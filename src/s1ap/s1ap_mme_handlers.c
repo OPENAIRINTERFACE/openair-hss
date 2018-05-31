@@ -1191,33 +1191,33 @@ s1ap_mme_handle_path_switch_request (
 
 
 //      message_p = itti_alloc_new_message (TASK_S1AP, MME_APP_INITIAL_CONTEXT_SETUP_RSP);
-      message_p = itti_alloc_new_message (TASK_S1AP, MME_APP_PATH_SWITCH_REQ);
+      message_p = itti_alloc_new_message (TASK_S1AP, S1AP_PATH_SWITCH_REQUEST);
       AssertFatal (message_p != NULL, "itti_alloc_new_message Failed");
-      memset ((void *)&message_p->ittiMsg.mme_app_path_switch_req, 0, sizeof (itti_mme_app_path_switch_req_t));
+      memset ((void *)&message_p->ittiMsg.s1ap_path_switch_request, 0, sizeof (itti_s1ap_path_switch_request_t));
       /*
        * Bad, very bad cast...
        */
       eRABToBeSwitchedDlItemIEs_p = (S1ap_E_RABToBeSwitchedDLItemIEs_t *)
         pathSwitchRequest_p->e_RABToBeSwitchedDLList.s1ap_E_RABToBeSwitchedDLItem.array[0];
-      MME_APP_PATH_SWITCH_REQ (message_p).mme_ue_s1ap_id = ue_ref_p->mme_ue_s1ap_id;
-      MME_APP_PATH_SWITCH_REQ (message_p).enb_ue_s1ap_id = ue_ref_p->enb_ue_s1ap_id;
-      MME_APP_PATH_SWITCH_REQ (message_p).enb_ue_s1ap_id = ue_ref_p->enb_ue_s1ap_id;
-      MME_APP_PATH_SWITCH_REQ (message_p).sctp_assoc_id  = assoc_id;
-      MME_APP_PATH_SWITCH_REQ (message_p).sctp_stream    = stream;
-      MME_APP_PATH_SWITCH_REQ (message_p).enb_id         = ue_ref_p->enb->enb_id;
-      MME_APP_PATH_SWITCH_REQ (message_p).eps_bearer_id = eRABToBeSwitchedDlItemIEs_p->e_RABToBeSwitchedDLItem.e_RAB_ID;
-      MME_APP_PATH_SWITCH_REQ (message_p).bearer_s1u_enb_fteid.ipv4 = 1;  // TO DO
-      MME_APP_PATH_SWITCH_REQ (message_p).bearer_s1u_enb_fteid.ipv6 = 0;  // TO DO
-      MME_APP_PATH_SWITCH_REQ (message_p).bearer_s1u_enb_fteid.interface_type = S1_U_ENODEB_GTP_U;
-      MME_APP_PATH_SWITCH_REQ (message_p).bearer_s1u_enb_fteid.teid = htonl ( *((uint32_t *) eRABToBeSwitchedDlItemIEs_p->e_RABToBeSwitchedDLItem.gTP_TEID.buf));
-      memcpy (&MME_APP_PATH_SWITCH_REQ (message_p).bearer_s1u_enb_fteid.ipv4_address, eRABToBeSwitchedDlItemIEs_p->e_RABToBeSwitchedDLItem.transportLayerAddress.buf, 4);
+      S1AP_PATH_SWITCH_REQUEST (message_p).mme_ue_s1ap_id = ue_ref_p->mme_ue_s1ap_id;
+      S1AP_PATH_SWITCH_REQUEST (message_p).enb_ue_s1ap_id = ue_ref_p->enb_ue_s1ap_id;
+      S1AP_PATH_SWITCH_REQUEST (message_p).enb_ue_s1ap_id = ue_ref_p->enb_ue_s1ap_id;
+      S1AP_PATH_SWITCH_REQUEST (message_p).sctp_assoc_id  = assoc_id;
+      S1AP_PATH_SWITCH_REQUEST (message_p).sctp_stream    = stream;
+      S1AP_PATH_SWITCH_REQUEST (message_p).enb_id         = ue_ref_p->enb->enb_id;
+      S1AP_PATH_SWITCH_REQUEST (message_p).eps_bearer_id = eRABToBeSwitchedDlItemIEs_p->e_RABToBeSwitchedDLItem.e_RAB_ID;
+      S1AP_PATH_SWITCH_REQUEST (message_p).bearer_s1u_enb_fteid.ipv4 = 1;  // TO DO
+      S1AP_PATH_SWITCH_REQUEST (message_p).bearer_s1u_enb_fteid.ipv6 = 0;  // TO DO
+      S1AP_PATH_SWITCH_REQUEST (message_p).bearer_s1u_enb_fteid.interface_type = S1_U_ENODEB_GTP_U;
+      S1AP_PATH_SWITCH_REQUEST (message_p).bearer_s1u_enb_fteid.teid = htonl ( *((uint32_t *) eRABToBeSwitchedDlItemIEs_p->e_RABToBeSwitchedDLItem.gTP_TEID.buf));
+      memcpy (&S1AP_PATH_SWITCH_REQUEST (message_p).bearer_s1u_enb_fteid.ipv4_address, eRABToBeSwitchedDlItemIEs_p->e_RABToBeSwitchedDLItem.transportLayerAddress.buf, 4);
       MSC_LOG_TX_MESSAGE (MSC_S1AP_MME,
                           MSC_MMEAPP_MME,
                           NULL, 0,
-                          "0 MME_APP_PATH_SWITCH_REQ mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ebi %u s1u enb teid %u",
-                          MME_APP_PATH_SWITCH_REQ (message_p).mme_ue_s1ap_id,
-                          MME_APP_PATH_SWITCH_REQ (message_p).eps_bearer_id,
-                          MME_APP_PATH_SWITCH_REQ (message_p).bearer_s1u_enb_fteid.teid);
+                          "0 S1AP_PATH_SWITCH_REQUEST mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ebi %u s1u enb teid %u",
+                          S1AP_PATH_SWITCH_REQUEST (message_p).mme_ue_s1ap_id,
+                          S1AP_PATH_SWITCH_REQUEST (message_p).eps_bearer_id,
+                          S1AP_PATH_SWITCH_REQUEST (message_p).bearer_s1u_enb_fteid.teid);
       rc =  itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
       OAILOG_FUNC_RETURN (LOG_S1AP, RETURNok);
   }
@@ -2431,6 +2431,5 @@ s1ap_handle_enb_initiated_reset_ack (
   }
   bstring b = blk2bstr(buffer, length);
   rc = s1ap_mme_itti_send_sctp_request (&b, enb_reset_ack_p->sctp_assoc_id, enb_reset_ack_p->sctp_stream_id, INVALID_MME_UE_S1AP_ID);
-  free_wrapper ((void**) &(enb_reset_ack_p->ue_to_reset_list));
   OAILOG_FUNC_RETURN (LOG_S1AP, rc);
 }

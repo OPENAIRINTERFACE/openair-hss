@@ -829,7 +829,7 @@ void emm_init_context(struct emm_data_context_s * const emm_ctx, const bool init
 
   OAILOG_DEBUG (LOG_NAS_EMM, "UE " MME_UE_S1AP_ID_FMT " Init EMM-CTX\n", emm_ctx->ue_id);
 
-  bdestroy(emm_ctx->esm_msg);
+  bdestroy_wrapper(&emm_ctx->esm_msg);
   emm_ctx_clear_guti(emm_ctx);
   emm_ctx_clear_old_guti(emm_ctx);
   emm_ctx_clear_imsi(emm_ctx);

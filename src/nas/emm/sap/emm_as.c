@@ -461,8 +461,7 @@ static int _emm_as_recv (
         decode_status,
         msg);       /**< Send the encoded  NAS_EMM message together with it. */
     /** If ask_ue_context is set.. Ask the MME_APP to send S10_UE_CONTEXT. */
-    if(msg)
-      bdestroy(msg);
+    bdestroy_wrapper(&msg);
     break;
 
   case TRACKING_AREA_UPDATE_COMPLETE:
@@ -702,7 +701,7 @@ static int _emm_as_establish_req (emm_as_establish_t * msg, int *emm_cause)
     OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Not purging the nas_msg for later context request for integrity check! \n");
   }else{
     OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - purging the nas_msg %p\n", emm_ctx);
-    bdestroy(msg->nas_msg); /**< We don't need the encoded message anymore. */
+    bdestroy_wrapper(&msg->nas_msg); /**< We don't need the encoded message anymore. */
   }
 
   switch (emm_msg->header.message_type) {
@@ -727,8 +726,7 @@ static int _emm_as_establish_req (emm_as_establish_t * msg, int *emm_cause)
         &decode_status,
         msg->nas_msg);       /**< Send the encoded  NAS_EMM message together with it. */
     /** If ask_ue_context is set.. Ask the MME_APP to send S10_UE_CONTEXT. */
-    if(msg->nas_msg && msg->nas_msg->slen > 0 && msg->nas_msg->slen <=0x3fff)
-      bdestroy(msg->nas_msg);
+    bdestroy_wrapper(&msg->nas_msg);
     break;
 
   case DETACH_REQUEST:

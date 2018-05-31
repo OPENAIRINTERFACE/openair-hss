@@ -707,7 +707,8 @@ void mme_app_itti_forward_relocation_response(ue_context_t *ue_context, mme_app_
   pdn_context_t * registered_pdn_ctx = NULL;
   RB_FOREACH (registered_pdn_ctx, PdnContexts, &ue_context->pdn_contexts) {
     DevAssert(registered_pdn_ctx);
-    mme_app_get_bearer_contexts_to_be_created(registered_pdn_ctx, &forward_relocation_response_p->handovered_bearers, BEARER_STATE_NULL);
+    forward_relocation_response_p->handovered_bearers = calloc (1, sizeof (bearer_contexts_to_be_created_t));
+    mme_app_get_bearer_contexts_to_be_created(registered_pdn_ctx, forward_relocation_response_p->handovered_bearers, BEARER_STATE_NULL);
     /** The number of bearers will be incremented in the method. S10 should just pick the ebi. */
   }
 

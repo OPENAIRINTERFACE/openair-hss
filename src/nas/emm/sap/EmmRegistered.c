@@ -185,9 +185,7 @@ EmmRegistered (
      * todo: make it optional!
      * Clear the ESM message, if exists.
      */
-    if (emm_ctx->esm_msg) {
-      bdestroy(emm_ctx->esm_msg);
-    }
+    bdestroy_wrapper(&emm_ctx->esm_msg);
     // todo: temporarily also remove the EMM context
     // Release emm and esm context
     _clear_emm_ctxt(emm_ctx);

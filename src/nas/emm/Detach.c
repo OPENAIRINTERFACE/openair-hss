@@ -100,7 +100,7 @@ _clear_emm_ctxt(emm_data_context_t *emm_context) {
   nas_delete_all_emm_procedures(emm_context);
   
   if (emm_context->esm_msg) {
-    bdestroy(emm_context->esm_msg);
+    bdestroy_wrapper(&emm_context->esm_msg);
   }
   emm_data_context_remove(&_emm_data, emm_context);
 
@@ -289,9 +289,7 @@ emm_proc_detach (
        */
 
       /** Not needed anymore. */
-      if (emm_context->esm_msg) {
-        bdestroy(emm_context->esm_msg);
-      }
+      bdestroy_wrapper(&emm_context->esm_msg);
 
       OAILOG_INFO (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " EMM-PROC  - Deactivating PDN Connection via ESM for detach before continuing. \n", emm_context->ue_id);
       /**
@@ -415,9 +413,7 @@ emm_proc_detach_request (
      */
 
     /** Not needed anymore. */
-    if (emm_context->esm_msg) {
-      bdestroy(emm_context->esm_msg);
-    }
+    bdestroy_wrapper(&emm_context->esm_msg);
 
     OAILOG_INFO (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " EMM-PROC  - Deactivating PDN Connection via ESM for detach before continuing. \n", emm_context->ue_id);
     /**

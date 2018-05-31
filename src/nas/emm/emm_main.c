@@ -104,7 +104,7 @@ emm_main_initialize (
   btrunc(b, 0);
   bassigncstr(b, "emm_data.ctx_coll_guti");
   _emm_data.ctx_coll_guti  = obj_hashtable_ts_create (mme_config.max_ues, NULL, NULL, hash_free_int_func, b);
-  bdestroy(b);
+  bdestroy_wrapper(&b);
   OAILOG_FUNC_OUT(LOG_NAS_EMM);
 }
 

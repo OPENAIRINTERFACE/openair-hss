@@ -260,9 +260,9 @@ void *mme_app_thread (void *args)
     /** Handover will start. */
 
     /** X2 Handover. */
-    case MME_APP_PATH_SWITCH_REQ:{
+    case S1AP_PATH_SWITCH_REQUEST:{
       mme_app_handle_path_switch_req (
-          &MME_APP_PATH_SWITCH_REQ (received_message_p)
+          &S1AP_PATH_SWITCH_REQUEST (received_message_p)
         );
       }
       break;

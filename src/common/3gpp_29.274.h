@@ -43,7 +43,6 @@
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"
 
-
 //-------------------------------------
 // 8.4 Cause
 
@@ -307,7 +306,7 @@ typedef struct mm_context_eps_s {
   uint8_t                   ms_nc_length;
   ms_network_capability_t   ms_nc;
   uint8_t                   mei_length;
-  Mei_t*                    mei;
+  Mei_t                     mei;
   uint8_t                   vdp_lenth;
   uint8_t                   vdp; // todo: ??
   uint8_t                   access_restriction_flags;
@@ -434,5 +433,11 @@ typedef struct bearer_context_within_create_bearer_response_s {
                                     ///< precedence over the PCO IE in the message body if they
                                     ///< both exist.
 } bearer_context_within_create_bearer_response_t;
+
+
+
+void free_bearer_contexts_to_be_created(bearer_contexts_to_be_created_t **bcs_tbc);
+void free_mme_ue_eps_pdn_connections(mme_ue_eps_pdn_connections_t ** pdn_connections);
+void free_mm_context_eps(mm_context_eps_t ** ue_eps_mm_context);
 
 #endif /* FILE_3GPP_29_274_SEEN */

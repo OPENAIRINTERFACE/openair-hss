@@ -58,7 +58,9 @@
 #define S1AP_ENB_INITIATED_RESET_ACK(mSGpTR) (mSGpTR)->ittiMsg.s1ap_enb_initiated_reset_ack
 
 // handover messages from NAS to MME_APP to S1AP
+#define S1AP_PATH_SWITCH_REQUEST(mSGpTR)              (mSGpTR)->ittiMsg.s1ap_path_switch_request
 #define S1AP_PATH_SWITCH_REQUEST_ACKNOWLEDGE(mSGpTR)  (mSGpTR)->ittiMsg.s1ap_path_switch_request_ack
+#define S1AP_PATH_SWITCH_REQUEST_FAILURE(mSGpTR)      (mSGpTR)->ittiMsg.s1ap_path_switch_request_failure
 /** eNB/MME status transfer. */
 #define S1AP_ENB_STATUS_TRANSFER(mSGpTR)              (mSGpTR)->ittiMsg.s1ap_enb_status_transfer
 #define S1AP_MME_STATUS_TRANSFER(mSGpTR)              (mSGpTR)->ittiMsg.s1ap_mme_status_transfer
@@ -68,7 +70,6 @@
 /** Handover Required, Preparation Failure, Cancel (source eNB side). */
 #define S1AP_HANDOVER_REQUIRED(mSGpTR)                (mSGpTR)->ittiMsg.s1ap_handover_required
 #define S1AP_HANDOVER_PREPARATION_FAILURE(mSGpTR)     (mSGpTR)->ittiMsg.s1ap_handover_preparation_failure
-#define S1AP_PATH_SWITCH_REQUEST_FAILURE(mSGpTR)      (mSGpTR)->ittiMsg.s1ap_path_switch_request_failure
 
 #define S1AP_HANDOVER_CANCEL(mSGpTR)                  (mSGpTR)->ittiMsg.s1ap_handover_cancel
 #define S1AP_HANDOVER_CANCEL_ACKNOWLEDGE(mSGpTR)      (mSGpTR)->ittiMsg.s1ap_handover_cancel_acknowledge
@@ -235,10 +236,14 @@ typedef struct itti_s1ap_e_rab_setup_rsp_s {
 
 
 // handover messaging
-typedef struct itti_s1ap_path_switch_req_s {
-  mme_ue_s1ap_id_t        mme_ue_s1ap_id;
-  enb_ue_s1ap_id_t        enb_ue_s1ap_id:24;
-
+typedef struct itti_s1ap_path_switch_request_s {
+  uint32_t                mme_ue_s1ap_id;
+  uint32_t                enb_ue_s1ap_id;
+  sctp_assoc_id_t         sctp_assoc_id;
+  sctp_stream_id_t        sctp_stream;
+  uint32_t                enb_id;
+  ebi_t                   eps_bearer_id;
+  fteid_t                 bearer_s1u_enb_fteid;
 //  /* Key eNB */
 //  uint8_t                 kenb[32];
 //
@@ -258,7 +263,7 @@ typedef struct itti_s1ap_path_switch_req_s {
 //  teid_t                  teid;
 //  /* S-GW IP address for User-Plane */
 //  ip_address_t            s_gw_address;
-} itti_s1ap_path_switch_req_t;
+} itti_s1ap_path_switch_request_t;
 
 /** Path Switch Request Acknowledgment sent from MME_APP to S1AP layer. */
 typedef struct itti_s1ap_path_switch_request_ack_s {
@@ -266,7 +271,7 @@ typedef struct itti_s1ap_path_switch_request_ack_s {
   mme_ue_s1ap_id_t        ue_id;            /* UE lower layer identifier   */
 
   /** Bearer Contexts to be switched List. */
-  bearer_contexts_to_be_created_t   bearer_ctx_to_be_switched_list;
+  bearer_contexts_to_be_created_t  *bearer_ctx_to_be_switched_list;
 
   /* Key eNB */
   uint8_t                 nh[AUTH_NH_SIZE];
@@ -321,7 +326,7 @@ typedef struct itti_s1ap_handover_request_s {
   /** UE AMBR. */
   ambr_t                          ambr;
   /** Bearer Contexts to be Setup List. */
-  bearer_contexts_to_be_created_t bearer_ctx_to_be_setup_list;
+  bearer_contexts_to_be_created_t *bearer_ctx_to_be_setup_list;
 
   /** F-Container. */
   bstring                   source_to_target_eutran_container;

@@ -358,16 +358,12 @@ static void mme_app_free_s10_procedure_mme_handover(mme_app_s10_proc_t **s10_pro
   if((*s10_proc_mme_handover_pp)->nas_s10_context.mm_eps_ctx){
     free_wrapper(&((*s10_proc_mme_handover_pp)->nas_s10_context.mm_eps_ctx)); /**< Setting the reference inside the procedure also to null. */
   }
-//  if((*s10_proc_mme_handover_pp)->source_to_target_eutran_container){
-//    bdestroy((*s10_proc_mme_handover_pp)->source_to_target_eutran_container->container_value);
-//    free_wrapper(&((*s10_proc_mme_handover_pp)->source_to_target_eutran_container)); /**< Setting the reference inside the procedure also to null. */
-//  }
+  if((*s10_proc_mme_handover_pp)->source_to_target_eutran_f_container.container_value){
+    bdestroy_wrapper(&(*s10_proc_mme_handover_pp)->source_to_target_eutran_f_container.container_value);
+  }
   /*
    * Todo: Make a generic function for this (proc_element with free_wrapper_ie() method).
    */
-  if((*s10_proc_mme_handover_pp)->f_cause){
-    free_wrapper(&((*s10_proc_mme_handover_pp)->f_cause)); /**< Setting the reference inside the procedure also to null. */
-  }
   /** PDN Connections. */
   if((*s10_proc_mme_handover_pp)->pdn_connections){
     free_wrapper(&((*s10_proc_mme_handover_pp)->pdn_connections)); /**< Setting the reference inside the procedure also to null. */

@@ -53,7 +53,6 @@
 /** Necessary for TAU. */
 #define MME_APP_NAS_UPDATE_LOCATION_CNF(mSGpTR)          (mSGpTR)->ittiMsg.mme_app_nas_update_location_cnf
 
-#define MME_APP_PATH_SWITCH_REQ(mSGpTR)                  (mSGpTR)->ittiMsg.mme_app_path_switch_req
 #define MME_APP_S1AP_MME_UE_ID_NOTIFICATION(mSGpTR)      (mSGpTR)->ittiMsg.mme_app_s1ap_mme_ue_id_notification
 
 typedef struct itti_mme_app_connection_establishment_cnf_s {
@@ -119,11 +118,6 @@ typedef struct itti_mme_app_initial_context_setup_rsp_s {
   s1u_teid_t              gtp_teid[BEARERS_PER_UE];
 } itti_mme_app_initial_context_setup_rsp_t;
 
-typedef struct itti_mme_app_delete_session_rsp_s {
-  /* UE identifier */
-  mme_ue_s1ap_id_t    ue_id;
-} itti_mme_app_delete_session_rsp_t;
-
 typedef struct itti_mme_app_create_dedicated_bearer_req_s {
   /* UE identifier */
   mme_ue_s1ap_id_t                  ue_id;
@@ -178,17 +172,6 @@ typedef struct itti_mme_app_initial_context_setup_failure_s {
   mme_ue_s1ap_id_t      mme_ue_s1ap_id;
 } itti_mme_app_initial_context_setup_failure_t;
 
-
-/** ITTI Handover Messages. */
-typedef struct itti_mme_app_path_switch_req_s {
-  uint32_t                mme_ue_s1ap_id;
-  uint32_t                enb_ue_s1ap_id;
-  sctp_assoc_id_t         sctp_assoc_id;
-  sctp_stream_id_t        sctp_stream;
-  uint32_t                enb_id;
-  ebi_t                   eps_bearer_id;
-  fteid_t                 bearer_s1u_enb_fteid;
-} itti_mme_app_path_switch_req_t;
 
 typedef struct itti_mme_app_nas_update_location_cnf_s {
   mme_ue_s1ap_id_t    ue_id;

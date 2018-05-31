@@ -40,6 +40,7 @@
 #include "3gpp_33.401.h"
 #include "3gpp_24.007.h"
 #include "3gpp_36.401.h"
+#include "3gpp_29.274.h"
 #include "3gpp_36.331.h"
 #include "security_types.h"
 #include "common_types.h"
@@ -109,16 +110,19 @@ void itti_free_msg_content (MessageDef * const message_p)
   break;
 
   case MME_APP_CREATE_DEDICATED_BEARER_REQ: {
-    // todo: free array of tfts and other elements
-    if (message_p->ittiMsg.mme_app_create_dedicated_bearer_req.tfts) {
-      free_traffic_flow_template(&message_p->ittiMsg.mme_app_create_dedicated_bearer_req.tfts);
+    for (int i = 0; i < BEARERS_PER_UE; i++) {
+      if (message_p->ittiMsg.mme_app_create_dedicated_bearer_req.tfts[i]) {
+        free_traffic_flow_template(&message_p->ittiMsg.mme_app_create_dedicated_bearer_req.tfts[i]);
+      }
+      if(message_p->ittiMsg.mme_app_create_dedicated_bearer_req.fteid_set[i]) {
+        free_wrapper((void**)&message_p->ittiMsg.mme_app_create_dedicated_bearer_req.fteid_set[i]);
+      }
+      if(message_p->ittiMsg.mme_app_create_dedicated_bearer_req.pcos[i]) {
+        clear_protocol_configuration_options(&message_p->ittiMsg.mme_app_create_dedicated_bearer_req.pcos[i]);
+      }
     }
   }
   break;
-
-  case MME_APP_DELETE_SESSION_RSP:
-    // DO nothing
-    break;
 
   case NAS_PDN_CONNECTIVITY_REQ:{
     clear_protocol_configuration_options(&message_p->ittiMsg.nas_pdn_connectivity_req.pco);
@@ -173,8 +177,29 @@ void itti_free_msg_content (MessageDef * const message_p)
   }
   break;
 
+  case NAS_PDN_DISCONNECT_REQ:{
+    bdestroy_wrapper (&message_p->ittiMsg.nas_pdn_disconnect_req.apn);
+    AssertFatal(NULL == message_p->ittiMsg.nas_pdn_disconnect_req.apn, "TODO clean pointer");
+  }
+  break;
+
   case NAS_PDN_CONNECTIVITY_FAIL:
     // DO nothing
+    break;
+
+  case NAS_ERAB_SETUP_REQ:
+    bdestroy_wrapper (&message_p->ittiMsg.itti_erab_setup_req.nas_msg);
+    break;
+
+  case NAS_PDN_CONFIG_REQ:
+    bdestroy_wrapper (&message_p->ittiMsg.nas_pdn_config_req.apn);
+    bdestroy_wrapper (&message_p->ittiMsg.nas_pdn_config_req.pdn_addr);
+    AssertFatal(NULL == message_p->ittiMsg.nas_pdn_config_req.pdn_addr, "TODO clean pointer");
+   break;
+
+  case NAS_CONTEXT_REQ:
+    bdestroy_wrapper (&message_p->ittiMsg.nas_context_req.nas_msg);
+    AssertFatal(NULL == message_p->ittiMsg.nas_context_req.nas_msg, "TODO clean pointer");
     break;
 
   case S11_CREATE_SESSION_REQUEST: {
@@ -210,6 +235,8 @@ void itti_free_msg_content (MessageDef * const message_p)
 
   case S11_RELEASE_ACCESS_BEARERS_REQUEST:
   case S11_RELEASE_ACCESS_BEARERS_RESPONSE:
+  case S11_DOWNLINK_DATA_NOTIFICATION:
+  case S11_DOWNLINK_DATA_NOTIFICATION_ACKNOWLEDGE:
     // DO nothing (trxn)
     break;
 
@@ -240,6 +267,20 @@ void itti_free_msg_content (MessageDef * const message_p)
     }
     break;
 
+  case S1AP_E_RAB_SETUP_RSP: {
+      for (int i = 0; i < message_p->ittiMsg.s1ap_e_rab_setup_rsp.e_rab_setup_list.no_of_items; i++) {
+        bdestroy_wrapper (&message_p->ittiMsg.s1ap_e_rab_setup_rsp.e_rab_setup_list.item[i].transport_layer_address);
+      }
+    }
+  break;
+
+  case S1AP_ENB_INITIATED_RESET_REQ:
+    free_wrapper ((void**) &message_p->ittiMsg.s1ap_enb_initiated_reset_req.ue_to_reset_list);
+    break;
+
+  case S1AP_ENB_INITIATED_RESET_ACK:
+    free_wrapper ((void**) &message_p->ittiMsg.s1ap_enb_initiated_reset_ack.ue_to_reset_list);
+    break;
 
   case S1AP_UE_CAPABILITIES_IND: // todo: removing capabilities?
   case S1AP_ENB_DEREGISTERED_IND:
@@ -247,6 +288,15 @@ void itti_free_msg_content (MessageDef * const message_p)
   case S1AP_UE_CONTEXT_RELEASE_REQ:
   case S1AP_UE_CONTEXT_RELEASE_COMMAND:
   case S1AP_UE_CONTEXT_RELEASE_COMPLETE:
+
+  case S1AP_PATH_SWITCH_REQUEST:
+  case S1AP_PATH_SWITCH_REQUEST_FAILURE:
+  case S1AP_HANDOVER_FAILURE:
+  case S1AP_HANDOVER_PREPARATION_FAILURE:
+  case S1AP_HANDOVER_CANCEL:
+  case S1AP_HANDOVER_CANCEL_ACKNOWLEDGE:
+  case S1AP_HANDOVER_NOTIFY:
+  case S1AP_PAGING:
     // DO nothing
     break;
 
@@ -254,6 +304,8 @@ void itti_free_msg_content (MessageDef * const message_p)
   case S6A_UPDATE_LOCATION_ANS:
   case S6A_AUTH_INFO_REQ:
   case S6A_AUTH_INFO_ANS:
+  case S6A_CANCEL_LOCATION_REQ:
+  case S6A_RESET_REQ:
     // DO nothing
     break;
 
@@ -283,31 +335,24 @@ void itti_free_msg_content (MessageDef * const message_p)
     // TODO
    break;
 
-   /*
-    * Free Handover Messaging!
-    * MME_APP:
-    */
+  case S1AP_PATH_SWITCH_REQUEST_ACKNOWLEDGE:
+    /** Bearer Contexts to be switched. */
+    if(message_p->ittiMsg.s1ap_path_switch_request_ack.bearer_ctx_to_be_switched_list){
+      free_bearer_contexts_to_be_created(&message_p->ittiMsg.s1ap_path_switch_request_ack.bearer_ctx_to_be_switched_list);
+    }
+    break;
+
   case S1AP_HANDOVER_REQUIRED:
     bdestroy_wrapper(&message_p->ittiMsg.s1ap_handover_required.eutran_source_to_target_container);
     break;
 
-  case S10_FORWARD_RELOCATION_REQUEST:
-    /* Transparent Container. */
-     bdestroy_wrapper(&message_p->ittiMsg.s10_forward_relocation_request.eutran_container->container_value);
-    /* PDN Connections. */
-    if(message_p->ittiMsg.s10_forward_relocation_request.pdn_connections){
-
-    }
-    break;
-
-  case S10_FORWARD_RELOCATION_RESPONSE:
-      /* Transparent Container. */
-    bdestroy_wrapper(&message_p->ittiMsg.s10_forward_relocation_response.eutran_container.container_value);
-    break;
-
   case S1AP_HANDOVER_REQUEST:
-    handover_request_p = &message_p->ittiMsg.s1ap_handover_request;
-    bdestroy_wrapper(&handover_request_p->source_to_target_eutran_container);
+    /** E-UTRAN Container. */
+    bdestroy_wrapper(&message_p->ittiMsg.s1ap_handover_request.source_to_target_eutran_container);
+    /** Bearer Context to Be Setup. */
+    if(message_p->ittiMsg.s1ap_handover_request.bearer_ctx_to_be_setup_list){
+      free_bearer_contexts_to_be_created(&message_p->ittiMsg.s1ap_handover_request.bearer_ctx_to_be_setup_list);
+    }
     break;
 
   case S1AP_HANDOVER_REQUEST_ACKNOWLEDGE:
@@ -317,29 +362,67 @@ void itti_free_msg_content (MessageDef * const message_p)
 //          bdestroy_wrapper (&message_p->ittiMsg.s1ap_e_rab_setup_req.e_rab_to_be_setup_list.item[i].transport_layer_address);
     }
     break;
+
+  case S1AP_HANDOVER_COMMAND:
+    bdestroy_wrapper(&message_p->ittiMsg.s1ap_handover_command.eutran_target_to_source_container);
+    break;
+
   case S1AP_ENB_STATUS_TRANSFER:
     bdestroy_wrapper(&message_p->ittiMsg.s1ap_enb_status_transfer.bearerStatusTransferList_buffer);
     break;
   case S1AP_MME_STATUS_TRANSFER:
     bdestroy_wrapper(&message_p->ittiMsg.s1ap_mme_status_transfer.bearerStatusTransferList_buffer);
     break;
-  case S10_FORWARD_ACCESS_CONTEXT_NOTIFICATION:
-//    todo: bdestroy(&message_p->ittiMsg.s10_forward_access_context_notification.eutran_container.container_value);
+
+
+    /**
+     * S10 Messages.
+     */
+  case S10_FORWARD_RELOCATION_REQUEST:
+    /** Transparent Container. */
+    bdestroy_wrapper(&message_p->ittiMsg.s10_forward_relocation_request.f_container.container_value);
+    /** PDN Connections. */
+    if(message_p->ittiMsg.s10_forward_relocation_request.pdn_connections){
+      free_mme_ue_eps_pdn_connections(&message_p->ittiMsg.s10_forward_relocation_request.pdn_connections);
+    }
+    /** MM Context. */
+    if(message_p->ittiMsg.s10_forward_relocation_request.ue_eps_mm_context){
+      free_mm_context_eps(&message_p->ittiMsg.s10_forward_relocation_request.ue_eps_mm_context);
+    }
+    /** Source SGW FQDN. */
+    bdestroy_wrapper(&message_p->ittiMsg.s10_forward_relocation_request.source_sgw_fqdn);
     break;
-  case S10_FORWARD_ACCESS_CONTEXT_ACKNOWLEDGE:
-    break;
-  case NAS_CONTEXT_REQ:
-    bdestroy(&message_p->ittiMsg.nas_context_req.nas_msg);
-    break;
-  case S10_CONTEXT_REQUEST:
-    bdestroy(&message_p->ittiMsg.s10_context_request.complete_request_message.request_value);
-    break;
-  case S10_CONTEXT_RESPONSE:
-    /* PDN Connections. */
-    if(message_p->ittiMsg.s10_context_response.pdn_connections){
-        // todo: remove pdn_connections
+
+  case S10_FORWARD_RELOCATION_RESPONSE:
+    /** Transparent Container. */
+    bdestroy_wrapper(&message_p->ittiMsg.s10_forward_relocation_response.eutran_container.container_value);
+
+    /** Handovered Bearers. */
+    if(message_p->ittiMsg.s10_forward_relocation_response.handovered_bearers){
+      free_bearer_contexts_to_be_created(&message_p->ittiMsg.s10_forward_relocation_response.handovered_bearers);
     }
     break;
+
+  case S10_FORWARD_ACCESS_CONTEXT_NOTIFICATION:
+    /** EUTRAN Container. */
+    bdestroy_wrapper(&message_p->ittiMsg.s10_forward_access_context_notification.eutran_container.container_value);
+    break;
+  case S10_CONTEXT_REQUEST:
+    bdestroy_wrapper(&message_p->ittiMsg.s10_context_request.complete_request_message.request_value);
+    break;
+  case S10_CONTEXT_RESPONSE:
+    /** PDN Connections. */
+    if(message_p->ittiMsg.s10_context_response.pdn_connections){
+      free_mme_ue_eps_pdn_connections(&message_p->ittiMsg.s10_context_response.pdn_connections);
+    }
+    /** MM Context. */
+    if(message_p->ittiMsg.s10_context_response.ue_eps_mm_context){
+      free_mm_context_eps(&message_p->ittiMsg.s10_context_response.ue_eps_mm_context);
+    }
+    /** Source SGW FQDN. */
+    bdestroy_wrapper(&message_p->ittiMsg.s10_context_response.source_sgw_fqdn);
+    break;
+
   default:
     ;
   }

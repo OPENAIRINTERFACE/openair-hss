@@ -138,9 +138,9 @@ s10_mme_forward_relocation_request (
     * Set the Transparent F-Container.
     */
    rc = nwGtpv2cMsgAddIeFContainer((ulp_req.hMsg), NW_GTPV2C_IE_INSTANCE_ZERO,
-       (uint8_t*)req_p->eutran_container->container_value->data,
-       blength(req_p->eutran_container->container_value),
-       req_p->eutran_container->container_type);
+       (uint8_t*)req_p->f_container.container_value->data,
+       blength(req_p->f_container.container_value),
+       req_p->f_container.container_type);
    /** Destroy the container. */
 //   const uint8_t container_map[] = {
 //       0x40, 0x80, 0xc0, 0x0f, 0x10, 0x3f, 0xc5, 0x9a, 0xd4, 0x80, 0x01, 0x06, 0x0e, 0x4d, 0x2a, 0x64,
@@ -166,8 +166,7 @@ s10_mme_forward_relocation_request (
 //       (uint8_t*)new_long_container->data,
 //       blength(new_long_container),
 //       req_p->eutran_container.container_type);
-   bdestroy(req_p->eutran_container->container_value);
-//   bdestroy(new_long_container);
+//   bdestroy_wrapper(&new_long_container);
 
 
    DevAssert( NW_OK == rc );
@@ -274,9 +273,8 @@ s10_mme_handle_forward_relocation_request(
    * E-UTRAN container (F-Container) Information Element.
    * Instance Zero is E-UTRAN. Only E-UTRAN will be supported.
    */
-  req_p->eutran_container = calloc(1, sizeof(F_Container_t));
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_F_CONTAINER, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
-       s10_f_container_ie_get, req_p->eutran_container);
+       s10_f_container_ie_get, &req_p->f_container);
   DevAssert (NW_OK == rc);
 
   /**
@@ -406,13 +404,12 @@ s10_mme_forward_relocation_response (
            blength(forward_relocation_response_p->eutran_container.container_value),
            forward_relocation_response_p->eutran_container.container_type);
        /** Destroy the container. */
-       bdestroy(forward_relocation_response_p->eutran_container.container_value);
        DevAssert( NW_OK == rc );
      }
 
      /** Setting the Bearer Context to Setup. Just EBI needed. */
-     for (int i = 0; i < forward_relocation_response_p->handovered_bearers.num_bearer_context; i++) {
-       s10_bearer_context_created_ie_set( &(ulp_req.hMsg), &forward_relocation_response_p->handovered_bearers.bearer_contexts[i]);
+     for (int i = 0; i < forward_relocation_response_p->handovered_bearers->num_bearer_context; i++) {
+       s10_bearer_context_created_ie_set( &(ulp_req.hMsg), &forward_relocation_response_p->handovered_bearers->bearer_contexts[i]);
      }
    }
    /** No allocated context remains. */
@@ -474,8 +471,9 @@ s10_mme_handle_forward_relocation_response(
   /*
    * Bearer Contexts Created IE
    */
+  resp_p->handovered_bearers = calloc(1, sizeof(bearer_contexts_to_be_created_t));
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_BEARER_CONTEXT, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
-      s10_bearer_context_created_ie_get, &resp_p->handovered_bearers);
+      s10_bearer_context_created_ie_get, resp_p->handovered_bearers);
   DevAssert (NW_OK == rc);
   /*
    * Run the parser
@@ -552,8 +550,7 @@ s10_mme_forward_access_context_notification(nw_gtpv2c_stack_handle_t *stack_p,
       forward_access_context_notif_p->eutran_container.container_type);
   DevAssert( NW_OK == rc );
   /** Destroy the container. */
-  bdestroy(forward_access_context_notif_p->eutran_container.container_value);
-  bdestroy(enbStatusPrefixBstr);
+  bdestroy_wrapper(&enbStatusPrefixBstr);
 
   /** Send the message. */
   rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
@@ -984,7 +981,6 @@ s10_mme_context_request (
       blength(req_p->complete_request_message.request_value),
       COMPLETE_TAU_REQUEST_TYPE);
   /** Destroy the container. */
-  bdestroy(req_p->complete_request_message.request_value);
   DevAssert( NW_OK == rc );
 
   rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req); /**< Creates an ULP tunnel if none existing. */

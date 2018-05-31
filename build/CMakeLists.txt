@@ -274,7 +274,8 @@ add_library(3GPP_TYPES
   ${OPENAIRCN_DIR}/src/common/3gpp_24.008_mm_ies.c
   ${OPENAIRCN_DIR}/src/common/3gpp_24.008_gmm_ies.c
   ${OPENAIRCN_DIR}/src/common/3gpp_24.008_gprs_common_ies.c
-  ${OPENAIRCN_DIR}/src/common/3gpp_24.008_sm_ies.c)
+  ${OPENAIRCN_DIR}/src/common/3gpp_24.008_sm_ies.c
+  ${OPENAIRCN_DIR}/src/common/3gpp_29.274_sm_ies.c)
 set(3GPP_TYPES_LIB 3GPP_TYPES)
 
 

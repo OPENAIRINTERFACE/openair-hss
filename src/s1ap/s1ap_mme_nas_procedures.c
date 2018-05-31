@@ -733,11 +733,6 @@ s1ap_handle_conn_est_cnf (
     OAILOG_FUNC_OUT (LOG_S1AP);
   }
 
-  for (int itemRemove = 0; itemRemove < conn_est_cnf_pP->no_of_e_rabs; itemRemove++) {
-    bdestroy (conn_est_cnf_pP->nas_pdu[itemRemove]);
-  }
-
-
   OAILOG_NOTICE (LOG_S1AP, "Send S1AP_INITIAL_CONTEXT_SETUP_REQUEST message MME_UE_S1AP_ID = " MME_UE_S1AP_ID_FMT " eNB_UE_S1AP_ID = " ENB_UE_S1AP_ID_FMT "\n",
               (mme_ue_s1ap_id_t)initialContextSetupRequest_p->mme_ue_s1ap_id, (enb_ue_s1ap_id_t)initialContextSetupRequest_p->eNB_UE_S1AP_ID);
   MSC_LOG_TX_MESSAGE (MSC_S1AP_MME,
@@ -1132,7 +1127,7 @@ s1ap_handle_handover_request (
 
   S1ap_E_RABToBeSetupItemHOReq_t          e_RABToBeSetupHO = {0}; // yes, alloc on stack
   // todo: only a single bearer assumed right now.
-  s1ap_add_bearer_context_to_setup_list(&handoverRequest_p->e_RABToBeSetupListHOReq, &e_RABToBeSetupHO, &handover_request_pP->bearer_ctx_to_be_setup_list);
+  s1ap_add_bearer_context_to_setup_list(&handoverRequest_p->e_RABToBeSetupListHOReq, &e_RABToBeSetupHO, handover_request_pP->bearer_ctx_to_be_setup_list);
   // e_RABToBeSetupHO --> todo: disappears inside
 
   /** Set the security context. */
@@ -1262,13 +1257,10 @@ s1ap_handle_handover_command (
   OCTET_STRING_fromBuf(&handoverCommand_p->target_ToSource_TransparentContainer,
       handover_command_pP->eutran_target_to_source_container->data, blength(handover_command_pP->eutran_target_to_source_container));
 
-  /** Destroy the bstring. */
-  bdestroy(handover_command_pP->eutran_target_to_source_container);
-
   if (s1ap_mme_encode_pdu (&message, &buffer_p, &length) < 0) {
     DevMessage("Failed to encode handover command \n");
   }
- OAILOG_NOTICE (LOG_S1AP, "Send S1AP_HANDOVER_COMMAND message MME_UE_S1AP_ID = " MME_UE_S1AP_ID_FMT " eNB_UE_S1AP_ID = " ENB_UE_S1AP_ID_FMT "\n",
+  OAILOG_NOTICE (LOG_S1AP, "Send S1AP_HANDOVER_COMMAND message MME_UE_S1AP_ID = " MME_UE_S1AP_ID_FMT " eNB_UE_S1AP_ID = " ENB_UE_S1AP_ID_FMT "\n",
               (mme_ue_s1ap_id_t)handoverCommand_p->mme_ue_s1ap_id, (enb_ue_s1ap_id_t)handoverCommand_p->eNB_UE_S1AP_ID);
   MSC_LOG_TX_MESSAGE (MSC_S1AP_MME,
                       MSC_S1AP_ENB,
@@ -1360,7 +1352,7 @@ s1ap_handle_mme_status_transfer( const itti_s1ap_status_transfer_t * const s1ap_
     OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
   }
   // todo: do we need this destroy?
-  bdestroy(s1ap_status_transfer_pP->bearerStatusTransferList_buffer);
+  bdestroy_wrapper(&s1ap_status_transfer_pP->bearerStatusTransferList_buffer);
 //  OAILOG_NOTICE (LOG_S1AP, "Send S1AP_MME_STATUS_TRANSFER message MME_UE_S1AP_ID = " MME_UE_S1AP_ID_FMT " eNB_UE_S1AP_ID = " ENB_UE_S1AP_ID_FMT "\n",
 //              (mme_ue_s1ap_id_t)mmeStatusTransfer_p->mme_ue_s1ap_id, (enb_ue_s1ap_id_t)mmeStatusTransfer_p->eNB_UE_S1AP_ID);
   MSC_LOG_TX_MESSAGE (MSC_S1AP_MME,
@@ -1503,7 +1495,7 @@ int s1ap_generate_bearer_context_to_setup(bearer_context_to_be_created_t * bc_tb
 
   // todo: optimize this
   /** Destroy the temporarily allocated bstring. */
-  bdestroy(transportLayerAddress);
+  bdestroy_wrapper(&transportLayerAddress);
   // todo: ipv6
 
   // TODO: S1AP PDU..

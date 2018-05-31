@@ -91,8 +91,8 @@ typedef struct mme_app_s10_proc_mme_handover_s {
   fteid_t                       remote_mme_teid;
   uint16_t                      peer_port;
   target_identification_t       target_id;
-  F_Container_t                *source_to_target_eutran_container;
-  F_Cause_t                    *f_cause;
+  F_Container_t                 source_to_target_eutran_f_container;
+  F_Cause_t                     f_cause;
   /** NAS context information. */
   nas_s10_context_t             nas_s10_context;
   /** PDN Connections. */

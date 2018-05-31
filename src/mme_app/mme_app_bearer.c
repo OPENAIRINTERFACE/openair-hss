@@ -256,7 +256,7 @@ mme_app_handle_nas_pdn_connectivity_req (
   //#if TEMPORARY_DEBUG
   //  bstring b = protocol_configuration_options_to_xml(&ue_context->pending_pdn_connectivity_req_pco);
   //  OAILOG_DEBUG (LOG_MME_APP, "PCO %s\n", bdata(b));
-  //  bdestroy(b);
+  //  bdestroy_wrapper(&b);
   //#endif
 
   mme_app_get_pdn_context(ue_context, nas_pdn_connectivity_req_pP->pdn_cid, nas_pdn_connectivity_req_pP->default_ebi, nas_pdn_connectivity_req_pP->apn, &pdn_context);
@@ -967,7 +967,7 @@ mme_app_handle_create_sess_resp (
   //#if TEMPORARY_DEBUG
   // bstring b = protocol_configuration_options_to_xml(&ue_context->pending_pdn_connectivity_req_pco);
   // OAILOG_DEBUG (LOG_MME_APP, "PCO %s\n", bdata(b));
-  // bdestroy(b);
+  // bdestroy_wrapper(&b);
   //#endif
 
   // todo: if handovered with multiple bearers, we might need to send  CSR and handle CSResp with multiple bearer contexts!
@@ -1030,7 +1030,7 @@ mme_app_handle_create_sess_resp (
           s10_handover_procedure->nas_s10_context.mm_eps_ctx->ue_nc.eia,
           s10_handover_procedure->nas_s10_context.mm_eps_ctx->nh,
           s10_handover_procedure->nas_s10_context.mm_eps_ctx->ncc,
-          s10_handover_procedure->source_to_target_eutran_container->container_value);
+          s10_handover_procedure->source_to_target_eutran_f_container.container_value);
     }
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
   }else if (emm_cn_proc_ctx_req){
@@ -1883,25 +1883,25 @@ void mme_app_send_s1ap_path_switch_request_failure(mme_ue_s1ap_id_t mme_ue_s1ap_
 //------------------------------------------------------------------------------
 void
 mme_app_handle_path_switch_req(
-  const itti_mme_app_path_switch_req_t * const path_switch_req_pP
+  const itti_s1ap_path_switch_request_t * const s1ap_path_switch_req
   )
 {
   struct ue_context_s                    *ue_context = NULL;
   MessageDef                             *message_p = NULL;
 
   OAILOG_FUNC_IN (LOG_MME_APP);
-  OAILOG_DEBUG (LOG_MME_APP, "Received MME_APP_PATH_SWITCH_REQ from S1AP\n");
-  ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, path_switch_req_pP->mme_ue_s1ap_id);
+  OAILOG_DEBUG (LOG_MME_APP, "Received S1AP_PATH_SWITCH_REQUEST from S1AP\n");
+  ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, s1ap_path_switch_req->mme_ue_s1ap_id);
 
   if (ue_context == NULL) {
-    OAILOG_ERROR (LOG_MME_APP, "We didn't find this mme_ue_s1ap_id in list of UE: %08x %d(dec)\n", path_switch_req_pP->mme_ue_s1ap_id, path_switch_req_pP->mme_ue_s1ap_id);
-    MSC_LOG_EVENT (MSC_MMEAPP_MME, "MME_APP_PATH_SWITCH_REQ Unknown ue %u", path_switch_req_pP->mme_ue_s1ap_id);
+    OAILOG_ERROR (LOG_MME_APP, "We didn't find this mme_ue_s1ap_id in list of UE: %08x %d(dec)\n", s1ap_path_switch_req->mme_ue_s1ap_id, s1ap_path_switch_req->mme_ue_s1ap_id);
+    MSC_LOG_EVENT (MSC_MMEAPP_MME, "S1AP_PATH_SWITCH_REQUEST Unknown ue %u", s1ap_path_switch_req->mme_ue_s1ap_id);
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
   enb_s1ap_id_key_t                       enb_s1ap_id_key = INVALID_ENB_UE_S1AP_ID_KEY;
 
   /** Update the ENB_ID_KEY. */
-  MME_APP_ENB_S1AP_ID_KEY(enb_s1ap_id_key, path_switch_req_pP->enb_id, path_switch_req_pP->enb_ue_s1ap_id);
+  MME_APP_ENB_S1AP_ID_KEY(enb_s1ap_id_key, s1ap_path_switch_req->enb_id, s1ap_path_switch_req->enb_ue_s1ap_id);
   // Update enb_s1ap_id_key in hashtable
   mme_ue_context_update_coll_keys( &mme_app_desc.mme_ue_contexts,
       ue_context,
@@ -1913,15 +1913,15 @@ mme_app_handle_path_switch_req(
       &ue_context->guti);
 
   // Set the handover flag, check that no handover exists.
-  ue_context->enb_ue_s1ap_id    = path_switch_req_pP->enb_ue_s1ap_id;
-  ue_context->sctp_assoc_id_key = path_switch_req_pP->sctp_assoc_id;
+  ue_context->enb_ue_s1ap_id    = s1ap_path_switch_req->enb_ue_s1ap_id;
+  ue_context->sctp_assoc_id_key = s1ap_path_switch_req->sctp_assoc_id;
   //  sctp_stream_id_t        sctp_stream;
   uint16_t encryption_algorithm_capabilities;
   uint16_t integrity_algorithm_capabilities;
   // todo: update them from the X2 message!
-  if(emm_data_context_update_security_parameters(path_switch_req_pP->mme_ue_s1ap_id, &encryption_algorithm_capabilities, &integrity_algorithm_capabilities) != RETURNok){
-    OAILOG_ERROR(LOG_MME_APP, "Error updating AS security parameters for UE with ueId: " MME_UE_S1AP_ID_FMT ". \n", path_switch_req_pP->mme_ue_s1ap_id);
-    mme_app_send_s1ap_path_switch_request_failure(path_switch_req_pP->mme_ue_s1ap_id, path_switch_req_pP->enb_ue_s1ap_id, path_switch_req_pP->sctp_assoc_id, SYSTEM_FAILURE);
+  if(emm_data_context_update_security_parameters(s1ap_path_switch_req->mme_ue_s1ap_id, &encryption_algorithm_capabilities, &integrity_algorithm_capabilities) != RETURNok){
+    OAILOG_ERROR(LOG_MME_APP, "Error updating AS security parameters for UE with ueId: " MME_UE_S1AP_ID_FMT ". \n", s1ap_path_switch_req->mme_ue_s1ap_id);
+    mme_app_send_s1ap_path_switch_request_failure(s1ap_path_switch_req->mme_ue_s1ap_id, s1ap_path_switch_req->enb_ue_s1ap_id, s1ap_path_switch_req->sctp_assoc_id, SYSTEM_FAILURE);
     /** Implicitly detach the UE --> If EMM context is missing, still continue with the resource removal. */
     message_p = itti_alloc_new_message (TASK_MME_APP, NAS_IMPLICIT_DETACH_UE_IND);
     DevAssert (message_p != NULL);
@@ -1930,7 +1930,7 @@ mme_app_handle_path_switch_req(
     itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
- OAILOG_INFO(LOG_MME_APP, "Successfully updated AS security parameters for UE with ueId: " MME_UE_S1AP_ID_FMT " for X2 handover. \n", path_switch_req_pP->mme_ue_s1ap_id);
+ OAILOG_INFO(LOG_MME_APP, "Successfully updated AS security parameters for UE with ueId: " MME_UE_S1AP_ID_FMT " for X2 handover. \n", s1ap_path_switch_req->mme_ue_s1ap_id);
 
  // Stop Initial context setup process guard timer,if running todo: path switch request?
   if (ue_context->path_switch_req_timer.id != MME_APP_TIMER_INACTIVE_ID) {
@@ -1955,9 +1955,9 @@ mme_app_handle_path_switch_req(
    * Delay Value in integer multiples of 50 millisecs, or zero
    */
   s11_modify_bearer_request->delay_dl_packet_notif_req = 0;  // TO DO
-  s11_modify_bearer_request->bearer_contexts_to_be_modified.bearer_contexts[0].eps_bearer_id = path_switch_req_pP->eps_bearer_id;
+  s11_modify_bearer_request->bearer_contexts_to_be_modified.bearer_contexts[0].eps_bearer_id = s1ap_path_switch_req->eps_bearer_id;
   memcpy (&s11_modify_bearer_request->bearer_contexts_to_be_modified.bearer_contexts[0].s1_eNB_fteid,
-      &path_switch_req_pP->bearer_s1u_enb_fteid,
+      &s1ap_path_switch_req->bearer_s1u_enb_fteid,
       sizeof (s11_modify_bearer_request->bearer_contexts_to_be_modified.bearer_contexts[0].s1_eNB_fteid));
   s11_modify_bearer_request->bearer_contexts_to_be_modified.num_bearer_context = 1;
 
@@ -2262,11 +2262,9 @@ mme_app_handle_handover_required(
   forward_relocation_request_p->s11_sgw_teid.ipv4 = 1;
 
   /** Set the F-Cause. */
-  if(!forward_relocation_request_p->f_cause)
-    forward_relocation_request_p->f_cause = calloc(1, sizeof(F_Cause_t));
-  forward_relocation_request_p->f_cause->fcause_type      = FCAUSE_S1AP;
-  forward_relocation_request_p->f_cause->fcause_s1ap_type = FCAUSE_S1AP_RNL;
-  forward_relocation_request_p->f_cause->fcause_value     = (uint8_t)handover_required_pP->f_cause_value;
+  forward_relocation_request_p->f_cause.fcause_type      = FCAUSE_S1AP;
+  forward_relocation_request_p->f_cause.fcause_s1ap_type = FCAUSE_S1AP_RNL;
+  forward_relocation_request_p->f_cause.fcause_value     = (uint8_t)handover_required_pP->f_cause_value;
 
   /** Set the target identification. */
   forward_relocation_request_p->target_identification.target_type = 1; /**< Macro eNodeB. */
@@ -2296,10 +2294,8 @@ mme_app_handle_handover_required(
   mme_app_set_ue_eps_mm_context(forward_relocation_request_p->ue_eps_mm_context, ue_context, ue_nas_ctx);
 
   /** Put the E-UTRAN transparent container. */
-  if(!forward_relocation_request_p->eutran_container)
-     forward_relocation_request_p->eutran_container = calloc(1, sizeof(F_Container_t));
-  forward_relocation_request_p->eutran_container->container_type = 3;
-  forward_relocation_request_p->eutran_container->container_value = handover_required_pP->eutran_source_to_target_container;
+  forward_relocation_request_p->f_container.container_type = 3;
+  forward_relocation_request_p->f_container.container_value = handover_required_pP->eutran_source_to_target_container;
   handover_required_pP->eutran_source_to_target_container = NULL;
   /** Send the Forward Relocation Message to S11. */
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME,  MSC_S10_MME ,
@@ -2661,10 +2657,10 @@ mme_app_handle_forward_relocation_request(
 
  s10_proc_mme_handover->nas_s10_context.mm_eps_ctx = forward_relocation_request_pP->ue_eps_mm_context;
  forward_relocation_request_pP->ue_eps_mm_context = NULL;
- s10_proc_mme_handover->source_to_target_eutran_container = forward_relocation_request_pP->eutran_container;
- forward_relocation_request_pP->eutran_container = NULL;
+ s10_proc_mme_handover->source_to_target_eutran_f_container = forward_relocation_request_pP->f_container;
+ forward_relocation_request_pP->f_container.container_value = NULL;
+
  s10_proc_mme_handover->f_cause = forward_relocation_request_pP->f_cause;
- forward_relocation_request_pP->f_cause = NULL;
 
  /** Set the Source FTEID. */
  memcpy((void*)&s10_proc_mme_handover->remote_mme_teid, (void*)&forward_relocation_request_pP->s10_source_mme_teid, sizeof(fteid_t));
@@ -2712,9 +2708,8 @@ mme_app_handle_forward_relocation_request(
        forward_relocation_request_pP->ue_eps_mm_context->ue_nc.eia,
        forward_relocation_request_pP->ue_eps_mm_context->nh,
        forward_relocation_request_pP->ue_eps_mm_context->ncc,
-       forward_relocation_request_pP->eutran_container);
+       s10_proc_mme_handover->source_to_target_eutran_f_container.container_value);
    /** Unlink the e-utran transparent container. */
-   forward_relocation_request_pP->eutran_container = NULL;
  }
  ue_context->imsi_auth = IMSI_AUTHENTICATED;
  OAILOG_INFO (LOG_MME_APP, "Successfully created and initialized an S10 Inter-MME handover procedure for mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
@@ -2756,7 +2751,8 @@ void mme_app_send_s1ap_handover_request(mme_ue_s1ap_id_t mme_ue_s1ap_id,
   handover_request_p->ambr.br_dl = ue_context->subscribed_ue_ambr.br_dl;
 
   /** Set the bearer contexts to be created. Not changing any bearer state. */
-  memcpy((void*)&handover_request_p->bearer_ctx_to_be_setup_list, bcs_tbc, sizeof(*bcs_tbc));
+  handover_request_p->bearer_ctx_to_be_setup_list = calloc(1, sizeof(bearer_contexts_to_be_created_t));
+  memcpy((void*)handover_request_p->bearer_ctx_to_be_setup_list, bcs_tbc, sizeof(*bcs_tbc));
 
   /** Set the Security Capabilities. */
   handover_request_p->security_capabilities_encryption_algorithms = encryption_algorithm_capabilities;
@@ -2871,7 +2867,7 @@ mme_app_handle_forward_relocation_response(
    * todo: must check if any bearer exist at all? todo: must check that the number bearers is as expected?
    * todo: DevCheck ((bearer_id < BEARERS_PER_UE) && (bearer_id >= 0), bearer_id, BEARERS_PER_UE, 0);
    */
-  bearer_id = forward_relocation_response_pP->handovered_bearers.bearer_contexts[0].eps_bearer_id /* - 5 */ ;
+  bearer_id = forward_relocation_response_pP->handovered_bearers->bearer_contexts[0].eps_bearer_id /* - 5 */ ;
   // todo: what is the dumping doing? printing? needed for s10?
 
   /**

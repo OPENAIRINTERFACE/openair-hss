@@ -2278,7 +2278,6 @@ mme_app_handle_s10_context_request(const itti_s10_context_request_t * const s10_
 // if(rc != RETURNok){
 //   OAILOG_ERROR(LOG_MME_APP, "UE NAS message for IMSI " IMSI_64_FMT " could not be validated. \n", ue_context->imsi);
 //   _mme_app_send_s10_context_response_err(s10_context_request_pP->s10_target_mme_teid.teid, s10_context_request_pP->s10_target_mme_teid.ipv4, s10_context_request_pP->trxn, REQUEST_REJECTED);
-//   bdestroy(s10_context_request_pP->complete_request_message.request_value);
 //   OAILOG_FUNC_OUT (LOG_MME_APP);
 // }
 
@@ -2286,7 +2285,6 @@ mme_app_handle_s10_context_request(const itti_s10_context_request_t * const s10_
   * Destroy the message finally
   * todo: check what if already destroyed.
   */
- bdestroy(s10_context_request_pP->complete_request_message.request_value);
  /** Prepare the S10 CONTEXT_RESPONSE. */
  message_p = itti_alloc_new_message (TASK_MME_APP, S10_CONTEXT_RESPONSE);
  DevAssert (message_p != NULL);

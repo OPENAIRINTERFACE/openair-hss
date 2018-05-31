@@ -426,7 +426,7 @@ s10_mme_init (
 
   bstring b = bfromcstr("s10_mme_teid_2_gtv2c_teid_handle");
   s10_mme_teid_2_gtv2c_teid_handle = hashtable_ts_create(mme_config_p->max_ues, HASH_TABLE_DEFAULT_HASH_FUNC, hash_free_int_func, b);
-  bdestroy(b);
+  bdestroy_wrapper(&b);
 
   OAILOG_DEBUG (LOG_S10, "Initializing S10 interface: DONE\n");
   return ret;
