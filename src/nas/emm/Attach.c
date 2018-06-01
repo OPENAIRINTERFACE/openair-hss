@@ -1634,6 +1634,19 @@ static int _emm_send_attach_accept (emm_data_context_t * emm_context)
       nas_stop_T3450(attach_proc->ue_id, &attach_proc->T3450, NULL);
       nas_start_T3450(attach_proc->ue_id, &attach_proc->T3450, attach_proc->emm_spec_proc.emm_proc.base_proc.time_out, (void*)emm_context);
     }
+
+    /**
+     * Implicit GUTI reallocation;
+     * * * * Notify EMM that common procedure has been initiated
+     */
+    memset(&emm_sap, 0, sizeof(emm_sap_t));
+
+    emm_sap.primitive = EMMREG_COMMON_PROC_REQ;
+    emm_sap.u.emm_reg.ue_id = emm_context->ue_id;
+    emm_sap.u.emm_reg.ctx  = emm_context;
+    MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMREG_COMMON_PROC_REQ ue id " MME_UE_S1AP_ID_FMT " ", msg_pP->ue_id);
+    rc = emm_sap_send (&emm_sap);
+
   } else {
     OAILOG_WARNING (LOG_NAS_EMM, "ue_context NULL\n");
   }

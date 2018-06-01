@@ -262,9 +262,13 @@ int EmmCommonProcedureInitiated (emm_reg_t * const evt)
   case _EMMREG_TAU_CNF:
     MSC_LOG_RX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "_EMMREG_TAU_CNF ue id " MME_UE_S1AP_ID_FMT " ", evt->ue_id);
 
-
-
-
+    /*
+     * Call this method after setting the state.
+     * Initial Context Setup Response might have been received meanwhile.
+     * todo: add locks
+     */
+    rc = emm_fsm_set_state (evt->ue_id, evt->ctx, EMM_REGISTERED);
+    assert(rc == RETURNok);
 
     /*
      * TAU procedure successful
@@ -273,10 +277,6 @@ int EmmCommonProcedureInitiated (emm_reg_t * const evt)
     if ((emm_ctx) && (evt->notify) && (evt->u.tau.proc) && (evt->u.tau.proc->emm_spec_proc.emm_proc.base_proc.success_notif)) {
       rc = (*evt->u.tau.proc->emm_spec_proc.emm_proc.base_proc.success_notif)(emm_ctx);
     }
-
-
-
-
 
     if (evt->free_proc) {
       nas_delete_tau_procedure(emm_ctx);
@@ -290,7 +290,6 @@ int EmmCommonProcedureInitiated (emm_reg_t * const evt)
 //            mme_app_remove_s10_tunnel_endpoint(ue_context->local_mme_teid_s10, s10_handover_proc->remote_mme_teid.ipv4_address);
 //          }
 
-    rc = emm_fsm_set_state (evt->ue_id, evt->ctx, EMM_REGISTERED);
     break;
 
   case _EMMREG_TAU_REJ:
