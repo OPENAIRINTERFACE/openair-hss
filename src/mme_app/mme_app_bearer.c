@@ -1031,6 +1031,8 @@ mme_app_handle_create_sess_resp (
           s10_handover_procedure->nas_s10_context.mm_eps_ctx->nh,
           s10_handover_procedure->nas_s10_context.mm_eps_ctx->ncc,
           s10_handover_procedure->source_to_target_eutran_f_container.container_value);
+
+      s10_handover_procedure->source_to_target_eutran_f_container.container_value = NULL; /**< Set it to NULL ALWAYS. */
     }
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
   }else if (emm_cn_proc_ctx_req){
@@ -2709,6 +2711,9 @@ mme_app_handle_forward_relocation_request(
        forward_relocation_request_pP->ue_eps_mm_context->nh,
        forward_relocation_request_pP->ue_eps_mm_context->ncc,
        s10_proc_mme_handover->source_to_target_eutran_f_container.container_value);
+
+   s10_proc_mme_handover->source_to_target_eutran_f_container.container_value = NULL; /**< Set it to NULL ALWAYS. */
+
    /** Unlink the e-utran transparent container. */
  }
  ue_context->imsi_auth = IMSI_AUTHENTICATED;
@@ -3045,6 +3050,9 @@ mme_app_handle_handover_request_acknowledge(
    /** Ignore the message. Set the UE to idle mode. */
    OAILOG_FUNC_OUT (LOG_MME_APP);
  }
+
+ AssertFatal(NULL == s10_handover_proc->source_to_target_eutran_f_container.container_value, "TODO clean pointer");
+
  /*
   * For both cases, update the S1U eNB FTEIDs.
   */
@@ -3284,6 +3292,7 @@ mme_app_handle_enb_status_transfer(
    /** No need to unlink here. */
    // todo: macro/home
    mme_app_send_s1ap_mme_status_transfer(ue_context->mme_ue_s1ap_id, s10_handover_proc->target_enb_ue_s1ap_id, s10_handover_proc->target_ecgi.cell_identity.enb_id, enbStatusPrefixBstr);
+   /** eNB-Status-Transfer message message will be freed. */
    OAILOG_FUNC_OUT (LOG_MME_APP);
  }else{
    /* UE is DEREGISTERED. Assuming that it came from S10 inter-MME handover. Forwarding the eNB status information to the target-MME via Forward Access Context Notification. */
@@ -3346,6 +3355,7 @@ mme_app_handle_s1ap_handover_notify(
    OAILOG_ERROR(LOG_MME_APP, "No Handover Procedure is runnning for UE with mmeS1apUeId " MME_UE_S1AP_ID_FMT" in state %d. Discarding the message\n", ue_context->mme_ue_s1ap_id, ue_context->mm_state);
    OAILOG_FUNC_OUT (LOG_MME_APP);
  }
+
  /**
   * No need to signal the NAS layer the completion of the handover.
   * The ECGI & TAI will also be sent with TAU if its UPLINK_NAS_TRANSPORT.

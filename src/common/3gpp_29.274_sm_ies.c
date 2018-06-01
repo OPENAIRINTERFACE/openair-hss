@@ -72,7 +72,11 @@ static void free_pdn_connection(pdn_connection_t * pdn_connection)
   bdestroy_wrapper (&pdn_connection->apn_str);
 
   /** Bearer Contexts to be Created. */
-  free_bearer_contexts_to_be_created(&pdn_connection->bearer_context_list);
+  for (int i = 0; i < pdn_connection->bearer_context_list.num_bearer_context; i++) {
+    for (int j = 0; j < pdn_connection->bearer_context_list.bearer_contexts[i].tft.parameterslist.num_parameters; j++) {
+      bdestroy_wrapper(&pdn_connection->bearer_context_list.bearer_contexts[i].tft.parameterslist.parameter[j]);
+    }
+  }
 }
 
 //------------------------------------------------------------------------------

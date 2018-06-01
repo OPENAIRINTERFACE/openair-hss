@@ -51,8 +51,6 @@
 //------------------------------------------------------------------------------
 void itti_free_msg_content (MessageDef * const message_p)
 {
-  itti_s1ap_handover_request_t *handover_request_p = NULL;
-
   switch (ITTI_MSG_ID (message_p)) {
   case ASYNC_SYSTEM_COMMAND:{
       if (ASYNC_SYSTEM_COMMAND (message_p).system_command) {
@@ -349,6 +347,9 @@ void itti_free_msg_content (MessageDef * const message_p)
   case S1AP_HANDOVER_REQUEST:
     /** E-UTRAN Container. */
     bdestroy_wrapper(&message_p->ittiMsg.s1ap_handover_request.source_to_target_eutran_container);
+    AssertFatal(NULL == message_p->ittiMsg.s1ap_handover_request.source_to_target_eutran_container, "TODO clean pointer");
+
+
     /** Bearer Context to Be Setup. */
     if(message_p->ittiMsg.s1ap_handover_request.bearer_ctx_to_be_setup_list){
       free_bearer_contexts_to_be_created(&message_p->ittiMsg.s1ap_handover_request.bearer_ctx_to_be_setup_list);
@@ -381,6 +382,7 @@ void itti_free_msg_content (MessageDef * const message_p)
   case S10_FORWARD_RELOCATION_REQUEST:
     /** Transparent Container. */
     bdestroy_wrapper(&message_p->ittiMsg.s10_forward_relocation_request.f_container.container_value);
+    AssertFatal(NULL == message_p->ittiMsg.s10_forward_relocation_request.f_container.container_value, "TODO clean pointer");
     /** PDN Connections. */
     if(message_p->ittiMsg.s10_forward_relocation_request.pdn_connections){
       free_mme_ue_eps_pdn_connections(&message_p->ittiMsg.s10_forward_relocation_request.pdn_connections);
