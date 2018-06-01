@@ -536,11 +536,14 @@ static void nas_delete_context_req_procedure(struct emm_data_context_s *emm_cont
   if (*ctx_req_proc) {
    OAILOG_TRACE (LOG_NAS_EMM, "UE " MME_UE_S1AP_ID_FMT " Delete Context Request procedure\n", emm_context->ue_id);
    if ((*ctx_req_proc)->cn_proc.base_proc.parent) {
-      (*ctx_req_proc)->cn_proc.base_proc.parent->child = NULL;
-    }
-    void *unused = NULL;
-    nas_stop_Ts10_ctx_res(emm_context->ue_id, &(*ctx_req_proc)->timer_s10, unused);
-    free_wrapper((void**)ctx_req_proc);
+     (*ctx_req_proc)->cn_proc.base_proc.parent->child = NULL;
+   }
+   ue_context_t * ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
+
+   void *unused = NULL;
+   nas_stop_Ts10_ctx_res(emm_context->ue_id, &(*ctx_req_proc)->timer_s10, unused);
+
+   free_wrapper((void**)ctx_req_proc);
   }
 }
 

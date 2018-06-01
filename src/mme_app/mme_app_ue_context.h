@@ -286,6 +286,9 @@ typedef struct pdn_context_s {
  */
 typedef struct ue_context_s {
 
+
+//  bool came_from_tau; /**< For test. */
+
   // todo: ue context mutex
   pthread_mutex_t recmutex;  // mutex on the ue_context_t + emm_context_s + esm_context_t
 

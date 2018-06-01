@@ -1320,6 +1320,12 @@ mme_app_handle_initial_context_setup_rsp (
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
 
+//  if(ue_context->came_from_tau){
+//    OAILOG_DEBUG (LOG_MME_APP, "Sleeping @ MME_APP_INITIAL_CONTEXT_SETUP_RSP from S1AP\n");
+//    sleep(1);
+//    OAILOG_DEBUG (LOG_MME_APP, "After sleeping @ MME_APP_INITIAL_CONTEXT_SETUP_RSP from S1AP\n");
+//  }
+
   // Stop Initial context setup process guard timer,if running
   if (ue_context->initial_context_setup_rsp_timer.id != MME_APP_TIMER_INACTIVE_ID) {
     if (timer_remove(ue_context->initial_context_setup_rsp_timer.id, NULL)) {
@@ -1381,6 +1387,8 @@ found_pdn:
       } else {
         AssertFatal(0, "TODO IP address %d bytes", blength(initial_ctxt_setup_rsp_pP->transport_layer_address[item]));
       }
+      bearer_context_to_setup->bearer_state |= BEARER_STATE_ENB_CREATED;
+      bearer_context_to_setup->bearer_state |= BEARER_STATE_MME_CREATED;
     }
   }
   /** Setting as ACTIVE when MBResp received from SAE-GW. */
@@ -2857,6 +2865,10 @@ mme_app_handle_forward_relocation_response(
      */
     mme_app_send_s1ap_handover_preparation_failure(ue_context->mme_ue_s1ap_id,
         ue_context->enb_ue_s1ap_id, ue_context->sctp_assoc_id_key, RELOCATION_FAILURE);
+
+    /** Delete the source handover procedure. Continue with the existing UE reference. */
+    mme_app_delete_s10_procedure_mme_handover(ue_context);
+
     OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
   }
   /** We are the source-MME side. Store the counterpart as target-MME side. */

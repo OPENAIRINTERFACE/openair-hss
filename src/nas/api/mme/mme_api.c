@@ -422,12 +422,18 @@ int mme_api_registration_complete(const mme_ue_s1ap_id_t mme_ue_s1ap_id){
 
     registered_pdn_ctx = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
     bearer_context_to_establish = RB_MIN(SessionBearers, &registered_pdn_ctx->session_bearers);
-    if(bearer_context_to_establish->bearer_state != BEARER_STATE_ACTIVE){
-      if(mme_app_send_s11_modify_bearer_req(ue_context, registered_pdn_ctx) != RETURNok){
-        OAILOG_ERROR(LOG_MME_APP, "Error sending MBR for mmeUeS1apId " MME_UE_S1AP_ID_FMT ". Implicitly detaching the UE. \n", mme_ue_s1ap_id);
-        // todo!
-        DevAssert(0);
+    if(BEARER_STATE_ENB_CREATED & bearer_context_to_establish->bearer_state){
+      if(bearer_context_to_establish->bearer_state != BEARER_STATE_ACTIVE){
+        if(mme_app_send_s11_modify_bearer_req(ue_context, registered_pdn_ctx) != RETURNok){
+          OAILOG_ERROR(LOG_MME_APP, "Error sending MBR for mmeUeS1apId " MME_UE_S1AP_ID_FMT ". Implicitly detaching the UE. \n", mme_ue_s1ap_id);
+          // todo!
+          DevAssert(0);
+        }
+      }else{
+        OAILOG_WARNING(LOG_MME_APP, "Bearer with ebi %d is already in ACTIVE state for mmeUeS1apId " MME_UE_S1AP_ID_FMT ". Skipping MBR. \n", mme_ue_s1ap_id);
       }
+    }else{
+      OAILOG_INFO(LOG_MME_APP, "Bearer with ebi %d has not ENB context established yet for mmeUeS1apId " MME_UE_S1AP_ID_FMT ". Skipping MBR. \n", mme_ue_s1ap_id);
     }
 //    RB_FOREACH (registered_pdn_ctx, PdnContexts, &ue_context->pdn_contexts) {
 //      DevAssert(registered_pdn_ctx);

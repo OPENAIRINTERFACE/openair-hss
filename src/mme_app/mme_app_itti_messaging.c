@@ -113,7 +113,14 @@ int mme_app_send_s11_release_access_bearers_req (struct ue_context_s *const ue_c
   DevAssert (ue_context );
 
   pdn_context = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
-  DevAssert(pdn_context);
+  if(!pdn_context){
+    OAILOG_ERROR (LOG_MME_APP, "NO PDN Context for UE with Id " MME_UE_S1AP_ID_FMT " and imsi " IMSI_64_FMT "\n", ue_context->mme_ue_s1ap_id, ue_context->imsi);
+    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+  }
+
+
+
+//  DevAssert(pdn_context);
 
 
   message_p = itti_alloc_new_message (TASK_MME_APP, S11_RELEASE_ACCESS_BEARERS_REQUEST);
@@ -374,12 +381,11 @@ mme_app_send_s11_modify_bearer_req(
 }
 
 //------------------------------------------------------------------------------
-int mme_app_remove_s10_tunnel_endpoint(teid_t local_teid, teid_t remote_teid, struct in_addr peer_ip){
+int mme_app_remove_s10_tunnel_endpoint(teid_t local_teid, struct in_addr peer_ip){
   OAILOG_FUNC_IN(LOG_MME_APP);
 
   MessageDef *message_p = itti_alloc_new_message (TASK_MME_APP, S10_REMOVE_UE_TUNNEL);
   DevAssert (message_p != NULL);
-  message_p->ittiMsg.s10_remove_ue_tunnel.remote_teid  = remote_teid;
   message_p->ittiMsg.s10_remove_ue_tunnel.local_teid   = local_teid;
   message_p->ittiMsg.s10_remove_ue_tunnel.peer_ip      = peer_ip;
 //  message_p->ittiMsg.s10_remove_ue_tunnel.cause = LOCAL_DETACH;

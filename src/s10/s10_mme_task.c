@@ -101,14 +101,6 @@ s10_mme_ulp_process_stack_req_cb (
       ret = s10_mme_handle_context_request(&s10_mme_stack_handle, pUlpApi);
       break;
 
-    case NW_GTP_CONTEXT_RSP:
-      ret = s10_mme_handle_context_response(&s10_mme_stack_handle, pUlpApi);
-      break;
-
-    case NW_GTP_CONTEXT_ACK:
-      ret = s10_mme_handle_context_acknowledgement(&s10_mme_stack_handle, pUlpApi);
-      break;
-
     case NW_GTP_RELOCATION_CANCEL_REQ:
       ret = s10_mme_handle_relocation_cancel_request(&s10_mme_stack_handle, pUlpApi);
       break;
@@ -139,16 +131,9 @@ s10_mme_ulp_process_stack_req_cb (
       ret = s10_mme_handle_forward_relocation_complete_acknowledge(&s10_mme_stack_handle, pUlpApi);
       break;
 
-    case NW_GTP_CONTEXT_REQ:
-      ret = s10_mme_handle_context_request(&s10_mme_stack_handle, pUlpApi);
-      break;
 
     case NW_GTP_CONTEXT_RSP:
       ret = s10_mme_handle_context_response(&s10_mme_stack_handle, pUlpApi);
-      break;
-
-    case NW_GTP_CONTEXT_ACK:
-      ret = s10_mme_handle_context_acknowledgement(&s10_mme_stack_handle, pUlpApi);
       break;
 
     case NW_GTP_RELOCATION_CANCEL_RSP:
@@ -160,6 +145,16 @@ s10_mme_ulp_process_stack_req_cb (
       break;
     }
 
+    break;
+
+  case NW_GTPV2C_ULP_API_TRIGGERED_ACK_IND:
+    OAILOG_DEBUG (LOG_S10, "Received triggered ACK indication\n");
+
+    switch (pUlpApi->u_api_info.triggeredAckIndInfo.msgType) {
+    case NW_GTP_CONTEXT_ACK:
+      ret = s10_mme_handle_context_acknowledgement(&s10_mme_stack_handle, pUlpApi);
+      break;
+    }
     break;
 
   /** Timeout Handler */

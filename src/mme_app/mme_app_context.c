@@ -2556,15 +2556,20 @@ mme_app_handle_s10_context_response(
   OAILOG_INFO(LOG_MME_APP, "Sent S10 Context Acknowledge to the source MME FTEID " TEID_FMT " for UE with mmeUeS1apId " MME_UE_S1AP_ID_FMT ". \n",
       ue_context->mme_ue_s1ap_id, s10_context_ack_p->teid);
 
-  /**
-   * Update the coll_keys with the IMSI.
+//  ue_context->came_from_tau = true;
+
+  /** Remove the S10 Tunnel. */
+  mme_app_remove_s10_tunnel_endpoint(ue_context->local_mme_teid_s10, s10_context_response_pP->s10_source_mme_teid.ipv4_address);
+
+  /*
+   * Update the coll_keys with the IMSI and remove the S10 Tunnel Endpoint.
    */
   mme_ue_context_update_coll_keys (&mme_app_desc.mme_ue_contexts, ue_context,
       ue_context->enb_s1ap_id_key,
       ue_context->mme_ue_s1ap_id,
       imsi,      /**< New IMSI. */
       ue_context->mme_teid_s11,
-      ue_context->local_mme_teid_s10,
+      INVALID_TEID,
       &ue_context->guti);
 
   ue_context->imsi_auth = IMSI_AUTHENTICATED;
@@ -2572,6 +2577,9 @@ mme_app_handle_s10_context_response(
 
   emm_cn_proc_ctx_req->nas_s10_context.mm_eps_ctx = s10_context_response_pP->ue_eps_mm_context;
   s10_context_response_pP->ue_eps_mm_context = NULL;
+
+  /** Set the target side S10 information. */
+  memcpy((void*)&emm_cn_proc_ctx_req->remote_mme_teid, (void*)&s10_context_response_pP->s10_source_mme_teid, sizeof(fteid_t));
 
   /** Copy the pdn connections also into the emm_cn procedure. */
   emm_cn_proc_ctx_req->pdn_connections = s10_context_response_pP->pdn_connections;
@@ -2639,6 +2647,22 @@ mme_app_handle_s10_context_acknowledge(
         "Ignoring the handover state. \n", s10_context_acknowledge_pP->teid);
     // todo: what to do in this case? Ignoring the S6a cancel location request?
   }
+  /** Remove the S10 Tunnel endpoint. */
+
+  /** Remove the S10 Tunnel. */
+  mme_app_remove_s10_tunnel_endpoint(ue_context->local_mme_teid_s10, s10_context_acknowledge_pP->peer_ip);
+
+  /*
+   * Update the coll_keys with the IMSI and remove the S10 Tunnel Endpoint.
+   */
+  mme_ue_context_update_coll_keys (&mme_app_desc.mme_ue_contexts, ue_context,
+      ue_context->enb_s1ap_id_key,
+      ue_context->mme_ue_s1ap_id,
+      ue_context->imsi,      /**< New IMSI. */
+      ue_context->mme_teid_s11,
+      INVALID_TEID,
+      &ue_context->guti);
+
   // todo : Mark the UE context as invalid
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }

@@ -156,6 +156,7 @@ typedef enum nw_gtpv2c_ulp_api_type_e {
   NW_GTPV2C_ULP_API_INITIAL_REQ_IND,                    /**< Receive a initial message from stack       */
   NW_GTPV2C_ULP_API_TRIGGERED_RSP_IND,                  /**< Recieve a triggered rsp message from stack */
   NW_GTPV2C_ULP_API_TRIGGERED_REQ_IND,                  /**< Recieve a triggered req message from stack */
+  NW_GTPV2C_ULP_API_TRIGGERED_ACK_IND,                    /**< Receive a triggered ACK from stack       */
   NW_GTPV2C_ULP_API_RSP_FAILURE_IND,                    /**< Rsp failure for gtpv2 message from stack   */
 
   /* Local tunnel management APIs from ULP to stack */
@@ -263,6 +264,7 @@ typedef struct nw_gtpv2c_initial_req_ind_info_s {
 } nw_gtpv2c_initial_req_ind_info_t;
 
 typedef nw_gtpv2c_initial_req_info_t NwGtpv2cFindInfoT;
+typedef nw_gtpv2c_initial_req_ind_info_t nw_gtpv2c_triggered_ack_ind_info_t;
 
 /**
  * API information elements between ULP and Stack for
@@ -340,6 +342,7 @@ typedef struct nw_gtpv2c_ulp_api_s {
     nw_gtpv2c_triggered_req_info_t         triggeredReqInfo;
     nw_gtpv2c_triggered_ack_info_t         triggeredAckInfo;
     nw_gtpv2c_initial_req_ind_info_t       initialReqIndInfo;
+    nw_gtpv2c_triggered_ack_ind_info_t     triggeredAckIndInfo;
     nw_gtpv2c_triggered_rsp_ind_info_t     triggeredRspIndInfo;
     nw_gtpv2c_triggered_req_ind_info_t     triggeredReqIndInfo;
     nw_gtpv2c_rsp_failure_ind_info_t       rspFailureInfo;

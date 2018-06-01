@@ -426,7 +426,6 @@ typedef struct itti_s10_relocation_cancel_response_s {
 typedef struct itti_s10_remove_ue_tunnel_s {
   /** Local Tunnel TEID. */
   teid_t                  local_teid;                ///< S10 MME Tunnel Endpoint Identifier
-  teid_t                  remote_teid;                ///< S10 MME Tunnel Endpoint Identifier
 
   struct in_addr                peer_ip;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME
   // here fields listed in 3GPP TS 29.274

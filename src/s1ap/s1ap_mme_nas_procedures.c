@@ -903,6 +903,15 @@ int s1ap_handover_preparation_failure (
 
   OAILOG_FUNC_IN (LOG_S1AP);
 
+
+  enb_description_t * source_enb_ref = s1ap_is_enb_assoc_id_in_list(assoc_id);
+  if(!source_enb_ref){
+    OAILOG_ERROR (LOG_S1AP, "No source-enb could be found for assoc-id %u. Handover Preparation Failure Failed. \n",
+        assoc_id);
+    /** No need to change anything. */
+    OAILOG_FUNC_OUT (LOG_S1AP);
+  }
+
   handoverPreparationFailure_p = &message.msg.s1ap_HandoverPreparationFailureIEs;
   s1ap_mme_set_cause(&handoverPreparationFailure_p->cause, S1ap_Cause_PR_misc, 0);
   handoverPreparationFailure_p->eNB_UE_S1AP_ID = enb_ue_s1ap_id;

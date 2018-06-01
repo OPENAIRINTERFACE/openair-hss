@@ -1335,13 +1335,15 @@ s1ap_mme_handle_handover_preparation(const sctp_assoc_id_t assoc_id, const sctp_
   /** Not changing any ue_reference properties. */
   message_p = itti_alloc_new_message (TASK_S1AP, S1AP_HANDOVER_REQUIRED);
   AssertFatal (message_p != NULL, "itti_alloc_new_message Failed");
-  memset ((void *)&message_p->ittiMsg.s1ap_handover_required, 0, sizeof (itti_s1ap_handover_required_t));
 
   S1AP_HANDOVER_REQUIRED (message_p).mme_ue_s1ap_id = ue_ref_p->mme_ue_s1ap_id;
   S1AP_HANDOVER_REQUIRED (message_p).enb_ue_s1ap_id = ue_ref_p->enb_ue_s1ap_id;
   /** Selected-TAI. */
   S1AP_HANDOVER_REQUIRED (message_p).selected_tai  = target_tai;
   S1AP_HANDOVER_REQUIRED (message_p).selected_tai  = target_tai;
+  /** Set SCTP Assoc Id. */
+  S1AP_HANDOVER_REQUIRED (message_p).sctp_assoc_id  = assoc_id;
+
 
   /** Global-ENB-ID. */
   plmn_t enb_id_plmn;

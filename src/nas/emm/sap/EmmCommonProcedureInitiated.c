@@ -287,7 +287,7 @@ int EmmCommonProcedureInitiated (emm_reg_t * const evt)
 //       /** Delete the local Tunnel. */
 //          mme_app_s10_proc_mme_handover_t * s10_handover_proc = mme_app_get_s10_procedure_mme_handover(ue_context);
 //          if(s10_handover_proc){
-//            mme_app_remove_s10_tunnel_endpoint(ue_context->local_mme_teid_s10, s10_handover_proc->remote_mme_teid.teid, s10_handover_proc->remote_mme_teid.ipv4_address);
+//            mme_app_remove_s10_tunnel_endpoint(ue_context->local_mme_teid_s10, s10_handover_proc->remote_mme_teid.ipv4_address);
 //          }
 
     rc = emm_fsm_set_state (evt->ue_id, evt->ctx, EMM_REGISTERED);

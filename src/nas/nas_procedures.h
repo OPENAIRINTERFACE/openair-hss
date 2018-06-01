@@ -353,6 +353,7 @@ typedef struct nas_ctx_req_proc_s {
   mme_ue_eps_pdn_connections_t  *pdn_connections;
   uint8_t                     next_processed_pdn_connection;
   int                         nas_cause;
+  fteid_t                     remote_mme_teid;
   struct nas_timer_s          timer_s10; // todo: necessary?
   mme_ue_s1ap_id_t            ue_id;
   bool                        resync; // Indicates whether the authentication information is requested due to sync failure
