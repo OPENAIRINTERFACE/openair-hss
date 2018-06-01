@@ -188,18 +188,27 @@ int EmmCommonProcedureInitiated (emm_reg_t * const evt)
 
   case _EMMREG_ATTACH_CNF:
     MSC_LOG_RX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "_EMMREG_ATTACH_CNF ue id " MME_UE_S1AP_ID_FMT " ", evt->ue_id);
+
     /*
      * Attach procedure successful and default EPS bearer
      * context activated;
      * enter state EMM-REGISTERED.
      */
+    rc = emm_fsm_set_state (evt->ue_id, evt->ctx, EMM_REGISTERED);
+    assert(rc == RETURNok);
+
+    /*
+     * Call this method after setting the state.
+     * Initial Context Setup Response might have been received meanwhile.
+     * todo: add locks
+     */
+    MSC_LOG_RX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "_EMMREG_ATTACH_CNF ue id " MME_UE_S1AP_ID_FMT " ", evt->ue_id);
     if ((emm_ctx) /*&& (evt->notify) */&& (evt->u.attach.proc) && (evt->u.attach.proc->emm_spec_proc.emm_proc.base_proc.success_notif)) {
       rc = (*evt->u.attach.proc->emm_spec_proc.emm_proc.base_proc.success_notif)(emm_ctx);
     }
-//    if (evt->free_proc) {
-      nas_delete_attach_procedure(emm_ctx);
-//    }
-    rc = emm_fsm_set_state (evt->ue_id, evt->ctx, EMM_REGISTERED);
+    //    if (evt->free_proc) {
+    nas_delete_attach_procedure(emm_ctx);
+     //    }
     break;
 
   case _EMMREG_ATTACH_REJ:
