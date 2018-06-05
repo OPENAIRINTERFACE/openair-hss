@@ -1268,7 +1268,7 @@ mme_app_handle_downlink_data_notification(const itti_s11_downlink_data_notificat
 
   /** Check that the UE is in idle mode!. */
   if (ECM_IDLE != ue_context->ecm_state) {
-    OAILOG_ERROR (LOG_MME_APP, "UE_Context with IMSI " IMSI_64_FMT " and mmeUeS1apId: %d. \n is not in ECM_IDLE mode, insted %d. \n",
+    OAILOG_ERROR (LOG_MME_APP, "UE_Context with IMSI " IMSI_64_FMT " and mmeUeS1apId: %d. \n is not in ECM_IDLE mode, instead %d. \n",
         ue_context->imsi, ue_context->mme_ue_s1ap_id, ue_context->ecm_state);
     // todo: later.. check this more granularly
     mme_app_send_downlink_data_notification_acknowledge(UE_ALREADY_RE_ATTACHED, saegw_dl_data_ntf_pP->teid, saegw_dl_data_ntf_pP->peer_ip, saegw_dl_data_ntf_pP->trxn);

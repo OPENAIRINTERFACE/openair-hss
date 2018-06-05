@@ -532,8 +532,7 @@ void nas_itti_detach_req(const mme_ue_s1ap_id_t ue_idP)
                 MSC_NAS_MME,
                 MSC_MMEAPP_MME,
                 NULL,0,
-                "0 NAS_DETACH_REQ ue id " MME_UE_S1AP_ID_FMT " ",
-          ue_idP);
+                "0 NAS_DETACH_REQ ue id " MME_UE_S1AP_ID_FMT, ue_idP);
 
   itti_send_msg_to_task(TASK_MME_APP, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT(LOG_NAS);

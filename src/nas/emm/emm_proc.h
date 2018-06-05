@@ -83,8 +83,10 @@ typedef enum {
 
 typedef struct emm_attach_request_ies_s {
   emm_proc_attach_type_t         type;
+  mme_ue_s1ap_id_t               old_ue_id;        /* OLD identifier                                  */
   additional_update_type_t       additional_update_type;
   bool                           is_native_sc;
+  bool                           is_new;
   ksi_t                          ksi;
   bool                           is_native_guti;
   guti_t                        *guti;
@@ -184,7 +186,8 @@ int emm_proc_status(mme_ue_s1ap_id_t ue_id, emm_cause_t emm_cause);
 void free_emm_attach_request_ies(emm_attach_request_ies_t ** const params);
 
 int emm_proc_attach_request(mme_ue_s1ap_id_t ue_id,
-                            emm_attach_request_ies_t * const params);
+                            emm_attach_request_ies_t * const params,
+                            emm_data_context_t ** emm_data_context);
 
 int _emm_attach_reject (emm_data_context_t *emm_context, struct nas_base_proc_s * nas_base_proc);
 

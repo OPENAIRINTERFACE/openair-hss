@@ -209,6 +209,14 @@ inline bool is_nas_specific_procedure_tau_running(const struct emm_data_context_
 }
 
 //------------------------------------------------------------------------------
+nas_emm_specific_proc_t *get_nas_specific_procedure(const struct emm_data_context_s * const ctxt)
+{
+  if ((ctxt) && (ctxt->emm_procedures)  && (ctxt->emm_procedures->emm_specific_proc))
+    return ctxt->emm_procedures->emm_specific_proc;
+  return NULL;
+}
+
+//------------------------------------------------------------------------------
 nas_emm_attach_proc_t *get_nas_specific_procedure_attach(const struct emm_data_context_s * const ctxt)
 {
   if ((ctxt) && (ctxt->emm_procedures)  && (ctxt->emm_procedures->emm_specific_proc) &&
@@ -650,6 +658,9 @@ nas_emm_attach_proc_t* nas_new_attach_procedure(struct emm_data_context_s * cons
   emm_context->emm_procedures->emm_specific_proc->emm_proc.base_proc.nas_puid = __sync_fetch_and_add (&nas_puid, 1);
   emm_context->emm_procedures->emm_specific_proc->emm_proc.base_proc.type = NAS_PROC_TYPE_EMM;
   emm_context->emm_procedures->emm_specific_proc->emm_proc.type  = NAS_EMM_PROC_TYPE_SPECIFIC;
+  /** Timer. */
+  emm_context->emm_procedures->emm_specific_proc->retry_timer.sec = TIMER_SPECIFIC_RETRY_DEFAULT_VALUE;
+  emm_context->emm_procedures->emm_specific_proc->retry_timer.id  = NAS_TIMER_INACTIVE_ID;
   emm_context->emm_procedures->emm_specific_proc->type  = EMM_SPEC_PROC_TYPE_ATTACH;
   /** Set the success notifications, entered when the UE goes from EMM_DEREGISTERED to EMM_REGISTERED (former MME_APP callbacks). */
 //  emm_context->emm_procedures->emm_specific_proc->emm_proc.base_proc.success_notif = _emm_registration_complete;
@@ -858,7 +869,7 @@ nas_ctx_req_proc_t *nas_new_cn_ctx_req_procedure(struct emm_data_context_s * con
   ctx_req_proc->cn_proc.base_proc.type = NAS_PROC_TYPE_CN;
   ctx_req_proc->cn_proc.type           = CN_PROC_CTX_REQ;
   // todo: timer necessary for context request?
-  ctx_req_proc->timer_s10.sec          = TIMER_S10_CONTEXT_REQ_DEFAULT_VALUE;
+  ctx_req_proc->timer_s10.sec          = TIMER_SPECIFIC_RETRY_DEFAULT_VALUE;
   ctx_req_proc->timer_s10.id           = NAS_TIMER_INACTIVE_ID;
 
   nas_cn_procedure_t * wrapper = calloc(1, sizeof(*wrapper));

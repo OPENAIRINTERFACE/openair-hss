@@ -62,6 +62,7 @@ Description Defines internal private data handled by EPS Mobility
 
 #define TIMER_S6A_AUTH_INFO_RSP_DEFAULT_VALUE 2 // two second timeout value to wait for auth_info_rsp message from HSS
 #define TIMER_S10_CONTEXT_REQ_DEFAULT_VALUE   5 // two second timeout value to wait for context_rsp message from source MME
+#define TIMER_SPECIFIC_RETRY_DEFAULT_VALUE    1 // two second timeout value to wait for context_rsp message from source MME
 
 /****************************************************************************/
 /************************  G L O B A L    T Y P E S  ************************/
@@ -388,6 +389,8 @@ void nas_stop_Ts6a_auth_info(const mme_ue_s1ap_id_t ue_id, struct nas_timer_s * 
 void nas_start_Ts10_ctx_req(const mme_ue_s1ap_id_t ue_id, struct nas_timer_s * const Ts10_auth_info,  time_out_t time_out_cb, void *timer_callback_args);
 void nas_stop_Ts10_ctx_res(const mme_ue_s1ap_id_t ue_id, struct nas_timer_s * const Ts10_ctx_res, void *timer_callback_args);
 
+void nas_start_T_retry_specific_procedure(const mme_ue_s1ap_id_t ue_id, struct nas_timer_s * const T_retry,  time_out_t time_out_cb, void *timer_callback_args);
+void nas_stop_T_retry_specific_procedure(const mme_ue_s1ap_id_t ue_id, struct nas_timer_s * const T_retry, void *timer_callback_args);
 
 int  emm_data_context_add(emm_data_t *emm_data, struct emm_data_context_s *elm) __attribute__ ((nonnull)) ;
 int  emm_data_context_add_guti (emm_data_t * emm_data, struct emm_data_context_s *elm) __attribute__ ((nonnull)) ;

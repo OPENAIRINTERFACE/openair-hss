@@ -109,6 +109,7 @@ typedef enum {
 typedef struct nas_emm_specific_proc_s {
   nas_emm_proc_t               emm_proc;
   emm_specific_proc_type_t     type;
+  struct nas_timer_s           retry_timer;   // EMM message retransmission timer
 } nas_emm_specific_proc_t;
 
 struct emm_attach_request_ies_s;
@@ -143,6 +144,7 @@ struct emm_tau_request_ies_s;
 typedef struct nas_emm_tau_proc_s {
   nas_emm_specific_proc_t          emm_spec_proc;
   struct nas_timer_s               T3450;   // EMM message retransmission timer
+
 #define TAU_COUNTER_MAX  5
   int                              tau_accept_sent;
   bool                             tau_reject_sent;
@@ -430,6 +432,8 @@ nas_sr_proc_t *get_nas_con_mngt_procedure_service_request(const struct emm_data_
 bool is_nas_specific_procedure_attach_running(const struct emm_data_context_s * const ctxt);
 bool is_nas_specific_procedure_detach_running(const struct emm_data_context_s * const ctxt);
 bool is_nas_specific_procedure_tau_running(const struct emm_data_context_s * const ctxt);
+
+nas_emm_specific_proc_t *get_nas_specific_procedure(const struct emm_data_context_s * const ctxt);
 
 nas_emm_attach_proc_t *get_nas_specific_procedure_attach(const struct emm_data_context_s * const ctxt);
 nas_emm_detach_proc_t *get_nas_specific_procedure_detach(const struct emm_data_context_s * const ctxt);

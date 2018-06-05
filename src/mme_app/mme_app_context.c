@@ -1116,6 +1116,7 @@ void mme_remove_ue_context (
   //  unlock_ue_contexts(ue_context);
 
   free_wrapper ((void**) &ue_context);
+
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 

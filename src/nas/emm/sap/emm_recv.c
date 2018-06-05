@@ -320,7 +320,23 @@ emm_recv_attach_request (
   /*
    * Execute the requested UE attach procedure
    */
-  rc = emm_proc_attach_request (ue_id, params);
+  emm_data_context_t * duplicate_emm_context = NULL;
+  rc = emm_proc_attach_request (ue_id, params, &duplicate_emm_context);
+  if(duplicate_emm_context && duplicate_emm_context->emm_cause != EMM_CAUSE_SUCCESS){
+    OAILOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - Found an invalid old duplicate UE context with ueId [%08x] - Implicitly detaching it. \n", ue_id);
+    /** Clean up new UE context that was created to handle new attach request. */
+    emm_sap_t                               emm_sap = {0};
+    emm_sap.primitive = EMMCN_IMPLICIT_DETACH_UE; /**< UE context will be purged. */
+    emm_sap.u.emm_cn.u.emm_cn_implicit_detach.emm_cause   = duplicate_emm_context->emm_cause; /**< Not sending detach type. */
+    emm_sap.u.emm_cn.u.emm_cn_implicit_detach.detach_type = 0; /**< Not sending detach type. */
+    emm_sap.u.emm_cn.u.emm_cn_implicit_detach.ue_id = duplicate_emm_context->ue_id;
+    /*
+     * Don't send the detach type, such that no NAS Detach Request is sent to the UE.
+     * Depending on the cause, the MME_APP will check and inform the NAS layer to continue with the procedure, before the timer expires.
+     */
+    emm_sap_send (&emm_sap);
+    /** Send the SAP request. */
+  }
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 

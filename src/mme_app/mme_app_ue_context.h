@@ -403,7 +403,6 @@ typedef struct ue_context_s {
   // MME UE S1AP ID, Unique identity of the UE within MME.
   mme_ue_s1ap_id_t       mme_ue_s1ap_id;
 
-
   // MME TEID for S11             // MME Tunnel Endpoint Identifier for S11 interface.
   // LOCATED IN THIS.subscribed_apns[MAX_APN_PER_UE].mme_teid_s11
   teid_t                      local_mme_teid_s10;                // needed to get the UE context from S10 messages

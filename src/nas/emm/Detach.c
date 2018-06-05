@@ -387,46 +387,46 @@ emm_proc_detach_request (
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
   }
 
-
-  /** Create a specific procedure for detach request. */
-  _emm_proc_create_procedure_detach_request(emm_context, params);
-  // todo: detach
-
-  /* Check if any PDN Connections exist. */
-  // todo: check that any session exists.
-  if(emm_context->esm_ctx.n_pdns){
-    esm_sap_t                               esm_sap = {0};
-    /** Send Disconnect Request to all PDNs. */
-    pdn_context_t * pdn_context = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
-
-    esm_sap.primitive = ESM_PDN_DISCONNECT_REQ;
-    esm_sap.is_standalone = false;
-    esm_sap.ue_id = emm_context->ue_id;
-    esm_sap.ctx = emm_context;
-    esm_sap.recv = emm_context->esm_msg;
-    esm_sap.data.pdn_disconnect.default_ebi = pdn_context->default_ebi; /**< Default Bearer Id of default APN. */
-    esm_sap.data.pdn_disconnect.cid         = pdn_context->context_identifier; /**< Context Identifier of default APN. */
-    esm_sap_send(&esm_sap);
-    /*
-     * Remove the contexts and send S11 Delete Session Request to the SAE-GW.
-     * Will continue with the detach procedure when S11 Delete Session Response arrives.
-     */
-
-    /** Not needed anymore. */
-    bdestroy_wrapper(&emm_context->esm_msg);
-
-    OAILOG_INFO (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " EMM-PROC  - Deactivating PDN Connection via ESM for detach before continuing. \n", emm_context->ue_id);
-    /**
-     * Not waiting for a response. Will assume that the session is correctly purged.. Continuing with the detach and assuming that the SAE-GW session is purged.
-     * Assuming, that in 5G AMF/SMF structure, it is like in PCRF, sending DELETE_SESSION_REQUEST and not caring about the response. Assuming the session is deactivated.
-     */
-    OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
-
-  }else{
-    /** No PDNs existing, continue with the EMM detach. */
-    rc = RETURNok;
-  }
-  // todo: this might be in success_notif of detach_proc
+//  TODO
+//  /** Create a specific procedure for detach request. */
+//  _emm_proc_create_procedure_detach_request(emm_context, params);
+//  // todo: detach
+//
+//  /* Check if any PDN Connections exist. */
+//  // todo: check that any session exists.
+//  if(emm_context->esm_ctx.n_pdns){
+//    esm_sap_t                               esm_sap = {0};
+//    /** Send Disconnect Request to all PDNs. */
+//    pdn_context_t * pdn_context = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
+//
+//    esm_sap.primitive = ESM_PDN_DISCONNECT_REQ;
+//    esm_sap.is_standalone = false;
+//    esm_sap.ue_id = emm_context->ue_id;
+//    esm_sap.ctx = emm_context;
+//    esm_sap.recv = emm_context->esm_msg;
+//    esm_sap.data.pdn_disconnect.default_ebi = pdn_context->default_ebi; /**< Default Bearer Id of default APN. */
+//    esm_sap.data.pdn_disconnect.cid         = pdn_context->context_identifier; /**< Context Identifier of default APN. */
+//    esm_sap_send(&esm_sap);
+//    /*
+//     * Remove the contexts and send S11 Delete Session Request to the SAE-GW.
+//     * Will continue with the detach procedure when S11 Delete Session Response arrives.
+//     */
+//
+//    /** Not needed anymore. */
+//    bdestroy_wrapper(&emm_context->esm_msg);
+//
+//    OAILOG_INFO (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " EMM-PROC  - Deactivating PDN Connection via ESM for detach before continuing. \n", emm_context->ue_id);
+//    /**
+//     * Not waiting for a response. Will assume that the session is correctly purged.. Continuing with the detach and assuming that the SAE-GW session is purged.
+//     * Assuming, that in 5G AMF/SMF structure, it is like in PCRF, sending DELETE_SESSION_REQUEST and not caring about the response. Assuming the session is deactivated.
+//     */
+//    OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
+//
+//  }else{
+//    /** No PDNs existing, continue with the EMM detach. */
+//    rc = RETURNok;
+//  }
+//  // todo: this might be in success_notif of detach_proc
 
   if (params->switch_off) {
     MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 Removing UE context ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
