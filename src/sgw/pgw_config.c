@@ -182,13 +182,24 @@ int pgw_config_process (pgw_config_t * config_pP)
     counter64 = 0x00000000FFFFFFFF >> config_pP->ue_pool_mask[i];  // address Prefix_mask/0..0 not valid
     counter64 = counter64 - 2;
 
+
+    //Any math should be applied onto host byte order i.e. ntohl()
+    addr_start.s_addr = htonl( ntohl(addr_start.s_addr) + 2 );
     do {
-      addr_start.s_addr = addr_start.s_addr + htonl (2);
       ip4_ref = calloc (1, sizeof (conf_ipv4_list_elm_t));
-      ip4_ref->addr = addr_start;
+      ip4_ref->addr.s_addr = addr_start.s_addr;
       STAILQ_INSERT_TAIL (&config_pP->ipv4_pool_list, ip4_ref, ipv4_entries);
+      
+      if (!config_pP->masquerade_SGI) {
+        system_cmd = bformat ("arp -nDs %s %s pub",
+          inet_ntoa(ip4_ref->addr), 
+          bdata(config_pP->ipv4.if_name_SGI));
+      }
       counter64 = counter64 - 1;
+      addr_start.s_addr = htonl( ntohl(addr_start.s_addr) + 1 );
     } while (counter64 > 0);
+
+
 
     //---------------
     if (config_pP->masquerade_SGI) {
