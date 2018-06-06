@@ -568,8 +568,7 @@ mme_app_handle_initial_ue_message (
               &guti);
           /** Set the UE in ECM-Connected state. */
           // todo: checking before
-          ue_context->ecm_state         = ECM_CONNECTED;
-
+          mme_ue_context_update_ue_sig_connection_state (&mme_app_desc.mme_ue_contexts, ue_context, ECM_CONNECTED);
         }
       } else {
         OAILOG_DEBUG (LOG_MME_APP, "MME_APP_INITIAL_UE_MESSAGE with mme code %u and S-TMSI %u:"
@@ -613,7 +612,6 @@ mme_app_handle_initial_ue_message (
     }
 
     /** Initialize the fields of the MME_APP context. */
-    ue_context->ecm_state         = ECM_CONNECTED;
     ue_context->mme_ue_s1ap_id    = INVALID_MME_UE_S1AP_ID;
     ue_context->enb_ue_s1ap_id    = initial_pP->enb_ue_s1ap_id;
     // todo: check if this works for home and macro enb id
@@ -623,7 +621,6 @@ mme_app_handle_initial_ue_message (
     /** Since the NAS and MME_APP contexts are split again, we assign a new mme_ue_s1ap_id here. */
 
 //    uintptr_t bearer_context_2 = mme_app_get_ue_bearer_context_2(ue_context, 5);
-
 
     ue_context->mme_ue_s1ap_id    = mme_app_ctx_get_new_ue_id ();
     if (ue_context->mme_ue_s1ap_id  == INVALID_MME_UE_S1AP_ID) {
@@ -639,6 +636,9 @@ mme_app_handle_initial_ue_message (
       OAILOG_ERROR (LOG_MME_APP, "Failed to insert new MME UE context enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT "\n", initial_pP->enb_ue_s1ap_id);
       OAILOG_FUNC_OUT (LOG_MME_APP);
     }
+
+    mme_ue_context_update_ue_sig_connection_state (&mme_app_desc.mme_ue_contexts, ue_context, ECM_CONNECTED);
+
   }
   ue_context->sctp_assoc_id_key = initial_pP->sctp_assoc_id;
   ue_context->e_utran_cgi = initial_pP->ecgi;

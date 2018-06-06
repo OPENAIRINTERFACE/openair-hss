@@ -380,51 +380,47 @@ emm_proc_detach_request (
   ue_context_t       *ue_context  = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, ue_id);
   DevAssert(ue_context);
 
-  if (!emm_context) {
-    OAILOG_WARNING (LOG_NAS_EMM, "No EMM context exists for the UE (ue_id=" MME_UE_S1AP_ID_FMT ")\n", ue_id);
-    // There may be MME APP Context. Trigger clean up in MME APP 
-    nas_itti_detach_req(ue_id);
-    OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
-  }
+  if (emm_context) {
+    /** Create a specific procedure for detach request. */
+    _emm_proc_create_procedure_detach_request(emm_context, params);
+    /* Check if any PDN Connections exist. */
+    // todo: check that any session exists.
+    if(emm_context->esm_ctx.n_pdns){
+      esm_sap_t                               esm_sap = {0};
+      /** Send Disconnect Request to all PDNs. */
+      pdn_context_t * pdn_context = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
 
-  /** Create a specific procedure for detach request. */
-  _emm_proc_create_procedure_detach_request(emm_context, params);
-  // todo: detach
+      esm_sap.primitive = ESM_PDN_DISCONNECT_REQ;
+      esm_sap.is_standalone = false;
+      esm_sap.ue_id = emm_context->ue_id;
+      esm_sap.ctx = emm_context;
+      esm_sap.recv = emm_context->esm_msg;
+      esm_sap.data.pdn_disconnect.default_ebi = pdn_context->default_ebi; /**< Default Bearer Id of default APN. */
+      esm_sap.data.pdn_disconnect.cid         = pdn_context->context_identifier; /**< Context Identifier of default APN. */
+      esm_sap_send(&esm_sap);
+      /*
+       * Remove the contexts and send S11 Delete Session Request to the SAE-GW.
+       * Will continue with the detach procedure when S11 Delete Session Response arrives.
+       */
 
-  /* Check if any PDN Connections exist. */
-  // todo: check that any session exists.
-  if(emm_context->esm_ctx.n_pdns){
-    esm_sap_t                               esm_sap = {0};
-    /** Send Disconnect Request to all PDNs. */
-    pdn_context_t * pdn_context = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
+      /** Not needed anymore. */
+      bdestroy_wrapper(&emm_context->esm_msg);
 
-    esm_sap.primitive = ESM_PDN_DISCONNECT_REQ;
-    esm_sap.is_standalone = false;
-    esm_sap.ue_id = emm_context->ue_id;
-    esm_sap.ctx = emm_context;
-    esm_sap.recv = emm_context->esm_msg;
-    esm_sap.data.pdn_disconnect.default_ebi = pdn_context->default_ebi; /**< Default Bearer Id of default APN. */
-    esm_sap.data.pdn_disconnect.cid         = pdn_context->context_identifier; /**< Context Identifier of default APN. */
-    esm_sap_send(&esm_sap);
-    /*
-     * Remove the contexts and send S11 Delete Session Request to the SAE-GW.
-     * Will continue with the detach procedure when S11 Delete Session Response arrives.
-     */
-
-    /** Not needed anymore. */
-    bdestroy_wrapper(&emm_context->esm_msg);
-
-    OAILOG_INFO (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " EMM-PROC  - Deactivating PDN Connection via ESM for detach before continuing. \n", emm_context->ue_id);
-    /**
-     * Not waiting for a response. Will assume that the session is correctly purged.. Continuing with the detach and assuming that the SAE-GW session is purged.
-     * Assuming, that in 5G AMF/SMF structure, it is like in PCRF, sending DELETE_SESSION_REQUEST and not caring about the response. Assuming the session is deactivated.
-     */
-    OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
-
+      OAILOG_INFO (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " EMM-PROC  - Deactivating PDN Connection via ESM for detach before continuing. \n", emm_context->ue_id);
+      /**
+       * Not waiting for a response. Will assume that the session is correctly purged.. Continuing with the detach and assuming that the SAE-GW session is purged.
+       * Assuming, that in 5G AMF/SMF structure, it is like in PCRF, sending DELETE_SESSION_REQUEST and not caring about the response. Assuming the session is deactivated.
+       */
+      OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
+    }else{
+      /** No PDNs existing, continue with the EMM detach. */
+      rc = RETURNok;
+    }
   }else{
-    /** No PDNs existing, continue with the EMM detach. */
+    /** No EMM context existing. */
     rc = RETURNok;
   }
+
   // todo: this might be in success_notif of detach_proc
 
   if (params->switch_off) {
@@ -450,7 +446,11 @@ emm_proc_detach_request (
     /*
      * Setup EPS NAS security data
      */
-    emm_as_set_security_data (&emm_as->sctx, &emm_context->_security, false, true);
+    if(emm_context){
+      emm_as_set_security_data (&emm_as->sctx, &emm_context->_security, false, true);
+    }else{
+      OAILOG_INFO (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " EMM-PROC  - Not setting security context for detach accept. \n", ue_id);
+    }
     /*
      * Notify EMM-AS SAP that Detach Accept message has to
      * be sent to the network
@@ -459,8 +459,11 @@ emm_proc_detach_request (
     rc = emm_sap_send (&emm_sap);
   }
   /** Confirm the detach procedure and inform MME_APP. */
-
-  emm_sap_t                               emm_sap = {0};
+  if(!emm_context || !emm_context->esm_ctx.n_pdns){
+    OAILOG_INFO (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " EMM-PROC  - No EMM context/PDNs existing. Directly continuing with UE context removal. \n", ue_id);
+    nas_itti_detach_req(ue_id);
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
+  }
 
   /*
    * Notify EMM FSM that the UE has been implicitly detached

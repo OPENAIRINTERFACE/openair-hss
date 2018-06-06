@@ -693,7 +693,9 @@ static int _emm_as_establish_req (emm_as_establish_t * msg, int *emm_cause)
       && decode_status.security_context_available == 0
       && decode_status.integrity_protected_message == 1
       && decode_status.mac_matched == 0
-      && (emm_msg->header.message_type == ATTACH_REQUEST || emm_msg->header.message_type == TRACKING_AREA_UPDATE_REQUEST)){
+      && (emm_msg->header.message_type == ATTACH_REQUEST
+          || emm_msg->header.message_type == TRACKING_AREA_UPDATE_REQUEST
+          || emm_msg->header.message_type == DETACH_REQUEST)){
     /**
      * Not purging the encoded nas_msg.. will send it to the source MME for security validation.
      * It may be the ciphered message.
@@ -735,10 +737,11 @@ static int _emm_as_establish_req (emm_as_establish_t * msg, int *emm_cause)
        * This means UE context is not present and this UE is not known in the EPC.
        * If message is Detach Request. Ignore the message.
        */
-      *emm_cause = EMM_CAUSE_UE_IDENTITY_CANT_BE_DERIVED_BY_NW;
+//      *emm_cause = EMM_CAUSE_UE_IDENTITY_CANT_BE_DERIVED_BY_NW;
 
       //Clean up S1AP and MME UE Context 
-      nas_itti_detach_req(msg->ue_id);
+      rc = emm_recv_detach_request (
+          msg->ue_id, &emm_msg->detach_request, msg->is_initial, emm_cause, &decode_status);
 //      unlock_ue_contexts(ue_context);
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
     }
