@@ -118,6 +118,7 @@ typedef struct emm_detach_request_ies_s {
 
 typedef struct emm_tau_request_ies_s {
   EpsUpdateType                  eps_update_type;
+  mme_ue_s1ap_id_t               old_ue_id;        /* OLD identifier                                  */
   bool                           is_native_sc;
   bool                           is_initial;
   ksi_t                          ksi;
@@ -187,7 +188,7 @@ void free_emm_attach_request_ies(emm_attach_request_ies_t ** const params);
 
 int emm_proc_attach_request(mme_ue_s1ap_id_t ue_id,
                             emm_attach_request_ies_t * const params,
-                            emm_data_context_t ** emm_data_context);
+                            emm_data_context_t ** duplicate_emm_ue_ctx_pP);
 
 int _emm_attach_reject (emm_data_context_t *emm_context, struct nas_base_proc_s * nas_base_proc);
 
@@ -206,7 +207,8 @@ int emm_proc_tracking_area_update_request (
   emm_tau_request_ies_t *ies,
   const int gea,
   const bool gprs_present,
-  int *emm_cause);
+  int *emm_cause,
+  emm_data_context_t ** emm_context_pP);
 
 int emm_proc_tracking_area_update_reject (
   const mme_ue_s1ap_id_t ue_id,

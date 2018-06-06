@@ -426,7 +426,7 @@ void *mme_app_thread (void *args)
           mme_ue_s1ap_id_t mme_ue_s1ap_id = *((mme_ue_s1ap_id_t *)(received_message_p->ittiMsg.timer_has_expired.arg));
           ue_context_p = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, mme_ue_s1ap_id);
           if (ue_context_p == NULL) {
-            OAILOG_WARNING (LOG_MME_APP, "Timer expired but no assoicated UE context for UE id " MME_UE_S1AP_ID_FMT "\n",mme_ue_s1ap_id);
+            OAILOG_WARNING (LOG_MME_APP, "Timer expired but no associated UE context for UE id " MME_UE_S1AP_ID_FMT "\n",mme_ue_s1ap_id);
             break;
           }
           s10_handover_proc = mme_app_get_s10_procedure_mme_handover(ue_context_p);

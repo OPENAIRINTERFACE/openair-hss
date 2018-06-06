@@ -351,31 +351,6 @@ mme_api_notify_new_guti (
   OAILOG_FUNC_RETURN (LOG_NAS, RETURNerror);
 }
 
-/*
- *
- *  Name:    mme_api_notify_end_ue_s1ap_id_changed()
- *
- *  Description: Notify the MME of a change in ue id (reconnection).
- *
- *  Inputs:
- *         old_ueid:      old nas_ue id
- *         new_ueid:      new nas_ue id
- *         mme_ue_s1ap_id:   nas ue id
- *  Return:    RETURNok, RETURNerror
- *
- */
-int
-mme_api_notified_new_ue_s1ap_id_association (
-    const enb_s1ap_id_key_t  enb_ue_s1ap_id_key,
-    const uint32_t         enb_id,
-    const mme_ue_s1ap_id_t mme_ue_s1ap_id)
-{
-  int                                     ret = RETURNok;
-  OAILOG_FUNC_IN (LOG_NAS);
-  ret = mme_ue_context_notified_new_ue_s1ap_id_association(enb_ue_s1ap_id_key, mme_ue_s1ap_id);
-  OAILOG_FUNC_RETURN (LOG_NAS, ret);
-}
-
 //------------------------------------------------------------------------------
 /*
  *

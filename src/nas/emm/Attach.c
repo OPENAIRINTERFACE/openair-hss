@@ -143,7 +143,7 @@ static int _emm_send_attach_accept (emm_data_context_t * emm_context);
 
 static bool _emm_attach_ies_have_changed (mme_ue_s1ap_id_t ue_id, emm_attach_request_ies_t * const ies1, emm_attach_request_ies_t * const ies2);
 
-static void _emm_proc_create_procedure_attach_request(emm_data_context_t * const ue_context, emm_attach_request_ies_t * const ies, bool is_new);
+static void _emm_proc_create_procedure_attach_request(emm_data_context_t * const ue_context, emm_attach_request_ies_t * const ies);
 
 static int _emm_attach_retry_procedure(nas_emm_specific_proc_t *specif_proc);
 
@@ -192,7 +192,7 @@ static int emm_proc_attach_request_validity(emm_data_context_t * emm_context, mm
 int emm_proc_attach_request (
   mme_ue_s1ap_id_t ue_id,
   emm_attach_request_ies_t * const ies,
-  emm_data_context_t ** duplicate_emm_ue_ctx_pp)
+  emm_data_context_t ** duplicate_emm_ue_ctx_pP)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
@@ -206,8 +206,6 @@ int emm_proc_attach_request (
   mme_ue_s1ap_id_t                        old_ue_id = INVALID_MME_UE_S1AP_ID;
   nas_emm_attach_proc_t                  *attach_procedure = NULL;
   nas_emm_tau_proc_t                     *tau_procedure = NULL;
-
-  bool                                    is_new = false;
 
   if (ies->imsi) {
     imsi64 = imsi_to_imsi64(ies->imsi);
@@ -269,27 +267,27 @@ int emm_proc_attach_request (
    * 24.301 does not say anything about that the EMM context should be discarded when no S-TMSI was sent.
    * We assume that the remaining variables are OK and don't check them here.
    */
-  *duplicate_emm_ue_ctx_pp = emm_data_context_get(&_emm_data, ue_id);
-  if (!(*duplicate_emm_ue_ctx_pp) && ies->guti) { // no need for  && (is_native_guti)
+  *duplicate_emm_ue_ctx_pP = emm_data_context_get(&_emm_data, ue_id);
+  if (!(*duplicate_emm_ue_ctx_pP) && ies->guti) { // no need for  && (is_native_guti)
     // todo: handle this case.
-    (*duplicate_emm_ue_ctx_pp) = emm_data_context_get_by_guti(&_emm_data, ies->guti);
-    if ((*duplicate_emm_ue_ctx_pp)) {
+    (*duplicate_emm_ue_ctx_pP) = emm_data_context_get_by_guti(&_emm_data, ies->guti);
+    if ((*duplicate_emm_ue_ctx_pP)) {
       /** We found an EMM context. Don't clean it up, continue to use it. */
       OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - We found an EMM context from GUTI " GUTI_FMT " with old mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT". \n",
-          GUTI_ARG(&(*duplicate_emm_ue_ctx_pp)->_guti), (*duplicate_emm_ue_ctx_pp)->ue_id);
+          GUTI_ARG(&(*duplicate_emm_ue_ctx_pP)->_guti), (*duplicate_emm_ue_ctx_pP)->ue_id);
       /** Continue to check for EMM context and their validity. */
-    } else if ((!(*duplicate_emm_ue_ctx_pp)) && (ies->imsi)) { /**< If we could not find one per IMSI. */
-      (*duplicate_emm_ue_ctx_pp) = emm_data_context_get_by_imsi(&_emm_data, imsi64);
-      if ((*duplicate_emm_ue_ctx_pp)) {
+    } else if ((!(*duplicate_emm_ue_ctx_pP)) && (ies->imsi)) { /**< If we could not find one per IMSI. */
+      (*duplicate_emm_ue_ctx_pP) = emm_data_context_get_by_imsi(&_emm_data, imsi64);
+      if ((*duplicate_emm_ue_ctx_pP)) {
         OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - We found an EMM context from IMSI " IMSI_64_FMT " with old mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT". \n",
-            (*duplicate_emm_ue_ctx_pp)->_imsi64, (*duplicate_emm_ue_ctx_pp)->ue_id);
+            (*duplicate_emm_ue_ctx_pP)->_imsi64, (*duplicate_emm_ue_ctx_pP)->ue_id);
       }
     } /** If we have an EMM UE context already, the S-TMSI was matched to an GUTI successfully, so the IMSI should be OK, as well. */
   }
-  if ((*duplicate_emm_ue_ctx_pp)) {  /**< We found a matching EMM context via IMSI or S-TMSI. */
+  if ((*duplicate_emm_ue_ctx_pP)) {  /**< We found a matching EMM context via IMSI or S-TMSI. */
     /** Check the validity of the existing EMM context It may or may not have another MME_APP UE context. */
-    mme_ue_s1ap_id_t old_mme_ue_id = (*duplicate_emm_ue_ctx_pp)->ue_id;
-    rc = emm_proc_attach_request_validity((*duplicate_emm_ue_ctx_pp), ue_id, ies);
+    mme_ue_s1ap_id_t old_mme_ue_id = (*duplicate_emm_ue_ctx_pP)->ue_id;
+    rc = emm_proc_attach_request_validity((*duplicate_emm_ue_ctx_pP), ue_id, ies);
     /** Check the return value. */
     if(rc != RETURNok){
       /** Not continuing with the Attach-Request (it might be rejected, a previous attach accept might have been resent or just ignored). */
@@ -305,7 +303,7 @@ int emm_proc_attach_request (
   }
 
   OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Continuing for Attach Request for UE_ID " MME_UE_S1AP_ID_FMT " after validation of the attach request. \n", ue_id);
-  if(!(*duplicate_emm_ue_ctx_pp) || (*duplicate_emm_ue_ctx_pp)->emm_cause != EMM_CAUSE_SUCCESS) {
+  if(!(*duplicate_emm_ue_ctx_pP) || (*duplicate_emm_ue_ctx_pP)->emm_cause != EMM_CAUSE_SUCCESS) {
     OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - No valid EMM context was found for UE_ID " MME_UE_S1AP_ID_FMT ". \n", ue_id);
     /*
      * Create UE's EMM context
@@ -352,32 +350,36 @@ int emm_proc_attach_request (
       rc = _emm_attach_reject (new_emm_ue_ctx, (struct nas_base_proc_s *)&no_attach_proc); /**< todo: Not removing old duplicate. */
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
     }
-    is_new = true;
-  }else if ((*duplicate_emm_ue_ctx_pp) && (*duplicate_emm_ue_ctx_pp)->emm_cause == EMM_CAUSE_SUCCESS){
+  }else if ((*duplicate_emm_ue_ctx_pP) && (*duplicate_emm_ue_ctx_pP)->emm_cause == EMM_CAUSE_SUCCESS){
     OAILOG_WARNING (LOG_NAS_EMM, "We have a valid EMM context with IMSI " IMSI_64_FMT " from a previous registration with ueId " MME_UE_S1AP_ID_FMT ". \n",
-        (*duplicate_emm_ue_ctx_pp)->_imsi64, (*duplicate_emm_ue_ctx_pp)->ue_id);
+        (*duplicate_emm_ue_ctx_pP)->_imsi64, (*duplicate_emm_ue_ctx_pP)->ue_id);
     /*
      * We have an EMM context with GUTI from a previous registration.
      * Validate it, if the message has been received with a security header and if the security header can be validated we can continue using it.
      */
-    new_emm_ue_ctx = (*duplicate_emm_ue_ctx_pp);
-    is_new = false;
-  }
-  if (ies->last_visited_registered_tai) {
-    emm_ctx_set_valid_lvr_tai(new_emm_ue_ctx, ies->last_visited_registered_tai);
-  } else {
-    emm_ctx_clear_lvr_tai(new_emm_ue_ctx);
+    new_emm_ue_ctx = (*duplicate_emm_ue_ctx_pP);
+    /*
+     * The old UE Id can not already be in REGISTERED state.
+     * If there are some differences of the current structure to the received message, the context will be
+     * implicitly detached (together with all its layers).
+     * Else, if we can use it, we can also continue with the newly created UE references and don't
+     * have to re-link any of them to the old UE context.
+     */
+  }else{
+    OAILOG_WARNING (LOG_NAS_EMM, "We have an invalid EMM context with IMSI " IMSI_64_FMT " from a previous registration with ueId " MME_UE_S1AP_ID_FMT " in an undefined state. Performing implicit detach first. \n",
+        (*duplicate_emm_ue_ctx_pP)->_imsi64, (*duplicate_emm_ue_ctx_pP)->ue_id);
+    (*duplicate_emm_ue_ctx_pP)->emm_cause = EMM_CAUSE_ILLEGAL_UE;
   }
   /** Continue with the new or existing EMM context. */
-  _emm_proc_create_procedure_attach_request(new_emm_ue_ctx, ies, is_new);
-  if((*duplicate_emm_ue_ctx_pp) && (*duplicate_emm_ue_ctx_pp)->emm_cause != EMM_CAUSE_SUCCESS){
+  _emm_proc_create_procedure_attach_request(new_emm_ue_ctx, ies);
+  if((*duplicate_emm_ue_ctx_pP) && (*duplicate_emm_ue_ctx_pP)->emm_cause != EMM_CAUSE_SUCCESS){
     /** Set the new attach procedure into pending mode and continue with it after the completion of the duplicate removal. */
     void *unused = NULL;
     nas_emm_attach_proc_t * attach_proc = get_nas_specific_procedure_attach(new_emm_ue_ctx);
     nas_stop_T_retry_specific_procedure(new_emm_ue_ctx->ue_id, &attach_proc->emm_spec_proc.retry_timer, unused);
     nas_start_T_retry_specific_procedure(new_emm_ue_ctx->ue_id, &attach_proc->emm_spec_proc.retry_timer, _emm_attach_retry_procedure, attach_proc);
     /** Set the old mme_ue_s1ap id which will be checked. */
-    attach_proc->ies->old_ue_id =(*duplicate_emm_ue_ctx_pp)->ue_id;
+    attach_proc->ies->old_ue_id =(*duplicate_emm_ue_ctx_pP)->ue_id;
     /*
      * Nothing else to do with the current attach procedure. Leave it on hold.
      * Continue to handle the new attach procedure.
@@ -568,7 +570,6 @@ int emm_proc_attach_complete (
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
-
 /****************************************************************************/
 /*********************  L O C A L    F U N C T I O N S  *********************/
 /****************************************************************************/
@@ -622,6 +623,7 @@ int emm_proc_attach_request_validity(emm_data_context_t * emm_context, mme_ue_s1
     OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
     /** We don't need to check the EMM context further. It is deallocated, but continue with processing the Attach Request., return. */ // todo: check that the emm_ctx is nulled. (else, need to do it here).
   }
+
   /*
    * Check if there is an Authentication Procedure running.
    * No collisions are mentioned, but just abort the current authentication procedure, if it was triggered by MME/OAM interface.
@@ -654,6 +656,7 @@ int emm_proc_attach_request_validity(emm_data_context_t * emm_context, mme_ue_s1
       DevAssert(rc == RETURNok);
     }
   }
+
   /*
    * We don't need to check the identification procedure. If it is not part of an attach procedure (no specific attach procedure is running - assuming all common procedures
    * belong to the specific procedure), we let it run. It may independently trigger a timeout with consequences.
@@ -734,6 +737,7 @@ int emm_proc_attach_request_validity(emm_data_context_t * emm_context, mme_ue_s1
 //            imsi_ue_mm_ctx->emm_context.num_attach_request++;
       REQUIREMENT_3GPP_24_301(R10_5_5_1_2_7_d__2);
       /*
+       * If nothing has changed, we assume that no new context/reference/description has to be removed.
        * - if the information elements do not differ, then the ATTACH ACCEPT message shall be resent and the timer
        * T3450 shall be restarted if an ATTACH COMPLETE message is expected. In that case, the retransmission
        * counter related to T3450 is not incremented.
@@ -806,27 +810,23 @@ int emm_proc_attach_request_validity(emm_data_context_t * emm_context, mme_ue_s1
     OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Received Attach Request for a DEREGISTERED UE_ID " MME_UE_S1AP_ID_FMT ". "
         "Will continue with the existing EMM_CTX's and let current common procedures run. Silently discarding all specific procedures (XXX_ACCEPT sent, etc.. ). \n", emm_context->ue_id);
     // todo: to be sure, just silently discard all specific procedures, is this necessary or should we assert?
-//       emm_context_silently_reset_procedures(new_emm_ue_ctx); /**< Discard all pending COMPLETEs, here (specific: XX_accept sent already). The complete message will then be discarded when specific XX_ACCEPT flag is off! */
+    //       emm_context_silently_reset_procedures(new_emm_ue_ctx); /**< Discard all pending COMPLETEs, here (specific: XX_accept sent already). The complete message will then be discarded when specific XX_ACCEPT flag is off! */
     /*
      * Assuming nothing to reset when continuing with DEREGISTERED EMM context. Continue using its EPS security context.
      * Will ask for new subscription data in the HSS with ULR (also to register the MME again).
      */
     ue_context_t * ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
-//    if(ue_context != NULL){
-//      OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - BUG The old DEREGISTERED UE context with ueId " MME_UE_S1AP_ID_FMT " still has an MME_APP context. "
-//          "Rejecting new Attach Request and removing contexts for new ueId " MME_UE_S1AP_ID_FMT ". \n", emm_context->ue_id, ue_id);
-//      /*
-//       * Send an attach reject back.
-//       * todo: reattach required in attach reject?
-//       */
-//      temp_emm_ue_ctx.emm_cause = EMM_CAUSE_ILLEGAL_UE; /**< Send a ATTACH_REJECT with the temporary context. */
-//      /*
-//       * Do not accept the UE to attach to the network
-//       */
-//      rc = _emm_attach_reject (&temp_emm_ue_ctx);
-//      OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror); /**< This case is an error. */
-//    }
-    DevAssert(!ue_context); // todo: error handling here!
+    DevAssert(!ue_context); // todo: error handling here?
+    /** Check that the security context could be validated. */
+    if (!(IS_EMM_CTXT_PRESENT_SECURITY(emm_context)
+          && ies->decode_status.integrity_protected_message
+          && ies->decode_status.mac_matched)){
+      OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Received Attach Request while UE context does not have a valid security context. Performing an implicit detach. \n");
+      /** Set the EMM cause to invalid. */
+      emm_context->emm_cause = EMM_CAUSE_ILLEGAL_UE;
+      /** Continue to handle the TAU Request inside a new EMM context. */
+      OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
+    }
     /*
      * We don't need to check if any parameters have changed.
      * If we received an integrity protected message and if the MAC header could be verified we will assume
@@ -847,7 +847,7 @@ int emm_proc_attach_request_validity(emm_data_context_t * emm_context, mme_ue_s1
   }
 }
 
-static void _emm_proc_create_procedure_attach_request(emm_data_context_t * const emm_context, emm_attach_request_ies_t * const ies, bool is_new)
+static void _emm_proc_create_procedure_attach_request(emm_data_context_t * const emm_context, emm_attach_request_ies_t * const ies)
 {
   nas_emm_attach_proc_t *attach_proc = nas_new_attach_procedure(emm_context);
   AssertFatal(attach_proc, "TODO Handle this");
@@ -858,7 +858,6 @@ static void _emm_proc_create_procedure_attach_request(emm_data_context_t * const
     ((nas_base_proc_t*)attach_proc)->time_out = _emm_attach_t3450_handler;
     /** Set the MME_APP registration complete procedure for callback. */
     ((nas_base_proc_t*)attach_proc)->success_notif = _emm_attach_registration_complete;
-    attach_proc->ies->is_new = is_new;
   }
 }
 /*
@@ -1074,25 +1073,20 @@ static int _emm_attach_run_procedure(emm_data_context_t *emm_context)
   if (attach_proc) {
     REQUIREMENT_3GPP_24_301(R10_5_5_1_2_3__1);
 
-    /** Check if we have a valid security context, we also assume that we have a valid IMSI, if not we begin new, including the identification. */
-    if (attach_proc->ies->decode_status.integrity_protected_message
-            && attach_proc->ies->decode_status.mac_matched) {
-      /** Consider the ESM security context of the UE as valid and continue to handle the ESM message with making a ULR at the HSS. */
-      OAILOG_INFO(LOG_NAS_EMM, "EMM-PROC  - EMM context for the ue_id=" MME_UE_S1AP_ID_FMT " has a valid and active EPS security context. "
-          "Continuing with the subscription handling. \n", emm_context->ue_id);
-      /* We assume that we also have a valid IMSI, not checking if we just received one. */
+    if (attach_proc->ies->last_visited_registered_tai) {
+      emm_ctx_set_valid_lvr_tai(emm_context, attach_proc->ies->last_visited_registered_tai);
+    } else {
+      emm_ctx_clear_lvr_tai(emm_context);
+    }
+
+    if(IS_EMM_CTXT_PRESENT_SECURITY(emm_context)){
       /*
        * No AUTH or SMC is needed, directly perform ULR/Subscription (and always perform it
-       * due to MeshFlow reasons). Assume that tht UE/MS network capabilites are not changed and don't need to be
+       * due to MeshFlow reasons). Assume that the UE/MS network capabilities are not changed and don't need to be
        * replayed.
        */
       rc = _emm_attach(emm_context);
-    }
-    /** We don't have a valid security context, initialize the existing EMM context. */
-    if(!attach_proc->ies->is_new){
-      OAILOG_WARNING(LOG_NAS_EMM, "EMM-PROC  - Old/existing EMM context for the ue_id=" MME_UE_S1AP_ID_FMT " has not a valid and active EPS security context. Initializing it. \n", emm_context->ue_id);
-      emm_init_context(emm_context, true);
-      attach_proc->ies->is_new = true;  /**< Initialized. */
+      OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
     }
     /** Set LVR TAI again. */
     emm_ctx_set_valid_lvr_tai(emm_context, attach_proc->ies->last_visited_registered_tai);
@@ -1177,8 +1171,6 @@ static int _emm_attach_retry_procedure(nas_emm_specific_proc_t *specific_proc){
   rc = _emm_attach_run_procedure(emm_context);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
-
-
 
 //------------------------------------------------------------------------------
 static int _emm_attach_success_identification_cb (emm_data_context_t *emm_context)

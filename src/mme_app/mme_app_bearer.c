@@ -3042,11 +3042,6 @@ mme_app_handle_handover_request_acknowledge(
   * Set the downlink bearers as pending.
   * Will be forwarded to the SAE-GW after the HANDOVER_NOTIFY/S10_FORWARD_RELOCATION_COMPLETE_ACKNOWLEDGE.
   * todo: currently only a single bearer will be set.
-  */
-
-// memcpy(&ue_context->pending_s1u_downlink_bearer, &handover_request_acknowledge_pP->bearer_s1u_enb_fteid, sizeof(fteid_t));
-// ue_context->pending_s1u_downlink_bearer_ebi = handover_request_acknowledge_pP->eps_bearer_id;
- /*
   * Check if there is a handover procedure running.
   * Depending on the handover procedure, either send handover command or forward_relocation_response.
   * todo: do this via success_notification.

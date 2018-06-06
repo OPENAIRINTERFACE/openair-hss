@@ -139,11 +139,6 @@ mme_api_notify_imsi ( const mme_ue_s1ap_id_t id, const imsi64_t imsi64);
 
 int mme_api_notify_new_guti (const mme_ue_s1ap_id_t ueid, guti_t * const guti);
 
-int mme_api_notified_new_ue_s1ap_id_association (
-    const enb_s1ap_id_key_t  enb_ue_s1ap_id_key,
-    const uint32_t         enb_id,
-    const mme_ue_s1ap_id_t mme_ue_s1ap_id);
-
 int mme_api_registration_complete(const mme_ue_s1ap_id_t mme_ue_s1ap_id);
 
 int mme_api_new_guti(const imsi_t * const imsi,
