@@ -549,6 +549,8 @@ static void nas_delete_context_req_procedure(struct emm_data_context_s *emm_cont
    ue_context_t * ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
 
    void *unused = NULL;
+   OAILOG_DEBUG (LOG_NAS_EMM, "UE " MME_UE_S1AP_ID_FMT " Delete Context Request procedure timer with timer id %u \n", emm_context->ue_id, (*ctx_req_proc)->timer_s10.id);
+
    nas_stop_Ts10_ctx_res(emm_context->ue_id, &(*ctx_req_proc)->timer_s10, unused);
 
    free_wrapper((void**)ctx_req_proc);
@@ -689,6 +691,9 @@ nas_emm_tau_proc_t *nas_new_tau_procedure(struct emm_data_context_s * const emm_
   emm_context->emm_procedures->emm_specific_proc->emm_proc.base_proc.nas_puid = __sync_fetch_and_add (&nas_puid, 1);
   emm_context->emm_procedures->emm_specific_proc->emm_proc.base_proc.type = NAS_PROC_TYPE_EMM;
   emm_context->emm_procedures->emm_specific_proc->emm_proc.type  = NAS_EMM_PROC_TYPE_SPECIFIC;
+  /** Timer. */
+  emm_context->emm_procedures->emm_specific_proc->retry_timer.sec = TIMER_SPECIFIC_RETRY_DEFAULT_VALUE;
+  emm_context->emm_procedures->emm_specific_proc->retry_timer.id  = NAS_TIMER_INACTIVE_ID;
   emm_context->emm_procedures->emm_specific_proc->type  = EMM_SPEC_PROC_TYPE_TAU;
 
   nas_emm_tau_proc_t * proc = (nas_emm_tau_proc_t*)emm_context->emm_procedures->emm_specific_proc;

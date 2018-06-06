@@ -96,6 +96,7 @@ static const char                      *_emm_cn_primitive_str[] = {
   "EMMCN_CONTEXT_FAIL",
   "EMM_CN_DEREGISTER_UE",
   "EMM_CN_PDN_CONFIG_RES",
+  "EMM_CN_PDN_CONFIG_FAIL",
   "EMM_CN_PDN_CONNECTIVITY_RES",
   "EMM_CN_PDN_CONNECTIVITY_FAIL",
   "EMM_CN_PDN_DISCONNECT_RES",
@@ -377,6 +378,14 @@ static int _emm_cn_pdn_connectivity_res (emm_cn_pdn_res_t * msg_pP)
   nas_emm_attach_proc_t                  *attach_proc = get_nas_specific_procedure_attach(emm_context);
 
   if(!attach_proc){
+    /** Check if it is a TAU procedure, else it is standalone. */
+    if (is_nas_specific_procedure_tau_running(emm_context)){
+      /** Continue with TAU Accept. */
+      rc = emm_cn_wrapper_tracking_area_update_accept(emm_context);
+      /** We will set the UE into COMMON-PROCEDURE-INITIATED state inside this method. */
+      OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
+    }
+    OAILOG_INFO (LOG_NAS_EMM, "EMM  -  Neither TAU nor ATTACH procedure is running for ue " MME_UE_S1AP_ID_FMT ". Assuming standalone. \n", emm_context->ue_id);
     is_standalone = true;
   }
 
@@ -793,10 +802,12 @@ static int _emm_cn_context_fail (const emm_cn_context_fail_t * msg)
   if (ctx_req_proc) {
     ctx_req_proc->nas_cause = msg->cause; // todo: better handling
     rc = (*ctx_req_proc->failure_notif)(emm_ctx);
+    nas_delete_cn_procedure(emm_ctx, ctx_req_proc);
+
   } else {
     OAILOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - " "Failed to find context request procedure associated to UE id " MME_UE_S1AP_ID_FMT "...\n", msg->ue_id);
   }
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
 }
 
 //------------------------------------------------------------------------------
@@ -858,7 +869,7 @@ int emm_cn_send (const emm_cn_t * msg)
     rc = _emm_cn_context_res (msg->u.context_res);
     break;
   case EMMCN_CONTEXT_FAIL:
-    rc = _emm_cn_context_fail (&msg->u.context_fail);
+    rc = _emm_cn_context_fail (msg->u.context_fail);
     break;
 
   default:

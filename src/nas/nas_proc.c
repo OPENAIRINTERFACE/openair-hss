@@ -617,8 +617,7 @@ nas_proc_context_fail (
   emm_cn_ctx_fail.ue_id = ue_id;
 
   emm_sap.primitive = EMMCN_CONTEXT_FAIL;
-  emm_sap.u.emm_cn.u.context_fail.ue_id = ue_id;
-  emm_sap.u.emm_cn.u.context_fail.cause = cause;
+  emm_sap.u.emm_cn.u.context_fail = &emm_cn_ctx_fail;
   MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMCN_CONTEXT_FAIL ue_id " MME_UE_S1AP_ID_FMT " ", ue_id);
   rc = emm_sap_send (&emm_sap);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);

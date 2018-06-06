@@ -151,8 +151,8 @@ emm_sap_send (
   } else {
     OAILOG_WARNING (LOG_NAS_EMM, "EMM-SAP -   Out of range primitive (%d)\n", primitive);
   }
-
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  return rc;
+//  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
 /****************************************************************************/

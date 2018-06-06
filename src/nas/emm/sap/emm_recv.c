@@ -713,7 +713,7 @@ emm_recv_tracking_area_update_request (
   }
 
   /** Set the complete TAU Request. */
-  ies->complete_tau_request = nas_msg;
+  ies->complete_tau_request = bstrcpy(nas_msg);
 
   ies->decode_status = *decode_status;
   /*

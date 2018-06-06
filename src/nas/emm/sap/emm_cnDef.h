@@ -138,7 +138,7 @@ typedef struct emm_mme_ul_s {
     emm_cn_auth_fail_t      *auth_fail;
 
     emm_cn_context_res_t     *context_res;
-    emm_cn_context_fail_t     context_fail;
+    emm_cn_context_fail_t    *context_fail;
 
     emm_cn_deregister_ue_t   deregister;
     emm_cn_pdn_config_res_t  *emm_cn_pdn_config_res;

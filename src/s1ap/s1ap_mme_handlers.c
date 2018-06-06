@@ -752,6 +752,7 @@ s1ap_mme_handle_ue_context_release_request (
       AssertFatal (message_p != NULL, "itti_alloc_new_message Failed");
       S1AP_UE_CONTEXT_RELEASE_REQ (message_p).mme_ue_s1ap_id = ue_ref_p->mme_ue_s1ap_id;
       S1AP_UE_CONTEXT_RELEASE_REQ (message_p).enb_ue_s1ap_id = ue_ref_p->enb_ue_s1ap_id;
+      S1AP_UE_CONTEXT_RELEASE_REQ (message_p).enb_id = ue_ref_p->enb->enb_id;
       S1AP_UE_CONTEXT_RELEASE_REQ (message_p).cause = ueContextReleaseRequest_p->cause;
 
       MSC_LOG_TX_MESSAGE (MSC_S1AP_MME, MSC_MMEAPP_MME, NULL, 0, "0 S1AP_UE_CONTEXT_RELEASE_REQ mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ",

@@ -66,6 +66,7 @@
 #include "emm_proc.h"
 #include "common_defs.h"
 #include "emm_data.h"
+#include "esm_proc.h"
 #include "emm_sap.h"
 #include "emm_cause.h"
 #include "mme_config.h"
@@ -109,7 +110,7 @@ static int _emm_tracking_area_update_success_security_cb (emm_data_context_t *em
 static int _emm_tracking_area_update_failure_security_cb (emm_data_context_t *emm_context);
 
 static int _context_req_proc_success_cb (emm_data_context_t *emm_context);
-static int _emm_tracking_area_update_failure_context_res_cb (emm_data_context_t *emm_context);
+static int _context_req_proc_failure_cb (emm_data_context_t *emm_context);
 
 static int _emm_tracking_area_update_run_procedure(emm_data_context_t *emm_context);
 static void _emm_proc_create_procedure_tracking_area_update_request(emm_data_context_t * const ue_context, emm_tau_request_ies_t * const ies);
@@ -172,8 +173,8 @@ int emm_proc_tracking_area_update_request (
     /*
      * Get it via GUTI (S-TMSI not set, getting via GUTI).
      * GUTI will always be there. Checking for validity of the GUTI via the validity of the TMSI. */
-    if(!(INVALID_M_TMSI != ies->old_guti.m_tmsi)){
-      if(((*duplicate_emm_ue_ctx_pP) = emm_data_context_get_by_guti (&_emm_data, &ies->old_guti) != NULL)){ /**< May be set if S-TMSI is set. */
+    if((INVALID_M_TMSI != ies->old_guti.m_tmsi)){
+      if(((*duplicate_emm_ue_ctx_pP) = emm_data_context_get_by_guti (&_emm_data, &ies->old_guti)) != NULL){ /**< May be set if S-TMSI is set. */
         OAILOG_DEBUG(LOG_NAS_EMM, "EMM-PROC-  Found a valid UE with correct GUTI " GUTI_FMT " and (old) ue_id " MME_UE_S1AP_ID_FMT ". "
             "Continuing with the Tracking Area Update Request. \n", GUTI_ARG(&(*duplicate_emm_ue_ctx_pP)->_guti), (*duplicate_emm_ue_ctx_pP)->ue_id);
       }
@@ -246,7 +247,10 @@ int emm_proc_tracking_area_update_request (
         (*duplicate_emm_ue_ctx_pP)->_imsi64, (*duplicate_emm_ue_ctx_pP)->ue_id);
     (*duplicate_emm_ue_ctx_pP)->emm_cause = EMM_CAUSE_ILLEGAL_UE;
   }
-  /** Continue with the new or existing EMM context. */
+  /*
+   * Continue with the new or existing EMM context.
+   * Unlink the NAS message.
+   */
   _emm_proc_create_procedure_tracking_area_update_request(new_emm_ue_context, ies);
   if((*duplicate_emm_ue_ctx_pP) && (*duplicate_emm_ue_ctx_pP)->emm_cause != EMM_CAUSE_SUCCESS){
     /** Set the new attach procedure into pending mode and continue with it after the completion of the duplicate removal. */
@@ -427,7 +431,7 @@ emm_proc_tracking_area_update_complete (
 static
 int emm_proc_tracking_area_update_request_validity(emm_data_context_t * emm_context, mme_ue_s1ap_id_t new_ue_id, emm_tau_request_ies_t * const ies ){
 
-  OAILOG_FUNC_OUT(LOG_NAS_EMM);
+  OAILOG_FUNC_IN(LOG_NAS_EMM);
   int                      rc = RETURNerror;
 //  emm_data_context_t      *emm_context = *emm_context_pP;
 
@@ -632,7 +636,7 @@ int emm_proc_tracking_area_update_request_validity(emm_data_context_t * emm_cont
         nas_itti_detach_req(tau_procedure->ue_id);
         free_emm_tau_request_ies(&ies);
         OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Received duplicated TAU Request\n");
-        OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
+        OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
       }
     } else if (!is_nas_tau_accept_sent(tau_procedure) && (!is_nas_tau_reject_sent(tau_procedure))) {  /**< TAU accept or reject not sent yet. */
 //       REQUIREMENT_3GPP_24_301(R10_5_5_3_2_7_e__1);
@@ -656,6 +660,7 @@ int emm_proc_tracking_area_update_request_validity(emm_data_context_t * emm_cont
          // trigger clean up
          /** Set the EMM cause to invalid. */
          emm_context->emm_cause = EMM_CAUSE_ILLEGAL_UE;
+         OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
        } else {
 //         REQUIREMENT_3GPP_24_301(R10_5_5_3_2_7_e__2);
          /*
@@ -666,19 +671,20 @@ int emm_proc_tracking_area_update_request_validity(emm_data_context_t * emm_cont
          nas_itti_detach_req(tau_procedure->ue_id);
          free_emm_tau_request_ies(&ies);
          OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Received duplicated TAU Request\n");
-         OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
+         OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
        }
      }
   }
   /** If the TAU request was received in EMM_DEREGISTERED or EMM_COMMON_PROCEDURE_INITIATED state, we should remove the context implicitly. */
-  if (EMM_REGISTERED != fsm_state || EMM_COMMON_PROCEDURE_INITIATED != fsm_state){
-    OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Received TAU Request while state is not in EMM_REGISTERED, instead %d. \n.", fsm_state);
+  if (!(EMM_REGISTERED == fsm_state || EMM_COMMON_PROCEDURE_INITIATED == fsm_state)){
+    OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Received TAU Request while state is not in EMM_REGISTERED/EMM_COMMON_PROCEDURE_INITIATED, instead %d. \n.", fsm_state);
     /** Set the EMM cause to invalid. */
     emm_context->emm_cause = EMM_CAUSE_ILLEGAL_UE;
     /** Continue to handle the TAU Request inside a new EMM context. */
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
   }
   /** Check that the UE has a valid security context and that the message could be successfully decoded. */
+
   if (!(IS_EMM_CTXT_PRESENT_SECURITY(emm_context)
       && ies->decode_status.integrity_protected_message
       && ies->decode_status.mac_matched)){
@@ -1764,7 +1770,7 @@ static int _emm_tracking_area_update_run_procedure(emm_data_context_t *emm_conte
            * A S10 Context Request process may already have been started.
            */
           rc = _start_context_request_procedure(emm_context, tau_proc,
-              _context_req_proc_success_cb, emm_proc_identification);
+              _context_req_proc_success_cb, _context_req_proc_failure_cb);
           /** Do S10 Context Request. */
           nas_itti_ctx_req(emm_context->ue_id, &emm_context->_old_guti,
               tau_proc->ies->originating_tai,
@@ -1847,11 +1853,12 @@ static int _context_req_proc_success_cb (emm_data_context_t *emm_context)
 }
 
 //------------------------------------------------------------------------------
-static int _emm_tracking_area_update_failure_context_res_cb (emm_data_context_t *emm_context)
+static int _context_req_proc_failure_cb (emm_data_context_t *emm_context)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
 
+  nas_ctx_req_proc_t *nas_ctx_req_proc = get_nas_cn_procedure_ctx_req(emm_context);
   nas_emm_tau_proc_t                    *tau_proc = get_nas_specific_procedure_tau(emm_context);
   if (tau_proc) {
     // todo: requirement to continue with identification, auth and SMC if context res fails!
@@ -1987,11 +1994,29 @@ static int _emm_tracking_area_update_success_security_cb (emm_data_context_t *em
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
 
-  nas_emm_tau_proc_t                  *tau_proc = get_nas_specific_procedure_tau(emm_context);
+  nas_emm_tau_proc_t                     *tau_proc = get_nas_specific_procedure_tau(emm_context);
+//  esm_sap_t                               esm_sap = {0};
 
   if (tau_proc) {
-    rc = nas_itti_pdn_config_req (emm_context->ue_id, &emm_context->_imsi, NULL, 0);
-            OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+    if (!emm_context->esm_ctx.esm_proc_data) {
+//       // todo: why not checking if another ESM procedure is running?
+//       // todo: timers will be reset like in EMM procedures?
+       emm_context->esm_ctx.esm_proc_data  = (esm_proc_data_t *) calloc(1, sizeof(*emm_context->esm_ctx.esm_proc_data));
+     }
+//
+     struct esm_proc_data_s * esm_data = emm_context->esm_ctx.esm_proc_data;
+     esm_data->request_type = REQUEST_TYPE_INITIAL_REQUEST;
+
+     esm_data->pti = 0;
+//    /** Request the ESM Information. */
+//    esm_sap.primitive = ESM_REQUEST_ESM_INFORMATION;
+//    esm_sap.is_standalone = false;
+//    esm_sap.ue_id = emm_context->ue_id;
+////    esm_sap.recv = esm_msg_pP;
+//    esm_sap.ctx = emm_context;
+//    rc = esm_sap_send (&esm_sap);
+    rc = nas_itti_pdn_config_req (emm_context->ue_id, &emm_context->_imsi, NULL, REQUEST_TYPE_INITIAL_REQUEST);
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 //    rc = _emm_tracking_area_update(emm_context);
   }
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);

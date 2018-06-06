@@ -934,11 +934,11 @@ int _start_context_request_procedure(struct emm_data_context_s *emm_context, nas
   /*
    * Context request.
    */
-  ctx_req_proc->cn_proc.base_proc.parent = (nas_base_proc_t*)&spec_proc;
+  ctx_req_proc->cn_proc.base_proc.parent = (nas_base_proc_t*)&spec_proc->emm_proc.base_proc;
   /*
    * Not configuring an AS common procedure as parent procedure of the S10 procedure.
    */
-//  ctx_req_proc->emm_com_proc.emm_proc.base_proc.child = &auth_info_proc->cn_proc.base_proc;
+  ctx_req_proc->cn_proc.base_proc.parent->child = &ctx_req_proc->cn_proc.base_proc;
   ctx_req_proc->success_notif = _context_res_proc_success; /**< Continue with a PDN Configuration (ULR, CSR). */
   ctx_req_proc->failure_notif = _context_res_proc_fail; /**< Continue with the identification procedure (IdReq, AuthReq, SMC). */
   ctx_req_proc->cn_proc.base_proc.time_out = s10_context_req_timer_expiry_handler;
@@ -1184,7 +1184,7 @@ void nas_start_Ts10_ctx_req(const mme_ue_s1ap_id_t ue_id, struct nas_timer_s * c
     Ts10_ctx_res->id = nas_timer_start (Ts10_ctx_res->sec, 0, time_out_cb, timer_callback_args);
     if (NAS_TIMER_INACTIVE_ID != Ts10_ctx_res->id) {
       MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 Ts10_ctx_res started UE " MME_UE_S1AP_ID_FMT " ", ue_id);
-      OAILOG_DEBUG (LOG_NAS_EMM, "Ts10_ctx_res started UE " MME_UE_S1AP_ID_FMT "\n", ue_id);
+      OAILOG_DEBUG (LOG_NAS_EMM, "Ts10_ctx_res started UE " MME_UE_S1AP_ID_FMT " with timer id %u \n", ue_id, Ts10_ctx_res->id);
     } else {
       OAILOG_ERROR (LOG_NAS_EMM, "Could not start Ts10_ctx_res UE " MME_UE_S1AP_ID_FMT " ", ue_id);
     }
@@ -1251,7 +1251,7 @@ void nas_stop_Ts10_ctx_res(const mme_ue_s1ap_id_t ue_id, struct nas_timer_s * co
   if ((Ts10_ctx_res) && (Ts10_ctx_res->id != NAS_TIMER_INACTIVE_ID)) {
     Ts10_ctx_res->id = nas_timer_stop(Ts10_ctx_res->id, &timer_callback_args);
     MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 Ts10_ctx_res stopped UE " MME_UE_S1AP_ID_FMT " ", ue_id);
-    OAILOG_DEBUG (LOG_NAS_EMM, "Ts10_ctx_res stopped UE " MME_UE_S1AP_ID_FMT "\n", ue_id);
+    OAILOG_DEBUG (LOG_NAS_EMM, "Ts10_ctx_res stopped UE " MME_UE_S1AP_ID_FMT " with timer id %u \n", ue_id, Ts10_ctx_res->id);
   }
 }
 
