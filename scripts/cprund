@@ -1,2 +1,3 @@
 #!/bin/bash
+sudo rm /tmp/mme_stdout.log /tmp/mme_stderr.log
 sudo daemon --name=cpnf --stdout=/tmp/mme_stdout.log --stderr=/tmp/mme_stderr.log -X '/usr/local/bin/mme -c /usr/local/etc/oai/mme.fdsprint.conf' 

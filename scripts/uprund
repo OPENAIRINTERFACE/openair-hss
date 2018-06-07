@@ -1,2 +1,3 @@
 #!/bin/bash
+sudo rm /tmp/spgw_stdout.log /tmp/spgw_stderr.log
 sudo daemon --name=upnf --stdout=/tmp/spgw_stdout.log --stderr=/tmp/spgw_stderr.log -X /usr/local/bin/spgw
