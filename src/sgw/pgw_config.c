@@ -194,6 +194,7 @@ int pgw_config_process (pgw_config_t * config_pP)
         system_cmd = bformat ("arp -nDs %s %s pub",
           inet_ntoa(ip4_ref->addr), 
           bdata(config_pP->ipv4.if_name_SGI));
+        pgw_system (system_cmd, PGW_ABORT_ON_ERROR, __FILE__, __LINE__);
       }
       counter64 = counter64 - 1;
       addr_start.s_addr = htonl( ntohl(addr_start.s_addr) + 1 );
