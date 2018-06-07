@@ -52,6 +52,7 @@
 #include "log.h"
 #include "msc.h"
 #include "common_defs.h"
+#include "assertions.h"
 #include "3gpp_requirements_24.301.h"
 #include "common_types.h"
 #include "3gpp_24.007.h"
@@ -1112,6 +1113,7 @@ static int _emm_as_send (const emm_as_t * msg)
           nas_itti_establish_cnf (as_msg.msg.nas_establish_rsp.ue_id,
                                   as_msg.msg.nas_establish_rsp.err_code,
                                   as_msg.msg.nas_establish_rsp.nas_msg,
+                                  as_msg.msg.nas_establish_rsp.nas_ul_count,
                                   as_msg.msg.nas_establish_rsp.selected_encryption_algorithm,
                                   as_msg.msg.nas_establish_rsp.selected_integrity_algorithm);
           OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
@@ -1710,17 +1712,19 @@ static int _emm_as_establish_cnf (const emm_as_establish_t * msg, nas_establish_
   as_msg->s_tmsi.m_tmsi = msg->eps_id.guti->m_tmsi;
   as_msg->nas_msg = msg->nas_msg; 
   
+  /** Get the specific procedure. */
   struct emm_data_context_s                   *emm_ctx = NULL;
   emm_security_context_t                 *emm_security_context = NULL;
   emm_ctx = emm_data_context_get (&_emm_data, msg->ue_id);
   if (emm_ctx) {
+    nas_emm_specific_proc_t * spec_proc = get_nas_specific_procedure(emm_ctx);
     if (IS_EMM_CTXT_PRESENT_SECURITY(emm_ctx)) {
       emm_security_context = &emm_ctx->_security;
       as_msg->selected_encryption_algorithm = (uint16_t) htons(0x10000 >> emm_security_context->selected_algorithms.encryption);
       as_msg->selected_integrity_algorithm  = (uint16_t) htons(0x10000 >> emm_security_context->selected_algorithms.integrity);
       OAILOG_DEBUG (LOG_NAS_EMM, "Set nas_msg.selected_encryption_algorithm -> NBO: 0x%04X (%u)\n", as_msg->selected_encryption_algorithm, emm_security_context->selected_algorithms.encryption);
       OAILOG_DEBUG (LOG_NAS_EMM, "Set nas_msg.selected_integrity_algorithm -> NBO: 0x%04X (%u)\n", as_msg->selected_integrity_algorithm, emm_security_context->selected_algorithms.integrity);
-      as_msg->nas_ul_count = 0x00000000 | (emm_security_context->ul_count.overflow << 8) | emm_security_context->ul_count.seq_num;  // This is sent to calculate KeNB 
+      as_msg->nas_ul_count = (spec_proc && spec_proc->smc_performed) ? 0 : (0x00000000 | (emm_security_context->ul_count.overflow << 8) | emm_security_context->ul_count.seq_num);  // This is sent to calculate KeNB
       OAILOG_DEBUG (LOG_NAS_EMM, "EMMAS-SAP - NAS UL COUNT %8x\n", as_msg->nas_ul_count);
     }
   }

@@ -392,6 +392,11 @@ emm_proc_security_mode_complete (mme_ue_s1ap_id_t ue_id, const imeisv_mobile_ide
     void * timer_callback_arg = NULL;
     nas_stop_T3460(ue_id, &smc_proc->T3460, timer_callback_arg);
 
+    /** Set the SMC flag in the parent procedure. */
+    if(((nas_base_proc_t *)smc_proc)->parent){
+      ((nas_emm_specific_proc_t*)((nas_base_proc_t *)smc_proc)->parent)->smc_performed = true;
+    }
+
     if (imeisvmob) {
       imeisv_t imeisv = {0};
       imeisv.u.num.tac1 = imeisvmob->tac1;

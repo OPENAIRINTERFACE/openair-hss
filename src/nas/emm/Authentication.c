@@ -571,11 +571,13 @@ int emm_proc_authentication_failure (
           OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
         }
 
-        memcpy (resync_param.data, (emm_ctx->_vector[emm_ctx->_security.vector_index].rand), RAND_LENGTH_OCTETS);
-        memcpy ((resync_param.data + RAND_LENGTH_OCTETS), auts->data, AUTS_LENGTH);
+        bstring rand_bstr = blk2bstr (emm_ctx->_vector[0].rand, RAND_LENGTH_OCTETS);
+        bconcat(rand_bstr, auts);
         // TODO: Double check this case as there is no identity request being sent.
-        _start_authentication_information_procedure_synch(emm_ctx, auth_proc, &resync_param);
-        free_wrapper((void**)&resync_param.data);
+        _start_authentication_information_procedure_synch(emm_ctx, auth_proc, rand_bstr);
+//        free_wrapper((void**)&resync_param.data);
+        bdestroy_wrapper(&rand_bstr);
+
         emm_ctx_clear_auth_vectors(emm_ctx);
         rc = RETURNok;
 //        unlock_ue_contexts(ue_context);

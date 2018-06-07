@@ -94,7 +94,7 @@ typedef struct s6a_auth_info_req_s {
   /* AUTS to provide to AUC.
    * Only present and interpreted if re_synchronization == 1.
    */
-  uint8_t auts[AUTS_LENGTH];
+  uint8_t auts[RESYNC_PARAM_LENGTH];
 } s6a_auth_info_req_t;
 
 typedef struct s6a_auth_info_ans_s {

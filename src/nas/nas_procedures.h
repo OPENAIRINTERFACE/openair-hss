@@ -110,6 +110,7 @@ typedef struct nas_emm_specific_proc_s {
   nas_emm_proc_t               emm_proc;
   emm_specific_proc_type_t     type;
   struct nas_timer_s           retry_timer;   // EMM message retransmission timer
+  bool                         smc_performed;
 } nas_emm_specific_proc_t;
 
 struct emm_attach_request_ies_s;

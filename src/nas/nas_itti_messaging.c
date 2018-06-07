@@ -398,7 +398,7 @@ void nas_itti_auth_info_req(
   } else {
     AssertFatal(auts_pP != NULL, "Autn Null during resynchronization");
     auth_info_req->re_synchronization = 1;
-    memcpy (auth_info_req->auts, auts_pP->data, sizeof auth_info_req->auts);
+    memcpy (auth_info_req->auts, auts_pP->data, blength(auts_pP));
   }
 
   MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_S6A_MME, NULL, 0, "0 S6A_AUTH_INFO_REQ IMSI "IMSI_64_FMT" visited_plmn "PLMN_FMT" re_sync %u",
@@ -450,6 +450,7 @@ void nas_itti_establish_cnf(
   const mme_ue_s1ap_id_t ue_idP,
   const nas_error_code_t error_codeP,
   bstring                msgP,
+  const uint32_t         nas_count,
   const uint16_t         selected_encryption_algorithmP,
   const uint16_t         selected_integrity_algorithmP)
 {
@@ -486,8 +487,7 @@ void nas_itti_establish_cnf(
       "Invalid vector index %d", emm_ctx->_security.vector_index);
 
   derive_keNB (emm_ctx->_vector[emm_ctx->_security.vector_index].kasme,
-      0 /*emm_ctx->_security.ul_count.seq_num */| (emm_ctx->_security.ul_count.overflow << 8),
-      NAS_CONNECTION_ESTABLISHMENT_CNF(message_p).kenb);
+      nas_count, NAS_CONNECTION_ESTABLISHMENT_CNF(message_p).kenb);
 
   uint8_t                                 zero[32];
   memset(zero, 0, 32);
