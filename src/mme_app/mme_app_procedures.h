@@ -101,7 +101,7 @@ typedef struct mme_app_s10_proc_mme_handover_s {
 
   /** Target Information to store on the source side. */
   tai_t                         target_tai;
-
+  bool                          ho_command_sent;
   ecgi_t                        source_ecgi;  /**< Source home/macro enb id. */
   ecgi_t                        target_ecgi;  /**< Target home/macro enb id. */
   bool                          pending_clear_location_request;

@@ -465,6 +465,35 @@ void mme_app_send_s1ap_handover_cancel_acknowledge(mme_ue_s1ap_id_t mme_ue_s1ap_
 }
 
 //------------------------------------------------------------------------------
+/**
+ * Send an S1AP Handover Preparation Failure to the S1AP layer.
+ * Not triggering release of resources, everything will stay as it it.
+ * The MME_APP ITTI message elements though need to be deallocated.
+ */
+void mme_app_send_s1ap_handover_preparation_failure(mme_ue_s1ap_id_t mme_ue_s1ap_id, enb_ue_s1ap_id_t enb_ue_s1ap_id, sctp_assoc_id_t assoc_id, enum s1cause cause){
+  OAILOG_FUNC_IN (LOG_MME_APP);
+  /** Send a S1AP HANDOVER PREPARATION FAILURE TO THE SOURCE ENB. */
+  MessageDef * message_p = itti_alloc_new_message (TASK_MME_APP, S1AP_HANDOVER_PREPARATION_FAILURE);
+  DevAssert (message_p != NULL);
+  DevAssert(cause != S1AP_SUCCESSFUL_HANDOVER);
+
+  itti_s1ap_handover_preparation_failure_t *s1ap_handover_preparation_failure_p = &message_p->ittiMsg.s1ap_handover_preparation_failure;
+  memset ((void*)s1ap_handover_preparation_failure_p, 0, sizeof (itti_s1ap_handover_preparation_failure_t));
+
+  /** Set the identifiers. */
+  s1ap_handover_preparation_failure_p->mme_ue_s1ap_id = mme_ue_s1ap_id;
+  s1ap_handover_preparation_failure_p->enb_ue_s1ap_id = enb_ue_s1ap_id;
+  s1ap_handover_preparation_failure_p->assoc_id = assoc_id;
+  /** Set the negative cause. */
+  s1ap_handover_preparation_failure_p->cause = cause;
+
+  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "MME_APP Sending S1AP HANDOVER_PREPARATION_FAILURE");
+  /** Sending a message to S1AP. */
+  itti_send_msg_to_task (TASK_S1AP, INSTANCE_DEFAULT, message_p);
+  OAILOG_FUNC_OUT (LOG_MME_APP);
+}
+
+//------------------------------------------------------------------------------
 void notify_s1ap_new_ue_mme_s1ap_id_association (const sctp_assoc_id_t   assoc_id,
     const enb_ue_s1ap_id_t  enb_ue_s1ap_id,
     const mme_ue_s1ap_id_t  mme_ue_s1ap_id)
@@ -749,6 +778,40 @@ void mme_app_itti_forward_relocation_response(ue_context_t *ue_context, mme_app_
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 
+
+//------------------------------------------------------------------------------
+/**
+ * Send an S10 Forward Relocation response with error cause.
+ * It shall not trigger creating a local S10 tunnel.
+ * Parameter is the TEID & IP of the SOURCE-MME.
+ */
+void mme_app_send_s10_forward_relocation_response_err(teid_t mme_source_s10_teid, struct in_addr mme_source_ipv4_address, void *trxn,  gtpv2c_cause_value_t gtpv2cCause){
+  OAILOG_FUNC_IN (LOG_MME_APP);
+
+  /** Send a Forward Relocation RESPONSE with error cause: RELOCATION_FAILURE. */
+  MessageDef * message_p = itti_alloc_new_message (TASK_MME_APP, S10_FORWARD_RELOCATION_RESPONSE);
+  DevAssert (message_p != NULL);
+
+  itti_s10_forward_relocation_response_t *forward_relocation_response_p = &message_p->ittiMsg.s10_forward_relocation_response;
+  memset ((void*)forward_relocation_response_p, 0, sizeof (itti_s10_forward_relocation_response_t));
+
+  /**
+   * Set the TEID of the source MME.
+   * No need to set local_teid since no S10 tunnel will be created in error case.
+   */
+  forward_relocation_response_p->teid = mme_source_s10_teid;
+  /** Set the IPv4 address of the source MME. */
+  forward_relocation_response_p->peer_ip = mme_source_ipv4_address;
+  forward_relocation_response_p->cause.cause_value = gtpv2cCause;
+  forward_relocation_response_p->trxn  = trxn;
+
+  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S10_MME, NULL, 0, "MME_APP Sending S10 FORWARD_RELOCATION_RESPONSE_ERR to source TEID " TEID_FMT ". \n", mme_source_s10_teid);
+
+  /** Sending a message to S10. */
+  itti_send_msg_to_task (TASK_S10, INSTANCE_DEFAULT, message_p);
+
+  OAILOG_FUNC_OUT (LOG_MME_APP);
+}
 
 /**
  * Send a NAS Context Response with error code.

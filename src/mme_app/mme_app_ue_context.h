@@ -506,9 +506,6 @@ typedef struct ue_context_s {
 } ue_context_t;
 
 
-
-
-
 typedef struct mme_ue_context_s {
   uint32_t               nb_ue_managed;
   uint32_t               nb_ue_idle;

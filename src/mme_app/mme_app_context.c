@@ -2457,7 +2457,8 @@ mme_app_handle_relocation_cancel_request(
 
  OAILOG_FUNC_IN (LOG_MME_APP);
 
- IMSI_STRING_TO_IMSI64 (&relocation_cancel_request_pP->imsi, &imsi64);
+ imsi64 = imsi_to_imsi64(&relocation_cancel_request_pP->imsi);
+
  OAILOG_DEBUG (LOG_MME_APP, "Handling S10_RELOCATION_CANCEL_REQUEST REQUEST for imsi " IMSI_64_FMT " with TEID " TEID_FMT". \n", imsi64, relocation_cancel_request_pP->teid);
 
  /** Check that the UE does exist. */
@@ -2473,7 +2474,7 @@ mme_app_handle_relocation_cancel_request(
  memset ((void*)relocation_cancel_response_p, 0, sizeof (itti_s10_relocation_cancel_response_t));
  relocation_cancel_response_p->peer_ip.s_addr = relocation_cancel_request_pP->peer_ip.s_addr;
  relocation_cancel_response_p->trxn           = relocation_cancel_request_pP->trxn;
- if(!ue_context || ue_context->imsi != imsi64){
+ if(!ue_context){
    OAILOG_ERROR (LOG_MME_APP, "We didn't find this UE in list of UE: " IMSI_64_FMT". \n", imsi64);
    /** Send a relocation cancel response with 0 TEID if remote TEID is not set yet (although spec says otherwise). It may may not be that a transaction might be removed. */
    relocation_cancel_response_p->cause.cause_value = IMSI_IMEI_NOT_KNOWN;
@@ -2529,6 +2530,13 @@ mme_app_handle_relocation_cancel_request(
   * First the default bearers should be removed. Then the UE context in the eNodeB.
   */
  ue_context->s1_ue_context_release_cause = S1AP_HANDOVER_CANCELLED;
+ /**
+  * Respond with a Relocation Cancel Response (without waiting for the S10-Triggered detach to complete).
+  */
+ relocation_cancel_response_p->cause.cause_value = REQUEST_ACCEPTED;
+ itti_send_msg_to_task (TASK_S10, INSTANCE_DEFAULT, message_p);
+ /** Delete the handover procedure. */
+ mme_app_delete_s10_procedure_mme_handover(ue_context);
 
  /**
   * Send a S1AP Context Release Request.
@@ -2536,11 +2544,7 @@ mme_app_handle_relocation_cancel_request(
   * todo: macro/home
   */
  mme_app_itti_ue_context_release(ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, ue_context->s1_ue_context_release_cause, s10_handover_process->target_id.target_id.macro_enb_id.enb_id);
- /**
-  * Respond with a Relocation Cancel Response (without waiting for the S10-Triggered detach to complete).
-  */
- relocation_cancel_response_p->cause.cause_value = REQUEST_ACCEPTED;
- itti_send_msg_to_task (TASK_S10, INSTANCE_DEFAULT, message_p);
+
  /** Triggered an Implicit Detach Message back. */
  OAILOG_FUNC_OUT (LOG_MME_APP);
 }
@@ -2579,7 +2583,11 @@ mme_app_handle_relocation_cancel_response( /**< Will only be sent to cancel a ha
  }else{
    OAILOG_INFO(LOG_MME_APP, "RELOCATION_CANCEL_REPONSE was accepted at TARGET-MME side for UE with mmeUeS1apId " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
  }
- /** We will not wait for RELOCATION_CANCEL_REQUEST to send Handover Cancel Acknowledge back. */
+ /** Check if there is a S10 Handover Procedure. Remove it if exists. */
+ mme_app_delete_s10_procedure_mme_handover(ue_context);
+ /** Send Cancel Ack back. */
+ mme_app_send_s1ap_handover_cancel_acknowledge(ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, ue_context->sctp_assoc_id_key);
+
  OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 

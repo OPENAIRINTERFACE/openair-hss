@@ -65,8 +65,6 @@
 static void mme_app_send_s1ap_path_switch_request_acknowledge(mme_ue_s1ap_id_t mme_ue_s1ap_id);
 
 static void mme_app_send_s1ap_path_switch_request_failure(mme_ue_s1ap_id_t mme_ue_s1ap_id, enb_ue_s1ap_id_t enb_ue_s1ap_id, sctp_assoc_id_t assoc_id, enum s1cause cause);
-static
-void mme_app_send_s10_forward_relocation_response_err(teid_t mme_source_s10_teid, struct in_addr mme_source_ipv4_address, void *trxn,  gtpv2c_cause_value_t gtpv2cCause);
 
 static
 void mme_app_send_s1ap_handover_request(mme_ue_s1ap_id_t mme_ue_s1ap_id,
@@ -1758,36 +1756,6 @@ void mme_app_trigger_mme_initiated_dedicated_bearer_deactivation_procedure (ue_c
 
 //------------------------------------------------------------------------------
 /**
- * Send an S1AP Handover Preparation Failure to the S1AP layer.
- * Not triggering release of resources, everything will stay as it it.
- * The MME_APP ITTI message elements though need to be deallocated.
- */
-static
-void mme_app_send_s1ap_handover_preparation_failure(mme_ue_s1ap_id_t mme_ue_s1ap_id, enb_ue_s1ap_id_t enb_ue_s1ap_id, sctp_assoc_id_t assoc_id, enum s1cause cause){
-  OAILOG_FUNC_IN (LOG_MME_APP);
-  /** Send a S1AP HANDOVER PREPARATION FAILURE TO THE SOURCE ENB. */
-  MessageDef * message_p = itti_alloc_new_message (TASK_MME_APP, S1AP_HANDOVER_PREPARATION_FAILURE);
-  DevAssert (message_p != NULL);
-  DevAssert(cause != S1AP_SUCCESSFUL_HANDOVER);
-
-  itti_s1ap_handover_preparation_failure_t *s1ap_handover_preparation_failure_p = &message_p->ittiMsg.s1ap_handover_preparation_failure;
-  memset ((void*)s1ap_handover_preparation_failure_p, 0, sizeof (itti_s1ap_handover_preparation_failure_t));
-
-  /** Set the identifiers. */
-  s1ap_handover_preparation_failure_p->mme_ue_s1ap_id = mme_ue_s1ap_id;
-  s1ap_handover_preparation_failure_p->enb_ue_s1ap_id = enb_ue_s1ap_id;
-  s1ap_handover_preparation_failure_p->assoc_id = assoc_id;
-  /** Set the negative cause. */
-  s1ap_handover_preparation_failure_p->cause = cause;
-
-  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "MME_APP Sending S1AP HANDOVER_PREPARATION_FAILURE");
-  /** Sending a message to S1AP. */
-  itti_send_msg_to_task (TASK_S1AP, INSTANCE_DEFAULT, message_p);
-  OAILOG_FUNC_OUT (LOG_MME_APP);
-}
-
-//------------------------------------------------------------------------------
-/**
  * Method to send the path switch request acknowledge to the target-eNB.
  * Will not make any changes in the UE context.
  * No timer to be started.
@@ -1997,41 +1965,6 @@ mme_app_handle_path_switch_req(
 }
 
 //------------------------------------------------------------------------------
-/**
- * Send an S10 Forward Relocation response with error cause.
- * It shall not trigger creating a local S10 tunnel.
- * Parameter is the TEID & IP of the SOURCE-MME.
- */
-static
-void mme_app_send_s10_forward_relocation_response_err(teid_t mme_source_s10_teid, struct in_addr mme_source_ipv4_address, void *trxn,  gtpv2c_cause_value_t gtpv2cCause){
-  OAILOG_FUNC_IN (LOG_MME_APP);
-
-  /** Send a Forward Relocation RESPONSE with error cause: RELOCATION_FAILURE. */
-  MessageDef * message_p = itti_alloc_new_message (TASK_MME_APP, S10_FORWARD_RELOCATION_RESPONSE);
-  DevAssert (message_p != NULL);
-
-  itti_s10_forward_relocation_response_t *forward_relocation_response_p = &message_p->ittiMsg.s10_forward_relocation_response;
-  memset ((void*)forward_relocation_response_p, 0, sizeof (itti_s10_forward_relocation_response_t));
-
-  /**
-   * Set the TEID of the source MME.
-   * No need to set local_teid since no S10 tunnel will be created in error case.
-   */
-  forward_relocation_response_p->teid = mme_source_s10_teid;
-  /** Set the IPv4 address of the source MME. */
-  forward_relocation_response_p->peer_ip = mme_source_ipv4_address;
-  forward_relocation_response_p->cause.cause_value = gtpv2cCause;
-  forward_relocation_response_p->trxn  = trxn;
-
-  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S10_MME, NULL, 0, "MME_APP Sending S10 FORWARD_RELOCATION_RESPONSE_ERR to source TEID " TEID_FMT ". \n", mme_source_s10_teid);
-
-  /** Sending a message to S10. */
-  itti_send_msg_to_task (TASK_S10, INSTANCE_DEFAULT, message_p);
-
-  OAILOG_FUNC_OUT (LOG_MME_APP);
-}
-
-//------------------------------------------------------------------------------
 void
 mme_app_handle_handover_required(
      itti_s1ap_handover_required_t * const handover_required_pP
@@ -2217,7 +2150,7 @@ mme_app_handle_handover_required(
    * Keep the source side as it is.
    */
   memcpy((void*)&s10_handover_procedure->target_tai, (void*)&handover_required_pP->selected_tai, sizeof(handover_required_pP->selected_tai));
-  memcpy((void*)&s10_handover_procedure->target_ecgi, (void*)&handover_required_pP->global_enb_id, sizeof(handover_required_pP->selected_tai)); /**< Home or macro enb id. */
+  memcpy((void*)&s10_handover_procedure->target_ecgi, (void*)&handover_required_pP->global_enb_id, sizeof(handover_required_pP->global_enb_id)); /**< Home or macro enb id. */
 
   /*
    * Set the source values, too. We might need it if the MME_STATUS_TRANSFER has to be sent after Handover Notify (emulator errors).
@@ -2409,26 +2342,45 @@ mme_app_handle_handover_cancel(
      * todo: to skip this step, we might set it back to 0 after S10-Complete for the previous Handover.
      */
     // todo: currently only a single neighboring MME supported.
-    message_p = itti_alloc_new_message (TASK_MME_APP, S10_RELOCATION_CANCEL_REQUEST);
-    DevAssert (message_p != NULL);
-    itti_s10_relocation_cancel_request_t *relocation_cancel_request_p = &message_p->ittiMsg.s10_relocation_cancel_request;
-    memset ((void*)relocation_cancel_request_p, 0, sizeof (itti_s10_relocation_cancel_request_t));
-    relocation_cancel_request_p->teid = s10_handover_proc->remote_mme_teid.teid; /**< May or may not be 0. */
-    relocation_cancel_request_p->local_teid = ue_context->local_mme_teid_s10; /**< May or may not be 0. */
-    // todo: check the table!
-    relocation_cancel_request_p->peer_ip.s_addr = s10_handover_proc->remote_mme_teid.ipv4_address.s_addr;
-    /** IMSI. */
-    IMSI64_TO_STRING (ue_context->imsi, (char *)relocation_cancel_request_p->imsi.u.value);
-    // message content was set to 0
-    relocation_cancel_request_p->imsi.length = strlen ((const char *)relocation_cancel_request_p->imsi.u.value);
-    MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S10_MME, NULL, 0, "0 RELOCATION_CANCEL_REQUEST_MESSAGE");
-    itti_send_msg_to_task (TASK_S10, INSTANCE_DEFAULT, message_p);
-    OAILOG_DEBUG(LOG_MME_APP, "Successfully sent S10 RELOCATION_CANCEL_REQUEST to the target MME for the UE with IMSI " IMSI_64_FMT " and id " MME_UE_S1AP_ID_FMT ". "
-        "Continuing with HO-CANCEL PROCEDURE. \n", ue_context->mme_ue_s1ap_id, ue_context->imsi);
-    /** Delete the handover procedure. */
-    // todo: aborting the handover procedure.
-    mme_app_delete_s10_procedure_mme_handover(ue_context);
-  }
+   /** Get the neighboring MME IP. */
+   struct in_addr neigh_mme_ipv4_addr;
+   neigh_mme_ipv4_addr.s_addr = 0;
+
+   if (1) {
+     // TODO prototype may change
+     mme_app_select_service(&s10_handover_proc->target_tai, &neigh_mme_ipv4_addr);
+     //    session_request_p->peer_ip.in_addr = mme_config.ipv4.
+     if(neigh_mme_ipv4_addr.s_addr == 0){
+       /** Send a Handover Preparation Failure back. */
+       mme_app_send_s1ap_handover_cancel_acknowledge(handover_cancel_pP->mme_ue_s1ap_id, handover_cancel_pP->enb_ue_s1ap_id, handover_cancel_pP->assoc_id);
+       mme_app_delete_s10_procedure_mme_handover(ue_context);
+       OAILOG_ERROR(LOG_MME_APP, "The selected TAI " TAI_FMT " is not configured as an S10 MME neighbor for UE. "
+           "Accepting Handover cancel and removing handover procedure. \n",
+           TAI_ARG(&s10_handover_proc->target_tai), s10_handover_proc->mme_ue_s1ap_id);
+       MSC_LOG_EVENT (MSC_MMEAPP_MME, "S1AP_HANDOVER_REQUIRED Unknown ue %u", handover_required_pP->mme_ue_s1ap_id);
+       OAILOG_FUNC_OUT (LOG_MME_APP);
+     }
+   }
+
+   message_p = itti_alloc_new_message (TASK_MME_APP, S10_RELOCATION_CANCEL_REQUEST);
+   DevAssert (message_p != NULL);
+   itti_s10_relocation_cancel_request_t *relocation_cancel_request_p = &message_p->ittiMsg.s10_relocation_cancel_request;
+   memset ((void*)relocation_cancel_request_p, 0, sizeof (itti_s10_relocation_cancel_request_t));
+   relocation_cancel_request_p->teid = s10_handover_proc->remote_mme_teid.teid; /**< May or may not be 0. */
+   relocation_cancel_request_p->local_teid = ue_context->local_mme_teid_s10; /**< May or may not be 0. */
+   // todo: check the table!
+   relocation_cancel_request_p->peer_ip.s_addr = neigh_mme_ipv4_addr.s_addr;
+   /** IMSI. */
+   memcpy((void*)&relocation_cancel_request_p->imsi, &emm_context->_imsi, sizeof(imsi_t));
+   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S10_MME, NULL, 0, "0 RELOCATION_CANCEL_REQUEST_MESSAGE");
+   itti_send_msg_to_task (TASK_S10, INSTANCE_DEFAULT, message_p);
+   OAILOG_DEBUG(LOG_MME_APP, "Successfully sent S10 RELOCATION_CANCEL_REQUEST to the target MME for the UE with IMSI " IMSI_64_FMT " and id " MME_UE_S1AP_ID_FMT ". "
+       "Continuing with HO-CANCEL PROCEDURE. \n", ue_context->mme_ue_s1ap_id, ue_context->imsi);
+   /** Delete the handover procedure. */
+   // todo: aborting the handover procedure.
+//    mme_app_delete_s10_procedure_mme_handover(ue_context);
+   OAILOG_FUNC_OUT (LOG_MME_APP);
+ }
   /*
    * Update the local S10 TEID.
    */
@@ -2901,6 +2853,7 @@ mme_app_handle_forward_relocation_response(
       ue_context->e_utran_cgi.cell_identity.enb_id, ue_context->mme_ue_s1ap_id, ue_context->imsi);
   /** Send a Handover Command. */
   mme_app_send_s1ap_handover_command(ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, ue_context->e_utran_cgi.cell_identity.enb_id, forward_relocation_response_pP->eutran_container.container_value);
+  s10_handover_procedure->ho_command_sent = true;
   /** Unlink the container. */
   forward_relocation_response_pP->eutran_container.container_value = NULL;
   /**
@@ -3112,6 +3065,7 @@ mme_app_handle_handover_request_acknowledge(
        ue_context->enb_ue_s1ap_id,
        ue_context->e_utran_cgi.cell_identity.enb_id,
        handover_request_acknowledge_pP->target_to_source_eutran_container);
+   s10_handover_proc->ho_command_sent = true;
    /** Unlink the transparent container. */
    handover_request_acknowledge_pP->target_to_source_eutran_container = NULL;
    /**

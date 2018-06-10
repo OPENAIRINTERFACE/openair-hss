@@ -1866,8 +1866,18 @@ s10_mme_handle_ulp_error_indicatior(
   break;
   case NW_GTP_RELOCATION_CANCEL_REQ:
    {
-     /** Respond with an S10 Relocation Cancel Response Failure. */
-     OAILOG_WARNING (LOG_S10, "Not handling timeout for relocation cancel request for local S10-TEID " TEID_FMT ". \n", pUlpApi->u_api_info.rspFailureInfo.teidLocal);
+     /** Respond with an S10 Relocation Cancel Response Success. */
+//     OAILOG_WARNING (LOG_S10, "Not handling timeout for relocation cancel request for local S10-TEID " TEID_FMT ". \n", pUlpApi->u_api_info.rspFailureInfo.teidLocal);
+     itti_s10_relocation_cancel_response_t            *resp_p;
+     message_p = itti_alloc_new_message (TASK_S10, S10_RELOCATION_CANCEL_RESPONSE);
+     resp_p = &message_p->ittiMsg.s10_relocation_cancel_response;
+     memset(resp_p, 0, sizeof(*resp_p));
+     /** Set the destination TEID (our TEID). */
+     resp_p->teid = pUlpApi->u_api_info.rspFailureInfo.teidLocal;
+     /** Set the transaction for the triggered acknowledgement. */
+     resp_p->trxn = (void *)pUlpApi->u_api_info.rspFailureInfo.hUlpTrxn;
+     /** Set the cause. */
+     resp_p->cause.cause_value = REQUEST_ACCEPTED; /**< Would mean that this message either did not come at all or could not be dealt with properly. */
      OAILOG_FUNC_RETURN (LOG_S10, RETURNok);
    }
    break;

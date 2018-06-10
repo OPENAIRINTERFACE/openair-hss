@@ -326,7 +326,7 @@ s10_mme_thread (
 
     case TIMER_HAS_EXPIRED:{
         OAILOG_DEBUG (LOG_S10, "Processing timeout for timer_id 0x%lx and arg %p\n", received_message_p->ittiMsg.timer_has_expired.timer_id, received_message_p->ittiMsg.timer_has_expired.arg);
-//        DevAssert (nwGtpv2cProcessTimeout (received_message_p->ittiMsg.timer_has_expired.arg) == NW_OK);
+        DevAssert (nwGtpv2cProcessTimeout (received_message_p->ittiMsg.timer_has_expired.arg) == NW_OK);
       }
       break;
     case TERMINATE_MESSAGE: {
