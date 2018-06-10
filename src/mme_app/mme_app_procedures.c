@@ -256,6 +256,10 @@ mme_app_handle_mobility_completion_timer_expiry (mme_app_s10_proc_mme_handover_t
   DevAssert (ue_context != NULL);
   MessageDef                             *message_p = NULL;
   OAILOG_INFO (LOG_MME_APP, "Expired- MME Handover Completion timer for UE " MME_UE_S1AP_ID_FMT " run out. \n", ue_context->mme_ue_s1ap_id);
+  /*
+   * This timer is only expired in the inter-MME handover case for the source MME.
+   * The timer will be stopped when successfully the S10 Forward Relocation Completion message arrives.
+   */
   if(s10_proc_mme_handover->pending_clear_location_request){
     OAILOG_INFO (LOG_MME_APP, "CLR flag is set for UE " MME_UE_S1AP_ID_FMT ". Performing implicit detach. \n", ue_context->mme_ue_s1ap_id);
     s10_proc_mme_handover->proc.timer.id = MME_APP_TIMER_INACTIVE_ID;
@@ -269,8 +273,17 @@ mme_app_handle_mobility_completion_timer_expiry (mme_app_s10_proc_mme_handover_t
     itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
   }else{
     OAILOG_WARNING(LOG_MME_APP, "CLR flag is NOT set for UE " MME_UE_S1AP_ID_FMT ". Not performing implicit detach. \n", ue_context->mme_ue_s1ap_id);
+    /*
+     * Handover failed on the target MME side.
+     * Aborting the handover procedure and leaving the UE intact.
+     * Going into Idle mode.
+     */
+    /** Remove the context in the target eNB. */
+    mme_app_itti_ue_context_release(ue_context->mme_ue_s1ap_id, s10_proc_mme_handover->target_enb_ue_s1ap_id, S1AP_HANDOVER_FAILED, s10_proc_mme_handover->target_ecgi.cell_identity.enb_id);
+    ue_context->s1_ue_context_release_cause = S1AP_HANDOVER_FAILED;
+
+    OAILOG_FUNC_OUT (LOG_MME_APP);
   }
-  OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 
 //------------------------------------------------------------------------------
@@ -285,24 +298,15 @@ mme_app_s10_proc_mme_handover_t* mme_app_create_s10_procedure_mme_handover(ue_co
   s10_proc_mme_handover->mme_ue_s1ap_id = ue_context->mme_ue_s1ap_id;
 
   /*
-   * Add the timeout method and start the timer.
-   * We need a separate function and a timeout, since we saw in the tests with real equipment,
-   * that sometimes after no tracking area update request follows the inter-MME handover.
-   */
-  if(target_mme){
-    s10_proc_mme_handover->proc.proc.time_out = mme_app_handle_mme_s10_handover_completion_timer_expiry;
-  }else{
-    s10_proc_mme_handover->proc.proc.time_out = mme_app_handle_mobility_completion_timer_expiry;
-  }
-  /*
    * Start a fresh S10 MME Handover Completion timer for the forward relocation request procedure.
    * Give the procedure as the argument.
    */
-  if(target_mme && s1ap_ho_type == MME_APP_S10_PROC_TYPE_INTER_MME_HANDOVER){
+  if(s1ap_ho_type == MME_APP_S10_PROC_TYPE_INTER_MME_HANDOVER && target_mme){
+    s10_proc_mme_handover->proc.proc.time_out = mme_app_handle_mme_s10_handover_completion_timer_expiry;
     if (timer_setup (mme_config.mme_s10_handover_completion_timer, 0,
-        TASK_MME_APP, INSTANCE_DEFAULT, TIMER_ONE_SHOT, (void *) s10_proc_mme_handover, &(s10_proc_mme_handover->proc.timer.id)) < 0) {
+        TASK_MME_APP, INSTANCE_DEFAULT, TIMER_ONE_SHOT,  (void *) &(ue_context->mme_ue_s1ap_id), &(s10_proc_mme_handover->proc.timer.id)) < 0) {
       OAILOG_ERROR (LOG_MME_APP, "Failed to start the MME Handover Completion timer for UE id " MME_UE_S1AP_ID_FMT " for duration %d \n", ue_context->mme_ue_s1ap_id,
-          mme_config.mme_mobility_completion_timer);
+          mme_config.mme_s10_handover_completion_timer);
       s10_proc_mme_handover->proc.timer.id = MME_APP_TIMER_INACTIVE_ID;
       /**
        * UE will be implicitly detached, if this timer runs out. It should be manually removed.
@@ -316,12 +320,33 @@ mme_app_s10_proc_mme_handover_t* mme_app_create_s10_procedure_mme_handover(ue_co
     }
   }else{
     /*
-     * The case that it is INTRA-MME-HANDOVER or source side, we don't start a mme_app_s10_proc timer.
-     * We only leave the UE reference timer to remove the UE_Reference towards the source enb.
-     * That's not part of the procedure and also should run if the process is removed.
+     * The case that it is INTER-MME-HANDOVER or source side, we start a mme_app_s10_proc timer.
+     * It is run until the Forward_Relocation_Complete message arrives.
+     * It is used, if no Handover Notify message arrives at the target MME, that the source MME can eventually exit the handover procedure.
      */
+    s10_proc_mme_handover->proc.proc.time_out = mme_app_handle_mobility_completion_timer_expiry;
+    if (timer_setup (mme_config.mme_mobility_completion_timer * 2, 0,
+        TASK_MME_APP, INSTANCE_DEFAULT, TIMER_ONE_SHOT, (void *) &(ue_context->mme_ue_s1ap_id), &(s10_proc_mme_handover->proc.timer.id)) < 0) {
+      OAILOG_ERROR (LOG_MME_APP, "Failed to start the MME Mobility Completion timer for UE id " MME_UE_S1AP_ID_FMT " for duration %d \n", ue_context->mme_ue_s1ap_id,
+          (mme_config.mme_mobility_completion_timer * 2));
+      s10_proc_mme_handover->proc.timer.id = MME_APP_TIMER_INACTIVE_ID;
+      /**
+       * UE will be implicitly detached, if this timer runs out. It should be manually removed.
+       * S10 FW Relocation Complete removes this timer.
+       */
+    } else {
+      OAILOG_DEBUG (LOG_MME_APP, "MME APP : Activated the MME Mobility Completion timer for the source MME for UE id  " MME_UE_S1AP_ID_FMT ". "
+          "Waiting for UE to go back from IDLE mode to ACTIVE mode.. Timer Id %u. Timer duration %d \n",
+          ue_context->mme_ue_s1ap_id, s10_proc_mme_handover->proc.timer.id, (mme_config.mme_mobility_completion_timer * 2));
+      /** Upon expiration, invalidate the timer.. no flag needed. */
+    }
   }
-    /** Add the S10 procedure. */
+  /*
+   * The case that it is INTRA-MME-HANDOVER or source side, we don't start a mme_app_s10_proc timer.
+   * We only leave the UE reference timer to remove the UE_Reference towards the source enb.
+   * That's not part of the procedure and also should run if the process is removed.
+   */
+  /** Add the S10 procedure. */
   mme_app_s10_proc_t *s10_proc = (mme_app_s10_proc_t *)s10_proc_mme_handover;
 
   s10_proc->target_mme = target_mme;

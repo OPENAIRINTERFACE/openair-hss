@@ -1484,59 +1484,59 @@ s1ap_mme_handle_handover_notification(const sctp_assoc_id_t assoc_id, const sctp
   //S1ap-id-EUTRAN-CGI
 
   OAILOG_FUNC_IN (LOG_S1AP);
-  handoverNotification_p= &message->msg.s1ap_HandoverNotifyIEs;
-  // eNB UE S1AP ID is limited to 24 bits
-  enb_ue_s1ap_id = (enb_ue_s1ap_id_t) (handoverNotification_p->eNB_UE_S1AP_ID & ENB_UE_S1AP_ID_MASK);
-
-  OAILOG_DEBUG (LOG_S1AP, "Handover Notify message received from eNB UE S1AP ID: " ENB_UE_S1AP_ID_FMT "\n", enb_ue_s1ap_id);
-  /**
-   * Search the UE via the ENB-ID and the ENB_UE_S1AP_ID.
-   * The MME_UE_S1AP_ID will not be registered with the UE_REFERECNCE until HANDOVER_NOTIFY is completed.
-   */
-  enb_description_t * enb_ref = s1ap_is_enb_assoc_id_in_list (assoc_id);
-  DevAssert(enb_ref);
-  if ((ue_ref_p = s1ap_is_enb_ue_s1ap_id_in_list_per_enb(enb_ue_s1ap_id, enb_ref->enb_id)) == NULL) {
-    /*
-     * The MME UE S1AP ID provided by eNB doesn't point to any valid UE.
-     * * * * MME replies with a PATH SWITCH REQUEST FAILURE message and start operation
-     * * * * as described in TS 36.413 [11].
-     * * * * TODO
-     */
-    OAILOG_ERROR(LOG_S1AP, "ENB UE S1AP ID " ENB_UE_S1AP_ID_FMT " provided by target eNB %d doesn't point to any valid UE. \n", enb_ue_s1ap_id, enb_ref->enb_id);
-    /**
-     * Wait for the S10 Relocation Timer to run up or trigger a cancel by the source side.
-     * Nothing extra done in this case.
-     */
-    OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
-  }
-  /** Not changing any ue_reference properties. The MME_APP layer will eventually stop the S10_HANDOVER_RELOCATION TIMER. */
-  /** Get the TAI and the eCGI: Values that are sent with Attach Request. */
-  OCTET_STRING_TO_TAC (&handoverNotification_p->tai.tAC, tai.tac);
-  DevAssert (handoverNotification_p->tai.pLMNidentity.size == 3);
-  TBCD_TO_PLMN_T(&handoverNotification_p->tai.pLMNidentity, &tai.plmn);
-  DevAssert (handoverNotification_p->eutran_cgi.pLMNidentity.size == 3);
-  TBCD_TO_PLMN_T(&handoverNotification_p->eutran_cgi.pLMNidentity, &ecgi.plmn);
-  BIT_STRING_TO_CELL_IDENTITY (&handoverNotification_p->eutran_cgi.cell_ID, ecgi.cell_identity);
-
-  // Currently just use this message send the MBR to SAE-GW and inform the source MME
-  message_p = itti_alloc_new_message (TASK_S1AP, S1AP_HANDOVER_NOTIFY);
-  AssertFatal (message_p != NULL, "itti_alloc_new_message Failed");
-  memset ((void *)&message_p->ittiMsg.s1ap_handover_notify, 0, sizeof (itti_s1ap_handover_notify_t));
-  /*
-   * Bad, very bad cast...
-   */
-  S1AP_HANDOVER_NOTIFY (message_p).mme_ue_s1ap_id = (mme_ue_s1ap_id_t) handoverNotification_p->mme_ue_s1ap_id;
-  S1AP_HANDOVER_NOTIFY (message_p).enb_ue_s1ap_id = enb_ue_s1ap_id;
-  S1AP_HANDOVER_NOTIFY (message_p).tai                    = tai;       /**< MME will not check if thats the correct target eNB. Just update the UE Context. */
-  S1AP_HANDOVER_NOTIFY (message_p).cgi                    = ecgi;
-  S1AP_HANDOVER_NOTIFY (message_p).assoc_id               = assoc_id;
-
-  MSC_LOG_TX_MESSAGE (MSC_S1AP_MME,
-      MSC_MMEAPP_MME,
-      NULL, 0,
-      "0 S1AP_HANDOVER_NOTIFY mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT,
-      S1AP_HANDOVER_NOTIFY(message_p).mme_ue_s1ap_id);
-  rc =  itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
+//  handoverNotification_p= &message->msg.s1ap_HandoverNotifyIEs;
+//  // eNB UE S1AP ID is limited to 24 bits
+//  enb_ue_s1ap_id = (enb_ue_s1ap_id_t) (handoverNotification_p->eNB_UE_S1AP_ID & ENB_UE_S1AP_ID_MASK);
+//
+//  OAILOG_DEBUG (LOG_S1AP, "Handover Notify message received from eNB UE S1AP ID: " ENB_UE_S1AP_ID_FMT "\n", enb_ue_s1ap_id);
+//  /**
+//   * Search the UE via the ENB-ID and the ENB_UE_S1AP_ID.
+//   * The MME_UE_S1AP_ID will not be registered with the UE_REFERECNCE until HANDOVER_NOTIFY is completed.
+//   */
+//  enb_description_t * enb_ref = s1ap_is_enb_assoc_id_in_list (assoc_id);
+//  DevAssert(enb_ref);
+//  if ((ue_ref_p = s1ap_is_enb_ue_s1ap_id_in_list_per_enb(enb_ue_s1ap_id, enb_ref->enb_id)) == NULL) {
+//    /*
+//     * The MME UE S1AP ID provided by eNB doesn't point to any valid UE.
+//     * * * * MME replies with a PATH SWITCH REQUEST FAILURE message and start operation
+//     * * * * as described in TS 36.413 [11].
+//     * * * * TODO
+//     */
+//    OAILOG_ERROR(LOG_S1AP, "ENB UE S1AP ID " ENB_UE_S1AP_ID_FMT " provided by target eNB %d doesn't point to any valid UE. \n", enb_ue_s1ap_id, enb_ref->enb_id);
+//    /**
+//     * Wait for the S10 Relocation Timer to run up or trigger a cancel by the source side.
+//     * Nothing extra done in this case.
+//     */
+//    OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
+//  }
+//  /** Not changing any ue_reference properties. The MME_APP layer will eventually stop the S10_HANDOVER_RELOCATION TIMER. */
+//  /** Get the TAI and the eCGI: Values that are sent with Attach Request. */
+//  OCTET_STRING_TO_TAC (&handoverNotification_p->tai.tAC, tai.tac);
+//  DevAssert (handoverNotification_p->tai.pLMNidentity.size == 3);
+//  TBCD_TO_PLMN_T(&handoverNotification_p->tai.pLMNidentity, &tai.plmn);
+//  DevAssert (handoverNotification_p->eutran_cgi.pLMNidentity.size == 3);
+//  TBCD_TO_PLMN_T(&handoverNotification_p->eutran_cgi.pLMNidentity, &ecgi.plmn);
+//  BIT_STRING_TO_CELL_IDENTITY (&handoverNotification_p->eutran_cgi.cell_ID, ecgi.cell_identity);
+//
+//  // Currently just use this message send the MBR to SAE-GW and inform the source MME
+//  message_p = itti_alloc_new_message (TASK_S1AP, S1AP_HANDOVER_NOTIFY);
+//  AssertFatal (message_p != NULL, "itti_alloc_new_message Failed");
+//  memset ((void *)&message_p->ittiMsg.s1ap_handover_notify, 0, sizeof (itti_s1ap_handover_notify_t));
+//  /*
+//   * Bad, very bad cast...
+//   */
+//  S1AP_HANDOVER_NOTIFY (message_p).mme_ue_s1ap_id = (mme_ue_s1ap_id_t) handoverNotification_p->mme_ue_s1ap_id;
+//  S1AP_HANDOVER_NOTIFY (message_p).enb_ue_s1ap_id = enb_ue_s1ap_id;
+//  S1AP_HANDOVER_NOTIFY (message_p).tai                    = tai;       /**< MME will not check if thats the correct target eNB. Just update the UE Context. */
+//  S1AP_HANDOVER_NOTIFY (message_p).cgi                    = ecgi;
+//  S1AP_HANDOVER_NOTIFY (message_p).assoc_id               = assoc_id;
+//
+//  MSC_LOG_TX_MESSAGE (MSC_S1AP_MME,
+//      MSC_MMEAPP_MME,
+//      NULL, 0,
+//      "0 S1AP_HANDOVER_NOTIFY mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT,
+//      S1AP_HANDOVER_NOTIFY(message_p).mme_ue_s1ap_id);
+//  rc =  itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_RETURN (LOG_S1AP, RETURNok);
 }
 

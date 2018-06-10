@@ -1096,7 +1096,7 @@ s1ap_handle_handover_request (
     itti_s1ap_handover_failure_t *handover_failure_p = &message_p->ittiMsg.s1ap_handover_failure;
     memset ((void *)&message_p->ittiMsg.s1ap_handover_failure, 0, sizeof (itti_s1ap_handover_failure_t));
     /** Fill the S1AP Handover Failure elements per hand. */
-    handover_failure_p->mme_ue_s1ap_id = handoverRequest_p->mme_ue_s1ap_id;
+    handover_failure_p->mme_ue_s1ap_id = handover_request_pP->ue_id;
     /** No need to remove any UE_Reference to the target_enb, not existing. */
     OAILOG_FUNC_OUT (LOG_S1AP);
   }

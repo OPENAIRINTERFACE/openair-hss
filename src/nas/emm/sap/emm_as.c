@@ -1677,7 +1677,7 @@ static int _emm_as_erab_setup_req (const emm_as_activate_bearer_context_req_t * 
  ** Description: Processes the EMMAS-SAP connection establish confirm      **
  **      primitive                                                 **
  **                                                                        **
- ** EMMAS-SAP - EMM->AS: ESTABLISH_CNF - NAS signalling connection         **
+ ** EMMAS-SAP - EMM->AS: ESTABLISH_CNF - NAS signaling connection         **
  **                                                                        **
  ** Inputs:  msg:       The EMMAS-SAP primitive to process         **
  **      Others:    None                                       **

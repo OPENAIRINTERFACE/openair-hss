@@ -1351,7 +1351,10 @@ _mme_app_handle_s1ap_ue_context_release (const mme_ue_s1ap_id_t mme_ue_s1ap_id,
      * Also in the case of intra-MME handover with a EMM-REGISTERED UE, we will not receive a UE-Context-Release Request, we will send the release command.
      * No more pending S1U DL FTEID fields necessary, we will automatically remove them once with UE-Ctx-Release-Complete.
      * The bearer contexts of the PDN session will directly be updated when eNodeB sends S1U Dl FTEIDs (can be before MBR is sent to the SAE-GW).
+     *
+     * If hando
      */
+
     // release S1-U tunnel mapping in S_GW for all the active bearers for the UE
     // /** Check if this is the main S1AP UE reference, if o
     // todo:   Assert(at_least_1_BEARER_IS_ESTABLISHED_TO_SAEGW)!?!?
@@ -1363,22 +1366,21 @@ _mme_app_handle_s1ap_ue_context_release (const mme_ue_s1ap_id_t mme_ue_s1ap_id,
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 
-
 /*
-   From GPP TS 23.401 version 10.13.0 Release 10, section 5.3.5 S1 release procedure, point 6:
-   The eNodeB confirms the S1 Release by returning an S1 UE Context Release Complete message to the MME.
-   With this, the signalling connection between the MME and the eNodeB for that UE is released. This step shall be
-   performed promptly after step 4, e.g. it shall not be delayed in situations where the UE does not acknowledge the
-   RRC Connection Release.
-   The MME deletes any eNodeB related information ("eNodeB Address in Use for S1-MME" and "eNB UE S1AP
-   ID") from the UE's MME context, but, retains the rest of the UE's MME context including the S-GW's S1-U
-   configuration information (address and TEIDs). All non-GBR EPS bearers established for the UE are preserved
-   in the MME and in the Serving GW.
-   If the cause of S1 release is because of User I inactivity, Inter-RAT Redirection, the MME shall preserve the
-   GBR bearers. If the cause of S1 release is because of CS Fallback triggered, further details about bearer handling
-   are described in TS 23.272 [58]. Otherwise, e.g. Radio Connection With UE Lost, the MME shall trigger the
-   MME Initiated Dedicated Bearer Deactivation procedure (clause 5.4.4.2) for the GBR bearer(s) of the UE after
-   the S1 Release procedure is completed.
+  From GPP TS 23.401 version 10.13.0 Release 10, section 5.3.5 S1 release procedure, point 6:
+  The eNodeB confirms the S1 Release by returning an S1 UE Context Release Complete message to the MME.
+  With this, the signalling connection between the MME and the eNodeB for that UE is released. This step shall be
+  performed promptly after step 4, e.g. it shall not be delayed in situations where the UE does not acknowledge the
+  RRC Connection Release.
+  The MME deletes any eNodeB related information ("eNodeB Address in Use for S1-MME" and "eNB UE S1AP
+  ID") from the UE's MME context, but, retains the rest of the UE's MME context including the S-GW's S1-U
+  configuration information (address and TEIDs). All non-GBR EPS bearers established for the UE are preserved
+  in the MME and in the Serving GW.
+  If the cause of S1 release is because of User I inactivity, Inter-RAT Redirection, the MME shall preserve the
+  GBR bearers. If the cause of S1 release is because of CS Fallback triggered, further details about bearer handling
+  are described in TS 23.272 [58]. Otherwise, e.g. Radio Connection With UE Lost, the MME shall trigger the
+  MME Initiated Dedicated Bearer Deactivation procedure (clause 5.4.4.2) for the GBR bearer(s) of the UE after
+  the S1 Release procedure is completed.
 */
 //------------------------------------------------------------------------------
 void
@@ -1451,12 +1453,24 @@ mme_app_handle_s1ap_ue_context_release_complete (
         mme_app_delete_s10_procedure_mme_handover(ue_context);
         /** Re-Establish the UE-Reference as the main reference. */
         if(ue_context->enb_ue_s1ap_id != s1ap_ue_context_release_complete->enb_ue_s1ap_id){
-          OAILOG_DEBUG(LOG_MME_APP, "Establishing the SCTP current UE_REFERENCE enb_ue_s1ap_ue_id " ENB_UE_S1AP_ID_FMT ". ", s1ap_ue_context_release_complete->enb_ue_s1ap_id);
+
           /**
-           * This will overwrite the association towards the old eNB if single MME S1AP handover.
-           * The old eNB will be referenced by the enb_ue_s1ap_id.
+           * Check the cause, if a handover failure occurred with the target enb, without waiting for handover cancel from source, remove the UE reference to source enb, too.
            */
-          notify_s1ap_new_ue_mme_s1ap_id_association (ue_context->sctp_assoc_id_key, ue_context->enb_ue_s1ap_id, ue_context->mme_ue_s1ap_id);
+          if(ue_context->s1_ue_context_release_cause == S1AP_HANDOVER_FAILED){
+            OAILOG_DEBUG(LOG_MME_APP, "Handover failure. Removing the UE reference to the source enb with enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT ", too (no cancel received) for ueId " MME_UE_S1AP_ID_FMT ". ",
+                ue_context->enb_ue_s1ap_id, ue_context->mme_ue_s1ap_id);
+            mme_app_itti_ue_context_release(ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, ue_context->s1_ue_context_release_cause, ue_context->e_utran_cgi.cell_identity.enb_id);
+
+          }else{
+            OAILOG_DEBUG(LOG_MME_APP, "No handover failure. Establishing the SCTP current UE_REFERENCE enb_ue_s1ap_ue_id " ENB_UE_S1AP_ID_FMT ". ", s1ap_ue_context_release_complete->enb_ue_s1ap_id);
+
+            /**
+             * This will overwrite the association towards the old eNB if single MME S1AP handover.
+             * The old eNB will be referenced by the enb_ue_s1ap_id.
+             */
+            notify_s1ap_new_ue_mme_s1ap_id_association (ue_context->sctp_assoc_id_key, ue_context->enb_ue_s1ap_id, ue_context->mme_ue_s1ap_id);
+          }
         }
         OAILOG_FUNC_OUT (LOG_MME_APP);
       }
@@ -2429,7 +2443,6 @@ mme_app_handle_s10_context_acknowledge(
   // todo : Mark the UE context as invalid
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
-
 
 //------------------------------------------------------------------------------
 void

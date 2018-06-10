@@ -1133,6 +1133,7 @@ mme_app_handle_modify_bearer_resp (
   // todo: optimize the validation!
   DevAssert(current_bearer_p);
   mme_app_get_pdn_context(ue_context, current_bearer_p->pdn_cx_id, current_bearer_p->ebi, NULL, &pdn_context);
+  /** If a too fast detach happens this is null. */
   DevAssert(pdn_context);
 
   /** Set all bearers of the EBI to valid. */
@@ -1168,7 +1169,7 @@ mme_app_handle_modify_bearer_resp (
         /** Found a PDN. Establish the bearer contexts. */
         OAILOG_INFO(LOG_MME_APP, "Establishing the bearers for UE_CONTEXT for UE " MME_UE_S1AP_ID_FMT " triggered by handover notify. \n", ue_context->mme_ue_s1ap_id);
         mme_app_send_s11_modify_bearer_req(ue_context, pdn_context);
-        OAILOG_FUNC_OUT (LOG_MME_APP);
+        OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
       }
     }
     OAILOG_INFO(LOG_MME_APP, "No PDN found to establish the bearers for UE " MME_UE_S1AP_ID_FMT ". Checking for INTER-MME handover. \n", ue_context->mme_ue_s1ap_id);
@@ -1178,6 +1179,7 @@ mme_app_handle_modify_bearer_resp (
        * Sending Forward Relocation Complete Notification and waiting for acknowledgment.
        */
        /** Nothing else left to do on the target side. We don't delete the handover process. It will run and timeout until TAU is complete. */
+      OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
     }else{
       /** For INTRA-MME handover trigger the timer mentioned in TS 23.401 to remove the UE Context and the old S1AP UE reference to the source eNB. */
       ue_description_t * old_ue_reference = s1ap_is_enb_ue_s1ap_id_in_list_per_enb(s10_handover_proc->source_enb_ue_s1ap_id, s10_handover_proc->source_ecgi.cell_identity.enb_id);
@@ -1189,7 +1191,7 @@ mme_app_handle_modify_bearer_resp (
               old_ue_reference->enb_ue_s1ap_id, mme_config.mme_mobility_completion_timer);
           old_ue_reference->s1ap_handover_completion_timer.id = MME_APP_TIMER_INACTIVE_ID;
           /** Not set the timer for the UE context, since we will not deregister. */
-          OAILOG_FUNC_OUT (LOG_MME_APP);
+          OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
         } else {
           OAILOG_DEBUG (LOG_MME_APP, "MME APP : Completed Handover Procedure at (source) MME side after handling S1AP_HANDOVER_NOTIFY. "
               "Activated the S1AP Handover completion timer enbUeS1apId " ENB_UE_S1AP_ID_FMT ". Removing source eNB resources after timer.. Timer Id %u. Timer duration %d \n",
@@ -1197,14 +1199,17 @@ mme_app_handle_modify_bearer_resp (
           /** Remove the handover procedure. */
           mme_app_delete_s10_procedure_mme_handover(ue_context);
           /** Not setting the timer for MME_APP UE context. */
-          OAILOG_FUNC_OUT (LOG_MME_APP);
+          OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
         }
       }else{
         OAILOG_DEBUG(LOG_MME_APP, "No old UE_REFERENCE was found for mmeS1apUeId " MME_UE_S1AP_ID_FMT " and enbUeS1apId "ENB_UE_S1AP_ID_FMT ". Not starting a new timer. \n",
             ue_context->enb_ue_s1ap_id, s10_handover_proc->source_ecgi.cell_identity.enb_id);
-        OAILOG_FUNC_OUT (LOG_MME_APP);
+        OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
       }
     }
+  }else{
+    /** No S10 Procedure Present. */
+    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
   }
 }
 
@@ -2338,7 +2343,7 @@ mme_app_handle_handover_cancel(
   /** Check if there is a handover process. */
   mme_app_s10_proc_mme_handover_t * s10_handover_proc = mme_app_get_s10_procedure_mme_handover(ue_context);
   if(!s10_handover_proc){
-    OAILOG_ERROR (LOG_MME_APP, "UE with ue_id " MME_UE_S1AP_ID_FMT " has not an ongoing handover procedure on the (source) MME side. Sending Cancel Ack. \n", ue_context->mme_ue_s1ap_id);
+    OAILOG_WARNING(LOG_MME_APP, "UE with ue_id " MME_UE_S1AP_ID_FMT " has not an ongoing handover procedure on the (source) MME side. Sending Cancel Ack. \n", ue_context->mme_ue_s1ap_id);
     mme_app_send_s1ap_handover_cancel_acknowledge(handover_cancel_pP->mme_ue_s1ap_id, handover_cancel_pP->enb_ue_s1ap_id, handover_cancel_pP->assoc_id);
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
@@ -2369,18 +2374,19 @@ mme_app_handle_handover_cancel(
      */
     if(s10_handover_proc->target_enb_ue_s1ap_id != 0 && ue_context->enb_ue_s1ap_id != s10_handover_proc->target_enb_ue_s1ap_id){
       // todo: macro/home enb_id
-      ue_description_t * ue_reference = s1ap_is_enb_ue_s1ap_id_in_list_per_enb(s10_handover_proc->target_enb_ue_s1ap_id, s10_handover_proc->target_id.target_id.macro_enb_id.enb_id);
+      ue_description_t * ue_reference = s1ap_is_enb_ue_s1ap_id_in_list_per_enb(s10_handover_proc->target_enb_ue_s1ap_id, s10_handover_proc->target_ecgi.cell_identity.enb_id);
       if(ue_reference != NULL){
         /** UE Reference to the target eNB found. Sending a UE Context Release to the target MME BEFORE a HANDOVER_REQUEST_ACK arrives. */
         OAILOG_INFO(LOG_MME_APP, "Sending UE-Context-Release-Cmd to the target eNB %d for the UE-ID " MME_UE_S1AP_ID_FMT " and pending_enbUeS1apId " ENB_UE_S1AP_ID_FMT " (current enbUeS1apId) " ENB_UE_S1AP_ID_FMT ". \n.",
-            s10_handover_proc->target_id.target_id.macro_enb_id.enb_id, ue_context->mme_ue_s1ap_id, s10_handover_proc->target_enb_ue_s1ap_id, ue_context->enb_ue_s1ap_id);
+            s10_handover_proc->target_ecgi.cell_identity.enb_id, ue_context->mme_ue_s1ap_id, s10_handover_proc->target_enb_ue_s1ap_id, ue_context->enb_ue_s1ap_id);
         ue_context->s1_ue_context_release_cause = S1AP_HANDOVER_CANCELLED;
-        mme_app_itti_ue_context_release (ue_context->mme_ue_s1ap_id, s10_handover_proc->target_enb_ue_s1ap_id, S1AP_HANDOVER_CANCELLED, s10_handover_proc->target_id.target_id.macro_enb_id.enb_id);
+        mme_app_itti_ue_context_release (ue_context->mme_ue_s1ap_id, s10_handover_proc->target_enb_ue_s1ap_id, S1AP_HANDOVER_CANCELLED, s10_handover_proc->target_ecgi.cell_identity.enb_id);
         /**
          * No pending transparent container expected.
          * We directly respond with CANCEL_ACK, since when UE_CTX_RELEASE_CMPLT comes from targetEnb, we don't know if the current enb is target or source,
          * so we cannot decide there to send CANCEL_ACK without a flag.
          */
+        OAILOG_FUNC_OUT (LOG_MME_APP);
       }else{
         OAILOG_INFO(LOG_MME_APP, "No target UE reference is established yet. No S1AP UE context removal needed for UE-ID " MME_UE_S1AP_ID_FMT ". Responding with HO_CANCEL_ACK back to enbUeS1apId " ENB_UE_S1AP_ID_FMT ". \n.",
             ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id);
@@ -2388,12 +2394,12 @@ mme_app_handle_handover_cancel(
     }
     /** Send a HO-CANCEL-ACK to the source-MME. */
     mme_app_send_s1ap_handover_cancel_acknowledge(handover_cancel_pP->mme_ue_s1ap_id, handover_cancel_pP->enb_ue_s1ap_id, handover_cancel_pP->assoc_id);
-    OAILOG_FUNC_OUT (LOG_MME_APP);
     /** Delete the handover procedure. */
     // todo: aborting the handover procedure.
     mme_app_delete_s10_procedure_mme_handover(ue_context);
     /** Keeping the UE context as it is. */
-  }else{
+    OAILOG_FUNC_OUT (LOG_MME_APP);
+ }else{
     /* Intra MME procedure.
      *
      * Target-TAI was not in the current MME. Sending a S10 Context Release Request.
@@ -3412,10 +3418,19 @@ mme_app_handle_s1ap_handover_notify(
   *
   * Update the bearers in the SAE-GW for INTRA and INTER MME handover.
   */
-
  if(s10_handover_proc->proc.type == MME_APP_S10_PROC_TYPE_INTRA_MME_HANDOVER){
    OAILOG_DEBUG(LOG_MME_APP, "UE MME context with imsi " IMSI_64_FMT " and mmeS1apUeId " MME_UE_S1AP_ID_FMT " has successfully completed intra-MME handover process after HANDOVER_NOTIFY. \n",
        ue_context->imsi, handover_notify_pP->mme_ue_s1ap_id);
+   /*
+    * Stop the timer of the handover procedure.
+    * Don't delete the handover procedure.
+    */
+   if (s10_handover_proc->proc.timer.id != MME_APP_TIMER_INACTIVE_ID) {
+     if (timer_remove(s10_handover_proc->proc.timer.id, NULL)) {
+       OAILOG_ERROR (LOG_MME_APP, "Failed to stop handover procedure timer for the INTRA-MME handover for UE id  %d \n", ue_context->mme_ue_s1ap_id);
+     }
+     s10_handover_proc->proc.timer.id = MME_APP_TIMER_INACTIVE_ID;
+   }
    /** Update the PDN session information directly in the new UE_Context. */
    pdn_context_t * pdn_context = NULL;
    RB_FOREACH (pdn_context, PdnContexts, &ue_context->pdn_contexts) {
@@ -3523,7 +3538,17 @@ mme_app_handle_forward_relocation_complete_notification(
   */
  ue_description_t * old_ue_reference = s1ap_is_enb_ue_s1ap_id_in_list_per_enb(ue_context->enb_ue_s1ap_id, ue_context->e_utran_cgi.cell_identity.enb_id);
  if(old_ue_reference){
-   /** Start the timer of the procedure (only if target-mme for inter-MME S1ap handover). */
+   /** Stop the timer of the handover procedur first. */
+   if (s10_handover_proc->proc.timer.id != MME_APP_TIMER_INACTIVE_ID) {
+     if (timer_remove(s10_handover_proc->proc.timer.id, NULL)) {
+       OAILOG_ERROR (LOG_MME_APP, "Failed to stop handover procedure timer for the INTRA-MME handover for UE id  %d \n", ue_context->mme_ue_s1ap_id);
+     }
+     s10_handover_proc->proc.timer.id = MME_APP_TIMER_INACTIVE_ID;
+   }
+   /*
+    * Start the timer of the ue-reference and also set it to the procedure (only if target-mme for inter-MME S1ap handover).
+    * Timeout will occur in S1AP layer.
+    */
    if (timer_setup (mme_config.mme_mobility_completion_timer, 0,
        TASK_S1AP, INSTANCE_DEFAULT, TIMER_ONE_SHOT, (void *)old_ue_reference, &(old_ue_reference->s1ap_handover_completion_timer.id)) < 0) {
      OAILOG_ERROR (LOG_MME_APP, "Failed to start >s1ap_handover_completion for enbUeS1apId " ENB_UE_S1AP_ID_FMT " for duration %d \n", old_ue_reference->enb_ue_s1ap_id, mme_config.mme_mobility_completion_timer);
@@ -3625,37 +3650,6 @@ mme_app_handle_implicit_detach_timer_expiry (struct ue_context_s *ue_context)
   message_p->ittiMsg.nas_implicit_detach_ue_ind.ue_id = ue_context->mme_ue_s1ap_id;
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_IMPLICIT_DETACH_UE_IND_MESSAGE");
   itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
-  OAILOG_FUNC_OUT (LOG_MME_APP);
-}
-
-// todo: handle this inside normal mme_app_procs timeout handler
-//------------------------------------------------------------------------------
-void
-mme_app_handle_mobility_completion_timer_expiry (struct ue_context_s *ue_context)
-{
-  OAILOG_FUNC_IN (LOG_MME_APP);
-  DevAssert (ue_context != NULL);
-  MessageDef                             *message_p = NULL;
-  OAILOG_INFO (LOG_MME_APP, "Expired- MME Mobility Completion timer for UE " MME_UE_S1AP_ID_FMT " run out. \n", ue_context->mme_ue_s1ap_id);
-  /** Get the S10 Handover Procedure. */
-  mme_app_s10_proc_mme_handover_t * s10_handover_proc = mme_app_get_s10_procedure_mme_handover(ue_context);
-  if(!s10_handover_proc){
-    OAILOG_ERROR(LOG_MME_APP, "No S10 Handover procedure exists for UE " MME_UE_S1AP_ID_FMT ". Ignoring Mobility Completion Timer expiry. \n", ue_context->mme_ue_s1ap_id);
-    OAILOG_FUNC_OUT (LOG_MME_APP);
-  }
-  if(s10_handover_proc->pending_clear_location_request){
-//    OAILOG_INFO (LOG_MME_APP, "CLR flag is set for UE " MME_UE_S1AP_ID_FMT ". Performing implicit detach. \n", ue_context->mme_ue_s1ap_id);
-//    ue_context->mme_mobility_completion_timer.id = MME_APP_TIMER_INACTIVE_ID;
-//    ue_context->s1_ue_context_release_cause = S1AP_NAS_DETACH;
-//    /** Check if the CLR flag has been set. */
-//    message_p = itti_alloc_new_message (TASK_MME_APP, NAS_IMPLICIT_DETACH_UE_IND);
-//    DevAssert (message_p != NULL);
-//    message_p->ittiMsg.nas_implicit_detach_ue_ind.ue_id = ue_context->mme_ue_s1ap_id; /**< We don't send a Detach Type such that no Detach Request is sent to the UE if handover is performed. */
-//    MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_IMPLICIT_DETACH_UE_IND_MESSAGE");
-//    itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
-  }else{
-    OAILOG_WARNING(LOG_MME_APP, "CLR flag is NOT set for UE " MME_UE_S1AP_ID_FMT ". Not performing implicit detach. \n", ue_context->mme_ue_s1ap_id);
-  }
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 
