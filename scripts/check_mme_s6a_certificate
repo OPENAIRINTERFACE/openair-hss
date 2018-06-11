@@ -34,7 +34,7 @@ THIS_SCRIPT_PATH=$(dirname $(readlink -f $0))
 
 function _create_mme_certs()
 {
-  local    output_path=$1
+  local    output_path=$(readlink -e $1)
   local    fqdn=$2
 
   cd /tmp
@@ -54,7 +54,13 @@ function _create_mme_certs()
   openssl req -new -batch -out mme.csr.pem -key mme.key.pem -subj /CN=$fqdn/C=FR/ST=PACA/L=Aix/O=Eurecom/OU=CM
 
   # Certification authority
-  openssl ca -cert mme.cacert.pem -keyfile mme.cakey.pem -in mme.csr.pem -out mme.cert.pem -outdir . -batch
+  if [[ "$OS_BASEDISTRO" == "fedora" ]]; then
+    cp /etc/pki/tls/openssl.cnf .
+    sed -i 's/\/etc\/pki\/CA/\/tmp\/demoCA/' openssl.cnf
+    openssl ca -cert mme.cacert.pem -keyfile mme.cakey.pem -in mme.csr.pem -out mme.cert.pem -outdir . -batch -config ./openssl.cnf
+  else
+    openssl ca -cert mme.cacert.pem -keyfile mme.cakey.pem -in mme.csr.pem -out mme.cert.pem -outdir . -batch
+  fi
 
   if [ ! -d $output_path ]; then
     echo "Creating non existing directory: $output_path/"

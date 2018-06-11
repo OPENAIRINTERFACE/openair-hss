@@ -43,6 +43,7 @@
 
 #define AUTH_MAX_EUTRAN_VECTORS 6
 
+extern hss_config_t hss_config;
 int
 s6a_auth_info_cb (
   struct msg **msg,
@@ -235,10 +236,16 @@ s6a_auth_info_cb (
   /*
    * Fetch User data
    */
-  if (hss_mysql_auth_info (&auth_info_req, &auth_info_resp) != 0) {
+  int rc = hss_mysql_auth_info (&auth_info_req, &auth_info_resp);
+  if (rc != 0) {
+    result_code = rc;
     /*
      * Database query failed...
      */
+    if (DIAMETER_ERROR_USER_UNKNOWN == result_code) {
+      experimental = 1;
+      goto out;
+    }
     result_code = DIAMETER_AUTHENTICATION_DATA_UNAVAILABLE;
     experimental = 1;
     goto out;
@@ -291,6 +298,8 @@ s6a_auth_info_cb (
       /*
        * Generate authentication vector
        */
+      ComputeOPc (auth_info_resp.key, hss_config.operator_key_bin, auth_info_resp.opc);
+      print_buffer ("opc      : ", auth_info_resp.opc, 16);
       generate_vector (auth_info_resp.opc, imsi, auth_info_resp.key, hdr->avp_value->os.data, sqn, &vector[i]);
     }
     hss_mysql_push_rand_sqn (auth_info_req.imsi, vector[num_vectors-1].rand, sqn);

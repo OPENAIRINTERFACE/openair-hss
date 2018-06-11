@@ -24,22 +24,11 @@
 
 #  include <stdarg.h>
 
-#  if DAEMONIZE
-#    include <syslog.h>
-#    define FPRINTF_ERROR(...)                                   do {syslog (LOG_ERR,     ##__VA_ARGS__);} while(0)
-#    define FPRINTF_NOTICE(...)                                  do {syslog (LOG_NOTICE , ##__VA_ARGS__);} while(0)
-#    define FPRINTF_INFO(...)                                    do {syslog (LOG_INFO ,   ##__VA_ARGS__);} while(0)
-#    define FPRINTF_DEBUG(...)                                   do {syslog (LOG_DEBUG ,  ##__VA_ARGS__);} while(0)
-#    define VFPRINTF_ERR(...)                                    do {vsyslog (LOG_ERR ,   ##__VA_ARGS__);} while(0)
-#    define VFPRINTF_INFO(...)                                   do {vsyslog (LOG_INFO ,  ##__VA_ARGS__);} while(0)
-#    define VFPRINTF_DEBUG(...)                                  do {vsyslog (LOG_DEBUG , ##__VA_ARGS__);} while(0)
-#  else
-#    define FPRINTF_ERROR(...)                                   do {fprintf (stderr,   ##__VA_ARGS__);} while(0)
-#    define FPRINTF_NOTICE(...)                                  do {fprintf (stdout,   ##__VA_ARGS__);} while(0)
-#    define FPRINTF_INFO(...)                                    do {fprintf (stdout,   ##__VA_ARGS__);} while(0)
-#    define FPRINTF_DEBUG(...)                                   do {fprintf (stdout,   ##__VA_ARGS__);} while(0)
-#    define VFPRINTF_ERROR(...)                                  do {vfprintf (stderr , ##__VA_ARGS__);} while(0)
-#    define VFPRINTF_INFO(...)                                   do {vfprintf (stdout , ##__VA_ARGS__);} while(0)
-#    define VFPRINTF_DEBUG(...)                                  do {vfprintf (stdout , ##__VA_ARGS__);} while(0)
-#  endif
+#  define FPRINTF_ERROR(...)                                   do {fprintf (stderr,   ##__VA_ARGS__);} while(0)
+#  define FPRINTF_NOTICE(...)                                  do {fprintf (stdout,   ##__VA_ARGS__);} while(0)
+#  define FPRINTF_INFO(...)                                    do {fprintf (stdout,   ##__VA_ARGS__);} while(0)
+#  define FPRINTF_DEBUG(...)                                   do {fprintf (stdout,   ##__VA_ARGS__);} while(0)
+#  define VFPRINTF_ERROR(...)                                  do {vfprintf (stderr , ##__VA_ARGS__);} while(0)
+#  define VFPRINTF_INFO(...)                                   do {vfprintf (stdout , ##__VA_ARGS__);} while(0)
+#  define VFPRINTF_DEBUG(...)                                  do {vfprintf (stdout , ##__VA_ARGS__);} while(0)
 #endif /* FILE_LOG_SEEN */

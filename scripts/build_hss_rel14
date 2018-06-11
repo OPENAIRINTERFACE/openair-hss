@@ -19,7 +19,7 @@
 # For more information about the OpenAirInterface (OAI) Software Alliance:
 #      contact@openairinterface.org
 ################################################################################
-# file build_hss_sprint
+# file build_hss_rel14
 # brief
 # author Tien-Thinh NGUYEN
 # company Eurecom
@@ -28,32 +28,30 @@
 ################################
 # include helper functions
 ################################
-THIS_SCRIPT_PATH=$(dirname $(readlink -f $0))
-source $THIS_SCRIPT_PATH/../build/tools/build_helper
-
+HSS_SCRIPT_PATH=$(dirname $(readlink -f $0))
+source $HSS_SCRIPT_PATH/../build/tools/build_helper.hss_rel14
 
 
 function help()
 {
   echo_error " "
-  echo_error "Usage: build_hss [OPTION]..."
+  echo_error "Usage: build_hss_rel14 [OPTION]..."
   echo_error "Build the experimental HSS executable. (oai_hss)"
   echo_error " "
   echo_error "Options:"
   echo_error "Mandatory arguments to long options are mandatory for short options too."
   echo_error "  -c, --clean                               Clean the build generated files: config, object, executable files (build from scratch)"
   echo_error "  -d, --debug                               Compile with debug informations."
-  echo_error "  -D, --daemon                              Build HSS as a daemon."
   echo_error "  -F, --force                               No interactive script for installation of software packages."
   echo_error "  -h, --help                                Print this help."
-  echo_error "  -i, --check-installed-software            Check installed software packages necessary to build and run HSS (support Ubuntu 16.04, 14.04)."
+  echo_error "  -i, --check-installed-software            Check installed software packages necessary to build and run HSS (support $SUPPORTED_DISTRO)."
+  echo_error "                                            If filled, then OPc key in table users for all subscribers (IMSI) will be computed/updated."
   echo_error "  -v, --verbose                             Build process verbose."
 }
 
 function main()
 {
   local -i clean=0
-  local -i daemon=0
   local -i verbose=0
   local -i var_check_install_oai_software=0
   local -i force=0
@@ -63,20 +61,21 @@ function main()
 
   until [ -z "$1" ]; do
     case "$1" in
+      -b | --build-type)
+        # For compat with CI only, TODO
+        list_include_item "Debug Release RelWithDebInfo MinSizeRel" $2
+        [[ $? -ne 0 ]] && echo_error "Build type $2 not recognized" && return $?
+        cmake_args="$cmake_args -DCMAKE_BUILD_TYPE=$2"
+        shift 2;
+        ;;
       -c | --clean)
         clean=1
         echo "Clean the build generated files (build from scratch)"
         shift;
         ;;
       -d | --debug)
-        cmake_args="$cmake_args -DDEBUG=1"
+        make_args="$make_args -DDEBUG=1"
         echo "Compile with debug informations"
-        shift;
-        ;;
-      -D | --daemon)
-        daemon=1
-        cmake_args="$cmake_args -DDAEMONIZE=1"
-        echo "Build HSS as a daemon"
         shift;
         ;;
       -F | --force)
@@ -86,10 +85,10 @@ function main()
         ;;
       -h | --help)
         help
-        exit 0
+        return 0
         ;;
       -i | --check-installed-software)
-        echo "Check installed software packages necessary to build and run HSS (support Ubuntu 14.04, 16.04):"
+        echo "Check installed software packages necessary to build and run HSS (support $SUPPORTED_DISTRO):"
         set_openair_env
         var_check_install_oai_software=1
         shift;
@@ -104,27 +103,44 @@ function main()
       *)   
         echo "Unknown option $1"
         help
-        exit 1
+        return 1
         ;;
     esac
   done
 
-  if [ $var_check_install_oai_software -gt 0 ];then
-    #update_package_db
-    #check_install_hss_software  $force
-    #TTN
-    #install required packages
-    install_libs
-    #donwload and install submodules
-    init_submodules 
-    #build_util and Hsssec
-    build_util 
-    build_hsssec
-
-    echo "HSS not compiled, to compile it, re-run build_hss without -i option"
-    exit 0
+  if [ $clean -ne 0 ]; then
+    if [[ $verbose -eq 1 ]]; then
+      echo "Cleaning HSS"
+    fi
+    rm -Rf $HSS_SCRIPT_PATH/../build/hss_rel14/build 2>&1
+    mkdir -m 777 -p -v $HSS_SCRIPT_PATH/../build/hss_rel14/build
   fi
-  
+  if [ ! -d $HSS_SCRIPT_PATH/../build/hss_rel14/build ]; then
+    mkdir -m 777 -p -v $HSS_SCRIPT_PATH/../build/hss_rel14/build
+  fi
+
+  if [ $var_check_install_oai_software -gt 0 ];then
+    update_package_db
+    [[ $? -ne 0 ]] && return $?
+    
+    # Temp, do it here in the same node as HSS
+    #if [ $force -gt 0 ];then
+    #    $HSS_SCRIPT_PATH/build_cassandra -i --force
+    #else
+    #    $HSS_SCRIPT_PATH/build_cassandra -i 
+    #fi
+    #[[ $? -ne 0 ]] && return $?
+    
+    check_install_hss_software  $force
+    if [ $? -ne 0 ]; then
+        echo_error "Error: HSS software installation failed"
+        return 1
+    else
+        echo_success "HSS software installation successful"
+        echo "HSS not compiled, to compile it, re-run build_hss without -i option"
+        return 0
+    fi
+  fi
 
   set_openair_env
   if [[ $verbose -eq 1 ]]; then
@@ -132,51 +148,30 @@ function main()
   fi
   
   if [[ z$OPENAIRCN_DIR = z ]]; then
-    echo_fatal "OPENAIRCN_DIR env variable not set, exiting"
+    echo_error "OPENAIRCN_DIR env variable not set, exiting"
+    return 1
   fi
 
 
   local dlog=$OPENAIRCN_DIR/build/log
-  
-  mkdir -m 777 -p $dlog $dlog
+
+  mkdir -m 777 -p $dlog
 
 
   cmake_args="$cmake_args -DOPENAIRCN_DIR=$OPENAIRCN_DIR"
 
+  build_util 
+  [[ $? -ne 0 ]] && return $?
+  build_hsssec
+  [[ $? -ne 0 ]] && return $?
   cd $OPENAIRCN_DIR/build/hss_rel14
-  if [ $clean -ne 0 ]; then
-    if [[ $verbose -eq 1 ]]; then
-      echo "Cleaning HSS"
-    fi
-    rm -Rf build 2>&1
-    mkdir -m 777 -p -v build
-  fi
-  if [ ! -d ./build ]; then
-    mkdir -m 777 -p -v build
-  fi
-  
-  make clean
-  make
-  #
-  $SUDO killall -q hss
-  $SUDO cp -upv $OPENAIRCN_DIR/build/hss_rel14/bin/hss /usr/local/bin/ && echo_success "hss installed"
-  
-  
-  if [ ! -d /usr/local/etc/oai ]; then
-    $SUDO mkdir -p /usr/local/etc/oai
-  fi
-  
-  if [ ! -d /usr/local/etc/oai/freeDiameter ]; then
-    $SUDO mkdir -p /usr/local/etc/oai/freeDiameter
-  fi
+  make $make_args
+  [[ $? -ne 0 ]] && return $?
+  chmod -f 777 *
 
-  #Copy the HSS configuration file to /usr/local/etc/oai
-  $SUDO cp -upv $OPENAIRCN_DIR/etc/hss_rel14.conf /usr/local/etc/oai
-  $SUDO cp -upv $OPENAIRCN_DIR/etc/hss_rel14.json /usr/local/etc/oai
-  $SUDO cp -upv $OPENAIRCN_DIR/etc/hss_rel14_fd.conf /usr/local/etc/oai/freeDiameter
-  $SUDO cp -upv $OPENAIRCN_DIR/etc/acl.conf /usr/local/etc/oai/freeDiameter
-   
- 
+  $SUDO killall -q oai_hss
+  $SUDO cp -upv $OPENAIRCN_DIR/build/hss_rel14/bin/hss /usr/local/bin/oai_hss && echo_success "oai_hss installed"
+  return 0
 }
 
 

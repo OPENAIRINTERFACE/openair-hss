@@ -41,6 +41,7 @@ typedef struct hss_config_s {
 
   char *random;
   char  random_bool;
+  char *pid_directory;
 } hss_config_t;
 
 int hss_config_init(int argc, char *argv[], hss_config_t *hss_config_p);

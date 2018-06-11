@@ -62,6 +62,7 @@
 #define HSS_CONFIG_STRING_OPERATOR_KEY             "OPERATOR_key"
 #define HSS_CONFIG_STRING_RANDOM                   "RANDOM"
 #define HSS_CONFIG_STRING_FREEDIAMETER_CONF_FILE   "FD_conf"
+#define HSS_CONFIG_STRING_PID_DIRECTORY            "PID_DIRECTORY"
 
 
 // LG TODO fd_g_debug_lvl
@@ -160,6 +161,7 @@ hss_display_banner (
   void)
 {
   FPRINTF_NOTICE ( "==== EURECOM %s v%s ====\n", PACKAGE_NAME, PACKAGE_VERSION);
+  FPRINTF_NOTICE ( "Initial built: %s %s\n", __DATE__, __TIME__);
   FPRINTF_NOTICE ( "Please report any bug to: %s\n\n", PACKAGE_BUGREPORT);
 }
 
@@ -297,7 +299,8 @@ hss_config_parse_file (
     if (  (config_setting_lookup_string( setting, HSS_CONFIG_STRING_OPERATOR_KEY, (const char **)&astring) )) {
       hss_config_p->operator_key = strdup(astring);
     } else {
-      FPRINTF_NOTICE( "Failed to parse HSS configuration file token %s!\n", HSS_CONFIG_STRING_OPERATOR_KEY);
+      FPRINTF_ERROR( "Failed to parse HSS configuration file token %s!\n", HSS_CONFIG_STRING_OPERATOR_KEY);
+      return ret;
     }
 
     if (  (config_setting_lookup_string( setting, HSS_CONFIG_STRING_RANDOM, (const char **)&astring) )) {
@@ -311,6 +314,13 @@ hss_config_parse_file (
      hss_config_p->freediameter_config = strdup(astring);
     } else {
       FPRINTF_ERROR( "Failed to parse HSS configuration file token %s!\n", HSS_CONFIG_STRING_FREEDIAMETER_CONF_FILE);
+      return ret;
+    }
+
+    if (  (config_setting_lookup_string( setting, HSS_CONFIG_STRING_PID_DIRECTORY, (const char **)&astring) )) {
+     hss_config_p->pid_directory = strdup(astring);
+    } else {
+      FPRINTF_ERROR( "Failed to parse HSS configuration file token %s!\n", HSS_CONFIG_STRING_PID_DIRECTORY);
       return ret;
     }
   } else {

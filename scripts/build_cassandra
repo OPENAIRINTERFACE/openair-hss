@@ -29,7 +29,7 @@
 # include helper functions
 ################################
 THIS_SCRIPT_PATH=$(dirname $(readlink -f $0))
-source $THIS_SCRIPT_PATH/../build/tools/build_helper
+source $THIS_SCRIPT_PATH/../build/tools/build_helper.cassandra
 
 
 
@@ -82,12 +82,18 @@ function main()
 
   if [ $var_check_install_cassandra_software -gt 0 ];then
     #Install Java-8 and Cassandra    
-    install_cassandra
+    check_install_cassandra_software $force
+    if [ $? -ne 0 ]; then
+        echo_error "Error: Cassandra installation failed"
+        return 1
+    else
+        echo_success "Cassandra installation successful"
+    fi
     
     $SUDO cp -upv $OPENAIRCN_DIR/etc/cassandra.conf /usr/local/etc/oai
 
-    echo "Cassandra has been installed successfully."
-    exit 0
+    echo_success "Cassandra has been installed successfully."
+    return  0
   fi
   
   #stop cassandra and clean the log files before modifying the configuration   

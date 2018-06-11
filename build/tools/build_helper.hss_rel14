@@ -1,0 +1,248 @@
+################################################################################
+# Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The OpenAirInterface Software Alliance licenses this file to You under
+# the Apache License, Version 2.0  (the "License"); you may not use this file
+# except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#-------------------------------------------------------------------------------
+# For more information about the OpenAirInterface (OAI) Software Alliance:
+#      contact@openairinterface.org
+################################################################################
+
+# file build_helper.hss_rel14
+# brief
+# author Laurent Thomas, Lionel GAUTHIER, Tien-Thinh Nguyen
+#
+#######################################
+################################
+# include helper functions
+################################
+SCRIPT=$(readlink -f ${BASH_SOURCE})
+THIS_BH_HSS_SCRIPT_PATH=`dirname $SCRIPT`
+source $THIS_BH_HSS_SCRIPT_PATH/build_helper
+
+#-------------------------------------------------------------------------------
+build_freeDiameter()
+{
+  pushd $OPENAIRCN_DIR/build/hss_rel14/modules/freeDiameter
+  rm -rf build
+  mkdir -p build
+  cd build
+  $CMAKE ..
+  [[ $? -ne 0 ]] && popd && return $?
+  awk '{if (/^DISABLE_SCTP/) gsub(/OFF/, "ON"); print}' CMakeCache.txt > tmp && mv tmp CMakeCache.txt
+  make
+  res=$?
+  [[ $res -ne 0 ]] && popd && return $res
+  $SUDO make install
+  res=$?
+  [[ $res -ne 0 ]] && popd && return $res
+  popd
+  return $?
+}
+
+#-------------------------------------------------------------------------------
+build_c_ares()
+{
+  pushd $OPENAIRCN_DIR/build/hss_rel14/modules/c-ares
+  ./buildconf
+  res=$?
+  [[ $res -ne 0 ]] && popd && return $res
+  ./configure
+  res=$?
+  [[ $res -ne 0 ]] && popd && return $res
+  make
+  res=$?
+  [[ $res -ne 0 ]] && popd && return $res
+  $SUDO make install
+  res=$?
+  [[ $res -ne 0 ]] && popd && return $res
+  popd
+  return $?
+}
+
+#-------------------------------------------------------------------------------
+build_cpp_driver()
+{
+  pushd $OPENAIRCN_DIR/build/hss_rel14/modules/cpp-driver
+  rm -rf build
+  mkdir -p build
+  cd build
+  $CMAKE ..
+  res=$?
+  [[ $res -ne 0 ]] && popd && return $res
+  make
+  res=$?
+  [[ $res -ne 0 ]] && popd && return $res
+  $SUDO make install
+  res=$?
+  [[ $res -ne 0 ]] && popd && return $res
+  popd
+  return $?
+}
+
+#-------------------------------------------------------------------------------
+build_pistache()
+{
+  pushd $OPENAIRCN_DIR/build/hss_rel14/modules/pistache
+  rm -rf build
+  mkdir -p build
+  cd build
+  $CMAKE -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release ..
+  res=$?
+  [[ $res -ne 0 ]] && popd && return $res
+  make
+  res=$?
+  [[ $res -ne 0 ]] && popd && return $res
+  $SUDO make install
+  res=$?
+  [[ $res -ne 0 ]] && popd && return $res
+  popd
+  return $?
+}
+
+
+#-------------------------------------------------------------------------------
+init_submodules()
+{
+  git submodule init
+  [[ $? -ne 0 ]] && return $?
+  git submodule update
+  [[ $? -ne 0 ]] && return $?
+  git submodule foreach git pull origin master
+  [[ $? -ne 0 ]] && return $?
+
+  set_openair_env
+  dir=$OPENAIRCN_DIR/build/hss_rel14
+ 
+  build_freeDiameter
+  [[ $? -ne 0 ]] && return $?
+  build_c_ares
+  [[ $? -ne 0 ]] && return $?
+  build_cpp_driver
+  [[ $? -ne 0 ]] && return $?
+  build_pistache
+  [[ $? -ne 0 ]] && return $?
+  
+  $SUDO ldconfig
+  return $?
+}
+
+#-------------------------------------------------------------------------------
+build_util()
+{
+  pushd $OPENAIRCN_DIR/build/hss_rel14/util
+  rm -rf build
+  mkdir -p build
+  make
+  res=$?
+  popd
+  return $res
+}
+
+
+#-------------------------------------------------------------------------------
+build_hsssec()
+{
+  pushd $OPENAIRCN_DIR/build/hss_rel14/hsssec
+  rm -rf build
+  mkdir -p build
+  make
+  res=$?
+  popd
+  return $res
+}
+
+
+#-------------------------------------------------------------------------------
+build_hss()
+{
+  pushd $OPENAIRCN_DIR/build/hss_rel14
+  make clean
+  make
+  res=$?
+  popd
+  return $res
+}
+
+#-------------------------------------------------------------------------------
+#arg1 is force (no interactive script)
+check_install_hss_software() {
+  if ! check_supported_distribution; then
+    echo_error "Your distribution $(get_distribution_release) is not supported by openair-cn"
+    return 1
+  fi
+  if [ $1 -gt 0 ]; then 
+    OPTION="-y"
+  else
+    OPTION=""
+  fi
+
+  check_enable_epel_repos
+
+  # packages
+  if [[ $OS_DISTRO == "ubuntu" ]]; then
+    PACKAGE_LIST="\
+      g++ \
+      make \
+      $CMAKE \
+      libuv1-dev \
+      libssl-dev \
+      autotools-dev \
+      libtool-bin \
+      m4 \
+      automake \
+      libmemcached-dev \
+      memcached \
+      cmake-curses-gui \
+      gcc \
+      bison \
+      flex \
+      libsctp-dev \
+      libgnutls-dev \
+      libgcrypt-dev \
+      libidn11-dev \
+      nettle-dev"
+  elif [[ "$OS_BASEDISTRO" == "fedora" ]]; then
+    # LG: TODO check package list for Fedora
+    PACKAGE_LIST="\
+      g++ \
+      make \
+      $CMAKE \
+      libuv-dev \
+      libssl-dev \
+      autotools-dev \
+      libtool-bin \
+      m4 \
+      automake \
+      libmemcached-dev \
+      memcached \
+      cmake-curses-gui \
+      gcc \
+      bison \
+      flex \
+      libsctp-dev \
+      libgnutls-dev \
+      libgcrypt-dev \
+      libidn11-dev \
+      nettle-dev"
+  else
+    echo_fatal "$OS_DISTRO is not a supported distribution."
+  fi
+  $SUDO $INSTALLER install $OPTION $PACKAGE_LIST
+  [[ $? -ne 0 ]] && return $?
+
+  init_submodules
+  return $? 
+}
+

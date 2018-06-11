@@ -76,7 +76,7 @@ function main(){
   # test if tables have been created
   mysql -h $mysql_hostname -u $hss_username --password=$hss_password  -e "desc $database_name.users" > /dev/null 2>&1
   if [ $? -eq 1 ]; then 
-    mysql -h $mysql_hostname -u $hss_username --password=$hss_password $database_name < $OPENAIRCN_DIR/SRC/OAI_HSS/db/$database_name.sql
+    mysql -h $mysql_hostname -u $hss_username --password=$hss_password $database_name < $OPENAIRCN_DIR/src/oai_hss/db/$database_name.sql
     if [ $? -ne 0 ]; then
       echo_error "HSS: $database_name tables creation failed"
       return 1

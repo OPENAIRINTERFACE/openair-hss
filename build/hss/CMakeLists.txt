@@ -283,5 +283,4 @@ target_link_libraries (oai_hss
 
 # Default parameters
 # Does not work on simple install (fqdn in /etc/hosts 127.0.1.1)
-add_boolean_option(DAEMONIZE         false          "If true, HSS execute like a daemon (fork).")  
 
