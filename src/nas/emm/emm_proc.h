@@ -83,7 +83,6 @@ typedef enum {
 
 typedef struct emm_attach_request_ies_s {
   emm_proc_attach_type_t         type;
-  mme_ue_s1ap_id_t               old_ue_id;        /* OLD identifier                                  */
   additional_update_type_t       additional_update_type;
   bool                           is_native_sc;
   bool                           is_new;
@@ -118,7 +117,7 @@ typedef struct emm_detach_request_ies_s {
 
 typedef struct emm_tau_request_ies_s {
   EpsUpdateType                  eps_update_type;
-  mme_ue_s1ap_id_t               old_ue_id;        /* OLD identifier                                  */
+  uint8_t                        nas_ul_count;
   bool                           is_native_sc;
   bool                           is_initial;
   ksi_t                          ksi;

@@ -3180,37 +3180,34 @@ mme_app_handle_handover_failure (
    /** Leave the context as it is. */
    OAILOG_FUNC_OUT (LOG_MME_APP);
  }
+
+ /** Set a local TEID. */
+ if(!ue_context->local_mme_teid_s10){
+   /** Set the Source MME_S10_FTEID the same as in S11. */
+   teid_t local_teid = 0x0;
+   do{
+     local_teid = (teid_t) (rand() % 0xFFFFFFFF);
+   }while(mme_ue_context_exists_s10_teid(&mme_app_desc.mme_ue_contexts, local_teid) != NULL);
+
+   mme_ue_context_update_coll_keys (&mme_app_desc.mme_ue_contexts, ue_context,
+       ue_context->enb_s1ap_id_key,
+       ue_context->mme_ue_s1ap_id,
+       ue_context->imsi,
+       ue_context->mme_teid_s11,       // mme_teid_s11 is new
+       local_teid,       // set with forward_relocation_request!
+       &ue_context->guti);
+ }else{
+   OAILOG_INFO (LOG_MME_APP, "A S10 Local TEID " TEID_FMT " already exists. Not reallocating for UE: %08x %d(dec)\n",
+       ue_context->local_mme_teid_s10, ue_context->mme_ue_s1ap_id, ue_context->mme_ue_s1ap_id);
+ }
+
  /**
   * UE is in UE_UNREGISTERED state. Assuming inter-MME S1AP Handover was triggered.
   * Sending FW_RELOCATION_RESPONSE with error code and implicit detach.
   */
+ mme_app_send_s10_forward_relocation_response_err(s10_handover_proc->remote_mme_teid.teid, s10_handover_proc->remote_mme_teid.ipv4_address, s10_handover_proc->forward_relocation_trxn, RELOCATION_FAILURE);
 
- // Initiate Implicit Detach for the UE
- message_p = itti_alloc_new_message (TASK_MME_APP, S10_FORWARD_RELOCATION_RESPONSE);
- DevAssert (message_p != NULL);
- itti_s10_forward_relocation_response_t *forward_relocation_response_p = &message_p->ittiMsg.s10_forward_relocation_response;
- memset ((void*)forward_relocation_response_p, 0, sizeof (itti_s10_forward_relocation_response_t));
- /** Set the target S10 TEID. */
- forward_relocation_response_p->teid    = s10_handover_proc->remote_mme_teid.teid; /**< Only a single target-MME TEID can exist at a time. */
- /** Get the MME from the origin TAI. */
- forward_relocation_response_p->peer_ip = s10_handover_proc->remote_mme_teid.ipv4_address; /**< todo: Check this is correct. */
- /**
-  * Trxn is the only object that has the last seqNum, but we can only search the TRXN in the RB-Tree with the seqNum.
-  * We need to store the last seqNum locally.
-  */
- forward_relocation_response_p->trxn    = s10_handover_proc->forward_relocation_trxn;
- /** Set the cause. */
- forward_relocation_response_p->cause.cause_value = RELOCATION_FAILURE;
-
- /** Perform an implicit detach. Will remove all S10 procedures. */
- ue_context->s1_ue_context_release_cause = S1AP_IMPLICIT_CONTEXT_RELEASE;
- message_p = itti_alloc_new_message (TASK_MME_APP, NAS_IMPLICIT_DETACH_UE_IND);
- DevAssert (message_p != NULL);
- itti_nas_implicit_detach_ue_ind_t *nas_implicit_detach_ue_ind_p = &message_p->ittiMsg.nas_implicit_detach_ue_ind;
- memset ((void*)nas_implicit_detach_ue_ind_p, 0, sizeof (itti_nas_implicit_detach_ue_ind_t));
- message_p->ittiMsg.nas_implicit_detach_ue_ind.ue_id = ue_context->mme_ue_s1ap_id;
- itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
-
+ ue_context->s1_ue_context_release_cause = S1AP_HANDOVER_FAILED;
  /** No timers, etc. is needed. */
  OAILOG_FUNC_OUT (LOG_MME_APP);
 }

@@ -250,13 +250,41 @@ emm_proc_identification_complete (
          */
         imsi64_t imsi64 = imsi_to_imsi64(imsi);
 
-        emm_data_context_t * imsi_emm_ctx_test = emm_data_context_get_by_imsi (&_emm_data, imsi64);
-        DevAssert(!imsi_emm_ctx_test);
+        emm_data_context_t * imsi_emm_ctx_duplicate = emm_data_context_get_by_imsi (&_emm_data, imsi64);
+        if(imsi_emm_ctx_duplicate){ /**< We have the UE with this IMSI (different GUTI). */
+          OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - We already have EMM context with ueId " MME_UE_S1AP_ID_FMT " and IMSI " IMSI_64_FMT ". Setting new EMM context with ueId " MME_UE_S1AP_ID_FMT " into pending mode "
+              "and implicitly detaching old EMM context. \n", imsi_emm_ctx_duplicate->ue_id, imsi64, emm_ctx->ue_id);
+          void * unused= NULL;
+          nas_stop_T_retry_specific_procedure(emm_ctx->ue_id, &((nas_emm_specific_proc_t*)(((nas_base_proc_t *)ident_proc)->parent))->retry_timer, unused);
+          nas_start_T_retry_specific_procedure(emm_ctx->ue_id, &((nas_emm_specific_proc_t*)(((nas_base_proc_t *)ident_proc)->parent))->retry_timer, ((nas_emm_specific_proc_t*)(((nas_base_proc_t *)ident_proc)->parent))->retry_cb, emm_ctx);
+          /** Set the old mme_ue_s1ap id which will be checked. */
+          ((nas_emm_specific_proc_t*)(((nas_base_proc_t *)ident_proc)->parent))->old_ue_id = imsi_emm_ctx_duplicate->ue_id;
+          /*
+           * Perform an implicit detach on the new one.
+           */
+          imsi_emm_ctx_duplicate->emm_cause = EMM_CAUSE_ILLEGAL_UE;
+
+          /** Clean up new UE context that was created to handle new attach request. */
+          emm_sap_t                               emm_sap = {0};
+          emm_sap.primitive = EMMCN_IMPLICIT_DETACH_UE; /**< UE context will be purged. */
+          emm_sap.u.emm_cn.u.emm_cn_implicit_detach.emm_cause   = imsi_emm_ctx_duplicate->emm_cause; /**< Not sending detach type. */
+          emm_sap.u.emm_cn.u.emm_cn_implicit_detach.detach_type = 0; /**< Not sending detach type. */
+          emm_sap.u.emm_cn.u.emm_cn_implicit_detach.ue_id = imsi_emm_ctx_duplicate->ue_id;
+          /*
+           * Don't send the detach type, such that no NAS Detach Request is sent to the UE.
+           * Depending on the cause, the MME_APP will check and inform the NAS layer to continue with the procedure, before the timer expires.
+           */
+          emm_sap_send (&emm_sap);
+
+          //              unlock_ue_contexts(ue_context);
+          //             unlock_ue_contexts(imsi_ue_mm_ctx);
+          OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
+        }
 
         emm_ctx_set_valid_imsi(emm_ctx, imsi, imsi64);
         emm_data_context_upsert_imsi(&_emm_data, emm_ctx);
 
-        imsi_emm_ctx_test = emm_data_context_get_by_imsi (&_emm_data, imsi64);
+        emm_data_context_t * imsi_emm_ctx_test = emm_data_context_get_by_imsi (&_emm_data, imsi64);
         DevAssert(imsi_emm_ctx_test);
 
       } else if (imei) {

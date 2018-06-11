@@ -1365,6 +1365,7 @@ s10_mme_remove_ue_tunnel (
   hashtable_rc_t                          hash_rc = HASH_TABLE_OK;
   DevAssert (stack_p );
   DevAssert (remove_ue_tunnel_p );
+  OAILOG_FUNC_IN (LOG_S10);
   MSC_LOG_RX_MESSAGE (MSC_S10_MME, MSC_SGW, NULL, 0, "Removing S10 UE Tunnels for local S10 teid " TEID_FMT " ",
       remove_ue_tunnel_p->local_teid);
   // delete local s10 tunnel
@@ -1399,7 +1400,7 @@ s10_mme_remove_ue_tunnel (
     }else{
       OAILOG_ERROR (LOG_S10, "Could NOT FIND A GTPv2-C hTunnel for local teid %X @ DELETION \n", remove_ue_tunnel_p->local_teid);
     }
-    return RETURNerror;
+    OAILOG_FUNC_RETURN(LOG_S10, RETURNerror);
 
   } else{
 
@@ -1431,8 +1432,8 @@ s10_mme_remove_ue_tunnel (
     DevAssert (HASH_TABLE_OK == hash_rc);
 
     OAILOG_DEBUG(LOG_S10, "Successfully removed S10 Tunnel local teid %X\n", remove_ue_tunnel_p->local_teid);
+    OAILOG_FUNC_RETURN(LOG_S10, RETURNok);
   }
-  return RETURNok;
 }
 
 //------------------------------------------------------------------------------

@@ -249,7 +249,7 @@ mme_app_handle_mme_s10_handover_completion_timer_expiry (mme_app_s10_proc_mme_ha
         s10_proc_mme_handover->forward_relocation_trxn, REQUEST_REJECTED);
   }
   /** Delete the procedure. */
-   mme_app_delete_s10_procedure_mme_handover(ue_context);
+  mme_app_delete_s10_procedure_mme_handover(ue_context);
 
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
@@ -292,21 +292,31 @@ mme_app_handle_mobility_completion_timer_expiry (mme_app_s10_proc_mme_handover_t
       ue_context->s1_ue_context_release_cause = S1AP_HANDOVER_FAILED;
     }else{
       OAILOG_WARNING(LOG_MME_APP, "Releasing the request for the source-ENB for INTER handover for UE " MME_UE_S1AP_ID_FMT ". Not performing implicit detach. \n", ue_context->mme_ue_s1ap_id);
-      /*
-       * Intra and we are source, so remove the handover procedure locally and send Release Command to source eNB.
-       * We might have send HO-Command, but FW-Relocation-Complete message has not arrived.
-       * So we must set the source ENB into idle mode manually.
-       */
-      if(s10_proc_mme_handover->ho_command_sent){
-        OAILOG_WARNING(LOG_MME_APP, "HO command already set for UE. Setting S1AP reference to idle mode for UE " MME_UE_S1AP_ID_FMT ". Not performing implicit detach. \n", ue_context->mme_ue_s1ap_id);
-        mme_app_itti_ue_context_release(ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, S1AP_HANDOVER_FAILED, ue_context->e_utran_cgi.cell_identity.enb_id);
-        /** Remove the handover procedure. */
-        mme_app_delete_s10_procedure_mme_handover(ue_context);
+      /** Check if the UE is in connected mode. */
+      if(ue_context->ecm_state == ECM_CONNECTED){
+        OAILOG_DEBUG(LOG_MME_APP, "UE " MME_UE_S1AP_ID_FMT " is in ECM connected state (assuming handover). \n", ue_context->mme_ue_s1ap_id);
+        /*
+         * Intra and we are source, so remove the handover procedure locally and send Release Command to source eNB.
+         * We might have send HO-Command, but FW-Relocation-Complete message has not arrived.
+         * So we must set the source ENB into idle mode manually.
+         */
+        if(s10_proc_mme_handover->ho_command_sent){
+          OAILOG_WARNING(LOG_MME_APP, "HO command already set for UE. Setting S1AP reference to idle mode for UE " MME_UE_S1AP_ID_FMT ". Not performing implicit detach. \n", ue_context->mme_ue_s1ap_id);
+          mme_app_itti_ue_context_release(ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, S1AP_HANDOVER_FAILED, ue_context->e_utran_cgi.cell_identity.enb_id);
+          /** Remove the handover procedure. */
+          mme_app_delete_s10_procedure_mme_handover(ue_context);
+          OAILOG_FUNC_OUT (LOG_MME_APP);
+        }else{
+          /** This should not happen. The Ho-Cancel should come first. */
+          OAILOG_WARNING(LOG_MME_APP, "HO command not set yet for UE. Setting S1AP reference to idle mode for UE " MME_UE_S1AP_ID_FMT ". Not performing implicit detach. \n", ue_context->mme_ue_s1ap_id);
+          mme_app_send_s1ap_handover_preparation_failure(ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, ue_context->sctp_assoc_id_key, S1AP_HANDOVER_FAILED);
+          /** Not setting UE into idle mode at source. */
+          OAILOG_FUNC_OUT (LOG_MME_APP);
+        }
       }else{
-        /** This should not happen. The Ho-Cancel should come first. */
-        OAILOG_WARNING(LOG_MME_APP, "HO command not set yet for UE. Setting S1AP reference to idle mode for UE " MME_UE_S1AP_ID_FMT ". Not performing implicit detach. \n", ue_context->mme_ue_s1ap_id);
-        mme_app_send_s1ap_handover_preparation_failure(ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, ue_context->sctp_assoc_id_key, S1AP_HANDOVER_FAILED);
-        /** Not setting UE into idle mode at source. */
+        OAILOG_DEBUG(LOG_MME_APP, "UE " MME_UE_S1AP_ID_FMT " is in idle state (assuming idle tau). Removing handover procedure. \n", ue_context->mme_ue_s1ap_id);
+        mme_app_delete_s10_procedure_mme_handover(ue_context);
+        OAILOG_FUNC_OUT (LOG_MME_APP);
       }
     }
 
@@ -331,6 +341,7 @@ mme_app_s10_proc_mme_handover_t* mme_app_create_s10_procedure_mme_handover(ue_co
    */
   if(s1ap_ho_type == MME_APP_S10_PROC_TYPE_INTER_MME_HANDOVER && target_mme){
     s10_proc_mme_handover->proc.proc.time_out = mme_app_handle_mme_s10_handover_completion_timer_expiry;
+    mme_config_read_lock (&mme_config);
     if (timer_setup (mme_config.mme_s10_handover_completion_timer * 12, 0,
         TASK_MME_APP, INSTANCE_DEFAULT, TIMER_ONE_SHOT,  (void *) &(ue_context->mme_ue_s1ap_id), &(s10_proc_mme_handover->proc.timer.id)) < 0) {
       OAILOG_ERROR (LOG_MME_APP, "Failed to start the MME Handover Completion timer for UE id " MME_UE_S1AP_ID_FMT " for duration %d \n", ue_context->mme_ue_s1ap_id,
@@ -346,6 +357,7 @@ mme_app_s10_proc_mme_handover_t* mme_app_create_s10_procedure_mme_handover(ue_co
           ue_context->mme_ue_s1ap_id, s10_proc_mme_handover->proc.timer.id, mme_config.mme_s10_handover_completion_timer * 12);
       /** Upon expiration, invalidate the timer.. no flag needed. */
     }
+    mme_config_unlock (&mme_config);
   }else{
     /*
      * The case that it is INTER-MME-HANDOVER or source side, we start a mme_app_s10_proc timer.
@@ -353,6 +365,7 @@ mme_app_s10_proc_mme_handover_t* mme_app_create_s10_procedure_mme_handover(ue_co
      * It is used, if no Handover Notify message arrives at the target MME, that the source MME can eventually exit the handover procedure.
      */
     s10_proc_mme_handover->proc.proc.time_out = mme_app_handle_mobility_completion_timer_expiry;
+    mme_config_read_lock (&mme_config);
     if (timer_setup (mme_config.mme_mobility_completion_timer * 12, 0,
         TASK_MME_APP, INSTANCE_DEFAULT, TIMER_ONE_SHOT, (void *) &(ue_context->mme_ue_s1ap_id), &(s10_proc_mme_handover->proc.timer.id)) < 0) {
       OAILOG_ERROR (LOG_MME_APP, "Failed to start the MME Mobility Completion timer for UE id " MME_UE_S1AP_ID_FMT " for duration %d \n", ue_context->mme_ue_s1ap_id,
@@ -368,6 +381,8 @@ mme_app_s10_proc_mme_handover_t* mme_app_create_s10_procedure_mme_handover(ue_co
           ue_context->mme_ue_s1ap_id, s10_proc_mme_handover->proc.timer.id, (mme_config.mme_mobility_completion_timer * 12));
       /** Upon expiration, invalidate the timer.. no flag needed. */
     }
+    mme_config_unlock (&mme_config);
+
   }
   /*
    * The case that it is INTRA-MME-HANDOVER or source side, we don't start a mme_app_s10_proc timer.
@@ -437,6 +452,7 @@ static void mme_app_free_s10_procedure_mme_handover(mme_app_s10_proc_t **s10_pro
 //------------------------------------------------------------------------------
 void mme_app_delete_s10_procedure_mme_handover(ue_context_t * const ue_context)
 {
+  OAILOG_FUNC_IN (LOG_MME_APP);
   if (ue_context->s10_procedures) {
     mme_app_s10_proc_t *s10_proc = NULL;
 
@@ -455,6 +471,8 @@ void mme_app_delete_s10_procedure_mme_handover(ue_context_t * const ue_context)
           if (timer_remove(s10_proc->timer.id, NULL)) {
             OAILOG_ERROR (LOG_MME_APP, "Failed to stop the procedure timer for -MMME handover for UE id  %d \n", ue_context->mme_ue_s1ap_id);
             s10_proc->timer.id = MME_APP_TIMER_INACTIVE_ID;
+          }else{
+            OAILOG_DEBUG(LOG_MME_APP, "Successfully removed timer for -MMME handover for UE id  %d \n", ue_context->mme_ue_s1ap_id);
           }
         }
         s10_proc->timer.id = MME_APP_TIMER_INACTIVE_ID;
@@ -462,7 +480,7 @@ void mme_app_delete_s10_procedure_mme_handover(ue_context_t * const ue_context)
 //        if(s10_proc->target_mme)
         remove_s10_tunnel_endpoint(ue_context, s10_proc->peer_ip);
         mme_app_free_s10_procedure_mme_handover(&s10_proc);
-        return;
+        OAILOG_FUNC_OUT (LOG_MME_APP);
       }else if (MME_APP_S10_PROC_TYPE_INTRA_MME_HANDOVER == s10_proc->type){
         LIST_REMOVE(s10_proc, entries);
         /*
@@ -483,10 +501,13 @@ void mme_app_delete_s10_procedure_mme_handover(ue_context_t * const ue_context)
         /** Remove the S10 Tunnel endpoint and set the UE context S10 as invalid. */
 //        remove_s10_tunnel_endpoint(ue_context, s10_proc);
         mme_app_free_s10_procedure_mme_handover(&s10_proc);
-        return;
+        OAILOG_FUNC_OUT (LOG_MME_APP);
       }
     }
+    OAILOG_FUNC_OUT (LOG_MME_APP);
   }
+  OAILOG_INFO(LOG_MME_APP, "No S10 Procedures existing for UE " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
+  OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 
 /*

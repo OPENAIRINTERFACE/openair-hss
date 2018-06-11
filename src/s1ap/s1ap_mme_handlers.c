@@ -1764,7 +1764,7 @@ s1ap_mme_handle_handover_resource_allocation_response(const sctp_assoc_id_t asso
                       S1AP_HANDOVER_REQUEST_ACKNOWLEDGE (message_p).eps_bearer_id,
                       S1AP_HANDOVER_REQUEST_ACKNOWLEDGE (message_p).bearer_s1u_enb_fteid.teid);
   rc =  itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
-  OAILOG_FUNC_RETURN (LOG_S1AP, RETURNok);
+  OAILOG_FUNC_RETURN (LOG_S1AP, rc);
 }
 
 int

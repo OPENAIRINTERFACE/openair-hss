@@ -404,19 +404,19 @@ gtpv2c_ambr_ie_set (
    * MCC Decimal | MCC Hundreds
    */
 
-  uint8_t                                 ambr_br[16];
+  uint8_t                                 ambr_br[8];
   uint8_t                                 *p_ambr;
   p_ambr = ambr_br;
 
-  memset(ambr_br, 0, 16);
+  memset(ambr_br, 0, 8);
 
-  INT64_TO_BUFFER(ambr->br_ul, p_ambr);
-  p_ambr+=8;
+  INT32_TO_BUFFER(ambr->br_ul, p_ambr);
+  p_ambr+=4;
 
-  INT64_TO_BUFFER(ambr->br_dl, p_ambr);
+  INT32_TO_BUFFER(ambr->br_dl, p_ambr);
   // todo: byte order?
 
-  rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_AMBR, 16, 0, p_ambr);
+  rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_AMBR, 8, 0, ambr_br);
   DevAssert (NW_OK == rc);
   return RETURNok;
 }
