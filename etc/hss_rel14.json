@@ -1,0 +1,18 @@
+{"common": {
+    "fdcfg": "/usr/local/etc/oai/freeDiameter/hss_rel14_fd.conf",
+    "originhost": "hss.openair4G.eur",
+    "originrealm": "openair4G.eur" 
+ },
+ "hss": {
+    "gtwhost": "*",
+    "gtwport" : 9080,
+    "restport" : 9081,
+    "casssrv": "192.168.112.60", 
+    "cassusr": "root",
+    "casspwd": "root",
+    "cassdb" : "vhss",
+    "randv"  : true,
+    "optkey" : "63bfa50ee6523365ff14c1f45f88737d",
+    "reloadkey"  : false
+ }
+}

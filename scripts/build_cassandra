@@ -1,0 +1,122 @@
+#!/bin/bash
+################################################################################
+# Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The OpenAirInterface Software Alliance licenses this file to You under 
+# the Apache License, Version 2.0  (the "License"); you may not use this file
+# except in compliance with the License.  
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#-------------------------------------------------------------------------------
+# For more information about the OpenAirInterface (OAI) Software Alliance:
+#      contact@openairinterface.org
+################################################################################
+# file install_cassandra
+# brief run script for Cassandra.
+# author  Tien-Thinh NGUYEN
+# company Eurecom
+# email:  tien-thinh.nguyen@eurecom.fr 
+#
+################################
+# include helper functions
+################################
+THIS_SCRIPT_PATH=$(dirname $(readlink -f $0))
+source $THIS_SCRIPT_PATH/../build/tools/build_helper
+
+
+
+function help()
+{
+  echo_error " "
+  echo_error "Usage: build_cassandra [OPTION]..."
+  echo_error "Build Cassandra DB"
+  echo_error " "
+  echo_error "Options:"
+  echo_error "Mandatory arguments to long options are mandatory for short options too."
+  echo_error "  -F, --force                               No interactive script for installation of software packages."
+  echo_error "  -h, --help                                Print this help."
+  echo_error "  -i, --check-installed-software            Check installed software packages necessary to build and run Cassandra (support Ubuntu 16.04)."
+}
+
+
+function main()
+{
+  local -i verbose=0
+  local -i var_check_install_cassandra_software=0
+  local -i force=0
+  local    realm=""
+
+  until [ -z "$1" ]; do
+    case "$1" in
+      -F | --force)
+        force=1
+        echo "Force set (no interactive)"
+        shift;
+        ;;
+      -h | --help)
+        help
+        exit 0
+        ;;
+      -i | --check-installed-software)
+        echo "Check installed software packages necessary to build and run Cassandra (support Ubuntu 16.04):"
+        set_openair_env
+        var_check_install_cassandra_software=1
+        shift;
+        ;;
+      *)   
+        echo "Unknown option $1"
+        help
+        exit 1
+        ;;
+    esac
+  done
+
+
+  if [ $var_check_install_cassandra_software -gt 0 ];then
+    #Install Java-8 and Cassandra    
+    install_cassandra
+    
+    $SUDO cp -upv $OPENAIRCN_DIR/etc/cassandra.conf /usr/local/etc/oai
+
+    echo "Cassandra has been installed successfully."
+    exit 0
+  fi
+  
+  #stop cassandra and clean the log files before modifying the configuration   
+  clean_log_cassandra
+  
+  #Update the Cassandra configuration
+  #get Cassandra_Server_IP from the configuration file
+  value="`cat /usr/local/etc/oai/cassandra.conf | cut -d "#" -f1 | grep 'cassandra_server_IP' | tr -d " " | grep "="`"
+  eval $value
+  var_name="cassandra_server_IP"
+  Cassandra_Server_IP=${!var_name}
+  echo $Cassandra_Server_IP
+  
+  #set values in the configuration file /etc/cassandra/cassandra.yaml
+  $SUDO sed -i "s/'Test Cluster'/'HSS Cluster'/g" /etc/cassandra/cassandra.yaml
+  #set seeds to Cassandra_Server_IP
+  $SUDO sed -i "s/"127.0.0.1"/$Cassandra_Server_IP/g" /etc/cassandra/cassandra.yaml
+  #set listen_address and rpc_address to Cassandra_Server_IP
+  $SUDO sed -i "s/"localhost"/$Cassandra_Server_IP/g" /etc/cassandra/cassandra.yaml
+  #set endpoint_snitch
+  $SUDO sed -i 's/'SimpleSnitch'/'GossipingPropertyFileSnitch'/g' /etc/cassandra/cassandra.yaml
+  #uncomment prefer_local=true in /etc/cassandra/cassandra-rackdc.properties
+  $SUDO sed -i '/prefer_local/s/^#//g' /etc/cassandra/cassandra-rackdc.properties
+  
+  $SUDO service cassandra start   
+  
+}
+
+
+main "$@"
+
+

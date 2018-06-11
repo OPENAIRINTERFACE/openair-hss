@@ -1,0 +1,18 @@
+[submodule "build/hss_rel14/modules/c-ares"]
+	path = build/hss_rel14/modules/c-ares
+	url = https://github.com/c-ares/c-ares.git
+[submodule "build/hss_rel14/modules/rapidjson"]
+	path = build/hss_rel14/modules/rapidjson
+	url = https://github.com/miloyip/rapidjson.git
+[submodule "build/hss_rel14/modules/cpp-driver"]
+	path = build/hss_rel14/modules/cpp-driver
+	url = https://github.com/datastax/cpp-driver.git
+[submodule "build/hss_rel14/modules/spdlog"]
+	path = build/hss_rel14/modules/spdlog
+	url = https://github.com/gabime/spdlog.git
+[submodule "build/hss_rel14/modules/freeDiameter"]
+	path = build/hss_rel14/modules/freeDiameter
+	url = https://gerrit.opencord.org/freeDiameter.git
+[submodule "build/hss_rel14/modules/pistache"]
+	path = build/hss_rel14/modules/pistache
+	url = https://github.com/oktal/pistache.git
