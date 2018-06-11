@@ -31,6 +31,9 @@
 #include "sgw_config.h"
 #include "pgw_config.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef struct spgw_config_s {
   sgw_config_t sgw_config;
@@ -46,5 +49,9 @@ int spgw_config_parse_opt_line (
   int argc,
   char *argv[],
   spgw_config_t * spgw_config_p);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FILE_SPGW_CONFIG_SEEN */

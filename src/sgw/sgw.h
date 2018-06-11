@@ -33,13 +33,18 @@
 
 #include "bstrlib.h"
 #include "queue.h"
-
 #include "hashtable.h"
+#include "obj_hashtable.h"
+
 #include "commonDef.h"
 #include "common_types.h"
 #include "sgw_context_manager.h"
 #include "gtpv1u_sgw_defs.h"
 #include "pgw_pcef_emulation.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef struct sgw_app_s {
 
@@ -51,8 +56,11 @@ typedef struct sgw_app_s {
 
   struct in_addr sgw_ip_address_S5_S8_up; // unused now
 
-  // key is S11 S-GW local teid
+  // key is S11 S-GW local teid, value is S11 tunnel id pair
   hash_table_ts_t *s11teid2mme_hashtable;
+
+  // key is paa, value is S11 s-gw local teid
+  obj_hash_table_uint64_t *ip2s11teid;
 
   // key is S1-U S-GW local teid
   //hash_table_t *s1uteid2enb_hashtable;
@@ -73,9 +81,14 @@ struct ipv4_list_elm_s {
 typedef struct pgw_app_s {
   STAILQ_HEAD(ipv4_list_free_head_s,     ipv4_list_elm_s)  ipv4_list_free;
   STAILQ_HEAD(ipv4_list_allocated_head_s, ipv4_list_elm_s) ipv4_list_allocated;
+  // TODO clarify deactivated_predefined_pcc_rules versus predefined_pcc_rules
   hash_table_ts_t                                         *deactivated_predefined_pcc_rules;
   hash_table_ts_t                                         *predefined_pcc_rules;
 } pgw_app_t;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

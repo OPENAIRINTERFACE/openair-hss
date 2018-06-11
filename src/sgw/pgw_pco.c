@@ -42,6 +42,11 @@
 #include "rfc_1877.h"
 #include "rfc_1332.h"
 #include "spgw_config.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 //------------------------------------------------------------------------------
 int pgw_pco_push_protocol_or_container_id(protocol_configuration_options_t * const pco, pco_protocol_or_container_id_t * const poc_id /* STOLEN_REF poc_id->contents*/)
 {
@@ -79,8 +84,10 @@ int pgw_process_pco_request_ipcp(protocol_configuration_options_t * const pco_re
   OAILOG_DEBUG (LOG_SPGW_APP, "PCO: Protocol identifier IPCP length %u\n", poc_id->length);
 
   ipcp_req_code = poc_id->contents->data[pco_in_index++];
+  UNUSED(ipcp_req_code);
   ipcp_req_identifier = poc_id->contents->data[pco_in_index++];
   ipcp_req_length = (((uint16_t) poc_id->contents->data[pco_in_index]) << 8) | ((uint16_t) poc_id->contents->data[pco_in_index + 1]);
+  UNUSED(ipcp_req_length);
   OAILOG_TRACE (LOG_SPGW_APP, "PCO: Protocol identifier IPCP (0x%x) code 0x%x identifier 0x%x length %u\n", poc_id->id, ipcp_req_code, ipcp_req_identifier, ipcp_req_length);
   pco_in_index += 2;
   ipcp_req_remaining_length = ipcp_req_remaining_length - 1 - 1 - 2;
@@ -303,3 +310,7 @@ int pgw_process_pco_request(
   }
   return RETURNok;
 }
+
+#ifdef __cplusplus
+}
+#endif

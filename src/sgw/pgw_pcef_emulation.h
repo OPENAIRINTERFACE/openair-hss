@@ -29,8 +29,16 @@
 #ifndef FILE_PGW_PCEF_EMULATION_SEEN
 #define FILE_PGW_PCEF_EMULATION_SEEN
 
+#include <stdbool.h>
+
 #include "queue.h"
 #include "3gpp_24.007.h"
+#include "3gpp_24.008.h"
+#include "3gpp_29.274.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef enum {
   PF_ID_MIN = 0,
@@ -99,5 +107,10 @@ void pgw_pcef_emulation_apply_rule(const sdf_id_t sdf_id, const struct pgw_confi
 void pgw_pcef_emulation_apply_sdf_filter(sdf_filter_t   * const sdf_f, const sdf_id_t sdf_id, const struct pgw_config_s * const pgw_config_p);
 bstring pgw_pcef_emulation_packet_filter_2_iptable_string(packet_filter_contents_t * const packetfiltercontents, uint8_t direction);
 int pgw_pcef_get_sdf_parameters (const sdf_id_t sdf_id, bearer_qos_t * const bearer_qos, packet_filter_t * const packet_filter, uint8_t * const num_pf);
+pcc_rule_t*  pgw_pcef_get_rule_by_id(const sdf_id_t sdf_id);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FILE_PGW_PCEF_EMULATION_SEEN */

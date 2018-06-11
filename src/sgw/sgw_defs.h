@@ -29,6 +29,15 @@
 #ifndef FILE_SGW_DEFS_SEEN
 #define FILE_SGW_DEFS_SEEN
 #include "spgw_config.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int sgw_init(spgw_config_t *spgw_config_pP);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FILE_SGW_DEFS_SEEN */

@@ -29,6 +29,14 @@
 #ifndef FILE_SGW_HANDLERS_SEEN
 #define FILE_SGW_HANDLERS_SEEN
 
+#include "gtpv1_u_messages_types.h"
+#include "ip_forward_messages_types.h"
+#include "s11_messages_types.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int sgw_handle_create_session_request(const itti_s11_create_session_request_t * const session_req_p);
 int sgw_handle_sgi_endpoint_created  (itti_sgi_create_end_point_response_t   * const resp_p);
 int sgw_handle_sgi_endpoint_updated  (const itti_sgi_update_end_point_response_t   * const resp_p);
@@ -40,4 +48,9 @@ int sgw_handle_delete_session_request(const itti_s11_delete_session_request_t * 
 int sgw_handle_release_access_bearers_request(const itti_s11_release_access_bearers_request_t * const release_access_bearers_req_pP);
 int sgw_no_pcef_create_dedicated_bearer(s11_teid_t teid);
 int sgw_handle_create_bearer_response (const itti_s11_create_bearer_response_t * const create_bearer_response_pP);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* FILE_SGW_HANDLERS_SEEN */

@@ -29,6 +29,10 @@
 
 #include "gtpv1u.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 //#define GTPV1U_LINEAR_TEID_ALLOCATION 1
 
 #if GTPV1U_LINEAR_TEID_ALLOCATION
@@ -46,3 +50,8 @@ gtpv1u_new_teid (
   return random () + random () % (RAND_MAX - 1) + 1;
 #endif
 }
+
+#ifdef __cplusplus
+}
+#endif
+

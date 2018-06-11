@@ -34,7 +34,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
-#include <syslog.h>
 #include <string.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -62,7 +61,6 @@
 #include "security_types.h"
 #include "common_types.h"
 #include "common_defs.h"
-
 #include "intertask_interface_init.h"
 #include "udp_primitives_server.h"
 #include "sgw_config.h"
@@ -83,69 +81,27 @@ main (
 {
   char   *pid_file_name = NULL;
 
+  CHECK_INIT_RETURN (shared_log_init (MAX_LOG_PROTOS));
+  CHECK_INIT_RETURN (OAILOG_INIT (LOG_SPGW_ENV, OAILOG_LEVEL_NOTICE, MAX_LOG_PROTOS));
+
   // Currently hard-coded value. TODO: add as config option.
   pid_file_name = get_exe_absolute_path("/var/run");
 
-#if DAEMONIZE
-  pid_t pid, sid; // Our process ID and Session ID
-
-  // Fork off the parent process
-  pid = fork();
-  if (pid < 0) {
-    exit(EXIT_FAILURE);
-  }
-  // If we got a good PID, then we can exit the parent process.
-  if (pid > 0) {
-    exit(EXIT_SUCCESS);
-  }
-  // Change the file mode mask
-  umask(0);
-
-  // Create a new SID for the child process
-  sid = setsid();
-  if (sid < 0) {
-    exit(EXIT_FAILURE); // Log the failure
-  }
-
-  // Change the current working directory
-  if ((chdir("/")) < 0) {
-    // Log the failure
-    exit(EXIT_FAILURE);
-  }
-
-  /* Close out the standard file descriptors */
-  close(STDIN_FILENO);
-  close(STDOUT_FILENO);
-  close(STDERR_FILENO);
-
   if (! is_pid_file_lock_success(pid_file_name)) {
-    free_wrapper(pid_file_name);
+    free_wrapper((void**) &pid_file_name);
     exit (-EDEADLK);
   }
-#else
-  if (! is_pid_file_lock_success(pid_file_name)) {
-    free_wrapper((void**)&pid_file_name);
-    exit (-EDEADLK);
-  }
-#endif
 
-  CHECK_INIT_RETURN (shared_log_init (MAX_LOG_PROTOS));
-  CHECK_INIT_RETURN (OAILOG_INIT (LOG_SPGW_ENV, OAILOG_LEVEL_NOTICE, MAX_LOG_PROTOS));
-  /*
-   * Calling each layer init function
-   */
-  CHECK_INIT_RETURN (itti_init (TASK_MAX, THREAD_MAX, MESSAGES_ID_MAX, tasks_info, messages_info,
-#if ENABLE_ITTI_ANALYZER
-          messages_definition_xml,
-#else
-          NULL,
-#endif
-          NULL));
+  CHECK_INIT_RETURN (itti_init (TASK_MAX, THREAD_MAX, MESSAGES_ID_MAX, tasks_info, messages_info, NULL, NULL));
   CHECK_INIT_RETURN (async_system_init());
   /*
    * Parse the command line for options and set the mme_config accordingly.
    */
   CHECK_INIT_RETURN (spgw_config_parse_opt_line (argc, argv, &spgw_config));
+  /*
+   * Calling each layer init function
+   */
+
   MSC_INIT (MSC_SP_GW, THREAD_MAX + TASK_MAX);
   CHECK_INIT_RETURN (udp_init ());
   CHECK_INIT_RETURN (s11_sgw_init (&spgw_config.sgw_config));
@@ -156,6 +112,6 @@ main (
    */
   itti_wait_tasks_end ();
   pid_file_unlock();
-  free_wrapper((void**)pid_file_name);
+  free_wrapper((void**) &pid_file_name);
   return 0;
 }

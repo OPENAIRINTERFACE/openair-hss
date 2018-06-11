@@ -36,6 +36,8 @@
 
 #include "dynamic_memory_check.h"
 #include "log.h"
+#include "hashtable.h"
+#include "obj_hashtable.h"
 #include "msc.h"
 #include "assertions.h"
 #include "conversions.h"
@@ -47,6 +49,10 @@
 #include "sgw_context_manager.h"
 #include "pgw_pcef_emulation.h"
 #include "pgw_procedures.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 //------------------------------------------------------------------------------
 void pgw_delete_procedures(s_plus_p_gw_eps_bearer_context_information_t * const ctx_p)
@@ -123,3 +129,6 @@ void pgw_free_procedure_create_bearer(pgw_ni_cbr_proc_t **ni_cbr_proc)
   free_wrapper((void**)ni_cbr_proc);
 }
 
+#ifdef __cplusplus
+}
+#endif

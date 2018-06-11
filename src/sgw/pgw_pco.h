@@ -28,6 +28,10 @@
 #ifndef FILE_PGW_PCO_SEEN
 #define FILE_PGW_PCO_SEEN
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * protocol_configuration_options_ids_t
  *
@@ -59,5 +63,9 @@ int pgw_process_pco_request(
   const protocol_configuration_options_t * const pco_req,
   protocol_configuration_options_t * pco_resp,
   protocol_configuration_options_ids_t * const pco_ids);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

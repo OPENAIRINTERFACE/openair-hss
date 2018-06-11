@@ -30,6 +30,9 @@
 
 #include "queue.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef enum {
   // should introduce Gx IP CAN procedures, etc, here
@@ -66,6 +69,8 @@ pgw_ni_cbr_proc_t* pgw_get_procedure_create_bearer(s_plus_p_gw_eps_bearer_contex
 void pgw_delete_procedure_create_bearer(s_plus_p_gw_eps_bearer_context_information_t *ctx_p);
 void pgw_free_procedure_create_bearer(pgw_ni_cbr_proc_t **ni_cbr_proc);
 
-
+#ifdef __cplusplus
+}
+#endif
 
 #endif

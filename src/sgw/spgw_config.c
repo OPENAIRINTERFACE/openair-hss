@@ -59,6 +59,10 @@
 #include "dynamic_memory_check.h"
 #include "async_system.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 static void spgw_config_display (spgw_config_t * config_p);
 
 //------------------------------------------------------------------------------
@@ -71,9 +75,11 @@ static void spgw_config_init (spgw_config_t * config_pP)
 //------------------------------------------------------------------------------
 static int spgw_config_process (spgw_config_t * config_pP)
 {
+#if ENABLE_LIBGTPNL
   async_system_command (TASK_ASYNC_SYSTEM, SPGW_WARN_ON_ERROR, "sysctl -w net.ipv4.ip_forward=1");
   async_system_command (TASK_ASYNC_SYSTEM, SPGW_WARN_ON_ERROR, "sync");
-
+#endif
+  
   if (RETURNok != sgw_config_process (&config_pP->sgw_config)) {
     return RETURNerror;
   }
@@ -215,3 +221,8 @@ int spgw_config_parse_opt_line (
   spgw_config_display (spgw_config_p);
   return RETURNok;
 }
+
+#ifdef __cplusplus
+}
+#endif
+

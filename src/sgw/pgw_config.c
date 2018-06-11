@@ -38,8 +38,6 @@
 #include <stdbool.h>
 #include <unistd.h>
 #include <netdb.h>
-#include <net/if.h>
-#include <sys/ioctl.h>
 #include <pthread.h>
 
 #include "bstrlib.h"
@@ -49,10 +47,15 @@
 #include "dynamic_memory_check.h"
 #include "log.h"
 #include "intertask_interface.h"
+#include "if.h"
 #include "async_system.h"
 #include "common_defs.h"
 #include "pgw_pcef_emulation.h"
 #include "spgw_config.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #ifdef LIBCONFIG_LONG
 #  define libconfig_int long
@@ -77,67 +80,22 @@ int pgw_config_process (pgw_config_t * config_pP)
   uint64_t                                counter64 = 0;
   conf_ipv4_list_elm_t                   *ip4_ref = NULL;
 
-
+#if ENABLE_LIBGTPNL
   async_system_command (TASK_ASYNC_SYSTEM, PGW_ABORT_ON_ERROR, "iptables -t mangle -F OUTPUT");
   async_system_command (TASK_ASYNC_SYSTEM, PGW_ABORT_ON_ERROR, "iptables -t mangle -F POSTROUTING");
 
   if (config_pP->masquerade_SGI) {
     async_system_command (TASK_ASYNC_SYSTEM, PGW_ABORT_ON_ERROR, "iptables -t nat -F PREROUTING");
   }
+#endif
 
-  // Get ipv4 address
-  char str[INET_ADDRSTRLEN];
-  char str_sgi[INET_ADDRSTRLEN];
+  if (get_mtu_from_iface(config_pP->ipv4.if_name_S5_S8, &config_pP->ipv4.mtu_S5_S8)) {
+    OAILOG_CRITICAL(LOG_SPGW_APP, "Failed to probe S5-S8 inet addr\n");
+  }
 
   // GET SGi informations
-  {
-    struct ifreq ifr;
-    memset(&ifr, 0, sizeof(ifr));
-    int fd = socket(AF_INET, SOCK_DGRAM, 0);
-    ifr.ifr_addr.sa_family = AF_INET;
-    strncpy(ifr.ifr_name, (const char *)config_pP->ipv4.if_name_SGI->data, IFNAMSIZ-1);
-    if (ioctl(fd, SIOCGIFADDR, &ifr)) {
-      OAILOG_CRITICAL(LOG_SPGW_APP, "Failed to read SGI ip addresses: error %s\n", strerror(errno));
-      return RETURNerror;
-    }
-    struct sockaddr_in* ipaddr = (struct sockaddr_in*)&ifr.ifr_addr;
-    if (inet_ntop(AF_INET, (const void *)&ipaddr->sin_addr, str_sgi, INET_ADDRSTRLEN) == NULL) {
-      OAILOG_ERROR (LOG_SPGW_APP, "inet_ntop");
-      return RETURNerror;
-    }
-    config_pP->ipv4.SGI.s_addr = ipaddr->sin_addr.s_addr;
-
-    ifr.ifr_addr.sa_family = AF_INET;
-    strncpy(ifr.ifr_name, (const char *)config_pP->ipv4.if_name_SGI->data, IFNAMSIZ-1);
-    if (ioctl(fd, SIOCGIFMTU, &ifr)) {
-      OAILOG_CRITICAL(LOG_SPGW_APP, "Failed to probe SGI MTU: error %s\n", strerror(errno));
-      return RETURNerror;
-    }
-    config_pP->ipv4.mtu_SGI = ifr.ifr_mtu;
-    OAILOG_DEBUG (LOG_SPGW_APP, "Found SGI interface MTU=%d\n", config_pP->ipv4.mtu_SGI);
-    close(fd);
-  }
-  // GET S5_S8 informations
-  {
-    struct ifreq ifr;
-    memset(&ifr, 0, sizeof(ifr));
-    int fd = socket(AF_INET, SOCK_DGRAM, 0);
-    ifr.ifr_addr.sa_family = AF_INET;
-    strncpy(ifr.ifr_name, (const char *)config_pP->ipv4.if_name_S5_S8->data, IFNAMSIZ-1);
-    ioctl(fd, SIOCGIFADDR, &ifr);
-    struct sockaddr_in* ipaddr = (struct sockaddr_in*)&ifr.ifr_addr;
-    if (inet_ntop(AF_INET, (const void *)&ipaddr->sin_addr, str, INET_ADDRSTRLEN) == NULL) {
-      OAILOG_ERROR (LOG_SPGW_APP, "inet_ntop");
-      return RETURNerror;
-    }
-    config_pP->ipv4.S5_S8.s_addr = ipaddr->sin_addr.s_addr;
-
-    ifr.ifr_addr.sa_family = AF_INET;
-    strncpy(ifr.ifr_name, (const char *)config_pP->ipv4.if_name_S5_S8->data, IFNAMSIZ-1);
-    ioctl(fd, SIOCGIFMTU, &ifr);
-    config_pP->ipv4.mtu_S5_S8 = ifr.ifr_mtu;
-    OAILOG_DEBUG (LOG_SPGW_APP, "Foung S5_S8 interface MTU=%d\n", config_pP->ipv4.mtu_S5_S8);
-    close(fd);
+  if (get_mtu_from_iface(config_pP->ipv4.if_name_S5_S8, &config_pP->ipv4.mtu_SGI)) {
+    OAILOG_CRITICAL(LOG_SPGW_APP, "Failed to probe S5-S8 inet addr\n");
   }
 
   for (int i = 0; i < config_pP->num_ue_pool; i++) {
@@ -168,17 +126,20 @@ int pgw_config_process (pgw_config_t * config_pP)
     } while (counter64 > 0);
 
     //---------------
+#if ENABLE_LIBGTPNL
     if (config_pP->masquerade_SGI) {
       async_system_command (TASK_ASYNC_SYSTEM, PGW_ABORT_ON_ERROR, "iptables -t nat -I POSTROUTING -s %s/%d -o %s  ! --protocol sctp -j SNAT --to-source %s",
           inet_ntoa(config_pP->ue_pool_addr[i]), config_pP->ue_pool_mask[i],
           bdata(config_pP->ipv4.if_name_SGI), str_sgi);
     }
+#endif
 
     uint32_t min_mtu = config_pP->ipv4.mtu_SGI;
     // 36 = GTPv1-U min header size
     if ((config_pP->ipv4.mtu_S5_S8 - 36) < min_mtu) {
       min_mtu = config_pP->ipv4.mtu_S5_S8 - 36;
     }
+#if ENABLE_LIBGTPNL
     if (config_pP->ue_tcp_mss_clamp) {
       async_system_command (TASK_ASYNC_SYSTEM, PGW_ABORT_ON_ERROR, "iptables -t mangle -I FORWARD -s %s/%d   -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss %u",
           inet_ntoa(config_pP->ue_pool_addr[i]), config_pP->ue_pool_mask[i], min_mtu - 40);
@@ -186,15 +147,15 @@ int pgw_config_process (pgw_config_t * config_pP)
       async_system_command (TASK_ASYNC_SYSTEM, PGW_ABORT_ON_ERROR, "iptables -t mangle -I FORWARD -d %s/%d -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss %u",
           inet_ntoa(config_pP->ue_pool_addr[i]), config_pP->ue_pool_mask[i], min_mtu - 40);
     }
+#endif
 
     if (config_pP->pcef.enabled) {
+#if ENABLE_LIBGTPNL
       if (config_pP->pcef.tcp_ecn_enabled) {
         async_system_command (TASK_ASYNC_SYSTEM, PGW_ABORT_ON_ERROR, "sysctl -w net.ipv4.tcp_ecn=1");
       }
-      if (config_pP->pcef.traffic_shaping_enabled) {
-        async_system_command (TASK_ASYNC_SYSTEM, PGW_WARN_ON_ERROR, "tc qdisc del root dev %s", bdata(config_pP->ipv4.if_name_SGI));
-        async_system_command (TASK_ASYNC_SYSTEM, PGW_ABORT_ON_ERROR, "tc qdisc add dev %s root handle 1: htb default 0xFFFFFFFF", bdata(config_pP->ipv4.if_name_SGI));
-      }
+#endif
+      pgw_pcef_emulation_init(config_pP);
     }
   }
   return 0;
@@ -209,6 +170,7 @@ int pgw_config_parse_file (pgw_config_t * config_pP)
   config_setting_t                       *sub2setting = NULL;
   char                                   *if_S5_S8 = NULL;
   char                                   *if_SGI = NULL;
+  char                                   *SGI = NULL;
   char                                   *masquerade_SGI = NULL;
   char                                   *ue_tcp_mss_clamping = NULL;
   char                                   *default_dns = NULL;
@@ -224,6 +186,7 @@ int pgw_config_parse_file (pgw_config_t * config_pP)
   bstring                                 system_cmd = NULL;
   libconfig_int                           mtu = 0;
   int                                     prefix_mask = 0;
+  struct in_addr                          in_addr_var = {0};
 
 
   config_init (&cfg);
@@ -255,14 +218,26 @@ int pgw_config_parse_file (pgw_config_t * config_pP)
     if (subsetting) {
       if ((config_setting_lookup_string (subsetting, PGW_CONFIG_STRING_PGW_INTERFACE_NAME_FOR_S5_S8, (const char **)&if_S5_S8)
            && config_setting_lookup_string (subsetting, PGW_CONFIG_STRING_PGW_INTERFACE_NAME_FOR_SGI, (const char **)&if_SGI)
+           && config_setting_lookup_string (subsetting, PGW_CONFIG_STRING_PGW_IPV4_ADDRESS_FOR_SGI, (const char **)&SGI)
            && config_setting_lookup_string (subsetting, PGW_CONFIG_STRING_PGW_MASQUERADE_SGI, (const char **)&masquerade_SGI)
            && config_setting_lookup_string (subsetting, PGW_CONFIG_STRING_UE_TCP_MSS_CLAMPING, (const char **)&ue_tcp_mss_clamping)
           )
         ) {
         config_pP->ipv4.if_name_S5_S8 = bfromcstr(if_S5_S8);
         config_pP->ipv4.if_name_SGI = bfromcstr (if_SGI);
-        OAILOG_DEBUG (LOG_SPGW_APP, "Parsing configuration file found SGI: on %s\n", bdata(config_pP->ipv4.if_name_SGI));
+        cidr = bfromcstr (SGI);
+        struct bstrList *list = bsplit (cidr, '/');
+        AssertFatal(2 == list->qty, "Bad CIDR address %s", bdata(cidr));
+        address = list->entry[0];
+        mask    = list->entry[1];
+        IPV4_STR_ADDR_TO_INADDR (bdata(address), config_pP->ipv4.SGI, "BAD IP ADDRESS FORMAT FOR S1u_S12_S4 !\n");
+        config_pP->ipv4.mask_sgi = atoi ((const char*)mask->data);
+        bstrListDestroy(list);
+        in_addr_var.s_addr = config_pP->ipv4.SGI.s_addr;
+        OAILOG_INFO (LOG_SPGW_APP, "Parsing configuration file found SGi: %s/%d on %s\n",
+                       inet_ntoa (in_addr_var), config_pP->ipv4.mask_sgi, bdata(config_pP->ipv4.if_name_SGI));
 
+#if ENABLE_LIBGTPNL
         if (strcasecmp (masquerade_SGI, "yes") == 0) {
           config_pP->masquerade_SGI = true;
           OAILOG_DEBUG (LOG_SPGW_APP, "Masquerade SGI\n");
@@ -277,6 +252,7 @@ int pgw_config_parse_file (pgw_config_t * config_pP)
           config_pP->ue_tcp_mss_clamp = false;
           OAILOG_DEBUG (LOG_SPGW_APP, "NO CLAMP TCP MSS\n");
         }
+#endif
       } else {
         OAILOG_WARNING (LOG_SPGW_APP, "CONFIG P-GW / NETWORK INTERFACES parsing failed\n");
       }
@@ -350,7 +326,6 @@ int pgw_config_parse_file (pgw_config_t * config_pP)
       config_pP->ue_mtu = 1463;
     }
     OAILOG_DEBUG (LOG_SPGW_APP, "UE MTU : %u\n", config_pP->ue_mtu);
-
     if (config_setting_lookup_string (setting_pgw, PGW_CONFIG_STRING_GTPV1U_REALIZATION, (const char **)&astring)) {
       if (strcasecmp (astring, PGW_CONFIG_STRING_NO_GTP_KERNEL_AVAILABLE) == 0) {
         config_pP->use_gtp_kernel_module = false;
@@ -371,15 +346,6 @@ int pgw_config_parse_file (pgw_config_t * config_pP)
       if ((config_setting_lookup_string (subsetting, PGW_CONFIG_STRING_PCEF_ENABLED, (const char **)&astring))) {
         if (strcasecmp (astring, "yes") == 0) {
           config_pP->pcef.enabled = true;
-
-          if (config_setting_lookup_string (subsetting, PGW_CONFIG_STRING_TRAFFIC_SHAPPING_ENABLED, (const char **)&astring)) {
-            if (strcasecmp (astring, "yes") == 0) {
-              config_pP->pcef.traffic_shaping_enabled = true;
-              OAILOG_DEBUG (LOG_SPGW_APP, "Traffic shapping enabled\n");
-            } else {
-              config_pP->pcef.traffic_shaping_enabled = false;
-            }
-          }
 
           if (config_setting_lookup_string (subsetting, PGW_CONFIG_STRING_TCP_ECN_ENABLED, (const char **)&astring)) {
             if (strcasecmp (astring, "yes") == 0) {
@@ -458,8 +424,10 @@ void pgw_config_display (pgw_config_t * config_p)
   OAILOG_INFO (LOG_SPGW_APP, "    SGi iface ............: %s\n", bdata(config_p->ipv4.if_name_SGI));
   OAILOG_INFO (LOG_SPGW_APP, "    SGi ip  (read)........: %s\n", inet_ntoa (*((struct in_addr *)&config_p->ipv4.SGI)));
   OAILOG_INFO (LOG_SPGW_APP, "    SGi MTU (read)........: %u\n", config_p->ipv4.mtu_SGI);
+#if ENABLE_LIBGTPNL
   OAILOG_INFO (LOG_SPGW_APP, "    User TCP MSS clamping : %s\n", config_p->ue_tcp_mss_clamp == 0 ? "false" : "true");
   OAILOG_INFO (LOG_SPGW_APP, "    User IP masquerading  : %s\n", config_p->masquerade_SGI == 0 ? "false" : "true");
+#endif
   if (config_p->use_gtp_kernel_module) {
     OAILOG_INFO (LOG_SPGW_APP, "- GTPv1U .................: Enabled (Linux kernel module)\n");
     OAILOG_INFO (LOG_SPGW_APP, "    Load/unload module....: %s\n", (config_p->enable_loading_gtp_kernel_module) ? "enabled" : "disabled");
@@ -469,8 +437,6 @@ void pgw_config_display (pgw_config_t * config_p)
 
   OAILOG_INFO (LOG_SPGW_APP, "- PCEF support ...........: %s (in development)\n", config_p->pcef.enabled == 0 ? "false" : "true");
   if (config_p->pcef.enabled) {
-    OAILOG_INFO (LOG_SPGW_APP, "    Traffic shaping ......: %s (TODO it soon)\n",
-        config_p->pcef.traffic_shaping_enabled == 0 ? "false" : "true");
     OAILOG_INFO (LOG_SPGW_APP, "    TCP ECN  .............: %s\n", config_p->pcef.tcp_ecn_enabled == 0 ? "false" : "true");
     OAILOG_INFO (LOG_SPGW_APP, "    Push dedicated bearer SDF ID: %d (testing dedicated bearer functionality down to OAI UE/COSTS UE)\n",
         config_p->pcef.automatic_push_dedicated_bearer_sdf_identifier);
@@ -500,3 +466,7 @@ void pgw_config_display (pgw_config_t * config_p)
   OAILOG_INFO (LOG_SPGW_APP, "- Helpers:\n");
   OAILOG_INFO (LOG_SPGW_APP, "    Push PCO (DNS+MTU) ........: %s\n", config_p->force_push_pco == 0 ? "false" : "true");
 }
+
+#ifdef __cplusplus
+}
+#endif

@@ -21,8 +21,13 @@
 #ifndef FILE_GTPV1U_SGW_DEFS_SEEN
 #define FILE_GTPV1U_SGW_DEFS_SEEN
 
-#include "hashtable.h"
 #include "common_types.h"
+#include "hashtable.h"
+#include "spgw_config.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define GTPV1U_UDP_PORT (2152)
 
@@ -35,7 +40,7 @@ typedef enum {
   BEARER_DL_HANDOVER,
   BEARER_UL_HANDOVER,
   BEARER_MAX,
-} s1_bearer_state_t;
+} bearer_state_t;
 
 #define BUFFER_TO_uint32_t(buf, x) \
 do {                            \
@@ -49,10 +54,10 @@ do {                            \
 
 typedef struct gtpv1u_teid2enb_info_s {
   /* TEID used in dl and ul */
-  uint32_t          teid_enb;         ///< Remote eNB TEID
-  ip_address_t      enb_ip_addr;
-  s1_bearer_state_t state;
-  uint16_t          port; /// LG ???
+  uint32_t       teid_enb;         ///< Remote eNB TEID
+  ip_address_t   enb_ip_addr;
+  bearer_state_t state;
+  uint16_t       port; /// LG ???
 } gtpv1u_teid2enb_info_t;
 
 
@@ -78,4 +83,7 @@ typedef struct {
 int gtpv1u_init (spgw_config_t *spgw_config);
 void gtpv1u_exit (gtpv1u_data_t * const gtpv1u_data);
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* FILE_GTPV1U_SGW_DEFS_SEEN */

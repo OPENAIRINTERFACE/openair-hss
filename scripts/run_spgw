@@ -31,10 +31,24 @@
 # include helper functions
 ################################
 THIS_SCRIPT_PATH=$(dirname $(readlink -f $0))
-source $THIS_SCRIPT_PATH/../build/tools/build_helper
+source $THIS_SCRIPT_PATH/../build/tools/build_helper.ovs
+
 declare -i g_run_msc_gen=0
 declare    g_msc_dir="/tmp"
 declare    g_spgw_default_config_file="/usr/local/etc/oai/spgw.conf"
+
+LIBGTPNL="LIBGTPNL"
+LIBGTPNL_OVS="LIBGTPNL_OVS"
+OPENFLOW_MOSAIC="OPENFLOW_MOSAIC"
+OPENFLOW="OPENFLOW"
+REST="REST"
+GTPU_API=$OPENFLOW
+SGI_DUMMY_MAC_NH="00.11.22.33.44.55"
+
+OVS_GTPU_BRIDGE_NAME="spgwu"
+CTRL_IP="127.0.0.1"
+CTRL_PORT="6654"
+UDP_PORT_FOR_S1U="2152"
 
 set_openair_env 
 
@@ -48,17 +62,19 @@ function help()
   echo_error "Options:"
   echo_error "Mandatory arguments to long options are mandatory for short options too."
   echo_error "  -c, --config-file     file_abs_path Config file to be used by spgw if you don't want to use the default one: $g_spgw_default_config_file"
-  echo_error "  -d, --daemon                        Run the daemon."
   echo_error "  -g, --gdb                           Run with GDB."
   echo_error "  -G, --gdb-cmd         cmd cmd_arg   Append this GDB cmd to GDB command file (ex1: break Attach.c:272, ex2: watch 0xffee0002)."
   echo_error "                                      All repetitions of this argument are valid."
+  echo_error "  --gtpu       api                    GTPV1-U implementation, choice in [$LIBGTPNL, $OPENFLOW_MOSAIC, $OPENFLOW], default is $GTPU_API"
   echo_error "  -h, --help                          Print this help."
-  echo_error "  -k, --kill                          Kill all running SPGW instances, exit script then."
+  echo_error "  -k, --kill                          Kill all running SPGW instances."
+  echo_error "  -K, --Kill                          Kill all running SPGW instances, exit script then."
   echo_error "  -m, --mscgen          directory     Generate mscgen output files in a directory"
-  echo_error "  -v, --verbosity-level               Verbosity level (0,1,2)."
-  echo_error "                                        0 -> ASN1 XER printf off"
-  echo_error "                                        1 -> ASN1 XER printf on and ASN1 debug off"
-  echo_error "                                        2 -> ASN1 XER printf on and ASN1 debug on"
+  echo_error "  --sgi-nh         nh                 SGi next-hop IP address (can be a gateway, router, single app server), will be arp'ed for GTP data "
+  echo_error "                                      plane if OVS is used, default is SGi network a.b.c.1 if no --sgi-mac-nh supplied."
+  echo_error "  --sgi-dum-mac-nh                    Dummy SGi next-hop L2 address for GTP data plane if OVS is used"
+  echo_error "  --sgi-mac-nh     nh                 SGi next-hop L2 address (can be a gateway, router, single app server) for GTP data plane if OVS is used"
+  echo_error "                                      --sgi-nh and --sgi-mac-nh and --sgi-dum-mac-nh are mutually exclusive if OVS is used, else don't use them."
 }
 
 function do_msc_gen()
@@ -77,17 +93,15 @@ function control_c()
   exit $?
 }
 
-NAME=spgwd
-DAEMON=/usr/sbin/$NAME
-DAEMON_ARGS=""
 PIDFILE=/var/run/$NAME.pid
 function main()
 {
   local -i run_gdb=0
-  local -i run_daemon=0
   local -i set_network_interfaces=0
   local    exe_arguments=" "
   local    spgw_config_file=$g_spgw_default_config_file
+  local    sgi_nh
+  local    sgi_mac_nh
   local    breakpoint_location=""
   local -a gdb_args
   local -i gdb_index=0
@@ -105,11 +119,6 @@ function main()
         echo "setting GDB flag to: $run_gdb"
         shift;
         ;;
-      -D | --daemon)
-        run_daemon=1
-        echo "Run SPGW as a daemon"
-        shift;
-        ;;
       -G | --gdb-arg)
         run_gdb=1
         gdb_args[$gdb_index]="$2 $3"
@@ -117,20 +126,27 @@ function main()
         gdb_index=$((gdb_index + 1))
         shift 3;
         ;;
+      --gtpu)
+        list_include_item "$LIBGTPNL $OPENFLOW $OPENFLOW_MOSAIC" $2
+        [[ $? -ne 0 ]] && echo_error "GTPV1U API type $2 not recognized or not available" && return $?
+        GTPU_API=$2
+        shift 2;
+        ;;
       -h | --help)
         help
-        exit 0
-        ;;
-      -i | --set-nw-interfaces)
-        set_network_interfaces=1
-        echo "setting network interfaces: $set_network_interfaces"
-        shift;
+        return 0
         ;;
       -k | --kill)
         $SUDO killall -q spgw
         $SUDO rm /var/run/spgw.pid
-        do_stop_daemon
-        exit 0
+        ovs_stop $OVS_GTPU_BRIDGE_NAME
+        shift;
+        ;;
+      -K | --Kill)
+        $SUDO killall -q spgw
+        $SUDO rm /var/run/spgw.pid
+        ovs_stop $OVS_GTPU_BRIDGE_NAME
+        return 0
         shift;
         ;;
       -m | --mscgen)
@@ -141,19 +157,25 @@ function main()
           shift 2;
         else
           echo_error "Mscgen log dir does not exist"
-          exit -1
+          return -1
         fi
         ;;      
-      -v | --verbosity-level)
-        local verbosity_level=$2
-        echo "setting verbosity level to: $verbosity_level"
-        exe_arguments="-v $verbosity_level $exe_arguments"
+      --sgi-dum-mac-nh)
+        sgi_mac_nh=$SGI_DUMMY_MAC_NH
+        shift;
+        ;;
+      --sgi-mac-nh)
+        sgi_mac_nh=$2
+        shift 2;
+        ;;
+      --sgi-nh)
+        sgi_nh=$2
         shift 2;
         ;;
       *)   
         echo "Unknown option $1"
         help
-        exit 0
+        return 1
         ;;
     esac
   done
@@ -161,20 +183,17 @@ function main()
   set_openair_env 
   cecho "OPENAIR_DIR    = $OPENAIR_DIR" $green
   
+  export ENABLE_"$GTPU_API"=1
 
   if [ ! -f $spgw_config_file ]; then 
-    echo_fatal "Please provide -c|--config-file valid argument (\"$spgw_config_file\" not a valid file)"
+    echo_error "Please provide -c|--config-file valid argument (\"$spgw_config_file\" not a valid file)"
+    return 1
   fi
 
 
-  if [ "$run_daemon" -eq 1 ]; then
-    if [ ! -e /usr/sbin/spgwd ]; then
-      echo_fatal "Cannot find /usr/sbin/spgwd executable, have a look at the output of build_spgw  -D ... executable"
-    fi
-  else
-    if [ ! -e /usr/local/bin/spgw ]; then
-    echo_fatal "Cannot find /usr/local/bin/mme executable, have a look at the output of build_spgw executable"
-    fi
+  if [ ! -e /usr/local/bin/spgw ]; then
+    echo_error "Cannot find /usr/local/bin/spgw executable, have a look at the output of build_spgw executable"
+    return 1
   fi
 
 
@@ -182,29 +201,125 @@ function main()
     rm -f /tmp/openair.msc.*
   fi
 
-  if [ $set_network_interfaces -eq 1 ]; then
-    set_spgw_network_interfaces $spgw_config_file
-  fi
-    
-  DAEMON_ARGS=$DAEMON_ARGS" -c $spgw_config_file"
-  if [ "$run_daemon" -eq 1 ]; then
-    # TODO options
-    $SUDO killall -q spgw
-    do_stop_daemon
-    case "$?" in
-      0) echo_success "SPGW daemon was running -> stopped";;
-      1) ;;
-      2) echo_fatal "FAILURE: SPGW daemon was running -> could not stop it";;
-    esac
-    do_start_daemon
-    case "$?" in
-      0) echo_success "SPGW daemon started";;
-      1) echo_fatal "FAILURE: SPGW daemon was already running";;
-      2) echo_fatal "FAILURE: Cannot start SPGW daemon";;
-    esac
-    exit 0
-  fi
 
+  ##########################
+  # SGI INTERFACE
+  # SGi interface may be the same as S1-U interface in tiny setups
+  ##########################
+  sgi_nw_dev_string="PGW_INTERFACE_NAME_FOR_SGI"
+  sgi_nw_device="`cat $spgw_config_file | cut -d "#" -f1 | grep $sgi_nw_dev_string | tr -d " " | grep "="`"
+  eval $sgi_nw_device
+  is_interface_up ${!sgi_nw_dev_string}
+  [[ $? -ne 0 ]] && echo_error "Failed to find SGi interface ${!sgi_nw_dev_string} up" && return $?
+  sgi_ip_cidr=$(get_interface_inet_global_cidr ${!sgi_nw_dev_string})
+  sgi_ip=$(echo $sgi_ip_cidr | cut -d '/' -f1)
+  echo_success "SGI interface ${!sgi_nw_dev_string} found up, inet $sgi_ip_cidr"
+
+  echo_info "Setting in $spgw_config_file PGW_IPV4_ADDRESS_FOR_SGI = $sgi_ip_cidr"
+  sed -i "s|.*PGW_IPV4_ADDRESS_FOR_SGI.*|        PGW_IPV4_ADDRESS_FOR_SGI = \"$sgi_ip_cidr\";|" $spgw_config_file
+
+  ##########################
+  # GTPV1-U INTERFACE
+  # By default we assign the S1U IP address to the GTPU bridge
+  ##########################
+  s1u_nw_dev_string="SGW_INTERFACE_NAME_FOR_S1U_S12_S4_UP"
+  s1u_nw_device="`cat $spgw_config_file | cut -d "#" -f1 | grep $s1u_nw_dev_string | tr -d " " | grep "="`"
+  eval $s1u_nw_device
+  is_interface_up ${!s1u_nw_dev_string}
+  [[ $? -ne 0 ]] && echo_error "Failed to find S1-U interface up" && return $?
+  s1u_ip_cidr=$(get_interface_inet_global_cidr ${!s1u_nw_dev_string})
+  s1u_ip=$(echo $s1u_ip_cidr | cut -d '/' -f1)
+  echo_success "S1-U interface ${!s1u_nw_dev_string} found up, inet $s1u_ip_cidr"
+
+  echo_info "Setting in $spgw_config_file SGW_IPV4_ADDRESS_FOR_S1U_S12_S4_UP = $s1u_ip_cidr"
+  sed -i "s|.*SGW_IPV4_ADDRESS_FOR_S1U_S12_S4_UP.*|        SGW_IPV4_ADDRESS_FOR_S1U_S12_S4_UP = \"$s1u_ip_cidr\";|" $spgw_config_file
+
+
+  if [ -z ${ENABLE_OPENFLOW+x} ]  ||  [ -z ${ENABLE_OPENFLOW_MOSAIC+x} ]; then
+    ovs_start
+    sleep 1
+
+    if [ -z $sgi_mac_nh ]; then
+      if [ -z $sgi_nh ]; then
+        subnet=$(ip address show dev ${!sgi_nw_dev_string} | grep inet | grep -v inet6 | xargs | cut -d ' ' -f2 | cut -d '/' -f1 | cut -d '.' -f1-3)
+        [[ $? -ne 0 ]] && echo_error "Failed to get subnet of SGi interface" && return $?
+        sgi_nh=$subnet'.1'
+        echo "Set SGi next hop to $sgi_nh"
+      fi
+      # do arp sgi_nh
+      echo "@0" ${!sgi_nw_dev_string}
+      ping -I ${!sgi_nw_dev_string} -c 1 $sgi_nh
+      # May be configured to not reply to ping
+      # Assume default route is through SGi
+      [[ $? -ne 0 ]] && ping -I ${!sgi_nw_dev_string} -c 1 www.google.com
+      [[ $? -ne 0 ]] && echo_error "Failed to ping google server after failed to ping SGI next hop" && return $?
+      sgi_mac_nh=$(arp --device ${!sgi_nw_dev_string} --numeric | grep $sgi_nh | xargs | cut -d ' ' -f3)
+      [[ $? -ne 0 ]] && echo_error "Failed to get L2 address of SGi next hop" && return $?
+    fi
+    echo "Set SGi next hop L2 address to $sgi_mac_nh"
+
+
+    ##########################
+    # Bridge configuration
+    ##########################
+    $SUDO ovs-vsctl del-br $OVS_GTPU_BRIDGE_NAME
+    sleep 1
+    #$SUDO ovs-vsctl add-br $OVS_GTPU_BRIDGE_NAME -- set bridge $OVS_GTPU_BRIDGE_NAME protocols=OpenFlow10,OpenFlow13 
+    $SUDO ovs-vsctl add-br $OVS_GTPU_BRIDGE_NAME
+    [[ $? -ne 0 ]] && return $?
+    echo_success "Created switch $OVS_GTPU_BRIDGE_NAME"
+    sleep 1
+    
+    echo "Add port ${!sgi_nw_dev_string} to $OVS_GTPU_BRIDGE_NAME"
+    $SUDO ovs-vsctl add-port $OVS_GTPU_BRIDGE_NAME ${!sgi_nw_dev_string}
+    [[ $? -ne 0 ]] && return $?
+    sleep 1
+    
+    echo "Add port s1u to $OVS_GTPU_BRIDGE_NAME"
+    $SUDO ovs-vsctl add-port $OVS_GTPU_BRIDGE_NAME s1u -- set Interface s1u type=gtp options:remote_ip=flow -- set Interface s1u type=gtp options:key=flow
+    [[ $? -ne 0 ]] && return $?
+    
+    echo "ifconfig $OVS_GTPU_BRIDGE_NAME up"
+    $SUDO ifconfig $OVS_GTPU_BRIDGE_NAME up
+    #[[ $? -ne 0 ]] && return $?
+    sleep 1
+    
+    echo "ifconfig  ${!sgi_nw_dev_string} 0"
+    $SUDO ifconfig  ${!sgi_nw_dev_string} 0
+    [[ $? -ne 0 ]] && return $?
+    sleep 1
+
+    echo "ip addr add $sgi_ip dev $OVS_GTPU_BRIDGE_NAME"
+    $SUDO ip addr add $sgi_ip dev $OVS_GTPU_BRIDGE_NAME 
+    [[ $? -ne 0 ]] && return $?
+    
+    $SUDO ovs-vsctl set-controller $OVS_GTPU_BRIDGE_NAME  tcp:$CTRL_IP:$CTRL_PORT
+    [[ $? -ne 0 ]] && return $?
+
+
+    # Port for GTPV1-U network device
+    gtpu_port=$($SUDO ovs-ofctl dump-ports-desc $OVS_GTPU_BRIDGE_NAME | grep s1u | cut -d '(' -f1)
+    gtpu_mac=$($SUDO ovs-ofctl dump-ports-desc $OVS_GTPU_BRIDGE_NAME | grep s1u | cut -d ':' -f3-8)
+    echo "Found GTPU port switch to $gtpu_port L2 $gtpu_mac"
+
+    sgi_port=$($SUDO ovs-ofctl dump-ports-desc $OVS_GTPU_BRIDGE_NAME | grep ${!sgi_nw_dev_string} | cut -d '(' -f1)
+    sgi_mac=$($SUDO ovs-ofctl dump-ports-desc $OVS_GTPU_BRIDGE_NAME | grep ${!sgi_nw_dev_string} | cut -d ':' -f3-8)
+    echo "Found SGi port switch to $sgi_port L2 $sgi_mac"
+
+    # sed config file
+    echo_info "Setting in $spgw_config_file BRIDGE_NAME = $OVS_GTPU_BRIDGE_NAME"
+    sed -i "s/.*BRIDGE_NAME.*/        BRIDGE_NAME = \"$OVS_GTPU_BRIDGE_NAME\";/" $spgw_config_file
+    echo_info "Setting in $spgw_config_file L2_EGRESS_PORT = $sgi_mac"
+    sed -i "s/.*L2_EGRESS_PORT.*/        L2_EGRESS_PORT = \"$sgi_mac\";/" $spgw_config_file
+    echo_info "Setting in $spgw_config_file EGRESS_PORT_NUM = $sgi_port"
+    sed -i "s/.*EGRESS_PORT_NUM.*/        EGRESS_PORT_NUM = $sgi_port;/" $spgw_config_file
+    echo_info "Setting in $spgw_config_file GTP_PORT_NUM = $gtpu_port"
+    sed -i "s/.*GTP_PORT_NUM.*/        GTP_PORT_NUM = $gtpu_port;/" $spgw_config_file
+    echo_info "Setting in $spgw_config_file UPLINK_MAC = $sgi_mac_nh"
+    sed -i "s/.*UPLINK_MAC.*/        UPLINK_MAC = \"$sgi_mac_nh\";/" $spgw_config_file
+    echo_info "Setting in $spgw_config_file UDP_PORT_FOR_S1U = $UDP_PORT_FOR_S1U"
+    sed -i "s/.*UDP_PORT_FOR_S1U.*/        UDP_PORT_FOR_S1U = $UDP_PORT_FOR_S1U;/" $spgw_config_file
+  fi
 
   exe_arguments="-c $spgw_config_file $exe_arguments"
 
@@ -230,6 +345,7 @@ function main()
       $SUDO $THIS_SCRIPT_PATH/msc_gen --profile EPC --dir $g_msc_dir --type png
     fi
   fi
+  return $?
 }
 
 main "$@"

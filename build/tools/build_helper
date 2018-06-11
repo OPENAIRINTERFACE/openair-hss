@@ -159,6 +159,11 @@ clean_all_files() {
   rm -rf $dir/autotests/BIN $dir/autotests/log $dir/autotests/*/build
 }
 
+#-------------------------------------------------------------------------------
+disable_ipv6() {
+  $SUDO sysctl -w net.ipv6.conf.all.disable_ipv6=1
+}
+
 
 #-------------------------------------------------------------------------------
 # Compare two versions of software. Returns true if $version is greater than $req_version
@@ -345,49 +350,47 @@ bcastcalc(){
 
 
 #-------------------------------------------------------------------------------
-is_real_interface(){
-  my_bool=1
-  for var in "$@"
-  do
-    if [ "a$var" == "a" ]; then
-      return 0
-    fi
-    if [ "a$var" == "anone" ]; then
-      return 0
-    fi
-    IF=`cat /etc/udev/rules.d/70-persistent-net.rules | grep $var | sed 's/^.*NAME=//' | tr -d '"'`
-    if [ "$IF" == "$var" ]; then
-      if [ "a${var:0:3}" != "aeth" ]; then
-        if [ "a${var:0:4}" != "awlan" ]; then
-          if [ "a${var:0:4}" != "awifi" ]; then
-            my_bool=0;
-          fi
-        fi
-      fi
-    fi
-  done
-  return $my_bool
+# arg1 is network interface name
+# output to stdout
+get_interface_inet_global_address() {
+  if [ "$#" -eq 1 ]; then
+    is_interface_up $1
+    [[ $? -ne 0 ]] && return $?
+    ip -4 addr show $1 scope global | awk '$1 == "inet" {print $2}' | xargs | cut -d '/' -f1
+    return 0
+  else
+    echo_error "usage: get_interface_inet_global_address if_name"
+    return 1
+  fi
 }
 
 #-------------------------------------------------------------------------------
-is_virtual_interface(){
-  my_bool=1
-  for var in "$@"
-  do
-    if [ "a$var" == "a" ]; then
-      return 0
-    fi
-    if [ "a$var" == "anone" ]; then
-      return 0
-    fi
-    num=`expr index "$var" :`
-
-    if [ $num -eq 0 ]; then
-      my_bool=0;
-    fi
-  done
-  return $my_bool
+# arg1 is network interface name
+# output to stdout
+get_interface_inet_global_cidr() {
+  if [ "$#" -eq 1 ]; then
+    is_interface_up $1
+    [[ $? -ne 0 ]] && return $?
+    ip -4 addr show $1 scope global | awk '$1 == "inet" {print $2}' | xargs
+    return 0
+  else
+    echo_error "usage: get_interface_inet_global_address if_name"
+    return 1
+  fi
 }
+
+#-------------------------------------------------------------------------------
+# arg1 is network interface name
+is_interface_up(){
+  if [ "$#" -eq 1 ]; then
+    ip a show $1 up | grep $1 > /dev/null
+    return $?
+  else
+    echo_error "usage: is_interface_up if_name"
+    return 1
+  fi
+}
+
 
 #-------------------------------------------------------------------------------
 # arg1 = interface name
@@ -410,122 +413,6 @@ set_interface_up(){
   sync
 }
 
-#-------------------------------------------------------------------------------
-# arg1 = interface name
-# arg2 = ipv4 addr cidr
-set_virtual_interface_up(){
-  interface=$1
-  address=${2%/*} #part before '/'
-  cidr_netmask=${2#*/} # part after '/'
-
-  if [ "a${interface:0:4}" == "anone" ]; then
-    return;
-  fi
-  echo "ifconfig  $interface $address up"
-  $SUDO ifconfig  $interface $address up
-  sync
-}
-
-#-------------------------------------------------------------------------------
-#arg1 is interface name
-#arg2 is IP address (CIDR)
-set_network_interface(){
-  local interface_name=$1
-  local ip_cidr=$2
-
-  is_virtual_interface $interface_name
-  if [ $? -eq 1 ]; then
-    echo "$interface_name is virtual interface"
-    set_virtual_interface_up $interface_name $ip_cidr
-  else
-    is_real_interface $interface_name
-    if [ $? -eq 1 ]; then
-      echo "$interface_name is real interface"
-      set_interface_up $interface_name $ip_cidr
-    else
-      echo_warning "$interface_name not handled, not configuring it"
-      return
-    fi
-  fi
-}
-
-#-------------------------------------------------------------------------------
-# arg1 is MME or EPC config file
-set_mme_network_interfaces(){
-  value="`cat $1 | cut -d "#" -f1 | grep 'ADDRESS\|INTERFACE' | tr -d " " | grep "="`"
-  eval $value
-
-  # check all var names are correct
-  list_var_name="\
-        MME_INTERFACE_NAME_FOR_S1_MME         MME_IPV4_ADDRESS_FOR_S1_MME \
-        MME_INTERFACE_NAME_FOR_S11_MME        MME_IPV4_ADDRESS_FOR_S11_MME"
-  for var_name in $list_var_name
-  do
-    if [ -n "$${var_name}" ]; then
-      echo_success "Found ${var_name} = ${!var_name}"
-    else
-      echo_fatal "${var_name} does does not exist in your config file $1"
-    fi
-  done
-
-  # configure interfaces
-  set_network_interface  $MME_INTERFACE_NAME_FOR_S1_MME         $MME_IPV4_ADDRESS_FOR_S1_MME
-  set_network_interface  $MME_INTERFACE_NAME_FOR_S11_MME        $MME_IPV4_ADDRESS_FOR_S11_MME
-}
-
-#-------------------------------------------------------------------------------
-# arg1 is S/P-GW or EPC config file
-set_spgw_network_interfaces(){
-  value="`cat $1 | cut -d "#" -f1 | grep 'ADDRESS\|INTERFACE' | tr -d " " | grep "="`"
-  eval $value
-
-  # check all var names are correct
-  list_var_name="\
-        SGW_INTERFACE_NAME_FOR_S11            SGW_IPV4_ADDRESS_FOR_S11 \
-        SGW_INTERFACE_NAME_FOR_S1U_S12_S4_UP  SGW_IPV4_ADDRESS_FOR_S1U_S12_S4_UP \
-        SGW_INTERFACE_NAME_FOR_S5_S8_UP       SGW_IPV4_ADDRESS_FOR_S5_S8_UP \
-        PGW_INTERFACE_NAME_FOR_S5_S8          PGW_IPV4_ADDRESS_FOR_S5_S8 \
-        PGW_INTERFACE_NAME_FOR_SGI            PGW_IPV4_ADDRESS_FOR_SGI"
-  for var_name in $list_var_name
-  do
-    if [ -n "$${var_name}" ]; then
-      echo_success "Found ${var_name} = ${!var_name}"
-    else
-      echo_fatal "${var_name} does does not exist in your config file $1"
-    fi
-  done
-
-  # configure interfaces
-  set_network_interface  $SGW_INTERFACE_NAME_FOR_S11            $SGW_IPV4_ADDRESS_FOR_S11
-  set_network_interface  $SGW_INTERFACE_NAME_FOR_S1U_S12_S4_UP  $SGW_IPV4_ADDRESS_FOR_S1U_S12_S4_UP
-  set_network_interface  $SGW_INTERFACE_NAME_FOR_S5_S8_UP       $SGW_IPV4_ADDRESS_FOR_S5_S8_UP
-  set_network_interface  $PGW_INTERFACE_NAME_FOR_S5_S8          $PGW_IPV4_ADDRESS_FOR_S5_S8
-  set_network_interface  $PGW_INTERFACE_NAME_FOR_SGI            $PGW_IPV4_ADDRESS_FOR_SGI
-}
-
-#-------------------------------------------------------------------------------
-# arg1 is a 'libconfig-like' config file
-set_enb_network_interfaces(){
-  value="`cat $1 | cut -d "#" -f1 | grep 'ADDRESS\|INTERFACE' | tr -d " " | grep "="`"
-  eval $value
-
-  # check all var names are correct
-  list_var_name="\
-        ENB_INTERFACE_NAME_FOR_S1_MME         ENB_IPV4_ADDRESS_FOR_S1_MME \
-        ENB_INTERFACE_NAME_FOR_S1U            ENB_IPV4_ADDRESS_FOR_S1U "
-  for var_name in $list_var_name
-  do
-    if [ -n "$${var_name}" ]; then
-      echo_success "Found ${var_name} = ${!var_name}"
-    else
-      echo_fatal "${var_name} does does not exist in your config file $1"
-    fi
-  done
-
-  # configure interfaces
-  set_network_interface  $ENB_INTERFACE_NAME_FOR_S1_MME         $ENB_IPV4_ADDRESS_FOR_S1_MME
-  set_network_interface  $ENB_INTERFACE_NAME_FOR_S1U            $ENB_IPV4_ADDRESS_FOR_S1U
-}
 
 ################################
 # set_openair_env
@@ -582,3 +469,4 @@ function handle_ctrl_c(){
     fi
   done
 }
+

@@ -30,6 +30,10 @@
 
 #include "3gpp_23.401.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /********************************
 *     Paired contexts           *
 *********************************/
@@ -39,7 +43,6 @@ typedef struct s_plus_p_gw_eps_bearer_context_information_s {
   sgw_eps_bearer_context_information_t sgw_eps_bearer_context_information;
   pgw_eps_bearer_context_information_t pgw_eps_bearer_context_information;
 } s_plus_p_gw_eps_bearer_context_information_t;
-
 
 
 // data entry for s11teid2mme_hashtable
@@ -69,11 +72,20 @@ sgw_eps_bearer_ctxt_t *                sgw_cm_create_eps_bearer_context(void);
 sgw_pdn_connection_t *                 sgw_cm_create_pdn_connection(void);
 void                                   sgw_cm_free_pdn_connection(sgw_pdn_connection_t *pdn_connectionP);
 void                                   sgw_free_sgw_eps_bearer_context (sgw_eps_bearer_ctxt_t ** sgw_eps_bearer_ctxt);
+int                                    sgw_register_paging_paa(const teid_t local_s11_teid, const paa_t * const paa);
+int                                    sgw_deregister_paging_paa(const paa_t * const paa);
+int                                    sgw_get_subscriber_id_from_ipv4(const struct in_addr* dest_ip, char** imsi, teid_t * s11_lteid);
+int                                    sgw_get_s_plus_p_gw_eps_bearer_context_information(const teid_t ls11teid, s_plus_p_gw_eps_bearer_context_information_t *ctx);
 s_plus_p_gw_eps_bearer_context_information_t * sgw_cm_create_bearer_context_information_in_collection(teid_t teid);
 void                                   sgw_cm_free_s_plus_p_gw_eps_bearer_context_information(s_plus_p_gw_eps_bearer_context_information_t **contextP);
 int                                    sgw_cm_remove_bearer_context_information(teid_t teid);
 sgw_eps_bearer_ctxt_t *                sgw_cm_create_eps_bearer_ctxt_in_collection (sgw_pdn_connection_t * const sgw_pdn_connection, const ebi_t eps_bearer_idP);
 sgw_eps_bearer_ctxt_t *                sgw_cm_insert_eps_bearer_ctxt_in_collection (sgw_pdn_connection_t * const sgw_pdn_connection, sgw_eps_bearer_ctxt_t * const sgw_eps_bearer_ctxt);
 sgw_eps_bearer_ctxt_t*                 sgw_cm_get_eps_bearer_entry (sgw_pdn_connection_t * const sgw_pdn_connection, ebi_t ebi);
-int                                    sgw_cm_remove_eps_bearer_entry(hash_table_ts_t *eps_bearersP, ebi_t eps_bearer_idP);
+int                                    sgw_cm_remove_eps_bearer_entry(  sgw_pdn_connection_t * const sgw_pdn_connection, ebi_t eps_bearer_idP);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* FILE_SGW_CONTEXT_MANAGER_SEEN */

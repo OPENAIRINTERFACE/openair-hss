@@ -34,11 +34,15 @@
 #include "queue.h"
 #include "bstrlib.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define PGW_CONFIG_STRING_PGW_CONFIG                            "P-GW"
 #define PGW_CONFIG_STRING_NETWORK_INTERFACES_CONFIG             "NETWORK_INTERFACES"
 #define PGW_CONFIG_STRING_PGW_INTERFACE_NAME_FOR_S5_S8          "PGW_INTERFACE_NAME_FOR_S5_S8"
 #define PGW_CONFIG_STRING_PGW_INTERFACE_NAME_FOR_SGI            "PGW_INTERFACE_NAME_FOR_SGI"
-#define PGW_CONFIG_STRING_PGW_IPV4_ADDR_FOR_SGI                 "PGW_IPV4_ADDRESS_FOR_SGI"
+#define PGW_CONFIG_STRING_PGW_IPV4_ADDRESS_FOR_SGI              "PGW_IPV4_ADDRESS_FOR_SGI"
 #define PGW_CONFIG_STRING_PGW_MASQUERADE_SGI                    "PGW_MASQUERADE_SGI"
 #define PGW_CONFIG_STRING_UE_TCP_MSS_CLAMPING                   "UE_TCP_MSS_CLAMPING"
 #define PGW_CONFIG_STRING_NAS_FORCE_PUSH_PCO                    "FORCE_PUSH_PROTOCOL_CONFIGURATION_OPTIONS"
@@ -58,14 +62,12 @@
 
 #define PGW_CONFIG_STRING_PCEF                                  "PCEF"
 #define PGW_CONFIG_STRING_PCEF_ENABLED                          "PCEF_ENABLED"
-#define PGW_CONFIG_STRING_TRAFFIC_SHAPPING_ENABLED              "TRAFFIC_SHAPPING_ENABLED"
 #define PGW_CONFIG_STRING_TCP_ECN_ENABLED                       "TCP_ECN_ENABLED"
 #define PGW_CONFIG_STRING_AUTOMATIC_PUSH_DEDICATED_BEARER_PCC_RULE  "AUTOMATIC_PUSH_DEDICATED_BEARER_PCC_RULE"
 #define PGW_CONFIG_STRING_DEFAULT_BEARER_STATIC_PCC_RULE        "DEFAULT_BEARER_STATIC_PCC_RULE"
 #define PGW_CONFIG_STRING_PUSH_STATIC_PCC_RULES                 "PUSH_STATIC_PCC_RULES"
 #define PGW_CONFIG_STRING_APN_AMBR_UL                           "APN_AMBR_UL"
 #define PGW_CONFIG_STRING_APN_AMBR_DL                           "APN_AMBR_DL"
-
 #define PGW_ABORT_ON_ERROR true
 #define PGW_WARN_ON_ERROR  false
 
@@ -105,11 +107,13 @@ typedef struct pgw_config_s {
     struct in_addr default_dns_sec;
   } ipv4;
 
+#if ENABLE_LIBGTPNL
   bool      ue_tcp_mss_clamp; // for UE TCP traffic
   bool      masquerade_SGI;
+#endif
 
   int              num_ue_pool;
-#define PGW_NUM_UE_POOL_MAX 16
+#define PGW_NUM_UE_POOL_MAX 96
   uint8_t          ue_pool_mask[PGW_NUM_UE_POOL_MAX];
   struct in_addr   ue_pool_addr[PGW_NUM_UE_POOL_MAX];
 
@@ -120,7 +124,6 @@ typedef struct pgw_config_s {
 
   struct {
     bool      enabled;
-    bool      traffic_shaping_enabled;
     bool      tcp_ecn_enabled;           // test for CoDel qdisc
     sdf_id_t  default_bearer_sdf_identifier;
     sdf_id_t  automatic_push_dedicated_bearer_sdf_identifier;
@@ -128,7 +131,6 @@ typedef struct pgw_config_s {
     uint64_t  apn_ambr_ul;
     uint64_t  apn_ambr_dl;
   } pcef;
-
 
   STAILQ_HEAD(ipv4_pool_head_s, conf_ipv4_list_elm_s) ipv4_pool_list;
 } pgw_config_t;
@@ -142,5 +144,9 @@ void pgw_config_display (pgw_config_t * config_p);
 #define pgw_config_read_lock(pGWcONFIG)  pthread_rwlock_rdlock(&(pGWcONFIG)->rw_lock)
 #define pgw_config_write_lock(pGWcONFIG) pthread_rwlock_wrlock(&(pGWcONFIG)->rw_lock)
 #define pgw_config_unlock(pGWcONFIG)     pthread_rwlock_unlock(&(pGWcONFIG)->rw_lock)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FILE_PGW_CONFIG_SEEN */

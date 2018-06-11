@@ -40,6 +40,10 @@
 #include "common_defs.h"
 #include "sgw_ie_defs.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 static const SGWCauseMapping_t          causes[] = {
   {LOCAL_DETACH, "Local detach", 0, 0, 0, 0},
   {COMPLETE_DETACH, "Complete detach", 0, 0, 0, 0},
@@ -98,3 +102,7 @@ sgw_cause_2_string (
     return res->name;
   }
 }
+
+#ifdef __cplusplus
+}
+#endif

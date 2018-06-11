@@ -28,6 +28,10 @@
 #ifndef FILE_S11_CAUSES_SEEN
 #define FILE_S11_CAUSES_SEEN
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct SGWCauseMapping_e {
   uint8_t value;
   /* Displayable cause name */
@@ -40,5 +44,9 @@ typedef struct SGWCauseMapping_e {
 } SGWCauseMapping_t;
 
 char *sgw_cause_2_string(uint8_t cause_value);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FILE_S11_CAUSES_SEEN */

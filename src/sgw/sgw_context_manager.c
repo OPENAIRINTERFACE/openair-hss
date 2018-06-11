@@ -53,6 +53,10 @@
 #include "sgw_context_manager.h"
 #include "sgw.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern sgw_app_t                        sgw_app;
 
 
@@ -69,7 +73,7 @@ sgw_display_s11teid2mme_mapping (
 
   if (dataP ) {
     mme_sgw_tunnel = (mme_sgw_tunnel_t *) dataP;
-    OAILOG_DEBUG (LOG_SPGW_APP, "| %u\t<------------->\t%u\n", mme_sgw_tunnel->remote_teid, mme_sgw_tunnel->local_teid);
+    OAILOG_DEBUG (LOG_SPGW_APP, "| " TEID_FMT "\t<------------->\t" TEID_FMT "\n", mme_sgw_tunnel->remote_teid, mme_sgw_tunnel->local_teid);
   } else {
     OAILOG_DEBUG (LOG_SPGW_APP, "INVALID S11 TEID MAPPING FOUND\n");
   }
@@ -94,7 +98,7 @@ void sgw_display_sgw_eps_bearer_context (const sgw_eps_bearer_ctxt_t  * const ep
 //-----------------------------------------------------------------------------
 {
   if (eps_bearer_ctxt) {
-    OAILOG_DEBUG (LOG_SPGW_APP, "|\t\t\t\tebi: %u, enb_teid_for_S1u: %u, s_gw_teid_for_S1u_S12_S4_up: %u (tbc)\n",
+    OAILOG_DEBUG (LOG_SPGW_APP, "|\t\t\t\tebi: %u, enb_teid_for_S1u: " TEID_FMT ", s_gw_teid_for_S1u_S12_S4_up: " TEID_FMT " (tbc)\n",
         eps_bearer_ctxt->eps_bearer_id, eps_bearer_ctxt->enb_teid_S1u, eps_bearer_ctxt->s_gw_teid_S1u_S12_S4_up);
   }
 }
@@ -117,9 +121,9 @@ sgw_display_s11_bearer_context_information (
     //Imsi_t               imsi;                           ///< IMSI (International Mobile Subscriber Identity) is the subscriber permanent identity.
     OAILOG_DEBUG (LOG_SPGW_APP, "|\t\timsi_unauthenticated_indicator:\t%u\n", sp_context_information->sgw_eps_bearer_context_information.imsi_unauthenticated_indicator);
     //char                 msisdn[MSISDN_LENGTH];          ///< The basic MSISDN of the UE. The presence is dictated by its storage in the HSS.
-    OAILOG_DEBUG (LOG_SPGW_APP, "|\t\tmme_teid_    S11:              \t%u\n", sp_context_information->sgw_eps_bearer_context_information.mme_teid_S11);
+    OAILOG_DEBUG (LOG_SPGW_APP, "|\t\tmme_teid_    S11:              \t" TEID_FMT "\n", sp_context_information->sgw_eps_bearer_context_information.mme_teid_S11);
     //ip_address_t         mme_ip_address_for_S11;         ///< MME IP address the S11 interface.
-    OAILOG_DEBUG (LOG_SPGW_APP, "|\t\ts_gw_teid_S11_S4:              \t%u\n", sp_context_information->sgw_eps_bearer_context_information.s_gw_teid_S11_S4);
+    OAILOG_DEBUG (LOG_SPGW_APP, "|\t\ts_gw_teid_S11_S4:              \t" TEID_FMT "\n", sp_context_information->sgw_eps_bearer_context_information.s_gw_teid_S11_S4);
     //ip_address_t         s_gw_ip_address_for_S11_S4;     ///< S-GW IP address for the S11 interface and the S4 Interface (control plane).
     //cgi_t                last_known_cell_Id;             ///< This is the last location of the UE known by the network
     OAILOG_DEBUG (LOG_SPGW_APP, "|\t\tpdn_connection:\n");
@@ -191,7 +195,7 @@ sgw_cm_create_s11_tunnel (
     /*
      * Malloc failed, may be ENOMEM error
      */
-    OAILOG_ERROR (LOG_SPGW_APP, "Failed to create tunnel for remote_teid %u\n", remote_teid);
+    OAILOG_ERROR (LOG_SPGW_APP, "Failed to create tunnel for remote_teid " TEID_FMT "\n", remote_teid);
     return NULL;
   }
 
@@ -259,7 +263,9 @@ void sgw_cm_free_pdn_connection (sgw_pdn_connection_t * pdn_connectionP)
       free_wrapper((void**)&pdn_connectionP->apn_in_use);
     }
     for (int ebix = 0; ebix < BEARERS_PER_UE; ebix++) {
-      sgw_free_sgw_eps_bearer_context(&pdn_connectionP->sgw_eps_bearers_array[ebix]);
+      if (pdn_connectionP->sgw_eps_bearers_array[ebix]) { 
+        sgw_free_sgw_eps_bearer_context(&pdn_connectionP->sgw_eps_bearers_array[ebix]);
+      }
     }
   }
 }
@@ -271,6 +277,132 @@ void sgw_free_sgw_eps_bearer_context (sgw_eps_bearer_ctxt_t ** sgw_eps_bearer_ct
     // nothing to do actually
     free_wrapper((void**) sgw_eps_bearer_ctxt);
   }
+}
+
+//-----------------------------------------------------------------------------
+int sgw_register_paging_paa(const teid_t local_s11_teid, const paa_t * const paa)
+{
+  char str[INET6_ADDRSTRLEN+1] = {0};
+
+  switch (paa->pdn_type) {
+  case  IPv4:
+    if (inet_ntop(AF_INET, &paa->ipv4_address, str, INET6_ADDRSTRLEN) == NULL) {
+      OAILOG_ERROR (LOG_SPGW_APP, "Failed to register PAA IPv4 address\n");
+      return RETURNerror;
+    }
+    if (HASH_TABLE_OK != obj_hashtable_uint64_ts_insert (sgw_app.ip2s11teid, strdup(str), strlen(str), local_s11_teid)) {
+      OAILOG_ERROR (LOG_SPGW_APP, "Failed to register PAA IPv4 address\n");
+      return RETURNerror;
+    }
+    break;
+  case IPv6:
+    if (inet_ntop(AF_INET6, &paa->ipv6_address, str, INET6_ADDRSTRLEN) == NULL) {
+      OAILOG_ERROR (LOG_SPGW_APP, "Failed to register PAA IPv6 address\n");
+      return RETURNerror;
+    }
+    if (HASH_TABLE_OK != obj_hashtable_uint64_ts_insert (sgw_app.ip2s11teid, strdup(str), strlen(str), local_s11_teid)) {
+      OAILOG_ERROR (LOG_SPGW_APP, "Failed to register PAA IPv6 address\n");
+      return RETURNerror;
+    }
+    break;
+  case IPv4_AND_v6:
+    if (inet_ntop(AF_INET, &paa->ipv4_address, str, INET6_ADDRSTRLEN) == NULL) {
+      OAILOG_ERROR (LOG_SPGW_APP, "Failed to register PAA IPv4 address\n");
+      return RETURNerror;
+    }
+    if (HASH_TABLE_OK != obj_hashtable_uint64_ts_insert (sgw_app.ip2s11teid, strdup(str), strlen(str), local_s11_teid)) {
+      OAILOG_ERROR (LOG_SPGW_APP, "Failed to register PAA IPv4 address\n");
+      return RETURNerror;
+    }
+    if (inet_ntop(AF_INET6, &paa->ipv6_address, str, INET6_ADDRSTRLEN) == NULL) {
+      OAILOG_ERROR (LOG_SPGW_APP, "Failed to register PAA IPv6 address\n");
+      return RETURNerror;
+    }
+    if (HASH_TABLE_OK != obj_hashtable_uint64_ts_insert (sgw_app.ip2s11teid, strdup(str), strlen(str), local_s11_teid)) {
+      OAILOG_ERROR (LOG_SPGW_APP, "Failed to register PAA IPv6 address\n");
+      return RETURNerror;
+    }
+    break;
+  default:
+    return RETURNerror;
+  }
+  return RETURNok;
+}
+
+//-----------------------------------------------------------------------------
+int sgw_deregister_paging_paa(const paa_t * const paa)
+{
+  char str[INET6_ADDRSTRLEN+1] = {0};
+
+  switch (paa->pdn_type) {
+  case  IPv4:
+    if (inet_ntop(AF_INET, &paa->ipv4_address, str, INET6_ADDRSTRLEN) == NULL) {
+      OAILOG_ERROR (LOG_SPGW_APP, "Failed to register PAA IPv4 address\n");
+      return RETURNerror;
+    }
+    if (HASH_TABLE_OK != obj_hashtable_uint64_ts_free (sgw_app.ip2s11teid, str, strlen(str))) {
+      OAILOG_ERROR (LOG_SPGW_APP, "Failed to deregister PAA IPv4 address\n");
+      return RETURNerror;
+    }
+    break;
+  case IPv6:
+    if (inet_ntop(AF_INET6, &paa->ipv6_address, str, INET6_ADDRSTRLEN) == NULL) {
+      OAILOG_ERROR (LOG_SPGW_APP, "Failed to deregister PAA IPv6 address\n");
+      return RETURNerror;
+    }
+    if (HASH_TABLE_OK != obj_hashtable_uint64_ts_free (sgw_app.ip2s11teid, str, strlen(str))) {
+      OAILOG_ERROR (LOG_SPGW_APP, "Failed to deregister PAA IPv6 address\n");
+      return RETURNerror;
+    }
+    break;
+  case IPv4_AND_v6:
+    if (inet_ntop(AF_INET, &paa->ipv4_address, str, INET6_ADDRSTRLEN) == NULL) {
+      OAILOG_ERROR (LOG_SPGW_APP, "Failed to deregister PAA IPv4 address\n");
+      return RETURNerror;
+    }
+    if (HASH_TABLE_OK != obj_hashtable_uint64_ts_free (sgw_app.ip2s11teid, str, strlen(str))) {
+      OAILOG_ERROR (LOG_SPGW_APP, "Failed to deregister PAA IPv4 address\n");
+      return RETURNerror;
+    }
+    if (inet_ntop(AF_INET6, &paa->ipv6_address, str, INET6_ADDRSTRLEN) == NULL) {
+      OAILOG_ERROR (LOG_SPGW_APP, "Failed to deregister PAA IPv6 address\n");
+      return RETURNerror;
+    }
+    if (HASH_TABLE_OK != obj_hashtable_uint64_ts_free (sgw_app.ip2s11teid, str, strlen(str))) {
+      OAILOG_ERROR (LOG_SPGW_APP, "Failed to deregister PAA IPv6 address\n");
+      return RETURNerror;
+    }
+    break;
+  default:
+    return RETURNerror;
+  }
+  return RETURNok;
+}
+
+//-----------------------------------------------------------------------------
+int sgw_get_subscriber_id_from_ipv4(const struct in_addr* dest_ip, char** imsi, teid_t * s11_lteid)
+{
+
+  char str[INET_ADDRSTRLEN+1] = {0};
+  uint64_t teid = 0;
+
+  if (inet_ntop(AF_INET, dest_ip, str, INET_ADDRSTRLEN) == NULL) {
+    return RETURNerror;
+  }
+
+  if (HASH_TABLE_OK != obj_hashtable_uint64_ts_get (sgw_app.ip2s11teid, str, strlen(str), &teid)) {
+    return RETURNerror;
+  }
+
+  *s11_lteid = (teid_t)teid;
+  s_plus_p_gw_eps_bearer_context_information_t *ctx = NULL;
+  if (sgw_get_s_plus_p_gw_eps_bearer_context_information(*s11_lteid, ctx)) {
+    return RETURNerror;
+  }
+  char imsi_s[IMSI_BCD_DIGITS_MAX+1] = {0};
+  IMSI_TO_STRING(&ctx->sgw_eps_bearer_context_information.imsi, imsi_s, IMSI_BCD_DIGITS_MAX);
+  *imsi = strdup(imsi_s);
+  return RETURNok;
 }
 
 //-----------------------------------------------------------------------------
@@ -289,6 +421,14 @@ void sgw_cm_free_s_plus_p_gw_eps_bearer_context_information (s_plus_p_gw_eps_bea
 }
 
 //-----------------------------------------------------------------------------
+int sgw_get_s_plus_p_gw_eps_bearer_context_information(const teid_t ls11teid, s_plus_p_gw_eps_bearer_context_information_t *ctx)
+{
+  if (HASH_TABLE_OK != hashtable_ts_get (sgw_app.s11_bearer_context_information_hashtable, ls11teid, (void **)&ctx)) {
+    return RETURNerror;
+  }
+  return RETURNok;
+}
+//-----------------------------------------------------------------------------
 s_plus_p_gw_eps_bearer_context_information_t *
 sgw_cm_create_bearer_context_information_in_collection (
   teid_t teid)
@@ -301,11 +441,11 @@ sgw_cm_create_bearer_context_information_in_collection (
     /*
      * Malloc failed, may be ENOMEM error
      */
-    OAILOG_ERROR (LOG_SPGW_APP, "Failed to create new bearer context information object for S11 remote_teid %u\n", teid);
+    OAILOG_ERROR (LOG_SPGW_APP, "Failed to create new bearer context information object for S11 remote_teid " TEID_FMT "\n", teid);
     return NULL;
   }
 
-  OAILOG_DEBUG (LOG_SPGW_APP, "sgw_cm_create_bearer_context_information_in_collection %d\n", teid);
+  OAILOG_DEBUG (LOG_SPGW_APP, "sgw_cm_create_bearer_context_information_in_collection " TEID_FMT "\n", teid);
   /*
    * new_bearer_context_information->sgw_eps_bearer_context_information.pdn_connections = obj_hashtable_ts_create(32, NULL, NULL, sgw_cm_free_pdn_connection);
    * 
@@ -321,7 +461,7 @@ sgw_cm_create_bearer_context_information_in_collection (
   bdestroy_wrapper (&b);
 
   if (new_bearer_context_information->pgw_eps_bearer_context_information.apns == NULL) {
-    OAILOG_ERROR (LOG_SPGW_APP, "Failed to create APN collection object entry for EPS bearer S11 teid %u \n", teid);
+    OAILOG_ERROR (LOG_SPGW_APP, "Failed to create APN collection object entry for EPS bearer S11 teid " TEID_FMT "\n", teid);
     sgw_cm_free_s_plus_p_gw_eps_bearer_context_information (&new_bearer_context_information);
     return NULL;
   }
@@ -331,7 +471,7 @@ sgw_cm_create_bearer_context_information_in_collection (
    * * * * If collision_p is not NULL (0), it means tunnel is already present.
    */
   hashtable_ts_insert (sgw_app.s11_bearer_context_information_hashtable, teid, new_bearer_context_information);
-  OAILOG_DEBUG (LOG_SPGW_APP, "Added new s_plus_p_gw_eps_bearer_context_information_t in s11_bearer_context_information_hashtable key teid %u\n", teid);
+  OAILOG_DEBUG (LOG_SPGW_APP, "Added new s_plus_p_gw_eps_bearer_context_information_t in s11_bearer_context_information_hashtable key teid " TEID_FMT "\n", teid);
   return new_bearer_context_information;
 }
 
@@ -382,7 +522,6 @@ sgw_eps_bearer_ctxt_t *sgw_cm_insert_eps_bearer_ctxt_in_collection (
     sgw_pdn_connection_t * const sgw_pdn_connection,
     sgw_eps_bearer_ctxt_t * const sgw_eps_bearer_ctxt)
 {
-
   if (!sgw_eps_bearer_ctxt) {
     OAILOG_ERROR (LOG_SPGW_APP, "Failed to insert EPS bearer context : NULL context\n");
     return NULL;
@@ -405,26 +544,30 @@ sgw_eps_bearer_ctxt_t* sgw_cm_get_eps_bearer_entry (
   if ((ebi < EPS_BEARER_IDENTITY_FIRST) || (ebi > EPS_BEARER_IDENTITY_LAST)) {
     return NULL;
   }
+
   return sgw_pdn_connection->sgw_eps_bearers_array[EBI_TO_INDEX(ebi)];
 }
 
 //-----------------------------------------------------------------------------
 int
 sgw_cm_remove_eps_bearer_entry (
-  hash_table_ts_t * eps_bearersP,
-  ebi_t eps_bearer_idP)
+  sgw_pdn_connection_t * const sgw_pdn_connection,
+  ebi_t ebi)
 //-----------------------------------------------------------------------------
 {
-  hashtable_rc_t                            hrc = HASH_TABLE_OK;
-
-  if (eps_bearersP == NULL) {
+  if ((ebi < EPS_BEARER_IDENTITY_FIRST) || (ebi > EPS_BEARER_IDENTITY_LAST)) {
     return RETURNerror;
   }
-  hrc = hashtable_ts_free (eps_bearersP, eps_bearer_idP);
-  if (HASH_TABLE_OK == hrc) {
+  sgw_eps_bearer_ctxt_t * sgw_eps_bearer_ctxt = sgw_pdn_connection->sgw_eps_bearers_array[EBI_TO_INDEX(ebi)];
+  if (sgw_eps_bearer_ctxt) {
+    sgw_free_sgw_eps_bearer_context(&sgw_eps_bearer_ctxt);
     return RETURNok;
-  } else {
-    return RETURNerror;
   }
+  return RETURNerror;
+
 }
+
+#ifdef __cplusplus
+}
+#endif
 

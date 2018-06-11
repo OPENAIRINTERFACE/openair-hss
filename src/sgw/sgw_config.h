@@ -34,19 +34,40 @@
 #include "bstrlib.h"
 #include "common_types.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define SGW_CONFIG_STRING_SGW_CONFIG                            "S-GW"
 #define SGW_CONFIG_STRING_NETWORK_INTERFACES_CONFIG             "NETWORK_INTERFACES"
+#define SGW_CONFIG_STRING_OVS_CONFIG                            "OVS"
 #define SGW_CONFIG_STRING_SGW_INTERFACE_NAME_FOR_S1U_S12_S4_UP  "SGW_INTERFACE_NAME_FOR_S1U_S12_S4_UP"
 #define SGW_CONFIG_STRING_SGW_IPV4_ADDRESS_FOR_S1U_S12_S4_UP    "SGW_IPV4_ADDRESS_FOR_S1U_S12_S4_UP"
-#define SGW_CONFIG_STRING_SGW_PORT_FOR_S1U_S12_S4_UP            "SGW_IPV4_PORT_FOR_S1U_S12_S4_UP"
+#define SGW_CONFIG_STRING_SGW_UDP_PORT_FOR_S1U_S12_S4_UP        "SGW_UDP_PORT_FOR_S1U_S12_S4_UP"
 #define SGW_CONFIG_STRING_SGW_INTERFACE_NAME_FOR_S5_S8_UP       "SGW_INTERFACE_NAME_FOR_S5_S8_UP"
 #define SGW_CONFIG_STRING_SGW_IPV4_ADDRESS_FOR_S5_S8_UP         "SGW_IPV4_ADDRESS_FOR_S5_S8_UP"
 #define SGW_CONFIG_STRING_SGW_INTERFACE_NAME_FOR_S11            "SGW_INTERFACE_NAME_FOR_S11"
 #define SGW_CONFIG_STRING_SGW_IPV4_ADDRESS_FOR_S11              "SGW_IPV4_ADDRESS_FOR_S11"
+#define SGW_CONFIG_STRING_SGW_UDP_PORT_FOR_S11                  "SGW_UDP_PORT_FOR_S11"
+
+#define SGW_CONFIG_STRING_OVS_BRIDGE_NAME                       "BRIDGE_NAME"
+#define SGW_CONFIG_STRING_OVS_EGRESS_PORT_NUM                   "EGRESS_PORT_NUM"
+#define SGW_CONFIG_STRING_OVS_GTP_PORT_NUM                      "GTP_PORT_NUM"
+#define SGW_CONFIG_STRING_OVS_L2_EGRESS_PORT                    "L2_EGRESS_PORT"
+#define SGW_CONFIG_STRING_OVS_UPLINK_MAC                        "UPLINK_MAC"
+#define SGW_CONFIG_STRING_OVS_UDP_PORT_FOR_S1U                  "UDP_PORT_FOR_S1U"
 
 #define SPGW_ABORT_ON_ERROR true
 #define SPGW_WARN_ON_ERROR false
+
+typedef struct spgw_ovs_config_s {
+  int      gtpu_udp_port_num;
+  bstring  bridge_name;
+  int      egress_port_num;
+  bstring  l2_egress_port;
+  int      gtp_port_num;
+  bstring  uplink_mac; // next (first) hop
+} spgw_ovs_config_t;
 
 typedef struct sgw_config_s {
   /* Reader/writer lock for this configuration */
@@ -71,12 +92,18 @@ typedef struct sgw_config_s {
     int            netmask_S11;
   } ipv4;
   uint16_t     udp_port_S1u_S12_S4_up;
+  uint16_t     udp_port_S5_S8_up;
+  uint16_t     udp_port_S5_S8_cp;
+  uint16_t     udp_port_S11;
 
   bool         local_to_eNB;
-
+#if (!EMBEDDED_SGW)
   log_config_t log_config;
+#endif
 
   bstring      config_file;
+
+  spgw_ovs_config_t ovs_config;
 } sgw_config_t;
 
 void sgw_config_init (sgw_config_t * config_pP);
@@ -87,5 +114,9 @@ void sgw_config_display (sgw_config_t * config_p);
 #define sgw_config_read_lock(sGWcONFIG)  do { pthread_rwlock_rdlock(&(sGWcONFIG)->rw_lock);} while(0)
 #define sgw_config_write_lock(sGWcONFIG) do { pthread_rwlock_wrlock(&(sGWcONFIG)->rw_lock);} while(0)
 #define sgw_config_unlock(sGWcONFIG)     do { pthread_rwlock_unlock(&(sGWcONFIG)->rw_lock);} while(0)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FILE_SGW_CONFIG_SEEN */

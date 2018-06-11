@@ -19,7 +19,7 @@
  *      contact@openairinterface.org
  */
 
-/*! \file sgw_handlers.c
+/*! \file pgw_pcef_emulation.c
   \brief
   \author Lionel Gauthier
   \company Eurecom
@@ -52,6 +52,10 @@
 #include "pgw_procedures.h"
 #include "sgw.h"
 #include "async_system.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 extern pgw_app_t                        pgw_app;
 
@@ -210,9 +214,9 @@ int pgw_pcef_emulation_init (const pgw_config_t * const pgw_config_p)
   pcc_rule->sdf_template.sdf_filter[0].identifier = PF_ID_DEFAULT;
   pcc_rule->sdf_template.sdf_filter[0].spare = 0;
   pcc_rule->sdf_template.sdf_filter[0].direction = TRAFFIC_FLOW_TEMPLATE_DOWNLINK_ONLY;
-  pcc_rule->sdf_template.sdf_filter[0].eval_precedence = 2;
+  pcc_rule->sdf_template.sdf_filter[0].eval_precedence = 250;
   pcc_rule->sdf_template.sdf_filter[0].length = 9;
-  pcc_rule->sdf_template.sdf_filter[0].packetfiltercontents.flags = TRAFFIC_FLOW_TEMPLATE_IPV4_REMOTE_ADDR_FLAG;
+  pcc_rule->sdf_template.sdf_filter[0].packetfiltercontents.flags = TRAFFIC_FLOW_TEMPLATE_IPV4_LOCAL_ADDR_FLAG;
   pcc_rule->sdf_template.sdf_filter[0].packetfiltercontents.ipv4remoteaddr[0].addr = (uint8_t) ((pgw_config_p->ue_pool_addr[0].s_addr) & 0x000000FF);
   pcc_rule->sdf_template.sdf_filter[0].packetfiltercontents.ipv4remoteaddr[1].addr = (uint8_t) ((pgw_config_p->ue_pool_addr[0].s_addr >> 8) & 0x000000FF);
   pcc_rule->sdf_template.sdf_filter[0].packetfiltercontents.ipv4remoteaddr[2].addr = (uint8_t) ((pgw_config_p->ue_pool_addr[0].s_addr >> 16) & 0x000000FF);
@@ -399,3 +403,16 @@ static void free_pcc_rule (void ** rule)
     }
   }
 }
+
+//------------------------------------------------------------------------------
+pcc_rule_t* pgw_pcef_get_rule_by_id(const sdf_id_t sdf_id)
+{
+  pcc_rule_t* rule = NULL;
+  //hashtable_rc_t hrc =
+  hashtable_ts_get(pgw_app.deactivated_predefined_pcc_rules, sdf_id, (void**)&rule);
+  return rule;
+}
+
+#ifdef __cplusplus
+}
+#endif
