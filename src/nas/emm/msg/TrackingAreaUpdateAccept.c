@@ -231,7 +231,7 @@ encode_tracking_area_update_accept (
    * Checking IEI and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, TRACKING_AREA_UPDATE_ACCEPT_MINIMUM_LENGTH, len);
-  *(buffer + encoded) = ((encode_u8_eps_update_result (&tracking_area_update_accept->epsupdateresult) & 0x0f) << 4) | 0x00;
+  *(buffer + encoded) = ((encode_u8_eps_update_result (&tracking_area_update_accept->epsupdateresult) & 0x0f)) | 0x00;
   encoded++;
 
   if ((tracking_area_update_accept->presencemask & TRACKING_AREA_UPDATE_ACCEPT_T3412_VALUE_PRESENT)

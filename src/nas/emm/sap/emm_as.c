@@ -113,6 +113,7 @@ static int _emm_as_recv (
     bstring msg,
     size_t len,
     int *emm_cause,
+    uint8_t ul_nas_count,
     nas_message_decode_status_t   * decode_status);
 
 
@@ -295,12 +296,12 @@ static int _emm_as_recv (
   bstring msg,
   size_t len,
   int *emm_cause,
+  uint8_t ul_nas_count,
   nas_message_decode_status_t   * decode_status)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   nas_message_decode_status_t             local_decode_status = {0};
   int                                     decoder_rc = RETURNok;
-  uint8_t                                 ul_nas_count = 0;
   int                                     rc = RETURNerror;
   nas_message_t                           nas_msg = {.security_protected.header = {0},
                                                      .security_protected.plain.emm.header = {0},
@@ -331,7 +332,7 @@ static int _emm_as_recv (
   /*
    * Decode the received message
    */
-  decoder_rc = nas_message_decode (msg->data, &nas_msg, len, emm_security_context, &ul_nas_count, decode_status);
+  decoder_rc = nas_message_decode (msg->data, &nas_msg, len, emm_security_context, NULL, decode_status);
 
   if (decoder_rc < 0) {
     OAILOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - Failed to decode NAS message " "(err=%d)\n", decoder_rc);
@@ -432,6 +433,7 @@ static int _emm_as_recv (
           " Will create new UE context & ask source MME if possible. \n", ue_id);
     }
     /** Process the TAU request. It may ask the S10 for UE Context creation. */
+    OAILOG_INFO (LOG_NAS_EMM, "! RECEIVED SEQ NO OF UL-DATA TAU_REQ %d. \n", ul_nas_count);
     rc = emm_recv_tracking_area_update_request (ue_id,
         &emm_msg->tracking_area_update_request,
         emm_cause,
@@ -511,6 +513,7 @@ static int _emm_as_data_ind (emm_as_data_t * msg, int *emm_cause)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
+  uint8_t                                 ul_nas_count = 0;
 
   OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received AS data transfer indication " "(ue_id=" MME_UE_S1AP_ID_FMT ", delivered=%s, length=%d)\n",
       msg->ue_id, (msg->delivered) ? "true" : "false", blength(msg->nas_msg));
@@ -543,6 +546,7 @@ static int _emm_as_data_ind (emm_as_data_t * msg, int *emm_cause)
             &header,
             blength(msg->nas_msg),
             security,
+            &ul_nas_count,
             &decode_status);
 
         if ((bytes < 0) &&
@@ -560,7 +564,7 @@ static int _emm_as_data_ind (emm_as_data_t * msg, int *emm_cause)
           tai_t                                   originating_tai = {0}; // originating TAI
           memcpy(&originating_tai, msg->tai, sizeof(originating_tai));
 
-          rc = _emm_as_recv (msg->ue_id, &originating_tai, &msg->ecgi, plain_msg, bytes, emm_cause, &decode_status);
+          rc = _emm_as_recv (msg->ue_id, &originating_tai, &msg->ecgi, plain_msg, bytes, emm_cause, ul_nas_count, &decode_status);
         } else if (header.protocol_discriminator == EPS_SESSION_MANAGEMENT_MESSAGE) {
           /*
            * Foward ESM data to EPS session management

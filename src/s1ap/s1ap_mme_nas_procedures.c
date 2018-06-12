@@ -1324,7 +1324,7 @@ s1ap_handle_mme_status_transfer( const itti_s1ap_status_transfer_t * const s1ap_
   mmeStatusTransfer_p = &message.msg.s1ap_MMEStatusTransferIEs;
 
   /** Set the enb_ue_s1ap id and the mme_ue_s1ap_id. */
-  mmeStatusTransfer_p->mme_ue_s1ap_id = (unsigned long)ue_ref->mme_ue_s1ap_id;
+  mmeStatusTransfer_p->mme_ue_s1ap_id = (unsigned long)s1ap_status_transfer_pP->mme_ue_s1ap_id;
   mmeStatusTransfer_p->eNB_UE_S1AP_ID = (unsigned long)ue_ref->enb_ue_s1ap_id;
 
   /*
@@ -1372,7 +1372,7 @@ s1ap_handle_mme_status_transfer( const itti_s1ap_status_transfer_t * const s1ap_
                       (enb_ue_s1ap_id_t)mmeStatusTransfer_p->eNB_UE_S1AP_ID);
   bstring b = blk2bstr(buffer_p, length);
   free(buffer_p);
-  s1ap_mme_itti_send_sctp_request (&b, ue_ref->enb->sctp_assoc_id, ue_ref->sctp_stream_send, ue_ref->mme_ue_s1ap_id);
+  s1ap_mme_itti_send_sctp_request (&b, ue_ref->enb->sctp_assoc_id, ue_ref->sctp_stream_send, s1ap_status_transfer_pP->mme_ue_s1ap_id);
   OAILOG_FUNC_OUT (LOG_S1AP);
 }
 

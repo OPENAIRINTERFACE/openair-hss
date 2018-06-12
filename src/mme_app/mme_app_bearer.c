@@ -2995,8 +2995,6 @@ mme_app_handle_handover_request_acknowledge(
    /** Ignore the message. */
    OAILOG_FUNC_OUT (LOG_MME_APP);
  }
- OAILOG_DEBUG (LOG_MME_APP, "Received S1AP_HANDOVER_REQUEST_ACKNOWLEDGE from S1AP (2). UE eNbUeS1aPId " ENB_UE_S1AP_ID_FMT ". \n", ue_context->enb_ue_s1ap_id);
-
  /*
   * Set the downlink bearers as pending.
   * Will be forwarded to the SAE-GW after the HANDOVER_NOTIFY/S10_FORWARD_RELOCATION_COMPLETE_ACKNOWLEDGE.
@@ -3078,13 +3076,12 @@ mme_app_handle_handover_request_acknowledge(
    OAILOG_FUNC_OUT (LOG_MME_APP);
  }else{
    DevAssert(ue_context->mm_state == UE_UNREGISTERED); /**< NAS invalidation should have set this to UE_UNREGISTERED. */
-   OAILOG_INFO(LOG_MME_APP, "Inter-MME S10 Handover procedure is ongoing. Sending a Forward Relocation Response message to source-MME for ueId: " MME_UE_S1AP_ID_FMT " and enbUeS1apId " ENB_UE_S1AP_ID_FMT ". \n",
-       handover_request_acknowledge_pP->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id);
-   /*
+    /*
     * Set the enb_ue_s1ap_id in this case to the UE_Context, too.
     * todo: just let it in the s10_handover_procedure.
     */
    ue_context->enb_ue_s1ap_id = handover_request_acknowledge_pP->enb_ue_s1ap_id;
+
    /*
     * Update the enb_id_s1ap_key and register it.
     */
@@ -3100,6 +3097,9 @@ mme_app_handle_handover_request_acknowledge(
        ue_context->mme_teid_s11,
        ue_context->local_mme_teid_s10,
        &ue_context->guti);
+
+   OAILOG_INFO(LOG_MME_APP, "Inter-MME S10 Handover procedure is ongoing. Sending a Forward Relocation Response message to source-MME for ueId: " MME_UE_S1AP_ID_FMT " and enbUeS1apId " ENB_UE_S1AP_ID_FMT ". \n",
+        handover_request_acknowledge_pP->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id);
 
    teid_t local_teid = 0x0;
    do{

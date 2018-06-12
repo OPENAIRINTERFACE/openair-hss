@@ -563,7 +563,7 @@ inline void emm_ctx_update_from_mm_eps_context(emm_data_context_t * const emm_ct
    */
   if(emm_ctx_p->_security.ul_count.seq_num == 0){
     OAILOG_DEBUG (LOG_NAS_EMM, "EMM-PROC  - Setting the UE NAS UL-Count to the one received from S10 %d for UE " MME_UE_S1AP_ID_FMT ".\n",
-        mm_eps_ctxt->nas_ul_count, emm_ctx_p->ue_id);
+        mm_eps_ctxt->nas_ul_count.seq_num, emm_ctx_p->ue_id);
     emm_ctx_p->_security.ul_count = mm_eps_ctxt->nas_ul_count;
     emm_ctx_p->_security.ul_count.seq_num += 1;
     /** Increment the NAS UL_COUNT. */
