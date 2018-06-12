@@ -1469,8 +1469,6 @@ s1ap_handle_paging( const itti_s1ap_paging_t * const s1ap_paging_pP){
   bstring b = blk2bstr(buffer_p, length);
   free(buffer_p);
   s1ap_mme_itti_send_sctp_request (&b, ue_ref->enb->sctp_assoc_id, ue_ref->sctp_stream_send, ue_ref->mme_ue_s1ap_id);
-  /** todo: leaving the UE in S1AP_UE_HANDOVER_STATE? */
-  //  ue_ref->s1_ue_state = S1AP_UE_CONNECTED;
   OAILOG_FUNC_OUT (LOG_S1AP);
 }
 
