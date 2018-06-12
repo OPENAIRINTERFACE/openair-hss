@@ -568,6 +568,7 @@ emm_recv_tracking_area_update_request (
   const tai_t              * const originating_tai,
   const ecgi_t             * const originating_ecgi,
   const nas_message_decode_status_t  * const decode_status,
+  uint8_t                     nas_ul_count,
   bstring nas_msg)
 {
   int                                     rc = RETURNok;
@@ -636,6 +637,7 @@ emm_recv_tracking_area_update_request (
   ies->ksi             = msg->naskeysetidentifier.naskeysetidentifier;
   ies->is_initial      = is_initial;
 
+  ies->nas_ul_count = nas_ul_count;
   // Optional fields
   if (msg->presencemask & TRACKING_AREA_UPDATE_REQUEST_NONCURRENT_NATIVE_NAS_KEY_SET_IDENTIFIER_PRESENT) {
     ies->is_native_non_current_sc   = (msg->noncurrentnativenaskeysetidentifier.tsc != NAS_KEY_SET_IDENTIFIER_MAPPED);

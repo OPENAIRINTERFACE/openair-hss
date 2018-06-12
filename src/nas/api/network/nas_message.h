@@ -132,6 +132,7 @@ int nas_message_decode(
     nas_message_t      *msg,
     size_t              length,
     void               *security,
+    uint8_t            *ul_seq_no,
     nas_message_decode_status_t * status);
 
 int nas_message_encode(

@@ -486,6 +486,8 @@ void nas_itti_establish_cnf(
   AssertFatal((0 <= emm_ctx->_security.vector_index) && (MAX_EPS_AUTH_VECTORS > emm_ctx->_security.vector_index),
       "Invalid vector index %d", emm_ctx->_security.vector_index);
 
+  OAILOG_DEBUG (LOG_NAS_EMM, "EMM-PROC  - KeNB with UL Count %d for UE " MME_UE_S1AP_ID_FMT ". \n", nas_count, emm_ctx->ue_id);
+
   derive_keNB (emm_ctx->_vector[emm_ctx->_security.vector_index].kasme,
       nas_count, NAS_CONNECTION_ESTABLISHMENT_CNF(message_p).kenb);
 

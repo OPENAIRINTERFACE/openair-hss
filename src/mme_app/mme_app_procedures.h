@@ -56,6 +56,7 @@ typedef struct mme_app_base_proc_s {
 typedef enum {
   MME_APP_S10_PROC_TYPE_NONE = 0,
   MME_APP_S10_PROC_TYPE_INTER_MME_HANDOVER,
+//  MME_APP_S10_PROC_TYPE_INTER_MME_TAU,
   MME_APP_S10_PROC_TYPE_INTRA_MME_HANDOVER
 } mme_app_s10_proc_type_t;
 

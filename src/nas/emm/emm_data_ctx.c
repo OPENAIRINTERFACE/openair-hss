@@ -57,11 +57,6 @@
 //#include "EmmCommon.h"
 #include "../../mme/mme_ie_defs.h"
 
-
-static int _ctx_req_proc_success_cb (struct emm_data_context_s *emm_ctx);
-static int _ctx_req_proc_failure_cb (struct emm_data_context_s *emm_ctx);
-
-
 //------------------------------------------------------------------------------
 
 static hashtable_rc_t
@@ -562,15 +557,26 @@ inline void emm_ctx_update_from_mm_eps_context(emm_data_context_t * const emm_ct
   /**
    * Continue with the parameters set and validated in the SECURITY_MODE_CONTROL messages.
    */
-  /** NAS counts. */
-  emm_ctx_p->_security.ul_count = mm_eps_ctxt->nas_ul_count;
+  /*
+   * NAS counts.
+   * Check the last NAS count. If the current one is non-zero, take that.
+   */
+  if(emm_ctx_p->_security.ul_count.seq_num == 0){
+    OAILOG_DEBUG (LOG_NAS_EMM, "EMM-PROC  - Setting the UE NAS UL-Count to the one received from S10 %d for UE " MME_UE_S1AP_ID_FMT ".\n",
+        mm_eps_ctxt->nas_ul_count, emm_ctx_p->ue_id);
+    emm_ctx_p->_security.ul_count = mm_eps_ctxt->nas_ul_count;
+    emm_ctx_p->_security.ul_count.seq_num += 1;
+    /** Increment the NAS UL_COUNT. */
+     if (!emm_ctx_p->_security.ul_count.seq_num) {
+       emm_ctx_p->_security.ul_count.overflow += 1;
+     }
+  }else{
+    OAILOG_DEBUG (LOG_NAS_EMM, "EMM-PROC  - Leaving the UE NAS UL-Count to the one received from NAS message %d for UE " MME_UE_S1AP_ID_FMT ".\n",
+          emm_ctx_p->_security.ul_count.seq_num, emm_ctx_p->ue_id);
+  }
   emm_ctx_p->_security.dl_count = mm_eps_ctxt->nas_dl_count;
 
-  /** Increment the NAS UL_COUNT. */
-  emm_ctx_p->_security.ul_count.seq_num += 1;
-  if (!emm_ctx_p->_security.ul_count.seq_num) {
-    emm_ctx_p->_security.ul_count.overflow += 1;
-  }
+
 
   /**
    * Set the NAS ciphering and integrity keys.
@@ -947,180 +953,6 @@ int _start_context_request_procedure(struct emm_data_context_s *emm_context, nas
   nas_start_Ts10_ctx_req( ctx_req_proc->ue_id, &ctx_req_proc->timer_s10, ctx_req_proc->cn_proc.base_proc.time_out, emm_context);
 
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
-}
-
-// todo: start_identification_procedure for attach!
-
-//------------------------------------------------------------------------------
-static int _ctx_req_proc_success_cb (struct emm_data_context_s *emm_ctx_p)
-{
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
-  nas_ctx_req_proc_t * ctx_req_proc = get_nas_cn_procedure_ctx_req(emm_ctx_p);
-  int                                     rc = RETURNerror;
-
-  if (ctx_req_proc) {
-    if (!emm_ctx_p) {
-      OAILOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - " "Failed to find UE id " MME_UE_S1AP_ID_FMT "\n", ctx_req_proc->ue_id);
-      // todo: not deleting the CN procedure?
-      OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
-    }
-
-    /** Check that there is a specific procedure running. */
-    if(ctx_req_proc->cn_proc.base_proc.parent){
-      /**
-       * Set the identity values (IMSI) valid and present.
-       * Assuming IMSI is always returned with S10 Context Response and the IMSI hastable registration method validates the received IMSI.
-       */
-      clear_imsi(&emm_ctx_p->_imsi);
-      emm_ctx_set_valid_imsi(emm_ctx_p, &ctx_req_proc->nas_s10_context._imsi, ctx_req_proc->nas_s10_context.imsi);
-
-      //  todo:    emm_data_context_upsert_imsi(&_emm_data, emm_ctx_p); /**< Register the IMSI in the hash table. */
-
-      // todo: identification
-  //    if (rc != RETURNok) {
-  //      OAILOG_ERROR(LOG_NAS_EMM, "EMM-PROC  - " "Error inserting EMM_DATA_CONTEXT for mmeUeS1apId " MME_UE_S1AP_ID_FMT " "
-  //          "for the RECEIVED IMSI " IMSI_64_FMT ". \n", emm_ctx_p->ue_id, msg->imsi);
-  //      /** Sending TAU or Attach Reject back, which will purge the EMM/MME_APP UE contexts. */
-  //      if(is_nas_specific_procedure_tau_running(emm_ctx_p)){
-  //        rc = emm_proc_tracking_area_update_reject(emm_ctx_p->ue_id, SYSTEM_FAILURE);
-  //        // todo: consider this as an internal error, not continue with identification procedure.
-  //        OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
-  //      }else if(is_nas_specific_procedure_attach_running(emm_ctx_p)){
-  //        rc = emm_proc_attach_reject(emm_ctx_p->ue_id, msg->cause);
-  //        // todo: consider this as an internal error, not continue with identification procedure.
-  //        OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
-  //      }
-  //      OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
-  //    }
-
-      /*
-       * Update the security context & security vectors of the UE independent of TAU/Attach here (set fields valid/present).
-       * Then inform the MME_APP that the context was successfully authenticated. Trigger a CSR.
-       */
-      emm_ctx_update_from_mm_eps_context(emm_ctx_p, ctx_req_proc->nas_s10_context.mm_eps_ctx);
-      OAILOG_INFO(LOG_NAS_EMM, "EMM-PROC  - " "Successfully updated the EMM context with ueId " MME_UE_S1AP_ID_FMT " from the received MM_EPS_Context from the MME for UE with imsi: " IMSI_64_FMT ". \n",
-          emm_ctx_p->ue_id, emm_ctx_p->_imsi64);
-
-      /** Delete the CN procedure. */
-      nas_delete_cn_procedure(emm_ctx_p, &ctx_req_proc->cn_proc);
-
-//      if (rc != RETURNok) {
-//        emm_sap_t                               emm_sap = {0};
-//        emm_sap.primitive = EMMREG_COMMON_PROC_REJ;
-//        emm_sap.u.emm_reg.ue_id     = ue_id;
-//        emm_sap.u.emm_reg.ctx       = emm_ctx;
-//        emm_sap.u.emm_reg.notify    = true;
-//        emm_sap.u.emm_reg.free_proc = true;
-//        emm_sap.u.emm_reg.u.common.common_proc = &auth_proc->emm_com_proc;
-//        emm_sap.u.emm_reg.u.common.previous_emm_fsm_state = auth_proc->emm_com_proc.emm_proc.previous_emm_fsm_state;
-//        rc = emm_sap_send (&emm_sap);
-//      }
-    } else {
-      OAILOG_ERROR(LOG_NAS_EMM, "EMM-PROC  - " "Could not find a parent specific procedure for the EMM context with ueId " MME_UE_S1AP_ID_FMT " with imsi: " IMSI_64_FMT ". \n",
-          emm_ctx_p->ue_id, emm_ctx_p->_imsi64);
-      nas_delete_cn_procedure(emm_ctx_p, &ctx_req_proc->cn_proc);
-    }
-  }
-  // todo: pdn config req!//ULR!//tau_accept!!
-//    /*
-//     * Currently, the PDN_CONNECTIVITY_REQUEST ESM IE is not processed by the ESM layer.
-//     * Later, with multi APN, process it and also the PDN_CONNECTION IE.
-//     * Currently, just send ITTI signal to build up session via the stored pending PDN information.
-//     */
-//
-//    /**
-//     * Prepare a CREATE_SESSION_REQUEST message from the pending data.
-//     * NO (default) apn_configuration is present (or expected) since ULA is not sent yet to HSS.
-//     */
-//    rc =  mme_app_send_s11_create_session_req_from_handover_tau(emm_ctx->ue_id);
-//    /** Leave the UE in EMM_DEREGISTERED state until TAU_ACCEPT. */
-//    OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
-//  }else{
-
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
-}
-
-//------------------------------------------------------------------------------
-static int _ctx_req_proc_failure_cb (struct emm_data_context_s *emm_ctx)
-{
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
-  nas_ctx_req_proc_t * ctx_req_proc = get_nas_cn_procedure_ctx_req(emm_ctx);
-  int                                     rc = RETURNerror;
-
-  /**
-   * An UE could or could not exist. We need to check. If it exists, it needs to be purged.
-   * Since no UE context is established yet, we don't have security/no bearers.0
-   * If the message is received after the timeout, the MME_APP context also should not exist.
-   * If the MME_APP context existed at that point in time, it will later be removed.
-   * Just discard the message then.
-   */
-  emm_ctx = emm_data_context_get (&_emm_data, emm_ctx->ue_id);
-
-  if (ctx_req_proc) {
-    nas_emm_specific_proc_t  * emm_specific_proc = (nas_emm_specific_proc_t*)((nas_base_proc_t *)ctx_req_proc)->parent;
-
-    int emm_cause = ctx_req_proc->nas_cause;
-    nas_delete_cn_procedure(emm_ctx, &ctx_req_proc->cn_proc);
-    /** EMM Context. */
-    if (emm_ctx == NULL) {
-      OAILOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - " "Failed to find UE associated to id " MME_UE_S1AP_ID_FMT "...\n", emm_ctx->ue_id);
-      /*
-       * In this case, don't wait for the timer to remove the rest! Assume no timers exist.
-       * Purge the rest of the UE context (MME_APP etc.).
-       */
-      OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
-    }
-
-    /** Get the specific procedure. The CN procedure is not part of a common procedure. */
-    if(emm_specific_proc){
-      /** Continue with an identification procedure. */
-      // todo: currently execute the failure method!
-      OAILOG_WARNING(LOG_NAS_EMM, "EMM-PROC  - " "Rejecting the running specific procedure for UE associated to id " MME_UE_S1AP_ID_FMT " of type %d (todo: identification procedure)...\n", emm_ctx->ue_id, emm_specific_proc->type);
-      // todo: enter the correct method..
-      // todo: add this into the correct method
-//      if(is_nas_specific_procedure_tau_running(emm_ctx)){
-//        nas_emm_tau_proc_t * tau_proc = (nas_emm_tau_proc_t*)emm_specific_proc;
-//        tau_proc->emm_cause = emm_cause;
-//        emm_sap_t                               emm_sap = {0};
-//        emm_sap.primitive = EMMREG_TAU_REJ;
-//        emm_sap.u.emm_reg.ue_id = emm_ctx->ue_id;
-//        emm_sap.u.emm_reg.ctx = emm_ctx;
-//        emm_sap.u.emm_reg.notify = false;
-//        emm_sap.u.emm_reg.free_proc = true;
-//        emm_sap.u.emm_reg.u.tau.proc = tau_proc;
-//        rc = emm_sap_send (&emm_sap);
-//      }else if (is_nas_specific_procedure_attach_running(emm_ctx)) {
-//        nas_emm_attach_proc_t * attach_proc = (nas_emm_attach_proc_t*)emm_specific_proc;
-//        attach_proc->emm_cause = emm_cause;
-//        emm_sap_t                               emm_sap = {0};
-//        emm_sap.primitive = EMMREG_ATTACH_REJ;
-//        emm_sap.u.emm_reg.ue_id = emm_ctx->ue_id;
-//        emm_sap.u.emm_reg.ctx = emm_ctx;
-//        emm_sap.u.emm_reg.notify = false;
-//        emm_sap.u.emm_reg.free_proc = true;
-//        emm_sap.u.emm_reg.u.attach.proc = attach_proc;
-//        rc = emm_sap_send (&emm_sap);
-//      }else{
-//        OAILOG_WARNING(LOG_NAS_EMM, "EMM-PROC  - " "Performing an implicit detach due %d for id " MME_UE_S1AP_ID_FMT " (todo: identification procedure)...\n", emm_specific_proc->type, emm_ctx->ue_id);
-//        // todo: implicit detach
-//
-//      }
-    }else{
-      OAILOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - " "Failed to find specific procedure for UE associated to id " MME_UE_S1AP_ID_FMT "...\n", emm_ctx->ue_id);
-      OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
-    }
-    //    nas_emm_ctauth_proc_t * auth_proc = get_nas_common_procedure_authentication(emm_ctx);
-    /*
-     * Check the TAU status/flag.
-     * Depending on the received TAU procedure (must exist, return an TAU accept back).
-     */
-
-    OAILOG_ERROR(LOG_NAS_EMM, "EMM-PROC  - " "UE context failure received for ue_id " MME_UE_S1AP_ID_FMT " which is neither is in TAU nor Attach procedure. "
-        "Continuing to reject the specific procedure. \n", emm_ctx->ue_id);
-    OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
-  }
-  OAILOG_ERROR(LOG_NAS_EMM, "EMM-PROC  - " "Received NULL CN-procedure for ue_id " MME_UE_S1AP_ID_FMT ". \n", emm_ctx->ue_id);
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
 }
 
 //------------------------------------------------------------------------------

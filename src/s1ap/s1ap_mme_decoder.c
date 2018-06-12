@@ -260,9 +260,17 @@ s1ap_mme_decode_unsuccessfull_outcome (
     case S1ap_ProcedureCode_id_InitialContextSetup: {
         ret = s1ap_decode_s1ap_initialcontextsetupfailureies (&message->msg.s1ap_InitialContextSetupFailureIEs, &unSuccessfulOutcome_p->value);
         s1ap_xer_print_s1ap_initialcontextsetupfailure (s1ap_xer__print2sp, message_string, message);
-        *message_id = S1AP_INITIAL_CONTEXT_SETUP_LOG;
+        *message_id = S1AP_HANDOVER_FAILURE_LOG;
       }
       break;
+
+      /** Handover Messaging. */
+    case S1ap_ProcedureCode_id_HandoverResourceAllocation: {
+      ret = s1ap_decode_s1ap_handoverfailureies(&message->msg.s1ap_HandoverFailureIEs, &unSuccessfulOutcome_p->value);
+      s1ap_xer_print_s1ap_handoverfailure(s1ap_xer__print2sp, message_string, message);
+      *message_id = S1AP_HANDOVER_FAILED;
+    }
+    break;
 
     default: {
         OAILOG_ERROR (LOG_S1AP, "Unknown procedure ID (%d) for unsuccessfull outcome message\n", (int)unSuccessfulOutcome_p->procedureCode);

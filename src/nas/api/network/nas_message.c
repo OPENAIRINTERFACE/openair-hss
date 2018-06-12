@@ -380,6 +380,7 @@ int nas_message_decode (
     nas_message_t * msg,
     size_t length,
     void *security,
+    uint8_t *ul_seq_no,
     nas_message_decode_status_t * status)
 {
   OAILOG_FUNC_IN (LOG_NAS);
@@ -399,6 +400,8 @@ int nas_message_decode (
     status->security_context_available = 1;
   }
   size  = nas_message_header_decode (buffer, &msg->header, length, status, &is_sr);
+
+  *ul_seq_no = msg->header.sequence_number;
 
   OAILOG_DEBUG (LOG_NAS, "nas_message_header_decode returned size %d\n", size);
 

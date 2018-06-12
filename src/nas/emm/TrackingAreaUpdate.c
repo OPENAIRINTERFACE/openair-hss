@@ -113,7 +113,7 @@ static int _context_req_proc_success_cb (emm_data_context_t *emm_context);
 static int _context_req_proc_failure_cb (emm_data_context_t *emm_context);
 
 static int _emm_tracking_area_update_run_procedure(emm_data_context_t *emm_context);
-static void _emm_proc_create_procedure_tracking_area_update_request(emm_data_context_t * const ue_context, emm_tau_request_ies_t * const ies);
+static void _emm_proc_create_procedure_tracking_area_update_request(emm_data_context_t * const ue_context, emm_tau_request_ies_t * const ies, retry_cb_t retry_cb);
 static bool _emm_tracking_area_update_ies_have_changed (mme_ue_s1ap_id_t ue_id, emm_tau_request_ies_t * const tau_ies1, emm_tau_request_ies_t * const tau_ies2);
 
 static int _emm_tracking_area_update_success_identification_cb (emm_data_context_t *emm_context);
@@ -125,7 +125,7 @@ static int emm_proc_tracking_area_update_request_validity(emm_data_context_t * e
 
 static void _emm_tracking_area_update_registration_complete(emm_data_context_t *emm_context);
 
-static int _emm_tau_retry_procedure(nas_emm_specific_proc_t *specif_proc);
+static int _emm_tau_retry_procedure(emm_data_context_t *emm_context);
 
 /****************************************************************************/
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
@@ -251,15 +251,15 @@ int emm_proc_tracking_area_update_request (
    * Continue with the new or existing EMM context.
    * Unlink the NAS message.
    */
-  _emm_proc_create_procedure_tracking_area_update_request(new_emm_ue_context, ies);
+  _emm_proc_create_procedure_tracking_area_update_request(new_emm_ue_context, ies, _emm_tau_retry_procedure);
   if((*duplicate_emm_ue_ctx_pP) && (*duplicate_emm_ue_ctx_pP)->emm_cause != EMM_CAUSE_SUCCESS){
     /** Set the new attach procedure into pending mode and continue with it after the completion of the duplicate removal. */
     void *unused = NULL;
     nas_emm_tau_proc_t * tau_proc = get_nas_specific_procedure_tau(new_emm_ue_context);
     nas_stop_T_retry_specific_procedure(new_emm_ue_context->ue_id, &tau_proc->emm_spec_proc.retry_timer, unused);
-    nas_start_T_retry_specific_procedure(new_emm_ue_context->ue_id, &tau_proc->emm_spec_proc.retry_timer, _emm_tau_retry_procedure, tau_proc);
+    nas_start_T_retry_specific_procedure(new_emm_ue_context->ue_id, &tau_proc->emm_spec_proc.retry_timer, tau_proc->emm_spec_proc.retry_cb, new_emm_ue_context);
     /** Set the old mme_ue_s1ap id which will be checked. */
-    tau_proc->ies->old_ue_id =(*duplicate_emm_ue_ctx_pP)->ue_id;
+    tau_proc->emm_spec_proc.old_ue_id =(*duplicate_emm_ue_ctx_pP)->ue_id;
     /*
      * Nothing else to do with the current TAU procedure. Leave it on hold.
      * Continue to handle the new TAU procedure.
@@ -698,7 +698,7 @@ int emm_proc_tracking_area_update_request_validity(emm_data_context_t * emm_cont
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
 }
 
-static void _emm_proc_create_procedure_tracking_area_update_request(emm_data_context_t * const emm_context, emm_tau_request_ies_t * const ies)
+static void _emm_proc_create_procedure_tracking_area_update_request(emm_data_context_t * const emm_context, emm_tau_request_ies_t * const ies, retry_cb_t retry_cb)
 {
   nas_emm_tau_proc_t *tau_proc = nas_new_tau_procedure(emm_context);
   AssertFatal(tau_proc, "TODO Handle this");
@@ -710,6 +710,7 @@ static void _emm_proc_create_procedure_tracking_area_update_request(emm_data_con
     ((nas_base_proc_t*)tau_proc)->time_out = _emm_tracking_area_update_t3450_handler;
     /** Set the MME_APP registration complete procedure for callback. */
     ((nas_base_proc_t*)tau_proc)->success_notif = _emm_tracking_area_update_registration_complete;
+    ((nas_emm_specific_proc_t*)tau_proc)->retry_cb= retry_cb;
   }
 }
 
@@ -1530,21 +1531,20 @@ static bool _emm_tracking_area_update_ies_have_changed (mme_ue_s1ap_id_t ue_id, 
  * --------------------------------------------------------------------------
  */
 //------------------------------------------------------------------------------
-static int _emm_tau_retry_procedure(nas_emm_specific_proc_t *specific_proc){
+static int _emm_tau_retry_procedure(emm_data_context_t *emm_context){
   /** Validate that no old EMM context exists. */
   OAILOG_FUNC_IN (LOG_NAS_EMM);
 
   int                                      rc = RETURNerror;
-  nas_emm_tau_proc_t                     * tau_proc = (nas_emm_tau_proc_t*)specific_proc;
-  emm_data_context_t                     * emm_context                 = emm_data_context_get(&_emm_data, tau_proc->ue_id);
-  emm_data_context_t                     * duplicate_emm_context       = emm_data_context_get(&_emm_data, tau_proc->ies->old_ue_id);
-  ue_context_t                           * duplicate_ue_context        = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, tau_proc->ies->old_ue_id);
+  nas_emm_tau_proc_t                     * tau_proc = (nas_emm_tau_proc_t*)get_nas_specific_procedure(emm_context);
+  emm_data_context_t                     * duplicate_emm_context       = emm_data_context_get(&_emm_data, tau_proc->emm_spec_proc.old_ue_id);
+  ue_context_t                           * duplicate_ue_context        = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, tau_proc->emm_spec_proc.old_ue_id);
 
   /** Get the attach procedure. */
 
   if(duplicate_emm_context){
     /** Send an attach reject back. */
-    OAILOG_WARNING(LOG_NAS_EMM, "EMM-PROC  - An old EMM context for ue_id=" MME_UE_S1AP_ID_FMT " still existing. Aborting the TAU procedure. \n", tau_proc->ies->old_ue_id);
+    OAILOG_WARNING(LOG_NAS_EMM, "EMM-PROC  - An old EMM context for ue_id=" MME_UE_S1AP_ID_FMT " still existing. Aborting the TAU procedure. \n", tau_proc->emm_spec_proc.old_ue_id);
     rc = _emm_tracking_area_update_reject(tau_proc->ue_id, EMM_CAUSE_ILLEGAL_UE);
 
     emm_sap_t emm_sap                      = {0};
@@ -1559,7 +1559,7 @@ static int _emm_tau_retry_procedure(nas_emm_specific_proc_t *specific_proc){
   }
   /* Check that no old MME_APP UE context exists. */
   if(duplicate_ue_context){
-    OAILOG_WARNING(LOG_NAS_EMM, "EMM-PROC  - An old UE context for ue_id=" MME_UE_S1AP_ID_FMT " still existing. Aborting the TAU procedure. \n", tau_proc->ies->old_ue_id);
+    OAILOG_WARNING(LOG_NAS_EMM, "EMM-PROC  - An old UE context for ue_id=" MME_UE_S1AP_ID_FMT " still existing. Aborting the TAU procedure. \n", tau_proc->emm_spec_proc.old_ue_id);
     /** Send an attach reject back. */
     rc = _emm_tracking_area_update_reject(tau_proc->ue_id, EMM_CAUSE_ILLEGAL_UE);
 
@@ -1575,7 +1575,7 @@ static int _emm_tau_retry_procedure(nas_emm_specific_proc_t *specific_proc){
 
   }
   OAILOG_WARNING(LOG_NAS_EMM, "EMM-PROC  - No old EMM/UE context exists for ue_id=" MME_UE_S1AP_ID_FMT ". Continuing with TAU procedure for new ueId " MME_UE_S1AP_ID_FMT ". \n",
-      tau_proc->ies->old_ue_id, emm_context->ue_id);
+      tau_proc->emm_spec_proc.old_ue_id, emm_context->ue_id);
 
   rc = _emm_tracking_area_update_run_procedure(emm_context);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
@@ -1830,6 +1830,7 @@ static int _context_req_proc_success_cb (emm_data_context_t *emm_context)
    * Update the security context & security vectors of the UE independent of TAU/Attach here (set fields valid/present).
    * Then inform the MME_APP that the context was successfully authenticated. Trigger a CSR.
    */
+  emm_context->_security.ul_count.seq_num = tau_proc->ies->nas_ul_count;
   emm_ctx_update_from_mm_eps_context(emm_context, nas_s10_ctx->mm_eps_ctx);
   OAILOG_INFO(LOG_NAS_EMM, "EMM-PROC  - " "Successfully updated the EMM context with ueId " MME_UE_S1AP_ID_FMT " from the received MM_EPS_Context from the MME for UE with imsi: " IMSI_64_FMT ". \n",
       emm_context->ue_id, emm_context->_imsi64);
@@ -1860,6 +1861,10 @@ static int _context_req_proc_failure_cb (emm_data_context_t *emm_context)
 
   nas_ctx_req_proc_t *nas_ctx_req_proc = get_nas_cn_procedure_ctx_req(emm_context);
   nas_emm_tau_proc_t                    *tau_proc = get_nas_specific_procedure_tau(emm_context);
+  /** Delete the context request procedure. */
+  if(nas_ctx_req_proc)
+     nas_delete_cn_procedure(emm_context, nas_ctx_req_proc);
+
   if (tau_proc) {
     // todo: requirement to continue with identification, auth and SMC if context res fails!
     rc = emm_proc_identification (emm_context, (nas_emm_proc_t *)tau_proc, IDENTITY_TYPE_2_IMSI, _emm_tracking_area_update_success_identification_cb, _emm_tracking_area_update_failure_identification_cb);

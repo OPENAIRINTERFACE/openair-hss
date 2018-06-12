@@ -37,6 +37,7 @@ struct nas_emm_proc_s;
 
 typedef int (*success_cb_t)(struct emm_data_context_s*);
 typedef int (*failure_cb_t)(struct emm_data_context_s*);
+
 typedef int (*proc_abort_t)(struct emm_data_context_s*, struct nas_base_proc_s*);
 
 typedef int (*pdu_in_resp_t)(struct emm_data_context_s*, void *arg); // can be RESPONSE, COMPLETE, ACCEPT
@@ -105,11 +106,15 @@ typedef enum {
   EMM_SPEC_PROC_TYPE_TAU,
 } emm_specific_proc_type_t;
 
+typedef int (*retry_cb_t)(struct nas_emm_specific_proc_s *);
+
 // EMM Specific procedures
 typedef struct nas_emm_specific_proc_s {
   nas_emm_proc_t               emm_proc;
   emm_specific_proc_type_t     type;
   struct nas_timer_s           retry_timer;   // EMM message retransmission timer
+  retry_cb_t                   retry_cb;
+  mme_ue_s1ap_id_t               old_ue_id;        /* OLD identifier used for retry methods                                */
   bool                         smc_performed;
 } nas_emm_specific_proc_t;
 

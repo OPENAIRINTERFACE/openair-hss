@@ -300,6 +300,7 @@ static int _emm_as_recv (
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   nas_message_decode_status_t             local_decode_status = {0};
   int                                     decoder_rc = RETURNok;
+  uint8_t                                 ul_nas_count = 0;
   int                                     rc = RETURNerror;
   nas_message_t                           nas_msg = {.security_protected.header = {0},
                                                      .security_protected.plain.emm.header = {0},
@@ -330,7 +331,7 @@ static int _emm_as_recv (
   /*
    * Decode the received message
    */
-  decoder_rc = nas_message_decode (msg->data, &nas_msg, len, emm_security_context, decode_status);
+  decoder_rc = nas_message_decode (msg->data, &nas_msg, len, emm_security_context, &ul_nas_count, decode_status);
 
   if (decoder_rc < 0) {
     OAILOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - Failed to decode NAS message " "(err=%d)\n", decoder_rc);
@@ -413,28 +414,6 @@ static int _emm_as_recv (
     break;
 
   case TRACKING_AREA_UPDATE_REQUEST:
-//    // Check for emm_ctx and integrity verification
-//    /** Check for this case too, that if no security context is existing, it should be received by the source MME. */
-//      if ((emm_ctx == NULL) ||
-//              ((0 == decode_status->security_context_available) ||
-//                  (0 == decode_status->integrity_protected_message) ||
-//                      ((1 == decode_status->security_context_available) && (0 == decode_status->mac_matched)))) {
-//
-//        *emm_cause = EMM_CAUSE_UE_IDENTITY_CANT_BE_DERIVED_BY_NW;
-//        // Send Reject with cause "UE identity cannot be derived by the network" to trigger fresh attach
-//        rc = emm_proc_tracking_area_update_reject (ue_id, EMM_CAUSE_UE_IDENTITY_CANT_BE_DERIVED_BY_NW);
-//        OAILOG_FUNC_RETURN (LOG_NAS_EMM,rc);
-//      }
-//
-//      // Process periodic TAU
-//      rc = emm_recv_tracking_area_update_request (ue_id,
-//          &emm_msg->tracking_area_update_request,
-//          emm_cause,
-//          originating_tai->tac,
-//          &originating_tai->plmn,
-//          decode_status,
-//          );
-//      break;
     // Check for emm_ctx and integrity verification
     /** If the TAU message does not has an integrity header reject it. */
     if (0 == decode_status->integrity_protected_message) {     /**< TAU must have an MAC header!. */
@@ -460,6 +439,7 @@ static int _emm_as_recv (
         originating_tai,
         originating_ecgi,
         decode_status,
+        ul_nas_count,
         msg);       /**< Send the encoded  NAS_EMM message together with it. */
     /** If ask_ue_context is set.. Ask the MME_APP to send S10_UE_CONTEXT. */
     bdestroy_wrapper(&msg);
@@ -640,6 +620,7 @@ static int _emm_as_establish_req (emm_as_establish_t * msg, int *emm_cause)
   nas_message_decode_status_t             decode_status = {0};
   int                                     decoder_rc = 0;
   int                                     rc = RETURNerror;
+  uint8_t                                 ul_nas_count = 0;
 
   OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received AS connection establish request\n");
   nas_message_t                           nas_msg = {.security_protected.header = {0},
@@ -658,7 +639,7 @@ static int _emm_as_establish_req (emm_as_establish_t * msg, int *emm_cause)
   /*
    * Decode initial NAS message
    */
-  decoder_rc = nas_message_decode (msg->nas_msg->data, &nas_msg, blength(msg->nas_msg), emm_security_context, &decode_status);
+  decoder_rc = nas_message_decode (msg->nas_msg->data, &nas_msg, blength(msg->nas_msg), emm_security_context, &ul_nas_count, &decode_status);
   /** Not destroying the message here. */
 
   // TODO conditional IE error
@@ -719,6 +700,8 @@ static int _emm_as_establish_req (emm_as_establish_t * msg, int *emm_cause)
      * Not rejecting the the TAU, if no integrity header.
      * NAS messages could also be sent without integrity header.
      */
+    OAILOG_INFO (LOG_NAS_EMM, "! RECEIVED SEQ NO OF INITIAL TAU_REQ %d. \n", ul_nas_count);
+
     /** Process the TAU request. It may ask the S10 for UE Context creation. */
     rc = emm_recv_tracking_area_update_request (msg->ue_id,
         &emm_msg->tracking_area_update_request,
@@ -727,6 +710,7 @@ static int _emm_as_establish_req (emm_as_establish_t * msg, int *emm_cause)
         msg->tai,
         &msg->ecgi,
         &decode_status,
+        ul_nas_count,
         msg->nas_msg);       /**< Send the encoded  NAS_EMM message together with it. */
     /** If ask_ue_context is set.. Ask the MME_APP to send S10_UE_CONTEXT. */
     bdestroy_wrapper(&msg->nas_msg);
@@ -1103,10 +1087,11 @@ static int _emm_as_send (const emm_as_t * msg)
           nas_itti_dl_data_req (as_msg.msg.nas_establish_rsp.ue_id, as_msg.msg.nas_establish_rsp.nas_msg, as_msg.msg.nas_establish_rsp.err_code);
           OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
         } else {
-          OAILOG_DEBUG (LOG_NAS_EMM, "EMMAS-SAP - Sending nas_itti_establish_cnf to S1AP UE ID 0x%x sea 0x%04X sia 0x%04X\n",
+          OAILOG_DEBUG (LOG_NAS_EMM, "EMMAS-SAP - Sending nas_itti_establish_cnf to S1AP UE ID 0x%x sea 0x%04X sia 0x%04X, uplink count %d\n",
                      as_msg.msg.nas_establish_rsp.ue_id,
                      as_msg.msg.nas_establish_rsp.selected_encryption_algorithm,
-                     as_msg.msg.nas_establish_rsp.selected_integrity_algorithm);
+                     as_msg.msg.nas_establish_rsp.selected_integrity_algorithm,
+                     as_msg.msg.nas_establish_rsp.nas_ul_count);
           /*
            * Handle success case
            */

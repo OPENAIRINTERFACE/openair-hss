@@ -253,7 +253,7 @@ void mme_app_ue_context_free_content (ue_context_t * const ue_context)
 
   /** Will remove the S10 tunnel endpoints. */
   if (ue_context->s10_procedures) {
-    mme_app_delete_s10_procedures(ue_context);
+    mme_app_delete_s10_procedure_mme_handover(ue_context); // todo: generic s10 function
   }
 
   if (ue_context->s11_procedures) {
@@ -1979,7 +1979,7 @@ mme_app_handle_s10_context_request(const itti_s10_context_request_t * const s10_
 {
  struct ue_context_s                    *ue_context = NULL;
  MessageDef                             *message_p = NULL;
- mme_app_s10_proc_mme_handover_t        *s10_proc_mme_handover = NULL;
+ mme_app_s10_proc_mme_handover_t        *s10_proc_mme_tau = NULL;
  int                                     rc = RETURNok;
 
  DevAssert(s10_context_request_pP);
@@ -2027,8 +2027,8 @@ mme_app_handle_s10_context_request(const itti_s10_context_request_t * const s10_
    OAILOG_WARNING(LOG_MME_APP, "UE NAS EMM context is NOT in ECM_IDLE state for GUTI "GUTI_FMT ". Continuing with processing of S10 Context Request. \n", GUTI_ARG(&s10_context_request_pP->old_guti));
  }
  /** Check if there is any S10 procedure existing. */
- s10_proc_mme_handover = mme_app_get_s10_procedure_mme_handover(ue_context);
- if(s10_proc_mme_handover){
+ s10_proc_mme_tau = mme_app_get_s10_procedure_mme_handover(ue_context);
+ if(s10_proc_mme_tau){
    OAILOG_WARNING (LOG_MME_APP, "EMM context for UE with ue_id " MME_UE_S1AP_ID_FMT " IMSI " IMSI_64_FMT " in EMM_REGISTERED state has a running S10 procedure. "
          "Rejecting further procedures. \n", ue_context->mme_ue_s1ap_id, ue_context->imsi);
    _mme_app_send_s10_context_response_err(s10_context_request_pP->s10_target_mme_teid.teid, s10_context_request_pP->s10_target_mme_teid.ipv4_address, s10_context_request_pP->trxn, REQUEST_REJECTED);
@@ -2045,9 +2045,10 @@ mme_app_handle_s10_context_request(const itti_s10_context_request_t * const s10_
   * Each time a CSResp for a specific APN arrives, send another CSReq if needed.
   *
   * Remove the UE context when the timer runs out for any case (also if context request is rejected).
+  * We won't stop the timer and restart it. The timer for idle TAU will run out.
   */
- s10_proc_mme_handover = mme_app_create_s10_procedure_mme_handover(ue_context, false, MME_APP_S10_PROC_TYPE_INTER_MME_HANDOVER);
- DevAssert(s10_proc_mme_handover);
+ s10_proc_mme_tau = mme_app_create_s10_procedure_mme_handover(ue_context, false, MME_APP_S10_PROC_TYPE_INTER_MME_HANDOVER);
+ DevAssert(s10_proc_mme_tau);
 
  /** No S10 Procedure running. */
  // todo: validate NAS message!
@@ -2126,18 +2127,6 @@ mme_app_handle_s10_context_request(const itti_s10_context_request_t * const s10_
     * A Clear_Location_Request message received from the HSS will cause the resources to be removed.
     * Resources will not be removed if that is not received. --> TS.23.401 defines for SGSN "remove after CLReq" explicitly).
     */
-   mme_config_read_lock (&mme_config);
-   if (timer_setup (mme_config.mme_mobility_completion_timer, 0,
-       TASK_MME_APP, INSTANCE_DEFAULT, TIMER_ONE_SHOT, (void *) &(ue_context->mme_ue_s1ap_id), &(s10_proc_mme_handover->proc.timer.id)) < 0) {
-     OAILOG_ERROR (LOG_MME_APP, "Failed to start MME mobility completion timer for UE id  %d for duration %d \n", ue_context->mme_ue_s1ap_id, mme_config.mme_mobility_completion_timer);
-     s10_proc_mme_handover->proc.timer.id = MME_APP_TIMER_INACTIVE_ID;
-   } else {
-     OAILOG_DEBUG (LOG_MME_APP, "MME APP : Handled S10_CONTEXT_REQUEST at source MME side and started timer for UE context removal. "
-         "Activated the MME mobilty timer UE id  %d. Waiting for CANCEL_LOCATION_REQUEST from HSS.. Timer Id %u. Timer duration %d. \n",
-         ue_context->mme_ue_s1ap_id, s10_proc_mme_handover->proc.timer.id, mme_config.mme_mobility_completion_timer);
-     /** Upon expiration, invalidate the timer.. no flag needed. */
-   }
-   mme_config_unlock (&mme_config);
  }else{
    /**
     * No source-MME (local) FTEID needs to be set. No tunnel needs to be established.
@@ -2220,6 +2209,9 @@ pdn_context_t * mme_app_handle_pdn_connectivity_from_s10(ue_context_t *ue_contex
    * Allocate the bearer contexts and the bearer level QoS to immediately send .
    */
   pdn_context->subscribed_apn_ambr = pdn_connection->apn_ambr;
+
+  /** Just set it temporarily to the UE, too. */
+  ue_context->subscribed_ue_ambr = pdn_connection->apn_ambr;
 
   for (int num_bearer = 0; num_bearer < pdn_connection->bearer_context_list.num_bearer_context; num_bearer++){
     bearer_context_to_be_created_t * bearer_context_to_be_created_s10 = &pdn_connection->bearer_context_list.bearer_contexts[num_bearer];
@@ -2337,6 +2329,37 @@ mme_app_handle_s10_context_response(
 
   /** Remove the S10 Tunnel. */
   mme_app_remove_s10_tunnel_endpoint(ue_context->local_mme_teid_s10, s10_context_response_pP->s10_source_mme_teid.ipv4_address);
+  /*
+   * Update the coll_keys with the IMSI and remove the S10 Tunnel Endpoint.
+   */
+  mme_ue_context_update_coll_keys (&mme_app_desc.mme_ue_contexts, ue_context,
+      ue_context->enb_s1ap_id_key,
+      ue_context->mme_ue_s1ap_id,
+      ue_context->imsi,      /**< New IMSI. */
+      ue_context->mme_teid_s11,
+      INVALID_TEID,
+      &ue_context->guti);
+
+
+  /** Check if another UE context with the given IMSI exists. */
+  ue_context_t * ue_context_old = mme_ue_context_exists_imsi(&mme_app_desc.mme_ue_contexts, imsi);
+  if(ue_context_old && (ue_context->mme_ue_s1ap_id != ue_context_old->mme_ue_s1ap_id)){
+    OAILOG_ERROR(LOG_MME_APP, "An old UE context already exists with ueId " MME_UE_S1AP_ID_FMT " for the UE with IMSI " IMSI_64_FMT ". Rejecting NAS context request procedure. \n",
+        ue_context_old->mme_ue_s1ap_id, ue_context_old->imsi);
+    /*
+     * Let the timeout happen for the new UE context. Will discard this information and continue with normal identification procedure.
+     * Meanwhile remove the old UE.
+     */
+    OAILOG_INFO (LOG_MME_APP, "Implicitly detaching the UE due CLR flag @ completion of MME_MOBILITY timer for UE id  %d \n", ue_context_old->mme_ue_s1ap_id);
+    message_p = itti_alloc_new_message (TASK_MME_APP, NAS_IMPLICIT_DETACH_UE_IND);
+    DevAssert (message_p != NULL);
+    message_p->ittiMsg.nas_implicit_detach_ue_ind.ue_id = ue_context_old->mme_ue_s1ap_id; /**< Rest won't be sent, so no NAS Detach Request will be sent. */
+    MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_IMPLICIT_DETACH_UE_IND_MESSAGE");
+    itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+    OAILOG_FUNC_OUT (LOG_MME_APP);
+    /** Waiting timeout for detaching the new UE context. */
+  }
+//  sleep(100);
 
   /*
    * Update the coll_keys with the IMSI and remove the S10 Tunnel Endpoint.
@@ -2424,23 +2447,7 @@ mme_app_handle_s10_context_acknowledge(
         "Ignoring the handover state. \n", s10_context_acknowledge_pP->teid);
     // todo: what to do in this case? Ignoring the S6a cancel location request?
   }
-  /** Remove the S10 Tunnel endpoint. */
-
-  /** Remove the S10 Tunnel. */
-  mme_app_remove_s10_tunnel_endpoint(ue_context->local_mme_teid_s10, s10_context_acknowledge_pP->peer_ip);
-
-  /*
-   * Update the coll_keys with the IMSI and remove the S10 Tunnel Endpoint.
-   */
-  mme_ue_context_update_coll_keys (&mme_app_desc.mme_ue_contexts, ue_context,
-      ue_context->enb_s1ap_id_key,
-      ue_context->mme_ue_s1ap_id,
-      ue_context->imsi,      /**< New IMSI. */
-      ue_context->mme_teid_s11,
-      INVALID_TEID,
-      &ue_context->guti);
-
-  // todo : Mark the UE context as invalid
+  /** The S10 Tunnel endpoint will be removed with the completion of the MME-Mobility Completion timer of the procedure. */
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 
@@ -2628,8 +2635,8 @@ void mme_app_set_pdn_connections(struct mme_ue_eps_pdn_connections_s * pdn_conne
     /** APN Restriction. */
     pdn_connections->pdn_connection[num_pdn].apn_restriction = 0; // pdn_context_to_forward->apn_restriction
     /** APN-AMBR */
-    pdn_connections->pdn_connection[num_pdn].apn_ambr.br_ul = pdn_context_to_forward->subscribed_apn_ambr.br_ul;
-    pdn_connections->pdn_connection[num_pdn].apn_ambr.br_dl = pdn_context_to_forward->subscribed_apn_ambr.br_ul;
+    pdn_connections->pdn_connection[num_pdn].apn_ambr.br_ul = ue_context->subscribed_ue_ambr.br_ul;
+    pdn_connections->pdn_connection[num_pdn].apn_ambr.br_dl = ue_context->subscribed_ue_ambr.br_dl; // pdn_context_to_forward->subscribed_apn_ambr.br_ul;
     /** Set the bearer contexts for all existing bearers of the PDN. */
     bearer_context_t * bearer_context_to_forward = NULL;
     RB_FOREACH (bearer_context_to_forward, SessionBearers, &pdn_context_to_forward->session_bearers) {

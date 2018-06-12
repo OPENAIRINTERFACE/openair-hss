@@ -51,6 +51,7 @@ MESSAGE_DEF(S1AP_HANDOVER_CANCEL_LOG       , MESSAGE_PRIORITY_MED, IttiMsgText  
 MESSAGE_DEF(S1AP_ENB_STATUS_TRANSFER_LOG   , MESSAGE_PRIORITY_MED, IttiMsgText                      , s1ap_enb_status_transfer_log)
 MESSAGE_DEF(S1AP_HANDOVER_NOTIFY_LOG       , MESSAGE_PRIORITY_MED, IttiMsgText                      , s1ap_handover_notify_log)
 MESSAGE_DEF(S1AP_HANDOVER_REQUEST_ACKNOWLEDGE_LOG       , MESSAGE_PRIORITY_MED, IttiMsgText         , s1ap_handover_request_acknowledge_log)
+MESSAGE_DEF(S1AP_HANDOVER_FAILURE_LOG       , MESSAGE_PRIORITY_MED, IttiMsgText         , s1ap_handover_failure_log)
 MESSAGE_DEF(S1AP_UE_CONTEXT_RELEASE_LOG    , MESSAGE_PRIORITY_MED, IttiMsgText                      , s1ap_ue_context_release_log)
 
 MESSAGE_DEF(S1AP_E_RABSETUP_RESPONSE_LOG    , MESSAGE_PRIORITY_MED, IttiMsgText                      , s1ap_e_rabsetup_response_log)
