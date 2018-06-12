@@ -66,6 +66,11 @@ static inline int                       s1ap_mme_encode_e_rab_setup (
   uint8_t ** buffer,
   uint32_t * length);
 
+static inline int                       s1ap_mme_encode_paging(
+  s1ap_message * message_p,
+  uint8_t ** buffer,
+  uint32_t * length);
+
 static inline int                       s1ap_mme_encode_initiating (
   s1ap_message * message_p,
   uint8_t ** buffer,
@@ -194,6 +199,9 @@ s1ap_mme_encode_initiating (
 
   case S1ap_ProcedureCode_id_MMEStatusTransfer:
     return s1ap_mme_encode_mme_status_transfer (message_p, buffer, length);
+
+  case S1ap_ProcedureCode_id_Paging:
+    return s1ap_mme_encode_paging(message_p, buffer, length);
 
   default:
     OAILOG_NOTICE (LOG_S1AP, "Unknown procedure ID (%d) for initiating message_p\n", (int)message_p->procedureCode);
@@ -516,4 +524,26 @@ s1ap_mme_encode_e_rab_setup (
   }
 
   return s1ap_generate_initiating_message (buffer, length, S1ap_ProcedureCode_id_E_RABSetup, message_p->criticality, &asn_DEF_S1ap_E_RABSetupRequest, e_rab_setup_p);
+}
+
+//------------------------------------------------------------------------------
+static inline int
+s1ap_mme_encode_paging(
+  s1ap_message * message_p,
+  uint8_t ** buffer,
+  uint32_t * length)
+{
+  S1ap_Paging_t          paging;
+  S1ap_Paging_t         *paging_p = &paging;
+
+  memset (paging_p, 0, sizeof (S1ap_Paging_t));
+
+  /*
+   * Convert IE structure into asn1 message_p
+   */
+  if (s1ap_encode_s1ap_pagingies(paging_p, &message_p->msg.s1ap_PagingIEs) < 0) {
+    return -1;
+  }
+
+  return s1ap_generate_initiating_message (buffer, length, S1ap_ProcedureCode_id_Paging, message_p->criticality, &asn_DEF_S1ap_E_RABSetupRequest, paging_p);
 }

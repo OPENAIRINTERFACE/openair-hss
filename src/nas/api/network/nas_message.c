@@ -278,6 +278,7 @@ int nas_message_decrypt (
     nas_message_security_header_t * header,
     size_t length,
     void *security,
+    uint8_t *ul_nas_count,
     nas_message_decode_status_t * status)
 {
   OAILOG_FUNC_IN (LOG_NAS);
@@ -288,6 +289,8 @@ int nas_message_decrypt (
    * Decode the header
    */
   int                                     size = nas_message_header_decode (inbuf, header, length, status, &is_sr);
+
+  *ul_nas_count = header->sequence_number;
 
   if (size < 0) {
     OAILOG_DEBUG (LOG_NAS, "MESSAGE TOO SHORT\n");
@@ -401,7 +404,10 @@ int nas_message_decode (
   }
   size  = nas_message_header_decode (buffer, &msg->header, length, status, &is_sr);
 
-  *ul_seq_no = msg->header.sequence_number;
+  if(ul_seq_no){
+    *ul_seq_no = msg->header.sequence_number;
+    OAILOG_DEBUG(LOG_NAS, "Header seq no of uplink message %d: \n", *ul_seq_no);
+  }
 
   OAILOG_DEBUG (LOG_NAS, "nas_message_header_decode returned size %d\n", size);
 

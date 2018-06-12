@@ -637,6 +637,8 @@ emm_recv_tracking_area_update_request (
   ies->ksi             = msg->naskeysetidentifier.naskeysetidentifier;
   ies->is_initial      = is_initial;
 
+  OAILOG_INFO (LOG_NAS_EMM, " * * * * Parsing Tracking Area Update Request with update_type %d. \n", ies->eps_update_type.eps_update_type_value);
+
   ies->nas_ul_count = nas_ul_count;
   // Optional fields
   if (msg->presencemask & TRACKING_AREA_UPDATE_REQUEST_NONCURRENT_NATIVE_NAS_KEY_SET_IDENTIFIER_PRESENT) {

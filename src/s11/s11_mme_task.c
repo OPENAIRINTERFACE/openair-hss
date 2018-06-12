@@ -112,6 +112,10 @@ s11_mme_ulp_process_stack_req_cb (
           ret = s11_mme_handle_create_bearer_request (&s11_mme_stack_handle, pUlpApi);
           break;
 
+        case NW_GTP_DOWNLINK_DATA_NOTIFICATION:
+          ret = s11_mme_handle_downlink_data_notification (&s11_mme_stack_handle, pUlpApi);
+          break;
+
         default:
           OAILOG_WARNING (LOG_S11, "Received unhandled INITIAL_REQ_IND message type %d\n", pUlpApi->u_api_info.initialReqIndInfo.msgType);
       }
@@ -225,6 +229,11 @@ s11_mme_thread (
 
     case S11_RELEASE_ACCESS_BEARERS_REQUEST:{
         s11_mme_release_access_bearers_request (&s11_mme_stack_handle, &received_message_p->ittiMsg.s11_release_access_bearers_request);
+      }
+      break;
+
+    case S11_DOWNLINK_DATA_NOTIFICATION_ACKNOWLEDGE:{
+        s11_mme_downlink_data_notification_acknowledge(&s11_mme_stack_handle, &received_message_p->ittiMsg.s11_downlink_data_notification_acknowledge);
       }
       break;
 

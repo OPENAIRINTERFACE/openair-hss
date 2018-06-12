@@ -1385,11 +1385,13 @@ static bool _emm_tracking_area_update_ies_have_changed (mme_ue_s1ap_id_t ue_id, 
   /*
    * The GUTI if provided by the UE
    */
-  if (*ies1->old_guti_type != *ies2->old_guti_type) {
-    OAILOG_DEBUG (LOG_NAS_EMM, "UE " MME_UE_S1AP_ID_FMT" TAU IEs changed: Native GUTI %d -> %d \n", ue_id, *ies1->old_guti_type, *ies2->old_guti_type);
-    OAILOG_FUNC_RETURN (LOG_NAS_EMM, true);
-  }
-//  if ((ies1->old_guti) && (!ies2->old_guti)) {
+    if ((ies1->old_guti_type) && (ies2->old_guti_type)) {
+      if (*ies1->old_guti_type != *ies2->old_guti_type) {
+         OAILOG_DEBUG (LOG_NAS_EMM, "UE " MME_UE_S1AP_ID_FMT" TAU IEs changed: Native GUTI %d -> %d \n", ue_id, *ies1->old_guti_type, *ies2->old_guti_type);
+         OAILOG_FUNC_RETURN (LOG_NAS_EMM, true);
+      }
+    }
+ //  if ((ies1->old_guti) && (!ies2->old_guti)) {
 //    OAILOG_INFO (LOG_NAS_EMM, "UE " MME_UE_S1AP_ID_FMT" TAU IEs changed:  GUTI " GUTI_FMT " -> None\n", ue_id, GUTI_ARG(&ies1->old_guti));
 //    OAILOG_FUNC_RETURN (LOG_NAS_EMM, true);
 //  }

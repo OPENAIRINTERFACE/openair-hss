@@ -125,6 +125,7 @@ int nas_message_decrypt(
     nas_message_security_header_t  *header,
     size_t                          length,
     void                           *security,
+    uint8_t *ul_nas_count,
     nas_message_decode_status_t *   status);
 
 int nas_message_decode(
