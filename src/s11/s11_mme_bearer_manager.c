@@ -95,6 +95,56 @@ s11_mme_release_access_bearers_request (
 
 //------------------------------------------------------------------------------
 int
+s11_mme_downlink_data_notification_acknowledge(
+  nw_gtpv2c_stack_handle_t * stack_p,
+  itti_s11_downlink_data_notification_acknowledge_t * ack_p)
+{
+  nw_gtpv2c_ulp_api_t                       ulp_ack;
+  gtpv2c_cause_t                            cause;
+  nw_rc_t                                   rc;
+  nw_gtpv2c_trxn_handle_t                   trxn;
+
+  DevAssert (stack_p );
+  DevAssert (ack_p );
+  memset (&ulp_ack, 0, sizeof (nw_gtpv2c_ulp_api_t));
+  ulp_ack.apiType = NW_GTPV2C_ULP_API_TRIGGERED_RSP;
+
+  trxn = (nw_gtpv2c_trxn_handle_t) ack_p->trxn;
+
+  /*
+   * Prepare a create bearer response to send to SGW.
+   */
+  memset (&cause, 0, sizeof (gtpv2c_cause_t));
+  ulp_ack.u_api_info.triggeredRspInfo.hTrxn = trxn;
+  rc = nwGtpv2cMsgNew (*stack_p, true, NW_GTP_DOWNLINK_DATA_NOTIFICATION_ACK, ack_p->teid, 0, &(ulp_ack.hMsg));
+  DevAssert (NW_OK == rc);
+  /*
+   * Set the remote TEID
+   */
+  ulp_ack.u_api_info.triggeredRspInfo.teidLocal  = ack_p->local_teid;
+
+  hashtable_rc_t hash_rc = hashtable_ts_get(s11_mme_teid_2_gtv2c_teid_handle,
+      (hash_key_t) ack_p->local_teid, (void **)(uintptr_t)&ulp_ack.u_api_info.triggeredRspInfo.hTunnel);
+
+  if (HASH_TABLE_OK != hash_rc) {
+    OAILOG_WARNING (LOG_S11, "Could not get GTPv2-C hTunnel for local teid %X\n", ack_p->local_teid);
+    return RETURNerror;
+  }
+
+  // TODO relay cause
+  cause = ack_p->cause;
+  gtpv2c_cause_ie_set (&(ulp_ack.hMsg), &cause);
+
+  MSC_LOG_TX_MESSAGE (MSC_S11_MME, MSC_SGW, NULL, 0, "0 DOWNLINK_DATA_NOTIFICATION_ACK S11 teid " TEID_FMT " cause %d",
+      ack_p->teid, ack_p->cause.cause_value);
+
+  rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_ack);
+  DevAssert (NW_OK == rc);
+  return RETURNok;
+}
+
+//------------------------------------------------------------------------------
+int
 s11_mme_handle_release_access_bearer_response (
   nw_gtpv2c_stack_handle_t * stack_p,
   nw_gtpv2c_ulp_api_t * pUlpApi)

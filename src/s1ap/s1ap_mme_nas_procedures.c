@@ -1384,7 +1384,7 @@ s1ap_handle_paging( const itti_s1ap_paging_t * const s1ap_paging_pP){
   uint8_t                                *buffer_p = NULL;
   uint32_t                                length = 0;
   ue_description_t                       *ue_ref = NULL;
-  enb_description_t                      *target_enb_ref = NULL;
+  enb_description_t                      *eNB_ref = NULL;
   S1ap_PagingIEs_t                       *paging_p = NULL;
 
   s1ap_message                            message = {0}; // yes, alloc on stack
@@ -1393,47 +1393,54 @@ s1ap_handle_paging( const itti_s1ap_paging_t * const s1ap_paging_pP){
   DevAssert (s1ap_paging_pP != NULL);
 
   ue_ref = s1ap_is_ue_mme_id_in_list (s1ap_paging_pP->mme_ue_s1ap_id);
-  if (!ue_ref) {
+  if (ue_ref) {
     /** Set the source_assoc_id!! */
     /** todo: for intra-mme handover, this will deliver the old s1ap id. */
-    OAILOG_ERROR (LOG_S1AP, " NO UE_CONTEXT could be found to send MME Status Transfer for UE mme ue s1ap id (" MME_UE_S1AP_ID_FMT "). \n",
+    OAILOG_ERROR (LOG_S1AP, " UE_CONTEXT already exist. Cannot page UE mme ue s1ap id (" MME_UE_S1AP_ID_FMT "). \n",
         s1ap_paging_pP->mme_ue_s1ap_id);
-    // todo: save the enb_association to the old enodeb temporarily in the newly created context?
-    // There are some race conditions were NAS T3450 timer is stopped and removed at same time
-    // todo: send the reject message back.. clear all the contexts..
     OAILOG_FUNC_OUT (LOG_S1AP);
   }
 
-  /** No need to find the source_enb.. Assuming that the source_enb association is still present. */
-  /** Check the UE state is in S1AP_UE_HANDOVER_S1AP. */
-  // todo: creating a new UE_REFERENCE.. or getting one?
+  /** Get the last eNB. */
+  if ((eNB_ref = s1ap_is_enb_assoc_id_in_list (s1ap_paging_pP->sctp_assoc_id_key)) == NULL) {
+    OAILOG_WARNING (LOG_S1AP, "Unknown eNB on assoc_id %d\n", s1ap_paging_pP->sctp_assoc_id_key);
+    OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
+  }
 
-//  if(ue_ref->s1_ue_state != S1AP_UE_){
-//    OAILOG_ERROR (LOG_S1AP, " UE context is not in S1AP_UE_CONNECTED state but in %d for UE mme ue s1ap id (" MME_UE_S1AP_ID_FMT "). \n",
-//            ue_ref->s1_ue_state, s1ap_status_transfer_pP->mme_ue_s1ap_id);
-//    // todo: save the enb_association to the old enodeb temporarily in the newly created context?
-//    // There are some race conditions were NAS T3450 timer is stopped and removed at same time
-//    // todo: send the reject message back.. clear all the contexts..
-//    OAILOG_FUNC_OUT (LOG_S1AP);
-//  }
-
+  /** Just create the message and send it without creating a S1AP UE reference. */
   message.procedureCode = S1ap_ProcedureCode_id_Paging;
   message.direction = S1AP_PDU_PR_initiatingMessage;
   paging_p = &message.msg.s1ap_PagingIEs;
 
   /** Encode and set the UE Identity Index Value. */
 //  paging_p->ueIdentityIndexValue.= (unsigned long)ue_ref->mme_ue_s1ap_id; // todo: encode!
-  INT32_TO_BIT_STRING(s1ap_paging_pP->ue_identity_index, &paging_p->ueIdentityIndexValue);
-//  paging_p->ueIdentityIndexValue.buf = (uint8_t *) & s1ap_paging_pP->ue_identity_index.;
-//  paging_p->ueIdentityIndexValue.size = 5;
-//  paging_p->ueIdentityIndexValue.bits_unused = 0;
+//  INT32_TO_BIT_STRING(s1ap_paging_pP->ue_identity_index, &paging_p->ueIdentityIndexValue);
+//
+//  if (conn_est_cnf_pP->kenb) {
+//    initialContextSetupRequest_p->securityKey.buf = calloc (AUTH_KENB_SIZE, sizeof(uint8_t));
+//    memcpy (initialContextSetupRequest_p->securityKey.buf, conn_est_cnf_pP->kenb, AUTH_KENB_SIZE);
+//    initialContextSetupRequest_p->securityKey.size = AUTH_KENB_SIZE;
+//  } else {
+//    OAILOG_DEBUG (LOG_S1AP, "No kenb\n");
+//    initialContextSetupRequest_p->securityKey.buf = NULL;
+//    initialContextSetupRequest_p->securityKey.size = 0;
+//  }
+//
+//  initialContextSetupRequest_p->securityKey.bits_unused = 0;
+//
+//
+  paging_p->ueIdentityIndexValue.buf = calloc (2, sizeof(uint8_t)); // (uint8_t *) &s1ap_paging_pP->ue_identity_index;
+  memcpy(paging_p->ueIdentityIndexValue.buf, (uint8_t*)&(s1ap_paging_pP->ue_identity_index), 2);
+//  * paging_p->ueIdentityIndexValue.buf = *paging_p->ueIdentityIndexValue.buf<<6;
+  paging_p->ueIdentityIndexValue.size = 2;
+  paging_p->ueIdentityIndexValue.bits_unused = 6;
 
   /** Encode the CN Domain. */
   paging_p->cnDomain = S1ap_CNDomain_ps;
 
   /** Set the UE Paging Identity . */
   paging_p->uePagingID.present = S1ap_UEPagingID_PR_s_TMSI;
-  INT16_TO_OCTET_STRING(s1ap_paging_pP->tmsi, &paging_p->uePagingID.choice.s_TMSI.m_TMSI);
+  INT32_TO_OCTET_STRING(s1ap_paging_pP->tmsi, &paging_p->uePagingID.choice.s_TMSI.m_TMSI);
   // todo: chose the right gummei or get it from the request!
   INT8_TO_OCTET_STRING(mme_config.gummei.gummei[0].mme_code, &paging_p->uePagingID.choice.s_TMSI.mMEC);
 
@@ -1444,11 +1451,11 @@ s1ap_handle_paging( const itti_s1ap_paging_t * const s1ap_paging_pP){
   uint8_t                                 plmn[3] = { 0x00, 0x00, 0x00 };     //{ 0x02, 0xF8, 0x29 };
   PLMN_T_TO_TBCD (s1ap_paging_pP->tai.plmn,
                     plmn,
-                    find_mnc_length (
+                    mme_config_find_mnc_length(
                         s1ap_paging_pP->tai.plmn.mcc_digit1, s1ap_paging_pP->tai.plmn.mcc_digit2, s1ap_paging_pP->tai.plmn.mcc_digit3,
                         s1ap_paging_pP->tai.plmn.mnc_digit1, s1ap_paging_pP->tai.plmn.mnc_digit2, s1ap_paging_pP->tai.plmn.mnc_digit3)
   );
-  OCTET_STRING_fromBuf(&tai_item.taiItem.tAI.pLMNidentity, plmn, 3);;
+  OCTET_STRING_fromBuf(&tai_item.taiItem.tAI.pLMNidentity, plmn, 3);
   /** Set the TAI. */
   ASN_SEQUENCE_ADD (&paging_p->taiList, &tai_item);
 
@@ -1468,7 +1475,7 @@ s1ap_handle_paging( const itti_s1ap_paging_t * const s1ap_paging_pP){
                       (mme_ue_s1ap_id_t)s1ap_paging_pP->mme_ue_s1ap_id);
   bstring b = blk2bstr(buffer_p, length);
   free(buffer_p);
-  s1ap_mme_itti_send_sctp_request (&b, ue_ref->enb->sctp_assoc_id, ue_ref->sctp_stream_send, ue_ref->mme_ue_s1ap_id);
+  s1ap_mme_itti_send_sctp_request (&b, eNB_ref->sctp_assoc_id, eNB_ref->next_sctp_stream, s1ap_paging_pP->mme_ue_s1ap_id);
   OAILOG_FUNC_OUT (LOG_S1AP);
 }
 

@@ -414,7 +414,9 @@ typedef struct itti_s1ap_handover_notify_s {
 
 typedef struct itti_s1ap_paging_s {
   mme_ue_s1ap_id_t        mme_ue_s1ap_id;
-  uint32_t                ue_identity_index;
+  sctp_assoc_id_t         sctp_assoc_id_key; // link with eNB id
+
+  uint16_t                ue_identity_index;
   tmsi_t                  tmsi;
 
   tai_t                   tai;               /* Indicating the Tracking Area from which the UE has sent the NAS message.                         */

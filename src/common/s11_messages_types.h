@@ -1122,6 +1122,7 @@ typedef struct itti_s11_downlink_data_notification_s {
  */
 typedef struct itti_s11_downlink_data_notification_acknowledge_s {
   teid_t          teid;                   ///< Tunnel Endpoint Identifier
+  teid_t          local_teid;                   ///< Tunnel Endpoint Identifier
   gtpv2c_cause_t  cause;
   // Recovery           ///< optional This IE shall be included if contacting the peer for the first time
   // Private Extension  ///< optional

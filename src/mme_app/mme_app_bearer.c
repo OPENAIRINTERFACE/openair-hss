@@ -1213,7 +1213,7 @@ mme_app_handle_modify_bearer_resp (
 
 //------------------------------------------------------------------------------
 static
-void mme_app_send_downlink_data_notification_acknowledge(gtpv2c_cause_value_t cause, teid_t saegw_s11_teid, uint32_t peer_ip, void *trxn){
+void mme_app_send_downlink_data_notification_acknowledge(gtpv2c_cause_value_t cause, teid_t saegw_s11_teid, teid_t local_s11_teid, uint32_t peer_ip, void *trxn){
   OAILOG_FUNC_IN (LOG_MME_APP);
 
   /** Send a Downlink Data Notification Acknowledge with cause. */
@@ -1223,17 +1223,13 @@ void mme_app_send_downlink_data_notification_acknowledge(gtpv2c_cause_value_t ca
   itti_s11_downlink_data_notification_acknowledge_t *downlink_data_notification_ack_p = &message_p->ittiMsg.s11_downlink_data_notification_acknowledge;
   memset ((void*)downlink_data_notification_ack_p, 0, sizeof (itti_s11_downlink_data_notification_acknowledge_t));
   // todo: s10 TEID set every time?
-  downlink_data_notification_ack_p->teid = saegw_s11_teid; // todo: ue_context->mme_s10_teid;
-  /** No Local TEID exists yet.. no local S10 tunnel is allocated. */
-  // todo: currently only just a single MME is allowed.
+  downlink_data_notification_ack_p->teid = saegw_s11_teid;
+  downlink_data_notification_ack_p->local_teid = local_s11_teid;
   /** Get the first PDN context. */
 
   downlink_data_notification_ack_p->peer_ip = peer_ip;
   downlink_data_notification_ack_p->cause.cause_value = cause;
   downlink_data_notification_ack_p->trxn  = trxn;
-
-  /** Deallocate the container in the FORWARD_RELOCATION_REQUEST.  */
-  // todo: how is this deallocated
 
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "MME_APP Sending S11 DOWNLINK_DATA_NOTIFICATION_ACK");
 
@@ -1263,7 +1259,7 @@ mme_app_handle_downlink_data_notification(const itti_s11_downlink_data_notificat
     MSC_LOG_RX_DISCARDED_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "DOWNLINK_DATA_NOTIFICATION FROM local S11 teid " TEID_FMT " ", saegw_dl_data_ntf_pP->teid);
     OAILOG_DEBUG (LOG_MME_APP, "We didn't find this teid in list of UE: %08x\n", saegw_dl_data_ntf_pP->teid);
     /** Send a DOWNLINK_DATA_NOTIFICATION_ACKNOWLEDGE. */
-    mme_app_send_downlink_data_notification_acknowledge(CONTEXT_NOT_FOUND, saegw_dl_data_ntf_pP->teid, saegw_dl_data_ntf_pP->peer_ip, saegw_dl_data_ntf_pP->trxn);
+    mme_app_send_downlink_data_notification_acknowledge(CONTEXT_NOT_FOUND, saegw_dl_data_ntf_pP->teid, ue_context->mme_teid_s11, saegw_dl_data_ntf_pP->peer_ip, saegw_dl_data_ntf_pP->trxn);
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
   MSC_LOG_RX_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "DOWNLINK_DATA_NOTIFICATION for local S11 teid " TEID_FMT " IMSI " IMSI_64_FMT " ",
@@ -1274,14 +1270,14 @@ mme_app_handle_downlink_data_notification(const itti_s11_downlink_data_notificat
     OAILOG_ERROR (LOG_MME_APP, "UE_Context with IMSI " IMSI_64_FMT " and mmeUeS1apId: %d. \n is not in ECM_IDLE mode, instead %d. \n",
         ue_context->imsi, ue_context->mme_ue_s1ap_id, ue_context->ecm_state);
     // todo: later.. check this more granularly
-    mme_app_send_downlink_data_notification_acknowledge(UE_ALREADY_RE_ATTACHED, saegw_dl_data_ntf_pP->teid, saegw_dl_data_ntf_pP->peer_ip, saegw_dl_data_ntf_pP->trxn);
+    mme_app_send_downlink_data_notification_acknowledge(UE_ALREADY_RE_ATTACHED, saegw_dl_data_ntf_pP->teid, ue_context->mme_teid_s11, saegw_dl_data_ntf_pP->peer_ip, saegw_dl_data_ntf_pP->trxn);
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
 
   OAILOG_INFO(LOG_MME_APP, "MME_MOBILTY_COMPLETION timer is not running. Starting paging procedure for UE with imsi " IMSI_64_FMT ". \n", ue_context->imsi);
 
   // todo: timeout to wait to ignore further DL_DATA_NOTIF messages->
-  mme_app_send_downlink_data_notification_acknowledge(REQUEST_ACCEPTED, saegw_dl_data_ntf_pP->teid, saegw_dl_data_ntf_pP->peer_ip, saegw_dl_data_ntf_pP->trxn);
+  mme_app_send_downlink_data_notification_acknowledge(REQUEST_ACCEPTED, saegw_dl_data_ntf_pP->teid, ue_context->mme_teid_s11, saegw_dl_data_ntf_pP->peer_ip, saegw_dl_data_ntf_pP->trxn);
 
   /** No need to start paging timeout timer. It will be handled by the Periodic TAU update timer. */
   // todo: no downlink data notification failure and just removing the UE?
@@ -1293,11 +1289,14 @@ mme_app_handle_downlink_data_notification(const itti_s11_downlink_data_notificat
 
   memset (s1ap_paging_p, 0, sizeof (itti_s1ap_paging_t));
   s1ap_paging_p->mme_ue_s1ap_id = ue_context->mme_ue_s1ap_id; /**< Just MME_UE_S1AP_ID. */
-  s1ap_paging_p->ue_identity_index = (ue_context->imsi %1024) & 0xFFFF; /**< Just MME_UE_S1AP_ID. */
+  /** Send the latest SCTP. */
+  s1ap_paging_p->sctp_assoc_id_key = ue_context->sctp_assoc_id_key;
+  s1ap_paging_p->ue_identity_index = (uint16_t)((ue_context->imsi %1024) & 0xFFFF); /**< Just MME_UE_S1AP_ID. */
   s1ap_paging_p->tmsi = ue_context->guti.m_tmsi;
   // todo: these ones may differ from GUTI?
   s1ap_paging_p->tai.plmn = ue_context->guti.gummei.plmn;
   s1ap_paging_p->tai.tac  = *mme_config.served_tai.tac;
+  OAILOG_INFO(LOG_MME_APP, "Calculated ue_identity index value for UE with imsi " IMSI_64_FMT " and ueId " MME_UE_S1AP_ID_FMT" is %d. \n", ue_context->imsi, ue_context->mme_ue_s1ap_id, s1ap_paging_p->ue_identity_index);
 
   /** S1AP Paging. */
   itti_send_msg_to_task (TASK_S1AP, INSTANCE_DEFAULT, message_p);
