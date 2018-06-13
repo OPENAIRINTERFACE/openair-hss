@@ -1414,33 +1414,11 @@ s1ap_handle_paging( const itti_s1ap_paging_t * const s1ap_paging_pP){
   paging_p = &message.msg.s1ap_PagingIEs;
 
   /** Encode and set the UE Identity Index Value. */
-//  paging_p->ueIdentityIndexValue.= (unsigned long)ue_ref->mme_ue_s1ap_id; // todo: encode!
-//  INT32_TO_BIT_STRING(s1ap_paging_pP->ue_identity_index, &paging_p->ueIdentityIndexValue);
-//
-//  if (conn_est_cnf_pP->kenb) {
-//    initialContextSetupRequest_p->securityKey.buf = calloc (AUTH_KENB_SIZE, sizeof(uint8_t));
-//    memcpy (initialContextSetupRequest_p->securityKey.buf, conn_est_cnf_pP->kenb, AUTH_KENB_SIZE);
-//    initialContextSetupRequest_p->securityKey.size = AUTH_KENB_SIZE;
-//  } else {
-//    OAILOG_DEBUG (LOG_S1AP, "No kenb\n");
-//    initialContextSetupRequest_p->securityKey.buf = NULL;
-//    initialContextSetupRequest_p->securityKey.size = 0;
-//  }
-//
-//  initialContextSetupRequest_p->securityKey.bits_unused = 0;
-//
-//
   paging_p->ueIdentityIndexValue.buf = calloc (2, sizeof(uint8_t)); // (uint8_t *) &s1ap_paging_pP->ue_identity_index;
-
-//  uint16_t index_val = s1ap_paging_pP->ue_identity_index << 6;
-//  uint16_t index_val_1 = htons(s1ap_paging_pP->ue_identity_index);
-//  uint16_t index_val_2 = s1ap_paging_pP->ue_identity_index << 6;
-
 
   uint16_t index_val = htons(s1ap_paging_pP->ue_identity_index << 6);
 
   memcpy(paging_p->ueIdentityIndexValue.buf, (uint8_t*)&index_val, 2);
-//  * paging_p->ueIdentityIndexValue.buf = *paging_p->ueIdentityIndexValue.buf<<6;
   paging_p->ueIdentityIndexValue.size = 2;
   paging_p->ueIdentityIndexValue.bits_unused = 6;
 
