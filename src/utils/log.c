@@ -51,8 +51,6 @@
 #include <pthread.h>
 #include <syslog.h>
 
-#include <libxml/xmlwriter.h>
-#include <libxml/xpath.h>
 #include "intertask_interface.h"
 #include "timer.h"
 #include "log.h"

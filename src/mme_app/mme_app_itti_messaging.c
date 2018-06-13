@@ -33,8 +33,6 @@
 #include <stdint.h>
 #include <pthread.h>
 
-#include <libxml/xmlwriter.h>
-#include <libxml/xpath.h>
 #include "bstrlib.h"
 
 #include "dynamic_memory_check.h"

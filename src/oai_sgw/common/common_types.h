@@ -113,10 +113,19 @@ typedef uint64_t                 imsi64_t;
 typedef uint8_t       ksi_t;
 #define KSI_NO_KEY_AVAILABLE     0x07
 
-
+typedef struct count_s{
+  uint32_t spare:8;
+  uint32_t overflow:16;
+  uint32_t seq_num:8;
+} count_t;
 
 typedef uint8_t     AcT_t;      /* Access Technology    */
 
+typedef enum SelectionMode_e {
+  MS_O_N_P_APN_S_V    = 0,    ///< MS or network provided APN, subscribed verified
+  MS_P_APN_S_N_V      = 1,    ///< MS provided APN, subscription not verified
+  N_P_APN_S_N_V       = 2,    ///< Network provided APN, subscription not verified
+} SelectionMode_t;
 
 typedef enum {
   RAT_WLAN           = 0,
@@ -132,7 +141,26 @@ typedef enum {
   RAT_EHRPD          = 2003,
 } rat_type_t;
 
+typedef enum {
+ MME_UPDATE_PROCEDURE       = 0,
+ SGSN_UPDATE_PROCEDURE      = 1,
+ SUBSCRIPTION_WITHDRAWAL    = 2,
+ UPDATE_PROCEDURE_IWF       = 3,
+ INITIAL_ATTACH_PROCEDURE   = 4,
+}cancellation_type_t;
+
 #define NUMBER_OF_RAT_TYPE 11
+
+#define MEI_IMEI    0x0
+#define MEI_IMEISV  0x1
+
+typedef struct {
+  uint8_t present;
+  union {
+    unsigned imei:15;
+    unsigned imeisv:16;
+  } choice;
+} Mei_t;
 
 typedef enum {
   SS_SERVICE_GRANTED = 0,
@@ -146,6 +174,20 @@ typedef enum {
   NAM_ONLY_PACKET        = 2,
   NAM_MAX,
 } network_access_mode_t;
+
+/* Only one type of address can be present at the same time
+ * This type is applicable to IP address Information Element defined
+ * in 3GPP TS 29.274 #8.9
+ */
+typedef struct {
+#define GTP_IP_ADDR_v4  0x0
+#define GTP_IP_ADDR_v6  0x1
+  unsigned present:1;
+  union {
+    uint8_t v4[4];
+    uint8_t v6[16];
+  } address;
+} gtp_ip_address_t;
 
 typedef uint64_t bitrate_t;
 

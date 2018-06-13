@@ -31,8 +31,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include <libxml/xmlwriter.h>
-#include <libxml/xpath.h>
 #include "bstrlib.h"
 
 #include "log.h"
@@ -40,7 +38,6 @@
 #include "intertask_interface.h"
 #include "s1ap_common.h"
 #include "s1ap_mme_itti_messaging.h"
-#include "xml_msg_dump_itti.h"
 
 
 //------------------------------------------------------------------------------
@@ -83,7 +80,6 @@ s1ap_mme_itti_nas_uplink_ind (
 
   MSC_LOG_TX_MESSAGE (MSC_S1AP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_UPLINK_DATA_IND ue_id " MME_UE_S1AP_ID_FMT " len %u",
       NAS_UPLINK_DATA_IND (message_p).ue_id, blength(NAS_UPLINK_DATA_IND (message_p).nas_msg));
-  XML_MSG_DUMP_ITTI_NAS_UPLINK_DATA_IND(&NAS_UPLINK_DATA_IND (message_p), TASK_S1AP, TASK_NAS_MME, NULL);
   return itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
 }
 
@@ -114,7 +110,6 @@ s1ap_mme_itti_nas_downlink_cnf (
   }
   MSC_LOG_TX_MESSAGE (MSC_S1AP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_DOWNLINK_DATA_CNF ue_id " MME_UE_S1AP_ID_FMT " err_code %u",
       NAS_DL_DATA_CNF (message_p).ue_id, NAS_DL_DATA_CNF (message_p).err_code);
-  XML_MSG_DUMP_ITTI_NAS_DOWNLINK_DATA_CNF(&NAS_DL_DATA_CNF (message_p), TASK_S1AP, TASK_NAS_MME, NULL);
   return itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
 }
 //------------------------------------------------------------------------------
@@ -246,8 +241,6 @@ void s1ap_mme_itti_nas_non_delivery_ind(
       "0 NAS_DOWNLINK_DATA_REJ ue_id "MME_UE_S1AP_ID_FMT" len %u",
       ue_id,
       NAS_DL_DATA_REJ(message_p).nas_msg->slen);
-
-  XML_MSG_DUMP_ITTI_NAS_DOWNLINK_DATA_REJ(&NAS_DL_DATA_REJ (message_p), TASK_S1AP, TASK_NAS_MME, NULL);
 
   // should be sent to MME_APP, but this one would forward it to NAS_MME, so send it directly to NAS_MME
   // but let's see

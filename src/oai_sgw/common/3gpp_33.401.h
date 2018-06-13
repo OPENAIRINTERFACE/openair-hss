@@ -25,6 +25,8 @@
   \company Eurecom
   \email: lionel.gauthier@eurecom.fr
 */
+#include "security_types.h"
+
 #ifndef FILE_3GPP_33_401_SEEN
 #define FILE_3GPP_33_401_SEEN
 #ifdef __cplusplus
@@ -58,6 +60,27 @@ extern "C" {
  * authentication procedure between UE and MME.
  */
 #define MAX_EPS_AUTH_VECTORS          1
+
+
+//----------------------------
+typedef struct mm_ue_eps_authentication_quadruplet_s{
+  uint8_t                   rand[16];
+  uint8_t                   xres_len;
+  uint8_t                   xres[XRES_LENGTH_MAX];
+  uint8_t                   autn_len;
+  uint8_t                   autn[AUTN_LENGTH_OCTETS];
+  uint8_t                   k_asme[32];
+} mm_ue_eps_authentication_quadruplet_t;
+
+typedef struct mm_ue_eps_authentication_quintuplet_s{
+  uint8_t                   rand[16];
+  uint8_t                   xres_len;
+  uint8_t                   xres[XRES_LENGTH_MAX];
+  uint8_t                   ck[16];
+  uint8_t                   ik[16];
+  uint8_t                   autn_len;
+  uint8_t                   autn[AUTN_LENGTH_OCTETS];
+} mm_ue_eps_authentication_quintuplet_t;
 
 #ifdef __cplusplus
 }

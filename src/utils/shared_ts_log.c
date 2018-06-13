@@ -48,13 +48,10 @@
 #include <fcntl.h>
 #include <pthread.h>
 
-#include <libxml/xmlwriter.h>
-#include <libxml/xpath.h>
 #include "bstrlib.h"
 
 #include "hashtable.h"
 #include "obj_hashtable.h"
-#include "mme_scenario_player.h"
 #include "3gpp_23.003.h"
 #include "3gpp_24.008.h"
 #include "3gpp_33.401.h"

@@ -37,8 +37,6 @@
 #include <pthread.h>
 
 
-#include <libxml/xmlwriter.h>
-#include <libxml/xpath.h>
 #include "bstrlib.h"
 #include "queue.h"
 #include "tree.h"
@@ -49,6 +47,7 @@
 #include "assertions.h"
 #include "conversions.h"
 #include "intertask_interface.h"
+#include "timer.h"
 #include "itti_free_defined_msg.h"
 #include "s1ap_mme.h"
 #include "s1ap_mme_decoder.h"
@@ -58,9 +57,6 @@
 #include "s1ap_mme_itti_messaging.h"
 #include "dynamic_memory_check.h"
 #include "mme_config.h"
-#include "xml_msg_dump_itti.h"
-#include "mme_scenario_player.h"
-
 
 
 #if S1AP_DEBUG_LIST
@@ -140,7 +136,6 @@ s1ap_mme_thread (
 
     // From MME_APP task
     case MME_APP_CONNECTION_ESTABLISHMENT_CNF:{
-        XML_MSG_DUMP_ITTI_MME_APP_CONNECTION_ESTABLISHMENT_CNF(&MME_APP_CONNECTION_ESTABLISHMENT_CNF (received_message_p), ITTI_MSG_ORIGIN_ID (received_message_p), TASK_S1AP, NULL);
         s1ap_handle_conn_est_cnf (&MME_APP_CONNECTION_ESTABLISHMENT_CNF (received_message_p));
       }
       break;
@@ -151,7 +146,6 @@ s1ap_mme_thread (
          * New message received from NAS task.
          * * * * This corresponds to a S1AP downlink nas transport message.
          */
-        XML_MSG_DUMP_ITTI_NAS_DOWNLINK_DATA_REQ(&NAS_DOWNLINK_DATA_REQ (received_message_p), ITTI_MSG_ORIGIN_ID (received_message_p), TASK_S1AP, NULL);
         s1ap_generate_downlink_nas_transport (NAS_DOWNLINK_DATA_REQ (received_message_p).enb_ue_s1ap_id,
             NAS_DOWNLINK_DATA_REQ (received_message_p).ue_id,
             NAS_DOWNLINK_DATA_REQ (received_message_p).enb_id,
@@ -160,21 +154,18 @@ s1ap_mme_thread (
       break;
 
     case S1AP_E_RAB_SETUP_REQ:{
-        XML_MSG_DUMP_ITTI_S1AP_E_RAB_SETUP_REQ(&S1AP_E_RAB_SETUP_REQ (received_message_p), ITTI_MSG_ORIGIN_ID (received_message_p), TASK_S1AP, NULL);
         s1ap_generate_s1ap_e_rab_setup_req (&S1AP_E_RAB_SETUP_REQ (received_message_p));
       }
       break;
 
     // From MME_APP task
     case S1AP_UE_CONTEXT_RELEASE_COMMAND:{
-        XML_MSG_DUMP_ITTI_S1AP_UE_CONTEXT_RELEASE_COMMAND(&S1AP_UE_CONTEXT_RELEASE_COMMAND (received_message_p), ITTI_MSG_ORIGIN_ID (received_message_p), TASK_S1AP, NULL);
         s1ap_handle_ue_context_release_command (&received_message_p->ittiMsg.s1ap_ue_context_release_command);
       }
       break;
 
       // From SCTP layer, notifies S1AP of disconnection of a peer (eNB).
     case SCTP_CLOSE_ASSOCIATION:{
-        XML_MSG_DUMP_ITTI_SCTP_CLOSE_ASSOCIATION(&SCTP_CLOSE_ASSOCIATION(received_message_p), ITTI_MSG_ORIGIN_ID (received_message_p), TASK_S1AP, NULL);
         s1ap_handle_sctp_disconnection(SCTP_CLOSE_ASSOCIATION (received_message_p).assoc_id,
             SCTP_CLOSE_ASSOCIATION (received_message_p).reset);
       }
@@ -289,7 +280,6 @@ s1ap_mme_thread (
 
       // From SCTP layer, notifies S1AP of connection of a peer (eNB).
     case SCTP_NEW_ASSOCIATION:{
-        XML_MSG_DUMP_ITTI_SCTP_NEW_ASSOCIATION(&SCTP_NEW_ASSOCIATION(received_message_p), ITTI_MSG_ORIGIN_ID (received_message_p), TASK_S1AP, NULL);
         s1ap_handle_new_association (&received_message_p->ittiMsg.sctp_new_peer);
       }
       break;

@@ -60,7 +60,6 @@
 #include "security_types.h"
 #include "common_types.h"
 #include "common_defs.h"
-#include "xml_msg_dump.h"
 #include "mme_config.h"
 
 #include "intertask_interface_init.h"
@@ -73,7 +72,6 @@
 #include "nas_defs.h"
 #include "s10_mme.h"
 #include "s11_mme.h"
-#include "mme_scenario_player_task.h"
 
 /* FreeDiameter headers for support of S6A interface */
 #include <freeDiameter/freeDiameter-host.h>
@@ -160,9 +158,6 @@ main (
 #endif
           NULL));
   MSC_INIT (MSC_MME, THREAD_MAX + TASK_MAX);
-#if TRACE_XML
-  CHECK_INIT_RETURN (mme_scenario_player_init (&mme_config));
-#endif
   CHECK_INIT_RETURN (nas_init (&mme_config));
   CHECK_INIT_RETURN (sctp_init (&mme_config));
   CHECK_INIT_RETURN (udp_init ());
@@ -171,7 +166,6 @@ main (
   CHECK_INIT_RETURN (s1ap_mme_init());
   CHECK_INIT_RETURN (mme_app_init (&mme_config));
   CHECK_INIT_RETURN (s6a_init (&mme_config));
-  XML_MSG_DUMP_INIT();
   OAILOG_DEBUG(LOG_MME_APP, "MME app initialization complete\n");
 
   /*
@@ -180,6 +174,5 @@ main (
   itti_wait_tasks_end ();
   pid_file_unlock();
   free_wrapper((void**)&pid_file_name);
-  XML_MSG_DUMP_EXIT();
   return 0;
 }

@@ -33,8 +33,6 @@
 #include <stdint.h>
 #include <pthread.h>
 
-#include <libxml/xmlwriter.h>
-#include <libxml/xpath.h>
 #include "bstrlib.h"
 
 #include "dynamic_memory_check.h"
@@ -56,7 +54,6 @@
 #include "gcc_diag.h"
 #include "mme_app_itti_messaging.h"
 #include "mme_app_procedures.h"
-#include "xml_msg_dump_itti.h"
 #include "s1ap_mme.h"
 #include "s1ap_mme_ta.h"
 
@@ -455,7 +452,6 @@ mme_app_handle_initial_ue_message (
   void                                   *id = NULL;
 
   OAILOG_DEBUG (LOG_MME_APP, "Received MME_APP_INITIAL_UE_MESSAGE from S1AP\n");
-  XML_MSG_DUMP_ITTI_S1AP_INITIAL_UE_MESSAGE(initial_pP, TASK_S1AP, TASK_MME_APP, NULL);
 
   MME_APP_ENB_S1AP_ID_KEY(enb_s1ap_id_key, initial_pP->ecgi.cell_identity.enb_id, initial_pP->enb_ue_s1ap_id);
 

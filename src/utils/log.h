@@ -350,25 +350,25 @@ int log_get_start_time_sec (void);
 #    define OAILOG_DEBUG(...)                                           {void;}
 #  endif
 #  if !defined(OAILOG_TRACE)
-#    define OAILOG_TRACE(...)                                           {void;}
+#    define OAILOG_TRACE(...)
 #  endif
 #  if !defined(OAILOG_EXTERNAL)
-#    define OAILOG_EXTERNAL(...)                                        {void;}
+#    define OAILOG_EXTERNAL(...)
 #  endif
 #  if !defined(OAILOG_FUNC_IN)
-#    define OAILOG_FUNC_IN(...)                                         {void;}
+#    define OAILOG_FUNC_IN(pRoTo)
 #  endif
 #  if !defined(OAILOG_FUNC_OUT)
-#    define OAILOG_FUNC_OUT(pRoTo)                                      do{ return;} while 0
+#    define OAILOG_FUNC_OUT(pRoTo)                                      do{ return;} while (0)
 #  endif
 #  if !defined(OAILOG_FUNC_RETURN)
-#    define OAILOG_FUNC_RETURN(pRoTo, rEtUrNcOdE)                       do{ return rEtUrNcOdE;} while 0
+#    define OAILOG_FUNC_RETURN(pRoTo, rEtUrNcOdE)                       do{ return rEtUrNcOdE;} while (0)
 #  endif
 #  if !defined(OAILOG_STREAM_HEX)
-#    define OAILOG_STREAM_HEX(...)                                      {void;}
+#    define OAILOG_STREAM_HEX(...)
 #  endif
 #  if !defined(OAILOG_STREAM_HEX_ARRAY)
-#    define OAILOG_STREAM_HEX_ARRAY(...)                                {void;}
+#    define OAILOG_STREAM_HEX_ARRAY(...)
 #  endif
 
 #  if DAEMONIZE

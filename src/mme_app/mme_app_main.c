@@ -33,8 +33,6 @@
 #include <stdint.h>
 #include <pthread.h>
 
-#include <libxml/xmlwriter.h>
-#include <libxml/xpath.h>
 #include "bstrlib.h"
 
 #include "dynamic_memory_check.h"
@@ -48,15 +46,12 @@
 #include "mme_app_ue_context.h"
 #include "mme_app_defs.h"
 #include "mme_app_statistics.h"
-#include "xml_msg_dump.h"
 #include "common_defs.h"
 #include "mme_app_edns_emulation.h"
 #include "mme_app_procedures.h"
 
 //mme_app_desc_t                          mme_app_desc;
 mme_app_desc_t                          mme_app_desc = {.rw_lock = PTHREAD_RWLOCK_INITIALIZER, 0} ;
-
-extern xmlTextWriterPtr g_xml_text_writer;
 
 
 void     *mme_app_thread (void *args);
@@ -534,7 +529,6 @@ void mme_app_exit (void)
   // todo: also check other timers!
   timer_remove(mme_app_desc.statistic_timer_id, NULL);
   mme_app_edns_exit();
-  XML_MSG_DUMP_EXIT();
   hashtable_uint64_ts_destroy (mme_app_desc.mme_ue_contexts.imsi_ue_context_htbl);
   hashtable_uint64_ts_destroy (mme_app_desc.mme_ue_contexts.tun11_ue_context_htbl);
   hashtable_uint64_ts_destroy (mme_app_desc.mme_ue_contexts.tun10_ue_context_htbl);

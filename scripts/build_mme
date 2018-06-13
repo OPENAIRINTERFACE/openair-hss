@@ -29,7 +29,7 @@
 # include helper functions
 ################################
 THIS_SCRIPT_PATH=$(dirname $(readlink -f $0))
-source $THIS_SCRIPT_PATH/../build/tools/build_helper
+source $THIS_SCRIPT_PATH/../build/tools/build_helper.mme
 
 function help()
 {
@@ -39,26 +39,39 @@ function help()
   echo_error " "
   echo_error "Options:"
   echo_error "Mandatory arguments to long options are mandatory for short options too."
+  echo_error "  -b, --build-type                          Build type as defined in cmake, allowed values are: Debug Release RelWithDebInfo MinSizeRel"
   echo_error "  -c, --clean                               Clean the build generated files: config, object, executable files (build from scratch)"
-  echo_error "  -D, --daemon                              Build MME as a daemon."
   echo_error "  -f, --force                               No interactive script for installation of software packages."
   echo_error "  -h, --help                                Print this help."
-  echo_error "  -i, --check-installed-software            Check installed software packages necessary to build and run MME (support Ubuntu 14.04, 15.10)."
+  echo_error "  -i, --check-installed-software            Check installed software packages necessary to build and run MME (support $SUPPORTED_DISTRO)."
+  echo_error "  -s, --split-mob-git-repo  git_url         mobility git repository"
+  echo_error "  -S, --split-mob-lfs-repo  directory       mobility repository accessible through a local directory path"
   echo_error "  -u, --unit-tests                          Trigger unit tests."
-  echo_error "  -v, --verbose                             Build process verbose."
+  echo_error "  -v, --verbose                             Make build process verbose."
+  echo_error "  -V, --Verbose                             CMake only build process verbose, display compilation warnings and errors."
   echo_error " "
 }
 
+# arg1 is git URL
+# global var for return value of function get_git_mobility_repo
+OPENAIR_CN_MOBILITY_DIR=/tmp/openair-cn-mobility
+function get_git_mobility_repo()
+{
+  # hardcoded path
+  rm -Rf $OPENAIR_CN_MOBILITY_DIR
+  git clone $1 $OPENAIR_CN_MOBILITY_DIR
+  if [ $? -ne 0 ]; then
+    echo_error "Failed to clone git URL $1, abort"
+    return 1
+  fi
+  return 0
+}
 
-NAME=mmed
-DAEMON=/usr/sbin/$NAME
-DAEMON_ARGS=""
 PIDFILE=/var/run/$NAME.pid
 
 function main()
 {
   local -i clean=0
-  local -i daemon=0
   local -i force=0
   local -i unit_tests=0
   local -i verbose=0
@@ -70,15 +83,15 @@ function main()
   until [ -z "$1" ]
     do
     case "$1" in
+      -b | --build-type)
+        list_include_item "Debug Release RelWithDebInfo MinSizeRel" $2
+        [[ $? -ne 0 ]] && echo_error "Build type $2 not recognized" && return $?
+        cmake_args="$cmake_args -DCMAKE_BUILD_TYPE=$2"
+        shift 2;
+        ;;
       -c | --clean)
         clean=1
         echo "Clean the build generated files (build from scratch)"
-        shift;
-        ;;
-      -D | --daemon)
-        daemon=1
-        cmake_args="$cmake_args -DDAEMONIZE=1"
-        echo "Build MME as a daemon"
         shift;
         ;;
       -f | --force)
@@ -92,10 +105,25 @@ function main()
         exit 0
         ;;
       -i | --check-installed-software)
-        echo "Check installed software packages necessary to build and run EPC (support Ubuntu 14.04, 15.10):"
+        echo "Check installed software packages necessary to build and run EPC (support $SUPPORTED_DISTRO):"
         set_openair_env
         var_check_install_oai_software=1
         shift;
+        ;;
+      -s | --split-mob-git-repo)
+        get_git_mobility_repo $2
+        [[ $? -ne 0 ]] && return $?
+        cmake_args="$cmake_args -DMOBILITY_REPO=True -DMOBILITY_REPO_SRC=$OPENAIR_CN_MOBILITY_DIR"
+        shift 2;
+        ;;
+      -S | --split-mob-lfs-repo)
+        if [ ! -d $2 ]; then
+          echo_error "\"$2\" is not a known directory on this local file system, abort"
+          return 1
+        fi
+        
+        cmake_args="$cmake_args -DMOBILITY_REPO=True -DMOBILITY_REPO_SRC=$2"
+        shift 2;
         ;;
       -u | --unit-tests)
         echo "Unit tests triggered"
@@ -109,10 +137,15 @@ function main()
         verbose=1
         shift;
         ;;
+      -V | --Verbose)
+        echo "CMake build process verbose"
+        verbose=1
+        shift;
+        ;;
       *)   
         echo "Unknown option $1"
         help
-        exit 1
+        return 1
         ;;
     esac
   done
@@ -120,27 +153,21 @@ function main()
   if [ $var_check_install_oai_software -gt 0 ];then
     update_package_db
     check_install_mme_software  $force
-    echo "MME not compiled, to compile it, re-run build_mme without -i option"
-    exit 0
+    if [ $? -ne 0 ]; then
+        echo_error "Error: MME software installation failed"
+        return 1
+    else
+        echo_success "MME software installation successful"
+        echo "MME not compiled, to compile it, re-run build_mme without -i option"
+        return 0
+    fi
   fi
   
   set_openair_env 
-  $SUDO cp -uv  $OPENAIRCN_DIR/scripts/mme_test_s1_pcap2pdml /usr/local/bin
-  $SUDO chmod 755 /usr/local/bin/mme_test_s1_pcap2pdml
-   
-  $SUDO cp -uv  $OPENAIRCN_DIR/scripts/test_epc              /usr/local/bin
-  $SUDO chmod 755 /usr/local/bin/test_epc 
-  
-  $SUDO mkdir -p -m 755 /usr/share/oai/xsl
-  $SUDO cp -upv  $OPENAIRCN_DIR/src/test/scenarios/play_scenario.xsl    /usr/share/oai/xsl
-  $SUDO cp -upv  $OPENAIRCN_DIR/src/test/scenarios/generic_scenario.xsl /usr/share/oai/xsl
-  
-
 
   if [[ $verbose -eq 1 ]]; then
     cecho "OPENAIRCN_DIR    = $OPENAIRCN_DIR" $green
   fi
-  
 
   local dlog=$OPENAIRCN_DIR/build/log
   
@@ -150,6 +177,14 @@ function main()
     $SUDO mkdir -p /usr/local/etc/oai/freeDiameter
   fi
   
+  ##############################################################################
+  # Create mme
+  ##############################################################################
+  cd $OPENAIRCN_DIR/build
+  if [ ! -d ./mme ]; then
+    mkdir -m 777 -p -v mme
+  fi
+ 
   ##############################################################################
   # Clean
   ##############################################################################
@@ -170,27 +205,22 @@ function main()
   if [ ! -d ./build ]; then
     mkdir -m 777 -p -v build
   fi
-  cmake_file=./CMakeLists.txt
-  cp $OPENAIRCN_DIR/build/mme/CMakeLists.template $cmake_file
-  echo 'include(${CMAKE_CURRENT_SOURCE_DIR}/../CMakeLists.txt)' >> $cmake_file
-  
+
   cd ./build
-  cmake  $cmake_args .. 
-  
-  compilations mme mme mme
+  $CMAKE $cmake_args .. > /dev/null
+  [[ $? -ne 0 ]] && return $?
+
+  compilations mme mme $OPENAIRCN_DIR/build/mme/build/mme_app $verbose
+  [[ $? -ne 0 ]] && return $?
 
   if [ $unit_tests -ne 0 ]; then
-    make_test mme mme mme $verbose
+    make_test mme mme $OPENAIRCN_DIR/build/mme/build/mme_app $verbose
+    [[ $? -ne 0 ]] && return $?
   fi 
 
-  if [ $daemon -ne 0 ]; then
-    # TODO /usr/sbin ?
-    do_stop_daemon
-    $SUDO cp -upv $OPENAIRCN_DIR/build/mme/build/mme /usr/sbin/mmed && echo_success "mmed installed"
-  else
-    $SUDO killall -q mme
-    $SUDO cp -upv $OPENAIRCN_DIR/build/mme/build/mme /usr/local/bin && echo_success "mme installed" 
-  fi   
+  $SUDO killall -q mme
+  $SUDO cp -upv $OPENAIRCN_DIR/build/mme/build/mme_app/mme /usr/local/bin && echo_success "mme installed"  
+  return 0
 }
 
 

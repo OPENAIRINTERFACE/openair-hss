@@ -32,8 +32,6 @@
 #include <stdint.h>
 #include <pthread.h>
 
-#include <libxml/xmlwriter.h>
-#include <libxml/xpath.h>
 #include "bstrlib.h"
 
 #include "hashtable.h"
@@ -51,7 +49,6 @@
 #include "s1ap_mme_itti_messaging.h"
 #include "s1ap_mme.h"
 #include "s1ap_mme_ta.h"
-#include "xml_msg_dump_itti.h"
 #include "s1ap_mme_handlers.h"
 #include "mme_app_statistics.h"
 #include "timer.h"
@@ -664,7 +661,6 @@ s1ap_mme_handle_initial_context_setup_response (
                       MME_APP_INITIAL_CONTEXT_SETUP_RSP (message_p).ue_id,
                       MME_APP_INITIAL_CONTEXT_SETUP_RSP (message_p).e_rab_id[0],
                       MME_APP_INITIAL_CONTEXT_SETUP_RSP (message_p).gtp_teid[0]);
-  XML_MSG_DUMP_ITTI_MME_APP_INITIAL_CONTEXT_SETUP_RSP(&MME_APP_INITIAL_CONTEXT_SETUP_RSP (message_p), TASK_S1AP, TASK_MME_APP, NULL);
   rc =  itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_RETURN (LOG_S1AP, rc);
 }
@@ -757,7 +753,6 @@ s1ap_mme_handle_ue_context_release_request (
 
       MSC_LOG_TX_MESSAGE (MSC_S1AP_MME, MSC_MMEAPP_MME, NULL, 0, "0 S1AP_UE_CONTEXT_RELEASE_REQ mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ",
               S1AP_UE_CONTEXT_RELEASE_REQ (message_p).mme_ue_s1ap_id);
-      XML_MSG_DUMP_ITTI_S1AP_UE_CONTEXT_RELEASE_REQ(&S1AP_UE_CONTEXT_RELEASE_REQ (message_p), TASK_S1AP, TASK_MME_APP, NULL);
       rc =  itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
       OAILOG_FUNC_RETURN (LOG_S1AP, rc);
     } else {
@@ -972,7 +967,6 @@ s1ap_mme_handle_ue_context_release_complete (
   S1AP_UE_CONTEXT_RELEASE_COMPLETE (message_p).sctp_assoc_id  = ue_ref_p->enb->sctp_assoc_id;
 
   MSC_LOG_TX_MESSAGE (MSC_S1AP_MME, MSC_MMEAPP_MME, NULL, 0, "0 S1AP_UE_CONTEXT_RELEASE_COMPLETE mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ", S1AP_UE_CONTEXT_RELEASE_COMPLETE (message_p).mme_ue_s1ap_id);
-  XML_MSG_DUMP_ITTI_S1AP_UE_CONTEXT_RELEASE_COMPLETE(&S1AP_UE_CONTEXT_RELEASE_COMPLETE (message_p), TASK_S1AP, TASK_MME_APP, NULL);
 
   itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
   DevAssert(ue_ref_p->s1_ue_state == S1AP_UE_WAITING_CRR);
@@ -2161,7 +2155,6 @@ s1ap_mme_handle_erab_setup_response (
                       MSC_MMEAPP_MME,
                       NULL, 0,
                       "0 S1AP_E_RAB_SETUP_RSP mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ");
-  XML_MSG_DUMP_ITTI_S1AP_E_RAB_SETUP_RSP(&S1AP_E_RAB_SETUP_RSP (message_p), TASK_S1AP, TASK_MME_APP, NULL);
   rc =  itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_RETURN (LOG_S1AP, rc);
 }

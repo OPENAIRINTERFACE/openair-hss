@@ -40,8 +40,6 @@
 #include <sys/eventfd.h>
 #include <malloc.h>
 
-#include <libxml/xpath.h>
-#include <libxml/xmlwriter.h>
 #include "liblfds710.h"
 #include "bstrlib.h"
 

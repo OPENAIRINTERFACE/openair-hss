@@ -21,7 +21,7 @@ cmake_minimum_required(VERSION 2.8)
 include(${CMAKE_CURRENT_SOURCE_DIR}/../CMakeLists.txt)
 find_package(Doxygen)
 if(DOXYGEN_FOUND)
-configure_file(${OPENAIRCN_DIR}/DOCS/DOXYGEN/Doxyfile ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile @ONLY)
+configure_file(${OPENAIRCN_DIR}/docs/doxygen/Doxyfile ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile @ONLY)
 add_custom_target(doc
 ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
 WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}

@@ -49,39 +49,23 @@ function help()
   echo_error "Options:"
   echo_error "Mandatory arguments to long options are mandatory for short options too."
   echo_error "  -c, --config-file     file_abs_path Config file to be used by MME if you don't want to use the default one: $g_mme_default_config_file"
-  echo_error "  -D, --daemon                             Run the daemon."
-  echo_error "  -g, --gdb                                Run with GDB."
-  echo_error "  -G, --gdb-cmd         cmd cmd_arg        Append this GDB cmd to GDB command file (ex1: break Attach.c:272, ex2: watch 0xffee0002)."
-  echo_error "                                           All repetitions of this argument are valid."
-  echo_error "  -h, --help                               Print this help."
-  echo_error "  -I, --install-mme-files                  Install MME config files. (NOT RECOMMENDED. See tutorials on https://gitlab.eurecom.fr/oai/openairinterface5g/wikis/OpenAirUsage or DOCS/EPC_User_Guide.pdf"
-  echo_error "  -k, --kill                               Kill all running MME instances, exit script then."
-  echo_error "  -m, --mscgen          directory          Generate mscgen output files in a directory"
-  echo_error "  -s, --scenario-player scenario_abs_path  Run MME with scenario player (check it is built in MME by setting TRACE_XML to 'True' in $THIS_SCRIPT_PATH/../BUILD/MME/CMakeLists.template)"
-  echo_error "                                           Continue playing scenario(s) even if an error is encountered"
-  echo_error "  -S,                   scenario_abs_path  Run MME with scenario player (check it is built in MME by setting TRACE_XML to 'True' in $THIS_SCRIPT_PATH/../BUILD/MME/CMakeLists.template)"
-  echo_error "                                           Stop playing scenario(s) on first error encountered"
-  echo_error "  -v, --verbosity-level                    Verbosity level (0,1,2)."
-  echo_error "                                             0 -> ASN1 XER printf off"
-  echo_error "                                             1 -> ASN1 XER printf on and ASN1 debug off"
-  echo_error "                                             2 -> ASN1 XER printf on and ASN1 debug on"
+  echo_error "  -g, --gdb                           Run with GDB."
+  echo_error "  -G, --gdb-cmd         cmd cmd_arg   Append this GDB cmd to GDB command file (ex1: break Attach.c:272, ex2: watch 0xffee0002)."
+  echo_error "                                      All repetitions of this argument are valid."
+  echo_error "  -h, --help                          Print this help."
+  echo_error "  -I, --install-mme-files             Install MME config files. (NOT RECOMMENDED. See tutorials on https://gitlab.eurecom.fr/oai/openairinterface5g/wikis/OpenAirUsage or docs/EPC_User_Guide.pdf"
+  echo_error "  -k, --kill                          Kill all running MME instances, exit script then."
+  echo_error "  -m, --mscgen          directory     Generate mscgen output files in a directory"
+  echo_error "  -v, --verbosity-level               Verbosity level (0,1,2)."
+  echo_error "                                        0 -> ASN1 XER printf off"
+  echo_error "                                        1 -> ASN1 XER printf on and ASN1 debug off"
+  echo_error "                                        2 -> ASN1 XER printf on and ASN1 debug on"
 }
 
 function do_msc_gen()
 {
   cd $g_msc_dir
   $THIS_SCRIPT_PATH/msc_gen
-}
-
-function do_xml_dump()
-{
-  for file in `ls /tmp/mme_msg*`; 
-  do 
-    tmpfile=`mktemp`
-    xmllint --format $file > $tmpfile
-    cat $tmpfile | $SUDO tee $file > /dev/null
-    rm  $tmpfile
-  done;
 }
 
 function control_c()
@@ -91,24 +75,17 @@ function control_c()
   if [ $g_run_msc_gen -eq 1 ]; then 
     do_msc_gen
   fi
-  do_xml_dump
   exit $?
 }
 
-NAME=mmed
-DAEMON=/usr/sbin/$NAME
-DAEMON_ARGS=""
 PIDFILE=/var/run/$NAME.pid
 function main()
 {
   local -i run_gdb=0
-  local -i run_daemon=0
-  local -i run_scenario_player=0
   local -i set_network_interfaces=0
   local -i var_check_install_mme_files=0
   local    exe_arguments=" "
   local    mme_config_file=$g_mme_default_config_file
-  local    scenario_file
   local -a gdb_args
   local -i gdb_index=0
 
@@ -119,11 +96,6 @@ function main()
         mme_config_file=$2
         echo "setting config file to: $mme_config_file"
         shift 2;
-        ;;
-      -D | --daemon)
-        run_daemon=1
-        echo "Run MME as a daemon"
-        shift;
         ;;
       -g | --gdb)
         run_gdb=1
@@ -139,7 +111,7 @@ function main()
         ;;
       -h | --help)
         help
-        exit 0
+        return 0
         ;;
       -i | --set-nw-interfaces)
         set_network_interfaces=1
@@ -154,8 +126,7 @@ function main()
       -k | --kill)
         $SUDO killall -q mme
         $SUDO rm /var/run/mme.pid
-        do_stop_daemon
-        exit 0
+        return 0
         shift;
         ;;
       -m | --mscgen)
@@ -166,27 +137,9 @@ function main()
           shift 2;
         else
           echo_error "Mscgen log dir does not exist"
-          exit -1
+          return -1
         fi
         ;;          
-      -s | --scenario-player)
-        run_scenario_player=1
-        echo "setting scenario player flag to: $run_scenario_player"
-        scenario_file=$2
-        echo "setting scenario file to: $scenario_file"
-        exe_arguments="-s $scenario_file $exe_arguments"
-        DAEMON_ARGS=$DAEMON_ARGS" -s $scenario_file"
-        shift 2;
-        ;;
-      -S)
-        run_scenario_player=1
-        echo "setting scenario player flag to: $run_scenario_player"
-        scenario_file=$2
-        echo "setting scenario file to: $scenario_file"
-        exe_arguments="-S $scenario_file $exe_arguments"
-        DAEMON_ARGS=$DAEMON_ARGS" -S $scenario_file"
-        shift 2;
-        ;;
       -v | --verbosity-level)
         local verbosity_level=$2
         echo "setting verbosity level to: $verbosity_level"
@@ -196,7 +149,7 @@ function main()
       *)   
         echo "Unknown option $1"
         help
-        exit 0
+        return 1
         ;;
     esac
   done
@@ -209,25 +162,25 @@ function main()
   #####################################
   if [ ! -f $mme_config_file ]; then 
     if [ $g_mme_default_config_file != $mme_config_file ]; then
-      echo_fatal "Please provide -c|--config-file valid argument (\"$mme_config_file\" not a valid file)"
+      echo_error "Please provide -c|--config-file valid argument (\"$mme_config_file\" not a valid file)"
+      return 1
     fi
   fi
   
   if [ $var_check_install_mme_files -gt 0 ];then
-    $SUDO mkdir -p /usr/local/share/oai/test > /dev/null
-    $SUDO cp -rupv $OPENAIRCN_DIR/TEST/MME    /usr/local/share/oai/test
-    
     $SUDO mkdir -p /usr/local/etc/oai/freeDiameter > /dev/null
   
     if [ ! -f /usr/local/etc/oai/mme.conf ]; then
       $SUDO cp -upv $THIS_SCRIPT_PATH/../etc/mme.conf    /usr/local/etc/oai
-      echo_fatal "Please customize /usr/local/etc/oai/mme.conf (interfaces, TAIs, GUMMEI, HSS hostname, SGW IP address, logging, etc), after, please re-run run_mme -I"
+      echo_error "Please customize /usr/local/etc/oai/mme.conf (interfaces, TAIs, GUMMEI, HSS hostname, SGW IP address, logging, etc), after, please re-run run_mme -I"
+      return 1
     else
       if [  $THIS_SCRIPT_PATH/../etc/mme.conf -nt  /usr/local/etc/oai/mme.conf ]; then
         read -p "Do you want to update /usr/local/etc/oai/mme.conf with $OPENAIRCN_DIR/etc/mme.conf ? <y/N> " prompt
         if [[ $prompt =~ [yY](es)* ]]; then
           $SUDO cp -upv $THIS_SCRIPT_PATH/../etc/mme.conf    /usr/local/etc/oai
-          echo_fatal "Please customize /usr/local/etc/oai/mme.conf (interfaces, TAIs, GUMMEI, HSS hostname, SGW IP address, logging, etc), after, please re-run run_mme -I"
+          echo_error "Please customize /usr/local/etc/oai/mme.conf (interfaces, TAIs, GUMMEI, HSS hostname, SGW IP address, logging, etc), after, please re-run run_mme -I"
+          return 1
         fi
       fi
     fi 
@@ -239,8 +192,8 @@ function main()
     # hardcoded MME diameter ID 
     fqdn=`hostname --fqdn`
     if [ "a$fqdn" == "a" ]; then
-      echo_error "Please allow the IP resolution of MME FQDN (in /etc/hosts, example: 127.0.1.1 myhostname.openair4G.eur myhostname)."
-      echo_fatal "Please allow the IP resolution of HSS FQDN (in /etc/hosts, example: 127.0.1.1 hss.openair4G.eur hss if HSS run on MME host)."
+      echo_error "Please allow the IP resolution of MME FQDN."
+      return 1
     fi
 
     # generate certificates if necessary
@@ -253,14 +206,9 @@ function main()
   #####################################
   # Check executables
   #####################################
-  if [ "$run_daemon" -eq 1 ]; then
-    if [ ! -e /usr/sbin/mmed ]; then
-      echo_fatal "Cannot find /usr/sbin/mmed executable, have a look at the output of build_mme  -D ... executable"
-    fi
-  else
-    if [ ! -e /usr/local/bin/mme ]; then
-    echo_fatal "Cannot find /usr/local/bin/mme executable, have a look at the output of build_mme executable"
-    fi
+  if [ ! -e /usr/local/bin/mme ]; then
+    echo_error "Cannot find /usr/local/bin/mme executable, have a look at the output of build_mme executable"
+    return 1
   fi
 
 
@@ -274,35 +222,7 @@ function main()
   if [ $set_network_interfaces -eq 1 ]; then
     set_mme_network_interfaces $mme_config_file
   fi
-
-
-  #####################################
-  # Clean old XML generated files
-  #####################################
-  $SUDO rm -f /var/log/mme_msg_*
-
-
-  #####################################
-  # Running daemon?
-  #####################################
-  DAEMON_ARGS=$DAEMON_ARGS" -c $mme_config_file"
-  if [ "$run_daemon" -eq 1 ]; then
-    # TODO options
-    $SUDO killall -q mme
-    do_stop_daemon
-    case "$?" in
-      0) echo_success "MME daemon was running -> stopped";;
-      1) ;;
-      2) echo_fatal "FAILURE: MME daemon was running -> could not stop it";;
-    esac
-    do_start_daemon
-    case "$?" in
-      0) echo_success "MME daemon started";;
-      1) echo_fatal "FAILURE: MME daemon was already running";;
-      2) echo_fatal "FAILURE: Cannot start MME daemon";;
-    esac
-    exit 0
-  fi
+    
 
   #####################################
   # Running executable
@@ -331,6 +251,7 @@ function main()
       $SUDO $THIS_SCRIPT_PATH/msc_gen --profile MME --dir $g_msc_dir --type png
     fi
   fi
+  return $?
 }
 
 main "$@"

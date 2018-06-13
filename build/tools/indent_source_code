@@ -40,7 +40,7 @@ function main()
 
   command -v astyle -h >/dev/null 2>&1 || { echo >&2 "astyle required but it's not installed."; sudo apt-get install astyle; }
   
-  find $OPENAIRCN_DIR/src/gtp* $OPENAIRCN_DIR/src/mme_app $OPENAIRCN_DIR/src/nas $OPENAIRCN_DIR/src/oai* $OPENAIRCN_DIR/src/openairhss $OPENAIRCN_DIR/src/s* $OPENAIRCN_DIR/src/udp $OPENAIRCN_DIR/src/utils \
+  find $OPENAIRCN_DIR/src/gtp* $OPENAIRCN_DIR/src/mme_app $OPENAIRCN_DIR/src/nas $OPENAIRCN_DIR/src/oai* $OPENAIRCN_DIR/src/s* $OPENAIRCN_DIR/src/udp $OPENAIRCN_DIR/src/utils \
           -type f -name '*.c' -execdir astyle  --mode=c --convert-tabs --indent=spaces=2 -A14                            \
           --indent-switches --indent-cases --indent-preproc-block --indent-preproc-define --indent-col1-comments         \
           --break-blocks --delete-empty-lines --align-pointer=name                                                       \

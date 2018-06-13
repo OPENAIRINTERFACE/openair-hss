@@ -40,19 +40,6 @@ extern "C" {
 typedef uint8_t  DelayValue_t;
 typedef uint32_t SequenceNumber_t;
 
-/* Only one type of address can be present at the same time
- * This type is applicable to IP address Information Element defined
- * in 3GPP TS 29.274 #8.9
- */
-typedef struct {
-#define GTP_IP_ADDR_v4  0x0
-#define GTP_IP_ADDR_v6  0x1
-  unsigned present:1;
-  union {
-    uint8_t v4[4];
-    uint8_t v6[16];
-  } address;
-} gtp_ip_address_t;
 
 /* 3GPP TS 29.274 Figure 8.12 */
 
@@ -118,17 +105,6 @@ typedef struct {
   uint8_t digit[MSISDN_LENGTH];
   uint8_t length;
 } Msisdn_t;
-
-#define MEI_IMEI    0x0
-#define MEI_IMEISV  0x1
-
-typedef struct {
-  uint8_t present;
-  union {
-    unsigned imei:15;
-    unsigned imeisv:16;
-  } choice;
-} Mei_t;
 
 typedef struct {
   uint8_t  mcc[3];
@@ -251,12 +227,6 @@ typedef struct {
   } target_id;
 } target_identification_t;
 
-typedef enum SelectionMode_e {
-  MS_O_N_P_APN_S_V    = 0,    ///< MS or network provided APN, subscribed verified
-  MS_P_APN_S_N_V      = 1,    ///< MS provided APN, subscription not verified
-  N_P_APN_S_N_V       = 2,    ///< Network provided APN, subscription not verified
-} SelectionMode_t;
-
 typedef struct {
   uint32_t uplink_ambr;
   uint32_t downlink_ambr;
@@ -321,52 +291,6 @@ typedef enum node_type_e {
   NODE_TYPE_MME  = 0,
   NODE_TYPE_SGSN = 1
 } node_type_t;
-
-
-
-
-typedef struct {
-  uint8_t                  eps_bearer_id;    ///< EBI,  Mandatory CSR
-  bearer_qos_t             bearer_level_qos;
-  traffic_flow_template_t  tft;              ///< Bearer TFT, Optional CSR, This IE may be included on the S4/S11 and S5/S8 interfaces.
-} bearer_to_create_t;
-
-//-----------------
-typedef struct bearer_context_to_be_created_s {
-  uint8_t                  eps_bearer_id;       ///< EBI,  Mandatory CSR
-  traffic_flow_template_t  tft;                 ///< Bearer TFT, Optional CSR, This IE may be included on the S4/S11 and S5/S8 interfaces.
-  fteid_t                  s1u_enb_fteid;       ///< S1-U eNodeB F-TEID, Conditional CSR, This IE shall be included on the S11 interface for X2-based handover with SGW relocation.
-  fteid_t                  s4u_sgsn_fteid;      ///< S4-U SGSN F-TEID, Conditional CSR, This IE shall be included on the S4 interface if the S4-U interface is used.
-  fteid_t                  s5_s8_u_sgw_fteid;   ///< S5/S8-U SGW F-TEID, Conditional CSR, This IE shall be included on the S5/S8 interface for an "eUTRAN Initial Attach",
-                                                ///  a "PDP Context Activation" or a "UE Requested PDN Connectivity".
-  fteid_t                  s5_s8_u_pgw_fteid;   ///< S5/S8-U PGW F-TEID, Conditional CSR, This IE shall be included on the S4 and S11 interfaces for the TAU/RAU/Handover
-                                                /// cases when the GTP-based S5/S8 is used.
-  fteid_t                  s12_rnc_fteid;       ///< S12 RNC F-TEID, Conditional Optional CSR, This IE shall be included on the S4 interface if the S12
-                                                /// interface is used in the Enhanced serving RNS relocation with SGW relocation procedure.
-  fteid_t                  s2b_u_epdg_fteid;    ///< S2b-U ePDG F-TEID, Conditional CSR, This IE shall be included on the S2b interface for an Attach
-                                                /// with GTP on S2b, a UE initiated Connectivity to Additional PDN with GTP on S2b and a Handover to Untrusted Non-
-                                                /// 3GPP IP Access with GTP on S2b.
-  /* This parameter is received only if the QoS parameters have been modified */
-  bearer_qos_t  bearer_level_qos;    ///< Bearer QoS, Mandatory CSR
-} bearer_context_to_be_created_t;
-
-typedef struct bearer_contexts_to_be_created_s {
-#define MSG_CREATE_SESSION_REQUEST_MAX_BEARER_CONTEXTS   11
-uint8_t num_bearer_context;
-bearer_context_to_be_created_t bearer_contexts[MSG_CREATE_SESSION_REQUEST_MAX_BEARER_CONTEXTS];    ///< Bearer Contexts to be created
-///< Several IEs with the same type and instance value shall be
-///< included on the S4/S11 and S5/S8 interfaces as necessary
-///< to represent a list of Bearers. One single IE shall be
-///< included on the S2b interface.
-///< One bearer shall be included for an E-UTRAN Initial
-///< Attach, a PDP Context Activation, a UE requested PDN
-///< Connectivity, an Attach with GTP on S2b, a UE initiated
-///< Connectivity to Additional PDN with GTP on S2b and a
-///< Handover to Untrusted Non-3GPP IP Access with GTP on
-///< S2b.
-///< One or more bearers shall be included for a
-///< Handover/TAU/RAU with an SGW change.
-} bearer_contexts_to_be_created_t;
 
 //-----------------
 typedef struct bearer_context_created_s {

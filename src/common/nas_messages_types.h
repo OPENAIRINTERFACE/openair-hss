@@ -294,7 +294,6 @@ typedef struct itti_nas_signalling_connection_rel_ind_s {
   /* UE identifier */
   mme_ue_s1ap_id_t                  ue_id;
 } itti_nas_signalling_connection_rel_ind_t;
-e_ind_t;
 
 typedef struct itti_nas_implicit_detach_ue_ind_s {
   /* UE identifier */

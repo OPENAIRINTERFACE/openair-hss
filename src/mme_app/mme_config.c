@@ -940,8 +940,6 @@ static void mme_config_display (mme_config_t * config_pP)
 #if DEBUG_IS_ON
   OAILOG_DEBUG (LOG_CONFIG, "Built with CMAKE_BUILD_TYPE ................: %s\n", CMAKE_BUILD_TYPE);
   OAILOG_DEBUG (LOG_CONFIG, "Built with DISABLE_ITTI_DETECT_SUB_TASK_ID .: %d\n", DISABLE_ITTI_DETECT_SUB_TASK_ID);
-  OAILOG_DEBUG (LOG_CONFIG, "Built with ENABLE_ITTI .....................: %d\n", ENABLE_ITTI);
-  OAILOG_DEBUG (LOG_CONFIG, "Built with ENABLE_ITTI_ANALYZER ............: %d\n", ENABLE_ITTI_ANALYZER);
   OAILOG_DEBUG (LOG_CONFIG, "Built with ITTI_TASK_STACK_SIZE ............: %d\n", ITTI_TASK_STACK_SIZE);
   OAILOG_DEBUG (LOG_CONFIG, "Built with ITTI_LITE .......................: %d\n", ITTI_LITE);
   OAILOG_DEBUG (LOG_CONFIG, "Built with LOG_OAI .........................: %d\n", LOG_OAI);
@@ -953,7 +951,6 @@ static void mme_config_display (mme_config_t * config_pP)
   OAILOG_DEBUG (LOG_CONFIG, "Built with SCTP_DUMP_LIST ..................: %d\n", SCTP_DUMP_LIST);
   OAILOG_DEBUG (LOG_CONFIG, "Built with TRACE_HASHTABLE .................: %d\n", TRACE_HASHTABLE);
   OAILOG_DEBUG (LOG_CONFIG, "Built with TRACE_3GPP_SPEC .................: %d\n", TRACE_3GPP_SPEC);
-  OAILOG_DEBUG (LOG_CONFIG, "Built with TRACE_XML .......................: %d (enable MME scenario player feature)\n", TRACE_XML);
 #endif
   OAILOG_INFO (LOG_CONFIG, "Configuration:\n");
   OAILOG_INFO (LOG_CONFIG, "- File .................................: %s\n", bdata(config_pP->config_file));
