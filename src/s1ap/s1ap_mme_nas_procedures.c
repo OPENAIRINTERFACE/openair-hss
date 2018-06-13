@@ -1380,6 +1380,7 @@ s1ap_handle_mme_status_transfer( const itti_s1ap_status_transfer_t * const s1ap_
 void
 s1ap_handle_paging( const itti_s1ap_paging_t * const s1ap_paging_pP){
 
+
   uint                                    offset = 0;
   uint8_t                                *buffer_p = NULL;
   uint32_t                                length = 0;
@@ -1430,7 +1431,15 @@ s1ap_handle_paging( const itti_s1ap_paging_t * const s1ap_paging_pP){
 //
 //
   paging_p->ueIdentityIndexValue.buf = calloc (2, sizeof(uint8_t)); // (uint8_t *) &s1ap_paging_pP->ue_identity_index;
-  memcpy(paging_p->ueIdentityIndexValue.buf, (uint8_t*)&(s1ap_paging_pP->ue_identity_index), 2);
+
+//  uint16_t index_val = s1ap_paging_pP->ue_identity_index << 6;
+//  uint16_t index_val_1 = htons(s1ap_paging_pP->ue_identity_index);
+//  uint16_t index_val_2 = s1ap_paging_pP->ue_identity_index << 6;
+
+
+  uint16_t index_val = htons(s1ap_paging_pP->ue_identity_index << 6);
+
+  memcpy(paging_p->ueIdentityIndexValue.buf, (uint8_t*)&index_val, 2);
 //  * paging_p->ueIdentityIndexValue.buf = *paging_p->ueIdentityIndexValue.buf<<6;
   paging_p->ueIdentityIndexValue.size = 2;
   paging_p->ueIdentityIndexValue.bits_unused = 6;
@@ -1476,6 +1485,7 @@ s1ap_handle_paging( const itti_s1ap_paging_t * const s1ap_paging_pP){
   bstring b = blk2bstr(buffer_p, length);
   free(buffer_p);
   s1ap_mme_itti_send_sctp_request (&b, eNB_ref->sctp_assoc_id, eNB_ref->next_sctp_stream, s1ap_paging_pP->mme_ue_s1ap_id);
+
   OAILOG_FUNC_OUT (LOG_S1AP);
 }
 
