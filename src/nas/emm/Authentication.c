@@ -865,20 +865,20 @@ static void  _authentication_t3460_handler (void *args)
       emm_sap_send (&emm_sap);
     }
   }else{
-    /*
-     * Abort the authentication procedure.
-     * There was an authentication procedure which failed where no specific procedure is running.
-     * The timer is stopped and this is not a high severity case, but still call the EMMREG_COMMON_PROC_ABORT method get back to the old state!
-     */
-    emm_sap_t                               emm_sap = {0};
-    emm_sap.primitive = EMMREG_COMMON_PROC_ABORT;
-    emm_sap.u.emm_reg.ue_id     = auth_proc->ue_id;
-    emm_sap.u.emm_reg.ctx       = emm_ctx;
-    emm_sap.u.emm_reg.notify    = false;
-    emm_sap.u.emm_reg.free_proc = true;
-    emm_sap.u.emm_reg.u.common.common_proc = &auth_proc->emm_com_proc;
-    emm_sap.u.emm_reg.u.common.previous_emm_fsm_state = auth_proc->emm_com_proc.emm_proc.previous_emm_fsm_state;
-    emm_sap_send (&emm_sap);
+//    /*
+//     * Abort the authentication procedure.
+//     * There was an authentication procedure which failed where no specific procedure is running.
+//     * The timer is stopped and this is not a high severity case, but still call the EMMREG_COMMON_PROC_ABORT method get back to the old state!
+//     */
+//    emm_sap_t                               emm_sap = {0};
+//    emm_sap.primitive = EMMREG_COMMON_PROC_ABORT;
+//    emm_sap.u.emm_reg.ue_id     = emm_ctx->ue_id;
+//    emm_sap.u.emm_reg.ctx       = emm_ctx;
+//    emm_sap.u.emm_reg.notify    = false;
+//    emm_sap.u.emm_reg.free_proc = true;
+//    emm_sap.u.emm_reg.u.common.common_proc = &auth_proc->emm_com_proc;
+//    emm_sap.u.emm_reg.u.common.previous_emm_fsm_state = auth_proc->emm_com_proc.emm_proc.previous_emm_fsm_state;
+//    emm_sap_send (&emm_sap);
   }
   OAILOG_FUNC_OUT (LOG_NAS_EMM);
 }

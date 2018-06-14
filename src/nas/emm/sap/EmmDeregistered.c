@@ -179,9 +179,9 @@ int EmmDeregistered (emm_reg_t * const evt)
   case _EMMREG_ATTACH_ABORT:
     MSC_LOG_RX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "_EMMREG_ATTACH_ABORT ue id " MME_UE_S1AP_ID_FMT " ", evt->ue_id);
     // TODO when abort is called it may trigger a emm_proc_detach_request() that will free the emm_spec_proc
-    failure_cb_t failure_notif = NULL;
+//    failure_cb_t failure_notif = NULL;
     if ((emm_ctx) && (evt->u.attach.proc)) {
-      failure_notif = evt->u.attach.proc->emm_spec_proc.emm_proc.base_proc.failure_notif;
+//      failure_notif = evt->u.attach.proc->emm_spec_proc.emm_proc.base_proc.failure_notif;
       if (evt->u.attach.proc->emm_spec_proc.emm_proc.base_proc.abort) {
         rc = (*evt->u.attach.proc->emm_spec_proc.emm_proc.base_proc.abort)(emm_ctx, &evt->u.attach.proc->emm_spec_proc.emm_proc.base_proc);
       }
@@ -191,7 +191,7 @@ int EmmDeregistered (emm_reg_t * const evt)
 //      rc = (*failure_notif)(emm_ctx);
 //    }
 //    if (evt->free_proc) {
-      nas_delete_attach_procedure(emm_ctx);
+//      nas_delete_attach_procedure(emm_ctx);
 //    }
     break;
 
