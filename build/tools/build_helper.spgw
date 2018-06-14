@@ -140,9 +140,17 @@ check_install_spgw_software() {
 
   # Libraries
   if [[ $OS_DISTRO == "ubuntu" ]]; then
+    case "$(get_distribution_release)" in
+	"ubuntu14.04" | "ubuntu16.04" | "ubuntu17.04" | "ubuntu17.10")
+	    specific_packages="libconfig8-dev"
+	    ;;
+	"ubuntu18.04")
+	    specific_packages="libconfig-dev"
+	    ;;
+    esac
     PACKAGE_LIST="\
+      $specific_packages \
       guile-2.0-dev \
-      libconfig8-dev \
       libcurl4-gnutls-dev \
       libevent-dev \
       libgcrypt11-dev \
@@ -185,10 +193,18 @@ check_install_spgw_software() {
 
   # Networking
   if [[ $OS_DISTRO == "ubuntu" ]]; then
+    case "$(get_distribution_release)" in
+	"ubuntu14.04" | "ubuntu16.04" | "ubuntu17.04" | "ubuntu17.10")
+	    specific_packages="iproute"
+	    ;;
+	"ubuntu18.04")
+	    specific_packages="iproute2"
+	    ;;
+    esac
     PACKAGE_LIST="\
+      $specific_packages \
       ethtool \
       iperf \
-      iproute \
       vlan"
   elif [[ "$OS_BASEDISTRO" == "fedora" ]]; then
     PACKAGE_LIST="\

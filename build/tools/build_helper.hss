@@ -81,8 +81,16 @@ check_install_hss_software() {
 
   # Libraries
   if [[ $OS_DISTRO == "ubuntu" ]]; then
+    case "$(get_distribution_release)" in
+	"ubuntu14.04" | "ubuntu16.04" | "ubuntu17.04" | "ubuntu17.10")
+	    specific_packages="libconfig8-dev"
+	    ;;
+	"ubuntu18.04")
+	    specific_packages="libconfig-dev"
+	    ;;
+    esac
     PACKAGE_LIST="\
-      libconfig8-dev \
+      $specific_packages \
       libgcrypt11-dev \
       libidn2-0-dev \
       libidn11-dev \
@@ -138,7 +146,7 @@ check_install_hss_software() {
         python-mysqldb \
         pkg-config"
       ;;
-    "ubuntu16.04")
+    "ubuntu16.04" | "ubuntu17.04" | "ubuntu17.10" | "ubuntu18.04")
       PACKAGE_LIST="\
         python-pexpect \
         python-mysqldb"

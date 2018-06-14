@@ -66,9 +66,16 @@ check_install_mme_software() {
       cmake \
       doxygen \
       flex \
-      gccxml \
       gdb \
       git"
+    case "$(get_distribution_release)" in
+      "ubuntu17.04" | "ubuntu17.10" | "ubuntu18.04")
+	PACKAGE_LIST="$PACKAGE_LIST castxml"
+      ;;
+      "ubuntu14.04" | "ubuntu16.04")
+	PACKAGE_LIST="$PACKAGE_LIST gccxml"
+      ;;
+    esac
   elif [[ "$OS_BASEDISTRO" == "fedora" ]]; then
     PACKAGE_LIST="\
       autoconf \
@@ -90,9 +97,17 @@ check_install_mme_software() {
 
   # Libraries
   if [[ $OS_DISTRO == "ubuntu" ]]; then
+    case "$(get_distribution_release)" in
+	"ubuntu14.04" | "ubuntu16.04" | "ubuntu17.04" | "ubuntu17.10")
+	    specific_packages="libconfig8-dev"
+	    ;;
+	"ubuntu18.04")
+	    specific_packages="libconfig-dev"
+	    ;;
+    esac
     PACKAGE_LIST="\
+      $specific_packages \
       guile-2.0-dev \
-      libconfig8-dev \
       libgcrypt11-dev \
       libgmp-dev \
       libhogweed? \
@@ -141,10 +156,18 @@ check_install_mme_software() {
     echo "Install gnutls/nettle"
     $SUDO apt-get install -y nettle-dev nettle-bin
     ret=$?;[[ $ret -ne 0 ]] && return $ret
-    $SUDO apt-get install -y libgnutls-dev
-    ret=$?;[[ $ret -ne 0 ]] && return $ret
+    case "$(get_distribution_release)" in
+      "ubuntu17.04" | "ubuntu17.10" | "ubuntu18.04")
+	$SUDO apt-get install -y libgnutls28-dev
+	ret=$?;[[ $ret -ne 0 ]] && return $ret
+	;;
+      "ubuntu14.04" | "ubuntu16.04")
+	$SUDO apt-get install -y libgnutls-dev
+	ret=$?;[[ $ret -ne 0 ]] && return $ret
+	;;
+    esac
   fi
-  
+
   install_freediameter_from_source $1
   ret=$?;[[ $ret -ne 0 ]] && return $ret
   install_asn1c_from_source $1
@@ -155,9 +178,17 @@ check_install_mme_software() {
 
   # Networking
   if [[ $OS_DISTRO == "ubuntu" ]]; then
+    case "$(get_distribution_release)" in
+	"ubuntu14.04" | "ubuntu16.04" | "ubuntu17.04" | "ubuntu17.10")
+	    specific_packages="iproute"
+	    ;;
+	"ubuntu18.04")
+	    specific_packages="iproute2"
+	    ;;
+    esac
     PACKAGE_LIST="\
+      $specific_packages \
       ethtool \
-      iproute \
       vlan"
   elif [[ "$OS_BASEDISTRO" == "fedora" ]]; then
     PACKAGE_LIST="\

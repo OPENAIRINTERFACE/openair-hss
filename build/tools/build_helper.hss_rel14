@@ -193,7 +193,16 @@ check_install_hss_software() {
 
   # packages
   if [[ $OS_DISTRO == "ubuntu" ]]; then
+    case "$(get_distribution_release)" in
+	"ubuntu17.04" | "ubuntu17.10" | "ubuntu18.04")
+	    specific_packages="libgnutls28-dev"
+	    ;;
+	"ubuntu14.04" | "ubuntu16.04")
+	    specific_packages="libgnutls-dev"
+	    ;;
+    esac
     PACKAGE_LIST="\
+      $specific_packages \
       g++ \
       make \
       $CMAKE \

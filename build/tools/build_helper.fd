@@ -201,8 +201,17 @@ install_freediameter_from_source() {
     OPTION="-y"
   fi
   if [[ "$OS_DISTRO" == "ubuntu" ]]; then
+    case "$(get_distribution_release)" in
+	"ubuntu17.04" | "ubuntu17.10" | "ubuntu18.04")
+	    specific_packages="libgnutls28-dev"
+	    ;;
+	"ubuntu14.04" | "ubuntu16.04")
+	    specific_packages="libgnutls-dev"
+	    ;;
+    esac
     # libpq-dev 'may' be not needed
     PACKAGE_LIST="\
+      $specific_packages \
       autoconf \
       automake \
       bison \
@@ -215,7 +224,6 @@ install_freediameter_from_source() {
       gcc \
       gdb \
       libgcrypt-dev \
-      libgnutls-dev \
       libidn11-dev \
       libmysqlclient-dev \
       libpq-dev \
