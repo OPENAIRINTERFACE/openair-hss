@@ -455,16 +455,24 @@ int emm_proc_attach_reject (mme_ue_s1ap_id_t ue_id, emm_cause_t emm_cause)
     if (is_nas_specific_procedure_attach_running (emm_context)) {
       nas_emm_attach_proc_t     *attach_proc = (nas_emm_attach_proc_t*)emm_context->emm_procedures->emm_specific_proc;
 
-      attach_proc->emm_cause = emm_cause;
-      emm_sap_t                               emm_sap = {0};
-      emm_sap.primitive = EMMREG_ATTACH_REJ;
-      emm_sap.u.emm_reg.ue_id = ue_id;
-      emm_sap.u.emm_reg.ctx = emm_context;
-      emm_sap.u.emm_reg.notify = false;
-      emm_sap.u.emm_reg.free_proc = true;
-      emm_sap.u.emm_reg.u.attach.proc = attach_proc;
-      rc = emm_sap_send (&emm_sap);
+      // todo: review attach rejects
+//      attach_proc->emm_cause = emm_cause;
+//      emm_sap_t                               emm_sap = {0};
+//      emm_sap.primitive = EMMREG_ATTACH_REJ;
+//      emm_sap.u.emm_reg.ue_id = ue_id;
+//      emm_sap.u.emm_reg.ctx = emm_context;
+//      emm_sap.u.emm_reg.notify = false;
+//      emm_sap.u.emm_reg.free_proc = true;
+//      emm_sap.u.emm_reg.u.attach.proc = attach_proc;
+//      rc = emm_sap_send (&emm_sap);
+      rc = _emm_attach_reject (emm_context, &attach_proc->emm_spec_proc.emm_proc.base_proc);
+    }else{
+      OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - No attach procedure for (ue_id=" MME_UE_S1AP_ID_FMT ")\n", ue_id);
+
     }
+  }else{
+    OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - No EMM Context for (ue_id=" MME_UE_S1AP_ID_FMT ")\n", ue_id);
+
   }
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }

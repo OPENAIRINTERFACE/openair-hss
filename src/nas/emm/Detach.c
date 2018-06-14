@@ -240,7 +240,7 @@ emm_proc_detach (
      /*
       * Setup NAS information message to transfer
       */
-     emm_as->nas_info = EMM_AS_NAS_INFO_DETACH;
+     emm_as->nas_info = EMM_AS_NAS_INFO_DETACH_REQ;
      emm_as->nas_msg = NULL;
      /*
       * Set the UE identifier

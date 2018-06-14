@@ -484,6 +484,11 @@ static int _emm_as_recv (
     rc = emm_recv_detach_request (ue_id, &emm_msg->detach_request, false, emm_cause, decode_status);
     break;
 
+  case DETACH_ACCEPT:
+    OAILOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - Received Detach Accept. Ignoring. Current emm_cause %d.", *emm_cause);
+    rc = RETURNok;
+    break;
+
   default:
     OAILOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - EMM message 0x%x is not valid", emm_msg->header.message_type);
     *emm_cause = EMM_CAUSE_MESSAGE_TYPE_NOT_COMPATIBLE;
