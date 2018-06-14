@@ -291,10 +291,19 @@ mme_api_notify_imsi (
 {
   ue_context_t                           *ue_context = NULL;
 
+  ue_context_t                           *ue_context_imsi_duplicate = NULL;
+
   OAILOG_FUNC_IN (LOG_NAS);
+
+  ue_context_imsi_duplicate = mme_ue_context_exists_imsi(&mme_app_desc.mme_ue_contexts, imsi64);
+  if(ue_context_imsi_duplicate){
+    OAILOG_ERROR(LOG_MME_APP, "MME_APP context with ue_id=" MME_UE_S1AP_ID_FMT " already exists for IMSI " IMSI_64_FMT" (valid)\n", ue_context_imsi_duplicate->imsi, imsi64);
+    OAILOG_FUNC_RETURN (LOG_NAS, RETURNok);
+  }
+
   ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, id);
 
-
+  /** Check if a UE context with that IMSI already exists. */
   if ( ue_context) {
     mme_ue_context_update_coll_keys (&mme_app_desc.mme_ue_contexts,
         ue_context,

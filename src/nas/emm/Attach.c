@@ -391,6 +391,22 @@ int emm_proc_attach_request (
     // todo: this probably will not work, we need to update the enb_ue_s1ap_id of the old UE context to continue to work with it!
     //              unlock_ue_contexts(ue_context);
     //             unlock_ue_contexts(imsi_ue_mm_ctx);
+
+
+//    /** Clean up new UE context that was created to handle new attach request. */
+//    emm_sap_t                               emm_sap = {0};
+//    emm_sap.primitive = EMMCN_IMPLICIT_DETACH_UE; /**< UE context will be purged. */
+//    emm_sap.u.emm_cn.u.emm_cn_implicit_detach.emm_cause   = (*duplicate_emm_ue_ctx_pP)->emm_cause; /**< Not sending detach type. */
+//    emm_sap.u.emm_cn.u.emm_cn_implicit_detach.detach_type = 0; /**< Not sending detach type. */
+//    emm_sap.u.emm_cn.u.emm_cn_implicit_detach.ue_id = (*duplicate_emm_ue_ctx_pP)->ue_id;
+//    /*
+//     * Don't send the detach type, such that no NAS Detach Request is sent to the UE.
+//     * Depending on the cause, the MME_APP will check and inform the NAS layer to continue with the procedure, before the timer expires.
+//     */
+//    emm_sap_send (&emm_sap);
+//
+//    sleep(1);
+
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
 
   }else{
@@ -860,6 +876,7 @@ static void _emm_proc_create_procedure_attach_request(emm_data_context_t * const
     ((nas_base_proc_t*)attach_proc)->success_notif = _emm_attach_registration_complete;
     attach_proc->emm_spec_proc.retry_cb = retry_cb;
   }
+  OAILOG_DEBUG(LOG_NAS_EMM, " CREATED NEW ATTACH PROC %p \n. ", attach_proc);
 }
 /*
  * --------------------------------------------------------------------------
@@ -1148,16 +1165,19 @@ static int _emm_attach_retry_procedure(emm_data_context_t *emm_ctx){
     /** Send an attach reject back. */
     OAILOG_WARNING(LOG_NAS_EMM, "EMM-PROC  - An old EMM context for ue_id=" MME_UE_S1AP_ID_FMT " still existing. Aborting the attach procedure. \n", attach_proc->emm_spec_proc.old_ue_id);
     rc = _emm_attach_reject (emm_context, &attach_proc->emm_spec_proc.emm_proc.base_proc);
+//
+//    emm_sap_t emm_sap                      = {0};
+//    emm_sap.primitive                      = EMMREG_ATTACH_REJ;
+//    emm_sap.u.emm_reg.ue_id                = attach_proc->ue_id;
+//    emm_sap.u.emm_reg.ctx                  = emm_context;
+//    emm_sap.u.emm_reg.notify               = true;
+//    emm_sap.u.emm_reg.free_proc            = true;
+//    emm_sap.u.emm_reg.u.attach.proc        = attach_proc;
+//    // don't care emm_sap.u.emm_reg.u.attach.is_emergency = false;
+//    rc = emm_sap_send (&emm_sap);
+//
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 
-    emm_sap_t emm_sap                      = {0};
-    emm_sap.primitive                      = EMMREG_ATTACH_REJ;
-    emm_sap.u.emm_reg.ue_id                = attach_proc->ue_id;
-    emm_sap.u.emm_reg.ctx                  = emm_context;
-    emm_sap.u.emm_reg.notify               = true;
-    emm_sap.u.emm_reg.free_proc            = true;
-    emm_sap.u.emm_reg.u.attach.proc        = attach_proc;
-    // don't care emm_sap.u.emm_reg.u.attach.is_emergency = false;
-    rc = emm_sap_send (&emm_sap);
   }
   /* Check that no old MME_APP UE context exists. */
   if(duplicate_ue_context){
@@ -1165,16 +1185,17 @@ static int _emm_attach_retry_procedure(emm_data_context_t *emm_ctx){
     /** Send an attach reject back. */
     rc = _emm_attach_reject (emm_context, &attach_proc->emm_spec_proc.emm_proc.base_proc);
 
-    emm_sap_t emm_sap                      = {0};
-    emm_sap.primitive                      = EMMREG_ATTACH_REJ;
-    emm_sap.u.emm_reg.ue_id                = attach_proc->ue_id;
-    emm_sap.u.emm_reg.ctx                  = emm_context;
-    emm_sap.u.emm_reg.notify               = true;
-    emm_sap.u.emm_reg.free_proc            = true;
-    emm_sap.u.emm_reg.u.attach.proc        = attach_proc;
-    // don't care emm_sap.u.emm_reg.u.attach.is_emergency = false;
-    rc = emm_sap_send (&emm_sap);
-
+//    emm_sap_t emm_sap                      = {0};
+//    emm_sap.primitive                      = EMMREG_ATTACH_REJ;
+//    emm_sap.u.emm_reg.ue_id                = attach_proc->ue_id;
+//    emm_sap.u.emm_reg.ctx                  = emm_context;
+//    emm_sap.u.emm_reg.notify               = true;
+//    emm_sap.u.emm_reg.free_proc            = true;
+//    emm_sap.u.emm_reg.u.attach.proc        = attach_proc;
+//    // don't care emm_sap.u.emm_reg.u.attach.is_emergency = false;
+//    rc = emm_sap_send (&emm_sap);
+    /** Stop continuing with the procedure. The MME_APP context is assumed to be removed, too. */
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
   }
   OAILOG_WARNING(LOG_NAS_EMM, "EMM-PROC  - No old EMM/UE context exists for ue_id=" MME_UE_S1AP_ID_FMT ". Continuing with attach procedure for new ueId " MME_UE_S1AP_ID_FMT ". \n",
       attach_proc->emm_spec_proc.old_ue_id, emm_context->ue_id);

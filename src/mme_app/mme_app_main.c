@@ -172,7 +172,7 @@ void *mme_app_thread (void *args)
       break;
 
     case S11_DELETE_SESSION_RESPONSE: {
-      mme_app_handle_delete_session_rsp (&received_message_p->ittiMsg.s11_delete_session_response);
+//      mme_app_handle_delete_session_rsp (&received_message_p->ittiMsg.s11_delete_session_response);
       }
       break;
 

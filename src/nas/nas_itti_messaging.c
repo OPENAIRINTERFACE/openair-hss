@@ -521,20 +521,22 @@ void nas_itti_establish_cnf(
 }
 
 //------------------------------------------------------------------------------
-void nas_itti_detach_req(const mme_ue_s1ap_id_t ue_idP)
+void nas_itti_detach_req(const mme_ue_s1ap_id_t ue_id)
 {
   OAILOG_FUNC_IN(LOG_NAS);
   MessageDef *message_p;
 
+  OAILOG_INFO(LOG_NAS_EMM, "EMM-PROC  - Sending NAS_ITTI_DETACH_REQ for UE " MME_UE_S1AP_ID_FMT ". \n", ue_id);
+
   message_p = itti_alloc_new_message(TASK_NAS_MME, NAS_DETACH_REQ);
 
-  NAS_DETACH_REQ(message_p).ue_id = ue_idP;
+  NAS_DETACH_REQ(message_p).ue_id = ue_id;
 
   MSC_LOG_TX_MESSAGE(
                 MSC_NAS_MME,
                 MSC_MMEAPP_MME,
                 NULL,0,
-                "0 NAS_DETACH_REQ ue id " MME_UE_S1AP_ID_FMT, ue_idP);
+                "0 NAS_DETACH_REQ ue id " MME_UE_S1AP_ID_FMT, ue_id);
 
   itti_send_msg_to_task(TASK_MME_APP, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT(LOG_NAS);
@@ -571,7 +573,7 @@ void  s6a_auth_info_rsp_timer_expiry_handler (void *args)
     // Send Attach Reject with cause NETWORK FAILURE and delete UE context
     nas_proc_auth_param_fail (auth_info_proc->ue_id, NAS_CAUSE_NETWORK_FAILURE);
   } else {
-    OAILOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - Timer timer_s6_auth_info_rsp expired. Null EMM Context for UE \n");
+    OAILOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - Timer timer_s6_auth_info_rsp expired. Null EMM Context for UE " MME_UE_S1AP_ID_FMT ". \n", emm_ctx->ue_id);
   }
 
   OAILOG_FUNC_OUT (LOG_NAS_EMM);

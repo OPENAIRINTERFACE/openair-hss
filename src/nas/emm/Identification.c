@@ -280,6 +280,21 @@ emm_proc_identification_complete (
           //             unlock_ue_contexts(imsi_ue_mm_ctx);
           OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
         }
+        ue_context_t * ue_context_duplicate_imsi = mme_ue_context_exists_imsi(&mme_app_desc.mme_ue_contexts, imsi64);
+        if(ue_context_duplicate_imsi){
+          OAILOG_ERROR(LOG_NAS_EMM, "EMM-PROC  - We already have MME_APP UE context with ueId " MME_UE_S1AP_ID_FMT " and IMSI " IMSI_64_FMT ". "
+              "Setting new EMM context with ueId " MME_UE_S1AP_ID_FMT " into pending mode "
+              "and implicitly removing old MME_APP UE context. \n", ue_context_duplicate_imsi->mme_ue_s1ap_id, imsi64, emm_ctx->ue_id);
+
+          nas_itti_detach_req(ue_context_duplicate_imsi->mme_ue_s1ap_id);
+
+          void * unused= NULL;
+          nas_stop_T_retry_specific_procedure(emm_ctx->ue_id, &((nas_emm_specific_proc_t*)(((nas_base_proc_t *)ident_proc)->parent))->retry_timer, unused);
+          nas_start_T_retry_specific_procedure(emm_ctx->ue_id, &((nas_emm_specific_proc_t*)(((nas_base_proc_t *)ident_proc)->parent))->retry_timer, ((nas_emm_specific_proc_t*)(((nas_base_proc_t *)ident_proc)->parent))->retry_cb, emm_ctx);
+          /** Set the old mme_ue_s1ap id which will be checked. */
+          ((nas_emm_specific_proc_t*)(((nas_base_proc_t *)ident_proc)->parent))->old_ue_id = ue_context_duplicate_imsi->mme_ue_s1ap_id;
+          OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
+        }
 
         emm_ctx_set_valid_imsi(emm_ctx, imsi, imsi64);
         emm_data_context_upsert_imsi(&_emm_data, emm_ctx);
