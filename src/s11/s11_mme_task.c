@@ -121,6 +121,12 @@ s11_mme_ulp_process_stack_req_cb (
       }
       break;
 
+    /** Timeout Handler */
+    case NW_GTPV2C_ULP_API_RSP_FAILURE_IND:
+       ret = s11_mme_handle_ulp_error_indicatior(&s11_mme_stack_handle, pUlpApi);
+       break;
+       // todo: add initial reqs --> CBR / UBR / DBR !
+
     default:
       OAILOG_WARNING (LOG_S11, "Received unhandled message type %d\n", pUlpApi->apiType);
       break;

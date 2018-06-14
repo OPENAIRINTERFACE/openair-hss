@@ -901,6 +901,12 @@ s1ap_handle_ue_context_release_command (
   /** Get the eNB reference. */
   enb_ref_p = s1ap_is_enb_id_in_list(ue_context_release_command_pP->enb_id);
 
+  if(!enb_ref_p){
+    OAILOG_DEBUG (LOG_S1AP, "No enbRef could be found for enb_id %d for releasing the context of ueId " MME_UE_S1AP_ID_FMT " and enbUeS1apId " ENB_UE_S1AP_ID_FMT ". \n",
+        ue_context_release_command_pP->enb_id, ue_context_release_command_pP->mme_ue_s1ap_id, ue_context_release_command_pP->enb_ue_s1ap_id);
+    OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
+  }
+
   OAILOG_FUNC_IN (LOG_S1AP);
   if ((ue_ref_p = s1ap_is_enb_ue_s1ap_id_in_list_per_enb (ue_context_release_command_pP->enb_ue_s1ap_id, ue_context_release_command_pP->enb_id)) == NULL) {
     OAILOG_DEBUG (LOG_S1AP, "No UE reference could be found for mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " and enbUeS1apId " ENB_UE_S1AP_ID_FMT ". \n",

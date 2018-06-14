@@ -386,6 +386,17 @@ emm_proc_detach_request (
   DevAssert(ue_context);
 
   if (emm_context) {
+    /*
+     * Validate, just check if a specific procedure exist, if so disregard the detach request.
+     * Assuming that DSR failed, with the timeout, we should send one without a security header.
+     */
+    nas_emm_specific_proc_t * specific_proc = get_nas_specific_procedure(emm_context);
+    if(specific_proc){
+      /** A specific procedure exists, abort the detach request, wait the specific procedure to complete. */
+      OAILOG_INFO (LOG_NAS_EMM, " EMM-PROC  - A specific procedure with type %d for ueId " MME_UE_S1AP_ID_FMT " exists. Dropping the detach request. \n", emm_context->ue_id, specific_proc->type);
+      OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
+    }
+
     /** Create a specific procedure for detach request. */
     _emm_proc_create_procedure_detach_request(emm_context, params);
     /* Check if any PDN Connections exist. */
