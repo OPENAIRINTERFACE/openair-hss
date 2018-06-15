@@ -924,7 +924,7 @@ gtpv2c_bearer_context_created_ie_get (
 int
 gtpv2c_bearer_context_created_ie_set (
   nw_gtpv2c_msg_handle_t * msg,
-  const bearer_context_created_t const * bearer)
+  const bearer_context_created_t * const bearer)
 {
   nw_rc_t                                   rc;
 

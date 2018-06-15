@@ -191,7 +191,7 @@ int hss_mysql_push_rand_sqn(const char *imsi, uint8_t *rand_p, uint8_t *sqn);
 
 int hss_mysql_increment_sqn(const char *imsi);
 
-int hss_mysql_check_opc_keys(const uint8_t const opP[16]);
+int hss_mysql_check_opc_keys(const uint8_t opP[16]);
 
 
 #endif /* DB_PROTO_H_ */

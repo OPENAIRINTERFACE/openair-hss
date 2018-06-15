@@ -38,8 +38,8 @@
 #include "s6a_proto.h"
 
 extern void                             ComputeOPc (
-  const uint8_t const kP[16],
-  const uint8_t const opP[16],
+  const uint8_t kP[16],
+  const uint8_t opP[16],
   uint8_t opcP[16]);
 
 
@@ -575,7 +575,7 @@ hss_mysql_auth_info (
 
 int
 hss_mysql_check_opc_keys (
-  const uint8_t const opP[16])
+  const uint8_t opP[16])
 {
   int                                     ret = 0;
   MYSQL_RES                              *res = NULL;
