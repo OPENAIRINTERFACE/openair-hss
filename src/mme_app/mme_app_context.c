@@ -219,16 +219,8 @@ void mme_app_ue_context_free_content (ue_context_t * const ue_context)
 //    }
 //    ue_context->mme_s10_handover_completion_timer.id = MME_APP_TIMER_INACTIVE_ID;
 //  }
-
-  if (ue_context->ue_radio_capability) {
-    free_wrapper((void**) &(ue_context->ue_radio_capability));
-  }
-//  ue_context->ue_radio_cap_length = 0;
-
   ue_context->s1_ue_context_release_cause = S1AP_INVALID_CAUSE;
-
   // todo: remove all the MME_APP UE context bearer contexts (available bearers) --> When this point is reached, NAS is purged--> All pdn/bearer  contexts should have been removed!
-
 //  pdn_context_t * registered_pdn_ctx = NULL;
 //  RB_FOREACH (registered_pdn_ctx, PdnContexts, &ue_context->pdn_contexts) {
 //    DevAssert(registered_pdn_ctx);

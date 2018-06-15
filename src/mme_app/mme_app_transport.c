@@ -94,7 +94,7 @@ int mme_app_handle_nas_dl_req (
     }
 
   } else {
-    OAILOG_DEBUG (LOG_MME_APP, "DOWNLINK NAS TRANSPORT failed mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " not found\n", nas_dl_req_pP->ue_id);
+    OAILOG_ERROR(LOG_MME_APP, "DOWNLINK NAS TRANSPORT failed mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " not found\n", nas_dl_req_pP->ue_id);
 
   }
 

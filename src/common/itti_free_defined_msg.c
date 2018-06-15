@@ -279,8 +279,9 @@ void itti_free_msg_content (MessageDef * const message_p)
   case S1AP_ENB_INITIATED_RESET_ACK:
     free_wrapper ((void**) &message_p->ittiMsg.s1ap_enb_initiated_reset_ack.ue_to_reset_list);
     break;
+  case S1AP_UE_CAPABILITIES_IND:
+    break;
 
-  case S1AP_UE_CAPABILITIES_IND: // todo: removing capabilities?
   case S1AP_ENB_DEREGISTERED_IND:
   case S1AP_DEREGISTER_UE_REQ:
   case S1AP_UE_CONTEXT_RELEASE_REQ:

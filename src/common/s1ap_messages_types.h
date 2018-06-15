@@ -134,7 +134,7 @@ typedef struct s1ap_initial_ue_message_s {
   ecgi_t                e_utran_cgi;
 } s1ap_initial_ue_message_t;
 
-#define S1AP_UE_RADIOCAPABILITY_MAX_SIZE 1000
+#define S1AP_UE_RADIOCAPABILITY_MAX_SIZE 3000
 
 typedef struct itti_s1ap_ue_cap_ind_s {
   mme_ue_s1ap_id_t  mme_ue_s1ap_id;
