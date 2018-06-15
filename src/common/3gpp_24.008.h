@@ -750,13 +750,13 @@ void free_protocol_configuration_options (protocol_configuration_options_t ** co
 int decode_protocol_configuration_options (
     protocol_configuration_options_t * protocolconfigurationoptions,
     const uint8_t * const buffer,
-    const const uint32_t len);
+    const uint32_t len);
 
 int decode_protocol_configuration_options_ie (
     protocol_configuration_options_t * protocolconfigurationoptions,
     const bool iei_present,
     const uint8_t * const buffer,
-    const const uint32_t len);
+    const uint32_t len);
 
 int encode_protocol_configuration_options (
     const protocol_configuration_options_t * const protocolconfigurationoptions,

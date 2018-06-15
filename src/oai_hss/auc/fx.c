@@ -59,10 +59,10 @@ extern hss_config_t                     hss_config;
   -----------------------------------------------------------------*/
 void
 generate_autn (
-  const uint8_t const sqn[6],
-  const uint8_t const ak[6],
-  const uint8_t const amf[2],
-  const uint8_t const mac_a[8],
+  const uint8_t sqn[6],
+  const uint8_t ak[6],
+  const uint8_t amf[2],
+  const uint8_t mac_a[8],
   uint8_t autn[16])
 {
   int                                     i;
@@ -86,11 +86,11 @@ generate_autn (
   -----------------------------------------------------------------*/
 void
 f1 (
-  const uint8_t const opc[16],
-  const uint8_t const k[16],
-  const uint8_t const _rand[16],
-  const uint8_t const sqn[6],
-  const uint8_t const amf[2],
+  const uint8_t opc[16],
+  const uint8_t k[16],
+  const uint8_t _rand[16],
+  const uint8_t sqn[6],
+  const uint8_t amf[2],
   uint8_t mac_a[8])
 {
   uint8_t                                 temp[16];
@@ -150,9 +150,9 @@ f1 (
   -----------------------------------------------------------------*/
 void
 f2345 (
-  const uint8_t const opc[16],
-  const uint8_t const k[16],
-  const uint8_t const _rand[16],
+  const uint8_t opc[16],
+  const uint8_t k[16],
+  const uint8_t _rand[16],
   uint8_t res[8],
   uint8_t ck[16],
   uint8_t ik[16],
@@ -239,11 +239,11 @@ f2345 (
   -----------------------------------------------------------------*/
 void
 f1star (
-  const uint8_t const opc[16],
-  const uint8_t const k[16],
-  const uint8_t const _rand[16],
-  const uint8_t const sqn[6],
-  const uint8_t const amf[2],
+  const uint8_t opc[16],
+  const uint8_t k[16],
+  const uint8_t _rand[16],
+  const uint8_t sqn[6],
+  const uint8_t amf[2],
   uint8_t mac_s[8])
 {
   uint8_t                                 temp[16];
@@ -303,9 +303,9 @@ f1star (
   -----------------------------------------------------------------*/
 void
 f5star (
-  const uint8_t const opc[16],
-  const uint8_t const k[16],
-  const uint8_t const _rand[16],
+  const uint8_t opc[16],
+  const uint8_t k[16],
+  const uint8_t _rand[16],
   uint8_t ak[6])
 {
   uint8_t                                 temp[16];
@@ -345,8 +345,8 @@ f5star (
   -----------------------------------------------------------------*/
 void
 ComputeOPc (
-  const uint8_t const kP[16],
-  const uint8_t const opP[16],
+  const uint8_t kP[16],
+  const uint8_t opP[16],
   uint8_t opcP[16])
 {
   uint8_t                                 i;

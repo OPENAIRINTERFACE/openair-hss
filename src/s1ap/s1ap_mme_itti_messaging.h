@@ -38,8 +38,8 @@ int s1ap_mme_itti_send_sctp_request(STOLEN_REF bstring *payload,
 
 int s1ap_mme_itti_nas_uplink_ind(const mme_ue_s1ap_id_t ue_id,
                                  STOLEN_REF bstring *payload,
-                                 const tai_t      const* tai,
-                                 const ecgi_t     const* cgi);
+                                 const tai_t      *const tai,
+                                 const ecgi_t     *const cgi);
 
 int s1ap_mme_itti_nas_downlink_cnf (const mme_ue_s1ap_id_t ue_id, const bool is_success);
 
@@ -50,15 +50,15 @@ void s1ap_mme_itti_s1ap_initial_ue_message(
   const mme_ue_s1ap_id_t  mme_ue_s1ap_id,
   const uint8_t * const   nas_msg,
   const size_t            nas_msg_length,
-  const tai_t      const* tai,
-  const ecgi_t     const* cgi,
+  const tai_t      *const tai,
+  const ecgi_t     *const cgi,
   const long              rrc_cause,
-  const s_tmsi_t   const* opt_s_tmsi,
-  const csg_id_t   const* opt_csg_id,
-  const gummei_t   const* opt_gummei,
-  const void       const* opt_cell_access_mode,  // unused
-  const void       const* opt_cell_gw_transport_address,  // unused
-  const void       const* opt_relay_node_indicator);  // unused
+  const s_tmsi_t   *const opt_s_tmsi,
+  const csg_id_t   *const opt_csg_id,
+  const gummei_t   *const opt_gummei,
+  const void       *const opt_cell_access_mode,  // unused
+  const void       *const opt_cell_gw_transport_address,  // unused
+  const void       *const opt_relay_node_indicator);  // unused
 
 
 #if ORIGINAL_CODE
