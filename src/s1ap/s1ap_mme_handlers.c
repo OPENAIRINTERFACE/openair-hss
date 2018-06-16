@@ -2240,6 +2240,12 @@ s1ap_mme_handle_error_ind_message (const sctp_assoc_id_t assoc_id, const sctp_st
   DevAssert(enb_ref);
 
   ue_description_t * ue_ref = s1ap_is_ue_enb_id_in_list (enb_ref, errorIndication_p->eNB_UE_S1AP_ID);
+  /** If no UE reference exists, drop the message. */
+  if(!ue_ref){
+    /** Check that the UE reference exists. */
+    OAILOG_WARNING(LOG_S1AP, "No UE reference exists for enbId %d and enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT ". Dropping error indication. \n", enb_ref->enb_id, errorIndication_p->eNB_UE_S1AP_ID);
+    OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
+  }
 
   /*
    * Handle error indication.
