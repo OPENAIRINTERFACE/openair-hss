@@ -152,8 +152,6 @@ check_install_mme_software() {
   install_liblfds7.1.0_from_source $1
   [[ $? -ne 0 ]] && return $?
 
-  install_libgtpnl_from_source $1
-  [[ $? -ne 0 ]] && return $?
 
   # Networking
   if [[ $OS_DISTRO == "ubuntu" ]]; then
