@@ -586,6 +586,8 @@ static void _security_t3460_handler  (void *args)
   }
   nas_emm_smc_proc_t * smc_proc = get_nas_common_procedure_smc(emm_ctx);
 
+  mme_ue_s1ap_id_t ue_id = emm_ctx->ue_id;
+
   if (smc_proc){
     /*
      * Increment the retransmission counter
@@ -613,7 +615,12 @@ static void _security_t3460_handler  (void *args)
       emm_sap.u.emm_reg.u.common.common_proc = &smc_proc->emm_com_proc;
       emm_sap.u.emm_reg.u.common.previous_emm_fsm_state = smc_proc->emm_com_proc.emm_proc.previous_emm_fsm_state;
       emm_sap_send (&emm_sap);
+
+      /** The EMM context will be removed in the EMMREG function. */
+      DevAssert(!emm_data_context_get(&_emm_data, ue_id));
     }
+  }else{
+    OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - T3460 timer expired, but no SMC procedure exists for ueId " MME_UE_S1AP_ID_FMT ". Ignoring. \n", ue_id);
   }
 
   OAILOG_FUNC_OUT (LOG_NAS_EMM);

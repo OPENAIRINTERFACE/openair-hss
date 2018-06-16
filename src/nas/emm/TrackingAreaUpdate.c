@@ -1001,7 +1001,7 @@ static int _emm_send_tracking_area_update_accept(emm_data_context_t * const emm_
   //----------------------------------------
   REQUIREMENT_3GPP_24_301(R10_5_5_1_2_4__14);
   emm_sap.u.emm_as.u.data.eps_network_feature_support = &_emm_data.conf.eps_network_feature_support;
-  emm_sap.u.emm_as.u.data.eps_update_result = tau_proc->ies->eps_update_type.eps_update_type_value; /**< Set the UPDATE_RESULT irrelevant of data/establish. */
+  emm_sap.u.emm_as.u.data.eps_update_result = ( tau_proc->ies->eps_update_type.eps_update_type_value == 1 || tau_proc->ies->eps_update_type.eps_update_type_value == 2) ? 1 : 0; /**< Set the UPDATE_RESULT irrelevant of data/establish. */
   emm_sap.u.emm_as.u.data.nas_msg = NULL;
 
   // TODO : Not setting these values..
@@ -1943,17 +1943,17 @@ static int _emm_tracking_area_update_failure_authentication_cb (emm_data_context
     tau_proc->emm_cause = emm_context->emm_cause;
 
     // TODO could be in callback of attach procedure triggered by EMMREG_TAU_REJ
-//    rc = _emm_tracking_area_update_reject(emm_context, &tau_proc->emm_spec_proc.emm_proc.base_proc);
+    rc = _emm_tracking_area_update_reject(emm_context, &tau_proc->emm_spec_proc.emm_proc.base_proc);
 
-    emm_sap_t emm_sap                      = {0};
-    emm_sap.primitive                      = EMMREG_TAU_REJ;
-    emm_sap.u.emm_reg.ue_id                = tau_proc->ue_id;
-    emm_sap.u.emm_reg.ctx                  = emm_context;
-    emm_sap.u.emm_reg.notify               = true;
-    emm_sap.u.emm_reg.free_proc            = true;
-    emm_sap.u.emm_reg.u.tau.proc = tau_proc;
-    // don't care emm_sap.u.emm_reg.u.tau.is_emergency = false;
-    rc = emm_sap_send (&emm_sap);
+//    emm_sap_t emm_sap                      = {0};
+//    emm_sap.primitive                      = EMMREG_TAU_REJ;
+//    emm_sap.u.emm_reg.ue_id                = tau_proc->ue_id;
+//    emm_sap.u.emm_reg.ctx                  = emm_context;
+//    emm_sap.u.emm_reg.notify               = true;
+//    emm_sap.u.emm_reg.free_proc            = true;
+//    emm_sap.u.emm_reg.u.tau.proc = tau_proc;
+//    // don't care emm_sap.u.emm_reg.u.tau.is_emergency = false;
+//    rc = emm_sap_send (&emm_sap);
   }
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
@@ -2037,7 +2037,20 @@ static int _emm_tracking_area_update_failure_security_cb (emm_data_context_t *em
   nas_emm_tau_proc_t                     *tau_proc = get_nas_specific_procedure_tau(emm_context);
 
   if (tau_proc) {
-//    _emm_tracking_area_update_release(emm_context); // tau_reject?
+    tau_proc->emm_cause = emm_context->emm_cause;
+
+     // TODO could be in callback of attach procedure triggered by EMMREG_ATTACH_REJ
+     rc = _emm_tracking_area_update_reject(emm_context->ue_id, emm_context->emm_cause);
+
+ //    emm_sap_t emm_sap                      = {0};
+ //    emm_sap.primitive                      = EMMREG_ATTACH_REJ;
+ //    emm_sap.u.emm_reg.ue_id                = attach_proc->ue_id;
+ //    emm_sap.u.emm_reg.ctx                  = emm_context;
+ //    emm_sap.u.emm_reg.notify               = true;
+ //    emm_sap.u.emm_reg.free_proc            = true;
+ //    emm_sap.u.emm_reg.u.attach.proc = attach_proc;
+ //    // don't care emm_sap.u.emm_reg.u.attach.is_emergency = false;
+ //    rc = emm_sap_send (&emm_sap);
   }
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }

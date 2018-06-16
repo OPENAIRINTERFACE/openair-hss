@@ -767,7 +767,7 @@ static int _emm_as_establish_req (emm_as_establish_t * msg, int *emm_cause)
       
       *emm_cause = EMM_CAUSE_UE_IDENTITY_CANT_BE_DERIVED_BY_NW;
       // Send Service Reject with cause "UE identity cannot be derived by the network" to trigger fresh attach 
-      rc = emm_proc_service_reject (msg->ue_id, EMM_CAUSE_UE_IDENTITY_CANT_BE_DERIVED_BY_NW);
+      rc = emm_proc_service_reject (msg->ue_id, EMM_CAUSE_UE_IDENTITY_CANT_BE_DERIVED_BY_NW); /**< MME_APP & S1APUE Context should not be removed. Reattach will happen. */
 //      unlock_ue_contexts(ue_context);
       OAILOG_FUNC_RETURN (LOG_NAS_EMM,rc);
     }
@@ -1795,6 +1795,7 @@ static int _emm_as_establish_rej (const emm_as_establish_t * msg, nas_establish_
 {
   EMM_msg                                *emm_msg = NULL;
   int                                     size = 0;
+  bool                                    dont_remove_bearers = false;
   nas_message_t                           nas_msg = {.security_protected.header = {0},
                                                      .security_protected.plain.emm.header = {0},
                                                      .security_protected.plain.esm.header = {0}};
@@ -1840,6 +1841,9 @@ static int _emm_as_establish_rej (const emm_as_establish_t * msg, nas_establish_
       } else {
         MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send TRACKING_AREA_UPDATE_REJECT to ue id " MME_UE_S1AP_ID_FMT " ", as_msg->ue_id);
       }
+      if(msg->emm_cause == EMM_CAUSE_UE_IDENTITY_CANT_BE_DERIVED_BY_NW){
+        dont_remove_bearers = true;
+      }
 
       size = emm_send_tracking_area_update_reject (msg, &emm_msg->tracking_area_update_reject);
       break;
@@ -1849,6 +1853,9 @@ static int _emm_as_establish_rej (const emm_as_establish_t * msg, nas_establish_
         MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send SERVICE_REJECT to s_TMSI %u.%u ", as_msg->s_tmsi.mme_code, as_msg->s_tmsi.m_tmsi);
       } else {
         MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send SERVICE_REJECT to ue id " MME_UE_S1AP_ID_FMT " ", as_msg->ue_id);
+      }
+      if(msg->emm_cause == EMM_CAUSE_UE_IDENTITY_CANT_BE_DERIVED_BY_NW){
+        dont_remove_bearers = true;
       }
 
       size = emm_send_service_reject (msg, &emm_msg->service_reject);
@@ -1879,9 +1886,17 @@ static int _emm_as_establish_rej (const emm_as_establish_t * msg, nas_establish_
                                                                     size,
                                                                     emm_security_context);
     if (bytes > 0) {
-      // This is to indicate MME-APP to release the S1AP UE context after sending the message.
-      as_msg->err_code = AS_TERMINATED_NAS; 
-      OAILOG_FUNC_RETURN (LOG_NAS_EMM, AS_NAS_ESTABLISH_RSP);
+      // This is to indicate MME-APP to release the S1AP UE context after sending the message. Must be dependent on the cause, because UE will perform attach depending on it.
+      if(dont_remove_bearers){
+        OAILOG_INFO(LOG_NAS_EMM, "EMM Cause is %d. Not removing bearers too. Current error code %d. \n", msg->emm_cause, as_msg->err_code);
+        as_msg->err_code = AS_TERMINATED_NAS_LIGHT;
+        // todo: setting success if attach failes?
+        OAILOG_FUNC_RETURN (LOG_NAS_EMM, AS_NAS_ESTABLISH_RSP);
+      }else{
+        OAILOG_INFO(LOG_NAS_EMM, "EMM Cause is %d. Removing bearers too. \n", msg->emm_cause);
+        as_msg->err_code = AS_TERMINATED_NAS;
+        OAILOG_FUNC_RETURN (LOG_NAS_EMM, AS_NAS_ESTABLISH_RSP);
+      }
     }
   }
 

@@ -151,8 +151,13 @@ int EmmCommonProcedureInitiated (emm_reg_t * const evt)
         rc = (*evt->u.common.common_proc->emm_proc.base_proc.failure_notif)(emm_ctx);
       }
 
-      if (evt->free_proc) {
-        nas_delete_common_procedure(emm_ctx, &evt->u.common.common_proc);
+      /** Check if the emm context still exists. */
+      if(emm_data_context_get(&_emm_data, evt->ue_id)){
+        if (evt->free_proc) {
+          nas_delete_common_procedure(emm_ctx, &evt->u.common.common_proc);
+        }
+      }else{
+        /** No EMM context exist. Not freeing any procedures. */
       }
     } else {
       MSC_LOG_RX_DISCARDED_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "_EMMREG_COMMON_PROC_REJ ue id " MME_UE_S1AP_ID_FMT " ", evt->ue_id);
@@ -167,18 +172,27 @@ int EmmCommonProcedureInitiated (emm_reg_t * const evt)
         rc = nas_unlink_procedures(evt->u.common.common_proc->emm_proc.base_proc.parent, (nas_base_proc_t*)&evt->u.common.common_proc->emm_proc.base_proc);
       }
 
-      if ((emm_ctx) && (evt->u.common.common_proc->emm_proc.base_proc.abort)) {
+      if ((emm_ctx) && (evt->u.common.common_proc->emm_proc.base_proc.abort)) { /**< Just stops the timer. */
         (*evt->u.common.common_proc->emm_proc.base_proc.abort)(emm_ctx, &evt->u.common.common_proc->emm_proc.base_proc);
       }
 
       rc = emm_fsm_set_state (evt->ue_id, emm_ctx, ((nas_emm_proc_t*)evt->u.common.common_proc)->previous_emm_fsm_state);
 
-      /** We will always check the notification flag, depending on the severity of the error. */
+      /*
+       *
+       * We will always check the notification flag, depending on the severity of the error.
+       * May perform an implicit detach (and removing all procedures).
+       */
       if ((rc != RETURNerror) && (emm_ctx) && (evt->notify) && (evt->u.common.common_proc->emm_proc.base_proc.failure_notif)) {
         (*evt->u.common.common_proc->emm_proc.base_proc.failure_notif)(emm_ctx);
       }
-      if (evt->free_proc) {
-        nas_delete_common_procedure(emm_ctx, &evt->u.common.common_proc);
+      /** Check if the emm context still exists. */
+      if(emm_data_context_get(&_emm_data, evt->ue_id)){
+        if (evt->free_proc) {
+          nas_delete_common_procedure(emm_ctx, &evt->u.common.common_proc);
+        }
+      }else{
+        /** No EMM context exist. Not freeing any procedures. */
       }
     } else {
       MSC_LOG_RX_DISCARDED_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "_EMMREG_COMMON_PROC_ABORT ue id " MME_UE_S1AP_ID_FMT " ", evt->ue_id);

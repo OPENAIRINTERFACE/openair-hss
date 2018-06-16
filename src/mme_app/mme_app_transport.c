@@ -87,10 +87,13 @@ int mme_app_handle_nas_dl_req (
         nas_dl_req_pP->ue_id, ue_context->enb_ue_s1ap_id);
 
     // Check the transaction status. And trigger the UE context release command accrordingly.
-    if (nas_dl_req_pP->transaction_status != AS_SUCCESS) {
+    if (nas_dl_req_pP->transaction_status != AS_SUCCESS && nas_dl_req_pP->transaction_status != AS_TERMINATED_NAS_LIGHT) {
       ue_context->s1_ue_context_release_cause = S1AP_NAS_NORMAL_RELEASE;
       // Notify S1AP to send UE Context Release Command to eNB.
       mme_app_itti_ue_context_release (ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, ue_context->s1_ue_context_release_cause, ue_context->e_utran_cgi.cell_identity.enb_id);
+    }else{
+      OAILOG_ERROR(LOG_MME_APP, "DOWNLINK NAS TRANSPORT failed mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " not found. Not terminating bearers due error cause %d.\n", nas_dl_req_pP->ue_id, nas_dl_req_pP->transaction_status);
+
     }
 
   } else {

@@ -225,8 +225,13 @@ EmmRegistered (
         rc = (*evt->u.tau.proc->emm_spec_proc.emm_proc.base_proc.failure_notif)(emm_ctx);
       }
 
-      if (evt->free_proc) {
-        nas_delete_tau_procedure(emm_ctx);
+      /** Check if the emm context still exists. */
+      if(emm_data_context_get(&_emm_data, evt->ue_id)){
+        if (evt->free_proc) {
+          nas_delete_common_procedure(emm_ctx, &evt->u.common.common_proc);
+        }
+      }else{
+        /** No EMM context exist. Not freeing any procedures. */
       }
     }
     break;

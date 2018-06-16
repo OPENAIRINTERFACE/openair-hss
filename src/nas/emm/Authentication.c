@@ -826,6 +826,8 @@ static void  _authentication_t3460_handler (void *args)
   }
   nas_emm_auth_proc_t * auth_proc = get_nas_common_procedure_authentication(emm_ctx);
 
+  mme_ue_s1ap_id_t ue_id = emm_ctx->ue_id;
+
   if (auth_proc){
     /*
      * Increment the retransmission counter
@@ -855,30 +857,11 @@ static void  _authentication_t3460_handler (void *args)
       emm_sap.u.emm_reg.u.common.previous_emm_fsm_state = auth_proc->emm_com_proc.emm_proc.previous_emm_fsm_state;
       emm_sap_send (&emm_sap);
 
-      // abort ANY ongoing EMM procedure (R10_5_4_2_7_b)
-      nas_delete_all_emm_procedures(emm_ctx);
-
-      // Clean up MME APP UE context  
-      memset((void*)&emm_sap, 0, sizeof(emm_sap));
-      emm_sap.primitive = EMMCN_IMPLICIT_DETACH_UE;
-      emm_sap.u.emm_cn.u.emm_cn_implicit_detach.ue_id = auth_proc->ue_id;
-      emm_sap_send (&emm_sap);
+      /** The EMM context will be removed in the EMMREG function. */
+      DevAssert(!emm_data_context_get(&_emm_data, ue_id));
     }
   }else{
-//    /*
-//     * Abort the authentication procedure.
-//     * There was an authentication procedure which failed where no specific procedure is running.
-//     * The timer is stopped and this is not a high severity case, but still call the EMMREG_COMMON_PROC_ABORT method get back to the old state!
-//     */
-//    emm_sap_t                               emm_sap = {0};
-//    emm_sap.primitive = EMMREG_COMMON_PROC_ABORT;
-//    emm_sap.u.emm_reg.ue_id     = emm_ctx->ue_id;
-//    emm_sap.u.emm_reg.ctx       = emm_ctx;
-//    emm_sap.u.emm_reg.notify    = false;
-//    emm_sap.u.emm_reg.free_proc = true;
-//    emm_sap.u.emm_reg.u.common.common_proc = &auth_proc->emm_com_proc;
-//    emm_sap.u.emm_reg.u.common.previous_emm_fsm_state = auth_proc->emm_com_proc.emm_proc.previous_emm_fsm_state;
-//    emm_sap_send (&emm_sap);
+    OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - T3460 timer expired, but no authentication procedure exists for ueId " MME_UE_S1AP_ID_FMT ". Ignoring. \n", ue_id);
   }
   OAILOG_FUNC_OUT (LOG_NAS_EMM);
 }
