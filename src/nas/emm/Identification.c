@@ -265,7 +265,7 @@ emm_proc_identification_complete (
           imsi_emm_ctx_duplicate->emm_cause = EMM_CAUSE_ILLEGAL_UE;
 
           /** Clean up new UE context that was created to handle new attach request. */
-          emm_sap_t                               emm_sap = {0};
+          memset(&emm_sap, 0 , sizeof(emm_sap_t));
           emm_sap.primitive = EMMCN_IMPLICIT_DETACH_UE; /**< UE context will be purged. */
           emm_sap.u.emm_cn.u.emm_cn_implicit_detach.emm_cause   = imsi_emm_ctx_duplicate->emm_cause; /**< Not sending detach type. */
           emm_sap.u.emm_cn.u.emm_cn_implicit_detach.detach_type = 0; /**< Not sending detach type. */
@@ -275,6 +275,21 @@ emm_proc_identification_complete (
            * Depending on the cause, the MME_APP will check and inform the NAS layer to continue with the procedure, before the timer expires.
            */
           emm_sap_send (&emm_sap);
+
+          /*
+           * Notify EMM that the identification procedure successfully completed.
+           * Free the procedure, but don't continue.
+           */
+          memset(&emm_sap, 0 , sizeof(emm_sap_t));
+          MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMREG_COMMON_PROC_CNF (IDENT) ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
+          emm_sap.primitive = EMMREG_COMMON_PROC_CNF;
+          emm_sap.u.emm_reg.ue_id    = ue_id;
+          emm_sap.u.emm_reg.ctx      = emm_ctx;
+          emm_sap.u.emm_reg.notify   = false;
+          emm_sap.u.emm_reg.free_proc = true;
+          emm_sap.u.emm_reg.u.common.common_proc            = &ident_proc->emm_com_proc;
+          emm_sap.u.emm_reg.u.common.previous_emm_fsm_state = ident_proc->emm_com_proc.emm_proc.previous_emm_fsm_state;
+          rc = emm_sap_send (&emm_sap);
 
           //              unlock_ue_contexts(ue_context);
           //             unlock_ue_contexts(imsi_ue_mm_ctx);
@@ -293,6 +308,21 @@ emm_proc_identification_complete (
           nas_start_T_retry_specific_procedure(emm_ctx->ue_id, &((nas_emm_specific_proc_t*)(((nas_base_proc_t *)ident_proc)->parent))->retry_timer, ((nas_emm_specific_proc_t*)(((nas_base_proc_t *)ident_proc)->parent))->retry_cb, emm_ctx);
           /** Set the old mme_ue_s1ap id which will be checked. */
           ((nas_emm_specific_proc_t*)(((nas_base_proc_t *)ident_proc)->parent))->old_ue_id = ue_context_duplicate_imsi->mme_ue_s1ap_id;
+
+          /*
+           * Notify EMM that the identification procedure successfully completed.
+           * Free the procedure, but don't continue.
+           */
+          MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMREG_COMMON_PROC_CNF (IDENT) ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
+          emm_sap.primitive = EMMREG_COMMON_PROC_CNF;
+          emm_sap.u.emm_reg.ue_id    = ue_id;
+          emm_sap.u.emm_reg.ctx      = emm_ctx;
+          emm_sap.u.emm_reg.notify   = false;
+          emm_sap.u.emm_reg.free_proc = true;
+          emm_sap.u.emm_reg.u.common.common_proc            = &ident_proc->emm_com_proc;
+          emm_sap.u.emm_reg.u.common.previous_emm_fsm_state = ident_proc->emm_com_proc.emm_proc.previous_emm_fsm_state;
+          rc = emm_sap_send (&emm_sap);
+
           OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
         }
 

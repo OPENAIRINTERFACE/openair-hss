@@ -161,6 +161,8 @@ void mme_app_handle_handover_request_acknowledge(itti_s1ap_handover_request_ackn
 
 void mme_app_handle_handover_failure(const itti_s1ap_handover_failure_t * const handover_failure_pP    );
 
+void mme_app_s1ap_error_indication(const itti_s1ap_error_indication_t * const s1ap_error_indication_pP    );
+
 void mme_app_handle_enb_status_transfer(itti_s1ap_status_transfer_t* const s1ap_status_transfer_pP    );
 
 void mme_app_handle_forward_relocation_complete_notification(const itti_s10_forward_relocation_complete_notification_t* const forward_relocation_complete_notification_pP    );

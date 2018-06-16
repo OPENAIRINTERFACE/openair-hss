@@ -2226,10 +2226,79 @@ int s1ap_mme_handle_erab_setup_failure (const sctp_assoc_id_t assoc_id,
 int
 s1ap_mme_handle_error_ind_message (const sctp_assoc_id_t assoc_id, const sctp_stream_id_t stream, struct s1ap_message_s *message)
 {
+  MessageDef                             *message_p = NULL;
+  S1ap_ErrorIndicationIEs_t              *errorIndication_p = NULL;
+  long                                    cause_value;
   OAILOG_FUNC_IN (LOG_S1AP);
-  OAILOG_DEBUG (LOG_S1AP, "*****ERROR IND is not supported*****\n");
+
+  /** Get the Failure Message. */
+  errorIndication_p = &message->msg.s1ap_ErrorIndicationIEs;
+
+  OAILOG_FUNC_IN (LOG_S1AP);
+
+  enb_description_t * enb_ref = s1ap_is_enb_assoc_id_in_list (assoc_id);
+  DevAssert(enb_ref);
+
+  ue_description_t * ue_ref = s1ap_is_ue_enb_id_in_list (enb_ref, errorIndication_p->eNB_UE_S1AP_ID);
+
+  /*
+   * Handle error indication.
+   * Just forward to the MME_APP layer, depending if there is a handover procedure running or not the current handover procedure might be disregarded.
+   */
+  message_p = itti_alloc_new_message (TASK_S1AP, S1AP_ERROR_INDICATION);
+  AssertFatal (message_p != NULL, "itti_alloc_new_message Failed");
+  memset ((void *)&message_p->ittiMsg.s1ap_error_indication, 0, sizeof (itti_s1ap_error_indication_t));
+  S1AP_ERROR_INDICATION (message_p).mme_ue_s1ap_id = errorIndication_p->mme_ue_s1ap_id;
+  S1AP_ERROR_INDICATION (message_p).enb_ue_s1ap_id = errorIndication_p->eNB_UE_S1AP_ID;
+  S1AP_ERROR_INDICATION (message_p).enb_id = enb_ref->enb_id;
+
+  /** Choice. */
+  S1ap_Cause_PR cause_type = errorIndication_p->cause.present;
+
+  switch (cause_type)
+  {
+  case S1ap_Cause_PR_radioNetwork:
+    cause_value = errorIndication_p->cause.choice.radioNetwork;
+    OAILOG_DEBUG (LOG_S1AP, "S1AP_ERROR_INDICATION with Cause_Type = Radio Network and Cause_Value = %ld\n", cause_value);
+    break;
+
+  case S1ap_Cause_PR_transport:
+    cause_value = errorIndication_p->cause.choice.transport;
+    OAILOG_DEBUG (LOG_S1AP, "S1AP_ERROR_INDICATION with Cause_Type = Transport and Cause_Value = %ld\n", cause_value);
+    break;
+
+  case S1ap_Cause_PR_nas:
+    cause_value = errorIndication_p->cause.choice.nas;
+    OAILOG_DEBUG (LOG_S1AP, "S1AP_ERROR_INDICATION with Cause_Type = NAS and Cause_Value = %ld\n", cause_value);
+    break;
+
+  case S1ap_Cause_PR_protocol:
+    cause_value = errorIndication_p->cause.choice.protocol;
+    OAILOG_DEBUG (LOG_S1AP, "S1AP_ERROR_INDICATION with Cause_Type = Protocol and Cause_Value = %ld\n", cause_value);
+    break;
+
+  case S1ap_Cause_PR_misc:
+    cause_value = errorIndication_p->cause.choice.misc;
+    OAILOG_DEBUG (LOG_S1AP, "S1AP_ERROR_INDICATION with Cause_Type = MISC and Cause_Value = %ld\n", cause_value);
+    break;
+
+  default:
+    OAILOG_ERROR (LOG_S1AP, "S1AP_ERROR_INDICATION with Invalid Cause_Type = %d\n", cause_type);
+    OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
+  }
+
+  /**
+   * No match function exists between the S1AP Cause and the decoded cause yet.
+   * Set it to anything else thatn SYSTEM_FAILURE, not to trigger any implicit detach due cause (only based on the handover type).
+   */
+  S1AP_ERROR_INDICATION (message_p).cause = S1AP_HANDOVER_FAILED;
+
+  MSC_LOG_TX_MESSAGE (MSC_S1AP_MME, MSC_MMEAPP_MME, NULL, 0, "0 S1AP_ERROR_INDICATION mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ", S1AP_ERROR_INDICATION (message_p).mme_ue_s1ap_id);
+  itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
+
   OAILOG_FUNC_RETURN (LOG_S1AP, RETURNok);
 }
+
 //------------------------------------------------------------------------------
 
 int

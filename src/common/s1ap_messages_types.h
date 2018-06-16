@@ -75,6 +75,8 @@
 #define S1AP_HANDOVER_REQUEST_ACKNOWLEDGE(mSGpTR)     (mSGpTR)->ittiMsg.s1ap_handover_request_acknowledge
 #define S1AP_HANDOVER_FAILURE(mSGpTR)                 (mSGpTR)->ittiMsg.s1ap_handover_failure
 
+#define S1AP_ERROR_INDICATION(mSGpTR)                 (mSGpTR)->ittiMsg.s1ap_error_indication
+
 /** S1AP Paging. */
 #define S1AP_PAGING(mSGpTR)                           (mSGpTR)->ittiMsg.s1ap_paging
 
@@ -360,6 +362,15 @@ typedef struct itti_s1ap_handover_preparation_failure_s {
   sctp_assoc_id_t         assoc_id;
   enum s1cause            cause;
 } itti_s1ap_handover_preparation_failure_t;
+
+/** S1AP Error Indication. */
+typedef struct itti_s1ap_error_indication_s {
+  mme_ue_s1ap_id_t        mme_ue_s1ap_id;
+  enb_ue_s1ap_id_t        enb_ue_s1ap_id:24;
+  sctp_assoc_id_t         assoc_id;
+  uint32_t                enb_id;
+  enum s1cause            cause;
+}itti_s1ap_error_indication_t;
 
 /** Path Switch Request Failure. */
 typedef struct itti_s1ap_path_switch_request_failure_s {

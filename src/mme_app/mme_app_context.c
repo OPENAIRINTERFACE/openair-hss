@@ -1418,6 +1418,14 @@ mme_app_handle_s1ap_ue_context_release_complete (
               s1ap_ue_context_release_complete->mme_ue_s1ap_id, s1ap_ue_context_release_complete->enb_ue_s1ap_id);
         /** Not releasing any bearer information. */
         /* Update keys and ECM state. */
+        if(ue_context->mm_state == UE_UNREGISTERED){
+          OAILOG_DEBUG(LOG_MME_APP, "Received UE context release complete for the main ue_reference of the UE with mme_ue_s1ap_id "MME_UE_S1AP_ID_FMT" and enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT" in UE_UNREGISTERED state. "
+              "Performing implicit detach (failed handover). \n", s1ap_ue_context_release_complete->mme_ue_s1ap_id, s1ap_ue_context_release_complete->enb_ue_s1ap_id);
+          mme_remove_ue_context(&mme_app_desc.mme_ue_contexts, ue_context);
+          OAILOG_FUNC_OUT (LOG_MME_APP);
+        }
+        OAILOG_DEBUG(LOG_MME_APP, "Received UE context release complete for the main ue_reference of the UE with mme_ue_s1ap_id "MME_UE_S1AP_ID_FMT" and enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT" in UE_REGISTERED state. "
+            "Not performing implicit detach, only idle mode (failed handover). \n", s1ap_ue_context_release_complete->mme_ue_s1ap_id, s1ap_ue_context_release_complete->enb_ue_s1ap_id);
         mme_ue_context_update_ue_sig_connection_state (&mme_app_desc.mme_ue_contexts, ue_context, ECM_IDLE);
         OAILOG_FUNC_OUT (LOG_MME_APP);
       }

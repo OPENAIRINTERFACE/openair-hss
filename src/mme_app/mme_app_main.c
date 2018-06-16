@@ -372,6 +372,13 @@ void *mme_app_thread (void *args)
      }
      break;
 
+     case S1AP_ERROR_INDICATION:{
+       mme_app_s1ap_error_indication(
+           &S1AP_ERROR_INDICATION(received_message_p)
+       );
+     }
+     break;
+
       /** Status Transfer . */
       case S1AP_ENB_STATUS_TRANSFER:{
           mme_app_handle_enb_status_transfer(

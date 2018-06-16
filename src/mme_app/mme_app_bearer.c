@@ -3208,6 +3208,26 @@ mme_app_handle_handover_failure (
 }
 
 //------------------------------------------------------------------------------
+void mme_app_s1ap_error_indication(const itti_s1ap_error_indication_t * const s1ap_error_indication_pP    ){
+  struct ue_context_s                    *ue_context = NULL;
+  MessageDef                             *message_p = NULL;
+  uint64_t                                imsi = 0;
+
+  OAILOG_FUNC_IN (LOG_MME_APP);
+
+  OAILOG_DEBUG (LOG_MME_APP, "Received S1AP_ERROR_INDICATION from eNB for UE_ID " MME_UE_S1AP_ID_FMT ". \n", s1ap_error_indication_pP->mme_ue_s1ap_id);
+
+  /** Don't check the UE conetxt. */
+  OAILOG_ERROR(LOG_MME_APP, "Sending UE Context release request for UE context with mmeS1apUeId " MME_UE_S1AP_ID_FMT". \n", s1ap_error_indication_pP->mme_ue_s1ap_id);
+
+  /** No matter if handover procedure exists or not, perform an UE context release. */
+  mme_app_itti_ue_context_release(s1ap_error_indication_pP->mme_ue_s1ap_id, s1ap_error_indication_pP->enb_ue_s1ap_id, S1AP_NAS_NORMAL_RELEASE, s1ap_error_indication_pP->enb_id);
+
+  /** No timers, etc. is needed. */
+  OAILOG_FUNC_OUT (LOG_MME_APP);
+}
+
+//------------------------------------------------------------------------------
 void
 mme_app_handle_enb_status_transfer(
      itti_s1ap_status_transfer_t * const s1ap_status_transfer_pP
@@ -3303,7 +3323,7 @@ mme_app_handle_s1ap_handover_notify(
    OAILOG_ERROR(LOG_MME_APP, "An UE MME context does not exist for UE with mmeS1apUeId " MME_UE_S1AP_ID_FMT". \n", handover_notify_pP->mme_ue_s1ap_id);
    MSC_LOG_EVENT (MSC_MMEAPP_MME, "S1AP_HANDOVER_NOTIFY. No UE existing mmeS1apUeId " MME_UE_S1AP_ID_FMT". \n", handover_notify_pP->mme_ue_s1ap_id);
    /** Removing the S1ap context directly. */
-   mme_app_itti_ue_context_release(handover_notify_pP->mme_ue_s1ap_id, handover_notify_pP->enb_ue_s1ap_id, SYSTEM_FAILURE, handover_notify_pP->cgi.cell_identity.enb_id);
+   mme_app_itti_ue_context_release(handover_notify_pP->mme_ue_s1ap_id, handover_notify_pP->enb_ue_s1ap_id, S1AP_SYSTEM_FAILURE, handover_notify_pP->cgi.cell_identity.enb_id);
    OAILOG_FUNC_OUT (LOG_MME_APP);
  }
  /**
