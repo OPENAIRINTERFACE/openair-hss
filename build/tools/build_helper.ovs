@@ -87,7 +87,7 @@ install_gtp_ovs_kernel_module() {
 
   # explicit
   local DATA_PLANE_SUPPORTED_KERNEL_MIN_VERSION="4.9.1"
-  local DATA_PLANE_SUPPORTED_KERNEL_MAX_VERSION="4.9.86"
+  local DATA_PLANE_SUPPORTED_KERNEL_MAX_VERSION="4.9.108"
 
   if [ $1 -gt 0 ]; then
     OPTION="-y"
@@ -284,7 +284,7 @@ install_ovs_gtp_kernel_space_from_source(){
 
   # explicit
   local DATA_PLANE_SUPPORTED_KERNEL_MIN_VERSION="4.9.1"
-  local DATA_PLANE_SUPPORTED_KERNEL_MAX_VERSION="4.9.86"
+  local DATA_PLANE_SUPPORTED_KERNEL_MAX_VERSION="4.9.108"
 
   if [ $1 -eq 0 ]; then
     OPTION=""
