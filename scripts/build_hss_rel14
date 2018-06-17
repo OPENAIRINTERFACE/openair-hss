@@ -124,12 +124,12 @@ function main()
     [[ $? -ne 0 ]] && return $?
     
     # Temp, do it here in the same node as HSS
-    #if [ $force -gt 0 ];then
-    #    $HSS_SCRIPT_PATH/build_cassandra -i --force
-    #else
-    #    $HSS_SCRIPT_PATH/build_cassandra -i 
-    #fi
-    #[[ $? -ne 0 ]] && return $?
+    if [ $force -gt 0 ];then
+        $HSS_SCRIPT_PATH/build_cassandra -i --force
+    else
+        $HSS_SCRIPT_PATH/build_cassandra -i 
+    fi
+    [[ $? -ne 0 ]] && return $?
     
     check_install_hss_software  $force
     if [ $? -ne 0 ]; then
