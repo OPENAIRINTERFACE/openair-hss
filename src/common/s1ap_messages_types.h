@@ -44,6 +44,9 @@
 #define S1AP_UE_CONTEXT_RELEASE_COMPLETE(mSGpTR) (mSGpTR)->ittiMsg.s1ap_ue_context_release_complete
 #define S1AP_E_RAB_SETUP_REQ(mSGpTR)             (mSGpTR)->ittiMsg.s1ap_e_rab_setup_req
 #define S1AP_E_RAB_SETUP_RSP(mSGpTR)             (mSGpTR)->ittiMsg.s1ap_e_rab_setup_rsp
+#define S1AP_E_RAB_RELEASE_REQ(mSGpTR)           (mSGpTR)->ittiMsg.s1ap_e_rab_release_req
+#define S1AP_E_RAB_RELEASE_RSP(mSGpTR)           (mSGpTR)->ittiMsg.s1ap_e_rab_release_rsp
+
 #define S1AP_INITIAL_UE_MESSAGE(mSGpTR)          (mSGpTR)->ittiMsg.s1ap_initial_ue_message
 
 #define S1AP_ENB_INITIATED_RESET_REQ(mSGpTR) (mSGpTR)->ittiMsg.s1ap_enb_initiated_reset_req
@@ -215,6 +218,16 @@ typedef struct itti_s1ap_e_rab_setup_req_s {
 
 } itti_s1ap_e_rab_setup_req_t;
 
+typedef struct itti_s1ap_e_rab_release_req_s {
+  mme_ue_s1ap_id_t    mme_ue_s1ap_id;
+  enb_ue_s1ap_id_t    enb_ue_s1ap_id;
+
+  // E-RAB to Be Setup List
+  e_rab_list_t        e_rab_to_be_release_list;
+  /** NAS message. */
+  bstring                          nas_pdu;
+
+} itti_s1ap_e_rab_release_req_t;
 
 typedef struct itti_s1ap_e_rab_setup_rsp_s {
   mme_ue_s1ap_id_t    mme_ue_s1ap_id;
@@ -227,6 +240,18 @@ typedef struct itti_s1ap_e_rab_setup_rsp_s {
   e_rab_list_t        e_rab_failed_to_setup_list;
 
 } itti_s1ap_e_rab_setup_rsp_t;
+
+typedef struct itti_s1ap_e_rab_release_rsp_s {
+  mme_ue_s1ap_id_t    mme_ue_s1ap_id;
+  enb_ue_s1ap_id_t    enb_ue_s1ap_id;
+
+  // E-RAB to Be Setup List
+  e_rab_list_t                  e_rab_release_list;
+
+//   Optional
+//  e_rab_list_t        e_rab_failed_to_setup_list;
+
+} itti_s1ap_e_rab_release_rsp_t;
 
 
 // handover messaging

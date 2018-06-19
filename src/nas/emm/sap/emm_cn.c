@@ -592,6 +592,7 @@ static int _emm_cn_pdn_disconnect_res(const emm_cn_pdn_disconnect_res_t * msg)
   ESM_msg                                 esm_msg = {.header = {0}};
   int                                     esm_cause;
   esm_sap_t                               esm_sap = {0};
+  bool                                    pdn_local_delete = false;
 
   ue_context_t *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, msg->ue_id);
   DevAssert(ue_context); // todo:
@@ -619,9 +620,9 @@ static int _emm_cn_pdn_disconnect_res(const emm_cn_pdn_disconnect_res_t * msg)
    */
   nas_emm_detach_proc_t  *detach_proc = get_nas_specific_procedure_detach(emm_context);
   // todo: implicit detach ? specific procedure?
-  if(!(detach_proc || EMM_DEREGISTERED_INITIATED == emm_fsm_get_state(emm_context))){
-    OAILOG_INFO (LOG_NAS_EMM, "No detach procedure ongoing for UE " MME_UE_S1AP_ID_FMT". Skipping the PDN Disconnect message. \n", emm_context->ue_id);
-    OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
+  if(detach_proc || EMM_DEREGISTERED_INITIATED == emm_fsm_get_state(emm_context)){
+    OAILOG_INFO (LOG_NAS_EMM, "Detach procedure ongoing for UE " MME_UE_S1AP_ID_FMT". Performing local PDN context deletion. \n", emm_context->ue_id);
+    pdn_local_delete = true;
   }
   /** Check for the number of pdn connections left. */
   if(!emm_context->esm_ctx.n_pdns){
@@ -684,16 +685,21 @@ static int _emm_cn_pdn_disconnect_res(const emm_cn_pdn_disconnect_res_t * msg)
       DevAssert(0);
     }
   }else{
-    OAILOG_INFO (LOG_NAS_EMM, "%d more PDN contexts exist for UE " MME_UE_S1AP_ID_FMT". Continuing with PDN Disconnect procedure. \n", emm_context->esm_ctx.n_pdns, emm_context->ue_id);
-    /** Send Disconnect Request for all remaining PDNs. */
-    pdn_context_t * pdn_context = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
-    esm_sap.primitive = ESM_PDN_DISCONNECT_REQ;
+    OAILOG_INFO (LOG_NAS_EMM, "%d more PDN contexts exist for UE (not-local PDN deactivation) " MME_UE_S1AP_ID_FMT". Continuing with PDN Disconnect procedure. \n", emm_context->esm_ctx.n_pdns, emm_context->ue_id);
+    /*
+     * Send Disconnect Request to the ESM layer.
+     * It will disconnect the first PDN which is pending deactivation.
+     * This can be called at detach procedure with multiple PDNs, too.
+     *
+     * If detach procedure, or MME initiated PDN context deactivation procedure, we will first locally remove the PDN context.
+     * The remaining PDN contexts will not be those who need NAS messaging to be purged, but the ones, who were not purged locally at all.
+     */
+    esm_sap.primitive = ESM_PDN_DISCONNECT_CNF;
     esm_sap.is_standalone = false;
     esm_sap.ue_id = emm_context->ue_id;
     esm_sap.ctx = emm_context;
     esm_sap.recv = NULL;
-    esm_sap.data.pdn_disconnect.default_ebi = pdn_context->default_ebi; /**< Default Bearer Id of default APN. */
-    esm_sap.data.pdn_disconnect.cid         = pdn_context->context_identifier; /**< Context Identifier of default APN. */
+    esm_sap.data.pdn_disconnect.local_delete = pdn_local_delete; // pdn_context->default_ebi; /**< Default Bearer Id of default APN. */
     esm_sap_send(&esm_sap);
     OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
   }

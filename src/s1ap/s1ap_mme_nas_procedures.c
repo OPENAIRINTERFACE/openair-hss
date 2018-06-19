@@ -578,6 +578,108 @@ int s1ap_generate_s1ap_e_rab_setup_req (itti_s1ap_e_rab_setup_req_t * const e_ra
 }
 
 //------------------------------------------------------------------------------
+int s1ap_generate_s1ap_e_rab_release_req (itti_s1ap_e_rab_release_req_t * const e_rab_release_req)
+{
+  OAILOG_FUNC_IN (LOG_S1AP);
+  ue_description_t                       *ue_ref = NULL;
+  uint8_t                                *buffer_p = NULL;
+  uint32_t                                length = 0;
+  void                                   *id = NULL;
+  const enb_ue_s1ap_id_t                  enb_ue_s1ap_id = e_rab_release_req->enb_ue_s1ap_id;
+  const mme_ue_s1ap_id_t                  ue_id       = e_rab_release_req->mme_ue_s1ap_id;
+
+  hashtable_ts_get (&g_s1ap_mme_id2assoc_id_coll, (const hash_key_t)ue_id, (void **)&id);
+  if (id) {
+    sctp_assoc_id_t sctp_assoc_id = (sctp_assoc_id_t)(uintptr_t)id;
+    enb_description_t  *enb_ref = s1ap_is_enb_assoc_id_in_list (sctp_assoc_id);
+    if (enb_ref) {
+      ue_ref = s1ap_is_ue_enb_id_in_list (enb_ref,enb_ue_s1ap_id);
+    }
+  }
+  // TODO remove soon:
+  if (!ue_ref) {
+    ue_ref = s1ap_is_ue_mme_id_in_list (ue_id);
+  }
+  // finally!
+  if (!ue_ref) {
+    /*
+     * If the UE-associated logical S1-connection is not established,
+     * * * * the MME shall allocate a unique MME UE S1AP ID to be used for the UE.
+     */
+    OAILOG_DEBUG (LOG_S1AP, "Unknown UE MME ID " MME_UE_S1AP_ID_FMT ", This case is not handled right now\n", ue_id);
+    OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
+  } else {
+    /*
+     * We have found the UE in the list.
+     * Create new IE list message and encode it.
+     */
+    S1ap_E_RABReleaseCommandIEs_t          *e_rabreleasecommandies = NULL;
+    s1ap_message                            message = {0};
+
+    message.procedureCode = S1ap_ProcedureCode_id_E_RABRelease;
+    message.direction = S1AP_PDU_PR_initiatingMessage;
+    ue_ref->s1_ue_state = S1AP_UE_CONNECTED;
+    e_rabreleasecommandies = &message.msg.s1ap_E_RABReleaseCommandIEs;
+    /*
+     * Setting UE informations with the ones found in ue_ref
+     */
+    e_rabreleasecommandies->mme_ue_s1ap_id = ue_ref->mme_ue_s1ap_id;
+    e_rabreleasecommandies->eNB_UE_S1AP_ID = ue_ref->enb_ue_s1ap_id;
+    /*eNB
+     * Fill in the NAS pdu
+     */
+    e_rabreleasecommandies->presenceMask = 0;
+//    if (e_rab_release_req->ue_aggregate_maximum_bit_rate_present) {
+//      e_rabreleasecommandies->presenceMask |= S1AP_E_RABRELEASECOMMANDIES_UEAGGREGATEMAXIMUMBITRATE_PRESENT;
+//      TO DO e_rabreleasecommandies->uEaggregateMaximumBitrate.uEaggregateMaximumBitRateDL.buf
+//    }
+
+    S1ap_E_RABItem_t s1ap_E_RABItem[e_rab_release_req->e_rab_to_be_release_list.no_of_items];
+
+    for  (int i= 0; i < e_rab_release_req->e_rab_to_be_release_list.no_of_items; i++) {
+      memset(&s1ap_E_RABItem[i], 0, sizeof(S1ap_E_RABItem_t));
+
+      s1ap_E_RABItem[i].e_RAB_ID = e_rab_release_req->e_rab_to_be_release_list.item[i].e_rab_id;
+      /** Set Id-Cause. */
+      s1ap_E_RABItem[i].cause.present = S1ap_Cause_PR_nas;
+      s1ap_E_RABItem[i].cause.choice.nas = 0;
+
+      ASN_SEQUENCE_ADD (&e_rabreleasecommandies->e_RABToBeReleasedList, &s1ap_E_RABItem[i]);
+//      }
+    }
+
+    /** Set the NAS message outside of the EBI list. */
+    if(e_rab_release_req->nas_pdu){
+      e_rabreleasecommandies->presenceMask |=
+          S1AP_E_RABRELEASECOMMANDIES_NAS_PDU_PRESENT;
+      OCTET_STRING_fromBuf (&e_rabreleasecommandies->nas_pdu, (char *)bdata(e_rab_release_req->nas_pdu),
+          blength(e_rab_release_req->nas_pdu));
+    }else{
+      OAILOG_INFO(LOG_S1AP, "No NAS message received for S1AP E-RAB release command for ueId " MME_UE_S1AP_ID_FMT" .\n", e_rab_release_req->mme_ue_s1ap_id);
+    }
+
+    if (s1ap_mme_encode_pdu (&message, &buffer_p, &length) < 0) {
+      // TODO: handle something
+      OAILOG_ERROR (LOG_S1AP, "Encoding of s1ap_E_RABReleaseCommandIEs failed \n");
+      OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
+    }
+
+    OAILOG_NOTICE (LOG_S1AP, "Send S1AP E_RABRelease command MME_UE_S1AP_ID = " MME_UE_S1AP_ID_FMT " eNB_UE_S1AP_ID = " ENB_UE_S1AP_ID_FMT "\n",
+                (mme_ue_s1ap_id_t)e_rabreleasecommandies->mme_ue_s1ap_id, (enb_ue_s1ap_id_t)e_rabreleasecommandies->eNB_UE_S1AP_ID);
+    MSC_LOG_TX_MESSAGE (MSC_S1AP_MME,
+                        MSC_S1AP_ENB,
+                        NULL, 0,
+                        "0 E_RABSetup/initiatingMessage mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " enb_ue_s1ap_id" ENB_UE_S1AP_ID_FMT " nas length %u",
+                        (mme_ue_s1ap_id_t)e_rabreleasecommandies->mme_ue_s1ap_id, (enb_ue_s1ap_id_t)e_rabreleasecommandies->eNB_UE_S1AP_ID, length);
+    bstring b = blk2bstr(buffer_p, length);
+    s1ap_mme_itti_send_sctp_request (&b , ue_ref->enb->sctp_assoc_id, ue_ref->sctp_stream_send, ue_ref->mme_ue_s1ap_id);
+  }
+
+  OAILOG_FUNC_RETURN (LOG_S1AP, RETURNok);
+
+}
+
+//------------------------------------------------------------------------------
 void
 s1ap_handle_conn_est_cnf (
   const itti_mme_app_connection_establishment_cnf_t * const conn_est_cnf_pP)
@@ -1171,6 +1273,9 @@ s1ap_handle_handover_request (
    */
   asn_uint642INTEGER (&handoverRequest_p->uEaggregateMaximumBitrate.uEaggregateMaximumBitRateDL, handover_request_pP->ambr.br_dl);
   asn_uint642INTEGER (&handoverRequest_p->uEaggregateMaximumBitrate.uEaggregateMaximumBitRateUL, handover_request_pP->ambr.br_ul);
+
+  OAILOG_DEBUG (LOG_S1AP, "\t- @}---}-- HANDOVER_REQUEST : AMBR DL %" PRIu64 "\n", handover_request_pP->ambr.br_dl);
+  OAILOG_DEBUG (LOG_S1AP, "\t- HANDOVER_REQUEST : AMBR UL %" PRIu64 "\n", handover_request_pP->ambr.br_ul);
 
   /*
    * E-UTRAN Target-ToSource Transparent Container.

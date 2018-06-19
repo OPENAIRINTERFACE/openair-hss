@@ -1020,8 +1020,7 @@ int _emm_attach_reject (emm_data_context_t *emm_context, struct nas_base_proc_s 
   } else if (attach_proc->esm_msg_out) {
     emm_sap.u.emm_as.u.establish.nas_msg = attach_proc->esm_msg_out;
   } else {
-    OAILOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - ESM message is missing\n");
-    OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
+    OAILOG_WARNING(LOG_NAS_EMM, "EMM-PROC  - ESM message is missing but attach reject reason due ESM. Continuing with attach reject.\n");
   }
 
   /*
@@ -1536,6 +1535,7 @@ static int _emm_attach (emm_data_context_t *emm_context)
         bdestroy_wrapper (&attach_proc->ies->esm_msg);
         attach_proc->esm_msg_out = esm_sap.send;
         rc = _emm_attach_reject (emm_context, &attach_proc->emm_spec_proc.emm_proc.base_proc);
+        OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
       } else {
         /*
          * ESM procedure failed and, received message has been discarded or

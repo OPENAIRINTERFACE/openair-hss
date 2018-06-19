@@ -54,6 +54,7 @@
 #include "3gpp_24.008.h"
 #include "3gpp_29.274.h"
 #include "mme_app_ue_context.h"
+#include "mme_app_defs.h"
 #include "nas_message.h"
 #include "esm_sap.h"
 #include "esm_recv.h"
@@ -64,7 +65,7 @@
 #include "esm_msg.h"
 #include "esm_cause.h"
 #include "esm_proc.h"
-
+#include "esm_ebr.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -112,6 +113,7 @@ static const char                      *_esm_sap_primitive_str[] = {
   "ESM_PDN_CONNECTIVITY_CNF",
   "ESM_PDN_CONNECTIVITY_REJ",
   "ESM_PDN_DISCONNECT_REQ",
+  "ESM_PDN_DISCONNECT_CNF",
   "ESM_PDN_DISCONNECT_REJ",
   "ESM_BEARER_RESOURCE_ALLOCATE_REQ",
   "ESM_BEARER_RESOURCE_ALLOCATE_REJ",
@@ -175,8 +177,10 @@ esm_sap_send (esm_sap_t * msg)
   /*
    * Check the ESM-SAP primitive
    */
-  esm_primitive_t                         primitive = msg->primitive;
-  esm_cause_t                             esm_cause = ESM_CAUSE_SUCCESS;
+  esm_primitive_t                         primitive   = msg->primitive;
+  esm_cause_t                             esm_cause   = ESM_CAUSE_SUCCESS;
+
+  pdn_context_t                          *pdn_context = NULL;
 
   assert ((primitive > ESM_START) && (primitive < ESM_END));
   OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Received primitive %s (%d)\n", _esm_sap_primitive_str[primitive - ESM_START - 1], primitive);
@@ -203,7 +207,10 @@ esm_sap_send (esm_sap_t * msg)
 
   case ESM_PDN_DISCONNECT_REQ:
     /*
-     * MME initiated PDN disconnection procedure.
+     * MME (detach) or UE PDN disconnection procedure.
+     * If MME initiated procedure, the PDN context will be removed locally before sending the delete session request, but one at a time.
+     * At detach, also multiple PDN connections may exist.
+     *
      *
      * Without waiting for UE confirmation, directly update the ESM context.
      * Send S11 Delete Session Request to the SAE-GW.
@@ -211,18 +218,36 @@ esm_sap_send (esm_sap_t * msg)
      * Execute the PDN disconnect procedure requested by the UE.
      * Validating the message in the context of the UE and finding the PDN context to remove.
      */
-    rc = esm_proc_eps_bearer_context_deactivate(msg->ctx, true, msg->data.pdn_disconnect.default_ebi, msg->data.pdn_disconnect.cid, &esm_cause);
+    rc = esm_proc_eps_bearer_context_deactivate(msg->ctx, msg->data.pdn_disconnect.local_delete, msg->data.pdn_disconnect.default_ebi, msg->data.pdn_disconnect.cid, &esm_cause);
     if (rc != RETURNerror) {
+
+
+
+      /** If no local pdn context deletion, directly continue with the NAS/S1AP message. */
       int pid = esm_proc_pdn_disconnect_request( msg->ctx, PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED, msg->data.pdn_disconnect.default_ebi, &esm_cause);
       if (pid == RETURNerror) {
         rc = RETURNerror;
       }else{
         /** Delete the PDN connection locally (todo: also might do this together with removing all bearers/default bearer). */
-        proc_tid_t pti = _pdn_connectivity_delete (msg->ctx, pid);
+        proc_tid_t pti = _pdn_connectivity_delete (msg->ctx, msg->data.pdn_disconnect.cid);
       }
+
+
     }else{
       OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
 //      DevAssert(0);
+    }
+    break;
+
+
+  case ESM_PDN_DISCONNECT_CNF:{ /**< This will be received if a S11 Delete Session Response has arrived and no detach procedure was ongoing, always not standalone. */
+    /*
+     * Create a deactivate EPS bearer context request message, set the status as pending deactivation and continue.
+     * The EBI should already be set when the ESM message has been received.
+     */
+    rc = _esm_sap_send(DEACTIVATE_EPS_BEARER_CONTEXT_REQUEST,
+        msg->is_standalone, msg->ctx, msg->ctx->esm_ctx.esm_proc_data->pti, msg->ctx->esm_ctx.esm_proc_data->ebi,
+        &msg->data, msg->send);
     }
     break;
 
@@ -308,7 +333,13 @@ esm_sap_send (esm_sap_t * msg)
     break;
 
   case ESM_UNITDATA_IND:
-    rc = _esm_sap_recv (-1, msg->is_standalone, msg->ctx, msg->recv, msg->send, &msg->err);
+    /** Check that an EMM context exists, if not disregard the message. */
+    if(msg->ctx)
+      rc = _esm_sap_recv (-1, msg->is_standalone, msg->ctx, msg->recv, msg->send, &msg->err);
+    else{
+      OAILOG_ERROR (LOG_NAS_ESM, "ESM-SAP   - No EMM context received for ESM_UNITDATA_IND. \n");
+      rc = RETURNerror;
+    }
     break;
 
   default:
@@ -371,6 +402,7 @@ _esm_sap_recv (
   int                                     decoder_rc;
   ESM_msg                                 esm_msg;
 
+  /** An
   memset (&esm_msg, 0, sizeof (ESM_msg));
   /*
    * Decode the received ESM message
@@ -565,7 +597,9 @@ _esm_sap_recv (
         /*
          * Process PDN connectivity request message received from the UE
          */
-        esm_cause = esm_recv_pdn_connectivity_request (emm_context, pti, ebi, &esm_msg.pdn_connectivity_request, &ebi);
+        bool                                    is_pdn_connectivity = false;
+        pdn_context_t                          *new_pdn_context     = NULL;
+        esm_cause = esm_recv_pdn_connectivity_request (emm_context, pti, ebi, &esm_msg.pdn_connectivity_request, &ebi, &is_pdn_connectivity, &new_pdn_context);
 
         if (esm_cause != ESM_CAUSE_SUCCESS) {
           /*
@@ -654,13 +688,111 @@ _esm_sap_recv (
 #else
           esm_cause = ESM_CAUSE_SUCCESS;
 #endif
-          /*
-           * Setup the callback function used to send default EPS bearer
-           * * * * context request message onto the network
-           */
-          //esm_procedure = esm_proc_default_eps_bearer_context_request;
-        }
+          if(!is_standalone){
+            *err = ESM_SAP_SUCCESS;
+             OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
+          }
+          ue_context_t * ue_context  = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
+          /** Get the configuration. */
+          DevAssert(new_pdn_context);
 
+          /** If a PDN connectivity exists, perform an activate default eps bearer context request. */
+          if(is_pdn_connectivity){
+            /*
+             * Get the PDN context.
+             */
+
+            bearer_context_t * bearer_context_duplicate = mme_app_get_session_bearer_context(new_pdn_context, new_pdn_context->default_ebi);
+            DevAssert(bearer_context_duplicate);
+
+            memset (&esm_msg, 0, sizeof (ESM_msg));
+            esm_proc_pdn_type_t                     esm_pdn_type = ESM_PDN_TYPE_IPV4;
+            switch (new_pdn_context->pdn_type) {
+            case IPv4:
+              OAILOG_INFO (LOG_NAS_EMM, "EMM  -  esm_pdn_type = ESM_PDN_TYPE_IPV4\n");
+              esm_pdn_type = ESM_PDN_TYPE_IPV4;
+              break;
+
+            case IPv6:
+              OAILOG_INFO (LOG_NAS_EMM, "EMM  -  esm_pdn_type = ESM_PDN_TYPE_IPV6\n");
+              esm_pdn_type = ESM_PDN_TYPE_IPV6;
+              break;
+
+            case IPv4_AND_v6:
+              OAILOG_INFO (LOG_NAS_EMM, "EMM  -  esm_pdn_type = ESM_PDN_TYPE_IPV4V6\n");
+              esm_pdn_type = ESM_PDN_TYPE_IPV4V6;
+              break;
+
+            default:
+              OAILOG_INFO (LOG_NAS_EMM, "EMM  -  esm_pdn_type = ESM_PDN_TYPE_IPV4 (forced to default)\n");
+              esm_pdn_type = ESM_PDN_TYPE_IPV4;
+            }
+
+
+            EpsQualityOfService                     qos = {0};
+            qos.bitRatesPresent = 0;
+            qos.bitRatesExtPresent = 0;
+          //#pragma message "Some work to do here about qos"
+            qos.qci = bearer_context_duplicate->qci;
+            qos.bitRates.maxBitRateForUL = 0;     //msg_pP->qos.mbrUL;
+            qos.bitRates.maxBitRateForDL = 0;     //msg_pP->qos.mbrDL;
+            qos.bitRates.guarBitRateForUL = 0;    //msg_pP->qos.gbrUL;
+            qos.bitRates.guarBitRateForDL = 0;    //msg_pP->qos.gbrDL;
+            qos.bitRatesExt.maxBitRateForUL = 0;
+            qos.bitRatesExt.maxBitRateForDL = 0;
+            qos.bitRatesExt.guarBitRateForUL = 0;
+            qos.bitRatesExt.guarBitRateForDL = 0;
+
+            /*
+             * Return default EPS bearer context request message
+             */
+            rc = esm_send_activate_default_eps_bearer_context_request (pti, ebi,      //msg_pP->ebi,
+                                                                       &esm_msg.activate_default_eps_bearer_context_request,
+                                                                       new_pdn_context->apn_subscribed,
+                                                                       new_pdn_context->pco,
+                                                                       new_pdn_context->pdn_type, paa_to_bstring(new_pdn_context->paa),
+                                                                       &qos, ESM_CAUSE_SUCCESS);
+            /** Leaving the PCOs of the PDN context. */
+            if (rc != RETURNerror) {
+              /*
+               * Encode the returned ESM response message
+               */
+              char                                    emm_cn_sap_buffer[EMM_CN_SAP_BUFFER_SIZE];
+              int                                     size = esm_msg_encode (&esm_msg, (uint8_t *) emm_cn_sap_buffer,
+                                                                             EMM_CN_SAP_BUFFER_SIZE);
+
+              OAILOG_INFO (LOG_NAS_EMM, "ESM encoded MSG size %d\n", size);
+
+              if (size > 0) {
+                rsp = blk2bstr(emm_cn_sap_buffer, size);
+              }
+
+              /*
+               * Complete the relevant ESM procedure
+               */
+              rc = esm_proc_default_eps_bearer_context_request (is_standalone, emm_context, new_pdn_context->default_ebi,        //0, //ESM_EBI_UNASSIGNED, //msg->ebi,
+                                                                &rsp, triggered_by_ue);
+
+              if (rc != RETURNok) {
+                /*
+                 * Return indication that ESM procedure failed
+                 */
+          //      unlock_ue_contexts(ue_context);
+                OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+              }
+            } else {
+              OAILOG_INFO (LOG_NAS_EMM, "ESM send activate_default_eps_bearer_context_request failed\n");
+              OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+            }
+          }else{
+            OAILOG_INFO (LOG_NAS_EMM, "No PDN connectivity exists for the second APN \"%s\" for ueId " MME_UE_S1AP_ID_FMT ". "
+                "Establishing PDN connection. \n", bdata(esm_msg.activate_default_eps_bearer_context_request.accesspointname), emm_context->ue_id);
+            nas_itti_pdn_connectivity_req (emm_context->esm_ctx.esm_proc_data->pti, emm_context->ue_id, new_pdn_context->context_identifier, new_pdn_context->default_ebi, emm_context->_imsi64, &emm_context->_imsi,
+                emm_context->esm_ctx.esm_proc_data, emm_context->esm_ctx.esm_proc_data->request_type);
+            /** No PDN connectivity exists yet. Leaving with PDN connectivity establishment. No procedure needed. */
+            rc = RETURNok;
+          }
+        }
         break;
       }
 
@@ -689,12 +821,12 @@ _esm_sap_recv (
         /*
          * Return deactivate EPS bearer context request message
          */
-        rc = esm_send_deactivate_eps_bearer_context_request (pti, ebi, &esm_msg.deactivate_eps_bearer_context_request, ESM_CAUSE_REGULAR_DEACTIVATION);
+//        rc = esm_send_deactivate_eps_bearer_context_request (pti, ebi, &esm_msg.deactivate_eps_bearer_context_request, ESM_CAUSE_REGULAR_DEACTIVATION);
         /*
          * Setup the callback function used to send deactivate EPS
          * * * * bearer context request message onto the network
          */
-        esm_procedure = esm_proc_eps_bearer_context_deactivate_request;
+//        esm_procedure = esm_proc_eps_bearer_context_deactivate_request;
       }
 
       break;
@@ -873,6 +1005,21 @@ _esm_sap_send (
     break;
 
   case DEACTIVATE_EPS_BEARER_CONTEXT_REQUEST:
+    /**
+     * Create and encode the message,
+     * set the procedure to set the pending status and to start the timers.
+     * The EBI should already be set when the ESM message has been received.
+     * This is always non local, since else we don't send message sent.
+     */
+    rc = esm_send_deactivate_eps_bearer_context_request (emm_context->esm_ctx.esm_proc_data->pti, emm_context->esm_ctx.esm_proc_data->ebi,
+        &esm_msg.deactivate_eps_bearer_context_request, ESM_CAUSE_REGULAR_DEACTIVATION);
+    if (rc != RETURNerror) {
+      /** If no local pdn context deletion, directly continue with the NAS/S1AP message.
+       * Setup the callback function used to send deactivate EPS
+       * * * * bearer context request message onto the network
+       */
+      esm_procedure = esm_proc_eps_bearer_context_deactivate_request;
+    }
     break;
 
   case PDN_CONNECTIVITY_REJECT:

@@ -66,6 +66,11 @@ static inline int                       s1ap_mme_encode_e_rab_setup (
   uint8_t ** buffer,
   uint32_t * length);
 
+static inline int                       s1ap_mme_encode_e_rab_release (
+  s1ap_message * message_p,
+  uint8_t ** buffer,
+  uint32_t * length);
+
 static inline int                       s1ap_mme_encode_paging(
   s1ap_message * message_p,
   uint8_t ** buffer,
@@ -193,6 +198,9 @@ s1ap_mme_encode_initiating (
 
   case S1ap_ProcedureCode_id_E_RABSetup:
     return s1ap_mme_encode_e_rab_setup (message_p, buffer, length);
+
+  case S1ap_ProcedureCode_id_E_RABRelease:
+    return s1ap_mme_encode_e_rab_release (message_p, buffer, length);
 
   case S1ap_ProcedureCode_id_HandoverResourceAllocation:
     return s1ap_mme_encode_handover_resource_allocation (message_p, buffer, length);
@@ -524,6 +532,28 @@ s1ap_mme_encode_e_rab_setup (
   }
 
   return s1ap_generate_initiating_message (buffer, length, S1ap_ProcedureCode_id_E_RABSetup, message_p->criticality, &asn_DEF_S1ap_E_RABSetupRequest, e_rab_setup_p);
+}
+
+//------------------------------------------------------------------------------
+static inline int
+s1ap_mme_encode_e_rab_release (
+  s1ap_message * message_p,
+  uint8_t ** buffer,
+  uint32_t * length)
+{
+  S1ap_E_RABReleaseCommand_t        e_rab_release;
+  S1ap_E_RABReleaseCommand_t       *e_rab_release_p = &e_rab_release;
+
+  memset (e_rab_release_p, 0, sizeof (S1ap_E_RABReleaseCommand_t));
+
+  /*
+   * Convert IE structure into asn1 message_p
+   */
+  if (s1ap_encode_s1ap_e_rabreleasecommandies(e_rab_release_p, &message_p->msg.s1ap_E_RABReleaseCommandIEs) < 0) {
+    return -1;
+  }
+
+  return s1ap_generate_initiating_message (buffer, length, S1ap_ProcedureCode_id_E_RABRelease, message_p->criticality, &asn_DEF_S1ap_E_RABReleaseCommand, e_rab_release_p);
 }
 
 //------------------------------------------------------------------------------

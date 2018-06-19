@@ -191,7 +191,7 @@ mme_app_send_s11_create_session_req (
    * no tunnel had been previously setup, the distant teid is set to 0.
    * The remote teid will be provided in the response message.
    */
-  session_request_p->teid = 0;
+  session_request_p->teid = ue_context->s_gw_teid_s11_s4;
   /** IMSI. */
   memcpy((void*)&session_request_p->imsi, imsi_p, sizeof(imsi_t));
   // message content was set to 0
@@ -397,7 +397,7 @@ int mme_app_remove_s10_tunnel_endpoint(teid_t local_teid, struct in_addr peer_ip
  * Cu
  */
 //------------------------------------------------------------------------------
-int mme_app_send_delete_session_request (struct ue_context_s * const ue_context_p, const ebi_t ebi, const struct in_addr saegw_s11_in_addr, const teid_t saegw_s11_teid)
+int mme_app_send_delete_session_request (struct ue_context_s * const ue_context_p, const ebi_t ebi, const struct in_addr saegw_s11_in_addr, const teid_t saegw_s11_teid, const bool noDelete)
 {
   MessageDef                             *message_p = NULL;
   int                                     rc = RETURNok;
@@ -408,6 +408,7 @@ int mme_app_send_delete_session_request (struct ue_context_s * const ue_context_
   S11_DELETE_SESSION_REQUEST (message_p).local_teid = ue_context_p->mme_teid_s11;
   S11_DELETE_SESSION_REQUEST (message_p).teid       = saegw_s11_teid;
   S11_DELETE_SESSION_REQUEST (message_p).lbi        = ebi; //default bearer
+  S11_DELETE_SESSION_REQUEST (message_p).noDelete   = noDelete; //default bearer
 
   OAI_GCC_DIAG_OFF(pointer-to-int-cast);
   S11_DELETE_SESSION_REQUEST (message_p).sender_fteid_for_cp.teid = (teid_t) ue_context_p;

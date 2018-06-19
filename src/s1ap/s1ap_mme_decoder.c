@@ -215,6 +215,13 @@ s1ap_mme_decode_successfull_outcome (
       }
       break;
 
+    case S1ap_ProcedureCode_id_E_RABRelease: {
+        ret = s1ap_decode_s1ap_e_rabreleaseresponseies(&message->msg.s1ap_E_RABReleaseResponseIEs, &successfullOutcome_p->value);
+        s1ap_xer_print_s1ap_e_rabreleaseresponse(s1ap_xer__print2sp, message_string, message);
+        *message_id = S1AP_E_RABRELEASE_RESPONSE_LOG;
+      }
+      break;
+
     /** Handover Messaging. */
     case S1ap_ProcedureCode_id_HandoverResourceAllocation: {
       ret = s1ap_decode_s1ap_handoverrequestacknowledgeies(&message->msg.s1ap_HandoverRequestAcknowledgeIEs, &successfullOutcome_p->value);
@@ -355,6 +362,8 @@ int s1ap_free_mme_decode_pdu(
 //    return free_s1ap_uecontextreleasecomplete(&message->msg.s1ap_UEContextReleaseCompleteIEs);
 //  case S1AP_E_RABSETUP_RESPONSE_LOG:
 //    return free_s1ap_e_rabsetupresponse(&message->msg.s1ap_E_RABSetupResponseIEs);
+//  case S1AP_E_RABRELEASE_RESPONSE_LOG:
+//    return free_s1ap_e_rabreleaseresponse(&message->msg.s1ap_E_RABReleaseResponseIEs);
 //  case S1AP_INITIAL_CONTEXT_SETUP_LOG:
 //    if (message->direction == S1AP_PDU_PR_successfulOutcome) {
 //      return free_s1ap_initialcontextsetupresponse(&message->msg.s1ap_InitialContextSetupResponseIEs);

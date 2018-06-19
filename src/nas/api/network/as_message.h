@@ -511,8 +511,10 @@ typedef struct rab_establish_cnf_s {
  * to specific radio access bearer at the network side.
  */
 typedef struct rab_release_req_s {
+  mme_ue_s1ap_id_t ue_id;     /* UE lower layer identifier        */
   s_tmsi_t    s_tmsi;      /* UE identity                      */
   as_rab_id_t rab_id;      /* Radio access bearer identity     */
+  bstring     nas_msg; /* NAS message to transfer     */
 } rab_release_req_t;
 
 /*

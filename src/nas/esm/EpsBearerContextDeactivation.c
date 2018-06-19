@@ -301,19 +301,17 @@ esm_proc_eps_bearer_context_deactivate_accept (
   OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - EPS bearer context deactivation " "accepted by the UE (ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d)\n",
       ue_id, ebi);
 
-  if (rc != RETURNerror) {
-    /*
-     * Release the EPS bearer context.
-     */
-    rc = _eps_bearer_release (emm_context, ebi, &pid);
+  /*
+   * Release the EPS bearer context.
+   */
+  rc = _eps_bearer_release (emm_context, ebi, &pid);
 
-    if (rc != RETURNok) {
-      /*
-       * Failed to release the EPS bearer context
-       */
-      *esm_cause = ESM_CAUSE_PROTOCOL_ERROR;
-      pid = RETURNerror;
-    }
+  if (rc != RETURNok) {
+    /*
+     * Failed to release the EPS bearer context
+     */
+    *esm_cause = ESM_CAUSE_PROTOCOL_ERROR;
+    pid = RETURNerror;
   }
 
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, pid);
@@ -443,15 +441,18 @@ _eps_bearer_deactivate (
    * Notify EMM that a deactivate EPS bearer context request message
    * has to be sent to the UE
    */
-  emm_esm_data_t                         *emm_esm = &emm_sap.u.emm_esm.u.data;
+  emm_esm_deactivate_bearer_req_t     *emm_esm_deactivate = &emm_sap.u.emm_esm.u.deactivate_bearer;
+  MSC_LOG_TX_MESSAGE (MSC_NAS_ESM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMESM_DEACTIVATE_REQ (bearer deactivate) ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
 
-  emm_sap.primitive = EMMESM_UNITDATA_REQ;
+  memset(emm_esm_deactivate, 0, sizeof(emm_esm_deactivate_bearer_req_t));
+
+  emm_sap.primitive = EMMESM_DEACTIVATE_BEARER_REQ;
   emm_sap.u.emm_esm.ue_id = ue_id;
   emm_sap.u.emm_esm.ctx = ue_context;
-  emm_esm->msg = *msg;
+  emm_esm_deactivate->msg = *msg;
+  emm_esm_deactivate->ebi = ebi;
   bstring msg_dup = bstrcpy(*msg);
   *msg = NULL;
-  MSC_LOG_TX_MESSAGE (MSC_NAS_ESM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMESM_UNITDATA_REQ (bearer deactivate) ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
   rc = emm_sap_send (&emm_sap);
 
   if (rc != RETURNerror) {

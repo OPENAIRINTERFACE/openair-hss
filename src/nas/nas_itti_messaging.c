@@ -98,6 +98,22 @@ nas_itti_erab_setup_req (const mme_ue_s1ap_id_t ue_id,
 }
 
 //------------------------------------------------------------------------------
+int
+nas_itti_erab_release_req (const mme_ue_s1ap_id_t ue_id,
+    const ebi_t ebi,
+    bstring                nas_msg)
+{
+  MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_MME, NAS_ERAB_RELEASE_REQ);
+  NAS_ERAB_RELEASE_REQ (message_p).ue_id   = ue_id;
+  NAS_ERAB_RELEASE_REQ (message_p).ebi     = ebi;
+  NAS_ERAB_RELEASE_REQ (message_p).nas_msg = nas_msg;
+  nas_msg = NULL;
+  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_MMEAPP_MME, NULL, 0, "0 NAS_ERAB_RELEASE_REQ ue id " MME_UE_S1AP_ID_FMT " ebi %u len %u", ue_id, ebi, blength(NAS_ERAB_SETUP_REQ (message_p).nas_msg));
+  // make a long way by MME_APP instead of S1AP to retrieve the sctp_association_id key.
+  return itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
+}
+
+//------------------------------------------------------------------------------
 void nas_itti_dedicated_eps_bearer_complete(
     const mme_ue_s1ap_id_t ue_idP,
     const ebi_t ebiP)
@@ -299,6 +315,7 @@ void nas_itti_pdn_disconnect_req(
   ebi_t                   default_ebi,
   struct in_addr          saegw_s11_addr, /**< Put them into the UE context ? */
   teid_t                  saegw_teid,
+  bool                    noDelete,
   esm_proc_data_t        *proc_data_pP)
 {
   OAILOG_FUNC_IN(LOG_NAS);
@@ -313,6 +330,7 @@ void nas_itti_pdn_disconnect_req(
   NAS_PDN_DISCONNECT_REQ(message_p).pti             = proc_data_pP->pti;
   NAS_PDN_DISCONNECT_REQ(message_p).default_ebi     = default_ebi;
   NAS_PDN_DISCONNECT_REQ(message_p).ue_id           = ue_idP;
+  NAS_PDN_DISCONNECT_REQ(message_p).noDelete        = noDelete;
 
   NAS_PDN_DISCONNECT_REQ(message_p).saegw_s11_ip_addr    = saegw_s11_addr;
   NAS_PDN_DISCONNECT_REQ(message_p).saegw_s11_teid       = saegw_teid;

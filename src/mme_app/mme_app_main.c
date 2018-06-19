@@ -135,7 +135,12 @@ void *mme_app_thread (void *args)
       break;
 
     case NAS_ERAB_SETUP_REQ:{
-      mme_app_handle_erab_setup_req (&NAS_ERAB_SETUP_REQ (received_message_p));
+      mme_app_handle_nas_erab_setup_req (&NAS_ERAB_SETUP_REQ (received_message_p));
+    }
+    break;
+
+    case NAS_ERAB_RELEASE_REQ:{
+      mme_app_handle_nas_erab_release_req (&NAS_ERAB_RELEASE_REQ (received_message_p));
     }
     break;
 

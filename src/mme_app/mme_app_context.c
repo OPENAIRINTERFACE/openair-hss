@@ -2213,6 +2213,9 @@ pdn_context_t * mme_app_handle_pdn_connectivity_from_s10(ue_context_t *ue_contex
   /** Just set it temporarily to the UE, too. */
   ue_context->subscribed_ue_ambr = pdn_connection->apn_ambr;
 
+  OAILOG_DEBUG (LOG_MME_APP, "\t- @}---}-- HANDLING_PDN_CONNECTIVITY: AMBR DL %" PRIu64 "\n", ue_context->subscribed_ue_ambr.br_dl);
+  OAILOG_DEBUG (LOG_MME_APP, "\t- @}---}-- HANDLING_PDN_CONNECTIVITY: AMBR UL %" PRIu64 "\n", ue_context->subscribed_ue_ambr.br_ul);
+
   for (int num_bearer = 0; num_bearer < pdn_connection->bearer_context_list.num_bearer_context; num_bearer++){
     bearer_context_to_be_created_t * bearer_context_to_be_created_s10 = &pdn_connection->bearer_context_list.bearer_contexts[num_bearer];
     /* Create bearer contexts in the PDN context. */

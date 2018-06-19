@@ -100,6 +100,9 @@ _clear_emm_ctxt(emm_data_context_t *emm_context) {
   // todo: check if necessary!
   nas_delete_all_emm_procedures(emm_context);
   
+  /** Stop/Delete all ESM procedurs & timers. */
+  free_esm_context_content(&emm_context->esm_ctx);
+
   if (emm_context->esm_msg) {
     bdestroy_wrapper(&emm_context->esm_msg);
   }
@@ -282,8 +285,10 @@ emm_proc_detach (
       esm_sap.ue_id = emm_context->ue_id;
       esm_sap.ctx = emm_context;
       esm_sap.recv = emm_context->esm_msg;
-      esm_sap.data.pdn_disconnect.default_ebi = pdn_context->default_ebi; /**< Default Bearer Id of default APN. */
-      esm_sap.data.pdn_disconnect.cid         = pdn_context->context_identifier; /**< Context Identifier of default APN. */
+      /** Locally delete the PDN context first. */
+      esm_sap.data.pdn_disconnect.default_ebi  = pdn_context->default_ebi;        /**< Default Bearer Id of default APN. */
+      esm_sap.data.pdn_disconnect.cid          = pdn_context->context_identifier; /**< Context Identifier of default APN. */
+      esm_sap.data.pdn_disconnect.local_delete = true;                            /**< Local deletion of PDN contexts. */
       esm_sap_send(&esm_sap);
       /*
        * Remove the contexts and send S11 Delete Session Request to the SAE-GW.
@@ -413,6 +418,7 @@ emm_proc_detach_request (
       esm_sap.recv = emm_context->esm_msg;
       esm_sap.data.pdn_disconnect.default_ebi = pdn_context->default_ebi; /**< Default Bearer Id of default APN. */
       esm_sap.data.pdn_disconnect.cid         = pdn_context->context_identifier; /**< Context Identifier of default APN. */
+      esm_sap.data.pdn_disconnect.local_delete = true;                            /**< Local deletion of PDN contexts. */
       esm_sap_send(&esm_sap);
       /*
        * Remove the contexts and send S11 Delete Session Request to the SAE-GW.

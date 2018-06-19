@@ -78,6 +78,7 @@ typedef struct esm_proc_data_s {
   request_type_t          request_type;
   bstring                 apn;
   pdn_cid_t               pdn_cid;
+  ebi_t                   ebi;
   esm_proc_pdn_type_t     pdn_type;
   bstring                 pdn_addr;
   bearer_qos_t            bearer_qos;

@@ -354,12 +354,12 @@ int esm_proc_pdn_config_res(emm_data_context_t * emm_context, pdn_cid_t **pdn_ci
   }
 
   // search for an already set PDN context
-//  for ((**pdn_cid) = 0; (**pdn_cid) < MAX_APN_PER_UE; (**pdn_cid)++) {
+  //  for ((**pdn_cid) = 0; (**pdn_cid) < MAX_APN_PER_UE; (**pdn_cid)++) {
 
   /** Check if a tunnel already exists depending on the flag. */
   /** Create a temporary bstring to search for the APN-NI. */
-//  bstring apn_ni = bsapn_config->service_selection
-//  bstring apn_subscribed = blk2bstr(apn_config->service_selection, apn_config->service_selection_length);
+  //  bstring apn_ni = bsapn_config->service_selection
+  //  bstring apn_subscribed = blk2bstr(apn_config->service_selection, apn_config->service_selection_length);
   /*
    * Need to put this apn-subscribed into the newly created apn context or deallocate it (handover).
    * No context identifier will be set in the PDN context. Even if has came from handover. We should not go deep that much.
@@ -376,7 +376,7 @@ int esm_proc_pdn_config_res(emm_data_context_t * emm_context, pdn_cid_t **pdn_ci
     rc = esm_ebr_set_status (emm_context, pdn_context->default_ebi, ESM_EBR_ACTIVE, false);
     /** Set the context identifier when updating the pdn_context. */
   }
-//  }
+  //  }
   /*
    * Set the ESM Proc Data values.
    * Update the UE context and PDN context information with it.
@@ -431,9 +431,9 @@ int esm_proc_pdn_config_res(emm_data_context_t * emm_context, pdn_cid_t **pdn_ci
         }
       } else {
       }
-    }
+  }
   //      unlock_ue_contexts(ue_context);
-        OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
 

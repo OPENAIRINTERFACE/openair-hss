@@ -69,6 +69,7 @@ typedef enum emm_as_primitive_u {
   _EMMAS_ERAB_SETUP_REQ, /* EMM->AS: ERAB setup request  */
   _EMMAS_ERAB_SETUP_CNF, /* AS->EMM  */
   _EMMAS_ERAB_SETUP_REJ, /* AS->EMM  */
+  _EMMAS_ERAB_RELEASE_REQ, /* EMM->AS: ERAB release request  */
   _EMMAS_DATA_REQ,      /* EMM->AS: Data transfer request     */
   _EMMAS_DATA_IND,      /* AS->EMM: Data transfer indication      */
   _EMMAS_PAGE_IND,      /* AS->EMM: Paging data indication        */
@@ -268,6 +269,13 @@ typedef struct emm_as_activate_bearer_context_req_s {
   bstring                nas_msg;     /* NAS message to be transfered     */
 } emm_as_activate_bearer_context_req_t;
 
+typedef struct emm_as_deactivate_bearer_context_req_s {
+  mme_ue_s1ap_id_t       ue_id;       /* UE lower layer identifier        */
+  ebi_t                  ebi;         /* EPS erab ids. Some eNodeBs like Nokia for does not accept list of bearers for deactivation. */
+  emm_as_security_data_t sctx;        /* EPS NAS security context         */
+  bstring                nas_msg;     /* NAS message to be transfered     */
+} emm_as_deactivate_bearer_context_req_t;
+
 /*
  * EMMAS primitive for status indication
  * -------------------------------------
@@ -306,6 +314,7 @@ typedef struct emm_as_s {
     emm_as_release_t    release;
     emm_as_data_t       data;
     emm_as_activate_bearer_context_req_t activate_bearer_context_req;
+    emm_as_deactivate_bearer_context_req_t deactivate_bearer_context_req;
     emm_as_page_t       page;
     emm_as_status_t     status;
     emm_as_cell_info_t  cell_info;

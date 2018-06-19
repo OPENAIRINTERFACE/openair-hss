@@ -186,7 +186,11 @@ void itti_free_msg_content (MessageDef * const message_p)
     break;
 
   case NAS_ERAB_SETUP_REQ:
-    bdestroy_wrapper (&message_p->ittiMsg.itti_erab_setup_req.nas_msg);
+    bdestroy_wrapper (&message_p->ittiMsg.nas_erab_setup_req.nas_msg);
+    break;
+
+  case NAS_ERAB_RELEASE_REQ:
+    bdestroy_wrapper (&message_p->ittiMsg.nas_erab_release_req.nas_msg);
     break;
 
   case NAS_PDN_CONFIG_REQ:
@@ -249,6 +253,7 @@ void itti_free_msg_content (MessageDef * const message_p)
   case S1AP_UE_CONTEXT_RELEASE_COMMAND_LOG:
   case S1AP_UE_CONTEXT_RELEASE_LOG:
   case S1AP_E_RABSETUP_RESPONSE_LOG:
+  case S1AP_E_RABRELEASE_RESPONSE_LOG:
 
     // DO nothing
     break;
@@ -270,6 +275,14 @@ void itti_free_msg_content (MessageDef * const message_p)
         bdestroy_wrapper (&message_p->ittiMsg.s1ap_e_rab_setup_rsp.e_rab_setup_list.item[i].transport_layer_address);
       }
     }
+  break;
+
+  case S1AP_E_RAB_RELEASE_REQ: {
+    bdestroy_wrapper (&message_p->ittiMsg.s1ap_e_rab_release_req.nas_pdu);
+    }
+    break;
+
+  case S1AP_E_RAB_RELEASE_RSP:
   break;
 
   case S1AP_ENB_INITIATED_RESET_REQ:

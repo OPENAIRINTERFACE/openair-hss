@@ -292,7 +292,7 @@ esm_ebr_context_release (
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
   }
 
-  if(*pid != NULL){
+  if(*pid != NULL && *pid != MAX_APN_PER_UE){
     mme_app_get_pdn_context(ue_context, *pid, ebi, NULL, &pdn_context);
   }else{
     /** Get the bearer context from all session bearers. */

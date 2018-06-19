@@ -70,6 +70,7 @@ typedef enum esm_primitive_s {
   ESM_PDN_CONNECTIVITY_CNF,
   ESM_PDN_CONNECTIVITY_REJ,
   ESM_PDN_DISCONNECT_REQ,
+  ESM_PDN_DISCONNECT_CNF,
   ESM_PDN_DISCONNECT_REJ,
   ESM_BEARER_RESOURCE_ALLOCATE_REQ,
   ESM_BEARER_RESOURCE_ALLOCATE_REJ,
@@ -138,7 +139,8 @@ typedef struct esm_pdn_connectivity_s {
  */
 typedef struct esm_pdn_disconnect_s {
   ebi_t     default_ebi;        /* Default EBI of PDN context */
-  pdn_cid_t cid;        /* PDN connection local identifier      */
+  pdn_cid_t cid;                /* PDN connection local identifier      */
+  bool      local_delete;       /* PDN connection local identifier      */
 } esm_pdn_disconnect_t;
 
 /*

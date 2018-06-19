@@ -56,6 +56,7 @@ typedef enum {
   _EMMESM_RELEASE_IND,
   _EMMESM_UNITDATA_REQ,
   _EMMESM_ACTIVATE_BEARER_REQ,
+  _EMMESM_DEACTIVATE_BEARER_REQ,
   _EMMESM_UNITDATA_IND,
   _EMMESM_END
 } emm_esm_primitive_t;
@@ -89,6 +90,15 @@ typedef struct emm_esm_activate_bearer_req_s {
 } emm_esm_activate_bearer_req_t;
 
 /*
+ * EMMESM primitive for EPS bearer context release
+ * ---------------------------------------------
+ */
+typedef struct emm_esm_deactivate_bearer_req_s {
+  ebi_t            ebi;        /* bearer to deactivate */
+  bstring          msg;        /* ESM message to be transfered     */
+} emm_esm_deactivate_bearer_req_t;
+
+/*
  * EMMESM primitive for data transfer
  * ----------------------------------
  */
@@ -110,7 +120,8 @@ typedef struct {
     emm_esm_establish_t establish;
     emm_esm_data_t data;
     emm_esm_activate_bearer_req_t activate_bearer;
-  } u;
+    emm_esm_deactivate_bearer_req_t deactivate_bearer;
+ } u;
   /* TODO: complete emm_esm_t structure definition */
 } emm_esm_t;
 

@@ -189,6 +189,12 @@ static void _esm_information_t3489_handler (void *args)
    * Get retransmission timer parameters data
    */
   esm_ebr_timer_data_t                   *esm_ebr_timer_data = (esm_ebr_timer_data_t *) (args);
+  emm_data_context_t                     *emm_ctx = emm_data_context_get(&_emm_data, esm_ebr_timer_data->ue_id);
+
+  if (!(emm_ctx)) {
+    OAILOG_ERROR (LOG_NAS_EMM, "T3460 timer expired No EMM context\n");
+    OAILOG_FUNC_OUT (LOG_NAS_EMM);
+  }
 
   if (esm_ebr_timer_data) {
     /*

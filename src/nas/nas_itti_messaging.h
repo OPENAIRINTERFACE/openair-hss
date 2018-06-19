@@ -47,6 +47,10 @@ nas_itti_erab_setup_req (
     const bitrate_t        gbr_dl,
     const bitrate_t        gbr_ul,
     bstring                nas_msg);
+int
+nas_itti_erab_release_req (const mme_ue_s1ap_id_t ue_id,
+    const ebi_t ebi,
+    bstring                nas_msg);
 
 void nas_itti_pdn_config_req(
   unsigned int            ue_idP,
@@ -69,6 +73,7 @@ void nas_itti_pdn_disconnect_req(
   ebi_t                   default_ebi,
   struct in_addr          saegw_s11_addr, /**< Put them into the UE context ? */
   teid_t                  saegw_s11_teid,
+  bool                    noDelete,
   esm_proc_data_t        *proc_data_pP);
 
 void nas_itti_ctx_req(

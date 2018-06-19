@@ -175,6 +175,7 @@ typedef struct nw_gtpv2c_trxn_s {
   uint32_t                      seqNum;
   struct in_addr                peerIp;
   uint32_t                      peerPort;
+  uint32_t                      noDelete;
   uint8_t                       t3Timer;
   uint8_t                       maxRetries;
   nw_gtpv2c_msg_t*              pMsg;

@@ -95,6 +95,7 @@ extern                                  "C" {
       ulpApi.hMsg = 0;
       ulpApi.apiType = NW_GTPV2C_ULP_API_RSP_FAILURE_IND;
       ulpApi.u_api_info.rspFailureInfo.hUlpTrxn = thiz->hUlpTrxn;
+      ulpApi.u_api_info.rspFailureInfo.noDelete = thiz->noDelete;
       ulpApi.u_api_info.rspFailureInfo.msgType = thiz->pMsg ? thiz->pMsg->msgType: 0;
       ulpApi.u_api_info.rspFailureInfo.hUlpTunnel = ((thiz->hTunnel) ? ((nw_gtpv2c_tunnel_t *) (thiz->hTunnel))->hUlpTunnel : 0);
       ulpApi.u_api_info.rspFailureInfo.teidLocal = (thiz->hTunnel) ? ((nw_gtpv2c_tunnel_t*)(thiz->hTunnel))->teid: 0;

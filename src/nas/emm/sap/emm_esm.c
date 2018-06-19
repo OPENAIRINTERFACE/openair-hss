@@ -147,6 +147,12 @@ emm_esm_send (
         msg->u.activate_bearer.msg);
     break;
 
+  case _EMMESM_DEACTIVATE_BEARER_REQ:
+    MSC_LOG_RX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_ESM_MME, NULL, 0, "_EMMESM_DEACTIVATE_BEARER_REQ ue id " MME_UE_S1AP_ID_FMT " ", msg->ue_id);
+    rc = lowerlayer_deactivate_bearer_req (msg->ue_id, msg->u.deactivate_bearer.ebi,
+        msg->u.deactivate_bearer.msg);
+    break;
+
   default:
     break;
   }

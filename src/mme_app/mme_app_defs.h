@@ -103,7 +103,9 @@ void mme_app_handle_initial_ue_message       (itti_s1ap_initial_ue_message_t * c
 
 int mme_app_handle_create_sess_resp          (itti_s11_create_session_response_t * const create_sess_resp_pP); //not const because we need to free internal stucts
 
-void mme_app_handle_erab_setup_req (itti_erab_setup_req_t * const itti_erab_setup_req);
+void mme_app_handle_nas_erab_setup_req (itti_nas_erab_setup_req_t * const itti_nas_erab_setup_req);
+
+void mme_app_handle_nas_erab_release_req (itti_nas_erab_release_req_t * const itti_nas_erab_release_req);
 
 void mme_app_handle_delete_session_rsp	     (const itti_s11_delete_session_response_t * const delete_sess_respP);
 

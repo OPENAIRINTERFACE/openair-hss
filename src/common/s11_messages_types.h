@@ -974,6 +974,7 @@ typedef struct itti_s11_delete_session_request_s {
   teid_t      teid;                   ///< Tunnel Endpoint Identifier
   ebi_t       lbi;                    ///< Linked EPS Bearer ID
   fteid_t     sender_fteid_for_cp;    ///< Sender F-TEID for control plane
+  bool        noDelete;
 
   /* Operation Indication: This flag shall be set over S4/S11 interface
    * if the SGW needs to forward the Delete Session Request message to

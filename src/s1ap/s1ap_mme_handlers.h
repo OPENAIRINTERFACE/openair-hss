@@ -98,6 +98,11 @@ void s1ap_mme_handle_mme_mobility_completion_timer_expiry (void *ue_ref_p);
 int s1ap_mme_handle_erab_setup_response (const sctp_assoc_id_t assoc_id,
     const sctp_stream_id_t stream, struct s1ap_message_s *message);
 
+int s1ap_mme_handle_erab_release_response (
+    const sctp_assoc_id_t assoc_id,
+    const sctp_stream_id_t stream,
+    struct s1ap_message_s *message);
+
 int s1ap_mme_handle_erab_setup_failure (const sctp_assoc_id_t assoc_id,
     const sctp_stream_id_t stream, struct s1ap_message_s *message);
 

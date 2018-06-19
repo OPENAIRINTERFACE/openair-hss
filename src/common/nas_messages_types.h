@@ -50,7 +50,8 @@
 #define NAS_AUTHENTICATION_REQ(mSGpTR)              (mSGpTR)->ittiMsg.nas_auth_req
 #define NAS_AUTHENTICATION_PARAM_REQ(mSGpTR)        (mSGpTR)->ittiMsg.nas_auth_param_req
 #define NAS_DETACH_REQ(mSGpTR)                      (mSGpTR)->ittiMsg.nas_detach_req
-#define NAS_ERAB_SETUP_REQ(mSGpTR)                  (mSGpTR)->ittiMsg.itti_erab_setup_req
+#define NAS_ERAB_SETUP_REQ(mSGpTR)                  (mSGpTR)->ittiMsg.nas_erab_setup_req
+#define NAS_ERAB_RELEASE_REQ(mSGpTR)                (mSGpTR)->ittiMsg.nas_erab_release_req
 #define NAS_SIGNALLING_CONNECTION_REL_IND(mSGpTR)  (mSGpTR)->ittiMsg.nas_signalling_connection_rel_ind
 
 // todo: context req_res..
@@ -225,7 +226,7 @@ typedef struct itti_nas_dl_data_rej_s {
   int              err_code;
 } itti_nas_dl_data_rej_t;
 
-typedef struct itti_erab_setup_req_s {
+typedef struct itti_nas_erab_setup_req_s {
   mme_ue_s1ap_id_t ue_id;            /* UE lower layer identifier   */
   ebi_t            ebi;              /* EPS bearer id        */
   bstring          nas_msg;          /* NAS erab bearer context activation message           */
@@ -233,7 +234,13 @@ typedef struct itti_erab_setup_req_s {
   bitrate_t        mbr_ul;
   bitrate_t        gbr_dl;
   bitrate_t        gbr_ul;
-} itti_erab_setup_req_t;
+} itti_nas_erab_setup_req_t;
+
+typedef struct itti_nas_erab_release_req_s {
+  mme_ue_s1ap_id_t ue_id;            /* UE lower layer identifier   */
+  ebi_t            ebi;              /* EPS bearer id        */
+  bstring          nas_msg;          /* NAS erab bearer context deactivation message           */
+} itti_nas_erab_release_req_t;
 
 
 typedef struct itti_nas_attach_req_s {
@@ -327,6 +334,7 @@ typedef struct itti_nas_pdn_disconnect_req_s {
   ebi_t                   default_ebi;
   struct in_addr          saegw_s11_ip_addr;
   teid_t                  saegw_s11_teid;
+  bool                    noDelete;
   bstring                 apn;
 } itti_nas_pdn_disconnect_req_t;
 

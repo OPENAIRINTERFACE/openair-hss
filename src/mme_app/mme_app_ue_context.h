@@ -331,6 +331,8 @@ typedef struct ue_context_s {
   /* Time when the cell identity was acquired */
   time_t                 cell_age;                    // Time elapsed since the last E-UTRAN Cell Global Identity was acquired. set by nas_auth_param_req_t
 
+  teid_t                 s_gw_teid_s11_s4;
+
   /* TODO: add csg_id */
   /* TODO: add csg_membership */
   /* TODO Access mode: Access mode of last known ECGI when the UE was active */

@@ -158,6 +158,12 @@ s1ap_mme_thread (
       }
       break;
 
+    case S1AP_E_RAB_RELEASE_REQ:{
+        XML_MSG_DUMP_ITTI_S1AP_E_RAB_RELEASE_REQ(&S1AP_E_RAB_RELEASE_REQ (received_message_p), ITTI_MSG_ORIGIN_ID (received_message_p), TASK_S1AP, NULL);
+        s1ap_generate_s1ap_e_rab_release_req (&S1AP_E_RAB_RELEASE_REQ (received_message_p));
+      }
+      break;
+
     // From MME_APP task
     case S1AP_UE_CONTEXT_RELEASE_COMMAND:{
         s1ap_handle_ue_context_release_command (&received_message_p->ittiMsg.s1ap_ue_context_release_command);
