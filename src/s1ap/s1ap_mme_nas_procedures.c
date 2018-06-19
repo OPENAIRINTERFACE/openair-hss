@@ -121,6 +121,9 @@ s1ap_mme_handle_initial_ue_message (
     ue_ref->s1ap_ue_context_rel_timer.id  = S1AP_TIMER_INACTIVE_ID;
     ue_ref->s1ap_ue_context_rel_timer.sec = S1AP_UE_CONTEXT_REL_COMP_TIMER;
 
+    ue_ref->s1ap_handover_completion_timer.id  = S1AP_TIMER_INACTIVE_ID;
+    ue_ref->s1ap_handover_completion_timer.sec = S1AP_HANDOVER_COMPLETION_TIMER;
+
     // On which stream we received the message
     ue_ref->sctp_stream_recv = stream;
     ue_ref->sctp_stream_send = ue_ref->enb->next_sctp_stream;

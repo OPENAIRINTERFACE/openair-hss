@@ -2761,6 +2761,23 @@ mme_app_handle_forward_relocation_request(
      mme_app_get_bearer_contexts_to_be_created(registered_pdn_ctx, &bcs_tbc, BEARER_STATE_NULL);
      /** The number of bearers will be incremented in the method. S10 should just pick the ebi. */
    }
+   if(!bcs_tbc.num_bearer_context){
+     /**
+      * No BC context exist. Reject the handover and perform an implicit detach with SYSTEM_FAILURE (not waiting for context complete to proceed with the implicit detach.
+      */
+     OAILOG_INFO (LOG_MME_APP, "No BC context exist. Reject the handover and perform an implicit detach with SYSTEM_FAILURE (not waiting for context complete to proceed with the implicit detach for mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
+     /** Send a forward relocation response with error. */
+     mme_app_send_s10_forward_relocation_response_err(forward_relocation_request_pP->s10_source_mme_teid.teid,
+         forward_relocation_request_pP->s10_source_mme_teid.ipv4_address, forward_relocation_request_pP->trxn, SYSTEM_FAILURE);
+
+     ue_context->s1_ue_context_release_cause = S1AP_IMPLICIT_CONTEXT_RELEASE;
+     /** Perform an implicit detach and reject the handover procedure. */
+     message_p = itti_alloc_new_message (TASK_MME_APP, NAS_IMPLICIT_DETACH_UE_IND);
+     DevAssert (message_p != NULL);
+     message_p->ittiMsg.nas_implicit_detach_ue_ind.ue_id = ue_context->mme_ue_s1ap_id;
+     itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+     OAILOG_FUNC_OUT (LOG_MME_APP);
+   }
    mme_app_send_s1ap_handover_request(ue_context->mme_ue_s1ap_id,
        &bcs_tbc,
        forward_relocation_request_pP->target_identification.target_id.macro_enb_id.enb_id,

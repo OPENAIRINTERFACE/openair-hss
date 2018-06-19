@@ -1689,28 +1689,33 @@ s10_mme_relocation_cancel_response(
   rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_rsp);
   DevAssert (NW_OK == rc);
 
+  /*
+   * If a handover procedure exists, the tunnel enpoint will be removed with that procedure.
+   * Not with this message.
+   */
+
   /** Depending if there is a GTPv2c Tunnel or not, remove the tunnel. */
-  memset (&ulp_rsp, 0, sizeof (nw_gtpv2c_ulp_api_t));
-  ulp_rsp.apiType = NW_GTPV2C_ULP_DELETE_LOCAL_TUNNEL;
-
-  hashtable_rc_t hash_rc = hashtable_ts_get(s10_mme_teid_2_gtv2c_teid_handle,
-      (hash_key_t) relocation_cancel_resp_p->local_teid, (void **)(uintptr_t)&ulp_rsp.u_api_info.deleteLocalTunnelInfo.hTunnel);
-  if (HASH_TABLE_OK != hash_rc) {
-    OAILOG_WARNING (LOG_S10, "Could not get GTPv2-C hTunnel for local TEID %X on S10 MME interface. \n", relocation_cancel_resp_p->local_teid);
-    return RETURNok;
-  }
-
-  rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_rsp);
-  DevAssert (NW_OK == rc);
-  OAILOG_INFO(LOG_S10, "DELETED local S10 teid (TEID FOUND IN HASH_MAP)" TEID_FMT " \n", relocation_cancel_resp_p->local_teid);
+//  memset (&ulp_rsp, 0, sizeof (nw_gtpv2c_ulp_api_t));
+//  ulp_rsp.apiType = NW_GTPV2C_ULP_DELETE_LOCAL_TUNNEL;
+//
+//  hashtable_rc_t hash_rc = hashtable_ts_get(s10_mme_teid_2_gtv2c_teid_handle,
+//      (hash_key_t) relocation_cancel_resp_p->local_teid, (void **)(uintptr_t)&ulp_rsp.u_api_info.deleteLocalTunnelInfo.hTunnel);
+//  if (HASH_TABLE_OK != hash_rc) {
+//    OAILOG_WARNING (LOG_S10, "Could not get GTPv2-C hTunnel for local TEID %X on S10 MME interface. \n", relocation_cancel_resp_p->local_teid);
+//    return RETURNok;
+//  }
+//
+//  rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_rsp);
+//  DevAssert (NW_OK == rc);
+//  OAILOG_INFO(LOG_S10, "DELETED local S10 teid (TEID FOUND IN HASH_MAP)" TEID_FMT " \n", relocation_cancel_resp_p->local_teid);
 
   /**
    * hash_free_int_func is set as the freeing function.
    * The value is removed from the map. But the value itself (int) is not freed.
    * The Tunnels are not deallocated but just set back to the Tunnel pool.
    */
-  hash_rc = hashtable_ts_free(s10_mme_teid_2_gtv2c_teid_handle, (hash_key_t) relocation_cancel_resp_p->local_teid);
-  DevAssert (HASH_TABLE_OK == hash_rc);
+//  hash_rc = hashtable_ts_free(s10_mme_teid_2_gtv2c_teid_handle, (hash_key_t) relocation_cancel_resp_p->local_teid);
+//  DevAssert (HASH_TABLE_OK == hash_rc);
   return RETURNok;
 }
 

@@ -1425,8 +1425,13 @@ mme_app_handle_s1ap_ue_context_release_complete (
           OAILOG_FUNC_OUT (LOG_MME_APP);
         }
         OAILOG_DEBUG(LOG_MME_APP, "Received UE context release complete for the main ue_reference of the UE with mme_ue_s1ap_id "MME_UE_S1AP_ID_FMT" and enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT" in UE_REGISTERED state. "
-            "Not performing implicit detach, only idle mode (failed handover). \n", s1ap_ue_context_release_complete->mme_ue_s1ap_id, s1ap_ue_context_release_complete->enb_ue_s1ap_id);
+            "Not performing implicit detach, only idle mode (failed handover). Removing the handover procedure. \n", s1ap_ue_context_release_complete->mme_ue_s1ap_id, s1ap_ue_context_release_complete->enb_ue_s1ap_id);
         mme_ue_context_update_ue_sig_connection_state (&mme_app_desc.mme_ue_contexts, ue_context, ECM_IDLE);
+        /** Remove the handover procedure. */
+        if (ue_context->s10_procedures) {
+            mme_app_delete_s10_procedure_mme_handover(ue_context); // todo: generic s10 function
+          }
+
         OAILOG_FUNC_OUT (LOG_MME_APP);
       }
     }else{
@@ -1438,7 +1443,9 @@ mme_app_handle_s1ap_ue_context_release_complete (
             "Sending HO-CANCELLATION-ACK back to the source eNB. \n", s1ap_ue_context_release_complete->enb_id, ue_context->mme_ue_s1ap_id, ue_context->mm_state);
         ue_context->s1_ue_context_release_cause = S1AP_INVALID_CAUSE;
         /** Not releasing the main connection. Removing the handover procedure. */
-        mme_app_delete_s10_procedure_mme_handover(ue_context);
+        if (ue_context->s10_procedures) {
+          mme_app_delete_s10_procedure_mme_handover(ue_context); // todo: generic s10 function
+        }
 
         OAILOG_FUNC_OUT (LOG_MME_APP);
       }else{
@@ -1450,7 +1457,10 @@ mme_app_handle_s1ap_ue_context_release_complete (
         /* Update keys and ECM state. */
 //        mme_ue_context_update_ue_sig_connection_state (&mme_app_desc.mme_ue_contexts, ue_context, ECM_IDLE);
 
-        mme_app_delete_s10_procedure_mme_handover(ue_context);
+        if (ue_context->s10_procedures) {
+            mme_app_delete_s10_procedure_mme_handover(ue_context); // todo: generic s10 function
+          }
+
         /** Re-Establish the UE-Reference as the main reference. */
         if(ue_context->enb_ue_s1ap_id != s1ap_ue_context_release_complete->enb_ue_s1ap_id){
 

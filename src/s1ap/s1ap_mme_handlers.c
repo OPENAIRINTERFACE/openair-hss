@@ -866,11 +866,11 @@ s1ap_mme_generate_ue_context_release_command (
           ue_ref_p->mme_ue_s1ap_id, cause);
       // Start timer to track UE context release complete from eNB
       if (timer_setup (ue_ref_p->s1ap_ue_context_rel_timer.sec, 0,
-          TASK_S1AP, INSTANCE_DEFAULT, TIMER_ONE_SHOT, (void *)&(ue_ref_p->mme_ue_s1ap_id), &(ue_ref_p->s1ap_ue_context_rel_timer.id)) < 0) {
+          TASK_S1AP, INSTANCE_DEFAULT, TIMER_ONE_SHOT, (void *)(ue_ref_p), &(ue_ref_p->s1ap_ue_context_rel_timer.id)) < 0) {
         OAILOG_ERROR (LOG_S1AP, "Failed to start UE context release complete timer for UE id %d \n", ue_ref_p->mme_ue_s1ap_id);
         ue_ref_p->s1ap_ue_context_rel_timer.id = S1AP_TIMER_INACTIVE_ID;
       } else {
-        OAILOG_DEBUG (LOG_S1AP, "Started S1AP UE context release timer for UE id  %d \n", ue_ref_p->mme_ue_s1ap_id);
+        OAILOG_DEBUG (LOG_S1AP, "Started S1AP UE context release timer for UE id  %d and timer id 0x%lx  \n", ue_ref_p->mme_ue_s1ap_id, ue_ref_p->s1ap_ue_context_rel_timer.id);
       }
       OAILOG_FUNC_RETURN (LOG_S1AP, rc);
     }
@@ -896,7 +896,8 @@ s1ap_handle_ue_context_release_command (
 {
   ue_description_t                       *ue_ref_p = NULL;
   enb_description_t                      *enb_ref_p = NULL;
-  int                                    rc = RETURNok;
+  MessageDef                             *message_p = NULL;
+  int                                     rc = RETURNok;
 
   /** Get the eNB reference. */
   enb_ref_p = s1ap_is_enb_id_in_list(ue_context_release_command_pP->enb_id);
@@ -921,6 +922,17 @@ s1ap_handle_ue_context_release_command (
   if (ue_context_release_command_pP->cause == S1AP_IMPLICIT_CONTEXT_RELEASE ||
       ue_context_release_command_pP->cause == S1AP_SCTP_SHUTDOWN_OR_RESET) {
     s1ap_remove_ue (ue_ref_p);
+    /** Send release complete back to proceed with the detach procedure. */
+    OAILOG_DEBUG (LOG_S1AP, "Removed UE reference for ueId " MME_UE_S1AP_ID_FMT " implicitly. Continuing with release complete. \n", ue_context_release_command_pP->mme_ue_s1ap_id);
+    message_p = itti_alloc_new_message (TASK_S1AP, S1AP_UE_CONTEXT_RELEASE_COMPLETE);
+    AssertFatal (message_p != NULL, "itti_alloc_new_message Failed");
+    memset ((void *)&message_p->ittiMsg.s1ap_ue_context_release_complete, 0, sizeof (itti_s1ap_ue_context_release_complete_t));
+
+    /** Notify the MME_APP layer that error handling context removals can continue. */
+    S1AP_UE_CONTEXT_RELEASE_COMPLETE (message_p).mme_ue_s1ap_id = ue_context_release_command_pP->mme_ue_s1ap_id;
+    MSC_LOG_TX_MESSAGE (MSC_S1AP_MME, MSC_MMEAPP_MME, NULL, 0, "0 S1AP_UE_CONTEXT_RELEASE_COMPLETE mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ", S1AP_UE_CONTEXT_RELEASE_COMPLETE (message_p).mme_ue_s1ap_id);
+    itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
+    OAILOG_FUNC_RETURN (LOG_S1AP, rc);
   } else {
     /** We send the mme_ue_s1ap_id explicitly, since it may be 0 in some handover complete procedures. */
     rc = s1ap_mme_generate_ue_context_release_command (ue_ref_p, ue_context_release_command_pP->mme_ue_s1ap_id, ue_context_release_command_pP->cause, enb_ref_p);
