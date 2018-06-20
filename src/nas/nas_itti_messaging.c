@@ -524,6 +524,18 @@ void nas_itti_establish_cnf(
     OAILOG_WARNING( LOG_NAS_EMM, "EMM-PROC  - NH value is NOT 0 @ initial S1AP context establishment  \n");
   }
 
+  OAILOG_STREAM_HEX(OAILOG_LEVEL_DEBUG, LOG_NAS, "New NH_CONJ of emmCtx: ", emm_ctx->_vector[emm_ctx->_security.vector_index].nh_conj, 32);
+
+
+  /** Reset the next chaining hop counter.
+   * TS. 33.401:
+   * Upon receipt of the NAS Service Request message, the MME shall derive key KeNB as specified in Annex A.3 using the
+    NAS COUNT [9] corresponding to the NAS Service Request and initialize the value of the Next hop Chaining Counter
+    (NCC) to one. The MME shall further derive a next hop parameter NH as specified in Annex A.4 using the newly
+    derived KeNB as basis for the derivation. This fresh {NH, NCC=1} pair shall be stored in the MME and shall be used for
+    the next forward security key derivation. The MME shall communicate the {KeNB, NCC=0} pair and KSIASME to the
+    serving eNB in the S1-AP procedure INITIAL CONTEXT SETUP.
+   */
   emm_ctx->_security.ncc = 0;
 
   MSC_LOG_TX_MESSAGE(

@@ -24,6 +24,8 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
+#include <stdio.h>
 
 
 #include "bstrlib.h"
@@ -34,6 +36,8 @@
 #include "msc.h"
 #include "tree.h"
 #include "common_types.h"
+#include "gcc_diag.h"
+
 #include "3gpp_24.007.h"
 #include "3gpp_24.301.h"
 #include "3gpp_24.008.h"
@@ -834,6 +838,7 @@ void emm_init_context(struct emm_data_context_s * const emm_ctx, const bool init
   emm_ctx->_emm_fsm_state  = EMM_DEREGISTERED;
 
   OAILOG_DEBUG (LOG_NAS_EMM, "UE " MME_UE_S1AP_ID_FMT " Init EMM-CTX\n", emm_ctx->ue_id);
+  emm_ctx->_security.ncc = 0;
 
   bdestroy_wrapper(&emm_ctx->esm_msg);
   emm_ctx_clear_guti(emm_ctx);
@@ -890,6 +895,27 @@ int emm_data_context_update_security_parameters(const mme_ue_s1ap_id_t ue_id,
   emm_ctx->_security.ncc++;
   /* The NCC is a 3-bit key index (values from 0 to 7) for the NH and is sent to the UE in the handover command signaling. */
   emm_ctx->_security.ncc = emm_ctx->_security.ncc % 8;
+  /** If a wrap up occurs, skip the first one. */
+//
+//  if(!emm_ctx->_security.ncc){
+//
+//    OAILOG_INFO(LOG_NAS_EMM, "EMM-CTX - NCC wrap around for UE id " MME_UE_S1AP_ID_FMT " and IMSI " IMSI_64_FMT ". UL Count is %d. Sec_vector %d. \n",
+//        emm_ctx->ue_id, emm_ctx->_imsi64, emm_ctx->_security.ul_count.seq_num, emm_ctx->_security.vector_index);
+//
+//    memset(emm_ctx->_vector[emm_ctx->_security.vector_index].nh_conj, 0, 32);
+//    OAILOG_STREAM_HEX(OAILOG_LEVEL_DEBUG, LOG_NAS, "Resetted NH_CONJ: ", emm_ctx->_vector[emm_ctx->_security.vector_index].nh_conj, 32);
+//
+//    /** NCC wrap around, recalculate KeNB. */
+//    derive_keNB (emm_ctx->_vector[emm_ctx->_security.vector_index].kasme,
+//        emm_ctx->_security.ul_count.seq_num, emm_ctx->_vector[emm_ctx->_security.vector_index].nh_conj);
+//    OAILOG_STREAM_HEX(OAILOG_LEVEL_DEBUG, LOG_NAS, "New KeNB/NH_CONJ: ", emm_ctx->_vector[emm_ctx->_security.vector_index].nh_conj, 32);
+//
+//    /** Increase the NCC. */
+//    emm_ctx->_security.ncc++;
+//    /** Derive the next hop. */
+//    derive_nh(emm_ctx->_vector[emm_ctx->_security.vector_index].kasme, emm_ctx->_vector[emm_ctx->_security.vector_index].nh_conj);
+//    OAILOG_STREAM_HEX(OAILOG_LEVEL_DEBUG, LOG_NAS_EMM, "New NH_CONJ for ncc1: ", emm_ctx->_vector[emm_ctx->_security.vector_index].nh_conj, 32);
+//  }
 
   OAILOG_INFO(LOG_NAS_EMM, "EMM-CTX - Updated AS security parameters for EMM context with UE id " MME_UE_S1AP_ID_FMT " and IMSI " IMSI_64_FMT ". \n",
           ue_id, emm_ctx->_imsi64);
