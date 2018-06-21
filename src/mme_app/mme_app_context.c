@@ -2680,6 +2680,167 @@ void mme_app_set_pdn_connections(struct mme_ue_eps_pdn_connections_s * pdn_conne
   OAILOG_FUNC_OUT(LOG_MME_APP);
 }
 
+//------------------------------------------------------------------------------
+/*
+ *
+ *  Name:    mme_app_registration_complete()
+ *
+ *  Description: Notify the MME that a UE has successfully registered via Attach or Tracking Area Update specific procedure.
+ *
+ *  Inputs:
+ *         ueid:      emm_context id
+ *  Return:    void
+ *
+ */
+int mme_app_registration_complete(const mme_ue_s1ap_id_t mme_ue_s1ap_id){
+
+  ue_context_t                           *ue_context = NULL;
+  int                                     rc = RETURNok;
+
+  OAILOG_FUNC_IN (LOG_NAS);
+  ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, mme_ue_s1ap_id);
+  DevAssert(ue_context);
+  /** Get the handover procedure if exists. */
+  mme_app_s10_proc_mme_handover_t * s10_handover_proc = NULL;
+  if(((s10_handover_proc = mme_app_get_s10_procedure_mme_handover(ue_context)) != NULL)){
+    if(s10_handover_proc->proc.type == MME_APP_S10_PROC_TYPE_INTRA_MME_HANDOVER){
+      /** Complete the Intra Handover. */
+      OAILOG_DEBUG(LOG_MME_APP, "UE MME context with imsi " IMSI_64_FMT " and mmeS1apUeId " MME_UE_S1AP_ID_FMT " has successfully completed intra-MME handover process after HANDOVER_NOTIFY. \n",
+          ue_context->imsi, ue_context->mme_ue_s1ap_id);
+      /** For INTRA-MME handover trigger the timer mentioned in TS 23.401 to remove the UE Context and the old S1AP UE reference to the source eNB. */
+      ue_description_t * old_ue_reference = s1ap_is_enb_ue_s1ap_id_in_list_per_enb(s10_handover_proc->source_enb_ue_s1ap_id, s10_handover_proc->source_ecgi.cell_identity.enb_id);
+      if(old_ue_reference){
+        /** For INTRA-MME handover, start the timer to remove the old UE reference here. No timer should be started for the S10 Handover Process. */
+        if (timer_setup (mme_config.mme_mobility_completion_timer, 0,
+            TASK_S1AP, INSTANCE_DEFAULT, TIMER_ONE_SHOT, (void *)old_ue_reference, &(old_ue_reference->s1ap_handover_completion_timer.id)) < 0) {
+          OAILOG_ERROR (LOG_MME_APP, "Failed to start s1ap_mobility_completion timer for source eNB for enbUeS1apId " ENB_UE_S1AP_ID_FMT " for duration %d. "
+              "Still continuing with MBR. \n",
+              old_ue_reference->enb_ue_s1ap_id, mme_config.mme_mobility_completion_timer);
+          old_ue_reference->s1ap_handover_completion_timer.id = MME_APP_TIMER_INACTIVE_ID;
+        } else {
+          OAILOG_DEBUG (LOG_MME_APP, "MME APP : Completed Handover Procedure at (source) MME side after handling S1AP_HANDOVER_NOTIFY. "
+              "Activated the S1AP Handover completion timer enbUeS1apId " ENB_UE_S1AP_ID_FMT ". Removing source eNB resources after timer.. Timer Id %u. Timer duration %d \n",
+              old_ue_reference->enb_ue_s1ap_id, old_ue_reference->s1ap_handover_completion_timer.id, mme_config.mme_mobility_completion_timer);
+          /** MBR will be independent of this. */
+        }
+      }else{
+        OAILOG_DEBUG(LOG_MME_APP, "No old UE_REFERENCE was found for mmeS1apUeId " MME_UE_S1AP_ID_FMT " and enbUeS1apId "ENB_UE_S1AP_ID_FMT ". Not starting a new timer. \n",
+            ue_context->enb_ue_s1ap_id, s10_handover_proc->source_ecgi.cell_identity.enb_id);
+        OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
+      }
+      /*
+       * Delete the handover procedure.
+       * For multi-APN Intra MME handover, the MBResp should trigger further MBReqs.
+       */
+      mme_app_delete_s10_procedure_mme_handover(ue_context);
+    }else{
+      /*
+       * INTRA-MME Handover (INTER-MME idle TAU won't have this procedure).
+       * If the UE is registered, remove the handover procedure.
+       * If not, just continue with the MBR.
+       */
+      if(ue_context->mm_state == UE_REGISTERED){
+        /** UE is registered, we completed the handover procedure completely. Deleting the procedure. */
+        mme_app_delete_s10_procedure_mme_handover(ue_context);
+        /*
+         * Still need to check pending bearer deactivation.
+         * If so, no MBR will be sent.
+         */
+      }else{
+       /*
+        * UE is not registered yet. Assuming handover notify arrived and TAU is expected. Continuing with the MBR.
+        * Not removing the handover procedure.
+        */
+      }
+    }
+  }else{
+    /*
+     * No handover procedure exist. Normal idle TAU/Attach procedure.
+     * Continue with the normal MBR/Pending_deactivation procedure.
+     */
+  }
+  /** Check if there is a pending deactivation flag is set. */
+  if(ue_context->pending_bearer_deactivation && ue_context->mm_state == UE_REGISTERED){
+    OAILOG_INFO(LOG_MME_APP, "After UE entered UE_REGISTERED state, initiating bearer deactivation for UE with mmeUeS1apId " MME_UE_S1AP_ID_FMT ". \n", mme_ue_s1ap_id);
+    ue_context->pending_bearer_deactivation = false;
+    ue_context->s1_ue_context_release_cause = S1AP_NAS_NORMAL_RELEASE;
+    // Notify S1AP to send UE Context Release Command to eNB.
+    mme_app_itti_ue_context_release (ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, ue_context->s1_ue_context_release_cause, ue_context->e_utran_cgi.cell_identity.enb_id);
+    OAILOG_FUNC_OUT (LOG_MME_APP);
+  }else{
+    OAILOG_INFO(LOG_MME_APP, "After UE entered UE_REGISTERED state, no pending_deactivation flag set for UE with mmeUeS1apId " MME_UE_S1AP_ID_FMT ". "
+        "Checking for unestablished EPS bearers. \n", mme_ue_s1ap_id);
+    /*
+     * No pending bearer deactivation.
+     * Check if there is are any pending unestablished downlink bearers (DL-GTP Tunnel Information to the SAE-GW).
+     * In case of successfully completed inter-MME S10 handover. Nothing further will be done.
+     */
+    // todo: how to do this in multi apn?
+    pdn_context_t * registered_pdn_ctx = NULL;
+    bearer_context_t * bearer_context_to_establish = NULL;
+    registered_pdn_ctx = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
+    bearer_context_to_establish = RB_MIN(SessionBearers, &registered_pdn_ctx->session_bearers);
+    if(BEARER_STATE_ENB_CREATED & bearer_context_to_establish->bearer_state){
+      if(bearer_context_to_establish->bearer_state != BEARER_STATE_ACTIVE){
+        if(mme_app_send_s11_modify_bearer_req(ue_context, registered_pdn_ctx) != RETURNok){
+          OAILOG_ERROR(LOG_MME_APP, "Error sending MBR for mmeUeS1apId " MME_UE_S1AP_ID_FMT ". Implicitly detaching the UE. \n", mme_ue_s1ap_id);
+          // todo!
+          DevAssert(0);
+        }
+      }else{
+        OAILOG_WARNING(LOG_MME_APP, "Bearer with ebi %d is already in ACTIVE state for mmeUeS1apId " MME_UE_S1AP_ID_FMT ". Skipping MBR. \n", mme_ue_s1ap_id);
+      }
+    }else{
+      OAILOG_INFO(LOG_MME_APP, "Bearer with ebi %d has not ENB context established yet for mmeUeS1apId " MME_UE_S1AP_ID_FMT ". Skipping MBR. \n", mme_ue_s1ap_id);
+    }
+
+    //      /** Update the PDN session information directly in the new UE_Context. */
+    //      pdn_context_t * pdn_context = NULL;
+    //      RB_FOREACH (pdn_context, PdnContexts, &ue_context->pdn_contexts) {
+    //        DevAssert(pdn_context);
+    //        bearer_context_t * first_bearer = RB_MIN(SessionBearers, &pdn_context->session_bearers);
+    //        DevAssert(first_bearer);
+    //        if(first_bearer->bearer_state == BEARER_STATE_ACTIVE){
+    //          /** Continue to next pdn. */
+    //          continue;
+    //        }else{
+    //          /** Found a PDN. Establish the bearer contexts. */
+    //          OAILOG_INFO(LOG_MME_APP, "Establishing the bearers for UE_CONTEXT for UE " MME_UE_S1AP_ID_FMT " triggered by handover notify. Successfully handled handover notify. \n", ue_context->mme_ue_s1ap_id);
+    //          mme_app_send_s11_modify_bearer_req(ue_context, pdn_context);
+    ////          OAILOG_FUNC_OUT (LOG_MME_APP);
+    //        }
+    //      }
+
+
+//    RB_FOREACH (registered_pdn_ctx, PdnContexts, &ue_context->pdn_contexts) {
+//      DevAssert(registered_pdn_ctx);
+//      /*
+//       * Get the first PDN whose bearers are not established yet.
+//       * Do the MBR just one PDN at a time.
+//       */
+//      RB_FOREACH (bearer_context_to_establish, SessionBearers, &registered_pdn_ctx->session_bearers) {
+//        DevAssert(bearer_context_to_establish);
+//        /** Add them to the bearears list of the MBR. */
+//        if (bearer_context_to_establish->bearer_state != BEARER_STATE_ACTIVE){
+//          OAILOG_INFO(LOG_MME_APP, "Found a PDN with unestablished bearers for mmeUeS1apId " MME_UE_S1AP_ID_FMT ". Sending MBR. \n", mme_ue_s1ap_id);
+//          /** Send the S11 MBR and return. */
+//          // todo: error handling! this might occur if some error with OVS happens.
+//          if(mme_app_send_s11_modify_bearer_req(ue_context, registered_pdn_ctx) != RETURNok){
+//            OAILOG_ERROR(LOG_MME_APP, "Error sending MBR for mmeUeS1apId " MME_UE_S1AP_ID_FMT ". Implicitly detaching the UE. \n", mme_ue_s1ap_id);
+//            // todo!
+//            DevAssert(0);
+//          }
+//          OAILOG_INFO(LOG_MME_APP, "Successfully sent MBR for mmeUeS1apId " MME_UE_S1AP_ID_FMT ". Returning from REGISTRERED callback. \n", mme_ue_s1ap_id);
+//          OAILOG_FUNC_OUT (LOG_MME_APP);
+//        }
+//      }
+//      registered_pdn_ctx = NULL;
+//    }
+    OAILOG_ERROR(LOG_MME_APP, "No PDN context found with unestablished bearers for mmeUeS1apId " MME_UE_S1AP_ID_FMT ". \n", mme_ue_s1ap_id);
+    OAILOG_FUNC_OUT (LOG_MME_APP);
+  }
+}
+
 ////-------------------------------------------------------------------------------------------
 //void mme_app_process_pdn_connection_ie(ue_context_t * ue_context, pdn_connection_t * pdn_connection){
 //  OAILOG_FUNC_IN (LOG_MME_APP);

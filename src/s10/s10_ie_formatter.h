@@ -132,7 +132,7 @@ int s10_ebi_ie_set(nw_gtpv2c_msg_handle_t *msg, const unsigned ebi);
 /* Bearer Contexts to Create Information Element as part of Create Session Request
  * 3GPP TS 29.274 Table 7.2.1-2.
  */
-//nw_rc_t s10_bearer_context_to_be_created_ie_get (uint8_t ieType, uint8_t ieLength, uint8_t ieInstance, uint8_t * ieValue, void *arg);
+//nw_rc_t s10_bearer_context_to_be_created_ie_get (uint8_t ieType, uint16_t ieLength, uint8_t ieInstance, uint8_t * ieValue, void *arg);
 
 int s10_bearer_context_to_be_modified_ie_set (nw_gtpv2c_msg_handle_t * msg, const bearer_context_to_be_modified_t * bearer_context);
 

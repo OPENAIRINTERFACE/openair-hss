@@ -275,6 +275,33 @@ decode_tracking_area_update_request (
       tracking_area_update_request->presencemask |= TRACKING_AREA_UPDATE_REQUEST_OLD_GUTI_TYPE_PRESENT;
       break;
 
+    case TRACKING_AREA_UPDATE_REQUEST_VOICE_DOMAIN_PREFERENCE_AND_UE_USAGE_SETTING_IEI:
+      if ((decoded_result =
+          decode_voice_domain_preference_and_ue_usage_setting (&tracking_area_update_request->voicedomainpreferenceandueusagesetting, TRACKING_AREA_UPDATE_REQUEST_VOICE_DOMAIN_PREFERENCE_AND_UE_USAGE_SETTING_IEI, buffer + decoded, len - decoded)) <= 0) {
+        return decoded_result;
+      }
+
+      decoded += decoded_result;
+      /*
+       * Set corresponding mask to 1 in presencemask
+       */
+      tracking_area_update_request->presencemask |= TRACKING_AREA_UPDATE_REQUEST_VOICE_DOMAIN_PREFERENCE_AND_UE_USAGE_SETTING_IEI;
+      break;
+
+    case TRACKING_AREA_UPDATE_REQUEST_MS_NETWORK_FEATURE_SUPPORT_IEI:
+       if ((decoded_result =
+           decode_ms_network_feature_support_ie(&tracking_area_update_request->msnetworkfeaturesupport,
+             TRACKING_AREA_UPDATE_REQUEST_MS_NETWORK_FEATURE_SUPPORT_IEI,
+             buffer + decoded, len - decoded)) <= 0) {
+         return decoded_result;
+//         OAILOG_FUNC_RETURN (LOG_NAS_EMM, decoded_result);
+       }
+
+       decoded += decoded_result;
+       /* Set corresponding mask to 1 in presencemask */
+       tracking_area_update_request->presencemask |= TRACKING_AREA_UPDATE_REQUEST_MS_NETWORK_FEATURE_SUPPORT_PRESENT;
+       break;
+
     default:
       errorCodeDecoder = TLV_UNEXPECTED_IEI;
       return TLV_UNEXPECTED_IEI;

@@ -134,7 +134,7 @@ static int _emm_as_encode (bstring *info, nas_message_t * msg, size_t length, em
 static int _emm_as_encrypt (bstring *info, const nas_message_security_header_t * header, const unsigned char *buffer,
     size_t length, emm_security_context_t * emm_security_context);
 
-static int _emm_as_send (const emm_as_t * msg);
+static int _emm_as_send (emm_as_t * msg);
 static int _emm_as_security_req (const emm_as_security_t *, dl_info_transfer_req_t *);
 static int _emm_as_security_rej (const emm_as_security_t *, dl_info_transfer_req_t *);
 static int _emm_as_establish_cnf (const emm_as_establish_t *, nas_establish_rsp_t *);
@@ -216,7 +216,7 @@ int emm_as_send (emm_as_t * msg)
     /*
      * Other primitives are forwarded to lower layers (S1AP)
      */
-    rc = _emm_as_send (msg);
+    rc = _emm_as_send (msg); /**< Not used here originally. */
 
     if (rc != RETURNok) {
       OAILOG_ERROR (LOG_NAS_EMM, "EMMAS-SAP - " "Failed to process primitive %s (%d)\n", _emm_as_primitive_str[primitive - _EMMAS_START - 1], primitive);
@@ -226,36 +226,36 @@ int emm_as_send (emm_as_t * msg)
     break;
   }
 
-  /*
-   * Handle decoding errors
-   */
-  if ((emm_cause != EMM_CAUSE_SUCCESS) && (emm_cause != EMM_CAUSE_UE_IDENTITY_CANT_BE_DERIVED_BY_NW)) {
-    /*
-     * Ignore received message that is too short to contain a complete
-     * * * * message type information element
-     */
-    if (rc == TLV_BUFFER_TOO_SHORT) {
-      OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
-    }
-    /*
-     * Ignore received message that contains not supported protocol
-     * * * * discriminator
-     */
-    else if (rc == TLV_PROTOCOL_NOT_SUPPORTED) {
-      OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
-    } else if (rc == TLV_WRONG_MESSAGE_TYPE) {
-      emm_cause = EMM_CAUSE_MESSAGE_TYPE_NOT_IMPLEMENTED;
-    }
-
-    /*
-     * EMM message processing failed
-     */
-    OAILOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - Received EMM message is not valid " "(cause=%d)\n", emm_cause);
-    /*
-     * Return an EMM status message
-     */
-    rc = emm_proc_status (ue_id, emm_cause);
-  }
+//  /*
+//   * Handle decoding errors
+//   */
+//  if ((emm_cause != EMM_CAUSE_SUCCESS) && (emm_cause != EMM_CAUSE_UE_IDENTITY_CANT_BE_DERIVED_BY_NW)) {
+//    /*
+//     * Ignore received message that is too short to contain a complete
+//     * * * * message type information element
+//     */
+//    if (rc == TLV_BUFFER_TOO_SHORT) {
+//      OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
+//    }
+//    /*
+//     * Ignore received message that contains not supported protocol
+//     * * * * discriminator
+//     */
+//    else if (rc == TLV_PROTOCOL_NOT_SUPPORTED) {
+//      OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
+//    } else if (rc == TLV_WRONG_MESSAGE_TYPE) {
+//      emm_cause = EMM_CAUSE_MESSAGE_TYPE_NOT_IMPLEMENTED;
+//    }
+//
+//    /*
+//     * EMM message processing failed
+//     */
+//    OAILOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - Received EMM message is not valid " "(cause=%d)\n", emm_cause);
+//    /*
+//     * Return an EMM status message
+//     */
+//    rc = emm_proc_status (ue_id, emm_cause);
+//  }
 
   if (rc != RETURNok) {
     OAILOG_ERROR (LOG_NAS_EMM, "EMMAS-SAP - Failed to process primitive %s (%d)\n", _emm_as_primitive_str[primitive - _EMMAS_START - 1], primitive);
@@ -1023,10 +1023,50 @@ static int _emm_as_encrypt (bstring *info, const nas_message_security_header_t *
  **      Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
-static int _emm_as_send (const emm_as_t * msg)
+static int _emm_as_send (emm_as_t * msg)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   as_message_t                            as_msg = {0};
+  int                                     rc = RETURNok;
+
+  /*
+   * If the received message is not an EMM Status message, handle decoding errors.
+   * Else skip this part.
+   */
+  if(msg->primitive != _EMMAS_STATUS_IND && msg->u.base.emm_cause){
+    if ((msg->u.base.emm_cause != EMM_CAUSE_SUCCESS) && (msg->u.base.emm_cause != EMM_CAUSE_UE_IDENTITY_CANT_BE_DERIVED_BY_NW)) {
+      /*
+       * Ignore received message that is too short to contain a complete
+       * * * * message type information element
+       */
+      if (rc == TLV_BUFFER_TOO_SHORT) {
+        OAILOG_ERROR(LOG_NAS_EMM, "EMMAS-SAP - TLV buffer is too short. Not sending status proc. Continuing with reject message if any." "(cause=%d)\n", msg->u.base.emm_cause);
+      }
+      /*
+       * Ignore received message that contains not supported protocol
+       * * * * discriminator
+       */
+      else if (rc == TLV_PROTOCOL_NOT_SUPPORTED) {
+        OAILOG_ERROR(LOG_NAS_EMM, "EMMAS-SAP - TLV protocol not supported. Not sending status proc. Continuing with reject message if any. " "(cause=%d)\n", msg->u.base.emm_cause);
+      } else if (rc == TLV_WRONG_MESSAGE_TYPE) {
+        msg->u.base.emm_cause = EMM_CAUSE_MESSAGE_TYPE_NOT_IMPLEMENTED;
+      }
+
+      /*
+       * EMM message processing failed
+       */
+      OAILOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - Received EMM message is not valid " "(cause=%d) for ue_id " MME_UE_S1AP_ID_FMT ". \n", msg->u.base.emm_cause, msg->u.base.ue_id);
+      /*
+       * Return an EMM status message
+       */
+      rc = emm_proc_status (msg->u.base.ue_id, msg->u.base.emm_cause);
+      if(rc != RETURNok){
+        OAILOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - Error sending status message to ueId " MME_UE_S1AP_ID_FMT ". "
+            "Received EMM message is not valid " "(cause=%d)\n", msg->u.base.ue_id, msg->u.base.emm_cause);
+        OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+      }
+    }
+  }
 
   switch (msg->primitive) {
   case _EMMAS_DATA_REQ:

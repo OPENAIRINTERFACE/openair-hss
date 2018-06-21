@@ -98,10 +98,10 @@ typedef struct emm_as_security_data_s {
  * ----------------------------
  */
 typedef struct emm_as_security_s {
+  int                    emm_cause;/* EMM failure cause code       */
   mme_ue_s1ap_id_t       ue_id;    /* UE lower layer identifier        */
   const guti_t          *guti;     /* GUTI temporary mobile identity   */
   emm_as_security_data_t sctx;     /* EPS NAS security context     */
-  int                    emm_cause;/* EMM failure cause code       */
   uint64_t               puid;     // linked to procedure UID
   /*
    * Identity request/response
@@ -141,6 +141,10 @@ typedef struct emm_as_security_s {
   uint8_t msg_type;    /* Type of NAS security message to transfer */
 } emm_as_security_t;
 
+typedef struct emm_as_base_s {
+  int                    emm_cause;                   /* EMM failure cause code        */
+  mme_ue_s1ap_id_t       ue_id;                       /* UE lower layer identifier         */
+}emm_as_base_t;
 /*
  * EMMAS primitive for connection establishment
  * --------------------------------------------
@@ -154,6 +158,7 @@ typedef struct emm_as_EPS_identity_s {
 } emm_as_EPS_identity_t;
 
 typedef struct emm_as_establish_s {
+  int                    emm_cause;                   /* EMM failure cause code        */
   mme_ue_s1ap_id_t       ue_id;                       /* UE lower layer identifier         */
   emm_as_EPS_identity_t  eps_id;                      /* UE's EPS mobile identity      */
   guti_t                *guti;                        /* TAU GUTI   */
@@ -171,7 +176,6 @@ typedef struct emm_as_establish_s {
   uint8_t                nas_info;    /* Type of NAS information to transfer  */
   bstring                nas_msg;     /* NAS message to be transfered     */
   uint8_t                eps_update_result;           /* TAU EPS update result   */
-  int                    emm_cause;                   /* EMM failure cause code        */
 
   uint64_t               puid;                        /* linked to procedure UID */
   bool                   is_initial;                  /* true if contained in initial message    */
@@ -208,6 +212,7 @@ typedef struct emm_as_establish_s {
  * --------------------------------------
  */
 typedef struct emm_as_release_s {
+  int              emm_cause;
   mme_ue_s1ap_id_t ue_id;                   /* UE lower layer identifier          */
   const guti_t    *guti;                   /* GUTI temporary mobile identity     */
 #define EMM_AS_CAUSE_AUTHENTICATION 0x01   /* Authentication failure */
@@ -220,6 +225,7 @@ typedef struct emm_as_release_s {
  * ---------------------------------
  */
 typedef struct emm_as_data_s {
+  int                    emm_cause;                   /* EMM failure cause code        */
   mme_ue_s1ap_id_t       ue_id;         /* UE lower layer identifier        */
   emm_as_EPS_identity_t  eps_id;        /* UE's EPS mobile identity         */
   const guti_t          *guti;          /* GUTI temporary mobile identity   */
@@ -243,7 +249,6 @@ typedef struct emm_as_data_s {
 #define EMM_AS_DATA_DELIVERED_LOWER_LAYER_NON_DELIVERY_INDICATION_DUE_TO_HO  2
   uint8_t                delivered;   /* Data message delivery indicator  */
   emm_proc_detach_type_t detach_type; /**< Set to true if reattach is required. */
-  int                    emm_cause;                   /* EMM failure cause code        */
 #define EMM_AS_NAS_DATA_ATTACH          0x01  /* Attach complete      */
 #define EMM_AS_NAS_DATA_DETACH_ACCEPT   0x02  /* Detach request       */
 #define EMM_AS_NAS_DATA_TAU             0x03  /* TAU    Accept        */
@@ -253,12 +258,12 @@ typedef struct emm_as_data_s {
 } emm_as_data_t;
 
 /*
- * EMMAS primitive for paging
- * --------------------------
+ * EMMAS primitive for dedicated bearer establishment
+ * ----------------------------------------------------
  */
-typedef struct emm_as_page_s {} emm_as_page_t;
 
 typedef struct emm_as_activate_bearer_context_req_s {
+  int                    emm_cause;                   /* EMM failure cause code        */
   mme_ue_s1ap_id_t       ue_id;       /* UE lower layer identifier        */
   ebi_t                  ebi;         /* EPS rab id                       */
   bitrate_t              mbr_dl;
@@ -270,6 +275,7 @@ typedef struct emm_as_activate_bearer_context_req_s {
 } emm_as_activate_bearer_context_req_t;
 
 typedef struct emm_as_deactivate_bearer_context_req_s {
+  int                    emm_cause;                   /* EMM failure cause code        */
   mme_ue_s1ap_id_t       ue_id;       /* UE lower layer identifier        */
   ebi_t                  ebi;         /* EPS erab ids. Some eNodeBs like Nokia for does not accept list of bearers for deactivation. */
   emm_as_security_data_t sctx;        /* EPS NAS security context         */
@@ -281,10 +287,10 @@ typedef struct emm_as_deactivate_bearer_context_req_s {
  * -------------------------------------
  */
 typedef struct emm_as_status_s {
+  int                    emm_cause;                   /* EMM failure cause code        */
   mme_ue_s1ap_id_t       ue_id;      /* UE lower layer identifier        */
   const guti_t          *guti;      /* GUTI temporary mobile identity   */
   emm_as_security_data_t sctx;      /* EPS NAS security context     */
-  int                    emm_cause; /* EMM failure cause code       */
 } emm_as_status_t;
 
 /*
@@ -292,6 +298,8 @@ typedef struct emm_as_status_s {
  * ------------------------------------
  */
 typedef struct emm_as_cell_info_s {
+  int                                emm_cause;                   /* EMM failure cause code        */
+  mme_ue_s1ap_id_t                   ue_id;      /* UE lower layer identifier        todo: define constant here?*/
   uint8_t                            found;    /* Indicates whether a suitable cell is found   */
 #define EMM_AS_PLMN_LIST_SIZE   6
   PLMN_LIST_T(EMM_AS_PLMN_LIST_SIZE) plmn_ids;
@@ -309,13 +317,13 @@ typedef struct emm_as_cell_info_s {
 typedef struct emm_as_s {
   emm_as_primitive_t primitive;
   union {
+    emm_as_base_t       base;                   /* EMM failure cause code        */
     emm_as_security_t   security;
     emm_as_establish_t  establish;
     emm_as_release_t    release;
     emm_as_data_t       data;
     emm_as_activate_bearer_context_req_t activate_bearer_context_req;
     emm_as_deactivate_bearer_context_req_t deactivate_bearer_context_req;
-    emm_as_page_t       page;
     emm_as_status_t     status;
     emm_as_cell_info_t  cell_info;
   } u;

@@ -184,7 +184,6 @@ void *mme_app_thread (void *args)
     case S11_MODIFY_BEARER_RESPONSE:{
         struct ue_context_s                    *ue_context_p = NULL;
         ue_context_p = mme_ue_context_exists_s11_teid (&mme_app_desc.mme_ue_contexts, received_message_p->ittiMsg.s11_modify_bearer_response.teid);
-
         if (ue_context_p == NULL) {
           MSC_LOG_RX_DISCARDED_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 MODIFY_BEARER_RESPONSE local S11 teid " TEID_FMT " ",
             received_message_p->ittiMsg.s11_modify_bearer_response.teid);
@@ -269,7 +268,7 @@ void *mme_app_thread (void *args)
 
       /** S1AP Handover. */
       case S1AP_HANDOVER_REQUIRED:{
-        mme_app_handle_handover_required (
+        mme_app_handle_s1ap_handover_required (
             &S1AP_HANDOVER_REQUIRED(received_message_p)
         );
       }

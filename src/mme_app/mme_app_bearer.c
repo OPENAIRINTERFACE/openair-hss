@@ -1061,6 +1061,26 @@ mme_app_handle_create_sess_resp (
         mme_app_get_bearer_contexts_to_be_created(registered_pdn_ctx, &bcs_tbc, BEARER_STATE_NULL);
         /** The number of bearers will be incremented in the method. S10 should just pick the ebi. */
       }
+      uint16_t encryption_algorithm_capabilities = (uint16_t)0;
+      uint16_t integrity_algorithm_capabilities  = (uint16_t)0;
+      /** Update the security parameters of the MM context of the S10 procedure. */
+      if(mm_ue_eps_context_update_security_parameters(ue_context->mme_ue_s1ap_id, s10_handover_procedure->nas_s10_context.mm_eps_ctx, &encryption_algorithm_capabilities, &integrity_algorithm_capabilities) != RETURNok){
+        OAILOG_ERROR(LOG_MME_APP, "Error updating AS security parameters for UE with ueId: " MME_UE_S1AP_ID_FMT ". Sending FW-Relocation response error and performing implicit detach on the target MME. \n", ue_context->mme_ue_s1ap_id);
+        //     mme_app_send_s1ap_handover_preparation_failure(ue_context->mme_ue_s1ap_id, handover_required_pP->enb_ue_s1ap_id, handover_required_pP->sctp_assoc_id, S1AP_SYSTEM_FAILURE);
+        //     /** If UE state is REGISTERED, then we also expect security context to be valid. */
+        mme_app_send_s10_forward_relocation_response_err(s10_handover_procedure->remote_mme_teid.teid,
+            s10_handover_procedure->remote_mme_teid.ipv4_address, s10_handover_procedure->forward_relocation_trxn, SYSTEM_FAILURE);
+        ue_context->s1_ue_context_release_cause = S1AP_IMPLICIT_CONTEXT_RELEASE;
+        /** Perform an implicit detach and reject the handover procedure. */
+        message_p = itti_alloc_new_message (TASK_MME_APP, NAS_IMPLICIT_DETACH_UE_IND);
+        DevAssert (message_p != NULL);
+        message_p->ittiMsg.nas_implicit_detach_ue_ind.ue_id = ue_context->mme_ue_s1ap_id;
+        itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+        OAILOG_FUNC_OUT (LOG_MME_APP);
+      }
+      OAILOG_INFO(LOG_MME_APP, "Successfully updated AS security parameters for UE with ueId: " MME_UE_S1AP_ID_FMT ". "
+          "Continuing handover request for INTRA-MME handover (proper UE context). \n", ue_context->mme_ue_s1ap_id);
+
       mme_app_send_s1ap_handover_request(ue_context->mme_ue_s1ap_id,
           &bcs_tbc,
           // todo: check for macro/home enb_id
@@ -1192,64 +1212,23 @@ mme_app_handle_modify_bearer_resp (
     ue_context->pending_x2_handover = false;
     OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
   }
-  /** Check for handover procedures. */
-  mme_app_s10_proc_mme_handover_t * s10_handover_proc = mme_app_get_s10_procedure_mme_handover(ue_context);
-  if(s10_handover_proc){
-    /** No matter if it is a INTRA or INTER MME handover, continue with the MBR for other PDNs. */
-    pdn_context_t * pdn_context = NULL;
-    RB_FOREACH (pdn_context, PdnContexts, &ue_context->pdn_contexts) {
-      DevAssert(pdn_context);
-      bearer_context_t * first_bearer = RB_MIN(SessionBearers, &pdn_context->session_bearers);
-      DevAssert(first_bearer);
-      if(first_bearer->bearer_state == BEARER_STATE_ACTIVE){
-        /** Continue to next pdn. */
-        continue;
-      }else{
-        /** Found a PDN. Establish the bearer contexts. */
-        OAILOG_INFO(LOG_MME_APP, "Establishing the bearers for UE_CONTEXT for UE " MME_UE_S1AP_ID_FMT " triggered by handover notify. \n", ue_context->mme_ue_s1ap_id);
-        mme_app_send_s11_modify_bearer_req(ue_context, pdn_context);
-        OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
-      }
-    }
-    OAILOG_INFO(LOG_MME_APP, "No PDN found to establish the bearers for UE " MME_UE_S1AP_ID_FMT ". Checking for INTER-MME handover. \n", ue_context->mme_ue_s1ap_id);
-    if(s10_handover_proc->proc.type == MME_APP_S10_PROC_TYPE_INTER_MME_HANDOVER){
-      /**
-       * UE came from S10 inter-MME handover. Not clear the pending_handover state yet.
-       * Sending Forward Relocation Complete Notification and waiting for acknowledgment.
-       */
-       /** Nothing else left to do on the target side. We don't delete the handover process. It will run and timeout until TAU is complete. */
-      OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
+  /** No matter if there is an handover procedure or not, continue with the MBR for other PDNs. */
+  pdn_context = NULL;
+  RB_FOREACH (pdn_context, PdnContexts, &ue_context->pdn_contexts) {
+    DevAssert(pdn_context);
+    bearer_context_t * first_bearer = RB_MIN(SessionBearers, &pdn_context->session_bearers);
+    DevAssert(first_bearer);
+    if(first_bearer->bearer_state == BEARER_STATE_ACTIVE){
+      /** Continue to next pdn. */
+      continue;
     }else{
-      /** For INTRA-MME handover trigger the timer mentioned in TS 23.401 to remove the UE Context and the old S1AP UE reference to the source eNB. */
-      ue_description_t * old_ue_reference = s1ap_is_enb_ue_s1ap_id_in_list_per_enb(s10_handover_proc->source_enb_ue_s1ap_id, s10_handover_proc->source_ecgi.cell_identity.enb_id);
-      if(old_ue_reference){
-        /** For INTRA-MME handover, start the timer to remove the old UE reference here. No timer should be started for the S10 Handover Process. */
-        if (timer_setup (mme_config.mme_mobility_completion_timer, 0,
-            TASK_S1AP, INSTANCE_DEFAULT, TIMER_ONE_SHOT, (void *)old_ue_reference, &(old_ue_reference->s1ap_handover_completion_timer.id)) < 0) {
-          OAILOG_ERROR (LOG_MME_APP, "Failed to start >s1ap_handover_completion for enbUeS1apId " ENB_UE_S1AP_ID_FMT " for duration %d \n",
-              old_ue_reference->enb_ue_s1ap_id, mme_config.mme_mobility_completion_timer);
-          old_ue_reference->s1ap_handover_completion_timer.id = MME_APP_TIMER_INACTIVE_ID;
-          /** Not set the timer for the UE context, since we will not deregister. */
-          OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
-        } else {
-          OAILOG_DEBUG (LOG_MME_APP, "MME APP : Completed Handover Procedure at (source) MME side after handling S1AP_HANDOVER_NOTIFY. "
-              "Activated the S1AP Handover completion timer enbUeS1apId " ENB_UE_S1AP_ID_FMT ". Removing source eNB resources after timer.. Timer Id %u. Timer duration %d \n",
-              old_ue_reference->enb_ue_s1ap_id, old_ue_reference->s1ap_handover_completion_timer.id, mme_config.mme_mobility_completion_timer);
-          /** Remove the handover procedure. */
-          mme_app_delete_s10_procedure_mme_handover(ue_context);
-          /** Not setting the timer for MME_APP UE context. */
-          OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
-        }
-      }else{
-        OAILOG_DEBUG(LOG_MME_APP, "No old UE_REFERENCE was found for mmeS1apUeId " MME_UE_S1AP_ID_FMT " and enbUeS1apId "ENB_UE_S1AP_ID_FMT ". Not starting a new timer. \n",
-            ue_context->enb_ue_s1ap_id, s10_handover_proc->source_ecgi.cell_identity.enb_id);
-        OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
-      }
+      /** Found a PDN. Establish the bearer contexts. */
+      OAILOG_INFO(LOG_MME_APP, "Establishing the bearers for UE_CONTEXT for UE " MME_UE_S1AP_ID_FMT " triggered by handover notify. \n", ue_context->mme_ue_s1ap_id);
+      mme_app_send_s11_modify_bearer_req(ue_context, pdn_context);
+      OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
     }
-  }else{
-    /** No S10 Procedure Present. */
-    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
   }
+  OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
 }
 
 //------------------------------------------------------------------------------
@@ -1991,10 +1970,10 @@ mme_app_handle_path_switch_req(
   ue_context->enb_ue_s1ap_id    = s1ap_path_switch_req->enb_ue_s1ap_id;
   ue_context->sctp_assoc_id_key = s1ap_path_switch_req->sctp_assoc_id;
   //  sctp_stream_id_t        sctp_stream;
-  uint16_t encryption_algorithm_capabilities;
-  uint16_t integrity_algorithm_capabilities;
+  uint16_t encryption_algorithm_capabilities = (uint16_t)0;
+  uint16_t integrity_algorithm_capabilities  = (uint16_t)0;
   // todo: update them from the X2 message!
-  if(emm_data_context_update_security_parameters(s1ap_path_switch_req->mme_ue_s1ap_id, &encryption_algorithm_capabilities, &integrity_algorithm_capabilities) != RETURNok){
+  if(emm_data_context_update_security_parameters(ue_context->mme_ue_s1ap_id, &encryption_algorithm_capabilities, &integrity_algorithm_capabilities) != RETURNok){
     OAILOG_ERROR(LOG_MME_APP, "Error updating AS security parameters for UE with ueId: " MME_UE_S1AP_ID_FMT ". \n", s1ap_path_switch_req->mme_ue_s1ap_id);
     mme_app_send_s1ap_path_switch_request_failure(s1ap_path_switch_req->mme_ue_s1ap_id, s1ap_path_switch_req->enb_ue_s1ap_id, s1ap_path_switch_req->sctp_assoc_id, SYSTEM_FAILURE);
     /** Implicitly detach the UE --> If EMM context is missing, still continue with the resource removal. */
@@ -2058,7 +2037,7 @@ mme_app_handle_path_switch_req(
 
 //------------------------------------------------------------------------------
 void
-mme_app_handle_handover_required(
+mme_app_handle_s1ap_handover_required(
      itti_s1ap_handover_required_t * const handover_required_pP
     )   {
   OAILOG_FUNC_IN (LOG_MME_APP);
@@ -2116,13 +2095,6 @@ mme_app_handle_handover_required(
   /** Get the updated security parameters from EMM layer directly. Else new states and ITTI messages are necessary. */
   uint16_t encryption_algorithm_capabilities;
   uint16_t integrity_algorithm_capabilities;
-  if(emm_data_context_update_security_parameters(handover_required_pP->mme_ue_s1ap_id, &encryption_algorithm_capabilities, &integrity_algorithm_capabilities) != RETURNok){
-    OAILOG_ERROR(LOG_MME_APP, "Error updating AS security parameters for UE with ueId: " MME_UE_S1AP_ID_FMT ". \n", handover_required_pP->mme_ue_s1ap_id);
-    mme_app_send_s1ap_handover_preparation_failure(handover_required_pP->mme_ue_s1ap_id, handover_required_pP->enb_ue_s1ap_id, handover_required_pP->sctp_assoc_id, S1AP_SYSTEM_FAILURE);
-    /** If UE state is REGISTERED, then we also expect security context to be valid. */
-    OAILOG_FUNC_OUT (LOG_MME_APP);
-  }
-  OAILOG_INFO(LOG_MME_APP, "Successfully updated AS security parameters for UE with ueId: " MME_UE_S1AP_ID_FMT ". \n", handover_required_pP->mme_ue_s1ap_id);
   /** Check if the destination eNodeB is attached at the same or another MME. */
   if (mme_app_check_ta_local(&handover_required_pP->selected_tai.plmn, handover_required_pP->selected_tai.tac)) {
     /** Check if the eNB with the given eNB-ID is served. */
@@ -2166,7 +2138,23 @@ mme_app_handle_handover_required(
         mme_app_get_bearer_contexts_to_be_created(registered_pdn_ctx, &bcs_tbc, BEARER_STATE_NULL);
         /** The number of bearers will be incremented in the method. S10 should just pick the ebi. */
       }
-
+      /** Check the number of bc's. If != 0, update the security parameters send the handover request. */
+      if(!bcs_tbc.num_bearer_context){
+        OAILOG_INFO (LOG_MME_APP, "No BC context exist. Reject the handover for mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
+        /** Send a handover preparation failure with error. */
+        mme_app_send_s1ap_handover_preparation_failure(handover_required_pP->mme_ue_s1ap_id, handover_required_pP->enb_ue_s1ap_id, handover_required_pP->sctp_assoc_id, S1AP_SYSTEM_FAILURE);
+        OAILOG_FUNC_OUT (LOG_MME_APP);
+      }
+      uint16_t encryption_algorithm_capabilities = (uint16_t)0;
+      uint16_t integrity_algorithm_capabilities  = (uint16_t)0;
+      /** Update the security parameters. */
+      if(emm_data_context_update_security_parameters(ue_context->mme_ue_s1ap_id, &encryption_algorithm_capabilities, &integrity_algorithm_capabilities) != RETURNok){
+        OAILOG_ERROR(LOG_MME_APP, "Error updating AS security parameters for UE with ueId: " MME_UE_S1AP_ID_FMT ". \n", handover_required_pP->mme_ue_s1ap_id);
+        mme_app_send_s1ap_handover_preparation_failure(handover_required_pP->mme_ue_s1ap_id, handover_required_pP->enb_ue_s1ap_id, handover_required_pP->sctp_assoc_id, S1AP_SYSTEM_FAILURE);
+        /** If UE state is REGISTERED, then we also expect security context to be valid. */
+        OAILOG_FUNC_OUT (LOG_MME_APP);
+      }
+      OAILOG_INFO(LOG_MME_APP, "Successfully updated AS security parameters for UE with ueId: " MME_UE_S1AP_ID_FMT ". Continuing handover request for INTRA-MME handover. \n", handover_required_pP->mme_ue_s1ap_id);
       mme_app_send_s1ap_handover_request(handover_required_pP->mme_ue_s1ap_id,
           &bcs_tbc,
           handover_required_pP->global_enb_id.cell_identity.enb_id,
@@ -2778,6 +2766,26 @@ mme_app_handle_forward_relocation_request(
      itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
      OAILOG_FUNC_OUT (LOG_MME_APP);
    }
+   uint16_t encryption_algorithm_capabilities = (uint16_t)0;
+   uint16_t integrity_algorithm_capabilities  = (uint16_t)0;
+   /** Update the security parameters of the MM context of the S10 procedure. */
+   if(mm_ue_eps_context_update_security_parameters(ue_context->mme_ue_s1ap_id, s10_proc_mme_handover->nas_s10_context.mm_eps_ctx, &encryption_algorithm_capabilities, &integrity_algorithm_capabilities) != RETURNok){
+     OAILOG_ERROR(LOG_MME_APP, "Error updating AS security parameters for UE with ueId: " MME_UE_S1AP_ID_FMT ". "
+         "Sending FW-Relocation response error and performing implicit detach on the target MME. \n", ue_context->mme_ue_s1ap_id);
+//     mme_app_send_s1ap_handover_preparation_failure(ue_context->mme_ue_s1ap_id, handover_required_pP->enb_ue_s1ap_id, handover_required_pP->sctp_assoc_id, S1AP_SYSTEM_FAILURE);
+//     /** If UE state is REGISTERED, then we also expect security context to be valid. */
+     mme_app_send_s10_forward_relocation_response_err(forward_relocation_request_pP->s10_source_mme_teid.teid,
+         forward_relocation_request_pP->s10_source_mme_teid.ipv4_address, forward_relocation_request_pP->trxn, SYSTEM_FAILURE);
+     ue_context->s1_ue_context_release_cause = S1AP_IMPLICIT_CONTEXT_RELEASE;
+     /** Perform an implicit detach and reject the handover procedure. */
+     message_p = itti_alloc_new_message (TASK_MME_APP, NAS_IMPLICIT_DETACH_UE_IND);
+     DevAssert (message_p != NULL);
+     message_p->ittiMsg.nas_implicit_detach_ue_ind.ue_id = ue_context->mme_ue_s1ap_id;
+     itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+     OAILOG_FUNC_OUT (LOG_MME_APP);
+   }
+   OAILOG_INFO(LOG_MME_APP, "Successfully updated AS security parameters for UE with ueId: " MME_UE_S1AP_ID_FMT ". Continuing handover request for INTRA-MME handover. \n", ue_context->mme_ue_s1ap_id);
+
    mme_app_send_s1ap_handover_request(ue_context->mme_ue_s1ap_id,
        &bcs_tbc,
        forward_relocation_request_pP->target_identification.target_id.macro_enb_id.enb_id,
@@ -3503,35 +3511,8 @@ mme_app_handle_s1ap_handover_notify(
   * Update the bearers in the SAE-GW for INTRA and INTER MME handover.
   */
  if(s10_handover_proc->proc.type == MME_APP_S10_PROC_TYPE_INTRA_MME_HANDOVER){
-   OAILOG_DEBUG(LOG_MME_APP, "UE MME context with imsi " IMSI_64_FMT " and mmeS1apUeId " MME_UE_S1AP_ID_FMT " has successfully completed intra-MME handover process after HANDOVER_NOTIFY. \n",
-       ue_context->imsi, handover_notify_pP->mme_ue_s1ap_id);
-   /*
-    * Stop the timer of the handover procedure.
-    * Don't delete the handover procedure.
-    */
-   if (s10_handover_proc->proc.timer.id != MME_APP_TIMER_INACTIVE_ID) {
-     if (timer_remove(s10_handover_proc->proc.timer.id, NULL)) {
-       OAILOG_ERROR (LOG_MME_APP, "Failed to stop handover procedure timer for the INTRA-MME handover for UE id  %d \n", ue_context->mme_ue_s1ap_id);
-     }
-     s10_handover_proc->proc.timer.id = MME_APP_TIMER_INACTIVE_ID;
-   }
-   /** Update the PDN session information directly in the new UE_Context. */
-   pdn_context_t * pdn_context = NULL;
-   RB_FOREACH (pdn_context, PdnContexts, &ue_context->pdn_contexts) {
-     DevAssert(pdn_context);
-     bearer_context_t * first_bearer = RB_MIN(SessionBearers, &pdn_context->session_bearers);
-     DevAssert(first_bearer);
-     if(first_bearer->bearer_state == BEARER_STATE_ACTIVE){
-       /** Continue to next pdn. */
-       continue;
-     }else{
-       /** Found a PDN. Establish the bearer contexts. */
-       OAILOG_INFO(LOG_MME_APP, "Establishing the bearers for UE_CONTEXT for UE " MME_UE_S1AP_ID_FMT " triggered by handover notify. Successfully handled handover notify. \n", ue_context->mme_ue_s1ap_id);
-       mme_app_send_s11_modify_bearer_req(ue_context, pdn_context);
-       OAILOG_FUNC_OUT (LOG_MME_APP);
-     }
-   }
-   OAILOG_ERROR(LOG_MME_APP, "No PDN found to establish the bearers for UE " MME_UE_S1AP_ID_FMT " due handover notify. \n", ue_context->mme_ue_s1ap_id);
+   /** Complete the registration of the UE. */
+   mme_app_registration_complete(ue_context->mme_ue_s1ap_id);
    OAILOG_FUNC_OUT (LOG_MME_APP);
  }else{
    OAILOG_DEBUG(LOG_MME_APP, "UE MME context with imsi " IMSI_64_FMT " and mmeS1apUeId " MME_UE_S1AP_ID_FMT " has successfully completed inter-MME handover process after HANDOVER_NOTIFY. \n",
@@ -3671,33 +3652,16 @@ mme_app_handle_forward_relocation_complete_acknowledge(
    MSC_LOG_EVENT (MSC_MMEAPP_MME, "S10_FORWARD_RELOCATION_COMPLETE_ACKNOWLEDGEMENT. No UE existing teid %d. \n", forward_relocation_complete_acknowledgement_pP->teid);
    OAILOG_FUNC_OUT (LOG_MME_APP);
  }
-
  /*
-  * Not stopping MME Handover Completion timer. It will be stopped with the removed handover procedure on the target MME side for inter-mme s1ap handover.
-  * (When TAU-Complete is received // UE is registered).
+  * Complete the handover procedure (register).
+  * We will again enter the method when TAU is complete.
   */
- pdn_context_t * pdn_context = NULL;
- RB_FOREACH (pdn_context, PdnContexts, &ue_context->pdn_contexts) {
-   DevAssert(pdn_context);
-   bearer_context_t * first_bearer = RB_MIN(SessionBearers, &pdn_context->session_bearers);
-   DevAssert(first_bearer);
-   if(first_bearer->bearer_state == BEARER_STATE_ACTIVE){
-     /** Continue to next pdn. */
-     continue;
-   }else{
-     /** Found a PDN. Establish the bearer contexts. */
-     OAILOG_INFO(LOG_MME_APP, "Establishing the bearers for UE_CONTEXT for UE " MME_UE_S1AP_ID_FMT " triggered by handover notify. \n", ue_context->mme_ue_s1ap_id);
-     mme_app_send_s11_modify_bearer_req(ue_context, pdn_context);
-     OAILOG_FUNC_OUT (LOG_MME_APP);
-   }
- }
-
+ mme_app_registration_complete(ue_context->mme_ue_s1ap_id);
  /** S1AP inter-MME handover is complete. */
- OAILOG_INFO(LOG_MME_APP, "UE_Context with IMSI " IMSI_64_FMT " and mmeUeS1apId: " MME_UE_S1AP_ID_FMT " successfully completed handover procedure! \n",
+ OAILOG_INFO(LOG_MME_APP, "UE_Context with IMSI " IMSI_64_FMT " and mmeUeS1apId: " MME_UE_S1AP_ID_FMT " successfully completed INTER-MME (S10) handover procedure! \n",
      ue_context->imsi, ue_context->mme_ue_s1ap_id);
  OAILOG_FUNC_OUT (LOG_MME_APP);
 }
-
 
 //------------------------------------------------------------------------------
 void

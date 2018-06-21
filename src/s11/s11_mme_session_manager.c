@@ -413,7 +413,7 @@ s11_mme_handle_ulp_error_indicatior(
     memset(rsp_p, 0, sizeof(*rsp_p));
     /** Set the destination TEID (our TEID). */
     rsp_p->teid = pUlpApi->u_api_info.rspFailureInfo.teidLocal;
-    /** Set the transaction for the triggered acknowledgement. */
+    /** Set the transaction for the triggered acknowledgment. */
     rsp_p->trxn = (void *)pUlpApi->u_api_info.rspFailureInfo.hUlpTrxn;
     /** Set the cause. */
     rsp_p->cause.cause_value = SYSTEM_FAILURE; /**< Would mean that this message either did not come at all or could not be dealt with properly. */
@@ -427,7 +427,7 @@ s11_mme_handle_ulp_error_indicatior(
     memset(rsp_p, 0, sizeof(*rsp_p));
     /** Set the destination TEID (our TEID). */
     rsp_p->teid = pUlpApi->u_api_info.rspFailureInfo.teidLocal;
-    /** Set the transaction for the triggered acknowledgement. */
+    /** Set the transaction for the triggered acknowledgment. */
     rsp_p->trxn = (void *)pUlpApi->u_api_info.rspFailureInfo.hUlpTrxn;
     /** Set the cause. */
     rsp_p->cause.cause_value = SYSTEM_FAILURE; /**< Would mean that this message either did not come at all or could not be dealt with properly. */
@@ -445,13 +445,32 @@ s11_mme_handle_ulp_error_indicatior(
     memset(rsp_p, 0, sizeof(*rsp_p));
     /** Set the destination TEID (our TEID). */
     rsp_p->teid = pUlpApi->u_api_info.rspFailureInfo.teidLocal;
-    /** Set the transaction for the triggered acknowledgement. */
+    /** Set the transaction for the triggered acknowledgment. */
     rsp_p->trxn = (void *)pUlpApi->u_api_info.rspFailureInfo.hUlpTrxn;
     /** Set the cause. */
     rsp_p->cause.cause_value = REQUEST_ACCEPTED; /**< Would mean that this message either did not come at all or could not be dealt with properly. */
     OAILOG_ERROR (LOG_S11, "DELETE_SESSION_RESPONE could not be received for for local teid " TEID_FMT". Sending ACCEPTED back (ignoring the network failure). \n", rsp_p->teid);
   }
     break;
+  case NW_GTP_RELEASE_ACCESS_BEARERS_REQ:
+   {
+     /**
+      * We will omit the error and send success back.
+      * UE context should always be removed.
+      */
+     itti_s11_release_access_bearers_response_t            *rsp_p;
+     message_p = itti_alloc_new_message (TASK_S10, S11_RELEASE_ACCESS_BEARERS_RESPONSE);
+     rsp_p = &message_p->ittiMsg.s11_release_access_bearers_response;
+     memset(rsp_p, 0, sizeof(*rsp_p));
+     /** Set the destination TEID (our TEID). */
+     rsp_p->teid = pUlpApi->u_api_info.rspFailureInfo.teidLocal;
+     /** Set the transaction for the triggered acknowledgment. */
+     rsp_p->trxn = (void *)pUlpApi->u_api_info.rspFailureInfo.hUlpTrxn;
+     /** Set the cause. */
+     rsp_p->cause.cause_value = REQUEST_ACCEPTED; /**< Would mean that this message either did not come at all or could not be dealt with properly. */
+     OAILOG_ERROR (LOG_S11, "RELEASE_ACCESS_BEARERS_RESPONSE could not be received for for local teid " TEID_FMT". Sending ACCEPTED back (ignoring the network failure). \n", rsp_p->teid);
+   }
+     break;
   default:
     OAILOG_ERROR (LOG_S10, "Received an unhandled error indicator for the local S10-TEID " TEID_FMT " and message type %d. \n",
         pUlpApi->u_api_info.rspFailureInfo.teidLocal, pUlpApi->u_api_info.rspFailureInfo.msgType);

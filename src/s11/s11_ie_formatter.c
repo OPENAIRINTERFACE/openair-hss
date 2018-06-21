@@ -61,7 +61,7 @@
 nw_rc_t
 gtpv2c_msisdn_ie_get (
   uint8_t ieType,
-  uint8_t ieLength,
+  uint16_t ieLength,
   uint8_t ieInstance,
   uint8_t * ieValue,
   void *arg)
@@ -100,7 +100,7 @@ gtpv2c_msisdn_ie_get (
 nw_rc_t
 gtpv2c_mei_ie_get (
   uint8_t ieType,
-  uint8_t ieLength,
+  uint16_t ieLength,
   uint8_t ieInstance,
   uint8_t * ieValue,
   void *arg)
@@ -115,7 +115,7 @@ gtpv2c_mei_ie_get (
 nw_rc_t
 gtpv2c_node_type_ie_get (
   uint8_t ieType,
-  uint8_t ieLength,
+  uint16_t ieLength,
   uint8_t ieInstance,
   uint8_t * ieValue,
   void *arg)
@@ -172,7 +172,7 @@ gtpv2c_node_type_ie_set (
 nw_rc_t
 gtpv2c_pdn_type_ie_get (
   uint8_t ieType,
-  uint8_t ieLength,
+  uint16_t ieLength,
   uint8_t ieInstance,
   uint8_t * ieValue,
   void *arg)
@@ -245,7 +245,7 @@ gtpv2c_pdn_type_ie_set (
 nw_rc_t
 gtpv2c_rat_type_ie_get (
   uint8_t ieType,
-  uint8_t ieLength,
+  uint16_t ieLength,
   uint8_t ieInstance,
   uint8_t * ieValue,
   void *arg)
@@ -354,7 +354,7 @@ gtpv2c_ebi_ie_set (
 nw_rc_t
 gtpv2c_ebi_ie_get (
   uint8_t ieType,
-  uint8_t ieLength,
+  uint16_t ieLength,
   uint8_t ieInstance,
   uint8_t * ieValue,
   void *arg)
@@ -371,7 +371,7 @@ gtpv2c_ebi_ie_get (
 nw_rc_t
 gtpv2c_ebi_ie_get_list (
   uint8_t ieType,
-  uint8_t ieLength,
+  uint16_t ieLength,
   uint8_t ieInstance,
   uint8_t * ieValue,
   void *arg)
@@ -416,7 +416,7 @@ gtpv2c_bearer_context_to_create_ie_set (
 nw_rc_t
 gtpv2c_bearer_context_to_be_created_within_create_session_request_ie_get (
   uint8_t ieType,
-  uint8_t ieLength,
+  uint16_t ieLength,
   uint8_t ieInstance,
   uint8_t * ieValue,
   void *arg)
@@ -517,7 +517,7 @@ gtpv2c_bearer_context_to_be_created_within_create_session_request_ie_set (
 nw_rc_t
 gtpv2c_bearer_context_to_be_created_within_create_bearer_request_ie_get (
   uint8_t ieType,
-  uint8_t ieLength,
+  uint16_t ieLength,
   uint8_t ieInstance,
   uint8_t * ieValue,
   void *arg)
@@ -694,7 +694,7 @@ int gtpv2c_bearer_context_within_create_bearer_response_ie_set (
 nw_rc_t
 gtpv2c_bearer_context_within_create_bearer_response_ie_get (
   uint8_t ieType,
-  uint8_t ieLength,
+  uint16_t ieLength,
   uint8_t ieInstance,
   uint8_t * ieValue,
   void *arg)
@@ -808,7 +808,7 @@ gtpv2c_bearer_context_to_be_modified_within_modify_bearer_request_ie_set (
 nw_rc_t
 gtpv2c_bearer_context_to_be_modified_within_modify_bearer_request_ie_get (
   uint8_t ieType,
-  uint8_t ieLength,
+  uint16_t ieLength,
   uint8_t ieInstance,
   uint8_t * ieValue,
   void *arg)
@@ -853,7 +853,7 @@ gtpv2c_bearer_context_to_be_modified_within_modify_bearer_request_ie_get (
 nw_rc_t
 gtpv2c_bearer_context_created_ie_get (
   uint8_t ieType,
-  uint8_t ieLength,
+  uint16_t ieLength,
   uint8_t ieInstance,
   uint8_t * ieValue,
   void *arg)
@@ -1012,7 +1012,7 @@ gtpv2c_bearer_context_created_ie_set (
 nw_rc_t
 gtpv2c_apn_restriction_ie_get (
   uint8_t ieType,
-  uint8_t ieLength,
+  uint16_t ieLength,
   uint8_t ieInstance,
   uint8_t * ieValue,
   void *arg)
@@ -1046,7 +1046,7 @@ gtpv2c_apn_restriction_ie_set (
 nw_rc_t
 gtpv2c_serving_network_ie_get (
   uint8_t ieType,
-  uint8_t ieLength,
+  uint16_t ieLength,
   uint8_t ieInstance,
   uint8_t * ieValue,
   void *arg)
@@ -1112,7 +1112,7 @@ gtpv2c_serving_network_ie_set (
 nw_rc_t
 gtpv2c_pco_ie_get (
   uint8_t ieType,
-  uint8_t ieLength,
+  uint16_t ieLength,
   uint8_t ieInstance,
   uint8_t * ieValue,
   void *arg)
@@ -1149,7 +1149,7 @@ gtpv2c_pco_ie_set (
 nw_rc_t
 gtpv2c_tft_ie_get (
   uint8_t ieType,
-  uint8_t ieLength,
+  uint16_t ieLength,
   uint8_t ieInstance,
   uint8_t * ieValue,
   void *arg)
@@ -1195,7 +1195,7 @@ gtpv2c_tft_ie_set (
 nw_rc_t
 gtpv2c_apn_ie_get (
   uint8_t ieType,
-  uint8_t ieLength,
+  uint16_t ieLength,
   uint8_t ieInstance,
   uint8_t * ieValue,
   void *arg)
@@ -1323,7 +1323,7 @@ gtpv2c_apn_plmn_ie_set (
 nw_rc_t
 gtpv2c_uli_ie_get (
   uint8_t ieType,
-  uint8_t ieLength,
+  uint16_t ieLength,
   uint8_t ieInstance,
   uint8_t * ieValue,
   void *arg)
@@ -1343,7 +1343,7 @@ gtpv2c_uli_ie_get (
 nw_rc_t
 gtpv2c_bearer_qos_ie_get (
   uint8_t ieType,
-  uint8_t ieLength,
+  uint16_t ieLength,
   uint8_t ieInstance,
   uint8_t * ieValue,
   void *arg)
@@ -1446,7 +1446,7 @@ gtpv2c_bearer_qos_ie_set (
 nw_rc_t
 gtpv2c_ip_address_ie_get (
   uint8_t ieType,
-  uint8_t ieLength,
+  uint16_t ieLength,
   uint8_t ieInstance,
   uint8_t * ieValue,
   void *arg)
@@ -1490,7 +1490,7 @@ gtpv2c_ip_address_ie_set (
 nw_rc_t
 gtpv2c_delay_value_ie_get (
   uint8_t ieType,
-  uint8_t ieLength,
+  uint16_t ieLength,
   uint8_t ieInstance,
   uint8_t * ieValue,
   void *arg)
@@ -1529,7 +1529,7 @@ gtpv2c_delay_value_ie_set (
 nw_rc_t
 gtpv2c_ue_time_zone_ie_get (
   uint8_t ieType,
-  uint8_t ieLength,
+  uint16_t ieLength,
   uint8_t ieInstance,
   uint8_t * ieValue,
   void *arg)
@@ -1571,7 +1571,7 @@ gtpv2c_ue_time_zone_ie_set (
 nw_rc_t
 gtpv2c_target_identification_ie_get (
   uint8_t ieType,
-  uint8_t ieLength,
+  uint16_t ieLength,
   uint8_t ieInstance,
   uint8_t * ieValue,
   void *arg)
@@ -1644,7 +1644,7 @@ gtpv2c_target_identification_ie_get (
 nw_rc_t
 gtpv2c_bearer_flags_ie_get (
   uint8_t ieType,
-  uint8_t ieLength,
+  uint16_t ieLength,
   uint8_t ieInstance,
   uint8_t * ieValue,
   void *arg)
@@ -1683,7 +1683,7 @@ gtpv2c_bearer_flags_ie_set (
 nw_rc_t
 gtpv2c_indication_flags_ie_get (
   uint8_t ieType,
-  uint8_t ieLength,
+  uint16_t ieLength,
   uint8_t ieInstance,
   uint8_t * ieValue,
   void *arg)
@@ -1773,7 +1773,7 @@ gtpv2c_indication_flags_ie_set (
 nw_rc_t
 gtpv2c_fqcsid_ie_get (
   uint8_t ieType,
-  uint8_t ieLength,
+  uint16_t ieLength,
   uint8_t ieInstance,
   uint8_t * ieValue,
   void *arg)

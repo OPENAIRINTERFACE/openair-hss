@@ -30,7 +30,7 @@
 #define FILE_S11_COMMON_SEEN
 
 nw_rc_t s11_ie_indication_generic(uint8_t  ieType,
-                                uint8_t  ieLength,
+                                uint16_t  ieLength,
                                 uint8_t  ieInstance,
                                 uint8_t *ieValue,
                                 void  *arg);

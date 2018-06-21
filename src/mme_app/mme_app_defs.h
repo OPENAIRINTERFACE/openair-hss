@@ -146,7 +146,7 @@ void mme_app_trigger_mme_initiated_dedicated_bearer_deactivation_procedure (ue_c
 
 
 /** S1AP Handover messaging. */
-void mme_app_handle_handover_required( itti_s1ap_handover_required_t * handover_required_pP );
+void mme_app_handle_s1ap_handover_required( itti_s1ap_handover_required_t * handover_required_pP );
 
 void mme_app_handle_handover_cancel( const itti_s1ap_handover_cancel_t * const handover_cancel_pP );
 

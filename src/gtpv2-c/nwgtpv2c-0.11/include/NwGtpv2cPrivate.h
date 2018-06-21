@@ -140,7 +140,7 @@ typedef struct nw_gtpv2c_timeout_info_s {
  * GTPv2c Message Container Definition
  *--------------------------------------------------------------------------*/
 
-#define NW_GTPV2C_MAX_MSG_LEN                                    (1024)  /**< Maximum supported gtpv2c packet length including header */
+#define NW_GTPV2C_MAX_MSG_LEN                                    (4096)  /**< Maximum supported gtpv2c packet length including header */
 
 /**
  * NwGtpv2cMsgT holds gtpv2c messages to/from the peer.

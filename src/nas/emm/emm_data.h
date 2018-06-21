@@ -373,6 +373,11 @@ int emm_data_context_update_security_parameters(const mme_ue_s1ap_id_t ue_id,
     uint16_t *encryption_algorithm_capabilities,
     uint16_t *integrity_algorithm_capabilities);
 
+int mm_ue_eps_context_update_security_parameters(const mme_ue_s1ap_id_t ue_id,
+    mm_context_eps_t *mm_eps_ue_context,
+    uint16_t *encryption_algorithm_capabilities,
+    uint16_t *integrity_algorithm_capabilities);
+
 void emm_data_context_get_security_parameters(const mme_ue_s1ap_id_t ue_id,
     uint16_t *encryption_algorithm_capabilities,
     uint16_t *integrity_algorithm_capabilities);

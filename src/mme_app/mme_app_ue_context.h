@@ -635,6 +635,7 @@ void mme_app_ue_context_free_content (ue_context_t * const mme_ue_context_p);
  **/
 void mme_app_dump_ue_contexts(const mme_ue_context_t * const mme_ue_context);
 
+int mme_app_registration_complete(const mme_ue_s1ap_id_t mme_ue_s1ap_id);
 
 void mme_app_handle_s1ap_ue_context_release_req(const itti_s1ap_ue_context_release_req_t const *s1ap_ue_context_release_req);
 

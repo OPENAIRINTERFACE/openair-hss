@@ -87,6 +87,8 @@
 # define TRACKING_AREA_UPDATE_REQUEST_SUPPORTED_CODECS_PRESENT                              (1<<15)
 # define TRACKING_AREA_UPDATE_REQUEST_ADDITIONAL_UPDATE_TYPE_PRESENT                        (1<<16)
 # define TRACKING_AREA_UPDATE_REQUEST_OLD_GUTI_TYPE_PRESENT                                 (1<<17)
+# define TRACKING_AREA_UPDATE_REQUEST_MS_NETWORK_FEATURE_SUPPORT_PRESENT                    (1<<18)
+
 
 typedef enum tracking_area_update_request_iei_tag {
   TRACKING_AREA_UPDATE_REQUEST_NONCURRENT_NATIVE_NAS_KEY_SET_IDENTIFIER_IEI       = 0xB0, /* 0xB0 = 176 */
@@ -97,6 +99,7 @@ typedef enum tracking_area_update_request_iei_tag {
   TRACKING_AREA_UPDATE_REQUEST_UE_NETWORK_CAPABILITY_IEI                          = 0x58, /* 0x58 = 88 */
   TRACKING_AREA_UPDATE_REQUEST_LAST_VISITED_REGISTERED_TAI_IEI                    = 0x52, /* 0x52 = 82 */
   TRACKING_AREA_UPDATE_REQUEST_DRX_PARAMETER_IEI                                  = GMM_DRX_PARAMETER_IEI,
+  TRACKING_AREA_UPDATE_REQUEST_MS_NETWORK_FEATURE_SUPPORT_IEI                     = C_MS_NETWORK_FEATURE_SUPPORT_IEI,
   TRACKING_AREA_UPDATE_REQUEST_UE_RADIO_CAPABILITY_INFORMATION_UPDATE_NEEDED_IEI  = 0xA0, /* 0xA0 = 160 */
   TRACKING_AREA_UPDATE_REQUEST_EPS_BEARER_CONTEXT_STATUS_IEI                      = 0x57, /* 0x57 = 87 */
   TRACKING_AREA_UPDATE_REQUEST_MS_NETWORK_CAPABILITY_IEI                          = GMM_MS_NETWORK_CAPABILITY_IEI,
@@ -107,6 +110,7 @@ typedef enum tracking_area_update_request_iei_tag {
   TRACKING_AREA_UPDATE_REQUEST_SUPPORTED_CODECS_IEI                               = 0x40, /* 0x40 = 64 */
   TRACKING_AREA_UPDATE_REQUEST_ADDITIONAL_UPDATE_TYPE_IEI                         = 0xF0, /* 0xF0 = 240 */
   TRACKING_AREA_UPDATE_REQUEST_OLD_GUTI_TYPE_IEI                                  = 0xE0, /* 0xE0 = 224 */
+  TRACKING_AREA_UPDATE_REQUEST_VOICE_DOMAIN_PREFERENCE_AND_UE_USAGE_SETTING_IEI   = 0x5D, /* 0x5D = 93  */
 } tracking_area_update_request_iei;
 
 /*
@@ -144,6 +148,8 @@ typedef struct tracking_area_update_request_msg_tag {
   supported_codec_list_t                   supportedcodecs;
   additional_update_type_t                 additionalupdatetype;
   guti_type_t                              oldgutitype;
+  voice_domain_preference_and_ue_usage_setting_t   voicedomainpreferenceandueusagesetting;
+  ms_network_feature_support_t             msnetworkfeaturesupport;
 } tracking_area_update_request_msg;
 
 int decode_tracking_area_update_request(tracking_area_update_request_msg *trackingareaupdaterequest, uint8_t *buffer, uint32_t len);
