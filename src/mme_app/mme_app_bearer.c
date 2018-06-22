@@ -1186,15 +1186,18 @@ mme_app_handle_modify_bearer_resp (
     itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
   }
-  // todo: check baerer contexts marked for removal
+  // todo: Check bearer contexts marked for removal.
   mme_app_get_session_bearer_context_from_all(ue_context, modify_bearer_resp_pP->bearer_contexts_modified.bearer_contexts[0].eps_bearer_id, &current_bearer_p);
   /** Get the first bearers PDN. */
-  // todo: optimize the validation!
-  DevAssert(current_bearer_p);
+  /** In this case, we will ignore the MBR and assume a detach process is ongoing. */
+  if(!current_bearer_p){
+    OAILOG_INFO(LOG_MME_APP, "We could not find the first bearer with eBI %d in the set of bearers. Ignoring the MBResp for UE with ueId: " MME_UE_S1AP_ID_FMT ". \n",
+        ue_context->mme_ue_s1ap_id);
+    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
+  }
   mme_app_get_pdn_context(ue_context, current_bearer_p->pdn_cx_id, current_bearer_p->ebi, NULL, &pdn_context);
   /** If a too fast detach happens this is null. */
-  DevAssert(pdn_context);
-
+  DevAssert(pdn_context); /**< Should exist if bearers exist (todo: lock for this). */
   /** Set all bearers of the EBI to valid. */
   bearer_context_t * bc_to_act = NULL;
   RB_FOREACH (bc_to_act, SessionBearers, &pdn_context->session_bearers) {
@@ -1202,11 +1205,10 @@ mme_app_handle_modify_bearer_resp (
     /** Add them to the bearers list of the MBR. */
     bc_to_act->bearer_state = BEARER_STATE_ACTIVE;
   }
-
   // todo: set the downlink teid?
   /** If it is an X2 Handover, send a path switch response back. */
   if(ue_context->pending_x2_handover){
-    OAILOG_INFO(LOG_MME_APP, "Sending an S1AP Path Switch Request Acknowledge for for UE with ueId: " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
+    OAILOG_INFO(LOG_MME_APP, "Sending an S1AP Path Switch Request Acknowledge for UE with ueId: " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
     mme_app_send_s1ap_path_switch_request_acknowledge(ue_context->mme_ue_s1ap_id);
     /** Reset the flag. */
     ue_context->pending_x2_handover = false;

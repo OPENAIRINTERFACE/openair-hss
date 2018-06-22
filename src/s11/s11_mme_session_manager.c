@@ -387,7 +387,6 @@ s11_mme_handle_delete_session_response (
     DevAssert (HASH_TABLE_OK == hash_rc);
 
   }
-
   return itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
 }
 

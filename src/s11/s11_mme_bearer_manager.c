@@ -366,9 +366,6 @@ s11_mme_handle_modify_bearer_response (
   DevAssert (NW_OK == rc);
 
   // todo: BC's marked for removal
-
-
-
   /*
    * Run the parser
    */
