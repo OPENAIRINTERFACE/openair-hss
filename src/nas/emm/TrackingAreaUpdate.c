@@ -917,18 +917,6 @@ static int _emm_send_tracking_area_update_accept(emm_data_context_t * const emm_
     }
   }else{
     emm_sap.primitive = EMMAS_DATA_REQ; /**< We also check the current ECM state to handle active flag. */
-    /** Check the NCC counter, if it is 7 (wrap around, set to true). */
-    if(ue_context->pending_bearer_deactivation){
-      OAILOG_WARNING (LOG_NAS_EMM, "Pending bearer deactivation flag already set. "
-          "Not modifying it for ue_id=" MME_UE_S1AP_ID_FMT ", \n", emm_context->ue_id);
-    }else{
-      if(emm_context->_security.ncc == 7){
-        OAILOG_WARNING (LOG_NAS_EMM, "NCC has reached 7. Triggering idle mode for wrap around for ue_id=" MME_UE_S1AP_ID_FMT ", \n", emm_context->ue_id);
-        ue_context->pending_bearer_deactivation = true; /**< No matter if we send GUTI and wait for TAU_COMPLETE or not. */
-      }else{
-        OAILOG_WARNING (LOG_NAS_EMM, "NCC not reached 7 yet. Not triggering bearer deactivation for ue_id=" MME_UE_S1AP_ID_FMT ", \n", emm_context->_security.ncc, emm_context->ue_id);
-      }
-    }
   }
   /** Set the rest as data. */
   emm_sap.u.emm_as.u.data.ue_id = emm_context->ue_id; /**< These should also set for data. */
@@ -1149,7 +1137,6 @@ static int _emm_tracking_area_update_accept (nas_emm_tau_proc_t * const tau_proc
        */
       DevAssert(IS_EMM_CTXT_VALID_UE_NETWORK_CAPABILITY(emm_context));
       DevAssert(IS_EMM_CTXT_VALID_MS_NETWORK_CAPABILITY(emm_context));
-      DevAssert(IS_EMM_CTXT_VALID_CURRENT_DRX_PARAMETER(emm_context));
 
       /**
        * Send a TAU-Accept without GUTI.
