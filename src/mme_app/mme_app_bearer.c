@@ -367,25 +367,51 @@ mme_app_handle_conn_est_cnf (
    * No inner NAS message exists.
    * todo: later also add an array or a list of NAS messages in the nas_itti_establish_cnf
    */
-  pdn_context_t * first_pdn = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
-  DevAssert(first_pdn);
 
-  bearer_context_t * first_bearer = RB_MIN(SessionBearers, &first_pdn->session_bearers); // todo: @ handover (idle mode tau) this should give us the default ebi!
-  if(first_bearer){ // todo: optimize this!
-//    if ((BEARER_STATE_SGW_CREATED  || BEARER_STATE_S1_RELEASED) & first_bearer->bearer_state) {    /**< It could be in IDLE mode. */
-      establishment_cnf_p->e_rab_id[0]                                 = first_bearer->ebi ;//+ EPS_BEARER_IDENTITY_FIRST;
-      establishment_cnf_p->e_rab_level_qos_qci[0]                      = first_bearer->qci;
-      establishment_cnf_p->e_rab_level_qos_priority_level[0]           = first_bearer->priority_level;
-      establishment_cnf_p->e_rab_level_qos_preemption_capability[0]    = first_bearer->preemption_capability;
-      establishment_cnf_p->e_rab_level_qos_preemption_vulnerability[0] = first_bearer->preemption_vulnerability;
-      establishment_cnf_p->transport_layer_address[0]                  = fteid_ip_address_to_bstring(&first_bearer->s_gw_fteid_s1u);
-      establishment_cnf_p->gtp_teid[0]                                 = first_bearer->s_gw_fteid_s1u.teid;
-//      if (!j) { // todo: ESM message may exist --> should match each to the EBI!
-      establishment_cnf_p->nas_pdu[0]                                  = nas_conn_est_cnf_pP->nas_msg;
+  pdn_context_t * established_pdn = NULL;
+  RB_FOREACH (established_pdn, PdnContexts, &ue_context->pdn_contexts) {
+    DevAssert(established_pdn);
+    bearer_context_t * first_bearer = RB_MIN(SessionBearers, &established_pdn->session_bearers); // todo: @ handover (idle mode tau) this should give us the default ebi!
+    if(first_bearer){ // todo: optimize this!
+    //    if ((BEARER_STATE_SGW_CREATED  || BEARER_STATE_S1_RELEASED) & first_bearer->bearer_state) {    /**< It could be in IDLE mode. */
+      establishment_cnf_p->e_rab_id[establishment_cnf_p->no_of_e_rabs]                                 = first_bearer->ebi ;//+ EPS_BEARER_IDENTITY_FIRST;
+      establishment_cnf_p->e_rab_level_qos_qci[establishment_cnf_p->no_of_e_rabs]                      = first_bearer->qci;
+      establishment_cnf_p->e_rab_level_qos_priority_level[establishment_cnf_p->no_of_e_rabs]           = first_bearer->priority_level;
+      establishment_cnf_p->e_rab_level_qos_preemption_capability[establishment_cnf_p->no_of_e_rabs]    = first_bearer->preemption_capability;
+      establishment_cnf_p->e_rab_level_qos_preemption_vulnerability[establishment_cnf_p->no_of_e_rabs] = first_bearer->preemption_vulnerability;
+      establishment_cnf_p->transport_layer_address[establishment_cnf_p->no_of_e_rabs]                  = fteid_ip_address_to_bstring(&first_bearer->s_gw_fteid_s1u);
+      establishment_cnf_p->gtp_teid[establishment_cnf_p->no_of_e_rabs]                                 = first_bearer->s_gw_fteid_s1u.teid;
+    //      if (!j) { // todo: ESM message may exist --> should match each to the EBI!
+      if(establishment_cnf_p->no_of_e_rabs == 0){
+        establishment_cnf_p->nas_pdu[establishment_cnf_p->no_of_e_rabs]                                  = nas_conn_est_cnf_pP->nas_msg;
       nas_conn_est_cnf_pP->nas_msg = NULL; /**< Unlink. */
-//    }
+    //    }
+      }
+      establishment_cnf_p->no_of_e_rabs++;
+    }
   }
-  establishment_cnf_p->no_of_e_rabs = 1;
+
+
+
+
+//  pdn_context_t * first_pdn = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
+//  DevAssert(first_pdn);
+//
+//  bearer_context_t * first_bearer = RB_MIN(SessionBearers, &first_pdn->session_bearers); // todo: @ handover (idle mode tau) this should give us the default ebi!
+//  if(first_bearer){ // todo: optimize this!
+////    if ((BEARER_STATE_SGW_CREATED  || BEARER_STATE_S1_RELEASED) & first_bearer->bearer_state) {    /**< It could be in IDLE mode. */
+//      establishment_cnf_p->e_rab_id[0]                                 = first_bearer->ebi ;//+ EPS_BEARER_IDENTITY_FIRST;
+//      establishment_cnf_p->e_rab_level_qos_qci[0]                      = first_bearer->qci;
+//      establishment_cnf_p->e_rab_level_qos_priority_level[0]           = first_bearer->priority_level;
+//      establishment_cnf_p->e_rab_level_qos_preemption_capability[0]    = first_bearer->preemption_capability;
+//      establishment_cnf_p->e_rab_level_qos_preemption_vulnerability[0] = first_bearer->preemption_vulnerability;
+//      establishment_cnf_p->transport_layer_address[0]                  = fteid_ip_address_to_bstring(&first_bearer->s_gw_fteid_s1u);
+//      establishment_cnf_p->gtp_teid[0]                                 = first_bearer->s_gw_fteid_s1u.teid;
+////      if (!j) { // todo: ESM message may exist --> should match each to the EBI!
+//      establishment_cnf_p->nas_pdu[0]                                  = nas_conn_est_cnf_pP->nas_msg;
+//      nas_conn_est_cnf_pP->nas_msg = NULL; /**< Unlink. */
+////    }
+//  }
 
   // Copy UE radio capabilities into message if it exists (todo).
 //  OAILOG_DEBUG (LOG_MME_APP, "UE radio context already cached: %s\n",
@@ -1363,42 +1389,43 @@ mme_app_handle_initial_context_setup_rsp (
     ue_context->initial_context_setup_rsp_timer.id = MME_APP_TIMER_INACTIVE_ID;
   }
 
-  pdn_context_t * registered_pdn_ctx = NULL;
-  /** Update all bearers and get the pdn context id. */
-  RB_FOREACH (registered_pdn_ctx, PdnContexts, &ue_context->pdn_contexts) {
-    DevAssert(registered_pdn_ctx);
-
-    /**
-     * Get the first PDN whose bearers are not established yet.
-     * Do the MBR just one PDN at a time.
-     */
-    bearer_context_t * bearer_context_to_establish = NULL;
-    RB_FOREACH (bearer_context_to_establish, SessionBearers, &registered_pdn_ctx->session_bearers) {
-      DevAssert(bearer_context_to_establish);
-      /** Add them to the bearears list of the MBR. */
-      if (bearer_context_to_establish->ebi == initial_ctxt_setup_rsp_pP->e_rab_id[0]){
-        goto found_pdn;
-      }
-    }
-    registered_pdn_ctx = NULL;
-  }
-  OAILOG_INFO(LOG_MME_APP, "No PDN context found with unestablished bearers for mmeUeS1apId " MME_UE_S1AP_ID_FMT ". Dropping Initial Context Setup Response. \n", ue_context->mme_ue_s1ap_id);
-  OAILOG_FUNC_OUT (LOG_MME_APP);
-
-found_pdn:
-//  /** Save the bearer information as pending or send it directly if UE is registered. */
-//  RB_FOREACH (bearer_context_to_establish, SessionBearers, &registered_pdn_ctx->session_bearers) {
-//    DevAssert(bearer_context_to_establish);
-//    /** Add them to the bearears list of the MBR. */
-//    if (bearer_context_to_establish->ebi == initial_ctxt_setup_rsp_pP->e_rab_id[0]){
-//      goto found_pdn;
+//  pdn_context_t * registered_pdn_ctx = NULL;
+//  /** Update all bearers and get the pdn context id. */
+//  RB_FOREACH (registered_pdn_ctx, PdnContexts, &ue_context->pdn_contexts) {
+//    DevAssert(registered_pdn_ctx);
+//
+//    /**
+//     * Get the first PDN whose bearers are not established yet.
+//     * Do the MBR just one PDN at a time.
+//     */
+//    bearer_context_t * bearer_context_to_establish = NULL;
+//    RB_FOREACH (bearer_context_to_establish, SessionBearers, &registered_pdn_ctx->session_bearers) {
+//      DevAssert(bearer_context_to_establish);
+//      /** Add them to the bearears list of the MBR. */
+//      if (bearer_context_to_establish->ebi == initial_ctxt_setup_rsp_pP->e_rab_id[0]){
+//        goto found_pdn;
+//      }
 //    }
+//    registered_pdn_ctx = NULL;
 //  }
+//  OAILOG_INFO(LOG_MME_APP, "No PDN context found with unestablished bearers for mmeUeS1apId " MME_UE_S1AP_ID_FMT ". Dropping Initial Context Setup Response. \n", ue_context->mme_ue_s1ap_id);
+//  OAILOG_FUNC_OUT (LOG_MME_APP);
+//
+//found_pdn:
+////  /** Save the bearer information as pending or send it directly if UE is registered. */
+////  RB_FOREACH (bearer_context_to_establish, SessionBearers, &registered_pdn_ctx->session_bearers) {
+////    DevAssert(bearer_context_to_establish);
+////    /** Add them to the bearears list of the MBR. */
+////    if (bearer_context_to_establish->ebi == initial_ctxt_setup_rsp_pP->e_rab_id[0]){
+////      goto found_pdn;
+////    }
+////  }
 
   for (int item = 0; item < initial_ctxt_setup_rsp_pP->no_of_e_rabs; item++) {
     ebi_t ebi_to_establish = initial_ctxt_setup_rsp_pP->e_rab_id[item];
+    bearer_context_t* bearer_context_to_setup = NULL;
     /** Update the bearer context. */
-    bearer_context_t* bearer_context_to_setup = mme_app_get_session_bearer_context(registered_pdn_ctx, ebi_to_establish);
+    mme_app_get_session_bearer_context_from_all(ue_context, ebi_to_establish, &bearer_context_to_setup);
     if(bearer_context_to_setup){
       bearer_context_to_setup->enb_fteid_s1u.interface_type = S1_U_ENODEB_GTP_U;
       bearer_context_to_setup->enb_fteid_s1u.teid           = initial_ctxt_setup_rsp_pP->gtp_teid[item];
@@ -1420,9 +1447,11 @@ found_pdn:
       bearer_context_to_setup->bearer_state |= BEARER_STATE_MME_CREATED;
     }
   }
+
   /** Setting as ACTIVE when MBResp received from SAE-GW. */
   if(ue_context->mm_state == UE_REGISTERED){
     /** Send Modify Bearer Request for the APN. */
+    pdn_context_t * registered_pdn_ctx = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
     mme_app_send_s11_modify_bearer_req(ue_context, registered_pdn_ctx);
     // todo: check Modify bearer request
   }else{

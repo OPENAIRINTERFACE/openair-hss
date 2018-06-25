@@ -630,7 +630,7 @@ s1ap_mme_handle_initial_context_setup_response (
     OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
   }
 
-  if (initialContextSetupResponseIEs_p->e_RABSetupListCtxtSURes.s1ap_E_RABSetupItemCtxtSURes.count != 1) {
+  if (initialContextSetupResponseIEs_p->e_RABSetupListCtxtSURes.s1ap_E_RABSetupItemCtxtSURes.count < 1) {
     OAILOG_DEBUG (LOG_S1AP, "E-RAB creation has failed\n");
     OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
   }
