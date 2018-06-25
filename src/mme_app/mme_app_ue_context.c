@@ -111,7 +111,7 @@ inline int32_t                    mme_app_compare_pdn_context(
   }
 
   /** The context identifier may or may not be set. It may also be null. So check it latest. */
-  if(a->context_identifier != 666 && b->context_identifier != 666){
+  if(a->context_identifier != PDN_CONTEXT_IDENTIFIER_UNASSIGNED && b->context_identifier != PDN_CONTEXT_IDENTIFIER_UNASSIGNED){
     if (a->context_identifier > b->context_identifier)
       return 1;
 

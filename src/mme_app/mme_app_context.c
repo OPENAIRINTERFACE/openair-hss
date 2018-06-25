@@ -2165,7 +2165,7 @@ pdn_context_t * mme_app_handle_pdn_connectivity_from_s10(ue_context_t *ue_contex
   int                     rc = RETURNok;
 
   /** Get and handle the PDN Connection element as pending PDN connection element (using the default_ebi and the apn). */
-  mme_app_get_pdn_context(ue_context, 0, pdn_connection->linked_eps_bearer_id, pdn_connection->apn_str, &pdn_context);
+  mme_app_get_pdn_context(ue_context, PDN_CONTEXT_IDENTIFIER_UNASSIGNED, pdn_connection->linked_eps_bearer_id, pdn_connection->apn_str, &pdn_context);
   if(pdn_context){
     /* Found the PDN context. */
     OAILOG_ERROR(LOG_MME_APP, "PDN context for apn %s and default ebi %d already exists for UE_ID: " MME_UE_S1AP_ID_FMT". Skipping the establishment (or update). \n",
@@ -2178,7 +2178,7 @@ pdn_context_t * mme_app_handle_pdn_connectivity_from_s10(ue_context_t *ue_contex
    * Later set context identifier by ULA?
    */
   /** Craete a PDN connection and later set the ESM values when NAS layer is established. */
-  pdn_context = mme_app_create_pdn_context(ue_context, pdn_connection->apn_str, 666); /**< Create the pdn context using the APN network identifier. */
+  pdn_context = mme_app_create_pdn_context(ue_context, pdn_connection->apn_str, PDN_CONTEXT_IDENTIFIER_UNASSIGNED); /**< Create the pdn context using the APN network identifier. */
   if(!pdn_context) {
     OAILOG_ERROR(LOG_MME_APP, "Could not create a new pdn context for apn \" %s \" for UE_ID " MME_UE_S1AP_ID_FMT " from S10 PDN_CONNECTIONS IE. "
         "Skipping the establishment of pdn context. \n", pdn_connection->apn_str, ue_context->mme_ue_s1ap_id);
