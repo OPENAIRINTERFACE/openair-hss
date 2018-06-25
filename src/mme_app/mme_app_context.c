@@ -2178,12 +2178,16 @@ pdn_context_t * mme_app_handle_pdn_connectivity_from_s10(ue_context_t *ue_contex
    * Later set context identifier by ULA?
    */
   /** Craete a PDN connection and later set the ESM values when NAS layer is established. */
-  pdn_context = mme_app_create_pdn_context(ue_context, pdn_connection->apn_str, 0); /**< Create the pdn context using the APN network identifier. */
+  pdn_context = mme_app_create_pdn_context(ue_context, pdn_connection->apn_str, 666); /**< Create the pdn context using the APN network identifier. */
   if(!pdn_context) {
     OAILOG_ERROR(LOG_MME_APP, "Could not create a new pdn context for apn \" %s \" for UE_ID " MME_UE_S1AP_ID_FMT " from S10 PDN_CONNECTIONS IE. "
         "Skipping the establishment of pdn context. \n", pdn_connection->apn_str, ue_context->mme_ue_s1ap_id);
     OAILOG_FUNC_RETURN(LOG_MME_APP, NULL);
   }
+
+  pdn_context_t * pdn_test = NULL;
+  mme_app_get_pdn_context(ue_context, 0, 0, pdn_connection->apn_str, &pdn_test);
+
   /*
    * Will update the PDN context with the PCOs received from the SAE-GW.
    * todo: No PCO elements received @ handover from source MME? MS to network PCO or the result of the first PCO?

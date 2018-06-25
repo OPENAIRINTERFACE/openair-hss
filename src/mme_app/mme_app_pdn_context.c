@@ -187,6 +187,7 @@ pdn_context_t *  mme_app_create_pdn_context(ue_context_t * const ue_context, con
     pdn_context->apn_subscribed = blk2bstr(apn_configuration->service_selection, apn_configuration->service_selection_length);  /**< Set the APN-NI from the service selection. */
   } else {
     pdn_context->apn_subscribed = apn;
+    pdn_context->context_identifier = context_identifier;
     OAILOG_WARNING(LOG_MME_APP, "No APN configuration exists for UE " MME_UE_S1AP_ID_FMT ". Assuming Handover/TAU UE: " MME_UE_S1AP_ID_FMT ". Subscribed apn %s. \n",
         ue_context->mme_ue_s1ap_id, bdata(pdn_context->apn_subscribed));
     // todo: check that a procedure exists?

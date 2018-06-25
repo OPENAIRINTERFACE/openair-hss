@@ -370,6 +370,18 @@ int esm_proc_pdn_config_res(emm_data_context_t * emm_context, pdn_cid_t **pdn_ci
     OAILOG_INFO(LOG_NAS_EMM, "EMMCN-SAP  - " "PDN context was found for UE " MME_UE_S1AP_ID_FMT" already. "
         "(Assuming PDN connectivity is already established before ULA). "
         "Will update PDN/UE context information and continue with the accept procedure for id " MME_UE_S1AP_ID_FMT "...\n", ue_context->mme_ue_s1ap_id);
+    /** Check the context id of the PDN context. Set it to the correct one. */
+    if(pdn_context->context_identifier == 666){
+      pdn_context_t *pdn_context_removed = RB_REMOVE(PdnContexts, &ue_context->pdn_contexts, pdn_context);
+      if(!pdn_context_removed){
+        OAILOG_ERROR(LOG_MME_APP,  "Could not find pdn context with pid %d for ue_id " MME_UE_S1AP_ID_FMT "! \n",
+            pdn_context->context_identifier, ue_context->mme_ue_s1ap_id);
+        OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+      }
+      pdn_context->context_identifier = apn_config->context_identifier;
+      DevAssert(!RB_INSERT (PdnContexts, &ue_context->pdn_contexts, pdn_context));
+
+    }
     /** Not creating updated bearers. */
     **is_pdn_connectivity = true;
     /** Set the state of the ESM bearer context as ACTIVE (not setting as active if no TAU has followed). */
