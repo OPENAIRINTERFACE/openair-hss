@@ -505,6 +505,8 @@ typedef struct ue_context_s {
   struct mme_app_timer_t       path_switch_req_timer;
   // todo: (2) timers necessary for handover?
   struct mme_app_timer_t       s1ap_handover_req_timer;
+
+  ebi_t                        next_def_ebi_offset;
 } ue_context_t;
 
 

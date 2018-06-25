@@ -584,16 +584,21 @@ int emm_proc_tracking_area_update_request_validity(emm_data_context_t * emm_cont
       emm_sap.u.emm_reg.free_proc = true; /**< Will remove the T3450 timer. */
       emm_sap.u.emm_reg.u.attach.proc   = attach_procedure;
       rc = emm_sap_send (&emm_sap);
+
+      emm_context->emm_cause = EMM_CAUSE_ILLEGAL_UE;
+
       /** Send a TAU-Reject back, removing the new MME_APP UE context, too. */
-      rc = emm_proc_tracking_area_update_reject(attach_procedure->ue_id, EMM_CAUSE_IMPLICITLY_DETACHED); /**< Will remove the contexts for the TAU-Req. */
-//      free_emm_tau_request_ies(&ies);
+      rc = emm_proc_tracking_area_update_reject(new_ue_id, EMM_CAUSE_IMPLICITLY_DETACHED); /**< Will remove the contexts for the TAU-Req. */
+      free_emm_tau_request_ies(&ies);
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
     }else{
       OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - TAU request received for IMSI " IMSI_64_FMT " with mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " while an Attach Procedure is running (Attach Accept/Reject not sent yet). Discarding TAU Request. \n",
           emm_context->_imsi64, emm_context->ue_id);
       /** TAU before ATTACH_ACCEPT sent should be rejected directly. */
-      rc = emm_proc_tracking_area_update_reject(attach_procedure->ue_id, EMM_CAUSE_MSC_NOT_REACHABLE); /**< Will remove the contexts for the TAU-Req. */
-//      free_emm_tau_request_ies(&ies);
+//      rc = emm_proc_tracking_area_update_reject(attach_procedure->ue_id, EMM_CAUSE_MSC_NOT_REACHABLE); /**< Will remove the contexts for the TAU-Req. */
+      if(new_ue_id != emm_context->ue_id)
+        nas_itti_detach_req(new_ue_id);
+      free_emm_tau_request_ies(&ies);
       /** Not touching the ATTACH procedure. */
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
     }
@@ -633,8 +638,10 @@ int emm_proc_tracking_area_update_request_validity(emm_data_context_t * emm_cont
          */
         _emm_tracking_area_update_accept_retx(emm_context); /**< Resend the TAU_ACCEPT with the old EMM context (with old UE IDs). */
         // Clean up new UE context that was created to handle new tau request
-        nas_itti_detach_req(tau_procedure->ue_id);
+        if(new_ue_id != emm_context->ue_id)
+          nas_itti_detach_req(new_ue_id);
         free_emm_tau_request_ies(&ies);
+
         OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Received duplicated TAU Request\n");
         OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
       }
@@ -653,7 +660,7 @@ int emm_proc_tracking_area_update_request_validity(emm_data_context_t * emm_cont
          emm_sap.primitive = EMMREG_TAU_ABORT;
          emm_sap.u.emm_reg.ue_id = tau_procedure->ue_id;
          emm_sap.u.emm_reg.ctx   = emm_context;
-         emm_sap.u.emm_reg.notify= true;
+         emm_sap.u.emm_reg.notify= false;
          emm_sap.u.emm_reg.free_proc = true;
          emm_sap.u.emm_reg.u.tau.proc   = tau_procedure;
          rc = emm_sap_send (&emm_sap);
@@ -668,8 +675,10 @@ int emm_proc_tracking_area_update_request_validity(emm_data_context_t * emm_cont
           * and shall ignore the second TAU REQUEST message.
           */
          // Clean up new UE context that was created to handle new attach request
-         nas_itti_detach_req(tau_procedure->ue_id);
+         if(new_ue_id != emm_context->ue_id)
+           nas_itti_detach_req(new_ue_id);
          free_emm_tau_request_ies(&ies);
+
          OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Received duplicated TAU Request\n");
          OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
        }
@@ -1242,17 +1251,17 @@ static int _emm_tracking_area_update_abort (struct emm_data_context_s *emm_conte
     void * timer_callback_args = NULL;
     nas_stop_T3450(tau_proc->ue_id, &tau_proc->T3450, timer_callback_args);
 
-    /*
-     * TAU only should be aborted. No explicit REJECT has to be sent.
-     * Currently, for _emm_attach_abort() and for _emm_tracking_area_update_abort() we implicitly detach the UE.
-     * todo: should this not be  done with DEREGISTER? (leaving the EMM/Security context)
-     * todo: how to define in NAS_IMPLICIT_DETACH if EMM/Security context should stay or not?
-     */
-    emm_sap_t                               emm_sap = {0};
-
-    emm_sap.primitive = EMMCN_IMPLICIT_DETACH_UE;
-    emm_sap.u.emm_cn.u.emm_cn_implicit_detach.ue_id = emm_context->ue_id;
-    rc = emm_sap_send (&emm_sap);
+//    /*
+//     * TAU only should be aborted. No explicit REJECT has to be sent.
+//     * Currently, for _emm_attach_abort() and for _emm_tracking_area_update_abort() we implicitly detach the UE.
+//     * todo: should this not be  done with DEREGISTER? (leaving the EMM/Security context)
+//     * todo: how to define in NAS_IMPLICIT_DETACH if EMM/Security context should stay or not?
+//     */
+//    emm_sap_t                               emm_sap = {0};
+//
+//    emm_sap.primitive = EMMCN_IMPLICIT_DETACH_UE;
+//    emm_sap.u.emm_cn.u.emm_cn_implicit_detach.ue_id = emm_context->ue_id;
+//    rc = emm_sap_send (&emm_sap);
   }
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
@@ -1496,7 +1505,7 @@ static bool _emm_tracking_area_update_ies_have_changed (mme_ue_s1ap_id_t ue_id, 
   /*
    * UE network capability
    */
-  if (memcmp(&ies1->ue_network_capability, &ies2->ue_network_capability, sizeof(ies1->ue_network_capability))) {
+  if (memcmp(ies1->ue_network_capability, ies2->ue_network_capability, sizeof(*ies1->ue_network_capability))) {
     OAILOG_INFO (LOG_NAS_EMM, "UE " MME_UE_S1AP_ID_FMT" TAU IEs changed: UE network capability\n", ue_id);
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, true);
   }
@@ -1547,15 +1556,16 @@ static int _emm_tau_retry_procedure(emm_data_context_t *emm_context){
     OAILOG_WARNING(LOG_NAS_EMM, "EMM-PROC  - An old EMM context for ue_id=" MME_UE_S1AP_ID_FMT " still existing. Aborting the TAU procedure. \n", tau_proc->emm_spec_proc.old_ue_id);
     rc = _emm_tracking_area_update_reject(tau_proc->ue_id, EMM_CAUSE_ILLEGAL_UE);
 
-    emm_sap_t emm_sap                      = {0};
-    emm_sap.primitive                      = EMMREG_TAU_REJ;
-    emm_sap.u.emm_reg.ue_id                = tau_proc->ue_id;
-    emm_sap.u.emm_reg.ctx                  = emm_context;
-    emm_sap.u.emm_reg.notify               = true;
-    emm_sap.u.emm_reg.free_proc            = true;
-    emm_sap.u.emm_reg.u.attach.proc        = tau_proc;
-    // don't care emm_sap.u.emm_reg.u.tau.is_emergency = false;
-    rc = emm_sap_send (&emm_sap);
+//    emm_sap_t emm_sap                      = {0};
+//    emm_sap.primitive                      = EMMREG_TAU_REJ;
+//    emm_sap.u.emm_reg.ue_id                = tau_proc->ue_id;
+//    emm_sap.u.emm_reg.ctx                  = emm_context;
+//    emm_sap.u.emm_reg.notify               = true;
+//    emm_sap.u.emm_reg.free_proc            = true;
+//    emm_sap.u.emm_reg.u.attach.proc        = tau_proc;
+//    // don't care emm_sap.u.emm_reg.u.tau.is_emergency = false;
+//    rc = emm_sap_send (&emm_sap);
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
   }
   /* Check that no old MME_APP UE context exists. */
   if(duplicate_ue_context){
@@ -1563,15 +1573,16 @@ static int _emm_tau_retry_procedure(emm_data_context_t *emm_context){
     /** Send an attach reject back. */
     rc = _emm_tracking_area_update_reject(tau_proc->ue_id, EMM_CAUSE_ILLEGAL_UE);
 
-    emm_sap_t emm_sap                      = {0};
-    emm_sap.primitive                      = EMMREG_TAU_REJ;
-    emm_sap.u.emm_reg.ue_id                = tau_proc->ue_id;
-    emm_sap.u.emm_reg.ctx                  = emm_context;
-    emm_sap.u.emm_reg.notify               = true;
-    emm_sap.u.emm_reg.free_proc            = true;
-    emm_sap.u.emm_reg.u.attach.proc        = tau_proc;
-    // don't care emm_sap.u.emm_reg.u.attach.is_emergency = false;
-    rc = emm_sap_send (&emm_sap);
+//    emm_sap_t emm_sap                      = {0};
+//    emm_sap.primitive                      = EMMREG_TAU_REJ;
+//    emm_sap.u.emm_reg.ue_id                = tau_proc->ue_id;
+//    emm_sap.u.emm_reg.ctx                  = emm_context;
+//    emm_sap.u.emm_reg.notify               = true;
+//    emm_sap.u.emm_reg.free_proc            = true;
+//    emm_sap.u.emm_reg.u.attach.proc        = tau_proc;
+//    // don't care emm_sap.u.emm_reg.u.attach.is_emergency = false;
+//    rc = emm_sap_send (&emm_sap);
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 
   }
   OAILOG_WARNING(LOG_NAS_EMM, "EMM-PROC  - No old EMM/UE context exists for ue_id=" MME_UE_S1AP_ID_FMT ". Continuing with TAU procedure for new ueId " MME_UE_S1AP_ID_FMT ". \n",
@@ -1941,7 +1952,7 @@ static int _emm_tracking_area_update_failure_authentication_cb (emm_data_context
     tau_proc->emm_cause = emm_context->emm_cause;
 
     // TODO could be in callback of attach procedure triggered by EMMREG_TAU_REJ
-    rc = _emm_tracking_area_update_reject(emm_context, &tau_proc->emm_spec_proc.emm_proc.base_proc);
+    rc = _emm_tracking_area_update_reject(emm_context->ue_id, tau_proc->emm_cause);
 
 //    emm_sap_t emm_sap                      = {0};
 //    emm_sap.primitive                      = EMMREG_TAU_REJ;
@@ -1976,18 +1987,22 @@ static int _emm_start_tracking_area_update_proc_security (emm_data_context_t *em
        */
       OAILOG_WARNING (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT "EMM-PROC  - Failed to initiate security mode control procedure\n", emm_context->ue_id);
       tau_proc->emm_cause = EMM_CAUSE_ILLEGAL_UE;
-      /*
-       * Do not accept the UE to attach to the network
-       */
-      emm_sap_t emm_sap                      = {0};
-      emm_sap.primitive                      = EMMREG_TAU_REJ;
-      emm_sap.u.emm_reg.ue_id                = emm_context->ue_id;
-      emm_sap.u.emm_reg.ctx                  = emm_context;
-      emm_sap.u.emm_reg.notify               = true;
-      emm_sap.u.emm_reg.free_proc            = true;
-      emm_sap.u.emm_reg.u.tau.proc    = tau_proc;
-      // dont care emm_sap.u.emm_reg.u.tau.is_emergency = false;
-      rc = emm_sap_send (&emm_sap);
+//      /*
+//       * Do not accept the UE to attach to the network
+//       */
+//      emm_sap_t emm_sap                      = {0};
+//      emm_sap.primitive                      = EMMREG_TAU_REJ;
+//      emm_sap.u.emm_reg.ue_id                = emm_context->ue_id;
+//      emm_sap.u.emm_reg.ctx                  = emm_context;
+//      emm_sap.u.emm_reg.notify               = true;
+//      emm_sap.u.emm_reg.free_proc            = true;
+//      emm_sap.u.emm_reg.u.tau.proc    = tau_proc;
+//      // dont care emm_sap.u.emm_reg.u.tau.is_emergency = false;
+//      rc = emm_sap_send (&emm_sap);
+
+      rc = _emm_tracking_area_update_reject(tau_proc->ue_id, EMM_CAUSE_ILLEGAL_UE);
+      OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+
     }
   }
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);

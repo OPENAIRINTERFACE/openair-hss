@@ -70,7 +70,7 @@
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
 /****************************************************************************/
-extern int _pdn_connectivity_delete (emm_data_context_t * ctx, int pid);
+extern int _pdn_connectivity_delete (emm_data_context_t * ctx, int pid,   ebi_t     default_ebi);
 /****************************************************************************/
 /*******************  L O C A L    D E F I N I T I O N S  *******************/
 /****************************************************************************/
@@ -173,6 +173,7 @@ esm_sap_send (esm_sap_t * msg)
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   int                                     rc = RETURNerror;
   pdn_cid_t                               pid = MAX_APN_PER_UE;
+  ebi_t                                   ebi = 0;
 
   /*
    * Check the ESM-SAP primitive
@@ -197,10 +198,10 @@ esm_sap_send (esm_sap_t * msg)
     /*
      * PDN connectivity locally failed
      */
-    rc = esm_proc_default_eps_bearer_context_failure (msg->ctx, &pid);
+    rc = esm_proc_default_eps_bearer_context_failure (msg->ctx, &pid, &ebi);
 
     if (rc != RETURNerror) {
-      rc = esm_proc_pdn_connectivity_failure (msg->ctx, pid);
+      rc = esm_proc_pdn_connectivity_failure (msg->ctx, pid, ebi);
     }
 
     break;
@@ -224,12 +225,12 @@ esm_sap_send (esm_sap_t * msg)
 
 
       /** If no local pdn context deletion, directly continue with the NAS/S1AP message. */
-      int pid = esm_proc_pdn_disconnect_request( msg->ctx, PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED, msg->data.pdn_disconnect.default_ebi, &esm_cause);
+      int pid = esm_proc_pdn_disconnect_request( msg->ctx, PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED, msg->data.pdn_disconnect.cid, msg->data.pdn_disconnect.default_ebi, &esm_cause);
       if (pid == RETURNerror) {
         rc = RETURNerror;
       }else{
         /** Delete the PDN connection locally (todo: also might do this together with removing all bearers/default bearer). */
-        proc_tid_t pti = _pdn_connectivity_delete (msg->ctx, msg->data.pdn_disconnect.cid);
+        proc_tid_t pti = _pdn_connectivity_delete (msg->ctx, msg->data.pdn_disconnect.cid, msg->data.pdn_disconnect.default_ebi);
       }
 
 
@@ -253,11 +254,11 @@ esm_sap_send (esm_sap_t * msg)
 
   case ESM_PDN_CONFIG_RES:
     rc = esm_proc_pdn_config_res(msg->ctx,
-        &msg->data.pdn_config_res.is_pdn_connectivity,
+        &msg->data.pdn_config_res.pdn_cid,
         &msg->data.pdn_config_res.is_pdn_connectivity,
         msg->data.pdn_config_res.imsi,
         msg->data.pdn_config_res.apn,
-        &msg->data.pdn_config_res.default_ebi);
+        &msg->data.pdn_config_res.default_ebi, &esm_cause);
     break;
 
   case ESM_PDN_DISCONNECT_REJ:
@@ -407,6 +408,8 @@ _esm_sap_recv (
   /*
    * Decode the received ESM message
    */
+  memset(&esm_msg, 0, sizeof(ESM_msg));
+
   decoder_rc = esm_msg_decode (&esm_msg, (uint8_t *)bdata(req), blength(req));
 
   /*

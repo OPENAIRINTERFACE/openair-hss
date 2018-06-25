@@ -97,13 +97,6 @@ inline int32_t                    mme_app_compare_pdn_context(
     struct pdn_context_s *a,
     struct pdn_context_s *b) {
 
-  /** Compare APN selection. */
-  if(a->apn_subscribed && b->apn_subscribed){
-    int res = bstricmp (a->apn_subscribed, b->apn_subscribed);
-    if(res != 0){
-      return res;
-    }
-  }
 
   /** Check that default ebis not 0. */
   if(a->default_ebi && b->default_ebi){
@@ -113,6 +106,8 @@ inline int32_t                    mme_app_compare_pdn_context(
 
     if (a->default_ebi < b->default_ebi)
       return -1;
+
+    return 0; /**< We found it. */
   }
 
   /** The context identifier may or may not be set. It may also be null. So check it latest. */
@@ -121,6 +116,14 @@ inline int32_t                    mme_app_compare_pdn_context(
 
   if (a->context_identifier < b->context_identifier)
     return -1;
+
+  /** Compare APN selection. */
+  if(a->apn_subscribed && b->apn_subscribed){
+    int res = bstricmp (a->apn_subscribed, b->apn_subscribed);
+//    if(res != 0){
+      return res; /**< If they match, no need to check further. */
+//    }
+  }
 
   /* Compare the APN names. */
 //  return bstricmp (a->apn_in_use, b->apn_in_use);

@@ -70,7 +70,6 @@
 #include "nas_itti_messaging.h" 
 #include "mme_app_defs.h"
 
-
 static void _emm_proc_create_procedure_detach_request(emm_data_context_t * const emm_context, emm_detach_request_ies_t * const ies);
 
 /****************************************************************************/
@@ -192,7 +191,11 @@ emm_proc_detach (
   ue_context_t                           *ue_context  = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, ue_id);
   // todo: review this for implicit detach
   if(!ue_context){
-    OAILOG_ERROR(LOG_NAS_EMM, "EMM-PROC  -  * * * * * NO UE CONTEXT FOUND FOR IMPLICIT DETACH OF UE WITH ueID " MME_UE_S1AP_ID_FMT " and IMSI " IMSI_64_FMT ". \n", emm_context->ue_id, emm_context->_imsi64);
+    if(emm_context){
+      OAILOG_ERROR(LOG_NAS_EMM, "EMM-PROC  -  * * * * * NO UE CONTEXT FOUND FOR IMPLICIT DETACH OF UE WITH ueID " MME_UE_S1AP_ID_FMT " and IMSI " IMSI_64_FMT ". \n", emm_context->ue_id, emm_context->_imsi64);
+    }else{
+      OAILOG_ERROR(LOG_NAS_EMM, "EMM-PROC  -  * * * * * NO EMM CONTEXT FOUND FOR IMPLICIT DETACH OF UE WITH ueID " MME_UE_S1AP_ID_FMT " and IMSI " IMSI_64_FMT ". \n", ue_id, NULL);
+    }
   }
 
   /*

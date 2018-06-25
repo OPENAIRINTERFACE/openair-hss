@@ -260,6 +260,11 @@ mme_app_handle_nas_pdn_connectivity_req (
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
 
+  if(nas_pdn_connectivity_req_pP->default_ebi == 6){
+    pdn_context_t *pdn_context_test = NULL;
+    mme_app_get_pdn_context(ue_context, nas_pdn_connectivity_req_pP->pdn_cid, nas_pdn_connectivity_req_pP->default_ebi, NULL, &pdn_context_test);
+    DevAssert(pdn_context_test);
+  }
   // todo: get target_tai or so from ue_context!!
   rc = mme_app_send_s11_create_session_req (ue_context, &nas_pdn_connectivity_req_pP->_imsi, pdn_context, &emm_context->originating_tai);
 
@@ -1617,7 +1622,7 @@ void mme_app_handle_e_rab_setup_rsp (itti_s1ap_e_rab_setup_rsp_t  * const e_rab_
 //  if(ue_context->mm_state == UE_REGISTERED){
     /** Send Modify Bearer Request for the APN. */
     pdn_context_t * pdn_context = NULL;
-    mme_app_get_pdn_context(ue_context, bearer_context_to_setup->pdn_cx_id, EPS_BEARER_IDENTITY_UNASSIGNED, NULL, &pdn_context);
+    mme_app_get_pdn_context(ue_context, bearer_context_to_setup->pdn_cx_id, bearer_context_to_setup->ebi, NULL, &pdn_context);
     mme_app_send_s11_modify_bearer_req(ue_context, pdn_context);
     // todo: check Modify bearer request
 //  }else{

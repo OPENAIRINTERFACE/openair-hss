@@ -69,7 +69,9 @@ void mme_app_free_pdn_context (pdn_context_t ** const pdn_context)
     free_protocol_configuration_options(&(*pdn_context)->pco);
   }
   // todo: free PAA
-  free_wrapper((void**)&((*pdn_context)->paa));
+  if((*pdn_context)->paa){
+    free_wrapper((void**)&((*pdn_context)->paa));
+  }
 
   memset(&(*pdn_context)->esm_data, 0, sizeof((*pdn_context)->esm_data));
 
@@ -166,6 +168,9 @@ pdn_context_t *  mme_app_create_pdn_context(ue_context_t * const ue_context, con
   if (apn_configuration) {
     mme_app_pdn_context_init(ue_context, pdn_context);
 
+    pdn_context->default_ebi            = 5 + ue_context->next_def_ebi_offset;
+    ue_context->next_def_ebi_offset++;
+
     pdn_context->context_identifier     = apn_configuration->context_identifier;
     pdn_context->pdn_type               = apn_configuration->pdn_type;
     if (apn_configuration->nb_ip_address) {
@@ -189,7 +194,7 @@ pdn_context_t *  mme_app_create_pdn_context(ue_context_t * const ue_context, con
 
   }
   pdn_context->is_active = true;
-  pdn_context->default_ebi = EPS_BEARER_IDENTITY_UNASSIGNED;
+//  pdn_context->default_ebi = EPS_BEARER_IDENTITY_UNASSIGNED;
   // TODO pdn_context->apn_in_use     =
   /** Insert the PDN context into the map of PDN contexts. */
   DevAssert(!RB_INSERT (PdnContexts, &ue_context->pdn_contexts, pdn_context));

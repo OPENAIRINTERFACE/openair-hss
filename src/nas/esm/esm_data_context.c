@@ -55,11 +55,14 @@
 #include "networkDef.h"
 #include "log.h"
 #include "esm_ebr_context.h"
+
 #include "dynamic_memory_check.h"
 
 #include "common_defs.h"
+
 #include "mme_app_ue_context.h"
 #include "mme_config.h"
+#include "esm_proc.h"
 
 
 // free allocated structs
@@ -137,6 +140,12 @@ void free_esm_context_content(esm_context_t * esm_ctx)
 {
   if (esm_ctx) {
     nas_stop_T3489(esm_ctx);
+    /** Delete the ESM context. */
+    if(esm_ctx->esm_proc_data){
+      bdestroy_wrapper(&esm_ctx->esm_proc_data->apn);
+      bdestroy_wrapper(&esm_ctx->esm_proc_data->pdn_addr);
+      free_wrapper((void **) &esm_ctx->esm_proc_data);
+    }
   }
 }
 

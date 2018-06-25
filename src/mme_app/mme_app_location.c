@@ -110,7 +110,9 @@ int mme_app_handle_s6a_update_location_ans (
   MessageDef                             *message_p = NULL;
   itti_nas_pdn_config_rsp_t              *nas_pdn_config_rsp = NULL;
   uint64_t                                imsi64 = 0;
-  struct ue_context_s                    *ue_context = NULL;
+  struct ue_context_s                    *ue_context  = NULL;
+  struct emm_data_context_s              *emm_context = NULL;
+  struct apn_configuration_s             *apn_config  = NULL;
   int                                     rc = RETURNok;
 
   DevAssert (ula_pP );
@@ -121,6 +123,12 @@ int mme_app_handle_s6a_update_location_ans (
   if ((ue_context = mme_ue_context_exists_imsi (&mme_app_desc.mme_ue_contexts, imsi64)) == NULL) {
     OAILOG_ERROR (LOG_MME_APP, "That's embarrassing as we don't know this IMSI\n");
     MSC_LOG_EVENT (MSC_MMEAPP_MME, "0 S6A_UPDATE_LOCATION unknown imsi " IMSI_64_FMT" ", imsi64);
+    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+  }
+
+  /** Recheck that the EMM Data Context is found by the IMSI. */
+  if ((emm_context = emm_data_context_get_by_imsi(&_emm_data, imsi64)) == NULL) {
+    OAILOG_ERROR (LOG_MME_APP, "That's embarrassing as we don't know this IMSI " IMSI_64_FMT " for the EMM Data Context. \n", imsi64);
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
 
@@ -158,9 +166,13 @@ int mme_app_handle_s6a_update_location_ans (
   ue_context->network_access_mode = ula_pP->subscription_data.access_mode;
   memcpy (&ue_context->apn_config_profile, &ula_pP->subscription_data.apn_config_profile, sizeof (apn_config_profile_t));
 
+  /*
+   * Check that the all the established PDN Context exists (handover).
+   * todo: detach the PDNs which don't have a subscription.
+   */
   pdn_context_t * first_pdn = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
   if(first_pdn){
-    struct apn_configuration_s* apn_config = mme_app_select_apn(ue_context, first_pdn->apn_subscribed);
+    apn_config = mme_app_select_apn(ue_context, first_pdn->apn_subscribed);
     DevAssert(apn_config);
   }
 

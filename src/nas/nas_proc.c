@@ -384,6 +384,7 @@ nas_proc_authentication_info_answer (
     DevCheck(aia->auth_info.nb_of_vectors > 0, aia->auth_info.nb_of_vectors, 1, 0);
 
     OAILOG_DEBUG (LOG_NAS_EMM, "INFORMING NAS ABOUT AUTH RESP SUCCESS got %u vector(s)\n", aia->auth_info.nb_of_vectors);
+
     rc = nas_proc_auth_param_res (ctxt->ue_id, aia->auth_info.nb_of_vectors, aia->auth_info.eutran_vector);
   } else {
     OAILOG_ERROR (LOG_NAS_EMM, "INFORMING NAS ABOUT AUTH RESP ERROR CODE\n");
@@ -473,6 +474,7 @@ nas_proc_pdn_config_res (
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
   emm_sap_t                               emm_sap = {0};
+  emm_data_context_t                     *emm_context = NULL;
 
   emm_sap.primitive = EMMCN_PDN_CONFIG_RES;
   emm_sap.u.emm_cn.u.emm_cn_pdn_config_res = emm_cn_pdn_config_res;

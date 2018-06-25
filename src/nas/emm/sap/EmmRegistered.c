@@ -150,10 +150,10 @@ EmmRegistered (
     nas_delete_attach_procedure(emm_ctx);
     break;
 
-  case _EMMREG_ATTACH_ABORT:
-    OAILOG_ERROR (LOG_NAS_EMM, "EMM-FSM state EMM_REGISTERED - Primitive _EMMREG_ATTACH_ABORT is not valid\n");
-    MSC_LOG_RX_DISCARDED_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "_EMMREG_ATTACH_ABORT ue id " MME_UE_S1AP_ID_FMT " ", evt->ue_id);
-    break;
+//  case _EMMREG_ATTACH_ABORT:
+//    OAILOG_ERROR (LOG_NAS_EMM, "EMM-FSM state EMM_REGISTERED - Primitive _EMMREG_ATTACH_ABORT is not valid\n");
+//    MSC_LOG_RX_DISCARDED_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "_EMMREG_ATTACH_ABORT ue id " MME_UE_S1AP_ID_FMT " ", evt->ue_id);
+//    break;
 
   case _EMMREG_DETACH_INIT:
     OAILOG_ERROR (LOG_NAS_EMM, "EMM-FSM state EMM_REGISTERED - Primitive _EMMREG_DETACH_INIT is not valid\n");

@@ -34,6 +34,9 @@
 #include "TLVDecoder.h"
 #include "PdnConnectivityRequest.h"
 
+
+#include "assertions.h"
+
 int
 decode_pdn_connectivity_request (
   pdn_connectivity_request_msg * pdn_connectivity_request,
@@ -79,6 +82,7 @@ decode_pdn_connectivity_request (
        * Set corresponding mask to 1 in presencemask
        */
       pdn_connectivity_request->presencemask |= PDN_CONNECTIVITY_REQUEST_ESM_INFORMATION_TRANSFER_FLAG_PRESENT;
+
       break;
 
     case PDN_CONNECTIVITY_REQUEST_ACCESS_POINT_NAME_IEI:
@@ -90,6 +94,7 @@ decode_pdn_connectivity_request (
        * Set corresponding mask to 1 in presencemask
        */
       pdn_connectivity_request->presencemask |= PDN_CONNECTIVITY_REQUEST_ACCESS_POINT_NAME_PRESENT;
+
       break;
 
     case PDN_CONNECTIVITY_REQUEST_PROTOCOL_CONFIGURATION_OPTIONS_IEI:
@@ -101,6 +106,7 @@ decode_pdn_connectivity_request (
        * Set corresponding mask to 1 in presencemask
        */
       pdn_connectivity_request->presencemask |= PDN_CONNECTIVITY_REQUEST_PROTOCOL_CONFIGURATION_OPTIONS_PRESENT;
+
       break;
     
     case PDN_CONNECTIVITY_REQUEST_DEVICE_PROPERTIES_IEI:
@@ -108,6 +114,7 @@ decode_pdn_connectivity_request (
       // Skip this IE. Not supported. It is relevant for delay tolerant devices such as IoT devices.
       OAILOG_INFO (LOG_NAS_ESM, "ESM-MSG - Device Properties IE in PDN Connectivity Request is not supported. Skipping this IE. IE = %x\n", ieiDecoded);
       decoded +=1; // Device Properties is 1 byte
+
       break;
       
     default:
@@ -115,7 +122,6 @@ decode_pdn_connectivity_request (
       return TLV_UNEXPECTED_IEI;
     }
   }
-
   return decoded;
 }
 

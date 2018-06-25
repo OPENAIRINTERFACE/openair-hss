@@ -213,6 +213,8 @@ esm_recv_pdn_connectivity_request (
     // todo: why not checking if another ESM procedure is running?
     // todo: timers will be reset like in EMM procedures?
     emm_context->esm_ctx.esm_proc_data  = (esm_proc_data_t *) calloc(1, sizeof(*emm_context->esm_ctx.esm_proc_data));
+  }else{
+    OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - ESM Proc Data was existing!" "(ue_id=%d)\n", emm_context->ue_id);
   }
 
   struct esm_proc_data_s * esm_data = emm_context->esm_ctx.esm_proc_data;
@@ -409,7 +411,7 @@ esm_recv_pdn_connectivity_request (
             &new_pdn_context);
 
     pdn_context_t *pdn_ctx_p1 = NULL;
-    mme_app_get_pdn_context(ue_context, apn_config->context_identifier, ESM_EBI_UNASSIGNED, emm_context->esm_ctx.esm_proc_data->apn, &pdn_ctx_p1);
+    mme_app_get_pdn_context(ue_context, apn_config->context_identifier, ue_context->next_def_ebi_offset + 5 - 1, emm_context->esm_ctx.esm_proc_data->apn, &pdn_ctx_p1);
     DevAssert(pdn_ctx_p1);
 
     // todo: optimize this
@@ -418,7 +420,7 @@ esm_recv_pdn_connectivity_request (
         /*
          * Create local default EPS bearer context
          */
-        if ((!is_pdn_connectivity) || ((is_pdn_connectivity) && (EPS_BEARER_IDENTITY_UNASSIGNED == new_pdn_context->default_ebi))) {
+        if ((!is_pdn_connectivity) || ((is_pdn_connectivity) /*&& (EPS_BEARER_IDENTITY_UNASSIGNED == new_pdn_context->default_ebi)*/)) {
           rc = esm_proc_default_eps_bearer_context (emm_context, emm_context->esm_ctx.esm_proc_data->pti, new_pdn_context, emm_context->esm_ctx.esm_proc_data->apn, &new_ebi, emm_context->esm_ctx.esm_proc_data->bearer_qos.qci, &esm_cause);
         }
         // todo: if the bearer already exist, we may modify the qos parameters with Modify_Bearer_Request!
@@ -505,7 +507,7 @@ esm_recv_pdn_disconnect_request (
    * Triggering a Delete Session Request for the PDN.
    *
    */
-  int pid = esm_proc_pdn_disconnect_request (emm_context, pti, *linked_ebi, &esm_cause);
+  int pid = esm_proc_pdn_disconnect_request (emm_context, pti, 0, *linked_ebi, &esm_cause);
 
   if (pid != RETURNerror) {
     /*
@@ -574,9 +576,15 @@ esm_cause_t esm_recv_information_response (
   /*
    * Execute the PDN disconnect procedure requested by the UE
    */
+
   int pid = esm_proc_esm_information_response (emm_context, pti, msg->accesspointname, &msg->protocolconfigurationoptions, &esm_cause);
 
   if (pid != RETURNerror) {
+
+
+    emm_data_context_t * emm_context_test = emm_data_context_get_by_imsi (&_emm_data, emm_context->_imsi64);
+    DevAssert(emm_context_test);
+
 
     // Continue with pdn connectivity request
     nas_itti_pdn_config_req(ue_id, &emm_context->_imsi, emm_context->esm_ctx.esm_proc_data, emm_context->esm_ctx.esm_proc_data->request_type);
@@ -969,7 +977,7 @@ esm_recv_deactivate_eps_bearer_context_accept (
      * Check if it was the default ebi. If so, release the pdn context.
      * If not, respond with a delete bearer response back. Keep the UE context and PDN context as valid.
      */
-    mme_app_get_pdn_context(ue_context, pid, ESM_EBI_UNASSIGNED, NULL, &pdn_context);
+    mme_app_get_pdn_context(ue_context, pid, ebi, NULL, &pdn_context);
     if(!pdn_context){
       OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - No PDN context could be found. (pid=%d)\n", pid);
       OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY);
@@ -977,7 +985,7 @@ esm_recv_deactivate_eps_bearer_context_accept (
     int rc = RETURNerror;
     if(!pdn_context->is_active){
       OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - We released  the default EBI. Deregistering the PDN context. (ebi=%d,pid=%d)\n", ebi,pid);
-      rc = esm_proc_pdn_disconnect_accept (emm_context, pid, &esm_cause); /**< Delete Session Request is already sent at the beginning. We don't care for the response. */
+      rc = esm_proc_pdn_disconnect_accept (emm_context, pid, ebi, &esm_cause); /**< Delete Session Request is already sent at the beginning. We don't care for the response. */
     }else{
       OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - We released  the dedicated EBI. Responding with delete bearer response back. (ebi=%d,pid=%d)\n", ebi,pid);
       nas_itti_dedicated_eps_bearer_deactivation_complete(emm_context->ue_id, pdn_context->default_ebi, pdn_context->context_identifier, ebi);

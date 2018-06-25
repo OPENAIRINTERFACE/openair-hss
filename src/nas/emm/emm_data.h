@@ -203,13 +203,12 @@ typedef struct emm_data_context_s {
                                                         security context does not contain an EPS AS security context. A non-current EPS security context is either of type 'full
                                                         native' or of type 'partial native'.     */
 
-  int                      emm_cause;    /* EMM failure cause code                          */
+  int                      emm_cause;                /* EMM failure cause code                          */
 
   emm_fsm_state_t          _emm_fsm_state;
 
 
   struct esm_context_s     esm_ctx;
-
 
 //  ue_network_capability_t  tau_ue_network_capability;         /* stored TAU Request IE Requirement MME24.301R10_5.5.3.2.4_4*/
 //  ms_network_capability_t  tau_ms_network_capability;         /* stored TAU Request IE Requirement MME24.301R10_5.5.3.2.4_4*/

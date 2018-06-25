@@ -117,6 +117,9 @@ static int                              _esm_msg_encode_header (
  **    Others:  None                                       **
  **                                                                        **
  ***************************************************************************/
+
+#include "assertions.h"
+
 int
 esm_msg_decode (
   ESM_msg * msg,

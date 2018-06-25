@@ -74,7 +74,7 @@
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
 /****************************************************************************/
 
-extern int _pdn_connectivity_delete (emm_data_context_t * emm_context, pdn_cid_t pid);
+extern int _pdn_connectivity_delete (emm_data_context_t * emm_context, pdn_cid_t pid, ebi_t default_ebi);
 
 /****************************************************************************/
 /*******************  L O C A L    D E F I N I T I O N S  *******************/
@@ -131,6 +131,7 @@ int
 esm_proc_pdn_disconnect_request (
   emm_data_context_t * emm_context,
   proc_tid_t pti,
+  pdn_cid_t  pdn_cid,
   ebi_t default_ebi,
   esm_cause_t *esm_cause)
 {
@@ -154,15 +155,13 @@ esm_proc_pdn_disconnect_request (
   ue_context_t                        *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
   DevAssert(ue_context);
 
-  pdn_cid_t pdn_cx_id = 0;
-
   bearer_context_t * bearer_context_to_deactivate = NULL;
   mme_app_get_session_bearer_context_from_all(ue_context, default_ebi, &bearer_context_to_deactivate); /**< Might be locally removed. */
   if(bearer_context_to_deactivate){
-    pdn_cx_id = bearer_context_to_deactivate->pdn_cx_id;
+    pdn_cid_t pdn_cx_id = bearer_context_to_deactivate->pdn_cx_id;
     mme_app_get_pdn_context(ue_context, pdn_cx_id, default_ebi, NULL, &pdn_context);
- }else{
-    mme_app_get_pdn_context(ue_context, 0, default_ebi, NULL, &pdn_context);
+  }else{
+    mme_app_get_pdn_context(ue_context, pdn_cid, default_ebi, NULL, &pdn_context);
   }
 
   if(!pdn_context || pdn_context->context_identifier >= MAX_APN_PER_UE){
@@ -234,6 +233,7 @@ int
 esm_proc_pdn_disconnect_accept (
   emm_data_context_t * emm_context,
   pdn_cid_t pid,
+  ebi_t     default_ebi,
   esm_cause_t *esm_cause)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
@@ -248,7 +248,7 @@ esm_proc_pdn_disconnect_accept (
     /*
      * Delete the PDN connection entry
      */
-    proc_tid_t                            pti = _pdn_connectivity_delete (emm_context, pid);
+    proc_tid_t                            pti = _pdn_connectivity_delete (emm_context, pid, default_ebi);
 
     if (pti != ESM_PT_UNASSIGNED) {
       OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);

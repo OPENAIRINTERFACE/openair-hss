@@ -403,7 +403,7 @@ esm_proc_default_eps_bearer_context_reject (
  **      Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
-int esm_proc_default_eps_bearer_context_failure (emm_data_context_t * emm_context, pdn_cid_t * const pid)
+int esm_proc_default_eps_bearer_context_failure (emm_data_context_t * emm_context, pdn_cid_t * const pid, ebi_t *ebi)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   int                                     rc = RETURNerror;
@@ -421,15 +421,15 @@ int esm_proc_default_eps_bearer_context_failure (emm_data_context_t * emm_contex
    * Get the EPS bearer identity of the EPS bearer context which is still
    * * * * pending in the active pending state
    */
-  ebi_t                                     ebi = esm_ebr_get_pending_ebi (emm_context, ESM_EBR_ACTIVE_PENDING);
+  *ebi = esm_ebr_get_pending_ebi (emm_context, ESM_EBR_ACTIVE_PENDING);
 
-  if (ebi != ESM_EBI_UNASSIGNED) {
+  if (*ebi != ESM_EBI_UNASSIGNED) {
     int                                  bid = BEARERS_PER_UE;
 
     /*
      * Release the default EPS bearer context and enter state INACTIVE
      */
-    rc = esm_proc_eps_bearer_context_deactivate (emm_context, true, ebi, *pid, NULL);
+    rc = esm_proc_eps_bearer_context_deactivate (emm_context, true, *ebi, *pid, NULL);
   }
 
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);

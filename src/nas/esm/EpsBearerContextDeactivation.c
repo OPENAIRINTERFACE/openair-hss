@@ -156,7 +156,7 @@ esm_proc_eps_bearer_context_deactivate (
   DevAssert(ue_context);
 
   /** Get the PDN Context. */
-  mme_app_get_pdn_context(ue_context, pdn_context, ESM_EBI_UNASSIGNED, NULL, &pdn_context);
+  mme_app_get_pdn_context(ue_context, pid, ESM_EBI_UNASSIGNED, NULL, &pdn_context);
   DevAssert(pdn_context);
 
   OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - EPS default bearer context deactivation " "(ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d)\n", ue_context->mme_ue_s1ap_id, ebi);

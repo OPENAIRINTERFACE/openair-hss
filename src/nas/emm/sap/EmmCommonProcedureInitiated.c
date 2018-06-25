@@ -317,8 +317,18 @@ int EmmCommonProcedureInitiated (emm_reg_t * const evt)
     break;
 
   case _EMMREG_TAU_REJ:
-    OAILOG_ERROR (LOG_NAS_EMM, "EMM-FSM state EMM_COMMON_PROCEDURE_INITIATED - Primitive _EMMREG_TAU_REJ is not valid\n");
-    MSC_LOG_RX_DISCARDED_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "_EMMREG_TAU_REJ ue id " MME_UE_S1AP_ID_FMT " ", evt->ue_id);
+    MSC_LOG_RX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "_EMMREG_TAU_REJ ue id " MME_UE_S1AP_ID_FMT " ", evt->ue_id);
+
+    if ((emm_ctx) && (evt->u.tau.proc) && (evt->u.tau.proc->emm_spec_proc.emm_proc.base_proc.fail_out)) {
+      rc = (*evt->u.tau.proc->emm_spec_proc.emm_proc.base_proc.fail_out)(emm_ctx, &evt->u.tau.proc->emm_spec_proc.emm_proc.base_proc);
+    }
+
+    if ((emm_ctx) && (evt->notify) && (evt->u.tau.proc) && (evt->u.tau.proc->emm_spec_proc.emm_proc.base_proc.failure_notif)) {
+      rc = (*evt->u.tau.proc->emm_spec_proc.emm_proc.base_proc.failure_notif)(emm_ctx);
+    }
+    if (evt->free_proc) {
+      nas_delete_tau_procedure(emm_ctx);
+    }
     break;
 
   case _EMMREG_TAU_ABORT:
