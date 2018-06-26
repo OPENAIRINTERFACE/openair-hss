@@ -366,10 +366,10 @@ mme_app_s10_proc_mme_handover_t* mme_app_create_s10_procedure_mme_handover(ue_co
      */
     s10_proc_mme_handover->proc.proc.time_out = mme_app_handle_mobility_completion_timer_expiry;
     mme_config_read_lock (&mme_config);
-    if (timer_setup (mme_config.mme_mobility_completion_timer * 12, 0,
+    if (timer_setup (mme_config.mme_mobility_completion_timer * 1, 0,
         TASK_MME_APP, INSTANCE_DEFAULT, TIMER_ONE_SHOT, (void *) &(ue_context->mme_ue_s1ap_id), &(s10_proc_mme_handover->proc.timer.id)) < 0) {
       OAILOG_ERROR (LOG_MME_APP, "Failed to start the MME Mobility Completion timer for UE id " MME_UE_S1AP_ID_FMT " for duration %d \n", ue_context->mme_ue_s1ap_id,
-          (mme_config.mme_mobility_completion_timer * 12));
+          (mme_config.mme_mobility_completion_timer * 1));
       s10_proc_mme_handover->proc.timer.id = MME_APP_TIMER_INACTIVE_ID;
       /**
        * UE will be implicitly detached, if this timer runs out. It should be manually removed.
@@ -378,7 +378,7 @@ mme_app_s10_proc_mme_handover_t* mme_app_create_s10_procedure_mme_handover(ue_co
     } else {
       OAILOG_DEBUG (LOG_MME_APP, "MME APP : Activated the MME Mobility Completion timer for the source MME for UE id  " MME_UE_S1AP_ID_FMT ". "
           "Waiting for UE to go back from IDLE mode to ACTIVE mode.. Timer Id %u. Timer duration %d \n",
-          ue_context->mme_ue_s1ap_id, s10_proc_mme_handover->proc.timer.id, (mme_config.mme_mobility_completion_timer * 12));
+          ue_context->mme_ue_s1ap_id, s10_proc_mme_handover->proc.timer.id, (mme_config.mme_mobility_completion_timer * 1));
       /** Upon expiration, invalidate the timer.. no flag needed. */
     }
     mme_config_unlock (&mme_config);

@@ -2186,7 +2186,8 @@ pdn_context_t * mme_app_handle_pdn_connectivity_from_s10(ue_context_t *ue_contex
   }
 
   pdn_context_t * pdn_test = NULL;
-  mme_app_get_pdn_context(ue_context, 0, 0, pdn_connection->apn_str, &pdn_test);
+  mme_app_get_pdn_context(ue_context, ue_context->next_def_ebi_offset + PDN_CONTEXT_IDENTIFIER_UNASSIGNED - 1, ue_context->next_def_ebi_offset + 5 -1 , pdn_connection->apn_str, &pdn_test);
+  DevAssert(pdn_test);
 
   /*
    * Will update the PDN context with the PCOs received from the SAE-GW.
@@ -2226,9 +2227,6 @@ pdn_context_t * mme_app_handle_pdn_connectivity_from_s10(ue_context_t *ue_contex
 
   /** Just set it temporarily to the UE, too. */
   ue_context->subscribed_ue_ambr = pdn_connection->apn_ambr;
-
-  OAILOG_DEBUG (LOG_MME_APP, "\t- @}---}-- HANDLING_PDN_CONNECTIVITY: AMBR DL %" PRIu64 "\n", ue_context->subscribed_ue_ambr.br_dl);
-  OAILOG_DEBUG (LOG_MME_APP, "\t- @}---}-- HANDLING_PDN_CONNECTIVITY: AMBR UL %" PRIu64 "\n", ue_context->subscribed_ue_ambr.br_ul);
 
   for (int num_bearer = 0; num_bearer < pdn_connection->bearer_context_list.num_bearer_context; num_bearer++){
     bearer_context_to_be_created_t * bearer_context_to_be_created_s10 = &pdn_connection->bearer_context_list.bearer_contexts[num_bearer];

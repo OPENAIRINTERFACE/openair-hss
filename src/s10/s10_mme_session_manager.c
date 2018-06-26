@@ -232,9 +232,13 @@ s10_mme_forward_relocation_request (
 
    DevAssert( NW_OK == rc );
 
+   DevAssert (0 <= req_p->pdn_connections->num_pdn_connections);
+   DevAssert(MSG_FORWARD_RELOCATION_REQUEST_MAX_PDN_CONNECTIONS >= req_p->pdn_connections->num_pdn_connections);
 
-//  s10_serving_network_ie_set (&(ulp_req.hMsg), &req_p->serving_network);
-   s10_pdn_connection_ie_set (&(ulp_req.hMsg), req_p->pdn_connections);
+   for(int num_pdn= 0; num_pdn < req_p->pdn_connections->num_pdn_connections; num_pdn++){
+     pdn_connection_t * pdn_connection = &req_p->pdn_connections->pdn_connection[num_pdn];
+     s10_pdn_connection_ie_set (&(ulp_req.hMsg), pdn_connection);
+   }
 
   /**
    * Set the MM EPS UE Context.
@@ -318,8 +322,8 @@ s10_mme_handle_forward_relocation_request(
    * todo: multiple pdn connection IEs can exist with instance 0.
    */
   req_p->pdn_connections = calloc(1, sizeof(mme_ue_eps_pdn_connections_t));
-  rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_PDN_CONNECTION, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_MANDATORY,
-       s10_pdn_connection_ie_get, req_p->pdn_connections);
+  rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_PDN_CONNECTION, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
+       s10_pdn_connections_ie_get, req_p->pdn_connections);
   DevAssert (NW_OK == rc);
 
   /*
@@ -1173,76 +1177,80 @@ s10_mme_context_response (
     nw_gtpv2c_stack_handle_t *stack_p,
     itti_s10_context_response_t *rsp_p)
 {
-  nw_gtpv2c_ulp_api_t                         ulp_req;
-  nw_rc_t                                   rc;
-  uint8_t                                 restart_counter = 0;
+  nw_gtpv2c_ulp_api_t                         ulp_rsp;
+  nw_rc_t                                     rc;
+  uint8_t                                     restart_counter = 0;
   nw_gtpv2c_trxn_handle_t                     trxn;
-  gtpv2c_cause_t                             cause;
+  gtpv2c_cause_t                              cause;
 
   DevAssert (rsp_p );
   DevAssert (stack_p );
-  memset (&ulp_req, 0, sizeof (nw_gtpv2c_ulp_api_t));
+  memset (&ulp_rsp, 0, sizeof (nw_gtpv2c_ulp_api_t));
   memset (&cause, 0, sizeof (gtpv2c_cause_t));
 
   trxn = (nw_gtpv2c_trxn_handle_t) rsp_p->trxn;
   DevAssert (trxn);
 
-
   /**
    * Prepare a context response to send to target MME.
    */
-  ulp_req.apiType = NW_GTPV2C_ULP_API_TRIGGERED_RSP;
-  ulp_req.u_api_info.triggeredRspInfo.hTrxn = trxn;
-  ulp_req.u_api_info.triggeredRspInfo.teidLocal = rsp_p->s10_source_mme_teid.teid;
-  ulp_req.u_api_info.triggeredRspInfo.hUlpTunnel = 0;
-  ulp_req.u_api_info.triggeredRspInfo.hTunnel    = 0;
+  ulp_rsp.apiType = NW_GTPV2C_ULP_API_TRIGGERED_RSP;
+  ulp_rsp.u_api_info.triggeredRspInfo.hTrxn = trxn;
+  ulp_rsp.u_api_info.triggeredRspInfo.teidLocal = rsp_p->s10_source_mme_teid.teid;
+  ulp_rsp.u_api_info.triggeredRspInfo.hUlpTunnel = 0;
+  ulp_rsp.u_api_info.triggeredRspInfo.hTunnel    = 0;
 
   /**
    * Create a tunnel for the GTPv2-C stack if its a positive response.
    */
   if(rsp_p->cause.cause_value == REQUEST_ACCEPTED){
-    ulp_req.apiType |= NW_GTPV2C_ULP_API_FLAG_CREATE_LOCAL_TUNNEL;
+    ulp_rsp.apiType |= NW_GTPV2C_ULP_API_FLAG_CREATE_LOCAL_TUNNEL;
   }else{
     OAILOG_WARNING (LOG_S10, "The cause is not REQUEST_ACCEPTED but %d for S10_CONTEXT_RESPONSE. "
         "Not creating a local S10 Tunnel @ triggered response! \n", rsp_p->cause);
   }
 
-  rc = nwGtpv2cMsgNew (*stack_p, true, NW_GTP_CONTEXT_RSP, 0, 0, &(ulp_req.hMsg));
+  rc = nwGtpv2cMsgNew (*stack_p, true, NW_GTP_CONTEXT_RSP, 0, 0, &(ulp_rsp.hMsg));
   DevAssert (NW_OK == rc);
   /*
    * Set the destination TEID
    */
-  rc = nwGtpv2cMsgSetTeid (ulp_req.hMsg, rsp_p->teid);
+  rc = nwGtpv2cMsgSetTeid (ulp_rsp.hMsg, rsp_p->teid);
   DevAssert (NW_OK == rc);
 
   /** Add the S10 Cause : Not setting offending IE type now. */
-  rc = nwGtpv2cMsgAddIeCause((ulp_req.hMsg), 0, rsp_p->cause.cause_value, 0, 0, 0);
+  rc = nwGtpv2cMsgAddIeCause((ulp_rsp.hMsg), 0, rsp_p->cause.cause_value, 0, 0, 0);
   DevAssert( NW_OK == rc );
 
   if(rsp_p->cause.cause_value == REQUEST_ACCEPTED){
     /** Add the S10 source-MME FTEID. */
-    rc = nwGtpv2cMsgAddIeFteid ((ulp_req.hMsg), NW_GTPV2C_IE_INSTANCE_ZERO, S10_MME_GTP_C,
+    rc = nwGtpv2cMsgAddIeFteid ((ulp_rsp.hMsg), NW_GTPV2C_IE_INSTANCE_ZERO, S10_MME_GTP_C,
         rsp_p->s10_source_mme_teid.teid, /**< FTEID of the TARGET_MME. */
         rsp_p->s10_source_mme_teid.ipv4 ? &rsp_p->s10_source_mme_teid.ipv4_address : 0,
             rsp_p->s10_source_mme_teid.ipv6 ? &rsp_p->s10_source_mme_teid.ipv6_address : NULL);
 
     /** Add the S10 source-MME SAE-GW FTEID. */
-    rc = nwGtpv2cMsgAddIeFteid ((ulp_req.hMsg), NW_GTPV2C_IE_INSTANCE_ONE, S11_SGW_GTP_C,
+    rc = nwGtpv2cMsgAddIeFteid ((ulp_rsp.hMsg), NW_GTPV2C_IE_INSTANCE_ONE, S11_SGW_GTP_C,
         rsp_p->s11_sgw_teid.teid, /**< FTEID of the TARGET_MME. */
         rsp_p->s11_sgw_teid.ipv4 ? &rsp_p->s11_sgw_teid.ipv4_address : 0,
             rsp_p->s11_sgw_teid.ipv6 ? &rsp_p->s11_sgw_teid.ipv6_address : NULL);
     DevAssert (NW_OK == rc);
 
     /** IMSI. */
-    gtpv2c_imsi_ie_set (&(ulp_req.hMsg), &rsp_p->imsi);
+    gtpv2c_imsi_ie_set (&(ulp_rsp.hMsg), &rsp_p->imsi);
 
     /** PDN Connection IE. */
-    s10_pdn_connection_ie_set (&(ulp_req.hMsg), rsp_p->pdn_connections);
+    DevAssert (0 <= rsp_p->pdn_connections->num_pdn_connections);
+    DevAssert(MSG_FORWARD_RELOCATION_REQUEST_MAX_PDN_CONNECTIONS >= rsp_p->pdn_connections->num_pdn_connections);
+    for(int num_pdn= 0; num_pdn < rsp_p->pdn_connections->num_pdn_connections; num_pdn++){
+      pdn_connection_t * pdn_connection = &rsp_p->pdn_connections->pdn_connection[num_pdn];
+      s10_pdn_connection_ie_set (&(ulp_rsp.hMsg), pdn_connection);
+    }
 
     /** Set the MM EPS UE Context. */
-    s10_ue_mm_eps_context_ie_set(&(ulp_req.hMsg), rsp_p->ue_eps_mm_context);
+    s10_ue_mm_eps_context_ie_set(&(ulp_rsp.hMsg), rsp_p->ue_eps_mm_context);
   }
-  rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
+  rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_rsp);
   DevAssert (NW_OK == rc);
 
   /**
@@ -1250,10 +1258,10 @@ s10_mme_context_response (
    */
   if(rsp_p->cause.cause_value == REQUEST_ACCEPTED){
     hashtable_rc_t hash_rc = hashtable_ts_insert(s10_mme_teid_2_gtv2c_teid_handle, /**< Directly register the created tunnel. */
-        (hash_key_t) ulp_req.u_api_info.createLocalTunnelInfo.teidLocal,
-        (void *)ulp_req.u_api_info.createLocalTunnelInfo.hTunnel); /**< Just store the value as int (no free method) after allocating the S10 GTPv2c Tunnel from the tunnel pool. */
+        (hash_key_t) ulp_rsp.u_api_info.createLocalTunnelInfo.teidLocal,
+        (void *)ulp_rsp.u_api_info.createLocalTunnelInfo.hTunnel); /**< Just store the value as int (no free method) after allocating the S10 GTPv2c Tunnel from the tunnel pool. */
     hash_rc = hashtable_ts_get(s10_mme_teid_2_gtv2c_teid_handle,
-        (hash_key_t) ulp_req.u_api_info.createLocalTunnelInfo.teidLocal, (void **)(uintptr_t)&ulp_req.u_api_info.createLocalTunnelInfo.hTunnel);
+        (hash_key_t) ulp_rsp.u_api_info.createLocalTunnelInfo.teidLocal, (void **)(uintptr_t)&ulp_rsp.u_api_info.createLocalTunnelInfo.hTunnel);
     DevAssert(hash_rc == HASH_TABLE_OK);
   }else{
     OAILOG_WARNING (LOG_S10, "The cause is not REQUEST_ACCEPTED but %d for S10_CONTEXT_RESPONSE. "
@@ -1325,7 +1333,7 @@ s10_mme_handle_context_response(
    */
   resp_p->pdn_connections = calloc(1, sizeof(mme_ue_eps_pdn_connections_t));
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_PDN_CONNECTION, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
-      s10_pdn_connection_ie_get, resp_p->pdn_connections);
+      s10_pdn_connections_ie_get, resp_p->pdn_connections);
   DevAssert (NW_OK == rc);
 
    /*

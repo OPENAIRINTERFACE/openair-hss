@@ -235,9 +235,10 @@ static int _emm_cn_pdn_config_res (emm_cn_pdn_config_res_t * msg_pP)
   if(emm_context->esm_ctx.esm_proc_data) /**< In case of S10 TAU the PDN Contexts should already be established. */
     apn = emm_context->esm_ctx.esm_proc_data->apn;
   else{
-    // todo: optimize
-    pdn_context_t * pdn_ctx = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
-    apn = pdn_ctx->apn_subscribed;
+    /*
+     * Don't set any specific APN.
+     * ESM layer should update the PDN configurations for all PDN configs.
+     */
   }
 
   /** Inform the ESM about the PDN Config Response. */
@@ -246,11 +247,11 @@ static int _emm_cn_pdn_config_res (emm_cn_pdn_config_res_t * msg_pP)
   esm_sap.ue_id = emm_context->ue_id;
   esm_sap.ctx = emm_context;
   esm_sap.recv = NULL;
-  esm_sap.data.pdn_config_res.pdn_cid             = &pdn_cid;
-  esm_sap.data.pdn_config_res.default_ebi         = &default_ebi;
+  esm_sap.data.pdn_config_res.pdn_cid             = &pdn_cid;     /**< Only used for initial attach and initial TAU. */
+  esm_sap.data.pdn_config_res.default_ebi         = &default_ebi; /**< Only used for initial attach and initial TAU. */
   esm_sap.data.pdn_config_res.is_pdn_connectivity = &is_pdn_connectivity; /**< Default Bearer Id of default APN. */
   esm_sap.data.pdn_config_res.imsi                = msg_pP->imsi64; /**< Context Identifier of default APN. */
-  esm_sap.data.pdn_config_res.apn                 = apn; /**< Context Identifier of default APN. */
+  esm_sap.data.pdn_config_res.apn                 = apn; /**< Context Identifier of default APN. Will be NULL in case of multi APN or none given. */
 
   rc = esm_sap_send(&esm_sap);
 

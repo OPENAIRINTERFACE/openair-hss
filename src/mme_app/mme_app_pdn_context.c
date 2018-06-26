@@ -85,6 +85,15 @@ void mme_app_get_pdn_context (ue_context_t * const ue_context, pdn_cid_t const c
   pdn_context_t pdn_context_key = {.apn_subscribed = apn_subscribed, .default_ebi = default_ebi, .context_identifier = context_id};
   pdn_context_t * pdn_ctx_p = RB_FIND(PdnContexts, &ue_context->pdn_contexts, &pdn_context_key);
   *pdn_ctx = pdn_ctx_p;
+  if(!pdn_ctx_p){
+    /** Could not find the PDN context, search again using the APN. */
+
+    RB_FOREACH (pdn_ctx_p, PdnContexts, &ue_context->pdn_contexts) {
+      DevAssert(pdn_ctx_p);
+      if(!bstricmp (pdn_ctx_p->apn_subscribed, apn_subscribed))
+          *pdn_ctx = pdn_ctx_p;
+    }
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -186,8 +195,10 @@ pdn_context_t *  mme_app_create_pdn_context(ue_context_t * const ue_context, con
     memcpy (&pdn_context->default_bearer_eps_subscribed_qos_profile, &apn_configuration->subscribed_qos, sizeof(eps_subscribed_qos_profile_t));
     pdn_context->apn_subscribed = blk2bstr(apn_configuration->service_selection, apn_configuration->service_selection_length);  /**< Set the APN-NI from the service selection. */
   } else {
+    pdn_context->default_ebi = 5 + ue_context->next_def_ebi_offset;
     pdn_context->apn_subscribed = apn;
-    pdn_context->context_identifier = context_identifier;
+    pdn_context->context_identifier = context_identifier + ue_context->next_def_ebi_offset;
+    ue_context->next_def_ebi_offset++;
     OAILOG_WARNING(LOG_MME_APP, "No APN configuration exists for UE " MME_UE_S1AP_ID_FMT ". Assuming Handover/TAU UE: " MME_UE_S1AP_ID_FMT ". Subscribed apn %s. \n",
         ue_context->mme_ue_s1ap_id, bdata(pdn_context->apn_subscribed));
     // todo: check that a procedure exists?

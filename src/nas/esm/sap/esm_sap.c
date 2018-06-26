@@ -182,6 +182,8 @@ esm_sap_send (esm_sap_t * msg)
   esm_cause_t                             esm_cause   = ESM_CAUSE_SUCCESS;
 
   pdn_context_t                          *pdn_context = NULL;
+  pdn_context_t                          *established_pdn = NULL;
+  ue_context_t                           *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, msg->ctx->ue_id);
 
   assert ((primitive > ESM_START) && (primitive < ESM_END));
   OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Received primitive %s (%d)\n", _esm_sap_primitive_str[primitive - ESM_START - 1], primitive);
@@ -255,12 +257,29 @@ esm_sap_send (esm_sap_t * msg)
   break;
 
   case ESM_PDN_CONFIG_RES:
-    rc = esm_proc_pdn_config_res(msg->ctx,
-        &msg->data.pdn_config_res.pdn_cid,
-        &msg->data.pdn_config_res.is_pdn_connectivity,
-        msg->data.pdn_config_res.imsi,
-        msg->data.pdn_config_res.apn,
-        &msg->data.pdn_config_res.default_ebi, &esm_cause);
+    /*
+     * Check if an APN is given, if so get the pdn configuration for it and set the pdn_connectivity flag as false.
+     * Else, go through all PDNs.
+     */
+    if(msg->data.pdn_config_res.apn){
+      rc = esm_proc_pdn_config_res(msg->ctx,
+          &msg->data.pdn_config_res.pdn_cid,
+          &msg->data.pdn_config_res.is_pdn_connectivity,
+          msg->data.pdn_config_res.imsi,
+          msg->data.pdn_config_res.apn,
+          &msg->data.pdn_config_res.default_ebi, &esm_cause);
+    }else{
+      RB_FOREACH (established_pdn, PdnContexts, &ue_context->pdn_contexts) {
+        msg->data.pdn_config_res.apn = established_pdn->apn_subscribed;
+        /** Not setting the context identifier. */
+        rc = esm_proc_pdn_config_res(msg->ctx,
+            &msg->data.pdn_config_res.pdn_cid,
+            &msg->data.pdn_config_res.is_pdn_connectivity,
+            msg->data.pdn_config_res.imsi,
+            msg->data.pdn_config_res.apn,
+            &msg->data.pdn_config_res.default_ebi, &esm_cause);
+      }
+    }
     break;
 
   case ESM_PDN_DISCONNECT_REJ:

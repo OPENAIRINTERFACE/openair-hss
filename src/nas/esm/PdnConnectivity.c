@@ -336,9 +336,6 @@ int esm_proc_pdn_config_res(emm_data_context_t * emm_context, pdn_cid_t **pdn_ci
   OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Processing new subscription data handling from HSS (ue_id=" MME_UE_S1AP_ID_FMT ") for apn \"%s\". \n", ue_context->mme_ue_s1ap_id, bdata(apn));
 
   //----------------------------------------------------------------------------
-  // PDN selection here
-  // Because NAS knows APN selected by UE if any
-  // default APN selection
 
   /** We reject at the beginning if no APN has been transmitted at initial attach procedure. */
   struct apn_configuration_s* apn_config = mme_app_select_apn(ue_context, apn);
@@ -371,7 +368,7 @@ int esm_proc_pdn_config_res(emm_data_context_t * emm_context, pdn_cid_t **pdn_ci
         "(Assuming PDN connectivity is already established before ULA). "
         "Will update PDN/UE context information and continue with the accept procedure for id " MME_UE_S1AP_ID_FMT "...\n", ue_context->mme_ue_s1ap_id);
     /** Check the context id of the PDN context. Set it to the correct one. */
-    if(pdn_context->context_identifier == PDN_CONTEXT_IDENTIFIER_UNASSIGNED){
+    if(pdn_context->context_identifier >= PDN_CONTEXT_IDENTIFIER_UNASSIGNED){
       pdn_context_t *pdn_context_removed = RB_REMOVE(PdnContexts, &ue_context->pdn_contexts, pdn_context);
       if(!pdn_context_removed){
         OAILOG_ERROR(LOG_MME_APP,  "Could not find pdn context with pid %d for ue_id " MME_UE_S1AP_ID_FMT "! \n",
@@ -387,6 +384,7 @@ int esm_proc_pdn_config_res(emm_data_context_t * emm_context, pdn_cid_t **pdn_ci
     /** Set the state of the ESM bearer context as ACTIVE (not setting as active if no TAU has followed). */
     rc = esm_ebr_set_status (emm_context, pdn_context->default_ebi, ESM_EBR_ACTIVE, false);
     /** Set the context identifier when updating the pdn_context. */
+    OAILOG_INFO(LOG_NAS_EMM, "EMMCN-SAP  - " "Successfully updatd PDN context for UE " MME_UE_S1AP_ID_FMT" which was established already. \n", ue_context->mme_ue_s1ap_id);
   }
   //  }
   /*

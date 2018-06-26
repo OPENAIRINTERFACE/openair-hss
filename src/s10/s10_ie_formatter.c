@@ -355,12 +355,10 @@ nw_rc_t
 s10_pdn_connection_ie_set ( nw_gtpv2c_msg_handle_t * msg, void * arg){
   nw_rc_t                                 rc;
   uint8_t                                 i;
-  mme_ue_eps_pdn_connections_t           *pdn_connections = (mme_ue_eps_pdn_connections_t*)arg;
+  pdn_connection_t                       *pdn_connection = (pdn_connection_t*)arg;
 
   DevAssert (msg );
-  DevAssert (pdn_connections );
-  DevAssert (0 <= pdn_connections->num_pdn_connections);
-  DevAssert(MSG_FORWARD_RELOCATION_REQUEST_MAX_PDN_CONNECTIONS >= pdn_connections->num_pdn_connections);
+  DevAssert (pdn_connection );
 
   /*
    * Start section for grouped IE: PDN connection
@@ -368,37 +366,35 @@ s10_pdn_connection_ie_set ( nw_gtpv2c_msg_handle_t * msg, void * arg){
   rc = nwGtpv2cMsgGroupedIeStart (*msg, NW_GTPV2C_IE_PDN_CONNECTION, NW_GTPV2C_IE_INSTANCE_ZERO);
   DevAssert (NW_OK == rc);
 
-  for (i = 0; i < pdn_connections->num_pdn_connections; i++) {
-    /** APN IE Set. */
-    s10_apn_ie_set (msg, pdn_connections->pdn_connection[i].apn_str);
+  /** APN IE Set. */
+  s10_apn_ie_set (msg, pdn_connection->apn_str);
 
-    /** Set the IPv4 Address. */
-    s10_ipv4_address_ie_set(msg, &(pdn_connections->pdn_connection[i].ipv4_address));
+  /** Set the IPv4 Address. */
+  s10_ipv4_address_ie_set(msg, &(pdn_connection->ipv4_address));
 
-    /** Set the IPv6 Address. */
-    if(pdn_connections->pdn_connection[i].ipv6_prefix_length){
-      s10_ipv6_address_ie_set(msg, &(pdn_connections->pdn_connection[i].ipv6_address));
-    }
-
-    /** EBI Set. */
-    s10_ebi_ie_set (msg, pdn_connections->pdn_connection[i].linked_eps_bearer_id);
-
-    /** Set the S5/S8 FTEID. */
-    rc = nwGtpv2cMsgAddIeFteid (*msg, NW_GTPV2C_IE_INSTANCE_ZERO,
-        S5_S8_PGW_GTP_C,
-        pdn_connections->pdn_connection[i].pgw_address_for_cp.teid,
-        pdn_connections->pdn_connection[i].pgw_address_for_cp.ipv4 ? &pdn_connections->pdn_connection[i].pgw_address_for_cp.ipv4_address : 0,
-            pdn_connections->pdn_connection[i].pgw_address_for_cp.ipv6 ? &pdn_connections->pdn_connection[i].pgw_address_for_cp.ipv6_address : NULL);
-    DevAssert (NW_OK == rc);
-
-    /** Set APN Restriction IE. */
-    s10_apn_restriction_ie_set(msg, 0x00);
-    /** Set AMBR IE. */
-    gtpv2c_ambr_ie_set(msg, &(pdn_connections->pdn_connection[i].apn_ambr));
-
-    /** Set the PDN connection (another concatenated grouped IE). */
-    s10_bearer_context_to_create_ie_set(msg, &(pdn_connections->pdn_connection[i].bearer_context_list));
+  /** Set the IPv6 Address. */
+  if(pdn_connection->ipv6_prefix_length){
+    s10_ipv6_address_ie_set(msg, &(pdn_connection->ipv6_address));
   }
+
+  /** EBI Set. */
+  s10_ebi_ie_set (msg, pdn_connection->linked_eps_bearer_id);
+
+  /** Set the S5/S8 FTEID. */
+  rc = nwGtpv2cMsgAddIeFteid (*msg, NW_GTPV2C_IE_INSTANCE_ZERO,
+      S5_S8_PGW_GTP_C,
+      pdn_connection->pgw_address_for_cp.teid,
+      pdn_connection->pgw_address_for_cp.ipv4 ? &pdn_connection->pgw_address_for_cp.ipv4_address : 0,
+          pdn_connection->pgw_address_for_cp.ipv6 ? &pdn_connection->pgw_address_for_cp.ipv6_address : NULL);
+  DevAssert (NW_OK == rc);
+
+  /** Set APN Restriction IE. */
+  s10_apn_restriction_ie_set(msg, 0x00);
+  /** Set AMBR IE. */
+  gtpv2c_ambr_ie_set(msg, &(pdn_connection->apn_ambr));
+
+  /** Set the PDN connection (another concatenated grouped IE). */
+  s10_bearer_context_to_create_ie_set(msg, &(pdn_connection->bearer_context_list));
 
   /*
    * End section for grouped IE: PDN connection
@@ -410,24 +406,18 @@ s10_pdn_connection_ie_set ( nw_gtpv2c_msg_handle_t * msg, void * arg){
 }
 
 nw_rc_t
-s10_pdn_connection_ie_get (
+s10_pdn_connections_ie_get (
   uint8_t ieType,
   uint16_t ieLength,
   uint8_t ieInstance,
   uint8_t * ieValue,
   void *arg)
 {
-  mme_ue_eps_pdn_connections_t         *pdn_connections = (mme_ue_eps_pdn_connections_t *) arg;
-  uint8_t                               current_pdn_connection = pdn_connections->num_pdn_connections;
+  mme_ue_eps_pdn_connections_t           *pdn_connections = (mme_ue_eps_pdn_connections_t *) arg;
   DevAssert (pdn_connections );
-  DevAssert (0 <= current_pdn_connection);
-  DevAssert (MSG_FORWARD_RELOCATION_REQUEST_MAX_PDN_CONNECTIONS >= current_pdn_connection + 1);
-  pdn_connection_t                       *pdn_connection = &pdn_connections->pdn_connection[current_pdn_connection];
   uint8_t                                 read = 0;
-  nw_rc_t                                   rc;
-
-//  memset (&pdn_connection, 0, sizeof (pdn_connection_t));
-
+  nw_rc_t                                 rc;
+  pdn_connection_t                       *pdn_connection = &pdn_connections->pdn_connection[pdn_connections->num_pdn_connections];
   while (ieLength > read) {
     nw_gtpv2c_ie_tlv_t                         *ie_p;
 
@@ -491,7 +481,7 @@ s10_pdn_connection_ie_get (
 
     read += (ntohs (ie_p->l) + sizeof (nw_gtpv2c_ie_tlv_t));
   }
-  pdn_connections->num_pdn_connections += 1;
+  pdn_connections->num_pdn_connections++;
   return NW_OK;
 }
 

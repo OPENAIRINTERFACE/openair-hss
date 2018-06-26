@@ -1239,7 +1239,8 @@ s1ap_handle_handover_request (
   handoverRequest_p = &message.msg.s1ap_HandoverRequestIEs;
   handoverRequest_p->mme_ue_s1ap_id = (unsigned long)handover_request_pP->ue_id;
 
-  S1ap_E_RABToBeSetupItemHOReq_t          e_RABToBeSetupHO = {0}; // yes, alloc on stack
+  S1ap_E_RABToBeSetupItemHOReq_t          e_RABToBeSetupHO[handover_request_pP->bearer_ctx_to_be_setup_list->num_bearer_context]; // yes, alloc on stack
+  memset(e_RABToBeSetupHO, 0, sizeof(e_RABToBeSetupHO));
   // todo: only a single bearer assumed right now.
   s1ap_add_bearer_context_to_setup_list(&handoverRequest_p->e_RABToBeSetupListHOReq, &e_RABToBeSetupHO, handover_request_pP->bearer_ctx_to_be_setup_list);
   // e_RABToBeSetupHO --> todo: disappears inside
@@ -1276,9 +1277,6 @@ s1ap_handle_handover_request (
    */
   asn_uint642INTEGER (&handoverRequest_p->uEaggregateMaximumBitrate.uEaggregateMaximumBitRateDL, handover_request_pP->ambr.br_dl);
   asn_uint642INTEGER (&handoverRequest_p->uEaggregateMaximumBitrate.uEaggregateMaximumBitRateUL, handover_request_pP->ambr.br_ul);
-
-  OAILOG_DEBUG (LOG_S1AP, "\t- @}---}-- HANDOVER_REQUEST : AMBR DL %" PRIu64 "\n", handover_request_pP->ambr.br_dl);
-  OAILOG_DEBUG (LOG_S1AP, "\t- HANDOVER_REQUEST : AMBR UL %" PRIu64 "\n", handover_request_pP->ambr.br_ul);
 
   /*
    * E-UTRAN Target-ToSource Transparent Container.
@@ -1589,7 +1587,7 @@ s1ap_handle_paging( const itti_s1ap_paging_t * const s1ap_paging_pP){
 
 //------------------------------------------------------------------------------
 static
-int s1ap_generate_bearer_context_to_setup(bearer_context_to_be_created_t * bc_tbc, S1ap_E_RABToBeSetupItemHOReq_t         * e_RABToBeSetupHO_p){
+int s1ap_generate_bearer_context_to_setup(bearer_context_to_be_created_t * bc_tbc, S1ap_E_RABToBeSetupItemHOReq_t         *e_RABToBeSetupHO_p){
   OAILOG_FUNC_IN (LOG_S1AP);
 
   uint                                    offset = 0;
@@ -1669,13 +1667,13 @@ s1ap_add_bearer_context_to_setup_list (S1ap_E_RABToBeSetupListHOReqIEs_t * const
 
   int num_bc = 0;
   for(int num_bc = 0; num_bc < bcs_tbc->num_bearer_context; num_bc++){
-    if(s1ap_generate_bearer_context_to_setup(&bcs_tbc->bearer_contexts[num_bc], e_RABToBeSetupHO_p) != RETURNok){
+    if(s1ap_generate_bearer_context_to_setup(&bcs_tbc->bearer_contexts[num_bc], &e_RABToBeSetupHO_p[num_bc]) != RETURNok){
       OAILOG_ERROR(LOG_S1AP, "Error adding bearer context with ebi %d to list of bearers to setup.\n", bcs_tbc->bearer_contexts[num_bc].eps_bearer_id);
       return false;
     }
+    /** Add the E-RAB bearer to the message. */
+    ASN_SEQUENCE_ADD (e_RABToBeSetupListHOReq_p, &e_RABToBeSetupHO_p[num_bc]);
   }
-  /** Add the E-RAB bearer to the message. */
-  ASN_SEQUENCE_ADD (e_RABToBeSetupListHOReq_p, e_RABToBeSetupHO_p);
   return true;
 }
 

@@ -1073,13 +1073,14 @@ mme_app_handle_create_sess_resp (
       OAILOG_INFO(LOG_MME_APP, "We have further PDN connections that need to be established via handover for UE " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
       pdn_connection_t * pdn_connection = &s10_handover_procedure->pdn_connections->pdn_connection[s10_handover_procedure->next_processed_pdn_connection];
       DevAssert(pdn_connection);
-      mme_app_handle_pdn_connectivity_from_s10(ue_context, pdn_connection);
+      pdn_context = mme_app_handle_pdn_connectivity_from_s10(ue_context, pdn_connection);
       s10_handover_procedure->next_processed_pdn_connection++;
       /*
        * When Create Session Response is received, continue to process the next PDN connection, until all are processed.
        * When all pdn_connections are completed, continue with handover request.
        */
-      mme_app_send_s11_create_session_req (ue_context, NULL, pdn_context, &s10_handover_procedure->target_tai);
+      mme_app_send_s11_create_session_req (ue_context, &s10_handover_procedure->nas_s10_context._imsi, pdn_context, &s10_handover_procedure->target_tai);
+
       OAILOG_INFO(LOG_MME_APP, "Successfully sent CSR for UE " MME_UE_S1AP_ID_FMT ". Waiting for CSResp to continue to process handover on source MME side. \n", ue_context->mme_ue_s1ap_id);
     }else{
       OAILOG_INFO(LOG_MME_APP, "No further PDN connections that need to be established via handover for UE " MME_UE_S1AP_ID_FMT ". Continuing with handover request. \n", ue_context->mme_ue_s1ap_id);
@@ -1133,14 +1134,14 @@ mme_app_handle_create_sess_resp (
       OAILOG_INFO(LOG_MME_APP, "We have further PDN connections that need to be established via handover for UE " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
       pdn_connection_t * pdn_connection = &emm_cn_proc_ctx_req->pdn_connections->pdn_connection[emm_cn_proc_ctx_req->next_processed_pdn_connection];
       DevAssert(pdn_connection);
-      mme_app_handle_pdn_connectivity_from_s10(ue_context, pdn_connection);
+      pdn_context = mme_app_handle_pdn_connectivity_from_s10(ue_context, pdn_connection);
       emm_cn_proc_ctx_req->next_processed_pdn_connection++;
       /*
        * When Create Session Response is received, continue to process the next PDN connection, until all are processed.
        * When all pdn_connections are completed, continue with handover request.
        */
       // todo: check target_tai at idle mode
-      mme_app_send_s11_create_session_req (ue_context, NULL, pdn_context, &ue_context->tai_last_tau);
+      mme_app_send_s11_create_session_req (ue_context, &emm_cn_proc_ctx_req->nas_s10_context._imsi, pdn_context, &emm_context->originating_tai);
       OAILOG_INFO(LOG_MME_APP, "Successfully sent CSR for UE " MME_UE_S1AP_ID_FMT ". Waiting for CSResp to continue to process handover on source MME side. \n", ue_context->mme_ue_s1ap_id);
     }else{
       OAILOG_INFO(LOG_MME_APP, "No further PDN connections that need to be established via idle mode TAU for UE " MME_UE_S1AP_ID_FMT ". "
@@ -2873,10 +2874,6 @@ void mme_app_send_s1ap_handover_request(mme_ue_s1ap_id_t mme_ue_s1ap_id,
   /** Set the AMBR Parameters. */
   handover_request_p->ambr.br_ul = ue_context->subscribed_ue_ambr.br_ul;
   handover_request_p->ambr.br_dl = ue_context->subscribed_ue_ambr.br_dl;
-
-  OAILOG_DEBUG (LOG_MME_APP, "\t- @}---}-- SENDING_HANDOVER_REQUEST: AMBR DL %" PRIu64 "\n", handover_request_p->ambr.br_ul);
-  OAILOG_DEBUG (LOG_MME_APP, "\t- @}---}-- SENDING_HANDOVER_REQUEST: AMBR UL %" PRIu64 "\n", handover_request_p->ambr.br_ul);
-
 
   /** Set the bearer contexts to be created. Not changing any bearer state. */
   handover_request_p->bearer_ctx_to_be_setup_list = calloc(1, sizeof(bearer_contexts_to_be_created_t));

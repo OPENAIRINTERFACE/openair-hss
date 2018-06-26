@@ -60,7 +60,7 @@ s10_mm_ue_context_ie_get (
 nw_rc_t s10_pdn_connection_ie_set ( nw_gtpv2c_msg_handle_t * msg, void * arg);
 
 nw_rc_t
-s10_pdn_connection_ie_get ( uint8_t ieType, uint16_t ieLength, uint8_t ieInstance, uint8_t * ieValue, void *arg);
+s10_pdn_connections_ie_get ( uint8_t ieType, uint16_t ieLength, uint8_t ieInstance, uint8_t * ieValue, void *arg);
 
 /* F-Cause Information Element
  * 3GPP TS 29.274 #8.49
