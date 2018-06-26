@@ -240,8 +240,10 @@ esm_sap_send (esm_sap_t * msg)
     }
     break;
 
-
-  case ESM_PDN_DISCONNECT_CNF:{ /**< This will be received if a S11 Delete Session Response has arrived and no detach procedure was ongoing, always not standalone. */
+  case ESM_PDN_DISCONNECT_CNF:{
+    /** Check if we do a local detach or not. */
+    OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Continuing with standalone PDN disconnection for ueId " MME_UE_S1AP_ID_FMT ". \n",
+          msg->ue_id);
     /*
      * Create a deactivate EPS bearer context request message, set the status as pending deactivation and continue.
      * The EBI should already be set when the ESM message has been received.
@@ -249,8 +251,8 @@ esm_sap_send (esm_sap_t * msg)
     rc = _esm_sap_send(DEACTIVATE_EPS_BEARER_CONTEXT_REQUEST,
         msg->is_standalone, msg->ctx, msg->ctx->esm_ctx.esm_proc_data->pti, msg->ctx->esm_ctx.esm_proc_data->ebi,
         &msg->data, msg->send);
-    }
-    break;
+  }
+  break;
 
   case ESM_PDN_CONFIG_RES:
     rc = esm_proc_pdn_config_res(msg->ctx,

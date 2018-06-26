@@ -724,7 +724,7 @@ static int _emm_cn_pdn_disconnect_res(const emm_cn_pdn_disconnect_res_t * msg)
       DevAssert(0);
     }
   }else{
-    OAILOG_INFO (LOG_NAS_EMM, "%d more PDN contexts exist for UE (not-local PDN deactivation) " MME_UE_S1AP_ID_FMT". Continuing with PDN Disconnect procedure. \n", emm_context->esm_ctx.n_pdns, emm_context->ue_id);
+    OAILOG_INFO (LOG_NAS_EMM, "%d more PDN contexts exist for UE " MME_UE_S1AP_ID_FMT". Continuing with PDN Disconnect procedure. \n", emm_context->esm_ctx.n_pdns, emm_context->ue_id);
     /*
      * Send Disconnect Request to the ESM layer.
      * It will disconnect the first PDN which is pending deactivation.
@@ -733,14 +733,41 @@ static int _emm_cn_pdn_disconnect_res(const emm_cn_pdn_disconnect_res_t * msg)
      * If detach procedure, or MME initiated PDN context deactivation procedure, we will first locally remove the PDN context.
      * The remaining PDN contexts will not be those who need NAS messaging to be purged, but the ones, who were not purged locally at all.
      */
-    esm_sap.primitive = ESM_PDN_DISCONNECT_CNF;
-    esm_sap.is_standalone = false;
-    esm_sap.ue_id = emm_context->ue_id;
-    esm_sap.ctx = emm_context;
-    esm_sap.recv = NULL;
-    esm_sap.data.pdn_disconnect.local_delete = pdn_local_delete; // pdn_context->default_ebi; /**< Default Bearer Id of default APN. */
-    esm_sap_send(&esm_sap);
-    OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
+    if(!pdn_local_delete){
+      esm_sap.primitive = ESM_PDN_DISCONNECT_CNF;
+      esm_sap.is_standalone = true;
+      esm_sap.ue_id = emm_context->ue_id;
+      esm_sap.ctx = emm_context;
+      esm_sap.recv = NULL;
+      esm_sap.data.pdn_disconnect.local_delete = pdn_local_delete; // pdn_context->default_ebi; /**< Default Bearer Id of default APN. */
+      esm_sap_send(&esm_sap);
+      OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
+    }else{
+      OAILOG_INFO (LOG_NAS_ESM, "ue_id=" MME_UE_S1AP_ID_FMT " EMM-PROC  - Non Standalone & local detach triggered PDN deactivation. \n", emm_context->ue_id);
+      esm_sap_t                               esm_sap = {0};
+      /** Send Disconnect Request to all PDNs. */
+      pdn_context_t * pdn_context = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
+
+      esm_sap.primitive = ESM_PDN_DISCONNECT_REQ;
+      esm_sap.is_standalone = false;
+      esm_sap.ue_id = emm_context->ue_id;
+      esm_sap.ctx = emm_context;
+      esm_sap.recv = emm_context->esm_msg;
+      esm_sap.data.pdn_disconnect.default_ebi = pdn_context->default_ebi; /**< Default Bearer Id of default APN. */
+      esm_sap.data.pdn_disconnect.cid         = pdn_context->context_identifier; /**< Context Identifier of default APN. */
+      esm_sap.data.pdn_disconnect.local_delete = true;                            /**< Local deletion of PDN contexts. */
+      esm_sap_send(&esm_sap);
+      /*
+       * Remove the contexts and send S11 Delete Session Request to the SAE-GW.
+       * Will continue with the detach procedure when S11 Delete Session Response arrives.
+       */
+
+      /**
+       * Not waiting for a response. Will assume that the session is correctly purged.. Continuing with the detach and assuming that the SAE-GW session is purged.
+       * Assuming, that in 5G AMF/SMF structure, it is like in PCRF, sending DELETE_SESSION_REQUEST and not caring about the response. Assuming the session is deactivated.
+       */
+      OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
+    }
   }
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
