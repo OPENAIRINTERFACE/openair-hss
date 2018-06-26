@@ -77,7 +77,7 @@ check_install_hss_software() {
     echo_fatal "$OS_DISTRO is not a supported distribution."
   fi
   $SUDO $INSTALLER install $OPTION $PACKAGE_LIST
-  [[ $? -ne 0 ]] && return $?
+  ret=$?;[[ $ret -ne 0 ]] && return $ret
 
   # Libraries
   if [[ $OS_DISTRO == "ubuntu" ]]; then
@@ -115,7 +115,7 @@ check_install_hss_software() {
     echo_fatal "$OS_DISTRO is not a supported distribution."
   fi
   $SUDO $INSTALLER install $OPTION $PACKAGE_LIST
-  [[ $? -ne 0 ]] && return $?
+  ret=$?;[[ $ret -ne 0 ]] && return $ret
 
   if [[ $OS_BASEDISTRO == 'fedora' ]]; then
     $SUDO systemctl enable mariadb
@@ -126,11 +126,11 @@ check_install_hss_software() {
     #Remove old gnutls/nettle installation that was done from sources
     remove_nettle_from_source
     $SUDO $INSTALLER install -y nettle-dev nettle-bin
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
   fi
 
   install_freediameter_from_source $1
-  [[ $? -ne 0 ]] && return $?
+  ret=$?;[[ $ret -ne 0 ]] && return $ret
 
   case "$(get_distribution_release)" in
     "ubuntu14.04")

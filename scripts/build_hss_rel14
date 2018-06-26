@@ -123,14 +123,6 @@ function main()
     update_package_db
     [[ $? -ne 0 ]] && return $?
     
-    # Temp, do it here in the same node as HSS
-    if [ $force -gt 0 ];then
-        $HSS_SCRIPT_PATH/build_cassandra -i --force
-    else
-        $HSS_SCRIPT_PATH/build_cassandra -i 
-    fi
-    [[ $? -ne 0 ]] && return $?
-    
     check_install_hss_software  $force
     if [ $? -ne 0 ]; then
         echo_error "Error: HSS software installation failed"
@@ -161,12 +153,12 @@ function main()
   cmake_args="$cmake_args -DOPENAIRCN_DIR=$OPENAIRCN_DIR"
 
   build_util 
-  [[ $? -ne 0 ]] && return $?
+  ret=$?;[[ $ret -ne 0 ]] && return $ret
   build_hsssec
-  [[ $? -ne 0 ]] && return $?
+  ret=$?;[[ $ret -ne 0 ]] && return $ret
   cd $OPENAIRCN_DIR/build/hss_rel14
   make $make_args
-  [[ $? -ne 0 ]] && return $?
+  ret=$?;[[ $ret -ne 0 ]] && return $ret
   chmod -f 777 *
 
   $SUDO killall -q oai_hss

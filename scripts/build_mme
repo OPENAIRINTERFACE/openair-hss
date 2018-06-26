@@ -173,8 +173,8 @@ function main()
   
   mkdir -m 777 -p $dlog
   
-  if [ ! -d /usr/local/etc/oai ]; then
-    $SUDO mkdir -p /usr/local/etc/oai/freeDiameter
+  if [ ! -d /usr/local/etc/oai/freeDiameter ]; then
+    $SUDO mkdir -m 777 -p /usr/local/etc/oai/freeDiameter
   fi
   
   ##############################################################################
@@ -208,14 +208,14 @@ function main()
 
   cd ./build
   $CMAKE $cmake_args .. > /dev/null
-  [[ $? -ne 0 ]] && return $?
+  ret=$?;[[ $ret -ne 0 ]] && return $ret
 
   compilations mme mme $OPENAIRCN_DIR/build/mme/build/mme_app $verbose
-  [[ $? -ne 0 ]] && return $?
+  ret=$?;[[ $ret -ne 0 ]] && return $ret
 
   if [ $unit_tests -ne 0 ]; then
     make_test mme mme $OPENAIRCN_DIR/build/mme/build/mme_app $verbose
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
   fi 
 
   $SUDO killall -q mme

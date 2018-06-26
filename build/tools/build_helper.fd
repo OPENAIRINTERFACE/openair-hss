@@ -162,7 +162,7 @@ install_1.1.5_freediameter_from_source() {
     python-dev \
     ssl-cert \
     swig
-  [[ $? -ne 0 ]] && return $?
+  ret=$?;[[ $ret -ne 0 ]] && return $ret
 
   if [[ $prompt =~ [yY](es)* ]]
   then
@@ -170,20 +170,20 @@ install_1.1.5_freediameter_from_source() {
     echo "Downloading 1.1.5 freeDiameter archive"
     $SUDO rm -rf /tmp/1.1.5.tar.gz /tmp/freeDiameter-1.1.5 /tmp/freediameter
     GIT_SSL_NO_VERIFY=true git clone https://gitlab.eurecom.fr/oai/freediameter.git -b eurecom-1.1.5
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
     cd /tmp/freediameter
     #patch -p1 < $OPENAIRCN_DIR/src/s6a/freediameter/freediameter-1.1.5.patch
     mkdir build
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
     cd build
     cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr ../
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
     echo "Compiling freeDiameter"
     make -j`nproc`
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
     #make test
     $SUDO make install
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
     cd /tmp
     rm -rf /tmp/1.1.5.tar.gz /tmp/freeDiameter-1.1.5 /tmp/freediameter
   fi
@@ -262,12 +262,12 @@ install_freediameter_from_source() {
     mkdir build
     cd build
     $CMAKE -DCMAKE_INSTALL_PREFIX:PATH=/usr/local ../
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
     make -j`nproc`
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
     #make test
     $SUDO make install
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
     cd /tmp
     rm -rf /tmp/1.2.0.tar.gz /tmp/freeDiameter-1.2.0 /tmp/freediameter
   fi

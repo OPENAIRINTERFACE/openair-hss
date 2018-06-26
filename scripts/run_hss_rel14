@@ -106,6 +106,10 @@ function main()
   #####################################
   # Install config files
   #####################################
+  if [ ! -d /usr/local/etc/oai/freeDiameter ]; then
+    $SUDO mkdir -m 777 -p /usr/local/etc/oai/freeDiameter
+  fi
+    
   if [ ! -f $hss_config_file ]; then 
     if [ $g_hss_default_config_file != $hss_config_file ]; then
       echo_fatal "Please provide -c|--config-file valid argument (\"$hss_config_file\" not a valid file)"

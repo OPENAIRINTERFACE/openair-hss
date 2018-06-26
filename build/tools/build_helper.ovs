@@ -43,9 +43,9 @@ install_libfluid_from_source(){
   then
     # optional but recommended for secure connection towards controller
     $SUDO apt-get install $OPTION autoconf libtool build-essential pkg-config
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
     $SUDO apt-get install $OPTION libevent-dev libssl-dev
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
 
     SAVEDPWD=${PWD}
     
@@ -53,29 +53,29 @@ install_libfluid_from_source(){
     mkdir /tmp/fluid
     cd /tmp/fluid
     git clone https://github.com/OpenNetworkingFoundation/libfluid.git
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
     cd libfluid
     ./bootstrap.sh
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
 
 
     cd libfluid_base
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
     ./configure --prefix=/usr
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
     make
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
     $SUDO make install
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
 
     cd /tmp/fluid/libfluid/libfluid_msg
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
     ./configure --prefix=/usr
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
     make
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
     $SUDO make install
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
     cd $SAVEDPWD
   fi
   return 0
@@ -124,18 +124,18 @@ install_gtp_ovs_kernel_module() {
     cd /tmp/gtp
     echo 'OVS: Cloning openair-cn-extras'
     git clone https://github.com/OPENAIRINTERFACE/openair-cn-extras.git
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
 
     cd openair-cn-extras/linux-4.9.0-gtp-module
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
     make
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
     $SUDO make install  # this overwrites the old gtp.ko
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
     $SUDO modprobe udp_tunnel
     $SUDO modprobe ip6_udp_tunnel
     $SUDO modprobe gtp
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
     $SUDO depmod -a
   fi
   return 0
@@ -153,7 +153,7 @@ ovs_load_kernel_modules(){
   $SUDO modprobe udp_tunnel
   $SUDO modprobe ip6_udp_tunnel
   $SUDO modprobe gtp
-  [[ $? -ne 0 ]] && return $?
+  ret=$?;[[ $ret -ne 0 ]] && return $ret
   #$SUDO modprobe gre
   #$SUDO modprobe ip_gre
   #$SUDO modprobe ip6_gre
@@ -170,12 +170,12 @@ ovs_load_kernel_modules(){
   
   #$SUDO modprobe openvswitch
   $SUDO insmod /lib/modules/`uname -r`/extra/openvswitch.ko
-  [[ $? -ne 0 ]] && return $?
+  ret=$?;[[ $ret -ne 0 ]] && return $ret
   sync
   #sleep 7
   #sync
   #$SUDO insmod /lib/modules/`uname -r`/extra/vport-gtp.ko
-  #[[ $? -ne 0 ]] && return $?
+  #ret=$?;[[ $ret -ne 0 ]] && return $ret
   #$SUDO insmod /lib/modules/`uname -r`/extra/vport-geneve.ko
   #$SUDO insmod /lib/modules/`uname -r`/extra/vport-gre.ko
   #$SUDO insmod /lib/modules/`uname -r`/extra/vport-lisp.ko
@@ -237,7 +237,7 @@ ovs_start() {
                  --certificate=db:Open_vSwitch,SSL,certificate \
                  --bootstrap-ca-cert=db:Open_vSwitch,SSL,ca_cert \
                  --pidfile --detach --log-file
-  [[ $? -ne 0 ]] && echo_error "Failed to start ovsdb-server" && return $?
+  ret=$?;[[ $ret -ne 0 ]] && echo_error "Failed to start ovsdb-server" && return $ret
   echo_success "ovsdb-server running"
   sleep 1
 
@@ -247,7 +247,7 @@ ovs_start() {
     # is harmless):
     echo "Init ovs db..."
     $SUDO ovs-vsctl --no-wait init
-    [[ $? -ne 0 ]] && echo_error "Failed to init OVS db" && return $?
+    ret=$?;[[ $ret -ne 0 ]] && echo_error "Failed to init OVS db" && return $ret
     echo_success "Initialized ovs db."
   fi
 
@@ -255,7 +255,7 @@ ovs_start() {
   # Unix domain socket:
   echo "Starting vswitchd..."
   pgrep ovs-vswitchd || $SUDO ovs-vswitchd -v --pidfile --detach --log-file=/usr/local/var/log
-  [[ $? -ne 0 ]] && echo_error "Failed to start vswitchd" && return $?
+  ret=$?;[[ $ret -ne 0 ]] && echo_error "Failed to start vswitchd" && return $ret
   echo_success "vswitchd running"
   sleep 1
 }
@@ -312,7 +312,7 @@ install_ovs_gtp_kernel_space_from_source(){
 
     # optional but recommended for secure connection towards controller
     $SUDO apt-get install $OPTION libssl-dev libcap-ng-dev python-pip python-six
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
 
     # required by ovs
     # if problems with locale:
@@ -329,7 +329,7 @@ install_ovs_gtp_kernel_space_from_source(){
     #sudo -H python -m pip install six
     #sudo -H pip install six
     #echo $?
-    #[[ $? -ne 0 ]] && return $?
+    #ret=$?;[[ $ret -ne 0 ]] && return $ret
 
     ovs_clean_installation
 
@@ -361,30 +361,30 @@ install_ovs_gtp_kernel_space_from_source(){
     $SUDO rm -rf /tmp/ovs
     cd /tmp
     git clone https://github.com/openvswitch/ovs.git
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
     cd ovs
     git checkout 31b88c97512b5dca9f1f6f73bb33292618eee88a
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
     git am /tmp/gtp/openair-cn-extras/ovs/0001-datapath-GPRS-Tunneling-Protocol-GTP-support.patch
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
     git am /tmp/gtp/openair-cn-extras/ovs/0002-userspace-GPRS-Tunneling-Protocol-GTP-support.patch
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
 
     ./boot.sh
     ./configure --with-linux=/lib/modules/`uname -r`/build
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
     make -j`nproc`
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
     cat /tmp/gtp/openair-cn-extras/linux-4.9.0-gtp-module/Module.symvers >> datapath/linux/Module.symvers
     make
     $SUDO make modules_install  # this overwrites openvswitch.ko, vport.ko, vport-gtp.ko, etc.
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
     $SUDO make install
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
     $SUDO mkdir -p /usr/local/etc/openvswitch
     $SUDO mkdir -p /usr/local/var/run/openvswitch
     $SUDO ovsdb-tool create /usr/local/etc/openvswitch/conf.db vswitchd/vswitch.ovsschema
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
     cd $SAVEDPWD
     
     ovs_start 1

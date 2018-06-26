@@ -44,7 +44,7 @@ check_install_cassandra_software() {
   if [[ $prompt =~ [yY](es)* ]]
   then
     $SUDO add-apt-repository -y ppa:webupd8team/java
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
     $SUDO apt-get update
     echo oracle-java8-installer shared/accepted-oracle-license-v1-1 select true | $SUDO /usr/bin/debconf-set-selections
     # install Java 8
@@ -52,9 +52,9 @@ check_install_cassandra_software() {
 
     echo "deb http://www.apache.org/dist/cassandra/debian 21x main" | $SUDO  tee -a /etc/apt/sources.list.d/cassandra.sources.list
     curl https://www.apache.org/dist/cassandra/KEYS | $SUDO  apt-key add -
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
     $SUDO apt-get update
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
     $SUDO $INSTALLER install $OPTION cassandra
     return $?
   else 
@@ -67,6 +67,7 @@ check_install_cassandra_software() {
 clean_log_cassandra() {
 
   $SUDO service cassandra stop
+  ret=$?;[[ $ret -ne 0 ]] && echo_error "no known cassandra service seems to be configured on this host" && return $ret
   $SUDO rm -rf /var/lib/cassandra/data/system/*
   $SUDO rm -rf /var/lib/cassandra/commitlog/*
   $SUDO rm -rf /var/lib/cassandra/data/system_traces/*

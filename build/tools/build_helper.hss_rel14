@@ -39,7 +39,8 @@ build_freeDiameter()
   mkdir -p build
   cd build
   $CMAKE ..
-  [[ $? -ne 0 ]] && popd && return $?
+  res=$?
+  [[ $res -ne 0 ]] && popd && return $res
   awk '{if (/^DISABLE_SCTP/) gsub(/OFF/, "ON"); print}' CMakeCache.txt > tmp && mv tmp CMakeCache.txt
   make
   res=$?
@@ -116,23 +117,23 @@ build_pistache()
 init_submodules()
 {
   git submodule init
-  [[ $? -ne 0 ]] && return $?
+  ret=$?;[[ $ret -ne 0 ]] && return $ret
   git submodule update
-  [[ $? -ne 0 ]] && return $?
+  ret=$?;[[ $ret -ne 0 ]] && return $ret
   git submodule foreach git pull origin master
-  [[ $? -ne 0 ]] && return $?
+  ret=$?;[[ $ret -ne 0 ]] && return $ret
 
   set_openair_env
   dir=$OPENAIRCN_DIR/build/hss_rel14
  
   build_freeDiameter
-  [[ $? -ne 0 ]] && return $?
+  ret=$?;[[ $ret -ne 0 ]] && return $ret
   build_c_ares
-  [[ $? -ne 0 ]] && return $?
+  ret=$?;[[ $ret -ne 0 ]] && return $ret
   build_cpp_driver
-  [[ $? -ne 0 ]] && return $?
+  ret=$?;[[ $ret -ne 0 ]] && return $ret
   build_pistache
-  [[ $? -ne 0 ]] && return $?
+  ret=$?;[[ $ret -ne 0 ]] && return $ret
   
   $SUDO ldconfig
   return $?
@@ -240,7 +241,7 @@ check_install_hss_software() {
     echo_fatal "$OS_DISTRO is not a supported distribution."
   fi
   $SUDO $INSTALLER install $OPTION $PACKAGE_LIST
-  [[ $? -ne 0 ]] && return $?
+  ret=$?;[[ $ret -ne 0 ]] && return $ret
 
   init_submodules
   return $? 

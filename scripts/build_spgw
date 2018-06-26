@@ -130,8 +130,8 @@ function main()
 
   export ENABLE_"$GTPU_API"=1
   
-  if [ ! -d /usr/local/etc/oai/freeDiameter ]; then
-    $SUDO mkdir -p /usr/local/etc/oai/freeDiameter
+  if [ ! -d /usr/local/etc/oai ]; then
+    $SUDO mkdir -m 777 -p /usr/local/etc/oai
   fi
   
   if [ $var_check_install_oai_software -gt 0 ];then
@@ -182,10 +182,10 @@ function main()
   
   cd ./build
   $CMAKE $cmake_args .. > /dev/null
-  [[ $? -ne 0 ]] && return $?
+  ret=$?;[[ $ret -ne 0 ]] && return $ret
 
   compilations spgw spgw $OPENAIRCN_DIR/build/spgw/build/spgw $verbose
-  [[ $? -ne 0 ]] && return $?
+  ret=$?;[[ $ret -ne 0 ]] && return $ret
 
   $SUDO cp -upv $OPENAIRCN_DIR/build/spgw/build/spgw /usr/local/bin && echo_success "spgw installed"
   return 0

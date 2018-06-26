@@ -166,10 +166,12 @@ function main()
       return 1
     fi
   fi
-  
+
+  if [ ! -d /usr/local/etc/oai/freeDiameter ]; then
+    $SUDO mkdir -m 777 -p /usr/local/etc/oai/freeDiameter > /dev/null
+  fi
+
   if [ $var_check_install_mme_files -gt 0 ];then
-    $SUDO mkdir -p /usr/local/etc/oai/freeDiameter > /dev/null
-  
     if [ ! -f /usr/local/etc/oai/mme.conf ]; then
       $SUDO cp -upv $THIS_SCRIPT_PATH/../etc/mme.conf    /usr/local/etc/oai
       echo_error "Please customize /usr/local/etc/oai/mme.conf (interfaces, TAIs, GUMMEI, HSS hostname, SGW IP address, logging, etc), after, please re-run run_mme -I"
@@ -184,7 +186,7 @@ function main()
         fi
       fi
     fi 
-  
+
     $SUDO cp -upv $THIS_SCRIPT_PATH/../etc/mme_fd.conf /usr/local/etc/oai/freeDiameter
     echo_warning "Be carefull /usr/local/etc/oai/freeDiameter/mme_fd.conf has realm, freeDiameter identity, HSS "
     echo_warning "IPv4 address, HSS realm, HSS FQDN, all hardcoded, please check them and change them upon your needs."

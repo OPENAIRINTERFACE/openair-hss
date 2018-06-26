@@ -115,9 +115,9 @@ function main()
     
   #Add Test Data to Cassandra
   #./data_provisioning_users.sh <IMSI> <MSISDN> <APN> <Key> <No of UEs> <Cassandra_Server_IP>
-  #The following example will add 25 entries:
+  #The following example will add 200 entries:
   cd $THIS_SCRIPT_PATH
-  ./data_provisioning_users.sh 208014567891234 1122334455 apn1 465B5CE8B199B49FAA5F0A2EE238A6BC 25 $Cassandra_Server_IP
+  ./data_provisioning_users.sh 208014567891234 1122334455 apn1 465B5CE8B199B49FAA5F0A2EE238A6BC 200 $Cassandra_Server_IP
   
   if [ $? -ne 0 ]; then
      echo_error "Data provisioning for users failed"
@@ -138,8 +138,8 @@ function main()
   fi
   
   #start Cassandra (if necessary)
-  $SUDO service cassandra start        
-  
+  $SUDO service cassandra start
+  return $?
 }
 
 

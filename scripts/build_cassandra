@@ -31,6 +31,7 @@
 THIS_SCRIPT_PATH=$(dirname $(readlink -f $0))
 source $THIS_SCRIPT_PATH/../build/tools/build_helper.cassandra
 
+DEFAULT_CASSANDRA_SERVER_IP="127.0.0.1"
 
 
 function help()
@@ -44,6 +45,7 @@ function help()
   echo_error "  -F, --force                               No interactive script for installation of software packages."
   echo_error "  -h, --help                                Print this help."
   echo_error "  -i, --check-installed-software            Check installed software packages necessary to build and run Cassandra (support Ubuntu 16.04)."
+  echo_error "  -s, --cassandra-server-ip                 Binding address for cassandra server (default is $DEFAULT_CASSANDRA_SERVER_IP)."
 }
 
 
@@ -53,6 +55,8 @@ function main()
   local -i var_check_install_cassandra_software=0
   local -i force=0
   local    realm=""
+  local    cassandra_server_ip=$DEFAULT_CASSANDRA_SERVER_IP
+  local -i change_cassandra_server_ip=0
 
   until [ -z "$1" ]; do
     case "$1" in
@@ -71,6 +75,11 @@ function main()
         var_check_install_cassandra_software=1
         shift;
         ;;
+      -s | --cassandra-server-ip)
+        cassandra_server_ip=$2
+        change_cassandra_server_ip=1
+        shift 2;
+        ;;
       *)   
         echo "Unknown option $1"
         help
@@ -79,7 +88,11 @@ function main()
     esac
   done
 
+  set_openair_env
 
+  if [ ! -d /usr/local/etc/oai ]; then
+    $SUDO mkdir -p /usr/local/etc/oai
+  fi
   if [ $var_check_install_cassandra_software -gt 0 ];then
     #Install Java-8 and Cassandra    
     check_install_cassandra_software $force
@@ -89,15 +102,19 @@ function main()
     else
         echo_success "Cassandra installation successful"
     fi
-    
-    $SUDO cp -upv $OPENAIRCN_DIR/etc/cassandra.conf /usr/local/etc/oai
 
+    $SUDO cp -upv $OPENAIRCN_DIR/etc/cassandra.conf /usr/local/etc/oai
+    $SUDO sed -i "s|@cassandra_IP@|$cassandra_server_ip|g" /usr/local/etc/oai/cassandra.conf
     echo_success "Cassandra has been installed successfully."
     return  0
+  elif [ $change_cassandra_server_ip -gt 0 ];then
+    $SUDO cp -upv $OPENAIRCN_DIR/etc/cassandra.conf /usr/local/etc/oai
+    $SUDO sed -i "s|@cassandra_IP@|$cassandra_server_ip|g" /usr/local/etc/oai/cassandra.conf
   fi
   
   #stop cassandra and clean the log files before modifying the configuration   
   clean_log_cassandra
+  ret=$?;[[ $ret -ne 0 ]] && return $ret
   
   #Update the Cassandra configuration
   #get Cassandra_Server_IP from the configuration file
@@ -105,21 +122,26 @@ function main()
   eval $value
   var_name="cassandra_server_IP"
   Cassandra_Server_IP=${!var_name}
-  echo $Cassandra_Server_IP
+  echo "Cassandra_Server_IP=$Cassandra_Server_IP"
   
-  #set values in the configuration file /etc/cassandra/cassandra.yaml
-  $SUDO sed -i "s/'Test Cluster'/'HSS Cluster'/g" /etc/cassandra/cassandra.yaml
-  #set seeds to Cassandra_Server_IP
-  $SUDO sed -i "s/"127.0.0.1"/$Cassandra_Server_IP/g" /etc/cassandra/cassandra.yaml
-  #set listen_address and rpc_address to Cassandra_Server_IP
-  $SUDO sed -i "s/"localhost"/$Cassandra_Server_IP/g" /etc/cassandra/cassandra.yaml
-  #set endpoint_snitch
-  $SUDO sed -i 's/'SimpleSnitch'/'GossipingPropertyFileSnitch'/g' /etc/cassandra/cassandra.yaml
-  #uncomment prefer_local=true in /etc/cassandra/cassandra-rackdc.properties
-  $SUDO sed -i '/prefer_local/s/^#//g' /etc/cassandra/cassandra-rackdc.properties
+  if [ -f /etc/cassandra/cassandra.yaml ]; then
+    #set values in the configuration file /etc/cassandra/cassandra.yaml
+    $SUDO sed -i "s/'Test Cluster'/'HSS Cluster'/g" /etc/cassandra/cassandra.yaml
+    #set seeds to Cassandra_Server_IP
+    $SUDO sed -i "s/"127.0.0.1"/$Cassandra_Server_IP/g" /etc/cassandra/cassandra.yaml
+    #set listen_address and rpc_address to Cassandra_Server_IP
+    $SUDO sed -i "s/"localhost"/$Cassandra_Server_IP/g" /etc/cassandra/cassandra.yaml
+    #set endpoint_snitch
+    $SUDO sed -i 's/'SimpleSnitch'/'GossipingPropertyFileSnitch'/g' /etc/cassandra/cassandra.yaml
+    #uncomment prefer_local=true in /etc/cassandra/cassandra-rackdc.properties
+    $SUDO sed -i '/prefer_local/s/^#//g' /etc/cassandra/cassandra-rackdc.properties
+  else
+    echo_error "Missing file /etc/cassandra/cassandra.yaml"
+    return 1
+  fi
   
   $SUDO service cassandra start   
-  
+  return $?
 }
 
 

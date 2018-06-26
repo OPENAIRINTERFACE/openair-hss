@@ -60,14 +60,14 @@ install_libevent_2.1.x_from_source() {
       return 1
     fi
     tar -xzf libevent-2.1.8-stable.tar.gz
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
     cd libevent-2.1.8-stable/
     ./configure
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
     make
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
     #make verify
-    #[[ $? -ne 0 ]] && return $?
+    #ret=$?;[[ $ret -ne 0 ]] && return $ret
     $SUDO make install
     cd /tmp
     rm -rf /tmp/libevent*
@@ -134,7 +134,7 @@ check_install_spgw_software() {
   fi
   echo "Install build tools"
   $SUDO $INSTALLER install $OPTION $PACKAGE_LIST
-  [[ $? -ne 0 ]] && return $?
+  ret=$?;[[ $ret -ne 0 ]] && return $ret
   
 
   # Libraries
@@ -180,7 +180,7 @@ check_install_spgw_software() {
   fi
   echo "Install distro libs"
   $SUDO $INSTALLER install $OPTION $PACKAGE_LIST
-  [[ $? -ne 0 ]] && return $?
+  ret=$?;[[ $ret -ne 0 ]] && return $ret
 
   # Networking
   if [[ $OS_DISTRO == "ubuntu" ]]; then
@@ -200,7 +200,7 @@ check_install_spgw_software() {
   fi
   echo "Install networking tools"
   $SUDO $INSTALLER install $OPTION $PACKAGE_LIST
-  [[ $? -ne 0 ]] && return $?
+  ret=$?;[[ $ret -ne 0 ]] && return $ret
 
   if [[ "$OS_DISTRO" == "ubuntu" ]]; then
     PACKAGE_LIST="\
@@ -225,10 +225,10 @@ check_install_spgw_software() {
   fi
   echo "Install $PACKAGE_LIST"
   $SUDO $INSTALLER install $OPTION $PACKAGE_LIST
-  [[ $? -ne 0 ]] && return $?
+  ret=$?;[[ $ret -ne 0 ]] && return $ret
 
   install_liblfds7.1.0_from_source $1
-  [[ $? -ne 0 ]] && return $?
+  ret=$?;[[ $ret -ne 0 ]] && return $ret
 
 
   gcc_version=`gcc --version | head -n1 | cut -d" " -f4`
@@ -241,13 +241,13 @@ check_install_spgw_software() {
     if [[ $prompt =~ [yY](es)* ]]; then
       echo "Upgrade gcc"
       $SUDO add-apt-repository -y ppa:ubuntu-toolchain-r/test
-      [[ $? -ne 0 ]] && return $?
+      ret=$?;[[ $ret -ne 0 ]] && return $ret
       $SUDO apt-get update
-      [[ $? -ne 0 ]] && return $?
+      ret=$?;[[ $ret -ne 0 ]] && return $ret
       $SUDO apt-get install gcc-`echo -n $required_gcc_version | cut -d'.' -f3 --complement`
-      [[ $? -ne 0 ]] && return $?
+      ret=$?;[[ $ret -ne 0 ]] && return $ret
       update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.9 60 --slave /usr/bin/g++ g++ /usr/bin/g++-4.9
-      [[ $? -ne 0 ]] && return $?
+      ret=$?;[[ $ret -ne 0 ]] && return $ret
       update-alternatives --config gcc
     fi
   fi
@@ -256,9 +256,9 @@ check_install_spgw_software() {
   if [ ! -z ${ENABLE_LIBGTPNL+x} ]; then 
     echo "Install libgtpnl"
     install_libgtpnl_from_source $1
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
     install_gtp_mark_kernel_module $1
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
   fi
 
   if [ ! -z ${ENABLE_OPENFLOW_MOSAIC+x} ]; then
@@ -271,20 +271,20 @@ check_install_spgw_software() {
   if [ ! -z ${ENABLE_OPENFLOW+x} ]  ||  [ ! -z ${ENABLE_OPENFLOW_MOSAIC+x} ]; then
     echo "Install GTP kernel module"
     install_gtp_ovs_kernel_module $1
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
     echo "Install ovs"
     install_ovs_gtp_kernel_space_from_source $1
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
     
     # For fluid under openair-cn/src dir
     # install_libevent_2.1.x_from_source $1
-    # [[ $? -ne 0 ]] && return $?
+    # ret=$?;[[ $ret -ne 0 ]] && return $ret
     
     # optional but recommended for secure connection towards controller
     $SUDO apt-get install $OPTION autoconf libtool build-essential pkg-config
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
     $SUDO apt-get install $OPTION libssl-dev
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
     
   fi
   return 0

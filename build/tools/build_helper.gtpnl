@@ -52,20 +52,20 @@ install_gtp_mark_kernel_module() {
     cd /tmp/gtp
     echo 'OVS: Cloning openair-cn-extras'
     git clone https://github.com/OPENAIRINTERFACE/openair-cn-extras.git
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
 
     cd openair-cn-extras/linux-4.13-gtp-module
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
     make -C /lib/modules/`uname -r`/build M=$PWD
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
     sudo cp gtp.ko /lib/modules/`uname -r`/kernel/drivers/net/gtp.ko
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
     $SUDO depmod -a
     
     $SUDO modprobe udp_tunnel
     $SUDO modprobe ip6_udp_tunnel
     $SUDO modprobe gtp
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
   fi
   return 0
 }
@@ -110,23 +110,23 @@ install_libgtpnl_from_source() {
     echo "Downloading libgtpnl archive"
     $SUDO rm -rf /tmp/libgtpnl*
     git clone git://git.osmocom.org/libgtpnl
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
     cd libgtpnl
     git reset --hard 345d687
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
     patch --verbose -p1  < $OPENAIRCN_DIR/build/tools/libgtpnl.LTE_dedicated_bearer.v0.patch 
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
     autoreconf -fi
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
     ./configure
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
     echo "Compiling libgtpnl"
     make -j`nproc`
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
     $SUDO make install
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
     $SUDO ldconfig
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
     cd /tmp
     $SUDO rm -rf /tmp/libgtpnl*
   fi

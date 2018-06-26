@@ -86,7 +86,7 @@ check_install_mme_software() {
   fi
   echo "Install build packages"
   $SUDO $INSTALLER install $OPTION $PACKAGE_LIST
-  [[ $? -ne 0 ]] && return $?
+  ret=$?;[[ $ret -ne 0 ]] && return $ret
 
   # Libraries
   if [[ $OS_DISTRO == "ubuntu" ]]; then
@@ -134,23 +134,23 @@ check_install_mme_software() {
   fi
   echo "Install libraries"
   $SUDO $INSTALLER install $OPTION $PACKAGE_LIST
-  [[ $? -ne 0 ]] && return $?
+  ret=$?;[[ $ret -ne 0 ]] && return $ret
 
   if [[ $OS_DISTRO == 'ubuntu' ]]; then
     #Remove old gnutls/nettle installation that was done from sources
     echo "Install gnutls/nettle"
     $SUDO apt-get install -y nettle-dev nettle-bin
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
     $SUDO apt-get install -y libgnutls-dev
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
   fi
   
   install_freediameter_from_source $1
-  [[ $? -ne 0 ]] && return $?
+  ret=$?;[[ $ret -ne 0 ]] && return $ret
   install_asn1c_from_source $1
-  [[ $? -ne 0 ]] && return $?
+  ret=$?;[[ $ret -ne 0 ]] && return $ret
   install_liblfds7.1.0_from_source $1
-  [[ $? -ne 0 ]] && return $?
+  ret=$?;[[ $ret -ne 0 ]] && return $ret
 
 
   # Networking
@@ -169,7 +169,7 @@ check_install_mme_software() {
   fi
   echo "Install networking packages"
   $SUDO $INSTALLER install $OPTION $PACKAGE_LIST
-  [[ $? -ne 0 ]] && return $?
+  ret=$?;[[ $ret -ne 0 ]] && return $ret
 
   if [[ "$OS_DISTRO" == "ubuntu" ]]; then
     PACKAGE_LIST="\

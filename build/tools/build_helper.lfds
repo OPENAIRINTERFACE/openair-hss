@@ -46,21 +46,21 @@ install_liblfds7.1.0_from_source() {
     echo "Install liblfds7.1.0 from source"
     # Compilers, generators, ...
     $SUDO apt-get install $OPTION build-essential
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
     cd /tmp
     echo "Downloading liblfds7.1.0 archive"
     $SUDO rm -rf /tmp/liblfds*
     git clone https://github.com/liblfds/liblfds.git
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
     cd liblfds/liblfds/liblfds7.1.0/liblfds710/build/gcc_gnumake
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
     #make so_rel # do a selector
     make so_dbg
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
     $SUDO rm -f /usr/local/lib//liblfds710.so
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
     $SUDO make so_install
-    [[ $? -ne 0 ]] && return $?
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
     $SUDO rm -rf /tmp/liblfds*
   fi
   return 0
