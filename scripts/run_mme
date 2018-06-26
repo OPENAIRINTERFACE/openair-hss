@@ -49,6 +49,8 @@ function help()
   echo_error "Options:"
   echo_error "Mandatory arguments to long options are mandatory for short options too."
   echo_error "  -c, --config-file     file_abs_path Config file to be used by MME if you don't want to use the default one: $g_mme_default_config_file"
+  echo_error "  -e, --enable-core-dump              Enable core dump for mme executable"
+  echo_error "  -d, --disable-core-dump              Enable core dump for mme executable"
   echo_error "  -g, --gdb                           Run with GDB."
   echo_error "  -G, --gdb-cmd         cmd cmd_arg   Append this GDB cmd to GDB command file (ex1: break Attach.c:272, ex2: watch 0xffee0002)."
   echo_error "                                      All repetitions of this argument are valid."
@@ -78,7 +80,6 @@ function control_c()
   exit $?
 }
 
-PIDFILE=/var/run/$NAME.pid
 function main()
 {
   local -i run_gdb=0
@@ -96,6 +97,23 @@ function main()
         mme_config_file=$2
         echo "setting config file to: $mme_config_file"
         shift 2;
+        ;;
+      -e | --enable-core-dump)
+        # Warning Ubuntu 16.04
+        $SUDO ulimit -S -c 0
+        $SUDO ulimit -S -c unlimited /usr/local/bin/mme
+        $SUDO rm /var/crash/_usr_bin_sudo.0.crash
+        mkdir -p  ~/.config/apport/ > /dev/null
+        echo '[main]' > ~/.config/apport/settings
+        echo 'unpackaged=true' >> ~/.config/apport/settings
+        echo "Enabled core dump for mme executable"
+        shift;
+        ;;
+      -d | --disable-core-dump)
+        # Warning Ubuntu 16.04
+        $SUDO ulimit -S -c 0
+        rm -Rf ~/.config/apport
+        shift;
         ;;
       -g | --gdb)
         run_gdb=1
