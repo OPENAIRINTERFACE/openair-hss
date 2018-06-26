@@ -53,7 +53,7 @@ s1ap_mme_decode_initiating (
   size_t                                  message_string_size;
   //MessagesIds                             message_id = MESSAGES_ID_MAX;
   DevAssert (initiating_p != NULL);
-  message_string = calloc (10000, sizeof (char));
+  message_string = calloc (20000, sizeof (char));
   s1ap_string_total_size = 0;
   message->procedureCode = initiating_p->procedureCode;
   message->criticality = initiating_p->criticality;

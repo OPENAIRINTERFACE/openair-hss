@@ -590,13 +590,12 @@ inline void emm_ctx_update_from_mm_eps_context(emm_data_context_t * const emm_ct
   if (IS_EMM_CTXT_PRESENT_UE_NETWORK_CAPABILITY(emm_ctx_p)) {
     OAILOG_DEBUG (LOG_NAS_EMM, "EMM-PROC  - UE network capabilities already present for IMSI " IMSI_64_FMT ". Not setting from S10 Context Response. \n", emm_ctx_p->_imsi64);
   }else{
-    emm_ctx_set_ue_nw_cap(emm_ctx_p, &mm_eps_ctxt->ue_nc);
+    emm_ctx_set_valid_ue_nw_cap(emm_ctx_p, &mm_eps_ctxt->ue_nc);
   }
   if (IS_EMM_CTXT_PRESENT_MS_NETWORK_CAPABILITY(emm_ctx_p)) {
     OAILOG_DEBUG (LOG_NAS_EMM, "EMM-PROC  - MS network capabilities already present for IMSI " IMSI_64_FMT ". Not setting from S10 Context Response. \n", emm_ctx_p->_imsi64);
   }else{
-    emm_ctx_set_attribute_present(emm_ctx_p, EMM_CTXT_MEMBER_MS_NETWORK_CAPABILITY_IE);
-    memcpy((void*)&emm_ctx_p->_ms_network_capability, (ms_network_capability_t*)&mm_eps_ctxt->ms_nc, sizeof(ms_network_capability_t)); // todo: review this
+    emm_ctx_set_valid_ms_nw_cap(emm_ctx_p, (ms_network_capability_t*)&mm_eps_ctxt->ms_nc);
     // todo: review all of this
 //    emm_ctx_p->gea = (mm_eps_ctxt->ms_nc.gea1 << 6)| mm_eps_ctxt->ms_nc.egea;
 //    emm_ctx_p->gprs_present = true; /**< Todo: how to find this out? */

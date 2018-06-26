@@ -935,13 +935,17 @@ static int _emm_send_tracking_area_update_accept(emm_data_context_t * const emm_
   //----------------------------------------
   REQUIREMENT_3GPP_24_301(R10_5_5_3_2_4__4);
   //----------------------------------------
-  emm_ctx_set_valid_ue_nw_cap(emm_context, tau_proc->ies->ue_network_capability);
+
+  if (tau_proc->ies->ms_network_capability) {
+    emm_ctx_set_valid_ue_nw_cap(emm_context, tau_proc->ies->ue_network_capability);
+    /** Not clearing them, we might have received it from S10. */
+  }
 
   if (tau_proc->ies->ms_network_capability) {
     emm_ctx_set_valid_ms_nw_cap(emm_context, tau_proc->ies->ms_network_capability);
   } else {
     // optional IE
-    emm_ctx_clear_ms_nw_cap(emm_context);
+    /** Not clearing them, we might have received it from S10. */
   }
 
   //----------------------------------------
@@ -1626,12 +1630,12 @@ static int _emm_tracking_area_update_run_procedure(emm_data_context_t *emm_conte
     if (tau_proc->ies->ue_network_capability) {
       emm_ctx_set_ue_nw_cap((emm_data_context_t * const)emm_context, tau_proc->ies->ue_network_capability);
     }else{
-      emm_ctx_clear_ue_nw_cap(emm_context);
+      /** Not clearing the attributes. We will keep them from the attach. */
     }
     if (tau_proc->ies->ms_network_capability) {
       emm_ctx_set_ms_nw_cap(emm_context, tau_proc->ies->ms_network_capability);
     }else{
-      emm_ctx_clear_ms_nw_cap(emm_context);
+//      emm_ctx_clear_ms_nw_cap(emm_context);
 //      emm_context->gea = (msg->msnetworkcapability.gea1 << 6)| msg->msnetworkcapability.egea;
 //      emm_context->gprs_present = true; /**< Todo: how to find this out? */
     }
