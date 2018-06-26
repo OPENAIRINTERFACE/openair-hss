@@ -1797,13 +1797,6 @@ mme_app_handle_nas_context_req(itti_nas_context_req_t * const nas_context_req_pP
 //    OAILOG_FUNC_OUT (LOG_MME_APP);
 //  }
 
-  /**
-   * Store the received PDN connectivity information as pending information in the MME_APP UE context.
-   * todo: if normal attach --> Create Session Request will be sent from the subscription information ULA.
-   * We could send the PDN Connection IE together to the NAS, but since we have subscription information yet, we still need the
-   * method mme_app_send_s11_create_session_req_from_handover_tau which sends the CREATE_SESSION_REQUEST from the pending information.
-   */
-
   struct in_addr neigh_mme_ipv4_addr;
   neigh_mme_ipv4_addr.s_addr = 0;
 
@@ -2412,7 +2405,7 @@ mme_app_handle_s10_context_response(
    * When Create Session Response is received, continue to process the next PDN connection, until all are processed.
    * When all pdn_connections are completed, continue with handover request.
    */
-  if(mme_app_send_s11_create_session_req (ue_context, &s10_context_response_pP->imsi, pdn_context, &emm_context->originating_tai) != RETURNok){
+  if(mme_app_send_s11_create_session_req (ue_context, &s10_context_response_pP->imsi, pdn_context, &emm_context->originating_tai, true) != RETURNok){
     /**
      * Error sending CSReq. Send S10 Context Response error to NAS.
      */

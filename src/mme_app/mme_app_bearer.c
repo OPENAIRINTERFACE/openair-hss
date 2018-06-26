@@ -266,7 +266,7 @@ mme_app_handle_nas_pdn_connectivity_req (
     DevAssert(pdn_context_test);
   }
   // todo: get target_tai or so from ue_context!!
-  rc = mme_app_send_s11_create_session_req (ue_context, &nas_pdn_connectivity_req_pP->_imsi, pdn_context, &emm_context->originating_tai);
+  rc = mme_app_send_s11_create_session_req (ue_context, &nas_pdn_connectivity_req_pP->_imsi, pdn_context, &emm_context->originating_tai, false);
 
   OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
 }
@@ -1079,7 +1079,7 @@ mme_app_handle_create_sess_resp (
        * When Create Session Response is received, continue to process the next PDN connection, until all are processed.
        * When all pdn_connections are completed, continue with handover request.
        */
-      mme_app_send_s11_create_session_req (ue_context, &s10_handover_procedure->nas_s10_context._imsi, pdn_context, &s10_handover_procedure->target_tai);
+      mme_app_send_s11_create_session_req (ue_context, &s10_handover_procedure->nas_s10_context._imsi, pdn_context, &s10_handover_procedure->target_tai, false);
 
       OAILOG_INFO(LOG_MME_APP, "Successfully sent CSR for UE " MME_UE_S1AP_ID_FMT ". Waiting for CSResp to continue to process handover on source MME side. \n", ue_context->mme_ue_s1ap_id);
     }else{
@@ -1141,7 +1141,7 @@ mme_app_handle_create_sess_resp (
        * When all pdn_connections are completed, continue with handover request.
        */
       // todo: check target_tai at idle mode
-      mme_app_send_s11_create_session_req (ue_context, &emm_cn_proc_ctx_req->nas_s10_context._imsi, pdn_context, &emm_context->originating_tai);
+      mme_app_send_s11_create_session_req (ue_context, &emm_cn_proc_ctx_req->nas_s10_context._imsi, pdn_context, &emm_context->originating_tai, true);
       OAILOG_INFO(LOG_MME_APP, "Successfully sent CSR for UE " MME_UE_S1AP_ID_FMT ". Waiting for CSResp to continue to process handover on source MME side. \n", ue_context->mme_ue_s1ap_id);
     }else{
       OAILOG_INFO(LOG_MME_APP, "No further PDN connections that need to be established via idle mode TAU for UE " MME_UE_S1AP_ID_FMT ". "
@@ -2765,7 +2765,7 @@ mme_app_handle_forward_relocation_request(
     * When Create Session Response is received, continue to process the next PDN connection, until all are processed.
     * When all pdn_connections are completed, continue with handover request.
     */
-   mme_app_send_s11_create_session_req (ue_context, &s10_proc_mme_handover->nas_s10_context._imsi, pdn_context, &target_tai);
+   mme_app_send_s11_create_session_req (ue_context, &s10_proc_mme_handover->nas_s10_context._imsi, pdn_context, &target_tai, false);
    OAILOG_INFO(LOG_MME_APP, "Successfully sent CSR for UE " MME_UE_S1AP_ID_FMT ". Waiting for CSResp to continue to process handover on source MME side. \n", ue_context->mme_ue_s1ap_id);
  }else{
    /** Ignore the received pdn_connections IE and continue straight with handover request. */

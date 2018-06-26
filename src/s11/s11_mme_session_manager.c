@@ -92,7 +92,12 @@ s11_mme_create_session_request (
   gtpv2c_pdn_type_ie_set (&(ulp_req.hMsg), &req_p->pdn_type);
   gtpv2c_paa_ie_set(&(ulp_req.hMsg), &req_p->paa);
   gtpv2c_apn_restriction_ie_set(&(ulp_req.hMsg), 0);
- /*
+  /**
+   * Indication Flags.
+   */
+  gtpv2c_indication_flags_ie_set (&(ulp_req.hMsg), &req_p->indication_flags);
+
+  /*
    * Sender F-TEID for Control Plane (MME S11)
    */
   rc = nwGtpv2cMsgAddIeFteid ((ulp_req.hMsg), NW_GTPV2C_IE_INSTANCE_ZERO,

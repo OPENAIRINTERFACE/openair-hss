@@ -141,7 +141,7 @@ int mme_app_send_s11_release_access_bearers_req (struct ue_context_s *const ue_c
 //------------------------------------------------------------------------------
 int
 mme_app_send_s11_create_session_req (
-  struct ue_context_s *const ue_context, const imsi_t const * imsi_p, pdn_context_t * pdn_context, tai_t * serving_tai)
+  struct ue_context_s *const ue_context, const imsi_t const * imsi_p, pdn_context_t * pdn_context, tai_t * serving_tai, const bool is_from_s10_tau)
 {
   uint8_t                                 i = 0;
 
@@ -205,7 +205,10 @@ mme_app_send_s11_create_session_req (
    * Set the indication flag.
    */
   memset(&session_request_p->indication_flags, 0, sizeof(session_request_p->indication_flags));   // TO DO
-  session_request_p->indication_flags.oi = 0x1;
+
+  if(is_from_s10_tau){
+    session_request_p->indication_flags.oi = 0x1; /** Currently only setting for idle TAU. */
+  }
 
   /*
    * Copy the subscribed APN-AMBR to the sgw create session request message
