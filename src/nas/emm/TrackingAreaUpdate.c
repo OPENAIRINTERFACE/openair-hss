@@ -927,6 +927,8 @@ static int _emm_send_tracking_area_update_accept(emm_data_context_t * const emm_
   }else{
     emm_sap.primitive = EMMAS_DATA_REQ; /**< We also check the current ECM state to handle active flag. */
   }
+
+
   /** Set the rest as data. */
   emm_sap.u.emm_as.u.data.ue_id = emm_context->ue_id; /**< These should also set for data. */
   emm_sap.u.emm_as.u.data.nas_info = EMM_AS_NAS_DATA_TAU;

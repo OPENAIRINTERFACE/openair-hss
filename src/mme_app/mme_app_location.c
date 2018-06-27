@@ -132,6 +132,13 @@ int mme_app_handle_s6a_update_location_ans (
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
 
+  /** Send the S6a message. */
+  message_p = itti_alloc_new_message (TASK_MME_APP, NAS_PDN_CONFIG_RSP);
+
+  if (message_p == NULL) {
+    goto err;
+  }
+
   if (ula_pP->result.present == S6A_RESULT_BASE) {
     if (ula_pP->result.choice.base != DIAMETER_SUCCESS) {
       /*
@@ -186,13 +193,6 @@ int mme_app_handle_s6a_update_location_ans (
   ue_context->implicit_detach_timer.id = MME_APP_TIMER_INACTIVE_ID;
   ue_context->implicit_detach_timer.sec = (ue_context->mobile_reachability_timer.sec) + MME_APP_DELTA_REACHABILITY_IMPLICIT_DETACH_TIMER * 60;
 
-
-  /** Send the S6a message. */
-  message_p = itti_alloc_new_message (TASK_MME_APP, NAS_PDN_CONFIG_RSP);
-
-  if (message_p == NULL) {
-    goto err;
-  }
 
   nas_pdn_config_rsp = &message_p->ittiMsg.nas_pdn_config_rsp;
   nas_pdn_config_rsp->ue_id  = ue_context->mme_ue_s1ap_id;
