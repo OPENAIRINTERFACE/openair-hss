@@ -99,20 +99,24 @@ function main()
         shift 2;
         ;;
       -e | --enable-core-dump)
-        # Warning Ubuntu 16.04
-        $SUDO ulimit -S -c 0
-        $SUDO ulimit -S -c unlimited /usr/local/bin/mme
-        $SUDO rm /var/crash/_usr_bin_sudo.0.crash
-        mkdir -p  ~/.config/apport/ > /dev/null
-        echo '[main]' > ~/.config/apport/settings
-        echo 'unpackaged=true' >> ~/.config/apport/settings
-        echo "Enabled core dump for mme executable"
+        # https://developer.toradex.com/knowledge-base/enable-and-analyze-coredumps-in-linux
+        # Warning for Ubuntu apport should be disabled, should be same for other distro similar services
+        core_dump_enabled=$(cat /boot/config-`uname -r` | grep CONFIG_COREDUMP | cut -d '=' -f2)
+        if [[ $core_dump_enabled != 'y' ]]; then
+          echo_error "Core dumps not enabled for this kernel"
+        else
+          $SUDO sysctl -w kernel.core_uses_pid=1
+          $SUDO sysctl -w kernel.core_pattern='/var/crash/core-%e-%s-%u-%g-%p-%t'
+          $SUDO sysctl -w fs.suid_dumpable=2
+        
+          ulimit -S -c 0
+          ulimit -S -c unlimited /usr/local/bin/mme
+          echo "Enabled core dump for mme executable"
+        fi
         shift;
         ;;
       -d | --disable-core-dump)
-        # Warning Ubuntu 16.04
-        $SUDO ulimit -S -c 0
-        rm -Rf ~/.config/apport
+        ulimit -S -c 0 /usr/local/bin/mme
         shift;
         ;;
       -g | --gdb)
