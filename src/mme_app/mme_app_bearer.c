@@ -1256,10 +1256,12 @@ mme_app_handle_modify_bearer_resp (
       /** Continue to next pdn. */
       continue;
     }else{
-      /** Found a PDN. Establish the bearer contexts. */
-      OAILOG_INFO(LOG_MME_APP, "Establishing the bearers for UE_CONTEXT for UE " MME_UE_S1AP_ID_FMT " triggered by handover notify. \n", ue_context->mme_ue_s1ap_id);
-      mme_app_send_s11_modify_bearer_req(ue_context, pdn_context);
-      OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
+      if(first_bearer->bearer_state & BEARER_STATE_ENB_CREATED){
+        /** Found a PDN. Establish the bearer contexts. */
+        OAILOG_INFO(LOG_MME_APP, "Establishing the bearers for UE_CONTEXT for UE " MME_UE_S1AP_ID_FMT " triggered by handover notify (not active but ENB Created). \n", ue_context->mme_ue_s1ap_id);
+        mme_app_send_s11_modify_bearer_req(ue_context, pdn_context);
+        OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
+      }
     }
   }
   OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
@@ -2410,6 +2412,7 @@ mme_app_handle_handover_cancel(
   emm_context = emm_data_context_get_by_guti (&_emm_data, &ue_context->guti);
   /** Check that the UE NAS context != NULL. */
   DevAssert(emm_context && emm_fsm_get_state (emm_context) == EMM_REGISTERED);
+
   /*
    * UE will always stay in EMM-REGISTERED mode until S10 Handover is completed (CANCEL_LOCATION_REQUEST).
    * Just checking S10 is not enough. The UE may have handovered to the target-MME and then handovered to another eNB in the TARGET-MME.

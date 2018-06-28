@@ -2776,7 +2776,7 @@ int mme_app_registration_complete(const mme_ue_s1ap_id_t mme_ue_s1ap_id){
     registered_pdn_ctx = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
     bearer_context_to_establish = RB_MIN(SessionBearers, &registered_pdn_ctx->session_bearers);
     if(BEARER_STATE_ENB_CREATED & bearer_context_to_establish->bearer_state){
-      if(bearer_context_to_establish->bearer_state != BEARER_STATE_ACTIVE){
+      if(bearer_context_to_establish->bearer_state != BEARER_STATE_ACTIVE){ /**< We enter here for the EMM registration, triggering is independent of multi APN. */
         if(mme_app_send_s11_modify_bearer_req(ue_context, registered_pdn_ctx) != RETURNok){
           OAILOG_ERROR(LOG_MME_APP, "Error sending MBR for mmeUeS1apId " MME_UE_S1AP_ID_FMT ". Implicitly detaching the UE. \n", mme_ue_s1ap_id);
           // todo!

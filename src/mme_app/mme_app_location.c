@@ -215,8 +215,7 @@ err:
   }
 
   itti_nas_pdn_config_fail_t *nas_pdn_config_fail = &message_p->ittiMsg.nas_pdn_config_fail;
-  nas_pdn_config_rsp->ue_id  = ue_context->mme_ue_s1ap_id;
-  nas_pdn_config_rsp->imsi64 = imsi64;
+  nas_pdn_config_fail->ue_id  = ue_context->mme_ue_s1ap_id;
 
   /** For error codes, use nas_pdn_cfg_fail. */
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_PDN_CONFIG_FAIL IMSI " IMSI_64_FMT, imsi64);
