@@ -444,6 +444,25 @@ static void _identification_t3470_handler (void *args)
       MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMREG_PROC_ABORT (identification) ue id " MME_UE_S1AP_ID_FMT " ", ident_proc->ue_id);
       emm_sap_send (&emm_sap);
       nas_delete_all_emm_procedures(emm_ctx);
+
+      /*
+       * We need also to check if the EMM context exists or not.
+       * A non delivery indicator, might have triggered another identity request, and in the meantime, the MME_APP context might have been removed, due to a Context Release Complete.
+       */
+
+      emm_ctx = emm_data_context_get(&_emm_data, ident_proc->ue_id);
+      if(emm_ctx){
+        OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - EMM Context for ueId " MME_UE_S1AP_ID_FMT " is still existing. Removing failed EMM context.. \n", ident_proc->ue_id);
+        emm_sap_t                               emm_sap = {0};
+        emm_sap.primitive = EMMCN_IMPLICIT_DETACH_UE;
+        emm_sap.u.emm_cn.u.emm_cn_implicit_detach.ue_id = ident_proc->ue_id;
+        emm_sap_send (&emm_sap);
+        OAILOG_FUNC_OUT (LOG_NAS_EMM);
+      }else{
+        OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - EMM Context for ueId " MME_UE_S1AP_ID_FMT " is not existing. Triggering an MME_APP detach.. \n", ident_proc->ue_id);
+        nas_itti_detach_req(ident_proc->ue_id);
+        OAILOG_FUNC_OUT (LOG_NAS_EMM);
+      }
     }
   } else {
     OAILOG_ERROR (LOG_NAS_EMM, "T3470 timer expired, No Identification procedure found\n");

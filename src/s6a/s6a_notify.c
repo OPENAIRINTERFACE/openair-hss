@@ -233,9 +233,9 @@ s6a_generate_notify_req (
   /*
    * Set the nr-flags as indicated by upper layer
    */
-//  if (nr_p->single_registration_indiction) {
+  if (nr_p->single_registration_indiction) {
     FLAGS_SET (value.u32, NR_SINGLE_REGISTRATION_IND);
-//  }
+  }
 
   CHECK_FCT (fd_msg_avp_setvalue (avp, &value));
   CHECK_FCT (fd_msg_avp_add (msg, MSG_BRW_LAST_CHILD, avp));

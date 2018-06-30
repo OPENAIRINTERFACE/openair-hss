@@ -1421,6 +1421,7 @@ mme_app_handle_s1ap_ue_context_release_complete (
         if(ue_context->mm_state == UE_UNREGISTERED){
           OAILOG_DEBUG(LOG_MME_APP, "Received UE context release complete for the main ue_reference of the UE with mme_ue_s1ap_id "MME_UE_S1AP_ID_FMT" and enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT" in UE_UNREGISTERED state. "
               "Performing implicit detach (failed handover). \n", s1ap_ue_context_release_complete->mme_ue_s1ap_id, s1ap_ue_context_release_complete->enb_ue_s1ap_id);
+          /* We may have an EMM context but the common and specific procedure timeouts should remove the EMM context. */
           mme_remove_ue_context(&mme_app_desc.mme_ue_contexts, ue_context);
           OAILOG_FUNC_OUT (LOG_MME_APP);
         }
