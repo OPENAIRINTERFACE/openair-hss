@@ -235,10 +235,12 @@ static int _emm_cn_pdn_config_res (emm_cn_pdn_config_res_t * msg_pP)
   if(emm_context->esm_ctx.esm_proc_data) /**< In case of S10 TAU the PDN Contexts should already be established. */
     apn = emm_context->esm_ctx.esm_proc_data->apn;
   else{
-    /*
-     * Don't set any specific APN.
-     * ESM layer should update the PDN configurations for all PDN configs.
-     */
+    /** Check if any PDN contexts exists (handover/idle tau). */
+    if(RB_EMPTY(&ue_context->pdn_contexts)){
+      /** Neither a PDN context exists nor an APN is set. */
+      apn_configuration_t *default_apn_config = &ue_context->apn_config_profile.apn_configuration[ue_context->apn_config_profile.context_identifier];
+      apn = blk2bstr(default_apn_config->service_selection, default_apn_config->service_selection_length);
+    }
   }
 
   /** Inform the ESM about the PDN Config Response. */

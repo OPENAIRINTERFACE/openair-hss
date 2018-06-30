@@ -1425,12 +1425,16 @@ mme_app_handle_s1ap_ue_context_release_complete (
           OAILOG_FUNC_OUT (LOG_MME_APP);
         }
         OAILOG_DEBUG(LOG_MME_APP, "Received UE context release complete for the main ue_reference of the UE with mme_ue_s1ap_id "MME_UE_S1AP_ID_FMT" and enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT" in UE_REGISTERED state. "
-            "Not performing implicit detach, only idle mode (failed handover). Removing the handover procedure. \n", s1ap_ue_context_release_complete->mme_ue_s1ap_id, s1ap_ue_context_release_complete->enb_ue_s1ap_id);
+            "Not performing implicit detach, only idle mode (missing CLR). Notifying the HSS. \n", s1ap_ue_context_release_complete->mme_ue_s1ap_id, s1ap_ue_context_release_complete->enb_ue_s1ap_id);
         mme_ue_context_update_ue_sig_connection_state (&mme_app_desc.mme_ue_contexts, ue_context, ECM_IDLE);
+
+        /** This part is not %100 specification but send a notification request. */
+        mme_app_itti_notify_request(ue_context->imsi, &s10_handover_proc->target_tai.plmn, true);
+
         /** Remove the handover procedure. */
         if (ue_context->s10_procedures) {
-            mme_app_delete_s10_procedure_mme_handover(ue_context); // todo: generic s10 function
-          }
+          mme_app_delete_s10_procedure_mme_handover(ue_context); // todo: generic s10 function
+        }
 
         OAILOG_FUNC_OUT (LOG_MME_APP);
       }
@@ -1762,6 +1766,12 @@ mme_app_handle_nas_context_req(itti_nas_context_req_t * const nas_context_req_pP
    * This should come through an initial request for attach/TAU.
    * MME_APP UE context is created and is in UE_UNREGISTERED mode.
    */
+
+  if(1){
+    _mme_app_send_nas_context_response_err(nas_context_req_pP->ue_id, SYSTEM_FAILURE);
+    OAILOG_FUNC_OUT (LOG_MME_APP);
+  }
+
   ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, nas_context_req_pP->ue_id);
   if (ue_context == NULL) { /**< Always think separate of EMM_DATA context and the rest. Could mean or not mean, that no EMM_DATA exists. */
     OAILOG_ERROR(LOG_MME_APP, "An UE MME context does not exist for UE with mmeUeS1apId " MME_UE_S1AP_ID_FMT " and guti: " GUTI_FMT ". \n",

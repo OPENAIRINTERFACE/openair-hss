@@ -440,3 +440,203 @@ gtpv2c_ambr_ie_get (
   return NW_OK;
 }
 
+//------------------------------------------------------------------------------
+nw_rc_t
+gtpv2c_target_identification_ie_get (
+  uint8_t ieType,
+  uint16_t ieLength,
+  uint8_t ieInstance,
+  uint8_t * ieValue,
+  void *arg)
+{
+  target_identification_t                *target_identification = (target_identification_t *) arg;
+
+  DevAssert (target_identification );
+  target_identification->target_type = ieValue[0];
+
+  target_identification->mcc[1] = (ieValue[1] & 0xF0) >> 4;
+  target_identification->mcc[0] = (ieValue[1] & 0x0F);
+  target_identification->mcc[2] = (ieValue[2] & 0x0F);
+
+  if ((ieValue[1] & 0xF0) == 0xF0) {
+    /*
+     * Two digits MNC
+     */
+    target_identification->mnc[0] = 0;
+    target_identification->mnc[1] = (ieValue[3] & 0x0F);
+    target_identification->mnc[2] = (ieValue[3] & 0xF0) >> 4;
+  } else {
+    target_identification->mnc[0] = (ieValue[3] & 0x0F);
+    target_identification->mnc[1] = (ieValue[3] & 0xF0) >> 4;
+    target_identification->mnc[2] = (ieValue[2] & 0xF0) >> 4;
+  }
+
+  switch (target_identification->target_type) {
+  case TARGET_ID_RNC_ID:{
+      target_identification->target_id.rnc_id.lac = (ieValue[4] << 8) | ieValue[5];
+      target_identification->target_id.rnc_id.rac = ieValue[6];
+
+      if (ieLength == 11) {
+        /*
+         * Extended RNC id
+         */
+        target_identification->target_id.rnc_id.id  = (ieValue[7] << 24) | (ieValue[8] << 16);
+        target_identification->target_id.rnc_id.xid = (ieValue[9] << 8) | (ieValue[10]);
+      } else if (ieLength == 9) {
+        /*
+         * Normal RNC id
+         */
+        target_identification->target_id.rnc_id.id  = (ieValue[7] << 8) | ieValue[8];
+        target_identification->target_id.rnc_id.xid = 0;
+      } else {
+        /*
+         * This case is not possible
+         */
+        return NW_GTPV2C_IE_INCORRECT;
+      }
+
+      OAILOG_DEBUG (LOG_S10, "\t\t- LAC 0x%04x\n", target_identification->target_id.rnc_id.lac);
+      OAILOG_DEBUG (LOG_S10, "\t\t- RAC 0x%02x\n", target_identification->target_id.rnc_id.rac);
+      OAILOG_DEBUG (LOG_S10, "\t\t- RNC -ID 0x%08x\n", target_identification->target_id.rnc_id.id);
+      OAILOG_DEBUG (LOG_S10, "\t\t- RNC -XID 0x%08x\n", target_identification->target_id.rnc_id.xid);
+    }
+    break;
+
+  case TARGET_ID_MACRO_ENB_ID:{
+      if (ieLength != 9) {
+        return NW_GTPV2C_IE_INCORRECT;
+      }
+
+      target_identification->target_id.macro_enb_id.enb_id = ((ieValue[4] & 0x0F) << 16) | (ieValue[5] << 8) | ieValue[6];
+      target_identification->target_id.macro_enb_id.tac = (ieValue[7] << 8) | ieValue[8];
+      OAILOG_DEBUG (LOG_S10, "\t\t- ENB Id 0x%06x\n", target_identification->target_id.macro_enb_id.enb_id);
+      OAILOG_DEBUG (LOG_S10, "\t\t- TAC    0x%04x\n", target_identification->target_id.macro_enb_id.tac);
+    }
+    break;
+
+  case TARGET_ID_HOME_ENB_ID:{
+      if (ieLength != 10) {
+        return NW_GTPV2C_IE_INCORRECT;
+      }
+
+      target_identification->target_id.home_enb_id.enb_id = ((ieValue[4] & 0x0F) << 14) | (ieValue[5] << 16) | (ieValue[6] << 8) | ieValue[7];
+      target_identification->target_id.home_enb_id.tac = (ieValue[8] << 8) | ieValue[9];
+      OAILOG_DEBUG (LOG_S10, "\t\t- ENB Id 0x%07x\n", target_identification->target_id.home_enb_id.enb_id);
+      OAILOG_DEBUG (LOG_S10, "\t\t- TAC    0x%04x\n", target_identification->target_id.home_enb_id.tac);
+    }
+    break;
+
+  default:
+    return NW_GTPV2C_IE_INCORRECT;
+  }
+
+  return NW_OK;
+}
+
+//------------------------------------------------------------------------------
+int
+gtpv2c_target_identification_ie_set (
+  nw_gtpv2c_msg_handle_t * msg,
+  const target_identification_t * target_identification)
+{
+  nw_rc_t                                rc;
+  uint8_t                                target_id[3];
+  uint32_t                               macro_enb_id;
+  uint16_t                               tac;
+
+  DevAssert (msg );
+  DevAssert (target_identification );
+  /*
+   * MCC Decimal | MCC Hundreds
+   */
+  target_id[0] = ((target_identification->mcc[1] & 0x0F) << 4) | (target_identification->mcc[0] & 0x0F);
+  target_id[1] = target_identification->mcc[2] & 0x0F;
+
+  if ((target_identification->mnc[0] & 0xF) == 0xF) {
+    /*
+     * Only two digits
+     */
+    target_id[1] |= 0xF0;
+    target_id[2] = ((target_identification->mnc[2] & 0x0F) << 4) | (target_identification->mnc[1] & 0x0F);
+  } else {
+    target_id[1] |= (target_identification->mnc[2] & 0x0F) << 4;
+    target_id[2] = ((target_identification->mnc[1] & 0x0F) << 4) | (target_identification->mnc[0] & 0x0F);
+  }
+
+  /** Check the eNB type. */
+
+  tac          = target_identification->target_id.macro_enb_id.tac;
+
+  /** Build an array for the TargetIe payload. */
+
+  uint8_t enbId[4];
+
+  uint8_t targetIeBuf[10];
+  uint8_t *pTargetIeBuf= targetIeBuf;
+
+  uint8_t target_id_length = 0;
+
+  memset(pTargetIeBuf, 0, 10);
+  /** Target Type. */
+  *pTargetIeBuf = target_identification->target_type;
+  target_id_length++;
+  /** Set the plmn. */
+  memcpy((uint8_t*)(pTargetIeBuf + target_id_length), target_id, 3);
+  target_id_length+=3;
+
+  /** Check the eNB Type. */
+  if(target_identification->target_type == TARGET_ID_HOME_ENB_ID){
+    /** Set the enb-id as home. No need to skipping places. */
+    enbId[0] = target_identification->target_id.home_enb_id.enb_id >> 24 & 0x0F;
+    enbId[1] = target_identification->target_id.home_enb_id.enb_id >> 16 & 0xFF;
+    enbId[2] = target_identification->target_id.home_enb_id.enb_id >> 8 & 0xFF;
+    enbId[3] = target_identification->target_id.home_enb_id.enb_id & 0xFF;
+    memcpy(pTargetIeBuf + target_id_length, enbId, 4);
+    target_id_length+=4;
+    /** TAC. */
+    *((uint16_t *) (pTargetIeBuf + target_id_length)) = htons(target_identification->target_id.home_enb_id.tac);
+    target_id_length+=2;
+  }
+  else if(target_identification->target_type == TARGET_ID_MACRO_ENB_ID) {
+    /** Here always assume macro, also for RNC. */
+
+    /** Macro Enb Id. */
+    enbId[0] = target_identification->target_id.home_enb_id.enb_id >> 16 & 0xFF;
+    enbId[1] = target_identification->target_id.home_enb_id.enb_id >> 8 & 0xFF;
+    enbId[2] = target_identification->target_id.home_enb_id.enb_id & 0xFF;
+    memcpy(pTargetIeBuf + target_id_length, enbId, 3);
+    target_id_length+=3;
+    /** TAC. */
+    *((uint16_t *) (pTargetIeBuf + target_id_length)) = htons(target_identification->target_id.macro_enb_id.tac);
+    target_id_length+=2;
+  }
+  else if(target_identification->target_type == TARGET_ID_RNC_ID) {
+    /** Encode the RNC ID type. */
+    /** Here always assume macro, also for RNC. */
+    /** Macro Enb Id. */
+    // Skip 1 place --> todo: copy 20 bits
+    target_id_length+=2;
+    *((uint32_t *) (pTargetIeBuf + target_id_length)) = htons(target_identification->target_id.rnc_id.lac);
+    target_id_length+=2;
+    *((uint32_t *) (pTargetIeBuf + target_id_length)) = target_identification->target_id.rnc_id.rac;
+    target_id_length++;
+    /** RNC-ID. */
+    *((uint16_t *) (pTargetIeBuf + target_id_length)) = htons(target_identification->target_id.rnc_id.id);
+    target_id_length+=2;
+    /** RNC-XID. */
+    *((uint16_t *) (pTargetIeBuf + target_id_length)) = htonl(target_identification->target_id.rnc_id.xid);
+    target_id_length+=2;
+  }
+  else{
+    /** Received unhandled cell id. */
+    return RETURNerror;
+  }
+
+  // todo: extended f-cause?!
+  /** Reset the pointer. */
+
+  rc = nwGtpv2cMsgAddIe(*msg, NW_GTPV2C_IE_TARGET_IDENTIFICATION, target_id_length, NW_GTPV2C_IE_INSTANCE_ZERO, pTargetIeBuf);
+  DevAssert (NW_OK == rc);
+  return RETURNok;
+}
+

@@ -87,6 +87,8 @@ void mme_app_handle_s1ap_ue_context_release_complete (const itti_s1ap_ue_context
 
 void mme_app_itti_ue_context_release (    mme_ue_s1ap_id_t mme_ue_s1ap_id, enb_ue_s1ap_id_t enb_ue_s1ap_id, enum s1cause cause, uint32_t target_enb_id);
 
+void mme_app_itti_notify_request(const imsi64_t imsi, const plmn_t * handovered_plmn, const bool mobility_completion);
+
 int mme_app_send_s6a_update_location_req     (struct ue_context_s * const ue_context);
 
 int mme_app_handle_s6a_update_location_ans   (const s6a_update_location_ans_t * const ula_pP);

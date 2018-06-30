@@ -33,3 +33,6 @@ MESSAGE_DEF(S6A_AUTH_INFO_REQ, MESSAGE_PRIORITY_MED,            s6a_auth_info_re
 MESSAGE_DEF(S6A_AUTH_INFO_ANS, MESSAGE_PRIORITY_MED,            s6a_auth_info_ans_t, s6a_auth_info_ans)
 MESSAGE_DEF(S6A_CANCEL_LOCATION_REQ, MESSAGE_PRIORITY_MED,      s6a_cancel_location_req_t, s6a_cancel_location_req)
 MESSAGE_DEF(S6A_RESET_REQ, MESSAGE_PRIORITY_MED,                s6a_reset_req_t, s6a_reset_req)
+/** Notify Request. */
+MESSAGE_DEF(S6A_NOTIFY_REQ, MESSAGE_PRIORITY_MED,               s6a_notify_req_t, s6a_notify_req)
+MESSAGE_DEF(S6A_NOTIFY_ANS, MESSAGE_PRIORITY_MED,               s6a_notify_ans_t, s6a_notify_ans)

@@ -928,7 +928,6 @@ static int _emm_send_tracking_area_update_accept(emm_data_context_t * const emm_
     emm_sap.primitive = EMMAS_DATA_REQ; /**< We also check the current ECM state to handle active flag. */
   }
 
-
   /** Set the rest as data. */
   emm_sap.u.emm_as.u.data.ue_id = emm_context->ue_id; /**< These should also set for data. */
   emm_sap.u.emm_as.u.data.nas_info = EMM_AS_NAS_DATA_TAU;
@@ -2034,7 +2033,7 @@ static int _emm_tracking_area_update_success_security_cb (emm_data_context_t *em
      esm_data->request_type = REQUEST_TYPE_INITIAL_REQUEST;
 
      esm_data->pti = 0;
-//    /** Request the ESM Information. */
+     /** Request the ESM Information. */
 //    esm_sap.primitive = ESM_REQUEST_ESM_INFORMATION;
 //    esm_sap.is_standalone = false;
 //    esm_sap.ue_id = emm_context->ue_id;

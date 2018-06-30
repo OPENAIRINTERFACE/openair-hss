@@ -288,12 +288,6 @@ s1ap_mme_handle_s1_setup_request (
       OAILOG_FUNC_RETURN (LOG_S1AP, rc);
     }
 
-
-
-
-
-
-
     shared_log_queue_item_t *  context = NULL;
     OAILOG_MESSAGE_START (OAILOG_LEVEL_DEBUG, LOG_S1AP, (&context), "New s1 setup request incoming from ");
 
@@ -1353,22 +1347,41 @@ s1ap_mme_handle_handover_preparation(const sctp_assoc_id_t assoc_id, const sctp_
   S1AP_HANDOVER_REQUIRED (message_p).enb_ue_s1ap_id = ue_ref_p->enb_ue_s1ap_id;
   /** Selected-TAI. */
   S1AP_HANDOVER_REQUIRED (message_p).selected_tai  = target_tai;
-  S1AP_HANDOVER_REQUIRED (message_p).selected_tai  = target_tai;
+
   /** Set SCTP Assoc Id. */
   S1AP_HANDOVER_REQUIRED (message_p).sctp_assoc_id  = assoc_id;
-
 
   /** Global-ENB-ID. */
   plmn_t enb_id_plmn;
   memset(&enb_id_plmn, 0, sizeof(plmn_t));
   TBCD_TO_PLMN_T (&handoverRequired_p->targetID.choice.targeteNB_ID.global_ENB_ID.pLMNidentity, &enb_id_plmn);
   S1AP_HANDOVER_REQUIRED (message_p).global_enb_id.plmn = enb_id_plmn;
+
   // Macro eNB = 20 bits
-  uint8_t *enb_id_buf = handoverRequired_p->targetID.choice.targeteNB_ID.global_ENB_ID.eNB_ID.choice.macroENB_ID.buf;
-  if (handoverRequired_p->targetID.choice.targeteNB_ID.global_ENB_ID.eNB_ID.choice.macroENB_ID.size != 20) {
-    //TODO: handle case were size != 20 -> notify ? reject ?
+  /** Get the enb id. */
+  uint32_t enb_id = 0;
+  if(handoverRequired_p->targetID.choice.targeteNB_ID.global_ENB_ID.eNB_ID.present == S1ap_ENB_ID_PR_homeENB_ID){
+    /** Target is a home eNB Id. */
+    // Home eNB ID = 28 bits
+    uint8_t *enb_id_buf = handoverRequired_p->targetID.choice.targeteNB_ID.global_ENB_ID.eNB_ID.choice.homeENB_ID.buf;
+    if (handoverRequired_p->targetID.choice.targeteNB_ID.global_ENB_ID.eNB_ID.choice.homeENB_ID.size != 28) {
+      //TODO: handle case were size != 28 -> notify ? reject ?
+    }
+    enb_id = (enb_id_buf[0] << 20) + (enb_id_buf[1] << 12) + (enb_id_buf[2] << 4) + ((enb_id_buf[3] & 0xf0) >> 4);
+    S1AP_HANDOVER_REQUIRED (message_p).target_enb_type = TARGET_ID_HOME_ENB_ID;
+    //    OAILOG_MESSAGE_ADD (context, "home eNB id: %07x", target_enb_id);
+  }else{
+    /** Target is a macro eNB Id (Macro eNB = 20 bits). */
+    uint8_t *enb_id_buf = handoverRequired_p->targetID.choice.targeteNB_ID.global_ENB_ID.eNB_ID.choice.macroENB_ID.buf;
+
+    if (handoverRequired_p->targetID.choice.targeteNB_ID.global_ENB_ID.eNB_ID.choice.macroENB_ID.size != 20) {
+      //TODO: handle case were size != 28 -> notify ? reject ?
+    }
+    enb_id = (enb_id_buf[0] << 12) + (enb_id_buf[1] << 4) + ((enb_id_buf[2] & 0xf0) >> 4);
+    //    OAILOG_MESSAGE_ADD (context, "macro eNB id: %05x", target_enb_id);
+    S1AP_HANDOVER_REQUIRED (message_p).target_enb_type = TARGET_ID_MACRO_ENB_ID;
   }
-  uint32_t enb_id = (enb_id_buf[0] << 12) + (enb_id_buf[1] << 4) + ((enb_id_buf[2] & 0xf0) >> 4);
+
   S1AP_HANDOVER_REQUIRED (message_p).global_enb_id.cell_identity.enb_id = enb_id;
   OAILOG_DEBUG(LOG_S1AP, "Successfully decoded targetID IE in Handover Required. \n");
 

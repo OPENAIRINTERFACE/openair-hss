@@ -122,7 +122,7 @@ s10_mme_forward_relocation_request (
   /**
    * Target Identification.
    */
-  s10_target_identification_ie_set (&(ulp_req.hMsg), &req_p->target_identification);
+  gtpv2c_target_identification_ie_set (&(ulp_req.hMsg), &req_p->target_identification);
 
   /*
    * Source S10 SAEGW F-TEID for Control Plane
@@ -346,7 +346,7 @@ s10_mme_handle_forward_relocation_request(
    * Target Identifier Information Element.
    */
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_TARGET_IDENTIFICATION, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
-       s10_target_identification_ie_get, &req_p->target_identification);
+      gtpv2c_target_identification_ie_get, &req_p->target_identification);
   DevAssert (NW_OK == rc);
 
   // todo: F-CAUSE not handled!

@@ -69,6 +69,9 @@ s6a_fd_init_dict_objs (
   CHECK_FD_FCT (fd_dict_search (fd_g_config->cnf_dict, DICT_COMMAND, CMD_BY_NAME, "Cancel-Location-Answer", &s6a_fd_cnf.dataobj_s6a_cla, ENOENT));
   CHECK_FD_FCT (fd_dict_search (fd_g_config->cnf_dict, DICT_COMMAND, CMD_BY_NAME, "Reset-Request", &s6a_fd_cnf.dataobj_s6a_rr, ENOENT));
 //  CHECK_FD_FCT (fd_dict_search (fd_g_config->cnf_dict, DICT_COMMAND, CMD_BY_NAME, "Reset-Answer", &s6a_fd_cnf.dataobj_s6a_ra, ENOENT));
+  CHECK_FD_FCT (fd_dict_search (fd_g_config->cnf_dict, DICT_COMMAND, CMD_BY_NAME, "Notify-Request", &s6a_fd_cnf.dataobj_s6a_nr, ENOENT));
+  CHECK_FD_FCT (fd_dict_search (fd_g_config->cnf_dict, DICT_COMMAND, CMD_BY_NAME, "Notify-Answer", &s6a_fd_cnf.dataobj_s6a_na, ENOENT));
+
   /*
    * Pre-loading base avps
    */
@@ -88,6 +91,7 @@ s6a_fd_init_dict_objs (
   CHECK_FD_FCT (fd_dict_search (fd_g_config->cnf_dict, DICT_AVP, AVP_BY_NAME_ALL_VENDORS, "CLR-Flags", &s6a_fd_cnf.dataobj_s6a_clr_flags, ENOENT));
   CHECK_FD_FCT (fd_dict_search (fd_g_config->cnf_dict, DICT_AVP, AVP_BY_NAME_ALL_VENDORS, "ULR-Flags", &s6a_fd_cnf.dataobj_s6a_ulr_flags, ENOENT));
   CHECK_FD_FCT (fd_dict_search (fd_g_config->cnf_dict, DICT_AVP, AVP_BY_NAME_ALL_VENDORS, "ULA-Flags", &s6a_fd_cnf.dataobj_s6a_ula_flags, ENOENT));
+  CHECK_FD_FCT (fd_dict_search (fd_g_config->cnf_dict, DICT_AVP, AVP_BY_NAME_ALL_VENDORS, "NOR-Flags", &s6a_fd_cnf.dataobj_s6a_nr_flags, ENOENT));
   CHECK_FD_FCT (fd_dict_search (fd_g_config->cnf_dict, DICT_AVP, AVP_BY_NAME_ALL_VENDORS, "Subscription-Data", &s6a_fd_cnf.dataobj_s6a_subscription_data, ENOENT));
   CHECK_FD_FCT (fd_dict_search (fd_g_config->cnf_dict, DICT_AVP, AVP_BY_NAME_ALL_VENDORS, "Requested-EUTRAN-Authentication-Info", &s6a_fd_cnf.dataobj_s6a_req_eutran_auth_info, ENOENT));
   CHECK_FD_FCT (fd_dict_search (fd_g_config->cnf_dict, DICT_AVP, AVP_BY_NAME_ALL_VENDORS, "Number-Of-Requested-Vectors", &s6a_fd_cnf.dataobj_s6a_number_of_requested_vectors, ENOENT));
@@ -114,6 +118,13 @@ s6a_fd_init_dict_objs (
    */
   CHECK_FD_FCT (fd_disp_register (s6a_aia_cb, DISP_HOW_CC, &when, NULL, &s6a_fd_cnf.aia_hdl));
   DevAssert (s6a_fd_cnf.aia_hdl );
+  /*
+   * Register the callback for Notify Answer S6A Application
+   */
+  CHECK_FD_FCT (fd_disp_register (s6a_na_cb, DISP_HOW_CC, &when, NULL, &s6a_fd_cnf.na_hdl));
+  DevAssert (s6a_fd_cnf.na_hdl );
+  when.command = s6a_fd_cnf.dataobj_s6a_na;
+  when.app = s6a_fd_cnf.dataobj_s6a_app;
   /**
    * Register the callback for the Cancel Location Request S6A Application
    */

@@ -2156,7 +2156,7 @@ mme_app_handle_s1ap_handover_required(
        * Keep the source side as it is.
        */
       memcpy((void*)&s10_handover_procedure->target_tai, (void*)&handover_required_pP->selected_tai, sizeof(handover_required_pP->selected_tai));
-      memcpy((void*)&s10_handover_procedure->target_ecgi, (void*)&handover_required_pP->global_enb_id, sizeof(handover_required_pP->selected_tai)); /**< Home or macro enb id. */
+      memcpy((void*)&s10_handover_procedure->target_ecgi, (void*)&handover_required_pP->global_enb_id, sizeof(handover_required_pP->global_enb_id)); /**< Home or macro enb id. */
 
       /*
        * Set the source values, too. We might need it if the MME_STATUS_TRANSFER has to be sent after Handover Notify (emulator errors).
@@ -2219,8 +2219,8 @@ mme_app_handle_s1ap_handover_required(
   }
   OAILOG_DEBUG (LOG_MME_APP, "Target TA  "TAI_FMT " is NOT served by current MME. Searching for a neighboring MME. \n", TAI_ARG(&handover_required_pP->selected_tai));
 
-  struct in_addr neigh_mme_ipv4_addr;
-  neigh_mme_ipv4_addr.s_addr = 0;
+  struct in_addr neigh_mme_ipv4_addr = {.s_addr = 0};
+
 
   if (1) {
     // TODO prototype may change
@@ -2270,6 +2270,9 @@ mme_app_handle_s1ap_handover_required(
    */
   memcpy((void*)&s10_handover_procedure->target_tai, (void*)&handover_required_pP->selected_tai, sizeof(handover_required_pP->selected_tai));
   memcpy((void*)&s10_handover_procedure->target_ecgi, (void*)&handover_required_pP->global_enb_id, sizeof(handover_required_pP->global_enb_id)); /**< Home or macro enb id. */
+
+  /** Set the eNB type. */
+//  s10_handover_procedure->target_enb_type = handover_required_pP->target_enb_type;
 
   /*
    * Set the source values, too. We might need it if the MME_STATUS_TRANSFER has to be sent after Handover Notify (emulator errors).
@@ -2333,8 +2336,6 @@ mme_app_handle_s1ap_handover_required(
   forward_relocation_request_p->f_cause.fcause_s1ap_type = FCAUSE_S1AP_RNL;
   forward_relocation_request_p->f_cause.fcause_value     = (uint8_t)handover_required_pP->f_cause_value;
 
-  /** Set the target identification. */
-  forward_relocation_request_p->target_identification.target_type = 1; /**< Macro eNodeB. */
   /** Set the MCC. */
   forward_relocation_request_p->target_identification.mcc[0]  = handover_required_pP->selected_tai.plmn.mcc_digit1;
   forward_relocation_request_p->target_identification.mcc[1]  = handover_required_pP->selected_tai.plmn.mcc_digit2;
@@ -2343,14 +2344,17 @@ mme_app_handle_s1ap_handover_required(
   forward_relocation_request_p->target_identification.mnc[0]  = handover_required_pP->selected_tai.plmn.mnc_digit1;
   forward_relocation_request_p->target_identification.mnc[1]  = handover_required_pP->selected_tai.plmn.mnc_digit2;
   forward_relocation_request_p->target_identification.mnc[2]  = handover_required_pP->selected_tai.plmn.mnc_digit3;
-  /* Set the Target Id.
-   * todo: macro/home  */
-  forward_relocation_request_p->target_identification.target_id.macro_enb_id.tac    = handover_required_pP->selected_tai.tac;
-  forward_relocation_request_p->target_identification.target_id.macro_enb_id.enb_id = handover_required_pP->global_enb_id.cell_identity.enb_id;
+  /* Set the Target Id with the correct type. */
+  forward_relocation_request_p->target_identification.target_type = handover_required_pP->target_enb_type;
 
-  /** todo: Set the TAI and and the global-eNB-Id. */
-  // memcpy(&forward_relocation_request_p->selected_tai, &handover_required_pP->selected_tai, sizeof(handover_required_pP->selected_tai));
-  // memcpy(&forward_relocation_request_p->global_enb_id, &handover_required_pP->global_enb_id, sizeof(handover_required_pP->global_enb_id));
+  if(forward_relocation_request_p->target_identification.target_type == TARGET_ID_HOME_ENB_ID){
+    forward_relocation_request_p->target_identification.target_id.home_enb_id.tac    = handover_required_pP->selected_tai.tac;
+    forward_relocation_request_p->target_identification.target_id.home_enb_id.enb_id = handover_required_pP->global_enb_id.cell_identity.enb_id;
+  }else{
+    /** We assume macro enb id. */
+    forward_relocation_request_p->target_identification.target_id.macro_enb_id.tac    = handover_required_pP->selected_tai.tac;
+    forward_relocation_request_p->target_identification.target_id.macro_enb_id.enb_id = handover_required_pP->global_enb_id.cell_identity.enb_id;
+  }
 
   /** Allocate and set the PDN_CONNECTIONS IE. */
   forward_relocation_request_p->pdn_connections = calloc(1, sizeof(struct mme_ue_eps_pdn_connections_s));
@@ -2584,9 +2588,32 @@ mme_app_handle_forward_relocation_request(
  target_tai.plmn.mnc_digit1 = forward_relocation_request_pP->target_identification.mnc[0];
  target_tai.plmn.mnc_digit2 = forward_relocation_request_pP->target_identification.mnc[1];
  target_tai.plmn.mnc_digit3 = forward_relocation_request_pP->target_identification.mnc[2];
- // todo: macro/home enb_id
  target_tai.tac = forward_relocation_request_pP->target_identification.target_id.macro_enb_id.tac;
 
+
+ /** Get the eNB Id. */
+ target_type_t target_type = forward_relocation_request_pP->target_identification.target_type;
+ uint32_t enb_id = 0;
+ switch(forward_relocation_request_pP->target_identification.target_type){
+   case TARGET_ID_MACRO_ENB_ID:
+     enb_id = forward_relocation_request_pP->target_identification.target_id.macro_enb_id.enb_id;
+     break;
+
+   case TARGET_ID_HOME_ENB_ID:
+     enb_id = forward_relocation_request_pP->target_identification.target_id.macro_enb_id.enb_id;
+     break;
+
+   default:
+     OAILOG_DEBUG (LOG_MME_APP, "Target ENB type %d cannot be handovered to. Rejecting S10 handover request.. \n",
+         forward_relocation_request_pP->target_identification.target_type);
+     mme_app_send_s10_forward_relocation_response_err(forward_relocation_request_pP->s10_source_mme_teid.teid,
+         forward_relocation_request_pP->s10_source_mme_teid.ipv4_address, forward_relocation_request_pP->trxn, RELOCATION_FAILURE);
+     OAILOG_FUNC_OUT (LOG_MME_APP);
+ }
+
+ if(enb_id == 256){
+   OAILOG_DEBUG (LOG_MME_APP, "Entered eNB-id 256!  \n");
+ }
  /** Check the target-ENB is reachable. */
  if (mme_app_check_ta_local(&target_tai.plmn, forward_relocation_request_pP->target_identification.target_id.macro_enb_id.tac)) {
    /** The target PLMN and TAC are served by this MME. */
@@ -2595,12 +2622,12 @@ mme_app_handle_forward_relocation_request(
     * Currently only a single TA will be served by each MME and we are expecting TAU from the UE side.
     * Check that the eNB is also served, that an SCTP association exists for the eNB.
     */
-   if(s1ap_is_enb_id_in_list(forward_relocation_request_pP->target_identification.target_id.macro_enb_id.enb_id) != NULL){
-     OAILOG_DEBUG (LOG_MME_APP, "Target ENB_ID %u is served by current MME. \n", forward_relocation_request_pP->target_identification.target_id.macro_enb_id.enb_id);
+   if(s1ap_is_enb_id_in_list(enb_id) != NULL){
+     OAILOG_DEBUG (LOG_MME_APP, "Target ENB_ID %u is served by current MME. \n", enb_id);
      /** Continue with the handover establishment. */
    }else{
      /** The target PLMN and TAC are not served by this MME. */
-     OAILOG_ERROR(LOG_MME_APP, "Target ENB_ID %u is NOT served by the current MME. \n", forward_relocation_request_pP->target_identification.target_id.macro_enb_id.enb_id);
+     OAILOG_ERROR(LOG_MME_APP, "Target ENB_ID %u is NOT served by the current MME. \n", enb_id);
      mme_app_send_s10_forward_relocation_response_err(forward_relocation_request_pP->s10_source_mme_teid.teid, forward_relocation_request_pP->s10_source_mme_teid.ipv4_address, forward_relocation_request_pP->trxn, RELOCATION_FAILURE);
      OAILOG_FUNC_OUT (LOG_MME_APP);
    }
@@ -2757,6 +2784,9 @@ mme_app_handle_forward_relocation_request(
  s10_proc_mme_handover->forward_relocation_trxn = forward_relocation_request_pP->trxn;
  /** If it is a new_ue_context, additionally set the pdn_connections IE. */
  if(new_ue_context){
+   /** Set the eNB Id. */
+   ue_context->e_utran_cgi.cell_identity.enb_id = enb_id;
+
    s10_proc_mme_handover->pdn_connections = forward_relocation_request_pP->pdn_connections;
    forward_relocation_request_pP->pdn_connections = NULL; /**< Unlink the pdn_connections. */
    OAILOG_INFO(LOG_MME_APP, "UE_CONTEXT for UE " MME_UE_S1AP_ID_FMT " is a new UE_Context. Processing the received PDN_CONNECTIONS IEs (continuing with CSR). \n", ue_context->mme_ue_s1ap_id);
@@ -2828,7 +2858,7 @@ mme_app_handle_forward_relocation_request(
 
    mme_app_send_s1ap_handover_request(ue_context->mme_ue_s1ap_id,
        &bcs_tbc,
-       forward_relocation_request_pP->target_identification.target_id.macro_enb_id.enb_id,
+       enb_id,
        s10_proc_mme_handover->nas_s10_context.mm_eps_ctx->ue_nc.eea,
        s10_proc_mme_handover->nas_s10_context.mm_eps_ctx->ue_nc.eia,
        s10_proc_mme_handover->nas_s10_context.mm_eps_ctx->nh,
@@ -3509,7 +3539,7 @@ mme_app_handle_s1ap_handover_notify(
   * Update the coll-keys.
   */
  ue_context->sctp_assoc_id_key = handover_notify_pP->assoc_id;
- ue_context->e_utran_cgi = handover_notify_pP->cgi;
+ ue_context->e_utran_cgi.cell_identity.cell_id = handover_notify_pP->cgi.cell_identity.cell_id;
  /** Update the enbUeS1apId (again). */
  ue_context->enb_ue_s1ap_id = handover_notify_pP->enb_ue_s1ap_id; /**< Updating the enb_ue_s1ap_id here. */
  // regenerate the enb_s1ap_id_key as enb_ue_s1ap_id is changed.

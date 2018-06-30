@@ -201,7 +201,8 @@ typedef struct {
   /* Length of RNC Id can be 2 bytes if length of element is 8
    * or 4 bytes long if length is 10.
    */
-  uint32_t rnc_id;
+  uint16_t id;
+  uint16_t xid;
 } rnc_id_t;
 
 typedef struct {

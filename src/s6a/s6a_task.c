@@ -109,6 +109,10 @@ void *s6a_thread (void *args)
         s6a_generate_authentication_info_req (&received_message_p->ittiMsg.s6a_auth_info_req);
       }
       break;
+    case S6A_NOTIFY_REQ:{
+      s6a_generate_notify_req(&received_message_p->ittiMsg.s6a_notify_req);
+      }
+      break;
     case TIMER_HAS_EXPIRED:{
         /*
          * Trying to connect to peers

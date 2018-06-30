@@ -300,12 +300,13 @@ mme_app_handle_mobility_completion_timer_expiry (mme_app_s10_proc_mme_handover_t
          * We might have send HO-Command, but FW-Relocation-Complete message has not arrived.
          * So we must set the source ENB into idle mode manually.
          */
-        if(s10_proc_mme_handover->ho_command_sent){
+        if(s10_proc_mme_handover->ho_command_sent){ /**< This is the error timeout. The real mobility completion timeout comes from S1AP. */
           OAILOG_WARNING(LOG_MME_APP, "HO command already set for UE. Setting S1AP reference to idle mode for UE " MME_UE_S1AP_ID_FMT ". Not performing implicit detach. \n", ue_context->mme_ue_s1ap_id);
           mme_app_itti_ue_context_release(ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, S1AP_HANDOVER_FAILED, ue_context->e_utran_cgi.cell_identity.enb_id);
           /** Remove the handover procedure. */
           mme_app_delete_s10_procedure_mme_handover(ue_context);
           OAILOG_FUNC_OUT (LOG_MME_APP);
+
         }else{
           /** This should not happen. The Ho-Cancel should come first. */
           OAILOG_WARNING(LOG_MME_APP, "HO command not set yet for UE. Setting S1AP reference to idle mode for UE " MME_UE_S1AP_ID_FMT ". Not performing implicit detach. \n", ue_context->mme_ue_s1ap_id);

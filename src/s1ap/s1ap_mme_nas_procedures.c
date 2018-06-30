@@ -150,6 +150,8 @@ s1ap_mme_handle_initial_ue_message (
     DevAssert (initialUEMessage_p->eutran_cgi.pLMNidentity.size == 3);
     TBCD_TO_PLMN_T(&initialUEMessage_p->eutran_cgi.pLMNidentity, &ecgi.plmn);
     BIT_STRING_TO_CELL_IDENTITY (&initialUEMessage_p->eutran_cgi.cell_ID, ecgi.cell_identity);
+    /** Set the ENB Id. */
+    ecgi.cell_identity.enb_id = eNB_ref->enb_id;
 
     if (initialUEMessage_p->presenceMask & S1AP_INITIALUEMESSAGEIES_S_TMSI_PRESENT) {
       OCTET_STRING_TO_MME_CODE(&initialUEMessage_p->s_tmsi.mMEC, s_tmsi.mme_code);
@@ -1329,6 +1331,14 @@ s1ap_handle_handover_command (
   S1ap_HandoverCommandIEs_t              *handoverCommand_p = NULL;
 
   s1ap_message                            message = {0}; // yes, alloc on stack
+
+  enb_description_t                      *enb_ref = NULL;
+
+  enb_ref = s1ap_is_enb_id_in_list(handover_command_pP->enb_id);
+  if(!enb_ref){
+    enb_ref = s1ap_is_enb_id_in_list(10);
+    enb_ref = s1ap_is_enb_id_in_list(256);
+  }
 
   OAILOG_FUNC_IN (LOG_S1AP);
   DevAssert (handover_command_pP != NULL);

@@ -35,6 +35,7 @@
 #include "NwGtpv2c.h"
 #include "3gpp_23.003.h"
 #include "3gpp_29.274.h"
+#include "mme_ie_defs.h"
 
 /* Imsi Information Element
  * 3GPP TS.29.274 #8.3
@@ -73,5 +74,21 @@ gtpv2c_ambr_ie_get (
   uint8_t ieInstance,
   uint8_t * ieValue,
   void *arg);
+
+/* Target Identification Information Element
+ * 3GPP TS 29.274 #8.51
+ */
+nw_rc_t
+gtpv2c_target_identification_ie_get (
+  uint8_t ieType,
+  uint16_t ieLength,
+  uint8_t ieInstance,
+  uint8_t * ieValue,
+  void *arg);
+
+int
+gtpv2c_target_identification_ie_set (
+  nw_gtpv2c_msg_handle_t * msg,
+  const target_identification_t * target_identification);
 
 #endif /* FILE_GTPV2C_IE_FORMATTER_SEEN */

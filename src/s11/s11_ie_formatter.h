@@ -159,11 +159,6 @@ int gtpv2c_delay_value_ie_set(nw_gtpv2c_msg_handle_t *msg, const DelayValue_t *d
 nw_rc_t gtpv2c_ue_time_zone_ie_get(uint8_t ieType, uint16_t ieLength, uint8_t ieInstance, uint8_t *ieValue, void *arg);
 int gtpv2c_ue_time_zone_ie_set(nw_gtpv2c_msg_handle_t *msg, const UETimeZone_t *ue_time_zone);
 
-/* Target Identification Information Element
- * 3GPP TS 29.274 #8.51
- */
-nw_rc_t gtpv2c_target_identification_ie_get(uint8_t ieType, uint16_t ieLength, uint8_t ieInstance, uint8_t *ieValue, void *arg);
-
 /* Bearer Flags Information Element
  * 3GPP TS 29.274 #8.32
  */

@@ -36,6 +36,10 @@
 #define S6A_CANCEL_LOCATION_REQ(mSGpTR)  (mSGpTR)->ittiMsg.s6a_cancel_location_req
 #define S6A_RESET_REQ(mSGpTR)            (mSGpTR)->ittiMsg.s6a_reset_req
 
+/** Notify Request/Answer. */
+#define S6A_NOTIFY_REQ(mSGpTR)           (mSGpTR)->ittiMsg.s6a_notify_req
+#define S6A_NOTIFY_ANS(mSGpTR)           (mSGpTR)->ittiMsg.s6a_notify_ans
+
 #define AUTS_LENGTH 14
 #define RESYNC_PARAM_LENGTH AUTS_LENGTH + RAND_LENGTH_OCTETS
 
@@ -112,5 +116,19 @@ typedef struct s6a_reset_req_s {
 // todo: maybe username?
 } s6a_reset_req_t;
 
+typedef struct s6a_notify_req_s {
+  #define  SINGLE_REGITRATION_INDICATION   (0x1)
+  unsigned single_registration_indiction:1;
+
+  char    imsi[IMSI_BCD_DIGITS_MAX + 1];
+  uint8_t imsi_length;
+  plmn_t  visited_plmn;
+
+} s6a_notify_req_t;
+
+typedef struct s6a_notify_ans_s {
+  s6a_result_t result;
+
+} s6a_notify_ans_t;
 
 #endif /* FILE_S6A_MESSAGES_TYPES_SEEN */

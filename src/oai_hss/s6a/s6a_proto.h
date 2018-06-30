@@ -108,6 +108,7 @@ typedef struct {
   struct dict_object *dataobj_s6a_kasme;
   struct dict_object *dataobj_s6a_ulr_flags;
   struct dict_object *dataobj_s6a_ula_flags;
+  struct dict_object *dataobj_s6a_nr_flags;
   struct dict_object *dataobj_s6a_pur_flags;
   struct dict_object *dataobj_s6a_pua_flags;
   struct dict_object *dataobj_s6a_rat_type;

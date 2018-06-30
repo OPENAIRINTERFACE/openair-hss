@@ -76,6 +76,49 @@ void mme_app_itti_ue_context_release (
 }
 
 //------------------------------------------------------------------------------
+void mme_app_itti_notify_request(const imsi64_t imsi,
+    const plmn_t * handovered_plmn, const bool mobility_completion){
+  OAILOG_FUNC_IN(LOG_MME_APP);
+  MessageDef                             *message_p   = NULL;
+  int                                     rc = RETURNok;
+  emm_data_context_t                     *emm_context = NULL;
+  s6a_notify_req_t                       *s6a_nr_req  = NULL;
+
+  message_p = itti_alloc_new_message(TASK_MME_APP, S6A_NOTIFY_REQ);
+
+  if (message_p == NULL) {
+    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+  }
+
+  s6a_nr_req = &message_p->ittiMsg.s6a_notify_req;
+
+  /** Recheck that the UE context is found by the IMSI. */
+  if ((emm_context = emm_data_context_get_by_imsi(&_emm_data, imsi)) == NULL) {
+    OAILOG_ERROR (LOG_MME_APP, "That's embarrassing as we don't know this IMSI " IMSI_64_FMT ". \n", imsi);
+    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+  }
+
+  IMSI_TO_STRING(&emm_context->_imsi, s6a_nr_req->imsi, IMSI_BCD_DIGITS_MAX+1);
+
+  s6a_nr_req->imsi_length = strlen (s6a_nr_req->imsi);
+
+  if(mobility_completion){
+    s6a_nr_req->single_registration_indiction = SINGLE_REGITRATION_INDICATION;
+  }
+
+  memcpy (&s6a_nr_req->visited_plmn, handovered_plmn, sizeof (plmn_t));
+
+  MSC_LOG_TX_MESSAGE(
+      MSC_MMEAPP_MME,
+      MSC_S6A_MME,
+      NULL,0,
+      "0 S6A_NOTIFY_REQ ue id "MME_UE_S1AP_ID_FMT" ", ue_id);
+
+  rc = itti_send_msg_to_task(TASK_S6A, INSTANCE_DEFAULT, message_p);
+  OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
+}
+
+//------------------------------------------------------------------------------
 int mme_app_send_nas_signalling_connection_rel_ind(const mme_ue_s1ap_id_t ue_id)
 {
   OAILOG_FUNC_IN(LOG_MME_APP);

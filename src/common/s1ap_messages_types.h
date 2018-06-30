@@ -307,6 +307,8 @@ typedef struct itti_s1ap_handover_required_s {
   /** Target Id. */
   tai_t                   selected_tai;
   ecgi_t                  global_enb_id;
+  uint8_t                 target_enb_type;
+
   /** Cause. */
   S1ap_Cause_PR           f_cause_type;
   long                    f_cause_value;
