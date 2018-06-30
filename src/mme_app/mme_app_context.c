@@ -1762,16 +1762,12 @@ mme_app_handle_nas_context_req(itti_nas_context_req_t * const nas_context_req_pP
    */
   MessageDef            *message_p;
   struct ue_context_s   *ue_context = NULL;
+  OAILOG_FUNC_IN (LOG_MME_APP);
   /*
    * Check that the UE does exist.
    * This should come through an initial request for attach/TAU.
    * MME_APP UE context is created and is in UE_UNREGISTERED mode.
    */
-
-  if(1){
-    _mme_app_send_nas_context_response_err(nas_context_req_pP->ue_id, SYSTEM_FAILURE);
-    OAILOG_FUNC_OUT (LOG_MME_APP);
-  }
 
   ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, nas_context_req_pP->ue_id);
   if (ue_context == NULL) { /**< Always think separate of EMM_DATA context and the rest. Could mean or not mean, that no EMM_DATA exists. */

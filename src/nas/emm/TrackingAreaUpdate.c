@@ -2041,16 +2041,16 @@ static int _emm_tracking_area_update_success_security_cb (emm_data_context_t *em
 //  esm_sap_t                               esm_sap = {0};
 
   if (tau_proc) {
-    if (!emm_context->esm_ctx.esm_proc_data) {
+//    if (!emm_context->esm_ctx.esm_proc_data) {
 //       // todo: why not checking if another ESM procedure is running?
 //       // todo: timers will be reset like in EMM procedures?
-       emm_context->esm_ctx.esm_proc_data  = (esm_proc_data_t *) calloc(1, sizeof(*emm_context->esm_ctx.esm_proc_data));
-     }
+//       emm_context->esm_ctx.esm_proc_data  = (esm_proc_data_t *) calloc(1, sizeof(*emm_context->esm_ctx.esm_proc_data));
+//     }
 //
-     struct esm_proc_data_s * esm_data = emm_context->esm_ctx.esm_proc_data;
-     esm_data->request_type = REQUEST_TYPE_INITIAL_REQUEST;
+//     struct esm_proc_data_s * esm_data = emm_context->esm_ctx.esm_proc_data;
+//     esm_data->request_type = REQUEST_TYPE_INITIAL_REQUEST;
 
-     esm_data->pti = 0;
+//     esm_data->pti = 0;
      /** Request the ESM Information. */
 //    esm_sap.primitive = ESM_REQUEST_ESM_INFORMATION;
 //    esm_sap.is_standalone = false;

@@ -85,7 +85,7 @@ void mme_app_get_pdn_context (ue_context_t * const ue_context, pdn_cid_t const c
   pdn_context_t pdn_context_key = {.apn_subscribed = apn_subscribed, .default_ebi = default_ebi, .context_identifier = context_id};
   pdn_context_t * pdn_ctx_p = RB_FIND(PdnContexts, &ue_context->pdn_contexts, &pdn_context_key);
   *pdn_ctx = pdn_ctx_p;
-  if(!pdn_ctx_p){
+  if(!pdn_ctx_p && apn_subscribed){
     /** Could not find the PDN context, search again using the APN. */
 
     RB_FOREACH (pdn_ctx_p, PdnContexts, &ue_context->pdn_contexts) {

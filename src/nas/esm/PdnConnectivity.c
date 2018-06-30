@@ -329,6 +329,7 @@ int esm_proc_pdn_config_res(emm_data_context_t * emm_context, pdn_cid_t **pdn_ci
   int                                     rc = RETURNok;
   ebi_t                                   new_ebi = 0;
   pdn_context_t                          *pdn_context = NULL;
+  bearer_context_t                       *bearer_context = NULL;
   DevAssert(ue_context);
 
   // todo: lock UE context
@@ -376,6 +377,11 @@ int esm_proc_pdn_config_res(emm_data_context_t * emm_context, pdn_cid_t **pdn_ci
         OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
       }
       pdn_context->context_identifier = apn_config->context_identifier;
+      /** Set the context also to all the bearers. */
+      RB_FOREACH (bearer_context, SessionBearers, &pdn_context->session_bearers) {
+        // todo: better error handling
+        bearer_context->pdn_cx_id = apn_config->context_identifier;
+      }
       DevAssert(!RB_INSERT (PdnContexts, &ue_context->pdn_contexts, pdn_context));
 
     }
@@ -384,64 +390,75 @@ int esm_proc_pdn_config_res(emm_data_context_t * emm_context, pdn_cid_t **pdn_ci
     /** Set the state of the ESM bearer context as ACTIVE (not setting as active if no TAU has followed). */
     rc = esm_ebr_set_status (emm_context, pdn_context->default_ebi, ESM_EBR_ACTIVE, false);
     /** Set the context identifier when updating the pdn_context. */
-    OAILOG_INFO(LOG_NAS_EMM, "EMMCN-SAP  - " "Successfully updatd PDN context for UE " MME_UE_S1AP_ID_FMT" which was established already. \n", ue_context->mme_ue_s1ap_id);
+    OAILOG_INFO(LOG_NAS_EMM, "EMMCN-SAP  - " "Successfully updated PDN context for UE " MME_UE_S1AP_ID_FMT" which was established already. \n", ue_context->mme_ue_s1ap_id);
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
   }
-  //  }
+  OAILOG_WARNING(LOG_MME_APP,  "No established PDN connection exists for ue_id " MME_UE_S1AP_ID_FMT ". Continuing with ESM procedure context.! \n",
+       ue_context->mme_ue_s1ap_id);
+
   /*
    * Set the ESM Proc Data values.
    * Update the UE context and PDN context information with it.
    * todo: how to check that this is still our last ESM proc data?
    */
-  if(emm_context->esm_ctx.esm_proc_data){
+
+  if(!emm_context->esm_ctx.esm_proc_data){
+    /** ESM proc data. */
+    OAILOG_WARNING(LOG_MME_APP,  "No ESM proc data for ue_id " MME_UE_S1AP_ID_FMT " Creating new one.! \n",
+        ue_context->mme_ue_s1ap_id);
+    emm_context->esm_ctx.esm_proc_data  = (esm_proc_data_t *) calloc(1, sizeof(*emm_context->esm_ctx.esm_proc_data));  /**< TAU without context request, for example. */
+    emm_context->esm_ctx.esm_proc_data->apn = apn; /**< Not removing. */
+  }
+
+  /*
+   * Execute the PDN connectivity procedure requested by the UE
+   */
+  emm_context->esm_ctx.esm_proc_data->pdn_cid              = apn_config->context_identifier; /**< Set it to the one matched. */
+  emm_context->esm_ctx.esm_proc_data->bearer_qos.qci       = apn_config->subscribed_qos.qci;
+  emm_context->esm_ctx.esm_proc_data->bearer_qos.pci       = apn_config->subscribed_qos.allocation_retention_priority.pre_emp_capability;
+  emm_context->esm_ctx.esm_proc_data->bearer_qos.pl        = apn_config->subscribed_qos.allocation_retention_priority.priority_level;
+  emm_context->esm_ctx.esm_proc_data->bearer_qos.pvi       = apn_config->subscribed_qos.allocation_retention_priority.pre_emp_vulnerability;
+  emm_context->esm_ctx.esm_proc_data->bearer_qos.gbr.br_ul = 0;
+  emm_context->esm_ctx.esm_proc_data->bearer_qos.gbr.br_dl = 0;
+  emm_context->esm_ctx.esm_proc_data->bearer_qos.mbr.br_ul = 0;
+  emm_context->esm_ctx.esm_proc_data->bearer_qos.mbr.br_dl = 0;
+  // TODO  "Better to throw emm_ctx->esm_ctx.esm_proc_data as a parameter or as a hidden parameter ?"
+  // todo: if PDN_CONTEXT exist --> we might need to send an ESM update message like MODIFY EPS BEARER CONTEXT REQUEST to the UE
+  rc = esm_proc_pdn_connectivity_request (emm_context,
+      emm_context->esm_ctx.esm_proc_data->pti,
+      apn_config->context_identifier,
+      emm_context->esm_ctx.esm_proc_data->request_type,
+      emm_context->esm_ctx.esm_proc_data->apn,
+      emm_context->esm_ctx.esm_proc_data->pdn_type,
+      emm_context->esm_ctx.esm_proc_data->pdn_addr,
+      &emm_context->esm_ctx.esm_proc_data->bearer_qos,
+      (emm_context->esm_ctx.esm_proc_data->pco.num_protocol_or_container_id ) ? &emm_context->esm_ctx.esm_proc_data->pco:NULL,
+          esm_cause,
+          &pdn_context);
+
+  pdn_context_t *pdn_ctx_p1 = NULL;
+  mme_app_get_pdn_context(ue_context, apn_config->context_identifier, ESM_EBI_UNASSIGNED, emm_context->esm_ctx.esm_proc_data->apn, &pdn_ctx_p1);
+  DevAssert(pdn_ctx_p1);
+
+  **pdn_cid = pdn_context->context_identifier;
+  // todo: optimize this
+  DevAssert(pdn_context);
+  if (rc != RETURNerror) {
     /*
-     * Execute the PDN connectivity procedure requested by the UE
+     * Create local default EPS bearer context
      */
-    emm_context->esm_ctx.esm_proc_data->pdn_cid              = apn_config->context_identifier; /**< Set it to the one matched. */
-    emm_context->esm_ctx.esm_proc_data->bearer_qos.qci       = apn_config->subscribed_qos.qci;
-    emm_context->esm_ctx.esm_proc_data->bearer_qos.pci       = apn_config->subscribed_qos.allocation_retention_priority.pre_emp_capability;
-    emm_context->esm_ctx.esm_proc_data->bearer_qos.pl        = apn_config->subscribed_qos.allocation_retention_priority.priority_level;
-    emm_context->esm_ctx.esm_proc_data->bearer_qos.pvi       = apn_config->subscribed_qos.allocation_retention_priority.pre_emp_vulnerability;
-    emm_context->esm_ctx.esm_proc_data->bearer_qos.gbr.br_ul = 0;
-    emm_context->esm_ctx.esm_proc_data->bearer_qos.gbr.br_dl = 0;
-    emm_context->esm_ctx.esm_proc_data->bearer_qos.mbr.br_ul = 0;
-    emm_context->esm_ctx.esm_proc_data->bearer_qos.mbr.br_dl = 0;
-    // TODO  "Better to throw emm_ctx->esm_ctx.esm_proc_data as a parameter or as a hidden parameter ?"
-    // todo: if PDN_CONTEXT exist --> we might need to send an ESM update message like MODIFY EPS BEARER CONTEXT REQUEST to the UE
-    rc = esm_proc_pdn_connectivity_request (emm_context,
-        emm_context->esm_ctx.esm_proc_data->pti,
-        apn_config->context_identifier,
-        emm_context->esm_ctx.esm_proc_data->request_type,
-        emm_context->esm_ctx.esm_proc_data->apn,
-        emm_context->esm_ctx.esm_proc_data->pdn_type,
-        emm_context->esm_ctx.esm_proc_data->pdn_addr,
-        &emm_context->esm_ctx.esm_proc_data->bearer_qos,
-        (emm_context->esm_ctx.esm_proc_data->pco.num_protocol_or_container_id ) ? &emm_context->esm_ctx.esm_proc_data->pco:NULL,
-            esm_cause,
-            &pdn_context);
+    if ((!is_pdn_connectivity) || ((is_pdn_connectivity) /*&& (EPS_BEARER_IDENTITY_UNASSIGNED == pdn_context->default_ebi) */)) {
+      rc = esm_proc_default_eps_bearer_context (emm_context, emm_context->esm_ctx.esm_proc_data->pti, pdn_context, emm_context->esm_ctx.esm_proc_data->apn, &new_ebi, emm_context->esm_ctx.esm_proc_data->bearer_qos.qci, esm_cause);
+    }
+    // todo: if the bearer already exist, we may modify the qos parameters with Modify_Bearer_Request!
 
-    pdn_context_t *pdn_ctx_p1 = NULL;
-    mme_app_get_pdn_context(ue_context, apn_config->context_identifier, ESM_EBI_UNASSIGNED, emm_context->esm_ctx.esm_proc_data->apn, &pdn_ctx_p1);
-    DevAssert(pdn_ctx_p1);
-
-    **pdn_cid = pdn_context->context_identifier;
-    // todo: optimize this
-    DevAssert(pdn_context);
     if (rc != RETURNerror) {
-        /*
-         * Create local default EPS bearer context
-         */
-        if ((!is_pdn_connectivity) || ((is_pdn_connectivity) /*&& (EPS_BEARER_IDENTITY_UNASSIGNED == pdn_context->default_ebi) */)) {
-          rc = esm_proc_default_eps_bearer_context (emm_context, emm_context->esm_ctx.esm_proc_data->pti, pdn_context, emm_context->esm_ctx.esm_proc_data->apn, &new_ebi, emm_context->esm_ctx.esm_proc_data->bearer_qos.qci, esm_cause);
-        }
-        // todo: if the bearer already exist, we may modify the qos parameters with Modify_Bearer_Request!
-
-        if (rc != RETURNerror) {
-          *esm_cause = ESM_CAUSE_SUCCESS;
-          /** Set the default ebi of the itti message. */
-          **default_ebi_pp = pdn_context->default_ebi;
-        }
-      } else {
-      }
+      *esm_cause = ESM_CAUSE_SUCCESS;
+      /** Set the default ebi of the itti message. */
+      **default_ebi_pp = pdn_context->default_ebi;
+    }
+    else {
+    }
   }
   //      unlock_ue_contexts(ue_context);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
