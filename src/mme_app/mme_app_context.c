@@ -2059,6 +2059,16 @@ mme_app_handle_s10_context_request(const itti_s10_context_request_t * const s10_
   */
  s10_proc_mme_tau = mme_app_create_s10_procedure_mme_handover(ue_context, false, MME_APP_S10_PROC_TYPE_INTER_MME_HANDOVER);
  DevAssert(s10_proc_mme_tau);
+ /** S10 */
+ tai_t target_tai;
+ memset(&target_tai, 0, sizeof (tai_t));
+ s10_proc_mme_tau->target_tai.plmn.mcc_digit1 = s10_context_request_pP->serving_network.mcc[0];
+ s10_proc_mme_tau->target_tai.plmn.mcc_digit2 = s10_context_request_pP->serving_network.mcc[1];
+ s10_proc_mme_tau->target_tai.plmn.mcc_digit3 = s10_context_request_pP->serving_network.mcc[2];
+ s10_proc_mme_tau->target_tai.plmn.mnc_digit1 = s10_context_request_pP->serving_network.mnc[0];
+ s10_proc_mme_tau->target_tai.plmn.mnc_digit2 = s10_context_request_pP->serving_network.mnc[1];
+ s10_proc_mme_tau->target_tai.plmn.mnc_digit3 = s10_context_request_pP->serving_network.mnc[2];
+ /** Not setting the TAI. */
 
  /** No S10 Procedure running. */
  // todo: validate NAS message!
@@ -2365,7 +2375,6 @@ mme_app_handle_s10_context_response(
      * Let the timeout happen for the new UE context. Will discard this information and continue with normal identification procedure.
      * Meanwhile remove the old UE.
      */
-    OAILOG_INFO (LOG_MME_APP, "Implicitly detaching the UE due CLR flag @ completion of MME_MOBILITY timer for UE id  %d \n", ue_context_old->mme_ue_s1ap_id);
     message_p = itti_alloc_new_message (TASK_MME_APP, NAS_IMPLICIT_DETACH_UE_IND);
     DevAssert (message_p != NULL);
     message_p->ittiMsg.nas_implicit_detach_ue_ind.ue_id = ue_context_old->mme_ue_s1ap_id; /**< Rest won't be sent, so no NAS Detach Request will be sent. */
@@ -2462,6 +2471,14 @@ mme_app_handle_s10_context_acknowledge(
         "Ignoring the handover state. \n", s10_context_acknowledge_pP->teid);
     // todo: what to do in this case? Ignoring the S6a cancel location request?
   }
+  /** Check if the UE is in idle mode, if so send a release request. */
+  if(ue_context->ecm_state == ECM_CONNECTED){
+    OAILOG_WARNING(LOG_MME_APP, "Context acknowledge received in ECM connected state for ueId " MME_UE_S1AP_ID_FMT ", enbUeS1apId " ENB_UE_S1AP_ID_FMT " enbId %d. \n",
+        ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, ue_context->e_utran_cgi.cell_identity.enb_id);
+    ue_context->s1_ue_context_release_cause = S1AP_NAS_NORMAL_RELEASE; /**< We will send the context release command. */
+    mme_app_itti_ue_context_release (ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, ue_context->s1_ue_context_release_cause, ue_context->e_utran_cgi.cell_identity.enb_id);
+  }
+
   /** The S10 Tunnel endpoint will be removed with the completion of the MME-Mobility Completion timer of the procedure. */
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
