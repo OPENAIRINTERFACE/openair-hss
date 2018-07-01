@@ -59,7 +59,7 @@
 
 //----------------------------------------------------------------------------
 // todo: check which one needed
-static void mme_app_send_s1ap_path_switch_request_acknowledge(mme_ue_s1ap_id_t mme_ue_s1ap_id);
+static void mme_app_send_s1ap_path_switch_request_acknowledge(mme_ue_s1ap_id_t mme_ue_s1ap_id, bearer_contexts_to_be_created_t * bcs_tbc);
 
 static void mme_app_send_s1ap_path_switch_request_failure(mme_ue_s1ap_id_t mme_ue_s1ap_id, enb_ue_s1ap_id_t enb_ue_s1ap_id, sctp_assoc_id_t assoc_id, enum s1cause cause);
 
@@ -1238,14 +1238,7 @@ mme_app_handle_modify_bearer_resp (
     bc_to_act->bearer_state = BEARER_STATE_ACTIVE;
   }
   // todo: set the downlink teid?
-  /** If it is an X2 Handover, send a path switch response back. */
-  if(ue_context->pending_x2_handover){
-    OAILOG_INFO(LOG_MME_APP, "Sending an S1AP Path Switch Request Acknowledge for UE with ueId: " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
-    mme_app_send_s1ap_path_switch_request_acknowledge(ue_context->mme_ue_s1ap_id);
-    /** Reset the flag. */
-    ue_context->pending_x2_handover = false;
-    OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
-  }
+
   /** No matter if there is an handover procedure or not, continue with the MBR for other PDNs. */
   pdn_context = NULL;
   RB_FOREACH (pdn_context, PdnContexts, &ue_context->pdn_contexts) {
@@ -1264,6 +1257,25 @@ mme_app_handle_modify_bearer_resp (
       }
     }
   }
+  /** No more MBRs to send, check for x2 handover. */
+  /** If it is an X2 Handover, send a path switch response back. */
+   if(ue_context->pending_x2_handover){
+     OAILOG_INFO(LOG_MME_APP, "Sending an S1AP Path Switch Request Acknowledge for UE with ueId: " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
+
+     bearer_contexts_created_t  bcs_tbs;
+     memset((void*)&bcs_tbs, 0, sizeof(bcs_tbs));
+     pdn_context_t * registered_pdn_ctx = NULL;
+     RB_FOREACH (registered_pdn_ctx, PdnContexts, &ue_context->pdn_contexts) {
+       DevAssert(registered_pdn_ctx);
+       mme_app_get_bearer_contexts_to_be_created(registered_pdn_ctx, &bcs_tbs, BEARER_STATE_NULL);
+       /** The number of bearers will be incremented in the method. S10 should just pick the ebi. */
+     }
+
+     mme_app_send_s1ap_path_switch_request_acknowledge(ue_context->mme_ue_s1ap_id, &bcs_tbs);
+     /** Reset the flag. */
+     ue_context->pending_x2_handover = false;
+     OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
+   }
   OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
 }
 
@@ -1871,7 +1883,7 @@ void mme_app_trigger_mme_initiated_dedicated_bearer_deactivation_procedure (ue_c
  * No timer to be started.
  */
 static
-void mme_app_send_s1ap_path_switch_request_acknowledge(mme_ue_s1ap_id_t mme_ue_s1ap_id){
+void mme_app_send_s1ap_path_switch_request_acknowledge(mme_ue_s1ap_id_t mme_ue_s1ap_id, bearer_contexts_to_be_created_t * bcs_tbc){
   MessageDef * message_p = NULL;
   bearer_context_t                       *current_bearer_p = NULL;
   ebi_t                                   bearer_id = 0;
@@ -1903,16 +1915,10 @@ void mme_app_send_s1ap_path_switch_request_acknowledge(mme_ue_s1ap_id_t mme_ue_s
   /** The ENB_ID/Stream information in the UE_Context are still the ones for the source-ENB and the SCTP-UE_ID association is not set yet for the new eNB. */
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S1AP_MME, NULL, 0, "MME_APP Sending S1AP PATH_SWITCH_REQUEST_ACKNOWLEDGE.");
 
-//  todo: multiApn X2 handover
-//  bearer_id = ue_context->default_bearer_id;
-//  current_bearer_p =  mme_app_is_bearer_context_in_list(ue_context->mme_ue_s1ap_id, bearer_id);
-//  path_switch_req_ack_p->eps_bearer_id = bearer_id;
 
-  /** Set all active bearers to be switched. */
-//  path_switch_req_ack_p->bearer_ctx_to_be_switched_list.num_bearer_context = ue_context->nb_ue_bearer_ctxs;
-//  path_switch_req_ack_p->bearer_ctx_to_be_switched_list.bearer_contexts[0]= (void*)&ue_context->bearer_ctxs;
-//
-//  hash_table_ts_t * bearer_contexts1 = (hash_table_ts_t*)path_switch_req_ack_p->bearer_ctx_to_be_switched_list.bearer_ctxs;
+  /** Set the bearer contexts to be created. Not changing any bearer state. */
+  path_switch_req_ack_p->bearer_ctx_to_be_switched_list = calloc(1, sizeof(bearer_contexts_to_be_created_t));
+  memcpy((void*)path_switch_req_ack_p->bearer_ctx_to_be_switched_list, bcs_tbc, sizeof(*bcs_tbc));
 
   uint16_t encryption_algorithm_capabilities = 0;
   uint16_t integrity_algorithm_capabilities = 0;
@@ -2033,42 +2039,54 @@ mme_app_handle_path_switch_req(
     ue_context->path_switch_req_timer.id = MME_APP_TIMER_INACTIVE_ID;
   }
 
+  /**
+   * Update the bearers.
+   */
+  for(int nb_bearer = 0; nb_bearer < s1ap_path_switch_req->no_of_e_rabs; nb_bearer++) {
+    ebi_t ebi = s1ap_path_switch_req->e_rab_id[nb_bearer];
+    /** Get the bearer context. */
+    bearer_context_t * bearer_context = NULL;
+    mme_app_get_session_bearer_context_from_all(ue_context, ebi, &bearer_context);
+    DevAssert(bearer_context);
+    /** Set to inactivet. */
+    bearer_context->bearer_state &= (~BEARER_STATE_ACTIVE);
+
+    /** Update the FTEID of the bearer context and uncheck the established state. */
+    bearer_context->enb_fteid_s1u.teid = s1ap_path_switch_req->gtp_teid[nb_bearer];
+    bearer_context->enb_fteid_s1u.interface_type      = S1_U_ENODEB_GTP_U;
+    /** Set the IP address from the FTEID. */
+    if (4 == blength(s1ap_path_switch_req->transport_layer_address[nb_bearer])) {
+      bearer_context->enb_fteid_s1u.ipv4 = 1;
+      memcpy(&bearer_context->enb_fteid_s1u.ipv4_address,
+          s1ap_path_switch_req->transport_layer_address[nb_bearer]->data, blength(s1ap_path_switch_req->transport_layer_address[nb_bearer]));
+    } else if (16 == blength(s1ap_path_switch_req->transport_layer_address[nb_bearer])) {
+      bearer_context->enb_fteid_s1u.ipv6 = 1;
+      memcpy(&bearer_context->enb_fteid_s1u.ipv6_address,
+          s1ap_path_switch_req->transport_layer_address[nb_bearer]->data,
+          blength(s1ap_path_switch_req->transport_layer_address[nb_bearer]));
+    } else {
+      AssertFatal(0, "TODO IP address %d bytes", blength(s1ap_path_switch_req->transport_layer_address[nb_bearer]));
+    }
+    bearer_context->bearer_state |= BEARER_STATE_ENB_CREATED;
+    bearer_context->bearer_state |= BEARER_STATE_MME_CREATED;
+  }
+
+//
+//  s1ap_path_switch_req->bearer_contexts_to_be_modified.bearer_contexts[0].eps_bearer_id = s1ap_path_switch_req->eps_bearer_id;
+//  memcpy (&s1ap_path_switch_req->bearer_contexts_to_be_modified.bearer_contexts[0].s1_eNB_fteid,
+//      &s1ap_path_switch_req->bearer_s1u_enb_fteid,
+//      sizeof (s1ap_path_switch_req->bearer_contexts_to_be_modified.bearer_contexts[0].s1_eNB_fteid));
+//  s1ap_path_switch_req->bearer_contexts_to_be_modified.num_bearer_context = 1;
+
+
+
+  OAILOG_INFO(LOG_MME_APP, "Sending MBR due to Patch Switch Request for UE " MME_UE_S1AP_ID_FMT " . \n", ue_context->mme_ue_s1ap_id);
+
   // todo: multiApn X2 handover!
   pdn_context_t * first_pdn = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
   DevAssert(first_pdn);
 
-  message_p = itti_alloc_new_message (TASK_MME_APP, S11_MODIFY_BEARER_REQUEST);
-  AssertFatal (message_p , "itti_alloc_new_message Failed");
-  itti_s11_modify_bearer_request_t *s11_modify_bearer_request = &message_p->ittiMsg.s11_modify_bearer_request;
-  memset ((void *)s11_modify_bearer_request, 0, sizeof (*s11_modify_bearer_request));
-  s11_modify_bearer_request->peer_ip.s_addr = first_pdn->s_gw_address_s11_s4.address.ipv4_address.s_addr;
-  s11_modify_bearer_request->teid = first_pdn->s_gw_teid_s11_s4;
-  s11_modify_bearer_request->local_teid = ue_context->mme_teid_s11;
-  /*
-   * Delay Value in integer multiples of 50 millisecs, or zero
-   */
-  s11_modify_bearer_request->delay_dl_packet_notif_req = 0;  // TO DO
-  s11_modify_bearer_request->bearer_contexts_to_be_modified.bearer_contexts[0].eps_bearer_id = s1ap_path_switch_req->eps_bearer_id;
-  memcpy (&s11_modify_bearer_request->bearer_contexts_to_be_modified.bearer_contexts[0].s1_eNB_fteid,
-      &s1ap_path_switch_req->bearer_s1u_enb_fteid,
-      sizeof (s11_modify_bearer_request->bearer_contexts_to_be_modified.bearer_contexts[0].s1_eNB_fteid));
-  s11_modify_bearer_request->bearer_contexts_to_be_modified.num_bearer_context = 1;
-
-  s11_modify_bearer_request->bearer_contexts_to_be_removed.num_bearer_context = 0;
-
-  s11_modify_bearer_request->mme_fq_csid.node_id_type = GLOBAL_UNICAST_IPv4; // TO DO
-  s11_modify_bearer_request->mme_fq_csid.csid = 0;   // TO DO ...
-  memset(&s11_modify_bearer_request->indication_flags, 0, sizeof(s11_modify_bearer_request->indication_flags));   // TO DO
-  s11_modify_bearer_request->rat_type = RAT_EUTRAN;
-  /*
-   * S11 stack specific parameter. Not used in standalone epc mode
-   */
-  s11_modify_bearer_request->trxn = NULL;
-  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME,  MSC_S11_MME ,
-                      NULL, 0, "0 S11_MODIFY_BEARER_REQUEST teid %u ebi %u", s11_modify_bearer_request->teid,
-                      s11_modify_bearer_request->bearer_contexts_to_be_modified.bearer_contexts[0].eps_bearer_id);
-  itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
-
+  mme_app_send_s11_modify_bearer_req(ue_context, first_pdn);
   // todo: since PSReq is already received from B-COM just set a flag (ask Lionel how to do it better).
   ue_context->pending_x2_handover = true;
   OAILOG_FUNC_OUT (LOG_MME_APP);
@@ -2933,7 +2951,7 @@ void mme_app_send_s1ap_handover_request(mme_ue_s1ap_id_t mme_ue_s1ap_id,
  * No timer to be started.
  */
 static
-void mme_app_send_s1ap_handover_command(mme_ue_s1ap_id_t mme_ue_s1ap_id, enb_ue_s1ap_id_t enb_ue_s1ap_id, uint32_t enb_id, bstring target_to_source_cont){
+void mme_app_send_s1ap_handover_command(mme_ue_s1ap_id_t mme_ue_s1ap_id, enb_ue_s1ap_id_t enb_ue_s1ap_id, uint32_t enb_id, bearer_contexts_to_be_created_t * bcs_tbc, bstring target_to_source_cont){
   MessageDef * message_p = NULL;
 
   OAILOG_FUNC_IN (LOG_MME_APP);
@@ -2947,6 +2965,11 @@ void mme_app_send_s1ap_handover_command(mme_ue_s1ap_id_t mme_ue_s1ap_id, enb_ue_
   handover_command_p->mme_ue_s1ap_id = mme_ue_s1ap_id;
   handover_command_p->enb_ue_s1ap_id = enb_ue_s1ap_id; /**< Just ENB_UE_S1AP_ID. */
   handover_command_p->enb_id = enb_id;
+
+  /** Set the bearer contexts to be created. Not changing any bearer state. */
+  handover_command_p->bearer_ctx_to_be_forwarded_list = calloc(1, sizeof(bearer_contexts_to_be_created_t));
+  memcpy((void*)handover_command_p->bearer_ctx_to_be_forwarded_list, bcs_tbc, sizeof(*bcs_tbc));
+
   /** Set the E-UTRAN Target-To-Source-Transparent-Container. */
   handover_command_p->eutran_target_to_source_container = target_to_source_cont;
   // todo: what will the enb_ue_s1ap_ids for single mme s1ap handover will be.. ?
@@ -3038,8 +3061,19 @@ mme_app_handle_forward_relocation_response(
    */
   OAILOG_INFO(LOG_MME_APP, "MME_APP UE context is in REGISTERED state. Sending a Handover Command to the source-ENB with enbId: %d for UE with mmeUeS1APId : " MME_UE_S1AP_ID_FMT " and IMSI " IMSI_64_FMT " after S10 Forward Relocation Response. \n",
       ue_context->e_utran_cgi.cell_identity.enb_id, ue_context->mme_ue_s1ap_id, ue_context->imsi);
+
+  bearer_contexts_to_be_created_t bcs_tbf;
+  memset((void*)&bcs_tbf, 0, sizeof(bcs_tbf));
+  pdn_context_t * registered_pdn_ctx = NULL;
+  RB_FOREACH (registered_pdn_ctx, PdnContexts, &ue_context->pdn_contexts) {
+    DevAssert(registered_pdn_ctx);
+    mme_app_get_bearer_contexts_to_be_created(registered_pdn_ctx, &bcs_tbf, BEARER_STATE_NULL);
+    /** The number of bearers will be incremented in the method. S10 should just pick the ebi. */
+  }
+
   /** Send a Handover Command. */
-  mme_app_send_s1ap_handover_command(ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, ue_context->e_utran_cgi.cell_identity.enb_id, forward_relocation_response_pP->eutran_container.container_value);
+  mme_app_send_s1ap_handover_command(ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, ue_context->e_utran_cgi.cell_identity.enb_id, &bcs_tbf,
+      forward_relocation_response_pP->eutran_container.container_value);
   s10_handover_procedure->ho_command_sent = true;
   /** Unlink the container. */
   forward_relocation_response_pP->eutran_container.container_value = NULL;
@@ -3242,6 +3276,17 @@ mme_app_handle_handover_request_acknowledge(
    DevAssert(ue_context->mm_state == UE_REGISTERED);
    OAILOG_INFO(LOG_MME_APP, "Intra-MME S10 Handover procedure is ongoing. Sending a Handover Command to the source-ENB with enbId: %d for UE with mmeUeS1APId : " MME_UE_S1AP_ID_FMT " and enbUeS1apId " ENB_UE_S1AP_ID_FMT ". \n",
        ue_context->e_utran_cgi.cell_identity.enb_id, handover_request_acknowledge_pP->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id);
+
+
+   bearer_contexts_to_be_created_t bcs_tbf;
+   memset((void*)&bcs_tbf, 0, sizeof(bcs_tbf));
+   pdn_context_t * registered_pdn_ctx = NULL;
+   RB_FOREACH (registered_pdn_ctx, PdnContexts, &ue_context->pdn_contexts) {
+     DevAssert(registered_pdn_ctx);
+     mme_app_get_bearer_contexts_to_be_created(registered_pdn_ctx, &bcs_tbf, BEARER_STATE_NULL);
+     /** The number of bearers will be incremented in the method. S10 should just pick the ebi. */
+   }
+
    /*
     * Save the new ENB_UE_S1AP_ID
     * Don't update the coll_keys with the new enb_ue_s1ap_id.
@@ -3249,6 +3294,7 @@ mme_app_handle_handover_request_acknowledge(
    mme_app_send_s1ap_handover_command(handover_request_acknowledge_pP->mme_ue_s1ap_id,
        ue_context->enb_ue_s1ap_id,
        ue_context->e_utran_cgi.cell_identity.enb_id,
+       &bcs_tbf,
        handover_request_acknowledge_pP->target_to_source_eutran_container);
    s10_handover_proc->ho_command_sent = true;
    /** Unlink the transparent container. */

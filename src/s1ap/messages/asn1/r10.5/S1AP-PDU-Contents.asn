@@ -48,6 +48,7 @@ IMPORTS
     S1ap-ExtendedRepetitionPeriod,
     S1ap-GTP-TEID,
     S1ap-GUMMEI,
+   	S1ap-GUMMEIType,
     S1ap-HandoverRestrictionList,
     S1ap-HandoverType,
     S1ap-LAI,
@@ -1496,7 +1497,8 @@ S1ap-InitialUEMessageIEs S1AP-PROTOCOL-IES ::= {
     { ID id-GUMMEI-ID                    CRITICALITY reject    TYPE S1ap-GUMMEI                            PRESENCE optional} |
     { ID id-CellAccessMode                CRITICALITY reject    TYPE S1ap-CellAccessMode                    PRESENCE optional} |
     { ID id-GW-TransportLayerAddress    CRITICALITY ignore    TYPE S1ap-TransportLayerAddress            PRESENCE optional} |
-    { ID id-RelayNode-Indicator            CRITICALITY reject    TYPE S1ap-RelayNode-Indicator            PRESENCE optional},
+    { ID id-RelayNode-Indicator            CRITICALITY reject    TYPE S1ap-RelayNode-Indicator            PRESENCE optional}|
+	{ ID id-GUMMEIType					CRITICALITY ignore	TYPE S1ap-GUMMEIType						PRESENCE optional},
     ...
 }
 

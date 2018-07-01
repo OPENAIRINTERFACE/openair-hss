@@ -261,8 +261,11 @@ typedef struct itti_s1ap_path_switch_request_s {
   sctp_assoc_id_t         sctp_assoc_id;
   sctp_stream_id_t        sctp_stream;
   uint32_t                enb_id;
-  ebi_t                   eps_bearer_id;
-  fteid_t                 bearer_s1u_enb_fteid;
+  uint8_t                 no_of_e_rabs;
+  ebi_t                   e_rab_id[BEARERS_PER_UE];
+  bstring                 transport_layer_address[BEARERS_PER_UE];
+  s1u_teid_t              gtp_teid[BEARERS_PER_UE];
+
 //  /* Key eNB */
 //  uint8_t                 kenb[32];
 //
@@ -328,6 +331,7 @@ typedef struct itti_s1ap_handover_command_s {
   uint32_t                enb_id;
   /** F-Container. */
   bstring                 eutran_target_to_source_container;
+  bearer_contexts_to_be_created_t *bearer_ctx_to_be_forwarded_list;
 
   // todo: handover type will always be set as intra_lte in s1ap layer..
 
@@ -362,8 +366,6 @@ typedef struct itti_s1ap_handover_request_acknowledge_s {
   uint32_t                enb_ue_s1ap_id;
 //  sctp_assoc_id_t         sctp_assoc_id;
 //  sctp_stream_id_t        sctp_stream;
-//  ebi_t                   eps_bearer_id;
-//  fteid_t                 bearer_s1u_enb_fteid;
   uint8_t                 no_of_e_rabs;
   ebi_t                   e_rab_id[BEARERS_PER_UE];
   bstring                 transport_layer_address[BEARERS_PER_UE];

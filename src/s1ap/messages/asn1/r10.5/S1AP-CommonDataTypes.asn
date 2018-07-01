@@ -224,7 +224,11 @@ S1ap-ProtocolIE-ID		::= INTEGER {
     id-MMERelaySupportIndicator                     (163),
     id-GWContextReleaseIndication                   (164),
     id-ManagementBasedMDTAllowed                    (165),
-    id-PrivacyIndicator                             (166)
+    id-PrivacyIndicator                             (166),
+	id-Time-UE-StayedInCell-EnhancedGranularity		(167),
+	id-HO-Cause										(168),
+	id-VoiceSupportMatchIndicator					(169),
+	id-GUMMEIType									(170)
 } (0..65535)
 
 S1ap-TriggeringMessage	::= ENUMERATED { initiating-message, successful-outcome, unsuccessfull-outcome }

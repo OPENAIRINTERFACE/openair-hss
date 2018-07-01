@@ -121,6 +121,7 @@ inline void ASN_DEBUG(const char *fmt, ...);
 #include "S1ap-GBR-QosInformation.h"
 #include "S1ap-GTP-TEID.h"
 #include "S1ap-GUMMEI.h"
+#include "S1ap-GUMMEIType.h"
 #include "S1ap-HandoverRestrictionList.h"
 #include "S1ap-HandoverType.h"
 #include "S1ap-HFN.h"

@@ -710,6 +710,12 @@ S1ap-GUMMEI            ::= SEQUENCE {
     ...
 }
 
+S1ap-GUMMEIType ::= ENUMERATED {
+	native,
+	mapped,
+	...
+}
+
 S1ap-GWContextReleaseIndication ::= ENUMERATED {
     true,
     ...

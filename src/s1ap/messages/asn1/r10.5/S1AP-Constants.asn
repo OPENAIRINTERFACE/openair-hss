@@ -279,5 +279,9 @@ id-MMERelaySupportIndicator						S1ap-ProtocolIE-ID ::= 163
 id-GWContextReleaseIndication					S1ap-ProtocolIE-ID ::= 164
 id-ManagementBasedMDTAllowed					S1ap-ProtocolIE-ID ::= 165
 id-PrivacyIndicator								S1ap-ProtocolIE-ID ::= 166
+id-Time-UE-StayedInCell-EnhancedGranularity		S1ap-ProtocolIE-ID ::= 167
+id-HO-Cause										S1ap-ProtocolIE-ID ::= 168
+id-VoiceSupportMatchIndicator					S1ap-ProtocolIE-ID ::= 169
+id-GUMMEIType									S1ap-ProtocolIE-ID ::= 170
 
 END

@@ -380,6 +380,11 @@ void itti_free_msg_content (MessageDef * const message_p)
 
   case S1AP_HANDOVER_COMMAND:
     bdestroy_wrapper(&message_p->ittiMsg.s1ap_handover_command.eutran_target_to_source_container);
+    /** Bearer Context to Be Setup. */
+    if(message_p->ittiMsg.s1ap_handover_command.bearer_ctx_to_be_forwarded_list){
+      free_bearer_contexts_to_be_created(&message_p->ittiMsg.s1ap_handover_command.bearer_ctx_to_be_forwarded_list);
+    }
+
     break;
 
   case S1AP_ENB_STATUS_TRANSFER:

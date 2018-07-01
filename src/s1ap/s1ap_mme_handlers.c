@@ -1123,18 +1123,6 @@ s1ap_mme_handle_path_switch_request (
     s1ap_send_path_switch_request_failure(assoc_id, stream, mme_ue_s1ap_id, enb_ue_s1ap_id);
   } else {
     /** The enb_ue_s1ap_id will change! **/
-
-    OAILOG_DEBUG(LOG_S1AP, "UE_DESCRIPTION REFERENCE @ OLD UE DESCRIPTION AFTER PSR %x \n", ue_ref_p);
-    OAILOG_DEBUG(LOG_S1AP, "UE_DESCRIPTION REFERENCE @ OLD UE DESCRIPTION AFTER PSR %p \n", ue_ref_p);
-    OAILOG_DEBUG(LOG_S1AP, "SET ENB_UE_S1AP_ID (0)   @ OLD UE DESCRIPTION AFTER PSR %d \n", ue_ref_p->enb_ue_s1ap_id);
-
-
-    if (pathSwitchRequest_p->e_RABToBeSwitchedDLList.s1ap_E_RABToBeSwitchedDLItem.count != 1) {
-      OAILOG_DEBUG (LOG_S1AP, "E-RAB switch has failed\n");
-      OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
-    }
-
-    /** Try to remove the old s1ap UE context --> ue_reference. */
     OAILOG_DEBUG (LOG_S1AP, "Removed old ue_reference before handover for MME UE S1AP ID " MME_UE_S1AP_ID_FMT "\n", (uint32_t) ue_ref_p->mme_ue_s1ap_id);
     s1ap_remove_ue (ue_ref_p);
 
@@ -1156,10 +1144,6 @@ s1ap_mme_handle_path_switch_request (
     ue_ref_p->enb_ue_s1ap_id = enb_ue_s1ap_id;
     // Will be allocated by NAS
     ue_ref_p->mme_ue_s1ap_id = mme_ue_s1ap_id;
-
-    OAILOG_DEBUG(LOG_S1AP, "UE_DESCRIPTION REFERENCE @ NEW UE DESCRIPTION AFTER PSR %x \n", ue_ref_p);
-    OAILOG_DEBUG(LOG_S1AP, "UE_DESCRIPTION REFERENCE @ NEW UE DESCRIPTION AFTER PSR %p \n", ue_ref_p);
-    OAILOG_DEBUG(LOG_S1AP, "SET ENB_UE_S1AP_ID (0)   @ NEW UE DESCRIPTION AFTER PSR %d \n", ue_ref_p->enb_ue_s1ap_id);
 
     ue_ref_p->s1ap_ue_context_rel_timer.id  = S1AP_TIMER_INACTIVE_ID;
     ue_ref_p->s1ap_ue_context_rel_timer.sec = S1AP_UE_CONTEXT_REL_COMP_TIMER;
@@ -1204,20 +1188,29 @@ s1ap_mme_handle_path_switch_request (
       /*
        * Bad, very bad cast...
        */
-      eRABToBeSwitchedDlItemIEs_p = (S1ap_E_RABToBeSwitchedDLItemIEs_t *)
-        pathSwitchRequest_p->e_RABToBeSwitchedDLList.s1ap_E_RABToBeSwitchedDLItem.array[0];
+
+
+
+      S1AP_PATH_SWITCH_REQUEST (message_p).no_of_e_rabs = pathSwitchRequest_p->e_RABToBeSwitchedDLList.s1ap_E_RABToBeSwitchedDLItem.count;
+
+      for (int item = 0; item < pathSwitchRequest_p->e_RABToBeSwitchedDLList.s1ap_E_RABToBeSwitchedDLItem.count; item++) {
+         /*
+          * Bad, very bad cast...
+          */
+        eRABToBeSwitchedDlItemIEs_p = (S1ap_E_RABToBeSwitchedDLItemIEs_t *)
+        pathSwitchRequest_p->e_RABToBeSwitchedDLList.s1ap_E_RABToBeSwitchedDLItem.array[item];
+
+        S1AP_PATH_SWITCH_REQUEST (message_p).e_rab_id[item] = eRABToBeSwitchedDlItemIEs_p->e_RABToBeSwitchedDLItem.e_RAB_ID;
+        S1AP_PATH_SWITCH_REQUEST (message_p).gtp_teid[item] = htonl (*((uint32_t *) eRABToBeSwitchedDlItemIEs_p->e_RABToBeSwitchedDLItem.gTP_TEID.buf));
+        S1AP_PATH_SWITCH_REQUEST (message_p).transport_layer_address[item] =
+            blk2bstr(eRABToBeSwitchedDlItemIEs_p->e_RABToBeSwitchedDLItem.transportLayerAddress.buf, eRABToBeSwitchedDlItemIEs_p->e_RABToBeSwitchedDLItem.transportLayerAddress.size);
+      }
+
       S1AP_PATH_SWITCH_REQUEST (message_p).mme_ue_s1ap_id = ue_ref_p->mme_ue_s1ap_id;
-      S1AP_PATH_SWITCH_REQUEST (message_p).enb_ue_s1ap_id = ue_ref_p->enb_ue_s1ap_id;
       S1AP_PATH_SWITCH_REQUEST (message_p).enb_ue_s1ap_id = ue_ref_p->enb_ue_s1ap_id;
       S1AP_PATH_SWITCH_REQUEST (message_p).sctp_assoc_id  = assoc_id;
       S1AP_PATH_SWITCH_REQUEST (message_p).sctp_stream    = stream;
       S1AP_PATH_SWITCH_REQUEST (message_p).enb_id         = ue_ref_p->enb->enb_id;
-      S1AP_PATH_SWITCH_REQUEST (message_p).eps_bearer_id = eRABToBeSwitchedDlItemIEs_p->e_RABToBeSwitchedDLItem.e_RAB_ID;
-      S1AP_PATH_SWITCH_REQUEST (message_p).bearer_s1u_enb_fteid.ipv4 = 1;  // TO DO
-      S1AP_PATH_SWITCH_REQUEST (message_p).bearer_s1u_enb_fteid.ipv6 = 0;  // TO DO
-      S1AP_PATH_SWITCH_REQUEST (message_p).bearer_s1u_enb_fteid.interface_type = S1_U_ENODEB_GTP_U;
-      S1AP_PATH_SWITCH_REQUEST (message_p).bearer_s1u_enb_fteid.teid = htonl ( *((uint32_t *) eRABToBeSwitchedDlItemIEs_p->e_RABToBeSwitchedDLItem.gTP_TEID.buf));
-      memcpy (&S1AP_PATH_SWITCH_REQUEST (message_p).bearer_s1u_enb_fteid.ipv4_address, eRABToBeSwitchedDlItemIEs_p->e_RABToBeSwitchedDLItem.transportLayerAddress.buf, 4);
       MSC_LOG_TX_MESSAGE (MSC_S1AP_MME,
                           MSC_MMEAPP_MME,
                           NULL, 0,
