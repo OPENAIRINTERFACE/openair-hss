@@ -503,7 +503,32 @@ mme_app_handle_initial_ue_message (
       {
         // Get the UE context using mme_ue_s1ap_id
         ue_context =  mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, ue_nas_ctx->ue_id);
-        DevAssert(ue_context != NULL);
+        /*
+         * The EMM context may have been removed, due to some erroneous conditions (NAS-NON Delivery, etc.).
+         * In this case, we invalidate the EMM context for now.
+         */
+        if(!ue_context){
+          /** todo: later fix this. */
+          OAILOG_WARNING(LOG_MME_APP, "ToDo: An EMM context for the given UE exists, but not NAS context. "
+              "This is not implemented now and will be added later (reattach without security). Currently invalidating NAS context. Continuing with the initial UE message. \n");
+
+          /** Remove the UE reference implicitly, and then the old context. */
+          ue_description_t * temp_ue_reference = s1ap_is_enb_ue_s1ap_id_in_list_per_enb(initial_pP->enb_ue_s1ap_id, initial_pP->ecgi.cell_identity.enb_id);
+          if(temp_ue_reference){
+            OAILOG_ERROR (LOG_MME_APP, "MME_APP_INITAIL_UE_MESSAGE. ERROR***** Removing the newly created s1ap UE reference with enbUeS1apId " ENB_UE_S1AP_ID_FMT " and enbId %d.\n" ,
+                initial_pP->enb_ue_s1ap_id, initial_pP->ecgi.cell_identity.enb_id);
+            s1ap_remove_ue(temp_ue_reference);
+          }
+          message_p = itti_alloc_new_message (TASK_MME_APP, NAS_IMPLICIT_DETACH_UE_IND);
+          DevAssert (message_p != NULL);
+          itti_nas_implicit_detach_ue_ind_t *nas_implicit_detach_ue_ind_p = &message_p->ittiMsg.nas_implicit_detach_ue_ind;
+          memset ((void*)nas_implicit_detach_ue_ind_p, 0, sizeof (itti_nas_implicit_detach_ue_ind_t));
+          message_p->ittiMsg.nas_implicit_detach_ue_ind.ue_id = ue_nas_ctx->ue_id;
+          itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+          OAILOG_INFO(LOG_MME_APP, "Informed NAS about the invalidated NAS context. Dropping the initial UE request for enbUeS1apId " ENB_UE_S1AP_ID_FMT". \n", initial_pP->enb_ue_s1ap_id);
+          OAILOG_FUNC_OUT (LOG_MME_APP);
+        }
+
         if ((ue_context != NULL) && (ue_context->mme_ue_s1ap_id == ue_nas_ctx->ue_id)) {
           initial_pP->mme_ue_s1ap_id = ue_nas_ctx->ue_id;
           if (ue_context->enb_s1ap_id_key != INVALID_ENB_UE_S1AP_ID_KEY)

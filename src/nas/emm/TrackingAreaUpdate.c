@@ -341,16 +341,8 @@ emm_proc_tracking_area_update_complete (
   emm_sap_t                               emm_sap = {0};
   nas_emm_tau_proc_t                     *tau_proc = NULL;
 
-
-
-
-
   OAILOG_FUNC_IN (LOG_NAS_EMM);
-  OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - EPS attach complete (ue_id=" MME_UE_S1AP_ID_FMT ")\n", ue_id);
-
-
-
-
+  OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - EPS TAU complete (ue_id=" MME_UE_S1AP_ID_FMT ")\n", ue_id);
 
   /*
    * Get the UE context
@@ -414,6 +406,19 @@ emm_proc_tracking_area_update_complete (
   emm_sap.u.emm_reg.free_proc = true;
   emm_sap.u.emm_reg.u.tau.proc = tau_proc;
   rc = emm_sap_send (&emm_sap);
+
+  /*
+   * Check if the UE is in registered state.
+   */
+  if(emm_context && emm_context->_emm_fsm_state != EMM_REGISTERED){
+    OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - EMM Context for ueId " MME_UE_S1AP_ID_FMT " is still not in EMM_REGISTERED state although TAU_CNF has arrived. "
+        "Removing failed EMM context implicitly.. \n", ue_id);
+    emm_sap_t                               emm_sap = {0};
+    emm_sap.primitive = EMMCN_IMPLICIT_DETACH_UE;
+    emm_sap.u.emm_cn.u.emm_cn_implicit_detach.ue_id = ue_id;
+    emm_sap_send (&emm_sap);
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  }
 
 //  unlock_ue_contexts(ue_context);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);

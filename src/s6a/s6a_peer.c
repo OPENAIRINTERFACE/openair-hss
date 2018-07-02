@@ -188,7 +188,9 @@ s6a_fd_new_peer (
     sleep(timeout);
   }
   bdestroy(hss_name);
-  free_wrapper((void **) &fd_g_config->cnf_diamid);
+  if(fd_g_config->cnf_diamid){
+    free_wrapper((void **) &fd_g_config->cnf_diamid);
+  }
   fd_g_config->cnf_diamid_len = 0;
   return RETURNerror;
 #endif

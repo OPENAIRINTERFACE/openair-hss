@@ -574,6 +574,21 @@ int emm_proc_attach_complete (
 //    emm_sap.u.emm_reg.free_proc = true;
     emm_sap.u.emm_reg.u.attach.proc = attach_proc;
     rc = emm_sap_send (&emm_sap);
+
+
+    /*
+     * Check if the UE is in registered state.
+     */
+    if(emm_context && emm_context->_emm_fsm_state != EMM_REGISTERED){
+      OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - EMM Context for ueId " MME_UE_S1AP_ID_FMT " is still not in EMM_REGISTERED state although ATTACH_CNF has arrived. "
+          "Removing failed EMM context implicitly.. \n", ue_id);
+      emm_sap_t                               emm_sap = {0};
+      emm_sap.primitive = EMMCN_IMPLICIT_DETACH_UE;
+      emm_sap.u.emm_cn.u.emm_cn_implicit_detach.ue_id = ue_id;
+      emm_sap_send (&emm_sap);
+      OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+    }
+
   } else if (esm_sap.err != ESM_SAP_DISCARDED) {
     /*
      * Notify EMM that attach procedure failed
