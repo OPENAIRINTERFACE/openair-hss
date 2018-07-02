@@ -26,6 +26,11 @@ include_directories(${SRC_TOP_DIR}/nas)
 # sgw_ie_defs.h
 include_directories(${SRC_TOP_DIR}/sgw)
 
+# mme_ie_defs.h
+include_directories(${SRC_TOP_DIR}/mme)
+
+include_directories(${SRC_TOP_DIR}/nas/util)
+
 include_directories("${SRC_TOP_DIR}/s1ap/messages/asn1/${ASN1RELDIR}")
 include_directories("${SRC_TOP_DIR}/s1ap")
 include_directories("${SRC_TOP_DIR}/s11")

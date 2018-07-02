@@ -32,6 +32,7 @@ add_library(S6A
     s6a_common.c
     s6a_dict.c
     s6a_error.c
+    s6a_notify.c
     s6a_peer.c
     s6a_reset.c
     s6a_subscription_data.c
