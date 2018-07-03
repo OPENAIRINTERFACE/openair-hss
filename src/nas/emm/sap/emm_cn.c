@@ -232,9 +232,18 @@ static int _emm_cn_pdn_config_res (emm_cn_pdn_config_res_t * msg_pP)
    * Todo: multiple APN handover!
    */
   bstring apn = NULL;
-  if(emm_context->esm_ctx.esm_proc_data) /**< In case of S10 TAU the PDN Contexts should already be established. */
+  if(emm_context->esm_ctx.esm_proc_data){ /**< In case of S10 TAU the PDN Contexts should already be established. */
     apn = emm_context->esm_ctx.esm_proc_data->apn;
-  else{
+    if(!apn){
+      OAILOG_INFO(LOG_NAS_EMM, "EMMCN-SAP  - " "No APN set in the ESM proc data for UE Id " MME_UE_S1AP_ID_FMT ". Taking default APN. ...\n", msg_pP->ue_id);
+      /** Check if any PDN contexts exists (handover/idle tau). */
+      if(RB_EMPTY(&ue_context->pdn_contexts)){
+        /** Neither a PDN context exists nor an APN is set. */
+        apn_configuration_t *default_apn_config = &ue_context->apn_config_profile.apn_configuration[ue_context->apn_config_profile.context_identifier];
+        apn = blk2bstr(default_apn_config->service_selection, default_apn_config->service_selection_length);
+      }
+    }
+  }else{
     /** Check if any PDN contexts exists (handover/idle tau). */
     if(RB_EMPTY(&ue_context->pdn_contexts)){
       /** Neither a PDN context exists nor an APN is set. */

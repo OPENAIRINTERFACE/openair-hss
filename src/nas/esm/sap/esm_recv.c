@@ -285,7 +285,7 @@ esm_recv_pdn_connectivity_request (
      * * * * The MME waits for completion of the ESM information request
      * * * * procedure before proceeding with the PDN connectivity procedure.
      */
-    if (!mme_config.nas_config.disable_esm_information) {
+    if (!mme_config.nas_config.disable_esm_information && msg->esminformationtransferflag) {
       esm_proc_esm_information_request(emm_context, pti);
       OAILOG_FUNC_RETURN (LOG_NAS_ESM, esm_cause);
     }
