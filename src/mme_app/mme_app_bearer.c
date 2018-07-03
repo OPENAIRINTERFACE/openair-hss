@@ -1142,8 +1142,8 @@ mme_app_handle_create_sess_resp (
           &bcs_tbc,
           // todo: check for macro/home enb_id
           s10_handover_procedure->target_id.target_id.macro_enb_id.enb_id,
-          s10_handover_procedure->nas_s10_context.mm_eps_ctx->ue_nc.eea,
-          s10_handover_procedure->nas_s10_context.mm_eps_ctx->ue_nc.eia,
+          encryption_algorithm_capabilities,
+          integrity_algorithm_capabilities,
           s10_handover_procedure->nas_s10_context.mm_eps_ctx->nh,
           s10_handover_procedure->nas_s10_context.mm_eps_ctx->ncc,
           s10_handover_procedure->source_to_target_eutran_f_container.container_value);
@@ -2174,9 +2174,6 @@ mme_app_handle_s1ap_handover_required(
    * Update Security Parameters and send them to the target MME or target eNB.
    * This is same next hop procedure as in X2.
    */
-  /** Get the updated security parameters from EMM layer directly. Else new states and ITTI messages are necessary. */
-  uint16_t encryption_algorithm_capabilities;
-  uint16_t integrity_algorithm_capabilities;
   /** Check if the destination eNodeB is attached at the same or another MME. */
   if (mme_app_check_ta_local(&handover_required_pP->selected_tai.plmn, handover_required_pP->selected_tai.tac)) {
     /** Check if the eNB with the given eNB-ID is served. */
@@ -2902,8 +2899,8 @@ mme_app_handle_forward_relocation_request(
    mme_app_send_s1ap_handover_request(ue_context->mme_ue_s1ap_id,
        &bcs_tbc,
        enb_id,
-       s10_proc_mme_handover->nas_s10_context.mm_eps_ctx->ue_nc.eea,
-       s10_proc_mme_handover->nas_s10_context.mm_eps_ctx->ue_nc.eia,
+       encryption_algorithm_capabilities,
+       integrity_algorithm_capabilities,
        s10_proc_mme_handover->nas_s10_context.mm_eps_ctx->nh,
        s10_proc_mme_handover->nas_s10_context.mm_eps_ctx->ncc,
        s10_proc_mme_handover->source_to_target_eutran_f_container.container_value);
