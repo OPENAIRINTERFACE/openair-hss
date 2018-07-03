@@ -8,6 +8,7 @@ include_directories(${SRC_TOP_DIR}/oai_sgw/utils/hashtable)
 include_directories(${SRC_TOP_DIR}/oai_sgw/utils/msc)
 include_directories(${SRC_TOP_DIR}/oai_sgw/gtpv2-c/nwgtpv2c-0.11/include)
 include_directories(${SRC_TOP_DIR}/oai_sgw/gtpv2-c/nwgtpv2c-0.11/shared)
+include_directories(${SRC_TOP_DIR}/oai_sgw/gtpv2-c/gtpv2c_ie_formatter/shared/)
 include_directories(${SRC_TOP_DIR}/mme_app)
 include_directories(${SRC_TOP_DIR}/sgw)
 

@@ -35,7 +35,7 @@ extern                                  "C" {
 
   static nw_rc_t                            nwGtpv2cCreateSessionRequestIeIndication (
   uint8_t ieType,
-  uint8_t ieLength,
+  uint16_t ieLength,
   uint8_t ieInstance,
   uint8_t * ieValue,
   void *arg) {

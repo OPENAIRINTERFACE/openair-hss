@@ -49,6 +49,7 @@
 #include "s11_ie_formatter.h"
 #include "log.h"
 #include "s11_messages_types.h"
+#include "gtpv2c_ie_formatter.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -30,6 +30,10 @@
 
 #include "3gpp_23.003.h"
 #include "bstrlib.h"
+
+#include <stdint.h>
+#include <stdbool.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif

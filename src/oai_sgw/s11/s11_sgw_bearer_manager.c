@@ -48,6 +48,7 @@
 #include "s11_sgw_bearer_manager.h"
 #include "s11_ie_formatter.h"
 #include "log.h"
+#include "gtpv2c_ie_formatter.h"
 
 #ifdef __cplusplus
 extern "C" {
