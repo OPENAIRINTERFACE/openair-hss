@@ -217,12 +217,17 @@ function main()
   eval $sgi_nw_device
   is_interface_up ${!sgi_nw_dev_string}
   ret=$?;[[ $ret -ne 0 ]] && echo_error "Failed to find SGi interface ${!sgi_nw_dev_string} up" && return $ret
-  sgi_ip_cidr=$(get_interface_inet_global_cidr ${!sgi_nw_dev_string})
-  sgi_ip=$(echo $sgi_ip_cidr | cut -d '/' -f1)
-  echo_success "SGI interface ${!sgi_nw_dev_string} found up, inet $sgi_ip_cidr"
 
-  echo_info "Setting in $spgw_config_file PGW_IPV4_ADDRESS_FOR_SGI = $sgi_ip_cidr"
-  sed -i "s|.*PGW_IPV4_ADDRESS_FOR_SGI.*|        PGW_IPV4_ADDRESS_FOR_SGI = \"$sgi_ip_cidr\";|" $spgw_config_file
+  sgi_ip_cidr_string="PGW_IPV4_ADDRESS_FOR_SGI"
+  sgi_ip_cidr="`cat $spgw_config_file | cut -d "#" -f1 | grep $sgi_ip_cidr_string | tr -d " " | grep "="`"
+  eval $sgi_ip_cidr
+  #sgi_ip_cidr=$(get_interface_inet_global_cidr ${!sgi_nw_dev_string})
+  sgi_ip=$(echo $sgi_ip_cidr | cut -d '/' -f1)
+
+  echo_success "SGI interface ${!sgi_nw_dev_string} found up, inet ${!sgi_ip_cidr_string}"
+
+  #echo_info "Setting in $spgw_config_file PGW_IPV4_ADDRESS_FOR_SGI = $sgi_ip_cidr"
+  #sed -i "s|.*PGW_IPV4_ADDRESS_FOR_SGI.*|        PGW_IPV4_ADDRESS_FOR_SGI = \"$sgi_ip_cidr\";|" $spgw_config_file
 
   ##########################
   # GTPV1-U INTERFACE
@@ -295,8 +300,8 @@ function main()
     ret=$?;[[ $ret -ne 0 ]] && return $ret
     sleep 1
 
-    echo "ip addr add $sgi_ip dev $OVS_GTPU_BRIDGE_NAME"
-    $SUDO ip addr add $sgi_ip dev $OVS_GTPU_BRIDGE_NAME 
+    echo "ip addr add ${!sgi_ip_cidr_string} dev $OVS_GTPU_BRIDGE_NAME"
+    $SUDO ip addr add ${!sgi_ip_cidr_string} dev $OVS_GTPU_BRIDGE_NAME 
     ret=$?;[[ $ret -ne 0 ]] && return $ret
     
     $SUDO ovs-vsctl set-controller $OVS_GTPU_BRIDGE_NAME  tcp:$CTRL_IP:$CTRL_PORT
