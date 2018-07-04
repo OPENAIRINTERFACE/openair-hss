@@ -894,7 +894,7 @@ sgw_handle_delete_session_request (
   delete_session_resp_p = S11_DELETE_SESSION_RESPONSE(message_p);
   OAILOG_WARNING (LOG_SPGW_APP, "Delete session handler needs to be completed...\n");
 
-  if (delete_session_req_pP->indication_flags.oi) {
+  if (delete_session_req_pP->indication_flags.octets[0] & O5_OI_FLAG_BIT_POS) {
     OAILOG_DEBUG (LOG_SPGW_APP, "OI flag is set for this message indicating the request" "should be forwarded to P-GW entity\n");
   }
 

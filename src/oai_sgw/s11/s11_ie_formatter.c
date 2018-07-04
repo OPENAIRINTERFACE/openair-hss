@@ -1563,7 +1563,7 @@ gtpv2c_bearer_flags_ie_set (
   value = (bearer_flags->vb << 1) | bearer_flags->ppc;
   rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_BEARER_FLAGS, 1, 0, (uint8_t *) & value);
   DevAssert (NW_OK == rc);
-  return RETURNok;
+  return NW_OK;
 }
 
 //------------------------------------------------------------------------------
@@ -1578,42 +1578,16 @@ gtpv2c_indication_flags_ie_get (
   indication_flags_t                     *indication_flags = (indication_flags_t *) arg;
 
   DevAssert (indication_flags );
+  DevAssert (ieValue );
+  DevAssert (ieLength <= INDICATION_FLAGS_MAX_OCTETS);
 
-  if (2 <= ieLength) { // think about more than 3 later
-    indication_flags->daf   = (ieValue[0] >> DAF_FLAG_BIT_POS)   & 0x01;
-    indication_flags->dtf   = (ieValue[0] >> DTF_FLAG_BIT_POS)   & 0x01;
-    indication_flags->hi    = (ieValue[0] >> HI_FLAG_BIT_POS)    & 0x01;
-    indication_flags->dfi   = (ieValue[0] >> DFI_FLAG_BIT_POS)   & 0x01;
-    indication_flags->oi    = (ieValue[0] >> OI_FLAG_BIT_POS)    & 0x01;
-    indication_flags->isrsi = (ieValue[0] >> ISRSI_FLAG_BIT_POS) & 0x01;
-    indication_flags->israi = (ieValue[0] >> ISRAI_FLAG_BIT_POS) & 0x01;
-    indication_flags->sgwci = (ieValue[0] >> SGWCI_FLAG_BIT_POS) & 0x01;
-
-    indication_flags->sqci  = (ieValue[1] >> SQSI_FLAG_BIT_POS)  & 0x01;
-    indication_flags->uimsi = (ieValue[1] >> UIMSI_FLAG_BIT_POS) & 0x01;
-    indication_flags->cfsi  = (ieValue[1] >> CFSI_FLAG_BIT_POS)  & 0x01;
-    indication_flags->crsi  = (ieValue[1] >> CRSI_FLAG_BIT_POS)  & 0x01;
-    indication_flags->p     = (ieValue[1] >> P_FLAG_BIT_POS)     & 0x01;
-    indication_flags->pt    = (ieValue[1] >> PT_FLAG_BIT_POS)    & 0x01;
-    indication_flags->si    = (ieValue[1] >> SI_FLAG_BIT_POS)    & 0x01;
-    indication_flags->msv   = (ieValue[1] >> MSV_FLAG_BIT_POS)   & 0x01;
-
-    if (2 == ieLength) {
-      return NW_OK;
-    }
-    if (3 == ieLength) {
-      indication_flags->spare1 = 0;
-      indication_flags->spare2 = 0;
-      indication_flags->spare3 = 0;
-      indication_flags->s6af  = (ieValue[2] >> S6AF_FLAG_BIT_POS)  & 0x01;
-      indication_flags->s4af  = (ieValue[2] >> S4AF_FLAG_BIT_POS)  & 0x01;
-      indication_flags->mbmdt = (ieValue[2] >> MBMDT_FLAG_BIT_POS) & 0x01;
-      indication_flags->israu = (ieValue[2] >> ISRAU_FLAG_BIT_POS) & 0x01;
-      indication_flags->ccrsi = (ieValue[2] >> CRSI_FLAG_BIT_POS)  & 0x01;
-      return NW_OK;
-    }
+  if  (ieLength <= INDICATION_FLAGS_MAX_OCTETS) {
+    memcpy(indication_flags->octets, ieValue, ieLength);
+    indication_flags->num_octets = ieLength;
+    return NW_OK;
+  } else {
+    return NW_GTPV2C_IE_INCORRECT;
   }
-  return NW_GTPV2C_IE_INCORRECT;
 }
 
 //------------------------------------------------------------------------------
@@ -1623,37 +1597,15 @@ gtpv2c_indication_flags_ie_set (
   const indication_flags_t * indication_flags)
 {
   nw_rc_t                                   rc;
-  uint8_t                                 value[3];
+  uint8_t                                 value[indication_flags->num_octets];
+
+  DevAssert (indication_flags->num_octets <= INDICATION_FLAGS_MAX_OCTETS);
+  memcpy(value, indication_flags->octets, indication_flags->num_octets);
 
   DevAssert (msg );
-  DevAssert (indication_flags );
-  value[0] = (indication_flags->daf << DAF_FLAG_BIT_POS) |
-      (indication_flags->dtf   << DTF_FLAG_BIT_POS) |
-      (indication_flags->hi    << HI_FLAG_BIT_POS) |
-      (indication_flags->dfi   << DFI_FLAG_BIT_POS) |
-      (indication_flags->oi    << OI_FLAG_BIT_POS) |
-      (indication_flags->isrsi << ISRSI_FLAG_BIT_POS) |
-      (indication_flags->israi << ISRAI_FLAG_BIT_POS) |
-      (indication_flags->sgwci << SGWCI_FLAG_BIT_POS);
-
-  value[1] = (indication_flags->sqci << SQSI_FLAG_BIT_POS) |
-      (indication_flags->uimsi << UIMSI_FLAG_BIT_POS) |
-      (indication_flags->cfsi  << CFSI_FLAG_BIT_POS) |
-      (indication_flags->crsi  << CRSI_FLAG_BIT_POS) |
-      (indication_flags->p     << P_FLAG_BIT_POS) |
-      (indication_flags->pt    << PT_FLAG_BIT_POS) |
-      (indication_flags->si    << SI_FLAG_BIT_POS) |
-      (indication_flags->msv   << MSV_FLAG_BIT_POS);
-
-  value[2] = (indication_flags->s6af << S6AF_FLAG_BIT_POS) |
-      (indication_flags->s4af   << S4AF_FLAG_BIT_POS) |
-      (indication_flags->mbmdt  << MBMDT_FLAG_BIT_POS) |
-      (indication_flags->israu  << ISRAU_FLAG_BIT_POS) |
-      (indication_flags->ccrsi  << CCRSI_FLAG_BIT_POS);
-
-  rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_INDICATION, 3, 0, (uint8_t*)value);
+  rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_INDICATION, indication_flags->num_octets, 0, (uint8_t*)value);
   DevAssert (NW_OK == rc);
-  return RETURNok;
+  return NW_OK;
 }
 
 //------------------------------------------------------------------------------

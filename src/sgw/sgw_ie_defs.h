@@ -44,61 +44,89 @@ typedef uint32_t SequenceNumber_t;
 /* 3GPP TS 29.274 Figure 8.12 */
 
 typedef struct indication_flags_s {
-  uint8_t daf:1;
-  uint8_t dtf:1;
-  uint8_t hi:1;
-  uint8_t dfi:1;
-  uint8_t oi:1;
-  uint8_t isrsi:1;
-  uint8_t israi:1;
-  uint8_t sgwci:1;
+#define INDICATION_FLAGS_MAX_OCTETS 7
+  uint8_t octets[INDICATION_FLAGS_MAX_OCTETS];
+  uint8_t num_octets;
 
-  uint8_t sqci:1;
-  uint8_t uimsi:1;
-  uint8_t cfsi:1;
-  uint8_t crsi:1;
-  uint8_t p:1;
-  uint8_t pt:1;
-  uint8_t si:1;
-  uint8_t msv:1;
-
-  uint8_t spare1:1;
-  uint8_t spare2:1;
-  uint8_t spare3:1;
-  uint8_t s6af:1;
-  uint8_t s4af:1;
-  uint8_t mbmdt:1;
-  uint8_t israu:1;
-  uint8_t ccrsi:1;
 } indication_flags_t;
+
+/* Bit mask for octet 5 in indication IE */
+#define O5_DAF_FLAG_BIT_POS      7
+#define O5_DTF_FLAG_BIT_POS      6
+#define O5_HI_FLAG_BIT_POS       5
+#define O5_DFI_FLAG_BIT_POS      4
+#define O5_OI_FLAG_BIT_POS       3
+#define O5_ISRSI_FLAG_BIT_POS    2
+#define O5_ISRAI_FLAG_BIT_POS    1
+#define O5_SGWCI_FLAG_BIT_POS    0
+
+/* Bit mask for octet 6 in indication IE */
+#define O6_SQSI_FLAG_BIT_POS   7
+#define O6_UIMSI_FLAG_BIT_POS  6
+#define O6_CFSI_FLAG_BIT_POS   5
+#define O6_CRSI_FLAG_BIT_POS   4
+#define O6_P_FLAG_BIT_POS      3
+#define O6_PT_FLAG_BIT_POS     2
+#define O6_SI_FLAG_BIT_POS     1
+#define O6_MSV_FLAG_BIT_POS    0
 
 /* Bit mask for octet 7 in indication IE */
 // UPDATE RELEASE 10
-#define S6AF_FLAG_BIT_POS  4
-#define S4AF_FLAG_BIT_POS  3
-#define MBMDT_FLAG_BIT_POS 2
-#define ISRAU_FLAG_BIT_POS 1
-#define CCRSI_FLAG_BIT_POS 0
+#define O7_S6AF_FLAG_BIT_POS  4
+#define O7_S4AF_FLAG_BIT_POS  3
+#define O7_MBMDT_FLAG_BIT_POS 2
+#define O7_ISRAU_FLAG_BIT_POS 1
+#define O7_CCRSI_FLAG_BIT_POS 0
 
-/* Bit mask for octet 6 in indication IE */
-#define SQSI_FLAG_BIT_POS   7
-#define UIMSI_FLAG_BIT_POS  6
-#define CFSI_FLAG_BIT_POS   5
-#define CRSI_FLAG_BIT_POS   4
-#define P_FLAG_BIT_POS      3
-#define PT_FLAG_BIT_POS     2
-#define SI_FLAG_BIT_POS     1
-#define MSV_FLAG_BIT_POS    0
+/* Bit mask for octet 8 in indication IE */
+#define O7_RETLOC_FLAG_BIT_POS  7
+#define O7_PBIC_FLAG_BIT_POS  6
+#define O7_SRNI_FLAG_BIT_POS  5
+#define O7_S6AF_FLAG_BIT_POS  4
+#define O7_S4AF_FLAG_BIT_POS  3
+#define O7_MBMDT_FLAG_BIT_POS 2
+#define O7_ISRAU_FLAG_BIT_POS 1
+#define O7_CCRSI_FLAG_BIT_POS 0
 
-/* Bit mask for octet 5 in indication IE */
-#define DAF_FLAG_BIT_POS      7
-#define DTF_FLAG_BIT_POS      6
-#define HI_FLAG_BIT_POS       5
-#define DFI_FLAG_BIT_POS      4
-#define OI_FLAG_BIT_POS       3
-#define ISRSI_FLAG_BIT_POS    2
-#define ISRAI_FLAG_BIT_POS    1
-#define SGWCI_FLAG_BIT_POS    0
+// Octet 8
+#define O8_CPRAI_FLAG_BIT_POS 7
+#define O8_ARRL_FLAG_BIT_POS  6
+#define O8_PPOF_FLAG_BIT_POS  5
+#define O8_PPON_FLAG_BIT_POS  4
+#define O8_PPSI_FLAG_BIT_POS  3
+#define O8_CSFBI_FLAG_BIT_POS 2
+#define O8_CLII_FLAG_BIT_POS  1
+#define O8_CPSR_FLAG_BIT_POS  0
+
+// Octet 9
+#define O9_NSI_FLAG_BIT_POS  7
+#define O9_UASI_FLAG_BIT_POS 6
+#define O9_DTCI_FLAG_BIT_POS 5
+#define O9_BDWI_FLAG_BIT_POS 4
+#define O9_PSCI_FLAG_BIT_POS 3
+#define O9_PCRI_FLAG_BIT_POS 2
+#define O9_AOSI_FLAG_BIT_POS 1
+#define O9_AOPI_FLAG_BIT_POS 0
+
+// Octet 10
+#define O10_ROAAI_FLAG_BIT_POS   7
+#define O10_EPCOSI_FLAG_BIT_POS  6
+#define O10_CPOPCI_FLAG_BIT_POS  5
+#define O10_PMTSMI_FLAG_BIT_POS  4
+#define O10_S11TF_FLAG_BIT_POS   3
+#define O10_PNSI_FLAG_BIT_POS    2
+#define O10_UNACCSI_FLAG_BIT_POS 1
+#define O10_WPMSI_FLAG_BIT_POS   0
+
+// Octet 11
+#define O11_SPARE7_FLAG_BIT_POS  7
+#define O11_SPARE6_FLAG_BIT_POS  6
+#define O11_SPARE5_FLAG_BIT_POS  5
+#define O11_SPARE4_FLAG_BIT_POS  4
+#define O11_SPARE3_FLAG_BIT_POS  3
+#define O11_SPARE2_FLAG_BIT_POS  2
+#define O11_ENBCRSI_FLAG_BIT_POS 1
+#define O11_TSPCMI_FLAG_BIT_POS  0
 
 
 typedef struct {
