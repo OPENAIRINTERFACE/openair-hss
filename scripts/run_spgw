@@ -62,6 +62,7 @@ function help()
   echo_error "Options:"
   echo_error "Mandatory arguments to long options are mandatory for short options too."
   echo_error "  -c, --config-file     file_abs_path Config file to be used by spgw if you don't want to use the default one: $g_spgw_default_config_file"
+  echo_error "  -d, --daemon                        Run spgw as a daemon."
   echo_error "  -g, --gdb                           Run with GDB."
   echo_error "  -G, --gdb-cmd         cmd cmd_arg   Append this GDB cmd to GDB command file (ex1: break Attach.c:272, ex2: watch 0xffee0002)."
   echo_error "                                      All repetitions of this argument are valid."
@@ -97,6 +98,7 @@ PIDFILE=/var/run/$NAME.pid
 function main()
 {
   local -i run_gdb=0
+  local -i run_daemon=0
   local -i set_network_interfaces=0
   local    exe_arguments=" "
   local    spgw_config_file=$g_spgw_default_config_file
@@ -113,6 +115,10 @@ function main()
         spgw_config_file=$2
         echo "setting config file to: $spgw_config_file"
         shift 2;
+        ;;
+      -d | --daemon)
+        run_daemon=1
+        shift;
         ;;
       -g | --gdb)
         run_gdb=1
@@ -323,6 +329,11 @@ function main()
 
   exe_arguments="-c $spgw_config_file $exe_arguments"
 
+  if [ $run_daemon -eq 1 ]; then 
+    $SUDO daemon --name=upnf --stdout=/tmp/spgw_stdout.log --stderr=/tmp/spgw_stderr.log -X /usr/local/bin/spgw
+    return $?
+  fi
+  
   if [ $run_gdb -eq 0 ]; then 
     # trap keyboard interrupt (control-c)
     trap control_c SIGINT

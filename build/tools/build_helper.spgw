@@ -115,6 +115,7 @@ check_install_spgw_software() {
       bison \
       build-essential \
       cmake \
+      daemon \
       doxygen \
       flex \
       gdb \

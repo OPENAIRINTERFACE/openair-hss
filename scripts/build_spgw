@@ -187,6 +187,8 @@ function main()
   compilations spgw spgw $OPENAIRCN_DIR/build/spgw/build/spgw $verbose
   ret=$?;[[ $ret -ne 0 ]] && return $ret
 
+  # For daemon should not be group writable
+  $SUDO chmod 755 $OPENAIRCN_DIR/build/spgw/build/spgw
   $SUDO cp -upv $OPENAIRCN_DIR/build/spgw/build/spgw /usr/local/bin && echo_success "spgw installed"
   return 0
 }
