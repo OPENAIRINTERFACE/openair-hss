@@ -105,7 +105,8 @@ function main()
   local    sgi_nh
   local    sgi_mac_nh
   local    breakpoint_location=""
-  local -a gdb_args
+  local -a gdb_args1
+  local -a gdb_args2
   local -i gdb_index=0
 
   until [ -z "$1" ]
@@ -127,8 +128,9 @@ function main()
         ;;
       -G | --gdb-arg)
         run_gdb=1
-        gdb_args[$gdb_index]="$2 $3"
-        echo "Appending gdb args: ${gdb_args[$gdb_index]}"
+        gdb_args1[$gdb_index]="$2"
+        gdb_args2[$gdb_index]="$3"
+        echo "Appending gdb args: ${gdb_args1[$gdb_index]} ${gdb_args2[$gdb_index]}"
         gdb_index=$((gdb_index + 1))
         shift 3;
         ;;
@@ -335,30 +337,47 @@ function main()
   exe_arguments="-c $spgw_config_file $exe_arguments"
 
   if [ $run_daemon -eq 1 ]; then 
-    $SUDO daemon --name=upnf --stdout=/tmp/spgw_stdout.log --stderr=/tmp/spgw_stderr.log -X /usr/local/bin/spgw
-    return $?
-  fi
-  
-  if [ $run_gdb -eq 0 ]; then 
-    # trap keyboard interrupt (control-c)
-    trap control_c SIGINT
-    $SUDO spgw  `echo $exe_arguments` 2>&1 
+    $SUDO daemon --name=upnf --stdout=/tmp/spgwd_stdout.log --stderr=/tmp/spgwd_stderr.log --pidfile=/tmp/spgwd.pid -X /usr/local/bin/spgw
+    ret=$?
+    [[ $ret -ne 0 ]] && return $ret
+    if [ $run_gdb -ne 0 ]; then 
+      # trap keyboard interrupt (control-c) is done by gdb
+      $SUDO touch      .gdb_spgwd
+      $SUDO chmod 777  .gdb_spgwd
+      
+      $SUDO echo "set target-async on" > .gdb_spgwd
+      $SUDO echo "set pagination off" >> .gdb_spgwd
+      spgwd_pid=`pidof spgw`
+      $SUDO echo "attach $spgwd_pid"  >> .gdb_spgwd
+      for i in ${!gdb_args1[@]}; do
+        $SUDO echo "${gdb_args1[i]} ${gdb_args2[i]}" >> .gdb_spgwd
+      done
+      $SUDO echo "continue"    >> .gdb_spgwd
+      $SUDO cat .gdb_spgwd
+      $SUDO gdb -n -x .gdb_spgwd
+    fi
   else
-    # trap keyboard interrupt (control-c) is done by gdb
-    $SUDO touch      ~/.gdb_spgw
-    $SUDO chmod 777  ~/.gdb_spgw
-    $SUDO echo "file spgw" > ~/.gdb_spgw
-    $SUDO echo "set args $exe_arguments "        >> ~/.gdb_spgw
-    for i in ${gdb_args[@]}; do
-      $SUDO echo "$i"                            >> ~/.gdb_mme
-    done
-    $SUDO echo "run"                             >> ~/.gdb_spgw
-    $SUDO cat ~/.gdb_spgw
-    $SUDO gdb -n -x ~/.gdb_spgw
-    if [ $g_run_msc_gen -eq 1 ]; then 
-      #$SUDO do_msc_gen
-      cd $g_msc_dir
-      $SUDO $THIS_SCRIPT_PATH/msc_gen --profile EPC --dir $g_msc_dir --type png
+    if [ $run_gdb -eq 0 ]; then 
+      # trap keyboard interrupt (control-c)
+      trap control_c SIGINT
+      $SUDO spgw  `echo $exe_arguments` 2>&1 
+    else
+      # trap keyboard interrupt (control-c) is done by gdb
+      $SUDO touch      ~/.gdb_spgw
+      $SUDO chmod 777  ~/.gdb_spgw
+      $SUDO echo "file spgw" > ~/.gdb_spgw
+      $SUDO echo "set args $exe_arguments "        >> ~/.gdb_spgw
+      for i in ${!gdb_args1[@]}; do
+        $SUDO echo "${gdb_args1[i]} ${gdb_args2[i]}" >> .gdb_spgw
+      done
+      $SUDO echo "run"                             >> ~/.gdb_spgw
+      $SUDO cat ~/.gdb_spgw
+      $SUDO gdb -n -x ~/.gdb_spgw
+      if [ $g_run_msc_gen -eq 1 ]; then 
+        #$SUDO do_msc_gen
+        cd $g_msc_dir
+        $SUDO $THIS_SCRIPT_PATH/msc_gen --profile EPC --dir $g_msc_dir --type png
+      fi
     fi
   fi
   return $?
