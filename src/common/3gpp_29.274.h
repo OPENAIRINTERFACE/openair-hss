@@ -244,7 +244,10 @@ typedef struct bearer_context_to_be_created_s {
                                                 /// with GTP on S2b, a UE initiated Connectivity to Additional PDN with GTP on S2b and a Handover to Untrusted Non-
                                                 /// 3GPP IP Access with GTP on S2b.
   /* This parameter is received only if the QoS parameters have been modified */
-  bearer_qos_t  bearer_level_qos;    ///< Bearer QoS, Mandatory CSR
+  bearer_qos_t                      bearer_level_qos;    ///< Bearer QoS, Mandatory CSR
+  protocol_configuration_options_t  pco;///< This IE may be sent on the S5/S8 and S4/S11 interfaces
+                                    ///< if ePCO is not supported by the UE or the network. This bearer level IE takes precedence
+                                    ///< over the PCO IE in the message body if they both exist.
 } bearer_context_to_be_created_t;
 
 typedef struct bearer_contexts_to_be_created_s {
@@ -366,27 +369,6 @@ typedef struct mme_ue_eps_pdn_connections_s {
   pdn_connection_t pdn_connection[MSG_FORWARD_RELOCATION_REQUEST_MAX_PDN_CONNECTIONS];
 } mme_ue_eps_pdn_connections_t;
 //----------------------------
-
-
-//-------------------------------------
-// 7.2.3-2: Bearer Context within Create Bearer Request
-
-typedef struct bearer_context_within_create_bearer_request_s {
-  uint8_t      eps_bearer_id;       ///< EBI,  Mandatory CSR
-  traffic_flow_template_t      tft; ///< Bearer TFT, Optional CSR, This IE may be included on the S4/S11 and S5/S8 interfaces.
-  fteid_t      s1u_sgw_fteid;       ///< This IE shall be sent on the S11 interface if the S1-U interface is used.
-                                    ///< If SGW supports both IPv4 and IPv6, it shall send both an
-                                    ///< IPv4 address and an IPv6 address within the S1-U SGW F-TEID IE.
-  fteid_t      s5_s8_u_pgw_fteid;   ///< This IE shall be sent on the S4, S5/S8 and S11 interfaces for GTP-based S5/S8 interface. The MME/SGSN shall
-                                    ///< ignore the IE on S11/S4 for PMIP-based S5/S8 interface.
-  fteid_t      s12_sgw_fteid;       ///< This IE shall be sent on the S4 interface if the S12 interface is used. See NOTE 1.
-  fteid_t      s4_u_sgw_fteid;      ///< This IE shall be sent on the S4 interface if the S4-U interface is used. See NOTE 1.
-  fteid_t      s2b_u_pgw_fteid;     ///< This IE (for user plane) shall be sent on the S2b interface.
-  bearer_qos_t  bearer_level_qos;    ///<
-  protocol_configuration_options_t  pco;///< This IE may be sent on the S5/S8 and S4/S11 interfaces
-                                    ///< if ePCO is not supported by the UE or the network. This bearer level IE takes precedence
-                                    ///< over the PCO IE in the message body if they both exist.
-} bearer_context_within_create_bearer_request_t;
 
 //-------------------------------------
 // 7.2.4-2: Bearer Context within Create Bearer Response

@@ -260,7 +260,7 @@ typedef struct ue_security_capability_s {
 #define T3402_DEFAULT_VALUE          720
 #define T3410_DEFAULT_VALUE           15
 #define T3411_DEFAULT_VALUE           10
-#define T3412_DEFAULT_VALUE         3240
+#define T3412_DEFAULT_VALUE            5
 #define T3416_DEFAULT_VALUE           30
 #define T3417_DEFAULT_VALUE            5
 #define T3417_EXT_DEFAULT_VALUE       10

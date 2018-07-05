@@ -1550,30 +1550,13 @@ mme_app_handle_s11_create_bearer_req (
     OAILOG_DEBUG (LOG_MME_APP, "We didn't find this teid in list of UE: %" PRIX32 "\n", create_bearer_request_pP->teid);
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
-  // check if default bearer already created
-  ebi_t linked_eps_bearer_id = create_bearer_request_pP->linked_eps_bearer_id;
-  /** Check that the default bearer context is a session bearer context. */
-  bearer_context_t * linked_bc = NULL;
-  mme_app_get_session_bearer_context_from_all(ue_context, linked_eps_bearer_id, &linked_bc);
-  if (!linked_bc) {
-    MSC_LOG_RX_DISCARDED_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 CREATE_BEARERS_REQUEST ue id " MME_UE_S1AP_ID_FMT " local S11 teid " TEID_FMT " ",
-        ue_context->mme_ue_s1ap_id, create_bearer_request_pP->teid);
-    OAILOG_DEBUG (LOG_MME_APP, "We didn't find the linked bearer id %" PRIu8 " for UE: " MME_UE_S1AP_ID_FMT "\n",
-        linked_eps_bearer_id, ue_context->mme_ue_s1ap_id);
-    OAILOG_FUNC_OUT (LOG_MME_APP);
-  }
-  /** Get the PDN context. */
-  mme_app_get_pdn_context(ue_context, linked_bc->pdn_cx_id, linked_bc->ebi, NULL, &pdn_context);
-  DevAssert(pdn_context);
-
-  pdn_cid_t cid = linked_bc->pdn_cx_id;
-
-  MSC_LOG_RX_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 CREATE_BEARERS_REQUEST ue id " MME_UE_S1AP_ID_FMT " PDN id %u IMSI " IMSI_64_FMT " n ebi %u",
+  /** The validation of the request will be done in the ESM layer. */
+  MSC_LOG_RX_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 CREATE_BEARERS_REQUEST ueId " MME_UE_S1AP_ID_FMT " PDN id %u IMSI " IMSI_64_FMT " num bearer %u",
       ue_context->mme_ue_s1ap_id, cid, ue_context->imsi, create_bearer_request_pP->bearer_contexts.num_bearer_context);
 
-  /** Create an S11 procedure. */
-  mme_app_s11_proc_create_bearer_t* s11_proc_create_bearer = mme_app_create_s11_procedure_create_bearer(ue_context);
-  s11_proc_create_bearer->proc.s11_trxn  = (uintptr_t)create_bearer_request_pP->trxn;
+//  /** Create an S11 procedure. */
+//  mme_app_s11_proc_create_bearer_t* s11_proc_create_bearer = mme_app_create_s11_procedure_create_bearer(ue_context);
+//  s11_proc_create_bearer->proc.s11_trxn  = (uintptr_t)create_bearer_request_pP->trxn;
 
   /*
    * Let the ESM layer validate the request and build the pending bearer contexts.
@@ -1583,57 +1566,21 @@ mme_app_handle_s11_create_bearer_req (
   // forward request to NAS
   MessageDef  *message_p = itti_alloc_new_message (TASK_MME_APP, MME_APP_CREATE_DEDICATED_BEARER_REQ);
   AssertFatal (message_p , "itti_alloc_new_message Failed");
-  MME_APP_CREATE_DEDICATED_BEARER_REQ (message_p).ue_id          = ue_context->mme_ue_s1ap_id;
-  MME_APP_CREATE_DEDICATED_BEARER_REQ (message_p).cid            = cid;
-  MME_APP_CREATE_DEDICATED_BEARER_REQ (message_p).linked_ebi     = pdn_context->default_ebi;
-  /** Bearer will be allocated in the ESM layer. */
-  for (int i = 0; i < create_bearer_request_pP->bearer_contexts.num_bearer_context; i++) {
-    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    // TODO THINK OF BEARER AGGREGATING SEVERAL SDFs, 1 bearer <-> (QCI, ARP)
-    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    const bearer_context_within_create_bearer_request_t *msg_bc = &create_bearer_request_pP->bearer_contexts.bearer_contexts[i];
-//    bearer_context_t *  dedicated_bc = mme_app_create_bearer_context(ue_context, cid, msg_bc->eps_bearer_id, false);
 
-    /*
-     * Set the FTEIDs into the process as pending IEs.
-     * When Activate Bearer Context Response is arrived from the UE, we will look try to find the FTEID from the S1U teid.
-     */
+  itti_mme_app_create_dedicated_bearer_req_t *mme_app_create_bearer_req = &message_p->ittiMsg.mme_app_create_dedicated_bearer_req;
+  /** MME_APP Create Bearer Request. */
+  mme_app_create_bearer_req->ue_id         = ue_context->mme_ue_s1ap_id;
+  mme_app_create_bearer_req->linked_ebi    = create_bearer_request_pP->linked_eps_bearer_id;
+  /** Set it into the procedure, but also into the ITTI message. */
+//  memcpy((void*)&s11_proc_create_bearer->bcs_tbc ,           &create_bearer_request_pP->bearer_contexts, sizeof(bearer_contexts_to_be_created_t));
+//  memcpy((void*)&mme_app_create_bearer_req->bearer_contexts, &create_bearer_request_pP->bearer_contexts, sizeof(bearer_contexts_to_be_created_t));
 
-//    MME_APP_CREATE_DEDICATED_BEARER_REQ (message_p).bearer_qos[i]          = msg_bc->bearer_level_qos;
-    /** Allocate a new BearerFTEIDs structure and copy the FTEIDs into the procedure. */
-    struct fteid_set_s *fteid_set = calloc(1, sizeof(struct fteid_set_s));
-    DevAssert(fteid_set); // todo:
-    memcpy((void*)&fteid_set->s1u_fteid, (void*)&msg_bc->s1u_sgw_fteid, sizeof(fteid_t));
-    memcpy((void*)&fteid_set->s5_fteid, (void*)&msg_bc->s5_s8_u_pgw_fteid, sizeof(fteid_t));
-
-//    Assert(!RB_INSERT (BearerFteids, &s11_proc_create_bearer->fteid_set, fteid_set)); /**< Find the correct FTEID later by using the S1U FTEID as key.. */
-//    MME_APP_CREATE_DEDICATED_BEARER_REQ (message_p).s_gw_fteid_s1u[i]      = msg_bc->s1u_sgw_fteid;
-//    MME_APP_CREATE_DEDICATED_BEARER_REQ (message_p).p_gw_fteid_s5_s8_up[i] = msg_bc->s5_s8_u_pgw_fteid;
-    // Todo: we cannot store them in a map, because when we evaluate the response, EBI is our key, which is not set here. That's why, we need to forward it to ESM.
-
-    MME_APP_CREATE_DEDICATED_BEARER_REQ (message_p).fteid_set[i] = fteid_set;
-
-//    s11_proc_create_bearer->bearer_status[EBI_TO_INDEX(msg_bc->eps_bearer_id)] = S11_PROC_BEARER_PENDING;
-    s11_proc_create_bearer->bearer_status[i] = S11_PROC_BEARER_PENDING;
-
-//    dedicated_bc->bearer_state   |= BEARER_STATE_SGW_CREATED;
-//    dedicated_bc->bearer_state   |= BEARER_STATE_MME_CREATED;
-
-    if (msg_bc->tft.numberofpacketfilters) {
-      MME_APP_CREATE_DEDICATED_BEARER_REQ (message_p).tfts[i] = calloc(1, sizeof(traffic_flow_template_t));
-      copy_traffic_flow_template(MME_APP_CREATE_DEDICATED_BEARER_REQ (message_p).tfts[i], &msg_bc->tft);
-    }
-    if (msg_bc->pco.num_protocol_or_container_id) {
-      MME_APP_CREATE_DEDICATED_BEARER_REQ (message_p).pcos[i] = calloc(1, sizeof(protocol_configuration_options_t));
-      copy_protocol_configuration_options(MME_APP_CREATE_DEDICATED_BEARER_REQ (message_p).pcos[i], &msg_bc->pco);
-    }
-
-    /** Update the number of bearers. */
-    s11_proc_create_bearer->num_bearers++;
-    MME_APP_CREATE_DEDICATED_BEARER_REQ (message_p).num_bearers++;
-  }
-  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 MME_APP_CREATE_DEDICATED_BEARER_REQ mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " qci %u cid %u",
-      MME_APP_CREATE_DEDICATED_BEARER_REQ (message_p).ue_id, msg_bc->bearer_level_qos.qci, cid);
+  //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  // TODO THINK OF BEARER AGGREGATING SEVERAL SDFs, 1 bearer <-> (QCI, ARP) (bearer context)
+  //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  /** No need to set bearer states, we won't establish the bearers yet. */
+  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 MME_APP_CREATE_DEDICATED_BEARER_REQ mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ",
+      mme_app_create_bearer_req->ue_id);
   itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
@@ -1827,7 +1774,7 @@ void mme_app_handle_create_dedicated_bearer_rsp (itti_mme_app_create_dedicated_b
   if (s11_proc_create_bearer) {
     ebi_t ebi = create_dedicated_bearer_rsp->ebi;
     s11_proc_create_bearer->num_status_received++;
-    s11_proc_create_bearer->bearer_status[EBI_TO_INDEX(ebi)] = S11_PROC_BEARER_SUCCESS;
+//    s11_proc_create_bearer->bearer_status[EBI_TO_INDEX(ebi)] = S11_PROC_BEARER_SUCCESS;
     // if received all bearers creation results
     if (s11_proc_create_bearer->num_status_received == s11_proc_create_bearer->num_bearers) { /**< If all NAS responses have arrived. Additionally check if the lists are filled. */
       if(s11_proc_create_bearer->bearer_contexts_failed || s11_proc_create_bearer->bearer_contexts_success){
@@ -1848,45 +1795,45 @@ void mme_app_handle_create_dedicated_bearer_rsp (itti_mme_app_create_dedicated_b
 void mme_app_handle_create_dedicated_bearer_rej (itti_mme_app_create_dedicated_bearer_rej_t   * const create_dedicated_bearer_rej)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
-  struct ue_context_s                 *ue_context = NULL;
-  /** Get the first PDN Context. */
-  pdn_context_t * pdn_context = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
-  DevAssert(pdn_context);
-
-  ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, create_dedicated_bearer_rej->ue_id);
-
-  if (ue_context == NULL) {
-    OAILOG_DEBUG (LOG_MME_APP, "We didn't find this mme_ue_s1ap_id in list of UE: " MME_UE_S1AP_ID_FMT "\n", create_dedicated_bearer_rej->ue_id);
-    OAILOG_FUNC_OUT (LOG_MME_APP);
-  }
-
-  /*
-   * TS 23.401: 5.4.1: The MME shall be prepared to receive this message either before or after the Session Management Response message (sent in step 9).
-   *
-   * The itti message will be sent directly by MME APP or by ESM layer, depending on the order of the messages.
-   *
-   * So we check the state of the bearers.
-   * The indication that S11 Create Bearer Response should be sent to the SAE-GW, should be sent by ESM/NAS layer.
-   */
-  mme_app_s11_proc_create_bearer_t *s11_proc_create_bearer = mme_app_get_s11_procedure_create_bearer(ue_context);
-
-  if (s11_proc_create_bearer) {
-    ebi_t ebi = create_dedicated_bearer_rej->ebi;
-    s11_proc_create_bearer->num_status_received++;
-    s11_proc_create_bearer->bearer_status[EBI_TO_INDEX(ebi)] = S11_PROC_BEARER_FAILED;
-    // if received all bearers creation results
-    if (s11_proc_create_bearer->num_status_received == s11_proc_create_bearer->num_bearers) { /**< If all NAS responses have arrived. Additionally check if the lists are filled. */
-      if(s11_proc_create_bearer->bearer_contexts_failed || s11_proc_create_bearer->bearer_contexts_success){
-        //        mme_app_s11_procedure_create_bearer_send_response(ue_context, s11_proc_create);
-        mme_app_send_s11_create_bearer_rsp(ue_context, pdn_context->s_gw_teid_s11_s4, s11_proc_create_bearer->bearer_contexts_success, s11_proc_create_bearer->bearer_contexts_failed);
-        mme_app_delete_s11_procedure_create_bearer(ue_context);
-      }else{
-        OAILOG_WARNING(LOG_MME_APP, "No response from S1AP received yet for UE: " MME_UE_S1AP_ID_FMT "\n", create_dedicated_bearer_rej->ue_id);
-      }
-    }
-  }else{
-    /** No S11 CBReq procedure exists. We already might have dealt with it. */
-  }
+//  struct ue_context_s                 *ue_context = NULL;
+//  /** Get the first PDN Context. */
+//  pdn_context_t * pdn_context = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
+//  DevAssert(pdn_context);
+//
+//  ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, create_dedicated_bearer_rej->ue_id);
+//
+//  if (ue_context == NULL) {
+//    OAILOG_DEBUG (LOG_MME_APP, "We didn't find this mme_ue_s1ap_id in list of UE: " MME_UE_S1AP_ID_FMT "\n", create_dedicated_bearer_rej->ue_id);
+//    OAILOG_FUNC_OUT (LOG_MME_APP);
+//  }
+//
+//  /*
+//   * TS 23.401: 5.4.1: The MME shall be prepared to receive this message either before or after the Session Management Response message (sent in step 9).
+//   *
+//   * The itti message will be sent directly by MME APP or by ESM layer, depending on the order of the messages.
+//   *
+//   * So we check the state of the bearers.
+//   * The indication that S11 Create Bearer Response should be sent to the SAE-GW, should be sent by ESM/NAS layer.
+//   */
+//  mme_app_s11_proc_create_bearer_t *s11_proc_create_bearer = mme_app_get_s11_procedure_create_bearer(ue_context);
+//
+//  if (s11_proc_create_bearer) {
+//    ebi_t ebi = create_dedicated_bearer_rej->ebi;
+//    s11_proc_create_bearer->num_status_received++;
+//    s11_proc_create_bearer->bearer_status[EBI_TO_INDEX(ebi)] = S11_PROC_BEARER_FAILED;
+//    // if received all bearers creation results
+//    if (s11_proc_create_bearer->num_status_received == s11_proc_create_bearer->num_bearers) { /**< If all NAS responses have arrived. Additionally check if the lists are filled. */
+//      if(s11_proc_create_bearer->bearer_contexts_failed || s11_proc_create_bearer->bearer_contexts_success){
+//        //        mme_app_s11_procedure_create_bearer_send_response(ue_context, s11_proc_create);
+//        mme_app_send_s11_create_bearer_rsp(ue_context, pdn_context->s_gw_teid_s11_s4, s11_proc_create_bearer->bearer_contexts_success, s11_proc_create_bearer->bearer_contexts_failed);
+//        mme_app_delete_s11_procedure_create_bearer(ue_context);
+//      }else{
+//        OAILOG_WARNING(LOG_MME_APP, "No response from S1AP received yet for UE: " MME_UE_S1AP_ID_FMT "\n", create_dedicated_bearer_rej->ue_id);
+//      }
+//    }
+//  }else{
+//    /** No S11 CBReq procedure exists. We already might have dealt with it. */
+//  }
 
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
@@ -2650,10 +2597,6 @@ mme_app_handle_forward_relocation_request(
          forward_relocation_request_pP->s10_source_mme_teid.ipv4_address, forward_relocation_request_pP->trxn, RELOCATION_FAILURE);
      OAILOG_FUNC_OUT (LOG_MME_APP);
  }
-
- if(enb_id == 256){
-   OAILOG_DEBUG (LOG_MME_APP, "Entered eNB-id 256!  \n");
- }
  /** Check the target-ENB is reachable. */
  if (mme_app_check_ta_local(&target_tai.plmn, forward_relocation_request_pP->target_identification.target_id.macro_enb_id.tac)) {
    /** The target PLMN and TAC are served by this MME. */
@@ -2911,6 +2854,7 @@ mme_app_handle_forward_relocation_request(
  }
  ue_context->imsi_auth = IMSI_AUTHENTICATED;
  OAILOG_INFO (LOG_MME_APP, "Successfully created and initialized an S10 Inter-MME handover procedure for mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
+
  OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 

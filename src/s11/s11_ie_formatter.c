@@ -522,11 +522,11 @@ gtpv2c_bearer_context_to_be_created_within_create_bearer_request_ie_get (
   uint8_t * ieValue,
   void *arg)
 {
-  bearer_contexts_within_create_bearer_request_t         *bearer_contexts = (bearer_contexts_within_create_bearer_request_t *) arg;
+  bearer_contexts_to_be_created_t          *bearer_contexts = (bearer_contexts_to_be_created_t *) arg;
   DevAssert (bearer_contexts );
   DevAssert (0 <= bearer_contexts->num_bearer_context);
   DevAssert (MSG_CREATE_BEARER_REQUEST_MAX_BEARER_CONTEXTS >= bearer_contexts->num_bearer_context);
-  bearer_context_within_create_bearer_request_t          *bearer_context  = &bearer_contexts->bearer_contexts[bearer_contexts->num_bearer_context];
+  bearer_context_to_be_created_t         *bearer_context  = &bearer_contexts->bearer_contexts[bearer_contexts->num_bearer_context];
   uint8_t                                 read = 0;
   nw_rc_t                                   rc;
 
@@ -564,13 +564,13 @@ gtpv2c_bearer_context_to_be_created_within_create_bearer_request_ie_get (
           rc = gtpv2c_fteid_ie_get (ie_p->t, ntohs (ie_p->l), ie_p->i, &ieValue[read + sizeof (nw_gtpv2c_ie_tlv_t)], &bearer_context->s5_s8_u_pgw_fteid);
           break;
         case 2:
-          rc = gtpv2c_fteid_ie_get (ie_p->t, ntohs (ie_p->l), ie_p->i, &ieValue[read + sizeof (nw_gtpv2c_ie_tlv_t)], &bearer_context->s12_sgw_fteid);
+          rc = gtpv2c_fteid_ie_get (ie_p->t, ntohs (ie_p->l), ie_p->i, &ieValue[read + sizeof (nw_gtpv2c_ie_tlv_t)], &bearer_context->s12_rnc_fteid);
           break;
         case 3:
-          rc = gtpv2c_fteid_ie_get (ie_p->t, ntohs (ie_p->l), ie_p->i, &ieValue[read + sizeof (nw_gtpv2c_ie_tlv_t)], &bearer_context->s4_u_sgw_fteid);
+          rc = gtpv2c_fteid_ie_get (ie_p->t, ntohs (ie_p->l), ie_p->i, &ieValue[read + sizeof (nw_gtpv2c_ie_tlv_t)], &bearer_context->s4u_sgsn_fteid);
           break;
         case 4:
-          rc = gtpv2c_fteid_ie_get (ie_p->t, ntohs (ie_p->l), ie_p->i, &ieValue[read + sizeof (nw_gtpv2c_ie_tlv_t)], &bearer_context->s2b_u_pgw_fteid);
+          rc = gtpv2c_fteid_ie_get (ie_p->t, ntohs (ie_p->l), ie_p->i, &ieValue[read + sizeof (nw_gtpv2c_ie_tlv_t)], &bearer_context->s2b_u_epdg_fteid);
           break;
         default:
           OAILOG_ERROR (LOG_S11, "Received unexpected IE %u instance %u\n", ie_p->t, ie_p->i);
@@ -595,7 +595,7 @@ gtpv2c_bearer_context_to_be_created_within_create_bearer_request_ie_get (
 int
 gtpv2c_bearer_context_to_be_created_within_create_bearer_request_ie_set (
   nw_gtpv2c_msg_handle_t * msg,
-  const bearer_context_within_create_bearer_request_t * bearer_context)
+  const bearer_context_to_be_created_t  * bearer_context)
 {
   nw_rc_t                                   rc;
 
@@ -616,14 +616,14 @@ gtpv2c_bearer_context_to_be_created_within_create_bearer_request_ie_set (
   if (bearer_context->s5_s8_u_pgw_fteid.teid) {
     gtpv2c_fteid_ie_set (msg, &bearer_context->s5_s8_u_pgw_fteid, 1);
   }
-  if (bearer_context->s12_sgw_fteid.teid) {
-    gtpv2c_fteid_ie_set (msg, &bearer_context->s12_sgw_fteid, 2);
+  if (bearer_context->s12_rnc_fteid.teid) {
+    gtpv2c_fteid_ie_set (msg, &bearer_context->s12_rnc_fteid, 2);
   }
-  if (bearer_context->s4_u_sgw_fteid.teid) {
-    gtpv2c_fteid_ie_set (msg, &bearer_context->s4_u_sgw_fteid, 3);
+  if (bearer_context->s4u_sgsn_fteid.teid) {
+    gtpv2c_fteid_ie_set (msg, &bearer_context->s4u_sgsn_fteid, 3);
   }
-  if (bearer_context->s2b_u_pgw_fteid.teid) {
-    gtpv2c_fteid_ie_set (msg, &bearer_context->s2b_u_pgw_fteid, 4);
+  if (bearer_context->s2b_u_epdg_fteid.teid) {
+    gtpv2c_fteid_ie_set (msg, &bearer_context->s2b_u_epdg_fteid, 4);
   }
   gtpv2c_bearer_qos_ie_set(msg, &bearer_context->bearer_level_qos);
   gtpv2c_tft_ie_set(msg, &bearer_context->tft);

@@ -534,7 +534,7 @@ typedef struct itti_s11_create_bearer_request_s {
 
   protocol_configuration_options_t pco;///< O: This IE may be sent on the S5/S8 and S4/S11 interfaces
 
-  bearer_contexts_within_create_bearer_request_t bearer_contexts;    ///< M: Several IEs with this type and instance values shall be
+  bearer_contexts_to_be_created_t *bearer_contexts;    ///< M: Several IEs with this type and instance values shall be
   ///< included as necessary to represent a list of Bearers.
 
   FQ_CSID_t                  pgw_fq_csid;       ///< C: This IE shall be included by MME on S11 and shall be

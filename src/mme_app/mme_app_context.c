@@ -680,15 +680,21 @@ mme_insert_ue_context (
 
 
     // filled ENB UE S1AP ID
-    h_rc = hashtable_ts_is_key_exists (mme_ue_context_p->enb_ue_s1ap_id_ue_context_htbl, (const hash_key_t)ue_context->enb_s1ap_id_key);
-    if (HASH_TABLE_OK == h_rc) {
-      OAILOG_DEBUG (LOG_MME_APP, "This ue context %p already exists enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT "\n",
+    /** Check that the eNB_S1AP_ID_KEY exists. */
+    if(ue_context->enb_s1ap_id_key != INVALID_ENB_UE_S1AP_ID_KEY){
+      h_rc = hashtable_ts_is_key_exists (mme_ue_context_p->enb_ue_s1ap_id_ue_context_htbl, (const hash_key_t)ue_context->enb_s1ap_id_key);
+      if (HASH_TABLE_OK == h_rc) {
+        OAILOG_DEBUG (LOG_MME_APP, "This ue context %p already exists enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT "\n",
+            ue_context, ue_context->enb_ue_s1ap_id);
+        OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+      }
+      h_rc = hashtable_ts_insert (mme_ue_context_p->enb_ue_s1ap_id_ue_context_htbl,
+                                 (const hash_key_t)ue_context->enb_s1ap_id_key,
+                                  (void *)((uintptr_t)ue_context->mme_ue_s1ap_id));
+    }else{
+      OAILOG_DEBUG (LOG_MME_APP, "The received enb_ue_s1ap_id_key is invalid " ENB_UE_S1AP_ID_FMT ". Skipping. \n",
           ue_context, ue_context->enb_ue_s1ap_id);
-      OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
     }
-    h_rc = hashtable_ts_insert (mme_ue_context_p->enb_ue_s1ap_id_ue_context_htbl,
-                               (const hash_key_t)ue_context->enb_s1ap_id_key,
-                                (void *)((uintptr_t)ue_context->mme_ue_s1ap_id));
 
     if (HASH_TABLE_OK != h_rc) {
       OAILOG_DEBUG (LOG_MME_APP, "Error could not register this ue context %p enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT " ue_id 0x%x\n",

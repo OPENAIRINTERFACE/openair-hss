@@ -283,6 +283,8 @@ void *mme_app_thread (void *args)
 
       /** S10 Forward Relocation Messages. */
       case S10_FORWARD_RELOCATION_REQUEST:{
+
+
           mme_app_handle_forward_relocation_request(
               &S10_FORWARD_RELOCATION_REQUEST(received_message_p)
               );
