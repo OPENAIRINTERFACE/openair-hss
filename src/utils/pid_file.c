@@ -75,7 +75,7 @@ int lockfile(int fd, int lock_type)
 //------------------------------------------------------------------------------
 bool is_pid_file_lock_success(char const *pid_file_name)
 {
-  char       pid_dec[32] = {0};
+  char       pid_dec[64] = {0};
 
   g_fd_pid_file = open(pid_file_name,
                        O_RDWR | O_CREAT,
@@ -97,7 +97,7 @@ bool is_pid_file_lock_success(char const *pid_file_name)
   ftruncate(g_fd_pid_file, 0);
   // write PID in file
   g_pid = getpid();
-  snprintf(pid_dec, 64 /* should be big enough */, "%ld", (long)g_pid);
+  snprintf(pid_dec, sizeof(pid_dec), "%ld", (long)g_pid);
   write(g_fd_pid_file, pid_dec, strlen(pid_dec));
   return true;
 }
