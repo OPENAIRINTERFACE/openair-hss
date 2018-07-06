@@ -464,47 +464,6 @@ s11_sgw_handle_delete_session_response (
   return RETURNok;
 }
 
-//------------------------------------------------------------------------------
-int
-s11_sgw_handle_downlink_data_notification (
-  nw_gtpv2c_stack_handle_t * stack_p,
-  itti_s11_downlink_data_notification_t * downlink_data_notification_p)
-{
-  nw_rc_t                                   rc;
-  nw_gtpv2c_ulp_api_t                       ulp_req;
-
-  OAILOG_DEBUG (LOG_S11, "Received S11_DOWNLINK_DATA_NOTIFICATION\n");
-  DevAssert (downlink_data_notification_p );
-  DevAssert (stack_p );
-  /**
-   * Create a tunnel for the GTPv2-C stack
-   */
-  memset (&ulp_req, 0, sizeof (nw_gtpv2c_ulp_api_t));
-  ulp_req.u_api_info.initialReqInfo.teidLocal = downlink_data_notification_p->local_teid;
-  ulp_req.apiType = NW_GTPV2C_ULP_API_INITIAL_REQ; /**< Sending Side. */
-  ulp_req.u_api_info.initialReqInfo.peerIp     = downlink_data_notification_p->peer_ip;
-  hashtable_rc_t hash_rc = hashtable_ts_get(s11_sgw_teid_2_gtv2c_teid_handle,
-      (hash_key_t) ulp_req.u_api_info.initialReqInfo.teidLocal, (void **)(uintptr_t)&ulp_req.u_api_info.initialReqInfo.hTunnel);
-  if (HASH_TABLE_OK != hash_rc) {
-    OAILOG_WARNING (LOG_S11, "Could not get GTPv2-C hTunnel for local TEID %X on S11 SGW interface. \n", ulp_req.u_api_info.initialReqInfo.teidLocal);
-    return RETURNerror;
-  }
-  rc = nwGtpv2cMsgNew (*stack_p, true, NW_GTP_DOWNLINK_DATA_NOTIFICATION, 0, 0, &(ulp_req.hMsg));
-  DevAssert (NW_OK == rc);
-  /*
-   * Set the remote TEID
-   */
-  rc = nwGtpv2cMsgSetTeid (ulp_req.hMsg, downlink_data_notification_p->teid);
-  DevAssert (NW_OK == rc);
-
-
-
-  /** Send the message. */
-  rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
-  DevAssert (NW_OK == rc);
-  return RETURNok;
-}
-
 
 #ifdef __cplusplus
 }

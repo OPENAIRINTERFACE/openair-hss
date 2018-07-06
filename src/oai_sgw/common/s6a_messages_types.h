@@ -89,7 +89,7 @@ typedef struct s6a_auth_info_req_s {
   /* AUTS to provide to AUC.
    * Only present and interpreted if re_synchronization == 1.
    */
-  uint8_t resync_param[RAND_LENGTH_OCTETS + AUTS_LENGTH];
+  uint8_t auts[RESYNC_PARAM_LENGTH];
 } s6a_auth_info_req_t;
 
 typedef struct s6a_auth_info_ans_s {
@@ -101,6 +101,34 @@ typedef struct s6a_auth_info_ans_s {
   /* Authentication info containing the vector(s) */
   authentication_info_t auth_info;
 } s6a_auth_info_ans_t;
+
+typedef struct s6a_cancel_location_req_s {
+  char       imsi[IMSI_BCD_DIGITS_MAX + 1]; // username
+  uint8_t    imsi_length;               // username
+
+  uint32_t   clr_flags;               // clr flags
+
+  cancellation_type_t cancellation_type;
+} s6a_cancel_location_req_t;
+
+typedef struct s6a_reset_req_s {
+// todo: maybe username?
+} s6a_reset_req_t;
+
+typedef struct s6a_notify_req_s {
+  #define  SINGLE_REGITRATION_INDICATION   (0x1)
+  unsigned single_registration_indiction:1;
+
+  char    imsi[IMSI_BCD_DIGITS_MAX + 1];
+  uint8_t imsi_length;
+  plmn_t  visited_plmn;
+
+} s6a_notify_req_t;
+
+typedef struct s6a_notify_ans_s {
+  s6a_result_t result;
+
+} s6a_notify_ans_t;
 
 #ifdef __cplusplus
 }

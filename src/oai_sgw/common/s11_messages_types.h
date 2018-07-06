@@ -29,7 +29,7 @@
 #ifndef FILE_S11_MESSAGES_TYPES_SEEN
 #define FILE_S11_MESSAGES_TYPES_SEEN
 
-#include "../sgw/sgw_ie_defs.h"
+#include "3gpp_29.274.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -537,7 +537,7 @@ typedef struct itti_s11_create_bearer_request_s {
 
   protocol_configuration_options_t pco;///< O: This IE may be sent on the S5/S8 and S4/S11 interfaces
 
-  bearer_contexts_within_create_bearer_request_t bearer_contexts;    ///< M: Several IEs with this type and instance values shall be
+  bearer_contexts_to_be_created_t bearer_contexts;    ///< M: Several IEs with this type and instance values shall be
   ///< included as necessary to represent a list of Bearers.
 
   FQ_CSID_t                  pgw_fq_csid;       ///< C: This IE shall be included by MME on S11 and shall be
@@ -977,6 +977,7 @@ typedef struct itti_s11_delete_session_request_s {
   teid_t      teid;                   ///< Tunnel Endpoint Identifier
   ebi_t       lbi;                    ///< Linked EPS Bearer ID
   fteid_t     sender_fteid_for_cp;    ///< Sender F-TEID for control plane
+  bool        noDelete;
 
   /* Operation Indication: This flag shall be set over S4/S11 interface
    * if the SGW needs to forward the Delete Session Request message to
@@ -1152,6 +1153,7 @@ typedef struct itti_s11_downlink_data_notification_s {
  */
 typedef struct itti_s11_downlink_data_notification_acknowledge_s {
   teid_t          teid;                   ///< Tunnel Endpoint Identifier
+  teid_t          local_teid;                   ///< Tunnel Endpoint Identifier
   gtpv2c_cause_t  cause;
   // Recovery           ///< optional This IE shall be included if contacting the peer for the first time
   // Private Extension  ///< optional

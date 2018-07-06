@@ -39,8 +39,8 @@
 extern "C" {
 #endif
 
-#define NAS_UL_DATA_IND(mSGpTR)                     (mSGpTR)->ittiMsg.nas_ul_data_ind
-#define NAS_DL_DATA_REQ(mSGpTR)                     (mSGpTR)->ittiMsg.nas_dl_data_req
+#define NAS_UPLINK_DATA_IND(mSGpTR)                 (mSGpTR)->ittiMsg.nas_ul_data_ind
+#define NAS_DOWNLINK_DATA_REQ(mSGpTR)               (mSGpTR)->ittiMsg.nas_dl_data_req
 #define NAS_DL_DATA_CNF(mSGpTR)                     (mSGpTR)->ittiMsg.nas_dl_data_cnf
 #define NAS_DL_DATA_REJ(mSGpTR)                     (mSGpTR)->ittiMsg.nas_dl_data_rej
 #define NAS_PDN_CONFIG_REQ(mSGpTR)                  (mSGpTR)->ittiMsg.nas_pdn_config_req
@@ -55,20 +55,43 @@ extern "C" {
 #define NAS_AUTHENTICATION_REQ(mSGpTR)              (mSGpTR)->ittiMsg.nas_auth_req
 #define NAS_AUTHENTICATION_PARAM_REQ(mSGpTR)        (mSGpTR)->ittiMsg.nas_auth_param_req
 #define NAS_DETACH_REQ(mSGpTR)                      (mSGpTR)->ittiMsg.nas_detach_req
-#define NAS_ERAB_SETUP_REQ(mSGpTR)                  (mSGpTR)->ittiMsg.itti_erab_setup_req
+#define NAS_ERAB_SETUP_REQ(mSGpTR)                  (mSGpTR)->ittiMsg.nas_erab_setup_req
+#define NAS_ERAB_RELEASE_REQ(mSGpTR)                (mSGpTR)->ittiMsg.nas_erab_release_req
 #define NAS_SIGNALLING_CONNECTION_REL_IND(mSGpTR)  (mSGpTR)->ittiMsg.nas_signalling_connection_rel_ind
 
+// todo: context req_res..
+// todo:
+#define NAS_IMPLICIT_DETACH_UE_IND(mSGpTR)          (mSGpTR)->ittiMsg.nas_implicit_detach_ue_ind
 
+/** Add PDN Disconnect request. */
+#define NAS_PDN_DISCONNECT_REQ(mSGpTR)              (mSGpTR)->ittiMsg.nas_pdn_disconnect_req
+#define NAS_PDN_DISCONNECT_RSP(mSGpTR)              (mSGpTR)->ittiMsg.nas_pdn_disconnect_rsp
 
+#define NAS_CONTEXT_REQ(mSGpTR)                  (mSGpTR)->ittiMsg.nas_context_req
+#define NAS_CONTEXT_RES(mSGpTR)                  (mSGpTR)->ittiMsg.nas_context_res
+#define NAS_CONTEXT_FAIL(mSGpTR)                 (mSGpTR)->ittiMsg.nas_context_fail
+
+typedef enum pdn_conn_rsp_cause_e {
+  CAUSE_OK = 16,
+  CAUSE_CONTEXT_NOT_FOUND = 64,
+  CAUSE_INVALID_MESSAGE_FORMAT = 65,
+  CAUSE_SERVICE_NOT_SUPPORTED = 68,
+  CAUSE_SYSTEM_FAILURE = 72,
+  CAUSE_NO_RESOURCES_AVAILABLE = 73,
+  CAUSE_ALL_DYNAMIC_ADDRESSES_OCCUPIED = 84
+} pdn_conn_rsp_cause_t;
 
 typedef struct itti_nas_pdn_connectivity_req_s {
   proc_tid_t             pti;   // nas ref  Identity of the procedure transaction executed to activate the PDN connection entry
   mme_ue_s1ap_id_t       ue_id; // nas ref
-  char                   imsi[16];
-  uint8_t                imsi_length;
+//  char                   imsi[16];
+//  uint8_t                imsi_length;
+  imsi64_t               imsi;
+  imsi_t                 _imsi;
   bearer_qos_t           bearer_qos;
   protocol_configuration_options_t pco;
   bstring                apn;
+  ebi_t                  default_ebi;
   pdn_cid_t              pdn_cid;
   bstring                pdn_addr;
   int                    pdn_type;
@@ -107,16 +130,13 @@ typedef struct itti_nas_pdn_connectivity_rsp_s {
   fteid_t                  sgw_s1u_fteid;
 } itti_nas_pdn_connectivity_rsp_t;
 
-
 typedef struct itti_nas_pdn_connectivity_fail_s {
-  mme_ue_s1ap_id_t        ue_id; 
-  int                     pti;  
-  pdn_conn_rsp_cause_t    cause;  
+  mme_ue_s1ap_id_t        ue_id;
+  int                     pti;
+  pdn_conn_rsp_cause_t    cause;
 } itti_nas_pdn_connectivity_fail_t;
 
-
 typedef struct itti_nas_pdn_config_req_s {
-  proc_tid_t             pti;   // nas ref  Identity of the procedure transaction executed to activate the PDN connection entry
   mme_ue_s1ap_id_t       ue_id; // nas ref
   char                   imsi[16];
   uint8_t                imsi_length;
@@ -128,6 +148,7 @@ typedef struct itti_nas_pdn_config_req_s {
 
 typedef struct itti_nas_pdn_config_rsp_s {
   mme_ue_s1ap_id_t        ue_id; // nas ref
+  imsi64_t                imsi64;
 } itti_nas_pdn_config_rsp_t;
 
 typedef struct itti_nas_pdn_config_fail_s {
@@ -193,6 +214,9 @@ typedef struct itti_nas_dl_data_req_s {
   enb_ue_s1ap_id_t  enb_ue_s1ap_id; /* UE lower layer identifier        */
   mme_ue_s1ap_id_t  ue_id;          /* UE lower layer identifier        */
   //nas_error_code_t err_code;      /* Transaction status               */
+  nas_error_code_t  transaction_status;  /* Transaction status               */
+  uint32_t          enb_id;
+
   bstring           nas_msg;        /* Uplink NAS message           */
 } itti_nas_dl_data_req_t;
 
@@ -207,7 +231,7 @@ typedef struct itti_nas_dl_data_rej_s {
   int              err_code;
 } itti_nas_dl_data_rej_t;
 
-typedef struct itti_erab_setup_req_s {
+typedef struct itti_nas_erab_setup_req_s {
   mme_ue_s1ap_id_t ue_id;            /* UE lower layer identifier   */
   ebi_t            ebi;              /* EPS bearer id        */
   bstring          nas_msg;          /* NAS erab bearer context activation message           */
@@ -215,7 +239,13 @@ typedef struct itti_erab_setup_req_s {
   bitrate_t        mbr_ul;
   bitrate_t        gbr_dl;
   bitrate_t        gbr_ul;
-} itti_erab_setup_req_t;
+} itti_nas_erab_setup_req_t;
+
+typedef struct itti_nas_erab_release_req_s {
+  mme_ue_s1ap_id_t ue_id;            /* UE lower layer identifier   */
+  ebi_t            ebi;              /* EPS bearer id        */
+  bstring          nas_msg;          /* NAS erab bearer context deactivation message           */
+} itti_nas_erab_release_req_t;
 
 
 typedef struct itti_nas_attach_req_s {
@@ -262,7 +292,6 @@ typedef struct itti_nas_auth_param_req_s {
 typedef struct itti_nas_detach_req_s {
   /* UE identifier */
   mme_ue_s1ap_id_t ue_id;
-  long             cause;
 } itti_nas_detach_req_t;
 
 typedef struct itti_nas_signalling_connection_rel_ind_s {
@@ -270,7 +299,55 @@ typedef struct itti_nas_signalling_connection_rel_ind_s {
   mme_ue_s1ap_id_t                  ue_id;
 } itti_nas_signalling_connection_rel_ind_t;
 
+typedef struct itti_nas_implicit_detach_ue_ind_s {
+  /* UE identifier */
+  mme_ue_s1ap_id_t ue_id;
+  uint8_t emm_cause;
+  uint8_t detach_type;
+} itti_nas_implicit_detach_ue_ind_t;
 
+/** NAS Context request and response. */
+typedef struct itti_nas_context_req_s {
+  mme_ue_s1ap_id_t        ue_id;
+  guti_t                  old_guti;
+  rat_type_t              rat_type;
+  tai_t                   originating_tai;
+  bstring                 nas_msg;
+  plmn_t                  visited_plmn;
+} itti_nas_context_req_t;
+
+typedef struct itti_nas_context_res_s {
+  mme_ue_s1ap_id_t        ue_id;
+  uint64_t                imsi;
+  imsi_t                  _imsi;
+  imei_t                  _imei;
+  uint8_t                 n_pdns;
+  uint8_t                 n_bearers;
+  bool                    is_emergency;
+} itti_nas_context_res_t;
+
+typedef struct itti_nas_context_fail_s {
+  mme_ue_s1ap_id_t        ue_id;
+  gtpv2c_cause_value_t    cause;
+//  uint64_t                imsi;
+} itti_nas_context_fail_t;
+
+typedef struct itti_nas_pdn_disconnect_req_s {
+  mme_ue_s1ap_id_t        ue_id;
+  pti_t                   pti;
+  pdn_cid_t               pdn_cid;
+  ebi_t                   default_ebi;
+  struct in_addr          saegw_s11_ip_addr;
+  teid_t                  saegw_s11_teid;
+  bool                    noDelete;
+  bstring                 apn;
+} itti_nas_pdn_disconnect_req_t;
+
+typedef struct itti_nas_pdn_disconnect_rsp_s {
+  mme_ue_s1ap_id_t        ue_id;
+  int                     cause;
+//  unsigned int            pdn_ctx_id;
+} itti_nas_pdn_disconnect_rsp_t;
 #ifdef __cplusplus
 }
 #endif

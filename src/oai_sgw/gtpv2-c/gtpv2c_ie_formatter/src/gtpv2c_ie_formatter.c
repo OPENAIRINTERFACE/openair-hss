@@ -54,7 +54,6 @@
 #include "NwGtpv2cMsgParser.h"
 #include "security_types.h"
 #include "common_types.h"
-#include "sgw_ie_defs.h"
 #include "PdnType.h"
 
 //------------------------------------------------------------------------------

@@ -45,7 +45,6 @@ extern "C" {
 
 typedef struct itti_mme_app_connection_establishment_cnf_s {
   mme_ue_s1ap_id_t        ue_id;
-
   ambr_t                  ue_ambr;
 
   // E-RAB to Be Setup List
@@ -73,13 +72,17 @@ typedef struct itti_mme_app_connection_establishment_cnf_s {
   uint16_t                ue_security_capabilities_integrity_algorithms;
 
   // Security key
-  uint8_t                 kenb[AUTH_KENB_SIZE];
-
-  bstring                 ue_radio_capability;
+  uint8_t                 kenb[AUTH_KASME_SIZE];
 
   // Trace Activation (optional)
   // Handover Restriction List (optional)
+
   // UE Radio Capability (optional)
+  uint8_t                 *ue_radio_capabilities;
+  int                     ue_radio_cap_length;
+  // todo:   bstring                 ue_radio_capability;
+
+
   // Subscriber Profile ID for RAT/Frequency priority (optional)
   // CS Fallback Indicator (optional)
   // SRVCC Operation Possible (optional)
@@ -89,31 +92,32 @@ typedef struct itti_mme_app_connection_establishment_cnf_s {
   // MME UE S1AP ID 2  (optional)
   // Management Based MDT Allowed (optional)
 
-  //itti_nas_conn_est_cnf_t nas_conn_est_cnf;
+//  itti_nas_conn_est_cnf_t nas_conn_est_cnf;
 } itti_mme_app_connection_establishment_cnf_t;
 
 typedef struct itti_mme_app_initial_context_setup_rsp_s {
   mme_ue_s1ap_id_t        ue_id;
   uint8_t                 no_of_e_rabs;
+
   ebi_t                   e_rab_id[BEARERS_PER_UE];
   bstring                 transport_layer_address[BEARERS_PER_UE];
   s1u_teid_t              gtp_teid[BEARERS_PER_UE];
 } itti_mme_app_initial_context_setup_rsp_t;
 
-typedef struct itti_mme_app_delete_session_rsp_s {
-  /* UE identifier */
-  mme_ue_s1ap_id_t    ue_id;
-} itti_mme_app_delete_session_rsp_t;
-
 typedef struct itti_mme_app_create_dedicated_bearer_req_s {
   /* UE identifier */
   mme_ue_s1ap_id_t                  ue_id;
   pdn_cid_t                         cid;
-  ebi_t                             ebi;
   ebi_t                             linked_ebi;
-  bearer_qos_t                      bearer_qos;
-  traffic_flow_template_t           *tft;
-  protocol_configuration_options_t  *pco;
+  uint8_t                           num_bearers;
+  /** No EBI will set yet. */
+  struct fteid_set_s               *fteid_set[BEARERS_PER_UE];
+  ebi_t                             ebis[BEARERS_PER_UE];
+  s1u_teid_t                        saegw_s1u_teid[BEARERS_PER_UE];
+  traffic_flow_template_t          *tfts[BEARERS_PER_UE];
+  bearer_qos_t                      bearer_qos_vals[BEARERS_PER_UE];
+
+  protocol_configuration_options_t *pcos[BEARERS_PER_UE];
 } itti_mme_app_create_dedicated_bearer_req_t;
 
 typedef struct itti_mme_app_create_dedicated_bearer_rsp_s {
@@ -128,6 +132,42 @@ typedef struct itti_mme_app_create_dedicated_bearer_rej_s {
   ebi_t                             ebi;
 } itti_mme_app_create_dedicated_bearer_rej_t;
 
+typedef struct itti_mme_app_delete_dedicated_bearer_req_s {
+  /* UE identifier */
+  mme_ue_s1ap_id_t                  ue_id;
+  ebi_t                             ded_ebi;
+  ebi_t                             def_ebi;
+  pdn_cid_t                         pid;
+} itti_mme_app_delete_dedicated_bearer_req_t;
+
+typedef struct itti_mme_app_delete_dedicated_bearer_rsp_s {
+  /* UE identifier */
+  mme_ue_s1ap_id_t                  ue_id;
+  ebi_t                             ded_ebi;
+  ebi_t                             def_ebi;
+  pdn_cid_t                         pid;
+} itti_mme_app_delete_dedicated_bearer_rsp_t;
+
+typedef struct itti_mme_app_s1ap_mme_ue_id_notification_s {
+  enb_ue_s1ap_id_t      enb_ue_s1ap_id;
+  mme_ue_s1ap_id_t      mme_ue_s1ap_id;
+  sctp_assoc_id_t       sctp_assoc_id;
+} itti_mme_app_s1ap_mme_ue_id_notification_t;
+
+typedef struct itti_mme_app_initial_context_setup_failure_s {
+  mme_ue_s1ap_id_t      mme_ue_s1ap_id;
+} itti_mme_app_initial_context_setup_failure_t;
+
+
+typedef struct itti_mme_app_nas_update_location_cnf_s {
+  mme_ue_s1ap_id_t    ue_id;
+
+  char       imsi[IMSI_BCD_DIGITS_MAX + 1]; // username
+  uint8_t    imsi_length;               // username
+
+  s6a_result_t result;
+
+}itti_mme_app_nas_update_location_cnf_t;
 
 #ifdef __cplusplus
 }

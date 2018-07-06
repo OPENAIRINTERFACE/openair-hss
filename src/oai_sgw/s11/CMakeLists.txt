@@ -29,6 +29,7 @@ add_library(S11_SGW
     s11_common.c
     s11_ie_formatter.c
     s11_sgw.c
+    s11_sgw_downlink_data.c
     s11_sgw_session_manager.c
     s11_sgw_bearer_manager.c
     )

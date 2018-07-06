@@ -29,7 +29,6 @@
 #ifndef FILE_GTPV2C_IE_FORMATTER_SEEN
 #define FILE_GTPV2C_IE_FORMATTER_SEEN
 
-#include "sgw_ie_defs.h"
 #include <stdbool.h>
 
 #include "NwTypes.h"
