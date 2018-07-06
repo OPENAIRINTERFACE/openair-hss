@@ -51,7 +51,6 @@
 #include "s10_messages_types.h"
 #include "s11_messages_types.h"
 #include "security_types.h"
-#include "sgw_ie_defs.h"
 #include "emm_data.h"
 #include "esm_data.h"
 

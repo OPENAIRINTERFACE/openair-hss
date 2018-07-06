@@ -46,7 +46,7 @@ void free_bearer_contexts_to_be_created(bearer_contexts_to_be_created_t **bcs_tb
   // nothing to do for packet filters
   for (int i = 0; i < bctbc->num_bearer_context; i++) {
     for (int j = 0; j < bctbc->bearer_contexts[i].tft.parameterslist.num_parameters; j++) {
-      bdestroy_wrapper(&bctbc->bearer_contexts[i].tft.parameterslist.parameter[j]);
+      bdestroy_wrapper(&bctbc->bearer_contexts[i].tft.parameterslist.parameter[j].contents);
     }
   }
   free_wrapper((void**)bcs_tbc);
@@ -66,7 +66,7 @@ static void free_pdn_connection(pdn_connection_t * pdn_connection)
   /** Bearer Contexts to be Created. */
   for (int i = 0; i < pdn_connection->bearer_context_list.num_bearer_context; i++) {
     for (int j = 0; j < pdn_connection->bearer_context_list.bearer_contexts[i].tft.parameterslist.num_parameters; j++) {
-      bdestroy_wrapper(&pdn_connection->bearer_context_list.bearer_contexts[i].tft.parameterslist.parameter[j]);
+      bdestroy_wrapper(&pdn_connection->bearer_context_list.bearer_contexts[i].tft.parameterslist.parameter[j].contents);
     }
   }
 }

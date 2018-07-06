@@ -50,7 +50,6 @@
 #include "mme_app_apn_selection.h"
 #include "mme_app_pdn_context.h"
 #include "mme_app_bearer_context.h"
-#include "sgw_ie_defs.h"
 #include "common_defs.h"
 #include "mme_app_itti_messaging.h"
 #include "mme_app_wrr_selection.h"

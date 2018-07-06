@@ -33,6 +33,7 @@
 #include "bstrlib.h"
 #include "3gpp_33.401.h"
 #include "3gpp_24.008.h"
+#include "3gpp_24.007.h"
 #include "security_types.h"
 
 //------------------------------------------------------------------------------
@@ -203,6 +204,11 @@ typedef uint8_t  proc_tid_t; // procedure transaction identity, related to esm p
 #define ARD_MAX                             (1U << 6)
 
 
+typedef struct ebi_list_s {
+  uint32_t   num_ebi;
+  #define RELEASE_ACCESS_BEARER_MAX_BEARERS   8
+  ebi_t      ebis[RELEASE_ACCESS_BEARER_MAX_BEARERS]  ;
+} ebi_list_t;
 
 typedef union {
   uint8_t imei[IMEI_DIGITS_MAX-1]; // -1 =  remove CD/SD digit

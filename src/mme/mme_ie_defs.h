@@ -33,7 +33,6 @@
 #include "3gpp_24.008.h"
 #include "3gpp_36.401.h"
 #include "3gpp_24.301.h"
-#include "sgw_ie_defs.h"
 #include "nas_timer.h"
 
 /* Cause as defined in 3GPP TS 29.274 #8.4 */

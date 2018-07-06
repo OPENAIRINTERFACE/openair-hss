@@ -55,7 +55,6 @@
 #include "s11_common.h"
 #include "security_types.h"
 #include "common_types.h"
-#include "sgw_ie_defs.h"
 #include "PdnType.h"
 
 //------------------------------------------------------------------------------
@@ -396,7 +395,6 @@ gtpv2c_ambr_ie_set (
     nw_gtpv2c_msg_handle_t * msg, ambr_t * ambr)
 {
   nw_rc_t                                   rc;
-  uint8_t                                 value[3];
 
   DevAssert (msg );
   DevAssert (ambr );

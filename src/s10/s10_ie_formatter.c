@@ -49,6 +49,7 @@
 #include "security_types.h"
 #include "common_types.h"
 #include "mme_ie_defs.h"
+#include "mme_config.h"
 #include "PdnType.h"
 #include "s10_ie_formatter.h"
 
@@ -60,9 +61,7 @@ s10_guti_ie_set (
   nw_gtpv2c_msg_handle_t * msg,
   const guti_t * guti)
 {
-  uint8_t                                 guti_length,
-                                          i;
-  nw_rc_t                                   rc;
+  nw_rc_t                                 rc;
 
   DevAssert (msg );
   DevAssert (guti );
@@ -293,7 +292,6 @@ s10_f_cause_ie_set (
 nw_rc_t
 s10_pdn_connection_ie_set ( nw_gtpv2c_msg_handle_t * msg, void * arg){
   nw_rc_t                                 rc;
-  uint8_t                                 i;
   pdn_connection_t                       *pdn_connection = (pdn_connection_t*)arg;
 
   DevAssert (msg );

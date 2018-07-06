@@ -64,7 +64,6 @@
 #include "intertask_interface.h"
 #include "common_defs.h"
 #include "mme_api.h"
-#include "sgw_ie_defs.h"
 #include "mme_app_ue_context.h"
 #include "mme_app_defs.h"
 #include "mme_config.h"

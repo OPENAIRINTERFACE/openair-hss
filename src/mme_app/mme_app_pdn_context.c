@@ -46,7 +46,6 @@
 #include "mme_app_extern.h"
 #include "mme_app_ue_context.h"
 #include "mme_app_defs.h"
-#include "sgw_ie_defs.h"
 #include "common_defs.h"
 #include "mme_app_pdn_context.h"
 #include "mme_app_apn_selection.h"

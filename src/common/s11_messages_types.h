@@ -29,7 +29,7 @@
 #ifndef FILE_S11_MESSAGES_TYPES_SEEN
 #define FILE_S11_MESSAGES_TYPES_SEEN
 
-#include "../sgw/sgw_ie_defs.h"
+#include "3gpp_29.274.h"
 
 #define S11_CREATE_SESSION_REQUEST(mSGpTR)         (mSGpTR)->ittiMsg.s11_create_session_request
 #define S11_CREATE_SESSION_RESPONSE(mSGpTR)        (mSGpTR)->ittiMsg.s11_create_session_response
@@ -651,6 +651,7 @@ typedef struct itti_s11_create_bearer_response_s {
  * - UE requested PDN connectivity
  * - X2-based handover without SGWrelocation
  */
+
 typedef struct itti_s11_modify_bearer_request_s {
   teid_t                     local_teid;       ///< not in specs for inner MME use
 

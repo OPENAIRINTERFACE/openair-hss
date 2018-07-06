@@ -53,7 +53,6 @@
 #include "s11_common.h"
 #include "security_types.h"
 #include "common_types.h"
-#include "sgw_ie_defs.h"
 #include "PdnType.h"
 #include "s11_ie_formatter.h"
 

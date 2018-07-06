@@ -31,6 +31,7 @@
 #define FILE_S10_MESSAGES_TYPES_SEEN
 
 #include "mme_ie_defs.h"
+#include "3gpp_29.274.h"
 
 // todo: the sender and receiver side both use the same messages?
 #define S10_FORWARD_RELOCATION_REQUEST(mSGpTR)                  (mSGpTR)->ittiMsg.s10_forward_relocation_request

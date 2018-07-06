@@ -235,6 +235,11 @@ s10_pdn_address_ie_set (
   NW_IN const struct in_addr  const * ipv4Addr);
 
 int
+s10_ipv4_address_ie_set (
+    nw_gtpv2c_msg_handle_t * msg,
+  NW_IN const struct in_addr  const * ipv4Addr);
+
+int
 s10_ipv6_address_ie_set (
     nw_gtpv2c_msg_handle_t * msg,
   NW_IN const struct in6_addr  const * ipv6Addr);
