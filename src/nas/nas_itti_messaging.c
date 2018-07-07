@@ -114,29 +114,29 @@ nas_itti_erab_release_req (const mme_ue_s1ap_id_t ue_id,
 }
 
 //------------------------------------------------------------------------------
-void nas_itti_dedicated_eps_bearer_complete(
+void nas_itti_activate_bearer_cnf(
     const mme_ue_s1ap_id_t ue_idP,
-    const ebi_t ebiP)
+    const ebi_t            ebi)
 {
   OAILOG_FUNC_IN(LOG_NAS);
-  MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_MME, MME_APP_CREATE_DEDICATED_BEARER_RSP);
-  MME_APP_CREATE_DEDICATED_BEARER_RSP (message_p).ue_id   = ue_idP;
-  MME_APP_CREATE_DEDICATED_BEARER_RSP (message_p).ebi     = ebiP;
-  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_MMEAPP_MME, NULL, 0, "0 MME_APP_CREATE_DEDICATED_BEARER_RSP ue id " MME_UE_S1AP_ID_FMT " ebi %u", ue_idP, ebiP);
+  MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_MME, MME_APP_ACTIVATE_BEARER_CNF);
+  MME_APP_ACTIVATE_BEARER_CNF (message_p).ue_id   = ue_idP;
+  MME_APP_ACTIVATE_BEARER_CNF (message_p).ebi     = ebi;
+  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_MMEAPP_MME, NULL, 0, "0 MME_APP_ACTIVATE_BEARER_CNF ue id " MME_UE_S1AP_ID_FMT, ue_idP);
   itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT(LOG_NAS);
 }
 
 //------------------------------------------------------------------------------
-void nas_itti_dedicated_eps_bearer_reject(
+void nas_itti_activate_bearer_rej(
     const mme_ue_s1ap_id_t ue_idP,
-    const ebi_t ebiP)
+    const ebi_t            ebi)
 {
   OAILOG_FUNC_IN(LOG_NAS);
-  MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_MME, MME_APP_CREATE_DEDICATED_BEARER_REJ);
-  MME_APP_CREATE_DEDICATED_BEARER_REJ (message_p).ue_id   = ue_idP;
-  MME_APP_CREATE_DEDICATED_BEARER_REJ (message_p).ebi     = ebiP;
-  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_MMEAPP_MME, NULL, 0, "0 MME_APP_CREATE_DEDICATED_BEARER_REJ ue id " MME_UE_S1AP_ID_FMT " ebi %u", ue_idP, ebiP);
+  MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_MME, MME_APP_ACTIVATE_BEARER_REJ);
+  MME_APP_ACTIVATE_BEARER_REJ (message_p).ue_id   = ue_idP;
+  MME_APP_ACTIVATE_BEARER_REJ (message_p).ebi     = ebi;
+  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_MMEAPP_MME, NULL, 0, "0 MME_APP_ACTIVATE_BEARER_REJ ue id " MME_UE_S1AP_ID_FMT, ue_idP);
   itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT(LOG_NAS);
 }
@@ -149,12 +149,12 @@ void nas_itti_dedicated_eps_bearer_deactivation_complete(
     const ebi_t ded_ebi)
 {
   OAILOG_FUNC_IN(LOG_NAS);
-  MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_MME, MME_APP_DELETE_DEDICATED_BEARER_RSP);
-  MME_APP_DELETE_DEDICATED_BEARER_RSP (message_p).ue_id     = ue_idP;
-  MME_APP_DELETE_DEDICATED_BEARER_RSP (message_p).def_ebi   = default_ebi;
-  MME_APP_DELETE_DEDICATED_BEARER_RSP (message_p).ded_ebi   = ded_ebi;
-  MME_APP_DELETE_DEDICATED_BEARER_RSP (message_p).pid       = pid;
-  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_MMEAPP_MME, NULL, 0, "0 MME_APP_DELETE_DEDICATED_BEARER_RSP ue id " MME_UE_S1AP_ID_FMT " ebi %u", ue_idP, ded_ebi);
+  MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_MME, MME_APP_DEACTIVATE_BEARER_CNF);
+  MME_APP_DEACTIVATE_BEARER_CNF (message_p).ue_id     = ue_idP;
+  MME_APP_DEACTIVATE_BEARER_CNF (message_p).def_ebi   = default_ebi;
+  MME_APP_DEACTIVATE_BEARER_CNF (message_p).ded_ebi   = ded_ebi;
+  MME_APP_DEACTIVATE_BEARER_CNF (message_p).pid       = pid;
+  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_MMEAPP_MME, NULL, 0, "0 MME_APP_DEACTIVATE_BEARER_CNF ue id " MME_UE_S1AP_ID_FMT " ebi %u", ue_idP, ded_ebi);
   itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT(LOG_NAS);
 }

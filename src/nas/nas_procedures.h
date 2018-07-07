@@ -270,7 +270,7 @@ typedef struct nas_sr_proc_s {
 ////////////////////////////////////////////////////////////////////////////////
 typedef enum {
   ESM_PROC_NONE = 0,
-  ESM_PROC_EPS_BEARER_CONTEXT,
+//  ESM_PROC_EPS_BEARER_CONTEXT,
   ESM_PROC_TRANSACTION
 } esm_proc_type_t;
 
@@ -279,18 +279,13 @@ typedef struct nas_esm_proc_s {
   esm_proc_type_t             type;
 } nas_esm_proc_t;
 
-typedef enum {
-  ESM_BEARER_CTX_PROC_NONE = 0,
-  ESM_PROC_DEFAULT_EPS_BEARER_CTXT_ACTIVATION,
-  ESM_PROC_DEDICATED_EPS_BEARER_CTXT_ACTIVATION,
-  ESM_PROC_EPS_BEARER_CTXT_MODIFICATION,
-  ESM_PROC_EPS_BEARER_CTXT_DEACTIVATION
-} esm_bearer_ctx_proc_type_t;
-
-typedef struct nas_esm_bearer_ctx_proc_s {
-  nas_esm_proc_t              esm_proc;
-  esm_bearer_ctx_proc_type_t  type;
-} nas_esm_bearer_ctx_proc_t;
+//typedef enum {
+//  ESM_BEARER_CTX_PROC_NONE = 0,
+//  ESM_PROC_DEFAULT_EPS_BEARER_CTXT_ACTIVATION,
+//  ESM_PROC_DEDICATED_EPS_BEARER_CTXT_ACTIVATION,
+//  ESM_PROC_EPS_BEARER_CTXT_MODIFICATION,
+//  ESM_PROC_EPS_BEARER_CTXT_DEACTIVATION
+//} esm_bearer_ctx_proc_type_t;
 
 typedef enum {
   ESM_TRANSACTION_PROC_NONE = 0,
@@ -304,6 +299,39 @@ typedef struct nas_esm_transaction_proc_s {
   nas_esm_proc_t               esm_proc;
   esm_transaction_proc_type_t  type;
 } nas_esm_transaction_proc_t;
+
+typedef struct nas_esm_transaction_procedures_s {
+  nas_esm_transaction_proc_t                          *proc;
+  LIST_ENTRY(nas_esm_transaction_procedures_s)         entries;
+} nas_esm_transaction_procedures_t;
+
+///*
+// *
+// */
+//
+//typedef struct nas_esm_bearer_ctx_proc_s {
+//  nas_esm_proc_t               esm_proc;
+//  esm_bearer_ctx_proc_type_t   type;
+//  /** Pending Bearer Contexts. */
+//  LIST_HEAD(nas_transaction_procedures_head_s, bearer_context_s)  pending_bearers;
+//} nas_esm_bearer_ctx_proc_t;
+//
+//
+//typedef struct nas_esm_bearer_context_procedure_s {
+//  nas_esm_bearer_ctx_proc_t                           *proc;
+//  LIST_ENTRY(nas_esm_bearer_context_procedure_s)       entries;
+//} nas_esm_bearer_context_procedure_t;
+//
+///*
+// *
+// */
+
+typedef struct esm_procedures_s {
+  /** UE/PTI triggered ESM procedure. */
+  LIST_HEAD(nas_esm_transaction_procedures_head_s, nas_esm_transaction_procedures_s)  esm_transaction_procs;
+//  /** CN Triggered ESM procedure. */
+//  LIST_HEAD(nas_esm_bearer_context_procedures_head_s, nas_esm_bearer_context_procedure_s)  esm_bearer_context_procs;
+} esm_procedures_t;
 
 ////////////////////////////////////////////////////////////////////////////////
 // CN procedures
@@ -479,5 +507,13 @@ nas_ctx_req_proc_t *nas_new_cn_ctx_req_procedure(struct emm_data_context_s * con
 void nas_digest_msg(const unsigned char * const msg, const size_t msg_len, char * const digest, /*INOUT*/ size_t * const digest_length);
 void nas_emm_procedure_register_emm_message(mme_ue_s1ap_id_t ue_id, const uint64_t puid, bstring nas_msg);
 nas_emm_proc_t * nas_emm_find_procedure_by_msg_digest(struct emm_data_context_s * const emm_context, const char * const digest, const size_t digest_bytes, const size_t msg_size);
+
+///** New ESM Bearer Context procedure. */
+//nas_esm_bearer_ctx_proc_t *nas_new_esm_bearer_context_procedure(struct emm_data_context_s * const emm_context);
+//nas_esm_bearer_context_procedure_t  *get_esm_bearer_context_procedure(const struct emm_data_context_s * const ctxt, esm_bearer_ctx_proc_type_t esm_bc_proc_type); /**< Only one procedure can exist at a time. */
+nas_esm_transaction_proc_t *get_esm_transaction_procedure(const struct emm_data_context_s * const ctxt, esm_transaction_proc_type_t esm_trx_proc_type); /**< Only one procedure can exist at a time. */
+void nas_delete_all_esm_procedures(struct emm_data_context_s * const emm_context);
+void _nas_delete_esm_transaction_procedures(struct emm_data_context_s *emm_context, nas_esm_transaction_proc_t * trx_proc);
+//void _nas_delete_esm_bearer_context_procedures(struct emm_data_context_s *emm_context, nas_esm_bearer_ctx_proc_t * bc_proc);
 
 #endif

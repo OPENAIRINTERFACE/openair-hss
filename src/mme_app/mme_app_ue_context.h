@@ -115,8 +115,8 @@ struct mme_app_timer_t {
 };
 
 typedef struct fteid_set_s {
-  fteid_t s1u_fteid;
-  fteid_t s5_fteid;
+  fteid_t *s1u_fteid;
+  fteid_t *s5_fteid;
 };
 
 /** @struct bearer_context_t
@@ -125,6 +125,7 @@ typedef struct fteid_set_s {
 typedef struct bearer_context_s {
   // EPS Bearer ID: An EPS bearer identity uniquely identifies an EP S bearer for one UE accessing via E-UTRAN
   ebi_t                       ebi;
+  ebi_t                       linked_ebi;
 
   // TI Transaction Identifier
   proc_tid_t                  transaction_identifier;
@@ -506,6 +507,9 @@ typedef struct ue_context_s {
   struct mme_app_timer_t       s1ap_handover_req_timer;
 
   ebi_t                        next_def_ebi_offset;
+
+  int                          num_free_bearers;
+
 } ue_context_t;
 
 

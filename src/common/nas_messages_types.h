@@ -52,7 +52,7 @@
 #define NAS_DETACH_REQ(mSGpTR)                      (mSGpTR)->ittiMsg.nas_detach_req
 #define NAS_ERAB_SETUP_REQ(mSGpTR)                  (mSGpTR)->ittiMsg.nas_erab_setup_req
 #define NAS_ERAB_RELEASE_REQ(mSGpTR)                (mSGpTR)->ittiMsg.nas_erab_release_req
-#define NAS_SIGNALLING_CONNECTION_REL_IND(mSGpTR)  (mSGpTR)->ittiMsg.nas_signalling_connection_rel_ind
+#define NAS_SIGNALLING_CONNECTION_REL_IND(mSGpTR)   (mSGpTR)->ittiMsg.nas_signalling_connection_rel_ind
 
 // todo: context req_res..
 // todo:

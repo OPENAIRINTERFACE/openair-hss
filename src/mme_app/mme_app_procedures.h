@@ -56,7 +56,6 @@ typedef struct mme_app_base_proc_s {
 typedef enum {
   MME_APP_S10_PROC_TYPE_NONE = 0,
   MME_APP_S10_PROC_TYPE_INTER_MME_HANDOVER,
-//  MME_APP_S10_PROC_TYPE_INTER_MME_TAU,
   MME_APP_S10_PROC_TYPE_INTRA_MME_HANDOVER
 } mme_app_s10_proc_type_t;
 
@@ -134,15 +133,11 @@ typedef enum {
 
 typedef struct mme_app_s11_proc_create_bearer_s {
   mme_app_s11_proc_t           proc;
-  int                          num_bearers;
+  int                          num_bearers_unhandled;
   int                          num_status_received;
 
   // TODO here give a NAS/S1AP/.. reason -> GTPv2-C reason
   bearer_contexts_to_be_created_t *bcs_tbc; /**< Store the bearer contexts to be created here, and don't register them yet in the MME_APP context. */
-
-  LIST_HEAD(bearer_contexts_sucess_s, bearer_context_s) *bearer_contexts_success;
-  LIST_HEAD(bearer_contexts_failed_s, bearer_context_s) *bearer_contexts_failed;
-
 } mme_app_s11_proc_create_bearer_t;
 
 typedef enum {

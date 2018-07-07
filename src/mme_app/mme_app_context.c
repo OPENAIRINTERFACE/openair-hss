@@ -158,6 +158,7 @@ ue_context_t *mme_create_new_ue_context (void)
     DevAssert (bearer_ctx_p != NULL);
     bearer_ctx_p->ebi = ebi;
     RB_INSERT (BearerPool, &(new_p->bearer_pool), bearer_ctx_p);
+    new_p->num_free_bearers++;
   }
   return new_p;
 }
@@ -247,10 +248,10 @@ void mme_app_ue_context_free_content (ue_context_t * const ue_context)
   if (ue_context->s10_procedures) {
     mme_app_delete_s10_procedure_mme_handover(ue_context); // todo: generic s10 function
   }
-
-  if (ue_context->s11_procedures) {
-    mme_app_delete_s11_procedures(ue_context);
-  }
+//
+//  if (ue_context->s11_procedures) {
+//    mme_app_delete_s11_procedures(ue_context);
+//  }
 
   // todo: unlock?
   memset(ue_context, 0, sizeof(*ue_context));

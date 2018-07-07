@@ -107,13 +107,13 @@ void nas_itti_establish_cnf(
 void nas_itti_detach_req(
   const mme_ue_s1ap_id_t      ue_idP);
 
-void nas_itti_dedicated_eps_bearer_complete(
+void nas_itti_activate_bearer_cnf(
     const mme_ue_s1ap_id_t ue_idP,
-    const ebi_t ebiP);
+    const ebi_t            ebi);
 
-void nas_itti_dedicated_eps_bearer_reject(
+void nas_itti_activate_bearer_rej(
     const mme_ue_s1ap_id_t ue_idP,
-    const ebi_t ebiP);
+    const ebi_t            ebi);
 
 void nas_itti_dedicated_eps_bearer_deactivation_complete(
     const mme_ue_s1ap_id_t ue_idP,

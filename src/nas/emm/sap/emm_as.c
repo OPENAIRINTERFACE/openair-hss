@@ -70,6 +70,7 @@
 #include "nas_proc.h"
 #include "emm_proc.h"
 #include "TrackingAreaUpdateMobility.h"
+#include "esm_sap.h"
 
 
 /****************************************************************************/
@@ -122,6 +123,7 @@ static int _emm_as_recv (
 static int _emm_as_establish_req (emm_as_establish_t * msg, int *emm_cause);
 static int _emm_as_data_ind (emm_as_data_t * msg, int *emm_cause);
 static int _emm_as_release_ind (const emm_as_release_t * const release, int *emm_cause);
+static int _emm_as_erab_setup_rej(const emm_as_erab_setup_rej_t *erab_setup_rej, int *emm_cause);
 
 /*
    Functions executed to send data to the network when requested
@@ -212,6 +214,11 @@ int emm_as_send (emm_as_t * msg)
     ue_id = msg->u.release.ue_id;
     break;
 
+  case _EMMAS_ERAB_SETUP_REJ:
+    rc = _emm_as_erab_setup_rej (&msg->u.erab_setup_rej, &emm_cause);
+    ue_id = msg->u.release.ue_id;
+    break;
+
   default:
     /*
      * Other primitives are forwarded to lower layers (S1AP)
@@ -225,37 +232,6 @@ int emm_as_send (emm_as_t * msg)
 
     break;
   }
-
-//  /*
-//   * Handle decoding errors
-//   */
-//  if ((emm_cause != EMM_CAUSE_SUCCESS) && (emm_cause != EMM_CAUSE_UE_IDENTITY_CANT_BE_DERIVED_BY_NW)) {
-//    /*
-//     * Ignore received message that is too short to contain a complete
-//     * * * * message type information element
-//     */
-//    if (rc == TLV_BUFFER_TOO_SHORT) {
-//      OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
-//    }
-//    /*
-//     * Ignore received message that contains not supported protocol
-//     * * * * discriminator
-//     */
-//    else if (rc == TLV_PROTOCOL_NOT_SUPPORTED) {
-//      OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
-//    } else if (rc == TLV_WRONG_MESSAGE_TYPE) {
-//      emm_cause = EMM_CAUSE_MESSAGE_TYPE_NOT_IMPLEMENTED;
-//    }
-//
-//    /*
-//     * EMM message processing failed
-//     */
-//    OAILOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - Received EMM message is not valid " "(cause=%d)\n", emm_cause);
-//    /*
-//     * Return an EMM status message
-//     */
-//    rc = emm_proc_status (ue_id, emm_cause);
-//  }
 
   if (rc != RETURNok) {
     OAILOG_ERROR (LOG_NAS_EMM, "EMMAS-SAP - Failed to process primitive %s (%d)\n", _emm_as_primitive_str[primitive - _EMMAS_START - 1], primitive);
@@ -809,6 +785,33 @@ static int _emm_as_release_ind (const emm_as_release_t * const release, int *emm
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int rc = lowerlayer_release(release->ue_id, release->cause);
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+}
+
+static int _emm_as_erab_setup_rej(const emm_as_erab_setup_rej_t * const e_rab_setup_rej, int *emm_cause)
+{
+  int                                     rc = RETURNok;
+  /** Like PDN Config Response, directly forwarded to ESM. */
+  // forward to ESM
+   esm_sap_t                               esm_sap = {0};
+
+   OAILOG_FUNC_IN (LOG_NAS_EMM);
+
+   emm_data_context_t *emm_context = emm_data_context_get( &_emm_data, e_rab_setup_rej->ue_id);
+   DevAssert(emm_context);
+
+   // todo: from here, write the stuff from the specification: MME prepared to receive rejection from S1AP before NAS..
+   esm_sap.primitive = ESM_BEARER_RESOURCE_ALLOCATE_REJ;
+   esm_sap.ctx           = emm_context;
+   esm_sap.is_standalone = true;
+   esm_sap.ue_id         = e_rab_setup_rej->ue_id;
+   esm_sap.data.esm_bearer_resource_allocate_rej.ebi   = e_rab_setup_rej->ebi;
+
+   MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_ESM_MME, NULL, 0, "0 ESM_BEARER_RESOURCE_ALLOCATE_REJ ue id " MME_UE_S1AP_ID_FMT " ebi %u",
+       esm_sap.ue_id, e_rab_setup_rej->ebi);
+
+   rc = esm_sap_send (&esm_sap);
+
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 

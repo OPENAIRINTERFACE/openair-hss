@@ -800,24 +800,6 @@ static int _emm_cn_activate_dedicated_bearer_req (emm_cn_activate_dedicated_bear
   esm_sap.is_standalone = true;
   esm_sap.ue_id         = msg->ue_id;
   memcpy((void*)&esm_sap.data.eps_dedicated_bearer_context_activate, msg, sizeof(emm_cn_activate_dedicated_bearer_req_t)); // todo: pointer directly?
-//      cid         = msg->cid;
-//  esm_sap.data.eps_dedicated_bearer_context_activate.linked_ebi  = msg->linked_ebi;
-//
-//  /** Fill the bearer context values. */
-//  for(int i = 0; i < msg->)
-//  esm_sap.data.eps_dedicated_bearer_context_activate.ebi         = msg->ebi;
-//
-//  esm_sap.data.eps_dedicated_bearer_context_activate.tft         = msg->tft;
-//  esm_sap.data.eps_dedicated_bearer_context_activate.qci         = msg->bearer_qos.qci;
-//  esm_sap.data.eps_dedicated_bearer_context_activate.gbr_ul      = msg->bearer_qos.gbr.br_ul;
-//  esm_sap.data.eps_dedicated_bearer_context_activate.gbr_dl      = msg->bearer_qos.gbr.br_dl;
-//  esm_sap.data.eps_dedicated_bearer_context_activate.mbr_ul      = msg->bearer_qos.mbr.br_ul;
-//  esm_sap.data.eps_dedicated_bearer_context_activate.mbr_dl      = msg->bearer_qos.mbr.br_dl;
-//  // stole ref if any
-//  msg->tft = NULL;
-//  esm_sap.data.eps_dedicated_bearer_context_activate.pco         = msg->pco;
-//  // stole ref if any
-//  msg->pco = NULL;
 
   MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_ESM_MME, NULL, 0, "0 ESM_DEDICATED_EPS_BEARER_CONTEXT_ACTIVATE_REQ ue id " MME_UE_S1AP_ID_FMT /*" ebi %u"*/,
       esm_sap.ue_id,/*esm_sap.data.eps_dedicated_bearer_context_activate.ebi*/);

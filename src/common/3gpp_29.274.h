@@ -494,6 +494,7 @@ typedef struct bearer_context_created_s {
 
   /* This parameter is used on S11 interface only */
   fteid_t       s1u_sgw_fteid;       ///< S1-U SGW F-TEID
+  fteid_t       s1u_enb_fteid;       ///< S1-U ENB F-TEID
 
   /* This parameter is used on S4 interface only */
   fteid_t       s4u_sgw_fteid;       ///< S4-U SGW F-TEID
@@ -548,8 +549,9 @@ typedef struct bearer_contexts_modified_s {
 } bearer_contexts_modified_t;
 
 typedef struct bearer_context_marked_for_removal_s {
-  uint8_t       eps_bearer_id;   ///< EPS bearer ID
+  uint8_t        eps_bearer_id;   ///< EPS bearer ID
   gtpv2c_cause_t cause;
+  fteid_t        s1u_sgw_fteid;   ///< Sender F-TEID for user plane
 } bearer_context_marked_for_removal_t;
 
 typedef struct bearer_contexts_marked_for_removal_s {

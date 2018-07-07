@@ -107,17 +107,10 @@ void itti_free_msg_content (MessageDef * const message_p)
   }
   break;
 
-  case MME_APP_CREATE_DEDICATED_BEARER_REQ: {
-    for (int i = 0; i < BEARERS_PER_UE; i++) {
-      if (message_p->ittiMsg.mme_app_create_dedicated_bearer_req.tfts[i]) {
-        free_traffic_flow_template(&message_p->ittiMsg.mme_app_create_dedicated_bearer_req.tfts[i]);
-      }
-      if(message_p->ittiMsg.mme_app_create_dedicated_bearer_req.fteid_set[i]) {
-        free_wrapper((void**)&message_p->ittiMsg.mme_app_create_dedicated_bearer_req.fteid_set[i]);
-      }
-      if(message_p->ittiMsg.mme_app_create_dedicated_bearer_req.pcos[i]) {
-        clear_protocol_configuration_options(&message_p->ittiMsg.mme_app_create_dedicated_bearer_req.pcos[i]);
-      }
+  case MME_APP_ACTIVATE_BEARER_REQ: {
+    /** Bearer Context to Be Setup. */
+    if(message_p->ittiMsg.mme_app_activate_bearer_req.bcs_to_be_created){
+      free_bearer_contexts_to_be_created(&message_p->ittiMsg.mme_app_activate_bearer_req.bcs_to_be_created);
     }
   }
   break;
@@ -216,6 +209,9 @@ void itti_free_msg_content (MessageDef * const message_p)
 
   case S11_CREATE_BEARER_REQUEST: {
     clear_protocol_configuration_options(&message_p->ittiMsg.s11_create_bearer_request.pco);
+    if(message_p->ittiMsg.s11_create_bearer_request.bearer_contexts){
+      free_bearer_contexts_to_be_created(&message_p->ittiMsg.s11_create_bearer_request.bearer_contexts);
+    }
   }
   break;
 

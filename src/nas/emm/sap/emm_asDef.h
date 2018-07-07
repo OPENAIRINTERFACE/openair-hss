@@ -282,6 +282,11 @@ typedef struct emm_as_deactivate_bearer_context_req_s {
   bstring                nas_msg;     /* NAS message to be transfered     */
 } emm_as_deactivate_bearer_context_req_t;
 
+typedef struct emm_as_erab_setup_rej_s {
+  mme_ue_s1ap_id_t       ue_id;
+  ebi_t                  ebi;
+} emm_as_erab_setup_rej_t;
+
 /*
  * EMMAS primitive for status indication
  * -------------------------------------
@@ -324,6 +329,7 @@ typedef struct emm_as_s {
     emm_as_data_t       data;
     emm_as_activate_bearer_context_req_t activate_bearer_context_req;
     emm_as_deactivate_bearer_context_req_t deactivate_bearer_context_req;
+    emm_as_erab_setup_rej_t erab_setup_rej;
     emm_as_status_t     status;
     emm_as_cell_info_t  cell_info;
   } u;

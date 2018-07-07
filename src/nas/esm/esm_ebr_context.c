@@ -192,19 +192,14 @@ esm_ebr_context_create (
     }
     bearer_context->esm_ebr_context.pco = pco;
 
-    /*
-     * Set the FTEIDs.
-     * It looks ugly here, but we don't have the EBI in the MME_APP when S11 CBR is received, and need also don't have the ebi's there yet.
-     */
-
-    /** todo: For Attach --> Set FTEIDs and bearer state. */
-    //    Assert(!RB_INSERT (BearerFteids, &s11_proc_create_bearer->fteid_set, fteid_set)); /**< Find the correct FTEID later by using the S1U FTEID as key.. */
-//    memcpy((void*)&bearer_context->s_gw_fteid_s1u , &fteid_set->s1u_fteid, sizeof(fteid_t));
-//    memcpy((void*)&bearer_context->p_gw_fteid_s5_s8_up , &fteid_set->s5_fteid, sizeof(fteid_t));
-    // Todo: we cannot store them in a map, because when we evaluate the response, EBI is our key, which is not set here. That's why, we need to forward it to ESM.
-
+    /** We can set the FTEIDs right before the CBResp is set. */
+    if(fteid_set){
+      memcpy((void*)&bearer_context->s_gw_fteid_s1u , fteid_set->s1u_fteid, sizeof(fteid_t));
+      memcpy((void*)&bearer_context->p_gw_fteid_s5_s8_up , fteid_set->s5_fteid, sizeof(fteid_t));
+      bearer_context->bearer_state |= BEARER_STATE_SGW_CREATED;
+    }
     /** Set the MME_APP states (todo: may be with Activate Dedicated Bearer Response). */
-//    bearer_context->bearer_state   |= BEARER_STATE_SGW_CREATED;
+    bearer_context->bearer_state   |= BEARER_STATE_SGW_CREATED;
     bearer_context->bearer_state   |= BEARER_STATE_MME_CREATED;
 
     if (is_default) {

@@ -40,13 +40,14 @@ int mme_app_send_s11_modify_bearer_req(struct ue_context_s *const ue_context, pd
 int mme_app_remove_s10_tunnel_endpoint(teid_t local_teid, struct in_addr peer_ip);
 int mme_app_send_delete_session_request (struct ue_context_s * const ue_context_p, const ebi_t ebi, const struct in_addr saegw_s11_in_addr, const teid_t saegw_s11_teid, const bool noDelete); /**< Moved Delete Session Request from mme_app_detach. */
 
+void mme_app_itti_e_rab_failure(mme_ue_s1ap_id_t ue_id, ebi_t ebi);
+
 int
 mme_app_send_s11_create_bearer_rsp (
   struct ue_context_s *const ue_context,
-//  struct in_addr  peer_ip,
-  teid_t          saegw_s11_teid,
-  struct bearer_contexts_sucess_s *bearer_contexts_success,
-  struct bearer_contexts_sucess_s *bearer_contexts_failed);
+  pdn_context_t       *pdn_ctx,
+  void                *trxn,
+  bearer_contexts_to_be_created_t * bcs_tbc);
 
 void mme_app_itti_nas_context_response(ue_context_t * ue_context, nas_s10_context_t * s10_context_val);
 void mme_app_itti_nas_pdn_connectivity_response(ue_context_t * ue_context, paa_t *paa, protocol_configuration_options_t * pco, bearer_context_t * bc);

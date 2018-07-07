@@ -105,13 +105,13 @@ typedef struct emm_cn_context_fail_s {
 struct itti_nas_pdn_config_rsp_s;
 struct itti_nas_pdn_connectivity_rsp_s;
 struct itti_nas_pdn_connectivity_fail_s;
-struct itti_mme_app_create_dedicated_bearer_req_s;
+
 typedef struct itti_nas_pdn_config_rsp_s        emm_cn_pdn_config_res_t;
 typedef struct itti_nas_pdn_config_fail_s       emm_cn_pdn_config_fail_t;
 typedef struct itti_nas_pdn_connectivity_rsp_s  emm_cn_pdn_res_t;
 typedef struct itti_nas_pdn_connectivity_fail_s emm_cn_pdn_fail_t;
 typedef struct itti_nas_pdn_disconnect_rsp_s    emm_cn_pdn_disconnect_res_t;
-typedef struct itti_mme_app_create_dedicated_bearer_req_s emm_cn_activate_dedicated_bearer_req_t;
+typedef struct itti_mme_app_activate_bearer_req_s emm_cn_activate_dedicated_bearer_req_t;
 
 /** NAS UE context response. */
 typedef itti_nas_context_res_t  emm_cn_context_res_t;

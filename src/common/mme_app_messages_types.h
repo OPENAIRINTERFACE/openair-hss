@@ -35,17 +35,21 @@
 
 #define MME_APP_CONNECTION_ESTABLISHMENT_CNF(mSGpTR)     (mSGpTR)->ittiMsg.mme_app_connection_establishment_cnf
 #define MME_APP_INITIAL_CONTEXT_SETUP_RSP(mSGpTR)        (mSGpTR)->ittiMsg.mme_app_initial_context_setup_rsp
-#define MME_APP_CREATE_DEDICATED_BEARER_REQ(mSGpTR)      (mSGpTR)->ittiMsg.mme_app_create_dedicated_bearer_req
-#define MME_APP_CREATE_DEDICATED_BEARER_RSP(mSGpTR)      (mSGpTR)->ittiMsg.mme_app_create_dedicated_bearer_rsp
-#define MME_APP_CREATE_DEDICATED_BEARER_REJ(mSGpTR)      (mSGpTR)->ittiMsg.mme_app_create_dedicated_bearer_rej
-#define MME_APP_DELETE_DEDICATED_BEARER_REQ(mSGpTR)      (mSGpTR)->ittiMsg.mme_app_delete_dedicated_bearer_req
-#define MME_APP_DELETE_DEDICATED_BEARER_RSP(mSGpTR)      (mSGpTR)->ittiMsg.mme_app_delete_dedicated_bearer_rsp
+
+#define MME_APP_ACTIVATE_BEARER_REQ(mSGpTR)              (mSGpTR)->ittiMsg.mme_app_activate_bearer_req
+#define MME_APP_ACTIVATE_BEARER_CNF(mSGpTR)              (mSGpTR)->ittiMsg.mme_app_activate_bearer_cnf
+#define MME_APP_ACTIVATE_BEARER_REJ(mSGpTR)              (mSGpTR)->ittiMsg.mme_app_activate_bearer_rej
+
+#define MME_APP_DEACTIVATE_BEARER_REQ(mSGpTR)            (mSGpTR)->ittiMsg.mme_app_deactivate_bearer_req
+#define MME_APP_DEACTIVATE_BEARER_CNF(mSGpTR)            (mSGpTR)->ittiMsg.mme_app_deactivate_bearer_cnf
 
 #define MME_APP_INITIAL_CONTEXT_SETUP_FAILURE(mSGpTR)    (mSGpTR)->ittiMsg.mme_app_initial_context_setup_failure
 /** Necessary for TAU. */
 #define MME_APP_NAS_UPDATE_LOCATION_CNF(mSGpTR)          (mSGpTR)->ittiMsg.mme_app_nas_update_location_cnf
 
 #define MME_APP_S1AP_MME_UE_ID_NOTIFICATION(mSGpTR)      (mSGpTR)->ittiMsg.mme_app_s1ap_mme_ue_id_notification
+
+#define MME_APP_E_RAB_FAILURE(mSGpTR)                    (mSGpTR)->ittiMsg.mme_app_e_rab_failure
 
 typedef struct itti_mme_app_connection_establishment_cnf_s {
   mme_ue_s1ap_id_t        ue_id;
@@ -110,49 +114,42 @@ typedef struct itti_mme_app_initial_context_setup_rsp_s {
   s1u_teid_t              gtp_teid[BEARERS_PER_UE];
 } itti_mme_app_initial_context_setup_rsp_t;
 
-typedef struct itti_mme_app_create_dedicated_bearer_req_s {
+typedef struct itti_mme_app_activate_bearer_req_s {
   /* UE identifier */
   mme_ue_s1ap_id_t                  ue_id;
   pdn_cid_t                         cid;
   ebi_t                             linked_ebi;
-  uint8_t                           num_bearers;
   /** No EBI will set yet. */
-  struct fteid_set_s               *fteid_set[BEARERS_PER_UE];
-  ebi_t                             ebis[BEARERS_PER_UE];
-  s1u_teid_t                        saegw_s1u_teid[BEARERS_PER_UE];
-  traffic_flow_template_t          *tfts[BEARERS_PER_UE];
-  bearer_qos_t                      bearer_qos_vals[BEARERS_PER_UE];
+  bearer_contexts_to_be_created_t  *bcs_to_be_created;
+} itti_mme_app_activate_bearer_req_t;
 
-  protocol_configuration_options_t *pcos[BEARERS_PER_UE];
-} itti_mme_app_create_dedicated_bearer_req_t;
-
-typedef struct itti_mme_app_create_dedicated_bearer_rsp_s {
+typedef struct itti_mme_app_activate_bearer_cnf_s {
   /* UE identifier */
-  mme_ue_s1ap_id_t                  ue_id;
-  ebi_t                             ebi;
-} itti_mme_app_create_dedicated_bearer_rsp_t;
+  mme_ue_s1ap_id_t                      ue_id;
+  ebi_t                                 ebi;
+} itti_mme_app_activate_bearer_cnf_t;
 
-typedef struct itti_mme_app_create_dedicated_bearer_rej_s {
+typedef struct itti_mme_app_activate_bearer_rej_s {
   /* UE identifier */
-  mme_ue_s1ap_id_t                  ue_id;
-  ebi_t                             ebi;
-} itti_mme_app_create_dedicated_bearer_rej_t;
+  mme_ue_s1ap_id_t                      ue_id;
+  ebi_t                                 ebi;
+} itti_mme_app_activate_bearer_rej_t;
 
-typedef struct itti_mme_app_delete_dedicated_bearer_req_s {
+typedef struct itti_mme_app_deactivate_bearer_req_s {
   /* UE identifier */
   mme_ue_s1ap_id_t                  ue_id;
   ebi_t                             ded_ebi;
   ebi_t                             def_ebi;
   pdn_cid_t                         pid;
-} itti_mme_app_delete_dedicated_bearer_req_t;
+} itti_mme_app_deactivate_bearer_req_t;
 
-typedef struct itti_mme_app_delete_dedicated_bearer_rsp_s {
+typedef struct itti_mme_app_deactivate_bearer_cnf_s {
   /* UE identifier */
   mme_ue_s1ap_id_t                  ue_id;
   ebi_t                             ded_ebi;
   ebi_t                             def_ebi;
   pdn_cid_t                         pid;
-} itti_mme_app_delete_dedicated_bearer_rsp_t;
+} itti_mme_app_deactivate_bearer_cnf_t;
 
 typedef struct itti_mme_app_s1ap_mme_ue_id_notification_s {
   enb_ue_s1ap_id_t      enb_ue_s1ap_id;
@@ -164,6 +161,10 @@ typedef struct itti_mme_app_initial_context_setup_failure_s {
   mme_ue_s1ap_id_t      mme_ue_s1ap_id;
 } itti_mme_app_initial_context_setup_failure_t;
 
+typedef struct itti_mme_app_e_rab_failure_s {
+  mme_ue_s1ap_id_t      mme_ue_s1ap_id;
+  ebi_t                 ebi;
+} itti_mme_app_e_rab_failure_t;
 
 typedef struct itti_mme_app_nas_update_location_cnf_s {
   mme_ue_s1ap_id_t    ue_id;

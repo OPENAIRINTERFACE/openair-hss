@@ -30,11 +30,15 @@
 
 MESSAGE_DEF(MME_APP_CONNECTION_ESTABLISHMENT_CNF  , MESSAGE_PRIORITY_MED, itti_mme_app_connection_establishment_cnf_t  , mme_app_connection_establishment_cnf)
 MESSAGE_DEF(MME_APP_INITIAL_CONTEXT_SETUP_RSP     , MESSAGE_PRIORITY_MED, itti_mme_app_initial_context_setup_rsp_t  ,    mme_app_initial_context_setup_rsp)
-MESSAGE_DEF(MME_APP_CREATE_DEDICATED_BEARER_REQ   , MESSAGE_PRIORITY_MED, itti_mme_app_create_dedicated_bearer_req_t  ,  mme_app_create_dedicated_bearer_req)
-MESSAGE_DEF(MME_APP_CREATE_DEDICATED_BEARER_RSP   , MESSAGE_PRIORITY_MED, itti_mme_app_create_dedicated_bearer_rsp_t  ,  mme_app_create_dedicated_bearer_rsp)
-MESSAGE_DEF(MME_APP_CREATE_DEDICATED_BEARER_REJ   , MESSAGE_PRIORITY_MED, itti_mme_app_create_dedicated_bearer_rej_t  ,  mme_app_create_dedicated_bearer_rej)
-MESSAGE_DEF(MME_APP_DELETE_DEDICATED_BEARER_REQ   , MESSAGE_PRIORITY_MED, itti_mme_app_delete_dedicated_bearer_req_t  ,  mme_app_delete_dedicated_bearer_req)
-MESSAGE_DEF(MME_APP_DELETE_DEDICATED_BEARER_RSP   , MESSAGE_PRIORITY_MED, itti_mme_app_delete_dedicated_bearer_rsp_t  ,  mme_app_delete_dedicated_bearer_rsp)
+
+MESSAGE_DEF(MME_APP_ACTIVATE_BEARER_REQ           , MESSAGE_PRIORITY_MED, itti_mme_app_activate_bearer_req_t  ,  mme_app_activate_bearer_req)
+MESSAGE_DEF(MME_APP_ACTIVATE_BEARER_CNF           , MESSAGE_PRIORITY_MED, itti_mme_app_activate_bearer_cnf_t  ,  mme_app_activate_bearer_cnf)
+MESSAGE_DEF(MME_APP_ACTIVATE_BEARER_REJ           , MESSAGE_PRIORITY_MED, itti_mme_app_activate_bearer_rej_t  ,  mme_app_activate_bearer_rej)
+
+MESSAGE_DEF(MME_APP_DEACTIVATE_BEARER_REQ         , MESSAGE_PRIORITY_MED, itti_mme_app_deactivate_bearer_req_t  ,  mme_app_deactivate_bearer_req)
+MESSAGE_DEF(MME_APP_DEACTIVATE_BEARER_CNF         , MESSAGE_PRIORITY_MED, itti_mme_app_deactivate_bearer_cnf_t  ,  mme_app_deactivate_bearer_cnf)
+
+MESSAGE_DEF(MME_APP_E_RAB_FAILURE                 , MESSAGE_PRIORITY_MED, itti_mme_app_e_rab_failure_t  ,  mme_app_e_rab_failure)
 
 /** New message to signal the MME_UE_S1AP_ID to S1AP. */
 MESSAGE_DEF(MME_APP_S1AP_MME_UE_ID_NOTIFICATION   , MESSAGE_PRIORITY_MED, itti_mme_app_s1ap_mme_ue_id_notification_t    ,  mme_app_s1ap_mme_ue_id_notification)

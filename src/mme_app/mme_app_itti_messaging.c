@@ -559,93 +559,109 @@ void notify_s1ap_new_ue_mme_s1ap_id_association (const sctp_assoc_id_t   assoc_i
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 
+void
+mme_app_itti_e_rab_failure(mme_ue_s1ap_id_t ue_id, ebi_t ebi){
+  MessageDef                             *message_p = NULL;
+
+  OAILOG_FUNC_IN (LOG_MME_APP);
+
+  OAILOG_DEBUG (LOG_MME_APP, "Sending E-RAB Failure for ueId " MME_UE_S1AP_ID_FMT " for ebi %d to deactivate the bearer. \n",
+      ue_id, ebi);
+
+  message_p = itti_alloc_new_message (TASK_MME_APP, MME_APP_E_RAB_FAILURE);
+  AssertFatal (message_p , "itti_alloc_new_message Failed");
+  itti_mme_app_e_rab_failure_t *e_rab_failure = &message_p->ittiMsg.mme_app_e_rab_failure;
+  e_rab_failure->mme_ue_s1ap_id = ue_id;
+  e_rab_failure->ebi = ebi;
+
+  OAILOG_FUNC_OUT (LOG_MME_APP);
+}
+
 //------------------------------------------------------------------------------
 int
 mme_app_send_s11_create_bearer_rsp (
   struct ue_context_s *const ue_context,
-//  struct in_addr  peer_ip,
-  teid_t          saegw_s11_teid,
-  struct bearer_contexts_sucess_s *bearer_contexts_success,
-  struct bearer_contexts_sucess_s *bearer_contexts_failed)
+  pdn_context_t       *pdn_ctx,
+  void                *trxn,
+  bearer_contexts_to_be_created_t *bcs_tbc)
 {
   /*
-   * Keep the identifier to the default APN
+   * Keep the identifier to the default APN.
    */
   context_identifier_t                    context_identifier = 0;
   MessageDef                             *message_p = NULL;
   itti_s11_create_session_request_t      *session_request_p = NULL;
+  bearer_context_t                       *bc_success = NULL;
   int                                     rc = RETURNok;
 
   // todo: handover flag in operation-identifier?!
 
   OAILOG_FUNC_IN (LOG_MME_APP);
   DevAssert (ue_context);
+  DevAssert(bcs_tbc);
+  DevAssert(pdn_ctx);
+
   OAILOG_DEBUG (LOG_MME_APP, "Sending Create Bearer Response for imsi " IMSI_64_FMT "\n", ue_context->imsi);
 
   message_p = itti_alloc_new_message (TASK_MME_APP, S11_CREATE_BEARER_RESPONSE);
   AssertFatal (message_p , "itti_alloc_new_message Failed");
   itti_s11_create_bearer_response_t *s11_create_bearer_response = &message_p->ittiMsg.s11_create_bearer_response;
   s11_create_bearer_response->local_teid = ue_context->mme_teid_s11;
-  s11_create_bearer_response->trxn = NULL;
+  s11_create_bearer_response->trxn = trxn;
   s11_create_bearer_response->cause.cause_value = 0;
 
-  int msg_bearer_index = 0;
-  bearer_context_t *bearer_context = NULL;
-  if(bearer_contexts_success){
-    LIST_FOREACH(bearer_context, bearer_contexts_success, temp_entries) {
-//
-////  RB_FOREAC(for (int i = 0; i < e_rab_setup_rsp->e_rab_setup_list.no_of_items; i++) {
-////    e_rab_id_t e_rab_id = e_rab_setup_rsp->e_rab_setup_list.item[i].e_rab_id;
-////    bearer_context_t * bc = NULL;
-//      mme_app_get_session_bearer_context_from_all(ue_context_p, (ebi_t) e_rab_id, &bc);
-//    if (bearer_context_to_establish->bearer_state & BEARER_STATE_ENB_CREATED) {
-      s11_create_bearer_response->cause.cause_value = REQUEST_ACCEPTED;
-      s11_create_bearer_response->bearer_contexts.bearer_contexts[msg_bearer_index].eps_bearer_id = bearer_context->ebi;
-      s11_create_bearer_response->bearer_contexts.bearer_contexts[msg_bearer_index].cause.cause_value = REQUEST_ACCEPTED;
+  /** Iterate through the bearers to be created and check which ones where established. */
+  for(int num_bc = 0; num_bc < bcs_tbc->num_bearer_context; num_bc++){
+    /** Check if the bearer is a session bearer. */
+    bc_success = mme_app_get_session_bearer_context(pdn_ctx, bcs_tbc->bearer_contexts[num_bc].eps_bearer_id);
+    if(bc_success){
+      OAILOG_DEBUG (LOG_MME_APP, "Bearer with ebi %d successfully established for ueId " MME_UE_S1AP_ID_FMT ". Current CBResp cause value %d. \n",
+          ue_context->mme_ue_s1ap_id, s11_create_bearer_response->cause);
+      if(s11_create_bearer_response->cause.cause_value == REQUEST_REJECTED)
+        s11_create_bearer_response->cause.cause_value= REQUEST_ACCEPTED_PARTIALLY;
+      if(!s11_create_bearer_response->cause.cause_value)
+        s11_create_bearer_response->cause.cause_value = REQUEST_ACCEPTED;
+      OAILOG_DEBUG (LOG_MME_APP, "Bearer with ebi %d successfully established for ueId " MME_UE_S1AP_ID_FMT ". New CBResp cause value %d. \n",
+             ue_context->mme_ue_s1ap_id, s11_create_bearer_response->cause.cause_value);
+
+      /** The error case is at least PARTIALLY ACCEPTED. */
+      s11_create_bearer_response->bearer_contexts.bearer_contexts[num_bc].eps_bearer_id     = bcs_tbc->bearer_contexts[num_bc].eps_bearer_id;
+      s11_create_bearer_response->bearer_contexts.bearer_contexts[num_bc].cause.cause_value = REQUEST_ACCEPTED;
       //  FTEID eNB
-      s11_create_bearer_response->bearer_contexts.bearer_contexts[msg_bearer_index].s1u_enb_fteid = bearer_context->enb_fteid_s1u;
-
+      memcpy(&s11_create_bearer_response->bearer_contexts.bearer_contexts[num_bc].s1u_enb_fteid,
+          &bc_success->enb_fteid_s1u, sizeof(bc_success->enb_fteid_s1u));
       // FTEID SGW S1U
-      s11_create_bearer_response->bearer_contexts.bearer_contexts[msg_bearer_index].s1u_sgw_fteid = bearer_context->s_gw_fteid_s1u;       ///< This IE shall be sent on the S11 interface. It shall be used
+      memcpy(&s11_create_bearer_response->bearer_contexts.bearer_contexts[num_bc].s1u_sgw_fteid,
+          &bc_success->s_gw_fteid_s1u, sizeof(bc_success->s_gw_fteid_s1u));       ///< This IE shall be sent on the S11 interface. It shall be used
       s11_create_bearer_response->bearer_contexts.num_bearer_context++;
-      msg_bearer_index++;
+    }else{
+      OAILOG_WARNING (LOG_MME_APP, "Bearer with ebi %d could not be established for ueId " MME_UE_S1AP_ID_FMT ". Current CBResp cause value %d. \n",
+            ue_context->mme_ue_s1ap_id, s11_create_bearer_response->cause);
+        if(s11_create_bearer_response->cause.cause_value == REQUEST_ACCEPTED)
+          s11_create_bearer_response->cause.cause_value = REQUEST_ACCEPTED_PARTIALLY;
+        if(!s11_create_bearer_response->cause.cause_value)
+          s11_create_bearer_response->cause.cause_value = REQUEST_REJECTED;
+        OAILOG_DEBUG (LOG_MME_APP, "Bearer with ebi %d could not be established for ueId " MME_UE_S1AP_ID_FMT ". New CBResp cause value %d. \n",
+               ue_context->mme_ue_s1ap_id, s11_create_bearer_response->cause.cause_value);
+
+        s11_create_bearer_response->bearer_contexts.bearer_contexts[num_bc].eps_bearer_id     = 0;
+        s11_create_bearer_response->bearer_contexts.bearer_contexts[num_bc].cause.cause_value = REQUEST_REJECTED;
+        // FTEID SGW S1U
+        memcpy(&s11_create_bearer_response->bearer_contexts.bearer_contexts[num_bc].s1u_sgw_fteid,
+            &bcs_tbc->bearer_contexts[num_bc].s1u_sgw_fteid, sizeof(bcs_tbc->bearer_contexts[num_bc].s1u_sgw_fteid));       ///< This IE shall be sent on the S11 interface. It shall be used
+        s11_create_bearer_response->bearer_contexts.num_bearer_context++;
     }
   }
-
-  /** Install the failed bearer contexts. */
-  bearer_context = NULL;
-  /** Update the result. */
-  if(bearer_contexts_failed){
-    if (REQUEST_ACCEPTED == s11_create_bearer_response->cause.cause_value) {
-      s11_create_bearer_response->cause.cause_value = REQUEST_ACCEPTED_PARTIALLY;
-    } else {
-      s11_create_bearer_response->cause.cause_value = REQUEST_REJECTED;
-    }
-    /* Set the beaer contexts. Continue with the last actual msg_bearer_index. */
-    LIST_FOREACH(bearer_context, bearer_contexts_failed, temp_entries) {
-      s11_create_bearer_response->bearer_contexts.bearer_contexts[msg_bearer_index].eps_bearer_id = bearer_context->ebi;
-      s11_create_bearer_response->bearer_contexts.bearer_contexts[msg_bearer_index].cause.cause_value = REQUEST_REJECTED;
-
-      // FTEID SGW S1U (also in reject case)
-      s11_create_bearer_response->bearer_contexts.bearer_contexts[msg_bearer_index].s1u_sgw_fteid = bearer_context->s_gw_fteid_s1u;       ///< This IE shall be sent on the S11 interface. It shall be used
-      s11_create_bearer_response->bearer_contexts.num_bearer_context++;
-      msg_bearer_index++;
-    }
-  }
-
-  s11_create_bearer_response->teid = saegw_s11_teid;
-////  s11_create_bearer_response->
-//
-//  ////  mme_config_read_lock (&mme_config);
-//////  session_request_p->peer_ip = mme_config.ipv4.sgw_s11;
-//////  mme_config_unlock (&mme_config);
-////  // TODO perform SGW selection
-////  // Actually, since S and P GW are bundled together, there is no PGW selection (based on PGW id in ULA, or DNS query based on FQDN)
-//  if (1) {
-//    // TODO prototype may change
-//    mme_app_select_sgw(serving_tai, &session_request_p->peer_ip);
-//  }
-
+  s11_create_bearer_response->teid = pdn_ctx->s_gw_teid_s11_s4;
+////  ////  mme_config_read_lock (&mme_config);
+////////  session_request_p->peer_ip = mme_config.ipv4.sgw_s11;
+////////  mme_config_unlock (&mme_config);
+//////  // TODO perform SGW selection
+//////  // Actually, since S and P GW are bundled together, there is no PGW selection (based on PGW id in ULA, or DNS query based on FQDN)
+////  if (1) {
+////    // TODO prototype may change
+////    mme_app_select_sgw(serving_tai, &session_request_p->peer_ip);
+////  }
 
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME,  MSC_S11_MME ,
       NULL, 0, "0 S11_CREATE_BEARER_RESPONSE teid %u", s11_create_bearer_response->teid);

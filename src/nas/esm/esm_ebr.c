@@ -53,6 +53,7 @@
 #include "3gpp_24.008.h"
 #include "3gpp_29.274.h"
 #include "common_defs.h"
+#include "assertions.h"
 #include "commonDef.h"
 #include "mme_app_ue_context.h"
 #include "emm_data.h"
@@ -167,13 +168,12 @@ void esm_ebr_initialize (void)
  **      Others:    _esm_ebr_data                              **
  **                                                                        **
  ***************************************************************************/
-//#include "mme_app_bearer_context.h"
 int esm_ebr_assign (emm_data_context_t * emm_context, ebi_t ebi, pdn_context_t *pdn_context)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   esm_ebr_context_t                      *ebr_ctx = NULL;
   bearer_context_t                       *bearer_context = NULL;
-  bearer_context_t* bearer_context_2 = NULL;
+  bearer_context_t                       *bearer_context_2 = NULL;
 
   int                                     i;
 
@@ -527,10 +527,13 @@ esm_ebr_set_status (
   ue_context_t                        *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
 
   /*
-   * Get EPS bearer context data
+   * Get EPS bearer context data from the reserved bearers.
    */
   mme_app_get_session_bearer_context_from_all(ue_context, ebi, &bearer_context);
 
+  /*
+   * Get EPS bearer context data
+   */
   if ((bearer_context == NULL) || (bearer_context->ebi != ebi)) {
     /*
      * EPS bearer context not assigned

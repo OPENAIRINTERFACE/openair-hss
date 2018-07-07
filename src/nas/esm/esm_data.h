@@ -194,6 +194,9 @@ typedef struct esm_context_s {
   int        n_active_pdns;     /* Number of active PDN connections     */
   int        n_pdns;
   bool       is_emergency;  /* Indicates whether a PDN connection for emergency bearer services is established       */
+
+  esm_procedures_t  *esm_procedures;
+
   struct esm_proc_data_s *esm_proc_data;
   struct nas_timer_s      T3489;
 } esm_context_t;

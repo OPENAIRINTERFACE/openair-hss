@@ -99,6 +99,9 @@ _clear_emm_ctxt(emm_data_context_t *emm_context) {
   // todo: check if necessary!
   nas_delete_all_emm_procedures(emm_context);
   
+  /** Free all ESM procedure. */
+  nas_delete_all_esm_procedures(emm_context);
+
   /** Stop/Delete all ESM procedurs & timers. */
   free_esm_context_content(&emm_context->esm_ctx);
 

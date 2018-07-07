@@ -85,7 +85,7 @@ typedef enum esm_primitive_s {
 /************************  G L O B A L    T Y P E S  ************************/
 /****************************************************************************/
 
-typedef struct itti_mme_app_create_dedicated_bearer_req_s esm_eps_create_dedicated_bearer_req_t;
+typedef struct itti_mme_app_activate_bearer_req_s esm_eps_create_dedicated_bearer_req_t;
 
 /*
  * Error code returned upon processing ESM-SAP primitive
@@ -105,6 +105,10 @@ typedef enum {
  */
 typedef struct esm_activate_eps_default_bearer_context_s {
 } esm_activate_eps_default_bearer_context_t;
+
+typedef struct esm_bearer_resource_allocate_rej_s{
+  ebi_t             ebi;
+}esm_bearer_resource_allocate_rej_t;
 
 /*
  * ESM primitive for PDN config response
@@ -189,6 +193,7 @@ typedef union {
   esm_pdn_disconnect_t pdn_disconnect;
   esm_eps_bearer_context_deactivate_t eps_bearer_context_deactivate;
   esm_eps_create_dedicated_bearer_req_t eps_dedicated_bearer_context_activate;
+  esm_bearer_resource_allocate_rej_t    esm_bearer_resource_allocate_rej;
 } esm_sap_data_t;
 
 struct emm_data_context_s;

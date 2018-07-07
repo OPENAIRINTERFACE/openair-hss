@@ -117,7 +117,7 @@ int mme_app_handle_authentication_info_answer(const s6a_auth_info_ans_t * const 
 
 void  mme_app_handle_release_access_bearers_resp (const itti_s11_release_access_bearers_response_t * const rel_access_bearers_rsp_pP);
 
-void mme_app_handle_s11_create_bearer_req        (const itti_s11_create_bearer_request_t * const create_bearer_request_pP);
+void mme_app_handle_s11_create_bearer_req        (itti_s11_create_bearer_request_t * create_bearer_request_pP);
 
 void mme_app_bearer_create_workflow (ue_context_t * const ue_context, const pdn_cid_t cid);
 
@@ -133,18 +133,11 @@ int mme_app_handle_nas_dl_req ( itti_nas_dl_data_req_t *const nas_dl_req_pP);
 
 void mme_app_handle_e_rab_setup_rsp (itti_s1ap_e_rab_setup_rsp_t  * const e_rab_setup_rsp);
 
-void mme_app_handle_create_dedicated_bearer_rsp (itti_mme_app_create_dedicated_bearer_rsp_t   * const create_dedicated_bearer_rsp);
+void mme_app_handle_activate_bearer_cnf (itti_mme_app_activate_bearer_cnf_t   * const activate_bearer_cnf);
 
-void mme_app_handle_create_dedicated_bearer_rej (itti_mme_app_create_dedicated_bearer_rej_t   * const create_dedicated_bearer_rej);
+void mme_app_handle_activate_bearer_rej (itti_mme_app_activate_bearer_rej_t   * const activate_bearer_rej);
 
 void mme_app_trigger_mme_initiated_dedicated_bearer_deactivation_procedure (ue_context_t * const ue_context, const pdn_cid_t cid);
-
-
-
-
-
-
-
 
 
 /** S1AP Handover messaging. */

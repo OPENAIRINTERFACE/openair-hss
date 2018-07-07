@@ -136,8 +136,6 @@ typedef struct emm_data_context_s {
   uint8_t                    attach_type;  /* EPS/Combined/etc. */
   additional_update_type_t   additional_update_type;
 
-//  uint             num_attach_request;/* Num attach request received               */
-
   emm_procedures_t  *emm_procedures;
 
   uint32_t         member_present_mask; /* bitmask, see significance of bits below */

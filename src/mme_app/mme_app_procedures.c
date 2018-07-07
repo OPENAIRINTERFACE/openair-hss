@@ -79,8 +79,7 @@ static void mme_app_free_s10_procedure_mme_handover(mme_app_s10_proc_t **s10_pro
 //    return 0;
 //}
 //
-//RB_GENERATE (BearerFteids, fteid_set_s, fteid_set_rbt_Node, fteid_set_compare_s1u_saegw)
-
+//RB_GENERATE (BearerF0teids, fteid_set_s, fteid_set_rbt_Node, fteid_set_compare_s1u_saegw)
 
 //------------------------------------------------------------------------------
 void mme_app_delete_s11_procedures(ue_context_t * const ue_context)
@@ -111,9 +110,6 @@ mme_app_s11_proc_create_bearer_t* mme_app_create_s11_procedure_create_bearer(ue_
   mme_app_s11_proc_t *s11_proc = (mme_app_s11_proc_t *)s11_proc_create_bearer;
 
   /** Initialize the of the procedure. */
-  LIST_INIT(s11_proc_create_bearer->bearer_contexts_success);
-  LIST_INIT(s11_proc_create_bearer->bearer_contexts_failed);
-
 
   if (!ue_context->s11_procedures) {
     ue_context->s11_procedures = calloc(1, sizeof(struct s11_procedures_s));
@@ -138,6 +134,7 @@ mme_app_s11_proc_create_bearer_t* mme_app_get_s11_procedure_create_bearer(ue_con
   }
   return NULL;
 }
+
 //------------------------------------------------------------------------------
 void mme_app_delete_s11_procedure_create_bearer(ue_context_t * const ue_context)
 {
@@ -153,12 +150,15 @@ void mme_app_delete_s11_procedure_create_bearer(ue_context_t * const ue_context)
     }
   }
 }
+
 //------------------------------------------------------------------------------
-static void mme_app_free_s11_procedure_create_bearer(mme_app_s11_proc_t **s11_proc)
+static void mme_app_free_s11_procedure_create_bearer(mme_app_s11_proc_t **s11_proc_cbr)
 {
   // DO here specific releases (memory,etc)
-  // nothing to do actually
-  free_wrapper((void**)s11_proc);
+  /** Remove the bearer contexts to be setup. */
+  mme_app_s11_proc_create_bearer_t ** s11_proc_create_bearer_pp = (mme_app_s11_proc_create_bearer_t**)s11_proc_cbr;
+  free_bearer_contexts_to_be_created(&(*s11_proc_create_bearer_pp)->bcs_tbc);
+  free_wrapper((void**)s11_proc_create_bearer_pp);
 }
 
 /**

@@ -80,8 +80,12 @@ static void *nas_intertask_interface (void *args_p)
         }
         break;
 
-    case MME_APP_CREATE_DEDICATED_BEARER_REQ:
-      nas_proc_create_dedicated_bearer(&MME_APP_CREATE_DEDICATED_BEARER_REQ (received_message_p));
+    case MME_APP_ACTIVATE_BEARER_REQ:
+      nas_proc_activate_dedicated_bearer(&MME_APP_ACTIVATE_BEARER_REQ (received_message_p));
+      break;
+
+    case MME_APP_E_RAB_FAILURE:
+      nas_proc_e_rab_failure(&MME_APP_E_RAB_FAILURE (received_message_p));
       break;
 
     case NAS_DOWNLINK_DATA_CNF:{

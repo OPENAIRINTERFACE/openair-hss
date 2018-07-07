@@ -224,8 +224,6 @@ esm_sap_send (esm_sap_t * msg)
     rc = esm_proc_eps_bearer_context_deactivate(msg->ctx, msg->data.pdn_disconnect.local_delete, msg->data.pdn_disconnect.default_ebi, msg->data.pdn_disconnect.cid, &esm_cause);
     if (rc != RETURNerror) {
 
-
-
       /** If no local pdn context deletion, directly continue with the NAS/S1AP message. */
       int pid = esm_proc_pdn_disconnect_request( msg->ctx, PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED, msg->data.pdn_disconnect.cid, msg->data.pdn_disconnect.default_ebi, &esm_cause);
       if (pid == RETURNerror) {
@@ -234,7 +232,6 @@ esm_sap_send (esm_sap_t * msg)
         /** Delete the PDN connection locally (todo: also might do this together with removing all bearers/default bearer). */
         proc_tid_t pti = _pdn_connectivity_delete (msg->ctx, msg->data.pdn_disconnect.cid, msg->data.pdn_disconnect.default_ebi);
       }
-
 
     }else{
       OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
@@ -289,6 +286,14 @@ esm_sap_send (esm_sap_t * msg)
     break;
 
   case ESM_BEARER_RESOURCE_ALLOCATE_REJ:
+    /*
+     * Reject the bearer, stop the timer and put it into the empty pool.
+     */
+    rc = esm_proc_eps_bearer_context_deactivate (msg->ctx, true, msg->data.esm_bearer_resource_allocate_rej.ebi,
+        PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED, NULL);
+    /** Inform the MME_APP of the removal. Will eventually trigger a CBResp. */
+    nas_itti_activate_bearer_rej(msg->ue_id, ebi);
+
     break;
 
   case ESM_BEARER_RESOURCE_MODIFY_REQ:
@@ -318,17 +323,23 @@ esm_sap_send (esm_sap_t * msg)
     esm_eps_create_dedicated_bearer_req_t* bearer_activate = &msg->data.eps_dedicated_bearer_context_activate;
     if (msg->is_standalone) {
       esm_cause_t esm_cause;
-      rc = esm_proc_dedicated_eps_bearer_context (msg->ctx,
+      rc = esm_proc_dedicated_eps_bearer_context (msg->ctx,     /**< Create an ESM procedure and store the bearers in the procedure as pending. */
           bearer_activate->linked_ebi,
           0,
           bearer_activate->cid,
-          &bearer_activate->num_bearers,
-          bearer_activate->ebis,
-          bearer_activate->tfts,
-          bearer_activate->pcos,
-          bearer_activate->bearer_qos_vals,
+          bearer_activate->bcs_to_be_created,
           &esm_cause);
-      if (rc != RETURNok) {
+      if (rc != RETURNok) {   /**< We assume that no ESM procedure exists. */
+        OAILOG_ERROR (LOG_NAS_ESM, "ESM-SAP   - Failed to handle CN bearer context procedure due SYSTEM_FAILURE!\n", _esm_sap_primitive_str[primitive - ESM_START - 1], primitive);
+        /** Reject all requested bearers due SYSTEM_FAILURE. */
+        bearer_contexts_marked_for_removal_t bcs_marked_for_removal;
+        memset(&bcs_marked_for_removal, 0, sizeof(bearer_contexts_marked_for_removal_t));
+        for(int num_bc = 0; num_bc < bearer_activate->bcs_to_be_created->num_bearer_context; num_bc++){
+          bcs_marked_for_removal.bearer_contexts[num_bc].cause.cause_value = SYSTEM_FAILURE;
+          bcs_marked_for_removal.bearer_contexts[num_bc].eps_bearer_id = bearer_activate->bcs_to_be_created->bearer_contexts[num_bc].eps_bearer_id;
+        }
+        /** Send a NAS ITTI directly. */
+//        nas_itti_dedicated_eps_bearer_reject(msg->ue_id, &bcs_marked_for_removal);
         break;
       }
       /* Send Activate Dedicated Bearer Context Request */
@@ -337,7 +348,7 @@ esm_sap_send (esm_sap_t * msg)
           &msg->data, msg->send);
     }
   }
-    break;
+  break;
 
   case ESM_DEDICATED_EPS_BEARER_CONTEXT_ACTIVATE_CNF:
     break;
@@ -1005,22 +1016,26 @@ _esm_sap_send (
       const   esm_eps_create_dedicated_bearer_req_t *msg = &data->eps_dedicated_bearer_context_activate;
 
       EpsQualityOfService eps_qos = {0};
+      /** Sending a EBR-Request per bearer context. */
+      for(int num_bc = 0; num_bc < msg->bcs_to_be_created->num_bearer_context; num_bc++){
+        rc = qos_params_to_eps_qos(msg->bcs_to_be_created->bearer_contexts[num_bc].bearer_level_qos.qci,
+            msg->bcs_to_be_created->bearer_contexts[num_bc].bearer_level_qos.mbr.br_dl,
+            msg->bcs_to_be_created->bearer_contexts[num_bc].bearer_level_qos.mbr.br_ul,
 
-      /** todo: put them all into a single bearer context. */
-      // todo: conversion of bitrates
-      for(int num_bc = 0; num_bc < msg->num_bearers; num_bc++){
-        rc = qos_params_to_eps_qos(msg->bearer_qos_vals[num_bc].qci, msg->bearer_qos_vals[num_bc].mbr.br_dl, msg->bearer_qos_vals[num_bc].mbr.br_ul, msg->bearer_qos_vals[num_bc].gbr.br_dl, msg->bearer_qos_vals[num_bc].gbr.br_ul,
+            msg->bcs_to_be_created->bearer_contexts[num_bc].bearer_level_qos.gbr.br_dl,
+            msg->bcs_to_be_created->bearer_contexts[num_bc].bearer_level_qos.gbr.br_ul,
             &eps_qos, false);
 
         if (RETURNok == rc) {
           rc = esm_send_activate_dedicated_eps_bearer_context_request (
-              pti, msg->ebis[num_bc],
+              pti, msg->bcs_to_be_created->bearer_contexts[num_bc].eps_bearer_id,
               &esm_msg.activate_dedicated_eps_bearer_context_request,
-              msg->linked_ebi, &eps_qos, msg->tfts[num_bc], msg->pcos[num_bc]);
+              msg->linked_ebi, &eps_qos,
+              &msg->bcs_to_be_created->bearer_contexts[num_bc].tft,
+              &msg->bcs_to_be_created->bearer_contexts[num_bc].pco);
 
-          esm_procedure = esm_proc_dedicated_eps_bearer_context_request;
-
-      }
+          esm_procedure = esm_proc_dedicated_eps_bearer_context_request; /**< Not the procedure. */
+        }
       }
     }
     break;
