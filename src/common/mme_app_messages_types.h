@@ -119,6 +119,7 @@ typedef struct itti_mme_app_activate_bearer_req_s {
   mme_ue_s1ap_id_t                  ue_id;
   pdn_cid_t                         cid;
   ebi_t                             linked_ebi;
+  pti_t                             pti;
   /** No EBI will set yet. */
   bearer_contexts_to_be_created_t  *bcs_to_be_created;
 } itti_mme_app_activate_bearer_req_t;
@@ -133,14 +134,17 @@ typedef struct itti_mme_app_activate_bearer_rej_s {
   /* UE identifier */
   mme_ue_s1ap_id_t                      ue_id;
   ebi_t                                 ebi;
+
 } itti_mme_app_activate_bearer_rej_t;
 
 typedef struct itti_mme_app_deactivate_bearer_req_s {
   /* UE identifier */
+#define ESM_SAP_ALL_EBI     0xff
   mme_ue_s1ap_id_t                  ue_id;
-  ebi_t                             ded_ebi;
   ebi_t                             def_ebi;
-  pdn_cid_t                         pid;
+  pti_t                             pti;
+  pdn_cid_t                         cid;
+  ebi_list_t                        ebis;
 } itti_mme_app_deactivate_bearer_req_t;
 
 typedef struct itti_mme_app_deactivate_bearer_cnf_s {

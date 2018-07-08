@@ -590,7 +590,6 @@ mme_app_send_s11_create_bearer_rsp (
    */
   context_identifier_t                    context_identifier = 0;
   MessageDef                             *message_p = NULL;
-  itti_s11_create_session_request_t      *session_request_p = NULL;
   bearer_context_t                       *bc_success = NULL;
   int                                     rc = RETURNok;
 
@@ -665,6 +664,59 @@ mme_app_send_s11_create_bearer_rsp (
 
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME,  MSC_S11_MME ,
       NULL, 0, "0 S11_CREATE_BEARER_RESPONSE teid %u", s11_create_bearer_response->teid);
+  itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
+  OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
+}
+
+//------------------------------------------------------------------------------
+int
+mme_app_send_s11_delete_bearer_rsp (
+  struct ue_context_s *const ue_context,
+  pdn_context_t       *pdn_ctx,
+  void                *trxn,
+  ebi_list_t          *ebi_list)
+{
+  /*
+   * Keep the identifier to the default APN.
+   */
+  MessageDef                             *message_p = NULL;
+  int                                     rc = RETURNok;
+
+  // todo: handover flag in operation-identifier?!
+
+  OAILOG_FUNC_IN (LOG_MME_APP);
+  DevAssert (ue_context);
+  DevAssert(ebi_list);
+
+  OAILOG_DEBUG (LOG_MME_APP, "Sending Delete Bearer Response for imsi " IMSI_64_FMT "\n", ue_context->imsi);
+
+  message_p = itti_alloc_new_message (TASK_MME_APP, S11_DELETE_BEARER_RESPONSE);
+  AssertFatal (message_p , "itti_alloc_new_message Failed");
+  itti_s11_delete_bearer_response_t *s11_delete_bearer_response = &message_p->ittiMsg.s11_delete_bearer_response;
+  s11_delete_bearer_response->local_teid = ue_context->mme_teid_s11;
+  s11_delete_bearer_response->trxn = trxn;
+  s11_delete_bearer_response->cause.cause_value = REQUEST_ACCEPTED;
+  s11_delete_bearer_response->linked_eps_bearer_id = pdn_ctx->default_ebi;
+
+  /** Iterate through the bearers to be created and check which ones where established. */
+  for(int num_ebi = 0; num_ebi < ebi_list->num_ebi; num_ebi++){
+    /** Check if the bearer is a session bearer. */
+    s11_delete_bearer_response->bearer_contexts.bearer_contexts[num_ebi].cause.cause_value          = REQUEST_ACCEPTED;
+    s11_delete_bearer_response->bearer_contexts.bearer_contexts[num_ebi].eps_bearer_id  = ebi_list->ebis[num_ebi];
+  }
+  s11_delete_bearer_response->teid = pdn_ctx->s_gw_teid_s11_s4;
+////  ////  mme_config_read_lock (&mme_config);
+////////  session_request_p->peer_ip = mme_config.ipv4.sgw_s11;
+////////  mme_config_unlock (&mme_config);
+//////  // TODO perform SGW selection
+//////  // Actually, since S and P GW are bundled together, there is no PGW selection (based on PGW id in ULA, or DNS query based on FQDN)
+////  if (1) {
+////    // TODO prototype may change
+////    mme_app_select_sgw(serving_tai, &session_request_p->peer_ip);
+////  }
+
+  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME,  MSC_S11_MME ,
+      NULL, 0, "0 S11_DELETE_BEARER_RESPONSE teid %u", s11_delete_bearer_response->teid);
   itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
 }

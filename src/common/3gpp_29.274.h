@@ -478,6 +478,7 @@ bearer_context_to_be_created_t bearer_contexts[MSG_CREATE_SESSION_REQUEST_MAX_BE
 typedef struct bearer_context_to_be_removed_s {
   uint8_t eps_bearer_id;      ///< EPS Bearer ID, Mandatory
   fteid_t s4u_sgsn_fteid;     ///< S4-U SGSN F-TEID, Conditional , redundant
+  gtpv2c_cause_t cause;
 } bearer_context_to_be_removed_t; // Within Create Session Request, Modify Bearer Request, Modify Access Bearers Request
 
 
@@ -608,6 +609,29 @@ typedef struct bearer_contexts_within_create_bearer_response_s {
   uint8_t num_bearer_context;
   bearer_context_within_create_bearer_response_t bearer_contexts[MSG_CREATE_BEARER_RESPONSE_MAX_BEARER_CONTEXTS];
 } bearer_contexts_within_create_bearer_response_t;
+
+//-------------------------------------
+// 7.2.10-2: Bearer Context within Delete Bearer Response
+
+typedef struct bearer_context_within_delete_bearer_response_s {
+  uint8_t      eps_bearer_id;       ///< EBI
+  gtpv2c_cause_t  cause;               ///< This IE shall indicate if the bearer handling was successful,
+                                    ///< and if not, it gives information on the reason.
+  protocol_configuration_options_t  pco;///< If the UE includes the PCO IE in the corresponding
+                                     ///< message, then the MME/SGSN shall copy the content of
+                                     ///< this IE transparently from the PCO IE included by the UE.
+                                     ///< If the SGW receives PCO from MME/SGSN, SGW shall
+                                     ///< forward it to the PGW. This bearer level IE takes
+                                     ///< precedence over the PCO IE in the message body if they
+} bearer_context_within_delete_bearer_response_t;
+
+#define MSG_DELETE_BEARER_REQUEST_MAX_FAILED_BEARER_CONTEXTS   11 // todo: find optimum number
+
+typedef struct bearer_contexts_within_delete_bearer_response_s {
+#define MSG_DELETE_BEARER_RESPONSE_MAX_BEARER_CONTEXTS   11
+  uint8_t num_bearer_context;
+  bearer_context_within_delete_bearer_response_t bearer_contexts[MSG_DELETE_BEARER_RESPONSE_MAX_BEARER_CONTEXTS];
+} bearer_contexts_within_delete_bearer_response_t;
 
 //-------------------------------------
 // 8.38 MM EPS Context

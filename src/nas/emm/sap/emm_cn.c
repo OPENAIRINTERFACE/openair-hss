@@ -101,6 +101,7 @@ static const char                      *_emm_cn_primitive_str[] = {
   "EMM_CN_PDN_CONNECTIVITY_FAIL",
   "EMM_CN_PDN_DISCONNECT_RES",
   "EMM_CN_ACTIVATE_DEDICATED_BEARER_REQ",
+  "EMM_CN_DEACTIVATE_DEDICATED_BEARER_REQ",
   "EMMCN_IMPLICIT_DETACH_UE",
   "EMMCN_SMC_PROC_FAIL",
 };
@@ -805,6 +806,32 @@ static int _emm_cn_activate_dedicated_bearer_req (emm_cn_activate_dedicated_bear
       esm_sap.ue_id,/*esm_sap.data.eps_dedicated_bearer_context_activate.ebi*/);
 
   rc = esm_sap_send (&esm_sap);
+  msg->bcs_to_be_created = NULL;
+
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+}
+
+//------------------------------------------------------------------------------
+static int _emm_cn_deactivate_dedicated_bearer_req (emm_cn_deactivate_dedicated_bearer_req_t * msg)
+{
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  int                                     rc = RETURNok;
+  /** Like PDN Config Response, directly forwarded to ESM. */
+  // forward to ESM
+  esm_sap_t                               esm_sap = {0};
+
+  emm_data_context_t *emm_context = emm_data_context_get( &_emm_data, msg->ue_id);
+
+  esm_sap.primitive = ESM_DEDICATED_EPS_BEARER_CONTEXT_DEACTIVATE_REQ;
+  esm_sap.ctx           = emm_context;
+  esm_sap.is_standalone = true;
+  esm_sap.ue_id         = msg->ue_id;
+  memcpy((void*)&esm_sap.data.eps_dedicated_bearer_context_deactivate, msg, sizeof(emm_cn_deactivate_dedicated_bearer_req_t)); // todo: pointer directly?
+
+  MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_ESM_MME, NULL, 0, "0 ESM_DEDICATED_EPS_BEARER_CONTEXT_DEACTIVATE_REQ ue id " MME_UE_S1AP_ID_FMT /*" ebi %u"*/,
+      esm_sap.ue_id,/*esm_sap.data.eps_dedicated_bearer_context_activate.ebi*/);
+
+  rc = esm_sap_send (&esm_sap);
 
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
@@ -920,6 +947,10 @@ int emm_cn_send (const emm_cn_t * msg)
   
   case EMMCN_ACTIVATE_DEDICATED_BEARER_REQ:
     rc = _emm_cn_activate_dedicated_bearer_req (msg->u.activate_dedicated_bearer_req);
+    break;
+
+  case EMMCN_DEACTIVATE_DEDICATED_BEARER_REQ:
+    rc = _emm_cn_deactivate_dedicated_bearer_req (msg->u.deactivate_dedicated_bearer_req);
     break;
 
   case EMMCN_IMPLICIT_DETACH_UE:

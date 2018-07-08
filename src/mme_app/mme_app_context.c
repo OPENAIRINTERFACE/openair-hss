@@ -158,7 +158,6 @@ ue_context_t *mme_create_new_ue_context (void)
     DevAssert (bearer_ctx_p != NULL);
     bearer_ctx_p->ebi = ebi;
     RB_INSERT (BearerPool, &(new_p->bearer_pool), bearer_ctx_p);
-    new_p->num_free_bearers++;
   }
   return new_p;
 }

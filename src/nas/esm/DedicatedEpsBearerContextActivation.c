@@ -139,64 +139,51 @@ esm_proc_dedicated_eps_bearer_context (
   ebi_t  default_ebi,
   const proc_tid_t   pti,                  // todo: Will always be 0 for network initiated bearer establishment.
   const pdn_cid_t    pdn_cid,              // todo: Per APN for now.
-  bearer_contexts_to_be_created_t *bcs_tbc,
+  bearer_context_to_be_created_t *bc_tbc,
   esm_cause_t *esm_cause)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   mme_ue_s1ap_id_t                        ue_id = emm_context->ue_id;
-  ebi_t                                   ebi = 0;
+  ebi_t                                   ded_ebi = 0;
   pdn_context_t                          *pdn_context = NULL;
   OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Dedicated EPS bearer context activation " "(ue_id=" MME_UE_S1AP_ID_FMT ", pid=%d)\n",
       ue_id, pdn_cid);
 
   ue_context_t                        *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
-  mme_app_get_pdn_context(ue_context, pdn_cid, 0, NULL, &pdn_context);
+  mme_app_get_pdn_context(ue_context, pdn_cid, default_ebi, NULL, &pdn_context);
   if(!pdn_context){
     OAILOG_ERROR(LOG_NAS_EMM, "EMMCN-SAP  - " "No PDN context was found for UE " MME_UE_S1AP_ID_FMT" for cid %d to assign dedicated bearers.\n", ue_context->mme_ue_s1ap_id, pdn_cid);
-    OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
-  }
-  /**
-   * Check the number of remaining dedicated bearers.
-   * todo: lock here.
-   */
-  if(ue_context->num_free_bearers < bcs_tbc->num_bearer_context){
-    // todo: take the remaining ones.
-    OAILOG_ERROR(LOG_NAS_EMM, "EMMCN-SAP  - " "%d bearer contexts remain but %d requested in UE " MME_UE_S1AP_ID_FMT".\n", ue_context->mme_ue_s1ap_id, ue_context->num_free_bearers, bcs_tbc->num_bearer_context);
-    *esm_cause = ESM_CAUSE_INSUFFICIENT_RESOURCES;
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
   }
   /*
    * No bearer context is assigned yet. Create a new EPS bearer context procedure.
    * Reserve EPS bearer contexts into  the procedure.
+   * Assign new EPS bearer context.
+   * Put it into the list of session bearers.
    */
-  /** Successfully created NAS ESM procedure. */
-  for(int num_bc = 0; num_bc < bcs_tbc->num_bearer_context; num_bc++){
+  ded_ebi = esm_ebr_assign (emm_context, ESM_EBI_UNASSIGNED, pdn_context);
+  if (ded_ebi != ESM_EBI_UNASSIGNED) {
     /*
-     * Assign new EPS bearer context.
-     * Put it into the list of session bearers.
+     * Create default EPS bearer context.
+     * Null as Bearer Level QoS
      */
-    ebi = esm_ebr_assign (emm_context, ESM_EBI_UNASSIGNED, pdn_context);
-    if (ebi != ESM_EBI_UNASSIGNED) {
-      /** Set the default EBI of the as the ebi. */
-      pdn_context->default_ebi = ebi;
-      /*
-       * Create default EPS bearer context.
-       * Null as Bearer Level QoS
-       */
-      bearer_qos_t bearer_qos = {.qci = bcs_tbc->bearer_contexts[num_bc].bearer_level_qos.qci};
-      struct fteid_set_s fteid_set;
-      fteid_set.s1u_fteid = &bcs_tbc->bearer_contexts[num_bc].s1u_sgw_fteid;
-      fteid_set.s5_fteid  = &bcs_tbc->bearer_contexts[num_bc].s5_s8_u_pgw_fteid;
-      ebi = esm_ebr_context_create (emm_context, pti, pdn_context, ebi, &fteid_set, IS_DEFAULT_BEARER_YES, &bearer_qos,
-          &bcs_tbc->bearer_contexts[num_bc].tft,
-          &bcs_tbc->bearer_contexts[num_bc].pco);
-      /** Check the EBI. */
-      DevAssert(ebi != ESM_EBI_UNASSIGNED);
-    }
-    OAILOG_INFO(LOG_NAS_ESM, "ESM-PROC  - Successfully reserved bearer with ebi %d. \n", bcs_tbc->bearer_contexts[num_bc].eps_bearer_id);
+    bearer_qos_t bearer_qos = {.qci = bc_tbc->bearer_level_qos.qci};
+    struct fteid_set_s fteid_set;
+    fteid_set.s1u_fteid = &bc_tbc->s1u_sgw_fteid;
+    fteid_set.s5_fteid  = &bc_tbc->s5_s8_u_pgw_fteid;
+    ded_ebi = esm_ebr_context_create (emm_context, pti, pdn_context, ded_ebi, &fteid_set, IS_DEFAULT_BEARER_YES, &bearer_qos,
+        &bc_tbc->tft,
+        &bc_tbc->pco);
+    /** Check the EBI. */
+    DevAssert(ded_ebi != ESM_EBI_UNASSIGNED);
+    bc_tbc->eps_bearer_id = ded_ebi;
+    OAILOG_INFO(LOG_NAS_ESM, "ESM-PROC  - Successfully reserved bearer with ebi %d. \n", bc_tbc->eps_bearer_id);
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);
+  }else{
+    OAILOG_INFO(LOG_NAS_ESM, "ESM-PROC  - Error assigning bearer context for ue " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
   }
-  OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);
-}
+ }
 
 /****************************************************************************
  **                                                                        **

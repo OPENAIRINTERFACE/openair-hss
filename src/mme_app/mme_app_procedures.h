@@ -114,7 +114,8 @@ typedef struct mme_app_s10_proc_mme_handover_s {
 /* S11 */
 typedef enum {
   MME_APP_S11_PROC_TYPE_NONE = 0,
-  MME_APP_S11_PROC_TYPE_CREATE_BEARER
+  MME_APP_S11_PROC_TYPE_CREATE_BEARER,
+  MME_APP_S11_PROC_TYPE_DELETE_BEARER
 } mme_app_s11_proc_type_t;
 
 typedef struct mme_app_s11_proc_s {
@@ -136,9 +137,22 @@ typedef struct mme_app_s11_proc_create_bearer_s {
   int                          num_bearers_unhandled;
   int                          num_status_received;
 
+  ebi_t                        linked_ebi;
+  pdn_cid_t                    pci;
+
   // TODO here give a NAS/S1AP/.. reason -> GTPv2-C reason
   bearer_contexts_to_be_created_t *bcs_tbc; /**< Store the bearer contexts to be created here, and don't register them yet in the MME_APP context. */
 } mme_app_s11_proc_create_bearer_t;
+
+typedef struct mme_app_s11_proc_delete_bearer_s {
+  mme_app_s11_proc_t           proc;
+  int                          num_bearers_unhandled;
+  int                          num_status_received;
+  ebi_list_t                   ebis;
+
+  // TODO here give a NAS/S1AP/.. reason -> GTPv2-C reason
+  bearer_contexts_to_be_removed_t bcs_failed; /**< Store the bearer contexts to be created here, and don't register them yet in the MME_APP context. */
+} mme_app_s11_proc_delete_bearer_t;
 
 typedef enum {
   MME_APP_S1AP_PROC_TYPE_NONE = 0,
@@ -149,10 +163,14 @@ typedef enum {
 //RB_PROTOTYPE(BearerFteids, fteid_set_s, fteid_set_rbt_Node, fteid_set_compare_s1u_saegw)
 
 void mme_app_delete_s11_procedures(ue_context_t * const ue_context_p);
+
 mme_app_s11_proc_create_bearer_t* mme_app_create_s11_procedure_create_bearer(ue_context_t * const ue_context_p);
 mme_app_s11_proc_create_bearer_t* mme_app_get_s11_procedure_create_bearer(ue_context_t * const ue_context_p);
 void mme_app_delete_s11_procedure_create_bearer(ue_context_t * const ue_context_p);
-void mme_app_s11_procedure_create_bearer_send_response(ue_context_t * const ue_context_p, mme_app_s11_proc_create_bearer_t* s11_proc_create);
+
+mme_app_s11_proc_delete_bearer_t* mme_app_create_s11_procedure_delete_bearer(ue_context_t * const ue_context_p);
+mme_app_s11_proc_delete_bearer_t* mme_app_get_s11_procedure_delete_bearer(ue_context_t * const ue_context_p);
+void mme_app_delete_s11_procedure_delete_bearer(ue_context_t * const ue_context_p);
 
 /*
  * - Creating handover procedure in intra-MME and inter-MME handover

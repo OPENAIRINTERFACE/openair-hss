@@ -915,26 +915,6 @@ s10_ebi_ie_get (
   return NW_OK;
 }
 
-nw_rc_t
-s10_ebi_ie_get_list (
-  uint8_t ieType,
-  uint16_t ieLength,
-  uint8_t ieInstance,
-  uint8_t * ieValue,
-  void *arg)
-{
-  ebi_list_t                             *ebi_list = (ebi_list_t*)arg;
-  DevAssert (ebi_list);
-  DevAssert (RELEASE_ACCESS_BEARER_MAX_BEARERS > ebi_list->num_ebi);
-  uint8_t                                *ebi = (uint8_t *)&ebi_list->ebis[ebi_list->num_ebi];
-
-  DevAssert (ebi );
-  *ebi = ieValue[0] & 0x0F;
-  OAILOG_DEBUG (LOG_S10, "\t- EBI %u\n", *ebi);
-  ebi_list->num_ebi += 1;
-  return NW_OK;
-}
-
 int
 s10_bearer_context_to_create_ie_set (
   nw_gtpv2c_msg_handle_t * msg,

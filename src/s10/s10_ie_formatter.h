@@ -146,8 +146,6 @@ int s10_ebi_ie_set(nw_gtpv2c_msg_handle_t *msg, const unsigned ebi);
 
 nw_rc_t s10_ebi_ie_get (uint8_t ieType, uint16_t ieLength, uint8_t ieInstance, uint8_t * ieValue, void *arg);
 
-nw_rc_t s10_ebi_ie_get_list (uint8_t ieType, uint16_t ieLength, uint8_t ieInstance, uint8_t * ieValue, void *arg);
-
 /** Set the Bearer Context IE. */
 int s10_bearer_context_to_create_ie_set (nw_gtpv2c_msg_handle_t * msg, const bearer_contexts_to_be_created_t * bearer_contexts);
 

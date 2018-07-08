@@ -112,6 +112,10 @@ s11_mme_ulp_process_stack_req_cb (
           ret = s11_mme_handle_create_bearer_request (&s11_mme_stack_handle, pUlpApi);
           break;
 
+        case NW_GTP_DELETE_BEARER_REQ:
+          ret = s11_mme_handle_delete_bearer_request (&s11_mme_stack_handle, pUlpApi);
+          break;
+
         case NW_GTP_DOWNLINK_DATA_NOTIFICATION:
           ret = s11_mme_handle_downlink_data_notification (&s11_mme_stack_handle, pUlpApi);
           break;
@@ -215,6 +219,11 @@ s11_mme_thread (
 
     case S11_CREATE_BEARER_RESPONSE:{
       s11_mme_create_bearer_response (&s11_mme_stack_handle, &received_message_p->ittiMsg.s11_create_bearer_response);
+      }
+      break;
+
+    case S11_DELETE_BEARER_RESPONSE:{
+      s11_mme_delete_bearer_response (&s11_mme_stack_handle, &received_message_p->ittiMsg.s11_delete_bearer_response);
       }
       break;
 

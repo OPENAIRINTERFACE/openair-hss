@@ -988,6 +988,7 @@ esm_recv_deactivate_eps_bearer_context_accept (
       rc = esm_proc_pdn_disconnect_accept (emm_context, pid, ebi, &esm_cause); /**< Delete Session Request is already sent at the beginning. We don't care for the response. */
     }else{
       OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - We released  the dedicated EBI. Responding with delete bearer response back. (ebi=%d,pid=%d)\n", ebi,pid);
+      /** Respond per bearer. */
       nas_itti_dedicated_eps_bearer_deactivation_complete(emm_context->ue_id, pdn_context->default_ebi, pdn_context->context_identifier, ebi);
       /** Successfully informed the MME_APP layer about the bearer deactivation. We are complete. */
     }

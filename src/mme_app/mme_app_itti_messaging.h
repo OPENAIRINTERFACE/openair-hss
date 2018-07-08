@@ -49,6 +49,13 @@ mme_app_send_s11_create_bearer_rsp (
   void                *trxn,
   bearer_contexts_to_be_created_t * bcs_tbc);
 
+int
+mme_app_send_s11_delete_bearer_rsp (
+  struct ue_context_s *const ue_context,
+  pdn_context_t       *pdn_ctx,
+  void                *trxn,
+  ebi_list_t          *ebi_list);
+
 void mme_app_itti_nas_context_response(ue_context_t * ue_context, nas_s10_context_t * s10_context_val);
 void mme_app_itti_nas_pdn_connectivity_response(ue_context_t * ue_context, paa_t *paa, protocol_configuration_options_t * pco, bearer_context_t * bc);
 void mme_app_itti_forward_relocation_response(ue_context_t *ue_context, mme_app_s10_proc_mme_handover_t *s10_handover_proc, bstring target_to_source_container);

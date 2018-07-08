@@ -172,7 +172,6 @@ void mme_app_register_bearer_context(ue_context_t * const ue_context, ebi_t ebi,
   OAILOG_INFO (LOG_MME_APP, "Successfully set bearer context with ebi %d for PDN id %u and for ue id " MME_UE_S1AP_ID_FMT "\n",
       pBearerCtx->ebi, pdn_context->context_identifier, ue_context->mme_ue_s1ap_id);
   *bc_pp = pBearerCtx;
-  ue_context->num_free_bearers--;
   OAILOG_FUNC_OUT(LOG_MME_APP);
 }
 
@@ -204,7 +203,6 @@ int mme_app_deregister_bearer_context(ue_context_t * const ue_context, ebi_t ebi
 //  Assert(!RB_INSERT (BearerPool, &ue_context->bearer_pool, pBearerCtx));
   OAILOG_INFO(LOG_MME_APP, "Successfully deregistered the bearer context with ebi %d from PDN id %u and for ue_id " MME_UE_S1AP_ID_FMT "\n",
       pBearerCtx->ebi, pdn_context->context_identifier, ue_context->mme_ue_s1ap_id);
-  ue_context->num_free_bearers++;
   OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
 }
 

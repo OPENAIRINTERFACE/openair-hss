@@ -87,7 +87,7 @@ s1ap_message_decoded_callback           messages_callback[][3] = {
       s1ap_mme_handle_erab_setup_failure},                    /* E_RABSetup */
   {0, 0, 0},                    /* E_RABModify */
   {0, s1ap_mme_handle_erab_release_response, 0},                    /* E_RABRelease */
-  {0, 0, 0},                    /* E_RABReleaseIndication */
+  {s1ap_mme_handle_erab_release_indication, 0, 0},                    /* E_RABReleaseIndication */
   {
    0, s1ap_mme_handle_initial_context_setup_response,
    s1ap_mme_handle_initial_context_setup_failure},      /* InitialContextSetup */
@@ -2215,6 +2215,7 @@ s1ap_mme_handle_erab_release_response (
     OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
   }
 
+  // todo
 //  message_p = itti_alloc_new_message (TASK_S1AP, S1AP_E_RAB_RELEASE_RSP);
 //  AssertFatal (message_p != NULL, "itti_alloc_new_message Failed");
 //  S1AP_E_RAB_RELEASE_RSP (message_p).mme_ue_s1ap_id = ue_ref_p->mme_ue_s1ap_id;
@@ -2235,6 +2236,57 @@ s1ap_mme_handle_erab_release_response (
 //    }
 //  }
 //
+//  if (s1ap_E_RABSetupResponseIEs_p->presenceMask & S1AP_E_RABSETUPRESPONSEIES_E_RABFAILEDTOSETUPLISTBEARERSURES_PRESENT) {
+//    int num_erab = s1ap_E_RABSetupResponseIEs_p->e_RABFailedToSetupListBearerSURes.s1ap_E_RABItem.count;
+//    for (int index = 0; index < num_erab; index++) {
+//      S1ap_E_RABItem_t * erab_item = (S1ap_E_RABItem_t *)s1ap_E_RABSetupResponseIEs_p->e_RABFailedToSetupListBearerSURes.s1ap_E_RABItem.array[index];
+//      S1AP_E_RAB_SETUP_RSP (message_p).e_rab_failed_to_setup_list.item[index].e_rab_id = erab_item->e_RAB_ID;
+//      S1AP_E_RAB_SETUP_RSP (message_p).e_rab_failed_to_setup_list.item[index].cause = erab_item->cause;
+//      S1AP_E_RAB_SETUP_RSP (message_p).e_rab_failed_to_setup_list.no_of_items += 1;
+//    }
+//  }
+//
+//  MSC_LOG_TX_MESSAGE (MSC_S1AP_MME,
+//                      MSC_MMEAPP_MME,
+//                      NULL, 0,
+//                      "0 S1AP_E_RAB_SETUP_RSP mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ");
+//  XML_MSG_DUMP_ITTI_S1AP_E_RAB_SETUP_RSP(&S1AP_E_RAB_SETUP_RSP (message_p), TASK_S1AP, TASK_MME_APP, NULL);
+//  rc =  itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
+  OAILOG_FUNC_RETURN (LOG_S1AP, rc);
+}
+
+//------------------------------------------------------------------------------
+int
+s1ap_mme_handle_erab_release_indication (
+    const sctp_assoc_id_t assoc_id,
+    const sctp_stream_id_t stream,
+    struct s1ap_message_s *message)
+{
+  OAILOG_FUNC_IN (LOG_S1AP);
+  S1ap_E_RABReleaseIndicationIEs_t         *s1ap_E_RABReleaseIndicationIEs_p = NULL;
+  ue_description_t                       *ue_ref_p  = NULL;
+  MessageDef                             *message_p = NULL;
+  int                                     rc = RETURNok;
+
+  s1ap_E_RABReleaseIndicationIEs_p = &message->msg.s1ap_E_RABReleaseIndicationIEs;
+  MSC_LOG_RX_MESSAGE (MSC_S1AP_MME,
+                      MSC_S1AP_ENB,
+                      NULL, 0,
+                      "0 E_RABReleaseIndication/%s enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " len %u",
+                      s1ap_direction2String[message->direction], s1ap_E_RABReleaseIndicationIEs_p->eNB_UE_S1AP_ID,
+                      s1ap_E_RABReleaseIndicationIEs_p->mme_ue_s1ap_id);
+
+  if ((ue_ref_p = s1ap_is_ue_mme_id_in_list ((uint32_t) s1ap_E_RABReleaseIndicationIEs_p->mme_ue_s1ap_id)) == NULL) {
+    OAILOG_DEBUG (LOG_S1AP, "No UE is attached to this mme UE s1ap id: " MME_UE_S1AP_ID_FMT "\n", (mme_ue_s1ap_id_t)s1ap_E_RABReleaseIndicationIEs_p->mme_ue_s1ap_id);
+    OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
+  }
+
+  if (ue_ref_p->enb_ue_s1ap_id != s1ap_E_RABReleaseIndicationIEs_p->eNB_UE_S1AP_ID) {
+    OAILOG_DEBUG (LOG_S1AP, "Mismatch in eNB UE S1AP ID, known: " ENB_UE_S1AP_ID_FMT ", received: " ENB_UE_S1AP_ID_FMT "\n",
+                ue_ref_p->enb_ue_s1ap_id, (enb_ue_s1ap_id_t)s1ap_E_RABReleaseIndicationIEs_p->eNB_UE_S1AP_ID);
+    OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
+  }
+
 //  if (s1ap_E_RABSetupResponseIEs_p->presenceMask & S1AP_E_RABSETUPRESPONSEIES_E_RABFAILEDTOSETUPLISTBEARERSURES_PRESENT) {
 //    int num_erab = s1ap_E_RABSetupResponseIEs_p->e_RABFailedToSetupListBearerSURes.s1ap_E_RABItem.count;
 //    for (int index = 0; index < num_erab; index++) {

@@ -507,9 +507,6 @@ typedef struct ue_context_s {
   struct mme_app_timer_t       s1ap_handover_req_timer;
 
   ebi_t                        next_def_ebi_offset;
-
-  int                          num_free_bearers;
-
 } ue_context_t;
 
 

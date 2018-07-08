@@ -1537,35 +1537,51 @@ void
 mme_app_handle_s11_create_bearer_req (
     itti_s11_create_bearer_request_t *  create_bearer_request_pP)
 {
-  OAILOG_FUNC_IN (LOG_MME_APP);
-  //MessageDef                             *message_p = NULL;
+  MessageDef                               *message_p   = NULL;
   struct ue_context_s                      *ue_context  = NULL;
   struct pdn_context_s                     *pdn_context = NULL;
+  bearer_context_t                         *default_bc  = NULL;
+
+  OAILOG_FUNC_IN (LOG_MME_APP);
 
   ue_context = mme_ue_context_exists_s11_teid (&mme_app_desc.mme_ue_contexts, create_bearer_request_pP->teid);
 
   if (ue_context == NULL) {
-    MSC_LOG_RX_DISCARDED_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 CREATE_BEARERS_REQUEST local S11 teid " TEID_FMT " ",
+    MSC_LOG_RX_DISCARDED_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 CREATE_BEARER_REQUEST local S11 teid " TEID_FMT " ",
         create_bearer_request_pP->teid);
     OAILOG_DEBUG (LOG_MME_APP, "We didn't find this teid in list of UE: %" PRIX32 "\n", create_bearer_request_pP->teid);
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
   /** The validation of the request will be done in the ESM layer. */
-  MSC_LOG_RX_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 CREATE_BEARERS_REQUEST ueId " MME_UE_S1AP_ID_FMT " PDN id %u IMSI " IMSI_64_FMT " num bearer %u",
+  MSC_LOG_RX_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 CREATE_BEARER_REQUEST ueId " MME_UE_S1AP_ID_FMT " PDN id %u IMSI " IMSI_64_FMT " num bearer %u",
       ue_context->mme_ue_s1ap_id, cid, ue_context->imsi, create_bearer_request_pP->bearer_contexts.num_bearer_context);
+
+  mme_app_get_session_bearer_context_from_all(ue_context, create_bearer_request_pP->linked_eps_bearer_id, &default_bc);
+  if(!default_bc){
+    MSC_LOG_RX_DISCARDED_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 CREATE_BEARER_REQUEST local S11 teid " TEID_FMT " ",
+        create_bearer_request_pP->teid);
+    OAILOG_DEBUG (LOG_MME_APP, "We didn't find this bearer in list of UE: %" PRIX32 "\n", create_bearer_request_pP->teid);
+    OAILOG_FUNC_OUT (LOG_MME_APP);
+  }
 
   /** Create an S11 procedure. */
   mme_app_s11_proc_create_bearer_t* s11_proc_create_bearer = mme_app_create_s11_procedure_create_bearer(ue_context);
+  DevAssert(s11_proc_create_bearer);
+
   s11_proc_create_bearer->proc.s11_trxn         = (uintptr_t)create_bearer_request_pP->trxn;
+  s11_proc_create_bearer->num_bearers_unhandled = create_bearer_request_pP->bearer_contexts->num_bearer_context;
   s11_proc_create_bearer->bcs_tbc               = create_bearer_request_pP->bearer_contexts;
-  s11_proc_create_bearer->num_bearers_unhandled = s11_proc_create_bearer->bcs_tbc->num_bearer_context;
+  s11_proc_create_bearer->linked_ebi            = default_bc->linked_ebi;
+  s11_proc_create_bearer->pci                   = default_bc->pdn_cx_id;
+
+  // todo: PCOs
 
   /*
    * Let the ESM layer validate the request and build the pending bearer contexts.
    * Also, send a single message to the eNB.
    * May received multiple back.
    */
-  MessageDef  *message_p = itti_alloc_new_message (TASK_MME_APP, MME_APP_ACTIVATE_BEARER_REQ);
+  message_p = itti_alloc_new_message (TASK_MME_APP, MME_APP_ACTIVATE_BEARER_REQ);
   AssertFatal (message_p , "itti_alloc_new_message Failed");
 
   itti_mme_app_activate_bearer_req_t *mme_app_activate_bearer_req = &message_p->ittiMsg.mme_app_activate_bearer_req;
@@ -1573,11 +1589,71 @@ mme_app_handle_s11_create_bearer_req (
   mme_app_activate_bearer_req->ue_id              = ue_context->mme_ue_s1ap_id;
   mme_app_activate_bearer_req->linked_ebi         = create_bearer_request_pP->linked_eps_bearer_id;
   mme_app_activate_bearer_req->bcs_to_be_created  = create_bearer_request_pP->bearer_contexts;
+  /** Might be UE triggered. */
+  mme_app_activate_bearer_req->pti                = create_bearer_request_pP->pti;
+  mme_app_activate_bearer_req->cid                = default_bc->pdn_cx_id;
+
   /** Set it to NULL, such that it is not deallocated. */
   create_bearer_request_pP->bearer_contexts     = NULL;
 
   /** No need to set bearer states, we won't establish the bearers yet. */
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 MME_APP_ACTIVATE_BEARER_REQ mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ",
+      mme_app_create_bearer_req->ue_id);
+  itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+  OAILOG_FUNC_OUT (LOG_MME_APP);
+}
+
+//------------------------------------------------------------------------------
+void
+mme_app_handle_s11_delete_bearer_req (
+    itti_s11_delete_bearer_request_t *  delete_bearer_request_pP)
+{
+  MessageDef                               *message_p   = NULL;
+  struct ue_context_s                      *ue_context  = NULL;
+  struct pdn_context_s                     *pdn_context = NULL;
+
+  OAILOG_FUNC_IN (LOG_MME_APP);
+
+  ue_context = mme_ue_context_exists_s11_teid (&mme_app_desc.mme_ue_contexts, delete_bearer_request_pP->teid);
+
+  if (ue_context == NULL) {
+    MSC_LOG_RX_DISCARDED_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 DELETE_BEARER_REQUEST local S11 teid " TEID_FMT " ",
+        delete_bearer_request_pP->teid);
+    OAILOG_DEBUG (LOG_MME_APP, "We didn't find this teid in list of UE: %" PRIX32 "\n", delete_bearer_request_pP->teid);
+    OAILOG_FUNC_OUT (LOG_MME_APP);
+  }
+  /** The validation of the request will be done in the ESM layer. */
+  MSC_LOG_RX_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 DELETE_BEARER_REQUEST ueId " MME_UE_S1AP_ID_FMT " PDN id %u IMSI " IMSI_64_FMT " num bearer %u",
+      ue_context->mme_ue_s1ap_id, cid, ue_context->imsi, delete_bearer_request_pP->bearer_contexts.num_bearer_context);
+
+  /** Create an S11 procedure. */
+  mme_app_s11_proc_delete_bearer_t* s11_proc_delete_bearer = mme_app_create_s11_procedure_delete_bearer(ue_context);
+  DevAssert(s11_proc_delete_bearer);
+
+  s11_proc_delete_bearer->proc.s11_trxn         = (uintptr_t)delete_bearer_request_pP->trxn;
+  s11_proc_delete_bearer->num_bearers_unhandled = delete_bearer_request_pP->ebi_list.num_ebi;
+  memcpy(&s11_proc_delete_bearer->ebis, &delete_bearer_request_pP->ebi_list, sizeof(delete_bearer_request_pP->ebi_list));
+  // todo: failed bearer contexts not handled yet
+  memcpy(&s11_proc_delete_bearer->bcs_failed, &delete_bearer_request_pP->failed_bearer_contexts, sizeof(delete_bearer_request_pP->failed_bearer_contexts));
+
+  // todo: PCOs
+
+  /*
+   * Let the ESM layer validate the request and deactivate the bearers.
+   */
+  message_p = itti_alloc_new_message (TASK_MME_APP, MME_APP_DEACTIVATE_BEARER_REQ);
+  AssertFatal (message_p , "itti_alloc_new_message Failed");
+
+  itti_mme_app_deactivate_bearer_req_t *mme_app_deactivate_bearer_req = &message_p->ittiMsg.mme_app_deactivate_bearer_req;
+  mme_app_deactivate_bearer_req->ue_id              = ue_context->mme_ue_s1ap_id;
+  mme_app_deactivate_bearer_req->def_ebi            = delete_bearer_request_pP->linked_eps_bearer_id;
+  memcpy(&mme_app_deactivate_bearer_req->ebis, &delete_bearer_request_pP->ebi_list, sizeof(delete_bearer_request_pP->ebi_list));
+  /** Might be UE triggered. */
+  mme_app_deactivate_bearer_req->pti                = delete_bearer_request_pP->pti;
+  /** Set it to NULL, such that it is not deallocated. */
+
+  /** No need to set bearer states, we won't remove the bearers yet. */
+  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 MME_APP_DEACTIVATE_BEARER_REQ mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ",
       mme_app_create_bearer_req->ue_id);
   itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT (LOG_MME_APP);
@@ -1671,7 +1747,7 @@ void mme_app_handle_e_rab_setup_rsp (itti_s1ap_e_rab_setup_rsp_t  * const e_rab_
       }else{
         /** Assume that the PDN Connectivity will fail and the PDN context will be purges by NAS messaging. */
         OAILOG_WARNING(LOG_MME_APP, "UE with (failed) bearer context for ebi %d has no S11 Bearer Context procedure: " MME_UE_S1AP_ID_FMT ". "
-            "Skipping failure (NAS cleanup)). \n", e_rab_id, ue_context->mme_ue_s1ap_id);
+            "Skipping failure (NAS cleanup should follow)). \n", e_rab_id, ue_context->mme_ue_s1ap_id);
       }
     }else{
       OAILOG_WARNING(LOG_MME_APP, "No (failed) bearer context was found for ebi %d for UE: " MME_UE_S1AP_ID_FMT ". Assuming eliminated by ESM message and skipping error. \n", e_rab_id, ue_context->mme_ue_s1ap_id);
@@ -1761,6 +1837,8 @@ void mme_app_handle_activate_bearer_cnf (itti_mme_app_activate_bearer_cnf_t   * 
   }
   OAILOG_INFO(LOG_MME_APP, "No unhandled bearers left for s11 dedicated bearer procedure for UE: " MME_UE_S1AP_ID_FMT ". Sending CBResp back immediately. \n", ue_context->mme_ue_s1ap_id);
   mme_app_send_s11_create_bearer_rsp(ue_context, pdn_context, s11_proc_dedicated_bearer->proc.s11_trxn, s11_proc_dedicated_bearer->bcs_tbc);
+  /** Delete the procedure if it exists. */
+  mme_app_delete_s11_procedure_create_bearer(ue_context);
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 
@@ -1768,18 +1846,17 @@ void mme_app_handle_activate_bearer_cnf (itti_mme_app_activate_bearer_cnf_t   * 
 void mme_app_handle_activate_bearer_rej (itti_mme_app_activate_bearer_rej_t   * const activate_bearer_rej)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
-  struct ue_context_s                 *ue_context = NULL;
+  struct ue_context_s                 *ue_context   = NULL;
   /** Get the first PDN Context. */
-  bearer_context_t * bc_failed = NULL;
-  pdn_context_t * pdn_context = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
-  DevAssert(pdn_context);
+  bearer_context_t                    *bc_failed    = NULL;
+  pdn_context_t                       *pdn_context  = NULL;
 
   ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, activate_bearer_rej->ue_id);
-
-  if (ue_context == NULL) {
+  if (!ue_context) {
     OAILOG_DEBUG (LOG_MME_APP, "We didn't find this mme_ue_s1ap_id in list of UE: " MME_UE_S1AP_ID_FMT "\n", activate_bearer_rej->ue_id);
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
+
   /** Get the MME_APP Dedicated Bearer procedure, */
   mme_app_s11_proc_create_bearer_t * s11_proc_dedicated_bearer = mme_app_get_s11_procedure_create_bearer(ue_context);
   if(!s11_proc_dedicated_bearer){
@@ -1787,6 +1864,14 @@ void mme_app_handle_activate_bearer_rej (itti_mme_app_activate_bearer_rej_t   * 
         ue_context->mme_ue_s1ap_id);
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
+
+  mme_app_get_pdn_context(ue_context, s11_proc_dedicated_bearer->pci, s11_proc_dedicated_bearer->linked_ebi, NULL, &pdn_context);
+  if (!pdn_context) {
+    OAILOG_DEBUG (LOG_MME_APP, "We didn't find the pdn context with cid %d and default ebi %d for UE: " MME_UE_S1AP_ID_FMT "\n",
+        s11_proc_dedicated_bearer->pci, s11_proc_dedicated_bearer->linked_ebi, activate_bearer_rej->ue_id);
+    OAILOG_FUNC_OUT (LOG_MME_APP);
+  }
+
   /*
    * TS 23.401: 5.4.1: The MME shall be prepared to receive this message either before or after the Session Management Response message (sent in step 9).
    *
@@ -1801,8 +1886,63 @@ void mme_app_handle_activate_bearer_rej (itti_mme_app_activate_bearer_rej_t   * 
   /** No matter if the S1U-ENB TEID has arrived or not, decrease the number or pending bearers in the s11 dedicated bearer procedure. */
   s11_proc_dedicated_bearer->num_bearers_unhandled--;
 
-  /** We only send the rejected bearers back. */
-  mme_app_send_s11_create_bearer_rsp(ue_context, pdn_context->s_gw_teid_s11_s4, s11_proc_dedicated_bearer->proc.s11_trxn, s11_proc_dedicated_bearer->bcs_tbc);
+  if(s11_proc_dedicated_bearer->num_bearers_unhandled){
+    OAILOG_INFO(LOG_MME_APP, "Still %d unhandled bearers exist for s11 dedicated bearer procedure for UE: " MME_UE_S1AP_ID_FMT ". Not sending CBResp back yet. \n",
+        s11_proc_dedicated_bearer->num_bearers_unhandled, ue_context->mme_ue_s1ap_id);
+    OAILOG_FUNC_OUT (LOG_MME_APP);
+  }
+  OAILOG_INFO(LOG_MME_APP, "No unhandled bearers left for s11 dedicated bearer procedure for UE: " MME_UE_S1AP_ID_FMT ". Sending CBResp back immediately. \n", ue_context->mme_ue_s1ap_id);
+  mme_app_send_s11_create_bearer_rsp(ue_context, pdn_context, s11_proc_dedicated_bearer->proc.s11_trxn, s11_proc_dedicated_bearer->bcs_tbc);
+  /** Delete the procedure if it exists. */
+  mme_app_delete_s11_procedure_create_bearer(ue_context);
+  OAILOG_FUNC_OUT (LOG_MME_APP);
+}
+
+//------------------------------------------------------------------------------
+void mme_app_handle_deactivate_bearer_cnf (itti_mme_app_deactivate_bearer_cnf_t   * const deactivate_bearer_cnf)
+{
+  OAILOG_FUNC_IN (LOG_MME_APP);
+  struct ue_context_s                 *ue_context = NULL;
+  /** Get the first PDN Context. */
+  pdn_context_t * pdn_context = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
+  DevAssert(pdn_context);
+
+  ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, deactivate_bearer_cnf->ue_id);
+
+  if (ue_context == NULL) {
+    OAILOG_DEBUG (LOG_MME_APP, "We didn't find this mme_ue_s1ap_id in list of UE: " MME_UE_S1AP_ID_FMT "\n", deactivate_bearer_cnf->ue_id);
+    OAILOG_FUNC_OUT (LOG_MME_APP);
+  }
+  /*
+   * TS 23.401: 5.4.1: The MME shall be prepared to receive this message either before or after the Session Management Response message (sent in step 9).
+   *
+   * The itti message will be sent directly by MME APP or by ESM layer, depending on the order of the messages.
+   *
+   * So we check the state of the bearers.
+   * The indication that S11 Create Bearer Response should be sent to the SAE-GW, should be sent by ESM/NAS layer.
+   */
+  /** Get the MME_APP Dedicated Bearer procedure, */
+  mme_app_s11_proc_delete_bearer_t * s11_proc_dedicated_bearer = mme_app_get_s11_procedure_delete_bearer(ue_context);
+  if(!s11_proc_dedicated_bearer){
+    OAILOG_ERROR(LOG_MME_APP, "No S11 dedicated bearer procedure exists for UE: " MME_UE_S1AP_ID_FMT ". Not sending DBResp back. \n",
+        ue_context->mme_ue_s1ap_id);
+    OAILOG_FUNC_OUT (LOG_MME_APP);
+  }
+  /** Check if the bearer context exists as a session bearer. */
+  bearer_context_t * bc;
+  mme_app_get_session_bearer_context_from_all(ue_context, deactivate_bearer_cnf->ded_ebi, bc);
+  DevAssert(!bc);
+
+  /** Not checking S1U E-RAB Release Response. */
+  s11_proc_dedicated_bearer->num_bearers_unhandled--;
+  if(s11_proc_dedicated_bearer->num_bearers_unhandled){
+    OAILOG_INFO(LOG_MME_APP, "Still %d unhandled bearers exist for s11 delte dedicated bearer procedure for UE: " MME_UE_S1AP_ID_FMT ". Not sending DBResp back yet. \n",
+        s11_proc_dedicated_bearer->num_bearers_unhandled, ue_context->mme_ue_s1ap_id);
+    OAILOG_FUNC_OUT (LOG_MME_APP);
+  }
+  OAILOG_INFO(LOG_MME_APP, "No unhandled bearers left for s11 delete dedicated bearer procedure for UE: " MME_UE_S1AP_ID_FMT ". Sending DBResp back immediately. \n", ue_context->mme_ue_s1ap_id);
+  mme_app_send_s11_delete_bearer_rsp(ue_context, pdn_context, s11_proc_dedicated_bearer->proc.s11_trxn, &s11_proc_dedicated_bearer->ebis);
+  mme_app_delete_s11_procedure_delete_bearer(ue_context);
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 

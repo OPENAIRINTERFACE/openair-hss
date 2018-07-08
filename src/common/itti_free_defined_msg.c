@@ -215,6 +215,11 @@ void itti_free_msg_content (MessageDef * const message_p)
   }
   break;
 
+  case S11_DELETE_BEARER_REQUEST: {
+    clear_protocol_configuration_options(&message_p->ittiMsg.s11_delete_bearer_request.pco);
+  }
+  break;
+
   case S11_CREATE_BEARER_RESPONSE: {
     clear_protocol_configuration_options(&message_p->ittiMsg.s11_create_bearer_response.pco);
   }

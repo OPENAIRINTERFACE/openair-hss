@@ -114,6 +114,11 @@ void *mme_app_thread (void *args)
     }
     break;
 
+    case MME_APP_DEACTIVATE_BEARER_CNF:{
+      mme_app_handle_deactivate_bearer_cnf (&MME_APP_DEACTIVATE_BEARER_CNF (received_message_p));
+    }
+    break;
+
     case NAS_CONNECTION_ESTABLISHMENT_CNF:{
         mme_app_handle_conn_est_cnf (&NAS_CONNECTION_ESTABLISHMENT_CNF (received_message_p));
       }
@@ -169,6 +174,10 @@ void *mme_app_thread (void *args)
 
     case S11_CREATE_BEARER_REQUEST:
       mme_app_handle_s11_create_bearer_req (&received_message_p->ittiMsg.s11_create_bearer_request);
+      break;
+
+    case S11_DELETE_BEARER_REQUEST:
+      mme_app_handle_s11_delete_bearer_req (&received_message_p->ittiMsg.s11_delete_bearer_request);
       break;
 
     case S11_CREATE_SESSION_RESPONSE:{

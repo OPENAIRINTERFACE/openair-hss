@@ -172,6 +172,34 @@ extern                                  "C" {
   };
 
   static
+  NwGtpv2cMsgIeInfoT                      deleteBearerReqFailedBearerCtxtTobeCreatedIeInfoTbl[] = {
+    {NW_GTPV2C_IE_EBI, 1, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_MANDATORY, NULL},
+    {NW_GTPV2C_IE_CAUSE, 0, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_MANDATORY, NULL},
+    /*
+     * Do not add below this
+     */
+    {0, 0, 0}
+  };
+
+  static
+  NwGtpv2cMsgIeInfoT                      deleteBearerReqIeInfoTbl[] = {
+    {NW_GTPV2C_IE_EBI, 1, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL, NULL},
+    {NW_GTPV2C_IE_EBI, 1, NW_GTPV2C_IE_INSTANCE_ONE, NW_GTPV2C_IE_PRESENCE_CONDITIONAL, NULL},
+    {NW_GTPV2C_IE_BEARER_CONTEXT, 0, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_OPTIONAL, deleteBearerReqFailedBearerCtxtTobeCreatedIeInfoTbl},
+    {NW_GTPV2C_IE_PROCEDURE_TRANSACTION_ID, 1, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL, NULL},
+    {NW_GTPV2C_IE_PCO, 0, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_OPTIONAL, NULL},
+    {NW_GTPV2C_IE_FQ_CSID, 0, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL, NULL},
+    {NW_GTPV2C_IE_FQ_CSID, 0, NW_GTPV2C_IE_INSTANCE_ONE, NW_GTPV2C_IE_PRESENCE_CONDITIONAL, NULL},
+    {NW_GTPV2C_IE_CAUSE, 0, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL, NULL},
+    {NW_GTPV2C_IE_INDICATION, 0, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL_OPTIONAL, NULL},
+    {NW_GTPV2C_IE_PRIVATE_EXTENSION, 0, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_OPTIONAL, NULL},
+    /*
+     * Do not add below this
+     */
+    {0, 0, 0}
+  };
+
+  static
   NwGtpv2cMsgIeInfoT                      createBearerRspBearerCtxtTobeCreatedIeInfoTbl[] = {
     {NW_GTPV2C_IE_EBI, 1, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_MANDATORY, NULL},
     {NW_GTPV2C_IE_CAUSE, 0, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_MANDATORY, NULL},
@@ -206,6 +234,36 @@ extern                                  "C" {
     {0, 0, 0}
   };
 
+  static
+  NwGtpv2cMsgIeInfoT                      deleteBearerRspBearerCtxtTobeCreatedIeInfoTbl[] = {
+      {NW_GTPV2C_IE_EBI, 1, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_MANDATORY, NULL},
+      {NW_GTPV2C_IE_CAUSE, 0, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_MANDATORY, NULL},
+      /* Warning: NW_GTPV2C_IE_FTEID Up to instance 9 */
+      {NW_GTPV2C_IE_PCO, 0, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL_OPTIONAL, NULL},
+      /*
+       * Do not add below this
+       */
+      {0, 0, 0}
+  };
+
+  static
+  NwGtpv2cMsgIeInfoT                      deleteBearerRspIeInfoTbl[] = {
+      {NW_GTPV2C_IE_CAUSE, 0, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_MANDATORY, NULL},
+      {NW_GTPV2C_IE_EBI, 1, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL, NULL},
+      {NW_GTPV2C_IE_BEARER_CONTEXT, 0, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL, deleteBearerRspBearerCtxtTobeCreatedIeInfoTbl},
+      {NW_GTPV2C_IE_RECOVERY, 0, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL, NULL},
+      {NW_GTPV2C_IE_FQ_CSID, 0, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL, NULL},
+      {NW_GTPV2C_IE_FQ_CSID, 0, NW_GTPV2C_IE_INSTANCE_ONE, NW_GTPV2C_IE_PRESENCE_CONDITIONAL, NULL},
+      {NW_GTPV2C_IE_FQ_CSID, 0, NW_GTPV2C_IE_INSTANCE_TWO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL, NULL},
+      {NW_GTPV2C_IE_PCO, 0, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL, NULL},
+      {NW_GTPV2C_IE_UE_TIME_ZONE, 0, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_OPTIONAL, NULL},
+      {NW_GTPV2C_IE_ULI, 0, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_OPTIONAL, NULL},
+      {NW_GTPV2C_IE_PRIVATE_EXTENSION, 0, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_OPTIONAL, NULL},
+      /*
+       * Do not add below this
+       */
+      {0, 0, 0}
+  };
 
   static
   NwGtpv2cMsgIeInfoT                      modifyBearerReqIeInfoTbl[] = {
@@ -682,6 +740,18 @@ extern                                  "C" {
       case NW_GTP_CREATE_BEARER_RSP:{
           rc = nwGtpv2cMsgIeParseInfoUpdate (thiz, createBearerRspIeInfoTbl);
           NW_ASSERT (NW_OK == rc);
+        }
+        break;
+
+      case NW_GTP_DELETE_BEARER_REQ:{
+        rc = nwGtpv2cMsgIeParseInfoUpdate (thiz, deleteBearerReqIeInfoTbl);
+        NW_ASSERT (NW_OK == rc);
+      }
+      break;
+
+      case NW_GTP_DELETE_BEARER_RSP:{
+        rc = nwGtpv2cMsgIeParseInfoUpdate (thiz, deleteBearerRspIeInfoTbl);
+        NW_ASSERT (NW_OK == rc);
         }
         break;
 

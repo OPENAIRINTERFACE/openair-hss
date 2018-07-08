@@ -173,7 +173,7 @@ int esm_proc_dedicated_eps_bearer_context( emm_data_context_t * emm_context,
     ebi_t  default_ebi,
     const proc_tid_t   pti,                  // todo: will always be 0 for network initiated bearer establishment.
     const pdn_cid_t    pdn_cid,              /**< todo: Per APN for now. */
-    bearer_contexts_to_be_created_t *bcs_tbc,
+    bearer_context_to_be_created_t *bc_tbc,
     esm_cause_t *esm_cause);
 
 int esm_proc_dedicated_eps_bearer_context_request(const bool is_standalone, emm_data_context_t * const emm_context, const ebi_t ebi, STOLEN_REF bstring *msg, const bool ue_triggered);

@@ -103,6 +103,8 @@ static const char                      *_esm_sap_primitive_str[] = {
   "ESM_DEDICATED_EPS_BEARER_CONTEXT_ACTIVATE_REQ",
   "ESM_DEDICATED_EPS_BEARER_CONTEXT_ACTIVATE_CNF",
   "ESM_DEDICATED_EPS_BEARER_CONTEXT_ACTIVATE_REJ",
+  "ESM_DEDICATED_EPS_BEARER_CONTEXT_DEACTIVATE_REQ",
+  "ESM_DEDICATED_EPS_BEARER_CONTEXT_DEACTIVATE_CNF",
   "ESM_EPS_BEARER_CONTEXT_MODIFY_REQ",
   "ESM_EPS_BEARER_CONTEXT_MODIFY_CNF",
   "ESM_EPS_BEARER_CONTEXT_MODIFY_REJ",
@@ -292,7 +294,7 @@ esm_sap_send (esm_sap_t * msg)
     rc = esm_proc_eps_bearer_context_deactivate (msg->ctx, true, msg->data.esm_bearer_resource_allocate_rej.ebi,
         PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED, NULL);
     /** Inform the MME_APP of the removal. Will eventually trigger a CBResp. */
-    nas_itti_activate_bearer_rej(msg->ue_id, ebi);
+    nas_itti_activate_bearer_rej(msg->ue_id, msg->data.esm_bearer_resource_allocate_rej.ebi);
 
     break;
 
@@ -320,32 +322,31 @@ esm_sap_send (esm_sap_t * msg)
     break;
 
   case ESM_DEDICATED_EPS_BEARER_CONTEXT_ACTIVATE_REQ: {
-    esm_eps_create_dedicated_bearer_req_t* bearer_activate = &msg->data.eps_dedicated_bearer_context_activate;
+    esm_eps_activate_bearer_req_t* bearer_activate = &msg->data.eps_dedicated_bearer_context_activate;
     if (msg->is_standalone) {
       esm_cause_t esm_cause;
-      rc = esm_proc_dedicated_eps_bearer_context (msg->ctx,     /**< Create an ESM procedure and store the bearers in the procedure as pending. */
-          bearer_activate->linked_ebi,
-          0,
-          bearer_activate->cid,
-          bearer_activate->bcs_to_be_created,
-          &esm_cause);
-      if (rc != RETURNok) {   /**< We assume that no ESM procedure exists. */
-        OAILOG_ERROR (LOG_NAS_ESM, "ESM-SAP   - Failed to handle CN bearer context procedure due SYSTEM_FAILURE!\n", _esm_sap_primitive_str[primitive - ESM_START - 1], primitive);
-        /** Reject all requested bearers due SYSTEM_FAILURE. */
-        bearer_contexts_marked_for_removal_t bcs_marked_for_removal;
-        memset(&bcs_marked_for_removal, 0, sizeof(bearer_contexts_marked_for_removal_t));
-        for(int num_bc = 0; num_bc < bearer_activate->bcs_to_be_created->num_bearer_context; num_bc++){
-          bcs_marked_for_removal.bearer_contexts[num_bc].cause.cause_value = SYSTEM_FAILURE;
-          bcs_marked_for_removal.bearer_contexts[num_bc].eps_bearer_id = bearer_activate->bcs_to_be_created->bearer_contexts[num_bc].eps_bearer_id;
+      /** Handle each bearer context separately. */
+      for(int num_bc = 0; num_bc < bearer_activate->bcs_to_be_created->num_bearer_context; num_bc++){
+        rc = esm_proc_dedicated_eps_bearer_context (msg->ctx,     /**< Create an ESM procedure and store the bearers in the procedure as pending. */
+            bearer_activate->linked_ebi,
+            bearer_activate->pti,
+            bearer_activate->cid,
+            &bearer_activate->bcs_to_be_created->bearer_contexts[num_bc],
+            &esm_cause);
+        if (rc != RETURNok) {   /**< We assume that no ESM procedure exists. */
+          OAILOG_ERROR (LOG_NAS_ESM, "ESM-SAP   - Failed to handle CN bearer context procedure due SYSTEM_FAILURE for num_bearer %d!\n",
+              _esm_sap_primitive_str[primitive - ESM_START - 1], primitive, num_bc);
+          /** Send a NAS ITTI directly for the specific bearer. This will reduce the number of bearers to be processed. */
+          nas_itti_activate_bearer_rej(msg->ue_id, bearer_activate->bcs_to_be_created->bearer_contexts[num_bc].eps_bearer_id); /**< Assuming, no other CN bearer procedure will intervere. */
+          continue; /**< The remaining must also be rejected, such that the procedure has no pending elements anymore. */
         }
-        /** Send a NAS ITTI directly. */
-//        nas_itti_dedicated_eps_bearer_reject(msg->ue_id, &bcs_marked_for_removal);
-        break;
+        OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Successfully allocated bearer with ebi %d for ue " MME_UE_S1AP_ID_FMT "!\n",
+            bearer_activate->bcs_to_be_created->bearer_contexts[num_bc].eps_bearer_id, ue_context->mme_ue_s1ap_id);
+        /* Send Activate Dedicated Bearer Context Request */
+        rc = _esm_sap_send(ACTIVATE_DEDICATED_EPS_BEARER_CONTEXT_REQUEST,
+            msg->is_standalone, msg->ctx, (proc_tid_t)bearer_activate->pti, bearer_activate->bcs_to_be_created->bearer_contexts[num_bc].eps_bearer_id,
+            &msg->data, msg->send);
       }
-      /* Send Activate Dedicated Bearer Context Request */
-      rc = _esm_sap_send(ACTIVATE_DEDICATED_EPS_BEARER_CONTEXT_REQUEST,
-          msg->is_standalone, msg->ctx, (proc_tid_t)0 , bearer_activate->linked_ebi,
-          &msg->data, msg->send);
     }
   }
   break;
@@ -355,6 +356,32 @@ esm_sap_send (esm_sap_t * msg)
 
   case ESM_DEDICATED_EPS_BEARER_CONTEXT_ACTIVATE_REJ:
     break;
+
+  case ESM_DEDICATED_EPS_BEARER_CONTEXT_DEACTIVATE_REQ:{
+    esm_eps_deactivate_bearer_req_t* bearer_deactivate = &msg->data.eps_dedicated_bearer_context_deactivate;
+    if (msg->is_standalone) {
+      esm_cause_t esm_cause;
+
+      // todo: currently single messages, sum up to one big message
+      for(int num_ebi = 0; num_ebi < bearer_deactivate->ebis.num_ebi; num_ebi++){
+        rc = esm_proc_eps_bearer_context_deactivate(msg->ctx, false,
+            bearer_deactivate->ebis.ebis[num_ebi],
+            bearer_deactivate->cid, &esm_cause);
+
+        if(rc != RETURNerror){
+          /* Send Activate Dedicated Bearer Context Request */
+          rc = _esm_sap_send(DEACTIVATE_EPS_BEARER_CONTEXT_REQUEST,
+              msg->is_standalone, msg->ctx, (proc_tid_t)bearer_deactivate->pti,  bearer_deactivate->ebis.ebis[num_ebi],
+              &msg->data, msg->send);
+        }else{
+          OAILOG_ERROR (LOG_NAS_ESM, "ESM-SAP   - Error deactivating bearer context for UE " MME_UE_S1AP_ID_FMT " and ebi %d. \n",
+             ue_context->mme_ue_s1ap_id, bearer_deactivate->ebis.ebis[num_ebi]);
+
+        }
+      }
+    }
+  }
+  break;
 
   case ESM_EPS_BEARER_CONTEXT_MODIFY_REQ:
     break;
@@ -1013,7 +1040,7 @@ _esm_sap_send (
     break;
 
   case ACTIVATE_DEDICATED_EPS_BEARER_CONTEXT_REQUEST: {
-      const   esm_eps_create_dedicated_bearer_req_t *msg = &data->eps_dedicated_bearer_context_activate;
+      const   esm_eps_activate_bearer_req_t *msg = &data->eps_dedicated_bearer_context_activate;
 
       EpsQualityOfService eps_qos = {0};
       /** Sending a EBR-Request per bearer context. */
@@ -1050,7 +1077,7 @@ _esm_sap_send (
      * The EBI should already be set when the ESM message has been received.
      * This is always non local, since else we don't send message sent.
      */
-    rc = esm_send_deactivate_eps_bearer_context_request (emm_context->esm_ctx.esm_proc_data->pti, emm_context->esm_ctx.esm_proc_data->ebi,
+    rc = esm_send_deactivate_eps_bearer_context_request (pti, ebi,
         &esm_msg.deactivate_eps_bearer_context_request, ESM_CAUSE_REGULAR_DEACTIVATION);
     if (rc != RETURNerror) {
       /** If no local pdn context deletion, directly continue with the NAS/S1AP message.
