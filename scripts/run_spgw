@@ -226,7 +226,7 @@ function main()
   #sgi_ip_cidr=$(get_interface_inet_global_cidr ${!sgi_nw_dev_string})
   sgi_ip=$(echo $sgi_ip_cidr | cut -d '/' -f1)
 
-  echo_success "SGI interface ${!sgi_nw_dev_string} found up, inet ${!sgi_ip_cidr_string}"
+  echo_success "SGI interface ${!sgi_nw_dev_string} found inet ${!sgi_ip_cidr_string} in config file"
 
   #echo_info "Setting in $spgw_config_file PGW_IPV4_ADDRESS_FOR_SGI = $sgi_ip_cidr"
   #sed -i "s|.*PGW_IPV4_ADDRESS_FOR_SGI.*|        PGW_IPV4_ADDRESS_FOR_SGI = \"$sgi_ip_cidr\";|" $spgw_config_file
@@ -242,7 +242,7 @@ function main()
   ret=$?;[[ $ret -ne 0 ]] && echo_error "Failed to find S1-U interface up" && return $ret
   s1u_ip_cidr=$(get_interface_inet_global_cidr ${!s1u_nw_dev_string})
   s1u_ip=$(echo $s1u_ip_cidr | cut -d '/' -f1)
-  echo_success "S1-U interface ${!s1u_nw_dev_string} found up, inet $s1u_ip_cidr"
+  echo_success "S1-U interface ${!s1u_nw_dev_string} found inet $s1u_ip_cidr in config file"
 
   echo_info "Setting in $spgw_config_file SGW_IPV4_ADDRESS_FOR_S1U_S12_S4_UP = $s1u_ip_cidr"
   sed -i "s|.*SGW_IPV4_ADDRESS_FOR_S1U_S12_S4_UP.*|        SGW_IPV4_ADDRESS_FOR_S1U_S12_S4_UP = \"$s1u_ip_cidr\";|" $spgw_config_file
@@ -251,8 +251,12 @@ function main()
   if [ -z ${ENABLE_OPENFLOW+x} ]  ||  [ -z ${ENABLE_OPENFLOW_MOSAIC+x} ]; then
     ovs_start
     sleep 1
+    $SUDO ovs-vsctl del-br $OVS_GTPU_BRIDGE_NAME
 
     if [ -z $sgi_mac_nh ]; then
+    
+      $SUDO ifconfig ${!sgi_nw_dev_string} ${!sgi_ip_cidr_string}
+      
       if [ -z $sgi_nh ]; then
         subnet=$(ip address show dev ${!sgi_nw_dev_string} | grep inet | grep -v inet6 | xargs | cut -d ' ' -f2 | cut -d '/' -f1 | cut -d '.' -f1-3)
         [[ $? -ne 0 ]] && echo_error "Failed to get subnet of SGi interface" && return $?
@@ -264,8 +268,11 @@ function main()
       ping -I ${!sgi_nw_dev_string} -c 1 $sgi_nh
       # May be configured to not reply to ping
       # Assume default route is through SGi
-      [[ $? -ne 0 ]] && ping -I ${!sgi_nw_dev_string} -c 1 www.google.com
-      ret=$?;[[ $ret -ne 0 ]] && echo_error "Failed to ping google server after failed to ping SGI next hop" && return $ret
+      ret=$?
+      if [[ $ret -ne 0 ]]; then 
+        ping -I ${!sgi_nw_dev_string} -c 1 www.google.com
+        ret=$?;[[ $ret -ne 0 ]] && echo_error "Failed to ping google server after failed to ping SGI next hop" && return $ret
+      fi
       sgi_mac_nh=$(arp --device ${!sgi_nw_dev_string} --numeric | grep $sgi_nh | xargs | cut -d ' ' -f3)
       ret=$?;[[ $ret -ne 0 ]] && echo_error "Failed to get L2 address of SGi next hop" && return $ret
     fi
