@@ -129,9 +129,6 @@ int sgw_config_parse_file (sgw_config_t * config_pP)
     config_pP->log_config.gtpv1u_log_level   = MAX_LOG_LEVEL;
     config_pP->log_config.gtpv2c_log_level   = MAX_LOG_LEVEL;
     config_pP->log_config.sctp_log_level     = MAX_LOG_LEVEL;
-    config_pP->log_config.s1ap_log_level     = MAX_LOG_LEVEL;
-    config_pP->log_config.nas_log_level      = MAX_LOG_LEVEL;
-    config_pP->log_config.mme_app_log_level  = MAX_LOG_LEVEL;
     config_pP->log_config.spgw_app_log_level = MAX_LOG_LEVEL;
     config_pP->log_config.s11_log_level      = MAX_LOG_LEVEL;
     config_pP->log_config.s6a_log_level      = MAX_LOG_LEVEL;

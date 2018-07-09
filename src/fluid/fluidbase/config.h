@@ -38,22 +38,22 @@
 #define LT_OBJDIR ".libs/"
 
 /* Define to the address where bug reports for this package should be sent. */
-#define PACKAGE_BUGREPORT "allanv@cpqd.com.br"
+//#define PACKAGE_BUGREPORT "allanv@cpqd.com.br"
 
 /* Define to the full name of this package. */
-#define PACKAGE_NAME "libfluid_base"
+//#define PACKAGE_NAME "libfluid_base"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "libfluid_base 1.0"
+//#define PACKAGE_STRING "libfluid_base 1.0"
 
 /* Define to the one symbol short name of this package. */
-#define PACKAGE_TARNAME "libfluid_base"
+//#define PACKAGE_TARNAME "libfluid_base"
 
 /* Define to the home page for this package. */
-#define PACKAGE_URL "http://www.cpqd.com.br/"
+//#define PACKAGE_URL "http://www.cpqd.com.br/"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.0"
+//#define PACKAGE_VERSION "1.0"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
