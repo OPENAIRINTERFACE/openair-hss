@@ -48,6 +48,10 @@ extern "C" {
 #define PGW_CONFIG_STRING_NAS_FORCE_PUSH_PCO                    "FORCE_PUSH_PROTOCOL_CONFIGURATION_OPTIONS"
 
 #define PGW_CONFIG_STRING_IP_ADDRESS_POOL                       "IP_ADDRESS_POOL"
+#define PGW_CONFIG_STRING_ARP_UE                                "ARP_UE"
+#define PGW_CONFIG_STRING_ARP_UE_CHOICE_NO                      "NO"
+#define PGW_CONFIG_STRING_ARP_UE_CHOICE_LINUX                   "LINUX"
+#define PGW_CONFIG_STRING_ARP_UE_CHOICE_OAI                     "OAI"
 #define PGW_CONFIG_STRING_IPV4_ADDRESS_LIST                     "IPV4_LIST"
 #define PGW_CONFIG_STRING_IPV4_PREFIX_DELIMITER                 '/'
 #define PGW_CONFIG_STRING_DEFAULT_DNS_IPV4_ADDRESS              "DEFAULT_DNS_IPV4_ADDRESS"
@@ -116,6 +120,8 @@ typedef struct pgw_config_s {
 #define PGW_NUM_UE_POOL_MAX 96
   uint8_t          ue_pool_mask[PGW_NUM_UE_POOL_MAX];
   struct in_addr   ue_pool_addr[PGW_NUM_UE_POOL_MAX];
+  bool             arp_ue_linux;
+  bool             arp_ue_oai;
 
   bool      force_push_pco;
   uint16_t  ue_mtu;

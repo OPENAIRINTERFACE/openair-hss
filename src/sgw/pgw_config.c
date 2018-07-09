@@ -121,6 +121,11 @@ int pgw_config_process (pgw_config_t * config_pP)
       ip4_ref = calloc (1, sizeof (conf_ipv4_list_elm_t));
       ip4_ref->addr.s_addr = addr_start.s_addr;
       STAILQ_INSERT_TAIL (&config_pP->ipv4_pool_list, ip4_ref, ipv4_entries);
+
+      if (config_pP->arp_ue_linux) {
+         async_system_command (TASK_ASYNC_SYSTEM, PGW_ABORT_ON_ERROR, "arp -nDs %s %s pub", inet_ntoa(ip4_ref->addr), bdata(config_pP->ipv4.if_name_SGI));
+      }
+
       counter64 = counter64 - 1;
       addr_start.s_addr = htonl( ntohl(addr_start.s_addr) + 1 );
     } while (counter64 > 0);
@@ -264,6 +269,20 @@ int pgw_config_parse_file (pgw_config_t * config_pP)
     subsetting = config_setting_get_member (setting_pgw, PGW_CONFIG_STRING_IP_ADDRESS_POOL);
 
     if (subsetting) {
+
+      config_pP->arp_ue_oai = false;
+      config_pP->arp_ue_linux = false;
+
+      if (config_setting_lookup_string (subsetting, PGW_CONFIG_STRING_ARP_UE, (const char **)&astring)) {
+        if (strcasecmp (astring, PGW_CONFIG_STRING_ARP_UE_CHOICE_LINUX) == 0) {
+          config_pP->arp_ue_linux = true;
+        } else if (strcasecmp (astring, PGW_CONFIG_STRING_ARP_UE_CHOICE_OAI) == 0) {
+          // TODO
+          config_pP->arp_ue_oai = true;
+          AssertFatal(0, "ARP UE managed by OAI SPGW not available yet");
+        }
+      }
+
       sub2setting = config_setting_get_member (subsetting, PGW_CONFIG_STRING_IPV4_ADDRESS_LIST);
 
       if (sub2setting) {
