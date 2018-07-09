@@ -87,14 +87,13 @@ enum_to_string_t                        all_apn_conf_ind_to_string[ALL_APN_MAX] 
 };
 
 enum_to_string_t                        pdn_type_to_string[IP_MAX] = {
+  {0, "0"}
+  ,
   {IPv4, "IPv4"}
   ,
   {IPv6, "IPv6"}
   ,
   {IPv4_AND_v6, "IPv4 and IPv6"}
-  ,
-  {IPv4_OR_v6, "IPv4 or IPv6"}
-  ,
 };
 
 static int

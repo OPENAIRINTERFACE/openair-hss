@@ -50,6 +50,7 @@
 #include "dynamic_memory_check.h"
 #include "gcc_diag.h"
 #include "log.h"
+#include "conversions.h"
 
 #ifdef _NWGTPV2C_HAVE_TIMERADD
 #  define NW_GTPV2C_TIMER_ADD(tvp, uvp, vvp) timeradd((tvp), (uvp), (vvp))
@@ -903,10 +904,10 @@ static nw_rc_t                            nwGtpv2cHandleUlpFindLocalTunnel (
     pUlpReq->u_api_info.findLocalTunnelInfo.hTunnel = (nw_gtpv2c_tunnel_handle_t) pLocalTunnel;
 
     if(pLocalTunnel){
-      OAILOG_DEBUG (LOG_GTPV2C, "FOUND local tunnel with teid '0x%x' and peer IP 0x%x\n", keyTunnel.teid, keyTunnel.ipv4AddrRemote);
+      OAILOG_DEBUG (LOG_GTPV2C, "FOUND local tunnel with teid '0x%x' and peer IP "IN_ADDR_FMT"\n", keyTunnel.teid, PRI_IN_ADDR(keyTunnel.ipv4AddrRemote));
 
     }else{
-      OAILOG_DEBUG (LOG_GTPV2C, "DID NOT FOUND local tunnel with teid '0x%x' and peer IP 0x%x\n", keyTunnel.teid, keyTunnel.ipv4AddrRemote);
+      OAILOG_DEBUG (LOG_GTPV2C, "DID NOT FOUND local tunnel with teid '0x%x' and peer IP "IN_ADDR_FMT"\n", keyTunnel.teid, PRI_IN_ADDR(keyTunnel.ipv4AddrRemote));
 
     }
     return RETURNok;

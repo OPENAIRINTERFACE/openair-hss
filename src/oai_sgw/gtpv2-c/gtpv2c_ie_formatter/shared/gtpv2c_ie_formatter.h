@@ -103,4 +103,16 @@ gtpv2c_arp_ie_get (
   uint8_t * ieValue,
   void *arg);
 
+nw_rc_t
+gtpv2c_selection_mode_ie_set (
+    nw_gtpv2c_msg_handle_t * msg, SelectionMode_t * sm);
+
+nw_rc_t
+gtpv2c_selection_mode_ie_get (
+  uint8_t ieType,
+  uint16_t ieLength,
+  uint8_t ieInstance,
+  uint8_t * ieValue,
+  void *arg);
+
 #endif /* FILE_GTPV2C_IE_FORMATTER_SEEN */

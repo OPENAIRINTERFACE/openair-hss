@@ -187,22 +187,14 @@ gtpv2c_pdn_type_ie_get (
 
   DevAssert (pdn_type );
 
-  if (*ieValue == 1) {
-    /*
-     * Only IPv4
-     */
-    *pdn_type = IPv4;
-  } else if (*ieValue == 2) {
-    /*
-     * Only IPv6
-     */
-    *pdn_type = IPv6;
-  } else if (*ieValue == 3) {
-    /*
-     * IPv4 and/or IPv6
-     */
-    *pdn_type = IPv4_AND_v6;
-  } else {
+  switch (*ieValue) {
+  case IPv4:
+  case IPv6:
+  case IPv4_AND_v6:
+    *pdn_type = *ieValue;
+    break;
+
+  default:
     OAILOG_ERROR (LOG_S11, "Received unknown value for PDN Type: %u\n", *ieValue);
     return NW_GTPV2C_IE_INCORRECT;
   }
@@ -218,23 +210,16 @@ gtpv2c_pdn_type_ie_set (
   const pdn_type_t * pdn_type)
 {
   nw_rc_t                                   rc;
-  uint8_t                                 value;
+  uint8_t                                 value = 0;
 
   DevAssert (pdn_type );
   DevAssert (msg );
 
   switch (*pdn_type) {
   case IPv4:
-    value = 1;
-    break;
-
   case IPv6:
-    value = 2;
-    break;
-
   case IPv4_AND_v6:
-  case IPv4_OR_v6:
-    value = 3;
+    value = *pdn_type;
     break;
 
   default:

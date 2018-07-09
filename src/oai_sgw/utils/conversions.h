@@ -402,6 +402,27 @@ int ascii_to_hex(uint8_t *dst, const char *h);
     ((bYtE) & 0x02 ? '1':'0'),\
     ((bYtE) & 0x01 ? '1':'0')
 
+void copy_paa(paa_t *paa_dst, paa_t *paa_src);
+bstring paa_to_bstring(paa_t *paa);
+bstring fteid_ip_address_to_bstring(const struct fteid_s * const fteid);
+bstring ip_address_to_bstring(ip_address_t *ip_address);
+void    bstring_to_ip_address(bstring const bstr, ip_address_t * const ip_address);
+
+
+#define FTEID_T_2_IP_ADDRESS_T(fte_p,ip_p) \
+do { \
+    (ip_p)->ipv4 = false; \
+    (ip_p)->ipv6 = false; \
+    if ((fte_p)->ipv4) { \
+      (ip_p)->ipv4 = true; \
+      (ip_p)->address.ipv4_address.s_addr = (fte_p)->ipv4_address.s_addr;         \
+    } \
+    else if ((fte_p)->ipv6) { \
+      (ip_p)->ipv6 = true; \
+      memcpy(&(ip_p)->address.ipv6_address, &(fte_p)->ipv6_address, sizeof((fte_p)->ipv6_address)); \
+    } \
+} while (0)
+
 #ifdef __cplusplus
 }
 #endif

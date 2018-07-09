@@ -84,90 +84,105 @@ s11_sgw_handle_create_session_request (
    */
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_IMSI, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
 		  gtpv2c_imsi_ie_get, &create_session_request_p->imsi);
+  if (NW_OK == rc) create_session_request_p->ie_presence_mask |= S11_CREATE_SESSION_REQUEST_PR_IE_IMSI;
   DevAssert (NW_OK == rc);
   /*
    * MSISDN IE
    */
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_MSISDN, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
 		  gtpv2c_msisdn_ie_get, &create_session_request_p->msisdn);
+  if (NW_OK == rc) create_session_request_p->ie_presence_mask |= S11_CREATE_SESSION_REQUEST_PR_IE_MSISDN;
   DevAssert (NW_OK == rc);
   /*
    * MEI IE
    */
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_MEI, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
 		  gtpv2c_mei_ie_get, &create_session_request_p->mei);
+  if (NW_OK == rc) create_session_request_p->ie_presence_mask |= S11_CREATE_SESSION_REQUEST_PR_IE_MEI;
   DevAssert (NW_OK == rc);
   /*
    * ULI IE
    */
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_ULI, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
 		  gtpv2c_uli_ie_get, &create_session_request_p->uli);
+  if (NW_OK == rc) create_session_request_p->ie_presence_mask |= S11_CREATE_SESSION_REQUEST_PR_IE_ULI;
   DevAssert (NW_OK == rc);
   /*
    * Serving Network IE
    */
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_SERVING_NETWORK, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
 		  gtpv2c_serving_network_ie_get, &create_session_request_p->serving_network);
+  if (NW_OK == rc) create_session_request_p->ie_presence_mask |= S11_CREATE_SESSION_REQUEST_PR_IE_SERVING_NETWORK;
   DevAssert (NW_OK == rc);
   /*
    * RAT Type IE
    */
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_RAT_TYPE, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_MANDATORY,
 		  gtpv2c_rat_type_ie_get, &create_session_request_p->rat_type);
+  if (NW_OK == rc) create_session_request_p->ie_presence_mask |= S11_CREATE_SESSION_REQUEST_PR_IE_RAT_TYPE;
   DevAssert (NW_OK == rc);
   /*
    * Indication Flags IE
    */
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_INDICATION, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
 		  gtpv2c_indication_flags_ie_get, &create_session_request_p->indication_flags);
+  if (NW_OK == rc) create_session_request_p->ie_presence_mask |= S11_CREATE_SESSION_REQUEST_PR_IE_INDICATION_FLAGS;
   DevAssert (NW_OK == rc);
   /*
    * APN IE
    */
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_APN, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_MANDATORY,
 		  gtpv2c_apn_ie_get, &create_session_request_p->apn);
+  if (NW_OK == rc) create_session_request_p->ie_presence_mask |= S11_CREATE_SESSION_REQUEST_PR_IE_APN;
   DevAssert (NW_OK == rc);
   /*
    * Selection Mode IE
    */
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_SELECTION_MODE, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
-		  s11_ie_indication_generic, NULL);
+      gtpv2c_selection_mode_ie_get, &create_session_request_p->selection_mode);
+  if (NW_OK == rc) create_session_request_p->ie_presence_mask |= S11_CREATE_SESSION_REQUEST_PR_IE_SELECTION_MODE;
   DevAssert (NW_OK == rc);
   /*
    * PDN Type IE
    */
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_PDN_TYPE, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
 		  gtpv2c_pdn_type_ie_get, &create_session_request_p->pdn_type);
+  if (NW_OK == rc) create_session_request_p->ie_presence_mask |= S11_CREATE_SESSION_REQUEST_PR_IE_PDN_TYPE;
   DevAssert (NW_OK == rc);
   /*
    * PAA IE
    */
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_PAA, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
            gtpv2c_paa_ie_get, &create_session_request_p->paa);
+  if (NW_OK == rc) create_session_request_p->ie_presence_mask |= S11_CREATE_SESSION_REQUEST_PR_IE_PAA;
   DevAssert (NW_OK == rc);
   /*
    * Sender FTEID for CP IE
    */
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_FTEID, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_MANDATORY,
            gtpv2c_fteid_ie_get, &create_session_request_p->sender_fteid_for_cp);
+  if (NW_OK == rc) create_session_request_p->ie_presence_mask |= S11_CREATE_SESSION_REQUEST_PR_IE_SENDER_FTEID_FOR_CONTROL_PLANE;
   DevAssert (NW_OK == rc);
   /*
    * PGW FTEID for CP IE
    */
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_FTEID, NW_GTPV2C_IE_INSTANCE_ONE, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
 		  gtpv2c_fteid_ie_get, &create_session_request_p->pgw_address_for_cp);
+  if (NW_OK == rc) create_session_request_p->ie_presence_mask |= S11_CREATE_SESSION_REQUEST_PR_IE_PGW_S5S8_ADDRESS_FOR_CONTROL_PLANE;
   DevAssert (NW_OK == rc);
   /*
    * APN Restriction IE
    */
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_APN_RESTRICTION, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
            s11_ie_indication_generic, NULL);
+  if (NW_OK == rc) create_session_request_p->ie_presence_mask |= S11_CREATE_SESSION_REQUEST_PR_IE_MAXIMUM_APN_RESTRICTION;
   DevAssert (NW_OK == rc);
   /*
    * Bearer Context IE
    */
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_BEARER_CONTEXT, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_MANDATORY,
       gtpv2c_bearer_context_to_be_created_within_create_session_request_ie_get, &create_session_request_p->bearer_contexts_to_be_created);
+  if (NW_OK == rc) create_session_request_p->ie_presence_mask |= S11_CREATE_SESSION_REQUEST_PR_IE_BEARER_CONTEXTS_TO_BE_CREATED;
   DevAssert (NW_OK == rc);
 
 
@@ -176,6 +191,7 @@ s11_sgw_handle_create_session_request (
    */
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_PCO, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
       gtpv2c_pco_ie_get, &create_session_request_p->pco);
+  if (NW_OK == rc) create_session_request_p->ie_presence_mask |= S11_CREATE_SESSION_REQUEST_PR_IE_PCO;
   DevAssert (NW_OK == rc);
 
 
@@ -188,12 +204,14 @@ s11_sgw_handle_create_session_request (
    */
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_AMBR, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
            gtpv2c_ambr_ie_get, &create_session_request_p->ambr);
+  if (NW_OK == rc) create_session_request_p->ie_presence_mask |= S11_CREATE_SESSION_REQUEST_PR_IE_APN_AMBR;
   DevAssert (NW_OK == rc);
   /*
    * Recovery IE
    */
-  rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_RECOVERY, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_MANDATORY,
+  rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_RECOVERY, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
 		  s11_ie_indication_generic, NULL);
+  if (NW_OK == rc) create_session_request_p->ie_presence_mask |= S11_CREATE_SESSION_REQUEST_PR_IE_RECOVERY;
   DevAssert (NW_OK == rc);
   create_session_request_p->teid = nwGtpv2cMsgGetTeid (pUlpApi->hMsg);
   create_session_request_p->trxn = (void *)pUlpApi->u_api_info.initialReqIndInfo.hTrxn;
@@ -298,29 +316,42 @@ s11_sgw_handle_create_session_response (
    */
   rc = nwGtpv2cMsgSetTeid (ulp_req.hMsg, create_session_response_p->teid);
   DevAssert (NW_OK == rc);
-  cause = create_session_response_p->cause;
-  gtpv2c_cause_ie_set (&(ulp_req.hMsg), &cause);
 
-  rc = nwGtpv2cMsgAddIeFteid ((ulp_req.hMsg), NW_GTPV2C_IE_INSTANCE_ZERO, S11_SGW_GTP_C,
+  if (create_session_response_p->ie_presence_mask & S11_CREATE_SESSION_RESPONSE_PR_IE_CAUSE) {
+    cause = create_session_response_p->cause;
+    gtpv2c_cause_ie_set (&(ulp_req.hMsg), &cause);
+  }
+
+  if (create_session_response_p->ie_presence_mask & S11_CREATE_SESSION_RESPONSE_PR_IE_SENDER_FTEID_FOR_CONTROL_PLANE) {
+    rc = nwGtpv2cMsgAddIeFteid ((ulp_req.hMsg), NW_GTPV2C_IE_INSTANCE_ZERO, S11_SGW_GTP_C,
       create_session_response_p->s11_sgw_fteid.teid,
       create_session_response_p->s11_sgw_fteid.ipv4 ? &create_session_response_p->s11_sgw_fteid.ipv4_address : 0,
       create_session_response_p->s11_sgw_fteid.ipv6 ? &create_session_response_p->s11_sgw_fteid.ipv6_address : NULL);
+  }
 
-  rc = nwGtpv2cMsgAddIeFteid ((ulp_req.hMsg), NW_GTPV2C_IE_INSTANCE_ONE, S5_S8_PGW_GTP_C,
+  if (create_session_response_p->ie_presence_mask & S11_CREATE_SESSION_RESPONSE_PR_IE_PGW_S5S8_FTEID_FOR_CONTROL_PLANE) {
+    rc = nwGtpv2cMsgAddIeFteid ((ulp_req.hMsg), NW_GTPV2C_IE_INSTANCE_ONE, S5_S8_PGW_GTP_C,
       create_session_response_p->s11_sgw_fteid.teid,
       create_session_response_p->s11_sgw_fteid.ipv4 ? &create_session_response_p->s11_sgw_fteid.ipv4_address : 0,
       create_session_response_p->s11_sgw_fteid.ipv6 ? &create_session_response_p->s11_sgw_fteid.ipv6_address : NULL);
+  }
 
-
-  gtpv2c_paa_ie_set (&(ulp_req.hMsg), create_session_response_p->paa);
+  if (create_session_response_p->ie_presence_mask & S11_CREATE_SESSION_RESPONSE_PR_IE_PAA) {
+    gtpv2c_paa_ie_set (&(ulp_req.hMsg), &create_session_response_p->paa);
+  }
   /*
    * Put 0 for now i.e. no existing context or restriction
    */
   gtpv2c_apn_restriction_ie_set (&(ulp_req.hMsg), 0);
-  gtpv2c_pco_ie_set (&(ulp_req.hMsg), &create_session_response_p->pco);
 
-  for (int i = 0; i < create_session_response_p->bearer_contexts_created.num_bearer_context; i++) {
-    gtpv2c_bearer_context_created_ie_set (&(ulp_req.hMsg), &create_session_response_p->bearer_contexts_created.bearer_contexts[i]);
+  if (create_session_response_p->ie_presence_mask & S11_CREATE_SESSION_RESPONSE_PR_IE_PCO) {
+    gtpv2c_pco_ie_set (&(ulp_req.hMsg), &create_session_response_p->pco);
+  }
+
+  if (create_session_response_p->ie_presence_mask & S11_CREATE_SESSION_RESPONSE_PR_IE_BEARER_CONTEXTS_CREATED) {
+    for (int i = 0; i < create_session_response_p->bearer_contexts_created.num_bearer_context; i++) {
+      gtpv2c_bearer_context_created_ie_set (&(ulp_req.hMsg), &create_session_response_p->bearer_contexts_created.bearer_contexts[i]);
+    }
   }
 
   rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);

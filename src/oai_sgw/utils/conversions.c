@@ -24,14 +24,15 @@
   \author Sebastien ROUX
   \company Eurecom
 */
+#include "assertions.h"
+#include "common_defs.h"
+#include "conversions.h"
+
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <ctype.h>
 #include <inttypes.h>
-
-#include "common_defs.h"
-#include "conversions.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -137,6 +138,83 @@ imsi64_t imsi_to_imsi64(const imsi_t * const imsi)
     }
   }
   return imsi64;
+}
+
+//------------------------------------------------------------------------------
+bstring fteid_ip_address_to_bstring(const struct fteid_s * const fteid)
+{
+  bstring bstr = NULL;
+  if (fteid->ipv4) {
+    bstr = blk2bstr(&fteid->ipv4_address.s_addr, 4);
+  } else if (fteid->ipv6) {
+    bstr = blk2bstr(&fteid->ipv6_address, 16);
+  } else {
+    char avoid_seg_fault[4] = {0,0,0,0};
+    bstr = blk2bstr(avoid_seg_fault, 4);
+  }
+  return bstr;
+}
+
+//------------------------------------------------------------------------------
+bstring ip_address_to_bstring(ip_address_t *ip_address)
+{
+  bstring bstr = NULL;
+  if (ip_address->ipv4) {
+    bstr = blk2bstr(&ip_address->address.ipv4_address.s_addr, 4);
+  } else if (ip_address->ipv6) {
+    bstr = blk2bstr(&ip_address->address.ipv6_address, 16);
+  }
+  return bstr;
+}
+
+//------------------------------------------------------------------------------
+void bstring_to_ip_address(bstring const bstr, ip_address_t * const ip_address)
+{
+  if (bstr) {
+    ip_address->ipv4 = false;
+    ip_address->ipv6 = false;
+    switch (blength(bstr)) {
+    case 4:
+      ip_address->ipv4 = true;
+      memcpy(&ip_address->address.ipv4_address, bstr->data, blength(bstr));
+      break;
+    case 16:
+      ip_address->ipv6 = true;
+      memcpy(&ip_address->address.ipv6_address, bstr->data, blength(bstr));
+      break;
+    default:
+      ;
+    }
+  }
+}
+
+//------------------------------------------------------------------------------
+bstring paa_to_bstring(paa_t *paa)
+{
+  bstring bstr = NULL;
+  switch (paa->pdn_type) {
+  case IPv4:
+    bstr = blk2bstr(&paa->ipv4_address.s_addr, 4);
+    break;
+  case IPv6:
+    DevAssert (paa->ipv6_prefix_length == 64);    // NAS seems to only support 64 bits
+    bstr = blk2bstr(&paa->ipv6_address, paa->ipv6_prefix_length / 8);
+    break;
+  case IPv4_AND_v6:
+    DevAssert (paa->ipv6_prefix_length == 64);    // NAS seems to only support 64 bits
+    bstr = blk2bstr(&paa->ipv4_address.s_addr, 4);
+    bcatblk(bstr, &paa->ipv6_address, paa->ipv6_prefix_length / 8);
+    break;
+  default:
+    ;
+  }
+  return bstr;
+}
+
+//------------------------------------------------------------------------------
+void copy_paa(paa_t *paa_dst, paa_t *paa_src)
+{
+  memcpy(paa_dst, paa_src, sizeof(paa_t));
 }
 
 #ifdef __cplusplus

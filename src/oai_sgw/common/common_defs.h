@@ -39,6 +39,7 @@ extern "C" {
 
 #define OFFSET_OF(TyPe, MeMBeR) ((size_t) &((TyPe *)0)->MeMBeR)
 
+#define MOVE_REF(DeSt, ReF) DeSt = Ref; ReF = NULL
 
 #define PARENT_STRUCT(cOnTaiNeD, TyPe, MeMBeR) ({                      \
         const typeof( ((TyPe *)0)->MeMBeR ) *__MemBeR_ptr = (cOnTaiNeD);    \

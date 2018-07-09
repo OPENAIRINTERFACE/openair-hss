@@ -30,7 +30,7 @@
 #define FILE_3GPP_29_274_SEEN
 #include <arpa/inet.h>
 
-#include "common_types.h"
+#include "common_root_types.h"
 #include "3gpp_24.301.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"
@@ -128,6 +128,17 @@ typedef struct {
 } gtpv2c_cause_t;
 
 //-------------------------------------
+// 8.9 IP Address
+typedef struct {
+  bool ipv4;
+  bool ipv6;
+  union {
+    struct in_addr  ipv4_address;
+    struct in6_addr ipv6_address;
+  } address;
+} ip_address_t;
+
+//-------------------------------------
 // 8.11 MSISDN
 typedef struct {
   uint8_t digit[MSISDN_LENGTH];
@@ -221,6 +232,29 @@ typedef struct indication_flags_s {
 #define O11_SPARE2_FLAG_BIT_POS  2
 #define O11_ENBCRSI_FLAG_BIT_POS 1
 #define O11_TSPCMI_FLAG_BIT_POS  0
+
+
+//-------------------------------------
+// 8.34 PDN Type
+typedef enum {
+  IPv4 = 1,
+  IPv6 = 2,
+  IPv4_AND_v6 = 3,
+  IP_MAX,
+} pdn_type_value_t;
+
+typedef uint8_t pdn_type_t;
+
+//-------------------------------------
+// 8.14 PAA
+
+typedef struct paa_s {
+  pdn_type_value_t pdn_type;
+  struct in_addr ipv4_address;
+  struct in6_addr ipv6_address;
+  /* Note in rel.8 the ipv6 prefix length has a fixed value of /64 */
+  uint8_t ipv6_prefix_length;
+} paa_t;
 
 //-------------------------------------
 // 8.15 Bearer Quality of Service (Bearer QoS)
@@ -638,6 +672,25 @@ typedef struct bearer_contexts_within_create_bearer_response_s {
   bearer_context_within_create_bearer_response_t bearer_contexts[MSG_CREATE_BEARER_RESPONSE_MAX_BEARER_CONTEXTS];
 } bearer_contexts_within_create_bearer_response_t;
 
+#ifdef __cplusplus
+}
+#endif
+
+#include "common_types.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+//-------------------------------------------------
+// 8.58: Selection Mode
+
+typedef enum SelectionMode_e {
+  MS_O_N_P_APN_S_V    = 0,    ///< MS or network provided APN, subscribed verified
+  MS_P_APN_S_N_V      = 1,    ///< MS provided APN, subscription not verified
+  N_P_APN_S_N_V       = 2,    ///< Network provided APN, subscription not verified
+} SelectionMode_t;
+
 //-------------------------------------
 // 8.38 MM EPS Context
 
@@ -772,6 +825,7 @@ typedef struct target_identification_s {
     home_enb_id_t  home_enb_id;
   } target_id;
 } target_identification_t;
+
 
 //-------------------------------------------------
 // 8.65: Node Type

@@ -54,6 +54,7 @@
 #include "s11_sgw.h"
 #include "s11_sgw_bearer_manager.h"
 #include "s11_sgw_session_manager.h"
+#include "s11_sgw_downlink_data.h"
 #include "timer_messages_types.h"
 #include "udp_messages_types.h"
 #include "s11_messages_types.h"

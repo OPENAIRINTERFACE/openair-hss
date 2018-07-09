@@ -140,7 +140,7 @@ gtpv2c_imsi_ie_set (
 
   rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_IMSI, imsi_nbo.length, 0, (uint8_t*)imsi_nbo.u.value);
   DevAssert (NW_OK == rc);
-  return RETURNok;
+  return NW_OK;
 }
 
 //------------------------------------------------------------------------------
@@ -194,7 +194,7 @@ gtpv2c_cause_ie_set (
   }
 
   DevAssert (NW_OK == rc);
-  return rc == NW_OK ? 0 : -1;
+  return NW_OK;
 }
 
 
@@ -237,7 +237,7 @@ gtpv2c_fteid_ie_set (
 
   rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_FTEID, offset, instance, value);
   DevAssert (NW_OK == rc);
-  return RETURNok;
+  return NW_OK;
 }
 
 
@@ -325,7 +325,7 @@ gtpv2c_paa_ie_get (
     OAILOG_DEBUG (LOG_GTPV2C, "\t- IPv6 addr %s/%u\n", ipv6_ascii, paa->ipv6_prefix_length);
   }
 
-  if (paa->pdn_type == 3) {
+  if (paa->pdn_type == IPv4_AND_v6) {
     offset = 17;
   }
 
@@ -341,7 +341,6 @@ gtpv2c_paa_ie_get (
     OAILOG_DEBUG (LOG_GTPV2C, "\t- IPv4 addr %s\n", ipv4);
   }
 
-  paa->pdn_type -= 1;
   return NW_OK;
 }
 
@@ -351,41 +350,43 @@ gtpv2c_paa_ie_set (
   nw_gtpv2c_msg_handle_t * msg,
   const paa_t * paa)
 {
-  /*
-   * ipv4 address = 4 + ipv6 address = 16 + ipv6 prefix length = 1
-   * * * * + pdn_type = 1
-   * * * * = maximum of 22 bytes
-   */
-  uint8_t                                 temp[22];
-  uint8_t                                 pdn_type;
-  uint8_t                                 offset = 0;
-  nw_rc_t                                   rc;
-
-  DevAssert (paa );
-  pdn_type = paa->pdn_type + 1;
-  temp[offset] = pdn_type;
-  offset++;
-
-  if (pdn_type & 0x2) {
+  if (paa) {
     /*
-     * If ipv6 or ipv4v6 present
+     * ipv4 address = 4 + ipv6 address = 16 + ipv6 prefix length = 1
+     * * * * + pdn_type = 1
+     * * * * = maximum of 22 bytes
      */
-    temp[1] = paa->ipv6_prefix_length;
-    memcpy (&temp[2], paa->ipv6_address.__in6_u.__u6_addr8, 16);
-    offset += 17;
-  }
+    uint8_t                                 temp[22];
+    uint8_t                                 offset = 0;
+    nw_rc_t                                   rc;
 
-  if (pdn_type & 0x1) {
-    uint32_t hbo = ntohl(paa->ipv4_address.s_addr);
-    temp[offset++] = (uint8_t)(hbo >> 24);
-    temp[offset++] = (uint8_t)(hbo >> 16);
-    temp[offset++] = (uint8_t)(hbo >> 8);
-    temp[offset++] = (uint8_t)hbo;
-  }
+    DevAssert (paa );
+    temp[offset] = paa->pdn_type;
+    offset++;
 
-  rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_PAA, offset, 0, temp);
-  DevAssert (NW_OK == rc);
-  return RETURNok;
+    if (paa->pdn_type & 0x2) {
+      /*
+       * If ipv6 or ipv4v6 present
+       */
+      temp[1] = paa->ipv6_prefix_length;
+      memcpy (&temp[2], paa->ipv6_address.__in6_u.__u6_addr8, 16);
+      offset += 17;
+    }
+
+    if (paa->pdn_type & 0x1) {
+      uint32_t hbo = ntohl(paa->ipv4_address.s_addr);
+      temp[offset++] = (uint8_t)(hbo >> 24);
+      temp[offset++] = (uint8_t)(hbo >> 16);
+      temp[offset++] = (uint8_t)(hbo >> 8);
+      temp[offset++] = (uint8_t)hbo;
+    }
+
+    rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_PAA, offset, 0, temp);
+    DevAssert (NW_OK == rc);
+    return NW_OK;
+  } else {
+    return NW_FAILURE;
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -412,7 +413,7 @@ gtpv2c_ambr_ie_set (
 
   rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_AMBR, 8, 0, ambr_br);
   DevAssert (NW_OK == rc);
-  return RETURNok;
+  return NW_OK;
 }
 
 //------------------------------------------------------------------------------
@@ -623,7 +624,7 @@ gtpv2c_target_identification_ie_set (
   }
   else{
     /** Received unhandled cell id. */
-    return RETURNerror;
+    return NW_FAILURE;
   }
 
   // todo: extended f-cause?!
@@ -631,7 +632,7 @@ gtpv2c_target_identification_ie_set (
 
   rc = nwGtpv2cMsgAddIe(*msg, NW_GTPV2C_IE_TARGET_IDENTIFICATION, target_id_length, NW_GTPV2C_IE_INSTANCE_ZERO, pTargetIeBuf);
   DevAssert (NW_OK == rc);
-  return RETURNok;
+  return NW_OK;
 }
 
 
@@ -646,7 +647,7 @@ gtpv2c_arp_ie_set (
 
   nw_rc_t rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_ARP, 1, 0, &arp8);
   DevAssert (NW_OK == rc);
-  return RETURNok;
+  return NW_OK;
 }
 
 //------------------------------------------------------------------------------
@@ -669,4 +670,35 @@ gtpv2c_arp_ie_get (
   OAILOG_DEBUG (LOG_GTPV2C, "\t- ARP PVI  %d\n", arp->pre_emp_vulnerability);
   return NW_OK;
 }
+
+//------------------------------------------------------------------------------
+nw_rc_t
+gtpv2c_selection_mode_ie_set (
+    nw_gtpv2c_msg_handle_t * msg, SelectionMode_t * sm)
+{
+  DevAssert (msg );
+  DevAssert (sm );
+  uint8_t val8 = *sm;
+  nw_rc_t rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_SELECTION_MODE, 1, 0, &val8);
+  DevAssert (NW_OK == rc);
+  return NW_OK;
+}
+
+//------------------------------------------------------------------------------
+nw_rc_t
+gtpv2c_selection_mode_ie_get (
+  uint8_t ieType,
+  uint16_t ieLength,
+  uint8_t ieInstance,
+  uint8_t * ieValue,
+  void *arg)
+{
+  SelectionMode_t                  *sm = (SelectionMode_t *) arg;
+
+  DevAssert (sm);
+  *sm = (ieValue[0] & 0x03);
+  OAILOG_DEBUG (LOG_GTPV2C, "\t- Selection Mode  %d\n", *sm);
+  return NW_OK;
+}
+
 

@@ -44,21 +44,6 @@ typedef uint32_t SequenceNumber_t;
 /* 3GPP TS 29.274 Figure 8.12 */
 
 
-#define FTEID_T_2_IP_ADDRESS_T(fte_p,ip_p) \
-do { \
-    if ((fte_p)->ipv4) { \
-      (ip_p)->pdn_type = IPv4; \
-      (ip_p)->address.ipv4_address.s_addr = (fte_p)->ipv4_address.s_addr;         \
-    } \
-    if ((fte_p)->ipv6) { \
-        if ((fte_p)->ipv4) { \
-          (ip_p)->pdn_type = IPv4_AND_v6; \
-        } else { \
-          (ip_p)->pdn_type = IPv6; \
-        } \
-        memcpy(&(ip_p)->address.ipv6_address, &(fte_p)->ipv6_address, sizeof((fte_p)->ipv6_address)); \
-    } \
-} while (0)
 
 typedef struct {
   uint32_t uplink_ambr;

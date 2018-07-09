@@ -66,6 +66,70 @@ extern "C" {
  * - S1/X2-based handover with SGW change
  */
 typedef struct itti_s11_create_session_request_s {
+  uint64_t           ie_presence_mask;
+#define S11_CREATE_SESSION_REQUEST_PR_IE_IMSI                               ((uint64_t)1)
+#define S11_CREATE_SESSION_REQUEST_PR_IE_MSISDN                              ((uint64_t)1 << 1)
+#define S11_CREATE_SESSION_REQUEST_PR_IE_MEI                                 ((uint64_t)1 << 2)
+#define S11_CREATE_SESSION_REQUEST_PR_IE_ULI                                 ((uint64_t)1 << 3)
+#define S11_CREATE_SESSION_REQUEST_PR_IE_SERVING_NETWORK                     ((uint64_t)1 << 4)
+#define S11_CREATE_SESSION_REQUEST_PR_IE_RAT_TYPE                            ((uint64_t)1 << 5)
+#define S11_CREATE_SESSION_REQUEST_PR_IE_INDICATION_FLAGS                    ((uint64_t)1 << 6)
+#define S11_CREATE_SESSION_REQUEST_PR_IE_SENDER_FTEID_FOR_CONTROL_PLANE      ((uint64_t)1 << 7)
+#define S11_CREATE_SESSION_REQUEST_PR_IE_PGW_S5S8_ADDRESS_FOR_CONTROL_PLANE  ((uint64_t)1 << 8)
+#define S11_CREATE_SESSION_REQUEST_PR_IE_APN                                 ((uint64_t)1 << 9)
+#define S11_CREATE_SESSION_REQUEST_PR_IE_SELECTION_MODE                      ((uint64_t)1 << 10)
+#define S11_CREATE_SESSION_REQUEST_PR_IE_PDN_TYPE                            ((uint64_t)1 << 11)
+#define S11_CREATE_SESSION_REQUEST_PR_IE_PAA                                 ((uint64_t)1 << 12)
+#define S11_CREATE_SESSION_REQUEST_PR_IE_MAXIMUM_APN_RESTRICTION             ((uint64_t)1 << 13)
+#define S11_CREATE_SESSION_REQUEST_PR_IE_APN_AMBR                            ((uint64_t)1 << 14)
+#define S11_CREATE_SESSION_REQUEST_PR_IE_LINKED_EPS_BEARER_ID                ((uint64_t)1 << 15)
+#define S11_CREATE_SESSION_REQUEST_PR_IE_TRUSTED_WLAN_MODE_INDICATION        ((uint64_t)1 << 16)
+#define S11_CREATE_SESSION_REQUEST_PR_IE_PCO                                 ((uint64_t)1 << 17)
+#define S11_CREATE_SESSION_REQUEST_PR_IE_BEARER_CONTEXTS_TO_BE_CREATED       ((uint64_t)1 << 18)
+#define S11_CREATE_SESSION_REQUEST_PR_IE_BEARER_CONTEXTS_TO_BE_REMOVED       ((uint64_t)1 << 19)
+#define S11_CREATE_SESSION_REQUEST_PR_IE_TRACE_INFORMATION                   ((uint64_t)1 << 20)
+#define S11_CREATE_SESSION_REQUEST_PR_IE_RECOVERY                            ((uint64_t)1 << 21)
+#define S11_CREATE_SESSION_REQUEST_PR_IE_MME_FQ_CSID                         ((uint64_t)1 << 22)
+#define S11_CREATE_SESSION_REQUEST_PR_IE_SGW_FQ_CSID                         ((uint64_t)1 << 23)
+#define S11_CREATE_SESSION_REQUEST_PR_IE_EPDG_FQ_CSID                        ((uint64_t)1 << 24)
+#define S11_CREATE_SESSION_REQUEST_PR_IE_TWAN_FQ_CSID                        ((uint64_t)1 << 25)
+#define S11_CREATE_SESSION_REQUEST_PR_IE_UE_TIME_ZONE                        ((uint64_t)1 << 26)
+#define S11_CREATE_SESSION_REQUEST_PR_IE_UCI                                 ((uint64_t)1 << 27)
+#define S11_CREATE_SESSION_REQUEST_PR_IE_CHARGING_CHARACTERISTICS            ((uint64_t)1 << 28)
+#define S11_CREATE_SESSION_REQUEST_PR_IE_MME_S4_SGSN_LDN                     ((uint64_t)1 << 29)
+#define S11_CREATE_SESSION_REQUEST_PR_IE_SGW_LDN                             ((uint64_t)1 << 30)
+#define S11_CREATE_SESSION_REQUEST_PR_IE_EPDG_LDN                            ((uint64_t)1 << 31)
+#define S11_CREATE_SESSION_REQUEST_PR_IE_TWAN_LDN                            ((uint64_t)1 << 32)
+#define S11_CREATE_SESSION_REQUEST_PR_IE_SIGNALLING_PRIORITY_INDICATION      ((uint64_t)1 << 33)
+#define S11_CREATE_SESSION_REQUEST_PR_IE_UE_LOCAL_IP_ADDRESS                 ((uint64_t)1 << 34)
+#define S11_CREATE_SESSION_REQUEST_PR_IE_UE_UDP_PORT                         ((uint64_t)1 << 35)
+#define S11_CREATE_SESSION_REQUEST_PR_IE_APCO                                ((uint64_t)1 << 36)
+#define S11_CREATE_SESSION_REQUEST_PR_IE_HENB_LOCAL_IP_ADDRESS               ((uint64_t)1 << 37)
+#define S11_CREATE_SESSION_REQUEST_PR_IE_HENB_UDP_PORT                       ((uint64_t)1 << 38)
+#define S11_CREATE_SESSION_REQUEST_PR_IE_MME_S4_SGSN_IDENTIFIER              ((uint64_t)1 << 39)
+#define S11_CREATE_SESSION_REQUEST_PR_IE_TWAN_IDENTIFIER                     ((uint64_t)1 << 40)
+#define S11_CREATE_SESSION_REQUEST_PR_IE_EPDG_IP_ADDRESS                     ((uint64_t)1 << 41)
+#define S11_CREATE_SESSION_REQUEST_PR_IE_CN_OPERATOR_SELECTION_ENTITY        ((uint64_t)1 << 42)
+#define S11_CREATE_SESSION_REQUEST_PR_IE_PRESENCE_REPORTING_AREA_INFORMATION ((uint64_t)1 << 43)
+#define S11_CREATE_SESSION_REQUEST_PR_IE_MMES4_SGSN_OVERLOAD_CONTROL_INFORMATION ((uint64_t)1 << 44)
+#define S11_CREATE_SESSION_REQUEST_PR_IE_SGW_OVERLOAD_CONTROL_INFORMATION    ((uint64_t)1 << 45)
+#define S11_CREATE_SESSION_REQUEST_PR_IE_TWAN_EPDG_OVERLOAD_CONTROL_INFORMATION ((uint64_t)1 << 46)
+#define S11_CREATE_SESSION_REQUEST_PR_IE_ORIGINATION_TIME_STAMP              ((uint64_t)1 << 47)
+#define S11_CREATE_SESSION_REQUEST_PR_IE_MAXIMUM_WAIT_TIME                   ((uint64_t)1 << 48)
+#define S11_CREATE_SESSION_REQUEST_PR_IE_WLAN_LOCATION_INFORMATION           ((uint64_t)1 << 49)
+#define S11_CREATE_SESSION_REQUEST_PR_IE_WLAN_LOCATION_TIMESTAMP             ((uint64_t)1 << 50)
+#define S11_CREATE_SESSION_REQUEST_PR_IE_NBIFOM_CONTAINER                    ((uint64_t)1 << 51)
+#define S11_CREATE_SESSION_REQUEST_PR_IE_REMOTE_UE_CONTEXT_CONNECTED         ((uint64_t)1 << 52)
+#define S11_CREATE_SESSION_REQUEST_PR_IE_3GPP_AAA_SERVER_IDENTIFIER          ((uint64_t)1 << 53)
+#define S11_CREATE_SESSION_REQUEST_PR_IE_EPCO                                ((uint64_t)1 << 54)
+#define S11_CREATE_SESSION_REQUEST_PR_IE_SERVING_PLMN_RATE_CONTROL           ((uint64_t)1 << 55)
+#define S11_CREATE_SESSION_REQUEST_PR_IE_MO_EXCEPTION_DATA_COUNTER           ((uint64_t)1 << 56)
+#define S11_CREATE_SESSION_REQUEST_PR_IE_UE_TCP_PORT                         ((uint64_t)1 << 57)
+#define S11_CREATE_SESSION_REQUEST_PR_IE_MAPPED_UE_USAGE_TYPE                ((uint64_t)1 << 58)
+#define S11_CREATE_SESSION_REQUEST_PR_IE_ULI_FOR_SGW                         ((uint64_t)1 << 59)
+#define S11_CREATE_SESSION_REQUEST_PR_IE_SGW_U_NODE_NAME                     ((uint64_t)1 << 60)
+#define S11_CREATE_SESSION_REQUEST_PR_IE_PRIVATE_EXTENSION                   ((uint64_t)1 << 61)
+
   teid_t             teid;                ///< S11- S-GW Tunnel Endpoint Identifier
 
   imsi_t             imsi;                ///< The IMSI shall be included in the message on the S4/S11
@@ -348,6 +412,42 @@ typedef struct itti_s11_create_session_request_s {
  * - S1/X2-based handover with SGW change
  */
 typedef struct itti_s11_create_session_response_s {
+  uint64_t           ie_presence_mask;
+#define S11_CREATE_SESSION_RESPONSE_PR_IE_CAUSE                              ((uint64_t)1)
+#define S11_CREATE_SESSION_RESPONSE_PR_IE_CHANGE_REPORTING_ACTION            ((uint64_t)1 << 1)
+#define S11_CREATE_SESSION_RESPONSE_PR_IE_CSG_INFORMATION_REPORTING_ACTION   ((uint64_t)1 << 2)
+#define S11_CREATE_SESSION_RESPONSE_PR_IE_HENB_INFORMATION_REPORTING         ((uint64_t)1 << 3)
+#define S11_CREATE_SESSION_RESPONSE_PR_IE_SENDER_FTEID_FOR_CONTROL_PLANE     ((uint64_t)1 << 4)
+#define S11_CREATE_SESSION_RESPONSE_PR_IE_PGW_S5S8_FTEID_FOR_CONTROL_PLANE   ((uint64_t)1 << 5)
+#define S11_CREATE_SESSION_RESPONSE_PR_IE_PAA                                ((uint64_t)1 << 6)
+#define S11_CREATE_SESSION_RESPONSE_PR_IE_APN_RESTRICTION                    ((uint64_t)1 << 7)
+#define S11_CREATE_SESSION_RESPONSE_PR_IE_APN_AMBR                           ((uint64_t)1 << 8)
+#define S11_CREATE_SESSION_RESPONSE_PR_IE_LINKED_EPS_BEARER_ID               ((uint64_t)1 << 9)
+#define S11_CREATE_SESSION_RESPONSE_PR_IE_PCO                                ((uint64_t)1 << 10)
+#define S11_CREATE_SESSION_RESPONSE_PR_IE_BEARER_CONTEXTS_CREATED            ((uint64_t)1 << 11)
+#define S11_CREATE_SESSION_RESPONSE_PR_IE_BEARER_CONTEXTS_MARKED_FOR_REMOVAL ((uint64_t)1 << 12)
+#define S11_CREATE_SESSION_RESPONSE_PR_IE_RECOVERY                           ((uint64_t)1 << 13)
+#define S11_CREATE_SESSION_RESPONSE_PR_IE_CHARGING_GATEWAY_NAME              ((uint64_t)1 << 14)
+#define S11_CREATE_SESSION_RESPONSE_PR_IE_CHARGING_GATEWAY_ADDRESS           ((uint64_t)1 << 15)
+#define S11_CREATE_SESSION_RESPONSE_PR_IE_PGW_FQ_CSID                        ((uint64_t)1 << 16)
+#define S11_CREATE_SESSION_RESPONSE_PR_IE_SGW_FQ_CSID                        ((uint64_t)1 << 17)
+#define S11_CREATE_SESSION_RESPONSE_PR_IE_SGW_LDN                            ((uint64_t)1 << 18)
+#define S11_CREATE_SESSION_RESPONSE_PR_IE_PGW_LDN                            ((uint64_t)1 << 19)
+#define S11_CREATE_SESSION_RESPONSE_PR_IE_PGW_BACK_OFF_TIME                  ((uint64_t)1 << 20)
+#define S11_CREATE_SESSION_RESPONSE_PR_IE_APCO                               ((uint64_t)1 << 21)
+#define S11_CREATE_SESSION_RESPONSE_PR_IE_TRUSTED_WLAN_IPV4_PARAMETERS       ((uint64_t)1 << 22)
+#define S11_CREATE_SESSION_RESPONSE_PR_IE_INDICATION_FLAGS                   ((uint64_t)1 << 23)
+#define S11_CREATE_SESSION_RESPONSE_PR_IE_PRESENCE_REPORTING_AREA_ACTION     ((uint64_t)1 << 24)
+#define S11_CREATE_SESSION_RESPONSE_PR_IE_PGW_NODE_LEVEL_LOAD_CONTROL_INFORMATION ((uint64_t)1 << 25)
+#define S11_CREATE_SESSION_RESPONSE_PR_IE_PGW_APN_LEVEL_LOAD_CONTROL_INFORMATION  ((uint64_t)1 << 26)
+#define S11_CREATE_SESSION_RESPONSE_PR_IE_SGW_NODE_LEVEL_LOAD_CONTROL_INFORMATION ((uint64_t)1 << 27)
+#define S11_CREATE_SESSION_RESPONSE_PR_IE_PGW_OVERLOAD_CONTROL_INFORMATION   ((uint64_t)1 << 28)
+#define S11_CREATE_SESSION_RESPONSE_PR_IE_SGW_OVERLOAD_CONTROL_INFORMATION   ((uint64_t)1 << 29)
+#define S11_CREATE_SESSION_RESPONSE_PR_IE_NBIFOM_CONTAINER                   ((uint64_t)1 << 30)
+#define S11_CREATE_SESSION_RESPONSE_PR_IE_PDN_CONNECTION_CHARGING_ID         ((uint64_t)1 << 31)
+#define S11_CREATE_SESSION_RESPONSE_PR_IE_EPCO                               ((uint64_t)1 << 32)
+#define S11_CREATE_SESSION_RESPONSE_PR_IE_PRIVATE_EXTENSION                  ((uint64_t)1 << 33)
+
   teid_t                   teid;                ///< Tunnel Endpoint Identifier
 
   // here fields listed in 3GPP TS 29.274
@@ -389,7 +489,7 @@ typedef struct itti_s11_create_session_response_s {
   ///< procedures.
 
 
-  paa_t                   *paa;                 ///< PDN Address Allocation
+  paa_t                    paa;                 ///< PDN Address Allocation
   ///< This IE shall be included on the S5/S8, S4/S11 and S2b
   ///< interfaces for the E-UTRAN initial attach, PDP Context
   ///< Activation, UE requested PDN connectivity, Attach with
@@ -412,7 +512,7 @@ typedef struct itti_s11_create_session_response_s {
   ///< of APN for the APN associated with this EPS bearer
   ///< Context.
 
-  ambr_t             ambr;                      ///< Aggregate Maximum Bit Rate (APN-AMBR)
+  ambr_t             apn_ambr;                  ///< Aggregate Maximum Bit Rate (APN-AMBR)
   ///< This IE represents the APN-AMBR. It shall be included on
   ///< the S5/S8, S4/S11 and S2b interfaces if the received APN-
   ///< AMBR has been modified by the PCRF.

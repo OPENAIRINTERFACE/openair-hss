@@ -272,47 +272,70 @@ sgw_handle_sgi_endpoint_created (
      * * * *  we set the cause value regarding the S1-U bearer establishment result status.
      */
     if (resp_pP->status == SGI_STATUS_OK) {
-      create_session_response_p->bearer_contexts_created.bearer_contexts[0].s1u_sgw_fteid.teid = resp_pP->sgw_S1u_teid;
-      create_session_response_p->bearer_contexts_created.bearer_contexts[0].s1u_sgw_fteid.interface_type = S1_U_SGW_GTP_U;
-      create_session_response_p->bearer_contexts_created.bearer_contexts[0].s1u_sgw_fteid.ipv4 = 1;
-      create_session_response_p->bearer_contexts_created.bearer_contexts[0].s1u_sgw_fteid.ipv4_address.s_addr = sgw_app.sgw_ip_address_S1u_S12_S4_up.s_addr;
-      create_session_response_p->ambr.br_dl = 100000000;
-      create_session_response_p->ambr.br_ul = 40000000;
+      {
+        // later create_session_response_p->ie_presence_mask |= S11_CREATE_SESSION_RESPONSE_PR_IE_BEARER_CONTEXTS_CREATED;
+        create_session_response_p->bearer_contexts_created.bearer_contexts[0].s1u_sgw_fteid.teid = resp_pP->sgw_S1u_teid;
+        create_session_response_p->bearer_contexts_created.bearer_contexts[0].s1u_sgw_fteid.interface_type = S1_U_SGW_GTP_U;
+        create_session_response_p->bearer_contexts_created.bearer_contexts[0].s1u_sgw_fteid.ipv4 = 1;
+        create_session_response_p->bearer_contexts_created.bearer_contexts[0].s1u_sgw_fteid.ipv4_address.s_addr = sgw_app.sgw_ip_address_S1u_S12_S4_up.s_addr;
+      }
+      {
+        create_session_response_p->ie_presence_mask |= S11_CREATE_SESSION_RESPONSE_PR_IE_APN_AMBR;
+        create_session_response_p->apn_ambr.br_dl = 100000000;
+        create_session_response_p->apn_ambr.br_ul = 40000000;
+      }
 
-      sgw_eps_bearer_ctxt_t *eps_bearer_ctxt_p =
+      {
+        create_session_response_p->ie_presence_mask |= S11_CREATE_SESSION_RESPONSE_PR_IE_PAA;
+        sgw_eps_bearer_ctxt_t *eps_bearer_ctxt_p =
           sgw_cm_get_eps_bearer_entry(&new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.pdn_connection,
               resp_pP->eps_bearer_id);
-      AssertFatal (eps_bearer_ctxt_p, "ERROR UNABLE TO GET EPS BEARER ENTRY\n");
-      AssertFatal (sizeof (eps_bearer_ctxt_p->paa) == sizeof (resp_pP->paa), "Mismatch in lengths");       // sceptic mode
-      memcpy (&eps_bearer_ctxt_p->paa, &resp_pP->paa, sizeof (paa_t));
-      memcpy (&create_session_response_p->paa, &resp_pP->paa, sizeof (paa_t));
-      sgw_register_paging_paa(new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.s_gw_teid_S11_S4, &resp_pP->paa);
+        AssertFatal (eps_bearer_ctxt_p, "ERROR UNABLE TO GET EPS BEARER ENTRY\n");
 
-      copy_protocol_configuration_options (&create_session_response_p->pco, &resp_pP->pco);
-      clear_protocol_configuration_options(&resp_pP->pco);
-      /*
-       * Set the Cause information from bearer context created.
-       * "Request accepted" is returned when the GTPv2 entity has accepted a control plane request.
-       */
-      create_session_response_p->cause.cause_value = REQUEST_ACCEPTED;
-      create_session_response_p->bearer_contexts_created.bearer_contexts[0].cause.cause_value = REQUEST_ACCEPTED;
+        AssertFatal (sizeof (eps_bearer_ctxt_p->paa) == sizeof (resp_pP->paa), "Mismatch in lengths");       // sceptic mode
+        memcpy (&eps_bearer_ctxt_p->paa, &resp_pP->paa, sizeof (paa_t));
+        memcpy (&create_session_response_p->paa, &resp_pP->paa, sizeof (paa_t));
+        sgw_register_paging_paa(new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.s_gw_teid_S11_S4, &resp_pP->paa);
+      }
+
+      {
+        create_session_response_p->ie_presence_mask |= S11_CREATE_SESSION_RESPONSE_PR_IE_PCO;
+        copy_protocol_configuration_options (&create_session_response_p->pco, &resp_pP->pco);
+        clear_protocol_configuration_options(&resp_pP->pco);
+      }
+      {
+        /*
+         * Set the Cause information from bearer context created.
+         * Request accepted" is returned when the GTPv2 entity has accepted a control plane request.
+         */
+        create_session_response_p->ie_presence_mask |= S11_CREATE_SESSION_RESPONSE_PR_IE_CAUSE;
+        create_session_response_p->cause.cause_value = REQUEST_ACCEPTED;
+        create_session_response_p->bearer_contexts_created.bearer_contexts[0].cause.cause_value = REQUEST_ACCEPTED;
+      }
     } else {
+      create_session_response_p->ie_presence_mask |= S11_CREATE_SESSION_RESPONSE_PR_IE_CAUSE;
       create_session_response_p->cause.cause_value = M_PDN_APN_NOT_ALLOWED;
       create_session_response_p->bearer_contexts_created.bearer_contexts[0].cause.cause_value = M_PDN_APN_NOT_ALLOWED;
     }
 
-    create_session_response_p->s11_sgw_fteid.teid = resp_pP->context_teid;
-    create_session_response_p->s11_sgw_fteid.interface_type = S11_SGW_GTP_C;
-    create_session_response_p->s11_sgw_fteid.ipv4 = 1;
-    create_session_response_p->s11_sgw_fteid.ipv4_address.s_addr = spgw_config.sgw_config.ipv4.S11.s_addr;
+    {
+      create_session_response_p->ie_presence_mask |= S11_CREATE_SESSION_RESPONSE_PR_IE_SENDER_FTEID_FOR_CONTROL_PLANE;
+      create_session_response_p->s11_sgw_fteid.teid = resp_pP->context_teid;
+      create_session_response_p->s11_sgw_fteid.interface_type = S11_SGW_GTP_C;
+      create_session_response_p->s11_sgw_fteid.ipv4 = 1;
+      create_session_response_p->s11_sgw_fteid.ipv4_address.s_addr = spgw_config.sgw_config.ipv4.S11.s_addr;
+    }
 
+    create_session_response_p->ie_presence_mask |= S11_CREATE_SESSION_RESPONSE_PR_IE_BEARER_CONTEXTS_CREATED;
     create_session_response_p->bearer_contexts_created.bearer_contexts[0].eps_bearer_id = resp_pP->eps_bearer_id;
     create_session_response_p->bearer_contexts_created.num_bearer_context += 1;
 
     create_session_response_p->trxn = new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.trxn;
     create_session_response_p->peer_ip.s_addr = new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.mme_ip_address_S11.address.ipv4_address.s_addr;
   } else {
+    create_session_response_p->ie_presence_mask |= S11_CREATE_SESSION_RESPONSE_PR_IE_CAUSE;
     create_session_response_p->cause.cause_value = CONTEXT_NOT_FOUND;
+    create_session_response_p->ie_presence_mask |= S11_CREATE_SESSION_RESPONSE_PR_IE_BEARER_CONTEXTS_CREATED;
     create_session_response_p->bearer_contexts_created.bearer_contexts[0].cause.cause_value = CONTEXT_NOT_FOUND;
     create_session_response_p->bearer_contexts_created.num_bearer_context += 1;
   }
@@ -425,6 +448,10 @@ sgw_handle_gtpv1uCreateTunnelResp (
           //Check the error code returned by "IP address allocator" and handle it accordingly
 
           sgi_create_endpoint_resp.status = SGI_STATUS_ERROR_ALL_DYNAMIC_ADDRESSES_OCCUPIED;
+        }
+      } else {
+        if (new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.saved_message.paa.pdn_type) {
+
         }
       }
 
@@ -1154,7 +1181,8 @@ int sgw_no_pcef_create_dedicated_bearer(s11_teid_t teid)
       eps_bearer_ctxt_p->tft.numberofpacketfilters = number_of_packet_filters;
 
       eps_bearer_ctxt_p->s_gw_teid_S1u_S12_S4_up = sgw_get_new_s1u_teid ();
-      eps_bearer_ctxt_p->s_gw_ip_address_S1u_S12_S4_up.pdn_type = IPv4;
+      eps_bearer_ctxt_p->s_gw_ip_address_S1u_S12_S4_up.ipv4 = true;
+      eps_bearer_ctxt_p->s_gw_ip_address_S1u_S12_S4_up.ipv6 = false;
       eps_bearer_ctxt_p->s_gw_ip_address_S1u_S12_S4_up.address.ipv4_address.s_addr = sgw_app.sgw_ip_address_S1u_S12_S4_up.s_addr;
 
       // Put in cache the sgw_eps_bearer_entry_t
