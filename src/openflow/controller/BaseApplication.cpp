@@ -48,7 +48,7 @@ void BaseApplication::install_default_flow(fluid_base::OFConnection* ofconn,
                                            const OpenflowMessenger& messenger) {
   of13::FlowMod fm = messenger.create_default_flow_mod(OF_TABLE_SWITCH, of13::OFPFC_ADD, OF_PRIO_SWITCH_LOWER_PRIORITY);
   // Output to next table
-  of13::GoToTable inst(OF_TABLE_FINAL);
+  of13::GoToTable inst(OF_TABLE_SGI_OUT);
   fm.add_instruction(inst);
   OAILOG_INFO(LOG_GTPV1U, "Setting default switch flow for Base Application\n");
   messenger.send_of_msg(fm, ofconn);

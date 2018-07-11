@@ -131,8 +131,8 @@ int gtpv1u_init (spgw_config_t *spgw_config)
   //AssertFatal(spgw_config->pgw_config.num_ue_pool == 1, "No more than 1 UE pool allowed actually");
   //for (int i = 0; i < spgw_config->pgw_config.num_ue_pool; i++) {
     // GTP device uses the same MTU as SGi.
-    gtp_tunnel_ops->init(&spgw_config->pgw_config.ue_pool_addr[0],
-                         spgw_config->pgw_config.ue_pool_mask[0], spgw_config->pgw_config.ipv4.mtu_SGI,
+    gtp_tunnel_ops->init(&spgw_config->pgw_config.ue_pool_network[0],
+                         &spgw_config->pgw_config.ue_pool_netmask[0], spgw_config->pgw_config.ipv4.mtu_SGI,
                          &sgw_app.gtpv1u_data.fd0, &sgw_app.gtpv1u_data.fd1u);
   //}
 
@@ -145,7 +145,7 @@ int gtpv1u_init (spgw_config_t *spgw_config)
   }
 
 #if ENABLE_OPENFLOW
-  bstring command = bformat("ovs-vsctl set-controller %s tcp:%s:%u",  bdata(spgw_config->sgw_config.ovs_config.bridge_name), CONTROLLER_ADDR, CONTROLLER_PORT);
+  bstring command = bformat("ovs-vsctl set-controller %s tcp:%s:%u",  bdata(spgw_config->pgw_config.ovs_config.bridge_name), CONTROLLER_ADDR, CONTROLLER_PORT);
   async_system_command (TASK_ASYNC_SYSTEM, false, bdata(command));
   bdestroy_wrapper(&command);
 #endif

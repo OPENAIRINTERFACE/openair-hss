@@ -217,16 +217,15 @@ int pgw_pcef_emulation_init (const pgw_config_t * const pgw_config_p)
   pcc_rule->sdf_template.sdf_filter[0].eval_precedence = 250;
   pcc_rule->sdf_template.sdf_filter[0].length = 9;
   pcc_rule->sdf_template.sdf_filter[0].packetfiltercontents.flags = TRAFFIC_FLOW_TEMPLATE_IPV4_LOCAL_ADDR_FLAG;
-  pcc_rule->sdf_template.sdf_filter[0].packetfiltercontents.ipv4remoteaddr[0].addr = (uint8_t) ((pgw_config_p->ue_pool_addr[0].s_addr) & 0x000000FF);
-  pcc_rule->sdf_template.sdf_filter[0].packetfiltercontents.ipv4remoteaddr[1].addr = (uint8_t) ((pgw_config_p->ue_pool_addr[0].s_addr >> 8) & 0x000000FF);
-  pcc_rule->sdf_template.sdf_filter[0].packetfiltercontents.ipv4remoteaddr[2].addr = (uint8_t) ((pgw_config_p->ue_pool_addr[0].s_addr >> 16) & 0x000000FF);
-  pcc_rule->sdf_template.sdf_filter[0].packetfiltercontents.ipv4remoteaddr[3].addr = (uint8_t) ((pgw_config_p->ue_pool_addr[0].s_addr >> 24) & 0x000000FF);
-  struct in_addr addr_mask = {0};
-  addr_mask.s_addr = htonl (0xFFFFFFFF << (32 - pgw_config_p->ue_pool_mask[0]));
-  pcc_rule->sdf_template.sdf_filter[0].packetfiltercontents.ipv4remoteaddr[0].mask = (uint8_t) ((addr_mask.s_addr) & 0x000000FF);
-  pcc_rule->sdf_template.sdf_filter[0].packetfiltercontents.ipv4remoteaddr[1].mask = (uint8_t) ((addr_mask.s_addr >> 8) & 0x000000FF);
-  pcc_rule->sdf_template.sdf_filter[0].packetfiltercontents.ipv4remoteaddr[2].mask = (uint8_t) ((addr_mask.s_addr >> 16) & 0x000000FF);
-  pcc_rule->sdf_template.sdf_filter[0].packetfiltercontents.ipv4remoteaddr[3].mask = (uint8_t) ((addr_mask.s_addr >> 24) & 0x000000FF);
+  pcc_rule->sdf_template.sdf_filter[0].packetfiltercontents.ipv4remoteaddr[0].addr = (uint8_t) ((pgw_config_p->ue_pool_network[0].s_addr) & 0x000000FF);
+  pcc_rule->sdf_template.sdf_filter[0].packetfiltercontents.ipv4remoteaddr[1].addr = (uint8_t) ((pgw_config_p->ue_pool_network[0].s_addr >> 8) & 0x000000FF);
+  pcc_rule->sdf_template.sdf_filter[0].packetfiltercontents.ipv4remoteaddr[2].addr = (uint8_t) ((pgw_config_p->ue_pool_network[0].s_addr >> 16) & 0x000000FF);
+  pcc_rule->sdf_template.sdf_filter[0].packetfiltercontents.ipv4remoteaddr[3].addr = (uint8_t) ((pgw_config_p->ue_pool_network[0].s_addr >> 24) & 0x000000FF);
+
+  pcc_rule->sdf_template.sdf_filter[0].packetfiltercontents.ipv4remoteaddr[0].mask = (uint8_t) ((pgw_config_p->ue_pool_netmask[0].s_addr) & 0x000000FF);
+  pcc_rule->sdf_template.sdf_filter[0].packetfiltercontents.ipv4remoteaddr[1].mask = (uint8_t) ((pgw_config_p->ue_pool_netmask[0].s_addr >> 8) & 0x000000FF);
+  pcc_rule->sdf_template.sdf_filter[0].packetfiltercontents.ipv4remoteaddr[2].mask = (uint8_t) ((pgw_config_p->ue_pool_netmask[0].s_addr >> 16) & 0x000000FF);
+  pcc_rule->sdf_template.sdf_filter[0].packetfiltercontents.ipv4remoteaddr[3].mask = (uint8_t) ((pgw_config_p->ue_pool_netmask[0].s_addr >> 24) & 0x000000FF);
   pcc_rule->sdf_template.number_of_packet_filters = 1;
   hrc = hashtable_ts_insert(pgw_app.deactivated_predefined_pcc_rules, pcc_rule->sdf_id, pcc_rule);
   if (HASH_TABLE_OK != hrc) {
@@ -284,9 +283,9 @@ void pgw_pcef_emulation_apply_sdf_filter(sdf_filter_t   * const sdf_f, const sdf
       marking_command = bformat("iptables -I POSTROUTING -t mangle  %s -j MARK --set-mark %d",  bdata(filter), sdf_id);
     } else {
       //marking_command = bformat("iptables -I PREROUTING -t mangle --in-interface %s --dest %"PRIu8".%"PRIu8".%"PRIu8".%"PRIu8"/%"PRIu8" %s -j MARK --set-mark %d",
-      marking_command = bformat("iptables -I POSTROUTING -t mangle  --dest %"PRIu8".%"PRIu8".%"PRIu8".%"PRIu8"/%"PRIu8" %s -j MARK --set-mark %d",
-          NIPADDR(pgw_config_p->ue_pool_addr[0].s_addr),
-          pgw_config_p->ue_pool_mask[0], bdata(filter), sdf_id);
+      marking_command = bformat("iptables -I POSTROUTING -t mangle  -m iprange --dst-range %s-%s %s -j MARK --set-mark %d",
+          inet_ntoa(pgw_config_p->ue_pool_range_low[0]),
+          inet_ntoa(pgw_config_p->ue_pool_range_high[0]), bdata(filter), sdf_id);
     }
     bdestroy_wrapper(&filter);
     async_system_command (TASK_ASYNC_SYSTEM, false, bdata(marking_command));
@@ -299,9 +298,9 @@ void pgw_pcef_emulation_apply_sdf_filter(sdf_filter_t   * const sdf_f, const sdf
     if ((TRAFFIC_FLOW_TEMPLATE_IPV4_REMOTE_ADDR_FLAG | TRAFFIC_FLOW_TEMPLATE_IPV6_REMOTE_ADDR_FLAG) & sdf_f->packetfiltercontents.flags) {
       marking_command = bformat("iptables -I OUTPUT -t mangle  %s -j MARK --set-mark %d",  bdata(filter), sdf_id);
     } else {
-      marking_command = bformat("iptables -I OUTPUT -t mangle  --dest %"PRIu8".%"PRIu8".%"PRIu8".%"PRIu8"/%"PRIu8" %s -j MARK --set-mark %d",
-          NIPADDR(pgw_config_p->ue_pool_addr[0].s_addr),
-          pgw_config_p->ue_pool_mask[0], bdata(filter), sdf_id);
+      marking_command = bformat("iptables -I OUTPUT -t mangle  -m iprange --dst-range %s-%s %s -j MARK --set-mark %d",
+          inet_ntoa(pgw_config_p->ue_pool_range_low[0]),
+          inet_ntoa(pgw_config_p->ue_pool_range_high[0]), bdata(filter), sdf_id);
     }
     bdestroy_wrapper(&filter);
     async_system_command (TASK_ASYNC_SYSTEM, false, bdata(marking_command));

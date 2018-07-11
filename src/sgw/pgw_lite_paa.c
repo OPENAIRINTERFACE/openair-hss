@@ -142,17 +142,17 @@ pgw_release_free_ipv4_paa_address (
   return RETURNerror;
 }
 
-int get_assigned_ipv4_block(const int block, struct in_addr * const netaddr, uint32_t * const prefix)
-{
-  int rc = RETURNok;
-  if (RETURNok != (rc = pgw_get_free_ipv4_paa_address(netaddr))) {
-    return rc;
-  }
-   // Only one block supported now (have to process the release in right pool)
-   DevAssert(block == 0);
-   *prefix = spgw_config.pgw_config.ue_pool_mask[block];
-  return rc;
-}
+//int get_assigned_ipv4_block(const int block, struct in_addr * const netaddr, uint32_t * const prefix)
+//{
+//  int rc = RETURNok;
+//  if (RETURNok != (rc = pgw_get_free_ipv4_paa_address(netaddr))) {
+//    return rc;
+//  }
+//   // Only one block supported now (have to process the release in right pool)
+//   DevAssert(block == 0);
+//   *prefix = spgw_config.pgw_config.ue_pool_mask[block];
+//  return rc;
+//}
 
 
 int get_num_paa_ipv4_pool(void)
@@ -161,13 +161,25 @@ int get_num_paa_ipv4_pool(void)
 }
 
 
-int get_paa_ipv4_pool(const int block, struct in_addr * const netaddr, struct in_addr * const netmask)
+int get_paa_ipv4_pool(const int block, struct in_addr * const range_low, struct in_addr * const range_high, struct in_addr * const netaddr, struct in_addr * const netmask, const struct ipv4_list_elm_s **out_of_nw)
 {
   // Only one block supported now (have to process the release in right pool)
   DevAssert(block < spgw_config.pgw_config.num_ue_pool);
-  *netaddr = spgw_config.pgw_config.ue_pool_addr[block];
-  uint8_t prefix = spgw_config.pgw_config.ue_pool_mask[block];
-  netmask->s_addr = htonl(~((1 << (32 - prefix)) - 1));
+  if (range_low) {
+    *range_low = spgw_config.pgw_config.ue_pool_range_low[block];
+  }
+  if (range_high) {
+    *range_high = spgw_config.pgw_config.ue_pool_range_high[block];
+  }
+  if (netaddr) {
+    *netaddr = spgw_config.pgw_config.ue_pool_network[block];
+  }
+  if (netmask) {
+    *netmask = spgw_config.pgw_config.ue_pool_netmask[block];
+  }
+  if (out_of_nw) {
+    *out_of_nw = spgw_config.pgw_config.ue_pool_excluded[block].stqh_first;
+  }
   return RETURNok;
 }
 
@@ -175,7 +187,8 @@ int get_paa_ipv4_pool(const int block, struct in_addr * const netaddr, struct in
 int get_paa_ipv4_pool_id(const struct in_addr ue_addr)
 {
   for (int i = 0; i < spgw_config.pgw_config.num_ue_pool; i++) {
-    if ((ue_addr.s_addr & htonl(~((1 << (32 - spgw_config.pgw_config.ue_pool_mask[i])) - 1))) == spgw_config.pgw_config.ue_pool_addr[i].s_addr) {
+    if ((ntohl(ue_addr.s_addr) >= ntohl(spgw_config.pgw_config.ue_pool_range_low[i].s_addr)) &&
+        (ntohl(ue_addr.s_addr) <= ntohl(spgw_config.pgw_config.ue_pool_range_high[i].s_addr))) {
       return i;
     }
   }

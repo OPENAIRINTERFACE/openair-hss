@@ -84,9 +84,10 @@ void GTPApplication::install_switch_gtp_flow(fluid_base::OFConnection* ofconn,
   int      num_addr_pools = get_num_paa_ipv4_pool();
   struct in_addr netaddr;
   struct in_addr netmask;
+  const struct ipv4_list_elm_s *out_of_scope = NULL;
 
   for (int pidx = 0; pidx < num_addr_pools; pidx++) {
-    int ret = get_paa_ipv4_pool(pidx, &netaddr, &netmask);
+    int ret = get_paa_ipv4_pool(pidx, NULL, NULL, &netaddr, &netmask, &out_of_scope);
 
     //--------------------------------------------------------------------------
     // DL GTP flow
@@ -230,11 +231,9 @@ void GTPApplication::add_sgi_out_flow(
   fm.out_port(egress_port_num_);
   fm.out_group(0);
   fm.flags(0);
-  
-  of13::ApplyActions apply_inst;
-  fluid_msg::of13::OutputAction act(egress_port_num_, 1024);
-  apply_inst.add_action(act);
-  fm.add_instruction(apply_inst);
+
+  of13::GoToTable inst(OF_TABLE_SGI_OUT);
+  fm.add_instruction(inst);
 
 
   uint8_t* buffer = fm.pack();

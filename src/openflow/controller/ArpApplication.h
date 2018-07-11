@@ -21,6 +21,7 @@
 
 #pragma once
 #include <memory>
+#include <unordered_map>
 
 #include "OpenflowController.h"
 #include "PacketInSwitchApplication.h"
@@ -33,13 +34,13 @@ namespace openflow {
 #define ARPHRD_ETHER  1   /* Ethernet 10/100Mbps.  */
 #define ETH_P_IP  0x0800    /* Internet Protocol packet */
 
-typedef struct ethhdr {
+typedef struct __attribute__((__packed__)) ethhdr {
   unsigned char h_dest[ETH_ALEN]; /* destination eth addr */
   unsigned char h_source[ETH_ALEN]; /* source ether addr  */
   uint16_t    h_proto;    /* packet type ID field  big endian */
-} ethhdr_t __attribute__((packed));
+} ethhdr_t;
 
-typedef struct arphdr {
+typedef struct __attribute__((__packed__)) arphdr {
   unsigned short int ar_hrd;    /* Format of hardware address.  */
   unsigned short int ar_pro;    /* Format of protocol address.  */
   unsigned char ar_hln;   /* Length of hardware address.  */
@@ -47,7 +48,7 @@ typedef struct arphdr {
   unsigned short int ar_op;   /* ARP opcode (command).  */
 } arphdr_t;
 
-typedef struct  ether_arp {
+typedef struct __attribute__((__packed__)) ether_arp {
   struct  arphdr ea_hdr;    /* fixed-size header */
   u_int8_t arp_sha[ETH_ALEN]; /* sender hardware address */
   u_int8_t arp_spa[4];    /* sender protocol address */
@@ -67,7 +68,7 @@ private:
       of13::PacketIn& ofpi,
       const OpenflowMessenger& messenger);
 
-  void  send_arp_reply(const PacketInEvent& pi, of13::PacketIn& ofpi, const OpenflowMessenger& messenger);
+  void  send_arp_reply(const PacketInEvent& pi, of13::PacketIn& ofpi, const OpenflowMessenger& messenger, struct in_addr& spa);
 
 
   /**
@@ -100,13 +101,34 @@ private:
   void install_arp_flow(fluid_base::OFConnection* ofconn,
       const OpenflowMessenger& messenger);
 
+  void add_default_sgi_out_flow(
+      fluid_base::OFConnection* ofconn,
+      const OpenflowMessenger& messenger);
+
+  void add_update_dst_l2_flow(const PacketInEvent& pin_ev,
+      const OpenflowMessenger& messenger,
+      const struct in_addr& dst_addr,
+      const std::string dst_mac);
+
+  void learn_neighbour_from_arp_reply(const PacketInEvent& pin_ev,
+      const OpenflowMessenger& messenger, const ether_arp_t * const ether_arp);
+
+  void learn_neighbour_from_arp_request(const PacketInEvent& pin_ev,
+      const OpenflowMessenger& messenger, const ether_arp_t * const ether_arp);
+
+  void update_neighbours(const PacketInEvent& pin_ev,
+      const OpenflowMessenger& messenger,
+      in_addr_t l3,
+      std::string l2);
 
   PacketInSwitchApplication& pin_sw_app_;
-  const int in_port_;
-  struct in_addr l3_;
-  std::string l2_;
+  const int in_port_; // ARP coming in through this port
+  struct in_addr l3_; // IP address of network device linked to this port
+  std::string l2_;    // L2 address of network device linked to this port
   //uint8_t arp_ha_[ETH_ALEN];
   //uint8_t arp_pa_[4];
+  std::unordered_map<in_addr_t, std::string> learning_arp;
+  std::set<in_addr_t, std::string> ue_arp;
 };
 
 }

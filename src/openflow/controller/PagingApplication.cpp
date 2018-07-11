@@ -118,7 +118,7 @@ void PagingApplication::install_default_flow(
   this->pin_sw_app_.register_for_cookie(this, cookie);
 
   for (int pidx = 0; pidx < num_addr_pools; pidx++) {
-    int ret = get_paa_ipv4_pool(pidx, &netaddr, &netmask);
+    int ret = get_paa_ipv4_pool(pidx, NULL, NULL, &netaddr, &netmask, NULL);
     // Convert to string for logging
     char ip_str[INET_ADDRSTRLEN];
     char net_str[INET_ADDRSTRLEN];

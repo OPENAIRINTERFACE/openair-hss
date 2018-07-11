@@ -89,6 +89,7 @@ main (
 
   if (! is_pid_file_lock_success(pid_file_name)) {
     free_wrapper((void**) &pid_file_name);
+    OAI_FPRINTF_ERR ("Lock PID file %s failed\n", pid_file_name);
     exit (-EDEADLK);
   }
 
@@ -113,5 +114,6 @@ main (
   itti_wait_tasks_end ();
   pid_file_unlock();
   free_wrapper((void**) &pid_file_name);
+  OAI_FPRINTF_ERR ("Exiting\n");
   return 0;
 }

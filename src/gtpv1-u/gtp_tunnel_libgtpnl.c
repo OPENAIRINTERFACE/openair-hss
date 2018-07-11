@@ -51,7 +51,7 @@ static struct {
 
 #define GTP_DEVNAME "gtp0"
 
-int libgtpnl_init(struct in_addr *ue_net, uint32_t mask, int mtu, int *fd0, int *fd1u)
+int libgtpnl_init(struct in_addr *ue_net, struct in_addr *ue_netmask, int mtu, int *fd0, int *fd1u)
 {
   // we don't need GTP v0, but interface with kernel requires 2 file descriptors
   *fd0 = socket(AF_INET, SOCK_DGRAM, 0);

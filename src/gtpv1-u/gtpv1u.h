@@ -78,7 +78,7 @@ extern "C" {
  *         @o_tei: TX GTP Tunnel ID.
  */
 struct gtp_tunnel_ops {
-  int  (*init)(struct in_addr *ue_net, uint32_t mask, int mtu, int *fd0, int *fd1u);
+  int  (*init)(struct in_addr *ue_net, struct in_addr *ue_netmask, int mtu, int *fd0, int *fd1u);
   int  (*uninit)(void);
   int  (*reset)(void);
 #if ENABLE_LIBGTPNL

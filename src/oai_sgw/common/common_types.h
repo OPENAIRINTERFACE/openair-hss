@@ -37,9 +37,16 @@
 #include "3gpp_29.274.h"
 #include "security_types.h"
 
+#include "queue.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+struct ipv4_list_elm_s {
+  STAILQ_ENTRY(ipv4_list_elm_s) ipv4_entries;
+  struct in_addr  addr;
+};
 
 typedef struct ebi_list_s {
   uint32_t   num_ebi;

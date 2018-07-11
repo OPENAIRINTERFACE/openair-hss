@@ -27,6 +27,7 @@
 extern "C" {
   #include "log.h"
   #include "spgw_config.h"
+  #include "pgw_lite_paa.h"
 }
 
 using namespace fluid_msg;
@@ -35,7 +36,8 @@ namespace openflow {
     
 
 ArpApplication::ArpApplication(PacketInSwitchApplication& pin_sw_app, const int in_port, const std::string l2,  const struct in_addr l3) :
-    pin_sw_app_(pin_sw_app), in_port_(in_port), l2_(l2), l3_(l3) {};
+    pin_sw_app_(pin_sw_app), in_port_(in_port), l2_(l2), l3_(l3) {
+};
 
 
 void ArpApplication::packet_in_callback(const PacketInEvent& pin_ev,
@@ -50,22 +52,43 @@ void ArpApplication::packet_in_callback(const PacketInEvent& pin_ev,
   const ethhdr_t *ethhdr = reinterpret_cast<const ethhdr_t*>(eth_frame);
   const ether_arp_t *arp = reinterpret_cast<const ether_arp_t*>(&eth_frame[ETH_HEADER_LENGTH]);
 
-  OAILOG_DEBUG(LOG_GTPV1U, "PACKET_IN 1/3: ARP REQUEST ETH SRC %02X:%02X:%02X:%02X:%02X:%02X ETH DST %02X:%02X:%02X:%02X:%02X:%02X PROTO %04X\n",
-      ethhdr->h_source[0],ethhdr->h_source[1],ethhdr->h_source[2],ethhdr->h_source[3],ethhdr->h_source[4],ethhdr->h_source[5],
-      ethhdr->h_dest[0],ethhdr->h_dest[1],ethhdr->h_dest[2],ethhdr->h_dest[3],ethhdr->h_dest[4],ethhdr->h_dest[5],
-      ntohs(ethhdr->h_proto));
-  OAILOG_DEBUG(LOG_GTPV1U, "PACKET_IN 2/3: ARP REQUEST HW SRC %02X:%02X:%02X:%02X:%02X:%02X IP SRC %d.%d.%d.%d\n",
-      arp->arp_sha[0], arp->arp_sha[1], arp->arp_sha[2], arp->arp_sha[3], arp->arp_sha[4], arp->arp_sha[5],
-      arp->arp_spa[0], arp->arp_spa[1], arp->arp_spa[2], arp->arp_spa[3]);
-  OAILOG_DEBUG(LOG_GTPV1U, "PACKET_IN 3/3: ARP REQUEST HW DST %02X:%02X:%02X:%02X:%02X:%02X IP DST %d.%d.%d.%d\n",
-      arp->arp_tha[0], arp->arp_tha[1], arp->arp_tha[2], arp->arp_tha[3], arp->arp_tha[4], arp->arp_tha[5],
-      arp->arp_tpa[0], arp->arp_tpa[1], arp->arp_tpa[2], arp->arp_tpa[3]);
+  if (ARPOP_REQUEST == ntohs(arp->ea_hdr.ar_op)) {
+    learn_neighbour_from_arp_request(pin_ev, messenger, arp);
 
-  send_arp_reply(pin_ev, ofpi, messenger);
+    unsigned char buf_in_addr[sizeof (struct in6_addr)];
+    char buf_ip_addr[INET6_ADDRSTRLEN];
+    char buf_eth_addr[6*2+5+1];
+    struct in_addr inaddr;
+
+    // source host
+    if (snprintf(buf_ip_addr, INET6_ADDRSTRLEN,"%d.%d.%d.%d", arp->arp_tpa[0], arp->arp_tpa[1], arp->arp_tpa[2], arp->arp_tpa[3]) >= 7 ) {
+      if (inet_pton (AF_INET, buf_ip_addr, buf_in_addr) == 1) {
+        memcpy (&inaddr, buf_in_addr, sizeof (struct in_addr));
+        if (spgw_config.pgw_config.arp_ue_oai) {
+          if (get_paa_ipv4_pool_id(inaddr) >= 0) {
+            OAILOG_DEBUG(LOG_GTPV1U, "send_arp_reply() (target UE %s)\n", buf_ip_addr);
+            send_arp_reply(pin_ev, ofpi, messenger, inaddr);
+          } else {
+            OAILOG_DEBUG(LOG_GTPV1U, "not send_arp_reply() (UE)\n");
+          }
+        }
+        if (inaddr.s_addr == l3_.s_addr) {
+          OAILOG_DEBUG(LOG_GTPV1U, "send_arp_reply() (SGi %s)\n", buf_ip_addr);
+          send_arp_reply(pin_ev, ofpi, messenger, inaddr);
+        }
+      } else {
+        OAILOG_DEBUG(LOG_GTPV1U, "Error in inet_pton()\n");
+      }
+    } else {
+      OAILOG_DEBUG(LOG_GTPV1U, "Error in snprintf()\n");
+    }
+  } else if (ARPOP_REPLY == ntohs(arp->ea_hdr.ar_op)) {
+    learn_neighbour_from_arp_reply(pin_ev, messenger, arp);
+  }
 }
 
 
-void ArpApplication::send_arp_reply(const PacketInEvent& pin_ev, of13::PacketIn& ofpi, const OpenflowMessenger& messenger) {
+void ArpApplication::send_arp_reply(const PacketInEvent& pin_ev, of13::PacketIn& ofpi, const OpenflowMessenger& messenger, struct in_addr& spa) {
 
   size_t size = pin_ev.get_length();
   const uint8_t *data = reinterpret_cast<const uint8_t*>(pin_ev.get_data());
@@ -73,6 +96,18 @@ void ArpApplication::send_arp_reply(const PacketInEvent& pin_ev, of13::PacketIn&
 
   const ethhdr_t *ethhdr = reinterpret_cast<const ethhdr_t*>(eth_frame);
   const ether_arp_t *arp = reinterpret_cast<const ether_arp_t*>(&eth_frame[ETH_HEADER_LENGTH]);
+
+  OAILOG_DEBUG(LOG_GTPV1U, "PACKET_IN 1/3: ARP REQUEST ETH SRC %02X:%02X:%02X:%02X:%02X:%02X ETH DST %02X:%02X:%02X:%02X:%02X:%02X PROTO %04X\n",
+    ethhdr->h_source[0],ethhdr->h_source[1],ethhdr->h_source[2],ethhdr->h_source[3],ethhdr->h_source[4],ethhdr->h_source[5],
+    ethhdr->h_dest[0],ethhdr->h_dest[1],ethhdr->h_dest[2],ethhdr->h_dest[3],ethhdr->h_dest[4],ethhdr->h_dest[5],
+    ntohs(ethhdr->h_proto));
+  OAILOG_DEBUG(LOG_GTPV1U, "PACKET_IN 2/3: ARP REQUEST HW SRC %02X:%02X:%02X:%02X:%02X:%02X IP SRC %d.%d.%d.%d\n",
+    arp->arp_sha[0], arp->arp_sha[1], arp->arp_sha[2], arp->arp_sha[3], arp->arp_sha[4], arp->arp_sha[5],
+    arp->arp_spa[0], arp->arp_spa[1], arp->arp_spa[2], arp->arp_spa[3]);
+  OAILOG_DEBUG(LOG_GTPV1U, "PACKET_IN 3/3: ARP REQUEST HW DST %02X:%02X:%02X:%02X:%02X:%02X IP DST %d.%d.%d.%d\n",
+    arp->arp_tha[0], arp->arp_tha[1], arp->arp_tha[2], arp->arp_tha[3], arp->arp_tha[4], arp->arp_tha[5],
+    arp->arp_tpa[0], arp->arp_tpa[1], arp->arp_tpa[2], arp->arp_tpa[3]);
+
 
   of13::FlowMod arp_fm = messenger.create_default_flow_mod(
       OF_TABLE_ARP,
@@ -89,7 +124,7 @@ void ArpApplication::send_arp_reply(const PacketInEvent& pin_ev, of13::PacketIn&
   of13::EthType type_match(ARP_ETH_TYPE);
   arp_fm.add_oxm_field(type_match);
 
-  of13::ARPTPA tpa(l3_);
+  of13::ARPTPA tpa(spa);
   arp_fm.add_oxm_field(tpa);
 
   // may be omitted
@@ -113,7 +148,7 @@ void ArpApplication::send_arp_reply(const PacketInEvent& pin_ev, of13::PacketIn&
   of13::SetFieldAction set_arp_dst_hw(new of13::ARPTHA(ethhdr->h_source));
   apply_inst.add_action(set_arp_dst_hw);
 
-  of13::SetFieldAction set_arp_src_pro(new of13::ARPSPA(l3_));
+  of13::SetFieldAction set_arp_src_pro(new of13::ARPSPA(spa));
   apply_inst.add_action(set_arp_src_pro);
 
   of13::SetFieldAction set_arp_dst_pro(new of13::ARPTPA(arp->arp_spa));
@@ -134,6 +169,7 @@ void ArpApplication::event_callback(const ControllerEvent& ev,
   if (ev.get_type() == EVENT_SWITCH_UP) {
     install_switch_arp_flow(ev.get_connection(), messenger);
     install_arp_flow(ev.get_connection(), messenger);
+    add_default_sgi_out_flow(ev.get_connection(), messenger); // no update of l2 dest addr
   }
 }
 
@@ -146,9 +182,6 @@ void ArpApplication::install_switch_arp_flow(fluid_base::OFConnection* ofconn,
   // ARP eth type
   of13::EthType type_match(ARP_ETH_TYPE);
   fm.add_oxm_field(type_match);
-
-  of13::ARPOp op_match(ARPOP_REQUEST);
-  fm.add_oxm_field(op_match);
 
   // Output to next table
   of13::GoToTable inst(OF_TABLE_ARP);
@@ -168,7 +201,7 @@ void ArpApplication::install_arp_flow(
   uint64_t cookie = this->pin_sw_app_.generate_cookie();
   this->pin_sw_app_.register_for_cookie(this, cookie);
 
-  of13::FlowMod fm = messenger.create_default_flow_mod(OF_TABLE_ARP, of13::OFPFC_ADD, 0);
+  of13::FlowMod fm = messenger.create_default_flow_mod(OF_TABLE_ARP, of13::OFPFC_ADD, OF_PRIO_ARP_LOWER_PRIORITY);
 
   fm.cookie(cookie);
 
@@ -178,9 +211,6 @@ void ArpApplication::install_arp_flow(
   // IP eth type
   of13::EthType type_match(ARP_ETH_TYPE);
   fm.add_oxm_field(type_match);
-
-  of13::ARPTPA ip_match(l3_, std::string("255.255.255.255"));
-  fm.add_oxm_field(ip_match);
 
   // Output to controller
   of13::OutputAction act(of13::OFPP_CONTROLLER, of13::OFPCML_NO_BUFFER);
@@ -193,5 +223,135 @@ void ArpApplication::install_arp_flow(
 
 }
 
+void ArpApplication::add_default_sgi_out_flow(
+    fluid_base::OFConnection* ofconn,
+    const OpenflowMessenger& messenger) {
+  of13::FlowMod fm = messenger.create_default_flow_mod(
+      OF_TABLE_SGI_OUT,
+      of13::OFPFC_ADD,
+      OF_PRIO_SGI_OUT_LOWER_PRIORITY);
+  fm.buffer_id(0xffffffff);
+  fm.out_port(in_port_);
+  fm.out_group(0);
+  fm.flags(0);
+
+  of13::ApplyActions apply_inst;
+  fluid_msg::of13::OutputAction act(in_port_, 1024);
+  apply_inst.add_action(act);
+  fm.add_instruction(apply_inst);
+
+
+  uint8_t* buffer = fm.pack();
+  ofconn->send(buffer, fm.length());
+  fluid_msg::OFMsg::free_buffer(buffer);
+
+  OAILOG_DEBUG(LOG_GTPV1U, "Default SGi out flow added\n");
+}
+
+void ArpApplication::add_update_dst_l2_flow(const PacketInEvent& pin_ev,
+    const OpenflowMessenger& messenger,
+    const struct in_addr& dst_addr,
+    const std::string dst_mac) {
+  of13::FlowMod fm = messenger.create_default_flow_mod(
+      OF_TABLE_SGI_OUT,
+      of13::OFPFC_ADD,
+      OF_PRIO_SGI_OUT_PRIORITY);
+  fm.buffer_id(0xffffffff);
+  fm.out_port(in_port_);
+  fm.out_group(0);
+  fm.flags(0);
+
+  of13::EthType type_match(IP_ETH_TYPE);
+  fm.add_oxm_field(type_match);
+
+  of13::IPv4Dst ip_dst_match(dst_addr.s_addr);
+  fm.add_oxm_field(ip_dst_match);
+
+  of13::ApplyActions apply_inst;
+
+  EthAddress dst_address(dst_mac);
+  of13::SetFieldAction set_eth_dst(new of13::EthDst(dst_address));
+  apply_inst.add_action(set_eth_dst);
+
+  fluid_msg::of13::OutputAction act(in_port_, 1024);
+  apply_inst.add_action(act);
+  fm.add_instruction(apply_inst);
+
+  messenger.send_of_msg(fm, pin_ev.get_connection());
+}
+
+void ArpApplication::learn_neighbour_from_arp_reply(const PacketInEvent& pin_ev,
+    const OpenflowMessenger& messenger,
+    const ether_arp_t * const arp) {
+  unsigned char buf_in_addr[sizeof (struct in6_addr)];
+  char buf_ip_addr[INET6_ADDRSTRLEN];
+  char buf_eth_addr[6*2+5+1];
+  struct in_addr inaddr;
+
+  // source host
+  if (snprintf(buf_ip_addr, INET6_ADDRSTRLEN,"%d.%d.%d.%d", arp->arp_spa[0], arp->arp_spa[1], arp->arp_spa[2], arp->arp_spa[3]) >= 7 ) {
+    if (inet_pton (AF_INET, buf_ip_addr, buf_in_addr) == 1) {
+      memcpy (&inaddr, buf_in_addr, sizeof (struct in_addr));
+
+      if (snprintf(buf_ip_addr, sizeof(buf_eth_addr),"%02X:%02X:%02X:%02X:%02X:%02X",
+            arp->arp_sha[0], arp->arp_sha[1], arp->arp_sha[2], arp->arp_sha[3], arp->arp_sha[4], arp->arp_sha[5]) > 0 ) {
+        std::string mac(buf_eth_addr);
+        // populate or update
+        update_neighbours(pin_ev, messenger, inaddr.s_addr, mac);
+      }
+    }
+  }
+
+  // Destination host
+  if (snprintf(buf_ip_addr, INET6_ADDRSTRLEN,"%d.%d.%d.%d", arp->arp_tpa[0], arp->arp_tpa[1], arp->arp_tpa[2], arp->arp_tpa[3]) >= 7 ) {
+    if (inet_pton (AF_INET, buf_ip_addr, buf_in_addr) == 1) {
+      memcpy (&inaddr, buf_in_addr, sizeof (struct in_addr));
+
+      if (snprintf(buf_ip_addr, sizeof(buf_eth_addr),"%02X:%02X:%02X:%02X:%02X:%02X",
+            arp->arp_tha[0], arp->arp_tha[1], arp->arp_tha[2], arp->arp_tha[3], arp->arp_tha[4], arp->arp_tha[5]) > 0 ) {
+        std::string mac(buf_eth_addr);
+        // populate or update
+        update_neighbours(pin_ev, messenger, inaddr.s_addr, mac);
+      }
+    }
+  }
+}
+
+void ArpApplication::learn_neighbour_from_arp_request(const PacketInEvent& pin_ev,
+    const OpenflowMessenger& messenger,
+    const ether_arp_t * const arp) {
+  unsigned char buf_in_addr[sizeof (struct in6_addr)];
+  char buf_ip_addr[INET6_ADDRSTRLEN];
+  char buf_eth_addr[6*2+5+1];
+  struct in_addr inaddr;
+
+  // source host
+  if (snprintf(buf_ip_addr, INET6_ADDRSTRLEN,"%d.%d.%d.%d", arp->arp_spa[0], arp->arp_spa[1], arp->arp_spa[2], arp->arp_spa[3]) >= 7 ) {
+    if (inet_pton (AF_INET, buf_ip_addr, buf_in_addr) == 1) {
+      memcpy (&inaddr, buf_in_addr, sizeof (struct in_addr));
+
+      if (snprintf(buf_ip_addr, sizeof(buf_eth_addr),"%02X:%02X:%02X:%02X:%02X:%02X",
+            arp->arp_sha[0], arp->arp_sha[1], arp->arp_sha[2], arp->arp_sha[3], arp->arp_sha[4], arp->arp_sha[5]) > 0 ) {
+        std::string mac(buf_eth_addr);
+        // populate or update
+        update_neighbours(pin_ev, messenger, inaddr.s_addr, mac);
+      }
+    }
+  }
+}
+
+void ArpApplication::update_neighbours(const PacketInEvent& pin_ev,
+    const OpenflowMessenger& messenger,
+    in_addr_t l3,
+    std::string l2) {
+
+  std::string mac = learning_arp[l3];
+  if (l2.compare(mac)) {
+    learning_arp[l3] = l2;
+    struct in_addr dst_addr;
+    dst_addr.s_addr = l3;
+    add_update_dst_l2_flow(pin_ev, messenger, dst_addr, l2);
+  }
+}
 
 }

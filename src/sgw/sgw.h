@@ -72,12 +72,6 @@ typedef struct sgw_app_s {
 } sgw_app_t;
 
 
-struct ipv4_list_elm_s {
-  STAILQ_ENTRY(ipv4_list_elm_s) ipv4_entries;
-  struct in_addr  addr;
-};
-
-
 typedef struct pgw_app_s {
   STAILQ_HEAD(ipv4_list_free_head_s,     ipv4_list_elm_s)  ipv4_list_free;
   STAILQ_HEAD(ipv4_list_allocated_head_s, ipv4_list_elm_s) ipv4_list_allocated;

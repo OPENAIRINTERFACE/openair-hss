@@ -47,11 +47,10 @@ int openflow_uninit(void)
   return ret;
 }
 
-int openflow_init(struct in_addr *ue_net, uint32_t mask, int mtu, int *fd0,
+int openflow_init(struct in_addr *ue_net, struct in_addr *ue_netmask, int mtu, int *fd0,
                   int *fd1u)
 {
-  AssertFatal(start_of_controller() >= 0,
-              "Could not start openflow controller\n");
+  AssertFatal(start_of_controller() >= 0, "Could not start openflow controller\n");
   return 0;
 }
 

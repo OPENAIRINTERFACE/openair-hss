@@ -45,17 +45,17 @@ int start_of_controller(void) {
   static openflow::PacketInSwitchApplication packet_in_sw_app;
   static openflow::PagingApplication paging_app(packet_in_sw_app);
   static openflow::ArpApplication arp_app(packet_in_sw_app,
-      spgw_config.sgw_config.ovs_config.egress_port_num,
-      std::string(bdata(spgw_config.sgw_config.ovs_config.l2_egress_port)),
+      spgw_config.pgw_config.ovs_config.egress_port_num,
+      std::string(bdata(spgw_config.pgw_config.ovs_config.l2_egress_port)),
       spgw_config.pgw_config.ipv4.SGI);
   static openflow::BaseApplication base_app;
   static openflow::GTPApplication gtp_app(
-    std::string(bdata(spgw_config.sgw_config.ovs_config.uplink_mac)),
+    std::string(bdata(spgw_config.pgw_config.ovs_config.uplink_mac)),
     spgw_config.sgw_config.ipv4.S1u_S12_S4_up,
-    spgw_config.sgw_config.ovs_config.gtp_port_num,
+    spgw_config.pgw_config.ovs_config.gtp_port_num,
     spgw_config.pgw_config.ipv4.SGI,
-    std::string(bdata(spgw_config.sgw_config.ovs_config.l2_egress_port)),
-    spgw_config.sgw_config.ovs_config.egress_port_num
+    std::string(bdata(spgw_config.pgw_config.ovs_config.l2_egress_port)),
+    spgw_config.pgw_config.ovs_config.egress_port_num
   );
 
   // Base app registers first, because it deletes/creates default flow
