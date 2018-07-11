@@ -944,7 +944,7 @@ static nw_rc_t                            nwGtpv2cHandleUlpFindLocalTunnel (
     rc = nwGtpv2cMsgAddIeTV1 (hMsg, NW_GTPV2C_IE_RECOVERY, 0, thiz->restartCounter);
     char                                    ipv4[INET_ADDRSTRLEN];
     inet_ntop (AF_INET, (void*)peerIp, ipv4, INET_ADDRSTRLEN);
-    OAILOG_ERROR (LOG_GTPV2C, "Sending NW_GTP_ECHO_RSP message to %s:%u with seq %u\n", ipv4, peerPort, (seqNum));
+    OAILOG_INFO (LOG_GTPV2C, "Sending NW_GTP_ECHO_RSP message to %s:%u with seq %u\n", ipv4, peerPort, (seqNum));
     rc = nwGtpv2cCreateAndSendMsg (thiz, (seqNum), peerIp, peerPort, (nw_gtpv2c_msg_t *) hMsg);
     rc = nwGtpv2cMsgDelete ((nw_gtpv2c_stack_handle_t) thiz, hMsg);
     NW_ASSERT (NW_OK == rc);
