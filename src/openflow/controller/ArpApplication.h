@@ -68,7 +68,9 @@ private:
       of13::PacketIn& ofpi,
       const OpenflowMessenger& messenger);
 
-  void  send_arp_reply(const PacketInEvent& pi, of13::PacketIn& ofpi, const OpenflowMessenger& messenger, struct in_addr& spa);
+  void send_arp_reply(of13::PacketIn &pi, fluid_base::OFConnection* ofconn, uint32_t in_port, struct in_addr& spa);
+
+  void flow_mod_arp_reply(const PacketInEvent& pi, of13::PacketIn& ofpi, const OpenflowMessenger& messenger, struct in_addr& spa);
 
 
   /**
@@ -111,7 +113,7 @@ private:
       const std::string dst_mac);
 
   void learn_neighbour_from_arp_reply(const PacketInEvent& pin_ev,
-      const OpenflowMessenger& messenger, const ether_arp_t * const ether_arp);
+      const OpenflowMessenger& messenger);
 
   void learn_neighbour_from_arp_request(const PacketInEvent& pin_ev,
       const OpenflowMessenger& messenger, const ether_arp_t * const ether_arp);
