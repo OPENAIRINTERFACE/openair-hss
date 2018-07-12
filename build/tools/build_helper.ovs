@@ -153,7 +153,7 @@ ovs_load_kernel_modules(){
   $SUDO modprobe udp_tunnel
   $SUDO modprobe ip6_udp_tunnel
   $SUDO modprobe gtp
-  ret=$?;[[ $ret -ne 0 ]] && return $ret
+  ret=$?;[[ $ret -ne 0 ]] &&  echo_error "Could not load gtp kernel module" && return $ret
   #$SUDO modprobe gre
   #$SUDO modprobe ip_gre
   #$SUDO modprobe ip6_gre
@@ -170,7 +170,7 @@ ovs_load_kernel_modules(){
   
   #$SUDO modprobe openvswitch
   $SUDO insmod /lib/modules/`uname -r`/extra/openvswitch.ko
-  ret=$?;[[ $ret -ne 0 ]] && return $ret
+  ret=$?;[[ $ret -ne 0 ]] && echo_error "Could not load /lib/modules/`uname -r`/extra/openvswitch.ko kernel module" && return $ret
   sync
   #sleep 7
   #sync

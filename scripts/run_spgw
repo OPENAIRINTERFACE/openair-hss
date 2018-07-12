@@ -250,8 +250,11 @@ function main()
 
   if [ -z ${ENABLE_OPENFLOW+x} ]  ||  [ -z ${ENABLE_OPENFLOW_MOSAIC+x} ]; then
     ovs_start
+    ret=$?;[[ $ret -ne 0 ]] && echo_error "Failed to start OVS" && return $ret
+
     sleep 1
     $SUDO ovs-vsctl del-br $OVS_GTPU_BRIDGE_NAME
+    sleep 1
 
     if [ -z $sgi_mac_nh ]; then
     
@@ -282,11 +285,9 @@ function main()
     ##########################
     # Bridge configuration
     ##########################
-    $SUDO ovs-vsctl del-br $OVS_GTPU_BRIDGE_NAME
-    sleep 1
     #$SUDO ovs-vsctl add-br $OVS_GTPU_BRIDGE_NAME -- set bridge $OVS_GTPU_BRIDGE_NAME protocols=OpenFlow10,OpenFlow13 
     $SUDO ovs-vsctl add-br $OVS_GTPU_BRIDGE_NAME
-    ret=$?;[[ $ret -ne 0 ]] && return $ret
+    ret=$?;[[ $ret -ne 0 ]] && echo_error "Could not create OVS switch $OVS_GTPU_BRIDGE_NAME" && return $ret
     echo_success "Created switch $OVS_GTPU_BRIDGE_NAME"
     sleep 1
     
