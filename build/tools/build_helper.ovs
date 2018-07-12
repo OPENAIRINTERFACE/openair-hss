@@ -255,9 +255,11 @@ ovs_start() {
   # Unix domain socket:
   echo "Starting vswitchd..."
   pgrep ovs-vswitchd || $SUDO ovs-vswitchd -v --pidfile --detach --log-file=/usr/local/var/log
+  # pgrep ovs-vswitchd || $SUDO ovs-vswitchd -v --pidfile --detach --log-file=/usr/local/var/log/openvswitch/ovs-vswitchd.log -vconsole:dbg -vsyslog:dbg -vfile:dbg
   ret=$?;[[ $ret -ne 0 ]] && echo_error "Failed to start vswitchd" && return $ret
   echo_success "vswitchd running"
   sleep 1
+  return 0
 }
 
 #-------------------------------------------------------------------------------
