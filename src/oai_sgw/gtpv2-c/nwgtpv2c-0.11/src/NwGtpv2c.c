@@ -1,35 +1,35 @@
 /*----------------------------------------------------------------------------*
  *                                                                            *
-                                n w - g t p v 2 c
-      G P R S   T u n n e l i n g    P r o t o c o l   v 2 c    S t a c k
+ *                              n w - g t p v 2 c                             * 
+ *    G P R S   T u n n e l i n g    P r o t o c o l   v 2 c    S t a c k     *
  *                                                                            *
  *                                                                            *
-   Copyright (c) 2010-2011 Amit Chawre
-   All rights reserved.
+ * Copyright (c) 2010-2011 Amit Chawre                                        *
+ * All rights reserved.                                                       *
  *                                                                            *
-   Redistribution and use in source and binary forms, with or without
-   modification, are permitted provided that the following conditions
-   are met:
+ * Redistribution and use in source and binary forms, with or without         *
+ * modification, are permitted provided that the following conditions         *
+ * are met:                                                                   *
  *                                                                            *
-   1. Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-   2. Redistributions in binary form must reproduce the above copyright
-      notice, this list of conditions and the following disclaimer in the
-      documentation and/or other materials provided with the distribution.
-   3. The name of the author may not be used to endorse or promote products
-      derived from this software without specific prior written permission.
+ * 1. Redistributions of source code must retain the above copyright          *
+ *    notice, this list of conditions and the following disclaimer.           *
+ * 2. Redistributions in binary form must reproduce the above copyright       *
+ *    notice, this list of conditions and the following disclaimer in the     *
+ *    documentation and/or other materials provided with the distribution.    *
+ * 3. The name of the author may not be used to endorse or promote products   *
+ *    derived from this software without specific prior written permission.   *
  *                                                                            *
-   THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
-   IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
-   OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-   IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
-   INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
-   NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-   DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-   THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
-   THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-  ----------------------------------------------------------------------------*/
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR       *
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES  *
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.    *
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,           *
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT   *
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,  *
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY      *
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT        *
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF   *
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.          *
+ *----------------------------------------------------------------------------*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -571,8 +571,14 @@ static nw_rc_t nwGtpv2cCreateLocalTunnel (
           pLocalTunnel = RB_MIN (NwGtpv2cTunnelMap, &(thiz->tunnelMap));
 //          DevAssert(!pLocalTunnel);
 
-          OAILOG_WARNING (LOG_GTPV2C,  "Request message received on non-existent teid 0x%x from peer 0x%x received! Discarding.\n", ntohl (pUlpReq->u_api_info.initialReqInfo.teidLocal), htonl (pUlpReq->u_api_info.initialReqInfo.peerIp.s_addr));
-          rc = nwGtpv2cCreateLocalTunnel (thiz, pUlpReq->u_api_info.initialReqInfo.teidLocal, &pUlpReq->u_api_info.initialReqInfo.peerIp, pUlpReq->u_api_info.initialReqInfo.hUlpTunnel, &pUlpReq->u_api_info.initialReqInfo.hTunnel);
+          OAILOG_WARNING (LOG_GTPV2C,  "Request message received on non-existent teid 0x%x from peer 0x%x received! Discarding.\n",
+              ntohl (pUlpReq->u_api_info.initialReqInfo.teidLocal),
+              htonl (pUlpReq->u_api_info.initialReqInfo.peerIp.s_addr));
+
+          rc = nwGtpv2cCreateLocalTunnel (thiz, pUlpReq->u_api_info.initialReqInfo.teidLocal,
+              &pUlpReq->u_api_info.initialReqInfo.peerIp,
+              pUlpReq->u_api_info.initialReqInfo.hUlpTunnel,
+              &pUlpReq->u_api_info.initialReqInfo.hTunnel);
           NW_ASSERT (NW_OK == rc);
         }else{
           pUlpReq->u_api_info.initialReqInfo.hTunnel = (nw_gtpv2c_tunnel_handle_t) pLocalTunnel;
@@ -1171,6 +1177,7 @@ static nw_rc_t                            nwGtpv2cHandleTriggeredAck(
       OAI_GCC_DIAG_OFF(pointer-to-int-cast);
       thiz->id = (uint32_t) thiz;
       thiz->seqNum = ((uint32_t) thiz) & 0x0000FFFF;
+      OAILOG_DEBUG (LOG_GTPV2C,  "Initializing sequence number to %"PRIu32".\n", thiz->seqNum);
       OAI_GCC_DIAG_ON(pointer-to-int-cast);
       RB_INIT (&(thiz->tunnelMap));
       RB_INIT (&(thiz->outstandingTxSeqNumMap));
@@ -1195,6 +1202,8 @@ static nw_rc_t                            nwGtpv2cHandleTriggeredAck(
       NW_GTPV2C_INIT_MSG_IE_PARSE_INFO (thiz, NW_GTP_RELEASE_ACCESS_BEARERS_RSP);
       /** Paging related GTPv2c signaling. */
       NW_GTPV2C_INIT_MSG_IE_PARSE_INFO (thiz, NW_GTP_DOWNLINK_DATA_NOTIFICATION);
+      NW_GTPV2C_INIT_MSG_IE_PARSE_INFO (thiz, NW_GTP_DOWNLINK_DATA_NOTIFICATION_ACK);
+      NW_GTPV2C_INIT_MSG_IE_PARSE_INFO (thiz, NW_GTP_DOWNLINK_DATA_NOTIFICATION_FAILURE_IND);
 
       /*
        * For S10 interface
@@ -1451,6 +1460,9 @@ static nw_rc_t                            nwGtpv2cHandleTriggeredAck(
     case NW_GTP_CONTEXT_RSP:
     case NW_GTP_FORWARD_RELOCATION_COMPLETE_ACK:
     case NW_GTP_RELOCATION_CANCEL_RSP:
+      /** S11: Paging. */
+    case NW_GTP_DOWNLINK_DATA_NOTIFICATION_ACK:
+    case NW_GTP_DOWNLINK_DATA_NOTIFICATION_FAILURE_IND:
       rc = nwGtpv2cHandleTriggeredRsp (thiz, msgType, udpData, udpDataLen, peerPort, peerIp);
       break;
 
@@ -1668,7 +1680,6 @@ static nw_rc_t                            nwGtpv2cHandleTriggeredAck(
    Start Timer with ULP Timer Manager
 */
 
-
   nw_rc_t                                   nwGtpv2cStartTimer (
   nw_gtpv2c_stack_t * thiz,
   uint32_t timeoutSec,
@@ -1724,18 +1735,22 @@ static nw_rc_t                            nwGtpv2cHandleTriggeredAck(
 
       if (thiz->activeTimerInfo) {
         if (NW_GTPV2C_TIMER_CMP_P (&(thiz->activeTimerInfo->tvTimeout), &(timeoutInfo->tvTimeout), >)) {
-//          OAILOG_DEBUG (LOG_GTPV2C, "Stopping active timer 0x%" PRIxPTR " for info 0x%p!\n", thiz->activeTimerInfo->hTimer, thiz->activeTimerInfo);
+          OAILOG_DEBUG (LOG_GTPV2C, "Stopping active timer 0x%" PRIxPTR " for activeTimerInfo 0x%p! Trxn 0x%p\n",
+              thiz->activeTimerInfo->hTimer, thiz->activeTimerInfo, timeoutCallbackArg);
           rc = thiz->tmrMgr.tmrStopCallback (thiz->tmrMgr.tmrMgrHandle, thiz->activeTimerInfo->hTimer);
           NW_ASSERT (NW_OK == rc);
         } else {
-          OAILOG_DEBUG (LOG_GTPV2C, "Already Started timer 0x%" PRIxPTR " for info 0x%p!\n", thiz->activeTimerInfo->hTimer, thiz->activeTimerInfo);
+          OAILOG_DEBUG (LOG_GTPV2C, "Already Started timer 0x%" PRIxPTR " for activeTimerInfo 0x%p! Trxn 0x%p\n",
+              thiz->activeTimerInfo->hTimer, thiz->activeTimerInfo, timeoutCallbackArg);
           *phTimer = (nw_gtpv2c_timer_handle_t) timeoutInfo;
           OAILOG_FUNC_RETURN (LOG_GTPV2C, NW_OK);
         }
       }
 
-      rc = thiz->tmrMgr.tmrStartCallback (thiz->tmrMgr.tmrMgrHandle, timeoutSec, timeoutUsec, tmrType, (void *)timeoutInfo, &timeoutInfo->hTimer);
-      OAILOG_DEBUG (LOG_GTPV2C, "Started timer 0x%" PRIxPTR " for info 0x%p!\n", timeoutInfo->hTimer, timeoutInfo);
+      rc = thiz->tmrMgr.tmrStartCallback (thiz->tmrMgr.tmrMgrHandle, timeoutSec, timeoutUsec, tmrType,
+          (void *)timeoutInfo, &timeoutInfo->hTimer);
+      OAILOG_DEBUG (LOG_GTPV2C, "Started timer 0x%" PRIxPTR " for timeoutInfo 0x%p! Trxn 0x%p\n",
+          timeoutInfo->hTimer, timeoutInfo, timeoutCallbackArg);
       NW_ASSERT (NW_OK == rc);
       thiz->activeTimerInfo = timeoutInfo;
     }

@@ -50,41 +50,47 @@ private:
    * @param ev (in) - pointer to some subclass of ControllerEvent that occurred
    */
   virtual void event_callback(const ControllerEvent& ev,
-                              const OpenflowMessenger& messenger);
+      const OpenflowMessenger& messenger);
 
 
   void install_switch_gtp_flow(fluid_base::OFConnection* ofconn,
-                                             const OpenflowMessenger& messenger);
+      const OpenflowMessenger& messenger);
   /*
    * Add uplink flow from UE to internet
    * @param ev - AddGTPTunnelEvent containing ue ip, enb ip, and tunnel id's
    */
   void add_uplink_tunnel_flow(const AddGTPTunnelEvent& ev,
-                              const OpenflowMessenger& messenger);
+      const OpenflowMessenger& messenger);
 
   void add_downlink_match(of13::FlowMod& downlink_fm,
       const struct in_addr& ue_ip,
       const sdf_filter_t &sdf_filter);
+
+  void delete_ue_paging_flow(
+      const AddGTPTunnelEvent& ev,
+      const OpenflowMessenger& messenger,
+      const int pool_id);
+
   /*
    * Add downlink flow from internet to UE
    * @param ev - AddGTPTunnelEvent containing ue ip, enb ip, and tunnel id's
    */
   void add_downlink_tunnel_flow(const AddGTPTunnelEvent& ev,
-                                const OpenflowMessenger& messenger);
+      const OpenflowMessenger& messenger);
 
   /*
    * Remove uplink tunnel flow on disconnect
    * @param ev - DeleteGTPTunnelEvent containing ue ip, and inbound tei
    */
   void delete_uplink_tunnel_flow(const DeleteGTPTunnelEvent& ev,
-                                 const OpenflowMessenger& messenger);
+      const OpenflowMessenger& messenger);
 
   /*
    * Remove downlink tunnel flow on disconnect
    * @param ev - DeleteGTPTunnelEvent containing ue ip, and inbound tei
    */
   void delete_downlink_tunnel_flow(const DeleteGTPTunnelEvent& ev,
-                                   const OpenflowMessenger& messenger);
+      const OpenflowMessenger& messenger);
 
   void install_loop_flow(fluid_base::OFConnection* ofconn,
       const OpenflowMessenger& messenger);
@@ -93,10 +99,15 @@ private:
       const OpenflowMessenger& messenger);
   
   void add_pdn_loop(const AddGTPTunnelEvent& ev, 
-                    const OpenflowMessenger& messenger,
-                    const uint16_t flow_priority,
-                    const uint32_t goto_table);
+      const OpenflowMessenger& messenger,
+      const uint16_t flow_priority,
+      const uint32_t goto_table);
 
+  void delete_pdn_loop(
+      const DeleteGTPTunnelEvent& ev,
+      const OpenflowMessenger& messenger,
+      const uint16_t flow_priority,
+      const uint32_t goto_table);
 private:
   static const std::string GTP_PORT_MAC;
 

@@ -39,7 +39,9 @@ int openflow_controller_add_gtp_tunnel(struct in_addr ue, struct in_addr enb,
                                        uint32_t i_tei, uint32_t o_tei,
                                        const char* imsi, const pcc_rule_t *const rule);
 
-int openflow_controller_del_gtp_tunnel(struct in_addr ue, uint32_t i_tei, const pcc_rule_t *const rule);
+int openflow_controller_del_gtp_tunnel(struct in_addr ue, uint32_t i_tei, uint32_t o_tei, const pcc_rule_t *const rule);
+
+int openflow_controller_stop_dl_data_notification_ue(struct in_addr ue, uint16_t timeout);
 
 #ifdef __cplusplus
 }

@@ -61,50 +61,52 @@ extern hash_table_ts_t                        *s11_sgw_teid_2_gtv2c_teid_handle;
 int
 s11_sgw_handle_downlink_data_notification (
   nw_gtpv2c_stack_handle_t * stack_p,
-  itti_s11_downlink_data_notification_t * downlink_data_notification_p)
+  itti_s11_downlink_data_notification_t * notif_p)
 {
   nw_rc_t                                   rc;
   nw_gtpv2c_ulp_api_t                       ulp_req;
 
   OAILOG_DEBUG (LOG_S11, "Received S11_DOWNLINK_DATA_NOTIFICATION\n");
-  DevAssert (downlink_data_notification_p );
+  DevAssert (notif_p );
   DevAssert (stack_p );
-  /**
-   * Create a tunnel for the GTPv2-C stack
-   */
+
   memset (&ulp_req, 0, sizeof (nw_gtpv2c_ulp_api_t));
-  ulp_req.u_api_info.initialReqInfo.teidLocal = downlink_data_notification_p->local_teid;
-  ulp_req.apiType = NW_GTPV2C_ULP_API_INITIAL_REQ; /**< Sending Side. */
-  ulp_req.u_api_info.initialReqInfo.peerIp     = downlink_data_notification_p->peer_ip;
+  ulp_req.apiType = NW_GTPV2C_ULP_API_INITIAL_REQ;
+
+
+  ulp_req.u_api_info.initialReqInfo.peerIp = notif_p->peer_ip;
+  ulp_req.u_api_info.initialReqInfo.teidLocal  = notif_p->local_teid;
+
   hashtable_rc_t hash_rc = hashtable_ts_get(s11_sgw_teid_2_gtv2c_teid_handle,
       (hash_key_t) ulp_req.u_api_info.initialReqInfo.teidLocal, (void **)(uintptr_t)&ulp_req.u_api_info.initialReqInfo.hTunnel);
+
   if (HASH_TABLE_OK != hash_rc) {
     OAILOG_WARNING (LOG_S11, "Could not get GTPv2-C hTunnel for local TEID %X on S11 SGW interface. \n", ulp_req.u_api_info.initialReqInfo.teidLocal);
     return RETURNerror;
   }
-  rc = nwGtpv2cMsgNew (*stack_p, true, NW_GTP_DOWNLINK_DATA_NOTIFICATION, 0, 0, &(ulp_req.hMsg));
+  rc = nwGtpv2cMsgNew (*stack_p, true, NW_GTP_DOWNLINK_DATA_NOTIFICATION, notif_p->teid, 0, &(ulp_req.hMsg));
   DevAssert (NW_OK == rc);
   /*
    * Set the remote TEID
    */
-  rc = nwGtpv2cMsgSetTeid (ulp_req.hMsg, downlink_data_notification_p->teid);
+  rc = nwGtpv2cMsgSetTeid (ulp_req.hMsg, notif_p->teid);
   DevAssert (NW_OK == rc);
 
-  if (downlink_data_notification_p->ie_presence_mask & DOWNLINK_DATA_NOTIFICATION_IE_CAUSE_PRESENT) {
-    gtpv2c_cause_ie_set (&(ulp_req.hMsg), &downlink_data_notification_p->cause);
+  if (notif_p->ie_presence_mask & DOWNLINK_DATA_NOTIFICATION_PR_IE_CAUSE) {
+    gtpv2c_cause_ie_set (&(ulp_req.hMsg), &notif_p->cause);
   }
 
   // TODO conditional
-  if (downlink_data_notification_p->ie_presence_mask & DOWNLINK_DATA_NOTIFICATION_IE_EPS_BEARER_ID_PRESENT) {
-    gtpv2c_ebi_ie_set (&(ulp_req.hMsg), (unsigned)downlink_data_notification_p->ebi);
+  if (notif_p->ie_presence_mask & DOWNLINK_DATA_NOTIFICATION_PR_IE_EPS_BEARER_ID) {
+    gtpv2c_ebi_ie_set (&(ulp_req.hMsg), (unsigned)notif_p->ebi);
   }
 
-  if (downlink_data_notification_p->ie_presence_mask & DOWNLINK_DATA_NOTIFICATION_IE_ARP_PRESENT) {
-    gtpv2c_arp_ie_set (&(ulp_req.hMsg), &downlink_data_notification_p->arp);
+  if (notif_p->ie_presence_mask & DOWNLINK_DATA_NOTIFICATION_PR_IE_ARP) {
+    gtpv2c_arp_ie_set (&(ulp_req.hMsg), &notif_p->arp);
   }
 
-  if (downlink_data_notification_p->ie_presence_mask & DOWNLINK_DATA_NOTIFICATION_IE_IMSI_PRESENT) {
-    gtpv2c_imsi_ie_set(&(ulp_req.hMsg), &downlink_data_notification_p->imsi);
+  if (notif_p->ie_presence_mask & DOWNLINK_DATA_NOTIFICATION_PR_IE_IMSI) {
+    gtpv2c_imsi_ie_set(&(ulp_req.hMsg), &notif_p->imsi);
   }
 
   // Sender F-TEID for Control Plane, indication flags, SGW's node level Load Control Information, SGW's Overload
@@ -115,6 +117,142 @@ s11_sgw_handle_downlink_data_notification (
   DevAssert (NW_OK == rc);
   return RETURNok;
 }
+
+//------------------------------------------------------------------------------
+int
+s11_sgw_handle_downlink_data_notification_ack (
+  nw_gtpv2c_stack_handle_t * stack_p,
+  nw_gtpv2c_ulp_api_t * pUlpApi)
+{
+  nw_rc_t                                 rc = NW_OK;
+  uint8_t                                 offendingIeType,
+                                          offendingIeInstance;
+  uint16_t                                offendingIeLength;
+  itti_s11_downlink_data_notification_acknowledge_t *resp_p;
+  MessageDef                             *message_p;
+  nw_gtpv2c_msg_parser_t                 *pMsgParser;
+
+  DevAssert (stack_p );
+  message_p = itti_alloc_new_message_sized (TASK_S11, S11_DOWNLINK_DATA_NOTIFICATION_ACKNOWLEDGE, sizeof(itti_s11_downlink_data_notification_acknowledge_t));
+  resp_p = S11_DOWNLINK_DATA_NOTIFICATION_ACKNOWLEDGE(message_p);
+
+  resp_p->teid = nwGtpv2cMsgGetTeid(pUlpApi->hMsg);
+
+  /*
+   * Create a new message parser
+   */
+  rc = nwGtpv2cMsgParserNew (*stack_p, NW_GTP_DOWNLINK_DATA_NOTIFICATION_ACK, s11_ie_indication_generic, NULL, &pMsgParser);
+  DevAssert (NW_OK == rc);
+  /*
+   * Cause IE
+   */
+  rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_CAUSE, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_MANDATORY, gtpv2c_cause_ie_get,
+      &resp_p->cause);
+  DevAssert (NW_OK == rc);
+
+
+  rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_IMSI, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_OPTIONAL,
+      gtpv2c_imsi_ie_get,
+      &resp_p->imsi);
+  DevAssert (NW_OK == rc);
+
+
+  /*
+   * Run the parser
+   */
+  rc = nwGtpv2cMsgParserRun (pMsgParser, (pUlpApi->hMsg), &offendingIeType, &offendingIeInstance, &offendingIeLength);
+
+  if (rc != NW_OK) {
+    MSC_LOG_RX_DISCARDED_MESSAGE (MSC_S11_MME, MSC_SGW, NULL, 0, "0 DOWNLINK_DATA_NOTIFICATION_ACK local S11 teid " TEID_FMT " ", resp_p->teid);
+    /*
+     * TODO: handle this case
+     */
+    itti_free (ITTI_MSG_ORIGIN_ID (message_p), message_p);
+    message_p = NULL;
+    rc = nwGtpv2cMsgParserDelete (*stack_p, pMsgParser);
+    DevAssert (NW_OK == rc);
+    rc = nwGtpv2cMsgDelete (*stack_p, (pUlpApi->hMsg));
+    DevAssert (NW_OK == rc);
+    return RETURNerror;
+  }
+
+  MSC_LOG_RX_MESSAGE (MSC_S11_MME, MSC_SGW, NULL, 0, "0 DOWNLINK_DATA_NOTIFICATION_ACK local S11 teid " TEID_FMT " cause %u",
+    resp_p->teid, resp_p->cause);
+
+  rc = nwGtpv2cMsgParserDelete (*stack_p, pMsgParser);
+  DevAssert (NW_OK == rc);
+  rc = nwGtpv2cMsgDelete (*stack_p, (pUlpApi->hMsg));
+  DevAssert (NW_OK == rc);
+  return itti_send_msg_to_task (TASK_SPGW_APP, INSTANCE_DEFAULT, message_p);
+}
+
+//------------------------------------------------------------------------------
+int
+s11_sgw_handle_downlink_data_notification_failure_ind (
+    nw_gtpv2c_stack_handle_t * stack_p,
+    nw_gtpv2c_ulp_api_t * pUlpApi)
+  {
+    nw_rc_t                                 rc = NW_OK;
+    uint8_t                                 offendingIeType,
+                                            offendingIeInstance;
+    uint16_t                                offendingIeLength;
+    itti_s11_downlink_data_notification_failure_indication_t   *initial_p;
+    MessageDef                             *message_p;
+    nw_gtpv2c_msg_parser_t                 *pMsgParser;
+
+    DevAssert (stack_p );
+    message_p = itti_alloc_new_message_sized (TASK_S11, S11_DOWNLINK_DATA_NOTIFICATION_FAILURE_INDICATION, sizeof(itti_s11_downlink_data_notification_failure_indication_t));
+    initial_p = S11_DOWNLINK_DATA_NOTIFICATION_FAILURE_INDICATION(message_p);
+
+    /*
+    * Create a new message parser
+    */
+   rc = nwGtpv2cMsgParserNew (*stack_p, NW_GTP_DOWNLINK_DATA_NOTIFICATION_FAILURE_IND, s11_ie_indication_generic, NULL, &pMsgParser);
+   DevAssert (NW_OK == rc);
+
+   /*
+    * Cause IE
+    */
+   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_CAUSE, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_MANDATORY, gtpv2c_cause_ie_get,
+       &initial_p->cause);
+   if (NW_OK == rc) initial_p->ie_presence_mask |= DOWNLINK_DATA_NOTIFICATION_FAILURE_IND_PR_IE_CAUSE;
+   DevAssert (NW_OK == rc);
+
+   /*
+    * Imsi IE
+    */
+   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_IMSI, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
+       gtpv2c_imsi_ie_get, &initial_p->imsi);
+   if (NW_OK == rc) initial_p->ie_presence_mask |= DOWNLINK_DATA_NOTIFICATION_FAILURE_IND_PR_IE_IMSI;
+   DevAssert (NW_OK == rc);
+
+   DevAssert (NW_OK == rc);
+   initial_p->teid = nwGtpv2cMsgGetTeid (pUlpApi->hMsg);
+   initial_p->trxn = (void *)pUlpApi->u_api_info.initialReqIndInfo.hTrxn;
+   initial_p->peer_ip = pUlpApi->u_api_info.initialReqIndInfo.peerIp;
+   rc = nwGtpv2cMsgParserRun (pMsgParser, pUlpApi->hMsg, &offendingIeType, &offendingIeInstance, &offendingIeLength);
+
+   if (rc != NW_OK) {
+     MSC_LOG_RX_DISCARDED_MESSAGE (MSC_S11_MME, MSC_SGW, NULL, 0,
+         "0 DOWNLINK_DATA_NOTIFICATION_FAILURE_NOTIFICATION local S11 teid " TEID_FMT " ", initial_p->teid);
+     /*
+      * TODO: handle this case
+      */
+     itti_free (ITTI_MSG_ORIGIN_ID (message_p), message_p);
+     message_p = NULL;
+     rc = nwGtpv2cMsgParserDelete (*stack_p, pMsgParser);
+     DevAssert (NW_OK == rc);
+     rc = nwGtpv2cMsgDelete (*stack_p, (pUlpApi->hMsg));
+     DevAssert (NW_OK == rc);
+     return RETURNerror;
+   }
+
+   rc = nwGtpv2cMsgParserDelete (*stack_p, pMsgParser);
+   DevAssert (NW_OK == rc);
+   rc = nwGtpv2cMsgDelete (*stack_p, (pUlpApi->hMsg));
+   DevAssert (NW_OK == rc);
+   return itti_send_msg_to_task (TASK_SPGW_APP, INSTANCE_DEFAULT, message_p);
+ }
 
 
 #ifdef __cplusplus

@@ -356,7 +356,6 @@ do {                                                    \
 #define IMSI64_TO_STRING(iMSI64, sTRING) snprintf(sTRING, IMSI_BCD_DIGITS_MAX+1, IMSI_64_FMT, iMSI64)
 imsi64_t imsi_to_imsi64(const imsi_t * const imsi);
 
-
 #define IMSI_TO_STRING(iMsI_t_PtR,iMsI_sTr, MaXlEn) \
         do { \
           int l_i = 0; \

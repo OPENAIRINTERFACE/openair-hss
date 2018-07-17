@@ -37,6 +37,7 @@ enum ControllerEventType {
   EVENT_ERROR,
   EVENT_ADD_GTP_TUNNEL,
   EVENT_DELETE_GTP_TUNNEL,
+  EVENT_STOP_DL_DATA_NOTIFICATION,
   EVENT_ADD_SDF_FILTER,
   EVENT_DELETE_SDF_FILTER
 };
@@ -185,16 +186,35 @@ public:
   DeleteGTPTunnelEvent(
     const struct in_addr ue_ip,
     const uint32_t in_tei,
+    const uint32_t out_tei,
     const pcc_rule_t *const rule);
 
     const struct in_addr& get_ue_ip() const;
     const uint32_t get_in_tei() const;
+    const uint32_t get_out_tei() const;
     const pcc_rule_t *const  get_rule() const;
 
 private:
   const struct in_addr ue_ip_;
   const uint32_t in_tei_;
+  const uint32_t out_tei_;
   const pcc_rule_t *const rule_;
+};
+
+/*
+ * Event triggered by MME to ack a paging for a UE
+ */
+class StopDLDataNotificationEvent : public ExternalEvent {
+public:
+  StopDLDataNotificationEvent(
+    const struct in_addr ue_ip, uint16_t time_out);
+
+  const struct in_addr& get_ue_ip() const;
+  const uint16_t get_time_out() const;
+
+private:
+  const struct in_addr ue_ip_;
+  const uint16_t time_out_;
 };
 
 }

@@ -137,8 +137,9 @@ const pcc_rule_t *const AddGTPTunnelEvent::get_rule() const {
 DeleteGTPTunnelEvent::DeleteGTPTunnelEvent(
     const struct in_addr ue_ip,
     const uint32_t in_tei,
+    const uint32_t out_tei,
     const pcc_rule_t *const rule) :
-    ue_ip_(ue_ip), in_tei_(in_tei), rule_(rule),
+    ue_ip_(ue_ip), in_tei_(in_tei), out_tei_(out_tei), rule_(rule),
     ExternalEvent(EVENT_DELETE_GTP_TUNNEL) {}
 
 const struct in_addr& DeleteGTPTunnelEvent::get_ue_ip() const {
@@ -149,8 +150,26 @@ const uint32_t DeleteGTPTunnelEvent::get_in_tei() const {
   return in_tei_;
 }
 
+const uint32_t DeleteGTPTunnelEvent::get_out_tei() const {
+  return out_tei_;
+}
+
 const pcc_rule_t *const DeleteGTPTunnelEvent::get_rule() const {
   return rule_;
+}
+
+StopDLDataNotificationEvent::StopDLDataNotificationEvent(
+    const struct in_addr ue_ip, uint16_t time_out) :
+        ue_ip_(ue_ip),
+        time_out_(time_out),
+    ExternalEvent(EVENT_STOP_DL_DATA_NOTIFICATION) {}
+
+const struct in_addr& StopDLDataNotificationEvent::get_ue_ip() const {
+  return ue_ip_;
+}
+
+const uint16_t StopDLDataNotificationEvent::get_time_out() const {
+  return time_out_;
 }
 
 }

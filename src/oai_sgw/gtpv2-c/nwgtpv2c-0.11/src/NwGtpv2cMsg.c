@@ -80,6 +80,7 @@ extern                                  "C" {
       pMsg = gpGtpv2cMsgPool;
       gpGtpv2cMsgPool = gpGtpv2cMsgPool->next;
     } else {
+      // LG changed malloc into calloc
       NW_GTPV2C_MALLOC (pStack, sizeof (nw_gtpv2c_msg_t), pMsg, nw_gtpv2c_msg_t *);
     }
 
@@ -148,6 +149,8 @@ extern                                  "C" {
     // warning: unused variable ‘pStack’ [-Wunused-variable]: NwGtpv2cStackT                         *pStack = (NwGtpv2cStackT *) hGtpcStackHandle;
 
     OAILOG_DEBUG (LOG_GTPV2C, "Purging message %" PRIxPTR "!\n", hMsg);
+    // LG added zeroed
+    memset((void*)hMsg, 0, sizeof(nw_gtpv2c_msg_t));
     ((nw_gtpv2c_msg_t *) hMsg)->next = gpGtpv2cMsgPool;
     gpGtpv2cMsgPool = (nw_gtpv2c_msg_t *) hMsg;
     return NW_OK;

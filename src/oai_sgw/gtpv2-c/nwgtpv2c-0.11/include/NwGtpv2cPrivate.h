@@ -67,7 +67,7 @@ extern "C" {
     }                                                                   \
     else                                                                \
     {                                                                   \
-      _mem = (_type) malloc (_size);                                    \
+      _mem = (_type) calloc (1, _size);                                 \
     }                                                                   \
   } while (0)
 

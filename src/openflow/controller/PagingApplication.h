@@ -29,14 +29,14 @@
 namespace openflow {
 #define ETH_HEADER_LENGTH 14
 
+#define UNCONFIRMED_CLAMPING_TIMEOUT 30
+
 class PagingApplication: public PacketInApplication {
 
 public:
   PagingApplication(PacketInSwitchApplication& pin_sw_app);
 
 private:
-  // TODO: move to config file
-  static const int CLAMPING_TIMEOUT = 30; // seconds
 
   virtual void packet_in_callback(const PacketInEvent& pin_ev,
       of13::PacketIn& ofpi,
@@ -53,6 +53,13 @@ private:
   virtual void event_callback(const ControllerEvent& ev,
                               const OpenflowMessenger& messenger);
 
+  void clamp_dl_data_notification(
+      fluid_base::OFConnection* ofconn,
+      const OpenflowMessenger& messenger,
+      const struct in_addr ue_ip,
+      const int pool_id,
+      const uint16_t clamp_time_out);
+
   /**
    * Handles downlink data intended for a UE in idle mode, then forwards the
    * paging request to SPGW. After initiating the paging process, it also clamps
@@ -61,7 +68,7 @@ private:
    * @param ofconn (in) - given connection to OVS switch
    * @param data (in) - the ethernet packet received by the switch
    */
-  void handle_paging_message(fluid_base::OFConnection* ofconn, uint8_t* data,
+  void trigger_dl_data_notification(fluid_base::OFConnection* ofconn, uint8_t* data,
                              const OpenflowMessenger& messenger);
 
   /**

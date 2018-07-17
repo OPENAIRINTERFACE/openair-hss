@@ -10,6 +10,7 @@ include_directories(${SRC_TOP_DIR}/oai_sgw/utils)
 include_directories(${SRC_TOP_DIR}/oai_sgw/utils/bstr)
 include_directories(${SRC_TOP_DIR}/oai_sgw/utils/hashtable)
 include_directories(${SRC_TOP_DIR}/oai_sgw/utils/msc)
+include_directories(${SRC_TOP_DIR}/openflow/controller)
 
 # TODO (amar) fix include leak
 include_directories("${SRC_TOP_DIR}/nas")

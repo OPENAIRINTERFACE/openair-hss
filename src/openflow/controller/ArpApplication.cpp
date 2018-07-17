@@ -54,7 +54,7 @@ void ArpApplication::packet_in_callback(const PacketInEvent& pin_ev,
   const ether_arp_t *arp = reinterpret_cast<const ether_arp_t*>(&eth_frame[ETH_HEADER_LENGTH]);
 
   if (ARPOP_REQUEST == ntohs(arp->ea_hdr.ar_op)) {
-    OAILOG_DEBUG(LOG_GTPV1U, "Handling packet-in message in arp app: ARPOP_REQUEST\n");
+    //OAILOG_DEBUG(LOG_GTPV1U, "Handling packet-in message in arp app: ARPOP_REQUEST\n");
     learn_neighbour_from_arp_request(pin_ev, messenger, arp);
 
     unsigned char buf_in_addr[sizeof (struct in6_addr)];
@@ -68,7 +68,7 @@ void ArpApplication::packet_in_callback(const PacketInEvent& pin_ev,
         memcpy (&inaddr, buf_in_addr, sizeof (struct in_addr));
         if (spgw_config.pgw_config.arp_ue_oai) {
           if (get_paa_ipv4_pool_id(inaddr) >= 0) {
-            OAILOG_DEBUG(LOG_GTPV1U, "send_arp_reply() (target UE %s) port %d\n", buf_ip_addr, in_port_);
+            //OAILOG_DEBUG(LOG_GTPV1U, "send_arp_reply() (target UE %s) port %d\n", buf_ip_addr, in_port_);
             flow_mod_arp_reply(pin_ev, ofpi, messenger, inaddr);
             send_arp_reply(ofpi, pin_ev.get_connection(), in_port_, inaddr);
           } else {
@@ -76,7 +76,7 @@ void ArpApplication::packet_in_callback(const PacketInEvent& pin_ev,
           }
         }
         if (inaddr.s_addr == l3_.s_addr) {
-          OAILOG_DEBUG(LOG_GTPV1U, "send_arp_reply() (SGi %s) port %d\n", buf_ip_addr, in_port_);
+          //OAILOG_DEBUG(LOG_GTPV1U, "send_arp_reply() (SGi %s) port %d\n", buf_ip_addr, in_port_);
           flow_mod_arp_reply(pin_ev, ofpi, messenger, inaddr);
           send_arp_reply(ofpi, pin_ev.get_connection(), in_port_, inaddr);
         }
@@ -98,7 +98,7 @@ void ArpApplication::packet_in_callback(const PacketInEvent& pin_ev,
           if (get_paa_ipv4_pool_id(inaddr) < 0) {
             OAILOG_DEBUG(LOG_GTPV1U, "TODO: Smash out packet-in message in arp app: ARPOP_REPLY (Can happen if Action TABLE is used for sending ARP reply)\n");
           } else {
-            OAILOG_DEBUG(LOG_GTPV1U, "Handling packet-in message in arp app: ARPOP_REPLY\n");
+            //OAILOG_DEBUG(LOG_GTPV1U, "Handling packet-in message in arp app: ARPOP_REPLY\n");
             learn_neighbour_from_arp_reply(pin_ev, messenger);
           }
         } else {
@@ -118,7 +118,7 @@ void ArpApplication::send_arp_reply(of13::PacketIn &pi, fluid_base::OFConnection
 
     /*Add Packet in data if the packet was not buffered*/
     if (pi.buffer_id() == -1) {
-      OAILOG_DEBUG(LOG_GTPV1U, "send_arp_reply() packet was not buffered\n");
+      //OAILOG_DEBUG(LOG_GTPV1U, "send_arp_reply() packet was not buffered\n");
       po.data(pi.data(), pi.data_len());
     }
 
@@ -160,8 +160,7 @@ void ArpApplication::send_arp_reply(of13::PacketIn &pi, fluid_base::OFConnection
 
     buf = po.pack();
 
-    int ret = ofconn->send(buf, po.length());
-    printf("ofconn->send returned %d\n", ret);
+    ofconn->send(buf, po.length());
     OFMsg::free_buffer(buf);
 }
 
@@ -175,15 +174,15 @@ void ArpApplication::flow_mod_arp_reply(const PacketInEvent& pin_ev, of13::Packe
   const ethhdr_t *ethhdr = reinterpret_cast<const ethhdr_t*>(eth_frame);
   const ether_arp_t *arp = reinterpret_cast<const ether_arp_t*>(&eth_frame[ETH_HEADER_LENGTH]);
 
-  OAILOG_DEBUG(LOG_GTPV1U, "PACKET_IN 1/3: ARP REQUEST ETH SRC %02X:%02X:%02X:%02X:%02X:%02X ETH DST %02X:%02X:%02X:%02X:%02X:%02X PROTO %04X\n",
-    ethhdr->h_source[0],ethhdr->h_source[1],ethhdr->h_source[2],ethhdr->h_source[3],ethhdr->h_source[4],ethhdr->h_source[5],
-    ethhdr->h_dest[0],ethhdr->h_dest[1],ethhdr->h_dest[2],ethhdr->h_dest[3],ethhdr->h_dest[4],ethhdr->h_dest[5],
+  //OAILOG_DEBUG(LOG_GTPV1U, "PACKET_IN 1/3: ARP REQUEST ETH SRC %02X:%02X:%02X:%02X:%02X:%02X ETH DST %02X:%02X:%02X:%02X:%02X:%02X PROTO %04X\n", \
+    ethhdr->h_source[0],ethhdr->h_source[1],ethhdr->h_source[2],ethhdr->h_source[3],ethhdr->h_source[4],ethhdr->h_source[5], \
+    ethhdr->h_dest[0],ethhdr->h_dest[1],ethhdr->h_dest[2],ethhdr->h_dest[3],ethhdr->h_dest[4],ethhdr->h_dest[5], \
     ntohs(ethhdr->h_proto));
-  OAILOG_DEBUG(LOG_GTPV1U, "PACKET_IN 2/3: ARP REQUEST HW SRC %02X:%02X:%02X:%02X:%02X:%02X IP SRC %d.%d.%d.%d\n",
-    arp->arp_sha[0], arp->arp_sha[1], arp->arp_sha[2], arp->arp_sha[3], arp->arp_sha[4], arp->arp_sha[5],
+  //OAILOG_DEBUG(LOG_GTPV1U, "PACKET_IN 2/3: ARP REQUEST HW SRC %02X:%02X:%02X:%02X:%02X:%02X IP SRC %d.%d.%d.%d\n", \
+    arp->arp_sha[0], arp->arp_sha[1], arp->arp_sha[2], arp->arp_sha[3], arp->arp_sha[4], arp->arp_sha[5], \
     arp->arp_spa[0], arp->arp_spa[1], arp->arp_spa[2], arp->arp_spa[3]);
-  OAILOG_DEBUG(LOG_GTPV1U, "PACKET_IN 3/3: ARP REQUEST HW DST %02X:%02X:%02X:%02X:%02X:%02X IP DST %d.%d.%d.%d\n",
-    arp->arp_tha[0], arp->arp_tha[1], arp->arp_tha[2], arp->arp_tha[3], arp->arp_tha[4], arp->arp_tha[5],
+  //OAILOG_DEBUG(LOG_GTPV1U, "PACKET_IN 3/3: ARP REQUEST HW DST %02X:%02X:%02X:%02X:%02X:%02X IP DST %d.%d.%d.%d\n", \
+    arp->arp_tha[0], arp->arp_tha[1], arp->arp_tha[2], arp->arp_tha[3], arp->arp_tha[4], arp->arp_tha[5], \
     arp->arp_tpa[0], arp->arp_tpa[1], arp->arp_tpa[2], arp->arp_tpa[3]);
 
 
@@ -376,12 +375,12 @@ void ArpApplication::learn_neighbour_from_arp_reply(const PacketInEvent& pin_ev,
   const ethhdr_t *ethhdr = reinterpret_cast<const ethhdr_t*>(eth_frame);
   const ether_arp_t *arp = reinterpret_cast<const ether_arp_t*>(&eth_frame[ETH_HEADER_LENGTH]);
 
-  OAILOG_DEBUG(LOG_GTPV1U, "Learning from ARP REPLY %d.%d.%d.%d -> %d.%d.%d.%d\n",
-      arp->arp_spa[0], arp->arp_spa[1], arp->arp_spa[2], arp->arp_spa[3],
+  //OAILOG_DEBUG(LOG_GTPV1U, "Learning from ARP REPLY %d.%d.%d.%d -> %d.%d.%d.%d\n", \
+      arp->arp_spa[0], arp->arp_spa[1], arp->arp_spa[2], arp->arp_spa[3], \
       arp->arp_tpa[0], arp->arp_tpa[1], arp->arp_tpa[2], arp->arp_tpa[3]);
 
-  OAILOG_DEBUG(LOG_GTPV1U, "Learning from ARP REPLY HW SRC %02X:%02X:%02X:%02X:%02X:%02X -> %02X:%02X:%02X:%02X:%02X:%02X\n",
-      arp->arp_sha[0], arp->arp_sha[1], arp->arp_sha[2], arp->arp_sha[3], arp->arp_sha[4], arp->arp_sha[5],
+  //OAILOG_DEBUG(LOG_GTPV1U, "Learning from ARP REPLY HW SRC %02X:%02X:%02X:%02X:%02X:%02X -> %02X:%02X:%02X:%02X:%02X:%02X\n", \
+      arp->arp_sha[0], arp->arp_sha[1], arp->arp_sha[2], arp->arp_sha[3], arp->arp_sha[4], arp->arp_sha[5], \
       arp->arp_tha[0], arp->arp_tha[1], arp->arp_tha[2], arp->arp_tha[3], arp->arp_tha[4], arp->arp_tha[5]);
 
 

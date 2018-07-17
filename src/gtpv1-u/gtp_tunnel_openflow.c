@@ -72,7 +72,7 @@ int openflow_add_tunnel(struct in_addr ue, struct in_addr enb,
 
 int openflow_del_tunnel(struct in_addr ue, uint32_t i_tei, uint32_t o_tei, const pcc_rule_t *const rule)
 {
-  return openflow_controller_del_gtp_tunnel(ue, i_tei, rule);
+  return openflow_controller_del_gtp_tunnel(ue, i_tei, o_tei, rule);
 }
 
 static const struct gtp_tunnel_ops openflow_ops = {

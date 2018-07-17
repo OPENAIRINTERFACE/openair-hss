@@ -40,6 +40,15 @@ s11_sgw_handle_downlink_data_notification (
   nw_gtpv2c_stack_handle_t * stack_p,
   itti_s11_downlink_data_notification_t * downlink_data_notification_p);
 
+int
+s11_sgw_handle_downlink_data_notification_ack (
+  nw_gtpv2c_stack_handle_t * stack_p,
+  nw_gtpv2c_ulp_api_t * pUlpApi);
+
+int
+s11_sgw_handle_downlink_data_notification_failure_ind (
+  nw_gtpv2c_stack_handle_t * stack_p,
+  nw_gtpv2c_ulp_api_t * pUlpApi);
 
 #ifdef __cplusplus
 }

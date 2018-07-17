@@ -1,35 +1,35 @@
 /*----------------------------------------------------------------------------*
  *                                                                            *
-                                n w - g t p v 2 c
-      G P R S   T u n n e l i n g    P r o t o c o l   v 2 c    S t a c k
+ *                              n w - g t p v 2 c                             * 
+ *    G P R S   T u n n e l i n g    P r o t o c o l   v 2 c    S t a c k     *
  *                                                                            *
  *                                                                            *
-   Copyright (c) 2010-2011 Amit Chawre
-   All rights reserved.
+ * Copyright (c) 2010-2011 Amit Chawre                                        *
+ * All rights reserved.                                                       *
  *                                                                            *
-   Redistribution and use in source and binary forms, with or without
-   modification, are permitted provided that the following conditions
-   are met:
+ * Redistribution and use in source and binary forms, with or without         *
+ * modification, are permitted provided that the following conditions         *
+ * are met:                                                                   *
  *                                                                            *
-   1. Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-   2. Redistributions in binary form must reproduce the above copyright
-      notice, this list of conditions and the following disclaimer in the
-      documentation and/or other materials provided with the distribution.
-   3. The name of the author may not be used to endorse or promote products
-      derived from this software without specific prior written permission.
+ * 1. Redistributions of source code must retain the above copyright          *
+ *    notice, this list of conditions and the following disclaimer.           *
+ * 2. Redistributions in binary form must reproduce the above copyright       *
+ *    notice, this list of conditions and the following disclaimer in the     *
+ *    documentation and/or other materials provided with the distribution.    *
+ * 3. The name of the author may not be used to endorse or promote products   *
+ *    derived from this software without specific prior written permission.   *
  *                                                                            *
-   THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
-   IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
-   OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-   IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
-   INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
-   NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-   DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-   THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
-   THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-  ----------------------------------------------------------------------------*/
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR       *
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES  *
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.    *
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,           *
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT   *
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,  *
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY      *
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT        *
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF   *
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.          *
+ *----------------------------------------------------------------------------*/
 
 #include <stdio.h>
 #include <string.h>
@@ -50,7 +50,7 @@
 
 
 #ifdef __cplusplus
-extern                                  "C" {
+extern "C" {
 #endif
 
 
@@ -526,6 +526,35 @@ extern                                  "C" {
     {0, 0, 0}
   };
 
+  static
+  NwGtpv2cMsgIeInfoT                      downlinkDataNtfAckIeInfoTbl[] = {
+      {NW_GTPV2C_IE_CAUSE, 0, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_MANDATORY, NULL},
+      {NW_GTPV2C_IE_RECOVERY, 1, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_OPTIONAL, NULL},
+      {NW_GTPV2C_IE_THROTTLING, 0, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_OPTIONAL, NULL},
+      {NW_GTPV2C_IE_IMSI, 8, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_OPTIONAL, NULL},
+      {NW_GTPV2C_IE_EPC_TIMER, 0, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_OPTIONAL, NULL},
+      {NW_GTPV2C_IE_INTEGER_NUMBER, 0, NW_GTPV2C_IE_INSTANCE_ONE, NW_GTPV2C_IE_PRESENCE_OPTIONAL, NULL},
+      {NW_GTPV2C_IE_PRIVATE_EXTENSION, 0, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_OPTIONAL, NULL},
+
+    /*
+     * Do not add below this
+     */
+    {0, 0, 0}
+  };
+
+  static
+  NwGtpv2cMsgIeInfoT                      downlinkDataNtfFailIndIeInfoTbl[] = {
+      {NW_GTPV2C_IE_CAUSE, 0, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_MANDATORY, NULL},
+      {NW_GTPV2C_IE_NODE_TYPE, 0, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_OPTIONAL, NULL},
+      {NW_GTPV2C_IE_IMSI, 8, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_OPTIONAL, NULL},
+      {NW_GTPV2C_IE_PRIVATE_EXTENSION, 0, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_OPTIONAL, NULL},
+
+    /*
+     * Do not add below this
+     */
+    {0, 0, 0}
+  };
+
   /** Relocation Cancel Request. */
   static
   NwGtpv2cMsgIeInfoT                      relocationCancelRequestIeInfoTbl[] = {
@@ -790,6 +819,18 @@ extern                                  "C" {
       /** Paging related downlink data notification. */
       case NW_GTP_DOWNLINK_DATA_NOTIFICATION: {
         rc = nwGtpv2cMsgIeParseInfoUpdate (thiz, downlinkDataNtfIeInfoTbl);
+        NW_ASSERT (NW_OK == rc);
+      }
+      break;
+
+      case NW_GTP_DOWNLINK_DATA_NOTIFICATION_ACK: {
+        rc = nwGtpv2cMsgIeParseInfoUpdate (thiz, downlinkDataNtfAckIeInfoTbl);
+        NW_ASSERT (NW_OK == rc);
+      }
+      break;
+
+      case NW_GTP_DOWNLINK_DATA_NOTIFICATION_FAILURE_IND: {
+        rc = nwGtpv2cMsgIeParseInfoUpdate (thiz, downlinkDataNtfFailIndIeInfoTbl);
         NW_ASSERT (NW_OK == rc);
       }
       break;

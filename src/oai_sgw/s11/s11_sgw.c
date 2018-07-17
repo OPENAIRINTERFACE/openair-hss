@@ -98,6 +98,10 @@ static nw_rc_t s11_sgw_ulp_process_stack_req_cb (nw_gtpv2c_ulp_handle_t hUlp, nw
           ret = s11_sgw_handle_release_access_bearers_request (&s11_sgw_stack_handle, pUlpApi);
           break;
 
+        case NW_GTP_DOWNLINK_DATA_NOTIFICATION_FAILURE_IND:
+          ret = s11_sgw_handle_downlink_data_notification_failure_ind (&s11_sgw_stack_handle, pUlpApi);
+          break;
+
         default:
           OAILOG_WARNING (LOG_S11,  "Received unhandled initial request message type %d\n", pUlpApi->u_api_info.initialReqIndInfo.msgType);
           break;
@@ -114,6 +118,11 @@ static nw_rc_t s11_sgw_ulp_process_stack_req_cb (nw_gtpv2c_ulp_handle_t hUlp, nw
         case NW_GTP_CREATE_BEARER_RSP:
           ret = s11_sgw_handle_create_bearer_response (&s11_sgw_stack_handle, pUlpApi);
           break;
+
+        case NW_GTP_DOWNLINK_DATA_NOTIFICATION_ACK:
+          ret = s11_sgw_handle_downlink_data_notification_ack (&s11_sgw_stack_handle, pUlpApi);
+          break;
+
 
           default:
             OAILOG_WARNING (LOG_S11,  "Received unhandled response message type %d\n", pUlpApi->u_api_info.triggeredRspIndInfo.msgType);
@@ -181,8 +190,8 @@ static nw_rc_t s11_sgw_start_timer_wrapper (
   } else {
     ret = timer_setup (timeoutSec, timeoutUsec, TASK_S11, INSTANCE_DEFAULT, TIMER_ONE_SHOT, timeoutArg, &timer_id);
   }
-
-  return ret == 0 ? NW_OK : NW_FAILURE;
+  *hTmr = (nw_gtpv2c_timer_handle_t) timer_id;
+  return ret == RETURNok ? NW_OK : NW_FAILURE;
 }
 
 //------------------------------------------------------------------------------
@@ -195,7 +204,7 @@ static nw_rc_t s11_sgw_stop_timer_wrapper (
 
   timer_id = (long)tmrHandle;
   ret = timer_remove (timer_id, NULL);
-  return ret == 0 ? NW_OK : NW_FAILURE;
+  return ret == RETURNok ? NW_OK : NW_FAILURE;
 }
 
 //------------------------------------------------------------------------------

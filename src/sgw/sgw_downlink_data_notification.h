@@ -33,8 +33,20 @@ extern "C" {
 #endif
 #include <netinet/in.h>
 #include "3gpp_24.007.h"
+#include "s11_messages_types.h"
+
+#define PAGING_UNCONFIRMED_CLAMPING_TIMEOUT_SEC        6
+#define PAGING_CONFIRMED_CLAMPING_TIMEOUT_SEC          60
+#define PAGING_UE_NOT_RESPONDING_CLAMPING_TIMEOUT_SEC  30
+#define PAGING_SERVICE_DENIED_CLAMPING_TIMEOUT_SEC     180
+#define PAGING_REJECTED_CLAMPING_TIMEOUT_SEC           8192
 
 int sgw_notify_downlink_data(const struct in_addr ue_ip, const ebi_t ebi);
+
+int sgw_handle_s11_downlink_data_notification_ack (const itti_s11_downlink_data_notification_acknowledge_t * const ack);
+
+int sgw_handle_s11_downlink_data_notification_failure_ind (const itti_s11_downlink_data_notification_failure_indication_t * const ind);
+
 
 #ifdef __cplusplus
 }

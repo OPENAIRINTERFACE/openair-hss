@@ -45,6 +45,9 @@ void PagingApplication::packet_in_callback(const PacketInEvent& pin_ev,
     const OpenflowMessenger& messenger) {
 
   OAILOG_DEBUG(LOG_GTPV1U, "Handling packet-in message in paging app\n");
+  trigger_dl_data_notification(pin_ev.get_connection(),
+      static_cast<uint8_t*>(ofpi.data()),
+      messenger);
 }
 
 
@@ -56,10 +59,16 @@ void PagingApplication::event_callback(const ControllerEvent& ev,
     of13::PacketIn ofpi;
     ofpi.unpack(const_cast<uint8_t*>(pi.get_data()));
 
-    handle_paging_message(ev.get_connection(),
+    trigger_dl_data_notification(ev.get_connection(),
         static_cast<uint8_t*>(ofpi.data()),
         messenger);
 
+  }
+  else if (ev.get_type() == EVENT_STOP_DL_DATA_NOTIFICATION) {
+    const StopDLDataNotificationEvent& ce = static_cast<const StopDLDataNotificationEvent&>(ev);
+    int pool_id = get_paa_ipv4_pool_id(ce.get_ue_ip());
+    clamp_dl_data_notification(ev.get_connection(), messenger,
+        ce.get_ue_ip(), pool_id, ce.get_time_out());
   }
   else if (ev.get_type() == EVENT_SWITCH_UP) {
     install_default_flow(ev.get_connection(), messenger);
@@ -67,7 +76,42 @@ void PagingApplication::event_callback(const ControllerEvent& ev,
   }
 }
 
-void PagingApplication::handle_paging_message(
+void PagingApplication::clamp_dl_data_notification(
+    fluid_base::OFConnection* ofconn,
+    const OpenflowMessenger& messenger,
+    const struct in_addr ue_ip,
+    const int pool_id,
+    const uint16_t clamp_time_out) {
+
+
+#if DEBUG_IS_ON
+  char* dest_ip_str = inet_ntoa(ue_ip);
+  OAILOG_DEBUG(LOG_GTPV1U, "Throttle DL data notification for IP %s for %d seconds\n",
+             dest_ip_str, clamp_time_out);
+#endif
+
+  /*
+   * Clamp on this ip for configured amount of time
+   * Priority is above default paging flow, but below gtp flow. This way when
+   * paging succeeds, this flow will be ignored.
+   * The clamping time is necessary to prevent packets from continually hitting
+   * userspace, and as a retry time if paging fails
+   */
+  of13::FlowMod fm = messenger.create_default_flow_mod(OF_TABLE_PAGING_UE_IN_PROGRESS+pool_id, of13::OFPFC_ADD,
+    OF_PRIO_PAGING_UE_IN_PROGRESS);
+  fm.hard_timeout(clamp_time_out);
+  of13::EthType type_match(IP_ETH_TYPE);
+  fm.add_oxm_field(type_match);
+
+  of13::IPv4Dst ip_match(ue_ip.s_addr);
+  fm.add_oxm_field(ip_match);
+
+  // No actions mean packet is dropped
+  messenger.send_of_msg(fm, ofconn);
+  return;
+}
+
+void PagingApplication::trigger_dl_data_notification(
     fluid_base::OFConnection* ofconn,
     uint8_t* data,
     const OpenflowMessenger& messenger) {
@@ -79,9 +123,11 @@ void PagingApplication::handle_paging_message(
 
   sgw_notify_downlink_data(dest_ip, 0 /* TODO ebi */);
 
+#if DEBUG_IS_ON
   char* dest_ip_str = inet_ntoa(dest_ip);
   OAILOG_DEBUG(LOG_GTPV1U, "Initiating paging procedure for IP %s\n",
              dest_ip_str);
+#endif
 
   /*
    * Clamp on this ip for configured amount of time
@@ -92,17 +138,15 @@ void PagingApplication::handle_paging_message(
    */
   int pool_id  = get_paa_ipv4_pool_id(dest_ip);
 
-  of13::FlowMod fm = messenger.create_default_flow_mod(OF_TABLE_PAGING_UE_IN_PROGRESS+pool_id, of13::OFPFC_ADD,
-      OF_PRIO_PAGING_UE_IN_PROGRESS);
-  fm.hard_timeout(CLAMPING_TIMEOUT);
-  of13::EthType type_match(IP_ETH_TYPE);
-  fm.add_oxm_field(type_match);
-
-  of13::IPv4Dst ip_match(dest_ip.s_addr);
-  fm.add_oxm_field(ip_match);
-
-  // No actions mean packet is dropped
-  messenger.send_of_msg(fm, ofconn);
+  if (RETURNerror != pool_id) {
+    clamp_dl_data_notification(ofconn, messenger, dest_ip, pool_id, UNCONFIRMED_CLAMPING_TIMEOUT);
+  } else {
+#if !DEBUG_IS_ON
+    char* dest_ip_str = inet_ntoa(dest_ip);
+#endif
+    OAILOG_NOTICE(LOG_GTPV1U, "Could not clamp DL Data notification for UE %s, unknown pool id\n",
+               dest_ip_str);
+  }
   return;
 }
 

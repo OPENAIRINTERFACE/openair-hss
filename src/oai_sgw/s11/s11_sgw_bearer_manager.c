@@ -85,30 +85,35 @@ s11_sgw_handle_modify_bearer_request (
    */
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_INDICATION, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
       gtpv2c_indication_flags_ie_get, &request_p->indication_flags);
+  if (NW_OK == rc) request_p->ie_presence_mask |= S11_MODIFY_BEARER_REQUEST_PR_IE_INDICATION_FLAGS;
   DevAssert (NW_OK == rc);
   /*
    * MME-FQ-CSID IE
    */
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_FQ_CSID, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
       gtpv2c_fqcsid_ie_get, &request_p->mme_fq_csid);
+  if (NW_OK == rc) request_p->ie_presence_mask |= S11_MODIFY_BEARER_REQUEST_PR_IE_MME_FQ_CSID;
   DevAssert (NW_OK == rc);
   /*
    * RAT Type IE
    */
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_RAT_TYPE, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
       gtpv2c_rat_type_ie_get, &request_p->rat_type);
+  if (NW_OK == rc) request_p->ie_presence_mask |= S11_MODIFY_BEARER_REQUEST_PR_IE_RAT_TYPE;
   DevAssert (NW_OK == rc);
   /*
    * Delay Value IE
    */
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_DELAY_VALUE, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
       gtpv2c_delay_value_ie_get, &request_p->delay_dl_packet_notif_req);
+  if (NW_OK == rc) request_p->ie_presence_mask |= S11_MODIFY_BEARER_REQUEST_PR_IE_DELAY_DOWNLINK_PACKET_NOTIFICATION_REQUEST;
   DevAssert (NW_OK == rc);
   /*
    * Bearer Context to be modified IE
    */
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_BEARER_CONTEXT, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
       gtpv2c_bearer_context_to_be_modified_within_modify_bearer_request_ie_get, &request_p->bearer_contexts_to_be_modified);
+  if (NW_OK == rc) request_p->ie_presence_mask |= S11_MODIFY_BEARER_REQUEST_PR_IE_BEARER_CONTEXTS_TO_BE_MODIFIED;
   DevAssert (NW_OK == rc);
   rc = nwGtpv2cMsgParserRun (pMsgParser, pUlpApi->hMsg, &offendingIeType, &offendingIeInstance, &offendingIeLength);
 

@@ -66,6 +66,7 @@ int start_of_controller(void) {
   ctrl.register_for_event(&gtp_app, openflow::EVENT_SWITCH_UP);
   ctrl.register_for_event(&gtp_app, openflow::EVENT_ADD_GTP_TUNNEL);
   ctrl.register_for_event(&gtp_app, openflow::EVENT_DELETE_GTP_TUNNEL);
+  ctrl.register_for_event(&gtp_app, openflow::EVENT_STOP_DL_DATA_NOTIFICATION);
   ctrl.register_for_event(&arp_app, openflow::EVENT_SWITCH_UP);
 
   ctrl.start();
@@ -101,9 +102,15 @@ int openflow_controller_add_gtp_tunnel(struct in_addr ue, struct in_addr enb,
 }
 
 
-int openflow_controller_del_gtp_tunnel(struct in_addr ue, uint32_t i_tei, const pcc_rule_t *const rule) {
-  auto del_tunnel = std::make_shared<openflow::DeleteGTPTunnelEvent>(ue, i_tei, rule);
+int openflow_controller_del_gtp_tunnel(struct in_addr ue, uint32_t i_tei, uint32_t o_tei, const pcc_rule_t *const rule) {
+  auto del_tunnel = std::make_shared<openflow::DeleteGTPTunnelEvent>(ue, i_tei, o_tei, rule);
   ctrl.inject_external_event(del_tunnel, external_event_callback);
+  return 0;
+}
+
+int openflow_controller_stop_dl_data_notification_ue(struct in_addr ue, uint16_t timeout) {
+  auto stop_dl_not = std::make_shared<openflow::StopDLDataNotificationEvent>(ue, timeout);
+  ctrl.inject_external_event(stop_dl_not, external_event_callback);
   return 0;
 }
 

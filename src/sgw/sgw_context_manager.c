@@ -116,7 +116,7 @@ sgw_display_s11_bearer_context_information (
 
   if (dataP ) {
     sp_context_information = (s_plus_p_gw_eps_bearer_context_information_t *) dataP;
-    OAILOG_DEBUG (LOG_SPGW_APP, "| KEY %" PRId64 ":      \n", keyP);
+    OAILOG_DEBUG (LOG_SPGW_APP, "| KEY %"PRIx64" %" PRId64 "(dec):      \n", keyP, keyP);
     OAILOG_DEBUG (LOG_SPGW_APP, "|\tsgw_eps_bearer_context_information:     |\n");
     //Imsi_t               imsi;                           ///< IMSI (International Mobile Subscriber Identity) is the subscriber permanent identity.
     OAILOG_DEBUG (LOG_SPGW_APP, "|\t\timsi_unauthenticated_indicator:\t%u\n", sp_context_information->sgw_eps_bearer_context_information.imsi_unauthenticated_indicator);
@@ -174,7 +174,7 @@ sgw_get_new_S11_tunnel_id (
 //-----------------------------------------------------------------------------
 {
   // TO DO: RANDOM
-  static teid_t                           tunnel_id = 0;
+  static teid_t                           tunnel_id = 100;
 
   tunnel_id += 1;
   return tunnel_id;
@@ -294,6 +294,8 @@ int sgw_register_paging_paa(const teid_t local_s11_teid, const paa_t * const paa
       OAILOG_ERROR (LOG_SPGW_APP, "Failed to register PAA IPv4 address\n");
       return RETURNerror;
     }
+    OAILOG_DEBUG (LOG_SPGW_APP, "Register PAA IPv4 address for paging in sgw_app.ip2s11teid[" TEID_FMT "]=%s\n", local_s11_teid, str);
+
     break;
   case IPv6:
     if (inet_ntop(AF_INET6, &paa->ipv6_address, str, INET6_ADDRSTRLEN) == NULL) {
@@ -337,13 +339,14 @@ int sgw_deregister_paging_paa(const paa_t * const paa)
   switch (paa->pdn_type) {
   case  IPv4:
     if (inet_ntop(AF_INET, &paa->ipv4_address, str, INET6_ADDRSTRLEN) == NULL) {
-      OAILOG_ERROR (LOG_SPGW_APP, "Failed to register PAA IPv4 address\n");
+      OAILOG_ERROR (LOG_SPGW_APP, "Failed to deregister PAA IPv4 address\n");
       return RETURNerror;
     }
     if (HASH_TABLE_OK != obj_hashtable_uint64_ts_free (sgw_app.ip2s11teid, str, strlen(str))) {
       OAILOG_ERROR (LOG_SPGW_APP, "Failed to deregister PAA IPv4 address\n");
       return RETURNerror;
     }
+    OAILOG_DEBUG (LOG_SPGW_APP, "Deregistered PAA IPv4 address for paging in sgw_app.ip2s11teid[%s]\n", str);
     break;
   case IPv6:
     if (inet_ntop(AF_INET6, &paa->ipv6_address, str, INET6_ADDRSTRLEN) == NULL) {
@@ -354,6 +357,7 @@ int sgw_deregister_paging_paa(const paa_t * const paa)
       OAILOG_ERROR (LOG_SPGW_APP, "Failed to deregister PAA IPv6 address\n");
       return RETURNerror;
     }
+    OAILOG_DEBUG (LOG_SPGW_APP, "Deregistered PAA IPv6 address for paging in sgw_app.ip2s11teid[%s]\n", str);
     break;
   case IPv4_AND_v6:
     if (inet_ntop(AF_INET, &paa->ipv4_address, str, INET6_ADDRSTRLEN) == NULL) {
@@ -364,6 +368,7 @@ int sgw_deregister_paging_paa(const paa_t * const paa)
       OAILOG_ERROR (LOG_SPGW_APP, "Failed to deregister PAA IPv4 address\n");
       return RETURNerror;
     }
+    OAILOG_DEBUG (LOG_SPGW_APP, "Deregistered PAA IPv4 address for paging in sgw_app.ip2s11teid[%s]\n", str);
     if (inet_ntop(AF_INET6, &paa->ipv6_address, str, INET6_ADDRSTRLEN) == NULL) {
       OAILOG_ERROR (LOG_SPGW_APP, "Failed to deregister PAA IPv6 address\n");
       return RETURNerror;
@@ -372,6 +377,7 @@ int sgw_deregister_paging_paa(const paa_t * const paa)
       OAILOG_ERROR (LOG_SPGW_APP, "Failed to deregister PAA IPv6 address\n");
       return RETURNerror;
     }
+    OAILOG_DEBUG (LOG_SPGW_APP, "Deregistered PAA IPv6 address for paging in sgw_app.ip2s11teid[%s]\n", str);
     break;
   default:
     return RETURNerror;
@@ -383,25 +389,36 @@ int sgw_deregister_paging_paa(const paa_t * const paa)
 int sgw_get_subscriber_id_from_ipv4(const struct in_addr* dest_ip, char** imsi, teid_t * s11_lteid)
 {
 
-  char str[INET_ADDRSTRLEN+1] = {0};
+  char str[INET6_ADDRSTRLEN+1] = {0};
   uint64_t teid = 0;
 
   if (inet_ntop(AF_INET, dest_ip, str, INET_ADDRSTRLEN) == NULL) {
     return RETURNerror;
   }
 
+  sgw_display_s11_bearer_context_information_mapping();
+
   if (HASH_TABLE_OK != obj_hashtable_uint64_ts_get (sgw_app.ip2s11teid, str, strlen(str), &teid)) {
     return RETURNerror;
   }
-
   *s11_lteid = (teid_t)teid;
+  OAILOG_DEBUG (LOG_SPGW_APP, "sgw_get_subscriber_id_from_ipv4 %s -> " TEID_FMT " (local S11 teid)\n", str, *s11_lteid);
+
   s_plus_p_gw_eps_bearer_context_information_t *ctx = NULL;
-  if (sgw_get_s_plus_p_gw_eps_bearer_context_information(*s11_lteid, ctx)) {
+  if (sgw_get_s_plus_p_gw_eps_bearer_context_information(*s11_lteid, &ctx)) {
+    OAILOG_DEBUG (LOG_SPGW_APP, "sgw_get_subscriber_id_from_ipv4 %s could not find EPS Bearer Context Information for local S11 teid " TEID_FMT "\n",
+        str, *s11_lteid);
     return RETURNerror;
   }
-  char imsi_s[IMSI_BCD_DIGITS_MAX+1] = {0};
-  IMSI_TO_STRING(&ctx->sgw_eps_bearer_context_information.imsi, imsi_s, IMSI_BCD_DIGITS_MAX);
-  *imsi = strdup(imsi_s);
+  if (NULL != ctx) {
+    char imsi_s[IMSI_BCD_DIGITS_MAX+1] = {0};
+    IMSI_TO_STRING(&ctx->sgw_eps_bearer_context_information.imsi, imsi_s, IMSI_BCD_DIGITS_MAX);
+    *imsi = strdup(imsi_s);
+    OAILOG_DEBUG (LOG_SPGW_APP, "sgw_get_subscriber_id_from_ipv4 %s -> IMSI %s\n", str, *imsi);
+  } else {
+    OAILOG_DEBUG (LOG_SPGW_APP, "sgw_get_subscriber_id_from_ipv4 %s found NULL EPS Bearer Context Information for local S11 teid " TEID_FMT "\n", str, *s11_lteid);
+    return RETURNerror;
+  }
   return RETURNok;
 }
 
@@ -421,9 +438,9 @@ void sgw_cm_free_s_plus_p_gw_eps_bearer_context_information (s_plus_p_gw_eps_bea
 }
 
 //-----------------------------------------------------------------------------
-int sgw_get_s_plus_p_gw_eps_bearer_context_information(const teid_t ls11teid, s_plus_p_gw_eps_bearer_context_information_t *ctx)
+int sgw_get_s_plus_p_gw_eps_bearer_context_information(const teid_t ls11teid, s_plus_p_gw_eps_bearer_context_information_t **ctx)
 {
-  if (HASH_TABLE_OK != hashtable_ts_get (sgw_app.s11_bearer_context_information_hashtable, ls11teid, (void **)&ctx)) {
+  if (HASH_TABLE_OK != hashtable_ts_get (sgw_app.s11_bearer_context_information_hashtable, ls11teid, (void **)ctx)) {
     return RETURNerror;
   }
   return RETURNok;
@@ -483,6 +500,7 @@ sgw_cm_remove_bearer_context_information (
   int                                     temp = 0;
 
   temp = hashtable_ts_free (sgw_app.s11_bearer_context_information_hashtable, teid);
+  OAILOG_DEBUG (LOG_SPGW_APP, "Removed s_plus_p_gw_eps_bearer_context_information_t teid " TEID_FMT "\n", teid);
   return temp;
 }
 

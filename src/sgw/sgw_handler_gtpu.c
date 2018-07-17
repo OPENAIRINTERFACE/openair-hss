@@ -75,7 +75,7 @@ sgw_handle_gtpu_downlink_data_notification (
 
 
   // in SGW split key would be S5/S8 teid instead of ue_ip
-  if ((rc = sgw_get_subscriber_id_from_ipv4(&gtpu_dl_data_notif->ue_ip, &imsi_str, &s11lteid))) {
+  if (RETURNok == (rc = sgw_get_subscriber_id_from_ipv4(&gtpu_dl_data_notif->ue_ip, &imsi_str, &s11lteid))) {
 
     s_plus_p_gw_eps_bearer_context_information_t *s_plus_p_gw_eps_bearer_ctxt_info_p = NULL;
     hashtable_rc_t                          hash_rc = HASH_TABLE_OK;
@@ -90,22 +90,42 @@ sgw_handle_gtpu_downlink_data_notification (
         itti_s11_downlink_data_notification_t *s11_downlink_data_notification = S11_DOWNLINK_DATA_NOTIFICATION(message_p);
 
         // TODO EBI
-        s11_downlink_data_notification->ie_presence_mask |= DOWNLINK_DATA_NOTIFICATION_IE_EPS_BEARER_ID_PRESENT;
-        s11_downlink_data_notification->ebi = gtpu_dl_data_notif->eps_bearer_id;
+        s11_downlink_data_notification->ie_presence_mask |= DOWNLINK_DATA_NOTIFICATION_PR_IE_EPS_BEARER_ID;
+        //s11_downlink_data_notification->ebi = gtpu_dl_data_notif->eps_bearer_id;
+        s11_downlink_data_notification->ebi = s_plus_p_gw_eps_bearer_ctxt_info_p->sgw_eps_bearer_context_information.pdn_connection.default_bearer;
 
-        // TODO ARP
-//        s11_downlink_data_notification->ie_presence_mask |= DOWNLINK_DATA_NOTIFICATION_IE_ARP_PRESENT;
-//        s11_downlink_data_notification->arp.pre_emp_capability = s_plus_p_gw_eps_bearer_ctxt_info_p->sgw_eps_bearer_context_information.pdn_connection.sgw_eps_bearers_array[0]->eps_bearer_qos.pci;
-//        s11_downlink_data_notification->arp.pre_emp_vulnerability = s_plus_p_gw_eps_bearer_ctxt_info_p->sgw_eps_bearer_context_information.pdn_connection.sgw_eps_bearers_array[0]->eps_bearer_qos.pvi;
-//        s11_downlink_data_notification->arp.priority_level = s_plus_p_gw_eps_bearer_ctxt_info_p->sgw_eps_bearer_context_information.pdn_connection.sgw_eps_bearers_array[0]->eps_bearer_qos.pl;
+        // ARP
+        s11_downlink_data_notification->ie_presence_mask |= DOWNLINK_DATA_NOTIFICATION_PR_IE_ARP;
+        s11_downlink_data_notification->arp.pre_emp_capability = s_plus_p_gw_eps_bearer_ctxt_info_p->sgw_eps_bearer_context_information.pdn_connection.sgw_eps_bearers_array[0]->eps_bearer_qos.pci;
+        s11_downlink_data_notification->arp.pre_emp_vulnerability = s_plus_p_gw_eps_bearer_ctxt_info_p->sgw_eps_bearer_context_information.pdn_connection.sgw_eps_bearers_array[0]->eps_bearer_qos.pvi;
+        s11_downlink_data_notification->arp.priority_level = s_plus_p_gw_eps_bearer_ctxt_info_p->sgw_eps_bearer_context_information.pdn_connection.sgw_eps_bearers_array[0]->eps_bearer_qos.pl;
 
-        // NO NEED FOR IMSI FOR SIMPLE CASE
+        // IMSI
+        s11_downlink_data_notification->ie_presence_mask |= DOWNLINK_DATA_NOTIFICATION_PR_IE_IMSI;
+        s11_downlink_data_notification->imsi = s_plus_p_gw_eps_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi;
+
+        s11_downlink_data_notification->teid = s_plus_p_gw_eps_bearer_ctxt_info_p->sgw_eps_bearer_context_information.mme_teid_S11;
+
         //s11_create_bearer_request->trxn = s_plus_p_gw_eps_bearer_ctxt_info_p->sgw_eps_bearer_context_information.trxn;
         s11_downlink_data_notification->peer_ip.s_addr = s_plus_p_gw_eps_bearer_ctxt_info_p->sgw_eps_bearer_context_information.mme_ip_address_S11.address.ipv4_address.s_addr;
         s11_downlink_data_notification->local_teid = s_plus_p_gw_eps_bearer_ctxt_info_p->sgw_eps_bearer_context_information.s_gw_teid_S11_S4;
+        OAILOG_DEBUG (LOG_SPGW_APP,
+            "Tx DOWNLINK_DATA_NOTIFICATION -> TASK_S11, S11 MME teid "TEID_FMT" S11 S-GW teid "TEID_FMT"\n",
+            s11_downlink_data_notification->teid,
+            s11_downlink_data_notification->local_teid);
+        rc = itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
+        OAILOG_FUNC_RETURN(LOG_SPGW_APP, rc);
       }
       OAILOG_FUNC_RETURN(LOG_SPGW_APP, rc);
     }
+#if DEBUG_IS_ON
+    else {
+      OAILOG_DEBUG (LOG_SPGW_APP, "DL Data Notification: Failed to get EPC Bearer Context Information for UE" IN_ADDR_FMT " IMSI %s\n",
+          PRI_IN_ADDR(gtpu_dl_data_notif->ue_ip), imsi_str);
+    }
+#endif
+  } else {
+    OAILOG_NOTICE (LOG_SPGW_APP, "DL Data Notification: Failed to get IMSI from UE IP " IN_ADDR_FMT "\n", PRI_IN_ADDR(gtpu_dl_data_notif->ue_ip));
   }
   OAILOG_FUNC_RETURN(LOG_SPGW_APP, RETURNerror);
 }

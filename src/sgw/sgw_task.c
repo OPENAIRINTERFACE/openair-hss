@@ -54,12 +54,14 @@
 #include "sgw_defs.h"
 #include "sgw_handlers.h"
 #include "sgw_handler_gtpu.h"
+#include "sgw_downlink_data_notification.h"
 #include "sgw.h"
 #include "spgw_config.h"
 #include "pgw_ue_ip_address_alloc.h"
 #include "pgw_pcef_emulation.h"
 #include "gtpv1_u_messages_types.h"
 #include "s11_messages_types.h"
+#include "async_system.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -95,6 +97,16 @@ static void *sgw_intertask_interface (void *args_p)
       }
       break;
 
+    case S11_DOWNLINK_DATA_NOTIFICATION_ACKNOWLEDGE:{
+      sgw_handle_s11_downlink_data_notification_ack (S11_DOWNLINK_DATA_NOTIFICATION_ACKNOWLEDGE(received_message_p));
+    }
+    break;
+
+    case S11_DOWNLINK_DATA_NOTIFICATION_FAILURE_INDICATION:{
+      sgw_handle_s11_downlink_data_notification_failure_ind (S11_DOWNLINK_DATA_NOTIFICATION_FAILURE_INDICATION(received_message_p));
+    }
+    break;
+
     case GTPV1U_UPDATE_TUNNEL_RESP:{
         sgw_handle_gtpv1uUpdateTunnelResp (GTPV1U_UPDATE_TUNNEL_RESP(received_message_p));
       }
@@ -106,6 +118,9 @@ static void *sgw_intertask_interface (void *args_p)
 
     case S11_CREATE_BEARER_RESPONSE:{
         sgw_handle_create_bearer_response (S11_CREATE_BEARER_RESPONSE(received_message_p));
+#if TRACE_IS_ON
+        system ("ovs-ofctl dump-flows spgwu");
+#endif
       }
       break;
 
@@ -122,26 +137,44 @@ static void *sgw_intertask_interface (void *args_p)
 
     case S11_DELETE_SESSION_REQUEST:{
         sgw_handle_delete_session_request (S11_DELETE_SESSION_REQUEST(received_message_p));
+#if TRACE_IS_ON
+        system ("ovs-ofctl dump-flows spgwu");
+#endif
       }
       break;
 
     case S11_MODIFY_BEARER_REQUEST:{
         sgw_handle_modify_bearer_request (S11_MODIFY_BEARER_REQUEST(received_message_p));
+#if TRACE_IS_ON
+        system ("ovs-ofctl dump-flows spgwu");
+#endif
       }
       break;
 
     case S11_RELEASE_ACCESS_BEARERS_REQUEST:{
+#if TRACE_IS_ON
+        system ("ovs-ofctl dump-flows spgwu");
+#endif
         sgw_handle_release_access_bearers_request (S11_RELEASE_ACCESS_BEARERS_REQUEST(received_message_p));
+#if TRACE_IS_ON
+        system ("ovs-ofctl dump-flows spgwu");
+#endif
       }
       break;
 
     case SGI_CREATE_ENDPOINT_RESPONSE:{
         sgw_handle_sgi_endpoint_created (SGI_CREATE_ENDPOINT_RESPONSE(received_message_p));
+#if TRACE_IS_ON
+        async_system_command (TASK_ASYNC_SYSTEM, false, "ovs-ofctl dump-flows spgwu");
+#endif
       }
       break;
 
     case SGI_UPDATE_ENDPOINT_RESPONSE:{
         sgw_handle_sgi_endpoint_updated (SGI_UPDATE_ENDPOINT_RESPONSE(received_message_p));
+#if TRACE_IS_ON
+        async_system_command (TASK_ASYNC_SYSTEM, false, "ovs-ofctl dump-flows spgwu");
+#endif
       }
       break;
 

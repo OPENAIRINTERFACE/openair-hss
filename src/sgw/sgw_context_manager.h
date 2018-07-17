@@ -75,7 +75,7 @@ void                                   sgw_free_sgw_eps_bearer_context (sgw_eps_
 int                                    sgw_register_paging_paa(const teid_t local_s11_teid, const paa_t * const paa);
 int                                    sgw_deregister_paging_paa(const paa_t * const paa);
 int                                    sgw_get_subscriber_id_from_ipv4(const struct in_addr* dest_ip, char** imsi, teid_t * s11_lteid);
-int                                    sgw_get_s_plus_p_gw_eps_bearer_context_information(const teid_t ls11teid, s_plus_p_gw_eps_bearer_context_information_t *ctx);
+int                                    sgw_get_s_plus_p_gw_eps_bearer_context_information(const teid_t ls11teid, s_plus_p_gw_eps_bearer_context_information_t **ctx);
 s_plus_p_gw_eps_bearer_context_information_t * sgw_cm_create_bearer_context_information_in_collection(teid_t teid);
 void                                   sgw_cm_free_s_plus_p_gw_eps_bearer_context_information(s_plus_p_gw_eps_bearer_context_information_t **contextP);
 int                                    sgw_cm_remove_bearer_context_information(teid_t teid);

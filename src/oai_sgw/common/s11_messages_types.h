@@ -47,7 +47,8 @@ extern "C" {
 #define S11_RELEASE_ACCESS_BEARERS_REQUEST(mSGpTR) ((itti_s11_release_access_bearers_request_t*)(mSGpTR)->itti_msg)
 #define S11_RELEASE_ACCESS_BEARERS_RESPONSE(mSGpTR) ((itti_s11_release_access_bearers_response_t*)(mSGpTR)->itti_msg)
 #define S11_DOWNLINK_DATA_NOTIFICATION(mSGpTR)	   ((itti_s11_downlink_data_notification_t*)(mSGpTR)->itti_msg)
-#define S11_DOWNLINK_DATA_NOTIFICATION_ACKNOWLEDGE(mSGpTR) 	   ((itti_s11_downlink_data_notification_acknowledge_t*)(mSGpTR)->itti_msg)
+#define S11_DOWNLINK_DATA_NOTIFICATION_ACKNOWLEDGE(mSGpTR)     ((itti_s11_downlink_data_notification_acknowledge_t*)(mSGpTR)->itti_msg)
+#define S11_DOWNLINK_DATA_NOTIFICATION_FAILURE_INDICATION(mSGpTR)  ((itti_s11_downlink_data_notification_failure_indication_t*)(mSGpTR)->itti_msg)
 
 
 //-----------------------------------------------------------------------------
@@ -755,6 +756,39 @@ typedef struct itti_s11_create_bearer_response_s {
  * - X2-based handover without SGWrelocation
  */
 typedef struct itti_s11_modify_bearer_request_s {
+  uint64_t           ie_presence_mask;
+#define S11_MODIFY_BEARER_REQUEST_PR_IE_MEI                                 ((uint64_t)1)
+#define S11_MODIFY_BEARER_REQUEST_PR_IE_ULI                                 ((uint64_t)1 << 1)
+#define S11_MODIFY_BEARER_REQUEST_PR_IE_SERVING_NETWORK                     ((uint64_t)1 << 2)
+#define S11_MODIFY_BEARER_REQUEST_PR_IE_RAT_TYPE                            ((uint64_t)1 << 3)
+#define S11_MODIFY_BEARER_REQUEST_PR_IE_INDICATION_FLAGS                    ((uint64_t)1 << 4)
+#define S11_MODIFY_BEARER_REQUEST_PR_IE_SENDER_FTEID_FOR_CONTROL_PLANE      ((uint64_t)1 << 5)
+#define S11_MODIFY_BEARER_REQUEST_PR_IE_APN_AMBR                            ((uint64_t)1 << 6)
+#define S11_MODIFY_BEARER_REQUEST_PR_IE_DELAY_DOWNLINK_PACKET_NOTIFICATION_REQUEST ((uint64_t)1 << 7)
+#define S11_MODIFY_BEARER_REQUEST_PR_IE_BEARER_CONTEXTS_TO_BE_MODIFIED      ((uint64_t)1 << 8)
+#define S11_MODIFY_BEARER_REQUEST_PR_IE_BEARER_CONTEXTS_TO_BE_REMOVED       ((uint64_t)1 << 9)
+#define S11_MODIFY_BEARER_REQUEST_PR_IE_RECOVERY                            ((uint64_t)1 << 10)
+#define S11_MODIFY_BEARER_REQUEST_PR_IE_UE_TIME_ZONE                        ((uint64_t)1 << 11)
+#define S11_MODIFY_BEARER_REQUEST_PR_IE_MME_FQ_CSID                         ((uint64_t)1 << 12)
+#define S11_MODIFY_BEARER_REQUEST_PR_IE_SGW_FQ_CSID                         ((uint64_t)1 << 13)
+#define S11_MODIFY_BEARER_REQUEST_PR_IE_UCI                                 ((uint64_t)1 << 14)
+#define S11_MODIFY_BEARER_REQUEST_PR_IE_UE_LOCAL_IP_ADDRESS                 ((uint64_t)1 << 15)
+#define S11_MODIFY_BEARER_REQUEST_PR_IE_UE_UDP_PORT                         ((uint64_t)1 << 16)
+#define S11_MODIFY_BEARER_REQUEST_PR_IE_MME_S4_SGSN_LDN                     ((uint64_t)1 << 17)
+#define S11_MODIFY_BEARER_REQUEST_PR_IE_SGW_LDN                             ((uint64_t)1 << 18)
+#define S11_MODIFY_BEARER_REQUEST_PR_IE_HENB_LOCAL_IP_ADDRESS               ((uint64_t)1 << 19)
+#define S11_MODIFY_BEARER_REQUEST_PR_IE_HENB_UDP_PORT                       ((uint64_t)1 << 20)
+#define S11_MODIFY_BEARER_REQUEST_PR_IE_MME_S4_SGSN_IDENTIFIER              ((uint64_t)1 << 21)
+#define S11_MODIFY_BEARER_REQUEST_PR_IE_CN_OPERATOR_SELECTION_ENTITY        ((uint64_t)1 << 22)
+#define S11_MODIFY_BEARER_REQUEST_PR_IE_PRESENCE_REPORTING_AREA_INFORMATION ((uint64_t)1 << 23)
+#define S11_MODIFY_BEARER_REQUEST_PR_IE_MMES4_SGSN_OVERLOAD_CONTROL_INFORMATION ((uint64_t)1 << 24)
+#define S11_MODIFY_BEARER_REQUEST_PR_IE_SGW_OVERLOAD_CONTROL_INFORMATION    ((uint64_t)1 << 25)
+#define S11_MODIFY_BEARER_REQUEST_PR_IE_EPDG_OVERLOAD_CONTROL_INFORMATION   ((uint64_t)1 << 26)
+#define S11_MODIFY_BEARER_REQUEST_PR_IE_SERVING_PLMN_RATE_CONTROL           ((uint64_t)1 << 27)
+#define S11_MODIFY_BEARER_REQUEST_PR_IE_MO_EXCEPTION_DATA_COUNTER           ((uint64_t)1 << 28)
+#define S11_MODIFY_BEARER_REQUEST_PR_IE_IMSI                                ((uint64_t)1 << 29)
+#define S11_MODIFY_BEARER_REQUEST_PR_IE_ULI_FOR_SGW                         ((uint64_t)1 << 30)
+#define S11_MODIFY_BEARER_REQUEST_PR_IE_PRIVATE_EXTENSION                   ((uint64_t)1 << 61)
   teid_t                     local_teid;       ///< not in specs for inner MME use
 
   teid_t                     teid;             ///< S11 SGW Tunnel Endpoint Identifier
@@ -1231,14 +1265,14 @@ typedef struct itti_s11_downlink_data_notification_s {
                                           ///<        IP address received from the DNS during the SGW
                                           ///<        selection) of the serving SGW.
   //SGW's node level Load Control Information
-#define DOWNLINK_DATA_NOTIFICATION_IE_CAUSE_PRESENT                  0x0001
-#define DOWNLINK_DATA_NOTIFICATION_IE_EPS_BEARER_ID_PRESENT          0x0002
-#define DOWNLINK_DATA_NOTIFICATION_IE_ARP_PRESENT                    0x0004
-#define DOWNLINK_DATA_NOTIFICATION_IE_IMSI_PRESENT                   0x0008
-#define DOWNLINK_DATA_NOTIFICATION_IE_SENDER_FTEID_FOR_CP_PRESENT    0x0010
-#define DOWNLINK_DATA_NOTIFICATION_IE_INDICATION_FLAGS_PRESENT       0x0020
-#define DOWNLINK_DATA_NOTIFICATION_IE_SGW_NODE_LEVEL_LCI_PRESENT     0x0040
-#define DOWNLINK_DATA_NOTIFICATION_IE_SGW_OVERLOAD_CI_PRESENT        0x0080
+#define DOWNLINK_DATA_NOTIFICATION_PR_IE_CAUSE                  0x0001
+#define DOWNLINK_DATA_NOTIFICATION_PR_IE_EPS_BEARER_ID          0x0002
+#define DOWNLINK_DATA_NOTIFICATION_PR_IE_ARP                    0x0004
+#define DOWNLINK_DATA_NOTIFICATION_PR_IE_IMSI                   0x0008
+#define DOWNLINK_DATA_NOTIFICATION_PR_IE_SENDER_FTEID_FOR_CP    0x0010
+#define DOWNLINK_DATA_NOTIFICATION_PR_IE_INDICATION_FLAGS       0x0020
+#define DOWNLINK_DATA_NOTIFICATION_PR_IE_SGW_NODE_LEVEL_LCI     0x0040
+#define DOWNLINK_DATA_NOTIFICATION_PR_IE_SGW_OVERLOAD_CI        0x0080
   uint32_t            ie_presence_mask;
   /* GTPv2-C specific parameters */
   void       *trxn;
@@ -1255,12 +1289,45 @@ typedef struct itti_s11_downlink_data_notification_acknowledge_s {
   teid_t          teid;                   ///< Tunnel Endpoint Identifier
   teid_t          local_teid;                   ///< Tunnel Endpoint Identifier
   gtpv2c_cause_t  cause;
+  imsi_t          imsi;
   // Recovery           ///< optional This IE shall be included if contacting the peer for the first time
   // Private Extension  ///< optional
+#define DOWNLINK_DATA_NOTIFICATION_ACK_PR_IE_CAUSE                                 0x0001
+#define DOWNLINK_DATA_NOTIFICATION_ACK_PR_IE_DATA_NOTIFICATION_DELAY               0x0002
+#define DOWNLINK_DATA_NOTIFICATION_ACK_PR_IE_RECOVERY                              0x0004
+#define DOWNLINK_DATA_NOTIFICATION_ACK_PR_IE_DL_LOW_PRIORITY_TRAFFIC_THROTTLING    0x0008
+#define DOWNLINK_DATA_NOTIFICATION_ACK_PR_IE_IMSI                                  0x0010
+#define DOWNLINK_DATA_NOTIFICATION_ACK_PR_IE_DL_BUFFERING_DURATION                 0x0020
+#define DOWNLINK_DATA_NOTIFICATION_ACK_PR_IE_DL_BUFFERING_SUGGESTED_PACKET_COUNT   0x0040
+  uint32_t            ie_presence_mask;
   /* GTPv2-C specific parameters */
   void       *trxn;
   uint32_t    peer_ip;
 } itti_s11_downlink_data_notification_acknowledge_t;
+
+
+//-----------------------------------------------------------------------------
+/** @struct itti_s11_downlink_data_notification_acknowledge_t
+ *  @brief Downlink Data Notification Acknowledge
+ *
+ * The Downlink Data Notification Acknowledge message is sent on the S11 interface by the MME to the SGW as part of the S1 paging procedure.
+ */
+typedef struct itti_s11_downlink_data_notification_failure_indication_s {
+  teid_t          teid;                   ///< Tunnel Endpoint Identifier
+  teid_t          local_teid;                   ///< Tunnel Endpoint Identifier
+  gtpv2c_cause_t  cause;
+  imsi_t          imsi;
+  // Recovery           ///< optional This IE shall be included if contacting the peer for the first time
+  // Private Extension  ///< optional
+#define DOWNLINK_DATA_NOTIFICATION_FAILURE_IND_PR_IE_CAUSE                0x0001
+#define DOWNLINK_DATA_NOTIFICATION_FAILURE_IND_PR_IE_ORIGINATING_NODE     0x0002
+#define DOWNLINK_DATA_NOTIFICATION_FAILURE_IND_PR_IE_IMSI                 0x0004
+#define DOWNLINK_DATA_NOTIFICATION_FAILURE_IND_PR_IE_PRIVATE_EXTENSION    0x0008
+  uint32_t            ie_presence_mask;
+  /* GTPv2-C specific parameters */
+  void       *trxn;
+  struct in_addr  peer_ip;
+} itti_s11_downlink_data_notification_failure_indication_t;
 
 
 #ifdef __cplusplus
