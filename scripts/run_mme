@@ -189,6 +189,10 @@ function main()
     fi
   fi
 
+  if [ ! -d /var/run/mme ]; then
+    $SUDO mkdir -p /var/run/mme > /dev/null
+  fi
+
   if [ ! -d /usr/local/etc/oai/freeDiameter ]; then
     $SUDO mkdir -m 777 -p /usr/local/etc/oai/freeDiameter > /dev/null
   fi
