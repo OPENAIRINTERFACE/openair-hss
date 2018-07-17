@@ -173,6 +173,7 @@ install_1.1.5_freediameter_from_source() {
     ret=$?;[[ $ret -ne 0 ]] && return $ret
     cd /tmp/freediameter
     #patch -p1 < $OPENAIRCN_DIR/src/s6a/freediameter/freediameter-1.1.5.patch
+    patch -p1 < $OPENAIRCN_DIR/src/s6a/freediameter/freediameter_eurecom-1.1.5_0001-S6a-dictionary-add-CLR-Flags.patch
     mkdir build
     ret=$?;[[ $ret -ne 0 ]] && return $ret
     cd build
@@ -267,6 +268,7 @@ install_freediameter_from_source() {
     #tar xzf 1.2.0.tar.gz
     cd freediameter
     #patch -p1 < $OPENAIRCN_DIR/src/s6a/freediameter/freediameter-1.2.0.patch
+    patch -p1 < $OPENAIRCN_DIR/src/s6a/freediameter/freediameter_eurecom-1.2.0_0001-S6a-dictionary-add-CLR-Flags.patch
     mkdir build
     cd build
     $CMAKE -DCMAKE_INSTALL_PREFIX:PATH=/usr/local ../
