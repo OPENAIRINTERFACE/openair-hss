@@ -136,6 +136,9 @@ static void *sgw_intertask_interface (void *args_p)
       break;
 
     case S11_DELETE_SESSION_REQUEST:{
+#if TRACE_IS_ON
+        system ("ovs-ofctl dump-flows spgwu");
+#endif
         sgw_handle_delete_session_request (S11_DELETE_SESSION_REQUEST(received_message_p));
 #if TRACE_IS_ON
         system ("ovs-ofctl dump-flows spgwu");
@@ -144,6 +147,9 @@ static void *sgw_intertask_interface (void *args_p)
       break;
 
     case S11_MODIFY_BEARER_REQUEST:{
+#if TRACE_IS_ON
+        system ("ovs-ofctl dump-flows spgwu");
+#endif
         sgw_handle_modify_bearer_request (S11_MODIFY_BEARER_REQUEST(received_message_p));
 #if TRACE_IS_ON
         system ("ovs-ofctl dump-flows spgwu");
