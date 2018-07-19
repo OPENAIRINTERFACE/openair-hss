@@ -41,7 +41,7 @@ namespace openflow {
 
 #define OF_TABLE_SWITCH                 0
 #define OF_TABLE_ARP                    1
-#define OF_TABLE_UL_GTPU                2
+#define OF_TABLE_UL_GTPU                0
 #define OF_TABLE_LOOP                  (OF_TABLE_UL_GTPU + MAX_UE_POOL_PDN)
 // should be + MAX_UE_POOLS
 #define OF_TABLE_DL_GTPU               (OF_TABLE_LOOP + 1)

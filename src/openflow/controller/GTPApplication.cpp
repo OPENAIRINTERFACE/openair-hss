@@ -117,30 +117,6 @@ void GTPApplication::install_switch_gtp_flow(fluid_base::OFConnection* ofconn,
                 "Setting switch flow for UE IP block %s/%s for DL in GTP Application\n",
                 ip_str, net_str);
     messenger.send_of_msg(fmd, ofconn);
-
-    //--------------------------------------------------------------------------
-    // UL GTP flow
-    //--------------------------------------------------------------------------
-    {
-      of13::FlowMod fmu = messenger.create_default_flow_mod(OF_TABLE_SWITCH, of13::OFPFC_ADD, OF_PRIO_SWITCH_GOTO_UL_GTP_TABLE);
-      of13::InPort ingress_port_match(gtp_port_num_);
-      fmu.add_oxm_field(ingress_port_match);
-
-      // IP eth type
-      of13::EthType type_match(IP_ETH_TYPE);
-      fmu.add_oxm_field(type_match);
-
-      of13::IPv4Src ip_src_match(netaddr.s_addr, netmask.s_addr);
-      fmu.add_oxm_field(ip_src_match);
-
-      // Output to next table
-      of13::GoToTable ul_inst(OF_TABLE_UL_GTPU+pidx);
-      fmu.add_instruction(ul_inst);
-      OAILOG_INFO(LOG_GTPV1U,
-                  "Setting switch flow for UE IP block %s/%s for UL in GTP Application\n",
-                  ip_str, net_str);
-      messenger.send_of_msg(fmu, ofconn);
-    }
   }
 }
 
@@ -186,7 +162,7 @@ void GTPApplication::add_uplink_tunnel_flow(
     OAILOG_INFO(LOG_GTPV1U, "add_uplink_tunnel_flow() found pool_id %d\n", pool_id);
 
     of13::FlowMod uplink_fm = messenger.create_default_flow_mod(
-        OF_TABLE_UL_GTPU + pool_id,
+        OF_TABLE_UL_GTPU,
       of13::OFPFC_ADD,
       OF_PRIO_GTPU);
 
