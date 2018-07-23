@@ -934,10 +934,9 @@ static int encode_traffic_flow_template_packet_filter (
        */
       IES_ENCODE_U8 (buffer, encoded, TRAFFIC_FLOW_TEMPLATE_IPV6_REMOTE_ADDR);
 
-      for (j = 0; j < TRAFFIC_FLOW_TEMPLATE_IPV6_ADDR_SIZE; j++) {
-        *(buffer + encoded) = packetfilter->packetfiltercontents.ipv6remoteaddr[j].addr;
-        *(buffer + encoded + TRAFFIC_FLOW_TEMPLATE_IPV6_ADDR_SIZE) = packetfilter->packetfiltercontents.ipv6remoteaddr[j].mask;
-        encoded++;
+      for (j = encoded; j < TRAFFIC_FLOW_TEMPLATE_IPV6_ADDR_SIZE + encoded; j++) {
+        *((uint8_t*)(buffer + j)) = packetfilter->packetfiltercontents.ipv6remoteaddr[j - encoded].addr;
+        *((uint8_t*)(buffer + j + TRAFFIC_FLOW_TEMPLATE_IPV6_ADDR_SIZE)) = packetfilter->packetfiltercontents.ipv6remoteaddr[j - encoded].mask;
       }
 
       encoded += TRAFFIC_FLOW_TEMPLATE_IPV6_ADDR_SIZE;
