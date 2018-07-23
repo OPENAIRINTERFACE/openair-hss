@@ -1708,7 +1708,6 @@ void mme_app_handle_e_rab_setup_rsp (itti_s1ap_e_rab_setup_rsp_t  * const e_rab_
           s11_proc_create_bearer->num_bearers_unhandled--;
           OAILOG_DEBUG (LOG_MME_APP, "For UE " MME_UE_S1AP_ID_FMT " ebi %d is active and ENB-FTEID is received. "
                "Decreasing the number of pending bearers in the procedure to %d. \n", ue_context->mme_ue_s1ap_id, e_rab_id, s11_proc_create_bearer->num_bearers_unhandled);
-          s11_proc_create_bearer->num_bearers_unhandled--;
         }else{
           OAILOG_WARNING(LOG_MME_APP, "For UE " MME_UE_S1AP_ID_FMT " ebi %d is still in state %d although ENB-FTEID is received. "
               "Not decreasing the number of pending bearers in the procedure: %d. \n", ue_context->mme_ue_s1ap_id, e_rab_id, s11_proc_create_bearer->num_bearers_unhandled);
@@ -1788,9 +1787,6 @@ void mme_app_handle_activate_bearer_cnf (itti_mme_app_activate_bearer_cnf_t   * 
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
   struct ue_context_s                 *ue_context = NULL;
-  /** Get the first PDN Context. */
-  pdn_context_t * pdn_context = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
-  DevAssert(pdn_context);
 
   ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, activate_bearer_cnf->ue_id);
 
@@ -1798,6 +1794,11 @@ void mme_app_handle_activate_bearer_cnf (itti_mme_app_activate_bearer_cnf_t   * 
     OAILOG_DEBUG (LOG_MME_APP, "We didn't find this mme_ue_s1ap_id in list of UE: " MME_UE_S1AP_ID_FMT "\n", activate_bearer_cnf->ue_id);
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
+
+  /** Get the first PDN Context. */
+  pdn_context_t * pdn_context = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
+  DevAssert(pdn_context);
+
   /*
    * TS 23.401: 5.4.1: The MME shall be prepared to receive this message either before or after the Session Management Response message (sent in step 9).
    *
@@ -1815,12 +1816,12 @@ void mme_app_handle_activate_bearer_cnf (itti_mme_app_activate_bearer_cnf_t   * 
   }
   /** Check if the bearer context exists as a session bearer. */
   bearer_context_t * bc;
-  mme_app_get_session_bearer_context_from_all(ue_context, activate_bearer_cnf->ebi, bc);
+  mme_app_get_session_bearer_context_from_all(ue_context, activate_bearer_cnf->ebi, &bc);
   DevAssert(bc);
   /**
    * If the ENB-S1U TEID is set, reduce the number of pending bearers.
    */
-  if(bc->s_gw_fteid_s1u.teid != INVALID_TEID &&
+  if(bc->enb_fteid_s1u.teid != INVALID_TEID &&
       (bc->bearer_state & BEARER_STATE_ENB_CREATED)){
     /** Reduce the number of pending EBIs. */
     s11_proc_dedicated_bearer->num_bearers_unhandled--;

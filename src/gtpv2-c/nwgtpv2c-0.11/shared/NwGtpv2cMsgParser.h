@@ -53,6 +53,7 @@ typedef struct nw_gtpv2c_msg_parser_s {
 
   struct {
     uint8_t iePresence;
+    bool firstInstanceOccurred;     /**< If we have multiple bearer contexts, check this flag to increment the mandatory IE count. */
     nw_rc_t (*ieReadCallback) (uint8_t ieType, uint16_t ieLength, uint8_t ieInstance,  uint8_t* ieValue, void* ieReadCallbackArg);
     void* ieReadCallbackArg;
   } ieParseInfo[NW_GTPV2C_IE_TYPE_MAXIMUM][NW_GTPV2C_IE_INSTANCE_MAXIMUM];

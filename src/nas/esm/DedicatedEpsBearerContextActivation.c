@@ -152,7 +152,7 @@ esm_proc_dedicated_eps_bearer_context (
   ue_context_t                        *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
   mme_app_get_pdn_context(ue_context, pdn_cid, default_ebi, NULL, &pdn_context);
   if(!pdn_context){
-    OAILOG_ERROR(LOG_NAS_EMM, "EMMCN-SAP  - " "No PDN context was found for UE " MME_UE_S1AP_ID_FMT" for cid %d to assign dedicated bearers.\n", ue_context->mme_ue_s1ap_id, pdn_cid);
+    OAILOG_ERROR(LOG_NAS_EMM, "EMMCN-SAP  - " "No PDN context was found for UE " MME_UE_S1AP_ID_FMT" for cid %d and default ebi %d to assign dedicated bearers.\n", ue_context->mme_ue_s1ap_id, pdn_cid, default_ebi);
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
   }
   /*
@@ -171,7 +171,7 @@ esm_proc_dedicated_eps_bearer_context (
     struct fteid_set_s fteid_set;
     fteid_set.s1u_fteid = &bc_tbc->s1u_sgw_fteid;
     fteid_set.s5_fteid  = &bc_tbc->s5_s8_u_pgw_fteid;
-    ded_ebi = esm_ebr_context_create (emm_context, pti, pdn_context, ded_ebi, &fteid_set, IS_DEFAULT_BEARER_YES, &bearer_qos,
+    ded_ebi = esm_ebr_context_create (emm_context, pti, pdn_context, ded_ebi, &fteid_set, IS_DEFAULT_BEARER_NO, &bearer_qos,
         &bc_tbc->tft,
         &bc_tbc->pco);
     /** Check the EBI. */
@@ -504,6 +504,9 @@ static int _dedicated_eps_bearer_activate (
    * message has to be sent to the UE
    */
   emm_esm_activate_bearer_req_t          *emm_esm_activate = &emm_sap.u.emm_esm.u.activate_bearer;
+
+  mme_app_get_session_bearer_context_from_all(ue_context, ebi, &bearer_context);
+  DevAssert(bearer_context);
 
   emm_sap.primitive       = EMMESM_ACTIVATE_BEARER_REQ;
   emm_sap.u.emm_esm.ue_id = ue_id;

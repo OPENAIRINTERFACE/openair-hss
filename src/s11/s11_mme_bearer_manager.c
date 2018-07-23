@@ -382,7 +382,7 @@ s11_mme_handle_create_bearer_request (
     req_p->bearer_contexts = calloc(1, sizeof(bearer_contexts_to_be_created_t));
     rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_BEARER_CONTEXT, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_MANDATORY,
         gtpv2c_bearer_context_to_be_created_within_create_bearer_request_ie_get,
-        &req_p->bearer_contexts);
+        req_p->bearer_contexts);
     DevAssert (NW_OK == rc);
 
     /** Add the PTI to inform to UEs. */
