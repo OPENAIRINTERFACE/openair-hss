@@ -384,7 +384,6 @@ esm_send_activate_dedicated_eps_bearer_context_request (
   traffic_flow_template_t *tft,
   protocol_configuration_options_t *pco)
 {
-
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   /*
    * Mandatory - ESM message header
@@ -413,7 +412,7 @@ esm_send_activate_dedicated_eps_bearer_context_request (
     memcpy(&msg->protocolconfigurationoptions, pco, sizeof(protocol_configuration_options_t));
     msg->presencemask |= ACTIVATE_DEDICATED_EPS_BEARER_CONTEXT_REQUEST_PROTOCOL_CONFIGURATION_OPTIONS_PRESENT;
   }
-  OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Send Activate Dedicated EPS Bearer Context " "Request message (pti=%d, ebi=%d)\n", msg->proceduretransactionidentity, msg->epsbeareridentity);
+  OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Send Activate Dedicated EPS Bearer Context " "Request message (pti=%d, ebi=%d). \n", msg->proceduretransactionidentity, msg->epsbeareridentity);
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);
 }
 

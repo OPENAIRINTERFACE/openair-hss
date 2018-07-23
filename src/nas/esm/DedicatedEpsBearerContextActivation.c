@@ -168,6 +168,10 @@ esm_proc_dedicated_eps_bearer_context (
      * Null as Bearer Level QoS
      */
     bearer_qos_t bearer_qos = {.qci = bc_tbc->bearer_level_qos.qci};
+    bearer_qos.pci = bc_tbc->bearer_level_qos.pci;
+    bearer_qos.pvi = bc_tbc->bearer_level_qos.pvi;
+    bearer_qos.pl  = bc_tbc->bearer_level_qos.pl;
+
     struct fteid_set_s fteid_set;
     fteid_set.s1u_fteid = &bc_tbc->s1u_sgw_fteid;
     fteid_set.s5_fteid  = &bc_tbc->s5_s8_u_pgw_fteid;
@@ -176,6 +180,7 @@ esm_proc_dedicated_eps_bearer_context (
         &bc_tbc->pco);
     /** Check the EBI. */
     DevAssert(ded_ebi != ESM_EBI_UNASSIGNED);
+
     bc_tbc->eps_bearer_id = ded_ebi;
     OAILOG_INFO(LOG_NAS_ESM, "ESM-PROC  - Successfully reserved bearer with ebi %d. \n", bc_tbc->eps_bearer_id);
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);

@@ -1045,26 +1045,36 @@ _esm_sap_send (
       EpsQualityOfService eps_qos = {0};
       /** Sending a EBR-Request per bearer context. */
       for(int num_bc = 0; num_bc < msg->bcs_to_be_created->num_bearer_context; num_bc++){
-        rc = qos_params_to_eps_qos(msg->bcs_to_be_created->bearer_contexts[num_bc].bearer_level_qos.qci,
-            msg->bcs_to_be_created->bearer_contexts[num_bc].bearer_level_qos.mbr.br_dl,
-            msg->bcs_to_be_created->bearer_contexts[num_bc].bearer_level_qos.mbr.br_ul,
+        if(msg->bcs_to_be_created->bearer_contexts[num_bc].eps_bearer_id == ebi){
+          /** Found the EBI. */
+          if(msg->bcs_to_be_created->bearer_contexts[num_bc].tft.numberofpacketfilters > 1){
+            memset((void*)&eps_qos, 0, sizeof(eps_qos));
+          }
+          rc = qos_params_to_eps_qos(msg->bcs_to_be_created->bearer_contexts[num_bc].bearer_level_qos.qci,
+              msg->bcs_to_be_created->bearer_contexts[num_bc].bearer_level_qos.mbr.br_dl,
+              msg->bcs_to_be_created->bearer_contexts[num_bc].bearer_level_qos.mbr.br_ul,
 
-            msg->bcs_to_be_created->bearer_contexts[num_bc].bearer_level_qos.gbr.br_dl,
-            msg->bcs_to_be_created->bearer_contexts[num_bc].bearer_level_qos.gbr.br_ul,
-            &eps_qos, false);
+              msg->bcs_to_be_created->bearer_contexts[num_bc].bearer_level_qos.gbr.br_dl,
+              msg->bcs_to_be_created->bearer_contexts[num_bc].bearer_level_qos.gbr.br_ul,
+              &eps_qos, false);
+          if (RETURNok == rc) {
+            rc = esm_send_activate_dedicated_eps_bearer_context_request (
+                pti, msg->bcs_to_be_created->bearer_contexts[num_bc].eps_bearer_id,
+                &esm_msg.activate_dedicated_eps_bearer_context_request,
+                msg->linked_ebi, &eps_qos,
+                &msg->bcs_to_be_created->bearer_contexts[num_bc].tft,
+                &msg->bcs_to_be_created->bearer_contexts[num_bc].pco);
 
-        if (RETURNok == rc) {
-          rc = esm_send_activate_dedicated_eps_bearer_context_request (
-              pti, msg->bcs_to_be_created->bearer_contexts[num_bc].eps_bearer_id,
-              &esm_msg.activate_dedicated_eps_bearer_context_request,
-              msg->linked_ebi, &eps_qos,
-              &msg->bcs_to_be_created->bearer_contexts[num_bc].tft,
-              &msg->bcs_to_be_created->bearer_contexts[num_bc].pco);
-
-          esm_procedure = esm_proc_dedicated_eps_bearer_context_request; /**< Not the procedure. */
+            esm_procedure = esm_proc_dedicated_eps_bearer_context_request; /**< Not the procedure. */
+          }
+          /** Exit the loop directly. */
+          OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Successfully sent request to establish dedicated bearer for ebi %d for UE " MME_UE_S1AP_ID_FMT " . \n",
+              ebi, emm_context->ue_id);
+          break;
         }
       }
     }
+    /** Exit the case always here. */
     break;
 
   case MODIFY_EPS_BEARER_CONTEXT_REQUEST:

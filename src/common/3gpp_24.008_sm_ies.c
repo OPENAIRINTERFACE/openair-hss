@@ -729,13 +729,13 @@ static int decode_traffic_flow_template_packet_filter (
     }
   }
 
-  if (len - decoded != 0) {
-    /*
-     * Mismatch between the number of packet filters subfield,
-     * * * * and the number of packet filters in the packet filter list
-     */
-    return (TLV_VALUE_DOESNT_MATCH);
-  }
+//  if (len - decoded != 0) {
+//    /*
+//     * Mismatch between the number of packet filters subfield,
+//     * * * * and the number of packet filters in the packet filter list
+//     */
+//    return (TLV_VALUE_DOESNT_MATCH);
+//  }
 
   return decoded;
 }
@@ -898,6 +898,7 @@ static int encode_traffic_flow_template_packet_filter (
    * Packet filter evaluation precedence
    */
   IES_ENCODE_U8 (buffer, encoded, packetfilter->eval_precedence);
+
   /*
    * Save address of the Packet filter contents field length
    */
@@ -918,10 +919,9 @@ static int encode_traffic_flow_template_packet_filter (
        */
       IES_ENCODE_U8 (buffer, encoded, TRAFFIC_FLOW_TEMPLATE_IPV4_REMOTE_ADDR);
 
-      for (j = 0; j < TRAFFIC_FLOW_TEMPLATE_IPV4_ADDR_SIZE; j++) {
-        *(buffer + encoded) = packetfilter->packetfiltercontents.ipv4remoteaddr[j].addr;
-        *(buffer + encoded + TRAFFIC_FLOW_TEMPLATE_IPV4_ADDR_SIZE) = packetfilter->packetfiltercontents.ipv4remoteaddr[j].mask;
-        encoded++;
+      for (j = encoded; j < TRAFFIC_FLOW_TEMPLATE_IPV4_ADDR_SIZE + encoded; j++) {
+        *((uint8_t*)(buffer + j)) = packetfilter->packetfiltercontents.ipv4remoteaddr[j - encoded].addr;
+        *((uint8_t*)(buffer + j + TRAFFIC_FLOW_TEMPLATE_IPV4_ADDR_SIZE)) = packetfilter->packetfiltercontents.ipv4remoteaddr[j - encoded].mask;
       }
 
       encoded += TRAFFIC_FLOW_TEMPLATE_IPV4_ADDR_SIZE;

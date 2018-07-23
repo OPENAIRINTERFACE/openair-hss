@@ -122,7 +122,7 @@ esm_ebr_context_create (
 
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   esm_ctx = &emm_context->esm_ctx;
-  ue_context_t                        *ue_context  = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
+  ue_context_t                           *ue_context  = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
 
   if(!pdn_context){
     OAILOG_ERROR(LOG_NAS_ESM , "ESM-PROC  - PDN connection has not been " "allocated for UE " MME_UE_S1AP_ID_FMT". \n", emm_context->ue_id);
@@ -177,10 +177,16 @@ esm_ebr_context_create (
      */
 
     bearer_context->qci = bearer_level_qos->qci;
+
     bearer_context->esm_ebr_context.gbr_dl = bearer_level_qos->gbr.br_dl;
     bearer_context->esm_ebr_context.gbr_ul = bearer_level_qos->gbr.br_ul;
     bearer_context->esm_ebr_context.mbr_dl = bearer_level_qos->mbr.br_dl;
     bearer_context->esm_ebr_context.mbr_ul = bearer_level_qos->mbr.br_ul;
+
+    /** Set the priority values. */
+    bearer_context->preemption_capability    = bearer_level_qos->pci == 0 ? 1 : 0;
+    bearer_context->preemption_vulnerability = bearer_level_qos->pvi == 0 ? 1 : 0;
+    bearer_context->priority_level           = bearer_level_qos->pl;
 
     if (bearer_context->esm_ebr_context.tft) {
       free_traffic_flow_template(&bearer_context->esm_ebr_context.tft);

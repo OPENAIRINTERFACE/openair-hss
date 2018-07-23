@@ -215,7 +215,6 @@ void *mme_app_thread (void *args)
       }
       break;
 
-
     case S1AP_E_RAB_SETUP_RSP:{
         mme_app_handle_e_rab_setup_rsp (&S1AP_E_RAB_SETUP_RSP (received_message_p));
       }

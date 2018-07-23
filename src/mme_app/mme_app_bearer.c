@@ -259,12 +259,6 @@ mme_app_handle_nas_pdn_connectivity_req (
     OAILOG_ERROR (LOG_MME_APP, "No PDN context found for pdn_cid %d for UE " MME_UE_S1AP_ID_FMT ". \n", nas_pdn_connectivity_req_pP->pdn_cid, nas_pdn_connectivity_req_pP->ue_id);
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
-
-  if(nas_pdn_connectivity_req_pP->default_ebi == 6){
-    pdn_context_t *pdn_context_test = NULL;
-    mme_app_get_pdn_context(ue_context, nas_pdn_connectivity_req_pP->pdn_cid, nas_pdn_connectivity_req_pP->default_ebi, NULL, &pdn_context_test);
-    DevAssert(pdn_context_test);
-  }
   // todo: get target_tai or so from ue_context!!
   rc = mme_app_send_s11_create_session_req (ue_context, &nas_pdn_connectivity_req_pP->_imsi, pdn_context, &emm_context->originating_tai, false);
 
