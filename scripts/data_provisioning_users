@@ -1,0 +1,138 @@
+#!/usr/bin/python
+
+#Copyright (c) 2017 Sprint
+################################################################################
+# Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The OpenAirInterface Software Alliance licenses this file to You under
+# the Apache License, Version 2.0  (the "License"); you may not use this file
+# except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#-------------------------------------------------------------------------------
+# For more information about the OpenAirInterface (OAI) Software Alliance:
+#      contact@openairinterface.org
+################################################################################
+# file populate_hss_mysql_db
+# brief
+# main author Sprint
+# company Sprint
+# email: 
+# other author Lionel GAUTHIER for python conversion
+
+import argparse
+#import json
+#import tempfile
+from cassandra.cluster import Cluster
+
+#---------------------------------------------------------------------
+def str2bool(arg):
+    ua = str(arg).lower()
+    if 'true'.startswith(ua):
+        return True
+    elif 'false'.startswith(ua):
+        return False
+    else:
+        return False
+
+
+def main():
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-a', '--apn',          default='oai.ipv4',            help="APN allowed for all IMSI of this HSS db")
+    parser.add_argument('-C', '--cassandra-cluster', default='127.0.0.1',      help="Cassandra list of nodes")
+    parser.add_argument('-k', '--key',          default='8baf473f2f8fd09487cccbd7097c6862', help="LTE K (common for all IMSI)=8baf473f2f8fd09487cccbd7097c6862 for OP=11111111111111111111111111111111\n\
+                                                                                                LTE K (common for all IMSI)=fec86ba6eb707ed08905757b1bb44b8f for OP=1006020f0a478bf6b699f15c062e42b3")
+    parser.add_argument('-I', '--imsi-first',   default='001010000000001',     help="First IMSI for creating subscribers")
+    parser.add_argument('-M', '--msisdn-first', default='+33663000021',        help="MSISDN of users (TODO: distincts MSISDN)")
+    parser.add_argument('-m', '--mme-identity', default='mme.openair4G.eur',   help="Granted MME access to HSS")
+    parser.add_argument('-n', '--no-of-users',  type=int, default=200,         help="Number of users")
+    parser.add_argument('-r', '--realm',        default='openair4G.eur',       help="Realm of the CN")
+    parser.add_argument('-t', '--truncate',     default='False',   choices=['True', 'TRUE', 'true', 'False', 'FALSE', 'false'],           help="Display modified tables")
+    parser.add_argument('-v', '--verbose',      default='True',    choices=['True', 'TRUE', 'true', 'False', 'FALSE', 'false'],          help="Display modified tables")
+    args = parser.parse_args()
+
+    # This will attempt to connection to a Cassandra instance on your local machine (127.0.0.1)
+    # The set of IP addresses we pass to the :class:`~.Cluster` is simply an initial set of contact points.
+    # After the driver connects to one of these nodes it will automatically discover the rest of the nodes 
+    # in the cluster and connect to them, so you don't need to list every node in your cluster.
+    cluster = Cluster([args.cassandra_cluster])
+    
+    session = cluster.connect()
+    # session.set_keyspace('mykeyspace')
+
+    if str2bool(args.truncate):
+        session.execute("""TRUNCATE vhss.msisdn_imsi ;""")
+        session.execute("""TRUNCATE vhss.users_imsi ;""")
+
+    imsi_first_int = int(args.imsi_first)
+    imsi_length = len(args.imsi_first)
+
+    msisdn_first_int = int(args.msisdn_first)
+
+    for i in range(args.no_of_users):
+        imsi = imsi_first_int + i
+        imsi_str = str(imsi)
+        imsi_str = imsi_str.zfill(imsi_length)
+
+        msisdn = msisdn_first_int + i
+        
+        # Do not throw away now
+        #cmd_file = tempfile.NamedTemporaryFile(delete=False)
+        #with open(cmd_file.name, "w") as f:
+        #    f.write("cassandra_ip={0}".format(args.cassandra_cluster))
+        #    f.write("imsi={0}".format(imsi_str))
+        #    f.write("msisdn={0}".format(str(msisdn)))
+        #    f.write("access_restriction=41")
+        #    f.write("key={0}".format(args.key))
+        #    f.write("mmehost={0}".format(args.mme_identity))
+        #    f.write("mmeidentity_idmmeidentity={0}".format(3))
+        #    f.write("mmerealm={0}".format(args.realm))
+        #    f.write("rand={0}".format('2683b376d1056746de3b254012908e0e'))
+        #    f.write("sqn={0}".format(96))
+        #    f.write("""cqlsh $cassandra_ip -e "INSERT INTO vhss.users_imsi (imsi, msisdn, access_restriction, key, mmehost, mmeidentity_idmmeidentity, mmerealm, rand, sqn, subscription_data) VALUES ('$imsi', $msisdn, $access_restriction, '$key', '$mmehost', $mmeidentity_idmmeidentity, '$mmerealm', '$rand', $sqn, '{\"Subscription-Data\":{\"Access-Restriction-Data\":41,\"Subscriber-Status\":0,\"Network-Access-Mode\":2,\"Regional-Subscription-Zone-Code\":[\"0x0123\",\"0x4567\",\"0x89AB\",\"0xCDEF\",\"0x1234\",\"0x5678\",\"0x9ABC\",\"0xDEF0\",\"0x2345\",\"0x6789\"],\"MSISDN\":\"0x$msisdn\",\"AMBR\":{\"Max-Requested-Bandwidth-UL\":50000000,\"Max-Requested-Bandwidth-DL\":100000000},\"APN-Configuration-Profile\":{\"Context-Identifier\":0,\"All-APN-Configurations-Included-Indicator\":0,\"APN-Configuration\":{\"Context-Identifier\":0,\"PDN-Type\":0,\"Served-Party-IP-Address\":[\"10.0.0.1\",\"10.0.0.2\"],\"Service-Selection\":\"apn1\",\"EPS-Subscribed-QoS-Profile\":{\"QoS-Class-Identifier\":9,\"Allocation-Retention-Priority\":{\"Priority-Level\":15,\"Pre-emption-Capability\":0,\"Pre-emption-Vulnerability\":0}},\"AMBR\":{\"Max-Requested-Bandwidth-UL\":50000000,\"Max-Requested-Bandwidth-DL\":100000000},\"PDN-GW-Allocation-Type\":0,\"MIP6-Agent-Info\":{\"MIP-Home-Agent-Address\":[\"172.26.17.183\"]}}},\"Subscribed-Periodic-RAU-TAU-Timer\":0}}');" """)
+        #    f.flush()
+   
+        session.execute(
+            """
+            INSERT INTO vhss.users_imsi (imsi, msisdn, access_restriction, key, mmehost, mmeidentity_idmmeidentity, mmerealm, rand, sqn, subscription_data)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """,
+            (imsi_str, msisdn, 41, args.key, args.mme_identity, 3, args.realm, '2683b376d1056746de3b254012908e0e', 96, 
+            "{""Subscription-Data"":{""Access-Restriction-Data"":41,""Subscriber-Status"":0,""Network-Access-Mode"":2,""Regional-Subscription-Zone-Code"":[""0x0123"",""0x4567"",""0x89AB"",""0xCDEF"",""0x1234"",""0x5678"",""0x9ABC"",""0xDEF0"",""0x2345"",""0x6789""],""MSISDN"":""0x"+str(msisdn)+" "",""AMBR"":{""Max-Requested-Bandwidth-UL"":50000000,""Max-Requested-Bandwidth-DL"":100000000},""APN-Configuration-Profile"":{""Context-Identifier"":0,""All-APN-Configurations-Included-Indicator"":0,""APN-Configuration"":{""Context-Identifier"":0,""PDN-Type"":0,""Served-Party-IP-Address"":[""10.0.0.1"",""10.0.0.2""],""Service-Selection"":\""+args.apn+"\",""EPS-Subscribed-QoS-Profile"":{""QoS-Class-Identifier"":9,""Allocation-Retention-Priority"":{""Priority-Level"":15,""Pre-emption-Capability"":0,""Pre-emption-Vulnerability"":0}},""AMBR"":{""Max-Requested-Bandwidth-UL"":50000000,""Max-Requested-Bandwidth-DL"":100000000},""PDN-GW-Allocation-Type"":0,""MIP6-Agent-Info"":{""MIP-Home-Agent-Address"":[""172.26.17.183""]}}},""Subscribed-Periodic-RAU-TAU-Timer"":0}}"  
+            )
+        )
+        
+        session.execute(
+            """
+            INSERT INTO vhss.msisdn_imsi (msisdn, imsi) VALUES (%s, %s) 
+            """, 
+            (msisdn, imsi_str))
+
+    if str2bool(args.verbose):
+        # TODO pretty print
+        rows = session.execute('SELECT imsi, msisdn, access_restriction, key, mmehost, mmeidentity_idmmeidentity, mmerealm, rand, sqn, subscription_data FROM vhss.users_imsi')
+        for row in rows:
+            print row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9]
+
+        rows = session.execute('SELECT msisdn, imsi FROM vhss.msisdn_imsi')
+        for row in rows:
+            print row[0], row[1]
+
+    
+if __name__ == "__main__":
+    main()
+
+
+
+
+
+
