@@ -90,7 +90,6 @@ function main()
         ;;
       -k | --kill)
         $SUDO killall -q oai_hss
-        do_stop_daemon
         shift 1;
         exit 0
         ;;
@@ -107,7 +106,8 @@ function main()
   # Install config files
   #####################################
   if [ ! -d /usr/local/etc/oai/freeDiameter ]; then
-    $SUDO mkdir -m 777 -p /usr/local/etc/oai/freeDiameter
+    $SUDO mkdir -m 777 -p /usr/local/etc/oai
+    $SUDO mkdir -m 777    /usr/local/etc/oai/freeDiameter
   fi
     
   if [ ! -f $hss_config_file ]; then 
@@ -155,29 +155,30 @@ function main()
     #echo_warning "re-run $OPENAIRCN_DIR/scripts/check_hss_s6a_certificate /usr/local/etc/oai/freeDiameter YOUR_HSS_FQDN"
     #$SUDO $OPENAIRCN_DIR/scripts/check_hss_s6a_certificate /usr/local/etc/oai/freeDiameter $g_hss_default_fqdn
   
+    #Create Diameter Certificates
+    $OPENAIRCN_DIR/src/hss_rel14/bin/make_certs.sh hss openair4G.eur
+    if [ $? -ne 0 ]; then
+      echo_error "Diameter certificate creation failed"
+      return 1
+    else
+      echo_success "Diameter certificate creation succeeded"
+    fi  
   fi
 
-  #Create Diameter Certificates
-  $OPENAIRCN_DIR/src/hss_rel14/bin/make_certs.sh hss openair4G.eur
-  if [ $? -ne 0 ]; then
-     echo_error "Diameter certificate creation failed"
-     return 1
-  else
-     echo_success "Diameter certificate creation succeeded"
-  fi
 
-  #update configuration file
+
+  #update configuration file hss_rel14.json if necessary, based on hss_rel14.conf
   value="`cat /usr/local/etc/oai/hss_rel14.conf | cut -d "#" -f1 | grep 'cassandra_Server_IP' | tr -d " " | grep "="`"
   eval $value
   var_name="cassandra_Server_IP"
   Cassandra_Server_IP=${!var_name}
   echo $Cassandra_Server_IP
-  $SUDO sed -i "s/"192.168.112.60"/$Cassandra_Server_IP/g" /usr/local/etc/oai/hss_rel14.json
+  $SUDO sed -i "s/"@cassandra_Server_IP@"/$Cassandra_Server_IP/g" /usr/local/etc/oai/hss_rel14.json
     
   exe_arguments=$exe_arguments" -j $hss_config_file"
   
   #Calculate the OPc value for each UE (User Equipment).
-  hss  `echo $exe_arguments` --onlyloadkey
+  oai_hss  `echo $exe_arguments` --onlyloadkey
   
   if [ $? -ne 0 ]; then
      echo_error "OPC calculation failed"
@@ -194,7 +195,7 @@ function main()
   else
     $SUDO touch      ~/.gdb_hss
     $SUDO chmod 777  ~/.gdb_hss
-    $SUDO echo "file hss" > ~/.gdb_hss
+    $SUDO echo "file oai_hss" > ~/.gdb_hss
     $SUDO echo "set args $exe_arguments   " >> ~/.gdb_hss
     $SUDO echo "run"                        >> ~/.gdb_hss
     $SUDO cat ~/.gdb_hss
