@@ -675,12 +675,12 @@ static int mme_config_parse_file (mme_config_t * config_pP)
     if (setting != NULL) {
       if ((config_setting_lookup_string (setting, MME_CONFIG_STRING_INTERFACE_NAME_FOR_S1_MME, (const char **)&if_name_s1_mme)
            && config_setting_lookup_string (setting, MME_CONFIG_STRING_IPV4_ADDRESS_FOR_S1_MME, (const char **)&s1_mme)
-           && config_setting_lookup_string (setting, MME_CONFIG_STRING_INTERFACE_NAME_FOR_S11_MME, (const char **)&if_name_s11)
-           && config_setting_lookup_string (setting, MME_CONFIG_STRING_IPV4_ADDRESS_FOR_S11_MME, (const char **)&s11)
+           && config_setting_lookup_string (setting, MME_CONFIG_STRING_INTERFACE_NAME_FOR_S11, (const char **)&if_name_s11)
+           && config_setting_lookup_string (setting, MME_CONFIG_STRING_IPV4_ADDRESS_FOR_S11, (const char **)&s11)
            && config_setting_lookup_int (setting, MME_CONFIG_STRING_MME_PORT_FOR_S11, &aint_s11)
            /** S10. */
-           && config_setting_lookup_string (setting, MME_CONFIG_STRING_INTERFACE_NAME_FOR_S10_MME, (const char **)&if_name_s10)
-           && config_setting_lookup_string (setting, MME_CONFIG_STRING_IPV4_ADDRESS_FOR_S10_MME, (const char **)&s10)
+           && config_setting_lookup_string (setting, MME_CONFIG_STRING_INTERFACE_NAME_FOR_S10, (const char **)&if_name_s10)
+           && config_setting_lookup_string (setting, MME_CONFIG_STRING_IPV4_ADDRESS_FOR_S10, (const char **)&s10)
            && config_setting_lookup_int (setting, MME_CONFIG_STRING_MME_PORT_FOR_S10, &aint_s10)
           )
         ) {
@@ -875,7 +875,7 @@ static int mme_config_parse_file (mme_config_t * config_pP)
           OAILOG_INFO (LOG_MME_APP, "Parsing configuration file found S-GW S11: %s\n", inet_ntoa (config_pP->e_dns_emulation.service_ip_addr[i]));
         }
         /** Check S11 Endpoint (service="x-3gpp-mme:x-s10"). */
-        if ((config_setting_lookup_string (sub2setting, MME_CONFIG_STRING_MME_IPV4_ADDRESS_FOR_S10, (const char **)&mme_ip_address_for_s10)
+        if ((config_setting_lookup_string (sub2setting, MME_CONFIG_STRING_PEER_MME_IPV4_ADDRESS_FOR_S10, (const char **)&mme_ip_address_for_s10)
           )
         )
         {

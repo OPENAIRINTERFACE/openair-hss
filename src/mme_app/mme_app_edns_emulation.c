@@ -58,6 +58,10 @@ struct in_addr* mme_app_edns_get_wrr_entry(bstring id)
 //------------------------------------------------------------------------------
 int mme_app_edns_add_wrr_entry(bstring id, struct in_addr in_addr)
 {
+  if (INADDR_ANY == in_addr.s_addr) {
+    // Do not halt the config process
+    return RETURNok;
+  }
   char * cid = calloc(1, blength(id)+1);
   if (cid) {
     strncpy(cid, (const char *)id->data, blength(id));
