@@ -87,6 +87,7 @@ int main(int argc, char **argv)
    std::cout << "Options::casspwd               : " << Options::getcasspwd()               << std::endl;
    std::cout << "Options::cassdb                : " << Options::getcassdb()                << std::endl;
    std::cout << "Options::randvector            : " << Options::getrandvector()            << std::endl;
+   std::cout << "Options::roamallow             : " << Options::getroamallow()             << std::endl;
    std::cout << "Options::optkey                : " << Options::getoptkey()                << std::endl;
    std::cout << "Options::reloadkey             : " << Options::getreloadkey()             << std::endl;
    std::cout << "Options::onlyloadkey           : " << Options::getonlyloadkey()           << std::endl;

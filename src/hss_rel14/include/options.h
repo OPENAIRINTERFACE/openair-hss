@@ -41,6 +41,7 @@ public:
    static const std::string &getcasspwd()                { return m_casspwd; }
    static const std::string &getcassdb()                 { return m_cassdb; }
    static bool               getrandvector()             { return m_randvector; }
+   static bool               getroamallow()              { return m_roamallow; }
    static const std::string &getoptkey()                 { return m_optkey; }
    static bool               getreloadkey()              { return m_reloadkey; }
    static bool               getonlyloadkey()            { return m_onlyloadkey; }
@@ -69,7 +70,8 @@ private:
      onlyloadkey                       = 0x200,
      gtwport                           = 0x400,
      gtwhost                           = 0x800,
-     restport                          = 0x1000
+     restport                          = 0x1000,
+     roamallow                         = 0x2000
    };
 
    static void help();
@@ -85,6 +87,7 @@ private:
    static std::string m_casspwd;
    static std::string m_cassdb;
    static bool        m_randvector;
+   static bool        m_roamallow;
    static std::string m_optkey;
    static bool        m_reloadkey;
    static bool        m_onlyloadkey;

@@ -40,6 +40,7 @@ std::string Options::m_cassuser;
 std::string Options::m_casspwd;
 std::string Options::m_cassdb;
 bool        Options::m_randvector;
+bool        Options::m_roamallow;
 std::string Options::m_optkey;
 bool        Options::m_reloadkey;
 bool        Options::m_onlyloadkey;
@@ -62,6 +63,7 @@ void Options::help()
              << "  -p, --casspwd password       Cassandra password." << std::endl
              << "  -d, --cassdb db              Cassandra database name." << std::endl
              << "  -r, --randv  boolean         Random subscriber vector generation" << std::endl
+             << "  -t, --roamallow  boolean     Allow roaming for subscribers" << std::endl
              << "  -o, --optkey  key            Operator key" << std::endl
              << "  -i, --reloadkey  boolean     Reload operator keys at init" << std::endl
              << "  -q, --onlyloadkey  boolean   Only load operator keys at init" << std::endl
@@ -140,6 +142,11 @@ bool Options::parseJson(){
          m_randvector = hssSection["randv"].GetBool();
          options |= randvector;
       }
+      if(!(options & roamallow) && hssSection.HasMember("roamallow")){
+         if(!hssSection["roamallow"].IsBool()) { std::cout << "Error parsing json value: [roamallow]" << std::endl; return false; }
+         m_roamallow = hssSection["roamallow"].GetBool();
+         options |= roamallow;
+      }
       if(!(options & optkey) && hssSection.HasMember("optkey")){
          if(!hssSection["optkey"].IsString()) { std::cout << "Error parsing json value: [optkey]" << std::endl; return false; }
          m_optkey = hssSection["optkey"].GetString();
@@ -203,6 +210,7 @@ bool Options::parseInputOptions( int argc, char **argv )
       { "casspwd",      required_argument,  NULL, 'p' },
       { "cassdb",       required_argument,  NULL, 'd' },
       { "randv",        no_argument,        NULL, 'r' },
+      { "roamallow",    no_argument,        NULL, 't' },
       { "optkey",       required_argument,  NULL, 'o' },
       { "reloadkey",    no_argument,        NULL, 'i' },
       { "onlyloadkey",  no_argument,        NULL, 'q' },
@@ -228,6 +236,7 @@ bool Options::parseInputOptions( int argc, char **argv )
          case 'p': { m_casspwd = optarg;                       options |= casspwd;                 break; }
          case 'd': { m_cassdb = optarg;                        options |= cassdb;                  break; }
          case 'r': { m_randvector = true;                      options |= randvector;              break; }
+         case 't': { m_roamallow = true;                       options |= roamallow;               break; }
          case 'o': { m_optkey = true;                          options |= optkey;                  break; }
          case 'i': { m_reloadkey = true;                       options |= reloadkey;               break; }
          case 'q': { m_onlyloadkey = true;                     options |= onlyloadkey;             break; }

@@ -13,6 +13,7 @@
     "cassdb" : "vhss",
     "randv"  : true,
     "optkey" : "@OP_KEY@",
-    "reloadkey"  : false
+    "reloadkey"  : false,
+    "roamallow"  : @ROAMING_ALLOWED@
  }
 }
