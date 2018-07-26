@@ -125,6 +125,9 @@ s1ap_mme_thread (
     switch (ITTI_MSG_ID (received_message_p)) {
     case ACTIVATE_MESSAGE:{
         hss_associated = true;
+        if (s1ap_send_init_sctp () < 0) {
+          OAILOG_CRITICAL (LOG_S1AP, "Error while sending SCTP_INIT_MSG to SCTP\n");
+        }
       }
       break;
 
@@ -349,12 +352,7 @@ s1ap_mme_init(void)
     return RETURNerror;
   }
 
-  if (s1ap_send_init_sctp () < 0) {
-    OAILOG_ERROR (LOG_S1AP, "Error while sendind SCTP_INIT_MSG to SCTP \n");
-    return RETURNerror;
-  }
-
-  OAILOG_DEBUG (LOG_S1AP, "Initializing S1AP interface: DONE\n");
+  OAILOG_DEBUG (LOG_S1AP, "Initializing S1AP interface: DONE, but not reachable yet (wait for MME<->HSS CER procedure)\n");
   return RETURNok;
 }
 //------------------------------------------------------------------------------
