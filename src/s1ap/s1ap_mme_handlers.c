@@ -404,6 +404,9 @@ s1ap_mme_handle_s1_setup_request (
 
     s1ap_dump_enb (enb_association);
     rc =  s1ap_generate_s1_setup_response (enb_association);
+    if (rc == RETURNok) {
+      update_mme_app_stats_connected_enb_add();
+    }
     OAILOG_FUNC_RETURN (LOG_S1AP, rc);
   } else {
     /*
@@ -411,9 +414,6 @@ s1ap_mme_handle_s1_setup_request (
      */
     OAILOG_ERROR (LOG_S1AP, "Rejecting s1 setup request Can not process the request, MME is not connected to HSS\n");
     rc = s1ap_mme_generate_s1_setup_failure (assoc_id, S1ap_Cause_PR_misc, S1ap_CauseMisc_unspecified, -1);
-    if (rc == RETURNok) {
-      update_mme_app_stats_connected_enb_add();
-    }
     OAILOG_FUNC_RETURN (LOG_S1AP, rc);
   }
   OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
