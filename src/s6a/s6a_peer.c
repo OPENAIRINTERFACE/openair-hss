@@ -176,14 +176,16 @@ s6a_fd_new_peer (
             fflush(fp);
             fclose(fp);
           }
-          bdestroy(hss_name);
+          bdestroy_wrapper(&hss_name);
           return RETURNok;
         } else {
           OAILOG_DEBUG (LOG_S6A, "S6a peer state is %d\n", ret);
         }
+      }  else {
+        OAILOG_DEBUG (LOG_S6A, "Could not get S6a peer informations %s\n", diamid);
       }
     } else {
-      OAILOG_DEBUG (LOG_S6A, "Could not get S6a peer\n");
+      OAILOG_DEBUG (LOG_S6A, "Could not get S6a peer by id: %s\n", diamid);
     }
     sleep(timeout);
   }
