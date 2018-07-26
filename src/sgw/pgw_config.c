@@ -225,19 +225,16 @@ int pgw_config_parse_file (pgw_config_t * config_pP)
     }
     char* ovs_bridge_name = NULL;
     char* l2_egress_port = NULL;
-    libconfig_int gtpu_udp_port_num = 0;
     libconfig_int egress_port_num = 0;
     libconfig_int gtp_port_num = 0;
     char* uplink_mac = NULL;
     if (config_setting_lookup_string (ovs_settings, PGW_CONFIG_STRING_OVS_BRIDGE_NAME, (const char **)&ovs_bridge_name)
-        && config_setting_lookup_int (ovs_settings, PGW_CONFIG_STRING_OVS_UDP_PORT_FOR_S1U, &gtpu_udp_port_num)
         && config_setting_lookup_int (ovs_settings, PGW_CONFIG_STRING_OVS_EGRESS_PORT_NUM, &egress_port_num)
         && config_setting_lookup_int (ovs_settings, PGW_CONFIG_STRING_OVS_GTP_PORT_NUM, &gtp_port_num)
         && config_setting_lookup_string (ovs_settings, PGW_CONFIG_STRING_OVS_L2_EGRESS_PORT, (const char **)&l2_egress_port)
         && config_setting_lookup_string (ovs_settings, PGW_CONFIG_STRING_OVS_UPLINK_MAC, (const char **)&uplink_mac)
         ) {
       config_pP->ovs_config.bridge_name = bfromcstr (ovs_bridge_name);
-      config_pP->ovs_config.gtpu_udp_port_num = gtpu_udp_port_num;
       config_pP->ovs_config.egress_port_num = egress_port_num;
       config_pP->ovs_config.gtp_port_num = gtp_port_num;
       config_pP->ovs_config.uplink_mac = bfromcstr (uplink_mac);
@@ -479,7 +476,6 @@ void pgw_config_display (pgw_config_t * config_p)
 #if ENABLE_OPENFLOW
   OAILOG_INFO (LOG_SPGW_APP, "- OpenVSwitch:\n");
   OAILOG_INFO (LOG_SPGW_APP, "    bridge_name .........: %s\n", bdata(config_p->ovs_config.bridge_name));
-  OAILOG_INFO (LOG_SPGW_APP, "    gtpu_udp_port_num ...: %d\n", config_p->ovs_config.gtpu_udp_port_num);
   OAILOG_INFO (LOG_SPGW_APP, "    egress_port_num .....: %d\n", config_p->ovs_config.egress_port_num);
   OAILOG_INFO (LOG_SPGW_APP, "    gtp_port_num ........: %d\n", config_p->ovs_config.gtp_port_num);
   OAILOG_INFO (LOG_SPGW_APP, "    uplink_mac ..........: %s\n", bdata(config_p->ovs_config.uplink_mac));

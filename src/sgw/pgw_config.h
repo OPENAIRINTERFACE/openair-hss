@@ -81,7 +81,6 @@ extern "C" {
 #define PGW_CONFIG_STRING_OVS_GTP_PORT_NUM                      "GTP_PORT_NUM"
 #define PGW_CONFIG_STRING_OVS_L2_EGRESS_PORT                    "L2_EGRESS_PORT"
 #define PGW_CONFIG_STRING_OVS_UPLINK_MAC                        "UPLINK_MAC"
-#define PGW_CONFIG_STRING_OVS_UDP_PORT_FOR_S1U                  "UDP_PORT_FOR_S1U"
 
 // may be more
 #define PGW_MAX_ALLOCATED_PDN_ADDRESSES 1024
@@ -94,7 +93,6 @@ typedef struct conf_ipv4_list_elm_s {
 
 
 typedef struct spgw_ovs_config_s {
-  int      gtpu_udp_port_num;
   bstring  bridge_name;
   int      egress_port_num;
   bstring  l2_egress_port;

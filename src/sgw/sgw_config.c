@@ -280,7 +280,7 @@ void sgw_config_display (sgw_config_t * config_p)
   OAILOG_INFO (LOG_SPGW_APP, "- File .................................: %s\n", bdata(config_p->config_file));
 
   OAILOG_INFO (LOG_SPGW_APP, "- S1-U:\n");
-  OAILOG_INFO (LOG_SPGW_APP, "    port number ......: %d\n", config_p->udp_port_S1u_S12_S4_up);
+  OAILOG_INFO (LOG_SPGW_APP, "    S1u port .............: %d\n", config_p->udp_port_S1u_S12_S4_up);
   OAILOG_INFO (LOG_SPGW_APP, "    S1u_S12_S4 iface .....: %s\n", bdata(config_p->ipv4.if_name_S1u_S12_S4_up));
   OAILOG_INFO (LOG_SPGW_APP, "    S1u_S12_S4 ip ........: %s/%u\n", inet_ntoa (config_p->ipv4.S1u_S12_S4_up), config_p->ipv4.netmask_S1u_S12_S4_up);
   OAILOG_INFO (LOG_SPGW_APP, "- S5-S8:\n");
