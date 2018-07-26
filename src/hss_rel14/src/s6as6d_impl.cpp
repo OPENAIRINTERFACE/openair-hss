@@ -167,7 +167,7 @@ void UPLRreq::processAnswer( FDMessageAnswer &ans )
 
 void display_error_message(const char *err_msg)
 {
-
+  std::cerr << "Error: " << err_msg << std::endl;
 }
 
 // Function invoked when a UPLR Command is received
