@@ -1156,7 +1156,9 @@ static int _emm_attach_run_procedure(emm_data_context_t *emm_context)
       OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
     }
     /** Set LVR TAI again. */
-    emm_ctx_set_valid_lvr_tai(emm_context, attach_proc->ies->last_visited_registered_tai);
+    if (attach_proc->ies->last_visited_registered_tai) {
+      emm_ctx_set_valid_lvr_tai(emm_context, attach_proc->ies->last_visited_registered_tai);
+    }
     // todo:present, valid?
     emm_context->originating_tai = *attach_proc->ies->originating_tai;
 
