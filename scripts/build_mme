@@ -42,6 +42,7 @@ function help()
   echo_error "  -b, --build-type                          Build type as defined in cmake, allowed values are: Debug Release RelWithDebInfo MinSizeRel"
   echo_error "  -c, --clean                               Clean the build generated files: config, object, executable files (build from scratch)"
   echo_error "  -f, --force                               No interactive script for installation of software packages."
+  echo_error "  -F, --free-diameter-unmod-ext-lib         Install freeDiameter with non modified extension library."
   echo_error "  -h, --help                                Print this help."
   echo_error "  -i, --check-installed-software            Check installed software packages necessary to build and run MME (support $SUPPORTED_DISTRO)."
   echo_error "  -s, --split-mob-git-repo  git_url         mobility git repository"
@@ -68,6 +69,7 @@ function get_git_mobility_repo()
 }
 
 PIDFILE=/var/run/$NAME.pid
+export FD_INSTALL_FUNC=install_opencoord.org_freediameter
 
 function main()
 {
@@ -97,6 +99,11 @@ function main()
       -f | --force)
         force=1
         echo "Force set (no interactive)"
+        shift;
+        ;;
+      -F | --free-diameter-unmod-ext-lib)
+        export FD_INSTALL_FUNC=install_freediameter_from_source
+        echo "Will install old freeDiameter library"
         shift;
         ;;
       -h | --help)

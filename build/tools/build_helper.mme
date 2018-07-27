@@ -89,7 +89,8 @@ check_install_mme_software() {
       git \
       pkgconfig"
   else
-    echo_fatal "$OS_DISTRO is not a supported distribution."
+    echo_error "$OS_DISTRO is not a supported distribution."
+    return 1
   fi
   echo "Install build packages"
   $SUDO $INSTALLER install $OPTION $PACKAGE_LIST
@@ -145,7 +146,8 @@ check_install_mme_software() {
       nettle-devel \
       gnutls-devel"
   else
-    echo_fatal "$OS_DISTRO is not a supported distribution."
+    echo_error "$OS_DISTRO is not a supported distribution."
+    return 1
   fi
   echo "Install libraries"
   $SUDO $INSTALLER install $OPTION $PACKAGE_LIST
@@ -168,7 +170,7 @@ check_install_mme_software() {
     esac
   fi
 
-  install_freediameter_from_source $1
+  $FD_INSTALL_FUNC $1
   ret=$?;[[ $ret -ne 0 ]] && return $ret
   install_asn1c_from_source $1
   ret=$?;[[ $ret -ne 0 ]] && return $ret
@@ -196,7 +198,8 @@ check_install_mme_software() {
       iproute \
       vconfig "
   else
-    echo_fatal "$OS_DISTRO is not a supported distribution."
+    echo_error "$OS_DISTRO is not a supported distribution."
+    return 1
   fi
   echo "Install networking packages"
   $SUDO $INSTALLER install $OPTION $PACKAGE_LIST
@@ -223,7 +226,8 @@ check_install_mme_software() {
       python2-pexpect \
       unzip"
   else
-    echo_fatal "$OS_DISTRO is not a supported distribution."
+    echo_error "$OS_DISTRO is not a supported distribution."
+    return 1
   fi
   echo "Install misc packages"
   $SUDO $INSTALLER install $OPTION $PACKAGE_LIST

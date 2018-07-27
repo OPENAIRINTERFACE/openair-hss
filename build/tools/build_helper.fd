@@ -339,3 +339,70 @@ install_latest_freediameter_from_source() {
     rm -rf /tmp/freediameter
   fi
 }
+
+#-------------------------------------------------------------------------------
+# arg1 is force (no interactive script)
+install_opencoord.org_freediameter() {
+  if [ $1 -eq 0 ]; then
+    read -p "Do you want to install opencoord freeDiameter ? <y/N> " prompt
+    OPTION=""
+  else
+    prompt='y'
+    OPTION="-y"
+  fi
+
+  # libpq-dev 'may' be not needed
+  $SUDO apt-get install $OPTION \
+    autoconf  \
+    automake  \
+    bison     \
+    build-essential \
+    cmake \
+    cmake-curses-gui  \
+    debhelper \
+    flex  \
+    g++ \
+    gcc \
+    gdb \
+    libgcrypt-dev \
+    libidn11-dev \
+    libmysqlclient-dev \
+    libpq-dev \
+    libsctp1 \
+    libsctp-dev \
+    libxml2-dev \
+    mercurial \
+    python-dev \
+    ssl-cert \
+    swig
+
+  if [[ $prompt =~ [yY](es)* ]]
+  then
+    pushd `pwd`
+    cd /tmp
+    rm -rf /tmp/freeDiameter
+    echo "Downloading opencoord.org freeDiameter "
+    git clone https://gerrit.opencord.org/freeDiameter.git
+    res=$?
+    [[ $res -ne 0 ]] && popd && return $res
+    cd freeDiameter
+    git apply $OPENAIRCN_DIR/build/patches/0001-opencoord.org.freeDiameter.patch
+    rm -rf build
+    mkdir -p build
+    cd build
+    $CMAKE ..
+    res=$?
+    [[ $res -ne 0 ]] && popd && return $res
+    awk '{if (/^DISABLE_SCTP/) gsub(/OFF/, "ON"); print}' CMakeCache.txt > tmp && mv tmp CMakeCache.txt
+    make -j`nproc`
+    res=$?
+    [[ $res -ne 0 ]] && popd && return $res
+    $SUDO make install
+    res=$?
+    [[ $res -ne 0 ]] && popd && return $res
+    cd /tmp
+    rm -rf /tmp/freediameter
+    popd     
+    return $?
+  fi
+}
