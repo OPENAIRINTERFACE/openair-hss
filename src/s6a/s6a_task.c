@@ -73,13 +73,20 @@ static void oai_fd_logger(int loglevel, const char * format, va_list args)
 {
 #define FD_LOG_MAX_MESSAGE_LENGTH 8192
   char       buffer[FD_LOG_MAX_MESSAGE_LENGTH];
-  int        rv = 0;
+  int        rv1 = 0,rv2 = 0;
+  struct timeval elapsed_time;
 
-  rv = vsnprintf (buffer, 8192, format, args);
-  if ((0 > rv) || ((FD_LOG_MAX_MESSAGE_LENGTH) < rv)) {
+  shared_log_get_elapsed_time_since_start(&elapsed_time);
+
+  rv1 = snprintf (buffer, 8192, "...... %05ld:%06ld %08lX LEVEL S6A --no source file-- ", elapsed_time.tv_sec, elapsed_time.tv_usec, pthread_self());
+  if ((0 > rv1) || ((FD_LOG_MAX_MESSAGE_LENGTH) < rv1)) {
     return;
   }
-  OAILOG_EXTERNAL (loglevel, LOG_S6A, "%s\n", buffer);
+  rv2 = vsnprintf (&buffer[rv1], 8192 - rv1, format, args);
+  if ((0 > rv2) || ((FD_LOG_MAX_MESSAGE_LENGTH - rv1) < rv2)) {
+    return;
+  }
+  fprintf (stdout, "%s\n", buffer);
 }
 
 //------------------------------------------------------------------------------
