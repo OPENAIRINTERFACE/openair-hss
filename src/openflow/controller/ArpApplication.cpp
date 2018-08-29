@@ -36,8 +36,8 @@ namespace openflow {
     
 
 //------------------------------------------------------------------------------
-ArpApplication::ArpApplication(PacketInSwitchApplication& pin_sw_app, const int in_port, const std::string l2,  const struct in_addr l3) :
-    pin_sw_app_(pin_sw_app), in_port_(in_port), l2_(l2), l3_(l3) {
+ArpApplication::ArpApplication(PacketInSwitchApplication& pin_sw_app, const int in_port, const std::string l2,  const struct in_addr l3, const sgi_arp_boot_cache_t * const sgi_arp_boot_cache) :
+    pin_sw_app_(pin_sw_app), in_port_(in_port), l2_(l2), l3_(l3) , sgi_arp_boot_cache_(sgi_arp_boot_cache) {
 };
 
 
@@ -248,6 +248,7 @@ void ArpApplication::event_callback(const ControllerEvent& ev,
     install_switch_arp_flow(ev.get_connection(), messenger);
     install_arp_flow(ev.get_connection(), messenger);
     add_default_sgi_out_flow(ev.get_connection(), messenger); // no update of l2 dest addr
+    add_sgi_arp_cache_out_flow(ev.get_connection(), messenger);
   }
 }
 
@@ -329,10 +330,26 @@ void ArpApplication::add_default_sgi_out_flow(
 }
 
 //------------------------------------------------------------------------------
-void ArpApplication::add_update_dst_l2_flow(const PacketInEvent& pin_ev,
+void ArpApplication::add_sgi_arp_cache_out_flow(
+    fluid_base::OFConnection* ofconn,
+    const OpenflowMessenger& messenger) {
+  if (sgi_arp_boot_cache_) {
+    for (int i = 0; i < sgi_arp_boot_cache_->num_entries; i++) {
+      std::string mac(bdata(sgi_arp_boot_cache_->mac[i]));
+      add_update_dst_l2_flow(ofconn, messenger, sgi_arp_boot_cache_->ip[i], mac);
+    }
+  }
+}
+
+//------------------------------------------------------------------------------
+void ArpApplication::add_update_dst_l2_flow(fluid_base::OFConnection* of_connexion,
     const OpenflowMessenger& messenger,
     const struct in_addr& dst_addr,
     const std::string dst_mac) {
+
+  OAILOG_DEBUG (LOG_GTPV1U, "Egress: Update MAC dest for %s -> %s\n",
+                         inet_ntoa (dst_addr), dst_mac.c_str());
+
   of13::FlowMod fm = messenger.create_default_flow_mod(
       OF_TABLE_SGI_OUT,
       of13::OFPFC_ADD,
@@ -358,7 +375,7 @@ void ArpApplication::add_update_dst_l2_flow(const PacketInEvent& pin_ev,
   apply_inst.add_action(act);
   fm.add_instruction(apply_inst);
 
-  messenger.send_of_msg(fm, pin_ev.get_connection());
+  messenger.send_of_msg(fm, of_connexion);
 }
 
 //------------------------------------------------------------------------------
@@ -448,7 +465,7 @@ void ArpApplication::update_neighbours(const PacketInEvent& pin_ev,
     learning_arp[l3] = l2;
     struct in_addr dst_addr;
     dst_addr.s_addr = l3;
-    add_update_dst_l2_flow(pin_ev, messenger, dst_addr, l2);
+    add_update_dst_l2_flow(pin_ev.get_connection(), messenger, dst_addr, l2);
   }
 }
 

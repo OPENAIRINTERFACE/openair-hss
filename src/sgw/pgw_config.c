@@ -243,6 +243,31 @@ int pgw_config_parse_file (pgw_config_t * config_pP)
       AssertFatal(false, "Couldn't find all ovs settings in spgw config\n");
     }
 
+    config_setting_t *setting_arp_cache = config_setting_get_member (ovs_settings, PGW_CONFIG_STRING_OVS_SGI_ARP_CACHE);
+    if (setting_arp_cache != NULL) {
+      char *ip = NULL;
+      char *mac = NULL;
+      config_pP->ovs_config.sgi_arp_boot_cache.num_entries = 0;
+      num = config_setting_length (setting_arp_cache);
+      for (i = 0; i < num; i++) {
+        config_setting_t *sub2setting = config_setting_get_elem (setting_arp_cache, i);
+
+        if (sub2setting != NULL) {
+          if ((config_setting_lookup_string (sub2setting, PGW_CONFIG_STRING_IP, (const char **)&ip))) {
+            IPV4_STR_ADDR_TO_INADDR (ip, config_pP->ovs_config.sgi_arp_boot_cache.ip[i], "BAD IP ADDRESS FORMAT FOR SGi ARP CACHE !\n");
+          } else {
+            AssertFatal(false, "Couldn't find IPv4 address for SGi ARP cache item %u\n", i);
+          }
+
+          if ((config_setting_lookup_string (sub2setting, PGW_CONFIG_STRING_MAC, (const char **)&mac))) {
+            config_pP->ovs_config.sgi_arp_boot_cache.mac[i] = bfromcstr(mac);
+          } else {
+            AssertFatal(false, "Couldn't find MAC address for SGi ARP cache item %u\n", i);
+          }
+          config_pP->ovs_config.sgi_arp_boot_cache.num_entries++;
+        }
+      }
+    } // optional section
 #endif
     subsetting = config_setting_get_member (setting_pgw, PGW_CONFIG_STRING_NETWORK_INTERFACES_CONFIG);
 

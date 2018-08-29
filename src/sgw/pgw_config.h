@@ -81,6 +81,9 @@ extern "C" {
 #define PGW_CONFIG_STRING_OVS_GTP_PORT_NUM                      "GTP_PORT_NUM"
 #define PGW_CONFIG_STRING_OVS_L2_EGRESS_PORT                    "L2_EGRESS_PORT"
 #define PGW_CONFIG_STRING_OVS_UPLINK_MAC                        "UPLINK_MAC"
+#define PGW_CONFIG_STRING_OVS_SGI_ARP_CACHE                     "SGI_ARP_CACHE"
+#define PGW_CONFIG_STRING_IP                                    "IP"
+#define PGW_CONFIG_STRING_MAC                                   "MAC"
 
 // may be more
 #define PGW_MAX_ALLOCATED_PDN_ADDRESSES 1024
@@ -91,6 +94,12 @@ typedef struct conf_ipv4_list_elm_s {
   struct in_addr  addr;
 } conf_ipv4_list_elm_t;
 
+typedef struct sgi_arp_boot_cache_s {
+#define PGW_ARP_BOOT_CACHE_NUM_ENTRIES_MAX 16
+  struct in_addr   ip[PGW_ARP_BOOT_CACHE_NUM_ENTRIES_MAX];
+  bstring          mac[PGW_ARP_BOOT_CACHE_NUM_ENTRIES_MAX];
+  int num_entries;
+} sgi_arp_boot_cache_t;
 
 typedef struct spgw_ovs_config_s {
   bstring  bridge_name;
@@ -98,6 +107,7 @@ typedef struct spgw_ovs_config_s {
   bstring  l2_egress_port;
   int      gtp_port_num;
   bstring  uplink_mac; // next (first) hop
+  sgi_arp_boot_cache_t sgi_arp_boot_cache;
 } spgw_ovs_config_t;
 
 #include "pgw_pcef_emulation.h"

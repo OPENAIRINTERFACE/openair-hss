@@ -47,7 +47,8 @@ int start_of_controller(void) {
   static openflow::ArpApplication arp_app(packet_in_sw_app,
       spgw_config.pgw_config.ovs_config.egress_port_num,
       std::string(bdata(spgw_config.pgw_config.ovs_config.l2_egress_port)),
-      spgw_config.pgw_config.ipv4.SGI);
+      spgw_config.pgw_config.ipv4.SGI,
+      &spgw_config.pgw_config.ovs_config.sgi_arp_boot_cache);
   static openflow::BaseApplication base_app;
   static openflow::GTPApplication gtp_app(
     std::string(bdata(spgw_config.pgw_config.ovs_config.uplink_mac)),

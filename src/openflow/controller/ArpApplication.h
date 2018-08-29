@@ -26,6 +26,10 @@
 #include "OpenflowController.h"
 #include "PacketInSwitchApplication.h"
 
+extern "C" {
+  #include "pgw_config.h"
+}
+
 namespace openflow {
 #define ETH_ALEN           6
 #define ETH_P_ARP 0x0806    /* Address Resolution packet  */
@@ -60,7 +64,7 @@ typedef struct __attribute__((__packed__)) ether_arp {
 class ArpApplication: public PacketInApplication {
 
 public:
-  ArpApplication(PacketInSwitchApplication& pin_sw_app, const int in_port, const std::string l2, const struct in_addr l3);
+  ArpApplication(PacketInSwitchApplication& pin_sw_app, const int in_port, const std::string l2, const struct in_addr l3, const sgi_arp_boot_cache_t * const sgi_arp_boot_cache);
 
 private:
 
@@ -107,7 +111,11 @@ private:
       fluid_base::OFConnection* ofconn,
       const OpenflowMessenger& messenger);
 
-  void add_update_dst_l2_flow(const PacketInEvent& pin_ev,
+  void add_sgi_arp_cache_out_flow(
+      fluid_base::OFConnection* ofconn,
+      const OpenflowMessenger& messenger);
+
+  void add_update_dst_l2_flow(fluid_base::OFConnection* of_connexion,
       const OpenflowMessenger& messenger,
       const struct in_addr& dst_addr,
       const std::string dst_mac);
@@ -131,6 +139,7 @@ private:
   //uint8_t arp_pa_[4];
   std::unordered_map<in_addr_t, std::string> learning_arp;
   std::set<in_addr_t, std::string> ue_arp;
+  const sgi_arp_boot_cache_t * sgi_arp_boot_cache_;
 };
 
 }
