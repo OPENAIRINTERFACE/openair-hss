@@ -366,6 +366,17 @@ s6a_parse_apn_configuration (
     case AVP_CODE_AMBR:
       CHECK_FCT (s6a_parse_ambr (avp, &apn_config->ambr));
       break;
+
+    case AVP_CODE_PDN_GW_ALLOCATION_TYPE:
+      // Assuming PDN GW ALLOCATION TYPE is actually static
+      break;
+
+    case AVP_CODE_MIP6_AGENT_INFO:
+      // TODO with AVP_CODE_PDN_GW_ALLOCATION_TYPE when splitting S and P-GW
+      break;
+
+    default:
+      OAILOG_ERROR (LOG_S6A, "Unknownn AVP code %d while parsing APN configuration\n", hdr->avp_code);
     }
 
     /*
