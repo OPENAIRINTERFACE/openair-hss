@@ -247,11 +247,16 @@ mme_app_send_s11_create_session_req (
    * Set the indication flag.
    */
   memset(&session_request_p->indication_flags, 0, sizeof(session_request_p->indication_flags));   // TO DO
+  session_request_p->indication_flags.crsi = 0x1;
 
   if(is_from_s10_tau){
     session_request_p->indication_flags.oi = 0x1; /** Currently only setting for idle TAU. */
   }
 
+  session_request_p->uli.present |= ULI_ECGI;
+  session_request_p->uli.s.ecgi = ue_context->e_utran_cgi;
+  session_request_p->uli.present |= ULI_TAI;
+  tai_to_Tai(serving_tai, &session_request_p->uli.s.tai);
   /*
    * Copy the subscribed APN-AMBR to the sgw create session request message
    */

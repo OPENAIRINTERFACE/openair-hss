@@ -196,9 +196,9 @@ do {                                    \
 #define BIT_STRING_TO_CELL_IDENTITY(aSN, vALUE)                     \
 do {                                                                \
     DevCheck((aSN)->bits_unused == 4, (aSN)->bits_unused, 4, 0);    \
-    vALUE.enb_id = ((aSN)->buf[0] << 12) | ((aSN)->buf[1] << 4) |   \
-        ((aSN)->buf[2] >> 4);                                       \
-    vALUE.cell_id = ((aSN)->buf[2] << 4) | ((aSN)->buf[3] >> 4);    \
+    vALUE.enb_id = ((uint32_t)(aSN)->buf[0] << 16) | ((uint32_t)(aSN)->buf[1] << 8) |   \
+        ((uint32_t)(aSN)->buf[2]);                                       \
+    vALUE.cell_id = ((aSN)->buf[3]);    \
 } while(0)
 
 #define MCC_HUNDREDS(vALUE) \
@@ -413,5 +413,6 @@ int ascii_to_hex(uint8_t *dst, const char *h);
     ((bYtE) & 0x02 ? '1':'0'),\
     ((bYtE) & 0x01 ? '1':'0')
 
+void tai_to_Tai(const tai_t * const tai, Tai_t * const Tai);
 
 #endif /* FILE_CONVERSIONS_SEEN */

@@ -136,6 +136,8 @@ int gtpv2c_apn_ie_set(nw_gtpv2c_msg_handle_t *msg, const char *apn);
 
 int gtpv2c_apn_plmn_ie_set (nw_gtpv2c_msg_handle_t * msg, const char *apn, const ServingNetwork_t * serving_network);
 
+int gtpv2c_uli_ie_set (nw_gtpv2c_msg_handle_t * msg, const Uli_t * uli);
+
 nw_rc_t gtpv2c_mei_ie_get(uint8_t ieType, uint16_t ieLength, uint8_t ieInstance, uint8_t *ieValue, void *arg);
 
 nw_rc_t gtpv2c_uli_ie_get(uint8_t ieType, uint16_t ieLength, uint8_t ieInstance, uint8_t *ieValue, void *arg);
