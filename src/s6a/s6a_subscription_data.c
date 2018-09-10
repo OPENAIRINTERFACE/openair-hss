@@ -375,6 +375,14 @@ s6a_parse_apn_configuration (
       // TODO with AVP_CODE_PDN_GW_ALLOCATION_TYPE when splitting S and P-GW
       break;
 
+    case AVP_CODE_3GPP_CHARGING_CHARACTERISTICS:
+      OAILOG_INFO (LOG_S6A, "AVP_CODE_3GPP_CHARGING_CHARACTERISTICS %d not processed\n", hdr->avp_code);
+      break;
+
+    case AVP_CODE_VPLMN_DYNAMIC_ADDRESS_ALLOWED:
+      OAILOG_INFO (LOG_S6A, "AVP_CODE_VPLMN_DYNAMIC_ADDRESS_ALLOWED %d not processed\n", hdr->avp_code);
+      break;
+
     default:
       OAILOG_ERROR (LOG_S6A, "Unknownn AVP code %d while parsing APN configuration\n", hdr->avp_code);
     }
@@ -472,9 +480,15 @@ s6a_parse_subscription_data (
       break;
 
     case AVP_CODE_APN_OI_REPLACEMENT:
+      OAILOG_DEBUG (LOG_S6A, "AVP code %d APN-OI-Replacement not processed\n", hdr->avp_code);
+      break;
+
+    case AVP_CODE_3GPP_CHARGING_CHARACTERISTICS:
+      OAILOG_DEBUG (LOG_S6A, "AVP code %d 3GPP-Charging Characteristics not processed\n", hdr->avp_code);
       break;
 
     default:
+      OAILOG_DEBUG (LOG_S6A, "Unknown AVP code %d not processed\n", hdr->avp_code);
       return RETURNerror;
     }
 
