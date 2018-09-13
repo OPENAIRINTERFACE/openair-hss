@@ -605,7 +605,8 @@ add_library(S6A
   ${S6A_DIR}/s6a_up_loc.c
   ${S6A_DIR}/s6a_reset.c
   ${S6A_DIR}/s6a_clear_loc.c
-  )
+  ${S6A_DIR}/s6a_notify.c  
+ )
 
 set(SGW_DIR ${OPENAIRCN_DIR}/src/sgw)
 add_library (SGW
@@ -920,7 +921,7 @@ add_executable(mme
   ${OPENAIRCN_DIR}/src/oai_mme/oai_mme.c
   ${OPENAIRCN_DIR}/src/common/common_types.c
   ${OPENAIRCN_DIR}/src/common/itti_free_defined_msg.c
-  ${OPENAIRCN_DIR}/src/common/itti_comp.c
+#  ${OPENAIRCN_DIR}/src/common/itti_comp.c
   ${OPENAIRCN_DIR}/src/nas/nas_mme_task.c
   )
   
