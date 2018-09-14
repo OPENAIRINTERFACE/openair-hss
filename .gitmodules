@@ -16,3 +16,7 @@
 [submodule "build/hss_rel14/modules/pistache"]
 	path = build/hss_rel14/modules/pistache
 	url = https://github.com/oktal/pistache.git
+[submodule "build/spgw/modules/rapidjson"]
+	path = build/spgw/modules/rapidjson
+	url = https://github.com/miloyip/rapidjson.git
+	branch = master
