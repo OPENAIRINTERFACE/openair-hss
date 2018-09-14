@@ -20,3 +20,7 @@
 	path = build/spgw/modules/rapidjson
 	url = https://github.com/miloyip/rapidjson.git
 	branch = master
+[submodule "build/spgw/modules/freeDiameter"]
+	path = build/spgw/modules/freeDiameter
+	url = https://gerrit.opencord.org/freeDiameter.git
+	branch = master
