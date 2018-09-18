@@ -510,7 +510,7 @@ s11_mme_handle_delete_bearer_request (
         &req_p->pco);
     DevAssert (NW_OK == rc);
 
-    rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_BEARER_CONTEXT, NW_GTPV2C_IE_INSTANCE_ONE, NW_GTPV2C_IE_PRESENCE_CONDITIONAL, gtpv2c_ebi_ie_get_list,
+    rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_EBI, NW_GTPV2C_IE_INSTANCE_ONE, NW_GTPV2C_IE_PRESENCE_CONDITIONAL, gtpv2c_ebi_ie_get_list,
         &req_p->ebi_list);
     DevAssert (NW_OK == rc);
 
