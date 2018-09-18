@@ -961,12 +961,12 @@ static int _emm_send_tracking_area_update_accept(emm_data_context_t * const emm_
   //----------------------------------------
 
   if (tau_proc->ies->ms_network_capability) {
-    emm_ctx_set_valid_ue_nw_cap(emm_context, tau_proc->ies->ue_network_capability);
+    emm_ctx_set_valid_ms_nw_cap(emm_context, tau_proc->ies->ms_network_capability);
     /** Not clearing them, we might have received it from S10. */
   }
 
-  if (tau_proc->ies->ms_network_capability) {
-    emm_ctx_set_valid_ms_nw_cap(emm_context, tau_proc->ies->ms_network_capability);
+  if (tau_proc->ies->ue_network_capability) {
+    emm_ctx_set_valid_ue_nw_cap(emm_context, tau_proc->ies->ue_network_capability);
   } else {
     // optional IE
     /** Not clearing them, we might have received it from S10. */

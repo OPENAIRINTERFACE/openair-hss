@@ -172,6 +172,7 @@ esm_proc_dedicated_eps_bearer_context (
     bearer_qos.pvi = bc_tbc->bearer_level_qos.pvi;
     bearer_qos.pl  = bc_tbc->bearer_level_qos.pl;
 
+
     struct fteid_set_s fteid_set;
     fteid_set.s1u_fteid = &bc_tbc->s1u_sgw_fteid;
     fteid_set.s5_fteid  = &bc_tbc->s5_s8_u_pgw_fteid;

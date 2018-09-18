@@ -185,8 +185,15 @@ int mme_app_deregister_bearer_context(ue_context_t * const ue_context, ebi_t ebi
   // todo: add a lot of locks..
   bearer_context_t bc_key = { .ebi = ebi}; /**< Define a bearer context key. */ // todo: just setting one element, and maybe without the key?
   /** Removed a bearer context from the UE contexts bearer pool and adds it into the PDN sessions bearer pool. */
-  pBearerCtx = RB_REMOVE(SessionBearers, &pdn_context->session_bearers, &bc_key);
+  pBearerCtx = RB_FIND(BearerPool, &pdn_context->session_bearers, &bc_key);
   if(!pBearerCtx){
+    OAILOG_ERROR(LOG_MME_APP,  "Could not find a session bearer context with ebi %d in pdn context %d for ue_id " MME_UE_S1AP_ID_FMT"! \n", ebi, pdn_context->context_identifier, ue_context->mme_ue_s1ap_id);
+    OAILOG_FUNC_RETURN (LOG_MME_APP, NULL);
+  }
+  /** Removed a bearer context from the UE contexts bearer pool and adds it into the PDN sessions bearer pool. */
+  bearer_context_t *pBearerCtx_removed = NULL;
+  pBearerCtx_removed = RB_REMOVE(SessionBearers, &pdn_context->session_bearers, pBearerCtx);
+  if(!pBearerCtx_removed){
     OAILOG_ERROR(LOG_MME_APP,  "Could not find an session bearer context with ebi %d for ue_id " MME_UE_S1AP_ID_FMT " inside pdn context with context id %d! \n",
         ebi, ue_context->mme_ue_s1ap_id, pdn_context->context_identifier);
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
@@ -198,9 +205,11 @@ int mme_app_deregister_bearer_context(ue_context_t * const ue_context, ebi_t ebi
    */
 
   /** Initialize the new bearer context. */
-  mme_app_bearer_context_init(pBearerCtx);
+  mme_app_bearer_context_init(pBearerCtx_removed);
+
   /** Insert the bearer context into the free bearer of the ue context. */
-//  Assert(!RB_INSERT (BearerPool, &ue_context->bearer_pool, pBearerCtx));
+  RB_INSERT (BearerPool, &ue_context->bearer_pool, pBearerCtx_removed);
+
   OAILOG_INFO(LOG_MME_APP, "Successfully deregistered the bearer context with ebi %d from PDN id %u and for ue_id " MME_UE_S1AP_ID_FMT "\n",
       pBearerCtx->ebi, pdn_context->context_identifier, ue_context->mme_ue_s1ap_id);
   OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);

@@ -1627,8 +1627,8 @@ mme_app_handle_s11_delete_bearer_req (
   s11_proc_delete_bearer->proc.s11_trxn         = (uintptr_t)delete_bearer_request_pP->trxn;
   s11_proc_delete_bearer->num_bearers_unhandled = delete_bearer_request_pP->ebi_list.num_ebi;
   memcpy(&s11_proc_delete_bearer->ebis, &delete_bearer_request_pP->ebi_list, sizeof(delete_bearer_request_pP->ebi_list));
-  // todo: failed bearer contexts not handled yet
-  memcpy(&s11_proc_delete_bearer->bcs_failed, &delete_bearer_request_pP->failed_bearer_contexts, sizeof(delete_bearer_request_pP->failed_bearer_contexts));
+  // todo: failed bearer contexts not handled yet (failed from those in DBC)
+//  memcpy(&s11_proc_delete_bearer->bcs_failed, &delete_bearer_request_pP->to_be_removed_bearer_contexts, sizeof(delete_bearer_request_pP->to_be_removed_bearer_contexts));
 
   // todo: PCOs
 
@@ -1898,12 +1898,8 @@ void mme_app_handle_deactivate_bearer_cnf (itti_mme_app_deactivate_bearer_cnf_t 
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
   struct ue_context_s                 *ue_context = NULL;
-  /** Get the first PDN Context. */
-  pdn_context_t * pdn_context = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
-  DevAssert(pdn_context);
 
   ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, deactivate_bearer_cnf->ue_id);
-
   if (ue_context == NULL) {
     OAILOG_DEBUG (LOG_MME_APP, "We didn't find this mme_ue_s1ap_id in list of UE: " MME_UE_S1AP_ID_FMT "\n", deactivate_bearer_cnf->ue_id);
     OAILOG_FUNC_OUT (LOG_MME_APP);
@@ -1924,9 +1920,16 @@ void mme_app_handle_deactivate_bearer_cnf (itti_mme_app_deactivate_bearer_cnf_t 
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
   /** Check if the bearer context exists as a session bearer. */
-  bearer_context_t * bc;
-  mme_app_get_session_bearer_context_from_all(ue_context, deactivate_bearer_cnf->ded_ebi, bc);
+  bearer_context_t * bc = NULL;
+  mme_app_get_session_bearer_context_from_all(ue_context, deactivate_bearer_cnf->ded_ebi, &bc);
   DevAssert(!bc);
+
+  pdn_context_t *pdn_context = NULL;
+  mme_app_get_pdn_context(ue_context, deactivate_bearer_cnf->pid, deactivate_bearer_cnf->def_ebi, NULL, &pdn_context);
+
+  bearer_context_t * bc_test = NULL;
+  mme_app_get_session_bearer_context_from_all(ue_context, deactivate_bearer_cnf->def_ebi, &bc_test);
+  DevAssert(bc_test);
 
   /** Not checking S1U E-RAB Release Response. */
   s11_proc_dedicated_bearer->num_bearers_unhandled--;

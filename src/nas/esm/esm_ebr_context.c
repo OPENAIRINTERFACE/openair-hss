@@ -221,6 +221,9 @@ esm_ebr_context_create (
       if (pdn->is_emergency) {
         esm_ctx->is_emergency = true;
       }
+    }else {
+      /** Set the default ebi. */
+      bearer_context->linked_ebi = pdn_context->default_ebi;
     }
 
     /*
@@ -299,10 +302,11 @@ esm_ebr_context_release (
     /** Get the bearer context from all session bearers. */
     mme_app_get_session_bearer_context_from_all(ue_context, ebi, &bearer_context);
     if(!bearer_context){
-      OAILOG_ERROR(LOG_NAS_ESM , "ESM-PROC  - Could not find PDN context from ebi %d. \n", ebi);
+      OAILOG_ERROR(LOG_NAS_ESM , "ESM-PROC  - Could not find bearer context from ebi %d. \n", ebi);
       OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_EBI_UNASSIGNED);
     }
-    mme_app_get_pdn_context(ue_context, bearer_context->pdn_cx_id, ebi, NULL, &pdn_context);
+
+    mme_app_get_pdn_context(ue_context, bearer_context->pdn_cx_id, 5/*bearer_context->linked_ebi*/, NULL, &pdn_context);
     *pid = bearer_context->pdn_cx_id;
   }
 
