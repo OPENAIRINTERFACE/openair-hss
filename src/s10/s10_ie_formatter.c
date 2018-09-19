@@ -1687,7 +1687,7 @@ s10_pdn_address_ie_get (
 int
 s10_ipv4_address_ie_set (
     nw_gtpv2c_msg_handle_t * msg,
-  NW_IN const struct in_addr  const * ipv4Addr)
+  NW_IN const struct in_addr * const ipv4Addr)
 {
   uint8_t                                 temp[16];
   uint8_t                                 offset = 0;
@@ -1708,7 +1708,7 @@ s10_ipv4_address_ie_set (
 int
 s10_ipv6_address_ie_set (
     nw_gtpv2c_msg_handle_t * msg,
-  NW_IN const struct in6_addr const * ipv6Addr)
+  NW_IN const struct in6_addr * const ipv6Addr)
 {
   uint8_t                                 temp[16];
   uint8_t                                 offset = 0;

@@ -230,7 +230,7 @@ s10_pdn_address_ie_get (
 int
 s10_pdn_address_ie_set (
     nw_gtpv2c_msg_handle_t * msg,
-  NW_IN const struct in_addr  const * ipv4Addr);
+  NW_IN const struct in_addr * const ipv4Addr);
 
 int
 s10_ipv4_address_ie_set (
@@ -240,7 +240,7 @@ s10_ipv4_address_ie_set (
 int
 s10_ipv6_address_ie_set (
     nw_gtpv2c_msg_handle_t * msg,
-  NW_IN const struct in6_addr  const * ipv6Addr);
+  NW_IN const struct in6_addr * const ipv6Addr);
 
 int s10_apn_restriction_ie_get (
   uint8_t ieType, uint16_t ieLength, uint8_t ieInstance, uint8_t * ieValue, void *arg);

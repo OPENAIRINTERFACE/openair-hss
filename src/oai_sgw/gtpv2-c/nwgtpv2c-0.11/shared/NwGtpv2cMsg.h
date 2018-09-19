@@ -434,8 +434,8 @@ nwGtpv2cMsgAddIeFteid(NW_IN nw_gtpv2c_msg_handle_t hMsg,
                       NW_IN uint8_t       instance,
                       NW_IN uint8_t       ifType,
                       NW_IN const uint32_t      teidOrGreKey,
-                      NW_IN const struct in_addr  const *ipv4Addr,
-                      NW_IN const struct in6_addr const *pIpv6Addr);
+                      NW_IN const struct in_addr  * const ipv4Addr,
+                      NW_IN const struct in6_addr * constpIpv6Addr);
 
 nw_rc_t
 nwGtpv2cMsgGroupedIeStart(NW_IN nw_gtpv2c_msg_handle_t hMsg,
