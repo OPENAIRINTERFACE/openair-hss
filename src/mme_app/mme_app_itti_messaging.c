@@ -708,6 +708,7 @@ mme_app_send_s11_delete_bearer_rsp (
     /** Check if the bearer is a session bearer. */
     s11_delete_bearer_response->bearer_contexts.bearer_contexts[num_ebi].cause.cause_value          = REQUEST_ACCEPTED;
     s11_delete_bearer_response->bearer_contexts.bearer_contexts[num_ebi].eps_bearer_id  = ebi_list->ebis[num_ebi];
+    s11_delete_bearer_response->bearer_contexts.num_bearer_context++;
   }
   s11_delete_bearer_response->teid = pdn_ctx->s_gw_teid_s11_s4;
 ////  ////  mme_config_read_lock (&mme_config);

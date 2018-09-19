@@ -673,6 +673,7 @@ typedef struct itti_s11_delete_bearer_request_s {
 
   ebi_list_t                 ebi_list;
 
+  // todo: if bearers in delete_bearer_command could not be created
   bearer_contexts_to_be_removed_t failed_bearer_contexts;    ///< M: Several IEs with this type and instance values shall be
   ///< included as necessary to represent a list of Bearers.
 

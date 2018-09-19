@@ -182,18 +182,17 @@ esm_proc_eps_bearer_context_deactivate (
 
       *esm_cause = ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY;
 
-      /** todo: validate the session bearers of the PDN context. */
+      /** Only validate the current bearer, the others might be in a pending deactivation state. */
       bearer_context_t *session_bearer = NULL;
-      RB_FOREACH(session_bearer, SessionBearers, &pdn_context->session_bearers){
-        DevAssert(session_bearer->pdn_cx_id == pid && session_bearer->esm_ebr_context.status == ESM_EBR_ACTIVE);
-        /*
-         * todo: validate a single bearer!
-         * todo: better, more meaningful validation
-         * The EPS bearer context to be released is valid.
-         */
-        *esm_cause = ESM_CAUSE_SUCCESS;
-        rc = RETURNok;
-      }
+      session_bearer = mme_app_get_session_bearer_context(pdn_context, ebi);
+      DevAssert(session_bearer && session_bearer->pdn_cx_id == pid && session_bearer->esm_ebr_context.status == ESM_EBR_ACTIVE);
+      /*
+       * todo: validate a single bearer!
+       * todo: better, more meaningful validation
+       * The EPS bearer context to be released is valid.
+       */
+      *esm_cause = ESM_CAUSE_SUCCESS;
+      rc = RETURNok;
     }
   }
   /** Will continue with sending the bearer deactivation request. */
