@@ -4,12 +4,22 @@
 
 namespace fluid_base {
 
+
+#if EVENT__NUMERIC_VERSION == 0x02010800
+#define EVENT_BASE_ADD_VIRTUAL event_base_add_virtual_
+#define EVENT_BASE_DEL_VIRTUAL event_base_del_virtual_
+#else
+#define EVENT_BASE_ADD_VIRTUAL event_base_add_virtual
+#define EVENT_BASE_DEL_VIRTUAL event_base_del_virtual
+#endif
+
+
 // Define our own value, since the stdint.h define doesn't work in C++
 #define OF_MAX_LEN 0xFFFF
 
 // See FIXME in EventLoop::EventLoop
-extern "C" void event_base_add_virtual(struct event_base *);
-extern "C" void event_base_del_virtual(struct event_base *);
+extern "C" void EVENT_BASE_ADD_VIRTUAL(struct event_base *);
+extern "C" void EVENT_BASE_DEL_VIRTUAL(struct event_base *);
 
 class EventLoop::LibEventEventLoop {
 private:
@@ -41,7 +51,7 @@ EventLoop::EventLoop(int id) {
     See:
     http://stackoverflow.com/questions/7645217/user-triggered-event-in-libevent
     */
-    event_base_add_virtual(this->m_implementation->base);
+    EVENT_BASE_ADD_VIRTUAL(this->m_implementation->base);
 }
 
 EventLoop::~EventLoop() {
@@ -56,7 +66,7 @@ void EventLoop::run() {
     event_base_dispatch(this->m_implementation->base);
     // See note in EventLoop::EventLoop. Here we disable the virtual event
     // to guarantee that nothing blocks.
-    event_base_del_virtual(this->m_implementation->base);
+    EVENT_BASE_DEL_VIRTUAL(this->m_implementation->base);
     event_base_loop(this->m_implementation->base, EVLOOP_NONBLOCK);
 }
 
@@ -76,3 +86,4 @@ void* EventLoop::get_base() {
 }
 
 }
+
