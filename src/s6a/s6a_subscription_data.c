@@ -487,6 +487,10 @@ s6a_parse_subscription_data (
       OAILOG_DEBUG (LOG_S6A, "AVP code %d 3GPP-Charging Characteristics not processed\n", hdr->avp_code);
       break;
 
+    case AVP_CODE_REGIONAL_SUBSCRIPTION_ZONE_CODE:
+      OAILOG_DEBUG (LOG_S6A, "AVP code %d Regional-Subscription-Zone=Code not processed\n", hdr->avp_code);
+      break;
+
     default:
       OAILOG_DEBUG (LOG_S6A, "Unknown AVP code %d not processed\n", hdr->avp_code);
       return RETURNerror;
