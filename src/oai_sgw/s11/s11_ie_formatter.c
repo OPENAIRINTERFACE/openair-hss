@@ -436,7 +436,7 @@ gtpv2c_bearer_context_to_be_created_within_create_session_request_ie_get (
       break;
 
     case NW_GTPV2C_IE_BEARER_TFT:
-      OAILOG_ERROR (LOG_S11, "Received IE %u to implement\n", ie_p->t);
+      OAILOG_ERROR (LOG_S11, "Received IE BEARER_TFT %u to implement\n", ie_p->t);
       return NW_GTPV2C_IE_INCORRECT;
       break;
 

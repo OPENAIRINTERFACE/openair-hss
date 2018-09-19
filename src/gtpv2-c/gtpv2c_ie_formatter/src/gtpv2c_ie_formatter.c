@@ -638,3 +638,34 @@ gtpv2c_target_identification_ie_set (
   return RETURNok;
 }
 
+//------------------------------------------------------------------------------
+nw_rc_t
+gtpv2c_selection_mode_ie_set (
+    nw_gtpv2c_msg_handle_t * msg, SelectionMode_t * sm)
+{
+  DevAssert (msg );
+  DevAssert (sm );
+  uint8_t val8 = *sm;
+  nw_rc_t rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_SELECTION_MODE, 1, 0, &val8);
+  DevAssert (NW_OK == rc);
+  return NW_OK;
+}
+
+//------------------------------------------------------------------------------
+nw_rc_t
+gtpv2c_selection_mode_ie_get (
+  uint8_t ieType,
+  uint16_t ieLength,
+  uint8_t ieInstance,
+  uint8_t * ieValue,
+  void *arg)
+{
+  SelectionMode_t                  *sm = (SelectionMode_t *) arg;
+
+  DevAssert (sm);
+  *sm = (ieValue[0] & 0x03);
+  OAILOG_DEBUG (LOG_GTPV2C, "\t- Selection Mode  %d\n", *sm);
+  return NW_OK;
+}
+
+

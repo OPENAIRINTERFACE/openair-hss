@@ -154,6 +154,7 @@ s1ap_mme_handle_initial_ue_message (
     DevAssert (initialUEMessage_p->eutran_cgi.pLMNidentity.size == 3);
     TBCD_TO_PLMN_T(&initialUEMessage_p->eutran_cgi.pLMNidentity, &ecgi.plmn);
     BIT_STRING_TO_CELL_IDENTITY (&initialUEMessage_p->eutran_cgi.cell_ID, ecgi.cell_identity);
+
     /** Set the ENB Id. */
     ecgi.cell_identity.enb_id = eNB_ref->enb_id;
 

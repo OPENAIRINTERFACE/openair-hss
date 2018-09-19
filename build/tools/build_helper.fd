@@ -393,7 +393,8 @@ install_opencoord.org_freediameter() {
     $CMAKE ..
     res=$?
     [[ $res -ne 0 ]] && popd && return $res
-    awk '{if (/^DISABLE_SCTP/) gsub(/OFF/, "ON"); print}' CMakeCache.txt > tmp && mv tmp CMakeCache.txt
+    # Do not disable SCTP on S6a
+    #awk '{if (/^DISABLE_SCTP/) gsub(/OFF/, "ON"); print}' CMakeCache.txt > tmp && mv tmp CMakeCache.txt
     make -j`nproc`
     res=$?
     [[ $res -ne 0 ]] && popd && return $res
