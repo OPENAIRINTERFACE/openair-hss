@@ -77,6 +77,13 @@ int lowerlayer_activate_bearer_req(const mme_ue_s1ap_id_t ue_id, const ebi_t ebi
     const bitrate_t        gbr_ul,
     bstring data);
 
+int lowerlayer_modify_bearer_req(const mme_ue_s1ap_id_t ue_id, const ebi_t ebi,
+    const bitrate_t        mbr_dl,
+    const bitrate_t        mbr_ul,
+    const bitrate_t        gbr_dl,
+    const bitrate_t        gbr_ul,
+    bstring data);
+
 int lowerlayer_deactivate_bearer_req (
     const mme_ue_s1ap_id_t ue_id,
     const ebi_t            ebi,

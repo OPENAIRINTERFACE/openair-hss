@@ -107,6 +107,8 @@ int mme_app_handle_create_sess_resp          (itti_s11_create_session_response_t
 
 void mme_app_handle_nas_erab_setup_req (itti_nas_erab_setup_req_t * const itti_nas_erab_setup_req);
 
+void mme_app_handle_nas_erab_modify_req (itti_nas_erab_modify_req_t * const itti_nas_erab_modify_setup_req);
+
 void mme_app_handle_nas_erab_release_req (itti_nas_erab_release_req_t * const itti_nas_erab_release_req);
 
 void mme_app_handle_delete_session_rsp	     (const itti_s11_delete_session_response_t * const delete_sess_respP);
@@ -136,6 +138,8 @@ bool mme_app_dump_ue_context (const hash_key_t keyP, void *const ue_context, voi
 int mme_app_handle_nas_dl_req ( itti_nas_dl_data_req_t *const nas_dl_req_pP);
 
 void mme_app_handle_e_rab_setup_rsp (itti_s1ap_e_rab_setup_rsp_t  * const e_rab_setup_rsp);
+
+void mme_app_handle_e_rab_modify_rsp (itti_s1ap_e_rab_modify_rsp_t  * const e_rab_modify_rsp);
 
 void mme_app_handle_activate_bearer_cnf (itti_mme_app_activate_bearer_cnf_t   * const activate_bearer_cnf);
 

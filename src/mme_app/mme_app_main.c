@@ -154,6 +154,11 @@ void *mme_app_thread (void *args)
     }
     break;
 
+    case NAS_ERAB_MODIFY_REQ:{
+      mme_app_handle_nas_erab_modify_req (&NAS_ERAB_MODIFY_REQ (received_message_p));
+    }
+    break;
+
     case NAS_ERAB_RELEASE_REQ:{
       mme_app_handle_nas_erab_release_req (&NAS_ERAB_RELEASE_REQ (received_message_p));
     }
@@ -231,6 +236,11 @@ void *mme_app_thread (void *args)
 
     case S1AP_E_RAB_SETUP_RSP:{
         mme_app_handle_e_rab_setup_rsp (&S1AP_E_RAB_SETUP_RSP (received_message_p));
+      }
+      break;
+
+    case S1AP_E_RAB_MODIFY_RSP:{
+        mme_app_handle_e_rab_modify_rsp (&S1AP_E_RAB_MODIFY_RSP (received_message_p));
       }
       break;
 

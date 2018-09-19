@@ -145,6 +145,7 @@ static int _emm_as_data_req (const emm_as_data_t *, dl_info_transfer_req_t *);
 static int _emm_as_status_ind (const emm_as_status_t *, dl_info_transfer_req_t *);
 static int _emm_as_release_req (const emm_as_release_t *, nas_release_req_t *);
 static int _emm_as_erab_setup_req (const emm_as_activate_bearer_context_req_t *, activate_bearer_context_req_t *);
+static int _emm_as_erab_modify_req (const emm_as_modify_bearer_context_req_t *, modify_bearer_context_req_t *);
 static int _emm_as_erab_release_req (const emm_as_deactivate_bearer_context_req_t * msg, rab_release_req_t * as_msg);
 
 /****************************************************************************/
@@ -1081,6 +1082,11 @@ static int _emm_as_send (emm_as_t * msg)
     as_msg.msg_id = _emm_as_erab_setup_req (&msg->u.activate_bearer_context_req, &as_msg.msg.activate_bearer_context_req);
     break;
 
+  case _EMMAS_ERAB_MODIFY_REQ:
+    // todo: make array of NAS messages in 1 S1AP E-RABModifyRequest message!
+    as_msg.msg_id = _emm_as_erab_modify_req (&msg->u.modify_bearer_context_req, &as_msg.msg.modify_bearer_context_req);
+    break;
+
   case _EMMAS_ERAB_RELEASE_REQ:
     // todo: make array of NAS messages in 1 S1AP E-RABReleaseRequest message!
     as_msg.msg_id = _emm_as_erab_release_req (&msg->u.deactivate_bearer_context_req, &as_msg.msg.rab_release_req);
@@ -1137,6 +1143,18 @@ static int _emm_as_send (emm_as_t * msg)
           as_msg.msg.activate_bearer_context_req.gbr_ul,
           as_msg.msg.activate_bearer_context_req.nas_msg);
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
+    }
+    break;
+
+    case AS_MODIFY_BEARER_CONTEXT_REQ:{
+        nas_itti_erab_modify_req (as_msg.msg.modify_bearer_context_req.ue_id,
+            as_msg.msg.modify_bearer_context_req.ebi,
+            as_msg.msg.modify_bearer_context_req.mbr_dl,
+            as_msg.msg.modify_bearer_context_req.mbr_ul,
+            as_msg.msg.modify_bearer_context_req.gbr_dl,
+            as_msg.msg.modify_bearer_context_req.gbr_ul,
+            as_msg.msg.modify_bearer_context_req.nas_msg);
+        OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
     }
     break;
 
@@ -1717,6 +1735,78 @@ static int _emm_as_erab_setup_req (const emm_as_activate_bearer_context_req_t * 
 
     if (bytes > 0) {
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, AS_ACTIVATE_BEARER_CONTEXT_REQ);
+    }
+  }
+
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, 0);
+}
+
+//------------------------------------------------------------------------------
+static int _emm_as_erab_modify_req (const emm_as_modify_bearer_context_req_t * msg, modify_bearer_context_req_t * as_msg)
+{
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  int                                     size = 0;
+  int                                     is_encoded = false;
+
+  OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Send E-RAB modify request\n");
+  nas_message_t                           nas_msg = {.security_protected.header = {0},
+                                                     .security_protected.plain.emm.header = {0},
+                                                     .security_protected.plain.esm.header = {0}};
+
+  /*
+   * Setup the AS message
+   */
+  as_msg->ue_id  = msg->ue_id;
+  as_msg->ebi    = msg->ebi;
+  as_msg->gbr_dl = msg->gbr_dl;
+  as_msg->gbr_ul = msg->gbr_ul;
+  as_msg->mbr_dl = msg->mbr_dl;
+  as_msg->mbr_ul = msg->mbr_ul;
+
+  /*
+   * Setup the NAS security header
+   */
+  EMM_msg                                *emm_msg = _emm_as_set_header (&nas_msg, &msg->sctx);
+
+  /*
+   * Setup the NAS information message
+   */
+  if (emm_msg) {
+      size = msg->nas_msg->slen;
+      is_encoded = true;
+  }
+
+  if (size > 0) {
+    int                                     bytes = 0;
+    emm_security_context_t                 *emm_security_context = NULL;
+    emm_data_context_t                     *emm_context = emm_data_context_get(&_emm_data, msg->ue_id);
+
+    emm_context = emm_data_context_get (&_emm_data, msg->ue_id);
+    if (emm_context) {
+      if (IS_EMM_CTXT_PRESENT_SECURITY(emm_context)) {
+        emm_security_context = &emm_context->_security;
+      }
+    }
+
+    if (emm_security_context) {
+      nas_msg.header.sequence_number = emm_security_context->dl_count.seq_num;
+      OAILOG_DEBUG (LOG_NAS_EMM, "Set nas_msg.header.sequence_number -> %u\n", nas_msg.header.sequence_number);
+    }
+
+    if (!is_encoded) {
+      /*
+       * Encode the NAS information message
+       */
+      bytes = _emm_as_encode (&as_msg->nas_msg, &nas_msg, size, emm_security_context);
+    } else {
+      /*
+       * Encrypt the NAS information message
+       */
+      bytes = _emm_as_encrypt (&as_msg->nas_msg, &nas_msg.header, msg->nas_msg->data, size, emm_security_context);
+    }
+
+    if (bytes > 0) {
+      OAILOG_FUNC_RETURN (LOG_NAS_EMM, AS_MODIFY_BEARER_CONTEXT_REQ);
     }
   }
 

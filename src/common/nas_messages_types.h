@@ -51,6 +51,7 @@
 #define NAS_AUTHENTICATION_PARAM_REQ(mSGpTR)        (mSGpTR)->ittiMsg.nas_auth_param_req
 #define NAS_DETACH_REQ(mSGpTR)                      (mSGpTR)->ittiMsg.nas_detach_req
 #define NAS_ERAB_SETUP_REQ(mSGpTR)                  (mSGpTR)->ittiMsg.nas_erab_setup_req
+#define NAS_ERAB_MODIFY_REQ(mSGpTR)                 (mSGpTR)->ittiMsg.nas_erab_modify_req
 #define NAS_ERAB_RELEASE_REQ(mSGpTR)                (mSGpTR)->ittiMsg.nas_erab_release_req
 #define NAS_SIGNALLING_CONNECTION_REL_IND(mSGpTR)   (mSGpTR)->ittiMsg.nas_signalling_connection_rel_ind
 
@@ -235,6 +236,16 @@ typedef struct itti_nas_erab_setup_req_s {
   bitrate_t        gbr_dl;
   bitrate_t        gbr_ul;
 } itti_nas_erab_setup_req_t;
+
+typedef struct itti_nas_erab_modify_req_s {
+  mme_ue_s1ap_id_t ue_id;            /* UE lower layer identifier   */
+  ebi_t            ebi;              /* EPS bearer id        */
+  bstring          nas_msg;          /* NAS erab bearer context activation message           */
+  bitrate_t        mbr_dl;
+  bitrate_t        mbr_ul;
+  bitrate_t        gbr_dl;
+  bitrate_t        gbr_ul;
+} itti_nas_erab_modify_req_t;
 
 typedef struct itti_nas_erab_release_req_s {
   mme_ue_s1ap_id_t ue_id;            /* UE lower layer identifier   */

@@ -68,6 +68,7 @@
     <S1AP_UE_CONTEXT_RELEASE_COMPLETE enabled="1" foreground_color="#585858" background_color="#cbffb1"/>
     <S1AP_UE_CONTEXT_RELEASE_LOG enabled="1" foreground_color="#585858" background_color="#ffffff"/>
     <S1AP_E_RABSETUP_RESPONSE_LOG enabled="1" foreground_color="#585858" background_color="#ffffff"/>
+    <S1AP_E_RABMODIFY_RESPONSE_LOG enabled="1" foreground_color="#585858" background_color="#ffffff"/>
     <S1AP_E_RABRELEASE_RESPONSE_LOG enabled="1" foreground_color="#585858" background_color="#ffffff"/>
     <S1AP_UE_CONTEXT_RELEASE_REQ enabled="1" foreground_color="#585858" background_color="#ffffff"/>
     <S1AP_UE_CONTEXT_RELEASE_REQ_LOG enabled="1" foreground_color="#585858" background_color="#ffffff"/>

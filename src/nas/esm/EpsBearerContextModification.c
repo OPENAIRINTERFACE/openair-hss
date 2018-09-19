@@ -150,12 +150,7 @@ esm_proc_modify_eps_bearer_context (
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
   }
 
-  /** Not updating the parameters yet. Updating later when a success is received. */
-
-  /*
-   * Bearer context must already be assigned yet ans in ACTIVE state.
-   */
-  rc = esm_ebr_set_status(emm_context, bc_tbu->eps_bearer_id, ESM_EBR_MODIFY_PENDING, false);
+  /** Not updating the parameters yet. Updating later when a success is received. State will be updated later. */
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
 }
 

@@ -161,6 +161,11 @@ s1ap_mme_thread (
       }
       break;
 
+    case S1AP_E_RAB_MODIFY_REQ:{
+        s1ap_generate_s1ap_e_rab_modify_req (&S1AP_E_RAB_MODIFY_REQ (received_message_p));
+      }
+      break;
+
     case S1AP_E_RAB_RELEASE_REQ:{
         s1ap_generate_s1ap_e_rab_release_req (&S1AP_E_RAB_RELEASE_REQ (received_message_p));
       }

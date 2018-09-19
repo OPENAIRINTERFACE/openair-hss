@@ -99,6 +99,30 @@ nas_itti_erab_setup_req (const mme_ue_s1ap_id_t ue_id,
 
 //------------------------------------------------------------------------------
 int
+nas_itti_erab_modify_req (const mme_ue_s1ap_id_t ue_id,
+    const ebi_t ebi,
+    const bitrate_t        mbr_dl,
+    const bitrate_t        mbr_ul,
+    const bitrate_t        gbr_dl,
+    const bitrate_t        gbr_ul,
+    bstring                nas_msg)
+{
+  MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_MME, NAS_ERAB_MODIFY_REQ);
+  NAS_ERAB_MODIFY_REQ (message_p).ue_id   = ue_id;
+  NAS_ERAB_MODIFY_REQ (message_p).ebi     = ebi;
+  NAS_ERAB_MODIFY_REQ (message_p).mbr_dl  = mbr_dl;
+  NAS_ERAB_MODIFY_REQ (message_p).mbr_ul  = mbr_ul;
+  NAS_ERAB_MODIFY_REQ (message_p).gbr_dl  = gbr_dl;
+  NAS_ERAB_MODIFY_REQ (message_p).gbr_ul  = gbr_ul;
+  NAS_ERAB_MODIFY_REQ (message_p).nas_msg = nas_msg;
+  nas_msg = NULL;
+  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_MMEAPP_MME, NULL, 0, "0 NAS_ERAB_MODIFY_REQ ue id " MME_UE_S1AP_ID_FMT " ebi %u len %u", ue_id, ebi, blength(NAS_ERAB_MODIFY_REQ (message_p).nas_msg));
+  // make a long way by MME_APP instead of S1AP to retrieve the sctp_association_id key.
+  return itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
+}
+
+//------------------------------------------------------------------------------
+int
 nas_itti_erab_release_req (const mme_ue_s1ap_id_t ue_id,
     const ebi_t ebi,
     bstring                nas_msg)

@@ -44,6 +44,8 @@
 #define S1AP_UE_CONTEXT_RELEASE_COMPLETE(mSGpTR) (mSGpTR)->ittiMsg.s1ap_ue_context_release_complete
 #define S1AP_E_RAB_SETUP_REQ(mSGpTR)             (mSGpTR)->ittiMsg.s1ap_e_rab_setup_req
 #define S1AP_E_RAB_SETUP_RSP(mSGpTR)             (mSGpTR)->ittiMsg.s1ap_e_rab_setup_rsp
+#define S1AP_E_RAB_MODIFY_REQ(mSGpTR)            (mSGpTR)->ittiMsg.s1ap_e_rab_modify_req
+#define S1AP_E_RAB_MODIFY_RSP(mSGpTR)            (mSGpTR)->ittiMsg.s1ap_e_rab_modify_rsp
 #define S1AP_E_RAB_RELEASE_REQ(mSGpTR)           (mSGpTR)->ittiMsg.s1ap_e_rab_release_req
 #define S1AP_E_RAB_RELEASE_RSP(mSGpTR)           (mSGpTR)->ittiMsg.s1ap_e_rab_release_rsp
 
@@ -218,6 +220,19 @@ typedef struct itti_s1ap_e_rab_setup_req_s {
 
 } itti_s1ap_e_rab_setup_req_t;
 
+typedef struct itti_s1ap_e_rab_modify_req_s {
+  mme_ue_s1ap_id_t    mme_ue_s1ap_id;
+  enb_ue_s1ap_id_t    enb_ue_s1ap_id;
+
+  // Applicable for non-GBR E-RABs
+  bool                            ue_aggregate_maximum_bit_rate_present;
+  ue_aggregate_maximum_bit_rate_t ue_aggregate_maximum_bit_rate;
+
+  // E-RAB to Be Setup List
+  e_rab_to_be_modified_list_t     e_rab_to_be_modified_list;
+
+} itti_s1ap_e_rab_modify_req_t;
+
 typedef struct itti_s1ap_e_rab_release_req_s {
   mme_ue_s1ap_id_t    mme_ue_s1ap_id;
   enb_ue_s1ap_id_t    enb_ue_s1ap_id;
@@ -233,13 +248,25 @@ typedef struct itti_s1ap_e_rab_setup_rsp_s {
   mme_ue_s1ap_id_t    mme_ue_s1ap_id;
   enb_ue_s1ap_id_t    enb_ue_s1ap_id;
 
-  // E-RAB to Be Setup List
+  // E-RAB Setup List
   e_rab_setup_list_t                  e_rab_setup_list;
 
   // Optional
   e_rab_list_t        e_rab_failed_to_setup_list;
 
 } itti_s1ap_e_rab_setup_rsp_t;
+
+typedef struct itti_s1ap_e_rab_modify_rsp_s {
+  mme_ue_s1ap_id_t    mme_ue_s1ap_id;
+  enb_ue_s1ap_id_t    enb_ue_s1ap_id;
+
+  // E-RAB Modify List
+  e_rab_modify_list_t                  e_rab_modify_list;
+
+  // Optional
+  e_rab_list_t        e_rab_failed_to_modify_list;
+
+} itti_s1ap_e_rab_modify_rsp_t;
 
 typedef struct itti_s1ap_e_rab_release_rsp_s {
   mme_ue_s1ap_id_t    mme_ue_s1ap_id;

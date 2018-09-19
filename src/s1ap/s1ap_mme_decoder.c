@@ -215,6 +215,13 @@ s1ap_mme_decode_successfull_outcome (
       }
       break;
 
+    case S1ap_ProcedureCode_id_E_RABModify: {
+        ret = s1ap_decode_s1ap_e_rabmodifyresponseies (&message->msg.s1ap_E_RABModifyResponseIEs, &successfullOutcome_p->value);
+        s1ap_xer_print_s1ap_e_rabmodifyresponse (s1ap_xer__print2sp, message_string, message);
+        *message_id = S1AP_E_RABMODIFY_RESPONSE_LOG;
+      }
+      break;
+
     case S1ap_ProcedureCode_id_E_RABRelease: {
         ret = s1ap_decode_s1ap_e_rabreleaseresponseies(&message->msg.s1ap_E_RABReleaseResponseIEs, &successfullOutcome_p->value);
         s1ap_xer_print_s1ap_e_rabreleaseresponse(s1ap_xer__print2sp, message_string, message);
@@ -362,6 +369,8 @@ int s1ap_free_mme_decode_pdu(
 //    return free_s1ap_uecontextreleasecomplete(&message->msg.s1ap_UEContextReleaseCompleteIEs);
 //  case S1AP_E_RABSETUP_RESPONSE_LOG:
 //    return free_s1ap_e_rabsetupresponse(&message->msg.s1ap_E_RABSetupResponseIEs);
+//  case S1AP_E_RABMODIFY_RESPONSE_LOG:
+//    return free_s1ap_e_rabmodifyresponse(&message->msg.s1ap_E_RABModifyResponseIEs);
 //  case S1AP_E_RABRELEASE_RESPONSE_LOG:
 //    return free_s1ap_e_rabreleaseresponse(&message->msg.s1ap_E_RABReleaseResponseIEs);
 //  case S1AP_INITIAL_CONTEXT_SETUP_LOG:

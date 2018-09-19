@@ -69,6 +69,9 @@ typedef enum emm_as_primitive_u {
   _EMMAS_ERAB_SETUP_REQ, /* EMM->AS: ERAB setup request  */
   _EMMAS_ERAB_SETUP_CNF, /* AS->EMM  */
   _EMMAS_ERAB_SETUP_REJ, /* AS->EMM  */
+  _EMMAS_ERAB_MODIFY_REQ, /* EMM->AS: ERAB modify request  */
+  _EMMAS_ERAB_MODIFY_CNF, /* AS->EMM  */
+  _EMMAS_ERAB_MODIFY_REJ, /* AS->EMM  */
   _EMMAS_ERAB_RELEASE_REQ, /* EMM->AS: ERAB release request  */
   _EMMAS_DATA_REQ,      /* EMM->AS: Data transfer request     */
   _EMMAS_DATA_IND,      /* AS->EMM: Data transfer indication      */
@@ -258,7 +261,7 @@ typedef struct emm_as_data_s {
 } emm_as_data_t;
 
 /*
- * EMMAS primitive for dedicated bearer establishment
+ * EMMAS primitive for (dedicated) bearer establishment, modification and removal
  * ----------------------------------------------------
  */
 
@@ -273,6 +276,18 @@ typedef struct emm_as_activate_bearer_context_req_s {
   emm_as_security_data_t sctx;        /* EPS NAS security context         */
   bstring                nas_msg;     /* NAS message to be transfered     */
 } emm_as_activate_bearer_context_req_t;
+
+typedef struct emm_as_modify_bearer_context_req_s {
+  int                    emm_cause;                   /* EMM failure cause code        */
+  mme_ue_s1ap_id_t       ue_id;       /* UE lower layer identifier        */
+  ebi_t                  ebi;         /* EPS rab id                       */
+  bitrate_t              mbr_dl;
+  bitrate_t              mbr_ul;
+  bitrate_t              gbr_dl;
+  bitrate_t              gbr_ul;
+  emm_as_security_data_t sctx;        /* EPS NAS security context         */
+  bstring                nas_msg;     /* NAS message to be transfered     */
+} emm_as_modify_bearer_context_req_t;
 
 typedef struct emm_as_deactivate_bearer_context_req_s {
   int                    emm_cause;                   /* EMM failure cause code        */
@@ -328,6 +343,7 @@ typedef struct emm_as_s {
     emm_as_release_t    release;
     emm_as_data_t       data;
     emm_as_activate_bearer_context_req_t activate_bearer_context_req;
+    emm_as_modify_bearer_context_req_t modify_bearer_context_req;
     emm_as_deactivate_bearer_context_req_t deactivate_bearer_context_req;
     emm_as_erab_setup_rej_t erab_setup_rej;
     emm_as_status_t     status;
