@@ -966,24 +966,33 @@ esm_recv_deactivate_eps_bearer_context_accept (
   /*
    * Message processing
    */
+  bearer_context_t * bc_p = NULL;
+  mme_app_get_session_bearer_context_from_all(ue_context, ebi, &bc_p);
+  if(!bc_p){
+    OAILOG_ERROR(LOG_NAS_ESM , "ESM-PROC  - Could not find PDN context from ebi %d. \n", ebi);
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_EBI_UNASSIGNED);
+  }
+
+  ebi_t linked_ebi = bc_p->linked_ebi;
+
   /*
    * Execute the default EPS bearer context activation procedure accepted
    * * * * by the UE
    */
   int pid = esm_proc_eps_bearer_context_deactivate_accept (emm_context, ebi, &esm_cause);
-
   if (pid != RETURNerror) {
     /*
      * Check if it was the default ebi. If so, release the pdn context.
      * If not, respond with a delete bearer response back. Keep the UE context and PDN context as valid.
      */
-    mme_app_get_pdn_context(ue_context, pid, ebi, NULL, &pdn_context);
+    mme_app_get_pdn_context(ue_context, pid, linked_ebi, NULL, &pdn_context);
     if(!pdn_context){
       OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - No PDN context could be found. (pid=%d)\n", pid);
       OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY);
     }
     int rc = RETURNerror;
     if(!pdn_context->is_active){
+      // todo: check that only 1 deactivate message for the default bearer exists
       OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - We released  the default EBI. Deregistering the PDN context. (ebi=%d,pid=%d)\n", ebi,pid);
       rc = esm_proc_pdn_disconnect_accept (emm_context, pid, ebi, &esm_cause); /**< Delete Session Request is already sent at the beginning. We don't care for the response. */
     }else{

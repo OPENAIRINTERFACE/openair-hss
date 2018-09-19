@@ -396,8 +396,8 @@ extern                                  "C" {
   NW_IN uint8_t instance,
   NW_IN uint8_t ifType,
   NW_IN const uint32_t teidOrGreKey,
-  NW_IN const struct in_addr  const * ipv4Addr,
-  NW_IN const struct in6_addr const * pIpv6Addr) {
+  NW_IN const struct in_addr  * const ipv4Addr,
+  NW_IN const struct in6_addr * const pIpv6Addr) {
     uint8_t                                 fteidBuf[32];
     uint8_t                                *pFteidBuf = fteidBuf;
 

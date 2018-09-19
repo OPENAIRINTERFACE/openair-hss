@@ -418,6 +418,7 @@ s6a_generate_authentication_info_req (
      * Re-synchronization information containing the AUTS computed at USIM
      */
     if (air_p->re_synchronization) {
+      OAILOG_DEBUG (LOG_S6A, "Added Re-Synchronistaion for UE \n");
       CHECK_FCT (fd_msg_avp_new (s6a_fd_cnf.dataobj_s6a_re_synchronization_info, 0, &child_avp));
       value.os.len = RESYNC_PARAM_LENGTH;
       value.os.data = air_p->auts;

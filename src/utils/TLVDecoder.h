@@ -55,7 +55,7 @@ int decode_bstring (
   const uint8_t * const buffer,
   const uint32_t buflen);
 
-bstring dump_bstring_xml (const bstring  const bstr);
+bstring dump_bstring_xml (const bstring  bstr);
 
 void tlv_decode_perror(void);
 

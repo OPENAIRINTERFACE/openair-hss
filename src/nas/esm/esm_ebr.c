@@ -137,15 +137,6 @@ void esm_ebr_initialize (void)
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   OAILOG_FUNC_OUT (LOG_NAS_ESM);
 }
-//
-//static
-//uintptr_t mme_app_get_ue_bearer_context_2(ue_context_t * const ue_context, ebi_t ebi){
-//  bearer_context_t bc_key = { .ebi = ebi}; /**< Define a bearer context key. */ // todo: just setting one element, and maybe without the key?
-//  /** Removed a bearer context from the UE contexts bearer pool and adds it into the PDN sessions bearer pool. */
-//  bearer_context_t * pBearerCtx = RB_FIND(BearerPool, &ue_context->bearer_pool, &bc_key);
-//   return (uintptr_t)pBearerCtx;
-//}
-
 
 /****************************************************************************
  **                                                                        **

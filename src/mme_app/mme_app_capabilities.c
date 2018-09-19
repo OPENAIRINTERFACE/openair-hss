@@ -43,7 +43,7 @@
 
 int
 mme_app_handle_s1ap_ue_capabilities_ind (
-    const itti_s1ap_ue_cap_ind_t const *s1ap_ue_cap_ind_pP)
+    const itti_s1ap_ue_cap_ind_t * const s1ap_ue_cap_ind_pP)
 {
   ue_context_t *ue_context_p = NULL;
 
