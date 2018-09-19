@@ -1554,7 +1554,7 @@ mme_app_handle_s11_create_bearer_req (
   if(!default_bc){
     MSC_LOG_RX_DISCARDED_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 CREATE_BEARER_REQUEST local S11 teid " TEID_FMT " ",
         create_bearer_request_pP->teid);
-    OAILOG_DEBUG (LOG_MME_APP, "We didn't find this bearer in list of UE: %" PRIX32 "\n", create_bearer_request_pP->teid);
+    OAILOG_ERROR(LOG_MME_APP, "We didn't find this bearer in list of UE: %" PRIX32 "\n", create_bearer_request_pP->teid);
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
 
@@ -1593,6 +1593,80 @@ mme_app_handle_s11_create_bearer_req (
   /** No need to set bearer states, we won't establish the bearers yet. */
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 MME_APP_ACTIVATE_BEARER_REQ mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ",
       mme_app_create_bearer_req->ue_id);
+  itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+  OAILOG_FUNC_OUT (LOG_MME_APP);
+}
+
+//------------------------------------------------------------------------------
+void
+mme_app_handle_s11_update_bearer_req (
+    itti_s11_update_bearer_request_t *  update_bearer_request_pP)
+{
+  MessageDef                               *message_p   = NULL;
+  struct ue_context_s                      *ue_context  = NULL;
+  struct pdn_context_s                     *pdn_context = NULL;
+  bearer_context_t                         *default_bc  = NULL;
+
+  OAILOG_FUNC_IN (LOG_MME_APP);
+
+  ue_context = mme_ue_context_exists_s11_teid (&mme_app_desc.mme_ue_contexts, update_bearer_request_pP->teid);
+
+  if (ue_context == NULL) {
+    MSC_LOG_RX_DISCARDED_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 UPDATE_BEARER_REQUEST local S11 teid " TEID_FMT " ",
+        update_bearer_request_pP->teid);
+    OAILOG_ERROR(LOG_MME_APP, "We didn't find this teid in list of UE: %" PRIX32 "\n", update_bearer_request_pP->teid);
+    OAILOG_FUNC_OUT (LOG_MME_APP);
+  }
+  /** The validation of the request will be done in the ESM layer. */
+  MSC_LOG_RX_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 UPDATE_BEARER_REQUEST ueId " MME_UE_S1AP_ID_FMT " PDN id %u IMSI " IMSI_64_FMT " num bearer %u",
+      ue_context->mme_ue_s1ap_id, cid, ue_context->imsi, update_bearer_request_pP->bearer_contexts.num_bearer_context);
+
+  /** No default EBI will be sent. Need to check all dedicated EBIs. */
+  for(int num_bearer = 0; num_bearer < update_bearer_request_pP->bearer_contexts->num_bearer_context; num_bearer++){
+    bearer_context_t * ded_bc = NULL;
+    mme_app_get_session_bearer_context_from_all(ue_context, update_bearer_request_pP->bearer_contexts->bearer_contexts[num_bearer].eps_bearer_id, &ded_bc);
+      if(!ded_bc || ded_bc->esm_ebr_context.status != ESM_EBR_ACTIVE){
+        MSC_LOG_RX_DISCARDED_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 UPDATE_BEARER_REQUEST local S11 teid " TEID_FMT " ",
+            update_bearer_request_pP->teid);
+        OAILOG_ERROR(LOG_MME_APP, "We could not find an (ACTIVE) dedicated bearer for ebi %d in bearer list of UE: %" MME_UE_S1AP_ID_FMT". \n",
+            update_bearer_request_pP->bearer_contexts->bearer_contexts[num_bearer].eps_bearer_id, ue_context->mme_ue_s1ap_id);
+        OAILOG_FUNC_OUT (LOG_MME_APP);
+      }
+  }
+
+  /** Create an S11 procedure for the UBR. */
+  mme_app_s11_proc_update_bearer_t* s11_proc_update_bearer = mme_app_create_s11_procedure_update_bearer(ue_context);
+  DevAssert(s11_proc_update_bearer);
+
+  s11_proc_update_bearer->proc.s11_trxn         = (uintptr_t)update_bearer_request_pP->trxn;
+  s11_proc_update_bearer->num_bearers_unhandled = update_bearer_request_pP->bearer_contexts->num_bearer_context;
+  s11_proc_update_bearer->bcs_tbu               = update_bearer_request_pP->bearer_contexts;
+  s11_proc_update_bearer->pci                   = default_bc->pdn_cx_id;
+
+  // todo: PCOs
+
+  /*
+   * Let the ESM layer validate the request and build the pending bearer contexts.
+   * Also, send a single message to the eNB.
+   * May received multiple back.
+   */
+  message_p = itti_alloc_new_message (TASK_MME_APP, MME_APP_UPDATE_BEARER_REQ);
+  AssertFatal (message_p , "itti_alloc_new_message Failed");
+
+  itti_mme_app_update_bearer_req_t *mme_app_update_bearer_req = &message_p->ittiMsg.mme_app_update_bearer_req;
+  /** MME_APP Create Bearer Request. */
+  mme_app_update_bearer_req->ue_id              = ue_context->mme_ue_s1ap_id;
+  mme_app_update_bearer_req->bcs_to_be_updated  = update_bearer_request_pP->bearer_contexts;
+  /** Might be UE triggered. */
+  mme_app_update_bearer_req->pti                = update_bearer_request_pP->pti;
+  mme_app_update_bearer_req->cid                = default_bc->pdn_cx_id;
+
+  /** Set it to NULL, such that it is not deallocated. */
+  update_bearer_request_pP->bearer_contexts     = NULL;
+
+  /** No need to set bearer states, we won't establish the bearers yet. */
+  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 MME_APP_UPDATE_BEARER_REQ mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ",
+      mme_app_update_bearer_req->ue_id);
   itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }

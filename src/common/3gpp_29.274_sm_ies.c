@@ -53,6 +53,25 @@ void free_bearer_contexts_to_be_created(bearer_contexts_to_be_created_t **bcs_tb
 }
 
 //------------------------------------------------------------------------------
+void free_bearer_contexts_to_be_updated(bearer_contexts_to_be_updated_t **bcs_tbu){
+  bearer_contexts_to_be_updated_t * bctbu = *bcs_tbu;
+  // nothing to do for packet filters
+  for (int i = 0; i < bctbu->num_bearer_context; i++) {
+    for (int j = 0; j < bctbu->bearer_contexts[i].tft.parameterslist.num_parameters; j++) {
+      bdestroy_wrapper(&bctbu->bearer_contexts[i].tft.parameterslist.parameter[j].contents);
+    }
+  }
+  free_wrapper((void**)bcs_tbu);
+}
+
+//------------------------------------------------------------------------------
+void free_bearer_contexts_to_be_deleted(bearer_contexts_to_be_removed_t **bcs_tbr){
+  bearer_contexts_to_be_removed_t * bctbr = *bcs_tbr;
+  // nothing to do for packet filters
+  free_wrapper((void**)bcs_tbr);
+}
+
+//------------------------------------------------------------------------------
 // 7.3.1 PDN Connections IE
 //------------------------------------------------------------------------------
 

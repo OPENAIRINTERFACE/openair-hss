@@ -647,10 +647,10 @@ s11_mme_handle_delete_bearer_request (
         &req_p->ebi_list);
     DevAssert (NW_OK == rc);
 
-    rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_BEARER_CONTEXT, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_OPTIONAL,
-        gtpv2c_failed_bearer_contexts_within_delete_bearer_request_ie_get,
-        &req_p->failed_bearer_contexts);
-    DevAssert (NW_OK == rc);
+//    rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_BEARER_CONTEXT, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_OPTIONAL,
+//        gtpv2c_failed_bearer_contexts_within_delete_bearer_request_ie_get,
+//        &req_p->failed_bearer_contexts);
+//    DevAssert (NW_OK == rc);
 
     /** Add the PTI to inform to UEs. */
     rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_BEARER_CONTEXT, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL, gtpv2c_pti_ie_get,

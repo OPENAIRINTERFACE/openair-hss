@@ -176,6 +176,10 @@ void *mme_app_thread (void *args)
       mme_app_handle_s11_create_bearer_req (&received_message_p->ittiMsg.s11_create_bearer_request);
       break;
 
+    case S11_UPDATE_BEARER_REQUEST:
+      mme_app_handle_s11_update_bearer_req (&received_message_p->ittiMsg.s11_update_bearer_request);
+      break;
+
     case S11_DELETE_BEARER_REQUEST:
       mme_app_handle_s11_delete_bearer_req (&received_message_p->ittiMsg.s11_delete_bearer_request);
       break;

@@ -115,6 +115,14 @@ void itti_free_msg_content (MessageDef * const message_p)
   }
   break;
 
+  case MME_APP_UPDATE_BEARER_REQ: {
+    /** Bearer Context to Be updated. */
+    if(message_p->ittiMsg.mme_app_update_bearer_req.bcs_to_be_updated){
+      free_bearer_contexts_to_be_updated(&message_p->ittiMsg.mme_app_update_bearer_req.bcs_to_be_updated);
+    }
+  }
+  break;
+
   case NAS_PDN_CONNECTIVITY_REQ:{
     clear_protocol_configuration_options(&message_p->ittiMsg.nas_pdn_connectivity_req.pco);
     bdestroy_wrapper (&message_p->ittiMsg.nas_pdn_connectivity_req.apn);
@@ -215,8 +223,19 @@ void itti_free_msg_content (MessageDef * const message_p)
   }
   break;
 
+  case S11_UPDATE_BEARER_REQUEST: {
+    clear_protocol_configuration_options(&message_p->ittiMsg.s11_update_bearer_request.pco);
+    if(message_p->ittiMsg.s11_update_bearer_request.bearer_contexts){
+      free_bearer_contexts_to_be_updated(&message_p->ittiMsg.s11_update_bearer_request.bearer_contexts);
+    }
+  }
+  break;
+
   case S11_DELETE_BEARER_REQUEST: {
     clear_protocol_configuration_options(&message_p->ittiMsg.s11_delete_bearer_request.pco);
+//    if(message_p->ittiMsg.s11_delete_bearer_request.failed_bearer_contexts){
+//      free_bearer_contexts_to_be_deleted(&message_p->ittiMsg.s11_delete_bearer_request.failed_bearer_contexts);
+//    }
   }
   break;
 

@@ -50,6 +50,7 @@
 #include "mme_app_procedures.h"
 
 static void mme_app_free_s11_procedure_create_bearer(mme_app_s11_proc_t **s11_proc);
+static void mme_app_free_s11_procedure_update_bearer(mme_app_s11_proc_t **s11_proc);
 static void mme_app_free_s11_procedure_delete_bearer(mme_app_s11_proc_t **s11_proc);
 static void mme_app_free_s10_procedure_mme_handover(mme_app_s10_proc_t **s10_proc);
 
@@ -94,6 +95,8 @@ void mme_app_delete_s11_procedures(ue_context_t * const ue_context)
       s11_proc2 = LIST_NEXT(s11_proc1, entries);
       if (MME_APP_S11_PROC_TYPE_CREATE_BEARER == s11_proc1->type) {
         mme_app_free_s11_procedure_create_bearer(&s11_proc1);
+      } else if (MME_APP_S11_PROC_TYPE_UPDATE_BEARER == s11_proc1->type) {
+        mme_app_free_s11_procedure_update_bearer(&s11_proc1);
       } else if (MME_APP_S11_PROC_TYPE_DELETE_BEARER == s11_proc1->type) {
         mme_app_free_s11_procedure_delete_bearer(&s11_proc1);
       } // else ...
@@ -148,6 +151,56 @@ void mme_app_delete_s11_procedure_create_bearer(ue_context_t * const ue_context)
       if (MME_APP_S11_PROC_TYPE_CREATE_BEARER == s11_proc->type) {
         LIST_REMOVE(s11_proc, entries);
         mme_app_free_s11_procedure_create_bearer(&s11_proc);
+        return;
+      }
+    }
+  }
+}
+
+//------------------------------------------------------------------------------
+mme_app_s11_proc_update_bearer_t* mme_app_create_s11_procedure_update_bearer(ue_context_t * const ue_context)
+{
+  mme_app_s11_proc_update_bearer_t *s11_proc_update_bearer = calloc(1, sizeof(mme_app_s11_proc_update_bearer_t));
+  s11_proc_update_bearer->proc.proc.type = MME_APP_BASE_PROC_TYPE_S11;
+  s11_proc_update_bearer->proc.type      = MME_APP_S11_PROC_TYPE_UPDATE_BEARER;
+  mme_app_s11_proc_t *s11_proc = (mme_app_s11_proc_t *)s11_proc_update_bearer;
+
+  /** Initialize the of the procedure. */
+
+  if (!ue_context->s11_procedures) {
+    ue_context->s11_procedures = calloc(1, sizeof(struct s11_procedures_s));
+    LIST_INIT(ue_context->s11_procedures);
+  }
+  LIST_INSERT_HEAD((ue_context->s11_procedures), s11_proc, entries);
+
+  return s11_proc_update_bearer;
+}
+
+//------------------------------------------------------------------------------
+mme_app_s11_proc_update_bearer_t* mme_app_get_s11_procedure_update_bearer(ue_context_t * const ue_context)
+{
+  if (ue_context->s11_procedures) {
+    mme_app_s11_proc_t *s11_proc = NULL;
+
+    LIST_FOREACH(s11_proc, ue_context->s11_procedures, entries) {
+      if (MME_APP_S11_PROC_TYPE_UPDATE_BEARER == s11_proc->type) {
+        return (mme_app_s11_proc_update_bearer_t*)s11_proc;
+      }
+    }
+  }
+  return NULL;
+}
+
+//------------------------------------------------------------------------------
+void mme_app_delete_s11_procedure_update_bearer(ue_context_t * const ue_context)
+{
+  if (ue_context->s11_procedures) {
+    mme_app_s11_proc_t *s11_proc = NULL;
+
+    LIST_FOREACH(s11_proc, ue_context->s11_procedures, entries) {
+      if (MME_APP_S11_PROC_TYPE_UPDATE_BEARER == s11_proc->type) {
+        LIST_REMOVE(s11_proc, entries);
+        mme_app_free_s11_procedure_update_bearer(&s11_proc);
         return;
       }
     }
@@ -215,11 +268,22 @@ static void mme_app_free_s11_procedure_create_bearer(mme_app_s11_proc_t **s11_pr
 }
 
 //------------------------------------------------------------------------------
+static void mme_app_free_s11_procedure_update_bearer(mme_app_s11_proc_t **s11_proc_cbr)
+{
+  // DO here specific releases (memory,etc)
+  /** Remove the bearer contexts to be setup. */
+  mme_app_s11_proc_update_bearer_t ** s11_proc_update_bearer_pp = (mme_app_s11_proc_update_bearer_t**)s11_proc_cbr;
+  free_bearer_contexts_to_be_updated(&(*s11_proc_update_bearer_pp)->bcs_tbu);
+  free_wrapper((void**)s11_proc_update_bearer_pp);
+}
+
+//------------------------------------------------------------------------------
 static void mme_app_free_s11_procedure_delete_bearer(mme_app_s11_proc_t **s11_proc_cbr)
 {
   // DO here specific releases (memory,etc)
   /** Remove the bearer contexts to be setup. */
   mme_app_s11_proc_delete_bearer_t ** s11_proc_delete_bearer_pp = (mme_app_s11_proc_delete_bearer_t**)s11_proc_cbr;
+  free_bearer_contexts_to_be_deleted(&(*s11_proc_delete_bearer_pp)->bcs_failed);
   free_wrapper((void**)s11_proc_delete_bearer_pp);
 }
 

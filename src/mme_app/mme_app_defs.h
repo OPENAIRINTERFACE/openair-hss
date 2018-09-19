@@ -119,6 +119,8 @@ void  mme_app_handle_release_access_bearers_resp (const itti_s11_release_access_
 
 void mme_app_handle_s11_create_bearer_req        (itti_s11_create_bearer_request_t * create_bearer_request_pP);
 
+void mme_app_handle_s11_update_bearer_req        (itti_s11_update_bearer_request_t * update_bearer_request_pP);
+
 void mme_app_handle_s11_delete_bearer_req (    itti_s11_delete_bearer_request_t *  delete_bearer_request_pP);
 
 void mme_app_bearer_create_workflow (ue_context_t * const ue_context, const pdn_cid_t cid);

@@ -487,9 +487,9 @@ typedef struct bearer_context_to_be_updated_s {
 } bearer_context_to_be_updated_t;
 
 typedef struct bearer_contexts_to_be_updated_s {
-#define MSG_UPDATE_CREATE_SESSION_REQUEST_MAX_BEARER_CONTEXTS   11
+#define MSG_UPDATE_BEARER_REQUEST_MAX_BEARER_CONTEXTS   11
 uint8_t num_bearer_context;
-bearer_context_to_be_updated_t bearer_contexts[MSG_CREATE_SESSION_REQUEST_MAX_BEARER_CONTEXTS];    ///< Bearer Contexts to be created
+bearer_context_to_be_updated_t bearer_contexts[MSG_UPDATE_BEARER_REQUEST_MAX_BEARER_CONTEXTS];    ///< Bearer Contexts to be created
 ///< Several IEs with the same type and instance value shall be
 ///< included on the S4/S11 and S5/S8 interfaces as necessary
 ///< to represent a list of Bearers. One single IE shall be
@@ -511,8 +511,9 @@ typedef struct bearer_context_to_be_removed_s {
 } bearer_context_to_be_removed_t; // Within Create Session Request, Modify Bearer Request, Modify Access Bearers Request
 
 typedef struct bearer_contexts_to_be_removed_s {
+  #define MSG_DELETE_BEARER_REQUEST_MAX_BEARER_CONTEXTS   11
   uint8_t num_bearer_context;
-  bearer_context_to_be_removed_t bearer_contexts[MSG_CREATE_SESSION_REQUEST_MAX_BEARER_CONTEXTS];
+  bearer_context_to_be_removed_t bearer_contexts[MSG_DELETE_BEARER_REQUEST_MAX_BEARER_CONTEXTS];
 } bearer_contexts_to_be_removed_t;
 
 //-------------------------------------
@@ -637,11 +638,6 @@ typedef struct bearer_contexts_within_create_bearer_response_s {
   uint8_t num_bearer_context;
   bearer_context_within_create_bearer_response_t bearer_contexts[MSG_CREATE_BEARER_RESPONSE_MAX_BEARER_CONTEXTS];
 } bearer_contexts_within_create_bearer_response_t;
-
-//-------------------------------------
-// 7.2.15 Update Bearer Request
-//-------------------------------------
-#define MSG_UPDATE_BEARER_REQUEST_MAX_BEARER_CONTEXTS   11
 
 //-------------------------------------
 // 7.2.16 Update Bearer Response
@@ -848,6 +844,7 @@ typedef struct mme_ue_eps_pdn_connections_s {
 //----------------------------
 
 void free_bearer_contexts_to_be_created(bearer_contexts_to_be_created_t **bcs_tbc);
+void free_bearer_contexts_to_be_updated(bearer_contexts_to_be_updated_t **bcs_tbu);
 void free_mme_ue_eps_pdn_connections(mme_ue_eps_pdn_connections_t ** pdn_connections);
 void free_mm_context_eps(mm_context_eps_t ** ue_eps_mm_context);
 
