@@ -115,6 +115,15 @@ void nas_itti_activate_bearer_rej(
     const mme_ue_s1ap_id_t ue_idP,
     const ebi_t            ebi);
 
+void nas_itti_modify_bearer_cnf(
+    const mme_ue_s1ap_id_t ue_idP,
+    const ebi_t            ebi);
+
+void nas_itti_modify_bearer_rej(
+    const mme_ue_s1ap_id_t ue_idP,
+    const ebi_t            ebi,
+    const esm_cause_t      esm_cause);
+
 void nas_itti_dedicated_eps_bearer_deactivation_complete(
     const mme_ue_s1ap_id_t ue_idP,
     const ebi_t default_ebi,

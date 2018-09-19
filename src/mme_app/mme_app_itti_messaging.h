@@ -50,6 +50,13 @@ mme_app_send_s11_create_bearer_rsp (
   bearer_contexts_to_be_created_t * bcs_tbc);
 
 int
+mme_app_send_s11_update_bearer_rsp (
+  struct ue_context_s *const ue_context,
+  pdn_context_t       *pdn_ctx,
+  void                *trxn,
+  bearer_contexts_to_be_updated_t *bcs_tbu);
+
+int
 mme_app_send_s11_delete_bearer_rsp (
   struct ue_context_s *const ue_context,
   pdn_context_t       *pdn_ctx,

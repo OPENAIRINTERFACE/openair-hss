@@ -226,6 +226,11 @@ s11_mme_thread (
       }
       break;
 
+    case S11_UPDATE_BEARER_RESPONSE:{
+      s11_mme_update_bearer_response(&s11_mme_stack_handle, &received_message_p->ittiMsg.s11_update_bearer_response);
+    }
+    break;
+
     case S11_DELETE_BEARER_RESPONSE:{
       s11_mme_delete_bearer_response (&s11_mme_stack_handle, &received_message_p->ittiMsg.s11_delete_bearer_response);
       }

@@ -103,6 +103,9 @@ static const char                      *_esm_sap_primitive_str[] = {
   "ESM_DEDICATED_EPS_BEARER_CONTEXT_ACTIVATE_REQ",
   "ESM_DEDICATED_EPS_BEARER_CONTEXT_ACTIVATE_CNF",
   "ESM_DEDICATED_EPS_BEARER_CONTEXT_ACTIVATE_REJ",
+  "ESM_EPS_BEARER_CONTEXT_MODIFY_REQ",
+  "ESM_EPS_BEARER_CONTEXT_MODIFY_CNF",
+  "ESM_EPS_BEARER_CONTEXT_MODIFY_REJ",
   "ESM_DEDICATED_EPS_BEARER_CONTEXT_DEACTIVATE_REQ",
   "ESM_DEDICATED_EPS_BEARER_CONTEXT_DEACTIVATE_CNF",
   "ESM_EPS_BEARER_CONTEXT_MODIFY_REQ",
@@ -357,6 +360,41 @@ esm_sap_send (esm_sap_t * msg)
   case ESM_DEDICATED_EPS_BEARER_CONTEXT_ACTIVATE_REJ:
     break;
 
+  case ESM_EPS_BEARER_CONTEXT_MODIFY_REQ: {
+     esm_eps_modify_bearer_req_t* bearer_modify = &msg->data.eps_bearer_context_modify;
+     if (msg->is_standalone) {
+       esm_cause_t esm_cause;
+       /** Handle each bearer context separately. */
+       for(int num_bc = 0; num_bc < bearer_modify->bcs_to_be_updated->num_bearer_context; num_bc++){
+         rc = esm_proc_modify_eps_bearer_context (msg->ctx,     /**< Just setting the state as MODIFY_PENDING. */
+             bearer_modify->pti,
+             bearer_modify->cid,
+             &bearer_modify->bcs_to_be_updated->bearer_contexts[num_bc],
+             &esm_cause);
+         if (rc != RETURNok) {   /**< We assume that no ESM procedure exists. */
+           OAILOG_ERROR (LOG_NAS_ESM, "ESM-SAP   - Failed to handle CN modify bearer context procedure due SYSTEM_FAILURE for num_bearer %d!\n",
+               _esm_sap_primitive_str[primitive - ESM_START - 1], primitive, num_bc);
+           /** Send a NAS ITTI directly for the specific bearer. This will reduce the number of bearers to be processed. */
+           nas_itti_modify_bearer_rej(msg->ue_id, bearer_modify->bcs_to_be_updated->bearer_contexts[num_bc].eps_bearer_id, ESM_CAUSE_PROTOCOL_ERROR); /**< Assuming, no other CN bearer procedure will intervere. */
+           continue; /**< The remaining must also be rejected, such that the procedure has no pending elements anymore. */
+         }
+         OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Successfully modified bearer context with ebi %d for ue " MME_UE_S1AP_ID_FMT "!\n",
+             bearer_modify->bcs_to_be_updated->bearer_contexts[num_bc].eps_bearer_id, ue_context->mme_ue_s1ap_id);
+         /* Send Modify Bearer Context Request */
+         rc = _esm_sap_send(MODIFY_EPS_BEARER_CONTEXT_REQUEST,
+             msg->is_standalone, msg->ctx, (proc_tid_t)bearer_modify->pti, bearer_modify->bcs_to_be_updated->bearer_contexts[num_bc].eps_bearer_id,
+             &msg->data, msg->send);
+       }
+     }
+   }
+   break;
+
+   case ESM_EPS_BEARER_CONTEXT_MODIFY_CNF:
+     break;
+
+   case ESM_EPS_BEARER_CONTEXT_MODIFY_REJ:
+     break;
+
   case ESM_DEDICATED_EPS_BEARER_CONTEXT_DEACTIVATE_REQ:{
     esm_eps_deactivate_bearer_req_t* bearer_deactivate = &msg->data.eps_dedicated_bearer_context_deactivate;
     if (msg->is_standalone) {
@@ -382,15 +420,6 @@ esm_sap_send (esm_sap_t * msg)
     }
   }
   break;
-
-  case ESM_EPS_BEARER_CONTEXT_MODIFY_REQ:
-    break;
-
-  case ESM_EPS_BEARER_CONTEXT_MODIFY_CNF:
-    break;
-
-  case ESM_EPS_BEARER_CONTEXT_MODIFY_REJ:
-    break;
 
   case ESM_UNITDATA_IND:
     /** Check that an EMM context exists, if not disregard the message. */
@@ -1077,8 +1106,41 @@ _esm_sap_send (
     /** Exit the case always here. */
     break;
 
-  case MODIFY_EPS_BEARER_CONTEXT_REQUEST:
-    break;
+  case MODIFY_EPS_BEARER_CONTEXT_REQUEST:{
+    const   esm_eps_modify_bearer_req_t *msg = &data->eps_bearer_context_modify;
+
+    EpsQualityOfService eps_qos = {0};
+    /** Sending a EBR-Request per bearer context. */
+    for(int num_bc = 0; num_bc < msg->bcs_to_be_updated->num_bearer_context; num_bc++){
+      if(msg->bcs_to_be_updated->bearer_contexts[num_bc].eps_bearer_id == ebi){
+        /** Found the EBI. */
+        if(msg->bcs_to_be_updated->bearer_contexts[num_bc].tft.numberofpacketfilters > 1){
+          memset((void*)&eps_qos, 0, sizeof(eps_qos));
+        }
+        rc = qos_params_to_eps_qos(msg->bcs_to_be_updated->bearer_contexts[num_bc].bearer_level_qos.qci,
+            msg->bcs_to_be_updated->bearer_contexts[num_bc].bearer_level_qos.mbr.br_dl,
+            msg->bcs_to_be_updated->bearer_contexts[num_bc].bearer_level_qos.mbr.br_ul,
+
+            msg->bcs_to_be_updated->bearer_contexts[num_bc].bearer_level_qos.gbr.br_dl,
+            msg->bcs_to_be_updated->bearer_contexts[num_bc].bearer_level_qos.gbr.br_ul,
+            &eps_qos, false);
+        if (RETURNok == rc) {
+          rc = esm_send_modify_eps_bearer_context_request (
+              pti, msg->bcs_to_be_updated->bearer_contexts[num_bc].eps_bearer_id,
+              &esm_msg.activate_dedicated_eps_bearer_context_request, &eps_qos,
+              &msg->bcs_to_be_updated->bearer_contexts[num_bc].tft,
+              &msg->bcs_to_be_updated->bearer_contexts[num_bc].pco);
+
+          esm_procedure = esm_proc_modify_eps_bearer_context_request; /**< Not the procedure. */
+        }
+        /** Exit the loop directly. */
+        OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Successfully sent request to modify bearer for ebi %d for UE " MME_UE_S1AP_ID_FMT " . \n",
+            ebi, emm_context->ue_id);
+        break;
+      }
+    }
+  }
+  break;
 
   case DEACTIVATE_EPS_BEARER_CONTEXT_REQUEST:
     /**

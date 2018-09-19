@@ -141,6 +141,10 @@ void mme_app_handle_activate_bearer_cnf (itti_mme_app_activate_bearer_cnf_t   * 
 
 void mme_app_handle_activate_bearer_rej (itti_mme_app_activate_bearer_rej_t   * const activate_bearer_rej);
 
+void mme_app_handle_modify_bearer_cnf (itti_mme_app_modify_bearer_cnf_t   * const modify_bearer_cnf);
+
+void mme_app_handle_modify_bearer_rej (itti_mme_app_modify_bearer_rej_t   * const modify_bearer_rej);
+
 void mme_app_handle_deactivate_bearer_cnf (itti_mme_app_deactivate_bearer_cnf_t   * const deactivate_bearer_cnf);
 
 void mme_app_trigger_mme_initiated_dedicated_bearer_deactivation_procedure (ue_context_t * const ue_context, const pdn_cid_t cid);

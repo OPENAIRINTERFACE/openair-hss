@@ -35,9 +35,9 @@ MESSAGE_DEF(MME_APP_ACTIVATE_BEARER_REQ           , MESSAGE_PRIORITY_MED, itti_m
 MESSAGE_DEF(MME_APP_ACTIVATE_BEARER_CNF           , MESSAGE_PRIORITY_MED, itti_mme_app_activate_bearer_cnf_t  ,  mme_app_activate_bearer_cnf)
 MESSAGE_DEF(MME_APP_ACTIVATE_BEARER_REJ           , MESSAGE_PRIORITY_MED, itti_mme_app_activate_bearer_rej_t  ,  mme_app_activate_bearer_rej)
 
-MESSAGE_DEF(MME_APP_UPDATE_BEARER_REQ             , MESSAGE_PRIORITY_MED, itti_mme_app_update_bearer_req_t  ,  mme_app_update_bearer_req)
-MESSAGE_DEF(MME_APP_UPDATE_BEARER_CNF             , MESSAGE_PRIORITY_MED, itti_mme_app_update_bearer_cnf_t  ,  mme_app_update_bearer_cnf)
-MESSAGE_DEF(MME_APP_UPDATE_BEARER_REJ             , MESSAGE_PRIORITY_MED, itti_mme_app_update_bearer_rej_t  ,  mme_app_update_bearer_rej)
+MESSAGE_DEF(MME_APP_MODIFY_BEARER_REQ             , MESSAGE_PRIORITY_MED, itti_mme_app_modify_bearer_req_t  ,  mme_app_modify_bearer_req)
+MESSAGE_DEF(MME_APP_MODIFY_BEARER_CNF             , MESSAGE_PRIORITY_MED, itti_mme_app_modify_bearer_cnf_t  ,  mme_app_modify_bearer_cnf)
+MESSAGE_DEF(MME_APP_MODIFY_BEARER_REJ             , MESSAGE_PRIORITY_MED, itti_mme_app_modify_bearer_rej_t  ,  mme_app_modify_bearer_rej)
 
 MESSAGE_DEF(MME_APP_DEACTIVATE_BEARER_REQ         , MESSAGE_PRIORITY_MED, itti_mme_app_deactivate_bearer_req_t  ,  mme_app_deactivate_bearer_req)
 MESSAGE_DEF(MME_APP_DEACTIVATE_BEARER_CNF         , MESSAGE_PRIORITY_MED, itti_mme_app_deactivate_bearer_cnf_t  ,  mme_app_deactivate_bearer_cnf)

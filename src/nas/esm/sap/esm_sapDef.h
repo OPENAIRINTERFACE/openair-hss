@@ -61,6 +61,9 @@ typedef enum esm_primitive_s {
   ESM_DEDICATED_EPS_BEARER_CONTEXT_ACTIVATE_REQ,
   ESM_DEDICATED_EPS_BEARER_CONTEXT_ACTIVATE_CNF,
   ESM_DEDICATED_EPS_BEARER_CONTEXT_ACTIVATE_REJ,
+  ESM_EPS_BEARER_CONTEXT_UPDATE_REQ,
+  ESM_EPS_BEARER_CONTEXT_UPDATE_CNF,
+  ESM_EPS_BEARER_CONTEXT_UPDATE_REJ,
   ESM_DEDICATED_EPS_BEARER_CONTEXT_DEACTIVATE_REQ,
   ESM_DEDICATED_EPS_BEARER_CONTEXT_DEACTIVATE_CNF,
   ESM_EPS_BEARER_CONTEXT_MODIFY_REQ,
@@ -88,6 +91,7 @@ typedef enum esm_primitive_s {
 /****************************************************************************/
 
 typedef struct itti_mme_app_activate_bearer_req_s   esm_eps_activate_bearer_req_t;
+typedef struct itti_mme_app_modify_bearer_req_s     esm_eps_modify_bearer_req_t;
 typedef struct itti_mme_app_deactivate_bearer_req_s esm_eps_deactivate_bearer_req_t;
 
 /*
@@ -185,6 +189,7 @@ typedef union {
   esm_pdn_connectivity_t pdn_connect;
   esm_pdn_disconnect_t pdn_disconnect;
   esm_eps_activate_bearer_req_t     eps_dedicated_bearer_context_activate;
+  esm_eps_modify_bearer_req_t       eps_bearer_context_modify;
   esm_eps_deactivate_bearer_req_t   eps_dedicated_bearer_context_deactivate;
   esm_bearer_resource_allocate_rej_t    esm_bearer_resource_allocate_rej;
 } esm_sap_data_t;

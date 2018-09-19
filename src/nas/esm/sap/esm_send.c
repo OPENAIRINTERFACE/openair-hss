@@ -418,6 +418,69 @@ esm_send_activate_dedicated_eps_bearer_context_request (
 
 /****************************************************************************
  **                                                                        **
+ ** Name:    esm_send_modify_eps_bearer_context_request()  **
+ **                                                                        **
+ ** Description: Builds Modify EPS Bearer Context Request message  **
+ **                                                                        **
+ **      The modify EPS bearer context request message **
+ **      is sent by the network to the UE to request modification of **
+ **      an EPS bearer context which is already activated..          **
+ **                                                                        **
+ ** Inputs:  pti:       Procedure transaction identity             **
+ **      ebi:       EPS bearer identity                        **
+ **      qos:       EPS quality of service                     **
+ **      tft:       Traffic flow template                      **
+ **      Others:    None                                       **
+ **                                                                        **
+ ** Outputs:     msg:       The ESM message to be sent                 **
+ **      Return:    RETURNok, RETURNerror                      **
+ **      Others:    None                                       **
+ **                                                                        **
+ ***************************************************************************/
+int
+esm_send_modify_eps_bearer_context_request (
+  pti_t pti,
+  ebi_t ebi,
+  modify_eps_bearer_context_request_msg * msg,
+  const EpsQualityOfService * qos,
+  traffic_flow_template_t *tft,
+  protocol_configuration_options_t *pco)
+{
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
+  /*
+   * Mandatory - ESM message header
+   */
+  msg->protocoldiscriminator = EPS_SESSION_MANAGEMENT_MESSAGE;
+  msg->epsbeareridentity = ebi;
+  msg->messagetype = MODIFY_EPS_BEARER_CONTEXT_REQUEST;
+  msg->proceduretransactionidentity = pti;
+
+  // todo: qos/newQos/epsQos
+//  /*
+//   * Mandatory - EPS QoS
+//   */
+//  msg->epsqos = *qos;
+  /*
+   * Mandatory - traffic flow template
+   */
+  if (tft) {
+    memcpy(&msg->tft, tft, sizeof(traffic_flow_template_t));
+  }
+
+  /*
+   * Optional
+   */
+  msg->presencemask = 0;
+  if (pco) {
+    memcpy(&msg->protocolconfigurationoptions, pco, sizeof(protocol_configuration_options_t));
+    msg->presencemask |= MODIFY_EPS_BEARER_CONTEXT_REQUEST_PROTOCOL_CONFIGURATION_OPTIONS_PRESENT;
+  }
+  OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Send Modify EPS Bearer Context " "Request message (pti=%d, ebi=%d). \n", msg->proceduretransactionidentity, msg->epsbeareridentity);
+  OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);
+}
+
+/****************************************************************************
+ **                                                                        **
  ** Name:    esm_send_deactivate_eps_bearer_context_request()          **
  **                                                                        **
  ** Description: Builds Deactivate EPS Bearer Context Request message      **

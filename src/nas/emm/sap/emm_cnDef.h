@@ -56,6 +56,7 @@ typedef enum emmcn_primitive_s {
   _EMMCN_PDN_CONNECTIVITY_FAIL,// LG
   _EMMCN_PDN_DISCONNECT_RES,// LG
   _EMMCN_ACTIVATE_DEDICATED_BEARER_REQ,// LG
+  _EMMCN_MODIFY_BEARER_REQ,// LG
   _EMMCN_DEACTIVATE_DEDICATED_BEARER_REQ,// LG
   _EMMCN_IMPLICIT_DETACH_UE,
   _EMMCN_SMC_PROC_FAIL,
@@ -113,6 +114,7 @@ typedef struct itti_nas_pdn_connectivity_rsp_s  emm_cn_pdn_res_t;
 typedef struct itti_nas_pdn_connectivity_fail_s emm_cn_pdn_fail_t;
 typedef struct itti_nas_pdn_disconnect_rsp_s    emm_cn_pdn_disconnect_res_t;
 typedef struct itti_mme_app_activate_bearer_req_s emm_cn_activate_dedicated_bearer_req_t;
+typedef struct itti_mme_app_modify_bearer_req_s emm_cn_modify_bearer_req_t;
 typedef struct itti_mme_app_deactivate_bearer_req_s emm_cn_deactivate_dedicated_bearer_req_t;
 
 /** NAS UE context response. */
@@ -149,6 +151,7 @@ typedef struct emm_mme_ul_s {
     emm_cn_pdn_fail_t       *emm_cn_pdn_fail;
     emm_cn_pdn_disconnect_res_t *emm_cn_pdn_disconnect_res;
     emm_cn_activate_dedicated_bearer_req_t *activate_dedicated_bearer_req;
+    emm_cn_modify_bearer_req_t *modify_bearer_req;
     emm_cn_deactivate_dedicated_bearer_req_t *deactivate_dedicated_bearer_req;
     emm_cn_implicit_detach_ue_t   emm_cn_implicit_detach;
     emm_cn_smc_fail_t        *smc_fail;

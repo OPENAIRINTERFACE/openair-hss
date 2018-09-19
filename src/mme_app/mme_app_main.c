@@ -114,6 +114,16 @@ void *mme_app_thread (void *args)
     }
     break;
 
+    case MME_APP_MODIFY_BEARER_CNF:{
+      mme_app_handle_modify_bearer_cnf (&MME_APP_MODIFY_BEARER_CNF (received_message_p));
+    }
+    break;
+
+    case MME_APP_MODIFY_BEARER_REJ:{
+      mme_app_handle_modify_bearer_rej (&MME_APP_MODIFY_BEARER_REJ (received_message_p));
+    }
+    break;
+
     case MME_APP_DEACTIVATE_BEARER_CNF:{
       mme_app_handle_deactivate_bearer_cnf (&MME_APP_DEACTIVATE_BEARER_CNF (received_message_p));
     }

@@ -115,10 +115,10 @@ void itti_free_msg_content (MessageDef * const message_p)
   }
   break;
 
-  case MME_APP_UPDATE_BEARER_REQ: {
+  case MME_APP_MODIFY_BEARER_REQ: {
     /** Bearer Context to Be updated. */
-    if(message_p->ittiMsg.mme_app_update_bearer_req.bcs_to_be_updated){
-      free_bearer_contexts_to_be_updated(&message_p->ittiMsg.mme_app_update_bearer_req.bcs_to_be_updated);
+    if(message_p->ittiMsg.mme_app_modify_bearer_req.bcs_to_be_updated){
+      free_bearer_contexts_to_be_updated(&message_p->ittiMsg.mme_app_modify_bearer_req.bcs_to_be_updated);
     }
   }
   break;

@@ -670,6 +670,97 @@ mme_app_send_s11_create_bearer_rsp (
 
 //------------------------------------------------------------------------------
 int
+mme_app_send_s11_update_bearer_rsp (
+  struct ue_context_s *const ue_context,
+  pdn_context_t       *pdn_ctx,
+  void                *trxn,
+  bearer_contexts_to_be_updated_t *bcs_tbu)
+{
+  /*
+   * Keep the identifier to the default APN.
+   */
+  context_identifier_t                    context_identifier = 0;
+  MessageDef                             *message_p = NULL;
+  bearer_context_t                       *bc_success = NULL;
+  int                                     rc = RETURNok;
+
+  // todo: handover flag in operation-identifier?!
+
+  OAILOG_FUNC_IN (LOG_MME_APP);
+  DevAssert (ue_context);
+  DevAssert(bcs_tbu);
+  DevAssert(pdn_ctx);
+
+  OAILOG_DEBUG (LOG_MME_APP, "Sending Update Bearer Response for imsi " IMSI_64_FMT "\n", ue_context->imsi);
+
+  message_p = itti_alloc_new_message (TASK_MME_APP, S11_UPDATE_BEARER_RESPONSE);
+  AssertFatal (message_p , "itti_alloc_new_message Failed");
+  itti_s11_update_bearer_response_t *s11_update_bearer_response = &message_p->ittiMsg.s11_update_bearer_response;
+  s11_update_bearer_response->local_teid = ue_context->mme_teid_s11;
+  s11_update_bearer_response->trxn = trxn;
+  s11_update_bearer_response->cause.cause_value = 0;
+
+  /** Iterate through the bearers to be created and check which ones where established. */
+  for(int num_bc = 0; num_bc < bcs_tbu->num_bearer_context; num_bc++){
+    /** Check if the bearer is a session bearer. */
+    bc_success = mme_app_get_session_bearer_context(pdn_ctx, bcs_tbu->bearer_contexts[num_bc].eps_bearer_id);
+    if(bc_success){
+      OAILOG_DEBUG (LOG_MME_APP, "Bearer with ebi %d successfully updated for ueId " MME_UE_S1AP_ID_FMT ". Current UBResp cause value %d. \n",
+          ue_context->mme_ue_s1ap_id, s11_update_bearer_response->cause);
+      if(s11_update_bearer_response->cause.cause_value == REQUEST_REJECTED)
+        s11_update_bearer_response->cause.cause_value= REQUEST_ACCEPTED_PARTIALLY;
+      if(!s11_update_bearer_response->cause.cause_value)
+        s11_update_bearer_response->cause.cause_value = REQUEST_ACCEPTED;
+      OAILOG_DEBUG (LOG_MME_APP, "Bearer with ebi %d successfully updated for ueId " MME_UE_S1AP_ID_FMT ". New UBResp cause value %d. \n",
+             ue_context->mme_ue_s1ap_id, s11_update_bearer_response->cause.cause_value);
+
+      /** The error case is at least PARTIALLY ACCEPTED. */
+      s11_update_bearer_response->bearer_contexts.bearer_contexts[num_bc].eps_bearer_id     = bcs_tbu->bearer_contexts[num_bc].eps_bearer_id;
+      s11_update_bearer_response->bearer_contexts.bearer_contexts[num_bc].cause.cause_value = REQUEST_ACCEPTED;
+//      //  FTEID eNB
+//      memcpy(&s11_create_bearer_response->bearer_contexts.bearer_contexts[num_bc].s1u_enb_fteid,
+//          &bc_success->enb_fteid_s1u, sizeof(bc_success->enb_fteid_s1u));
+//      // FTEID SGW S1U
+//      memcpy(&s11_create_bearer_response->bearer_contexts.bearer_contexts[num_bc].s1u_sgw_fteid,
+//          &bc_success->s_gw_fteid_s1u, sizeof(bc_success->s_gw_fteid_s1u));       ///< This IE shall be sent on the S11 interface. It shall be used
+      s11_update_bearer_response->bearer_contexts.num_bearer_context++;
+    }else{
+      OAILOG_WARNING (LOG_MME_APP, "Bearer with ebi %d could not be established for ueId " MME_UE_S1AP_ID_FMT ". Current UBResp cause value %d. \n",
+            ue_context->mme_ue_s1ap_id, s11_update_bearer_response->cause);
+        if(s11_update_bearer_response->cause.cause_value == REQUEST_ACCEPTED)
+          s11_update_bearer_response->cause.cause_value = REQUEST_ACCEPTED_PARTIALLY;
+        if(!s11_update_bearer_response->cause.cause_value)
+          s11_update_bearer_response->cause.cause_value = REQUEST_REJECTED;
+        OAILOG_DEBUG (LOG_MME_APP, "Bearer with ebi %d could not be established for ueId " MME_UE_S1AP_ID_FMT ". New UBResp cause value %d. \n",
+               ue_context->mme_ue_s1ap_id, s11_update_bearer_response->cause.cause_value);
+
+        s11_update_bearer_response->bearer_contexts.bearer_contexts[num_bc].eps_bearer_id     = 0;
+        s11_update_bearer_response->bearer_contexts.bearer_contexts[num_bc].cause.cause_value = REQUEST_REJECTED; // todo: assuming this was due ESM_CAUSE_EPS_BEARER_IDENTITY_UNKNOWN --> the cause should trigger the sae-gw to release the resources
+//        // FTEID SGW S1U
+//        memcpy(&s11_update_bearer_response->bearer_contexts.bearer_contexts[num_bc].s1u_sgw_fteid,
+//            &bcs_tbu->bearer_contexts[num_bc].s1u_sgw_fteid, sizeof(bcs_tbu->bearer_contexts[num_bc].s1u_sgw_fteid));       ///< This IE shall be sent on the S11 interface. It shall be used
+        s11_update_bearer_response->bearer_contexts.num_bearer_context++;
+    }
+  }
+  s11_update_bearer_response->teid = pdn_ctx->s_gw_teid_s11_s4;
+////  ////  mme_config_read_lock (&mme_config);
+////////  session_request_p->peer_ip = mme_config.ipv4.sgw_s11;
+////////  mme_config_unlock (&mme_config);
+//////  // TODO perform SGW selection
+//////  // Actually, since S and P GW are bundled together, there is no PGW selection (based on PGW id in ULA, or DNS query based on FQDN)
+////  if (1) {
+////    // TODO prototype may change
+////    mme_app_select_sgw(serving_tai, &session_request_p->peer_ip);
+////  }
+
+  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME,  MSC_S11_MME ,
+      NULL, 0, "0 S11_UPDATE_BEARER_RESPONSE teid %u", s11_update_bearer_response->teid);
+  itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
+  OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
+}
+
+//------------------------------------------------------------------------------
+int
 mme_app_send_s11_delete_bearer_rsp (
   struct ue_context_s *const ue_context,
   pdn_context_t       *pdn_ctx,

@@ -84,6 +84,10 @@ static void *nas_intertask_interface (void *args_p)
       nas_proc_activate_dedicated_bearer(&MME_APP_ACTIVATE_BEARER_REQ (received_message_p));
       break;
 
+    case MME_APP_MODIFY_BEARER_REQ:
+      nas_proc_modify_bearer(&MME_APP_MODIFY_BEARER_REQ (received_message_p));
+      break;
+
     case MME_APP_DEACTIVATE_BEARER_REQ:
       nas_proc_deactivate_dedicated_bearer(&MME_APP_DEACTIVATE_BEARER_REQ (received_message_p));
       break;

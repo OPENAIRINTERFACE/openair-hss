@@ -184,6 +184,24 @@ int esm_proc_dedicated_eps_bearer_context_reject(emm_data_context_t * emm_contex
 
 /*
  * --------------------------------------------------------------------------
+ *      EPS bearer context modification procedure
+ * --------------------------------------------------------------------------
+ */
+
+int esm_proc_modify_eps_bearer_context( emm_data_context_t * emm_context,
+    const proc_tid_t   pti,                  // todo: will always be 0 for network initiated bearer establishment.
+    const pdn_cid_t    pdn_cid,              /**< todo: Per APN for now. */
+    bearer_context_to_be_updated_t *bc_tbu,
+    esm_cause_t *esm_cause);
+
+int esm_proc_modify_eps_bearer_context_request(const bool is_standalone, emm_data_context_t * const emm_context, const ebi_t ebi, STOLEN_REF bstring *msg, const bool ue_triggered);
+
+int esm_proc_modify_eps_bearer_context_accept(emm_data_context_t * emm_context, ebi_t ebi, esm_cause_t *esm_cause);
+int esm_proc_modify_eps_bearer_context_reject(emm_data_context_t * emm_context, ebi_t ebi, esm_cause_t *esm_cause);
+
+
+/*
+ * --------------------------------------------------------------------------
  *      EPS bearer context deactivation procedure
  * --------------------------------------------------------------------------
  */
