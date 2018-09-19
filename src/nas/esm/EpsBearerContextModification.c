@@ -351,7 +351,7 @@ esm_proc_modify_eps_bearer_context_reject (
        */
       *esm_cause = ESM_CAUSE_PROTOCOL_ERROR;
     }
-    nas_itti_modify_bearer_rej(ue_id, ebi, esm_cause); /**< The SAE-GW should release the cause, too. */
+    nas_itti_modify_bearer_rej(ue_id, ebi); /**< The SAE-GW should release the cause, too. */
   }
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
 }

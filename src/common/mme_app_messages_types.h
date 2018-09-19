@@ -159,7 +159,6 @@ typedef struct itti_mme_app_modify_bearer_rej_s {
   /* UE identifier */
   mme_ue_s1ap_id_t                      ue_id;
   ebi_t                                 ebi;
-  esm_cause_t                           esm_cause;
 } itti_mme_app_modify_bearer_rej_t;
 
 typedef struct itti_mme_app_deactivate_bearer_req_s {

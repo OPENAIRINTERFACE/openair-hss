@@ -158,14 +158,12 @@ void nas_itti_modify_bearer_cnf(
 //------------------------------------------------------------------------------
 void nas_itti_modify_bearer_rej(
     const mme_ue_s1ap_id_t ue_idP,
-    const ebi_t            ebi,
-    const esm_cause_t      esm_cause)
+    const ebi_t            ebi)
 {
   OAILOG_FUNC_IN(LOG_NAS);
   MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_MME, MME_APP_MODIFY_BEARER_REJ);
   MME_APP_MODIFY_BEARER_REJ (message_p).ue_id   = ue_idP;
   MME_APP_MODIFY_BEARER_REJ (message_p).ebi     = ebi;
-  MME_APP_MODIFY_BEARER_REJ (message_p).esm_cause = esm_cause;
   MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_MMEAPP_MME, NULL, 0, "0 MME_APP_MODIFY_BEARER_REJ ue id " MME_UE_S1AP_ID_FMT, ue_idP);
   itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT(LOG_NAS);

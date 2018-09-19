@@ -2061,10 +2061,17 @@ void mme_app_handle_modify_bearer_rej (itti_mme_app_modify_bearer_rej_t   * cons
    */
   /** Assert that the bearer context is already removed. */
   mme_app_get_session_bearer_context_from_all(ue_context, modify_bearer_rej->ebi, &bc_failed);
-  DevAssert(bc_failed);
+  if(!bc_failed){
+    OAILOG_WARNING(LOG_MME_APP, "The bearer with ebi %d for mme_ue_s1ap_id of UE: " MME_UE_S1AP_ID_FMT " was removed. \n", modify_bearer_rej->ebi, modify_bearer_rej->ue_id);
+  }else{
+    for(int num_bc = 0; num_bc < s11_proc_update_bearer->bcs_tbu->num_bearer_context; num_bc++ ){
+      if(s11_proc_update_bearer->bcs_tbu->bearer_contexts[num_bc].eps_bearer_id == modify_bearer_rej->ebi){
+        s11_proc_update_bearer->bcs_tbu->bearer_contexts[num_bc].cause.cause_value = REQUEST_REJECTED; /**< No need to check the cause. Bearer context won't be removed. */
+      }
+    }
+  }
   /** No matter if the S1U-ENB TEID has arrived or not, decrease the number or pending bearers in the s11 dedicated bearer procedure. */
   s11_proc_update_bearer->num_bearers_unhandled--;
-
   if(s11_proc_update_bearer->num_bearers_unhandled){
     OAILOG_INFO(LOG_MME_APP, "Still %d unhandled bearers exist for s11 update bearer procedure for UE: " MME_UE_S1AP_ID_FMT ". Not sending UBResp back yet. \n",
         s11_proc_update_bearer->num_bearers_unhandled, ue_context->mme_ue_s1ap_id);

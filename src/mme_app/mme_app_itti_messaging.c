@@ -700,6 +700,7 @@ mme_app_send_s11_update_bearer_rsp (
   s11_update_bearer_response->trxn = trxn;
   s11_update_bearer_response->cause.cause_value = 0;
 
+  // todo: pco, uli
   /** Iterate through the bearers to be created and check which ones where established. */
   for(int num_bc = 0; num_bc < bcs_tbu->num_bearer_context; num_bc++){
     /** Check if the bearer is a session bearer. */
@@ -707,22 +708,26 @@ mme_app_send_s11_update_bearer_rsp (
     if(bc_success){
       OAILOG_DEBUG (LOG_MME_APP, "Bearer with ebi %d successfully updated for ueId " MME_UE_S1AP_ID_FMT ". Current UBResp cause value %d. \n",
           ue_context->mme_ue_s1ap_id, s11_update_bearer_response->cause);
-      if(s11_update_bearer_response->cause.cause_value == REQUEST_REJECTED)
-        s11_update_bearer_response->cause.cause_value= REQUEST_ACCEPTED_PARTIALLY;
-      if(!s11_update_bearer_response->cause.cause_value)
-        s11_update_bearer_response->cause.cause_value = REQUEST_ACCEPTED;
-      OAILOG_DEBUG (LOG_MME_APP, "Bearer with ebi %d successfully updated for ueId " MME_UE_S1AP_ID_FMT ". New UBResp cause value %d. \n",
-             ue_context->mme_ue_s1ap_id, s11_update_bearer_response->cause.cause_value);
+      /** Check the cause of the bearer value. */
+      if(bcs_tbu->bearer_contexts[num_bc].cause.cause_value == REQUEST_ACCEPTED){
+        if(s11_update_bearer_response->cause.cause_value == REQUEST_REJECTED)
+          s11_update_bearer_response->cause.cause_value= REQUEST_ACCEPTED_PARTIALLY;
+        if(!s11_update_bearer_response->cause.cause_value)
+          s11_update_bearer_response->cause.cause_value = REQUEST_ACCEPTED;
+      }else{
+        if(s11_update_bearer_response->cause.cause_value == REQUEST_ACCEPTED)
+          s11_update_bearer_response->cause.cause_value = REQUEST_ACCEPTED_PARTIALLY;
+        if(!s11_update_bearer_response->cause.cause_value)
+          s11_update_bearer_response->cause.cause_value = REQUEST_REJECTED;
+      }
+      OAILOG_DEBUG (LOG_MME_APP, "Bearer with ebi %d updated with result code %d for ueId " MME_UE_S1AP_ID_FMT ". New UBResp cause value %d. \n",
+          bcs_tbu->bearer_contexts[num_bc].eps_bearer_id, bcs_tbu->bearer_contexts[num_bc].cause, ue_context->mme_ue_s1ap_id, s11_update_bearer_response->cause.cause_value);
 
       /** The error case is at least PARTIALLY ACCEPTED. */
       s11_update_bearer_response->bearer_contexts.bearer_contexts[num_bc].eps_bearer_id     = bcs_tbu->bearer_contexts[num_bc].eps_bearer_id;
-      s11_update_bearer_response->bearer_contexts.bearer_contexts[num_bc].cause.cause_value = REQUEST_ACCEPTED;
-//      //  FTEID eNB
-//      memcpy(&s11_create_bearer_response->bearer_contexts.bearer_contexts[num_bc].s1u_enb_fteid,
-//          &bc_success->enb_fteid_s1u, sizeof(bc_success->enb_fteid_s1u));
-//      // FTEID SGW S1U
-//      memcpy(&s11_create_bearer_response->bearer_contexts.bearer_contexts[num_bc].s1u_sgw_fteid,
-//          &bc_success->s_gw_fteid_s1u, sizeof(bc_success->s_gw_fteid_s1u));       ///< This IE shall be sent on the S11 interface. It shall be used
+      s11_update_bearer_response->bearer_contexts.bearer_contexts[num_bc].cause.cause_value = bcs_tbu->bearer_contexts[num_bc].cause.cause_value;
+      // todo: pco
+      /** No FTEIDs to be set. */
       s11_update_bearer_response->bearer_contexts.num_bearer_context++;
     }else{
       OAILOG_WARNING (LOG_MME_APP, "Bearer with ebi %d could not be established for ueId " MME_UE_S1AP_ID_FMT ". Current UBResp cause value %d. \n",
@@ -733,12 +738,8 @@ mme_app_send_s11_update_bearer_rsp (
           s11_update_bearer_response->cause.cause_value = REQUEST_REJECTED;
         OAILOG_DEBUG (LOG_MME_APP, "Bearer with ebi %d could not be established for ueId " MME_UE_S1AP_ID_FMT ". New UBResp cause value %d. \n",
                ue_context->mme_ue_s1ap_id, s11_update_bearer_response->cause.cause_value);
-
-        s11_update_bearer_response->bearer_contexts.bearer_contexts[num_bc].eps_bearer_id     = 0;
-        s11_update_bearer_response->bearer_contexts.bearer_contexts[num_bc].cause.cause_value = REQUEST_REJECTED; // todo: assuming this was due ESM_CAUSE_EPS_BEARER_IDENTITY_UNKNOWN --> the cause should trigger the sae-gw to release the resources
-//        // FTEID SGW S1U
-//        memcpy(&s11_update_bearer_response->bearer_contexts.bearer_contexts[num_bc].s1u_sgw_fteid,
-//            &bcs_tbu->bearer_contexts[num_bc].s1u_sgw_fteid, sizeof(bcs_tbu->bearer_contexts[num_bc].s1u_sgw_fteid));       ///< This IE shall be sent on the S11 interface. It shall be used
+        s11_update_bearer_response->bearer_contexts.bearer_contexts[num_bc].eps_bearer_id     = bcs_tbu->bearer_contexts[num_bc].eps_bearer_id;
+        s11_update_bearer_response->bearer_contexts.bearer_contexts[num_bc].cause.cause_value = NO_RESOURCES_AVAILABLE; /**<: This was due ESM_CAUSE_EPS_BEARER_IDENTITY_UNKNOWN --> the cause should trigger the sae-gw to release the EBI. */
         s11_update_bearer_response->bearer_contexts.num_bearer_context++;
     }
   }
