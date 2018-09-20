@@ -110,15 +110,6 @@ int s1ap_mme_handle_erab_release_indication (
     const sctp_stream_id_t stream,
     struct s1ap_message_s *message);
 
-int s1ap_mme_handle_erab_setup_failure (const sctp_assoc_id_t assoc_id,
-    const sctp_stream_id_t stream, struct s1ap_message_s *message);
-
-int s1ap_mme_handle_erab_modify_failure (const sctp_assoc_id_t assoc_id,
-    const sctp_stream_id_t stream, struct s1ap_message_s *message);
-
-int s1ap_mme_handle_erab_release_failure(const sctp_assoc_id_t assoc_id,
-    const sctp_stream_id_t stream, struct s1ap_message_s *message);
-
 int s1ap_handle_enb_initiated_reset_ack (const itti_s1ap_enb_initiated_reset_ack_t * const enb_reset_ack_p);
 
 int s1ap_mme_handle_error_ind_message (const sctp_assoc_id_t assoc_id,

@@ -154,12 +154,12 @@ void nas_itti_activate_bearer_cnf(
 //------------------------------------------------------------------------------
 void nas_itti_activate_bearer_rej(
     const mme_ue_s1ap_id_t ue_idP,
-    const ebi_t            ebi)
+    const teid_t           saegw_s1u_teid)
 {
   OAILOG_FUNC_IN(LOG_NAS);
   MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_MME, MME_APP_ACTIVATE_BEARER_REJ);
-  MME_APP_ACTIVATE_BEARER_REJ (message_p).ue_id   = ue_idP;
-  MME_APP_ACTIVATE_BEARER_REJ (message_p).ebi     = ebi;
+  MME_APP_ACTIVATE_BEARER_REJ (message_p).ue_id           = ue_idP;
+  MME_APP_ACTIVATE_BEARER_REJ (message_p).saegw_s1u_teid  = saegw_s1u_teid;
   MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_MMEAPP_MME, NULL, 0, "0 MME_APP_ACTIVATE_BEARER_REJ ue id " MME_UE_S1AP_ID_FMT, ue_idP);
   itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT(LOG_NAS);
@@ -182,12 +182,14 @@ void nas_itti_modify_bearer_cnf(
 //------------------------------------------------------------------------------
 void nas_itti_modify_bearer_rej(
     const mme_ue_s1ap_id_t ue_idP,
-    const ebi_t            ebi)
+    const ebi_t            ebi,
+    const bool             removed)
 {
   OAILOG_FUNC_IN(LOG_NAS);
   MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_MME, MME_APP_MODIFY_BEARER_REJ);
   MME_APP_MODIFY_BEARER_REJ (message_p).ue_id   = ue_idP;
   MME_APP_MODIFY_BEARER_REJ (message_p).ebi     = ebi;
+  MME_APP_MODIFY_BEARER_REJ (message_p).removed = removed;
   MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_MMEAPP_MME, NULL, 0, "0 MME_APP_MODIFY_BEARER_REJ ue id " MME_UE_S1AP_ID_FMT, ue_idP);
   itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT(LOG_NAS);
@@ -196,16 +198,12 @@ void nas_itti_modify_bearer_rej(
 //------------------------------------------------------------------------------
 void nas_itti_dedicated_eps_bearer_deactivation_complete(
     const mme_ue_s1ap_id_t ue_idP,
-    const ebi_t default_ebi,
-    const pdn_cid_t pid,
     const ebi_t ded_ebi)
 {
   OAILOG_FUNC_IN(LOG_NAS);
   MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_MME, MME_APP_DEACTIVATE_BEARER_CNF);
   MME_APP_DEACTIVATE_BEARER_CNF (message_p).ue_id     = ue_idP;
-  MME_APP_DEACTIVATE_BEARER_CNF (message_p).def_ebi   = default_ebi;
   MME_APP_DEACTIVATE_BEARER_CNF (message_p).ded_ebi   = ded_ebi;
-  MME_APP_DEACTIVATE_BEARER_CNF (message_p).pid       = pid;
   MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_MMEAPP_MME, NULL, 0, "0 MME_APP_DEACTIVATE_BEARER_CNF ue id " MME_UE_S1AP_ID_FMT " ebi %u", ue_idP, ded_ebi);
   itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT(LOG_NAS);

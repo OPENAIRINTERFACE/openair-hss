@@ -117,6 +117,12 @@ typedef struct esm_bearer_resource_allocate_rej_s{
   ebi_t             ebi;
 }esm_bearer_resource_allocate_rej_t;
 
+
+typedef struct esm_bearer_resource_modify_rej_s{
+  ebi_t             ebi;
+  bool              remove;
+}esm_bearer_resource_modify_rej_t;
+
 /*
  * ESM primitive for PDN config response
  * --------------------------------------------
@@ -192,6 +198,7 @@ typedef union {
   esm_eps_modify_bearer_req_t       eps_bearer_context_modify;
   esm_eps_deactivate_bearer_req_t   eps_dedicated_bearer_context_deactivate;
   esm_bearer_resource_allocate_rej_t    esm_bearer_resource_allocate_rej;
+  esm_bearer_resource_modify_rej_t    esm_bearer_resource_modify_rej;
 } esm_sap_data_t;
 
 struct emm_data_context_s;

@@ -258,6 +258,8 @@ esm_proc_modify_eps_bearer_context_accept (
   rc = esm_ebr_stop_timer (emm_context, ebi);
 
   if (rc != RETURNerror) {
+    esm_ebr_state oldState = esm_ebr_get_status(emm_context, ebi);
+
     /*
      * Set the EPS bearer context state to ACTIVE
      */
@@ -268,13 +270,17 @@ esm_proc_modify_eps_bearer_context_accept (
        * The EPS bearer context was already in ACTIVE state
        */
       OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - EBI %d was already ACTIVE\n", ebi);
+      /**
+       * This is actually not an error, me might have received an E-RAB failure just before. We will ignore the received ACCEPT and continue.
+       * The bearer configuration won't be changed (although it is different in the UE NAS layer know, but that's not our concern..
+       */
       *esm_cause = ESM_CAUSE_PROTOCOL_ERROR;
+    } else{
+      /** We changed the status of the ESM bearer context, so the ESM reply came before any E-RAB failures, if any. */
+      nas_itti_modify_bearer_cnf(ue_id, ebi);
     }
-    /*
-     * No need for an ESM procedure.
-     * Just set the status to active and inform the MME_APP layer.
-     */
-    nas_itti_modify_bearer_cnf(ue_id, ebi);
+  }else {
+    /** Bearer not found, assuming due E-RAB error handling. */
   }
 
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
@@ -312,7 +318,8 @@ int
 esm_proc_modify_eps_bearer_context_reject (
   emm_data_context_t * emm_context,
   ebi_t ebi,
-  esm_cause_t *esm_cause)
+  esm_cause_t *esm_cause,
+  bool ue_requested)
 {
   int                                     rc;
   mme_ue_s1ap_id_t                        ue_id  = emm_context->ue_id;
@@ -329,24 +336,38 @@ esm_proc_modify_eps_bearer_context_reject (
 
   if (rc != RETURNerror) {
     /*
+     * Session bearer still exists.
      * Check the cause code and depending continue or disable the bearer context locally.
      */
+
+    esm_ebr_state oldState = esm_ebr_get_status(emm_context, ebi);
 
     if(*esm_cause == ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY){
       OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Deactivating the ESM bearer locally. " "(ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d)\n", ue_id, ebi);
       ebi = esm_ebr_context_release (emm_context, ebi, pdn_ci, false);
-      if (ebi == ESM_EBI_UNASSIGNED) {
+      if (ebi == ESM_EBI_UNASSIGNED) {  /**< Bearer was already released. */
         OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Failed to release EPS bearer context\n");
         OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
       }
     }
+
     if (*esm_cause != ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY) {
       /*
+       * Session bearer existed and was not removed.
        * Failed to release the modify the EPS bearer context
        */
       *esm_cause = ESM_CAUSE_PROTOCOL_ERROR;
+      /** Set the state back to active. */
+      esm_ebr_set_status(emm_context, ebi, ESM_EBR_ACTIVE, ue_requested);
     }
-    nas_itti_modify_bearer_rej(ue_id, ebi); /**< The SAE-GW should release the cause, too. */
+    /**
+     * Inform the MME_APP only if it came as an ESM response, the bearer existed and no E-RAB failure was received yet. The S11 procedure should be handled with already.
+     * We don't check the return value of status setting, because the bearer might have also been removed implicitly.
+     */
+    if(ue_requested && oldState != ESM_EBR_ACTIVE) /**< Check if the procedure was not released before due E-RAB failure. */
+      nas_itti_modify_bearer_rej(ue_id, ebi, *esm_cause == ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY); /**< The SAE-GW should release the cause, too. */
+  } else {
+    /** No E-RAB  could be found. Can live with it. */
   }
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
 }
@@ -434,7 +455,7 @@ static void _modify_eps_bearer_context_t3486_handler (void *args)
       }
 
       /** Send a reject back to the MME_APP layer to continue with the Update Bearer Response. */
-      nas_itti_activate_bearer_rej(esm_ebr_timer_data->ctx->ue_id, esm_ebr_timer_data->ebi);
+      nas_itti_modify_bearer_rej(esm_ebr_timer_data->ctx->ue_id, esm_ebr_timer_data->ebi, false);
 
     }
     if (esm_ebr_timer_data->msg) {

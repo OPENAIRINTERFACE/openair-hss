@@ -83,10 +83,9 @@ s1ap_message_decoded_callback           messages_callback[][3] = {
   {s1ap_mme_handle_path_switch_request, 0, 0},  /* PathSwitchRequest */
   {s1ap_mme_handle_handover_cancel, 0, 0},                    /* HandoverCancel */
 
-  {0, s1ap_mme_handle_erab_setup_response,
-      s1ap_mme_handle_erab_setup_failure},                    /* E_RABSetup */
-  {0, s1ap_mme_handle_erab_modify_response, s1ap_mme_handle_erab_modify_failure},                    /* E_RABModify */
-  {0, s1ap_mme_handle_erab_release_response, s1ap_mme_handle_erab_release_failure},                    /* E_RABRelease */
+  {0, s1ap_mme_handle_erab_setup_response, 0},                    /* E_RABSetup */
+  {0, s1ap_mme_handle_erab_modify_response, 0},                    /* E_RABModify */
+  {0, s1ap_mme_handle_erab_release_response, 0},                    /* E_RABRelease */
   {s1ap_mme_handle_erab_release_indication, 0, 0},                    /* E_RABReleaseIndication */
   {
    0, s1ap_mme_handle_initial_context_setup_response,
@@ -2421,27 +2420,6 @@ s1ap_mme_handle_mme_mobility_completion_timer_expiry (void *arg)
     OAILOG_DEBUG (LOG_S1AP, "Removed S1AP_UE_REFERENCE FOR ENB_UE_S1AP_ID " ENB_UE_S1AP_ID_FMT " and mmeUeS1apId  " MME_UE_S1AP_ID_FMT "\n", (uint32_t) ue_reference_p->enb_ue_s1ap_id, (uint32_t) ue_reference_p->mme_ue_s1ap_id);
   }
   OAILOG_FUNC_OUT (LOG_S1AP);
-}
-
-//------------------------------------------------------------------------------
-int s1ap_mme_handle_erab_setup_failure (const sctp_assoc_id_t assoc_id,
-    const sctp_stream_id_t stream, struct s1ap_message_s *message)
-{
-  AssertFatal(0, "TODO");
-}
-
-//------------------------------------------------------------------------------
-int s1ap_mme_handle_erab_modify_failure (const sctp_assoc_id_t assoc_id,
-    const sctp_stream_id_t stream, struct s1ap_message_s *message)
-{
-  AssertFatal(0, "TODO");
-}
-
-//------------------------------------------------------------------------------
-int s1ap_mme_handle_erab_release_failure (const sctp_assoc_id_t assoc_id,
-    const sctp_stream_id_t stream, struct s1ap_message_s *message)
-{
-  AssertFatal(0, "TODO");
 }
 
 //------------------------------------------------------------------------------

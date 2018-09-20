@@ -185,7 +185,14 @@ esm_proc_eps_bearer_context_deactivate (
       /** Only validate the current bearer, the others might be in a pending deactivation state. */
       bearer_context_t *session_bearer = NULL;
       session_bearer = mme_app_get_session_bearer_context(pdn_context, ebi);
-      DevAssert(session_bearer && session_bearer->pdn_cx_id == pid && session_bearer->esm_ebr_context.status == ESM_EBR_ACTIVE);
+      if(!session_bearer){
+        /** Bearer to release not existing. */
+        OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - Bearer with ebi %d for UE with ue_id " MME_UE_S1AP_ID_FMT " already released. \n", ebi, ue_context->mme_ue_s1ap_id);
+        OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
+      }else{
+        DevAssert(session_bearer->pdn_cx_id == pid && session_bearer->esm_ebr_context.status == ESM_EBR_ACTIVE);
+
+      }
       /*
        * todo: validate a single bearer!
        * todo: better, more meaningful validation

@@ -293,11 +293,11 @@ esm_sap_send (esm_sap_t * msg)
   case ESM_BEARER_RESOURCE_ALLOCATE_REJ:
     /*
      * Reject the bearer, stop the timer and put it into the empty pool.
+     * This might be due a failed establishment.
+     * No need to inform the MME_APP layer again.
      */
     rc = esm_proc_eps_bearer_context_deactivate (msg->ctx, true, msg->data.esm_bearer_resource_allocate_rej.ebi,
         PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED, NULL);
-    /** Inform the MME_APP of the removal. Will eventually trigger a CBResp. */
-    nas_itti_activate_bearer_rej(msg->ue_id, msg->data.esm_bearer_resource_allocate_rej.ebi);
 
     break;
 
@@ -305,7 +305,29 @@ esm_sap_send (esm_sap_t * msg)
     break;
 
   case ESM_BEARER_RESOURCE_MODIFY_REJ:
-    break;
+    /*
+      * Reject the bearer, stop the timer and put it into the empty pool.
+      * This might be due a failed establishment.
+      */
+     if(msg->data.esm_bearer_resource_modify_rej.remove){
+       OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Removing bearer with ebi %d for ueId " MME_UE_S1AP_ID_FMT " due failed modification. \n",
+           msg->data.esm_bearer_resource_modify_rej.ebi, msg->ue_id);
+       /** Will return false, if the bearer is already removed. */
+       rc = esm_proc_eps_bearer_context_deactivate (msg->ctx, true, msg->data.esm_bearer_resource_allocate_rej.ebi,
+           PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED, NULL);
+     }else{
+       OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Not removing bearer with ebi %d for ueId " MME_UE_S1AP_ID_FMT " due failed modification. \n",
+           msg->data.esm_bearer_resource_modify_rej.ebi, msg->ue_id);
+
+       /** Abort the ESM modification procedure, if existing and still pending.. */
+       esm_cause =  ESM_CAUSE_REQUEST_REJECTED_UNSPECIFIED;
+       rc = esm_proc_modify_eps_bearer_context_reject(msg->ctx, msg->data.esm_bearer_resource_modify_rej.ebi, &esm_cause, false);
+     }
+     /**
+      * No need to to inform the MME_APP of the removal.
+      * A CBResp/UBResp (incl. removing the count of unhandled bearers) might already have been triggered.
+      */
+     break;
 
   case ESM_DEFAULT_EPS_BEARER_CONTEXT_ACTIVATE_REQ:
     break;
@@ -340,7 +362,7 @@ esm_sap_send (esm_sap_t * msg)
           OAILOG_ERROR (LOG_NAS_ESM, "ESM-SAP   - Failed to handle CN bearer context procedure due SYSTEM_FAILURE for num_bearer %d!\n",
               _esm_sap_primitive_str[primitive - ESM_START - 1], primitive, num_bc);
           /** Send a NAS ITTI directly for the specific bearer. This will reduce the number of bearers to be processed. */
-          nas_itti_activate_bearer_rej(msg->ue_id, bearer_activate->bcs_to_be_created->bearer_contexts[num_bc].eps_bearer_id); /**< Assuming, no other CN bearer procedure will intervere. */
+          nas_itti_activate_bearer_rej(msg->ue_id, bearer_activate->bcs_to_be_created->bearer_contexts[num_bc].s1u_sgw_fteid.teid); /**< Assuming, no other CN bearer procedure will intervere. */
           continue; /**< The remaining must also be rejected, such that the procedure has no pending elements anymore. */
         }
         OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Successfully allocated bearer with ebi %d for ue " MME_UE_S1AP_ID_FMT "!\n",
@@ -353,12 +375,6 @@ esm_sap_send (esm_sap_t * msg)
     }
   }
   break;
-
-  case ESM_DEDICATED_EPS_BEARER_CONTEXT_ACTIVATE_CNF:
-    break;
-
-  case ESM_DEDICATED_EPS_BEARER_CONTEXT_ACTIVATE_REJ:
-    break;
 
   case ESM_EPS_BEARER_CONTEXT_MODIFY_REQ: {
      esm_eps_modify_bearer_req_t* bearer_modify = &msg->data.eps_bearer_context_modify;
@@ -375,7 +391,7 @@ esm_sap_send (esm_sap_t * msg)
            OAILOG_ERROR (LOG_NAS_ESM, "ESM-SAP   - Failed to handle CN modify bearer context procedure due SYSTEM_FAILURE for num_bearer %d!\n",
                _esm_sap_primitive_str[primitive - ESM_START - 1], primitive, num_bc);
            /** Send a NAS ITTI directly for the specific bearer. This will reduce the number of bearers to be processed. */
-           nas_itti_modify_bearer_rej(msg->ue_id, bearer_modify->bcs_to_be_updated->bearer_contexts[num_bc].eps_bearer_id, ESM_CAUSE_PROTOCOL_ERROR); /**< Assuming, no other CN bearer procedure will intervere. */
+           nas_itti_modify_bearer_rej(msg->ue_id, bearer_modify->bcs_to_be_updated->bearer_contexts[num_bc].eps_bearer_id, false); /**< Assuming, no other CN bearer procedure will intervere. */
            continue; /**< The remaining must also be rejected, such that the procedure has no pending elements anymore. */
          }
          OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Successfully modified bearer context with ebi %d for ue " MME_UE_S1AP_ID_FMT "!\n",
@@ -389,32 +405,29 @@ esm_sap_send (esm_sap_t * msg)
    }
    break;
 
-   case ESM_EPS_BEARER_CONTEXT_MODIFY_CNF:
-     break;
-
-   case ESM_EPS_BEARER_CONTEXT_MODIFY_REJ:
-     break;
-
   case ESM_DEDICATED_EPS_BEARER_CONTEXT_DEACTIVATE_REQ:{
     esm_eps_deactivate_bearer_req_t* bearer_deactivate = &msg->data.eps_dedicated_bearer_context_deactivate;
     if (msg->is_standalone) {
       esm_cause_t esm_cause;
 
       // todo: currently single messages, sum up to one big message
-      for(int num_ebi = 0; num_ebi < bearer_deactivate->ebis.num_ebi; num_ebi++){
+      for(int num_bc = 0; num_bc < bearer_deactivate->ebis.num_ebi; num_bc++){
         rc = esm_proc_eps_bearer_context_deactivate(msg->ctx, false,
-            bearer_deactivate->ebis.ebis[num_ebi],
+            bearer_deactivate->ebis.ebis[num_bc],
             bearer_deactivate->cid, &esm_cause);
 
         if(rc != RETURNerror){
           /* Send Activate Dedicated Bearer Context Request */
           rc = _esm_sap_send(DEACTIVATE_EPS_BEARER_CONTEXT_REQUEST,
-              msg->is_standalone, msg->ctx, (proc_tid_t)bearer_deactivate->pti,  bearer_deactivate->ebis.ebis[num_ebi],
+              msg->is_standalone, msg->ctx, (proc_tid_t)bearer_deactivate->pti,  bearer_deactivate->ebis.ebis[num_bc],
               &msg->data, msg->send);
         }else{
           OAILOG_ERROR (LOG_NAS_ESM, "ESM-SAP   - Error deactivating bearer context for UE " MME_UE_S1AP_ID_FMT " and ebi %d. \n",
-             ue_context->mme_ue_s1ap_id, bearer_deactivate->ebis.ebis[num_ebi]);
-
+             ue_context->mme_ue_s1ap_id, bearer_deactivate->ebis.ebis[num_bc]);
+          if(esm_cause == ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY){
+            /** Inform the MME_APP about the missing EBI to continue with the DBResp. */
+            nas_itti_dedicated_eps_bearer_deactivation_complete(ue_context->mme_ue_s1ap_id, bearer_deactivate->ebis.ebis[num_bc]);
+          }
         }
       }
     }
@@ -678,9 +691,43 @@ _esm_sap_recv (
       break;
 
     case MODIFY_EPS_BEARER_CONTEXT_ACCEPT:
+      /*
+       * Process activate dedicated EPS bearer context accept message
+       * received from the UE
+       */
+      esm_cause = esm_recv_modify_eps_bearer_context_accept (emm_context, pti, ebi, &esm_msg.modify_eps_bearer_context_accept);
+
+      if ((esm_cause == ESM_CAUSE_INVALID_PTI_VALUE) || (esm_cause == ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY)) {
+        /*
+         * 3GPP TS 24.301, section 7.3.1, case f
+         * * * * Ignore ESM message received with reserved PTI value
+         * * * * 3GPP TS 24.301, section 7.3.2, case f
+         * * * * Ignore ESM message received with reserved or assigned
+         * * * * value that does not match an existing EPS bearer context
+         */
+        is_discarded = true;
+      }
+
       break;
 
     case MODIFY_EPS_BEARER_CONTEXT_REJECT:
+      /*
+       * Process modify EPS bearer context reject message
+       * received from the UE
+       */
+      esm_cause = esm_recv_modify_eps_bearer_context_reject (emm_context, pti, ebi, &esm_msg.modify_eps_bearer_context_reject);
+
+      if ((esm_cause == ESM_CAUSE_INVALID_PTI_VALUE) || (esm_cause == ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY)) {
+        /*
+         * 3GPP TS 24.301, section 7.3.1, case f
+         * * * * Ignore ESM message received with reserved PTI value
+         * * * * 3GPP TS 24.301, section 7.3.2, case f
+         * * * * Ignore ESM message received with reserved or assigned
+         * * * * value that does not match an existing EPS bearer context
+         */
+        is_discarded = true;
+      }
+
       break;
 
     case PDN_CONNECTIVITY_REQUEST:{

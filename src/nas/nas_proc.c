@@ -587,16 +587,21 @@ int nas_proc_deactivate_dedicated_bearer(emm_cn_deactivate_dedicated_bearer_req_
 }
 
 //------------------------------------------------------------------------------
-int nas_proc_e_rab_failure(mme_ue_s1ap_id_t ue_id, ebi_t ebi)
+int nas_proc_e_rab_failure(mme_ue_s1ap_id_t ue_id, ebi_t ebi, bool modify, bool remove)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
   emm_sap_t                               emm_sap = {0};
-  emm_sap.primitive = _EMMAS_ERAB_SETUP_REJ;
   emm_sap.u.emm_as.u.erab_setup_rej.ue_id = ue_id;
   emm_sap.u.emm_as.u.erab_setup_rej.ebi   = ebi;
-
-  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMM_AS_ERAB_SETUP_REJ " MME_UE_S1AP_ID_FMT " ", ue_id);
+  if(!modify){
+    emm_sap.primitive = _EMMAS_ERAB_SETUP_REJ;
+    MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMM_AS_ERAB_SETUP_REJ " MME_UE_S1AP_ID_FMT " ", ue_id);
+  }else{
+    emm_sap.primitive = _EMMAS_ERAB_MODIFY_REJ;
+    emm_sap.u.emm_as.u.erab_modify_rej.remove_bearer = remove; /**< Union stuff. */
+    MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMM_AS_ERAB_MODIFY_REJ " MME_UE_S1AP_ID_FMT " ", ue_id);
+  }
   rc = emm_sap_send (&emm_sap);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }

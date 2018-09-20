@@ -285,9 +285,13 @@ esm_proc_dedicated_eps_bearer_context_accept (
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   int                                     rc = RETURNerror;
   mme_ue_s1ap_id_t                        ue_id = emm_context->ue_id;
+  ue_context_t                            *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
 
   OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Dedicated EPS bearer context activation " "accepted by the UE (ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d)\n",
       ue_id, ebi);
+
+  DevAssert(ue_context);
+
   /*
    * Stop T3485 timer.
    * Will also check if the bearer exists. If not (E-RAB Setup Failure), the message will be dropped.
@@ -295,6 +299,11 @@ esm_proc_dedicated_eps_bearer_context_accept (
   rc = esm_ebr_stop_timer (emm_context, ebi);
 
   if (rc != RETURNerror) {
+    /** Get the bearer. */
+    bearer_context_t * bc_success = NULL;
+    mme_app_get_session_bearer_context_from_all(ue_context, ebi, &bc_success);  /**< We check before, that the bearer is received (todo: little lock might be needed). */
+    DevAssert(bc_success);
+
     /*
      * Set the EPS bearer context state to ACTIVE
      */
@@ -311,7 +320,7 @@ esm_proc_dedicated_eps_bearer_context_accept (
      * No need for an ESM procedure.
      * Just set the status to active and inform the MME_APP layer.
      */
-    nas_itti_activate_bearer_cnf(ue_id, ebi);
+    nas_itti_activate_bearer_cnf(ue_id, bc_success->ebi);
   }
 
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
@@ -352,10 +361,14 @@ esm_proc_dedicated_eps_bearer_context_reject (
   int                                     rc;
   mme_ue_s1ap_id_t                        ue_id  = emm_context->ue_id;
   pdn_cid_t                               pdn_ci = PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED;
+  ue_context_t                            *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
 
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Dedicated EPS bearer context activation " "not accepted by the UE (ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d)\n",
       ue_id, ebi);
+
+  DevAssert(ue_context);
+
   /*
    * Stop T3485 timer if running.
    * Will also check if the bearer exists. If not (E-RAB Setup Failure), the message will be dropped.
@@ -363,6 +376,11 @@ esm_proc_dedicated_eps_bearer_context_reject (
   rc = esm_ebr_stop_timer (emm_context, ebi);
 
   if (rc != RETURNerror) {
+    /** Get the bearer context and extract the saegw s11 teid for correlation. */
+    bearer_context_t * bc_failed = NULL;
+    mme_app_get_session_bearer_context_from_all(ue_context, ebi, &bc_failed);
+    DevAssert(bc_failed);
+
     /*
      * Release the dedicated EPS bearer context and enter state INACTIVE
      */
@@ -378,7 +396,7 @@ esm_proc_dedicated_eps_bearer_context_reject (
        */
       *esm_cause = ESM_CAUSE_PROTOCOL_ERROR;
     }
-    nas_itti_activate_bearer_rej(ue_id, ebi);
+    nas_itti_activate_bearer_rej(ue_id, bc_failed->s_gw_fteid_s1u.teid);
   }
 
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);

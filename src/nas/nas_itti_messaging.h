@@ -124,7 +124,7 @@ void nas_itti_activate_bearer_cnf(
 
 void nas_itti_activate_bearer_rej(
     const mme_ue_s1ap_id_t ue_idP,
-    const ebi_t            ebi);
+    const teid_t           saegw_s1u_teid);
 
 void nas_itti_modify_bearer_cnf(
     const mme_ue_s1ap_id_t ue_idP,
@@ -132,12 +132,11 @@ void nas_itti_modify_bearer_cnf(
 
 void nas_itti_modify_bearer_rej(
     const mme_ue_s1ap_id_t ue_idP,
-    const ebi_t            ebi);
+    const ebi_t            ebi,
+    const bool             removed);
 
 void nas_itti_dedicated_eps_bearer_deactivation_complete(
     const mme_ue_s1ap_id_t ue_idP,
-    const ebi_t default_ebi,
-    const pdn_cid_t pid,
     const ebi_t ded_ebi);
 
 void  s6a_auth_info_rsp_timer_expiry_handler (void *args);

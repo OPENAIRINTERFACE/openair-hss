@@ -455,6 +455,7 @@ typedef struct bearer_context_to_be_created_s {
   protocol_configuration_options_t  pco;///< This IE may be sent on the S5/S8 and S4/S11 interfaces
                                     ///< if ePCO is not supported by the UE or the network. This bearer level IE takes precedence
                                     ///< over the PCO IE in the message body if they both exist.
+  gtpv2c_cause_t            cause;
 } bearer_context_to_be_created_t;
 
 typedef struct bearer_contexts_to_be_created_s {

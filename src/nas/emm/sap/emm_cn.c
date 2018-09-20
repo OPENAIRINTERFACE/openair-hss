@@ -803,8 +803,7 @@ static int _emm_cn_activate_dedicated_bearer_req (emm_cn_activate_dedicated_bear
   esm_sap.ue_id         = msg->ue_id;
   memcpy((void*)&esm_sap.data.eps_dedicated_bearer_context_activate, msg, sizeof(emm_cn_activate_dedicated_bearer_req_t)); // todo: pointer directly?
 
-  MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_ESM_MME, NULL, 0, "0 ESM_DEDICATED_EPS_BEARER_CONTEXT_ACTIVATE_REQ ue id " MME_UE_S1AP_ID_FMT /*" ebi %u"*/,
-      esm_sap.ue_id,/*esm_sap.data.eps_dedicated_bearer_context_activate.ebi*/);
+  MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_ESM_MME, NULL, 0, "0 ESM_DEDICATED_EPS_BEARER_CONTEXT_ACTIVATE_REQ ue id " MME_UE_S1AP_ID_FMT, esm_sap.ue_id);
 
   rc = esm_sap_send (&esm_sap);
   msg->bcs_to_be_created = NULL;
@@ -829,8 +828,7 @@ static int _emm_cn_modify_bearer_req (emm_cn_modify_bearer_req_t * msg)
   esm_sap.ue_id         = msg->ue_id;
   memcpy((void*)&esm_sap.data.eps_bearer_context_modify, msg, sizeof(emm_cn_modify_bearer_req_t)); // todo: pointer directly?
 
-  MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_ESM_MME, NULL, 0, "0 ESM_EPS_BEARER_CONTEXT_MODIFY_REQ ue id " MME_UE_S1AP_ID_FMT /*" ebi %u"*/,
-      esm_sap.ue_id,/*esm_sap.data.eps_bearer_context_modify.ebi*/);
+  MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_ESM_MME, NULL, 0, "0 ESM_EPS_BEARER_CONTEXT_MODIFY_REQ ue id " MME_UE_S1AP_ID_FMT, esm_sap.ue_id);
 
   rc = esm_sap_send (&esm_sap);
   msg->bcs_to_be_updated= NULL;
@@ -855,8 +853,7 @@ static int _emm_cn_deactivate_dedicated_bearer_req (emm_cn_deactivate_dedicated_
   esm_sap.ue_id         = msg->ue_id;
   memcpy((void*)&esm_sap.data.eps_dedicated_bearer_context_deactivate, msg, sizeof(emm_cn_deactivate_dedicated_bearer_req_t)); // todo: pointer directly?
 
-  MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_ESM_MME, NULL, 0, "0 ESM_DEDICATED_EPS_BEARER_CONTEXT_DEACTIVATE_REQ ue id " MME_UE_S1AP_ID_FMT /*" ebi %u"*/,
-      esm_sap.ue_id,/*esm_sap.data.eps_dedicated_bearer_context_activate.ebi*/);
+  MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_ESM_MME, NULL, 0, "0 ESM_DEDICATED_EPS_BEARER_CONTEXT_DEACTIVATE_REQ ue id " MME_UE_S1AP_ID_FMT, esm_sap.ue_id);
 
   rc = esm_sap_send (&esm_sap);
 

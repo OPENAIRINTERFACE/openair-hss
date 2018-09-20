@@ -302,6 +302,12 @@ typedef struct emm_as_erab_setup_rej_s {
   ebi_t                  ebi;
 } emm_as_erab_setup_rej_t;
 
+typedef struct emm_as_erab_modify_rej_s {
+  mme_ue_s1ap_id_t       ue_id;
+  ebi_t                  ebi;
+  bool                   remove_bearer;
+} emm_as_erab_modify_rej_t;
+
 /*
  * EMMAS primitive for status indication
  * -------------------------------------
@@ -346,6 +352,7 @@ typedef struct emm_as_s {
     emm_as_modify_bearer_context_req_t modify_bearer_context_req;
     emm_as_deactivate_bearer_context_req_t deactivate_bearer_context_req;
     emm_as_erab_setup_rej_t erab_setup_rej;
+    emm_as_erab_modify_rej_t erab_modify_rej;
     emm_as_status_t     status;
     emm_as_cell_info_t  cell_info;
   } u;

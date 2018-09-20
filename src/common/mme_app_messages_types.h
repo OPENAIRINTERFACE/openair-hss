@@ -137,7 +137,7 @@ typedef struct itti_mme_app_activate_bearer_cnf_s {
 typedef struct itti_mme_app_activate_bearer_rej_s {
   /* UE identifier */
   mme_ue_s1ap_id_t                      ue_id;
-  ebi_t                                 ebi;
+  teid_t                                saegw_s1u_teid;
 } itti_mme_app_activate_bearer_rej_t;
 
 typedef struct itti_mme_app_modify_bearer_req_s {
@@ -159,6 +159,7 @@ typedef struct itti_mme_app_modify_bearer_rej_s {
   /* UE identifier */
   mme_ue_s1ap_id_t                      ue_id;
   ebi_t                                 ebi;
+  bool                                  removed;
 } itti_mme_app_modify_bearer_rej_t;
 
 typedef struct itti_mme_app_deactivate_bearer_req_s {
@@ -175,8 +176,6 @@ typedef struct itti_mme_app_deactivate_bearer_cnf_s {
   /* UE identifier */
   mme_ue_s1ap_id_t                  ue_id;
   ebi_t                             ded_ebi;
-  ebi_t                             def_ebi;
-  pdn_cid_t                         pid;
 } itti_mme_app_deactivate_bearer_cnf_t;
 
 typedef struct itti_mme_app_s1ap_mme_ue_id_notification_s {
@@ -192,6 +191,8 @@ typedef struct itti_mme_app_initial_context_setup_failure_s {
 typedef struct itti_mme_app_e_rab_failure_s {
   mme_ue_s1ap_id_t      mme_ue_s1ap_id;
   ebi_t                 ebi;
+  bool                  modify;
+  bool                  remove;
 } itti_mme_app_e_rab_failure_t;
 
 typedef struct itti_mme_app_nas_update_location_cnf_s {

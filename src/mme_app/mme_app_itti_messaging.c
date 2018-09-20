@@ -560,7 +560,7 @@ void notify_s1ap_new_ue_mme_s1ap_id_association (const sctp_assoc_id_t   assoc_i
 }
 
 void
-mme_app_itti_e_rab_failure(mme_ue_s1ap_id_t ue_id, ebi_t ebi){
+mme_app_itti_e_rab_failure(mme_ue_s1ap_id_t ue_id, ebi_t ebi, bool modify, bool remove){
   MessageDef                             *message_p = NULL;
 
   OAILOG_FUNC_IN (LOG_MME_APP);
@@ -573,6 +573,8 @@ mme_app_itti_e_rab_failure(mme_ue_s1ap_id_t ue_id, ebi_t ebi){
   itti_mme_app_e_rab_failure_t *e_rab_failure = &message_p->ittiMsg.mme_app_e_rab_failure;
   e_rab_failure->mme_ue_s1ap_id = ue_id;
   e_rab_failure->ebi = ebi;
+  e_rab_failure->modify = modify;
+  e_rab_failure->remove = remove;
 
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
@@ -633,7 +635,7 @@ mme_app_send_s11_create_bearer_rsp (
       memcpy(&s11_create_bearer_response->bearer_contexts.bearer_contexts[num_bc].s1u_sgw_fteid,
           &bc_success->s_gw_fteid_s1u, sizeof(bc_success->s_gw_fteid_s1u));       ///< This IE shall be sent on the S11 interface. It shall be used
       s11_create_bearer_response->bearer_contexts.num_bearer_context++;
-    }else{
+    }else{ /**< EBI 0. */
       OAILOG_WARNING (LOG_MME_APP, "Bearer with ebi %d could not be established for ueId " MME_UE_S1AP_ID_FMT ". Current CBResp cause value %d. \n",
             ue_context->mme_ue_s1ap_id, s11_create_bearer_response->cause);
         if(s11_create_bearer_response->cause.cause_value == REQUEST_ACCEPTED)
@@ -670,6 +672,17 @@ mme_app_send_s11_create_bearer_rsp (
 
 //------------------------------------------------------------------------------
 int
+mme_app_send_s11_create_bearer_rsp_error(const ue_context_t *ue_context, teid_t s11_saegw_teid, int cause_val, uintptr_t gtpv2c_trxn, const bearer_contexts_to_be_created_t * bcs_tbc){
+  int                                     rc = RETURNok;
+
+  OAILOG_FUNC_IN (LOG_MME_APP);
+
+  // todo: implement
+  OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
+}
+
+//------------------------------------------------------------------------------
+int
 mme_app_send_s11_update_bearer_rsp (
   struct ue_context_s *const ue_context,
   pdn_context_t       *pdn_ctx,
@@ -681,7 +694,6 @@ mme_app_send_s11_update_bearer_rsp (
    */
   context_identifier_t                    context_identifier = 0;
   MessageDef                             *message_p = NULL;
-  bearer_context_t                       *bc_success = NULL;
   int                                     rc = RETURNok;
 
   // todo: handover flag in operation-identifier?!
@@ -699,49 +711,29 @@ mme_app_send_s11_update_bearer_rsp (
   s11_update_bearer_response->local_teid = ue_context->mme_teid_s11;
   s11_update_bearer_response->trxn = trxn;
   s11_update_bearer_response->cause.cause_value = 0;
-
   // todo: pco, uli
   /** Iterate through the bearers to be created and check which ones where established. */
   for(int num_bc = 0; num_bc < bcs_tbu->num_bearer_context; num_bc++){
-    /** Check if the bearer is a session bearer. */
-    bc_success = mme_app_get_session_bearer_context(pdn_ctx, bcs_tbu->bearer_contexts[num_bc].eps_bearer_id);
-    if(bc_success){
-      OAILOG_DEBUG (LOG_MME_APP, "Bearer with ebi %d successfully updated for ueId " MME_UE_S1AP_ID_FMT ". Current UBResp cause value %d. \n",
-          ue_context->mme_ue_s1ap_id, s11_update_bearer_response->cause);
-      /** Check the cause of the bearer value. */
-      if(bcs_tbu->bearer_contexts[num_bc].cause.cause_value == REQUEST_ACCEPTED){
-        if(s11_update_bearer_response->cause.cause_value == REQUEST_REJECTED)
-          s11_update_bearer_response->cause.cause_value= REQUEST_ACCEPTED_PARTIALLY;
-        if(!s11_update_bearer_response->cause.cause_value)
-          s11_update_bearer_response->cause.cause_value = REQUEST_ACCEPTED;
-      }else{
-        if(s11_update_bearer_response->cause.cause_value == REQUEST_ACCEPTED)
-          s11_update_bearer_response->cause.cause_value = REQUEST_ACCEPTED_PARTIALLY;
-        if(!s11_update_bearer_response->cause.cause_value)
-          s11_update_bearer_response->cause.cause_value = REQUEST_REJECTED;
-      }
-      OAILOG_DEBUG (LOG_MME_APP, "Bearer with ebi %d updated with result code %d for ueId " MME_UE_S1AP_ID_FMT ". New UBResp cause value %d. \n",
-          bcs_tbu->bearer_contexts[num_bc].eps_bearer_id, bcs_tbu->bearer_contexts[num_bc].cause, ue_context->mme_ue_s1ap_id, s11_update_bearer_response->cause.cause_value);
-
-      /** The error case is at least PARTIALLY ACCEPTED. */
-      s11_update_bearer_response->bearer_contexts.bearer_contexts[num_bc].eps_bearer_id     = bcs_tbu->bearer_contexts[num_bc].eps_bearer_id;
-      s11_update_bearer_response->bearer_contexts.bearer_contexts[num_bc].cause.cause_value = bcs_tbu->bearer_contexts[num_bc].cause.cause_value;
-      // todo: pco
-      /** No FTEIDs to be set. */
-      s11_update_bearer_response->bearer_contexts.num_bearer_context++;
+    if(bcs_tbu->bearer_contexts[num_bc].cause.cause_value == REQUEST_ACCEPTED){
+      if(s11_update_bearer_response->cause.cause_value == REQUEST_REJECTED)
+        s11_update_bearer_response->cause.cause_value = REQUEST_ACCEPTED_PARTIALLY;
+      if(!s11_update_bearer_response->cause.cause_value)
+        s11_update_bearer_response->cause.cause_value = REQUEST_ACCEPTED;
     }else{
-      OAILOG_WARNING (LOG_MME_APP, "Bearer with ebi %d could not be established for ueId " MME_UE_S1AP_ID_FMT ". Current UBResp cause value %d. \n",
-            ue_context->mme_ue_s1ap_id, s11_update_bearer_response->cause);
-        if(s11_update_bearer_response->cause.cause_value == REQUEST_ACCEPTED)
-          s11_update_bearer_response->cause.cause_value = REQUEST_ACCEPTED_PARTIALLY;
-        if(!s11_update_bearer_response->cause.cause_value)
-          s11_update_bearer_response->cause.cause_value = REQUEST_REJECTED;
-        OAILOG_DEBUG (LOG_MME_APP, "Bearer with ebi %d could not be established for ueId " MME_UE_S1AP_ID_FMT ". New UBResp cause value %d. \n",
-               ue_context->mme_ue_s1ap_id, s11_update_bearer_response->cause.cause_value);
-        s11_update_bearer_response->bearer_contexts.bearer_contexts[num_bc].eps_bearer_id     = bcs_tbu->bearer_contexts[num_bc].eps_bearer_id;
-        s11_update_bearer_response->bearer_contexts.bearer_contexts[num_bc].cause.cause_value = NO_RESOURCES_AVAILABLE; /**<: This was due ESM_CAUSE_EPS_BEARER_IDENTITY_UNKNOWN --> the cause should trigger the sae-gw to release the EBI. */
-        s11_update_bearer_response->bearer_contexts.num_bearer_context++;
+      if(s11_update_bearer_response->cause.cause_value == REQUEST_ACCEPTED)
+        s11_update_bearer_response->cause.cause_value = REQUEST_ACCEPTED_PARTIALLY;
+      if(!s11_update_bearer_response->cause.cause_value)
+        s11_update_bearer_response->cause.cause_value = REQUEST_REJECTED;
     }
+    OAILOG_DEBUG (LOG_MME_APP, "Bearer with ebi %d updated with result code %d for ueId " MME_UE_S1AP_ID_FMT ". New UBResp cause value %d. \n",
+        bcs_tbu->bearer_contexts[num_bc].eps_bearer_id, bcs_tbu->bearer_contexts[num_bc].cause, ue_context->mme_ue_s1ap_id, s11_update_bearer_response->cause.cause_value);
+
+    /** The error case is at least PARTIALLY ACCEPTED. */
+    s11_update_bearer_response->bearer_contexts.bearer_contexts[num_bc].eps_bearer_id     = bcs_tbu->bearer_contexts[num_bc].eps_bearer_id;
+    s11_update_bearer_response->bearer_contexts.bearer_contexts[num_bc].cause.cause_value = bcs_tbu->bearer_contexts[num_bc].cause.cause_value;
+    // todo: pco
+    /** No FTEIDs to be set. */
+    s11_update_bearer_response->bearer_contexts.num_bearer_context++;
   }
   s11_update_bearer_response->teid = pdn_ctx->s_gw_teid_s11_s4;
 ////  ////  mme_config_read_lock (&mme_config);
@@ -762,9 +754,20 @@ mme_app_send_s11_update_bearer_rsp (
 
 //------------------------------------------------------------------------------
 int
+mme_app_send_s11_update_bearer_rsp_error(const ue_context_t *ue_context, teid_t s11_saegw_teid, int cause_val, uintptr_t gtpv2c_trxn, const bearer_contexts_to_be_updated_t * bcs_tbu){
+  int                                     rc = RETURNok;
+
+  OAILOG_FUNC_IN (LOG_MME_APP);
+
+  // todo: implement
+  OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
+}
+
+//------------------------------------------------------------------------------
+int
 mme_app_send_s11_delete_bearer_rsp (
   struct ue_context_s *const ue_context,
-  pdn_context_t       *pdn_ctx,
+  ebi_t                def_ebi,
   void                *trxn,
   ebi_list_t          *ebi_list)
 {
@@ -788,7 +791,7 @@ mme_app_send_s11_delete_bearer_rsp (
   s11_delete_bearer_response->local_teid = ue_context->mme_teid_s11;
   s11_delete_bearer_response->trxn = trxn;
   s11_delete_bearer_response->cause.cause_value = REQUEST_ACCEPTED;
-  s11_delete_bearer_response->linked_eps_bearer_id = pdn_ctx->default_ebi;
+  s11_delete_bearer_response->linked_eps_bearer_id = def_ebi;
 
   /** Iterate through the bearers to be created and check which ones where established. */
   for(int num_ebi = 0; num_ebi < ebi_list->num_ebi; num_ebi++){
@@ -797,7 +800,7 @@ mme_app_send_s11_delete_bearer_rsp (
     s11_delete_bearer_response->bearer_contexts.bearer_contexts[num_ebi].eps_bearer_id  = ebi_list->ebis[num_ebi];
     s11_delete_bearer_response->bearer_contexts.num_bearer_context++;
   }
-  s11_delete_bearer_response->teid = pdn_ctx->s_gw_teid_s11_s4;
+  s11_delete_bearer_response->teid = ue_context->s_gw_teid_s11_s4;
 ////  ////  mme_config_read_lock (&mme_config);
 ////////  session_request_p->peer_ip = mme_config.ipv4.sgw_s11;
 ////////  mme_config_unlock (&mme_config);
@@ -811,6 +814,17 @@ mme_app_send_s11_delete_bearer_rsp (
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME,  MSC_S11_MME ,
       NULL, 0, "0 S11_DELETE_BEARER_RESPONSE teid %u", s11_delete_bearer_response->teid);
   itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
+  OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
+}
+
+//------------------------------------------------------------------------------
+int
+mme_app_send_s11_delete_bearer_rsp_error(const ue_context_t *ue_context, teid_t s11_saegw_teid, int cause_val, uintptr_t gtpv2c_trxn, const ebi_list_t * ebi_list){
+  int                                     rc = RETURNok;
+
+  OAILOG_FUNC_IN (LOG_MME_APP);
+
+  // todo: implement
   OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
 }
 
