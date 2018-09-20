@@ -403,7 +403,7 @@ set_interface_up(){
   cidr_netmask=${2#*/} # part after '/'
 
   if [ "a${interface:0:4}" == "anone" ]; then
-    return;
+    return 1;
   fi
   echo "ifconfig  $interface up"
   $SUDO ifconfig  $interface up
@@ -413,9 +413,69 @@ set_interface_up(){
   echo "ip -4 addr add  $address/$cidr_netmask broadcast $broadcast dev $interface"
   $SUDO ip -4 addr add  $address/$cidr_netmask broadcast $broadcast dev $interface
   sync
+  return 0
+}
+
+#-------------------------------------------------------------------------------
+# arg1 = interface name
+# arg2 = ipv4 addr cidr or ipv4 addr
+set_virtual_interface_up(){
+  interface=$1
+  address=${2%/*} #part before '/'
+  cidr_netmask=${2#*/} # part after '/'
+
+  if [ "a${interface:0:4}" == "anone" ]; then
+    return 1;
+  fi
+  case $interface in
+    *:*) 
+      $SUDO ifconfig  $interface $address up
+      return $?
+    ;;
+  esac
+  return 1
 }
 
 
+#-------------------------------------------------------------------------------
+# arg1 is a config file (mme.conf, spgw.conf)
+set_cn_virtual_interfaces(){
+  if [ "$#" -eq 1 ]; then
+    value="`cat $1 | cut -d "#" -f1 | grep 'ADDRESS\|INTERFACE' | tr -d " " | grep "="`"
+    eval $value
+
+    declare -a if_arr=("MME_INTERFACE_NAME_FOR_S1_MME" "MME_INTERFACE_NAME_FOR_S11" "MME_INTERFACE_NAME_FOR_S10" 
+                  "SGW_INTERFACE_NAME_FOR_S11" "SGW_INTERFACE_NAME_FOR_S1U_S12_S4_UP" "SGW_INTERFACE_NAME_FOR_S5_S8_UP" 
+                  "PGW_INTERFACE_NAME_FOR_S5_S8" "PGW_INTERFACE_NAME_FOR_SGI")
+                  
+    declare -a ip_arr=("MME_IPV4_ADDRESS_FOR_S1_MME" "MME_IPV4_ADDRESS_FOR_S11" "MME_IPV4_ADDRESS_FOR_S10" 
+                  "SGW_IPV4_ADDRESS_FOR_S11" "SGW_IPV4_ADDRESS_FOR_S1U_S12_S4_UP" "SGW_IPV4_ADDRESS_FOR_S5_S8_UP"
+                  "PGW_IPV4_ADDRESS_FOR_S5_S8" "PGW_IPV4_ADDRESS_FOR_SGI")
+
+    for ((i=0; i<${#if_arr[@]}; ++i)); do
+      if_name=${if_arr[i]}
+      ip_address=${ip_arr[i]}      
+      if [ -n "$${if_name}" ]; then
+        case ${!if_name} in
+          *:*) 
+            if [ -n "$${ip_address}" ]; then
+              echo_success "Configuring ${!if_name}  ${!ip_address}"
+              set_virtual_interface_up  ${!if_name}  ${!ip_address} 
+              [[ $? -ne 0 ]] && return $?
+            else
+              echo_error "$ip_address does not exist in your config file $1, but $if_name does!"
+              return 1
+            fi  
+            ;;
+        esac
+      fi
+    done
+    return 0
+  else
+    echo_error "usage: set_cn_virtual_interfaces config_file"
+    return 1
+  fi
+}
 ################################
 # set_openair_env
 ###############################
