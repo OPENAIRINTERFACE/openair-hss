@@ -1,5 +1,5 @@
 {"common": {
-    "fdcfg": "/usr/local/etc/oai/freeDiameter/hss_rel14_fd.conf",
+    "fdcfg": "@PREFIX@/freeDiameter/hss_rel14_fd.conf",
     "originhost": "@HSS_FQDN@",
     "originrealm": "@REALM@" 
  },
