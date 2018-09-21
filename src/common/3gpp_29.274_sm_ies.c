@@ -54,12 +54,15 @@ void free_bearer_contexts_to_be_created(bearer_contexts_to_be_created_t **bcs_tb
 
 //------------------------------------------------------------------------------
 void free_bearer_contexts_to_be_updated(bearer_contexts_to_be_updated_t **bcs_tbu){
-  bearer_contexts_to_be_updated_t * bctbu = *bcs_tbu;
+  bearer_contexts_to_be_updated_t * bcstbu = *bcs_tbu;
   // nothing to do for packet filters
-  for (int i = 0; i < bctbu->num_bearer_context; i++) {
-    for (int j = 0; j < bctbu->bearer_contexts[i].tft.parameterslist.num_parameters; j++) {
-      bdestroy_wrapper(&bctbu->bearer_contexts[i].tft.parameterslist.parameter[j].contents);
+  for (int i = 0; i < bcstbu->num_bearer_context; i++) {
+    for (int j = 0; j < bcstbu->bearer_contexts[i].tft.parameterslist.num_parameters; j++) {
+      bdestroy_wrapper(&bcstbu->bearer_contexts[i].tft.parameterslist.parameter[j].contents);
     }
+    /** Destroy the bearer level qos. */
+    if(bcstbu->bearer_contexts[i].bearer_level_qos)
+      free_wrapper((void**)&bcstbu->bearer_contexts[i].bearer_level_qos);
   }
   free_wrapper((void**)bcs_tbu);
 }

@@ -436,11 +436,38 @@ esm_sap_send (esm_sap_t * msg)
   }
   break;
 
-  case ESM_EPS_UPDATE_ESM_BEARERS_REQ:
+  case ESM_EPS_UPDATE_ESM_BEARERS_REQ: {
     /** Check that the bearers are active, and update the tft, qos, and apn-ambr values. */
     // todo: apn ambr to ue ambr calculation !
+    esm_eps_update_esm_bearers_req_t* update_esm_bearers = &msg->data.eps_update_esm_bearers;
+    if (msg->is_standalone) {
+      esm_cause_t esm_cause;
+      /**
+       * APN-AMBR.
+       * todo: Subscribed APN-AMBR is changed by PCRF or is it something like "actual apn ambr"*/
+      if(msg->data.eps_update_esm_bearers.ambr.br_dl && msg->data.eps_update_esm_bearers.ambr.br_ul)
+        pdn_context->subscribed_apn_ambr = msg->data.eps_update_esm_bearers.ambr;
+      /** Update the bearer level QoS TFT values. */
+      for(int num_bc = 0; num_bc < msg->data.eps_update_esm_bearers.bcs_to_be_updated->num_bearer_context; num_bc++){
+        rc = esm_proc_update_eps_bearer_context(msg->ctx, &msg->data.eps_update_esm_bearers.bcs_to_be_updated->bearer_contexts[num_bc]);
+        if(rc != RETURNerror){
+          /* Successfully updated the bearer context. */
+          OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Successfully updated ebi %d to final values via UBR for UE " MME_UE_S1AP_ID_FMT ". \n",
+              ue_context->mme_ue_s1ap_id, msg->data.eps_update_esm_bearers.bcs_to_be_updated->bearer_contexts[num_bc].eps_bearer_id);
+        }else{
+          OAILOG_ERROR (LOG_NAS_ESM, "ESM-SAP   - Error while updating ebi %d to final values via UBR for UE " MME_UE_S1AP_ID_FMT ". \n",
+              ue_context->mme_ue_s1ap_id, msg->data.eps_update_esm_bearers.bcs_to_be_updated->bearer_contexts[num_bc].eps_bearer_id);
+          /**
+           * Bearer may stay with old parameters and in active state.
+           * We assume that the bearer got removed due some concurrency  issues.
+           * We continue to handle the remaining bearers.
+           */
+        }
+      }
+    }
+  }
+  break;
 
-    break;
 
   case ESM_UNITDATA_IND:
     /** Check that an EMM context exists, if not disregard the message. */
@@ -1172,12 +1199,12 @@ _esm_sap_send (
         if(msg->bcs_to_be_updated->bearer_contexts[num_bc].tft.numberofpacketfilters > 1){
           memset((void*)&eps_qos, 0, sizeof(eps_qos));
         }
-        rc = qos_params_to_eps_qos(msg->bcs_to_be_updated->bearer_contexts[num_bc].bearer_level_qos.qci,
-            msg->bcs_to_be_updated->bearer_contexts[num_bc].bearer_level_qos.mbr.br_dl,
-            msg->bcs_to_be_updated->bearer_contexts[num_bc].bearer_level_qos.mbr.br_ul,
+        rc = qos_params_to_eps_qos(msg->bcs_to_be_updated->bearer_contexts[num_bc].bearer_level_qos->qci,
+            msg->bcs_to_be_updated->bearer_contexts[num_bc].bearer_level_qos->mbr.br_dl,
+            msg->bcs_to_be_updated->bearer_contexts[num_bc].bearer_level_qos->mbr.br_ul,
 
-            msg->bcs_to_be_updated->bearer_contexts[num_bc].bearer_level_qos.gbr.br_dl,
-            msg->bcs_to_be_updated->bearer_contexts[num_bc].bearer_level_qos.gbr.br_ul,
+            msg->bcs_to_be_updated->bearer_contexts[num_bc].bearer_level_qos->gbr.br_dl,
+            msg->bcs_to_be_updated->bearer_contexts[num_bc].bearer_level_qos->gbr.br_ul,
             &eps_qos, false);
         if (RETURNok == rc) {
           ambr_t * ambr_sent = NULL;

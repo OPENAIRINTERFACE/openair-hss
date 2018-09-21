@@ -168,6 +168,7 @@ typedef struct itti_mme_app_modify_bearer_rej_s {
 typedef struct itti_mme_app_update_esm_bearers_req_s {
   /* UE identifier */
   mme_ue_s1ap_id_t                      ue_id;
+  ambr_t                                ambr;
   bearer_contexts_to_be_updated_t      *bcs_to_be_updated;
 } itti_mme_app_update_esm_bearers_req_t;
 

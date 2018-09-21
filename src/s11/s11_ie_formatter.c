@@ -823,6 +823,8 @@ gtpv2c_bearer_context_to_be_updated_within_update_bearer_request_ie_get (
       break;
 
     case NW_GTPV2C_IE_BEARER_LEVEL_QOS:
+      if(!bearer_context->bearer_level_qos)
+        bearer_context->bearer_level_qos = calloc(1, sizeof(bearer_qos_t));
       rc = gtpv2c_bearer_qos_ie_get (ie_p->t, ntohs (ie_p->l), ie_p->i, &ieValue[read + sizeof (nw_gtpv2c_ie_tlv_t)], &bearer_context->bearer_level_qos);
       break;
 

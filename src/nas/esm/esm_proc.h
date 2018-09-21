@@ -194,6 +194,11 @@ int esm_proc_modify_eps_bearer_context( emm_data_context_t * emm_context,
     bearer_context_to_be_updated_t *bc_tbu,
     esm_cause_t *esm_cause);
 
+int
+esm_proc_update_eps_bearer_context (
+  emm_data_context_t * emm_context,
+  const bearer_context_to_be_updated_t *bc_tbu);
+
 int esm_proc_modify_eps_bearer_context_request(const bool is_standalone, emm_data_context_t * const emm_context, const ebi_t ebi, STOLEN_REF bstring *msg, const bool ue_triggered);
 
 int esm_proc_modify_eps_bearer_context_accept(emm_data_context_t * emm_context, ebi_t ebi, esm_cause_t *esm_cause);
