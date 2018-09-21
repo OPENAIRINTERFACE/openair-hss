@@ -216,6 +216,7 @@ check_install_hss_software() {
       memcached \
       cmake-curses-gui \
       python-cassandra \
+      python3-cassandra \
       gcc \
       bison \
       flex \
