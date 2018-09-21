@@ -1740,6 +1740,7 @@ mme_app_handle_s11_update_bearer_req (
   s11_proc_update_bearer->num_bearers_unhandled = update_bearer_request_pP->bearer_contexts->num_bearer_context;
   s11_proc_update_bearer->bcs_tbu               = update_bearer_request_pP->bearer_contexts;
   s11_proc_update_bearer->pci                   = default_bc->pdn_cx_id;
+  s11_proc_update_bearer->apn_ambr              = update_bearer_request_pP->apn_ambr;
   s11_proc_update_bearer->linked_ebi            = linked_ebi;
 
   // todo: PCOs
@@ -1756,6 +1757,7 @@ mme_app_handle_s11_update_bearer_req (
   /** MME_APP Update Bearer Request. */
   mme_app_modify_bearer_req->ue_id              = ue_context->mme_ue_s1ap_id;
   mme_app_modify_bearer_req->bcs_to_be_updated  = update_bearer_request_pP->bearer_contexts;
+  mme_app_modify_bearer_req->ambr               = update_bearer_request_pP->apn_ambr;
   /** Might be UE triggered. */
   mme_app_modify_bearer_req->pti                = update_bearer_request_pP->pti;
   mme_app_modify_bearer_req->cid                = default_bc->pdn_cx_id;
@@ -2169,6 +2171,9 @@ void mme_app_handle_e_rab_modify_rsp (itti_s1ap_e_rab_modify_rsp_t  * const e_ra
     OAILOG_DEBUG (LOG_MME_APP, "For the S11 dedicated bearer procedure, no pending bearers left (either success or failure) for UE " MME_UE_S1AP_ID_FMT ". "
         "Sending UBResp immediately. \n", ue_context->mme_ue_s1ap_id);
     mme_app_send_s11_update_bearer_rsp(ue_context, pdn_context, s11_proc_update_bearer->proc.s11_trxn, s11_proc_update_bearer->bcs_tbu);
+    /** Unlink the bearers to be updated and send them to the ESM layer for final processing and saving.. */
+    bearer_contexts_to_be_updated_t * bcs_tbu = s11_proc_update_bearer->bcs_tbu;
+    s11_proc_update_bearer->bcs_tbu = NULL;
     /** Delete the procedure if it exists. */
     mme_app_delete_s11_procedure_update_bearer(ue_context);
   }
@@ -2347,6 +2352,7 @@ void mme_app_handle_modify_bearer_cnf (itti_mme_app_modify_bearer_cnf_t   * cons
   OAILOG_FUNC_IN (LOG_MME_APP);
   struct ue_context_s                 *ue_context = NULL;
   pdn_context_t                       *pdn_context = NULL;
+  MessageDef                          *message_p = NULL;
 
   ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, modify_bearer_cnf->ue_id);
 
@@ -2417,8 +2423,24 @@ void mme_app_handle_modify_bearer_cnf (itti_mme_app_modify_bearer_cnf_t   * cons
   }
   OAILOG_INFO(LOG_MME_APP, "No unhandled bearers left for s11 update bearer procedure for UE: " MME_UE_S1AP_ID_FMT ". Sending UBResp back immediately. \n", ue_context->mme_ue_s1ap_id);
   mme_app_send_s11_update_bearer_rsp(ue_context, pdn_context, s11_proc_update_bearer->proc.s11_trxn, s11_proc_update_bearer->bcs_tbu);
+  /** Inform the ESM layer. */
+  message_p = itti_alloc_new_message (TASK_MME_APP, MME_APP_ACTIVATE_BEARER_REQ);
+  AssertFatal (message_p , "itti_alloc_new_message Failed");
+
+  itti_mme_app_update_esm_bearers_req_t *mme_app_update_esm_bearers_req = &message_p->ittiMsg.mme_app_update_esm_bearers_req;
+  /** MME_APP Create Bearer Request. */
+  mme_app_update_esm_bearers_req->ue_id              = ue_context->mme_ue_s1ap_id;
+  mme_app_update_esm_bearers_req->bcs_to_be_updated  = s11_proc_update_bearer->bcs_tbu;
+  s11_proc_update_bearer->bcs_tbu = NULL;
+
+  /** No need to set bearer states, we won't establish the bearers yet. */
+  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 MME_APP_UPDATE_ESM_BEARERS_REQ mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ",
+      mme_app_update_esm_bearers_req->ue_id);
+  itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+
   /** Delete the procedure if it exists. */
   mme_app_delete_s11_procedure_update_bearer(ue_context);
+
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 
@@ -2500,6 +2522,8 @@ void mme_app_handle_modify_bearer_rej (itti_mme_app_modify_bearer_rej_t   * cons
   }
   OAILOG_INFO(LOG_MME_APP, "No unhandled bearers left for s11 update bearer procedure for UE: " MME_UE_S1AP_ID_FMT ". Sending UBResp back immediately. \n", ue_context->mme_ue_s1ap_id);
   mme_app_send_s11_update_bearer_rsp(ue_context, pdn_context, s11_proc_update_bearer->proc.s11_trxn, s11_proc_update_bearer->bcs_tbu);
+  bearer_contexts_to_be_updated_t * bcs_tbu = s11_proc_update_bearer->bcs_tbu;
+  s11_proc_update_bearer->bcs_tbu = NULL;
   /** Delete the procedure if it exists. */
   mme_app_delete_s11_procedure_update_bearer(ue_context);
   OAILOG_FUNC_OUT (LOG_MME_APP);

@@ -391,6 +391,12 @@ int esm_ebr_stop_timer (emm_data_context_t * emm_context, ebi_t ebi)
 
   OAILOG_FUNC_IN (LOG_NAS_ESM);
 
+  /*
+   * 3GPP TS 24.301, section 7.3.2, case f
+   * * * * Reserved or assigned value that does not match an existing EPS
+   * * * * bearer context
+   */
+
   if ((ebi < ESM_EBI_MIN) || (ebi > ESM_EBI_MAX)) {
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
   }

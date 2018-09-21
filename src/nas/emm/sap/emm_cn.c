@@ -103,6 +103,7 @@ static const char                      *_emm_cn_primitive_str[] = {
   "EMM_CN_ACTIVATE_DEDICATED_BEARER_REQ",
   "EMM_CN_UPDATE_BEARER_REQ",
   "EMM_CN_DEACTIVATE_DEDICATED_BEARER_REQ",
+  "EMM_CN_UPDATE_ESM_BEARERS_REQ",
   "EMMCN_IMPLICIT_DETACH_UE",
   "EMMCN_SMC_PROC_FAIL",
 };
@@ -480,7 +481,7 @@ static int _emm_cn_pdn_connectivity_res (emm_cn_pdn_res_t * msg_pP)
   rc = esm_send_activate_default_eps_bearer_context_request (msg_pP->pti, msg_pP->ebi,      //msg_pP->ebi,
                                                              &esm_msg.activate_default_eps_bearer_context_request,
                                                              pdn_context->apn_subscribed,
-                                                             &msg_pP->pco,
+                                                             &msg_pP->pco, &msg_pP->apn_ambr,
                                                              esm_pdn_type, msg_pP->pdn_addr,
                                                              &qos, ESM_CAUSE_SUCCESS);
   clear_protocol_configuration_options(&msg_pP->pco); // todo: here or in the ITTI_FREE function
@@ -861,6 +862,30 @@ static int _emm_cn_deactivate_dedicated_bearer_req (emm_cn_deactivate_dedicated_
 }
 
 //------------------------------------------------------------------------------
+static int _emm_cn_update_esm_bearers_req (emm_cn_update_esm_bearers_req_t * msg)
+{
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  int                                     rc = RETURNok;
+  /** Like PDN Config Response, directly forwarded to ESM. */
+  // forward to ESM
+  esm_sap_t                               esm_sap = {0};
+
+  emm_data_context_t *emm_context = emm_data_context_get( &_emm_data, msg->ue_id);
+
+  esm_sap.primitive = ESM_EPS_UPDATE_ESM_BEARERS_REQ;
+  esm_sap.ctx           = emm_context;
+  esm_sap.is_standalone = true;
+  esm_sap.ue_id         = msg->ue_id;
+  memcpy((void*)&esm_sap.data.eps_update_esm_bearers, msg, sizeof(emm_cn_update_esm_bearers_req_t)); // todo: pointer directly?
+
+  MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_ESM_MME, NULL, 0, "0 ESM_UPDATE_ESM_BEARERS_REQ ue id " MME_UE_S1AP_ID_FMT, esm_sap.ue_id);
+
+  rc = esm_sap_send (&esm_sap);
+
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+}
+
+//------------------------------------------------------------------------------
 static int _emm_cn_context_res (const emm_cn_context_res_t * msg)
 {
   emm_data_context_t                     *emm_context = NULL;
@@ -970,15 +995,19 @@ int emm_cn_send (const emm_cn_t * msg)
     break;
   
   case EMMCN_ACTIVATE_DEDICATED_BEARER_REQ:
-    rc = _emm_cn_activate_dedicated_bearer_req (msg->u.activate_dedicated_bearer_req);
+    rc = _emm_cn_activate_dedicated_bearer_req (msg->u.emm_cn_activate_dedicated_bearer_req);
     break;
 
   case EMMCN_MODIFY_BEARER_REQ:
-    rc = _emm_cn_modify_bearer_req (msg->u.modify_bearer_req);
+    rc = _emm_cn_modify_bearer_req (msg->u.emm_cn_modify_bearer_req);
     break;
 
   case EMMCN_DEACTIVATE_DEDICATED_BEARER_REQ:
-    rc = _emm_cn_deactivate_dedicated_bearer_req (msg->u.deactivate_dedicated_bearer_req);
+    rc = _emm_cn_deactivate_dedicated_bearer_req (msg->u.emm_cn_deactivate_dedicated_bearer_req);
+    break;
+
+  case EMMCN_UPDATE_ESM_BEARERS_REQ:
+    rc = _emm_cn_update_esm_bearers_req (msg->u.emm_cn_update_esm_bearers_req);
     break;
 
   case EMMCN_IMPLICIT_DETACH_UE:

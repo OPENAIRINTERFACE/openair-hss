@@ -951,23 +951,7 @@ esm_recv_modify_eps_bearer_context_accept (
     OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Invalid PTI value (pti=%d)\n", pti);
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_PTI_VALUE);
   }
-//  /*
-//   * EPS bearer identity checking
-//   * todo: check with original functions (no ebi allocated)
-//   */
-//  else if (esm_ebr_is_reserved (ebi) || !mme_app_get_session_bearer_context_from_all(ue_context, ebi)) {    // todo: check old function esm_ebr_is_not_in_use (emm_context, ebi
-//    /*
-//     * 3GPP TS 24.301, section 7.3.2, case f
-//     * * * * Reserved or assigned value that does not match an existing EPS
-//     * * * * bearer context
-//     */
-//    OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Invalid EPS bearer identity (ebi=%d)\n", ebi);
-//    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY);
-//  }
 
-  /*
-   * Message processing
-   */
   /*
    * Execute the dedicated EPS bearer context activation procedure accepted
    * * * * by the UE

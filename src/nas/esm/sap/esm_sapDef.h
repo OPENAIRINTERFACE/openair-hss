@@ -69,6 +69,7 @@ typedef enum esm_primitive_s {
   ESM_EPS_BEARER_CONTEXT_MODIFY_REQ,
   ESM_EPS_BEARER_CONTEXT_MODIFY_CNF,
   ESM_EPS_BEARER_CONTEXT_MODIFY_REJ,
+  ESM_EPS_UPDATE_ESM_BEARERS_REQ,
   /* Transaction related procedures (initiated by the UE) */
   ESM_PDN_CONFIG_RES,
   ESM_PDN_CONNECTIVITY_REQ,
@@ -93,6 +94,8 @@ typedef enum esm_primitive_s {
 typedef struct itti_mme_app_activate_bearer_req_s   esm_eps_activate_bearer_req_t;
 typedef struct itti_mme_app_modify_bearer_req_s     esm_eps_modify_bearer_req_t;
 typedef struct itti_mme_app_deactivate_bearer_req_s esm_eps_deactivate_bearer_req_t;
+
+typedef struct itti_mme_app_update_esm_bearers_req_s esm_eps_eps_update_esm_bearers_t;
 
 /*
  * Error code returned upon processing ESM-SAP primitive
@@ -197,6 +200,7 @@ typedef union {
   esm_eps_activate_bearer_req_t     eps_dedicated_bearer_context_activate;
   esm_eps_modify_bearer_req_t       eps_bearer_context_modify;
   esm_eps_deactivate_bearer_req_t   eps_dedicated_bearer_context_deactivate;
+  esm_eps_eps_update_esm_bearers_t  eps_update_esm_bearers;
   esm_bearer_resource_allocate_rej_t    esm_bearer_resource_allocate_rej;
   esm_bearer_resource_modify_rej_t    esm_bearer_resource_modify_rej;
 } esm_sap_data_t;

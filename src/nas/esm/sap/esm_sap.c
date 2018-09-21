@@ -112,6 +112,8 @@ static const char                      *_esm_sap_primitive_str[] = {
   "ESM_EPS_BEARER_CONTEXT_MODIFY_CNF",
   "ESM_EPS_BEARER_CONTEXT_MODIFY_REJ",
 
+  "ESM_EPS_UPDATE_ESM_BEARERS_REQ",
+
   "ESM_PDN_CONFIG_RES",
 
   "ESM_PDN_CONNECTIVITY_REQ",
@@ -433,6 +435,12 @@ esm_sap_send (esm_sap_t * msg)
     }
   }
   break;
+
+  case ESM_EPS_UPDATE_ESM_BEARERS_REQ:
+    /** Check that the bearers are active, and update the tft, qos, and apn-ambr values. */
+    // todo: apn ambr to ue ambr calculation !
+
+    break;
 
   case ESM_UNITDATA_IND:
     /** Check that an EMM context exists, if not disregard the message. */
@@ -887,7 +895,7 @@ _esm_sap_recv (
             rc = esm_send_activate_default_eps_bearer_context_request (pti, ebi,      //msg_pP->ebi,
                                                                        &esm_msg.activate_default_eps_bearer_context_request,
                                                                        new_pdn_context->apn_subscribed,
-                                                                       new_pdn_context->pco,
+                                                                       new_pdn_context->pco,  &new_pdn_context->p_gw_apn_ambr,
                                                                        new_pdn_context->pdn_type, paa_to_bstring(new_pdn_context->paa),
                                                                        &qos, ESM_CAUSE_SUCCESS);
             /** Leaving the PCOs of the PDN context. */
@@ -1172,11 +1180,14 @@ _esm_sap_send (
             msg->bcs_to_be_updated->bearer_contexts[num_bc].bearer_level_qos.gbr.br_ul,
             &eps_qos, false);
         if (RETURNok == rc) {
+          ambr_t * ambr_sent = NULL;
+          if(!num_bc)
+            ambr_sent = &msg->ambr;
           rc = esm_send_modify_eps_bearer_context_request (
               pti, msg->bcs_to_be_updated->bearer_contexts[num_bc].eps_bearer_id,
               &esm_msg.activate_dedicated_eps_bearer_context_request, &eps_qos,
               &msg->bcs_to_be_updated->bearer_contexts[num_bc].tft,
-              &msg->bcs_to_be_updated->bearer_contexts[num_bc].pco);
+              ambr_sent, &msg->bcs_to_be_updated->bearer_contexts[num_bc].pco);
 
           esm_procedure = esm_proc_modify_eps_bearer_context_request; /**< Not the procedure. */
         }

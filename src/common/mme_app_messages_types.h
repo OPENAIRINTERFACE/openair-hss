@@ -44,6 +44,8 @@
 #define MME_APP_MODIFY_BEARER_CNF(mSGpTR)                (mSGpTR)->ittiMsg.mme_app_modify_bearer_cnf
 #define MME_APP_MODIFY_BEARER_REJ(mSGpTR)                (mSGpTR)->ittiMsg.mme_app_modify_bearer_rej
 
+#define MME_APP_UPDATE_ESM_BEARERS_REQ(mSGpTR)           (mSGpTR)->ittiMsg.mme_app_update_esm_bearers_req
+
 #define MME_APP_DEACTIVATE_BEARER_REQ(mSGpTR)            (mSGpTR)->ittiMsg.mme_app_deactivate_bearer_req
 #define MME_APP_DEACTIVATE_BEARER_CNF(mSGpTR)            (mSGpTR)->ittiMsg.mme_app_deactivate_bearer_cnf
 
@@ -146,7 +148,8 @@ typedef struct itti_mme_app_modify_bearer_req_s {
   pdn_cid_t                         cid;
   pti_t                             pti;
   /** No EBI will set yet. */
-  bearer_contexts_to_be_updated_t  *bcs_to_be_updated;
+  ambr_t                            ambr;
+  bearer_contexts_to_be_updated_t      *bcs_to_be_updated;
 } itti_mme_app_modify_bearer_req_t;
 
 typedef struct itti_mme_app_modify_bearer_cnf_s {
@@ -161,6 +164,12 @@ typedef struct itti_mme_app_modify_bearer_rej_s {
   ebi_t                                 ebi;
   bool                                  removed;
 } itti_mme_app_modify_bearer_rej_t;
+
+typedef struct itti_mme_app_update_esm_bearers_req_s {
+  /* UE identifier */
+  mme_ue_s1ap_id_t                      ue_id;
+  bearer_contexts_to_be_updated_t      *bcs_to_be_updated;
+} itti_mme_app_update_esm_bearers_req_t;
 
 typedef struct itti_mme_app_deactivate_bearer_req_s {
   /* UE identifier */

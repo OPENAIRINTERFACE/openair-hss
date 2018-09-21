@@ -151,6 +151,7 @@ typedef struct mme_app_s11_proc_update_bearer_s {
   int                          num_status_received;
 
   pdn_cid_t                    pci;
+  ambr_t                       apn_ambr;
   ebi_t                        linked_ebi;
   // TODO here give a NAS/S1AP/.. reason -> GTPv2-C reason
   bearer_contexts_to_be_updated_t *bcs_tbu; /**< Store the bearer contexts to be created here, and don't register them yet in the MME_APP context. */

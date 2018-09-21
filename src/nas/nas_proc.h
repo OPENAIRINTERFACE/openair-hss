@@ -111,6 +111,8 @@ int nas_proc_pdn_disconnect_res (emm_cn_pdn_disconnect_res_t * emm_cn_pdn_discon
 int nas_proc_activate_dedicated_bearer(emm_cn_activate_dedicated_bearer_req_t * emm_cn_activate);
 int nas_proc_modify_bearer(emm_cn_modify_bearer_req_t * emm_cn_modify);
 int nas_proc_deactivate_dedicated_bearer(emm_cn_deactivate_dedicated_bearer_req_t * emm_cn_deactivate);
+int nas_proc_establish_bearer_update(emm_cn_update_esm_bearers_req_t * emm_cn_update_esm_bearers);
+
 int nas_proc_e_rab_failure(mme_ue_s1ap_id_t ue_id, ebi_t ebi, bool modify, bool remove);
 int nas_proc_signalling_connection_rel_ind (mme_ue_s1ap_id_t ue_id);
 int nas_proc_implicit_detach_ue_ind (mme_ue_s1ap_id_t ue_id, uint8_t emm_cause, uint8_t detach_type);

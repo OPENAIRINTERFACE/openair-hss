@@ -258,10 +258,8 @@ esm_proc_modify_eps_bearer_context_accept (
   rc = esm_ebr_stop_timer (emm_context, ebi);
 
   if (rc != RETURNerror) {
-    esm_ebr_state oldState = esm_ebr_get_status(emm_context, ebi);
-
     /*
-     * Set the EPS bearer context state to ACTIVE
+     * Set the EPS bearer context state to ACTIVE (bearer exists, just stop the procedure if already not stopped).
      */
     rc = esm_ebr_set_status (emm_context, ebi, ESM_EBR_ACTIVE, false);
 
@@ -276,7 +274,12 @@ esm_proc_modify_eps_bearer_context_accept (
        */
       *esm_cause = ESM_CAUSE_PROTOCOL_ERROR;
     } else{
-      /** We changed the status of the ESM bearer context, so the ESM reply came before any E-RAB failures, if any. */
+      /**
+       * The ESM procedure was terminated implicitly but the bearer context remained (old status was same (ESM_ACTIVE).
+       * We changed the status of the ESM bearer context, so the ESM reply came before any E-RAB failures, if any.
+       *
+       * The current bearers are not updated yet.
+       */
       nas_itti_modify_bearer_cnf(ue_id, ebi);
     }
   }else {

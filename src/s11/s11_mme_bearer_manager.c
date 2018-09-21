@@ -520,7 +520,7 @@ s11_mme_handle_update_bearer_request (
 
     /** Add the AMBR. */
     rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_AMBR, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_MANDATORY, gtpv2c_ambr_ie_get,
-        &req_p->pti);
+        &req_p->apn_ambr);
     DevAssert (NW_OK == rc);
 
     /*
