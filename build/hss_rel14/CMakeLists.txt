@@ -43,7 +43,7 @@ set(OAI_HSS_UTIL_DIR           ${OPENAIRCN_DIR}/src/hss_rel14/util)
 set(OPENAIR_BIN_DIR       ${OPENAIRCN_DIR}/src/hss_rel14/)
 
 
-set(CMAKE_MODULE_PATH "${OPENAIRCN_DIR}/build/modules" "${CMAKE_MODULE_PATH}")
+set(CMAKE_MODULE_PATH "${OPENAIRCN_DIR}/build/cmake_modules" "${CMAKE_MODULE_PATH}")
 
 macro(add_boolean_option name val helpstr)
   if(DEFINED ${name})
@@ -137,7 +137,7 @@ add_definitions("-DPACKAGE_BUGREPORT=\"openaircn-user@lists.eurecom.fr\"")
 link_directories(${OAI_HSS_DIR}/util)
 link_directories(${OAI_HSS_DIR}/hsssec)
 
-include_directories( ${OAI_HSS_DIR}/modules/rapidjson/include ${OAI_HSS_DIR}/util/include ${OAI_HSS_DIR}/include /usr/local/include/freeDiameter ${OAI_HSS_DIR}/hsssec/include /usr/local/include ${OAI_HSS_DIR}/modules/cpp-driver/include )
+include_directories( ${OAI_HSS_DIR}/../git_submodules/rapidjson/include ${OAI_HSS_DIR}/util/include ${OAI_HSS_DIR}/include /usr/local/include/freeDiameter ${OAI_HSS_DIR}/hsssec/include /usr/local/include ${OAI_HSS_DIR}/../git_submodules/cpp-driver/include )
 ADD_EXECUTABLE(oai_hss  ${OAI_HSS_DIR}/src/main.cpp)
 target_link_libraries (oai_hss 
                        -Wl,-whole-archive 

@@ -34,7 +34,7 @@ LIBS := \
 INCS := \
  -I $(OAI_HSS_DIR)/include \
  -I $(OAI_HSS_DIR)/util/include \
- -I $(OAI_MODULES_DIR)/modules/rapidjson/include \
+ -I $(OAI_MODULES_DIR)/../git_submodules/rapidjson/include \
  -I /usr/local/include/freeDiameter \
  -I $(OAI_HSS_DIR)/hsssec/include \
  -I /usr/local/include

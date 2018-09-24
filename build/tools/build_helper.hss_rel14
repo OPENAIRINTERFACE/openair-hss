@@ -34,7 +34,7 @@ source $THIS_BH_HSS_SCRIPT_PATH/build_helper
 #-------------------------------------------------------------------------------
 build_freeDiameter()
 {
-  pushd $OPENAIRCN_DIR/build/hss_rel14/modules/freeDiameter
+  pushd $OPENAIRCN_DIR/build/git_submodules/freeDiameter
   rm -rf build
   mkdir -p build
   cd build
@@ -55,7 +55,7 @@ build_freeDiameter()
 #-------------------------------------------------------------------------------
 build_c_ares()
 {
-  pushd $OPENAIRCN_DIR/build/hss_rel14/modules/c-ares
+  pushd $OPENAIRCN_DIR/build/git_submodules/c-ares
   ./buildconf
   res=$?
   [[ $res -ne 0 ]] && popd && return $res
@@ -75,7 +75,7 @@ build_c_ares()
 #-------------------------------------------------------------------------------
 build_cpp_driver()
 {
-  pushd $OPENAIRCN_DIR/build/hss_rel14/modules/cpp-driver
+  pushd $OPENAIRCN_DIR/build/git_submodules/cpp-driver
   rm -rf build
   mkdir -p build
   cd build
@@ -95,7 +95,7 @@ build_cpp_driver()
 #-------------------------------------------------------------------------------
 build_pistache()
 {
-  pushd $OPENAIRCN_DIR/build/hss_rel14/modules/pistache
+  pushd $OPENAIRCN_DIR/build/git_submodules/pistache
   rm -rf build
   mkdir -p build
   cd build
