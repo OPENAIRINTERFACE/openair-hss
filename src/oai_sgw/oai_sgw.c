@@ -79,13 +79,15 @@ main (
   int argc,
   char *argv[])
 {
-  char   *pid_file_name = NULL;
+  char *pid_dir;
+  char *pid_file_name;
 
   CHECK_INIT_RETURN (shared_log_init (MAX_LOG_PROTOS));
   CHECK_INIT_RETURN (OAILOG_INIT (LOG_SPGW_ENV, OAILOG_LEVEL_NOTICE, MAX_LOG_PROTOS));
 
-  // Currently hard-coded value. TODO: add as config option.
-  pid_file_name = get_exe_absolute_path("/var/run");
+  pid_dir = bstr2cstr(spgw_config.pgw_config.pid_dir, 1);
+  pid_dir = pid_dir ? pid_dir : "/var/run";
+  pid_file_name = get_exe_absolute_path(pid_dir, spgw_config.pgw_config.instance);
 
   if (! is_pid_file_lock_success(pid_file_name)) {
     free_wrapper((void**) &pid_file_name);

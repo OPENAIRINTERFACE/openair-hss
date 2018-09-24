@@ -373,7 +373,9 @@ get_interface_inet_global_cidr() {
   if [ "$#" -eq 1 ]; then
     is_interface_up $1
     [[ $? -ne 0 ]] && return $?
-    ip -4 addr show $1 scope global | awk '$1 == "inet" {print $2}' | xargs
+    # grep is needed for virtual interfaces
+    # But be careful of ens4:1, ens4:10, prefer ens4:1000, ens4:1010 for example
+    ip -4 addr show $1 scope global | grep $1 | awk '$1 == "inet" {print $2}' | xargs
     return 0
   else
     echo_error "usage: get_interface_inet_global_address if_name"
@@ -441,6 +443,21 @@ set_virtual_interface_up(){
 # arg1 is a config file (mme.conf, spgw.conf)
 set_cn_virtual_interfaces(){
   if [ "$#" -eq 1 ]; then
+
+    declare -a if_arr=("MME_INTERFACE_NAME_FOR_S1_MME" "MME_INTERFACE_NAME_FOR_S11" "MME_INTERFACE_NAME_FOR_S10" 
+                  "SGW_INTERFACE_NAME_FOR_S11" "SGW_INTERFACE_NAME_FOR_S1U_S12_S4_UP" "SGW_INTERFACE_NAME_FOR_S5_S8_UP" 
+                  "PGW_INTERFACE_NAME_FOR_S5_S8" "PGW_INTERFACE_NAME_FOR_SGI")
+                  
+    declare -a ip_arr=("MME_IPV4_ADDRESS_FOR_S1_MME" "MME_IPV4_ADDRESS_FOR_S11" "MME_IPV4_ADDRESS_FOR_S10" 
+                  "SGW_IPV4_ADDRESS_FOR_S11" "SGW_IPV4_ADDRESS_FOR_S1U_S12_S4_UP" "SGW_IPV4_ADDRESS_FOR_S5_S8_UP"
+                  "PGW_IPV4_ADDRESS_FOR_S5_S8" "PGW_IPV4_ADDRESS_FOR_SGI")
+    for ((i=0; i<${#if_arr[@]}; ++i)); do
+      if_name=${if_arr[i]}
+      ip_address=${ip_arr[i]}
+      unset $if_name
+      unset $ip_address
+    done
+  
     value="`cat $1 | cut -d "#" -f1 | cut -d "}" -f1 | cut -d "{" -f2 | grep 'ADDRESS\|INTERFACE' | tr -d " " | grep "="`"
     eval $value
 
