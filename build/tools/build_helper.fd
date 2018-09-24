@@ -378,32 +378,30 @@ install_opencoord.org_freediameter() {
 
   if [[ $prompt =~ [yY](es)* ]]
   then
-    pushd `pwd`
-    cd /tmp
-    rm -rf /tmp/freeDiameter
-    echo "Downloading opencoord.org freeDiameter "
-    git clone https://gerrit.opencord.org/freeDiameter.git
-    res=$?
-    [[ $res -ne 0 ]] && popd && return $res
-    cd freeDiameter
-    git apply $OPENAIRCN_DIR/build/patches/0001-opencoord.org.freeDiameter.patch
+    git submodule init
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
+    git submodule update
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
+    pushd $OPENAIRCN_DIR/build/git_submodules/freeDiameter
+    git pull origin master 
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
+    patch -p1 <  $OPENAIRCN_DIR/build/patches/0001-opencoord.org.freeDiameter.patch
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
+  
     rm -rf build
     mkdir -p build
     cd build
     $CMAKE ..
     res=$?
     [[ $res -ne 0 ]] && popd && return $res
-    # Do not disable SCTP on S6a
-    #awk '{if (/^DISABLE_SCTP/) gsub(/OFF/, "ON"); print}' CMakeCache.txt > tmp && mv tmp CMakeCache.txt
+    awk '{if (/^DISABLE_SCTP/) gsub(/OFF/, "ON"); print}' CMakeCache.txt > tmp && mv tmp CMakeCache.txt
     make -j`nproc`
     res=$?
     [[ $res -ne 0 ]] && popd && return $res
     $SUDO make install
     res=$?
     [[ $res -ne 0 ]] && popd && return $res
-    cd /tmp
-    rm -rf /tmp/freediameter
-    popd     
+    popd
     return $?
   fi
 }
