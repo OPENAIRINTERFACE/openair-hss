@@ -191,6 +191,7 @@ int pgw_config_parse_file (pgw_config_t * config_pP)
   unsigned char                           buf_in_addr[sizeof (struct in_addr)];
   bstring                                 system_cmd = NULL;
   libconfig_int                           mtu = 0;
+  libconfig_int                           aint = 0;
   struct in_addr                          in_addr_var = {0};
 
 
@@ -218,6 +219,21 @@ int pgw_config_parse_file (pgw_config_t * config_pP)
   setting_pgw = config_lookup (&cfg, PGW_CONFIG_STRING_PGW_CONFIG);
 
   if (setting_pgw) {
+
+    if ((config_setting_lookup_string (setting_pgw,
+                                       PGW_CONFIG_STRING_PID_DIRECTORY,
+                                       (const char **)&astring))) {
+      config_pP->pid_dir = bfromcstr (astring);
+    } else {
+      AssertFatal(false, "Couldn't find all " PGW_CONFIG_STRING_PID_DIRECTORY " setting in pgw config\n");
+    }
+
+    if ((config_setting_lookup_int (setting_pgw, PGW_CONFIG_STRING_INSTANCE, &aint))) {
+      config_pP->instance = (uint32_t) aint;
+    } else {
+      AssertFatal(false, "Couldn't find all " PGW_CONFIG_STRING_INSTANCE " setting in pgw config\n");
+    }
+
 #if ENABLE_OPENFLOW
     config_setting_t* ovs_settings = config_setting_get_member (setting_pgw, PGW_CONFIG_STRING_OVS_CONFIG);
     if (ovs_settings == NULL) {

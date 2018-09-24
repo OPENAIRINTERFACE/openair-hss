@@ -36,6 +36,7 @@
 
 #include "bstrlib.h"
 
+#include "common_defs.h"
 #include "pid_file.h"
 #include "dynamic_memory_check.h"
 
@@ -46,10 +47,10 @@ extern "C" {
 int     g_fd_pid_file = -1;
 __pid_t g_pid         = -1;
 //------------------------------------------------------------------------------
-char* get_exe_absolute_path(char const *basepath)
+char* get_exe_absolute_path(char const *basepath, unsigned int instance)
 {
-
-  char   pid_file_name[256] = {0};
+#define MAX_FILE_PATH_LENGTH 255
+  char   pid_file_name[MAX_FILE_PATH_LENGTH+1] = {0};
   char   *exe_basename      = NULL;
   int    rv                 = 0;
   int    num_chars          = 0;
@@ -62,9 +63,9 @@ char* get_exe_absolute_path(char const *basepath)
   pid_file_name[rv] = 0;
   exe_basename = basename(pid_file_name);
 
-  // Add 6 for the other 5 characters in the path + null terminator.
-  num_chars = strlen(basepath) + strlen(exe_basename) + 6;
-  snprintf(pid_file_name, num_chars, "%s/%s.pid", basepath, exe_basename);
+  // Add 6 for the other 5 characters in the path + null terminator + 2 chars for instance.
+  num_chars = strlen(basepath) + strlen(exe_basename) + 6 + 2;
+  snprintf(pid_file_name, min(num_chars, MAX_FILE_PATH_LENGTH), "%s/%s%02u.pid", basepath, exe_basename, instance);
   return strdup(pid_file_name);
 }
 

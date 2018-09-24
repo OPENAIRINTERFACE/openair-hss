@@ -76,6 +76,7 @@ function help()
   echo_error "  --sgi-dum-mac-nh                    Dummy SGi next-hop L2 address for GTP data plane if OVS is used"
   echo_error "  --sgi-mac-nh     nh                 SGi next-hop L2 address (can be a gateway, router, single app server) for GTP data plane if OVS is used"
   echo_error "                                      --sgi-nh and --sgi-mac-nh and --sgi-dum-mac-nh are mutually exclusive if OVS is used, else don't use them."
+  echo_error "  -s, --set-virt-if                   Set virtual interfaces if any listed in config file (default or provided with -c option)"
 }
 
 function do_msc_gen()
@@ -99,7 +100,7 @@ function main()
 {
   local -i run_gdb=0
   local -i run_daemon=0
-  local -i set_network_interfaces=0
+  local -i set_virt_nw_if=0
   local    exe_arguments=" "
   local    spgw_config_file=$g_spgw_default_config_file
   local    sgi_nh
@@ -180,6 +181,10 @@ function main()
         sgi_nh=$2
         shift 2;
         ;;
+      -s | --set-virt-if)
+        set_virt_nw_if=1
+        shift;
+        ;;
       *)   
         echo "Unknown option $1"
         help
@@ -198,6 +203,7 @@ function main()
     return 1
   fi
 
+  
 
   if [ ! -e /usr/local/bin/spgw ]; then
     echo_error "Cannot find /usr/local/bin/spgw executable, have a look at the output of build_spgw executable"
@@ -210,9 +216,27 @@ function main()
   fi
 
 
+  if [ $set_virt_nw_if -eq 1 ]; then 
+    set_cn_virtual_interfaces $spgw_config_file
+    ret=$?;[[ $ret -ne 0 ]] && echo_error "Failed to set virtual interfaces" && return $ret
+  fi
+  
+
+
+  ##########################
+  # INSTANCE
+  ##########################
+  instance_string="INSTANCE"
+  instance="`cat $spgw_config_file | cut -d "#" -f1 | grep $instance_string | tr -d " " | grep "="`"
+  eval $instance
+  INSTANCE=${!instance_string}
+
+  OVS_GTPU_BRIDGE_NAME=$OVS_GTPU_BRIDGE_NAME${!instance_string}
+  echo_info OVS_GTPU_BRIDGE_NAME=$OVS_GTPU_BRIDGE_NAME
+
+
   ##########################
   # SGI INTERFACE
-  # SGi interface may be the same as S1-U interface in tiny setups
   ##########################
   sgi_nw_dev_string="PGW_INTERFACE_NAME_FOR_SGI"
   sgi_nw_device="`cat $spgw_config_file | cut -d "#" -f1 | grep $sgi_nw_dev_string | tr -d " " | grep "="`"
