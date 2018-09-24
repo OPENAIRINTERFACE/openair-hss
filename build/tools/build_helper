@@ -441,7 +441,7 @@ set_virtual_interface_up(){
 # arg1 is a config file (mme.conf, spgw.conf)
 set_cn_virtual_interfaces(){
   if [ "$#" -eq 1 ]; then
-    value="`cat $1 | cut -d "#" -f1 | grep 'ADDRESS\|INTERFACE' | tr -d " " | grep "="`"
+    value="`cat $1 | cut -d "#" -f1 | cut -d "}" -f1 | cut -d "{" -f2 | grep 'ADDRESS\|INTERFACE' | tr -d " " | grep "="`"
     eval $value
 
     declare -a if_arr=("MME_INTERFACE_NAME_FOR_S1_MME" "MME_INTERFACE_NAME_FOR_S11" "MME_INTERFACE_NAME_FOR_S10" 

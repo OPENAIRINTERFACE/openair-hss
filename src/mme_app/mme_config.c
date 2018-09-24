@@ -390,6 +390,10 @@ static int mme_config_parse_file (mme_config_t * config_pP)
       config_pP->pid_dir = bfromcstr (astring);
     }
 
+    if ((config_setting_lookup_int (setting_mme, MME_CONFIG_STRING_INSTANCE, &aint))) {
+      config_pP->instance = (uint32_t) aint;
+    }
+
     if ((config_setting_lookup_int (setting_mme, MME_CONFIG_STRING_MAXENB, &aint))) {
       config_pP->max_enbs = (uint32_t) aint;
     }
