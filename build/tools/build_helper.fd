@@ -378,6 +378,7 @@ install_opencoord.org_freediameter() {
 
   if [[ $prompt =~ [yY](es)* ]]
   then
+    rm -Rf $OPENAIRCN_DIR/build/git_submodules/freeDiameter/*
     git submodule init
     ret=$?;[[ $ret -ne 0 ]] && return $ret
     git submodule update

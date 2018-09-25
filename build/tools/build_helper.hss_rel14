@@ -35,6 +35,8 @@ source $THIS_BH_HSS_SCRIPT_PATH/build_helper
 build_freeDiameter()
 {
   pushd $OPENAIRCN_DIR/build/git_submodules/freeDiameter
+  patch -p1 <  $OPENAIRCN_DIR/build/patches/0001-opencoord.org.freeDiameter.patch
+  ret=$?;[[ $ret -ne 0 ]] && popd && return $ret
   rm -rf build
   mkdir -p build
   cd build
@@ -116,7 +118,13 @@ build_pistache()
 #-------------------------------------------------------------------------------
 init_submodules()
 {
+  # Because of patch, TODO cleaner
+  rm -Rf $OPENAIRCN_DIR/build/git_submodules/freeDiameter/*
   git submodule init
+  ret=$?;[[ $ret -ne 0 ]] && return $ret
+  git submodule foreach --recursive git clean -xfd
+  ret=$?;[[ $ret -ne 0 ]] && return $ret
+  git submodule foreach --recursive git reset --hard
   ret=$?;[[ $ret -ne 0 ]] && return $ret
   git submodule update
   ret=$?;[[ $ret -ne 0 ]] && return $ret
