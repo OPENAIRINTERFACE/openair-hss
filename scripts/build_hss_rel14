@@ -42,7 +42,7 @@ function help()
   echo_error "Mandatory arguments to long options are mandatory for short options too."
   echo_error "  -c, --clean                               Clean the build generated files: config, object, executable files (build from scratch)"
   echo_error "  -d, --debug                               Compile with debug informations."
-  echo_error "  -F, --force                               No interactive script for installation of software packages."
+  echo_error "  -f, --force                               No interactive script for installation of software packages."
   echo_error "  -h, --help                                Print this help."
   echo_error "  -i, --check-installed-software            Check installed software packages necessary to build and run HSS (support $SUPPORTED_DISTRO)."
   echo_error "                                            If filled, then OPc key in table users for all subscribers (IMSI) will be computed/updated."
@@ -78,7 +78,7 @@ function main()
         echo "Compile with debug informations"
         shift;
         ;;
-      -F | --force)
+      -f | --force)
         force=1
         echo "Force set (no interactive)"
         shift;
