@@ -55,7 +55,6 @@ function help()
   echo_error "  -G, --gdb-cmd         cmd cmd_arg   Append this GDB cmd to GDB command file (ex1: break Attach.c:272, ex2: watch 0xffee0002)."
   echo_error "                                      All repetitions of this argument are valid."
   echo_error "  -h, --help                          Print this help."
-  echo_error "  -I, --install-mme-files             Install MME config files. (NOT RECOMMENDED. See tutorials on https://gitlab.eurecom.fr/oai/openairinterface5g/wikis/OpenAirUsage or docs/EPC_User_Guide.pdf"
   echo_error "  -k, --kill                          Kill all running MME instances, exit script then."
   echo_error "  -m, --mscgen          directory     Generate mscgen output files in a directory"
   echo_error "  -s, --set-virt-if                   Set virtual interfaces if any listed in config file (default or provided with -c option)"
@@ -85,7 +84,6 @@ function main()
 {
   local -i run_gdb=0
   local -i set_virt_nw_if=0
-  local -i var_check_install_mme_files=0
   local    exe_arguments=" "
   local    mme_config_file=$g_mme_default_config_file
   local -a gdb_args
@@ -136,14 +134,9 @@ function main()
         help
         return 0
         ;;
-      -I | --install-mme-files)
-        echo "Install MME files: .conf files."
-        var_check_install_mme_files=1
-        shift;
-        ;;
       -k | --kill)
         $SUDO killall -q mme
-        $SUDO rm /var/run/mme.pid
+        $SUDO rm /var/run/mme*.pid
         return 0
         shift;
         ;;
@@ -187,48 +180,6 @@ function main()
       echo_error "Please provide -c|--config-file valid argument (\"$mme_config_file\" not a valid file)"
       return 1
     fi
-  fi
-
-  if [ ! -d /var/run/mme ]; then
-    $SUDO mkdir -p /var/run/mme > /dev/null
-  fi
-
-  if [ ! -d /usr/local/etc/oai/freeDiameter ]; then
-    $SUDO mkdir -m 777 -p /usr/local/etc/oai/freeDiameter > /dev/null
-  fi
-
-  if [ $var_check_install_mme_files -gt 0 ];then
-    if [ ! -f /usr/local/etc/oai/mme.conf ]; then
-      $SUDO cp -upv $THIS_SCRIPT_PATH/../etc/mme.conf    /usr/local/etc/oai
-      echo_error "Please customize /usr/local/etc/oai/mme.conf (interfaces, TAIs, GUMMEI, HSS hostname, SGW IP address, logging, etc), after, please re-run run_mme -I"
-      return 1
-    else
-      if [  $THIS_SCRIPT_PATH/../etc/mme.conf -nt  /usr/local/etc/oai/mme.conf ]; then
-        read -p "Do you want to update /usr/local/etc/oai/mme.conf with $OPENAIRCN_DIR/etc/mme.conf ? <y/N> " prompt
-        if [[ $prompt =~ [yY](es)* ]]; then
-          $SUDO cp -upv $THIS_SCRIPT_PATH/../etc/mme.conf    /usr/local/etc/oai
-          echo_error "Please customize /usr/local/etc/oai/mme.conf (interfaces, TAIs, GUMMEI, HSS hostname, SGW IP address, logging, etc), after, please re-run run_mme -I"
-          return 1
-        fi
-      fi
-    fi 
-
-    $SUDO cp -upv $THIS_SCRIPT_PATH/../etc/mme_fd.conf /usr/local/etc/oai/freeDiameter
-    echo_warning "Be carefull /usr/local/etc/oai/freeDiameter/mme_fd.conf has realm, freeDiameter identity, HSS "
-    echo_warning "IPv4 address, HSS realm, HSS FQDN, all hardcoded, please check them and change them upon your needs."
-  
-    # hardcoded MME diameter ID 
-    fqdn=`hostname --fqdn`
-    if [ "a$fqdn" == "a" ]; then
-      echo_error "Please allow the IP resolution of MME FQDN."
-      return 1
-    fi
-
-    # generate certificates if necessary
-    echo_warning "Generating MME certificates using MME FQDN $fqdn, if you want to use an other"
-    echo_warning "FQDN, please modify mme_fd.conf, /etc/hosts consistently and then "
-    echo_warning "re-run $OPENAIRCN_DIR/scripts/check_mme_s6a_certificate /usr/local/etc/oai/freeDiameter $fqdn consistently"
-    $SUDO $OPENAIRCN_DIR/scripts/check_mme_s6a_certificate /usr/local/etc/oai/freeDiameter $fqdn
   fi
 
   #####################################
