@@ -866,7 +866,9 @@ typedef struct itti_s11_delete_bearer_response_s {
   // here fields listed in 3GPP TS 29.274
   gtpv2c_cause_t            cause;               ///< M
 
-  ebi_t                    linked_eps_bearer_id;///< This IE shall be sent on S5/S8 when the UE moves from a
+  ebi_t                    linked_eps_bearer_id;///< If the response corresponds to the bearer deactivation EBI 0 (LBI) procedure in case all the bearers associated with the default bearer of a PDN connection shall be released,
+  ///< this IE shall be included on the S4/S11, S5/S8 and S2a/S2b interfaces to indicate the default bearer associated with the PDN being disconnected.
+
 
   bearer_contexts_within_delete_bearer_response_t bearer_contexts;///< Several IEs with this type and instance value shall be
   ///< included on the S4/S11, S5/S8 and S2b interfaces as

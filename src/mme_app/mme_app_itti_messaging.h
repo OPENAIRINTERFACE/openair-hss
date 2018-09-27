@@ -42,35 +42,30 @@ int mme_app_send_delete_session_request (struct ue_context_s * const ue_context_
 
 void mme_app_itti_e_rab_failure(mme_ue_s1ap_id_t ue_id, ebi_t ebi, bool modify, bool remove);
 
+/**
+ * If cause value is nonzero, it will be set.
+ * If it is zero, it will be derived from the cause values of the bearer contexts.
+ */
 int
 mme_app_send_s11_create_bearer_rsp (
   struct ue_context_s *const ue_context,
   pdn_context_t       *pdn_ctx,
   void                *trxn,
-  bearer_contexts_to_be_created_t * bcs_tbc);
-
-int
-mme_app_send_s11_create_bearer_rsp_error(const ue_context_t *ue_context, teid_t s11_saegw_teid, int cause_val, uintptr_t gtpv2c_trxn, const bearer_contexts_to_be_created_t * bcs_tbc);
+  gtpv2c_cause_value_t cause_value,
+  bearer_contexts_to_be_created_t *bcs_tbc);
 
 int
 mme_app_send_s11_update_bearer_rsp (
   struct ue_context_s *const ue_context,
-  pdn_context_t       *pdn_ctx,
   void                *trxn,
   bearer_contexts_to_be_updated_t *bcs_tbu);
 
 int
-mme_app_send_s11_update_bearer_rsp_error(const ue_context_t *ue_context, teid_t s11_saegw_teid, int cause_val, uintptr_t gtpv2c_trxn, const bearer_contexts_to_be_updated_t * bcs_tbu);
-
-int
 mme_app_send_s11_delete_bearer_rsp (
   struct ue_context_s *const ue_context,
-  ebi_t                def_ebi,
+  gtpv2c_cause_value_t cause_value,
   void                *trxn,
   ebi_list_t          *ebi_list);
-
-int
-mme_app_send_s11_delete_bearer_rsp_error(const ue_context_t *ue_context, teid_t s11_saegw_teid, int cause_val, uintptr_t gtpv2c_trxn, const ebi_list_t * ebi_list);
 
 void mme_app_itti_nas_context_response(ue_context_t * ue_context, nas_s10_context_t * s10_context_val);
 void mme_app_itti_nas_pdn_connectivity_response(ue_context_t * ue_context, paa_t *paa, protocol_configuration_options_t * pco, bearer_context_t * bc);

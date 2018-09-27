@@ -1187,7 +1187,7 @@ mme_app_dump_ue_context (
       //}
       bformata (bstr_dump, "    - AMBR (bits/s)     ( Downlink |  Uplink  )\n");
       // TODO bformata (bstr_dump, "        Subscribed ...: (%010" PRIu64 "|%010" PRIu64 ")\n", ue_context->subscribed_ambr.br_dl, ue_context->subscribed_ambr.br_ul);
-      bformata (bstr_dump, "        Allocated ....: (%010" PRIu64 "|%010" PRIu64 ")\n", ue_context->used_ambr.br_dl, ue_context->used_ambr.br_ul);
+      bformata (bstr_dump, "        Allocated ....: (%010" PRIu64 "|%010" PRIu64 ")\n", ue_context->subscribed_ue_ambr.br_dl, ue_context->subscribed_ue_ambr.br_ul);
 
       bformata (bstr_dump, "    - APN config list:\n");
 

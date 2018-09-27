@@ -72,6 +72,8 @@ static const char                      *_emm_esm_primitive_str[] = {
   "EMMESM_RELEASE_IND",
   "EMMESM_UNITDATA_REQ",
   "EMMESM_ACTIVATE_BEARER_REQ",
+  "EMMESM_MODIFY_BEARER_REQ",
+  "EMMESM_DEACTIVATE_BEARER_REQ",
   "EMMESM_UNITDATA_IND",
 };
 

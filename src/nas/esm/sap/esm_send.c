@@ -441,7 +441,7 @@ esm_send_modify_eps_bearer_context_request (
   modify_eps_bearer_context_request_msg * msg,
   const EpsQualityOfService * qos,
   traffic_flow_template_t *tft,
-  ambr_t * ambr,
+  ambr_t *ambr,
   protocol_configuration_options_t *pco)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
@@ -470,14 +470,15 @@ esm_send_modify_eps_bearer_context_request (
     memcpy(&msg->tft, tft, sizeof(traffic_flow_template_t));
     msg->presencemask |= MODIFY_EPS_BEARER_CONTEXT_REQUEST_TFT_PRESENT;
   }
-
   /*
    * Optional - APN AMBR
    * Implementing subscribed values.
    */
   if(ambr){
-    msg->presencemask |= MODIFY_EPS_BEARER_CONTEXT_REQUEST_APNAMBR_PRESENT;
-    ambr_kbps_calc(&msg->apnambr, ambr->br_dl, ambr->br_ul);
+    if(ambr->br_dl && ambr->br_ul){
+      msg->presencemask |= MODIFY_EPS_BEARER_CONTEXT_REQUEST_APNAMBR_PRESENT;
+      ambr_kbps_calc(&msg->apnambr, ambr->br_dl, ambr->br_ul);
+    }
   }else {
     OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - no APN AMBR is present for activating default eps bearer. \n");
   }

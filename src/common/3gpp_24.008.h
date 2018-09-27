@@ -30,6 +30,7 @@
 #define FILE_3GPP_24_008_SEEN
 
 #include "3gpp_23.003.h"
+#include "EsmCause.h"
 #include <stdbool.h>
 
 //#warning "Set it to max size of message"
@@ -1003,6 +1004,9 @@ typedef struct traffic_flow_template_s {
   parameters_list_t    parameterslist; // The parameters list contains a variable number of parameters that may be
                                        // transferred. If the parameters list is included, the E bit is set to 1; otherwise, the E bit
                                        // is set to 0.
+  /** Own field to set. */
+  long                 packet_filter_identifier_bitmap;  /**<< Map of allocated identifiers. */
+  uint8_t              precedence_set[256];              /**<< Map precedences to identifier. */
 } traffic_flow_template_t;
 
 #define TFT_ENCODE_IEI_TRUE     true
@@ -1016,6 +1020,7 @@ int decode_traffic_flow_template(traffic_flow_template_t *trafficflowtemplate, c
 int decode_traffic_flow_template_ie(traffic_flow_template_t *trafficflowtemplate, const bool iei_present, const uint8_t * const buffer, const uint32_t len);
 void copy_traffic_flow_template (traffic_flow_template_t * const tft_dst, const traffic_flow_template_t * const tft_src);
 void free_traffic_flow_template(traffic_flow_template_t ** tft);
+int verify_traffic_flow_template_syntactical(traffic_flow_template_t * tft, traffic_flow_template_t * tft_original, esm_cause_t **esm_cause);
 
 //******************************************************************************
 // 10.5.7 GPRS Common information elements

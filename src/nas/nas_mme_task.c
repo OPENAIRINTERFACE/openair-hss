@@ -80,20 +80,20 @@ static void *nas_intertask_interface (void *args_p)
         }
         break;
 
-    case MME_APP_ACTIVATE_BEARER_REQ:
-      nas_proc_activate_dedicated_bearer(&MME_APP_ACTIVATE_BEARER_REQ (received_message_p));
+    case MME_APP_ACTIVATE_EPS_BEARER_CTX_REQ:
+      nas_proc_activate_dedicated_bearer(&MME_APP_ACTIVATE_EPS_BEARER_CTX_REQ (received_message_p));
       break;
 
-    case MME_APP_MODIFY_BEARER_REQ:
-      nas_proc_modify_bearer(&MME_APP_MODIFY_BEARER_REQ (received_message_p));
+    case MME_APP_MODIFY_EPS_BEARER_CTX_REQ:
+      nas_proc_modify_eps_bearer_ctx(&MME_APP_MODIFY_EPS_BEARER_CTX_REQ (received_message_p));
       break;
 
-    case MME_APP_DEACTIVATE_BEARER_REQ:
-      nas_proc_deactivate_dedicated_bearer(&MME_APP_DEACTIVATE_BEARER_REQ (received_message_p));
+    case MME_APP_DEACTIVATE_EPS_BEARER_CTX_REQ:
+      nas_proc_deactivate_dedicated_bearer(&MME_APP_DEACTIVATE_EPS_BEARER_CTX_REQ (received_message_p));
       break;
 
-    case MME_APP_UPDATE_ESM_BEARERS_REQ:
-      nas_proc_establish_bearer_update(&MME_APP_UPDATE_ESM_BEARERS_REQ (received_message_p));
+    case MME_APP_UPDATE_ESM_BEARER_CTXS_REQ:
+      nas_proc_establish_bearer_update(&MME_APP_UPDATE_ESM_BEARER_CTXS_REQ (received_message_p));
       break;
 
     case MME_APP_E_RAB_FAILURE:

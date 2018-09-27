@@ -162,7 +162,6 @@ void esm_ebr_initialize (void)
 int esm_ebr_assign (emm_data_context_t * emm_context, ebi_t ebi, pdn_context_t *pdn_context)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
-  esm_ebr_context_t                      *ebr_ctx = NULL;
   bearer_context_t                       *bearer_context = NULL;
   bearer_context_t                       *bearer_context_2 = NULL;
 
@@ -187,13 +186,6 @@ int esm_ebr_assign (emm_data_context_t * emm_context, ebi_t ebi, pdn_context_t *
     OAILOG_WARNING (LOG_NAS_ESM, "ESM-FSM   - Could not register bearer context for UE ueId " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_EBI_UNASSIGNED);
   }
-  // todo: check that EBI is valid
-//  if (ebi != ESM_EBI_UNASSIGNED) {
-//    if ((ebi < ESM_EBI_MIN) || (ebi > ESM_EBI_MAX)) {
-//        OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_EBI_UNASSIGNED);
-//      } else {
-
-  ebr_ctx = &bearer_context->esm_ebr_context;
   /** Will set ESM ACTIVE_PENDING state later when dedicated EPS bearer context request is sent to the UE. */
   OAILOG_INFO (LOG_NAS_ESM, "ESM-FSM   - EPS bearer context %d assigned for ueId " MME_UE_S1AP_ID_FMT ". \n", bearer_context->ebi);
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, bearer_context->ebi);
@@ -588,7 +580,7 @@ esm_ebr_get_status (
 
   bearer_context_t                       *bearer_context = NULL;
 
-  bearer_context = mme_app_get_session_bearer_context(ue_context, ebi);
+  mme_app_get_session_bearer_context_from_all(ue_context, ebi, &bearer_context);
 
   if (bearer_context == NULL) {
     // todo: check if it is in the unallocated ones

@@ -112,7 +112,7 @@ static const char                      *_esm_sap_primitive_str[] = {
   "ESM_EPS_BEARER_CONTEXT_MODIFY_CNF",
   "ESM_EPS_BEARER_CONTEXT_MODIFY_REJ",
 
-  "ESM_EPS_UPDATE_ESM_BEARERS_REQ",
+  "ESM_EPS_UPDATE_ESM_BEARER_CTXS_REQ",
 
   "ESM_PDN_CONFIG_RES",
 
@@ -300,7 +300,7 @@ esm_sap_send (esm_sap_t * msg)
      */
     rc = esm_proc_eps_bearer_context_deactivate (msg->ctx, true, msg->data.esm_bearer_resource_allocate_rej.ebi,
         PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED, NULL);
-
+    /** If this was the default bearer, release the pdn connectivity. */
     break;
 
   case ESM_BEARER_RESOURCE_MODIFY_REQ:
@@ -349,66 +349,100 @@ esm_sap_send (esm_sap_t * msg)
     break;
 
   case ESM_DEDICATED_EPS_BEARER_CONTEXT_ACTIVATE_REQ: {
-    esm_eps_activate_bearer_req_t* bearer_activate = &msg->data.eps_dedicated_bearer_context_activate;
+    esm_eps_activate_eps_bearer_ctx_req_t* bearer_activate = &msg->data.eps_dedicated_bearer_context_activate;
     if (msg->is_standalone) {
-      esm_cause_t esm_cause;
       /** Handle each bearer context separately. */
-      for(int num_bc = 0; num_bc < bearer_activate->bcs_to_be_created->num_bearer_context; num_bc++){
+      /** Get the bearer contexts to be created. */
+      bearer_contexts_to_be_created_t * bcs_tbc = (bearer_contexts_to_be_created_t*)bearer_activate->bcs_to_be_created_ptr;
+      for(int num_bc = 0; num_bc < bcs_tbc->num_bearer_context; num_bc++){
         rc = esm_proc_dedicated_eps_bearer_context (msg->ctx,     /**< Create an ESM procedure and store the bearers in the procedure as pending. */
             bearer_activate->linked_ebi,
             bearer_activate->pti,
             bearer_activate->cid,
-            &bearer_activate->bcs_to_be_created->bearer_contexts[num_bc],
+            &bcs_tbc->bearer_contexts[num_bc],
             &esm_cause);
+        /** For each bearer separately process with the bearer establishment. */
         if (rc != RETURNok) {   /**< We assume that no ESM procedure exists. */
           OAILOG_ERROR (LOG_NAS_ESM, "ESM-SAP   - Failed to handle CN bearer context procedure due SYSTEM_FAILURE for num_bearer %d!\n",
               _esm_sap_primitive_str[primitive - ESM_START - 1], primitive, num_bc);
-          /** Send a NAS ITTI directly for the specific bearer. This will reduce the number of bearers to be processed. */
-          nas_itti_activate_bearer_rej(msg->ue_id, bearer_activate->bcs_to_be_created->bearer_contexts[num_bc].s1u_sgw_fteid.teid); /**< Assuming, no other CN bearer procedure will intervere. */
-          continue; /**< The remaining must also be rejected, such that the procedure has no pending elements anymore. */
+          /**
+           * Send a NAS ITTI directly for the specific bearer. This will reduce the number of bearers to be processed.
+           * No bearer should be allocated.
+           */
+          nas_itti_activate_eps_bearer_ctx_rej(msg->ue_id, bcs_tbc->bearer_contexts[num_bc].s1u_sgw_fteid.teid, esm_cause); /**< Assuming, no other CN bearer procedure will intervere. */
+          /**<
+           * We will check the remaining bearer requests and reject bearers individually (we might have a mix of rejected and accepted bearers).
+           * The remaining must also be rejected, such that the procedure has no pending elements anymore.
+           */
+          continue;
         }
         OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Successfully allocated bearer with ebi %d for ue " MME_UE_S1AP_ID_FMT "!\n",
-            bearer_activate->bcs_to_be_created->bearer_contexts[num_bc].eps_bearer_id, ue_context->mme_ue_s1ap_id);
+            bcs_tbc->bearer_contexts[num_bc].eps_bearer_id, ue_context->mme_ue_s1ap_id);
         /* Send Activate Dedicated Bearer Context Request */
         rc = _esm_sap_send(ACTIVATE_DEDICATED_EPS_BEARER_CONTEXT_REQUEST,
-            msg->is_standalone, msg->ctx, (proc_tid_t)bearer_activate->pti, bearer_activate->bcs_to_be_created->bearer_contexts[num_bc].eps_bearer_id,
+            msg->is_standalone, msg->ctx, (proc_tid_t)bearer_activate->pti, bcs_tbc->bearer_contexts[num_bc].eps_bearer_id,
             &msg->data, msg->send);
+        /** Check the resulting error code. */
+        if(rc == RETURNerror) {
+          OAILOG_ERROR (LOG_NAS_ESM, "ESM-SAP   - Could not trigger allocation of dedicated bearer context with ebi %d for ue " MME_UE_S1AP_ID_FMT "!\n",
+              bcs_tbc->bearer_contexts[num_bc].eps_bearer_id, ue_context->mme_ue_s1ap_id);
+          /** Removed the created EPS bearer context. */
+          rc = esm_proc_eps_bearer_context_deactivate (msg->ctx, true, bcs_tbc->bearer_contexts[num_bc].eps_bearer_id,  /**< Set above. */
+              PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED, NULL);
+          /** Inform the MME APP. */
+          nas_itti_activate_eps_bearer_ctx_rej(msg->ue_id, bcs_tbc->bearer_contexts[num_bc].s1u_sgw_fteid.teid, esm_cause); /**< Assuming, no other CN bearer procedure will intervere. */
+        }else{
+          OAILOG_INFO(LOG_NAS_ESM, "ESM-SAP   - Successfully completed triggering the allocation of dedicated bearer context with ebi %d for ue " MME_UE_S1AP_ID_FMT "!\n",
+              bcs_tbc->bearer_contexts[num_bc].eps_bearer_id, ue_context->mme_ue_s1ap_id);
+        }
       }
     }
   }
   break;
 
   case ESM_EPS_BEARER_CONTEXT_MODIFY_REQ: {
-     esm_eps_modify_bearer_req_t* bearer_modify = &msg->data.eps_bearer_context_modify;
+     esm_eps_modify_eps_bearer_ctx_req_t* bearer_modify = &msg->data.eps_bearer_context_modify;
      if (msg->is_standalone) {
-       esm_cause_t esm_cause;
        /** Handle each bearer context separately. */
-       for(int num_bc = 0; num_bc < bearer_modify->bcs_to_be_updated->num_bearer_context; num_bc++){
+       bearer_contexts_to_be_updated_t * bcs_tbu = (bearer_contexts_to_be_updated_t*)bearer_modify->bcs_to_be_updated_ptr;
+       for(int num_bc = 0; num_bc < bcs_tbu->num_bearer_context; num_bc++){
          rc = esm_proc_modify_eps_bearer_context (msg->ctx,     /**< Just setting the state as MODIFY_PENDING. */
              bearer_modify->pti,
-             bearer_modify->cid,
-             &bearer_modify->bcs_to_be_updated->bearer_contexts[num_bc],
+             &bcs_tbu->bearer_contexts[num_bc],
              &esm_cause);
          if (rc != RETURNok) {   /**< We assume that no ESM procedure exists. */
            OAILOG_ERROR (LOG_NAS_ESM, "ESM-SAP   - Failed to handle CN modify bearer context procedure due SYSTEM_FAILURE for num_bearer %d!\n",
                _esm_sap_primitive_str[primitive - ESM_START - 1], primitive, num_bc);
            /** Send a NAS ITTI directly for the specific bearer. This will reduce the number of bearers to be processed. */
-           nas_itti_modify_bearer_rej(msg->ue_id, bearer_modify->bcs_to_be_updated->bearer_contexts[num_bc].eps_bearer_id, false); /**< Assuming, no other CN bearer procedure will intervere. */
+           nas_itti_modify_eps_bearer_ctx_rej(msg->ue_id, bcs_tbu->bearer_contexts[num_bc].eps_bearer_id, esm_cause); /**< Assuming, no other CN bearer procedure will intervere. */
            continue; /**< The remaining must also be rejected, such that the procedure has no pending elements anymore. */
          }
          OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Successfully modified bearer context with ebi %d for ue " MME_UE_S1AP_ID_FMT "!\n",
-             bearer_modify->bcs_to_be_updated->bearer_contexts[num_bc].eps_bearer_id, ue_context->mme_ue_s1ap_id);
+             bcs_tbu->bearer_contexts[num_bc].eps_bearer_id, ue_context->mme_ue_s1ap_id);
          /* Send Modify Bearer Context Request */
          rc = _esm_sap_send(MODIFY_EPS_BEARER_CONTEXT_REQUEST,
-             msg->is_standalone, msg->ctx, (proc_tid_t)bearer_modify->pti, bearer_modify->bcs_to_be_updated->bearer_contexts[num_bc].eps_bearer_id,
+             msg->is_standalone, msg->ctx, (proc_tid_t)bearer_modify->pti, bcs_tbu->bearer_contexts[num_bc].eps_bearer_id,
              &msg->data, msg->send);
+         /** Check the resulting error code. */
+         if(rc == RETURNerror){
+           OAILOG_ERROR (LOG_NAS_ESM, "ESM-SAP   - Could not trigger allocation of dedicated bearer context with ebi %d for ue " MME_UE_S1AP_ID_FMT "!\n",
+               bcs_tbu->bearer_contexts[num_bc].eps_bearer_id, ue_context->mme_ue_s1ap_id);
+           /** Removed the created EPS bearer context. */
+           rc = esm_proc_modify_eps_bearer_context_reject(msg->ctx, bcs_tbu->bearer_contexts[num_bc].eps_bearer_id,
+               &esm_cause, false);
+           /** Inform the MME APP. */
+           nas_itti_modify_eps_bearer_ctx_rej(msg->ue_id, bcs_tbu->bearer_contexts[num_bc].eps_bearer_id, esm_cause); /**< Assuming, no other CN bearer procedure will intervere. */
+         }else{
+           OAILOG_INFO(LOG_NAS_ESM, "ESM-SAP   - Successfully completed triggering the allocation of dedicated bearer context with ebi %d for ue " MME_UE_S1AP_ID_FMT "!\n",
+               bcs_tbu->bearer_contexts[num_bc].eps_bearer_id, ue_context->mme_ue_s1ap_id);
+         }
        }
      }
    }
    break;
 
   case ESM_DEDICATED_EPS_BEARER_CONTEXT_DEACTIVATE_REQ:{
-    esm_eps_deactivate_bearer_req_t* bearer_deactivate = &msg->data.eps_dedicated_bearer_context_deactivate;
+    esm_eps_deactivate_eps_bearer_ctx_req_t* bearer_deactivate = &msg->data.eps_dedicated_bearer_context_deactivate;
     if (msg->is_standalone) {
       esm_cause_t esm_cause;
 
@@ -436,38 +470,30 @@ esm_sap_send (esm_sap_t * msg)
   }
   break;
 
-  case ESM_EPS_UPDATE_ESM_BEARERS_REQ: {
+  case ESM_EPS_UPDATE_ESM_BEARER_CTXS_REQ: {
     /** Check that the bearers are active, and update the tft, qos, and apn-ambr values. */
     // todo: apn ambr to ue ambr calculation !
-    esm_eps_update_esm_bearers_req_t* update_esm_bearers = &msg->data.eps_update_esm_bearers;
-    if (msg->is_standalone) {
-      esm_cause_t esm_cause;
-      /**
-       * APN-AMBR.
-       * todo: Subscribed APN-AMBR is changed by PCRF or is it something like "actual apn ambr"*/
-      if(msg->data.eps_update_esm_bearers.ambr.br_dl && msg->data.eps_update_esm_bearers.ambr.br_ul)
-        pdn_context->subscribed_apn_ambr = msg->data.eps_update_esm_bearers.ambr;
-      /** Update the bearer level QoS TFT values. */
-      for(int num_bc = 0; num_bc < msg->data.eps_update_esm_bearers.bcs_to_be_updated->num_bearer_context; num_bc++){
-        rc = esm_proc_update_eps_bearer_context(msg->ctx, &msg->data.eps_update_esm_bearers.bcs_to_be_updated->bearer_contexts[num_bc]);
-        if(rc != RETURNerror){
-          /* Successfully updated the bearer context. */
-          OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Successfully updated ebi %d to final values via UBR for UE " MME_UE_S1AP_ID_FMT ". \n",
-              ue_context->mme_ue_s1ap_id, msg->data.eps_update_esm_bearers.bcs_to_be_updated->bearer_contexts[num_bc].eps_bearer_id);
-        }else{
-          OAILOG_ERROR (LOG_NAS_ESM, "ESM-SAP   - Error while updating ebi %d to final values via UBR for UE " MME_UE_S1AP_ID_FMT ". \n",
-              ue_context->mme_ue_s1ap_id, msg->data.eps_update_esm_bearers.bcs_to_be_updated->bearer_contexts[num_bc].eps_bearer_id);
-          /**
-           * Bearer may stay with old parameters and in active state.
-           * We assume that the bearer got removed due some concurrency  issues.
-           * We continue to handle the remaining bearers.
-           */
-        }
+    esm_eps_update_esm_bearer_ctxs_req_t* update_esm_bearer_ctxs = &msg->data.eps_update_esm_bearer_ctxs;
+    esm_cause_t esm_cause;
+    /** Update the bearer level QoS TFT values. */
+    for(int num_bc = 0; num_bc < msg->data.eps_update_esm_bearer_ctxs.bcs_to_be_updated->num_bearer_context; num_bc++){
+      rc = esm_proc_update_eps_bearer_context(msg->ctx, &msg->data.eps_update_esm_bearer_ctxs.bcs_to_be_updated->bearer_contexts[num_bc]);
+      if(rc != RETURNerror){
+        /* Successfully updated the bearer context. */
+        OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Successfully updated ebi %d to final values via UBR for UE " MME_UE_S1AP_ID_FMT ". \n",
+            ue_context->mme_ue_s1ap_id, msg->data.eps_update_esm_bearer_ctxs.bcs_to_be_updated->bearer_contexts[num_bc].eps_bearer_id);
+      }else{
+        OAILOG_ERROR (LOG_NAS_ESM, "ESM-SAP   - Error while updating ebi %d to final values via UBR for UE " MME_UE_S1AP_ID_FMT ". \n",
+            ue_context->mme_ue_s1ap_id, msg->data.eps_update_esm_bearer_ctxs.bcs_to_be_updated->bearer_contexts[num_bc].eps_bearer_id);
+        /**
+         * Bearer may stay with old parameters and in active state.
+         * We assume that the bearer got removed due some concurrency  issues.
+         * We continue to handle the remaining bearers.
+         */
       }
     }
   }
   break;
-
 
   case ESM_UNITDATA_IND:
     /** Check that an EMM context exists, if not disregard the message. */
@@ -1151,31 +1177,25 @@ _esm_sap_send (
     break;
 
   case ACTIVATE_DEDICATED_EPS_BEARER_CONTEXT_REQUEST: {
-      const   esm_eps_activate_bearer_req_t *msg = &data->eps_dedicated_bearer_context_activate;
-
+      const   esm_eps_activate_eps_bearer_ctx_req_t *msg = &data->eps_dedicated_bearer_context_activate;
       EpsQualityOfService eps_qos = {0};
       /** Sending a EBR-Request per bearer context. */
-      for(int num_bc = 0; num_bc < msg->bcs_to_be_created->num_bearer_context; num_bc++){
-        if(msg->bcs_to_be_created->bearer_contexts[num_bc].eps_bearer_id == ebi){
-          /** Found the EBI. */
-          if(msg->bcs_to_be_created->bearer_contexts[num_bc].tft.numberofpacketfilters > 1){
-            memset((void*)&eps_qos, 0, sizeof(eps_qos));
-          }
-          rc = qos_params_to_eps_qos(msg->bcs_to_be_created->bearer_contexts[num_bc].bearer_level_qos.qci,
-              msg->bcs_to_be_created->bearer_contexts[num_bc].bearer_level_qos.mbr.br_dl,
-              msg->bcs_to_be_created->bearer_contexts[num_bc].bearer_level_qos.mbr.br_ul,
-
-              msg->bcs_to_be_created->bearer_contexts[num_bc].bearer_level_qos.gbr.br_dl,
-              msg->bcs_to_be_created->bearer_contexts[num_bc].bearer_level_qos.gbr.br_ul,
+      bearer_contexts_to_be_created_t *bcs_tbc = (bearer_contexts_to_be_created_t*)msg->bcs_to_be_created_ptr;
+      for(int num_bc = 0; num_bc < bcs_tbc->num_bearer_context; num_bc++) {
+        if(bcs_tbc->bearer_contexts[num_bc].eps_bearer_id == ebi){
+          memset((void*)&eps_qos, 0, sizeof(eps_qos));
+          /** Set the EPS QoS. */
+          rc = qos_params_to_eps_qos(bcs_tbc->bearer_contexts[num_bc].bearer_level_qos.qci,
+              bcs_tbc->bearer_contexts[num_bc].bearer_level_qos.mbr.br_dl,bcs_tbc->bearer_contexts[num_bc].bearer_level_qos.mbr.br_ul,
+              bcs_tbc->bearer_contexts[num_bc].bearer_level_qos.gbr.br_dl, bcs_tbc->bearer_contexts[num_bc].bearer_level_qos.gbr.br_ul,
               &eps_qos, false);
           if (RETURNok == rc) {
             rc = esm_send_activate_dedicated_eps_bearer_context_request (
-                pti, msg->bcs_to_be_created->bearer_contexts[num_bc].eps_bearer_id,
+                pti, bcs_tbc->bearer_contexts[num_bc].eps_bearer_id,
                 &esm_msg.activate_dedicated_eps_bearer_context_request,
                 msg->linked_ebi, &eps_qos,
-                &msg->bcs_to_be_created->bearer_contexts[num_bc].tft,
-                &msg->bcs_to_be_created->bearer_contexts[num_bc].pco);
-
+                &bcs_tbc->bearer_contexts[num_bc].tft,
+                &bcs_tbc->bearer_contexts[num_bc].pco);
             esm_procedure = esm_proc_dedicated_eps_bearer_context_request; /**< Not the procedure. */
           }
           /** Exit the loop directly. */
@@ -1189,32 +1209,28 @@ _esm_sap_send (
     break;
 
   case MODIFY_EPS_BEARER_CONTEXT_REQUEST:{
-    const   esm_eps_modify_bearer_req_t *msg = &data->eps_bearer_context_modify;
+    const   esm_eps_modify_eps_bearer_ctx_req_t *msg = &data->eps_bearer_context_modify;
 
     EpsQualityOfService eps_qos = {0};
     /** Sending a EBR-Request per bearer context. */
-    for(int num_bc = 0; num_bc < msg->bcs_to_be_updated->num_bearer_context; num_bc++){
-      if(msg->bcs_to_be_updated->bearer_contexts[num_bc].eps_bearer_id == ebi){
-        /** Found the EBI. */
-        if(msg->bcs_to_be_updated->bearer_contexts[num_bc].tft.numberofpacketfilters > 1){
-          memset((void*)&eps_qos, 0, sizeof(eps_qos));
-        }
-        rc = qos_params_to_eps_qos(msg->bcs_to_be_updated->bearer_contexts[num_bc].bearer_level_qos->qci,
-            msg->bcs_to_be_updated->bearer_contexts[num_bc].bearer_level_qos->mbr.br_dl,
-            msg->bcs_to_be_updated->bearer_contexts[num_bc].bearer_level_qos->mbr.br_ul,
+    bearer_contexts_to_be_updated_t *bcs_tbu = (bearer_contexts_to_be_updated_t*)msg->bcs_to_be_updated_ptr;
+    for(int num_bc = 0; num_bc < bcs_tbu->num_bearer_context; num_bc++){
+      if(bcs_tbu->bearer_contexts[num_bc].eps_bearer_id == ebi){
+        memset((void*)&eps_qos, 0, sizeof(eps_qos));
+        rc = qos_params_to_eps_qos(bcs_tbu->bearer_contexts[num_bc].bearer_level_qos->qci,
+            bcs_tbu->bearer_contexts[num_bc].bearer_level_qos->mbr.br_dl,
+            bcs_tbu->bearer_contexts[num_bc].bearer_level_qos->mbr.br_ul,
 
-            msg->bcs_to_be_updated->bearer_contexts[num_bc].bearer_level_qos->gbr.br_dl,
-            msg->bcs_to_be_updated->bearer_contexts[num_bc].bearer_level_qos->gbr.br_ul,
+            bcs_tbu->bearer_contexts[num_bc].bearer_level_qos->gbr.br_dl,
+            bcs_tbu->bearer_contexts[num_bc].bearer_level_qos->gbr.br_ul,
             &eps_qos, false);
         if (RETURNok == rc) {
-          ambr_t * ambr_sent = NULL;
-          if(!num_bc)
-            ambr_sent = &msg->ambr;
+          ambr_t * ambr = !num_bc ? &msg->apn_ambr: NULL; /**< Send the new received AMBR (if exists) with the first bearer update message. */
           rc = esm_send_modify_eps_bearer_context_request (
-              pti, msg->bcs_to_be_updated->bearer_contexts[num_bc].eps_bearer_id,
+              pti, bcs_tbu->bearer_contexts[num_bc].eps_bearer_id,
               &esm_msg.activate_dedicated_eps_bearer_context_request, &eps_qos,
-              &msg->bcs_to_be_updated->bearer_contexts[num_bc].tft,
-              ambr_sent, &msg->bcs_to_be_updated->bearer_contexts[num_bc].pco);
+              &bcs_tbu->bearer_contexts[num_bc].tft,
+              ambr, &bcs_tbu->bearer_contexts[num_bc].pco);
 
           esm_procedure = esm_proc_modify_eps_bearer_context_request; /**< Not the procedure. */
         }

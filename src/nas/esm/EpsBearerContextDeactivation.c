@@ -168,6 +168,12 @@ esm_proc_eps_bearer_context_deactivate (
      */
     rc = _eps_bearer_release (emm_context, ebi, &pid);
     /** Return after releasing. */
+    if(!pdn_context->is_active){
+      // todo: check that only 1 deactivate message for the default bearer exists
+      *esm_cause = ESM_CAUSE_INSUFFICIENT_RESOURCES;
+      OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - We released  the default EBI. Deregistering the PDN context (E-RAB failure). (ebi=%d,pid=%d)\n", ebi,pid);
+      rc = esm_proc_pdn_disconnect_accept (emm_context, pdn_context->context_identifier, ebi, esm_cause); /**< Delete Session Request is already sent at the beginning. We don't care for the response. */
+    }
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
   }
 

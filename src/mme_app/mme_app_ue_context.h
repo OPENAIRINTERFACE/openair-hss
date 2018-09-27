@@ -410,10 +410,8 @@ typedef struct ue_context_s {
   teid_t                      local_mme_teid_s10;                // needed to get the UE context from S10 messages
   teid_t                      mme_teid_s11;                // set by mme_app_send_s11_create_session_req
 
-  // Subscribed UE-AMBR: The Maximum Aggregated uplink and downlink MBR values to be shared across all Non-GBR bearers according to the subscription of the user.
+  // Subscribed UE-AMBR: The Maximum Aggregated uplink and downlink MBR values to be shared across all Non-GBR bearers according to the subscription of the user. The used UE-AMBR will be calculated.
   ambr_t                 subscribed_ue_ambr;
-  // UE-AMBR: The currently used Maximum Aggregated uplink and downlink MBR values to be shared across all Non-GBR bearers.
-  ambr_t                 used_ue_ambr;
   // EPS Subscribed Charging Characteristics: The charging characteristics for the MS e.g. normal, prepaid, flat rate and/or hot billing.
   // Subscribed RFSP Index: An index to specific RRM configuration in the E-UTRAN that is received from the HSS.
   // RFSP Index in Use: An index to specific RRM configuration in the E-UTRAN that is currently in use.
@@ -466,7 +464,6 @@ typedef struct ue_context_s {
 
 
   bool                   subscription_known;        // set by S6A UPDATE LOCATION ANSWER
-  ambr_t                 used_ambr;
   subscriber_status_t    subscriber_status;        // set by S6A UPDATE LOCATION ANSWER
   network_access_mode_t  network_access_mode;       // set by S6A UPDATE LOCATION ANSWER
 
@@ -650,6 +647,10 @@ ebi_t mme_app_get_free_bearer_id(ue_context_t * const ue_context);
 void mme_app_free_bearer_context(bearer_context_t ** bc);
 
 void mme_app_ue_context_s1_release_enb_informations(ue_context_t *ue_context);
+
+ambr_t mme_app_total_p_gw_apn_ambr(ue_context_t *ue_context);
+
+ambr_t mme_app_total_p_gw_apn_ambr_rest(ue_context_t *ue_context, pdn_cid_t pci);
 
 /* Declaration (prototype) of the function to store pdn and bearer contexts. */
 RB_PROTOTYPE(PdnContexts, pdn_context_s, pdn_ctx_rbt_Node, mme_app_compare_pdn_context)

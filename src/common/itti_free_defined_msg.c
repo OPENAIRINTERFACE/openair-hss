@@ -107,26 +107,10 @@ void itti_free_msg_content (MessageDef * const message_p)
   }
   break;
 
-  case MME_APP_ACTIVATE_BEARER_REQ: {
-    /** Bearer Context to Be Setup. */
-    if(message_p->ittiMsg.mme_app_activate_bearer_req.bcs_to_be_created){
-      free_bearer_contexts_to_be_created(&message_p->ittiMsg.mme_app_activate_bearer_req.bcs_to_be_created);
-    }
-  }
-  break;
-
-  case MME_APP_MODIFY_BEARER_REQ: {
+  case MME_APP_UPDATE_ESM_BEARER_CTXS_REQ: {
     /** Bearer Context to Be updated. */
-    if(message_p->ittiMsg.mme_app_modify_bearer_req.bcs_to_be_updated){
-      free_bearer_contexts_to_be_updated(&message_p->ittiMsg.mme_app_modify_bearer_req.bcs_to_be_updated);
-    }
-  }
-  break;
-
-  case MME_APP_UPDATE_ESM_BEARERS_REQ: {
-    /** Bearer Context to Be updated. */
-    if(message_p->ittiMsg.mme_app_update_esm_bearers_req.bcs_to_be_updated){
-      free_bearer_contexts_to_be_updated(&message_p->ittiMsg.mme_app_update_esm_bearers_req.bcs_to_be_updated);
+    if(message_p->ittiMsg.mme_app_update_esm_bearer_ctxs_req.bcs_to_be_updated){
+      free_bearer_contexts_to_be_updated(&message_p->ittiMsg.mme_app_update_esm_bearer_ctxs_req.bcs_to_be_updated);
     }
   }
   break;

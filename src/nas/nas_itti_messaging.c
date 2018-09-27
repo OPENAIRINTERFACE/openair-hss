@@ -138,59 +138,102 @@ nas_itti_erab_release_req (const mme_ue_s1ap_id_t ue_id,
 }
 
 //------------------------------------------------------------------------------
-void nas_itti_activate_bearer_cnf(
+void nas_itti_activate_eps_bearer_ctx_cnf(
     const mme_ue_s1ap_id_t ue_idP,
     const ebi_t            ebi)
 {
   OAILOG_FUNC_IN(LOG_NAS);
-  MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_MME, MME_APP_ACTIVATE_BEARER_CNF);
-  MME_APP_ACTIVATE_BEARER_CNF (message_p).ue_id   = ue_idP;
-  MME_APP_ACTIVATE_BEARER_CNF (message_p).ebi     = ebi;
-  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_MMEAPP_MME, NULL, 0, "0 MME_APP_ACTIVATE_BEARER_CNF ue id " MME_UE_S1AP_ID_FMT, ue_idP);
+  MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_MME, MME_APP_ACTIVATE_EPS_BEARER_CTX_CNF);
+  MME_APP_ACTIVATE_EPS_BEARER_CTX_CNF (message_p).ue_id   = ue_idP;
+  MME_APP_ACTIVATE_EPS_BEARER_CTX_CNF (message_p).ebi     = ebi;
+  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_MMEAPP_MME, NULL, 0, "0 MME_APP_ACTIVATE_EPS_BEARER_CTX_CNF ue id " MME_UE_S1AP_ID_FMT, ue_idP);
   itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT(LOG_NAS);
 }
 
 //------------------------------------------------------------------------------
-void nas_itti_activate_bearer_rej(
+void nas_itti_activate_eps_bearer_ctx_rej(
     const mme_ue_s1ap_id_t ue_idP,
-    const teid_t           saegw_s1u_teid)
+    const teid_t           saegw_s1u_teid,
+    const esm_cause_t      esm_cause)
 {
   OAILOG_FUNC_IN(LOG_NAS);
-  MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_MME, MME_APP_ACTIVATE_BEARER_REJ);
-  MME_APP_ACTIVATE_BEARER_REJ (message_p).ue_id           = ue_idP;
-  MME_APP_ACTIVATE_BEARER_REJ (message_p).saegw_s1u_teid  = saegw_s1u_teid;
-  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_MMEAPP_MME, NULL, 0, "0 MME_APP_ACTIVATE_BEARER_REJ ue id " MME_UE_S1AP_ID_FMT, ue_idP);
+  MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_MME, MME_APP_ACTIVATE_EPS_BEARER_CTX_REJ);
+  MME_APP_ACTIVATE_EPS_BEARER_CTX_REJ (message_p).ue_id           = ue_idP;
+  MME_APP_ACTIVATE_EPS_BEARER_CTX_REJ (message_p).saegw_s1u_teid  = saegw_s1u_teid;
+  switch(esm_cause){
+  case ESM_CAUSE_SEMANTIC_ERROR_IN_THE_TFT_OPERATION:
+    MME_APP_ACTIVATE_EPS_BEARER_CTX_REJ (message_p).cause_value = SEMANTIC_ERROR_IN_TFT;
+    break;
+  case ESM_CAUSE_SYNTACTICAL_ERROR_IN_THE_TFT_OPERATION:
+    MME_APP_ACTIVATE_EPS_BEARER_CTX_REJ (message_p).cause_value = SYNTACTIC_ERROR_IN_TFT;
+    break;
+  case ESM_CAUSE_SEMANTIC_ERRORS_IN_PACKET_FILTER:
+    MME_APP_ACTIVATE_EPS_BEARER_CTX_REJ (message_p).cause_value = SEMANTIC_ERRORS_IN_PF;
+    break;
+  case ESM_CAUSE_SYNTACTICAL_ERROR_IN_PACKET_FILTER:
+    MME_APP_ACTIVATE_EPS_BEARER_CTX_REJ (message_p).cause_value = SYNTACTIC_ERRORS_IN_PF;
+    break;
+  case ESM_CAUSE_EPS_QOS_NOT_ACCEPTED:
+    MME_APP_ACTIVATE_EPS_BEARER_CTX_REJ (message_p).cause_value = MANDATORY_IE_INCORRECT;
+    break;
+  default:
+    MME_APP_ACTIVATE_EPS_BEARER_CTX_REJ (message_p).cause_value = REQUEST_REJECTED;
+    break;
+  }
+  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_MMEAPP_MME, NULL, 0, "0 MME_APP_ACTIVATE_EPS_BEARER_CTX_REJ ue id " MME_UE_S1AP_ID_FMT, ue_idP);
   itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT(LOG_NAS);
 }
 
 //------------------------------------------------------------------------------
-void nas_itti_modify_bearer_cnf(
+void nas_itti_modify_eps_bearer_ctx_cnf(
     const mme_ue_s1ap_id_t ue_idP,
     const ebi_t            ebi)
 {
   OAILOG_FUNC_IN(LOG_NAS);
-  MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_MME, MME_APP_MODIFY_BEARER_CNF);
-  MME_APP_MODIFY_BEARER_CNF (message_p).ue_id   = ue_idP;
-  MME_APP_MODIFY_BEARER_CNF (message_p).ebi     = ebi;
-  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_MMEAPP_MME, NULL, 0, "0 MME_APP_MODIFY_BEARER_CNF ue id " MME_UE_S1AP_ID_FMT, ue_idP);
+  MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_MME, MME_APP_MODIFY_EPS_BEARER_CTX_CNF);
+  MME_APP_MODIFY_EPS_BEARER_CTX_CNF (message_p).ue_id   = ue_idP;
+  MME_APP_MODIFY_EPS_BEARER_CTX_CNF (message_p).ebi     = ebi;
+  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_MMEAPP_MME, NULL, 0, "0 MME_APP_MODIFY_EPS_BEARER_CTX_CNF ue id " MME_UE_S1AP_ID_FMT, ue_idP);
   itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT(LOG_NAS);
 }
 
 //------------------------------------------------------------------------------
-void nas_itti_modify_bearer_rej(
+void nas_itti_modify_eps_bearer_ctx_rej(
     const mme_ue_s1ap_id_t ue_idP,
     const ebi_t            ebi,
-    const bool             removed)
+    const esm_cause_t      esm_cause)
 {
   OAILOG_FUNC_IN(LOG_NAS);
-  MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_MME, MME_APP_MODIFY_BEARER_REJ);
-  MME_APP_MODIFY_BEARER_REJ (message_p).ue_id   = ue_idP;
-  MME_APP_MODIFY_BEARER_REJ (message_p).ebi     = ebi;
-  MME_APP_MODIFY_BEARER_REJ (message_p).removed = removed;
-  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_MMEAPP_MME, NULL, 0, "0 MME_APP_MODIFY_BEARER_REJ ue id " MME_UE_S1AP_ID_FMT, ue_idP);
+  MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_MME, MME_APP_MODIFY_EPS_BEARER_CTX_REJ);
+  MME_APP_MODIFY_EPS_BEARER_CTX_REJ (message_p).ue_id   = ue_idP;
+  MME_APP_MODIFY_EPS_BEARER_CTX_REJ (message_p).ebi     = ebi;
+  switch(esm_cause){
+  case ESM_CAUSE_SEMANTIC_ERROR_IN_THE_TFT_OPERATION:
+    MME_APP_MODIFY_EPS_BEARER_CTX_REJ (message_p).cause_value = SEMANTIC_ERROR_IN_TFT;
+    break;
+  case ESM_CAUSE_SYNTACTICAL_ERROR_IN_THE_TFT_OPERATION:
+    MME_APP_MODIFY_EPS_BEARER_CTX_REJ (message_p).cause_value = SYNTACTIC_ERROR_IN_TFT;
+    break;
+  case ESM_CAUSE_SEMANTIC_ERRORS_IN_PACKET_FILTER:
+    MME_APP_MODIFY_EPS_BEARER_CTX_REJ (message_p).cause_value = SEMANTIC_ERRORS_IN_PF;
+    break;
+  case ESM_CAUSE_SYNTACTICAL_ERROR_IN_PACKET_FILTER:
+    MME_APP_MODIFY_EPS_BEARER_CTX_REJ (message_p).cause_value = SYNTACTIC_ERRORS_IN_PF;
+    break;
+  case ESM_CAUSE_EPS_QOS_NOT_ACCEPTED:
+    MME_APP_MODIFY_EPS_BEARER_CTX_REJ (message_p).cause_value = MANDATORY_IE_INCORRECT;
+    break;
+  case ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY:
+    MME_APP_MODIFY_EPS_BEARER_CTX_REJ (message_p).cause_value = NO_RESOURCES_AVAILABLE;
+    break;
+  default:
+    MME_APP_MODIFY_EPS_BEARER_CTX_REJ (message_p).cause_value = REQUEST_REJECTED;
+    break;
+  }
+  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_MMEAPP_MME, NULL, 0, "0 MME_APP_MODIFY_EPS_BEARER_CTX_REJ ue id " MME_UE_S1AP_ID_FMT, ue_idP);
   itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT(LOG_NAS);
 }
@@ -201,10 +244,10 @@ void nas_itti_dedicated_eps_bearer_deactivation_complete(
     const ebi_t ded_ebi)
 {
   OAILOG_FUNC_IN(LOG_NAS);
-  MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_MME, MME_APP_DEACTIVATE_BEARER_CNF);
-  MME_APP_DEACTIVATE_BEARER_CNF (message_p).ue_id     = ue_idP;
-  MME_APP_DEACTIVATE_BEARER_CNF (message_p).ded_ebi   = ded_ebi;
-  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_MMEAPP_MME, NULL, 0, "0 MME_APP_DEACTIVATE_BEARER_CNF ue id " MME_UE_S1AP_ID_FMT " ebi %u", ue_idP, ded_ebi);
+  MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_MME, MME_APP_DEACTIVATE_EPS_BEARER_CTX_CNF);
+  MME_APP_DEACTIVATE_EPS_BEARER_CTX_CNF (message_p).ue_id     = ue_idP;
+  MME_APP_DEACTIVATE_EPS_BEARER_CTX_CNF (message_p).ded_ebi   = ded_ebi;
+  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_MMEAPP_MME, NULL, 0, "0 MME_APP_DEACTIVATE_EPS_BEARER_CTX_CNF ue id " MME_UE_S1AP_ID_FMT " ebi %u", ue_idP, ded_ebi);
   itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT(LOG_NAS);
 }

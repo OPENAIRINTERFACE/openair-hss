@@ -457,7 +457,7 @@ s11_mme_create_bearer_response (
   }
 
   // TODO relay cause
-  cause =response_p->cause;
+  cause = response_p->cause;
   gtpv2c_cause_ie_set (&(ulp_req.hMsg), &cause);
 
   for (int i=0; i < response_p->bearer_contexts.num_bearer_context; i++) {
@@ -590,7 +590,7 @@ s11_mme_update_bearer_response (
   }
 
   // TODO relay cause
-  cause =response_p->cause;
+  cause = response_p->cause;
   gtpv2c_cause_ie_set (&(ulp_req.hMsg), &cause);
 
   for (int i=0; i < response_p->bearer_contexts.num_bearer_context; i++) {
@@ -724,10 +724,11 @@ s11_mme_delete_bearer_response (
   }
 
   // TODO relay cause
-  cause =response_p->cause;
+  cause = response_p->cause;
   gtpv2c_cause_ie_set (&(ulp_req.hMsg), &cause);
 
-  gtpv2c_ebi_ie_set (&(ulp_req.hMsg), (unsigned)response_p->linked_eps_bearer_id);
+  if(response_p->linked_eps_bearer_id)
+    gtpv2c_ebi_ie_set (&(ulp_req.hMsg), (unsigned)response_p->linked_eps_bearer_id);
 
   for (int i=0; i < response_p->bearer_contexts.num_bearer_context; i++) {
     rc = gtpv2c_bearer_context_within_delete_bearer_response_ie_set (&(ulp_req.hMsg), &response_p->bearer_contexts.bearer_contexts[i]);

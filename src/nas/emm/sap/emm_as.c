@@ -97,6 +97,8 @@ static const char                      *_emm_as_primitive_str[] = {
   "EMMAS_ERAB_SETUP_REQ",
   "EMMAS_ERAB_SETUP_CNF",
   "EMMAS_ERAB_SETUP_REJ",
+  "EMMAS_ERAB_MODIFY_REQ",
+  "EMMAS_ERAB_MODIFY_CNF",
   "EMMAS_ERAB_MODIFY_REJ",
   "EMMAS_ERAB_RELEASE_REQ",
 

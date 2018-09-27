@@ -190,7 +190,6 @@ int esm_proc_dedicated_eps_bearer_context_reject(emm_data_context_t * emm_contex
 
 int esm_proc_modify_eps_bearer_context( emm_data_context_t * emm_context,
     const proc_tid_t   pti,                  // todo: will always be 0 for network initiated bearer establishment.
-    const pdn_cid_t    pdn_cid,              /**< todo: Per APN for now. */
     bearer_context_to_be_updated_t *bc_tbu,
     esm_cause_t *esm_cause);
 
