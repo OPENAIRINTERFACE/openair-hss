@@ -317,12 +317,13 @@ function main()
     
     echo "Add port ${!sgi_nw_dev_string} to $OVS_GTPU_BRIDGE_NAME"
     $SUDO ovs-vsctl add-port $OVS_GTPU_BRIDGE_NAME ${!sgi_nw_dev_string}
-    ret=$?;[[ $ret -ne 0 ]] && return $ret
+    ret=$?;[[ $ret -ne 0 ]] && echo_error "Could not add port ${!sgi_nw_dev_string} to OVS switch $OVS_GTPU_BRIDGE_NAME" && return $ret
     sleep 1
     
-    echo "Add port s1u to $OVS_GTPU_BRIDGE_NAME"
-    $SUDO ovs-vsctl add-port $OVS_GTPU_BRIDGE_NAME s1u -- set Interface s1u type=gtp options:remote_ip=flow -- set Interface s1u type=gtp options:key=flow
-    ret=$?;[[ $ret -ne 0 ]] && return $ret
+    S1U_PORT='s1u'
+    echo "Add port $S1U_PORT to $OVS_GTPU_BRIDGE_NAME"
+    $SUDO ovs-vsctl add-port $OVS_GTPU_BRIDGE_NAME $S1U_PORT -- set Interface $S1U_PORT type=gtp options:remote_ip=flow -- set Interface $S1U_PORT type=gtp options:key=flow
+    ret=$?;[[ $ret -ne 0 ]] && echo_error "Could not add port $S1U_PORT to OVS switch $OVS_GTPU_BRIDGE_NAME" && return $ret
     
     echo "ifconfig $OVS_GTPU_BRIDGE_NAME up"
     $SUDO ifconfig $OVS_GTPU_BRIDGE_NAME up
@@ -343,8 +344,8 @@ function main()
 
 
     # Port for GTPV1-U network device
-    gtpu_port=$($SUDO ovs-ofctl dump-ports-desc $OVS_GTPU_BRIDGE_NAME | grep s1u | cut -d '(' -f1)
-    gtpu_mac=$($SUDO ovs-ofctl dump-ports-desc $OVS_GTPU_BRIDGE_NAME | grep s1u | cut -d ':' -f3-8)
+    gtpu_port=$($SUDO ovs-ofctl dump-ports-desc $OVS_GTPU_BRIDGE_NAME | grep $S1U_PORT | cut -d '(' -f1)
+    gtpu_mac=$($SUDO ovs-ofctl dump-ports-desc $OVS_GTPU_BRIDGE_NAME | grep $S1U_PORT | cut -d ':' -f3-8)
     echo "Found GTPU port switch to $gtpu_port L2 $gtpu_mac"
 
     sgi_port=$($SUDO ovs-ofctl dump-ports-desc $OVS_GTPU_BRIDGE_NAME | grep ${!sgi_nw_dev_string} | cut -d '(' -f1)
