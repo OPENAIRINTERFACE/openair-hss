@@ -282,22 +282,22 @@ int qos_params_to_eps_qos(const qci_t qci, const bitrate_t mbr_dl, const bitrate
 //------------------------------------------------------------------------------
 int validateEpsQosParameter(qci_t qci, int pvi, int pci, int pl, bitrate_t gbr_ul, bitrate_t gbr_dl, bitrate_t mbr_ul, bitrate_t mbr_dl){
   /** Check ARP. */
-  if(!(0 <= pvi <= 1))
+  if(!(0 <= pvi && pvi  <= 1))
     OAILOG_FUNC_RETURN(LOG_NAS_ESM, RETURNerror);
 
-  if(!(0 <= pci <= 1))
+  if(!(0 <= pci && pci <= 1))
     OAILOG_FUNC_RETURN(LOG_NAS_ESM, RETURNerror);
 
-  if(!(0 <= pl <= 15))
+  if(!(0 <= pl && pl <= 15))
     OAILOG_FUNC_RETURN(LOG_NAS_ESM, RETURNerror);
 
 
   /** Check MBR/GBR depending on QCI. */
-  if( (1 <= qci <= 4) || (65 <= qci <= 66) || (75 == qci) ){
+  if( (1 <= qci && qci <= 4) || (65 <= qci && qci <= 66) || (75 == qci) ){
     /** Received a GBR QCI. Check that bitrate values are set. */
     if(gbr_dl && gbr_ul && mbr_dl &&  mbr_ul )
       OAILOG_FUNC_RETURN(LOG_NAS_ESM, RETURNok);
-  }else if( (5 <= qci <= 9) || (69 <= qci <= 70) || (79 == qci) ){
+  }else if( (5 <= qci && qci <= 9) || (69 <= qci && qci <= 70) || (79 == qci) ){
     /** Received a NON-GBR QCI. Check that bitrate values are 0. */
     if(!(gbr_dl || gbr_ul || mbr_dl ||  mbr_ul ))
       OAILOG_FUNC_RETURN(LOG_NAS_ESM, RETURNok);

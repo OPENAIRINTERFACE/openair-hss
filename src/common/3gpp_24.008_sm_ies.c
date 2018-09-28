@@ -606,15 +606,13 @@ static int decode_traffic_flow_template_packet_filter (
   /*
    * Length of the Packet filter contents field
    */
-  uint8_t                                 pkflen;
-
-  IES_DECODE_U8 (buffer, decoded, pkflen);
+  IES_DECODE_U8 (buffer, decoded, packetfilter->length);
   /*
    * Packet filter contents
    */
   int                                     pkfstart = decoded;
 
-  while (decoded - pkfstart < pkflen) {
+  while (decoded - pkfstart < packetfilter->length) {
     /*
      * Packet filter component type identifier
      */

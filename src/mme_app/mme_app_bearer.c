@@ -1973,7 +1973,7 @@ static void mme_app_handle_e_rab_setup_rsp_dedicated_bearer(const itti_s1ap_e_ra
     bearer_context_to_be_created_t * bc_tbc = NULL;
     for(int num_bc = 0; num_bc < s11_proc_create_bearer->bcs_tbc->num_bearer_context; num_bc ++){
       if(s11_proc_create_bearer->bcs_tbc->bearer_contexts[num_bc].eps_bearer_id == e_rab_id){
-        bc_tbc = &s11_proc_create_bearer->bcs_tbc[num_bc];
+        bc_tbc = &s11_proc_create_bearer->bcs_tbc->bearer_contexts[num_bc];
       }
     }
     DevAssert(bc_tbc);
@@ -1987,6 +1987,25 @@ static void mme_app_handle_e_rab_setup_rsp_dedicated_bearer(const itti_s1ap_e_ra
     /** Cause is either not set or negative. It must be in the session bearers. */
     mme_app_get_session_bearer_context_from_all(ue_context, (ebi_t) e_rab_id, &bc_success);
     DevAssert(bc_success);
+
+    /** Set the TEID of the tbc and the bearer context. */
+    bc_success->enb_fteid_s1u.interface_type = S1_U_ENODEB_GTP_U;
+    bc_success->enb_fteid_s1u.teid           = e_rab_setup_rsp->e_rab_setup_list.item[i].gtp_teid;
+    /** Set the IP address. */
+    if (4 == blength(e_rab_setup_rsp->e_rab_setup_list.item[i].transport_layer_address)) {
+      bc_success->enb_fteid_s1u.ipv4         = 1;
+      memcpy(&bc_success->enb_fteid_s1u.ipv4_address,
+          e_rab_setup_rsp->e_rab_setup_list.item[i].transport_layer_address->data, blength(e_rab_setup_rsp->e_rab_setup_list.item[i].transport_layer_address));
+    } else if (16 == blength(e_rab_setup_rsp->e_rab_setup_list.item[i].transport_layer_address)) {
+      bc_success->enb_fteid_s1u.ipv6         = 1;
+      memcpy(&bc_success->enb_fteid_s1u.ipv6_address,
+          e_rab_setup_rsp->e_rab_setup_list.item[i].transport_layer_address->data,
+          blength(e_rab_setup_rsp->e_rab_setup_list.item[i].transport_layer_address));
+    } else {
+      AssertFatal(0, "TODO IP address %d bytes", blength(e_rab_setup_rsp->e_rab_setup_list.item[i].transport_layer_address));
+    }
+    memcpy((void*)&bc_tbc->s1u_enb_fteid, (void*)&bc_success->enb_fteid_s1u, sizeof(bc_success->enb_fteid_s1u));
+
     /** If the ESM EBR context is active. */
     if(bc_success->esm_ebr_context.status == ESM_EBR_ACTIVE){ /**< ESM session management messages completed successfully (transactions completed and no negative GTP cause). */
       /** Reduce the number of unhandled bearers. */
@@ -1997,8 +2016,11 @@ static void mme_app_handle_e_rab_setup_rsp_dedicated_bearer(const itti_s1ap_e_ra
        * Not reducing the number of unhandled bearers. We will check this cause later when NAS response arrives.
        * We will not trigger a CBResp with this.
        */
+      OAILOG_DEBUG (LOG_MME_APP, "Setting the cause as ACCEPTED for ebi % for ueId : " MME_UE_S1AP_ID_FMT "\n", bc_tbc->eps_bearer_id, e_rab_setup_rsp->mme_ue_s1ap_id);
       bc_tbc->cause.cause_value = REQUEST_ACCEPTED;
+
     }
+
   }
 
   /** Iterate through the failed bearers. */
