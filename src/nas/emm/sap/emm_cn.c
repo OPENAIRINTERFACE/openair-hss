@@ -822,7 +822,7 @@ static int _emm_cn_modify_eps_bearer_ctx_req (emm_cn_modify_eps_bearer_ctx_req_t
 
   emm_data_context_t *emm_context = emm_data_context_get( &_emm_data, msg->ue_id);
 
-  esm_sap.primitive = ESM_EPS_BEARER_CONTEXT_UPDATE_REQ;
+  esm_sap.primitive = ESM_EPS_BEARER_CONTEXT_MODIFY_REQ;
   esm_sap.ctx           = emm_context;
   esm_sap.is_standalone = true;
   esm_sap.ue_id         = msg->ue_id;

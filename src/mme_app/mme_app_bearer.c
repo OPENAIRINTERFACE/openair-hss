@@ -2030,7 +2030,7 @@ static void mme_app_handle_e_rab_setup_rsp_dedicated_bearer(const itti_s1ap_e_ra
     bearer_context_to_be_created_t* bc_tbc = NULL;
     for(int num_bc = 0; num_bc < s11_proc_create_bearer->bcs_tbc->num_bearer_context; num_bc ++){
       if(s11_proc_create_bearer->bcs_tbc->bearer_contexts[num_bc].eps_bearer_id == e_rab_id){
-        bc_tbc = &s11_proc_create_bearer->bcs_tbc[num_bc];
+        bc_tbc = &s11_proc_create_bearer->bcs_tbc->bearer_contexts[num_bc];
       }
     }
     DevAssert(bc_tbc);
@@ -2178,7 +2178,7 @@ void mme_app_handle_e_rab_modify_rsp (itti_s1ap_e_rab_modify_rsp_t  * const e_ra
     bearer_context_to_be_updated_t * bc_tbu = NULL;
     for(int num_bc = 0; num_bc < s11_proc_update_bearer->bcs_tbu->num_bearer_context; num_bc ++){
       if(s11_proc_update_bearer->bcs_tbu->bearer_contexts[num_bc].eps_bearer_id == e_rab_id){
-        bc_tbu = &s11_proc_update_bearer->bcs_tbu[num_bc];
+        bc_tbu = &s11_proc_update_bearer->bcs_tbu->bearer_contexts[num_bc];
       }
     }
     DevAssert(bc_tbu);
@@ -2216,7 +2216,7 @@ void mme_app_handle_e_rab_modify_rsp (itti_s1ap_e_rab_modify_rsp_t  * const e_ra
     bearer_context_to_be_updated_t * bc_tbu = NULL;
     for(int num_bc = 0; num_bc < s11_proc_update_bearer->bcs_tbu->num_bearer_context; num_bc ++){
       if(s11_proc_update_bearer->bcs_tbu->bearer_contexts[num_bc].eps_bearer_id == e_rab_id){
-        bc_tbu = &s11_proc_update_bearer->bcs_tbu[num_bc];
+        bc_tbu = &s11_proc_update_bearer->bcs_tbu->bearer_contexts[num_bc];
       }
     }
     DevAssert(bc_tbu);
@@ -2370,7 +2370,7 @@ void mme_app_handle_activate_eps_bearer_ctx_cnf (itti_mme_app_activate_eps_beare
       "Sending CBResp back immediately. \n", ue_context->mme_ue_s1ap_id);
   mme_app_send_s11_create_bearer_rsp(ue_context, pdn_context, s11_proc_create_bearer->proc.s11_trxn, 0, s11_proc_create_bearer->bcs_tbc);
   /** Delete the procedure if it exists. */
-  mme_app_delete_s11_procedure_update_bearer(ue_context);
+  mme_app_delete_s11_procedure_create_bearer(ue_context);
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 

@@ -896,10 +896,10 @@ int gtpv2c_bearer_context_within_update_bearer_response_ie_set (
   gtpv2c_ebi_ie_set (msg, bearer_context->eps_bearer_id);
   gtpv2c_cause_ie_set (msg, &bearer_context->cause);
   if (bearer_context->s12_rnc_fteid.teid) {
-    gtpv2c_fteid_ie_set (msg, &bearer_context->s12_rnc_fteid, 4);
+    gtpv2c_fteid_ie_set (msg, &bearer_context->s12_rnc_fteid, 0);
   }
   if (bearer_context->s4_u_sgsn_fteid.teid) {
-    gtpv2c_fteid_ie_set (msg, &bearer_context->s4_u_sgsn_fteid, 6);
+    gtpv2c_fteid_ie_set (msg, &bearer_context->s4_u_sgsn_fteid, 1);
   }
   if (bearer_context->pco.num_protocol_or_container_id) {
     gtpv2c_pco_ie_set(msg, &bearer_context->pco);

@@ -594,7 +594,7 @@ s11_mme_update_bearer_response (
   gtpv2c_cause_ie_set (&(ulp_req.hMsg), &cause);
 
   for (int i=0; i < response_p->bearer_contexts.num_bearer_context; i++) {
-    rc = gtpv2c_bearer_context_within_create_bearer_response_ie_set (&(ulp_req.hMsg), & response_p->bearer_contexts.bearer_contexts[i]);
+    rc = gtpv2c_bearer_context_within_update_bearer_response_ie_set(&(ulp_req.hMsg), & response_p->bearer_contexts.bearer_contexts[i]);
     DevAssert (NW_OK == rc);
   }
 

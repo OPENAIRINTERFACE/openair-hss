@@ -183,10 +183,14 @@ esm_ebr_context_create (
       bearer_context->esm_ebr_context.tft = (traffic_flow_template_t *) calloc (1, sizeof (traffic_flow_template_t));
       memcpy(bearer_context->esm_ebr_context.tft, tft, sizeof (traffic_flow_template_t));  /**< Should have the processed bitmap in the validation . */
     }
-    if (bearer_context->esm_ebr_context.pco) {
-      free_protocol_configuration_options(&bearer_context->esm_ebr_context.pco);
+    if(pco){
+      if (bearer_context->esm_ebr_context.pco) {
+        free_protocol_configuration_options(&bearer_context->esm_ebr_context.pco);
+      }
+      /** Make it with memcpy, don't use bearer.. */
+      bearer_context->esm_ebr_context.pco = (protocol_configuration_options_t *) calloc (1, sizeof (protocol_configuration_options_t));
+      memcpy(bearer_context->esm_ebr_context.pco, pco, sizeof (protocol_configuration_options_t));  /**< Should have the processed bitmap in the validation . */
     }
-    bearer_context->esm_ebr_context.pco = pco;
 
     /** We can set the FTEIDs right before the CBResp is set. */
     if(fteid_set){
@@ -293,7 +297,9 @@ esm_ebr_context_update (
     if (bearer_context->esm_ebr_context.pco) {
       free_protocol_configuration_options(&bearer_context->esm_ebr_context.pco);
     }
-    bearer_context->esm_ebr_context.pco = pco;
+    /** Make it with memcpy, don't use bearer.. */
+    bearer_context->esm_ebr_context.pco = (protocol_configuration_options_t *) calloc (1, sizeof (protocol_configuration_options_t));
+    memcpy(bearer_context->esm_ebr_context.pco, pco, sizeof (protocol_configuration_options_t));  /**< Should have the processed bitmap in the validation . */
   }
 
   /** Update TFT. */

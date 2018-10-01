@@ -187,20 +187,12 @@ mme_app_s11_proc_update_bearer_t* mme_app_create_s11_procedure_update_bearer(ue_
 //------------------------------------------------------------------------------
 mme_app_s11_proc_update_bearer_t* mme_app_get_s11_procedure_update_bearer(ue_context_t * const ue_context)
 {
-  /** Check if the list of S11 procedures is empty. */
-  if(ue_context->s11_procedures){
-    if(!LIST_EMPTY(ue_context->s11_procedures)){
-      OAILOG_ERROR (LOG_MME_APP, "UE with ueId " MME_UE_S1AP_ID_FMT " has already a S11 procedure ongoing. Cannot create UBR procedure. \n",
-          ue_context->mme_ue_s1ap_id);
-      return NULL;
-    }
-  }
   if (ue_context->s11_procedures) {
     mme_app_s11_proc_t *s11_proc = NULL;
 
     LIST_FOREACH(s11_proc, ue_context->s11_procedures, entries) {
       if (MME_APP_S11_PROC_TYPE_UPDATE_BEARER == s11_proc->type) {
-        return (mme_app_s11_proc_update_bearer_t*)s11_proc;
+        return (mme_app_s11_proc_create_bearer_t*)s11_proc;
       }
     }
   }
@@ -211,13 +203,6 @@ mme_app_s11_proc_update_bearer_t* mme_app_get_s11_procedure_update_bearer(ue_con
 void mme_app_delete_s11_procedure_update_bearer(ue_context_t * const ue_context)
 {
   /** Check if the list of S11 procedures is empty. */
-  if(ue_context->s11_procedures){
-    if(!LIST_EMPTY(ue_context->s11_procedures)){
-      OAILOG_ERROR (LOG_MME_APP, "UE with ueId " MME_UE_S1AP_ID_FMT " has already a S11 procedure ongoing. Cannot create DBR procedure. \n",
-          ue_context->mme_ue_s1ap_id);
-      return NULL;
-    }
-  }
   if (ue_context->s11_procedures) {
     mme_app_s11_proc_t *s11_proc = NULL;
 
@@ -297,7 +282,8 @@ static void mme_app_free_s11_procedure_update_bearer(mme_app_s11_proc_t **s11_pr
   // DO here specific releases (memory,etc)
   /** Remove the bearer contexts to be setup. */
   mme_app_s11_proc_update_bearer_t ** s11_proc_update_bearer_pp = (mme_app_s11_proc_update_bearer_t**)s11_proc_cbr;
-  free_bearer_contexts_to_be_updated(&(*s11_proc_update_bearer_pp)->bcs_tbu);
+  if((*s11_proc_update_bearer_pp)->bcs_tbu)
+    free_bearer_contexts_to_be_updated(&(*s11_proc_update_bearer_pp)->bcs_tbu);
   free_wrapper((void**)s11_proc_update_bearer_pp);
 }
 

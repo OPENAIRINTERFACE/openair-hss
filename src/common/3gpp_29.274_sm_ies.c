@@ -42,11 +42,11 @@
 
 //------------------------------------------------------------------------------
 void free_bearer_contexts_to_be_created(bearer_contexts_to_be_created_t **bcs_tbc){
-  bearer_contexts_to_be_created_t * bctbc = *bcs_tbc;
+  bearer_contexts_to_be_created_t * bcstbc = *bcs_tbc;
   // nothing to do for packet filters
-  for (int i = 0; i < bctbc->num_bearer_context; i++) {
-    for (int j = 0; j < bctbc->bearer_contexts[i].tft.parameterslist.num_parameters; j++) {
-      bdestroy_wrapper(&bctbc->bearer_contexts[i].tft.parameterslist.parameter[j].contents);
+  for (int i = 0; i < bcstbc->num_bearer_context; i++) {
+    for (int j = 0; j < bcstbc->bearer_contexts[i].tft.parameterslist.num_parameters; j++) {
+      bdestroy_wrapper(&bcstbc->bearer_contexts[i].tft.parameterslist.parameter[j].contents);
     }
   }
   free_wrapper((void**)bcs_tbc);
