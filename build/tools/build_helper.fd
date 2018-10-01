@@ -378,7 +378,6 @@ install_opencoord.org_freediameter() {
 
   if [[ $prompt =~ [yY](es)* ]]
   then
-    rm -Rf $OPENAIRCN_DIR/build/git_submodules/freeDiameter/*
     git submodule init
     ret=$?;[[ $ret -ne 0 ]] && return $ret
     git submodule update
@@ -386,7 +385,11 @@ install_opencoord.org_freediameter() {
     pushd $OPENAIRCN_DIR/build/git_submodules/freeDiameter
     git pull origin master 
     ret=$?;[[ $ret -ne 0 ]] && return $ret
-    patch -p1 <  $OPENAIRCN_DIR/build/patches/0001-opencoord.org.freeDiameter.patch
+    if ! patch -R -p1 -s -f --dry-run <  $OPENAIRCN_DIR/build/patches/0001-opencoord.org.freeDiameter.patch; then
+          patch -p1 <  $OPENAIRCN_DIR/build/patches/0001-opencoord.org.freeDiameter.patch
+    else
+      echo_info "Detected freeDiameter $OPENAIRCN_DIR/build/patches/0001-opencoord.org.freeDiameter.patch alredy applied"
+    fi
     ret=$?;[[ $ret -ne 0 ]] && return $ret
   
     rm -rf build
