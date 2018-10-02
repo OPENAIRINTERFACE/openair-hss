@@ -226,7 +226,7 @@ function main()
   exe_arguments="-c $mme_config_file $exe_arguments"
 
   if [ $run_daemon -eq 1 ]; then 
-    $SUDO daemon --env="CONFIG_FILE=$mme_config_file" --name=upnf$INSTANCE --stdout=/tmp/mmed"$INSTANCE"_stdout.log --stderr=/tmp/mmed"$INSTANCE"_stderr.log --pidfile=/tmp/mmed"$INSTANCE".pid -X /usr/local/bin/mme
+    $SUDO daemon --env="CONFIG_FILE=$mme_config_file" --name=mme$INSTANCE --stdout=/tmp/mmed"$INSTANCE"_stdout.log --stderr=/tmp/mmed"$INSTANCE"_stderr.log --pidfile=/tmp/mmed"$INSTANCE".pid -X /usr/local/bin/mme
     ret=$?
     [[ $ret -ne 0 ]] && return $ret
     if [ $run_gdb -ne 0 ]; then 
