@@ -1104,6 +1104,7 @@ mme_config_parse_opt_line (
   mme_config_t * config_pP)
 {
   int                                     c;
+  char                                   *config_file = NULL;
 
   mme_config_init (config_pP);
 
@@ -1161,12 +1162,19 @@ mme_config_parse_opt_line (
     }
   }
 
+  if (!config_pP->config_file) {
+    config_file = getenv("CONFIG_FILE");
+    if (config_file) {
+      config_pP->config_file            = bfromcstr(config_file);
+    } else {
+      OAILOG_ERROR (LOG_CONFIG, "No config file provided through arg -c, or env variable CONFIG_FILE, exiting\n");
+      return RETURNerror;
+    }
+  }
+  OAILOG_DEBUG (LOG_CONFIG, "Config file is %s\n", config_file);
   /*
    * Parse the configuration file using libconfig
    */
-  if (!config_pP->config_file) {
-    config_pP->config_file = bfromcstr("/usr/local/etc/oai/mme.conf");
-  }
   if (mme_config_parse_file (config_pP) != 0) {
     return -1;
   }

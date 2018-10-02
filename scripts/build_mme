@@ -222,7 +222,7 @@ function main()
   fi 
 
   $SUDO killall -q mme
-  $SUDO cp -upv $OPENAIRCN_DIR/build/mme/build/mme_app/mme /usr/local/bin && echo_success "mme installed"  
+  $SUDO cp -upv $OPENAIRCN_DIR/build/mme/build/mme_app/mme /usr/local/bin && $SUDO chmod 755 /usr/local/bin/mme && echo_success "mme installed"  
   return 0
 }
 

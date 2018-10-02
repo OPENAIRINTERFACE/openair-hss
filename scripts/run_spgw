@@ -147,13 +147,13 @@ function main()
         ;;
       -k | --kill)
         $SUDO killall -q spgw
-        $SUDO rm /var/run/spgw.pid
+        $SUDO rm /var/run/spgw*.pid
         ovs_stop $OVS_GTPU_BRIDGE_NAME
         shift;
         ;;
       -K | --Kill)
         $SUDO killall -q spgw
-        $SUDO rm /var/run/spgw.pid
+        $SUDO rm /var/run/spgw*.pid
         ovs_stop $OVS_GTPU_BRIDGE_NAME
         return 0
         shift;
@@ -368,9 +368,9 @@ function main()
   fi
 
   exe_arguments="-c $spgw_config_file $exe_arguments"
-
+  
   if [ $run_daemon -eq 1 ]; then 
-    $SUDO daemon --name=upnf --stdout=/tmp/spgwd_stdout.log --stderr=/tmp/spgwd_stderr.log --pidfile=/tmp/spgwd.pid -X /usr/local/bin/spgw
+    $SUDO daemon --env="CONFIG_FILE=$spgw_config_file" --name=upnf$INSTANCE --stdout=/tmp/spgwd"$INSTANCE"_stdout.log --stderr=/tmp/spgwd"$INSTANCE"_stderr.log --pidfile=/tmp/spgwd"$INSTANCE".pid -X /usr/local/bin/spgw
     ret=$?
     [[ $ret -ne 0 ]] && return $ret
     if [ $run_gdb -ne 0 ]; then 
@@ -380,7 +380,7 @@ function main()
       
       $SUDO echo "set target-async on" > .gdb_spgwd
       $SUDO echo "set pagination off" >> .gdb_spgwd
-      spgwd_pid=`pidof spgw`
+      spgwd_pid=`pidof -s spgw`
       $SUDO echo "attach $spgwd_pid"  >> .gdb_spgwd
       for i in ${!gdb_args1[@]}; do
         $SUDO echo "${gdb_args1[i]} ${gdb_args2[i]}" >> .gdb_spgwd

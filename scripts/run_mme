@@ -50,7 +50,8 @@ function help()
   echo_error "Mandatory arguments to long options are mandatory for short options too."
   echo_error "  -c, --config-file     file_abs_path Config file to be used by MME if you don't want to use the default one: $g_mme_default_config_file"
   echo_error "  -e, --enable-core-dump              Enable core dump for mme executable"
-  echo_error "  -d, --disable-core-dump             Disable core dump for mme executable"
+  echo_error "  -D, --disable-core-dump             Disable core dump for mme executable"
+  echo_error "  -d, --daemon                        Run MME as a daemon."
   echo_error "  -g, --gdb                           Run with GDB."
   echo_error "  -G, --gdb-cmd         cmd cmd_arg   Append this GDB cmd to GDB command file (ex1: break Attach.c:272, ex2: watch 0xffee0002)."
   echo_error "                                      All repetitions of this argument are valid."
@@ -83,6 +84,7 @@ function control_c()
 function main()
 {
   local -i run_gdb=0
+  local -i run_daemon=0
   local -i set_virt_nw_if=0
   local    exe_arguments=" "
   local    mme_config_file=$g_mme_default_config_file
@@ -114,8 +116,12 @@ function main()
         fi
         shift;
         ;;
-      -d | --disable-core-dump)
+      -D | --disable-core-dump)
         ulimit -S -c 0 /usr/local/bin/mme
+        shift;
+        ;;
+      -d | --daemon)
+        run_daemon=1
         shift;
         ;;
       -g | --gdb)
@@ -190,6 +196,13 @@ function main()
     return 1
   fi
 
+  ##########################
+  # INSTANCE
+  ##########################
+  instance_string="INSTANCE"
+  instance="`cat $mme_config_file | cut -d "#" -f1 | grep $instance_string | tr -d " " | grep "="`"
+  eval $instance
+  INSTANCE=${!instance_string}
 
   #####################################
   # Set virtual network interfaces if requested
@@ -212,26 +225,48 @@ function main()
   #####################################
   exe_arguments="-c $mme_config_file $exe_arguments"
 
-  if [ $run_gdb -eq 0 ]; then 
-    # trap keyboard interrupt (control-c)
-    trap control_c SIGINT
-    $SUDO mme  `echo $exe_arguments` 2>&1 
+  if [ $run_daemon -eq 1 ]; then 
+    $SUDO daemon --env="CONFIG_FILE=$mme_config_file" --name=upnf$INSTANCE --stdout=/tmp/mmed"$INSTANCE"_stdout.log --stderr=/tmp/mmed"$INSTANCE"_stderr.log --pidfile=/tmp/mmed"$INSTANCE".pid -X /usr/local/bin/mme
+    ret=$?
+    [[ $ret -ne 0 ]] && return $ret
+    if [ $run_gdb -ne 0 ]; then 
+      # trap keyboard interrupt (control-c) is done by gdb
+      $SUDO touch      .gdb_mmed
+      $SUDO chmod 777  .gdb_mmed
+      
+      $SUDO echo "set target-async on" > .gdb_mmed
+      $SUDO echo "set pagination off" >> .gdb_mmed
+      mmed_pid=`pidof -s mme`
+      $SUDO echo "attach $mmed_pid"  >> .gdb_mmed
+      for i in ${!gdb_args1[@]}; do
+        $SUDO echo "${gdb_args1[i]} ${gdb_args2[i]}" >> .gdb_mmed
+      done
+      $SUDO echo "continue"    >> .gdb_mmed
+      $SUDO cat .gdb_mmed
+      $SUDO gdb -n -x .gdb_mmed
+    fi
   else
-    # trap keyboard interrupt (control-c) is done by gdb
-    $SUDO touch      ~/.gdb_mme
-    $SUDO chmod 777  ~/.gdb_mme
-    $SUDO echo "file mme" > ~/.gdb_mme
-    $SUDO echo "set args $exe_arguments "        >> ~/.gdb_mme
-    for i in `seq 0 $gdb_index`; do
-      $SUDO echo "${gdb_args[$i]}"               >> ~/.gdb_mme
-    done
-    $SUDO echo "run"                             >> ~/.gdb_mme
-    $SUDO cat ~/.gdb_mme
-    $SUDO gdb -n -x ~/.gdb_mme
-    if [ $g_run_msc_gen -eq 1 ]; then 
-      #$SUDO do_msc_gen
-      cd $g_msc_dir
-      $SUDO $THIS_SCRIPT_PATH/msc_gen --profile MME --dir $g_msc_dir --type png
+    if [ $run_gdb -eq 0 ]; then 
+      # trap keyboard interrupt (control-c)
+      trap control_c SIGINT
+      $SUDO mme  `echo $exe_arguments` 2>&1 
+    else
+      # trap keyboard interrupt (control-c) is done by gdb
+      $SUDO touch      ~/.gdb_mme
+      $SUDO chmod 777  ~/.gdb_mme
+      $SUDO echo "file mme" > ~/.gdb_mme
+      $SUDO echo "set args $exe_arguments "        >> ~/.gdb_mme
+      for i in `seq 0 $gdb_index`; do
+        $SUDO echo "${gdb_args[$i]}"               >> ~/.gdb_mme
+      done
+      $SUDO echo "run"                             >> ~/.gdb_mme
+      $SUDO cat ~/.gdb_mme
+      $SUDO gdb -n -x ~/.gdb_mme
+      if [ $g_run_msc_gen -eq 1 ]; then 
+        #$SUDO do_msc_gen
+        cd $g_msc_dir
+        $SUDO $THIS_SCRIPT_PATH/msc_gen --profile MME --dir $g_msc_dir --type png
+      fi
     fi
   fi
   return $?
