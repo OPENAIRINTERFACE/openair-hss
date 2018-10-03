@@ -194,7 +194,7 @@ add_definitions("-DPACKAGE_BUGREPORT=\"openaircn-user@lists.eurecom.fr\"")
 # Include CMake modules to find other library
 ###############################################################################
 
-set(CMAKE_MODULE_PATH "${BUILD_TOP_DIR}/modules/")
+set(CMAKE_MODULE_PATH "${BUILD_TOP_DIR}/cmake_modules/")
 
 ###############################################################################
 # Include Check library for unit tests
@@ -847,7 +847,7 @@ include_directories(${NAS_SRC}/esm/sap)
 # We use either the cmake buildin, in ubuntu are in: /usr/share/cmake*/Modules/
 # or cmake provide a generic interface to pkg-config that widely used
 ###################################
-set(CMAKE_MODULE_PATH "${OPENAIRCN_DIR}/build/modules" "${CMAKE_MODULE_PATH}")
+set(CMAKE_MODULE_PATH "${OPENAIRCN_DIR}/build/cmake_modules" "${CMAKE_MODULE_PATH}")
 
 include(FindPkgConfig)
 

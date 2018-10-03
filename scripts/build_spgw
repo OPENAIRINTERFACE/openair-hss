@@ -189,7 +189,7 @@ function main()
 
   # For daemon should not be group writable
   $SUDO chmod 755 $OPENAIRCN_DIR/build/spgw/build/spgw
-  $SUDO cp -upv $OPENAIRCN_DIR/build/spgw/build/spgw /usr/local/bin && echo_success "spgw installed"
+  $SUDO cp -upv $OPENAIRCN_DIR/build/spgw/build/spgw /usr/local/bin && $SUDO chmod 755 /usr/local/bin/spgw && echo_success "spgw installed"
   return 0
 }
 

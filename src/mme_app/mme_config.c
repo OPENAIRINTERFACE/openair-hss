@@ -390,6 +390,10 @@ static int mme_config_parse_file (mme_config_t * config_pP)
       config_pP->pid_dir = bfromcstr (astring);
     }
 
+    if ((config_setting_lookup_int (setting_mme, MME_CONFIG_STRING_INSTANCE, &aint))) {
+      config_pP->instance = (uint32_t) aint;
+    }
+
     if ((config_setting_lookup_int (setting_mme, MME_CONFIG_STRING_MAXENB, &aint))) {
       config_pP->max_enbs = (uint32_t) aint;
     }
@@ -606,6 +610,24 @@ static int mme_config_parse_file (mme_config_t * config_pP)
         }
         n = stop_index;
       } while (0 != n);
+
+      for (i = 1; i < config_pP->served_tai.nb_tai; i++) {
+        if ((config_pP->served_tai.plmn_mcc[i-1] == config_pP->served_tai.plmn_mcc[i]) &&
+            (config_pP->served_tai.plmn_mnc[i-1] == config_pP->served_tai.plmn_mnc[i]) &&
+            (config_pP->served_tai.tac[i-1] == config_pP->served_tai.tac[i])) {
+
+          for (int j = i+1; j < config_pP->served_tai.nb_tai; j++) {
+            config_pP->served_tai.plmn_mcc[j-1] = config_pP->served_tai.plmn_mcc[j];
+            config_pP->served_tai.plmn_mnc[j-1] = config_pP->served_tai.plmn_mnc[j];
+            config_pP->served_tai.tac[j-1] = config_pP->served_tai.tac[j];
+          }
+          config_pP->served_tai.plmn_mcc[config_pP->served_tai.nb_tai-1] = 0;
+          config_pP->served_tai.plmn_mnc[config_pP->served_tai.nb_tai-1] = 0;
+          config_pP->served_tai.tac[config_pP->served_tai.nb_tai-1] = 0;
+          config_pP->served_tai.nb_tai--;
+          i--; //tricky
+        }
+      }
       // helper for determination of list type (global view), we could make sublists with different types, but keep things simple for now
       config_pP->served_tai.list_type = TRACKING_AREA_IDENTITY_LIST_TYPE_ONE_PLMN_CONSECUTIVE_TACS;
       for (i = 1; i < config_pP->served_tai.nb_tai; i++) {
@@ -1082,6 +1104,7 @@ mme_config_parse_opt_line (
   mme_config_t * config_pP)
 {
   int                                     c;
+  char                                   *config_file = NULL;
 
   mme_config_init (config_pP);
 
@@ -1139,12 +1162,19 @@ mme_config_parse_opt_line (
     }
   }
 
+  if (!config_pP->config_file) {
+    config_file = getenv("CONFIG_FILE");
+    if (config_file) {
+      config_pP->config_file            = bfromcstr(config_file);
+    } else {
+      OAILOG_ERROR (LOG_CONFIG, "No config file provided through arg -c, or env variable CONFIG_FILE, exiting\n");
+      return RETURNerror;
+    }
+  }
+  OAILOG_DEBUG (LOG_CONFIG, "Config file is %s\n", config_file);
   /*
    * Parse the configuration file using libconfig
    */
-  if (!config_pP->config_file) {
-    config_pP->config_file = bfromcstr("/usr/local/etc/oai/mme.conf");
-  }
   if (mme_config_parse_file (config_pP) != 0) {
     return -1;
   }
