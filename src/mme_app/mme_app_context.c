@@ -1697,15 +1697,30 @@ mme_app_handle_s1ap_ue_context_release_req (
                                           s1ap_ue_context_release_req->enb_id,
                                           S1AP_RADIO_EUTRAN_GENERATED_REASON);
 }
+//
+////------------------------------------------------------------------------------
+//void
+//mme_app_handle_enb_deregister_ind(const itti_s1ap_eNB_deregistered_ind_t const * eNB_deregistered_ind) {
+//  for (int i = 0; i < eNB_deregistered_ind->nb_ue_to_deregister; i++) {
+//    _mme_app_handle_s1ap_ue_context_release(eNB_deregistered_ind->mme_ue_s1ap_id[i],
+//                                            eNB_deregistered_ind->enb_ue_s1ap_id[i],
+//                                            eNB_deregistered_ind->enb_id,
+//                                            S1AP_SCTP_SHUTDOWN_OR_RESET);
+//  }
+//}
 
 //------------------------------------------------------------------------------
-void
-mme_app_handle_enb_deregister_ind(const itti_s1ap_eNB_deregistered_ind_t const * eNB_deregistered_ind) {
-  for (int i = 0; i < eNB_deregistered_ind->nb_ue_to_deregister; i++) {
-    _mme_app_handle_s1ap_ue_context_release(eNB_deregistered_ind->mme_ue_s1ap_id[i],
-                                            eNB_deregistered_ind->enb_ue_s1ap_id[i],
-                                            eNB_deregistered_ind->enb_id,
-                                            S1AP_SCTP_SHUTDOWN_OR_RESET);
+void mme_app_handle_s1ap_enb_deregistered_ind (const itti_s1ap_eNB_deregistered_ind_t * const enb_dereg_ind)
+{
+  for (int ue_idx = 0; ue_idx < enb_dereg_ind->nb_ue_to_deregister; ue_idx++) {
+//    struct ue_context_s *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, enb_dereg_ind->mme_ue_s1ap_id[ue_idx]);
+
+//    if (ue_context) {
+//      ue_context->ecm_state = ECM_IDLE;
+      mme_app_send_nas_signalling_connection_rel_ind(enb_dereg_ind->mme_ue_s1ap_id[ue_idx]); /**< If any procedures were ongoing, kill them. */
+      /** Release the s1ap contexts implicitly. */
+      _mme_app_handle_s1ap_ue_context_release(enb_dereg_ind->mme_ue_s1ap_id[ue_idx], enb_dereg_ind->enb_ue_s1ap_id[ue_idx], enb_dereg_ind->enb_id, S1AP_SCTP_SHUTDOWN_OR_RESET);
+//    }
   }
 }
 

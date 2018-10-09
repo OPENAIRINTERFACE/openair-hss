@@ -1940,13 +1940,14 @@ static bool s1ap_send_enb_deregistered_ind (
 
   arg_s1ap_send_enb_dereg_ind_t          *arg = (arg_s1ap_send_enb_dereg_ind_t*) argP;
   ue_description_t                       *ue_ref_p = (ue_description_t*)dataP;
-  /*
+ /*
    * Ask for a release of each UE context associated to the eNB
    */
   if (ue_ref_p) {
     if (arg->current_ue_index == 0) {
       arg->message_p = itti_alloc_new_message (TASK_S1AP, S1AP_ENB_DEREGISTERED_IND);
     }
+    OAILOG_INFO ( LOG_S1AP, "Triggering eNB deregistration indication for UE with enbId " ENB_UE_S1AP_ID_FMT ". \n", ue_ref_p->enb_ue_s1ap_id);
 
     AssertFatal(arg->current_ue_index < S1AP_ITTI_UE_PER_DEREGISTER_MESSAGE, "Too many deregistered UEs reported in S1AP_ENB_DEREGISTERED_IND message ");
     S1AP_ENB_DEREGISTERED_IND (arg->message_p).mme_ue_s1ap_id[arg->current_ue_index] = ue_ref_p->mme_ue_s1ap_id;
@@ -1964,6 +1965,7 @@ static bool s1ap_send_enb_deregistered_ind (
     arg->handled_ues++;
     arg->current_ue_index = arg->handled_ues % S1AP_ITTI_UE_PER_DEREGISTER_MESSAGE;
     *resultP = arg->message_p;
+
   } else {
     OAILOG_TRACE (LOG_S1AP, "No valid UE provided in callback: %p\n", ue_ref_p);
   }
@@ -2035,16 +2037,15 @@ s1ap_handle_sctp_disconnection (
     OAILOG_FUNC_RETURN(LOG_S1AP, RETURNok);
   }
 
+  enb_association->s1_state = S1AP_SHUTDOWN;
   MSC_LOG_EVENT (MSC_S1AP_MME, "0 Event SCTP_CLOSE_ASSOCIATION assoc_id: %d", assoc_id);
-
   hashtable_ts_apply_callback_on_elements(&enb_association->ue_coll, s1ap_send_enb_deregistered_ind, (void*)&arg, (void**)&message_p); /**< Just releasing the procedure. */
 
   /** Release the S1AP UE references implicitly. */
   OAILOG_DEBUG (MSC_S1AP_MME, "Releasing all S1AP UE references related to the ENB with assocId %d. \n", assoc_id);
-  hashtable_ts_apply_callback_on_elements(&enb_association->ue_coll, s1ap_remove_ue, NULL, NULL);
 
 
-  if ( (!(arg.handled_ues % S1AP_ITTI_UE_PER_DEREGISTER_MESSAGE)) && (arg.handled_ues) ){
+//  if ( (!(arg.handled_ues % S1AP_ITTI_UE_PER_DEREGISTER_MESSAGE)) && (arg.handled_ues) ){
     S1AP_ENB_DEREGISTERED_IND (message_p).nb_ue_to_deregister = arg.current_ue_index;
 
     for (i = arg.current_ue_index; i < S1AP_ITTI_UE_PER_DEREGISTER_MESSAGE; i++) {
@@ -2052,11 +2053,12 @@ s1ap_handle_sctp_disconnection (
       S1AP_ENB_DEREGISTERED_IND (message_p).enb_ue_s1ap_id[arg.current_ue_index] = 0;
     }
     MSC_LOG_TX_MESSAGE (MSC_S1AP_MME, MSC_NAS_MME, NULL, 0, "0 S1AP_ENB_DEREGISTERED_IND num ue to deregister %u", S1AP_ENB_DEREGISTERED_IND (message_p).nb_ue_to_deregister);
-    itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+    itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
     message_p = NULL;
-  }
+//  }
 
-  s1ap_remove_enb (enb_association);
+  /** The eNB will be removed, when the UE references are removed. */
+
   s1ap_dump_enb_list ();
   OAILOG_DEBUG (LOG_S1AP, "Removed eNB attached to assoc_id: %d\n", assoc_id);
   OAILOG_FUNC_RETURN (LOG_S1AP, RETURNok);
@@ -2376,7 +2378,7 @@ s1ap_mme_handle_erab_release_indication (
 //                      NULL, 0,
 //                      "0 S1AP_E_RAB_SETUP_RSP mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ");
 //  XML_MSG_DUMP_ITTI_S1AP_E_RAB_SETUP_RSP(&S1AP_E_RAB_SETUP_RSP (message_p), TASK_S1AP, TASK_MME_APP, NULL);
-//  rc =  itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
+  rc =  itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_RETURN (LOG_S1AP, rc);
 }
 

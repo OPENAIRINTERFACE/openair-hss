@@ -210,19 +210,6 @@ static
 }
 
 //------------------------------------------------------------------------------
-void mme_app_handle_s1ap_enb_deregistered_ind (const itti_s1ap_eNB_deregistered_ind_t * const enb_dereg_ind)
-{
-  for (int ue_idx = 0; ue_idx < enb_dereg_ind->nb_ue_to_deregister; ue_idx++) {
-    struct ue_context_s *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, enb_dereg_ind->mme_ue_s1ap_id[ue_idx]);
-
-    if (ue_context) {
-      ue_context->ecm_state = ECM_IDLE;
-      mme_app_send_nas_signalling_connection_rel_ind(enb_dereg_ind->mme_ue_s1ap_id[ue_idx]);
-    }
-  }
-}
-
-//------------------------------------------------------------------------------
 int
 mme_app_handle_nas_pdn_connectivity_req (
   itti_nas_pdn_connectivity_req_t * const nas_pdn_connectivity_req_pP)

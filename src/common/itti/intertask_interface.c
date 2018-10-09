@@ -252,7 +252,7 @@ void
 itti_print_DEBUG ()
 {
  char                                   *statistics = memory_pools_statistics (itti_desc.memory_pools_handle);
- OAILOG_ERROR(LOG_ITTI, "Periodic memory pools statistics:\n%s", statistics);
+ OAILOG_INFO(LOG_ITTI, "Periodic memory pools statistics:\n%s", statistics);
  free_wrapper ((void**)&statistics);
 }
 
