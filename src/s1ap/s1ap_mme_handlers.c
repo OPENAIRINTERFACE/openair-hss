@@ -350,11 +350,6 @@ s1ap_mme_handle_s1_setup_request (
 
     OAILOG_DEBUG (LOG_S1AP, "Adding eNB to the list of served eNBs\n");
 
-
-
-
-
-
     if ((enb_association = s1ap_is_enb_id_in_list (enb_id)) == NULL) {
       /*
        * eNB has not been fount in list of associated eNB,
@@ -390,15 +385,23 @@ s1ap_mme_handle_s1_setup_request (
          */
         s1SetupFailure.cause.present = S1ap_Cause_PR_misc;      //TODO: send the right cause
         s1SetupFailure.cause.choice.misc = S1ap_CauseMisc_control_processing_overload;
-        OAILOG_ERROR (LOG_S1AP, "Rejeting s1 setup request as eNB id %d is already associated to an active sctp association" "Previous known: %d, new one: %d\n", enb_id, enb_association->sctp_assoc_id, assoc_id);
-        //             s1ap_mme_encode_s1setupfailure(&s1SetupFailure,
-        //                                            receivedMessage->msg.s1ap_sctp_new_msg_ind.assocId);
+        OAILOG_ERROR (LOG_S1AP, "Rejecting s1 setup request as eNB id %d is already associated to an active sctp association" "Previous known: %d, new one: %d\n", enb_id, enb_association->sctp_assoc_id, assoc_id);
+        rc = s1ap_mme_generate_s1_setup_failure (assoc_id, S1ap_Cause_PR_misc, S1ap_CauseMisc_unspecified, -1); /**< eNB should attach again. */
+
+        /** Also remove the old eNB. */
+        OAILOG_INFO(LOG_S1AP, "Rejecting the old eNB connection for eNB id %d and old assoc_id: %d\n", enb_id, assoc_id);
+        s1ap_dump_enb_list();
+        s1ap_handle_sctp_disconnection(enb_association->sctp_assoc_id, false);
         OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
       }
 
+      OAILOG_INFO(LOG_S1AP, "We found the eNB id %d in the current list of enbs with matching sctp associations:" "assoc: %d\n", enb_id, enb_association->sctp_assoc_id);
       /*
        * TODO: call the reset procedure
        */
+      s1ap_dump_enb (enb_association);
+      rc =  s1ap_generate_s1_setup_response (enb_association);
+      OAILOG_FUNC_RETURN (LOG_S1AP, rc);
     }
 
     s1ap_dump_enb (enb_association);
@@ -2034,7 +2037,12 @@ s1ap_handle_sctp_disconnection (
 
   MSC_LOG_EVENT (MSC_S1AP_MME, "0 Event SCTP_CLOSE_ASSOCIATION assoc_id: %d", assoc_id);
 
-  hashtable_ts_apply_callback_on_elements(&enb_association->ue_coll, s1ap_send_enb_deregistered_ind, (void*)&arg, (void**)&message_p);
+  hashtable_ts_apply_callback_on_elements(&enb_association->ue_coll, s1ap_send_enb_deregistered_ind, (void*)&arg, (void**)&message_p); /**< Just releasing the procedure. */
+
+  /** Release the S1AP UE references implicitly. */
+  OAILOG_DEBUG (MSC_S1AP_MME, "Releasing all S1AP UE references related to the ENB with assocId %d. \n", assoc_id);
+  hashtable_ts_apply_callback_on_elements(&enb_association->ue_coll, s1ap_remove_ue, NULL, NULL);
+
 
   if ( (!(arg.handled_ues % S1AP_ITTI_UE_PER_DEREGISTER_MESSAGE)) && (arg.handled_ues) ){
     S1AP_ENB_DEREGISTERED_IND (message_p).nb_ue_to_deregister = arg.current_ue_index;

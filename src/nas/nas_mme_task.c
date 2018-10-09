@@ -173,6 +173,11 @@ static void *nas_intertask_interface (void *args_p)
     }
     break;
 
+    case NAS_SIGNALLING_CONNECTION_REL_IND:{
+       nas_proc_signalling_connection_rel_ind (NAS_SIGNALLING_CONNECTION_REL_IND (received_message_p).ue_id);
+    }
+    break;
+
     case TERMINATE_MESSAGE:{
         nas_exit();
         OAI_FPRINTF_INFO("TASK_NAS_MME terminated\n");

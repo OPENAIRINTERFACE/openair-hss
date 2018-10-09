@@ -462,6 +462,8 @@ void *mme_app_thread (void *args)
          */
         if (received_message_p->ittiMsg.timer_has_expired.timer_id == mme_app_desc.statistic_timer_id) {
           mme_app_statistics_display ();
+          /** Display the ITTI buffer. */
+          itti_print_DEBUG ();
         } else if (received_message_p->ittiMsg.timer_has_expired.arg != NULL) {
           mme_ue_s1ap_id_t mme_ue_s1ap_id = *((mme_ue_s1ap_id_t *)(received_message_p->ittiMsg.timer_has_expired.arg));
           ue_context_p = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, mme_ue_s1ap_id);
@@ -505,12 +507,12 @@ void *mme_app_thread (void *args)
       break;
     }
 
-    itti_free_msg_content(received_message_p);
-    itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
-    received_message_p = NULL;
     }
-  }
 
+    itti_free_msg_content(received_message_p);
+    itti_free(ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
+    received_message_p = NULL;
+  }
   return NULL;
 }
 

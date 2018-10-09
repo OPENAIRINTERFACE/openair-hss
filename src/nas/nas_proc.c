@@ -620,6 +620,19 @@ int nas_proc_e_rab_failure(mme_ue_s1ap_id_t ue_id, ebi_t ebi, bool modify, bool 
 }
 
 //------------------------------------------------------------------------------
+int nas_proc_signalling_connection_rel_ind (mme_ue_s1ap_id_t ue_id)
+{
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  int                                     rc = RETURNerror;
+  emm_sap_t                               emm_sap = {0};
+  emm_sap.primitive = _EMMAS_RELEASE_IND;
+  emm_sap.u.emm_as.u.release.ue_id = ue_id;
+  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMAS_RELEASE_IND " MME_UE_S1AP_ID_FMT " ", ue_id);
+  rc = emm_sap_send (&emm_sap);
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+}
+
+//------------------------------------------------------------------------------
 int
 nas_proc_implicit_detach_ue_ind (
   mme_ue_s1ap_id_t ue_id,

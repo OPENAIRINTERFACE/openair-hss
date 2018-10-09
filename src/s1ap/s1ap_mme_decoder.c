@@ -274,7 +274,7 @@ s1ap_mme_decode_unsuccessfull_outcome (
     case S1ap_ProcedureCode_id_InitialContextSetup: {
         ret = s1ap_decode_s1ap_initialcontextsetupfailureies (&message->msg.s1ap_InitialContextSetupFailureIEs, &unSuccessfulOutcome_p->value);
         s1ap_xer_print_s1ap_initialcontextsetupfailure (s1ap_xer__print2sp, message_string, message);
-        *message_id = S1AP_HANDOVER_FAILURE_LOG;
+        *message_id = S1AP_INITIAL_CONTEXT_SETUP_FAILURE_LOG;
       }
       break;
 
@@ -282,7 +282,7 @@ s1ap_mme_decode_unsuccessfull_outcome (
     case S1ap_ProcedureCode_id_HandoverResourceAllocation: {
       ret = s1ap_decode_s1ap_handoverfailureies(&message->msg.s1ap_HandoverFailureIEs, &unSuccessfulOutcome_p->value);
       s1ap_xer_print_s1ap_handoverfailure(s1ap_xer__print2sp, message_string, message);
-      *message_id = S1AP_HANDOVER_FAILED;
+      *message_id = S1AP_HANDOVER_FAILURE_LOG;
     }
     break;
 
@@ -373,6 +373,8 @@ int s1ap_free_mme_decode_pdu(
 //    return free_s1ap_e_rabmodifyresponse(&message->msg.s1ap_E_RABModifyResponseIEs);
 //  case S1AP_E_RABRELEASE_RESPONSE_LOG:
 //    return free_s1ap_e_rabreleaseresponse(&message->msg.s1ap_E_RABReleaseResponseIEs);
+//  case S1AP_INITIAL_CONTEXT_SETUP_FAILURE_LOG:
+//    return free_s1ap_initialcontextsetupfailure(&message->msg.s1ap_E_RABReleaseResponseIEs);
 //  case S1AP_INITIAL_CONTEXT_SETUP_LOG:
 //    if (message->direction == S1AP_PDU_PR_successfulOutcome) {
 //      return free_s1ap_initialcontextsetupresponse(&message->msg.s1ap_InitialContextSetupResponseIEs);

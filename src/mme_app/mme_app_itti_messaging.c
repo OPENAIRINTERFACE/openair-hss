@@ -337,6 +337,7 @@ mme_app_send_s11_create_session_req (
   session_request_p->selection_mode = MS_O_N_P_APN_S_V;
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0,
       "0 S11_CREATE_SESSION_REQUEST imsi " IMSI_64_FMT, ue_context_pP->imsi);
+  OAILOG_DEBUG (LOG_MME_APP, "Sending CSR for imsi (2) " IMSI_64_FMT "\n", ue_context->imsi);
   rc = itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
 }

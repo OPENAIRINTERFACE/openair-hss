@@ -267,6 +267,19 @@ void itti_free_msg_content (MessageDef * const message_p)
   case S1AP_E_RABSETUP_RESPONSE_LOG:
   case S1AP_E_RABMODIFY_RESPONSE_LOG:
   case S1AP_E_RABRELEASE_RESPONSE_LOG:
+    /* *** */
+  case S1AP_HANDOVER_NOTIFY_LOG:
+  case S1AP_ENB_STATUS_TRANSFER_LOG:
+  case S1AP_HANDOVER_CANCEL_LOG:
+  case S1AP_HANDOVER_REQUIRED_LOG:
+  case S1AP_PATH_SWITCH_REQUEST_LOG:
+  case S1AP_ENB_RESET_LOG:
+
+    /* *** */
+  case S1AP_INITIAL_CONTEXT_SETUP_FAILURE_LOG:
+  case S1AP_HANDOVER_FAILURE_LOG:
+    /* *** */
+  case S1AP_HANDOVER_REQUEST_ACKNOWLEDGE_LOG:
 
     // DO nothing
     break;
@@ -357,7 +370,7 @@ void itti_free_msg_content (MessageDef * const message_p)
   case UDP_INIT:
   case UDP_DATA_REQ:
   case UDP_DATA_IND:
-    // TODO
+    /** Changed to stacked buffer. */
    break;
 
   case S1AP_PATH_SWITCH_REQUEST_ACKNOWLEDGE:

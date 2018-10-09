@@ -247,7 +247,6 @@ mme_app_handle_nas_pdn_connectivity_req (
 
   DevAssert((emm_context = emm_data_context_get(&_emm_data, ue_context->mme_ue_s1ap_id)));
 
-  // ...
   ue_context->imsi_auth = IMSI_AUTHENTICATED;
 
   // todo: sending requested PCOs

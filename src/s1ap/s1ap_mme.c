@@ -173,7 +173,9 @@ s1ap_mme_thread (
 
     // From MME_APP task
     case S1AP_UE_CONTEXT_RELEASE_COMMAND:{
-        s1ap_handle_ue_context_release_command (&received_message_p->ittiMsg.s1ap_ue_context_release_command);
+      OAILOG_ERROR (LOG_S1AP, "ENTERED S1AP_UE_CONTEXT_RELEASE_COMMAND\n");
+      s1ap_handle_ue_context_release_command (&received_message_p->ittiMsg.s1ap_ue_context_release_command);
+        OAILOG_ERROR (LOG_S1AP, "AFTER S1AP_UE_CONTEXT_RELEASE_COMMAND\n");
       }
       break;
 

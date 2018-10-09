@@ -66,6 +66,7 @@ s11_mme_create_session_request (
   nw_gtpv2c_ulp_api_t                         ulp_req;
   nw_rc_t                                   rc;
   uint8_t                                 restart_counter = 0;
+  OAILOG_FUNC_IN (LOG_S11);
 
   DevAssert (stack_p );
   DevAssert (req_p );
@@ -135,9 +136,9 @@ s11_mme_create_session_request (
       (void *)ulp_req.u_api_info.initialReqInfo.hTunnel);
   if (HASH_TABLE_OK != hash_rc) {
     OAILOG_WARNING (LOG_S11, "Could not save GTPv2-C hTunnel %p for local teid %X\n", (void*)ulp_req.u_api_info.initialReqInfo.hTunnel, ulp_req.u_api_info.initialReqInfo.teidLocal);
-    return RETURNerror;
+    OAILOG_FUNC_RETURN (LOG_S11, RETURNerror);
   }
-  return RETURNok;
+  OAILOG_FUNC_RETURN (LOG_S11, RETURNok);
 }
 
 //------------------------------------------------------------------------------
