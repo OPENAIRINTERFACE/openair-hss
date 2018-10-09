@@ -765,7 +765,6 @@ s1ap_remove_enb (
   nb_enb_associated--;
 }
 
-//
 //bool
 //s1ap_add_bearer_context_to_list (__attribute__((unused))const hash_key_t keyP,
 //               void * const bearer_ctx_void,
