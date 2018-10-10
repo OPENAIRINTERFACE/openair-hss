@@ -360,7 +360,6 @@ mme_app_handle_conn_est_cnf (
     DevAssert(established_pdn);
     bearer_context_t * first_bearer = RB_MIN(SessionBearers, &established_pdn->session_bearers); // todo: @ handover (idle mode tau) this should give us the default ebi!
     if(first_bearer){ // todo: optimize this!
-
     //    if ((BEARER_STATE_SGW_CREATED  || BEARER_STATE_S1_RELEASED) & first_bearer->bearer_state) {    /**< It could be in IDLE mode. */
       establishment_cnf_p->e_rab_id[establishment_cnf_p->no_of_e_rabs]                                 = first_bearer->ebi ;//+ EPS_BEARER_IDENTITY_FIRST;
       establishment_cnf_p->e_rab_level_qos_qci[establishment_cnf_p->no_of_e_rabs]                      = first_bearer->qci;
