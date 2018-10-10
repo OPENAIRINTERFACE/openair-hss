@@ -363,7 +363,7 @@ mme_app_handle_conn_est_cnf (
     //    if ((BEARER_STATE_SGW_CREATED  || BEARER_STATE_S1_RELEASED) & first_bearer->bearer_state) {    /**< It could be in IDLE mode. */
       establishment_cnf_p->e_rab_id[establishment_cnf_p->no_of_e_rabs]                                 = first_bearer->ebi ;//+ EPS_BEARER_IDENTITY_FIRST;
       establishment_cnf_p->e_rab_level_qos_qci[establishment_cnf_p->no_of_e_rabs]                      = first_bearer->qci;
-      establishment_cnf_p->e_rab_level_qos_priority_level[establishment_cnf_p->no_of_e_rabs]           = first_bearer->priority_level;
+      establishment_cnf_p->e_rab_level_qos_priority_level[establishment_cnf_p->no_of_e_rabs]           = 13;// first_bearer->priority_level;
       establishment_cnf_p->e_rab_level_qos_preemption_capability[establishment_cnf_p->no_of_e_rabs]    = first_bearer->preemption_capability;
       establishment_cnf_p->e_rab_level_qos_preemption_vulnerability[establishment_cnf_p->no_of_e_rabs] = first_bearer->preemption_vulnerability;
       establishment_cnf_p->transport_layer_address[establishment_cnf_p->no_of_e_rabs]                  = fteid_ip_address_to_bstring(&first_bearer->s_gw_fteid_s1u);
@@ -613,7 +613,7 @@ mme_app_handle_initial_ue_message (
         /** Check that also no MME_APP UE context exists for the given GUTI. */
         // todo: check
         if(mme_ue_context_exists_guti(&mme_app_desc.mme_ue_contexts, &guti) != NULL){
-          OAILOG_DEBUG (LOG_MME_APP, "ERROR: UE EXIST WITH GUTI!\n.");
+          OAILOG_ERROR (LOG_MME_APP, "UE EXIST WITH GUTI!\n.");
           OAILOG_FUNC_OUT (LOG_MME_APP);
         }
       }

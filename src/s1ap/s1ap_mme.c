@@ -630,6 +630,7 @@ void s1ap_notified_new_ue_mme_s1ap_id_association (
           sctp_assoc_id, enb_ue_s1ap_id, mme_ue_s1ap_id, hashtable_rc_code2string(h_rc));
 
       ue_ref_test = s1ap_is_ue_mme_id_in_list (mme_ue_s1ap_id);
+      DevAssert(ue_ref_test);
       return;
     }
     OAILOG_DEBUG(LOG_S1AP, "Could not find  ue  with enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT "\n", enb_ue_s1ap_id);
