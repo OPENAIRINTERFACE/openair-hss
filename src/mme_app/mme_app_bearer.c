@@ -378,9 +378,6 @@ mme_app_handle_conn_est_cnf (
     }
   }
 
-
-
-
 //  pdn_context_t * first_pdn = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
 //  DevAssert(first_pdn);
 //
@@ -4077,7 +4074,7 @@ mme_app_handle_handover_request_acknowledge(
     */
    mme_app_send_s1ap_handover_command(handover_request_acknowledge_pP->mme_ue_s1ap_id,
        ue_context->enb_ue_s1ap_id,
-       ue_context->e_utran_cgi.cell_identity.enb_id,
+       s10_handover_proc->source_ecgi.cell_identity.enb_id,
        &bcs_tbf,
        handover_request_acknowledge_pP->target_to_source_eutran_container);
    s10_handover_proc->ho_command_sent = true;
@@ -4370,6 +4367,7 @@ mme_app_handle_s1ap_handover_notify(
   */
  ue_context->sctp_assoc_id_key = handover_notify_pP->assoc_id;
  ue_context->e_utran_cgi.cell_identity.cell_id = handover_notify_pP->cgi.cell_identity.cell_id;
+ ue_context->e_utran_cgi.cell_identity.enb_id  = handover_notify_pP->cgi.cell_identity.enb_id;
  /** Update the enbUeS1apId (again). */
  ue_context->enb_ue_s1ap_id = handover_notify_pP->enb_ue_s1ap_id; /**< Updating the enb_ue_s1ap_id here. */
  // regenerate the enb_s1ap_id_key as enb_ue_s1ap_id is changed.

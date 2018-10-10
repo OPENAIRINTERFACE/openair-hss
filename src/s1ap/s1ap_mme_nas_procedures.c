@@ -1521,8 +1521,8 @@ s1ap_handle_handover_command (
      * It is an error, if its not existing.
      * We rely on the timer that if no HANDOVER_NOTIFY is received in time, we will remove the UE context implicitly and the target-enb UE_REFERENCE.
      */
-    OAILOG_ERROR (LOG_S1AP, " NO UE_CONTEXT could be found to send handover command for UE mme ue s1ap id (" MME_UE_S1AP_ID_FMT ") to the source eNB with eNBId %d. \n",
-        handover_command_pP->mme_ue_s1ap_id, handover_command_pP->enb_id);
+    OAILOG_ERROR (LOG_S1AP, " NO UE_CONTEXT could be found to send handover command for UE enb ue s1ap id (" ENB_UE_S1AP_ID_FMT ") to the source eNB with eNBId %d. \n",
+        handover_command_pP->enb_ue_s1ap_id, handover_command_pP->enb_id);
     OAILOG_FUNC_OUT (LOG_S1AP);
   }
   /**
