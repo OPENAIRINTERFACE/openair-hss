@@ -335,7 +335,14 @@ esm_send_activate_default_eps_bearer_context_request (
   /** Implementing subscribed values. */
   if(ambr){
     msg->presencemask |= ACTIVATE_DEFAULT_EPS_BEARER_CONTEXT_REQUEST_APNAMBR_PRESENT;
-    ambr_kbps_calc(&msg->apnambr, ambr->br_dl, ambr->br_ul);
+// todo: test    ambr_kbps_calc(&msg->apnambr, ambr->br_dl, ambr->br_ul);
+    msg->apnambr.apnambrfordownlink = 0xfe;       // (8640kbps)
+    msg->apnambr.apnambrforuplink = 0xfe; // (8640kbps)
+    msg->apnambr.apnambrfordownlink_extended = 0xde;      // (200Mbps)
+    msg->apnambr.apnambrforuplink_extended = 0x9e;        // (100Mbps)
+    msg->apnambr.apnambrfordownlink_extended2 = 0;
+    msg->apnambr.apnambrforuplink_extended2 = 0;
+    msg->apnambr.extensions = 0 | APN_AGGREGATE_MAXIMUM_BIT_RATE_MAXIMUM_EXTENSION_PRESENT;
   }else {
     OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - no APN AMBR is present for activating default eps bearer. \n");
   }

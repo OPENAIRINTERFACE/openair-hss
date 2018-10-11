@@ -906,8 +906,8 @@ s1ap_handle_ue_context_release_command (
 
   OAILOG_FUNC_IN (LOG_S1AP);
   if ((ue_ref_p = s1ap_is_enb_ue_s1ap_id_in_list_per_enb (ue_context_release_command_pP->enb_ue_s1ap_id, ue_context_release_command_pP->enb_id)) == NULL) {
-    OAILOG_DEBUG (LOG_S1AP, "No UE reference could be found for mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " and enbUeS1apId " ENB_UE_S1AP_ID_FMT ". \n",
-                  ue_context_release_command_pP->mme_ue_s1ap_id, ue_context_release_command_pP->enb_ue_s1ap_id);
+    OAILOG_DEBUG (LOG_S1AP, "No UE reference could be found for enbUeS1apId " ENB_UE_S1AP_ID_FMT " and enbId %d. \n",
+                  ue_context_release_command_pP->enb_ue_s1ap_id, ue_context_release_command_pP->enb_id);
     MSC_LOG_EVENT (MSC_S1AP_MME, "0 UE_CONTEXT_RELEASE_COMMAND with mme_ue_s1ap_id only for non existing UE_REFERENCE for mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ", ue_context_release_command_pP->mme_ue_s1ap_id);
     /** We might receive a duplicate one. */
   }
@@ -1089,6 +1089,7 @@ s1ap_mme_handle_path_switch_request (
   mme_ue_s1ap_id_t                        mme_ue_s1ap_id = 0;
   MessageDef                             *message_p = NULL;
   int                                     rc = RETURNok;
+  ecgi_t                                  ecgi = {.plmn = {0}, .cell_identity = {0}};
 
   //  todo: The MME shall verify that the UE security
   //  capabilities received from the eNB are the same as the UE security capabilities that the MME has stored. If
@@ -1156,6 +1157,12 @@ s1ap_mme_handle_path_switch_request (
     // On which stream we received the message
     ue_ref_p->sctp_stream_recv = stream;
     ue_ref_p->sctp_stream_send = ue_ref_p->enb->next_sctp_stream;
+    // CGI mandatory IE
+    DevAssert (pathSwitchRequest_p->eutran_cgi.pLMNidentity.size == 3);
+    TBCD_TO_PLMN_T(&pathSwitchRequest_p->eutran_cgi.pLMNidentity, &ecgi.plmn);
+    BIT_STRING_TO_CELL_IDENTITY (&pathSwitchRequest_p->eutran_cgi.cell_ID, ecgi.cell_identity);
+    /** Set the ENB Id. */
+    ecgi.cell_identity.enb_id = ue_ref_p->enb->enb_id;
 
     /*
      * Increment the sctp stream for the eNB association.
@@ -1173,8 +1180,8 @@ s1ap_mme_handle_path_switch_request (
     }
 
 
-      /** Set the new association and the new stream. */
-      ue_ref_p->enb->sctp_assoc_id = assoc_id;
+    /** Set the new association and the new stream. */
+    ue_ref_p->enb->sctp_assoc_id = assoc_id;
       ue_ref_p->enb->next_sctp_stream = stream;
 
       // set the new enb id
@@ -1213,6 +1220,7 @@ s1ap_mme_handle_path_switch_request (
       S1AP_PATH_SWITCH_REQUEST (message_p).sctp_assoc_id  = assoc_id;
       S1AP_PATH_SWITCH_REQUEST (message_p).sctp_stream    = stream;
       S1AP_PATH_SWITCH_REQUEST (message_p).enb_id         = ue_ref_p->enb->enb_id;
+      S1AP_PATH_SWITCH_REQUEST (message_p).e_utran_cgi    = ecgi;
       MSC_LOG_TX_MESSAGE (MSC_S1AP_MME,
                           MSC_MMEAPP_MME,
                           NULL, 0,

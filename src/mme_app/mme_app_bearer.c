@@ -331,9 +331,10 @@ mme_app_handle_conn_est_cnf (
    * Add the subscribed UE-AMBR values.
    */
   //#pragma message  "Check ue_context ambr"
+  // todo: fix..
   ambr_t total_ue_ambr = mme_app_total_p_gw_apn_ambr(ue_context);
-  establishment_cnf_p->ue_ambr.br_dl = total_ue_ambr.br_dl;
-  establishment_cnf_p->ue_ambr.br_ul = total_ue_ambr.br_ul; /**< No conversion needed. */
+  establishment_cnf_p->ue_ambr.br_dl = 200000000; total_ue_ambr.br_dl;
+  establishment_cnf_p->ue_ambr.br_ul = 100000000;  // total_ue_ambr.br_ul; /**< No conversion needed. */
   /*
    * Add the Security capabilities.
    */
@@ -363,7 +364,7 @@ mme_app_handle_conn_est_cnf (
     //    if ((BEARER_STATE_SGW_CREATED  || BEARER_STATE_S1_RELEASED) & first_bearer->bearer_state) {    /**< It could be in IDLE mode. */
       establishment_cnf_p->e_rab_id[establishment_cnf_p->no_of_e_rabs]                                 = first_bearer->ebi ;//+ EPS_BEARER_IDENTITY_FIRST;
       establishment_cnf_p->e_rab_level_qos_qci[establishment_cnf_p->no_of_e_rabs]                      = first_bearer->qci;
-      establishment_cnf_p->e_rab_level_qos_priority_level[establishment_cnf_p->no_of_e_rabs]           = 13;// first_bearer->priority_level;
+      establishment_cnf_p->e_rab_level_qos_priority_level[establishment_cnf_p->no_of_e_rabs]           = first_bearer->priority_level;
       establishment_cnf_p->e_rab_level_qos_preemption_capability[establishment_cnf_p->no_of_e_rabs]    = first_bearer->preemption_capability;
       establishment_cnf_p->e_rab_level_qos_preemption_vulnerability[establishment_cnf_p->no_of_e_rabs] = first_bearer->preemption_vulnerability;
       establishment_cnf_p->transport_layer_address[establishment_cnf_p->no_of_e_rabs]                  = fteid_ip_address_to_bstring(&first_bearer->s_gw_fteid_s1u);
@@ -2716,7 +2717,7 @@ void mme_app_send_s1ap_path_switch_request_acknowledge(mme_ue_s1ap_id_t mme_ue_s
   path_switch_req_ack_p->security_capabilities_integrity_algorithms  = integrity_algorithm_capabilities;
 
   /** Set the next hop value and the NCC value. */
-  memcpy(path_switch_req_ack_p->nh, ue_nas_ctx->_security.nh_conj, AUTH_NH_SIZE);
+  memcpy(path_switch_req_ack_p->nh, ue_nas_ctx->_vector[ue_nas_ctx->_security.vector_index].nh_conj, AUTH_NH_SIZE);
   path_switch_req_ack_p->ncc = ue_nas_ctx->_security.ncc;
 
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S1AP_MME, NULL, 0,
@@ -2801,6 +2802,10 @@ mme_app_handle_path_switch_req(
   // Set the handover flag, check that no handover exists.
   ue_context->enb_ue_s1ap_id    = s1ap_path_switch_req->enb_ue_s1ap_id;
   ue_context->sctp_assoc_id_key = s1ap_path_switch_req->sctp_assoc_id;
+
+  // todo: set the enb and cell id
+  ue_context->e_utran_cgi.cell_identity.enb_id = s1ap_path_switch_req->e_utran_cgi.cell_identity.enb_id;
+  ue_context->e_utran_cgi.cell_identity.cell_id = s1ap_path_switch_req->e_utran_cgi.cell_identity.cell_id;
   //  sctp_stream_id_t        sctp_stream;
   uint16_t encryption_algorithm_capabilities = (uint16_t)0;
   uint16_t integrity_algorithm_capabilities  = (uint16_t)0;

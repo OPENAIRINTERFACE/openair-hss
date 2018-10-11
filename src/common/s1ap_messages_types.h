@@ -292,6 +292,7 @@ typedef struct itti_s1ap_path_switch_request_s {
   ebi_t                   e_rab_id[BEARERS_PER_UE];
   bstring                 transport_layer_address[BEARERS_PER_UE];
   s1u_teid_t              gtp_teid[BEARERS_PER_UE];
+  ecgi_t                  e_utran_cgi;
 
 //  /* Key eNB */
 //  uint8_t                 kenb[32];
