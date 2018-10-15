@@ -355,6 +355,7 @@ add_library(S1AP_EPC
   ${S1AP_DIR}/s1ap_mme_itti_messaging.c
   ${S1AP_DIR}/s1ap_mme_retransmission.c
   ${S1AP_DIR}/s1ap_mme_ta.c
+  ${S1AP_DIR}/s1ap_mme_gummei.c
   )
 
 

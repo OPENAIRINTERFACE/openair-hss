@@ -332,6 +332,12 @@ s1ap_mme_handle_s1_setup_request (
       OAILOG_FUNC_RETURN (LOG_S1AP, rc);
     }
 
+    if(s1ap_mme_compare_gummei(&s1SetupRequest_p->global_ENB_ID.pLMNidentity) != RETURNok){
+      OAILOG_ERROR (LOG_S1AP, "No Common GUMMEI with eNB, generate_s1_setup_failure\n");
+      rc =  s1ap_mme_generate_s1_setup_failure (assoc_id, S1ap_Cause_PR_misc, S1ap_CauseMisc_unknown_PLMN, S1ap_TimeToWait_v20s);
+      OAILOG_FUNC_RETURN (LOG_S1AP, rc);
+    }
+
     /* Requirement MME36.413R10_8.7.3.4 Abnormal Conditions
      * If the eNB initiates the procedure by sending a S1 SETUP REQUEST message including the PLMN Identity IEs and
      * none of the PLMNs provided by the eNB is identified by the MME, then the MME shall reject the eNB S1 Setup
