@@ -87,5 +87,5 @@ s1ap_mme_compare_gummei (
   {
     OAILOG_ERROR (LOG_S1AP, "No MME-GUMMEI serves this eNB");
   }
-  OAILOG_FUNC_RETURN(rc, LOG_S1AP);
+  OAILOG_FUNC_RETURN(LOG_S1AP, rc);
 }

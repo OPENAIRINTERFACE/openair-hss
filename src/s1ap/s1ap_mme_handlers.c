@@ -49,6 +49,7 @@
 #include "s1ap_mme_itti_messaging.h"
 #include "s1ap_mme.h"
 #include "s1ap_mme_ta.h"
+#include "s1ap_mme_gummei.h"
 #include "s1ap_mme_handlers.h"
 #include "mme_app_statistics.h"
 #include "timer.h"
