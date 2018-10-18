@@ -1658,7 +1658,7 @@ void mme_ue_context_update_ue_emm_state (
     update_mme_app_stats_attached_ue_sub();
   }else{
     OAILOG_CRITICAL(LOG_MME_APP, "**** Abnormal - No handler for state transition of UE with mme_ue_s1ap_ue_id "MME_UE_S1AP_ID_FMT " "
-        "entering %d state from %d state. ****\n", ue_context->mm_state, new_mm_state);
+        "entering %d state from %d state. ****\n", mme_ue_s1ap_id, ue_context->mm_state, new_mm_state);
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
   // todo: transition to/from UE_HANDOVER state!
