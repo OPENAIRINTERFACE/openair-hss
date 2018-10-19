@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<ITTI_NAS_DOWNLINK_DATA_REQ>
+  <ACTION>WAIT_RECEIVE</ACTION>
+  <ITTI_SENDER_TASK>TASK_MME_APP</ITTI_SENDER_TASK>
+  <ITTI_RECEIVER_TASK>TASK_MME_SCENARIO_PLAYER</ITTI_RECEIVER_TASK>
+  <TIMESTAMP>ANY</TIMESTAMP>
+  <mme_ue_s1ap_id>$MME_UE_S1AP_ID</mme_ue_s1ap_id>
+  <enb_ue_s1ap_id>$ENB_UE_S1AP_ID</enb_ue_s1ap_id>
+  <security_protected_nas_message>
+    <security_header_type>0x000002</security_header_type>
+    <protocol_discriminator>EPS_MOBILITY_MANAGEMENT_MESSAGE</protocol_discriminator>
+    <mac>#NAS_MAC_DL</mac>
+    <sequence_number>$NAS_DOWNLINK_SEQUENCE_NUMBER</sequence_number>
+    <!--esm_message_container length="0" hex_dump=""-->
+    <plain_nas_message>
+      <ebi>$DEDICATED_EPS_BEARER_IDENTITY</ebi>
+      <protocol_discriminator>EPS_SESSION_MANAGEMENT_MESSAGE</protocol_discriminator>
+      <pti>0</pti>
+      <message_type>ACTIVATE_DEDICATED_EPS_BEARER_CONTEXT_REQUEST</message_type>
+      <linked_eps_bearer_identity>$LINKED_EPS_BEARER_IDENTITY</linked_eps_bearer_identity>
+      <eps_quality_of_service qci="0x05">
+        <qci>0x05</qci>
+        <maximum_bit_rate_for_uplink>0x4a</maximum_bit_rate_for_uplink>
+        <maximum_bit_rate_for_downlink>0x4e</maximum_bit_rate_for_downlink>
+        <guaranted_bit_rate_for_uplink>0x4a</guaranted_bit_rate_for_uplink>
+        <guaranted_bit_rate_for_downlink>0x4e</guaranted_bit_rate_for_downlink>
+      </eps_quality_of_service>
+      <traffic_flow_template>
+        <tft_operation_code>0x01</tft_operation_code>
+        <e>0x00</e>
+        <number_of_packet_filters>1</number_of_packet_filters>
+        
+        <packet_filter>
+          <packet_filter_identifier>0x00</packet_filter_identifier>
+          <packet_filter_direction>0x03</packet_filter_direction>
+          <packet_filter_evaluation_precedence>0x68</packet_filter_evaluation_precedence>
+          <packet_filter_length>11</packet_filter_length>
+          <packet_filter_contents>
+            <component_type_identifier_ipv4_remote_address_type>
+              <ipv4_address>192.172.0.0</ipv4_address>
+              <ipv4_address_mask>255.255.255.0</ipv4_address_mask>
+            </component_type_identifier_ipv4_remote_address_type>
+            <component_type_identifier_protocol_identifier_next_header_type>
+              <protocol_header>0x11</protocol_header>
+            </component_type_identifier_protocol_identifier_next_header_type>
+          </packet_filter_contents>
+        </packet_filter>
+      </traffic_flow_template>
+    </plain_nas_message>
+  </security_protected_nas_message>
+</ITTI_NAS_DOWNLINK_DATA_REQ>

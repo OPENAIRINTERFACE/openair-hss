@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<ITTI_NAS_DOWNLINK_DATA_REQ>
+  <ACTION>WAIT_RECEIVE</ACTION>
+  <ITTI_SENDER_TASK>TASK_MME_APP</ITTI_SENDER_TASK>
+  <ITTI_RECEIVER_TASK>TASK_MME_SCENARIO_PLAYER</ITTI_RECEIVER_TASK>
+  <TIMESTAMP>ANY</TIMESTAMP>
+  <mme_ue_s1ap_id>#ITTI_NAS_DOWNLINK_DATA_REQ.MME_UE_S1AP_ID</mme_ue_s1ap_id>
+  <enb_ue_s1ap_id>$ENB_UE_S1AP_ID</enb_ue_s1ap_id>
+  <security_protected_nas_message>
+    <security_header_type>0x000002</security_header_type>
+    <protocol_discriminator>EPS_MOBILITY_MANAGEMENT_MESSAGE</protocol_discriminator>
+    <mac>#NAS_MAC_DL</mac>
+    <sequence_number>#NAS_DOWNLINK_SEQUENCE_NUMBER</sequence_number>
+    <plain_nas_message>
+      <security_header_type>0x000000</security_header_type>
+      <protocol_discriminator>EPS_MOBILITY_MANAGEMENT_MESSAGE</protocol_discriminator>
+      <message_type>AUTHENTICATION_REQUEST</message_type>
+      <nas_key_set_identifier tsc="0" ksi="0"/>
+      <authentication_parameter_rand>#ITTI_NAS_DOWNLINK_DATA_REQ.NAS.AUTHENTICATION_REQUEST.AUTHENTICATION_PARAMETER_RAND</authentication_parameter_rand>
+      <authentication_parameter_autn>#ITTI_NAS_DOWNLINK_DATA_REQ.NAS.AUTHENTICATION_REQUEST.AUTHENTICATION_PARAMETER_AUTN</authentication_parameter_autn>
+    </plain_nas_message>
+  </security_protected_nas_message>
+</ITTI_NAS_DOWNLINK_DATA_REQ>

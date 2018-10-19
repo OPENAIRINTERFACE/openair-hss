@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<ITTI_MME_APP_INITIAL_CONTEXT_SETUP_RSP>
+  <ACTION>SEND</ACTION>
+  <ITTI_SENDER_TASK>TASK_S1AP</ITTI_SENDER_TASK>
+  <ITTI_RECEIVER_TASK>TASK_MME_APP</ITTI_RECEIVER_TASK>
+  <TIMESTAMP>ANY</TIMESTAMP>
+  <mme_ue_s1ap_id>$MME_UE_S1AP_ID</mme_ue_s1ap_id>
+  <e_rab_setup_item>
+    <ebi>5</ebi>
+    <teid>$ENB_S1U_TEID</teid>
+    <transport_layer_address>c0a80cd5</transport_layer_address>
+  </e_rab_setup_item>
+</ITTI_MME_APP_INITIAL_CONTEXT_SETUP_RSP>

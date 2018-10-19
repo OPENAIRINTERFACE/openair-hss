@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- Scenarios may contain also scenarios_file -->
+
+<scenario name="all">    
+  <!-- VARIABLES FROM UE -->
+  <var name="NAS_UPLINK_SEQUENCE_NUMBER"                  value="0x0"        />
+  <var name="SELECTED_PLMN"                               hex_stream_value="208f93"    />
+  <var name="M_TMSI"                                      value="0x10000"    />
+  <var name="IMSI"                                        ascii_stream_value="208930000000001"    />
+  <var name="NAS_PTI_UL"                                  value="0x12"        />
+  <var name="UE_APN"                                      ascii_stream_value="oai.ipv4"   />
+  <var name="ESM_INFORMATION_TRANSFER_FLAG"               value="0x1"        />
+  <var name="UE_KSI"                                      value="0x7"        />
+
+    
+  <!-- VARIABLES TO MME -->
+  <var name="ENB_UE_S1AP_ID"                                       value="0xEB15AD"   />
+  <var name="ENB_S1U_TEID"                                         value="0x7e1d0000"   />
+
+  <var name="MME_CODE"                                    value="01"       />
+  <var name="MME_GROUP_IDENTIFIER"                        value="4"        />
+  <var name="MCC"                                         value="208"      />
+  <var name="MNC"                                         value="93f"      />
+  <var name="TRACKING_AREA_CODE"                          value="1"        />
+
+  <!-- VARIABLES FROM MME -->
+  <var name="NAS_MAC_DL"                                           value="00000000" />
+  <var name="MME_UE_S1AP_ID"                                       value="FFFFFFFF"   />
+  <var name="MME_S1U_TEID"                                         value="000000"   />
+  <var name="S1U_SGW_TRANSPORT_LAYER_ADDRESS"                      ascii_stream_value="000000"   />
+  <var name="NAS_DOWNLINK_SEQUENCE_NUMBER"                         value="0"        />
+  <var name="NAS_PTI_DL"                                           value="0"        />
+
+  <var name="UE_AMBR_DL"                                           value="000000"   />
+  <var name="UE_AMBR_UL"                                           value="000000"   />
+  
+  <var name="DEFAULT_BEARER_PRIORITY_LEVEL"                        value="0"        />
+  <var name="DEFAULT_BEARER_PREEMPTION_CAPABILITY"                 value="0"        />
+  <var name="DEFAULT_BEARER_PREEMPTION_VULNERABILITY"              value="0"        />
+    
+  <var name="DEDICATED_EPS_BEARER_IDENTITY"                        value="0x06"     />
+  <var name="LINKED_EPS_BEARER_IDENTITY"                           value="0x05"     />
+  <var name="DEDICATED_BEARER_PRIORITY_LEVEL"                      value="0"        />
+  <var name="DEDICATED_BEARER_PREEMPTION_CAPABILITY"               value="0"        />
+  <var name="DEDICATED_BEARER_PREEMPTION_VULNERABILITY"            value="0"        />
+  <var name="DEDICATED_BEARER_QOS_MBR_DL"                          value="0"        />
+  <var name="DEDICATED_BEARER_QOS_MBR_UL"                          value="0"        />
+  <var name="DEDICATED_BEARER_QOS_GBR_DL"                          value="0"        />
+  <var name="DEDICATED_BEARER_QOS_GBR_UL"                          value="0"        />
+  <var name="DEDICATED_BEARER_EPS_QOS_MBR_DL"                      value="0"        />
+  <var name="DEDICATED_BEARER_EPS_QOS_MBR_UL"                      value="0"        />
+  <var name="DEDICATED_BEARER_EPS_QOS_GBR_DL"                      value="0"        />
+  <var name="DEDICATED_BEARER_EPS_QOS_GBR_UL"                      value="0"        />
+  <var name="DEDICATED_BEARER_EPS_QOS_MBR_DL_EXT"                  value="0"        />
+  <var name="DEDICATED_BEARER_EPS_QOS_MBR_UL_EXT"                  value="0"        />
+  <var name="DEDICATED_BEARER_EPS_QOS_GBR_DL_EXT"                  value="0"        />
+  <var name="DEDICATED_BEARER_EPS_QOS_GBR_UL_EXT"                  value="0"        />
+  
+  <!--usim lte_k="8baf473f2f8fd09487cccbd7097c6862" sqn_ms="FF9BB4000E0C"/-->
+  <usim lte_k="fec86ba6eb707ed08905757b1bb44b8f" sqn_ms="FF9BB4000E0C"/>
+  
+  <!-- relative paths -->
+  <scenario_file><file>MISC/ATTACH_RELEASE_REPEATED/scenario_attach_release_repeated.xml</file></scenario_file>
+  <scenario_file><file>MISC/RANDOM_S1AP_UE_CONTEXT_RELEASE/scenario_R10_random_s1ap_ue_context_release_same_ue.xml</file></scenario_file>
+  <scenario_file><file>no_regression.xml</file></scenario_file>
+  <scenario_file><file>MISC/AIRPLANE_ON_OFF_REPEATED/scenario_airplane_on_off_repeated.xml</file></scenario_file>
+  <scenario_file><file>MISC/RANDOM_S1AP_UE_CONTEXT_RELEASE/scenario_R10_random_s1ap_ue_context_release.xml</file></scenario_file>
+
+
+  <!-- End of all scenarios: Let some timers show some bugs ? -->
+  <sleep    seconds="10"     useconds="0"          />
+
+</scenario>

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<ITTI_MME_APP_CONNECTION_ESTABLISHMENT_CNF>
+  <ACTION>WAIT_RECEIVE</ACTION>
+  <ITTI_SENDER_TASK>TASK_MME_APP</ITTI_SENDER_TASK>
+  <ITTI_RECEIVER_TASK>TASK_MME_SCENARIO_PLAYER</ITTI_RECEIVER_TASK>
+  <TIMESTAMP>ANY</TIMESTAMP>
+  <mme_ue_s1ap_id>$MME_UE_S1AP_ID</mme_ue_s1ap_id>
+  <e_rab_setup_item>
+    <ebi>5</ebi>
+    <qci>9</qci>
+    <priority_level>#DEFAULT_BEARER_PRIORITY_LEVEL</priority_level>
+    <pre_emption_capability>#DEFAULT_BEARER_PREEMPTION_CAPABILITY</pre_emption_capability>
+    <pre_emption_vulnerability>#DEFAULT_BEARER_PREEMPTION_VULNERABILITY</pre_emption_vulnerability>
+    <transport_layer_address>#ITTI_MME_APP_CONNECTION_ESTABLISHMENT_CNF.ERAB.S1U_SGW_TRANSPORT_LAYER_ADDRESS</transport_layer_address>
+    <teid>#ITTI_MME_APP_CONNECTION_ESTABLISHMENT_CNF.ERAB.S1U_TEID</teid>
+    <security_protected_nas_message>
+      <security_header_type>0x000002</security_header_type>
+      <protocol_discriminator>EPS_MOBILITY_MANAGEMENT_MESSAGE</protocol_discriminator>
+      <mac>#NAS_MAC_DL</mac>
+      <sequence_number>$ITTI_MME_APP_CONNECTION_ESTABLISHMENT_CNF.NAS.DOWNLINK_SEQUENCE_NUMBER</sequence_number>
+      <plain_nas_message>
+        <security_header_type>0x000000</security_header_type>
+        <protocol_discriminator>EPS_MOBILITY_MANAGEMENT_MESSAGE</protocol_discriminator>
+        <message_type>ATTACH_ACCEPT</message_type>
+        <!--EPS_ATTACH_RESULT EPS=0x1, IMSI=0x2-->
+        <eps_attach_result>$EPS_ATTACH_RESULT</eps_attach_result>
+        <gprs_timer_t3412>
+          <unit>2</unit>
+          <timer_value>9</timer_value>
+        </gprs_timer_t3412>
+        <tracking_area_identity_list/>
+        <esm_message_container length="ANY" hex_dump="ANY">
+          <ebi>5</ebi>
+          <protocol_discriminator>EPS_SESSION_MANAGEMENT_MESSAGE</protocol_discriminator>
+          <pti>$NAS_PTI_DL</pti>
+          <message_type>ACTIVATE_DEFAULT_EPS_BEARER_CONTEXT_REQUEST</message_type>
+          <eps_quality_of_service qci="0x9"/>
+          <apn>#ITTI_MME_APP_CONNECTION_ESTABLISHMENT_CNF.NAS.APN</apn>
+          <pdn_address pdn_type_value="IPV4">
+            <pdn_address_information>#ITTI_MME_APP_CONNECTION_ESTABLISHMENT_CNF.NAS.PDN_ADDRESS</pdn_address_information>
+          </pdn_address>
+          <apn_agregate_maximum_bit_rate>
+            <!--TODO human readable form, even in comment ?-->
+            <apn_ambr_dl>0xfe</apn_ambr_dl>
+            <apn_ambr_ul>0xfe</apn_ambr_ul>
+          </apn_agregate_maximum_bit_rate>
+          <pco>
+            <extension>0</extension>
+            <configuration_protocol>0</configuration_protocol>
+            <protocol id="IPCP" length="16">
+              <raw>ANY</raw>
+            </protocol>
+            <container id="DNS_SERVER_IPV4_ADDRESS" length="4" hex_data="ANY">
+              <!--DNS_SERVER_IPV4_ADDRESS=192.168.106.12-->
+            </container>
+          </pco>
+        </esm_message_container>
+        <eps_mobile_identity>
+          <oddeven>0x0</oddeven>
+          <!--type_of_identity = GUTI-->
+          <type_of_identity>0x6</type_of_identity>
+          <mcc>$MCC</mcc>
+          <mnc>$MNC</mnc>
+          <mme_group_identifier>$MME_GROUP_IDENTIFIER</mme_group_identifier>
+          <mme_code>$MME_CODE</mme_code>
+          <m_tmsi>$ITTI_MME_APP_CONNECTION_ESTABLISHMENT_CNF.NAS_EMM.GUTI.M_TMSI</m_tmsi>
+        </eps_mobile_identity>
+        <gprs_timer_t3402>
+          <unit>ANY</unit>
+          <timer_value>ANY</timer_value>
+        </gprs_timer_t3402>
+      </plain_nas_message>
+    </security_protected_nas_message>
+  </e_rab_setup_item>
+  <ue_security_capabilities_encryption_algorithms>c0</ue_security_capabilities_encryption_algorithms>
+  <ue_security_capabilities_integrity_protection_algorithms>c0</ue_security_capabilities_integrity_protection_algorithms>
+  <kenb>#ITTI_MME_APP_CONNECTION_ESTABLISHMENT_CNF.KENB</kenb>
+</ITTI_MME_APP_CONNECTION_ESTABLISHMENT_CNF>

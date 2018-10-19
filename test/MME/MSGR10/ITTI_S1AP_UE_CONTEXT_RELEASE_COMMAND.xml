@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<ITTI_S1AP_UE_CONTEXT_RELEASE_COMMAND>
+  <ACTION>WAIT_RECEIVE</ACTION>
+  <ITTI_SENDER_TASK>TASK_MME_APP</ITTI_SENDER_TASK>
+  <ITTI_RECEIVER_TASK>TASK_MME_SCENARIO_PLAYER</ITTI_RECEIVER_TASK>
+  <TIMESTAMP>ANY</TIMESTAMP>
+  <enb_ue_s1ap_id>$ENB_UE_S1AP_ID</enb_ue_s1ap_id>
+  <mme_ue_s1ap_id>$MME_UE_S1AP_ID</mme_ue_s1ap_id>
+  <s1ap_cause>
+    <group>$S1AP_CAUSE_GROUP</group>
+    <group_cause>$S1AP_CAUSE_GROUP_CAUSE</group_cause>
+  </s1ap_cause>
+</ITTI_S1AP_UE_CONTEXT_RELEASE_COMMAND>

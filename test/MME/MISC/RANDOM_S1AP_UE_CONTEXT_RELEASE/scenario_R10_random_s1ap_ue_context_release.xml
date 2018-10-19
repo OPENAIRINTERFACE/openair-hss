@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- Scenarios may contain also scenarios_file -->
+
+<scenario name="Rel10_random_s1ap_ue_ctxt_rel">
+
+  <!-- VARIABLES FROM UE -->
+
+  <var name="S1AP_CAUSE_GROUP"                            ascii_stream_value="radio_network_layer"        />
+  <var name="S1AP_CAUSE_GROUP_CAUSE"                      value="0x15"        />
+
+  
+  <scenario_file><file>../../3GPP_TS_24.301/set_next_ue_params.xml</file></scenario_file>
+  <!-- Design problem see inside this file 
+  <scenario_file><file>scenario_R10_s1ap_ue_context_release_after_attach_guti.xml</file></scenario_file>
+  -->
+
+  <scenario_file><file>../../3GPP_TS_24.301/set_next_ue_params.xml</file></scenario_file>
+  <scenario_file><file>scenario_R10_s1ap_ue_context_release_after_identity_request.xml</file></scenario_file>
+
+  <scenario_file><file>../../3GPP_TS_24.301/set_next_ue_params.xml</file></scenario_file>
+  <scenario_file><file>scenario_R10_s1ap_ue_context_release_after_auth_request.xml</file></scenario_file>
+
+  <scenario_file><file>../../3GPP_TS_24.301/set_next_ue_params.xml</file></scenario_file>
+  <scenario_file><file>scenario_R10_s1ap_ue_context_release_after_sm_command.xml</file></scenario_file>
+
+  <!-- Design problem, seems to be necessary to create a new type of behavior:
+       MAY/COULD (not MUST/SHOULD) rx message in a middle of a scenario (in this case attach accept), then deactivate it.
+  <scenario_file><file>../../3GPP_TS_24.301/set_next_ue_params.xml</file></scenario_file>
+  <scenario_file><file>scenario_R10_s1ap_ue_context_release_after_sm_complete.xml</file></scenario_file>
+  -->
+
+  <scenario_file><file>../../3GPP_TS_24.301/set_next_ue_params.xml</file></scenario_file>
+  <scenario_file><file>scenario_R10_s1ap_ue_context_release_after_attach_accept.xml</file></scenario_file>
+
+</scenario>

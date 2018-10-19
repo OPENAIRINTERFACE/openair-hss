@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- Scenarios may contain also scenarios_file -->
+
+<scenario name="3gpp_24.301_Rel10_section_5.4.4.6_d">
+
+
+  <!-- LOOP VARIABLE -->
+  <var name="NUM_LOOPS"                                   value="30"       />
+
+  <!-- VARIABLES TO MME -->
+  <var name="ENB_UE_S1AP_ID1"                             value="5446d1"   />
+  <var name="ENB_UE_S1AP_ID2"                             value="5446d2"   />
+  <var name="ENB_UE_S1AP_ID"                              value="5446d1"   />
+  <var name="MME_UE_S1AP_ID1"                             value="000000"   />
+  <var name="MME_UE_S1AP_ID2"                             value="000000"   />
+  <var name="MME_UE_S1AP_ID"                              value="000000"   />
+  <var name="MME_CODE"                                    value="01"       />
+  <var name="MME_GROUP_IDENTIFIER"                        value="4"        />
+  <var name="MCC"                                         value="208"      />
+  <var name="MNC"                                         value="93f"      />
+  <var name="TRACKING_AREA_CODE"                          value="1"        />
+
+  <!-- VARIABLES FROM UE -->
+  <var name="NAS_UPLINK_SEQUENCE_NUMBER"                  value="0"        />
+  <var name="SELECTED_PLMN"                               hex_stream_value="208f93"    />
+  <var name="M_TMSI"                                      value="608acd01"    />
+  <var name="IMSI"                                        ascii_stream_value="208930100001114"    />
+
+
+  <!-- VARIABLES COMPUTED BY MME SCENARIO PLAYER -->
+  <var name="AUTHENTICATION_RESPONSE_PARAMETER"           hex_stream_value="000000000000"/>
+  <var name="NAS_MAC_UL"                                  value="D8C12369" />
+
+  <!-- VARIABLES FROM MME -->
+  <var name="NAS_MAC_DL"                                                                            value="00000000" />
+  <var name="ITTI_NAS_DOWNLINK_DATA_REQ.MME_UE_S1AP_ID"                                             value="00000000" />
+
+  <var name="ITTI_MME_APP_CONNECTION_ESTABLISHMENT_CNF.NAS.DOWNLINK_SEQUENCE_NUMBER"                value="0"          />
+  <var name="ITTI_MME_APP_CONNECTION_ESTABLISHMENT_CNF.KENB"                                        hex_stream_value="00"/>
+  <var name="ITTI_MME_APP_CONNECTION_ESTABLISHMENT_CNF.ERAB.S1U_SGW_TRANSPORT_LAYER_ADDRESS"        value="0"/>
+  <var name="ITTI_MME_APP_CONNECTION_ESTABLISHMENT_CNF.ERAB.S1U_TEID"                               value="0"          />
+  <var name="ITTI_MME_APP_CONNECTION_ESTABLISHMENT_CNF.NAS_EMM.GUTI.M_TMSI"                         value="608acd01" />
+  <var name="ITTI_MME_APP_CONNECTION_ESTABLISHMENT_CNF.NAS.APN"                                     ascii_stream_value="" />
+  <var name="ITTI_MME_APP_CONNECTION_ESTABLISHMENT_CNF.NAS.PDN_ADDRESS"                             value="0" />
+
+  <var name="ITTI_NAS_DOWNLINK_DATA_REQ.NAS.AUTHENTICATION_REQUEST.AUTHENTICATION_PARAMETER_RAND"   hex_stream_value="00000000000000000000000000000000" />
+  <var name="ITTI_NAS_DOWNLINK_DATA_REQ.NAS.AUTHENTICATION_REQUEST.AUTHENTICATION_PARAMETER_AUTN"   hex_stream_value="00000000000000000000000000000000" />
+  <var name="RAND"                                                                                  hex_stream_value="00000000000000000000000000000000" />
+  <var name="AUTN"                                                                                  hex_stream_value="00000000000000000000000000000000" />
+
+  <var name="ITTI_NAS_DOWNLINK_DATA_REQ.NAS.SECURITY_MODE_COMMAND.TYPE_OF_INTEGRITY_PROTECTION_ALGORITHM" value="02"/>
+  <var name="ITTI_NAS_DOWNLINK_DATA_REQ.NAS.SECURITY_MODE_COMMAND.TYPE_OF_CIPHERING_ALGORITHM"            value="00"/>
+
+  <!-- USIM PARAMETERS -->
+  <!--usim lte_k="fec86ba6eb707ed08905757b1bb44b8f" sqn_ms="FF9BB400100C" operator_key="1006020f0a478bf6b699f15c062e42b3"/-->
+  <usim lte_k="fec86ba6eb707ed08905757b1bb44b8f" sqn_ms="FF9BB4000E0C"/>
+
+
+  <label name="loop0" />
+
+  <!-- CASE 2:  5.4.4.6.d__2 -->
+  <!-- time allowed values = seconds.microseconds or "now" -->
+  <!-- time_ref allowed values = negative integers (-n= n'th item before this), or "this" -->
+  <!-- ATTACH REQUEST -->
+
+  <set_var name="ENB_UE_S1AP_ID"                              value="$ENB_UE_S1AP_ID1"   />
+
+  <message_file action="send" time="now"  time_ref="this">
+    <file>mme_msg_000002_ITTI_MME_APP_INITIAL_UE_MESSAGE.xml</file>
+  </message_file>
+  <incr_var name="NAS_UPLINK_SEQUENCE_NUMBER"/>
+
+  <!-- IDENTITY REQUEST -->
+  <message_file action="receive" time="2.0" time_ref="-2">
+    <file>mme_msg_000003_ITTI_NAS_DOWNLINK_DATA_REQ.IDENTITY_REQUEST.xml</file>
+  </message_file>
+  <set_var name="MME_UE_S1AP_ID"                              value="$ITTI_NAS_DOWNLINK_DATA_REQ.MME_UE_S1AP_ID"   />
+  <jcond var_name="MME_UE_S1AP_ID" cond="ne"  value="0xFFFFFFFF" label="checked_mme_ue_s1ap_id_invalid"/>
+    <exit  status="failed" />
+  <label name="checked_mme_ue_s1ap_id_invalid" />
+
+  <!-- ATTACH REQUEST -->
+  <message_file action="send" time="now"  time_ref="this">
+    <file>mme_msg_000002_ITTI_MME_APP_INITIAL_UE_MESSAGE.xml</file>
+  </message_file>
+  <incr_var name="NAS_UPLINK_SEQUENCE_NUMBER"/>
+
+  <!-- IDENTITY REQUEST -->
+  <message_file action="receive" time="2.0" time_ref="-2">
+    <file>mme_msg_000003_ITTI_NAS_DOWNLINK_DATA_REQ.IDENTITY_REQUEST.xml</file>
+  </message_file>
+  <set_var name="MME_UE_S1AP_ID"                              value="$ITTI_NAS_DOWNLINK_DATA_REQ.MME_UE_S1AP_ID"   />
+
+  <!-- IDENTITY RESPONSE -->
+  <message_file action="send" time="now"  time_ref="this">
+    <file>mme_msg_000004_ITTI_NAS_UPLINK_DATA_IND.IDENTITY_RESPONSE.xml</file>
+  </message_file>
+  <incr_var name="NAS_UPLINK_SEQUENCE_NUMBER"/>
+
+  <!-- AUTHENTICATION REQUEST -->
+  <message_file action="receive" time="2.0" time_ref="-2">
+    <file>mme_msg_000005_ITTI_NAS_DOWNLINK_DATA_REQ.AUTHENTICATION_REQUEST.xml</file>
+  </message_file>
+
+  <set_var name="RAND"                              value="$ITTI_NAS_DOWNLINK_DATA_REQ.NAS.AUTHENTICATION_REQUEST.AUTHENTICATION_PARAMETER_RAND"   />
+  <set_var name="AUTN"                              value="$ITTI_NAS_DOWNLINK_DATA_REQ.NAS.AUTHENTICATION_REQUEST.AUTHENTICATION_PARAMETER_AUTN"   />
+  <!-- variable AUTHENTICATION_RESPONSE_PARAMETER is computed and set by scenario player now -->
+  <!-- TODO ADD RAND/or/ITTI_NAS_DOWNLINK_DATA_REQ.NAS.AUTHENTICATION_REQUEST.AUTHENTICATION_PARAMETER_RAND AND AUTN/or/
+            ITTI_NAS_DOWNLINK_DATA_REQ.NAS.AUTHENTICATION_REQUEST.AUTHENTICATION_PARAMETER_AUTN and SELECTED_PLMN VAR REFS instead of implicit refs hardcoded -->
+  <compute_authentication_response_parameter/>
+
+  <!-- AUTHENTICATION RESPONSE -->
+  <message_file action="send" time="now"  time_ref="this">
+    <file>mme_msg_000006_ITTI_NAS_UPLINK_DATA_IND.AUTHENTICATION_RESPONSE.xml</file>
+  </message_file>
+  <incr_var name="NAS_UPLINK_SEQUENCE_NUMBER"/>
+
+  <!-- SECURITY MODE COMMAND -->
+  <message_file action="receive" time="2.0" time_ref="-2">
+    <file>mme_msg_000007_ITTI_NAS_DOWNLINK_DATA_REQ.SECURITY_MODE_COMMAND.xml</file>
+  </message_file>
+
+
+  <set_var name="NAS_UPLINK_SEQUENCE_NUMBER"                              value="0"   />
+  <update_emm_security_context   seea="$ITTI_NAS_DOWNLINK_DATA_REQ.NAS.SECURITY_MODE_COMMAND.TYPE_OF_CIPHERING_ALGORITHM" seia="$ITTI_NAS_DOWNLINK_DATA_REQ.NAS.SECURITY_MODE_COMMAND.TYPE_OF_INTEGRITY_PROTECTION_ALGORITHM" ul_count="$NAS_UPLINK_SEQUENCE_NUMBER"/>
+
+  <!-- SECURITY MODE COMPLETE -->
+  <message_file action="send" time="now"  time_ref="this">
+    <file>mme_msg_000008_ITTI_NAS_UPLINK_DATA_IND.SECURITY_MODE_COMPLETE.xml</file>
+  </message_file>
+  <incr_var name="NAS_UPLINK_SEQUENCE_NUMBER"/>
+  <update_emm_security_context  ul_count="$NAS_UPLINK_SEQUENCE_NUMBER"/>
+
+
+  <!-- MME_APP_CONNECTION_ESTABLISHMENT_CNF -->
+  <message_file action="receive" time="2000.0" time_ref="-3">
+    <file>mme_msg_000009_ITTI_MME_APP_CONNECTION_ESTABLISHMENT_CNF.xml</file>
+  </message_file>
+
+  <!-- MME_APP_INITIAL_CONTEXT_SETUP_RSP -->
+  <message_file action="send" time="now"  time_ref="this">
+    <file>mme_msg_000010_ITTI_MME_APP_INITIAL_CONTEXT_SETUP_RSP.xml</file>
+  </message_file>
+
+  <!-- ATTACH_COMPLETE/ACTIVATE_DEFAULT_EPS_BEARER_CONTEXT_ACCEPT -->
+  <message_file action="send" time="now"  time_ref="this">
+    <file>mme_msg_000011_ITTI_NAS_UPLINK_DATA_IND.ATTACH_COMPLETE.xml</file>
+  </message_file>
+  <!-- Not necessary -->
+  <incr_var name="NAS_UPLINK_SEQUENCE_NUMBER"/>
+  <update_emm_security_context  ul_count="$NAS_UPLINK_SEQUENCE_NUMBER"/>
+
+
+  <sleep    seconds="1"     useconds="0"          />
+  <exit/>
+
+
+
+
+
+
+
+
+
+  <!-- time allowed values = seconds.microseconds or "now" -->
+  <!-- time_ref allowed values = negative integers (-n= n'th item before this), or "this" -->
+  <!--
+  <exit/>
+  <label name="exit_error" />
+  <exit  status="failed" />
+  <decr_var name="NUM_LOOPS"             />
+  <jcond var_name="NUM_LOOPS" cond="gt"  value="0" label="loop0"/>
+-->
+</scenario>

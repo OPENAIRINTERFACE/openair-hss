@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<ITTI_NAS_UPLINK_DATA_IND>
+  <ACTION>SEND</ACTION>
+  <ITTI_SENDER_TASK>TASK_S1AP</ITTI_SENDER_TASK>
+  <ITTI_RECEIVER_TASK>TASK_NAS_MME</ITTI_RECEIVER_TASK>
+  <TIMESTAMP>ANY</TIMESTAMP>
+  <mme_ue_s1ap_id>$MME_UE_S1AP_ID</mme_ue_s1ap_id>
+  <security_protected_nas_message>
+    <security_header_type>2</security_header_type>
+    <protocol_discriminator>EPS_MOBILITY_MANAGEMENT_MESSAGE</protocol_discriminator>
+    <mac>0</mac>
+    <sequence_number>$NAS_UPLINK_SEQUENCE_NUMBER</sequence_number>
+    <plain_nas_message>
+      <security_header_type>0</security_header_type>
+      <protocol_discriminator>EPS_MOBILITY_MANAGEMENT_MESSAGE</protocol_discriminator>
+      <message_type>DETACH_REQUEST</message_type>
+      <nas_key_set_identifier tsc="0" ksi="0"/>
+      <detach_type>
+        <switch_off>1</switch_off>
+        <type_of_detach>3</type_of_detach>
+      </detach_type>
+      <eps_mobile_identity>
+        <oddeven>0</oddeven>
+        <!--type_of_identity = GUTI-->
+        <type_of_identity>6</type_of_identity>
+        <mcc>$MCC</mcc>
+        <mnc>$MNC</mnc>
+        <mme_group_identifier>$MME_GROUP_IDENTIFIER</mme_group_identifier>
+        <mme_code>$MME_CODE</mme_code>
+        <m_tmsi>$M_TMSI</m_tmsi>
+      </eps_mobile_identity>
+    </plain_nas_message>
+  </security_protected_nas_message>
+  <tracking_area_identity>
+    <mcc>208</mcc>
+    <mnc>93f</mnc>
+    <tracking_area_code>1</tracking_area_code>
+  </tracking_area_identity>
+  <ecgi>
+    <plmn>
+      <mcc>208</mcc>
+      <mnc>93f</mnc>
+    </plmn>
+    <eci>00e0000</eci>
+  </ecgi>
+</ITTI_NAS_UPLINK_DATA_IND>

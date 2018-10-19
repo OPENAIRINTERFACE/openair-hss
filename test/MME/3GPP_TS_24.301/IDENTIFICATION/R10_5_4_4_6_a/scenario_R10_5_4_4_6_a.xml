@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- Scenarios may contain also scenarios_file -->
+
+<scenario name="3gpp_24.301_Rel10_section_5.4.4.6_a">
+
+  <!-- VARIABLES TO MME -->
+
+
+  <!-- VARIABLES FROM UE -->
+
+
+  <!-- VARIABLES COMPUTED BY MME SCENARIO PLAYER -->
+  <var name="AUTHENTICATION_RESPONSE_PARAMETER"           hex_stream_value="000000000000"/>
+  <var name="NAS_MAC_UL"                                  value="D8C12369" />
+
+  <!-- VARIABLES FROM MME -->
+
+  <var name="ITTI_NAS_DOWNLINK_DATA_REQ.MME_UE_S1AP_ID"            value="00000000" />
+
+
+  <label name="loopR10_5_4_4_6_a" />
+
+  <!-- time allowed values = seconds.microseconds or "now" -->
+  <!-- time_ref allowed values = negative integers (-n= n'th item before this), or "this" -->
+  <!-- ATTACH REQUEST -->
+  <message_file action="send" time="now"  time_ref="this">
+    <file>../../../MSGR10/ITTI_S1AP_INITIAL_UE_MESSAGE.ATTACH_REQUEST.GUTI.xml</file>
+  </message_file>
+  <incr_var name="NAS_UPLINK_SEQUENCE_NUMBER"/>
+
+  <!-- IDENTITY REQUEST -->
+  <message_file action="receive" time="2.0" time_ref="-2">
+    <file>../../../MSGR10/ITTI_NAS_DOWNLINK_DATA_REQ.IDENTITY_REQUEST.xml</file>
+  </message_file>
+  <set_var name="MME_UE_S1AP_ID"                              value="$ITTI_NAS_DOWNLINK_DATA_REQ.MME_UE_S1AP_ID"   />
+  <jcond var_name="MME_UE_S1AP_ID" cond="ne"  value="0xFFFFFFFF" label="checked_mme_ue_s1ap_id_invalid"/>
+    <exit  status="failed" />
+  <label name="checked_mme_ue_s1ap_id_invalid" />
+
+  <!-- NON DELIVERY INDICATION -->
+  <message_file action="send" time="now"  time_ref="this">
+    <file>../../../MSGR10/ITTI_NAS_DOWNLINK_DATA_REJ.IDENTITY_REQUEST.xml</file>
+  </message_file>
+  <incr_var name="NAS_UPLINK_SEQUENCE_NUMBER"/>
+</scenario>

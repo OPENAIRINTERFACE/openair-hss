@@ -1,0 +1,88 @@
+#!/usr/bin/python
+
+#Copyright (c) 2017 Sprint
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+### Add an entry to the mme_identity table ######
+
+import argparse
+from cassandra.cluster import Cluster
+
+#---------------------------------------------------------------------
+def str2bool(arg):
+    ua = str(arg).lower()
+    if 'true'.startswith(ua):
+        return True
+    elif 'false'.startswith(ua):
+        return False
+    else:
+        return False
+
+
+def main():
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-C', '--cassandra-cluster', default='127.0.0.1',      help="Cassandra list of nodes")
+    parser.add_argument('-I', '--id',   type=int, default=3,     help="MME Id")
+    parser.add_argument('-i', '--mme-isdn', default = 'mme-isdn',                help="MME ISDN")
+    parser.add_argument('-m', '--mme-identity', default='mme.openair4G.eur',   help="Granted MME access to HSS")
+    parser.add_argument('-r', '--realm',        default='openair4G.eur',       help="Realm of the CN")
+    parser.add_argument('-R', '--ue-reachability',  type=int, default=0,       help="UE reachability")
+    parser.add_argument('-t', '--truncate', default='False', choices=['True', 'TRUE', 'true', 'False', 'FALSE', 'false'], help="Truncate tables before populating them")
+    parser.add_argument('-v', '--verbose',  default='True', choices=['True', 'TRUE', 'true', 'False', 'FALSE', 'false'], help="Display populated tables")
+    args = parser.parse_args()
+
+    # This will attempt to connection to a Cassandra instance on your local machine (127.0.0.1)
+    # The set of IP addresses we pass to the :class:`~.Cluster` is simply an initial set of contact points.
+    # After the driver connects to one of these nodes it will automatically discover the rest of the nodes 
+    # in the cluster and connect to them, so you don't need to list every node in your cluster.
+    cluster = Cluster([args.cassandra_cluster])
+    
+    session = cluster.connect()
+    # session.set_keyspace('mykeyspace')
+
+    if str2bool(args.truncate):
+        session.execute("""TRUNCATE vhss.mmeidentity ;""")
+        session.execute("""TRUNCATE vhss.mmeidentity_host ;""")
+        print "vhss.mmeidentity truncated"
+        print "vhss.mmeidentity_host truncated"
+
+    session.execute(
+        """
+        INSERT INTO vhss.mmeidentity (idmmeidentity, mmeisdn, mmehost, mmerealm, ue_reachability) VALUES (%s, %s, %s, %s, %s) 
+        """, 
+        (args.id, args.mme_isdn, args.mme_identity, args.realm, args.ue_reachability))
+
+    session.execute(
+        """
+        INSERT INTO vhss.mmeidentity_host (idmmeidentity, mmeisdn, mmehost, mmerealm, ue_reachability) VALUES (%s, %s, %s, %s, %s) 
+        """, 
+        (args.id, args.mme_isdn, args.mme_identity, args.realm, args.ue_reachability))
+
+    if str2bool(args.verbose):
+        # TODO pretty print
+        rows = session.execute('SELECT idmmeidentity, mmeisdn, mmehost, mmerealm, ue_reachability FROM vhss.mmeidentity')
+        for row in rows:
+            print row[0], row[1], row[2], row[3], row[4]
+
+        rows = session.execute('SELECT idmmeidentity, mmeisdn, mmehost, mmerealm, ue_reachability FROM vhss.mmeidentity_host')
+        for row in rows:
+            print row[0], row[1], row[2], row[3], row[4]
+
+
+if __name__ == "__main__":
+    main()
+
+
+

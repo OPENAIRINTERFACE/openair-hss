@@ -1,0 +1,411 @@
+################################################################################
+# Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The OpenAirInterface Software Alliance licenses this file to You under
+# the Apache License, Version 2.0  (the "License"); you may not use this file
+# except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#-------------------------------------------------------------------------------
+# For more information about the OpenAirInterface (OAI) Software Alliance:
+#      contact@openairinterface.org
+################################################################################
+
+# file build_helper
+# brief
+# author Laurent Thomas, Lionel GAUTHIER
+#
+#######################################
+SCRIPT=$(readlink -f ${BASH_SOURCE})
+THIS_SCRIPT_PATH=`dirname $SCRIPT`
+source $THIS_SCRIPT_PATH/build_helper
+
+##########################################
+# X.509 certificates
+##########################################
+
+#-------------------------------------------------------------------------------
+make_one_cert() {
+  fqdn=$1
+  name=$2
+  $SUDO openssl genrsa -out $name.key.pem 1024
+  $SUDO openssl req -new -batch -out $name.csr.pem -key $name.key.pem -subj /CN=$name.$fqdn/C=FR/ST=PACA/L=Aix/O=Eurecom/OU=CM
+  $SUDO openssl ca -cert cacert.pem -keyfile cakey.pem -in $name.csr.pem -out $name.cert.pem -outdir . -batch
+}
+
+#-------------------------------------------------------------------------------
+make_certs(){
+
+  fqdn=$1
+  certs_dir=$FREEDIAMETER_PREFIX/freeDiameter
+  # certificates are stored in diameter config directory
+  if [ ! -d $certs_dir ];  then
+    echo "Creating non existing directory: $certs_dir"
+    $SUDO mkdir -p $certs_dir || echo_error "can't create: $certs_dir"
+  fi
+
+  cd $certs_dir
+  echo "creating the CA certificate"
+  echo_warning "erase all existing certificates as long as the CA is regenerated"
+  $SUDO rm -f $certs_dir/*.pem
+  $SUDO mkdir -p  $certs_dir/demoCA/
+  $SUDO touch $certs_dir/demoCA/index.txt
+  $SUDO sh -c "echo 01 > $certs_dir/demoCA/serial"
+
+  # CA self certificate
+  $SUDO openssl req  -new -batch -x509 -days 3650 -nodes -newkey rsa:1024 -out cacert.pem -keyout cakey.pem -subj /CN=$fqdn/C=FR/ST=PACA/L=Aix/O=Eurecom/OU=CM
+
+  # generate hss certificate and sign it
+  make_one_cert eur hss
+  make_one_cert eur mme
+
+  # legacy config is using a certificate named 'user'
+  make_one_cert eur user
+}
+
+
+#-------------------------------------------------------------------------------
+# Remove Nettle installation which was done from sources (only done for Ubuntu distro)
+remove_nettle_from_source() {
+  nettle_uninstall_log=$OPENAIRCN_DIR/build/log/nettle_uninstall_log.txt
+  #echo_info "\nUn-Installing Nettle from sources. The log file for nettle un-installation is here: $nettle_uninstall_log "
+  (
+    $SUDO apt-get remove -y nettle-dev nettle-bin 
+    cd /tmp
+    echo "Downloading nettle archive"
+    $SUDO rm -rf /tmp/nettle-2.5.tar.gz* /tmp/nettle-2.5
+    wget https://ftp.gnu.org/gnu/nettle/nettle-2.5.tar.gz
+    if [ $? -ne 0 ]; then
+      wget ftp://ftp.lysator.liu.se/pub/security/lsh/nettle-2.5.tar.gz
+    fi
+    if [ ! -f nettle-2.5.tar.gz ]; then
+      echo_error "Could not download nettle source files"
+      cd -
+      return 1
+    fi
+    tar -xzf nettle-2.5.tar.gz
+    cd nettle-2.5/
+    ./configure --disable-openssl --enable-shared --prefix=/usr 
+    $SUDO make uninstall || true 
+  ) >& $nettle_uninstall_log
+  return 0
+}
+
+
+#-------------------------------------------------------------------------------
+# Remove Gnutls from source (only done for Ubuntu distro)
+remove_gnutls_from_source(){
+  gnutls_uninstall_log=$OPENAIRCN_DIR/build/log/gnutls_uninstall_log.txt
+  #echo_info "\nUn-Installing Gnutls. The log file for Gnutls un-installation is here: $gnutls_uninstall_log "
+  (
+    $SUDO apt-get remove -y libgnutls-dev
+    cd /tmp 
+    echo "Downloading gnutls archive"
+    $SUDO rm -rf /tmp/gnutls-3.1.23.tar.xz* /tmp/gnutls-3.1.23
+    wget http://mirrors.dotsrc.org/gcrypt/gnutls/v3.1/gnutls-3.1.23.tar.xz || \
+      wget ftp://ftp.gnutls.org/gcrypt/gnutls/v3.1/gnutls-3.1.23.tar.xz
+    if [ ! -f gnutls-3.1.23.tar.xz ]; then
+      echo_error "Could not download gnutls source files"
+      cd -
+      return 1
+    fi
+    tar -xJf gnutls-3.1.23.tar.xz
+    cd gnutls-3.1.23/
+    ./configure --prefix=/usr
+    $SUDO make uninstall || true
+  )>& $gnutls_uninstall_log
+  return 0
+}
+
+
+#-------------------------------------------------------------------------------
+# arg1 is force (no interactive script)
+install_1.1.5_freediameter_from_source() {
+  if [ $1 -eq 0 ]; then
+    read -p "Do you want to install freeDiameter 1.1.5 ? <y/N> " prompt
+    OPTION=""
+  else
+    prompt='y'
+    OPTION="-y"
+  fi
+
+  echo "Install freeDiameter 1.1.5 from source"
+  # libpq-dev 'may' be not needed
+  $SUDO apt-get install $OPTION \
+    autoconf  \
+    automake  \
+    bison     \
+    build-essential \
+    cmake \
+    cmake-curses-gui  \
+    debhelper \
+    flex  \
+    g++ \
+    gcc \
+    gdb \
+    libgcrypt-dev \
+    libidn11-dev \
+    libmysqlclient-dev \
+    libpq-dev \
+    libsctp1 \
+    libsctp-dev \
+    libxml2-dev \
+    mercurial \
+    python-dev \
+    ssl-cert \
+    swig
+  ret=$?;[[ $ret -ne 0 ]] && return $ret
+
+  if [[ $prompt =~ [yY](es)* ]]
+  then
+    cd /tmp
+    echo "Downloading 1.1.5 freeDiameter archive"
+    $SUDO rm -rf /tmp/1.1.5.tar.gz /tmp/freeDiameter-1.1.5 /tmp/freediameter
+    GIT_SSL_NO_VERIFY=true git clone https://gitlab.eurecom.fr/oai/freediameter.git -b eurecom-1.1.5
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
+    cd /tmp/freediameter
+    #patch -p1 < $OPENAIRCN_DIR/src/s6a/freediameter/freediameter-1.1.5.patch
+    patch -p1 < $OPENAIRCN_DIR/src/s6a/freediameter/freediameter_eurecom-1.1.5_0001-S6a-dictionary-add-CLR-Flags.patch
+    mkdir build
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
+    cd build
+    cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr ../
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
+    echo "Compiling freeDiameter"
+    make -j`nproc`
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
+    #make test
+    $SUDO make install
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
+    cd /tmp
+    rm -rf /tmp/1.1.5.tar.gz /tmp/freeDiameter-1.1.5 /tmp/freediameter
+  fi
+  return $?
+}
+
+#-------------------------------------------------------------------------------
+# arg1 is force (no interactive script)
+install_freediameter_from_source() {
+  if [ $1 -eq 0 ]; then
+    read -p "Do you want to install freeDiameter 1.2.0 ? <y/N> " prompt
+    OPTION=""
+  else
+    prompt='y'
+    OPTION="-y"
+  fi
+  if [[ "$OS_DISTRO" == "ubuntu" ]]; then
+    case "$(get_distribution_release)" in
+	"ubuntu17.04" | "ubuntu17.10" | "ubuntu18.04")
+	    specific_packages="libgnutls28-dev"
+	    ;;
+	"ubuntu14.04" | "ubuntu16.04")
+	    specific_packages="libgnutls-dev"
+	    ;;
+    esac
+    # libpq-dev 'may' be not needed
+    PACKAGE_LIST="\
+      $specific_packages \
+      autoconf \
+      automake \
+      bison \
+      build-essential \
+      cmake \
+      cmake-curses-gui \
+      debhelper \
+      flex \
+      g++ \
+      gcc \
+      gdb \
+      libgcrypt-dev \
+      libidn11-dev \
+      libmysqlclient-dev \
+      libpq-dev \
+      libsctp1 \
+      libsctp-dev \
+      libxml2-dev \
+      mercurial \
+      python-dev \
+      ssl-cert \
+      swig"
+  elif [[ "$OS_BASEDISTRO" == "fedora" ]]; then
+    PACKAGE_LIST="\
+      autoconf \
+      automake \
+      bison \
+      $CMAKE \
+      flex \
+      gcc-c++ \
+      gcc \
+      gdb \
+      libgcrypt-devel \
+      libidn-devel \
+      lksctp-tools \
+      lksctp-tools-devel \
+      libxml2-devel \
+      mercurial \
+      swig"
+  else
+    echo_fatal "$OS_DISTRO is not a supported distribution."
+  fi
+  $SUDO $INSTALLER install $OPTION $PACKAGE_LIST
+
+
+  if [[ $prompt =~ [yY](es)* ]]
+  then
+    cd /tmp
+    echo "Downloading 1.2.0 freeDiameter archive"
+    $SUDO rm -rf /tmp/1.2.0.tar.gz* /tmp/freeDiameter-1.2.0 /tmp/freediameter
+    GIT_SSL_NO_VERIFY=true git clone https://gitlab.eurecom.fr/oai/freediameter.git -b eurecom-1.2.0
+    #wget http://www.freediameter.net/hg/freeDiameter/archive/1.2.0.tar.gz
+    #tar xzf 1.2.0.tar.gz
+    cd freediameter
+    #patch -p1 < $OPENAIRCN_DIR/src/s6a/freediameter/freediameter-1.2.0.patch
+    patch -p1 < $OPENAIRCN_DIR/src/s6a/freediameter/freediameter_eurecom-1.2.0_0001-S6a-dictionary-add-CLR-Flags.patch
+    mkdir build
+    cd build
+    $CMAKE -DCMAKE_INSTALL_PREFIX:PATH=/usr/local ../
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
+    make -j`nproc`
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
+    #make test
+    $SUDO make install
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
+    cd /tmp
+    rm -rf /tmp/1.2.0.tar.gz /tmp/freeDiameter-1.2.0 /tmp/freediameter
+  fi
+  return 0
+}
+
+#-------------------------------------------------------------------------------
+# arg1 is force (no interactive script)
+install_latest_freediameter_from_source() {
+  if [ $1 -eq 0 ]; then
+    read -p "Do you want to install latest freeDiameter ? <y/N> " prompt
+    OPTION=""
+  else
+    prompt='y'
+    OPTION="-y"
+  fi
+
+  # libpq-dev 'may' be not needed
+  $SUDO apt-get install $OPTION \
+    autoconf  \
+    automake  \
+    bison     \
+    build-essential \
+    cmake \
+    cmake-curses-gui  \
+    debhelper \
+    flex  \
+    g++ \
+    gcc \
+    gdb \
+    libgcrypt-dev \
+    libidn11-dev \
+    libmysqlclient-dev \
+    libpq-dev \
+    libsctp1 \
+    libsctp-dev \
+    libxml2-dev \
+    mercurial \
+    python-dev \
+    ssl-cert \
+    swig
+
+  if [[ $prompt =~ [yY](es)* ]]
+  then
+    cd /tmp
+    rm -rf /tmp/freeDiameter
+    echo "Downloading latest freeDiameter trunk (may be unstable)"
+    git clone https://github.com/Metaswitch/freeDiameter.git
+    cd freeDiameter
+    patch -p1 < $OPENAIRCN_DIR/src/s6a/freediameter/freediameter-1.2.0.patch
+    mkdir build
+    cd build
+    cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr ../
+    echo "Compiling freeDiameter"
+    make -j`nproc`
+    #make test
+    $SUDO make install
+    cd /tmp
+    rm -rf /tmp/freediameter
+  fi
+}
+
+#-------------------------------------------------------------------------------
+# arg1 is force (no interactive script)
+install_opencoord.org_freediameter() {
+  if [ $1 -eq 0 ]; then
+    read -p "Do you want to install opencoord freeDiameter ? <y/N> " prompt
+    OPTION=""
+  else
+    prompt='y'
+    OPTION="-y"
+  fi
+
+  # libpq-dev 'may' be not needed
+  $SUDO apt-get install $OPTION \
+    autoconf  \
+    automake  \
+    bison     \
+    build-essential \
+    cmake \
+    cmake-curses-gui  \
+    debhelper \
+    flex  \
+    g++ \
+    gcc \
+    gdb \
+    libgcrypt-dev \
+    libidn11-dev \
+    libmysqlclient-dev \
+    libpq-dev \
+    libsctp1 \
+    libsctp-dev \
+    libxml2-dev \
+    mercurial \
+    python-dev \
+    ssl-cert \
+    swig
+
+  if [[ $prompt =~ [yY](es)* ]]
+  then
+    git submodule init
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
+    git submodule update
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
+    pushd $OPENAIRCN_DIR/build/git_submodules/freeDiameter
+    git pull origin master 
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
+    if ! patch -R -p1 -s -f --dry-run <  $OPENAIRCN_DIR/build/patches/0001-opencoord.org.freeDiameter.patch; then
+          patch -p1 <  $OPENAIRCN_DIR/build/patches/0001-opencoord.org.freeDiameter.patch
+    else
+      echo_info "Detected freeDiameter $OPENAIRCN_DIR/build/patches/0001-opencoord.org.freeDiameter.patch alredy applied"
+    fi
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
+  
+    rm -rf build
+    mkdir -p build
+    cd build
+    $CMAKE ..
+    res=$?
+    [[ $res -ne 0 ]] && popd && return $res
+    awk '{if (/^DISABLE_SCTP/) gsub(/OFF/, "ON"); print}' CMakeCache.txt > tmp && mv tmp CMakeCache.txt
+    make -j`nproc`
+    res=$?
+    [[ $res -ne 0 ]] && popd && return $res
+    $SUDO make install
+    res=$?
+    [[ $res -ne 0 ]] && popd && return $res
+    popd
+    return $?
+  fi
+}
