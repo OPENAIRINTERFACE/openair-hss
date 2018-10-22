@@ -3759,7 +3759,7 @@ void mme_app_send_s1ap_handover_command(mme_ue_s1ap_id_t mme_ue_s1ap_id, enb_ue_
   /** Set the E-UTRAN Target-To-Source-Transparent-Container. */
   handover_command_p->eutran_target_to_source_container = target_to_source_cont;
   // todo: what will the enb_ue_s1ap_ids for single mme s1ap handover will be.. ?
-  OAILOG_INFO(LOG_MME_APP, "Sending S1AP handover command to the source eNodeB for UE " MME_UE_S1AP_ID_FMT ". \n", mme_ue_s1ap_id);
+  OAILOG_INFO(LOG_MME_APP, "Sending S1AP handover command to the source eNodeB for UE " MME_UE_S1AP_ID_FMT " to source enbId %d. \n", mme_ue_s1ap_id, enb_id);
   /** The ENB_ID/Stream information in the UE_Context are still the ones for the source-ENB and the SCTP-UE_ID association is not set yet for the new eNB. */
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S1AP_MME, NULL, 0, "MME_APP Sending S1AP HANDOVER_COMMAND.");
   /** Sending a message to S1AP. */
@@ -3858,7 +3858,10 @@ mme_app_handle_forward_relocation_response(
   }
 
   /** Send a Handover Command. */
-  mme_app_send_s1ap_handover_command(ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, ue_context->e_utran_cgi.cell_identity.enb_id, &bcs_tbf,
+  mme_app_send_s1ap_handover_command(ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id,
+      s10_handover_procedure->source_ecgi.cell_identity.enb_id,
+      // ue_context->e_utran_cgi.cell_identity.enb_id,
+      &bcs_tbf,
       forward_relocation_response_pP->eutran_container.container_value);
   s10_handover_procedure->ho_command_sent = true;
   /** Unlink the container. */

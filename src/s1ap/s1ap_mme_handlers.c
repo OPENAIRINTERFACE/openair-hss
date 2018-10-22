@@ -1549,9 +1549,12 @@ s1ap_mme_handle_handover_notification(const sctp_assoc_id_t assoc_id, const sctp
   OCTET_STRING_TO_TAC (&handoverNotification_p->tai.tAC, tai.tac);
   DevAssert (handoverNotification_p->tai.pLMNidentity.size == 3);
   TBCD_TO_PLMN_T(&handoverNotification_p->tai.pLMNidentity, &tai.plmn);
+
   DevAssert (handoverNotification_p->eutran_cgi.pLMNidentity.size == 3);
   TBCD_TO_PLMN_T(&handoverNotification_p->eutran_cgi.pLMNidentity, &ecgi.plmn);
   BIT_STRING_TO_CELL_IDENTITY (&handoverNotification_p->eutran_cgi.cell_ID, ecgi.cell_identity);
+  /** Set the ENB Id. */
+  ecgi.cell_identity.enb_id = enb_ref->enb_id;
 
   // Currently just use this message send the MBR to SAE-GW and inform the source MME
   message_p = itti_alloc_new_message (TASK_S1AP, S1AP_HANDOVER_NOTIFY);
