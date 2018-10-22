@@ -4281,8 +4281,15 @@ mme_app_handle_enb_status_transfer(
    OAILOG_ERROR(LOG_MME_APP, "No S10 handover procedure exists for UE with mmeS1apUeId " MME_UE_S1AP_ID_FMT" Ignoring ENB_STATUS_TRANSFER. \n", s1ap_status_transfer_pP->mme_ue_s1ap_id);
    MSC_LOG_EVENT (MSC_MMEAPP_MME, "S1AP_ENB_STATUS_TRANSFER. No UE existing mmeS1apUeId " MME_UE_S1AP_ID_FMT" Ignoring ENB_STATUS_TRANSFER. \n", s1ap_status_transfer_pP->mme_ue_s1ap_id);
    /**
-    * We don't really expect an error at this point. Just ignore the message.
+    * We don't really expect an error at this point. Just forward the message to the target enb.
     */
+   char enbStatusPrefix[] = {0x00, 0x00, 0x00, 0x59, 0x40, 0x0b};
+   bstring enbStatusPrefixBstr = blk2bstr (enbStatusPrefix, 6);
+   bconcat(enbStatusPrefixBstr, s1ap_status_transfer_pP->bearerStatusTransferList_buffer);
+   /** No need to unlink here. */
+   // todo: macro/home
+   mme_app_send_s1ap_mme_status_transfer(ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, ue_context->e_utran_cgi.cell_identity.enb_id, enbStatusPrefixBstr);
+   /** eNB-Status-Transfer message message will be freed. */
    OAILOG_FUNC_OUT (LOG_MME_APP);
  }
  if(s10_handover_proc->proc.type == MME_APP_S10_PROC_TYPE_INTRA_MME_HANDOVER){
