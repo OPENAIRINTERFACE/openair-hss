@@ -705,11 +705,11 @@ static nw_rc_t nwGtpv2cCreateLocalTunnel (
       keyTunnel.ipv4AddrRemote = pReqTrxn->peerIp;
       pLocalTunnel = RB_FIND (NwGtpv2cTunnelMap, &(thiz->tunnelMap), &keyTunnel);
       if (!pLocalTunnel) {
-        OAILOG_WARNING (LOG_GTPV2C,  "Triggered response not containing a tunnel. Creating one for local_teid 0x%x and peer 0x%x!\n", ntohl (pUlpRsp->u_api_info.triggeredRspInfo.teidLocal), htonl (pReqTrxn->peerIp.s_addr));
+        OAILOG_WARNING (LOG_GTPV2C,  "Triggered response not containing a tunnel. Creating one for local_teid 0x%x and peer 0x%x!\n", pUlpRsp->u_api_info.triggeredRspInfo.teidLocal, htonl (pReqTrxn->peerIp.s_addr));
         rc = nwGtpv2cCreateLocalTunnel (thiz, pUlpRsp->u_api_info.triggeredRspInfo.teidLocal, &pReqTrxn->peerIp, pUlpRsp->u_api_info.triggeredRspInfo.hUlpTunnel, &pUlpRsp->u_api_info.triggeredRspInfo.hTunnel);
         NW_ASSERT (NW_OK == rc);
       }else{
-        OAILOG_WARNING (LOG_GTPV2C,  "Triggered response already containing a tunnel. Not creating a new one for local_teid 0x%x and peer 0x%x.\n", ntohl (pUlpRsp->u_api_info.triggeredRspInfo.teidLocal), htonl (pReqTrxn->peerIp.s_addr));
+        OAILOG_WARNING (LOG_GTPV2C,  "Triggered response already containing a tunnel. Not creating a new one for local_teid 0x%x and peer 0x%x.\n", (pUlpRsp->u_api_info.triggeredRspInfo.teidLocal), htonl (pReqTrxn->peerIp.s_addr));
       }
     }
     OAILOG_FUNC_RETURN( LOG_GTPV2C, rc);

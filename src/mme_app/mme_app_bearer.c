@@ -3373,6 +3373,9 @@ mme_app_handle_forward_relocation_request(
  struct ue_context_s                    *ue_context = NULL;
  uint64_t                                imsi = 0;
  mme_app_s10_proc_mme_handover_t        *s10_proc_mme_handover = NULL;
+ bearer_contexts_to_be_created_t         bcs_tbc;
+ uint16_t encryption_algorithm_capabilities = (uint16_t)0;
+ uint16_t integrity_algorithm_capabilities  = (uint16_t)0;
  int                                     rc = RETURNok;
 
  OAILOG_FUNC_IN (LOG_MME_APP);
@@ -3384,6 +3387,7 @@ mme_app_handle_forward_relocation_request(
 
  imsi = imsi_to_imsi64(&forward_relocation_request_pP->imsi);
  OAILOG_DEBUG (LOG_MME_APP, "Handling FORWARD_RELOCATION REQUEST for imsi " IMSI_64_FMT ". \n", imsi);
+ memset((void*)&bcs_tbc, 0, sizeof(bcs_tbc));
 
  /** Everything stack to this point. */
  /** Check that the TAI & PLMN are actually served. */
@@ -3551,6 +3555,55 @@ mme_app_handle_forward_relocation_request(
        &ue_context->guti);
    new_ue_context = true;
  }
+ if(!new_ue_context){
+   /*
+     * A handover procedure also exists for this case.
+     * A release request must already be sent to the source eNB.
+     * Not updating the PDN connections IE for the UE.
+     * Assuming that it is a too fast re-handover where it is not needed.
+     */
+    /** Get all VOs of all session bearers and send handover request with it. */
+    pdn_context_t * registered_pdn_ctx = NULL;
+    RB_FOREACH (registered_pdn_ctx, PdnContexts, &ue_context->pdn_contexts) {
+      DevAssert(registered_pdn_ctx);
+      mme_app_get_bearer_contexts_to_be_created(registered_pdn_ctx, &bcs_tbc, BEARER_STATE_NULL);
+      /** The number of bearers will be incremented in the method. S10 should just pick the ebi. */
+    }
+    if(!bcs_tbc.num_bearer_context){
+       /**
+        * No BC context exist. Reject the handover and perform an implicit detach with SYSTEM_FAILURE (not waiting for context complete to proceed with the implicit detach.
+        */
+       OAILOG_INFO (LOG_MME_APP, "No BC context exist. Reject the handover and perform an implicit detach with SYSTEM_FAILURE (not waiting for context complete to proceed with the implicit detach for mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
+       /** Send a forward relocation response with error. */
+       mme_app_send_s10_forward_relocation_response_err(forward_relocation_request_pP->s10_source_mme_teid.teid,
+           forward_relocation_request_pP->s10_source_mme_teid.ipv4_address, forward_relocation_request_pP->trxn, SYSTEM_FAILURE);
+
+       ue_context->s1_ue_context_release_cause = S1AP_IMPLICIT_CONTEXT_RELEASE;
+       /** Perform an implicit detach and reject the handover procedure. */
+       message_p = itti_alloc_new_message (TASK_MME_APP, NAS_IMPLICIT_DETACH_UE_IND);
+       DevAssert (message_p != NULL);
+       message_p->ittiMsg.nas_implicit_detach_ue_ind.ue_id = ue_context->mme_ue_s1ap_id;
+       itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+       OAILOG_FUNC_OUT (LOG_MME_APP);
+    }
+    /** Update the security parameters of the MM context of the S10 procedure. */
+    if(mm_ue_eps_context_update_security_parameters(ue_context->mme_ue_s1ap_id, forward_relocation_request_pP->ue_eps_mm_context, &encryption_algorithm_capabilities, &integrity_algorithm_capabilities) != RETURNok){
+      OAILOG_ERROR(LOG_MME_APP, "Error updating AS security parameters for UE with ueId: " MME_UE_S1AP_ID_FMT ". "
+          "Sending FW-Relocation response error and performing implicit detach on the target MME. \n", ue_context->mme_ue_s1ap_id);
+      //     mme_app_send_s1ap_handover_preparation_failure(ue_context->mme_ue_s1ap_id, handover_required_pP->enb_ue_s1ap_id, handover_required_pP->sctp_assoc_id, S1AP_SYSTEM_FAILURE);
+      //     /** If UE state is REGISTERED, then we also expect security context to be valid. */
+      mme_app_send_s10_forward_relocation_response_err(forward_relocation_request_pP->s10_source_mme_teid.teid,
+          forward_relocation_request_pP->s10_source_mme_teid.ipv4_address, forward_relocation_request_pP->trxn, SYSTEM_FAILURE);
+      ue_context->s1_ue_context_release_cause = S1AP_IMPLICIT_CONTEXT_RELEASE;
+      /** Perform an implicit detach and reject the handover procedure. */
+      message_p = itti_alloc_new_message (TASK_MME_APP, NAS_IMPLICIT_DETACH_UE_IND);
+      DevAssert (message_p != NULL);
+      message_p->ittiMsg.nas_implicit_detach_ue_ind.ue_id = ue_context->mme_ue_s1ap_id;
+      itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+      OAILOG_FUNC_OUT (LOG_MME_APP);
+    }
+    OAILOG_INFO(LOG_MME_APP, "Successfully updated AS security parameters for UE with ueId: " MME_UE_S1AP_ID_FMT ". Continuing handover request for INTRA-MME handover. \n", ue_context->mme_ue_s1ap_id);
+ }
 
  /*
   * Create a new handover procedure, no matter a UE context exists or not.
@@ -3606,59 +3659,6 @@ mme_app_handle_forward_relocation_request(
  }else{
    /** Ignore the received pdn_connections IE and continue straight with handover request. */
    OAILOG_INFO (LOG_MME_APP, "Continuing with already existing MME_APP UE_Context with mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "Sending handover request. \n", ue_context->mme_ue_s1ap_id);
-//   s10_proc_mme_handover->next_processed_pdn_connection = s10_proc_mme_handover->pdn_connections->num_pdn_connections; /**< Just to be safe. */
-   /*
-    * A handover procedure also exists for this case.
-    * A release request must already be sent to the source eNB.
-    * Not updating the PDN connections IE for the UE.
-    * Assuming that it is a too fast re-handover where it is not needed.
-    */
-   /** Get all VOs of all session bearers and send handover request with it. */
-   bearer_contexts_to_be_created_t bcs_tbc;
-   memset((void*)&bcs_tbc, 0, sizeof(bcs_tbc));
-   pdn_context_t * registered_pdn_ctx = NULL;
-   RB_FOREACH (registered_pdn_ctx, PdnContexts, &ue_context->pdn_contexts) {
-     DevAssert(registered_pdn_ctx);
-     mme_app_get_bearer_contexts_to_be_created(registered_pdn_ctx, &bcs_tbc, BEARER_STATE_NULL);
-     /** The number of bearers will be incremented in the method. S10 should just pick the ebi. */
-   }
-   if(!bcs_tbc.num_bearer_context){
-     /**
-      * No BC context exist. Reject the handover and perform an implicit detach with SYSTEM_FAILURE (not waiting for context complete to proceed with the implicit detach.
-      */
-     OAILOG_INFO (LOG_MME_APP, "No BC context exist. Reject the handover and perform an implicit detach with SYSTEM_FAILURE (not waiting for context complete to proceed with the implicit detach for mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
-     /** Send a forward relocation response with error. */
-     mme_app_send_s10_forward_relocation_response_err(forward_relocation_request_pP->s10_source_mme_teid.teid,
-         forward_relocation_request_pP->s10_source_mme_teid.ipv4_address, forward_relocation_request_pP->trxn, SYSTEM_FAILURE);
-
-     ue_context->s1_ue_context_release_cause = S1AP_IMPLICIT_CONTEXT_RELEASE;
-     /** Perform an implicit detach and reject the handover procedure. */
-     message_p = itti_alloc_new_message (TASK_MME_APP, NAS_IMPLICIT_DETACH_UE_IND);
-     DevAssert (message_p != NULL);
-     message_p->ittiMsg.nas_implicit_detach_ue_ind.ue_id = ue_context->mme_ue_s1ap_id;
-     itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
-     OAILOG_FUNC_OUT (LOG_MME_APP);
-   }
-   uint16_t encryption_algorithm_capabilities = (uint16_t)0;
-   uint16_t integrity_algorithm_capabilities  = (uint16_t)0;
-   /** Update the security parameters of the MM context of the S10 procedure. */
-   if(mm_ue_eps_context_update_security_parameters(ue_context->mme_ue_s1ap_id, s10_proc_mme_handover->nas_s10_context.mm_eps_ctx, &encryption_algorithm_capabilities, &integrity_algorithm_capabilities) != RETURNok){
-     OAILOG_ERROR(LOG_MME_APP, "Error updating AS security parameters for UE with ueId: " MME_UE_S1AP_ID_FMT ". "
-         "Sending FW-Relocation response error and performing implicit detach on the target MME. \n", ue_context->mme_ue_s1ap_id);
-//     mme_app_send_s1ap_handover_preparation_failure(ue_context->mme_ue_s1ap_id, handover_required_pP->enb_ue_s1ap_id, handover_required_pP->sctp_assoc_id, S1AP_SYSTEM_FAILURE);
-//     /** If UE state is REGISTERED, then we also expect security context to be valid. */
-     mme_app_send_s10_forward_relocation_response_err(forward_relocation_request_pP->s10_source_mme_teid.teid,
-         forward_relocation_request_pP->s10_source_mme_teid.ipv4_address, forward_relocation_request_pP->trxn, SYSTEM_FAILURE);
-     ue_context->s1_ue_context_release_cause = S1AP_IMPLICIT_CONTEXT_RELEASE;
-     /** Perform an implicit detach and reject the handover procedure. */
-     message_p = itti_alloc_new_message (TASK_MME_APP, NAS_IMPLICIT_DETACH_UE_IND);
-     DevAssert (message_p != NULL);
-     message_p->ittiMsg.nas_implicit_detach_ue_ind.ue_id = ue_context->mme_ue_s1ap_id;
-     itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
-     OAILOG_FUNC_OUT (LOG_MME_APP);
-   }
-   OAILOG_INFO(LOG_MME_APP, "Successfully updated AS security parameters for UE with ueId: " MME_UE_S1AP_ID_FMT ". Continuing handover request for INTRA-MME handover. \n", ue_context->mme_ue_s1ap_id);
-
    mme_app_send_s1ap_handover_request(ue_context->mme_ue_s1ap_id,
        &bcs_tbc,
        enb_id,

@@ -81,7 +81,7 @@ extern                                  "C" {
     thiz = ((nw_gtpv2c_trxn_t *) arg);
     pStack = thiz->pStack;
     NW_ASSERT (pStack);
-    OAILOG_WARNING (LOG_GTPV2C,  "T3 Response timer expired for transaction 0x%p\n", thiz);
+    OAILOG_WARNING (LOG_GTPV2C,  "T3 Response timer expired for transaction %p\n", thiz);
     thiz->hRspTmr = 0;
 
     if (thiz->maxRetries) {
@@ -99,7 +99,7 @@ extern                                  "C" {
       ulpApi.u_api_info.rspFailureInfo.msgType = thiz->pMsg ? thiz->pMsg->msgType: 0;
       ulpApi.u_api_info.rspFailureInfo.hUlpTunnel = ((thiz->hTunnel) ? ((nw_gtpv2c_tunnel_t *) (thiz->hTunnel))->hUlpTunnel : 0);
       ulpApi.u_api_info.rspFailureInfo.teidLocal = (thiz->hTunnel) ? ((nw_gtpv2c_tunnel_t*)(thiz->hTunnel))->teid: 0;
-      OAILOG_ERROR (LOG_GTPV2C, "N3 retries expired for transaction 0x%p\n", thiz);
+      OAILOG_ERROR (LOG_GTPV2C, "N3 retries expired for transaction %p\n", thiz);
       RB_REMOVE (NwGtpv2cOutstandingTxSeqNumTrxnMap, &(pStack->outstandingTxSeqNumMap), thiz);
       rc = nwGtpv2cTrxnDelete (&thiz);
       rc = pStack->ulp.ulpReqCallback (pStack->ulp.hUlp, &ulpApi);
@@ -118,7 +118,7 @@ extern                                  "C" {
     NW_ASSERT (thiz);
     pStack = thiz->pStack;
     NW_ASSERT (pStack);
-    OAILOG_DEBUG (LOG_GTPV2C,  "Duplicate request hold timer expired for transaction 0x%p\n", thiz);
+    OAILOG_DEBUG (LOG_GTPV2C,  "Duplicate request hold timer expired for transaction %p\n", thiz);
     thiz->hRspTmr = 0;
     RB_REMOVE (NwGtpv2cOutstandingRxSeqNumTrxnMap, &(pStack->outstandingRxSeqNumMap), thiz);
     rc = nwGtpv2cTrxnDelete (&thiz);
@@ -243,7 +243,7 @@ extern                                  "C" {
       pTrxn->pMsg = NULL;
     }
 
-    OAILOG_DEBUG (LOG_GTPV2C,  "Created transaction 0x%p\n", pTrxn);
+    OAILOG_DEBUG (LOG_GTPV2C,  "Created transaction %p\n", pTrxn);
     return pTrxn;
   }
 
@@ -306,7 +306,7 @@ extern                                  "C" {
     }
 
     if (pTrxn)
-      OAILOG_DEBUG (LOG_GTPV2C,  "Created outstanding RX transaction 0x%p\n", pTrxn);
+      OAILOG_DEBUG (LOG_GTPV2C,  "Created outstanding RX transaction %p\n", pTrxn);
 
     return (pTrxn);
   }
@@ -328,7 +328,7 @@ extern                                  "C" {
     if (thiz->hRspTmr) {
       rc = nwGtpv2cTrxnStopPeerRspTimer (thiz);
       if (NW_OK != rc) {
-        OAILOG_INFO (LOG_GTPV2C, "Stopping peer response timer for trxn 0x%p failed!\n", thiz);
+        OAILOG_INFO (LOG_GTPV2C, "Stopping peer response timer for trxn %p failed!\n", thiz);
       }
     }
 
@@ -337,7 +337,7 @@ extern                                  "C" {
       NW_ASSERT (NW_OK == rc);
     }
 
-    OAILOG_DEBUG (LOG_GTPV2C,  "Purging  transaction 0x%p\n", thiz);
+    OAILOG_DEBUG (LOG_GTPV2C,  "Purging  transaction %p\n", thiz);
     thiz->next = gpGtpv2cTrxnPool;
     gpGtpv2cTrxnPool = thiz;
     *pthiz = NULL;

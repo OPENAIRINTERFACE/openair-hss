@@ -1099,7 +1099,7 @@ s10_mme_handle_context_request(
 
   /** Check the destination TEID is 0. */
   if(req_p->teid != (teid_t)0){
-    OAILOG_WARNING (LOG_S10, "Destination TEID of S10 Context Request is not 0, insted " TEID_FMT ". Ignoring s10 context requetst. \n", req_p->teid);
+    OAILOG_WARNING (LOG_S10, "Destination TEID of S10 Context Request is not 0, instead " TEID_FMT ". Ignoring s10 context request. \n", req_p->teid);
     return RETURNerror;
   }
   /*
@@ -1262,14 +1262,13 @@ s10_mme_context_response (
    * Create a tunnel for the GTPv2-C stack if its a positive response.
    */
 
-
   if(rsp_p->cause.cause_value == REQUEST_ACCEPTED){
-    OAILOG_INFO (LOG_S10, "INSERTING INTO S10 HASHTABLE teid " TEID_FMT " and tunnel object %p. \n", ulp_rsp.u_api_info.createLocalTunnelInfo.teidLocal, ulp_rsp.u_api_info.createLocalTunnelInfo.hTunnel);
+    OAILOG_INFO (LOG_S10, "INSERTING INTO S10 HASHTABLE teid " TEID_FMT " and tunnel object %p. \n", ulp_rsp.u_api_info.triggeredRspInfo.teidLocal, ulp_rsp.u_api_info.triggeredRspInfo.hTunnel);
     hashtable_rc_t hash_rc = hashtable_ts_insert(s10_mme_teid_2_gtv2c_teid_handle, /**< Directly register the created tunnel. */
-        (hash_key_t) ulp_rsp.u_api_info.createLocalTunnelInfo.teidLocal,
-        (void *)ulp_rsp.u_api_info.createLocalTunnelInfo.hTunnel); /**< Just store the value as int (no free method) after allocating the S10 GTPv2c Tunnel from the tunnel pool. */
+        (hash_key_t) ulp_rsp.u_api_info.triggeredRspInfo.teidLocal,
+        (void *)ulp_rsp.u_api_info.triggeredRspInfo.hTunnel); /**< Just store the value as int (no free method) after allocating the S10 GTPv2c Tunnel from the tunnel pool. */
     hash_rc = hashtable_ts_get(s10_mme_teid_2_gtv2c_teid_handle,
-        (hash_key_t) ulp_rsp.u_api_info.createLocalTunnelInfo.teidLocal, (void **)(uintptr_t)&ulp_rsp.u_api_info.createLocalTunnelInfo.hTunnel);
+        (hash_key_t) ulp_rsp.u_api_info.triggeredRspInfo.teidLocal, (void **)(uintptr_t)&ulp_rsp.u_api_info.triggeredRspInfo.hTunnel);
     DevAssert(hash_rc == HASH_TABLE_OK);
   }else{
     OAILOG_WARNING (LOG_S10, "The cause is not REQUEST_ACCEPTED but %d for S10_CONTEXT_RESPONSE. "
@@ -1448,6 +1447,11 @@ s10_mme_remove_ue_tunnel (
   // delete local s10 tunnel
   nw_gtpv2c_ulp_api_t                         ulp_req;
   memset (&ulp_req, 0, sizeof (nw_gtpv2c_ulp_api_t));
+
+  if(remove_ue_tunnel_p->local_teid == (teid_t)0){
+    OAILOG_ERROR (LOG_S10, "Cannot remove S10 tunnel endpoint for local teid 0. \n");
+    OAILOG_FUNC_RETURN(LOG_S10, rc);
+  }
 
   hash_rc = hashtable_ts_get(s10_mme_teid_2_gtv2c_teid_handle,
       (hash_key_t) remove_ue_tunnel_p->local_teid,

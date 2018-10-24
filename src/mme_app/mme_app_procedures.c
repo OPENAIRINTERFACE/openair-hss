@@ -304,6 +304,10 @@ static int remove_s10_tunnel_endpoint(ue_context_t * ue_context, struct in_addr 
   OAILOG_FUNC_IN(LOG_MME_APP);
   int             rc = RETURNerror;
 //  /** Removed S10 tunnel endpoint. */
+  if(ue_context->local_mme_teid_s10 == (teid_t)0){
+    OAILOG_ERROR (LOG_MME_APP, "UE with ueId " MME_UE_S1AP_ID_FMT " has no local S10 teid. Not triggering tunnel removal. \n", ue_context->mme_ue_s1ap_id);
+    OAILOG_FUNC_RETURN(LOG_MME_APP, rc);
+  }
   rc = mme_app_remove_s10_tunnel_endpoint(ue_context->local_mme_teid_s10, peer_ip);
   /** Deregister the key. */
   mme_ue_context_update_coll_keys( &mme_app_desc.mme_ue_contexts,

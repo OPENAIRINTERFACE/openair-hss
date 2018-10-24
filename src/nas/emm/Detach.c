@@ -216,7 +216,7 @@ emm_proc_detach (
    */
   if(emm_fsm_set_state (ue_id, emm_context, EMM_DEREGISTERED_INITIATED) == RETURNerror){
     OAILOG_WARNING (LOG_NAS_EMM, "An implicit detach procedure is already ongoing for EMM context of the UE (ue_id=" MME_UE_S1AP_ID_FMT "). Aborting new implicit detach.", ue_id);
-    // todo: add back in !OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
   }
 
   /**
