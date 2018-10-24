@@ -535,10 +535,14 @@ esm_ebr_context_release (
          OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_EBI_UNASSIGNED);
       }
 
-      pdn->n_bearers -= 1;
-
-      // todo: update esm context
-      emm_context->esm_ctx.n_active_ebrs--;
+//      pdn->n_bearers -= 1;
+//
+//      // todo: update esm context
+//      emm_context->esm_ctx.n_active_ebrs--;
+//
+//      // todo: fix:
+//      break;
+      OAILOG_FUNC_RETURN (LOG_NAS_ESM, ebi);
     }
 
     /*
