@@ -433,7 +433,6 @@ static int _emm_as_recv (
         ul_nas_count,
         msg);       /**< Send the encoded  NAS_EMM message together with it. */
     /** If ask_ue_context is set.. Ask the MME_APP to send S10_UE_CONTEXT. */
-    bdestroy_wrapper(&msg);
     break;
 
   case TRACKING_AREA_UPDATE_COMPLETE:

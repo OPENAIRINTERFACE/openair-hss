@@ -3713,6 +3713,7 @@ void mme_app_send_s1ap_handover_request(mme_ue_s1ap_id_t mme_ue_s1ap_id,
   handover_request_p->ambr.br_dl = ue_context->subscribed_ue_ambr.br_dl;
 
   /** Set the bearer contexts to be created. Not changing any bearer state. */
+  bcs_tbc->bearer_contexts[0].bearer_level_qos.pl = 13; // todo fix
   handover_request_p->bearer_ctx_to_be_setup_list = calloc(1, sizeof(bearer_contexts_to_be_created_t));
   memcpy((void*)handover_request_p->bearer_ctx_to_be_setup_list, bcs_tbc, sizeof(*bcs_tbc));
 

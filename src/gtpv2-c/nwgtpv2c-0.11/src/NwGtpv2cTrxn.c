@@ -211,7 +211,7 @@ extern                                  "C" {
         thiz->seqNum = 0;
     }
 
-    OAILOG_DEBUG (LOG_GTPV2C,  "Created transaction 0x%p\n", pTrxn);
+    OAILOG_DEBUG (LOG_GTPV2C,  "Created transaction %p\n", pTrxn);
     return pTrxn;
   }
 

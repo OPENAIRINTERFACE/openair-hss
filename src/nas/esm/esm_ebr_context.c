@@ -532,7 +532,7 @@ esm_ebr_context_release (
           * Failed to update ESM bearer status.
           */
          OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Failed to update ESM bearer status. \n");
-         OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
+         OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_EBI_UNASSIGNED);
       }
 
       pdn->n_bearers -= 1;
@@ -573,7 +573,7 @@ esm_ebr_context_release (
          * Failed to update ESM bearer status.
          */
         OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Failed to update ESM bearer status. \n");
-        OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
+        OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_EBI_UNASSIGNED);
      }
 
      pdn->n_bearers -= 1;

@@ -433,6 +433,11 @@ int mme_app_remove_s10_tunnel_endpoint(teid_t local_teid, struct in_addr peer_ip
   message_p->ittiMsg.s10_remove_ue_tunnel.local_teid   = local_teid;
   message_p->ittiMsg.s10_remove_ue_tunnel.peer_ip      = peer_ip;
 //  message_p->ittiMsg.s10_remove_ue_tunnel.cause = LOCAL_DETACH;
+  if(local_teid == (teid_t)0 ){
+    OAILOG_DEBUG (LOG_MME_APP, "Sending remove tunnel request for with null teid! \n");
+  } else if (peer_ip.s_addr == 0){
+    OAILOG_DEBUG (LOG_MME_APP, "Sending remove tunnel request for with null peer ip! \n");
+  }
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_IMPLICIT_DETACH_UE_IND_MESSAGE");
   itti_send_msg_to_task (TASK_S10, INSTANCE_DEFAULT, message_p);
 

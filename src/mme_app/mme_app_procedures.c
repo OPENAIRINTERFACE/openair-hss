@@ -304,7 +304,7 @@ static int remove_s10_tunnel_endpoint(ue_context_t * ue_context, struct in_addr 
   OAILOG_FUNC_IN(LOG_MME_APP);
   int             rc = RETURNerror;
 //  /** Removed S10 tunnel endpoint. */
-  mme_app_remove_s10_tunnel_endpoint(ue_context->local_mme_teid_s10, peer_ip);
+  rc = mme_app_remove_s10_tunnel_endpoint(ue_context->local_mme_teid_s10, peer_ip);
   /** Deregister the key. */
   mme_ue_context_update_coll_keys( &mme_app_desc.mme_ue_contexts,
       ue_context,
