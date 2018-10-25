@@ -3505,7 +3505,11 @@ mme_app_handle_forward_relocation_request(
          ue_context->mme_ue_s1ap_id, ue_context->imsi, ue_context->mm_state);
      /** Cannot send EMMREG abort procedure signal to EMM, thatswhy implicitly detaching the old UE context. */
    }
-   ue_context->s1_ue_context_release_cause = S1AP_INVALIDATE_NAS;  /**< This should remove the NAS context and invalidate the timers. */
+   if(ue_context){
+     ue_context->s1_ue_context_release_cause = S1AP_INVALIDATE_NAS;  /**< This should remove the NAS context and invalidate the timers. */
+   }else{
+     OAILOG_INFO(LOG_MME_APP, "Removing EMM context for UE with IMSI " IMSI_64_FMT " and " MME_UE_S1AP_ID_FMT " for already removed UE context. \n", ue_nas_ctx->_imsi64, ue_nas_ctx->ue_id);
+   }
    message_p = itti_alloc_new_message (TASK_MME_APP, NAS_IMPLICIT_DETACH_UE_IND);
    DevAssert (message_p != NULL);
    itti_nas_implicit_detach_ue_ind_t *nas_implicit_detach_ue_ind_p = &message_p->ittiMsg.nas_implicit_detach_ue_ind;
