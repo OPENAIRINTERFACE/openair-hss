@@ -569,17 +569,22 @@ inline void emm_ctx_update_from_mm_eps_context(emm_data_context_t * const emm_ct
         mm_eps_ctxt->nas_ul_count.seq_num, emm_ctx_p->ue_id);
     emm_ctx_p->_security.ul_count = mm_eps_ctxt->nas_ul_count;
     emm_ctx_p->_security.ul_count.seq_num += 1;
+
     /** Increment the NAS UL_COUNT. */
-     if (!emm_ctx_p->_security.ul_count.seq_num) {
-       emm_ctx_p->_security.ul_count.overflow += 1;
-     }
+    if (!emm_ctx_p->_security.ul_count.seq_num) {
+      emm_ctx_p->_security.ul_count.overflow += 1;
+    }
+    OAILOG_DEBUG (LOG_NAS_EMM, "EMM-PROC  - Final UE NAS UL-Count to the one received from S10 %d (overflow %d) for UE " MME_UE_S1AP_ID_FMT ".\n",
+        mm_eps_ctxt->nas_ul_count.seq_num, mm_eps_ctxt->nas_ul_count.overflow, emm_ctx_p->ue_id);
   }else{
-    OAILOG_DEBUG (LOG_NAS_EMM, "EMM-PROC  - Leaving the UE NAS UL-Count to the one received from NAS message %d for UE " MME_UE_S1AP_ID_FMT ".\n",
-          emm_ctx_p->_security.ul_count.seq_num, emm_ctx_p->ue_id);
+    OAILOG_DEBUG (LOG_NAS_EMM, "EMM-PROC  - Leaving the UE NAS UL-Count to the one received from NAS message %d but updating the overflow from S10 %d for UE " MME_UE_S1AP_ID_FMT ".\n",
+          emm_ctx_p->_security.ul_count.seq_num, emm_ctx_p->_security.ul_count.overflow, emm_ctx_p->ue_id);
+    /** Still update the ul_count overflow. */
+    emm_ctx_p->_security.ul_count.overflow = mm_eps_ctxt->nas_ul_count.overflow;
   }
   emm_ctx_p->_security.dl_count = mm_eps_ctxt->nas_dl_count;
-
-
+  OAILOG_DEBUG (LOG_NAS_EMM, "EMM-PROC  - Final UE NAS DL-Count to the one received from S10 %d (overflow %d) for UE " MME_UE_S1AP_ID_FMT ".\n",
+      emm_ctx_p->_security.dl_count.seq_num, emm_ctx_p->_security.dl_count.overflow, emm_ctx_p->ue_id);
 
   /**
    * Set the NAS ciphering and integrity keys.

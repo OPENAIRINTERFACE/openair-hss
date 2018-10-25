@@ -374,6 +374,20 @@ mme_app_handle_mme_s10_handover_completion_timer_expiry (mme_app_s10_proc_mme_ha
       "Performing S1AP UE Context Release Command and successive NAS implicit detach. \n", ue_context->mme_ue_s1ap_id);
   s10_proc_mme_handover->proc.timer.id = MME_APP_TIMER_INACTIVE_ID;
 
+  /** Check if an NAS context exists (this might happen if a TAU_COMPLETE has not arrived or arrived and was discarded due security reasons. */
+  emm_data_context_t * emm_context = emm_data_context_get(&_emm_data, ue_context->mme_ue_s1ap_id);
+  if(emm_context){
+    OAILOG_WARNING (LOG_MME_APP, " **** ABNORMAL **** An EMM context for UE " MME_UE_S1AP_ID_FMT " exists. Performing implicit detach due time out of handover completion timer! \n", ue_context->mme_ue_s1ap_id);
+    /** Check if the CLR flag has been set. */
+    message_p = itti_alloc_new_message (TASK_MME_APP, NAS_IMPLICIT_DETACH_UE_IND);
+    DevAssert (message_p != NULL);
+    message_p->ittiMsg.nas_implicit_detach_ue_ind.ue_id = ue_context->mme_ue_s1ap_id; /**< We don't send a Detach Type such that no Detach Request is sent to the UE if handover is performed. */
+
+    MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_IMPLICIT_DETACH_UE_IND_MESSAGE");
+    itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+    OAILOG_FUNC_OUT (LOG_MME_APP);
+  }
+
   ue_context->s1_ue_context_release_cause = S1AP_HANDOVER_CANCELLED;
   /*
    * Send a UE Context Release Command which would trigger a context release.
