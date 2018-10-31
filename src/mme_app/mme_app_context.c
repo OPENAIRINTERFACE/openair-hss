@@ -1320,28 +1320,42 @@ _mme_app_handle_s1ap_ue_context_release (const mme_ue_s1ap_id_t mme_ue_s1ap_id,
   }
   if (ue_context->mm_state == UE_UNREGISTERED) {
     OAILOG_INFO(LOG_MME_APP, "UE is in UNREGISTERED state. Releasing the UE context in the eNB and triggering an MME context removal for "MME_UE_S1AP_ID_FMT ". \n.", ue_context->mme_ue_s1ap_id);
+    emm_data_context_t * emm_context = emm_data_context_get(&_emm_data, ue_context->mme_ue_s1ap_id);
+    if(emm_context && is_nas_specific_procedure_attach_running(emm_context)) {
+      OAILOG_INFO(LOG_MME_APP, "Attach procedure is running for UE "MME_UE_S1AP_ID_FMT ". Triggering implicit detach (aborting attach procedure). \n.", ue_context->mme_ue_s1ap_id);
+      message_p = itti_alloc_new_message (TASK_MME_APP, NAS_IMPLICIT_DETACH_UE_IND);
+      DevAssert (message_p != NULL);
+      message_p->ittiMsg.nas_implicit_detach_ue_ind.ue_id = ue_context->mme_ue_s1ap_id; /**< Rest won't be sent, so no NAS Detach Request will be sent. */
+      MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_IMPLICIT_DETACH_UE_IND_MESSAGE");
+      itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+      OAILOG_FUNC_OUT (LOG_MME_APP);
+    }else{
+      /*
+       * As before, in the UE_UNREGISTERED state, we assume either that we have no EMM context at all, a DEREGISTERED EMM context context, or one, where a common or specific procedure is running.
+       * The EMM context will either be left in the inactive DEREGISTERED state or even if a procedure is running. It won't be touched.
+       * The fate of the NAS context will be decided by the procedures.
+       *
+       * Bearers either are not created (CSR) or established (MBR) at all.
+       * We don't need to send an explicit bearer removal request here.
+       *
+       * In UNREGISTERED state there should be no reason to send RELEASE_ACCESS_BEARER message to the SAE-GW, because notin established.
+       *
+       * If there area bearers established without an EMM context, the UE_CTX_RELEASE_COMPLETE will trigger the removal of the MME_APP UE context.
+       * During removal of MME_APP UE context, if no EMM context is there, then probably HO without TAU has happened.
+       * Only in that case, this should trigger Delete Session Request (only case where MME_APP does send it). Else it should only be send by EMM/NAS layer.
+       * todo: or handover_completion_timer should take care of that (that TAU_Complete has arrived).
+       *
+       * So in any case, just release the context. With release complete we should clean the MME_APP UE context.
+       *
+       * No need to send NAS implicit detach.
+       */
+      if(ue_context->s1_ue_context_release_cause == S1AP_INVALID_CAUSE)
+        ue_context->s1_ue_context_release_cause = S1AP_INITIAL_CONTEXT_SETUP_FAILED;
 
-    /*
-     * As before, in the UE_UNREGISTERED state, we assume either that we have no EMM context at all, a DEREGISTERED EMM context context, or one, where a common or specific procedure is running.
-     * The EMM context will either be left in the inactive DEREGISTERED state or even if a procedure is running. It won't be touched.
-     * The fate of the NAS context will be decided by the procedures.
-     *
-     * Bearers either are not created (CSR) or established (MBR) at all.
-     * We don't need to send an explicit bearer removal request here.
-     *
-     * In UNREGISTERED state there should be no reason to send RELEASE_ACCESS_BEARER message to the SAE-GW, because notin established.
-     *
-     * If there area bearers established without an EMM context, the UE_CTX_RELEASE_COMPLETE will trigger the removal of the MME_APP UE context.
-     * During removal of MME_APP UE context, if no EMM context is there, then probably HO without TAU has happened.
-     * Only in that case, this should trigger Delete Session Request (only case where MME_APP does send it). Else it should only be send by EMM/NAS layer.
-     * todo: or handover_completion_timer should take care of that (that TAU_Complete has arrived).
-     *
-     * So in any case, just release the context. With release complete we should clean the MME_APP UE context.
-     *
-     * No need to send NAS implicit detach.
-     */
-    mme_app_itti_ue_context_release(mme_ue_s1ap_id, enb_ue_s1ap_id, ue_context->s1_ue_context_release_cause, enb_id);
+      mme_app_itti_ue_context_release(mme_ue_s1ap_id, enb_ue_s1ap_id, ue_context->s1_ue_context_release_cause, enb_id);
+      OAILOG_FUNC_OUT (LOG_MME_APP);
 
+    }
   } else {
     /*
      * In the UE_REGISTERED case, we should always have established bearers.

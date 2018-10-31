@@ -638,6 +638,12 @@ s1ap_mme_handle_initial_context_setup_response (
     OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
   }
 
+  /** Check if a context removal is ongoing. */
+  if(ue_ref_p->s1_ue_state == S1AP_UE_WAITING_CRR && ue_ref_p->s1ap_ue_context_rel_timer.id != S1AP_TIMER_INACTIVE_ID){
+    OAILOG_ERROR(LOG_S1AP, "A context release procedure is goingoing for ueRerefernce with ueId " MME_UE_S1AP_ID_FMT" and enbUeId " ENB_UE_S1AP_ID_FMT ". Ignoring received Setup Response. \n", ue_ref_p->mme_ue_s1ap_id, ue_ref_p->enb_ue_s1ap_id);
+    OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
+  }
+
   ue_ref_p->s1_ue_state = S1AP_UE_CONNECTED;
   message_p = itti_alloc_new_message (TASK_S1AP, MME_APP_INITIAL_CONTEXT_SETUP_RSP);
   memset ((void *)&message_p->ittiMsg.mme_app_initial_context_setup_rsp, 0, sizeof (itti_mme_app_initial_context_setup_rsp_t));
@@ -821,6 +827,8 @@ s1ap_mme_generate_ue_context_release_command (
     break;
   case S1AP_HANDOVER_CANCELLED:cause_type = S1ap_Cause_PR_radioNetwork;
     cause_value = S1ap_CauseRadioNetwork_handover_cancelled;
+    if(!ue_ref_p)
+      expect_release_complete = false;
     break;
   case S1AP_HANDOVER_FAILED:cause_type = S1ap_Cause_PR_radioNetwork;
     cause_value = S1ap_CauseRadioNetwork_ho_failure_in_target_EPC_eNB_or_target_system;
@@ -917,7 +925,9 @@ s1ap_handle_ue_context_release_command (
                   ue_context_release_command_pP->enb_ue_s1ap_id, ue_context_release_command_pP->enb_id);
     MSC_LOG_EVENT (MSC_S1AP_MME, "0 UE_CONTEXT_RELEASE_COMMAND with mme_ue_s1ap_id only for non existing UE_REFERENCE for mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ", ue_context_release_command_pP->mme_ue_s1ap_id);
     /** We might receive a duplicate one. */
+    ue_ref_p = s1ap_is_ue_mme_id_in_list(ue_context_release_command_pP->mme_ue_s1ap_id);
   }
+
   /**
    * Check the cause. If it is implicit detach or sctp reset/shutdown no need to send UE context release command to eNB.
    * Free UE context locally.
@@ -971,7 +981,7 @@ s1ap_mme_handle_ue_context_release_complete (
      * This implies that UE context has already been deleted on the expiry of timer!
      * Ignore this message. The timer will trigger the cleanup in the MME_APP. EMM is again independent.
      */
-    OAILOG_DEBUG (LOG_S1AP, " UE Context Release commplete:No S1 context. Ignore the message for ueid " MME_UE_S1AP_ID_FMT "\n", (uint32_t) ueContextReleaseComplete_p->mme_ue_s1ap_id);
+    OAILOG_DEBUG (LOG_S1AP, " UE Context Release complete:No S1 context. Ignore the message for ueid " MME_UE_S1AP_ID_FMT "\n", (uint32_t) ueContextReleaseComplete_p->mme_ue_s1ap_id);
     MSC_LOG_EVENT (MSC_S1AP_MME, "0 UEContextReleaseComplete ignored, no context mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ", ueContextReleaseComplete_p->mme_ue_s1ap_id);
     OAILOG_FUNC_RETURN (LOG_S1AP, RETURNok);
   }

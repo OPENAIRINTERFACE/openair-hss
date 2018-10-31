@@ -626,13 +626,15 @@ static int _emm_cn_pdn_connectivity_fail (const emm_cn_pdn_fail_t * msg)
       }
     }
   }else if (is_nas_specific_procedure_tau_running(emm_ctx_p)){
-    OAILOG_ERROR (LOG_NAS_EMM, "EMMCN-SAP  - " "Sending TAU Reject message to id " MME_UE_S1AP_ID_FMT "...\n", msg->ue_id);
+    OAILOG_ERROR (LOG_NAS_EMM, "EMMCN-SAP  - " "Sending TAU Reject message to id " MME_UE_S1AP_ID_FMT "..\n", msg->ue_id);
 
     nas_emm_tau_proc_t  *tau_proc = get_nas_specific_procedure_tau(emm_ctx_p);
     rc = emm_proc_tracking_area_update_reject(msg->ue_id, EMM_CAUSE_ESM_FAILURE);
   }else{
     // todo: multi apn pdn connectivity failure case!
-    DevAssert(0);
+    OAILOG_ERROR (LOG_NAS_EMM, "EMMCN-SAP  - " "Received Create Session Response to id " MME_UE_S1AP_ID_FMT " which is neither attaching nor TAU...\n", msg->ue_id); /**< This case might exist, due to an old trx.
+    The tunnel is re-used by the teid, so we cannot reuse the tunnel (todo: eventually diff teid?).  */
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
   }
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }

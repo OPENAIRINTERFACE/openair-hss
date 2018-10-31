@@ -280,6 +280,8 @@ typedef struct mme_config_s {
 
 extern mme_config_t mme_config;
 
+bool mme_app_check_ta_local(const plmn_t * target_plmn, const tac_t target_tac);
+
 int mme_config_find_mnc_length(const char mcc_digit1P,
                                const char mcc_digit2P,
                                const char mcc_digit3P,

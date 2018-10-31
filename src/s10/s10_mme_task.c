@@ -119,10 +119,6 @@ s10_mme_ulp_process_stack_req_cb (
       ret = s10_mme_handle_forward_relocation_response(&s10_mme_stack_handle, pUlpApi);
       break;
 
-    case NW_GTP_FORWARD_ACCESS_CONTEXT_NTF:
-      ret = s10_mme_handle_forward_access_context_notification(&s10_mme_stack_handle, pUlpApi);
-      break;
-
     case NW_GTP_FORWARD_ACCESS_CONTEXT_ACK:
       ret = s10_mme_handle_forward_access_context_acknowledge(&s10_mme_stack_handle, pUlpApi);
       break;

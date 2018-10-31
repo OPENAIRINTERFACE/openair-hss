@@ -729,7 +729,7 @@ emm_recv_tracking_area_update_request (
       emm_cause, &duplicate_emm_context);
 
   if(duplicate_emm_context && duplicate_emm_context->emm_cause != EMM_CAUSE_SUCCESS){
-    OAILOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - Found an invalid old duplicate UE context with ueId [%08x] - Implicitly detaching it. \n", ue_id);
+    OAILOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - Found an invalid old duplicate UE context with ueId [%08x] - Implicitly detaching it. \n", duplicate_emm_context->ue_id);
     /** Clean up new UE context that was created to handle new attach request. */
     emm_sap_t                               emm_sap = {0};
     emm_sap.primitive = EMMCN_IMPLICIT_DETACH_UE; /**< UE context will be purged. */

@@ -393,7 +393,6 @@ mme_app_handle_mme_s10_handover_completion_timer_expiry (mme_app_s10_proc_mme_ha
    * Send a UE Context Release Command which would trigger a context release.
    * The e_cgi IE will be set with Handover Notify.
    */
-
   mme_app_itti_ue_context_release(ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, ue_context->s1_ue_context_release_cause, s10_proc_mme_handover->target_id.target_id.macro_enb_id.enb_id);
   /** Send a FW-Relocation Response error if no local teid is set (no FW-Relocation Response is send yet). */
   if(!ue_context->local_mme_teid_s10){

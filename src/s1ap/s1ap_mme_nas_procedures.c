@@ -414,7 +414,7 @@ s1ap_generate_downlink_nas_transport (
 
   message.procedureCode = S1ap_ProcedureCode_id_downlinkNASTransport;
   message.direction = S1AP_PDU_PR_initiatingMessage;
-  ue_ref->s1_ue_state = S1AP_UE_CONNECTED;
+//  ue_ref->s1_ue_state = S1AP_UE_CONNECTED; todo: detach procedure might be ongoing
   downlinkNasTransport = &message.msg.s1ap_DownlinkNASTransportIEs;
   /*
    * Setting UE informations with the ones fount in ue_ref
@@ -870,13 +870,6 @@ s1ap_handle_conn_est_cnf (
   initialContextSetupRequest_p = &message.msg.s1ap_InitialContextSetupRequestIEs;
   initialContextSetupRequest_p->mme_ue_s1ap_id = (unsigned long)ue_ref->mme_ue_s1ap_id;
   initialContextSetupRequest_p->eNB_UE_S1AP_ID = (unsigned long)ue_ref->enb_ue_s1ap_id;
-
-  // todo: remove them after testing
-  OAILOG_DEBUG(LOG_S1AP, "UE_DESCRIPTION REFERENCE @ CONNECTION ESTABLISHMENT %x \n", ue_ref);
-  OAILOG_DEBUG(LOG_S1AP, "UE_DESCRIPTION REFERENCE @ CONNECTION ESTABLISHMENT %p \n", ue_ref);
-  OAILOG_DEBUG(LOG_S1AP, "SET ENB_UE_S1AP_ID (0)  @ CONNECTION ESTABLISHMENT %d \n", (unsigned long)ue_ref->enb_ue_s1ap_id);
-  OAILOG_DEBUG(LOG_S1AP, "SET ENB_UE_S1AP_ID  @ CONNECTION ESTABLISHMENT %d \n", initialContextSetupRequest_p->eNB_UE_S1AP_ID);
-
 
   /*
    * Only add capability information if it's not empty.

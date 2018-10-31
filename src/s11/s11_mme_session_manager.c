@@ -477,11 +477,11 @@ s11_mme_handle_ulp_error_indicatior(
    }
      break;
   default:
-    OAILOG_ERROR (LOG_S10, "Received an unhandled error indicator for the local S10-TEID " TEID_FMT " and message type %d. \n",
+    OAILOG_ERROR (LOG_S10, "Received an unhandled error indicator for the local S11-TEID " TEID_FMT " and message type %d. \n",
         pUlpApi->u_api_info.rspFailureInfo.teidLocal, pUlpApi->u_api_info.rspFailureInfo.msgType);
     OAILOG_FUNC_RETURN (LOG_S11, RETURNerror);
   }
-  OAILOG_WARNING (LOG_S10, "Received an error indicator for the local S10-TEID " TEID_FMT " and message type %d. \n",
+  OAILOG_WARNING (LOG_S10, "Received an error indicator for the local S11-TEID " TEID_FMT " and message type %d. \n",
       pUlpApi->u_api_info.rspFailureInfo.teidLocal, pUlpApi->u_api_info.rspFailureInfo.msgType);
   int rc = itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_RETURN (LOG_S11, rc);

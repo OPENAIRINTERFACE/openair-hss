@@ -995,6 +995,8 @@ static nw_rc_t                            nwGtpv2cHandleUlpFindLocalTunnel (
     }
 
     seqNum = ntohl (*((uint32_t *) (msgBuf + (((*msgBuf) & 0x08) ? 8 : 4)))) >> 8;
+    OAILOG_DEBUG (LOG_GTPV2C,  "RECEIVED GTPV2c initial request message of type %d, length %d and seqNum 0x%x.\n", msgType, msgBufLen, seqNum);
+
     pTrxn = nwGtpv2cTrxnOutstandingRxNew (thiz, ntohl (teidLocal), peerIp, peerPort, (seqNum));
 
     if (pTrxn) {
@@ -1033,9 +1035,12 @@ static nw_rc_t                            nwGtpv2cHandleUlpFindLocalTunnel (
     nw_gtpv2c_error_t                          error = {0};
 
     bool                                       noDelete = false ;
-
     keyTrxn.seqNum = ntohl (*((uint32_t *) (msgBuf + (((*msgBuf) & 0x08) ? 8 : 4)))) >> 8;;
     keyTrxn.peerIp.s_addr = peerIp->s_addr;
+
+    OAILOG_DEBUG (LOG_GTPV2C,  "RECEIVED GTPV2c  response message of type %d, length %d and seqNum %x.\n", msgType, msgBufLen, keyTrxn.seqNum);
+
+
     pTrxn = RB_FIND (NwGtpv2cOutstandingTxSeqNumTrxnMap, &(thiz->outstandingTxSeqNumMap), &keyTrxn);
 
     if (pTrxn) {

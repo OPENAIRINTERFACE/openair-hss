@@ -195,8 +195,6 @@ inline void emm_ctx_set_valid_imsi(emm_data_context_t * const ctxt, imsi_t *imsi
 #endif
   /** Notifying the MME_APP without an ITTI request of the validated IMSI, to update the registration tables. */
   mme_api_notify_imsi(ctxt->ue_id, imsi64);
-  ue_context_t * test_ue_ctx = mme_ue_context_exists_imsi (&mme_app_desc.mme_ue_contexts, imsi64);
-  DevAssert(test_ue_ctx);
 }
 
 //------------------------------------------------------------------------------

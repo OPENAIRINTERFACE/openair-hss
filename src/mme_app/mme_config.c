@@ -50,6 +50,7 @@
 #include "common_defs.h"
 #include "mme_config.h"
 #include "spgw_config.h"
+#include "s1ap_mme_ta.h"
 
 struct mme_config_s                       mme_config = {.rw_lock = PTHREAD_RWLOCK_INITIALIZER, 0};
 
@@ -88,6 +89,72 @@ int mme_config_find_mnc_length (
   return 0;
 }
 
+//------------------------------------------------------------------------------
+static
+int mme_app_compare_plmn (
+  const plmn_t * const plmn)
+{
+  int                                     i = 0;
+  uint16_t                                mcc = 0;
+  uint16_t                                mnc = 0;
+  uint16_t                                mnc_len = 0;
+
+  DevAssert (plmn != NULL);
+  /** Get the integer values from the PLMN. */
+  PLMN_T_TO_MCC_MNC ((*plmn), mcc, mnc, mnc_len);
+
+  mme_config_read_lock (&mme_config);
+
+  for (i = 0; i < mme_config.served_tai.nb_tai; i++) {
+    OAILOG_TRACE (LOG_MME_APP, "Comparing plmn_mcc %d/%d, plmn_mnc %d/%d plmn_mnc_len %d/%d\n",
+        mme_config.served_tai.plmn_mcc[i], mcc, mme_config.served_tai.plmn_mnc[i], mnc, mme_config.served_tai.plmn_mnc_len[i], mnc_len);
+
+    if ((mme_config.served_tai.plmn_mcc[i] == mcc) &&
+        (mme_config.served_tai.plmn_mnc[i] == mnc) &&
+        (mme_config.served_tai.plmn_mnc_len[i] == mnc_len))
+      /*
+       * There is a matching plmn
+       */
+      return TA_LIST_AT_LEAST_ONE_MATCH;
+  }
+
+  mme_config_unlock (&mme_config);
+  return TA_LIST_NO_MATCH;
+}
+
+//------------------------------------------------------------------------------
+/* @brief compare a TAC
+*/
+static
+int mme_app_compare_tac (
+  uint16_t tac_value)
+{
+  int                                     i = 0;
+
+  mme_config_read_lock (&mme_config);
+
+  for (i = 0; i < mme_config.served_tai.nb_tai; i++) {
+    OAILOG_TRACE (LOG_MME_APP, "Comparing config tac %d, received tac = %d\n", mme_config.served_tai.tac[i], tac_value);
+
+    if (mme_config.served_tai.tac[i] == tac_value)
+      return TA_LIST_AT_LEAST_ONE_MATCH;
+  }
+
+  mme_config_unlock (&mme_config);
+  return TA_LIST_NO_MATCH;
+}
+
+//------------------------------------------------------------------------------
+bool mme_app_check_ta_local(const plmn_t * target_plmn, const tac_t target_tac){
+  if(TA_LIST_AT_LEAST_ONE_MATCH == mme_app_compare_plmn(target_plmn)){
+    if(TA_LIST_AT_LEAST_ONE_MATCH == mme_app_compare_tac(target_tac)){
+      OAILOG_DEBUG (LOG_MME_APP, "TAC and PLMN are matching. \n");
+      return true;
+    }
+  }
+  OAILOG_DEBUG (LOG_MME_APP, "TAC or PLMN are not matching. \n");
+  return false;
+}
 
 //------------------------------------------------------------------------------
 static void mme_config_init (mme_config_t * config_pP)
