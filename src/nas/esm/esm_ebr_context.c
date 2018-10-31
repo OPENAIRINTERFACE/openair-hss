@@ -514,42 +514,28 @@ esm_ebr_context_release (
      * * * * PDN, the UE shall delete all EPS bearer contexts associated to
      * * * * that PDN connection.
      */
-    RB_FOREACH(bearer_context, SessionBearers, &pdn_context->session_bearers){
-      OAILOG_WARNING (LOG_NAS_ESM , "ESM-PROC  - Release EPS bearer context " "(ebi=%d, pid=%d)\n", bearer_context->ebi, *pid);
-      /*
-       * Delete the TFT
-       */
-      // TODO Look at "free_traffic_flow_template"
-      //free_traffic_flow_template(&pdn->bearer[i]->tft);
-
-      /*
-       * Set the EPS bearer context state to INACTIVE
-       */
+    bearer_context = RB_MIN(SessionBearers, &pdn_context->session_bearers);
+    while(bearer_context){
       int rc  = esm_ebr_release (emm_context, bearer_context, pdn_context, ue_requested);
-      if (rc != RETURNok) {
-         /*
-          * Failed to update ESM bearer status.
-          */
-         OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Failed to update ESM bearer status. \n");
-         OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_EBI_UNASSIGNED);
-      }
+          if (rc != RETURNok) {
+             /*
+              * Failed to update ESM bearer status.
+              */
+             OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Failed to update ESM bearer status. \n");
+             OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_EBI_UNASSIGNED);
+          }
+          //      /*
+          //       * Delete the TFT
+          //       */
+          //      // TODO Look at "free_traffic_flow_template"
+          //      //free_traffic_flow_template(&pdn->bearer[i]->tft);
 
-//      pdn->n_bearers -= 1;
-//
-//      // todo: update esm context
-//      emm_context->esm_ctx.n_active_ebrs--;
-//
-//      // todo: fix:
-//      break;
-      OAILOG_FUNC_RETURN (LOG_NAS_ESM, ebi);
+          pdn->n_bearers -= 1;
+          //
+          //      // todo: update esm context
+          emm_context->esm_ctx.n_active_ebrs--;
+          bearer_context = RB_MIN(SessionBearers, &pdn_context->session_bearers);
     }
-
-    /*
-     * Reset the PDN connection activation indicator
-     */
-    // TODO Look at "Reset the PDN connection activation indicator"
-    pdn_context->is_active = false;
-
   }else{
     /*
       * The identity of the EPS bearer to released is given;
