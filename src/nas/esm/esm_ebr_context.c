@@ -492,8 +492,7 @@ esm_ebr_context_release (
       OAILOG_ERROR(LOG_NAS_ESM , "ESM-PROC  - Could not find bearer context from ebi %d. \n", ebi);
       OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_EBI_UNASSIGNED);
     }
-
-    mme_app_get_pdn_context(ue_context, bearer_context->pdn_cx_id, 5/*bearer_context->linked_ebi*/, NULL, &pdn_context);
+    mme_app_get_pdn_context(ue_context, bearer_context->pdn_cx_id, bearer_context->linked_ebi, NULL, &pdn_context);
     *pid = bearer_context->pdn_cx_id;
   }
 

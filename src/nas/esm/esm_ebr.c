@@ -231,7 +231,6 @@ int esm_ebr_release (emm_data_context_t * emm_context, bearer_context_t * bearer
      * Failed to update ESM bearer status.
      */
     OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Failed to update ESM bearer status to INACTIVE. Ignoring and continuing with the removal. \n");
-
     if(emm_fsm_get_state(emm_context) == EMM_DEREGISTERED_INITIATED){
       OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Ignoring state change failure for implicitly detaching UE " MME_UE_S1AP_ID_FMT". \n", emm_context->ue_id);
     }else {

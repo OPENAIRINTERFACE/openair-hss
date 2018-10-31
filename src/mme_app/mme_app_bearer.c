@@ -1543,18 +1543,19 @@ mme_app_handle_initial_context_setup_rsp (
       bearer_context_to_setup->bearer_state |= BEARER_STATE_MME_CREATED;
     }
   }
-
+  pdn_context_t * registered_pdn_ctx = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
   /** Setting as ACTIVE when MBResp received from SAE-GW. */
-  if(ue_context->mm_state == UE_REGISTERED){
+  if(ue_context->mm_state == UE_REGISTERED && registered_pdn_ctx){
     /** Send Modify Bearer Request for the APN. */
-    pdn_context_t * registered_pdn_ctx = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
     mme_app_send_s11_modify_bearer_req(ue_context, registered_pdn_ctx);
+    OAILOG_FUNC_OUT (LOG_MME_APP);
     // todo: check Modify bearer request
   }else{
     /** Will send MBR with MM state change callbacks (with ATTACH_COMPLETE). */
-    OAILOG_INFO(LOG_MME_APP, "IMSI " IMSI_64_FMT " is not registered yet. Waiting the UE to register to send the MBR.\n", ue_context->imsi);
+    OAILOG_INFO(LOG_MME_APP, "IMSI " IMSI_64_FMT " with ueId " MME_UE_S1AP_ID_FMT " is not registered or yet (%d) or no pdn context exist (interfered by detach procedure). "
+        "Waiting the UE to register to send the MBR or to detach..\n", ue_context->imsi, ue_context->mme_ue_s1ap_id, ue_context->mm_state);
+    OAILOG_FUNC_OUT (LOG_MME_APP);
   }
-  OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 
 //------------------------------------------------------------------------------
