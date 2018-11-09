@@ -316,23 +316,26 @@ mme_app_handle_conn_est_cnf (
   pdn_context_t * established_pdn = NULL;
   RB_FOREACH (established_pdn, PdnContexts, &ue_context->pdn_contexts) {
     DevAssert(established_pdn);
-    bearer_context_t * first_bearer = RB_MIN(SessionBearers, &established_pdn->session_bearers); // todo: @ handover (idle mode tau) this should give us the default ebi!
-    if(first_bearer){ // todo: optimize this!
-    //    if ((BEARER_STATE_SGW_CREATED  || BEARER_STATE_S1_RELEASED) & first_bearer->bearer_state) {    /**< It could be in IDLE mode. */
-      establishment_cnf_p->e_rab_id[establishment_cnf_p->no_of_e_rabs]                                 = first_bearer->ebi ;//+ EPS_BEARER_IDENTITY_FIRST;
-      establishment_cnf_p->e_rab_level_qos_qci[establishment_cnf_p->no_of_e_rabs]                      = first_bearer->qci;
-      establishment_cnf_p->e_rab_level_qos_priority_level[establishment_cnf_p->no_of_e_rabs]           = 13;//first_bearer->priority_level;
-      establishment_cnf_p->e_rab_level_qos_preemption_capability[establishment_cnf_p->no_of_e_rabs]    = first_bearer->preemption_capability;
-      establishment_cnf_p->e_rab_level_qos_preemption_vulnerability[establishment_cnf_p->no_of_e_rabs] = first_bearer->preemption_vulnerability;
-      establishment_cnf_p->transport_layer_address[establishment_cnf_p->no_of_e_rabs]                  = fteid_ip_address_to_bstring(&first_bearer->s_gw_fteid_s1u);
-      establishment_cnf_p->gtp_teid[establishment_cnf_p->no_of_e_rabs]                                 = first_bearer->s_gw_fteid_s1u.teid;
-    //      if (!j) { // todo: ESM message may exist --> should match each to the EBI!
-      if(establishment_cnf_p->no_of_e_rabs == 0){
-        establishment_cnf_p->nas_pdu[establishment_cnf_p->no_of_e_rabs]                                  = nas_conn_est_cnf_pP->nas_msg;
-      nas_conn_est_cnf_pP->nas_msg = NULL; /**< Unlink. */
-    //    }
+    bearer_context_t * bc_session = NULL;
+    RB_FOREACH (bc_session, SessionBearers, &established_pdn->session_bearers) { // todo: @ handover (idle mode tau) this should give us the default ebi!
+      if(bc_session){ // todo: check for error cases in handover.. if this can ever be null..
+//        if ((BEARER_STATE_SGW_CREATED  || BEARER_STATE_S1_RELEASED) & bc_session->bearer_state) {    /**< It could be in IDLE mode. */
+          establishment_cnf_p->e_rab_id[establishment_cnf_p->no_of_e_rabs]                                 = bc_session->ebi ;//+ EPS_BEARER_IDENTITY_FIRST;
+          establishment_cnf_p->e_rab_level_qos_qci[establishment_cnf_p->no_of_e_rabs]                      = bc_session->qci;
+          establishment_cnf_p->e_rab_level_qos_priority_level[establishment_cnf_p->no_of_e_rabs]           = bc_session->priority_level;//first_bearer->priority_level;
+          establishment_cnf_p->e_rab_level_qos_preemption_capability[establishment_cnf_p->no_of_e_rabs]    = bc_session->preemption_capability;
+          establishment_cnf_p->e_rab_level_qos_preemption_vulnerability[establishment_cnf_p->no_of_e_rabs] = bc_session->preemption_vulnerability;
+          establishment_cnf_p->transport_layer_address[establishment_cnf_p->no_of_e_rabs]                  = fteid_ip_address_to_bstring(&bc_session->s_gw_fteid_s1u);
+          establishment_cnf_p->gtp_teid[establishment_cnf_p->no_of_e_rabs]                                 = bc_session->s_gw_fteid_s1u.teid;
+          //      if (!j) { // todo: ESM message may exist --> should match each to the EBI!
+          if(establishment_cnf_p->no_of_e_rabs == 0){
+            establishment_cnf_p->nas_pdu[establishment_cnf_p->no_of_e_rabs]                                  = nas_conn_est_cnf_pP->nas_msg;
+            nas_conn_est_cnf_pP->nas_msg = NULL; /**< Unlink. */
+            //    }
+          }
+          establishment_cnf_p->no_of_e_rabs++;
+//        }
       }
-      establishment_cnf_p->no_of_e_rabs++;
     }
   }
 
