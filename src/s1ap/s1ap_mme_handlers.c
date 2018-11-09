@@ -370,7 +370,7 @@ s1ap_mme_handle_s1_setup_request (
         enb_association->s1_state = S1AP_RESETING;
         enb_association->enb_id = enb_id;
         enb_association->default_paging_drx = s1SetupRequest_p->defaultPagingDRX;
-
+        s1ap_set_tai(enb_association, &s1SetupRequest_p->supportedTAs);
         if (enb_name != NULL) {
           memcpy (enb_association->enb_name, s1SetupRequest_p->eNBname.buf, s1SetupRequest_p->eNBname.size);
           enb_association->enb_name[s1SetupRequest_p->eNBname.size] = '\0';

@@ -1442,9 +1442,6 @@ mme_app_handle_downlink_data_notification(const itti_s11_downlink_data_notificat
   s1ap_paging_p->sctp_assoc_id_key = ue_context->sctp_assoc_id_key;
   s1ap_paging_p->ue_identity_index = (uint16_t)((ue_context->imsi %1024) & 0xFFFF); /**< Just MME_UE_S1AP_ID. */
   s1ap_paging_p->tmsi = ue_context->guti.m_tmsi;
-  // todo: these ones may differ from GUTI?
-  s1ap_paging_p->tai.plmn = ue_context->guti.gummei.plmn;
-  s1ap_paging_p->tai.tac  = *mme_config.served_tai.tac;
   OAILOG_INFO(LOG_MME_APP, "Calculated ue_identity index value for UE with imsi " IMSI_64_FMT " and ueId " MME_UE_S1AP_ID_FMT" is %d. \n", ue_context->imsi, ue_context->mme_ue_s1ap_id, s1ap_paging_p->ue_identity_index);
 
   /** S1AP Paging. */

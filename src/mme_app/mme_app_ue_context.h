@@ -321,10 +321,6 @@ typedef struct ue_context_s {
   //imei_t                   _imei;        /* The IMEI provided by the UE     can be found in emm_nas_context                */
   //imeisv_t                 _imeisv;      /* The IMEISV provided by the UE   can be found in emm_nas_context                */
 
-  tai_list_t             tail_list; // Current Tracking area list
-
-  tai_t                  tai_last_tau ; // TAI of the TA in which the last Tracking Area Update was initiated.
-
   /* Last known cell identity */
   ecgi_t                  e_utran_cgi;                 // Last known E-UTRAN cell, set by nas_attach_req_t
   // read for S11 CREATE_SESSION_REQUEST

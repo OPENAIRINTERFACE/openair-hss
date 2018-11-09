@@ -479,7 +479,7 @@ typedef struct itti_s1ap_paging_s {
   uint16_t                ue_identity_index;
   tmsi_t                  tmsi;
 
-  tai_t                   tai;               /* Indicating the Tracking Area from which the UE has sent the NAS message.                         */
+//  tai_t                   tai;               /* Indicating the Tracking Area from which the UE has sent the NAS message.                         */
 
 } itti_s1ap_paging_t;
 

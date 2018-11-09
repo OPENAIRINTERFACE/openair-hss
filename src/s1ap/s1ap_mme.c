@@ -695,6 +695,25 @@ s1ap_new_ue (
 
 //------------------------------------------------------------------------------
 void
+s1ap_set_tai (enb_description_t * enb_ref, S1ap_SupportedTAs_t * ta_list){
+  S1ap_SupportedTAs_Item_t               * ta = NULL;
+  S1ap_PLMNidentity_t                    * plmn_i = NULL;
+  tac_t                                    tac_value = 0;
+
+  /** Get the PLMN. */
+  ta = ta_list->list.array[0];
+  plmn_i = ta_list->list.array[0]->broadcastPLMNs.list.array[0];
+  TBCD_TO_PLMN_T (plmn_i, &enb_ref->tai_list.partial_tai_list[0].u.tai_one_plmn_non_consecutive_tacs.plmn);
+
+  for (int i = 0; i < ta_list->list.count && i < 3; i++) {
+    OCTET_STRING_TO_TAC (&ta->tAC, tac_value);
+    enb_ref->tai_list.partial_tai_list[0].u.tai_one_plmn_non_consecutive_tacs.tac[i] = tac_value;
+    enb_ref->tai_list.partial_tai_list[0].numberofelements++;
+  }
+}
+
+//------------------------------------------------------------------------------
+void
 s1ap_remove_ue (
   ue_description_t * ue_ref)
 {

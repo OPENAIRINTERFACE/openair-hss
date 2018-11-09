@@ -1748,19 +1748,26 @@ s1ap_handle_paging( const itti_s1ap_paging_t * const s1ap_paging_pP){
   INT8_TO_OCTET_STRING(mme_config.gummei.gummei[0].mme_code, &paging_p->uePagingID.choice.s_TMSI.mMEC);
 
   /** Set the TAI-List. */
-  S1ap_TAIItemIEs_t tai_item = {0}; // yes, alloc on stack
-  INT16_TO_OCTET_STRING(s1ap_paging_pP->tai.tac, &tai_item.taiItem.tAI.tAC);
-  /** Set the PLMN. */
   uint8_t                                 plmn[3] = { 0x00, 0x00, 0x00 };     //{ 0x02, 0xF8, 0x29 };
-  PLMN_T_TO_TBCD (s1ap_paging_pP->tai.plmn,
-                    plmn,
-                    mme_config_find_mnc_length(
-                        s1ap_paging_pP->tai.plmn.mcc_digit1, s1ap_paging_pP->tai.plmn.mcc_digit2, s1ap_paging_pP->tai.plmn.mcc_digit3,
-                        s1ap_paging_pP->tai.plmn.mnc_digit1, s1ap_paging_pP->tai.plmn.mnc_digit2, s1ap_paging_pP->tai.plmn.mnc_digit3)
-  );
+  S1ap_TAIItemIEs_t tai_item = {0}; // yes, alloc on stack
+  PLMN_T_TO_TBCD (eNB_ref->tai_list.partial_tai_list[0].u.tai_one_plmn_non_consecutive_tacs.plmn,
+                     plmn,
+                     mme_config_find_mnc_length(
+                         eNB_ref->tai_list.partial_tai_list[0].u.tai_one_plmn_non_consecutive_tacs.plmn.mcc_digit1, eNB_ref->tai_list.partial_tai_list[0].u.tai_one_plmn_non_consecutive_tacs.plmn.mcc_digit2, eNB_ref->tai_list.partial_tai_list[0].u.tai_one_plmn_non_consecutive_tacs.plmn.mcc_digit3,
+                         eNB_ref->tai_list.partial_tai_list[0].u.tai_one_plmn_non_consecutive_tacs.plmn.mnc_digit1, eNB_ref->tai_list.partial_tai_list[0].u.tai_one_plmn_non_consecutive_tacs.plmn.mnc_digit2, eNB_ref->tai_list.partial_tai_list[0].u.tai_one_plmn_non_consecutive_tacs.plmn.mnc_digit3)
+                         )
+  ;
   OCTET_STRING_fromBuf(&tai_item.taiItem.tAI.pLMNidentity, plmn, 3);
+  INT16_TO_OCTET_STRING(eNB_ref->tai_list.partial_tai_list[0].u.tai_one_plmn_non_consecutive_tacs.tac[0], &tai_item.taiItem.tAI.tAC);
   /** Set the TAI. */
   ASN_SEQUENCE_ADD (&paging_p->taiList, &tai_item);
+
+  for(int ntac = 1; ntac < eNB_ref->tai_list.partial_tai_list[0].numberofelements; ntac++){
+    S1ap_TAIItemIEs_t tai_item = {0}; // yes, alloc on stack
+    INT16_TO_OCTET_STRING(eNB_ref->tai_list.partial_tai_list[0].u.tai_one_plmn_non_consecutive_tacs.tac[ntac], &tai_item.taiItem.tAI.tAC);
+    /** Set the TAI. */
+    ASN_SEQUENCE_ADD (&paging_p->taiList, &tai_item);
+  }
 
   /** Encoding without allocating? */
   if (s1ap_mme_encode_pdu (&message, &buffer_p, &length) < 0) {
