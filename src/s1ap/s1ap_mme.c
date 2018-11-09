@@ -703,6 +703,7 @@ s1ap_set_tai (enb_description_t * enb_ref, S1ap_SupportedTAs_t * ta_list){
   /** Get the PLMN. */
   ta = ta_list->list.array[0];
   plmn_i = ta_list->list.array[0]->broadcastPLMNs.list.array[0];
+  enb_ref->tai_list.partial_tai_list[0].typeoflist = TRACKING_AREA_IDENTITY_LIST_ONE_PLMN_NON_CONSECUTIVE_TACS;
   TBCD_TO_PLMN_T (plmn_i, &enb_ref->tai_list.partial_tai_list[0].u.tai_one_plmn_non_consecutive_tacs.plmn);
 
   for (int i = 0; i < ta_list->list.count && i < 3; i++) {
