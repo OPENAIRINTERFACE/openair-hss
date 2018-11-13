@@ -1209,18 +1209,20 @@ _esm_sap_send (
     const   esm_eps_modify_eps_bearer_ctx_req_t *msg = &data->eps_bearer_context_modify;
 
     EpsQualityOfService eps_qos = {0};
+    memset((void*)&eps_qos, 0, sizeof(eps_qos));
     /** Sending a EBR-Request per bearer context. */
     bearer_contexts_to_be_updated_t *bcs_tbu = (bearer_contexts_to_be_updated_t*)msg->bcs_to_be_updated_ptr;
     for(int num_bc = 0; num_bc < bcs_tbu->num_bearer_context; num_bc++){
       if(bcs_tbu->bearer_contexts[num_bc].eps_bearer_id == ebi){
-        memset((void*)&eps_qos, 0, sizeof(eps_qos));
-        rc = qos_params_to_eps_qos(bcs_tbu->bearer_contexts[num_bc].bearer_level_qos->qci,
-            bcs_tbu->bearer_contexts[num_bc].bearer_level_qos->mbr.br_dl,
-            bcs_tbu->bearer_contexts[num_bc].bearer_level_qos->mbr.br_ul,
-
-            bcs_tbu->bearer_contexts[num_bc].bearer_level_qos->gbr.br_dl,
-            bcs_tbu->bearer_contexts[num_bc].bearer_level_qos->gbr.br_ul,
-            &eps_qos, false);
+        if(bcs_tbu->bearer_contexts[num_bc].bearer_level_qos){
+          memset((void*)&eps_qos, 0, sizeof(eps_qos));
+          rc = qos_params_to_eps_qos(bcs_tbu->bearer_contexts[num_bc].bearer_level_qos->qci,
+              bcs_tbu->bearer_contexts[num_bc].bearer_level_qos->mbr.br_dl,
+              bcs_tbu->bearer_contexts[num_bc].bearer_level_qos->mbr.br_ul,
+              bcs_tbu->bearer_contexts[num_bc].bearer_level_qos->gbr.br_dl,
+              bcs_tbu->bearer_contexts[num_bc].bearer_level_qos->gbr.br_ul,
+              &eps_qos, false);
+        }
         if (RETURNok == rc) {
           ambr_t * ambr = !num_bc ? &msg->apn_ambr: NULL; /**< Send the new received AMBR (if exists) with the first bearer update message. */
           rc = esm_send_modify_eps_bearer_context_request (
@@ -1231,11 +1233,11 @@ _esm_sap_send (
 
           esm_procedure = esm_proc_modify_eps_bearer_context_request; /**< Not the procedure. */
         }
-        /** Exit the loop directly. */
-        OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Successfully sent request to modify bearer for ebi %d for UE " MME_UE_S1AP_ID_FMT " . \n",
-            ebi, emm_context->ue_id);
-        break;
       }
+      /** Exit the loop directly. */
+      OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Successfully sent request to modify bearer for ebi %d for UE " MME_UE_S1AP_ID_FMT " . \n",
+          ebi, emm_context->ue_id);
+      break;
     }
   }
   break;

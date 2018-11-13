@@ -161,7 +161,7 @@ typedef struct mme_app_s11_proc_update_bearer_s {
 typedef struct mme_app_s11_proc_delete_bearer_s {
   mme_app_s11_proc_t           proc;
   int                          num_bearers_unhandled;
-  ebi_t                        linked_eps_bearer_id;
+//  ebi_t                        linked_eps_bearer_id;
   int                          num_status_received;
   ebi_list_t                   ebis;
 

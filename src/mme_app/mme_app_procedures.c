@@ -292,9 +292,8 @@ static void mme_app_free_s11_procedure_delete_bearer(mme_app_s11_proc_t **s11_pr
 {
   // DO here specific releases (memory,etc)
   /** Remove the bearer contexts to be setup. */
-  mme_app_s11_proc_delete_bearer_t ** s11_proc_delete_bearer_pp = (mme_app_s11_proc_delete_bearer_t**)s11_proc_cbr;
-  free_bearer_contexts_to_be_deleted(&(*s11_proc_delete_bearer_pp)->bcs_failed);
-  free_wrapper((void**)s11_proc_delete_bearer_pp);
+//  mme_app_s11_proc_delete_bearer_t ** s11_proc_delete_bearer_pp = (mme_app_s11_proc_delete_bearer_t**)s11_proc_cbr;
+  free_wrapper((void**)s11_proc_cbr);
 }
 
 /**

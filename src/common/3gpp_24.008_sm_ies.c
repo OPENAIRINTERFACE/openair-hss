@@ -1163,6 +1163,9 @@ void free_traffic_flow_template(traffic_flow_template_t ** tft)
 
 #include "3gpp_24.301.h"
 //------------------------------------------------------------------------------
+/**
+ * We just add 1 to the identifier in the bitmaps.
+ */
 int
 verify_traffic_flow_template_syntactical(traffic_flow_template_t * tft, traffic_flow_template_t * tft_original, esm_cause_t **esm_cause)
 {
@@ -1183,7 +1186,7 @@ verify_traffic_flow_template_syntactical(traffic_flow_template_t * tft, traffic_
         return RETURNerror;
       }
       /** Verify each packet filter has distinct identifier and precedence. */
-      if(tft->packet_filter_identifier_bitmap & (0x01 << tft->packetfilterlist.createnewtft[num_pf].identifier)){
+      if(tft->packet_filter_identifier_bitmap & (0x01 << tft->packetfilterlist.createnewtft[num_pf].identifier + 1)){
         /** Packet Filter Identifier already set. */
         **esm_cause = ESM_CAUSE_SYNTACTICAL_ERROR_IN_PACKET_FILTER;
         return RETURNerror;
@@ -1194,8 +1197,8 @@ verify_traffic_flow_template_syntactical(traffic_flow_template_t * tft, traffic_
         return RETURNerror;
       }
       /** Mark the new packet filter. */
-      tft->packet_filter_identifier_bitmap |= (0x01 << tft->packetfilterlist.createnewtft[num_pf].identifier);
-      tft->precedence_set[tft->packetfilterlist.createnewtft[num_pf].eval_precedence] = tft->packetfilterlist.createnewtft[num_pf].identifier;
+      tft->packet_filter_identifier_bitmap |= (0x01 << tft->packetfilterlist.createnewtft[num_pf].identifier + 1);
+      tft->precedence_set[tft->packetfilterlist.createnewtft[num_pf].eval_precedence] = tft->packetfilterlist.createnewtft[num_pf].identifier + 1;
       /** Successfully validated packet filter syntax, */
     }
     /** Successfully checked addition TFTs. */
@@ -1220,7 +1223,7 @@ verify_traffic_flow_template_syntactical(traffic_flow_template_t * tft, traffic_
         return RETURNerror;
       }
       if((tft_original->packet_filter_identifier_bitmap | tft->packet_filter_identifier_bitmap)
-          & (0x01 << tft->packetfilterlist.addpacketfilter[num_pf].identifier)) {
+          & (0x01 << tft->packetfilterlist.addpacketfilter[num_pf].identifier + 1)) {
         /** Id already existing. */
         **esm_cause = ESM_CAUSE_SYNTACTICAL_ERROR_IN_PACKET_FILTER;
         return RETURNerror;
@@ -1231,8 +1234,8 @@ verify_traffic_flow_template_syntactical(traffic_flow_template_t * tft, traffic_
         return RETURNerror;
       }
       /** Set the precedence value in the new TFT. */
-      tft->packet_filter_identifier_bitmap |= (0x01 << tft->packetfilterlist.addpacketfilter[num_pf].identifier);
-      tft->precedence_set[tft->packetfilterlist.addpacketfilter[num_pf].eval_precedence] = tft->packetfilterlist.addpacketfilter[num_pf].identifier;
+      tft->packet_filter_identifier_bitmap |= (0x01 << tft->packetfilterlist.addpacketfilter[num_pf].identifier + 1);
+      tft->precedence_set[tft->packetfilterlist.addpacketfilter[num_pf].eval_precedence] = tft->packetfilterlist.addpacketfilter[num_pf].identifier + 1;
     }
     /** Successfully checked addition TFTs. */
     return RETURNok;
@@ -1253,12 +1256,12 @@ verify_traffic_flow_template_syntactical(traffic_flow_template_t * tft, traffic_
        * Just check that it does not occur twice in the current new TFT.
        * We will find it in the original TFT (must exist).
        */
-      if(tft->packet_filter_identifier_bitmap & (0x01 << tft->packetfilterlist.replacepacketfilter[num_pf].identifier)){
+      if(tft->packet_filter_identifier_bitmap & (0x01 << tft->packetfilterlist.replacepacketfilter[num_pf].identifier + 1)){
         **esm_cause = ESM_CAUSE_SYNTACTICAL_ERROR_IN_THE_TFT_OPERATION;
         return RETURNerror;
       }
       /** Must exist in the original one. */
-      if(!tft_original->packet_filter_identifier_bitmap & (0x01 << tft->packetfilterlist.replacepacketfilter[num_pf].identifier)){
+      if(!(tft_original->packet_filter_identifier_bitmap & (0x01 << tft->packetfilterlist.replacepacketfilter[num_pf].identifier + 1))){
         **esm_cause = ESM_CAUSE_SYNTACTICAL_ERROR_IN_THE_TFT_OPERATION;
         return RETURNerror;
       }
@@ -1268,16 +1271,23 @@ verify_traffic_flow_template_syntactical(traffic_flow_template_t * tft, traffic_
         **esm_cause = ESM_CAUSE_SYNTACTICAL_ERROR_IN_PACKET_FILTER;
         return RETURNerror;
       }
+      /** Set the precedence value in the new TFT. */
+      tft->precedence_set[tft->packetfilterlist.replacepacketfilter[num_pf].eval_precedence] = tft->packetfilterlist.replacepacketfilter[num_pf].identifier + 1;
+      tft->packet_filter_identifier_bitmap |= (0x01 << tft->packetfilterlist.replacepacketfilter[num_pf].identifier + 1);
+    }
+    /** Check that the precedences all move. */
+    for(int num_pf = 0; num_pf < tft->numberofpacketfilters; num_pf++){
       /** Successfully validated packet filter syntax. */
       if(tft_original->precedence_set[tft->packetfilterlist.replacepacketfilter[num_pf].eval_precedence] &&
-          tft_original->precedence_set[tft->packetfilterlist.replacepacketfilter[num_pf].eval_precedence] != tft->packetfilterlist.replacepacketfilter[num_pf].identifier) {
-        /** Found in the original TFT a packet filter with same precedence but other identifier. */
-        **esm_cause = ESM_CAUSE_SYNTACTICAL_ERROR_IN_THE_TFT_OPERATION;
-        return RETURNerror;
+          tft_original->precedence_set[tft->packetfilterlist.replacepacketfilter[num_pf].eval_precedence] != (tft->packetfilterlist.replacepacketfilter[num_pf].identifier + 1)) {
+        /** Found in the original TFT a packet filter with same precedence but other identifier. For this identifier, a new precedence also should exist (check only one layer). */
+        uint8_t ow_ident = tft_original->precedence_set[tft->packetfilterlist.replacepacketfilter[num_pf].eval_precedence]; /**< The one added. */
+        if(!(tft->packet_filter_identifier_bitmap & (0x01 << ow_ident))){
+          /** No replacement for packet filter whose precedence is overwritten.. */
+          **esm_cause = ESM_CAUSE_SYNTACTICAL_ERROR_IN_THE_TFT_OPERATION;
+          return RETURNerror;
+        }
       }
-      /** Set the precedence value in the new TFT. */
-      tft->precedence_set[tft->packetfilterlist.replacepacketfilter[num_pf].eval_precedence] = tft->packetfilterlist.addpacketfilter[num_pf].identifier;
-      tft->packet_filter_identifier_bitmap |= (0x01 << tft->packetfilterlist.replacepacketfilter[num_pf].identifier);
     }
     /** Successfully checked addition TFTs. */
     return RETURNok;
@@ -1293,23 +1303,19 @@ verify_traffic_flow_template_syntactical(traffic_flow_template_t * tft, traffic_
       return RETURNerror;
     }
     for(int num_pf = 0; num_pf < tft->numberofpacketfilters; num_pf++){
-        if(!tft->packetfilterlist.deletepacketfilter[num_pf].identifier){
-          **esm_cause = ESM_CAUSE_SYNTACTICAL_ERROR_IN_THE_TFT_OPERATION;
-          return RETURNerror;
-        }
         /**
          * Find the packet filter in the original TFT.
          * Not checking if multiple with same identifiert.
          */
-        if(!(tft_original->packet_filter_identifier_bitmap & (0x01 << tft->packetfilterlist.deletepacketfilter[num_pf].identifier))){
+        if(!(tft_original->packet_filter_identifier_bitmap & (0x01 << tft->packetfilterlist.deletepacketfilter[num_pf].identifier + 1))){
           **esm_cause = ESM_CAUSE_SYNTACTICAL_ERROR_IN_THE_TFT_OPERATION;
           return RETURNerror;
         }
-        if(tft->packet_filter_identifier_bitmap & (0x01 << tft->packetfilterlist.deletepacketfilter[num_pf].identifier)){
+        if(tft->packet_filter_identifier_bitmap & (0x01 << tft->packetfilterlist.deletepacketfilter[num_pf].identifier + 1)){
           **esm_cause = ESM_CAUSE_SYNTACTICAL_ERROR_IN_THE_TFT_OPERATION;
           return RETURNerror;
         }
-        tft->packet_filter_identifier_bitmap |= (0x01 << tft->packetfilterlist.deletepacketfilter[num_pf].identifier);
+        tft->packet_filter_identifier_bitmap |= (0x01 << tft->packetfilterlist.deletepacketfilter[num_pf].identifier + 1);
     }
     return RETURNok;
   default:

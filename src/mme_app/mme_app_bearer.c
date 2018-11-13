@@ -1799,6 +1799,13 @@ mme_app_handle_s11_delete_bearer_req (
     OAILOG_DEBUG (LOG_MME_APP, "We didn't find this teid in list of UE: %" PRIX32 "\n", delete_bearer_request_pP->teid);
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
+
+  /** Check if the linked ebi is existing. */
+  if(delete_bearer_request_pP->linked_eps_bearer_id){
+    OAILOG_ERROR(LOG_MME_APP, "Default bearer deactivation via Delete Bearer Request not implemented yet for UE with ueId " MME_UE_S1AP_ID_FMT". \n", ue_context->mme_ue_s1ap_id);
+    OAILOG_FUNC_OUT (LOG_MME_APP);
+  }
+
   /** The validation of the request will be done in the ESM layer. */
   MSC_LOG_RX_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 DELETE_BEARER_REQUEST ueId " MME_UE_S1AP_ID_FMT " PDN id %u IMSI " IMSI_64_FMT " num bearer %u",
       ue_context->mme_ue_s1ap_id, cid, ue_context->imsi, delete_bearer_request_pP->bearer_contexts.num_bearer_context);
@@ -1816,7 +1823,7 @@ mme_app_handle_s11_delete_bearer_req (
   /** Respond success if bearers are not existing. */
   s11_proc_delete_bearer->proc.s11_trxn         = (uintptr_t)delete_bearer_request_pP->trxn;
   s11_proc_delete_bearer->num_bearers_unhandled = delete_bearer_request_pP->ebi_list.num_ebi;
-  s11_proc_delete_bearer->linked_eps_bearer_id  = delete_bearer_request_pP->linked_eps_bearer_id; /**< Only if it is in the request. */
+//  s11_proc_delete_bearer->linked_eps_bearer_id  = delete_bearer_request_pP->linked_eps_bearer_id; /**< Only if it is in the request. */
   memcpy(&s11_proc_delete_bearer->ebis, &delete_bearer_request_pP->ebi_list, sizeof(delete_bearer_request_pP->ebi_list));
   // todo: failed bearer contexts not handled yet (failed from those in DBC)
 //  memcpy(&s11_proc_delete_bearer->bcs_failed, &delete_bearer_request_pP->to_be_removed_bearer_contexts, sizeof(delete_bearer_request_pP->to_be_removed_bearer_contexts));
@@ -2149,7 +2156,14 @@ void mme_app_handle_e_rab_modify_rsp (itti_s1ap_e_rab_modify_rsp_t  * const e_ra
       // todo: comparing with subscriped apn ambr..
       if(s11_proc_update_bearer->apn_ambr.br_dl && s11_proc_update_bearer->apn_ambr.br_ul)
         pdn_context->p_gw_apn_ambr = s11_proc_update_bearer->apn_ambr;
-      DevAssert(bc_tbu->cause.cause_value == REQUEST_ACCEPTED);
+      // todo: lock might be needed here
+      if(!bc_tbu->cause.cause_value){
+        OAILOG_DEBUG (LOG_MME_APP, "The cause is not set as accepted for ebi %d for ueId although NAS is accepted: " MME_UE_S1AP_ID_FMT "\n", bc_tbu->eps_bearer_id, e_rab_modify_rsp->mme_ue_s1ap_id);
+        /** Setting it as accepted such that we don't wait for the E-RAB which arrived. */
+        bc_tbu->cause.cause_value = REQUEST_ACCEPTED;
+      } else{
+        DevAssert(bc_tbu->cause.cause_value == REQUEST_ACCEPTED);
+      }
     }else{
       /**
        * Not reducing the number of unhandled bearers. We will check this cause later when NAS response arrives.
@@ -2546,7 +2560,7 @@ void mme_app_handle_modify_eps_bearer_ctx_rej (itti_mme_app_modify_eps_bearer_ct
   }
 
   /** Update the pending bearer contexts in the answer. */
-  if (bc_tbu->cause.cause_value != REQUEST_ACCEPTED) {
+  if (bc_tbu->cause.cause_value && bc_tbu->cause.cause_value != REQUEST_ACCEPTED) {
     OAILOG_INFO(LOG_MME_APP, "Received NAS reject after E-RAB modification reject for ebi %d occurred for UE: " MME_UE_S1AP_ID_FMT ". Not reducing number of unhandled bearers (assuming already done). \n",
         bc_tbu->eps_bearer_id, ue_context->mme_ue_s1ap_id);
     OAILOG_FUNC_OUT (LOG_MME_APP);
@@ -2602,10 +2616,6 @@ void mme_app_handle_deactivate_eps_bearer_ctx_cnf (itti_mme_app_deactivate_eps_b
   bearer_context_t * bc = NULL;
   mme_app_get_session_bearer_context_from_all(ue_context, deactivate_eps_bearer_ctx_cnf->ded_ebi, &bc);
   DevAssert(!bc);
-
-  bearer_context_t * bc_test = NULL;
-  mme_app_get_session_bearer_context_from_all(ue_context, s11_proc_delete_bearer->linked_eps_bearer_id, &bc_test);
-  DevAssert(bc_test);
 
   /** Not checking S1U E-RAB Release Response. */
   s11_proc_delete_bearer->num_bearers_unhandled--;

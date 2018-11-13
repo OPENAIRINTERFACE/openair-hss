@@ -149,12 +149,15 @@ esm_proc_modify_eps_bearer_context (
   }
   /** Verify the TFT, QoS, etc. */
   /** Before assigning the bearer context, validate the fields of the requested bearer context to be created. */
-  if(validateEpsQosParameter(bc_tbu->bearer_level_qos->qci, bc_tbu->bearer_level_qos->pvi, bc_tbu->bearer_level_qos->pci, bc_tbu->bearer_level_qos->pl,
-      bc_tbu->bearer_level_qos->gbr.br_dl, bc_tbu->bearer_level_qos->gbr.br_ul, bc_tbu->bearer_level_qos->mbr.br_dl, bc_tbu->bearer_level_qos->mbr.br_ul) == RETURNerror){
-      OAILOG_ERROR(LOG_NAS_EMM, "EMMCN-SAP  - " "EPS bearer context of UBR received for UE " MME_UE_S1AP_ID_FMT" could not be verified due erroneous EPS QoS.\n", ue_context->mme_ue_s1ap_id);
-      *esm_cause = ESM_CAUSE_EPS_QOS_NOT_ACCEPTED;
-      OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
+  if(bc_tbu->bearer_level_qos){
+    if(validateEpsQosParameter(bc_tbu->bearer_level_qos->qci, bc_tbu->bearer_level_qos->pvi, bc_tbu->bearer_level_qos->pci, bc_tbu->bearer_level_qos->pl,
+          bc_tbu->bearer_level_qos->gbr.br_dl, bc_tbu->bearer_level_qos->gbr.br_ul, bc_tbu->bearer_level_qos->mbr.br_dl, bc_tbu->bearer_level_qos->mbr.br_ul) == RETURNerror){
+          OAILOG_ERROR(LOG_NAS_EMM, "EMMCN-SAP  - " "EPS bearer context of UBR received for UE " MME_UE_S1AP_ID_FMT" could not be verified due erroneous EPS QoS.\n", ue_context->mme_ue_s1ap_id);
+          *esm_cause = ESM_CAUSE_EPS_QOS_NOT_ACCEPTED;
+          OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
+      }
   }
+
   /** Validate the TFT and packet filters don't have semantical errors.. */
   if(!((bc_tbu->tft.tftoperationcode == TRAFFIC_FLOW_TEMPLATE_OPCODE_ADD_PACKET_FILTER_TO_EXISTING_TFT)
       ||(bc_tbu->tft.tftoperationcode == TRAFFIC_FLOW_TEMPLATE_OPCODE_DELETE_PACKET_FILTERS_FROM_EXISTING_TFT)
@@ -221,7 +224,7 @@ esm_proc_update_eps_bearer_context (
   mme_app_get_session_bearer_context_from_all(ue_context, bc_tbu->eps_bearer_id, &bc);
   DevAssert(bc);
 
-  rc = esm_ebr_context_update(emm_context, bc, bc_tbu->bearer_level_qos, &bc_tbu->tft, bc_tbu->pco);
+  rc = esm_ebr_context_update(emm_context, bc, bc_tbu->bearer_level_qos, &bc_tbu->tft, &bc_tbu->pco);
 
   /** Not updating the parameters yet. Updating later when a success is received. State will be updated later. */
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
