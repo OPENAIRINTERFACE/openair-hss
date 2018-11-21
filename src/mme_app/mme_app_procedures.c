@@ -163,7 +163,7 @@ mme_app_s11_proc_update_bearer_t* mme_app_create_s11_procedure_update_bearer(ue_
   /** Check if the list of S11 procedures is empty. */
   if(ue_context->s11_procedures){
     if(!LIST_EMPTY(ue_context->s11_procedures)){
-      OAILOG_ERROR (LOG_MME_APP, "UE with ueId " MME_UE_S1AP_ID_FMT " has already a S11 procedure ongoing. Cannot create CBR procedure. \n",
+      OAILOG_ERROR (LOG_MME_APP, "UE with ueId " MME_UE_S1AP_ID_FMT " has already a S11 procedure ongoing. Cannot create UBR procedure. \n",
           ue_context->mme_ue_s1ap_id);
       return NULL;
     }

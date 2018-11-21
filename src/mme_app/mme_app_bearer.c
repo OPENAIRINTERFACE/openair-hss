@@ -1962,12 +1962,19 @@ static void mme_app_handle_e_rab_setup_rsp_dedicated_bearer(const itti_s1ap_e_ra
       AssertFatal(0, "TODO IP address %d bytes", blength(e_rab_setup_rsp->e_rab_setup_list.item[i].transport_layer_address));
     }
     memcpy((void*)&bc_tbc->s1u_enb_fteid, (void*)&bc_success->enb_fteid_s1u, sizeof(bc_success->enb_fteid_s1u));
-
     /** If the ESM EBR context is active. */
+    // todo: still locks neededhere..
     if(bc_success->esm_ebr_context.status == ESM_EBR_ACTIVE){ /**< ESM session management messages completed successfully (transactions completed and no negative GTP cause). */
-      /** Reduce the number of unhandled bearers. */
-      s11_proc_create_bearer->num_bearers_unhandled--;
-      DevAssert(bc_tbc->cause.cause_value == REQUEST_ACCEPTED);
+      if(!bc_tbc->cause.cause_value){
+          /** Should be on the way. */
+          OAILOG_DEBUG (LOG_MME_APP, "The cause is not set yet for ebi %d for ueId although NAS is accepted (not reducing num pending bearers yet): " MME_UE_S1AP_ID_FMT "\n", bc_tbc->eps_bearer_id, e_rab_setup_rsp->mme_ue_s1ap_id);
+          /** Setting it as accepted such that we don't wait for the E-RAB-Setup Rsp which arrived. */
+          bc_tbc->cause.cause_value = REQUEST_ACCEPTED;
+      } else{
+        DevAssert(bc_tbc->cause.cause_value == REQUEST_ACCEPTED);
+        /** Reduce the number of unhandled bearers. */
+        s11_proc_create_bearer->num_bearers_unhandled--;
+      }
     }else{
       /**
        * Not reducing the number of unhandled bearers. We will check this cause later when NAS response arrives.
@@ -2149,8 +2156,6 @@ void mme_app_handle_e_rab_modify_rsp (itti_s1ap_e_rab_modify_rsp_t  * const e_ra
     DevAssert(bc_success);
     /** If the ESM EBR context is active. */
     if(bc_success->esm_ebr_context.status == ESM_EBR_ACTIVE){ /**< ESM session management messages completed successfully (transactions completed and no negative GTP cause). */
-      /** Reduce the number of unhandled bearers. */
-      s11_proc_update_bearer->num_bearers_unhandled--;
       /** If 1 bearer is active, update the APN AMBR.*/
       pdn_context_t *pdn_context = NULL;
       // todo: comparing with subscriped apn ambr..
@@ -2158,11 +2163,13 @@ void mme_app_handle_e_rab_modify_rsp (itti_s1ap_e_rab_modify_rsp_t  * const e_ra
         pdn_context->p_gw_apn_ambr = s11_proc_update_bearer->apn_ambr;
       // todo: lock might be needed here
       if(!bc_tbu->cause.cause_value){
-        OAILOG_DEBUG (LOG_MME_APP, "The cause is not set as accepted for ebi %d for ueId although NAS is accepted: " MME_UE_S1AP_ID_FMT "\n", bc_tbu->eps_bearer_id, e_rab_modify_rsp->mme_ue_s1ap_id);
+        OAILOG_DEBUG (LOG_MME_APP, "The cause is not set as accepted for ebi %d for ueId although NAS is accepted (not reducing num pending bearers yet): " MME_UE_S1AP_ID_FMT "\n", bc_tbu->eps_bearer_id, e_rab_modify_rsp->mme_ue_s1ap_id);
         /** Setting it as accepted such that we don't wait for the E-RAB which arrived. */
         bc_tbu->cause.cause_value = REQUEST_ACCEPTED;
       } else{
         DevAssert(bc_tbu->cause.cause_value == REQUEST_ACCEPTED);
+        /** Reduce the number of unhandled bearers. */
+        s11_proc_update_bearer->num_bearers_unhandled--;
       }
     }else{
       /**

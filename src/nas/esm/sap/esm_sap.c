@@ -408,8 +408,7 @@ esm_sap_send (esm_sap_t * msg)
              &bcs_tbu->bearer_contexts[num_bc],
              &esm_cause);
          if (rc != RETURNok) {   /**< We assume that no ESM procedure exists. */
-           OAILOG_ERROR (LOG_NAS_ESM, "ESM-SAP   - Failed to handle CN modify bearer context procedure due SYSTEM_FAILURE for num_bearer %d!\n",
-               _esm_sap_primitive_str[primitive - ESM_START - 1], primitive, num_bc);
+           OAILOG_ERROR (LOG_NAS_ESM, "ESM-SAP   - Failed to handle CN modify bearer context procedure due SYSTEM_FAILURE for num_bearer %d!\n", num_bc);
            /** Send a NAS ITTI directly for the specific bearer. This will reduce the number of bearers to be processed. */
            nas_itti_modify_eps_bearer_ctx_rej(msg->ue_id, bcs_tbu->bearer_contexts[num_bc].eps_bearer_id, esm_cause); /**< Assuming, no other CN bearer procedure will intervere. */
            continue; /**< The remaining must also be rejected, such that the procedure has no pending elements anymore. */
@@ -478,10 +477,10 @@ esm_sap_send (esm_sap_t * msg)
       if(rc != RETURNerror){
         /* Successfully updated the bearer context. */
         OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Successfully updated ebi %d to final values via UBR for UE " MME_UE_S1AP_ID_FMT ". \n",
-            ue_context->mme_ue_s1ap_id, msg->data.eps_update_esm_bearer_ctxs.bcs_to_be_updated->bearer_contexts[num_bc].eps_bearer_id);
+            msg->data.eps_update_esm_bearer_ctxs.bcs_to_be_updated->bearer_contexts[num_bc].eps_bearer_id, ue_context->mme_ue_s1ap_id);
       }else{
         OAILOG_ERROR (LOG_NAS_ESM, "ESM-SAP   - Error while updating ebi %d to final values via UBR for UE " MME_UE_S1AP_ID_FMT ". \n",
-            ue_context->mme_ue_s1ap_id, msg->data.eps_update_esm_bearer_ctxs.bcs_to_be_updated->bearer_contexts[num_bc].eps_bearer_id);
+            msg->data.eps_update_esm_bearer_ctxs.bcs_to_be_updated->bearer_contexts[num_bc].eps_bearer_id, ue_context->mme_ue_s1ap_id);
         /**
          * Bearer may stay with old parameters and in active state.
          * We assume that the bearer got removed due some concurrency  issues.
@@ -1196,7 +1195,7 @@ _esm_sap_send (
             esm_procedure = esm_proc_dedicated_eps_bearer_context_request; /**< Not the procedure. */
           }
           /** Exit the loop directly. */
-          OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Successfully sent request to establish dedicated bearer for ebi %d for UE " MME_UE_S1AP_ID_FMT " . \n",
+          OAILOG_INFO(LOG_NAS_ESM, "ESM-SAP   - Successfully sent request to establish dedicated bearer for ebi %d for UE " MME_UE_S1AP_ID_FMT " . \n",
               ebi, emm_context->ue_id);
           break;
         }
@@ -1233,11 +1232,11 @@ _esm_sap_send (
 
           esm_procedure = esm_proc_modify_eps_bearer_context_request; /**< Not the procedure. */
         }
+        /** Exit the loop directly. */
+        OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Successfully sent request to modify bearer for ebi %d for UE " MME_UE_S1AP_ID_FMT " . \n",
+            ebi, emm_context->ue_id);
+        break;
       }
-      /** Exit the loop directly. */
-      OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Successfully sent request to modify bearer for ebi %d for UE " MME_UE_S1AP_ID_FMT " . \n",
-          ebi, emm_context->ue_id);
-      break;
     }
   }
   break;
@@ -1287,6 +1286,9 @@ _esm_sap_send (
 
     if (size > 0) {
       rsp = blk2bstr(esm_sap_buffer, size);
+    } else{
+      OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Error encoding ESM message 0x%x\n", msg_type);
+      OAILOG_FUNC_RETURN(LOG_NAS_ESM, RETURNerror);
     }
 
     /*
