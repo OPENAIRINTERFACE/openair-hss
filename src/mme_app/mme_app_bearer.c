@@ -72,6 +72,7 @@ static void mme_app_handle_e_rab_setup_rsp_pdn_connectivity(const mme_ue_s1ap_id
 static
 void mme_app_send_s1ap_handover_request(mme_ue_s1ap_id_t mme_ue_s1ap_id,
     bearer_contexts_to_be_created_t *bcs_tbc,
+    ambr_t                  *total_used_apn_ambr,
     uint32_t                enb_id,
     uint16_t                encryption_algorithm_capabilities,
     uint16_t                integrity_algorithm_capabilities,
@@ -290,8 +291,8 @@ mme_app_handle_conn_est_cnf (
   //#pragma message  "Check ue_context ambr"
   // todo: fix..
   ambr_t total_ue_ambr = mme_app_total_p_gw_apn_ambr(ue_context);
-  establishment_cnf_p->ue_ambr.br_dl = 200000000; total_ue_ambr.br_dl;
-  establishment_cnf_p->ue_ambr.br_ul = 100000000;  // total_ue_ambr.br_ul; /**< No conversion needed. */
+  establishment_cnf_p->ue_ambr.br_dl = total_ue_ambr.br_dl;
+  establishment_cnf_p->ue_ambr.br_ul = total_ue_ambr.br_ul; /**< No conversion needed. */
   /*
    * Add the Security capabilities.
    */
@@ -1193,8 +1194,11 @@ mme_app_handle_create_sess_resp (
       OAILOG_INFO(LOG_MME_APP, "Successfully updated AS security parameters for UE with ueId: " MME_UE_S1AP_ID_FMT ". "
           "Continuing handover request for INTRA-MME handover (proper UE context). \n", ue_context->mme_ue_s1ap_id);
 
+      ambr_t total_apn_ambr = mme_app_total_p_gw_apn_ambr(ue_context);
+
       mme_app_send_s1ap_handover_request(ue_context->mme_ue_s1ap_id,
           &bcs_tbc,
+          &total_apn_ambr,
           // todo: check for macro/home enb_id
           s10_handover_procedure->target_id.target_id.macro_enb_id.enb_id,
           encryption_algorithm_capabilities,
@@ -2991,8 +2995,10 @@ mme_app_handle_s1ap_handover_required(
         OAILOG_FUNC_OUT (LOG_MME_APP);
       }
       OAILOG_INFO(LOG_MME_APP, "Successfully updated AS security parameters for UE with ueId: " MME_UE_S1AP_ID_FMT ". Continuing handover request for INTRA-MME handover. \n", handover_required_pP->mme_ue_s1ap_id);
+      ambr_t total_apn_ambr = mme_app_total_p_gw_apn_ambr(ue_context);
       mme_app_send_s1ap_handover_request(handover_required_pP->mme_ue_s1ap_id,
           &bcs_tbc,
+          &total_apn_ambr,
           handover_required_pP->global_enb_id.cell_identity.enb_id,
           encryption_algorithm_capabilities,
           integrity_algorithm_capabilities,
@@ -3534,6 +3540,7 @@ mme_app_handle_forward_relocation_request(
 static
 void mme_app_send_s1ap_handover_request(mme_ue_s1ap_id_t mme_ue_s1ap_id,
     bearer_contexts_to_be_created_t *bcs_tbc,
+    ambr_t                  *total_used_apn_ambr,
     uint32_t                enb_id,
     uint16_t                encryption_algorithm_capabilities,
     uint16_t                integrity_algorithm_capabilities,
@@ -3558,11 +3565,10 @@ void mme_app_send_s1ap_handover_request(mme_ue_s1ap_id_t mme_ue_s1ap_id,
   handover_request_p->macro_enb_id = enb_id;
   /** Handover Type & Cause will be set in the S1AP layer. */
   /** Set the AMBR Parameters. */
-  handover_request_p->ambr.br_ul = ue_context->subscribed_ue_ambr.br_ul;
-  handover_request_p->ambr.br_dl = ue_context->subscribed_ue_ambr.br_dl;
+  handover_request_p->ambr.br_ul = total_used_apn_ambr->br_ul;
+  handover_request_p->ambr.br_dl = total_used_apn_ambr->br_dl;
 
   /** Set the bearer contexts to be created. Not changing any bearer state. */
-  bcs_tbc->bearer_contexts[0].bearer_level_qos.pl = 13; // todo fix
   handover_request_p->bearer_ctx_to_be_setup_list = calloc(1, sizeof(bearer_contexts_to_be_created_t));
   memcpy((void*)handover_request_p->bearer_ctx_to_be_setup_list, bcs_tbc, sizeof(*bcs_tbc));
 
