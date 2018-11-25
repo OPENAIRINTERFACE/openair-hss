@@ -408,10 +408,10 @@ gtpv2c_ambr_ie_set (
 
   memset(ambr_br, 0, 8);
 
-  INT32_TO_BUFFER(ambr->br_ul, p_ambr);
+  INT32_TO_BUFFER((ambr->br_ul/1000), p_ambr);
   p_ambr+=4;
 
-  INT32_TO_BUFFER(ambr->br_dl, p_ambr);
+  INT32_TO_BUFFER(((ambr->br_dl/1000)), p_ambr);
   // todo: byte order?
 
   rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_AMBR, 8, 0, ambr_br);
@@ -431,8 +431,11 @@ gtpv2c_ambr_ie_get (
   ambr_t                                 *ambr = (ambr_t *) arg;
 
   DevAssert (ambr );
-  ambr->br_ul = ntoh_int32_buf (&ieValue[0]);
-  ambr->br_dl = ntoh_int32_buf (&ieValue[4]);
+
+  BUFFER_TO_INT32(ieValue, ambr->br_ul);
+  BUFFER_TO_INT32((ieValue+4), ambr->br_dl);
+  ambr->br_dl *=1000;
+  ambr->br_ul *=1000;
   OAILOG_DEBUG (LOG_S11, "\t- AMBR UL %" PRIu64 "\n", ambr->br_ul);
   OAILOG_DEBUG (LOG_S11, "\t- AMBR DL %" PRIu64 "\n", ambr->br_dl);
   return NW_OK;

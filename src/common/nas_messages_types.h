@@ -109,7 +109,6 @@ typedef struct itti_nas_pdn_connectivity_rsp_s {
   /* Key eNB */
   //uint8_t                 kenb[32];
 
-  ambr_t                  ambr;
   ambr_t                  apn_ambr;
 
   /* EPS bearer ID */

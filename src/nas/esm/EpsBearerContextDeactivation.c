@@ -61,6 +61,7 @@
 #include "3gpp_24.008.h"
 #include "3gpp_29.274.h"
 #include "mme_app_ue_context.h"
+#include "mme_app_bearer_context.h"
 #include "esm_proc.h"
 #include "commonDef.h"
 #include "emm_data.h"
@@ -148,18 +149,19 @@ esm_proc_eps_bearer_context_deactivate (
   pdn_cid_t pid,
   esm_cause_t * const esm_cause)
 {
-
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   int                                     rc = RETURNerror;
   ue_context_t                           *ue_context  = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
   pdn_context_t                          *pdn_context = NULL;
   DevAssert(ue_context);
 
+  OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - EPS default bearer context deactivation " "(ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d)\n", ue_context->mme_ue_s1ap_id, ebi);
   /** Get the PDN Context. */
   mme_app_get_pdn_context(ue_context, pid, ESM_EBI_UNASSIGNED, NULL, &pdn_context);
-  DevAssert(pdn_context);
-
-  OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - EPS default bearer context deactivation " "(ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d)\n", ue_context->mme_ue_s1ap_id, ebi);
+  if(!pdn_context){
+    OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - EPS bearer context deactivation " "(ue_id=" MME_UE_S1AP_ID_FMT ", hat no valid PDN-Context for pid=%d, ebi=%d)\n", ue_context->mme_ue_s1ap_id, pid, ebi);
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
+  }
 
   if (is_local) {
     /*

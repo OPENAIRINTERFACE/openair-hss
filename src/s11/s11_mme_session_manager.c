@@ -106,6 +106,12 @@ s11_mme_create_session_request (
                               req_p->sender_fteid_for_cp.teid,
                               req_p->sender_fteid_for_cp.ipv4 ? &req_p->sender_fteid_for_cp.ipv4_address : 0,
                               req_p->sender_fteid_for_cp.ipv6 ? &req_p->sender_fteid_for_cp.ipv6_address : NULL);
+
+  /**
+   * Set the AMBR.
+   */
+  gtpv2c_ambr_ie_set(&ulp_req.hMsg, &req_p->ambr);
+
   /*
    * The P-GW TEID should be present on the S11 interface.
    * * * * In case of an initial attach it should be set to 0...
@@ -198,6 +204,12 @@ s11_mme_handle_create_session_response (
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_APN_RESTRICTION, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
       gtpv2c_apn_restriction_ie_get, &resp_p->apn_restriction);
   DevAssert (NW_OK == rc);
+
+  /** Add the AMBR. */
+  rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_AMBR, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL, gtpv2c_ambr_ie_get,
+      &resp_p->ambr);
+  DevAssert (NW_OK == rc);
+
   /*
    * PCO IE
    */

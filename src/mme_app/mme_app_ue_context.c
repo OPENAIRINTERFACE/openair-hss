@@ -272,8 +272,8 @@ ambr_t mme_app_total_p_gw_apn_ambr(ue_context_t *ue_context){
   ambr_t apn_ambr_sum= {0, 0};
   RB_FOREACH (registered_pdn_ctx, PdnContexts, &ue_context->pdn_contexts) {
     DevAssert(registered_pdn_ctx);
-    apn_ambr_sum.br_dl += registered_pdn_ctx->p_gw_apn_ambr.br_dl;
-    apn_ambr_sum.br_ul += registered_pdn_ctx->p_gw_apn_ambr.br_ul;
+    apn_ambr_sum.br_dl += registered_pdn_ctx->subscribed_apn_ambr.br_dl;
+    apn_ambr_sum.br_ul += registered_pdn_ctx->subscribed_apn_ambr.br_ul;
   }
   return apn_ambr_sum;
 }
@@ -287,8 +287,8 @@ ambr_t mme_app_total_p_gw_apn_ambr_rest(ue_context_t *ue_context, pdn_cid_t pci)
     DevAssert(registered_pdn_ctx);
     if(registered_pdn_ctx->context_identifier == pci)
       continue;
-    apn_ambr_sum.br_dl = registered_pdn_ctx->p_gw_apn_ambr.br_dl;
-    apn_ambr_sum.br_ul = registered_pdn_ctx->p_gw_apn_ambr.br_ul;
+    apn_ambr_sum.br_dl = registered_pdn_ctx->subscribed_apn_ambr.br_dl;
+    apn_ambr_sum.br_ul = registered_pdn_ctx->subscribed_apn_ambr.br_ul;
   }
   return apn_ambr_sum;
 }

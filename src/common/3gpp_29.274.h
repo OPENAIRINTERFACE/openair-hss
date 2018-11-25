@@ -543,7 +543,7 @@ typedef struct bearer_context_created_s {
   fteid_t       s12_sgw_fteid;       ///< S12 SGW F-TEID
 
   /* This parameter is received only if the QoS parameters have been modified */
-  bearer_qos_t *bearer_level_qos;
+  bearer_qos_t  bearer_level_qos;
 
   traffic_flow_template_t  tft;                 ///< Bearer TFT
 } bearer_context_created_t;

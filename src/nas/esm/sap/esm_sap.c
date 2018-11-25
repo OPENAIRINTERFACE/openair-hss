@@ -944,7 +944,7 @@ _esm_sap_recv (
             rc = esm_send_activate_default_eps_bearer_context_request (pti, ebi,      //msg_pP->ebi,
                                                                        &esm_msg.activate_default_eps_bearer_context_request,
                                                                        new_pdn_context->apn_subscribed,
-                                                                       new_pdn_context->pco,  &new_pdn_context->p_gw_apn_ambr,
+                                                                       new_pdn_context->pco,  &new_pdn_context->subscribed_apn_ambr,
                                                                        new_pdn_context->pdn_type, paa_to_bstring(new_pdn_context->paa),
                                                                        &qos, ESM_CAUSE_SUCCESS);
             /** Leaving the PCOs of the PDN context. */

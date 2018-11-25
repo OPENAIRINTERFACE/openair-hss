@@ -256,7 +256,6 @@ mme_app_send_s11_create_session_req (
    * Copy the subscribed APN-AMBR to the sgw create session request message
    */
   memcpy (&session_request_p->ambr, &pdn_context->subscribed_apn_ambr, sizeof (ambr_t));
-
   /*
    * Default EBI
    */
@@ -843,7 +842,7 @@ void mme_app_itti_nas_context_response(ue_context_t * ue_context, nas_s10_contex
 // todo: supporting currently a single bearer
 //------------------------------------------------------------------------------
 void mme_app_itti_nas_pdn_connectivity_response(ue_context_t * ue_context,
-    paa_t *paa, protocol_configuration_options_t * pco,
+    paa_t *paa, protocol_configuration_options_t * pco, pdn_context_t * pdn_context,
     bearer_context_t * bc){
 
   MessageDef                             *message_p = NULL;
@@ -851,6 +850,7 @@ void mme_app_itti_nas_pdn_connectivity_response(ue_context_t * ue_context,
 
   OAILOG_FUNC_IN (LOG_MME_APP);
   DevAssert (ue_context);
+  DevAssert (pdn_context);
   OAILOG_INFO (LOG_MME_APP, "Informing the NAS layer about the received CREATE_SESSION_REQUEST for UE " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
   //uint8_t *keNB = NULL;
   message_p = itti_alloc_new_message (TASK_MME_APP, NAS_PDN_CONNECTIVITY_RSP);
@@ -874,8 +874,8 @@ void mme_app_itti_nas_pdn_connectivity_response(ue_context_t * ue_context,
   nas_pdn_connectivity_rsp->pre_emp_capability    = bc->preemption_capability;
   nas_pdn_connectivity_rsp->sgw_s1u_fteid         = bc->s_gw_fteid_s1u;
   // optional IE
-  nas_pdn_connectivity_rsp->ambr.br_ul            = ue_context->subscribed_ue_ambr.br_ul;
-  nas_pdn_connectivity_rsp->ambr.br_dl            = ue_context->subscribed_ue_ambr.br_dl;
+  nas_pdn_connectivity_rsp->apn_ambr.br_ul            = pdn_context->subscribed_apn_ambr.br_ul;
+  nas_pdn_connectivity_rsp->apn_ambr.br_dl            = pdn_context->subscribed_apn_ambr.br_dl;
   // This IE is not applicable for TAU/RAU/Handover. If PGW decides to return PCO to the UE, PGW shall send PCO to
   // SGW. If SGW receives the PCO IE, SGW shall forward it to MME/SGSN.
   if (pco->num_protocol_or_container_id) {

@@ -1111,8 +1111,6 @@ void mme_app_dump_pdn_context (const struct ue_context_s *const ue_context,
     bformata (bstr_dump, "%*s     - Pre-emp capability .......: %s\n", indent_spaces, " ", (pdn_context->default_bearer_eps_subscribed_qos_profile.allocation_retention_priority.pre_emp_capability == PRE_EMPTION_CAPABILITY_ENABLED) ? "ENABLED" : "DISABLED");
     bformata (bstr_dump, "%*s     - APN-AMBR (bits/s) DL .....: %010" PRIu64 "\n", indent_spaces, " ", pdn_context->subscribed_apn_ambr.br_dl);
     bformata (bstr_dump, "%*s     - APN-AMBR (bits/s) UL .....: %010" PRIu64 "\n", indent_spaces, " ", pdn_context->subscribed_apn_ambr.br_ul);
-    bformata (bstr_dump, "%*s     - P-GW-APN-AMBR (bits/s) DL : %010" PRIu64 "\n", indent_spaces, " ", pdn_context->p_gw_apn_ambr.br_dl);
-    bformata (bstr_dump, "%*s     - P-GW-APN-AMBR (bits/s) UL : %010" PRIu64 "\n", indent_spaces, " ", pdn_context->p_gw_apn_ambr.br_ul);
     bformata (bstr_dump, "%*s     - Default EBI ..............: %u\n", indent_spaces, " ", pdn_context->default_ebi);
     bformata (bstr_dump, "%*s - NAS ESM private data:\n");
     bformata (bstr_dump, "%*s     - Procedure transaction ID .: %x\n", indent_spaces, " ", pdn_context->esm_data.pti);

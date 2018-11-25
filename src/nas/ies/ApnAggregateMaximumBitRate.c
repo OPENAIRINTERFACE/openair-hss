@@ -115,34 +115,34 @@ int encode_apn_aggregate_maximum_bit_rate (
 }
 
 //------------------------------------------------------------------------------
-int ambr_kbps_calc(ApnAggregateMaximumBitRate *apnambr, uint64_t br_dl, uint64_t br_ul)
+int ambr_kbps_calc(ApnAggregateMaximumBitRate *apnambr, uint64_t kbr_dl, uint64_t kbr_ul)
 {
   // if someone volunteer for subroutines..., no time yet.
   memset(apnambr, 0, sizeof(ApnAggregateMaximumBitRate));
   /** Set downlink bitrate. */
 
-  if (br_dl == 0) {
+  if (kbr_dl == 0) {
     apnambr->apnambrfordownlink = 0xff;
-  } else if ((br_dl > 0) && (br_dl <= 63)) {
-    apnambr->apnambrfordownlink = br_dl;
-  } else if ((br_dl > 63) && (br_dl <= 568)) {
-    apnambr->apnambrfordownlink = ((br_dl - 64) / 8) + 64;
-  } else if ((br_dl >= 576) && (br_dl <= 8640)) {
-    apnambr->apnambrfordownlink = ((br_dl - 128) / 64) + 128;
-  } else if (br_dl > 8640 && br_dl <= 256000) {
+  } else if ((kbr_dl > 0) && (kbr_dl <= 63)) {
+    apnambr->apnambrfordownlink = kbr_dl;
+  } else if ((kbr_dl > 63) && (kbr_dl <= 568)) {
+    apnambr->apnambrfordownlink = ((kbr_dl - 64) / 8) + 64;
+  } else if ((kbr_dl >= 576) && (kbr_dl <= 8640)) {
+    apnambr->apnambrfordownlink = ((kbr_dl - 128) / 64) + 128;
+  } else if (kbr_dl > 8640 && kbr_dl <= 256000) {
     apnambr->apnambrfordownlink = 0xfe;
     apnambr->extensions = 0 | APN_AGGREGATE_MAXIMUM_BIT_RATE_MAXIMUM_EXTENSION_PRESENT;
-    if ((br_dl >= 8600) && (br_dl <= 16000)) {
-      apnambr->apnambrfordownlink_extended = (br_dl - 8600) / 100;
-    } else if ((br_dl > 16000) && (br_dl <= 128000)) {
-      apnambr->apnambrfordownlink_extended = ((br_dl - 16000) / 1000) + 74;
-    } else if ((br_dl > 128000) && (br_dl <= 256000)) {
-      apnambr->apnambrfordownlink_extended = ((br_dl - 128000) / 2000) + 186;
+    if ((kbr_dl >= 8600) && (kbr_dl <= 16000)) {
+      apnambr->apnambrfordownlink_extended = (kbr_dl - 8600) / 100;
+    } else if ((kbr_dl > 16000) && (kbr_dl <= 128000)) {
+      apnambr->apnambrfordownlink_extended = ((kbr_dl - 16000) / 1000) + 74;
+    } else if ((kbr_dl > 128000) && (kbr_dl <= 256000)) {
+      apnambr->apnambrfordownlink_extended = ((kbr_dl - 128000) / 2000) + 186;
     }
-  } else if (br_dl > 256000 && br_dl <= 65280000) {
+  } else if (kbr_dl > 256000 && kbr_dl <= 65280000) {
     apnambr->apnambrfordownlink = 0xfe;
     apnambr->apnambrfordownlink_extended = 0xfa;
-    apnambr->apnambrfordownlink_extended2 = (br_dl - 256000) / 256000;
+    apnambr->apnambrfordownlink_extended2 = (kbr_dl - 256000) / 256000;
     apnambr->extensions = 0 | APN_AGGREGATE_MAXIMUM_BIT_RATE_MAXIMUM_EXTENSION_PRESENT;
     apnambr->extensions = 0 | APN_AGGREGATE_MAXIMUM_BIT_RATE_MAXIMUM_EXTENSION2_PRESENT;
   }else {
@@ -151,28 +151,28 @@ int ambr_kbps_calc(ApnAggregateMaximumBitRate *apnambr, uint64_t br_dl, uint64_t
   }
 
   /** Set uplink bitrate. */
-  if (br_ul == 0) {
+  if (kbr_ul == 0) {
     apnambr->apnambrforuplink = 0xff;
-  } else if ((br_ul > 0) && (br_ul <= 63)) {
-    apnambr->apnambrforuplink = br_ul;
-  } else if ((br_ul > 63) && (br_ul <= 568)) {
-    apnambr->apnambrforuplink = ((br_ul - 64) / 8) + 64;
-  } else if ((br_ul >= 576) && (br_ul <= 8640)) {
-    apnambr->apnambrforuplink = ((br_ul - 128) / 64) + 128;
-  } else if (br_ul > 8640 && br_ul <= 256000) {
+  } else if ((kbr_ul > 0) && (kbr_ul <= 63)) {
+    apnambr->apnambrforuplink = kbr_ul;
+  } else if ((kbr_ul > 63) && (kbr_ul <= 568)) {
+    apnambr->apnambrforuplink = ((kbr_ul - 64) / 8) + 64;
+  } else if ((kbr_ul >= 576) && (kbr_ul <= 8640)) {
+    apnambr->apnambrforuplink = ((kbr_ul - 128) / 64) + 128;
+  } else if (kbr_ul > 8640 && kbr_ul <= 256000) {
     apnambr->apnambrforuplink = 0xfe;
     apnambr->extensions = 0 | APN_AGGREGATE_MAXIMUM_BIT_RATE_MAXIMUM_EXTENSION_PRESENT;
-    if ((br_ul >= 8600) && (br_ul <= 16000)) {
-      apnambr->apnambrforuplink_extended = (br_ul - 8600) / 100;
-    } else if ((br_ul > 16000) && (br_ul <= 128000)) {
-      apnambr->apnambrforuplink_extended = ((br_ul - 16000) / 1000) + 74;
-    } else if ((br_ul > 128000) && (br_ul <= 256000)) {
-      apnambr->apnambrforuplink_extended = ((br_ul - 128000) / 2000) + 186;
+    if ((kbr_ul >= 8600) && (kbr_ul <= 16000)) {
+      apnambr->apnambrforuplink_extended = (kbr_ul - 8600) / 100;
+    } else if ((kbr_ul > 16000) && (kbr_ul <= 128000)) {
+      apnambr->apnambrforuplink_extended = ((kbr_ul - 16000) / 1000) + 74;
+    } else if ((kbr_ul > 128000) && (kbr_ul <= 256000)) {
+      apnambr->apnambrforuplink_extended = ((kbr_ul - 128000) / 2000) + 186;
     }
-  } else if (br_ul > 256000 && br_ul <= 65280000) {
+  } else if (kbr_ul > 256000 && kbr_ul <= 65280000) {
     apnambr->apnambrforuplink = 0xfe;
     apnambr->apnambrforuplink_extended = 0xfa;
-    apnambr->apnambrforuplink_extended2 = (br_ul - 256000) / 256000;
+    apnambr->apnambrforuplink_extended2 = (kbr_ul - 256000) / 256000;
     apnambr->extensions = 0 | APN_AGGREGATE_MAXIMUM_BIT_RATE_MAXIMUM_EXTENSION_PRESENT;
     apnambr->extensions = 0 | APN_AGGREGATE_MAXIMUM_BIT_RATE_MAXIMUM_EXTENSION2_PRESENT;
   }else {

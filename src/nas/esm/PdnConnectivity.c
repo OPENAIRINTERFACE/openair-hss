@@ -100,6 +100,7 @@ static pdn_cid_t _pdn_connectivity_create (
   const proc_tid_t pti,
   const context_identifier_t  context_identifier,
   const_bstring const apn,
+  const ambr_t * subscribed_ambr,
   pdn_type_t pdn_type,
   const_bstring const pdn_addr,
   protocol_configuration_options_t * const pco,
@@ -165,6 +166,7 @@ esm_proc_pdn_connectivity_request (
   const_bstring          const apn,
   esm_proc_pdn_type_t          pdn_type,
   const_bstring          const pdn_addr,
+  const ambr_t                       * subscribed_ambr,
   bearer_qos_t             * default_qos,
   protocol_configuration_options_t * const pco,
   esm_cause_t                 *esm_cause,
@@ -191,7 +193,7 @@ esm_proc_pdn_connectivity_request (
   /*
    * Create new PDN connection
    */
-  rc = _pdn_connectivity_create (emm_context, pti, context_identifier, apn, pdn_type, pdn_addr, pco, is_emergency, pdn_context_pP);
+  rc = _pdn_connectivity_create (emm_context, pti, context_identifier, apn, subscribed_ambr, pdn_type, pdn_addr, pco, is_emergency, pdn_context_pP);
 
   if (rc < 0) {
     OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Failed to create PDN connection\n");
@@ -431,6 +433,7 @@ int esm_proc_pdn_config_res(emm_data_context_t * emm_context, pdn_cid_t **pdn_ci
       emm_context->esm_ctx.esm_proc_data->apn,
       emm_context->esm_ctx.esm_proc_data->pdn_type,
       emm_context->esm_ctx.esm_proc_data->pdn_addr,
+      &apn_config->ambr,
       &emm_context->esm_ctx.esm_proc_data->bearer_qos,
       (emm_context->esm_ctx.esm_proc_data->pco.num_protocol_or_container_id ) ? &emm_context->esm_ctx.esm_proc_data->pco:NULL,
           esm_cause,
@@ -448,7 +451,7 @@ int esm_proc_pdn_config_res(emm_data_context_t * emm_context, pdn_cid_t **pdn_ci
      * Create local default EPS bearer context
      */
     if ((!is_pdn_connectivity) || ((is_pdn_connectivity) /*&& (EPS_BEARER_IDENTITY_UNASSIGNED == pdn_context->default_ebi) */)) {
-      rc = esm_proc_default_eps_bearer_context (emm_context, emm_context->esm_ctx.esm_proc_data->pti, pdn_context, emm_context->esm_ctx.esm_proc_data->apn, &new_ebi, emm_context->esm_ctx.esm_proc_data->bearer_qos.qci, esm_cause);
+      rc = esm_proc_default_eps_bearer_context (emm_context, emm_context->esm_ctx.esm_proc_data->pti, pdn_context, emm_context->esm_ctx.esm_proc_data->apn, &new_ebi, &emm_context->esm_ctx.esm_proc_data->bearer_qos, esm_cause);
     }
     // todo: if the bearer already exist, we may modify the qos parameters with Modify_Bearer_Request!
 
@@ -503,6 +506,7 @@ _pdn_connectivity_create (
   const proc_tid_t pti,
   const context_identifier_t  context_identifier,
   const_bstring const apn,    /**< Will be set into the APN context. */
+  const ambr_t * subscribed_ambr,
   pdn_type_t pdn_type,
   const_bstring const pdn_addr,
   protocol_configuration_options_t * const pco,
@@ -550,6 +554,9 @@ _pdn_connectivity_create (
         copy_protocol_configuration_options((*pdn_context_pP)->pco, pco);
       }
 
+      /** Set the subscribed ambr. */
+      (*pdn_context_pP)->subscribed_apn_ambr.br_dl = subscribed_ambr->br_dl;
+      (*pdn_context_pP)->subscribed_apn_ambr.br_ul = subscribed_ambr->br_ul;
       // todo: paa null checks here
       /*
        * Setup the IP address allocated by the network

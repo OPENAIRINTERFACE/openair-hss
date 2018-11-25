@@ -1075,8 +1075,8 @@ mme_app_handle_create_sess_resp (
         }else{
           OAILOG_ERROR( LOG_MME_APP, "Received new valid APN_AMBR for pdn context id %d for UE " MME_UE_S1AP_ID_FMT ". Updating pgw_ambr. \n",
               pdn_context->context_identifier, ue_context->mme_ue_s1ap_id);
-          pdn_context->p_gw_apn_ambr.br_dl = total_apn_ambr.br_dl;
-          pdn_context->p_gw_apn_ambr.br_ul = total_apn_ambr.br_ul; /**< Will be sent to the eNB. */
+          pdn_context->subscribed_apn_ambr.br_dl = total_apn_ambr.br_dl;
+          pdn_context->subscribed_apn_ambr.br_ul = total_apn_ambr.br_ul; /**< Will be sent to the eNB. */
         }
       }
     }
@@ -1089,18 +1089,14 @@ mme_app_handle_create_sess_resp (
     current_bearer_p->p_gw_fteid_s5_s8_up = create_sess_resp_pP->bearer_contexts_created.bearer_contexts[i].s5_s8_u_pgw_fteid;
 
     // if modified by pgw
-    if (create_sess_resp_pP->bearer_contexts_created.bearer_contexts[i].bearer_level_qos ) {
-      current_bearer_p->qci                      = create_sess_resp_pP->bearer_contexts_created.bearer_contexts[i].bearer_level_qos->qci;
-      current_bearer_p->priority_level           = create_sess_resp_pP->bearer_contexts_created.bearer_contexts[i].bearer_level_qos->pl;
-      current_bearer_p->preemption_vulnerability = create_sess_resp_pP->bearer_contexts_created.bearer_contexts[i].bearer_level_qos->pvi;
-      current_bearer_p->preemption_capability    = create_sess_resp_pP->bearer_contexts_created.bearer_contexts[i].bearer_level_qos->pci;
-
+    if (create_sess_resp_pP->bearer_contexts_created.bearer_contexts[i].bearer_level_qos.qci &&
+        create_sess_resp_pP->bearer_contexts_created.bearer_contexts[i].bearer_level_qos.pl) {
+      current_bearer_p->qci                      = create_sess_resp_pP->bearer_contexts_created.bearer_contexts[i].bearer_level_qos.qci;
+      current_bearer_p->priority_level           = create_sess_resp_pP->bearer_contexts_created.bearer_contexts[i].bearer_level_qos.pl;
+      current_bearer_p->preemption_vulnerability = create_sess_resp_pP->bearer_contexts_created.bearer_contexts[i].bearer_level_qos.pvi;
+      current_bearer_p->preemption_capability    = create_sess_resp_pP->bearer_contexts_created.bearer_contexts[i].bearer_level_qos.pci;
       //TODO should be set in NAS_PDN_CONNECTIVITY_RSP message
       // dbeken: we don't have NAS context in handover, so we need to do it here.
-      current_bearer_p->esm_ebr_context.gbr_dl   = create_sess_resp_pP->bearer_contexts_created.bearer_contexts[i].bearer_level_qos->gbr.br_dl;
-      current_bearer_p->esm_ebr_context.gbr_ul   = create_sess_resp_pP->bearer_contexts_created.bearer_contexts[i].bearer_level_qos->gbr.br_ul;
-      current_bearer_p->esm_ebr_context.mbr_dl   = create_sess_resp_pP->bearer_contexts_created.bearer_contexts[i].bearer_level_qos->mbr.br_dl;
-      current_bearer_p->esm_ebr_context.mbr_ul   = create_sess_resp_pP->bearer_contexts_created.bearer_contexts[i].bearer_level_qos->mbr.br_ul;
       OAILOG_DEBUG (LOG_MME_APP, "Set qci %u in bearer %u\n", current_bearer_p->qci, bearer_id);
     } else {
       OAILOG_DEBUG (LOG_MME_APP, "Set qci %u in bearer %u (qos not modified by P-GW)\n", current_bearer_p->qci, bearer_id);
@@ -1241,6 +1237,7 @@ mme_app_handle_create_sess_resp (
     DevAssert(first_bearer_context);
     mme_app_itti_nas_pdn_connectivity_response(ue_context,
         pdn_context->paa, &create_sess_resp_pP->pco,
+        pdn_context,
         first_bearer_context);
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
   }
@@ -2160,7 +2157,7 @@ void mme_app_handle_e_rab_modify_rsp (itti_s1ap_e_rab_modify_rsp_t  * const e_ra
       pdn_context_t *pdn_context = NULL;
       // todo: comparing with subscriped apn ambr..
       if(s11_proc_update_bearer->apn_ambr.br_dl && s11_proc_update_bearer->apn_ambr.br_ul)
-        pdn_context->p_gw_apn_ambr = s11_proc_update_bearer->apn_ambr;
+        pdn_context->subscribed_apn_ambr = s11_proc_update_bearer->apn_ambr;
       // todo: lock might be needed here
       if(!bc_tbu->cause.cause_value){
         OAILOG_DEBUG (LOG_MME_APP, "The cause is not set as accepted for ebi %d for ueId although NAS is accepted (not reducing num pending bearers yet): " MME_UE_S1AP_ID_FMT "\n", bc_tbu->eps_bearer_id, e_rab_modify_rsp->mme_ue_s1ap_id);
@@ -2480,8 +2477,9 @@ void mme_app_handle_modify_eps_bearer_ctx_cnf (itti_mme_app_modify_eps_bearer_ct
       bc_tbu->eps_bearer_id, ue_context->mme_ue_s1ap_id);
   s11_proc_update_bearer->num_bearers_unhandled--;
   // todo: compare with apn ambr..
-  if(s11_proc_update_bearer->apn_ambr.br_dl && s11_proc_update_bearer->apn_ambr.br_ul)
-       pdn_context->p_gw_apn_ambr = s11_proc_update_bearer->apn_ambr;
+  if(s11_proc_update_bearer->apn_ambr.br_dl && s11_proc_update_bearer->apn_ambr.br_ul){
+       pdn_context->subscribed_apn_ambr = s11_proc_update_bearer->apn_ambr;
+  }
 
   if(s11_proc_update_bearer->num_bearers_unhandled){
     OAILOG_INFO(LOG_MME_APP, "Still %d unhandled bearers exist for s11 update bearer procedure for UE: " MME_UE_S1AP_ID_FMT ". Not sending UBResp back yet. \n",

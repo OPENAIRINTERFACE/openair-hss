@@ -295,10 +295,12 @@ esm_recv_pdn_connectivity_request (
   /*
    * Execute the PDN connectivity procedure requested by the UE
    */
+  ambr_t ambr = {0};
   int pid = esm_proc_pdn_connectivity_request (emm_context, pti, request_type,
       &esm_data->apn,
       esm_data->pdn_type,
       &esm_data->pdn_addr,
+      &ambr
       &esm_data->qos,
       &esm_cause);
 
@@ -405,6 +407,7 @@ esm_recv_pdn_connectivity_request (
         emm_context->esm_ctx.esm_proc_data->apn,
         emm_context->esm_ctx.esm_proc_data->pdn_type,
         emm_context->esm_ctx.esm_proc_data->pdn_addr,
+        &apn_config->ambr,
         &emm_context->esm_ctx.esm_proc_data->bearer_qos,
         (emm_context->esm_ctx.esm_proc_data->pco.num_protocol_or_container_id ) ? &emm_context->esm_ctx.esm_proc_data->pco:NULL,
             &esm_cause,
@@ -421,7 +424,7 @@ esm_recv_pdn_connectivity_request (
          * Create local default EPS bearer context
          */
         if ((!is_pdn_connectivity) || ((is_pdn_connectivity) /*&& (EPS_BEARER_IDENTITY_UNASSIGNED == new_pdn_context->default_ebi)*/)) {
-          rc = esm_proc_default_eps_bearer_context (emm_context, emm_context->esm_ctx.esm_proc_data->pti, new_pdn_context, emm_context->esm_ctx.esm_proc_data->apn, &new_ebi, emm_context->esm_ctx.esm_proc_data->bearer_qos.qci, &esm_cause);
+          rc = esm_proc_default_eps_bearer_context (emm_context, emm_context->esm_ctx.esm_proc_data->pti, new_pdn_context, emm_context->esm_ctx.esm_proc_data->apn, &new_ebi, &emm_context->esm_ctx.esm_proc_data->bearer_qos, &esm_cause);
         }
         // todo: if the bearer already exist, we may modify the qos parameters with Modify_Bearer_Request!
 

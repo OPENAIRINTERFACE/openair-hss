@@ -138,7 +138,6 @@ esm_proc_modify_eps_bearer_context (
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   int                                     rc = RETURNok;
   mme_ue_s1ap_id_t                        ue_id = emm_context->ue_id;
-  pdn_context_t                          *pdn_context = NULL;
   OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - EPS bearer context modification " "(ue_id=" MME_UE_S1AP_ID_FMT ")\n", ue_id);
 
   ue_context_t                        *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
@@ -203,7 +202,6 @@ esm_proc_update_eps_bearer_context (
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   int                                     rc = RETURNok;
   mme_ue_s1ap_id_t                        ue_id = emm_context->ue_id;
-  pdn_context_t                          *pdn_context = NULL;
   OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Updating EPS bearer context configuration to new values " "(ue_id=" MME_UE_S1AP_ID_FMT " \n", ue_id);
 
   ue_context_t                        *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);

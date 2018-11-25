@@ -249,10 +249,6 @@ typedef struct pdn_context_s {
   //                      subscription of the user.
   ambr_t                       subscribed_apn_ambr;
 
-  // APN-AMBR: The Maximum Aggregated uplink and downlink MBR values to be shared across
-  // all Non-GBR bearers, which are established for this APN, as decided by the PDN GW.
-  ambr_t                       p_gw_apn_ambr;
-
   // PDN GW GRE Key for uplink traffic (user plane): PDN GW assigned GRE Key for the S5/S8 interface for the user plane for uplink traffic. (For PMIP-based S5/S8 only)
 
   // Default bearer: Identifies the EPS Bearer Id of the default bearer within the given PDN connection.

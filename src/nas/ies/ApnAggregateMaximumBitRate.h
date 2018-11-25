@@ -42,7 +42,7 @@ int encode_apn_aggregate_maximum_bit_rate(ApnAggregateMaximumBitRate *apnaggrega
 
 int decode_apn_aggregate_maximum_bit_rate(ApnAggregateMaximumBitRate *apnaggregatemaximumbitrate, uint8_t iei, uint8_t *buffer, uint32_t len);
 
-int ambr_kbps_calc(ApnAggregateMaximumBitRate *apnambr, uint64_t br_dl, uint64_t br_ul);
+int ambr_kbps_calc(ApnAggregateMaximumBitRate *apnambr, uint64_t kbr_dl, uint64_t kbr_ul);
 
 #endif /* APN_AGGREGATE_MAXIMUM_BIT_RATE_SEEN */
 

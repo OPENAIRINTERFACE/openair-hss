@@ -1290,6 +1290,10 @@ gtpv2c_bearer_context_created_ie_get (
       rc = gtpv2c_cause_ie_get (ie_p->t, ntohs (ie_p->l), ie_p->i, &ieValue[read + sizeof (nw_gtpv2c_ie_tlv_t)], &bearer_context->cause);
       break;
 
+    case NW_GTPV2C_IE_BEARER_LEVEL_QOS:
+       rc = gtpv2c_bearer_qos_ie_get (ie_p->t, ntohs (ie_p->l), ie_p->i, &ieValue[read + sizeof (nw_gtpv2c_ie_tlv_t)], &bearer_context->bearer_level_qos);
+       break;
+
     default:
       OAILOG_ERROR (LOG_S11, "Received unexpected IE %u\n", ie_p->t);
       return NW_GTPV2C_IE_INCORRECT;

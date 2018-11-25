@@ -380,7 +380,7 @@ s1ap_generate_downlink_nas_transport (
     sctp_assoc_id_t sctp_assoc_id = (sctp_assoc_id_t)(uintptr_t)id;
     enb_description_t  *enb_ref = s1ap_is_enb_assoc_id_in_list (sctp_assoc_id);
     if (enb_ref) {
-      OAILOG_ERROR (LOG_S1AP, "SEARCHING UE REFERENCE for SCTP association id %d,  enbUeS1apId " ENB_UE_S1AP_ID_FMT " and enbId %d. \n", sctp_assoc_id, enb_ue_s1ap_id, enb_ref->enb_id);
+      OAILOG_DEBUG(LOG_S1AP, "SEARCHING UE REFERENCE for SCTP association id %d,  enbUeS1apId " ENB_UE_S1AP_ID_FMT " and enbId %d. \n", sctp_assoc_id, enb_ue_s1ap_id, enb_ref->enb_id);
       ue_ref = s1ap_is_ue_enb_id_in_list (enb_ref,enb_ue_s1ap_id);
     } else {
       OAILOG_ERROR (LOG_S1AP, "No eNB for SCTP association id %d \n", sctp_assoc_id);
@@ -1033,11 +1033,6 @@ s1ap_handle_path_switch_req_ack(
   pathSwitchRequestAcknowledge_p->eNB_UE_S1AP_ID = (unsigned long)ue_ref->enb_ue_s1ap_id;
 
   /* Set the GTP-TEID. This is the S1-U S-GW TEID. */
-//  hash_table_ts_t * bearer_contexts_p = (hash_table_ts_t*)path_switch_req_ack_pP->bearer_ctx_to_be_switched_list.bearer_ctxs;
-//  bearer_context_t * bearer_context_p = NULL;
-//  hashtable_ts_get ((hash_table_ts_t * const)bearer_contexts_p, (const hash_key_t)5, (void **)&bearer_context_p);
-//  uint                                    offset = 0;
-//  S1ap_E_RABToBeSwitchedULItem_t          e_RABToBeSwitchedUl = {0}; // yes, alloc on stack
   /** Add the new forwarding IEs. */
   if(path_switch_req_ack_pP->bearer_ctx_to_be_switched_list){
     S1ap_IE_t *s1ap_ie_array[path_switch_req_ack_pP->bearer_ctx_to_be_switched_list->num_bearer_context];
@@ -1075,23 +1070,6 @@ s1ap_handle_path_switch_req_ack(
   pathSwitchRequestAcknowledge_p->securityContext.nextHopParameter.buf  = calloc (32, sizeof(uint8_t));
   memcpy (pathSwitchRequestAcknowledge_p->securityContext.nextHopParameter.buf, path_switch_req_ack_pP->nh, 32);
   pathSwitchRequestAcknowledge_p->securityContext.nextHopParameter.size = 32;
-
-
-//pathSwitchRequestAcknowledge_p = &message.msg.s1ap_PathSwitchRequestAcknowledgeIEs;
-
-//  OAILOG_DEBUG (LOG_S1AP, "security_capabilities_encryption_algorithms 0x%04X\n", conn_est_cnf_pP->security_capabilities_encryption_algorithms);
-//  OAILOG_DEBUG (LOG_S1AP, "security_capabilities_integrity_algorithms 0x%04X\n", conn_est_cnf_pP->security_capabilities_integrity_algorithms);
-
-//  if (conn_est_cnf_pP->kenb) {
-//    initialContextSetupRequest_p->securityKey.buf = calloc (32, sizeof(uint8_t));
-//    memcpy (initialContextSetupRequest_p->securityKey.buf, conn_est_cnf_pP->kenb, 32);
-//    initialContextSetupRequest_p->securityKey.size = 32;
-//  } else {
-//    OAILOG_DEBUG (LOG_S1AP, "No kenb\n");
-//    initialContextSetupRequest_p->securityKey.buf = NULL;
-//    initialContextSetupRequest_p->securityKey.size = 0;
-//  }
-
   pathSwitchRequestAcknowledge_p->securityContext.nextHopParameter.bits_unused = 0;
 
   if (s1ap_mme_encode_pdu (&message, &buffer_p, &length) < 0) {
