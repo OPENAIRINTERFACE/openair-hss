@@ -1076,8 +1076,8 @@ mme_app_handle_create_sess_resp (
         }else{
           OAILOG_ERROR( LOG_MME_APP, "Received new valid APN_AMBR for pdn context id %d for UE " MME_UE_S1AP_ID_FMT ". Updating pgw_ambr. \n",
               pdn_context->context_identifier, ue_context->mme_ue_s1ap_id);
-          pdn_context->subscribed_apn_ambr.br_dl = total_apn_ambr.br_dl;
-          pdn_context->subscribed_apn_ambr.br_ul = total_apn_ambr.br_ul; /**< Will be sent to the eNB. */
+          pdn_context->subscribed_apn_ambr.br_dl = create_sess_resp_pP->ambr.br_dl;
+          pdn_context->subscribed_apn_ambr.br_ul = create_sess_resp_pP->ambr.br_ul; /**< Will be sent to the eNB. */
         }
       }
     }
