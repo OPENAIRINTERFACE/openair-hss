@@ -12,7 +12,7 @@
         url = https://github.com/gabime/spdlog.git
 [submodule "build/git_submodules/freeDiameter"]
         path = build/git_submodules/freeDiameter
-        url = https://gerrit.opencord.org/freeDiameter.git
+	url = https://github.com/OPENAIRINTERFACE/opencord.org.freeDiameter.git
 [submodule "build/git_submodules/pistache"]
         path = build/git_submodules/pistache
         url = https://github.com/oktal/pistache.git
