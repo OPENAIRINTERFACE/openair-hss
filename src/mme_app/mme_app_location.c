@@ -285,7 +285,6 @@ mme_app_handle_s6a_cancel_location_req(
   message_p->ittiMsg.nas_implicit_detach_ue_ind.ue_id = ue_context->mme_ue_s1ap_id;
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_IMPLICIT_DETACH_UE_IND_MESSAGE");
   itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
-  OAILOG_INFO (LOG_MME_APP, "Expired- Implicit Detach timer for UE id  %d \n", ue_context->mme_ue_s1ap_id);
   OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
 }
 

@@ -705,11 +705,11 @@ static nw_rc_t nwGtpv2cCreateLocalTunnel (
       keyTunnel.ipv4AddrRemote = pReqTrxn->peerIp;
       pLocalTunnel = RB_FIND (NwGtpv2cTunnelMap, &(thiz->tunnelMap), &keyTunnel);
       if (!pLocalTunnel) {
-        OAILOG_WARNING (LOG_GTPV2C,  "Triggered response not containing a tunnel. Creating one for local_teid 0x%x and peer 0x%x!\n", ntohl (pUlpRsp->u_api_info.triggeredRspInfo.teidLocal), htonl (pReqTrxn->peerIp.s_addr));
+        OAILOG_WARNING (LOG_GTPV2C,  "Triggered response not containing a tunnel. Creating one for local_teid 0x%x and peer 0x%x!\n", pUlpRsp->u_api_info.triggeredRspInfo.teidLocal, htonl (pReqTrxn->peerIp.s_addr));
         rc = nwGtpv2cCreateLocalTunnel (thiz, pUlpRsp->u_api_info.triggeredRspInfo.teidLocal, &pReqTrxn->peerIp, pUlpRsp->u_api_info.triggeredRspInfo.hUlpTunnel, &pUlpRsp->u_api_info.triggeredRspInfo.hTunnel);
         NW_ASSERT (NW_OK == rc);
       }else{
-        OAILOG_WARNING (LOG_GTPV2C,  "Triggered response already containing a tunnel. Not creating a new one for local_teid 0x%x and peer 0x%x.\n", ntohl (pUlpRsp->u_api_info.triggeredRspInfo.teidLocal), htonl (pReqTrxn->peerIp.s_addr));
+        OAILOG_WARNING (LOG_GTPV2C,  "Triggered response already containing a tunnel. Not creating a new one for local_teid 0x%x and peer 0x%x.\n", (pUlpRsp->u_api_info.triggeredRspInfo.teidLocal), htonl (pReqTrxn->peerIp.s_addr));
       }
     }
     OAILOG_FUNC_RETURN( LOG_GTPV2C, rc);
@@ -995,6 +995,8 @@ static nw_rc_t                            nwGtpv2cHandleUlpFindLocalTunnel (
     }
 
     seqNum = ntohl (*((uint32_t *) (msgBuf + (((*msgBuf) & 0x08) ? 8 : 4)))) >> 8;
+    OAILOG_DEBUG (LOG_GTPV2C,  "RECEIVED GTPV2c initial request message of type %d, length %d and seqNum 0x%x.\n", msgType, msgBufLen, seqNum);
+
     pTrxn = nwGtpv2cTrxnOutstandingRxNew (thiz, ntohl (teidLocal), peerIp, peerPort, (seqNum));
 
     if (pTrxn) {
@@ -1033,9 +1035,12 @@ static nw_rc_t                            nwGtpv2cHandleUlpFindLocalTunnel (
     nw_gtpv2c_error_t                          error = {0};
 
     bool                                       noDelete = false ;
-
     keyTrxn.seqNum = ntohl (*((uint32_t *) (msgBuf + (((*msgBuf) & 0x08) ? 8 : 4)))) >> 8;;
     keyTrxn.peerIp.s_addr = peerIp->s_addr;
+
+    OAILOG_DEBUG (LOG_GTPV2C,  "RECEIVED GTPV2c  response message of type %d, length %d and seqNum %x.\n", msgType, msgBufLen, keyTrxn.seqNum);
+
+
     pTrxn = RB_FIND (NwGtpv2cOutstandingTxSeqNumTrxnMap, &(thiz->outstandingTxSeqNumMap), &keyTrxn);
 
     if (pTrxn) {
@@ -1192,6 +1197,8 @@ static nw_rc_t                            nwGtpv2cHandleTriggeredAck(
       NW_GTPV2C_INIT_MSG_IE_PARSE_INFO (thiz, NW_GTP_MODIFY_BEARER_RSP);
       NW_GTPV2C_INIT_MSG_IE_PARSE_INFO (thiz, NW_GTP_CREATE_BEARER_REQ);
       NW_GTPV2C_INIT_MSG_IE_PARSE_INFO (thiz, NW_GTP_CREATE_BEARER_RSP);
+      NW_GTPV2C_INIT_MSG_IE_PARSE_INFO (thiz, NW_GTP_UPDATE_BEARER_REQ);
+      NW_GTPV2C_INIT_MSG_IE_PARSE_INFO (thiz, NW_GTP_UPDATE_BEARER_RSP);
       NW_GTPV2C_INIT_MSG_IE_PARSE_INFO (thiz, NW_GTP_DELETE_BEARER_REQ);
       NW_GTPV2C_INIT_MSG_IE_PARSE_INFO (thiz, NW_GTP_DELETE_BEARER_RSP);
       NW_GTPV2C_INIT_MSG_IE_PARSE_INFO (thiz, NW_GTP_RELEASE_ACCESS_BEARERS_REQ);

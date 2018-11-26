@@ -96,13 +96,20 @@ int esm_send_pdn_disconnect_reject(pti_t pti, pdn_disconnect_reject_msg *msg,
  */
 int esm_send_activate_default_eps_bearer_context_request(pti_t pti, ebi_t ebi,
     activate_default_eps_bearer_context_request_msg *msg, bstring apn,
-    const protocol_configuration_options_t *pco, int pdn_type, bstring pdn_addr,
+    const protocol_configuration_options_t *pco, const ambr_t * ambr, int pdn_type, bstring pdn_addr,
     const EpsQualityOfService *qos, int esm_cause);
 
 int esm_send_activate_dedicated_eps_bearer_context_request(pti_t pti, ebi_t ebi,
     activate_dedicated_eps_bearer_context_request_msg *msg, ebi_t linked_ebi,
     const EpsQualityOfService *qos,
     traffic_flow_template_t *tft,
+    protocol_configuration_options_t *pco);
+
+int esm_send_modify_eps_bearer_context_request(pti_t pti, ebi_t ebi,
+    modify_eps_bearer_context_request_msg *msg,
+    const EpsQualityOfService *qos,
+    traffic_flow_template_t *tft,
+    ambr_t *ambr,
     protocol_configuration_options_t *pco);
 
 int esm_send_deactivate_eps_bearer_context_request(pti_t pti, ebi_t ebi,

@@ -72,6 +72,8 @@ int s1ap_generate_downlink_nas_transport (
 
 int s1ap_generate_s1ap_e_rab_setup_req (itti_s1ap_e_rab_setup_req_t * const e_rab_setup_req);
 
+int s1ap_generate_s1ap_e_rab_modify_req (itti_s1ap_e_rab_modify_req_t * const e_rab_modify_req);
+
 int s1ap_generate_s1ap_e_rab_release_req (itti_s1ap_e_rab_release_req_t * const e_rab_release_req);
 
 /** S1AP Path Switch Request Acknowledge. */

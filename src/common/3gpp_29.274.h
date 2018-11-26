@@ -455,6 +455,7 @@ typedef struct bearer_context_to_be_created_s {
   protocol_configuration_options_t  pco;///< This IE may be sent on the S5/S8 and S4/S11 interfaces
                                     ///< if ePCO is not supported by the UE or the network. This bearer level IE takes precedence
                                     ///< over the PCO IE in the message body if they both exist.
+  gtpv2c_cause_t            cause;
 } bearer_context_to_be_created_t;
 
 typedef struct bearer_contexts_to_be_created_s {
@@ -475,16 +476,46 @@ bearer_context_to_be_created_t bearer_contexts[MSG_CREATE_SESSION_REQUEST_MAX_BE
 ///< Handover/TAU/RAU with an SGW change.
 } bearer_contexts_to_be_created_t;
 
+//-----------------
+typedef struct bearer_context_to_be_updated_s {
+  uint8_t                  eps_bearer_id;       ///< EBI,  Mandatory CSR
+  traffic_flow_template_t  tft;                 ///< Bearer TFT, Optional CSR, This IE may be included on the S4/S11 and S5/S8 interfaces.
+  /* This parameter is received only if the QoS parameters have been modified */
+  bearer_qos_t                     *bearer_level_qos;    ///< Bearer QoS, Mandatory CSR
+  protocol_configuration_options_t  pco;///< This IE may be sent on the S5/S8 and S4/S11 interfaces
+                                    ///< if ePCO is not supported by the UE or the network. This bearer level IE takes precedence
+                                    ///< over the PCO IE in the message body if they both exist.
+  gtpv2c_cause_t                    cause;
+} bearer_context_to_be_updated_t;
+
+typedef struct bearer_contexts_to_be_updated_s {
+#define MSG_UPDATE_BEARER_REQUEST_MAX_BEARER_CONTEXTS   11
+uint8_t num_bearer_context;
+bearer_context_to_be_updated_t bearer_contexts[MSG_UPDATE_BEARER_REQUEST_MAX_BEARER_CONTEXTS];    ///< Bearer Contexts to be created
+///< Several IEs with the same type and instance value shall be
+///< included on the S4/S11 and S5/S8 interfaces as necessary
+///< to represent a list of Bearers. One single IE shall be
+///< included on the S2b interface.
+///< One bearer shall be included for an E-UTRAN Initial
+///< Attach, a PDP Context Activation, a UE requested PDN
+///< Connectivity, an Attach with GTP on S2b, a UE initiated
+///< Connectivity to Additional PDN with GTP on S2b and a
+///< Handover to Untrusted Non-3GPP IP Access with GTP on
+///< S2b.
+///< One or more bearers shall be included for a
+///< Handover/TAU/RAU with an SGW change.
+} bearer_contexts_to_be_updated_t;
+
 typedef struct bearer_context_to_be_removed_s {
   uint8_t eps_bearer_id;      ///< EPS Bearer ID, Mandatory
   fteid_t s4u_sgsn_fteid;     ///< S4-U SGSN F-TEID, Conditional , redundant
   gtpv2c_cause_t cause;
 } bearer_context_to_be_removed_t; // Within Create Session Request, Modify Bearer Request, Modify Access Bearers Request
 
-
 typedef struct bearer_contexts_to_be_removed_s {
+  #define MSG_DELETE_BEARER_REQUEST_MAX_BEARER_CONTEXTS   11
   uint8_t num_bearer_context;
-  bearer_context_to_be_removed_t bearer_contexts[MSG_CREATE_SESSION_REQUEST_MAX_BEARER_CONTEXTS];
+  bearer_context_to_be_removed_t bearer_contexts[MSG_DELETE_BEARER_REQUEST_MAX_BEARER_CONTEXTS];
 } bearer_contexts_to_be_removed_t;
 
 //-------------------------------------
@@ -512,7 +543,7 @@ typedef struct bearer_context_created_s {
   fteid_t       s12_sgw_fteid;       ///< S12 SGW F-TEID
 
   /* This parameter is received only if the QoS parameters have been modified */
-  bearer_qos_t *bearer_level_qos;
+  bearer_qos_t  bearer_level_qos;
 
   traffic_flow_template_t  tft;                 ///< Bearer TFT
 } bearer_context_created_t;
@@ -609,6 +640,34 @@ typedef struct bearer_contexts_within_create_bearer_response_s {
   uint8_t num_bearer_context;
   bearer_context_within_create_bearer_response_t bearer_contexts[MSG_CREATE_BEARER_RESPONSE_MAX_BEARER_CONTEXTS];
 } bearer_contexts_within_create_bearer_response_t;
+
+//-------------------------------------
+// 7.2.16 Update Bearer Response
+//-------------------------------------
+// 7.2.16-2: Bearer Context within Update Bearer Response
+
+typedef struct bearer_context_within_update_bearer_response_s {
+  uint8_t      eps_bearer_id;       ///< EBI
+  gtpv2c_cause_t  cause;               ///< This IE shall indicate if the bearer handling was successful,
+                                    ///< and if not, it gives information on the reason.
+  fteid_t      s12_rnc_fteid;       ///< C This IE shall be sent on the S4 interface if the S12
+                                    ///< interface is used. See NOTE 1.
+  fteid_t      s4_u_sgsn_fteid ;    ///< C This IE shall be sent on the S4 interface if the S4-U
+                                    ///< interface is used. See NOTE1.
+  protocol_configuration_options_t  pco;///< If the UE includes the PCO IE in the corresponding
+                                    ///< message, then the MME/SGSN shall copy the content of
+                                    ///< this IE transparently from the PCO IE included by the UE.
+                                    ///< If the SGW receives PCO from MME/SGSN, SGW shall
+                                    ///< forward it to the PGW. This bearer level IE takes
+                                    ///< precedence over the PCO IE in the message body if they
+                                    ///< both exist.
+} bearer_context_within_update_bearer_response_t;
+
+typedef struct bearer_contexts_within_update_bearer_response_s {
+#define MSG_UPDATE_BEARER_RESPONSE_MAX_BEARER_CONTEXTS   11
+  uint8_t num_bearer_context;
+  bearer_context_within_update_bearer_response_t bearer_contexts[MSG_UPDATE_BEARER_RESPONSE_MAX_BEARER_CONTEXTS];
+} bearer_contexts_within_update_bearer_response_t;
 
 //-------------------------------------
 // 7.2.10-2: Bearer Context within Delete Bearer Response
@@ -787,6 +846,7 @@ typedef struct mme_ue_eps_pdn_connections_s {
 //----------------------------
 
 void free_bearer_contexts_to_be_created(bearer_contexts_to_be_created_t **bcs_tbc);
+void free_bearer_contexts_to_be_updated(bearer_contexts_to_be_updated_t **bcs_tbu);
 void free_mme_ue_eps_pdn_connections(mme_ue_eps_pdn_connections_t ** pdn_connections);
 void free_mm_context_eps(mm_context_eps_t ** ue_eps_mm_context);
 

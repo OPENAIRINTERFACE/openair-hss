@@ -42,14 +42,36 @@
 
 //------------------------------------------------------------------------------
 void free_bearer_contexts_to_be_created(bearer_contexts_to_be_created_t **bcs_tbc){
-  bearer_contexts_to_be_created_t * bctbc = *bcs_tbc;
+  bearer_contexts_to_be_created_t * bcstbc = *bcs_tbc;
   // nothing to do for packet filters
-  for (int i = 0; i < bctbc->num_bearer_context; i++) {
-    for (int j = 0; j < bctbc->bearer_contexts[i].tft.parameterslist.num_parameters; j++) {
-      bdestroy_wrapper(&bctbc->bearer_contexts[i].tft.parameterslist.parameter[j].contents);
+  for (int i = 0; i < bcstbc->num_bearer_context; i++) {
+    for (int j = 0; j < bcstbc->bearer_contexts[i].tft.parameterslist.num_parameters; j++) {
+      bdestroy_wrapper(&bcstbc->bearer_contexts[i].tft.parameterslist.parameter[j].contents);
     }
   }
   free_wrapper((void**)bcs_tbc);
+}
+
+//------------------------------------------------------------------------------
+void free_bearer_contexts_to_be_updated(bearer_contexts_to_be_updated_t **bcs_tbu){
+  bearer_contexts_to_be_updated_t * bcstbu = *bcs_tbu;
+  // nothing to do for packet filters
+  for (int i = 0; i < bcstbu->num_bearer_context; i++) {
+    for (int j = 0; j < bcstbu->bearer_contexts[i].tft.parameterslist.num_parameters; j++) {
+      bdestroy_wrapper(&bcstbu->bearer_contexts[i].tft.parameterslist.parameter[j].contents);
+    }
+    /** Destroy the bearer level qos. */
+    if(bcstbu->bearer_contexts[i].bearer_level_qos)
+      free_wrapper((void**)&bcstbu->bearer_contexts[i].bearer_level_qos);
+  }
+  free_wrapper((void**)bcs_tbu);
+}
+
+//------------------------------------------------------------------------------
+void free_bearer_contexts_to_be_deleted(bearer_contexts_to_be_removed_t **bcs_tbr){
+  bearer_contexts_to_be_removed_t * bctbr = *bcs_tbr;
+  // nothing to do for packet filters
+  free_wrapper((void**)bcs_tbr);
 }
 
 //------------------------------------------------------------------------------

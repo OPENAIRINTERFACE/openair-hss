@@ -116,7 +116,7 @@ int esm_proc_pdn_connectivity_request(emm_data_context_t * emm_context, const pr
                                      const context_identifier_t  context_identifier,
                                      const esm_proc_pdn_request_t request_type,
                                      const_bstring const apn, esm_proc_pdn_type_t pdn_type,
-                                     const_bstring const pdn_addr, bearer_qos_t *default_qos,
+                                     const_bstring const pdn_addr, const ambr_t * subscribed_ambr, bearer_qos_t *default_qos,
                                      protocol_configuration_options_t * const pco,
                                      esm_cause_t *esm_cause, pdn_context_t              **pdn_context_pP);
 
@@ -155,7 +155,7 @@ int esm_proc_esm_information_response (emm_data_context_t * ue_context, pti_t pt
  * --------------------------------------------------------------------------
  */
 int esm_proc_default_eps_bearer_context(emm_data_context_t * emm_context, const proc_tid_t pti,
-pdn_context_t *pdn_context,   const bstring apn, ebi_t *ebi, const qci_t  qci, esm_cause_t *esm_cause);
+pdn_context_t *pdn_context,   const bstring apn, ebi_t *ebi, const bearer_qos_t *bearer_qos, esm_cause_t *esm_cause);
 int esm_proc_default_eps_bearer_context_request(bool is_standalone, emm_data_context_t * const emm_context, const ebi_t ebi, STOLEN_REF bstring *msg, const bool ue_triggered);
 int esm_proc_default_eps_bearer_context_failure (emm_data_context_t * emm_context, pdn_cid_t * const pid, ebi_t *ebi);
 
@@ -180,6 +180,28 @@ int esm_proc_dedicated_eps_bearer_context_request(const bool is_standalone, emm_
 
 int esm_proc_dedicated_eps_bearer_context_accept(emm_data_context_t * emm_context, ebi_t ebi, esm_cause_t *esm_cause);
 int esm_proc_dedicated_eps_bearer_context_reject(emm_data_context_t * emm_context, ebi_t ebi, esm_cause_t *esm_cause);
+
+
+/*
+ * --------------------------------------------------------------------------
+ *      EPS bearer context modification procedure
+ * --------------------------------------------------------------------------
+ */
+
+int esm_proc_modify_eps_bearer_context( emm_data_context_t * emm_context,
+    const proc_tid_t   pti,                  // todo: will always be 0 for network initiated bearer establishment.
+    bearer_context_to_be_updated_t *bc_tbu,
+    esm_cause_t *esm_cause);
+
+int
+esm_proc_update_eps_bearer_context (
+  emm_data_context_t * emm_context,
+  const bearer_context_to_be_updated_t *bc_tbu);
+
+int esm_proc_modify_eps_bearer_context_request(const bool is_standalone, emm_data_context_t * const emm_context, const ebi_t ebi, STOLEN_REF bstring *msg, const bool ue_triggered);
+
+int esm_proc_modify_eps_bearer_context_accept(emm_data_context_t * emm_context, ebi_t ebi, esm_cause_t *esm_cause);
+int esm_proc_modify_eps_bearer_context_reject(emm_data_context_t * emm_context, ebi_t ebi, esm_cause_t *esm_cause, bool ue_requested);
 
 
 /*

@@ -169,6 +169,9 @@ void mme_app_register_bearer_context(ue_context_t * const ue_context, ebi_t ebi,
   pBearerCtx->preemption_vulnerability = pdn_context->default_bearer_eps_subscribed_qos_profile.allocation_retention_priority.pre_emp_vulnerability;
   pBearerCtx->priority_level           = pdn_context->default_bearer_eps_subscribed_qos_profile.allocation_retention_priority.priority_level;
 
+  /** Initialize the ESM EBR context. */
+  esm_ebr_context_init(&pBearerCtx->esm_ebr_context);
+
   OAILOG_INFO (LOG_MME_APP, "Successfully set bearer context with ebi %d for PDN id %u and for ue id " MME_UE_S1AP_ID_FMT "\n",
       pBearerCtx->ebi, pdn_context->context_identifier, ue_context->mme_ue_s1ap_id);
   *bc_pp = pBearerCtx;

@@ -107,6 +107,8 @@ int mme_app_handle_create_sess_resp          (itti_s11_create_session_response_t
 
 void mme_app_handle_nas_erab_setup_req (itti_nas_erab_setup_req_t * const itti_nas_erab_setup_req);
 
+void mme_app_handle_nas_erab_modify_req (itti_nas_erab_modify_req_t * const itti_nas_erab_modify_setup_req);
+
 void mme_app_handle_nas_erab_release_req (itti_nas_erab_release_req_t * const itti_nas_erab_release_req);
 
 void mme_app_handle_delete_session_rsp	     (const itti_s11_delete_session_response_t * const delete_sess_respP);
@@ -118,6 +120,8 @@ int mme_app_handle_authentication_info_answer(const s6a_auth_info_ans_t * const 
 void  mme_app_handle_release_access_bearers_resp (const itti_s11_release_access_bearers_response_t * const rel_access_bearers_rsp_pP);
 
 void mme_app_handle_s11_create_bearer_req        (itti_s11_create_bearer_request_t * create_bearer_request_pP);
+
+void mme_app_handle_s11_update_bearer_req        (itti_s11_update_bearer_request_t * update_bearer_request_pP);
 
 void mme_app_handle_s11_delete_bearer_req (    itti_s11_delete_bearer_request_t *  delete_bearer_request_pP);
 
@@ -135,11 +139,17 @@ int mme_app_handle_nas_dl_req ( itti_nas_dl_data_req_t *const nas_dl_req_pP);
 
 void mme_app_handle_e_rab_setup_rsp (itti_s1ap_e_rab_setup_rsp_t  * const e_rab_setup_rsp);
 
-void mme_app_handle_activate_bearer_cnf (itti_mme_app_activate_bearer_cnf_t   * const activate_bearer_cnf);
+void mme_app_handle_e_rab_modify_rsp (itti_s1ap_e_rab_modify_rsp_t  * const e_rab_modify_rsp);
 
-void mme_app_handle_activate_bearer_rej (itti_mme_app_activate_bearer_rej_t   * const activate_bearer_rej);
+void mme_app_handle_activate_eps_bearer_ctx_cnf (itti_mme_app_activate_eps_bearer_ctx_cnf_t   * const activate_eps_bearer_ctx_cnf);
 
-void mme_app_handle_deactivate_bearer_cnf (itti_mme_app_deactivate_bearer_cnf_t   * const deactivate_bearer_cnf);
+void mme_app_handle_activate_eps_bearer_ctx_rej (itti_mme_app_activate_eps_bearer_ctx_rej_t   * const activate_eps_bearer_ctx_rej);
+
+void mme_app_handle_modify_eps_bearer_ctx_cnf (itti_mme_app_modify_eps_bearer_ctx_cnf_t   * const modify_eps_bearer_ctx_cnf);
+
+void mme_app_handle_modify_eps_bearer_ctx_rej (itti_mme_app_modify_eps_bearer_ctx_rej_t   * const modify_eps_bearer_ctx_rej);
+
+void mme_app_handle_deactivate_eps_bearer_ctx_cnf (itti_mme_app_deactivate_eps_bearer_ctx_cnf_t   * const deactivate_bearer_cnf);
 
 void mme_app_trigger_mme_initiated_dedicated_bearer_deactivation_procedure (ue_context_t * const ue_context, const pdn_cid_t cid);
 

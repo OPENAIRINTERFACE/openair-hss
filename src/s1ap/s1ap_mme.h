@@ -111,6 +111,7 @@ typedef struct enb_description_s {
   char     enb_name[150];      ///< Printable eNB Name
   uint32_t enb_id;             ///< Unique eNB ID
   uint8_t  default_paging_drx; ///< Default paging DRX interval for eNB
+  tai_list_t    tai_list;               ///< Tracking Area Identifiers signaled by the eNB (for each cell - used for paging.).
   /*@}*/
 
   /** UE list for this eNB **/
@@ -230,6 +231,8 @@ void s1ap_dump_ue(const ue_description_t * const ue_ref);
 
 bool s1ap_enb_compare_by_enb_id_cb (const hash_key_t keyP,
                                     void * const elementP, void * parameterP, void __attribute__((unused)) **unused_resultP);
+void
+s1ap_set_tai (enb_description_t * enb_ref, S1ap_SupportedTAs_t * ta_list);
 
 /** \brief Remove target UE from the list
  * \param ue_ref UE structure reference to remove

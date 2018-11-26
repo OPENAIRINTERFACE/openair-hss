@@ -477,6 +477,13 @@ static inline int sctp_read_from_socket (int sd, int ppid)
         }
         break;
 
+      case SCTP_RESTART:{
+        OAILOG_DEBUG (LOG_SCTP, "Received SCTP restart for the new connection.\n");
+        /** No separate SCTP INIT will be expected.. */
+        return SCTP_RC_ERROR;
+      }
+      break;
+
       default:
         break;
       }
@@ -507,6 +514,8 @@ static inline int sctp_read_from_socket (int sd, int ppid)
     bstring payload = blk2bstr(buffer, n);
     sctp_itti_send_new_message_ind (&payload, sinfo.sinfo_assoc_id, sinfo.sinfo_stream, association->instreams, association->outstreams);
   }
+
+  OAILOG_DEBUG (LOG_SCTP, "SCTP RETURNING!!\n");
 
   return SCTP_RC_NORMAL_READ;
 }

@@ -101,7 +101,9 @@ static const char                      *_emm_cn_primitive_str[] = {
   "EMM_CN_PDN_CONNECTIVITY_FAIL",
   "EMM_CN_PDN_DISCONNECT_RES",
   "EMM_CN_ACTIVATE_DEDICATED_BEARER_REQ",
+  "EMM_CN_MODIFY_EPS_BEARER_CTX_REQ",
   "EMM_CN_DEACTIVATE_DEDICATED_BEARER_REQ",
+  "EMM_CN_UPDATE_ESM_BEARERS_REQ",
   "EMMCN_IMPLICIT_DETACH_UE",
   "EMMCN_SMC_PROC_FAIL",
 };
@@ -479,7 +481,7 @@ static int _emm_cn_pdn_connectivity_res (emm_cn_pdn_res_t * msg_pP)
   rc = esm_send_activate_default_eps_bearer_context_request (msg_pP->pti, msg_pP->ebi,      //msg_pP->ebi,
                                                              &esm_msg.activate_default_eps_bearer_context_request,
                                                              pdn_context->apn_subscribed,
-                                                             &msg_pP->pco,
+                                                             &msg_pP->pco, &msg_pP->apn_ambr,
                                                              esm_pdn_type, msg_pP->pdn_addr,
                                                              &qos, ESM_CAUSE_SUCCESS);
   clear_protocol_configuration_options(&msg_pP->pco); // todo: here or in the ITTI_FREE function
@@ -624,13 +626,15 @@ static int _emm_cn_pdn_connectivity_fail (const emm_cn_pdn_fail_t * msg)
       }
     }
   }else if (is_nas_specific_procedure_tau_running(emm_ctx_p)){
-    OAILOG_ERROR (LOG_NAS_EMM, "EMMCN-SAP  - " "Sending TAU Reject message to id " MME_UE_S1AP_ID_FMT "...\n", msg->ue_id);
+    OAILOG_ERROR (LOG_NAS_EMM, "EMMCN-SAP  - " "Sending TAU Reject message to id " MME_UE_S1AP_ID_FMT "..\n", msg->ue_id);
 
     nas_emm_tau_proc_t  *tau_proc = get_nas_specific_procedure_tau(emm_ctx_p);
     rc = emm_proc_tracking_area_update_reject(msg->ue_id, EMM_CAUSE_ESM_FAILURE);
   }else{
     // todo: multi apn pdn connectivity failure case!
-    DevAssert(0);
+    OAILOG_ERROR (LOG_NAS_EMM, "EMMCN-SAP  - " "Received Create Session Response to id " MME_UE_S1AP_ID_FMT " which is neither attaching nor TAU...\n", msg->ue_id); /**< This case might exist, due to an old trx.
+    The tunnel is re-used by the teid, so we cannot reuse the tunnel (todo: eventually diff teid?).  */
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
   }
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
@@ -800,13 +804,35 @@ static int _emm_cn_activate_dedicated_bearer_req (emm_cn_activate_dedicated_bear
   esm_sap.ctx           = emm_context;
   esm_sap.is_standalone = true;
   esm_sap.ue_id         = msg->ue_id;
-  memcpy((void*)&esm_sap.data.eps_dedicated_bearer_context_activate, msg, sizeof(emm_cn_activate_dedicated_bearer_req_t)); // todo: pointer directly?
+  memcpy((void*)&esm_sap.data.eps_dedicated_bearer_context_activate, msg, sizeof(emm_cn_activate_dedicated_bearer_req_t));
 
-  MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_ESM_MME, NULL, 0, "0 ESM_DEDICATED_EPS_BEARER_CONTEXT_ACTIVATE_REQ ue id " MME_UE_S1AP_ID_FMT /*" ebi %u"*/,
-      esm_sap.ue_id,/*esm_sap.data.eps_dedicated_bearer_context_activate.ebi*/);
+  MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_ESM_MME, NULL, 0, "0 ESM_DEDICATED_EPS_BEARER_CONTEXT_ACTIVATE_REQ ue id " MME_UE_S1AP_ID_FMT, esm_sap.ue_id);
 
   rc = esm_sap_send (&esm_sap);
-  msg->bcs_to_be_created = NULL;
+
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+}
+
+//------------------------------------------------------------------------------
+static int _emm_cn_modify_eps_bearer_ctx_req (emm_cn_modify_eps_bearer_ctx_req_t * msg)
+{
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  int                                     rc = RETURNok;
+  /** Like PDN Config Response, directly forwarded to ESM. */
+  // forward to ESM
+  esm_sap_t                               esm_sap = {0};
+
+  emm_data_context_t *emm_context = emm_data_context_get( &_emm_data, msg->ue_id);
+
+  esm_sap.primitive = ESM_EPS_BEARER_CONTEXT_MODIFY_REQ;
+  esm_sap.ctx           = emm_context;
+  esm_sap.is_standalone = true;
+  esm_sap.ue_id         = msg->ue_id;
+  memcpy((void*)&esm_sap.data.eps_bearer_context_modify, msg, sizeof(emm_cn_modify_eps_bearer_ctx_req_t));
+
+  MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_ESM_MME, NULL, 0, "0 ESM_EPS_BEARER_CONTEXT_MODIFY_REQ ue id " MME_UE_S1AP_ID_FMT, esm_sap.ue_id);
+
+  rc = esm_sap_send (&esm_sap);
 
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
@@ -826,10 +852,32 @@ static int _emm_cn_deactivate_dedicated_bearer_req (emm_cn_deactivate_dedicated_
   esm_sap.ctx           = emm_context;
   esm_sap.is_standalone = true;
   esm_sap.ue_id         = msg->ue_id;
-  memcpy((void*)&esm_sap.data.eps_dedicated_bearer_context_deactivate, msg, sizeof(emm_cn_deactivate_dedicated_bearer_req_t)); // todo: pointer directly?
+  memcpy((void*)&esm_sap.data.eps_dedicated_bearer_context_deactivate, msg, sizeof(emm_cn_deactivate_dedicated_bearer_req_t));
 
-  MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_ESM_MME, NULL, 0, "0 ESM_DEDICATED_EPS_BEARER_CONTEXT_DEACTIVATE_REQ ue id " MME_UE_S1AP_ID_FMT /*" ebi %u"*/,
-      esm_sap.ue_id,/*esm_sap.data.eps_dedicated_bearer_context_activate.ebi*/);
+  MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_ESM_MME, NULL, 0, "0 ESM_DEDICATED_EPS_BEARER_CONTEXT_DEACTIVATE_REQ ue id " MME_UE_S1AP_ID_FMT, esm_sap.ue_id);
+
+  rc = esm_sap_send (&esm_sap);
+
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+}
+
+//------------------------------------------------------------------------------
+static int _emm_cn_update_esm_bearer_ctxs_req (emm_cn_update_esm_bearer_ctxs_req_t * msg)
+{
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  int                                     rc = RETURNok;
+  /** Like PDN Config Response, directly forwarded to ESM. */
+  // forward to ESM
+  esm_sap_t                               esm_sap = {0};
+
+  emm_data_context_t *emm_context = emm_data_context_get( &_emm_data, msg->ue_id);
+
+  esm_sap.primitive = ESM_EPS_UPDATE_ESM_BEARER_CTXS_REQ;
+  esm_sap.ctx           = emm_context;
+  esm_sap.ue_id         = msg->ue_id;
+  memcpy((void*)&esm_sap.data.eps_update_esm_bearer_ctxs, msg, sizeof(emm_cn_update_esm_bearer_ctxs_req_t)); // todo: pointer directly?
+
+  MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_ESM_MME, NULL, 0, "0 ESM_UPDATE_ESM_BEARER_CTXS_REQ ue id " MME_UE_S1AP_ID_FMT, esm_sap.ue_id);
 
   rc = esm_sap_send (&esm_sap);
 
@@ -946,11 +994,19 @@ int emm_cn_send (const emm_cn_t * msg)
     break;
   
   case EMMCN_ACTIVATE_DEDICATED_BEARER_REQ:
-    rc = _emm_cn_activate_dedicated_bearer_req (msg->u.activate_dedicated_bearer_req);
+    rc = _emm_cn_activate_dedicated_bearer_req (msg->u.emm_cn_activate_dedicated_bearer_req);
+    break;
+
+  case EMMCN_MODIFY_EPS_BEARER_CTX_REQ:
+    rc = _emm_cn_modify_eps_bearer_ctx_req (msg->u.emm_cn_modify_eps_bearer_ctx_req);
     break;
 
   case EMMCN_DEACTIVATE_DEDICATED_BEARER_REQ:
-    rc = _emm_cn_deactivate_dedicated_bearer_req (msg->u.deactivate_dedicated_bearer_req);
+    rc = _emm_cn_deactivate_dedicated_bearer_req (msg->u.emm_cn_deactivate_dedicated_bearer_req);
+    break;
+
+  case EMMCN_UPDATE_ESM_BEARERS_REQ:
+    rc = _emm_cn_update_esm_bearer_ctxs_req (msg->u.emm_cn_update_esm_bearer_ctxs_req);
     break;
 
   case EMMCN_IMPLICIT_DETACH_UE:

@@ -428,20 +428,31 @@ static void nas_delete_common_procedures(struct emm_data_context_s *emm_context)
           break;
         case EMM_COMM_PROC_AUTH: {
             nas_emm_auth_proc_t *auth_info_proc = (nas_emm_auth_proc_t *)p1->proc;
-            OAILOG_TRACE (LOG_NAS_EMM, "UE " MME_UE_S1AP_ID_FMT " Delete AUTH procedure\n", auth_info_proc->ue_id);
+            OAILOG_DEBUG (LOG_NAS_EMM, "UE " MME_UE_S1AP_ID_FMT " Delete AUTH procedure & timer\n", auth_info_proc->ue_id);
             if (auth_info_proc->unchecked_imsi) {
               free_wrapper((void**)&auth_info_proc->unchecked_imsi);
             }
+            void * timer_callback_args = NULL;
+            nas_stop_T3460(auth_info_proc->ue_id, &auth_info_proc->T3460, timer_callback_args);
+
           }
           break;
         case EMM_COMM_PROC_SMC: {
-          OAILOG_TRACE (LOG_NAS_EMM, "Delete SMC procedure %"PRIx64"\n", p1->proc->emm_proc.base_proc.nas_puid);
+          OAILOG_DEBUG (LOG_NAS_EMM, "Delete SMC procedure %"PRIx64"\n", p1->proc->emm_proc.base_proc.nas_puid);
             //nas_emm_smc_proc_t *smc_proc = (nas_emm_smc_proc_t *)(*proc);
+          nas_emm_smc_proc_t *smc_proc = (nas_emm_smc_proc_t *)p1->proc;
+          void * timer_callback_args = NULL;
+          nas_stop_T3460(smc_proc->ue_id, &smc_proc->T3460, timer_callback_args);
+
           }
           break;
         case EMM_COMM_PROC_IDENT: {
           OAILOG_TRACE (LOG_NAS_EMM, "Delete IDENT procedure %"PRIx64"\n", p1->proc->emm_proc.base_proc.nas_puid);
-            //nas_emm_ident_proc_t *ident_proc = (nas_emm_ident_proc_t *)(*proc);
+          //nas_emm_ident_proc_t *ident_proc = (nas_emm_ident_proc_t *)(*proc);
+          nas_emm_ident_proc_t *ident_proc = (nas_emm_ident_proc_t *)p1->proc;
+          void * timer_callback_args = NULL;
+          nas_stop_T3460(ident_proc->ue_id, &ident_proc->T3470, timer_callback_args);
+
           }
           break;
         case EMM_COMM_PROC_INFO:
@@ -476,6 +487,8 @@ void nas_delete_attach_procedure(struct emm_data_context_s *emm_context)
     if (proc->esm_msg_out) {
       bdestroy_wrapper(&proc->esm_msg_out);
     }
+    nas_stop_T_retry_specific_procedure(emm_context->ue_id, &proc->emm_spec_proc.retry_timer, unused);
+    OAILOG_TRACE (LOG_NAS_EMM, "UE " MME_UE_S1AP_ID_FMT " stopped the retry timer for attach procedure\n", ue_id);
 
     nas_delete_child_procedures(emm_context, (nas_base_proc_t *)proc);
 
@@ -499,6 +512,8 @@ void nas_delete_tau_procedure(struct emm_data_context_s *emm_context)
     if (proc->esm_msg_out) {
       bdestroy_wrapper(&proc->esm_msg_out);
     }
+    nas_stop_T_retry_specific_procedure(emm_context->ue_id, &proc->emm_spec_proc.retry_timer, unused);
+    OAILOG_TRACE (LOG_NAS_EMM, "UE " MME_UE_S1AP_ID_FMT " stopped the retry timer for TAU procedure\n", ue_id);
 
     nas_delete_child_procedures(emm_context, (nas_base_proc_t *)proc);
 

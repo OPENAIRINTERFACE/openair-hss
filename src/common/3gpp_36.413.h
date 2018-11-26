@@ -100,11 +100,38 @@ typedef struct e_rab_setup_item_s {
   teid_t                           gtp_teid;
 } e_rab_setup_item_t;
 
+// 9.1.3.3 E-RAB MODIFY REQUEST
+typedef struct e_rab_to_be_modified_item_s {
+  e_rab_id_t                       e_rab_id;
+  e_rab_level_qos_parameters_t     e_rab_level_qos_parameters;
+  bstring                          transport_layer_address;
+  teid_t                           gtp_teid;
+  bstring                          nas_pdu;
+  // Correlation ID TODO if necessary
+} e_rab_to_be_modified_item_t;
+
+typedef struct e_rab_to_be_modified_list_s {
+  uint16_t                      no_of_items;
+#define MAX_NO_OF_E_RABS 16 /* Spec says 256 */
+  e_rab_to_be_modified_item_t      item[MAX_NO_OF_E_RABS];
+} e_rab_to_be_modified_list_t;
+
+// 9.1.3.4 E-RAB MODIFY RESPONSE
+typedef struct e_rab_modify_item_s {
+  e_rab_id_t                       e_rab_id;
+  bstring                          transport_layer_address;
+  teid_t                           gtp_teid;
+} e_rab_modify_item_t;
 
 typedef struct e_rab_setup_list_s {
   uint16_t                      no_of_items;
   e_rab_setup_item_t            item[MAX_NO_OF_E_RABS];
 } e_rab_setup_list_t;
+
+typedef struct e_rab_modify_list_s {
+  uint16_t                      no_of_items;
+  e_rab_modify_item_t            item[MAX_NO_OF_E_RABS];
+} e_rab_modify_list_t;
 
 #include "S1ap-Cause.h"
 

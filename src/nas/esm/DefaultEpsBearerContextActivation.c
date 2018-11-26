@@ -135,13 +135,13 @@ esm_proc_default_eps_bearer_context (
   pdn_context_t *pdn_context,
   const bstring apn,
   ebi_t *ebi,
-  const qci_t  qci,
+  const bearer_qos_t *bearer_qos,
   esm_cause_t *esm_cause)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   mme_ue_s1ap_id_t                        ue_id = emm_context->ue_id;
   OAILOG_INFO (LOG_NAS_ESM,
-      "ESM-PROC  - Default EPS bearer context activation (ue_id=" MME_UE_S1AP_ID_FMT ", context_identifier=%d,  QCI %u)\n",ue_id, pdn_context->context_identifier, qci);
+      "ESM-PROC  - Default EPS bearer context activation (ue_id=" MME_UE_S1AP_ID_FMT ", context_identifier=%d,  QCI %u)\n",ue_id, pdn_context->context_identifier, bearer_qos->qci);
 
   ue_context_t                        *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
 
@@ -171,8 +171,7 @@ esm_proc_default_eps_bearer_context (
      * Null as Bearer Level QoS
      */
     // todo: S1U SGW set before?
-    bearer_qos_t bearer_qos = {.qci = qci};
-    *ebi = esm_ebr_context_create (emm_context, pti, pdn_context, *ebi, NULL, IS_DEFAULT_BEARER_YES, &bearer_qos, (traffic_flow_template_t *)NULL, (protocol_configuration_options_t*)NULL);
+    *ebi = esm_ebr_context_create (emm_context, pti, pdn_context, *ebi, NULL, IS_DEFAULT_BEARER_YES, bearer_qos, (traffic_flow_template_t *)NULL, (protocol_configuration_options_t*)NULL);
 
     if (*ebi == ESM_EBI_UNASSIGNED) {
       /*

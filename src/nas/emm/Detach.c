@@ -214,7 +214,10 @@ emm_proc_detach (
    * Set state as DEREGISTER initiated
    * todo: check if this state change is valid!
    */
-  emm_fsm_set_state (ue_id, emm_context, EMM_DEREGISTERED_INITIATED);
+  if(emm_fsm_set_state (ue_id, emm_context, EMM_DEREGISTERED_INITIATED) == RETURNerror){
+    OAILOG_WARNING (LOG_NAS_EMM, "An implicit detach procedure is already ongoing for EMM context of the UE (ue_id=" MME_UE_S1AP_ID_FMT "). Aborting new implicit detach.", ue_id);
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
+  }
 
   /**
     * Although MME_APP and EMM contexts are separated, doing it like this causes the recursion problem.
@@ -312,7 +315,7 @@ emm_proc_detach (
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
 
     }else{
-      /** No PDNs existing, continue with the EMM detach. */
+      OAILOG_INFO (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " EMM-PROC  - No PDNs existing, continue with the EMM detach. \n", ue_id);
       rc = RETURNok;
     }
     // todo: this might be in success_notif of detach_proc

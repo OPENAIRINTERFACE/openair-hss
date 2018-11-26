@@ -109,8 +109,12 @@ Description Defines the messages supported by the Access Stratum sublayer
 #define AS_ACTIVATE_BEARER_CONTEXT        0x08
 #define AS_ACTIVATE_BEARER_CONTEXT_REQ        (AS_ACTIVATE_BEARER_CONTEXT | AS_REQUEST)
 
+/* Radio Access Bearer establishment */
+#define AS_MODIFY_BEARER_CONTEXT        0x09
+#define AS_MODIFY_BEARER_CONTEXT_REQ        (AS_MODIFY_BEARER_CONTEXT | AS_REQUEST)
+
 /* Radio Access Bearer release */
-#define AS_RAB_RELEASE          0x09
+#define AS_RAB_RELEASE          0x0A
 #define AS_RAB_RELEASE_REQ      (AS_RAB_RELEASE | AS_REQUEST)
 #define AS_RAB_RELEASE_IND      (AS_RAB_RELEASE | AS_INDICATION)
 
@@ -501,6 +505,58 @@ typedef struct rab_establish_cnf_s {
 
 /*
  * --------------------------------------------------------------------------
+ *          Radio Access Bearer update
+ * --------------------------------------------------------------------------
+ */
+
+/*
+ * NAS->AS - Radio access bearer update request
+ * NAS requests the AS to update transmission resources to radio access
+ * bearer initialized at the network side.
+ */
+typedef struct modify_bearer_context_req_s {
+  mme_ue_s1ap_id_t ue_id;  /* UE lower layer identifier        */
+  ebi_t            ebi;    /* EPS bearer id    */
+  bitrate_t        mbr_dl;
+  bitrate_t        mbr_ul;
+  bitrate_t        gbr_dl;
+  bitrate_t        gbr_ul;
+  bstring          nas_msg; /* NAS message to transfer     */
+} modify_bearer_context_req_t;
+
+/*
+ * AS->NAS - Radio access bearer modification indication
+ * AS notifies the NAS that specific radio access bearer has to be modified.
+ */
+typedef struct rab_modify_ind_s {
+  mme_ue_s1ap_id_t ue_id;     /* UE lower layer identifier        */
+  ebi_t            ebi;    /* EPS bearer id    */
+} rab_modify_ind_t;
+
+/*
+ * NAS->AS - Radio access bearer modification response
+ * NAS responds to AS whether the specified radio access bearer has been
+ * successfully modified or not.
+ */
+typedef struct rab_modify_rsp_s {
+  mme_ue_s1ap_id_t ue_id;     /* UE lower layer identifier        */
+  ebi_t            ebi;    /* EPS bearer id    */
+  nas_error_code_t err_code;  /* Transaction status               */
+} rab_modify_rsp_t;
+
+/*
+ * AS->NAS - Radio access bearer modification confirm
+ * AS notifies NAS whether the specified radio access bearer has been
+ * successfully modified at the UE side or not.
+ */
+typedef struct rab_modify_cnf_s {
+  mme_ue_s1ap_id_t ue_id;     /* UE lower layer identifier        */
+  ebi_t            ebi;    /* EPS bearer id    */
+  nas_error_code_t err_code;  /* Transaction status               */
+} rab_modify_cnf_t;
+
+/*
+ * --------------------------------------------------------------------------
  *              Radio Access Bearer release
  * --------------------------------------------------------------------------
  */
@@ -552,9 +608,13 @@ typedef struct as_message_s {
     dl_info_transfer_cnf_t dl_info_transfer_cnf;
     dl_info_transfer_ind_t dl_info_transfer_ind;
     activate_bearer_context_req_t  activate_bearer_context_req;
+    modify_bearer_context_req_t    modify_bearer_context_req;
     rab_establish_ind_t    rab_establish_ind;
     rab_establish_rsp_t    rab_establish_rsp;
     rab_establish_cnf_t    rab_establish_cnf;
+    rab_modify_ind_t       rab_modify_ind;
+    rab_modify_rsp_t       rab_modify_rsp;
+    rab_modify_cnf_t       rab_modify_cnf;
     rab_release_req_t      rab_release_req;
     rab_release_ind_t      rab_release_ind;
   } __attribute__((__packed__)) msg;

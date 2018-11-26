@@ -203,6 +203,7 @@ set (libnas_mme_esm_OBJS
     ${CMAKE_CURRENT_SOURCE_DIR}/esm/DedicatedEpsBearerContextActivation.c
     ${CMAKE_CURRENT_SOURCE_DIR}/esm/DefaultEpsBearerContextActivation.c
     ${CMAKE_CURRENT_SOURCE_DIR}/esm/EpsBearerContextDeactivation.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/esm/EpsBearerContextModification.c
     ${CMAKE_CURRENT_SOURCE_DIR}/esm/esm_data_context.c
     ${CMAKE_CURRENT_SOURCE_DIR}/esm/esm_ebr.c
     ${CMAKE_CURRENT_SOURCE_DIR}/esm/esm_ebr_context.c

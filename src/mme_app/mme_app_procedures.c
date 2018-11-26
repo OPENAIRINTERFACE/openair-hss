@@ -50,6 +50,7 @@
 #include "mme_app_procedures.h"
 
 static void mme_app_free_s11_procedure_create_bearer(mme_app_s11_proc_t **s11_proc);
+static void mme_app_free_s11_procedure_update_bearer(mme_app_s11_proc_t **s11_proc);
 static void mme_app_free_s11_procedure_delete_bearer(mme_app_s11_proc_t **s11_proc);
 static void mme_app_free_s10_procedure_mme_handover(mme_app_s10_proc_t **s10_proc);
 
@@ -94,6 +95,8 @@ void mme_app_delete_s11_procedures(ue_context_t * const ue_context)
       s11_proc2 = LIST_NEXT(s11_proc1, entries);
       if (MME_APP_S11_PROC_TYPE_CREATE_BEARER == s11_proc1->type) {
         mme_app_free_s11_procedure_create_bearer(&s11_proc1);
+      } else if (MME_APP_S11_PROC_TYPE_UPDATE_BEARER == s11_proc1->type) {
+        mme_app_free_s11_procedure_update_bearer(&s11_proc1);
       } else if (MME_APP_S11_PROC_TYPE_DELETE_BEARER == s11_proc1->type) {
         mme_app_free_s11_procedure_delete_bearer(&s11_proc1);
       } // else ...
@@ -148,6 +151,65 @@ void mme_app_delete_s11_procedure_create_bearer(ue_context_t * const ue_context)
       if (MME_APP_S11_PROC_TYPE_CREATE_BEARER == s11_proc->type) {
         LIST_REMOVE(s11_proc, entries);
         mme_app_free_s11_procedure_create_bearer(&s11_proc);
+        return;
+      }
+    }
+  }
+}
+
+//------------------------------------------------------------------------------
+mme_app_s11_proc_update_bearer_t* mme_app_create_s11_procedure_update_bearer(ue_context_t * const ue_context)
+{
+  /** Check if the list of S11 procedures is empty. */
+  if(ue_context->s11_procedures){
+    if(!LIST_EMPTY(ue_context->s11_procedures)){
+      OAILOG_ERROR (LOG_MME_APP, "UE with ueId " MME_UE_S1AP_ID_FMT " has already a S11 procedure ongoing. Cannot create UBR procedure. \n",
+          ue_context->mme_ue_s1ap_id);
+      return NULL;
+    }
+  }
+  mme_app_s11_proc_update_bearer_t *s11_proc_update_bearer = calloc(1, sizeof(mme_app_s11_proc_update_bearer_t));
+  s11_proc_update_bearer->proc.proc.type = MME_APP_BASE_PROC_TYPE_S11;
+  s11_proc_update_bearer->proc.type      = MME_APP_S11_PROC_TYPE_UPDATE_BEARER;
+  mme_app_s11_proc_t *s11_proc = (mme_app_s11_proc_t *)s11_proc_update_bearer;
+
+  /** Initialize the of the procedure. */
+
+  if (!ue_context->s11_procedures) {
+    ue_context->s11_procedures = calloc(1, sizeof(struct s11_procedures_s));
+    LIST_INIT(ue_context->s11_procedures);
+  }
+  LIST_INSERT_HEAD((ue_context->s11_procedures), s11_proc, entries);
+
+  return s11_proc_update_bearer;
+}
+
+//------------------------------------------------------------------------------
+mme_app_s11_proc_update_bearer_t* mme_app_get_s11_procedure_update_bearer(ue_context_t * const ue_context)
+{
+  if (ue_context->s11_procedures) {
+    mme_app_s11_proc_t *s11_proc = NULL;
+
+    LIST_FOREACH(s11_proc, ue_context->s11_procedures, entries) {
+      if (MME_APP_S11_PROC_TYPE_UPDATE_BEARER == s11_proc->type) {
+        return (mme_app_s11_proc_create_bearer_t*)s11_proc;
+      }
+    }
+  }
+  return NULL;
+}
+
+//------------------------------------------------------------------------------
+void mme_app_delete_s11_procedure_update_bearer(ue_context_t * const ue_context)
+{
+  /** Check if the list of S11 procedures is empty. */
+  if (ue_context->s11_procedures) {
+    mme_app_s11_proc_t *s11_proc = NULL;
+
+    LIST_FOREACH(s11_proc, ue_context->s11_procedures, entries) {
+      if (MME_APP_S11_PROC_TYPE_UPDATE_BEARER == s11_proc->type) {
+        LIST_REMOVE(s11_proc, entries);
+        mme_app_free_s11_procedure_update_bearer(&s11_proc);
         return;
       }
     }
@@ -215,12 +277,23 @@ static void mme_app_free_s11_procedure_create_bearer(mme_app_s11_proc_t **s11_pr
 }
 
 //------------------------------------------------------------------------------
+static void mme_app_free_s11_procedure_update_bearer(mme_app_s11_proc_t **s11_proc_cbr)
+{
+  // DO here specific releases (memory,etc)
+  /** Remove the bearer contexts to be setup. */
+  mme_app_s11_proc_update_bearer_t ** s11_proc_update_bearer_pp = (mme_app_s11_proc_update_bearer_t**)s11_proc_cbr;
+  if((*s11_proc_update_bearer_pp)->bcs_tbu)
+    free_bearer_contexts_to_be_updated(&(*s11_proc_update_bearer_pp)->bcs_tbu);
+  free_wrapper((void**)s11_proc_update_bearer_pp);
+}
+
+//------------------------------------------------------------------------------
 static void mme_app_free_s11_procedure_delete_bearer(mme_app_s11_proc_t **s11_proc_cbr)
 {
   // DO here specific releases (memory,etc)
   /** Remove the bearer contexts to be setup. */
-  mme_app_s11_proc_delete_bearer_t ** s11_proc_delete_bearer_pp = (mme_app_s11_proc_delete_bearer_t**)s11_proc_cbr;
-  free_wrapper((void**)s11_proc_delete_bearer_pp);
+//  mme_app_s11_proc_delete_bearer_t ** s11_proc_delete_bearer_pp = (mme_app_s11_proc_delete_bearer_t**)s11_proc_cbr;
+  free_wrapper((void**)s11_proc_cbr);
 }
 
 /**
@@ -230,7 +303,11 @@ static int remove_s10_tunnel_endpoint(ue_context_t * ue_context, struct in_addr 
   OAILOG_FUNC_IN(LOG_MME_APP);
   int             rc = RETURNerror;
 //  /** Removed S10 tunnel endpoint. */
-  mme_app_remove_s10_tunnel_endpoint(ue_context->local_mme_teid_s10, peer_ip);
+  if(ue_context->local_mme_teid_s10 == (teid_t)0){
+    OAILOG_ERROR (LOG_MME_APP, "UE with ueId " MME_UE_S1AP_ID_FMT " has no local S10 teid. Not triggering tunnel removal. \n", ue_context->mme_ue_s1ap_id);
+    OAILOG_FUNC_RETURN(LOG_MME_APP, rc);
+  }
+  rc = mme_app_remove_s10_tunnel_endpoint(ue_context->local_mme_teid_s10, peer_ip);
   /** Deregister the key. */
   mme_ue_context_update_coll_keys( &mme_app_desc.mme_ue_contexts,
       ue_context,
@@ -296,12 +373,25 @@ mme_app_handle_mme_s10_handover_completion_timer_expiry (mme_app_s10_proc_mme_ha
       "Performing S1AP UE Context Release Command and successive NAS implicit detach. \n", ue_context->mme_ue_s1ap_id);
   s10_proc_mme_handover->proc.timer.id = MME_APP_TIMER_INACTIVE_ID;
 
+  /** Check if an NAS context exists (this might happen if a TAU_COMPLETE has not arrived or arrived and was discarded due security reasons. */
+  emm_data_context_t * emm_context = emm_data_context_get(&_emm_data, ue_context->mme_ue_s1ap_id);
+  if(emm_context){
+    OAILOG_WARNING (LOG_MME_APP, " **** ABNORMAL **** An EMM context for UE " MME_UE_S1AP_ID_FMT " exists. Performing implicit detach due time out of handover completion timer! \n", ue_context->mme_ue_s1ap_id);
+    /** Check if the CLR flag has been set. */
+    message_p = itti_alloc_new_message (TASK_MME_APP, NAS_IMPLICIT_DETACH_UE_IND);
+    DevAssert (message_p != NULL);
+    message_p->ittiMsg.nas_implicit_detach_ue_ind.ue_id = ue_context->mme_ue_s1ap_id; /**< We don't send a Detach Type such that no Detach Request is sent to the UE if handover is performed. */
+
+    MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_IMPLICIT_DETACH_UE_IND_MESSAGE");
+    itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+    OAILOG_FUNC_OUT (LOG_MME_APP);
+  }
+
   ue_context->s1_ue_context_release_cause = S1AP_HANDOVER_CANCELLED;
   /*
    * Send a UE Context Release Command which would trigger a context release.
    * The e_cgi IE will be set with Handover Notify.
    */
-
   mme_app_itti_ue_context_release(ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, ue_context->s1_ue_context_release_cause, s10_proc_mme_handover->target_id.target_id.macro_enb_id.enb_id);
   /** Send a FW-Relocation Response error if no local teid is set (no FW-Relocation Response is send yet). */
   if(!ue_context->local_mme_teid_s10){

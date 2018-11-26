@@ -47,6 +47,17 @@ nas_itti_erab_setup_req (
     const bitrate_t        gbr_dl,
     const bitrate_t        gbr_ul,
     bstring                nas_msg);
+
+int
+nas_itti_erab_modify_req (
+    const mme_ue_s1ap_id_t ue_id,
+    const ebi_t            ebi,
+    const bitrate_t        mbr_dl,
+    const bitrate_t        mbr_ul,
+    const bitrate_t        gbr_dl,
+    const bitrate_t        gbr_ul,
+    bstring                nas_msg);
+
 int
 nas_itti_erab_release_req (const mme_ue_s1ap_id_t ue_id,
     const ebi_t ebi,
@@ -107,18 +118,26 @@ void nas_itti_establish_cnf(
 void nas_itti_detach_req(
   const mme_ue_s1ap_id_t      ue_idP);
 
-void nas_itti_activate_bearer_cnf(
+void nas_itti_activate_eps_bearer_ctx_cnf(
     const mme_ue_s1ap_id_t ue_idP,
     const ebi_t            ebi);
 
-void nas_itti_activate_bearer_rej(
+void nas_itti_activate_eps_bearer_ctx_rej(
+    const mme_ue_s1ap_id_t ue_idP,
+    const teid_t           saegw_s1u_teid,
+    const esm_cause_t      esm_cause);
+
+void nas_itti_modify_eps_bearer_ctx_cnf(
     const mme_ue_s1ap_id_t ue_idP,
     const ebi_t            ebi);
+
+void nas_itti_modify_eps_bearer_ctx_rej(
+    const mme_ue_s1ap_id_t ue_idP,
+    const ebi_t            ebi,
+    const esm_cause_t      esm_cause);
 
 void nas_itti_dedicated_eps_bearer_deactivation_complete(
     const mme_ue_s1ap_id_t ue_idP,
-    const ebi_t default_ebi,
-    const pdn_cid_t pid,
     const ebi_t ded_ebi);
 
 void  s6a_auth_info_rsp_timer_expiry_handler (void *args);

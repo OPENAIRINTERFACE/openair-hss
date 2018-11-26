@@ -1111,8 +1111,6 @@ void mme_app_dump_pdn_context (const struct ue_context_s *const ue_context,
     bformata (bstr_dump, "%*s     - Pre-emp capability .......: %s\n", indent_spaces, " ", (pdn_context->default_bearer_eps_subscribed_qos_profile.allocation_retention_priority.pre_emp_capability == PRE_EMPTION_CAPABILITY_ENABLED) ? "ENABLED" : "DISABLED");
     bformata (bstr_dump, "%*s     - APN-AMBR (bits/s) DL .....: %010" PRIu64 "\n", indent_spaces, " ", pdn_context->subscribed_apn_ambr.br_dl);
     bformata (bstr_dump, "%*s     - APN-AMBR (bits/s) UL .....: %010" PRIu64 "\n", indent_spaces, " ", pdn_context->subscribed_apn_ambr.br_ul);
-    bformata (bstr_dump, "%*s     - P-GW-APN-AMBR (bits/s) DL : %010" PRIu64 "\n", indent_spaces, " ", pdn_context->p_gw_apn_ambr.br_dl);
-    bformata (bstr_dump, "%*s     - P-GW-APN-AMBR (bits/s) UL : %010" PRIu64 "\n", indent_spaces, " ", pdn_context->p_gw_apn_ambr.br_ul);
     bformata (bstr_dump, "%*s     - Default EBI ..............: %u\n", indent_spaces, " ", pdn_context->default_ebi);
     bformata (bstr_dump, "%*s - NAS ESM private data:\n");
     bformata (bstr_dump, "%*s     - Procedure transaction ID .: %x\n", indent_spaces, " ", pdn_context->esm_data.pti);
@@ -1187,7 +1185,7 @@ mme_app_dump_ue_context (
       //}
       bformata (bstr_dump, "    - AMBR (bits/s)     ( Downlink |  Uplink  )\n");
       // TODO bformata (bstr_dump, "        Subscribed ...: (%010" PRIu64 "|%010" PRIu64 ")\n", ue_context->subscribed_ambr.br_dl, ue_context->subscribed_ambr.br_ul);
-      bformata (bstr_dump, "        Allocated ....: (%010" PRIu64 "|%010" PRIu64 ")\n", ue_context->used_ambr.br_dl, ue_context->used_ambr.br_ul);
+      bformata (bstr_dump, "        Allocated ....: (%010" PRIu64 "|%010" PRIu64 ")\n", ue_context->subscribed_ue_ambr.br_dl, ue_context->subscribed_ue_ambr.br_ul);
 
       bformata (bstr_dump, "    - APN config list:\n");
 
@@ -1320,28 +1318,42 @@ _mme_app_handle_s1ap_ue_context_release (const mme_ue_s1ap_id_t mme_ue_s1ap_id,
   }
   if (ue_context->mm_state == UE_UNREGISTERED) {
     OAILOG_INFO(LOG_MME_APP, "UE is in UNREGISTERED state. Releasing the UE context in the eNB and triggering an MME context removal for "MME_UE_S1AP_ID_FMT ". \n.", ue_context->mme_ue_s1ap_id);
+    emm_data_context_t * emm_context = emm_data_context_get(&_emm_data, ue_context->mme_ue_s1ap_id);
+    if(emm_context && is_nas_specific_procedure_attach_running(emm_context)) {
+      OAILOG_INFO(LOG_MME_APP, "Attach procedure is running for UE "MME_UE_S1AP_ID_FMT ". Triggering implicit detach (aborting attach procedure). \n.", ue_context->mme_ue_s1ap_id);
+      message_p = itti_alloc_new_message (TASK_MME_APP, NAS_IMPLICIT_DETACH_UE_IND);
+      DevAssert (message_p != NULL);
+      message_p->ittiMsg.nas_implicit_detach_ue_ind.ue_id = ue_context->mme_ue_s1ap_id; /**< Rest won't be sent, so no NAS Detach Request will be sent. */
+      MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_IMPLICIT_DETACH_UE_IND_MESSAGE");
+      itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+      OAILOG_FUNC_OUT (LOG_MME_APP);
+    }else{
+      /*
+       * As before, in the UE_UNREGISTERED state, we assume either that we have no EMM context at all, a DEREGISTERED EMM context context, or one, where a common or specific procedure is running.
+       * The EMM context will either be left in the inactive DEREGISTERED state or even if a procedure is running. It won't be touched.
+       * The fate of the NAS context will be decided by the procedures.
+       *
+       * Bearers either are not created (CSR) or established (MBR) at all.
+       * We don't need to send an explicit bearer removal request here.
+       *
+       * In UNREGISTERED state there should be no reason to send RELEASE_ACCESS_BEARER message to the SAE-GW, because notin established.
+       *
+       * If there area bearers established without an EMM context, the UE_CTX_RELEASE_COMPLETE will trigger the removal of the MME_APP UE context.
+       * During removal of MME_APP UE context, if no EMM context is there, then probably HO without TAU has happened.
+       * Only in that case, this should trigger Delete Session Request (only case where MME_APP does send it). Else it should only be send by EMM/NAS layer.
+       * todo: or handover_completion_timer should take care of that (that TAU_Complete has arrived).
+       *
+       * So in any case, just release the context. With release complete we should clean the MME_APP UE context.
+       *
+       * No need to send NAS implicit detach.
+       */
+      if(ue_context->s1_ue_context_release_cause == S1AP_INVALID_CAUSE)
+        ue_context->s1_ue_context_release_cause = S1AP_INITIAL_CONTEXT_SETUP_FAILED;
 
-    /*
-     * As before, in the UE_UNREGISTERED state, we assume either that we have no EMM context at all, a DEREGISTERED EMM context context, or one, where a common or specific procedure is running.
-     * The EMM context will either be left in the inactive DEREGISTERED state or even if a procedure is running. It won't be touched.
-     * The fate of the NAS context will be decided by the procedures.
-     *
-     * Bearers either are not created (CSR) or established (MBR) at all.
-     * We don't need to send an explicit bearer removal request here.
-     *
-     * In UNREGISTERED state there should be no reason to send RELEASE_ACCESS_BEARER message to the SAE-GW, because notin established.
-     *
-     * If there area bearers established without an EMM context, the UE_CTX_RELEASE_COMPLETE will trigger the removal of the MME_APP UE context.
-     * During removal of MME_APP UE context, if no EMM context is there, then probably HO without TAU has happened.
-     * Only in that case, this should trigger Delete Session Request (only case where MME_APP does send it). Else it should only be send by EMM/NAS layer.
-     * todo: or handover_completion_timer should take care of that (that TAU_Complete has arrived).
-     *
-     * So in any case, just release the context. With release complete we should clean the MME_APP UE context.
-     *
-     * No need to send NAS implicit detach.
-     */
-    mme_app_itti_ue_context_release(mme_ue_s1ap_id, enb_ue_s1ap_id, ue_context->s1_ue_context_release_cause, enb_id);
+      mme_app_itti_ue_context_release(mme_ue_s1ap_id, enb_ue_s1ap_id, ue_context->s1_ue_context_release_cause, enb_id);
+      OAILOG_FUNC_OUT (LOG_MME_APP);
 
+    }
   } else {
     /*
      * In the UE_REGISTERED case, we should always have established bearers.
@@ -1697,15 +1709,25 @@ mme_app_handle_s1ap_ue_context_release_req (
                                           s1ap_ue_context_release_req->enb_id,
                                           S1AP_RADIO_EUTRAN_GENERATED_REASON);
 }
+//
+////------------------------------------------------------------------------------
+//void
+//mme_app_handle_enb_deregister_ind(const itti_s1ap_eNB_deregistered_ind_t const * eNB_deregistered_ind) {
+//  for (int i = 0; i < eNB_deregistered_ind->nb_ue_to_deregister; i++) {
+//    _mme_app_handle_s1ap_ue_context_release(eNB_deregistered_ind->mme_ue_s1ap_id[i],
+//                                            eNB_deregistered_ind->enb_ue_s1ap_id[i],
+//                                            eNB_deregistered_ind->enb_id,
+//                                            S1AP_SCTP_SHUTDOWN_OR_RESET);
+//  }
+//}
+
 
 //------------------------------------------------------------------------------
-void
-mme_app_handle_enb_deregister_ind(const itti_s1ap_eNB_deregistered_ind_t * const eNB_deregistered_ind) {
-  for (int i = 0; i < eNB_deregistered_ind->nb_ue_to_deregister; i++) {
-    _mme_app_handle_s1ap_ue_context_release(eNB_deregistered_ind->mme_ue_s1ap_id[i],
-                                            eNB_deregistered_ind->enb_ue_s1ap_id[i],
-                                            eNB_deregistered_ind->enb_id,
-                                            S1AP_SCTP_SHUTDOWN_OR_RESET);
+void mme_app_handle_s1ap_enb_deregistered_ind (const itti_s1ap_eNB_deregistered_ind_t * const enb_dereg_ind)
+{
+  for (int ue_idx = 0; ue_idx < enb_dereg_ind->nb_ue_to_deregister; ue_idx++) {
+      mme_app_send_nas_signalling_connection_rel_ind(enb_dereg_ind->mme_ue_s1ap_id[ue_idx]); /**< If any procedures were ongoing, kill them. */
+      _mme_app_handle_s1ap_ue_context_release(enb_dereg_ind->mme_ue_s1ap_id[ue_idx], enb_dereg_ind->enb_ue_s1ap_id[ue_idx], enb_dereg_ind->enb_id, S1AP_SCTP_SHUTDOWN_OR_RESET);
   }
 }
 

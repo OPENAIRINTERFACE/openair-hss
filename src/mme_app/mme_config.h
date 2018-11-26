@@ -116,7 +116,6 @@
 #define MME_CONFIG_STRING_NAS_T3485_TIMER                "T3485"
 #define MME_CONFIG_STRING_NAS_T3486_TIMER                "T3486"
 #define MME_CONFIG_STRING_NAS_T3489_TIMER                "T3489"
-#define MME_CONFIG_STRING_NAS_T3346_TIMER                "T3346"
 #define MME_CONFIG_STRING_NAS_T3495_TIMER                "T3495"
 
 #define MME_CONFIG_STRING_NAS_DISABLE_ESM_INFORMATION_PROCEDURE    "DISABLE_ESM_INFORMATION_PROCEDURE"
@@ -132,7 +131,7 @@
 #define MME_CONFIG_STRING_ASN1_VERBOSITY_INFO            "info"
 
 #define MME_CONFIG_STRING_WRR_LIST_SELECTION             "WRR_LIST_SELECTION"
-#define MME_CONFIG_STRING_PEER_MME_IPV4_ADDRESS_FOR_S10  "PEER_MME_IPV4_ADDRESS_FOR_S10'"
+#define MME_CONFIG_STRING_PEER_MME_IPV4_ADDRESS_FOR_S10  "MME_IPV4_ADDRESS_FOR_S10"
 ///** MME S10 List --> todo: later FULL WRR : Finding MME via eNB. */
 //#define MME_CONFIG_STRING_MME_LIST_SELECTION             "MME_LIST_SELECTION"
 
@@ -281,6 +280,8 @@ typedef struct mme_config_s {
 } mme_config_t;
 
 extern mme_config_t mme_config;
+
+bool mme_app_check_ta_local(const plmn_t * target_plmn, const tac_t target_tac);
 
 int mme_config_find_mnc_length(const char mcc_digit1P,
                                const char mcc_digit2P,

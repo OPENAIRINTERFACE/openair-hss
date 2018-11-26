@@ -355,6 +355,7 @@ add_library(S1AP_EPC
   ${S1AP_DIR}/s1ap_mme_itti_messaging.c
   ${S1AP_DIR}/s1ap_mme_retransmission.c
   ${S1AP_DIR}/s1ap_mme_ta.c
+  ${S1AP_DIR}/s1ap_mme_gummei.c
   )
 
 
@@ -796,6 +797,7 @@ set(libnas_mme_emm_sap_OBJS
   )
 
 set (libnas_mme_esm_OBJS
+  ${NAS_SRC}esm/EpsBearerContextModification.c
   ${NAS_SRC}esm/DedicatedEpsBearerContextActivation.c
   ${NAS_SRC}esm/DefaultEpsBearerContextActivation.c
   ${NAS_SRC}esm/EpsBearerContextDeactivation.c

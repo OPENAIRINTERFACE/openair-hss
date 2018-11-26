@@ -222,5 +222,9 @@ void *itti_malloc(task_id_t origin_task_id, task_id_t destination_task_id, ssize
 
 int itti_free(task_id_t task_id, void *ptr);
 
+int itti_free_DEBUG(task_id_t task_id, void *ptr);
+
+void itti_print_DEBUG();
+
 #endif /* INTERTASK_INTERFACE_H_ */
 /* @} */

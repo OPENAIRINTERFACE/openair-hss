@@ -195,8 +195,6 @@ inline void emm_ctx_set_valid_imsi(emm_data_context_t * const ctxt, imsi_t *imsi
 #endif
   /** Notifying the MME_APP without an ITTI request of the validated IMSI, to update the registration tables. */
   mme_api_notify_imsi(ctxt->ue_id, imsi64);
-  ue_context_t * test_ue_ctx = mme_ue_context_exists_imsi (&mme_app_desc.mme_ue_contexts, imsi64);
-  DevAssert(test_ue_ctx);
 }
 
 //------------------------------------------------------------------------------
@@ -569,17 +567,22 @@ inline void emm_ctx_update_from_mm_eps_context(emm_data_context_t * const emm_ct
         mm_eps_ctxt->nas_ul_count.seq_num, emm_ctx_p->ue_id);
     emm_ctx_p->_security.ul_count = mm_eps_ctxt->nas_ul_count;
     emm_ctx_p->_security.ul_count.seq_num += 1;
+
     /** Increment the NAS UL_COUNT. */
-     if (!emm_ctx_p->_security.ul_count.seq_num) {
-       emm_ctx_p->_security.ul_count.overflow += 1;
-     }
+    if (!emm_ctx_p->_security.ul_count.seq_num) {
+      emm_ctx_p->_security.ul_count.overflow += 1;
+    }
+    OAILOG_DEBUG (LOG_NAS_EMM, "EMM-PROC  - Final UE NAS UL-Count to the one received from S10 %d (overflow %d) for UE " MME_UE_S1AP_ID_FMT ".\n",
+        mm_eps_ctxt->nas_ul_count.seq_num, mm_eps_ctxt->nas_ul_count.overflow, emm_ctx_p->ue_id);
   }else{
-    OAILOG_DEBUG (LOG_NAS_EMM, "EMM-PROC  - Leaving the UE NAS UL-Count to the one received from NAS message %d for UE " MME_UE_S1AP_ID_FMT ".\n",
-          emm_ctx_p->_security.ul_count.seq_num, emm_ctx_p->ue_id);
+    OAILOG_DEBUG (LOG_NAS_EMM, "EMM-PROC  - Leaving the UE NAS UL-Count to the one received from NAS message %d but updating the overflow from S10 %d for UE " MME_UE_S1AP_ID_FMT ".\n",
+          emm_ctx_p->_security.ul_count.seq_num, emm_ctx_p->_security.ul_count.overflow, emm_ctx_p->ue_id);
+    /** Still update the ul_count overflow. */
+    emm_ctx_p->_security.ul_count.overflow = mm_eps_ctxt->nas_ul_count.overflow;
   }
   emm_ctx_p->_security.dl_count = mm_eps_ctxt->nas_dl_count;
-
-
+  OAILOG_DEBUG (LOG_NAS_EMM, "EMM-PROC  - Final UE NAS DL-Count to the one received from S10 %d (overflow %d) for UE " MME_UE_S1AP_ID_FMT ".\n",
+      emm_ctx_p->_security.dl_count.seq_num, emm_ctx_p->_security.dl_count.overflow, emm_ctx_p->ue_id);
 
   /**
    * Set the NAS ciphering and integrity keys.
@@ -1252,12 +1255,12 @@ void emm_context_dump (
       switch (emm_context->_tai_list.partial_tai_list[k].typeoflist) {
       case TRACKING_AREA_IDENTITY_LIST_ONE_PLMN_NON_CONSECUTIVE_TACS: {
           tai_t tai = {0};
-          tai.plmn.mcc_digit1 = emm_context->_tai_list.partial_tai_list[k].u.tai_one_plmn_non_consecutive_tacs.mcc_digit1;
-          tai.plmn.mcc_digit2 = emm_context->_tai_list.partial_tai_list[k].u.tai_one_plmn_non_consecutive_tacs.mcc_digit2;
-          tai.plmn.mcc_digit3 = emm_context->_tai_list.partial_tai_list[k].u.tai_one_plmn_non_consecutive_tacs.mcc_digit3;
-          tai.plmn.mnc_digit1 = emm_context->_tai_list.partial_tai_list[k].u.tai_one_plmn_non_consecutive_tacs.mnc_digit1;
-          tai.plmn.mnc_digit2 = emm_context->_tai_list.partial_tai_list[k].u.tai_one_plmn_non_consecutive_tacs.mnc_digit2;
-          tai.plmn.mnc_digit3 = emm_context->_tai_list.partial_tai_list[k].u.tai_one_plmn_non_consecutive_tacs.mnc_digit3;
+          tai.plmn.mcc_digit1 = emm_context->_tai_list.partial_tai_list[k].u.tai_one_plmn_non_consecutive_tacs.plmn.mcc_digit1;
+          tai.plmn.mcc_digit2 = emm_context->_tai_list.partial_tai_list[k].u.tai_one_plmn_non_consecutive_tacs.plmn.mcc_digit2;
+          tai.plmn.mcc_digit3 = emm_context->_tai_list.partial_tai_list[k].u.tai_one_plmn_non_consecutive_tacs.plmn.mcc_digit3;
+          tai.plmn.mnc_digit1 = emm_context->_tai_list.partial_tai_list[k].u.tai_one_plmn_non_consecutive_tacs.plmn.mnc_digit1;
+          tai.plmn.mnc_digit2 = emm_context->_tai_list.partial_tai_list[k].u.tai_one_plmn_non_consecutive_tacs.plmn.mnc_digit2;
+          tai.plmn.mnc_digit3 = emm_context->_tai_list.partial_tai_list[k].u.tai_one_plmn_non_consecutive_tacs.plmn.mnc_digit3;
           for (int p = 0; p < (emm_context->_tai_list.partial_tai_list[k].numberofelements+1); p++) {
             tai.tac        = emm_context->_tai_list.partial_tai_list[k].u.tai_one_plmn_non_consecutive_tacs.tac[p];
 
