@@ -17,9 +17,9 @@ file(GLOB SOURCES $OAI_HSS_DIR/util/*.cpp)
 
 # Include header files
 include_directories(OAI_HSS_DIR/util/include)
-include_directories($OAI_MODULES_DIR/modules/rapidjson/include/)
-include_directories($OAI_MODULES_DIR/modules/freeDiameter/include/)
-include_directories($OAI_MODULES_DIR/modules/c-ares)
+include_directories($OAI_MODULES_DIR/../git_submodules/rapidjson/include/)
+include_directories($OAI_MODULES_DIR/../git_submodules/freeDiameter/include/)
+include_directories($OAI_MODULES_DIR/../git_submodules/c-ares)
 # Create shared library
 add_library(${PROJECT_NAME} STATIC ${SOURCES})
 

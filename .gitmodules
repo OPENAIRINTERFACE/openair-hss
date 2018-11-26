@@ -1,18 +1,19 @@
-[submodule "build/hss_rel14/modules/c-ares"]
-	path = build/hss_rel14/modules/c-ares
-	url = https://github.com/c-ares/c-ares.git
-[submodule "build/hss_rel14/modules/rapidjson"]
-	path = build/hss_rel14/modules/rapidjson
-	url = https://github.com/miloyip/rapidjson.git
-[submodule "build/hss_rel14/modules/cpp-driver"]
-	path = build/hss_rel14/modules/cpp-driver
-	url = https://github.com/datastax/cpp-driver.git
-[submodule "build/hss_rel14/modules/spdlog"]
-	path = build/hss_rel14/modules/spdlog
-	url = https://github.com/gabime/spdlog.git
-[submodule "build/hss_rel14/modules/freeDiameter"]
-	path = build/hss_rel14/modules/freeDiameter
-	url = https://gerrit.opencord.org/freeDiameter.git
-[submodule "build/hss_rel14/modules/pistache"]
-	path = build/hss_rel14/modules/pistache
-	url = https://github.com/oktal/pistache.git
+[submodule "build/git_submodules/c-ares"]
+        path = build/git_submodules/c-ares
+        url = https://github.com/c-ares/c-ares.git
+[submodule "build/git_submodules/rapidjson"]
+        path = build/git_submodules/rapidjson
+        url = https://github.com/miloyip/rapidjson.git
+[submodule "build/git_submodules/cpp-driver"]
+        path = build/git_submodules/cpp-driver
+        url = https://github.com/datastax/cpp-driver.git
+[submodule "build/git_submodules/spdlog"]
+        path = build/git_submodules/spdlog
+        url = https://github.com/gabime/spdlog.git
+[submodule "build/git_submodules/freeDiameter"]
+        path = build/git_submodules/freeDiameter
+        url = https://gerrit.opencord.org/freeDiameter.git
+[submodule "build/git_submodules/pistache"]
+        path = build/git_submodules/pistache
+        url = https://github.com/oktal/pistache.git
+

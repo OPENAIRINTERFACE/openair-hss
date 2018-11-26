@@ -179,9 +179,12 @@ pdn_context_t *  mme_app_create_pdn_context(ue_context_t * const ue_context, con
     pdn_context->default_ebi            = 5 + ue_context->next_def_ebi_offset;
     ue_context->next_def_ebi_offset++;
 
+    pdn_context->subscribed_apn_ambr = apn_configuration->ambr;
+
     pdn_context->context_identifier     = apn_configuration->context_identifier;
     pdn_context->pdn_type               = apn_configuration->pdn_type;
     if (apn_configuration->nb_ip_address) {
+      pdn_context->paa = calloc(1, sizeof(paa_t));
       pdn_context->paa->pdn_type           = apn_configuration->ip_address[0].pdn_type;// TODO check this later...
       pdn_context->paa->ipv4_address       = apn_configuration->ip_address[0].address.ipv4_address;
       if (2 == apn_configuration->nb_ip_address) {

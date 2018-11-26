@@ -378,15 +378,20 @@ install_opencoord.org_freediameter() {
 
   if [[ $prompt =~ [yY](es)* ]]
   then
-    pushd `pwd`
-    cd /tmp
-    rm -rf /tmp/freeDiameter
-    echo "Downloading opencoord.org freeDiameter "
-    git clone https://gerrit.opencord.org/freeDiameter.git
-    res=$?
-    [[ $res -ne 0 ]] && popd && return $res
-    cd freeDiameter
-    git apply $OPENAIRCN_DIR/build/patches/0001-opencoord.org.freeDiameter.patch
+    git submodule init
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
+    git submodule update
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
+    pushd $OPENAIRCN_DIR/build/git_submodules/freeDiameter
+    git pull origin master 
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
+    if ! patch -R -p1 -s -f --dry-run <  $OPENAIRCN_DIR/build/patches/0001-opencoord.org.freeDiameter.patch; then
+          patch -p1 <  $OPENAIRCN_DIR/build/patches/0001-opencoord.org.freeDiameter.patch
+    else
+      echo_info "Detected freeDiameter $OPENAIRCN_DIR/build/patches/0001-opencoord.org.freeDiameter.patch alredy applied"
+    fi
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
+  
     rm -rf build
     mkdir -p build
     cd build
@@ -400,9 +405,7 @@ install_opencoord.org_freediameter() {
     $SUDO make install
     res=$?
     [[ $res -ne 0 ]] && popd && return $res
-    cd /tmp
-    rm -rf /tmp/freediameter
-    popd     
+    popd
     return $?
   fi
 }

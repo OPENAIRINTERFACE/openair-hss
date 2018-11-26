@@ -39,6 +39,8 @@ extern "C" {
 #endif
 
 #define PGW_CONFIG_STRING_PGW_CONFIG                            "P-GW"
+#define PGW_CONFIG_STRING_PID_DIRECTORY                         "PID_DIRECTORY"
+#define PGW_CONFIG_STRING_INSTANCE                              "INSTANCE"
 #define PGW_CONFIG_STRING_NETWORK_INTERFACES_CONFIG             "NETWORK_INTERFACES"
 #define PGW_CONFIG_STRING_PGW_INTERFACE_NAME_FOR_S5_S8          "PGW_INTERFACE_NAME_FOR_S5_S8"
 #define PGW_CONFIG_STRING_PGW_INTERFACE_NAME_FOR_SGI            "PGW_INTERFACE_NAME_FOR_SGI"
@@ -116,6 +118,8 @@ typedef struct pgw_config_s {
   /* Reader/writer lock for this configuration */
   pthread_rwlock_t rw_lock;
   bstring          config_file;
+  bstring          pid_dir;
+  unsigned int     instance;
 
   struct {
     bstring        if_name_S5_S8;

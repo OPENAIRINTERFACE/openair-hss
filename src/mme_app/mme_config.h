@@ -41,6 +41,7 @@
 
 #define MME_CONFIG_STRING_MME_CONFIG                     "MME"
 #define MME_CONFIG_STRING_PID_DIRECTORY                  "PID_DIRECTORY"
+#define MME_CONFIG_STRING_INSTANCE                       "INSTANCE"
 
 // todo: what is run mode?
 #define MME_CONFIG_STRING_RUN_MODE                       "RUN_MODE"
@@ -151,7 +152,7 @@ typedef struct mme_config_s {
   /* Reader/writer lock for this configuration */
   pthread_rwlock_t rw_lock;
 
-
+  unsigned int instance;
   bstring config_file;
   bstring pid_dir;
   bstring realm;

@@ -21,9 +21,9 @@ OBJECTS := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(SOURCES:.$(SRCEXT)=.o))
 DEPENDS := $(OBJECTS:%.o=%.d)
 CFLAGS := -std=c++11 -Wreturn-type -g -pthread -lrt # -Wall
 INC := -I $(OAI_HSS_UTIL_DIR)/include \
- -I $(OAI_MODULES_DIR)/modules/rapidjson/include \
- -I $(OAI_MODULES_DIR)/modules/freeDiameter/include \
- -I $(OAI_MODULES_DIR)/modules/c-ares
+ -I $(OAI_MODULES_DIR)/../git_submodules/rapidjson/include \
+ -I $(OAI_MODULES_DIR)/../git_submodules/freeDiameter/include \
+ -I $(OAI_MODULES_DIR)/../git_submodules/c-ares
 
 $(TARGET): $(OBJECTS)
 	@echo " Linking..."

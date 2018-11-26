@@ -1294,6 +1294,10 @@ gtpv2c_bearer_context_created_ie_get (
        rc = gtpv2c_bearer_qos_ie_get (ie_p->t, ntohs (ie_p->l), ie_p->i, &ieValue[read + sizeof (nw_gtpv2c_ie_tlv_t)], &bearer_context->bearer_level_qos);
        break;
 
+    case NW_GTPV2C_IE_BEARER_FLAGS:
+       OAILOG_WARNING (LOG_S11, "Received IE BEARER_FLAGS %u to implement\n", ie_p->t);
+      break;
+        
     default:
       OAILOG_ERROR (LOG_S11, "Received unexpected IE %u\n", ie_p->t);
       return NW_GTPV2C_IE_INCORRECT;
@@ -1368,7 +1372,7 @@ gtpv2c_bearer_context_modified_ie_get (
 int
 gtpv2c_bearer_context_created_ie_set (
   nw_gtpv2c_msg_handle_t * msg,
-  const bearer_context_created_t const * bearer)
+  const bearer_context_created_t * const bearer)
 {
   nw_rc_t                                   rc;
 
@@ -1619,47 +1623,47 @@ gtpv2c_apn_ie_get (
   return NW_OK;
 }
 
-////------------------------------------------------------------------------------
-//int
-//gtpv2c_apn_ie_set (
-//  nw_gtpv2c_msg_handle_t * msg,
-//  const char *apn)
-//{
-//  nw_rc_t                                   rc;
-//  uint8_t                                *value;
-//  uint8_t                                 apn_length;
-//  uint8_t                                 offset = 0;
-//  uint8_t                                *last_size;
-//  uint8_t                                 word_length = 0;
-//
-//  DevAssert (apn );
-//  DevAssert (msg );
-//  apn_length = strlen (apn);
-//  value = calloc (apn_length + 1, sizeof (uint8_t));
-//  last_size = &value[0];
-//
-//  while (apn[offset]) {
-//    /*
-//     * We replace the . by the length of the word
-//     */
-//    if (apn[offset] == '.') {
-//      *last_size = word_length;
-//      word_length = 0;
-//      last_size = &value[offset + 1];
-//    } else {
-//      word_length++;
-//      value[offset + 1] = apn[offset];
-//    }
-//
-//    offset++;
-//  }
-//
-//  *last_size = word_length;
-//  rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_APN, apn_length + 1, 0, value);
-//  DevAssert (NW_OK == rc);
-//  free_wrapper ((void**)&value);
-//  return RETURNok;
-//}
+//------------------------------------------------------------------------------
+int
+gtpv2c_apn_ie_set (
+  nw_gtpv2c_msg_handle_t * msg,
+  const char *apn)
+{
+  nw_rc_t                                   rc;
+  uint8_t                                *value;
+  uint8_t                                 apn_length;
+  uint8_t                                 offset = 0;
+  uint8_t                                *last_size;
+  uint8_t                                 word_length = 0;
+
+  DevAssert (apn );
+  DevAssert (msg );
+  apn_length = strlen (apn);
+  value = calloc (apn_length + 1, sizeof (uint8_t));
+  last_size = &value[0];
+
+  while (apn[offset]) {
+    /*
+     * We replace the . by the length of the word
+     */
+    if (apn[offset] == '.') {
+      *last_size = word_length;
+      word_length = 0;
+      last_size = &value[offset + 1];
+    } else {
+      word_length++;
+      value[offset + 1] = apn[offset];
+    }
+
+    offset++;
+  }
+
+  *last_size = word_length;
+  rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_APN, apn_length + 1, 0, value);
+  DevAssert (NW_OK == rc);
+  free_wrapper ((void**)&value);
+  return RETURNok;
+}
 
 int
 gtpv2c_apn_plmn_ie_set (
@@ -1706,6 +1710,60 @@ gtpv2c_apn_plmn_ie_set (
   free_wrapper ((void**) &value);
   return RETURNok;
 }
+
+
+
+int
+gtpv2c_uli_ie_set (
+    nw_gtpv2c_msg_handle_t * msg,
+    const Uli_t * uli)
+{
+  nw_rc_t                                 rc;
+  uint8_t                                 value[22];
+  uint8_t                                 *current = NULL;
+  uint8_t                                 length = 1; // present field
+
+  DevAssert (uli );
+  DevAssert (msg );
+  value[0] = uli->present;
+  current = &value[1];
+  if (ULI_CGI & uli->present) {
+    current[0] = (uli->s.cgi.mcc[1] << 4) | (uli->s.cgi.mcc[0]);
+    current[1] = (uli->s.cgi.mnc[2] << 4) | (uli->s.cgi.mcc[2]);
+    current[2] = (uli->s.cgi.mnc[1] << 4) | (uli->s.cgi.mnc[0]);
+    current[3] = (uint8_t)((uli->s.cgi.lac & 0xFF00) >> 8);
+    current[4] = (uint8_t)(uli->s.cgi.lac & 0x00FF);
+    current[5] = (uint8_t)((uli->s.cgi.ci & 0xFF00) >> 8);
+    current[6] = (uint8_t)(uli->s.cgi.ci & 0x00FF);
+    current = &current[7];
+    length += 7;
+  }
+  if (ULI_TAI & uli->present) {
+    current[0] = (uli->s.tai.mcc[1] << 4) | (uli->s.tai.mcc[0]);
+    current[1] = (uli->s.tai.mnc[2] << 4) | (uli->s.tai.mcc[2]);
+    current[2] = (uli->s.tai.mnc[1] << 4) | (uli->s.tai.mnc[0]);
+    current[3] = (uint8_t)((uli->s.tai.tac & 0xFF00) >> 8);
+    current[4] = (uint8_t)(uli->s.tai.tac & 0x00FF);
+    current = &current[5];
+    length += 5;
+  }
+  if (ULI_ECGI & uli->present) {
+    current[0] = (uli->s.ecgi.plmn.mcc_digit2 << 4) | (uli->s.ecgi.plmn.mcc_digit1);
+    current[1] = (uli->s.ecgi.plmn.mnc_digit3 << 4) | (uli->s.ecgi.plmn.mcc_digit3);
+    current[2] = (uli->s.ecgi.plmn.mnc_digit2 << 4) | (uli->s.ecgi.plmn.mnc_digit1);
+    current[3] = (uint8_t)((uli->s.ecgi.cell_identity.enb_id & 0x000F0000) >> 16);
+    current[4] = (uint8_t)((uli->s.ecgi.cell_identity.enb_id & 0x0000FF00) >> 8);
+    current[5] = (uint8_t)(uli->s.ecgi.cell_identity.enb_id & 0x000000FF);
+    current[6] = (uint8_t)(uli->s.ecgi.cell_identity.cell_id);
+    current = &current[7];
+    length += 7;
+  }
+  current = NULL;
+  rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_ULI, length, 0, value);
+  DevAssert (NW_OK == rc);
+  return RETURNok;
+}
+
 
 //------------------------------------------------------------------------------
 nw_rc_t

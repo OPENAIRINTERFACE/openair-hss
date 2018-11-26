@@ -1395,8 +1395,8 @@ _mme_app_handle_s1ap_ue_context_release (const mme_ue_s1ap_id_t mme_ue_s1ap_id,
 //------------------------------------------------------------------------------
 void
 mme_app_handle_s1ap_ue_context_release_complete (
-  const itti_s1ap_ue_context_release_complete_t const
-  *s1ap_ue_context_release_complete)
+  const itti_s1ap_ue_context_release_complete_t * const
+  s1ap_ue_context_release_complete)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
   struct ue_context_s                    *ue_context = NULL;
@@ -1670,7 +1670,7 @@ void mme_ue_context_update_ue_emm_state (
     update_mme_app_stats_attached_ue_sub();
   }else{
     OAILOG_CRITICAL(LOG_MME_APP, "**** Abnormal - No handler for state transition of UE with mme_ue_s1ap_ue_id "MME_UE_S1AP_ID_FMT " "
-        "entering %d state from %d state. ****\n", ue_context->mm_state, new_mm_state);
+        "entering %d state from %d state. ****\n", mme_ue_s1ap_id, ue_context->mm_state, new_mm_state);
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
   // todo: transition to/from UE_HANDOVER state!
@@ -1701,7 +1701,7 @@ void mme_ue_context_update_ue_emm_state (
 //------------------------------------------------------------------------------
 void
 mme_app_handle_s1ap_ue_context_release_req (
-  const itti_s1ap_ue_context_release_req_t const *s1ap_ue_context_release_req)
+  const itti_s1ap_ue_context_release_req_t * const s1ap_ue_context_release_req)
 
 {
   _mme_app_handle_s1ap_ue_context_release(s1ap_ue_context_release_req->mme_ue_s1ap_id,
@@ -1721,24 +1721,19 @@ mme_app_handle_s1ap_ue_context_release_req (
 //  }
 //}
 
+
 //------------------------------------------------------------------------------
 void mme_app_handle_s1ap_enb_deregistered_ind (const itti_s1ap_eNB_deregistered_ind_t * const enb_dereg_ind)
 {
   for (int ue_idx = 0; ue_idx < enb_dereg_ind->nb_ue_to_deregister; ue_idx++) {
-//    struct ue_context_s *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, enb_dereg_ind->mme_ue_s1ap_id[ue_idx]);
-
-//    if (ue_context) {
-//      ue_context->ecm_state = ECM_IDLE;
       mme_app_send_nas_signalling_connection_rel_ind(enb_dereg_ind->mme_ue_s1ap_id[ue_idx]); /**< If any procedures were ongoing, kill them. */
-      /** Release the s1ap contexts implicitly. */
       _mme_app_handle_s1ap_ue_context_release(enb_dereg_ind->mme_ue_s1ap_id[ue_idx], enb_dereg_ind->enb_ue_s1ap_id[ue_idx], enb_dereg_ind->enb_id, S1AP_SCTP_SHUTDOWN_OR_RESET);
-//    }
   }
 }
 
 //------------------------------------------------------------------------------
 void
-mme_app_handle_enb_reset_req (const itti_s1ap_enb_initiated_reset_req_t const * enb_reset_req)
+mme_app_handle_enb_reset_req (const itti_s1ap_enb_initiated_reset_req_t * const enb_reset_req)
 {
 
   MessageDef *message_p;

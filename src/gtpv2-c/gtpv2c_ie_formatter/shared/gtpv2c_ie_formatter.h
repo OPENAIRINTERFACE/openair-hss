@@ -91,4 +91,20 @@ gtpv2c_target_identification_ie_set (
   nw_gtpv2c_msg_handle_t * msg,
   const target_identification_t * target_identification);
 
+/* Selection Mode
+ * 3GPP TS 29.274 #8.58
+ */
+
+nw_rc_t
+gtpv2c_selection_mode_ie_set (
+    nw_gtpv2c_msg_handle_t * msg, SelectionMode_t * sm);
+
+nw_rc_t
+gtpv2c_selection_mode_ie_get (
+  uint8_t ieType,
+  uint16_t ieLength,
+  uint8_t ieInstance,
+  uint8_t * ieValue,
+  void *arg);
+
 #endif /* FILE_GTPV2C_IE_FORMATTER_SEEN */

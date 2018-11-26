@@ -53,6 +53,7 @@
 
 #include "../gtpv2-c/gtpv2c_ie_formatter/shared/gtpv2c_ie_formatter.h"
 #include "s11_ie_formatter.h"
+#include "s11_messages_types.h"
 
 
 extern hash_table_ts_t                        *s11_mme_teid_2_gtv2c_teid_handle;
@@ -89,10 +90,13 @@ s11_mme_create_session_request (
    * Putting the information Elements
    */
   gtpv2c_imsi_ie_set (&(ulp_req.hMsg), &req_p->imsi);
+  gtpv2c_uli_ie_set (&(ulp_req.hMsg), &req_p->uli);
   gtpv2c_rat_type_ie_set (&(ulp_req.hMsg), &req_p->rat_type);
   gtpv2c_pdn_type_ie_set (&(ulp_req.hMsg), &req_p->pdn_type);
   gtpv2c_paa_ie_set(&(ulp_req.hMsg), &req_p->paa);
   gtpv2c_apn_restriction_ie_set(&(ulp_req.hMsg), 0);
+  gtpv2c_ambr_ie_set (&(ulp_req.hMsg), &req_p->ambr);
+
   /**
    * Indication Flags.
    */
@@ -122,9 +126,21 @@ s11_mme_create_session_request (
 //                              req_p->pgw_address_for_cp.ipv4 ? &req_p->pgw_address_for_cp.ipv4_address : 0,
 //                              req_p->pgw_address_for_cp.ipv6 ? &req_p->pgw_address_for_cp.ipv6_address : NULL);
 
-//  gtpv2c_apn_ie_set (&(ulp_req.hMsg), req_p->apn);
-  gtpv2c_apn_plmn_ie_set (&(ulp_req.hMsg), req_p->apn, &req_p->serving_network);
+  int num_dots = 0;
+  for (int i =  0; i < strlen(req_p->apn); i++) {
+    if (req_p->apn[i] == '.') {
+      num_dots++;
+    }
+  }
+  // May check 2 dots
+  if (num_dots) {
+    gtpv2c_apn_ie_set (&(ulp_req.hMsg), req_p->apn);
+  } else {
+    gtpv2c_apn_plmn_ie_set (&(ulp_req.hMsg), req_p->apn, &req_p->serving_network);
+  }
 
+  gtpv2c_selection_mode_ie_set(&(ulp_req.hMsg), &req_p->selection_mode);
+  
   gtpv2c_serving_network_ie_set (&(ulp_req.hMsg), &req_p->serving_network);
   if(req_p->pco.num_protocol_or_container_id){
     gtpv2c_pco_ie_set (&(ulp_req.hMsg), &req_p->pco);

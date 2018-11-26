@@ -157,6 +157,11 @@ function main()
     esac
   done
   
+  set_openair_env 
+  if [[ $verbose -eq 1 ]]; then
+    cecho "OPENAIRCN_DIR    = $OPENAIRCN_DIR" $green
+  fi
+  
   if [ $var_check_install_oai_software -gt 0 ];then
     update_package_db
     check_install_mme_software  $force
@@ -170,19 +175,10 @@ function main()
     fi
   fi
   
-  set_openair_env 
-
-  if [[ $verbose -eq 1 ]]; then
-    cecho "OPENAIRCN_DIR    = $OPENAIRCN_DIR" $green
-  fi
 
   local dlog=$OPENAIRCN_DIR/build/log
   
   mkdir -m 777 -p $dlog
-  
-  if [ ! -d /usr/local/etc/oai/freeDiameter ]; then
-    $SUDO mkdir -m 777 -p /usr/local/etc/oai/freeDiameter
-  fi
   
   ##############################################################################
   # Create mme
@@ -226,11 +222,12 @@ function main()
   fi 
 
   $SUDO killall -q mme
-  $SUDO cp -upv $OPENAIRCN_DIR/build/mme/build/mme_app/mme /usr/local/bin && echo_success "mme installed"  
+  $SUDO cp -upv $OPENAIRCN_DIR/build/mme/build/mme_app/mme /usr/local/bin && $SUDO chmod 755 /usr/local/bin/mme && echo_success "mme installed"  
   return 0
 }
 
 
 main "$@"
+
 
 

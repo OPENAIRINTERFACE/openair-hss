@@ -42,7 +42,7 @@ set(OAI_HSS_DIR           ${OPENAIRCN_DIR}/src/oai_hss)
 set(OPENAIR_BIN_DIR       ${OPENAIRCN_DIR}/src/oai_hss)
 
 
-set(CMAKE_MODULE_PATH "${OPENAIRCN_DIR}/build/modules" "${CMAKE_MODULE_PATH}")
+set(CMAKE_MODULE_PATH "${OPENAIRCN_DIR}/build/cmake_modules" "${CMAKE_MODULE_PATH}")
 
 macro(add_boolean_option name val helpstr)
   if(DEFINED ${name})

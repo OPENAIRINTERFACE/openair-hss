@@ -166,6 +166,7 @@ int spgw_config_parse_opt_line (
   spgw_config_t * spgw_config_p)
 {
   int                                     c;
+  char                                   *config_file = NULL;
 
   spgw_config_init (spgw_config_p);
 
@@ -203,14 +204,22 @@ int spgw_config_parse_opt_line (
     }
   }
 
+  if (!spgw_config_p->config_file) {
+    config_file = getenv("CONFIG_FILE");
+    if (config_file) {
+      spgw_config_p->config_file            = bfromcstr(config_file);
+      spgw_config_p->pgw_config.config_file = bfromcstr(config_file);
+      spgw_config_p->sgw_config.config_file = bfromcstr(config_file);
+    } else {
+      OAILOG_ERROR (LOG_CONFIG, "No config file provided through arg -c, or env variable CONFIG_FILE, exiting\n");
+      return RETURNerror;
+    }
+  }
+  OAILOG_DEBUG (LOG_CONFIG, "Config file is %s\n", config_file);
+
   /*
    * Parse the configuration file using libconfig
    */
-  if (!spgw_config_p->config_file) {
-    spgw_config_p->config_file            = bfromcstr("/usr/local/etc/oai/spgw.conf");
-    spgw_config_p->pgw_config.config_file = bfromcstr("/usr/local/etc/oai/spgw.conf");
-    spgw_config_p->sgw_config.config_file = bfromcstr("/usr/local/etc/oai/spgw.conf");
-  }
   if (spgw_config_parse_file (spgw_config_p) != 0) {
     return RETURNerror;
   }

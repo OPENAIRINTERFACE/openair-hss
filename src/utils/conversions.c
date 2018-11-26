@@ -138,3 +138,15 @@ imsi64_t imsi_to_imsi64(const imsi_t * const imsi)
 }
 
 
+//------------------------------------------------------------------------------
+void tai_to_Tai(const tai_t * const tai, Tai_t * const Tai)
+{
+  Tai->mcc[0] = tai->plmn.mcc_digit1;
+  Tai->mcc[1] = tai->plmn.mcc_digit2;
+  Tai->mcc[2] = tai->plmn.mcc_digit3;
+  Tai->mnc[0] = tai->plmn.mnc_digit1;
+  Tai->mnc[1] = tai->plmn.mnc_digit2;
+  Tai->mnc[2] = tai->plmn.mnc_digit3;
+  Tai->tac    = tai->tac;
+}
+

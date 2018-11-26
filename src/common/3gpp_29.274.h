@@ -315,7 +315,7 @@ typedef struct uli_s {
     Sai_t  sai;
     Rai_t  rai;
     Tai_t  tai;
-    Ecgi_t ecgi;
+    ecgi_t ecgi;
     Lai_t  lai;
   } s;
 } Uli_t;
