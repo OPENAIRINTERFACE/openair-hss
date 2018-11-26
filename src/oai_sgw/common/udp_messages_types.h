@@ -42,7 +42,7 @@ typedef struct {
 } udp_init_t;
 
 typedef struct {
-  uint8_t  *buffer; /**< Always stacked used. */
+  uint8_t  *buffer;
   uint32_t  buffer_length;
   uint32_t  buffer_offset;
   struct in_addr  peer_address;
@@ -50,7 +50,7 @@ typedef struct {
 } udp_data_req_t;
 
 typedef struct {
-  uint8_t                       msgBuf[UDP_DATA_MAX_MSG_LEN];
+  uint8_t  *buffer;
   uint32_t  buffer_length;
   struct in_addr  peer_address;
   uint16_t  peer_port;

@@ -230,16 +230,18 @@ udp_server_receive_and_process (
       OAILOG_ERROR (LOG_UDP, "Recvfrom failed %s\n", strerror (errno));
       //break;
     } else {
-
       MessageDef                             *message_p = NULL;
       udp_data_ind_t                         *udp_data_ind_p;
-   //      uint8_t                                *forwarded_buffer = NULL;
+      uint8_t                                *forwarded_buffer = NULL;
+
       AssertFatal (sizeof (udp_sock_pP->buffer) >= bytes_received, "UDP BUFFER OVERFLOW");
-      message_p = itti_alloc_new_message (TASK_UDP, UDP_DATA_IND);
+      forwarded_buffer = itti_malloc (TASK_UDP, udp_sock_pP->task_id, bytes_received);
+      DevAssert (forwarded_buffer != NULL);
+      memcpy (forwarded_buffer, udp_sock_pP->buffer, bytes_received);
+      message_p = itti_alloc_new_message_sized (TASK_UDP, UDP_DATA_IND, sizeof(udp_data_ind_t));
       DevAssert (message_p != NULL);
       udp_data_ind_p = UDP_DATA_IND(message_p);
-      memcpy (udp_data_ind_p->msgBuf, udp_sock_pP->buffer, bytes_received);
-
+      udp_data_ind_p->buffer = forwarded_buffer;
       udp_data_ind_p->buffer_length = bytes_received;
       udp_data_ind_p->peer_port = htons (addr.sin_port);
       udp_data_ind_p->peer_address = addr.sin_addr;

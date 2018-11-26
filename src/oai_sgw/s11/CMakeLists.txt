@@ -23,7 +23,6 @@ include_directories("${SRC_TOP_DIR}/nas/esm")
 include_directories("${SRC_TOP_DIR}/nas/esm/msg")
 include_directories("${SRC_TOP_DIR}/nas/api/network")
 include_directories("${SRC_TOP_DIR}/nas/api/mme")
-include_directories("${SRC_TOP_DIR}/mme_app")
 
 add_library(S11_SGW
     s11_common.c

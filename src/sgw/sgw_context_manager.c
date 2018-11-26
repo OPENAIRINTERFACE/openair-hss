@@ -48,7 +48,6 @@
 #include "log.h"
 #include "sgw_ie_defs.h"
 #include "3gpp_23.401.h"
-#include "mme_config.h"
 #include "sgw_defs.h"
 #include "sgw_context_manager.h"
 #include "sgw.h"
