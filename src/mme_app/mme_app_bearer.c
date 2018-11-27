@@ -59,9 +59,11 @@
 
 //----------------------------------------------------------------------------
 // todo: check which one needed
-static void mme_app_send_s1ap_path_switch_request_acknowledge(mme_ue_s1ap_id_t mme_ue_s1ap_id, bearer_contexts_to_be_created_t * bcs_tbc);
+static void mme_app_send_s1ap_path_switch_request_acknowledge(mme_ue_s1ap_id_t mme_ue_s1ap_id,
+    uint16_t encryption_algorithm_capabilities, uint16_t integrity_algorithm_capabilities,
+    bearer_contexts_to_be_created_t * bcs_tbc);
 
-static void mme_app_send_s1ap_path_switch_request_failure(mme_ue_s1ap_id_t mme_ue_s1ap_id, enb_ue_s1ap_id_t enb_ue_s1ap_id, sctp_assoc_id_t assoc_id, enum s1cause cause);
+static void mme_app_send_s1ap_path_switch_request_failure(mme_ue_s1ap_id_t mme_ue_s1ap_id, enb_ue_s1ap_id_t enb_ue_s1ap_id, sctp_assoc_id_t assoc_id, const S1ap_Cause_PR cause_type);
 
 /**
  * E-RAB handling.
@@ -1289,9 +1291,10 @@ mme_app_handle_modify_bearer_resp (
      * In addition, perform an implicit detach in any case.
      */
     if(ue_context->pending_x2_handover){
-      OAILOG_ERROR(LOG_MME_APP, "Error modifying SAE-GW bearers for UE with ueId: " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
-      mme_app_send_s1ap_path_switch_request_failure(ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, ue_context->sctp_assoc_id_key, S1AP_SYSTEM_FAILURE);
+      OAILOG_ERROR(LOG_MME_APP, "Error modifying SAE-GW bearers for UE with ueId: " MME_UE_S1AP_ID_FMT " (no implicit detach - waiting explicit detach.). \n", ue_context->mme_ue_s1ap_id);
+      mme_app_send_s1ap_path_switch_request_failure(ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, ue_context->sctp_assoc_id_key, S1ap_Cause_PR_misc);
       /** We continue with the implicit detach, since handover already happened. */
+      OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
     }
     /** Implicitly detach the UE --> If EMM context is missing, still continue with the resource removal. */
     message_p = itti_alloc_new_message (TASK_MME_APP, NAS_IMPLICIT_DETACH_UE_IND);
@@ -1312,7 +1315,7 @@ mme_app_handle_modify_bearer_resp (
         ue_context->mme_ue_s1ap_id);
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
   }
-  mme_app_get_pdn_context(ue_context, current_bearer_p->pdn_cx_id, current_bearer_p->ebi, NULL, &pdn_context);
+  mme_app_get_pdn_context(ue_context, current_bearer_p->pdn_cx_id, current_bearer_p->linked_ebi, NULL, &pdn_context);
   /** If a too fast detach happens this is null. */
   DevAssert(pdn_context); /**< Should exist if bearers exist (todo: lock for this). */
   /** Set all bearers of the EBI to valid. */
@@ -1346,6 +1349,23 @@ mme_app_handle_modify_bearer_resp (
   /** If it is an X2 Handover, send a path switch response back. */
    if(ue_context->pending_x2_handover){
      OAILOG_INFO(LOG_MME_APP, "Sending an S1AP Path Switch Request Acknowledge for UE with ueId: " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
+     // todo: update them from the X2 message!
+
+     uint16_t encryption_algorithm_capabilities = 0;
+     uint16_t integrity_algorithm_capabilities = 0;
+     if(emm_data_context_update_security_parameters(ue_context->mme_ue_s1ap_id, &encryption_algorithm_capabilities, &integrity_algorithm_capabilities) != RETURNok){
+        OAILOG_ERROR(LOG_MME_APP, "Error updating AS security parameters for UE with ueId: " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
+        mme_app_send_s1ap_path_switch_request_failure(ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id,
+            ue_context->sctp_assoc_id_key, S1ap_Cause_PR_nas);
+        /** Implicitly detach the UE --> If EMM context is missing, still continue with the resource removal. */
+        message_p = itti_alloc_new_message (TASK_MME_APP, NAS_IMPLICIT_DETACH_UE_IND);
+        DevAssert (message_p != NULL);
+        message_p->ittiMsg.nas_implicit_detach_ue_ind.ue_id = ue_context->mme_ue_s1ap_id;
+        MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_IMPLICIT_DETACH_UE_IND_MESSAGE");
+        itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+        OAILOG_FUNC_OUT (LOG_MME_APP);
+      }
+     OAILOG_INFO(LOG_MME_APP, "Successfully updated AS security parameters for UE with ueId: " MME_UE_S1AP_ID_FMT " for X2 handover. \n", ue_context->mme_ue_s1ap_id);
 
      bearer_contexts_created_t  bcs_tbs;
      memset((void*)&bcs_tbs, 0, sizeof(bcs_tbs));
@@ -1355,8 +1375,7 @@ mme_app_handle_modify_bearer_resp (
        mme_app_get_bearer_contexts_to_be_created(registered_pdn_ctx, &bcs_tbs, BEARER_STATE_NULL);
        /** The number of bearers will be incremented in the method. S10 should just pick the ebi. */
      }
-
-     mme_app_send_s1ap_path_switch_request_acknowledge(ue_context->mme_ue_s1ap_id, &bcs_tbs);
+     mme_app_send_s1ap_path_switch_request_acknowledge(ue_context->mme_ue_s1ap_id, encryption_algorithm_capabilities, integrity_algorithm_capabilities, &bcs_tbs);
      /** Reset the flag. */
      ue_context->pending_x2_handover = false;
      OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
@@ -2656,7 +2675,9 @@ void mme_app_trigger_mme_initiated_dedicated_bearer_deactivation_procedure (ue_c
  * No timer to be started.
  */
 static
-void mme_app_send_s1ap_path_switch_request_acknowledge(mme_ue_s1ap_id_t mme_ue_s1ap_id, bearer_contexts_to_be_created_t * bcs_tbc){
+void mme_app_send_s1ap_path_switch_request_acknowledge(mme_ue_s1ap_id_t mme_ue_s1ap_id,
+    uint16_t encryption_algorithm_capabilities, uint16_t integrity_algorithm_capabilities,
+    bearer_contexts_to_be_created_t * bcs_tbc){
   MessageDef * message_p = NULL;
   bearer_context_t                       *current_bearer_p = NULL;
   ebi_t                                   bearer_id = 0;
@@ -2693,10 +2714,6 @@ void mme_app_send_s1ap_path_switch_request_acknowledge(mme_ue_s1ap_id_t mme_ue_s
   path_switch_req_ack_p->bearer_ctx_to_be_switched_list = calloc(1, sizeof(bearer_contexts_to_be_created_t));
   memcpy((void*)path_switch_req_ack_p->bearer_ctx_to_be_switched_list, bcs_tbc, sizeof(*bcs_tbc));
 
-  uint16_t encryption_algorithm_capabilities = 0;
-  uint16_t integrity_algorithm_capabilities = 0;
-
-  emm_data_context_get_security_parameters(mme_ue_s1ap_id, &encryption_algorithm_capabilities, &integrity_algorithm_capabilities);
   /** Set the new security parameters. */
   path_switch_req_ack_p->security_capabilities_encryption_algorithms = encryption_algorithm_capabilities;
   path_switch_req_ack_p->security_capabilities_integrity_algorithms  = integrity_algorithm_capabilities;
@@ -2729,12 +2746,11 @@ void mme_app_send_s1ap_path_switch_request_acknowledge(mme_ue_s1ap_id_t mme_ue_s
  * The MME_APP ITTI message elements though need to be deallocated.
  */
 static
-void mme_app_send_s1ap_path_switch_request_failure(mme_ue_s1ap_id_t mme_ue_s1ap_id, enb_ue_s1ap_id_t enb_ue_s1ap_id, sctp_assoc_id_t assoc_id, enum s1cause cause){
+void mme_app_send_s1ap_path_switch_request_failure(mme_ue_s1ap_id_t mme_ue_s1ap_id, enb_ue_s1ap_id_t enb_ue_s1ap_id, sctp_assoc_id_t assoc_id, const S1ap_Cause_PR cause_type){
   OAILOG_FUNC_IN (LOG_MME_APP);
   /** Send a S1AP Path Switch Request Failure TO THE TARGET ENB. */
   MessageDef * message_p = itti_alloc_new_message (TASK_MME_APP, S1AP_PATH_SWITCH_REQUEST_FAILURE);
   DevAssert (message_p != NULL);
-  DevAssert(cause != S1AP_SUCCESSFUL_HANDOVER);
 
   itti_s1ap_path_switch_request_failure_t *s1ap_path_switch_request_failure_p = &message_p->ittiMsg.s1ap_path_switch_request_failure;
   memset ((void*)s1ap_path_switch_request_failure_p, 0, sizeof (itti_s1ap_path_switch_request_failure_t));
@@ -2744,7 +2760,7 @@ void mme_app_send_s1ap_path_switch_request_failure(mme_ue_s1ap_id_t mme_ue_s1ap_
   s1ap_path_switch_request_failure_p->enb_ue_s1ap_id = enb_ue_s1ap_id;
   s1ap_path_switch_request_failure_p->assoc_id = assoc_id; /**< To whatever the new SCTP association is. */
   /** Set the negative cause. */
-  s1ap_path_switch_request_failure_p->cause = cause;
+  s1ap_path_switch_request_failure_p->cause_type = cause_type;
 
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "MME_APP Sending S1AP PATH_SWITCH_REQUEST_FAILURE");
   /** Sending a message to S1AP. */
@@ -2794,19 +2810,6 @@ mme_app_handle_path_switch_req(
   //  sctp_stream_id_t        sctp_stream;
   uint16_t encryption_algorithm_capabilities = (uint16_t)0;
   uint16_t integrity_algorithm_capabilities  = (uint16_t)0;
-  // todo: update them from the X2 message!
-  if(emm_data_context_update_security_parameters(ue_context->mme_ue_s1ap_id, &encryption_algorithm_capabilities, &integrity_algorithm_capabilities) != RETURNok){
-    OAILOG_ERROR(LOG_MME_APP, "Error updating AS security parameters for UE with ueId: " MME_UE_S1AP_ID_FMT ". \n", s1ap_path_switch_req->mme_ue_s1ap_id);
-    mme_app_send_s1ap_path_switch_request_failure(s1ap_path_switch_req->mme_ue_s1ap_id, s1ap_path_switch_req->enb_ue_s1ap_id, s1ap_path_switch_req->sctp_assoc_id, SYSTEM_FAILURE);
-    /** Implicitly detach the UE --> If EMM context is missing, still continue with the resource removal. */
-    message_p = itti_alloc_new_message (TASK_MME_APP, NAS_IMPLICIT_DETACH_UE_IND);
-    DevAssert (message_p != NULL);
-    message_p->ittiMsg.nas_implicit_detach_ue_ind.ue_id = ue_context->mme_ue_s1ap_id;
-    MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_IMPLICIT_DETACH_UE_IND_MESSAGE");
-    itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
-    OAILOG_FUNC_OUT (LOG_MME_APP);
-  }
- OAILOG_INFO(LOG_MME_APP, "Successfully updated AS security parameters for UE with ueId: " MME_UE_S1AP_ID_FMT " for X2 handover. \n", s1ap_path_switch_req->mme_ue_s1ap_id);
 
  // Stop Initial context setup process guard timer,if running todo: path switch request?
   if (ue_context->path_switch_req_timer.id != MME_APP_TIMER_INACTIVE_ID) {

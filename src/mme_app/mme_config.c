@@ -618,7 +618,7 @@ static int mme_config_parse_file (mme_config_t * config_pP)
       }
 
       config_pP->served_tai.nb_tai = num;
-      AssertFatal(16 >= num , "Too many TAIs configured %d", num);
+      AssertFatal(32 >= num , "Too many TAIs configured %d", num);
 
       for (i = 0; i < num; i++) {
         sub2setting = config_setting_get_elem (setting, i);

@@ -375,10 +375,6 @@ int mm_ue_eps_context_update_security_parameters(const mme_ue_s1ap_id_t ue_id,
     uint16_t *encryption_algorithm_capabilities,
     uint16_t *integrity_algorithm_capabilities);
 
-void emm_data_context_get_security_parameters(const mme_ue_s1ap_id_t ue_id,
-    uint16_t *encryption_algorithm_capabilities,
-    uint16_t *integrity_algorithm_capabilities);
-
 void nas_start_T3450(const mme_ue_s1ap_id_t ue_id, struct nas_timer_s * const T3450,  time_out_t time_out_cb, void *timer_callback_args);
 void nas_start_T3460(const mme_ue_s1ap_id_t ue_id, struct nas_timer_s * const T3460,  time_out_t time_out_cb, void *timer_callback_args);
 void nas_start_T3470(const mme_ue_s1ap_id_t ue_id, struct nas_timer_s * const T3470,  time_out_t time_out_cb, void *timer_callback_args);

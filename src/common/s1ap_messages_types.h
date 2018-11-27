@@ -434,7 +434,7 @@ typedef struct itti_s1ap_path_switch_request_failure_s {
   mme_ue_s1ap_id_t        mme_ue_s1ap_id;
   enb_ue_s1ap_id_t        enb_ue_s1ap_id:24;
   sctp_assoc_id_t         assoc_id;
-  enum s1cause            cause;
+  S1ap_Cause_PR           cause_type;
 } itti_s1ap_path_switch_request_failure_t;
 
 /** Handover Cancel. */

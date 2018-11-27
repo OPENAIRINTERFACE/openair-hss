@@ -1164,7 +1164,7 @@ int s1ap_handle_path_switch_request_failure (
     const itti_s1ap_path_switch_request_failure_t *path_switch_request_failure_pP)
 {
   DevAssert(path_switch_request_failure_pP);
-  return s1ap_path_switch_request_failure (path_switch_request_failure_pP->assoc_id, path_switch_request_failure_pP->mme_ue_s1ap_id, path_switch_request_failure_pP->enb_ue_s1ap_id, path_switch_request_failure_pP->cause);
+  return s1ap_path_switch_request_failure (path_switch_request_failure_pP->assoc_id, path_switch_request_failure_pP->mme_ue_s1ap_id, path_switch_request_failure_pP->enb_ue_s1ap_id, path_switch_request_failure_pP->cause_type);
 }
 
 int s1ap_path_switch_request_failure (
