@@ -44,21 +44,20 @@
 #include <stdlib.h>
 
 #include "bstrlib.h"
+#include "log.h"
 
 #include "common_types.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"
 #include "3gpp_29.274.h"
-#include "common_defs.h"
 #include "mme_app_ue_context.h"
-#include "esm_main.h"
-#include "commonDef.h"
-#include "log.h"
-
+#include "common_defs.h"
 #include "emm_data.h"
-#include "esm_data.h"
-#include "esm_pt.h"
+#include "esm_main.h"
 #include "esm_ebr.h"
+#include "esm_pt.h"
+#include "esm_data.h"
+
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/

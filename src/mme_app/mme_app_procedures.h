@@ -28,8 +28,6 @@
   \email: lionel.gauthier@eurecom.fr
 */
 
-#include "queue.h"
-
 //typedef int (*mme_app_pdu_in_resp_t)(void *arg);
 //typedef int (*mme_app_pdu_in_rej_t)(void *arg);
 //typedef int (*mme_app_time_out_t)(void *arg);

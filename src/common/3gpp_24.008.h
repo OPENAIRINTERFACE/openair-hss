@@ -29,9 +29,10 @@
 #ifndef FILE_3GPP_24_008_SEEN
 #define FILE_3GPP_24_008_SEEN
 
+#include <stdbool.h>
+#include "bstrlib.h"
 #include "3gpp_23.003.h"
 #include "EsmCause.h"
-#include <stdbool.h>
 
 //#warning "Set it to max size of message"
 #define IE_UNDEFINED_MAX_LENGTH 1024

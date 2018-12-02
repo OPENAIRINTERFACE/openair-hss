@@ -20,28 +20,28 @@
  */
 
 /*****************************************************************************
-
-Source      emm_esm.h
+Source      nas_esm_proc.h
 
 Version     0.1
 
-Date        2012/10/16
+Date        2012/09/20
 
-Product     NAS stack
+Product     NAS ESM stack
 
-Subsystem   EPS Mobility Management
+Subsystem   NAS ESM main process
 
-Author      Frederic Maurel
+Author      Frederic Maurel, Lionel GAUTHIER, Dincer Beken
 
-Description Defines the EMMESM Service Access Point that provides
-        interlayer services to the EPS Session Management sublayer
-        for service registration and activate/deactivate PDP context.
+Description NAS ESM procedure call manager
 
 *****************************************************************************/
-#ifndef FILE_EMM_ESM_SEEN
-#define FILE_EMM_ESM_SEEN
+#ifndef FILE_NAS_ESM_PROC_SEEN
+#define FILE_NAS_ESM_PROC_SEEN
 
-#include "emm_esmDef.h"
+#include "common_defs.h"
+#include "mme_config.h"
+#include "networkDef.h"
+#include "esm_sapDef.h"
 
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/
@@ -59,8 +59,37 @@ Description Defines the EMMESM Service Access Point that provides
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
 /****************************************************************************/
 
-void emm_esm_initialize(void);
+/*
+ * --------------------------------------------------------------------------
+ *          NAS procedures triggered by the user
+ * --------------------------------------------------------------------------
+ */
 
-int emm_esm_send(const emm_esm_t *msg);
 
-#endif /* FILE_EMM_ESM_SEEN*/
+/*
+ * --------------------------------------------------------------------------
+ *      NAS procedures triggered by the network
+ * --------------------------------------------------------------------------
+ */
+
+
+
+int nas_proc_establish_ind(const mme_ue_s1ap_id_t ue_id,
+                            const tai_t originating_tai,
+                            const ecgi_t ecgi,
+                            const as_cause_t as_cause,
+                            STOLEN_REF bstring *msg);
+/*
+ * --------------------------------------------------------------------------
+ *      NAS ESM procedures triggered by the mme applicative layer
+ * --------------------------------------------------------------------------
+ */
+int nas_proc_pdn_connectivity_res(esm_pdn_connectivity_t *esm_pdn_connectivity_rsp);
+int nas_proc_pdn_connectivity_fail(esm_pdn_connectivity_t *esm_pdn_connectivity_fail);
+int nas_proc_pdn_disconnect_res (esm_pdn_disconnect_t * esm_pdn_disconnect_res);
+int nas_proc_activate_dedicated_bearer(esm_eps_activate_eps_bearer_ctx_req_t * esm_cn_activate);
+int nas_proc_modify_eps_bearer_ctx(esm_eps_modify_eps_bearer_ctx_req_t * esm_cn_modify_eps_bearer_ctx);
+int nas_proc_deactivate_dedicated_bearer(esm_eps_deactivate_eps_bearer_ctx_req_t * esm_cn_deactivate);
+int nas_proc_establish_bearer_update(esm_eps_update_esm_bearer_ctxs_req_t * esm_cn_update_esm_bearer_ctxs);
+int nas_proc_e_rab_failure(mme_ue_s1ap_id_t ue_id, ebi_t ebi, bool modify, bool remove);
+#endif /* FILE_NAS_PROC_SEEN*/

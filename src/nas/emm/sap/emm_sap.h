@@ -42,11 +42,10 @@ Description Defines the EMM Service Access Points at which the EPS
 #ifndef FILE_EMM_SAP_SEEN
 #define FILE_EMM_SAP_SEEN
 
-#include "emm_data.h"
-#include "emm_regDef.h"
-#include "emm_esmDef.h"
 #include "emm_asDef.h"
 #include "emm_cnDef.h"
+#include "emm_data.h"
+#include "emm_regDef.h"
 
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/
@@ -86,13 +85,13 @@ typedef enum {
   EMMREG_LOWERLAYER_FAILURE   = _EMMREG_LOWERLAYER_FAILURE,
   EMMREG_LOWERLAYER_RELEASE   = _EMMREG_LOWERLAYER_RELEASE,
   EMMREG_LOWERLAYER_NON_DELIVERY = _EMMREG_LOWERLAYER_NON_DELIVERY,
-  /* EMMESM-SAP */
-  EMMESM_RELEASE_IND      = _EMMESM_RELEASE_IND,
-  EMMESM_UNITDATA_REQ     = _EMMESM_UNITDATA_REQ,
-  EMMESM_ACTIVATE_BEARER_REQ    = _EMMESM_ACTIVATE_BEARER_REQ,
-  EMMESM_MODIFY_BEARER_REQ    = _EMMESM_MODIFY_BEARER_REQ,
-  EMMESM_DEACTIVATE_BEARER_REQ  = _EMMESM_DEACTIVATE_BEARER_REQ,
-  EMMESM_UNITDATA_IND     = _EMMESM_UNITDATA_IND,
+//  /* EMMESM-SAP */
+//  EMMESM_RELEASE_IND      = _EMMESM_RELEASE_IND,
+//  EMMESM_UNITDATA_REQ     = _EMMESM_UNITDATA_REQ,
+//  EMMESM_ACTIVATE_BEARER_REQ    = _EMMESM_ACTIVATE_BEARER_REQ,
+//  EMMESM_MODIFY_BEARER_REQ    = _EMMESM_MODIFY_BEARER_REQ,
+//  EMMESM_DEACTIVATE_BEARER_REQ  = _EMMESM_DEACTIVATE_BEARER_REQ,
+//  EMMESM_UNITDATA_IND     = _EMMESM_UNITDATA_IND,
   /* EMMAS-SAP */
   EMMAS_SECURITY_REQ      = _EMMAS_SECURITY_REQ,
   EMMAS_SECURITY_IND      = _EMMAS_SECURITY_IND,
@@ -164,7 +163,7 @@ typedef struct emm_sap_s {
   emm_primitive_t primitive;
   union {
     emm_reg_t emm_reg;  /* EMMREG-SAP primitives    */
-    emm_esm_t emm_esm;  /* EMMESM-SAP primitives    */
+//    emm_esm_t emm_esm;  /* EMMESM-SAP primitives    */
     emm_as_t  emm_as;   /* EMMAS-SAP primitives     */
     emm_cn_t  emm_cn;   /* EMMCN-SAP primitives     */
   } u;

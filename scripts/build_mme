@@ -221,8 +221,18 @@ function main()
     ret=$?;[[ $ret -ne 0 ]] && return $ret
   fi 
 
-  $SUDO killall -q mme
-  $SUDO cp -upv $OPENAIRCN_DIR/build/mme/build/mme /usr/local/bin && $SUDO chmod 755 /usr/local/bin/mme && echo_success "mme installed"  
+#  $SUDO killall -q mme
+#  $SUDO cp -upv $OPENAIRCN_DIR/build/mme/build/mme /usr/local/bin && $SUDO chmod 755 /usr/local/bin/mme && echo_success "mme installed"  
+   $SUDO killall -q mme
+#    $SUDO cp -upv $OPENAIRCN_DIR/build/mme/build/mme /usr/local/bin && echo_success "mme installed" 
+    $SUDO killall -q mme_source
+    $SUDO killall -q mme_target
+    $SUDO rm /usr/local/bin/mme
+    $SUDO rm /usr/local/bin/mme_source
+    $SUDO rm /usr/local/bin/mme_target
+    $SUDO cp -upv $OPENAIRCN_DIR/build/mme/build/mme /usr/local/bin/mme_source && echo_success "mme_source installed"
+    $SUDO cp -upv $OPENAIRCN_DIR/build/mme/build/mme /usr/local/bin/mme_target && echo_success "mme_target installed"
+
   return 0
 }
 

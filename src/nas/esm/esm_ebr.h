@@ -63,19 +63,18 @@ const char * esm_ebr_state2string(esm_ebr_state esm_ebr_state);
 bool esm_ebr_is_reserved(ebi_t ebi);
 
 void esm_ebr_initialize(void);
-int esm_ebr_assign(emm_data_context_t * emm_context, ebi_t ebi, pdn_context_t *pdn_context);
-int esm_ebr_release (emm_data_context_t * emm_context, bearer_context_t * bearer_context, pdn_context_t * pdn_context, bool ue_requested);
+int esm_ebr_assign(esm_context_t * esm_context, ebi_t ebi, pdn_context_t *pdn_context);
+int esm_ebr_release (esm_context_t * esm_context, bearer_context_t * bearer_context, pdn_context_t * pdn_context, bool ue_requested);
 
-int esm_ebr_start_timer(emm_data_context_t * emm_context, ebi_t ebi, CLONE_REF const_bstring msg,
-                        long sec, nas_timer_callback_t cb);
-int esm_ebr_stop_timer(emm_data_context_t * emm_context, ebi_t ebi);
+int esm_ebr_start_timer(esm_context_t * esm_context, ebi_t ebi, CLONE_REF const_bstring msg, long sec, nas_timer_callback_t cb);
+int esm_ebr_stop_timer(esm_context_t * esm_context, ebi_t ebi);
 
-ebi_t esm_ebr_get_pending_ebi(emm_data_context_t * emm_context, esm_ebr_state status);
+ebi_t esm_ebr_get_pending_ebi(esm_context_t * esm_context, esm_ebr_state status);
 
-int esm_ebr_set_status(emm_data_context_t * emm_context, ebi_t ebi, esm_ebr_state status,
-                       bool ue_requested);
-esm_ebr_state esm_ebr_get_status(emm_data_context_t * emm_context, ebi_t ebi);
+int esm_ebr_set_status(esm_context_t * esm_context, ebi_t ebi, esm_ebr_state status,bool ue_requested);
 
-//bool esm_ebr_is_not_in_use(emm_data_context_t * emm_context, ebi_t ebi);
+esm_ebr_state esm_ebr_get_status(esm_context_t * esm_context, ebi_t ebi);
+
+//bool esm_ebr_is_not_in_use(esm_context_t * esm_context, ebi_t ebi);
 
 #endif /* ESM_EBR_SEEN*/

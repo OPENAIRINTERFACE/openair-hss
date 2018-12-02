@@ -60,18 +60,20 @@
 #include "gcc_diag.h"
 #include "dynamic_memory_check.h"
 #include "assertions.h"
-#include "3gpp_requirements_24.301.h"
-#include "common_types.h"
+
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"
 #include "3gpp_29.274.h"
-#include "mme_app_ue_context.h"
-#include "emm_proc.h"
-#include "common_defs.h"
-#include "nas_timer.h"
+#include "3gpp_requirements_24.301.h"
+#include "common_types.h"
+
 #include "emm_data.h"
-#include "emm_sap.h"
+#include "emm_proc.h"
 #include "emm_cause.h"
+#include "emm_sap.h"
+#include "nas_timer.h"
+#include "mme_app_ue_context.h"
+#include "common_defs.h"
 #include "secu_defs.h"
 #include "mme_app_defs.h"
 #include "nas_itti_messaging.h"
@@ -99,7 +101,7 @@
    Timer handlers
 */
 static void _security_t3460_handler (void *);
-static int _security_ll_failure (emm_data_context_t * emm_context, struct nas_emm_proc_s *nas_emm_proc);
+static int _security_ll_failure (emm_data_context_t * emm_context, struct nas_emm_proc_s *nas_emm_emm_proc);
 static int _security_non_delivered_ho (emm_data_context_t *emm_context, struct nas_emm_proc_s *nas_emm_proc);
 
 /*
@@ -107,7 +109,7 @@ static int _security_non_delivered_ho (emm_data_context_t *emm_context, struct n
    the security mode control procedure is aborted or the maximum value of the
    retransmission timer counter is exceed
 */
-static int _security_abort (emm_data_context_t * emm_context, struct nas_base_proc_s * base_proc);
+static int _security_abort (emm_data_context_t * emm_context, struct nas_emm_base_proc_s * emm_base_proc);
 static int _security_select_algorithms (const int ue_eiaP, const int ue_eeaP, int *const mme_eiaP, int *const mme_eeaP);
 
 
@@ -250,7 +252,7 @@ emm_proc_security_mode_control (
     /*
      * Setup ongoing EMM procedure callback functions
      */
-    ((nas_base_proc_t *)smc_proc)->parent                   = (nas_base_proc_t*)emm_specific_proc;
+    ((nas_emm_base_proc_t *)smc_proc)->parent               = (nas_emm_base_proc_t*)emm_specific_proc;
     smc_proc->emm_com_proc.emm_proc.delivered               = NULL;
     smc_proc->emm_com_proc.emm_proc.previous_emm_fsm_state  = emm_fsm_get_state(emm_ctx);
     smc_proc->emm_com_proc.emm_proc.not_delivered           = _security_ll_failure;
@@ -391,8 +393,8 @@ emm_proc_security_mode_complete (mme_ue_s1ap_id_t ue_id, const imeisv_mobile_ide
     nas_stop_T3460(ue_id, &smc_proc->T3460, timer_callback_arg);
 
     /** Set the SMC flag in the parent procedure. */
-    if(((nas_base_proc_t *)smc_proc)->parent){
-      ((nas_emm_specific_proc_t*)((nas_base_proc_t *)smc_proc)->parent)->smc_performed = true;
+    if(((nas_emm_base_proc_t *)smc_proc)->parent){
+      ((nas_emm_specific_proc_t*)((nas_emm_base_proc_t *)smc_proc)->parent)->smc_performed = true;
     }
 
     if (imeisvmob) {
@@ -776,14 +778,14 @@ static int _security_non_delivered_ho (emm_data_context_t * emm_context, struct 
  **      Others:    T3460                                      **
  **                                                                        **
  ***************************************************************************/
-static int _security_abort (emm_data_context_t * emm_context, struct nas_base_proc_s * base_proc)
+static int _security_abort (emm_data_context_t * emm_context, struct nas_emm_base_proc_s * emm_base_proc)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
 
 
-  if (base_proc) {
-    nas_emm_smc_proc_t * smc_proc = (nas_emm_smc_proc_t *)base_proc;
+  if (emm_base_proc) {
+    nas_emm_smc_proc_t * smc_proc = (nas_emm_smc_proc_t *)emm_base_proc;
     OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Abort Security Mode Control procedure " "(ue_id=" MME_UE_S1AP_ID_FMT ")\n", smc_proc->ue_id);
     /*
      * Stop timer T3460

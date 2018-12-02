@@ -40,8 +40,8 @@ Description
 
 #ifndef FILE_EMM_CNDEF_SEEN
 #define FILE_EMM_CNDEF_SEEN
-#include "intertask_interface.h"
 #include "emm_proc.h"
+#include "intertask_interface.h"
 
 typedef enum emmcn_primitive_s {
   _EMMCN_START = 400,
@@ -115,6 +115,7 @@ typedef struct itti_nas_pdn_connectivity_rsp_s  emm_cn_pdn_res_t;
 typedef struct itti_nas_pdn_connectivity_fail_s emm_cn_pdn_fail_t;
 typedef struct itti_nas_pdn_disconnect_rsp_s    emm_cn_pdn_disconnect_res_t;
 typedef struct itti_mme_app_activate_eps_bearer_ctx_req_s emm_cn_activate_dedicated_bearer_req_t;
+typedef struct itti_nas_pdn_connectivity_rsp_s  emm_cn_activate_default_bearer_req_t;
 typedef struct itti_mme_app_modify_eps_bearer_ctx_req_s emm_cn_modify_eps_bearer_ctx_req_t;
 typedef struct itti_mme_app_deactivate_eps_bearer_ctx_req_s emm_cn_deactivate_dedicated_bearer_req_t;
 typedef struct itti_mme_app_update_esm_bearer_ctxs_req_s emm_cn_update_esm_bearer_ctxs_req_t;

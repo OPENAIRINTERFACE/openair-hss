@@ -28,8 +28,8 @@
 
 #include "TLVEncoder.h"
 #include "TLVDecoder.h"
-#include "EsmMessageContainer.h"
 #include "log.h"
+#include "EsmMessageContainer.h"
 
 //------------------------------------------------------------------------------
 int decode_esm_message_container (

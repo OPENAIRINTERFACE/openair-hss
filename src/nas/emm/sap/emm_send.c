@@ -38,6 +38,7 @@
         Access Stratum sublayer.
 
 *****************************************************************************/
+
 #include <pthread.h>
 #include <inttypes.h>
 #include <stdint.h>
@@ -50,19 +51,19 @@
 
 #include "log.h"
 #include "assertions.h"
-#include "commonDef.h"
+#include "common_defs.h"
 #include "common_types.h"
 #include "common_defs.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"
 #include "3gpp_29.274.h"
 #include "3gpp_24.301.h"
-#include "emm_msgDef.h"
-#include "emm_proc.h"
 #include "mme_config.h"
-#include "emm_send.h"
-#include "emm_data.h"
 #include "mme_app_ue_context.h"
+#include "emm_send.h"
+#include "emm_msgDef.h"
+#include "emm_data.h"
+#include "emm_proc.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/

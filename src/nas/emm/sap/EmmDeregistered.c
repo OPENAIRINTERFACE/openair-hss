@@ -60,14 +60,15 @@
 
 #include "log.h"
 #include "common_defs.h"
-#include "emm_fsm.h"
-#include "commonDef.h"
+#include "common_defs.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"
 #include "3gpp_29.274.h"
 #include "networkDef.h"
-
 #include "emm_proc.h"
+#include "emm_fsm.h"
+#include "emm_regDef.h"
+
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -238,7 +239,7 @@ int EmmDeregistered (emm_reg_t * const evt)
        nas_stop_T3450(evt->u.tau.proc->ue_id, &evt->u.tau.proc->T3450, timer_callback_args);
 
        if ((emm_ctx) && (evt->u.tau.proc->emm_spec_proc.emm_proc.base_proc.abort)) { /**< Currently, will perform IMPLICIT detach. */
-         (*evt->u.tau.proc->emm_spec_proc.emm_proc.base_proc.abort)((nas_base_proc_t*) emm_ctx, evt->u.tau.proc); // &evt->u.tau.proc->emm_spec_proc.emm_proc.base_proc);
+         (*evt->u.tau.proc->emm_spec_proc.emm_proc.base_proc.abort)((nas_emm_base_proc_t*) emm_ctx, evt->u.tau.proc); // &evt->u.tau.proc->emm_spec_proc.emm_proc.base_proc);
        }
  //
  //      if ((rc != RETURNerror) && (emm_ctx) && (evt->notify) && (evt->u.tau.proc->emm_spec_proc.emm_proc.base_proc.failure_notif)) {

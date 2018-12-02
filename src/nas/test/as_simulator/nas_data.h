@@ -43,20 +43,20 @@ Description Defines constants and functions used by the AS simulator
 #ifndef __NAS_DATA_H__
 #define __NAS_DATA_H__
 
-#include "EpsAttachType.h"
-#include "DetachType.h"
-#include "NasKeySetIdentifier.h"
-#include "EpsMobileIdentity.h"
+#include "../../ies/DetachType.h"
+#include "../../ies/EmmCause.h"
+#include "../../ies/EpsAttachType.h"
+#include "../../ies/EpsMobileIdentity.h"
+#include "../../ies/EsmCause.h"
+#include "../../ies/NasKeySetIdentifier.h"
+#include "../../ies/NasRequestType.h"
+#include "../../ies/NasSecurityAlgorithms.h"
+#include "../../ies/PdnAddress.h"
+#include "../../ies/PdnType.h"
+#include "../../ies/TrackingAreaIdentityList.h"
 #include "MobileIdentity.h"
 #include "IdentityType2.h"
-#include "NasRequestType.h"
-#include "PdnType.h"
-#include "PdnAddress.h"
-#include "NasSecurityAlgorithms.h"
 #include "GprsTimer.h"
-#include "TrackingAreaIdentityList.h"
-#include "EmmCause.h"
-#include "EsmCause.h"
 
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/

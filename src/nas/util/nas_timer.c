@@ -46,23 +46,12 @@
 
 #include "bstrlib.h"
 
+#include "nas_timer.h"
 #include "intertask_interface.h"
 #include "timer.h"
-#include "nas_timer.h"
-#include "commonDef.h"
+#include "common_defs.h"
 #include "common_defs.h"
 #include "dynamic_memory_check.h"
-
-//------------------------------------------------------------------------------
-int nas_timer_init (void)
-{
-  return (RETURNok);
-}
-
-//------------------------------------------------------------------------------
-void nas_timer_cleanup (void)
-{
-}
 
 //------------------------------------------------------------------------------
 
@@ -86,7 +75,7 @@ long int nas_timer_start (
   nas_itti_timer_arg->nas_timer_callback = nas_timer_callback;
   nas_itti_timer_arg->nas_timer_callback_arg = nas_timer_callback_args;
 
-  ret = timer_setup (sec, usec, TASK_NAS_MME, INSTANCE_DEFAULT, TIMER_ONE_SHOT, nas_itti_timer_arg, &timer_id);
+  ret = timer_setup (sec, usec, TASK_NAS_EMM, INSTANCE_DEFAULT, TIMER_ONE_SHOT, nas_itti_timer_arg, &timer_id);
 
   if (ret == -1) {
     free_wrapper((void*)&nas_itti_timer_arg);

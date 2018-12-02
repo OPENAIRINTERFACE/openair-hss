@@ -41,19 +41,17 @@ Description Defines functions executed at the ESM Service Access
 #define __ESM_SEND_H__
 
 #include "common_defs.h"
-#include "EsmStatus.h"
-
-#include "PdnConnectivityReject.h"
-#include "PdnDisconnectReject.h"
+#include "ActivateDedicatedEpsBearerContextRequest.h"
+#include "ActivateDefaultEpsBearerContextRequest.h"
 #include "BearerResourceAllocationReject.h"
 #include "BearerResourceModificationReject.h"
-
-#include "ActivateDefaultEpsBearerContextRequest.h"
-#include "ActivateDedicatedEpsBearerContextRequest.h"
-#include "ModifyEpsBearerContextRequest.h"
 #include "DeactivateEpsBearerContextRequest.h"
-
 #include "EsmInformationRequest.h"
+#include "EsmStatus.h"
+#include "ModifyEpsBearerContextRequest.h"
+#include "PdnConnectivityReject.h"
+#include "PdnConnectivityReject.h"
+#include "PdnDisconnectReject.h"
 
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/

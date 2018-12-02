@@ -1197,6 +1197,13 @@ If the GUTI/IMSI mapping in the network was incorrect, the network should respon
     ACCEPT message or TRACKING AREA UPDATE REJECT message if the failure of handover procedure                      \
     is reported by the lower layer and the S1 signalling connection exists."
 
+#define R10_6_5_1_6_a "Abnormal cases on the network side                                                          \
+    If one or more information elements in the PDN CONNECTIVITY REQUEST message differ from the ones received within \
+    the previous PDN CONNECTIVITY REQUEST message, and multiple PDN connections for a given APN are not allowed, the \
+    network may deactivate the existing EPS bearer contexts for the PDN connection locally without notification to   \
+    the UE and proceed with the requested PDN connectivity procedure or may reject this PDN connectivity procedure   \
+    including the ESM cause #55 \"multiple PDN connections for a given APN not allowed\", in the PDN CONNECTIVITY REJECT message."
+#define R10_6_5_1_6_a_BRIEF ""
 
 #define R10_9_9_3_7_1__1 "Detach type information element - Type of detach                    \
     All other values are interpreted as 'combined EPS/IMSI detach' in this version of the     \

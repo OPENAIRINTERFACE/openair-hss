@@ -110,7 +110,8 @@
     <TASK_TIMER enabled="0"/>
     <TASK_GTPV1_U enabled="1"/>
     <TASK_MME_APP enabled="1"/>
-    <TASK_NAS_MME enabled="1"/>
+    <TASK_NAS_EMM enabled="1"/>
+    <TASK_NAS_ESM enabled="1"/>
     <TASK_S10 enabled="1"/>
     <TASK_S11 enabled="1"/>
     <TASK_S1AP enabled="1"/>
@@ -124,7 +125,8 @@
     <TASK_TIMER enabled="0"/>
     <TASK_GTPV1_U enabled="1"/>
     <TASK_MME_APP enabled="1"/>
-    <TASK_NAS_MME enabled="1"/>
+    <TASK_NAS_EMM enabled="1"/>
+    <TASK_NAS_ESM enabled="1"/>
     <TASK_S10 enabled="1"/>
     <TASK_S11 enabled="1"/>
     <TASK_S1AP enabled="1"/>

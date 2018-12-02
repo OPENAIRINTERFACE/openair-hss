@@ -47,7 +47,6 @@
 #include <arpa/inet.h>
 
 #include "bstrlib.h"
-
 #include "dynamic_memory_check.h"
 #include "log.h"
 #include "msc.h"
@@ -59,18 +58,20 @@
 #include "3gpp_24.008.h"
 #include "3gpp_29.274.h"
 #include "mme_app_ue_context.h"
-#include "as_message.h"
-#include "emm_cause.h"
-#include "nas_itti_messaging.h"
+
 #include "emm_as.h"
-#include "emm_recv.h"
 #include "LowerLayer.h"
+#include "emm_cause.h"
+#include "emm_recv.h"
 #include "emm_send.h"
-#include "mme_app_defs.h"
-#include "nas_proc.h"
-#include "emm_proc.h"
 #include "TrackingAreaUpdateMobility.h"
 #include "esm_sap.h"
+
+#include "nas_itti_messaging.h"
+#include "as_message.h"
+#include "emm_proc.h"
+#include "mme_app_defs.h"
+#include "nas_emm_proc.h"
 
 
 /****************************************************************************/

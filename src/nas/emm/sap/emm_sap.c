@@ -49,17 +49,16 @@
 #include "bstrlib.h"
 
 #include "log.h"
-#include "commonDef.h"
+#include "common_defs.h"
 #include "common_types.h"
 #include "common_defs.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"
 #include "3gpp_29.274.h"
-#include "emm_sap.h"
-#include "emm_reg.h"
-#include "emm_esm.h"
 #include "emm_as.h"
 #include "emm_cn.h"
+#include "emm_reg.h"
+#include "emm_sap.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -93,7 +92,6 @@ emm_sap_initialize (
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   emm_reg_initialize ();
-  emm_esm_initialize ();
   emm_as_initialize ();
   OAILOG_FUNC_OUT (LOG_NAS_EMM);
 }
@@ -130,13 +128,15 @@ emm_sap_send (
      */
     msg->u.emm_reg.primitive = primitive;
     rc = emm_reg_send (&msg->u.emm_reg);
-  } else if ((primitive > (emm_primitive_t) EMMESM_PRIMITIVE_MIN) && (primitive < (emm_primitive_t) EMMESM_PRIMITIVE_MAX)) {
-    /*
-     * Forward to the EMMESM-SAP
-     */
-    msg->u.emm_esm.primitive = primitive;
-    rc = emm_esm_send (&msg->u.emm_esm);
-  } else if ((primitive > (emm_primitive_t) EMMAS_PRIMITIVE_MIN) && (primitive < (emm_primitive_t) EMMAS_PRIMITIVE_MAX)) {
+  }
+//  else if ((primitive > (emm_primitive_t) EMMESM_PRIMITIVE_MIN) && (primitive < (emm_primitive_t) EMMESM_PRIMITIVE_MAX)) {
+//    /*
+//     * Forward to the EMMESM-SAP
+//     */
+//    msg->u.emm_esm.primitive = primitive;
+//    rc = emm_esm_send (&msg->u.emm_esm);
+//  }
+  else if ((primitive > (emm_primitive_t) EMMAS_PRIMITIVE_MIN) && (primitive < (emm_primitive_t) EMMAS_PRIMITIVE_MAX)) {
     /*
      * Forward to the EMMAS-SAP
      */

@@ -200,7 +200,7 @@ int mme_app_handle_s6a_update_location_ans (
 
   /** For error codes, use nas_pdn_cfg_fail. */
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_PDN_CONFIG_RESP IMSI " IMSI_64_FMT, imsi64);
-  rc =  itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+  rc =  itti_send_msg_to_task (TASK_NAS_EMM, INSTANCE_DEFAULT, message_p);
 // todo:    unlock_ue_contexts(ue_context);
   OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
 
@@ -219,7 +219,7 @@ err:
 
   /** For error codes, use nas_pdn_cfg_fail. */
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_PDN_CONFIG_FAIL IMSI " IMSI_64_FMT, imsi64);
-  rc =  itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+  rc =  itti_send_msg_to_task (TASK_NAS_EMM, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
 }
 
@@ -284,10 +284,9 @@ mme_app_handle_s6a_cancel_location_req(
   DevAssert (message_p != NULL);
   message_p->ittiMsg.nas_implicit_detach_ue_ind.ue_id = ue_context->mme_ue_s1ap_id;
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_IMPLICIT_DETACH_UE_IND_MESSAGE");
-  itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+  itti_send_msg_to_task (TASK_NAS_EMM, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
 }
-
 
 int
 mme_app_handle_s6a_reset_req(

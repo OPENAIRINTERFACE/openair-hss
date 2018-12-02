@@ -21,21 +21,23 @@
 
 #ifndef FILE_TRACKING_AREA_UPDATE_REQUEST_SEEN
 #define FILE_TRACKING_AREA_UPDATE_REQUEST_SEEN
-#include "SecurityHeaderType.h"
-#include "MessageType.h"
-#include "EpsUpdateType.h"
-#include "NasKeySetIdentifier.h"
-#include "EpsMobileIdentity.h"
-#include "Nonce.h"
-#include "UeNetworkCapability.h"
-#include "TrackingAreaIdentity.h"
-#include "UeRadioCapabilityInformationUpdateNeeded.h"
-#include "EpsBearerContextStatus.h"
-#include "AdditionalUpdateType.h"
-#include "GutiType.h"
 #include "3gpp_23.003.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"
+#include "3gpp_24.301.h"
+
+#include "AdditionalUpdateType.h"
+#include "EpsBearerContextStatus.h"
+#include "EpsMobileIdentity.h"
+#include "EpsUpdateType.h"
+#include "GutiType.h"
+#include "MessageType.h"
+#include "NasKeySetIdentifier.h"
+#include "Nonce.h"
+#include "SecurityHeaderType.h"
+#include "TrackingAreaIdentity.h"
+#include "UeNetworkCapability.h"
+#include "UeRadioCapabilityInformationUpdateNeeded.h"
 
 /* Minimum length macro. Formed by minimum length of each mandatory field */
 #define TRACKING_AREA_UPDATE_REQUEST_MINIMUM_LENGTH ( \

@@ -39,9 +39,9 @@
 
 *****************************************************************************/
 
-#include "network_parser.h"
+#include "../../test/network/network_parser.h"
 
-#include "util/parser.h"
+#include "../../util/parser.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/

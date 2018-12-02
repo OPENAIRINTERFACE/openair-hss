@@ -40,13 +40,14 @@
 
 *****************************************************************************/
 
-#include "nas_process.h"
+#include "../../test/as_simulator/nas_process.h"
 
-#include "nas_data.h"
 #include "nas_message.h"
 
 #include <stdio.h>              // snprintf
 #include <string.h>             // memset
+
+#include "../../test/as_simulator/nas_data.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/

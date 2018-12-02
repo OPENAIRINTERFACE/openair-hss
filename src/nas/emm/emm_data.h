@@ -40,21 +40,23 @@ Description Defines internal private data handled by EPS Mobility
 #define FILE_EMM_DATA_SEEN
 
 #include <sys/types.h>
+
 #include "queue.h"
 #include "hashtable.h"
 #include "obj_hashtable.h"
-#include "securityDef.h"
-#include "TrackingAreaIdentityList.h"
-#include "emm_fsm.h"
-#include "nas_timer.h"
-#include "nas_procedures.h"
 #include "3gpp_24.301.h"
 #include "3gpp_24.008.h"
+#include "securityDef.h"
+
+#include "nas_emm_procedures.h"
+#include "emm_fsm.h"
+#include "esm_data.h"
 #include "AdditionalUpdateType.h"
-#include "UeNetworkCapability.h"
 #include "EpsBearerContextStatus.h"
 #include "EpsNetworkFeatureSupport.h"
-#include "esm_data.h"
+#include "TrackingAreaIdentityList.h"
+#include "UeNetworkCapability.h"
+#include "nas_timer.h"
 
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/
@@ -205,18 +207,7 @@ typedef struct emm_data_context_s {
 
   emm_fsm_state_t          _emm_fsm_state;
 
-
-  struct esm_context_s     esm_ctx;
-
-//  ue_network_capability_t  tau_ue_network_capability;         /* stored TAU Request IE Requirement MME24.301R10_5.5.3.2.4_4*/
-//  ms_network_capability_t  tau_ms_network_capability;         /* stored TAU Request IE Requirement MME24.301R10_5.5.3.2.4_4*/
   drx_parameter_t          _current_drx_parameter;            /* stored TAU Request IE Requirement MME24.301R10_5.5.3.2.4_4*/
-  eps_bearer_context_status_t   _eps_bearer_context_status;/* stored TAU Request IE Requirement MME24.301R10_5.5.3.2.4_5*/
-  eps_network_feature_support_t _eps_network_feature_support;
-
-
-  // TODO: DO BETTER  WITH BELOW
-  bstring         esm_msg;      /* ESM message contained within the initial request*/
 #  define EMM_CN_SAP_BUFFER_SIZE 4096
 
 

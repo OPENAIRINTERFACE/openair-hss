@@ -55,15 +55,13 @@
 
 #include "log.h"
 #include "common_defs.h"
-#include "emm_fsm.h"
-#include "commonDef.h"
+#include "common_defs.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"
 #include "3gpp_29.274.h"
-#include "emm_fsm.h"
-
 #include "emm_proc.h"
-
+#include "emm_fsm.h"
+#include "emm_regDef.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -168,7 +166,7 @@ EmmDeregisteredInitiated (
      * todo: make it optional!
      * Clear the ESM message, if exists.
      */
-    bdestroy_wrapper(&emm_ctx->esm_msg);
+//    bdestroy_wrapper(&emm_ctxC->esm_msg);
     // Release emm and esm context
     _clear_emm_ctxt(emm_ctx);
     break;

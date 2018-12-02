@@ -383,7 +383,7 @@ mme_app_handle_mme_s10_handover_completion_timer_expiry (mme_app_s10_proc_mme_ha
     message_p->ittiMsg.nas_implicit_detach_ue_ind.ue_id = ue_context->mme_ue_s1ap_id; /**< We don't send a Detach Type such that no Detach Request is sent to the UE if handover is performed. */
 
     MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_IMPLICIT_DETACH_UE_IND_MESSAGE");
-    itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+    itti_send_msg_to_task (TASK_NAS_EMM, INSTANCE_DEFAULT, message_p);
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
 
@@ -428,7 +428,7 @@ mme_app_handle_mobility_completion_timer_expiry (mme_app_s10_proc_mme_handover_t
     message_p->ittiMsg.nas_implicit_detach_ue_ind.ue_id = ue_context->mme_ue_s1ap_id; /**< We don't send a Detach Type such that no Detach Request is sent to the UE if handover is performed. */
 
     MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_IMPLICIT_DETACH_UE_IND_MESSAGE");
-    itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+    itti_send_msg_to_task (TASK_NAS_EMM, INSTANCE_DEFAULT, message_p);
   }else{
     OAILOG_WARNING(LOG_MME_APP, "CLR flag is NOT set for UE " MME_UE_S1AP_ID_FMT ". Not performing implicit detach. \n", ue_context->mme_ue_s1ap_id);
     /*

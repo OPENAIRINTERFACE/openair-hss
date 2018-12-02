@@ -23,10 +23,10 @@
 #define BEARER_RESOURCE_ALLOCATION_REJECT_H_
 
 #include "MessageType.h"
-#include "EsmCause.h"
 #include "3gpp_23.003.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"
+#include "EsmCause.h"
 
 /* Minimum length macro. Formed by minimum length of each mandatory field */
 #define BEARER_RESOURCE_ALLOCATION_REJECT_MINIMUM_LENGTH ( \

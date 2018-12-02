@@ -594,7 +594,7 @@ s1ap_is_ue_mme_id_in_list (
   mme_ue_s1ap_id_t                       *mme_ue_s1ap_id_p = (mme_ue_s1ap_id_t*)&mme_ue_s1ap_id;
 
   hashtable_ts_apply_callback_on_elements(&g_s1ap_enb_coll, s1ap_enb_find_ue_by_mme_ue_id_cb, (void*)mme_ue_s1ap_id_p, (void**)&ue_ref);
-  OAILOG_TRACE(LOG_S1AP, "Return ue_ref %p \n", ue_ref);
+//  OAILOG_TRACE(LOG_S1AP, "Return ue_ref %p \n", ue_ref);
   return ue_ref;
 }
 

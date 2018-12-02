@@ -52,6 +52,16 @@
      _a < _b ? _a : _b; })
 
 
+/*
+ * A list of PLMNs
+ */
+#define PLMN_LIST_T(SIZE) struct {uint8_t n_plmns; plmn_t plmn[SIZE];}
+
+/*
+ * A list of TACs
+ */
+#define TAC_LIST_T(SIZE) struct {uint8_t n_tacs; TAC_t tac[SIZE];}
+
 //------------------------------------------------------------------------------
 
 typedef enum {

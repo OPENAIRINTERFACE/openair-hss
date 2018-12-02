@@ -53,17 +53,18 @@
 #include "assertions.h"
 #include "log.h"
 #include "msc.h"
-#include "common_defs.h"
-#include "common_types.h"
-#include "nas_timer.h"
 #include "3gpp_requirements_24.301.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"
 #include "3gpp_29.274.h"
-#include "mme_app_ue_context.h"
-#include "emm_proc.h"
+#include "common_defs.h"
+#include "common_types.h"
+
 #include "emm_data.h"
+#include "emm_proc.h"
 #include "emm_sap.h"
+#include "nas_timer.h"
+#include "mme_app_ue_context.h"
 #include "conversions.h"
 #include "mme_app_defs.h"
 
@@ -86,7 +87,7 @@ static const char                      *_emm_identity_type_str[] = {
 static void _identification_t3470_handler (void *args);
 static int _identification_ll_failure (struct emm_data_context_s *emm_context, struct nas_emm_proc_s * emm_proc);
 static int _identification_non_delivered_ho (struct emm_data_context_s *emm_context, struct nas_emm_proc_s * emm_proc);
-static int _identification_abort (struct emm_data_context_s *emm_context, struct nas_base_proc_s* base_proc);
+static int _identification_abort (struct emm_data_context_s *emm_context, struct nas_emm_base_proc_s* emm_base_proc);
 
 
 static int _identification_request (nas_emm_ident_proc_t * const proc);
@@ -162,7 +163,7 @@ emm_proc_identification (
       ident_proc->identity_type                                 = type;
       ident_proc->retransmission_count                          = 0;
       ident_proc->ue_id                                         = ue_id;
-      ((nas_base_proc_t *)ident_proc)->parent                   = (nas_base_proc_t*)emm_proc;
+      ((nas_emm_base_proc_t *)ident_proc)->parent               = (nas_emm_base_proc_t*)emm_proc;
       ident_proc->emm_com_proc.emm_proc.delivered               = NULL;
       ident_proc->emm_com_proc.emm_proc.previous_emm_fsm_state  = emm_fsm_get_state(emm_context);
       ident_proc->emm_com_proc.emm_proc.not_delivered           = _identification_ll_failure;
@@ -255,10 +256,10 @@ emm_proc_identification_complete (
           OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - We already have EMM context with ueId " MME_UE_S1AP_ID_FMT " and IMSI " IMSI_64_FMT ". Setting new EMM context with ueId " MME_UE_S1AP_ID_FMT " into pending mode "
               "and implicitly detaching old EMM context. \n", imsi_emm_ctx_duplicate->ue_id, imsi64, emm_ctx->ue_id);
           void * unused= NULL;
-          nas_stop_T_retry_specific_procedure(emm_ctx->ue_id, &((nas_emm_specific_proc_t*)(((nas_base_proc_t *)ident_proc)->parent))->retry_timer, unused);
-          nas_start_T_retry_specific_procedure(emm_ctx->ue_id, &((nas_emm_specific_proc_t*)(((nas_base_proc_t *)ident_proc)->parent))->retry_timer, ((nas_emm_specific_proc_t*)(((nas_base_proc_t *)ident_proc)->parent))->retry_cb, emm_ctx);
+          nas_stop_T_retry_specific_procedure(emm_ctx->ue_id, &((nas_emm_specific_proc_t*)(((nas_emm_base_proc_t *)ident_proc)->parent))->retry_timer, unused);
+          nas_start_T_retry_specific_procedure(emm_ctx->ue_id, &((nas_emm_specific_proc_t*)(((nas_emm_base_proc_t *)ident_proc)->parent))->retry_timer, ((nas_emm_specific_proc_t*)(((nas_emm_base_proc_t *)ident_proc)->parent))->retry_cb, emm_ctx);
           /** Set the old mme_ue_s1ap id which will be checked. */
-          ((nas_emm_specific_proc_t*)(((nas_base_proc_t *)ident_proc)->parent))->old_ue_id = imsi_emm_ctx_duplicate->ue_id;
+          ((nas_emm_specific_proc_t*)(((nas_emm_base_proc_t *)ident_proc)->parent))->old_ue_id = imsi_emm_ctx_duplicate->ue_id;
           /*
            * Perform an implicit detach on the new one.
            */
@@ -304,10 +305,10 @@ emm_proc_identification_complete (
           nas_itti_detach_req(ue_context_duplicate_imsi->mme_ue_s1ap_id);
 
           void * unused= NULL;
-          nas_stop_T_retry_specific_procedure(emm_ctx->ue_id, &((nas_emm_specific_proc_t*)(((nas_base_proc_t *)ident_proc)->parent))->retry_timer, unused);
-          nas_start_T_retry_specific_procedure(emm_ctx->ue_id, &((nas_emm_specific_proc_t*)(((nas_base_proc_t *)ident_proc)->parent))->retry_timer, ((nas_emm_specific_proc_t*)(((nas_base_proc_t *)ident_proc)->parent))->retry_cb, emm_ctx);
+          nas_stop_T_retry_specific_procedure(emm_ctx->ue_id, &((nas_emm_specific_proc_t*)(((nas_emm_base_proc_t *)ident_proc)->parent))->retry_timer, unused);
+          nas_start_T_retry_specific_procedure(emm_ctx->ue_id, &((nas_emm_specific_proc_t*)(((nas_emm_base_proc_t *)ident_proc)->parent))->retry_timer, ((nas_emm_specific_proc_t*)(((nas_emm_base_proc_t *)ident_proc)->parent))->retry_cb, emm_ctx);
           /** Set the old mme_ue_s1ap id which will be checked. */
-          ((nas_emm_specific_proc_t*)(((nas_base_proc_t *)ident_proc)->parent))->old_ue_id = ue_context_duplicate_imsi->mme_ue_s1ap_id;
+          ((nas_emm_specific_proc_t*)(((nas_emm_base_proc_t *)ident_proc)->parent))->old_ue_id = ue_context_duplicate_imsi->mme_ue_s1ap_id;
 
           /*
            * Notify EMM that the identification procedure successfully completed.
@@ -568,16 +569,15 @@ static int _identification_non_delivered_ho (struct emm_data_context_s *emm_cont
  *      Return:    None
  *      Others:    T3470
  */
-static int _identification_abort (struct emm_data_context_s *emm_context, struct nas_base_proc_s* base_proc)
+static int _identification_abort (struct emm_data_context_s *emm_context, struct nas_emm_base_proc_s* emm_base_proc)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
 
-  if ((emm_context) && (base_proc)) {
-    nas_emm_ident_proc_t * ident_proc = (nas_emm_ident_proc_t*)base_proc;
-    AssertFatal((NAS_PROC_TYPE_EMM == base_proc->type) &&
-        (NAS_EMM_PROC_TYPE_COMMON == ((nas_emm_proc_t*)base_proc)->type) &&
-        (EMM_COMM_PROC_IDENT == ((nas_emm_common_proc_t*)base_proc)->type), "Mismatch in procedure type");
+  if ((emm_context) && (emm_base_proc)) {
+    nas_emm_ident_proc_t * ident_proc = (nas_emm_ident_proc_t*)emm_base_proc;
+    AssertFatal((NAS_EMM_PROC_TYPE_COMMON == ((nas_emm_proc_t*)emm_base_proc)->type) &&
+        (EMM_COMM_PROC_IDENT == ((nas_emm_common_proc_t*)emm_base_proc)->type), "Mismatch in procedure type");
 
     OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Abort identification procedure " "(ue_id=" MME_UE_S1AP_ID_FMT ")\n", ident_proc->ue_id);
 

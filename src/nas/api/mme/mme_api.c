@@ -59,14 +59,14 @@
 #include "3gpp_24.301.h"
 #include "security_types.h"
 #include "common_types.h"
-#include "emm_msg.h"
-#include "esm_msg.h"
 #include "intertask_interface.h"
 #include "common_defs.h"
-#include "mme_api.h"
 #include "mme_app_ue_context.h"
 #include "mme_app_defs.h"
 #include "mme_config.h"
+#include "mme_api.h"
+#include "emm_msg.h"
+#include "esm_msg.h"
 
 #include "mme_app_procedures.h"
 /****************************************************************************/

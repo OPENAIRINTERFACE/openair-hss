@@ -80,7 +80,7 @@ s1ap_mme_itti_nas_uplink_ind (
 
   MSC_LOG_TX_MESSAGE (MSC_S1AP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_UPLINK_DATA_IND ue_id " MME_UE_S1AP_ID_FMT " len %u",
       NAS_UPLINK_DATA_IND (message_p).ue_id, blength(NAS_UPLINK_DATA_IND (message_p).nas_msg));
-  return itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+  return itti_send_msg_to_task (TASK_NAS_EMM, INSTANCE_DEFAULT, message_p);
 }
 
 //------------------------------------------------------------------------------
@@ -110,7 +110,7 @@ s1ap_mme_itti_nas_downlink_cnf (
   }
   MSC_LOG_TX_MESSAGE (MSC_S1AP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_DOWNLINK_DATA_CNF ue_id " MME_UE_S1AP_ID_FMT " err_code %u",
       NAS_DL_DATA_CNF (message_p).ue_id, NAS_DL_DATA_CNF (message_p).err_code);
-  return itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+  return itti_send_msg_to_task (TASK_NAS_ESM, INSTANCE_DEFAULT, message_p);
 }
 //------------------------------------------------------------------------------
 void s1ap_mme_itti_s1ap_initial_ue_message(
@@ -246,6 +246,6 @@ void s1ap_mme_itti_nas_non_delivery_ind(
 
   // should be sent to MME_APP, but this one would forward it to NAS_MME, so send it directly to NAS_MME
   // but let's see
-  itti_send_msg_to_task(TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+  itti_send_msg_to_task(TASK_NAS_EMM, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT (LOG_S1AP);
 }

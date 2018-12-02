@@ -53,22 +53,24 @@
 #include "assertions.h"
 #include "log.h"
 #include "msc.h"
-#include "nas_timer.h"
 #include "3gpp_requirements_24.301.h"
 #include "conversions.h"
+#include "bstrlib.h"
 
 #include "common_types.h"
 #include "common_defs.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"
 #include "3gpp_29.274.h"
+
 #include "mme_app_ue_context.h"
-#include "emm_proc.h"
-#include "common_defs.h"
 #include "emm_data.h"
-#include "esm_proc.h"
-#include "emm_sap.h"
+#include "emm_proc.h"
 #include "emm_cause.h"
+#include "emm_sap.h"
+#include "esm_proc.h"
+#include "nas_timer.h"
+#include "common_defs.h"
 #include "mme_app_defs.h"
 #include "mme_config.h"
 #include "mme_app_procedures.h"
@@ -98,7 +100,7 @@ static int _emm_start_tracking_area_update_proc_security (emm_data_context_t *em
 
 static int _emm_tracking_area_update_reject( const mme_ue_s1ap_id_t ue_id, const int emm_cause);
 static int _emm_tracking_area_update_accept (nas_emm_tau_proc_t * const tau_proc);
-static int _emm_tracking_area_update_abort (struct emm_data_context_s *emm_context, struct nas_base_proc_s * base_proc);
+static int _emm_tracking_area_update_abort (struct emm_data_context_s *emm_context, struct nas_emm_base_proc_s * emm_base_proc);
 static void _emm_tracking_area_update_t3450_handler (void *args);
 
 static int _emm_tracking_area_update_success_identification_cb (emm_data_context_t *emm_context);
@@ -738,11 +740,11 @@ static void _emm_proc_create_procedure_tracking_area_update_request(emm_data_con
   if (tau_proc) {
     tau_proc->ies = ies;
     tau_proc->ue_id = emm_context->ue_id;
-    ((nas_base_proc_t*)tau_proc)->abort = _emm_tracking_area_update_abort;
-    ((nas_base_proc_t*)tau_proc)->fail_in = NULL; // No parent procedure
-    ((nas_base_proc_t*)tau_proc)->time_out = _emm_tracking_area_update_t3450_handler;
+    ((nas_emm_base_proc_t*)tau_proc)->abort = _emm_tracking_area_update_abort;
+    ((nas_emm_base_proc_t*)tau_proc)->fail_in = NULL; // No parent procedure
+    ((nas_emm_base_proc_t*)tau_proc)->time_out = _emm_tracking_area_update_t3450_handler;
     /** Set the MME_APP registration complete procedure for callback. */
-    ((nas_base_proc_t*)tau_proc)->success_notif = _emm_tracking_area_update_registration_complete;
+    ((nas_emm_base_proc_t*)tau_proc)->success_notif = _emm_tracking_area_update_registration_complete;
     ((nas_emm_specific_proc_t*)tau_proc)->retry_cb= retry_cb;
   }
 }
@@ -1282,7 +1284,7 @@ static int _emm_tracking_area_update_accept (nas_emm_tau_proc_t * const tau_proc
 }
 
 //------------------------------------------------------------------------------
-static int _emm_tracking_area_update_abort (struct emm_data_context_s *emm_context, struct nas_base_proc_s * base_proc)
+static int _emm_tracking_area_update_abort (struct emm_data_context_s *emm_context, struct nas_emm_base_proc_s * emm_base_proc)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
@@ -1911,11 +1913,12 @@ static int _context_req_proc_success_cb (emm_data_context_t *emm_context)
   OAILOG_INFO(LOG_NAS_EMM, "EMM-PROC  - " "Successfully updated the EMM context with ueId " MME_UE_S1AP_ID_FMT " from the received MM_EPS_Context from the MME for UE with imsi: " IMSI_64_FMT ". \n",
       emm_context->ue_id, emm_context->_imsi64);
 
-  /*
-   * Update the ESM context (what was in esm_proc_default_eps_bearer_context).
-   */
-  emm_context->esm_ctx.n_active_ebrs += nas_s10_ctx->n_active_ebrs;
-  emm_context->esm_ctx.n_pdns        += nas_s10_ctx->n_pdns;
+  // todo: esm context to update..
+//  /*
+//   * Update the ESM context (what was in esm_proc_default_eps_bearer_context).
+//   */
+//  emm_context->esm_ctx.n_active_ebrs += nas_s10_ctx->n_active_ebrs;
+//  emm_context->esm_ctx.n_pdns        += nas_s10_ctx->n_pdns;
   // todo: num_active_pdns not used.
   // todo: is_emergency not set
   // todo; rest of ESM context will be set by MME_APP

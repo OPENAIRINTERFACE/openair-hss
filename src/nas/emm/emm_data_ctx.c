@@ -43,22 +43,22 @@
 #include "3gpp_24.008.h"
 #include "3gpp_29.274.h"
 #include "common_types.h"
-#include "commonDef.h"
 #include "common_defs.h"
-#include "NasSecurityAlgorithms.h"
+#include "common_defs.h"
 #include "conversions.h"
-#include "emm_data.h"
-#include "esm_data.h"
-#include "emm_proc.h"
 #include "security_types.h"
 #include "mme_config.h"
 #include "secu_defs.h"
-#include "emm_cause.h"
 #include "mme_app_defs.h"
 #include "nas_itti_messaging.h"
 
 //#include "EmmCommon.h"
-#include "../../mme/mme_ie_defs.h"
+#include "mme_ie_defs.h"
+#include "emm_data.h"
+#include "emm_proc.h"
+#include "emm_cause.h"
+#include "esm_data.h"
+#include "NasSecurityAlgorithms.h"
 
 //------------------------------------------------------------------------------
 
@@ -456,24 +456,24 @@ inline void emm_ctx_set_valid_drx_parameter(emm_data_context_t * const ctxt, drx
 /* Clear EPS bearer context status   */
 inline void emm_ctx_clear_eps_bearer_context_status(emm_data_context_t * const ctxt)
 {
-  memset (&ctxt->_eps_bearer_context_status, 0, sizeof (ctxt->_eps_bearer_context_status));
-  emm_ctx_clear_attribute_present(ctxt, EMM_CTXT_MEMBER_EPS_BEARER_CONTEXT_STATUS);
+//  memset (&ctxt->_eps_bearer_context_status, 0, sizeof (ctxt->_eps_bearer_context_status));
+//  emm_ctx_clear_attribute_present(ctxt, EMM_CTXT_MEMBER_EPS_BEARER_CONTEXT_STATUS);
   OAILOG_DEBUG (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " cleared EPS bearer context status\n", ctxt->ue_id);
 }
 
 /* Set current DRX parameter */
 inline void emm_ctx_set_eps_bearer_context_status(emm_data_context_t * const ctxt, eps_bearer_context_status_t *status)
 {
-  ctxt->_eps_bearer_context_status = *status;
-  emm_ctx_set_attribute_present(ctxt, EMM_CTXT_MEMBER_EPS_BEARER_CONTEXT_STATUS);
+//  ctxt->_eps_bearer_context_status = *status;
+//  emm_ctx_set_attribute_present(ctxt, EMM_CTXT_MEMBER_EPS_BEARER_CONTEXT_STATUS);
   OAILOG_DEBUG (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " set EPS bearer context status (present)\n", ctxt->ue_id);
 }
 
 /* Set current DRX parameter, mark it as valid */
 inline void emm_ctx_set_valid_eps_bearer_context_status(emm_data_context_t * const ctxt, eps_bearer_context_status_t *status)
 {
-  ctxt->_eps_bearer_context_status = *status;
-  emm_ctx_set_attribute_valid(ctxt, EMM_CTXT_MEMBER_EPS_BEARER_CONTEXT_STATUS);
+//  ctxt->_eps_bearer_context_status = *status;
+//  emm_ctx_set_attribute_valid(ctxt, EMM_CTXT_MEMBER_EPS_BEARER_CONTEXT_STATUS);
   OAILOG_DEBUG (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " set EPS bearer context status (valid)\n", ctxt->ue_id);
 }
 
@@ -841,7 +841,6 @@ void emm_init_context(struct emm_data_context_s * const emm_ctx, const bool init
   OAILOG_DEBUG (LOG_NAS_EMM, "UE " MME_UE_S1AP_ID_FMT " Init EMM-CTX\n", emm_ctx->ue_id);
   emm_ctx->_security.ncc = 0;
 
-  bdestroy_wrapper(&emm_ctx->esm_msg);
   emm_ctx_clear_guti(emm_ctx);
   emm_ctx_clear_old_guti(emm_ctx);
   emm_ctx_clear_imsi(emm_ctx);
@@ -858,7 +857,8 @@ void emm_init_context(struct emm_data_context_s * const emm_ctx, const bool init
 //  emm_ctx_clear_eps_bearer_context_status(emm_ctx); todo
 
   if (init_esm_ctxt) {
-    esm_init_context(&emm_ctx->esm_ctx);
+    // todo: init
+//    esm_init_context(&emm_ctx->esm_ctx);
   }
 }
 
@@ -999,7 +999,7 @@ int _start_context_request_procedure(struct emm_data_context_s *emm_context, nas
   /*
    * Context request.
    */
-  ctx_req_proc->cn_proc.base_proc.parent = (nas_base_proc_t*)&spec_proc->emm_proc.base_proc;
+  ctx_req_proc->cn_proc.base_proc.parent = (nas_emm_base_proc_t*)&spec_proc->emm_proc.base_proc;
   /*
    * Not configuring an AS common procedure as parent procedure of the S10 procedure.
    */
@@ -1146,11 +1146,26 @@ void nas_stop_Ts10_ctx_res(const mme_ue_s1ap_id_t ue_id, struct nas_timer_s * co
   }
 }
 
+#include "s1ap_mme.h"
 //------------------------------------------------------------------------------
 void nas_stop_T_retry_specific_procedure(const mme_ue_s1ap_id_t ue_id, struct nas_timer_s * const T_retry, void *timer_callback_args)
 {
   if ((T_retry) && (T_retry->id != NAS_TIMER_INACTIVE_ID)) {
+    ue_description_t * ue_ref = s1ap_is_ue_mme_id_in_list(ue_id);
+//    OAILOG_DEBUG(LOG_NAS_EMM, "EMM-PROC (NASx)  -  * * * * * (0) ueREF %p has mmeId " MME_UE_S1AP_ID_FMT ", enbId " ENB_UE_S1AP_ID_FMT " state %d and eNB_ref %p. \n",
+//        ue_ref, ue_ref->mme_ue_s1ap_id, ue_ref->enb_ue_s1ap_id, ue_ref->s1_ue_state, ue_ref->enb);
+//
+//    OAILOG_DEBUG (LOG_NAS_EMM, "T_retry timer before %p \n", T_retry);
+//    OAILOG_DEBUG (LOG_NAS_EMM, "T_retry timer id %d (before) \n", T_retry->id);
+
     T_retry->id = nas_timer_stop(T_retry->id, &timer_callback_args);
+
+//    OAILOG_DEBUG (LOG_NAS_EMM, "T_retry timer after %p \n", T_retry);
+//    OAILOG_DEBUG (LOG_NAS_EMM, "T_retry timer id %d (after) \n", T_retry->id);
+//    OAILOG_DEBUG(LOG_NAS_EMM, "EMM-PROC (NASx)  -  * * * * * (1) ueREF %p has mmeId " MME_UE_S1AP_ID_FMT ", enbId " ENB_UE_S1AP_ID_FMT " state %d and eNB_ref %p. \n",
+//           ue_ref, ue_ref->mme_ue_s1ap_id, ue_ref->enb_ue_s1ap_id, ue_ref->s1_ue_state, ue_ref->enb);
+
+    OAILOG_DEBUG (LOG_NAS_EMM, "T_retry (%p) stopped UE " MME_UE_S1AP_ID_FMT "\n", T_retry, ue_id);
     MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 T_retry stopped UE " MME_UE_S1AP_ID_FMT " ", ue_id);
     OAILOG_DEBUG (LOG_NAS_EMM, "T_retry stopped UE " MME_UE_S1AP_ID_FMT "\n", ue_id);
   }
@@ -1367,36 +1382,36 @@ void emm_context_dump (
 
     bformata (bstr_dump, "%*s     - EMM state:     %s\n", indent_spaces, " ", emm_fsm_get_state_str(emm_context));
 
-    if (emm_context->esm_msg) {
-      bformata (bstr_dump, "%*s     - Pending ESM msg :\n", indent_spaces, " ");
-      bformata (bstr_dump, "%*s     +-----+-------------------------------------------------+\n", indent_spaces, " ");
-      bformata (bstr_dump, "%*s     |     |  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f |\n", indent_spaces, " ");
-      bformata (bstr_dump, "%*s     |-----|-------------------------------------------------|\n", indent_spaces, " ");
-
-      int octet_index;
-      for (octet_index = 0; octet_index < blength(emm_context->esm_msg); octet_index++) {
-        if ((octet_index % 16) == 0) {
-          if (octet_index != 0) {
-            bformata (bstr_dump, " |\n");
-          }
-          bformata (bstr_dump, "%*s     |%04ld |", indent_spaces, " ", octet_index);
-        }
-
-        /*
-         * Print every single octet in hexadecimal form
-         */
-        bformata (bstr_dump, " %02x", emm_context->esm_msg->data[octet_index]);
-      }
-      /*
-       * Append enough spaces and put final pipe
-       */
-      for (int index = octet_index%16; index < 16; ++index) {
-        bformata (bstr_dump, "   ");
-      }
-      bformata (bstr_dump, " |\n");
-      bformata (bstr_dump, "%*s     +-----+-------------------------------------------------+\n", indent_spaces, " ");
-    }
-    bformata (bstr_dump, "%*s     - TODO  esm_data_ctx\n", indent_spaces, " ");
+//    if (emm_context->esm_msg) {
+//      bformata (bstr_dump, "%*s     - Pending ESM msg :\n", indent_spaces, " ");
+//      bformata (bstr_dump, "%*s     +-----+-------------------------------------------------+\n", indent_spaces, " ");
+//      bformata (bstr_dump, "%*s     |     |  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f |\n", indent_spaces, " ");
+//      bformata (bstr_dump, "%*s     |-----|-------------------------------------------------|\n", indent_spaces, " ");
+//
+//      int octet_index;
+////      for (octet_index = 0; octet_index < blength(emm_context->esm_msg); octet_index++) {
+////        if ((octet_index % 16) == 0) {
+////          if (octet_index != 0) {
+////            bformata (bstr_dump, " |\n");
+////          }
+////          bformata (bstr_dump, "%*s     |%04ld |", indent_spaces, " ", octet_index);
+////        }
+////
+////        /*
+////         * Print every single octet in hexadecimal form
+////         */
+////        bformata (bstr_dump, " %02x", emm_context->esm_msg->data[octet_index]);
+////      }
+//      /*
+//       * Append enough spaces and put final pipe
+//       */
+//      for (int index = octet_index%16; index < 16; ++index) {
+//        bformata (bstr_dump, "   ");
+//      }
+//      bformata (bstr_dump, " |\n");
+//      bformata (bstr_dump, "%*s     +-----+-------------------------------------------------+\n", indent_spaces, " ");
+//    }
+//    bformata (bstr_dump, "%*s     - TODO  esm_data_ctx\n", indent_spaces, " ");
     //esm_context_dump(&emm_context->esm_ctx, indent_spaces, bstr_dump);
   }
 }

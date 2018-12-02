@@ -44,11 +44,13 @@
 #include "log.h"
 #include "mme_config.h"
 #include "nas_network.h"
+
+#include "../network/as_message.h"
 #include "common_types.h"
-#include "nas_timer.h"
-#include "TrackingAreaIdentity.h"
-#include "as_message.h"
-#include "nas_proc.h"
+#include "emm/nas_emm_proc.h"
+#include "esm/nas_esm_proc.h"
+#include "ies/TrackingAreaIdentity.h"
+#include "util/nas_timer.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -86,29 +88,6 @@ void nas_network_initialize (mme_config_t * mme_config_p)
   nas_proc_initialize (mme_config_p);
   OAILOG_FUNC_OUT (LOG_NAS);
 }
-
-/****************************************************************************
- **                                                                        **
- ** Name:    nas_network_cleanup()                                     **
- **                                                                        **
- ** Description: Performs clean up procedure before the system is shutdown **
- **                                                                        **
- ** Inputs:  None                                                      **
- **          Others:    None                                       **
- **                                                                        **
- ** Outputs:     None                                                      **
- **          Return:    None                                       **
- **          Others:    None                                       **
- **                                                                        **
- ***************************************************************************/
-void nas_network_cleanup (void)
-{
-  OAILOG_FUNC_IN (LOG_NAS);
-  nas_proc_cleanup ();
-  nas_timer_cleanup ();
-  OAILOG_FUNC_OUT (LOG_NAS);
-}
-
 
 /****************************************************************************/
 /*********************  L O C A L    F U N C T I O N S  *********************/

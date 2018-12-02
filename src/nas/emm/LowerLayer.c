@@ -39,6 +39,7 @@
         and to request ESM unit data transfer to under layer.
 
 *****************************************************************************/
+
 #include <pthread.h>
 #include <inttypes.h>
 #include <stdint.h>
@@ -51,19 +52,20 @@
 #include "log.h"
 #include "msc.h"
 #include "gcc_diag.h"
-#include "commonDef.h"
+#include "common_defs.h"
 #include "common_defs.h"
 #include "common_types.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"
 #include "3gpp_29.274.h"
-#include "mme_app_ue_context.h"
+
 #include "emm_data.h"
 #include "emm_sap.h"
 #include "esm_sap.h"
-#include "log.h"
-#include "LowerLayer.h"
+
+#include "mme_app_ue_context.h"
 #include "mme_app_defs.h"
+#include "LowerLayer.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/

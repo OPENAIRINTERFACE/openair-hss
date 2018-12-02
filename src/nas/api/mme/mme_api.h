@@ -39,9 +39,9 @@ Description Implements the API used by the NAS layer running in the MME
 #ifndef FILE_MME_API_SEEN
 #define FILE_MME_API_SEEN
 
-#include "TrackingAreaIdentityList.h"
 #include "3gpp_23.003.h"
 #include "common_types.h"
+#include "TrackingAreaIdentityList.h"
 
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/

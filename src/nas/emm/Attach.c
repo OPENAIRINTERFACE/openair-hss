@@ -62,31 +62,34 @@
 
 #include "bstrlib.h"
 
+#include "3gpp_24.008.h"
+#include "3gpp_36.401.h"
+#include "3gpp_29.274.h"
+#include "3gpp_requirements_24.301.h"
 #include "gcc_diag.h"
 #include "dynamic_memory_check.h"
 #include "assertions.h"
 #include "log.h"
 #include "msc.h"
-#include "nas_timer.h"
 #include "common_types.h"
-#include "3gpp_24.008.h"
-#include "3gpp_36.401.h"
-#include "3gpp_29.274.h"
 #include "conversions.h"
-#include "3gpp_requirements_24.301.h"
-#include "nas_message.h"
-#include "as_message.h"
+
 #include "mme_app_ue_context.h"
-#include "emm_proc.h"
-#include "networkDef.h"
-#include "emm_sap.h"
-#include "mme_api.h"
+
 #include "emm_data.h"
-#include "esm_proc.h"
-#include "esm_sapDef.h"
-#include "esm_sap.h"
+#include "emm_proc.h"
 #include "emm_cause.h"
+#include "emm_sap.h"
+#include "esm_proc.h"
+#include "esm_sap.h"
+#include "mme_api.h"
+#include "as_message.h"
+#include "nas_message.h"
+#include "esm_sapDef.h"
 #include "NasSecurityAlgorithms.h"
+#include "nas_timer.h"
+
+#include "networkDef.h"
 #include "mme_config.h"
 #include "nas_itti_messaging.h"
 #include "mme_app_defs.h"
@@ -137,7 +140,7 @@ static int _emm_attach_failure_security_cb (emm_data_context_t *emm_context);
    Abnormal case attach procedures
 */
 static int _emm_attach_release (emm_data_context_t *emm_context);
-static int _emm_attach_abort (struct emm_data_context_s* emm_context, struct nas_base_proc_s * base_proc);
+static int _emm_attach_abort (struct emm_data_context_s* emm_context, struct nas_emm_base_proc_s * emm_base_proc);
 static int _emm_attach_run_procedure(emm_data_context_t *emm_context);
 static int _emm_send_attach_accept (emm_data_context_t * emm_context);
 
@@ -897,11 +900,11 @@ static void _emm_proc_create_procedure_attach_request(emm_data_context_t * const
   AssertFatal(attach_proc, "TODO Handle this");
   if ((attach_proc)) {
     attach_proc->ies = ies;
-    ((nas_base_proc_t*)attach_proc)->abort = _emm_attach_abort;
-    ((nas_base_proc_t*)attach_proc)->fail_in = NULL; // No parent procedure
-    ((nas_base_proc_t*)attach_proc)->time_out = _emm_attach_t3450_handler;
+    ((nas_emm_base_proc_t*)attach_proc)->abort = _emm_attach_abort;
+    ((nas_emm_base_proc_t*)attach_proc)->fail_in = NULL; // No parent procedure
+    ((nas_emm_base_proc_t*)attach_proc)->time_out = _emm_attach_t3450_handler;
     /** Set the MME_APP registration complete procedure for callback. */
-    ((nas_base_proc_t*)attach_proc)->success_notif = _emm_attach_registration_complete;
+    ((nas_emm_base_proc_t*)attach_proc)->success_notif = _emm_attach_registration_complete;
     attach_proc->emm_spec_proc.retry_cb = retry_cb;
   }
   OAILOG_DEBUG(LOG_NAS_EMM, " CREATED NEW ATTACH PROC %p \n. ", attach_proc);
@@ -1031,13 +1034,13 @@ static int _emm_attach_release (emm_data_context_t *emm_context)
  *      Others:    None
  *
  */
-int _emm_attach_reject (emm_data_context_t *emm_context, struct nas_base_proc_s * nas_base_proc)
+int _emm_attach_reject (emm_data_context_t *emm_context, struct nas_emm_base_proc_s * nas_emm_base_proc)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
 
   emm_sap_t                               emm_sap = {0};
-  struct nas_emm_attach_proc_s          * attach_proc = (struct nas_emm_attach_proc_s*)nas_base_proc;
+  struct nas_emm_attach_proc_s          * attach_proc = (struct nas_emm_attach_proc_s*)nas_emm_base_proc;
 
   OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - EMM attach procedure not accepted " "by the network (ue_id=" MME_UE_S1AP_ID_FMT ", cause=%d)\n",
       attach_proc->ue_id, attach_proc->emm_cause);
@@ -1098,7 +1101,7 @@ int _emm_attach_reject (emm_data_context_t *emm_context, struct nas_base_proc_s 
  *
  */
 //------------------------------------------------------------------------------
-static int _emm_attach_abort (struct emm_data_context_s* emm_context, struct nas_base_proc_s * base_proc)
+static int _emm_attach_abort (struct emm_data_context_s* emm_context, struct nas_emm_base_proc_s * emm_base_proc)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;

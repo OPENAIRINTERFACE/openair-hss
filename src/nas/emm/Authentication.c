@@ -58,22 +58,24 @@
 
 #include "bstrlib.h"
 
+#include "3gpp_24.007.h"
+#include "3gpp_24.008.h"
+#include "3gpp_29.274.h"
+#include "common_types.h"
+#include "3gpp_requirements_24.301.h"
 #include "log.h"
 #include "msc.h"
 #include "gcc_diag.h"
 #include "dynamic_memory_check.h"
 #include "assertions.h"
-#include "common_types.h"
-#include "3gpp_requirements_24.301.h"
-#include "3gpp_24.007.h"
-#include "3gpp_24.008.h"
-#include "3gpp_29.274.h"
-#include "mme_app_ue_context.h"
-#include "emm_proc.h"
-#include "nas_timer.h"
+
 #include "emm_data.h"
-#include "emm_sap.h"
+#include "emm_proc.h"
 #include "emm_cause.h"
+#include "emm_sap.h"
+#include "nas_timer.h"
+
+#include "mme_app_ue_context.h"
 #include "nas_itti_messaging.h"
 #include "mme_app_defs.h"
 
@@ -100,7 +102,7 @@
 static void _authentication_t3460_handler (void *args);
 static int _authentication_ll_failure (struct emm_data_context_s *emm_context, struct nas_emm_proc_s * emm_proc);
 static int _authentication_non_delivered_ho (struct emm_data_context_s *emm_context, struct nas_emm_proc_s * emm_proc);
-static int _authentication_abort (struct emm_data_context_s *emm_context, struct nas_base_proc_s * base_proc);
+static int _authentication_abort (struct emm_data_context_s *emm_context, struct nas_emm_base_proc_s * emm_base_proc);
 
 static int _start_authentication_information_procedure(struct emm_data_context_s *emm_context, nas_emm_auth_proc_t * const auth_proc, const_bstring auts);
 static int _auth_info_proc_success_cb (struct emm_data_context_s *emm_ctx);
@@ -110,7 +112,7 @@ static int _auth_info_proc_failure_cb (struct emm_data_context_s *emm_ctx);
 static int _authentication_check_imsi_5_4_2_5__1 (struct emm_data_context_s *emm_context);
 static int _authentication_check_imsi_5_4_2_5__1_fail (struct emm_data_context_s *emm_context);
 static int _authentication_request (nas_emm_auth_proc_t * auth_proc);
-static int _authentication_reject (struct emm_data_context_s *emm_context, struct nas_base_proc_s * base_proc);
+static int _authentication_reject (struct emm_data_context_s *emm_context, struct nas_emm_base_proc_s * emm_base_proc);
 
 /****************************************************************************/
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
@@ -196,7 +198,7 @@ emm_proc_authentication_ksi (
       auth_proc->emm_cause                                     = EMM_CAUSE_SUCCESS;
       auth_proc->retransmission_count                          = 0;
       auth_proc->ue_id                                         = ue_id;
-      ((nas_base_proc_t *)auth_proc)->parent                   = (nas_base_proc_t*)emm_specific_proc;
+      ((nas_emm_base_proc_t *)auth_proc)->parent                   = (nas_emm_base_proc_t*)emm_specific_proc;
       auth_proc->emm_com_proc.emm_proc.delivered               = NULL;
       auth_proc->emm_com_proc.emm_proc.previous_emm_fsm_state  = emm_fsm_get_state(emm_context);
       auth_proc->emm_com_proc.emm_proc.not_delivered           = _authentication_ll_failure;
@@ -256,7 +258,7 @@ emm_proc_authentication (
     auth_proc->retransmission_count                          = 0;
     auth_proc->ue_id                                         = ue_id;
     /** Set the parent procedure as specific. */
-    ((nas_base_proc_t *)auth_proc)->parent                   = (nas_base_proc_t*)emm_specific_proc;
+    ((nas_emm_base_proc_t *)auth_proc)->parent                   = (nas_emm_base_proc_t*)emm_specific_proc;
     auth_proc->emm_com_proc.emm_proc.delivered               = NULL;
     auth_proc->emm_com_proc.emm_proc.previous_emm_fsm_state  = emm_fsm_get_state(emm_context);
     auth_proc->emm_com_proc.emm_proc.not_delivered           = NULL;
@@ -908,7 +910,7 @@ static int _authentication_check_imsi_5_4_2_5__1 (struct emm_data_context_s *emm
 
         success_cb_t success_cb = auth_proc->emm_com_proc.emm_proc.base_proc.success_notif;
         failure_cb_t failure_cb = auth_proc->emm_com_proc.emm_proc.base_proc.failure_notif;
-        nas_emm_specific_proc_t  * emm_specific_proc = (nas_emm_specific_proc_t*)((nas_base_proc_t *)auth_proc)->parent;
+        nas_emm_specific_proc_t  * emm_specific_proc = (nas_emm_specific_proc_t*)((nas_emm_base_proc_t *)auth_proc)->parent;
 
         emm_sap_t                               emm_sap = {0};
         emm_sap.primitive = EMMREG_COMMON_PROC_ABORT;
@@ -1046,13 +1048,13 @@ static int _authentication_request (nas_emm_auth_proc_t * auth_proc)
  **      Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
-static int _authentication_reject (emm_data_context_t *emm_context, struct nas_base_proc_s * base_proc)
+static int _authentication_reject (emm_data_context_t *emm_context, struct nas_emm_base_proc_s * emm_base_proc)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   emm_sap_t                               emm_sap = {0};
   int                                     rc = RETURNerror;
-  if ((base_proc) && (emm_context)) {
-    nas_emm_auth_proc_t * auth_proc = (nas_emm_auth_proc_t *)base_proc;
+  if ((emm_base_proc) && (emm_context)) {
+    nas_emm_auth_proc_t * auth_proc = (nas_emm_auth_proc_t *)emm_base_proc;
 
 
     /*
@@ -1149,13 +1151,13 @@ static int _authentication_non_delivered_ho (struct emm_data_context_s *emm_cont
  **      Others:    T3460                                      **
  **                                                                        **
  ***************************************************************************/
-static int _authentication_abort (emm_data_context_t *emm_ctx, struct nas_base_proc_s * base_proc)
+static int _authentication_abort (emm_data_context_t *emm_ctx, struct nas_emm_base_proc_s * emm_base_proc)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
 
-  if ((base_proc) && (emm_ctx)) {
-    nas_emm_auth_proc_t * auth_proc = (nas_emm_auth_proc_t *)base_proc;
+  if ((emm_base_proc) && (emm_ctx)) {
+    nas_emm_auth_proc_t * auth_proc = (nas_emm_auth_proc_t *)emm_base_proc;
     OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Abort authentication procedure " "(ue_id=" MME_UE_S1AP_ID_FMT ")\n", emm_ctx->ue_id);
 
     /*

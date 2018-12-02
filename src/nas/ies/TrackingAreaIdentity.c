@@ -19,6 +19,7 @@
  *      contact@openairinterface.org
  */
 
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -29,6 +30,7 @@
 
 #include "TLVEncoder.h"
 #include "TLVDecoder.h"
+#include "common_types.h"
 #include "TrackingAreaIdentity.h"
 
 //------------------------------------------------------------------------------

@@ -134,7 +134,7 @@ int mme_app_send_nas_signalling_connection_rel_ind(const mme_ue_s1ap_id_t ue_id)
                 NULL,0,
                 "0 NAS_SIGNALLING_CONNECTION_REL_IND ue id "MME_UE_S1AP_ID_FMT" ", ue_id);
 
-  rc = itti_send_msg_to_task(TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+  rc = itti_send_msg_to_task(TASK_NAS_EMM, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
 }
 
@@ -317,9 +317,9 @@ mme_app_send_s11_create_session_req (
     session_request_p->paa.ipv6_prefix_length = pdn_context->paa->ipv6_prefix_length;
   }
   //  session_request_p->apn_restriction = 0x00; todo: set them where?
-  if(pdn_context->pco){ /**< todo: Should not exist in handover, where to get them?. */
-    copy_protocol_configuration_options (&session_request_p->pco, pdn_context->pco);
-  }
+//  if(pdn_context->pco){ /**< todo: Should not exist in handover, where to get them?. */
+//    copy_protocol_configuration_options (&session_request_p->pco, pdn_context->pco);
+//  }
 
 //  mme_config_read_lock (&mme_config);
 //  session_request_p->peer_ip = mme_config.ipv4.sgw_s11;
@@ -840,7 +840,7 @@ void mme_app_itti_nas_context_response(ue_context_t * ue_context, nas_s10_contex
       bearer_id,
       current_bearer_p->qci,
       current_bearer_p->priority_level);
-  rc = itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+  rc = itti_send_msg_to_task (TASK_NAS_EMM, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
 }
 
@@ -893,7 +893,7 @@ void mme_app_itti_nas_pdn_connectivity_response(ue_context_t * ue_context,
       bc->qci,
       bc->priority_level);
 
-  rc = itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+  rc = itti_send_msg_to_task (TASK_NAS_ESM, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
 }
 
@@ -1020,6 +1020,6 @@ void _mme_app_send_nas_context_response_err(mme_ue_s1ap_id_t ueId, gtpv2c_cause_
   nas_context_fail->ue_id = ueId;
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "MME_APP Sending NAS NAS_CONTEXT_FAIL to NAS");
   /** Sending a message to NAS. */
-  itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+  itti_send_msg_to_task (TASK_NAS_EMM, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }

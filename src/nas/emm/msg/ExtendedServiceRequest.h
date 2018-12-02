@@ -22,14 +22,14 @@
 #ifndef FILE_EXTENDED_SERVICE_REQUEST_SEEN
 #define FILE_EXTENDED_SERVICE_REQUEST_SEEN
 
-#include "SecurityHeaderType.h"
-#include "MessageType.h"
-#include "ServiceType.h"
-#include "NasKeySetIdentifier.h"
-#include "CsfbResponse.h"
 #include "3gpp_23.003.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"
+#include "CsfbResponse.h"
+#include "MessageType.h"
+#include "NasKeySetIdentifier.h"
+#include "SecurityHeaderType.h"
+#include "ServiceType.h"
 
 
 /* Minimum length macro. Formed by minimum length of each mandatory field */

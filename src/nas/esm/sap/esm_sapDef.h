@@ -42,7 +42,6 @@ Description Defines the ESM Service Access Point that provides EPS
 #define __ESM_SAPDEF_H__
 
 #include "bstrlib.h"
-#include "emm_data.h"
 
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/
@@ -88,6 +87,7 @@ typedef enum esm_primitive_s {
 /************************  G L O B A L    T Y P E S  ************************/
 /****************************************************************************/
 
+typedef struct itti_mme_app_activate_eps_bearer_ctx_req_s   esm_eps_activate_eps_bearer_ctx_req_t;
 typedef struct itti_mme_app_activate_eps_bearer_ctx_req_s   esm_eps_activate_eps_bearer_ctx_req_t;
 typedef struct itti_mme_app_modify_eps_bearer_ctx_req_s     esm_eps_modify_eps_bearer_ctx_req_t;
 typedef struct itti_mme_app_deactivate_eps_bearer_ctx_req_s esm_eps_deactivate_eps_bearer_ctx_req_t;
@@ -141,13 +141,20 @@ typedef struct esm_pdn_config_res_s {
  */
 typedef struct esm_pdn_connectivity_s {
   pdn_cid_t cid;        /* PDN connection local identifier      */
+  ebi_t     linked_ebi; /* PDN Default EBI. */
   int is_defined; /* Indicates whether a PDN context has been defined
              * for the specified APN            */
   int pdn_type;   /* PDN address type (IPv4, IPv6, IPv4v6)    */
-  const char *apn;    /* PDN's Access Point Name          */
+  bstring apn;
   bool is_emergency;   /* Indicates whether the PDN context has been
              * defined to establish connection for emergency
              * bearer services              */
+  protocol_configuration_options_t *pco;
+  ambr_t apn_ambr;
+  bstring                 pdn_addr;
+  /* QoS */
+  qci_t                   qci;
+  esm_cause_t             esm_cause;
 } esm_pdn_connectivity_t;
 
 /*
@@ -210,7 +217,7 @@ typedef struct esm_sap_s {
                  * within this primitive has to be sent/received
                  * standalone or together within an EMM related
                  * message              */
-  struct emm_data_context_s  *ctx;       /* UE MM context                   */
+  struct esm_context_s  *ctx;       /* ESM context                   */
   unsigned int        ue_id;      /* Local UE identifier             */
   esm_sap_error_t     err;       /* ESM-SAP error code               */
   const_bstring       recv;      /* Encoded ESM message received     */

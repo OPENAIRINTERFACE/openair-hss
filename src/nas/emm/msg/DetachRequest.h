@@ -22,12 +22,12 @@
 #ifndef FILE_DETACH_REQUEST_SEEN
 #define FILE_DETACH_REQUEST_SEEN
 
-#include "SecurityHeaderType.h"
-#include "MessageType.h"
 #include "DetachType.h"
-#include "NasKeySetIdentifier.h"
-#include "EpsMobileIdentity.h"
 #include "EmmCause.h"
+#include "EpsMobileIdentity.h"
+#include "MessageType.h"
+#include "NasKeySetIdentifier.h"
+#include "SecurityHeaderType.h"
 #include "3gpp_23.003.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"

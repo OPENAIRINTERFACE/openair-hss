@@ -39,12 +39,11 @@ Description Defines internal private data handled by EPS Session
 
 #ifndef __ESMDATA_H__
 #define __ESMDATA_H__
+#include "tree.h"
 
+#include "mme_api.h"
 #include "nas_timer.h"
 #include "networkDef.h"
-#include "tree.h"
-#include "3gpp_24.007.h"
-#include "mme_api.h"
 
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/
@@ -76,7 +75,7 @@ typedef enum {
 
 /* ESM message timer retransmission data */
 typedef struct esm_ebr_timer_data_s {
-  struct emm_data_context_s  *ctx;
+  struct esm_context_s  *ctx;
   mme_ue_s1ap_id_t       ue_id;      /* Lower layers UE identifier       */
   ebi_t                  ebi;        /* EPS bearer identity          */
   unsigned int           count;      /* Retransmission counter       */
@@ -190,12 +189,21 @@ struct esm_proc_data_s;
  * a PDN connection.
  */
 typedef struct esm_context_s {
+  mme_ue_s1ap_id_t ue_id;       /* UE Id will define the ESM context. */
+
   int        n_active_ebrs;     /* Total number of active EPS bearer contexts   */
   int        n_active_pdns;     /* Number of active PDN connections     */
   int        n_pdns;
   bool       is_emergency;  /* Indicates whether a PDN connection for emergency bearer services is established       */
 
-  esm_procedures_t  *esm_procedures;
+// esm_procedures_t  *esm_procedures;
+
+
+//  eps_bearer_context_status_t   _eps_bearer_context_status;/* stored TAU Request IE Requirement MME24.301R10_5.5.3.2.4_5*/
+//  eps_network_feature_support_t _eps_network_feature_support;
+  // TODO: DO BETTER  WITH BELOW
+  bstring         esm_msg;      /* ESM message contained within the initial request*/
+
 
   struct esm_proc_data_s *esm_proc_data;
   struct nas_timer_s      T3489;

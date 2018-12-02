@@ -59,17 +59,17 @@
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"
 #include "3gpp_29.274.h"
-#include "emm_data.h"
 #include "mme_app_ue_context.h"
-#include "esm_proc.h"
-#include "commonDef.h"
-#include "esm_cause.h"
-#include "esm_ebr.h"
-#include "esm_ebr_context.h"
-#include "emm_sap.h"
+#include "common_defs.h"
 #include "mme_config.h"
 #include "nas_itti_messaging.h"
 #include "mme_app_defs.h"
+#include "emm_data.h"
+#include "emm_sap.h"
+#include "esm_ebr.h"
+#include "esm_ebr_context.h"
+#include "esm_proc.h"
+#include "esm_cause.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -94,7 +94,7 @@ static void _modify_eps_bearer_context_t3486_handler (void *);
    retransmission counter */
 #define EPS_BEARER_CONTEXT_MODIFY_COUNTER_MAX   5
 
-static int _modify_eps_bearer_context(emm_data_context_t * emm_context, ebi_t ebi, STOLEN_REF bstring *msg);
+static int _modify_eps_bearer_context(esm_context_t * esm_context, ebi_t ebi, STOLEN_REF bstring *msg);
 
 /****************************************************************************/
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
@@ -112,7 +112,7 @@ static int _modify_eps_bearer_context(emm_data_context_t * emm_context, ebi_t eb
  ** Description: Allocates resources required for modification of an EPS   **
  **      bearer context.                                                   **
  **                                                                        **
- ** Inputs:  ue_id:      UE local identifier                        **
+ ** Inputs:  esm_context: ESM Context                                      **
  **          pid:       PDN connection identifier                  **
  **      esm_qos:   EPS bearer level QoS parameters            **
  **      tft:       Traffic flow template parameters           **
@@ -130,19 +130,19 @@ static int _modify_eps_bearer_context(emm_data_context_t * emm_context, ebi_t eb
  ***************************************************************************/
 int
 esm_proc_modify_eps_bearer_context (
-  emm_data_context_t * emm_context,
+  esm_context_t * esm_context,
   const proc_tid_t   pti,                  // todo: Will always be 0 for network initiated bearer establishment.
   bearer_context_to_be_updated_t *bc_tbu,
   esm_cause_t *esm_cause)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   int                                     rc = RETURNok;
-  mme_ue_s1ap_id_t                        ue_id = emm_context->ue_id;
+  mme_ue_s1ap_id_t                        ue_id = esm_context->ue_id;
   OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - EPS bearer context modification " "(ue_id=" MME_UE_S1AP_ID_FMT ")\n", ue_id);
 
-  ue_context_t                        *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
+  ue_context_t                        *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, esm_context->ue_id);
 
-  if(esm_ebr_get_status(emm_context, bc_tbu->eps_bearer_id) != ESM_EBR_ACTIVE){
+  if(esm_ebr_get_status(esm_context, bc_tbu->eps_bearer_id) != ESM_EBR_ACTIVE){
     OAILOG_ERROR(LOG_NAS_ESM, "ESM-PROC  - ESM Bearer Context for ebi %d is not ACTIVE for ue " MME_UE_S1AP_ID_FMT ". \n", bc_tbu->eps_bearer_id, ue_context->mme_ue_s1ap_id);
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
   }
@@ -156,7 +156,6 @@ esm_proc_modify_eps_bearer_context (
           OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
       }
   }
-
   /** Validate the TFT and packet filters don't have semantical errors.. */
   if(!((bc_tbu->tft.tftoperationcode == TRAFFIC_FLOW_TEMPLATE_OPCODE_ADD_PACKET_FILTER_TO_EXISTING_TFT)
       ||(bc_tbu->tft.tftoperationcode == TRAFFIC_FLOW_TEMPLATE_OPCODE_DELETE_PACKET_FILTERS_FROM_EXISTING_TFT)
@@ -196,15 +195,15 @@ esm_proc_modify_eps_bearer_context (
  ***************************************************************************/
 int
 esm_proc_update_eps_bearer_context (
-  emm_data_context_t * emm_context,
+  esm_context_t * esm_context,
   const bearer_context_to_be_updated_t *bc_tbu)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   int                                     rc = RETURNok;
-  mme_ue_s1ap_id_t                        ue_id = emm_context->ue_id;
+  mme_ue_s1ap_id_t                        ue_id = esm_context->ue_id;
   OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Updating EPS bearer context configuration to new values " "(ue_id=" MME_UE_S1AP_ID_FMT " \n", ue_id);
 
-  ue_context_t                        *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
+  ue_context_t                        *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, esm_context->ue_id);
 
   /** Check the cause. */
   if(bc_tbu->cause.cause_value != REQUEST_ACCEPTED){
@@ -212,7 +211,7 @@ esm_proc_update_eps_bearer_context (
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
   }
 
-  if(esm_ebr_get_status(emm_context, bc_tbu->eps_bearer_id) != ESM_EBR_ACTIVE){
+  if(esm_ebr_get_status(esm_context, bc_tbu->eps_bearer_id) != ESM_EBR_ACTIVE){
     OAILOG_ERROR(LOG_NAS_ESM, "ESM-PROC  - ESM Bearer Context for ebi %d is not ACTIVE for ue " MME_UE_S1AP_ID_FMT ". \n", bc_tbu->eps_bearer_id, ue_context->mme_ue_s1ap_id);
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
   }
@@ -222,7 +221,7 @@ esm_proc_update_eps_bearer_context (
   mme_app_get_session_bearer_context_from_all(ue_context, bc_tbu->eps_bearer_id, &bc);
   DevAssert(bc);
 
-  rc = esm_ebr_context_update(emm_context, bc, bc_tbu->bearer_level_qos, &bc_tbu->tft, &bc_tbu->pco);
+  rc = esm_ebr_context_update(esm_context, bc, bc_tbu->bearer_level_qos, &bc_tbu->tft, &bc_tbu->pco);
 
   /** Not updating the parameters yet. Updating later when a success is received. State will be updated later. */
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
@@ -257,14 +256,14 @@ esm_proc_update_eps_bearer_context (
 int
 esm_proc_modify_eps_bearer_context_request(
   bool is_standalone,
-  emm_data_context_t * emm_context,
+  esm_context_t * esm_context,
   ebi_t ebi,
   STOLEN_REF bstring *msg,
   bool ue_triggered)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   int                                     rc = RETURNok;
-  mme_ue_s1ap_id_t                        ue_id = emm_context->ue_id;
+  mme_ue_s1ap_id_t                        ue_id = esm_context->ue_id;
 
   OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Initiate EPS bearer context " "modification (ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d)\n",
       ue_id, ebi);
@@ -272,13 +271,13 @@ esm_proc_modify_eps_bearer_context_request(
    * Send modify EPS bearer context request message and
    * * * * start timer T3486
    */
-  rc = _modify_eps_bearer_context(emm_context, ebi, msg);
+  rc = _modify_eps_bearer_context(esm_context, ebi, msg);
 
   if (rc != RETURNerror) {
     /*
      * Set the EPS bearer context state to MODIFY PENDING
      */
-    rc = esm_ebr_set_status (emm_context, ebi, ESM_EBR_MODIFY_PENDING, ue_triggered);
+    rc = esm_ebr_set_status (esm_context, ebi, ESM_EBR_MODIFY_PENDING, ue_triggered);
 
     if (rc != RETURNok) {
       /*
@@ -315,13 +314,13 @@ esm_proc_modify_eps_bearer_context_request(
  ***************************************************************************/
 int
 esm_proc_modify_eps_bearer_context_accept (
-  emm_data_context_t * emm_context,
+  esm_context_t * esm_context,
   ebi_t ebi,
   esm_cause_t *esm_cause)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   int                                     rc = RETURNerror;
-  mme_ue_s1ap_id_t                        ue_id = emm_context->ue_id;
+  mme_ue_s1ap_id_t                        ue_id = esm_context->ue_id;
 
   OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - EPS bearer context modification " "accepted by the UE (ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d)\n",
       ue_id, ebi);
@@ -329,13 +328,13 @@ esm_proc_modify_eps_bearer_context_accept (
    * Stop T3486 timer.
    * Will also check if the bearer exists. If not (E-RAB Modify Failure), the message will be dropped.
    */
-  rc = esm_ebr_stop_timer (emm_context, ebi);
+  rc = esm_ebr_stop_timer (esm_context, ebi);
 
   if (rc != RETURNerror) {
     /*
      * Set the EPS bearer context state to ACTIVE (bearer exists, just stop the procedure if already not stopped).
      */
-    rc = esm_ebr_set_status (emm_context, ebi, ESM_EBR_ACTIVE, false);
+    rc = esm_ebr_set_status (esm_context, ebi, ESM_EBR_ACTIVE, false);
 
     if (rc != RETURNok) {
       /*
@@ -393,13 +392,13 @@ esm_proc_modify_eps_bearer_context_accept (
  ***************************************************************************/
 int
 esm_proc_modify_eps_bearer_context_reject (
-  emm_data_context_t * emm_context,
+  esm_context_t * esm_context,
   ebi_t ebi,
   esm_cause_t *esm_cause,
   bool ue_requested)
 {
   int                                     rc;
-  mme_ue_s1ap_id_t                        ue_id  = emm_context->ue_id;
+  mme_ue_s1ap_id_t                        ue_id  = esm_context->ue_id;
   pdn_cid_t                               pdn_ci = PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED;
 
   OAILOG_FUNC_IN (LOG_NAS_ESM);
@@ -409,7 +408,7 @@ esm_proc_modify_eps_bearer_context_reject (
    * Stop T3486 timer if running.
    * Will also check if the bearer exists. If not (E-RAB Setup Failure), the message will be dropped.
    */
-  rc = esm_ebr_stop_timer (emm_context, ebi);
+  rc = esm_ebr_stop_timer (esm_context, ebi);
 
   if (rc != RETURNerror) {
     /*
@@ -417,11 +416,11 @@ esm_proc_modify_eps_bearer_context_reject (
      * Check the cause code and depending continue or disable the bearer context locally.
      */
 
-    esm_ebr_state oldState = esm_ebr_get_status(emm_context, ebi);
+    esm_ebr_state oldState = esm_ebr_get_status(esm_context, ebi);
 
     if(*esm_cause == ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY){
       OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Deactivating the ESM bearer locally. " "(ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d)\n", ue_id, ebi);
-      ebi = esm_ebr_context_release (emm_context, ebi, pdn_ci, false);
+      ebi = esm_ebr_context_release (esm_context, ebi, pdn_ci, false);
       if (ebi == ESM_EBI_UNASSIGNED) {  /**< Bearer was already released. */
         OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Failed to release EPS bearer context\n");
         OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
@@ -435,7 +434,7 @@ esm_proc_modify_eps_bearer_context_reject (
        */
       *esm_cause = ESM_CAUSE_PROTOCOL_ERROR;
       /** Set the state back to active. */
-      esm_ebr_set_status(emm_context, ebi, ESM_EBR_ACTIVE, ue_requested);
+      esm_ebr_set_status(esm_context, ebi, ESM_EBR_ACTIVE, ue_requested);
     }
     /**
      * Inform the MME_APP only if it came as an ESM response, the bearer existed and no E-RAB failure was received yet. The S11 procedure should be handled with already.
@@ -568,36 +567,36 @@ static void _modify_eps_bearer_context_t3486_handler (void *args)
  **                                                                        **
  ***************************************************************************/
 static int _modify_eps_bearer_context(
-  emm_data_context_t * emm_context,
+  esm_context_t * esm_context,
   ebi_t ebi,
   STOLEN_REF bstring *msg)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   emm_sap_t                               emm_sap = {0};
   int                                     rc;
-  mme_ue_s1ap_id_t                        ue_id = emm_context->ue_id;
-  ue_context_t                           *ue_context  = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
+  mme_ue_s1ap_id_t                        ue_id = esm_context->ue_id;
+  ue_context_t                           *ue_context  = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, esm_context->ue_id);
   bearer_context_t                       *bearer_context = NULL;
 
   /*
    * Notify EMM that an modify EPS bearer context request
    * message has to be sent to the UE
    */
-  emm_esm_modify_bearer_req_t          *emm_esm_modify = &emm_sap.u.emm_esm.u.modify_bearer;
+//  emm_esm_modify_bearer_req_t          *emm_esm_modify = &emm_sap.u.emm_esm.u.modify_bearer;
 
   mme_app_get_session_bearer_context_from_all(ue_context, ebi, &bearer_context);
   DevAssert(bearer_context);
 
-  emm_sap.primitive       = EMMESM_MODIFY_BEARER_REQ;
-  emm_sap.u.emm_esm.ue_id = ue_id;
-  emm_sap.u.emm_esm.ctx   = emm_context;
-  emm_esm_modify->msg            = *msg;
-  emm_esm_modify->ebi            = ebi;
-
-  emm_esm_modify->mbr_dl         = bearer_context->esm_ebr_context.mbr_dl;
-  emm_esm_modify->mbr_ul         = bearer_context->esm_ebr_context.mbr_ul;
-  emm_esm_modify->gbr_dl         = bearer_context->esm_ebr_context.gbr_dl;
-  emm_esm_modify->gbr_ul         = bearer_context->esm_ebr_context.gbr_ul;
+//  emm_sap.primitive       = EMMESM_MODIFY_BEARER_REQ;
+//  emm_sap.u.emm_esm.ue_id = ue_id;
+//  emm_sap.u.emm_esm.ctx   = esm_context;
+//  emm_esm_modify->msg            = *msg;
+//  emm_esm_modify->ebi            = ebi;
+//
+//  emm_esm_modify->mbr_dl         = bearer_context->esm_ebr_context.mbr_dl;
+//  emm_esm_modify->mbr_ul         = bearer_context->esm_ebr_context.mbr_ul;
+//  emm_esm_modify->gbr_dl         = bearer_context->esm_ebr_context.gbr_dl;
+//  emm_esm_modify->gbr_ul         = bearer_context->esm_ebr_context.gbr_ul;
 
   bstring msg_dup = bstrcpy(*msg);
   *msg = NULL;
@@ -608,7 +607,7 @@ static int _modify_eps_bearer_context(
     /*
      * Start T3486 retransmission timer
      */
-    rc = esm_ebr_start_timer (emm_context, ebi, msg_dup, mme_config.nas_config.t3486_sec, _modify_eps_bearer_context_t3486_handler);
+    rc = esm_ebr_start_timer (esm_context, ebi, msg_dup, mme_config.nas_config.t3486_sec, _modify_eps_bearer_context_t3486_handler);
   } else {
     bdestroy_wrapper(&msg_dup);
   }

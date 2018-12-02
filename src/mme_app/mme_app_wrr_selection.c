@@ -37,6 +37,7 @@
 
 #include "log.h"
 #include "common_defs.h"
+#include "common_types.h"
 #include "dynamic_memory_check.h"
 #include "TrackingAreaIdentity.h"
 #include "mme_config.h"

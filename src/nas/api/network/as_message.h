@@ -42,15 +42,15 @@ Description Defines the messages supported by the Access Stratum sublayer
 #ifndef FILE_AS_MESSAGE_H_SEEN
 #define FILE_AS_MESSAGE_H_SEEN
 
-#include "commonDef.h"
+#include "common_defs.h"
 #include "networkDef.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.301.h"
 #include "3gpp_23.003.h"
 #include "3gpp_36.331.h"
 #include "3gpp_36.401.h"
-#include "TrackingAreaIdentity.h"
 #include "common_types.h"
+#include "TrackingAreaIdentity.h"
 
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/

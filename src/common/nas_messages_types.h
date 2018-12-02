@@ -129,6 +129,7 @@ typedef struct itti_nas_pdn_connectivity_fail_s {
   mme_ue_s1ap_id_t        ue_id;
   int                     pti;
   pdn_conn_rsp_cause_t    cause;
+  ebi_t                   linked_ebi;
 } itti_nas_pdn_connectivity_fail_t;
 
 typedef struct itti_nas_pdn_config_req_s {

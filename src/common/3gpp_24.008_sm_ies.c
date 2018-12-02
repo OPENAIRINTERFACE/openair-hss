@@ -38,6 +38,7 @@
 #include "assertions.h"
 #include "3gpp_23.003.h"
 #include "3gpp_24.008.h"
+#include "3gpp_24.301.h"
 #include "TLVDecoder.h"
 #include "TLVEncoder.h"
 
@@ -1161,7 +1162,6 @@ void free_traffic_flow_template(traffic_flow_template_t ** tft)
 //  filters in existing TFT" and two or more packet filters in all TFTs associated with this PDP address and APN
 //  would have identical packet filter precedence values.
 
-#include "3gpp_24.301.h"
 //------------------------------------------------------------------------------
 /**
  * We just add 1 to the identifier in the bitmaps.

@@ -40,15 +40,15 @@
 
 *****************************************************************************/
 
-#include "as_process.h"
-#include "nas_process.h"
+#include "../../test/as_simulator/as_process.h"
 
-#include "commonDef.h"
-#include "as_data.h"
-
+#include "common_defs.h"
 #include <sys/types.h>
 #include <stdio.h>              // snprintf
 #include <string.h>             // memcpy
+
+#include "../../test/as_simulator/as_data.h"
+#include "../../test/as_simulator/nas_process.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/

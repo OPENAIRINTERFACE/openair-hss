@@ -69,7 +69,8 @@
 #include "s1ap_mme.h"
 #include "timer.h"
 #include "mme_app_extern.h"
-#include "nas_defs.h"
+#include "nas_emm.h"
+#include "nas_esm.h"
 #include "s10_mme.h"
 #include "s11_mme.h"
 
@@ -158,7 +159,8 @@ main (
 #endif
           NULL));
   MSC_INIT (MSC_MME, THREAD_MAX + TASK_MAX);
-  CHECK_INIT_RETURN (nas_init (&mme_config));
+  CHECK_INIT_RETURN (nas_emm_init (&mme_config));
+  CHECK_INIT_RETURN (nas_esm_init ());
   CHECK_INIT_RETURN (sctp_init (&mme_config));
   CHECK_INIT_RETURN (udp_init ());
   CHECK_INIT_RETURN (s10_mme_init (&mme_config));

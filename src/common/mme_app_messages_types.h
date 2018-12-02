@@ -29,9 +29,9 @@
 #ifndef FILE_MME_APP_MESSAGES_TYPES_SEEN
 #define FILE_MME_APP_MESSAGES_TYPES_SEEN
 
-#include "nas_messages_types.h"
 #include "s1ap_common.h"
 #include "s10_messages_types.h"
+#include "nas_messages_types.h"
 
 #define MME_APP_CONNECTION_ESTABLISHMENT_CNF(mSGpTR)     (mSGpTR)->ittiMsg.mme_app_connection_establishment_cnf
 #define MME_APP_INITIAL_CONTEXT_SETUP_RSP(mSGpTR)        (mSGpTR)->ittiMsg.mme_app_initial_context_setup_rsp

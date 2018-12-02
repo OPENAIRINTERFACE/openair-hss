@@ -40,7 +40,7 @@ Description Defines the EPS Mobility Management procedure call manager,
 #define FILE_EMM_MAIN_SEEN
 
 #include "mme_config.h"
-#include "commonDef.h"
+#include "common_defs.h"
 #include "networkDef.h"
 
 /****************************************************************************/

@@ -41,12 +41,12 @@ Description Defines the EMM primitives available at the EMMAS Service
 #ifndef FILE_EMM_ASDEF_SEEN
 #define FILE_EMM_ASDEF_SEEN
 #include "common_types.h"
-#include "commonDef.h"
+#include "common_defs.h"
 #include "securityDef.h"
-#include "TrackingAreaIdentityList.h"
 #include "3gpp_36.401.h"
 #include "3gpp_23.003.h"
 #include "emm_proc.h"
+#include "TrackingAreaIdentityList.h"
 
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/

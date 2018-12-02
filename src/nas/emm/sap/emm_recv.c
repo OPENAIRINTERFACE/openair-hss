@@ -38,6 +38,7 @@
         from the Access Stratum sublayer.
 
 *****************************************************************************/
+
 #include <pthread.h>
 #include <inttypes.h>
 #include <stdint.h>
@@ -52,19 +53,17 @@
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"
 #include "3gpp_29.274.h"
-#include "emm_recv.h"
-
-#include "commonDef.h"
+#include "common_defs.h"
 #include "common_defs.h"
 #include "log.h"
-#include "emm_msgDef.h"
-#include "emm_cause.h"
-#include "emm_proc.h"
 #include "mme_config.h"
 #include "3gpp_requirements_24.301.h"
 #include "mme_app_defs.h"
+#include "emm_recv.h"
+#include "emm_proc.h"
+#include "emm_cause.h"
+#include "emm_msgDef.h"
 #include "emm_sap.h"
-
 extern mme_app_desc_t                          mme_app_desc;
 
 /****************************************************************************/

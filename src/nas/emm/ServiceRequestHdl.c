@@ -62,12 +62,14 @@
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"
 #include "3gpp_29.274.h"
-#include "mme_app_ue_context.h"
-#include "emm_proc.h"
-#include "nas_timer.h"
+
 #include "emm_data.h"
-#include "emm_sap.h"
+#include "emm_proc.h"
 #include "emm_cause.h"
+#include "emm_sap.h"
+#include "nas_timer.h"
+
+#include "mme_app_ue_context.h"
 #include "mme_app_defs.h"
 
 /****************************************************************************/

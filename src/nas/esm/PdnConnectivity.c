@@ -64,18 +64,18 @@
 #include "3gpp_29.274.h"
 #include "3gpp_36.401.h"
 #include "mme_app_ue_context.h"
-#include "commonDef.h"
-#include "esm_proc.h"
-#include "esm_data.h"
-#include "esm_ebr.h"
-#include "esm_cause.h"
-#include "esm_pt.h"
+#include "common_defs.h"
 #include "mme_api.h"
-#include "emm_sap.h"
 #include "mme_app_apn_selection.h"
 #include "mme_app_pdn_context.h"
 #include "mme_app_bearer_context.h"
 #include "mme_app_defs.h"
+#include "esm_data.h"
+#include "esm_ebr.h"
+#include "esm_proc.h"
+#include "esm_pt.h"
+#include "esm_cause.h"
+#include "esm_sapDef.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -84,8 +84,6 @@
 /****************************************************************************/
 /*******************  L O C A L    D E F I N I T I O N S  *******************/
 /****************************************************************************/
-
-
 
 /*
    --------------------------------------------------------------------------
@@ -96,7 +94,7 @@
    PDN connection handlers
 */
 static pdn_cid_t _pdn_connectivity_create (
-  emm_data_context_t * emm_context,
+  esm_context_t * esm_context,
   const proc_tid_t pti,
   const context_identifier_t  context_identifier,
   const_bstring const apn,
@@ -107,7 +105,7 @@ static pdn_cid_t _pdn_connectivity_create (
   const bool is_emergency,
   pdn_context_t              **pdn_context_pP);
 
-proc_tid_t _pdn_connectivity_delete (emm_data_context_t * emm_context, pdn_cid_t pdn_cid, ebi_t default_ebi);
+proc_tid_t _pdn_connectivity_delete (esm_context_t * esm_context, pdn_cid_t pdn_cid, ebi_t default_ebi);
 
 
 /****************************************************************************/
@@ -159,7 +157,7 @@ proc_tid_t _pdn_connectivity_delete (emm_data_context_t * emm_context, pdn_cid_t
  ***************************************************************************/
 int
 esm_proc_pdn_connectivity_request (
-  emm_data_context_t              * emm_context,
+  esm_context_t              * esm_context,
   const proc_tid_t             pti,
   const context_identifier_t   context_identifier,
   const esm_proc_pdn_request_t request_type,
@@ -174,7 +172,7 @@ esm_proc_pdn_connectivity_request (
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   int                                     rc = RETURNok;
-  mme_ue_s1ap_id_t                        ue_id = emm_context->ue_id;
+  mme_ue_s1ap_id_t                        ue_id = esm_context->ue_id;
 
   OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - PDN connectivity requested by the UE "
              "(ue_id=" MME_UE_S1AP_ID_FMT ", pti=%d) PDN type = %s, APN = %s pdn addr = %s context_identifier %d\n", ue_id, pti,
@@ -193,7 +191,7 @@ esm_proc_pdn_connectivity_request (
   /*
    * Create new PDN connection
    */
-  rc = _pdn_connectivity_create (emm_context, pti, context_identifier, apn, subscribed_ambr, pdn_type, pdn_addr, pco, is_emergency, pdn_context_pP);
+  rc = _pdn_connectivity_create (esm_context, pti, context_identifier, apn, subscribed_ambr, pdn_type, pdn_addr, pco, is_emergency, pdn_context_pP);
 
   if (rc < 0) {
     OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Failed to create PDN connection\n");
@@ -233,30 +231,30 @@ esm_proc_pdn_connectivity_request (
 int
 esm_proc_pdn_connectivity_reject (
   bool is_standalone,
-  emm_data_context_t * emm_context,
+  esm_context_t * esm_context,
   ebi_t ebi,
   STOLEN_REF bstring *msg,
   bool ue_triggered)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   int                                     rc = RETURNerror;
-  mme_ue_s1ap_id_t                        ue_id = emm_context->ue_id;
+  mme_ue_s1ap_id_t                        ue_id = esm_context->ue_id;
 
   OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - PDN connectivity not accepted by the " "network (ue_id=" MME_UE_S1AP_ID_FMT ")\n", ue_id);
 
   if (is_standalone) {
-    emm_sap_t                               emm_sap = {0};
+    esm_sap_t                               esm_sap = {0};
 
-    /*
-     * Notity EMM that ESM PDU has to be forwarded to lower layers
-     */
-    emm_sap.primitive = EMMESM_UNITDATA_REQ;
-    emm_sap.u.emm_esm.ue_id = ue_id;
-    emm_sap.u.emm_esm.ctx = emm_context;
-    emm_sap.u.emm_esm.u.data.msg = *msg;
+//    /*
+//     * Notity EMM that ESM PDU has to be forwarded to lower layers
+//     */
+//    emm_sap.primitive = EMMESM_UNITDATA_REQ;
+//    emm_sap.u.emm_esm.ue_id = ue_id;
+//    emm_sap.u.emm_esm.ctx = esm_context;
+//    emm_sap.u.emm_esm.u.data.msg = *msg;
     msg = NULL;
-    MSC_LOG_TX_MESSAGE (MSC_NAS_ESM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMESM_UNITDATA_REQ  (PDN CONNECTIVITY REJECT) ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
-    rc = emm_sap_send (&emm_sap);
+    MSC_LOG_TX_MESSAGE (MSC_NAS_ESM_MME, MSC_NAS_EMM_MME, NULL, 0, "ESM_UNITDATA_REQ  (PDN CONNECTIVITY REJECT) ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
+    rc = esm_sap_send (&esm_sap);
   }
 
   /*
@@ -289,17 +287,17 @@ esm_proc_pdn_connectivity_reject (
  **                  Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
-int esm_proc_pdn_connectivity_failure (emm_data_context_t * emm_context, pdn_cid_t pdn_cid, ebi_t default_ebi)
+int esm_proc_pdn_connectivity_failure (esm_context_t * esm_context, pdn_cid_t pdn_cid, ebi_t default_ebi)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   proc_tid_t                                     pti = ESM_PT_UNASSIGNED;
-  mme_ue_s1ap_id_t                               ue_id = emm_context->ue_id;
+  mme_ue_s1ap_id_t                               ue_id = esm_context->ue_id;
 
   OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - PDN connectivity failure (ue_id=" MME_UE_S1AP_ID_FMT ", pdn_cid=%d, ebi%d)\n", ue_id, pdn_cid, default_ebi);
   /*
    * Delete the PDN connection entry
    */
-  pti = _pdn_connectivity_delete (emm_context, pdn_cid, default_ebi);
+  pti = _pdn_connectivity_delete (esm_context, pdn_cid, default_ebi);
 
   if (pti != ESM_PT_UNASSIGNED) {
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);
@@ -325,9 +323,9 @@ int esm_proc_pdn_connectivity_failure (emm_data_context_t * emm_context, pdn_cid
  **                  Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
-int esm_proc_pdn_config_res(emm_data_context_t * emm_context, pdn_cid_t **pdn_cid, bool ** is_pdn_connectivity, imsi64_t imsi, bstring apn, ebi_t ** default_ebi_pp, esm_cause_t * esm_cause){
+int esm_proc_pdn_config_res(esm_context_t * esm_context, pdn_cid_t **pdn_cid, bool ** is_pdn_connectivity, imsi64_t imsi, bstring apn, ebi_t ** default_ebi_pp, esm_cause_t * esm_cause){
   OAILOG_FUNC_IN (LOG_NAS_ESM);
-  ue_context_t                           *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
+  ue_context_t                           *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, esm_context->ue_id);
   int                                     rc = RETURNok;
   ebi_t                                   new_ebi = 0;
   pdn_context_t                          *pdn_context = NULL;
@@ -390,7 +388,7 @@ int esm_proc_pdn_config_res(emm_data_context_t * emm_context, pdn_cid_t **pdn_ci
     /** Not creating updated bearers. */
     **is_pdn_connectivity = true;
     /** Set the state of the ESM bearer context as ACTIVE (not setting as active if no TAU has followed). */
-    rc = esm_ebr_set_status (emm_context, pdn_context->default_ebi, ESM_EBR_ACTIVE, false);
+    rc = esm_ebr_set_status (esm_context, pdn_context->default_ebi, ESM_EBR_ACTIVE, false);
     /** Set the context identifier when updating the pdn_context. */
     OAILOG_INFO(LOG_NAS_EMM, "EMMCN-SAP  - " "Successfully updated PDN context for UE " MME_UE_S1AP_ID_FMT" which was established already. \n", ue_context->mme_ue_s1ap_id);
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
@@ -404,43 +402,43 @@ int esm_proc_pdn_config_res(emm_data_context_t * emm_context, pdn_cid_t **pdn_ci
    * todo: how to check that this is still our last ESM proc data?
    */
 
-  if(!emm_context->esm_ctx.esm_proc_data){
+  if(!esm_context->esm_proc_data){
     /** ESM proc data. */
     OAILOG_WARNING(LOG_MME_APP,  "No ESM proc data for ue_id " MME_UE_S1AP_ID_FMT " Creating new one.! \n",
         ue_context->mme_ue_s1ap_id);
-    emm_context->esm_ctx.esm_proc_data  = (esm_proc_data_t *) calloc(1, sizeof(*emm_context->esm_ctx.esm_proc_data));  /**< TAU without context request, for example. */
-    emm_context->esm_ctx.esm_proc_data->apn = apn; /**< Not removing. */
+    esm_context->esm_proc_data  = (esm_proc_data_t *) calloc(1, sizeof(*esm_context->esm_proc_data));  /**< TAU without context request, for example. */
+    esm_context->esm_proc_data->apn = apn; /**< Not removing. */
   }
 
   /*
    * Execute the PDN connectivity procedure requested by the UE
    */
-  emm_context->esm_ctx.esm_proc_data->pdn_cid              = apn_config->context_identifier; /**< Set it to the one matched. */
-  emm_context->esm_ctx.esm_proc_data->bearer_qos.qci       = apn_config->subscribed_qos.qci;
-  emm_context->esm_ctx.esm_proc_data->bearer_qos.pci       = apn_config->subscribed_qos.allocation_retention_priority.pre_emp_capability;
-  emm_context->esm_ctx.esm_proc_data->bearer_qos.pl        = apn_config->subscribed_qos.allocation_retention_priority.priority_level;
-  emm_context->esm_ctx.esm_proc_data->bearer_qos.pvi       = apn_config->subscribed_qos.allocation_retention_priority.pre_emp_vulnerability;
-  emm_context->esm_ctx.esm_proc_data->bearer_qos.gbr.br_ul = 0;
-  emm_context->esm_ctx.esm_proc_data->bearer_qos.gbr.br_dl = 0;
-  emm_context->esm_ctx.esm_proc_data->bearer_qos.mbr.br_ul = 0;
-  emm_context->esm_ctx.esm_proc_data->bearer_qos.mbr.br_dl = 0;
+  esm_context->esm_proc_data->pdn_cid              = apn_config->context_identifier; /**< Set it to the one matched. */
+  esm_context->esm_proc_data->bearer_qos.qci       = apn_config->subscribed_qos.qci;
+  esm_context->esm_proc_data->bearer_qos.pci       = apn_config->subscribed_qos.allocation_retention_priority.pre_emp_capability;
+  esm_context->esm_proc_data->bearer_qos.pl        = apn_config->subscribed_qos.allocation_retention_priority.priority_level;
+  esm_context->esm_proc_data->bearer_qos.pvi       = apn_config->subscribed_qos.allocation_retention_priority.pre_emp_vulnerability;
+  esm_context->esm_proc_data->bearer_qos.gbr.br_ul = 0;
+  esm_context->esm_proc_data->bearer_qos.gbr.br_dl = 0;
+  esm_context->esm_proc_data->bearer_qos.mbr.br_ul = 0;
+  esm_context->esm_proc_data->bearer_qos.mbr.br_dl = 0;
   // TODO  "Better to throw emm_ctx->esm_ctx.esm_proc_data as a parameter or as a hidden parameter ?"
   // todo: if PDN_CONTEXT exist --> we might need to send an ESM update message like MODIFY EPS BEARER CONTEXT REQUEST to the UE
-  rc = esm_proc_pdn_connectivity_request (emm_context,
-      emm_context->esm_ctx.esm_proc_data->pti,
+  rc = esm_proc_pdn_connectivity_request (esm_context,
+      esm_context->esm_proc_data->pti,
       apn_config->context_identifier,
-      emm_context->esm_ctx.esm_proc_data->request_type,
-      emm_context->esm_ctx.esm_proc_data->apn,
-      emm_context->esm_ctx.esm_proc_data->pdn_type,
-      emm_context->esm_ctx.esm_proc_data->pdn_addr,
+      esm_context->esm_proc_data->request_type,
+      esm_context->esm_proc_data->apn,
+      esm_context->esm_proc_data->pdn_type,
+      esm_context->esm_proc_data->pdn_addr,
       &apn_config->ambr,
-      &emm_context->esm_ctx.esm_proc_data->bearer_qos,
-      (emm_context->esm_ctx.esm_proc_data->pco.num_protocol_or_container_id ) ? &emm_context->esm_ctx.esm_proc_data->pco:NULL,
+      &esm_context->esm_proc_data->bearer_qos,
+      (esm_context->esm_proc_data->pco.num_protocol_or_container_id ) ? &esm_context->esm_proc_data->pco:NULL,
           esm_cause,
           &pdn_context);
 
   pdn_context_t *pdn_ctx_p1 = NULL;
-  mme_app_get_pdn_context(ue_context, apn_config->context_identifier, ESM_EBI_UNASSIGNED, emm_context->esm_ctx.esm_proc_data->apn, &pdn_ctx_p1);
+  mme_app_get_pdn_context(ue_context, apn_config->context_identifier, ESM_EBI_UNASSIGNED, esm_context->esm_proc_data->apn, &pdn_ctx_p1);
   DevAssert(pdn_ctx_p1);
 
   **pdn_cid = pdn_context->context_identifier;
@@ -451,7 +449,7 @@ int esm_proc_pdn_config_res(emm_data_context_t * emm_context, pdn_cid_t **pdn_ci
      * Create local default EPS bearer context
      */
     if ((!is_pdn_connectivity) || ((is_pdn_connectivity) /*&& (EPS_BEARER_IDENTITY_UNASSIGNED == pdn_context->default_ebi) */)) {
-      rc = esm_proc_default_eps_bearer_context (emm_context, emm_context->esm_ctx.esm_proc_data->pti, pdn_context, emm_context->esm_ctx.esm_proc_data->apn, &new_ebi, &emm_context->esm_ctx.esm_proc_data->bearer_qos, esm_cause);
+      rc = esm_proc_default_eps_bearer_context (esm_context, esm_context->esm_proc_data->pti, pdn_context, esm_context->esm_proc_data->apn, &new_ebi, &esm_context->esm_proc_data->bearer_qos, esm_cause);
     }
     // todo: if the bearer already exist, we may modify the qos parameters with Modify_Bearer_Request!
 
@@ -466,7 +464,6 @@ int esm_proc_pdn_config_res(emm_data_context_t * emm_context, pdn_cid_t **pdn_ci
   //      unlock_ue_contexts(ue_context);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
-
 
 /****************************************************************************/
 /*********************  L O C A L    F U N C T I O N S  *********************/
@@ -502,7 +499,7 @@ int esm_proc_pdn_config_res(emm_data_context_t * emm_context, pdn_cid_t **pdn_ci
  ***************************************************************************/
 static int
 _pdn_connectivity_create (
-  emm_data_context_t * emm_context,
+  esm_context_t * esm_context,
   const proc_tid_t pti,
   const context_identifier_t  context_identifier,
   const_bstring const apn,    /**< Will be set into the APN context. */
@@ -514,7 +511,7 @@ _pdn_connectivity_create (
   pdn_context_t              **pdn_context_pP)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
-  ue_context_t                        *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
+  ue_context_t                        *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, esm_context->ue_id);
 
   OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Create new PDN connection (pti=%d) APN = %s, IP address = %s PDN context_identifier %d (ue_id=" MME_UE_S1AP_ID_FMT ")\n",
       pti, bdata(apn),
@@ -535,7 +532,7 @@ _pdn_connectivity_create (
       /*
        * Increment the number of PDN connections
        */
-      emm_context->esm_ctx.n_pdns += 1;
+      esm_context->n_pdns += 1;
       /*
        * Set the procedure transaction identity
        */
@@ -545,14 +542,14 @@ _pdn_connectivity_create (
        */
       (*pdn_context_pP)->esm_data.is_emergency = is_emergency;
 
-      if (pco) {
-        if (!(*pdn_context_pP)->pco) {
-          (*pdn_context_pP)->pco = calloc(1, sizeof(protocol_configuration_options_t));
-        } else {
-          clear_protocol_configuration_options((*pdn_context_pP)->pco);
-        }
-        copy_protocol_configuration_options((*pdn_context_pP)->pco, pco);
-      }
+//      if (pco) {
+//        if (!(*pdn_context_pP)->pco) {
+//          (*pdn_context_pP)->pco = calloc(1, sizeof(protocol_configuration_options_t));
+//        } else {
+//          clear_protocol_configuration_options((*pdn_context_pP)->pco);
+//        }
+//        copy_protocol_configuration_options((*pdn_context_pP)->pco, pco);
+//      }
 
       /** Set the subscribed ambr. */
       (*pdn_context_pP)->subscribed_apn_ambr.br_dl = subscribed_ambr->br_dl;
@@ -594,14 +591,14 @@ _pdn_connectivity_create (
      */
     (*pdn_context_pP)->esm_data.pti = pti;
     (*pdn_context_pP)->esm_data.is_emergency = is_emergency;
-    if (pco) {
-      if (!(*pdn_context_pP)->pco) {
-        (*pdn_context_pP)->pco = calloc(1, sizeof(protocol_configuration_options_t));
-      } else {
-        clear_protocol_configuration_options((*pdn_context_pP)->pco);
-      }
-      copy_protocol_configuration_options((*pdn_context_pP)->pco, pco);
-    }
+//    if (pco) {
+//      if (!(*pdn_context_pP)->pco) {
+//        (*pdn_context_pP)->pco = calloc(1, sizeof(protocol_configuration_options_t));
+//      } else {
+//        clear_protocol_configuration_options((*pdn_context_pP)->pco);
+//      }
+//      copy_protocol_configuration_options((*pdn_context_pP)->pco, pco);
+//    }
     (*pdn_context_pP)->pdn_type = pdn_type;
     if (pdn_addr) {
       (*pdn_context_pP)->paa->pdn_type = pdn_type;
@@ -646,22 +643,25 @@ _pdn_connectivity_create (
  **                  Others:    _esm_data                                  **
  **                                                                        **
  ***************************************************************************/
-proc_tid_t _pdn_connectivity_delete (emm_data_context_t * emm_context, pdn_cid_t pdn_cid, ebi_t default_ebi)
+proc_tid_t _pdn_connectivity_delete (esm_context_t * esm_context, pdn_cid_t pdn_cid, ebi_t default_ebi)
 {
   proc_tid_t                                     pti = ESM_PT_UNASSIGNED;
 
-  if (!emm_context) {
+  if (!esm_context) {
     return pti;
   }
-  ue_context_t                        *ue_context   = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
+  ue_context_t                        *ue_context   = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, esm_context->ue_id);
   pdn_context_t                       *pdn_context  = NULL;
   if (pdn_cid < MAX_APN_PER_UE) {
     /** Get PDN Context. */
     mme_app_get_pdn_context(ue_context, pdn_cid, default_ebi, NULL, &pdn_context);
     if (!pdn_context) {
-      OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - PDN connection has not been allocated\n");
+      OAILOG_INFO(LOG_NAS_ESM, "ESM-PROC  - PDN connection for cid=%d and ebi=%d  has not been allocated for UE "MME_UE_S1AP_ID_FMT". \n",
+          pdn_cid, default_ebi, esm_context->ue_id);
+      OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
     } else if (pdn_context->is_active) {
-      OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - PDN connection is active\n");
+      OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - PDN connection is active\n");
+      pti = pdn_context->esm_data.pti;
     } else if (pdn_context->esm_data.n_bearers) {
       OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - PDN connection has bearer\n");
     } else if (!RB_EMPTY(&pdn_context->session_bearers)) {
@@ -678,7 +678,7 @@ proc_tid_t _pdn_connectivity_delete (emm_data_context_t * emm_context, pdn_cid_t
   /*
    * Decrement the number of PDN connections
    */
-  emm_context->esm_ctx.n_pdns -= 1;
+  esm_context->n_pdns -= 1;
 
   /*
    * Remove from the PDN sessions of the UE context.

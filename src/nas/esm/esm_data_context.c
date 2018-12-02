@@ -48,22 +48,21 @@
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"
 #include "3gpp_29.274.h"
-#include "emm_data.h"
-#include "nas_timer.h"
-#include "esm_data.h"
-#include "commonDef.h"
+#include "common_defs.h"
 #include "networkDef.h"
 #include "log.h"
-#include "esm_ebr_context.h"
-
 #include "dynamic_memory_check.h"
 
 #include "common_defs.h"
 
 #include "mme_app_ue_context.h"
 #include "mme_config.h"
-#include "esm_proc.h"
 
+#include "emm_data.h"
+#include "esm_ebr_context.h"
+#include "esm_proc.h"
+#include "esm_data.h"
+#include "nas_timer.h"
 
 // free allocated structs
 //------------------------------------------------------------------------------
@@ -117,15 +116,14 @@ void esm_bearer_context_init(esm_ebr_context_t * esm_ebr_context)
 //}
 
 //------------------------------------------------------------------------------
-void nas_stop_T3489(esm_context_t * const esm_ctx)
+void nas_stop_T3489(esm_context_t * const esm_context)
 {
 
-  if ((esm_ctx) && (esm_ctx->T3489.id != NAS_TIMER_INACTIVE_ID)) {
-    emm_data_context_t        *emm_context   = PARENT_STRUCT(esm_ctx, struct emm_data_context_s, esm_ctx);
-    mme_ue_s1ap_id_t       ue_id = emm_context->ue_id;
+  if ((esm_context) && (esm_context->T3489.id != NAS_TIMER_INACTIVE_ID)) {
+    mme_ue_s1ap_id_t       ue_id = esm_context->ue_id;
     void *nas_timer_callback_args;
-    esm_ctx->T3489.id = nas_timer_stop (esm_ctx->T3489.id, (void**)&nas_timer_callback_args);
-    if (NAS_TIMER_INACTIVE_ID == esm_ctx->T3489.id) {
+    esm_context->T3489.id = nas_timer_stop (esm_context->T3489.id, (void**)&nas_timer_callback_args);
+    if (NAS_TIMER_INACTIVE_ID == esm_context->T3489.id) {
       MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 T3489 stopped UE " MME_UE_S1AP_ID_FMT " ", ue_id);
       OAILOG_INFO (LOG_NAS_EMM, "T3489 stopped UE " MME_UE_S1AP_ID_FMT "\n", ue_id);
     } else {
@@ -152,8 +150,7 @@ void free_esm_context_content(esm_context_t * esm_ctx)
 //------------------------------------------------------------------------------
 void esm_init_context(struct esm_context_s *esm_context)
 {
-  emm_data_context_t        *emm_context   = PARENT_STRUCT(esm_context, struct emm_data_context_s, esm_ctx);
-  OAILOG_DEBUG (LOG_NAS_ESM, "ESM-CTX - Init UE id " MME_UE_S1AP_ID_FMT "\n", emm_context->ue_id);
+  OAILOG_DEBUG (LOG_NAS_ESM, "ESM-CTX - Init UE id " MME_UE_S1AP_ID_FMT "\n", esm_context->ue_id);
   memset(esm_context, 0, sizeof(*esm_context));
   esm_context->T3489.id        = NAS_TIMER_INACTIVE_ID;
   esm_context->T3489.sec       = mme_config.nas_config.t3489_sec;

@@ -23,11 +23,11 @@
 #ifndef FILE_EMM_INFORMATION_SEEN
 #define FILE_EMM_INFORMATION_SEEN
 
-#include "SecurityHeaderType.h"
-#include "MessageType.h"
 #include "3gpp_23.003.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"
+#include "MessageType.h"
+#include "SecurityHeaderType.h"
 
 /* Minimum length macro. Formed by minimum length of each mandatory field */
 #define EMM_INFORMATION_MINIMUM_LENGTH (0)

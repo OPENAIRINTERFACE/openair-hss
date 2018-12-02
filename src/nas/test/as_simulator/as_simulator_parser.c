@@ -39,9 +39,9 @@
 
 *****************************************************************************/
 
-#include "as_simulator_parser.h"
+#include "../../test/as_simulator/as_simulator_parser.h"
 
-#include "parser.h"
+#include "../../util/parser.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/

@@ -19,6 +19,7 @@
  *      contact@openairinterface.org
  */
 
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -29,6 +30,7 @@
 #include "log.h"
 #include "TLVEncoder.h"
 #include "TLVDecoder.h"
+#include "3gpp_24.301.h"
 #include "UeNetworkCapability.h"
 
 

@@ -36,6 +36,7 @@
 #include "dynamic_memory_check.h"
 #include "common_defs.h"
 #include "assertions.h"
+#include "3gpp_24.301.h"
 #include "3gpp_29.274.h"
 #include "3gpp_24.008.h"
 

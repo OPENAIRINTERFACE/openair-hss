@@ -28,7 +28,7 @@
 #include "log.h"
 #include "TLVEncoder.h"
 #include "TLVDecoder.h"
-//#include "TrafficFlowAggregateDescription.h"
+#include "TrafficFlowAggregateDescription.h"
 
 //------------------------------------------------------------------------------
 int decode_traffic_flow_aggregate_description (

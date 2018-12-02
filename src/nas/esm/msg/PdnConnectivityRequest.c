@@ -19,6 +19,7 @@
  *      contact@openairinterface.org
  */
 
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -32,10 +33,9 @@
 #include "3gpp_24.301.h"
 #include "TLVEncoder.h"
 #include "TLVDecoder.h"
-#include "PdnConnectivityRequest.h"
-
-
 #include "assertions.h"
+#include "common_types.h"
+#include "PdnConnectivityRequest.h"
 
 int
 decode_pdn_connectivity_request (

@@ -910,6 +910,8 @@ s1ap_handle_ue_context_release_command (
   MessageDef                             *message_p = NULL;
   int                                     rc = RETURNok;
 
+  OAILOG_FUNC_IN (LOG_S1AP);
+
   /** Get the eNB reference. */
   enb_ref_p = s1ap_is_enb_id_in_list(ue_context_release_command_pP->enb_id);
 
@@ -919,13 +921,17 @@ s1ap_handle_ue_context_release_command (
     OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
   }
 
-  OAILOG_FUNC_IN (LOG_S1AP);
   if ((ue_ref_p = s1ap_is_enb_ue_s1ap_id_in_list_per_enb (ue_context_release_command_pP->enb_ue_s1ap_id, ue_context_release_command_pP->enb_id)) == NULL) {
     OAILOG_DEBUG (LOG_S1AP, "No UE reference could be found for enbUeS1apId " ENB_UE_S1AP_ID_FMT " and enbId %d. \n",
                   ue_context_release_command_pP->enb_ue_s1ap_id, ue_context_release_command_pP->enb_id);
     MSC_LOG_EVENT (MSC_S1AP_MME, "0 UE_CONTEXT_RELEASE_COMMAND with mme_ue_s1ap_id only for non existing UE_REFERENCE for mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ", ue_context_release_command_pP->mme_ue_s1ap_id);
     /** We might receive a duplicate one. */
     ue_ref_p = s1ap_is_ue_mme_id_in_list(ue_context_release_command_pP->mme_ue_s1ap_id);
+  }
+
+  if(ue_ref_p){
+    OAILOG_DEBUG (LOG_S1AP, "UE reference for enbUeS1apId " ENB_UE_S1AP_ID_FMT " and enbId %d is %p. \n",
+                      ue_context_release_command_pP->enb_ue_s1ap_id, ue_context_release_command_pP->enb_id, ue_ref_p);
   }
 
   /**
@@ -996,12 +1002,12 @@ s1ap_mme_handle_ue_context_release_complete (
   S1AP_UE_CONTEXT_RELEASE_COMPLETE (message_p).enb_ue_s1ap_id = ueContextReleaseComplete_p->eNB_UE_S1AP_ID;
   S1AP_UE_CONTEXT_RELEASE_COMPLETE (message_p).enb_id         = ue_ref_p->enb->enb_id;
   S1AP_UE_CONTEXT_RELEASE_COMPLETE (message_p).sctp_assoc_id  = ue_ref_p->enb->sctp_assoc_id;
+  DevAssert(ue_ref_p->s1_ue_state == S1AP_UE_WAITING_CRR);
+  s1ap_remove_ue (ue_ref_p);
 
   MSC_LOG_TX_MESSAGE (MSC_S1AP_MME, MSC_MMEAPP_MME, NULL, 0, "0 S1AP_UE_CONTEXT_RELEASE_COMPLETE mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ", S1AP_UE_CONTEXT_RELEASE_COMPLETE (message_p).mme_ue_s1ap_id);
 
   itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
-  DevAssert(ue_ref_p->s1_ue_state == S1AP_UE_WAITING_CRR);
-  s1ap_remove_ue (ue_ref_p);
   OAILOG_DEBUG (LOG_S1AP, "Removed UE " MME_UE_S1AP_ID_FMT "\n", (uint32_t) ueContextReleaseComplete_p->mme_ue_s1ap_id);
   OAILOG_FUNC_RETURN (LOG_S1AP, RETURNok);
 }

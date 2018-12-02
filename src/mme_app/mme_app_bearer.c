@@ -231,7 +231,7 @@ mme_app_handle_nas_pdn_disconnect_req (
      * We use the esm_proc_data to find the correct PDN in ESM.
      */
     /** The only matching is made in the esm data context (pti specific). */
-    itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+    itti_send_msg_to_task (TASK_NAS_ESM, INSTANCE_DEFAULT, message_p);
 
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
@@ -472,7 +472,7 @@ mme_app_handle_initial_ue_message (
           itti_nas_implicit_detach_ue_ind_t *nas_implicit_detach_ue_ind_p = &message_p->ittiMsg.nas_implicit_detach_ue_ind;
           memset ((void*)nas_implicit_detach_ue_ind_p, 0, sizeof (itti_nas_implicit_detach_ue_ind_t));
           message_p->ittiMsg.nas_implicit_detach_ue_ind.ue_id = ue_nas_ctx->ue_id;
-          itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+          itti_send_msg_to_task (TASK_NAS_EMM, INSTANCE_DEFAULT, message_p);
           OAILOG_INFO(LOG_MME_APP, "Informed NAS about the invalidated NAS context. Dropping the initial UE request for enbUeS1apId " ENB_UE_S1AP_ID_FMT". \n", initial_pP->enb_ue_s1ap_id);
           OAILOG_FUNC_OUT (LOG_MME_APP);
         }
@@ -669,7 +669,7 @@ mme_app_handle_initial_ue_message (
 //  uintptr_t bearer_context_3 = mme_app_get_ue_bearer_context_2(ue_context, 5);
 
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_INITIAL_UE_MESSAGE UE id " MME_UE_S1AP_ID_FMT " ", ue_context->mme_ue_s1ap_id);
-  itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+  itti_send_msg_to_task (TASK_NAS_EMM, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 
@@ -924,7 +924,7 @@ mme_app_handle_delete_session_rsp (
     * We use the esm_proc_data to find the correct PDN in ESM.
     */
    /** The only matching is made in the esm data context (pti specific). */
-   itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+   itti_send_msg_to_task (TASK_NAS_ESM, INSTANCE_DEFAULT, message_p);
 
    /** No S1AP release yet. */
   OAILOG_FUNC_OUT (LOG_MME_APP);
@@ -993,7 +993,7 @@ mme_app_handle_create_sess_resp (
       message_p = itti_alloc_new_message (TASK_MME_APP, NAS_IMPLICIT_DETACH_UE_IND);
       DevAssert (message_p != NULL);
       message_p->ittiMsg.nas_implicit_detach_ue_ind.ue_id = ue_context->mme_ue_s1ap_id;
-      itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+      itti_send_msg_to_task (TASK_NAS_EMM, INSTANCE_DEFAULT, message_p);
       OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
     }else if (emm_cn_proc_ctx_req){
       /** A CN Context Request procedure exists. Also check the remaining PDN contexts to create in the SAE-GW. */
@@ -1007,7 +1007,8 @@ mme_app_handle_create_sess_resp (
       // todo: nas_pdn_connectivity_fail->pti = ue_context->pending_pdn_connectivity_req_pti;
       nas_pdn_connectivity_fail->ue_id = ue_context->mme_ue_s1ap_id;
       nas_pdn_connectivity_fail->cause = CAUSE_SYSTEM_FAILURE; // (pdn_conn_rsp_cause_t)(create_sess_resp_pP->cause);
-      rc = itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+      nas_pdn_connectivity_fail->linked_ebi = create_sess_resp_pP->bearer_contexts_created.bearer_contexts[0].eps_bearer_id; // (pdn_conn_rsp_cause_t)(create_sess_resp_pP->cause);
+      rc = itti_send_msg_to_task (TASK_NAS_ESM, INSTANCE_DEFAULT, message_p);
       OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
     }
   }
@@ -1073,7 +1074,7 @@ mme_app_handle_create_sess_resp (
           // todo: nas_pdn_connectivity_fail->pti = ue_context->pending_pdn_connectivity_req_pti;
           nas_pdn_connectivity_fail->ue_id = ue_context->mme_ue_s1ap_id;
           nas_pdn_connectivity_fail->cause = CAUSE_NO_RESOURCES_AVAILABLE; // (pdn_conn_rsp_cause_t)(create_sess_resp_pP->cause);
-          rc = itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+          rc = itti_send_msg_to_task (TASK_NAS_ESM, INSTANCE_DEFAULT, message_p);
           OAILOG_FUNC_RETURN(LOG_MME_APP, rc);
         }else{
           OAILOG_ERROR( LOG_MME_APP, "Received new valid APN_AMBR for pdn context id %d for UE " MME_UE_S1AP_ID_FMT ". Updating pgw_ambr. \n",
@@ -1190,7 +1191,7 @@ mme_app_handle_create_sess_resp (
         message_p = itti_alloc_new_message (TASK_MME_APP, NAS_IMPLICIT_DETACH_UE_IND);
         DevAssert (message_p != NULL);
         message_p->ittiMsg.nas_implicit_detach_ue_ind.ue_id = ue_context->mme_ue_s1ap_id;
-        itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+        itti_send_msg_to_task (TASK_NAS_EMM, INSTANCE_DEFAULT, message_p);
         OAILOG_FUNC_OUT (LOG_MME_APP);
       }
       OAILOG_INFO(LOG_MME_APP, "Successfully updated AS security parameters for UE with ueId: " MME_UE_S1AP_ID_FMT ". "
@@ -1303,7 +1304,7 @@ mme_app_handle_modify_bearer_resp (
     message_p->ittiMsg.nas_implicit_detach_ue_ind.emm_cause = EMM_CAUSE_NETWORK_FAILURE;
     message_p->ittiMsg.nas_implicit_detach_ue_ind.detach_type = 0x02; // Re-Attach Not required;
     MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_IMPLICIT_DETACH_UE_IND_MESSAGE");
-    itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+    itti_send_msg_to_task (TASK_NAS_EMM, INSTANCE_DEFAULT, message_p);
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
   }
   // todo: Check bearer contexts marked for removal.
@@ -1362,7 +1363,7 @@ mme_app_handle_modify_bearer_resp (
         DevAssert (message_p != NULL);
         message_p->ittiMsg.nas_implicit_detach_ue_ind.ue_id = ue_context->mme_ue_s1ap_id;
         MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_IMPLICIT_DETACH_UE_IND_MESSAGE");
-        itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+        itti_send_msg_to_task (TASK_NAS_EMM, INSTANCE_DEFAULT, message_p);
         OAILOG_FUNC_OUT (LOG_MME_APP);
       }
      OAILOG_INFO(LOG_MME_APP, "Successfully updated AS security parameters for UE with ueId: " MME_UE_S1AP_ID_FMT " for X2 handover. \n", ue_context->mme_ue_s1ap_id);
@@ -1699,7 +1700,7 @@ mme_app_handle_s11_create_bearer_req (
   /** No need to set bearer states, we won't establish the bearers yet. */
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 MME_APP_ACTIVATE_EPS_BEARER_CTX_REQ mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ",
       mme_app_activate_eps_bearer_ctx_req->ue_id);
-  itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+  itti_send_msg_to_task (TASK_NAS_ESM, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 
@@ -1796,7 +1797,7 @@ mme_app_handle_s11_update_bearer_req (
 
   /** No need to set bearer states, we won't establish the bearers yet. */
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 MME_APP_MODIFY_EPS_BEARER_CTX_REQ mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ",  mme_app_modify_eps_bearer_ctx_req->ue_id);
-  itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+  itti_send_msg_to_task (TASK_NAS_ESM, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 
@@ -1867,7 +1868,7 @@ mme_app_handle_s11_delete_bearer_req (
   /** No need to set bearer states, we won't remove the bearers yet. */
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 MME_APP_DEACTIVATE_EPS_BEARER_CTX_REQ mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ",
       mme_app_deactivate_eps_bearer_ctx_req->ue_id);
-  itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+  itti_send_msg_to_task (TASK_NAS_ESM, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 
@@ -2264,7 +2265,7 @@ void mme_app_handle_e_rab_modify_rsp (itti_s1ap_e_rab_modify_rsp_t  * const e_ra
     /** No need to set bearer states, we won't establish the bearers yet. */
     MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 MME_APP_UPDATE_ESM_BEARER_CTXS_REQ mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ",
         mme_app_update_esm_bearers_req->ue_id);
-    itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+    itti_send_msg_to_task (TASK_NAS_ESM, INSTANCE_DEFAULT, message_p);
     /** Delete the procedure if it exists. */
     mme_app_delete_s11_procedure_update_bearer(ue_context);
   }
@@ -2524,7 +2525,7 @@ void mme_app_handle_modify_eps_bearer_ctx_cnf (itti_mme_app_modify_eps_bearer_ct
   /** No need to set bearer states, we won't establish the bearers yet. */
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 MME_APP_UPDATE_ESM_BEARER_CTXS_REQ mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ",
       mme_app_update_esm_bearers_req->ue_id);
-  itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+  itti_send_msg_to_task (TASK_NAS_ESM, INSTANCE_DEFAULT, message_p);
 
   /** Delete the procedure if it exists. */
   mme_app_delete_s11_procedure_update_bearer(ue_context);
@@ -4477,7 +4478,7 @@ mme_app_handle_implicit_detach_timer_expiry (struct ue_context_s *ue_context)
   DevAssert (message_p != NULL);
   message_p->ittiMsg.nas_implicit_detach_ue_ind.ue_id = ue_context->mme_ue_s1ap_id;
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_IMPLICIT_DETACH_UE_IND_MESSAGE");
-  itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+  itti_send_msg_to_task (TASK_NAS_EMM, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 
@@ -4501,7 +4502,7 @@ mme_app_handle_initial_context_setup_rsp_timer_expiry (struct ue_context_s *ue_c
     message_p = itti_alloc_new_message (TASK_MME_APP, NAS_IMPLICIT_DETACH_UE_IND);
     DevAssert (message_p != NULL);
     message_p->ittiMsg.nas_implicit_detach_ue_ind.ue_id = ue_context->mme_ue_s1ap_id;
-    itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+    itti_send_msg_to_task (TASK_NAS_EMM, INSTANCE_DEFAULT, message_p);
   } else {
     // Release S1-U bearer and move the UE to idle mode
     mme_app_send_s11_release_access_bearers_req(ue_context);
@@ -4543,7 +4544,7 @@ mme_app_handle_initial_context_setup_failure (
     message_p = itti_alloc_new_message (TASK_MME_APP, NAS_IMPLICIT_DETACH_UE_IND);
     DevAssert (message_p != NULL);
     message_p->ittiMsg.nas_implicit_detach_ue_ind.ue_id = ue_context->mme_ue_s1ap_id;
-    itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+    itti_send_msg_to_task (TASK_NAS_EMM, INSTANCE_DEFAULT, message_p);
   } else {
     // Release S1-U bearer and move the UE to idle mode
     mme_app_send_s11_release_access_bearers_req(ue_context);

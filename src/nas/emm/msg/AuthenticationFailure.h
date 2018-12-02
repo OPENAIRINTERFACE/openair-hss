@@ -22,13 +22,12 @@
 #ifndef FILE_AUTHENTICATION_FAILURE_SEEN
 #define FILE_AUTHENTICATION_FAILURE_SEEN
 
-#include "SecurityHeaderType.h"
-#include "MessageType.h"
 #include "EmmCause.h"
+#include "MessageType.h"
+#include "SecurityHeaderType.h"
 #include "3gpp_23.003.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"
-
 
 /* Minimum length macro. Formed by minimum length of each mandatory field */
 #define AUTHENTICATION_FAILURE_MINIMUM_LENGTH ( \

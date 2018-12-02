@@ -116,7 +116,6 @@ void mme_app_get_bearer_contexts_to_be_created(pdn_context_t * pdn_context, bear
 
   bearer_context_t * bearer_context_to_setup  = NULL;
 
-  int num_bc = bc_tbc->num_bearer_context;
   RB_FOREACH (bearer_context_to_setup, SessionBearers, &pdn_context->session_bearers) {
     DevAssert(bearer_context_to_setup);
     // todo: make it selective for multi PDN!
@@ -126,22 +125,22 @@ void mme_app_get_bearer_contexts_to_be_created(pdn_context_t * pdn_context, bear
      * They are already set to zero if non-gbr in the registration of the bearer contexts.
      */
     /** EBI. */
-    bc_tbc->bearer_contexts[num_bc].eps_bearer_id              = bearer_context_to_setup->ebi;
+    bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].eps_bearer_id              = bearer_context_to_setup->ebi;
     /** MBR/GBR values (setting indep. of QCI level). */
-    bc_tbc->bearer_contexts[num_bc].bearer_level_qos.gbr.br_ul = bearer_context_to_setup->esm_ebr_context.gbr_ul;
-    bc_tbc->bearer_contexts[num_bc].bearer_level_qos.gbr.br_dl = bearer_context_to_setup->esm_ebr_context.gbr_dl;
-    bc_tbc->bearer_contexts[num_bc].bearer_level_qos.mbr.br_ul = bearer_context_to_setup->esm_ebr_context.mbr_ul;
-    bc_tbc->bearer_contexts[num_bc].bearer_level_qos.mbr.br_dl = bearer_context_to_setup->esm_ebr_context.mbr_dl;
+    bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].bearer_level_qos.gbr.br_ul = bearer_context_to_setup->esm_ebr_context.gbr_ul;
+    bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].bearer_level_qos.gbr.br_dl = bearer_context_to_setup->esm_ebr_context.gbr_dl;
+    bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].bearer_level_qos.mbr.br_ul = bearer_context_to_setup->esm_ebr_context.mbr_ul;
+    bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].bearer_level_qos.mbr.br_dl = bearer_context_to_setup->esm_ebr_context.mbr_dl;
     /** QCI. */
-    bc_tbc->bearer_contexts[num_bc].bearer_level_qos.qci       = bearer_context_to_setup->qci;
-    bc_tbc->bearer_contexts[num_bc].bearer_level_qos.pvi       = bearer_context_to_setup->preemption_vulnerability;
-    bc_tbc->bearer_contexts[num_bc].bearer_level_qos.pci       = bearer_context_to_setup->preemption_capability;
-    bc_tbc->bearer_contexts[num_bc].bearer_level_qos.pl        = bearer_context_to_setup->priority_level;
+    bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].bearer_level_qos.qci       = bearer_context_to_setup->qci;
+    bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].bearer_level_qos.pvi       = bearer_context_to_setup->preemption_vulnerability;
+    bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].bearer_level_qos.pci       = bearer_context_to_setup->preemption_capability;
+    bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].bearer_level_qos.pl        = bearer_context_to_setup->priority_level;
     /** Set the S1U SAE-GW FTEID. */
-    bc_tbc->bearer_contexts[num_bc].s1u_sgw_fteid.ipv4                = bearer_context_to_setup->s_gw_fteid_s1u.ipv4;
-    bc_tbc->bearer_contexts[num_bc].s1u_sgw_fteid.interface_type      = bearer_context_to_setup->s_gw_fteid_s1u.interface_type;
-    bc_tbc->bearer_contexts[num_bc].s1u_sgw_fteid.ipv4_address.s_addr = bearer_context_to_setup->s_gw_fteid_s1u.ipv4_address.s_addr;
-    bc_tbc->bearer_contexts[num_bc].s1u_sgw_fteid.teid                = bearer_context_to_setup->s_gw_fteid_s1u.teid;
+    bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].s1u_sgw_fteid.ipv4                = bearer_context_to_setup->s_gw_fteid_s1u.ipv4;
+    bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].s1u_sgw_fteid.interface_type      = bearer_context_to_setup->s_gw_fteid_s1u.interface_type;
+    bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].s1u_sgw_fteid.ipv4_address.s_addr = bearer_context_to_setup->s_gw_fteid_s1u.ipv4_address.s_addr;
+    bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].s1u_sgw_fteid.teid                = bearer_context_to_setup->s_gw_fteid_s1u.teid;
     // todo: ipv6, other interfaces!
 
 

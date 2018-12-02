@@ -36,14 +36,15 @@
 
 *****************************************************************************/
 
-#include "nas_timer.h"
-#include "commonDef.h"
+#include "common_defs.h"
 
 #include <pthread.h>
 #include <stdio.h>              // printf
 #include <stdlib.h>             // exit
 #include <time.h>               // clock_gettime
 #include <poll.h>               // poll
+
+#include "../../util/nas_timer.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/

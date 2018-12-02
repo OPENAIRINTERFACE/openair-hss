@@ -22,7 +22,6 @@
 #ifndef UE_SECURITY_CAPABILITY_SEEN
 #define UE_SECURITY_CAPABILITY_SEEN
 
-
 int encode_ue_security_capability(ue_security_capability_t *uesecuritycapability, uint8_t iei, uint8_t *buffer, uint32_t len);
 
 int decode_ue_security_capability(ue_security_capability_t *uesecuritycapability, uint8_t iei, uint8_t *buffer, uint32_t len);

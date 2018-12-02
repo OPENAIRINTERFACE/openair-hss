@@ -33,7 +33,6 @@
 #include <stdlib.h>
 
 #include "bstrlib.h"
-
 #include "log.h"
 #include "dynamic_memory_check.h"
 #include "common_types.h"
@@ -41,19 +40,20 @@
 #include "3gpp_24.008.h"
 #include "3gpp_29.274.h"
 #include "mme_app_ue_context.h"
-#include "esm_proc.h"
-#include "commonDef.h"
-#include "emm_data.h"
-#include "esm_data.h"
-#include "esm_cause.h"
-#include "esm_ebr.h"
-#include "esm_ebr_context.h"
-#include "emm_sap.h"
-#include "esm_sap.h"
-#include "esm_send.h"
+#include "common_defs.h"
 #include "mme_config.h"
 #include "mme_app_defs.h"
 #include "nas_itti_messaging.h"
+#include "emm_data.h"
+#include "emm_sap.h"
+#include "esm_ebr.h"
+#include "esm_ebr_context.h"
+#include "esm_proc.h"
+#include "esm_cause.h"
+#include "esm_sap.h"
+#include "esm_send.h"
+#include "esm_data.h"
+
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
 /****************************************************************************/
@@ -61,7 +61,6 @@
 /****************************************************************************/
 /*******************  L O C A L    D E F I N I T I O N S  *******************/
 /****************************************************************************/
-
 
 /*
    Timer handlers
@@ -72,20 +71,19 @@ static void _esm_information_t3489_handler (void *);
    retransmission counter */
 #define ESM_INFORMATION_COUNTER_MAX   3
 
-static int _esm_information (emm_data_context_t * ue_context, ebi_t ebi, esm_ebr_timer_data_t * const data);
+static int _esm_information (esm_context_t * ue_context, ebi_t ebi, esm_ebr_timer_data_t * const data);
 
 
 /****************************************************************************/
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
 /****************************************************************************/
 
-
 //------------------------------------------------------------------------------
-int esm_proc_esm_information_request (emm_data_context_t * const ue_context, const pti_t pti)
+int esm_proc_esm_information_request (esm_context_t * const esm_context, const pti_t pti)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   int                                     rc;
-  mme_ue_s1ap_id_t      ue_id = ue_context->ue_id;
+  mme_ue_s1ap_id_t      ue_id = esm_context->ue_id;
 
   OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Initiate ESM information ue_id=" MME_UE_S1AP_ID_FMT ")\n", ue_id);
 
@@ -107,11 +105,11 @@ int esm_proc_esm_information_request (emm_data_context_t * const ue_context, con
        * start timer T3489
        */
       esm_ebr_timer_data_t   *data = (esm_ebr_timer_data_t *) calloc(1, sizeof(*data));
-      data->ctx = ue_context;
+      data->ctx = esm_context;
       data->ebi = EPS_BEARER_IDENTITY_UNASSIGNED;
       data->msg = msg_req;
       data->ue_id = ue_id;
-      rc = _esm_information (ue_context, pti, data);
+      rc = _esm_information (esm_context, pti, data);
     }
   }
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
@@ -119,7 +117,7 @@ int esm_proc_esm_information_request (emm_data_context_t * const ue_context, con
 
 
 //------------------------------------------------------------------------------
-int esm_proc_esm_information_response (emm_data_context_t * ue_context, pti_t pti, const_bstring const apn, const protocol_configuration_options_t * const pco, esm_cause_t * const esm_cause)
+int esm_proc_esm_information_response (esm_context_t * esm_context, pti_t pti, const_bstring const apn, const protocol_configuration_options_t * const pco, esm_cause_t * const esm_cause)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   int                                     rc = RETURNok;
@@ -127,20 +125,20 @@ int esm_proc_esm_information_response (emm_data_context_t * ue_context, pti_t pt
   /*
    * Stop T3489 timer if running
    */
-  nas_stop_T3489(&ue_context->esm_ctx);
+  nas_stop_T3489(esm_context);
 
   if (apn) {
-    if (ue_context->esm_ctx.esm_proc_data->apn) {
-      bdestroy_wrapper(&ue_context->esm_ctx.esm_proc_data->apn);
+    if (esm_context->esm_proc_data->apn) {
+      bdestroy_wrapper(&esm_context->esm_proc_data->apn);
     }
-    ue_context->esm_ctx.esm_proc_data->apn = bstrcpy(apn);
+    esm_context->esm_proc_data->apn = bstrcpy(apn);
   }
 
   if ((pco) && (pco->num_protocol_or_container_id)) {
-    if (ue_context->esm_ctx.esm_proc_data->pco.num_protocol_or_container_id) {
-      clear_protocol_configuration_options(&ue_context->esm_ctx.esm_proc_data->pco);
+    if (esm_context->esm_proc_data->pco.num_protocol_or_container_id) {
+      clear_protocol_configuration_options(&esm_context->esm_proc_data->pco);
     }
-    copy_protocol_configuration_options(&ue_context->esm_ctx.esm_proc_data->pco, pco);
+    copy_protocol_configuration_options(&esm_context->esm_proc_data->pco, pco);
   }
 
   *esm_cause = ESM_CAUSE_SUCCESS;
@@ -189,7 +187,7 @@ static void _esm_information_t3489_handler (void *args)
    * Get retransmission timer parameters data
    */
   esm_ebr_timer_data_t                   *esm_ebr_timer_data = (esm_ebr_timer_data_t *) (args);
-  emm_data_context_t                     *emm_ctx = emm_data_context_get(&_emm_data, esm_ebr_timer_data->ue_id);
+  esm_context_t                     *emm_ctx = emm_data_context_get(&_emm_data, esm_ebr_timer_data->ue_id);
 
   if (!(emm_ctx)) {
     OAILOG_ERROR (LOG_NAS_EMM, "T3460 timer expired No EMM context\n");
@@ -218,7 +216,7 @@ static void _esm_information_t3489_handler (void *args)
       /*
        * Stop timer T3489
        */
-      esm_ebr_timer_data->ctx->esm_ctx.T3489.id = NAS_TIMER_INACTIVE_ID;
+      esm_ebr_timer_data->ctx->T3489.id = NAS_TIMER_INACTIVE_ID;
       /*
        * Re-start T3489 timer
        */
@@ -255,39 +253,39 @@ static void _esm_information_t3489_handler (void *args)
  ***************************************************************************/
 static int
 _esm_information (
-  emm_data_context_t * ue_context,
+  esm_context_t * esm_context,
   ebi_t ebi,
   esm_ebr_timer_data_t * const data)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   emm_sap_t                               emm_sap = {0};
   int                                     rc;
-  mme_ue_s1ap_id_t                        ue_id = ue_context->ue_id;
+  mme_ue_s1ap_id_t                        ue_id = esm_context->ue_id;
 
   /*
    * Notify EMM that a deactivate EPS bearer context request message
    * has to be sent to the UE
    */
-  emm_esm_data_t                         *emm_esm = &emm_sap.u.emm_esm.u.data;
-
-  emm_sap.primitive = EMMESM_UNITDATA_REQ;
-  emm_sap.u.emm_esm.ue_id = ue_id;
-  emm_sap.u.emm_esm.ctx = ue_context;
-  emm_esm->msg = bstrcpy(data->msg);
-
-  MSC_LOG_TX_MESSAGE (MSC_NAS_ESM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMESM_UNITDATA_REQ (ESM_INFORMATION_REQUEST) ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
-  rc = emm_sap_send (&emm_sap);
+//  emm_esm_data_t                         *emm_esm = &emm_sap.u.emm_esm.u.data;
+//
+//  emm_sap.primitive = EMMESM_UNITDATA_REQ;
+//  emm_sap.u.emm_esm.ue_id = ue_id;
+//  emm_sap.u.emm_esm.ctx = ue_context;
+//  emm_esm->msg = bstrcpy(data->msg);
+//
+//  MSC_LOG_TX_MESSAGE (MSC_NAS_ESM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMESM_UNITDATA_REQ (ESM_INFORMATION_REQUEST) ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
+//  rc = emm_sap_send (&emm_sap);
 
   if (rc != RETURNerror) {
-    nas_stop_T3489(&ue_context->esm_ctx);
+    nas_stop_T3489(esm_context);
     /*
      * Start T3489 timer
      */
-    ue_context->esm_ctx.T3489.id = nas_timer_start (ue_context->esm_ctx.T3489.sec, 0 /*usec*/,_esm_information_t3489_handler, data);
+    esm_context->T3489.id = nas_timer_start (esm_context->T3489.sec, 0 /*usec*/,_esm_information_t3489_handler, data);
     MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3489 started UE " MME_UE_S1AP_ID_FMT " ", ue_id);
 
     OAILOG_INFO (LOG_NAS_EMM, "UE " MME_UE_S1AP_ID_FMT "Timer T3489 (%lx) expires in %ld seconds\n",
-        ue_id, ue_context->esm_ctx.T3489.id, ue_context->esm_ctx.T3489.sec);
+        ue_id, esm_context->T3489.id, esm_context->T3489.sec);
   }else {
     bdestroy_wrapper(&data->msg);
     free_wrapper((void**)data);

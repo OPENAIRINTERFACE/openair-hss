@@ -383,8 +383,12 @@ include_directories("${OPENAIRCN_DIR}/src/utils")
 
 include_directories("${OPENAIRCN_DIR}/src/common/itti")
 include_directories("${OPENAIRCN_DIR}/src/nas/")
+include_directories("${OPENAIRCN_DIR}/src/nas/")
+include_directories("${OPENAIRCN_DIR}/src/nas/api")
 include_directories("${OPENAIRCN_DIR}/src/nas/api/mme")
 include_directories("${OPENAIRCN_DIR}/src/nas/api/network")
+include_directories("${OPENAIRCN_DIR}/src/nas/emm")
+include_directories("${OPENAIRCN_DIR}/src/nas/emm")
 include_directories("${OPENAIRCN_DIR}/src/nas/emm/msg")
 include_directories("${OPENAIRCN_DIR}/src/nas/esm/msg")
 include_directories("${OPENAIRCN_DIR}/src/nas/ies")
@@ -775,6 +779,9 @@ set(libnas_mme_emm_OBJS
   ${NAS_SRC}emm/EmmStatusHdl.c
   ${NAS_SRC}emm/Identification.c
   ${NAS_SRC}emm/LowerLayer.c
+  ${NAS_SRC}emm/nas_emm_proc.c
+  ${NAS_SRC}emm/nas_emm_procedures.c
+  ${NAS_SRC}emm/nas_emm_task.c
   ${NAS_SRC}emm/SecurityModeControl.c
   ${NAS_SRC}emm/ServiceRequestHdl.c
   ${NAS_SRC}emm/TrackingAreaUpdate.c
@@ -809,6 +816,9 @@ set (libnas_mme_esm_OBJS
   ${NAS_SRC}esm/esm_main.c
   ${NAS_SRC}esm/esm_pt.c
   ${NAS_SRC}esm/EsmStatusHdl.c
+  ${NAS_SRC}esm/nas_esm_proc.c
+  ${NAS_SRC}esm/nas_esm_procedures.c
+  ${NAS_SRC}esm/nas_esm_task.c
   ${NAS_SRC}esm/PdnConnectivity.c
   ${NAS_SRC}esm/PdnDisconnect.c
   )
@@ -822,8 +832,6 @@ set(libnas_mme_esm_sap_OBJS
 add_library(LIB_NAS_MME
   ${NAS_SRC}nas_itti_messaging.c
   ${NAS_SRC}nas_network.c
-  ${NAS_SRC}nas_proc.c
-  ${NAS_SRC}nas_procedures.c
   ${libnas_api_OBJS}
   ${libnas_mme_api_OBJS}
   ${libnas_emm_msg_OBJS}
@@ -924,7 +932,8 @@ add_executable(mme
   ${OPENAIRCN_DIR}/src/common/common_types.c
   ${OPENAIRCN_DIR}/src/common/itti_free_defined_msg.c
 #  ${OPENAIRCN_DIR}/src/common/itti_comp.c
-  ${OPENAIRCN_DIR}/src/nas/nas_mme_task.c
+  ${OPENAIRCN_DIR}/src/nas/emm/nas_emm_task.c
+  ${OPENAIRCN_DIR}/src/nas/esm/nas_esm_task.c
   )
   
 if( ITTI_ANALYZER )

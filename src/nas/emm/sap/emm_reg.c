@@ -38,6 +38,7 @@
         procedures.
 
 *****************************************************************************/
+
 #include <pthread.h>
 #include <inttypes.h>
 #include <stdint.h>
@@ -47,12 +48,13 @@
 #include <assert.h>
 
 #include "bstrlib.h"
+#include "log.h"
 
 #include "common_defs.h"
-#include "log.h"
-#include "emm_reg.h"
-#include "commonDef.h"
+#include "common_defs.h"
+#include "common_types.h"
 #include "emm_fsm.h"
+#include "emm_reg.h"
 
 
 /****************************************************************************/

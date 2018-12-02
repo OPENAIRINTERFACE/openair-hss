@@ -36,6 +36,8 @@
         the main entry point for elementary EMM processing.
 
 *****************************************************************************/
+#include "../emm/emm_main.h"
+
 #include <pthread.h>
 #include <inttypes.h>
 #include <stdint.h>
@@ -43,6 +45,7 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "../emm/emm_data.h"
 #include "bstrlib.h"
 
 #include "log.h"
@@ -50,8 +53,6 @@
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"
 #include "common_defs.h"
-#include "emm_main.h"
-#include "emm_data.h"
 #include "mme_config.h"
 
 

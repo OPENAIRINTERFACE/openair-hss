@@ -40,16 +40,9 @@
 
 *****************************************************************************/
 
-#include "network_parser.h"
-
 #include "include/commonDef.h"
-#include "util/socket.h"
-#include "util/nas_timer.h"
 #include "api/network/as_message.h"
 #include "api/network/nas_message.h"
-#include "emm/msg/emm_cause.h"
-#include "esm/msg/esm_cause.h"
-
 #include "util/log.h"
 
 #include <stdio.h>              // printf, perror
@@ -59,6 +52,12 @@
 #include <signal.h>             // sigaction
 #include <string.h>             // memset, memcpy
 #include <unistd.h>             // sleep
+
+#include "../../emm/msg/emm_cause.h"
+#include "../../esm/msg/esm_cause.h"
+#include "../../nas_util/nas_timer.h"
+#include "../../test/network/network_parser.h"
+#include "../../util/socket.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/

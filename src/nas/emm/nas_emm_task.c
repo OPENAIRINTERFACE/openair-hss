@@ -32,6 +32,10 @@
 #include <stdbool.h>
 #include <string.h>
 
+#include "emm_main.h"
+#include "nas_emm.h"
+#include "nas_emm_proc.h"
+#include "nas_timer.h"
 #include "bstrlib.h"
 
 #include "log.h"
@@ -41,27 +45,23 @@
 #include "intertask_interface.h"
 #include "itti_free_defined_msg.h"
 #include "mme_config.h"
-#include "nas_defs.h"
 #include "nas_network.h"
-#include "nas_proc.h"
-#include "emm_main.h"
-#include "nas_timer.h"
 
-static void nas_exit(void);
+static void nas_emm_exit(void);
 
 //------------------------------------------------------------------------------
-static void *nas_intertask_interface (void *args_p)
+static void *nas_emm_intertask_interface (void *args_p)
 {
-  itti_mark_task_ready (TASK_NAS_MME);
+  itti_mark_task_ready (TASK_NAS_EMM);
 
   while (1) {
     MessageDef                             *received_message_p = NULL;
 
-    itti_receive_msg (TASK_NAS_MME, &received_message_p);
+    itti_receive_msg (TASK_NAS_EMM, &received_message_p);
 
     switch (ITTI_MSG_ID (received_message_p)) {
     case MESSAGE_TEST:{
-        OAI_FPRINTF_INFO("TASK_NAS_MME received MESSAGE_TEST\n");
+        OAI_FPRINTF_INFO("TASK_NAS_EMM received MESSAGE_TEST\n");
       }
       break;
 
@@ -79,27 +79,6 @@ static void *nas_intertask_interface (void *args_p)
               &nas_est_ind_p->initial_nas_msg);
         }
         break;
-
-    case MME_APP_ACTIVATE_EPS_BEARER_CTX_REQ:
-      nas_proc_activate_dedicated_bearer(&MME_APP_ACTIVATE_EPS_BEARER_CTX_REQ (received_message_p));
-      break;
-
-    case MME_APP_MODIFY_EPS_BEARER_CTX_REQ:
-      nas_proc_modify_eps_bearer_ctx(&MME_APP_MODIFY_EPS_BEARER_CTX_REQ (received_message_p));
-      break;
-
-    case MME_APP_DEACTIVATE_EPS_BEARER_CTX_REQ:
-      nas_proc_deactivate_dedicated_bearer(&MME_APP_DEACTIVATE_EPS_BEARER_CTX_REQ (received_message_p));
-      break;
-
-    case MME_APP_UPDATE_ESM_BEARER_CTXS_REQ:
-      nas_proc_establish_bearer_update(&MME_APP_UPDATE_ESM_BEARER_CTXS_REQ (received_message_p));
-      break;
-
-    case MME_APP_E_RAB_FAILURE:
-      nas_proc_e_rab_failure(MME_APP_E_RAB_FAILURE (received_message_p).mme_ue_s1ap_id, MME_APP_E_RAB_FAILURE (received_message_p).ebi,
-          MME_APP_E_RAB_FAILURE (received_message_p).modify, MME_APP_E_RAB_FAILURE (received_message_p).remove);
-      break;
 
     case NAS_DOWNLINK_DATA_CNF:{
         nas_proc_dl_transfer_cnf (NAS_DL_DATA_CNF (received_message_p).ue_id, NAS_DL_DATA_CNF (received_message_p).err_code, &NAS_DL_DATA_REJ (received_message_p).nas_msg);
@@ -129,25 +108,10 @@ static void *nas_intertask_interface (void *args_p)
     }
     break;
 
-    case NAS_PDN_CONNECTIVITY_FAIL:{
-        nas_proc_pdn_connectivity_fail (&NAS_PDN_CONNECTIVITY_FAIL (received_message_p));
-      }
-      break;
-
-    case NAS_PDN_CONNECTIVITY_RSP:{
-        nas_proc_pdn_connectivity_res (&NAS_PDN_CONNECTIVITY_RSP (received_message_p));
-      }
-      break;
-
-    case NAS_PDN_DISCONNECT_RSP:{
-        nas_proc_pdn_disconnect_res (&NAS_PDN_DISCONNECT_RSP (received_message_p));
-      }
-      break;
-
     case NAS_IMPLICIT_DETACH_UE_IND:{
-        nas_proc_implicit_detach_ue_ind (NAS_IMPLICIT_DETACH_UE_IND (received_message_p).ue_id, NAS_IMPLICIT_DETACH_UE_IND (received_message_p).emm_cause, NAS_IMPLICIT_DETACH_UE_IND (received_message_p).detach_type);
-      }
-      break;
+      nas_proc_implicit_detach_ue_ind (NAS_IMPLICIT_DETACH_UE_IND (received_message_p).ue_id, NAS_IMPLICIT_DETACH_UE_IND (received_message_p).emm_cause, NAS_IMPLICIT_DETACH_UE_IND (received_message_p).detach_type);
+    }
+    break;
 
     case S1AP_DEREGISTER_UE_REQ:{
         nas_proc_deregister_ue (S1AP_DEREGISTER_UE_REQ (received_message_p).mme_ue_s1ap_id);
@@ -179,11 +143,11 @@ static void *nas_intertask_interface (void *args_p)
     break;
 
     case TERMINATE_MESSAGE:{
-        nas_exit();
-        OAI_FPRINTF_INFO("TASK_NAS_MME terminated\n");
-        itti_free_msg_content(received_message_p);
-        itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
-        itti_exit_task ();
+      nas_emm_exit();
+      OAI_FPRINTF_INFO("TASK_NAS_EMM terminated\n");
+      itti_free_msg_content(received_message_p);
+      itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
+      itti_exit_task ();
       }
       break;
 
@@ -211,25 +175,24 @@ static void *nas_intertask_interface (void *args_p)
 }
 
 //------------------------------------------------------------------------------
-int nas_init (mme_config_t * mme_config_p)
+int nas_emm_init (mme_config_t * mme_config_p)
 {
-  OAILOG_DEBUG (LOG_NAS, "Initializing NAS task interface\n");
-  nas_network_initialize (mme_config_p);
+  OAILOG_DEBUG (LOG_NAS, "Initializing NAS EMM task interface\n");
+  emm_main_initialize(mme_config_p);
 
-  if (itti_create_task (TASK_NAS_MME, &nas_intertask_interface, NULL) < 0) {
-    OAILOG_ERROR (LOG_NAS, "Create task failed");
-    OAILOG_DEBUG (LOG_NAS, "Initializing NAS task interface: FAILED\n");
+  if (itti_create_task (TASK_NAS_EMM, &nas_emm_intertask_interface, NULL) < 0) {
+    OAILOG_ERROR (LOG_NAS, "Create NAS EMM task failed");
     return -1;
   }
 
-  OAILOG_DEBUG (LOG_NAS, "Initializing NAS task interface: DONE\n");
+  OAILOG_DEBUG (LOG_NAS, "Initializing NAS EMM task interface: DONE\n");
   return 0;
 }
 
 //------------------------------------------------------------------------------
-static void nas_exit(void)
+static void nas_emm_exit(void)
 {
-  OAILOG_DEBUG (LOG_NAS, "Cleaning NAS task interface\n");
-  nas_network_cleanup();
-  OAILOG_DEBUG (LOG_NAS, "Cleaning NAS task interface: DONE\n");
+  OAILOG_DEBUG (LOG_NAS, "Cleaning NAS EMM task interface\n");
+  emm_main_cleanup();
+  OAILOG_DEBUG (LOG_NAS, "Cleaning NAS EMM task interface: DONE\n");
 }
