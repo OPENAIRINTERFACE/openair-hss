@@ -81,6 +81,49 @@
 
 /****************************************************************************
  **                                                                        **
+ ** Name:    esm_send_status()                                         **
+ **                                                                        **
+ ** Description: Builds ESM status message                                 **
+ **                                                                        **
+ **      The ESM status message is sent by the network or the UE   **
+ **      to pass information on the status of the indicated EPS    **
+ **      bearer context and report certain error conditions.       **
+ **                                                                        **
+ ** Inputs:  pti:       Procedure transaction identity             **
+ **      ebi:       EPS bearer identity                        **
+ **      esm_cause: ESM cause code                             **
+ **      Others:    None                                       **
+ **                                                                        **
+ ** Outputs:     msg:       The ESM message to be sent                 **
+ **      Return:    RETURNok, RETURNerror                      **
+ **      Others:    None                                       **
+ **                                                                        **
+ ***************************************************************************/
+int
+esm_send_status (
+  pti_t pti,
+  ebi_t ebi,
+  esm_status_msg * msg,
+  int esm_cause)
+{
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
+  /*
+   * Mandatory - ESM message header
+   */
+  msg->protocoldiscriminator = EPS_SESSION_MANAGEMENT_MESSAGE;
+  msg->epsbeareridentity = ebi;
+  msg->messagetype = ESM_STATUS;
+  msg->proceduretransactionidentity = pti;
+  /*
+   * Mandatory - ESM cause code
+   */
+  msg->esmcause = esm_cause;
+  OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Send ESM Status message (pti=%d, ebi=%d)\n", msg->proceduretransactionidentity, msg->epsbeareridentity);
+  OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);
+}
+
+/****************************************************************************
+ **                                                                        **
  ** Name:    esm_proc_status_ind()                                     **
  **                                                                        **
  ** Description: Processes received ESM status message.                    **

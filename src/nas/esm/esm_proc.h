@@ -90,11 +90,18 @@ int esm_proc_status(const bool is_standalone, struct esm_context_s * const esm_c
  *          PDN connectivity procedure
  * --------------------------------------------------------------------------
  */
-/**
+
+/*
  * PDN Connectivity procedure (UE triggered - incl. initial attach).
  */
 nas_esm_pdn_connectivity_proc_t *_esm_proc_create_pdn_connectivity_procedure(mme_ue_s1ap_id_t ue_id, imsi_t *imsi, pti_t pti);
-void _esm_proc_free_pdn_connectivity_procedure(nas_esm_pdn_connectivity_proc_t * nas_pdn_connectivity_proc);
+void _esm_proc_free_pdn_connectivity_procedure(nas_esm_pdn_connectivity_proc_t ** nas_pdn_connectivity_proc);
+
+/*
+ * Bearer context procedure, which may or may not be a transactional procedure (triggered by UE/congestion, or CN).
+ */
+nas_esm_bearer_context_proc_t *_esm_proc_create_bearer_context_procedure(mme_ue_s1ap_id_t ue_id, imsi_t *imsi, pti_t pti, ebi_t ebi);
+void _esm_proc_free_bearer_context_procedure(nas_esm_pdn_connectivity_proc_t * nas_pdn_connectivity_proc);
 
 int
 esm_proc_pdn_connectivity_request (
@@ -149,14 +156,11 @@ int esm_proc_default_eps_bearer_context (
   mme_ue_s1ap_id_t   ue_id,
   const nas_esm_pdn_connectivity_proc_t * nas_pdn_connectivity_proc,
   bearer_qos_t *bearer_qos,
-  ambr_t       *apn_ambr,
+  ambr_t        apn_ambr,
   ESM_msg *esm_rsp_msg,
   esm_cause_t *esm_cause);
 
-int esm_proc_default_eps_bearer_context_request(bool is_standalone, struct esm_context_s * const esm_context, const ebi_t ebi, STOLEN_REF bstring *msg, const bool ue_triggered);
-int esm_proc_default_eps_bearer_context_failure (struct esm_context_s * esm_context, pdn_cid_t * const pid, ebi_t *ebi);
-
-int esm_proc_default_eps_bearer_context_accept(struct esm_context_s * esm_context, ebi_t ebi, esm_cause_t *esm_cause);
+void esm_proc_default_eps_bearer_context_accept (mme_ue_s1ap_id_t ue_id, nas_esm_pdn_connectivity_proc_t* esm_pdn_connectivity_proc);
 int esm_proc_default_eps_bearer_context_reject(struct esm_context_s * esm_context, ebi_t ebi, esm_cause_t *esm_cause);
 
 

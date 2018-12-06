@@ -20,7 +20,7 @@
  */
 
 /*****************************************************************************
-Source      esm_send.h
+Source      esm_message.h
 
 Version     0.1
 
@@ -37,8 +37,8 @@ Description Defines functions executed at the ESM Service Access
         EPS Mobility Management sublayer.
 
 *****************************************************************************/
-#ifndef __ESM_SEND_H__
-#define __ESM_SEND_H__
+#ifndef __ESM_MESSAGES_H__
+#define __ESM_MESSAGES_H__
 
 #include "common_defs.h"
 #include "ActivateDedicatedEpsBearerContextRequest.h"
@@ -74,16 +74,12 @@ Description Defines functions executed at the ESM Service Access
  * Functions executed by the MME to send ESM message to the UE
  * --------------------------------------------------------------------------
  */
-int esm_send_esm_information_request (pti_t pti, ebi_t ebi, esm_information_request_msg * msg);
-
 int esm_send_status(pti_t pti, ebi_t ebi, esm_status_msg *msg, int esm_cause);
 
 /*
  * Transaction related messages
  * ----------------------------
  */
-int esm_send_pdn_connectivity_reject(pti_t pti, pdn_connectivity_reject_msg *msg,
-                                     int esm_cause);
 
 int esm_send_pdn_disconnect_reject(pti_t pti, pdn_disconnect_reject_msg *msg,
                                    int esm_cause);
@@ -92,7 +88,7 @@ int esm_send_pdn_disconnect_reject(pti_t pti, pdn_disconnect_reject_msg *msg,
  * Messages related to EPS bearer contexts
  * ---------------------------------------
  */
-int esm_send_activate_default_eps_bearer_context_request(pti_t pti, ebi_t ebi,
+void esm_send_activate_default_eps_bearer_context_request(pti_t pti, ebi_t ebi,
     activate_default_eps_bearer_context_request_msg *msg, bstring apn,
     const protocol_configuration_options_t *pco, const ambr_t * ambr, int pdn_type, bstring pdn_addr,
     const EpsQualityOfService *qos, int esm_cause);
@@ -113,4 +109,4 @@ int esm_send_modify_eps_bearer_context_request(pti_t pti, ebi_t ebi,
 int esm_send_deactivate_eps_bearer_context_request(pti_t pti, ebi_t ebi,
     deactivate_eps_bearer_context_request_msg *msg, int esm_cause);
 
-#endif /* __ESM_SEND_H__*/
+#endif /* __ESM_MESSAGES_H__*/

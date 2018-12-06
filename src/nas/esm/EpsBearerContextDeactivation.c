@@ -107,62 +107,58 @@ static int _eps_bearer_release (    esm_context_t * esm_context, ebi_t ebi, pdn_
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
 /****************************************************************************/
 
-/*
-   --------------------------------------------------------------------------
-    EPS bearer context deactivation procedure executed by the MME
-   --------------------------------------------------------------------------
-*/
 /****************************************************************************
  **                                                                        **
- ** Name:    esm_proc_eps_bearer_context_deactivate()                  **
+ ** Name:    esm_send_deactivate_eps_bearer_context_request()          **
  **                                                                        **
- ** Description: Locally releases the EPS bearer context identified by the **
- **      given EPS bearer identity, without peer-to-peer signal-   **
- **      ling between the UE and the MME, or checks whether an EPS **
- **      bearer context with specified EPS bearer identity has     **
- **      been activated for the given UE.                          **
+ ** Description: Builds Deactivate EPS Bearer Context Request message      **
  **                                                                        **
- ** Inputs:  ue_id:      UE lower layer identifier                  **
- **      is local:  true if the EPS bearer context has to be   **
- **             locally released without peer-to-peer si-  **
- **             gnalling between the UE and the MME        **
- **      ebi:       EPS bearer identity of the EPS bearer con- **
- **             text to be deactivated                     **
- **      Others:    _esm_data                                  **
+ **      The deactivate EPS bearer context request message is sent **
+ **      by the network to request deactivation of an active EPS   **
+ **      bearer context.                                           **
  **                                                                        **
- ** Outputs:     pid:       Identifier of the PDN connection the EPS   **
- **             bearer belongs to                          **
- **      bid:       Identifier of the released EPS bearer con- **
- **             text entry                                 **
- **      esm_cause: Cause code returned upon ESM procedure     **
- **             failure                                    **
+ ** Inputs:  pti:       Procedure transaction identity             **
+ **      ebi:       EPS bearer identity                        **
+ **      esm_cause: ESM cause code                             **
+ **      Others:    None                                       **
+ **                                                                        **
+ ** Outputs:     msg:       The ESM message to be sent                 **
  **      Return:    RETURNok, RETURNerror                      **
  **      Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
 int
-esm_proc_eps_bearer_context_deactivate (
-  esm_context_t * const esm_context,
-  const bool is_local,
-  const ebi_t ebi,
-  pdn_cid_t pid,
-  esm_cause_t * const esm_cause)
+esm_send_deactivate_eps_bearer_context_request (
+  pti_t pti,
+  ebi_t ebi,
+  deactivate_eps_bearer_context_request_msg * msg,
+  int esm_cause)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
-  int                                     rc = RETURNerror;
-  ue_context_t                           *ue_context  = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, esm_context->ue_id);
-  pdn_context_t                          *pdn_context = NULL;
-  DevAssert(ue_context);
+  /*
+   * Mandatory - ESM message header
+   */
+  msg->protocoldiscriminator = EPS_SESSION_MANAGEMENT_MESSAGE;
+  msg->epsbeareridentity = ebi;
+  msg->messagetype = DEACTIVATE_EPS_BEARER_CONTEXT_REQUEST;
+  msg->proceduretransactionidentity = pti;
+  /*
+   * Mandatory - ESM cause code
+   */
+  msg->esmcause = esm_cause;
+  /*
+   * Optional IEs
+   */
+  msg->presencemask = 0;
+  OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Send Deactivate EPS Bearer Context Request " "message (pti=%d, ebi=%d)\n", msg->proceduretransactionidentity, msg->epsbeareridentity);
+  OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);
+}
 
-  OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - EPS default bearer context deactivation " "(ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d)\n", ue_context->mme_ue_s1ap_id, ebi);
-  /** Get the PDN Context. */
-  mme_app_get_pdn_context(ue_context, pid, ebi, NULL, &pdn_context);
-  if(!pdn_context){
-    OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - EPS bearer context deactivation " "(ue_id=" MME_UE_S1AP_ID_FMT ", hat no valid PDN-Context for pid=%d, ebi=%d)\n", ue_context->mme_ue_s1ap_id, pid, ebi);
-    OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
-  }
-
-  if (is_local) {
+/*
+   --------------------------------------------------------------------------
+    EPS bearer context deactivation procedure executed by the MME
+   --------------------------------------------------------------------------
+*/
     /*
      * Locally releasing the bearers and MME bearer contexts without asking the UE.
      * Will check for default bearer inside the method.
@@ -175,40 +171,6 @@ esm_proc_eps_bearer_context_deactivate (
 //      OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - We released  the default EBI. Deregistering the PDN context (E-RAB failure). (ebi=%d,pid=%d)\n", ebi,pid);
 //      rc = esm_proc_pdn_disconnect_accept (esm_context, pdn_context->context_identifier, ebi, esm_cause); /**< Delete Session Request is already sent at the beginning. We don't care for the response. */
 //    }
-    OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
-  }
-
-  OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - EPS bearer context deactivation " "(ue_id=" MME_UE_S1AP_ID_FMT ", pid=%d, ebi=%d)\n", ue_context->mme_ue_s1ap_id, pid, ebi);
-
-  if ((ue_context ) && (pid < MAX_APN_PER_UE)) {
-    if (!pdn_context) {
-      OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - PDN connection %d has not been " "allocated\n", pid);
-      *esm_cause = ESM_CAUSE_PROTOCOL_ERROR;
-    } else {
-      int                                     i;
-
-      *esm_cause = ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY;
-
-      /** Only validate the current bearer, the others might be in a pending deactivation state. */
-      bearer_context_t *session_bearer = NULL;
-      session_bearer = mme_app_get_session_bearer_context(pdn_context, ebi);
-      if(!session_bearer){
-        /** Bearer to release not existing. */
-        OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - Bearer with ebi %d for UE with ue_id " MME_UE_S1AP_ID_FMT " already released. \n", ebi, ue_context->mme_ue_s1ap_id);
-        OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
-      }else{
-        DevAssert(session_bearer->pdn_cx_id == pid && session_bearer->esm_ebr_context.status == ESM_EBR_ACTIVE);
-
-      }
-      /*
-       * todo: validate a single bearer!
-       * todo: better, more meaningful validation
-       * The EPS bearer context to be released is valid.
-       */
-      *esm_cause = ESM_CAUSE_SUCCESS;
-      rc = RETURNok;
-    }
-  }
   /** Will continue with sending the bearer deactivation request. */
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
 }

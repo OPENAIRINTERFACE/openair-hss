@@ -100,6 +100,84 @@ static int _modify_eps_bearer_context(esm_context_t * esm_context, ebi_t ebi, ST
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
 /****************************************************************************/
 
+/****************************************************************************
+ **                                                                        **
+ ** Name:    esm_send_modify_eps_bearer_context_request()  **
+ **                                                                        **
+ ** Description: Builds Modify EPS Bearer Context Request message  **
+ **                                                                        **
+ **      The modify EPS bearer context request message **
+ **      is sent by the network to the UE to request modification of **
+ **      an EPS bearer context which is already activated..          **
+ **                                                                        **
+ ** Inputs:  pti:       Procedure transaction identity             **
+ **      ebi:       EPS bearer identity                        **
+ **      qos:       EPS quality of service                     **
+ **      tft:       Traffic flow template                      **
+ **      Others:    None                                       **
+ **                                                                        **
+ ** Outputs:     msg:       The ESM message to be sent                 **
+ **      Return:    RETURNok, RETURNerror                      **
+ **      Others:    None                                       **
+ **                                                                        **
+ ***************************************************************************/
+int
+esm_send_modify_eps_bearer_context_request (
+  pti_t pti,
+  ebi_t ebi,
+  modify_eps_bearer_context_request_msg * msg,
+  const EpsQualityOfService * qos,
+  traffic_flow_template_t *tft,
+  ambr_t *ambr,
+  protocol_configuration_options_t *pco)
+{
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
+  /*
+   * Mandatory - ESM message header
+   */
+  msg->protocoldiscriminator = EPS_SESSION_MANAGEMENT_MESSAGE;
+  msg->epsbeareridentity = ebi;
+  msg->messagetype = MODIFY_EPS_BEARER_CONTEXT_REQUEST;
+  msg->proceduretransactionidentity = pti;
+  msg->presencemask = 0;
+
+  /*
+   * Optional - EPS QoS
+   */
+  if(qos) {
+    msg->newepsqos = *qos;
+    msg->presencemask |= MODIFY_EPS_BEARER_CONTEXT_REQUEST_NEW_QOS_PRESENT;
+  }
+  /*
+   * Optional - traffic flow template.
+   * Send the TFT as it is. It will contain the operation.
+   * We will modify the bearer context when the bearers are accepted.
+   */
+  if (tft) {
+    memcpy(&msg->tft, tft, sizeof(traffic_flow_template_t));
+    msg->presencemask |= MODIFY_EPS_BEARER_CONTEXT_REQUEST_TFT_PRESENT;
+  }
+  /*
+   * Optional - APN AMBR
+   * Implementing subscribed values.
+   */
+  if(ambr){
+    if(ambr->br_dl && ambr->br_ul){
+      msg->presencemask |= MODIFY_EPS_BEARER_CONTEXT_REQUEST_APNAMBR_PRESENT;
+      ambr_kbps_calc(&msg->apnambr, (ambr->br_dl/1000), (ambr->br_ul/1000));
+    }
+  }else {
+    OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - no APN AMBR is present for activating default eps bearer. \n");
+  }
+
+  if (pco) {
+    memcpy(&msg->protocolconfigurationoptions, pco, sizeof(protocol_configuration_options_t));
+    msg->presencemask |= MODIFY_EPS_BEARER_CONTEXT_REQUEST_PROTOCOL_CONFIGURATION_OPTIONS_PRESENT;
+  }
+  OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Send Modify EPS Bearer Context " "Request message (pti=%d, ebi=%d). \n", msg->proceduretransactionidentity, msg->epsbeareridentity);
+  OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);
+}
+
 /*
    --------------------------------------------------------------------------
       EPS bearer context modification procedure executed by the MME

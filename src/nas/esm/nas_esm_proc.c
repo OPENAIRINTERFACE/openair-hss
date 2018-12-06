@@ -132,6 +132,11 @@ void _nas_proc_pdn_connectivity_timeout_handler (void *args)
   OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Timer expired for transaction (type=%d, ue_id=" MME_UE_S1AP_ID_FMT "), " "retransmission counter = %d\n",
       nas_pdn_connectivity_proc->trx_base_proc.trx_type, ue_id, nas_pdn_connectivity_proc->trx_base_proc.esm_proc_timer.count);
 
+  /*
+   * Remove the ESM procedure and stop the T3485 timer if running.
+   */
+  rc = esm_ebr_stop_timer (esm_context, ebi);
+
   nas_pdn_connectivity_proc->trx_base_proc.retx_count += 1;
   if (nas_pdn_connectivity_proc->trx_base_proc.retx_count < ESM_INFORMATION_COUNTER_MAX) {
     /*
@@ -153,6 +158,18 @@ void _nas_proc_pdn_connectivity_timeout_handler (void *args)
       OAILOG_FUNC_OUT (LOG_NAS_ESM);
     }
   } else {
+
+    // todo: timeout fot T3485 default bearer context request timer
+//    /*
+//       * Release the default EPS bearer context and enter state INACTIVE
+//       */
+//      rc = esm_proc_eps_bearer_context_deactivate (esm_ebr_timer_data->ctx, true, esm_ebr_timer_data->ebi, pid, NULL);
+
+//    /*
+//     * Stop ESM timer T3485
+//     */
+//    rc = esm_ebr_stop_timer (esm_ebr_timer_data->ctx, esm_ebr_timer_data->ebi);
+
     /*
      * The maximum number of deactivate EPS bearer context request
      * message retransmission has exceed

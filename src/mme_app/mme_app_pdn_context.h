@@ -31,9 +31,14 @@
 int mme_app_esm_create_pdn_context(mme_ue_s1ap_id_t ue_id, const apn_configuration_t *apn_configuration, const bstring apn, pdn_cid_t pdn_cid, const pdn_context_t **pdn_context_pp);
 int mme_app_esm_update_pdn_context(mme_ue_s1ap_id_t ue_id, const bstring apn, pdn_cid_t pdn_cid, ebi_t linked_ebi, esm_ebr_state esm_ebr_state, const ambr_t apn_ambr, const bearer_qos_t *bearer_qos, protocol_configuration_options_t *pcos);
 
+/**
+ * Release all bearers of a PDN context and release the PDN context.
+ * If this method is triggered by the ESM layer, the ESM procedures/timers need to be released before..
+ */
+void mme_app_esm_delete_pdn_context(mme_ue_s1ap_id_t ue_id, bstring apn, pdn_cid_t pdn_cid, ebi_t linked_ebi);
+
 int mme_app_cn_update_bearer_context(mme_ue_s1ap_id_t ue_id, const ebi_t ebi, struct fteid_set_s * fteid_set);
 
-void mme_app_free_pdn_context (pdn_context_t ** const pdn_context);
 void mme_app_get_pdn_context (mme_ue_s1ap_id_t ue_id, pdn_cid_t const context_id, ebi_t const default_ebi, bstring const apn_subscribed, pdn_context_t **pdn_ctx);
 
 /*

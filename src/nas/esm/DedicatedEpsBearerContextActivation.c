@@ -105,6 +105,75 @@ static int _dedicated_eps_bearer_activate (esm_context_t * esm_context, ebi_t eb
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
 /****************************************************************************/
 
+/****************************************************************************
+ **                                                                        **
+ ** Name:    esm_send_activate_dedicated_eps_bearer_context_request()  **
+ **                                                                        **
+ ** Description: Builds Activate Dedicated EPS Bearer Context Request      **
+ **      message                                                   **
+ **                                                                        **
+ **      The activate dedicated EPS bearer context request message **
+ **      is sent by the network to the UE to request activation of **
+ **      a dedicated EPS bearer context associated with the same   **
+ **      PDN address(es) and APN as an already active default EPS  **
+ **      bearer context.                                           **
+ **                                                                        **
+ ** Inputs:  pti:       Procedure transaction identity             **
+ **      ebi:       EPS bearer identity                        **
+ **      linked_ebi:    EPS bearer identity of the default bearer  **
+ **             associated with the EPS dedicated bearer   **
+ **             to be activated                            **
+ **      qos:       EPS quality of service                     **
+ **      tft:       Traffic flow template                      **
+ **      Others:    None                                       **
+ **                                                                        **
+ ** Outputs:     msg:       The ESM message to be sent                 **
+ **      Return:    RETURNok, RETURNerror                      **
+ **      Others:    None                                       **
+ **                                                                        **
+ ***************************************************************************/
+int
+esm_send_activate_dedicated_eps_bearer_context_request (
+  pti_t pti,
+  ebi_t ebi,
+  activate_dedicated_eps_bearer_context_request_msg * msg,
+  ebi_t linked_ebi,
+  const EpsQualityOfService * qos,
+  traffic_flow_template_t *tft,
+  protocol_configuration_options_t *pco)
+{
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
+  /*
+   * Mandatory - ESM message header
+   */
+  msg->protocoldiscriminator = EPS_SESSION_MANAGEMENT_MESSAGE;
+  msg->epsbeareridentity = ebi;
+  msg->messagetype = ACTIVATE_DEDICATED_EPS_BEARER_CONTEXT_REQUEST;
+  msg->proceduretransactionidentity = pti;
+  msg->linkedepsbeareridentity = linked_ebi;
+  /*
+   * Mandatory - EPS QoS
+   */
+  msg->epsqos = *qos;
+  /*
+   * Mandatory - traffic flow template
+   */
+  if (tft) {
+    memcpy(&msg->tft, tft, sizeof(traffic_flow_template_t));
+  }
+
+  /*
+   * Optional
+   */
+  msg->presencemask = 0;
+  if (pco) {
+    memcpy(&msg->protocolconfigurationoptions, pco, sizeof(protocol_configuration_options_t));
+    msg->presencemask |= ACTIVATE_DEDICATED_EPS_BEARER_CONTEXT_REQUEST_PROTOCOL_CONFIGURATION_OPTIONS_PRESENT;
+  }
+  OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Send Activate Dedicated EPS Bearer Context " "Request message (pti=%d, ebi=%d). \n", msg->proceduretransactionidentity, msg->epsbeareridentity);
+  OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);
+}
+
 /*
    --------------------------------------------------------------------------
       Dedicated EPS bearer context activation procedure executed by the MME

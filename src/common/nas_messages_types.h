@@ -84,22 +84,15 @@ typedef struct itti_nas_pdn_connectivity_rsp_s {
   bstring                 pdn_addr;
   int                     pdn_type;
   int                     request_type;
-
   mme_ue_s1ap_id_t        ue_id;
-
   /* Key eNB */
-  //uint8_t                 kenb[32];
-
-  ambr_t                  apn_ambr;
 
   /* EPS bearer ID */
   unsigned                ebi:4;
 
   /* QoS */
-  qci_t                   qci;
-  priority_level_t        prio_level;
-  pre_emption_vulnerability_t pre_emp_vulnerability;
-  pre_emption_capability_t    pre_emp_capability;
+  bearer_qos_t                bearer_qos;
+  ambr_t                      apn_ambr;
 
   /* S-GW TEID for user-plane */
   /* S-GW IP address for User-Plane */
@@ -116,6 +109,7 @@ typedef struct itti_nas_pdn_connectivity_fail_s {
 typedef struct itti_nas_pdn_config_rsp_s {
   mme_ue_s1ap_id_t        ue_id; // nas ref
   imsi64_t                imsi64;
+  bool                    mobility;
 } itti_nas_pdn_config_rsp_t;
 
 typedef struct itti_nas_pdn_config_fail_s {

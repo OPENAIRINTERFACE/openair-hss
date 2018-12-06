@@ -1197,6 +1197,13 @@ If the GUTI/IMSI mapping in the network was incorrect, the network should respon
     ACCEPT message or TRACKING AREA UPDATE REJECT message if the failure of handover procedure                      \
     is reported by the lower layer and the S1 signalling connection exists."
 
+#define R10_6_4_1_2 "When the default bearer is activated as part of the attach procedure, the MME shall send the   \
+    ACTIVATE DEFAULT EPS BEARER CONTEXT REQUEST message together with ATTACH ACCEPT and shall                       \
+    not start the timer T3485. When the default bearer is activated as the response to a stand-alone                \
+    PDN CONNECTIVITY REQUEST message apart from the attach procedure, the MME shall send the                        \
+    ACTIVATE DEFAULT EPS BEARER CONTEXT REQUEST message alone, _and start the timer T3485."
+#define R10_6_4_1_2_BRIEF ""
+
 #define R10_6_5_1_6_a "Abnormal cases on the network side                                                          \
     If one or more information elements in the PDN CONNECTIVITY REQUEST message differ from the ones received within \
     the previous PDN CONNECTIVITY REQUEST message, and multiple PDN connections for a given APN are not allowed, the \

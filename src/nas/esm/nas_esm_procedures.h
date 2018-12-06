@@ -80,6 +80,9 @@ typedef struct nas_esm_transaction_proc_s {
   uint8_t                      retx_count;
 } nas_esm_transaction_proc_t;
 
+/*
+ * Structure for ESM PDN connectivity procedure.
+ */
 typedef struct nas_esm_pdn_connectivity_proc_s {
   /** Initial mandatory elements. */
   nas_esm_transaction_proc_t   trx_base_proc;
@@ -91,8 +94,23 @@ typedef struct nas_esm_pdn_connectivity_proc_s {
   tai_t                        visited_tai;
   pdn_cid_t                    pdn_cid;
   ebi_t                        default_ebi;
+  bool                         initial_attach;
 //  protocol_configuration_options_t  pco;
 } nas_esm_pdn_connectivity_proc_t;
+
+/*
+ * Structure for ESM bearer context procedure.
+ */
+typedef struct nas_esm_bearer_context_proc_s {
+  /** Initial mandatory elements. */
+  nas_esm_transaction_proc_t   trx_base_proc;  /**< It may be a transactional procedure (PTI set // triggered through resource modification, or not (pti=0), triggered by the core network. */
+  imsi_t                       imsi;
+  /** Additional elements requested from the UE and set with time.. */
+  pdn_cid_t                    pdn_cid;
+  ebi_t                        bearer_ebi;
+  ebi_t                        linked_ebi;
+//  protocol_configuration_options_t  pco;
+} nas_esm_bearer_context_proc_t;
 
 typedef struct nas_esm_transaction_procedures_s {
   nas_esm_transaction_proc_t                          *proc;

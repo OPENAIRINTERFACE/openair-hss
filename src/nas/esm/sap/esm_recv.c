@@ -631,17 +631,15 @@ esm_recv_pdn_disconnect_request (
  ***************************************************************************/
 esm_cause_t
 esm_recv_activate_default_eps_bearer_context_accept (
-  esm_context_t * esm_context,
+  mme_ue_s1ap_id_t ue_id,
   proc_tid_t pti,
   ebi_t ebi,
   const activate_default_eps_bearer_context_accept_msg * msg)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   esm_cause_t                              esm_cause = ESM_CAUSE_SUCCESS;
-  mme_ue_s1ap_id_t                         ue_id = esm_context->ue_id;
 
-  OAILOG_INFO(LOG_NAS_ESM, "ESM-SAP   - Received Activate Default EPS Bearer Context " "Accept message (ue_id=%d, pti=%d, ebi=%d)\n",
-          ue_id, pti, ebi);
+  OAILOG_INFO(LOG_NAS_ESM, "ESM-SAP   - Received Activate Default EPS Bearer Context " "Accept message (ue_id=%d, pti=%d, ebi=%d)\n", ue_id, pti, ebi);
 
   /*
    * Procedure transaction identity checking
@@ -666,19 +664,19 @@ esm_recv_activate_default_eps_bearer_context_accept (
     OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Invalid EPS bearer identity (ebi=%d)\n", ebi);
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY);
   }
-
-  /*
-   * Message processing
-   */
+  // todo: LOCK_ESM_TRX --> SHOULD BE REMOVED VIA TIMER?!?
   /*
    * Execute the default EPS bearer context activation procedure accepted
    * * * * by the UE
    */
-  int rc = esm_proc_default_eps_bearer_context_accept (esm_context, ebi, &esm_cause);
+  esm_proc_default_eps_bearer_context_accept (ue_id, esm_pdn_connectivity_proc);
+  /*
+   * Remove the PDN Connectivity procedure.
+   * It stops T3485 timer if running
+   */
+  _esm_proc_free_pdn_connectivity_procedure(&esm_pdn_connectivity_proc);
 
-  if (rc != RETURNerror) {
-    esm_cause = ESM_CAUSE_SUCCESS;
-  }
+  // todo: LOCK_ESM_TRX --> SHOULD BE REMOVED VIA TIMER?!?
 
   /*
    * Return the ESM cause value
@@ -707,14 +705,13 @@ esm_recv_activate_default_eps_bearer_context_accept (
  ***************************************************************************/
 esm_cause_t
 esm_recv_activate_default_eps_bearer_context_reject (
-  esm_context_t * esm_context,
+  mme_ue_s1ap_id_t ue_id,
   proc_tid_t pti,
   ebi_t ebi,
-  const activate_default_eps_bearer_context_reject_msg * msg)
+  const activate_default_eps_bearer_context_accept_msg * msg)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   esm_cause_t                             esm_cause = ESM_CAUSE_SUCCESS;
-  mme_ue_s1ap_id_t                        ue_id = esm_context->ue_id;
 
   OAILOG_INFO(LOG_NAS_ESM, "ESM-SAP   - Received Activate Default EPS Bearer Context " "Reject message (ue_id=%d, pti=%d, ebi=%d)\n",
           ue_id, pti, ebi);
@@ -731,26 +728,19 @@ esm_recv_activate_default_eps_bearer_context_reject (
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_PTI_VALUE);
   }
   /*
-   * EPS bearer identity checking
-   */
-  else if (esm_ebr_is_reserved (ebi)){ // || esm_ebr_is_not_in_use (esm_context, ebi)) {
-    /*
-     * 3GPP TS 24.301, section 7.3.2, case f
-     * * * * Reserved or assigned value that does not match an existing EPS
-     * * * * bearer context
-     */
-    OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Invalid EPS bearer identity (ebi=%d)", ebi);
-    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY);
-  }
-
-  /*
-   * Message processing
-   */
-  /*
-   * Execute the default EPS bearer context activation procedure not accepted
-   * * * * by the UE
+   * Remove the PDN Context for the given APN.
+   * No EMM message will be triggered, just a local remove.
+   * Inform the SAE-GW
    */
   int rc = esm_proc_default_eps_bearer_context_reject (esm_context, ebi, &esm_cause);
+
+  /*
+   * Remove the PDN Connectivity procedure.
+   * It stops T3485 timer if running
+   */
+  _esm_proc_free_pdn_connectivity_procedure(&esm_pdn_connectivity_proc);
+
+
 
   if (rc != RETURNerror) {
     esm_cause = ESM_CAUSE_SUCCESS;

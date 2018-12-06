@@ -101,7 +101,11 @@ struct itti_nas_pdn_connectivity_rsp_s;
 struct itti_nas_pdn_connectivity_fail_s;
 
 /** NAS UE context response. */
-typedef itti_nas_context_res_t  emm_cn_context_res_t;
+typedef itti_nas_context_res_t    emm_cn_context_res_t;
+typedef struct itti_nas_pdn_config_rsp_s        emm_cn_pdn_config_res_t;
+typedef struct itti_nas_pdn_config_fail_s       emm_cn_pdn_config_fail_t;
+typedef struct itti_nas_pdn_connectivity_rsp_s  emm_cn_pdn_connectivity_resp_t;
+typedef struct itti_nas_pdn_connectivity_fail_s emm_cn_pdn_connectivity_fail_t;
 
 typedef struct emm_cn_deregister_ue_s {
   uint32_t ue_id;

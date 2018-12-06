@@ -51,8 +51,8 @@
 #include "esm_proc.h"
 #include "esm_cause.h"
 #include "esm_sap.h"
-#include "esm_send.h"
 #include "esm_data.h"
+#include "sap/esm_message.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -69,6 +69,25 @@ _esm_information (
 /****************************************************************************/
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
 /****************************************************************************/
+
+/*
+   --------------------------------------------------------------------------
+   Functions executed by the MME to send ESM messages
+   --------------------------------------------------------------------------
+*/
+int esm_send_esm_information_request (pti_t pti, ebi_t ebi, esm_information_request_msg * msg)
+{
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
+  /*
+   * Mandatory - ESM message header
+   */
+  msg->protocoldiscriminator        = EPS_SESSION_MANAGEMENT_MESSAGE;
+  msg->epsbeareridentity            = ebi;
+  msg->messagetype                  = ESM_INFORMATION_REQUEST;
+  msg->proceduretransactionidentity = pti;
+  OAILOG_NOTICE (LOG_NAS_ESM, "ESM-SAP   - Send ESM_INFORMATION_REQUEST message (pti=%d, ebi=%d)\n", msg->proceduretransactionidentity, msg->epsbeareridentity);
+  OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);
+}
 
 //------------------------------------------------------------------------------
 int esm_proc_esm_information_request (nas_esm_transaction_proc_t *esm_trx_proc, ESM_msg * esm_result_msg)

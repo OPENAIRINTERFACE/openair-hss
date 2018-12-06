@@ -81,8 +81,6 @@ static const char                      *_esm_ebr_state_str[ESM_EBR_STATE_MAX] = 
   "BEARER CONTEXT ACTIVE PENDING"
 };
 
-
-
 /*
    ----------------------
    User notification data
@@ -121,7 +119,8 @@ const char * esm_ebr_state2string(esm_ebr_state esm_ebr_state)
  **                                                                        **
  ** Name:    esm_ebr_release()                                         **
  **                                                                        **
- ** Description: Release the given EPS bearer identity                     **
+ ** Description: Release the given EPS bearer context and its ESM          **
+ **               procedure, if existing.                                  **
  **                                                                        **
  ** Inputs:  ue_id:      Lower layers UE identifier                 **
  **      ebi:       The identity of the EPS bearer context to  **
@@ -135,46 +134,28 @@ const char * esm_ebr_state2string(esm_ebr_state esm_ebr_state)
  **      Others:    _esm_ebr_data                              **
  **                                                                        **
  ***************************************************************************/
-int esm_ebr_release (esm_context_t * esm_context, bearer_context_t * bearer_context, pdn_context_t * pdn_context, bool ue_requested)
+int esm_ebr_release (mme_ue_s1ap_id_t ue_id, bstring apn, pdn_cid_t pdn_cid, ebi_t ebi)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   esm_ebr_context_t                      *ebr_ctx = NULL;
 
-  ue_context_t                        *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, esm_context->ue_id);
-
   /*
-   * Delete the TFT
+   * Stop the running bearer context procedure (incl. timer) for the specific EBI.
+   * Other processes should not be affected.
    */
-  // TODO Look at "free_traffic_flow_template"
-  //free_traffic_flow_template(&pdn->bearer[i]->tft);
-
-  /*
-   * Set the EPS bearer context state to INACTIVE
-   */
-  int rc  = esm_ebr_set_status (esm_context, bearer_context->ebi, ESM_EBR_INACTIVE, ue_requested);
-  if (rc != RETURNok) {
-    /*
-     * Failed to update ESM bearer status.
-     */
-    OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Failed to update ESM bearer status to INACTIVE. Ignoring and continuing with the removal. \n");
-    if(emm_fsm_get_state(esm_context) == EMM_DEREGISTERED_INITIATED){
-      OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Ignoring state change failure for implicitly detaching UE " MME_UE_S1AP_ID_FMT". \n", esm_context->ue_id);
-    }else {
-      OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
-    }
+  nas_esm_bearer_context_proc_t * esm_bearer_context_proc = esm_data_get_bearer_procedure(ue_id, ebi);
+  if(esm_bearer_context_proc){
+    OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Removing ESM bearer procedure for released bearer context (ebi=%d) for UE " MME_UE_S1AP_ID_FMT". \n", ue_id, ebi);
+    /** This will also stop the timer of the procedure, no extra bearer timer is needed. */
+    // todo: locks needed in ESM?
+    _esm_proc_free_bearer_context_procedure(esm_bearer_context_proc);
+  }else {
+    OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - No ESM bearer procedure exists for bearer context (ebi=%d) for UE " MME_UE_S1AP_ID_FMT". \n", ue_id, ebi);
   }
   /*
-   * Stop any running timer.
+   * Deregister the single bearer context from the PDN context.
    */
-  rc = esm_ebr_stop_timer (esm_context, bearer_context->ebi);
-  if (rc != RETURNok) {
-    OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Failed to stop EPS bearer deactivation timer. \n");
-    OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
-  }
-  /*
-   * Deregister the bearer context.
-   */
-  rc = mme_app_deregister_bearer_context(ue_context, bearer_context->ebi, pdn_context);
+  rc = mme_app_deregister_bearer_context(ue_id, ebi, pdn_context);
   if(rc != RETURNok){
     OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Failed to deregister the EPS bearer context from the pdn context for ebi %d for ueId " MME_UE_S1AP_ID_FMT ". \n", bearer_context->ebi, esm_context->ue_id);
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
@@ -288,73 +269,4 @@ int esm_ebr_start_timer (esm_context_t * esm_context, ebi_t ebi,
   }
 
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
-}
-
-/****************************************************************************
- **                                                                        **
- ** Name:    esm_ebr_stop_timer()                                      **
- **                                                                        **
- ** Description: Stop the timer previously started for the given EPS bea-  **
- **      rer context                                               **
- **                                                                        **
- ** Inputs:  ue_id:      Lower layers UE identifier                 **
- **      ebi:       The identity of the EPS bearer             **
- **      Others:    None                                       **
- **                                                                        **
- ** Outputs:     None                                                      **
- **      Return:    RETURNok, RETURNerror                      **
- **      Others:    _esm_ebr_data                              **
- **                                                                        **
- ***************************************************************************/
-int esm_ebr_stop_timer (esm_context_t * esm_context, ebi_t ebi)
-{
-  esm_ebr_context_t                      *ebr_ctx = NULL;
-  bearer_context_t                       *bearer_context = NULL;
-
-  OAILOG_FUNC_IN (LOG_NAS_ESM);
-
-  /*
-   * 3GPP TS 24.301, section 7.3.2, case f
-   * * * * Reserved or assigned value that does not match an existing EPS
-   * * * * bearer context
-   */
-
-  if ((ebi < ESM_EBI_MIN) || (ebi > ESM_EBI_MAX)) {
-    OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
-  }
-
-  ue_context_t                        *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, esm_context->ue_id);
-
-  /*
-   * Get EPS bearer context data
-   */
-  mme_app_get_session_bearer_context_from_all(ue_context, ebi, &bearer_context);
-
-  if ((bearer_context == NULL) || (bearer_context->ebi != ebi)) {
-    /*
-     * EPS bearer context not assigned
-     */
-    OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
-  }
-
-  ebr_ctx = &bearer_context->esm_ebr_context;
-  /*
-   * Stop the retransmission timer if still running
-   */
-  if (ebr_ctx->timer.id != NAS_TIMER_INACTIVE_ID) {
-    OAILOG_INFO (LOG_NAS_ESM, "ESM-FSM   - Stop retransmission timer %ld\n", ebr_ctx->timer.id);
-    esm_ebr_timer_data_t * esm_ebr_timer_data = NULL;
-    ebr_ctx->timer.id = nas_timer_stop (ebr_ctx->timer.id, (void**)&esm_ebr_timer_data);
-    MSC_LOG_EVENT (MSC_NAS_ESM_MME, "0 Timer %x ebi %u stopped", ebr_ctx->timer.id, ebi);
-    /*
-     * Release the retransmisison timer parameters
-     */
-    if (esm_ebr_timer_data) {
-      if (esm_ebr_timer_data->msg) {
-        bdestroy_wrapper (&esm_ebr_timer_data->msg);
-      }
-      free_wrapper ((void**)&esm_ebr_timer_data);
-    }
-  }
-  OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);
 }

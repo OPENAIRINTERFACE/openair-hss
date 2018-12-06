@@ -72,19 +72,6 @@ bstring bearer_state2string(const mme_app_bearer_state_t bearer_state)
 }
 
 //------------------------------------------------------------------------------
-static void mme_app_bearer_context_init(bearer_context_t *const  bearer_context)
-{
-  if (bearer_context) {
-    ebi_t ebi = bearer_context->ebi;
-    memset(bearer_context, 0, sizeof(*bearer_context));
-    bearer_context->ebi = ebi;
-//    bearer_context->bearer_state = BEARER_STATE_NULL;
-
-    esm_bearer_context_init(&bearer_context->esm_ebr_context);
-  }
-}
-
-//------------------------------------------------------------------------------
 bearer_context_t *mme_app_new_bearer(){
   bearer_context_t * thiz = NULL;
   if (bearerContextPool) {
@@ -97,9 +84,21 @@ bearer_context_t *mme_app_new_bearer(){
 }
 
 //------------------------------------------------------------------------------
-int mme_app_bearer_context_delete (bearer_context_t *bearer_context)
+static int mme_app_bearer_context_initialize(bearer_context_t *bearer_context)
 {
-  mme_app_bearer_context_init(bearer_context);
+  /** Remove the EMS-EBR context of the bearer-context. */
+  bearer_context->esm_ebr_context->status   = ESM_EBR_INACTIVE;
+  if(bearer_context->esm_ebr_context.tft){
+    free_traffic_flow_template(&bearer_context->esm_ebr_context.tft);
+  }
+  if(bearer_context->esm_ebr_context.pco){
+    free_protocol_configuration_options(&bearer_context->esm_ebr_context.pco);
+  }
+  /** Remove the remaining contexts of the bearer context. */
+  memset(&bearer_context->esm_ebr_context, 0, sizeof(esm_ebr_context_t)); /**< Sets the SM status to ESM_STATUS_INVALID. */
+  ebi_t ebi = bearer_context->ebi;
+  memset(bearer_context, 0, sizeof(*bearer_context));
+  bearer_context->ebi = ebi;
   bearer_context->next_bc = bearerContextPool;
   bearerContextPool = bearer_context;
   return RETURNok;
@@ -201,6 +200,13 @@ int mme_app_deregister_bearer_context(ue_context_t * const ue_context, ebi_t ebi
         ebi, ue_context->mme_ue_s1ap_id, pdn_context->context_identifier);
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
+  /*
+   * Delete the TFT,
+   * todo: check any other allocated fields..
+   *
+   */
+  // TODO Look at "free_traffic_flow_template"
+  //free_traffic_flow_template(&pdn->bearer[i]->tft);
 
   /*
    * We don't have one pool where tunnels are allocated. We allocate a fixed number of bearer contexts at the beginning inside the UE context.
@@ -266,4 +272,41 @@ void mme_app_bearer_context_update_handover(bearer_context_t * bc_registered, be
   OAILOG_DEBUG (LOG_MME_APP, "Set qci and bearer level qos values from handover information %u in bearer %u\n", bc_registered->qci, bc_registered->ebi);
   OAILOG_FUNC_OUT(LOG_MME_APP);
 }
+
+//------------------------------------------------------------------------------
+int
+mme_app_cn_update_bearer_context(mme_ue_s1ap_id_t ue_id, const ebi_t ebi, struct fteid_set_s * fteid_set){
+  ue_context_t * ue_context         = NULL;
+  bearer_context_t * bearer_context = NULL;
+  int rc                            = RETURNok;
+
+  OAILOG_FUNC_IN (LOG_MME_APP);
+  ue_context_t * ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, ue_id);
+  if(!ue_context){
+    OAILOG_ERROR (LOG_MME_APP, "No MME_APP UE context could be found for UE: " MME_UE_S1AP_ID_FMT ". \n", ue_id);
+    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+  }
+  //  LOCK_UE_CONTEXT(ue_context);
+  /** Update the FTEIDs and the bearers CN state. */
+  mme_app_get_session_bearer_context_from_all(ue_id, ebi, &bearer_context);
+  if(bearer_context){
+    /** We can set the FTEIDs right before the CBResp is set. */
+    if(fteid_set){
+      memcpy((void*)&bearer_context->s_gw_fteid_s1u , fteid_set->s1u_fteid, sizeof(fteid_t));
+      memcpy((void*)&bearer_context->p_gw_fteid_s5_s8_up , fteid_set->s5_fteid, sizeof(fteid_t));
+      bearer_context->bearer_state |= BEARER_STATE_SGW_CREATED;
+    }
+    /** Set the MME_APP states (todo: may be with Activate Dedicated Bearer Response). */
+    bearer_context->bearer_state   |= BEARER_STATE_SGW_CREATED;
+    bearer_context->bearer_state   |= BEARER_STATE_MME_CREATED;
+    OAILOG_ERROR (LOG_MME_APP, "No MME_APP UE context could be found for UE: " MME_UE_S1AP_ID_FMT ". \n", ue_id);
+    rc = RETURNok;
+  }else{
+    OAILOG_ERROR (LOG_MME_APP, "No MME_APP UE context could be found for UE: " MME_UE_S1AP_ID_FMT ". \n", ue_id);
+    rc = RETURNerror;
+  }
+  //  UNLOCK_UE_CONTEXT(ue_context);
+  OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
+}
+
 

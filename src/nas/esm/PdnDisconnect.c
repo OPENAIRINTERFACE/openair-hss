@@ -74,29 +74,66 @@
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
 /****************************************************************************/
 
-extern int _pdn_connectivity_delete (esm_context_t * esm_context, pdn_cid_t pid, ebi_t default_ebi);
+extern int _pdn_connectivity_delete (mme_ue_s1ap_id_t ue_id, pdn_cid_t pdn_cid, bstring apn, ebi_t default_ebi, pti_t pti);
 
 /****************************************************************************/
 /*******************  L O C A L    D E F I N I T I O N S  *******************/
 /****************************************************************************/
-
 
 /*
    --------------------------------------------------------------------------
     Internal data handled by the PDN disconnect procedure in the MME
    --------------------------------------------------------------------------
 */
-/*
-   PDN disconnection handlers
-*/
-static int _pdn_disconnect_get_pid (esm_context_t * esm_context, ebi_t default_ebi, proc_tid_t pti);
 
 
 /****************************************************************************/
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
 /****************************************************************************/
 
-
+/****************************************************************************
+ **                                                                        **
+ ** Name:    esm_send_pdn_disconnect_reject()                          **
+ **                                                                        **
+ ** Description: Builds PDN Disconnect Reject message                      **
+ **                                                                        **
+ **      The PDN disconnect reject message is sent by the network  **
+ **      to the UE to reject release of a PDN connection.          **
+ **                                                                        **
+ ** Inputs:  pti:       Procedure transaction identity             **
+ **      esm_cause: ESM cause code                             **
+ **      Others:    None                                       **
+ **                                                                        **
+ ** Outputs:     msg:       The ESM message to be sent                 **
+ **      Return:    RETURNok, RETURNerror                      **
+ **      Others:    None                                       **
+ **                                                                        **
+ ***************************************************************************/
+int
+esm_send_pdn_disconnect_reject (
+  pti_t pti,
+  pdn_disconnect_reject_msg * msg,
+  int esm_cause)
+{
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
+  /*
+   * Mandatory - ESM message header
+   */
+  msg->protocoldiscriminator = EPS_SESSION_MANAGEMENT_MESSAGE;
+  msg->epsbeareridentity = EPS_BEARER_IDENTITY_UNASSIGNED;
+  msg->messagetype = PDN_DISCONNECT_REJECT;
+  msg->proceduretransactionidentity = pti;
+  /*
+   * Mandatory - ESM cause code
+   */
+  msg->esmcause = esm_cause;
+  /*
+   * Optional IEs
+   */
+  msg->presencemask = 0;
+  OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Send PDN Disconnect Reject message " "(pti=%d, ebi=%d)\n", msg->proceduretransactionidentity, msg->epsbeareridentity);
+  OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);
+}
 
 /*
    --------------------------------------------------------------------------
@@ -147,7 +184,6 @@ esm_proc_pdn_disconnect_request (
    * Get the identifier of the PDN connection entry assigned to the
    * * * * procedure transaction identity
    */
-//    pid = _pdn_disconnect_get_pid (esm_context, default_ebi, pti);
   ue_context_t                        *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, esm_context->ue_id);
   DevAssert(ue_context);
 
@@ -323,41 +359,3 @@ esm_proc_pdn_disconnect_reject (
                 PDN disconnection handlers
   ---------------------------------------------------------------------------
 */
-
-
-/****************************************************************************
- **                                                                        **
- ** Name:    _pdn_disconnect_get_pid()                                 **
- **                                                                        **
- ** Description: Returns the identifier of the PDN connection to which the **
- **      given procedure transaction identity has been assigned    **
- **      to establish connectivity to the specified UE             **
- **                                                                        **
- ** Inputs:  ue_id:      UE local identifier                        **
- **      pti:       The procedure transaction identity         **
- **      Others:    _esm_data                                  **
- **                                                                        **
- ** Outputs:     None                                                      **
- **      Return:    The identifier of the PDN connection if    **
- **             found in the list; -1 otherwise.           **
- **      Others:    None                                       **
- **                                                                        **
- ***************************************************************************/
-static pdn_cid_t
-_pdn_disconnect_get_pid (
-  esm_context_t * esm_context,
-  ebi_t default_ebi,
-  proc_tid_t pti)
-{
-  if (esm_context) {
-    ue_context_t                        *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, esm_context->ue_id);
-
-    pdn_context_t pdn_context_key = {.default_ebi = default_ebi};
-
-    pdn_context_t * pdn_context = RB_FIND(PdnContexts, &ue_context->pdn_contexts, &pdn_context_key);
-    if(pdn_context)
-      return pdn_context->context_identifier;
-    return MAX_APN_PER_UE;
-  }
-  return RETURNerror;
-}

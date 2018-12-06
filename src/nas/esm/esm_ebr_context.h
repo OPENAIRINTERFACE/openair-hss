@@ -57,6 +57,4 @@ Description Defines functions used to handle EPS bearer contexts.
 
 ebi_t esm_ebr_context_release(esm_context_t * esm_context, ebi_t ebi, pdn_cid_t *pid, bool ue_requested);
 
-void free_esm_ebr_context(esm_ebr_context_t * ctx);
-
 #endif /* ESM_EBR_CONTEXT_SEEN */

@@ -353,8 +353,6 @@ esm_ebr_context_release (
           //       */
           //      // TODO Look at "free_traffic_flow_template"
           //      //free_traffic_flow_template(&pdn->bearer[i]->tft);
-          pdn->n_bearers -= 1;
-          esm_context->n_active_ebrs--;
           bearer_context = RB_MIN(SessionBearers, &pdn_context->session_bearers);
     }
   }else{

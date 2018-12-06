@@ -66,43 +66,6 @@
 
 // free allocated structs
 //------------------------------------------------------------------------------
-void free_esm_bearer_context(esm_ebr_context_t * esm_ebr_context)
-{
-  if (esm_ebr_context) {
-    if (esm_ebr_context->pco) {
-      free_protocol_configuration_options(&esm_ebr_context->pco);
-    }
-    if (esm_ebr_context->tft) {
-      free_traffic_flow_template(&esm_ebr_context->tft);
-    }
-    if (NAS_TIMER_INACTIVE_ID != esm_ebr_context->timer.id) {
-      esm_ebr_timer_data_t * esm_ebr_timer_data = NULL;
-      esm_ebr_context->timer.id = nas_timer_stop (esm_ebr_context->timer.id, (void**)&esm_ebr_timer_data);
-      /*
-       * Release the retransmisison timer parameters
-       */
-      if (esm_ebr_timer_data) {
-        if (esm_ebr_timer_data->msg) {
-          bdestroy_wrapper (&esm_ebr_timer_data->msg);
-        }
-        free_wrapper ((void**)&esm_ebr_timer_data);
-      }
-    }
-  }
-}
-
-//------------------------------------------------------------------------------
-void esm_bearer_context_init(esm_ebr_context_t * esm_ebr_context)
-{
-  if (esm_ebr_context) {
-    memset(esm_ebr_context, 0, sizeof(*esm_ebr_context));
-    esm_ebr_context->status   = ESM_EBR_INACTIVE;
-    esm_ebr_context->timer.id = NAS_TIMER_INACTIVE_ID;
-  }
-}
-
-// free allocated structs
-//------------------------------------------------------------------------------
 //void free_esm_pdn(esm_pdn_t * pdn)
 //{
 //  if (pdn) {

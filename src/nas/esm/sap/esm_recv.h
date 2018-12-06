@@ -103,11 +103,11 @@ esm_cause_t esm_recv_pdn_disconnect_request(mme_ue_s1ap_id_t ue_id, proc_tid_t p
  * Messages related to EPS bearer contexts
  * ---------------------------------------
  */
-esm_cause_t esm_recv_activate_default_eps_bearer_context_accept(esm_context_t * esm_context,
+esm_cause_t esm_recv_activate_default_eps_bearer_context_accept(mme_ue_s1ap_id_t ue_id,
     proc_tid_t pti, ebi_t ebi, const activate_default_eps_bearer_context_accept_msg *msg);
 
-esm_cause_t esm_recv_activate_default_eps_bearer_context_reject(esm_context_t * esm_context,
-    proc_tid_t pti, ebi_t ebi, const activate_default_eps_bearer_context_reject_msg *msg);
+esm_cause_t esm_recv_activate_default_eps_bearer_context_reject (mme_ue_s1ap_id_t ue_id,
+    proc_tid_t pti, ebi_t ebi, const activate_default_eps_bearer_context_accept_msg * msg);
 
 esm_cause_t esm_recv_activate_dedicated_eps_bearer_context_accept(esm_context_t * esm_context,
     proc_tid_t pti, ebi_t ebi, const activate_dedicated_eps_bearer_context_accept_msg *msg);

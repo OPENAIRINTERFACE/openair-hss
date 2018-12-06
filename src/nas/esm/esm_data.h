@@ -121,8 +121,6 @@ typedef struct esm_data_s {
 } esm_data_t;
 
 
-void free_esm_bearer_context(esm_ebr_context_t * esm_ebr_context);
-void esm_bearer_context_init(esm_ebr_context_t * esm_ebr_context);
 void nas_stop_T3489(mme_ue_s1ap_id_t ue_id, nas_timer_t * const nas_timer);
 void free_esm_context_content(esm_context_t * esm_ctx);
 
