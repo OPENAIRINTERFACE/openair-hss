@@ -63,6 +63,10 @@
 #define TAC_LIST_T(SIZE) struct {uint8_t n_tacs; TAC_t tac[SIZE];}
 
 //------------------------------------------------------------------------------
+#define INTERNAL_FLAG_NULL        0
+#define INTERNAL_FLAG_X2_HANDOVER (1 << 0)
+
+//------------------------------------------------------------------------------
 
 typedef enum {
   /* Fatal errors - received message should not be processed */

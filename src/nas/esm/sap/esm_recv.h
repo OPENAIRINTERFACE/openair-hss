@@ -90,16 +90,14 @@ esm_cause_t esm_recv_status(esm_context_t * esm_context, proc_tid_t pti, ebi_t e
  * Transaction related messages
  * ----------------------------
  */
-esm_cause_t esm_recv_pdn_connectivity_request(esm_context_t * esm_context, proc_tid_t pti, ebi_t ebi,
-                                      const pdn_connectivity_request_msg *msg, ebi_t *new_ebi, bool *is_pdn_connectivity,
-                                      imsi_t *imsi, pdn_context_t **pdn_context_pp);
+esm_cause_t esm_recv_pdn_connectivity_request(mme_ue_s1ap_id_t ue_id, const imsi_t *imsi, proc_tid_t pti, ebi_t ebi, tai_t *visited_tai,
+                                    const pdn_connectivity_request_msg *msg, ESM_msg *esm_response);
 
-esm_cause_t esm_recv_pdn_disconnect_request(esm_context_t * esm_context, proc_tid_t pti, ebi_t ebi,
-                                    const pdn_disconnect_request_msg *msg,
-                                    ebi_t *linked_ebi);
+esm_cause_t esm_recv_information_response (mme_ue_s1ap_id_t ue_id, proc_tid_t pti,  ebi_t ebi,
+                                    const esm_information_response_msg * msg, ESM_msg *esm_response);
 
-esm_cause_t esm_recv_information_response (esm_context_t * esm_context, proc_tid_t pti, ebi_t ebi,
-                                    const esm_information_response_msg * msg);
+esm_cause_t esm_recv_pdn_disconnect_request(mme_ue_s1ap_id_t ue_id, proc_tid_t pti,  ebi_t ebi,
+                                    const pdn_disconnect_request_msg* msg, ESM_msg *esm_response);
 
 /*
  * Messages related to EPS bearer contexts

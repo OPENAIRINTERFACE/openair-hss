@@ -153,11 +153,10 @@ esm_send_status (
  **      Others:    None                                       **
  **                                                                        **
  ** Outputs:     msg:       The ESM message to be sent                 **
- **      Return:    RETURNok, RETURNerror                      **
  **      Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
-int
+void
 esm_send_pdn_connectivity_reject (
   pti_t pti,
   pdn_connectivity_reject_msg * msg,
@@ -180,7 +179,7 @@ esm_send_pdn_connectivity_reject (
    */
   msg->presencemask = 0;
   OAILOG_DEBUG (LOG_NAS_ESM, "ESM-SAP   - Send PDN Connectivity Reject message " "(pti=%d, ebi=%d)\n", msg->proceduretransactionidentity, msg->epsbeareridentity);
-  OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);
+  OAILOG_FUNC_OUT(LOG_NAS_ESM);
 }
 
 /****************************************************************************

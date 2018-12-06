@@ -53,6 +53,20 @@
 #include "esm_proc.h"
 #include "mme_app_defs.h"
 
+//------------------------------------------------------------------------------
+int
+nas_itti_esm_data_ind(
+  const mme_ue_s1ap_id_t ue_id,
+  bstring                *esm_msg_p)
+{
+  MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_EMM, NAS_ESM_DATA_IND);
+  NAS_ESM_DATA_IND (message_p).ue_id   = ue_id;
+  NAS_ESM_DATA_IND (message_p).esm_msg_p = *esm_msg_p;
+  *esm_msg_p = NULL;
+  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_S1AP_MME, NULL, 0, "0 NAS_ESM_DATA_IND ue id " MME_UE_S1AP_ID_FMT " len %u", ue_id, blength(nas_msg));
+  // make a long way by MME_APP instead of S1AP to retrieve the sctp_association_id key.
+  return itti_send_msg_to_task (TASK_NAS_ESM, INSTANCE_DEFAULT, message_p);
+}
 
 //------------------------------------------------------------------------------
 int
@@ -254,135 +268,37 @@ void nas_itti_dedicated_eps_bearer_deactivation_complete(
 //------------------------------------------------------------------------------
 void nas_itti_pdn_config_req(
   unsigned int            ue_idP,
+  task_id_t               task_id,
   const imsi_t           *const imsi_pP,
-  esm_proc_data_t        *proc_data_pP,
-  esm_proc_pdn_request_t  request_typeP)
+  esm_proc_pdn_request_t  request_type,
+  plmn_t                 *visited_plmn)
 {
   OAILOG_FUNC_IN(LOG_NAS);
   MessageDef *message_p = NULL;
-
   AssertFatal(imsi_pP       != NULL, "imsi_pP param is NULL");
-//  AssertFatal(proc_data_pP  != NULL, "proc_data_pP param is NULL"); for ULR from TAU, this may be null, since it is not triggered by an UE ESM message.
 
+  message_p = itti_alloc_new_message (task_id, S6A_UPDATE_LOCATION_REQ);
 
-  message_p = itti_alloc_new_message(TASK_NAS_EMM, NAS_PDN_CONFIG_REQ);
-
-//  hexa_to_ascii((uint8_t *)imsi_pP->u.value,
-//      NAS_PDN_CONFIG_REQ(message_p).imsi,
-//      imsi_pP->length);
-  IMSI_TO_STRING(imsi_pP, NAS_PDN_CONFIG_REQ(message_p).imsi, IMSI_BCD_DIGITS_MAX+1);
-  NAS_PDN_CONFIG_REQ(message_p).imsi_length = imsi_pP->length;
-
-  NAS_PDN_CONFIG_REQ(message_p).ue_id           = ue_idP;
-
-  if(proc_data_pP){
-    NAS_PDN_CONFIG_REQ(message_p).apn = bstrcpy(proc_data_pP->apn);
-    NAS_PDN_CONFIG_REQ(message_p).pdn_addr = bstrcpy(proc_data_pP->pdn_addr);
-
-    switch (proc_data_pP->pdn_type) {
-    case ESM_PDN_TYPE_IPV4:
-      NAS_PDN_CONFIG_REQ(message_p).pdn_type = IPv4;
-      break;
-
-    case ESM_PDN_TYPE_IPV6:
-      NAS_PDN_CONFIG_REQ(message_p).pdn_type = IPv6;
-      break;
-
-    case ESM_PDN_TYPE_IPV4V6:
-      NAS_PDN_CONFIG_REQ(message_p).pdn_type = IPv4_AND_v6;
-      break;
-
-    default:
-      NAS_PDN_CONFIG_REQ(message_p).pdn_type = IPv4;
-      break;
-    }
+  if (message_p == NULL) {
+    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
 
-  NAS_PDN_CONFIG_REQ(message_p).request_type  = request_typeP;
+  s6a_update_location_req_t s6a_ulr_p = &message_p->ittiMsg.s6a_update_location_req;
 
-  /** Not setting PTI and originating TAI. */
+  IMSI_TO_STRING(imsi_pP, s6a_ulr_p->imsi, IMSI_BCD_DIGITS_MAX+1);
+  s6a_ulr_p->imsi_length = strlen (s6a_ulr_p->imsi);
+  s6a_ulr_p.initial_attach = request_type;
 
-  MSC_LOG_TX_MESSAGE(
-        MSC_NAS_MME,
-        MSC_MMEAPP_MME,
-        NULL,0,
-        "NAS_PDN_CONFIG_REQ ue id " MME_UE_S1AP_ID_FMT " IMSI %X",
-        ue_idP, NAS_PDN_CONFIG_REQ(message_p).imsi);
-
-  itti_send_msg_to_task(TASK_MME_APP, INSTANCE_DEFAULT, message_p);
-  OAILOG_FUNC_OUT(LOG_NAS);
-}
-
-//------------------------------------------------------------------------------
-void nas_itti_pdn_connectivity_req(
-  int                     ptiP,
-  mme_ue_s1ap_id_t        ue_idP,
-  pdn_cid_t               pdn_cidP,
-  const ebi_t             default_ebi,
-//  const imsi_t           *const imsi_pP,
-  esm_proc_data_t        *proc_data_pP,
-  esm_proc_pdn_request_t  request_typeP)
-{
-  OAILOG_FUNC_IN(LOG_NAS);
-  MessageDef *message_p = NULL;
-
-//  AssertFatal(imsi_pP       != NULL, "imsi_pP param is NULL");
-  AssertFatal(proc_data_pP  != NULL, "proc_data_pP param is NULL");
-
-
-  message_p = itti_alloc_new_message(TASK_NAS_ESM, NAS_PDN_CONNECTIVITY_REQ);
-
-  NAS_PDN_CONNECTIVITY_REQ(message_p).pdn_cid         = pdn_cidP;
-  NAS_PDN_CONNECTIVITY_REQ(message_p).default_ebi     = default_ebi;
-  NAS_PDN_CONNECTIVITY_REQ(message_p).pti             = ptiP;
-  NAS_PDN_CONNECTIVITY_REQ(message_p).ue_id           = ue_idP;
-//  memcpy((void*)&NAS_PDN_CONNECTIVITY_REQ(message_p)._imsi, imsi_pP, sizeof (imsi_t));
-//
-//  if (isdigit(NAS_PDN_CONNECTIVITY_REQ(message_p).imsi[14])) {
-//    NAS_PDN_CONNECTIVITY_REQ(message_p).imsi_length = 15;
-//  } else {
-//    NAS_PDN_CONNECTIVITY_REQ(message_p).imsi_length = 14;
-//    NAS_PDN_CONNECTIVITY_REQ(message_p).imsi[14] = '\0';
-//  }
-
-  NAS_PDN_CONNECTIVITY_REQ(message_p).apn       = bstrcpy(proc_data_pP->apn);
-  NAS_PDN_CONNECTIVITY_REQ(message_p).pdn_addr  = bstrcpy(proc_data_pP->pdn_addr);
-
-  switch (proc_data_pP->pdn_type) {
-  case ESM_PDN_TYPE_IPV4:
-    NAS_PDN_CONNECTIVITY_REQ(message_p).pdn_type = IPv4;
-    break;
-
-  case ESM_PDN_TYPE_IPV6:
-    NAS_PDN_CONNECTIVITY_REQ(message_p).pdn_type = IPv6;
-    break;
-
-  case ESM_PDN_TYPE_IPV4V6:
-    NAS_PDN_CONNECTIVITY_REQ(message_p).pdn_type = IPv4_AND_v6;
-    break;
-
-  default:
-    NAS_PDN_CONNECTIVITY_REQ(message_p).pdn_type = IPv4;
-    break;
-  }
-
-  // not efficient but be careful about "typedef network_qos_t esm_proc_qos_t;"
-  memcpy(&NAS_PDN_CONNECTIVITY_REQ(message_p).bearer_qos, &proc_data_pP->bearer_qos, sizeof (proc_data_pP->bearer_qos));
-
-  NAS_PDN_CONNECTIVITY_REQ(message_p).request_type  = request_typeP;
-
-  copy_protocol_configuration_options (&NAS_PDN_CONNECTIVITY_REQ(message_p).pco, &proc_data_pP->pco);
-
-  MSC_LOG_TX_MESSAGE(
-        MSC_NAS_MME,
-        MSC_MMEAPP_MME,
-        NULL,0,
-        "NAS_PDN_CONNECTIVITY_REQ ue id " MME_UE_S1AP_ID_FMT " IMSI %X",
-        ue_idP, NAS_PDN_CONNECTIVITY_REQ(message_p).imsi);
-
-  itti_send_msg_to_task(TASK_MME_APP, INSTANCE_DEFAULT, message_p);
-
-  OAILOG_FUNC_OUT(LOG_NAS);
+  memcpy (&s6a_ulr_p->visited_plmn, visited_plmn, sizeof (plmn_t));
+  s6a_ulr_p->rat_type = RAT_EUTRAN;
+  /*
+   * Check if we already have UE data
+   * todo: remove this?
+   */
+  s6a_ulr_p->skip_subscriber_data = 0;
+  MSC_LOG_TX_MESSAGE (MSC_NAS_ESM, MSC_S6A_MME, NULL, 0, "0 S6A_UPDATE_LOCATION_REQ imsi %s", s6a_ulr_p->imsi);
+  int rc =  itti_send_msg_to_task (TASK_S6A, INSTANCE_DEFAULT, message_p);
+  OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
 }
 
 //------------------------------------------------------------------------------

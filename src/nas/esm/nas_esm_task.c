@@ -64,6 +64,38 @@ static void *nas_esm_intertask_interface (void *args_p)
       }
       break;
 
+    /** Just processing ESM Data and CN messages. Nothing related to AS. */
+    case NAS_ESM_DATA_IND: {
+      nas_esm_proc_data_ind(&NAS_ESM_DATA_IND (received_mesage_p));
+    }
+    break;
+
+    /**
+     * Due to specification 23.401 and the request-type flag, do ULR in ESM.
+     * Makes also handover procedures easier.
+     */
+    case NAS_PDN_CONFIG_RSP:{
+      nas_esm_proc_pdn_config_res (&NAS_PDN_CONFIG_RSP (received_message_p));
+    }
+    break;
+
+    case NAS_PDN_CONFIG_FAIL:{
+      nas_esm_proc_pdn_config_fail (&NAS_PDN_CONFIG_FAIL(received_message_p));
+    }
+    break;
+
+    case NAS_PDN_CONNECTIVITY_RSP:{
+      nas_esm_proc_pdn_connectivity_res (&NAS_PDN_CONNECTIVITY_RSP (received_message_p));
+    }
+    break;
+
+    case NAS_PDN_CONNECTIVITY_FAIL:{
+        nas_proc_pdn_connectivity_fail (&NAS_PDN_CONNECTIVITY_FAIL (received_message_p));
+      }
+      break;
+
+
+    /** Messages sent directly from MME_APP to NAS_ESM layer for S11 session responses. */
     case MME_APP_ACTIVATE_EPS_BEARER_CTX_REQ:
       nas_proc_activate_dedicated_bearer(&MME_APP_ACTIVATE_EPS_BEARER_CTX_REQ (received_message_p));
       break;
@@ -83,17 +115,6 @@ static void *nas_esm_intertask_interface (void *args_p)
     case MME_APP_E_RAB_FAILURE:
       nas_proc_e_rab_failure(MME_APP_E_RAB_FAILURE (received_message_p).mme_ue_s1ap_id, MME_APP_E_RAB_FAILURE (received_message_p).ebi,
           MME_APP_E_RAB_FAILURE (received_message_p).modify, MME_APP_E_RAB_FAILURE (received_message_p).remove);
-      break;
-
-    /** Messages sent directly from MME_APP to NAS_ESM layer for S11 session responses. */
-    case NAS_PDN_CONNECTIVITY_RSP:{
-        nas_proc_pdn_connectivity_res (&NAS_PDN_CONNECTIVITY_RSP (received_message_p));
-      }
-      break;
-
-    case NAS_PDN_CONNECTIVITY_FAIL:{
-        nas_proc_pdn_connectivity_fail (&NAS_PDN_CONNECTIVITY_FAIL (received_message_p));
-      }
       break;
 
     case NAS_PDN_DISCONNECT_RSP:{
@@ -137,6 +158,7 @@ static void *nas_esm_intertask_interface (void *args_p)
 int nas_esm_init ()
 {
   OAILOG_DEBUG (LOG_NAS, "Initializing NAS ESM task interface\n");
+  nas_timer_init ();
   esm_main_initialize();
 
   if (itti_create_task (TASK_NAS_ESM, &nas_esm_intertask_interface, NULL) < 0) {
@@ -153,5 +175,6 @@ static void nas_esm_exit(void)
 {
   OAILOG_DEBUG (LOG_NAS, "Cleaning NAS ESM task interface\n");
   esm_main_cleanup ();
+  nas_timer_cleanup();
   OAILOG_DEBUG (LOG_NAS, "Cleaning NAS ESM task interface: DONE\n");
 }

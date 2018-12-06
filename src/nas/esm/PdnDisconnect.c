@@ -144,13 +144,9 @@ esm_proc_pdn_disconnect_request (
   OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - PDN disconnect requested by the UE " "(ue_id=" MME_UE_S1AP_ID_FMT ", default_ebi %d, pti=%d)\n", ue_id, default_ebi, pti);
 
   /*
-   * Get UE's ESM context
+   * Get the identifier of the PDN connection entry assigned to the
+   * * * * procedure transaction identity
    */
-//  if (esm_context->esm_ctx.n_active_pdns > 1) {
-    /*
-     * Get the identifier of the PDN connection entry assigned to the
-     * * * * procedure transaction identity
-     */
 //    pid = _pdn_disconnect_get_pid (esm_context, default_ebi, pti);
   ue_context_t                        *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, esm_context->ue_id);
   DevAssert(ue_context);

@@ -305,7 +305,6 @@ int lowerlayer_data_ind (mme_ue_s1ap_id_t ue_id, const_bstring    data)
 
   emm_data_context_t                     *emm_data_context = emm_data_context_get(&_emm_data, ue_id);
   esm_sap.primitive = ESM_UNITDATA_IND;
-  esm_sap.is_standalone = true;
   esm_sap.ue_id = ue_id;
   esm_sap.ctx = emm_data_context;
   esm_sap.recv = data;
@@ -331,7 +330,7 @@ int lowerlayer_data_ind (mme_ue_s1ap_id_t ue_id, const_bstring    data)
  **      Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
-int lowerlayer_data_req (mme_ue_s1ap_id_t ue_id, bstring data)
+int lowerlayer_data_req (mme_ue_s1ap_id_t ue_id, esm_cause_t esm_cause, bstring data)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNok;
@@ -376,7 +375,7 @@ int lowerlayer_activate_bearer_req (
   emm_security_context_t                 *sctx = NULL;
   emm_data_context_t                     *emm_data_context = emm_data_context_get(&_emm_data, ue_id);
 
-  emm_sap.primitive = EMMAS_ERAB_SETUP_REQ;
+// todo:  emm_sap.primitive = EMMAS_ERAB_SETUP_REQ;
   emm_sap.u.emm_as.u.activate_bearer_context_req.ebi    = ebi;
   emm_sap.u.emm_as.u.activate_bearer_context_req.ue_id  = ue_id;
   emm_sap.u.emm_as.u.activate_bearer_context_req.mbr_dl = mbr_dl;
@@ -418,7 +417,7 @@ int lowerlayer_modify_bearer_req (
   emm_security_context_t                 *sctx = NULL;
   emm_data_context_t                     *emm_data_context = emm_data_context_get(&_emm_data, ue_id);
 
-  emm_sap.primitive = EMMAS_ERAB_MODIFY_REQ;
+ // todo: emm_sap.primitive = EMMAS_ERAB_MODIFY_REQ;
   emm_sap.u.emm_as.u.modify_bearer_context_req.ebi    = ebi;
   emm_sap.u.emm_as.u.modify_bearer_context_req.ue_id  = ue_id;
   emm_sap.u.emm_as.u.modify_bearer_context_req.mbr_dl = mbr_dl;
@@ -456,7 +455,7 @@ int lowerlayer_deactivate_bearer_req (
   emm_security_context_t                 *sctx = NULL;
   emm_data_context_t                     *emm_data_context = emm_data_context_get(&_emm_data, ue_id);
 
-  emm_sap.primitive = EMMAS_ERAB_RELEASE_REQ;
+// todo:  emm_sap.primitive = EMMAS_ERAB_RELEASE_REQ;
   emm_sap.u.emm_as.u.deactivate_bearer_context_req.ebi    = ebi;
   emm_sap.u.emm_as.u.deactivate_bearer_context_req.ue_id  = ue_id;
 

@@ -186,10 +186,11 @@ void itti_free_msg_content (MessageDef * const message_p)
     bdestroy_wrapper (&message_p->ittiMsg.nas_erab_release_req.nas_msg);
     break;
 
+  case NAS_ESM_DATA_IND:
+    bdestroy_wrapper (&message_p->ittiMsg.nas_esm_data_ind.esm_msg_p);
+    break;
+
   case NAS_PDN_CONFIG_REQ:
-    bdestroy_wrapper (&message_p->ittiMsg.nas_pdn_config_req.apn);
-    bdestroy_wrapper (&message_p->ittiMsg.nas_pdn_config_req.pdn_addr);
-    AssertFatal(NULL == message_p->ittiMsg.nas_pdn_config_req.pdn_addr, "TODO clean pointer");
    break;
 
   case NAS_CONTEXT_REQ:
@@ -339,12 +340,15 @@ void itti_free_msg_content (MessageDef * const message_p)
     break;
 
   case S6A_UPDATE_LOCATION_REQ:
-  case S6A_UPDATE_LOCATION_ANS:
   case S6A_AUTH_INFO_REQ:
   case S6A_AUTH_INFO_ANS:
   case S6A_CANCEL_LOCATION_REQ:
   case S6A_RESET_REQ:
     // DO nothing
+    break;
+  case S6A_UPDATE_LOCATION_ANS:
+    if(message_p->ittiMsg.s6a_update_location_ans.subscription_data)
+      free_wrapper((void**)&message_p->ittiMsg.s6a_update_location_ans.subscription_data);
     break;
 
   case SCTP_INIT_MSG:

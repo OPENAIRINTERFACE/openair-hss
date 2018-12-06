@@ -50,13 +50,13 @@ Description Defines internal private data handled by EPS Mobility
 
 #include "nas_emm_procedures.h"
 #include "emm_fsm.h"
-#include "esm_data.h"
 #include "AdditionalUpdateType.h"
 #include "EpsBearerContextStatus.h"
 #include "EpsNetworkFeatureSupport.h"
 #include "TrackingAreaIdentityList.h"
 #include "UeNetworkCapability.h"
 #include "nas_timer.h"
+#include "mme_api.h"
 
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/
@@ -125,7 +125,6 @@ struct emm_common_data_s;
 typedef struct emm_data_context_s {
   mme_ue_s1ap_id_t ue_id;        /* UE identifier                                  */
   bool             is_dynamic;  /* Dynamically allocated context indicator         */
-//  bool             is_attached; /* Attachment indicator                            */
   bool             is_emergency;/* Emergency bearer services indicator             */
   bool             is_has_been_attached; /* Attachment indicator                   */
   bool             is_initial_identity_imsi; // If the IMSI was used for identification in the initial NAS message

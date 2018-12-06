@@ -31,30 +31,15 @@
 
 struct nas_esm_base_proc_s;
 
-typedef int (*esm_success_cb_t)(struct esm_context_s*);
-typedef int (*esm_failure_cb_t)(struct esm_context_s*);
-
-typedef int (*esm_proc_abort_t)(struct esm_context_s*, struct nas_esm_base_proc_s*);
-
-typedef int (*esm_pdu_in_resp_t)(struct esm_context_s*, void *arg); // can be RESPONSE, COMPLETE, ACCEPT
-typedef int (*esm_pdu_in_rej_t)(struct esm_context_s*, void *arg);  // REJECT.
-typedef int (*esm_pdu_out_rej_t)(struct esm_context_s*, struct nas_esm_base_proc_s *);  // REJECT.
-typedef void (*esm_time_out_t)(void *arg);
+typedef int (*esm_failure_cb_t)(struct nas_esm_base_proc_s*);
+/** Method called inside the timeout. */
+typedef int (*esm_timeout_cb_t)(ESM_msg*);
 
 typedef struct nas_esm_base_proc_s {
-  esm_success_cb_t            success_notif;
+  mme_ue_s1ap_id_t            ue_id;
+  pti_t                       pti;
   esm_failure_cb_t            failure_notif;
-  esm_proc_abort_t            abort;
-
-  // PDU interface
-  //pdu_in_resp_t           resp_in;
-  esm_pdu_in_rej_t            fail_in;
-  esm_pdu_out_rej_t           fail_out;
-  esm_time_out_t              time_out;
-  uint64_t                nas_puid; // procedure unique identifier for internal use
-
-  struct nas_esm_base_proc_s *parent;
-  struct nas_esm_base_proc_s *child;
+  esm_timeout_cb_t            timeout_notif;
 } nas_esm_base_proc_t;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -66,11 +51,6 @@ typedef enum {
   ESM_PROC_TRANSACTION
 } esm_proc_type_t;
 
-typedef struct nas_esm_proc_s {
-  nas_esm_base_proc_t         base_proc;
-  esm_proc_type_t             type;
-} nas_esm_proc_t;
-
 //typedef enum {
 //  ESM_BEARER_CTX_PROC_NONE = 0,
 //  ESM_PROC_DEFAULT_EPS_BEARER_CTXT_ACTIVATION,
@@ -79,18 +59,40 @@ typedef struct nas_esm_proc_s {
 //  ESM_PROC_EPS_BEARER_CTXT_DEACTIVATION
 //} esm_bearer_ctx_proc_type_t;
 
-typedef enum {
-  ESM_TRANSACTION_PROC_NONE = 0,
-  ESM_PROC_TRANSACTION_PDN_CONNECTIVITY,
-  ESM_PROC_TRANSACTION_PDN_DISCONNECT,
-  ESM_PROC_TRANSACTION_BEARER_RESOURCE_ALLOCATION,
-  ESM_PROC_TRANSACTION_BEARER_RESOURCE_MODIFICATION,
-} esm_transaction_proc_type_t;
+//typedef enum {
+//  ESM_TRANSACTION_PROC_NONE = 0,
+//  ESM_PROC_TRANSACTION_PDN_CONNECTIVITY,
+//  ESM_PROC_TRANSACTION_PDN_DISCONNECT,
+//  ESM_PROC_TRANSACTION_BEARER_RESOURCE_ALLOCATION,
+//  ESM_PROC_TRANSACTION_BEARER_RESOURCE_MODIFICATION,
+//  ESM_PROC_INFORMATION_REQUEST_PROCEDURE
+//} esm_transaction_proc_type_t;
+
+typedef struct nas_esm_proc_s {
+  nas_esm_base_proc_t         base_proc;
+  esm_proc_type_t             type;
+//  esm_transaction_proc_type_t esm_procedure_type;
+} nas_esm_proc_t;
 
 typedef struct nas_esm_transaction_proc_s {
   nas_esm_proc_t               esm_proc;
-  esm_transaction_proc_type_t  type;
+  nas_timer_t                  esm_proc_timer;
+  uint8_t                      retx_count;
 } nas_esm_transaction_proc_t;
+
+typedef struct nas_esm_pdn_connectivity_proc_s {
+  /** Initial mandatory elements. */
+  nas_esm_transaction_proc_t   trx_base_proc;
+  esm_proc_pdn_type_t          pdn_type;
+  esm_proc_pdn_request_t       request_type;
+  imsi_t                       imsi;
+  /** Additional elements requested from the UE and set with time.. */
+  bstring                      apn_subscribed;
+  tai_t                        visited_tai;
+  pdn_cid_t                    pdn_cid;
+  ebi_t                        default_ebi;
+//  protocol_configuration_options_t  pco;
+} nas_esm_pdn_connectivity_proc_t;
 
 typedef struct nas_esm_transaction_procedures_s {
   nas_esm_transaction_proc_t                          *proc;

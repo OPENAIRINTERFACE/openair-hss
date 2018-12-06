@@ -401,7 +401,12 @@ emm_recv_attach_complete (
   /*
    * Execute the attach procedure completion
    */
-  rc = emm_proc_attach_complete (ue_id, msg->esmmessagecontainer, *emm_cause, *status);
+  rc = emm_proc_attach_complete (ue_id, *emm_cause, *status);
+  if(rc != RETURNerror){
+    rc = nas_itti_esm_data_ind(ue_id, &msg->esmmessagecontainer);
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  }
+  OAILOG_ERROR (LOG_NAS_EMM, "EMMAS-SAP - Failed handling Attach Complete message.. (ESM message won't be handled).\n");
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 

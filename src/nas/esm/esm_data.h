@@ -73,39 +73,16 @@ typedef enum {
   ESM_EBR_STATE_MAX
 } esm_ebr_state;
 
-/* ESM message timer retransmission data */
-typedef struct esm_ebr_timer_data_s {
-  struct esm_context_s  *ctx;
-  mme_ue_s1ap_id_t       ue_id;      /* Lower layers UE identifier       */
-  ebi_t                  ebi;        /* EPS bearer identity          */
-  unsigned int           count;      /* Retransmission counter       */
-  bstring                msg;        /* Encoded ESM message to re-transmit   */
-} esm_ebr_timer_data_t;
-
 /*
  * -----------------------
  * EPS bearer context data
  * -----------------------
  */
 typedef struct esm_ebr_context_s {
-  //ebi_t                           ebi;      /* EPS bearer identity          */
   esm_ebr_state                     status;   /* EPS bearer context status        */
-  bitrate_t                         gbr_dl;
-  bitrate_t                         gbr_ul;
-  bitrate_t                         mbr_dl;
-  bitrate_t                         mbr_ul;
   traffic_flow_template_t          *tft;
-  protocol_configuration_options_t *pco;
-  struct nas_timer_s                timer;   /* Retransmission timer         */
-  //  esm_ebr_timer_data_t *args; /* Retransmission timer parameters data */
+  //  protocol_configuration_options_t *pco;
 } esm_ebr_context_t;
-
-typedef struct esm_ebr_data_s {
-  unsigned char index;    /* Index of the next EPS bearer context
-                 * identity to be used */
-#define ESM_EBR_DATA_SIZE (ESM_EBI_MAX - ESM_EBI_MIN + 1)
-  esm_ebr_context_t *context[ESM_EBR_DATA_SIZE + 1];
-} esm_ebr_data_t;
 
 /*
  * --------------------------------------------------------------------------
@@ -114,102 +91,12 @@ typedef struct esm_ebr_data_s {
  * --------------------------------------------------------------------------
  */
 
-/*
- * Structure of an EPS bearer
- * --------------------------
- * An EPS bearer is a logical concept which applies to the connection
- * between two endpoints (UE and PDN Gateway) with specific QoS attri-
- * butes. An EPS bearer corresponds to one Quality of Service policy
- * applied within the EPC and E-UTRAN.
- */
-typedef struct esm_bearer_s {
-  int bid;        /* Identifier of the EPS bearer         */
-  unsigned int ebi;   /* EPS bearer identity              */
-  network_qos_t qos;  /* EPS bearer level QoS parameters      */
-  traffic_flow_template_t *tft;  /* Traffic Flow Template for packet filtering   */
-} esm_bearer_t;
-
 /* ESM procedure transaction states */
 typedef enum {
   ESM_PROCEDURE_TRANSACTION_INACTIVE = 0,
   ESM_PROCEDURE_TRANSACTION_PENDING,
   ESM_PROCEDURE_TRANSACTION_MAX
 } esm_pt_state_e;
-
-
-
-/*
- * Structure of a PDN connection
- * -----------------------------
- * A PDN connection is the association between a UE represented by
- * one IPv4 address and/or one IPv6 prefix and a PDN represented by
- * an Access Point Name (APN).
- */
-typedef struct esm_pdn_s {
-  proc_tid_t  pti;   /* Identity of the procedure transaction executed
-             * to activate the PDN connection entry     */
-  bool is_emergency;   /* Emergency bearer services indicator      */
-  int ambr;       /* Aggregate Maximum Bit Rate of this APN   */
-
-  int addr_realloc;   /* Indicates whether the UE is allowed to subsequently
-             * request another PDN connectivity to the same APN
-             * using an address PDN type (IPv4 or IPv6) other
-             * than the one already activated       */
-  int n_bearers;  /* Number of allocated EPS bearers;
-             * default EPS bearer is defined at index 0 */
-  esm_pt_state_e pt_state; // procedure transaction state
-} esm_pdn_t;  /**< Stored in MME_APP PDN Context (not in the ESM layer). */
-
-//typedef struct esm_pdn_s {
-//  bstring apn;    /* Access Point Name currently in used      */
-//  int type;       /* Address PDN type (IPv4, IPv6, IPv4v6)    */
-//#define ESM_DATA_IPV4_ADDRESS_SIZE  4
-//#define ESM_DATA_IPV6_ADDRESS_SIZE  8
-//#define ESM_DATA_IP_ADDRESS_SIZE    (ESM_DATA_IPV4_ADDRESS_SIZE + \
-//                                     ESM_DATA_IPV6_ADDRESS_SIZE)
-//  /* IPv4 PDN address and/or IPv6 prefix      */
-//  char ip_addr[ESM_DATA_IP_ADDRESS_SIZE+1];
-//  int addr_realloc;   /* Indicates whether the UE is allowed to subsequently
-//             * request another PDN connectivity to the same APN
-//             * using an address PDN type (IPv4 or IPv6) other
-//             * than the one already activated       */
-//#define ESM_DATA_EPS_BEARER_MAX 4
-//  esm_bearer_t *bearer[ESM_DATA_EPS_BEARER_MAX];
-//} esm_pdn_t;
-
-
-struct esm_proc_data_s;
-
-/*
- * Structure of the ESM data
- * -------------------------
- * The EPS Session Management sublayer handles data related to PDN
- * connections and EPS bearers. Each active PDN connection has a de-
- * fault EPS bearer. Several dedicated EPS bearers may exist within
- * a PDN connection.
- */
-typedef struct esm_context_s {
-  mme_ue_s1ap_id_t ue_id;       /* UE Id will define the ESM context. */
-
-  int        n_active_ebrs;     /* Total number of active EPS bearer contexts   */
-  int        n_active_pdns;     /* Number of active PDN connections     */
-  int        n_pdns;
-  bool       is_emergency;  /* Indicates whether a PDN connection for emergency bearer services is established       */
-
-// esm_procedures_t  *esm_procedures;
-
-
-//  eps_bearer_context_status_t   _eps_bearer_context_status;/* stored TAU Request IE Requirement MME24.301R10_5.5.3.2.4_5*/
-//  eps_network_feature_support_t _eps_network_feature_support;
-  // TODO: DO BETTER  WITH BELOW
-  bstring         esm_msg;      /* ESM message contained within the initial request*/
-
-
-  struct esm_proc_data_s *esm_proc_data;
-  struct nas_timer_s      T3489;
-} esm_context_t;
-
-
 
 /*
  * --------------------------------------------------------------------------
@@ -229,21 +116,15 @@ typedef struct esm_data_s {
    */
   struct mme_api_esm_config_s conf;
 
-  /** No tree of ESM data contexts, eventually later it may be split into AMF/SMF. */
-//  /*
-//   * ESM contexts
-//   * ------------
-//   */
-//  /* Use a tree for ue data context within MME */
-//  RB_HEAD(esm_data_context_map, esm_data_context_s) ctx_map;
+  /** No ESM Context needed. Only a tree of ESM procedures. */
+  RB_HEAD(esm_proc_map, nas_esm_proc_s) esm_proc_map;
 } esm_data_t;
 
 
 void free_esm_bearer_context(esm_ebr_context_t * esm_ebr_context);
 void esm_bearer_context_init(esm_ebr_context_t * esm_ebr_context);
-void nas_stop_T3489(esm_context_t * const esm_ctx);
+void nas_stop_T3489(mme_ue_s1ap_id_t ue_id, nas_timer_t * const nas_timer);
 void free_esm_context_content(esm_context_t * esm_ctx);
-void esm_init_context(struct esm_context_s *esm_ctx);
 
 
 struct esm_context_s *esm_data_context_get(

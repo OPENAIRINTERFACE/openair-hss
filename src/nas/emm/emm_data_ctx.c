@@ -52,7 +52,6 @@
 #include "mme_app_defs.h"
 #include "nas_itti_messaging.h"
 
-//#include "EmmCommon.h"
 #include "mme_ie_defs.h"
 #include "emm_data.h"
 #include "emm_proc.h"
@@ -890,6 +889,7 @@ int emm_data_context_update_security_parameters(const mme_ue_s1ap_id_t ue_id,
   *encryption_algorithm_capabilities = ((uint16_t)emm_ctx->_ue_network_capability.eea & ~(1 << 7)) << 1;
   *integrity_algorithm_capabilities = ((uint16_t)emm_ctx->_ue_network_capability.eia & ~(1 << 7)) << 1;
 
+  LOCK_EMM_CONTEXT(emm_ctx);
   /** Derive the next hop. */
   derive_nh(emm_ctx->_vector[emm_ctx->_security.vector_index].kasme, emm_ctx->_vector[emm_ctx->_security.vector_index].nh_conj);
 
@@ -898,11 +898,12 @@ int emm_data_context_update_security_parameters(const mme_ue_s1ap_id_t ue_id,
   /* The NCC is a 3-bit key index (values from 0 to 7) for the NH and is sent to the UE in the handover command signaling. */
   emm_ctx->_security.ncc = emm_ctx->_security.ncc % 8;
   /** If a wrap up occurs, skip the first one. */
-  if(!emm_ctx->_security.ncc){
-    /** Set the pending deactivation flag of the ncc. Will start from 0 then. */
-    ue_context->pending_bearer_deactivation = true;
-    OAILOG_ERROR(LOG_NAS_EMM, "EMM-CTX - NCC reached 7. Activating the pending bearer deactivation for UE context with ueId " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
-  }
+  // todo: NCC CASE!!
+//  if(!emm_ctx->_security.ncc){
+//    /** Set the pending deactivation flag of the ncc. Will start from 0 then. */
+//    ue_context->pending_bearer_deactivation = true;
+//    OAILOG_ERROR(LOG_NAS_EMM, "EMM-CTX - NCC reached 7. Activating the pending bearer deactivation for UE context with ueId " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
+//  }
 //  if(!emm_ctx->_security.ncc){
 //
 //    OAILOG_INFO(LOG_NAS_EMM, "EMM-CTX - NCC wrap around for UE id " MME_UE_S1AP_ID_FMT " and IMSI " IMSI_64_FMT ". UL Count is %d. Sec_vector %d. \n",
@@ -922,6 +923,7 @@ int emm_data_context_update_security_parameters(const mme_ue_s1ap_id_t ue_id,
 //    derive_nh(emm_ctx->_vector[emm_ctx->_security.vector_index].kasme, emm_ctx->_vector[emm_ctx->_security.vector_index].nh_conj);
 //    OAILOG_STREAM_HEX(OAILOG_LEVEL_DEBUG, LOG_NAS_EMM, "New NH_CONJ for ncc1: ", emm_ctx->_vector[emm_ctx->_security.vector_index].nh_conj, 32);
 //  }
+  UNLOCK_EMM_CONTEXT(emm_ctx);
 
   OAILOG_INFO(LOG_NAS_EMM, "EMM-CTX - Updated AS security parameters for EMM context with UE id " MME_UE_S1AP_ID_FMT " and IMSI " IMSI_64_FMT ". \n",
       ue_context->mme_ue_s1ap_id, emm_ctx->_imsi64);
@@ -957,11 +959,12 @@ int mm_ue_eps_context_update_security_parameters(mme_ue_s1ap_id_t ue_id,
   /* The NCC is a 3-bit key index (values from 0 to 7) for the NH and is sent to the UE in the handover command signaling. */
   mm_eps_ue_context->ncc = mm_eps_ue_context->ncc % 8;
   /** If a wrap up occurs, skip the first one. */
-  if(!mm_eps_ue_context->ncc){
-    /** Set the pending deactivation flag of the ncc. Will start from 0 then. */
-    ue_context->pending_bearer_deactivation = true;
-    OAILOG_ERROR(LOG_NAS_EMM, "EMM-CTX - NCC reached 7. Activating the pending bearer deactivation for UE context with ueId " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
-  }
+  // todo: NCC case..
+//  if(!mm_eps_ue_context->ncc){
+//    /** Set the pending deactivation flag of the ncc. Will start from 0 then. */
+//    ue_context->pending_bearer_deactivation = true;
+//    OAILOG_ERROR(LOG_NAS_EMM, "EMM-CTX - NCC reached 7. Activating the pending bearer deactivation for UE context with ueId " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
+//  }
 //  if(!emm_ctx->_security.ncc){
 //
 //    OAILOG_INFO(LOG_NAS_EMM, "EMM-CTX - NCC wrap around for UE id " MME_UE_S1AP_ID_FMT " and IMSI " IMSI_64_FMT ". UL Count is %d. Sec_vector %d. \n",

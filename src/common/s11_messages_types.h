@@ -1134,6 +1134,7 @@ typedef struct itti_s11_modify_bearer_request_s {
   /* GTPv2-C specific parameters */
   void                      *trxn;                        ///< Transaction identifier
   struct in_addr             peer_ip;
+  uint8_t                    internal_flags;
 } itti_s11_modify_bearer_request_t;
 
 //-----------------------------------------------------------------------------
@@ -1241,6 +1242,7 @@ typedef struct itti_s11_modify_bearer_response_s {
 
   /* S11 stack specific parameter. Not used in standalone epc mode */
   void                         *trxn;                      ///< Transaction identifier
+  uint8_t                      internal_flags;
 } itti_s11_modify_bearer_response_t;
 
 //-----------------------------------------------------------------------------

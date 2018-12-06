@@ -55,21 +55,6 @@ Description Defines functions used to handle EPS bearer contexts.
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
 /****************************************************************************/
 
-#define IS_DEFAULT_BEARER_YES true
-#define IS_DEFAULT_BEARER_NO  false
-ebi_t esm_ebr_context_create (
-  esm_context_t * esm_context,
-  const proc_tid_t pti,
-  void *pdn_context,
-  ebi_t ebi,
-  struct fteid_set_s * fteid_set,
-  bool is_default,
-  const bearer_qos_t *bearer_level_qos,
-  traffic_flow_template_t * tft,
-  protocol_configuration_options_t * pco);
-
-void esm_ebr_context_init (esm_ebr_context_t *esm_ebr_context);
-
 ebi_t esm_ebr_context_release(esm_context_t * esm_context, ebi_t ebi, pdn_cid_t *pid, bool ue_requested);
 
 void free_esm_ebr_context(esm_ebr_context_t * ctx);

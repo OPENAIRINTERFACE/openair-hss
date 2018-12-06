@@ -309,6 +309,24 @@ mme_ue_context_exists_enb_ue_s1ap_id (
 }
 
 //------------------------------------------------------------------------------
+subscription_data_t                           *
+subscription_data_exists_imsi (
+  mme_ue_context_t * const mme_ue_context_p,
+  const imsi64_t imsi)
+{
+  struct subscription_data_t                    *subscription_data = NULL;
+
+  hashtable_ts_get (mme_ue_context_p->imsi_subscription_profile_htbl, (const hash_key_t)imsi, (void **)&subscription_data);
+  if (subscription_data) {
+//    lock_ue_contexts(ue_context);
+//    OAILOG_TRACE (LOG_MME_APP, "UE  " MME_UE_S1AP_ID_FMT " fetched MM state %s, ECM state %s\n ",mme_ue_s1ap_id,
+//        (ue_context->mm_state == UE_UNREGISTERED) ? "UE_UNREGISTERED":(ue_context->mm_state == UE_REGISTERED) ? "UE_REGISTERED":"UNKNOWN",
+//        (ue_context->ecm_state == ECM_IDLE) ? "ECM_IDLE":(ue_context->ecm_state == ECM_CONNECTED) ? "ECM_CONNECTED":"UNKNOWN");
+  }
+  return subscription_data;
+}
+
+//------------------------------------------------------------------------------
 ue_context_t                           *
 mme_ue_context_exists_mme_ue_s1ap_id (
   mme_ue_context_t * const mme_ue_context_p,
@@ -881,6 +899,65 @@ void mme_remove_ue_context (
 }
 
 //------------------------------------------------------------------------------
+int
+mme_insert_subscription_profile(
+  mme_ue_context_t * const mme_ue_context_p,
+  const imsi64_t imsi, const subscription_data_t * subscription_profile)
+{
+  hashtable_rc_t                          h_rc = HASH_TABLE_OK;
+
+  OAILOG_FUNC_IN (LOG_MME_APP);
+  DevAssert (mme_ue_context_p );
+  DevAssert (subscription_profile);
+
+  h_rc = hashtable_ts_is_key_exists (mme_ue_context_p->imsi_subscription_profile_htbl, (const hash_key_t)imsi);
+
+  if (HASH_TABLE_OK == h_rc) {
+    OAILOG_DEBUG (LOG_MME_APP, "Subscription profile for IMSI " IMSI_64_FMT " already exists.\n", imsi);
+    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+  }
+
+  h_rc = hashtable_ts_insert (mme_ue_context_p->imsi_subscription_profile_htbl,
+      (const hash_key_t)imsi, (void *)subscription_profile);
+
+  if (HASH_TABLE_OK != h_rc) {
+    OAILOG_DEBUG (LOG_MME_APP, "Error could not register the subscription profile for IMSI " IMSI_64_FMT ". \n", imsi);
+    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+  }
+  OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
+
+  /*
+   * Updating statistics
+   */
+  __sync_fetch_and_add (&mme_ue_context_p->nb_apn_configuration, 1);
+
+  OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
+}
+
+//------------------------------------------------------------------------------
+void mme_remove_subscription_profile(mme_ue_context_t * const mme_ue_context_p, imsi64_t imsi){
+  // filled NAS UE ID/ MME UE S1AP ID
+  LOCK_SUBSCRIPTION_DATA_TREE();
+  hashtable_rc_t                          hash_rc = HASH_TABLE_OK;
+  subscription_data_t                    *subscription_data = NULL;
+  OAILOG_FUNC_IN (LOG_MME_APP);
+  hash_rc = hashtable_ts_remove (mme_ue_context_p->imsi_subscription_profile_htbl, (const hash_key_t)imsi, (void **)&subscription_data);
+  if (HASH_TABLE_OK != hash_rc){
+    OAILOG_WARNING(LOG_MME_APP, "No subscription data was found for IMSI " IMSI_64_FMT " in the subscription profile cache.", imsi);
+    OAILOG_FUNC_OUT (LOG_MME_APP);
+  }
+  /** Free the old subscription data. */
+  free_wrapper ((void**) &subscription_data);
+
+  /*
+   * Updating statistics
+   */
+  __sync_fetch_and_sub(&mme_ue_context_p->nb_apn_configuration, 1);
+
+  OAILOG_FUNC_OUT (LOG_MME_APP);
+}
+
+//------------------------------------------------------------------------------
 void mme_app_dump_protocol_configuration_options (const protocol_configuration_options_t * const pco,
     const                 bool ms2network_direction,
     const uint8_t         indent_spaces,
@@ -1068,7 +1145,6 @@ void mme_app_dump_pdn_context (const struct ue_context_s *const ue_context,
   if (pdn_context) {
     bformata (bstr_dump, "%*s - PDN ID %u:\n", indent_spaces, " ", pdn_cid);
     bformata (bstr_dump, "%*s - Context Identifier .: %x\n", indent_spaces, " ", pdn_context->context_identifier);
-    bformata (bstr_dump, "%*s - Is active          .: %s\n", indent_spaces, " ", (pdn_context->is_active) ? "yes":"no");
     bformata (bstr_dump, "%*s - APN in use .........: %s\n", indent_spaces, " ", bdata(pdn_context->apn_in_use));
     bformata (bstr_dump, "%*s - APN subscribed......: %s\n", indent_spaces, " ", bdata(pdn_context->apn_subscribed));
     bformata (bstr_dump, "%*s - APN OI replacement .: %s\n", indent_spaces, " ", bdata(pdn_context->apn_oi_replacement));
@@ -1144,7 +1220,6 @@ mme_app_dump_ue_context (
   if (ue_context) {
     bstring                                 bstr_dump = bfromcstralloc(4096, "\n-----------------------UE MM context ");
     bformata (bstr_dump, "%p --------------------\n", ue_context);
-    bformata (bstr_dump, "    - Authenticated ..: %s\n", (ue_context->imsi_auth == IMSI_UNAUTHENTICATED) ? "FALSE" : "TRUE");
     bformata (bstr_dump, "    - eNB UE s1ap ID .: %08x\n", ue_context->enb_ue_s1ap_id);
     bformata (bstr_dump, "    - MME UE s1ap ID .: %08x\n", ue_context->mme_ue_s1ap_id);
     bformata (bstr_dump, "    - MME S11 TEID ...: " TEID_FMT "\n", ue_context->mme_teid_s11);
@@ -2424,7 +2499,6 @@ mme_app_handle_s10_context_response(
       INVALID_TEID,
       &ue_context->guti);
 
-  ue_context->imsi_auth = IMSI_AUTHENTICATED;
   memcpy((void*)&emm_cn_proc_ctx_req->nas_s10_context._imsi, &s10_context_response_pP->imsi, sizeof(imsi_t));
 
   emm_cn_proc_ctx_req->nas_s10_context.mm_eps_ctx = s10_context_response_pP->ue_eps_mm_context;
@@ -2730,16 +2804,17 @@ void mme_app_set_pdn_connections(struct mme_ue_eps_pdn_connections_s * pdn_conne
 //------------------------------------------------------------------------------
 /*
  *
- *  Name:    mme_app_registration_complete()
+ *  Name:    mme_app_mobility_complete()
  *
- *  Description: Notify the MME that a UE has successfully registered via Attach or Tracking Area Update specific procedure.
+ *  Description: Notify the MME that a UE has successfully completed a mobility (handover/tau) procedure.
  *
  *  Inputs:
  *         ueid:      emm_context id
+ *         bool:
  *  Return:    void
  *
  */
-int mme_app_registration_complete(const mme_ue_s1ap_id_t mme_ue_s1ap_id){
+int mme_app_mobility_complete(const mme_ue_s1ap_id_t mme_ue_s1ap_id, bool activate_bearers){
 
   ue_context_t                           *ue_context = NULL;
   int                                     rc = RETURNok;
@@ -2750,6 +2825,7 @@ int mme_app_registration_complete(const mme_ue_s1ap_id_t mme_ue_s1ap_id){
   /** Get the handover procedure if exists. */
   mme_app_s10_proc_mme_handover_t * s10_handover_proc = NULL;
   if(((s10_handover_proc = mme_app_get_s10_procedure_mme_handover(ue_context)) != NULL)){
+    activate_bearers = true;
     if(s10_handover_proc->proc.type == MME_APP_S10_PROC_TYPE_INTRA_MME_HANDOVER){
       /** Complete the Intra Handover. */
       OAILOG_DEBUG(LOG_MME_APP, "UE MME context with imsi " IMSI_64_FMT " and mmeS1apUeId " MME_UE_S1AP_ID_FMT " has successfully completed intra-MME handover process after HANDOVER_NOTIFY. \n",
@@ -2800,92 +2876,16 @@ int mme_app_registration_complete(const mme_ue_s1ap_id_t mme_ue_s1ap_id){
         */
       }
     }
-  }else{
-    /*
-     * No handover procedure exist. Normal idle TAU/Attach procedure.
-     * Continue with the normal MBR/Pending_deactivation procedure.
-     */
   }
-  /** Check if there is a pending deactivation flag is set. */
-  if(ue_context->pending_bearer_deactivation && ue_context->mm_state == UE_REGISTERED){
-    OAILOG_INFO(LOG_MME_APP, "After UE entered UE_REGISTERED state, initiating bearer deactivation for UE with mmeUeS1apId " MME_UE_S1AP_ID_FMT ". \n", mme_ue_s1ap_id);
-    ue_context->pending_bearer_deactivation = false;
-    ue_context->s1_ue_context_release_cause = S1AP_NAS_NORMAL_RELEASE;
-    // Notify S1AP to send UE Context Release Command to eNB.
-    mme_app_itti_ue_context_release (ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, ue_context->s1_ue_context_release_cause, ue_context->e_utran_cgi.cell_identity.enb_id);
-    OAILOG_FUNC_OUT (LOG_MME_APP);
-  }else{
-    OAILOG_INFO(LOG_MME_APP, "After UE entered UE_REGISTERED state, no pending_deactivation flag set for UE with mmeUeS1apId " MME_UE_S1AP_ID_FMT ". "
-        "Checking for unestablished EPS bearers. \n", mme_ue_s1ap_id);
-    /*
-     * No pending bearer deactivation.
-     * Check if there is are any pending unestablished downlink bearers (DL-GTP Tunnel Information to the SAE-GW).
-     * In case of successfully completed inter-MME S10 handover. Nothing further will be done.
+  if(activate_bearers){
+    /**
+     * Use the MBR procedure to activate the bearers.
+     * MBReq will be sent for only those bearers which are not in ACTIVE state yet.
      */
-    // todo: how to do this in multi apn?
-    pdn_context_t * registered_pdn_ctx = NULL;
-    bearer_context_t * bearer_context_to_establish = NULL;
-    registered_pdn_ctx = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
-    bearer_context_to_establish = RB_MIN(SessionBearers, &registered_pdn_ctx->session_bearers);
-    if(BEARER_STATE_ENB_CREATED & bearer_context_to_establish->bearer_state){
-      if(bearer_context_to_establish->bearer_state != BEARER_STATE_ACTIVE){ /**< We enter here for the EMM registration, triggering is independent of multi APN. */
-        if(mme_app_send_s11_modify_bearer_req(ue_context, registered_pdn_ctx) != RETURNok){
-          OAILOG_ERROR(LOG_MME_APP, "Error sending MBR for mmeUeS1apId " MME_UE_S1AP_ID_FMT ". Implicitly detaching the UE. \n", mme_ue_s1ap_id);
-          // todo!
-          DevAssert(0);
-        }
-      }else{
-        OAILOG_WARNING(LOG_MME_APP, "Bearer with ebi %d is already in ACTIVE state for mmeUeS1apId " MME_UE_S1AP_ID_FMT ". Skipping MBR. \n", mme_ue_s1ap_id);
-      }
-    }else{
-      OAILOG_INFO(LOG_MME_APP, "Bearer with ebi %d has not ENB context established yet for mmeUeS1apId " MME_UE_S1AP_ID_FMT ". Skipping MBR. \n", mme_ue_s1ap_id);
-    }
-
-    //      /** Update the PDN session information directly in the new UE_Context. */
-    //      pdn_context_t * pdn_context = NULL;
-    //      RB_FOREACH (pdn_context, PdnContexts, &ue_context->pdn_contexts) {
-    //        DevAssert(pdn_context);
-    //        bearer_context_t * first_bearer = RB_MIN(SessionBearers, &pdn_context->session_bearers);
-    //        DevAssert(first_bearer);
-    //        if(first_bearer->bearer_state == BEARER_STATE_ACTIVE){
-    //          /** Continue to next pdn. */
-    //          continue;
-    //        }else{
-    //          /** Found a PDN. Establish the bearer contexts. */
-    //          OAILOG_INFO(LOG_MME_APP, "Establishing the bearers for UE_CONTEXT for UE " MME_UE_S1AP_ID_FMT " triggered by handover notify. Successfully handled handover notify. \n", ue_context->mme_ue_s1ap_id);
-    //          mme_app_send_s11_modify_bearer_req(ue_context, pdn_context);
-    ////          OAILOG_FUNC_OUT (LOG_MME_APP);
-    //        }
-    //      }
-
-
-//    RB_FOREACH (registered_pdn_ctx, PdnContexts, &ue_context->pdn_contexts) {
-//      DevAssert(registered_pdn_ctx);
-//      /*
-//       * Get the first PDN whose bearers are not established yet.
-//       * Do the MBR just one PDN at a time.
-//       */
-//      RB_FOREACH (bearer_context_to_establish, SessionBearers, &registered_pdn_ctx->session_bearers) {
-//        DevAssert(bearer_context_to_establish);
-//        /** Add them to the bearears list of the MBR. */
-//        if (bearer_context_to_establish->bearer_state != BEARER_STATE_ACTIVE){
-//          OAILOG_INFO(LOG_MME_APP, "Found a PDN with unestablished bearers for mmeUeS1apId " MME_UE_S1AP_ID_FMT ". Sending MBR. \n", mme_ue_s1ap_id);
-//          /** Send the S11 MBR and return. */
-//          // todo: error handling! this might occur if some error with OVS happens.
-//          if(mme_app_send_s11_modify_bearer_req(ue_context, registered_pdn_ctx) != RETURNok){
-//            OAILOG_ERROR(LOG_MME_APP, "Error sending MBR for mmeUeS1apId " MME_UE_S1AP_ID_FMT ". Implicitly detaching the UE. \n", mme_ue_s1ap_id);
-//            // todo!
-//            DevAssert(0);
-//          }
-//          OAILOG_INFO(LOG_MME_APP, "Successfully sent MBR for mmeUeS1apId " MME_UE_S1AP_ID_FMT ". Returning from REGISTRERED callback. \n", mme_ue_s1ap_id);
-//          OAILOG_FUNC_OUT (LOG_MME_APP);
-//        }
-//      }
-//      registered_pdn_ctx = NULL;
-//    }
-    OAILOG_ERROR(LOG_MME_APP, "No PDN context found with unestablished bearers for mmeUeS1apId " MME_UE_S1AP_ID_FMT ". \n", mme_ue_s1ap_id);
-    OAILOG_FUNC_OUT (LOG_MME_APP);
+    rc = mme_app_send_s11_modify_bearer_req(ue_context);
   }
+  OAILOG_INFO(LOG_MME_APP, "Completed registration of UE " MME_UE_S1AP_ID_FMT ". \n", mme_ue_s1ap_id);
+  OAILOG_FUNC_RETURN(LOG_MME_APP, rc);
 }
 
 ////-------------------------------------------------------------------------------------------

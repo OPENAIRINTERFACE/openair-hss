@@ -35,13 +35,12 @@
 #include "s1ap_messages_types.h"
 
 #define NAS_UPLINK_DATA_IND(mSGpTR)                 (mSGpTR)->ittiMsg.nas_ul_data_ind
+#define NAS_ESM_DATA_IND(mSGpTR)                    (mSGpTR)->ittiMsg.nas_esm_data_ind
 #define NAS_DOWNLINK_DATA_REQ(mSGpTR)               (mSGpTR)->ittiMsg.nas_dl_data_req
 #define NAS_DL_DATA_CNF(mSGpTR)                     (mSGpTR)->ittiMsg.nas_dl_data_cnf
 #define NAS_DL_DATA_REJ(mSGpTR)                     (mSGpTR)->ittiMsg.nas_dl_data_rej
-#define NAS_PDN_CONFIG_REQ(mSGpTR)                  (mSGpTR)->ittiMsg.nas_pdn_config_req
 #define NAS_PDN_CONFIG_RSP(mSGpTR)                  (mSGpTR)->ittiMsg.nas_pdn_config_rsp
 #define NAS_PDN_CONFIG_FAIL(mSGpTR)                 (mSGpTR)->ittiMsg.nas_pdn_config_fail
-#define NAS_PDN_CONNECTIVITY_REQ(mSGpTR)            (mSGpTR)->ittiMsg.nas_pdn_connectivity_req
 #define NAS_PDN_CONNECTIVITY_RSP(mSGpTR)            (mSGpTR)->ittiMsg.nas_pdn_connectivity_rsp
 #define NAS_PDN_CONNECTIVITY_FAIL(mSGpTR)           (mSGpTR)->ittiMsg.nas_pdn_connectivity_fail
 #define NAS_INITIAL_UE_MESSAGE(mSGpTR)              (mSGpTR)->ittiMsg.nas_initial_ue_message
@@ -76,24 +75,6 @@ typedef enum pdn_conn_rsp_cause_e {
   CAUSE_NO_RESOURCES_AVAILABLE = 73,
   CAUSE_ALL_DYNAMIC_ADDRESSES_OCCUPIED = 84
 } pdn_conn_rsp_cause_t;
-
-typedef struct itti_nas_pdn_connectivity_req_s {
-  proc_tid_t             pti;   // nas ref  Identity of the procedure transaction executed to activate the PDN connection entry
-  mme_ue_s1ap_id_t       ue_id; // nas ref
-//  char                   imsi[16];
-//  uint8_t                imsi_length;
-  imsi64_t               imsi;
-  imsi_t                 _imsi;
-  bearer_qos_t           bearer_qos;
-  protocol_configuration_options_t pco;
-  bstring                apn;
-  ebi_t                  default_ebi;
-  pdn_cid_t              pdn_cid;
-  bstring                pdn_addr;
-  int                    pdn_type;
-  int                    request_type;
-} itti_nas_pdn_connectivity_req_t;
-
 
 typedef struct itti_nas_pdn_connectivity_rsp_s {
   pdn_cid_t               pdn_cid;
@@ -131,16 +112,6 @@ typedef struct itti_nas_pdn_connectivity_fail_s {
   pdn_conn_rsp_cause_t    cause;
   ebi_t                   linked_ebi;
 } itti_nas_pdn_connectivity_fail_t;
-
-typedef struct itti_nas_pdn_config_req_s {
-  mme_ue_s1ap_id_t       ue_id; // nas ref
-  char                   imsi[16];
-  uint8_t                imsi_length;
-  bstring                apn;
-  bstring                pdn_addr;
-  pdn_type_t             pdn_type;
-  int                    request_type;
-} itti_nas_pdn_config_req_t;
 
 typedef struct itti_nas_pdn_config_rsp_s {
   mme_ue_s1ap_id_t        ue_id; // nas ref
@@ -205,6 +176,10 @@ typedef struct itti_nas_ul_data_ind_s {
   ecgi_t            cgi;            /* Indicating the cell from which the UE has sent the NAS message.   */
 } itti_nas_ul_data_ind_t;
 
+typedef struct itti_nas_esm_data_ind_s {
+  mme_ue_s1ap_id_t  ue_id;
+  bstring           esm_msg_p;
+} itti_nas_esm_data_ind_t;
 
 typedef struct itti_nas_dl_data_req_s {
   enb_ue_s1ap_id_t  enb_ue_s1ap_id; /* UE lower layer identifier        */

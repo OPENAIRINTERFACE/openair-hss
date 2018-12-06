@@ -53,7 +53,6 @@
 #include "networkDef.h"
 #include "mme_api.h"
 #include "mme_config.h"
-#include "nas_itti_messaging.h"
 #include "mme_app_defs.h"
 #include "nas_esm_procedures.h"
 #include "esm_proc.h"

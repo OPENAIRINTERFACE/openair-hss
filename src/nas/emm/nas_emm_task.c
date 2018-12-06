@@ -98,16 +98,6 @@ static void *nas_emm_intertask_interface (void *args_p)
       }
       break;
 
-    case NAS_PDN_CONFIG_RSP:{
-      nas_proc_pdn_config_res (&NAS_PDN_CONFIG_RSP (received_message_p));
-    }
-    break;
-
-    case NAS_PDN_CONFIG_FAIL:{
-      nas_proc_pdn_config_fail (&NAS_PDN_CONFIG_FAIL(received_message_p));
-    }
-    break;
-
     case NAS_IMPLICIT_DETACH_UE_IND:{
       nas_proc_implicit_detach_ue_ind (NAS_IMPLICIT_DETACH_UE_IND (received_message_p).ue_id, NAS_IMPLICIT_DETACH_UE_IND (received_message_p).emm_cause, NAS_IMPLICIT_DETACH_UE_IND (received_message_p).detach_type);
     }
@@ -160,7 +150,7 @@ static void *nas_emm_intertask_interface (void *args_p)
       break;
 
     default:{
-        OAILOG_DEBUG (LOG_NAS, "Unkwnon message ID %d:%s from %s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p), ITTI_MSG_ORIGIN_NAME (received_message_p));
+        OAILOG_DEBUG (LOG_NAS, "Unknown message ID %d:%s from %s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p), ITTI_MSG_ORIGIN_NAME (received_message_p));
       }
       break;
     }
@@ -178,6 +168,7 @@ static void *nas_emm_intertask_interface (void *args_p)
 int nas_emm_init (mme_config_t * mme_config_p)
 {
   OAILOG_DEBUG (LOG_NAS, "Initializing NAS EMM task interface\n");
+  nas_timer_init ();
   emm_main_initialize(mme_config_p);
 
   if (itti_create_task (TASK_NAS_EMM, &nas_emm_intertask_interface, NULL) < 0) {
@@ -194,5 +185,6 @@ static void nas_emm_exit(void)
 {
   OAILOG_DEBUG (LOG_NAS, "Cleaning NAS EMM task interface\n");
   emm_main_cleanup();
+  nas_timer_cleanup();
   OAILOG_DEBUG (LOG_NAS, "Cleaning NAS EMM task interface: DONE\n");
 }

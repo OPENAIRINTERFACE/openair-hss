@@ -31,7 +31,12 @@
 
 #include "nas_message.h"
 #include "as_message.h"
-#include "esm/esm_proc.h"
+#include "esm_proc.h"
+
+int
+nas_itti_esm_data_ind(
+  const mme_ue_s1ap_id_t ue_id,
+  bstring                *esm_msg_p);
 
 int nas_itti_dl_data_req(
   const mme_ue_s1ap_id_t ue_idP,
@@ -65,18 +70,10 @@ nas_itti_erab_release_req (const mme_ue_s1ap_id_t ue_id,
 
 void nas_itti_pdn_config_req(
   unsigned int            ue_idP,
+  task_id_t               task_id,
   const imsi_t           *const imsi_pP,
-  esm_proc_data_t        *proc_data_pP,
-  esm_proc_pdn_request_t  request_typeP);
-
-void nas_itti_pdn_connectivity_req(
-  int                     ptiP,
-  const mme_ue_s1ap_id_t  ue_idP,
-  const pdn_cid_t         pdn_cidP,
-  const ebi_t             default_ebi,
-//  const imsi_t           *const imsi_pP,
-  esm_proc_data_t        *proc_data_pP,
-  esm_proc_pdn_request_t  request_typeP);
+  esm_proc_pdn_request_t  request_type,
+  plmn_t                 *visited_plmn);
 
 void nas_itti_pdn_disconnect_req(
   mme_ue_s1ap_id_t        ue_idP,

@@ -66,11 +66,16 @@ typedef enum esm_primitive_s {
   ESM_DEDICATED_EPS_BEARER_CONTEXT_DEACTIVATE_REQ,
   ESM_DEDICATED_EPS_BEARER_CONTEXT_DEACTIVATE_CNF,
   ESM_EPS_UPDATE_ESM_BEARER_CTXS_REQ,
+
+
   /* Transaction related procedures (initiated by the UE) */
   ESM_PDN_CONFIG_RES,
-  ESM_PDN_CONNECTIVITY_REQ,
+  ESM_PDN_CONFIG_FAIL,
   ESM_PDN_CONNECTIVITY_CNF,
   ESM_PDN_CONNECTIVITY_REJ,
+
+
+
   ESM_PDN_DISCONNECT_REQ,
   ESM_PDN_DISCONNECT_CNF,
   ESM_PDN_DISCONNECT_REJ,
@@ -78,8 +83,7 @@ typedef enum esm_primitive_s {
   ESM_BEARER_RESOURCE_ALLOCATE_REJ,
   ESM_BEARER_RESOURCE_MODIFY_REQ,
   ESM_BEARER_RESOURCE_MODIFY_REJ,
-  /* ESM data indication ("raw" ESM message) */
-  ESM_UNITDATA_IND,
+
   ESM_END
 } esm_primitive_t;
 
@@ -87,24 +91,16 @@ typedef enum esm_primitive_s {
 /************************  G L O B A L    T Y P E S  ************************/
 /****************************************************************************/
 
-typedef struct itti_mme_app_activate_eps_bearer_ctx_req_s   esm_eps_activate_eps_bearer_ctx_req_t;
+typedef struct itti_nas_pdn_config_rsp_s                    esm_cn_pdn_config_res_t;
+typedef struct itti_nas_pdn_config_fail_s                   esm_cn_pdn_config_fail_t;
+typedef struct itti_nas_pdn_connectivity_rsp_s              esm_cn_pdn_connectivity_res_t;
+typedef struct itti_nas_pdn_connectivity_fail_s             esm_cn_pdn_connectivity_fail_t;
+typedef struct itti_nas_pdn_disconnect_rsp_s                esm_cn_pdn_disconnect_res_t;
+
 typedef struct itti_mme_app_activate_eps_bearer_ctx_req_s   esm_eps_activate_eps_bearer_ctx_req_t;
 typedef struct itti_mme_app_modify_eps_bearer_ctx_req_s     esm_eps_modify_eps_bearer_ctx_req_t;
 typedef struct itti_mme_app_deactivate_eps_bearer_ctx_req_s esm_eps_deactivate_eps_bearer_ctx_req_t;
-
-typedef struct itti_mme_app_update_esm_bearer_ctxs_req_s esm_eps_update_esm_bearer_ctxs_req_t;
-
-/*
- * Error code returned upon processing ESM-SAP primitive
- */
-typedef enum {
-  ESM_SAP_SUCCESS = 1, /* ESM-SAP primitive succeed           */
-  ESM_SAP_DISCARDED,   /* ESM-SAP primitive failed, the caller should
-              * ignore the error                */
-  ESM_SAP_FAILED   /* ESM-SAP primitive failed, the caller should
-              * take specific action and state transition may
-              * occurs                  */
-} esm_sap_error_t;
+typedef struct itti_mme_app_update_esm_bearer_ctxs_req_s    esm_eps_update_esm_bearer_ctxs_req_t;
 
 /*
  * ESM primitive for activate EPS default bearer context procedure
@@ -122,40 +118,6 @@ typedef struct esm_bearer_resource_modify_rej_s{
   ebi_t             ebi;
   bool              remove;
 }esm_bearer_resource_modify_rej_t;
-
-/*
- * ESM primitive for PDN config response
- * --------------------------------------------
- */
-typedef struct esm_pdn_config_res_s {
-  imsi64_t imsi;   /* IMSI */
-  pdn_cid_t *pdn_cid;
-  bool *is_pdn_connectivity;
-  ebi_t * default_ebi;
-  bstring apn;
-} esm_pdn_config_res_t;
-
-/*
- * ESM primitive for PDN connectivity procedure
- * --------------------------------------------
- */
-typedef struct esm_pdn_connectivity_s {
-  pdn_cid_t cid;        /* PDN connection local identifier      */
-  ebi_t     linked_ebi; /* PDN Default EBI. */
-  int is_defined; /* Indicates whether a PDN context has been defined
-             * for the specified APN            */
-  int pdn_type;   /* PDN address type (IPv4, IPv6, IPv4v6)    */
-  bstring apn;
-  bool is_emergency;   /* Indicates whether the PDN context has been
-             * defined to establish connection for emergency
-             * bearer services              */
-  protocol_configuration_options_t *pco;
-  ambr_t apn_ambr;
-  bstring                 pdn_addr;
-  /* QoS */
-  qci_t                   qci;
-  esm_cause_t             esm_cause;
-} esm_pdn_connectivity_t;
 
 /*
  * ESM primitive for PDN disconnect procedure
@@ -198,30 +160,27 @@ typedef struct esm_pdn_disconnect_s {
  * ------------------------------
  */
 typedef union {
-  esm_pdn_config_res_t pdn_config_res;
-  esm_pdn_connectivity_t pdn_connect;
   esm_pdn_disconnect_t pdn_disconnect;
   esm_eps_activate_eps_bearer_ctx_req_t     eps_dedicated_bearer_context_activate;
   esm_eps_modify_eps_bearer_ctx_req_t       eps_bearer_context_modify;
   esm_eps_deactivate_eps_bearer_ctx_req_t   eps_dedicated_bearer_context_deactivate;
-  esm_eps_update_esm_bearer_ctxs_req_t  eps_update_esm_bearer_ctxs;
-  esm_bearer_resource_allocate_rej_t    esm_bearer_resource_allocate_rej;
-  esm_bearer_resource_modify_rej_t    esm_bearer_resource_modify_rej;
+  esm_eps_update_esm_bearer_ctxs_req_t      eps_update_esm_bearer_ctxs;
+  esm_bearer_resource_allocate_rej_t        esm_bearer_resource_allocate_rej;
+  esm_bearer_resource_modify_rej_t          esm_bearer_resource_modify_rej;
+
+  /** From here on just pointers. */
+  esm_cn_pdn_config_res_t        *pdn_config_res;
+  esm_cn_pdn_config_fail_t       *pdn_config_fail;
+  esm_cn_pdn_connectivity_res_t  *pdn_connectivity_res;
+  esm_cn_pdn_connectivity_fail_t *pdn_connectivity_fail;
 } esm_sap_data_t;
 
 struct emm_data_context_s;
 
 typedef struct esm_sap_s {
   esm_primitive_t primitive;  /* ESM-SAP primitive to process     */
-  bool is_standalone;      /* Indicates whether the ESM message handled
-                 * within this primitive has to be sent/received
-                 * standalone or together within an EMM related
-                 * message              */
-  struct esm_context_s  *ctx;       /* ESM context                   */
   unsigned int        ue_id;      /* Local UE identifier             */
-  esm_sap_error_t     err;       /* ESM-SAP error code               */
   const_bstring       recv;      /* Encoded ESM message received     */
-  bstring             send;      /* Encoded ESM message to be sent   */
   esm_sap_data_t      data;      /* ESM message data parameters      */
 } esm_sap_t;
 

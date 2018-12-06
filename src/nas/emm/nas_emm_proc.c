@@ -110,7 +110,7 @@ nas_proc_establish_ind (
     /*
      * Notify the EMM procedure call manager that NAS signaling
      * connection establishment indication message has been received
-     * from the Access-Stratum sublayer
+     * from the Access-Stratum sublayer.
      */
     emm_sap.primitive = EMMAS_ESTABLISH_REQ;
     emm_sap.u.emm_as.u.establish.ue_id              = ue_id;
@@ -398,39 +398,6 @@ nas_proc_deregister_ue (
   MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMCN_DEREGISTER_UE ue_id " MME_UE_S1AP_ID_FMT " ", ue_id);
   emm_sap.primitive = EMMCN_DEREGISTER_UE;
   emm_sap.u.emm_cn.u.deregister.ue_id = ue_id;
-  rc = emm_sap_send (&emm_sap);
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
-}
-
-//------------------------------------------------------------------------------
-int
-nas_proc_pdn_config_res (
-  emm_cn_pdn_config_res_t * emm_cn_pdn_config_res)
-{
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
-  int                                     rc = RETURNerror;
-  emm_sap_t                               emm_sap = {0};
-  emm_data_context_t                     *emm_context = NULL;
-
-  emm_sap.primitive = EMMCN_PDN_CONFIG_RES;
-  emm_sap.u.emm_cn.u.emm_cn_pdn_config_res = emm_cn_pdn_config_res;
-  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMCN_PDN_CONFIG_RES ue_id " MME_UE_S1AP_ID_FMT " ", emm_cn_pdn_config_res->ue_id);
-  rc = emm_sap_send (&emm_sap);
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
-}
-
-//------------------------------------------------------------------------------
-int
-nas_proc_pdn_config_fail (
-  emm_cn_pdn_config_fail_t * emm_cn_pdn_config_fail)
-{
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
-  int                                     rc = RETURNerror;
-  emm_sap_t                               emm_sap = {0};
-
-  emm_sap.primitive = EMMCN_PDN_CONFIG_FAIL;
-  emm_sap.u.emm_cn.u.emm_cn_pdn_config_fail = emm_cn_pdn_config_fail;
-  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMCN_PDN_CONFIG_FAIL ue_id " MME_UE_S1AP_ID_FMT " ", emm_cn_pdn_config_fail->ue_id);
   rc = emm_sap_send (&emm_sap);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }

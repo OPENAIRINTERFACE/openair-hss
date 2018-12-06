@@ -139,7 +139,8 @@ s6a_ula_cb (
   CHECK_FCT (fd_msg_search_avp (ans_p, s6a_fd_cnf.dataobj_s6a_subscription_data, &avp_p));
 
   if (avp_p) {
-    CHECK_FCT (s6a_parse_subscription_data (avp_p, &s6a_update_location_ans_p->subscription_data));
+    s6a_update_location_ans_p->subscription_data = calloc(1, sizeof(subscription_data_t));
+    CHECK_FCT (s6a_parse_subscription_data (avp_p, s6a_update_location_ans_p->subscription_data));
     // LG COMMENTED THIS (2014/04/01)-> DevParam(0, 0, 0);
   }
 

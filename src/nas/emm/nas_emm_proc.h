@@ -94,8 +94,6 @@ int nas_proc_authentication_info_answer (s6a_auth_info_ans_t * ans);
 int nas_proc_auth_param_res (mme_ue_s1ap_id_t ue_id, uint8_t nb_vectors, eutran_vector_t *vectors);
 int nas_proc_auth_param_fail(mme_ue_s1ap_id_t ue_id, nas_cause_t cause);
 int nas_proc_deregister_ue(uint32_t ue_id);
-int nas_proc_pdn_config_res (emm_cn_pdn_config_res_t * emm_cn_pdn_config_res);
-int nas_proc_pdn_config_fail (emm_cn_pdn_config_fail_t * emm_cn_pdn_config_fail);
 
 int nas_proc_signalling_connection_rel_ind (mme_ue_s1ap_id_t ue_id);
 int nas_proc_implicit_detach_ue_ind (mme_ue_s1ap_id_t ue_id, uint8_t emm_cause, uint8_t detach_type);

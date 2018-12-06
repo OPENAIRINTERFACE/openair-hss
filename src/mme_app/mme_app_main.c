@@ -83,6 +83,14 @@ void *mme_app_thread (void *args)
       }
       break;
 
+    case S6A_UPDATE_LOCATION_ANS:{
+        /*
+         * We received the update location answer message from HSS -> Handle it
+         */
+        mme_app_handle_s6a_update_location_ans (&received_message_p->ittiMsg.s6a_update_location_ans);
+      }
+      break;
+
     case S6A_CANCEL_LOCATION_REQ:{
         /*
          * We received the cancel location request message from HSS -> Handle it
@@ -163,24 +171,6 @@ void *mme_app_thread (void *args)
       mme_app_handle_nas_erab_release_req (&NAS_ERAB_RELEASE_REQ (received_message_p));
     }
     break;
-
-    case NAS_PDN_CONFIG_REQ: {
-      struct ue_context_s                    *ue_context_p = NULL;
-      ue_context_p = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, received_message_p->ittiMsg.nas_pdn_config_req.ue_id);
-      if (ue_context_p) {
-        if(!ue_context_p->imsi_auth){
-          OAILOG_WARNING (LOG_MME_APP, "IMSI for UE context ueId " MME_UE_S1AP_ID_FMT " is not authenticated yet. Authenticating. \n", ue_context_p->mme_ue_s1ap_id);
-          ue_context_p->imsi_auth = IMSI_AUTHENTICATED;
-        }
-        mme_app_send_s6a_update_location_req(ue_context_p);
-        // todo    unlock_ue_contexts(ue_context_p);
-      }
-      break;
-
-    case NAS_PDN_CONNECTIVITY_REQ:{
-        mme_app_handle_nas_pdn_connectivity_req (&received_message_p->ittiMsg.nas_pdn_connectivity_req);
-      }
-      break;
 
     case NAS_PDN_DISCONNECT_REQ:{
         mme_app_handle_nas_pdn_disconnect_req (&received_message_p->ittiMsg.nas_pdn_disconnect_req);
@@ -273,15 +263,6 @@ void *mme_app_thread (void *args)
         mme_app_handle_s1ap_ue_context_release_req (&received_message_p->ittiMsg.s1ap_ue_context_release_req);
       }
       break;
-
-    case S6A_UPDATE_LOCATION_ANS:{
-        /*
-         * We received the update location answer message from HSS -> Handle it
-         */
-        mme_app_handle_s6a_update_location_ans (&received_message_p->ittiMsg.s6a_update_location_ans);
-      }
-      break;
-
 
     case MME_APP_INITIAL_CONTEXT_SETUP_FAILURE:{
       mme_app_handle_initial_context_setup_failure (&MME_APP_INITIAL_CONTEXT_SETUP_FAILURE (received_message_p));
@@ -446,6 +427,7 @@ void *mme_app_thread (void *args)
         hashtable_ts_destroy (mme_app_desc.mme_ue_contexts.tun10_ue_context_htbl);
         hashtable_ts_destroy (mme_app_desc.mme_ue_contexts.mme_ue_s1ap_id_ue_context_htbl);
         hashtable_ts_destroy (mme_app_desc.mme_ue_contexts.enb_ue_s1ap_id_ue_context_htbl);
+        hashtable_ts_destroy (mme_app_desc.mme_ue_contexts.imsi_apn_configuration_htbl);
         obj_hashtable_ts_destroy (mme_app_desc.mme_ue_contexts.guti_ue_context_htbl);
 
 
@@ -539,6 +521,9 @@ int mme_app_init (const mme_config_t * mme_config_p)
   btrunc(b, 0);
   bassigncstr(b, "mme_app_guti_ue_context_htbl");
   mme_app_desc.mme_ue_contexts.guti_ue_context_htbl = obj_hashtable_uint64_ts_create (mme_config.max_ues, NULL, hash_free_int_func, b);
+  btrunc(b, 0);
+  bassigncstr(b, "imsi_apn_configuration_htbl");
+  mme_app_desc.mme_ue_contexts.imsi_apn_configuration_htbl = hashtable_uint64_ts_create (mme_config.max_ues, NULL, b);
   bdestroy_wrapper (&b);
 
   if (mme_app_edns_init(mme_config_p)) {
@@ -578,6 +563,7 @@ void mme_app_exit (void)
   hashtable_uint64_ts_destroy (mme_app_desc.mme_ue_contexts.tun11_ue_context_htbl);
   hashtable_uint64_ts_destroy (mme_app_desc.mme_ue_contexts.tun10_ue_context_htbl);
   hashtable_uint64_ts_destroy (mme_app_desc.mme_ue_contexts.mme_ue_s1ap_id_ue_context_htbl);
+  hashtable_uint64_ts_destroy (mme_app_desc.mme_ue_contexts.imsi_apn_configuration_htbl);
   hashtable_ts_destroy (mme_app_desc.mme_ue_contexts.enb_ue_s1ap_id_ue_context_htbl);
   obj_hashtable_uint64_ts_destroy (mme_app_desc.mme_ue_contexts.guti_ue_context_htbl);
   mme_config_exit();

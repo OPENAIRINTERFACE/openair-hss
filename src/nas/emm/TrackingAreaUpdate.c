@@ -955,7 +955,6 @@ static int _emm_send_tracking_area_update_accept(emm_data_context_t * const emm_
      * Check the active flag. If false, set a notification to release the bearers after TAU_ACCEPT/COMPLETE (depending on the EMM state).
      */
     if(!tau_proc->ies->eps_update_type.active_flag){
-      ue_context->pending_bearer_deactivation = true; /**< No matter if we send GUTI and wait for TAU_COMPLETE or not. */
       emm_sap.primitive = EMMAS_DATA_REQ;
     }else{
       /**
@@ -966,7 +965,6 @@ static int _emm_send_tracking_area_update_accept(emm_data_context_t * const emm_
        * in ECM-CONNECTED state, the new MME releases the signaling connection with UE, according to clause 5.3.5.
        */
       emm_sap.primitive = EMMAS_ESTABLISH_CNF;
-      ue_context->pending_bearer_deactivation = false; /**< No matter if we send GUTI and wait for TAU_COMPLETE or not. */
     }
   }else{
     emm_sap.primitive = EMMAS_DATA_REQ; /**< We also check the current ECM state to handle active flag. */
@@ -1776,7 +1774,7 @@ static int _emm_tracking_area_update_run_procedure(emm_data_context_t *emm_conte
             emm_context->ue_id, EMM_CAUSE_IE_NOT_IMPLEMENTED);
         /** The EPS update type will be stored as pending IEs. */
         /** ESM context will not change, no ESM_PROC data will be created. */
-        rc = nas_itti_pdn_config_req (emm_context->ue_id, &emm_context->_imsi, NULL, 0);
+        rc = nas_itti_pdn_config_req (emm_context->ue_id, &emm_context->_imsi);
         OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
       } else{
         OAILOG_DEBUG (LOG_NAS_EMM, "EMM-PROC- Sending Tracking Area Update Accept for UE with valid subscription ue_id=" MME_UE_S1AP_ID_FMT ", active flag=%d)\n", emm_context->ue_id, tau_proc->ies->eps_update_type.active_flag);
@@ -1830,6 +1828,7 @@ static int _emm_tracking_area_update_run_procedure(emm_data_context_t *emm_conte
            * No need to start a new EMM_CN_CONTEXT_REQ procedure.
            * Will update the current EMM and ESM context with the pending values and continue with the registration in the HSS (ULR).
            */
+          // todo: set the active flag as true
           rc = _context_req_proc_success_cb(emm_context);
           OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
         }else{
@@ -1917,7 +1916,6 @@ static int _context_req_proc_success_cb (emm_data_context_t *emm_context)
 //  /*
 //   * Update the ESM context (what was in esm_proc_default_eps_bearer_context).
 //   */
-//  emm_context->esm_ctx.n_active_ebrs += nas_s10_ctx->n_active_ebrs;
 //  emm_context->esm_ctx.n_pdns        += nas_s10_ctx->n_pdns;
   // todo: num_active_pdns not used.
   // todo: is_emergency not set
@@ -1928,7 +1926,7 @@ static int _context_req_proc_success_cb (emm_data_context_t *emm_context)
     nas_delete_cn_procedure(emm_context, nas_ctx_req_proc);
 
   /** ESM context will not change, no ESM_PROC data will be created. */
-  rc = nas_itti_pdn_config_req (emm_context->ue_id, &emm_context->_imsi, NULL, 0);
+  rc = nas_itti_pdn_config_req (emm_context->ue_id, &emm_context->_imsi);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
@@ -2098,12 +2096,11 @@ static int _emm_tracking_area_update_success_security_cb (emm_data_context_t *em
 //     esm_data->pti = 0;
      /** Request the ESM Information. */
 //    esm_sap.primitive = ESM_REQUEST_ESM_INFORMATION;
-//    esm_sap.is_standalone = false;
 //    esm_sap.ue_id = emm_context->ue_id;
 ////    esm_sap.recv = esm_msg_pP;
 //    esm_sap.ctx = emm_context;
 //    rc = esm_sap_send (&esm_sap);
-    rc = nas_itti_pdn_config_req (emm_context->ue_id, &emm_context->_imsi, NULL, REQUEST_TYPE_INITIAL_REQUEST);
+    rc = nas_itti_pdn_config_req (emm_context->ue_id, &emm_context->_imsi);
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 //    rc = _emm_tracking_area_update(emm_context);
   }
@@ -2143,11 +2140,14 @@ static void _emm_tracking_area_update_registration_complete(emm_data_context_t *
   int                            rc = RETURNerror;
 
   OAILOG_FUNC_IN (LOG_MME_APP);
-
-  /** Find the UE context. */
-  rc = mme_api_registration_complete(emm_context->ue_id);
+  nas_emm_tau_proc_t                     *tau_proc = get_nas_specific_procedure_tau(emm_context);
+  DevAssert(tau_proc);
+  /**
+   * Inform the ESM layer about the registration. It would look prettier to have ESM as a child procedure,
+   * but we won't to separate them for the sake of locks as well as AMF/SMF separation..
+   */
+  rc = mme_api_registration_complete(emm_context->ue_id, tau_proc->ies->eps_update_type.active_flag);
   DevAssert(rc == RETURNok); /**< Should always exist. Any mobility issue in which this could occur? */
-
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 

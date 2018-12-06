@@ -66,13 +66,6 @@ typedef enum emm_as_primitive_u {
   _EMMAS_ESTABLISH_REJ, /* AS->EMM: Connection establish reject   */
   _EMMAS_RELEASE_REQ,   /* EMM->AS: Connection release request    */
   _EMMAS_RELEASE_IND,   /* AS->EMM: Connection release indication */
-  _EMMAS_ERAB_SETUP_REQ, /* EMM->AS: ERAB setup request  */
-  _EMMAS_ERAB_SETUP_CNF, /* AS->EMM  */
-  _EMMAS_ERAB_SETUP_REJ, /* AS->EMM  */
-  _EMMAS_ERAB_MODIFY_REQ, /* EMM->AS: ERAB modify request  */
-  _EMMAS_ERAB_MODIFY_CNF, /* AS->EMM  */
-  _EMMAS_ERAB_MODIFY_REJ, /* AS->EMM  */
-  _EMMAS_ERAB_RELEASE_REQ, /* EMM->AS: ERAB release request  */
   _EMMAS_DATA_REQ,      /* EMM->AS: Data transfer request     */
   _EMMAS_DATA_IND,      /* AS->EMM: Data transfer indication      */
   _EMMAS_PAGE_IND,      /* AS->EMM: Paging data indication        */

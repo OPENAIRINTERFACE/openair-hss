@@ -195,7 +195,6 @@ int emm_proc_attach_reject(mme_ue_s1ap_id_t ue_id, emm_cause_t emm_cause);
 
 int emm_proc_attach_complete (
   mme_ue_s1ap_id_t                  ue_id,
-  const_bstring                     esm_msg_pP,
   int                               emm_cause,
   const nas_message_decode_status_t status);
 

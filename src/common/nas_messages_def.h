@@ -28,11 +28,12 @@
   \email: lionel.gauthier@eurecom.fr
 */
 
-MESSAGE_DEF(NAS_PDN_CONNECTIVITY_REQ,           MESSAGE_PRIORITY_MED,   itti_nas_pdn_connectivity_req_t, nas_pdn_connectivity_req)
 MESSAGE_DEF(NAS_INITIAL_UE_MESSAGE,             MESSAGE_PRIORITY_MED,   itti_nas_initial_ue_message_t,   nas_initial_ue_message)
 MESSAGE_DEF(NAS_CONNECTION_ESTABLISHMENT_CNF,   MESSAGE_PRIORITY_MED,   itti_nas_conn_est_cnf_t,         nas_conn_est_cnf)
 MESSAGE_DEF(NAS_CONNECTION_RELEASE_IND,         MESSAGE_PRIORITY_MED,   itti_nas_conn_rel_ind_t,         nas_conn_rel_ind)
 MESSAGE_DEF(NAS_UPLINK_DATA_IND,                MESSAGE_PRIORITY_MED,   itti_nas_ul_data_ind_t,          nas_ul_data_ind)
+MESSAGE_DEF(NAS_ESM_DATA_IND,                   MESSAGE_PRIORITY_MED,   itti_nas_esm_data_ind_t,         nas_esm_data_ind)
+MESSAGE_DEF(NAS_ESM_CONGESTION,                 MESSAGE_PRIORITY_MED,   itti_nas_esm_congestion_ind_t,   nas_esm_congestion_ind)
 MESSAGE_DEF(NAS_DOWNLINK_DATA_REQ,              MESSAGE_PRIORITY_MED,   itti_nas_dl_data_req_t,          nas_dl_data_req)
 MESSAGE_DEF(NAS_DOWNLINK_DATA_CNF,              MESSAGE_PRIORITY_MED,   itti_nas_dl_data_cnf_t,          nas_dl_data_cnf)
 MESSAGE_DEF(NAS_DOWNLINK_DATA_REJ,              MESSAGE_PRIORITY_MED,   itti_nas_dl_data_rej_t,          nas_dl_data_rej)
@@ -43,7 +44,6 @@ MESSAGE_DEF(NAS_ERAB_RELEASE_REQ,               MESSAGE_PRIORITY_MED,   itti_nas
 /* NAS layer -> MME app messages */
 MESSAGE_DEF(NAS_AUTHENTICATION_PARAM_REQ,       MESSAGE_PRIORITY_MED,   itti_nas_auth_param_req_t,       nas_auth_param_req)
 MESSAGE_DEF(NAS_DETACH_REQ,       		MESSAGE_PRIORITY_MED,   itti_nas_detach_req_t,           	nas_detach_req)
-MESSAGE_DEF(NAS_PDN_CONFIG_REQ,                 MESSAGE_PRIORITY_MED,   itti_nas_pdn_config_req_t,       nas_pdn_config_req)
 
 /* MME app -> NAS layer messages */
 MESSAGE_DEF(NAS_PDN_CONNECTIVITY_RSP,           MESSAGE_PRIORITY_MED,   itti_nas_pdn_connectivity_rsp_t,  nas_pdn_connectivity_rsp)

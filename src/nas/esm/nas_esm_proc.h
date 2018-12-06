@@ -71,8 +71,9 @@ Description NAS ESM procedure call manager
  *      NAS procedures triggered by the network
  * --------------------------------------------------------------------------
  */
+void nas_stop_esm_timer(mme_ue_s1ap_id_t ue_id, nas_timer_t * const nas_timer);
 
-
+void _nas_proc_pdn_connectivity_timeout_handler (void *args);
 
 int nas_proc_establish_ind(const mme_ue_s1ap_id_t ue_id,
                             const tai_t originating_tai,
@@ -84,8 +85,15 @@ int nas_proc_establish_ind(const mme_ue_s1ap_id_t ue_id,
  *      NAS ESM procedures triggered by the mme applicative layer
  * --------------------------------------------------------------------------
  */
-int nas_proc_pdn_connectivity_res(esm_pdn_connectivity_t *esm_pdn_connectivity_rsp);
-int nas_proc_pdn_connectivity_fail(esm_pdn_connectivity_t *esm_pdn_connectivity_fail);
+/** Messages sent by the EMM layer (directly from UE). */
+int nas_esm_proc_data_ind (itti_nas_esm_data_ind_t * esm_data_ind);
+
+/** Messages triggered by the core network. */
+int nas_esm_proc_pdn_config_res (esm_cn_pdn_config_res_t * emm_cn_pdn_config_res);
+int nas_esm_proc_pdn_config_fail (esm_cn_pdn_config_fail_t * emm_cn_pdn_config_fail);
+int nas_esm_proc_pdn_connectivity_res(esm_cn_pdn_connectivity_res_t *esm_cn_pdn_connectivity_rsp);
+int nas_esm_proc_pdn_connectivity_fail(esm_cn_pdn_connectivity_fail_t *esm_cn_pdn_connectivity_fail);
+
 int nas_proc_pdn_disconnect_res (esm_pdn_disconnect_t * esm_pdn_disconnect_res);
 int nas_proc_activate_dedicated_bearer(esm_eps_activate_eps_bearer_ctx_req_t * esm_cn_activate);
 int nas_proc_modify_eps_bearer_ctx(esm_eps_modify_eps_bearer_ctx_req_t * esm_cn_modify_eps_bearer_ctx);

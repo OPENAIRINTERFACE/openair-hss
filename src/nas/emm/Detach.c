@@ -301,7 +301,6 @@ emm_proc_detach (
 //      pdn_context_t * pdn_context = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
 //
 //      esm_sap.primitive = ESM_PDN_DISCONNECT_REQ;
-//      esm_sap.is_standalone = false;
 //      esm_sap.ue_id = emm_context->ue_id;
 //      esm_sap.ctx = emm_context;
 //      esm_sap.recv = emm_context->esm_msg;
@@ -434,7 +433,6 @@ emm_proc_detach_request (
 //      pdn_context_t * pdn_context = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
 //
 //      esm_sap.primitive = ESM_PDN_DISCONNECT_REQ;
-//      esm_sap.is_standalone = false;
 //      esm_sap.ue_id = emm_context->ue_id;
 //      esm_sap.ctx = emm_context;
 //      esm_sap.recv = emm_context->esm_msg;

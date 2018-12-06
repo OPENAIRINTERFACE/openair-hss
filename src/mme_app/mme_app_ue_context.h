@@ -119,8 +119,16 @@ typedef struct fteid_set_s {
   fteid_t *s5_fteid;
 };
 
-/** @struct bearer_context_t
- *  @brief Parameters that should be kept for an eps bearer.
+/*
+ * @struct bearer_context_t
+ * @brief Parameters that should be kept for an eps bearer.
+ *
+ * Structure of an EPS bearer
+ * --------------------------
+ * An EPS bearer is a logical concept which applies to the connection
+ * between two endpoints (UE and PDN Gateway) with specific QoS attri-
+ * butes. An EPS bearer corresponds to one Quality of Service policy
+ * applied within the EPC and E-UTRAN.
  */
 typedef struct bearer_context_s {
   // EPS Bearer ID: An EPS bearer identity uniquely identifies an EP S bearer for one UE accessing via E-UTRAN
@@ -146,9 +154,10 @@ typedef struct bearer_context_s {
 
   // EPS bearer QoS: QCI and ARP, optionally: GBR and MBR for GBR bearer
   qci_t                       qci;
-
-  // TFT: Traffic Flow Template. (For PMIP-based S5/S8 only)
-  //traffic_flow_template_t          *tft_pmip;
+  bitrate_t                   gbr_dl;
+  bitrate_t                   gbr_ul;
+  bitrate_t                   mbr_dl;
+  bitrate_t                   mbr_ul;
 
   // extra 23.401 spec members
   pdn_cid_t                         pdn_cx_id;
@@ -266,8 +275,6 @@ typedef struct pdn_context_s {
   ip_address_t                s_gw_address_s11_s4;
   teid_t                      s_gw_teid_s11_s4;            // set by S11 CREATE_SESSION_RESPONSE
 
-  esm_pdn_t                   esm_data;
-  bool                        is_active;
   protocol_configuration_options_t *pco; // temp storage of information waiting for activation of required procedure
 
   RB_ENTRY (pdn_context_s)    pdnCtxRbtNode;            /**< RB Tree Data Structure Node        */
@@ -292,9 +299,6 @@ typedef struct ue_context_s {
    * so usage of an unsigned integer on 64 bits is necessary.
    */
   imsi64_t         imsi;                        // set by nas_auth_param_req_t
-#define IMSI_UNAUTHENTICATED  (false)
-#define IMSI_AUTHENTICATED    (true)
-  bool                   imsi_auth;           // This is an IMSI indicator to show the IMSI is unauthenticated. set by nas_auth_resp_t
 
   bstring                msisdn;                    // The basic MSISDN of the UE. The presence is dictated by its storage in the HSS.
                                                     // set by S6A UPDATE LOCATION ANSWER
@@ -440,22 +444,12 @@ typedef struct ue_context_s {
    * Take the bearer contexts from here and put them into the PDN context.
    */
   // todo: check if they are necessary!
-  #define MAX_APN_PER_UE    5 /**< Maximum number of PDN sesssions per UE. */
+  #define MAX_APN_PER_UE    5 /**< Maximum number of PDN sessions per UE. */
   RB_HEAD(PdnContexts, pdn_context_s) pdn_contexts;
 
-  apn_config_profile_t   apn_config_profile;                  // set by S6A UPDATE LOCATION ANSWER
-
-#define SUBSCRIPTION_UNKNOWN    false
-#define SUBSCRIPTION_KNOWN      true
-
-
   // Subscribed UE-AMBR: The Maximum Aggregated uplink and downlink MBR values to be shared across all Non-GBR bearers according to the subscription of the user.
-
-  apn_config_profile_t   apn_profile;                  // set by S6A UPDATE LOCATION ANSWER
   subscriber_status_t    sub_status;                   // set by S6A UPDATE LOCATION ANSWER
 
-
-  bool                   subscription_known;        // set by S6A UPDATE LOCATION ANSWER
   subscriber_status_t    subscriber_status;        // set by S6A UPDATE LOCATION ANSWER
   network_access_mode_t  network_access_mode;       // set by S6A UPDATE LOCATION ANSWER
 
@@ -473,14 +467,6 @@ typedef struct ue_context_s {
   // read by S6A UPDATE LOCATION REQUEST
   me_identity_t          me_identity;                 // not set/read except read by display utility
 
-  /* TODO: Add TAI list */
-
-  /** Additional stuff for handover (pending flags etc..). */
-//  bool                   pending_bearer_deactivation; todo: when removing the tau procedure, evaluate and check (need to store old ECM state)?
-  bool                   pending_x2_handover; /**< Temporary flag, clear with Lionel how to integrate the X2 of B-COM. */
-  bool                   pending_bearer_deactivation; //todo: could not find a way to remove this yet.
-
-
   // Mobile Reachability Timer-Start when UE moves to idle state. Stop when UE moves to connected state
   struct mme_app_timer_t       mobile_reachability_timer;
   // Implicit Detach Timer-Start at the expiry of Mobile Reachability timer. Stop when UE moves to connected state
@@ -490,12 +476,8 @@ typedef struct ue_context_s {
   /** Custom timer to remove UE at the source-MME side after a timeout. */
 //  struct mme_app_timer_t       mme_mobility_completion_timer; // todo: not TXXXX value found for this.
 
-  // Handover related stuff (for which messages to use the following
-  struct mme_app_timer_t       path_switch_req_timer;
   // todo: (2) timers necessary for handover?
   struct mme_app_timer_t       s1ap_handover_req_timer;
-
-  ebi_t                        next_def_ebi_offset;
 } ue_context_t;
 
 
@@ -508,12 +490,16 @@ typedef struct mme_ue_context_s {
   uint32_t               nb_ue_since_last_stat;
   uint32_t               nb_bearers_since_last_stat;
 
+  uint32_t               nb_apn_configuration;
+
   hash_table_uint64_ts_t  *imsi_ue_context_htbl; // data is mme_ue_s1ap_id_t
   hash_table_uint64_ts_t  *tun10_ue_context_htbl;// data is mme_ue_s1ap_id_t
   hash_table_uint64_ts_t  *tun11_ue_context_htbl;// data is mme_ue_s1ap_id_t
   hash_table_uint64_ts_t  *mme_ue_s1ap_id_ue_context_htbl; // data is enb_s1ap_id_key_t
   hash_table_ts_t         *enb_ue_s1ap_id_ue_context_htbl;
   obj_hash_table_uint64_t *guti_ue_context_htbl;// data is mme_ue_s1ap_id_t
+  /** Subscription profiles saved by IMSI. */
+  hash_table_uint64_ts_t  *imsi_subscription_profile_htbl; // data is imsi
 } mme_ue_context_t;
 
 
@@ -538,6 +524,13 @@ ue_context_t *mme_ue_context_exists_s11_teid(mme_ue_context_t * const mme_ue_con
 ue_context_t *mme_ue_context_exists_s10_teid(mme_ue_context_t * const mme_ue_context,
     const s11_teid_t teid);
 
+
+/** \brief Retrieve a subscription profile by imsi.
+ * \param teid imsi
+ * @returns the subscription profile received from the HSS.
+ **/
+subscription_data_t *mme_ue_subscription_data_exists_imsi ( mme_ue_context_t * const mme_ue_context_p,
+    const imsi64_t imsi);
 
 /** \brief Retrieve an UE context by selecting the provided mme_ue_s1ap_id
  * \param mme_ue_s1ap_id The UE id identifier used in S1AP MME (and NAS)
@@ -604,13 +597,24 @@ void mme_ue_context_dump_coll_keys(void);
 int mme_insert_ue_context(mme_ue_context_t * const mme_ue_context,
                          const struct ue_context_s * const ue_context_p);
 
-
 /** \brief Remove a UE context of the tree of known UEs.
  * \param ue_context_p The UE context to remove
  **/
 void mme_remove_ue_context(mme_ue_context_t * const mme_ue_context,
 		                   struct ue_context_s * const ue_context_p);
 
+/** \brief Insert a subscription profile received from the HSS for a given IMSI.
+ * \param imsi
+ * @returns 0 in case of success, -1 otherwise
+ **/
+int mme_insert_subscription_profile(mme_ue_context_t * const mme_ue_context,
+                         const imsi64_t imsi,
+                         const subscription_data_t * subscription_data);
+
+/** \brief Remove subscription data of an IMSI cached from the HSS.
+ * \param imsi
+ **/
+void mme_remove_subscription_profile(mme_ue_context_t * const mme_ue_context_p, imsi64_t imsi);
 
 /** \brief Allocate memory for a new UE context
  * @returns Pointer to the new structure, NULL if allocation failed
@@ -626,7 +630,7 @@ void mme_app_ue_context_free_content (ue_context_t * const mme_ue_context_p);
  **/
 void mme_app_dump_ue_contexts(const mme_ue_context_t * const mme_ue_context);
 
-int mme_app_registration_complete(const mme_ue_s1ap_id_t mme_ue_s1ap_id);
+int mme_app_mobility_complete(const mme_ue_s1ap_id_t mme_ue_s1ap_id, const bool activate);
 
 void mme_app_handle_s1ap_ue_context_release_req(const itti_s1ap_ue_context_release_req_t * const s1ap_ue_context_release_req);
 

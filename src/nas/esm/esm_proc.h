@@ -66,26 +66,6 @@ typedef enum {
 /************************  G L O B A L    T Y P E S  ************************/
 /****************************************************************************/
 
-/*
- * Type of the ESM procedure callback executed when requested by the UE
- * or initiated by the network
- */
-typedef int (*esm_proc_procedure_t) (const bool, struct esm_context_s * const , const ebi_t, bstring*, const bool);
-
-/* PDN connection and EPS bearer context data */
-typedef struct esm_proc_data_s {
-  proc_tid_t              pti;
-  request_type_t          request_type;
-  bstring                 apn;
-  pdn_cid_t               pdn_cid;
-  ebi_t                   ebi;
-  esm_proc_pdn_type_t     pdn_type;
-  bstring                 pdn_addr;
-  bearer_qos_t            bearer_qos;
-  traffic_flow_template_t tft;
-  protocol_configuration_options_t  pco;
-} esm_proc_data_t;
-
 /****************************************************************************/
 /********************  G L O B A L    V A R I A B L E S  ********************/
 /****************************************************************************/
@@ -100,7 +80,6 @@ typedef struct esm_proc_data_s {
  * --------------------------------------------------------------------------
  */
 
-
 int esm_proc_status_ind(struct esm_context_s * esm_context, const proc_tid_t pti, ebi_t ebi, esm_cause_t *esm_cause);
 int esm_proc_status(const bool is_standalone, struct esm_context_s * const esm_context, const ebi_t ebi,
     bstring *msg, const bool sent_by_ue);
@@ -111,20 +90,32 @@ int esm_proc_status(const bool is_standalone, struct esm_context_s * const esm_c
  *          PDN connectivity procedure
  * --------------------------------------------------------------------------
  */
+/**
+ * PDN Connectivity procedure (UE triggered - incl. initial attach).
+ */
+nas_esm_pdn_connectivity_proc_t *_esm_proc_create_pdn_connectivity_procedure(mme_ue_s1ap_id_t ue_id, imsi_t *imsi, pti_t pti);
+void _esm_proc_free_pdn_connectivity_procedure(nas_esm_pdn_connectivity_proc_t * nas_pdn_connectivity_proc);
 
-int esm_proc_pdn_connectivity_request(struct esm_context_s * esm_context, const proc_tid_t pti,
-                                     const context_identifier_t  context_identifier,
-                                     const esm_proc_pdn_request_t request_type,
-                                     const_bstring const apn, esm_proc_pdn_type_t pdn_type,
-                                     const_bstring const pdn_addr, const ambr_t * subscribed_ambr, bearer_qos_t *default_qos,
-                                     protocol_configuration_options_t * const pco,
-                                     esm_cause_t *esm_cause, pdn_context_t              **pdn_context_pP);
+int
+esm_proc_pdn_connectivity_request (
+  mme_ue_s1ap_id_t             ue_id,
+  imsi_t                      *imsi,
+  tai_t                       *visited_tai,
+  const proc_tid_t             pti,
+  const apn_configuration_t   *apn_configuration,
+  const esm_proc_pdn_request_t request_type,
+  const_bstring                const apn_subscribed,
+  esm_proc_pdn_type_t          pdn_type);
 
-int esm_proc_pdn_connectivity_reject(bool is_standalone, struct esm_context_s * esm_context,
-                                     ebi_t ebi, bstring *msg, bool ue_triggered);
 int esm_proc_pdn_connectivity_failure(struct esm_context_s * esm_context, pdn_cid_t pid, ebi_t default_ebi);
 
-int esm_proc_pdn_config_res(struct esm_context_s * esm_context, pdn_cid_t **pdn_cid, bool ** is_pdn_connectivity, imsi64_t imsi, bstring apn, ebi_t ** default_ebi_pp, esm_cause_t *esm_cause);
+int esm_proc_pdn_config_res(mme_ue_s1ap_id_t ue_id, nas_esm_pdn_connectivity_proc_t *nas_pdn_connectivity_proc, imsi64_t imsi, ESM_msg *esm_resp_msg);
+
+int esm_proc_pdn_config_fail(mme_ue_s1ap_id_t ue_id, nas_esm_pdn_connectivity_proc_t *nas_pdn_connectivity_proc, ESM_msg *esm_resp_msg);
+
+int esm_proc_pdn_connectivity_res(mme_ue_s1ap_id_t ue_id, nas_esm_pdn_connectivity_proc_t *nas_pdn_connectivity_proc, imsi64_t imsi, ESM_msg *esm_resp_msg);
+
+int esm_proc_pdn_connectivity_fail(mme_ue_s1ap_id_t ue_id, nas_esm_pdn_connectivity_proc_t *nas_pdn_connectivity_proc, imsi64_t imsi, ESM_msg *esm_resp_msg);
 
 /*
  * --------------------------------------------------------------------------
@@ -145,7 +136,7 @@ int esm_proc_pdn_disconnect_reject(const bool is_standalone, struct esm_context_
  * --------------------------------------------------------------------------
  */
 
-int esm_proc_esm_information_request (struct esm_context_s * const ue_context, const pti_t pti);
+int esm_proc_esm_information_request (nas_esm_transaction_proc_t *esm_trx_proc, ESM_msg * esm_result_msg);
 
 int esm_proc_esm_information_response (struct esm_context_s * ue_context, pti_t pti, const_bstring const apn, const protocol_configuration_options_t * const pco, esm_cause_t * const esm_cause);
 
@@ -154,8 +145,14 @@ int esm_proc_esm_information_response (struct esm_context_s * ue_context, pti_t 
  *      Default EPS bearer context activation procedure
  * --------------------------------------------------------------------------
  */
-int esm_proc_default_eps_bearer_context(struct esm_context_s * esm_context, const proc_tid_t pti,
-pdn_context_t *pdn_context,   const bstring apn, ebi_t *ebi, const bearer_qos_t *bearer_qos, esm_cause_t *esm_cause);
+int esm_proc_default_eps_bearer_context (
+  mme_ue_s1ap_id_t   ue_id,
+  const nas_esm_pdn_connectivity_proc_t * nas_pdn_connectivity_proc,
+  bearer_qos_t *bearer_qos,
+  ambr_t       *apn_ambr,
+  ESM_msg *esm_rsp_msg,
+  esm_cause_t *esm_cause);
+
 int esm_proc_default_eps_bearer_context_request(bool is_standalone, struct esm_context_s * const esm_context, const ebi_t ebi, STOLEN_REF bstring *msg, const bool ue_triggered);
 int esm_proc_default_eps_bearer_context_failure (struct esm_context_s * esm_context, pdn_cid_t * const pid, ebi_t *ebi);
 
@@ -211,7 +208,5 @@ int esm_proc_modify_eps_bearer_context_reject(struct esm_context_s * esm_context
 int esm_proc_eps_bearer_context_deactivate(struct esm_context_s * const esm_context,const bool is_local, const ebi_t ebi,pdn_cid_t pid, esm_cause_t * const esm_cause);
 int esm_proc_eps_bearer_context_deactivate_request(const bool is_standalone, struct esm_context_s * const esm_context, const ebi_t ebi, STOLEN_REF bstring *msg, const bool ue_triggered);
 pdn_cid_t esm_proc_eps_bearer_context_deactivate_accept(struct esm_context_s * esm_context, ebi_t ebi, esm_cause_t *esm_cause);
-
-
 
 #endif /* __ESM_PROC_H__*/

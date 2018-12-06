@@ -381,17 +381,18 @@ mme_api_notify_new_guti (
 //------------------------------------------------------------------------------
 /*
  *
- *  Name:    mme_api_registration_complete()
+ *  Name:    mme_api_mobility_complete()
  *
- *  Description: Notify the MME that a UE has successfully registered via Attach or Tracking Area Update specific procedure.
+ *  Description: Notify the MME that a UE has successfully completed a mobility procedure including a TAU.
  *
  *  Inputs:
  *         ueid:      emm_context id
+ *         bool:      activate_bearers
  *  Return:    void
  *
  */
-int mme_api_registration_complete(const mme_ue_s1ap_id_t mme_ue_s1ap_id){
-  return mme_app_registration_complete(mme_ue_s1ap_id);
+int mme_api_mobility_complete(const mme_ue_s1ap_id_t mme_ue_s1ap_id, bool activate_bearers){
+  return mme_app_mobility_complete(mme_ue_s1ap_id, activate_bearers);
 }
 
 /****************************************************************************
@@ -538,30 +539,6 @@ mme_api_new_guti (
   OAILOG_INFO (LOG_NAS, "UE " MME_UE_S1AP_ID_FMT "  Got GUTI " GUTI_FMT "\n", ue_context->mme_ue_s1ap_id, GUTI_ARG(guti));
 //  unlock_ue_contexts(ue_context);
   OAILOG_FUNC_RETURN (LOG_NAS, RETURNok);
-}
-
-//------------------------------------------------------------------------------
-bool
-mme_api_get_pending_bearer_deactivation (mme_ue_s1ap_id_t mme_ue_s1ap_id) {
-  OAILOG_FUNC_IN (LOG_NAS);
-  int                                     rc = RETURNok;
-  ue_context_t                           *ue_context = NULL;
-  ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, mme_ue_s1ap_id);
-  if(ue_context){
-    return ue_context->pending_bearer_deactivation;
-  }
-}
-
-//------------------------------------------------------------------------------
-void
-mme_api_set_pending_bearer_deactivation (mme_ue_s1ap_id_t mme_ue_s1ap_id, bool pending_bearer_deactivation) {
-  OAILOG_FUNC_IN (LOG_NAS);
-  int                                     rc = RETURNok;
-  ue_context_t                           *ue_context = NULL;
-  ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, mme_ue_s1ap_id);
-  if(ue_context){
-    ue_context->pending_bearer_deactivation = pending_bearer_deactivation;
-  }
 }
 
 /****************************************************************************

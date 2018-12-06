@@ -31,7 +31,6 @@
 
 #include "3gpp_29.274.h"
 // todo: remove includes!
-#include "securityDef.h"
 #include "emm_fsm.h"
 #include "nas_timer.h"
 

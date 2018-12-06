@@ -504,6 +504,7 @@ void nas_delete_attach_procedure(struct emm_data_context_s *emm_context)
     nas_emm_procedure_gc(emm_context);
   }
 }
+
 //-----------------------------------------------------------------------------
 void nas_delete_tau_procedure(struct emm_data_context_s *emm_context)
 {
@@ -529,6 +530,7 @@ void nas_delete_tau_procedure(struct emm_data_context_s *emm_context)
     nas_emm_procedure_gc(emm_context);
   }
 }
+
 //-----------------------------------------------------------------------------
 void nas_delete_detach_procedure(struct emm_data_context_s *emm_context)
 {
@@ -546,7 +548,6 @@ void nas_delete_detach_procedure(struct emm_data_context_s *emm_context)
     nas_emm_procedure_gc(emm_context);
   }
 }
-
 
 //-----------------------------------------------------------------------------
 static void nas_delete_auth_info_procedure(struct emm_data_context_s *emm_context, nas_auth_info_proc_t ** auth_info_proc)
