@@ -49,7 +49,8 @@
 #include "mme_app_apn_selection.h"
 
 //------------------------------------------------------------------------------
-struct apn_configuration_s   * mme_app_select_apn(imsi64_t imsi, const_bstring const ue_selected_apn)
+int
+mme_app_select_apn(imsi64_t imsi, const_bstring const ue_selected_apn, apn_configuration_t **apn_configuration)
 {
   OAILOG_FUNC_IN(LOG_MME_APP);
   /** Get the APN config profile from the IMSI. */
@@ -58,8 +59,9 @@ struct apn_configuration_s   * mme_app_select_apn(imsi64_t imsi, const_bstring c
   subscription_data_t   *subscription_data = subscription_data_exists_imsi(&mme_app_desc.mme_ue_contexts, imsi);
 
   if(subscription_data == NULL){
+    *apn_configuration = NULL;
     OAILOG_INFO (LOG_MME_APP, "No subscription data is received for IMSI " IMSI_64_FMT ". \n", imsi);
-    OAILOG_FUNC_OUT(LOG_MME_APP, NULL);
+    OAILOG_FUNC_OUT(LOG_MME_APP, RETURNok);
   }
 
   context_identifier_t          default_context_identifier = subscription_data->apn_config_profile.context_identifier;
@@ -73,7 +75,8 @@ struct apn_configuration_s   * mme_app_select_apn(imsi64_t imsi, const_bstring c
       if (subscription_data->apn_config_profile.apn_configuration[index].context_identifier == default_context_identifier) {
         OAILOG_DEBUG (LOG_MME_APP, "Selected APN %s for UE " IMSI_64_FMT "\n",
             subscription_data->apn_config_profile.apn_configuration[index].service_selection, imsi);
-        OAILOG_FUNC_OUT(LOG_MME_APP, &subscription_data->apn_config_profile.apn_configuration[index]);
+        *apn_configuration = &subscription_data->apn_config_profile.apn_configuration[index];
+        OAILOG_FUNC_OUT(LOG_MME_APP, RETURNok);
       }
     } else {
       /*
@@ -84,9 +87,10 @@ struct apn_configuration_s   * mme_app_select_apn(imsi64_t imsi, const_bstring c
           strlen(subscription_data->apn_config_profile.apn_configuration[index].service_selection)) == 1) {
           OAILOG_DEBUG (LOG_MME_APP, "Selected APN %s for UE " IMSI_64_FMT "\n",
               ue_context->apn_config_profile.apn_configuration[index].service_selection, imsi);
-        OAILOG_FUNC_OUT(LOG_MME_APP, &subscription_data->apn_config_profile.apn_configuration[index]);
+          *apn_configuration = &subscription_data->apn_config_profile.apn_configuration[index];
+          OAILOG_FUNC_OUT(LOG_MME_APP, RETURNok);
       }
     }
   }
-  OAILOG_FUNC_OUT(LOG_MME_APP, NULL);
+  OAILOG_FUNC_OUT(LOG_MME_APP, RETURNerror);
 }

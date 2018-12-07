@@ -110,8 +110,8 @@ esm_proc_pdn_connectivity_request (
   tai_t                       *visited_tai,
   const proc_tid_t             pti,
   const apn_configuration_t   *apn_configuration,
-  const esm_proc_pdn_request_t request_type,
   const_bstring                const apn_subscribed,
+  const esm_proc_pdn_request_t request_type,
   esm_proc_pdn_type_t          pdn_type);
 
 int esm_proc_pdn_connectivity_failure(struct esm_context_s * esm_context, pdn_cid_t pid, ebi_t default_ebi);

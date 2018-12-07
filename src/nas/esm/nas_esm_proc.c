@@ -114,68 +114,56 @@ void nas_stop_esm_timer(mme_ue_s1ap_id_t ue_id, nas_timer_t * const nas_timer)
  ***************************************************************************/
 void _nas_proc_pdn_connectivity_timeout_handler (void *args)
 {
-  OAILOG_FUNC_IN (LOG_NAS_ESM);
-  #define ESM_SAP_BUFFER_SIZE 4096
-  uint8_t           esm_sap_buffer[ESM_SAP_BUFFER_SIZE];
-  memcpy(esm_sap_buffer, 0, ESM_SAP_BUFFER_SIZE);
+  uint8_t                             esm_sap_buffer[ESM_SAP_BUFFER_SIZE];
+  mme_ue_s1ap_id_t                    ue_id = (mme_ue_s1ap_id_t)args;
+  nas_esm_pdn_connectivity_proc_t    *esm_pdn_connectivity_proc = NULL;
+  ESM_msg esm_msg;
 
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
+
+  memset(&esm_msg, 0, sizeof(ESM_msg));
+  memcpy(esm_sap_buffer, 0, ESM_SAP_BUFFER_SIZE);
   /*
    * Get the procedure of the timer.
    */
-  mme_ue_s1ap_id_t ue_id = (mme_ue_s1ap_id_t)args;
-
-  nas_esm_pdn_connectivity_proc_t * nas_pdn_connectivity_proc = esm_data_get_procedure(ue_id);
-  if(!nas_pdn_connectivity_proc){
+  esm_pdn_connectivity_proc = esm_data_get_procedure(ue_id);
+  if(!esm_pdn_connectivity_proc){
     OAILOG_ERROR(LOG_NAS_ESM, "ESM-SAP   - No procedure for UE " MME_UE_S1AP_ID_FMT " found (T3489).\n", ue_id);
     OAILOG_FUNC_OUT(LOG_NAS_ESM);
   }
   OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Timer expired for transaction (type=%d, ue_id=" MME_UE_S1AP_ID_FMT "), " "retransmission counter = %d\n",
-      nas_pdn_connectivity_proc->trx_base_proc.trx_type, ue_id, nas_pdn_connectivity_proc->trx_base_proc.esm_proc_timer.count);
-
+      esm_pdn_connectivity_proc->trx_base_proc.trx_type, ue_id, esm_pdn_connectivity_proc->trx_base_proc.esm_proc_timer.count);
   /*
-   * Remove the ESM procedure and stop the T3485 timer if running.
+   * Remove the ESM procedure and stop the ESM timer if running.
    */
-  rc = esm_ebr_stop_timer (esm_context, ebi);
+  rc = nas_stop_esm_timer(ue_id, &esm_pdn_connectivity_proc->trx_base_proc.esm_proc_timer);
 
-  nas_pdn_connectivity_proc->trx_base_proc.retx_count += 1;
-  if (nas_pdn_connectivity_proc->trx_base_proc.retx_count < ESM_INFORMATION_COUNTER_MAX) {
-    /*
-     * Re-send deactivate ESM information request message to the UE.
+  /**
+   * Process the timeout.
+   * Encode the returned message. Currently, building and encoding a new message every time.
+   */
+  rc = esm_pdn_connectivity_proc->trx_base_proc.esm_proc.base_proc.timeout_notif(esm_pdn_connectivity_proc, &esm_msg);
+  if(rc == RETURNok){
+    /** Encode the received message.
+     * todo: may need to add trx type --> Bearer Context Transactions to the specific lower layer function
      */
-    ESM_msg esm_msg;
-    memset(&esm_msg, 0, sizeof(ESM_msg));
-    nas_pdn_connectivity_proc->trx_base_proc.esm_proc.base_proc.timeout_notif(nas_pdn_connectivity_proc, &esm_msg);
     int size = esm_msg_encode (&esm_msg, (uint8_t *) esm_sap_buffer, ESM_SAP_BUFFER_SIZE);
     if (size > 0) {
       bstring resp = blk2bstr(esm_sap_buffer, size);
-      int rc = lowerlayer_data_req(ue_id, ESM_CAUSE_SUCCESS, resp);
+      rc = esm_pdn_connectivity_proc->trx_base_proc.esm_proc.base_proc.lowerlayer_cb(ue_id, ESM_CAUSE_SUCCESS, resp);
       if(rc != RETURNok){
-        OAILOG_ERROR(LOG_NAS_ESM, "ESM-SAP   - Error sending the transaction message for UE " MME_UE_S1AP_ID_FMT " found (timeout). Removing the transaction (pti=%d).\n", ue_id,
-            nas_pdn_connectivity_proc->trx_base_proc.esm_proc.base_proc.pti);
         /** Remove the transaction. */
-        _esm_proc_remove_pdn_connectivity_procedure(nas_pdn_connectivity_proc);
+        esm_pdn_connectivity_proc->trx_base_proc.esm_proc.base_proc.free_cb(esm_pdn_connectivity_proc);
+        OAILOG_ERROR(LOG_NAS_ESM, "ESM-SAP   - Error sending the transaction message for UE " MME_UE_S1AP_ID_FMT " found (timeout). "
+            "Removed the transaction (pti=%d).\n", ue_id, esm_pdn_connectivity_proc->trx_base_proc.esm_proc.base_proc.pti);
       }
       OAILOG_FUNC_OUT (LOG_NAS_ESM);
     }
-  } else {
-
-    // todo: timeout fot T3485 default bearer context request timer
-//    /*
-//       * Release the default EPS bearer context and enter state INACTIVE
-//       */
-//      rc = esm_proc_eps_bearer_context_deactivate (esm_ebr_timer_data->ctx, true, esm_ebr_timer_data->ebi, pid, NULL);
-
-//    /*
-//     * Stop ESM timer T3485
-//     */
-//    rc = esm_ebr_stop_timer (esm_ebr_timer_data->ctx, esm_ebr_timer_data->ebi);
-
-    /*
-     * The maximum number of deactivate EPS bearer context request
-     * message retransmission has exceed
-     */
-    nas_pdn_connectivity_proc->trx_base_proc.esm_proc_timer.id = NAS_TIMER_INACTIVE_ID;
-    nas_pdn_connectivity_proc->trx_base_proc.esm_proc.base_proc.failure_notif(nas_pdn_connectivity_proc);
+  }else {
+    OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - Error while handling the timeout callback for (pti=%d, ue_id=" MME_UE_S1AP_ID_FMT "), " "retransmission counter = %d. Removing the transaction. \n",
+        esm_pdn_connectivity_proc->trx_base_proc.esm_proc.base_proc.pti, ue_id, esm_pdn_connectivity_proc->trx_base_proc.esm_proc_timer.count);
+    esm_pdn_connectivity_proc->trx_base_proc.esm_proc.base_proc.free_cb(esm_pdn_connectivity_proc);
+    OAILOG_FUNC_OUT (LOG_NAS_ESM);
   }
   OAILOG_FUNC_OUT (LOG_NAS_ESM);
 }
@@ -187,24 +175,34 @@ void _nas_proc_pdn_connectivity_timeout_handler (void *args)
 */
 //------------------------------------------------------------------------------
 int
-nas_esm_proc_data_ind (
-  itti_nas_esm_data_ind_t * esm_data_ind)
+nas_esm_proc_attach_ind (
+  itti_nas_esm_attach_ind_t * attach_ind)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   int                                     rc = RETURNerror;
 
   /** Try to get the ESM Data context. */
-  bstring                                rsp = NULL;
-  esm_cause_t                            esm_cause = ESM_CAUSE_SUCCESS;
-  rc = _esm_sap_recv(esm_data_ind->ue_id, esm_data_ind->esm_msg_p, &esm_cause, &rsp);
-  /** We don't check for the error.. If a response message is there, we directly transmit it over the lower layers.. */
+  esm_sap_t                               esm_sap   = {0};
+  bstring                                 rsp       = NULL;
+  esm_cause_t                             esm_cause = ESM_CAUSE_SUCCESS;
+
+  esm_sap.primitive = ESM_ATTACH_IND;
+  esm_sap.ue_id = attach_ind->ue_id;
+  esm_sap.data.attach_ind = attach_ind;
+  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_ESM_MME, NULL, 0, "0 ESM_ATTACH_IND ue_id " MME_UE_S1AP_ID_FMT " ", attach_ind->ue_id);
+  rc = esm_sap_signal(attach_ind->ue_id, attach_ind->esm_msg_p, &esm_cause, &rsp);
+  /** For the error case, the attach_reject callback should be sent. */
   if(rc == RETURNok && rsp){
     /**
      * Will get and lock the EMM context to set the security header if there is a valid EMM context.
      * No changes in the state of the EMM context.
      */
-    rc = lowerlayer_data_req(esm_data_ind->ue_id, esm_cause, rsp);
+    rc = lowerlayer_data_req(attach_ind->ue_id, esm_cause, rsp);
+  } else if (rc == RETURNerror) {
+    /** No EMS transaction should be created, but we should use the failure callback. */
+    rc = _emm_attach_reject(attach_ind->ue_id, rsp);
   }
+  /** Do nothing. */
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
 }
 
@@ -222,7 +220,7 @@ nas_esm_proc_pdn_config_res (
   esm_sap.primitive = ESM_PDN_CONFIG_RES;
   esm_sap.ue_id = pdn_config_res->ue_id;
   esm_sap.data.pdn_config_res = pdn_config_res;
-  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_ESM_MME, NULL, 0, "0 ESMCN_PDN_CONFIG_RES ue_id " MME_UE_S1AP_ID_FMT " ", pdn_config_res->ue_id);
+  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_ESM_MME, NULL, 0, "0 ESM_PDN_CONFIG_RES ue_id " MME_UE_S1AP_ID_FMT " ", pdn_config_res->ue_id);
   rc = esm_sap_signal(pdn_config_res->ue_id, &esm_cause, &rsp);
   if(rc == RETURNok && rsp){
     /**
@@ -230,6 +228,30 @@ nas_esm_proc_pdn_config_res (
      * No changes in the state of the EMM context.
      */
     rc = lowerlayer_data_req(pdn_config_res->ue_id, esm_cause, rsp);
+  }
+  OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
+}
+
+//------------------------------------------------------------------------------
+int
+nas_esm_proc_data_ind (
+  itti_nas_esm_data_ind_t * esm_data_ind)
+{
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
+  int                                     rc = RETURNerror;
+
+  /** Try to get the ESM Data context. */
+  bstring                                rsp = NULL;
+  esm_cause_t                            esm_cause = ESM_CAUSE_SUCCESS;
+//  lower_layer_cb_t                       ll_cb = lowerlayer_data_req; /**< Default lower layer callback method. May use other lower layer callback methods for dedicated bearers (not for attach). */
+  rc = _esm_sap_recv(esm_data_ind->ue_id, esm_data_ind->esm_msg_p, *ll_cb, &esm_cause, &rsp);
+  /** We don't check for the error.. If a response message is there, we directly transmit it over the lower layers.. */
+  if(rsp){
+    /**
+     * Will get and lock the EMM context to set the security header if there is a valid EMM context.
+     * No changes in the state of the EMM context.
+     */
+    rc = lowerlayer_data_req(esm_data_ind->ue_id, rsp);
   }
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
 }
@@ -272,7 +294,7 @@ nas_esm_proc_pdn_connectivity_res (
   esm_sap.primitive = ESM_PDN_CONNECTIVITY_CNF;
   esm_sap.ue_id = pdn_conn_res->ue_id;
   esm_sap.data.pdn_connectivity_res = pdn_conn_res;
-  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_ESM_MME, NULL, 0, "0 ESMCN_PDN_CONNECTIVITY_RES ue_id " MME_UE_S1AP_ID_FMT " ", pdn_conn_res->ue_id);
+  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_ESM_MME, NULL, 0, "0 ESM_PDN_CONNECTIVITY_RES ue_id " MME_UE_S1AP_ID_FMT " ", pdn_conn_res->ue_id);
   rc = esm_sap_signal(pdn_conn_res->ue_id, &esm_cause, &rsp);
   if(rc == RETURNok && rsp){
     /**
@@ -298,7 +320,7 @@ nas_esm_proc_pdn_connectivity_fail (
   esm_sap.primitive = ESM_PDN_CONNECTIVITY_REJ;
   esm_sap.ue_id = pdn_conn_fail->ue_id;
   esm_sap.data.pdn_connectivity_fail = pdn_conn_fail;
-  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_ESM_MME, NULL, 0, "0 ESMCN_PDN_CONNECTIVITY_FAIL ue_id " MME_UE_S1AP_ID_FMT " ", pdn_conn_fail->ue_id);
+  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_ESM_MME, NULL, 0, "0 ESM_PDN_CONNECTIVITY_FAIL ue_id " MME_UE_S1AP_ID_FMT " ", pdn_conn_fail->ue_id);
   rc = esm_sap_signal(pdn_conn_fail->ue_id, &esm_cause, &rsp);
   if(rc == RETURNok && rsp){
     /**
@@ -336,6 +358,9 @@ int nas_proc_activate_dedicated_bearer(esm_eps_activate_eps_bearer_ctx_req_t * e
 //  emm_sap.u.emm_cn.u.emm_cn_activate_dedicated_bearer_req = emm_cn_activate;
   MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_ESM_MME, NULL, 0, "0 ESM_ACTIVATE_DEDICATED_BEARER_REQ " MME_UE_S1AP_ID_FMT " ", esm_cn_activate->ue_id);
   rc = esm_sap_send (&esm_sap);
+
+  // todo: lower_layer_is_directly_activate_dedicated_bearers!
+
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
 }
 
@@ -349,6 +374,9 @@ int nas_proc_modify_eps_bearer_ctx(esm_eps_modify_eps_bearer_ctx_req_t * esm_cn_
 //  esm_sap.u.emm_cn.u.emm_cn_modify_eps_bearer_ctx_req = emm_cn_modify_eps_bearer_ctx;
   MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_ESM_MME, NULL, 0, "0 ESM_MODIFY_EPS_BEARER_CTX_REQ " MME_UE_S1AP_ID_FMT " ", esm_modify->ue_id);
   rc = esm_sap_send (&esm_sap);
+
+  // todo: lower_layer_is_directly_modify_activate_dedicated_bearers!
+
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
 }
 
@@ -358,10 +386,13 @@ int nas_proc_deactivate_dedicated_bearer(esm_eps_deactivate_eps_bearer_ctx_req_t
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   int                                     rc = RETURNerror;
   esm_sap_t                               esm_sap = {0};
-//  emm_sap.primitive = _ESMCN_DEACTIVATE_DEDICATED_BEARER_REQ;
-//  emm_sap.u.emm_cn.u.emm_cn_deactivate_dedicated_bearer_req = emm_cn_deactivate;
+  //  emm_sap.primitive = _ESMCN_DEACTIVATE_DEDICATED_BEARER_REQ;
+  //  emm_sap.u.emm_cn.u.emm_cn_deactivate_dedicated_bearer_req = emm_cn_deactivate;
   MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_ESM_MME, NULL, 0, "0 ESM_DEACTIVATE_DEDICATED_BEARER_REQ " MME_UE_S1AP_ID_FMT " ", esm_deactivate_eps_bearer->ue_id);
   rc = esm_sap_send (&esm_sap);
+
+  // todo: lower_layer_is_directly_modify_activate_dedicated_bearers!
+
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
 }
 

@@ -34,6 +34,11 @@
 #include "esm_proc.h"
 
 int
+nas_itti_esm_attach_ind(
+  const mme_ue_s1ap_id_t    ue_id,
+  bstring                  *esm_msg_p);
+
+int
 nas_itti_esm_data_ind(
   const mme_ue_s1ap_id_t ue_id,
   bstring                *esm_msg_p);

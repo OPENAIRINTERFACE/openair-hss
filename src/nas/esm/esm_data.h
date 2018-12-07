@@ -45,12 +45,17 @@ Description Defines internal private data handled by EPS Session
 #include "nas_timer.h"
 #include "networkDef.h"
 
+
+
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/
 /****************************************************************************/
 
 /* Total number of active EPS bearers */
 #define ESM_DATA_EPS_BEARER_TOTAL   11
+
+/** ESM byte buffer size. */
+#define ESM_SAP_BUFFER_SIZE 4096
 
 /****************************************************************************/
 /************************  G L O B A L    T Y P E S  ************************/

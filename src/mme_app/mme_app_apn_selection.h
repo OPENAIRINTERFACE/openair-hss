@@ -33,6 +33,6 @@
 /**
  * Get an APN configuration profile for a given imsi.
  */
-struct apn_configuration_s   * mme_app_select_apn(imsi64_t * const imsi, const_bstring const ue_selected_apn);
+int mme_app_select_apn(imsi64_t imsi, const_bstring const ue_selected_apn, apn_configuration_t **apn_configuration);
 
 #endif

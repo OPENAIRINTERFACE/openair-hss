@@ -90,8 +90,8 @@ esm_cause_t esm_recv_status(esm_context_t * esm_context, proc_tid_t pti, ebi_t e
  * Transaction related messages
  * ----------------------------
  */
-esm_cause_t esm_recv_pdn_connectivity_request(mme_ue_s1ap_id_t ue_id, const imsi_t *imsi, proc_tid_t pti, ebi_t ebi, tai_t *visited_tai,
-                                    const pdn_connectivity_request_msg *msg, ESM_msg *esm_response);
+esm_cause_t esm_recv_pdn_connectivity_request(bool attach, mme_ue_s1ap_id_t ue_id, const imsi_t *imsi, proc_tid_t pti, ebi_t ebi, tai_t *visited_tai,
+                                    const pdn_connectivity_request_msg *msg, ESM_msg * esm_resp_msg);
 
 esm_cause_t esm_recv_information_response (mme_ue_s1ap_id_t ue_id, proc_tid_t pti,  ebi_t ebi,
                                     const esm_information_response_msg * msg, ESM_msg *esm_response);

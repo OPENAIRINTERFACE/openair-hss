@@ -28,12 +28,14 @@
   \email: lionel.gauthier@eurecom.fr
 */
 
+/** EMM to ESM messages. */
+MESSAGE_DEF(NAS_ESM_ATTACH_IND,                 MESSAGE_PRIORITY_MED,   itti_nas_esm_attach_ind_t,         nas_emm_data_ind)
+MESSAGE_DEF(NAS_ESM_DATA_IND,                   MESSAGE_PRIORITY_MED,   itti_nas_esm_data_ind_t,         nas_esm_data_ind)
+
 MESSAGE_DEF(NAS_INITIAL_UE_MESSAGE,             MESSAGE_PRIORITY_MED,   itti_nas_initial_ue_message_t,   nas_initial_ue_message)
 MESSAGE_DEF(NAS_CONNECTION_ESTABLISHMENT_CNF,   MESSAGE_PRIORITY_MED,   itti_nas_conn_est_cnf_t,         nas_conn_est_cnf)
 MESSAGE_DEF(NAS_CONNECTION_RELEASE_IND,         MESSAGE_PRIORITY_MED,   itti_nas_conn_rel_ind_t,         nas_conn_rel_ind)
 MESSAGE_DEF(NAS_UPLINK_DATA_IND,                MESSAGE_PRIORITY_MED,   itti_nas_ul_data_ind_t,          nas_ul_data_ind)
-MESSAGE_DEF(NAS_ESM_DATA_IND,                   MESSAGE_PRIORITY_MED,   itti_nas_esm_data_ind_t,         nas_esm_data_ind)
-MESSAGE_DEF(NAS_ESM_CONGESTION,                 MESSAGE_PRIORITY_MED,   itti_nas_esm_congestion_ind_t,   nas_esm_congestion_ind)
 MESSAGE_DEF(NAS_DOWNLINK_DATA_REQ,              MESSAGE_PRIORITY_MED,   itti_nas_dl_data_req_t,          nas_dl_data_req)
 MESSAGE_DEF(NAS_DOWNLINK_DATA_CNF,              MESSAGE_PRIORITY_MED,   itti_nas_dl_data_cnf_t,          nas_dl_data_cnf)
 MESSAGE_DEF(NAS_DOWNLINK_DATA_REJ,              MESSAGE_PRIORITY_MED,   itti_nas_dl_data_rej_t,          nas_dl_data_rej)

@@ -294,7 +294,7 @@ int emm_proc_security_mode_complete(mme_ue_s1ap_id_t ue_id, const imeisv_mobile_
 int emm_proc_security_mode_reject(mme_ue_s1ap_id_t ue_id);
 
 void
-_clear_emm_ctxt(emm_data_context_t *emm_ctx);
+_clear_emm_ctxt(mme_ue_s1ap_id_t ue_id);
 /*
  *---------------------------------------------------------------------------
  *             Network indication handlers

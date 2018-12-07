@@ -91,38 +91,39 @@ static const char                      *_emm_detach_type_str[] = {
 #include "s1ap_mme.h"
 
 void
-_clear_emm_ctxt(emm_data_context_t *emm_context) {
+_clear_emm_ctxt(mme_ue_s1ap_id_t ue_id) {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
-  ue_description_t * ue_ref = s1ap_is_ue_mme_id_in_list(emm_context->ue_id);
-  if (!emm_context) {
+  emm_data_context_t                     *emm_context = emm_data_context_get (&_emm_data, ue_id);
+  if(!emm_context){
+    OAILOG_DEBUG("No EMM context was found to clear for ue_id " MME_UE_S1AP_ID_FMT ". \n", ue_id);
     OAILOG_FUNC_OUT(LOG_NAS_EMM);
   }
-  mme_ue_s1ap_id_t  ue_id = emm_context->ue_id;
-  if(ue_ref){
-    OAILOG_DEBUG(LOG_NAS_EMM, "EMM-PROC  -  * * * * * (0) ueREF %p has mmeId " MME_UE_S1AP_ID_FMT ", enbId " ENB_UE_S1AP_ID_FMT " state %d and eNB_ref %p. \n",
-             ue_ref, ue_ref->mme_ue_s1ap_id, ue_ref->enb_ue_s1ap_id, ue_ref->s1_ue_state, ue_ref->enb);
+  if(!emm_context->is_dynamic) {
+    OAILOG_DEBUG("Cannot clear not-dynamic EMM context for ue_id " MME_UE_S1AP_ID_FMT ". \n", ue_id);
+    OAILOG_FUNC_OUT(LOG_NAS_EMM);
   }
+//  if(s1ap_is_ue_mme_id_in_list(emm_context->ue_id)ue_ref){
+//    OAILOG_DEBUG(LOG_NAS_EMM, "EMM-PROC  -  * * * * * (0) ueREF %p has mmeId " MME_UE_S1AP_ID_FMT ", enbId " ENB_UE_S1AP_ID_FMT " state %d and eNB_ref %p. \n",
+//             ue_ref, ue_ref->mme_ue_s1ap_id, ue_ref->enb_ue_s1ap_id, ue_ref->s1_ue_state, ue_ref->enb);
+//  }
 
+  LOCK_EMM_CONTEXT(emm_context);
   // todo: check if necessary!
   nas_delete_all_emm_procedures(emm_context);
-  if(ue_ref){
-    OAILOG_DEBUG(LOG_NAS_EMM, "EMM-PROC  -  * * * * * (1) ueREF %p has mmeId " MME_UE_S1AP_ID_FMT ", enbId " ENB_UE_S1AP_ID_FMT " state %d and eNB_ref %p. \n",
-            ue_ref, ue_ref->mme_ue_s1ap_id, ue_ref->enb_ue_s1ap_id, ue_ref->s1_ue_state, ue_ref->enb);
-  }
-
+//  if(ue_ref){
+//    OAILOG_DEBUG(LOG_NAS_EMM, "EMM-PROC  -  * * * * * (1) ueREF %p has mmeId " MME_UE_S1AP_ID_FMT ", enbId " ENB_UE_S1AP_ID_FMT " state %d and eNB_ref %p. \n",
+//            ue_ref, ue_ref->mme_ue_s1ap_id, ue_ref->enb_ue_s1ap_id, ue_ref->s1_ue_state, ue_ref->enb);
+//  }
   /** Free all ESM procedure. */
   nas_delete_all_esm_procedures(emm_context);
-
   /** Stop/Delete all ESM procedurs & timers. */
   // todo: removal of esm context in emm?!
 //  free_esm_context_content(&emm_context->esm_ctx);
-
   // todo: ESM_MSG removal
 //  if (emm_context->esm_msg) {
 //    bdestroy_wrapper(&emm_context->esm_msg);
 //  }
   emm_data_context_remove(&_emm_data, emm_context);
-
   emm_ctx_clear_old_guti(emm_context);
   emm_ctx_clear_guti(emm_context);
   emm_ctx_clear_imsi(emm_context);
@@ -133,10 +134,11 @@ _clear_emm_ctxt(emm_data_context_t *emm_context) {
   /*
    * Release the EMM context
    */
+  // todo: need to unlock freed context?!
+  UNLOCK_EMM_CONTEXT(emm_context);
   free_wrapper((void **) &emm_context);
   OAILOG_FUNC_OUT(LOG_NAS_EMM);
 }
-
 
 /*
    --------------------------------------------------------------------------

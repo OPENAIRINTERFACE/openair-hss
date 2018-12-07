@@ -75,7 +75,6 @@
 
 #include "nas_itti_messaging.h"
 
-extern int emm_cn_wrapper_attach_accept (emm_data_context_t * emm_context);
 extern int emm_cn_wrapper_tracking_area_update_accept (emm_data_context_t * emm_context);
 
 static int _emm_cn_authentication_res (emm_cn_auth_res_t * const msg);
@@ -285,31 +284,6 @@ static int _emm_cn_pdn_connectivity_res (emm_cn_pdn_connectivity_resp_t * msg_pP
   /** We will set the UE into COMMON-PROCEDURE-INITIATED state inside this method. */
   OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
 }
-///*
-//     * Send attach accept message to the UE
-//     */
-//    rc = emm_cn_wrapper_attach_accept (emm_context);
-//
-//    if (rc != RETURNerror) {
-//      if (IS_EMM_CTXT_PRESENT_OLD_GUTI(emm_context) &&
-//          (memcmp(&emm_context->_old_guti, &emm_context->_guti, sizeof(emm_context->_guti)))) {
-//        /*
-//         * Implicit GUTI reallocation;
-//         * Notify EMM that common procedure has been initiated
-//         * LG: TODO check this, seems very suspicious
-//         */
-//        emm_sap_t                               emm_sap = {0};
-//
-//        emm_sap.primitive = EMMREG_COMMON_PROC_REQ;
-//        emm_sap.u.emm_reg.ue_id = msg_pP->ue_id;
-//        emm_sap.u.emm_reg.ctx  = emm_context;
-//
-//        MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMREG_COMMON_PROC_REQ ue id " MME_UE_S1AP_ID_FMT " ", msg_pP->ue_id);
-//
-//        rc = emm_sap_send (&emm_sap);
-//      }
-//    }
-//  }
 
 //------------------------------------------------------------------------------
 static int

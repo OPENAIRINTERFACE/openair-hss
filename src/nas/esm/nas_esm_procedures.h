@@ -31,9 +31,18 @@
 
 struct nas_esm_base_proc_s;
 
+/*
+ * Define callbacks instead of checking the message type in the lower layer and accessing EMM functionalities.
+ * Also the EMM context will enter COMMON state and create a new GUTI after this callback.
+ */
+
 typedef int (*esm_failure_cb_t)(struct nas_esm_base_proc_s*);
 /** Method called inside the timeout. */
 typedef int (*esm_timeout_cb_t)(ESM_msg*);
+
+/** Methods used for callbacks. */
+typedef int (*lower_layer_cb_t)(mme_ue_s1ap_id_t, bstring);
+typedef int (*free_proc_cb_t)(nas_esm_base_proc_t *);
 
 typedef struct nas_esm_base_proc_s {
   mme_ue_s1ap_id_t            ue_id;
@@ -71,6 +80,7 @@ typedef enum {
 typedef struct nas_esm_proc_s {
   nas_esm_base_proc_t         base_proc;
   esm_proc_type_t             type;
+  lower_layer_cb_t            lower_layer;
 //  esm_transaction_proc_type_t esm_procedure_type;
 } nas_esm_proc_t;
 
@@ -94,7 +104,9 @@ typedef struct nas_esm_pdn_connectivity_proc_s {
   tai_t                        visited_tai;
   pdn_cid_t                    pdn_cid;
   ebi_t                        default_ebi;
-  bool                         initial_attach;
+  /** Attach procedure callbacks. */
+  esm_attach_success_cb_t      attach_success;
+  esm_attach_fail_cb_t         attach_fail;
 //  protocol_configuration_options_t  pco;
 } nas_esm_pdn_connectivity_proc_t;
 

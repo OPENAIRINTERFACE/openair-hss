@@ -53,6 +53,14 @@ Description Defines the ESM Service Access Point that provides EPS
  */
 typedef enum esm_primitive_s {
   ESM_START = 0,
+
+  /* Transaction related procedures (initiated by the UE) */
+  ESM_ATTACH_IND,
+  ESM_PDN_CONFIG_RES,
+  ESM_PDN_CONFIG_FAIL,
+  ESM_PDN_CONNECTIVITY_CNF,
+  ESM_PDN_CONNECTIVITY_REJ,
+
   /* Procedures related to EPS bearer contexts (initiated by the network) */
   ESM_DEFAULT_EPS_BEARER_CONTEXT_ACTIVATE_REQ,
   ESM_DEFAULT_EPS_BEARER_CONTEXT_ACTIVATE_CNF,
@@ -67,12 +75,6 @@ typedef enum esm_primitive_s {
   ESM_DEDICATED_EPS_BEARER_CONTEXT_DEACTIVATE_CNF,
   ESM_EPS_UPDATE_ESM_BEARER_CTXS_REQ,
 
-
-  /* Transaction related procedures (initiated by the UE) */
-  ESM_PDN_CONFIG_RES,
-  ESM_PDN_CONFIG_FAIL,
-  ESM_PDN_CONNECTIVITY_CNF,
-  ESM_PDN_CONNECTIVITY_REJ,
 
 
 
@@ -91,6 +93,7 @@ typedef enum esm_primitive_s {
 /************************  G L O B A L    T Y P E S  ************************/
 /****************************************************************************/
 
+typedef struct itti_nas_esm_attach_ind_t                    esm_emm_attach_ind_t;
 typedef struct itti_nas_pdn_config_rsp_s                    esm_cn_pdn_config_res_t;
 typedef struct itti_nas_pdn_config_fail_s                   esm_cn_pdn_config_fail_t;
 typedef struct itti_nas_pdn_connectivity_rsp_s              esm_cn_pdn_connectivity_res_t;
@@ -169,6 +172,7 @@ typedef union {
   esm_bearer_resource_modify_rej_t          esm_bearer_resource_modify_rej;
 
   /** From here on just pointers. */
+  esm_emm_attach_ind_t           *attach_ind;
   esm_cn_pdn_config_res_t        *pdn_config_res;
   esm_cn_pdn_config_fail_t       *pdn_config_fail;
   esm_cn_pdn_connectivity_res_t  *pdn_connectivity_res;

@@ -990,16 +990,36 @@ static int _emm_attach_release (emm_data_context_t *emm_context)
  *      Others:    None
  *
  */
-int _emm_attach_reject (emm_data_context_t *emm_context, struct nas_emm_base_proc_s * nas_emm_base_proc)
+int _emm_wrapper_attach_reject (mme_ue_s1ap_id_t ue_id, bstring esm_rsp)
 {
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  emm_data_context_t                     * emm_context = NULL;
   int                                     rc = RETURNerror;
 
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
+
+  // todo: get the EMM_CONTEXT, if exists lock it!!
+  emm_context = emm_data_context_get(&_emm_data, ue_id);
+  if(!emm_context){
+    OAILOG_WARNING(LOG_NAS_EMM, "EMM-PROC  - No EMM context was found for ue_id " MME_UE_S1AP_ID_FMT ". Ignoring attach reject. \n", ue_id);
+    OAILOG_FUNC_RETURN(LOG_NAS_EMM, RETURNok);
+  }
+  nas_emm_attach_proc_t                  * attach_proc                 = (nas_emm_attach_proc_t*)get_nas_specific_procedure(emm_context);
+  if(!attach_proc){
+    OAILOG_WARNING(LOG_NAS_EMM, "EMM-PROC  - No attach procedure was found for ue_id " MME_UE_S1AP_ID_FMT ". Ignoring attach reject. \n", ue_id);
+    OAILOG_FUNC_RETURN(LOG_NAS_EMM, RETURNok);
+  }
+
+}
+static int _emm_attach_reject(nas_emm_attach_proc_t * attach_proc)
+{
   emm_sap_t                               emm_sap = {0};
-  struct nas_emm_attach_proc_s          * attach_proc = (struct nas_emm_attach_proc_s*)nas_emm_base_proc;
+  emm_data_context_t                     *emm_context = NULL;
+
+  OAILOG_FUNC_IN(LOG_NAS_EMM);
 
   OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - EMM attach procedure not accepted " "by the network (ue_id=" MME_UE_S1AP_ID_FMT ", cause=%d)\n",
       attach_proc->ue_id, attach_proc->emm_cause);
+
   /*
    * Notify EMM-AS SAP that Attach Reject message has to be sent
    * onto the network
@@ -1007,11 +1027,8 @@ int _emm_attach_reject (emm_data_context_t *emm_context, struct nas_emm_base_pro
   emm_sap.primitive = EMMAS_ESTABLISH_REJ;
   emm_sap.u.emm_as.u.establish.ue_id = attach_proc->ue_id;
   emm_sap.u.emm_as.u.establish.eps_id.guti = NULL;
-
-
   emm_sap.u.emm_as.u.establish.emm_cause = attach_proc->emm_cause;
   emm_sap.u.emm_as.u.establish.nas_info = EMM_AS_NAS_INFO_ATTACH;
-
   if (attach_proc->emm_cause != EMM_CAUSE_ESM_FAILURE) {
     emm_sap.u.emm_as.u.establish.nas_msg = NULL;
   } else if (attach_proc->esm_msg_out) {
@@ -1019,24 +1036,18 @@ int _emm_attach_reject (emm_data_context_t *emm_context, struct nas_emm_base_pro
   } else {
     OAILOG_WARNING(LOG_NAS_EMM, "EMM-PROC  - ESM message is missing but attach reject reason due ESM. Continuing with attach reject.\n");
   }
-
   /*
    * Setup EPS NAS security data
    */
+  emm_context = emm_data_context_get(&_emm_data, attach_proc->ue_id);
   if (emm_context) {
     emm_as_set_security_data (&emm_sap.u.emm_as.u.establish.sctx, &emm_context->_security, false, false);
   } else {
     emm_as_set_security_data (&emm_sap.u.emm_as.u.establish.sctx, NULL, false, false);
   }
   rc = emm_sap_send (&emm_sap);
-
-
   // Release EMM context
-  if (emm_context) {
-    if(emm_context->is_dynamic) {
-      _clear_emm_ctxt(emm_context);
-    }
-  }
+  _clear_emm_ctxt(emm_context->ue_id);
 
 //  unlock_ue_contexts(ue_context);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
@@ -1514,7 +1525,7 @@ static int _emm_attach (emm_data_context_t *emm_context)
        * Notify ESM that PDN connectivity is requested.
        * This will decouple the ESM message.
        */
-      nas_itti_esm_data_ind(emm_context->ue_id, &attach_proc->ies->esm_msg);
+      nas_itti_esm_attach_ind(emm_context->ue_id, &attach_proc->ies->esm_msg);
       OAILOG_INFO (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " EMM-PROC  - Processing PDN Connectivity Request asynchronously.\n", emm_context->ue_id);
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
   }
@@ -1525,7 +1536,28 @@ static int _emm_attach (emm_data_context_t *emm_context)
 //------------------------------------------------------------------------------
 int emm_cn_wrapper_attach_accept (emm_data_context_t * emm_context)
 {
-  return _emm_send_attach_accept (emm_context);
+  OAILOG_FUNC_IN(LOG_NAS_EMM);
+  int rc = _emm_send_attach_accept (emm_context);
+  if (rc != RETURNerror) {
+    if (IS_EMM_CTXT_PRESENT_OLD_GUTI(emm_context) &&
+        (memcmp(&emm_context->_old_guti, &emm_context->_guti, sizeof(emm_context->_guti)))) {
+      /*
+       * Implicit GUTI reallocation;
+       * Notify EMM that common procedure has been initiated
+       * LG: TODO check this, seems very suspicious
+       */
+      emm_sap_t                               emm_sap = {0};
+
+      emm_sap.primitive = EMMREG_COMMON_PROC_REQ;
+      emm_sap.u.emm_reg.ue_id = msg_pP->ue_id;
+      emm_sap.u.emm_reg.ctx  = emm_context;
+
+      MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMREG_COMMON_PROC_REQ ue id " MME_UE_S1AP_ID_FMT " ", msg_pP->ue_id);
+
+      rc = emm_sap_send (&emm_sap);
+    }
+  }
+  OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
 }
 
 /*

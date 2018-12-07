@@ -94,33 +94,39 @@ static int _esm_sap_send (
    String representation of ESM-SAP primitives
 */
 static const char                      *_esm_sap_primitive_str[] = {
-  "ESM_DEFAULT_EPS_BEARER_CONTEXT_ACTIVATE_REQ",
-  "ESM_DEFAULT_EPS_BEARER_CONTEXT_ACTIVATE_CNF",
-  "ESM_DEFAULT_EPS_BEARER_CONTEXT_ACTIVATE_REJ",
-  "ESM_DEDICATED_EPS_BEARER_CONTEXT_ACTIVATE_REQ",
-  "ESM_DEDICATED_EPS_BEARER_CONTEXT_ACTIVATE_CNF",
-  "ESM_DEDICATED_EPS_BEARER_CONTEXT_ACTIVATE_REJ",
-  "ESM_EPS_BEARER_CONTEXT_MODIFY_REQ",
-  "ESM_EPS_BEARER_CONTEXT_MODIFY_CNF",
-  "ESM_EPS_BEARER_CONTEXT_MODIFY_REJ",
-  "ESM_DEDICATED_EPS_BEARER_CONTEXT_DEACTIVATE_REQ",
-  "ESM_DEDICATED_EPS_BEARER_CONTEXT_DEACTIVATE_CNF",
+    "ESM_ATTACH_IND_RES",
+    "ESM_PDN_CONFIG_RES",
+    "ESM_PDN_CONFIG_REJ",
+    "ESM_PDN_CONNECTIVITY_RES",
+    "ESM_PDN_CONNECTIVITY_REJ",
 
-  "ESM_EPS_UPDATE_ESM_BEARER_CTXS_REQ",
-
-  "ESM_PDN_CONFIG_RES",
-
-  "ESM_PDN_CONNECTIVITY_REQ",
-  "ESM_PDN_CONNECTIVITY_CNF",
-  "ESM_PDN_CONNECTIVITY_REJ",
-  "ESM_PDN_DISCONNECT_REQ",
-  "ESM_PDN_DISCONNECT_CNF",
-  "ESM_PDN_DISCONNECT_REJ",
-  "ESM_BEARER_RESOURCE_ALLOCATE_REQ",
-  "ESM_BEARER_RESOURCE_ALLOCATE_REJ",
-  "ESM_BEARER_RESOURCE_MODIFY_REQ",
-  "ESM_BEARER_RESOURCE_MODIFY_REJ",
-  "ESM_UNITDATA_IND",
+//  "ESM_DEFAULT_EPS_BEARER_CONTEXT_ACTIVATE_REQ",
+//  "ESM_DEFAULT_EPS_BEARER_CONTEXT_ACTIVATE_CNF",
+//  "ESM_DEFAULT_EPS_BEARER_CONTEXT_ACTIVATE_REJ",
+//  "ESM_DEDICATED_EPS_BEARER_CONTEXT_ACTIVATE_REQ",
+//  "ESM_DEDICATED_EPS_BEARER_CONTEXT_ACTIVATE_CNF",
+//  "ESM_DEDICATED_EPS_BEARER_CONTEXT_ACTIVATE_REJ",
+//  "ESM_EPS_BEARER_CONTEXT_MODIFY_REQ",
+//  "ESM_EPS_BEARER_CONTEXT_MODIFY_CNF",
+//  "ESM_EPS_BEARER_CONTEXT_MODIFY_REJ",
+//  "ESM_DEDICATED_EPS_BEARER_CONTEXT_DEACTIVATE_REQ",
+//  "ESM_DEDICATED_EPS_BEARER_CONTEXT_DEACTIVATE_CNF",
+//
+//  "ESM_EPS_UPDATE_ESM_BEARER_CTXS_REQ",
+//
+//  "ESM_PDN_CONFIG_RES",
+//
+//  "ESM_PDN_CONNECTIVITY_REQ",
+//  "ESM_PDN_CONNECTIVITY_CNF",
+//  "ESM_PDN_CONNECTIVITY_REJ",
+//  "ESM_PDN_DISCONNECT_REQ",
+//  "ESM_PDN_DISCONNECT_CNF",
+//  "ESM_PDN_DISCONNECT_REJ",
+//  "ESM_BEARER_RESOURCE_ALLOCATE_REQ",
+//  "ESM_BEARER_RESOURCE_ALLOCATE_REJ",
+//  "ESM_BEARER_RESOURCE_MODIFY_REQ",
+//  "ESM_BEARER_RESOURCE_MODIFY_REJ",
+//  "ESM_UNITDATA_IND",
 };
 
 
@@ -194,6 +200,11 @@ esm_sap_signal(esm_sap_t * msg, bstring *resp)
   OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Received primitive %s (%d)\n", _esm_sap_primitive_str[primitive - ESM_START - 1], primitive);
 
   switch (primitive) {
+
+  case ESM_ATTACH_IND: {
+    rc = _esm_sap_recv (msg->ue_id, true, msg->data.attach_ind->esm_msg_p, &esm_cause, resp);
+  }
+  break;
 
   case ESM_PDN_CONFIG_RES:{
     /*
@@ -325,12 +336,16 @@ esm_sap_signal(esm_sap_t * msg, bstring *resp)
   if (rc != RETURNok) {
     OAILOG_ERROR (LOG_NAS_ESM, "ESM-SAP   - Failed to process primitive %s (%d). No response message is expected. \n", _esm_sap_primitive_str[primitive - ESM_START - 1], primitive);
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
- }
+  }
+  if(resp){
+    OAILOG_DEBUG(LOG_NAS_ESM, "ESM-SAP   - An encoded response message for primitive %s (%d) already exists. Returning it. \n", _esm_sap_primitive_str[primitive - ESM_START - 1], primitive);
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);
+  }
   /*
    * ESM message processing failed and no response/reject message is received.
    * No status message for signaling.
    */
-  if (rc != RETURNerror && esm_resp_msg->header.message_type) {
+  if (esm_resp_msg->header.message_type) {
     #define ESM_SAP_BUFFER_SIZE 4096
     uint8_t           esm_sap_buffer[ESM_SAP_BUFFER_SIZE];
     /*
@@ -381,10 +396,13 @@ esm_sap_signal(esm_sap_t * msg, bstring *resp)
  ***************************************************************************/
 static int
 _esm_sap_recv (
-  mme_ue_s1ap_id_t mme_ue_s1ap_id,
-  const_bstring req,
-  esm_cause_t *esm_cause,
-  bstring *rsp)
+  mme_ue_s1ap_id_t    mme_ue_s1ap_id,
+  imsi_t             *imsi,
+  bool                attach,
+  tai_t              *visited_tai,
+  const_bstring       req,
+  esm_cause_t        *esm_cause,
+  bstring            *rsp)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   int                                     rc = RETURNerror;
@@ -470,15 +488,17 @@ _esm_sap_recv (
       /*
        * Process PDN connectivity request message received from the UE
        */
-      *esm_cause = esm_recv_pdn_connectivity_request (mme_ue_s1ap_id, pti, ebi, &esm_msg.pdn_connectivity_request, &esm_resp_msg);
+      *esm_cause = esm_recv_pdn_connectivity_request (attach, mme_ue_s1ap_id, imsi, pti, ebi, visited_tai, &esm_msg.pdn_connectivity_request, &esm_resp_msg.activate_dedicated_eps_bearer_context_request);
       if (*esm_cause != ESM_CAUSE_SUCCESS) {
-        /** Clear the received message and overwrite with the response. */
-        OAILOG_ERROR (LOG_NAS_ESM, "ESM-SAP   - PDN_CONNECTIVITY_REQUEST pti %u ebi %u for UE " MME_UE_S1AP_ID_FMT " could not be successfully processed. ESM_CAUSE: %d. \n", pti, ebi, mme_ue_s1ap_id, *esm_cause);
-        esm_send_pdn_connectivity_reject (pti, &esm_resp_msg.pdn_connectivity_reject, *esm_cause);
-        /** No callback function needed. Encoded message will be directly sent. */
-        break;
+        /*
+         * No transaction expected (not touching network triggered transactions.
+         */
+        memset(&esm_resp_msg, 0, sizeof (ESM_msg));
+        _esm_send_pdn_connectivity_reject(&esm_resp_msg, esm_cause);
       }else {
-        /** If a response ESM message is already receive, return it, no need to further go on. */
+        /*
+         * If a response ESM message is already receive, return it, no need to further go on.
+         */
         OAILOG_DEBUG (LOG_NAS_ESM, "ESM-SAP   - PDN_CONNECTIVITY_REQUEST pti %u ebi %u for UE " MME_UE_S1AP_ID_FMT " was successfully processed. \n", pti, ebi, mme_ue_s1ap_id);
       }
     }
@@ -519,18 +539,18 @@ _esm_sap_recv (
     /*
      * Return an ESM status message
      */
-    rc = esm_send_status (pti, ebi, &esm_resp_msg.esm_status, esm_cause);
+    esm_send_status (pti, ebi, &esm_resp_msg.esm_status, esm_cause);
     /*
-     * Discard received ESM message
+     * Consider this as an error case, may still return an encoded message but will call the error callback.
      */
+    rc = RETURNerror;
   } else {
     /*
      * ESM message processing succeed
      */
     rc = RETURNok;
   }
-  if (rc != RETURNerror && esm_resp_msg.header.message_type) {
-    #define ESM_SAP_BUFFER_SIZE 4096
+  if (esm_resp_msg.header.message_type) {
     uint8_t           esm_sap_buffer[ESM_SAP_BUFFER_SIZE];
     /*
      * Encode the returned ESM response message
@@ -675,15 +695,6 @@ _esm_sap_send (
        */
       esm_procedure = esm_proc_eps_bearer_context_deactivate_request;
     }
-    break;
-
-  case PDN_CONNECTIVITY_REJECT:
-    rc = esm_send_pdn_connectivity_reject (pti, &esm_msg.pdn_connectivity_reject, data->pdn_connect.esm_cause);
-    /*
-     * Setup the callback function used to send PDN connectivity
-     * * * * reject message onto the network
-     */
-    esm_procedure = esm_proc_pdn_connectivity_reject;
     break;
 
   case PDN_DISCONNECT_REJECT:

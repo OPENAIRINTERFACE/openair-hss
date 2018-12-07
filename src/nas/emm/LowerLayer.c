@@ -330,7 +330,7 @@ int lowerlayer_data_ind (mme_ue_s1ap_id_t ue_id, const_bstring    data)
  **      Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
-int lowerlayer_data_req (mme_ue_s1ap_id_t ue_id, esm_cause_t esm_cause, bstring data)
+int lowerlayer_data_req (mme_ue_s1ap_id_t ue_id, bstring data)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNok;

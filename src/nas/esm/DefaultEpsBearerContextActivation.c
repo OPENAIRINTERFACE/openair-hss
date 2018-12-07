@@ -89,6 +89,111 @@
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
 /****************************************************************************/
 
+
+/*
+   --------------------------------------------------------------------------
+                Timer handlers
+   --------------------------------------------------------------------------
+*/
+/****************************************************************************
+ **                                                                        **
+ ** Name:    _default_eps_bearer_activate_t3485_handler()              **
+ **                                                                        **
+ ** Description: T3485 timeout handler                                     **
+ **                                                                        **
+ **              3GPP TS 24.301, section 6.4.1.6, case a                   **
+ **      On the first expiry of the timer T3485, the MME shall re- **
+ **      send the ACTIVATE DEFAULT EPS BEARER CONTEXT REQUEST and  **
+ **      shall reset and restart timer T3485. This retransmission  **
+ **      is repeated four times, i.e. on the fifth expiry of timer **
+ **      T3485, the MME shall release possibly allocated resources **
+ **      for this activation and shall abort the procedure.        **
+ **                                                                        **
+ ** Inputs:  args:      handler parameters                         **
+ **      Others:    None                                       **
+ **                                                                        **
+ ** Outputs:     None                                                      **
+ **      Return:    None                                       **
+ **      Others:    None                                       **
+ **                                                                        **
+ ***************************************************************************/
+void _default_eps_bearer_activate_t3485_handler (nas_esm_pdn_connectivity_proc_t * esm_pdn_conn_procedure, ESM_msg * esm_resp_msg)
+{
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
+  int                                     rc;
+
+  ////      rc = esm_proc_default_eps_bearer_context(mme_ue_s1ap_id, esm_pdn_connectivity_proc,
+  ////          pdn_context_duplicate->
+  ////          &msg->data.pdn_connectivity_res->bearer_qos, msg->data.pdn_connectivity_res->apn_ambr, &esm_resp_msg, &esm_cause);
+  //  if(rc == RETURNerror){
+  //
+  //    if(*esm_cause == ESM_CAUSE_SUCCESS){
+  //      /** Ignore the received message. */
+  //    }else{
+  //        // todo: rc = esm_pdn_connectivity_reject()
+  //        // todo: esm_pdn_connectivity_reject_send;
+  //      }
+  //      // todo: remove the transaction..
+  //    }
+  //    // todo: start the timer, only if the nas procedure is not initial..
+  //    esm_send_activate_default_eps_bearer_context_request();
+  //
+  //
+  //  esm_activate_defesm_atproc_activate_pdn_connectivity_accept();
+  //  _esm_send_activate_default_bearer_context();
+  //  OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_SUCCESS);
+
+
+
+  /*
+   * Get retransmission timer parameters data
+   */
+  esm_ebr_timer_data_t                   *esm_ebr_timer_data = (esm_ebr_timer_data_t *) (args);
+
+  if (esm_ebr_timer_data) {
+    /*
+     * Increment the retransmission counter
+     */
+    esm_ebr_timer_data->count += 1;
+    OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - T3485 timer expired (ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d), " "retransmission counter = %d\n",
+        esm_ebr_timer_data->ue_id, esm_ebr_timer_data->ebi, esm_ebr_timer_data->count);
+
+    if (esm_ebr_timer_data->count < DEFAULT_EPS_BEARER_ACTIVATE_COUNTER_MAX) {
+      /*
+       * Re-send activate default EPS bearer context request message
+       * * * * to the UE
+       */
+      bstring b = bstrcpy(esm_ebr_timer_data->msg);
+      rc = _default_eps_bearer_activate (esm_ebr_timer_data->ctx, esm_ebr_timer_data->ebi, &b);
+    } else {
+      /*
+       * The maximum number of activate default EPS bearer context request
+       * message retransmission has exceed
+       */
+      pdn_cid_t                               pid = MAX_APN_PER_UE;
+      int                                     bidx = BEARERS_PER_UE;
+
+      /*
+       * Release the default EPS bearer context and enter state INACTIVE
+       */
+      rc = esm_proc_eps_bearer_context_deactivate (esm_ebr_timer_data->ctx, true, esm_ebr_timer_data->ebi, pid, NULL);
+
+      if (rc != RETURNerror) {
+        /*
+         * Stop timer T3485
+         */
+        rc = esm_ebr_stop_timer (esm_ebr_timer_data->ctx, esm_ebr_timer_data->ebi);
+      }
+    }
+    if (esm_ebr_timer_data->msg) {
+      bdestroy_wrapper (&esm_ebr_timer_data->msg);
+    }
+    free_wrapper ((void**)&esm_ebr_timer_data);
+  }
+
+  OAILOG_FUNC_OUT (LOG_NAS_ESM);
+}
+
 /****************************************************************************
  **                                                                        **
  ** Name:    esm_send_activate_default_eps_bearer_context_request()    **
@@ -234,44 +339,41 @@ esm_send_activate_default_eps_bearer_context_request (
 int
 esm_proc_default_eps_bearer_context (
   mme_ue_s1ap_id_t   ue_id,
-  const nas_esm_pdn_connectivity_proc_t * nas_pdn_connectivity_proc,
+  const nas_esm_pdn_connectivity_proc_t * esm_pdn_connectivity_proc,
   bearer_qos_t      *bearer_qos,
   ambr_t             apn_ambr,
-  ESM_msg           *esm_rsp_msg,
   esm_cause_t       *esm_cause)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
-  OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Default EPS bearer context activation (ue_id=" MME_UE_S1AP_ID_FMT ", context_identifier=%d,  QCI %u)\n",ue_id, nas_pdn_connectivity_proc->pdn_cid, bearer_qos->qci);
+  OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Default EPS bearer context activation (ue_id=" MME_UE_S1AP_ID_FMT ", context_identifier=%d,  QCI %u)\n",ue_id, esm_pdn_connectivity_proc->pdn_cid, bearer_qos->qci);
   /*
    * Update default EPS bearer context and pdn context.
    */
-  int rc = mme_app_esm_update_pdn_context(ue_id, nas_pdn_connectivity_proc->apn_subscribed, nas_pdn_connectivity_proc->pdn_cid, nas_pdn_connectivity_proc->default_ebi,
+  int rc = mme_app_esm_update_pdn_context(ue_id, esm_pdn_connectivity_proc->apn_subscribed, esm_pdn_connectivity_proc->pdn_cid, esm_pdn_connectivity_proc->default_ebi,
       ESM_EBR_ACTIVE_PENDING, apn_ambr, bearer_qos, (protocol_configuration_options_t*)NULL);
   if(rc == RETURNerror){
     OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Could not update the default EPS bearer context activation (ue_id=" MME_UE_S1AP_ID_FMT ", context_identifier=%d,  QCI %u)\. "
         "Removing the PDN context.",
-        ue_id, nas_pdn_connectivity_proc->pdn_cid, bearer_qos->qci);
+        ue_id, esm_pdn_connectivity_proc->pdn_cid, bearer_qos->qci);
     // todo:    rc = esm_ebr_context_release( )proc_eps_bearer_context_deactivate (esm_context, true, *ebi, *pid, NULL);
 
   }
-
   REQUIREMENT_3GPP_24_301(R10_6_4_1_2);
-  if(esm_pdn_connectivity_proc->initial_attach){
-       /** Not starting the T3485 timer. */
+  if(esm_pdn_connectivity_proc->attach_success){
+    /** Not starting the T3485 timer. */
+  }else{
+    OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Starting T3485 for Default EPS bearer context activation (ue_id=" MME_UE_S1AP_ID_FMT ", context_identifier=%d,  QCI %u)\n",
+        ue_id, esm_pdn_connectivity_proc->pdn_cid, bearer_qos->qci);
+    /** Stop any timer if running. */
+    nas_stop_esm_timer(ue_id, &esm_pdn_connectivity_proc->trx_base_proc.esm_proc_timer);
+    /** Start the T3485 timer for additional PDN connectivity. */
+    esm_pdn_connectivity_proc->trx_base_proc.esm_proc_timer.id = nas_timer_start (esm_pdn_connectivity_proc->trx_base_proc.esm_proc_timer.sec, 0 /*usec*/, TASK_NAS_ESM,
+        _nas_proc_pdn_connectivity_timeout_handler, ue_id); /**< Address field should be big enough to save an ID. */
 
-     }else{
-       /** Start the T3485 timer for additional PDN connectivity. */
-       nas_timer_start(esm_pdn_connectivity_proc->timer);
-     }
-  REQUIREMENT_3GPP_24_301(R10_6_4_1_2);
-     if(esm_pdn_connectivity_proc->initial_attach){
-       /** Not starting the T3485 timer. */
 
-     }else{
-       /** Start the T3485 timer for additional PDN connectivity. */
-       nas_timer_start(esm_pdn_connectivity_proc->timer);
-     }
-//     /**
+    nas_timer_start(esm_pdn_connectivity_proc->trx_base_proc.esm_proc_timer);
+  }
+  //     /**
 //      *     //  emm_sap.primitive       = EMMESM_ACTIVATE_BEARER_REQ;
 //   //  emm_sap.u.emm_esm.ue_id = ue_id;
 //     /*
@@ -351,4 +453,3 @@ esm_proc_default_eps_bearer_context_accept (mme_ue_s1ap_id_t ue_id,
 /****************************************************************************/
 /*********************  L O C A L    F U N C T I O N S  *********************/
 /****************************************************************************/
-

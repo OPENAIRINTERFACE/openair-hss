@@ -166,21 +166,22 @@ esm_recv_status (
  ***************************************************************************/
 esm_cause_t
 esm_recv_pdn_connectivity_request (
+  bool attach,
   const mme_ue_s1ap_id_t mme_ue_s1ap_id,
   const imsi_t *imsi,
   proc_tid_t pti,
   ebi_t ebi,
   tai_t *visited_tai,
   const pdn_connectivity_request_msg * msg,
-  ESM_msg **esm_response)
+  ESM_msg * esm_resp_msg)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   pdn_context_t                          *new_pdn_context  = NULL;
-  int                                     rc               = RETURNerror;
   esm_proc_pdn_request_t                  pdn_request_type = 0;
   esm_proc_pdn_type_t                     pdn_type         = 0;
+  int                                     rc               = RETURNerror;
 
-  OAILOG_INFO(LOG_NAS_ESM, "ESM-SAP   - Received PDN Connectivity Request message " "(ue_id=%u, pti=%d, ebi=%d)\n", esm_context->ue_id, pti, ebi);
+  OAILOG_INFO(LOG_NAS_ESM, "ESM-SAP   - Received PDN Connectivity Request message " "(ue_id=%u, pti=%d, ebi=%d, attach=%B)\n", esm_context->ue_id, pti, ebi, attach);
 
   /*
    * Procedure transaction identity checking
@@ -204,15 +205,19 @@ esm_recv_pdn_connectivity_request (
     OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Invalid EPS bearer identity (ebi=%d)\n", ebi);
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY);
   }
-  /** Check if a procedure exists. */
-  // todo: duplicate..
+  /*
+   * Check if a procedure exists.
+   * No procedure should exist at all (also no network triggered procedure without PTI.
+   */
   nas_esm_proc_t * esm_proc = esm_data_get_procedure(mme_ue_s1ap_id);
+  nas_esm_pdn_connectivity_proc_t * esm_pdn_connectivity_proc = NULL;
   if(esm_proc){
     OAILOG_INFO(LOG_NAS_ESM, "ESM-SAP   - Found a procedure (pti=%d, type=%d) for UE " MME_UE_S1AP_ID_FMT ".\n", esm_proc->base_proc.pti, esm_proc->type, mme_ue_s1ap_id);
     /** If it is a transactional procedure, check if the PTI is the same. */
     if(esm_proc->type == ESM_PROC_TRANSACTION){
       /** We have another transactional procedure. If the PTIs don't match, reject the message. */
       if(esm_proc->base_proc.pti != pti){
+        // todo: in case of retransmission, is PTI the same?!
         OAILOG_ERROR(LOG_NAS_ESM, "ESM-SAP   - Already an existing UE triggered ESM procedure (pti=%d, type=%d) for UE " MME_UE_S1AP_ID_FMT "."
             " Rejecting request for new procedure (pti=%d).\n", esm_proc->base_proc.pti, esm_proc->type, mme_ue_s1ap_id, pti);
         OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_REQUEST_REJECTED_BY_GW);
@@ -222,19 +227,19 @@ esm_recv_pdn_connectivity_request (
 //            ue_id, pti, esm_proc->esm_procedure_type);
 //        OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_REQUEST_REJECTED_BY_GW);
 //      }
-      /** Procedure already exists. Check if a response message is appended to the procedure.. Return the procedure. */
-      *esm_response = &((nas_esm_transaction_proc_t*)esm_proc)->esm_result;
-      OAILOG_INFO(LOG_NAS_ESM, "ESM-SAP   - Returning Already an existing procedure (pti=%d, type=%d) for UE " MME_UE_S1AP_ID_FMT "."
-          " Rejecting request for new procedure (pti=%d).\n", esm_proc->base_proc.pti, esm_proc->type, mme_ue_s1ap_id, pti);
-      OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_SUCCESS);
+      /** Procedure already exists. Send the type of the procedure. If activate default bearer is already sent, resent id. */
+      DevAssert(!attach);
+      OAILOG_INFO(LOG_NAS_ESM, "ESM-SAP   - A PDN connectivity request for (pti=%d, type=%d) for UE " MME_UE_S1AP_ID_FMT " is already received. \n"
+          " Continuing to check the new procedure (pti=%d).\n", esm_proc->base_proc.pti, esm_proc->type, mme_ue_s1ap_id, pti);
+      /** Reuse the old procedure. */
+      esm_pdn_connectivity_proc = (nas_esm_pdn_connectivity_proc_t*)esm_proc;
     } else {
-      /** A network initiated procedure exists. Not allowed. */
-      OAILOG_INFO(LOG_NAS_ESM, "ESM-SAP   - UE initiated ESM procedure (pti=%d, type=%d) for UE " MME_UE_S1AP_ID_FMT " collided with network initiated bearer procedure (pti=0).\n",
-          esm_proc->base_proc.pti, esm_proc->type, mme_ue_s1ap_id);
+      /** A network initiated procedure exists. No new ESM procedure to crete. */
+      OAILOG_INFO(LOG_NAS_ESM, "ESM-SAP   - UE initiated PDN connectivity procedure (pti=%d) for UE " MME_UE_S1AP_ID_FMT " collided with network initiated bearer procedure (pti=0).\n",
+          pti, mme_ue_s1ap_id);
       OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_COLLISION_WITH_NETWORK_INITIATED_REQUEST);
     }
   }
-  OAILOG_DEBUG(LOG_NAS_ESM, "ESM-SAP   - No ESM procedure for UE " MME_UE_S1AP_ID_FMT " exists. Proceeding with handling the new ESM request (pti=%d) for PDN connectivity.\n", pti, mme_ue_s1ap_id);
 
   /** Create a new procedure and fill it. */
   /*
@@ -272,22 +277,48 @@ esm_recv_pdn_connectivity_request (
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_UNKNOWN_PDN_TYPE);
   }
 
-  /**
-   * For the case of PDN Connectivity via ESM, we will always trigger an S11 Create Session Request.
+  /*
+   * If a PDN context is already established, check its state.
+   * If the beareFor the case of PDN Connectivity via ESM, we will always trigger an S11 Create Session Request.
    * We won't enter this case in case of a Tracking Area Update procedure.
    */
   pdn_context_t *pdn_context_duplicate = NULL;
-  mme_app_get_pdn_context(ue_id, PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED, ESM_EBI_UNASSIGNED, msg->accesspointname, &pdn_context_duplicate);
+  mme_app_get_pdn_context(mme_ue_s1ap_id, PDN_CONTEXT_IDENTIFIER_UNASSIGNED, ESM_EBI_UNASSIGNED, msg->accesspointname, &pdn_context_duplicate);
   if(pdn_context_duplicate){
-    OAILOG_ERROR(LOG_NAS_ESM, "ESM-SAP   - Found an established PDN context for the APN \"%s\". Rejecting the redundant PDN connectivity procedure." "(ue_id=%d, pti=%d)\n",
-          bdata(msg->accesspointname), mme_ue_s1ap_id, pti);
-    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_MULTIPLE_PDN_CONNECTIONS_NOT_ALLOWED);
+    /** Process duplicate transaction. */
+    if(esm_pdn_connectivity_proc ){
+      if(biseqcaseless(esm_pdn_connectivity_proc->apn_subscribed, pdn_context_duplicate->apn_subscribed)
+       && (esm_pdn_connectivity_proc->pdn_cid == pdn_context_duplicate->context_identifier)
+        && (esm_pdn_connectivity_proc->default_ebi == pdn_context_duplicate->default_ebi)){
+        /** Restart the T3485 timer and resend the ACTIVATE_DEFAULT_EPS_BEARER_CONTEXT message. */
+        rc = _default_eps_bearer_activate_t3485_handler(esm_pdn_connectivity_proc, esm_resp_msg);
+        if(rc == RETURNerror){
+          DevMessage("ESM-RECV : Retransmission failure for existing PDN context not handled yet!"); // todo: unhandled case!!
+        }
+        /** Return the message. */
+        OAILOG_ERROR(LOG_NAS_ESM, "ESM-SAP   - Found an established PDN context for the APN \"%s\" from an earlier message. "
+            "Resending PDN connectivity request and restarting T3485." "(ue_id=%d, pti=%d)\n",
+            bdata(msg->accesspointname), mme_ue_s1ap_id, esm_pdn_connectivity_proc->trx_base_proc.esm_proc.base_proc.pti);
+        OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_SUCCESS);
+      } else {
+        /** Received procedure is not valid. */
+      }
+    } else {
+      /** Reject due duplicate connection. */
+      OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_MULTIPLE_PDN_CONNECTIONS_NOT_ALLOWED);
+    }
+  }
+  if(esm_pdn_connectivity_proc){
+    /** Remove the duplicate procedure if no PDN context is created yet or did not match the one in the system. Also reject the current request. */
+    _esm_proc_free_pdn_connectivity_procedure(&esm_pdn_connectivity_proc);
+    OAILOG_ERROR(LOG_NAS_ESM, "ESM-SAP   - No established PDN context for the APN \"%s\" was found for the already existing PDN connectivity procedure. Removing old procedure "
+        "and rejecting the new PDN connectivity request." "(ue_id=%d, pti=%d)\n", bdata(msg->accesspointname), mme_ue_s1ap_id, esm_pdn_connectivity_proc->trx_base_proc.esm_proc.base_proc.pti);
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_REQUEST_REJECTED_BY_GW);
   }
 
   /*
    * Establish PDN connectivity.
    * Currently only checking that request type is INITIAL_REQUEST.
-   * todo: perform other validations than request type.
    */
   if(pdn_request_type!= ESM_PDN_REQUEST_INITIAL){
     OAILOG_ERROR(LOG_NAS_ESM, "ESM-SAP   - No other request type than INITIAL_REQUEST is supported for PDN connectivity procedure. "
@@ -295,15 +326,36 @@ esm_recv_pdn_connectivity_request (
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_SERVICE_OPTION_NOT_SUPPORTED);
   }
 
+  apn_configuration_t * apn_configuration = NULL;
+  imsi64_t imsi64 = imsi_to_imsi64(imsi);
+
+  int rc = mme_app_select_apn(imsi64, esm_pdn_connectivity_proc->apn_subscribed, &apn_configuration);
+  if(rc == RETURNerror){
+    DevAssert(esm_pdn_connectivity_proc->apn_subscribed);
+    OAILOG_ERROR(LOG_NAS_ESM, "ESM-SAP   - No APN configuration could be found for APN \"%s\". "
+        "Rejecting the PDN connectivity procedure." "(ue_id=%d, pti=%d)\n", bdata(esm_pdn_connectivity_proc->apn_subscribed), mme_ue_s1ap_id, pti);
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_UNKNOWN_ACCESS_POINT_NAME);
+  }
+
+  /** An APN Name must be present, if it is not attach. */
+  if(!attach && !(msg->presencemask & PDN_CONNECTIVITY_REQUEST_ACCESS_POINT_NAME_PRESENT)){
+    OAILOG_ERROR(LOG_NAS_ESM, "ESM-SAP   - No APN name present for extra PDN connectivity request. Rejecting the PDN connectivity procedure." "(ue_id=%d, pti=%d)\n", mme_ue_s1ap_id, pti);
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_UNKNOWN_ACCESS_POINT_NAME);
+  }
+
   /**
    * Create a new ESM procedure for PDN Connectivity. Not important if we continue with ESM information or PDN connectivity, since this function will handle
    * the received messages (no specific callback needed).
    */
-  nas_esm_pdn_connectivity_proc_t * esm_pdn_connectivity_proc = _esm_proc_create_pdn_connectivity_procedure(mme_ue_s1ap_id, imsi, pti);
-  esm_pdn_connectivity_proc->request_type = pdn_request_type;
-  esm_pdn_connectivity_proc->pdn_type = pdn_type;
-  memcpy(&esm_pdn_connectivity_proc->visited_tai, visited_tai, sizeof(tai_t));
-  // todo: LOCK_ESM_TRANSACTION!
+  if(!esm_pdn_connectivity_proc){
+    OAILOG_DEBUG(LOG_NAS_ESM, "ESM-SAP   - No ESM procedure for UE " MME_UE_S1AP_ID_FMT " exists. Proceeding with handling the new ESM request (pti=%d) for PDN connectivity.\n", pti, mme_ue_s1ap_id);
+  } else{
+    esm_pdn_connectivity_proc = _esm_proc_create_pdn_connectivity_procedure(mme_ue_s1ap_id, imsi, pti);
+    esm_pdn_connectivity_proc->request_type = pdn_request_type;
+    esm_pdn_connectivity_proc->pdn_type = pdn_type;
+    memcpy(&esm_pdn_connectivity_proc->imsi, imsi, sizeof(imsi_t));
+    memcpy(&esm_pdn_connectivity_proc->visited_tai, visited_tai, sizeof(tai_t));
+  }
 
   /*
    * Get the ESM information transfer flag
@@ -324,10 +376,14 @@ esm_recv_pdn_connectivity_request (
      */
     if (!mme_config.nas_config.disable_esm_information && msg->esminformationtransferflag) {
       /**
-       * Create an ESM message for ESM information request and configures the timer/timeout.
+       * Create an ESM message for ESM information request and start T3489.
        */
-      esm_proc_esm_information_request(mme_ue_s1ap_id, esm_pdn_connectivity_proc, esm_response);
+      rc = esm_proc_esm_information_request(esm_pdn_connectivity_proc, esm_resp_msg);
+      DevAssert(rc == RETURNok);
       OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_SUCCESS);
+    } else {
+      OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Ignoring received ESM Information Transfer flag. " "(ue_id=%d, pti=%d)\n", mme_ue_s1ap_id, pti);
+      /** Will use default APN configuration. */
     }
   }
 
@@ -348,25 +404,24 @@ esm_recv_pdn_connectivity_request (
     // todo: implement this after checking for fixes..
     //    copy_protocol_configuration_options(&esm_data->pco, &msg->protocolconfigurationoptions);
   }
-  imsi64_t imsi64 = imsi_to_imsi64(imsi);
-  /** Checking if APN configuration profile for the desired APN profile exists. */
-  struct apn_configuration_s* apn_config = mme_app_select_apn(&esm_pdn_connectivity_proc->imsi, esm_pdn_connectivity_proc->apn_subscribed);
-  if(!apn_config){
-    if(mme_app_select_subscription_data(&esm_pdn_connectivity_proc->imsi)){
-      OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Subscription Data exists for IMSI " IMSI_64_FMT" but no APN configuration for the APN \"%s\". " " (ue_id=%d, pti=%d)\n", imsi64, bdata(msg->accesspointname), ue_id, pti);
-      OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_APN_RESTRICTION_VALUE_NOT_COMPATIBLE);
-    }
-    OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - No APN configuration for the APN \"%s\" has been downloaded from the HSS yet.. "
-        "Getting subscription profile from the HSS after receiving ESM information request. " "(ue_id=%d, pti=%d)\n", bdata(msg->accesspointname), ue_id, pti);
-    /** Trigger a itti message to download subscription profile. */
-    nas_itti_pdn_config_req(mme_ue_s1ap_id, TASK_NAS_ESM, &esm_pdn_connectivity_proc->imsi, esm_pdn_connectivity_proc->request_type, &esm_pdn_connectivity_proc->visited_plmn);
-    /** No ESM response message. Downloading subscription data via ULR. */
+  if(!apn_configuration) { /**< Will always be the default configuration, even if a name is given. */
+    OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Getting subscription profile for IMSI "IMSI_64_FMT ". " "(ue_id=%d, pti=%d)\n", imsi64, ue_id, pti);
+    nas_itti_pdn_config_req(mme_ue_s1ap_id, TASK_NAS_ESM, imsi, esm_pdn_connectivity_proc->request_type, &visited_tai->plmn);
+    /*
+     * No ESM response message. Downloading subscription data via ULR.
+     * An ESM procedure is created but no timer is started.
+     */
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_SUCCESS);
   }
-  OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Found a valid APN configuration for the APN \"%s\" from HSS. Continuing with the PDN Connectivity procedure." "(ue_id=%d, pti=%d)\n",
-      bdata(msg->accesspointname), ue_id, pti);
 
-  /**
+  OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Found a valid (default) APN configuration (cid=%d). Continuing with the PDN Connectivity procedure." "(ue_id=%d, pti=%d)\n", apn_configuration->context_identifier, ue_id, pti);
+
+  if(!esm_pdn_connectivity_proc->apn_subscribed){
+    esm_pdn_connectivity_proc->apn_subscribed = blk2bstr(apn_configuration->service_selection, apn_configuration->service_selection_length);  /**< Set the APN-NI from the service selection. */
+  }
+  esm_pdn_connectivity_proc->pdn_cid = apn_configuration->context_identifier;
+
+  /*
    * Establish the PDN Connectivity, using the default APN-QoS values received in the subscription information, which will be processed in the MME_APP layer
    * inside the UE_CONTEXT. Just trigger PDN connectivity here.
    */
@@ -377,10 +432,18 @@ esm_recv_pdn_connectivity_request (
    * todo: how to check that this is still our last ESM proc data?
    * Execute the PDN connectivity procedure requested by the UE
    */
-  rc = esm_proc_pdn_connectivity_request (mme_ue_s1ap_id, imsi, pti, apn_config->context_identifier, esm_pdn_connectivity_proc->request_type, esm_pdn_connectivity_proc->apn_subscribed, esm_pdn_connectivity_proc->pdn_type);
+  rc = esm_proc_pdn_connectivity_request (mme_ue_s1ap_id, imsi,
+      visited_tai, pti,
+      apn_configuration,
+      esm_pdn_connectivity_proc->apn_subscribed,
+      esm_pdn_connectivity_proc->request_type,
+      esm_pdn_connectivity_proc->pdn_type);
 //      (esm_context->esm_proc_data->pco.num_protocol_or_container_id ) ? &esm_context->esm_proc_data->pco:NULL);
   if(rc == RETURNerror){
-    /** Remove the procedure and send a pdn rejection back, which will trigger the attach reject.
+    OAILOG_ERROR (LOG_NAS_ESM, "ESM-SAP   - Error while trying to establish an APN session for APN \"%s\" (cid=%d). " "(ue_id=%d, pti=%d)\n",
+        bdata(esm_pdn_connectivity_proc->apn_subscribed), esm_pdn_connectivity_proc->pdn_cid, ue_id, pti);
+    /** Remove the procedure and send a pdn rejection back, which will trigger the attach reject. */
+    _esm_proc_free_pdn_connectivity_procedure(&esm_pdn_connectivity_proc);
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_REQUEST_REJECTED_BY_GW);
   }
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_SUCCESS);

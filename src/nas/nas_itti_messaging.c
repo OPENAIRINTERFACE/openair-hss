@@ -55,9 +55,24 @@
 
 //------------------------------------------------------------------------------
 int
+nas_itti_esm_attach_ind(
+  const mme_ue_s1ap_id_t    ue_id,
+  bstring                  *esm_msg_p)
+{
+  MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_EMM, NAS_ESM_ATTACH_IND);
+  NAS_ESM_ATTACH_IND (message_p).ue_id      = ue_id;
+  NAS_ESM_ATTACH_IND (message_p).esm_msg_p  = *esm_msg_p;
+  *esm_msg_p = NULL;
+  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_S1AP_MME, NULL, 0, "0 NAS_ESM_ATTACH_IND ue id " MME_UE_S1AP_ID_FMT " len %u", ue_id, blength(nas_msg));
+  // make a long way by MME_APP instead of S1AP to retrieve the sctp_association_id key.
+  return itti_send_msg_to_task (TASK_NAS_ESM, INSTANCE_DEFAULT, message_p);
+}
+
+//------------------------------------------------------------------------------
+int
 nas_itti_esm_data_ind(
   const mme_ue_s1ap_id_t ue_id,
-  bstring                *esm_msg_p)
+  bstring                *esm_msg_p, )
 {
   MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_EMM, NAS_ESM_DATA_IND);
   NAS_ESM_DATA_IND (message_p).ue_id   = ue_id;

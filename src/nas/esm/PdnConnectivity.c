@@ -241,6 +241,7 @@ void _esm_proc_free_bearer_context_procedure(nas_esm_bearer_context_proc_t * esm
  **      Others:    _esm_data                                  **
  **                                                                        **
  ***************************************************************************/
+
 int
 esm_proc_pdn_connectivity_request (
   mme_ue_s1ap_id_t             ue_id,
@@ -248,8 +249,8 @@ esm_proc_pdn_connectivity_request (
   tai_t                       *visited_tai,
   const proc_tid_t             pti,
   const apn_configuration_t   *apn_configuration,
-  const esm_proc_pdn_request_t request_type,
   const_bstring                const apn_subscribed,
+  const esm_proc_pdn_request_t request_type,
   esm_proc_pdn_type_t          pdn_type)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
@@ -268,7 +269,7 @@ esm_proc_pdn_connectivity_request (
    * todo: Use locks on the MME_APP UE Context and consider the case of error/implicit detach..
    */
   pdn_context_t * pdn_context = NULL;
-  rc = mme_app_create_pdn_context(ue_id, pti, apn_configuration, apn_subscribed, apn_configuration.context_identifier, apn_subscribed, &pdn_context);
+  rc = mme_app_esm_create_pdn_context(ue_id, pti, apn_configuration, apn_subscribed, apn_configuration.context_identifier, apn_subscribed, &pdn_context);
   if (rc < 0) {
     OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - Failed to create PDN connection for UE " MME_UE_S1AP_ID_FMT ", apn = \"%s\" (pti=%d).\n", ue_id, (char *)bdata(apn_subscribed), pti);
     /** No empty/garbage contexts. */
