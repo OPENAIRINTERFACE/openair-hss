@@ -29,7 +29,7 @@
 
 /** PDN Context and Bearer Context operations from ESM (UE triggered) or handover. */
 int mme_app_esm_create_pdn_context(mme_ue_s1ap_id_t ue_id, const apn_configuration_t *apn_configuration, const bstring apn, pdn_cid_t pdn_cid, const pdn_context_t **pdn_context_pp);
-int mme_app_esm_update_pdn_context(mme_ue_s1ap_id_t ue_id, const bstring apn, pdn_cid_t pdn_cid, ebi_t linked_ebi, esm_ebr_state esm_ebr_state, const ambr_t apn_ambr, const bearer_qos_t *bearer_qos, protocol_configuration_options_t *pcos);
+int mme_app_esm_update_pdn_context(mme_ue_s1ap_id_t ue_id, const bstring apn, pdn_cid_t pdn_cid, ebi_t linked_ebi, esm_ebr_state esm_ebr_state, const ambr_t *apn_ambr, const bearer_qos_t *bearer_qos, protocol_configuration_options_t *pcos);
 
 /**
  * Release all bearers of a PDN context and release the PDN context.

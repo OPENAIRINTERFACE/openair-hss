@@ -249,11 +249,12 @@ int
 nas_esm_proc_pdn_connectivity_fail (
     esm_cn_pdn_connectivity_fail_t * pdn_conn_fail)
 {
-  OAILOG_FUNC_IN (LOG_NAS_ESM);
-  int                                     rc = RETURNerror;
   esm_sap_t                               esm_sap = {0};
   bstring                                 rsp = NULL;
   esm_cause_t                             esm_cause = ESM_CAUSE_SUCCESS;
+  int                                     rc = RETURNerror;
+
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
 
   esm_sap.primitive = ESM_PDN_CONNECTIVITY_REJ;
   esm_sap.ue_id = pdn_conn_fail->ue_id;
@@ -270,67 +271,102 @@ nas_esm_proc_pdn_connectivity_fail (
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
 }
 
+/*
+ *  DEDICATED BEARER HANDLING.
+ */
 //------------------------------------------------------------------------------
-int
-nas_proc_pdn_disconnect_res (
-  esm_pdn_disconnect_t * esm_cn_pdn_disc_res)
+int nas_esm_proc_activate_eps_bearer_ctx(esm_eps_activate_eps_bearer_ctx_req_t * esm_cn_activate)
 {
-  OAILOG_FUNC_IN (LOG_NAS_ESM);
-  int                                     rc = RETURNerror;
   esm_sap_t                               esm_sap = {0};
+  bstring                                 rsp = NULL;
+  esm_cause_t                             esm_cause = ESM_CAUSE_SUCCESS;
+  int                                     rc = RETURNerror;
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
 
-//  emm_sap.primitive = ESMCN_PDN_DISCONNECT_RES;
-//  emm_sap.u.emm_cn.u.emm_cn_pdn_disconnect_res = emm_cn_pdn_disc_res;
-//  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_ESM_MME, NULL, 0, "0 ESMCN_PDN_DISCONNECT_RES ue_id " MME_UE_S1AP_ID_FMT " ", emm_cn_pdn_disc_res->ue_id);
-  rc = esm_sap_send (&esm_sap);
+  esm_sap.primitive = ESM_EPS_BEARER_CONTEXT_ACTIVATE_REQ;
+  esm_sap.ue_id     = esm_cn_activate->ue_id;
+  esm_sap.data.eps_bearer_context_activate = esm_cn_activate;
+  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_ESM_MME, NULL, 0, "0 ESM_EPS_BEARER_CONTEXT_ACTIVATE_REQ " MME_UE_S1AP_ID_FMT " ", esm_cn_activate->ue_id);
+  /** Process each bearer context to be created separately. */
+
+  /** Handle each bearer context separately. */
+  /** Get the bearer contexts to be created. */
+  bearer_contexts_to_be_created_t * bcs_tbc = (bearer_contexts_to_be_created_t*)esm_cn_activate->bcs_to_be_created_ptr;
+  for(int num_bc = 0; num_bc < bcs_tbc->num_bearer_context; num_bc++){
+    bearer_context_to_be_created_t * bc_tbc = &bcs_tbc.bearer_contexts[num_bc];
+    esm_sap.data.eps_bearer_context_activate.pdn_cid    = esm_cn_activate->cid;
+    esm_sap.data.eps_bearer_context_activate.linked_ebi = esm_cn_activate->linked_ebi;
+    esm_sap.data.eps_bearer_context_activate.bc_tbc     = bc_tbc;
+    rc = esm_sap_signal(esm_cn_activate->ue_id, &esm_cause, &rsp);
+    if(rsp){
+      rc = lowerlayer_activate_bearer_req(esm_cn_activate->ue_id, esm_sap.data.eps_bearer_context_activate.bc_tbc->eps_bearer_id,
+          bc_tbc->bearer_level_qos->mbr.br_dl,
+          bc_tbc->bearer_level_qos->mbr.br_ul,
+          bc_tbc->bearer_level_qos->gbr.br_dl,
+          bc_tbc->bearer_level_qos->gbr.br_ul,
+          rsp);
+     }
+  }
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
 }
 
 //------------------------------------------------------------------------------
-int nas_proc_activate_dedicated_bearer(esm_eps_activate_eps_bearer_ctx_req_t * esm_cn_activate)
+int nas_esm_proc_modify_eps_bearer_ctx(esm_eps_update_esm_bearer_ctxs_req_t * esm_cn_update)
 {
-  OAILOG_FUNC_IN (LOG_NAS_ESM);
-  int                                     rc = RETURNerror;
   esm_sap_t                               esm_sap = {0};
-//  esm_sap.primitive = _ESMCN_ACTIVATE_DEDICATED_BEARER_REQ;
-//  emm_sap.u.emm_cn.u.emm_cn_activate_dedicated_bearer_req = emm_cn_activate;
-  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_ESM_MME, NULL, 0, "0 ESM_ACTIVATE_DEDICATED_BEARER_REQ " MME_UE_S1AP_ID_FMT " ", esm_cn_activate->ue_id);
-  rc = esm_sap_send (&esm_sap);
+  bstring                                 rsp = NULL;
+  esm_cause_t                             esm_cause = ESM_CAUSE_SUCCESS;
+  int                                     rc = RETURNerror;
 
-  // todo: lower_layer_is_directly_activate_dedicated_bearers!
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
 
+  esm_sap.primitive = ESM_EPS_BEARER_CONTEXT_MODIFY_REQ;
+  esm_sap.ue_id     = esm_cn_update->ue_id;
+  esm_sap.data.eps_bearer_context_modify = esm_cn_update;
+  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_ESM_MME, NULL, 0, "0 ESM_EPS_BEARER_CONTEXT_MODIFY_REQ " MME_UE_S1AP_ID_FMT " ", esm_cn_update->ue_id);
+  /** Handle each bearer context separately. */
+  /** Get the bearer contexts to be updated. */
+  bearer_contexts_to_be_updated_t* bcs_tbu = (bearer_contexts_to_be_updated_t*)esm_cn_update->bcs_to_be_updated;
+  for(int num_bc = 0; num_bc < bcs_tbu->num_bearer_context; num_bc++){
+    bearer_context_to_be_updated_t  * bc_tbu = &bcs_tbu.bearer_contexts[num_bc];
+    esm_sap.data.eps_bearer_context_modify.bc_tbu     = bc_tbu;
+    esm_sap.data.eps_bearer_context_modify.apn_ambr   = esm_cn_update->apn_ambr;
+    rc = esm_sap_signal(esm_cn_update->ue_id, &esm_cause, &rsp);
+    if(rsp){
+      rc = lowerlayer_modify_bearer_req(esm_cn_update->ue_id, esm_sap.data.eps_bearer_context_modify.bc_tbu->eps_bearer_id,
+          bc_tbu->bearer_level_qos->mbr.br_dl,
+          bc_tbu->bearer_level_qos->mbr.br_ul,
+          bc_tbu->bearer_level_qos->gbr.br_dl,
+          bc_tbu->bearer_level_qos->gbr.br_ul,
+          rsp);
+     }
+  }
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
 }
 
 //------------------------------------------------------------------------------
-int nas_proc_modify_eps_bearer_ctx(esm_eps_modify_eps_bearer_ctx_req_t * esm_cn_modify_eps_bearer_ctx)
+int nas_esm_proc_deactivate_eps_bearer_ctx(esm_eps_deactivate_eps_bearer_ctx_req_t * esm_cn_deactivate)
 {
-  OAILOG_FUNC_IN (LOG_NAS_ESM);
-  int                                     rc = RETURNerror;
   esm_sap_t                               esm_sap = {0};
-//  esm_sap.primitive = _ESMCN_MODIFY_EPS_BEARER_CTX_REQ;
-//  esm_sap.u.emm_cn.u.emm_cn_modify_eps_bearer_ctx_req = emm_cn_modify_eps_bearer_ctx;
-  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_ESM_MME, NULL, 0, "0 ESM_MODIFY_EPS_BEARER_CTX_REQ " MME_UE_S1AP_ID_FMT " ", esm_modify->ue_id);
-  rc = esm_sap_send (&esm_sap);
-
-  // todo: lower_layer_is_directly_modify_activate_dedicated_bearers!
-
-  OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
-}
-
-//------------------------------------------------------------------------------
-int nas_proc_deactivate_dedicated_bearer(esm_eps_deactivate_eps_bearer_ctx_req_t * esm_deactivate_eps_bearer)
-{
-  OAILOG_FUNC_IN (LOG_NAS_ESM);
+  bstring                                 rsp = NULL;
+  esm_cause_t                             esm_cause = ESM_CAUSE_SUCCESS;
   int                                     rc = RETURNerror;
-  esm_sap_t                               esm_sap = {0};
-  //  emm_sap.primitive = _ESMCN_DEACTIVATE_DEDICATED_BEARER_REQ;
-  //  emm_sap.u.emm_cn.u.emm_cn_deactivate_dedicated_bearer_req = emm_cn_deactivate;
-  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_ESM_MME, NULL, 0, "0 ESM_DEACTIVATE_DEDICATED_BEARER_REQ " MME_UE_S1AP_ID_FMT " ", esm_deactivate_eps_bearer->ue_id);
-  rc = esm_sap_send (&esm_sap);
 
-  // todo: lower_layer_is_directly_modify_activate_dedicated_bearers!
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
 
+  esm_sap.primitive = ESM_EPS_BEARER_CONTEXT_DEACTIVATE_REQ;
+  esm_sap.ue_id     = esm_cn_deactivate->ue_id;
+  esm_sap.data.eps_bearer_context_deactivate = esm_cn_deactivate;
+  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_ESM_MME, NULL, 0, "0 ESM_EPS_BEARER_CONTEXT_DEACTIVATE_REQ " MME_UE_S1AP_ID_FMT " ", esm_cn_deactivate->ue_id);
+  /** Handle each bearer context separately. */
+  /** Get the bearer contexts to be updated. */
+  for(int num_ebi= 0; num_ebi < esm_cn_deactivate->ebis.num_ebi; num_ebi++){
+    esm_sap.data.eps_bearer_context_deactivate.ded_ebi = esm_cn_deactivate->ebis[num_ebi];
+    rc = esm_sap_signal(esm_cn_deactivate->ue_id, &esm_cause, &rsp);
+    if(rsp){
+      rc = lowerlayer_deactivate_bearer_req(esm_cn_deactivate->ue_id, esm_sap.data.eps_bearer_context_deactivate.ded_ebi,rsp);
+     }
+  }
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
 }
 

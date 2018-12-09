@@ -90,10 +90,9 @@ static void *nas_esm_intertask_interface (void *args_p)
     break;
 
     case NAS_PDN_CONNECTIVITY_FAIL:{
-        nas_proc_pdn_connectivity_fail (&NAS_PDN_CONNECTIVITY_FAIL (received_message_p));
-      }
-      break;
-
+      nas_proc_pdn_connectivity_fail (&NAS_PDN_CONNECTIVITY_FAIL (received_message_p));
+    }
+    break;
 
     /** Messages sent directly from MME_APP to NAS_ESM layer for S11 session responses. */
     case MME_APP_ACTIVATE_EPS_BEARER_CTX_REQ:

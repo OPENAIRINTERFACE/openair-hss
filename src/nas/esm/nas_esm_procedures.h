@@ -38,18 +38,7 @@ struct nas_esm_base_proc_s;
 
 typedef int (*esm_failure_cb_t)(struct nas_esm_base_proc_s*);
 /** Method called inside the timeout. */
-typedef int (*esm_timeout_cb_t)(struct nas_esm_base_proc_s *ESM_msg*);
-
-/** Methods used for callbacks. */
-typedef int (*lower_layer_cb_t)(mme_ue_s1ap_id_t, bstring);
-typedef int (*free_proc_cb_t)(nas_esm_base_proc_t *);
-
-typedef struct nas_esm_base_proc_s {
-  mme_ue_s1ap_id_t            ue_id;
-  pti_t                       pti;
-  esm_failure_cb_t            failure_notif;
-  esm_timeout_cb_t            timeout_notif;
-} nas_esm_base_proc_t;
+typedef int (*esm_timeout_cb_t)(struct nas_esm_base_proc_s *);
 
 ////////////////////////////////////////////////////////////////////////////////
 // ESM procedures
@@ -57,7 +46,7 @@ typedef struct nas_esm_base_proc_s {
 typedef enum {
   ESM_PROC_NONE = 0,
   ESM_PROC_EPS_BEARER_CONTEXT,
-  ESM_PROC_TRANSACTION
+  ESM_PROC_PDN_CONTEXT
 } esm_proc_type_t;
 
 //typedef enum {
@@ -78,25 +67,22 @@ typedef enum {
 //} esm_transaction_proc_type_t;
 
 typedef struct nas_esm_proc_s {
-  nas_esm_base_proc_t         base_proc;
+  mme_ue_s1ap_id_t            ue_id;
+  esm_timeout_cb_t            timeout_notif;
   esm_proc_type_t             type;
-  lower_layer_cb_t            lower_layer;
 //  esm_transaction_proc_type_t esm_procedure_type;
-} nas_esm_proc_t;
-
-typedef struct nas_esm_transaction_proc_s {
-  nas_esm_proc_t               esm_proc;
   nas_timer_t                  esm_proc_timer;
   uint8_t                      retx_count;
-} nas_esm_transaction_proc_t;
+  pti_t                        pti;
+} nas_esm_proc_t;
 
 /*
- * Structure for ESM PDN connectivity procedure.
+ * Structure for ESM PDN connectivity and disconnectivity procedure.
  */
 typedef struct nas_esm_pdn_connectivity_proc_s {
   /** Initial mandatory elements. */
   bool                         is_attach;
-  nas_esm_transaction_proc_t   trx_base_proc;
+  nas_esm_proc_t               esm_base_proc;
   esm_proc_pdn_type_t          pdn_type;
   esm_proc_pdn_request_t       request_type;
   imsi_t                       imsi;
@@ -113,12 +99,13 @@ typedef struct nas_esm_pdn_connectivity_proc_s {
  */
 typedef struct nas_esm_bearer_context_proc_s {
   /** Initial mandatory elements. */
-  nas_esm_transaction_proc_t   trx_base_proc;  /**< It may be a transactional procedure (PTI set // triggered through resource modification, or not (pti=0), triggered by the core network. */
+  nas_esm_proc_t               esm_base_proc;  /**< It may be a transactional procedure (PTI set // triggered through resource modification, or not (pti=0), triggered by the core network. */
   imsi_t                       imsi;
   /** Additional elements requested from the UE and set with time.. */
   pdn_cid_t                    pdn_cid;
   ebi_t                        bearer_ebi;
   ebi_t                        linked_ebi;
+  bstring                      subscribed_apn;
 //  protocol_configuration_options_t  pco;
 } nas_esm_bearer_context_proc_t;
 
@@ -134,15 +121,14 @@ typedef struct esm_procedures_s {
 //  LIST_HEAD(nas_esm_bearer_context_procedures_head_s, nas_esm_bearer_context_procedure_s)  esm_bearer_context_procs;
 } esm_procedures_t;
 
-////////////////////////////////////////////////////////////////////////////////
-// Mix them (kind of class hierarchy--)
-////////////////////////////////////////////////////////////////////////////////
-typedef union {
-  nas_esm_base_proc_t         base_proc;
-  nas_esm_proc_t              esm_proc;
-} nas_proc_esm_t;
-
-int nas_unlink_esm_procedures(nas_esm_base_proc_t * const parent_proc, nas_esm_base_proc_t * const child_proc);
+//////////////////////////////////////////////////////////////////////////////////
+//// Mix them (kind of class hierarchy--)
+//////////////////////////////////////////////////////////////////////////////////
+//typedef union {
+//  nas_esm_base_proc_t         base_proc;
+//  nas_esm_proc_t              esm_proc;
+//} nas_proc_esm_t;
+//
 
 ///** New ESM Bearer Context procedure. */
 //nas_esm_bearer_ctx_proc_t *nas_new_esm_bearer_context_procedure(struct esm_context_s * const esm_context);

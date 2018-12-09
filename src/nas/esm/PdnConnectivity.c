@@ -149,7 +149,6 @@ nas_esm_pdn_connectivity_proc_t *_esm_proc_create_pdn_connectivity_procedure(mme
   nas_esm_pdn_connectivity_proc_t  *pdn_connectivity_proc = nas_new_pdn_connectivity_procedure(ue_id, pti);
   AssertFatal(pdn_connectivity_proc, "TODO Handle this");
   memcpy((void*)&pdn_connectivity_proc->imsi, imsi, sizeof(imsi_t));
-  pdn_connectivity_proc->trx_base_proc.esm_proc.base_proc.failure_notif = _esm_proc_pdn_connectivity_fail;
   /** Timeout notifier set separately. */
   return pdn_connectivity_proc;
 }
@@ -178,7 +177,6 @@ nas_esm_bearer_context_proc_t *_esm_proc_create_bearer_context_procedure(mme_ue_
   nas_esm_bearer_context_proc_t  *esm_bearer_context_proc = nas_new_bearer_context_proc(ue_id, pti, ebi);
   AssertFatal(esm_bearer_context_proc, "TODO Handle this");
   memcpy((void*)&esm_bearer_context_proc->imsi, imsi, sizeof(imsi_t));
-  esm_bearer_context_proc->trx_base_proc.esm_proc.base_proc.failure_notif = _esm_proc_bearer_context_fail;
   /*
    * Timeout notifier set separately.
    * This bearer context procedure may be transactional or not.

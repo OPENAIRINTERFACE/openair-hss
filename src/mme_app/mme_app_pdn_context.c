@@ -86,12 +86,15 @@ mme_app_esm_update_bearer_context(bearer_context_t * bearer_context, bearer_qos_
   /*
    * Setup the EPS bearer data with verified TFT and QoS.
    */
-  bearer_context->qci = bearer_level_qos->qci;
-  bearer_context->preemption_capability    = bearer_level_qos->pci == 0 ? 1 : 0;
-  bearer_context->preemption_vulnerability = bearer_level_qos->pvi == 0 ? 1 : 0;
-  bearer_context->priority_level           = bearer_level_qos->pl;
-  DevAssert(!bearer_context->esm_ebr_context.tft);
+  if(bearer_level_qos){
+    bearer_context->qci = bearer_level_qos->qci;
+    bearer_context->preemption_capability    = bearer_level_qos->pci == 0 ? 1 : 0;
+    bearer_context->preemption_vulnerability = bearer_level_qos->pvi == 0 ? 1 : 0;
+    bearer_context->priority_level           = bearer_level_qos->pl;
+    DevAssert(!bearer_context->esm_ebr_context.tft);
+  }
 
+  OAILOG_DEBUG(LOG_MME_APP, "Setting the ESM state of ebi %d to \"%s\". \n", bearer_context->ebi, esm_ebr_state2string(esm_ebr_state));
   bearer_context->esm_ebr_context.status = esm_ebr_state;
   if(bearer_tft){
     if(bearer_context->esm_ebr_context.tft)
@@ -265,7 +268,8 @@ mme_app_esm_create_pdn_context(mme_ue_s1ap_id_t ue_id, const apn_configuration_t
 
 //------------------------------------------------------------------------------
 int
-mme_app_esm_update_pdn_context(mme_ue_s1ap_id_t ue_id, const bstring apn, pdn_cid_t pdn_cid, ebi_t linked_ebi, esm_ebr_state esm_ebr_state, const ambr_t apn_ambr, const bearer_qos_t *bearer_qos, protocol_configuration_options_t *pcos){
+mme_app_esm_update_pdn_context(mme_ue_s1ap_id_t ue_id, const bstring apn, pdn_cid_t pdn_cid, ebi_t linked_ebi,
+    esm_ebr_state esm_ebr_state, const ambr_t *apn_ambr, const bearer_qos_t *default_bearer_qos, protocol_configuration_options_t *pcos){
   ue_context_t              *ue_context         = NULL;
   pdn_context_t             *pdn_context        = NULL;
   int                        rc                 = RETURNok;
@@ -283,11 +287,18 @@ mme_app_esm_update_pdn_context(mme_ue_s1ap_id_t ue_id, const bstring apn, pdn_ci
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
   //  LOCK_UE_CONTEXT(ue_context);
-  /** Update the authorized APN ambr of the pdn context. */
-  // todo: check if UE apn-ambr reached, if so, just add the remaining. (todo: inform sae/pcrf)
+  if(apn_ambr){
+    /** Update the authorized APN ambr of the pdn context. */
+    // todo: check if UE apn-ambr reached, if so, just add the remaining. (todo: inform sae/pcrf)
+    pdn_context->subscribed_apn_ambr.br_dl = apn_ambr->br_dl;
+    pdn_context->subscribed_apn_ambr.br_ul = apn_ambr->br_ul;
+  }
   /** Get the default bearer context directly. */
   bearer_context_t * default_bearer = RB_MIN(SessionBearers, &pdn_context->session_bearers);
-  mme_app_esm_update_bearer_context(default_bearer, bearer_qos, esm_ebr_state);
+  DevAssert(default_bearer);
+  DevAssert(default_bearer->ebi == default_bearer->linked_ebi);
+  DevAssert(default_bearer->ebi == pdn_context->default_ebi);
+  mme_app_esm_update_bearer_context(default_bearer, default_bearer_qos, esm_ebr_state);
   //    if(pco){
   //      if (bearer_context->esm_ebr_context.pco) {
   //        free_protocol_configuration_options(&bearer_context->esm_ebr_context.pco);

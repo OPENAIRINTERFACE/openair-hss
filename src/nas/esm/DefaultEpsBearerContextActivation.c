@@ -239,8 +239,7 @@ esm_proc_default_eps_bearer_context (
     esm_pdn_connectivity_proc->trx_base_proc.esm_proc_timer.id = nas_timer_start (esm_pdn_connectivity_proc->trx_base_proc.esm_proc_timer.sec, 0 /*usec*/, TASK_NAS_ESM,
         _nas_proc_pdn_connectivity_timeout_handler, ue_id); /**< Address field should be big enough to save an ID. */
     nas_timer_start(esm_pdn_connectivity_proc->trx_base_proc.esm_proc_timer);
-
-    esm_pdn_connectivity_proc->trx_base_proc.esm_proc.base_proc.timeout_notif = _default_eps_bearer_activate_t3485_handler;
+    esm_pdn_connectivity_proc->trx_base_proc.esm_proc.timeout_notif = _default_eps_bearer_activate_t3485_handler;
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_SUCCESS);
   }
 }
@@ -279,10 +278,10 @@ esm_proc_default_eps_bearer_context_accept (mme_ue_s1ap_id_t ue_id,
    * Update the ESM bearer context state of the default bearer as ACTIVE.
    * The CN state & FTEID will be set by the MME_APP layer in independently of this.
    */
-  mme_app_update_esm_state(ue_id, esm_pdn_connectivity_proc->apn_subscribed, esm_pdn_connectivity_proc->pdn_cid,
-      esm_pdn_connectivity_proc->default_ebi, ESM_EBR_ACTIVE);
+  rc = mme_app_esm_update_pdn_context(ue_id, esm_pdn_connectivity_proc->apn_subscribed, esm_pdn_connectivity_proc->pdn_cid, esm_pdn_connectivity_proc->default_ebi, ESM_EBR_ACTIVE,
+      NULL, NULL, NULL);
   /** No need to inform the anything else. */
-  OAILOG_FUNC_OUT(LOG_NAS_ESM);
+  OAILOG_FUNC_OUT(LOG_NAS_ESM, rc);
 }
 
 /****************************************************************************/
@@ -325,15 +324,15 @@ _default_eps_bearer_activate_t3485_handler(nas_esm_pdn_connectivity_proc_t * esm
      */
 
     pdn_context_t * pdn_context = NULL;
-    mme_app_get_pdn_context(esm_pdn_connectivity_proc->trx_base_proc.esm_proc.base_proc.ue_id, esm_pdn_connectivity_proc->pdn_cid,
+    mme_app_get_pdn_context(esm_pdn_connectivity_proc->trx_base_proc.esm_proc.ue_id, esm_pdn_connectivity_proc->pdn_cid,
         esm_pdn_connectivity_proc->default_ebi, esm_pdn_connectivity_proc->apn_subscribed, &pdn_context);
     if(pdn_context){
       bearer_context_t * bearer_context = NULL;
       mme_app_get_session_bearer_context(pdn_context, esm_pdn_connectivity_proc->default_ebi);
       if(bearer_context){
-        rc = esm_send_activate_default_eps_bearer_context_request(esm_pdn_connectivity_proc->trx_base_proc.esm_proc.base_proc.ue_id, pdn_context, bearer_context);
+        rc = esm_send_activate_default_eps_bearer_context_request(esm_pdn_connectivity_proc->trx_base_proc.esm_proc.ue_id, pdn_context, bearer_context);
         if (rc != RETURNerror) {
-          rc = esm_proc_default_eps_bearer_context (esm_pdn_connectivity_proc->trx_base_proc.esm_proc.base_proc.ue_id, esm_pdn_connectivity_proc);
+          rc = esm_proc_default_eps_bearer_context (esm_pdn_connectivity_proc->trx_base_proc.esm_proc.ue_id, esm_pdn_connectivity_proc);
           OAILOG_FUNC_RETURN(LOG_NAS_ESM, rc);
         }
       }
@@ -343,7 +342,7 @@ _default_eps_bearer_activate_t3485_handler(nas_esm_pdn_connectivity_proc_t * esm
    * No PDN context is expected.
    * Prepare the reject message.
    */
-  esm_send_pdn_connectivity_reject(esm_pdn_connectivity_proc->trx_base_proc.esm_proc.base_proc.pti, esm_resp_msg, ESM_CAUSE_ESM_INFORMATION_NOT_RECEIVED);
+  esm_send_pdn_connectivity_reject(esm_pdn_connectivity_proc->trx_base_proc.esm_proc.pti, esm_resp_msg, ESM_CAUSE_ESM_INFORMATION_NOT_RECEIVED);
   /*
    * Release the transactional PDN connectivity procedure.
    */

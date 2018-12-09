@@ -132,7 +132,7 @@ static int _dedicated_eps_bearer_activate (esm_context_t * esm_context, ebi_t eb
  **      Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
-int
+void
 esm_send_activate_dedicated_eps_bearer_context_request (
   pti_t pti,
   ebi_t ebi,
@@ -171,7 +171,9 @@ esm_send_activate_dedicated_eps_bearer_context_request (
     msg->presencemask |= ACTIVATE_DEDICATED_EPS_BEARER_CONTEXT_REQUEST_PROTOCOL_CONFIGURATION_OPTIONS_PRESENT;
   }
   OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Send Activate Dedicated EPS Bearer Context " "Request message (pti=%d, ebi=%d). \n", msg->proceduretransactionidentity, msg->epsbeareridentity);
-  OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);
+  OAILOG_FUNC_OUT(LOG_NAS_ESM);
+
+
 }
 
 /*
@@ -270,6 +272,30 @@ esm_proc_dedicated_eps_bearer_context (
     OAILOG_INFO(LOG_NAS_ESM, "ESM-PROC  - Error assigning bearer context for ue " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
   }
+
+  //             rc = esm_proc_modify_eps_bearer_context_reject(msg->ctx, bcs_tbu->bearer_contexts[num_bc].eps_bearer_id,
+  //                 &esm_cause, false);
+  //             /** Inform the MME APP. */
+  //             nas_itti_modify_eps_bearer_ctx_rej(msg->ue_id, bcs_tbu->bearer_contexts[num_bc].eps_bearer_id, esm_cause); /**< Assuming, no other CN bearer procedure will intervere. */
+      // todo: set the timer and update the esm ebr context
+  //    esm_procedure = esm_proc_modify_eps_bearer_context_request; /**< Not the procedure. */
+
+
+
+  // TODO: IF ERROR!
+  //   OAILOG_ERROR (LOG_NAS_ESM, "ESM-SAP   - Failed to handle CN bearer context procedure due SYSTEM_FAILURE for num_bearer %d!\n",
+  // todo: remove the procedure
+  //        /**
+  //         * Send a NAS ITTI directly for the specific bearer. This will reduce the number of bearers to be processed.
+  //         * No bearer should be allocated.
+  //         */
+  //        nas_itti_activate_eps_bearer_ctx_rej(msg->ue_id, bcs_tbc->bearer_contexts[num_bc].s1u_sgw_fteid.teid, esm_cause); /**< Assuming, no other CN bearer procedure will intervere. */
+  //        /**<
+  //         * We will check the remaining bearer requests and reject bearers individually (we might have a mix of rejected and accepted bearers).
+  //         * The remaining must also be rejected, such that the procedure has no pending elements anymore.
+  //         */
+
+
  }
 
 /****************************************************************************
@@ -572,6 +598,69 @@ static void _dedicated_eps_bearer_activate_t3485_handler (void *args)
 
   OAILOG_FUNC_OUT (LOG_NAS_ESM);
 }
+
+///****************************************************************************
+// **                                                                        **
+// ** Name:    _default_eps_bearer_activate_t3485_handler()              **
+// **                                                                        **
+// ** Description: T3485 timeout handler                                     **
+// **                                                                        **
+// **              3GPP TS 24.301, section 6.4.1.6, case a                   **
+// **      On the first expiry of the timer T3485, the MME shall re- **
+// **      send the ACTIVATE DEFAULT EPS BEARER CONTEXT REQUEST and  **
+// **      shall reset and restart timer T3485. This retransmission  **
+// **      is repeated four times, i.e. on the fifth expiry of timer **
+// **      T3485, the MME shall release possibly allocated resources **
+// **      for this activation and shall abort the procedure.        **
+// **                                                                        **
+// ** Inputs:  args:      handler parameters                         **
+// **      Others:    None                                       **
+// **                                                                        **
+// ** Outputs:     None                                                      **
+// **      Return:    None                                       **
+// **      Others:    None                                       **
+// **                                                                        **
+// ***************************************************************************/
+//
+//static int
+//_default_eps_bearer_activate_t3485_handler(nas_esm_bearer_context_proc_t * esm_bearer_proc, ESM_msg *esm_resp_msg) {
+//  int                         rc = RETURNok;
+//
+//  OAILOG_FUNC_IN(LOG_NAS_ESM);
+//
+//  esm_bearer_proc->trx_base_proc.esm_proc.retx_count += 1;
+//  if (esm_bearer_proc->trx_base_proc.esm_proc.retx_count < DEFAULT_EPS_BEARER_ACTIVATE_COUNTER_MAX) {
+//    /*
+//     * Create a new ESM-Information request and restart the timer.
+//     * Keep the ESM transaction.
+//     */
+//
+//    pdn_context_t * pdn_context = NULL;
+//    mme_app_get_pdn_context(esm_bearer_proc->trx_base_proc.esm_proc.ue_id, esm_bearer_proc->pdn_cid,
+//        esm_bearer_proc->bearer_ebi, esm_bearer_proc->apn, &pdn_context);
+//    if(pdn_context){
+//      bearer_context_t * bearer_context = NULL;
+//      mme_app_get_session_bearer_context(pdn_context, esm_bearer_proc->bearer_ebi);
+//      if(bearer_context){
+//        rc = esm_send_activate_dedicated_eps_bearer_context_request(esm_bearer_proc->trx_base_proc.esm_proc.ue_id, pdn_context, bearer_context);
+//        if (rc != RETURNerror) {
+//          rc = esm_proc_dedicated_eps_bearer_context(esm_bearer_proc->trx_base_proc.esm_proc.ue_id, esm_bearer_proc);
+//          OAILOG_FUNC_RETURN(LOG_NAS_ESM, rc);
+//        }
+//      }
+//    }
+//  }
+//  /*
+//   * Prepare the reject message.
+//   */
+//  esm_send_pdn_connectivity_reject(esm_pdn_connectivity_proc->trx_base_proc.esm_proc.pti, esm_resp_msg, ESM_CAUSE_ESM_INFORMATION_NOT_RECEIVED);
+//  /*
+//   * Release the transactional PDN connectivity procedure.
+//   */
+//  _esm_proc_free_bearer_context_procedure(&esm_bearer_proc);
+//  OAILOG_FUNC_RETURN(LOG_NAS_ESM, RETURNok);
+//}
+
 
 /*
    --------------------------------------------------------------------------

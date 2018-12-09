@@ -349,7 +349,6 @@ esm_recv_pdn_connectivity_request (
    */
   if(!esm_pdn_connectivity_proc){
     OAILOG_DEBUG(LOG_NAS_ESM, "ESM-SAP   - No ESM procedure for UE " MME_UE_S1AP_ID_FMT " exists. Proceeding with handling the new ESM request (pti=%d) for PDN connectivity.\n", pti, mme_ue_s1ap_id);
-  } else{
     esm_pdn_connectivity_proc = _esm_proc_create_pdn_connectivity_procedure(mme_ue_s1ap_id, imsi, pti);
     esm_pdn_connectivity_proc->request_type = pdn_request_type;
     esm_pdn_connectivity_proc->pdn_type = pdn_type;
@@ -474,8 +473,7 @@ esm_cause_t esm_recv_information_response (
   mme_ue_s1ap_id_t ue_id,
   proc_tid_t pti,
   ebi_t ebi,
-  const esm_information_response_msg * msg,
-  ESM_msg *esm_response)
+  const esm_information_response_msg * msg)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   esm_cause_t                               esm_cause = ESM_CAUSE_SUCCESS;
@@ -624,15 +622,15 @@ esm_cause_t esm_recv_information_response (
  ***************************************************************************/
 esm_cause_t
 esm_recv_pdn_disconnect_request (
-  esm_context_t * esm_context,
+  mme_ue_s1ap_id_t ue_id,
   proc_tid_t pti,
   ebi_t ebi,
-  const pdn_disconnect_request_msg * msg,
-  ebi_t *linked_ebi)
+  const pdn_disconnect_request_msg * msg)
 {
-  OAILOG_FUNC_IN (LOG_NAS_ESM);
   esm_cause_t                               esm_cause = ESM_CAUSE_SUCCESS;
-  mme_ue_s1ap_id_t                          ue_id = esm_context->ue_id;
+  int                                       rc        = RETURNok;
+
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
 
   OAILOG_INFO(LOG_NAS_ESM, "ESM-SAP   - Received PDN Disconnect Request message " "(ue_id=%d, pti=%d, ebi=%d)\n", ue_id, pti, ebi);
 
@@ -660,39 +658,52 @@ esm_recv_pdn_disconnect_request (
   }
 
   /*
-   * Message processing
+   * Check that no transaction for this UE for PDN Disconnection exists.
+   * Create a new transaction.
    */
+  nas_esm_proc_t * esm_base_proc = esm_data_get_esm_procedure(ue_id);
+  nas_esm_pdn_connectivity_proc_t * esm_pdn_disconnect_proc = NULL;
+  if(esm_base_proc){
+    OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - An ESM procedure for UE ueId " MME_UE_S1AP_ID_FMT " exists. . \n", ue_id);
+    if(esm_base_proc->type == ESM_PROC_TRANSACTION){
+      /** We have another transactional procedure. If the PTIs don't match, reject the message and remove the procedure. */
+      if(((nas_esm_transaction_proc_t*)esm_base_proc)->pti != pti){
+        OAILOG_ERROR(LOG_NAS_ESM, "ESM-SAP   - Already an existing UE triggered ESM procedure (pti=%d, type=%d) for UE " MME_UE_S1AP_ID_FMT "."
+            " Rejecting request for new procedure (pti=%d).\n", ((nas_esm_transaction_proc_t*)esm_base_proc)->pti, esm_base_proc->type, ue_id, pti);
+        OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_REQUEST_REJECTED_BY_GW);
+      }
+      /** Procedure already exists. Check if a response message is appended to the procedure.. Return the procedure. */
+      OAILOG_WARNING(LOG_NAS_ESM, "ESM-SAP   - Found a valid ESM procedure (pti=%d) for UE " MME_UE_S1AP_ID_FMT ". Rehandling the ESM disconnection procedure. \n", pti, ue_id);
+      esm_pdn_disconnect_proc = (nas_esm_pdn_connectivity_proc_t*)esm_base_proc;
+    } else {
+      /** A network initiated procedure exists. Not allowed (not removing the procedure). */
+      OAILOG_INFO(LOG_NAS_ESM, "ESM-SAP   - UE initiated ESM information procedure (pti=%d) for UE " MME_UE_S1AP_ID_FMT " collided with network initiated bearer procedure (pti=0).\n", pti, ue_id);
+      /** Currently not handling both procedures. */
+      OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_COLLISION_WITH_NETWORK_INITIATED_REQUEST);
+    }
+  }
 
-  /** Get the linked EBI. */
-  *linked_ebi = msg->linkedepsbeareridentity;
+  if(!esm_pdn_disconnect_proc){
+    esm_pdn_disconnect_proc = _esm_proc_create_pdn_connectivity_procedure(ue_id, NULL, pti);
+    esm_pdn_disconnect_proc->default_ebi = msg->linkedepsbeareridentity;
+  }
+  // todo: PCOs @ esm disconnect
 
   /*
    * Execute the PDN disconnect procedure requested by the UE.
+   * Starting the T3492 timer and setting it as the timeout handler.
    * Validating the message in the context of the UE and finding the PDN context to remove (validating not last PDN).
+   * Setting the ESM contexts of the bearer into INACTIVE_PENDING state (not caring about the CN states).
    * Triggering a Delete Session Request for the PDN.
-   *
    */
-  int pid = esm_proc_pdn_disconnect_request (esm_context, pti, 0, *linked_ebi, &esm_cause);
-
-  if (pid != RETURNerror) {
-    /*
-     * Get the identity of the default EPS bearer context assigned to
-     * * * * the PDN connection to disconnect from
-     */
-    /*
-     * Check if it is a local release, if so directly release all bearers of the PDN connection and the PDN connection itself.
-     * If not, do a validation, only.
-     * Default bearer request will be sent in the esm_sap layer after this.
-     */
-//    int rc = esm_proc_eps_bearer_context_deactivate (esm_context, false, ESM_SAP_ALL_EBI, pid, &esm_cause);
-
-//    if (rc != RETURNerror) {
-      esm_cause = ESM_CAUSE_SUCCESS;
-//    }
+  esm_cause = esm_proc_pdn_disconnect_request (ue_id, pti, PDN_CONTEXT_IDENTIFIER_UNASSIGNED, msg->epsbeareridentity, &esm_cause);
+  if(esm_cause != ESM_CAUSE_SUCCESS){
+    _esm_proc_free_pdn_connectivity_procedure(&esm_pdn_disconnect_proc);
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, esm_cause);
   }
+
   /*
-   * Return the ESM cause value.
-   * We sent the S11 Delete Session Request message and request default bearer removal from the UE.
+   * Send the Deactivate Bearer Context message.
    */
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, esm_cause);
 }
@@ -723,8 +734,9 @@ esm_recv_activate_default_eps_bearer_context_accept (
   ebi_t ebi,
   const activate_default_eps_bearer_context_accept_msg * msg)
 {
-  OAILOG_FUNC_IN (LOG_NAS_ESM);
   esm_cause_t                              esm_cause = ESM_CAUSE_SUCCESS;
+
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
 
   OAILOG_INFO(LOG_NAS_ESM, "ESM-SAP   - Received Activate Default EPS Bearer Context " "Accept message (ue_id=%d, pti=%d, ebi=%d)\n", ue_id, pti, ebi);
 
@@ -742,7 +754,7 @@ esm_recv_activate_default_eps_bearer_context_accept (
   /*
    * EPS bearer identity checking
    */
-  else if (esm_ebr_is_reserved (ebi)){ // || esm_ebr_is_not_in_use (esm_context, ebi)) {
+  else if (esm_ebr_is_reserved (ebi)){
     /*
      * 3GPP TS 24.301, section 7.3.2, case f
      * * * * Reserved or assigned value that does not match an existing EPS
@@ -751,7 +763,13 @@ esm_recv_activate_default_eps_bearer_context_accept (
     OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Invalid EPS bearer identity (ebi=%d)\n", ebi);
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY);
   }
-  // todo: LOCK_ESM_TRX --> SHOULD BE REMOVED VIA TIMER?!?
+
+  nas_esm_pdn_connectivity_proc_t * esm_pdn_connectivity_proc = esm_data_get_procedure(ue_id);
+  if(!esm_pdn_connectivity_proc){
+    OAILOG_WARNING(LOG_NAS_ESM, "ESM-SAP   - No procedure for UE " MME_UE_S1AP_ID_FMT " found. Ignoring the received ESM message ADBA.\n", ue_id);
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_SUCCESS);
+  }
+
   /*
    * Execute the default EPS bearer context activation procedure accepted
    * * * * by the UE
@@ -762,9 +780,6 @@ esm_recv_activate_default_eps_bearer_context_accept (
    * It stops T3485 timer if running
    */
   _esm_proc_free_pdn_connectivity_procedure(&esm_pdn_connectivity_proc);
-
-  // todo: LOCK_ESM_TRX --> SHOULD BE REMOVED VIA TIMER?!?
-
   /*
    * Return the ESM cause value
    */
@@ -814,29 +829,25 @@ esm_recv_activate_default_eps_bearer_context_reject (
     OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Invalid PTI value (pti=%d)\n", pti);
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_PTI_VALUE);
   }
+
+  nas_esm_pdn_connectivity_proc_t * esm_pdn_connectivity_proc = esm_data_get_procedure(ue_id);
+  if(!esm_pdn_connectivity_proc){
+    OAILOG_WARNING(LOG_NAS_ESM, "ESM-SAP   - No procedure for UE " MME_UE_S1AP_ID_FMT " found. Ignoring the received ESM information request.\n", ue_id);
+    // todo: unhandled
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_SUCCESS);
+  }
+
   /*
    * Remove the PDN Context for the given APN.
    * No EMM message will be triggered, just a local remove.
    * Inform the SAE-GW
    */
-  int rc = esm_proc_default_eps_bearer_context_reject (esm_context, ebi, &esm_cause);
-
-  /*
-   * Remove the PDN Connectivity procedure.
-   * It stops T3485 timer if running
-   */
-  _esm_proc_free_pdn_connectivity_procedure(&esm_pdn_connectivity_proc);
-
-
-
-  if (rc != RETURNerror) {
-    esm_cause = ESM_CAUSE_SUCCESS;
-  }
+  esm_cause = esm_proc_pdn_connectivity_failure(ue_id, esm_pdn_connectivity_proc);
 
   /*
    * Return the ESM cause value
    */
-  OAILOG_FUNC_RETURN (LOG_NAS_ESM, esm_cause);
+  OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_SUCCESS);
 }
 
 /****************************************************************************
@@ -1153,35 +1164,22 @@ esm_recv_modify_eps_bearer_context_reject (
  ***************************************************************************/
 esm_cause_t
 esm_recv_deactivate_eps_bearer_context_accept (
-  esm_context_t * esm_context,
+  mme_ue_s1ap_id_t ue_id,
   proc_tid_t pti,
   ebi_t ebi,
   const deactivate_eps_bearer_context_accept_msg * msg)
 {
-  OAILOG_FUNC_IN (LOG_NAS_ESM);
   esm_cause_t                             esm_cause = ESM_CAUSE_SUCCESS;
-  mme_ue_s1ap_id_t                        ue_id = esm_context->ue_id;
-  ue_context_t                           *ue_context  = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, esm_context->ue_id);
-  pdn_context_t                          *pdn_context = NULL;
+
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
 
   OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Received Deactivate EPS Bearer Context " "Accept message (ue_id=%d, pti=%d, ebi=%d)\n",
           ue_id, pti, ebi);
 
   /*
-   * Procedure transaction identity checking
-   */
-  if (esm_pt_is_reserved (pti)) {
-    /*
-     * 3GPP TS 24.301, section 7.3.1, case f
-     * * * * Reserved PTI value
-     */
-    OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Invalid PTI value (pti=%d)\n", pti);
-    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_PTI_VALUE);
-  }
-  /*
    * EPS bearer identity checking
    */
-  else if (esm_ebr_is_reserved (ebi)){ // || esm_ebr_is_not_in_use (esm_context, ebi)) {
+  if (esm_ebr_is_reserved (ebi)){ // || esm_ebr_is_not_in_use (esm_context, ebi)) {
     /*
      * 3GPP TS 24.301, section 7.3.2, case f
      * * * * Reserved or assigned value that does not match an existing EPS
@@ -1192,52 +1190,45 @@ esm_recv_deactivate_eps_bearer_context_accept (
   }
 
   /*
-   * Message processing
+   * Check the procedure for the UE with the PTI (could be 0).
+   * It could be a PDN disconnection or a EPS bearer deactivation (pti >=0).
+   * Only one transaction is allowed.
    */
-  bearer_context_t * bc_p = NULL;
-  mme_app_get_session_bearer_context_from_all(ue_context, ebi, &bc_p);
-  if(!bc_p){
-    OAILOG_ERROR(LOG_NAS_ESM , "ESM-PROC  - Could not find PDN context from ebi %d. \n", ebi);
-    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_EBI_UNASSIGNED);
+  nas_esm_proc_t * esm_proc =  esm_data_get_procedure_by_pti(ue_id, pti);
+  if(!esm_proc){
+    OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - No ESM procedure could be found for UE " MME_UE_S1AP_ID_FMT " (pti=%d)\n", ue_id, pti);
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_PTI_VALUE);
   }
+  /* Check if the procedure is a bearer or a PDN connectivity procedure. */
+  if(esm_proc->type == ESM_PROC_PDN_CONTEXT){
+    /** Deactivate the PDN context. */
 
-  ebi_t linked_ebi = bc_p->linked_ebi;
+    esm_proc_pdn_disconnect_accept(((nas_esm_pdn_connectivity_proc_t*)esm_proc)->esm_base_proc.ue_id,
+        ((nas_esm_pdn_connectivity_proc_t*)esm_proc)->pdn_cid, ((nas_esm_pdn_connectivity_proc_t*)esm_proc)->default_ebi,
+        ((nas_esm_pdn_connectivity_proc_t*)esm_proc)->apn_subscribed);
 
-  /*
-   * Execute the default EPS bearer context activation procedure accepted
-   * * * * by the UE
-   */
-  int pid = esm_proc_eps_bearer_context_deactivate_accept (esm_context, ebi, &esm_cause);
-  if (pid != RETURNerror) {
+     _esm_proc_free_pdn_connectivity_procedure(&((nas_esm_pdn_connectivity_proc_t*)esm_proc));
+     /** Nothing to signal. */
+     OAILOG_FUNC_OUT (LOG_NAS_ESM, ESM_CAUSE_SUCCESS);
+  } else {
+    /** Bearer Context Procedures may be transactional or not. */
+    nas_esm_bearer_context_proc_t * esm_bearer_context_proc = (nas_esm_bearer_context_proc_t*)esm_proc;
+    /* Deactivate the bearer/pdn context implicitly. */
+    esm_proc_eps_bearer_context_deactivate_accept(esm_bearer_context_proc->esm_base_proc.ue_id, esm_bearer_context_proc->pdn_cid,
+        esm_bearer_context_proc->bearer_ebi, esm_bearer_context_proc->apn);
+    _esm_proc_free_bearer_context_procedure(&esm_bearer_context_proc);
     /*
-     * Check if it was the default ebi. If so, release the pdn context.
-     * If not, respond with a delete bearer response back. Keep the UE context and PDN context as valid.
+     * Deactivate the EPS bearer context (must be a dedicated bearer).
      */
-    mme_app_get_pdn_context(ue_context, pid, linked_ebi, NULL, &pdn_context);
-    if(!pdn_context){
-      OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - No PDN context could be found. (pid=%d)\n", pid);
-      OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY);
-    }
-    int rc = RETURNerror;
-    if(pdn_context->default_ebi == ebi){
-      // todo: check that only 1 deactivate message for the default bearer exists
-      OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - We released  the default EBI. Deregistering the PDN context. (ebi=%d,pid=%d)\n", ebi,pid);
-      rc = esm_proc_pdn_disconnect_accept (esm_context, pid, ebi, &esm_cause); /**< Delete Session Request is already sent at the beginning. We don't care for the response. */
-    }else{
-      OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - We released  the dedicated EBI. Responding with delete bearer response back. (ebi=%d,pid=%d)\n", ebi,pid);
-      /** Respond per bearer. */
-      nas_itti_dedicated_eps_bearer_deactivation_complete(esm_context->ue_id, ebi);
-      /** Successfully informed the MME_APP layer about the bearer deactivation. We are complete. */
-    }
-    if (rc != RETURNerror) {
-      esm_cause = ESM_CAUSE_SUCCESS;
-    }
+    OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - We released  the dedicated EBI. Responding with delete bearer response back. (ebi=%d,pid=%d)\n", ebi,pid);
+    /** Respond per bearer. */
+    nas_itti_dedicated_eps_bearer_deactivation_complete(ue_id, ebi);
+    /*
+     * Successfully informed the MME_APP layer about the bearer deactivation. We are complete.
+     */
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_SUCCESS);
   }
 
-  /*
-   * Return the ESM cause value
-   */
-  OAILOG_FUNC_RETURN (LOG_NAS_ESM, esm_cause);
 }
 
 /****************************************************************************/

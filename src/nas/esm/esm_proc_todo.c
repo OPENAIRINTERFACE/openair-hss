@@ -1,110 +1,4 @@
-/*
- * esm_proc_todo.c
- *
- *  Created on: Dec 4, 2018
- *      Author: root
- */
 
-
-//      /** If a PDN connectivity exists, perform an activate default eps bearer context request. */
-//      if(is_pdn_connectivity){
-//        /*
-//         * Get the PDN context.
-//         */
-//        bearer_context_t * bearer_context_duplicate = mme_app_get_session_bearer_context(new_pdn_context, new_pdn_context->default_ebi);
-//        DevAssert(bearer_context_duplicate);
-//
-//        memset (&esm_msg, 0, sizeof (ESM_msg));
-//              esm_proc_pdn_type_t                     esm_pdn_type = ESM_PDN_TYPE_IPV4;
-//
-//              esm_sap_t esm_sap;
-//              memset(&esm_sap, 0, sizeof(esm_sap_t));
-//              /** Trigger default EPS Bearer Activation. */
-//              esm_sap.data.pdn_connect.cid = new_pdn_context->context_identifier;
-//              esm_sap.data.pdn_connect.pdn_type = new_pdn_context->pdn_type;
-//              esm_sap.data.pdn_connect.apn = new_pdn_context->apn_subscribed;
-//  //            esm_sap.data.pdn_connect.pco = new_pdn_context->pco;
-//              esm_sap.data.pdn_connect.linked_ebi = new_pdn_context->default_ebi;
-//              /** The PDN Context PAA/AMBR values will be updated with the CSResp in the MME_APP bearer handler.*/
-//              esm_sap.data.pdn_connect.apn_ambr = new_pdn_context->subscribed_apn_ambr; /**< Updated with the value from the PCRF. */
-//              esm_sap.data.pdn_connect.pdn_addr = paa_to_bstring(new_pdn_context->paa); /**< For this, we need to store the IP information. */
-//              /*
-//               * Return default EPS bearer context request message
-//               */
-//              rc = _esm_sap_send(ACTIVATE_DEFAULT_EPS_BEARER_CONTEXT_REQUEST, is_standalone,
-//                  esm_context, pti, new_pdn_context->default_ebi, &esm_sap.data, &esm_sap.send);
-//            }else{
-//              OAILOG_INFO (LOG_NAS_EMM, "No PDN connectivity exists for the second APN \"%s\" for ueId " MME_UE_S1AP_ID_FMT ". "
-//                  "Establishing PDN connection. \n", bdata(esm_msg.activate_default_eps_bearer_context_request.accesspointname), esm_context->ue_id);
-//              nas_itti_pdn_connectivity_req (esm_context->esm_proc_data->pti, esm_context->ue_id, new_pdn_context->context_identifier, new_pdn_context->default_ebi,
-//                  esm_context->esm_proc_data, esm_context->esm_proc_data->request_type);
-//              /** No PDN connectivity exists yet. Leaving with PDN connectivity establishment. No procedure needed. */
-//              rc = RETURNok;
-//            }
-//          }
-
-
-
-
-//      case ACTIVATE_DEFAULT_EPS_BEARER_CONTEXT_ACCEPT:
-//        /*
-//         * Process activate default EPS bearer context accept message
-//         * received from the UE
-//         */
-//        esm_cause = esm_recv_activate_default_eps_bearer_context_accept (esm_context, pti, ebi, &esm_msg.activate_default_eps_bearer_context_accept);
-//
-//        if ((esm_cause == ESM_CAUSE_INVALID_PTI_VALUE) || (esm_cause == ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY)) {
-//          /*
-//           * 3GPP TS 24.301, section 7.3.1, case f
-//           * * * * Ignore ESM message received with reserved PTI value
-//           * * * * 3GPP TS 24.301, section 7.3.2, case f
-//           * * * * Ignore ESM message received with reserved or assigned
-//           * * * * value that does not match an existing EPS bearer context
-//           */
-//          is_discarded = true;
-//        }
-//
-//        break;
-//
-//        case ACTIVATE_DEFAULT_EPS_BEARER_CONTEXT_REJECT:
-//          /*
-//           * Process activate default EPS bearer context reject message
-//           * received from the UE
-//           */
-//          esm_cause = esm_recv_activate_default_eps_bearer_context_reject (esm_context, pti, ebi, &esm_msg.activate_default_eps_bearer_context_reject);
-//
-//          if ((esm_cause == ESM_CAUSE_INVALID_PTI_VALUE) || (esm_cause == ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY)) {
-//            /*
-//             * 3GPP TS 24.301, section 7.3.1, case f
-//             * * * * Ignore ESM message received with reserved PTI value
-//             * * * * 3GPP TS 24.301, section 7.3.2, case f
-//             * * * * Ignore ESM message received with reserved or assigned
-//             * * * * value that does not match an existing EPS bearer context
-//             */
-//            is_discarded = true;
-//          }
-//
-//          break;
-//
-//        case DEACTIVATE_EPS_BEARER_CONTEXT_ACCEPT:
-//          /*
-//           * Process deactivate EPS bearer context accept message
-//           * received from the UE
-//           */
-//          esm_cause = esm_recv_deactivate_eps_bearer_context_accept (esm_context, pti, ebi, &esm_msg.deactivate_eps_bearer_context_accept);
-//
-//          if ((esm_cause == ESM_CAUSE_INVALID_PTI_VALUE) || (esm_cause == ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY)) {
-//            /*
-//             * 3GPP TS 24.301, section 7.3.1, case f
-//             * * * * Ignore ESM message received with reserved PTI value
-//             * * * * 3GPP TS 24.301, section 7.3.2, case f
-//             * * * * Ignore ESM message received with reserved or assigned
-//             * * * * value that does not match an existing EPS bearer context
-//             */
-//            is_discarded = true;
-//          }
-//
-//          break;
 //
 //        case ACTIVATE_DEDICATED_EPS_BEARER_CONTEXT_ACCEPT:
 //          /*
@@ -185,47 +79,6 @@
 //          }
 //
 //          break;
-//
-//        case PDN_DISCONNECT_REQUEST:
-//          /*
-//           * Process PDN disconnect request message received from the UE.
-//           * Get the Linked Default EBI.
-//           */
-//          esm_cause = esm_recv_pdn_disconnect_request (esm_context, pti, ebi, &esm_msg.pdn_disconnect_request, &ebi);
-//
-//          if (esm_cause != ESM_CAUSE_SUCCESS) {
-//            /*
-//             * Return reject message
-//             */
-//            rc = esm_send_pdn_disconnect_reject (pti, &esm_msg.pdn_disconnect_reject, esm_cause);
-//            /*
-//             * Setup the callback function used to send PDN connectivity
-//             * * * * reject message onto the network
-//             */
-//            esm_procedure = esm_proc_pdn_disconnect_reject;
-//            /*
-//             * No ESM status message should be returned
-//             */
-//            esm_cause = ESM_CAUSE_SUCCESS;
-//          } else {
-//            /*
-//             * Return deactivate EPS bearer context request message
-//             */
-//    //        rc = esm_send_deactivate_eps_bearer_context_request (pti, ebi, &esm_msg.deactivate_eps_bearer_context_request, ESM_CAUSE_REGULAR_DEACTIVATION);
-//            /*
-//             * Setup the callback function used to send deactivate EPS
-//             * * * * bearer context request message onto the network
-//             */
-//    //        esm_procedure = esm_proc_eps_bearer_context_deactivate_request;
-//          }
-//
-//          break;
-//
-//        case BEARER_RESOURCE_ALLOCATION_REQUEST:
-//          break;
-//
-//        case BEARER_RESOURCE_MODIFICATION_REQUEST:
-//          break;
 
 //    case ESM_STATUS:
 //      /*
@@ -269,23 +122,6 @@
 //      OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
 ////      DevAssert(0);
 //    }
-//    break;
-//
-//  case ESM_PDN_DISCONNECT_CNF:{
-//    /** Check if we do a local detach or not. */
-//    OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Continuing with standalone PDN disconnection for ueId " MME_UE_S1AP_ID_FMT ". \n",
-//          msg->ue_id);
-//    /*
-//     * Create a deactivate EPS bearer context request message, set the status as pending deactivation and continue.
-//     * The EBI should already be set when the ESM message has been received.
-//     */
-//    rc = _esm_sap_send(DEACTIVATE_EPS_BEARER_CONTEXT_REQUEST,
-//        msg->ctx, msg->ctx->esm_proc_data->pti, msg->ctx->esm_proc_data->ebi,
-//        &msg->data, &msg->send);
-//  }
-//  break;
-//
-//  case ESM_PDN_DISCONNECT_REJ:
 //    break;
 //
 //  case ESM_BEARER_RESOURCE_ALLOCATE_REQ:
@@ -372,62 +208,6 @@
 //     */
 //    rc = _esm_sap_recv (ACTIVATE_DEFAULT_EPS_BEARER_CONTEXT_ACCEPT, msg->ctx, msg->recv, msg->send, &msg->err);
 //    break;
-//
-//  case ESM_DEFAULT_EPS_BEARER_CONTEXT_ACTIVATE_REJ:
-//    /*
-//     * The MME received activate default ESP bearer context reject
-//     */
-//    rc = _esm_sap_recv (ACTIVATE_DEFAULT_EPS_BEARER_CONTEXT_REJECT, msg->ctx, msg->recv, msg->send, &msg->err);
-//    break;
-//
-//  case ESM_DEDICATED_EPS_BEARER_CONTEXT_ACTIVATE_REQ: {
-//    esm_eps_activate_eps_bearer_ctx_req_t* bearer_activate = &msg->data.eps_dedicated_bearer_context_activate;
-//    /** Handle each bearer context separately. */
-//    /** Get the bearer contexts to be created. */
-//    bearer_contexts_to_be_created_t * bcs_tbc = (bearer_contexts_to_be_created_t*)bearer_activate->bcs_to_be_created_ptr;
-//    for(int num_bc = 0; num_bc < bcs_tbc->num_bearer_context; num_bc++){
-//      rc = esm_proc_dedicated_eps_bearer_context (msg->ctx,     /**< Create an ESM procedure and store the bearers in the procedure as pending. */
-//          bearer_activate->linked_ebi,
-//          bearer_activate->pti,
-//          bearer_activate->cid,
-//          &bcs_tbc->bearer_contexts[num_bc],
-//          &esm_cause);
-//      /** For each bearer separately process with the bearer establishment. */
-//      if (rc != RETURNok) {   /**< We assume that no ESM procedure exists. */
-//        OAILOG_ERROR (LOG_NAS_ESM, "ESM-SAP   - Failed to handle CN bearer context procedure due SYSTEM_FAILURE for num_bearer %d!\n",
-//            _esm_sap_primitive_str[primitive - ESM_START - 1], primitive, num_bc);
-//        /**
-//         * Send a NAS ITTI directly for the specific bearer. This will reduce the number of bearers to be processed.
-//         * No bearer should be allocated.
-//         */
-//        nas_itti_activate_eps_bearer_ctx_rej(msg->ue_id, bcs_tbc->bearer_contexts[num_bc].s1u_sgw_fteid.teid, esm_cause); /**< Assuming, no other CN bearer procedure will intervere. */
-//        /**<
-//         * We will check the remaining bearer requests and reject bearers individually (we might have a mix of rejected and accepted bearers).
-//         * The remaining must also be rejected, such that the procedure has no pending elements anymore.
-//         */
-//        continue;
-//      }
-//      OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Successfully allocated bearer with ebi %d for ue " MME_UE_S1AP_ID_FMT "!\n",
-//          bcs_tbc->bearer_contexts[num_bc].eps_bearer_id, ue_context->mme_ue_s1ap_id);
-//      /* Send Activate Dedicated Bearer Context Request */
-//      rc = _esm_sap_send(ACTIVATE_DEDICATED_EPS_BEARER_CONTEXT_REQUEST, msg->ctx, (proc_tid_t)bearer_activate->pti, bcs_tbc->bearer_contexts[num_bc].eps_bearer_id,
-//          &msg->data, &msg->send);
-//      /** Check the resulting error code. */
-//      if(rc == RETURNerror) {
-//        OAILOG_ERROR (LOG_NAS_ESM, "ESM-SAP   - Could not trigger allocation of dedicated bearer context with ebi %d for ue " MME_UE_S1AP_ID_FMT "!\n",
-//            bcs_tbc->bearer_contexts[num_bc].eps_bearer_id, ue_context->mme_ue_s1ap_id);
-//        /** Removed the created EPS bearer context. */
-//        rc = esm_proc_eps_bearer_context_deactivate (msg->ctx, true, bcs_tbc->bearer_contexts[num_bc].eps_bearer_id,  /**< Set above. */
-//            PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED, NULL);
-//          /** Inform the MME APP. */
-//          nas_itti_activate_eps_bearer_ctx_rej(msg->ue_id, bcs_tbc->bearer_contexts[num_bc].s1u_sgw_fteid.teid, esm_cause); /**< Assuming, no other CN bearer procedure will intervere. */
-//        }else{
-//          OAILOG_INFO(LOG_NAS_ESM, "ESM-SAP   - Successfully completed triggering the allocation of dedicated bearer context with ebi %d for ue " MME_UE_S1AP_ID_FMT "!\n",
-//              bcs_tbc->bearer_contexts[num_bc].eps_bearer_id, ue_context->mme_ue_s1ap_id);
-//        }
-//    }
-//  }
-//  break;
 //
 //  case ESM_EPS_BEARER_CONTEXT_MODIFY_REQ: {
 //     esm_eps_modify_eps_bearer_ctx_req_t* bearer_modify = &msg->data.eps_bearer_context_modify;

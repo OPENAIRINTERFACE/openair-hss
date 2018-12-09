@@ -74,8 +74,6 @@
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
 /****************************************************************************/
 
-extern int _pdn_connectivity_delete (mme_ue_s1ap_id_t ue_id, pdn_cid_t pdn_cid, bstring apn, ebi_t default_ebi, pti_t pti);
-
 /****************************************************************************/
 /*******************  L O C A L    D E F I N I T I O N S  *******************/
 /****************************************************************************/
@@ -85,7 +83,11 @@ extern int _pdn_connectivity_delete (mme_ue_s1ap_id_t ue_id, pdn_cid_t pdn_cid, 
     Internal data handled by the PDN disconnect procedure in the MME
    --------------------------------------------------------------------------
 */
+static void _eps_pdn_deactivate_t3495_handler (nas_esm_pdn_connectivity_proc_t * esm_pdn_disconnect_proc, ESM_msg * esm_rsp_msg);
 
+/* Maximum value of the deactivate EPS bearer context request
+   retransmission counter */
+#define EPS_PDN_CONTEXT_DEACTIVATE_COUNTER_MAX 5
 
 /****************************************************************************/
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
@@ -112,26 +114,28 @@ extern int _pdn_connectivity_delete (mme_ue_s1ap_id_t ue_id, pdn_cid_t pdn_cid, 
 int
 esm_send_pdn_disconnect_reject (
   pti_t pti,
-  pdn_disconnect_reject_msg * msg,
+  ESM_msg * esm_rsp_msg,
   int esm_cause)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
+
+  memset(esm_rsp_msg, 0, sizeof(ESM_msg));
   /*
    * Mandatory - ESM message header
    */
-  msg->protocoldiscriminator = EPS_SESSION_MANAGEMENT_MESSAGE;
-  msg->epsbeareridentity = EPS_BEARER_IDENTITY_UNASSIGNED;
-  msg->messagetype = PDN_DISCONNECT_REJECT;
-  msg->proceduretransactionidentity = pti;
+  esm_rsp_msg->pdn_disconnect_reject.protocoldiscriminator = EPS_SESSION_MANAGEMENT_MESSAGE;
+  esm_rsp_msg->pdn_disconnect_reject.epsbeareridentity = EPS_BEARER_IDENTITY_UNASSIGNED;
+  esm_rsp_msg->pdn_disconnect_reject.messagetype = PDN_DISCONNECT_REJECT;
+  esm_rsp_msg->pdn_disconnect_reject.proceduretransactionidentity = pti;
   /*
    * Mandatory - ESM cause code
    */
-  msg->esmcause = esm_cause;
+  esm_rsp_msg->pdn_disconnect_reject.esmcause = esm_cause;
   /*
    * Optional IEs
    */
-  msg->presencemask = 0;
-  OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Send PDN Disconnect Reject message " "(pti=%d, ebi=%d)\n", msg->proceduretransactionidentity, msg->epsbeareridentity);
+  esm_rsp_msg->pdn_disconnect_reject.presencemask = 0;
+  OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Send PDN Disconnect Reject message " "(pti=%d, ebi=%d)\n", esm_rsp_msg->pdn_disconnect_reject.proceduretransactionidentity, esm_rsp_msg->pdn_disconnect_reject.epsbeareridentity);
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);
 }
 
@@ -164,79 +168,52 @@ esm_send_pdn_disconnect_reject (
  **      Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
-int
+esm_cause_t
 esm_proc_pdn_disconnect_request (
-  esm_context_t * esm_context,
+  mme_ue_s1ap_id_t ue_id,
   proc_tid_t pti,
   pdn_cid_t  pdn_cid,
-  ebi_t default_ebi,
-  esm_cause_t *esm_cause)
+  nas_esm_pdn_connectivity_proc_t * esm_pdn_disconnect_proc)
 {
 
   OAILOG_FUNC_IN (LOG_NAS_ESM);
-  pdn_cid_t                               pid = RETURNerror;
-  mme_ue_s1ap_id_t                        ue_id = esm_context->ue_id;
-  pdn_context_t                          *pdn_context = NULL;
 
   OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - PDN disconnect requested by the UE " "(ue_id=" MME_UE_S1AP_ID_FMT ", default_ebi %d, pti=%d)\n", ue_id, default_ebi, pti);
 
+  pdn_context_t * pdn_context = NULL;
+  mme_app_get_pdn_context(ue_id, PDN_CONTEXT_IDENTIFIER_UNASSIGNED, esm_pdn_disconnect_proc->default_ebi, NULL, &pdn_context);
+  if(!pdn_context){
+    OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - No PDN context found (after update) (ebi=%d, pti=%d) for UE " MME_UE_S1AP_ID_FMT ".\n", default_ebi, pti, ue_id);
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_PDN_CONNECTION_DOES_NOT_EXIST);
+  }
+
+  /** Update the PDN connectivity procedure with the PDN context information. */
+  esm_pdn_disconnect_proc->trx_base_proc.esm_proc.pti = pti;
+  esm_pdn_disconnect_proc->pdn_cid = pdn_context->context_identifier;
+  esm_pdn_disconnect_proc->apn_subscribed = bstrcpy(pdn_context->apn_subscribed);
+
   /*
-   * Get the identifier of the PDN connection entry assigned to the
-   * * * * procedure transaction identity
+   * Send deactivate EPS bearer context request message and
+   * * * * start timer T3495/T3492
    */
-  ue_context_t                        *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, esm_context->ue_id);
-  DevAssert(ue_context);
+  OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Starting T3492 for Deactivate Default EPS bearer context deactivation (ue_id=" MME_UE_S1AP_ID_FMT ", context_identifier=%d)\n",
+      ue_id, esm_pdn_disconnect_proc->pdn_cid);
+  /** Stop any timer if running. */
+  nas_stop_esm_timer(ue_id, &esm_pdn_disconnect_proc->trx_base_proc.esm_proc.esm_proc_timer);
+  /** Start the T3485 timer for additional PDN connectivity. */
+  esm_pdn_disconnect_proc->trx_base_proc.esm_proc.esm_proc_timer.id = nas_timer_start (esm_pdn_disconnect_proc->trx_base_proc.esm_proc.esm_proc_timer.sec, 0 /*usec*/, TASK_NAS_ESM,
+      _nas_proc_pdn_connectivity_timeout_handler, ue_id); /**< Address field should be big enough to save an ID. */
 
-  bearer_context_t * bearer_context_to_deactivate = NULL;
-  mme_app_get_session_bearer_context_from_all(ue_context, default_ebi, &bearer_context_to_deactivate); /**< Might be locally removed. */
-  if(bearer_context_to_deactivate){
-    pdn_cid_t pdn_cx_id = bearer_context_to_deactivate->pdn_cx_id;
-    mme_app_get_pdn_context(ue_context, pdn_cx_id, default_ebi, NULL, &pdn_context);
-  }else{
-    mme_app_get_pdn_context(ue_context, pdn_cid, default_ebi, NULL, &pdn_context);
-  }
+  /* Set the timeout handler as the PDN Disconnection handler. */
+  esm_pdn_disconnect_proc->trx_base_proc.esm_proc.timeout_notif = _eps_pdn_deactivate_t3495_handler;
 
-  if(!pdn_context || pdn_context->context_identifier >= MAX_APN_PER_UE){
-    OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - No PDN connection found (pti=%d)\n", pti);
-    *esm_cause = ESM_CAUSE_PROTOCOL_ERROR;
-    OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
-  }
-//    return pdn_context->context_identifier;
-//  return MAX_APN_PER_UE;
-//
-//    if (pid >= MAX_APN_PER_UE) {
-//      OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - No PDN connection found (pti=%d)\n", pti);
-//      *esm_cause = ESM_CAUSE_PROTOCOL_ERROR;
-//      OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
-//    }
   /*
-   * Create a ESM proc data.
-   * todo: validate that no ESM Proc is running before starting a new ESM message!
-   * Currently, just overwriting the old one.
+   * Trigger an S11 Delete Session Request to the SAE-GW.
+   * No need to process the response.
    */
-  if (!esm_context->esm_proc_data) {
-    esm_context->esm_proc_data  = (esm_proc_data_t *) calloc(1, sizeof(*esm_context->esm_proc_data));
-  }else{
-    // todo: don't start a new esm_proc without completing the first one
-  }
-  esm_context->esm_proc_data->pti = pti;
-  esm_context->esm_proc_data->pdn_cid = pdn_context->context_identifier;
-  esm_context->esm_proc_data->apn = NULL;
-  esm_context->esm_proc_data->ebi = pdn_context->default_ebi;
+  nas_itti_pdn_disconnect_req(ue_id, esm_pdn_disconnect_proc->default_ebi, esm_pdn_disconnect_proc->trx_base_proc.pti, pdn_context->s_gw_address_s11_s4.address.ipv4_address, pdn_context->s_gw_teid_s11_s4);
 
-  /** Found the PDN context. Informing the MME_APP layer to release the bearers. */
-  nas_itti_pdn_disconnect_req(esm_context->ue_id, default_ebi, pdn_context->s_gw_address_s11_s4.address.ipv4_address, pdn_context->s_gw_teid_s11_s4,
-      (esm_context->n_pdns > 1),
-      esm_context->esm_proc_data);
-//  } else {
-//    /*
-//     * Attempt to disconnect from the last PDN disconnection
-//     * * * * is not allowed
-//     */
-//    *esm_cause = ESM_CAUSE_LAST_PDN_DISCONNECTION_NOT_ALLOWED;
-//  }
-
-  OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);
+  OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_SUCCESS);
 }
 
 /****************************************************************************
@@ -261,86 +238,27 @@ esm_proc_pdn_disconnect_request (
  **      Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
-int
+esm_cause_t
 esm_proc_pdn_disconnect_accept (
-  esm_context_t * esm_context,
+  mme_ue_s1ap_id_t ue_id,
   pdn_cid_t pid,
   ebi_t     default_ebi,
-  esm_cause_t *esm_cause)
+  bstring   apn)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
-  mme_ue_s1ap_id_t      ue_id = esm_context->ue_id;
+
   OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - PDN disconnect accepted by the UE " "(ue_id=" MME_UE_S1AP_ID_FMT ", pid=%d)\n", ue_id, pid);
   /*
    * Release the connectivity with the requested PDN
    */
   int                                     rc = mme_api_unsubscribe (NULL);
 
-  if (rc != RETURNerror) {
-    /*
-     * Delete the PDN connection entry
-     */
-    proc_tid_t                            pti = _pdn_connectivity_delete (esm_context, pid, default_ebi);
-
-    if (pti != ESM_PT_UNASSIGNED) {
-      OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);
-    }
-  }
-
-  *esm_cause = ESM_CAUSE_PROTOCOL_ERROR;
-  OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
-}
-
-/****************************************************************************
- **                                                                        **
- ** Name:    esm_proc_pdn_disconnect_reject()                          **
- **                                                                        **
- ** Description: Performs PDN disconnect procedure not accepted by the     **
- **      network.                                                  **
- **                                                                        **
- **              3GPP TS 24.301, section 6.5.2.4                           **
- **      Upon receipt of the PDN DISCONNECT REQUEST message, if it **
- **      is not accepted by the network, the MME shall send a PDN  **
- **      DISCONNECT REJECT message to the UE.                      **
- **                                                                        **
- ** Inputs:  is_standalone: Not used - Always true                     **
- **      ue_id:      UE lower layer identifier                  **
- **      ebi:       Not used                                   **
- **      msg:       Encoded PDN disconnect reject message to   **
- **             be sent                                    **
- **      ue_triggered:  Not used                                   **
- **      Others:    None                                       **
- **                                                                        **
- ** Outputs:     None                                                      **
- **      Return:    RETURNok, RETURNerror                      **
- **      Others:    None                                       **
- **                                                                        **
- ***************************************************************************/
-int
-esm_proc_pdn_disconnect_reject (
-  const bool is_standalone,
-  esm_context_t * esm_context,
-  ebi_t ebi,
-  STOLEN_REF bstring *msg,
-  const bool ue_triggered)
-{
-  OAILOG_FUNC_IN (LOG_NAS_ESM);
-  int                                     rc;
-  emm_sap_t                               emm_sap = {0};
-  mme_ue_s1ap_id_t                        ue_id = esm_context->ue_id;
-
-  OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - PDN disconnect not accepted by the network " "(ue_id=" MME_UE_S1AP_ID_FMT ")\n", ue_id);
   /*
-   * Notity EMM that ESM PDU has to be forwarded to lower layers
+   * Delete the MME_APP PDN context entry.
    */
-//  emm_sap.primitive = EMMESM_UNITDATA_REQ;
-//  emm_sap.u.emm_esm.ue_id = ue_id;
-//  emm_sap.u.emm_esm.ctx = esm_context;
-//  emm_sap.u.emm_esm.u.data.msg = *msg;
-//  *msg = NULL;
-//  MSC_LOG_TX_MESSAGE (MSC_NAS_ESM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMESM_UNITDATA_REQ  (PDN DISCONNECT REJECT) ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
-//  rc = emm_sap_send (&emm_sap);
-  OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
+  mme_app_pdn_context_delete(ue_id, pid, default_ebi, apn);
+
+  OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_SUCCESS);
 }
 
 /****************************************************************************/
@@ -353,6 +271,72 @@ esm_proc_pdn_disconnect_reject (
    --------------------------------------------------------------------------
 */
 
+/****************************************************************************
+ **                                                                        **
+ ** Name:    _eps_pdn_deactivate_t3495_handler()                    **
+ **                                                                        **
+ ** Description: T3495 timeout handler                                     **
+ **                                                                        **
+ **              3GPP TS 24.301, section 6.4.4.5, case a                   **
+ **      On the first expiry of the timer T3495, the MME shall re- **
+ **      send the DEACTIVATE EPS BEARER CONTEXT REQUEST and shall  **
+ **      reset and restart timer T3495. This retransmission is     **
+ **      repeated four times, i.e. on the fifth expiry of timer    **
+ **      T3495, the MME shall abort the procedure and deactivate   **
+ **      the EPS bearer context locally.                           **
+ **                                                                        **
+ ** Inputs:  args:      handler parameters                         **
+ **      Others:    None                                       **
+ **                                                                        **
+ ** Outputs:     None                                                      **
+ **      Return:    None                                       **
+ **      Others:    None                                       **
+ **                                                                        **
+ ***************************************************************************/
+static void _eps_pdn_deactivate_t3495_handler (nas_esm_pdn_connectivity_proc_t * esm_pdn_disconnect_proc, ESM_msg * esm_rsp_msg)
+{
+
+  OAILOG_FUNC_IN(LOG_NAS_ESM);
+
+  pdn_context_t * pdn_context = NULL;
+  mme_app_get_pdn_context(esm_pdn_disconnect_proc->trx_base_proc.esm_proc.ue_id, esm_pdn_disconnect_proc->pdn_cid,
+      esm_pdn_disconnect_proc->default_ebi, esm_pdn_disconnect_proc->apn_subscribed, &pdn_context);
+
+  esm_pdn_disconnect_proc->trx_base_proc.esm_proc.retx_count+= 1;
+  if (esm_pdn_disconnect_proc->trx_base_proc.esm_proc.retx_count < EPS_PDN_CONTEXT_DEACTIVATE_COUNTER_MAX) {
+    OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - T3492 timer expired (ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d), " "retransmission counter = %d\n",
+        esm_pdn_disconnect_proc->trx_base_proc.esm_proc.ue_id, esm_pdn_disconnect_proc->default_ebi, esm_pdn_disconnect_proc->trx_base_proc.retx_count);
+
+    /*
+     * Create a new ESM-Information request and restart the timer.
+     * Keep the ESM transaction.
+     */
+    if(pdn_context){
+      bearer_context_t * bearer_context = NULL;
+      mme_app_get_session_bearer_context(pdn_context, esm_pdn_disconnect_proc->default_ebi);
+      if(bearer_context){
+        rc = esm_send_deactivate_eps_bearer_context_request(esm_pdn_disconnect_proc->trx_base_proc.pti,
+            esm_pdn_disconnect_proc->default_ebi, esm_rsp_msg, ESM_CAUSE_REGULAR_DEACTIVATION);
+        if (rc != RETURNerror) {
+          rc = esm_proc_pdn_disconnect_request (esm_pdn_disconnect_proc->trx_base_proc.esm_proc.ue_id, esm_pdn_disconnect_proc->default_ebi, esm_pdn_disconnect_proc);
+          OAILOG_FUNC_RETURN(LOG_NAS_ESM, rc);
+        }
+      }
+    }
+  }
+
+  OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - T3492 timer expired (ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d), " "retransmission counter = %d\n",
+       esm_pdn_disconnect_proc->trx_base_proc.esm_proc.ue_id, esm_pdn_disconnect_proc->default_ebi, esm_pdn_disconnect_proc->trx_base_proc.esm_proc.retx_count);
+
+  /*
+   * Check if it is the default EBI, if so remove the PDN context.
+   */
+  /* Deactivate the bearer/pdn context implicitly. */
+  esm_proc_pdn_disconnect_accept(esm_pdn_disconnect_proc->trx_base_proc.esm_proc.ue_id, esm_pdn_disconnect_proc->pdn_cid, esm_pdn_disconnect_proc->default_ebi,
+      esm_pdn_disconnect_proc->apn_subscribed);
+  _esm_proc_free_pdn_connectivity_procedure(&esm_pdn_disconnect_proc);
+  OAILOG_FUNC_OUT (LOG_NAS_ESM);
+}
 
 /*
   ---------------------------------------------------------------------------

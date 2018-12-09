@@ -94,9 +94,8 @@ int nas_esm_proc_pdn_config_fail (esm_cn_pdn_config_fail_t * emm_cn_pdn_config_f
 int nas_esm_proc_pdn_connectivity_res(esm_cn_pdn_connectivity_res_t *esm_cn_pdn_connectivity_rsp);
 int nas_esm_proc_pdn_connectivity_fail(esm_cn_pdn_connectivity_fail_t *esm_cn_pdn_connectivity_fail);
 
-int nas_proc_pdn_disconnect_res (esm_pdn_disconnect_t * esm_pdn_disconnect_res);
-int nas_proc_activate_dedicated_bearer(esm_eps_activate_eps_bearer_ctx_req_t * esm_cn_activate);
-int nas_proc_modify_eps_bearer_ctx(esm_eps_modify_eps_bearer_ctx_req_t * esm_cn_modify_eps_bearer_ctx);
+int nas_esm_proc_activate_eps_bearer_ctx(esm_eps_activate_eps_bearer_ctx_req_t * esm_cn_activate);
+int nas_esm_proc_modify_eps_bearer_ctx(esm_eps_update_esm_bearer_ctxs_req_t * esm_cn_update);
 int nas_proc_deactivate_dedicated_bearer(esm_eps_deactivate_eps_bearer_ctx_req_t * esm_cn_deactivate);
 int nas_proc_establish_bearer_update(esm_eps_update_esm_bearer_ctxs_req_t * esm_cn_update_esm_bearer_ctxs);
 int nas_proc_e_rab_failure(mme_ue_s1ap_id_t ue_id, ebi_t ebi, bool modify, bool remove);

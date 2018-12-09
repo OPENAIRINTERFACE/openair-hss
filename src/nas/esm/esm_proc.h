@@ -122,20 +122,25 @@ esm_cause_t esm_proc_pdn_config_fail(mme_ue_s1ap_id_t ue_id, nas_esm_pdn_connect
 
 esm_cause_t esm_proc_pdn_connectivity_res (mme_ue_s1ap_id_t ue_id, ambr_t * apn_ambr, bearer_qos_t * bearer_level_qos, nas_esm_pdn_connectivity_proc_t * esm_pdn_connectivity_proc);
 
-int esm_proc_pdn_connectivity_fail(mme_ue_s1ap_id_t ue_id, nas_esm_pdn_connectivity_proc_t *nas_pdn_connectivity_proc, imsi64_t imsi, ESM_msg *esm_resp_msg);
-
 /*
  * --------------------------------------------------------------------------
  *              PDN disconnect procedure
  * --------------------------------------------------------------------------
  */
 
-int esm_proc_pdn_disconnect_request(struct esm_context_s * esm_context, const proc_tid_t pti, pdn_cid_t  pdn_cid, ebi_t default_ebi, esm_cause_t *esm_cause);
+esm_cause_t
+esm_proc_pdn_disconnect_request (
+  mme_ue_s1ap_id_t ue_id,
+  proc_tid_t pti,
+  pdn_cid_t  pdn_cid,
+  nas_esm_pdn_connectivity_proc_t * esm_pdn_disconnect_proc);
 
-int esm_proc_pdn_disconnect_accept(struct esm_context_s * esm_context, pdn_cid_t pid, ebi_t default_ebi, esm_cause_t *esm_cause);
-int esm_proc_pdn_disconnect_reject(const bool is_standalone, struct esm_context_s * esm_context,
-    ebi_t ebi, bstring *msg, const bool ue_triggered);
-
+esm_cause_t
+esm_proc_pdn_disconnect_accept (
+  mme_ue_s1ap_id_t ue_id,
+  pdn_cid_t pid,
+  ebi_t     default_ebi,
+  bstring   apn);
 
 /*
  * --------------------------------------------------------------------------
@@ -157,8 +162,6 @@ esm_cause_t esm_proc_default_eps_bearer_context (
   const nas_esm_pdn_connectivity_proc_t * nas_pdn_connectivity_proc);
 
 void esm_proc_default_eps_bearer_context_accept (mme_ue_s1ap_id_t ue_id, nas_esm_pdn_connectivity_proc_t* esm_pdn_connectivity_proc);
-int esm_proc_default_eps_bearer_context_reject(struct esm_context_s * esm_context, ebi_t ebi, esm_cause_t *esm_cause);
-
 
 /*
  * --------------------------------------------------------------------------
@@ -206,7 +209,9 @@ int esm_proc_modify_eps_bearer_context_reject(struct esm_context_s * esm_context
  * --------------------------------------------------------------------------
  */
 int esm_proc_eps_bearer_context_deactivate(struct esm_context_s * const esm_context,const bool is_local, const ebi_t ebi,pdn_cid_t pid, esm_cause_t * const esm_cause);
-int esm_proc_eps_bearer_context_deactivate_request(const bool is_standalone, struct esm_context_s * const esm_context, const ebi_t ebi, STOLEN_REF bstring *msg, const bool ue_triggered);
+
+esm_cause_t esm_proc_eps_bearer_context_deactivate_request (mme_ue_s1ap_id_t ue_id, const ebi_t ebi, nas_esm_pdn_connectivity_proc_t * esm_pdn_disconnect_proc);
+
 pdn_cid_t esm_proc_eps_bearer_context_deactivate_accept(struct esm_context_s * esm_context, ebi_t ebi, esm_cause_t *esm_cause);
 
 #endif /* __ESM_PROC_H__*/

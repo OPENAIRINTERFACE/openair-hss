@@ -253,6 +253,17 @@ esm_proc_modify_eps_bearer_context (
   OAILOG_INFO(LOG_NAS_EMM, "EMMCN-SAP  - " "ESM QoS and TFT could be verified of UBR received for UE " MME_UE_S1AP_ID_FMT".\n", ue_context->mme_ue_s1ap_id);
   /** Not updating the parameters yet. Updating later when a success is received. State will be updated later. */
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
+
+
+  //             rc = esm_proc_modify_eps_bearer_context_reject(msg->ctx, bcs_tbu->bearer_contexts[num_bc].eps_bearer_id,
+  //                 &esm_cause, false);
+  //             /** Inform the MME APP. */
+  //             nas_itti_modify_eps_bearer_ctx_rej(msg->ue_id, bcs_tbu->bearer_contexts[num_bc].eps_bearer_id, esm_cause); /**< Assuming, no other CN bearer procedure will intervere. */
+      // todo: set the timer and update the esm ebr context
+  //    esm_procedure = esm_proc_modify_eps_bearer_context_request; /**< Not the procedure. */
+
+
+
 }
 
 /****************************************************************************
