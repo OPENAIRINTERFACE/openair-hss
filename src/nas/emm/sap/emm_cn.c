@@ -533,10 +533,6 @@ int emm_cn_send (const emm_cn_t * msg)
     rc = _emm_cn_deactivate_dedicated_bearer_req (msg->u.emm_cn_deactivate_dedicated_bearer_req);
     break;
 
-  case EMMCN_UPDATE_ESM_BEARERS_REQ:
-    rc = _emm_cn_update_esm_bearer_ctxs_req (msg->u.emm_cn_update_esm_bearer_ctxs_req);
-    break;
-
   case EMMCN_IMPLICIT_DETACH_UE:
     rc = _emm_cn_implicit_detach_ue (msg->u.emm_cn_implicit_detach.ue_id, msg->u.emm_cn_implicit_detach.detach_type, msg->u.emm_cn_implicit_detach.emm_cause);
     break;

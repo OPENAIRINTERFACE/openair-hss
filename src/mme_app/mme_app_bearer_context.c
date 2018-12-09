@@ -94,6 +94,7 @@ void mme_app_bearer_context_initialize(bearer_context_t *bearer_context)
 //  if(bearer_context->esm_ebr_context.pco){
 //    free_protocol_configuration_options(&bearer_context->esm_ebr_context.pco);
 //  }
+
   /** Remove the remaining contexts of the bearer context. */
   memset(&bearer_context->esm_ebr_context, 0, sizeof(esm_ebr_context_t)); /**< Sets the SM status to ESM_STATUS_INVALID. */
   ebi_t ebi = bearer_context->ebi;
@@ -176,52 +177,52 @@ void mme_app_register_bearer_context(ue_context_t * const ue_context, ebi_t ebi,
   OAILOG_FUNC_OUT(LOG_MME_APP);
 }
 
-//------------------------------------------------------------------------------
-int mme_app_deregister_bearer_context(ue_context_t * const ue_context, ebi_t ebi, const pdn_context_t *pdn_context)
-{
-  AssertFatal((EPS_BEARER_IDENTITY_LAST >= ebi) && (EPS_BEARER_IDENTITY_FIRST <= ebi), "Bad ebi %u", ebi);
-  bearer_context_t            *pBearerCtx = NULL; /**< Define a bearer context key. */
-
-  /** Check that the PDN session exists. */
-  // todo: add a lot of locks..
-  bearer_context_t bc_key = { .ebi = ebi}; /**< Define a bearer context key. */ // todo: just setting one element, and maybe without the key?
-  /** Removed a bearer context from the UE contexts bearer pool and adds it into the PDN sessions bearer pool. */
-  pBearerCtx = RB_FIND(BearerPool, &pdn_context->session_bearers, &bc_key);
-  if(!pBearerCtx){
-    OAILOG_ERROR(LOG_MME_APP,  "Could not find a session bearer context with ebi %d in pdn context %d for ue_id " MME_UE_S1AP_ID_FMT"! \n", ebi, pdn_context->context_identifier, ue_context->mme_ue_s1ap_id);
-    OAILOG_FUNC_RETURN (LOG_MME_APP, NULL);
-  }
-  /** Removed a bearer context from the UE contexts bearer pool and adds it into the PDN sessions bearer pool. */
-  bearer_context_t *pBearerCtx_removed = NULL;
-  pBearerCtx_removed = RB_REMOVE(SessionBearers, &pdn_context->session_bearers, pBearerCtx);
-  if(!pBearerCtx_removed){
-    OAILOG_ERROR(LOG_MME_APP,  "Could not find an session bearer context with ebi %d for ue_id " MME_UE_S1AP_ID_FMT " inside pdn context with context id %d! \n",
-        ebi, ue_context->mme_ue_s1ap_id, pdn_context->context_identifier);
-    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
-  }
-  /*
-   * Delete the TFT,
-   * todo: check any other allocated fields..
-   *
-   */
-  // TODO Look at "free_traffic_flow_template"
-  //free_traffic_flow_template(&pdn->bearer[i]->tft);
-
-  /*
-   * We don't have one pool where tunnels are allocated. We allocate a fixed number of bearer contexts at the beginning inside the UE context.
-   * So the delete function is unlike to GTPv2c tunnels.
-   */
-
-  /** Initialize the new bearer context. */
-  mme_app_bearer_context_init(pBearerCtx_removed);
-
-  /** Insert the bearer context into the free bearer of the ue context. */
-  RB_INSERT (BearerPool, &ue_context->bearer_pool, pBearerCtx_removed);
-
-  OAILOG_INFO(LOG_MME_APP, "Successfully deregistered the bearer context with ebi %d from PDN id %u and for ue_id " MME_UE_S1AP_ID_FMT "\n",
-      pBearerCtx->ebi, pdn_context->context_identifier, ue_context->mme_ue_s1ap_id);
-  OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
-}
+////------------------------------------------------------------------------------
+//int mme_app_deregister_bearer_context(ue_context_t * const ue_context, ebi_t ebi, const pdn_context_t *pdn_context)
+//{
+//  AssertFatal((EPS_BEARER_IDENTITY_LAST >= ebi) && (EPS_BEARER_IDENTITY_FIRST <= ebi), "Bad ebi %u", ebi);
+//  bearer_context_t            *pBearerCtx = NULL; /**< Define a bearer context key. */
+//
+//  /** Check that the PDN session exists. */
+//  // todo: add a lot of locks..
+//  bearer_context_t bc_key = { .ebi = ebi}; /**< Define a bearer context key. */ // todo: just setting one element, and maybe without the key?
+//  /** Removed a bearer context from the UE contexts bearer pool and adds it into the PDN sessions bearer pool. */
+//  pBearerCtx = RB_FIND(BearerPool, &pdn_context->session_bearers, &bc_key);
+//  if(!pBearerCtx){
+//    OAILOG_ERROR(LOG_MME_APP,  "Could not find a session bearer context with ebi %d in pdn context %d for ue_id " MME_UE_S1AP_ID_FMT"! \n", ebi, pdn_context->context_identifier, ue_context->mme_ue_s1ap_id);
+//    OAILOG_FUNC_RETURN (LOG_MME_APP, NULL);
+//  }
+//  /** Removed a bearer context from the UE contexts bearer pool and adds it into the PDN sessions bearer pool. */
+//  bearer_context_t *pBearerCtx_removed = NULL;
+//  pBearerCtx_removed = RB_REMOVE(SessionBearers, &pdn_context->session_bearers, pBearerCtx);
+//  if(!pBearerCtx_removed){
+//    OAILOG_ERROR(LOG_MME_APP,  "Could not find an session bearer context with ebi %d for ue_id " MME_UE_S1AP_ID_FMT " inside pdn context with context id %d! \n",
+//        ebi, ue_context->mme_ue_s1ap_id, pdn_context->context_identifier);
+//    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+//  }
+//  /*
+//   * Delete the TFT,
+//   * todo: check any other allocated fields..
+//   *
+//   */
+//  // TODO Look at "free_traffic_flow_template"
+//  //free_traffic_flow_template(&pdn->bearer[i]->tft);
+//
+//  /*
+//   * We don't have one pool where tunnels are allocated. We allocate a fixed number of bearer contexts at the beginning inside the UE context.
+//   * So the delete function is unlike to GTPv2c tunnels.
+//   */
+//
+//  /** Initialize the new bearer context. */
+//  mme_app_bearer_context_init(pBearerCtx_removed);
+//
+//  /** Insert the bearer context into the free bearer of the ue context. */
+//  RB_INSERT (BearerPool, &ue_context->bearer_pool, pBearerCtx_removed);
+//
+//  OAILOG_INFO(LOG_MME_APP, "Successfully deregistered the bearer context with ebi %d from PDN id %u and for ue_id " MME_UE_S1AP_ID_FMT "\n",
+//      pBearerCtx->ebi, pdn_context->context_identifier, ue_context->mme_ue_s1ap_id);
+//  OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
+//}
 
 //------------------------------------------------------------------------------
 void mme_app_bearer_context_s1_release_enb_informations(bearer_context_t * const bc)
@@ -308,4 +309,167 @@ mme_app_cn_update_bearer_context(mme_ue_s1ap_id_t ue_id, const ebi_t ebi, struct
   OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
 }
 
+//------------------------------------------------------------------------------
+esm_cause_t
+mme_app_esm_modify_bearer_context(mme_ue_s1ap_id_t ue_id, const ebi_t ebi, struct bearer_qos_s * bearer_level_qos, traffic_flow_template_t * tft){
+  ue_context_t * ue_context         = NULL;
+  bearer_context_t * bearer_context = NULL;
+  int rc                            = RETURNok;
+
+  OAILOG_FUNC_IN (LOG_MME_APP);
+  ue_context_t * ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, ue_id);
+  if(!ue_context){
+    OAILOG_ERROR (LOG_MME_APP, "No MME_APP UE context could be found for UE: " MME_UE_S1AP_ID_FMT ". \n", ue_id);
+    OAILOG_FUNC_RETURN (LOG_MME_APP, ESM_CAUSE_REQUEST_REJECTED_UNSPECIFIED);
+  }
+  /** Update the FTEIDs and the bearers CN state. */
+  mme_app_get_session_bearer_context_from_all(ue_id, ebi, &bearer_context);
+  if(!bearer_context){
+    OAILOG_ERROR (LOG_MME_APP, "No MME_APP UE context could be found for UE: " MME_UE_S1AP_ID_FMT ". \n", ue_id);
+    OAILOG_FUNC_RETURN (LOG_MME_APP, ESM_CAUSE_REQUEST_REJECTED_UNSPECIFIED);
+  }
+  /** We can set the FTEIDs right before the CBResp is set. */
+  if(bearer_context->esm_ebr_context.status != ESM_EBR_ACTIVE){
+    OAILOG_ERROR(LOG_NAS_ESM, "ESM-PROC  - ESM Bearer Context for ebi %d is not ACTIVE for ue " MME_UE_S1AP_ID_FMT ". \n", bearer_context->ebi, ue_id);
+    OAILOG_FUNC_RETURN (LOG_MME_APP, ESM_CAUSE_REQUEST_REJECTED_UNSPECIFIED);
+  }
+
+  // todo: not locking the context here (maybe to set flags)
+
+  /** Verify the TFT, QoS, etc. */
+  /** Before assigning the bearer context, validate the fields of the requested bearer context to be created. */
+  if(bearer_level_qos){
+    if(validateEpsQosParameter(bearer_level_qos->qci, bearer_level_qos->pvi, bearer_level_qos->pci, bearer_level_qos->pl,
+        bearer_level_qos->gbr.br_dl, bearer_level_qos->gbr.br_ul, bearer_level_qos->mbr.br_dl, bearer_level_qos->mbr.br_ul) == RETURNerror){
+      OAILOG_ERROR(LOG_NAS_EMM, "EMMCN-SAP  - " "EPS bearer context of UBR received for UE " MME_UE_S1AP_ID_FMT" could not be verified due erroneous EPS QoS.\n", ue_context->mme_ue_s1ap_id);
+      OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_EPS_QOS_NOT_ACCEPTED);
+    }
+  }
+  /** Validate the TFT and packet filters don't have semantical errors.. */
+  if(tft) {
+    if(!((tft->tftoperationcode == TRAFFIC_FLOW_TEMPLATE_OPCODE_ADD_PACKET_FILTER_TO_EXISTING_TFT)
+        ||(tft->tftoperationcode == TRAFFIC_FLOW_TEMPLATE_OPCODE_DELETE_PACKET_FILTERS_FROM_EXISTING_TFT)
+        ||(tft->tftoperationcode == TRAFFIC_FLOW_TEMPLATE_OPCODE_REPLACE_PACKET_FILTERS_IN_EXISTING_TFT))){
+      OAILOG_ERROR(LOG_NAS_EMM, "EMMCN-SAP  - " "EPS bearer context of UBR received for UE " MME_UE_S1AP_ID_FMT" could not be verified due erroneous TFT code %d. \n",
+          ue_id, tft->tftoperationcode);
+      OAILOG_FUNC_RETURN (LOG_MME_APP, ESM_CAUSE_SEMANTIC_ERROR_IN_THE_TFT_OPERATION);
+    }
+    /** Verify the TFT together with the original TFT. */
+    esm_cause_t esm_cause = verify_traffic_flow_template_syntactical(tft, bearer_context->esm_ebr_context.tft);
+    if(esm_cause != ESM_CAUSE_SUCCESS){
+      OAILOG_ERROR(LOG_NAS_EMM, "EMMCN-SAP  - " "EPS bearer context of UBR received for UE " MME_UE_S1AP_ID_FMT" could not be verified due erroneous TFT. EsmCause %d. \n", ue_id, esm_cause);
+      OAILOG_FUNC_RETURN (LOG_NAS_ESM, esm_cause);
+    }
+  }
+  OAILOG_INFO(LOG_NAS_EMM, "EMMCN-SAP  - " "ESM QoS and TFT could be verified of UBR received for UE " MME_UE_S1AP_ID_FMT".\n", ue_id);
+  /** Not updating the parameters yet. Updating later when a success is received. State will be updated later. */
+  OAILOG_FUNC_RETURN (LOG_MME_APP, ESM_CAUSE_SUCCESS);
+}
+
+//------------------------------------------------------------------------------
+esm_cause_t
+mme_app_esm_finalize_bearer_context(mme_ue_s1ap_id_t ue_id, /*const pdn_cid_t pdn_cid, */const ebi_t ebi){
+  ue_context_t * ue_context         = NULL;
+  bearer_context_t * bearer_context = NULL;
+  int rc                            = RETURNok;
+
+  OAILOG_FUNC_IN (LOG_MME_APP);
+  ue_context_t * ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, ue_id);
+  if(!ue_context){
+    OAILOG_ERROR (LOG_MME_APP, "No MME_APP UE context could be found for UE: " MME_UE_S1AP_ID_FMT ". \n", ue_id);
+    OAILOG_FUNC_RETURN (LOG_MME_APP, ESM_CAUSE_REQUEST_REJECTED_UNSPECIFIED);
+  }
+  /** Update the FTEIDs and the bearers CN state. */
+  mme_app_get_session_bearer_context_from_all(ue_id, ebi, &bearer_context);
+  if(!bearer_context){
+    OAILOG_ERROR (LOG_MME_APP, "No MME_APP UE context could be found for UE: " MME_UE_S1AP_ID_FMT ". \n", ue_id);
+    OAILOG_FUNC_RETURN (LOG_MME_APP, ESM_CAUSE_PDN_CONNECTION_DOES_NOT_EXIST);
+  }
+  /** We can set the FTEIDs right before the CBResp is set. */
+  // todo: LOCK_UE_CONTEXT
+  bearer_context->esm_ebr_context.status = ESM_EBR_ACTIVE;
+  // todo: UNLOCK_UE_CONTEXT
+  OAILOG_FUNC_RETURN (LOG_MME_APP, ESM_CAUSE_SUCCESS);
+}
+
+//------------------------------------------------------------------------------
+esm_cause_t
+mme_app_esm_release_bearer_context(mme_ue_s1ap_id_t ue_id, const pdn_cid_t pdn_cid, const ebi_t ebi){
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
+  int                                     found = false;
+
+  pdn_context_t                       *pdn_context = NULL;
+  bearer_context_t                    *bearer_context = NULL;
+
+  ue_context_t                        *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, ue_id);
+  if(!ue_context){
+    OAILOG_ERROR (LOG_MME_APP, "No MME_APP UE context could be found for UE: " MME_UE_S1AP_ID_FMT ". \n", ue_id);
+    OAILOG_FUNC_RETURN (LOG_MME_APP, ESM_CAUSE_REQUEST_REJECTED_UNSPECIFIED);
+  }
+
+  if (ebi != ESM_EBI_UNASSIGNED) {
+    if ((ebi < ESM_EBI_MIN) || (ebi > ESM_EBI_MAX)) {
+      OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY);
+    }
+  }else{
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY);
+  }
+
+  if(pdn_cid!= NULL && *pdn_cid!= MAX_APN_PER_UE){
+    mme_app_get_pdn_context(ue_context, pdn_cid, ebi, NULL, &pdn_context);
+  }else{
+    /** Get the bearer context from all session bearers. */
+    mme_app_get_session_bearer_context_from_all(ue_context, ebi, &bearer_context);
+    if(!bearer_context){
+      OAILOG_ERROR(LOG_NAS_ESM , "ESM-PROC  - Could not find bearer context from ebi %d. \n", ebi);
+      OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY);
+    }
+    mme_app_get_pdn_context(ue_context, bearer_context->pdn_cx_id, bearer_context->linked_ebi, NULL, &pdn_context);
+    pdn_cid = bearer_context->pdn_cx_id;
+  }
+
+  /** At this point, we must have found the pdn_context. */
+  if(!pdn_context){
+    OAILOG_ERROR(LOG_NAS_ESM , "ESM-PROC  - PDN connection identifier %d " "is not valid\n", *pid);
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_PDN_CONNECTION_DOES_NOT_EXIST);
+  }
+  /*
+   * Check if it is a default ebi, if so release all the bearer contexts.
+   * If not, just release a single bearer context.
+   */
+  if (ebi == pdn_context->default_ebi || ebi == ESM_SAP_ALL_EBI) {
+    DevMessage("Default Bearer should not be released via this method!");
+  }
+
+  /*
+   * The identity of the EPS bearer to released is given;
+   * Release the EPS bearer context entry that match the specified EPS
+   * bearer identity
+   */
+  bearer_context = mme_app_get_session_bearer_context(pdn_context, ebi);
+  if(!bearer_context) {
+    OAILOG_ERROR(LOG_NAS_ESM , "ESM-PROC  - PDN connection identifier %d " "is not valid\n", *pid);
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_EBI_UNASSIGNED);
+  }
+
+  // TODO: LOCK_UE_CONTEXT!
+  /*
+   * Release all session bearers of the PDN context back into the UE pool.
+   */
+  DevAssert(RB_REMOVE(SessionBearers, &pdn_context->session_bearers, bearer_context));
+  /*
+   * We don't have one pool where tunnels are allocated. We allocate a fixed number of bearer contexts at the beginning inside the UE context.
+   * So the delete function is unlike to GTPv2c tunnels.
+   */
+  // no timers to stop, no DSR to be sent..
+  /** Initialize the new bearer context. */
+  mme_app_bearer_context_initialize(bearer_context);
+  /** Insert the bearer context into the free bearer of the ue context. */
+  RB_INSERT (BearerPool, &ue_context->bearer_pool, bearer_context);
+  OAILOG_INFO(LOG_MME_APP, "Successfully deregistered the bearer context with ebi %d from PDN id %u and for ue_id " MME_UE_S1AP_ID_FMT "\n",
+      bearer_context->ebi, pdn_context->context_identifier, ue_id);
+   // TODO: UNLOCK_UE_CONTEXT!
+
+  OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_SUCCESS);
+}
 

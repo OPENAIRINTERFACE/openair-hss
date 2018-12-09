@@ -305,6 +305,18 @@ int nas_esm_proc_activate_eps_bearer_ctx(esm_eps_activate_eps_bearer_ctx_req_t *
           bc_tbc->bearer_level_qos->gbr.br_dl,
           bc_tbc->bearer_level_qos->gbr.br_ul,
           rsp);
+
+
+      //  emm_sap.primitive       = EMMESM_ACTIVATE_BEARER_REQ;
+      //  emm_sap.u.emm_esm.ue_id = ue_id;
+      //  emm_sap.u.emm_esm.ctx   = esm_context;
+      //  emm_esm_activate->msg            = *msg;
+      //  emm_esm_activate->ebi            = ebi;
+      //
+      //  emm_esm_activate->mbr_dl         = bearer_context->esm_ebr_context.mbr_dl;
+      //  emm_esm_activate->mbr_ul         = bearer_context->esm_ebr_context.mbr_ul;
+      //  emm_esm_activate->gbr_dl         = bearer_context->esm_ebr_context.gbr_dl;
+      //  emm_esm_activate->gbr_ul         = bearer_context->esm_ebr_context.gbr_ul;
      }
   }
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
@@ -339,6 +351,11 @@ int nas_esm_proc_modify_eps_bearer_ctx(esm_eps_update_esm_bearer_ctxs_req_t * es
           bc_tbu->bearer_level_qos->gbr.br_dl,
           bc_tbu->bearer_level_qos->gbr.br_ul,
           rsp);
+      //  emm_esm_modify->mbr_dl         = bearer_context->esm_ebr_context.mbr_dl;
+      //  emm_esm_modify->mbr_ul         = bearer_context->esm_ebr_context.mbr_ul;
+      //  emm_esm_modify->gbr_dl         = bearer_context->esm_ebr_context.gbr_dl;
+      //  emm_esm_modify->gbr_ul         = bearer_context->esm_ebr_context.gbr_ul;
+
      }
   }
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);

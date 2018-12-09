@@ -291,7 +291,7 @@ typedef struct ue_context_s {
 //  bool came_from_tau; /**< For test. */
 
   // todo: ue context mutex
-  pthread_mutex_t recmutex;  // mutex on the ue_context_t + emm_context_s + esm_context_t
+  pthread_mutex_t recmutex;  // mutex on the ue_context_t
 
   /* Basic identifier for ue. IMSI is encoded on maximum of 15 digits of 4 bits,
    * so usage of an unsigned integer on 64 bits is necessary.

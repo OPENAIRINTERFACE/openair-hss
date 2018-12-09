@@ -76,20 +76,6 @@
 /*******************  L O C A L    D E F I N I T I O N S  *******************/
 /****************************************************************************/
 
-static int _esm_sap (
-  mme_ue_s1ap_id_t mme_ue_s1ap_id,
-  const_bstring req,
-  esm_cause_t *esm_cause,
-  bstring *rsp);
-
-static int _esm_sap_send (
-  int msg_type,
-  esm_context_t * esm_context,
-  proc_tid_t pti,
-  ebi_t ebi,
-  const esm_sap_data_t * data,
-  bstring * rsp);
-
 /*
    String representation of ESM-SAP primitives
 */
@@ -361,12 +347,21 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp, bool *is_attach)
             &bc_tbc->tft,
             &bc_tbc->pco);
       }
+    } else {
+      /**
+       * Send a NAS ITTI directly for the specific bearer. This will reduce the number of bearers to be processed.
+       * No bearer should be allocated.
+       */
+      nas_itti_activate_eps_bearer_ctx_rej(msg->ue_id, msg->data.eps_bearer_context_activate.bc_tbc->s1u_sgw_fteid.teid, esm_cause); /**< Assuming, no other CN bearer procedure will intervere. */
+      /**<
+       * We will check the remaining bearer requests and reject bearers individually (we might have a mix of rejected and accepted bearers).
+       * The remaining must also be rejected, such that the procedure has no pending elements anymore.
+       */
     }
   }
   break;
 
   case ESM_EPS_BEARER_CONTEXT_MODIFY_REQ:{
-
     esm_cause = esm_proc_modify_eps_bearer_context(msg->ue_id,     /**< Create an ESM procedure and store the bearers in the procedure as pending. */
            PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED,
            msg->data.eps_bearer_context_modify.pdn_cid,
@@ -396,32 +391,24 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp, bool *is_attach)
   break;
 
   case ESM_EPS_BEARER_CONTEXT_DEACTIVATE_REQ:{
+    if(esm_data_get_bearer_context_procedure_by_pti(msg->ue_id, msg.data.eps_bearer_context_deactivate.pti,
+        msg->data.eps_bearer_context_deactivate.ded_ebi)){
+      // todo: unhandled case, no procedure should exist for the UE!
+      // todo: handle this case..
+      DevAssert(0);
+    }
+    nas_esm_bearer_context_proc_t * esm_bearer_context_proc = _esm_proc_create_bearer_context_procedure(msg.ue_id, NULL, msg.data.eps_bearer_context_deactivate.pti,
+        msg.data.eps_bearer_context_deactivate.linked_ebi, msg.data.eps_bearer_context_deactivate.ded_ebi);
+    DevAssert(esm_bearer_context_proc);
 
-    nas_esm_pdn_connectivity_proc_t * esm_pdn_connectivity_proc = esm_data_get_procedure_by_pti(msg->ue_id, PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED);
-
-    esm_cause = esm_proc_eps_bearer_context_deactivate(msg->ue_id,     /**< Create an ESM procedure and store the bearers in the procedure as pending. */
-        msg->data.eps_bearer_context_deactivate.pti,
-        msg->data.eps_bearer_context_deactivate.ded_ebi,
-        ESM_CAUSE_REGULAR_DEACTIVATION);
-    // todo: if procedure fails : nas_itti_dedicated_eps_bearer_deactivation_complete(ue_context->mme_ue_s1ap_id, bearer_deactivate->ebis.ebis[num_bc]);
-    //      esm_procedure = esm_proc_eps_bearer_context_deactivate_request;
+    esm_cause = esm_proc_eps_bearer_context_deactivate_request(msg->ue_id,     /**< Create an ESM procedure and store the bearers in the procedure as pending. */
+        esm_bearer_context_proc);
     if (esm_cause == ESM_CAUSE_SUCCESS) {   /**< We assume that no ESM procedure exists. */
-      bearer_context_to_be_updated_t * bc_tbu = msg->data.eps_bearer_context_modify.bc_tbu;
-      EpsQualityOfService eps_qos = {0};
-      /** Sending a EBR-Request per bearer context. */
-      memset((void*)&eps_qos, 0, sizeof(eps_qos));
-      /** Set the EPS QoS. */
-      qos_params_to_eps_qos(bc_tbu->bearer_level_qos.qci,
-          bc_tbu->bearer_level_qos.mbr.br_dl, bc_tbu->bearer_level_qos.mbr.br_ul,
-          bc_tbu->bearer_level_qos.gbr.br_dl, bc_tbu->bearer_level_qos.gbr.br_ul,
-          &eps_qos, false);
       rc = esm_send_deactivate_eps_bearer_context_request (
-          pti, bc_tbu->eps_bearer_id,
+          msg.data.eps_bearer_context_deactivate.pti,
+          msg.data.eps_bearer_context_deactivate.ded_ebi,
           &esm_resp_msg,
-          &eps_qos,
-          &bc_tbu->tft,
-          &msg->data.eps_bearer_context_modify.apn_ambr,     /**< (If non-zero, then only in the first bearer context). */
-          &bc_tbu->pco);
+          ESM_CAUSE_REGULAR_DEACTIVATION);
     }
     /** No Procedure is expected for the error case, should be handled internally. */
   }
@@ -704,6 +691,79 @@ _esm_sap_recv (
        * received from the UE
        */
       esm_cause = esm_recv_deactivate_eps_bearer_context_accept (mme_ue_s1ap_id, pti, ebi, &esm_msg.deactivate_eps_bearer_context_accept);
+
+      if ((esm_cause == ESM_CAUSE_INVALID_PTI_VALUE) || (esm_cause == ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY)) {
+        /*
+         * 3GPP TS 24.301, section 7.3.1, case f
+         * * * * Ignore ESM message received with reserved PTI value
+         * * * * 3GPP TS 24.301, section 7.3.2, case f
+         * * * * Ignore ESM message received with reserved or assigned
+         * * * * value that does not match an existing EPS bearer context
+         */
+      }
+      break;
+
+      /** Dedicated Bearer only functions. */
+    case ACTIVATE_DEDICATED_EPS_BEARER_CONTEXT_ACCEPT:
+      /*
+       * Process activate dedicated EPS bearer context accept message
+       * received from the UE
+       */
+      esm_cause = esm_recv_activate_dedicated_eps_bearer_context_accept (mme_ue_s1ap_id, pti, ebi, &esm_msg.activate_dedicated_eps_bearer_context_accept);
+
+      if ((esm_cause == ESM_CAUSE_INVALID_PTI_VALUE) || (esm_cause == ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY)) {
+        /*
+         * 3GPP TS 24.301, section 7.3.1, case f
+         * * * * Ignore ESM message received with reserved PTI value
+         *  * * * 3GPP TS 24.301, section 7.3.2, case f
+         * * * * Ignore ESM message received with reserved or assigned
+         * * * * value that does not match an existing EPS bearer context
+         */
+      }
+      break;
+
+    case ACTIVATE_DEDICATED_EPS_BEARER_CONTEXT_REJECT:
+      /*
+       * Process activate dedicated EPS bearer context reject message
+       * received from the UE
+       */
+      esm_cause = esm_recv_activate_dedicated_eps_bearer_context_reject (mme_ue_s1ap_id, pti, ebi, &esm_msg.activate_dedicated_eps_bearer_context_reject);
+
+      if ((esm_cause == ESM_CAUSE_INVALID_PTI_VALUE) || (esm_cause == ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY)) {
+        /*
+         * 3GPP TS 24.301, section 7.3.1, case f
+         * * * * Ignore ESM message received with reserved PTI value
+         * * * * 3GPP TS 24.301, section 7.3.2, case f
+         * * * * Ignore ESM message received with reserved or assigned
+         * * * * value that does not match an existing EPS bearer context
+         */
+      }
+      break;
+
+    case MODIFY_EPS_BEARER_CONTEXT_ACCEPT:
+      /*
+       * Process activate dedicated EPS bearer context accept message
+       * received from the UE
+       */
+      esm_cause = esm_recv_modify_eps_bearer_context_accept( mme_ue_s1ap_id, pti, ebi, &esm_msg.activate_dedicated_eps_bearer_context_accept);
+
+      if ((esm_cause == ESM_CAUSE_INVALID_PTI_VALUE) || (esm_cause == ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY)) {
+        /*
+         * 3GPP TS 24.301, section 7.3.1, case f
+         * * * * Ignore ESM message received with reserved PTI value
+         *  * * * 3GPP TS 24.301, section 7.3.2, case f
+         * * * * Ignore ESM message received with reserved or assigned
+         * * * * value that does not match an existing EPS bearer context
+         */
+      }
+      break;
+
+    case MODIFY_EPS_BEARER_CONTEXT_REJECT:
+      /*
+       * Process activate dedicated EPS bearer context reject message
+       * received from the UE
+       */
+      esm_cause = esm_recv_modify_eps_bearer_context_reject(mme_ue_s1ap_id, pti, ebi, &esm_msg.activate_dedicated_eps_bearer_context_reject);
 
       if ((esm_cause == ESM_CAUSE_INVALID_PTI_VALUE) || (esm_cause == ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY)) {
         /*

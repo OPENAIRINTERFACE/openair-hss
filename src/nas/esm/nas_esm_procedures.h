@@ -105,6 +105,7 @@ typedef struct nas_esm_bearer_context_proc_s {
   pdn_cid_t                    pdn_cid;
   ebi_t                        bearer_ebi;
   ebi_t                        linked_ebi;
+  teid_t                       s1u_saegw_teid;
   bstring                      subscribed_apn;
 //  protocol_configuration_options_t  pco;
 } nas_esm_bearer_context_proc_t;

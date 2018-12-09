@@ -115,55 +115,55 @@ const char * esm_ebr_state2string(esm_ebr_state esm_ebr_state)
       return "UNKNOWN";
   }
 }
-/****************************************************************************
- **                                                                        **
- ** Name:    esm_ebr_release()                                         **
- **                                                                        **
- ** Description: Release the given EPS bearer context and its ESM          **
- **               procedure, if existing.                                  **
- **                                                                        **
- ** Inputs:  ue_id:      Lower layers UE identifier                 **
- **      ebi:       The identity of the EPS bearer context to  **
- **             be released                                **
- **      Others:    None                                       **
- **                                                                        **
- ** Outputs:     None                                                      **
- **      Return:    RETURNok if the EPS bearer context has     **
- **             been successfully released;                **
- **             RETURNerror otherwise.                     **
- **      Others:    _esm_ebr_data                              **
- **                                                                        **
- ***************************************************************************/
-int esm_ebr_release (mme_ue_s1ap_id_t ue_id, bstring apn, pdn_cid_t pdn_cid, ebi_t ebi)
-{
-  OAILOG_FUNC_IN (LOG_NAS_ESM);
-  esm_ebr_context_t                      *ebr_ctx = NULL;
-
-  /*
-   * Stop the running bearer context procedure (incl. timer) for the specific EBI.
-   * Other processes should not be affected.
-   */
-  nas_esm_bearer_context_proc_t * esm_bearer_context_proc = esm_data_get_bearer_procedure(ue_id, ebi);
-  if(esm_bearer_context_proc){
-    OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Removing ESM bearer procedure for released bearer context (ebi=%d) for UE " MME_UE_S1AP_ID_FMT". \n", ue_id, ebi);
-    /** This will also stop the timer of the procedure, no extra bearer timer is needed. */
-    // todo: locks needed in ESM?
-    _esm_proc_free_bearer_context_procedure(esm_bearer_context_proc);
-  }else {
-    OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - No ESM bearer procedure exists for bearer context (ebi=%d) for UE " MME_UE_S1AP_ID_FMT". \n", ue_id, ebi);
-  }
-  /*
-   * Deregister the single bearer context from the PDN context.
-   */
-  rc = mme_app_deregister_bearer_context(ue_id, ebi, pdn_context);
-  if(rc != RETURNok){
-    OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Failed to deregister the EPS bearer context from the pdn context for ebi %d for ueId " MME_UE_S1AP_ID_FMT ". \n", bearer_context->ebi, esm_context->ue_id);
-    OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
-  }
-
-  OAILOG_INFO (LOG_NAS_ESM, "ESM-FSM   - EPS bearer context %d released for ueId " MME_UE_S1AP_ID_FMT ". \n", bearer_context->ebi, esm_context->ue_id);
-  OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);
-}
+///****************************************************************************
+// **                                                                        **
+// ** Name:    esm_ebr_release()                                         **
+// **                                                                        **
+// ** Description: Release the given EPS bearer context and its ESM          **
+// **               procedure, if existing.                                  **
+// **                                                                        **
+// ** Inputs:  ue_id:      Lower layers UE identifier                 **
+// **      ebi:       The identity of the EPS bearer context to  **
+// **             be released                                **
+// **      Others:    None                                       **
+// **                                                                        **
+// ** Outputs:     None                                                      **
+// **      Return:    RETURNok if the EPS bearer context has     **
+// **             been successfully released;                **
+// **             RETURNerror otherwise.                     **
+// **      Others:    _esm_ebr_data                              **
+// **                                                                        **
+// ***************************************************************************/
+//int esm_ebr_release (mme_ue_s1ap_id_t ue_id, bstring apn, pdn_cid_t pdn_cid, ebi_t ebi)
+//{
+//  OAILOG_FUNC_IN (LOG_NAS_ESM);
+//  esm_ebr_context_t                      *ebr_ctx = NULL;
+//
+//  /*
+//   * Stop the running bearer context procedure (incl. timer) for the specific EBI.
+//   * Other processes should not be affected.
+//   */
+//  nas_esm_bearer_context_proc_t * esm_bearer_context_proc = esm_data_get_bearer_procedure(ue_id, ebi);
+//  if(esm_bearer_context_proc){
+//    OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Removing ESM bearer procedure for released bearer context (ebi=%d) for UE " MME_UE_S1AP_ID_FMT". \n", ue_id, ebi);
+//    /** This will also stop the timer of the procedure, no extra bearer timer is needed. */
+//    // todo: locks needed in ESM?
+//    _esm_proc_free_bearer_context_procedure(esm_bearer_context_proc);
+//  }else {
+//    OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - No ESM bearer procedure exists for bearer context (ebi=%d) for UE " MME_UE_S1AP_ID_FMT". \n", ue_id, ebi);
+//  }
+//  /*
+//   * Deregister the single bearer context from the PDN context.
+//   */
+//  rc = mme_app_deregister_bearer_context(ue_id, ebi, pdn_context);
+//  if(rc != RETURNok){
+//    OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Failed to deregister the EPS bearer context from the pdn context for ebi %d for ueId " MME_UE_S1AP_ID_FMT ". \n", bearer_context->ebi, esm_context->ue_id);
+//    OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
+//  }
+//
+//  OAILOG_INFO (LOG_NAS_ESM, "ESM-FSM   - EPS bearer context %d released for ueId " MME_UE_S1AP_ID_FMT ". \n", bearer_context->ebi, esm_context->ue_id);
+//  OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);
+//}
 
 /****************************************************************************
  **                                                                        **

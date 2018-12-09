@@ -1166,35 +1166,31 @@ void free_traffic_flow_template(traffic_flow_template_t ** tft)
 /**
  * We just add 1 to the identifier in the bitmaps.
  */
-int
-verify_traffic_flow_template_syntactical(traffic_flow_template_t * tft, traffic_flow_template_t * tft_original, esm_cause_t **esm_cause)
+esm_cause_t
+verify_traffic_flow_template_syntactical(traffic_flow_template_t * tft, traffic_flow_template_t * tft_original)
 {
   if(!tft || !tft->numberofpacketfilters){
-    return RETURNerror;
+    return ESM_CAUSE_SEMANTIC_ERROR_IN_THE_TFT_OPERATION;
   }
   switch(tft->tftoperationcode){
   case TRAFFIC_FLOW_TEMPLATE_OPCODE_CREATE_NEW_TFT: {
     if(tft_original){
-      **esm_cause = ESM_CAUSE_SEMANTIC_ERROR_IN_THE_TFT_OPERATION;
-      return RETURNerror;
+      return ESM_CAUSE_SEMANTIC_ERROR_IN_THE_TFT_OPERATION;
     }
     for(int num_pf = 0; num_pf < tft->numberofpacketfilters; num_pf++){
       /** Check that all packet filters exist. */
       if(!tft->packetfilterlist.createnewtft[num_pf].length){
         /** No packet filter exists, although mentioned in length. */
-        **esm_cause = ESM_CAUSE_SYNTACTICAL_ERROR_IN_THE_TFT_OPERATION;
-        return RETURNerror;
+        return ESM_CAUSE_SYNTACTICAL_ERROR_IN_THE_TFT_OPERATION;
       }
       /** Verify each packet filter has distinct identifier and precedence. */
       if(tft->packet_filter_identifier_bitmap & (0x01 << tft->packetfilterlist.createnewtft[num_pf].identifier + 1)){
         /** Packet Filter Identifier already set. */
-        **esm_cause = ESM_CAUSE_SYNTACTICAL_ERROR_IN_PACKET_FILTER;
-        return RETURNerror;
+        return ESM_CAUSE_SYNTACTICAL_ERROR_IN_PACKET_FILTER;
       }
       if(tft->precedence_set[tft->packetfilterlist.createnewtft[num_pf].eval_precedence]){
         /** Packet Filter Identifier already set. */
-        **esm_cause = ESM_CAUSE_SYNTACTICAL_ERROR_IN_PACKET_FILTER;
-        return RETURNerror;
+        return ESM_CAUSE_SYNTACTICAL_ERROR_IN_PACKET_FILTER;
       }
       /** Mark the new packet filter. */
       tft->packet_filter_identifier_bitmap |= (0x01 << tft->packetfilterlist.createnewtft[num_pf].identifier + 1);
@@ -1202,74 +1198,64 @@ verify_traffic_flow_template_syntactical(traffic_flow_template_t * tft, traffic_
       /** Successfully validated packet filter syntax, */
     }
     /** Successfully checked addition TFTs. */
-    return RETURNok;
+    return ESM_CAUSE_SUCCESS;
   }
   case TRAFFIC_FLOW_TEMPLATE_OPCODE_ADD_PACKET_FILTER_TO_EXISTING_TFT: {
     if(!tft_original){
-      **esm_cause = ESM_CAUSE_SEMANTIC_ERROR_IN_THE_TFT_OPERATION;
-      return RETURNerror;
+      return ESM_CAUSE_SEMANTIC_ERROR_IN_THE_TFT_OPERATION;
     }
     for(int num_pf = 0; num_pf < tft->numberofpacketfilters; num_pf++){
       /** Check that all packet filters exist. */
       if(!tft->packetfilterlist.addpacketfilter[num_pf].length){
         /** No packet filter exists, although mentioned in length. */
-        **esm_cause = ESM_CAUSE_SYNTACTICAL_ERROR_IN_THE_TFT_OPERATION;
-        return RETURNerror;
+        return ESM_CAUSE_SYNTACTICAL_ERROR_IN_THE_TFT_OPERATION;
       }
       /** Check that the packet filter does not exist in the original TFT. */
       if(tft_original->numberofpacketfilters == TRAFFIC_FLOW_TEMPLATE_NB_PACKET_FILTERS_MAX){
         /** Original TFT already has max number of packet filters. */
-        **esm_cause = ESM_CAUSE_SEMANTIC_ERROR_IN_THE_TFT_OPERATION;
-        return RETURNerror;
+        return ESM_CAUSE_SEMANTIC_ERROR_IN_THE_TFT_OPERATION;
       }
       if((tft_original->packet_filter_identifier_bitmap | tft->packet_filter_identifier_bitmap)
           & (0x01 << tft->packetfilterlist.addpacketfilter[num_pf].identifier + 1)) {
         /** Id already existing. */
-        **esm_cause = ESM_CAUSE_SYNTACTICAL_ERROR_IN_PACKET_FILTER;
-        return RETURNerror;
+        return ESM_CAUSE_SYNTACTICAL_ERROR_IN_PACKET_FILTER;
       }
       if(tft_original->precedence_set[tft->packetfilterlist.addpacketfilter[num_pf].eval_precedence] || tft->precedence_set[tft->packetfilterlist.addpacketfilter[num_pf].eval_precedence]){
         /** Precedence already exists in the original or already in the new TFT. */
-        **esm_cause = ESM_CAUSE_SYNTACTICAL_ERROR_IN_PACKET_FILTER;
-        return RETURNerror;
+        return ESM_CAUSE_SYNTACTICAL_ERROR_IN_PACKET_FILTER;
       }
       /** Set the precedence value in the new TFT. */
       tft->packet_filter_identifier_bitmap |= (0x01 << tft->packetfilterlist.addpacketfilter[num_pf].identifier + 1);
       tft->precedence_set[tft->packetfilterlist.addpacketfilter[num_pf].eval_precedence] = tft->packetfilterlist.addpacketfilter[num_pf].identifier + 1;
     }
     /** Successfully checked addition TFTs. */
-    return RETURNok;
+    return ESM_CAUSE_SUCESS;
   }
   case TRAFFIC_FLOW_TEMPLATE_OPCODE_REPLACE_PACKET_FILTERS_IN_EXISTING_TFT: {
     if(!tft_original){
-      **esm_cause = ESM_CAUSE_SEMANTIC_ERROR_IN_THE_TFT_OPERATION;
-      return RETURNerror;
+      return ESM_CAUSE_SEMANTIC_ERROR_IN_THE_TFT_OPERATION;
     }
     for(int num_pf = 0; num_pf < tft->numberofpacketfilters; num_pf++){
       /** Check that all packet filters exist. */
       if(!tft->packetfilterlist.replacepacketfilter[num_pf].length){
         /** No packet filter exists, although mentioned in length. */
-        **esm_cause = ESM_CAUSE_SYNTACTICAL_ERROR_IN_THE_TFT_OPERATION;
-        return RETURNerror;
+        return ESM_CAUSE_SYNTACTICAL_ERROR_IN_THE_TFT_OPERATION;
       }
       /**
        * Just check that it does not occur twice in the current new TFT.
        * We will find it in the original TFT (must exist).
        */
       if(tft->packet_filter_identifier_bitmap & (0x01 << tft->packetfilterlist.replacepacketfilter[num_pf].identifier + 1)){
-        **esm_cause = ESM_CAUSE_SYNTACTICAL_ERROR_IN_THE_TFT_OPERATION;
-        return RETURNerror;
+        return ESM_CAUSE_SYNTACTICAL_ERROR_IN_THE_TFT_OPERATION;
       }
       /** Must exist in the original one. */
       if(!(tft_original->packet_filter_identifier_bitmap & (0x01 << tft->packetfilterlist.replacepacketfilter[num_pf].identifier + 1))){
-        **esm_cause = ESM_CAUSE_SYNTACTICAL_ERROR_IN_THE_TFT_OPERATION;
-        return RETURNerror;
+        return ESM_CAUSE_SYNTACTICAL_ERROR_IN_THE_TFT_OPERATION;
       }
       /** Check that the precedence is not already given in the same new TFT. */
       if(tft->precedence_set[tft->packetfilterlist.replacepacketfilter[num_pf].eval_precedence]){
         /** Precedence already exists in the original or already in the new TFT. */
-        **esm_cause = ESM_CAUSE_SYNTACTICAL_ERROR_IN_PACKET_FILTER;
-        return RETURNerror;
+        return ESM_CAUSE_SYNTACTICAL_ERROR_IN_PACKET_FILTER;
       }
       /** Set the precedence value in the new TFT. */
       tft->precedence_set[tft->packetfilterlist.replacepacketfilter[num_pf].eval_precedence] = tft->packetfilterlist.replacepacketfilter[num_pf].identifier + 1;
@@ -1284,23 +1270,20 @@ verify_traffic_flow_template_syntactical(traffic_flow_template_t * tft, traffic_
         uint8_t ow_ident = tft_original->precedence_set[tft->packetfilterlist.replacepacketfilter[num_pf].eval_precedence]; /**< The one added. */
         if(!(tft->packet_filter_identifier_bitmap & (0x01 << ow_ident))){
           /** No replacement for packet filter whose precedence is overwritten.. */
-          **esm_cause = ESM_CAUSE_SYNTACTICAL_ERROR_IN_THE_TFT_OPERATION;
-          return RETURNerror;
+          return ESM_CAUSE_SYNTACTICAL_ERROR_IN_THE_TFT_OPERATION;
         }
       }
     }
     /** Successfully checked addition TFTs. */
-    return RETURNok;
+    return ESM_CAUSE_SUCCESS;
   }
   case TRAFFIC_FLOW_TEMPLATE_OPCODE_DELETE_PACKET_FILTERS_FROM_EXISTING_TFT:
     if(!tft_original){
-      **esm_cause = ESM_CAUSE_SEMANTIC_ERROR_IN_THE_TFT_OPERATION;
-      return RETURNerror;
+      return ESM_CAUSE_SEMANTIC_ERROR_IN_THE_TFT_OPERATION;
     }
     /** Check that not all packet filters are removed from the TFT. */
     if(tft_original->numberofpacketfilters <= tft->numberofpacketfilters){
-      **esm_cause = ESM_CAUSE_SEMANTIC_ERROR_IN_THE_TFT_OPERATION;
-      return RETURNerror;
+      return ESM_CAUSE_SEMANTIC_ERROR_IN_THE_TFT_OPERATION;
     }
     for(int num_pf = 0; num_pf < tft->numberofpacketfilters; num_pf++){
         /**
@@ -1308,19 +1291,17 @@ verify_traffic_flow_template_syntactical(traffic_flow_template_t * tft, traffic_
          * Not checking if multiple with same identifiert.
          */
         if(!(tft_original->packet_filter_identifier_bitmap & (0x01 << tft->packetfilterlist.deletepacketfilter[num_pf].identifier + 1))){
-          **esm_cause = ESM_CAUSE_SYNTACTICAL_ERROR_IN_THE_TFT_OPERATION;
-          return RETURNerror;
+          return ESM_CAUSE_SYNTACTICAL_ERROR_IN_THE_TFT_OPERATION;
         }
         if(tft->packet_filter_identifier_bitmap & (0x01 << tft->packetfilterlist.deletepacketfilter[num_pf].identifier + 1)){
-          **esm_cause = ESM_CAUSE_SYNTACTICAL_ERROR_IN_THE_TFT_OPERATION;
-          return RETURNerror;
+          return ESM_CAUSE_SYNTACTICAL_ERROR_IN_THE_TFT_OPERATION;
         }
         tft->packet_filter_identifier_bitmap |= (0x01 << tft->packetfilterlist.deletepacketfilter[num_pf].identifier + 1);
     }
-    return RETURNok;
+    return ESM_CAUSE_SUCCESS;
   default:
     /** No check implemented for TFT operation code. */
-    return RETURNerror;
+    return ESM_CAUSE_REQUEST_REJECTED_BY_GW;
   }
 }
 

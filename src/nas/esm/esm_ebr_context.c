@@ -101,7 +101,7 @@
  ***************************************************************************/
 int
 esm_ebr_context_update (
-  const esm_context_t * esm_context,
+  mme_ue_s1ap_id_t ue_id,
   bearer_context_t * bearer_context,
   const bearer_qos_t *bearer_level_qos,
   traffic_flow_template_t * tft,

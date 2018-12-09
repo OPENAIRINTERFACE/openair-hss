@@ -1,45 +1,4 @@
 
-//
-//        case ACTIVATE_DEDICATED_EPS_BEARER_CONTEXT_ACCEPT:
-//          /*
-//           * Process activate dedicated EPS bearer context accept message
-//           * received from the UE
-//           */
-//          esm_cause = esm_recv_activate_dedicated_eps_bearer_context_accept (esm_context, pti, ebi, &esm_msg.activate_dedicated_eps_bearer_context_accept);
-//
-//          if ((esm_cause == ESM_CAUSE_INVALID_PTI_VALUE) || (esm_cause == ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY)) {
-//            /*
-//             * 3GPP TS 24.301, section 7.3.1, case f
-//             * * * * Ignore ESM message received with reserved PTI value
-//             * * * * 3GPP TS 24.301, section 7.3.2, case f
-//             * * * * Ignore ESM message received with reserved or assigned
-//             * * * * value that does not match an existing EPS bearer context
-//             */
-//            is_discarded = true;
-//          }
-//
-//          break;
-//
-//        case ACTIVATE_DEDICATED_EPS_BEARER_CONTEXT_REJECT:
-//          /*
-//           * Process activate dedicated EPS bearer context reject message
-//           * received from the UE
-//           */
-//          esm_cause = esm_recv_activate_dedicated_eps_bearer_context_reject (esm_context, pti, ebi, &esm_msg.activate_dedicated_eps_bearer_context_reject);
-//
-//          if ((esm_cause == ESM_CAUSE_INVALID_PTI_VALUE) || (esm_cause == ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY)) {
-//            /*
-//             * 3GPP TS 24.301, section 7.3.1, case f
-//             * * * * Ignore ESM message received with reserved PTI value
-//             * * * * 3GPP TS 24.301, section 7.3.2, case f
-//             * * * * Ignore ESM message received with reserved or assigned
-//             * * * * value that does not match an existing EPS bearer context
-//             */
-//            is_discarded = true;
-//          }
-//
-//          break;
-//
 //        case MODIFY_EPS_BEARER_CONTEXT_ACCEPT:
 //          /*
 //           * Process activate dedicated EPS bearer context accept message
