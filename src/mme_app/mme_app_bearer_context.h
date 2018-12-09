@@ -32,7 +32,7 @@
 bstring bearer_state2string(const mme_app_bearer_state_t bearer_state);
 /** Create & deallocate a bearer context. */
 bearer_context_t *mme_app_new_bearer();
-int mme_app_bearer_context_delete (bearer_context_t *bearer_context);
+int mme_app_bearer_context_initialize(bearer_context_t *bearer_context);
 /** Find an allocated PDN session bearer context. */
 bearer_context_t* mme_app_get_session_bearer_context(pdn_context_t * const pdn_context, const ebi_t ebi);
 

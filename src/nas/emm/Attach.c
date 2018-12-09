@@ -1010,7 +1010,8 @@ int _emm_wrapper_attach_reject (mme_ue_s1ap_id_t ue_id, bstring esm_rsp)
   }
 
 }
-static int _emm_attach_reject(nas_emm_attach_proc_t * attach_proc)
+
+static int _emm_attach_reject(mme_ue_s1ap_id_t ue_id, bstring rsp)
 {
   emm_sap_t                               emm_sap = {0};
   emm_data_context_t                     *emm_context = NULL;
@@ -1534,7 +1535,7 @@ static int _emm_attach (emm_data_context_t *emm_context)
 }
 
 //------------------------------------------------------------------------------
-int emm_cn_wrapper_attach_accept (emm_data_context_t * emm_context)
+int _emm_wrapper_attach_accept (mme_ue_s1ap_id_t ue_id, bstring * esm_msg)
 {
   OAILOG_FUNC_IN(LOG_NAS_EMM);
   int rc = _emm_send_attach_accept (emm_context);

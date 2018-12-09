@@ -38,7 +38,7 @@ struct nas_esm_base_proc_s;
 
 typedef int (*esm_failure_cb_t)(struct nas_esm_base_proc_s*);
 /** Method called inside the timeout. */
-typedef int (*esm_timeout_cb_t)(ESM_msg*);
+typedef int (*esm_timeout_cb_t)(struct nas_esm_base_proc_s *ESM_msg*);
 
 /** Methods used for callbacks. */
 typedef int (*lower_layer_cb_t)(mme_ue_s1ap_id_t, bstring);
@@ -95,6 +95,7 @@ typedef struct nas_esm_transaction_proc_s {
  */
 typedef struct nas_esm_pdn_connectivity_proc_s {
   /** Initial mandatory elements. */
+  bool                         is_attach;
   nas_esm_transaction_proc_t   trx_base_proc;
   esm_proc_pdn_type_t          pdn_type;
   esm_proc_pdn_request_t       request_type;
@@ -104,10 +105,7 @@ typedef struct nas_esm_pdn_connectivity_proc_s {
   tai_t                        visited_tai;
   pdn_cid_t                    pdn_cid;
   ebi_t                        default_ebi;
-  /** Attach procedure callbacks. */
-  esm_attach_success_cb_t      attach_success;
-  esm_attach_fail_cb_t         attach_fail;
-//  protocol_configuration_options_t  pco;
+  //  protocol_configuration_options_t  pco;
 } nas_esm_pdn_connectivity_proc_t;
 
 /*

@@ -114,13 +114,13 @@ esm_proc_pdn_connectivity_request (
   const esm_proc_pdn_request_t request_type,
   esm_proc_pdn_type_t          pdn_type);
 
-int esm_proc_pdn_connectivity_failure(struct esm_context_s * esm_context, pdn_cid_t pid, ebi_t default_ebi);
+esm_cause_t esm_proc_pdn_connectivity_failure (mme_ue_s1ap_id_t ue_id, nas_esm_pdn_connectivity_proc_t * esm_pdn_connectivity_proc);
 
-int esm_proc_pdn_config_res(mme_ue_s1ap_id_t ue_id, nas_esm_pdn_connectivity_proc_t *nas_pdn_connectivity_proc, imsi64_t imsi, ESM_msg *esm_resp_msg);
+esm_cause_t esm_proc_pdn_config_res(mme_ue_s1ap_id_t ue_id, nas_esm_pdn_connectivity_proc_t *nas_pdn_connectivity_proc, imsi64_t imsi);
 
-int esm_proc_pdn_config_fail(mme_ue_s1ap_id_t ue_id, nas_esm_pdn_connectivity_proc_t *nas_pdn_connectivity_proc, ESM_msg *esm_resp_msg);
+esm_cause_t esm_proc_pdn_config_fail(mme_ue_s1ap_id_t ue_id, nas_esm_pdn_connectivity_proc_t *esm_pdn_connectivity_proc, ESM_msg * esm_resp_msg);
 
-int esm_proc_pdn_connectivity_res(mme_ue_s1ap_id_t ue_id, nas_esm_pdn_connectivity_proc_t *nas_pdn_connectivity_proc, imsi64_t imsi, ESM_msg *esm_resp_msg);
+esm_cause_t esm_proc_pdn_connectivity_res (mme_ue_s1ap_id_t ue_id, ambr_t * apn_ambr, bearer_qos_t * bearer_level_qos, nas_esm_pdn_connectivity_proc_t * esm_pdn_connectivity_proc);
 
 int esm_proc_pdn_connectivity_fail(mme_ue_s1ap_id_t ue_id, nas_esm_pdn_connectivity_proc_t *nas_pdn_connectivity_proc, imsi64_t imsi, ESM_msg *esm_resp_msg);
 
@@ -152,13 +152,9 @@ int esm_proc_esm_information_response (struct esm_context_s * ue_context, pti_t 
  *      Default EPS bearer context activation procedure
  * --------------------------------------------------------------------------
  */
-int esm_proc_default_eps_bearer_context (
+esm_cause_t esm_proc_default_eps_bearer_context (
   mme_ue_s1ap_id_t   ue_id,
-  const nas_esm_pdn_connectivity_proc_t * nas_pdn_connectivity_proc,
-  bearer_qos_t *bearer_qos,
-  ambr_t        apn_ambr,
-  ESM_msg *esm_rsp_msg,
-  esm_cause_t *esm_cause);
+  const nas_esm_pdn_connectivity_proc_t * nas_pdn_connectivity_proc);
 
 void esm_proc_default_eps_bearer_context_accept (mme_ue_s1ap_id_t ue_id, nas_esm_pdn_connectivity_proc_t* esm_pdn_connectivity_proc);
 int esm_proc_default_eps_bearer_context_reject(struct esm_context_s * esm_context, ebi_t ebi, esm_cause_t *esm_cause);

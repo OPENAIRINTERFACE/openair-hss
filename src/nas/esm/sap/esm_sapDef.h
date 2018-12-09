@@ -54,15 +54,18 @@ Description Defines the ESM Service Access Point that provides EPS
 typedef enum esm_primitive_s {
   ESM_START = 0,
 
+  /* Internal signal. */
+  ESM_TIMEOUT_IND,
+
   /* Transaction related procedures (initiated by the UE) */
-  ESM_ATTACH_IND,
   ESM_PDN_CONFIG_RES,
   ESM_PDN_CONFIG_FAIL,
   ESM_PDN_CONNECTIVITY_CNF,
   ESM_PDN_CONNECTIVITY_REJ,
+  ESM_PDN_DISCONNECT_CNF,
+  ESM_PDN_DISCONNECT_REJ,
 
   /* Procedures related to EPS bearer contexts (initiated by the network) */
-  ESM_DEFAULT_EPS_BEARER_CONTEXT_ACTIVATE_REQ,
   ESM_DEFAULT_EPS_BEARER_CONTEXT_ACTIVATE_CNF,
   ESM_DEFAULT_EPS_BEARER_CONTEXT_ACTIVATE_REJ,
   ESM_DEDICATED_EPS_BEARER_CONTEXT_ACTIVATE_REQ,
@@ -78,9 +81,6 @@ typedef enum esm_primitive_s {
 
 
 
-  ESM_PDN_DISCONNECT_REQ,
-  ESM_PDN_DISCONNECT_CNF,
-  ESM_PDN_DISCONNECT_REJ,
   ESM_BEARER_RESOURCE_ALLOCATE_REQ,
   ESM_BEARER_RESOURCE_ALLOCATE_REJ,
   ESM_BEARER_RESOURCE_MODIFY_REQ,

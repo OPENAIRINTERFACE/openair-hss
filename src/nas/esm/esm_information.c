@@ -66,6 +66,10 @@ static int
 _esm_information (
   nas_esm_pdn_connectivity_proc_t * const nas_pdn_connectivity_proc);
 
+static int
+_esm_information_t3489_handler(
+  nas_esm_pdn_connectivity_proc_t * esm_pdn_connectivity_proc, ESM_msg *esm_resp_msg);
+
 /* Maximum value of the deactivate EPS bearer context request
    retransmission counter */
 #define ESM_INFORMATION_COUNTER_MAX   3
@@ -107,7 +111,7 @@ int esm_proc_esm_information_request (nas_esm_transaction_proc_t *esm_trx_proc, 
   if (rc != RETURNerror) {
     rc = _esm_information (esm_trx_proc);
   }
-  esm_trx_proc->esm_proc.base_proc.timeout_notif = esm_proc_esm_information_request;
+  esm_trx_proc->esm_proc.base_proc.timeout_notif = _esm_information_t3489_handler;
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
 }
 
@@ -192,37 +196,35 @@ _esm_information (
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
 }
 
-
 static int
-_esm_information_t3489_handler(nas_esm_pdn_connectivity_proc_t * esm_pdn_connectivity_proc, ESM_msg *esm_msg) {
+_esm_information_t3489_handler(nas_esm_pdn_connectivity_proc_t * esm_pdn_connectivity_proc, ESM_msg *esm_resp_msg) {
   int                         rc = RETURNok;
 
   OAILOG_FUNC_IN(LOG_NAS_ESM);
 
   esm_pdn_connectivity_proc->trx_base_proc.retx_count += 1;
   if (esm_pdn_connectivity_proc->trx_base_proc.retx_count < ESM_INFORMATION_COUNTER_MAX) {
-    /** Create a new ESM-Information request. */
-    rc = esm_proc_esm_information_request (esm_pdn_connectivity_proc, esm_msg);
+    /*
+     * Create a new ESM-Information request and restart the timer.
+     * Keep the ESM transaction.
+     */
+    rc = esm_send_esm_information_request (esm_pdn_connectivity_proc->trx_base_proc.esm_proc.base_proc.pti, esm_pdn_connectivity_proc->default_ebi, &esm_resp_msg);
 
-//    } else {
-//
-//      // todo: timeout fot T3485 default bearer context request timer
-//  //    /*
-//  //       * Release the default EPS bearer context and enter state INACTIVE
-//  //       */
-//  //      rc = esm_proc_eps_bearer_context_deactivate (esm_ebr_timer_data->ctx, true, esm_ebr_timer_data->ebi, pid, NULL);
-//
-//  //    /*
-//  //     * Stop ESM timer T3485
-//  //     */
-//  //    rc = esm_ebr_stop_timer (esm_ebr_timer_data->ctx, esm_ebr_timer_data->ebi);
-//
-//      /*
-//       * The maximum number of deactivate EPS bearer context request
-//       * message retransmission has exceed
-//       */
-//      nas_pdn_connectivity_proc->trx_base_proc.esm_proc_timer.id = NAS_TIMER_INACTIVE_ID;
-//      nas_pdn_connectivity_proc->trx_base_proc.esm_proc.base_proc.failure_notif(nas_pdn_connectivity_proc);
+    if (rc != RETURNerror) {
+      rc = _esm_information (esm_pdn_connectivity_proc);
+    }
+
+    OAILOG_FUNC_RETURN(LOG_NAS_ESM, rc);
+  } else {
+    /*
+     * No PDN context is expected.
+     * Prepare the reject message.
+     */
+    esm_send_pdn_connectivity_reject(esm_pdn_connectivity_proc->trx_base_proc.esm_proc.base_proc.pti, esm_resp_msg, ESM_CAUSE_ESM_INFORMATION_NOT_RECEIVED);
+    /*
+     * Release the transactional PDN connectivity procedure.
+     */
+    _esm_proc_free_pdn_connectivity_procedure(&esm_pdn_connectivity_proc);
+    OAILOG_FUNC_RETURN(LOG_NAS_ESM, RETURNok);
   }
-  OAILOG_FUNC_OUT(LOG_NAS_ESM);
 }

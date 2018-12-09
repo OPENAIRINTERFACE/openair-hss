@@ -81,6 +81,11 @@ int esm_send_status(pti_t pti, ebi_t ebi, esm_status_msg *msg, int esm_cause);
  * ----------------------------
  */
 
+int esm_send_pdn_connectivity_reject (
+  pti_t pti,
+  ESM_msg * esm_msg,
+  int esm_cause);
+
 int esm_send_pdn_disconnect_reject(pti_t pti, pdn_disconnect_reject_msg *msg,
                                    int esm_cause);
 
@@ -91,10 +96,14 @@ int esm_send_pdn_disconnect_reject(pti_t pti, pdn_disconnect_reject_msg *msg,
 
 void _default_eps_bearer_activate_t3485_handler (nas_esm_pdn_connectivity_proc_t * esm_pdn_conn_procedure, ESM_msg * esm_resp_msg);
 
-void esm_send_activate_default_eps_bearer_context_request(pti_t pti, ebi_t ebi,
-    activate_default_eps_bearer_context_request_msg *msg, bstring apn,
-    const protocol_configuration_options_t *pco, const ambr_t * ambr, int pdn_type, bstring pdn_addr,
-    const EpsQualityOfService *qos, int esm_cause);
+void
+esm_send_activate_default_eps_bearer_context_request (
+  mme_ue_s1ap_id_t ue_id,
+  pti_t pti,
+  nas_esm_pdn_connectivity_proc_t * esm_pdn_connectivity_proc,
+  ESM_msg * esm_resp_msg,
+  pdn_context_t * pdn_context,
+  bearer_context_t * bearer_context);
 
 int esm_send_activate_dedicated_eps_bearer_context_request(pti_t pti, ebi_t ebi,
     activate_dedicated_eps_bearer_context_request_msg *msg, ebi_t linked_ebi,

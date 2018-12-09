@@ -204,6 +204,12 @@ typedef struct pdn_context_s {
   // APN Subscribed: The subscribed APN received from the HSS (APN-NI // ULA:APN Service Selection).
   bstring                     apn_subscribed;
 
+  // APN-OI Replacement: APN level APN-OI Replacement which has same role as UE level APN-OI
+  // Replacement but with higher priority than UE level APN-OI Replacement. This is
+  // an optional parameter. When available, it shall be used to construct the PDN GW
+  // FQDN instead of UE level APN-OI Replacement.
+  bstring         apn_oi_replacement;
+
   // PDN Type: IPv4, IPv6 or IPv4v6
   pdn_type_t                  pdn_type; /**< Set by UE/ULR. */
 
@@ -215,16 +221,8 @@ typedef struct pdn_context_s {
   paa_t             *paa ;                         // set by S11 CREATE_SESSION_RESPONSE
 
 
-
-
   // EPS PDN Charging Characteristics: The charging characteristics of this PDN connection, e.g. normal, prepaid, flat-rate
   // and/or hot billing.
-
-  // APN-OI Replacement: APN level APN-OI Replacement which has same role as UE level APN-OI
-  // Replacement but with higher priority than UE level APN-OI Replacement. This is
-  // an optional parameter. When available, it shall be used to construct the PDN GW
-  // FQDN instead of UE level APN-OI Replacement.
-  bstring         apn_oi_replacement;
 
   // SIPTO permissions: Indicates whether the traffic associated with this APN is allowed or prohibited for SIPTO
   // LIPA permissions: Indicates whether the PDN can be accessed via Local IP Access. Possible values

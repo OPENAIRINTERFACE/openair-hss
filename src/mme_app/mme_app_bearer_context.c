@@ -84,16 +84,16 @@ bearer_context_t *mme_app_new_bearer(){
 }
 
 //------------------------------------------------------------------------------
-static int mme_app_bearer_context_initialize(bearer_context_t *bearer_context)
+void mme_app_bearer_context_initialize(bearer_context_t *bearer_context)
 {
   /** Remove the EMS-EBR context of the bearer-context. */
   bearer_context->esm_ebr_context->status   = ESM_EBR_INACTIVE;
   if(bearer_context->esm_ebr_context.tft){
     free_traffic_flow_template(&bearer_context->esm_ebr_context.tft);
   }
-  if(bearer_context->esm_ebr_context.pco){
-    free_protocol_configuration_options(&bearer_context->esm_ebr_context.pco);
-  }
+//  if(bearer_context->esm_ebr_context.pco){
+//    free_protocol_configuration_options(&bearer_context->esm_ebr_context.pco);
+//  }
   /** Remove the remaining contexts of the bearer context. */
   memset(&bearer_context->esm_ebr_context, 0, sizeof(esm_ebr_context_t)); /**< Sets the SM status to ESM_STATUS_INVALID. */
   ebi_t ebi = bearer_context->ebi;
@@ -101,7 +101,6 @@ static int mme_app_bearer_context_initialize(bearer_context_t *bearer_context)
   bearer_context->ebi = ebi;
   bearer_context->next_bc = bearerContextPool;
   bearerContextPool = bearer_context;
-  return RETURNok;
 }
 
 //------------------------------------------------------------------------------

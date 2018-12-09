@@ -35,7 +35,6 @@
 #include "s1ap_messages_types.h"
 
 #define NAS_UPLINK_DATA_IND(mSGpTR)                 (mSGpTR)->ittiMsg.nas_ul_data_ind
-#define NAS_ESM_ATTACH_IND(mSGpTR)                  (mSGpTR)->ittiMsg.nas_esm_attach_ind
 #define NAS_ESM_DATA_IND(mSGpTR)                    (mSGpTR)->ittiMsg.nas_esm_data_ind
 #define NAS_DOWNLINK_DATA_REQ(mSGpTR)               (mSGpTR)->ittiMsg.nas_dl_data_req
 #define NAS_DL_DATA_CNF(mSGpTR)                     (mSGpTR)->ittiMsg.nas_dl_data_cnf
@@ -76,10 +75,6 @@ typedef enum pdn_conn_rsp_cause_e {
   CAUSE_NO_RESOURCES_AVAILABLE = 73,
   CAUSE_ALL_DYNAMIC_ADDRESSES_OCCUPIED = 84
 } pdn_conn_rsp_cause_t;
-
-/** ESM callbacks. */
-typedef int (*esm_attach_success_cb_t)(mme_ue_s1ap_id_t, bstring);
-typedef int (*esm_attach_fail_cb_t)   (mme_ue_s1ap_id_t, bstring);
 
 typedef struct itti_nas_pdn_connectivity_rsp_s {
   pdn_cid_t               pdn_cid;
@@ -175,14 +170,11 @@ typedef struct itti_nas_ul_data_ind_s {
   ecgi_t            cgi;            /* Indicating the cell from which the UE has sent the NAS message.   */
 } itti_nas_ul_data_ind_t;
 
-typedef struct itti_nas_esm_attach_ind_s {
-  mme_ue_s1ap_id_t  ue_id;
-  bstring           esm_msg_p;
-} itti_nas_esm_attach_ind_t;
-
 typedef struct itti_nas_esm_data_ind_s {
   mme_ue_s1ap_id_t  ue_id;
-  bstring           esm_msg_p;
+  bstring           req;
+  imsi_t            imsi;
+  tai_t             visited_tai;
 } itti_nas_esm_data_ind_t;
 
 typedef struct itti_nas_dl_data_req_s {

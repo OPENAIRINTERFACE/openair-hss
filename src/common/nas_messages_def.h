@@ -29,7 +29,6 @@
 */
 
 /** EMM to ESM messages. */
-MESSAGE_DEF(NAS_ESM_ATTACH_IND,                 MESSAGE_PRIORITY_MED,   itti_nas_esm_attach_ind_t,         nas_emm_data_ind)
 MESSAGE_DEF(NAS_ESM_DATA_IND,                   MESSAGE_PRIORITY_MED,   itti_nas_esm_data_ind_t,         nas_esm_data_ind)
 
 MESSAGE_DEF(NAS_INITIAL_UE_MESSAGE,             MESSAGE_PRIORITY_MED,   itti_nas_initial_ue_message_t,   nas_initial_ue_message)
