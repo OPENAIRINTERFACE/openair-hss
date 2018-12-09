@@ -260,16 +260,14 @@ esm_proc_eps_bearer_context_deactivate_request (
  **      Others:    T3495                                      **
  **                                                                        **
  ***************************************************************************/
-pdn_cid_t
+esm_cause_t
 esm_proc_eps_bearer_context_deactivate_accept (
-  esm_context_t * esm_context,
+  mme_ue_s1ap_id_t ue_id,
   ebi_t ebi,
-  esm_cause_t *esm_cause)
+  pdn_cid_t pdn_cid)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
-  int                                     rc = RETURNerror;
   pdn_cid_t                               pid = MAX_APN_PER_UE;
-  mme_ue_s1ap_id_t      ue_id = esm_context->ue_id;
 
   OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - EPS bearer context deactivation " "accepted by the UE (ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d)\n",
       ue_id, ebi);
@@ -277,17 +275,9 @@ esm_proc_eps_bearer_context_deactivate_accept (
   /*
    * Release the EPS bearer context.
    */
-  rc = _eps_bearer_release (esm_context, ebi, &pid);
+  mme_app_esm_release_bearer_context(ue_id, pdn_cid, ebi);
 
-  if (rc != RETURNok) {
-    /*
-     * Failed to release the EPS bearer context
-     */
-    *esm_cause = ESM_CAUSE_PROTOCOL_ERROR;
-    pid = RETURNerror;
-  }
-
-  OAILOG_FUNC_RETURN (LOG_NAS_ESM, pid);
+  OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_SUCCESS);
 }
 
 
@@ -367,52 +357,3 @@ static void _eps_bearer_deactivate_t3492_handler (nas_esm_proc_t * esm_proc, ESM
                 MME specific local functions
    --------------------------------------------------------------------------
 */
-
-/****************************************************************************
- **                                                                        **
- ** Name:    _eps_bearer_release()                                     **
- **                                                                        **
- ** Description: Releases the EPS bearer context identified by the given   **
- **      EPS bearer identity and enters state INACTIVE.            **
- **                                                                        **
- ** Inputs:  ue_id:      UE local identifier                        **
- **      ebi:       EPS bearer identity                        **
- **      Others:    None                                       **
- **                                                                        **
- ** Outputs:     pid:       Identifier of the PDN connection the EPS   **
- **             bearer belongs to                          **
- **      Return:    RETURNok, RETURNerror                      **
- **      Others:    None                                       **
- **                                                                        **
- ***************************************************************************/
-static int
-_eps_bearer_release (
-  esm_context_t * esm_context,
-  ebi_t ebi,
-  pdn_cid_t *pid)
-{
-  OAILOG_FUNC_IN (LOG_NAS_ESM);
-  int                                     rc = RETURNerror;
-
-
-  if (ebi == ESM_EBI_UNASSIGNED) {
-    OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Failed to release EPS bearer context\n");
-    OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
-  }
-  if ((ebi < ESM_EBI_MIN) || (ebi > ESM_EBI_MAX)) {
-    OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
-  }
-
-  /*
-   * Release and the contexts and update the counters.
-   */
-  ebi = esm_ebr_context_release (esm_context, ebi, pid, false);
-  if (ebi == ESM_EBI_UNASSIGNED) {
-    OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Failed to release EPS bearer context\n");
-    OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
-  }
-
-  /* Successfully released the context for EIB. */
-  OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Successfully released EPS bearer data for ebi %d and pid %d. \n", ebi, pid);
-  OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);
-}

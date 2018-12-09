@@ -266,15 +266,12 @@ esm_proc_modify_eps_bearer_context (
  ***************************************************************************/
 int
 esm_proc_update_eps_bearer_context (
-  esm_context_t * esm_context,
+  mme_ue_s1ap_id_t ue_id,
   const bearer_context_to_be_updated_t *bc_tbu)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   int                                     rc = RETURNok;
-  mme_ue_s1ap_id_t                        ue_id = esm_context->ue_id;
   OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Updating EPS bearer context configuration to new values " "(ue_id=" MME_UE_S1AP_ID_FMT " \n", ue_id);
-
-  ue_context_t                        *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, esm_context->ue_id);
 
   /** Check the cause. */
   if(bc_tbu->cause.cause_value != REQUEST_ACCEPTED){

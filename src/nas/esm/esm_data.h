@@ -127,8 +127,6 @@ typedef struct esm_data_s {
 
 
 void nas_stop_T3489(mme_ue_s1ap_id_t ue_id, nas_timer_t * const nas_timer);
-void free_esm_context_content(esm_context_t * esm_ctx);
-
 
 struct esm_context_s *esm_data_context_get(
   esm_data_t *esm_data, unsigned int _ueid);

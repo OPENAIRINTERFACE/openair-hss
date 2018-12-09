@@ -208,6 +208,6 @@ int esm_proc_modify_eps_bearer_context_reject(struct esm_context_s * esm_context
  */
 esm_cause_t esm_proc_eps_bearer_context_deactivate_request (mme_ue_s1ap_id_t ue_id, nas_esm_bearer_context_proc_t * esm_bearer_context_proc);
 
-pdn_cid_t esm_proc_eps_bearer_context_deactivate_accept(struct esm_context_s * esm_context, ebi_t ebi, esm_cause_t *esm_cause);
+esm_cause_t esm_proc_eps_bearer_context_deactivate_accept(mme_ue_s1ap_id_t ue_id, ebi_t ebi, pdn_cid_t pdn_cid);
 
 #endif /* __ESM_PROC_H__*/
