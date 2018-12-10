@@ -118,7 +118,6 @@ _clear_emm_ctxt(mme_ue_s1ap_id_t ue_id) {
   nas_delete_all_esm_procedures(emm_context);
   /** Stop/Delete all ESM procedurs & timers. */
   // todo: removal of esm context in emm?!
-//  free_esm_context_content(&emm_context->esm_ctx);
   // todo: ESM_MSG removal
 //  if (emm_context->esm_msg) {
 //    bdestroy_wrapper(&emm_context->esm_msg);

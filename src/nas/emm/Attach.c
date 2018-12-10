@@ -1526,7 +1526,8 @@ static int _emm_attach (emm_data_context_t *emm_context)
        * Notify ESM that PDN connectivity is requested.
        * This will decouple the ESM message.
        */
-      nas_itti_esm_attach_ind(emm_context->ue_id, &attach_proc->ies->esm_msg);
+      nas_itti_esm_data_ind(emm_context->ue_id, &attach_proc->ies->esm_msg,
+          attach_proc->ies->imsi, attach_proc->ies->last_visited_registered_tai);
       OAILOG_INFO (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " EMM-PROC  - Processing PDN Connectivity Request asynchronously.\n", emm_context->ue_id);
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
   }
@@ -1537,27 +1538,27 @@ static int _emm_attach (emm_data_context_t *emm_context)
 //------------------------------------------------------------------------------
 int _emm_wrapper_attach_accept (mme_ue_s1ap_id_t ue_id, bstring * esm_msg)
 {
-  OAILOG_FUNC_IN(LOG_NAS_EMM);
-  int rc = _emm_send_attach_accept (emm_context);
-  if (rc != RETURNerror) {
-    if (IS_EMM_CTXT_PRESENT_OLD_GUTI(emm_context) &&
-        (memcmp(&emm_context->_old_guti, &emm_context->_guti, sizeof(emm_context->_guti)))) {
-      /*
-       * Implicit GUTI reallocation;
-       * Notify EMM that common procedure has been initiated
-       * LG: TODO check this, seems very suspicious
-       */
-      emm_sap_t                               emm_sap = {0};
-
-      emm_sap.primitive = EMMREG_COMMON_PROC_REQ;
-      emm_sap.u.emm_reg.ue_id = msg_pP->ue_id;
-      emm_sap.u.emm_reg.ctx  = emm_context;
-
-      MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMREG_COMMON_PROC_REQ ue id " MME_UE_S1AP_ID_FMT " ", msg_pP->ue_id);
-
-      rc = emm_sap_send (&emm_sap);
-    }
-  }
+//  OAILOG_FUNC_IN(LOG_NAS_EMM);
+//  int rc = _emm_send_attach_accept (emm_context);
+//  if (rc != RETURNerror) {
+//    if (IS_EMM_CTXT_PRESENT_OLD_GUTI(emm_context) &&
+//        (memcmp(&emm_context->_old_guti, &emm_context->_guti, sizeof(emm_context->_guti)))) {
+//      /*
+//       * Implicit GUTI reallocation;
+//       * Notify EMM that common procedure has been initiated
+//       * LG: TODO check this, seems very suspicious
+//       */
+//      emm_sap_t                               emm_sap = {0};
+//
+//      emm_sap.primitive = EMMREG_COMMON_PROC_REQ;
+//      emm_sap.u.emm_reg.ue_id = msg_pP->ue_id;
+//      emm_sap.u.emm_reg.ctx  = emm_context;
+//
+//      MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMREG_COMMON_PROC_REQ ue id " MME_UE_S1AP_ID_FMT " ", msg_pP->ue_id);
+//
+//      rc = emm_sap_send (&emm_sap);
+//    }
+//  }
   OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
 }
 

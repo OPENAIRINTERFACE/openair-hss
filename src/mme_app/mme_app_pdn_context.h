@@ -28,7 +28,7 @@
 #define FILE_MME_APP_PDN_CONTEXT_SEEN
 
 /** PDN Context and Bearer Context operations from ESM (UE triggered) or handover. */
-int mme_app_esm_create_pdn_context(mme_ue_s1ap_id_t ue_id, const apn_configuration_t *apn_configuration, const bstring apn, pdn_cid_t pdn_cid, const pdn_context_t **pdn_context_pp);
+int mme_app_esm_create_pdn_context(mme_ue_s1ap_id_t ue_id, const apn_configuration_t *apn_configuration, const bstring apn, pdn_cid_t pdn_cid, pdn_context_t **pdn_context_pp);
 int mme_app_esm_update_pdn_context(mme_ue_s1ap_id_t ue_id, const bstring apn, pdn_cid_t pdn_cid, ebi_t linked_ebi, esm_ebr_state esm_ebr_state, const ambr_t *apn_ambr, const bearer_qos_t *bearer_qos, protocol_configuration_options_t *pcos);
 
 /**
@@ -43,9 +43,12 @@ esm_cause_t
 mme_app_esm_finalize_bearer_context(mme_ue_s1ap_id_t ue_id, /*const pdn_cid_t pdn_cid, */const ebi_t ebi, bearer_qos_t * bearer_level_qos, traffic_flow_template_t * tft, protocol_configuration_options_t * pco);
 
 esm_cause_t
+mme_app_esm_release_bearer_context(mme_ue_s1ap_id_t ue_id, const pdn_cid_t *pdn_cid, const ebi_t ebi);
+
+esm_cause_t
 mme_app_esm_modify_bearer_context(mme_ue_s1ap_id_t ue_id, const ebi_t ebi, struct bearer_qos_s * bearer_level_qos, traffic_flow_template_t * tft);
 
-void mme_app_get_pdn_context (mme_ue_s1ap_id_t ue_id, pdn_cid_t const context_id, ebi_t const default_ebi, bstring const apn_subscribed, pdn_context_t **pdn_ctx);
+void mme_app_get_pdn_context (mme_ue_s1ap_id_t ue_id, pdn_cid_t const context_id, ebi_t const default_ebi, bstring const subscribed_apn, pdn_context_t **pdn_ctx);
 
 /*
  * Receive Bearer Context VOs to send in CSR/Handover Request, etc..

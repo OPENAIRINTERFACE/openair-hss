@@ -1415,7 +1415,6 @@ void emm_context_dump (
 //      bformata (bstr_dump, "%*s     +-----+-------------------------------------------------+\n", indent_spaces, " ");
 //    }
 //    bformata (bstr_dump, "%*s     - TODO  esm_data_ctx\n", indent_spaces, " ");
-    //esm_context_dump(&emm_context->esm_ctx, indent_spaces, bstr_dump);
   }
 }
 

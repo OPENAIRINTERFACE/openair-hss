@@ -32,16 +32,17 @@
 #include "nas_message.h"
 #include "as_message.h"
 #include "esm_proc.h"
-
-int
-nas_itti_esm_attach_ind(
-  const mme_ue_s1ap_id_t    ue_id,
-  bstring                  *esm_msg_p);
+// todo: find a better place for this
+#include "mme_app_esm_procedures.h"
+#include "intertask_interface_types.h"
 
 int
 nas_itti_esm_data_ind(
-  const mme_ue_s1ap_id_t ue_id,
-  bstring                *esm_msg_p);
+  const mme_ue_s1ap_id_t  ue_id,
+  bstring                *esm_msg_p,
+  bool                    is_attach,
+  imsi_t                 *imsi,
+  tai_t                  *visited_tai);
 
 int nas_itti_dl_data_req(
   const mme_ue_s1ap_id_t ue_idP,
@@ -83,10 +84,10 @@ void nas_itti_pdn_config_req(
 void nas_itti_pdn_disconnect_req(
   mme_ue_s1ap_id_t        ue_idP,
   ebi_t                   default_ebi,
+  pti_t                   pti,
   struct in_addr          saegw_s11_addr, /**< Put them into the UE context ? */
   teid_t                  saegw_s11_teid,
-  bool                    noDelete,
-  esm_proc_data_t        *proc_data_pP);
+  nas_esm_proc_pdn_connectivity_t        *esm_pdn_connectivity_proc);
 
 void nas_itti_ctx_req(
   const uint32_t        ue_idP,

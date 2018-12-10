@@ -51,7 +51,7 @@
 
 //------------------------------------------------------------------------------
 int mme_app_handle_s6a_update_location_ans (
-  const s6a_update_location_ans_t * const ula_pP)
+  s6a_update_location_ans_t * ula_pP)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
   MessageDef                             *message_p = NULL;
@@ -84,7 +84,7 @@ int mme_app_handle_s6a_update_location_ans (
   /** Remove the cached subscription profile and set the new one. */
   subscription_data_t * subscription_data = ula_pP->subscription_data;
   mme_remove_subscription_profile(&mme_app_desc.mme_ue_contexts, imsi64);
-  mme_insert_subscription_profile(imsi64, subscription_data);
+  mme_insert_subscription_profile(&mme_app_desc.mme_ue_contexts, imsi64, subscription_data);
   ula_pP->subscription_data = NULL;
   OAILOG_INFO(LOG_MME_APP, "Updated the subscription profile for IMSI " IMSI_64_FMT " in the cache. \n", imsi64);
 
@@ -111,19 +111,19 @@ int mme_app_handle_s6a_update_location_ans (
     goto err;
   }
 
-  ue_context->subscriber_status = ula_pP->subscription_data.subscriber_status;
-  ue_context->access_restriction_data = ula_pP->subscription_data.access_restriction;
+  ue_context->subscriber_status = ula_pP->subscription_data->subscriber_status;
+  ue_context->access_restriction_data = ula_pP->subscription_data->access_restriction;
   /*
    * Copy the subscribed ambr to the sgw create session request message
    */
-  memcpy (&ue_context->subscribed_ue_ambr, &ula_pP->subscription_data.subscribed_ambr, sizeof (ambr_t));
+  memcpy (&ue_context->subscribed_ue_ambr, &ula_pP->subscription_data->subscribed_ambr, sizeof (ambr_t));
 
-  ue_context->msisdn = blk2bstr(ula_pP->subscription_data.msisdn, ula_pP->subscription_data.msisdn_length);
+  ue_context->msisdn = blk2bstr(ula_pP->subscription_data->msisdn, ula_pP->subscription_data->msisdn_length);
   //  AssertFatal (ula_pP->subscription_data.msisdn_length != 0, "MSISDN LENGTH IS 0"); todo: msisdn
-  AssertFatal (ula_pP->subscription_data.msisdn_length <= MSISDN_LENGTH, "MSISDN LENGTH is too high %u", MSISDN_LENGTH);
+  AssertFatal (ula_pP->subscription_data->msisdn_length <= MSISDN_LENGTH, "MSISDN LENGTH is too high %u", MSISDN_LENGTH);
 
-  ue_context->rau_tau_timer = ula_pP->subscription_data.rau_tau_timer;
-  ue_context->network_access_mode = ula_pP->subscription_data.access_mode;
+  ue_context->rau_tau_timer = ula_pP->subscription_data->rau_tau_timer;
+  ue_context->network_access_mode = ula_pP->subscription_data->access_mode;
 
   /*
    * Set the value of  Mobile Reachability timer based on value of T3412 (Periodic TAU timer) sent in Attach accept /TAU accept.

@@ -427,7 +427,7 @@ void *mme_app_thread (void *args)
         hashtable_ts_destroy (mme_app_desc.mme_ue_contexts.tun10_ue_context_htbl);
         hashtable_ts_destroy (mme_app_desc.mme_ue_contexts.mme_ue_s1ap_id_ue_context_htbl);
         hashtable_ts_destroy (mme_app_desc.mme_ue_contexts.enb_ue_s1ap_id_ue_context_htbl);
-        hashtable_ts_destroy (mme_app_desc.mme_ue_contexts.imsi_apn_configuration_htbl);
+        hashtable_ts_destroy (mme_app_desc.mme_ue_contexts.imsi_subscription_profile_htbl);
         obj_hashtable_ts_destroy (mme_app_desc.mme_ue_contexts.guti_ue_context_htbl);
 
 
@@ -487,7 +487,6 @@ void *mme_app_thread (void *args)
       break;
     }
 
-    }
 
     itti_free_msg_content(received_message_p);
     itti_free(ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
@@ -523,7 +522,7 @@ int mme_app_init (const mme_config_t * mme_config_p)
   mme_app_desc.mme_ue_contexts.guti_ue_context_htbl = obj_hashtable_uint64_ts_create (mme_config.max_ues, NULL, hash_free_int_func, b);
   btrunc(b, 0);
   bassigncstr(b, "imsi_apn_configuration_htbl");
-  mme_app_desc.mme_ue_contexts.imsi_apn_configuration_htbl = hashtable_uint64_ts_create (mme_config.max_ues, NULL, b);
+  mme_app_desc.mme_ue_contexts.imsi_subscription_profile_htbl = hashtable_uint64_ts_create (mme_config.max_ues, NULL, b);
   bdestroy_wrapper (&b);
 
   if (mme_app_edns_init(mme_config_p)) {
@@ -563,7 +562,7 @@ void mme_app_exit (void)
   hashtable_uint64_ts_destroy (mme_app_desc.mme_ue_contexts.tun11_ue_context_htbl);
   hashtable_uint64_ts_destroy (mme_app_desc.mme_ue_contexts.tun10_ue_context_htbl);
   hashtable_uint64_ts_destroy (mme_app_desc.mme_ue_contexts.mme_ue_s1ap_id_ue_context_htbl);
-  hashtable_uint64_ts_destroy (mme_app_desc.mme_ue_contexts.imsi_apn_configuration_htbl);
+  hashtable_uint64_ts_destroy (mme_app_desc.mme_ue_contexts.imsi_subscription_profile_htbl);
   hashtable_ts_destroy (mme_app_desc.mme_ue_contexts.enb_ue_s1ap_id_ue_context_htbl);
   obj_hashtable_uint64_ts_destroy (mme_app_desc.mme_ue_contexts.guti_ue_context_htbl);
   mme_config_exit();

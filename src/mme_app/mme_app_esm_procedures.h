@@ -50,6 +50,21 @@ typedef enum {
   ESM_PROC_PDN_CONTEXT
 } esm_proc_type_t;
 
+
+/* Type of PDN address */
+typedef enum {
+  ESM_PDN_TYPE_IPV4 = NET_PDN_TYPE_IPV4,
+  ESM_PDN_TYPE_IPV6 = NET_PDN_TYPE_IPV6,
+  ESM_PDN_TYPE_IPV4V6 = NET_PDN_TYPE_IPV4V6
+} esm_proc_pdn_type_t;
+
+/* Type of PDN request */
+typedef enum {
+  ESM_PDN_REQUEST_INITIAL = 1,
+  ESM_PDN_REQUEST_HANDOVER,
+  ESM_PDN_REQUEST_EMERGENCY
+} esm_proc_pdn_request_t;
+
 //
 //typedef enum {
 //  MME_APP_BASE_PROC_TYPE_NONE = 0,
@@ -165,7 +180,7 @@ typedef struct nas_esm_proc_pdn_connectivity_s {
   esm_proc_pdn_request_t       request_type;
   imsi_t                       imsi;
   /** Additional elements requested from the UE and set with time.. */
-  bstring                      apn_subscribed;
+  bstring                      subscribed_apn; /**< Should be copied with bstrcpy(). */
   tai_t                        visited_tai;
   pdn_cid_t                    pdn_cid;
   ebi_t                        default_ebi;
@@ -191,12 +206,6 @@ typedef struct nas_esm_proc_bearer_context_s {
   LIST_ENTRY(nas_esm_proc_bearer_context_s) entries;      /* List. */
 } nas_esm_proc_bearer_context_t;
 
-typedef enum {
-  S11_PROC_BEARER_UNKNOWN  = 0,
-  S11_PROC_BEARER_PENDING  = 1,
-  S11_PROC_BEARER_FAILED   = 2,
-  S11_PROC_BEARER_SUCCESS  = 3
-} s11_proc_bearer_status_t;
 
 //typedef struct mme_app_s11_proc_create_bearer_s {
 //  mme_app_s11_proc_t           proc;
@@ -228,7 +237,7 @@ void mme_app_nas_esm_free_pdn_connectivity_proc(nas_esm_proc_pdn_connectivity_t 
  * ESM Bearer Context Procedures.
  */
 void mme_app_nas_esm_free_bearer_context_procedures(ue_context_t * const ue_context_p); // todo: static!
-nas_esm_proc_bearer_context_t* mme_app_nas_esm_create_bearer_context_procedure(mme_ue_s1ap_id_t mme_ue_s1ap_id);
+nas_esm_proc_bearer_context_t* mme_app_nas_esm_create_bearer_context_procedure(mme_ue_s1ap_id_t mme_ue_s1ap_id, pti_t pti, ebi_t ebi);
 nas_esm_proc_bearer_context_t* mme_app_nas_esm_get_bearer_context_procedure(mme_ue_s1ap_id_t mme_ue_s1ap_id);
 void mme_app_nas_esm_free_bearer_context_proc(nas_esm_proc_bearer_context_t     **esm_bearer_context_proc);
 

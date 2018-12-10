@@ -72,9 +72,8 @@
 #include "emm_data.h"
 #include "emm_sap.h"
 #include "esm_ebr.h"
-#include "esm_ebr_context.h"
 #include "esm_proc.h"
-#include "msg/esm_cause.h"
+#include "esm_cause.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -93,7 +92,7 @@
 /*
    Timer handlers
 */
-static int _dedicated_eps_bearer_activate_t3485_handler (nas_esm_bearer_context_proc_t * esm_bearer_context_proc, ESM_msg *esm_resp_msg);
+static int _dedicated_eps_bearer_activate_t3485_handler (nas_esm_proc_bearer_context_t * esm_proc_bearer_context, ESM_msg *esm_resp_msg);
 
 /* Maximum value of the activate dedicated EPS bearer context request
    retransmission counter */
@@ -266,18 +265,18 @@ esm_proc_dedicated_eps_bearer_context (
   /*
    * Create a new EPS bearer context transaction.
    */
-  nas_esm_bearer_context_proc_t * esm_bearer_context_proc = _esm_proc_create_bearer_context_procedure(ue_id, NULL, pti, bc_tbc->eps_bearer_id);
-  DevAssert(esm_bearer_context_proc);
+  nas_esm_proc_bearer_context_t * esm_proc_bearer_context = _esm_proc_create_bearer_context_procedure(ue_id, NULL, pti, bc_tbc->eps_bearer_id);
+  DevAssert(esm_proc_bearer_context);
   // todo: further edit..
 
   /*
    * Start the procedure.
    */
-  nas_stop_esm_timer(ue_id, &esm_bearer_context_proc->esm_base_proc.esm_proc_timer);
+  nas_stop_esm_timer(ue_id, &esm_proc_bearer_context->esm_base_proc.esm_proc_timer);
   /** Start the T3485 timer for additional PDN connectivity. */
-  esm_bearer_context_proc->esm_base_proc.esm_proc_timer.id = nas_timer_start (mme_config.nas_config.t3485_sec, 0 /*usec*/, TASK_NAS_ESM,
+  esm_proc_bearer_context->esm_base_proc.esm_proc_timer.id = nas_timer_start (mme_config.nas_config.t3485_sec, 0 /*usec*/, TASK_NAS_ESM,
       _nas_proc_pdn_connectivity_timeout_handler, ue_id); /**< Address field should be big enough to save an ID. */
-  esm_bearer_context_proc->esm_base_proc.timeout_notif = _dedicated_eps_bearer_activate_t3485_handler;
+  esm_proc_bearer_context->esm_base_proc.timeout_notif = _dedicated_eps_bearer_activate_t3485_handler;
 
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_SUCCESS);
 }
@@ -321,7 +320,7 @@ esm_proc_dedicated_eps_bearer_context_accept (
   /*
    * Check that an EPS procedure exists.
    */
-  nas_esm_bearer_context_proc_t * esm_bearer_procedure = _esm_get_bearer_procedure(ue_id, ebi, pti);
+  nas_esm_proc_bearer_context_t * esm_bearer_procedure = _esm_proc_get_bearer_context_procedure(ue_id, pti, ebi);
   if(!esm_bearer_procedure){
     OAILOG_ERROR(LOG_NAS_ESM, "ESM-PROC  - No ESM bearer procedure exists for accepted dedicated bearer (ebi=%d, pti=%d) for UE " MME_UE_S1AP_ID_FMT ". \n", ebi, pti, ue_id);
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_REQUEST_REJECTED_UNSPECIFIED);
@@ -377,9 +376,10 @@ int
 esm_proc_dedicated_eps_bearer_context_reject (
   mme_ue_s1ap_id_t  ue_id,
   ebi_t ebi,
+  pti_t pti,
   esm_cause_t esm_cause)
 {
-  pdn_cid_t                               pdn_ci = PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED;
+  pdn_cid_t                               pdn_ci = PDN_CONTEXT_IDENTIFIER_UNASSIGNED;
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Dedicated EPS bearer context activation " "not accepted by the UE (ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d)\n",
       ue_id, ebi);
@@ -392,10 +392,21 @@ esm_proc_dedicated_eps_bearer_context_reject (
   /*
    * Check that an EPS procedure exists.
    */
-  nas_esm_bearer_context_proc_t * esm_bearer_procedure = _esm_get_bearer_procedure(ue_id, ebi, pti);
+  nas_esm_proc_bearer_context_t * esm_bearer_procedure = _esm_proc_get_bearer_context_procedure(ue_id, pti, ebi);
   if(!esm_bearer_procedure){
     OAILOG_ERROR(LOG_NAS_ESM, "ESM-PROC  - No ESM bearer procedure exists for accepted dedicated bearer (ebi=%d, pti=%d) for UE " MME_UE_S1AP_ID_FMT ". \n", ebi, pti, ue_id);
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_REQUEST_REJECTED_UNSPECIFIED);
+  } else {
+
+  }
+  /*
+   * Release the MME_APP bearer context.
+   */
+
+  if(mme_app_esm_release_bearer_context(ue_id,
+      ((esm_bearer_procedure) ? esm_bearer_procedure->pdn_cid : NULL),
+      ebi) != ESM_CAUSE_SUCCESS){
+    OAILOG_WARNING(LOG_NAS_ESM, "ESM-PROC  - No ESM bearer context could be found (ebi=%d, pti=%d) for UE " MME_UE_S1AP_ID_FMT ". \n", ebi, pti, ue_id);
   }
   /*
    * Failed to release the dedicated EPS bearer context.
@@ -411,8 +422,8 @@ esm_proc_dedicated_eps_bearer_context_reject (
   /*
    * Release the dedicated EPS bearer context and enter state INACTIVE
    */
-  mme_app_esm_release_bearer_context(ue_id, esm_bearer_procedure->pdn_cid, ebi);
-  OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
+  mme_app_esm_release_bearer_context(ue_id, &esm_bearer_procedure->pdn_cid, ebi);
+  OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);
 }
 
 
@@ -448,29 +459,29 @@ esm_proc_dedicated_eps_bearer_context_reject (
  **      Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
-static int _dedicated_eps_bearer_activate_t3485_handler (nas_esm_bearer_context_proc_t * esm_bearer_context_proc, ESM_msg *esm_resp_msg)
+static int _dedicated_eps_bearer_activate_t3485_handler (nas_esm_proc_bearer_context_t * esm_proc_bearer_context, ESM_msg *esm_resp_msg)
 {
   int                         rc = RETURNok;
 
   OAILOG_FUNC_IN(LOG_NAS_ESM);
 
-  esm_bearer_context_proc->esm_base_proc.retx_count += 1;
-  if (esm_bearer_context_proc->esm_base_proc.retx_count < DEDICATED_EPS_BEARER_ACTIVATE_COUNTER_MAX) {
+  esm_proc_bearer_context->esm_base_proc.retx_count += 1;
+  if (esm_proc_bearer_context->esm_base_proc.retx_count < DEDICATED_EPS_BEARER_ACTIVATE_COUNTER_MAX) {
     /*
      * Create a new ESM-Information request and restart the timer.
      * Keep the ESM transaction.
      */
 
     pdn_context_t * pdn_context = NULL;
-    mme_app_get_pdn_context(esm_bearer_context_proc->esm_base_proc.ue_id, esm_bearer_context_proc->pdn_cid,
-        esm_bearer_context_proc->linked_ebi, esm_bearer_context_proc->subscribed_apn, &pdn_context);
+    mme_app_get_pdn_context(esm_proc_bearer_context->esm_base_proc.ue_id, esm_proc_bearer_context->pdn_cid,
+        esm_proc_bearer_context->linked_ebi, esm_proc_bearer_context->subscribed_apn, &pdn_context);
     if(pdn_context){
       bearer_context_t * bearer_context = NULL;
-      mme_app_get_session_bearer_context(pdn_context, esm_bearer_context_proc->bearer_ebi);
+      mme_app_get_session_bearer_context(pdn_context, esm_proc_bearer_context->bearer_ebi);
       if(bearer_context){
-        rc = esm_send_activate_default_eps_bearer_context_request(esm_bearer_context_proc->esm_base_proc.ue_id, pdn_context, bearer_context);
+        rc = esm_send_activate_default_eps_bearer_context_request(esm_proc_bearer_context->esm_base_proc.ue_id, pdn_context, bearer_context);
          if (rc != RETURNerror) {
-           rc = esm_proc_default_eps_bearer_context (esm_bearer_context_proc->esm_base_proc.ue_id, esm_bearer_context_proc);
+           rc = esm_proc_default_eps_bearer_context (esm_proc_bearer_context->esm_base_proc.ue_id, esm_proc_bearer_context);
            OAILOG_FUNC_RETURN(LOG_NAS_ESM, rc);
          }
        }
@@ -487,21 +498,21 @@ static int _dedicated_eps_bearer_activate_t3485_handler (nas_esm_bearer_context_
    * Release the dedicated EPS bearer context and enter state INACTIVE
    */
 
-  teid_t s1u_saegw_teid = esm_bearer_context_proc->s1u_saegw_teid;
+  teid_t s1u_saegw_teid = esm_proc_bearer_context->s1u_saegw_teid;
 
   /** Send a reject back to the MME_APP layer. */
-  nas_itti_activate_eps_bearer_ctx_rej(esm_bearer_context_proc->esm_base_proc.ue_id, s1u_saegw_teid, ESM_CAUSE_INSUFFICIENT_RESOURCES);
+  nas_itti_activate_eps_bearer_ctx_rej(esm_proc_bearer_context->esm_base_proc.ue_id, s1u_saegw_teid, ESM_CAUSE_INSUFFICIENT_RESOURCES);
 
   /*
    * Release the transactional PDN connectivity procedure.
    */
-  _esm_proc_free_bearer_context_procedure(&esm_bearer_context_proc);
+  _esm_proc_free_bearer_context_procedure(&esm_proc_bearer_context);
 
   /*
    * Release the dedicated EPS bearer context and enter state INACTIVE
    */
-  mme_app_esm_release_bearer_context(esm_bearer_context_proc->esm_base_proc.ue_id,
-      esm_bearer_context_proc->pdn_cid, esm_bearer_context_proc->bearer_ebi);
+  mme_app_esm_release_bearer_context(esm_proc_bearer_context->esm_base_proc.ue_id,
+      esm_proc_bearer_context->pdn_cid, esm_proc_bearer_context->bearer_ebi);
 
   OAILOG_FUNC_RETURN(LOG_NAS_ESM, RETURNok);
 }

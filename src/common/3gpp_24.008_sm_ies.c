@@ -1166,6 +1166,7 @@ void free_traffic_flow_template(traffic_flow_template_t ** tft)
 /**
  * We just add 1 to the identifier in the bitmaps.
  */
+#include "esm_cause.h"
 esm_cause_t
 verify_traffic_flow_template_syntactical(traffic_flow_template_t * tft, traffic_flow_template_t * tft_original)
 {
@@ -1229,7 +1230,7 @@ verify_traffic_flow_template_syntactical(traffic_flow_template_t * tft, traffic_
       tft->precedence_set[tft->packetfilterlist.addpacketfilter[num_pf].eval_precedence] = tft->packetfilterlist.addpacketfilter[num_pf].identifier + 1;
     }
     /** Successfully checked addition TFTs. */
-    return ESM_CAUSE_SUCESS;
+    return ESM_CAUSE_SUCCESS;
   }
   case TRAFFIC_FLOW_TEMPLATE_OPCODE_REPLACE_PACKET_FILTERS_IN_EXISTING_TFT: {
     if(!tft_original){

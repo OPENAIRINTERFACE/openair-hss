@@ -175,6 +175,7 @@ typedef struct itti_nas_esm_data_ind_s {
   bstring           req;
   imsi_t            imsi;
   tai_t             visited_tai;
+  bool              is_attach;
 } itti_nas_esm_data_ind_t;
 
 typedef struct itti_nas_dl_data_req_s {

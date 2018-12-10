@@ -106,24 +106,25 @@ mme_app_esm_update_bearer_context(bearer_context_t * bearer_context, bearer_qos_
    * Return the EPS bearer identity of the default EPS bearer
    * * * * associated to the new EPS bearer context
    */
-  OAILOG_FUNC_RETURN(LOG_MME_APP);
+  OAILOG_FUNC_OUT(LOG_MME_APP);
 }
 
 //------------------------------------------------------------------------------
-void mme_app_get_pdn_context (mme_ue_s1ap_id_t ue_id, pdn_cid_t const context_id, ebi_t const default_ebi, bstring const apn_subscribed, pdn_context_t **pdn_ctx)
+void mme_app_get_pdn_context (mme_ue_s1ap_id_t ue_id, pdn_cid_t const context_id, ebi_t const default_ebi, bstring const subscribed_apn, pdn_context_t **pdn_ctx)
 {
   ue_context_t * ue_context = NULL;
-  /** Checking for valid fields inside the search comparision function. */
-  pdn_context_t pdn_context_key = {.apn_subscribed = apn_subscribed, .default_ebi = default_ebi, .context_identifier = context_id};
+  /** Checking for valid fields inside the search comparison function. */
+  pdn_context_t pdn_context_key = {.apn_subscribed = subscribed_apn, .default_ebi = default_ebi, .context_identifier = context_id};
   pdn_context_t * pdn_ctx_p = RB_FIND(PdnContexts, &ue_context->pdn_contexts, &pdn_context_key);
   *pdn_ctx = pdn_ctx_p;
-  if(!pdn_ctx_p && apn_subscribed){
+  if(!pdn_ctx_p && subscribed_apn){
     /** Could not find the PDN context, search again using the APN. */
-
     RB_FOREACH (pdn_ctx_p, PdnContexts, &ue_context->pdn_contexts) {
       DevAssert(pdn_ctx_p);
-      if(!bstricmp (pdn_ctx_p->apn_subscribed, apn_subscribed))
-          *pdn_ctx = pdn_ctx_p;
+      if(subscribed_apn){
+        if(!bstricmp (pdn_ctx_p->apn_subscribed, subscribed_apn))
+            *pdn_ctx = pdn_ctx_p;
+      }
     }
   }
 }
@@ -133,7 +134,7 @@ static void mme_app_pdn_context_init(ue_context_t * const ue_context, pdn_contex
 {
   if ((pdn_context) && (ue_context)) {
     memset(pdn_context, 0, sizeof(*pdn_context));
-    pdn_context->is_active = false;
+//    pdn_context->is_active = false;
     /** Initialize the session bearers map. */
     RB_INIT(&pdn_context->session_bearers);
   }
@@ -160,10 +161,10 @@ void mme_app_get_bearer_contexts_to_be_created(pdn_context_t * pdn_context, bear
     /** EBI. */
     bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].eps_bearer_id              = bearer_context_to_setup->ebi;
     /** MBR/GBR values (setting indep. of QCI level). */
-    bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].bearer_level_qos.gbr.br_ul = bearer_context_to_setup->esm_ebr_context.gbr_ul;
-    bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].bearer_level_qos.gbr.br_dl = bearer_context_to_setup->esm_ebr_context.gbr_dl;
-    bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].bearer_level_qos.mbr.br_ul = bearer_context_to_setup->esm_ebr_context.mbr_ul;
-    bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].bearer_level_qos.mbr.br_dl = bearer_context_to_setup->esm_ebr_context.mbr_dl;
+    bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].bearer_level_qos.gbr.br_ul = bearer_context_to_setup->gbr_ul;
+    bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].bearer_level_qos.gbr.br_dl = bearer_context_to_setup->gbr_dl;
+    bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].bearer_level_qos.mbr.br_ul = bearer_context_to_setup->mbr_ul;
+    bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].bearer_level_qos.mbr.br_dl = bearer_context_to_setup->mbr_dl;
     /** QCI. */
     bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].bearer_level_qos.qci       = bearer_context_to_setup->qci;
     bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].bearer_level_qos.pvi       = bearer_context_to_setup->preemption_vulnerability;
@@ -192,7 +193,7 @@ void mme_app_get_bearer_contexts_to_be_created(pdn_context_t * pdn_context, bear
 
 //------------------------------------------------------------------------------
 int
-mme_app_esm_create_pdn_context(mme_ue_s1ap_id_t ue_id, const apn_configuration_t *apn_configuration, const bstring apn, pdn_cid_t pdn_cid, const pdn_context_t **pdn_context_pp)
+mme_app_esm_create_pdn_context(mme_ue_s1ap_id_t ue_id, const apn_configuration_t *apn_configuration, const bstring apn, pdn_cid_t pdn_cid, pdn_context_t **pdn_context_pp)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
   ue_context_t * ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, ue_id);
@@ -201,7 +202,7 @@ mme_app_esm_create_pdn_context(mme_ue_s1ap_id_t ue_id, const apn_configuration_t
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
 //  LOCK_UE_CONTEXT(ue_context);
-  (*pdn_context_pp) = calloc(1, sizeof(*pdn_context_t));
+  (*pdn_context_pp) = calloc(1, sizeof(pdn_context_t));
   if (!(*pdn_context_pp)) {
     OAILOG_CRITICAL(LOG_MME_APP, "Error creating PDN context for UE: " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
    // todo: optimal locks UNLOCK_UE_CONTEXT(ue_context);
@@ -217,6 +218,9 @@ mme_app_esm_create_pdn_context(mme_ue_s1ap_id_t ue_id, const apn_configuration_t
   bearer_context_t * bearer_context_registered = NULL;
   mme_app_register_bearer_context(ue_context, free_bearer->ebi, (*pdn_context_pp), &bearer_context_registered);
   (*pdn_context_pp)->default_ebi = bearer_context_registered->ebi;
+  ue_context->next_def_ebi_offset++;
+
+
   bearer_context_registered->linked_ebi = bearer_context_registered->ebi;
   if (apn_configuration) {
     (*pdn_context_pp)->subscribed_apn_ambr          = apn_configuration->ambr; /**< APN received from the HSS APN configuration, to be updated with the PCRF. */

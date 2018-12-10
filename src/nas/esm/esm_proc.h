@@ -42,25 +42,12 @@ Description Defines the EPS Session Management procedures executed at
 #include "networkDef.h"
 #include "common_defs.h"
 #include "common_types.h"
+#include "mme_app_esm_procedures.h"
 
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/
 /****************************************************************************/
 
-
-/* Type of PDN address */
-typedef enum {
-  ESM_PDN_TYPE_IPV4 = NET_PDN_TYPE_IPV4,
-  ESM_PDN_TYPE_IPV6 = NET_PDN_TYPE_IPV6,
-  ESM_PDN_TYPE_IPV4V6 = NET_PDN_TYPE_IPV4V6
-} esm_proc_pdn_type_t;
-
-/* Type of PDN request */
-typedef enum {
-  ESM_PDN_REQUEST_INITIAL = 1,
-  ESM_PDN_REQUEST_HANDOVER,
-  ESM_PDN_REQUEST_EMERGENCY
-} esm_proc_pdn_request_t;
 
 /****************************************************************************/
 /************************  G L O B A L    T Y P E S  ************************/
@@ -92,13 +79,14 @@ int esm_proc_status_ind(mme_ue_s1ap_id_t ue_id, const proc_tid_t pti, ebi_t ebi,
  * PDN Connectivity procedure (UE triggered - incl. initial attach).
  */
 nas_esm_proc_pdn_connectivity_t *_esm_proc_create_pdn_connectivity_procedure(mme_ue_s1ap_id_t ue_id, imsi_t *imsi, pti_t pti);
-void _esm_proc_free_pdn_connectivity_procedure(nas_esm_pdn_connectivity_proc_t ** nas_pdn_connectivity_proc);
+void _esm_proc_free_pdn_connectivity_procedure(nas_esm_proc_pdn_connectivity_t ** esm_proc_pdn_connectivity);
+void _esm_proc_get_pdn_connectivity_procedure(mme_ue_s1ap_id_t ue_id, pti_t pti);
 
 /*
  * Bearer context procedure, which may or may not be a transactional procedure (triggered by UE/congestion, or CN).
  */
-nas_esm_bearer_context_proc_t *_esm_proc_create_bearer_context_procedure(mme_ue_s1ap_id_t ue_id, imsi_t *imsi, pti_t pti, ebi_t ebi);
-void _esm_proc_free_bearer_context_procedure(nas_esm_pdn_connectivity_proc_t * nas_pdn_connectivity_proc);
+nas_esm_proc_bearer_context_t *_esm_proc_create_bearer_context_procedure(mme_ue_s1ap_id_t ue_id, imsi_t *imsi, pti_t pti, ebi_t ebi, bstring apn);
+void _esm_proc_free_bearer_context_procedure(nas_esm_proc_bearer_context_t * esm_proc_bearer_context);
 
 int
 esm_proc_pdn_connectivity_request (
@@ -111,13 +99,13 @@ esm_proc_pdn_connectivity_request (
   const esm_proc_pdn_request_t request_type,
   esm_proc_pdn_type_t          pdn_type);
 
-esm_cause_t esm_proc_pdn_connectivity_failure (mme_ue_s1ap_id_t ue_id, nas_esm_pdn_connectivity_proc_t * esm_pdn_connectivity_proc);
+esm_cause_t esm_proc_pdn_connectivity_failure (mme_ue_s1ap_id_t ue_id, nas_esm_proc_pdn_connectivity_t * esm_pdn_connectivity_proc);
 
-esm_cause_t esm_proc_pdn_config_res(mme_ue_s1ap_id_t ue_id, nas_esm_pdn_connectivity_proc_t *nas_pdn_connectivity_proc, imsi64_t imsi);
+esm_cause_t esm_proc_pdn_config_res(mme_ue_s1ap_id_t ue_id, nas_esm_proc_pdn_connectivity_t *nas_pdn_connectivity_proc, imsi64_t imsi);
 
-esm_cause_t esm_proc_pdn_config_fail(mme_ue_s1ap_id_t ue_id, nas_esm_pdn_connectivity_proc_t *esm_pdn_connectivity_proc, ESM_msg * esm_resp_msg);
+esm_cause_t esm_proc_pdn_config_fail(mme_ue_s1ap_id_t ue_id, nas_esm_proc_pdn_connectivity_t *esm_pdn_connectivity_proc, ESM_msg * esm_resp_msg);
 
-esm_cause_t esm_proc_pdn_connectivity_res (mme_ue_s1ap_id_t ue_id, ambr_t * apn_ambr, bearer_qos_t * bearer_level_qos, nas_esm_pdn_connectivity_proc_t * esm_pdn_connectivity_proc);
+esm_cause_t esm_proc_pdn_connectivity_res (mme_ue_s1ap_id_t ue_id, ambr_t * apn_ambr, bearer_qos_t * bearer_level_qos, nas_esm_proc_pdn_connectivity_t * esm_pdn_connectivity_proc);
 
 /*
  * --------------------------------------------------------------------------
@@ -130,7 +118,7 @@ esm_proc_pdn_disconnect_request (
   mme_ue_s1ap_id_t ue_id,
   proc_tid_t pti,
   pdn_cid_t  pdn_cid,
-  nas_esm_pdn_connectivity_proc_t * esm_pdn_disconnect_proc);
+  nas_esm_proc_pdn_connectivity_t * esm_pdn_disconnect_proc);
 
 esm_cause_t
 esm_proc_pdn_disconnect_accept (
@@ -145,9 +133,9 @@ esm_proc_pdn_disconnect_accept (
  * --------------------------------------------------------------------------
  */
 
-int esm_proc_esm_information_request (nas_esm_pdn_connectivity_proc_t *esm_pdn_connectivity, ESM_msg * esm_result_msg);
+int esm_proc_esm_information_request (nas_esm_proc_pdn_connectivity_t *esm_pdn_connectivity, ESM_msg * esm_result_msg);
 
-int esm_proc_esm_information_response (mme_ue_s1ap_id_t ue_id, pti_t pti, nas_esm_pdn_connectivity_proc_t * nas_pdn_connectivity_proc, esm_information_response_msg * esm_information_resp);
+int esm_proc_esm_information_response (mme_ue_s1ap_id_t ue_id, pti_t pti, nas_esm_proc_pdn_connectivity_t * nas_pdn_connectivity_proc, esm_information_response_msg * esm_information_resp);
 
 /*
  * --------------------------------------------------------------------------
@@ -156,9 +144,9 @@ int esm_proc_esm_information_response (mme_ue_s1ap_id_t ue_id, pti_t pti, nas_es
  */
 esm_cause_t esm_proc_default_eps_bearer_context (
   mme_ue_s1ap_id_t   ue_id,
-  const nas_esm_pdn_connectivity_proc_t * nas_pdn_connectivity_proc);
+  const nas_esm_proc_pdn_connectivity_t * nas_pdn_connectivity_proc);
 
-void esm_proc_default_eps_bearer_context_accept (mme_ue_s1ap_id_t ue_id, nas_esm_pdn_connectivity_proc_t* esm_pdn_connectivity_proc);
+void esm_proc_default_eps_bearer_context_accept (mme_ue_s1ap_id_t ue_id, nas_esm_proc_pdn_connectivity_t* esm_pdn_connectivity_proc);
 
 /*
  * --------------------------------------------------------------------------
@@ -182,6 +170,7 @@ int
 esm_proc_dedicated_eps_bearer_context_reject (
   mme_ue_s1ap_id_t  ue_id,
   ebi_t ebi,
+  pti_t pti,
   esm_cause_t esm_cause);
 
 /*
@@ -193,19 +182,13 @@ esm_cause_t
 esm_proc_modify_eps_bearer_context (
   mme_ue_s1ap_id_t   ue_id,
   const proc_tid_t   pti,                   // todo: will always be 0 for network initiated bearer establishment.
-  nas_esm_bearer_context_proc_t  * esm_bearer_context_proc,
-  bearer_context_to_be_updated_t * bc_tbu);
+  bearer_context_to_be_updated_t  * bc_tbu,
+  ambr_t                          * apn_ambr);
 
 int
 esm_proc_update_eps_bearer_context (
   mme_ue_s1ap_id_t ue_id,
   const bearer_context_to_be_updated_t *bc_tbu);
-
-int
-esm_proc_modify_eps_bearer_context_request(
-  mme_ue_s1ap_id_t ue_id,
-  ebi_t ebi,
-  STOLEN_REF bstring *msg);
 
 esm_cause_t
 esm_proc_modify_eps_bearer_context_accept (
@@ -217,6 +200,7 @@ esm_cause_t
 esm_proc_modify_eps_bearer_context_reject (
   mme_ue_s1ap_id_t ue_id,
   ebi_t ebi,
+  pti_t pti,
   esm_cause_t *esm_cause);
 
 /*
@@ -224,7 +208,7 @@ esm_proc_modify_eps_bearer_context_reject (
  *      EPS bearer context deactivation procedure
  * --------------------------------------------------------------------------
  */
-esm_cause_t esm_proc_eps_bearer_context_deactivate_request (mme_ue_s1ap_id_t ue_id, nas_esm_bearer_context_proc_t * esm_bearer_context_proc);
+esm_cause_t esm_proc_eps_bearer_context_deactivate_request (mme_ue_s1ap_id_t ue_id, nas_esm_proc_bearer_context_t * esm_proc_bearer_context);
 
 esm_cause_t esm_proc_eps_bearer_context_deactivate_accept(mme_ue_s1ap_id_t ue_id, ebi_t ebi, pdn_cid_t pdn_cid);
 

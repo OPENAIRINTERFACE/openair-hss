@@ -93,13 +93,13 @@ int esm_send_pdn_disconnect_reject(pti_t pti, ESM_msg *esm_rsp_msg, int esm_caus
  * ---------------------------------------
  */
 
-void _default_eps_bearer_activate_t3485_handler (nas_esm_pdn_connectivity_proc_t * esm_pdn_conn_procedure, ESM_msg * esm_resp_msg);
+void _default_eps_bearer_activate_t3485_handler (nas_esm_proc_pdn_connectivity_t * esm_pdn_conn_procedure, ESM_msg * esm_resp_msg);
 
 void
 esm_send_activate_default_eps_bearer_context_request (
   mme_ue_s1ap_id_t ue_id,
   pti_t pti,
-  nas_esm_pdn_connectivity_proc_t * esm_pdn_connectivity_proc,
+  nas_esm_proc_pdn_connectivity_t * esm_pdn_connectivity_proc,
   ESM_msg * esm_resp_msg,
   pdn_context_t * pdn_context,
   bearer_context_t * bearer_context);

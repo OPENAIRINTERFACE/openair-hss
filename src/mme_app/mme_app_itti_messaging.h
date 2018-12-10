@@ -36,7 +36,9 @@ int mme_app_notify_s1ap_ue_context_released(const mme_ue_s1ap_id_t   ue_idP);
 int mme_app_send_nas_signalling_connection_rel_ind(const mme_ue_s1ap_id_t ue_id);
 int mme_app_send_s11_release_access_bearers_req (struct ue_context_s *const ue_context);
 int mme_app_send_s11_create_session_req (  struct ue_context_s *const ue_context, const imsi_t * const imsi_p, pdn_context_t * pdn_context, tai_t * serving_tai, const bool is_from_s10_tau);
-int mme_app_send_s11_modify_bearer_req(struct ue_context_s *const ue_context, pdn_context_t * pdn_context);
+//int mme_app_send_s11_modify_bearer_req(struct ue_context_s *const ue_context, pdn_context_t * pdn_context);
+mme_app_send_s11_modify_bearer_req(const ue_context_t * ue_context, pdn_context_t * pdn_context,
+    uint8_t flags, bearer_contexts_to_be_removed_t *bcs_to_be_removed);
 int mme_app_remove_s10_tunnel_endpoint(teid_t local_teid, struct in_addr peer_ip);
 int mme_app_send_delete_session_request (struct ue_context_s * const ue_context_p, const ebi_t ebi, const struct in_addr saegw_s11_in_addr, const teid_t saegw_s11_teid, const bool noDelete); /**< Moved Delete Session Request from mme_app_detach. */
 

@@ -59,7 +59,6 @@
 #include "mme_config.h"
 
 #include "emm_data.h"
-#include "esm_ebr_context.h"
 #include "esm_proc.h"
 #include "esm_data.h"
 #include "nas_timer.h"

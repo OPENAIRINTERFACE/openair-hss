@@ -166,8 +166,8 @@ typedef struct bearer_context_s {
    * Two bearer states, one mme_app_bearer_state (towards SAE-GW) and one towards eNodeB (if activated in RAN).
    * todo: setting one, based on the other is possible?
    */
-  mme_app_bearer_state_t            bearer_state;   /**< Need bearer state to establish them. */
-  esm_ebr_context_t                 esm_ebr_context;
+  mme_app_bearer_state_t            bearer_state;     /**< Need bearer state to establish them. */
+  esm_ebr_context_t                 esm_ebr_context;  /**< Contains the bearer level QoS parameters. */
   fteid_t                           enb_fteid_s1u;
 
   /* QoS for this bearer */
@@ -481,6 +481,10 @@ typedef struct ue_context_s {
 
   // todo: (2) timers necessary for handover?
   struct mme_app_timer_t       s1ap_handover_req_timer;
+
+  // todo: remove laters
+  ebi_t                        next_def_ebi_offset;
+
 } ue_context_t;
 
 

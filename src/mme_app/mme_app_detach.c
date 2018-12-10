@@ -57,7 +57,7 @@ mme_app_handle_detach_req (
   /*
    * Reset the flags of the UE.
    */
-   ue_context->subscription_known = SUBSCRIPTION_UNKNOWN;
+//   ue_context->subscription_known = SUBSCRIPTION_UNKNOWN;
 
    /** We will remove the mme_app handover procedures. */
 

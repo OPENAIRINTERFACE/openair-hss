@@ -1292,7 +1292,8 @@ mme_app_handle_modify_bearer_resp (
       if(first_bearer->bearer_state & BEARER_STATE_ENB_CREATED){
         /** Found a PDN. Establish the bearer contexts. */
         OAILOG_INFO(LOG_MME_APP, "Establishing the bearers for UE_CONTEXT for UE " MME_UE_S1AP_ID_FMT " triggered by handover notify (not active but ENB Created). \n", ue_context->mme_ue_s1ap_id);
-        mme_app_send_s11_modify_bearer_req(ue_context, pdn_context);
+        // todo: add flags and bearer contexts to be removed
+        mme_app_send_s11_modify_bearer_req(ue_context, pdn_context, 0, NULL);
         OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
       }
     }
@@ -1327,7 +1328,6 @@ mme_app_handle_modify_bearer_resp (
      }
      mme_app_send_s1ap_path_switch_request_acknowledge(ue_context->mme_ue_s1ap_id, encryption_algorithm_capabilities, integrity_algorithm_capabilities, &bcs_tbs);
      /** Reset the flag. */
-     ue_context->pending_x2_handover = false;
      OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
    }
   OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
@@ -1517,7 +1517,8 @@ mme_app_handle_initial_context_setup_rsp (
   /** Setting as ACTIVE when MBResp received from SAE-GW. */
   if(ue_context->mm_state == UE_REGISTERED && registered_pdn_ctx){
     /** Send Modify Bearer Request for the APN. */
-    mme_app_send_s11_modify_bearer_req(ue_context, registered_pdn_ctx);
+    // todo: add flags and bearer contexts to be removed
+    mme_app_send_s11_modify_bearer_req(ue_context, registered_pdn_ctx, 0, NULL);
     OAILOG_FUNC_OUT (LOG_MME_APP);
     // todo: check Modify bearer request
   }else{
@@ -2078,7 +2079,8 @@ static void mme_app_handle_e_rab_setup_rsp_pdn_connectivity(const mme_ue_s1ap_id
   /** Check if an S11 Dedicated Bearer procedure exists. If not, send an MBR (assume single bearer). */
   if(pdn_context){
     OAILOG_DEBUG (LOG_MME_APP, "Triggering MBReq for UE: " MME_UE_S1AP_ID_FMT " for PDN with ctxId %d and default ebi %d. \n", ue_context->mme_ue_s1ap_id, pdn_cid, def_ebi);
-    mme_app_send_s11_modify_bearer_req(ue_context, pdn_context);
+    // todo: add flags and bc's to be removed
+    mme_app_send_s11_modify_bearer_req(ue_context, pdn_context, 0, NULL);
   }else{
     OAILOG_ERROR(LOG_MME_APP, "Cannot trigger MBReq for UE: " MME_UE_S1AP_ID_FMT ". No PDN with ctxId %d and default ebi %d was found. \n", ue_context->mme_ue_s1ap_id, pdn_cid, def_ebi);
   }
@@ -2774,7 +2776,11 @@ mme_app_handle_path_switch_req(
   }
   /** Updated the bearers, send an S11 Modify Bearer Request on the updated bearers. */
   OAILOG_INFO(LOG_MME_APP, "Sending MBR due to Patch Switch Request for UE " MME_UE_S1AP_ID_FMT " . \n", ue_context->mme_ue_s1ap_id);
-  mme_app_send_s11_modify_bearer_req(s1ap_path_switch_req->mme_ue_s1ap_id);
+
+  // todo: fix
+  pdn_context_t * first_pdn = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
+  // todo: enter bearer contexts to be removed
+  mme_app_send_s11_modify_bearer_req(ue_context, first_pdn, 0, NULL);
   /** Check for any bearers removed, inform the ESM layer. */
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
@@ -3503,7 +3509,8 @@ void mme_app_send_s1ap_handover_request(mme_ue_s1ap_id_t mme_ue_s1ap_id,
  * No timer to be started.
  */
 static
-void mme_app_send_s1ap_handover_command(mme_ue_s1ap_id_t mme_ue_s1ap_id, enb_ue_s1ap_id_t enb_ue_s1ap_id, uint32_t enb_id, bearer_contexts_to_be_created_t * bcs_tbc, bstring target_to_source_cont){
+void mme_app_send_s1ap_handover_command(mme_ue_s1ap_id_t mme_ue_s1ap_id, enb_ue_s1ap_id_t enb_ue_s1ap_id, uint32_t enb_id,
+    bearer_contexts_to_be_created_t * bcs_tbc, bstring target_to_source_cont){
   MessageDef * message_p = NULL;
 
   OAILOG_FUNC_IN (LOG_MME_APP);
@@ -3829,10 +3836,21 @@ mme_app_handle_handover_request_acknowledge(
     * Save the new ENB_UE_S1AP_ID
     * Don't update the coll_keys with the new enb_ue_s1ap_id.
     */
+//   bearer_contexts_to_be_created_t bcs_tbf;
+//    memset((void*)&bcs_tbf, 0, sizeof(bcs_tbf));
+//    pdn_context_t * registered_pdn_ctx = NULL;
+//    RB_FOREACH (registered_pdn_ctx, PdnContexts, &ue_context->pdn_contexts) {
+//      DevAssert(registered_pdn_ctx);
+//      mme_app_get_bearer_contexts_to_be_created(registered_pdn_ctx, &bcs_tbf, BEARER_STATE_NULL);
+//      /** The number of bearers will be incremented in the method. S10 should just pick the ebi. */
+//    }
+
+
+
    mme_app_send_s1ap_handover_command(handover_request_acknowledge_pP->mme_ue_s1ap_id,
        ue_context->enb_ue_s1ap_id,
        s10_handover_proc->source_ecgi.cell_identity.enb_id,
-       &bcs_tbf,
+       NULL,
        handover_request_acknowledge_pP->target_to_source_eutran_container);
    s10_handover_proc->ho_command_sent = true;
    /** Unlink the transparent container. */

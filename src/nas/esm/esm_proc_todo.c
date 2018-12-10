@@ -156,42 +156,6 @@
 //    rc = _esm_sap_recv (ACTIVATE_DEFAULT_EPS_BEARER_CONTEXT_ACCEPT, msg->ctx, msg->recv, msg->send, &msg->err);
 //    break;
 //
-//  case ESM_EPS_BEARER_CONTEXT_MODIFY_REQ: {
-//     esm_eps_modify_eps_bearer_ctx_req_t* bearer_modify = &msg->data.eps_bearer_context_modify;
-//     /** Handle each bearer context separately. */
-//     bearer_contexts_to_be_updated_t * bcs_tbu = (bearer_contexts_to_be_updated_t*)bearer_modify->bcs_to_be_updated_ptr;
-//     for(int num_bc = 0; num_bc < bcs_tbu->num_bearer_context; num_bc++){
-//       rc = esm_proc_modify_eps_bearer_context (msg->ctx,     /**< Just setting the state as MODIFY_PENDING. */
-//           bearer_modify->pti,
-//           &bcs_tbu->bearer_contexts[num_bc],
-//           &esm_cause);
-//       if (rc != RETURNok) {   /**< We assume that no ESM procedure exists. */
-//         OAILOG_ERROR (LOG_NAS_ESM, "ESM-SAP   - Failed to handle CN modify bearer context procedure due SYSTEM_FAILURE for num_bearer %d!\n", num_bc);
-//         /** Send a NAS ITTI directly for the specific bearer. This will reduce the number of bearers to be processed. */
-//         nas_itti_modify_eps_bearer_ctx_rej(msg->ue_id, bcs_tbu->bearer_contexts[num_bc].eps_bearer_id, esm_cause); /**< Assuming, no other CN bearer procedure will intervere. */
-//         continue; /**< The remaining must also be rejected, such that the procedure has no pending elements anymore. */
-//       }
-//       OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Successfully modified bearer context with ebi %d for ue " MME_UE_S1AP_ID_FMT "!\n",
-//           bcs_tbu->bearer_contexts[num_bc].eps_bearer_id, ue_context->mme_ue_s1ap_id);
-//       /* Send Modify Bearer Context Request */
-//       rc = _esm_sap_send(MODIFY_EPS_BEARER_CONTEXT_REQUEST, msg->ctx, (proc_tid_t)bearer_modify->pti, bcs_tbu->bearer_contexts[num_bc].eps_bearer_id,
-//           &msg->data, &msg->send);
-//       /** Check the resulting error code. */
-//       if(rc == RETURNerror){
-//         OAILOG_ERROR (LOG_NAS_ESM, "ESM-SAP   - Could not trigger allocation of dedicated bearer context with ebi %d for ue " MME_UE_S1AP_ID_FMT "!\n",
-//             bcs_tbu->bearer_contexts[num_bc].eps_bearer_id, ue_context->mme_ue_s1ap_id);
-//         /** Removed the created EPS bearer context. */
-//         rc = esm_proc_modify_eps_bearer_context_reject(msg->ctx, bcs_tbu->bearer_contexts[num_bc].eps_bearer_id,
-//             &esm_cause, false);
-//         /** Inform the MME APP. */
-//         nas_itti_modify_eps_bearer_ctx_rej(msg->ue_id, bcs_tbu->bearer_contexts[num_bc].eps_bearer_id, esm_cause); /**< Assuming, no other CN bearer procedure will intervere. */
-//       }else{
-//         OAILOG_INFO(LOG_NAS_ESM, "ESM-SAP   - Successfully completed triggering the allocation of dedicated bearer context with ebi %d for ue " MME_UE_S1AP_ID_FMT "!\n",
-//             bcs_tbu->bearer_contexts[num_bc].eps_bearer_id, ue_context->mme_ue_s1ap_id);
-//       }
-//     }
-//   }
-//   break;
 //
 //  case ESM_DEDICATED_EPS_BEARER_CONTEXT_DEACTIVATE_REQ:{
 //    esm_eps_deactivate_eps_bearer_ctx_req_t* bearer_deactivate = &msg->data.eps_dedicated_bearer_context_deactivate;
@@ -218,33 +182,6 @@
 //    }
 //  }
 //  break;
-//
-//  case ESM_EPS_UPDATE_ESM_BEARER_CTXS_REQ: {
-//    /** Check that the bearers are active, and update the tft, qos, and apn-ambr values. */
-//    // todo: apn ambr to ue ambr calculation !
-//    esm_eps_update_esm_bearer_ctxs_req_t* update_esm_bearer_ctxs = &msg->data.eps_update_esm_bearer_ctxs;
-//    esm_cause_t esm_cause;
-//    /** Update the bearer level QoS TFT values. */
-//    for(int num_bc = 0; num_bc < msg->data.eps_update_esm_bearer_ctxs.bcs_to_be_updated->num_bearer_context; num_bc++){
-//      rc = esm_proc_update_eps_bearer_context(msg->ctx, &msg->data.eps_update_esm_bearer_ctxs.bcs_to_be_updated->bearer_contexts[num_bc]);
-//      if(rc != RETURNerror){
-//        /* Successfully updated the bearer context. */
-//        OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Successfully updated ebi %d to final values via UBR for UE " MME_UE_S1AP_ID_FMT ". \n",
-//            msg->data.eps_update_esm_bearer_ctxs.bcs_to_be_updated->bearer_contexts[num_bc].eps_bearer_id, ue_context->mme_ue_s1ap_id);
-//      }else{
-//        OAILOG_ERROR (LOG_NAS_ESM, "ESM-SAP   - Error while updating ebi %d to final values via UBR for UE " MME_UE_S1AP_ID_FMT ". \n",
-//            msg->data.eps_update_esm_bearer_ctxs.bcs_to_be_updated->bearer_contexts[num_bc].eps_bearer_id, ue_context->mme_ue_s1ap_id);
-//        /**
-//         * Bearer may stay with old parameters and in active state.
-//         * We assume that the bearer got removed due some concurrency  issues.
-//         * We continue to handle the remaining bearers.
-//         */
-//      }
-//    }
-//  }
-//  break;
-//
-
 
 
 /// PDN DISCONNECT

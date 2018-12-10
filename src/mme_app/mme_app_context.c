@@ -1112,17 +1112,17 @@ void mme_app_dump_bearer_context (const bearer_context_t * const bc, uint8_t ind
   bformata (bstr_dump, "%*s - Priority level ..: %u\n", indent_spaces, " ", bc->priority_level);
   bformata (bstr_dump, "%*s - Pre-emp vul .....: %s\n", indent_spaces, " ", (bc->preemption_vulnerability == PRE_EMPTION_VULNERABILITY_ENABLED) ? "ENABLED" : "DISABLED");
   bformata (bstr_dump, "%*s - Pre-emp cap .....: %s\n", indent_spaces, " ", (bc->preemption_capability == PRE_EMPTION_CAPABILITY_ENABLED) ? "ENABLED" : "DISABLED");
-  bformata (bstr_dump, "%*s - GBR UL ..........: %010" PRIu64 "\n", indent_spaces, " ", bc->esm_ebr_context.gbr_ul);
-  bformata (bstr_dump, "%*s - GBR DL ..........: %010" PRIu64 "\n", indent_spaces, " ", bc->esm_ebr_context.gbr_dl);
-  bformata (bstr_dump, "%*s - MBR UL ..........: %010" PRIu64 "\n", indent_spaces, " ", bc->esm_ebr_context.mbr_ul);
-  bformata (bstr_dump, "%*s - MBR DL ..........: %010" PRIu64 "\n", indent_spaces, " ", bc->esm_ebr_context.mbr_dl);
+  bformata (bstr_dump, "%*s - GBR UL ..........: %010" PRIu64 "\n", indent_spaces, " ", bc->gbr_ul);
+  bformata (bstr_dump, "%*s - GBR DL ..........: %010" PRIu64 "\n", indent_spaces, " ", bc->gbr_dl);
+  bformata (bstr_dump, "%*s - MBR UL ..........: %010" PRIu64 "\n", indent_spaces, " ", bc->mbr_ul);
+  bformata (bstr_dump, "%*s - MBR DL ..........: %010" PRIu64 "\n", indent_spaces, " ", bc->mbr_dl);
   bstring bstate = bearer_state2string(bc->bearer_state);
   bformata (bstr_dump, "%*s - State ...........: %s\n", indent_spaces, " ", bdata(bstate));
   bdestroy_wrapper(&bstate);
   bformata (bstr_dump, "%*s - "ANSI_COLOR_BOLD_ON"NAS ESM bearer private data .:\n", indent_spaces, " ");
   bformata (bstr_dump, "%*s -     ESM State .......: %s\n", indent_spaces, " ", esm_ebr_state2string(bc->esm_ebr_context.status));
-  bformata (bstr_dump, "%*s -     Timer id ........: %lx\n", indent_spaces, " ", bc->esm_ebr_context.timer.id);
-  bformata (bstr_dump, "%*s -     Timer TO(seconds): %ld\n", indent_spaces, " ", bc->esm_ebr_context.timer.sec);
+//  bformata (bstr_dump, "%*s -     Timer id ........: %lx\n", indent_spaces, " ", bc->esm_ebr_context.timer.id);
+//  bformata (bstr_dump, "%*s -     Timer TO(seconds): %ld\n", indent_spaces, " ", bc->esm_ebr_context.timer.sec);
 //  bformata (bstr_dump, "%*s -     Timer arg .......: %p\n", indent_spaces, " ", bc->esm_ebr_context.timer.args);
 //  if (bc->esm_ebr_context.args) {
 //    bformata (bstr_dump, "%*s -     Ctx ...........: %p\n", indent_spaces, " ", bc->esm_ebr_context.args->ctx);
@@ -1189,11 +1189,11 @@ void mme_app_dump_pdn_context (const struct ue_context_s *const ue_context,
     bformata (bstr_dump, "%*s     - APN-AMBR (bits/s) UL .....: %010" PRIu64 "\n", indent_spaces, " ", pdn_context->subscribed_apn_ambr.br_ul);
     bformata (bstr_dump, "%*s     - Default EBI ..............: %u\n", indent_spaces, " ", pdn_context->default_ebi);
     bformata (bstr_dump, "%*s - NAS ESM private data:\n");
-    bformata (bstr_dump, "%*s     - Procedure transaction ID .: %x\n", indent_spaces, " ", pdn_context->esm_data.pti);
-    bformata (bstr_dump, "%*s     -  Is emergency .............: %s\n", indent_spaces, " ", (pdn_context->esm_data.is_emergency) ? "yes":"no");
-    bformata (bstr_dump, "%*s     -  APN AMBR .................: %u\n", indent_spaces, " ", pdn_context->esm_data.ambr);
-    bformata (bstr_dump, "%*s     -  Addr realloc allowed......: %s\n", indent_spaces, " ", (pdn_context->esm_data.addr_realloc) ? "yes":"no");
-    bformata (bstr_dump, "%*s     -  Num allocated EPS bearers.: %d\n", indent_spaces, " ", pdn_context->esm_data.n_bearers);
+//    bformata (bstr_dump, "%*s     - Procedure transaction ID .: %x\n", indent_spaces, " ", pdn_context->pti);
+//    bformata (bstr_dump, "%*s     -  Is emergency .............: %s\n", indent_spaces, " ", (pdn_context->esm_data.is_emergency) ? "yes":"no");
+//    bformata (bstr_dump, "%*s     -  APN AMBR .................: %u\n", indent_spaces, " ", pdn_context->esm_data.ambr);
+//    bformata (bstr_dump, "%*s     -  Addr realloc allowed......: %s\n", indent_spaces, " ", (pdn_context->esm_data.addr_realloc) ? "yes":"no");
+//    bformata (bstr_dump, "%*s     -  Num allocated EPS bearers.: %d\n", indent_spaces, " ", pdn_context->esm_data.n_bearers);
     bformata (bstr_dump, "%*s - Bearer List:\n");
 
     /** Set all bearers of the EBI to valid. */
@@ -1241,80 +1241,81 @@ mme_app_dump_ue_context (
     /*
      * Display UE info only if we know them
      */
-    if (SUBSCRIPTION_KNOWN == ue_context->subscription_known) {
-      // TODO bformata (bstr_dump, "    - Status .........: %s\n", (ue_context->sub_status == SS_SERVICE_GRANTED) ? "Granted" : "Barred");
-#define DISPLAY_BIT_MASK_PRESENT(mASK)   \
-    ((ue_context->access_restriction_data & mASK) ? 'X' : 'O')
-      bformata (bstr_dump, "    (O = allowed, X = !O) |UTRAN|GERAN|GAN|HSDPA EVO|E_UTRAN|HO TO NO 3GPP|\n");
-      bformata (bstr_dump, "    - Access restriction  |  %c  |  %c  | %c |    %c    |   %c   |      %c      |\n",
-          DISPLAY_BIT_MASK_PRESENT (ARD_UTRAN_NOT_ALLOWED),
-          DISPLAY_BIT_MASK_PRESENT (ARD_GERAN_NOT_ALLOWED),
-          DISPLAY_BIT_MASK_PRESENT (ARD_GAN_NOT_ALLOWED), DISPLAY_BIT_MASK_PRESENT (ARD_I_HSDPA_EVO_NOT_ALLOWED), DISPLAY_BIT_MASK_PRESENT (ARD_E_UTRAN_NOT_ALLOWED), DISPLAY_BIT_MASK_PRESENT (ARD_HO_TO_NON_3GPP_NOT_ALLOWED));
-      // TODO bformata (bstr_dump, "    - Access Mode ....: %s\n", ACCESS_MODE_TO_STRING (ue_context->access_mode));
-      // TODO MSISDN
-      //bformata (bstr_dump, "    - MSISDN .........: %s\n", (ue_context->msisdn) ? ue_context->msisdn->data:"None");
-      bformata (bstr_dump, "    - RAU/TAU timer ..: %u\n", ue_context->rau_tau_timer);
-      // TODO IMEISV
-      //if (IS_EMM_CTXT_PRESENT_IMEISV(&ue_context->nas_emm_context)) {
-      //  bformata (bstr_dump, "    - IMEISV .........: %*s\n", IMEISV_DIGITS_MAX, ue_context->nas_emm_context._imeisv);
-      //}
-      bformata (bstr_dump, "    - AMBR (bits/s)     ( Downlink |  Uplink  )\n");
-      // TODO bformata (bstr_dump, "        Subscribed ...: (%010" PRIu64 "|%010" PRIu64 ")\n", ue_context->subscribed_ambr.br_dl, ue_context->subscribed_ambr.br_ul);
-      bformata (bstr_dump, "        Allocated ....: (%010" PRIu64 "|%010" PRIu64 ")\n", ue_context->subscribed_ue_ambr.br_dl, ue_context->subscribed_ue_ambr.br_ul);
-
-      bformata (bstr_dump, "    - APN config list:\n");
-
-      for (j = 0; j < ue_context->apn_config_profile.nb_apns; j++) {
-        struct apn_configuration_s             *apn_config_p;
-
-        apn_config_p = &ue_context->apn_config_profile.apn_configuration[j];
-        /*
-         * Default APN ?
-         */
-        bformata (bstr_dump, "        - Default APN ...: %s\n", (apn_config_p->context_identifier == ue_context->apn_config_profile.context_identifier)
-                     ? "TRUE" : "FALSE");
-        bformata (bstr_dump, "        - APN ...........: %s\n", apn_config_p->service_selection);
-        bformata (bstr_dump, "        - AMBR (bits/s) ( Downlink |  Uplink  )\n");
-        bformata (bstr_dump, "                        (%010" PRIu64 "|%010" PRIu64 ")\n", apn_config_p->ambr.br_dl, apn_config_p->ambr.br_ul);
-        bformata (bstr_dump, "        - PDN type ......: %s\n", PDN_TYPE_TO_STRING (apn_config_p->pdn_type));
-        bformata (bstr_dump, "        - QOS\n");
-        bformata (bstr_dump, "            QCI .........: %u\n", apn_config_p->subscribed_qos.qci);
-        bformata (bstr_dump, "            Prio level ..: %u\n", apn_config_p->subscribed_qos.allocation_retention_priority.priority_level);
-        bformata (bstr_dump, "            Pre-emp vul .: %s\n", (apn_config_p->subscribed_qos.allocation_retention_priority.pre_emp_vulnerability == PRE_EMPTION_VULNERABILITY_ENABLED) ? "ENABLED" : "DISABLED");
-        bformata (bstr_dump, "            Pre-emp cap .: %s\n", (apn_config_p->subscribed_qos.allocation_retention_priority.pre_emp_capability == PRE_EMPTION_CAPABILITY_ENABLED) ? "ENABLED" : "DISABLED");
-
-        if (apn_config_p->nb_ip_address == 0) {
-          bformata (bstr_dump, "            IP addr .....: Dynamic allocation\n");
-        } else {
-          int                                     i;
-
-          bformata (bstr_dump, "            IP addresses :\n");
-
-          for (i = 0; i < apn_config_p->nb_ip_address; i++) {
-            if (apn_config_p->ip_address[i].pdn_type == IPv4) {
-              char ipv4[INET_ADDRSTRLEN];
-              inet_ntop (AF_INET, (void*)&apn_config_p->ip_address[i].address.ipv4_address, ipv4, INET_ADDRSTRLEN);
-              bformata (bstr_dump, "                           [%s]\n", ipv4);
-            } else {
-              char                                    ipv6[INET6_ADDRSTRLEN];
-              inet_ntop (AF_INET6, &apn_config_p->ip_address[i].address.ipv6_address, ipv6, INET6_ADDRSTRLEN);
-              bformata (bstr_dump, "                           [%s]\n", ipv6);
-            }
-          }
-        }
-        bformata (bstr_dump, "\n");
-      }
-      bformata (bstr_dump, "    - PDNs:\n");
-
-      /** No matter if it is a INTRA or INTER MME handover, continue with the MBR for other PDNs. */
-      pdn_context_t * pdn_context_to_dump = NULL;
-      RB_FOREACH (pdn_context_to_dump, PdnContexts, &ue_context->pdn_contexts) {
-        AssertFatal(pdn_context_to_dump, "Mismatch in configuration bearer context NULL\n");
-        mme_app_dump_pdn_context(ue_context, pdn_context_to_dump, pdn_context_to_dump->context_identifier, 8, bstr_dump);
-      }
-
-
-    }
+    // todo: subscription-known
+//    if (SUBSCRIPTION_KNOWN == ue_context->subscription_known) {
+//      // TODO bformata (bstr_dump, "    - Status .........: %s\n", (ue_context->sub_status == SS_SERVICE_GRANTED) ? "Granted" : "Barred");
+//#define DISPLAY_BIT_MASK_PRESENT(mASK)   \
+//    ((ue_context->access_restriction_data & mASK) ? 'X' : 'O')
+//      bformata (bstr_dump, "    (O = allowed, X = !O) |UTRAN|GERAN|GAN|HSDPA EVO|E_UTRAN|HO TO NO 3GPP|\n");
+//      bformata (bstr_dump, "    - Access restriction  |  %c  |  %c  | %c |    %c    |   %c   |      %c      |\n",
+//          DISPLAY_BIT_MASK_PRESENT (ARD_UTRAN_NOT_ALLOWED),
+//          DISPLAY_BIT_MASK_PRESENT (ARD_GERAN_NOT_ALLOWED),
+//          DISPLAY_BIT_MASK_PRESENT (ARD_GAN_NOT_ALLOWED), DISPLAY_BIT_MASK_PRESENT (ARD_I_HSDPA_EVO_NOT_ALLOWED), DISPLAY_BIT_MASK_PRESENT (ARD_E_UTRAN_NOT_ALLOWED), DISPLAY_BIT_MASK_PRESENT (ARD_HO_TO_NON_3GPP_NOT_ALLOWED));
+//      // TODO bformata (bstr_dump, "    - Access Mode ....: %s\n", ACCESS_MODE_TO_STRING (ue_context->access_mode));
+//      // TODO MSISDN
+//      //bformata (bstr_dump, "    - MSISDN .........: %s\n", (ue_context->msisdn) ? ue_context->msisdn->data:"None");
+//      bformata (bstr_dump, "    - RAU/TAU timer ..: %u\n", ue_context->rau_tau_timer);
+//      // TODO IMEISV
+//      //if (IS_EMM_CTXT_PRESENT_IMEISV(&ue_context->nas_emm_context)) {
+//      //  bformata (bstr_dump, "    - IMEISV .........: %*s\n", IMEISV_DIGITS_MAX, ue_context->nas_emm_context._imeisv);
+//      //}
+//      bformata (bstr_dump, "    - AMBR (bits/s)     ( Downlink |  Uplink  )\n");
+//      // TODO bformata (bstr_dump, "        Subscribed ...: (%010" PRIu64 "|%010" PRIu64 ")\n", ue_context->subscribed_ambr.br_dl, ue_context->subscribed_ambr.br_ul);
+//      bformata (bstr_dump, "        Allocated ....: (%010" PRIu64 "|%010" PRIu64 ")\n", ue_context->subscribed_ue_ambr.br_dl, ue_context->subscribed_ue_ambr.br_ul);
+//
+//      bformata (bstr_dump, "    - APN config list:\n");
+//
+//      for (j = 0; j < ue_context->apn_config_profile.nb_apns; j++) {
+//        struct apn_configuration_s             *apn_config_p;
+//
+//        apn_config_p = &ue_context->apn_config_profile.apn_configuration[j];
+//        /*
+//         * Default APN ?
+//         */
+//        bformata (bstr_dump, "        - Default APN ...: %s\n", (apn_config_p->context_identifier == ue_context->apn_config_profile.context_identifier)
+//                     ? "TRUE" : "FALSE");
+//        bformata (bstr_dump, "        - APN ...........: %s\n", apn_config_p->service_selection);
+//        bformata (bstr_dump, "        - AMBR (bits/s) ( Downlink |  Uplink  )\n");
+//        bformata (bstr_dump, "                        (%010" PRIu64 "|%010" PRIu64 ")\n", apn_config_p->ambr.br_dl, apn_config_p->ambr.br_ul);
+//        bformata (bstr_dump, "        - PDN type ......: %s\n", PDN_TYPE_TO_STRING (apn_config_p->pdn_type));
+//        bformata (bstr_dump, "        - QOS\n");
+//        bformata (bstr_dump, "            QCI .........: %u\n", apn_config_p->subscribed_qos.qci);
+//        bformata (bstr_dump, "            Prio level ..: %u\n", apn_config_p->subscribed_qos.allocation_retention_priority.priority_level);
+//        bformata (bstr_dump, "            Pre-emp vul .: %s\n", (apn_config_p->subscribed_qos.allocation_retention_priority.pre_emp_vulnerability == PRE_EMPTION_VULNERABILITY_ENABLED) ? "ENABLED" : "DISABLED");
+//        bformata (bstr_dump, "            Pre-emp cap .: %s\n", (apn_config_p->subscribed_qos.allocation_retention_priority.pre_emp_capability == PRE_EMPTION_CAPABILITY_ENABLED) ? "ENABLED" : "DISABLED");
+//
+//        if (apn_config_p->nb_ip_address == 0) {
+//          bformata (bstr_dump, "            IP addr .....: Dynamic allocation\n");
+//        } else {
+//          int                                     i;
+//
+//          bformata (bstr_dump, "            IP addresses :\n");
+//
+//          for (i = 0; i < apn_config_p->nb_ip_address; i++) {
+//            if (apn_config_p->ip_address[i].pdn_type == IPv4) {
+//              char ipv4[INET_ADDRSTRLEN];
+//              inet_ntop (AF_INET, (void*)&apn_config_p->ip_address[i].address.ipv4_address, ipv4, INET_ADDRSTRLEN);
+//              bformata (bstr_dump, "                           [%s]\n", ipv4);
+//            } else {
+//              char                                    ipv6[INET6_ADDRSTRLEN];
+//              inet_ntop (AF_INET6, &apn_config_p->ip_address[i].address.ipv6_address, ipv6, INET6_ADDRSTRLEN);
+//              bformata (bstr_dump, "                           [%s]\n", ipv6);
+//            }
+//          }
+//        }
+//        bformata (bstr_dump, "\n");
+//      }
+//      bformata (bstr_dump, "    - PDNs:\n");
+//
+//      /** No matter if it is a INTRA or INTER MME handover, continue with the MBR for other PDNs. */
+//      pdn_context_t * pdn_context_to_dump = NULL;
+//      RB_FOREACH (pdn_context_to_dump, PdnContexts, &ue_context->pdn_contexts) {
+//        AssertFatal(pdn_context_to_dump, "Mismatch in configuration bearer context NULL\n");
+//        mme_app_dump_pdn_context(ue_context, pdn_context_to_dump, pdn_context_to_dump->context_identifier, 8, bstr_dump);
+//      }
+//
+//
+//    }
     bcatcstr (bstr_dump, "---------------------------------------------------------\n");
     OAILOG_DEBUG(LOG_MME_APP, "%s\n", bdata(bstr_dump));
     bdestroy_wrapper(&bstr_dump);
@@ -2786,10 +2787,10 @@ void mme_app_set_pdn_connections(struct mme_ue_eps_pdn_connections_s * pdn_conne
        * Also set the MBR/GBR values for each bearer, the target side, then should send MBR/GBR as 0 for non-GBR bearers.
        */
       // todo: divide by 1000?
-      bearer_list->bearer_contexts[num_bearer].bearer_level_qos.gbr.br_ul = bearer_context_to_forward->esm_ebr_context.gbr_ul;
-      bearer_list->bearer_contexts[num_bearer].bearer_level_qos.gbr.br_dl = bearer_context_to_forward->esm_ebr_context.gbr_dl;
-      bearer_list->bearer_contexts[num_bearer].bearer_level_qos.mbr.br_ul = bearer_context_to_forward->esm_ebr_context.mbr_ul;
-      bearer_list->bearer_contexts[num_bearer].bearer_level_qos.mbr.br_dl = bearer_context_to_forward->esm_ebr_context.mbr_dl;
+      bearer_list->bearer_contexts[num_bearer].bearer_level_qos.gbr.br_ul = bearer_context_to_forward->gbr_ul;
+      bearer_list->bearer_contexts[num_bearer].bearer_level_qos.gbr.br_dl = bearer_context_to_forward->gbr_dl;
+      bearer_list->bearer_contexts[num_bearer].bearer_level_qos.mbr.br_ul = bearer_context_to_forward->mbr_ul;
+      bearer_list->bearer_contexts[num_bearer].bearer_level_qos.mbr.br_dl = bearer_context_to_forward->mbr_dl;
       bearer_list->bearer_contexts[num_bearer].bearer_level_qos.qci       = bearer_context_to_forward->qci;
       bearer_list->bearer_contexts[num_bearer].bearer_level_qos.pvi       = bearer_context_to_forward->preemption_vulnerability;
       bearer_list->bearer_contexts[num_bearer].bearer_level_qos.pci       = bearer_context_to_forward->preemption_capability;
@@ -2882,7 +2883,8 @@ int mme_app_mobility_complete(const mme_ue_s1ap_id_t mme_ue_s1ap_id, bool activa
      * Use the MBR procedure to activate the bearers.
      * MBReq will be sent for only those bearers which are not in ACTIVE state yet.
      */
-    rc = mme_app_send_s11_modify_bearer_req(ue_context);
+    pdn_context_t * first_pdn = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
+    rc = mme_app_send_s11_modify_bearer_req(ue_context, first_pdn, 0, NULL);
   }
   OAILOG_INFO(LOG_MME_APP, "Completed registration of UE " MME_UE_S1AP_ID_FMT ". \n", mme_ue_s1ap_id);
   OAILOG_FUNC_RETURN(LOG_MME_APP, rc);

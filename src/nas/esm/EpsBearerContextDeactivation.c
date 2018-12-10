@@ -68,7 +68,6 @@
 #include "emm_data.h"
 #include "emm_sap.h"
 #include "esm_ebr.h"
-#include "esm_ebr_context.h"
 #include "esm_proc.h"
 #include "esm_cause.h"
 #include "esm_sap.h"
@@ -204,7 +203,7 @@ esm_send_deactivate_eps_bearer_context_request (
 esm_cause_t
 esm_proc_eps_bearer_context_deactivate_request (
   mme_ue_s1ap_id_t ue_id,
-  nas_esm_bearer_context_proc_t * esm_bearer_context_proc)
+  nas_esm_proc_bearer_context_t * esm_bearer_context_proc)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
 
@@ -315,11 +314,11 @@ esm_proc_eps_bearer_context_deactivate_accept (
  ***************************************************************************/
 static void _eps_bearer_deactivate_t3492_handler (nas_esm_proc_t * esm_proc, ESM_msg * esm_rsp_msg)
 {
-
   OAILOG_FUNC_IN(LOG_NAS_ESM);
+  int rc                    = RETURNok;
 
-  OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - T3492 timer expired (ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d), " "retransmission counter = %d\n",
-       esm_pdn_disconnect_proc->trx_base_proc.esm_proc.ue_id, esm_pdn_disconnect_proc->default_ebi, esm_pdn_disconnect_proc->trx_base_proc.retx_count);
+//  OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - T3492 timer expired (ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d), " "retransmission counter = %d\n",
+//       esm_pdn_disconnect_proc->es.esm_proc.ue_id, esm_pdn_disconnect_proc->default_ebi, esm_pdn_disconnect_proc->trx_base_proc.retx_count);
 
 
   esm_proc->retx_count += 1;
@@ -328,18 +327,18 @@ static void _eps_bearer_deactivate_t3492_handler (nas_esm_proc_t * esm_proc, ESM
      * Create a new ESM-Information request and restart the timer.
      * Keep the ESM transaction.
      */
-    nas_esm_bearer_context_proc_t esm_bearer_context_proc = (nas_esm_bearer_context_proc_t*)esm_proc;
-    rc = esm_proc_eps_bearer_context_deactivate_request (esm_proc->ue_id, (nas_esm_bearer_context_proc_t*)esm_proc);
+    nas_esm_proc_bearer_context_t esm_bearer_context_proc = (nas_esm_proc_bearer_context_t*)esm_proc;
+    rc = esm_proc_eps_bearer_context_deactivate_request (esm_proc->ue_id, (nas_esm_proc_bearer_context_t*)esm_proc);
     if(rc != RETURNerror) {
       rc = esm_send_deactivate_eps_bearer_context_request(esm_bearer_context_proc.esm_base_proc.pti,
           esm_bearer_context_proc.bearer_ebi, esm_rsp_msg, ESM_CAUSE_REGULAR_DEACTIVATION);
       OAILOG_FUNC_RETURN(LOG_NAS_ESM, rc);
     }
   }
+  nas_esm_proc_bearer_context_t * esm_bearer_context_proc = (nas_esm_proc_bearer_context_t*)esm_proc;
 
-  OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - T3492 timer expired (ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d), " "retransmission counter = %d\n",
-       esm_pdn_disconnect_proc->trx_base_proc.esm_proc.ue_id, esm_pdn_disconnect_proc->default_ebi, esm_pdn_disconnect_proc->trx_base_proc.retx_count);
-  nas_esm_bearer_context_proc_t * esm_bearer_context_proc = (nas_esm_bearer_context_proc_t*)esm_proc;
+//  OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - T3492 timer expired (ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d), " "retransmission counter = %d\n",
+//       esm_pdn_disconnect_proc->trx_base_proc.esm_proc.ue_id, esm_pdn_disconnect_proc->default_ebi, esm_pdn_disconnect_proc->trx_base_proc.retx_count);
   /** Bearer Context Procedures may be transactional or not. */
   /* Deactivate the bearer/pdn context implicitly. */
   esm_proc_eps_bearer_context_deactivate_accept(esm_bearer_context_proc->esm_base_proc.ue_id, esm_bearer_context_proc->pdn_cid,
@@ -349,7 +348,7 @@ static void _eps_bearer_deactivate_t3492_handler (nas_esm_proc_t * esm_proc, ESM
   /** Inform the MME_APP layer of the bearer deactivattion. */
   nas_itti_dedicated_eps_bearer_deactivation_complete(ue_context->mme_ue_s1ap_id, esm_bearer_context_proc->bearer_ebi);
 
-  OAILOG_FUNC_OUT (LOG_NAS_ESM);
+  OAILOG_FUNC_OUT (LOG_NAS_ESM, RETURNok);
 }
 
 /*

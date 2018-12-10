@@ -84,6 +84,7 @@ typedef enum {
  * -----------------------
  */
 typedef struct esm_ebr_context_s {
+//  bearer_qos_t                      bearer_level_qos;
   esm_ebr_state                     status;   /* EPS bearer context status        */
   traffic_flow_template_t          *tft;
   //  protocol_configuration_options_t *pco;

@@ -47,6 +47,8 @@
 #include "mme_app_ue_context.h"
 #include "common_defs.h"
 #include "mme_app_apn_selection.h"
+#include "mme_app_defs.h"
+
 
 //------------------------------------------------------------------------------
 int
@@ -61,7 +63,7 @@ mme_app_select_apn(imsi64_t imsi, const_bstring const ue_selected_apn, apn_confi
   if(subscription_data == NULL){
     *apn_configuration = NULL;
     OAILOG_INFO (LOG_MME_APP, "No subscription data is received for IMSI " IMSI_64_FMT ". \n", imsi);
-    OAILOG_FUNC_OUT(LOG_MME_APP, RETURNok);
+    OAILOG_FUNC_RETURN(LOG_MME_APP, RETURNok);
   }
 
   context_identifier_t          default_context_identifier = subscription_data->apn_config_profile.context_identifier;
@@ -76,7 +78,7 @@ mme_app_select_apn(imsi64_t imsi, const_bstring const ue_selected_apn, apn_confi
         OAILOG_DEBUG (LOG_MME_APP, "Selected APN %s for UE " IMSI_64_FMT "\n",
             subscription_data->apn_config_profile.apn_configuration[index].service_selection, imsi);
         *apn_configuration = &subscription_data->apn_config_profile.apn_configuration[index];
-        OAILOG_FUNC_OUT(LOG_MME_APP, RETURNok);
+        OAILOG_FUNC_RETURN(LOG_MME_APP, RETURNok);
       }
     } else {
       /*
@@ -86,11 +88,11 @@ mme_app_select_apn(imsi64_t imsi, const_bstring const ue_selected_apn, apn_confi
           subscription_data->apn_config_profile.apn_configuration[index].service_selection,
           strlen(subscription_data->apn_config_profile.apn_configuration[index].service_selection)) == 1) {
           OAILOG_DEBUG (LOG_MME_APP, "Selected APN %s for UE " IMSI_64_FMT "\n",
-              ue_context->apn_config_profile.apn_configuration[index].service_selection, imsi);
+              subscription_data->apn_config_profile.apn_configuration[index].service_selection, imsi);
           *apn_configuration = &subscription_data->apn_config_profile.apn_configuration[index];
-          OAILOG_FUNC_OUT(LOG_MME_APP, RETURNok);
+          OAILOG_FUNC_RETURN(LOG_MME_APP, RETURNok);
       }
     }
   }
-  OAILOG_FUNC_OUT(LOG_MME_APP, RETURNerror);
+  OAILOG_FUNC_RETURN(LOG_MME_APP, RETURNerror);
 }

@@ -144,15 +144,15 @@ nas_esm_proc_pdn_connectivity_t* mme_app_nas_esm_get_pdn_connectivity_procedure(
 }
 
 //------------------------------------------------------------------------------
-void mme_app_nas_esm_pdn_connectivity_proc(nas_esm_proc_pdn_connectivity_t **esm_proc_pdn_connectivity)
+void mme_app_nas_esm_free_pdn_connectivity_proc(nas_esm_proc_pdn_connectivity_t **esm_proc_pdn_connectivity)
 {
   // DO here specific releases (memory,etc)
   /** Remove the bearer contexts to be setup. */
   /**
    * Free components of the PDN connectivity procedure.
    */
-  if(esm_proc_pdn_connectivity->apn_subscribed)
-    bdestroy_wrapper(&esm_proc_pdn_connectivity->apn_subscribed);
+  if(esm_proc_pdn_connectivity->subscribed_apn)
+    bdestroy_wrapper(&esm_proc_pdn_connectivity->subscribed_apn);
 
 //  free_bearer_contexts_to_be_created(&(*esm_pdn_connectivity_proc_pp)->bcs_tbc);
   free_wrapper((void**)esm_proc_pdn_connectivity);
@@ -182,7 +182,7 @@ void mme_app_nas_esm_free_bearer_context_procedures(ue_context_t * const ue_cont
 }
 
 //------------------------------------------------------------------------------
-nas_esm_proc_bearer_context_t* mme_app_nas_esm_create_bearer_context_procedure(mme_ue_s1ap_id_t ue_id, pti_t pti)
+nas_esm_proc_bearer_context_t* mme_app_nas_esm_create_bearer_context_procedure(mme_ue_s1ap_id_t ue_id, pti_t pti, ebi_t ebi)
 {
   OAILOG_FUNC_IN(LOG_MME_APP);
   ue_context_t * ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, ue_id);
@@ -194,6 +194,7 @@ nas_esm_proc_bearer_context_t* mme_app_nas_esm_create_bearer_context_procedure(m
   nas_esm_proc_bearer_context_t *esm_proc_bearer_context = calloc(1, sizeof(nas_esm_proc_bearer_context_t));
   esm_proc_bearer_context->esm_base_proc.pti  = pti;
   esm_proc_bearer_context->esm_base_proc.type = ESM_PROC_EPS_BEARER_CONTEXT;
+  esm_proc_bearer_context->bearer_ebi = ebi;
 
   /** Initialize the of the procedure. */
   if (!ue_context->esm_procedures.bearer_context_procedures) {
@@ -229,7 +230,7 @@ nas_esm_proc_bearer_context_t* mme_app_nas_esm_get_bearer_context_procedure(mme_
 }
 
 //------------------------------------------------------------------------------
-void mme_app_nas_esm_bearer_context_proc(nas_esm_proc_bearer_context_t **esm_proc_bearer_context)
+void mme_app_nas_esm_free_bearer_context_proc(nas_esm_proc_bearer_context_t **esm_proc_bearer_context)
 {
   // DO here specific releases (memory,etc)
   /** Remove the bearer contexts to be setup. */

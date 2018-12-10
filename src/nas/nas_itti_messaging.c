@@ -55,28 +55,16 @@
 
 //------------------------------------------------------------------------------
 int
-nas_itti_esm_attach_ind(
-  const mme_ue_s1ap_id_t    ue_id,
-  bstring                  *esm_msg_p)
-{
-  MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_EMM, NAS_ESM_ATTACH_IND);
-  NAS_ESM_ATTACH_IND (message_p).ue_id      = ue_id;
-  NAS_ESM_ATTACH_IND (message_p).esm_msg_p  = *esm_msg_p;
-  *esm_msg_p = NULL;
-  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_S1AP_MME, NULL, 0, "0 NAS_ESM_ATTACH_IND ue id " MME_UE_S1AP_ID_FMT " len %u", ue_id, blength(nas_msg));
-  // make a long way by MME_APP instead of S1AP to retrieve the sctp_association_id key.
-  return itti_send_msg_to_task (TASK_NAS_ESM, INSTANCE_DEFAULT, message_p);
-}
-
-//------------------------------------------------------------------------------
-int
 nas_itti_esm_data_ind(
-  const mme_ue_s1ap_id_t ue_id,
-  bstring                *esm_msg_p, )
+  const mme_ue_s1ap_id_t  ue_id,
+  bstring                *esm_msg_p,
+  bool                    is_attach,
+  imsi_t                 *imsi,
+  tai_t                  *visited_tai)
 {
   MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_EMM, NAS_ESM_DATA_IND);
   NAS_ESM_DATA_IND (message_p).ue_id   = ue_id;
-  NAS_ESM_DATA_IND (message_p).esm_msg_p = *esm_msg_p;
+  NAS_ESM_DATA_IND (message_p).req     = *esm_msg_p;
   *esm_msg_p = NULL;
   MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_S1AP_MME, NULL, 0, "0 NAS_ESM_DATA_IND ue id " MME_UE_S1AP_ID_FMT " len %u", ue_id, blength(nas_msg));
   // make a long way by MME_APP instead of S1AP to retrieve the sctp_association_id key.
@@ -298,11 +286,11 @@ void nas_itti_pdn_config_req(
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
 
-  s6a_update_location_req_t s6a_ulr_p = &message_p->ittiMsg.s6a_update_location_req;
+  s6a_update_location_req_t *s6a_ulr_p = &message_p->ittiMsg.s6a_update_location_req;
 
   IMSI_TO_STRING(imsi_pP, s6a_ulr_p->imsi, IMSI_BCD_DIGITS_MAX+1);
   s6a_ulr_p->imsi_length = strlen (s6a_ulr_p->imsi);
-  s6a_ulr_p.initial_attach = request_type;
+  s6a_ulr_p->initial_attach = request_type;
 
   memcpy (&s6a_ulr_p->visited_plmn, visited_plmn, sizeof (plmn_t));
   s6a_ulr_p->rat_type = RAT_EUTRAN;
@@ -323,21 +311,21 @@ void nas_itti_pdn_disconnect_req(
   pti_t                   pti,
   struct in_addr          saegw_s11_addr, /**< Put them into the UE context ? */
   teid_t                  saegw_teid,
-  esm_proc_data_t        *proc_data_pP)
+  nas_esm_proc_pdn_connectivity_t        *esm_pdn_connectivity_proc)
 {
   OAILOG_FUNC_IN(LOG_NAS);
   MessageDef *message_p = NULL;
 
-  AssertFatal(proc_data_pP  != NULL, "proc_data_pP param is NULL");
+  AssertFatal(esm_pdn_connectivity_proc  != NULL, "esm_proc_param is NULL");
 
 
   message_p = itti_alloc_new_message(TASK_NAS_ESM, NAS_PDN_DISCONNECT_REQ);
 
-  NAS_PDN_DISCONNECT_REQ(message_p).pdn_cid         = proc_data_pP->pdn_cid;
-  NAS_PDN_DISCONNECT_REQ(message_p).pti             = proc_data_pP->pti;
+  NAS_PDN_DISCONNECT_REQ(message_p).pdn_cid         = esm_pdn_connectivity_proc->pdn_cid;
+  NAS_PDN_DISCONNECT_REQ(message_p).pti             = esm_pdn_connectivity_proc->esm_base_proc.pti;
   NAS_PDN_DISCONNECT_REQ(message_p).default_ebi     = default_ebi;
   NAS_PDN_DISCONNECT_REQ(message_p).ue_id           = ue_idP;
-  NAS_PDN_DISCONNECT_REQ(message_p).noDelete        = (proc_data_pP->pti) ? true : false;
+  NAS_PDN_DISCONNECT_REQ(message_p).noDelete        = (esm_pdn_connectivity_proc->esm_base_proc.pti) ? true : false;
   NAS_PDN_DISCONNECT_REQ(message_p).saegw_s11_ip_addr    = saegw_s11_addr;
   NAS_PDN_DISCONNECT_REQ(message_p).saegw_s11_teid       = saegw_teid;
 

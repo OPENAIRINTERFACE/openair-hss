@@ -47,7 +47,6 @@
 #include "emm_data.h"
 #include "emm_sap.h"
 #include "esm_ebr.h"
-#include "esm_ebr_context.h"
 #include "esm_proc.h"
 #include "esm_cause.h"
 #include "esm_sap.h"
@@ -64,11 +63,11 @@
 
 static int
 _esm_information (
-  nas_esm_pdn_connectivity_proc_t * const nas_pdn_connectivity_proc);
+  nas_esm_proc_pdn_connectivity_t * const esm_proc_pdn_connectivity);
 
 static int
 _esm_information_t3489_handler(
-  nas_esm_pdn_connectivity_proc_t * esm_pdn_connectivity_proc, ESM_msg *esm_resp_msg);
+  nas_esm_proc_pdn_connectivity_t * esm_pdn_connectivity_proc, ESM_msg *esm_resp_msg);
 
 /* Maximum value of the deactivate EPS bearer context request
    retransmission counter */
@@ -98,7 +97,7 @@ int esm_send_esm_information_request (pti_t pti, ebi_t ebi, esm_information_requ
 }
 
 //------------------------------------------------------------------------------
-int esm_proc_esm_information_request (nas_esm_transaction_proc_t *esm_trx_proc, ESM_msg * esm_result_msg)
+int esm_proc_esm_information_request (nas_esm_proc_pdn_connectivity_t *esm_proc_pdn_connectivity, ESM_msg * esm_result_msg)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
 
@@ -106,18 +105,18 @@ int esm_proc_esm_information_request (nas_esm_transaction_proc_t *esm_trx_proc, 
    * Send ESM information request message and
    * start timer T3489
    */
-  int rc = esm_send_esm_information_request (esm_trx_proc->esm_proc.base_proc.pti, EPS_BEARER_IDENTITY_UNASSIGNED, &esm_result_msg);
+  int rc = esm_send_esm_information_request (esm_proc_pdn_connectivity->esm_base_proc.pti, EPS_BEARER_IDENTITY_UNASSIGNED, &esm_result_msg);
 
   if (rc != RETURNerror) {
-    rc = _esm_information (esm_trx_proc);
+    rc = _esm_information (esm_proc_pdn_connectivity);
   }
-  esm_trx_proc->esm_proc.base_proc.timeout_notif = _esm_information_t3489_handler;
+  esm_proc_pdn_connectivity->esm_base_proc.timeout_notif = _esm_information_t3489_handler;
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
 }
 
 
 //------------------------------------------------------------------------------
-int esm_proc_esm_information_response (mme_ue_s1ap_id_t ue_id, pti_t pti, nas_esm_pdn_connectivity_proc_t * nas_pdn_connectivity_proc, esm_information_response_msg * esm_information_resp)
+int esm_proc_esm_information_response (mme_ue_s1ap_id_t ue_id, pti_t pti, nas_esm_proc_pdn_connectivity_t * esm_proc_pdn_connectivity, esm_information_response_msg * esm_information_resp)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   int                                     rc = RETURNok;
@@ -125,15 +124,15 @@ int esm_proc_esm_information_response (mme_ue_s1ap_id_t ue_id, pti_t pti, nas_es
   /*
    * Stop T3489 timer if running
    */
-  nas_stop_T3489(ue_id, &nas_pdn_connectivity_proc->trx_base_proc.esm_proc_timer);
+  nas_stop_T3489(ue_id, &esm_proc_pdn_connectivity->esm_base_proc.esm_proc_timer);
 
   /** Process the result. */
   if (esm_information_resp->presencemask & PDN_CONNECTIVITY_REQUEST_ACCESS_POINT_NAME_PRESENT) {
-    if(nas_pdn_connectivity_proc->apn_subscribed)
-      bdestroy_wrapper(&nas_pdn_connectivity_proc->apn_subscribed);
-    nas_pdn_connectivity_proc->apn_subscribed = bstrcpy(nas_pdn_connectivity_proc->apn_subscribed);
+    if(esm_proc_pdn_connectivity->subscribed_apn)
+      bdestroy_wrapper(&esm_proc_pdn_connectivity->subscribed_apn);
+    esm_proc_pdn_connectivity->apn_subscribed = bstrcpy(esm_proc_pdn_connectivity->apn_subscribed);
   }
-  if(!nas_pdn_connectivity_proc->apn_subscribed){
+  if(!esm_proc_pdn_connectivity->subscribed_apn){
     /** No APN Name received from UE. We will used the default one from the subscription data. */
     OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - No APN name received from UE to establish PDN connection and subscription exists. "
         "Will attach to the default APN in the subscription information. " "(ue_id=%d, pti=%d)\n", ue_id, pti);
@@ -177,18 +176,18 @@ int esm_proc_esm_information_response (mme_ue_s1ap_id_t ue_id, pti_t pti, nas_es
  ***************************************************************************/
 static int
 _esm_information (
-  nas_esm_pdn_connectivity_proc_t * const nas_pdn_connectivity_proc)
+  nas_esm_proc_pdn_connectivity_t * const esm_proc_pdn_connectivity)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   emm_sap_t                               emm_sap = {0};
   int                                     rc;
-  mme_ue_s1ap_id_t                        ue_id = nas_pdn_connectivity_proc->trx_base_proc.esm_proc.base_proc.ue_id;
+  mme_ue_s1ap_id_t                        ue_id = esm_proc_pdn_connectivity->esm_base_proc.ue_id;
 
-  nas_stop_esm_timer(ue_id, &nas_pdn_connectivity_proc->trx_base_proc.esm_proc_timer);
+  nas_stop_esm_timer(ue_id, &esm_proc_pdn_connectivity->esm_base_proc.esm_proc_timer);
   /*
    * Start T3489 timer
    */
-  nas_pdn_connectivity_proc->trx_base_proc.esm_proc_timer.id = nas_timer_start (nas_pdn_connectivity_proc->trx_base_proc.esm_proc_timer.sec, 0 /*usec*/, TASK_NAS_ESM, _nas_proc_pdn_connectivity_timeout_handler, ue_id); /**< Address field should be big enough to save an ID. */
+  esm_proc_pdn_connectivity->esm_base_proc.esm_proc_timer.id = nas_timer_start (esm_proc_pdn_connectivity->esm_base_proc.esm_proc_timer.sec, 0 /*usec*/, TASK_NAS_ESM, _nas_proc_pdn_connectivity_timeout_handler, ue_id); /**< Address field should be big enough to save an ID. */
   MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3489 started UE " MME_UE_S1AP_ID_FMT " ", ue_id);
 
   OAILOG_INFO (LOG_NAS_EMM, "UE " MME_UE_S1AP_ID_FMT "Timer T3489 (%lx) expires in %ld seconds\n",
@@ -197,18 +196,18 @@ _esm_information (
 }
 
 static int
-_esm_information_t3489_handler(nas_esm_pdn_connectivity_proc_t * esm_pdn_connectivity_proc, ESM_msg *esm_resp_msg) {
+_esm_information_t3489_handler(nas_esm_proc_pdn_connectivity_t * esm_pdn_connectivity_proc, ESM_msg *esm_resp_msg) {
   int                         rc = RETURNok;
 
   OAILOG_FUNC_IN(LOG_NAS_ESM);
 
-  esm_pdn_connectivity_proc->trx_base_proc.retx_count += 1;
-  if (esm_pdn_connectivity_proc->trx_base_proc.retx_count < ESM_INFORMATION_COUNTER_MAX) {
+  esm_pdn_connectivity_proc->esm_base_proc.retx_count += 1;
+  if (esm_pdn_connectivity_proc->esm_base_proc.retx_count < ESM_INFORMATION_COUNTER_MAX) {
     /*
      * Create a new ESM-Information request and restart the timer.
      * Keep the ESM transaction.
      */
-    rc = esm_send_esm_information_request (esm_pdn_connectivity_proc->trx_base_proc.esm_proc.base_proc.pti, esm_pdn_connectivity_proc->default_ebi, &esm_resp_msg);
+    rc = esm_send_esm_information_request (esm_pdn_connectivity_proc->esm_base_proc.pti, esm_pdn_connectivity_proc->default_ebi, &esm_resp_msg);
 
     if (rc != RETURNerror) {
       rc = _esm_information (esm_pdn_connectivity_proc);
@@ -220,7 +219,7 @@ _esm_information_t3489_handler(nas_esm_pdn_connectivity_proc_t * esm_pdn_connect
      * No PDN context is expected.
      * Prepare the reject message.
      */
-    esm_send_pdn_connectivity_reject(esm_pdn_connectivity_proc->trx_base_proc.esm_proc.base_proc.pti, esm_resp_msg, ESM_CAUSE_ESM_INFORMATION_NOT_RECEIVED);
+    esm_send_pdn_connectivity_reject(esm_pdn_connectivity_proc->esm_base_proc.pti, esm_resp_msg, ESM_CAUSE_ESM_INFORMATION_NOT_RECEIVED);
     /*
      * Release the transactional PDN connectivity procedure.
      */

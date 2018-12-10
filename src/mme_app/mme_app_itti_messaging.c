@@ -347,7 +347,11 @@ mme_app_send_s11_create_session_req (
 }
 
 //------------------------------------------------------------------------------
-mme_app_send_s11_modify_bearer_req(const mme_ue_s1ap_id_t mme_ue_s1ap_id, teid_t mme_teid_s11, pdn_context_t * pdn_context, unint8_t flags, bearer_contexts_to_be_removed_t *bcs_to_be_removed){
+//mme_app_send_s11_modify_bearer_req(const mme_ue_s1ap_id_t mme_ue_s1ap_id, teid_t mme_teid_s11,
+//    pdn_context_t * pdn_context, unint8_t flags, bearer_contexts_to_be_removed_t *bcs_to_be_removed){
+//  OAILOG_FUNC_IN (LOG_MME_APP);
+mme_app_send_s11_modify_bearer_req(const ue_context_t * ue_context, pdn_context_t * pdn_context,
+    uint8_t flags, bearer_contexts_to_be_removed_t *bcs_to_be_removed){
   OAILOG_FUNC_IN (LOG_MME_APP);
   int rc = RETURNok;
   MessageDef                             *message_p = NULL;
@@ -375,7 +379,7 @@ mme_app_send_s11_modify_bearer_req(const mme_ue_s1ap_id_t mme_ue_s1ap_id, teid_t
    * The remote teid will be provided in the response message.
    */
 
-  s11_modify_bearer_request->local_teid = mme_teid_s11;
+  s11_modify_bearer_request->local_teid = ue_context->mme_teid_s11;
   /*
    * Delay Value in integer multiples of 50 millisecs, or zero
    */
@@ -390,17 +394,17 @@ mme_app_send_s11_modify_bearer_req(const mme_ue_s1ap_id_t mme_ue_s1ap_id, teid_t
     DevAssert(bearer_context_to_establish);
     /** Add them to the bearers list of the MBR. */
     if(bearer_context_to_establish->s_gw_fteid_s1u.teid){
-      OAILOG_DEBUG(LOG_MME_APP, "Adding EBI %d as bearer context to be modified for UE " MME_UE_S1AP_ID_FMT". \n", bearer_context_to_establish->ebi, mme_ue_s1ap_id);
+      OAILOG_DEBUG(LOG_MME_APP, "Adding EBI %d as bearer context to be modified for UE " MME_UE_S1AP_ID_FMT". \n", bearer_context_to_establish->ebi, ue_context->mme_ue_s1ap_id);
       s11_modify_bearer_request->bearer_contexts_to_be_modified.bearer_contexts[s11_modify_bearer_request->bearer_contexts_to_be_modified.num_bearer_context].eps_bearer_id =
           bearer_context_to_establish->ebi;
       memcpy (&s11_modify_bearer_request->bearer_contexts_to_be_modified.bearer_contexts[s11_modify_bearer_request->bearer_contexts_to_be_modified.num_bearer_context].s1_eNB_fteid,
           &bearer_context_to_establish->enb_fteid_s1u, sizeof(bearer_context_to_establish->enb_fteid_s1u));
     } else{
       /** Add bearer context as to be removed.. */
-      OAILOG_DEBUG(LOG_MME_APP, "Adding EBI %d as bearer context to be removed for UE " MME_UE_S1AP_ID_FMT". \n", bearer_context_to_establish->ebi, mme_ue_s1ap_id);
+      OAILOG_DEBUG(LOG_MME_APP, "Adding EBI %d as bearer context to be removed for UE " MME_UE_S1AP_ID_FMT". \n", bearer_context_to_establish->ebi, ue_context->mme_ue_s1ap_id);
       s11_modify_bearer_request->bearer_contexts_to_be_removed.bearer_contexts[s11_modify_bearer_request->bearer_contexts_to_be_modified.num_bearer_context].eps_bearer_id =
                 bearer_context_to_establish->ebi;
-      s11_modify_bearer_request->bearer_contexts_to_be_removed.bearer_contexts[s11_modify_bearer_request->bearer_contexts_to_be_modified.num_bearer_context].cause = NO_RESOURCES_AVAILABLE;
+      s11_modify_bearer_request->bearer_contexts_to_be_removed.bearer_contexts[s11_modify_bearer_request->bearer_contexts_to_be_modified.num_bearer_context].cause.cause_value = NO_RESOURCES_AVAILABLE;
       bcs_to_be_removed->bearer_contexts[bcs_to_be_removed->num_bearer_context].eps_bearer_id = bearer_context_to_establish->ebi;
       bcs_to_be_removed->num_bearer_context++;
 
@@ -911,10 +915,12 @@ void mme_app_itti_nas_pdn_connectivity_response(ue_context_t * ue_context,
   // here at this point OctetString are saved in resp, no loss of memory (apn, pdn_addr)
   nas_pdn_connectivity_rsp->ue_id                 = ue_context->mme_ue_s1ap_id;
   nas_pdn_connectivity_rsp->ebi                   = bc->ebi;
-  nas_pdn_connectivity_rsp->qci                   = bc->qci;
-  nas_pdn_connectivity_rsp->prio_level            = bc->priority_level;
-  nas_pdn_connectivity_rsp->pre_emp_vulnerability = bc->preemption_vulnerability;
-  nas_pdn_connectivity_rsp->pre_emp_capability    = bc->preemption_capability;
+
+  // todo: where to get?
+//  nas_pdn_connectivity_rsp->qci                   = bc->qci;
+//  nas_pdn_connectivity_rsp->prio_level            = bc->priority_level;
+//  nas_pdn_connectivity_rsp->pre_emp_vulnerability = bc->preemption_vulnerability;
+//  nas_pdn_connectivity_rsp->pre_emp_capability    = bc->preemption_capability;
   nas_pdn_connectivity_rsp->sgw_s1u_fteid         = bc->s_gw_fteid_s1u;
   // optional IE
   nas_pdn_connectivity_rsp->apn_ambr.br_ul            = pdn_context->subscribed_apn_ambr.br_ul;

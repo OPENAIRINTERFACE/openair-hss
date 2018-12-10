@@ -89,7 +89,8 @@ void mme_app_itti_ue_context_release (    mme_ue_s1ap_id_t mme_ue_s1ap_id, enb_u
 
 void mme_app_itti_notify_request(const imsi64_t imsi, const plmn_t * handovered_plmn, const bool mobility_completion);
 
-int mme_app_handle_s6a_update_location_ans   (const s6a_update_location_ans_t * const ula_pP);
+// todo: put back in consts
+int mme_app_handle_s6a_update_location_ans   (s6a_update_location_ans_t * ula_pP);
 
 int mme_app_handle_nas_pdn_disconnect_req    ( itti_nas_pdn_disconnect_req_t * const nas_pdn_disconnect_req_pP);
 
