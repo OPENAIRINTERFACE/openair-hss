@@ -35,10 +35,10 @@ struct nas_esm_base_proc_s;
  * Define callbacks instead of checking the message type in the lower layer and accessing EMM functionalities.
  * Also the EMM context will enter COMMON state and create a new GUTI after this callback.
  */
-
-typedef int (*esm_failure_cb_t)(struct nas_esm_base_proc_s*);
-/** Method called inside the timeout. */
-typedef int (*esm_timeout_cb_t)(struct nas_esm_base_proc_s *);
+//
+//typedef int (*esm_failure_cb_t)(struct nas_esm_base_proc_s*);
+///** Method called inside the timeout. */
+//typedef int (*esm_timeout_cb_t)(struct nas_esm_base_proc_s *);
 
 ////////////////////////////////////////////////////////////////////////////////
 // ESM procedures
@@ -66,20 +66,10 @@ typedef enum {
 //  ESM_PROC_INFORMATION_REQUEST_PROCEDURE
 //} esm_transaction_proc_type_t;
 
-typedef struct nas_esm_proc_s {
-  mme_ue_s1ap_id_t            ue_id;
-  esm_timeout_cb_t            timeout_notif;
-  esm_proc_type_t             type;
-//  esm_transaction_proc_type_t esm_procedure_type;
-  nas_timer_t                  esm_proc_timer;
-  uint8_t                      retx_count;
-  pti_t                        pti;
-} nas_esm_proc_t;
-
 /*
  * Structure for ESM PDN connectivity and disconnectivity procedure.
  */
-typedef struct nas_esm_pdn_connectivity_proc_s {
+typedef struct nas_esm_proc_pdn_connectivity_s {
   /** Initial mandatory elements. */
   bool                         is_attach;
   nas_esm_proc_t               esm_base_proc;
@@ -92,12 +82,12 @@ typedef struct nas_esm_pdn_connectivity_proc_s {
   pdn_cid_t                    pdn_cid;
   ebi_t                        default_ebi;
   //  protocol_configuration_options_t  pco;
-} nas_esm_pdn_connectivity_proc_t;
+} nas_esm_proc_pdn_connectivity_t;
 
 /*
  * Structure for ESM bearer context procedure.
  */
-typedef struct nas_esm_bearer_context_proc_s {
+typedef struct nas_esm_proc_bearer_context_s {
   /** Initial mandatory elements. */
   nas_esm_proc_t               esm_base_proc;  /**< It may be a transactional procedure (PTI set // triggered through resource modification, or not (pti=0), triggered by the core network. */
   imsi_t                       imsi;
@@ -108,7 +98,7 @@ typedef struct nas_esm_bearer_context_proc_s {
   teid_t                       s1u_saegw_teid;
   bstring                      subscribed_apn;
 //  protocol_configuration_options_t  pco;
-} nas_esm_bearer_context_proc_t;
+} nas_esm_proc_bearer_context_t;
 
 typedef struct nas_esm_transaction_procedures_s {
   nas_esm_transaction_proc_t                          *proc;
@@ -131,10 +121,11 @@ typedef struct esm_procedures_s {
 //} nas_proc_esm_t;
 //
 
+// todo: put them temporary in MME_APP UE context
+void mme_app_nas_esm_free_pdn_connectivity_proc(nas_esm_proc_pdn_connectivity_t **esm_pdn_connectivity_proc);
+void mme_app_nas_esm_free_bearer_context_proc(nas_esm_proc_bearer_context_t     **esm_bearer_context_proc);
+
 ///** New ESM Bearer Context procedure. */
-//nas_esm_bearer_ctx_proc_t *nas_new_esm_bearer_context_procedure(struct esm_context_s * const esm_context);
-//nas_esm_bearer_context_procedure_t  *get_esm_bearer_context_procedure(const struct esm_context_s * const ctxt, esm_bearer_ctx_proc_type_t esm_bc_proc_type); /**< Only one procedure can exist at a time. */
-//nas_esm_transaction_proc_t *get_esm_transaction_procedure(const struct esm_context_s * const ctxt, esm_transaction_proc_type_t esm_trx_proc_type); /**< Only one procedure can exist at a time. */
 //void nas_delete_all_esm_procedures(const struct esm_context_s * const esm_context);
 //void _nas_delete_esm_transaction_procedures(const struct esm_context_s *esm_context, nas_esm_transaction_proc_t ** trx_proc);
 ////void _nas_delete_esm_bearer_context_procedures(struct esm_context_s *esm_context, nas_esm_bearer_ctx_proc_t * bc_proc);

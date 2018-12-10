@@ -455,6 +455,11 @@ typedef struct ue_context_s {
   LIST_HEAD(s10_procedures_s, mme_app_s10_proc_s) *s10_procedures;
   LIST_HEAD(s11_procedures_s, mme_app_s11_proc_s) *s11_procedures;
 
+  /** ESM Procedures */
+  struct esm_procedures_s {
+    LIST_HEAD(esm_pdn_connectivity_procedures_s, mme_app_s10_proc_s) *s10_procedures;
+    LIST_HEAD(esm_bearer_context_procedures_s, mme_app_s11_proc_s) *s11_procedures;
+  }esm_procedures;
   /* Time when the cell identity was acquired */
 
   bstring                 ue_radio_capability;

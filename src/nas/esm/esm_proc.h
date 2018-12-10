@@ -80,10 +80,7 @@ typedef enum {
  * --------------------------------------------------------------------------
  */
 
-int esm_proc_status_ind(struct esm_context_s * esm_context, const proc_tid_t pti, ebi_t ebi, esm_cause_t *esm_cause);
-int esm_proc_status(const bool is_standalone, struct esm_context_s * const esm_context, const ebi_t ebi,
-    bstring *msg, const bool sent_by_ue);
-
+int esm_proc_status_ind(mme_ue_s1ap_id_t ue_id, const proc_tid_t pti, ebi_t ebi, esm_cause_t *esm_cause);
 
 /*
  * --------------------------------------------------------------------------
@@ -148,9 +145,9 @@ esm_proc_pdn_disconnect_accept (
  * --------------------------------------------------------------------------
  */
 
-int esm_proc_esm_information_request (nas_esm_transaction_proc_t *esm_trx_proc, ESM_msg * esm_result_msg);
+int esm_proc_esm_information_request (nas_esm_pdn_connectivity_proc_t *esm_pdn_connectivity, ESM_msg * esm_result_msg);
 
-int esm_proc_esm_information_response (struct esm_context_s * ue_context, pti_t pti, const_bstring const apn, const protocol_configuration_options_t * const pco, esm_cause_t * const esm_cause);
+int esm_proc_esm_information_response (mme_ue_s1ap_id_t ue_id, pti_t pti, nas_esm_pdn_connectivity_proc_t * nas_pdn_connectivity_proc, esm_information_response_msg * esm_information_resp);
 
 /*
  * --------------------------------------------------------------------------
@@ -169,37 +166,58 @@ void esm_proc_default_eps_bearer_context_accept (mme_ue_s1ap_id_t ue_id, nas_esm
  * --------------------------------------------------------------------------
  */
 
-int esm_proc_dedicated_eps_bearer_context( struct esm_context_s * esm_context,
-    ebi_t  default_ebi,
-    const proc_tid_t   pti,                  // todo: will always be 0 for network initiated bearer establishment.
-    const pdn_cid_t    pdn_cid,              /**< todo: Per APN for now. */
-    bearer_context_to_be_created_t *bc_tbc,
-    esm_cause_t *esm_cause);
+int esm_proc_dedicated_eps_bearer_context( mme_ue_s1ap_id_t ue_id,
+  ebi_t  default_ebi,
+  const proc_tid_t   pti,                  // todo: Will always be 0 for network initiated bearer establishment.
+  const pdn_cid_t    pdn_cid,              // todo: Per APN for now.
+  bearer_context_to_be_created_t *bc_tbc);
 
-int esm_proc_dedicated_eps_bearer_context_accept(struct esm_context_s * esm_context, ebi_t ebi, esm_cause_t *esm_cause);
-int esm_proc_dedicated_eps_bearer_context_reject(struct esm_context_s * esm_context, ebi_t ebi, esm_cause_t *esm_cause);
+esm_cause_t
+esm_proc_dedicated_eps_bearer_context_accept (
+  mme_ue_s1ap_id_t ue_id,
+  pti_t            pti,
+  ebi_t            ebi);
 
+int
+esm_proc_dedicated_eps_bearer_context_reject (
+  mme_ue_s1ap_id_t  ue_id,
+  ebi_t ebi,
+  esm_cause_t esm_cause);
 
 /*
  * --------------------------------------------------------------------------
  *      EPS bearer context modification procedure
  * --------------------------------------------------------------------------
  */
-int esm_proc_modify_eps_bearer_context( struct esm_context_s * esm_context,
-    const proc_tid_t   pti,                  // todo: will always be 0 for network initiated bearer establishment.
-    bearer_context_to_be_updated_t *bc_tbu,
-    esm_cause_t *esm_cause);
+esm_cause_t
+esm_proc_modify_eps_bearer_context (
+  mme_ue_s1ap_id_t   ue_id,
+  const proc_tid_t   pti,                   // todo: will always be 0 for network initiated bearer establishment.
+  nas_esm_bearer_context_proc_t  * esm_bearer_context_proc,
+  bearer_context_to_be_updated_t * bc_tbu);
 
 int
 esm_proc_update_eps_bearer_context (
-  struct esm_context_s * esm_context,
+  mme_ue_s1ap_id_t ue_id,
   const bearer_context_to_be_updated_t *bc_tbu);
 
-int esm_proc_modify_eps_bearer_context_request(const bool is_standalone, struct esm_context_s * const esm_context, const ebi_t ebi, STOLEN_REF bstring *msg, const bool ue_triggered);
+int
+esm_proc_modify_eps_bearer_context_request(
+  mme_ue_s1ap_id_t ue_id,
+  ebi_t ebi,
+  STOLEN_REF bstring *msg);
 
-int esm_proc_modify_eps_bearer_context_accept(struct esm_context_s * esm_context, ebi_t ebi, esm_cause_t *esm_cause);
-int esm_proc_modify_eps_bearer_context_reject(struct esm_context_s * esm_context, ebi_t ebi, esm_cause_t *esm_cause, bool ue_requested);
+esm_cause_t
+esm_proc_modify_eps_bearer_context_accept (
+  mme_ue_s1ap_id_t ue_id,
+  ebi_t ebi,
+  esm_cause_t *esm_cause);
 
+esm_cause_t
+esm_proc_modify_eps_bearer_context_reject (
+  mme_ue_s1ap_id_t ue_id,
+  ebi_t ebi,
+  esm_cause_t *esm_cause);
 
 /*
  * --------------------------------------------------------------------------

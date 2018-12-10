@@ -39,18 +39,6 @@
 //
 //          break;
 
-//    case ESM_STATUS:
-//      /*
-//       * Process received ESM status message
-//       */
-//      esm_cause = esm_recv_status (esm_context, pti, ebi, &esm_msg.esm_status);
-//      break;
-
-
-
-
-
-
 
 /////////////////////////////////////////// ESM-SAP
 

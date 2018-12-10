@@ -69,7 +69,8 @@ typedef enum esm_primitive_s {
   ESM_EPS_BEARER_CONTEXT_ACTIVATE_REQ,
   ESM_EPS_BEARER_CONTEXT_MODIFY_REQ,
   ESM_EPS_BEARER_CONTEXT_DEACTIVATE_REQ,
-
+            /****/
+  ESM_EPS_UPDATE_ESM_BEARER_CTXS_REQ,
 
   /* Procedures related to EPS bearer contexts (initiated by the network) */
 //  ESM_DEFAULT_EPS_BEARER_CONTEXT_ACTIVATE_CNF,
@@ -82,7 +83,7 @@ typedef enum esm_primitive_s {
 //  ESM_EPS_BEARER_CONTEXT_MODIFY_REJ,
 //  ESM_DEDICATED_EPS_BEARER_CONTEXT_DEACTIVATE_REQ,
 //  ESM_DEDICATED_EPS_BEARER_CONTEXT_DEACTIVATE_CNF,
-//  ESM_EPS_UPDATE_ESM_BEARER_CTXS_REQ,
+//  ,
 
 
   ESM_BEARER_RESOURCE_ALLOCATE_REQ,
@@ -185,7 +186,6 @@ typedef struct esm_pdn_disconnect_s {
 typedef union {
 //  esm_pdn_disconnect_t pdn_disconnect;
 //  esm_eps_deactivate_eps_bearer_ctx_req_t   eps_dedicated_bearer_context_deactivate;
-//  esm_eps_update_esm_bearer_ctxs_req_t      eps_update_esm_bearer_ctxs;
 //  esm_bearer_resource_allocate_rej_t        esm_bearer_resource_allocate_rej;
 //  esm_bearer_resource_modify_rej_t          esm_bearer_resource_modify_rej;
 
@@ -197,9 +197,10 @@ typedef union {
   esm_cn_pdn_connectivity_fail_t *pdn_connectivity_fail;
 
   /** Non Pointer structures. */
-  esm_activate_eps_bearer_context_t   eps_bearer_context_activate;
-  esm_modify_eps_bearer_context_t     eps_bearer_context_modify;
-  esm_deactivate_eps_bearer_context_t eps_bearer_context_deactivate;
+  esm_activate_eps_bearer_context_t         eps_bearer_context_activate;
+  esm_modify_eps_bearer_context_t           eps_bearer_context_modify;
+  esm_deactivate_eps_bearer_context_t       eps_bearer_context_deactivate;
+  esm_eps_update_esm_bearer_ctxs_req_t      eps_update_esm_bearer_ctxs;
 } esm_sap_data_t;
 
 struct emm_data_context_s;

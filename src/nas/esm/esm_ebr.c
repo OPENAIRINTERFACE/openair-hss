@@ -58,7 +58,6 @@
 #include "mme_api.h"
 #include "mme_app_defs.h"
 #include "emm_data.h"
-#include "esm_ebr_context.h"
 #include "esm_ebr.h"
 
 /****************************************************************************/
@@ -90,7 +89,7 @@ static const char                      *_esm_ebr_state_str[ESM_EBR_STATE_MAX] = 
 /****************************************************************************/
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
 /****************************************************************************/
-
+// todo: fit somewhere better..
 //------------------------------------------------------------------------------
 const char * esm_ebr_state2string(esm_ebr_state esm_ebr_state)
 {

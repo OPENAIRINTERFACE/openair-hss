@@ -55,6 +55,9 @@
  */
 static bearer_context_t                 *bearerContextPool = NULL;
 
+static
+esm_cause_t mme_app_esm_bearer_context_finalize_tft(bearer_context_t * bearer_context, traffic_flow_template_t * tft);
+
 //------------------------------------------------------------------------------
 bstring bearer_state2string(const mme_app_bearer_state_t bearer_state)
 {
@@ -368,7 +371,8 @@ mme_app_esm_modify_bearer_context(mme_ue_s1ap_id_t ue_id, const ebi_t ebi, struc
 
 //------------------------------------------------------------------------------
 esm_cause_t
-mme_app_esm_finalize_bearer_context(mme_ue_s1ap_id_t ue_id, /*const pdn_cid_t pdn_cid, */const ebi_t ebi){
+mme_app_esm_finalize_bearer_context(mme_ue_s1ap_id_t ue_id, /*const pdn_cid_t pdn_cid, */const ebi_t ebi, bearer_qos_t * bearer_level_qos, traffic_flow_template_t * tft,
+    protocol_configuration_options_t * pco){
   ue_context_t * ue_context         = NULL;
   bearer_context_t * bearer_context = NULL;
   int rc                            = RETURNok;
@@ -388,6 +392,37 @@ mme_app_esm_finalize_bearer_context(mme_ue_s1ap_id_t ue_id, /*const pdn_cid_t pd
   /** We can set the FTEIDs right before the CBResp is set. */
   // todo: LOCK_UE_CONTEXT
   bearer_context->esm_ebr_context.status = ESM_EBR_ACTIVE;
+  /** Set the TFT, if exists. */
+  if(tft){
+    mme_app_esm_bearer_context_finalize_tft(bearer_context, tft);
+    OAILOG_DEBUG(LOG_MME_APP, "Finalized the TFT of bearer (ebi=%d) for UE: " MME_UE_S1AP_ID_FMT ". \n", ue_id, bearer_context->ebi);
+  }
+  if(bearer_level_qos){
+    /** Update the QCI. */
+    bearer_context->qci = bearer_level_qos->qci;
+
+    /** Update the GBR and MBR values (if existing). */
+    bearer_context->esm_ebr_context.gbr_dl = bearer_level_qos->gbr.br_dl;
+    bearer_context->esm_ebr_context.gbr_ul = bearer_level_qos->gbr.br_ul;
+    bearer_context->esm_ebr_context.mbr_dl = bearer_level_qos->mbr.br_dl;
+    bearer_context->esm_ebr_context.mbr_ul = bearer_level_qos->mbr.br_ul;
+
+    /** Set the priority values. */
+    bearer_context->preemption_capability    = bearer_level_qos->pci == 0 ? 1 : 0;
+    bearer_context->preemption_vulnerability = bearer_level_qos->pvi == 0 ? 1 : 0;
+    bearer_context->priority_level           = bearer_level_qos->pl;
+    OAILOG_DEBUG(LOG_MME_APP, "Finalized the bearer level QoS of bearer (ebi=%d) for UE: " MME_UE_S1AP_ID_FMT ". \n", ue_id, bearer_context->ebi);
+  }
+//  if(pco){
+//     if (bearer_context->esm_ebr_context.pco) {
+//       free_protocol_configuration_options(&bearer_context->esm_ebr_context.pco);
+//     }
+//     /** Make it with memcpy, don't use bearer.. */
+//     bearer_context->esm_ebr_context.pco = (protocol_configuration_options_t *) calloc (1, sizeof (protocol_configuration_options_t));
+//     memcpy(bearer_context->esm_ebr_context.pco, pco, sizeof (protocol_configuration_options_t));  /**< Should have the processed bitmap in the validation . */
+//   }
+
+
   // todo: UNLOCK_UE_CONTEXT
   OAILOG_FUNC_RETURN (LOG_MME_APP, ESM_CAUSE_SUCCESS);
 }
@@ -473,3 +508,121 @@ mme_app_esm_release_bearer_context(mme_ue_s1ap_id_t ue_id, const pdn_cid_t pdn_c
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_SUCCESS);
 }
 
+
+
+/*
+ * Local Functions.
+ */
+
+/**
+ * The bearer context should be locked when using this..
+ */
+esm_cause_t
+mme_app_esm_bearer_context_finalize_tft(bearer_context_t * bearer_context, traffic_flow_template_t * tft){
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
+  int                                     found = false;
+
+  /** Update TFT. */
+  if(tft){
+    OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Updating TFT for EPS bearer context (ebi=%d) for UE with ueId " MME_UE_S1AP_ID_FMT ". \n", bearer_context->ebi, esm_context->ue_id);
+    if(tft->tftoperationcode == TRAFFIC_FLOW_TEMPLATE_OPCODE_ADD_PACKET_FILTER_TO_EXISTING_TFT){
+      /**
+       * todo: (6.1.3.3.4) check at the beginning that all the packet filters exist, before continuing (check syntactical errors).
+       * & check that the bearer context in question has tft (and if delete, at least one TFT remains.
+        */
+       for(int num_pf = 0 ; num_pf < tft->numberofpacketfilters; num_pf++){
+         /**
+          * Assume that the identifier will be used as the ordinal.
+          */
+         packet_filter_t *new_packet_filter = NULL;
+         int num_pf1 = 0;
+         for(; num_pf1 < TRAFFIC_FLOW_TEMPLATE_NB_PACKET_FILTERS_MAX; num_pf1++) {
+           /** Update the packet filter with the correct identifier. */
+           if(bearer_context->esm_ebr_context.tft->packetfilterlist.createnewtft[num_pf1].length == 0){
+             new_packet_filter = &bearer_context->esm_ebr_context.tft->packetfilterlist.createnewtft[num_pf1];
+             break;
+           }
+         }
+         DevAssert(new_packet_filter); /**< todo: make synctactical check before. */
+         /** Clean up the packet filter. */
+         memset((void*)new_packet_filter, 0, sizeof(*new_packet_filter));
+         // todo: any variability in size?
+         memcpy((void*)new_packet_filter, (void*)&tft->packetfilterlist.addpacketfilter[num_pf], sizeof(tft->packetfilterlist.addpacketfilter[num_pf]));
+         OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Added new packet filter with packet filter id %d to EPS bearer context (ebi=%d) for UE with ueId " MME_UE_S1AP_ID_FMT ". \n",
+             tft->packetfilterlist.addpacketfilter[num_pf].identifier, bearer_context->ebi, esm_context->ue_id);
+         bearer_context->esm_ebr_context.tft->numberofpacketfilters++;
+         /** Update the flags. */
+         bearer_context->esm_ebr_context.tft->packet_filter_identifier_bitmap |= tft->packet_filter_identifier_bitmap;
+         DevAssert(!bearer_context->esm_ebr_context.tft->precedence_set[new_packet_filter->eval_precedence]);
+         bearer_context->esm_ebr_context.tft->precedence_set[new_packet_filter->eval_precedence] = new_packet_filter->identifier + 1;
+         OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Set precedence %d as pfId %d to EPS bearer context (ebi=%d) for UE with ueId " MME_UE_S1AP_ID_FMT ". \n",
+             new_packet_filter->eval_precedence, bearer_context->esm_ebr_context.tft->precedence_set[new_packet_filter->eval_precedence], bearer_context->ebi, esm_context->ue_id);
+       }
+       OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Successfully added %d new packet filters to EPS bearer context (ebi=%d) for UE with ueId " MME_UE_S1AP_ID_FMT ". "
+           "Current number of packet filters of bearer %d. \n", tft->numberofpacketfilters, bearer_context->ebi, esm_context->ue_id, bearer_context->esm_ebr_context.tft->numberofpacketfilters);
+     } else if(tft->tftoperationcode == TRAFFIC_FLOW_TEMPLATE_OPCODE_DELETE_PACKET_FILTERS_FROM_EXISTING_TFT){
+       // todo: check that at least one TFT exists, if not signal error !
+       /** todo: (6.1.3.3.4) check at the beginning that all the packet filters exist, before continuing (check syntactical errors). */
+       for(int num_pf = 0 ; num_pf < tft->numberofpacketfilters; num_pf++){
+         /**
+          * Assume that the identifier will be used as the ordinal.
+          */
+         int num_pf1 = 0;
+         for(; num_pf1 < TRAFFIC_FLOW_TEMPLATE_NB_PACKET_FILTERS_MAX; num_pf1++) {
+           /** Update the packet filter with the correct identifier. */
+           if(bearer_context->esm_ebr_context.tft->packetfilterlist.createnewtft[num_pf1].identifier == tft->packetfilterlist.deletepacketfilter[num_pf].identifier)
+             break;
+         }
+         DevAssert(num_pf1 < TRAFFIC_FLOW_TEMPLATE_NB_PACKET_FILTERS_MAX); /**< todo: make syntactical check before. */
+         /** Remove the packet filter. */
+         OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Removed the packet filter with packet filter id %d of EPS bearer context (ebi=%d) for UE with ueId " MME_UE_S1AP_ID_FMT ". \n",
+             tft->packetfilterlist.deletepacketfilter[num_pf].identifier, bearer_context->ebi, esm_context->ue_id);
+         /** Remove from precedence list. */
+         bearer_context->esm_ebr_context.tft->precedence_set[bearer_context->esm_ebr_context.tft->packetfilterlist.createnewtft[num_pf1].eval_precedence] = 0;
+         memset((void*)&bearer_context->esm_ebr_context.tft->packetfilterlist.createnewtft[num_pf1], 0,
+             sizeof(bearer_context->esm_ebr_context.tft->packetfilterlist.createnewtft[num_pf1]));
+         bearer_context->esm_ebr_context.tft->numberofpacketfilters--;
+       }
+       OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Successfully deleted %d existing packet filters of EPS bearer context (ebi=%d) for UE with ueId " MME_UE_S1AP_ID_FMT ". "
+           "Current number of packet filters of bearer context %d. \n", tft->numberofpacketfilters, bearer_context->ebi, esm_context->ue_id, bearer_context->esm_ebr_context.tft->numberofpacketfilters);
+       /** Update the flags. */
+       bearer_context->esm_ebr_context.tft->packet_filter_identifier_bitmap &= ~tft->packet_filter_identifier_bitmap;
+     } else if(tft->tftoperationcode == TRAFFIC_FLOW_TEMPLATE_OPCODE_REPLACE_PACKET_FILTERS_IN_EXISTING_TFT){
+       /** todo: (6.1.3.3.4) check at the beginning that all the packet filters exist, before continuing (check syntactical errors). */
+       for(int num_pf = 0 ; num_pf < tft->numberofpacketfilters; num_pf++){
+         /**
+          * Assume that the identifier will be used as the ordinal.
+          */
+         int num_pf1 = 0;
+         for(; num_pf1 < TRAFFIC_FLOW_TEMPLATE_NB_PACKET_FILTERS_MAX; num_pf1++) {
+           /** Update the packet filter with the correct identifier. */
+           if(bearer_context->esm_ebr_context.tft->packetfilterlist.createnewtft[num_pf1].identifier == tft->packetfilterlist.replacepacketfilter[num_pf].identifier)
+             break;
+         }
+         DevAssert(num_pf1 < TRAFFIC_FLOW_TEMPLATE_NB_PACKET_FILTERS_MAX); /**< todo: make syntactical check before. */
+         /** Clean the old packet filter and the precedence map entry. The identifier will stay.. */
+         bearer_context->esm_ebr_context.tft->precedence_set[bearer_context->esm_ebr_context.tft->packetfilterlist.createnewtft[num_pf1].eval_precedence] = 0;
+         memset((void*)&bearer_context->esm_ebr_context.tft->packetfilterlist.createnewtft[num_pf1], 0, sizeof(create_new_tft_t));
+         OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Removed the packet filter with packet filter id %d of EPS bearer context (ebi=%d) for UE with ueId " MME_UE_S1AP_ID_FMT ". \n",
+             tft->packetfilterlist.replacepacketfilter[num_pf].identifier, bearer_context->ebi, esm_context->ue_id);
+         // todo: use length?
+         memcpy((void*)&bearer_context->esm_ebr_context.tft->packetfilterlist.createnewtft[num_pf1], &tft->packetfilterlist.replacepacketfilter[num_pf], sizeof(replace_packet_filter_t));
+       }
+       OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Successfully replaced %d existing packet filters of EPS bearer context (ebi=%d) for UE with ueId " MME_UE_S1AP_ID_FMT ". "
+           "Current number of packet filter of bearer %d. \n", tft->numberofpacketfilters, bearer_context->ebi, esm_context->ue_id, bearer_context->esm_ebr_context.tft->numberofpacketfilters);
+       /** Removed the precedences, set them again, should be all zero. */
+       for(int num_pf = 0 ; num_pf < tft->numberofpacketfilters; num_pf++){
+         DevAssert(!bearer_context->esm_ebr_context.tft->precedence_set[tft->packetfilterlist.replacepacketfilter[num_pf].eval_precedence]);
+         OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Successfully set the new precedence of packet filter id (%d +1) to %d of EPS bearer context (ebi=%d) for UE with ueId " MME_UE_S1AP_ID_FMT "\n. ",
+                   tft->packetfilterlist.replacepacketfilter[num_pf].identifier, tft->packetfilterlist.replacepacketfilter[num_pf].eval_precedence, bearer_context->ebi, esm_context->ue_id);
+         bearer_context->esm_ebr_context.tft->precedence_set[tft->packetfilterlist.replacepacketfilter[num_pf].eval_precedence] = tft->packetfilterlist.replacepacketfilter[num_pf].identifier + 1;
+       }
+       /** No need to update the identifier bitmap. */
+     } else {
+       // todo: check that no other operation code is permitted, bearers without tft not permitted and default bearer may not have tft
+       OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Received invalid TFT operation code %d for bearer with (ebi=%d) for UE with ueId " MME_UE_S1AP_ID_FMT ". \n",
+           tft->tftoperationcode, bearer_context->ebi, esm_context->ue_id);
+       OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
+    }
+  }
+}

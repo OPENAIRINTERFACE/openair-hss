@@ -188,7 +188,7 @@ esm_send_modify_eps_bearer_context_request (
  ** Description: Allocates resources required for modification of an EPS   **
  **      bearer context.                                                   **
  **                                                                        **
- ** Inputs:  esm_context: ESM Context                                      **
+ ** Inputs:  ue_id:     ueId                        **
  **          pid:       PDN connection identifier                  **
  **      esm_qos:   EPS bearer level QoS parameters            **
  **      tft:       Traffic flow template parameters           **
@@ -270,26 +270,35 @@ esm_proc_update_eps_bearer_context (
   const bearer_context_to_be_updated_t *bc_tbu)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
-  int                                     rc = RETURNok;
+  bearer_qos_t            * bearer_qos  = NULL;
+  traffic_flow_template_t * tft         = NULL;
+  int                       rc          = RETURNok;
   OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Updating EPS bearer context configuration to new values " "(ue_id=" MME_UE_S1AP_ID_FMT " \n", ue_id);
+
+  /*
+   * Check if an ESM bearer context transaction exists.
+   */
+  nas_esm_bearer_context_proc_t * esm_bearer_context_proc = _esm_get_bearer_context_proc(ue_id, bc_tbu->eps_bearer_id);
+  if(!esm_bearer_context_proc){
+    OAILOG_WARNING(LOG_NAS_ESM, "ESM-PROC  - No ESM Bearer Context procedure for ebi %d exists for ueId " MME_UE_S1AP_ID_FMT ". "
+        "The bearer context assumed not to be in a pending state. \n", bc_tbu->eps_bearer_id, ue_id);
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);
+  }
 
   /** Check the cause. */
   if(bc_tbu->cause.cause_value != REQUEST_ACCEPTED){
-    OAILOG_ERROR(LOG_NAS_ESM, "ESM-PROC  - ESM Bearer Context for ebi %d has not been successfully updated for ueId " MME_UE_S1AP_ID_FMT ". \n", bc_tbu->eps_bearer_id, ue_context->mme_ue_s1ap_id);
-    OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
+    OAILOG_ERROR(LOG_NAS_ESM, "ESM-PROC  - ESM Bearer Context for ebi %d has not been successfully updated for ueId " MME_UE_S1AP_ID_FMT " "
+        " Removing the ESM procedure. Not setting the TFT and bearer level qos for the bearer. \n", bc_tbu->eps_bearer_id, ue_id);
+  } else {
+    bearer_qos = bc_tbu->bearer_level_qos;
+    tft        = &bc_tbu->tft;
   }
 
-  if(esm_ebr_get_status(esm_context, bc_tbu->eps_bearer_id) != ESM_EBR_ACTIVE){
-    OAILOG_ERROR(LOG_NAS_ESM, "ESM-PROC  - ESM Bearer Context for ebi %d is not ACTIVE for ue " MME_UE_S1AP_ID_FMT ". \n", bc_tbu->eps_bearer_id, ue_context->mme_ue_s1ap_id);
-    OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
-  }
+  /* Finalize the bearer context. */
+  mme_app_esm_finalize_bearer_context(ue_id, bc_tbu->eps_bearer_id, bearer_qos, tft, (protocol_configuration_options_t*)NULL);
 
-  /** Update the QoS parameter if exists. */
-  bearer_context_t *bc = NULL;
-  mme_app_get_session_bearer_context_from_all(ue_context, bc_tbu->eps_bearer_id, &bc);
-  DevAssert(bc);
-
-  rc = esm_ebr_context_update(esm_context, bc, bc_tbu->bearer_level_qos, &bc_tbu->tft, &bc_tbu->pco);
+  /* Remove the transaction. */
+  _esm_proc_free_pdn_connectivity_procedure(esm_bearer_context_proc);
 
   /** Not updating the parameters yet. Updating later when a success is received. State will be updated later. */
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);

@@ -414,6 +414,31 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp, bool *is_attach)
   }
   break;
 
+  case ESM_EPS_UPDATE_ESM_BEARER_CTXS_REQ: {
+    /** Check that the bearers are active, and update the tft, qos, and apn-ambr values. */
+    // todo: apn ambr to ue ambr calculation !
+    esm_eps_update_esm_bearer_ctxs_req_t* update_esm_bearer_ctxs = &msg->data.eps_update_esm_bearer_ctxs;
+    esm_cause_t esm_cause;
+    /** Update the bearer level QoS TFT values. */
+    for(int num_bc = 0; num_bc < msg->data.eps_update_esm_bearer_ctxs.bcs_to_be_updated->num_bearer_context; num_bc++){
+      rc = esm_proc_update_eps_bearer_context(msg->ue_id, &msg->data.eps_update_esm_bearer_ctxs.bcs_to_be_updated->bearer_contexts[num_bc]);
+      if(rc != RETURNerror){
+        /* Successfully updated the bearer context. */
+        OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Successfully updated ebi %d to final values via UBR for UE " MME_UE_S1AP_ID_FMT ". \n",
+            msg->data.eps_update_esm_bearer_ctxs.bcs_to_be_updated->bearer_contexts[num_bc].eps_bearer_id, ue_context->mme_ue_s1ap_id);
+      }else{
+        OAILOG_ERROR (LOG_NAS_ESM, "ESM-SAP   - Error while updating ebi %d to final values via UBR for UE " MME_UE_S1AP_ID_FMT ". \n",
+            msg->data.eps_update_esm_bearer_ctxs.bcs_to_be_updated->bearer_contexts[num_bc].eps_bearer_id, ue_context->mme_ue_s1ap_id);
+        /**
+         * Bearer may stay with old parameters and in active state.
+         * We assume that the bearer got removed due some concurrency  issues.
+         * We continue to handle the remaining bearers.
+         */
+      }
+    }
+  }
+  break;
+
   case ESM_TIMEOUT_IND: {
     /*
      * Get the procedure of the timer.
@@ -780,6 +805,13 @@ _esm_sap_recv (
       break;
 
     case BEARER_RESOURCE_MODIFICATION_REQUEST:
+      break;
+
+    case ESM_STATUS:
+      /*
+       * Process received ESM status message
+       */
+      esm_cause = esm_recv_status (mme_ue_s1ap_id, pti, ebi, &esm_msg.esm_status);
       break;
 
     /** Non-EMM Related Messages. */

@@ -105,36 +105,29 @@
 
 esm_cause_t
 esm_recv_status (
-  const mme_ue_s1ap_id_t mme_ue_s1ap_id,
+  const mme_ue_s1ap_id_t ue_id,
   proc_tid_t pti,
   ebi_t ebi,
-  const pdn_connectivity_request_msg * msg,
-  ESM_msg **esm_response)
+  const esm_status_msg * msg)
 {
   esm_cause_t                             esm_cause = ESM_CAUSE_SUCCESS;
   int                                     rc = RETURNerror;
 
   OAILOG_FUNC_IN (LOG_NAS_ESM);
-  OAILOG_INFO(LOG_NAS_ESM,  "ESM-SAP   - Received ESM status message (pti=%d, ebi=%d) for UE " MME_UE_S1AP_ID_FMT ". \n", pti, ebi, mme_ue_s1ap_id);
-//  /*
-//   * Message processing
-//   */
-//  /*
-//   * Get the ESM cause
-//   */
-//  esm_cause = msg->esmcause;
-//  /*
-//   * Execute the ESM status procedure
-//   */
-//  rc = esm_proc_status_ind (esm_context, pti, ebi, &esm_cause);
-//
-//  if (rc != RETURNerror) {
-//    esm_cause = ESM_CAUSE_SUCCESS;
-//  }
-
+  OAILOG_INFO(LOG_NAS_ESM,  "ESM-SAP   - Received ESM status message (pti=%d, ebi=%d) for UE " MME_UE_S1AP_ID_FMT ". \n",
+      pti, ebi, ue_id);
   /*
-   * Return the ESM cause value
+   * Message processing
    */
+  /*
+   * Get the ESM cause
+   */
+  esm_cause = msg->esmcause;
+  /*
+   * Execute the ESM status procedure
+   */
+  esm_cause = esm_proc_status_ind (ue_id, pti, ebi, &esm_cause);
+
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, esm_cause);
 }
 

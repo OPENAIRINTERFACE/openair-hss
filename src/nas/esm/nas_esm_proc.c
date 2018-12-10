@@ -281,6 +281,7 @@ int nas_esm_proc_activate_eps_bearer_ctx(esm_eps_activate_eps_bearer_ctx_req_t *
   bstring                                 rsp = NULL;
   esm_cause_t                             esm_cause = ESM_CAUSE_SUCCESS;
   int                                     rc = RETURNerror;
+  bool                                    is_attach = false;
   OAILOG_FUNC_IN (LOG_NAS_ESM);
 
   esm_sap.primitive = ESM_EPS_BEARER_CONTEXT_ACTIVATE_REQ;
@@ -297,7 +298,7 @@ int nas_esm_proc_activate_eps_bearer_ctx(esm_eps_activate_eps_bearer_ctx_req_t *
     esm_sap.data.eps_bearer_context_activate.pdn_cid    = esm_cn_activate->cid;
     esm_sap.data.eps_bearer_context_activate.linked_ebi = esm_cn_activate->linked_ebi;
     esm_sap.data.eps_bearer_context_activate.bc_tbc     = bc_tbc;
-    rc = esm_sap_signal(esm_cn_activate->ue_id, &esm_cause, &rsp);
+    rc = esm_sap_signal(&esm_sap, &rsp, &is_attach);
     if(rsp){
       rc = lowerlayer_activate_bearer_req(esm_cn_activate->ue_id, esm_sap.data.eps_bearer_context_activate.bc_tbc->eps_bearer_id,
           bc_tbc->bearer_level_qos->mbr.br_dl,
@@ -328,6 +329,7 @@ int nas_esm_proc_modify_eps_bearer_ctx(esm_eps_update_esm_bearer_ctxs_req_t * es
   esm_sap_t                               esm_sap = {0};
   bstring                                 rsp = NULL;
   esm_cause_t                             esm_cause = ESM_CAUSE_SUCCESS;
+  bool                                    is_attach = false;
   int                                     rc = RETURNerror;
 
   OAILOG_FUNC_IN (LOG_NAS_ESM);
@@ -343,7 +345,7 @@ int nas_esm_proc_modify_eps_bearer_ctx(esm_eps_update_esm_bearer_ctxs_req_t * es
     bearer_context_to_be_updated_t  * bc_tbu = &bcs_tbu.bearer_contexts[num_bc];
     esm_sap.data.eps_bearer_context_modify.bc_tbu     = bc_tbu;
     esm_sap.data.eps_bearer_context_modify.apn_ambr   = esm_cn_update->apn_ambr;
-    rc = esm_sap_signal(esm_cn_update->ue_id, &esm_cause, &rsp);
+    rc = esm_sap_signal(&esm_sap, &rsp, &is_attach);
     if(rsp){
       rc = lowerlayer_modify_bearer_req(esm_cn_update->ue_id, esm_sap.data.eps_bearer_context_modify.bc_tbu->eps_bearer_id,
           bc_tbu->bearer_level_qos->mbr.br_dl,
@@ -367,6 +369,7 @@ int nas_esm_proc_deactivate_eps_bearer_ctx(esm_eps_deactivate_eps_bearer_ctx_req
   esm_sap_t                               esm_sap = {0};
   bstring                                 rsp = NULL;
   esm_cause_t                             esm_cause = ESM_CAUSE_SUCCESS;
+  bool                                    is_attach = false;
   int                                     rc = RETURNerror;
 
   OAILOG_FUNC_IN (LOG_NAS_ESM);
@@ -379,11 +382,31 @@ int nas_esm_proc_deactivate_eps_bearer_ctx(esm_eps_deactivate_eps_bearer_ctx_req
   /** Get the bearer contexts to be updated. */
   for(int num_ebi= 0; num_ebi < esm_cn_deactivate->ebis.num_ebi; num_ebi++){
     esm_sap.data.eps_bearer_context_deactivate.ded_ebi = esm_cn_deactivate->ebis[num_ebi];
-    rc = esm_sap_signal(esm_cn_deactivate->ue_id, &esm_cause, &rsp);
+    rc = esm_sap_signal(&esm_sap, &rsp, &is_attach);
     if(rsp){
       rc = lowerlayer_deactivate_bearer_req(esm_cn_deactivate->ue_id, esm_sap.data.eps_bearer_context_deactivate.ded_ebi,rsp);
      }
   }
+  OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
+}
+
+//------------------------------------------------------------------------------
+int nas_esm_proc_establish_eps_bearer_ctx(esm_eps_update_esm_bearer_ctxs_req_t * esm_cn_update_final)
+{
+  esm_sap_t                               esm_sap = {0};
+  bstring                                 rsp = NULL;
+  esm_cause_t                             esm_cause = ESM_CAUSE_SUCCESS;
+  int                                     rc = RETURNerror;
+
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
+
+  esm_sap.primitive = ESM_EPS_UPDATE_ESM_BEARER_CTXS_REQ;
+  esm_sap.ue_id     = esm_cn_update_final->ue_id;
+  esm_sap.data.eps_update_esm_bearer_ctxs.bcs_to_be_updated = esm_cn_update_final->bcs_to_be_updated;
+  esm_cn_update_final->bcs_to_be_updated = NULL;    /**< Decouple it. */
+
+  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_ESM_MME, NULL, 0, "0 ESM_EPS_UPDATE_ESM_BEARER_CTXS_REQ " MME_UE_S1AP_ID_FMT " ", esm_cn_update_final->ue_id);
+  rc = esm_sap_signal(&esm_sap, &esm_cause, &rsp);
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
 }
 

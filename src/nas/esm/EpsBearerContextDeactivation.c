@@ -154,27 +154,27 @@ esm_send_deactivate_eps_bearer_context_request (
       esm_rsp_msg->deactivate_eps_bearer_context_request.proceduretransactionidentity, esm_rsp_msg->deactivate_eps_bearer_context_request.epsbeareridentity);
   OAILOG_FUNC_OUT(LOG_NAS_ESM);
 }
-
-/*
-   --------------------------------------------------------------------------
-    EPS bearer context deactivation procedure executed by the MME
-   --------------------------------------------------------------------------
-*/
-    /*
-     * Locally releasing the bearers and MME bearer contexts without asking the UE.
-     * Will check for default bearer inside the method.
-     */
-    rc = _eps_bearer_release (esm_context, ebi, &pid); /**< Implicitly removing the PDN context, if the default bearer is removed. */
-    /** Return after releasing. */
-//    if(!pdn_context->is_active){
-//      // todo: check that only 1 deactivate message for the default bearer exists
-//      *esm_cause = ESM_CAUSE_INSUFFICIENT_RESOURCES;
-//      OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - We released  the default EBI. Deregistering the PDN context (E-RAB failure). (ebi=%d,pid=%d)\n", ebi,pid);
-//      rc = esm_proc_pdn_disconnect_accept (esm_context, pdn_context->context_identifier, ebi, esm_cause); /**< Delete Session Request is already sent at the beginning. We don't care for the response. */
-//    }
-  /** Will continue with sending the bearer deactivation request. */
-  OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
-}
+// TODO : REMOVE THIS!
+///*
+//   --------------------------------------------------------------------------
+//    EPS bearer context deactivation procedure executed by the MME
+//   --------------------------------------------------------------------------
+//*/
+//    /*
+//     * Locally releasing the bearers and MME bearer contexts without asking the UE.
+//     * Will check for default bearer inside the method.
+//     */
+//    rc = _eps_bearer_release (esm_context, ebi, &pid); /**< Implicitly removing the PDN context, if the default bearer is removed. */
+//    /** Return after releasing. */
+////    if(!pdn_context->is_active){
+////      // todo: check that only 1 deactivate message for the default bearer exists
+////      *esm_cause = ESM_CAUSE_INSUFFICIENT_RESOURCES;
+////      OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - We released  the default EBI. Deregistering the PDN context (E-RAB failure). (ebi=%d,pid=%d)\n", ebi,pid);
+////      rc = esm_proc_pdn_disconnect_accept (esm_context, pdn_context->context_identifier, ebi, esm_cause); /**< Delete Session Request is already sent at the beginning. We don't care for the response. */
+////    }
+//  /** Will continue with sending the bearer deactivation request. */
+//  OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
+//}
 
 /****************************************************************************
  **                                                                        **

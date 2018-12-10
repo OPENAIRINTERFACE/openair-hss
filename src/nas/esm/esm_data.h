@@ -126,17 +126,6 @@ typedef struct esm_data_s {
 } esm_data_t;
 
 
-void nas_stop_T3489(mme_ue_s1ap_id_t ue_id, nas_timer_t * const nas_timer);
-
-struct esm_context_s *esm_data_context_get(
-  esm_data_t *esm_data, unsigned int _ueid);
-
-struct esm_context_s *esm_data_context_remove(
-  esm_data_t *esm_data, struct esm_context_s *elm);
-
-void esm_data_context_add(esm_data_t *esm_data, struct esm_context_s *elm);
-
-
 /****************************************************************************/
 /********************  G L O B A L    V A R I A B L E S  ********************/
 /****************************************************************************/

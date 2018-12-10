@@ -40,7 +40,7 @@ void mme_app_esm_delete_pdn_context(mme_ue_s1ap_id_t ue_id, bstring apn, pdn_cid
 int mme_app_cn_update_bearer_context(mme_ue_s1ap_id_t ue_id, const ebi_t ebi, struct fteid_set_s * fteid_set);
 
 esm_cause_t
-mme_app_esm_finalize_bearer_context(mme_ue_s1ap_id_t ue_id, /*const pdn_cid_t pdn_cid, */const ebi_t ebi);
+mme_app_esm_finalize_bearer_context(mme_ue_s1ap_id_t ue_id, /*const pdn_cid_t pdn_cid, */const ebi_t ebi, bearer_qos_t * bearer_level_qos, traffic_flow_template_t * tft, protocol_configuration_options_t * pco);
 
 esm_cause_t
 mme_app_esm_modify_bearer_context(mme_ue_s1ap_id_t ue_id, const ebi_t ebi, struct bearer_qos_s * bearer_level_qos, traffic_flow_template_t * tft);
