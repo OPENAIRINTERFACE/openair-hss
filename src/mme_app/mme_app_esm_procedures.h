@@ -29,9 +29,26 @@
 */
 
 
+////////////////////////////////////////////////////////////////////////////////
+// ESM procedures
+////////////////////////////////////////////////////////////////////////////////
+
+
+/*
+ * Define callbacks instead of checking the message type in the lower layer and accessing EMM functionalities.
+ * Also the EMM context will enter COMMON state and create a new GUTI after this callback.
+ */
+
 typedef int (*esm_failure_cb_t)(struct nas_esm_base_proc_s*);
 /** Method called inside the timeout. */
 typedef int (*esm_timeout_cb_t)(struct nas_esm_base_proc_s *);
+
+
+typedef enum {
+  ESM_PROC_NONE = 0,
+  ESM_PROC_EPS_BEARER_CONTEXT,
+  ESM_PROC_PDN_CONTEXT
+} esm_proc_type_t;
 
 //
 //typedef enum {
@@ -118,23 +135,61 @@ typedef int (*esm_timeout_cb_t)(struct nas_esm_base_proc_s *);
 //} mme_app_s11_proc_type_t;
 
 
+// TODO: MIGHT REVIEW
+//
+//typedef struct esm_procedures_s {
+//  /** UE/PTI triggered ESM procedure. */
+//  LIST_HEAD(nas_esm_transaction_procedures_head_s, nas_esm_transaction_procedures_s)  esm_transaction_procs;
+////  /** CN Triggered ESM procedure. */
+////  LIST_HEAD(nas_esm_bearer_context_procedures_head_s, nas_esm_bearer_context_procedure_s)  esm_bearer_context_procs;
+//} esm_procedures_t;
+
 typedef struct nas_esm_proc_s {
-  mme_ue_s1ap_id_t            ue_id;
-  esm_timeout_cb_t            timeout_notif;
-  esm_proc_type_t             type;
+  mme_ue_s1ap_id_t             ue_id;
+  esm_timeout_cb_t             timeout_notif;
+  esm_proc_type_t              type;
 //  esm_transaction_proc_type_t esm_procedure_type;
   nas_timer_t                  esm_proc_timer;
   uint8_t                      retx_count;
   pti_t                        pti;
 } nas_esm_proc_t;
 
+/*
+ * Structure for ESM PDN connectivity and disconnectivity procedure.
+ */
+typedef struct nas_esm_proc_pdn_connectivity_s {
+  /** Initial mandatory elements. */
+  nas_esm_proc_t               esm_base_proc;
+  bool                         is_attach;
+  esm_proc_pdn_type_t          pdn_type;
+  esm_proc_pdn_request_t       request_type;
+  imsi_t                       imsi;
+  /** Additional elements requested from the UE and set with time.. */
+  bstring                      apn_subscribed;
+  tai_t                        visited_tai;
+  pdn_cid_t                    pdn_cid;
+  ebi_t                        default_ebi;
+  //  protocol_configuration_options_t  pco;
+  LIST_ENTRY(nas_esm_proc_pdn_connectivity_s) entries;      /* List. */
+} nas_esm_proc_pdn_connectivity_t;
 
-typedef struct mme_app_pdn_connectivity_proc_s {
-  mme_app_base_proc_t         proc;
-  mme_app_s11_proc_type_t     type;
-  uintptr_t                   s11_trxn;
-  LIST_ENTRY(mme_app_s11_proc_s) entries;      /* List. */
-} mme_app_pdn_connectivity_proc_t;
+
+/*
+ * Structure for ESM bearer context procedure.
+ */
+typedef struct nas_esm_proc_bearer_context_s {
+  /** Initial mandatory elements. */
+  nas_esm_proc_t               esm_base_proc;  /**< It may be a transactional procedure (PTI set // triggered through resource modification, or not (pti=0), triggered by the core network. */
+  imsi_t                       imsi;
+  /** Additional elements requested from the UE and set with time.. */
+  pdn_cid_t                    pdn_cid;
+  ebi_t                        bearer_ebi;
+  ebi_t                        linked_ebi;
+  teid_t                       s1u_saegw_teid;
+  bstring                      subscribed_apn;
+//  protocol_configuration_options_t  pco;
+  LIST_ENTRY(nas_esm_proc_bearer_context_s) entries;      /* List. */
+} nas_esm_proc_bearer_context_t;
 
 typedef enum {
   S11_PROC_BEARER_UNKNOWN  = 0,
@@ -143,75 +198,38 @@ typedef enum {
   S11_PROC_BEARER_SUCCESS  = 3
 } s11_proc_bearer_status_t;
 
-typedef struct mme_app_s11_proc_create_bearer_s {
-  mme_app_s11_proc_t           proc;
-  int                          num_bearers_unhandled;
-  int                          num_status_received;
+//typedef struct mme_app_s11_proc_create_bearer_s {
+//  mme_app_s11_proc_t           proc;
+//  int                          num_bearers_unhandled;
+//  int                          num_status_received;
+//
+//  ebi_t                        linked_ebi;
+//  pdn_cid_t                    pci;
+//
+//  // TODO here give a NAS/S1AP/.. reason -> GTPv2-C reason
+//  bearer_contexts_to_be_created_t *bcs_tbc; /**< Store the bearer contexts to be created here, and don't register them yet in the MME_APP context. */
+//} mme_app_s11_proc_create_bearer_t;
 
-  ebi_t                        linked_ebi;
-  pdn_cid_t                    pci;
 
-  // TODO here give a NAS/S1AP/.. reason -> GTPv2-C reason
-  bearer_contexts_to_be_created_t *bcs_tbc; /**< Store the bearer contexts to be created here, and don't register them yet in the MME_APP context. */
-} mme_app_s11_proc_create_bearer_t;
-
-typedef struct mme_app_s11_proc_update_bearer_s {
-  mme_app_s11_proc_t           proc;
-  int                          num_bearers_unhandled;
-  int                          num_status_received;
-
-  pdn_cid_t                    pci;
-  ambr_t                       new_used_ue_ambr;
-  ebi_t                        linked_ebi;
-  // TODO here give a NAS/S1AP/.. reason -> GTPv2-C reason
-  ambr_t                        apn_ambr;
-  bearer_contexts_to_be_updated_t *bcs_tbu; /**< Store the bearer contexts to be created here, and don't register them yet in the MME_APP context. */
-} mme_app_s11_proc_update_bearer_t;
-
-typedef struct mme_app_s11_proc_delete_bearer_s {
-  mme_app_s11_proc_t           proc;
-  int                          num_bearers_unhandled;
-//  ebi_t                        linked_eps_bearer_id;
-  int                          num_status_received;
-  ebi_list_t                   ebis;
-
-  // TODO here give a NAS/S1AP/.. reason -> GTPv2-C reason
-  bearer_contexts_to_be_removed_t bcs_failed; /**< Store the bearer contexts to be created here, and don't register them yet in the MME_APP context. */
-} mme_app_s11_proc_delete_bearer_t;
-
-typedef enum {
-  MME_APP_S1AP_PROC_TYPE_NONE = 0,
-  MME_APP_S1AP_PROC_TYPE_INITIAL
-} mme_app_s1ap_proc_type_t;
-
+// todo: put them temporary in MME_APP UE context
 ///* Declaration (prototype) of the function to store bearer contexts. */
 //RB_PROTOTYPE(BearerFteids, fteid_set_s, fteid_set_rbt_Node, fteid_set_compare_s1u_saegw)
-
-void mme_app_delete_s11_procedures(ue_context_t * const ue_context_p);
-
-mme_app_s11_proc_create_bearer_t* mme_app_create_s11_procedure_create_bearer(ue_context_t * const ue_context_p);
-mme_app_s11_proc_create_bearer_t* mme_app_get_s11_procedure_create_bearer(ue_context_t * const ue_context_p);
-void mme_app_delete_s11_procedure_create_bearer(ue_context_t * const ue_context_p);
-
-mme_app_s11_proc_update_bearer_t* mme_app_create_s11_procedure_update_bearer(ue_context_t * const ue_context_p);
-mme_app_s11_proc_update_bearer_t* mme_app_get_s11_procedure_update_bearer(ue_context_t * const ue_context_p);
-void mme_app_delete_s11_procedure_update_bearer(ue_context_t * const ue_context_p);
-
-mme_app_s11_proc_delete_bearer_t* mme_app_create_s11_procedure_delete_bearer(ue_context_t * const ue_context_p);
-mme_app_s11_proc_delete_bearer_t* mme_app_get_s11_procedure_delete_bearer(ue_context_t * const ue_context_p);
-void mme_app_delete_s11_procedure_delete_bearer(ue_context_t * const ue_context_p);
-
-/*
- * - Creating handover procedure in intra-MME and inter-MME handover
- * - Creating handover procedure in source & target MME todo: create same timer but different callback methods.
- * - Since we don't have a valid EMM UE context, we need to create an MME_APP context.
- */
-void mme_app_delete_s10_procedures(ue_context_t * const ue_context_p);
 //------------------------------------------------------------------------------
-void mme_app_delete_s10_procedures(ue_context_t * const ue_context_p);
-mme_app_s10_proc_mme_handover_t* mme_app_create_s10_procedure_mme_handover(ue_context_t * const ue_context, bool target_mme, mme_app_s10_proc_type_t  s1ap_ho_type);
+/*
+ * PDN Connectivity Procedures.
+ */
+void mme_app_nas_esm_free_pdn_connectivity_procedures(ue_context_t * const ue_context_p);
+nas_esm_proc_pdn_connectivity_t* mme_app_nas_esm_create_pdn_connectivity_procedure(mme_ue_s1ap_id_t mme_ue_s1ap_id, pti_t pti);
+nas_esm_proc_pdn_connectivity_t* mme_app_nas_esm_get_pdn_connectivity_procedure(mme_ue_s1ap_id_t mme_ue_s1ap_id);
+void mme_app_nas_esm_free_pdn_connectivity_proc(nas_esm_proc_pdn_connectivity_t **esm_pdn_connectivity_proc);
 
-mme_app_s10_proc_mme_handover_t* mme_app_get_s10_procedure_mme_handover(ue_context_t * const ue_context_p);
-void mme_app_delete_s10_procedure_mme_handover(ue_context_t * const ue_context_p);
+//------------------------------------------------------------------------------
+/*
+ * ESM Bearer Context Procedures.
+ */
+void mme_app_nas_esm_free_bearer_context_procedures(ue_context_t * const ue_context_p); // todo: static!
+nas_esm_proc_bearer_context_t* mme_app_nas_esm_create_bearer_context_procedure(mme_ue_s1ap_id_t mme_ue_s1ap_id);
+nas_esm_proc_bearer_context_t* mme_app_nas_esm_get_bearer_context_procedure(mme_ue_s1ap_id_t mme_ue_s1ap_id);
+void mme_app_nas_esm_free_bearer_context_proc(nas_esm_proc_bearer_context_t     **esm_bearer_context_proc);
 
 #endif

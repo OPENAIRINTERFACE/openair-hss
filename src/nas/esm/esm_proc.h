@@ -91,7 +91,7 @@ int esm_proc_status_ind(mme_ue_s1ap_id_t ue_id, const proc_tid_t pti, ebi_t ebi,
 /*
  * PDN Connectivity procedure (UE triggered - incl. initial attach).
  */
-nas_esm_pdn_connectivity_proc_t *_esm_proc_create_pdn_connectivity_procedure(mme_ue_s1ap_id_t ue_id, imsi_t *imsi, pti_t pti);
+nas_esm_proc_pdn_connectivity_t *_esm_proc_create_pdn_connectivity_procedure(mme_ue_s1ap_id_t ue_id, imsi_t *imsi, pti_t pti);
 void _esm_proc_free_pdn_connectivity_procedure(nas_esm_pdn_connectivity_proc_t ** nas_pdn_connectivity_proc);
 
 /*

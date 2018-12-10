@@ -208,7 +208,7 @@ s6a_generate_update_location (
     value.os.len = blength(host);
     CHECK_FCT (fd_msg_avp_setvalue (avp_p, &value));
     CHECK_FCT (fd_msg_avp_add (msg_p, MSG_BRW_LAST_CHILD, avp_p));
-    bdestroy(host);
+    bdestroy_wrapper(&host);
   }
   /*
    * Destination_Realm

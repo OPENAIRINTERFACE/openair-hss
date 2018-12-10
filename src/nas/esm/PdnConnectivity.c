@@ -143,10 +143,10 @@ esm_send_pdn_connectivity_reject (
 }
 
 //-----------------------------------------------------------------------------
-nas_esm_pdn_connectivity_proc_t *_esm_proc_create_pdn_connectivity_procedure(mme_ue_s1ap_id_t ue_id, imsi_t *imsi, pti_t pti)
+nas_esm_proc_pdn_connectivity_t *_esm_proc_create_pdn_connectivity_procedure(mme_ue_s1ap_id_t ue_id, imsi_t *imsi, pti_t pti)
 {
   // todo: eventually setting apn..
-  nas_esm_pdn_connectivity_proc_t  *pdn_connectivity_proc = nas_new_pdn_connectivity_procedure(ue_id, pti);
+  nas_esm_proc_pdn_connectivity_t  *pdn_connectivity_proc = mme_app_nas_esm_create_pdn_connectivity_procedure(ue_id, pti);
   AssertFatal(pdn_connectivity_proc, "TODO Handle this");
   memcpy((void*)&pdn_connectivity_proc->imsi, imsi, sizeof(imsi_t));
   /** Timeout notifier set separately. */
