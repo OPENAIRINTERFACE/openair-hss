@@ -164,7 +164,7 @@ void _esm_proc_free_pdn_connectivity_procedure(nas_esm_proc_pdn_connectivity_t *
 }
 
 //-----------------------------------------------------------------------------
-nas_esm_proc_pdn_connectivity_t _esm_proc_get_pdn_connectivity_procedure(mme_ue_s1ap_id_t ue_id, pti_t pti){
+nas_esm_proc_pdn_connectivity_t *_esm_proc_get_pdn_connectivity_procedure(mme_ue_s1ap_id_t ue_id, pti_t pti){
   return mme_app_nas_esm_get_pdn_connectivity_procedure(ue_id, pti);
 }
 

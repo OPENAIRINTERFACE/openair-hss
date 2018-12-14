@@ -151,8 +151,8 @@ void mme_app_nas_esm_free_pdn_connectivity_proc(nas_esm_proc_pdn_connectivity_t 
   /**
    * Free components of the PDN connectivity procedure.
    */
-  if(esm_proc_pdn_connectivity->subscribed_apn)
-    bdestroy_wrapper(&esm_proc_pdn_connectivity->subscribed_apn);
+  if((*esm_proc_pdn_connectivity)->subscribed_apn)
+    bdestroy_wrapper(&((*esm_proc_pdn_connectivity)->subscribed_apn));
 
 //  free_bearer_contexts_to_be_created(&(*esm_pdn_connectivity_proc_pp)->bcs_tbc);
   free_wrapper((void**)esm_proc_pdn_connectivity);
@@ -237,8 +237,8 @@ void mme_app_nas_esm_free_bearer_context_proc(nas_esm_proc_bearer_context_t **es
   /**
    * Free components of the bearer context procedure.
    */
-  if(esm_proc_bearer_context->subscribed_apn)
-    bdestroy_wrapper(&esm_proc_bearer_context->subscribed_apn);
+  if((*esm_proc_bearer_context)->subscribed_apn)
+    bdestroy_wrapper(&((*esm_proc_bearer_context)->subscribed_apn));
 
 //  free_bearer_contexts_to_be_created(&(*esm_pdn_connectivity_proc_pp)->bcs_tbc);
   free_wrapper((void**)esm_proc_bearer_context);

@@ -72,7 +72,7 @@ nas_esm_proc_bearer_context_t *_esm_proc_create_bearer_context_procedure(mme_ue_
 void _esm_proc_free_bearer_context_procedure(nas_esm_proc_bearer_context_t ** esm_proc_bearer_context);
 
 //-----------------------------------------------------------------------------
-nas_esm_proc_bearer_context_t _esm_proc_get_bearer_context_procedure(mme_ue_s1ap_id_t ue_id, pti_t pti, ebi_t ebi);
+nas_esm_proc_bearer_context_t *_esm_proc_get_bearer_context_procedure(mme_ue_s1ap_id_t ue_id, pti_t pti, ebi_t ebi);
 
 esm_ebr_state _esm_ebr_get_status(mme_ue_s1ap_id_t ue_id, ebi_t ebi);
 

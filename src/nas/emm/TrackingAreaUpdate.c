@@ -1769,26 +1769,30 @@ static int _emm_tracking_area_update_run_procedure(emm_data_context_t *emm_conte
        */
       /** Check if any S6a Subscription information exist, if not pull them from the HSS. */
       OAILOG_INFO(LOG_NAS_EMM, "EMM-PROC- THE UE with ue_id=" MME_UE_S1AP_ID_FMT ", has already a security context. Checking for a subscription profile. \n", emm_context->ue_id);
-      if(ue_context->subscription_known == SUBSCRIPTION_UNKNOWN) { /**< Means, that the MM UE context is received from the sourc MME already due HO (and only due HO). */
-        OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC- THE UE with ue_id=" MME_UE_S1AP_ID_FMT ", does not have a subscription profile set. Requesting a new subscription profile. \n",
-            emm_context->ue_id, EMM_CAUSE_IE_NOT_IMPLEMENTED);
-        /** The EPS update type will be stored as pending IEs. */
-        /** ESM context will not change, no ESM_PROC data will be created. */
-        rc = nas_itti_pdn_config_req (emm_context->ue_id, &emm_context->_imsi);
-        OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
-      } else{
-        OAILOG_DEBUG (LOG_NAS_EMM, "EMM-PROC- Sending Tracking Area Update Accept for UE with valid subscription ue_id=" MME_UE_S1AP_ID_FMT ", active flag=%d)\n", emm_context->ue_id, tau_proc->ies->eps_update_type.active_flag);
-        /* Check the state of the EMM context. If it is REGISTERED, send an TAU_ACCEPT back and remove the tau procedure. */
-        if(emm_context->_emm_fsm_state == EMM_REGISTERED){
-          rc = _emm_tracking_area_update_accept (tau_proc); /**< Will remove the TAU procedure. */
-          nas_delete_tau_procedure(emm_context);
-        }else{
-          OAILOG_INFO(LOG_NAS_EMM, "EMM-PROC  - EMM context for the ue_id=" MME_UE_S1AP_ID_FMT " has a valid and active EPS security context and subscription but is not in EMM_REGISTERED state. Instead %d. "
-              "Continuing with the tracking area update reject. \n", emm_context->ue_id);
-          rc = emm_proc_tracking_area_update_reject (emm_context, EMM_CAUSE_NETWORK_FAILURE);
-          OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
-        }
-      }
+
+      // todo:
+//      if(ue_context->subscription_known == SUBSCRIPTION_UNKNOWN) { /**< Means, that the MM UE context is received from the sourc MME already due HO (and only due HO). */
+//        OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC- THE UE with ue_id=" MME_UE_S1AP_ID_FMT ", does not have a subscription profile set. Requesting a new subscription profile. \n",
+//            emm_context->ue_id, EMM_CAUSE_IE_NOT_IMPLEMENTED);
+//        /** The EPS update type will be stored as pending IEs. */
+//        /** ESM context will not change, no ESM_PROC data will be created. */
+//        rc = nas_itti_pdn_config_req (emm_context->ue_id, &emm_context->_imsi);
+//        OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+//      } else{
+//        OAILOG_DEBUG (LOG_NAS_EMM, "EMM-PROC- Sending Tracking Area Update Accept for UE with valid subscription ue_id=" MME_UE_S1AP_ID_FMT ", active flag=%d)\n", emm_context->ue_id, tau_proc->ies->eps_update_type.active_flag);
+//        /* Check the state of the EMM context. If it is REGISTERED, send an TAU_ACCEPT back and remove the tau procedure. */
+//        if(emm_context->_emm_fsm_state == EMM_REGISTERED){
+//          rc = _emm_tracking_area_update_accept (tau_proc); /**< Will remove the TAU procedure. */
+//          nas_delete_tau_procedure(emm_context);
+//        }else{
+//          OAILOG_INFO(LOG_NAS_EMM, "EMM-PROC  - EMM context for the ue_id=" MME_UE_S1AP_ID_FMT " has a valid and active EPS security context and subscription but is not in EMM_REGISTERED state. Instead %d. "
+//              "Continuing with the tracking area update reject. \n", emm_context->ue_id);
+//          rc = emm_proc_tracking_area_update_reject (emm_context, EMM_CAUSE_NETWORK_FAILURE);
+//          OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
+//        }
+//      }
+
+
       /** Not finishing the TAU procedure. */
     }else{
       /** Check if the origin TAI is belonging to the same MME (RF issues). */

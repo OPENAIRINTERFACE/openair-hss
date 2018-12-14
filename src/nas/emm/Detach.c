@@ -95,11 +95,11 @@ _clear_emm_ctxt(mme_ue_s1ap_id_t ue_id) {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   emm_data_context_t                     *emm_context = emm_data_context_get (&_emm_data, ue_id);
   if(!emm_context){
-    OAILOG_DEBUG("No EMM context was found to clear for ue_id " MME_UE_S1AP_ID_FMT ". \n", ue_id);
+    OAILOG_DEBUG(LOG_NAS_EMM, "No EMM context was found to clear for ue_id " MME_UE_S1AP_ID_FMT ". \n", ue_id);
     OAILOG_FUNC_OUT(LOG_NAS_EMM);
   }
   if(!emm_context->is_dynamic) {
-    OAILOG_DEBUG("Cannot clear not-dynamic EMM context for ue_id " MME_UE_S1AP_ID_FMT ". \n", ue_id);
+    OAILOG_DEBUG(LOG_NAS_EMM, "Cannot clear not-dynamic EMM context for ue_id " MME_UE_S1AP_ID_FMT ". \n", ue_id);
     OAILOG_FUNC_OUT(LOG_NAS_EMM);
   }
 //  if(s1ap_is_ue_mme_id_in_list(emm_context->ue_id)ue_ref){

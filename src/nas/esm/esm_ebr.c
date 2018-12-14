@@ -137,7 +137,7 @@ void _esm_proc_free_bearer_context_procedure(nas_esm_proc_bearer_context_t ** es
 }
 
 //-----------------------------------------------------------------------------
-nas_esm_proc_bearer_context_t _esm_proc_get_bearer_context_procedure(mme_ue_s1ap_id_t ue_id, pti_t pti, ebi_t ebi){
+nas_esm_proc_bearer_context_t *_esm_proc_get_bearer_context_procedure(mme_ue_s1ap_id_t ue_id, pti_t pti, ebi_t ebi){
   return mme_app_nas_esm_get_bearer_context_procedure(ue_id, pti, ebi);
 }
 

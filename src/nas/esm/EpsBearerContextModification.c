@@ -69,6 +69,7 @@
 #include "esm_ebr.h"
 #include "esm_proc.h"
 #include "esm_cause.h"
+#include "nas_esm_proc.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -243,7 +244,7 @@ esm_proc_modify_eps_bearer_context (
    */
   nas_stop_esm_timer(ue_id, &esm_proc_bearer_context->esm_base_proc.esm_proc_timer);
   /** Start the T3485 timer for additional PDN connectivity. */
-  esm_proc_bearer_context->esm_base_proc.esm_proc_timer.id = nas_timer_start (mme_config.nas_config.t3486_sec, 0 /*usec*/, TASK_NAS_ESM,
+  esm_proc_bearer_context->esm_base_proc.esm_proc_timer.id = nas_timer_start (mme_config.nas_config.t3486_sec, 0 /*usec*/, false,
       _nas_proc_pdn_connectivity_timeout_handler, ue_id); /**< Address field should be big enough to save an ID. */
   esm_proc_bearer_context->esm_base_proc.timeout_notif = _modify_eps_bearer_context_t3486_handler;
   OAILOG_FUNC_RETURN(LOG_NAS_ESM, esm_cause);
@@ -331,8 +332,7 @@ esm_cause_t
 esm_proc_modify_eps_bearer_context_accept (
   mme_ue_s1ap_id_t ue_id,
   ebi_t ebi,
-  pti_t pti,
-  esm_cause_t *esm_cause)
+  pti_t pti)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   int                                     rc = RETURNerror;
@@ -342,14 +342,14 @@ esm_proc_modify_eps_bearer_context_accept (
 
   /*
    * Set the MME_APP Bearer context as final.
-   * todo: update the TFT and qos now or before?
+   * todo: update the TFT and qos now or before? --> Later
    */
-  mme_app_esm_finalize_bearer_context(ue_id, ebi)
+  mme_app_esm_finalize_bearer_context(ue_id, ebi, NULL, NULL);
 
   /*
    * Check that an EPS procedure exists.
    */
-  nas_esm_proc_bearer_context_t * esm_bearer_procedure = _esm_proc_get_bearer_context_procedure(ue_id, ebi, pti);
+  nas_esm_proc_bearer_context_t * esm_bearer_procedure = _esm_proc_get_bearer_context_procedure(ue_id, pti, ebi);
   if(!esm_bearer_procedure){
     OAILOG_ERROR(LOG_NAS_ESM, "ESM-PROC  - No ESM bearer procedure exists for accepted dedicated bearer (ebi=%d, pti=%d) for UE " MME_UE_S1AP_ID_FMT ". \n", ebi, pti, ue_id);
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_REQUEST_REJECTED_UNSPECIFIED);
@@ -363,7 +363,7 @@ esm_proc_modify_eps_bearer_context_accept (
   /*
    * Update the bearer context.
    */
-  esm_cause = mme_app_esm_finalize_bearer_context(ue_id, ebi);
+  esm_cause_t esm_cause = mme_app_esm_finalize_bearer_context(ue_id, ebi);
 
   if(esm_cause == ESM_CAUSE_SUCCESS){
     /**
@@ -425,7 +425,8 @@ esm_proc_modify_eps_bearer_context_reject (
    * Will also check if the bearer exists. If not (E-RAB Setup Failure), the message will be dropped.
    */
   // todo: fix this
-  nas_esm_proc_bearer_context_t * esm_proc_bearer_context = _esm_proc_get_bearer_context_procedure(ue_id, pti);
+
+  nas_esm_proc_bearer_context_t * esm_proc_bearer_context = _esm_proc_get_bearer_context_procedure(ue_id, pti, ebi);
   if(!esm_proc_bearer_context){
     OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - No EPS bearer context modification procedure exists for pti=%d" "not accepted by the UE (ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d, cause=%d)\n",
         pti, ue_id, ebi, *esm_cause);
@@ -448,26 +449,27 @@ esm_proc_modify_eps_bearer_context_reject (
         OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Failed to release EPS bearer context\n");
         OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
       }
-    }
+  }
 
-    if (*esm_cause != ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY) {
+  if (*esm_cause != ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY) {
       /*
        * Session bearer existed and was not removed.
        * Failed to release the modify the EPS bearer context
        */
       *esm_cause = ESM_CAUSE_PROTOCOL_ERROR;
       /** Set the state back to active. */
-      esm_ebr_set_status(esm_context, ebi, ESM_EBR_ACTIVE, ue_requested);
+//      esm_ebr_set_status(esm_context, ebi, ESM_EBR_ACTIVE, ue_requested);
     }
     /**
      * Inform the MME_APP only if it came as an ESM response, the bearer existed and no E-RAB failure was received yet. The S11 procedure should be handled with already.
      * We don't check the return value of status setting, because the bearer might have also been removed implicitly.
      */
-    if(ue_requested && oldState != ESM_EBR_ACTIVE) /**< Check if the procedure was not released before due E-RAB failure. */
+    if(oldState != ESM_EBR_ACTIVE) /**< Check if the procedure was not released before due E-RAB failure. */
       nas_itti_modify_eps_bearer_ctx_rej(ue_id, ebi, esm_cause); /**< The SAE-GW should release the cause, too. */
-  } else {
-    /** No E-RAB  could be found. Can live with it. */
-  }
+//  } else {
+//    /** No E-RAB  could be found. Can live with it. */
+//  }
+
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
 }
 
@@ -514,54 +516,54 @@ static int _modify_eps_bearer_context_t3486_handler (nas_esm_proc_bearer_context
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   int                                     rc;
 
-  /*
-   * Get retransmission timer parameters data
-   */
-  esm_ebr_timer_data_t                   *esm_ebr_timer_data = (esm_ebr_timer_data_t *) (args);
-
-  if (esm_ebr_timer_data) {
-    /*
-     * Increment the retransmission counter
-     */
-    esm_ebr_timer_data->count += 1;
-    OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - T3486 timer expired (ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d), " "retransmission counter = %d\n",
-        esm_ebr_timer_data->ue_id, esm_ebr_timer_data->ebi, esm_ebr_timer_data->count);
-
-    if (esm_ebr_timer_data->count < EPS_BEARER_CONTEXT_MODIFY_COUNTER_MAX) {
-      /*
-       * Re-send modify EPS bearer context request message
-       * * * * to the UE
-       */
-      bstring b = bstrcpy(esm_ebr_timer_data->msg);
-      rc = _modify_eps_bearer_context (esm_ebr_timer_data->ctx, esm_ebr_timer_data->ebi, &b);
-    } else {
-      /*
-       * The maximum number of modify EPS bearer context request
-       * message retransmission has exceed
-       */
-      pdn_cid_t                               pid = MAX_APN_PER_UE;
-
-      /*
-       * Keep the current content of the EPS bearer context and stay in state ACTIVE.
-       */
-      rc = esm_ebr_set_status(esm_ebr_timer_data->ctx, esm_ebr_timer_data->ebi, ESM_EBR_ACTIVE, false);
-
-      if (rc != RETURNerror) {
-        /*
-         * Stop timer T3486
-         */
-        rc = esm_ebr_stop_timer (esm_ebr_timer_data->ctx, esm_ebr_timer_data->ebi);
-      }
-
-      /** Send a reject back to the MME_APP layer to continue with the Update Bearer Response. */
-      nas_itti_modify_eps_bearer_ctx_rej(esm_ebr_timer_data->ctx->ue_id, esm_ebr_timer_data->ebi, 0);
-
-    }
-    if (esm_ebr_timer_data->msg) {
-      bdestroy_wrapper (&esm_ebr_timer_data->msg);
-    }
-    free_wrapper ((void**)&esm_ebr_timer_data);
-  }
+//  /*
+//   * Get retransmission timer parameters data
+//   */
+//  esm_ebr_timer_data_t                   *esm_ebr_timer_data = (esm_ebr_timer_data_t *) (args);
+//
+//  if (esm_ebr_timer_data) {
+//    /*
+//     * Increment the retransmission counter
+//     */
+//    esm_ebr_timer_data->count += 1;
+//    OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - T3486 timer expired (ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d), " "retransmission counter = %d\n",
+//        esm_ebr_timer_data->ue_id, esm_ebr_timer_data->ebi, esm_ebr_timer_data->count);
+//
+//    if (esm_ebr_timer_data->count < EPS_BEARER_CONTEXT_MODIFY_COUNTER_MAX) {
+//      /*
+//       * Re-send modify EPS bearer context request message
+//       * * * * to the UE
+//       */
+//      bstring b = bstrcpy(esm_ebr_timer_data->msg);
+//      rc = _modify_eps_bearer_context (esm_ebr_timer_data->ctx, esm_ebr_timer_data->ebi, &b);
+//    } else {
+//      /*
+//       * The maximum number of modify EPS bearer context request
+//       * message retransmission has exceed
+//       */
+//      pdn_cid_t                               pid = MAX_APN_PER_UE;
+//
+//      /*
+//       * Keep the current content of the EPS bearer context and stay in state ACTIVE.
+//       */
+//      rc = esm_ebr_set_status(esm_ebr_timer_data->ctx, esm_ebr_timer_data->ebi, ESM_EBR_ACTIVE, false);
+//
+//      if (rc != RETURNerror) {
+//        /*
+//         * Stop timer T3486
+//         */
+//        rc = esm_ebr_stop_timer (esm_ebr_timer_data->ctx, esm_ebr_timer_data->ebi);
+//      }
+//
+//      /** Send a reject back to the MME_APP layer to continue with the Update Bearer Response. */
+//      nas_itti_modify_eps_bearer_ctx_rej(esm_ebr_timer_data->ctx->ue_id, esm_ebr_timer_data->ebi, 0);
+//
+//    }
+//    if (esm_ebr_timer_data->msg) {
+//      bdestroy_wrapper (&esm_ebr_timer_data->msg);
+//    }
+//    free_wrapper ((void**)&esm_ebr_timer_data);
+//  }
 
   OAILOG_FUNC_OUT (LOG_NAS_ESM);
 }

@@ -544,7 +544,10 @@ static int _emm_as_data_ind (emm_as_data_t * msg, int *emm_cause)
            */
           // shrink plain_msg
           btrunc(plain_msg, bytes);
-          rc = lowerlayer_data_ind (msg->ue_id, plain_msg);
+          nas_itti_esm_data_ind(emm_ctx->ue_id, plain_msg, false,
+              &emm_ctx->_imsi, &emm_ctx->_lvr_tai);
+
+//          rc = lowerlayer_data_ind (msg->ue_id, plain_msg);
         }
 
         bdestroy_wrapper (&plain_msg);

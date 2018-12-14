@@ -259,7 +259,7 @@ esm_proc_dedicated_eps_bearer_context (
 //    bc_tbc->eps_bearer_id = ded_ebi; /**< Will only used is successfully established. */
 
   if(esm_cause != ESM_CAUSE_SUCCESS){
-    OAILOG_INFO(LOG_NAS_ESM, "ESM-PROC  - Error assigning bearer context for ue " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
+    OAILOG_INFO(LOG_NAS_ESM, "ESM-PROC  - Error assigning bearer context for ue " MME_UE_S1AP_ID_FMT ". \n", ue_id);
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, esm_cause);
   }
   /*
@@ -274,7 +274,7 @@ esm_proc_dedicated_eps_bearer_context (
    */
   nas_stop_esm_timer(ue_id, &esm_proc_bearer_context->esm_base_proc.esm_proc_timer);
   /** Start the T3485 timer for additional PDN connectivity. */
-  esm_proc_bearer_context->esm_base_proc.esm_proc_timer.id = nas_timer_start (mme_config.nas_config.t3485_sec, 0 /*usec*/, TASK_NAS_ESM,
+  esm_proc_bearer_context->esm_base_proc.esm_proc_timer.id = nas_timer_start (mme_config.nas_config.t3485_sec, 0 /*usec*/, false,
       _nas_proc_pdn_connectivity_timeout_handler, ue_id); /**< Address field should be big enough to save an ID. */
   esm_proc_bearer_context->esm_base_proc.timeout_notif = _dedicated_eps_bearer_activate_t3485_handler;
 

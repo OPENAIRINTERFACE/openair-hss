@@ -228,7 +228,7 @@ esm_proc_eps_bearer_context_deactivate_request (
   /** Stop any timer if running. */
   nas_stop_esm_timer(ue_id, &esm_bearer_context_proc->esm_base_proc.esm_proc_timer);
   /** Start the T3485 timer for additional PDN connectivity. */
-  esm_bearer_context_proc->esm_base_proc.esm_proc_timer.id = nas_timer_start (esm_bearer_context_proc->esm_base_proc.esm_proc_timer.sec, 0 /*usec*/, TASK_NAS_ESM,
+  esm_bearer_context_proc->esm_base_proc.esm_proc_timer.id = nas_timer_start (esm_bearer_context_proc->esm_base_proc.esm_proc_timer.sec, 0 /*usec*/, false,
       _nas_proc_pdn_connectivity_timeout_handler, ue_id); /**< Address field should be big enough to save an ID. */
 
   esm_bearer_context_proc->esm_base_proc.timeout_notif = _eps_bearer_deactivate_t3492_handler;

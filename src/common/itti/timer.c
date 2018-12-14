@@ -128,7 +128,7 @@ int
 timer_setup (
   uint32_t interval_sec,
   uint32_t interval_us,
-  task_id_t task_id,
+  task_id_t     task_id,
   int32_t instance,
   timer_type_t type,
   void *timer_arg,

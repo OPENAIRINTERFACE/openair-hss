@@ -80,13 +80,11 @@ int esm_proc_status_ind(mme_ue_s1ap_id_t ue_id, const proc_tid_t pti, ebi_t ebi,
  */
 nas_esm_proc_pdn_connectivity_t *_esm_proc_create_pdn_connectivity_procedure(mme_ue_s1ap_id_t ue_id, imsi_t *imsi, pti_t pti);
 void _esm_proc_free_pdn_connectivity_procedure(nas_esm_proc_pdn_connectivity_t ** esm_proc_pdn_connectivity);
-void _esm_proc_get_pdn_connectivity_procedure(mme_ue_s1ap_id_t ue_id, pti_t pti);
+nas_esm_proc_pdn_connectivity_t *_esm_proc_get_pdn_connectivity_procedure(mme_ue_s1ap_id_t ue_id, pti_t pti);
 
 /*
  * Bearer context procedure, which may or may not be a transactional procedure (triggered by UE/congestion, or CN).
  */
-nas_esm_proc_bearer_context_t *_esm_proc_create_bearer_context_procedure(mme_ue_s1ap_id_t ue_id, imsi_t *imsi, pti_t pti, ebi_t ebi, bstring apn);
-void _esm_proc_free_bearer_context_procedure(nas_esm_proc_bearer_context_t * esm_proc_bearer_context);
 
 int
 esm_proc_pdn_connectivity_request (
@@ -194,7 +192,7 @@ esm_cause_t
 esm_proc_modify_eps_bearer_context_accept (
   mme_ue_s1ap_id_t ue_id,
   ebi_t ebi,
-  esm_cause_t *esm_cause);
+  pti_t pti);
 
 esm_cause_t
 esm_proc_modify_eps_bearer_context_reject (

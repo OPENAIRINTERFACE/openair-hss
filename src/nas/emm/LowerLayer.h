@@ -68,7 +68,7 @@ int lowerlayer_non_delivery_indication (mme_ue_s1ap_id_t ue_id, STOLEN_REF bstri
 int lowerlayer_establish(void);
 int lowerlayer_release(mme_ue_s1ap_id_t ue_id, int cause);
 
-int lowerlayer_data_ind(mme_ue_s1ap_id_t ueid, const_bstring data);
+//int lowerlayer_data_ind(mme_ue_s1ap_id_t ueid, const_bstring data);
 int lowerlayer_data_req(mme_ue_s1ap_id_t ueid, bstring data);
 int lowerlayer_activate_bearer_req(const mme_ue_s1ap_id_t ue_id, const ebi_t ebi,
     const bitrate_t        mbr_dl,

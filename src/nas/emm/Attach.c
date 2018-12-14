@@ -253,7 +253,7 @@ int emm_proc_attach_request (
      no_attach_proc.ue_id       = ue_id;
      no_attach_proc.emm_cause   = temp_emm_ue_ctx.emm_cause;
     no_attach_proc.esm_msg_out = NULL;
-    rc = _emm_attach_reject (&temp_emm_ue_ctx, (struct nas_base_proc_s *)&no_attach_proc);
+    rc = _emm_attach_reject (&temp_emm_ue_ctx, (struct nas_base_proc_s *)&no_attach_proc, NULL);
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
   }
 
@@ -324,7 +324,7 @@ int emm_proc_attach_request (
       no_attach_proc.ue_id       = ue_id;
       no_attach_proc.emm_cause   = temp_emm_ue_ctx.emm_cause;
       no_attach_proc.esm_msg_out = NULL;
-      rc = _emm_attach_reject (&temp_emm_ue_ctx, (struct nas_base_proc_s *)&no_attach_proc);
+      rc = _emm_attach_reject (&temp_emm_ue_ctx, (struct nas_base_proc_s *)&no_attach_proc, NULL);
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc); /**< Return with an error. */
     }
     /** Initialize the EMM context only in this case, else we have a DEREGISTERED but valid EMM context. */
@@ -349,7 +349,7 @@ int emm_proc_attach_request (
       no_attach_proc.ue_id       = ue_id;
       no_attach_proc.emm_cause   = new_emm_ue_ctx->emm_cause;
       no_attach_proc.esm_msg_out = NULL;
-      rc = _emm_attach_reject (new_emm_ue_ctx, (struct nas_base_proc_s *)&no_attach_proc); /**< todo: Not removing old duplicate. */
+      rc = _emm_attach_reject (new_emm_ue_ctx, (struct nas_base_proc_s *)&no_attach_proc, NULL); /**< todo: Not removing old duplicate. */
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
     }
   }else if ((*duplicate_emm_ue_ctx_pP) && (*duplicate_emm_ue_ctx_pP)->emm_cause == EMM_CAUSE_SUCCESS){
@@ -419,7 +419,7 @@ int emm_proc_attach_request (
       nas_emm_attach_proc_t                  *attach_proc = get_nas_specific_procedure_attach(new_emm_ue_ctx);
       attach_proc->emm_cause   = new_emm_ue_ctx->emm_cause;
       attach_proc->esm_msg_out = NULL;
-      rc = _emm_attach_reject (new_emm_ue_ctx, (struct nas_base_proc_s *)attach_proc);
+      rc = _emm_attach_reject (new_emm_ue_ctx, (struct nas_base_proc_s *)attach_proc, NULL);
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
     }
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
@@ -468,7 +468,7 @@ int emm_proc_attach_reject (mme_ue_s1ap_id_t ue_id, emm_cause_t emm_cause)
 //      emm_sap.u.emm_reg.u.attach.proc = attach_proc;
 //      rc = emm_sap_send (&emm_sap);
       attach_proc->emm_cause = emm_cause;
-      rc = _emm_attach_reject (emm_context, &attach_proc->emm_spec_proc.emm_proc.base_proc);
+      rc = _emm_attach_reject (emm_context, &attach_proc->emm_spec_proc.emm_proc.base_proc, NULL);
     }else{
       OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - No attach procedure for (ue_id=" MME_UE_S1AP_ID_FMT ")\n", ue_id);
 
@@ -973,7 +973,7 @@ static int _emm_attach_release (emm_data_context_t *emm_context)
 
 /*
  *
- * Name:    _emm_attach_reject()
+ * Name:    _emm_wrapper_attach_reject()
  *
  * Description: Performs the attach procedure not accepted by the network.
  *
@@ -1009,12 +1009,15 @@ int _emm_wrapper_attach_reject (mme_ue_s1ap_id_t ue_id, bstring esm_rsp)
     OAILOG_FUNC_RETURN(LOG_NAS_EMM, RETURNok);
   }
 
+  rc = _emm_attach_reject(emm_context, attach_proc, esm_rsp);
+
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
-static int _emm_attach_reject(mme_ue_s1ap_id_t ue_id, bstring rsp)
+// todo: put back as static
+int _emm_attach_reject(emm_data_context_t * emm_context, nas_emm_attach_proc_t * attach_proc, bstring rsp)
 {
   emm_sap_t                               emm_sap = {0};
-  emm_data_context_t                     *emm_context = NULL;
 
   OAILOG_FUNC_IN(LOG_NAS_EMM);
 
@@ -1046,7 +1049,7 @@ static int _emm_attach_reject(mme_ue_s1ap_id_t ue_id, bstring rsp)
   } else {
     emm_as_set_security_data (&emm_sap.u.emm_as.u.establish.sctx, NULL, false, false);
   }
-  rc = emm_sap_send (&emm_sap);
+  int rc = emm_sap_send (&emm_sap);
   // Release EMM context
   _clear_emm_ctxt(emm_context->ue_id);
 
@@ -1186,7 +1189,7 @@ static int _emm_attach_retry_procedure(emm_data_context_t *emm_ctx){
   if(duplicate_emm_context){
     /** Send an attach reject back. */
     OAILOG_WARNING(LOG_NAS_EMM, "EMM-PROC  - An old EMM context for ue_id=" MME_UE_S1AP_ID_FMT " still existing. Aborting the attach procedure. \n", attach_proc->emm_spec_proc.old_ue_id);
-    rc = _emm_attach_reject (emm_context, &attach_proc->emm_spec_proc.emm_proc.base_proc);
+    rc = _emm_attach_reject (emm_context, &attach_proc->emm_spec_proc.emm_proc.base_proc, NULL);
 //
 //    emm_sap_t emm_sap                      = {0};
 //    emm_sap.primitive                      = EMMREG_ATTACH_REJ;
@@ -1205,7 +1208,7 @@ static int _emm_attach_retry_procedure(emm_data_context_t *emm_ctx){
   if(duplicate_ue_context){
     OAILOG_WARNING(LOG_NAS_EMM, "EMM-PROC  - An old UE context for ue_id=" MME_UE_S1AP_ID_FMT " still existing. Aborting the attach procedure. \n", attach_proc->emm_spec_proc.old_ue_id);
     /** Send an attach reject back. */
-    rc = _emm_attach_reject (emm_context, &attach_proc->emm_spec_proc.emm_proc.base_proc);
+    rc = _emm_attach_reject (emm_context, &attach_proc->emm_spec_proc.emm_proc.base_proc, NULL);
 
 //    emm_sap_t emm_sap                      = {0};
 //    emm_sap.primitive                      = EMMREG_ATTACH_REJ;
@@ -1295,7 +1298,7 @@ static int _emm_attach_failure_authentication_cb (emm_data_context_t *emm_contex
     attach_proc->emm_cause = emm_context->emm_cause;
 
     // TODO could be in callback of attach procedure triggered by EMMREG_ATTACH_REJ
-    rc = _emm_attach_reject (emm_context, &attach_proc->emm_spec_proc.emm_proc.base_proc);
+    rc = _emm_attach_reject (emm_context, &attach_proc->emm_spec_proc.emm_proc.base_proc, NULL);
 
 //    emm_sap_t emm_sap                      = {0};
 //    emm_sap.primitive                      = EMMREG_ATTACH_REJ;
@@ -1526,7 +1529,7 @@ static int _emm_attach (emm_data_context_t *emm_context)
        * Notify ESM that PDN connectivity is requested.
        * This will decouple the ESM message.
        */
-      nas_itti_esm_data_ind(emm_context->ue_id, &attach_proc->ies->esm_msg,
+      nas_itti_esm_data_ind(emm_context->ue_id, &attach_proc->ies->esm_msg, true,
           attach_proc->ies->imsi, attach_proc->ies->last_visited_registered_tai);
       OAILOG_INFO (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " EMM-PROC  - Processing PDN Connectivity Request asynchronously.\n", emm_context->ue_id);
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
@@ -1559,7 +1562,7 @@ int _emm_wrapper_attach_accept (mme_ue_s1ap_id_t ue_id, bstring * esm_msg)
 //      rc = emm_sap_send (&emm_sap);
 //    }
 //  }
-  OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
+  OAILOG_FUNC_RETURN(LOG_NAS_EMM, RETURNok);
 }
 
 /*

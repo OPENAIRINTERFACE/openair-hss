@@ -279,12 +279,11 @@ mme_app_esm_update_pdn_context(mme_ue_s1ap_id_t ue_id, const bstring apn, pdn_ci
   int                        rc                 = RETURNok;
 
   OAILOG_FUNC_IN (LOG_MME_APP);
-  ue_context_t * ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, ue_id);
+  ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, ue_id);
   if(!ue_context){
     OAILOG_ERROR (LOG_MME_APP, "No MME_APP UE context could be found for UE: " MME_UE_S1AP_ID_FMT ". \n", ue_id);
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
-  pdn_context_t * pdn_context = NULL;
   mme_app_get_pdn_context(ue_id, pdn_cid, linked_ebi, apn, &pdn_context);
   if(!pdn_context){
     OAILOG_ERROR (LOG_MME_APP, "No PDN context for could be found for APN \"%s\" for UE: " MME_UE_S1AP_ID_FMT ". \n", bdata(apn), ue_id);
@@ -302,7 +301,7 @@ mme_app_esm_update_pdn_context(mme_ue_s1ap_id_t ue_id, const bstring apn, pdn_ci
   DevAssert(default_bearer);
   DevAssert(default_bearer->ebi == default_bearer->linked_ebi);
   DevAssert(default_bearer->ebi == pdn_context->default_ebi);
-  mme_app_esm_update_bearer_context(default_bearer, default_bearer_qos, esm_ebr_state);
+  mme_app_esm_update_bearer_context(default_bearer, default_bearer_qos, esm_ebr_state, (traffic_flow_template_t*)NULL);
   //    if(pco){
   //      if (bearer_context->esm_ebr_context.pco) {
   //        free_protocol_configuration_options(&bearer_context->esm_ebr_context.pco);
@@ -328,7 +327,7 @@ mme_app_esm_delete_pdn_context(mme_ue_s1ap_id_t ue_id, bstring apn, pdn_cid_t pd
   }
   mme_app_get_pdn_context(ue_context, pdn_cid, linked_ebi, apn, &pdn_context);
   if (!pdn_context) {
-    OAILOG_WARNING(LOG_NAS_ESM, "ESM-PROC  - PDN connection for cid=%d and ebi=%d and APN \"%s\" has not been allocated for UE "MME_UE_S1AP_ID_FMT". \n", pdn_cid, default_ebi, bdata(apn), ue_id);
+    OAILOG_WARNING(LOG_NAS_ESM, "ESM-PROC  - PDN connection for cid=%d and ebi=%d and APN \"%s\" has not been allocated for UE "MME_UE_S1AP_ID_FMT". \n", pdn_cid, linked_ebi, bdata(apn), ue_id);
     OAILOG_FUNC_OUT(LOG_MME_APP);
   }
 

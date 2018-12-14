@@ -457,8 +457,8 @@ typedef struct ue_context_s {
 
   /** ESM Procedures */
   struct esm_procedures_s {
-    LIST_HEAD(esm_pdn_connectivity_procedures_s, mme_app_s10_proc_s) *pdn_connectivity_procedures;
-    LIST_HEAD(esm_bearer_context_procedures_s, mme_app_s11_proc_s)   *bearer_context_procedures;
+    LIST_HEAD(esm_pdn_connectivity_procedures_s, nas_esm_proc_pdn_connectivity_s) *pdn_connectivity_procedures;
+    LIST_HEAD(esm_bearer_context_procedures_s, nas_esm_proc_bearer_context_s)   *bearer_context_procedures;
   }esm_procedures;
   /* Time when the cell identity was acquired */
 

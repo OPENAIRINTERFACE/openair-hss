@@ -280,39 +280,39 @@ int lowerlayer_release (mme_ue_s1ap_id_t ue_id, int cause)
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
-/****************************************************************************
- **                                                                        **
- ** Name:    lowerlayer_data_ind()                                     **
- **                                                                        **
- ** Description: Notify the EPS Session Management entity that data have   **
- **      been received from lower layers                           **
- **                                                                        **
- ** Inputs:  ue_id:      UE lower layer identifier                  **
- **      data:      Data transfered from lower layers          **
- **      Others:    None                                       **
- **                                                                        **
- ** Outputs:     None                                                      **
- **      Return:    RETURNok, RETURNerror                      **
- **      Others:    None                                       **
- **                                                                        **
- ***************************************************************************/
-int lowerlayer_data_ind (mme_ue_s1ap_id_t ue_id, const_bstring    data)
-{
-  esm_sap_t                               esm_sap = {0};
-  int                                     rc = RETURNok;
-
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
-
-  emm_data_context_t                     *emm_data_context = emm_data_context_get(&_emm_data, ue_id);
-  esm_sap.primitive = ESM_UNITDATA_IND;
-  esm_sap.ue_id = ue_id;
-  esm_sap.ctx = emm_data_context;
-  esm_sap.recv = data;
-  data = NULL;
-  rc = esm_sap_send (&esm_sap);
-//  unlock_ue_contexts(ue_context);
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
-}
+///****************************************************************************
+// **                                                                        **
+// ** Name:    lowerlayer_data_ind()                                     **
+// **                                                                        **
+// ** Description: Notify the EPS Session Management entity that data have   **
+// **      been received from lower layers                           **
+// **                                                                        **
+// ** Inputs:  ue_id:      UE lower layer identifier                  **
+// **      data:      Data transfered from lower layers          **
+// **      Others:    None                                       **
+// **                                                                        **
+// ** Outputs:     None                                                      **
+// **      Return:    RETURNok, RETURNerror                      **
+// **      Others:    None                                       **
+// **                                                                        **
+// ***************************************************************************/
+//int lowerlayer_data_ind (mme_ue_s1ap_id_t ue_id, const_bstring    data)
+//{
+//  esm_sap_t                               esm_sap = {0};
+//  int                                     rc = RETURNok;
+//
+//  OAILOG_FUNC_IN (LOG_NAS_EMM);
+//
+//  emm_data_context_t                     *emm_data_context = emm_data_context_get(&_emm_data, ue_id);
+//  esm_sap.primitive = ESM_UNITDATA_IND;
+//  esm_sap.ue_id = ue_id;
+//  esm_sap.ctx = emm_data_context;
+//  esm_sap.recv = data;
+//  data = NULL;
+//  rc = esm_sap_send (&esm_sap);
+////  unlock_ue_contexts(ue_context);
+//  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+//}
 
 /****************************************************************************
  **                                                                        **
