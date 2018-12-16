@@ -84,9 +84,9 @@ int esm_send_status(pti_t pti, ebi_t ebi, esm_status_msg *msg, int esm_cause);
 int esm_send_pdn_connectivity_reject (
   pti_t pti,
   ESM_msg * esm_msg,
-  int esm_cause);
+  esm_cause_t esm_cause);
 
-int esm_send_pdn_disconnect_reject(pti_t pti, ESM_msg *esm_rsp_msg, int esm_cause);
+void esm_send_pdn_disconnect_reject(pti_t pti, ESM_msg *esm_rsp_msg, int esm_cause);
 
 /*
  * Messages related to EPS bearer contexts
@@ -97,12 +97,11 @@ void _default_eps_bearer_activate_t3485_handler (nas_esm_proc_pdn_connectivity_t
 
 void
 esm_send_activate_default_eps_bearer_context_request (
-  mme_ue_s1ap_id_t ue_id,
-  pti_t pti,
-  nas_esm_proc_pdn_connectivity_t * esm_pdn_connectivity_proc,
-  ESM_msg * esm_resp_msg,
-  pdn_context_t * pdn_context,
-  bearer_context_t * bearer_context);
+  nas_esm_proc_pdn_connectivity_t * esm_proc_pdn_connectivity,
+  ambr_t * apn_ambr,
+  bearer_qos_t * bearer_level_qos,
+  paa_t   * paa,
+  ESM_msg * esm_resp_msg);
 
 void esm_send_activate_dedicated_eps_bearer_context_request(pti_t pti, ebi_t ebi,
     activate_dedicated_eps_bearer_context_request_msg *msg, ebi_t linked_ebi,
@@ -118,6 +117,6 @@ void esm_send_modify_eps_bearer_context_request(pti_t pti, ebi_t ebi,
     protocol_configuration_options_t *pco);
 
 void esm_send_deactivate_eps_bearer_context_request(pti_t pti, ebi_t ebi,
-    ESM_msg * esm_rsp_msg, int esm_cause);
+    ESM_msg * esm_rsp_msg, esm_cause_t esm_cause);
 
 #endif /* __ESM_MESSAGES_H__*/

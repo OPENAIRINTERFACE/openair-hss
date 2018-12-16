@@ -65,9 +65,10 @@ void nas_timer_cleanup (void)
 {
 }
 
-//------------------------------------------------------------------------------
 
-long int nas_timer_start (
+
+//------------------------------------------------------------------------------
+static long int nas_timer_start (
     long sec,
     long usec,
     bool is_emm,
@@ -99,6 +100,25 @@ long int nas_timer_start (
 
 
   return (timer_id);
+}
+
+//------------------------------------------------------------------------------
+long int nas_emm_timer_start (
+    long sec,
+    long usec,
+    nas_timer_callback_t nas_timer_callback,
+    void *nas_timer_callback_args)
+{
+  return nas_timer_start(sec, usec, true, nas_timer_callback, nas_timer_callback);
+}
+
+//------------------------------------------------------------------------------
+long int nas_esm_timer_start (
+    long sec,
+    long usec,
+    void *nas_timer_callback_args)
+{
+  return nas_timer_start(sec, usec, false, _nas_proc_esm_timeout_handler, nas_timer_callback_args);
 }
 
 //------------------------------------------------------------------------------

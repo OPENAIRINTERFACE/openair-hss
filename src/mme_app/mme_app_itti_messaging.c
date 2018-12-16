@@ -905,7 +905,8 @@ void mme_app_itti_nas_pdn_connectivity_response(ue_context_t * ue_context,
   nas_pdn_connectivity_rsp->pdn_cid = bc->pdn_cx_id;
   nas_pdn_connectivity_rsp->pti = bc->transaction_identifier;  // NAS internal ref
   nas_pdn_connectivity_rsp->ue_id = ue_context->mme_ue_s1ap_id;      // NAS internal ref
-  nas_pdn_connectivity_rsp->pdn_addr = paa_to_bstring(paa);
+//  nas_pdn_connectivity_rsp->pdn_addr = paa_to_bstring(paa);
+  nas_pdn_connectivity_rsp->paa = paa;
   // todo: mme_app ue_context does not has a PAA?
   //      memcpy(ue_context_p->paa.ipv4_address, create_sess_resp_pP->paa.ipv4_address, 4);
   nas_pdn_connectivity_rsp->pdn_type = paa->pdn_type;

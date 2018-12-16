@@ -101,7 +101,7 @@ esm_main_initialize (
   /*
    * Initialize the EPS bearer context manager
    */
-  esm_ebr_initialize ();
+//  todo: esm_ebr_initialize ();
   OAILOG_FUNC_OUT (LOG_NAS_ESM);
 }
 

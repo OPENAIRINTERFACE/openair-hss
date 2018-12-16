@@ -153,11 +153,6 @@ typedef struct bearer_context_s {
   fteid_t                      p_gw_fteid_s5_s8_up;
 
   // EPS bearer QoS: QCI and ARP, optionally: GBR and MBR for GBR bearer
-  qci_t                       qci;
-  bitrate_t                   gbr_dl;
-  bitrate_t                   gbr_ul;
-  bitrate_t                   mbr_dl;
-  bitrate_t                   mbr_ul;
 
   // extra 23.401 spec members
   pdn_cid_t                         pdn_cx_id;
@@ -171,9 +166,7 @@ typedef struct bearer_context_s {
   fteid_t                           enb_fteid_s1u;
 
   /* QoS for this bearer */
-  priority_level_t            priority_level;
-  pre_emption_vulnerability_t preemption_vulnerability;
-  pre_emption_capability_t    preemption_capability;
+  bearer_qos_t                bearer_level_qos;
 
   /** Add an entry field to make it part of a list. */
   LIST_ENTRY(bearer_context_s) entries;      /* List. */
@@ -249,7 +242,6 @@ typedef struct pdn_context_s {
 
   // EPS subscribed QoS profile: The bearer level QoS parameter values for that APN's default bearer (QCI and
   // ARP) (see clause 4.7.3).
-  eps_subscribed_qos_profile_t  default_bearer_eps_subscribed_qos_profile;
 
   // Subscribed APN-AMBR: The Maximum Aggregated uplink and downlink MBR values to be shared across
   //                      all Non-GBR bearers, which are established for this APN, according to the

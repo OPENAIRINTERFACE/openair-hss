@@ -193,7 +193,7 @@ void qos_params_to_eps_qos(const qci_t qci, const bitrate_t mbr_dl, const bitrat
     EpsQualityOfService * const eps_qos, bool is_default_bearer)
 {
   // if someone volunteer for subroutines..., no time yet.
-  DevAssert(eps_qos);
+//  DevAssert(eps_qos);
   memset(eps_qos, 0, sizeof(EpsQualityOfService));
   eps_qos->qci = qci;
   if (!is_default_bearer) {

@@ -276,10 +276,10 @@ mme_app_handle_conn_est_cnf (
       if(bc_session){ // todo: check for error cases in handover.. if this can ever be null..
 //        if ((BEARER_STATE_SGW_CREATED  || BEARER_STATE_S1_RELEASED) & bc_session->bearer_state) {    /**< It could be in IDLE mode. */
           establishment_cnf_p->e_rab_id[establishment_cnf_p->no_of_e_rabs]                                 = bc_session->ebi ;//+ EPS_BEARER_IDENTITY_FIRST;
-          establishment_cnf_p->e_rab_level_qos_qci[establishment_cnf_p->no_of_e_rabs]                      = bc_session->qci;
-          establishment_cnf_p->e_rab_level_qos_priority_level[establishment_cnf_p->no_of_e_rabs]           = bc_session->priority_level;//first_bearer->priority_level;
-          establishment_cnf_p->e_rab_level_qos_preemption_capability[establishment_cnf_p->no_of_e_rabs]    = bc_session->preemption_capability;
-          establishment_cnf_p->e_rab_level_qos_preemption_vulnerability[establishment_cnf_p->no_of_e_rabs] = bc_session->preemption_vulnerability;
+          establishment_cnf_p->e_rab_level_qos_qci[establishment_cnf_p->no_of_e_rabs]                      = bc_session->bearer_level_qos.qci;
+          establishment_cnf_p->e_rab_level_qos_priority_level[establishment_cnf_p->no_of_e_rabs]           = bc_session->bearer_level_qos.pl;
+          establishment_cnf_p->e_rab_level_qos_preemption_capability[establishment_cnf_p->no_of_e_rabs]    = bc_session->bearer_level_qos.pci == 0 ? 1 : 0;
+          establishment_cnf_p->e_rab_level_qos_preemption_vulnerability[establishment_cnf_p->no_of_e_rabs] = bc_session->bearer_level_qos.pvi == 0 ? 1 : 0;
           establishment_cnf_p->transport_layer_address[establishment_cnf_p->no_of_e_rabs]                  = fteid_ip_address_to_bstring(&bc_session->s_gw_fteid_s1u);
           establishment_cnf_p->gtp_teid[establishment_cnf_p->no_of_e_rabs]                                 = bc_session->s_gw_fteid_s1u.teid;
           //      if (!j) { // todo: ESM message may exist --> should match each to the EBI!
@@ -654,16 +654,16 @@ mme_app_handle_nas_erab_setup_req (itti_nas_erab_setup_req_t * const itti_nas_er
     s1ap_e_rab_setup_req->e_rab_to_be_setup_list.no_of_items = 1;
     s1ap_e_rab_setup_req->e_rab_to_be_setup_list.item[0].e_rab_id = bearer_context->ebi;
     s1ap_e_rab_setup_req->e_rab_to_be_setup_list.item[0].e_rab_level_qos_parameters.allocation_and_retention_priority.pre_emption_capability =
-        bearer_context->preemption_capability;
+        bearer_context->bearer_level_qos.pci == 0 ? 1 : 0;
     s1ap_e_rab_setup_req->e_rab_to_be_setup_list.item[0].e_rab_level_qos_parameters.allocation_and_retention_priority.pre_emption_vulnerability =
-        bearer_context->preemption_vulnerability;
+        bearer_context->bearer_level_qos.pvi == 0 ? 1 : 0;
     s1ap_e_rab_setup_req->e_rab_to_be_setup_list.item[0].e_rab_level_qos_parameters.allocation_and_retention_priority.priority_level =
-        bearer_context->priority_level;
+        bearer_context->bearer_level_qos.pl;
     s1ap_e_rab_setup_req->e_rab_to_be_setup_list.item[0].e_rab_level_qos_parameters.gbr_qos_information.e_rab_maximum_bit_rate_downlink    = itti_nas_erab_setup_req->mbr_dl;
     s1ap_e_rab_setup_req->e_rab_to_be_setup_list.item[0].e_rab_level_qos_parameters.gbr_qos_information.e_rab_maximum_bit_rate_uplink      = itti_nas_erab_setup_req->mbr_ul;
     s1ap_e_rab_setup_req->e_rab_to_be_setup_list.item[0].e_rab_level_qos_parameters.gbr_qos_information.e_rab_guaranteed_bit_rate_downlink = itti_nas_erab_setup_req->gbr_dl;
     s1ap_e_rab_setup_req->e_rab_to_be_setup_list.item[0].e_rab_level_qos_parameters.gbr_qos_information.e_rab_guaranteed_bit_rate_uplink   = itti_nas_erab_setup_req->gbr_ul;
-    s1ap_e_rab_setup_req->e_rab_to_be_setup_list.item[0].e_rab_level_qos_parameters.qci = bearer_context->qci;
+    s1ap_e_rab_setup_req->e_rab_to_be_setup_list.item[0].e_rab_level_qos_parameters.qci = bearer_context->bearer_level_qos.qci;
 
     s1ap_e_rab_setup_req->e_rab_to_be_setup_list.item[0].gtp_teid = bearer_context->s_gw_fteid_s1u.teid;
     s1ap_e_rab_setup_req->e_rab_to_be_setup_list.item[0].transport_layer_address = fteid_ip_address_to_bstring(&bearer_context->s_gw_fteid_s1u);
@@ -735,16 +735,16 @@ mme_app_handle_nas_erab_modify_req (itti_nas_erab_modify_req_t * const itti_nas_
     s1ap_e_rab_modify_req->e_rab_to_be_modified_list.no_of_items = 1;
     s1ap_e_rab_modify_req->e_rab_to_be_modified_list.item[0].e_rab_id = bearer_context->ebi;
     s1ap_e_rab_modify_req->e_rab_to_be_modified_list.item[0].e_rab_level_qos_parameters.allocation_and_retention_priority.pre_emption_capability =
-        bearer_context->preemption_capability;
+        bearer_context->bearer_level_qos.pci == 0 ? 1 : 0;
     s1ap_e_rab_modify_req->e_rab_to_be_modified_list.item[0].e_rab_level_qos_parameters.allocation_and_retention_priority.pre_emption_vulnerability =
-        bearer_context->preemption_vulnerability;
+        bearer_context->bearer_level_qos.pvi == 0 ? 1 : 0;
     s1ap_e_rab_modify_req->e_rab_to_be_modified_list.item[0].e_rab_level_qos_parameters.allocation_and_retention_priority.priority_level =
-        bearer_context->priority_level;
+        bearer_context->bearer_level_qos.pl == 0 ? 1 : 0;
     s1ap_e_rab_modify_req->e_rab_to_be_modified_list.item[0].e_rab_level_qos_parameters.gbr_qos_information.e_rab_maximum_bit_rate_downlink    = itti_nas_erab_modify_req->mbr_dl;
     s1ap_e_rab_modify_req->e_rab_to_be_modified_list.item[0].e_rab_level_qos_parameters.gbr_qos_information.e_rab_maximum_bit_rate_uplink      = itti_nas_erab_modify_req->mbr_ul;
     s1ap_e_rab_modify_req->e_rab_to_be_modified_list.item[0].e_rab_level_qos_parameters.gbr_qos_information.e_rab_guaranteed_bit_rate_downlink = itti_nas_erab_modify_req->gbr_dl;
     s1ap_e_rab_modify_req->e_rab_to_be_modified_list.item[0].e_rab_level_qos_parameters.gbr_qos_information.e_rab_guaranteed_bit_rate_uplink   = itti_nas_erab_modify_req->gbr_ul;
-    s1ap_e_rab_modify_req->e_rab_to_be_modified_list.item[0].e_rab_level_qos_parameters.qci = bearer_context->qci;
+    s1ap_e_rab_modify_req->e_rab_to_be_modified_list.item[0].e_rab_level_qos_parameters.qci = bearer_context->bearer_level_qos.qci;
 
     /**
      * UE AMBR: We may have new authorized values in the procedure. Setting them (may be lower or higher).
@@ -1046,15 +1046,15 @@ mme_app_handle_create_sess_resp (
     // if modified by pgw
     if (create_sess_resp_pP->bearer_contexts_created.bearer_contexts[i].bearer_level_qos.qci &&
         create_sess_resp_pP->bearer_contexts_created.bearer_contexts[i].bearer_level_qos.pl) {
-      current_bearer_p->qci                      = create_sess_resp_pP->bearer_contexts_created.bearer_contexts[i].bearer_level_qos.qci;
-      current_bearer_p->priority_level           = create_sess_resp_pP->bearer_contexts_created.bearer_contexts[i].bearer_level_qos.pl;
-      current_bearer_p->preemption_vulnerability = create_sess_resp_pP->bearer_contexts_created.bearer_contexts[i].bearer_level_qos.pvi;
-      current_bearer_p->preemption_capability    = create_sess_resp_pP->bearer_contexts_created.bearer_contexts[i].bearer_level_qos.pci;
+      current_bearer_p->bearer_level_qos.qci                      = create_sess_resp_pP->bearer_contexts_created.bearer_contexts[i].bearer_level_qos.qci;
+      current_bearer_p->bearer_level_qos.pl  = create_sess_resp_pP->bearer_contexts_created.bearer_contexts[i].bearer_level_qos.pl;
+      current_bearer_p->bearer_level_qos.pvi = create_sess_resp_pP->bearer_contexts_created.bearer_contexts[i].bearer_level_qos.pvi;
+      current_bearer_p->bearer_level_qos.pci = create_sess_resp_pP->bearer_contexts_created.bearer_contexts[i].bearer_level_qos.pci;
       //TODO should be set in NAS_PDN_CONNECTIVITY_RSP message
       // dbeken: we don't have NAS context in handover, so we need to do it here.
-      OAILOG_DEBUG (LOG_MME_APP, "Set qci %u in bearer %u\n", current_bearer_p->qci, bearer_id);
+      OAILOG_DEBUG (LOG_MME_APP, "Set qci %u in bearer %u\n", current_bearer_p->bearer_level_qos.qci, bearer_id);
     } else {
-      OAILOG_DEBUG (LOG_MME_APP, "Set qci %u in bearer %u (qos not modified by P-GW)\n", current_bearer_p->qci, bearer_id);
+      OAILOG_DEBUG (LOG_MME_APP, "Set qci %u in bearer %u (qos not modified by P-GW)\n", current_bearer_p->bearer_level_qos.qci, bearer_id);
     }
     /** Done iterating the established bearers. */
   }
@@ -1086,12 +1086,12 @@ mme_app_handle_create_sess_resp (
 
   /** Set the PAA into the PDN Context.  (todo: copy function). */
   /** Decouple the PAA and set it into the PDN context. */
-  /** Check if a PAA already exists. If so remove it and set the new one. */
-  if(pdn_context->paa){
-    free_wrapper((void**)&pdn_context->paa);
-  }
-  pdn_context->paa = create_sess_resp_pP->paa;
-  create_sess_resp_pP->paa = NULL;
+//  /** Check if a PAA already exists. If so remove it and set the new one. */
+//  if(pdn_context->paa){
+//    free_wrapper((void**)&pdn_context->paa);
+//  }
+//  pdn_context->paa = create_sess_resp_pP->paa;
+//  create_sess_resp_pP->paa = NULL;
 
   /*
    * Check if there is a handover process ongoing.
@@ -1194,9 +1194,10 @@ mme_app_handle_create_sess_resp (
     bearer_context_t * first_bearer_context = RB_MIN(SessionBearers, &pdn_context->session_bearers);
     DevAssert(first_bearer_context);
     mme_app_itti_nas_pdn_connectivity_response(ue_context,
-        pdn_context->paa, &create_sess_resp_pP->pco,
+        create_sess_resp_pP->paa, &create_sess_resp_pP->pco,
         pdn_context,
         first_bearer_context);
+    create_sess_resp_pP->paa = NULL;
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
   }
 
@@ -2769,11 +2770,11 @@ mme_app_handle_path_switch_req(
    * todo: Currently, we assume that default bearers are not removed.
    */
   /** All bearers to be switched, perform without ESM layer. */
-  int rc = mme_app_modify_bearers(s1ap_path_switch_req->mme_ue_s1ap_id, &s1ap_path_switch_req->bcs_to_be_modified);
-  if (rc == RETURNerror){
-    OAILOG_ERROR (LOG_MME_APP, "Error updating the bearers based on X2 path switch request for UE " MME_UE_S1AP_ID_FMT ". \n", s1ap_path_switch_req->mme_ue_s1ap_id);
-    OAILOG_FUNC_OUT(LOG_MME_APP);
-  }
+//  int rc = mme_app_modify_bearers(s1ap_path_switch_req->mme_ue_s1ap_id, &s1ap_path_switch_req->bcs_to_be_modified);
+//  if (rc == RETURNerror){
+//    OAILOG_ERROR (LOG_MME_APP, "Error updating the bearers based on X2 path switch request for UE " MME_UE_S1AP_ID_FMT ". \n", s1ap_path_switch_req->mme_ue_s1ap_id);
+//    OAILOG_FUNC_OUT(LOG_MME_APP);
+//  }
   /** Updated the bearers, send an S11 Modify Bearer Request on the updated bearers. */
   OAILOG_INFO(LOG_MME_APP, "Sending MBR due to Patch Switch Request for UE " MME_UE_S1AP_ID_FMT " . \n", ue_context->mme_ue_s1ap_id);
 
@@ -3817,7 +3818,7 @@ mme_app_handle_handover_request_acknowledge(
   * For both cases, update the S1U eNB FTEIDs.
   */
  s10_handover_proc->target_enb_ue_s1ap_id = handover_request_acknowledge_pP->enb_ue_s1ap_id;
- rc = mme_app_modify_bearers(ue_context->mme_ue_s1ap_id, &handover_request_acknowledge_pP->bcs_to_be_modified);
+// rc = mme_app_modify_bearers(ue_context->mme_ue_s1ap_id, &handover_request_acknowledge_pP->bcs_to_be_modified);
 
  // todo: handle bearer contexts failed.
  // todo: lionel--> checking the type or different success_notif methods?

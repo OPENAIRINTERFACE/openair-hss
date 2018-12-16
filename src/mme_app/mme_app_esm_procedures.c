@@ -89,7 +89,7 @@ void mme_app_nas_esm_free_pdn_connectivity_procedures(ue_context_t * const ue_co
     esm_pdn_connectivity_proc1 = LIST_FIRST(ue_context->esm_procedures.pdn_connectivity_procedures);                 /* Faster List Deletion. */
     while (esm_pdn_connectivity_proc1) {
       esm_pdn_connectivity_proc2 = LIST_NEXT(esm_pdn_connectivity_proc1, entries);
-      mme_app_nas_esm_pdn_connectivity_proc(&esm_pdn_connectivity_proc1);
+//      mme_app_nas_esm_pdn_connectivity_proc(&esm_pdn_connectivity_proc1);
       esm_pdn_connectivity_proc1 = esm_pdn_connectivity_proc2;
     }
     LIST_INIT(ue_context->esm_procedures.pdn_connectivity_procedures);

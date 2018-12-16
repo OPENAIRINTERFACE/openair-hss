@@ -330,6 +330,8 @@ int lowerlayer_release (mme_ue_s1ap_id_t ue_id, int cause)
  **      Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
+
+// TODO: NEED TO CHECK FOR ESM_CAUSE?
 int lowerlayer_data_req (mme_ue_s1ap_id_t ue_id, bstring data)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);

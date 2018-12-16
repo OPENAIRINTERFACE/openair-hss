@@ -128,7 +128,7 @@ esm_send_deactivate_eps_bearer_context_request (
   pti_t pti,
   ebi_t ebi,
   ESM_msg * esm_rsp_msg,
-  int esm_cause)
+  esm_cause_t esm_cause)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
 
@@ -207,7 +207,8 @@ esm_proc_eps_bearer_context_deactivate_request (
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
 
-  OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Initiate EPS bearer context deactivation " "(ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d)\n", ue_id, ebi);
+  OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Initiate EPS bearer context deactivation " "(ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d)\n",
+      esm_bearer_context_proc->esm_base_proc.ue_id, esm_bearer_context_proc->bearer_ebi);
 
   /*
    * Set the default bearer contexts of the PDN context into INACTIVE PENDING state.
@@ -215,7 +216,7 @@ esm_proc_eps_bearer_context_deactivate_request (
   int rc = mme_app_esm_update_pdn_context(ue_id, NULL, PDN_CONTEXT_IDENTIFIER_UNASSIGNED, esm_bearer_context_proc->linked_ebi, ESM_EBR_INACTIVE_PENDING, NULL, NULL, NULL);
   if(rc == RETURNerror){
     _esm_proc_free_bearer_context_procedure(&esm_bearer_context_proc);
-    OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - No PDN connection found (ebi=%d, pti=%d) for UE " MME_UE_S1AP_ID_FMT ".\n", default_ebi, pti, ue_id);
+    OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - No PDN connection found (ebi=%d, pti=%d) for UE " MME_UE_S1AP_ID_FMT ".\n", esm_bearer_context_proc->linked_ebi, PDN_CONTEXT_IDENTIFIER_UNASSIGNED, esm_bearer_context_proc->esm_base_proc.ue_id);
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_PDN_CONNECTION_DOES_NOT_EXIST);
   }
 
@@ -224,12 +225,12 @@ esm_proc_eps_bearer_context_deactivate_request (
    * * * * start timer T3495/T3492
    */
   OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Starting T3492 for Deactivate EPS bearer context (ue_id=" MME_UE_S1AP_ID_FMT ", context_identifier=%d)\n",
-      ue_id, esm_pdn_disconnect_proc->pdn_cid);
+      esm_bearer_context_proc->esm_base_proc.ue_id, esm_bearer_context_proc->pdn_cid);
   /** Stop any timer if running. */
   nas_stop_esm_timer(ue_id, &esm_bearer_context_proc->esm_base_proc.esm_proc_timer);
   /** Start the T3485 timer for additional PDN connectivity. */
-  esm_bearer_context_proc->esm_base_proc.esm_proc_timer.id = nas_timer_start (esm_bearer_context_proc->esm_base_proc.esm_proc_timer.sec, 0 /*usec*/, false,
-      _nas_proc_pdn_connectivity_timeout_handler, ue_id); /**< Address field should be big enough to save an ID. */
+  esm_bearer_context_proc->esm_base_proc.esm_proc_timer.id = nas_esm_timer_start (esm_bearer_context_proc->esm_base_proc.esm_proc_timer.sec, 0 /*usec*/, esm_bearer_context_proc->esm_base_proc.ue_id);
+  /**< Address field should be big enough to save an ID. */
 
   esm_bearer_context_proc->esm_base_proc.timeout_notif = _eps_bearer_deactivate_t3492_handler;
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_SUCCESS);
@@ -264,6 +265,7 @@ esm_proc_eps_bearer_context_deactivate_accept (
   mme_ue_s1ap_id_t ue_id,
   ebi_t ebi,
   pdn_cid_t pdn_cid)
+//  todo: bstring apn)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   pdn_cid_t                               pid = MAX_APN_PER_UE;
@@ -274,7 +276,7 @@ esm_proc_eps_bearer_context_deactivate_accept (
   /*
    * Release the EPS bearer context.
    */
-  mme_app_esm_release_bearer_context(ue_id, pdn_cid, ebi);
+  mme_app_esm_release_bearer_context(ue_id, pdn_cid, ebi /* apn */);
 
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_SUCCESS);
 }
@@ -312,10 +314,11 @@ esm_proc_eps_bearer_context_deactivate_accept (
  **      Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
-static void _eps_bearer_deactivate_t3492_handler (nas_esm_proc_t * esm_proc, ESM_msg * esm_rsp_msg)
+static int _eps_bearer_deactivate_t3492_handler (nas_esm_proc_t * esm_proc, ESM_msg * esm_rsp_msg)
 {
   OAILOG_FUNC_IN(LOG_NAS_ESM);
-  int rc                    = RETURNok;
+  nas_esm_proc_bearer_context_t * esm_bearer_context_proc = (nas_esm_proc_bearer_context_t*)esm_proc;
+  int                            rc                       = RETURNok;
 
 //  OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - T3492 timer expired (ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d), " "retransmission counter = %d\n",
 //       esm_pdn_disconnect_proc->es.esm_proc.ue_id, esm_pdn_disconnect_proc->default_ebi, esm_pdn_disconnect_proc->trx_base_proc.retx_count);
@@ -327,28 +330,27 @@ static void _eps_bearer_deactivate_t3492_handler (nas_esm_proc_t * esm_proc, ESM
      * Create a new ESM-Information request and restart the timer.
      * Keep the ESM transaction.
      */
-    nas_esm_proc_bearer_context_t esm_bearer_context_proc = (nas_esm_proc_bearer_context_t*)esm_proc;
     rc = esm_proc_eps_bearer_context_deactivate_request (esm_proc->ue_id, (nas_esm_proc_bearer_context_t*)esm_proc);
     if(rc != RETURNerror) {
-      rc = esm_send_deactivate_eps_bearer_context_request(esm_bearer_context_proc.esm_base_proc.pti,
-          esm_bearer_context_proc.bearer_ebi, esm_rsp_msg, ESM_CAUSE_REGULAR_DEACTIVATION);
+      esm_send_deactivate_eps_bearer_context_request(esm_bearer_context_proc->esm_base_proc.pti,
+          esm_bearer_context_proc->bearer_ebi, esm_rsp_msg, ESM_CAUSE_REGULAR_DEACTIVATION);
       OAILOG_FUNC_RETURN(LOG_NAS_ESM, rc);
     }
   }
-  nas_esm_proc_bearer_context_t * esm_bearer_context_proc = (nas_esm_proc_bearer_context_t*)esm_proc;
 
-//  OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - T3492 timer expired (ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d), " "retransmission counter = %d\n",
-//       esm_pdn_disconnect_proc->trx_base_proc.esm_proc.ue_id, esm_pdn_disconnect_proc->default_ebi, esm_pdn_disconnect_proc->trx_base_proc.retx_count);
-  /** Bearer Context Procedures may be transactional or not. */
+  OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Max timeout occurred or could not retransmit Deactivate Bearer Request to UE. Rejecting PDN context activation. "
+       "(ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d)\n", esm_bearer_context_proc->esm_base_proc.ue_id, esm_bearer_context_proc->bearer_ebi);
+
   /* Deactivate the bearer/pdn context implicitly. */
-  esm_proc_eps_bearer_context_deactivate_accept(esm_bearer_context_proc->esm_base_proc.ue_id, esm_bearer_context_proc->pdn_cid,
-      esm_bearer_context_proc->bearer_ebi, esm_bearer_context_proc->subscribed_apn);
+  esm_proc_eps_bearer_context_deactivate_accept(esm_bearer_context_proc->esm_base_proc.ue_id, esm_bearer_context_proc->bearer_ebi,
+      esm_bearer_context_proc->pdn_cid);
+//    todo:   esm_bearer_context_proc->subscribed_apn);
   _esm_proc_free_bearer_context_procedure(&esm_bearer_context_proc);
 
   /** Inform the MME_APP layer of the bearer deactivattion. */
-  nas_itti_dedicated_eps_bearer_deactivation_complete(ue_context->mme_ue_s1ap_id, esm_bearer_context_proc->bearer_ebi);
+  nas_itti_dedicated_eps_bearer_deactivation_complete(esm_bearer_context_proc->esm_base_proc.ue_id, esm_bearer_context_proc->bearer_ebi);
 
-  OAILOG_FUNC_OUT (LOG_NAS_ESM, RETURNok);
+  OAILOG_FUNC_RETURN(LOG_NAS_ESM, RETURNok);
 }
 
 /*

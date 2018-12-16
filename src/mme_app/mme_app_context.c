@@ -937,7 +937,7 @@ mme_insert_subscription_profile(
 //------------------------------------------------------------------------------
 void mme_remove_subscription_profile(mme_ue_context_t * const mme_ue_context_p, imsi64_t imsi){
   // filled NAS UE ID/ MME UE S1AP ID
-  LOCK_SUBSCRIPTION_DATA_TREE();
+//  LOCK_SUBSCRIPTION_DATA_TREE();
   hashtable_rc_t                          hash_rc = HASH_TABLE_OK;
   subscription_data_t                    *subscription_data = NULL;
   OAILOG_FUNC_IN (LOG_MME_APP);
@@ -1108,14 +1108,15 @@ void mme_app_dump_bearer_context (const bearer_context_t * const bc, uint8_t ind
     bformata (bstr_dump, "%*s - P-GW S5-S8 IPv6..: [%s]\n", indent_spaces, " ", ipv6);
   }
   bformata (bstr_dump, "%*s - P-GW TEID S5-S8..: " TEID_FMT "\n", indent_spaces, " ", bc->p_gw_fteid_s5_s8_up.teid);
-  bformata (bstr_dump, "%*s - QCI .............: %u\n", indent_spaces, " ", bc->qci);
-  bformata (bstr_dump, "%*s - Priority level ..: %u\n", indent_spaces, " ", bc->priority_level);
-  bformata (bstr_dump, "%*s - Pre-emp vul .....: %s\n", indent_spaces, " ", (bc->preemption_vulnerability == PRE_EMPTION_VULNERABILITY_ENABLED) ? "ENABLED" : "DISABLED");
-  bformata (bstr_dump, "%*s - Pre-emp cap .....: %s\n", indent_spaces, " ", (bc->preemption_capability == PRE_EMPTION_CAPABILITY_ENABLED) ? "ENABLED" : "DISABLED");
-  bformata (bstr_dump, "%*s - GBR UL ..........: %010" PRIu64 "\n", indent_spaces, " ", bc->gbr_ul);
-  bformata (bstr_dump, "%*s - GBR DL ..........: %010" PRIu64 "\n", indent_spaces, " ", bc->gbr_dl);
-  bformata (bstr_dump, "%*s - MBR UL ..........: %010" PRIu64 "\n", indent_spaces, " ", bc->mbr_ul);
-  bformata (bstr_dump, "%*s - MBR DL ..........: %010" PRIu64 "\n", indent_spaces, " ", bc->mbr_dl);
+  bformata (bstr_dump, "%*s - QCI .............: %u\n", indent_spaces, " ", bc->bearer_level_qos.qci);
+  bformata (bstr_dump, "%*s - Priority level ..: %u\n", indent_spaces, " ", bc->bearer_level_qos.pl);
+  // todo: use real values else than s11
+//  bformata (bstr_dump, "%*s - Pre-emp vul .....: %s\n", indent_spaces, " ", ((bc->bearer_level_qos.pci) == PRE_EMPTION_VULNERABILITY_ENABLED) ? "ENABLED" : "DISABLED");
+//  bformata (bstr_dump, "%*s - Pre-emp cap .....: %s\n", indent_spaces, " ", (bc->bearer_level_qos.pvi   == PRE_EMPTION_CAPABILITY_ENABLED) ? "ENABLED" : "DISABLED");
+  bformata (bstr_dump, "%*s - GBR UL ..........: %010" PRIu64 "\n", indent_spaces, " ", bc->bearer_level_qos.gbr.br_ul);
+  bformata (bstr_dump, "%*s - GBR DL ..........: %010" PRIu64 "\n", indent_spaces, " ", bc->bearer_level_qos.gbr.br_dl);
+  bformata (bstr_dump, "%*s - MBR UL ..........: %010" PRIu64 "\n", indent_spaces, " ", bc->bearer_level_qos.mbr.br_ul);
+  bformata (bstr_dump, "%*s - MBR DL ..........: %010" PRIu64 "\n", indent_spaces, " ", bc->bearer_level_qos.mbr.br_ul);
   bstring bstate = bearer_state2string(bc->bearer_state);
   bformata (bstr_dump, "%*s - State ...........: %s\n", indent_spaces, " ", bdata(bstate));
   bdestroy_wrapper(&bstate);
@@ -1180,11 +1181,6 @@ void mme_app_dump_pdn_context (const struct ue_context_s *const ue_context,
     }
     bformata (bstr_dump, "%*s - S-GW TEID s5 s8 cp .: " TEID_FMT "\n", indent_spaces, " ", pdn_context->s_gw_teid_s11_s4);
 
-    bformata (bstr_dump, "%*s - Default bearer eps subscribed qos profile:\n", indent_spaces, " ");
-    bformata (bstr_dump, "%*s     - QCI ......................: %u\n", indent_spaces, " ", pdn_context->default_bearer_eps_subscribed_qos_profile.qci);
-    bformata (bstr_dump, "%*s     - Priority level ...........: %u\n", indent_spaces, " ", pdn_context->default_bearer_eps_subscribed_qos_profile.allocation_retention_priority.priority_level);
-    bformata (bstr_dump, "%*s     - Pre-emp vulnerabil .......: %s\n", indent_spaces, " ", (pdn_context->default_bearer_eps_subscribed_qos_profile.allocation_retention_priority.pre_emp_vulnerability == PRE_EMPTION_VULNERABILITY_ENABLED) ? "ENABLED" : "DISABLED");
-    bformata (bstr_dump, "%*s     - Pre-emp capability .......: %s\n", indent_spaces, " ", (pdn_context->default_bearer_eps_subscribed_qos_profile.allocation_retention_priority.pre_emp_capability == PRE_EMPTION_CAPABILITY_ENABLED) ? "ENABLED" : "DISABLED");
     bformata (bstr_dump, "%*s     - APN-AMBR (bits/s) DL .....: %010" PRIu64 "\n", indent_spaces, " ", pdn_context->subscribed_apn_ambr.br_dl);
     bformata (bstr_dump, "%*s     - APN-AMBR (bits/s) UL .....: %010" PRIu64 "\n", indent_spaces, " ", pdn_context->subscribed_apn_ambr.br_ul);
     bformata (bstr_dump, "%*s     - Default EBI ..............: %u\n", indent_spaces, " ", pdn_context->default_ebi);
@@ -2292,7 +2288,7 @@ pdn_context_t * mme_app_handle_pdn_connectivity_from_s10(ue_context_t *ue_contex
    * Later set context identifier by ULA?
    */
   /** Craete a PDN connection and later set the ESM values when NAS layer is established. */
-  pdn_context = mme_app_create_pdn_context(ue_context, pdn_connection->apn_str, PDN_CONTEXT_IDENTIFIER_UNASSIGNED); /**< Create the pdn context using the APN network identifier. */
+//  pdn_context = mme_app_create_pdn_context(ue_context, pdn_connection->apn_str, PDN_CONTEXT_IDENTIFIER_UNASSIGNED); /**< Create the pdn context using the APN network identifier. */
   if(!pdn_context) {
     OAILOG_ERROR(LOG_MME_APP, "Could not create a new pdn context for apn \" %s \" for UE_ID " MME_UE_S1AP_ID_FMT " from S10 PDN_CONNECTIONS IE. "
         "Skipping the establishment of pdn context. \n", pdn_connection->apn_str, ue_context->mme_ue_s1ap_id);
@@ -2787,14 +2783,14 @@ void mme_app_set_pdn_connections(struct mme_ue_eps_pdn_connections_s * pdn_conne
        * Also set the MBR/GBR values for each bearer, the target side, then should send MBR/GBR as 0 for non-GBR bearers.
        */
       // todo: divide by 1000?
-      bearer_list->bearer_contexts[num_bearer].bearer_level_qos.gbr.br_ul = bearer_context_to_forward->gbr_ul;
-      bearer_list->bearer_contexts[num_bearer].bearer_level_qos.gbr.br_dl = bearer_context_to_forward->gbr_dl;
-      bearer_list->bearer_contexts[num_bearer].bearer_level_qos.mbr.br_ul = bearer_context_to_forward->mbr_ul;
-      bearer_list->bearer_contexts[num_bearer].bearer_level_qos.mbr.br_dl = bearer_context_to_forward->mbr_dl;
-      bearer_list->bearer_contexts[num_bearer].bearer_level_qos.qci       = bearer_context_to_forward->qci;
-      bearer_list->bearer_contexts[num_bearer].bearer_level_qos.pvi       = bearer_context_to_forward->preemption_vulnerability;
-      bearer_list->bearer_contexts[num_bearer].bearer_level_qos.pci       = bearer_context_to_forward->preemption_capability;
-      bearer_list->bearer_contexts[num_bearer].bearer_level_qos.pl        = bearer_context_to_forward->priority_level;
+      bearer_list->bearer_contexts[num_bearer].bearer_level_qos.gbr.br_ul = bearer_context_to_forward->bearer_level_qos.gbr.br_ul;
+      bearer_list->bearer_contexts[num_bearer].bearer_level_qos.gbr.br_dl = bearer_context_to_forward->bearer_level_qos.gbr.br_dl;
+      bearer_list->bearer_contexts[num_bearer].bearer_level_qos.mbr.br_ul = bearer_context_to_forward->bearer_level_qos.mbr.br_ul;
+      bearer_list->bearer_contexts[num_bearer].bearer_level_qos.mbr.br_dl = bearer_context_to_forward->bearer_level_qos.mbr.br_dl;
+      bearer_list->bearer_contexts[num_bearer].bearer_level_qos.qci       = bearer_context_to_forward->bearer_level_qos.qci;
+      bearer_list->bearer_contexts[num_bearer].bearer_level_qos.pvi       = bearer_context_to_forward->bearer_level_qos.pvi;
+      bearer_list->bearer_contexts[num_bearer].bearer_level_qos.pci       = bearer_context_to_forward->bearer_level_qos.pci;
+      bearer_list->bearer_contexts[num_bearer].bearer_level_qos.pl        = bearer_context_to_forward->bearer_level_qos.pl;
       bearer_list->num_bearer_context++;
     }
     pdn_connections->num_pdn_connections++;

@@ -114,9 +114,8 @@ int esm_proc_esm_information_request (nas_esm_proc_pdn_connectivity_t *esm_proc_
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
 }
 
-
 //------------------------------------------------------------------------------
-int esm_proc_esm_information_response (mme_ue_s1ap_id_t ue_id, pti_t pti, nas_esm_proc_pdn_connectivity_t * esm_proc_pdn_connectivity, esm_information_response_msg * esm_information_resp)
+int esm_proc_esm_information_response (mme_ue_s1ap_id_t ue_id, pti_t pti, nas_esm_proc_pdn_connectivity_t * esm_proc_pdn_connectivity, const esm_information_response_msg * const esm_information_resp)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   int                                     rc = RETURNok;
@@ -124,13 +123,15 @@ int esm_proc_esm_information_response (mme_ue_s1ap_id_t ue_id, pti_t pti, nas_es
   /*
    * Stop T3489 timer if running
    */
-  nas_stop_T3489(ue_id, &esm_proc_pdn_connectivity->esm_base_proc.esm_proc_timer);
+  nas_stop_esm_timer(ue_id, &esm_proc_pdn_connectivity->esm_base_proc.esm_proc_timer);
 
   /** Process the result. */
   if (esm_information_resp->presencemask & PDN_CONNECTIVITY_REQUEST_ACCESS_POINT_NAME_PRESENT) {
     if(esm_proc_pdn_connectivity->subscribed_apn)
       bdestroy_wrapper(&esm_proc_pdn_connectivity->subscribed_apn);
-    esm_proc_pdn_connectivity->apn_subscribed = bstrcpy(esm_proc_pdn_connectivity->apn_subscribed);
+    esm_proc_pdn_connectivity->subscribed_apn = esm_information_resp->accesspointname;
+    /** Unlink it from the message. */
+//    esm_information_resp->accesspointname = NULL;
   }
   if(!esm_proc_pdn_connectivity->subscribed_apn){
     /** No APN Name received from UE. We will used the default one from the subscription data. */
@@ -187,11 +188,11 @@ _esm_information (
   /*
    * Start T3489 timer
    */
-  esm_proc_pdn_connectivity->esm_base_proc.esm_proc_timer.id = nas_timer_start (esm_proc_pdn_connectivity->esm_base_proc.esm_proc_timer.sec, 0 /*usec*/, false, _nas_proc_pdn_connectivity_timeout_handler, ue_id); /**< Address field should be big enough to save an ID. */
+  esm_proc_pdn_connectivity->esm_base_proc.esm_proc_timer.id = nas_esm_timer_start (esm_proc_pdn_connectivity->esm_base_proc.esm_proc_timer.sec, 0 /*usec*/, ue_id); /**< Address field should be big enough to save an ID. */
   MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3489 started UE " MME_UE_S1AP_ID_FMT " ", ue_id);
 
   OAILOG_INFO (LOG_NAS_EMM, "UE " MME_UE_S1AP_ID_FMT "Timer T3489 (%lx) expires in %ld seconds\n",
-      ue_id, nas_timer->id, nas_timer->sec);
+      ue_id, esm_proc_pdn_connectivity->esm_base_proc.esm_proc_timer.id, esm_proc_pdn_connectivity->esm_base_proc.esm_proc_timer.sec);
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
 }
 

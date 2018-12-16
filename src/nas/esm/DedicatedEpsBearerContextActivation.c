@@ -204,7 +204,7 @@ esm_send_activate_dedicated_eps_bearer_context_request (
 esm_cause_t
 esm_proc_dedicated_eps_bearer_context (
   mme_ue_s1ap_id_t   ue_id,
-  ebi_t  default_ebi,
+  ebi_t              linked_ebi,
   const proc_tid_t   pti,                  // todo: Will always be 0 for network initiated bearer establishment.
   const pdn_cid_t    pdn_cid,              // todo: Per APN for now.
   bearer_context_to_be_created_t *bc_tbc)
@@ -216,28 +216,29 @@ esm_proc_dedicated_eps_bearer_context (
   OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Dedicated EPS bearer context activation " "(ue_id=" MME_UE_S1AP_ID_FMT ", pid=%d)\n",
       ue_id, pdn_cid);
 
-  mme_app_get_pdn_context(ue_id, pdn_cid, default_ebi, NULL, &pdn_context);
+  mme_app_get_pdn_context(ue_id, pdn_cid, linked_ebi, NULL, &pdn_context);
   if(!pdn_context){
-    OAILOG_ERROR(LOG_NAS_EMM, "EMMCN-SAP  - " "No PDN context was found for UE " MME_UE_S1AP_ID_FMT" for cid %d and default ebi %d to assign dedicated bearers.\n", ue_id, pdn_cid, default_ebi);
+    OAILOG_ERROR(LOG_NAS_EMM, "EMMCN-SAP  - " "No PDN context was found for UE " MME_UE_S1AP_ID_FMT" for cid %d and default ebi %d to assign dedicated bearers.\n",
+        ue_id, pdn_cid, linked_ebi);
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_PDN_CONNECTION_DOES_NOT_EXIST);
   }
   /** Before assigning the bearer context, validate the fields of the requested bearer context to be created. */
   if(validateEpsQosParameter(bc_tbc->bearer_level_qos.qci, bc_tbc->bearer_level_qos.pvi, bc_tbc->bearer_level_qos.pci, bc_tbc->bearer_level_qos.pl,
       bc_tbc->bearer_level_qos.gbr.br_dl, bc_tbc->bearer_level_qos.gbr.br_ul, bc_tbc->bearer_level_qos.mbr.br_dl, bc_tbc->bearer_level_qos.mbr.br_ul) == RETURNerror){
       OAILOG_ERROR(LOG_NAS_EMM, "EMMCN-SAP  - " "EPS bearer context of CBR received for UE " MME_UE_S1AP_ID_FMT" could not be verified due erroneous EPS QoS.\n",
-          ue_id, pdn_cid, default_ebi);
+          ue_id, pdn_cid, linked_ebi);
       OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_EPS_QOS_NOT_ACCEPTED);
   }
   /** Validate the TFT and packet filters don't have semantical errors.. */
   if(bc_tbc->tft.tftoperationcode != TRAFFIC_FLOW_TEMPLATE_OPCODE_CREATE_NEW_TFT){
     OAILOG_ERROR(LOG_NAS_EMM, "EMMCN-SAP  - " "EPS bearer context of CBR received for UE " MME_UE_S1AP_ID_FMT" could not be verified due erroneous TFT code %d. \n",
-        ue_id, pdn_cid, default_ebi, bc_tbc->tft.tftoperationcode);
+        ue_id, pdn_cid, linked_ebi, bc_tbc->tft.tftoperationcode);
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_SEMANTIC_ERROR_IN_THE_TFT_OPERATION);
   }
   esm_cause = verify_traffic_flow_template_syntactical(&bc_tbc->tft, NULL);
   if(esm_cause != ESM_CAUSE_SUCCESS){
     OAILOG_ERROR(LOG_NAS_EMM, "EMMCN-SAP  - " "EPS bearer context of CBR received for UE " MME_UE_S1AP_ID_FMT" could not be verified due erroneous TFT. EsmCause %d. \n",
-        ue_id, pdn_cid, default_ebi, esm_cause);
+        ue_id, pdn_cid, linked_ebi, esm_cause);
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, esm_cause);
   }
   OAILOG_INFO(LOG_NAS_EMM, "EMMCN-SAP  - " "ESM QoS and TFT could be verified of CBR received for UE " MME_UE_S1AP_ID_FMT".\n", ue_id);
@@ -245,7 +246,8 @@ esm_proc_dedicated_eps_bearer_context (
   /*
    * Register a new EPS bearer context into the MME.
    */
-  esm_cause = mme_app_pdn_register_bearer_context(ue_id, ESM_EBR_ACTIVE_PENDING, &bc_tbc->bearer_level_qos, &bc_tbc->tft);
+  // todo : REGISTER BEARER CONTEXT
+//  esm_cause = mme_app_pdn_register_bearer_context(ue_id, ESM_EBR_ACTIVE_PENDING, &bc_tbc->bearer_level_qos, &bc_tbc->tft);
 
 //  ded_ebi = esm_ebr_assign (esm_context, ESM_EBI_UNASSIGNED, pdn_context);
 //    struct fteid_set_s fteid_set;
@@ -265,7 +267,8 @@ esm_proc_dedicated_eps_bearer_context (
   /*
    * Create a new EPS bearer context transaction.
    */
-  nas_esm_proc_bearer_context_t * esm_proc_bearer_context = _esm_proc_create_bearer_context_procedure(ue_id, NULL, pti, bc_tbc->eps_bearer_id);
+  nas_esm_proc_bearer_context_t * esm_proc_bearer_context = _esm_proc_create_bearer_context_procedure(ue_id, (imsi_t*)NULL,
+      pti, bc_tbc->eps_bearer_id, (bstring)NULL);
   DevAssert(esm_proc_bearer_context);
   // todo: further edit..
 
@@ -274,8 +277,7 @@ esm_proc_dedicated_eps_bearer_context (
    */
   nas_stop_esm_timer(ue_id, &esm_proc_bearer_context->esm_base_proc.esm_proc_timer);
   /** Start the T3485 timer for additional PDN connectivity. */
-  esm_proc_bearer_context->esm_base_proc.esm_proc_timer.id = nas_timer_start (mme_config.nas_config.t3485_sec, 0 /*usec*/, false,
-      _nas_proc_pdn_connectivity_timeout_handler, ue_id); /**< Address field should be big enough to save an ID. */
+  esm_proc_bearer_context->esm_base_proc.esm_proc_timer.id = nas_esm_timer_start (mme_config.nas_config.t3485_sec, 0 /*usec*/, ue_id); /**< Address field should be big enough to save an ID. */
   esm_proc_bearer_context->esm_base_proc.timeout_notif = _dedicated_eps_bearer_activate_t3485_handler;
 
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_SUCCESS);
@@ -479,9 +481,13 @@ static int _dedicated_eps_bearer_activate_t3485_handler (nas_esm_proc_bearer_con
       bearer_context_t * bearer_context = NULL;
       mme_app_get_session_bearer_context(pdn_context, esm_proc_bearer_context->bearer_ebi);
       if(bearer_context){
-        rc = esm_send_activate_default_eps_bearer_context_request(esm_proc_bearer_context->esm_base_proc.ue_id, pdn_context, bearer_context);
+//        rc = esm_send_activate_dedicated_eps_bearer_context_request(esm_proc_bearer_context->esm_base_proc.ue_id, pdn_context, bearer_context);
          if (rc != RETURNerror) {
-           rc = esm_proc_default_eps_bearer_context (esm_proc_bearer_context->esm_base_proc.ue_id, esm_proc_bearer_context);
+           rc = esm_proc_dedicated_eps_bearer_context (esm_proc_bearer_context->esm_base_proc.ue_id,
+               pdn_context->default_ebi,
+               PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED,
+               pdn_context->context_identifier,
+               NULL);  // todo: bc_tbu
            OAILOG_FUNC_RETURN(LOG_NAS_ESM, rc);
          }
        }

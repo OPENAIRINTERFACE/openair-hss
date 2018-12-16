@@ -81,19 +81,20 @@ static void mme_app_free_pdn_context (pdn_context_t ** const pdn_context)
 // todo: move this into mme_app_bearer_context.c !
 //------------------------------------------------------------------------------
 static void
-mme_app_esm_update_bearer_context(bearer_context_t * bearer_context, bearer_qos_t * bearer_level_qos, esm_ebr_state esm_ebr_state, traffic_flow_template_t * bearer_tft){
+mme_app_esm_update_bearer_context(bearer_context_t * bearer_context, bearer_qos_t * const bearer_level_qos, esm_ebr_state esm_ebr_state, traffic_flow_template_t * bearer_tft){
   OAILOG_FUNC_IN (LOG_MME_APP);
   /*
    * Setup the EPS bearer data with verified TFT and QoS.
    */
-  if(bearer_level_qos){
-    bearer_context->qci = bearer_level_qos->qci;
-    bearer_context->preemption_capability    = bearer_level_qos->pci == 0 ? 1 : 0;
-    bearer_context->preemption_vulnerability = bearer_level_qos->pvi == 0 ? 1 : 0;
-    bearer_context->priority_level           = bearer_level_qos->pl;
+  if(bearer_level_qos->qci && bearer_level_qos->pl){
+    bearer_context->bearer_level_qos.qci = bearer_level_qos->qci;
+    bearer_context->bearer_level_qos.pci = bearer_level_qos->pci; // todo: pcipreemption_capability    = // (*bearer_level_qos)->pci == 0 ? 1 : 0;
+    bearer_context->bearer_level_qos.pvi = bearer_level_qos->pvi; // todo: preemption_vulnerability = (*bearer_level_qos)->pvi == 0 ? 1 : 0;
+    bearer_context->bearer_level_qos.pl  = bearer_level_qos->pl;
     DevAssert(!bearer_context->esm_ebr_context.tft);
+  } else {
+    memcpy((void*)bearer_level_qos, &bearer_context->bearer_level_qos, sizeof(bearer_qos_t));
   }
-
   OAILOG_DEBUG(LOG_MME_APP, "Setting the ESM state of ebi %d to \"%s\". \n", bearer_context->ebi, esm_ebr_state2string(esm_ebr_state));
   bearer_context->esm_ebr_context.status = esm_ebr_state;
   if(bearer_tft){
@@ -161,15 +162,15 @@ void mme_app_get_bearer_contexts_to_be_created(pdn_context_t * pdn_context, bear
     /** EBI. */
     bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].eps_bearer_id              = bearer_context_to_setup->ebi;
     /** MBR/GBR values (setting indep. of QCI level). */
-    bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].bearer_level_qos.gbr.br_ul = bearer_context_to_setup->gbr_ul;
-    bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].bearer_level_qos.gbr.br_dl = bearer_context_to_setup->gbr_dl;
-    bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].bearer_level_qos.mbr.br_ul = bearer_context_to_setup->mbr_ul;
-    bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].bearer_level_qos.mbr.br_dl = bearer_context_to_setup->mbr_dl;
+    bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].bearer_level_qos.gbr.br_ul = bearer_context_to_setup->bearer_level_qos.gbr.br_ul;
+    bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].bearer_level_qos.gbr.br_dl = bearer_context_to_setup->bearer_level_qos.gbr.br_dl;
+    bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].bearer_level_qos.mbr.br_ul = bearer_context_to_setup->bearer_level_qos.mbr.br_ul;
+    bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].bearer_level_qos.mbr.br_dl = bearer_context_to_setup->bearer_level_qos.mbr.br_dl;
     /** QCI. */
-    bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].bearer_level_qos.qci       = bearer_context_to_setup->qci;
-    bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].bearer_level_qos.pvi       = bearer_context_to_setup->preemption_vulnerability;
-    bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].bearer_level_qos.pci       = bearer_context_to_setup->preemption_capability;
-    bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].bearer_level_qos.pl        = bearer_context_to_setup->priority_level;
+    bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].bearer_level_qos.qci       = bearer_context_to_setup->bearer_level_qos.qci;
+    bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].bearer_level_qos.pvi       = bearer_context_to_setup->bearer_level_qos.pvi;
+    bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].bearer_level_qos.pci       = bearer_context_to_setup->bearer_level_qos.pci;
+    bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].bearer_level_qos.pl        = bearer_context_to_setup->bearer_level_qos.pl;
     /** Set the S1U SAE-GW FTEID. */
     bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].s1u_sgw_fteid.ipv4                = bearer_context_to_setup->s_gw_fteid_s1u.ipv4;
     bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].s1u_sgw_fteid.interface_type      = bearer_context_to_setup->s_gw_fteid_s1u.interface_type;
@@ -219,8 +220,6 @@ mme_app_esm_create_pdn_context(mme_ue_s1ap_id_t ue_id, const apn_configuration_t
   mme_app_register_bearer_context(ue_context, free_bearer->ebi, (*pdn_context_pp), &bearer_context_registered);
   (*pdn_context_pp)->default_ebi = bearer_context_registered->ebi;
   ue_context->next_def_ebi_offset++;
-
-
   bearer_context_registered->linked_ebi = bearer_context_registered->ebi;
   if (apn_configuration) {
     (*pdn_context_pp)->subscribed_apn_ambr          = apn_configuration->ambr; /**< APN received from the HSS APN configuration, to be updated with the PCRF. */
@@ -241,7 +240,11 @@ mme_app_esm_create_pdn_context(mme_ue_s1ap_id_t ue_id, const apn_configuration_t
     }
 #endif
     /** Set the default QoS values. */
-    memcpy (&(*pdn_context_pp)->default_bearer_eps_subscribed_qos_profile, &apn_configuration->subscribed_qos, sizeof(eps_subscribed_qos_profile_t));
+    bearer_context_registered->bearer_level_qos.qci = apn_configuration->subscribed_qos.qci;
+    bearer_context_registered->bearer_level_qos.pl  = apn_configuration->subscribed_qos.allocation_retention_priority.priority_level;
+    bearer_context_registered->bearer_level_qos.pvi = (apn_configuration->subscribed_qos.allocation_retention_priority.pre_emp_vulnerability) ? 0 : 1;
+    bearer_context_registered->bearer_level_qos.pci = (apn_configuration->subscribed_qos.allocation_retention_priority.pre_emp_capability) ? 0 : 1;
+
     (*pdn_context_pp)->apn_subscribed = blk2bstr(apn_configuration->service_selection, apn_configuration->service_selection_length);  /**< Set the APN-NI from the service selection. */
   } else {
     (*pdn_context_pp)->apn_subscribed = apn;
@@ -273,7 +276,9 @@ mme_app_esm_create_pdn_context(mme_ue_s1ap_id_t ue_id, const apn_configuration_t
 //------------------------------------------------------------------------------
 int
 mme_app_esm_update_pdn_context(mme_ue_s1ap_id_t ue_id, const bstring apn, pdn_cid_t pdn_cid, ebi_t linked_ebi,
-    esm_ebr_state esm_ebr_state, const ambr_t *apn_ambr, const bearer_qos_t *default_bearer_qos, protocol_configuration_options_t *pcos){
+    const pdn_type_t pdn_type, const paa_t * const paa,
+    esm_ebr_state esm_ebr_state, ambr_t * const apn_ambr, bearer_qos_t * const default_bearer_qos,
+    protocol_configuration_options_t *pcos){
   ue_context_t              *ue_context         = NULL;
   pdn_context_t             *pdn_context        = NULL;
   int                        rc                 = RETURNok;
@@ -290,11 +295,21 @@ mme_app_esm_update_pdn_context(mme_ue_s1ap_id_t ue_id, const bstring apn, pdn_ci
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
   //  LOCK_UE_CONTEXT(ue_context);
-  if(apn_ambr){
+  if(apn_ambr->br_dl && apn_ambr->br_ul){
     /** Update the authorized APN ambr of the pdn context. */
     // todo: check if UE apn-ambr reached, if so, just add the remaining. (todo: inform sae/pcrf)
     pdn_context->subscribed_apn_ambr.br_dl = apn_ambr->br_dl;
     pdn_context->subscribed_apn_ambr.br_ul = apn_ambr->br_ul;
+  } else {
+    /** No APN AMBR values are set, setting the current values. */
+    apn_ambr->br_dl = pdn_context->subscribed_apn_ambr.br_dl;
+    apn_ambr->br_ul = pdn_context->subscribed_apn_ambr.br_ul;
+  }
+  /** Set the new PAA. */
+  if (paa) {
+    /** Set the PAA. */
+    DevAssert(!pdn_context->paa);
+    pdn_context->paa = paa;
   }
   /** Get the default bearer context directly. */
   bearer_context_t * default_bearer = RB_MIN(SessionBearers, &pdn_context->session_bearers);
@@ -310,6 +325,16 @@ mme_app_esm_update_pdn_context(mme_ue_s1ap_id_t ue_id, const bstring apn, pdn_ci
   //      bearer_context->esm_ebr_context.pco = (protocol_configuration_options_t *) calloc (1, sizeof (protocol_configuration_options_t));
   //      memcpy(bearer_context->esm_ebr_context.pco, pco, sizeof (protocol_configuration_options_t));  /**< Should have the processed bitmap in the validation . */
   //    }
+  ////    if (pco) {
+  ////      if (!(*pdn_context_pP)->pco) {
+  ////        (*pdn_context_pP)->pco = calloc(1, sizeof(protocol_configuration_options_t));
+  ////      } else {
+  ////        clear_protocol_configuration_options((*pdn_context_pP)->pco);
+  ////      }
+  ////      copy_protocol_configuration_options((*pdn_context_pP)->pco, pco);
+  ////    }
+  //    }
+
   //  UNLOCK_UE_CONTEXT(ue_context);
   OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
 }

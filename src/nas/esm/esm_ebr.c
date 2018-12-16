@@ -118,7 +118,7 @@ const char * esm_ebr_state2string(esm_ebr_state esm_ebr_state)
 nas_esm_proc_bearer_context_t *_esm_proc_create_bearer_context_procedure(mme_ue_s1ap_id_t ue_id, imsi_t *imsi, pti_t pti, ebi_t ebi, bstring apn)
 {
   nas_esm_proc_bearer_context_t  *esm_proc_bearer_context = mme_app_nas_esm_create_bearer_context_procedure(ue_id, pti, ebi);
-  AssertFatal(esm_bearer_context_proc, "TODO Handle this");
+  AssertFatal(esm_proc_bearer_context, "TODO Handle this");
   memcpy((void*)&esm_proc_bearer_context->imsi, imsi, sizeof(imsi_t));
   if(apn)
     esm_proc_bearer_context->subscribed_apn = bstrcpy(apn);

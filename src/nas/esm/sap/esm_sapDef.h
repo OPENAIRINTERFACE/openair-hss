@@ -124,12 +124,14 @@ typedef struct esm_modify_eps_bearer_context_s {
 //  ebi_t                            linked_ebi;
   bearer_context_to_be_updated_t  *bc_tbu;
   ambr_t                           apn_ambr;
+  pti_t                            pti;
 } esm_modify_eps_bearer_context_t;
 
 typedef struct esm_deactivate_eps_bearer_context_s {
   pdn_cid_t                        pdn_cid;
   ebi_t                            linked_ebi;
   ebi_t                            ded_ebi;
+  pti_t                            pti;
 } esm_deactivate_eps_bearer_context_t;
 
 
@@ -192,7 +194,6 @@ typedef union {
   /** From here on just pointers. */
   esm_emm_attach_ind_t           *attach_ind;
   esm_cn_pdn_config_res_t        *pdn_config_res;
-  esm_cn_pdn_config_fail_t       *pdn_config_fail;
   esm_cn_pdn_connectivity_res_t  *pdn_connectivity_res;
   esm_cn_pdn_connectivity_fail_t *pdn_connectivity_fail;
 
@@ -206,10 +207,11 @@ typedef union {
 struct emm_data_context_s;
 
 typedef struct esm_sap_s {
-  esm_primitive_t primitive;  /* ESM-SAP primitive to process     */
-  unsigned int        ue_id;      /* Local UE identifier             */
-  const_bstring       recv;      /* Encoded ESM message received     */
-  esm_sap_data_t      data;      /* ESM message data parameters      */
+  esm_primitive_t primitive;      /* ESM-SAP primitive to process                                       */
+  unsigned int        ue_id;      /* Local UE identifier                                                */
+  bool                is_attach;  /* Define if it is an attach (may be edited inside the method).       */
+  const_bstring       recv;       /* Encoded ESM message received                                       */
+  esm_sap_data_t      data;       /* ESM message data parameters                                        */
 } esm_sap_t;
 
 /****************************************************************************/

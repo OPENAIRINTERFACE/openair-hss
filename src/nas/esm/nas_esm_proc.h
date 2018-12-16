@@ -73,8 +73,6 @@ Description NAS ESM procedure call manager
  */
 void nas_stop_esm_timer(mme_ue_s1ap_id_t ue_id, nas_timer_t * const nas_timer);
 
-void _nas_proc_pdn_connectivity_timeout_handler (void *args);
-
 int nas_proc_establish_ind(const mme_ue_s1ap_id_t ue_id,
                             const tai_t originating_tai,
                             const ecgi_t ecgi,

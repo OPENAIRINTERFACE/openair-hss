@@ -81,7 +81,7 @@ typedef struct itti_nas_pdn_connectivity_rsp_s {
   proc_tid_t              pti;   // nas ref  Identity of the procedure transaction executed to activate the PDN connection entry
   network_qos_t           qos;
   protocol_configuration_options_t pco;
-  bstring                 pdn_addr;
+  paa_t                  *paa;
   int                     pdn_type;
   int                     request_type;
   mme_ue_s1ap_id_t        ue_id;

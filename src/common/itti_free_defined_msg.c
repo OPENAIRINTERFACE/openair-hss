@@ -115,13 +115,13 @@ void itti_free_msg_content (MessageDef * const message_p)
   }
   break;
 
-  case NAS_PDN_CONNECTIVITY_REQ:{
-    clear_protocol_configuration_options(&message_p->ittiMsg.nas_pdn_connectivity_req.pco);
-    bdestroy_wrapper (&message_p->ittiMsg.nas_pdn_connectivity_req.apn);
-    bdestroy_wrapper (&message_p->ittiMsg.nas_pdn_connectivity_req.pdn_addr);
-    AssertFatal(NULL == message_p->ittiMsg.nas_pdn_connectivity_req.pdn_addr, "TODO clean pointer");
-  }
-  break;
+//  case NAS_PDN_CONNECTIVITY_REQ:{
+//    clear_protocol_configuration_options(&message_p->ittiMsg.nas_pdn_connectivity_req.pco);
+//    bdestroy_wrapper (&message_p->ittiMsg.nas_pdn_connectivity_req.apn);
+//    bdestroy_wrapper (&message_p->ittiMsg.nas_pdn_connectivity_req.pdn_addr);
+//    AssertFatal(NULL == message_p->ittiMsg.nas_pdn_connectivity_req.pdn_addr, "TODO clean pointer");
+//  }
+//  break;
 
   case NAS_INITIAL_UE_MESSAGE:
     bdestroy_wrapper (&message_p->ittiMsg.nas_initial_ue_message.nas.initial_nas_msg);
@@ -161,12 +161,12 @@ void itti_free_msg_content (MessageDef * const message_p)
     // DO nothing
     break;
 
-  case NAS_PDN_CONNECTIVITY_RSP:{
-    clear_protocol_configuration_options(&message_p->ittiMsg.nas_pdn_connectivity_rsp.pco);
-    bdestroy_wrapper (&message_p->ittiMsg.nas_pdn_connectivity_rsp.pdn_addr);
-    AssertFatal(NULL == message_p->ittiMsg.nas_pdn_connectivity_rsp.pdn_addr, "TODO clean pointer");
-  }
-  break;
+//  case NAS_PDN_CONNECTIVITY_RSP:{
+//    clear_protocol_configuration_options(&message_p->ittiMsg.nas_pdn_connectivity_rsp.pco);
+//    bdestroy_wrapper (&message_p->ittiMsg.nas_pdn_connectivity_rsp.pdn_addr);
+//    AssertFatal(NULL == message_p->ittiMsg.nas_pdn_connectivity_rsp.pdn_addr, "TODO clean pointer");
+//  }
+//  break;
 
   case NAS_PDN_DISCONNECT_REQ:{
     bdestroy_wrapper (&message_p->ittiMsg.nas_pdn_disconnect_req.apn);
@@ -186,17 +186,17 @@ void itti_free_msg_content (MessageDef * const message_p)
     bdestroy_wrapper (&message_p->ittiMsg.nas_erab_release_req.nas_msg);
     break;
 
-  case NAS_ESM_DATA_IND:
-    bdestroy_wrapper (&message_p->ittiMsg.nas_esm_data_ind.esm_msg_p);
-    break;
+//  case NAS_ESM_DATA_IND:
+//    bdestroy_wrapper (&message_p->ittiMsg.nas_esm_data_ind.esm_msg_p);
+//    break;
 
-  case NAS_PDN_CONFIG_REQ:
-   break;
+//  case NAS_PDN_CONFIG_REQ:
+//   break;
 
-  case NAS_CONTEXT_REQ:
-    bdestroy_wrapper (&message_p->ittiMsg.nas_context_req.nas_msg);
-    AssertFatal(NULL == message_p->ittiMsg.nas_context_req.nas_msg, "TODO clean pointer");
-    break;
+//  case NAS_CONTEXT_REQ:
+//    bdestroy_wrapper (&message_p->ittiMsg.nas_context_req.nas_msg);
+//    AssertFatal(NULL == message_p->ittiMsg.nas_context_req.nas_msg, "TODO clean pointer");
+//    break;
 
   case S11_CREATE_SESSION_REQUEST: {
     clear_protocol_configuration_options(&message_p->ittiMsg.s11_create_session_request.pco);
@@ -400,13 +400,13 @@ void itti_free_msg_content (MessageDef * const message_p)
     }
     break;
 
-  case S1AP_HANDOVER_REQUEST_ACKNOWLEDGE:
-    bdestroy_wrapper(&message_p->ittiMsg.s1ap_handover_request_acknowledge.target_to_source_eutran_container);
-    for (int i = 0; i < message_p->ittiMsg.s1ap_handover_request_acknowledge.no_of_e_rabs; i++) {
-      bdestroy_wrapper (&message_p->ittiMsg.s1ap_handover_request_acknowledge.transport_layer_address[i]);
-//          bdestroy_wrapper (&message_p->ittiMsg.s1ap_e_rab_setup_req.e_rab_to_be_setup_list.item[i].transport_layer_address);
-    }
-    break;
+//  case S1AP_HANDOVER_REQUEST_ACKNOWLEDGE:
+//    bdestroy_wrapper(&message_p->ittiMsg.s1ap_handover_request_acknowledge.target_to_source_eutran_container);
+//    for (int i = 0; i < message_p->ittiMsg.s1ap_handover_request_acknowledge.no_of_e_rabs; i++) {
+//      bdestroy_wrapper (&message_p->ittiMsg.s1ap_handover_request_acknowledge.transport_layer_address[i]);
+////          bdestroy_wrapper (&message_p->ittiMsg.s1ap_e_rab_setup_req.e_rab_to_be_setup_list.item[i].transport_layer_address);
+//    }
+//    break;
 
   case S1AP_HANDOVER_COMMAND:
     bdestroy_wrapper(&message_p->ittiMsg.s1ap_handover_command.eutran_target_to_source_container);

@@ -889,7 +889,7 @@ int emm_data_context_update_security_parameters(const mme_ue_s1ap_id_t ue_id,
   *encryption_algorithm_capabilities = ((uint16_t)emm_ctx->_ue_network_capability.eea & ~(1 << 7)) << 1;
   *integrity_algorithm_capabilities = ((uint16_t)emm_ctx->_ue_network_capability.eia & ~(1 << 7)) << 1;
 
-  LOCK_EMM_CONTEXT(emm_ctx);
+//  LOCK_EMM_CONTEXT(emm_ctx);
   /** Derive the next hop. */
   derive_nh(emm_ctx->_vector[emm_ctx->_security.vector_index].kasme, emm_ctx->_vector[emm_ctx->_security.vector_index].nh_conj);
 
@@ -923,7 +923,7 @@ int emm_data_context_update_security_parameters(const mme_ue_s1ap_id_t ue_id,
 //    derive_nh(emm_ctx->_vector[emm_ctx->_security.vector_index].kasme, emm_ctx->_vector[emm_ctx->_security.vector_index].nh_conj);
 //    OAILOG_STREAM_HEX(OAILOG_LEVEL_DEBUG, LOG_NAS_EMM, "New NH_CONJ for ncc1: ", emm_ctx->_vector[emm_ctx->_security.vector_index].nh_conj, 32);
 //  }
-  UNLOCK_EMM_CONTEXT(emm_ctx);
+//  UNLOCK_EMM_CONTEXT(emm_ctx);
 
   OAILOG_INFO(LOG_NAS_EMM, "EMM-CTX - Updated AS security parameters for EMM context with UE id " MME_UE_S1AP_ID_FMT " and IMSI " IMSI_64_FMT ". \n",
       ue_context->mme_ue_s1ap_id, emm_ctx->_imsi64);
@@ -1021,7 +1021,7 @@ int _start_context_request_procedure(struct emm_data_context_s *emm_context, nas
 void nas_start_T3450(const mme_ue_s1ap_id_t ue_id, struct nas_timer_s * const T3450,  time_out_t time_out_cb, void *timer_callback_args)
 {
   if ((T3450) && (T3450->id == NAS_TIMER_INACTIVE_ID)) {
-    T3450->id = nas_timer_start (T3450->sec, 0, true, time_out_cb, timer_callback_args);
+    T3450->id = nas_emm_timer_start (T3450->sec, 0, time_out_cb, timer_callback_args);
     if (NAS_TIMER_INACTIVE_ID != T3450->id) {
       MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 T3450 started UE " MME_UE_S1AP_ID_FMT " ", ue_id);
       OAILOG_DEBUG (LOG_NAS_EMM, "T3450 started UE " MME_UE_S1AP_ID_FMT "\n", ue_id);
@@ -1034,7 +1034,7 @@ void nas_start_T3450(const mme_ue_s1ap_id_t ue_id, struct nas_timer_s * const T3
 void nas_start_T3460(const mme_ue_s1ap_id_t ue_id, struct nas_timer_s * const T3460,  time_out_t time_out_cb, void *timer_callback_args)
 {
   if ((T3460) && (T3460->id == NAS_TIMER_INACTIVE_ID)) {
-    T3460->id = nas_timer_start (T3460->sec, 0, true, time_out_cb, timer_callback_args);
+    T3460->id = nas_emm_timer_start (T3460->sec, 0, time_out_cb, timer_callback_args);
     if (NAS_TIMER_INACTIVE_ID != T3460->id) {
       MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 T3460 started UE " MME_UE_S1AP_ID_FMT " ", ue_id);
       OAILOG_DEBUG (LOG_NAS_EMM, "T3460 started UE " MME_UE_S1AP_ID_FMT "\n", ue_id);
@@ -1047,7 +1047,7 @@ void nas_start_T3460(const mme_ue_s1ap_id_t ue_id, struct nas_timer_s * const T3
 void nas_start_T3470(const mme_ue_s1ap_id_t ue_id, struct nas_timer_s * const T3470,  time_out_t time_out_cb, void *timer_callback_args)
 {
   if ((T3470) && (T3470->id == NAS_TIMER_INACTIVE_ID)) {
-    T3470->id = nas_timer_start (T3470->sec, 0, true, time_out_cb, timer_callback_args);
+    T3470->id = nas_emm_timer_start (T3470->sec, 0, time_out_cb, timer_callback_args);
     if (NAS_TIMER_INACTIVE_ID != T3470->id) {
       MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 T3470 started UE " MME_UE_S1AP_ID_FMT " ", ue_id);
       OAILOG_DEBUG (LOG_NAS_EMM, "T3470 started UE " MME_UE_S1AP_ID_FMT "\n", ue_id);
@@ -1061,7 +1061,7 @@ void nas_start_T3470(const mme_ue_s1ap_id_t ue_id, struct nas_timer_s * const T3
 void nas_start_Ts6a_auth_info(const mme_ue_s1ap_id_t ue_id, struct nas_timer_s * const Ts6a_auth_info,  time_out_t time_out_cb, void *timer_callback_args)
 {
   if ((Ts6a_auth_info) && (Ts6a_auth_info->id == NAS_TIMER_INACTIVE_ID)) {
-    Ts6a_auth_info->id = nas_timer_start (Ts6a_auth_info->sec, 0, true,  time_out_cb, timer_callback_args);
+    Ts6a_auth_info->id = nas_emm_timer_start (Ts6a_auth_info->sec, 0, time_out_cb, timer_callback_args);
     if (NAS_TIMER_INACTIVE_ID != Ts6a_auth_info->id) {
       MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 Ts6a_auth_info started UE " MME_UE_S1AP_ID_FMT " ", ue_id);
       OAILOG_DEBUG (LOG_NAS_EMM, "Ts6a_auth_info started UE " MME_UE_S1AP_ID_FMT "\n", ue_id);
@@ -1075,7 +1075,7 @@ void nas_start_Ts6a_auth_info(const mme_ue_s1ap_id_t ue_id, struct nas_timer_s *
 void nas_start_Ts10_ctx_req(const mme_ue_s1ap_id_t ue_id, struct nas_timer_s * const Ts10_ctx_res,  time_out_t time_out_cb, void *timer_callback_args)
 {
   if ((Ts10_ctx_res) && (Ts10_ctx_res->id == NAS_TIMER_INACTIVE_ID)) {
-    Ts10_ctx_res->id = nas_timer_start (Ts10_ctx_res->sec, 0, true,  time_out_cb, timer_callback_args);
+    Ts10_ctx_res->id = nas_emm_timer_start (Ts10_ctx_res->sec, 0, time_out_cb, timer_callback_args);
     if (NAS_TIMER_INACTIVE_ID != Ts10_ctx_res->id) {
       MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 Ts10_ctx_res started UE " MME_UE_S1AP_ID_FMT " ", ue_id);
       OAILOG_DEBUG (LOG_NAS_EMM, "Ts10_ctx_res started UE " MME_UE_S1AP_ID_FMT " with timer id %u \n", ue_id, Ts10_ctx_res->id);
@@ -1089,7 +1089,7 @@ void nas_start_Ts10_ctx_req(const mme_ue_s1ap_id_t ue_id, struct nas_timer_s * c
 void nas_start_T_retry_specific_procedure(const mme_ue_s1ap_id_t ue_id, struct nas_timer_s * const T_retry,  time_out_t time_out_cb, void *timer_callback_args)
 {
   if ((T_retry) && (T_retry->id == NAS_TIMER_INACTIVE_ID)) {
-    T_retry->id = nas_timer_start (T_retry->sec, 0, true, time_out_cb, timer_callback_args);
+    T_retry->id = nas_emm_timer_start (T_retry->sec, 0, time_out_cb, timer_callback_args);
     if (NAS_TIMER_INACTIVE_ID != T_retry->id) {
       MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 T_retry started UE " MME_UE_S1AP_ID_FMT " ", ue_id);
       OAILOG_DEBUG (LOG_NAS_EMM, "T_retry started UE " MME_UE_S1AP_ID_FMT "\n", ue_id);

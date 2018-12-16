@@ -119,7 +119,7 @@ static int _modify_eps_bearer_context_t3486_handler (nas_esm_proc_bearer_context
  **      Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
-int
+void
 esm_send_modify_eps_bearer_context_request (
   pti_t pti,
   ebi_t ebi,
@@ -173,7 +173,7 @@ esm_send_modify_eps_bearer_context_request (
     msg->presencemask |= MODIFY_EPS_BEARER_CONTEXT_REQUEST_PROTOCOL_CONFIGURATION_OPTIONS_PRESENT;
   }
   OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Send Modify EPS Bearer Context " "Request message (pti=%d, ebi=%d). \n", msg->proceduretransactionidentity, msg->epsbeareridentity);
-  OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);
+  OAILOG_FUNC_OUT(LOG_NAS_ESM);
 }
 
 /*
@@ -244,8 +244,7 @@ esm_proc_modify_eps_bearer_context (
    */
   nas_stop_esm_timer(ue_id, &esm_proc_bearer_context->esm_base_proc.esm_proc_timer);
   /** Start the T3485 timer for additional PDN connectivity. */
-  esm_proc_bearer_context->esm_base_proc.esm_proc_timer.id = nas_timer_start (mme_config.nas_config.t3486_sec, 0 /*usec*/, false,
-      _nas_proc_pdn_connectivity_timeout_handler, ue_id); /**< Address field should be big enough to save an ID. */
+  esm_proc_bearer_context->esm_base_proc.esm_proc_timer.id = nas_esm_timer_start (mme_config.nas_config.t3486_sec, 0 /*usec*/, ue_id); /**< Address field should be big enough to save an ID. */
   esm_proc_bearer_context->esm_base_proc.timeout_notif = _modify_eps_bearer_context_t3486_handler;
   OAILOG_FUNC_RETURN(LOG_NAS_ESM, esm_cause);
 }
@@ -280,7 +279,8 @@ esm_proc_update_eps_bearer_context (
   /*
    * Check if an ESM bearer context transaction exists.
    */
-  nas_esm_proc_bearer_context_t * esm_bearer_context_proc = _esm_get_bearer_context_proc(ue_id, bc_tbu->eps_bearer_id);
+  // todo : GET PTI
+  nas_esm_proc_bearer_context_t * esm_bearer_context_proc = _esm_proc_get_bearer_context_procedure(ue_id, PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED, bc_tbu->eps_bearer_id);
   if(!esm_bearer_context_proc){
     OAILOG_WARNING(LOG_NAS_ESM, "ESM-PROC  - No ESM Bearer Context procedure for ebi %d exists for ueId " MME_UE_S1AP_ID_FMT ". "
         "The bearer context assumed not to be in a pending state. \n", bc_tbu->eps_bearer_id, ue_id);

@@ -212,7 +212,7 @@ static int _emm_cn_pdn_config_res (emm_cn_pdn_config_res_t * msg_pP)
     /*
      * Send tracking area update accept message to the UE
      */
-    rc = esm_cn_wrapper_tracking_area_update_accept(emm_context);
+//    rc = esm_cn_wrapper_tracking_area_update_accept(emm_context);
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc );
   }
 }

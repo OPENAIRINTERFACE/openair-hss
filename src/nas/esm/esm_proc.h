@@ -103,7 +103,9 @@ esm_cause_t esm_proc_pdn_config_res(mme_ue_s1ap_id_t ue_id, nas_esm_proc_pdn_con
 
 esm_cause_t esm_proc_pdn_config_fail(mme_ue_s1ap_id_t ue_id, nas_esm_proc_pdn_connectivity_t *esm_pdn_connectivity_proc, ESM_msg * esm_resp_msg);
 
-esm_cause_t esm_proc_pdn_connectivity_res (mme_ue_s1ap_id_t ue_id, ambr_t * apn_ambr, bearer_qos_t * bearer_level_qos, nas_esm_proc_pdn_connectivity_t * esm_pdn_connectivity_proc);
+esm_cause_t esm_proc_pdn_connectivity_res (mme_ue_s1ap_id_t ue_id, nas_esm_proc_pdn_connectivity_t * esm_proc_pdn_connectivity,
+    ambr_t * apn_ambr, bearer_qos_t * bearer_level_qos,
+    pdn_type_t pdn_type, paa_t * paa);
 
 /*
  * --------------------------------------------------------------------------
@@ -133,27 +135,29 @@ esm_proc_pdn_disconnect_accept (
 
 int esm_proc_esm_information_request (nas_esm_proc_pdn_connectivity_t *esm_pdn_connectivity, ESM_msg * esm_result_msg);
 
-int esm_proc_esm_information_response (mme_ue_s1ap_id_t ue_id, pti_t pti, nas_esm_proc_pdn_connectivity_t * nas_pdn_connectivity_proc, esm_information_response_msg * esm_information_resp);
+int esm_proc_esm_information_response (mme_ue_s1ap_id_t ue_id, pti_t pti, nas_esm_proc_pdn_connectivity_t * nas_pdn_connectivity_proc, const esm_information_response_msg * const esm_information_resp);
 
 /*
  * --------------------------------------------------------------------------
  *      Default EPS bearer context activation procedure
  * --------------------------------------------------------------------------
  */
-esm_cause_t esm_proc_default_eps_bearer_context (
+void
+esm_proc_default_eps_bearer_context (
   mme_ue_s1ap_id_t   ue_id,
-  const nas_esm_proc_pdn_connectivity_t * nas_pdn_connectivity_proc);
+  nas_esm_proc_pdn_connectivity_t * const esm_proc_pdn_connectivity);
 
-void esm_proc_default_eps_bearer_context_accept (mme_ue_s1ap_id_t ue_id, nas_esm_proc_pdn_connectivity_t* esm_pdn_connectivity_proc);
+void esm_proc_default_eps_bearer_context_accept (mme_ue_s1ap_id_t ue_id, const nas_esm_proc_pdn_connectivity_t* const esm_pdn_connectivity_proc);
 
 /*
  * --------------------------------------------------------------------------
  *      Dedicated EPS bearer context activation procedure
  * --------------------------------------------------------------------------
  */
-
-int esm_proc_dedicated_eps_bearer_context( mme_ue_s1ap_id_t ue_id,
-  ebi_t  default_ebi,
+esm_cause_t
+esm_proc_dedicated_eps_bearer_context (
+  mme_ue_s1ap_id_t   ue_id,
+  ebi_t              linked_ebi,
   const proc_tid_t   pti,                  // todo: Will always be 0 for network initiated bearer establishment.
   const pdn_cid_t    pdn_cid,              // todo: Per APN for now.
   bearer_context_to_be_created_t *bc_tbc);

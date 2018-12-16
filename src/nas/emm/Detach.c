@@ -107,7 +107,7 @@ _clear_emm_ctxt(mme_ue_s1ap_id_t ue_id) {
 //             ue_ref, ue_ref->mme_ue_s1ap_id, ue_ref->enb_ue_s1ap_id, ue_ref->s1_ue_state, ue_ref->enb);
 //  }
 
-  LOCK_EMM_CONTEXT(emm_context);
+//  LOCK_EMM_CONTEXT(emm_context);
   // todo: check if necessary!
   nas_delete_all_emm_procedures(emm_context);
 //  if(ue_ref){
@@ -115,7 +115,7 @@ _clear_emm_ctxt(mme_ue_s1ap_id_t ue_id) {
 //            ue_ref, ue_ref->mme_ue_s1ap_id, ue_ref->enb_ue_s1ap_id, ue_ref->s1_ue_state, ue_ref->enb);
 //  }
   /** Free all ESM procedure. */
-  nas_delete_all_esm_procedures(emm_context);
+//  nas_delete_all_esm_procedures(emm_context);
   /** Stop/Delete all ESM procedurs & timers. */
   // todo: removal of esm context in emm?!
   // todo: ESM_MSG removal
@@ -134,7 +134,7 @@ _clear_emm_ctxt(mme_ue_s1ap_id_t ue_id) {
    * Release the EMM context
    */
   // todo: need to unlock freed context?!
-  UNLOCK_EMM_CONTEXT(emm_context);
+//  UNLOCK_EMM_CONTEXT(emm_context);
   free_wrapper((void **) &emm_context);
   OAILOG_FUNC_OUT(LOG_NAS_EMM);
 }

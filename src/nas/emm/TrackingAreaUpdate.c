@@ -2150,7 +2150,7 @@ static void _emm_tracking_area_update_registration_complete(emm_data_context_t *
    * Inform the ESM layer about the registration. It would look prettier to have ESM as a child procedure,
    * but we won't to separate them for the sake of locks as well as AMF/SMF separation..
    */
-  rc = mme_api_registration_complete(emm_context->ue_id, tau_proc->ies->eps_update_type.active_flag);
+//  rc = mme_api_registration_complete(emm_context->ue_id, tau_proc->ies->eps_update_type.active_flag);
   DevAssert(rc == RETURNok); /**< Should always exist. Any mobility issue in which this could occur? */
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
