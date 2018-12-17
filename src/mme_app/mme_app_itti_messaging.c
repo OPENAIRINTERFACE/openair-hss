@@ -611,26 +611,6 @@ void notify_s1ap_new_ue_mme_s1ap_id_association (const sctp_assoc_id_t   assoc_i
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 
-void
-mme_app_itti_e_rab_failure(mme_ue_s1ap_id_t ue_id, ebi_t ebi, bool modify, bool remove){
-  MessageDef                             *message_p = NULL;
-
-  OAILOG_FUNC_IN (LOG_MME_APP);
-
-  OAILOG_DEBUG (LOG_MME_APP, "Sending E-RAB Failure for ueId " MME_UE_S1AP_ID_FMT " for ebi %d to deactivate the bearer. \n",
-      ue_id, ebi);
-
-  message_p = itti_alloc_new_message (TASK_MME_APP, MME_APP_E_RAB_FAILURE);
-  AssertFatal (message_p , "itti_alloc_new_message Failed");
-  itti_mme_app_e_rab_failure_t *e_rab_failure = &message_p->ittiMsg.mme_app_e_rab_failure;
-  e_rab_failure->mme_ue_s1ap_id = ue_id;
-  e_rab_failure->ebi = ebi;
-  e_rab_failure->modify = modify;
-  e_rab_failure->remove = remove;
-
-  OAILOG_FUNC_OUT (LOG_MME_APP);
-}
-
 //------------------------------------------------------------------------------
 int
 mme_app_send_s11_create_bearer_rsp (

@@ -253,42 +253,6 @@ mme_api_get_emm_config (
   OAILOG_FUNC_RETURN (LOG_NAS, RETURNok);
 }
 
-
-/****************************************************************************
- **                                                                        **
- ** Name:    mme_api_get_config()                                      **
- **                                                                        **
- ** Description: Retreives MME configuration data related to EPS session   **
- **      management                                                **
- **                                                                        **
- ** Inputs:  None                                                      **
- **      Others:    None                                       **
- **                                                                        **
- ** Outputs:     None                                                      **
- **      Return:    RETURNok, RETURNerror                      **
- **      Others:    None                                       **
- **                                                                        **
- ***************************************************************************/
-int
-mme_api_get_esm_config (
-  mme_api_esm_config_t * config)
-{
-  OAILOG_FUNC_IN (LOG_NAS);
-
-  if (_mme_api_ip_capability == MME_API_IPV4_ADDR) {
-    config->features = MME_API_IPV4;
-  } else if (_mme_api_ip_capability == MME_API_IPV6_ADDR) {
-    config->features = MME_API_IPV6;
-  } else if (_mme_api_ip_capability == MME_API_IPV4V6_ADDR) {
-    config->features = MME_API_IPV4 | MME_API_IPV6;
-  } else {
-    config->features = 0;
-  }
-
-  OAILOG_FUNC_RETURN (LOG_NAS, RETURNok);
-}
-
-
 /*
  *
  *  Name:    mme_api_notify_imsi()

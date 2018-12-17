@@ -643,6 +643,7 @@ add_library(MME_APP
   ${MME_DIR}/mme_app_main.c
   ${MME_DIR}/mme_app_pdn_context.c
   ${MME_DIR}/mme_app_procedures.c
+  ${MME_DIR}/mme_app_esm_procedures.c
   ${MME_DIR}/mme_app_wrr_selection.c
   ${MME_DIR}/mme_app_statistics.c
   ${MME_DIR}/mme_app_transport.c
@@ -810,14 +811,12 @@ set (libnas_mme_esm_OBJS
   ${NAS_SRC}esm/EpsBearerContextDeactivation.c
   ${NAS_SRC}esm/esm_data_context.c
   ${NAS_SRC}esm/esm_ebr.c
-  ${NAS_SRC}esm/esm_ebr_context.c
   ${NAS_SRC}esm/esm_information.c
   ${NAS_SRC}esm/esm_ip.c
   ${NAS_SRC}esm/esm_main.c
   ${NAS_SRC}esm/esm_pt.c
   ${NAS_SRC}esm/EsmStatusHdl.c
   ${NAS_SRC}esm/nas_esm_proc.c
-  ${NAS_SRC}esm/nas_esm_procedures.c
   ${NAS_SRC}esm/nas_esm_task.c
   ${NAS_SRC}esm/PdnConnectivity.c
   ${NAS_SRC}esm/PdnDisconnect.c
@@ -825,7 +824,6 @@ set (libnas_mme_esm_OBJS
 
 set(libnas_mme_esm_sap_OBJS
   ${NAS_SRC}esm/sap/esm_recv.c
-  ${NAS_SRC}esm/sap/esm_send.c
   ${NAS_SRC}esm/sap/esm_sap.c
   )
   

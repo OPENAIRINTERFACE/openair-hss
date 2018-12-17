@@ -132,8 +132,6 @@ void mme_api_duplicate_enb_ue_s1ap_id_detected (
     const mme_ue_s1ap_id_t mme_ue_s1ap_id,
     const bool             is_remove_old);
 
-int mme_api_get_esm_config(mme_api_esm_config_t *config);
-
 int
 mme_api_notify_imsi ( const mme_ue_s1ap_id_t id, const imsi64_t imsi64);
 

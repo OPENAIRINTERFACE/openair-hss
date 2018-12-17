@@ -1985,11 +1985,9 @@ static void mme_app_handle_e_rab_setup_rsp_dedicated_bearer(const itti_s1ap_e_ra
      * No need to check the result code, the bearer is not established in any case.
      * Also no need to wait for the ESM layer to continue with the CBResp (but sill informing the ESM layer to abort the session management procedure prematurely).
      */
-    /**
-     * Inform the ESM layer to remove the ESM bearer context and stop the procedure.
-     * (Even if NAS returned successfully).
-     */
-    mme_app_itti_e_rab_failure(ue_context->mme_ue_s1ap_id, e_rab_id, false, true); /**< WIll trigger pending bearer count and eventually trigger a CBResp. */
+
+    // todo: remove the ESM procedures in the MME_APP UE context directly..
+
   }
   pdn_context_t * pdn_context = NULL;
   /** Get the PDN context. */
@@ -2065,9 +2063,12 @@ static void mme_app_handle_e_rab_setup_rsp_pdn_connectivity(const mme_ue_s1ap_id
       mme_app_get_pdn_context(ue_context, pdn_cid, def_ebi, NULL, &pdn_context);
       /** Send a Delete Session Request. The response will trigger removal of the pdn & bearer resources. */
       OAILOG_WARNING(LOG_MME_APP, "After failed establishment of default bearer with default ebi %d for UE: " MME_UE_S1AP_ID_FMT ", "
-          "triggering implicit PDN context remova. \n", failed_ebi, ue_context->mme_ue_s1ap_id);
+          "triggering implicit PDN context removal. \n", failed_ebi, ue_context->mme_ue_s1ap_id);
       mme_app_send_delete_session_request(ue_context, bc_failed->linked_ebi, pdn_context->s_gw_address_s11_s4.address.ipv4_address, pdn_context->s_gw_teid_s11_s4, true); /**< Don't delete the S11 Tunnel endpoint (still need for the default apn). */
-      mme_app_itti_e_rab_failure(ue_context->mme_ue_s1ap_id, def_ebi, false, true); /**< WIll trigger pending bearer count and eventually trigger a CBResp. */
+
+      // todo: remove the ESM procedures in the MME_APP UE context directly..
+
+
       OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
     }else {
       OAILOG_ERROR(LOG_MME_APP, "No bearer context was found for failed default ebi %d for UE: " MME_UE_S1AP_ID_FMT "\n", failed_ebi, ue_context->mme_ue_s1ap_id);
@@ -2179,15 +2180,17 @@ void mme_app_handle_e_rab_modify_rsp (itti_s1ap_e_rab_modify_rsp_t  * const e_ra
       bc_tbu->cause.cause_value = NO_RESOURCES_AVAILABLE;
       mme_app_get_session_bearer_context_from_all(ue_context, e_rab_id, &bc_failed);
       DevAssert(bc_failed);
-      /** Found a BC.. should be removed. */
-      /** Trigger a removal to the ESM (ESM completed successfully (error on RAT side) . */
-      mme_app_itti_e_rab_failure(ue_context->mme_ue_s1ap_id, e_rab_id, true, true); /**< WIll trigger pending bearer count and eventually trigger a CBResp. */
+
+
+      // todo: remove the ESM procedures in the MME_APP UE context directly..
+
       /** No need to decrement the number of unhandled bearers. Continue with other bearers (ESM layer will reduce). */
     }else{
       /** Set cause as rejected. */
       bc_tbu->cause.cause_value = REQUEST_REJECTED;
       /** No need to inform the ESM layer. */
-      mme_app_itti_e_rab_failure(ue_context->mme_ue_s1ap_id, e_rab_id, true, false); /**< WIll trigger pending bearer count and eventually trigger a CBResp. */
+      // todo: remove the ESM procedures in the MME_APP UE context directly..
+
     }
     /** Reduce the number of unhandled bearers. */
     // todo: implement locks..
@@ -2205,20 +2208,10 @@ void mme_app_handle_e_rab_modify_rsp (itti_s1ap_e_rab_modify_rsp_t  * const e_ra
     OAILOG_DEBUG (LOG_MME_APP, "For the S11 dedicated bearer procedure, no pending bearers left (either success or failure) for UE " MME_UE_S1AP_ID_FMT ". "
         "Sending UBResp immediately. \n", ue_context->mme_ue_s1ap_id);
     mme_app_send_s11_update_bearer_rsp(ue_context, s11_proc_update_bearer->proc.s11_trxn, s11_proc_update_bearer->bcs_tbu);
-    /** Inform the ESM layer. */
-    MessageDef *message_p = itti_alloc_new_message (TASK_MME_APP, MME_APP_UPDATE_ESM_BEARER_CTXS_REQ);
-    AssertFatal (message_p , "itti_alloc_new_message Failed");
-
-    itti_mme_app_update_esm_bearer_ctxs_req_t *mme_app_update_esm_bearer_ctxs_req = &message_p->ittiMsg.mme_app_update_esm_bearer_ctxs_req;
-    /** MME_APP Create Bearer Request. */
-    mme_app_update_esm_bearer_ctxs_req->ue_id              = ue_context->mme_ue_s1ap_id;
-    mme_app_update_esm_bearer_ctxs_req->bcs_to_be_updated  = s11_proc_update_bearer->bcs_tbu;
-    s11_proc_update_bearer->bcs_tbu = NULL;
-    /** No need to set bearer states, we won't establish the bearers yet. */
-    MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 MME_APP_UPDATE_ESM_BEARER_CTXS_REQ mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ",
-        mme_app_update_esm_bearers_req->ue_id);
-    itti_send_msg_to_task (TASK_NAS_ESM, INSTANCE_DEFAULT, message_p);
-    /** Delete the procedure if it exists. */
+    /*
+     * We update the ESM bearer context when the NAS ESM confirmation arrives.
+     * We don't care for the E-RAB message.
+     */
     mme_app_delete_s11_procedure_update_bearer(ue_context);
   }
   OAILOG_FUNC_OUT (LOG_MME_APP);
@@ -2353,6 +2346,8 @@ void mme_app_handle_activate_eps_bearer_ctx_rej (itti_mme_app_activate_eps_beare
    *
    * So we check the state of the bearers.
    * The indication that S11 Create Bearer Response should be sent to the SAE-GW, should be sent by ESM/NAS layer.
+   *
+   * No locks should be needed for this.
    */
   bearer_context_to_be_created_t * bc_tbc = NULL;
   for(int num_bc = 0; num_bc < s11_proc_create_bearer->bcs_tbc->num_bearer_context; num_bc++ ){
@@ -2377,9 +2372,8 @@ void mme_app_handle_activate_eps_bearer_ctx_rej (itti_mme_app_activate_eps_beare
   }
   OAILOG_INFO(LOG_MME_APP, "No unhandled bearers left for s11 create bearer procedure for UE: " MME_UE_S1AP_ID_FMT ". Sending CBResp back immediately. \n", ue_context->mme_ue_s1ap_id);
   mme_app_send_s11_create_bearer_rsp(ue_context, pdn_context, s11_proc_create_bearer->proc.s11_trxn, 0, s11_proc_create_bearer->bcs_tbc);
-  /** Delete the procedure if it exists. */
+  /** Delete the procedure if it exists. No ESM procedure expected to be removed (should not exist here). */
   mme_app_delete_s11_procedure_create_bearer(ue_context);
-  /** NAS layer does not need to be informed because of NAS reject. No ESM bearer should be allocated  for this EBI and no change in the ESM context.*/
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 
@@ -2464,24 +2458,11 @@ void mme_app_handle_modify_eps_bearer_ctx_cnf (itti_mme_app_modify_eps_bearer_ct
   }
   OAILOG_INFO(LOG_MME_APP, "No unhandled bearers left for s11 update bearer procedure for UE: " MME_UE_S1AP_ID_FMT ". Sending UBResp back immediately. \n", ue_context->mme_ue_s1ap_id);
   mme_app_send_s11_update_bearer_rsp(ue_context, s11_proc_update_bearer->proc.s11_trxn, s11_proc_update_bearer->bcs_tbu);
-  /** Inform the ESM layer. */
-  message_p = itti_alloc_new_message (TASK_MME_APP, MME_APP_UPDATE_ESM_BEARER_CTXS_REQ);
-  AssertFatal (message_p , "itti_alloc_new_message Failed");
-
-  itti_mme_app_update_esm_bearer_ctxs_req_t *mme_app_update_esm_bearer_ctxs_req = &message_p->ittiMsg.mme_app_update_esm_bearer_ctxs_req;
-  /** MME_APP Create Bearer Request. */
-  mme_app_update_esm_bearer_ctxs_req->ue_id              = ue_context->mme_ue_s1ap_id;
-  mme_app_update_esm_bearer_ctxs_req->bcs_to_be_updated  = s11_proc_update_bearer->bcs_tbu;
-  s11_proc_update_bearer->bcs_tbu = NULL;
-
-  /** No need to set bearer states, we won't establish the bearers yet. */
-  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 MME_APP_UPDATE_ESM_BEARER_CTXS_REQ mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ",
-      mme_app_update_esm_bearers_req->ue_id);
-  itti_send_msg_to_task (TASK_NAS_ESM, INSTANCE_DEFAULT, message_p);
-
-  /** Delete the procedure if it exists. */
+  /*
+   * Delete the procedure if it exists.
+   * We don't need to inform the ESM layer.
+   */
   mme_app_delete_s11_procedure_update_bearer(ue_context);
-
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 

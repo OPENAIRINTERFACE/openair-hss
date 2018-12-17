@@ -107,14 +107,6 @@ void itti_free_msg_content (MessageDef * const message_p)
   }
   break;
 
-  case MME_APP_UPDATE_ESM_BEARER_CTXS_REQ: {
-    /** Bearer Context to Be updated. */
-    if(message_p->ittiMsg.mme_app_update_esm_bearer_ctxs_req.bcs_to_be_updated){
-      free_bearer_contexts_to_be_updated(&message_p->ittiMsg.mme_app_update_esm_bearer_ctxs_req.bcs_to_be_updated);
-    }
-  }
-  break;
-
 //  case NAS_PDN_CONNECTIVITY_REQ:{
 //    clear_protocol_configuration_options(&message_p->ittiMsg.nas_pdn_connectivity_req.pco);
 //    bdestroy_wrapper (&message_p->ittiMsg.nas_pdn_connectivity_req.apn);

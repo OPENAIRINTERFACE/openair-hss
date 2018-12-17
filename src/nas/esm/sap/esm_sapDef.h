@@ -54,9 +54,6 @@ Description Defines the ESM Service Access Point that provides EPS
 typedef enum esm_primitive_s {
   ESM_START = 0,
 
-  /* Internal signal. */
-  ESM_TIMEOUT_IND,
-
   /* Transaction related procedures (initiated by the UE) */
   ESM_PDN_CONFIG_RES,
   ESM_PDN_CONFIG_FAIL,
@@ -69,27 +66,9 @@ typedef enum esm_primitive_s {
   ESM_EPS_BEARER_CONTEXT_ACTIVATE_REQ,
   ESM_EPS_BEARER_CONTEXT_MODIFY_REQ,
   ESM_EPS_BEARER_CONTEXT_DEACTIVATE_REQ,
-            /****/
-  ESM_EPS_UPDATE_ESM_BEARER_CTXS_REQ,
 
-  /* Procedures related to EPS bearer contexts (initiated by the network) */
-//  ESM_DEFAULT_EPS_BEARER_CONTEXT_ACTIVATE_CNF,
-//  ESM_DEFAULT_EPS_BEARER_CONTEXT_ACTIVATE_REJ,
-////  ESM_DEDICATED_EPS_BEARER_CONTEXT_ACTIVATE_REQ,
-//  ESM_DEDICATED_EPS_BEARER_CONTEXT_ACTIVATE_CNF,
-//  ESM_DEDICATED_EPS_BEARER_CONTEXT_ACTIVATE_REJ,
-//  ESM_EPS_BEARER_CONTEXT_MODIFY_REQ,
-//  ESM_EPS_BEARER_CONTEXT_MODIFY_CNF,
-//  ESM_EPS_BEARER_CONTEXT_MODIFY_REJ,
-//  ESM_DEDICATED_EPS_BEARER_CONTEXT_DEACTIVATE_REQ,
-//  ESM_DEDICATED_EPS_BEARER_CONTEXT_DEACTIVATE_CNF,
-//  ,
-
-
-  ESM_BEARER_RESOURCE_ALLOCATE_REQ,
-  ESM_BEARER_RESOURCE_ALLOCATE_REJ,
-  ESM_BEARER_RESOURCE_MODIFY_REQ,
-  ESM_BEARER_RESOURCE_MODIFY_REJ,
+  /* Internal signal. */
+  ESM_TIMEOUT_IND,
 
   ESM_END
 } esm_primitive_t;
@@ -106,7 +85,7 @@ typedef struct itti_nas_pdn_connectivity_fail_s             esm_cn_pdn_connectiv
 typedef struct itti_nas_pdn_disconnect_rsp_s                esm_cn_pdn_disconnect_res_t;
 
 typedef struct itti_mme_app_activate_eps_bearer_ctx_req_s   esm_eps_activate_eps_bearer_ctx_req_t;
-typedef struct itti_mme_app_update_esm_bearer_ctxs_req_s    esm_eps_update_esm_bearer_ctxs_req_t;
+typedef struct itti_mme_app_modify_eps_bearer_ctx_req_s     esm_eps_modify_esm_bearer_ctxs_req_t;
 typedef struct itti_mme_app_deactivate_eps_bearer_ctx_req_s esm_eps_deactivate_eps_bearer_ctx_req_t;
 
 /*
@@ -120,8 +99,8 @@ typedef struct esm_activate_eps_bearer_context_s {
 } esm_activate_eps_bearer_context_t;
 
 typedef struct esm_modify_eps_bearer_context_s {
-//  pdn_cid_t                        pdn_cid;
-//  ebi_t                            linked_ebi;
+  pdn_cid_t                        pdn_cid;
+  ebi_t                            linked_ebi;
   bearer_context_to_be_updated_t  *bc_tbu;
   ambr_t                           apn_ambr;
   pti_t                            pti;
@@ -196,12 +175,12 @@ typedef union {
   esm_cn_pdn_config_res_t        *pdn_config_res;
   esm_cn_pdn_connectivity_res_t  *pdn_connectivity_res;
   esm_cn_pdn_connectivity_fail_t *pdn_connectivity_fail;
+  esm_cn_pdn_disconnect_res_t    *pdn_disconnect_res;
 
   /** Non Pointer structures. */
   esm_activate_eps_bearer_context_t         eps_bearer_context_activate;
   esm_modify_eps_bearer_context_t           eps_bearer_context_modify;
   esm_deactivate_eps_bearer_context_t       eps_bearer_context_deactivate;
-  esm_eps_update_esm_bearer_ctxs_req_t      eps_update_esm_bearer_ctxs;
 } esm_sap_data_t;
 
 struct emm_data_context_s;

@@ -91,17 +91,10 @@ esm_main_initialize (
   void)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
-
   /*
-   * Retreive MME supported configuration data
-   */
-  if (mme_api_get_esm_config (&_esm_data.conf) != RETURNok) {
-    OAILOG_ERROR (LOG_NAS_ESM, "ESM-MAIN  - Failed to get MME configuration data\n");
-  }
-  /*
+   * No ESM Data/configuration.
    * Initialize the EPS bearer context manager
    */
-//  todo: esm_ebr_initialize ();
   OAILOG_FUNC_OUT (LOG_NAS_ESM);
 }
 
@@ -124,6 +117,7 @@ esm_main_cleanup (
   void)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
+  /** Currently no hash tables. */
   OAILOG_FUNC_OUT (LOG_NAS_ESM);
 }
 

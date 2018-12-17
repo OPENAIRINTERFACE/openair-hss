@@ -70,49 +70,7 @@
 ////      DevAssert(0);
 //    }
 //    break;
-//
-//  case ESM_BEARER_RESOURCE_ALLOCATE_REQ:
-//    break;
-//
-//  case ESM_BEARER_RESOURCE_ALLOCATE_REJ:
-//    /*
-//     * Reject the bearer, stop the timer and put it into the empty pool.
-//     * This might be due a failed establishment.
-//     * No need to inform the MME_APP layer again.
-//     */
-//    rc = esm_proc_eps_bearer_context_deactivate (msg->ctx, true, msg->data.esm_bearer_resource_allocate_rej.ebi,
-//        PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED, NULL);
-//    /** If this was the default bearer, release the pdn connectivity. */
-//    break;
-//
-//  case ESM_BEARER_RESOURCE_MODIFY_REQ:
-//    break;
-//
-//  case ESM_BEARER_RESOURCE_MODIFY_REJ:
-//    /*
-//      * Reject the bearer, stop the timer and put it into the empty pool.
-//      * This might be due a failed establishment.
-//      */
-//     if(msg->data.esm_bearer_resource_modify_rej.remove){
-//       OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Removing bearer with ebi %d for ueId " MME_UE_S1AP_ID_FMT " due failed modification. \n",
-//           msg->data.esm_bearer_resource_modify_rej.ebi, msg->ue_id);
-//       /** Will return false, if the bearer is already removed. */
-//       rc = esm_proc_eps_bearer_context_deactivate (msg->ctx, true, msg->data.esm_bearer_resource_allocate_rej.ebi,
-//           PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED, NULL);
-//     }else{
-//       OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Not removing bearer with ebi %d for ueId " MME_UE_S1AP_ID_FMT " due failed modification. \n",
-//           msg->data.esm_bearer_resource_modify_rej.ebi, msg->ue_id);
-//
-//       /** Abort the ESM modification procedure, if existing and still pending.. */
-//       esm_cause =  ESM_CAUSE_REQUEST_REJECTED_UNSPECIFIED;
-//       rc = esm_proc_modify_eps_bearer_context_reject(msg->ctx, msg->data.esm_bearer_resource_modify_rej.ebi, &esm_cause, false);
-//     }
-//     /**
-//      * No need to to inform the MME_APP of the removal.
-//      * A CBResp/UBResp (incl. removing the count of unhandled bearers) might already have been triggered.
-//      */
-//     break;
-//
+
 //  case ESM_DEFAULT_EPS_BEARER_CONTEXT_ACTIVATE_REQ:{
 //    /** The PDN context should exist, set the received APN_AMBR and IP address, which would be necessary for retransmission. */
 //

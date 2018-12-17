@@ -115,14 +115,14 @@ const char * esm_ebr_state2string(esm_ebr_state esm_ebr_state)
  * Bearer Context Procedures
  */
 //-----------------------------------------------------------------------------
-nas_esm_proc_bearer_context_t *_esm_proc_create_bearer_context_procedure(mme_ue_s1ap_id_t ue_id, imsi_t *imsi, pti_t pti, ebi_t ebi, bstring apn)
+nas_esm_proc_bearer_context_t *_esm_proc_create_bearer_context_procedure(mme_ue_s1ap_id_t ue_id, pti_t pti, ebi_t linked_ebi, pdn_cid_t pdn_cid, ebi_t ebi,
+    int timeout_sec, int timeout_usec, esm_timeout_cb_t timeout_notif)
 {
-  nas_esm_proc_bearer_context_t  *esm_proc_bearer_context = mme_app_nas_esm_create_bearer_context_procedure(ue_id, pti, ebi);
+  nas_esm_proc_bearer_context_t  *esm_proc_bearer_context = mme_app_nas_esm_create_bearer_context_procedure(ue_id, pti, ebi, timeout_sec, timeout_usec, timeout_notif, (void*)ue_id);
   AssertFatal(esm_proc_bearer_context, "TODO Handle this");
-  memcpy((void*)&esm_proc_bearer_context->imsi, imsi, sizeof(imsi_t));
-  if(apn)
-    esm_proc_bearer_context->subscribed_apn = bstrcpy(apn);
-  /** Timeout notifier set separately. */
+  esm_proc_bearer_context->linked_ebi = linked_ebi;
+  esm_proc_bearer_context->pdn_cid = pdn_cid;
+  esm_proc_bearer_context->bearer_ebi = ebi;
   return esm_proc_bearer_context;
 }
 

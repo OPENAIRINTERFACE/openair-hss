@@ -2342,7 +2342,7 @@ pdn_context_t * mme_app_handle_pdn_connectivity_from_s10(ue_context_t *ue_contex
     bearer_context_to_be_created_t * bearer_context_to_be_created_s10 = &pdn_connection->bearer_context_list.bearer_contexts[num_bearer];
     /* Create bearer contexts in the PDN context. */
     bearer_context_t * bearer_context_registered = NULL;
-    mme_app_register_bearer_context(ue_context, bearer_context_to_be_created_s10->eps_bearer_id, pdn_context, &bearer_context_registered);
+//    mme_app_register_bearer_context(ue_context, bearer_context_to_be_created_s10->eps_bearer_id, pdn_context, &bearer_context_registered);
     // todo: optimize this!
     DevAssert(bearer_context_registered);
     /*

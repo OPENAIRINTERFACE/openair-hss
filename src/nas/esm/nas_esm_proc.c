@@ -150,12 +150,11 @@ int
 nas_esm_proc_data_ind (
   itti_nas_esm_data_ind_t * esm_data_ind)
 {
-  /** Try to get the ESM Data context. */
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
   bstring                                 rsp = NULL;
   esm_cause_t                             esm_cause = ESM_CAUSE_SUCCESS;
   int                                     rc = RETURNerror;
 
-  OAILOG_FUNC_IN (LOG_NAS_ESM);
   _esm_sap_recv(esm_data_ind->ue_id, &esm_data_ind->imsi, &esm_data_ind->visited_tai, esm_data_ind->req, &esm_cause, &rsp);
   /** We don't check for the error.. If a response message is there, we directly transmit it over the lower layers.. */
   if(rsp){
@@ -272,58 +271,73 @@ nas_esm_proc_pdn_connectivity_fail (
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
 }
 
+//------------------------------------------------------------------------------
+int
+nas_esm_proc_pdn_disconnect_res(
+    esm_cn_pdn_disconnect_res_t * pdn_disconn_res)
+{
+  esm_sap_t                               esm_sap = {0};
+  bstring                                 rsp = NULL;
+  esm_cause_t                             esm_cause = ESM_CAUSE_SUCCESS;
+  int                                     rc = RETURNerror;
+
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
+
+  esm_sap.primitive = ESM_PDN_DISCONNECT_CNF;
+  esm_sap.ue_id = pdn_disconn_res->ue_id;
+  esm_sap.data.pdn_disconnect_res = pdn_disconn_res;
+  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_ESM_MME, NULL, 0, "0 ESM_PDN_DISCONNECT_RES ue_id " MME_UE_S1AP_ID_FMT " ", pdn_disconn_res->ue_id);
+  rc = esm_sap_signal(&esm_sap, &rsp);
+  if(rsp){
+    /**
+     * Will get and lock the EMM context to set the security header if there is a valid EMM context.
+     * No changes in the state of the EMM context.
+     */
+    rc = lowerlayer_data_req(esm_sap.ue_id, rsp);
+  }
+  OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
+}
+
+/* No disconnect reject is expected. */
+
 /*
  *  DEDICATED BEARER HANDLING.
  */
 //------------------------------------------------------------------------------
 int nas_esm_proc_activate_eps_bearer_ctx(esm_eps_activate_eps_bearer_ctx_req_t * esm_cn_activate)
 {
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
+
   esm_sap_t                               esm_sap = {0};
   bstring                                 rsp = NULL;
   esm_cause_t                             esm_cause = ESM_CAUSE_SUCCESS;
   int                                     rc = RETURNerror;
-  OAILOG_FUNC_IN (LOG_NAS_ESM);
 
-  esm_sap.primitive = ESM_EPS_BEARER_CONTEXT_ACTIVATE_REQ;
-  esm_sap.ue_id     = esm_cn_activate->ue_id;
-  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_ESM_MME, NULL, 0, "0 ESM_EPS_BEARER_CONTEXT_ACTIVATE_REQ " MME_UE_S1AP_ID_FMT " ", esm_cn_activate->ue_id);
-  /** Process each bearer context to be created separately. */
-
-  /** Handle each bearer context separately. */
-  /** Get the bearer contexts to be created. */
+  esm_sap.primitive                                   = ESM_EPS_BEARER_CONTEXT_ACTIVATE_REQ;
+  esm_sap.ue_id                                       = esm_cn_activate->ue_id;
+  esm_sap.data.eps_bearer_context_activate.pdn_cid    = esm_cn_activate->cid;
+  esm_sap.data.eps_bearer_context_activate.linked_ebi = esm_cn_activate->linked_ebi;
+  /* Process each bearer context to be created separately. */
   bearer_contexts_to_be_created_t * bcs_tbc = (bearer_contexts_to_be_created_t*)esm_cn_activate->bcs_to_be_created_ptr;
-  for(int num_bc = 0; num_bc < bcs_tbc->num_bearer_context; num_bc++){
-    bearer_context_to_be_created_t * bc_tbc = &bcs_tbc->bearer_contexts[num_bc];
-    esm_sap.data.eps_bearer_context_activate.pdn_cid    = esm_cn_activate->cid;
-    esm_sap.data.eps_bearer_context_activate.linked_ebi = esm_cn_activate->linked_ebi;
-    esm_sap.data.eps_bearer_context_activate.bc_tbc     = bc_tbc;
+  for(int num_bc = 0; num_bc < bcs_tbc->num_bearer_context; num_bc++) {
+    esm_sap.data.eps_bearer_context_activate.bc_tbc   = &bcs_tbc->bearer_contexts[num_bc];
     rc = esm_sap_signal(&esm_sap, &rsp);
     if(rsp){
-      rc = lowerlayer_activate_bearer_req(esm_cn_activate->ue_id, esm_sap.data.eps_bearer_context_activate.bc_tbc->eps_bearer_id,
-          bc_tbc->bearer_level_qos.mbr.br_dl,
-          bc_tbc->bearer_level_qos.mbr.br_ul,
-          bc_tbc->bearer_level_qos.gbr.br_dl,
-          bc_tbc->bearer_level_qos.gbr.br_ul,
+      rc = lowerlayer_activate_bearer_req(esm_cn_activate->ue_id,
+          esm_sap.data.eps_bearer_context_activate.bc_tbc->eps_bearer_id,
+          esm_sap.data.eps_bearer_context_activate.bc_tbc->bearer_level_qos.mbr.br_dl,
+          esm_sap.data.eps_bearer_context_activate.bc_tbc->bearer_level_qos.mbr.br_ul,
+          esm_sap.data.eps_bearer_context_activate.bc_tbc->bearer_level_qos.gbr.br_dl,
+          esm_sap.data.eps_bearer_context_activate.bc_tbc->bearer_level_qos.gbr.br_ul,
           rsp);
-
-
-      //  emm_sap.primitive       = EMMESM_ACTIVATE_BEARER_REQ;
-      //  emm_sap.u.emm_esm.ue_id = ue_id;
-      //  emm_sap.u.emm_esm.ctx   = esm_context;
-      //  emm_esm_activate->msg            = *msg;
-      //  emm_esm_activate->ebi            = ebi;
-      //
-      //  emm_esm_activate->mbr_dl         = bearer_context->esm_ebr_context.mbr_dl;
-      //  emm_esm_activate->mbr_ul         = bearer_context->esm_ebr_context.mbr_ul;
-      //  emm_esm_activate->gbr_dl         = bearer_context->esm_ebr_context.gbr_dl;
-      //  emm_esm_activate->gbr_ul         = bearer_context->esm_ebr_context.gbr_ul;
-     }
+    }
+    esm_sap.data.eps_bearer_context_activate.bc_tbc = NULL;
   }
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
 }
 
 //------------------------------------------------------------------------------
-int nas_esm_proc_modify_eps_bearer_ctx(esm_eps_update_esm_bearer_ctxs_req_t * esm_cn_update)
+int nas_esm_proc_modify_eps_bearer_ctx(esm_eps_modify_esm_bearer_ctxs_req_t * esm_cn_modify)
 {
   esm_sap_t                               esm_sap = {0};
   bstring                                 rsp = NULL;
@@ -333,30 +347,29 @@ int nas_esm_proc_modify_eps_bearer_ctx(esm_eps_update_esm_bearer_ctxs_req_t * es
   OAILOG_FUNC_IN (LOG_NAS_ESM);
 
   esm_sap.primitive = ESM_EPS_BEARER_CONTEXT_MODIFY_REQ;
-  esm_sap.ue_id     = esm_cn_update->ue_id;
-  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_ESM_MME, NULL, 0, "0 ESM_EPS_BEARER_CONTEXT_MODIFY_REQ " MME_UE_S1AP_ID_FMT " ", esm_cn_update->ue_id);
-  /** Handle each bearer context separately. */
-  /** Get the bearer contexts to be updated. */
-  bearer_contexts_to_be_updated_t* bcs_tbu = (bearer_contexts_to_be_updated_t*)esm_cn_update->bcs_to_be_updated;
+  esm_sap.ue_id     = esm_cn_modify->ue_id;
+  esm_sap.data.eps_bearer_context_modify.pti = esm_cn_modify->pti;
+  esm_sap.data.eps_bearer_context_modify.linked_ebi = esm_cn_modify->linked_ebi;
+  esm_sap.data.eps_bearer_context_modify.pdn_cid    = esm_cn_modify->cid;
+  esm_sap.data.eps_bearer_context_modify.apn_ambr.br_dl = esm_cn_modify->apn_ambr.br_dl;
+  esm_sap.data.eps_bearer_context_modify.apn_ambr.br_ul = esm_cn_modify->apn_ambr.br_ul;
+  /* Handle each bearer context separately. */
+  bearer_contexts_to_be_updated_t* bcs_tbu = (bearer_contexts_to_be_updated_t*)esm_cn_modify->bcs_to_be_updated_ptr;
   for(int num_bc = 0; num_bc < bcs_tbu->num_bearer_context; num_bc++){
-    bearer_context_to_be_updated_t  * bc_tbu = &bcs_tbu->bearer_contexts[num_bc];
-    esm_sap.data.eps_bearer_context_modify.bc_tbu     = bc_tbu;
-    // TODO: UPDATE ESM APN AMBR
-//    esm_sap.data.eps_bearer_context_modify.apn_ambr   = esm_cn_update->apn_ambr;
+    esm_sap.data.eps_bearer_context_modify.bc_tbu       = &bcs_tbu->bearer_contexts[num_bc];
+    /* Set the APN-AMBR for the first bearer context. */
     rc = esm_sap_signal(&esm_sap, &rsp);
     if(rsp){
-      rc = lowerlayer_modify_bearer_req(esm_cn_update->ue_id, esm_sap.data.eps_bearer_context_modify.bc_tbu->eps_bearer_id,
-          bc_tbu->bearer_level_qos->mbr.br_dl,
-          bc_tbu->bearer_level_qos->mbr.br_ul,
-          bc_tbu->bearer_level_qos->gbr.br_dl,
-          bc_tbu->bearer_level_qos->gbr.br_ul,
+      rc = lowerlayer_modify_bearer_req(esm_cn_modify->ue_id, esm_sap.data.eps_bearer_context_modify.bc_tbu->eps_bearer_id,
+          esm_sap.data.eps_bearer_context_modify.bc_tbu->bearer_level_qos->mbr.br_dl,
+          esm_sap.data.eps_bearer_context_modify.bc_tbu->bearer_level_qos->mbr.br_ul,
+          esm_sap.data.eps_bearer_context_modify.bc_tbu->bearer_level_qos->gbr.br_dl,
+          esm_sap.data.eps_bearer_context_modify.bc_tbu->bearer_level_qos->gbr.br_ul,
           rsp);
-      //  emm_esm_modify->mbr_dl         = bearer_context->esm_ebr_context.mbr_dl;
-      //  emm_esm_modify->mbr_ul         = bearer_context->esm_ebr_context.mbr_ul;
-      //  emm_esm_modify->gbr_dl         = bearer_context->esm_ebr_context.gbr_dl;
-      //  emm_esm_modify->gbr_ul         = bearer_context->esm_ebr_context.gbr_ul;
-
-     }
+    }
+    /* Remove the APN-AMBR after the first iteration. */
+    memset(&esm_sap.data.eps_bearer_context_modify.apn_ambr, 0, sizeof(ambr_t));
+    esm_sap.data.eps_bearer_context_modify.bc_tbu = NULL;
   }
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
 }
@@ -383,60 +396,5 @@ int nas_esm_proc_deactivate_eps_bearer_ctx(esm_eps_deactivate_eps_bearer_ctx_req
       rc = lowerlayer_deactivate_bearer_req(esm_cn_deactivate->ue_id, esm_sap.data.eps_bearer_context_deactivate.ded_ebi,rsp);
      }
   }
-  OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
-}
-
-//------------------------------------------------------------------------------
-int nas_esm_proc_establish_eps_bearer_ctx(esm_eps_update_esm_bearer_ctxs_req_t * esm_cn_update_final)
-{
-  esm_sap_t                               esm_sap = {0};
-  bstring                                 rsp = NULL;
-  esm_cause_t                             esm_cause = ESM_CAUSE_SUCCESS;
-  int                                     rc = RETURNerror;
-
-  OAILOG_FUNC_IN (LOG_NAS_ESM);
-
-  esm_sap.primitive = ESM_EPS_UPDATE_ESM_BEARER_CTXS_REQ;
-  esm_sap.ue_id     = esm_cn_update_final->ue_id;
-  esm_sap.data.eps_update_esm_bearer_ctxs.bcs_to_be_updated = esm_cn_update_final->bcs_to_be_updated;
-  esm_cn_update_final->bcs_to_be_updated = NULL;    /**< Decouple it. */
-
-  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_ESM_MME, NULL, 0, "0 ESM_EPS_UPDATE_ESM_BEARER_CTXS_REQ " MME_UE_S1AP_ID_FMT " ", esm_cn_update_final->ue_id);
-  rc = esm_sap_signal(&esm_sap, &rsp);
-  OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
-}
-
-//------------------------------------------------------------------------------
-int nas_proc_establish_bearer_update(esm_eps_update_esm_bearer_ctxs_req_t * esm_update_esm_bearer_ctxs)
-{
-  OAILOG_FUNC_IN (LOG_NAS_ESM);
-  int                                     rc = RETURNerror;
-  esm_sap_t                               esm_sap = {0};
-  bstring                                 rsp = NULL;
-//  emm_sap.primitive = _ESMCN_UPDATE_ESM_BEARERS_REQ;
-//  emm_sap.u.emm_cn.u.emm_cn_update_esm_bearer_ctxs_req = emm_cn_update_esm_bearer_ctxs;
-  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_ESM_MME, NULL, 0, "0 ESM_CN_UPDATE_ESM_BEARER_CTXS_REQ" MME_UE_S1AP_ID_FMT " ", esm_update_esm_bearer_ctxs->ue_id);
-  rc = esm_sap_signal(&esm_sap, &rsp);
-  OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
-}
-
-//------------------------------------------------------------------------------
-int nas_proc_e_rab_failure(mme_ue_s1ap_id_t ue_id, ebi_t ebi, bool modify, bool remove)
-{
-  OAILOG_FUNC_IN (LOG_NAS_ESM);
-  int                                     rc = RETURNerror;
-//  esm_sap_t                               esm_sap = {0};
-//  bstring                                 rsp = NULL;
-////  emm_sap.u.emm_as.u.erab_setup_rej.ue_id = ue_id;
-////  emm_sap.u.emm_as.u.erab_setup_rej.ebi   = ebi;
-////  if(!modify){
-////    emm_sap.primitive = _EMMAS_ERAB_SETUP_REJ;
-////    MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_ESM_MME, NULL, 0, "0 EMM_AS_ERAB_SETUP_REJ " MME_UE_S1AP_ID_FMT " ", ue_id);
-////  }else{
-////    emm_sap.primitive = _EMMAS_ERAB_MODIFY_REJ;
-////    emm_sap.u.emm_as.u.erab_modify_rej.remove_bearer = remove; /**< Union stuff. */
-//    MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_ESM_MME, NULL, 0, "0 ESM_AS_ERAB_MODIFY_REJ " MME_UE_S1AP_ID_FMT " ", ue_id);
-////  }
-//  rc = esm_sap_signal(&esm_sap, &rsp);
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
 }

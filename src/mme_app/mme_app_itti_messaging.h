@@ -42,8 +42,6 @@ mme_app_send_s11_modify_bearer_req(const ue_context_t * ue_context, pdn_context_
 int mme_app_remove_s10_tunnel_endpoint(teid_t local_teid, struct in_addr peer_ip);
 int mme_app_send_delete_session_request (struct ue_context_s * const ue_context_p, const ebi_t ebi, const struct in_addr saegw_s11_in_addr, const teid_t saegw_s11_teid, const bool noDelete); /**< Moved Delete Session Request from mme_app_detach. */
 
-void mme_app_itti_e_rab_failure(mme_ue_s1ap_id_t ue_id, ebi_t ebi, bool modify, bool remove);
-
 /**
  * If cause value is nonzero, it will be set.
  * If it is zero, it will be derived from the cause values of the bearer contexts.

@@ -104,13 +104,14 @@ esm_send_activate_default_eps_bearer_context_request (
   ESM_msg * esm_resp_msg);
 
 void esm_send_activate_dedicated_eps_bearer_context_request(pti_t pti, ebi_t ebi,
-    activate_dedicated_eps_bearer_context_request_msg *msg, ebi_t linked_ebi,
+    ESM_msg *esm_msg,
+    ebi_t linked_ebi,
     const EpsQualityOfService *qos,
     traffic_flow_template_t *tft,
     protocol_configuration_options_t *pco);
 
 void esm_send_modify_eps_bearer_context_request(pti_t pti, ebi_t ebi,
-    modify_eps_bearer_context_request_msg *msg,
+    ESM_msg *esm_msg,
     const EpsQualityOfService *qos,
     traffic_flow_template_t *tft,
     ambr_t *ambr,

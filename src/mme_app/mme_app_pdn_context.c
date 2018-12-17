@@ -217,7 +217,7 @@ mme_app_esm_create_pdn_context(mme_ue_s1ap_id_t ue_id, const apn_configuration_t
   bearer_context_t * free_bearer = RB_MIN(BearerPool, &ue_context->bearer_pool);
   DevAssert(free_bearer); // todo: else, the pdn context needs to be removed..
   bearer_context_t * bearer_context_registered = NULL;
-  mme_app_register_bearer_context(ue_context, free_bearer->ebi, (*pdn_context_pp), &bearer_context_registered);
+//  todo: directly register the default bearer context here ! mme_app_register_bearer_context(ue_context, free_bearer->ebi, (*pdn_context_pp), &bearer_context_registered);
   (*pdn_context_pp)->default_ebi = bearer_context_registered->ebi;
   ue_context->next_def_ebi_offset++;
   bearer_context_registered->linked_ebi = bearer_context_registered->ebi;

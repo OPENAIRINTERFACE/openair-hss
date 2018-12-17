@@ -226,10 +226,6 @@ esm_proc_pdn_connectivity_request (
              (pdn_type == ESM_PDN_TYPE_IPV4) ? "IPv4" : (pdn_type == ESM_PDN_TYPE_IPV6) ? "IPv6" : "IPv4v6",
              (char *)bdata(apn_subscribed));
   /*
-   * Check network IP capabilities.
-   */
-  OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - _esm_data.conf.features %08x\n", _esm_data.conf.features);
-  /*
    * Create new PDN context in the MME_APP UE context.
    * This will also allocate a bearer context (NULL bearer set).
    * todo: Use locks on the MME_APP UE Context and consider the case of error/implicit detach..

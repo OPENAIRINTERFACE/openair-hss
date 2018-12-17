@@ -377,7 +377,7 @@ int lowerlayer_activate_bearer_req (
   emm_security_context_t                 *sctx = NULL;
   emm_data_context_t                     *emm_data_context = emm_data_context_get(&_emm_data, ue_id);
 
-// todo:  emm_sap.primitive = EMMAS_ERAB_SETUP_REQ;
+//  emm_sap.primitive = EMMAS_ERAB_SETUP_REQ;
   emm_sap.u.emm_as.u.activate_bearer_context_req.ebi    = ebi;
   emm_sap.u.emm_as.u.activate_bearer_context_req.ue_id  = ue_id;
   emm_sap.u.emm_as.u.activate_bearer_context_req.mbr_dl = mbr_dl;

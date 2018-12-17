@@ -98,7 +98,6 @@ void mme_app_bearer_context_initialize(bearer_context_t *bearer_context)
 //  if(bearer_context->esm_ebr_context.pco){
 //    free_protocol_configuration_options(&bearer_context->esm_ebr_context.pco);
 //  }
-
   /** Remove the remaining contexts of the bearer context. */
   memset(&bearer_context->esm_ebr_context, 0, sizeof(esm_ebr_context_t)); /**< Sets the SM status to ESM_STATUS_INVALID. */
   ebi_t ebi = bearer_context->ebi;
@@ -138,42 +137,73 @@ void mme_app_get_session_bearer_context_from_all(ue_context_t * const ue_context
 }
 
 //------------------------------------------------------------------------------
-void mme_app_register_bearer_context(ue_context_t * const ue_context, ebi_t ebi, const pdn_context_t *pdn_context, bearer_context_t ** bc_pp)
+esm_cause_t
+mme_app_register_dedicated_bearer_context(const mme_ue_s1ap_id_t ue_id, const esm_ebr_state esm_ebr_state, pdn_cid_t pdn_cid, ebi_t linked_ebi,
+    bearer_context_to_be_created_t * const bc_tbc)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
+  pdn_context_t               *pdn_context = NULL;
+  bearer_context_t            *pBearerCtx  = NULL; /**< Define a bearer context key. */
+  DevAssert(!bc_tbc->eps_bearer_id);              /**< Should be unassigned. */
 
-  AssertFatal((EPS_BEARER_IDENTITY_LAST >= ebi) && (EPS_BEARER_IDENTITY_FIRST <= ebi), "Bad ebi %u", ebi);
-  bearer_context_t            *pBearerCtx = NULL; /**< Define a bearer context key. */
-
-  /** Check that the PDN session exists. */
-  // todo: add a lot of locks..
-  bearer_context_t bc_key = { .ebi = ebi}; /**< Define a bearer context key. */ // todo: just setting one element, and maybe without the key?
-  /** Removed a bearer context from the UE contexts bearer pool and adds it into the PDN sessions bearer pool. */
-  pBearerCtx = RB_FIND(BearerPool, &ue_context->bearer_pool, &bc_key);
-  if(!pBearerCtx){
-    OAILOG_ERROR(LOG_MME_APP,  "Could not find a free bearer context with ebi %d for ue_id " MME_UE_S1AP_ID_FMT"! \n", ebi, ue_context->mme_ue_s1ap_id);
-    OAILOG_FUNC_RETURN (LOG_MME_APP, NULL);
+  ue_context_t * ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, ue_id);
+  if(!ue_context){
+    OAILOG_ERROR (LOG_MME_APP, "No MME_APP UE context could be found for UE: " MME_UE_S1AP_ID_FMT " to create a new dedicated bearer context. \n", ue_id);
+    OAILOG_FUNC_RETURN (LOG_MME_APP, ESM_CAUSE_REQUEST_REJECTED_UNSPECIFIED);
   }
-  bearer_context_t * pBearerCtx_1 = RB_REMOVE(BearerPool, &ue_context->bearer_pool, pBearerCtx);
-  DevAssert(pBearerCtx_1);
-  bearer_context_t * pBearerCtx_2 = RB_FIND(BearerPool, &ue_context->bearer_pool, &bc_key);
-  DevAssert(!pBearerCtx_2);
-  /** Received a free bearer context from the free bearer pool of the UE context. It should already be initialized. */
+  mme_app_get_pdn_context(ue_context, pdn_cid, linked_ebi, NULL, &pdn_context);
+  if(!pdn_context){
+    OAILOG_ERROR (LOG_MME_APP, "No PDN context for UE: " MME_UE_S1AP_ID_FMT " could be found (cid=%d,ebi=%d) to create a new dedicated bearer context. \n", ue_id, pdn_cid, linked_ebi);
+    OAILOG_FUNC_RETURN (LOG_MME_APP, ESM_CAUSE_UNKNOWN_ACCESS_POINT_NAME);
+  }
+
+  /** Removed a bearer context from the UE contexts bearer pool and adds it into the PDN sessions bearer pool. */
+  pBearerCtx = RB_MIN(BearerPool, &ue_context->bearer_pool);
+  if(!pBearerCtx){
+    OAILOG_ERROR(LOG_MME_APP,  "Could not find a free bearer context with for ue_id " MME_UE_S1AP_ID_FMT"! \n", ue_id);
+    OAILOG_FUNC_RETURN (LOG_MME_APP, ESM_CAUSE_REQUEST_REJECTED_BY_GW);
+  }
+  if(validateEpsQosParameter(bc_tbc->bearer_level_qos.qci, bc_tbc->bearer_level_qos.pvi, bc_tbc->bearer_level_qos.pci, bc_tbc->bearer_level_qos.pl,
+      bc_tbc->bearer_level_qos.gbr.br_dl, bc_tbc->bearer_level_qos.gbr.br_ul, bc_tbc->bearer_level_qos.mbr.br_dl, bc_tbc->bearer_level_qos.mbr.br_ul) == RETURNerror){
+    OAILOG_ERROR(LOG_NAS_EMM, "EMMCN-SAP  - " "EPS bearer context of CBR received for UE " MME_UE_S1AP_ID_FMT" could not be verified due erroneous EPS QoS.\n",
+        ue_id, pdn_cid, linked_ebi);
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_EPS_QOS_NOT_ACCEPTED);
+  }
+  /** Validate the TFT and packet filters don't have semantical errors.. */
+  if(bc_tbc->tft.tftoperationcode != TRAFFIC_FLOW_TEMPLATE_OPCODE_CREATE_NEW_TFT){
+    OAILOG_ERROR(LOG_NAS_EMM, "EMMCN-SAP  - " "EPS bearer context of CBR received for UE " MME_UE_S1AP_ID_FMT" could not be verified due erroneous TFT code %d. \n",
+        ue_id, pdn_cid, linked_ebi, bc_tbc->tft.tftoperationcode);
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_SEMANTIC_ERROR_IN_THE_TFT_OPERATION);
+  }
+  esm_cause_t esm_cause = verify_traffic_flow_template_syntactical(&bc_tbc->tft, NULL);
+  if(esm_cause != ESM_CAUSE_SUCCESS){
+    OAILOG_ERROR(LOG_NAS_EMM, "EMMCN-SAP  - " "EPS bearer context of CBR received for UE " MME_UE_S1AP_ID_FMT" could not be verified due erroneous TFT. EsmCause %d. \n",
+        ue_id, pdn_cid, linked_ebi, esm_cause);
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, esm_cause);
+  }
+  OAILOG_INFO(LOG_NAS_EMM, "EMMCN-SAP  - " "ESM QoS and TFT could be verified of CBR received for UE " MME_UE_S1AP_ID_FMT".\n", ue_id);
+
+  // todo: LOCK_UE_CONTEXT(
+  pBearerCtx = RB_REMOVE(BearerPool, &ue_context->bearer_pool, pBearerCtx);
+  DevAssert(pBearerCtx);
+  AssertFatal((EPS_BEARER_IDENTITY_LAST >= pBearerCtx->ebi) && (EPS_BEARER_IDENTITY_FIRST <= pBearerCtx->ebi), "Bad ebi %u", pBearerCtx->ebi);
   /* Check that there is no collision when adding the bearer context into the PDN sessions bearer pool. */
-  pBearerCtx->pdn_cx_id       = pdn_context->context_identifier;
-  /** Insert the bearer context. */
-  /** This should not happen with locks. */
-  bearer_context_t *pbc_test_1 = NULL;
-  pbc_test_1 = RB_INSERT (SessionBearers, &pdn_context->session_bearers, pBearerCtx);
-  DevAssert(!pbc_test_1); /**< Collision Check. */
+  pBearerCtx->pdn_cx_id              = pdn_context->context_identifier;
+  pBearerCtx->esm_ebr_context.status = esm_ebr_state;
+  /* When to set the TFT, PCC and qos features? */
+  /* Insert the bearer context. */
+  pBearerCtx = RB_INSERT (SessionBearers, &pdn_context->session_bearers, pBearerCtx);
+  DevAssert(!pBearerCtx); /**< Collision Check. */
 
-  /** Initialize the ESM EBR context. */
-//  esm_ebr_context_init(&pBearerCtx->esm_ebr_context);
-
-  OAILOG_INFO (LOG_MME_APP, "Successfully set bearer context with ebi %d for PDN id %u and for ue id " MME_UE_S1AP_ID_FMT "\n",
-      pBearerCtx->ebi, pdn_context->context_identifier, ue_context->mme_ue_s1ap_id);
-  *bc_pp = pBearerCtx;
-  OAILOG_FUNC_OUT(LOG_MME_APP);
+  /* Set the TEIDs. */
+  memcpy((void*)&pBearerCtx->s_gw_fteid_s1u,      &bc_tbc->s1u_sgw_fteid,     sizeof(fteid_t));
+  memcpy((void*)&pBearerCtx->p_gw_fteid_s5_s8_up, &bc_tbc->s5_s8_u_pgw_fteid, sizeof(fteid_t));
+  pBearerCtx->bearer_state   |= BEARER_STATE_SGW_CREATED;
+  pBearerCtx->bearer_state   |= BEARER_STATE_MME_CREATED;
+  OAILOG_INFO (LOG_MME_APP, "Successfully set dedicated bearer context (ebi=%d,cid=%d) and for UE " MME_UE_S1AP_ID_FMT "\n",
+      pBearerCtx->ebi, pdn_context->context_identifier, ue_id);
+  // todo: UNLOCK_UE_CONTEXT
+  OAILOG_FUNC_RETURN(LOG_MME_APP, ESM_CAUSE_SUCCESS);
 }
 
 ////------------------------------------------------------------------------------
@@ -314,7 +344,7 @@ mme_app_cn_update_bearer_context(mme_ue_s1ap_id_t ue_id, const ebi_t ebi, struct
  */
 //------------------------------------------------------------------------------
 esm_cause_t
-mme_app_esm_modify_bearer_context(mme_ue_s1ap_id_t ue_id, const ebi_t ebi, struct bearer_qos_s * bearer_level_qos, traffic_flow_template_t * tft){
+mme_app_esm_modify_bearer_context(mme_ue_s1ap_id_t ue_id, const ebi_t ebi, struct bearer_qos_s * bearer_level_qos, traffic_flow_template_t * tft, ambr_t *apn_ambr){
   ue_context_t * ue_context         = NULL;
   bearer_context_t * bearer_context = NULL;
   int rc                            = RETURNok;
@@ -364,6 +394,10 @@ mme_app_esm_modify_bearer_context(mme_ue_s1ap_id_t ue_id, const ebi_t ebi, struc
       OAILOG_ERROR(LOG_NAS_EMM, "EMMCN-SAP  - " "EPS bearer context of UBR received for UE " MME_UE_S1AP_ID_FMT" could not be verified due erroneous TFT. EsmCause %d. \n", ue_id, esm_cause);
       OAILOG_FUNC_RETURN (LOG_NAS_ESM, esm_cause);
     }
+  }
+  /* Check the APN-AMBR, that it does not exceed the subscription. */
+  if(apn_ambr->br_dl && apn_ambr->br_ul){
+    // todo: update apn-ambr
   }
   bearer_context->esm_ebr_context.status = ESM_EBR_MODIFY_PENDING;
 
@@ -432,63 +466,51 @@ mme_app_esm_finalize_bearer_context(mme_ue_s1ap_id_t ue_id, /*const pdn_cid_t pd
 }
 
 //------------------------------------------------------------------------------
-esm_cause_t
-mme_app_esm_release_bearer_context(mme_ue_s1ap_id_t ue_id, const pdn_cid_t *pdn_cid, const ebi_t ebi){
+void
+mme_app_esm_release_bearer_context(mme_ue_s1ap_id_t ue_id, const pdn_cid_t *pdn_cid, const ebi_t linked_ebi, const ebi_t ebi){
   OAILOG_FUNC_IN (LOG_NAS_ESM);
-  int                                     found = false;
-
   pdn_context_t                       *pdn_context = NULL;
   bearer_context_t                    *bearer_context = NULL;
-
   ue_context_t                        *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, ue_id);
   if(!ue_context){
     OAILOG_ERROR (LOG_MME_APP, "No MME_APP UE context could be found for UE: " MME_UE_S1AP_ID_FMT ". \n", ue_id);
-    OAILOG_FUNC_RETURN (LOG_MME_APP, ESM_CAUSE_REQUEST_REJECTED_UNSPECIFIED);
+    OAILOG_FUNC_OUT(LOG_MME_APP);
   }
-
   if (ebi != EPS_BEARER_IDENTITY_UNASSIGNED) {
     if ((ebi < ESM_EBI_MIN) || (ebi > ESM_EBI_MAX)) {
-      OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY);
+      OAILOG_FUNC_OUT(LOG_MME_APP);
     }
   }else{
-    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY);
+    OAILOG_FUNC_OUT(LOG_MME_APP);
   }
 
   if(pdn_cid != NULL && *pdn_cid!= MAX_APN_PER_UE){
-    mme_app_get_pdn_context(ue_context, pdn_cid, ebi, NULL, &pdn_context);
+    mme_app_get_pdn_context(ue_id, *pdn_cid, linked_ebi, NULL, &pdn_context);
+    if(!pdn_context){
+      OAILOG_ERROR(LOG_NAS_ESM , "ESM-PROC  - PDN connection identifier %d " "is not valid\n", *pdn_cid);
+      OAILOG_FUNC_OUT(LOG_MME_APP);
+    }
+    /* Get the bearer context. */
+    bearer_context = mme_app_get_session_bearer_context(pdn_context, ebi);
+    if(!bearer_context) {
+      OAILOG_ERROR(LOG_NAS_ESM , "ESM-PROC  - No bearer context for (ebi=%d) " "could be found. \n", ebi);
+      OAILOG_FUNC_OUT(LOG_MME_APP);
+    }
   }else{
     /** Get the bearer context from all session bearers. */
     mme_app_get_session_bearer_context_from_all(ue_context, ebi, &bearer_context);
     if(!bearer_context){
       OAILOG_ERROR(LOG_NAS_ESM , "ESM-PROC  - Could not find bearer context from ebi %d. \n", ebi);
-      OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY);
+      OAILOG_FUNC_OUT(LOG_MME_APP);
     }
-    mme_app_get_pdn_context(ue_context, bearer_context->pdn_cx_id, bearer_context->linked_ebi, NULL, &pdn_context);
-    pdn_cid = bearer_context->pdn_cx_id;
   }
 
-  /** At this point, we must have found the pdn_context. */
-  if(!pdn_context){
-    OAILOG_ERROR(LOG_NAS_ESM , "ESM-PROC  - PDN connection identifier %d " "is not valid\n", *pdn_cid);
-    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_PDN_CONNECTION_DOES_NOT_EXIST);
-  }
   /*
    * Check if it is a default ebi, if so release all the bearer contexts.
    * If not, just release a single bearer context.
    */
-  if (ebi == pdn_context->default_ebi || ebi == ESM_SAP_ALL_EBI) {
+  if (ebi == bearer_context->linked_ebi || ebi == ESM_SAP_ALL_EBI || (pdn_context && pdn_context->default_ebi == ebi)) {
     DevMessage("Default Bearer should not be released via this method!");
-  }
-
-  /*
-   * The identity of the EPS bearer to released is given;
-   * Release the EPS bearer context entry that match the specified EPS
-   * bearer identity
-   */
-  bearer_context = mme_app_get_session_bearer_context(pdn_context, ebi);
-  if(!bearer_context) {
-    OAILOG_ERROR(LOG_NAS_ESM , "ESM-PROC  - PDN connection identifier %d " "is not valid\n", *pdn_cid);
-    OAILOG_FUNC_RETURN (LOG_NAS_ESM, EPS_BEARER_IDENTITY_UNASSIGNED);
   }
 
   // TODO: LOCK_UE_CONTEXT!
@@ -507,16 +529,9 @@ mme_app_esm_release_bearer_context(mme_ue_s1ap_id_t ue_id, const pdn_cid_t *pdn_
   RB_INSERT (BearerPool, &ue_context->bearer_pool, bearer_context);
   OAILOG_INFO(LOG_MME_APP, "Successfully deregistered the bearer context with ebi %d from PDN id %u and for ue_id " MME_UE_S1AP_ID_FMT "\n",
       bearer_context->ebi, pdn_context->context_identifier, ue_id);
-   // TODO: UNLOCK_UE_CONTEXT!
-
-  OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_SUCCESS);
+  // TODO: UNLOCK_UE_CONTEXT!
+  OAILOG_FUNC_OUT(LOG_MME_APP);
 }
-
-
-
-/*
- * Local Functions.
- */
 
 /**
  * The bearer context should be locked when using this..

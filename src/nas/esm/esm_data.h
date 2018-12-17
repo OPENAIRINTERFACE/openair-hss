@@ -109,33 +109,10 @@ typedef enum {
  *  ESM internal data handled by EPS Session Management sublayer in the MME
  * --------------------------------------------------------------------------
  */
-/*
- * Structure of the ESM data
- * -------------------------
- */
-struct mme_api_esm_config_s;
-
-typedef struct esm_data_s {
-  /*
-   * MME configuration
-   * -----------------
-   */
-  struct mme_api_esm_config_s conf;
-
-  /** No ESM Context needed. Only a tree of ESM procedures. */
-  RB_HEAD(esm_proc_map, nas_esm_proc_s) esm_proc_map;
-} esm_data_t;
-
 
 /****************************************************************************/
 /********************  G L O B A L    V A R I A B L E S  ********************/
 /****************************************************************************/
-
-/*
- * ESM internal data (used within ESM only)
- * ----------------------------------------
- */
-esm_data_t _esm_data;
 
 /****************************************************************************/
 /******************  E X P O R T E D    F U N C T I O N S  ******************/

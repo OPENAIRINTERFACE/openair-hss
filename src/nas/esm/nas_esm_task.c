@@ -89,37 +89,31 @@ static void *nas_esm_intertask_interface (void *args_p)
     }
     break;
 
-//    case NAS_PDN_CONNECTIVITY_FAIL:{
-//      nas_proc_pdn_connectivity_fail (&NAS_PDN_CONNECTIVITY_FAIL (received_message_p));
-//    }
-//    break;
-//
-//    /** Messages sent directly from MME_APP to NAS_ESM layer for S11 session responses. */
-//    case MME_APP_ACTIVATE_EPS_BEARER_CTX_REQ:
-//      nas_proc_activate_dedicated_bearer(&MME_APP_ACTIVATE_EPS_BEARER_CTX_REQ (received_message_p));
-//      break;
-//
-//    case MME_APP_MODIFY_EPS_BEARER_CTX_REQ:
-//      nas_proc_modify_eps_bearer_ctx(&MME_APP_MODIFY_EPS_BEARER_CTX_REQ (received_message_p));
-//      break;
-//
-//    case MME_APP_DEACTIVATE_EPS_BEARER_CTX_REQ:
-//      nas_proc_deactivate_dedicated_bearer(&MME_APP_DEACTIVATE_EPS_BEARER_CTX_REQ (received_message_p));
-//      break;
-//
-//    case MME_APP_UPDATE_ESM_BEARER_CTXS_REQ:
-//      nas_proc_establish_bearer_update(&MME_APP_UPDATE_ESM_BEARER_CTXS_REQ (received_message_p));
-//      break;
-//
-//    case MME_APP_E_RAB_FAILURE:
-//      nas_proc_e_rab_failure(MME_APP_E_RAB_FAILURE (received_message_p).mme_ue_s1ap_id, MME_APP_E_RAB_FAILURE (received_message_p).ebi,
-//          MME_APP_E_RAB_FAILURE (received_message_p).modify, MME_APP_E_RAB_FAILURE (received_message_p).remove);
-//      break;
-//
-//    case NAS_PDN_DISCONNECT_RSP:{
-//        nas_proc_pdn_disconnect_res (&NAS_PDN_DISCONNECT_RSP (received_message_p));
-//      }
-//      break;
+    case NAS_PDN_CONNECTIVITY_FAIL:{
+      nas_esm_proc_pdn_connectivity_fail (&NAS_PDN_CONNECTIVITY_FAIL (received_message_p));
+    }
+    break;
+
+    case NAS_PDN_DISCONNECT_RSP:{
+      nas_esm_proc_pdn_disconnect_res (&NAS_PDN_DISCONNECT_RSP (received_message_p));
+    }
+    break;
+
+    /** Messages sent directly from MME_APP to NAS_ESM layer for S11 session responses. */
+    case MME_APP_ACTIVATE_EPS_BEARER_CTX_REQ:{
+      nas_esm_proc_activate_eps_bearer_ctx(&MME_APP_ACTIVATE_EPS_BEARER_CTX_REQ (received_message_p));
+    }
+    break;
+
+    case MME_APP_MODIFY_EPS_BEARER_CTX_REQ:{
+      nas_esm_proc_modify_eps_bearer_ctx(&MME_APP_MODIFY_EPS_BEARER_CTX_REQ (received_message_p));
+    }
+    break;
+
+    case MME_APP_DEACTIVATE_EPS_BEARER_CTX_REQ:{
+      nas_esm_proc_deactivate_eps_bearer_ctx(&MME_APP_DEACTIVATE_EPS_BEARER_CTX_REQ (received_message_p));
+    }
+    break;
 
     case TERMINATE_MESSAGE:{
         nas_esm_exit();

@@ -39,13 +39,9 @@
 #define MME_APP_ACTIVATE_EPS_BEARER_CTX_REQ(mSGpTR)      (mSGpTR)->ittiMsg.mme_app_activate_eps_bearer_ctx_req
 #define MME_APP_ACTIVATE_EPS_BEARER_CTX_CNF(mSGpTR)      (mSGpTR)->ittiMsg.mme_app_activate_eps_bearer_ctx_cnf
 #define MME_APP_ACTIVATE_EPS_BEARER_CTX_REJ(mSGpTR)      (mSGpTR)->ittiMsg.mme_app_activate_eps_bearer_ctx_rej
-
 #define MME_APP_MODIFY_EPS_BEARER_CTX_REQ(mSGpTR)        (mSGpTR)->ittiMsg.mme_app_modify_eps_bearer_ctx_req
 #define MME_APP_MODIFY_EPS_BEARER_CTX_CNF(mSGpTR)        (mSGpTR)->ittiMsg.mme_app_modify_eps_bearer_ctx_cnf
 #define MME_APP_MODIFY_EPS_BEARER_CTX_REJ(mSGpTR)        (mSGpTR)->ittiMsg.mme_app_modify_eps_bearer_ctx_rej
-
-#define MME_APP_UPDATE_ESM_BEARER_CTXS_REQ(mSGpTR)       (mSGpTR)->ittiMsg.mme_app_update_esm_bearer_ctxs_req
-
 #define MME_APP_DEACTIVATE_EPS_BEARER_CTX_REQ(mSGpTR)    (mSGpTR)->ittiMsg.mme_app_deactivate_eps_bearer_ctx_req
 #define MME_APP_DEACTIVATE_EPS_BEARER_CTX_CNF(mSGpTR)    (mSGpTR)->ittiMsg.mme_app_deactivate_eps_bearer_ctx_cnf
 
@@ -55,7 +51,6 @@
 
 #define MME_APP_S1AP_MME_UE_ID_NOTIFICATION(mSGpTR)      (mSGpTR)->ittiMsg.mme_app_s1ap_mme_ue_id_notification
 
-#define MME_APP_E_RAB_FAILURE(mSGpTR)                    (mSGpTR)->ittiMsg.mme_app_e_rab_failure
 
 typedef struct itti_mme_app_connection_establishment_cnf_s {
   mme_ue_s1ap_id_t        ue_id;
@@ -123,10 +118,10 @@ typedef struct itti_mme_app_initial_context_setup_rsp_s {
 typedef struct itti_mme_app_activate_eps_bearer_ctx_req_s {
   /* UE identifier */
   mme_ue_s1ap_id_t                  ue_id;
+  pti_t                             pti;
   pdn_cid_t                         cid;
   ebi_t                             linked_ebi;
-  pti_t                             pti;
-  uintptr_t                   bcs_to_be_created_ptr;
+  uintptr_t                         bcs_to_be_created_ptr;
 } itti_mme_app_activate_eps_bearer_ctx_req_t;
 
 typedef struct itti_mme_app_activate_eps_bearer_ctx_cnf_s {
@@ -146,8 +141,10 @@ typedef struct itti_mme_app_modify_eps_bearer_ctx_req_s {
   /* UE identifier */
   mme_ue_s1ap_id_t                  ue_id;
   pti_t                             pti;
+  pdn_cid_t                         cid;
+  ebi_t                             linked_ebi;
   ambr_t                            apn_ambr; /**< New APN AMBR. */
-  uintptr_t                   bcs_to_be_updated_ptr;
+  uintptr_t                         bcs_to_be_updated_ptr;
 } itti_mme_app_modify_eps_bearer_ctx_req_t;
 
 typedef struct itti_mme_app_modify_eps_bearer_ctx_cnf_s {
@@ -162,12 +159,6 @@ typedef struct itti_mme_app_modify_eps_bearer_ctx_rej_s {
   ebi_t                                 ebi;
   gtpv2c_cause_value_t                  cause_value;
 } itti_mme_app_modify_eps_bearer_ctx_rej_t;
-
-typedef struct itti_mme_app_update_esm_bearer_ctxs_req_s {
-  /* UE identifier */
-  mme_ue_s1ap_id_t                      ue_id;
-  bearer_contexts_to_be_updated_t      *bcs_to_be_updated;
-} itti_mme_app_update_esm_bearer_ctxs_req_t;
 
 typedef struct itti_mme_app_deactivate_eps_bearer_ctx_req_s {
   /* UE identifier */
@@ -194,13 +185,6 @@ typedef struct itti_mme_app_s1ap_mme_ue_id_notification_s {
 typedef struct itti_mme_app_initial_context_setup_failure_s {
   mme_ue_s1ap_id_t      mme_ue_s1ap_id;
 } itti_mme_app_initial_context_setup_failure_t;
-
-typedef struct itti_mme_app_e_rab_failure_s {
-  mme_ue_s1ap_id_t      mme_ue_s1ap_id;
-  ebi_t                 ebi;
-  bool                  modify;
-  bool                  remove;
-} itti_mme_app_e_rab_failure_t;
 
 typedef struct itti_mme_app_nas_update_location_cnf_s {
   mme_ue_s1ap_id_t    ue_id;

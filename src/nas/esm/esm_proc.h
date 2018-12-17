@@ -157,9 +157,9 @@ void esm_proc_default_eps_bearer_context_accept (mme_ue_s1ap_id_t ue_id, const n
 esm_cause_t
 esm_proc_dedicated_eps_bearer_context (
   mme_ue_s1ap_id_t   ue_id,
+  const proc_tid_t   pti,
   ebi_t              linked_ebi,
-  const proc_tid_t   pti,                  // todo: Will always be 0 for network initiated bearer establishment.
-  const pdn_cid_t    pdn_cid,              // todo: Per APN for now.
+  const pdn_cid_t    pdn_cid,
   bearer_context_to_be_created_t *bc_tbc);
 
 esm_cause_t
@@ -183,14 +183,11 @@ esm_proc_dedicated_eps_bearer_context_reject (
 esm_cause_t
 esm_proc_modify_eps_bearer_context (
   mme_ue_s1ap_id_t   ue_id,
-  const proc_tid_t   pti,                   // todo: will always be 0 for network initiated bearer establishment.
+  const proc_tid_t   pti,
+  const ebi_t        linked_ebi,
+  const pdn_cid_t    pdn_cid,
   bearer_context_to_be_updated_t  * bc_tbu,
   ambr_t                          * apn_ambr);
-
-int
-esm_proc_update_eps_bearer_context (
-  mme_ue_s1ap_id_t ue_id,
-  const bearer_context_to_be_updated_t *bc_tbu);
 
 esm_cause_t
 esm_proc_modify_eps_bearer_context_accept (

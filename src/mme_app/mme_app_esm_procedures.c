@@ -110,6 +110,9 @@ nas_esm_proc_pdn_connectivity_t* mme_app_nas_esm_create_pdn_connectivity_procedu
   nas_esm_proc_pdn_connectivity_t *esm_proc_pdn_connectivity = calloc(1, sizeof(nas_esm_proc_pdn_connectivity_t));
   esm_proc_pdn_connectivity->esm_base_proc.pti  = pti;
   esm_proc_pdn_connectivity->esm_base_proc.type = ESM_PROC_PDN_CONTEXT;
+  /* Set the timeout directly. Set the callback argument as the ue_id. */
+//  esm_proc_pdn_connectivity->esm_base_proc.esm_proc_timer.id = nas_esm_timer_start(timeout_sec, timeout_usec, arg);
+//  esm_proc_pdn_connectivity->esm_base_proc.timeout_notif = timeout_notif;
 
   /** Initialize the of the procedure. */
   if (!ue_context->esm_procedures.pdn_connectivity_procedures) {
@@ -182,19 +185,37 @@ void mme_app_nas_esm_free_bearer_context_procedures(ue_context_t * const ue_cont
 }
 
 //------------------------------------------------------------------------------
-nas_esm_proc_bearer_context_t* mme_app_nas_esm_create_bearer_context_procedure(mme_ue_s1ap_id_t ue_id, pti_t pti, ebi_t ebi)
+nas_esm_proc_bearer_context_t* mme_app_nas_esm_create_bearer_context_procedure(mme_ue_s1ap_id_t ue_id, pti_t pti, ebi_t ebi, int timeout_sec, int timeout_usec, esm_timeout_cb_t timeout_notif, void * arg)
 {
   OAILOG_FUNC_IN(LOG_MME_APP);
   ue_context_t * ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, ue_id);
   if(!ue_context){
     OAILOG_FUNC_RETURN(LOG_MME_APP, NULL);
   }
+  /* Check the first bearer context procedure, if it has another PTI, reject the request. */
+  nas_esm_proc_bearer_context_t *esm_proc_bearer_context = NULL;
+  if (ue_context->esm_procedures.bearer_context_procedures) {
+    LIST_FOREACH(esm_proc_bearer_context, ue_context->esm_procedures.bearer_context_procedures, entries) {
+      if(esm_proc_bearer_context){
+        if(esm_proc_bearer_context->esm_base_proc.pti != pti){
+          OAILOG_FUNC_RETURN(LOG_MME_APP, NULL);
+        } else if (esm_proc_bearer_context->bearer_ebi == ebi ) {
+          OAILOG_FUNC_RETURN(LOG_MME_APP, NULL);
+        } else {
+          /** We may have other bearer context procedure with the same PTI and other EBI. Continuing. */
+        }
+      }
+    }
+  }
 
   // TODO: LOCK_UE_CONTEXT
-  nas_esm_proc_bearer_context_t *esm_proc_bearer_context = calloc(1, sizeof(nas_esm_proc_bearer_context_t));
-  esm_proc_bearer_context->esm_base_proc.pti  = pti;
-  esm_proc_bearer_context->esm_base_proc.type = ESM_PROC_EPS_BEARER_CONTEXT;
-  esm_proc_bearer_context->bearer_ebi = ebi;
+  esm_proc_bearer_context = calloc(1, sizeof(nas_esm_proc_bearer_context_t));
+  esm_proc_bearer_context->esm_base_proc.ue_id = ue_id;
+  esm_proc_bearer_context->esm_base_proc.pti   = pti;
+  esm_proc_bearer_context->esm_base_proc.type  = ESM_PROC_EPS_BEARER_CONTEXT;
+  /* Set the timeout directly. Set the callback argument as the ue_id. */
+  esm_proc_bearer_context->esm_base_proc.esm_proc_timer.id = nas_esm_timer_start(timeout_sec, timeout_usec, arg);
+  esm_proc_bearer_context->esm_base_proc.timeout_notif = timeout_notif;
 
   /** Initialize the of the procedure. */
   if (!ue_context->esm_procedures.bearer_context_procedures) {
@@ -202,7 +223,7 @@ nas_esm_proc_bearer_context_t* mme_app_nas_esm_create_bearer_context_procedure(m
     LIST_INIT(ue_context->esm_procedures.bearer_context_procedures);
   }
   LIST_INSERT_HEAD((ue_context->esm_procedures.bearer_context_procedures), esm_proc_bearer_context, entries);
-
+  // todo: UNLOCK_UE_CONTEXT!
   return esm_proc_bearer_context;
 }
 
@@ -232,15 +253,14 @@ nas_esm_proc_bearer_context_t* mme_app_nas_esm_get_bearer_context_procedure(mme_
 //------------------------------------------------------------------------------
 void mme_app_nas_esm_free_bearer_context_proc(nas_esm_proc_bearer_context_t **esm_proc_bearer_context)
 {
+  // todo: LOCK_UE_CONTEXT
   // DO here specific releases (memory,etc)
   /** Remove the bearer contexts to be setup. */
   /**
    * Free components of the bearer context procedure.
    */
-  if((*esm_proc_bearer_context)->subscribed_apn)
-    bdestroy_wrapper(&((*esm_proc_bearer_context)->subscribed_apn));
-
 //  free_bearer_contexts_to_be_created(&(*esm_pdn_connectivity_proc_pp)->bcs_tbc);
   free_wrapper((void**)esm_proc_bearer_context);
+  // todo: UNLOCK_UE_CONTEXT
 }
 
