@@ -116,13 +116,6 @@ typedef struct e_rab_to_be_modified_list_s {
   e_rab_to_be_modified_item_t      item[MAX_NO_OF_E_RABS];
 } e_rab_to_be_modified_list_t;
 
-// 9.1.3.4 E-RAB MODIFY RESPONSE
-typedef struct e_rab_modify_item_s {
-  e_rab_id_t                       e_rab_id;
-  bstring                          transport_layer_address;
-  teid_t                           gtp_teid;
-} e_rab_modify_item_t;
-
 typedef struct e_rab_setup_list_s {
   uint16_t                      no_of_items;
   e_rab_setup_item_t            item[MAX_NO_OF_E_RABS];
@@ -130,7 +123,7 @@ typedef struct e_rab_setup_list_s {
 
 typedef struct e_rab_modify_list_s {
   uint16_t                      no_of_items;
-  e_rab_modify_item_t            item[MAX_NO_OF_E_RABS];
+  e_rab_setup_item_t            item[MAX_NO_OF_E_RABS];
 } e_rab_modify_list_t;
 
 #include "S1ap-Cause.h"

@@ -304,7 +304,8 @@ void mme_app_bearer_context_update_handover(bearer_context_t * bc_registered, be
 
 //------------------------------------------------------------------------------
 int
-mme_app_cn_update_bearer_context(mme_ue_s1ap_id_t ue_id, const ebi_t ebi, struct fteid_set_s * fteid_set){
+mme_app_cn_update_bearer_context(mme_ue_s1ap_id_t ue_id, const ebi_t ebi,
+    struct e_rab_setup_item_s * s1u_erab_setup_item, struct fteid_s * s1u_saegw_fteid){
   ue_context_t * ue_context         = NULL;
   bearer_context_t * bearer_context = NULL;
   int rc                            = RETURNok;
@@ -315,25 +316,41 @@ mme_app_cn_update_bearer_context(mme_ue_s1ap_id_t ue_id, const ebi_t ebi, struct
     OAILOG_ERROR (LOG_MME_APP, "No MME_APP UE context could be found for UE: " MME_UE_S1AP_ID_FMT ". \n", ue_id);
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
+  mme_app_get_session_bearer_context_from_all(ue_id, ebi, &bearer_context);
+  if(!bearer_context){
+    OAILOG_ERROR (LOG_MME_APP, "No bearer context (ebi=%d) for UE: " MME_UE_S1AP_ID_FMT ". \n", ebi, ue_id);
+    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+  }
+
   //  LOCK_UE_CONTEXT(ue_context);
   /** Update the FTEIDs and the bearers CN state. */
-  mme_app_get_session_bearer_context_from_all(ue_id, ebi, &bearer_context);
-  if(bearer_context){
-    /** We can set the FTEIDs right before the CBResp is set. */
-    if(fteid_set){
-      memcpy((void*)&bearer_context->s_gw_fteid_s1u , fteid_set->s1u_fteid, sizeof(fteid_t));
-      memcpy((void*)&bearer_context->p_gw_fteid_s5_s8_up , fteid_set->s5_fteid, sizeof(fteid_t));
-      bearer_context->bearer_state |= BEARER_STATE_SGW_CREATED;
+  if(s1u_erab_setup_item){
+    /** Set the TEID of the tbc and the bearer context. */
+    bearer_context->enb_fteid_s1u.interface_type = S1_U_ENODEB_GTP_U;
+    bearer_context->enb_fteid_s1u.teid           = s1u_erab_setup_item->gtp_teid;
+    /** Set the IP address. */
+    if (4 == blength(s1u_erab_setup_item->transport_layer_address)) {
+      bearer_context->enb_fteid_s1u.ipv4         = 1;
+      memcpy(&bearer_context->enb_fteid_s1u.ipv4_address,
+          s1u_erab_setup_item->transport_layer_address->data, blength(s1u_erab_setup_item->transport_layer_address));
+    } else if (16 == blength(s1u_erab_setup_item->transport_layer_address)) {
+      bearer_context->enb_fteid_s1u.ipv6         = 1;
+      memcpy(&bearer_context->enb_fteid_s1u.ipv6_address,
+          s1u_erab_setup_item->transport_layer_address->data,
+          blength(s1u_erab_setup_item->transport_layer_address));
+    } else {
+      AssertFatal(0, "TODO IP address %d bytes", blength(s1u_erab_setup_item->transport_layer_address));
     }
-    /** Set the MME_APP states (todo: may be with Activate Dedicated Bearer Response). */
-    bearer_context->bearer_state   |= BEARER_STATE_SGW_CREATED;
-    bearer_context->bearer_state   |= BEARER_STATE_MME_CREATED;
-    OAILOG_ERROR (LOG_MME_APP, "No MME_APP UE context could be found for UE: " MME_UE_S1AP_ID_FMT ". \n", ue_id);
-    rc = RETURNok;
-  }else{
-    OAILOG_ERROR (LOG_MME_APP, "No MME_APP UE context could be found for UE: " MME_UE_S1AP_ID_FMT ". \n", ue_id);
-    rc = RETURNerror;
+    bearer_context->bearer_state |= BEARER_STATE_ENB_CREATED;
   }
+  /* Set S1U SAEGW TEID. */
+  if(s1u_saegw_fteid){
+    memcpy((void*)&bearer_context->s_gw_fteid_s1u, s1u_saegw_fteid, sizeof(fteid_t));
+    //      memcpy((void*)&bearer_context->p_gw_fteid_s5_s8_up , fteid_set->s5_fteid, sizeof(fteid_t));
+    bearer_context->bearer_state |= BEARER_STATE_SGW_CREATED;
+  }
+  /** Set the MME_APP states (todo: may be with Activate Dedicated Bearer Response). */
+  // todo:     bearer_context->bearer_state   |= BEARER_STATE_MME_CREATED;
   //  UNLOCK_UE_CONTEXT(ue_context);
   OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
 }
@@ -409,20 +426,29 @@ mme_app_esm_modify_bearer_context(mme_ue_s1ap_id_t ue_id, const ebi_t ebi, struc
 
 //------------------------------------------------------------------------------
 esm_cause_t
-mme_app_esm_finalize_bearer_context(mme_ue_s1ap_id_t ue_id, /*const pdn_cid_t pdn_cid, */const ebi_t ebi, bearer_qos_t * bearer_level_qos, traffic_flow_template_t * tft,
+mme_app_finalize_bearer_context(mme_ue_s1ap_id_t ue_id, const pdn_cid_t pdn_cid, const ebi_t linked_ebi, const ebi_t ebi, ambr_t *ambr, bearer_qos_t * bearer_level_qos, traffic_flow_template_t * tft,
     protocol_configuration_options_t * pco){
+  OAILOG_FUNC_IN (LOG_MME_APP);
+
   ue_context_t * ue_context         = NULL;
   bearer_context_t * bearer_context = NULL;
+  pdn_context_t    * pdn_context    = NULL;
   int rc                            = RETURNok;
 
-  OAILOG_FUNC_IN (LOG_MME_APP);
   ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, ue_id);
   if(!ue_context){
     OAILOG_ERROR (LOG_MME_APP, "No MME_APP UE context could be found for UE: " MME_UE_S1AP_ID_FMT ". \n", ue_id);
     OAILOG_FUNC_RETURN (LOG_MME_APP, ESM_CAUSE_REQUEST_REJECTED_UNSPECIFIED);
   }
+
+  mme_app_get_pdn_context(ue_context, pdn_cid, linked_ebi, NULL, &pdn_context);
+  if(!pdn_context){
+    OAILOG_ERROR (LOG_MME_APP, "No PDN context for UE: " MME_UE_S1AP_ID_FMT " could be found (cid=%d,ebi=%d) to create a new dedicated bearer context. \n", ue_id, pdn_cid, linked_ebi);
+    OAILOG_FUNC_RETURN (LOG_MME_APP, ESM_CAUSE_UNKNOWN_ACCESS_POINT_NAME);
+  }
+
   /** Update the FTEIDs and the bearers CN state. */
-  mme_app_get_session_bearer_context_from_all(ue_id, ebi, &bearer_context);
+  bearer_context = mme_app_get_session_bearer_context(pdn_context, ebi);
   if(!bearer_context){
     OAILOG_ERROR (LOG_MME_APP, "No MME_APP UE context could be found for UE: " MME_UE_S1AP_ID_FMT ". \n", ue_id);
     OAILOG_FUNC_RETURN (LOG_MME_APP, ESM_CAUSE_PDN_CONNECTION_DOES_NOT_EXIST);
@@ -451,6 +477,13 @@ mme_app_esm_finalize_bearer_context(mme_ue_s1ap_id_t ue_id, /*const pdn_cid_t pd
     bearer_context->bearer_level_qos.pvi = bearer_level_qos->pl;
     OAILOG_DEBUG(LOG_MME_APP, "Finalized the bearer level QoS of bearer (ebi=%d) for UE: " MME_UE_S1AP_ID_FMT ". \n", ue_id, bearer_context->ebi);
   }
+  if(ambr){
+    if(ambr->br_dl && ambr->br_ul){
+      /** The APN-AMBR is checked at the beginning of the S11 CBR and the possible UE AMBR is also calculated there. */
+      pdn_context->subscribed_apn_ambr.br_dl = ambr->br_dl;
+      pdn_context->subscribed_apn_ambr.br_ul = ambr->br_ul;
+    }
+  }
 //  if(pco){
 //     if (bearer_context->esm_ebr_context.pco) {
 //       free_protocol_configuration_options(&bearer_context->esm_ebr_context.pco);
@@ -467,7 +500,7 @@ mme_app_esm_finalize_bearer_context(mme_ue_s1ap_id_t ue_id, /*const pdn_cid_t pd
 
 //------------------------------------------------------------------------------
 void
-mme_app_esm_release_bearer_context(mme_ue_s1ap_id_t ue_id, const pdn_cid_t *pdn_cid, const ebi_t linked_ebi, const ebi_t ebi){
+mme_app_release_bearer_context(mme_ue_s1ap_id_t ue_id, const pdn_cid_t *pdn_cid, const ebi_t linked_ebi, const ebi_t ebi){
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   pdn_context_t                       *pdn_context = NULL;
   bearer_context_t                    *bearer_context = NULL;

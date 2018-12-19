@@ -259,8 +259,15 @@ void mme_app_nas_esm_free_bearer_context_proc(nas_esm_proc_bearer_context_t **es
   /**
    * Free components of the bearer context procedure.
    */
-//  free_bearer_contexts_to_be_created(&(*esm_pdn_connectivity_proc_pp)->bcs_tbc);
-  free_wrapper((void**)esm_proc_bearer_context);
+
+  nas_stop_esm_timer((*esm_proc_bearer_context)->esm_base_proc.ue_id,
+       &((*esm_proc_bearer_context)->esm_base_proc.esm_proc_timer));
+
+  //  free_bearer_contexts_to_be_created(&(*esm_pdn_connectivity_proc_pp)->bcs_tbc);
+    free_wrapper((void**)esm_proc_bearer_context);
+
+    // todo: remove from list
+
   // todo: UNLOCK_UE_CONTEXT
 }
 

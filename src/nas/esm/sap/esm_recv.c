@@ -893,36 +893,21 @@ esm_recv_activate_dedicated_eps_bearer_context_accept (
     OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Invalid PTI value (pti=%d)\n", pti);
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_PTI_VALUE);
   }
-//  /*
-//   * EPS bearer identity checking
-//   * todo: check with original functions (no ebi allocated)
-//   */
-//  else if (esm_ebr_is_reserved (ebi) || !mme_app_get_session_bearer_context_from_all(ue_context, ebi)) {    // todo: check old function esm_ebr_is_not_in_use (esm_context, ebi
-//    /*
-//     * 3GPP TS 24.301, section 7.3.2, case f
-//     * * * * Reserved or assigned value that does not match an existing EPS
-//     * * * * bearer context
-//     */
-//    OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Invalid EPS bearer identity (ebi=%d)\n", ebi);
-//    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY);
-//  }
 
   /*
-   * Message processing
+   * Check that an EPS procedure exists.
    */
+  nas_esm_proc_bearer_context_t * esm_bearer_procedure = _esm_proc_get_bearer_context_procedure(ue_id, pti, ebi);
+  if(!esm_bearer_procedure){
+    OAILOG_ERROR(LOG_NAS_ESM, "ESM-PROC  - No ESM bearer procedure exists for successfully modified dedicated bearer (ebi=%d, pti=%d) for UE " MME_UE_S1AP_ID_FMT ". \n", ebi, pti, ue_id);
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_REQUEST_REJECTED_UNSPECIFIED);
+  }
+
   /*
    * Execute the dedicated EPS bearer context activation procedure accepted
    * * * * by the UE
    */
-  esm_cause = esm_proc_dedicated_eps_bearer_context_accept (ue_id, ebi, &esm_cause);
-
-  if (rc != RETURNerror) {
-    esm_cause = ESM_CAUSE_SUCCESS;
-  }
-
-  /*
-   * Return the ESM cause value
-   */
+  esm_cause = esm_proc_dedicated_eps_bearer_context_accept (ue_id, ebi, esm_bearer_procedure, &esm_cause);
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, esm_cause);
 }
 
@@ -1032,23 +1017,30 @@ esm_recv_modify_eps_bearer_context_accept (
           ue_id, pti, ebi);
 
   /*
-   * Procedure transaction identity checking
-   * todo: pti could be 0 (rx request)!
+   * Procedure transaction identity checking.
    */
-//  if (esm_pt_is_reserved (pti)) {
-//    /*
-//     * 3GPP TS 24.301, section 7.3.1, case f
-//     * * * * Reserved PTI value
-//     */
-//    OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Invalid PTI value (pti=%d)\n", pti);
-//    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_PTI_VALUE);
-//  }
+  if (esm_pt_is_reserved (pti)) {
+    /*
+     * 3GPP TS 24.301, section 7.3.1, case f
+     * * * * Reserved PTI value
+     */
+    OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Invalid PTI value (pti=%d)\n", pti);
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_PTI_VALUE);
+  }
 
+  /*
+   * Check that an EPS procedure exists.
+   */
+  nas_esm_proc_bearer_context_t * esm_bearer_procedure = _esm_proc_get_bearer_context_procedure(ue_id, pti, ebi);
+  if(!esm_bearer_procedure){
+    OAILOG_ERROR(LOG_NAS_ESM, "ESM-PROC  - No ESM bearer procedure exists for accepted dedicated bearer (ebi=%d, pti=%d) for UE " MME_UE_S1AP_ID_FMT ". \n", ebi, pti, ue_id);
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_REQUEST_REJECTED_UNSPECIFIED);
+  }
   /*
    * Execute the dedicated EPS bearer context activation procedure accepted
    * * * * by the UE
    */
-  esm_cause = esm_proc_modify_eps_bearer_context_accept(ue_id, ebi, &esm_cause);
+  esm_cause = esm_proc_modify_eps_bearer_context_accept(ue_id, ebi, esm_bearer_procedure, &esm_cause);
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, esm_cause);
 }
 

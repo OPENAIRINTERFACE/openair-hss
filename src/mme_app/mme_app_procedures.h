@@ -152,7 +152,6 @@ typedef struct mme_app_s11_proc_update_bearer_s {
   ambr_t                       new_used_ue_ambr;
   ebi_t                        linked_ebi;
   // TODO here give a NAS/S1AP/.. reason -> GTPv2-C reason
-  ambr_t                        apn_ambr;
   bearer_contexts_to_be_updated_t *bcs_tbu; /**< Store the bearer contexts to be created here, and don't register them yet in the MME_APP context. */
 } mme_app_s11_proc_update_bearer_t;
 

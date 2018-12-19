@@ -54,6 +54,7 @@
 #include "gcc_diag.h"
 #include "mme_app_itti_messaging.h"
 #include "mme_app_procedures.h"
+#include "mme_app_esm_procedures.h"
 #include "s1ap_mme.h"
 #include "s1ap_mme_ta.h"
 
@@ -1880,7 +1881,8 @@ void mme_app_handle_e_rab_setup_rsp (itti_s1ap_e_rab_setup_rsp_t  * const e_rab_
 static void mme_app_handle_e_rab_setup_rsp_dedicated_bearer(const itti_s1ap_e_rab_setup_rsp_t * e_rab_setup_rsp)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
-  struct ue_context_s                 *ue_context = NULL;
+  struct ue_context_s                    *ue_context = NULL;
+  struct pdn_context_s                   *pdn_context = NULL;
 
   ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, e_rab_setup_rsp->mme_ue_s1ap_id);
   if (ue_context == NULL) {
@@ -1888,10 +1890,17 @@ static void mme_app_handle_e_rab_setup_rsp_dedicated_bearer(const itti_s1ap_e_ra
     MSC_LOG_EVENT (MSC_MMEAPP_MME, " S1AP_E_RAB_SETUP_RSP Unknown ue " MME_UE_S1AP_ID_FMT "\n", e_rab_setup_rsp->mme_ue_s1ap_id);
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
-
   mme_app_s11_proc_create_bearer_t * s11_proc_create_bearer = mme_app_get_s11_procedure_create_bearer(ue_context);
   if(!s11_proc_create_bearer){
     OAILOG_ERROR( LOG_MME_APP, "No S11 CBR process for UE with mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " was found. Ignoring the message. \n", e_rab_setup_rsp->mme_ue_s1ap_id);
+    /** All ESM messages may have returned immediately negative and the CBResp might have been sent (removing the S11 session). */
+    OAILOG_FUNC_OUT (LOG_MME_APP);
+  }
+  /** Get the PDN context. */
+  mme_app_get_pdn_context(ue_context, s11_proc_create_bearer->pci, s11_proc_create_bearer->linked_ebi, NULL, &pdn_context);
+  if(pdn_context){
+    OAILOG_ERROR( LOG_MME_APP, "No PDN context (cid=%d,def_ebi=%d) could be found for UE " MME_UE_S1AP_ID_FMT ". Ignoring the message. \n",
+        s11_proc_create_bearer->pci, s11_proc_create_bearer->linked_ebi, e_rab_setup_rsp->mme_ue_s1ap_id);
     /** All ESM messages may have returned immediately negative and the CBResp might have been sent (removing the S11 session). */
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
@@ -1914,49 +1923,41 @@ static void mme_app_handle_e_rab_setup_rsp_dedicated_bearer(const itti_s1ap_e_ra
       continue;
     }
     /** Cause is either not set or negative. It must be in the session bearers. */
-    mme_app_get_session_bearer_context_from_all(ue_context, (ebi_t) e_rab_id, &bc_success);
-    DevAssert(bc_success);
-
-    /** Set the TEID of the tbc and the bearer context. */
-    bc_success->enb_fteid_s1u.interface_type = S1_U_ENODEB_GTP_U;
-    bc_success->enb_fteid_s1u.teid           = e_rab_setup_rsp->e_rab_setup_list.item[i].gtp_teid;
-    /** Set the IP address. */
-    if (4 == blength(e_rab_setup_rsp->e_rab_setup_list.item[i].transport_layer_address)) {
-      bc_success->enb_fteid_s1u.ipv4         = 1;
-      memcpy(&bc_success->enb_fteid_s1u.ipv4_address,
-          e_rab_setup_rsp->e_rab_setup_list.item[i].transport_layer_address->data, blength(e_rab_setup_rsp->e_rab_setup_list.item[i].transport_layer_address));
-    } else if (16 == blength(e_rab_setup_rsp->e_rab_setup_list.item[i].transport_layer_address)) {
-      bc_success->enb_fteid_s1u.ipv6         = 1;
-      memcpy(&bc_success->enb_fteid_s1u.ipv6_address,
-          e_rab_setup_rsp->e_rab_setup_list.item[i].transport_layer_address->data,
-          blength(e_rab_setup_rsp->e_rab_setup_list.item[i].transport_layer_address));
-    } else {
-      AssertFatal(0, "TODO IP address %d bytes", blength(e_rab_setup_rsp->e_rab_setup_list.item[i].transport_layer_address));
+    int rc = mme_app_cn_update_bearer_context(e_rab_setup_rsp->mme_ue_s1ap_id, e_rab_id, &e_rab_setup_rsp->e_rab_setup_list.item[i], NULL);
+    if(rc == RETURNerror){
+      /* Error updating the bearer context. */
+      OAILOG_ERROR(LOG_MME_APP, "The ebi %d could not be updated from the eNB for ueId : " MME_UE_S1AP_ID_FMT "\n", e_rab_id , e_rab_setup_rsp->mme_ue_s1ap_id);
+      OAILOG_FUNC_OUT (LOG_MME_APP);
     }
-    memcpy((void*)&bc_tbc->s1u_enb_fteid, (void*)&bc_success->enb_fteid_s1u, sizeof(bc_success->enb_fteid_s1u));
+    mme_app_get_session_bearer_context_from_all(e_rab_setup_rsp->mme_ue_s1ap_id, e_rab_id, &bc_success);
     /** If the ESM EBR context is active. */
-    // todo: still locks neededhere..
-    if(bc_success->esm_ebr_context.status == ESM_EBR_ACTIVE){ /**< ESM session management messages completed successfully (transactions completed and no negative GTP cause). */
-      if(!bc_tbc->cause.cause_value){
+    if(bc_success){
+      memcpy((void*)&bc_tbc->s1u_enb_fteid, (void*)&bc_success->enb_fteid_s1u, sizeof(bc_success->enb_fteid_s1u));
+      if(bc_success->esm_ebr_context.status == ESM_EBR_ACTIVE){ /**< ESM session management messages completed successfully (transactions completed and no negative GTP cause). */
+        if(bc_tbc->cause.cause_value == 0){
           /** Should be on the way. */
-          OAILOG_DEBUG (LOG_MME_APP, "The cause is not set yet for ebi %d for ueId although NAS is accepted (not reducing num pending bearers yet): " MME_UE_S1AP_ID_FMT "\n", bc_tbc->eps_bearer_id, e_rab_setup_rsp->mme_ue_s1ap_id);
+          OAILOG_DEBUG (LOG_MME_APP, "The cause is not set yet for ebi %d for ueId although NAS is accepted (not reducing num pending bearers yet): " MME_UE_S1AP_ID_FMT "\n",
+              bc_tbc->eps_bearer_id, e_rab_setup_rsp->mme_ue_s1ap_id);
           /** Setting it as accepted such that we don't wait for the E-RAB-Setup Rsp which arrived. */
           bc_tbc->cause.cause_value = REQUEST_ACCEPTED;
-      } else{
-        DevAssert(bc_tbc->cause.cause_value == REQUEST_ACCEPTED);
-        /** Reduce the number of unhandled bearers. */
-        s11_proc_create_bearer->num_bearers_unhandled--;
+        } else{
+          DevAssert(bc_tbc->cause.cause_value == REQUEST_ACCEPTED);
+          /*
+           * Reduce the number of unhandled bearers.
+           * We keep the ESM procedure (no ESM procedure for this bearer is expected at this point).
+           */
+          s11_proc_create_bearer->num_bearers_unhandled--;
+        }
+      }else{
+        /*
+         * Not reducing the number of unhandled bearers. We will check this cause later when NAS response arrives.
+         * We will not trigger a CBResp with this.
+         */
+        OAILOG_DEBUG (LOG_MME_APP, "Setting the cause as ACCEPTED for ebi % for ueId : " MME_UE_S1AP_ID_FMT "\n", bc_tbc->eps_bearer_id, e_rab_setup_rsp->mme_ue_s1ap_id);
+        bc_tbc->cause.cause_value = REQUEST_ACCEPTED;
       }
-    }else{
-      /**
-       * Not reducing the number of unhandled bearers. We will check this cause later when NAS response arrives.
-       * We will not trigger a CBResp with this.
-       */
-      OAILOG_DEBUG (LOG_MME_APP, "Setting the cause as ACCEPTED for ebi % for ueId : " MME_UE_S1AP_ID_FMT "\n", bc_tbc->eps_bearer_id, e_rab_setup_rsp->mme_ue_s1ap_id);
-      bc_tbc->cause.cause_value = REQUEST_ACCEPTED;
-
     }
-
+    /** Iterated through all bearer contexts. */
   }
 
   /** Iterate through the failed bearers. */
@@ -1976,7 +1977,16 @@ static void mme_app_handle_e_rab_setup_rsp_dedicated_bearer(const itti_s1ap_e_ra
       /** The number of negative values should already be decreased. */
       continue;
     }
-    // todo: here a minimal lock would be ok on the CBR procedure.
+
+    /* Release the ESM procedure, the received NAS message should be rejected. */
+    nas_esm_proc_bearer_context_t *esm_proc_bearer_context = mme_app_nas_esm_get_bearer_context_procedure(e_rab_setup_rsp->mme_ue_s1ap_id, PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED, bc_tbc->eps_bearer_id);
+    if(esm_proc_bearer_context){
+      /* Finalize the bearer context and terminate the ESM procedure. The response should not be regarded. */
+      mme_app_nas_esm_free_bearer_context_proc(&esm_proc_bearer_context);
+      OAILOG_DEBUG (LOG_MME_APP, "Freed the NAS ESM procedure for bearer activation (ebi=%d) for ueId : " MME_UE_S1AP_ID_FMT "\n",
+                esm_proc_bearer_context->bearer_ebi, esm_proc_bearer_context->esm_base_proc.ue_id);
+    }
+    mme_app_release_bearer_context(e_rab_setup_rsp->mme_ue_s1ap_id, &pdn_context->context_identifier, s11_proc_create_bearer->linked_ebi, e_rab_id);
     /** Set cause as rejected. */
     bc_tbc->cause.cause_value = REQUEST_REJECTED;
     /** The cause is either not set yet or positive. In either case we will reduce the number of unhandled bearers. */
@@ -1985,14 +1995,8 @@ static void mme_app_handle_e_rab_setup_rsp_dedicated_bearer(const itti_s1ap_e_ra
      * No need to check the result code, the bearer is not established in any case.
      * Also no need to wait for the ESM layer to continue with the CBResp (but sill informing the ESM layer to abort the session management procedure prematurely).
      */
-
-    // todo: remove the ESM procedures in the MME_APP UE context directly..
-
   }
-  pdn_context_t * pdn_context = NULL;
-  /** Get the PDN context. */
-  mme_app_get_pdn_context(ue_context, s11_proc_create_bearer->pci, s11_proc_create_bearer->linked_ebi, NULL, &pdn_context);
-  DevAssert(pdn_context);
+
   if(s11_proc_create_bearer->num_bearers_unhandled){
     OAILOG_DEBUG (LOG_MME_APP, "For the S11 dedicated bearer procedure, still %d pending bearers exist for UE " MME_UE_S1AP_ID_FMT ". "
         "Waiting with CBResp. \n", s11_proc_create_bearer->num_bearers_unhandled, ue_context->mme_ue_s1ap_id);
@@ -2094,6 +2098,9 @@ void mme_app_handle_e_rab_modify_rsp (itti_s1ap_e_rab_modify_rsp_t  * const e_ra
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
   struct ue_context_s                 *ue_context = NULL;
+  struct pdn_context_s                   *pdn_context = NULL;
+  pdn_cid_t pdn_cid = PDN_CONTEXT_IDENTIFIER_UNASSIGNED;
+  ebi_t     def_ebi = 0;
 
   ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, e_rab_modify_rsp->mme_ue_s1ap_id);
   if (ue_context == NULL) {
@@ -2107,9 +2114,16 @@ void mme_app_handle_e_rab_modify_rsp (itti_s1ap_e_rab_modify_rsp_t  * const e_ra
     /** All ESM messages may have returned immediately negative and the UBResp might have been sent (removing the S11 session). */
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
+  /** Get the PDN context. */
+  mme_app_get_pdn_context(ue_context, s11_proc_update_bearer->pci, s11_proc_update_bearer->linked_ebi, NULL, &pdn_context);
+  if(pdn_context){
+    OAILOG_ERROR( LOG_MME_APP, "No PDN context (cid=%d,def_ebi=%d) could be found for UE " MME_UE_S1AP_ID_FMT ". Ignoring the message. \n",
+        s11_proc_update_bearer->pci, s11_proc_update_bearer->linked_ebi, e_rab_modify_rsp->mme_ue_s1ap_id);
+    /** All ESM messages may have returned immediately negative and the CBResp might have been sent (removing the S11 session). */
+    OAILOG_FUNC_OUT (LOG_MME_APP);
+  }
+
   /** Handle the bearer contexts for multi-APN and dedicated bearer cases. */
-  pdn_cid_t pdn_cid = PDN_CONTEXT_IDENTIFIER_UNASSIGNED;
-  ebi_t     def_ebi = 0;
   for (int i = 0; i < e_rab_modify_rsp->e_rab_modify_list.no_of_items; i++) {
     e_rab_id_t e_rab_id = e_rab_modify_rsp->e_rab_modify_list.item[i].e_rab_id;
     bearer_context_t * bc_success = NULL;
@@ -2120,8 +2134,9 @@ void mme_app_handle_e_rab_modify_rsp (itti_s1ap_e_rab_modify_rsp_t  * const e_ra
       }
     }
     DevAssert(bc_tbu);
+
     /** Check if the message needs to be processed (if it has already failed, in that case the number of unhandled bearers already will be reduced). */
-    if(bc_tbu->cause.cause_value && bc_tbu->cause.cause_value != REQUEST_ACCEPTED){
+    if(bc_tbu->cause.cause_value != 0 && bc_tbu->cause.cause_value != REQUEST_ACCEPTED){
       OAILOG_DEBUG (LOG_MME_APP, "The ebi %d has already a negative error cause %d for ueId : " MME_UE_S1AP_ID_FMT "\n", bc_tbu->eps_bearer_id, e_rab_modify_rsp->mme_ue_s1ap_id);
       continue;
     }
@@ -2131,12 +2146,7 @@ void mme_app_handle_e_rab_modify_rsp (itti_s1ap_e_rab_modify_rsp_t  * const e_ra
     /** If the ESM EBR context is active. */
     if(bc_success->esm_ebr_context.status == ESM_EBR_ACTIVE){ /**< ESM session management messages completed successfully (transactions completed and no negative GTP cause). */
       /** If 1 bearer is active, update the APN AMBR.*/
-      pdn_context_t *pdn_context = NULL;
-      // todo: comparing with subscriped apn ambr..
-      if(s11_proc_update_bearer->apn_ambr.br_dl && s11_proc_update_bearer->apn_ambr.br_ul)
-        pdn_context->subscribed_apn_ambr = s11_proc_update_bearer->apn_ambr;
-      // todo: lock might be needed here
-      if(!bc_tbu->cause.cause_value){
+      if(bc_tbu->cause.cause_value == 0){
         OAILOG_DEBUG (LOG_MME_APP, "The cause is not set as accepted for ebi %d for ueId although NAS is accepted (not reducing num pending bearers yet): " MME_UE_S1AP_ID_FMT "\n", bc_tbu->eps_bearer_id, e_rab_modify_rsp->mme_ue_s1ap_id);
         /** Setting it as accepted such that we don't wait for the E-RAB which arrived. */
         bc_tbu->cause.cause_value = REQUEST_ACCEPTED;
@@ -2178,28 +2188,24 @@ void mme_app_handle_e_rab_modify_rsp (itti_s1ap_e_rab_modify_rsp_t  * const e_ra
           && (e_rab_modify_rsp->e_rab_failed_to_modify_list.item[i].cause.choice.radioNetwork == S1ap_CauseRadioNetwork_unknown_E_RAB_ID)){
       /** No EBI was found. Check if a session bearer exist, if so trigger implicit removal by setting correct cause. */
       bc_tbu->cause.cause_value = NO_RESOURCES_AVAILABLE;
-      mme_app_get_session_bearer_context_from_all(ue_context, e_rab_id, &bc_failed);
-      DevAssert(bc_failed);
-
-
-      // todo: remove the ESM procedures in the MME_APP UE context directly..
-
-      /** No need to decrement the number of unhandled bearers. Continue with other bearers (ESM layer will reduce). */
+      /** Bearer was implicitly removed in the access network. */
+      mme_app_release_bearer_context(e_rab_modify_rsp->mme_ue_s1ap_id, &pdn_context->context_identifier, s11_proc_update_bearer->linked_ebi, e_rab_id);
     }else{
       /** Set cause as rejected. */
       bc_tbu->cause.cause_value = REQUEST_REJECTED;
       /** No need to inform the ESM layer. */
-      // todo: remove the ESM procedures in the MME_APP UE context directly..
-
+      mme_app_finalize_bearer_context(e_rab_modify_rsp->mme_ue_s1ap_id, pdn_context->context_identifier, s11_proc_update_bearer->linked_ebi, e_rab_id, NULL, NULL, NULL, NULL);
     }
-    /** Reduce the number of unhandled bearers. */
-    // todo: implement locks..
-    s11_proc_update_bearer->num_bearers_unhandled--;
+    /* Release the ESM procedure, the received NAS message should be rejected. */
+    nas_esm_proc_bearer_context_t *esm_proc_bearer_context = mme_app_nas_esm_get_bearer_context_procedure(e_rab_modify_rsp->mme_ue_s1ap_id, PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED,
+        bc_tbu->eps_bearer_id);
+    if(esm_proc_bearer_context){
+      /* Finalize the bearer context and terminate the ESM procedure. The response should not be regarded. */
+      mme_app_nas_esm_free_bearer_context_proc(&esm_proc_bearer_context);
+      OAILOG_DEBUG (LOG_MME_APP, "Freed the NAS ESM procedure for bearer activation (ebi=%d) for ueId : " MME_UE_S1AP_ID_FMT "\n",
+          esm_proc_bearer_context->bearer_ebi, esm_proc_bearer_context->esm_base_proc.ue_id);
+    }
   }
-  pdn_context_t * pdn_context = NULL;
-  /** Get the PDN context. */
-  mme_app_get_pdn_context(ue_context, s11_proc_update_bearer->pci, s11_proc_update_bearer->linked_ebi, NULL, &pdn_context);
-  DevAssert(pdn_context);
   // todo: MBReq/MBResp for E-RAB modify?
   if(s11_proc_update_bearer->num_bearers_unhandled){
     OAILOG_DEBUG (LOG_MME_APP, "For the S11 dedicated bearer procedure, still %d pending bearers exist for UE " MME_UE_S1AP_ID_FMT ". "
@@ -2222,14 +2228,13 @@ void mme_app_handle_activate_eps_bearer_ctx_cnf (itti_mme_app_activate_eps_beare
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
   struct ue_context_s                 *ue_context = NULL;
+  struct pdn_context_s                *pdn_context = NULL;
 
   ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, activate_eps_bearer_ctx_cnf->ue_id);
-
   if (ue_context == NULL) {
     OAILOG_DEBUG (LOG_MME_APP, "We didn't find this mme_ue_s1ap_id in list of UE: " MME_UE_S1AP_ID_FMT "\n", activate_eps_bearer_ctx_cnf->ue_id);
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
-
   /*
    * TS 23.401: 5.4.1: The MME shall be prepared to receive this message either before or after the Session Management Response message (sent in step 9).
    *
@@ -2238,40 +2243,24 @@ void mme_app_handle_activate_eps_bearer_ctx_cnf (itti_mme_app_activate_eps_beare
    * So we check the state of the bearers.
    * The indication that S11 Create Bearer Response should be sent to the SAE-GW, should be sent by ESM/NAS layer.
    */
-  /** Get the MME_APP Dedicated Bearer procedure, */
-  mme_app_s11_proc_create_bearer_t * s11_proc_create_bearer= mme_app_get_s11_procedure_create_bearer(ue_context);
+  mme_app_s11_proc_create_bearer_t * s11_proc_create_bearer = mme_app_get_s11_procedure_create_bearer(ue_context);
   if(!s11_proc_create_bearer){
     /** Assuming all EBIs failed by eNB. */
     OAILOG_ERROR(LOG_MME_APP, "No S11 CBR procedure exists for UE: " MME_UE_S1AP_ID_FMT ". Not sending CBResp back. \n",
         ue_context->mme_ue_s1ap_id);
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
-
-  /**
-   * Check if the bearer context exists as a session bearer.
-   * EBI failures should not remove the bearer.
-   */
-  bearer_context_t * bc;
-  mme_app_get_session_bearer_context_from_all(ue_context, activate_eps_bearer_ctx_cnf->ebi, &bc);
-  if(!bc){
-    /**
-     * No session bearer found: meaning that right after ESM success, E-RAB failure arrived,
-     * and triggered a removal of the bearer context. Number of handled bearers should be handled.
-     */
-    OAILOG_INFO(LOG_MME_APP, "No session bearer found for ebi %d: meaning that right after ESM success, E-RAB failure arrived for UE: " MME_UE_S1AP_ID_FMT ". "
-        "Not triggering a CBResp. \n", bc->ebi, ue_context->mme_ue_s1ap_id);
-    OAILOG_FUNC_OUT (LOG_MME_APP);
-  }
-
-  pdn_context_t * pdn_context = NULL;
   /** Get the PDN context. */
   mme_app_get_pdn_context(ue_context, s11_proc_create_bearer->pci, s11_proc_create_bearer->linked_ebi, NULL, &pdn_context);
-  DevAssert(pdn_context);
-
+  if (!pdn_context) {
+    OAILOG_DEBUG (LOG_MME_APP, "We didn't find the pdn context with cid %d and default ebi %d for UE: " MME_UE_S1AP_ID_FMT "\n",
+        s11_proc_create_bearer->pci, s11_proc_create_bearer->linked_ebi, activate_eps_bearer_ctx_cnf->ue_id);
+     OAILOG_FUNC_OUT (LOG_MME_APP);
+  }
   /** Get the bearer context in question. */
   bearer_context_to_be_created_t * bc_tbc = NULL;
   for(int num_bc = 0; num_bc < s11_proc_create_bearer->bcs_tbc->num_bearer_context; num_bc ++){
-    if(s11_proc_create_bearer->bcs_tbc->bearer_contexts[num_bc].s1u_sgw_fteid.teid == bc->s_gw_fteid_s1u.teid){
+    if(s11_proc_create_bearer->bcs_tbc->bearer_contexts[num_bc].s1u_sgw_fteid.teid == activate_eps_bearer_ctx_cnf->saegw_s1u_teid){
       bc_tbc = &s11_proc_create_bearer->bcs_tbc->bearer_contexts[num_bc];
     }
   }
@@ -2279,25 +2268,25 @@ void mme_app_handle_activate_eps_bearer_ctx_cnf (itti_mme_app_activate_eps_beare
 
   /** Update the pending bearer contexts in the answer. */
   // todo: here a minimal lock may be ok (for the cause setting - like atomic boolean)
-  if(!bc_tbc->cause.cause_value){
+  if(bc_tbc->cause.cause_value == 0){
     /** No response received yet from E-RAB. Will just set it as SUCCESS, but not trigger an CBResp. */
     OAILOG_INFO(LOG_MME_APP, "Received NAS response before E-RAB setup response for ebi %d for UE: " MME_UE_S1AP_ID_FMT ". "
-        "Not triggering a CBResp. \n", bc->ebi, ue_context->mme_ue_s1ap_id);
+        "Not triggering a CBResp. \n", activate_eps_bearer_ctx_cnf->ebi, ue_context->mme_ue_s1ap_id);
     bc_tbc->cause.cause_value = REQUEST_ACCEPTED;
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }else if (bc_tbc->cause.cause_value != REQUEST_ACCEPTED) {
     OAILOG_INFO(LOG_MME_APP, "Received NAS response after E-RAB reject for ebi %d for UE: " MME_UE_S1AP_ID_FMT ". "
-        "Not reducing number of unhandled bearers (assuming already done). \n", bc->ebi, ue_context->mme_ue_s1ap_id);
-    /**
+        "Not reducing number of unhandled bearers (assuming already done). \n", activate_eps_bearer_ctx_cnf->ebi, ue_context->mme_ue_s1ap_id);
+    /*
      * E-RAB Reject will be send as an ITTI message to the NAS layer, removing the bearer.
      * No lock is needed.
      */
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
   OAILOG_INFO(LOG_MME_APP, "Received NAS response after E-RAB setup success for ebi %d for UE: " MME_UE_S1AP_ID_FMT ". "
-      "Will reduce number of unhandled bearers and eventually triggering a CBResp. \n", bc->ebi, ue_context->mme_ue_s1ap_id);
+      "Will reduce number of unhandled bearers and eventually triggering a CBResp. \n", activate_eps_bearer_ctx_cnf->ebi, ue_context->mme_ue_s1ap_id);
   s11_proc_create_bearer->num_bearers_unhandled--;
-  bc_tbc->eps_bearer_id = bc->ebi;
+  bc_tbc->eps_bearer_id = activate_eps_bearer_ctx_cnf->ebi;
   if(s11_proc_create_bearer->num_bearers_unhandled){
     OAILOG_INFO(LOG_MME_APP, "Still %d unhandled bearers exist for CBR for UE: " MME_UE_S1AP_ID_FMT ". Not sending CBResp back yet. \n",
         s11_proc_create_bearer->num_bearers_unhandled, ue_context->mme_ue_s1ap_id);
@@ -2317,7 +2306,6 @@ void mme_app_handle_activate_eps_bearer_ctx_rej (itti_mme_app_activate_eps_beare
   OAILOG_FUNC_IN (LOG_MME_APP);
   struct ue_context_s                 *ue_context   = NULL;
   /** Get the first PDN Context. */
-  bearer_context_t                    *bc_failed    = NULL;
   pdn_context_t                       *pdn_context  = NULL;
 
   ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, activate_eps_bearer_ctx_rej->ue_id);
@@ -2339,6 +2327,7 @@ void mme_app_handle_activate_eps_bearer_ctx_rej (itti_mme_app_activate_eps_beare
         s11_proc_create_bearer->pci, s11_proc_create_bearer->linked_ebi, activate_eps_bearer_ctx_rej->ue_id);
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
+
   /**
    * TS 23.401: 5.4.1: The MME shall be prepared to receive this message either before or after the Session Management Response message (sent in step 9).
    *
@@ -2357,7 +2346,7 @@ void mme_app_handle_activate_eps_bearer_ctx_rej (itti_mme_app_activate_eps_beare
   }
   DevAssert(bc_tbc);
   /** The bearer is assumed to be removed from the session bearers by the ESM layer. */
-  if (bc_tbc->cause.cause_value && bc_tbc->cause.cause_value != REQUEST_ACCEPTED) {
+  if (bc_tbc->cause.cause_value != 0 && bc_tbc->cause.cause_value != REQUEST_ACCEPTED) {
     OAILOG_INFO(LOG_MME_APP, "Received NAS reject after E-RAB activation reject for ebi %d occurred for UE: " MME_UE_S1AP_ID_FMT ". Not reducing number of unhandled bearers (assuming already done). \n",
         bc_tbc->eps_bearer_id, ue_context->mme_ue_s1ap_id);
     OAILOG_FUNC_OUT (LOG_MME_APP);
@@ -2382,7 +2371,8 @@ void mme_app_handle_modify_eps_bearer_ctx_cnf (itti_mme_app_modify_eps_bearer_ct
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
   struct ue_context_s                 *ue_context = NULL;
-  pdn_context_t                       *pdn_context = NULL;
+  struct pdn_context_s                *pdn_context = NULL;
+  struct bearer_context_s             *bearer_context = NULL;
   MessageDef                          *message_p = NULL;
 
   ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, modify_eps_bearer_ctx_cnf->ue_id);
@@ -2391,7 +2381,6 @@ void mme_app_handle_modify_eps_bearer_ctx_cnf (itti_mme_app_modify_eps_bearer_ct
     OAILOG_DEBUG (LOG_MME_APP, "We didn't find this mme_ue_s1ap_id in list of UE: " MME_UE_S1AP_ID_FMT "\n", modify_eps_bearer_ctx_cnf->ue_id);
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
-
   /*
    * TS 23.401: 5.4.2: The MME shall be prepared to receive this message either before or after the Session Management Response message (sent in step 9).
    *
@@ -2400,7 +2389,6 @@ void mme_app_handle_modify_eps_bearer_ctx_cnf (itti_mme_app_modify_eps_bearer_ct
    * So we check the state of the bearers.
    * The indication that S11 Update Bearer Response should be sent to the SAE-GW, should be sent by ESM/NAS layer.
    */
-  /** Get the MME_APP Dedicated Bearer procedure, */
   mme_app_s11_proc_update_bearer_t * s11_proc_update_bearer = mme_app_get_s11_procedure_update_bearer(ue_context);
   if(!s11_proc_update_bearer){
     OAILOG_ERROR(LOG_MME_APP, "No S11 update bearer procedure exists for UE: " MME_UE_S1AP_ID_FMT ". Not sending UBResp back. \n",
@@ -2410,7 +2398,17 @@ void mme_app_handle_modify_eps_bearer_ctx_cnf (itti_mme_app_modify_eps_bearer_ct
 
   /** Get the PDN context. */
   mme_app_get_pdn_context(ue_context, s11_proc_update_bearer->pci, s11_proc_update_bearer->linked_ebi, NULL, &pdn_context);
-  DevAssert(pdn_context);
+  if (!pdn_context) {
+    OAILOG_DEBUG (LOG_MME_APP, "We didn't find the pdn context with cid %d and default ebi %d for UE: " MME_UE_S1AP_ID_FMT "\n",
+        s11_proc_update_bearer->pci, s11_proc_update_bearer->linked_ebi, modify_eps_bearer_ctx_cnf->ue_id);
+     OAILOG_FUNC_OUT (LOG_MME_APP);
+  }
+  bearer_context = mme_app_get_session_bearer_context(pdn_context, modify_eps_bearer_ctx_cnf->ebi);
+  if(!bearer_context){
+    OAILOG_ERROR(LOG_MME_APP, "Could not find the bearer context for ebi %d and UE: " MME_UE_S1AP_ID_FMT ". Disregarding positive ESM response. \n",
+        modify_eps_bearer_ctx_cnf->ebi, ue_context->mme_ue_s1ap_id);
+    OAILOG_FUNC_OUT (LOG_MME_APP);
+  }
 
   /** Get the bearer context in question. */
   bearer_context_to_be_updated_t * bc_tbu = NULL;
@@ -2420,19 +2418,8 @@ void mme_app_handle_modify_eps_bearer_ctx_cnf (itti_mme_app_modify_eps_bearer_ct
     }
   }
   DevAssert(bc_tbu);
-
-  /** Check if the bearer context exists as a session bearer. */
-  bearer_context_t * bc;
-  mme_app_get_session_bearer_context_from_all(ue_context, modify_eps_bearer_ctx_cnf->ebi, &bc);
-  if(!bc){
-    DevAssert(bc_tbu->cause.cause_value != 0 && bc_tbu->cause.cause_value != REQUEST_ACCEPTED);
-    OAILOG_ERROR(LOG_MME_APP, "While handling the NAS ESM response, an E-RAB failure for ebi %d occurred for UE: " MME_UE_S1AP_ID_FMT ". Disregarding positive ESM response. \n",
-        bc_tbu->eps_bearer_id, ue_context->mme_ue_s1ap_id);
-    OAILOG_FUNC_OUT (LOG_MME_APP);
-  }
-
   /** Update the pending bearer contexts in the answer. */
-  if(!bc_tbu->cause.cause_value){
+  if(bc_tbu->cause.cause_value == 0){
     /** No response received yet from E-RAB. Will just set it as SUCCESS, but not trigger an UBResp. */
     OAILOG_INFO(LOG_MME_APP, "Received NAS response before E-RAB modification response for ebi %d occurred for UE: " MME_UE_S1AP_ID_FMT ". Not triggering a UBResp. \n",
             bc_tbu->eps_bearer_id, ue_context->mme_ue_s1ap_id);
@@ -2446,10 +2433,6 @@ void mme_app_handle_modify_eps_bearer_ctx_cnf (itti_mme_app_modify_eps_bearer_ct
   OAILOG_INFO(LOG_MME_APP, "Received NAS response after positive E-RAB modification response for ebi %d occurred for UE: " MME_UE_S1AP_ID_FMT ". Will reduce number of unhandled bearers and eventually triggering a UBResp. \n",
       bc_tbu->eps_bearer_id, ue_context->mme_ue_s1ap_id);
   s11_proc_update_bearer->num_bearers_unhandled--;
-  // todo: compare with apn ambr..
-  if(s11_proc_update_bearer->apn_ambr.br_dl && s11_proc_update_bearer->apn_ambr.br_ul){
-       pdn_context->subscribed_apn_ambr = s11_proc_update_bearer->apn_ambr;
-  }
 
   if(s11_proc_update_bearer->num_bearers_unhandled){
     OAILOG_INFO(LOG_MME_APP, "Still %d unhandled bearers exist for s11 update bearer procedure for UE: " MME_UE_S1AP_ID_FMT ". Not sending UBResp back yet. \n",
@@ -2471,8 +2454,6 @@ void mme_app_handle_modify_eps_bearer_ctx_rej (itti_mme_app_modify_eps_bearer_ct
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
   struct ue_context_s                 *ue_context   = NULL;
-  /** Get the first PDN Context. */
-  bearer_context_t                    *bc_failed    = NULL;
   pdn_context_t                       *pdn_context  = NULL;
 
   ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, modify_eps_bearer_ctx_rej->ue_id);
@@ -2480,7 +2461,6 @@ void mme_app_handle_modify_eps_bearer_ctx_rej (itti_mme_app_modify_eps_bearer_ct
     OAILOG_DEBUG (LOG_MME_APP, "We didn't find this mme_ue_s1ap_id in list of UE: " MME_UE_S1AP_ID_FMT "\n", modify_eps_bearer_ctx_rej->ue_id);
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
-
   /** Get the MME_APP Update Bearer procedure. */
   mme_app_s11_proc_update_bearer_t * s11_proc_update_bearer = mme_app_get_s11_procedure_update_bearer(ue_context);
   if(!s11_proc_update_bearer){
@@ -2488,7 +2468,6 @@ void mme_app_handle_modify_eps_bearer_ctx_rej (itti_mme_app_modify_eps_bearer_ct
         ue_context->mme_ue_s1ap_id);
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
-
   /*
    * TS 23.401: 5.4.2: The MME shall be prepared to receive this message either before or after the Session Management Response message (sent in step 9).
    *
@@ -2497,6 +2476,13 @@ void mme_app_handle_modify_eps_bearer_ctx_rej (itti_mme_app_modify_eps_bearer_ct
    * So we check the state of the bearers.
    * The indication that S11 Update Bearer Response should be sent to the SAE-GW, should be sent by ESM/NAS layer.
    */
+  /** Get the PDN context. */
+  mme_app_get_pdn_context(ue_context, s11_proc_update_bearer->pci, s11_proc_update_bearer->linked_ebi, NULL, &pdn_context);
+  if (!pdn_context) {
+    OAILOG_DEBUG (LOG_MME_APP, "We didn't find the pdn context with cid %d and default ebi %d for UE: " MME_UE_S1AP_ID_FMT "\n",
+        s11_proc_update_bearer->pci, s11_proc_update_bearer->linked_ebi, modify_eps_bearer_ctx_rej->ue_id);
+     OAILOG_FUNC_OUT (LOG_MME_APP);
+  }
   /** Assert that the bearer context is already removed. */
   bearer_context_to_be_updated_t * bc_tbu = NULL;
   for(int num_bc = 0; num_bc < s11_proc_update_bearer->bcs_tbu->num_bearer_context; num_bc++ ){
@@ -2506,28 +2492,12 @@ void mme_app_handle_modify_eps_bearer_ctx_rej (itti_mme_app_modify_eps_bearer_ct
   }
   DevAssert(bc_tbu);
 
-  /** Check if the bearer context exists as a session bearer. */
-  bearer_context_t * bc;
-  mme_app_get_session_bearer_context_from_all(ue_context, modify_eps_bearer_ctx_rej->ebi, &bc);
-  if(!bc){
-    if(modify_eps_bearer_ctx_rej->cause_value == NO_RESOURCES_AVAILABLE){
-      /** Bearer was removed in ESM layer. */
-      OAILOG_WARNING(LOG_MME_APP, "Bearer with ebi %d for UE: " MME_UE_S1AP_ID_FMT " was removed in the NAS ESM layer.. \n", bc_tbu->eps_bearer_id, ue_context->mme_ue_s1ap_id);
-    }else  {
-      DevAssert(bc_tbu->cause.cause_value != 0 && bc_tbu->cause.cause_value != REQUEST_ACCEPTED);
-      OAILOG_ERROR(LOG_MME_APP, "While handling the NAS ESM reject, an E-RAB failure for ebi %d occurred for UE: " MME_UE_S1AP_ID_FMT ". Disregarding ESM reject. \n",
-          bc_tbu->eps_bearer_id, ue_context->mme_ue_s1ap_id);
-      OAILOG_FUNC_OUT (LOG_MME_APP);
-    }
-  }
-
   /** Update the pending bearer contexts in the answer. */
-  if (bc_tbu->cause.cause_value && bc_tbu->cause.cause_value != REQUEST_ACCEPTED) {
+  if (bc_tbu->cause.cause_value != 0 && bc_tbu->cause.cause_value != REQUEST_ACCEPTED) {
     OAILOG_INFO(LOG_MME_APP, "Received NAS reject after E-RAB modification reject for ebi %d occurred for UE: " MME_UE_S1AP_ID_FMT ". Not reducing number of unhandled bearers (assuming already done). \n",
         bc_tbu->eps_bearer_id, ue_context->mme_ue_s1ap_id);
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
-
   /** No response received yet from E-RAB. Will just set it as SUCCESS, but not trigger an UBResp. */
   OAILOG_INFO(LOG_MME_APP, "Received NAS reject before E-RAB modification response, or after positive E-RAB response for ebi %d for UE: " MME_UE_S1AP_ID_FMT ". Reducing number of unhandled bearers. \n",
       bc_tbu->eps_bearer_id, ue_context->mme_ue_s1ap_id);

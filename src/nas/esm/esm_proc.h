@@ -166,6 +166,7 @@ esm_cause_t
 esm_proc_dedicated_eps_bearer_context_accept (
   mme_ue_s1ap_id_t ue_id,
   pti_t            pti,
+  nas_esm_proc_bearer_context_t *esm_bearer_procedure,
   ebi_t            ebi);
 
 int
@@ -193,6 +194,7 @@ esm_cause_t
 esm_proc_modify_eps_bearer_context_accept (
   mme_ue_s1ap_id_t ue_id,
   ebi_t ebi,
+  nas_esm_proc_bearer_context_t *esm_bearer_procedure,
   pti_t pti);
 
 esm_cause_t

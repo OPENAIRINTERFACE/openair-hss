@@ -122,6 +122,7 @@ void nas_itti_detach_req(
 
 void nas_itti_activate_eps_bearer_ctx_cnf(
     const mme_ue_s1ap_id_t ue_idP,
+    const teid_t           saegw_s1u_teid,
     const ebi_t            ebi);
 
 void nas_itti_activate_eps_bearer_ctx_rej(

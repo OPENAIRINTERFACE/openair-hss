@@ -128,6 +128,7 @@ typedef struct itti_mme_app_activate_eps_bearer_ctx_cnf_s {
   /* UE identifier */
   mme_ue_s1ap_id_t                      ue_id;
   ebi_t                                 ebi;
+  teid_t                                saegw_s1u_teid;
 } itti_mme_app_activate_eps_bearer_ctx_cnf_t;
 
 typedef struct itti_mme_app_activate_eps_bearer_ctx_rej_s {

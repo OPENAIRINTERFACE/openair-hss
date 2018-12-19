@@ -276,7 +276,7 @@ esm_proc_eps_bearer_context_deactivate_accept (
   /*
    * Release the EPS bearer context.
    */
-  mme_app_esm_release_bearer_context(ue_id, pdn_cid, ebi /* apn */);
+  mme_app_release_bearer_context(ue_id, pdn_cid, ebi /* apn */);
 
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_SUCCESS);
 }
