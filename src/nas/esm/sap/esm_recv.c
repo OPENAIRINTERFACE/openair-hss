@@ -1054,7 +1054,7 @@ esm_recv_deactivate_eps_bearer_context_accept (
    * It could be a PDN disconnection or a EPS bearer deactivation (pti >=0).
    * Only one transaction is allowed.
    */
-  nas_esm_proc_t * esm_base_proc =  _esm_proc_get_pdn_connectivity_procedure(ue_id, pti);
+  nas_esm_proc_t * esm_base_proc = _esm_proc_get_pdn_connectivity_procedure(ue_id, pti);
   if(!esm_base_proc){
     // todo: assume both cannot exist together.
     esm_base_proc = _esm_proc_get_bearer_context_procedure(ue_id, pti, ebi);
@@ -1066,11 +1066,10 @@ esm_recv_deactivate_eps_bearer_context_accept (
   if(esm_base_proc->type == ESM_PROC_PDN_CONTEXT){
     /** Deactivate the PDN context. */
     nas_esm_proc_pdn_connectivity_t * esm_proc_pdn_connectivity = (nas_esm_proc_pdn_connectivity_t*)esm_base_proc;
-    /* Deactivate the bearer/pdn context implicitly. */
-    esm_proc_pdn_disconnect_accept(esm_proc_pdn_connectivity->esm_base_proc.ue_id,
-        esm_proc_pdn_connectivity->pdn_cid, esm_proc_pdn_connectivity->default_ebi,
-        esm_proc_pdn_connectivity->subscribed_apn);
-
+    /*
+     * Delete the PDN connectivity in the MME_APP UE context.
+     */
+    mme_app_esm_delete_pdn_context(ue_id, esm_proc_pdn_connectivity->subscribed_apn, esm_proc_pdn_connectivity->pdn_cid, esm_proc_pdn_connectivity->default_ebi); /**< Frees it by putting it back to the pool. */
     _esm_proc_free_pdn_connectivity_procedure(&esm_proc_pdn_connectivity);
     /** Nothing to signal. */
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_SUCCESS);

@@ -168,6 +168,29 @@ nas_esm_proc_data_ind (
 
 //------------------------------------------------------------------------------
 int
+nas_esm_proc_esm_detach(
+  itti_nas_esm_detach_ind_t * esm_detach)
+{
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
+
+  esm_sap_t                               esm_sap = {0};
+  bstring                                 rsp = NULL;
+  esm_cause_t                             esm_cause = ESM_CAUSE_SUCCESS;
+  int                                     rc = RETURNok;
+
+  esm_sap.primitive = ESM_DETACH_IND;
+  esm_sap.ue_id     = esm_detach->ue_id;
+  memcpy((void*)&esm_sap.data.detach_ind.imsi, &esm_detach->imsi, sizeof(imsi_t));
+  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_ESM_MME, NULL, 0, "0 ESM_DETACH_IND " MME_UE_S1AP_ID_FMT " ", esm_detach->ue_id);
+  /** Handle each bearer context separately. */
+  /** Get the bearer contexts to be updated. */
+  esm_sap_signal(&esm_sap, &rsp);
+  DevAssert(!rsp);
+  OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
+}
+
+//------------------------------------------------------------------------------
+int
 nas_esm_proc_pdn_config_res (
     esm_cn_pdn_config_res_t * pdn_config_res)
 {

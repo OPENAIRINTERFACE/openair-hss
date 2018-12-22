@@ -36,15 +36,6 @@
 #define MME_APP_CONNECTION_ESTABLISHMENT_CNF(mSGpTR)     (mSGpTR)->ittiMsg.mme_app_connection_establishment_cnf
 #define MME_APP_INITIAL_CONTEXT_SETUP_RSP(mSGpTR)        (mSGpTR)->ittiMsg.mme_app_initial_context_setup_rsp
 
-#define MME_APP_ACTIVATE_EPS_BEARER_CTX_REQ(mSGpTR)      (mSGpTR)->ittiMsg.mme_app_activate_eps_bearer_ctx_req
-#define MME_APP_ACTIVATE_EPS_BEARER_CTX_CNF(mSGpTR)      (mSGpTR)->ittiMsg.mme_app_activate_eps_bearer_ctx_cnf
-#define MME_APP_ACTIVATE_EPS_BEARER_CTX_REJ(mSGpTR)      (mSGpTR)->ittiMsg.mme_app_activate_eps_bearer_ctx_rej
-#define MME_APP_MODIFY_EPS_BEARER_CTX_REQ(mSGpTR)        (mSGpTR)->ittiMsg.mme_app_modify_eps_bearer_ctx_req
-#define MME_APP_MODIFY_EPS_BEARER_CTX_CNF(mSGpTR)        (mSGpTR)->ittiMsg.mme_app_modify_eps_bearer_ctx_cnf
-#define MME_APP_MODIFY_EPS_BEARER_CTX_REJ(mSGpTR)        (mSGpTR)->ittiMsg.mme_app_modify_eps_bearer_ctx_rej
-#define MME_APP_DEACTIVATE_EPS_BEARER_CTX_REQ(mSGpTR)    (mSGpTR)->ittiMsg.mme_app_deactivate_eps_bearer_ctx_req
-#define MME_APP_DEACTIVATE_EPS_BEARER_CTX_CNF(mSGpTR)    (mSGpTR)->ittiMsg.mme_app_deactivate_eps_bearer_ctx_cnf
-
 #define MME_APP_INITIAL_CONTEXT_SETUP_FAILURE(mSGpTR)    (mSGpTR)->ittiMsg.mme_app_initial_context_setup_failure
 /** Necessary for TAU. */
 #define MME_APP_NAS_UPDATE_LOCATION_CNF(mSGpTR)          (mSGpTR)->ittiMsg.mme_app_nas_update_location_cnf
@@ -114,68 +105,6 @@ typedef struct itti_mme_app_initial_context_setup_rsp_s {
   bstring                 transport_layer_address[BEARERS_PER_UE];
   s1u_teid_t              gtp_teid[BEARERS_PER_UE];
 } itti_mme_app_initial_context_setup_rsp_t;
-
-typedef struct itti_mme_app_activate_eps_bearer_ctx_req_s {
-  /* UE identifier */
-  mme_ue_s1ap_id_t                  ue_id;
-  pti_t                             pti;
-  pdn_cid_t                         cid;
-  ebi_t                             linked_ebi;
-  uintptr_t                         bcs_to_be_created_ptr;
-} itti_mme_app_activate_eps_bearer_ctx_req_t;
-
-typedef struct itti_mme_app_activate_eps_bearer_ctx_cnf_s {
-  /* UE identifier */
-  mme_ue_s1ap_id_t                      ue_id;
-  ebi_t                                 ebi;
-  teid_t                                saegw_s1u_teid;
-} itti_mme_app_activate_eps_bearer_ctx_cnf_t;
-
-typedef struct itti_mme_app_activate_eps_bearer_ctx_rej_s {
-  /* UE identifier */
-  mme_ue_s1ap_id_t                      ue_id;
-  teid_t                                saegw_s1u_teid;
-  gtpv2c_cause_value_t                  cause_value;
-} itti_mme_app_activate_eps_bearer_ctx_rej_t;
-
-typedef struct itti_mme_app_modify_eps_bearer_ctx_req_s {
-  /* UE identifier */
-  mme_ue_s1ap_id_t                  ue_id;
-  pti_t                             pti;
-  pdn_cid_t                         cid;
-  ebi_t                             linked_ebi;
-  ambr_t                            apn_ambr; /**< New APN AMBR. */
-  uintptr_t                         bcs_to_be_updated_ptr;
-} itti_mme_app_modify_eps_bearer_ctx_req_t;
-
-typedef struct itti_mme_app_modify_eps_bearer_ctx_cnf_s {
-  /* UE identifier */
-  mme_ue_s1ap_id_t                      ue_id;
-  ebi_t                                 ebi;
-} itti_mme_app_modify_eps_bearer_ctx_cnf_t;
-
-typedef struct itti_mme_app_modify_eps_bearer_ctx_rej_s {
-  /* UE identifier */
-  mme_ue_s1ap_id_t                      ue_id;
-  ebi_t                                 ebi;
-  gtpv2c_cause_value_t                  cause_value;
-} itti_mme_app_modify_eps_bearer_ctx_rej_t;
-
-typedef struct itti_mme_app_deactivate_eps_bearer_ctx_req_s {
-  /* UE identifier */
-#define ESM_SAP_ALL_EBI     0xff
-  mme_ue_s1ap_id_t                  ue_id;
-  ebi_t                             def_ebi;
-  pti_t                             pti;
-  pdn_cid_t                         cid;
-  ebi_list_t                        ebis;
-} itti_mme_app_deactivate_eps_bearer_ctx_req_t;
-
-typedef struct itti_mme_app_deactivate_eps_bearer_ctx_cnf_s {
-  /* UE identifier */
-  mme_ue_s1ap_id_t                  ue_id;
-  ebi_t                             ded_ebi;
-} itti_mme_app_deactivate_eps_bearer_ctx_cnf_t;
 
 typedef struct itti_mme_app_s1ap_mme_ue_id_notification_s {
   enb_ue_s1ap_id_t      enb_ue_s1ap_id;

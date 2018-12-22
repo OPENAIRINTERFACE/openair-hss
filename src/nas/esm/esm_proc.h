@@ -120,13 +120,6 @@ esm_proc_pdn_disconnect_request (
   pdn_cid_t  pdn_cid,
   ebi_t linked_ebi);
 
-esm_cause_t
-esm_proc_pdn_disconnect_accept (
-  mme_ue_s1ap_id_t ue_id,
-  pdn_cid_t pid,
-  ebi_t     default_ebi,
-  bstring   apn);
-
 /*
  * --------------------------------------------------------------------------
  *              ESM information procedure

@@ -145,10 +145,8 @@ int mme_api_new_guti(const imsi_t * const imsi,
                      const tai_t  * const originating_tai,
                      tai_list_t   * const tai_list);
 
-int mme_api_subscribe(bstring *apn, mme_api_ip_version_t mme_pdn_index, bstring *pdn_addr,
-                      int is_emergency, mme_api_qos_t *qos);
-int mme_api_unsubscribe(bstring apn);
-
 void mme_ue_context_update_ue_emm_state (mme_ue_s1ap_id_t mme_ue_s1ap_id, mm_state_t new_emm_state);
+
+int mme_api_remove_subscription_data (const imsi64_t const imsi64);
 
 #endif /* FILE_MME_API_SEEN*/

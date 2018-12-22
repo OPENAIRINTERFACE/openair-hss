@@ -77,6 +77,9 @@
 //
 //RB_GENERATE (BearerF0teids, fteid_set_s, fteid_set_rbt_Node, fteid_set_compare_s1u_saegw)
 
+static void mme_app_nas_esm_free_bearer_context_proc(nas_esm_proc_bearer_context_t **esm_proc_bearer_context);
+static void mme_app_nas_esm_free_pdn_connectivity_proc(nas_esm_proc_pdn_connectivity_t **esm_proc_pdn_connectivity);
+
 //------------------------------------------------------------------------------
 void mme_app_nas_esm_free_pdn_connectivity_procedures(ue_context_t * const ue_context)
 {
@@ -88,7 +91,7 @@ void mme_app_nas_esm_free_pdn_connectivity_procedures(ue_context_t * const ue_co
     esm_pdn_connectivity_proc1 = LIST_FIRST(ue_context->esm_procedures.pdn_connectivity_procedures);                 /* Faster List Deletion. */
     while (esm_pdn_connectivity_proc1) {
       esm_pdn_connectivity_proc2 = LIST_NEXT(esm_pdn_connectivity_proc1, entries);
-//      mme_app_nas_esm_pdn_connectivity_proc(&esm_pdn_connectivity_proc1);
+      mme_app_nas_esm_free_pdn_connectivity_proc(&esm_pdn_connectivity_proc1);
       esm_pdn_connectivity_proc1 = esm_pdn_connectivity_proc2;
     }
     LIST_INIT(ue_context->esm_procedures.pdn_connectivity_procedures);
@@ -146,18 +149,24 @@ nas_esm_proc_pdn_connectivity_t* mme_app_nas_esm_get_pdn_connectivity_procedure(
 }
 
 //------------------------------------------------------------------------------
-void mme_app_nas_esm_free_pdn_connectivity_proc(nas_esm_proc_pdn_connectivity_t **esm_proc_pdn_connectivity)
+void mme_app_nas_esm_delete_pdn_connectivity_proc(nas_esm_proc_pdn_connectivity_t **esm_proc_pdn_connectivity)
+{
+  LIST_REMOVE((*esm_proc_pdn_connectivity), entries);
+  mme_app_nas_esm_free_pdn_connectivity_proc(esm_proc_pdn_connectivity);
+}
+
+//------------------------------------------------------------------------------
+static void mme_app_nas_esm_free_pdn_connectivity_proc(nas_esm_proc_pdn_connectivity_t **esm_proc_pdn_connectivity)
 {
   // DO here specific releases (memory,etc)
   /** Remove the bearer contexts to be setup. */
-  LIST_REMOVE((*esm_proc_pdn_connectivity), entries);
+  nas_stop_esm_timer((*esm_proc_pdn_connectivity)->esm_base_proc.ue_id,
+      &((*esm_proc_pdn_connectivity)->esm_base_proc.esm_proc_timer));
   /**
    * Free components of the PDN connectivity procedure.
    */
   if((*esm_proc_pdn_connectivity)->subscribed_apn)
     bdestroy_wrapper(&((*esm_proc_pdn_connectivity)->subscribed_apn));
-
-//  free_bearer_contexts_to_be_created(&(*esm_pdn_connectivity_proc_pp)->bcs_tbc);
   free_wrapper((void**)esm_proc_pdn_connectivity);
 }
 
@@ -251,27 +260,31 @@ nas_esm_proc_bearer_context_t* mme_app_nas_esm_get_bearer_context_procedure(mme_
 }
 
 //------------------------------------------------------------------------------
-void mme_app_nas_esm_free_bearer_context_proc(nas_esm_proc_bearer_context_t **esm_proc_bearer_context)
+void mme_app_nas_esm_delete_bearer_context_proc(nas_esm_proc_bearer_context_t **esm_proc_bearer_context)
 {
   // todo: LOCK_UE_CONTEXT
-  // DO here specific releases (memory,etc)
   /** Remove the bearer contexts to be setup. */
   /**
    * Free components of the bearer context procedure.
    */
   LIST_REMOVE((*esm_proc_bearer_context), entries);
-
-  nas_stop_esm_timer((*esm_proc_bearer_context)->esm_base_proc.ue_id,
-      &((*esm_proc_bearer_context)->esm_base_proc.esm_proc_timer));
-
-  if((*esm_proc_bearer_context)->tft){
-    free_traffic_flow_template(&((*esm_proc_bearer_context)->tft));
-  }
-
-  //  free_bearer_contexts_to_be_created(&(*esm_pdn_connectivity_proc_pp)->bcs_tbc);
-  free_wrapper((void**)esm_proc_bearer_context);
-
-
+  mme_app_nas_esm_free_bearer_context_proc(esm_proc_bearer_context);
   // todo: UNLOCK_UE_CONTEXT
 }
 
+//------------------------------------------------------------------------------
+static void mme_app_nas_esm_free_bearer_context_proc(nas_esm_proc_bearer_context_t **esm_proc_bearer_context)
+{
+  // todo: LOCK_UE_CONTEXT
+  /** Remove the bearer contexts to be setup. */
+  /**
+   * Free components of the bearer context procedure.
+   */
+  nas_stop_esm_timer((*esm_proc_bearer_context)->esm_base_proc.ue_id,
+      &((*esm_proc_bearer_context)->esm_base_proc.esm_proc_timer));
+  if((*esm_proc_bearer_context)->tft){
+    free_traffic_flow_template(&((*esm_proc_bearer_context)->tft));
+  }
+  free_wrapper((void**)esm_proc_bearer_context);
+  // todo: UNLOCK_UE_CONTEXT
+}

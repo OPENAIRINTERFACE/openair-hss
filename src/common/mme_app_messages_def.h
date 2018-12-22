@@ -31,15 +31,6 @@
 MESSAGE_DEF(MME_APP_CONNECTION_ESTABLISHMENT_CNF  , MESSAGE_PRIORITY_MED, itti_mme_app_connection_establishment_cnf_t  , mme_app_connection_establishment_cnf)
 MESSAGE_DEF(MME_APP_INITIAL_CONTEXT_SETUP_RSP     , MESSAGE_PRIORITY_MED, itti_mme_app_initial_context_setup_rsp_t  ,    mme_app_initial_context_setup_rsp)
 
-MESSAGE_DEF(MME_APP_ACTIVATE_EPS_BEARER_CTX_REQ   , MESSAGE_PRIORITY_MED, itti_mme_app_activate_eps_bearer_ctx_req_t  ,  mme_app_activate_eps_bearer_ctx_req)
-MESSAGE_DEF(MME_APP_ACTIVATE_EPS_BEARER_CTX_CNF   , MESSAGE_PRIORITY_MED, itti_mme_app_activate_eps_bearer_ctx_cnf_t  ,  mme_app_activate_eps_bearer_ctx_cnf)
-MESSAGE_DEF(MME_APP_ACTIVATE_EPS_BEARER_CTX_REJ   , MESSAGE_PRIORITY_MED, itti_mme_app_activate_eps_bearer_ctx_rej_t  ,  mme_app_activate_eps_bearer_ctx_rej)
-MESSAGE_DEF(MME_APP_MODIFY_EPS_BEARER_CTX_REQ     , MESSAGE_PRIORITY_MED, itti_mme_app_modify_eps_bearer_ctx_req_t  ,  mme_app_modify_eps_bearer_ctx_req)
-MESSAGE_DEF(MME_APP_MODIFY_EPS_BEARER_CTX_CNF     , MESSAGE_PRIORITY_MED, itti_mme_app_modify_eps_bearer_ctx_cnf_t  ,  mme_app_modify_eps_bearer_ctx_cnf)
-MESSAGE_DEF(MME_APP_MODIFY_EPS_BEARER_CTX_REJ     , MESSAGE_PRIORITY_MED, itti_mme_app_modify_eps_bearer_ctx_rej_t  ,  mme_app_modify_eps_bearer_ctx_rej)
-MESSAGE_DEF(MME_APP_DEACTIVATE_EPS_BEARER_CTX_REQ , MESSAGE_PRIORITY_MED, itti_mme_app_deactivate_eps_bearer_ctx_req_t  ,  mme_app_deactivate_eps_bearer_ctx_req)
-MESSAGE_DEF(MME_APP_DEACTIVATE_EPS_BEARER_CTX_CNF , MESSAGE_PRIORITY_MED, itti_mme_app_deactivate_eps_bearer_ctx_cnf_t  ,  mme_app_deactivate_eps_bearer_ctx_cnf)
-
 /** New message to signal the MME_UE_S1AP_ID to S1AP. */
 MESSAGE_DEF(MME_APP_S1AP_MME_UE_ID_NOTIFICATION   , MESSAGE_PRIORITY_MED, itti_mme_app_s1ap_mme_ue_id_notification_t    ,  mme_app_s1ap_mme_ue_id_notification)
 MESSAGE_DEF(MME_APP_INITIAL_CONTEXT_SETUP_FAILURE , MESSAGE_PRIORITY_MED, itti_mme_app_initial_context_setup_failure_t  ,    mme_app_initial_context_setup_failure)

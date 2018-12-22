@@ -85,9 +85,10 @@ void nas_itti_pdn_disconnect_req(
   mme_ue_s1ap_id_t        ue_idP,
   ebi_t                   default_ebi,
   pti_t                   pti,
+  bool                    deleteTunnel,
   struct in_addr          saegw_s11_addr, /**< Put them into the UE context ? */
   teid_t                  saegw_s11_teid,
-  nas_esm_proc_pdn_connectivity_t        *esm_pdn_connectivity_proc);
+  pdn_cid_t               pdn_cid);
 
 void nas_itti_ctx_req(
   const uint32_t        ue_idP,
@@ -103,11 +104,6 @@ void nas_itti_auth_info_req(
   plmn_t         * const visited_plmnP,
   const uint8_t          num_vectorsP,
   const_bstring    const auts_pP);
-
-void nas_itti_establish_rej(
-  const mme_ue_s1ap_id_t ue_idP,
-  const imsi_t  * const imsi_pP,
-  uint8_t             initial_reqP);
 
 void nas_itti_establish_cnf(
   const mme_ue_s1ap_id_t ue_idP,

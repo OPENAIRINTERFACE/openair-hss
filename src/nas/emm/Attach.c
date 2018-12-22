@@ -962,10 +962,12 @@ static int _emm_attach_release (emm_data_context_t *emm_context)
     mme_ue_s1ap_id_t      ue_id = emm_context->ue_id;
     OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Release UE context data (ue_id=" MME_UE_S1AP_ID_FMT ")\n", ue_id);
 
+    /** Not removing the downloaded subscription data. */
+
     /*
      * Release the EMM context
      */
-    _clear_emm_ctxt(emm_context);
+    _clear_emm_ctxt(emm_context->ue_id);
   }
 
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
@@ -1051,7 +1053,7 @@ int _emm_attach_reject(emm_data_context_t * emm_context, nas_emm_attach_proc_t *
   }
   int rc = emm_sap_send (&emm_sap);
   // Release EMM context
-  _clear_emm_ctxt(emm_context->ue_id);
+  _clear_emm_ctxt(emm_context);
 
 //  unlock_ue_contexts(ue_context);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);

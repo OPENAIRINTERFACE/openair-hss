@@ -89,6 +89,7 @@ static const char                      *_esm_sap_primitive_str[] = {
     "ESM_EPS_BEARER_CONTEXT_ACTIVATE_REQ",
     "ESM_EPS_BEARER_CONTEXT_MODIFY_REQ",
     "ESM_EPS_BEARER_CONTEXT_DEACTIVATE_REQ",
+    "ESM_DETACH_IND",
 
     "ESM_TIMEOUT_IND",
 };
@@ -157,6 +158,18 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
   OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Received primitive %s (%d)\n", _esm_sap_primitive_str[msg->primitive - ESM_START - 1], msg->primitive);
 
   switch (msg->primitive) {
+
+  case ESM_DETACH_IND:{
+    pti_t pti = PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED;
+    esm_cause = esm_proc_pdn_config_res(msg->ue_id, &msg->is_attach, &pti, msg->data.pdn_config_res->imsi64);
+    if(esm_cause != ESM_CAUSE_SUCCESS) {
+      /*
+       * Send a PDN connectivity reject.
+       */
+      esm_send_pdn_connectivity_reject(pti, &esm_resp_msg, esm_cause);
+    }
+  }
+  break;
 
   case ESM_PDN_CONFIG_RES:{
     pti_t pti = PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED;

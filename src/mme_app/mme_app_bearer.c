@@ -1633,25 +1633,25 @@ mme_app_handle_s11_create_bearer_req (
    * Also, send a single message to the eNB.
    * May received multiple back.
    */
-  message_p = itti_alloc_new_message (TASK_MME_APP, MME_APP_ACTIVATE_EPS_BEARER_CTX_REQ);
+  message_p = itti_alloc_new_message (TASK_MME_APP, NAS_ACTIVATE_EPS_BEARER_CTX_REQ);
   AssertFatal (message_p , "itti_alloc_new_message Failed");
 
-  itti_mme_app_activate_eps_bearer_ctx_req_t *mme_app_activate_eps_bearer_ctx_req = &message_p->ittiMsg.mme_app_activate_eps_bearer_ctx_req;
-  mme_app_activate_eps_bearer_ctx_req->bcs_to_be_created_ptr = (uintptr_t)create_bearer_request_pP->bearer_contexts;
+  itti_nas_activate_eps_bearer_ctx_req_t *nas_activate_eps_bearer_ctx_req = &message_p->ittiMsg.nas_activate_eps_bearer_ctx_req;
+  nas_activate_eps_bearer_ctx_req->bcs_to_be_created_ptr = (uintptr_t)create_bearer_request_pP->bearer_contexts;
   /** MME_APP Create Bearer Request. */
-  mme_app_activate_eps_bearer_ctx_req->ue_id              = ue_context->mme_ue_s1ap_id;
-  mme_app_activate_eps_bearer_ctx_req->linked_ebi         = create_bearer_request_pP->linked_eps_bearer_id;
+  nas_activate_eps_bearer_ctx_req->ue_id              = ue_context->mme_ue_s1ap_id;
+  nas_activate_eps_bearer_ctx_req->linked_ebi         = create_bearer_request_pP->linked_eps_bearer_id;
   /** Copy the BC to be created. */
   /** Might be UE triggered. */
-  mme_app_activate_eps_bearer_ctx_req->pti                = create_bearer_request_pP->pti;
-  mme_app_activate_eps_bearer_ctx_req->cid                = default_bc->pdn_cx_id;
+  nas_activate_eps_bearer_ctx_req->pti                = create_bearer_request_pP->pti;
+  nas_activate_eps_bearer_ctx_req->cid                = default_bc->pdn_cx_id;
 
   /** Set it to NULL, such that it is not deallocated. */
   create_bearer_request_pP->bearer_contexts     = NULL;
 
   /** No need to set bearer states, we won't establish the bearers yet. */
-  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 MME_APP_ACTIVATE_EPS_BEARER_CTX_REQ mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ",
-      mme_app_activate_eps_bearer_ctx_req->ue_id);
+  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_ACTIVATE_EPS_BEARER_CTX_REQ mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ",
+      nas_activate_eps_bearer_ctx_req->ue_id);
   itti_send_msg_to_task (TASK_NAS_ESM, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
@@ -1734,21 +1734,21 @@ mme_app_handle_s11_update_bearer_req (
    * Also, send a single message to the eNB.
    * May received multiple back.
    */
-  message_p = itti_alloc_new_message (TASK_MME_APP, MME_APP_MODIFY_EPS_BEARER_CTX_REQ);
+  message_p = itti_alloc_new_message (TASK_MME_APP, NAS_MODIFY_EPS_BEARER_CTX_REQ);
   AssertFatal (message_p , "itti_alloc_new_message Failed");
 
-  itti_mme_app_modify_eps_bearer_ctx_req_t *mme_app_modify_eps_bearer_ctx_req = &message_p->ittiMsg.mme_app_modify_eps_bearer_ctx_req;
-  mme_app_modify_eps_bearer_ctx_req->bcs_to_be_updated_ptr = (uintptr_t)update_bearer_request_pP->bearer_contexts;
-  /** MME_APP Update Bearer Request. The ESM layer will also check the APN-AMBR. */
-  mme_app_modify_eps_bearer_ctx_req->ue_id              = ue_context->mme_ue_s1ap_id;
+  itti_nas_modify_eps_bearer_ctx_req_t *nas_modify_eps_bearer_ctx_req = &message_p->ittiMsg.nas_modify_eps_bearer_ctx_req;
+  nas_modify_eps_bearer_ctx_req->bcs_to_be_updated_ptr = (uintptr_t)update_bearer_request_pP->bearer_contexts;
+  /** NAS Update Bearer Request. The ESM layer will also check the APN-AMBR. */
+  nas_modify_eps_bearer_ctx_req->ue_id              = ue_context->mme_ue_s1ap_id;
   /** Might be UE triggered. */
-  mme_app_modify_eps_bearer_ctx_req->pti                = update_bearer_request_pP->pti;
-  mme_app_modify_eps_bearer_ctx_req->apn_ambr           = update_bearer_request_pP->apn_ambr;
+  nas_modify_eps_bearer_ctx_req->pti                = update_bearer_request_pP->pti;
+  nas_modify_eps_bearer_ctx_req->apn_ambr           = update_bearer_request_pP->apn_ambr;
   /** Set it to NULL, such that it is not deallocated. */
   update_bearer_request_pP->bearer_contexts     = NULL;
 
   /** No need to set bearer states, we won't establish the bearers yet. */
-  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 MME_APP_MODIFY_EPS_BEARER_CTX_REQ mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ",  mme_app_modify_eps_bearer_ctx_req->ue_id);
+  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_MODIFY_EPS_BEARER_CTX_REQ mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ",  nas_modify_eps_bearer_ctx_req->ue_id);
   itti_send_msg_to_task (TASK_NAS_ESM, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
@@ -1806,20 +1806,20 @@ mme_app_handle_s11_delete_bearer_req (
   /*
    * Let the ESM layer validate the request and deactivate the bearers.
    */
-  message_p = itti_alloc_new_message (TASK_MME_APP, MME_APP_DEACTIVATE_EPS_BEARER_CTX_REQ);
+  message_p = itti_alloc_new_message (TASK_MME_APP, NAS_DEACTIVATE_EPS_BEARER_CTX_REQ);
   AssertFatal (message_p , "itti_alloc_new_message Failed");
 
-  itti_mme_app_deactivate_eps_bearer_ctx_req_t *mme_app_deactivate_eps_bearer_ctx_req = &message_p->ittiMsg.mme_app_deactivate_eps_bearer_ctx_req;
-  mme_app_deactivate_eps_bearer_ctx_req->ue_id              = ue_context->mme_ue_s1ap_id;
-  mme_app_deactivate_eps_bearer_ctx_req->def_ebi            = delete_bearer_request_pP->linked_eps_bearer_id;
-  memcpy(&mme_app_deactivate_eps_bearer_ctx_req->ebis, &delete_bearer_request_pP->ebi_list, sizeof(delete_bearer_request_pP->ebi_list));
+  itti_nas_deactivate_eps_bearer_ctx_req_t *nas_deactivate_eps_bearer_ctx_req = &message_p->ittiMsg.nas_deactivate_eps_bearer_ctx_req;
+  nas_deactivate_eps_bearer_ctx_req->ue_id              = ue_context->mme_ue_s1ap_id;
+  nas_deactivate_eps_bearer_ctx_req->def_ebi            = delete_bearer_request_pP->linked_eps_bearer_id;
+  memcpy(&nas_deactivate_eps_bearer_ctx_req->ebis, &delete_bearer_request_pP->ebi_list, sizeof(delete_bearer_request_pP->ebi_list));
   /** Might be UE triggered. */
-  mme_app_deactivate_eps_bearer_ctx_req->pti                = delete_bearer_request_pP->pti;
+  nas_deactivate_eps_bearer_ctx_req->pti                = delete_bearer_request_pP->pti;
   /** Set it to NULL, such that it is not deallocated. */
 
   /** No need to set bearer states, we won't remove the bearers yet. */
-  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 MME_APP_DEACTIVATE_EPS_BEARER_CTX_REQ mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ",
-      mme_app_deactivate_eps_bearer_ctx_req->ue_id);
+  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_DEACTIVATE_EPS_BEARER_CTX_REQ mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ",
+      nas_deactivate_eps_bearer_ctx_req->ue_id);
   itti_send_msg_to_task (TASK_NAS_ESM, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
@@ -1982,7 +1982,7 @@ static void mme_app_handle_e_rab_setup_rsp_dedicated_bearer(const itti_s1ap_e_ra
     nas_esm_proc_bearer_context_t *esm_proc_bearer_context = mme_app_nas_esm_get_bearer_context_procedure(e_rab_setup_rsp->mme_ue_s1ap_id, PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED, bc_tbc->eps_bearer_id);
     if(esm_proc_bearer_context){
       /* Finalize the bearer context and terminate the ESM procedure. The response should not be regarded. */
-      mme_app_nas_esm_free_bearer_context_proc(&esm_proc_bearer_context);
+      mme_app_nas_esm_delete_bearer_context_proc(&esm_proc_bearer_context);
       OAILOG_DEBUG (LOG_MME_APP, "Freed the NAS ESM procedure for bearer activation (ebi=%d) for ueId : " MME_UE_S1AP_ID_FMT "\n",
                 esm_proc_bearer_context->bearer_ebi, esm_proc_bearer_context->esm_base_proc.ue_id);
     }
@@ -2206,7 +2206,7 @@ void mme_app_handle_e_rab_modify_rsp (itti_s1ap_e_rab_modify_rsp_t  * const e_ra
         bc_tbu->eps_bearer_id);
     if(esm_proc_bearer_context){
       /* Finalize the bearer context and terminate the ESM procedure. The response should not be regarded. */
-      mme_app_nas_esm_free_bearer_context_proc(&esm_proc_bearer_context);
+      mme_app_nas_esm_delete_bearer_context_proc(&esm_proc_bearer_context);
       OAILOG_DEBUG (LOG_MME_APP, "Freed the NAS ESM procedure for bearer activation (ebi=%d) for ueId : " MME_UE_S1AP_ID_FMT "\n",
           esm_proc_bearer_context->bearer_ebi, esm_proc_bearer_context->esm_base_proc.ue_id);
     }
@@ -2229,7 +2229,7 @@ void mme_app_handle_e_rab_modify_rsp (itti_s1ap_e_rab_modify_rsp_t  * const e_ra
 }
 
 //------------------------------------------------------------------------------
-void mme_app_handle_activate_eps_bearer_ctx_cnf (itti_mme_app_activate_eps_bearer_ctx_cnf_t   * const activate_eps_bearer_ctx_cnf)
+void mme_app_handle_activate_eps_bearer_ctx_cnf (itti_nas_activate_eps_bearer_ctx_cnf_t   * const activate_eps_bearer_ctx_cnf)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
   struct ue_context_s                 *ue_context = NULL;
@@ -2306,7 +2306,7 @@ void mme_app_handle_activate_eps_bearer_ctx_cnf (itti_mme_app_activate_eps_beare
 }
 
 //------------------------------------------------------------------------------
-void mme_app_handle_activate_eps_bearer_ctx_rej (itti_mme_app_activate_eps_bearer_ctx_rej_t   * const activate_eps_bearer_ctx_rej)
+void mme_app_handle_activate_eps_bearer_ctx_rej (itti_nas_activate_eps_bearer_ctx_rej_t   * const activate_eps_bearer_ctx_rej)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
   struct ue_context_s                 *ue_context   = NULL;
@@ -2372,7 +2372,7 @@ void mme_app_handle_activate_eps_bearer_ctx_rej (itti_mme_app_activate_eps_beare
 }
 
 //------------------------------------------------------------------------------
-void mme_app_handle_modify_eps_bearer_ctx_cnf (itti_mme_app_modify_eps_bearer_ctx_cnf_t   * const modify_eps_bearer_ctx_cnf)
+void mme_app_handle_modify_eps_bearer_ctx_cnf (itti_nas_modify_eps_bearer_ctx_cnf_t   * const modify_eps_bearer_ctx_cnf)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
   struct ue_context_s                 *ue_context = NULL;
@@ -2455,7 +2455,7 @@ void mme_app_handle_modify_eps_bearer_ctx_cnf (itti_mme_app_modify_eps_bearer_ct
 }
 
 //------------------------------------------------------------------------------
-void mme_app_handle_modify_eps_bearer_ctx_rej (itti_mme_app_modify_eps_bearer_ctx_rej_t   * const modify_eps_bearer_ctx_rej)
+void mme_app_handle_modify_eps_bearer_ctx_rej (itti_nas_modify_eps_bearer_ctx_rej_t   * const modify_eps_bearer_ctx_rej)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
   struct ue_context_s                 *ue_context   = NULL;
@@ -2524,7 +2524,7 @@ void mme_app_handle_modify_eps_bearer_ctx_rej (itti_mme_app_modify_eps_bearer_ct
 }
 
 //------------------------------------------------------------------------------
-void mme_app_handle_deactivate_eps_bearer_ctx_cnf (itti_mme_app_deactivate_eps_bearer_ctx_cnf_t   * const deactivate_eps_bearer_ctx_cnf)
+void mme_app_handle_deactivate_eps_bearer_ctx_cnf (itti_nas_deactivate_eps_bearer_ctx_cnf_t   * const deactivate_eps_bearer_ctx_cnf)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
   struct ue_context_s                 *ue_context = NULL;

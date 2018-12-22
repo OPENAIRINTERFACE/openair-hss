@@ -181,15 +181,18 @@ EmmRegistered (
     if (evt->free_proc) {
       nas_delete_detach_procedure(emm_ctx);
     }
+    /* Remove the subscription information. */
+    mme_api_remove_subscription_data(emm_ctx->_imsi64);
+
     /*
      * Don't clear the EMM context here.
      * todo: make it optional!
      * Clear the ESM message, if exists.
      */
-//    bdestroy_wrapper(&emm_ctx->esm_msg);
+    //    bdestroy_wrapper(&emm_ctx->esm_msg);
     // todo: temporarily also remove the EMM context
     // Release emm and esm context
-    _clear_emm_ctxt(emm_ctx);
+    _clear_emm_ctxt(emm_ctx->ue_id);
     break;
 
   case _EMMREG_TAU_REQ:

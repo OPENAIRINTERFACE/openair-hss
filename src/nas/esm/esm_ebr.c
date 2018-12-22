@@ -134,7 +134,7 @@ void _esm_proc_free_bearer_context_procedure(nas_esm_proc_bearer_context_t ** es
   /** Forget the name of the timer.. only one can exist (also used for activate default EPS bearer context.. */
   nas_stop_esm_timer((*esm_proc_bearer_context)->esm_base_proc.ue_id,
       &((*esm_proc_bearer_context)->esm_base_proc.esm_proc_timer));
-  mme_app_nas_esm_free_bearer_context_proc(esm_proc_bearer_context);
+  mme_app_nas_esm_delete_bearer_context_proc(esm_proc_bearer_context);
 }
 
 //-----------------------------------------------------------------------------

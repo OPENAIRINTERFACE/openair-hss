@@ -22,7 +22,7 @@
 
 /*! \file mme_app_apn_selection.c
   \brief
-  \author Lionel Gauthier
+  \author Lionel Gauthier, Dincer Beken
   \company Eurecom
   \email: lionel.gauthier@eurecom.fr
 */
@@ -48,7 +48,6 @@
 #include "common_defs.h"
 #include "mme_app_apn_selection.h"
 #include "mme_app_defs.h"
-
 
 //------------------------------------------------------------------------------
 int

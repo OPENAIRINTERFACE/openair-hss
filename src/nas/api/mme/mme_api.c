@@ -78,9 +78,6 @@ extern mme_app_desc_t                   mme_app_desc;
 /*******************  L O C A L    D E F I N I T I O N S  *******************/
 /****************************************************************************/
 
-/* Maximum number of PDN connections the MME may simultaneously support */
-#define MME_API_PDN_MAX         10
-
 static mme_api_ip_version_t             _mme_api_ip_capability = MME_API_IPV4V6_ADDR;
 
 
@@ -92,9 +89,6 @@ static mme_api_ip_version_t             _mme_api_ip_capability = MME_API_IPV4V6_
 #define MME_API_BIT_RATE_128K   0x48
 #define MME_API_BIT_RATE_512K   0x78
 #define MME_API_BIT_RATE_1024K  0x87
-
-/* Total number of PDN connections (should not exceed MME_API_PDN_MAX) */
-static int                              _mme_api_pdn_id = 0;
 
 /****************************************************************************/
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
@@ -364,9 +358,6 @@ int mme_api_mobility_complete(const mme_ue_s1ap_id_t mme_ue_s1ap_id, bool activa
  ** Name:    mme_api_new_guti()                                        **
  **                                                                        **
  ** Description: Requests the MME to assign a new GUTI to the UE identi-   **
- **      fied by the given IMSI.                                   **
- **                                                                        **
- ** Description: Requests the MME to assign a new GUTI to the UE identi-   **
  **      fied by the given IMSI and returns the list of consecu-   **
  **      tive tracking areas the UE is registered to.              **
  **                                                                        **
@@ -507,69 +498,25 @@ mme_api_new_guti (
 
 /****************************************************************************
  **                                                                        **
- ** Name:        mme_api_subscribe()                                       **
+ ** Name:    mme_api_remove_subscription_data()                                        **
  **                                                                        **
- ** Description: Requests the MME to check whether connectivity with the   **
- **              requested PDN can be established using the specified APN. **
- **              If accepted the MME returns PDN subscription context con- **
- **              taining EPS subscribed QoS profile, the default APN if    **
- **              required and UE's IPv4 address and/or the IPv6 prefix.    **
+ ** Description: Removes the subscription profile downloaded from the HSS
+ **      based on the IMSI.                                   **
  **                                                                        **
- ** Inputs:  apn:               If not NULL, Access Point Name of the PDN  **
- **                             to connect to                              **
- **              is_emergency:  true if the PDN connectivity is requested  **
- **                             for emergency bearer services              **
- **                  Others:    None                                       **
+ ** Inputs:  imsi:      International Mobile Subscriber Identity   **
+ **      Others:    None                                       **
  **                                                                        **
- ** Outputs:         apn:       If NULL, default APN or APN configured for **
- **                             emergency bearer services                  **
- **                  pdn_addr:  PDN connection IPv4 address or IPv6 inter- **
- **                             face identifier to be used to build the    **
- **                             IPv6 link local address                    **
- **                  qos:       EPS subscribed QoS profile                 **
- **                  Return:    RETURNok, RETURNerror                      **
- **                  Others:    None                                       **
+ ** Outputs:        None                                       **
  **                                                                        **
  ***************************************************************************/
 int
-mme_api_subscribe (
-  bstring * apn,
-  mme_api_ip_version_t mme_pdn_index,
-  bstring * pdn_addr,
-  int is_emergency,
-  mme_api_qos_t * qos)
-{
-  int                                     rc = RETURNok;
-
-  OAILOG_FUNC_IN (LOG_NAS);
-  OAILOG_FUNC_RETURN (LOG_NAS, rc);
-}
-
-/****************************************************************************
- **                                                                        **
- ** Name:        mme_api_unsubscribe()                                     **
- **                                                                        **
- ** Description: Requests the MME to release connectivity with the reques- **
- **              ted PDN using the specified APN.                          **
- **                                                                        **
- ** Inputs:  apn:               Access Point Name of the PDN to disconnect **
- **                             from                                       **
- **                  Others:    None                                       **
- **                                                                        **
- ** Outputs:     None                                                      **
- **                  Return:    RETURNok, RETURNerror                      **
- **                  Others:    None                                       **
- **                                                                        **
- ***************************************************************************/
-int
-mme_api_unsubscribe ( bstring apn)
+mme_api_remove_subscription_data (
+  const imsi64_t const imsi64)
 {
   OAILOG_FUNC_IN (LOG_NAS);
-  int                                     rc = RETURNok;
 
-  /*
-   * Decrement the total number of PDN connections
-   */
-  _mme_api_pdn_id -= 1;
-  OAILOG_FUNC_RETURN (LOG_NAS, rc);
+  /* Remove the subscription information. */
+  mme_remove_subscription_profile(&mme_app_desc.mme_ue_contexts, imsi64);
+
+  OAILOG_FUNC_RETURN (LOG_NAS, RETURNok);
 }

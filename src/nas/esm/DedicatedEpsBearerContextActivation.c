@@ -254,6 +254,7 @@ esm_proc_dedicated_eps_bearer_context (
    * Register a new EPS bearer context into the MME.
    * This should only be for dedicated bearers (todo: handover with dedicated bearers).
    */
+  // todo: PCO handling
   traffic_flow_template_t * tft = bc_tbc->tft;
   esm_cause = mme_app_register_dedicated_bearer_context(ue_id, ESM_EBR_ACTIVE_PENDING, bc_tbc);  /**< We set the ESM state directly to active in handover. */
   if(esm_cause != ESM_CAUSE_SUCCESS){

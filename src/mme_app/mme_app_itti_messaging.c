@@ -845,18 +845,6 @@ void mme_app_itti_nas_context_response(ue_context_t * ue_context, nas_s10_contex
   //  memset (&(ue_context_p->pending_pdn_connectivity_req_imsi), 0, 16); /**< IMSI in create session request. */
   //  memcpy (&(ue_context_p->pending_pdn_connectivity_req_imsi), &(s10_context_response_pP->imsi.digit), s10_context_response_pP->imsi.length);
   //  ue_context_p->pending_pdn_connectivity_req_imsi_length = s10_context_response_pP->imsi.length;
-
-  /** When sending NAS context response, inform it also about the number established PDN sessions and bearers in the ESM layer. */
-  pdn_context_t * registered_pdn_ctx = NULL;
-  RB_FOREACH (registered_pdn_ctx, PdnContexts, &ue_context->pdn_contexts) {
-    DevAssert(registered_pdn_ctx);
-    nas_context_res->n_pdns++;
-    bearer_context_t * bearer_contexts = NULL;
-    RB_FOREACH (bearer_contexts, SessionBearers, &registered_pdn_ctx->session_bearers) {
-      DevAssert(registered_pdn_ctx);
-      nas_context_res->n_bearers++;
-    }
-  }
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_CONTEXT_RES sgw_s1u_teid %u ebi %u qci %u prio %u",
       current_bearer_p->s_gw_fteid_s1u.teid,
       bearer_id,

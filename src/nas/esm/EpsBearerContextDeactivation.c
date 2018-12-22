@@ -303,11 +303,12 @@ static void _eps_bearer_deactivate_t3495_handler (nas_esm_proc_t * esm_base_proc
     _esm_proc_free_bearer_context_procedure((nas_esm_proc_bearer_context_t**)&esm_base_proc);
     OAILOG_FUNC_OUT(LOG_NAS_ESM);
   }else {
-    /* Deactivate the bearer/pdn context implicitly. */
-    esm_proc_pdn_disconnect_accept(esm_base_proc->ue_id, ((nas_esm_proc_pdn_connectivity_t*)esm_base_proc)->pdn_cid,
-        ((nas_esm_proc_pdn_connectivity_t*)esm_base_proc)->default_ebi,
-        ((nas_esm_proc_pdn_connectivity_t*)esm_base_proc)->subscribed_apn);
-    _esm_proc_free_pdn_connectivity_procedure((nas_esm_proc_pdn_connectivity_t**)esm_base_proc);
+    nas_esm_proc_pdn_connectivity_t * esm_proc_pdn_connectivity = (nas_esm_proc_pdn_connectivity_t*)esm_base_proc;
+    /*
+     * Delete the PDN connectivity in the MME_APP UE context.
+     */
+    mme_app_esm_delete_pdn_context(esm_proc_pdn_connectivity->esm_base_proc.ue_id, esm_proc_pdn_connectivity->subscribed_apn, esm_proc_pdn_connectivity->pdn_cid, esm_proc_pdn_connectivity->default_ebi); /**< Frees it by putting it back to the pool. */
+    _esm_proc_free_pdn_connectivity_procedure(&esm_proc_pdn_connectivity);
     OAILOG_FUNC_OUT(LOG_NAS_ESM);
   }
 }

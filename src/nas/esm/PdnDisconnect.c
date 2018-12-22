@@ -200,58 +200,62 @@ esm_proc_pdn_disconnect_request (
    * Trigger an S11 Delete Session Request to the SAE-GW.
    * No need to process the response.
    */
-  nas_itti_pdn_disconnect_req(ue_id, linked_ebi, pti,
+  nas_itti_pdn_disconnect_req(ue_id, linked_ebi, pti, false,
       pdn_context->s_gw_address_s11_s4.address.ipv4_address, pdn_context->s_gw_teid_s11_s4,
-      esm_proc_pdn_disconnect);
+      pdn_cid);
 
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_SUCCESS);
 }
 
 /****************************************************************************
  **                                                                        **
- ** Name:    esm_proc_pdn_disconnect_accept()                          **
+ ** Name:    esm_proc_detach_request()                         **
  **                                                                        **
- ** Description: Performs PDN disconnect procedure accepted by the UE.     **
+ ** Description: Performs a local detach, removing all PDN contexts.       **
  **                                                                        **
- **              3GPP TS 24.301, section 6.5.2.3                           **
- **      On reception of DEACTIVATE EPS BEARER CONTEXT ACCEPT mes- **
- **      sage from the UE, the MME releases all the resources re-  **
- **      served for the PDN in the network.                        **
- **                                                                        **
+ **              Triggers an internal local detach procedure for all ESM   **
+ **              contexts.                                                 **
+ **                                                                 **
  ** Inputs:  ue_id:      UE lower layer identifier                  **
- **      pid:       Identifier of the PDN connection to be     **
- **             released                                   **
- **      Others:    _esm_data                                  **
+ **      Others:    None                                            **
  **                                                                        **
- ** Outputs:     esm_cause: Cause code returned upon ESM procedure     **
- **             failure                                    **
- **      Return:    RETURNok, RETURNerror                      **
- **      Others:    None                                       **
+ ** Outputs:     None                                               **
  **                                                                        **
  ***************************************************************************/
-esm_cause_t
-esm_proc_pdn_disconnect_accept (
-  mme_ue_s1ap_id_t ue_id,
-  pdn_cid_t pid,
-  ebi_t     default_ebi,
-  bstring   apn)
+void
+esm_proc_detach_request (
+  mme_ue_s1ap_id_t ue_id)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
 
-  OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - PDN disconnect accepted by the UE " "(ue_id=" MME_UE_S1AP_ID_FMT ", pid=%d)\n", ue_id, pid);
-  /*
-   * Release the connectivity with the requested PDN
-   */
-  int                                     rc = mme_api_unsubscribe (NULL);
+  OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Detach requested by the UE " "(ue_id=" MME_UE_S1AP_ID_FMT ")\n", ue_id);
 
-  /*
-   * Delete the MME_APP PDN context entry.
-   */
-//  mme_app_free_pdn_connection()free_pdn_connection(ue_id, pid, default_ebi, apn);
+  ue_context_t        * ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, ue_id);
+  pdn_context_t       * pdn_context = NULL;
 
-  OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_SUCCESS);
+  if(!ue_context){
+    OAILOG_WARNING(LOG_MME_APP, "No UE context could be found for UE: " MME_UE_S1AP_ID_FMT " to release ESM contexts. \n", ue_id);
+    OAILOG_FUNC_OUT(LOG_MME_APP);
+  }
+  /**
+   * Trigger all S11 messages, wihtouth removing the context.
+   * Todo: check what happens, if the transactions stay but s11 tunnel is removed.
+   */
+  RB_FOREACH (pdn_context, PdnContexts, &ue_context->pdn_contexts) {
+    DevAssert(pdn_context);
+    // todo: check this!
+    bool deleteTunnel = (RB_MIN(PdnContexts, &ue_context->pdn_contexts)== pdn_context);
+    /*
+     * Trigger an S11 Delete Session Request to the SAE-GW.
+     * No need to process the response.
+     */
+    nas_itti_pdn_disconnect_req(ue_id, pdn_context->default_ebi, PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED, deleteTunnel,
+        pdn_context->s_gw_address_s11_s4.address.ipv4_address, pdn_context->s_gw_teid_s11_s4, pdn_context->context_identifier);
+  }
+  OAILOG_INFO(LOG_MME_APP, "Triggered session deletion for all session. Removing ESM context of UE: " MME_UE_S1AP_ID_FMT " . \n", ue_id);
+  mme_app_esm_detach(ue_id);
+  OAILOG_FUNC_OUT(LOG_NAS_ESM);
 }
-
 /****************************************************************************/
 /*********************  L O C A L    F U N C T I O N S  *********************/
 /****************************************************************************/

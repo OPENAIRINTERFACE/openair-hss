@@ -99,7 +99,7 @@ s1ap_mme_itti_nas_downlink_cnf (
     OAILOG_FUNC_RETURN (LOG_S1AP, RETURNok);
   }
 
-  message_p = itti_alloc_new_message (TASK_S1AP, NAS_DOWNLINK_DATA_CNF);
+  message_p = itti_alloc_new_message (TASK_S1AP, NAS_DL_DATA_CNF);
 
   NAS_DL_DATA_CNF (message_p).ue_id = ue_id;
   if (is_success) {
@@ -108,7 +108,7 @@ s1ap_mme_itti_nas_downlink_cnf (
     NAS_DL_DATA_CNF (message_p).err_code = AS_FAILURE;
     OAILOG_ERROR (LOG_S1AP, "ERROR: Failed to send S1AP message to eNB. mme_ue_s1ap_id =  %d \n", ue_id);
   }
-  MSC_LOG_TX_MESSAGE (MSC_S1AP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_DOWNLINK_DATA_CNF ue_id " MME_UE_S1AP_ID_FMT " err_code %u",
+  MSC_LOG_TX_MESSAGE (MSC_S1AP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_DL_DATA_CNF ue_id " MME_UE_S1AP_ID_FMT " err_code %u",
       NAS_DL_DATA_CNF (message_p).ue_id, NAS_DL_DATA_CNF (message_p).err_code);
   return itti_send_msg_to_task (TASK_NAS_ESM, INSTANCE_DEFAULT, message_p);
 }
@@ -229,7 +229,7 @@ void s1ap_mme_itti_nas_non_delivery_ind(
   MessageDef     *message_p = NULL;
   // TODO translate, insert, cause in message
   OAILOG_FUNC_IN (LOG_S1AP);
-  message_p = itti_alloc_new_message(TASK_S1AP, NAS_DOWNLINK_DATA_REJ);
+  message_p = itti_alloc_new_message(TASK_S1AP, NAS_DL_DATA_REJ);
 
   NAS_DL_DATA_REJ(message_p).ue_id               = ue_id;
   /* Mapping between asn1 definition and NAS definition */

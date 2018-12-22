@@ -85,6 +85,7 @@ int nas_proc_establish_ind(const mme_ue_s1ap_id_t ue_id,
  */
 /** Messages sent by the EMM layer (directly from UE). */
 int nas_esm_proc_data_ind (itti_nas_esm_data_ind_t * esm_data_ind);
+int nas_esm_proc_esm_detach(itti_nas_esm_detach_ind_t * esm_detach);
 
 /** Messages triggered by the core network. */
 int nas_esm_proc_pdn_config_res (esm_cn_pdn_config_res_t * emm_cn_pdn_config_res);

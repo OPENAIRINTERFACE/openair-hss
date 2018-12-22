@@ -36,6 +36,7 @@
 
 #define NAS_UPLINK_DATA_IND(mSGpTR)                 (mSGpTR)->ittiMsg.nas_ul_data_ind
 #define NAS_ESM_DATA_IND(mSGpTR)                    (mSGpTR)->ittiMsg.nas_esm_data_ind
+#define NAS_ESM_DETACH_IND(mSGpTR)                  (mSGpTR)->ittiMsg.nas_esm_detach_ind
 #define NAS_DOWNLINK_DATA_REQ(mSGpTR)               (mSGpTR)->ittiMsg.nas_dl_data_req
 #define NAS_DL_DATA_CNF(mSGpTR)                     (mSGpTR)->ittiMsg.nas_dl_data_cnf
 #define NAS_DL_DATA_REJ(mSGpTR)                     (mSGpTR)->ittiMsg.nas_dl_data_rej
@@ -45,14 +46,20 @@
 #define NAS_PDN_CONNECTIVITY_FAIL(mSGpTR)           (mSGpTR)->ittiMsg.nas_pdn_connectivity_fail
 #define NAS_INITIAL_UE_MESSAGE(mSGpTR)              (mSGpTR)->ittiMsg.nas_initial_ue_message
 #define NAS_CONNECTION_ESTABLISHMENT_CNF(mSGpTR)    (mSGpTR)->ittiMsg.nas_conn_est_cnf
-#define NAS_BEARER_PARAM(mSGpTR)                    (mSGpTR)->ittiMsg.nas_bearer_param
-#define NAS_AUTHENTICATION_REQ(mSGpTR)              (mSGpTR)->ittiMsg.nas_auth_req
-#define NAS_AUTHENTICATION_PARAM_REQ(mSGpTR)        (mSGpTR)->ittiMsg.nas_auth_param_req
 #define NAS_DETACH_REQ(mSGpTR)                      (mSGpTR)->ittiMsg.nas_detach_req
 #define NAS_ERAB_SETUP_REQ(mSGpTR)                  (mSGpTR)->ittiMsg.nas_erab_setup_req
 #define NAS_ERAB_MODIFY_REQ(mSGpTR)                 (mSGpTR)->ittiMsg.nas_erab_modify_req
 #define NAS_ERAB_RELEASE_REQ(mSGpTR)                (mSGpTR)->ittiMsg.nas_erab_release_req
 #define NAS_SIGNALLING_CONNECTION_REL_IND(mSGpTR)   (mSGpTR)->ittiMsg.nas_signalling_connection_rel_ind
+
+#define NAS_ACTIVATE_EPS_BEARER_CTX_REQ(mSGpTR)     (mSGpTR)->ittiMsg.nas_activate_eps_bearer_ctx_req
+#define NAS_ACTIVATE_EPS_BEARER_CTX_CNF(mSGpTR)     (mSGpTR)->ittiMsg.nas_activate_eps_bearer_ctx_cnf
+#define NAS_ACTIVATE_EPS_BEARER_CTX_REJ(mSGpTR)     (mSGpTR)->ittiMsg.nas_activate_eps_bearer_ctx_rej
+#define NAS_MODIFY_EPS_BEARER_CTX_REQ(mSGpTR)       (mSGpTR)->ittiMsg.nas_modify_eps_bearer_ctx_req
+#define NAS_MODIFY_EPS_BEARER_CTX_CNF(mSGpTR)       (mSGpTR)->ittiMsg.nas_modify_eps_bearer_ctx_cnf
+#define NAS_MODIFY_EPS_BEARER_CTX_REJ(mSGpTR)       (mSGpTR)->ittiMsg.nas_modify_eps_bearer_ctx_rej
+#define NAS_DEACTIVATE_EPS_BEARER_CTX_REQ(mSGpTR)   (mSGpTR)->ittiMsg.nas_deactivate_eps_bearer_ctx_req
+#define NAS_DEACTIVATE_EPS_BEARER_CTX_CNF(mSGpTR)   (mSGpTR)->ittiMsg.nas_deactivate_eps_bearer_ctx_cnf
 
 // todo: context req_res..
 // todo:
@@ -151,11 +158,6 @@ typedef struct itti_nas_conn_est_cnf_s {
   uint16_t                integrity_algorithm_capabilities;
 } itti_nas_conn_est_cnf_t;
 
-typedef struct itti_nas_conn_rel_ind_s {
-
-} itti_nas_conn_rel_ind_t;
-
-
 typedef struct itti_nas_info_transfer_s {
   mme_ue_s1ap_id_t  ue_id;          /* UE lower layer identifier        */
   //nas_error_code_t err_code;     /* Transaction status               */
@@ -177,6 +179,11 @@ typedef struct itti_nas_esm_data_ind_s {
   tai_t             visited_tai;
   bool              is_attach;
 } itti_nas_esm_data_ind_t;
+
+typedef struct itti_nas_esm_detach_ind_s {
+  mme_ue_s1ap_id_t  ue_id;
+  imsi_t            imsi;
+} itti_nas_esm_detach_ind_t;
 
 typedef struct itti_nas_dl_data_req_s {
   enb_ue_s1ap_id_t  enb_ue_s1ap_id; /* UE lower layer identifier        */
@@ -251,22 +258,6 @@ typedef struct itti_nas_auth_rsp_s {
   char imsi[16];
 } itti_nas_auth_rsp_t;
 
-typedef struct itti_nas_auth_param_req_s {
-  /* UE identifier */
-  mme_ue_s1ap_id_t ue_id;
-
-  /* Imsi of the UE (In case of initial request) */
-  char     imsi[16];
-  uint8_t  imsi_length;
-
-  /* Indicates whether the procedure corresponds to a new connection or not */
-  uint8_t  initial_req:1;
-
-  uint8_t  re_synchronization:1;
-  uint8_t  auts[14];
-  uint8_t  num_vectors;
-} itti_nas_auth_param_req_t;
-
 typedef struct itti_nas_detach_req_s {
   /* UE identifier */
   mme_ue_s1ap_id_t ue_id;
@@ -299,8 +290,6 @@ typedef struct itti_nas_context_res_s {
   uint64_t                imsi;
   imsi_t                  _imsi;
   imei_t                  _imei;
-  uint8_t                 n_pdns;
-  uint8_t                 n_bearers;
   bool                    is_emergency;
 } itti_nas_context_res_t;
 
@@ -318,7 +307,6 @@ typedef struct itti_nas_pdn_disconnect_req_s {
   struct in_addr          saegw_s11_ip_addr;
   teid_t                  saegw_s11_teid;
   bool                    noDelete;
-  bstring                 apn;
 } itti_nas_pdn_disconnect_req_t;
 
 typedef struct itti_nas_pdn_disconnect_rsp_s {
@@ -326,5 +314,71 @@ typedef struct itti_nas_pdn_disconnect_rsp_s {
   int                     cause;
 //  unsigned int            pdn_ctx_id;
 } itti_nas_pdn_disconnect_rsp_t;
+
+/**
+ * Dedicated Bearer Operations.
+ */
+typedef struct itti_nas_activate_eps_bearer_ctx_req_s {
+  /* UE identifier */
+  mme_ue_s1ap_id_t                  ue_id;
+  pti_t                             pti;
+  pdn_cid_t                         cid;
+  ebi_t                             linked_ebi;
+  uintptr_t                         bcs_to_be_created_ptr;
+} itti_nas_activate_eps_bearer_ctx_req_t;
+
+typedef struct itti_nas_activate_eps_bearer_ctx_cnf_s {
+  /* UE identifier */
+  mme_ue_s1ap_id_t                      ue_id;
+  ebi_t                                 ebi;
+  teid_t                                saegw_s1u_teid;
+} itti_nas_activate_eps_bearer_ctx_cnf_t;
+
+typedef struct itti_nas_activate_eps_bearer_ctx_rej_s {
+  /* UE identifier */
+  mme_ue_s1ap_id_t                      ue_id;
+  teid_t                                saegw_s1u_teid;
+  gtpv2c_cause_value_t                  cause_value;
+} itti_nas_activate_eps_bearer_ctx_rej_t;
+
+typedef struct itti_nas_modify_eps_bearer_ctx_req_s {
+  /* UE identifier */
+  mme_ue_s1ap_id_t                  ue_id;
+  pti_t                             pti;
+  pdn_cid_t                         cid;
+  ebi_t                             linked_ebi;
+  ambr_t                            apn_ambr; /**< New APN AMBR. */
+  uintptr_t                         bcs_to_be_updated_ptr;
+} itti_nas_modify_eps_bearer_ctx_req_t;
+
+typedef struct itti_nas_modify_eps_bearer_ctx_cnf_s {
+  /* UE identifier */
+  mme_ue_s1ap_id_t                      ue_id;
+  ebi_t                                 ebi;
+} itti_nas_modify_eps_bearer_ctx_cnf_t;
+
+typedef struct itti_nas_modify_eps_bearer_ctx_rej_s {
+  /* UE identifier */
+  mme_ue_s1ap_id_t                      ue_id;
+  ebi_t                                 ebi;
+  gtpv2c_cause_value_t                  cause_value;
+} itti_nas_modify_eps_bearer_ctx_rej_t;
+
+typedef struct itti_nas_deactivate_eps_bearer_ctx_req_s {
+  /* UE identifier */
+#define ESM_SAP_ALL_EBI     0xff
+  mme_ue_s1ap_id_t                  ue_id;
+  ebi_t                             def_ebi;
+  pti_t                             pti;
+  pdn_cid_t                         cid;
+  ebi_list_t                        ebis;
+} itti_nas_deactivate_eps_bearer_ctx_req_t;
+
+typedef struct itti_nas_deactivate_eps_bearer_ctx_cnf_s {
+  /* UE identifier */
+  mme_ue_s1ap_id_t                  ue_id;
+  ebi_t                             ded_ebi;
+} itti_nas_deactivate_eps_bearer_ctx_cnf_t;
+
 
 #endif /* FILE_NAS_MESSAGES_TYPES_SEEN */

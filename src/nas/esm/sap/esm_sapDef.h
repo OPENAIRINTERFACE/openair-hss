@@ -66,6 +66,7 @@ typedef enum esm_primitive_s {
   ESM_EPS_BEARER_CONTEXT_ACTIVATE_REQ,
   ESM_EPS_BEARER_CONTEXT_MODIFY_REQ,
   ESM_EPS_BEARER_CONTEXT_DEACTIVATE_REQ,
+  ESM_DETACH_IND,
 
   /* Internal signal. */
   ESM_TIMEOUT_IND,
@@ -77,16 +78,15 @@ typedef enum esm_primitive_s {
 /************************  G L O B A L    T Y P E S  ************************/
 /****************************************************************************/
 
-typedef struct itti_nas_esm_attach_ind_t                    esm_emm_attach_ind_t;
 typedef struct itti_nas_pdn_config_rsp_s                    esm_cn_pdn_config_res_t;
 typedef struct itti_nas_pdn_config_fail_s                   esm_cn_pdn_config_fail_t;
 typedef struct itti_nas_pdn_connectivity_rsp_s              esm_cn_pdn_connectivity_res_t;
 typedef struct itti_nas_pdn_connectivity_fail_s             esm_cn_pdn_connectivity_fail_t;
 typedef struct itti_nas_pdn_disconnect_rsp_s                esm_cn_pdn_disconnect_res_t;
 
-typedef struct itti_mme_app_activate_eps_bearer_ctx_req_s   esm_eps_activate_eps_bearer_ctx_req_t;
-typedef struct itti_mme_app_modify_eps_bearer_ctx_req_s     esm_eps_modify_esm_bearer_ctxs_req_t;
-typedef struct itti_mme_app_deactivate_eps_bearer_ctx_req_s esm_eps_deactivate_eps_bearer_ctx_req_t;
+typedef struct itti_nas_activate_eps_bearer_ctx_req_s       esm_eps_activate_eps_bearer_ctx_req_t;
+typedef struct itti_nas_modify_eps_bearer_ctx_req_s         esm_eps_modify_esm_bearer_ctxs_req_t;
+typedef struct itti_nas_deactivate_eps_bearer_ctx_req_s     esm_eps_deactivate_eps_bearer_ctx_req_t;
 
 /*
  * ESM primitive for EPS bearer context procedure
@@ -171,7 +171,6 @@ typedef union {
 //  esm_bearer_resource_modify_rej_t          esm_bearer_resource_modify_rej;
 
   /** From here on just pointers. */
-  esm_emm_attach_ind_t           *attach_ind;
   esm_cn_pdn_config_res_t        *pdn_config_res;
   esm_cn_pdn_connectivity_res_t  *pdn_connectivity_res;
   esm_cn_pdn_connectivity_fail_t *pdn_connectivity_fail;
@@ -182,6 +181,7 @@ typedef union {
   esm_activate_eps_bearer_context_t         eps_bearer_context_activate;
   esm_modify_eps_bearer_context_t           eps_bearer_context_modify;
   esm_deactivate_eps_bearer_context_t       eps_bearer_context_deactivate;
+  itti_nas_esm_detach_ind_t                 detach_ind;
 } esm_sap_data_t;
 
 struct emm_data_context_s;

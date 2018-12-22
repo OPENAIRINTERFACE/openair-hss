@@ -59,6 +59,91 @@ void itti_free_msg_content (MessageDef * const message_p)
     }
     break;
 
+  /* NAS ESM. */
+  case NAS_ESM_DATA_IND:
+    bdestroy_wrapper (&message_p->ittiMsg.nas_esm_data_ind.req);
+    break;
+  case NAS_ESM_DETACH_IND:
+  case NAS_PDN_CONFIG_RSP:
+  case NAS_PDN_CONFIG_FAIL:
+    /** Nothing to do. */
+    break;
+
+  case NAS_PDN_CONNECTIVITY_RSP:
+    clear_protocol_configuration_options(&message_p->ittiMsg.nas_pdn_connectivity_rsp.pco);
+    free_wrapper(&message_p->ittiMsg.nas_pdn_connectivity_rsp.paa);
+    break;
+  case NAS_PDN_CONNECTIVITY_FAIL:
+  case NAS_PDN_DISCONNECT_REQ:
+  case NAS_PDN_DISCONNECT_RSP:
+    /* Nothing to do. */
+    break;
+
+    break;
+  case NAS_ACTIVATE_EPS_BEARER_CTX_REQ:
+  case NAS_MODIFY_EPS_BEARER_CTX_REQ:
+    /** Not removing the uintptr.
+     * The structure will be removed together with the MME_APP S11 procedure. */
+    break;
+  case NAS_ACTIVATE_EPS_BEARER_CTX_CNF:
+  case NAS_ACTIVATE_EPS_BEARER_CTX_REJ:
+    /* Nothing to do. */
+    break;
+
+  case NAS_MODIFY_EPS_BEARER_CTX_CNF:
+  case NAS_MODIFY_EPS_BEARER_CTX_REJ:
+    /* Nothing to do. */
+    break;
+
+  case NAS_DEACTIVATE_EPS_BEARER_CTX_REQ:
+  case NAS_DEACTIVATE_EPS_BEARER_CTX_CNF:
+    /** Nothing to do. */
+    break;
+  /* NAS EMM. */
+  case NAS_DOWNLINK_DATA_REQ:
+    bdestroy_wrapper(&message_p->ittiMsg.nas_dl_data_req.nas_msg);
+    AssertFatal(NULL == message_p->ittiMsg.nas_dl_data_req.nas_msg, "TODO clean pointer");
+   break;
+  case NAS_ERAB_SETUP_REQ:
+    bdestroy_wrapper(&message_p->ittiMsg.nas_erab_setup_req.nas_msg);
+    break;
+  case NAS_ERAB_MODIFY_REQ:
+    bdestroy_wrapper(&message_p->ittiMsg.nas_erab_modify_req.nas_msg);
+    break;
+  case NAS_ERAB_RELEASE_REQ:
+    bdestroy_wrapper (&message_p->ittiMsg.nas_erab_release_req.nas_msg);
+    break;
+  case NAS_CONTEXT_REQ:
+    bdestroy_wrapper (&message_p->ittiMsg.nas_context_req.nas_msg);
+    break;
+  case NAS_CONTEXT_RES:
+  case NAS_CONTEXT_FAIL:
+    // DO nothing
+    break;
+  case NAS_CONNECTION_ESTABLISHMENT_CNF:
+    bdestroy_wrapper (&message_p->ittiMsg.nas_conn_est_cnf.nas_msg);
+    AssertFatal(NULL == message_p->ittiMsg.nas_conn_est_cnf.nas_msg, "TODO clean pointer");
+    break;
+  case NAS_DL_DATA_CNF:
+    // DO nothing
+    break;
+  case NAS_DL_DATA_REJ:
+    bdestroy_wrapper (&message_p->ittiMsg.nas_dl_data_rej.nas_msg);
+    AssertFatal(NULL == message_p->ittiMsg.nas_dl_data_rej.nas_msg, "TODO clean pointer");
+    break;
+
+  case NAS_INITIAL_UE_MESSAGE:
+    bdestroy_wrapper (&message_p->ittiMsg.nas_initial_ue_message.nas.initial_nas_msg);
+    AssertFatal(NULL == message_p->ittiMsg.nas_initial_ue_message.nas.initial_nas_msg, "TODO clean pointer");
+    break;
+  case NAS_UPLINK_DATA_IND:
+    bdestroy_wrapper (&message_p->ittiMsg.nas_ul_data_ind.nas_msg);
+    AssertFatal(NULL == message_p->ittiMsg.nas_ul_data_ind.nas_msg, "TODO clean pointer");
+    break;
+  case NAS_DETACH_REQ:
+    // DO nothing
+    break;
+
   case GTPV1U_CREATE_TUNNEL_REQ:
   case GTPV1U_CREATE_TUNNEL_RESP:
   case GTPV1U_UPDATE_TUNNEL_REQ:
@@ -106,89 +191,6 @@ void itti_free_msg_content (MessageDef * const message_p)
     }
   }
   break;
-
-//  case NAS_PDN_CONNECTIVITY_REQ:{
-//    clear_protocol_configuration_options(&message_p->ittiMsg.nas_pdn_connectivity_req.pco);
-//    bdestroy_wrapper (&message_p->ittiMsg.nas_pdn_connectivity_req.apn);
-//    bdestroy_wrapper (&message_p->ittiMsg.nas_pdn_connectivity_req.pdn_addr);
-//    AssertFatal(NULL == message_p->ittiMsg.nas_pdn_connectivity_req.pdn_addr, "TODO clean pointer");
-//  }
-//  break;
-
-  case NAS_INITIAL_UE_MESSAGE:
-    bdestroy_wrapper (&message_p->ittiMsg.nas_initial_ue_message.nas.initial_nas_msg);
-    AssertFatal(NULL == message_p->ittiMsg.nas_initial_ue_message.nas.initial_nas_msg, "TODO clean pointer");
-    break;
-
-  case NAS_CONNECTION_ESTABLISHMENT_CNF:
-    bdestroy_wrapper (&message_p->ittiMsg.nas_conn_est_cnf.nas_msg);
-    AssertFatal(NULL == message_p->ittiMsg.nas_conn_est_cnf.nas_msg, "TODO clean pointer");
-    break;
-
-  case NAS_CONNECTION_RELEASE_IND:
-    // DO nothing
-    break;
-
-  case NAS_UPLINK_DATA_IND:
-    bdestroy_wrapper (&message_p->ittiMsg.nas_ul_data_ind.nas_msg);
-    AssertFatal(NULL == message_p->ittiMsg.nas_ul_data_ind.nas_msg, "TODO clean pointer");
-    break;
-
-  case NAS_DOWNLINK_DATA_REQ:
-    bdestroy_wrapper (&message_p->ittiMsg.nas_dl_data_req.nas_msg);
-    AssertFatal(NULL == message_p->ittiMsg.nas_dl_data_req.nas_msg, "TODO clean pointer");
-    break;
-
-  case NAS_DOWNLINK_DATA_CNF:
-    // DO nothing
-    break;
-
-  case NAS_DOWNLINK_DATA_REJ:
-    bdestroy_wrapper (&message_p->ittiMsg.nas_dl_data_rej.nas_msg);
-    AssertFatal(NULL == message_p->ittiMsg.nas_dl_data_rej.nas_msg, "TODO clean pointer");
-    break;
-
-  case NAS_AUTHENTICATION_PARAM_REQ:
-  case NAS_DETACH_REQ:
-    // DO nothing
-    break;
-
-//  case NAS_PDN_CONNECTIVITY_RSP:{
-//    clear_protocol_configuration_options(&message_p->ittiMsg.nas_pdn_connectivity_rsp.pco);
-//    bdestroy_wrapper (&message_p->ittiMsg.nas_pdn_connectivity_rsp.pdn_addr);
-//    AssertFatal(NULL == message_p->ittiMsg.nas_pdn_connectivity_rsp.pdn_addr, "TODO clean pointer");
-//  }
-//  break;
-
-  case NAS_PDN_DISCONNECT_REQ:{
-    bdestroy_wrapper (&message_p->ittiMsg.nas_pdn_disconnect_req.apn);
-    AssertFatal(NULL == message_p->ittiMsg.nas_pdn_disconnect_req.apn, "TODO clean pointer");
-  }
-  break;
-
-  case NAS_PDN_CONNECTIVITY_FAIL:
-    // DO nothing
-    break;
-
-  case NAS_ERAB_SETUP_REQ:
-    bdestroy_wrapper (&message_p->ittiMsg.nas_erab_setup_req.nas_msg);
-    break;
-
-  case NAS_ERAB_RELEASE_REQ:
-    bdestroy_wrapper (&message_p->ittiMsg.nas_erab_release_req.nas_msg);
-    break;
-
-//  case NAS_ESM_DATA_IND:
-//    bdestroy_wrapper (&message_p->ittiMsg.nas_esm_data_ind.esm_msg_p);
-//    break;
-
-//  case NAS_PDN_CONFIG_REQ:
-//   break;
-
-//  case NAS_CONTEXT_REQ:
-//    bdestroy_wrapper (&message_p->ittiMsg.nas_context_req.nas_msg);
-//    AssertFatal(NULL == message_p->ittiMsg.nas_context_req.nas_msg, "TODO clean pointer");
-//    break;
 
   case S11_CREATE_SESSION_REQUEST: {
     clear_protocol_configuration_options(&message_p->ittiMsg.s11_create_session_request.pco);

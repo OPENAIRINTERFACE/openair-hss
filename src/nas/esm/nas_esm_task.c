@@ -70,6 +70,11 @@ static void *nas_esm_intertask_interface (void *args_p)
     }
     break;
 
+    case NAS_ESM_DETACH_IND: {
+      nas_esm_proc_esm_detach(&NAS_ESM_DETACH_IND (received_message_p));
+    }
+    break;
+
     /**
      * Due to specification 23.401 and the request-type flag, do ULR in ESM.
      * Makes also handover procedures easier.
@@ -100,18 +105,18 @@ static void *nas_esm_intertask_interface (void *args_p)
     break;
 
     /** Messages sent directly from MME_APP to NAS_ESM layer for S11 session responses. */
-    case MME_APP_ACTIVATE_EPS_BEARER_CTX_REQ:{
-      nas_esm_proc_activate_eps_bearer_ctx(&MME_APP_ACTIVATE_EPS_BEARER_CTX_REQ (received_message_p));
+    case NAS_ACTIVATE_EPS_BEARER_CTX_REQ:{
+      nas_esm_proc_activate_eps_bearer_ctx(&NAS_ACTIVATE_EPS_BEARER_CTX_REQ (received_message_p));
     }
     break;
 
-    case MME_APP_MODIFY_EPS_BEARER_CTX_REQ:{
-      nas_esm_proc_modify_eps_bearer_ctx(&MME_APP_MODIFY_EPS_BEARER_CTX_REQ (received_message_p));
+    case NAS_MODIFY_EPS_BEARER_CTX_REQ:{
+      nas_esm_proc_modify_eps_bearer_ctx(&NAS_MODIFY_EPS_BEARER_CTX_REQ (received_message_p));
     }
     break;
 
-    case MME_APP_DEACTIVATE_EPS_BEARER_CTX_REQ:{
-      nas_esm_proc_deactivate_eps_bearer_ctx(&MME_APP_DEACTIVATE_EPS_BEARER_CTX_REQ (received_message_p));
+    case NAS_DEACTIVATE_EPS_BEARER_CTX_REQ:{
+      nas_esm_proc_deactivate_eps_bearer_ctx(&NAS_DEACTIVATE_EPS_BEARER_CTX_REQ (received_message_p));
     }
     break;
 

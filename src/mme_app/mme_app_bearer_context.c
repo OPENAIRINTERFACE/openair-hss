@@ -208,7 +208,7 @@ mme_app_register_dedicated_bearer_context(const mme_ue_s1ap_id_t ue_id, const es
   /* Insert the bearer context. */
   pBearerCtx = RB_INSERT (SessionBearers, &pdn_context->session_bearers, pBearerCtx);
   DevAssert(!pBearerCtx); /**< Collision Check. */
-  // todo: pcc
+  // todo: pco
 
   /* Set the TEIDs. */
   memcpy((void*)&pBearerCtx->s_gw_fteid_s1u,      &bc_tbc->s1u_sgw_fteid,     sizeof(fteid_t));

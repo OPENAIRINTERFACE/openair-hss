@@ -891,7 +891,7 @@ static int _emm_tracking_area_update_reject( const mme_ue_s1ap_id_t ue_id, const
   // Release EMM context 
   if (emm_context) {
     if(emm_context->is_dynamic) {
-      _clear_emm_ctxt(emm_context);
+      _clear_emm_ctxt(emm_context->ue_id);
     }
   }
 
@@ -1654,7 +1654,7 @@ static int _emm_tracking_area_update_run_procedure(emm_data_context_t *emm_conte
     // Release EMM context
     if (emm_context) {
       if(emm_context->is_dynamic) {
-        _clear_emm_ctxt(emm_context);
+        _clear_emm_ctxt(emm_context->ue_id);
       }
     }
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);

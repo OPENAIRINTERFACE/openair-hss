@@ -166,9 +166,12 @@ EmmDeregisteredInitiated (
      * todo: make it optional!
      * Clear the ESM message, if exists.
      */
+    /* Remove the subscription information. */
+    mme_api_remove_subscription_data(emm_ctx->_imsi64);
+
 //    bdestroy_wrapper(&emm_ctxC->esm_msg);
     // Release emm and esm context
-    _clear_emm_ctxt(emm_ctx);
+    _clear_emm_ctxt(emm_ctx->ue_id);
     break;
   case _EMMREG_TAU_REQ:
     OAILOG_ERROR (LOG_NAS_EMM, "EMM-FSM state EMM_DEREGISTERED_INITIATED - Primitive _EMMREG_TAU_REQ is not valid\n");

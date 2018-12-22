@@ -162,15 +162,6 @@ ue_context_t *mme_create_new_ue_context (void)
   return new_p;
 }
 
-
-//------------------------------------------------------------------------------
-void mme_app_free_pdn_connection (pdn_context_t ** const pdn_connection)
-{
-  bdestroy_wrapper(&(*pdn_connection)->apn_in_use);
-  bdestroy_wrapper(&(*pdn_connection)->apn_oi_replacement);
-  free_wrapper((void**)pdn_connection);
-}
-
 //------------------------------------------------------------------------------
 void mme_app_ue_context_free_content (ue_context_t * const ue_context)
 {
@@ -238,7 +229,7 @@ void mme_app_ue_context_free_content (ue_context_t * const ue_context)
 //  // todo: when is this method called? it should put the bearer contexts of the pdn context back to the UE contexts bearer list!
 //  for (int i = 0; i < MAX_APN_PER_UE; i++) {
 //    if (ue_context->pdn_contexts[i]) {
-//      mme_app_free_pdn_connection(&ue_context->pdn_contexts[i]);
+//      mme_app_free_pdn_context(&ue_context->pdn_contexts[i]);
 //    }
 //  }
 

@@ -126,8 +126,6 @@ void mme_app_bearer_create_workflow (ue_context_t * const ue_context, const pdn_
 
 //nas_cause_t s6a_error_2_nas_cause            (const uint32_t s6a_errorP, const int experimentalP);
 
-void mme_app_handle_nas_auth_param_req       (const itti_nas_auth_param_req_t * const nas_auth_param_req_pP);
-
 void mme_app_handle_initial_context_setup_rsp(itti_mme_app_initial_context_setup_rsp_t * const initial_ctxt_setup_rsp_pP);
 
 bool mme_app_dump_ue_context (const hash_key_t keyP, void *const ue_context, void *unused_param_pP, void **unused_result_pP);
@@ -138,15 +136,15 @@ void mme_app_handle_e_rab_setup_rsp (itti_s1ap_e_rab_setup_rsp_t  * const e_rab_
 
 void mme_app_handle_e_rab_modify_rsp (itti_s1ap_e_rab_modify_rsp_t  * const e_rab_modify_rsp);
 
-void mme_app_handle_activate_eps_bearer_ctx_cnf (itti_mme_app_activate_eps_bearer_ctx_cnf_t   * const activate_eps_bearer_ctx_cnf);
+void mme_app_handle_activate_eps_bearer_ctx_cnf (itti_nas_activate_eps_bearer_ctx_cnf_t   * const activate_eps_bearer_ctx_cnf);
 
-void mme_app_handle_activate_eps_bearer_ctx_rej (itti_mme_app_activate_eps_bearer_ctx_rej_t   * const activate_eps_bearer_ctx_rej);
+void mme_app_handle_activate_eps_bearer_ctx_rej (itti_nas_activate_eps_bearer_ctx_rej_t   * const activate_eps_bearer_ctx_rej);
 
-void mme_app_handle_modify_eps_bearer_ctx_cnf (itti_mme_app_modify_eps_bearer_ctx_cnf_t   * const modify_eps_bearer_ctx_cnf);
+void mme_app_handle_modify_eps_bearer_ctx_cnf (itti_nas_modify_eps_bearer_ctx_cnf_t   * const modify_eps_bearer_ctx_cnf);
 
-void mme_app_handle_modify_eps_bearer_ctx_rej (itti_mme_app_modify_eps_bearer_ctx_rej_t   * const modify_eps_bearer_ctx_rej);
+void mme_app_handle_modify_eps_bearer_ctx_rej (itti_nas_modify_eps_bearer_ctx_rej_t   * const modify_eps_bearer_ctx_rej);
 
-void mme_app_handle_deactivate_eps_bearer_ctx_cnf (itti_mme_app_deactivate_eps_bearer_ctx_cnf_t   * const deactivate_bearer_cnf);
+void mme_app_handle_deactivate_eps_bearer_ctx_cnf (itti_nas_deactivate_eps_bearer_ctx_cnf_t   * const deactivate_bearer_cnf);
 
 void mme_app_trigger_mme_initiated_dedicated_bearer_deactivation_procedure (ue_context_t * const ue_context, const pdn_cid_t cid);
 

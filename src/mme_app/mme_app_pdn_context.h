@@ -40,6 +40,8 @@ int mme_app_esm_update_pdn_context(mme_ue_s1ap_id_t ue_id, const bstring apn, pd
  */
 void mme_app_esm_delete_pdn_context(mme_ue_s1ap_id_t ue_id, bstring apn, pdn_cid_t pdn_cid, ebi_t linked_ebi);
 
+void mme_app_esm_detach (mme_ue_s1ap_id_t ue_id);
+
 int
 mme_app_cn_update_bearer_context(mme_ue_s1ap_id_t ue_id, const ebi_t ebi,
     struct e_rab_setup_item_s * s1u_erab_setup_item, struct fteid_s * s1u_saegw_fteid);

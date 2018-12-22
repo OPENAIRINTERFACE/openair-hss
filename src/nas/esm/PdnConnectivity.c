@@ -159,7 +159,7 @@ void _esm_proc_free_pdn_connectivity_procedure(nas_esm_proc_pdn_connectivity_t *
   /** Forget the name of the timer.. only one can exist (also used for activate default EPS bearer context.. */
   nas_stop_esm_timer((*esm_proc_pdn_connectivity)->esm_base_proc.ue_id,
       &((*esm_proc_pdn_connectivity)->esm_base_proc.esm_proc_timer));
-  mme_app_nas_esm_free_pdn_connectivity_proc(esm_proc_pdn_connectivity);
+  mme_app_nas_esm_delete_pdn_connectivity_proc(esm_proc_pdn_connectivity);
 }
 
 //-----------------------------------------------------------------------------
