@@ -1929,7 +1929,7 @@ static void mme_app_handle_e_rab_setup_rsp_dedicated_bearer(const itti_s1ap_e_ra
       OAILOG_ERROR(LOG_MME_APP, "The ebi %d could not be updated from the eNB for ueId : " MME_UE_S1AP_ID_FMT "\n", e_rab_id , e_rab_setup_rsp->mme_ue_s1ap_id);
       OAILOG_FUNC_OUT (LOG_MME_APP);
     }
-    mme_app_get_session_bearer_context_from_all(e_rab_setup_rsp->mme_ue_s1ap_id, e_rab_id, &bc_success);
+    bc_success = mme_app_get_session_bearer_context(pdn_context, e_rab_id);
     /** If the ESM EBR context is active. */
     if(bc_success){
       memcpy((void*)&bc_tbc->s1u_enb_fteid, (void*)&bc_success->enb_fteid_s1u, sizeof(bc_success->enb_fteid_s1u));
@@ -2135,13 +2135,18 @@ void mme_app_handle_e_rab_modify_rsp (itti_s1ap_e_rab_modify_rsp_t  * const e_ra
     }
     DevAssert(bc_tbu);
 
+    /*
+     * Modifications (QoS, TFT) on the bearer context itself will be done by the ESM layer.
+     * If UE accepts with success, but eNB does not, we may have a discrepancy.
+     */
+
     /** Check if the message needs to be processed (if it has already failed, in that case the number of unhandled bearers already will be reduced). */
     if(bc_tbu->cause.cause_value != 0 && bc_tbu->cause.cause_value != REQUEST_ACCEPTED){
       OAILOG_DEBUG (LOG_MME_APP, "The ebi %d has already a negative error cause %d for ueId : " MME_UE_S1AP_ID_FMT "\n", bc_tbu->eps_bearer_id, e_rab_modify_rsp->mme_ue_s1ap_id);
       continue;
     }
     /** Cause is either not set or negative. It must be in the session bearers. */
-    mme_app_get_session_bearer_context_from_all(ue_context, (ebi_t) e_rab_id, &bc_success);
+    bc_success = mme_app_get_session_bearer_context(pdn_context, e_rab_id);
     DevAssert(bc_success);
     /** If the ESM EBR context is active. */
     if(bc_success->esm_ebr_context.status == ESM_EBR_ACTIVE){ /**< ESM session management messages completed successfully (transactions completed and no negative GTP cause). */

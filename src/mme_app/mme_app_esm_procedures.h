@@ -28,7 +28,6 @@
   \email: dbeken@blackned.de
 */
 
-
 ////////////////////////////////////////////////////////////////////////////////
 // ESM procedures
 ////////////////////////////////////////////////////////////////////////////////
@@ -39,9 +38,8 @@
  * Also the EMM context will enter COMMON state and create a new GUTI after this callback.
  */
 
-typedef int (*esm_failure_cb_t)(struct nas_esm_base_proc_s*);
 /** Method called inside the timeout. */
-typedef int (*esm_timeout_cb_t)(struct nas_esm_base_proc_s *);
+typedef void (*esm_timeout_cb_t)(struct nas_esm_proc_s *);
 
 
 typedef enum {
@@ -64,100 +62,6 @@ typedef enum {
   ESM_PDN_REQUEST_HANDOVER,
   ESM_PDN_REQUEST_EMERGENCY
 } esm_proc_pdn_request_t;
-
-//
-//typedef enum {
-//  MME_APP_BASE_PROC_TYPE_NONE = 0,
-//  MME_APP_BASE_PROC_TYPE_S1AP,
-//  MME_APP_BASE_PROC_TYPE_S10,
-//  MME_APP_BASE_PROC_TYPE_S11
-//} mme_app_base_proc_type_t;
-//
-//
-//typedef struct mme_app_base_proc_s {
-//  // PDU interface
-//  //pdu_in_resp_t              resp_in;
-//  //pdu_in_rej_t               fail_in;
-//  time_out_t                 time_out;
-//  mme_app_base_proc_type_t   type;
-//} mme_app_base_proc_t;
-//
-///* S10 */
-//typedef enum {
-//  MME_APP_S10_PROC_TYPE_NONE = 0,
-//  MME_APP_S10_PROC_TYPE_INTER_MME_HANDOVER,
-//  MME_APP_S10_PROC_TYPE_INTRA_MME_HANDOVER
-//} mme_app_s10_proc_type_t;
-//
-//typedef struct mme_app_s10_proc_s {
-//  mme_app_base_proc_t         proc;
-//  mme_app_s10_proc_type_t     type;
-//  struct mme_app_timer_t      timer;
-//
-//  /** S10 Tunnel Endpoint information. */
-//  teid_t                      local_teid;
-//  teid_t                      remote_teid;
-//  struct in_addr              peer_ip;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME.
-//  bool                        target_mme;
-//  uintptr_t                   s10_trxn;
-//  LIST_ENTRY(mme_app_s10_proc_s) entries;      /* List. */
-//} mme_app_s10_proc_t;
-//
-///*
-// * S10 Procedure for Handover only on the target-MME side.
-// * On the source MME we don't need a procedure, a timer is enough.
-// */
-//typedef struct mme_app_s10_proc_mme_handover_s {
-//  mme_app_s10_proc_t            proc;
-//
-//  mme_ue_s1ap_id_t              mme_ue_s1ap_id;
-//
-//  enb_ue_s1ap_id_t              source_enb_ue_s1ap_id;
-//  enb_ue_s1ap_id_t              target_enb_ue_s1ap_id;
-//  time_out_t                   *s10_mme_handover_timeout;
-//
-//  uintptr_t                     forward_relocation_trxn;
-//  /** Peer Information. */
-//  fteid_t                       remote_mme_teid;
-//  uint16_t                      peer_port;
-//  target_identification_t       target_id;
-//  F_Container_t                 source_to_target_eutran_f_container;
-//  F_Cause_t                     f_cause;
-//  /** NAS context information. */
-//  nas_s10_context_t             nas_s10_context;
-//  /** PDN Connections. */
-//  mme_ue_eps_pdn_connections_t *pdn_connections;
-//  uint8_t                       next_processed_pdn_connection;
-//
-//  /** Target Information to store on the source side. */
-////  S1ap_ENB_ID_PR                target_enb_type;
-//
-//  tai_t                         target_tai;
-//  bool                          ho_command_sent;
-//  ecgi_t                        source_ecgi;  /**< Source home/macro enb id. */
-//  ecgi_t                        target_ecgi;  /**< Target home/macro enb id. */
-//  bool                          pending_clear_location_request;
-//
-//  LIST_ENTRY(mme_app_handover_proc_s) entries;      /* List. */
-//} mme_app_s10_proc_mme_handover_t;
-//
-///* S11 */
-//typedef enum {
-//  MME_APP_S11_PROC_TYPE_NONE = 0,
-//  MME_APP_S11_PROC_TYPE_CREATE_BEARER,
-//  MME_APP_S11_PROC_TYPE_UPDATE_BEARER,
-//  MME_APP_S11_PROC_TYPE_DELETE_BEARER
-//} mme_app_s11_proc_type_t;
-
-
-// TODO: MIGHT REVIEW
-//
-//typedef struct esm_procedures_s {
-//  /** UE/PTI triggered ESM procedure. */
-//  LIST_HEAD(nas_esm_transaction_procedures_head_s, nas_esm_transaction_procedures_s)  esm_transaction_procs;
-////  /** CN Triggered ESM procedure. */
-////  LIST_HEAD(nas_esm_bearer_context_procedures_head_s, nas_esm_bearer_context_procedure_s)  esm_bearer_context_procs;
-//} esm_procedures_t;
 
 typedef struct nas_esm_proc_s {
   mme_ue_s1ap_id_t             ue_id;
@@ -201,6 +105,8 @@ typedef struct nas_esm_proc_bearer_context_s {
   ebi_t                        linked_ebi;
   teid_t                       s1u_saegw_teid;
   ambr_t                       apn_ambr;
+  traffic_flow_template_t     *tft;
+  bearer_qos_t                 bearer_level_qos;
 //  protocol_configuration_options_t  pco;
   LIST_ENTRY(nas_esm_proc_bearer_context_s) entries;      /* List. */
 } nas_esm_proc_bearer_context_t;

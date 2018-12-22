@@ -121,4 +121,6 @@ int esm_msg_decode(ESM_msg *msg, uint8_t *buffer, uint32_t len);
 
 int esm_msg_encode(ESM_msg *msg, uint8_t *buffer, uint32_t len);
 
+void esm_msg_free ( ESM_msg * msg);
+
 #endif /* __ESM_MSG_H__ */

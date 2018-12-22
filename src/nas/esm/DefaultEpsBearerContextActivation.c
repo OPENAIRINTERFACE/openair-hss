@@ -89,8 +89,8 @@
    retransmission counter */
 #define DEFAULT_EPS_BEARER_ACTIVATE_COUNTER_MAX   3
 
-static int
-_default_eps_bearer_activate_t3485_handler(nas_esm_proc_pdn_connectivity_t * esm_proc_pdn_connectivity, ESM_msg *esm_resp_msg);
+static void
+_default_eps_bearer_activate_t3485_handler(nas_esm_proc_t * esm_base_proc, ESM_msg *esm_resp_msg);
 
 /****************************************************************************/
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
@@ -221,9 +221,6 @@ esm_proc_default_eps_bearer_context (
   mme_ue_s1ap_id_t   ue_id,
   nas_esm_proc_pdn_connectivity_t * const esm_proc_pdn_connectivity)
 {
-
-  int                rc = RETURNok;
-
   OAILOG_FUNC_IN (LOG_NAS_ESM);
 
   OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Default EPS bearer context activation (ue_id=" MME_UE_S1AP_ID_FMT ", context_identifier=%d)\n",
@@ -310,14 +307,13 @@ esm_proc_default_eps_bearer_context_accept (mme_ue_s1ap_id_t ue_id,
  **                                                                        **
  ***************************************************************************/
 
-static int
-_default_eps_bearer_activate_t3485_handler(nas_esm_proc_pdn_connectivity_t * esm_proc_pdn_connectivity, ESM_msg *esm_resp_msg) {
-  int                         rc = RETURNok;
-
+static void
+_default_eps_bearer_activate_t3485_handler(nas_esm_proc_t * esm_base_proc, ESM_msg *esm_resp_msg) {
   OAILOG_FUNC_IN(LOG_NAS_ESM);
 
-  esm_proc_pdn_connectivity->esm_base_proc.retx_count += 1;
-  if (esm_proc_pdn_connectivity->esm_base_proc.retx_count < DEFAULT_EPS_BEARER_ACTIVATE_COUNTER_MAX) {
+  nas_esm_proc_pdn_connectivity_t * esm_proc_pdn_connectivity = (nas_esm_proc_pdn_connectivity_t*)esm_base_proc;
+  esm_base_proc->retx_count += 1;
+  if (esm_base_proc->retx_count < DEFAULT_EPS_BEARER_ACTIVATE_COUNTER_MAX) {
     OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Retransmitting Default EPS bearer context activation request to UE (ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d)\n",
         esm_proc_pdn_connectivity->esm_base_proc.ue_id, esm_proc_pdn_connectivity->default_ebi);
     /*
@@ -325,7 +321,7 @@ _default_eps_bearer_activate_t3485_handler(nas_esm_proc_pdn_connectivity_t * esm
      * Keep the ESM transaction.
      */
     pdn_context_t * pdn_context = NULL;
-    mme_app_get_pdn_context(esm_proc_pdn_connectivity->esm_base_proc.ue_id, esm_proc_pdn_connectivity->pdn_cid,
+    mme_app_get_pdn_context(esm_base_proc->ue_id, esm_proc_pdn_connectivity->pdn_cid,
         esm_proc_pdn_connectivity->default_ebi, esm_proc_pdn_connectivity->subscribed_apn, &pdn_context);
     if(pdn_context){
       bearer_context_t * bearer_context = NULL;
@@ -338,12 +334,16 @@ _default_eps_bearer_activate_t3485_handler(nas_esm_proc_pdn_connectivity_t * esm
             esm_resp_msg);
         OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Successfully retransmitted Default EPS bearer context activation request to UE (ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d)\n",
             esm_proc_pdn_connectivity->esm_base_proc.ue_id, esm_proc_pdn_connectivity->default_ebi);
-        OAILOG_FUNC_RETURN(LOG_NAS_ESM, RETURNok);
+        /* Restart the T3485 timer. */
+        nas_stop_esm_timer(esm_proc_pdn_connectivity->esm_base_proc.ue_id, &esm_base_proc->esm_proc_timer);
+        esm_base_proc->esm_proc_timer.id = nas_esm_timer_start(mme_config.nas_config.t3485_sec, 0 /*usec*/, (void*)esm_base_proc);
+        esm_base_proc->timeout_notif = _default_eps_bearer_activate_t3485_handler;
+        OAILOG_FUNC_OUT(LOG_NAS_ESM);
       }
     }
   }
   OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Max timeout occurred or could not retransmit Default EPS bearer context activation request to UE. Rejecting PDN context activation. "
-      "(ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d)\n", esm_proc_pdn_connectivity->esm_base_proc.ue_id, esm_proc_pdn_connectivity->default_ebi);
+      "(ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d)\n", esm_base_proc->ue_id, esm_proc_pdn_connectivity->default_ebi);
   /*
    * No PDN context is expected.
    * Prepare the reject message.
@@ -353,5 +353,5 @@ _default_eps_bearer_activate_t3485_handler(nas_esm_proc_pdn_connectivity_t * esm
    * Release the transactional PDN connectivity procedure.
    */
   _esm_proc_free_pdn_connectivity_procedure(&esm_proc_pdn_connectivity);
-  OAILOG_FUNC_RETURN(LOG_NAS_ESM, RETURNok);
+  OAILOG_FUNC_OUT(LOG_NAS_ESM);
 }

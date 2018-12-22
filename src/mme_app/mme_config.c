@@ -907,7 +907,6 @@ static int mme_config_parse_file (mme_config_t * config_pP)
       if ((config_setting_lookup_int (setting, MME_CONFIG_STRING_NAS_T3495_TIMER, &aint))) {
         config_pP->nas_config.t3495_sec = (uint32_t) aint;
       }
-
 //      if ((config_setting_lookup_string (setting, MME_CONFIG_STRING_NAS_FORCE_REJECT_TAU, (const char **)&astring))) {
 //        if (strcasecmp (astring, "yes") == 0)
 //          config_pP->nas_config.force_reject_tau = true;

@@ -197,34 +197,50 @@ int
 mme_app_esm_create_pdn_context(mme_ue_s1ap_id_t ue_id, const apn_configuration_t *apn_configuration, const bstring apn, pdn_cid_t pdn_cid, pdn_context_t **pdn_context_pp)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
+  DevAssert(apn);
   ue_context_t * ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, ue_id);
   if(!ue_context){
     OAILOG_ERROR (LOG_MME_APP, "No MME_APP UE context could be found for UE: " MME_UE_S1AP_ID_FMT ". \n", ue_id);
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
-//  LOCK_UE_CONTEXT(ue_context);
-  (*pdn_context_pp) = calloc(1, sizeof(pdn_context_t));
-  if (!(*pdn_context_pp)) {
-    OAILOG_CRITICAL(LOG_MME_APP, "Error creating PDN context for UE: " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
-   // todo: optimal locks UNLOCK_UE_CONTEXT(ue_context);
+  mme_app_get_pdn_context(ue_id, pdn_cid, EPS_BEARER_IDENTITY_UNASSIGNED, apn, pdn_context_pp);
+  if((*pdn_context_pp)){
+    /** No PDN context was found. */
+    OAILOG_ERROR (LOG_MME_APP, "A PDN context for APN \"%s\" and cid=%d already exists UE: " MME_UE_S1AP_ID_FMT ". \n", ue_id, bdata(apn), pdn_cid);
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
+  bearer_context_t * free_bearer = RB_MIN(BearerPool, &ue_context->bearer_pool);
+  if(!free_bearer){
+    OAILOG_ERROR(LOG_MME_APP, "No available bearer context could be found for UE: " MME_UE_S1AP_ID_FMT ". \n", ue_id);
+    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+  }
+  (*pdn_context_pp) = calloc(1, sizeof(pdn_context_t));
+  if (!(*pdn_context_pp)) {
+    OAILOG_CRITICAL(LOG_MME_APP, "Error creating PDN context for UE: " MME_UE_S1AP_ID_FMT ". \n", ue_id);
+    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+  }
+  //  LOCK_UE_CONTEXT(ue_context);
   /*
    * Check if an APN configuration exists. If so, use it to update the fields.
    */
   mme_app_pdn_context_init(ue_context, (*pdn_context_pp));
   /** Get the default bearer context directly. */
-  bearer_context_t * free_bearer = RB_MIN(BearerPool, &ue_context->bearer_pool);
-  DevAssert(free_bearer); // todo: else, the pdn context needs to be removed..
-  bearer_context_t * bearer_context_registered = NULL;
-//  todo: directly register the default bearer context here ! mme_app_register_bearer_context(ue_context, free_bearer->ebi, (*pdn_context_pp), &bearer_context_registered);
-  (*pdn_context_pp)->default_ebi = bearer_context_registered->ebi;
+  free_bearer = RB_REMOVE(BearerPool, &ue_context->bearer_pool, free_bearer);
+  DevAssert(free_bearer);
+  AssertFatal((EPS_BEARER_IDENTITY_LAST >= free_bearer->ebi) && (EPS_BEARER_IDENTITY_FIRST <= free_bearer->ebi), "Bad ebi %u", free_bearer->ebi);
+  /* Check that there is no collision when adding the bearer context into the PDN sessions bearer pool. */
+  /* Insert the bearer context. */
+  RB_INSERT (SessionBearers, &(*pdn_context_pp)->session_bearers, free_bearer);
+
+  (*pdn_context_pp)->default_ebi = free_bearer->ebi;
   ue_context->next_def_ebi_offset++;
-  bearer_context_registered->linked_ebi = bearer_context_registered->ebi;
+  free_bearer->linked_ebi = free_bearer->ebi;
+  /** Set the APN independently. */
+  (*pdn_context_pp)->apn_subscribed = bstrcpy(apn);
   if (apn_configuration) {
     (*pdn_context_pp)->subscribed_apn_ambr          = apn_configuration->ambr; /**< APN received from the HSS APN configuration, to be updated with the PCRF. */
-    (*pdn_context_pp)->context_identifier           = apn_configuration->context_identifier;
     (*pdn_context_pp)->pdn_type                     = apn_configuration->pdn_type;
+    (*pdn_context_pp)->context_identifier           = apn_configuration->context_identifier;
     /** Set the subscribed APN-AMBR from the default profile. */
     (*pdn_context_pp)->subscribed_apn_ambr.br_dl    = apn_configuration->ambr.br_dl;
     (*pdn_context_pp)->subscribed_apn_ambr.br_ul    = apn_configuration->ambr.br_ul;
@@ -240,18 +256,17 @@ mme_app_esm_create_pdn_context(mme_ue_s1ap_id_t ue_id, const apn_configuration_t
     }
 #endif
     /** Set the default QoS values. */
-    bearer_context_registered->bearer_level_qos.qci = apn_configuration->subscribed_qos.qci;
-    bearer_context_registered->bearer_level_qos.pl  = apn_configuration->subscribed_qos.allocation_retention_priority.priority_level;
-    bearer_context_registered->bearer_level_qos.pvi = (apn_configuration->subscribed_qos.allocation_retention_priority.pre_emp_vulnerability) ? 0 : 1;
-    bearer_context_registered->bearer_level_qos.pci = (apn_configuration->subscribed_qos.allocation_retention_priority.pre_emp_capability) ? 0 : 1;
-
-    (*pdn_context_pp)->apn_subscribed = blk2bstr(apn_configuration->service_selection, apn_configuration->service_selection_length);  /**< Set the APN-NI from the service selection. */
+    free_bearer->bearer_level_qos.qci = apn_configuration->subscribed_qos.qci;
+    free_bearer->bearer_level_qos.pl  = apn_configuration->subscribed_qos.allocation_retention_priority.priority_level;
+    free_bearer->bearer_level_qos.pvi = (apn_configuration->subscribed_qos.allocation_retention_priority.pre_emp_vulnerability) ? 0 : 1;
+    free_bearer->bearer_level_qos.pci = (apn_configuration->subscribed_qos.allocation_retention_priority.pre_emp_capability) ? 0 : 1;
+//    (*pdn_context_pp)->apn_subscribed = blk2bstr(apn_configuration->service_selection, apn_configuration->service_selection_length);  /**< Set the APN-NI from the service selection. */
   } else {
-    (*pdn_context_pp)->apn_subscribed = apn;
     (*pdn_context_pp)->context_identifier = pdn_cid + (free_bearer->ebi - 5); /**< Add the temporary context ID from the ebi offset. */
-    OAILOG_WARNING(LOG_MME_APP, "No APN configuration exists for UE " MME_UE_S1AP_ID_FMT ". Subscribed APN \"%s.\" \n",
-        ue_context->mme_ue_s1ap_id, bdata((*pdn_context_pp)->apn_subscribed));
+    free_bearer->pdn_cx_id = (*pdn_context_pp)->context_identifier;
+    OAILOG_INFO(LOG_MME_APP, "No APN configuration exists for UE " MME_UE_S1AP_ID_FMT ". Subscribed APN \"%s.\" \n", ue_id, bdata((*pdn_context_pp)->apn_subscribed));
     /** The subscribed APN should already exist from handover (forward relocation request). */
+    free_bearer->esm_ebr_context.status = ESM_EBR_ACTIVE;
   }
   // todo: PCOs
   //     * Set the emergency bearer services indicator
@@ -265,11 +280,10 @@ mme_app_esm_create_pdn_context(mme_ue_s1ap_id_t ue_id, const apn_configuration_t
   //        }
   //        copy_protocol_configuration_options((*pdn_context_pP)->pco, pco);
   //      }
-
   /** Insert the PDN context into the map of PDN contexts. */
   DevAssert(!RB_INSERT (PdnContexts, &ue_context->pdn_contexts, (*pdn_context_pp)));
   // UNLOCK_UE_CONTEXT
-  MSC_LOG_EVENT (MSC_NAS_ESM_MME, "0 Create PDN cid %u APN %s", (*pdn_context_pp)->context_identifier, bdata((*pdn_context_pp)->apn_in_use));
+  MSC_LOG_EVENT (MSC_NAS_ESM_MME, "0 Create PDN cid %u APN %s", (*pdn_context_pp)->context_identifier, bdata((*pdn_context_pp)->apn_subscribed));
   OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
 }
 

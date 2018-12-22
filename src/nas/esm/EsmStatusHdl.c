@@ -103,22 +103,25 @@ int
 esm_send_status (
   pti_t pti,
   ebi_t ebi,
-  esm_status_msg * msg,
+  ESM_msg * msg,
   int esm_cause)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
+
+  memset((void*)msg, 0, sizeof(ESM_msg));
+
   /*
    * Mandatory - ESM message header
    */
-  msg->protocoldiscriminator = EPS_SESSION_MANAGEMENT_MESSAGE;
-  msg->epsbeareridentity = ebi;
-  msg->messagetype = ESM_STATUS;
-  msg->proceduretransactionidentity = pti;
+  msg->esm_status.protocoldiscriminator = EPS_SESSION_MANAGEMENT_MESSAGE;
+  msg->esm_status.epsbeareridentity = ebi;
+  msg->esm_status.messagetype = ESM_STATUS;
+  msg->esm_status.proceduretransactionidentity = pti;
   /*
    * Mandatory - ESM cause code
    */
-  msg->esmcause = esm_cause;
-  OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Send ESM Status message (pti=%d, ebi=%d)\n", msg->proceduretransactionidentity, msg->epsbeareridentity);
+  msg->esm_status.esmcause = esm_cause;
+  OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Send ESM Status message (pti=%d, ebi=%d)\n", msg->esm_status.proceduretransactionidentity, msg->esm_status.epsbeareridentity);
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);
 }
 

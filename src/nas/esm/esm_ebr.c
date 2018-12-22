@@ -119,10 +119,11 @@ nas_esm_proc_bearer_context_t *_esm_proc_create_bearer_context_procedure(mme_ue_
     int timeout_sec, int timeout_usec, esm_timeout_cb_t timeout_notif)
 {
   nas_esm_proc_bearer_context_t  *esm_proc_bearer_context = mme_app_nas_esm_create_bearer_context_procedure(ue_id, pti, ebi, timeout_sec, timeout_usec, timeout_notif, (void*)ue_id);
-  AssertFatal(esm_proc_bearer_context, "TODO Handle this");
-  esm_proc_bearer_context->linked_ebi = linked_ebi;
-  esm_proc_bearer_context->pdn_cid = pdn_cid;
-  esm_proc_bearer_context->bearer_ebi = ebi;
+  if(esm_proc_bearer_context){
+    esm_proc_bearer_context->linked_ebi = linked_ebi;
+    esm_proc_bearer_context->pdn_cid = pdn_cid; /**< Might be unassigned. */
+    esm_proc_bearer_context->bearer_ebi = ebi;
+  }
   return esm_proc_bearer_context;
 }
 

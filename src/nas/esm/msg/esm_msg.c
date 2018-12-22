@@ -387,6 +387,133 @@ esm_msg_encode (
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, header_result + encode_result);
 }
 
+/****************************************************************************
+ **                                                                        **
+ ** Name:  esm_msg_free()                                          **
+ **                                                                        **
+ ** Description: Frees the contents of the EPS Session Management messages **
+ **                                                                        **
+ ** Inputs:  msg: message contents which are allocated (apn, pco) to       **
+ **               be freed                                                 **
+ **    Others:  None                                       **
+ **                                                                        **
+ ** Outputs:   None                                       **
+ **                                                                        **
+ ***************************************************************************/
+
+void
+esm_msg_free (
+  ESM_msg * msg)
+{
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
+  int                                     header_result = 0;
+  int                                     decode_result = 0;
+  /*
+   * First decode the ESM message header
+   */
+
+  switch (msg->header.message_type) {
+  case PDN_DISCONNECT_REQUEST:
+    clear_protocol_configuration_options(&msg->pdn_disconnect_request.protocolconfigurationoptions);
+    break;
+
+  case DEACTIVATE_EPS_BEARER_CONTEXT_ACCEPT:
+    clear_protocol_configuration_options(&msg->deactivate_eps_bearer_context_accept.protocolconfigurationoptions);
+    break;
+
+  case BEARER_RESOURCE_ALLOCATION_REQUEST:
+    clear_traffic_flow_template(&msg->bearer_resource_allocation_request.trafficflowaggregate);
+    clear_protocol_configuration_options(&msg->bearer_resource_allocation_request.protocolconfigurationoptions);
+    break;
+
+  case ACTIVATE_DEFAULT_EPS_BEARER_CONTEXT_ACCEPT:
+    clear_protocol_configuration_options(&msg->activate_default_eps_bearer_context_accept.protocolconfigurationoptions);
+    break;
+
+  case PDN_CONNECTIVITY_REJECT:
+    clear_protocol_configuration_options(&msg->pdn_connectivity_reject.protocolconfigurationoptions);
+    break;
+
+  case MODIFY_EPS_BEARER_CONTEXT_REJECT:
+    clear_protocol_configuration_options(&msg->modify_eps_bearer_context_reject.protocolconfigurationoptions);
+    break;
+
+  case ACTIVATE_DEDICATED_EPS_BEARER_CONTEXT_REJECT:
+    clear_protocol_configuration_options(&msg->activate_dedicated_eps_bearer_context_reject.protocolconfigurationoptions);
+    break;
+
+  case MODIFY_EPS_BEARER_CONTEXT_ACCEPT:
+    clear_protocol_configuration_options(&msg->modify_eps_bearer_context_accept.protocolconfigurationoptions);
+    break;
+
+  case DEACTIVATE_EPS_BEARER_CONTEXT_REQUEST:
+    clear_protocol_configuration_options(&msg->deactivate_eps_bearer_context_request.protocolconfigurationoptions);
+    break;
+
+  case ACTIVATE_DEDICATED_EPS_BEARER_CONTEXT_ACCEPT:
+    clear_protocol_configuration_options(&msg->activate_dedicated_eps_bearer_context_accept.protocolconfigurationoptions);
+    break;
+
+  case ACTIVATE_DEFAULT_EPS_BEARER_CONTEXT_REJECT:
+    clear_protocol_configuration_options(&msg->activate_default_eps_bearer_context_reject.protocolconfigurationoptions);
+    break;
+
+  case MODIFY_EPS_BEARER_CONTEXT_REQUEST:
+    clear_traffic_flow_template(&msg->modify_eps_bearer_context_request.tft);
+    clear_protocol_configuration_options(&msg->modify_eps_bearer_context_request.protocolconfigurationoptions);
+    break;
+
+  case PDN_DISCONNECT_REJECT:
+    clear_protocol_configuration_options(&msg->pdn_disconnect_reject.protocolconfigurationoptions);
+    break;
+
+  case ACTIVATE_DEDICATED_EPS_BEARER_CONTEXT_REQUEST:
+    clear_traffic_flow_template(&msg->activate_dedicated_eps_bearer_context_request.tft);
+    clear_protocol_configuration_options(&msg->activate_dedicated_eps_bearer_context_request.protocolconfigurationoptions);
+    break;
+
+  case BEARER_RESOURCE_MODIFICATION_REJECT:
+    clear_protocol_configuration_options(&msg->bearer_resource_modification_reject.protocolconfigurationoptions);
+    break;
+
+  case BEARER_RESOURCE_ALLOCATION_REJECT:
+    clear_protocol_configuration_options(&msg->bearer_resource_allocation_reject.protocolconfigurationoptions);
+    break;
+
+  case ACTIVATE_DEFAULT_EPS_BEARER_CONTEXT_REQUEST:
+    bdestroy_wrapper(&msg->activate_default_eps_bearer_context_request.pdnaddress.pdnaddressinformation);
+    bdestroy_wrapper(&msg->activate_default_eps_bearer_context_request.accesspointname);
+    clear_protocol_configuration_options(&msg->activate_default_eps_bearer_context_request.protocolconfigurationoptions);
+    break;
+
+  case PDN_CONNECTIVITY_REQUEST:
+    bdestroy_wrapper(&msg->pdn_connectivity_request.accesspointname);
+    clear_protocol_configuration_options(&msg->pdn_connectivity_request.protocolconfigurationoptions);
+    break;
+
+  case ESM_INFORMATION_RESPONSE:
+    bdestroy_wrapper(&msg->esm_information_response.accesspointname);
+    clear_protocol_configuration_options(&msg->esm_information_response.protocolconfigurationoptions);
+    break;
+
+  case BEARER_RESOURCE_MODIFICATION_REQUEST:
+    clear_traffic_flow_template(&msg->bearer_resource_modification_request.trafficflowaggregate);
+    clear_protocol_configuration_options(&msg->bearer_resource_modification_request.protocolconfigurationoptions);
+    break;
+
+  case ESM_INFORMATION_REQUEST:
+    break;
+
+  case ESM_STATUS:
+    break;
+
+  default:
+    OAILOG_ERROR (LOG_NAS_ESM, "ESM-MSG   - Unexpected message type: 0x%x, Cannot clear contents. \n", msg->header.message_type);
+    break;
+  }
+
+  OAILOG_FUNC_OUT(LOG_NAS_ESM);
+}
 /****************************************************************************/
 /*********************  L O C A L    F U N C T I O N S  *********************/
 /****************************************************************************/

@@ -176,6 +176,7 @@ typedef union {
   esm_cn_pdn_connectivity_res_t  *pdn_connectivity_res;
   esm_cn_pdn_connectivity_fail_t *pdn_connectivity_fail;
   esm_cn_pdn_disconnect_res_t    *pdn_disconnect_res;
+  uintptr_t                       esm_proc_timeout;
 
   /** Non Pointer structures. */
   esm_activate_eps_bearer_context_t         eps_bearer_context_activate;

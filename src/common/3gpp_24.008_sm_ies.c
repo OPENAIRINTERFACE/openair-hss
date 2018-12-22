@@ -1148,6 +1148,18 @@ static void free_traffic_flow_template_parameter (parameter_t * param)
 }
 
 //------------------------------------------------------------------------------
+void clear_traffic_flow_template(traffic_flow_template_t * tft)
+{
+  if(tft){
+    // nothing to do for packet filters
+    for (int i = 0; i < tft->parameterslist.num_parameters; i++) {
+      free_traffic_flow_template_parameter (&tft->parameterslist.parameter[i]);
+    }
+    memset((void*)tft, 0, sizeof(traffic_flow_template_t));
+  }
+}
+
+//------------------------------------------------------------------------------
 void free_traffic_flow_template(traffic_flow_template_t ** tft)
 {
   traffic_flow_template_t * trafficflowtemplate = *tft;

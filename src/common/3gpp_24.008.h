@@ -1020,6 +1020,7 @@ int encode_traffic_flow_template_ie (const traffic_flow_template_t * const traff
 int decode_traffic_flow_template(traffic_flow_template_t *trafficflowtemplate, const uint8_t * const buffer, const uint32_t len);
 int decode_traffic_flow_template_ie(traffic_flow_template_t *trafficflowtemplate, const bool iei_present, const uint8_t * const buffer, const uint32_t len);
 void copy_traffic_flow_template (traffic_flow_template_t * const tft_dst, const traffic_flow_template_t * const tft_src);
+void clear_traffic_flow_template(traffic_flow_template_t * tft);
 void free_traffic_flow_template(traffic_flow_template_t ** tft);
 esm_cause_t verify_traffic_flow_template_syntactical(traffic_flow_template_t * tft, traffic_flow_template_t * tft_original);
 

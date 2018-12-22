@@ -91,13 +91,12 @@ esm_cause_t esm_recv_status(mme_ue_s1ap_id_t ue_id, proc_tid_t pti, ebi_t ebi,
  * ----------------------------
  */
 esm_cause_t esm_recv_pdn_connectivity_request(bool is_attach, mme_ue_s1ap_id_t ue_id, const imsi_t *imsi, proc_tid_t pti, ebi_t ebi, tai_t *visited_tai,
-                                    const pdn_connectivity_request_msg *msg, ESM_msg * esm_resp_msg);
+    const pdn_connectivity_request_msg *msg, const ESM_msg * esm_rsp_msg);
 
 esm_cause_t esm_recv_information_response (bool *is_attach,mme_ue_s1ap_id_t ue_id, proc_tid_t pti,  ebi_t ebi,
-                                    const esm_information_response_msg * msg);
+    const esm_information_response_msg * msg);
 
-esm_cause_t esm_recv_pdn_disconnect_request(mme_ue_s1ap_id_t ue_id, proc_tid_t pti,  ebi_t ebi,
-                                    const pdn_disconnect_request_msg* msg);
+esm_cause_t esm_recv_pdn_disconnect_request(mme_ue_s1ap_id_t ue_id, proc_tid_t pti,  ebi_t ebi, const pdn_disconnect_request_msg* msg, ESM_msg * const esm_rsp_msg);
 
 esm_cause_t esm_recv_activate_default_eps_bearer_context_accept(mme_ue_s1ap_id_t ue_id,
     proc_tid_t pti, ebi_t ebi, const activate_default_eps_bearer_context_accept_msg *msg);

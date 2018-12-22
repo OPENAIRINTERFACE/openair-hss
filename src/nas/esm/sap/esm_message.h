@@ -74,7 +74,7 @@ Description Defines functions executed at the ESM Service Access
  * Functions executed by the MME to send ESM message to the UE
  * --------------------------------------------------------------------------
  */
-int esm_send_status(pti_t pti, ebi_t ebi, esm_status_msg *msg, int esm_cause);
+int esm_send_status(pti_t pti, ebi_t ebi, ESM_msg *msg, int esm_cause);
 
 /*
  * Transaction related messages

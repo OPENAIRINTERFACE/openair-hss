@@ -437,7 +437,7 @@ typedef struct {
 //-----------------
 typedef struct bearer_context_to_be_created_s {
   uint8_t                  eps_bearer_id;       ///< EBI,  Mandatory CSR
-  traffic_flow_template_t  tft;                 ///< Bearer TFT, Optional CSR, This IE may be included on the S4/S11 and S5/S8 interfaces.
+  traffic_flow_template_t *tft;                 ///< Bearer TFT, Optional CSR, This IE may be included on the S4/S11 and S5/S8 interfaces.
   fteid_t                  s1u_enb_fteid;       ///< S1-U eNodeB F-TEID, Conditional CSR, This IE shall be included on the S11 interface for X2-based handover with SGW relocation.
   fteid_t                  s1u_sgw_fteid;       ///< S1-U SGW F-TEID, Conditional CSR, This IE shall be included on the S11 interface for X2-based handover with SGW relocation.
   fteid_t                  s4u_sgsn_fteid;      ///< S4-U SGSN F-TEID, Conditional CSR, This IE shall be included on the S4 interface if the S4-U interface is used.
@@ -479,7 +479,7 @@ bearer_context_to_be_created_t bearer_contexts[MSG_CREATE_SESSION_REQUEST_MAX_BE
 //-----------------
 typedef struct bearer_context_to_be_updated_s {
   uint8_t                  eps_bearer_id;       ///< EBI,  Mandatory CSR
-  traffic_flow_template_t  tft;                 ///< Bearer TFT, Optional CSR, This IE may be included on the S4/S11 and S5/S8 interfaces.
+  traffic_flow_template_t  *tft;                 ///< Bearer TFT, Optional CSR, This IE may be included on the S4/S11 and S5/S8 interfaces.
   /* This parameter is received only if the QoS parameters have been modified */
   bearer_qos_t                      *bearer_level_qos;    ///< Bearer QoS, Mandatory CSR
   protocol_configuration_options_t  pco;///< This IE may be sent on the S5/S8 and S4/S11 interfaces
