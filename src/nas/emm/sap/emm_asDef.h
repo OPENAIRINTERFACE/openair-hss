@@ -70,6 +70,16 @@ typedef enum emm_as_primitive_u {
   _EMMAS_DATA_IND,      /* AS->EMM: Data transfer indication      */
   _EMMAS_PAGE_IND,      /* AS->EMM: Paging data indication        */
   _EMMAS_STATUS_IND,    /* AS->EMM: Status indication         */
+
+  _EMMAS_ERAB_SETUP_REQ,
+  _EMMAS_ERAB_SETUP_CNF,
+  _EMMAS_ERAB_SETUP_REJ,
+  _EMMAS_ERAB_MODIFY_REQ,
+  _EMMAS_ERAB_MODIFY_CNF,
+  _EMMAS_ERAB_MODIFY_REJ,
+  _EMMAS_ERAB_RELEASE_REQ,
+  _EMMAS_ERAB_RELEASE_CNF,
+
   _EMMAS_END
 } emm_as_primitive_t;
 

@@ -155,7 +155,7 @@ esm_send_activate_default_eps_bearer_context_request (
    * Mandatory - Access Point Name
    * No need to copy, because directly encoded.
    */
-  esm_resp_msg->activate_default_eps_bearer_context_request.accesspointname = esm_proc_pdn_connectivity->subscribed_apn;
+  esm_resp_msg->activate_default_eps_bearer_context_request.accesspointname = bstrcpy(esm_proc_pdn_connectivity->subscribed_apn);
   /*
    * Mandatory - PDN address
    */
@@ -277,7 +277,21 @@ esm_proc_default_eps_bearer_context_accept (mme_ue_s1ap_id_t ue_id,
    */
   rc = mme_app_esm_update_pdn_context(ue_id, esm_proc_pdn_connectivity->subscribed_apn, esm_proc_pdn_connectivity->pdn_cid, esm_proc_pdn_connectivity->default_ebi, ESM_EBR_ACTIVE,
       NULL, NULL, NULL);
-  /** No need to inform the anything else. */
+  /** Trigger an MBReq. */
+  ue_context_t * ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, ue_id);
+  if(!ue_context){
+    OAILOG_ERROR (LOG_MME_APP, "No MME_APP UE context could be found for UE: " MME_UE_S1AP_ID_FMT ". \n", ue_id);
+    OAILOG_FUNC_OUT(LOG_MME_APP);
+  }
+  pdn_context_t * pdn_context = NULL;
+  mme_app_get_pdn_context(ue_id, esm_proc_pdn_connectivity->pdn_cid, esm_proc_pdn_connectivity->default_ebi,
+      esm_proc_pdn_connectivity->subscribed_apn, &pdn_context);
+  if(!pdn_context){
+    OAILOG_ERROR (LOG_MME_APP, "No PDN context for could be found for APN \"%s\" for UE: " MME_UE_S1AP_ID_FMT ". \n", bdata(esm_proc_pdn_connectivity->subscribed_apn), ue_id);
+    OAILOG_FUNC_OUT(LOG_MME_APP);
+  }
+  mme_app_send_s11_modify_bearer_req(ue_context, pdn_context, 0, NULL);
+
   OAILOG_FUNC_OUT(LOG_NAS_ESM);
 }
 

@@ -191,12 +191,8 @@ nas_esm_proc_pdn_connectivity_t *_esm_proc_get_pdn_connectivity_procedure(mme_ue
  **      context activation procedure.                             **
  **                                                                        **
  ** Inputs:  ue_id:      UE local identifier                        **
- **      pti:       Identifies the PDN connectivity procedure  **
- **             requested by the UE                        **
- **      request_type:  Type of the PDN request                    **
- **      pdn_type:  PDN type value (IPv4, IPv6, IPv4v6)        **
- **      apn:       Requested Access Point Name                **
- **      Others:    _esm_data                                  **
+ **      esm_pdn_connectivity_proc: ESM PDN connectivity procedure.
+ **      Others:    apn_configuration       **
  **                                                                        **
  **      Return:    The identifier of the PDN connection if    **
  **             successfully created;                      **
@@ -210,29 +206,28 @@ esm_proc_pdn_connectivity_request (
   mme_ue_s1ap_id_t             ue_id,
   imsi_t                      *imsi,
   tai_t                       *visited_tai,
-  const proc_tid_t             pti,
-  const apn_configuration_t   *apn_configuration,
-  const_bstring                const apn_subscribed,
-  const esm_proc_pdn_request_t request_type,
-  esm_proc_pdn_type_t          pdn_type)
+  nas_esm_proc_pdn_connectivity_t * const esm_proc_pdn_connectivity,
+  const apn_configuration_t   *apn_configuration)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
 
   OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - PDN connectivity requested by the UE "
-             "(ue_id=" MME_UE_S1AP_ID_FMT ", pti=%d) PDN type = %s, APN = %s \n", ue_id, pti,
-             (pdn_type == ESM_PDN_TYPE_IPV4) ? "IPv4" : (pdn_type == ESM_PDN_TYPE_IPV6) ? "IPv6" : "IPv4v6",
-             (char *)bdata(apn_subscribed));
+             "(ue_id=" MME_UE_S1AP_ID_FMT ", pti=%d) PDN type = %s, APN = %s \n", ue_id, esm_proc_pdn_connectivity->esm_base_proc.pti,
+             (esm_proc_pdn_connectivity->pdn_type == ESM_PDN_TYPE_IPV4) ? "IPv4" : (esm_proc_pdn_connectivity->pdn_type == ESM_PDN_TYPE_IPV6) ? "IPv6" : "IPv4v6",
+             (char *)bdata(esm_proc_pdn_connectivity->subscribed_apn));
   /*
    * Create new PDN context in the MME_APP UE context.
    * This will also allocate a bearer context (NULL bearer set).
    */
   pdn_context_t * pdn_context = NULL;
-  int rc = mme_app_esm_create_pdn_context(ue_id, apn_configuration, apn_subscribed, apn_configuration->context_identifier, &pdn_context);
+  int rc = mme_app_esm_create_pdn_context(ue_id, apn_configuration, esm_proc_pdn_connectivity->subscribed_apn, apn_configuration->context_identifier, &pdn_context);
   if (rc != RETURNok) {
-    OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - Failed to create PDN connection for UE " MME_UE_S1AP_ID_FMT ", apn = \"%s\" (pti=%d).\n", ue_id, (char *)bdata(apn_subscribed), pti);
+    OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - Failed to create PDN connection for UE " MME_UE_S1AP_ID_FMT ", apn = \"%s\" (pti=%d).\n", ue_id, (char *)bdata(esm_proc_pdn_connectivity->subscribed_apn),
+        esm_proc_pdn_connectivity->esm_base_proc.pti);
     /** No empty/garbage contexts. */
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_REQUEST_REJECTED_BY_GW);
   }
+  esm_proc_pdn_connectivity->default_ebi = pdn_context->default_ebi;
   /*
    * Inform the MME_APP procedure to establish a session in the SAE-GW.
    */
@@ -471,8 +466,7 @@ esm_proc_pdn_config_res(mme_ue_s1ap_id_t ue_id, bool * is_attach, pti_t * pti, i
    */
   //      (esm_context->esm_proc_data->pco.num_protocol_or_container_id ) ? &esm_context->esm_proc_data->pco:NULL,
   if(esm_proc_pdn_connectivity_request (ue_id, &esm_proc_pdn_connectivity->imsi, &esm_proc_pdn_connectivity->visited_tai,
-      esm_proc_pdn_connectivity->esm_base_proc.pti, apn_config, esm_proc_pdn_connectivity->subscribed_apn,
-      esm_proc_pdn_connectivity->request_type, esm_proc_pdn_connectivity->pdn_type) != ESM_CAUSE_SUCCESS){
+      esm_proc_pdn_connectivity, apn_config) != ESM_CAUSE_SUCCESS){
     /** Remove the procedure. */
     _esm_proc_free_pdn_connectivity_procedure(&esm_proc_pdn_connectivity);
     /** No PDN Context is expected. */

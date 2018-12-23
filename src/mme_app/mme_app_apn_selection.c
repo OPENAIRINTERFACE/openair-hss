@@ -57,7 +57,7 @@ mme_app_select_apn(imsi64_t imsi, const_bstring const ue_selected_apn, apn_confi
   /** Get the APN config profile from the IMSI. */
   apn_config_profile_t   apn_config_profile;                  // set by S6A UPDATE LOCATION ANSWER
   /** Subscription profile. */
-  subscription_data_t   *subscription_data = subscription_data_exists_imsi(&mme_app_desc.mme_ue_contexts, imsi);
+  subscription_data_t   *subscription_data = mme_ue_subscription_data_exists_imsi(&mme_app_desc.mme_ue_contexts, imsi);
 
   if(subscription_data == NULL){
     *apn_configuration = NULL;

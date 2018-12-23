@@ -109,7 +109,7 @@ long int nas_emm_timer_start (
     nas_timer_callback_t nas_timer_callback,
     void *nas_timer_callback_args)
 {
-  return nas_timer_start(sec, usec, true, nas_timer_callback, nas_timer_callback);
+  return nas_timer_start(sec, usec, true, nas_timer_callback, nas_timer_callback_args);
 }
 
 //------------------------------------------------------------------------------

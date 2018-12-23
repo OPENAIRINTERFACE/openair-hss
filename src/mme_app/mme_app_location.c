@@ -86,6 +86,8 @@ int mme_app_handle_s6a_update_location_ans (
   mme_remove_subscription_profile(&mme_app_desc.mme_ue_contexts, imsi64);
   mme_insert_subscription_profile(&mme_app_desc.mme_ue_contexts, imsi64, subscription_data);
   ula_pP->subscription_data = NULL;
+  subscription_data_t   *subscription_data_test = mme_ue_subscription_data_exists_imsi(&mme_app_desc.mme_ue_contexts, imsi64);
+
   OAILOG_INFO(LOG_MME_APP, "Updated the subscription profile for IMSI " IMSI_64_FMT " in the cache. \n", imsi64);
 
   /** Send the S6a message. */
@@ -111,19 +113,19 @@ int mme_app_handle_s6a_update_location_ans (
     goto err;
   }
 
-  ue_context->subscriber_status = ula_pP->subscription_data->subscriber_status;
-  ue_context->access_restriction_data = ula_pP->subscription_data->access_restriction;
+  ue_context->subscriber_status = subscription_data->subscriber_status;
+  ue_context->access_restriction_data = subscription_data->access_restriction;
   /*
    * Copy the subscribed ambr to the sgw create session request message
    */
-  memcpy (&ue_context->subscribed_ue_ambr, &ula_pP->subscription_data->subscribed_ambr, sizeof (ambr_t));
+  memcpy (&ue_context->subscribed_ue_ambr, &subscription_data->subscribed_ambr, sizeof (ambr_t));
 
-  ue_context->msisdn = blk2bstr(ula_pP->subscription_data->msisdn, ula_pP->subscription_data->msisdn_length);
+  ue_context->msisdn = blk2bstr(subscription_data->msisdn, subscription_data->msisdn_length);
   //  AssertFatal (ula_pP->subscription_data.msisdn_length != 0, "MSISDN LENGTH IS 0"); todo: msisdn
-  AssertFatal (ula_pP->subscription_data->msisdn_length <= MSISDN_LENGTH, "MSISDN LENGTH is too high %u", MSISDN_LENGTH);
+  AssertFatal (subscription_data->msisdn_length <= MSISDN_LENGTH, "MSISDN LENGTH is too high %u", MSISDN_LENGTH);
 
-  ue_context->rau_tau_timer = ula_pP->subscription_data->rau_tau_timer;
-  ue_context->network_access_mode = ula_pP->subscription_data->access_mode;
+  ue_context->rau_tau_timer = subscription_data->rau_tau_timer;
+  ue_context->network_access_mode = subscription_data->access_mode;
 
   /*
    * Set the value of  Mobile Reachability timer based on value of T3412 (Periodic TAU timer) sent in Attach accept /TAU accept.

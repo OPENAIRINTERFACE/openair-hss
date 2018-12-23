@@ -62,8 +62,13 @@ static void mme_app_esm_update_bearer_context(bearer_context_t * bearer_context,
 //------------------------------------------------------------------------------
 void mme_app_get_pdn_context (mme_ue_s1ap_id_t ue_id, pdn_cid_t const context_id, ebi_t const default_ebi, bstring const subscribed_apn, pdn_context_t **pdn_ctx)
 {
-  ue_context_t * ue_context = NULL;
-  /** Checking for valid fields inside the search comparison function. */
+  ue_context_t *ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, ue_id);
+  if(!ue_context){
+    OAILOG_ERROR (LOG_MME_APP, "No MME_APP UE context could be found for UE: " MME_UE_S1AP_ID_FMT ". \n", ue_id);
+    OAILOG_FUNC_OUT(LOG_MME_APP);
+  }
+
+  /** Checking for valid fields inside the search comparison function. No locks are taken. */
   pdn_context_t pdn_context_key = {.apn_subscribed = subscribed_apn, .default_ebi = default_ebi, .context_identifier = context_id};
   pdn_context_t * pdn_ctx_p = RB_FIND(PdnContexts, &ue_context->pdn_contexts, &pdn_context_key);
   *pdn_ctx = pdn_ctx_p;
@@ -72,11 +77,17 @@ void mme_app_get_pdn_context (mme_ue_s1ap_id_t ue_id, pdn_cid_t const context_id
     RB_FOREACH (pdn_ctx_p, PdnContexts, &ue_context->pdn_contexts) {
       DevAssert(pdn_ctx_p);
       if(subscribed_apn){
-        if(!bstricmp (pdn_ctx_p->apn_subscribed, subscribed_apn))
+        if(!bstricmp (pdn_ctx_p->apn_subscribed, subscribed_apn)){
             *pdn_ctx = pdn_ctx_p;
+            OAILOG_FUNC_OUT(LOG_MME_APP);
+        }
       }
     }
   }
+  OAILOG_ERROR (LOG_MME_APP, "No PDN context for (ebi=%d,cid=%d,apn=\"%s\") was found for UE: " MME_UE_S1AP_ID_FMT ". \n", default_ebi, context_id,
+      (subscribed_apn) ? bdata(subscribed_apn) : "NULL",
+      ue_id);
+  OAILOG_FUNC_OUT(LOG_MME_APP);
 }
 
 /*
@@ -158,6 +169,16 @@ mme_app_esm_create_pdn_context(mme_ue_s1ap_id_t ue_id, const apn_configuration_t
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
   //  LOCK_UE_CONTEXT(ue_context);
+  if(!RB_MIN(PdnContexts, &ue_context->pdn_contexts)){
+    OAILOG_INFO(LOG_MME_APP, "For the first PDN context, creating S11 keys for UE: " MME_UE_S1AP_ID_FMT ". \n", ue_id);
+    mme_ue_context_update_coll_keys (&mme_app_desc.mme_ue_contexts, ue_context,
+        ue_context->enb_s1ap_id_key,
+        ue_context->mme_ue_s1ap_id,
+        ue_context->imsi,
+        (teid_t) ue_context,       // mme_s11_teid is new
+        ue_context->local_mme_teid_s10,
+        &ue_context->guti);
+  }
   /*
    * Check if an APN configuration exists. If so, use it to update the fields.
    */
@@ -220,6 +241,7 @@ mme_app_esm_create_pdn_context(mme_ue_s1ap_id_t ue_id, const apn_configuration_t
   //      }
   /** Insert the PDN context into the map of PDN contexts. */
   DevAssert(!RB_INSERT (PdnContexts, &ue_context->pdn_contexts, (*pdn_context_pp)));
+
   // UNLOCK_UE_CONTEXT
   MSC_LOG_EVENT (MSC_NAS_ESM_MME, "0 Create PDN cid %u APN %s", (*pdn_context_pp)->context_identifier, bdata((*pdn_context_pp)->apn_subscribed));
   OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
@@ -247,15 +269,17 @@ mme_app_esm_update_pdn_context(mme_ue_s1ap_id_t ue_id, const bstring apn, pdn_ci
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
   //  LOCK_UE_CONTEXT(ue_context);
-  if(apn_ambr->br_dl && apn_ambr->br_ul){
-    /** Update the authorized APN ambr of the pdn context. */
-    // todo: check if UE apn-ambr reached, if so, just add the remaining. (todo: inform sae/pcrf)
-    pdn_context->subscribed_apn_ambr.br_dl = apn_ambr->br_dl;
-    pdn_context->subscribed_apn_ambr.br_ul = apn_ambr->br_ul;
-  } else {
-    /** No APN AMBR values are set, setting the current values. */
-    apn_ambr->br_dl = pdn_context->subscribed_apn_ambr.br_dl;
-    apn_ambr->br_ul = pdn_context->subscribed_apn_ambr.br_ul;
+  if(apn_ambr){
+    if(apn_ambr->br_dl && apn_ambr->br_ul){
+      /** Update the authorized APN ambr of the pdn context. */
+      // todo: check if UE apn-ambr reached, if so, just add the remaining. (todo: inform sae/pcrf)
+      pdn_context->subscribed_apn_ambr.br_dl = apn_ambr->br_dl;
+      pdn_context->subscribed_apn_ambr.br_ul = apn_ambr->br_ul;
+    } else {
+      /** No APN AMBR values are set, setting the current values. */
+      apn_ambr->br_dl = pdn_context->subscribed_apn_ambr.br_dl;
+      apn_ambr->br_ul = pdn_context->subscribed_apn_ambr.br_ul;
+    }
   }
   /** Set the new PAA. */
   if (paa) {
@@ -302,7 +326,7 @@ mme_app_esm_delete_pdn_context(mme_ue_s1ap_id_t ue_id, bstring apn, pdn_cid_t pd
     OAILOG_WARNING(LOG_MME_APP, "No MME_APP UE context could be found for UE: " MME_UE_S1AP_ID_FMT " to release \"%s\". \n", ue_id, bdata(apn));
     OAILOG_FUNC_OUT(LOG_MME_APP);
   }
-  mme_app_get_pdn_context(ue_context, pdn_cid, linked_ebi, apn, &pdn_context);
+  mme_app_get_pdn_context(ue_id, pdn_cid, linked_ebi, apn, &pdn_context);
   if (!pdn_context) {
     OAILOG_WARNING(LOG_NAS_ESM, "ESM-PROC  - PDN connection for cid=%d and ebi=%d and APN \"%s\" has not been allocated for UE "MME_UE_S1AP_ID_FMT". \n", pdn_cid, linked_ebi, bdata(apn), ue_id);
     OAILOG_FUNC_OUT(LOG_MME_APP);
@@ -330,11 +354,10 @@ mme_app_esm_detach(mme_ue_s1ap_id_t ue_id){
   mme_app_nas_esm_free_pdn_connectivity_procedures(ue_context);
 
   OAILOG_INFO(LOG_MME_APP, "Removed all ESM procedures of UE: " MME_UE_S1AP_ID_FMT " for detach. \n", ue_id);
-  pdn_context_t * pPdnContext = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
-  while(pPdnContext){
-    DevAssert(RB_REMOVE(PdnContexts, &ue_context->pdn_contexts, pPdnContext));
-    mme_app_free_pdn_context(&pPdnContext);
-    pPdnContext = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
+  pdn_context = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
+  while(pdn_context){
+    mme_app_delete_pdn_context(ue_context, &pdn_context);
+    pdn_context = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
   }
   OAILOG_INFO(LOG_MME_APP, "Removed all ESM contexts of UE: " MME_UE_S1AP_ID_FMT " for detach. \n", ue_id);
 
@@ -361,7 +384,7 @@ static void mme_app_pdn_context_init(ue_context_t * const ue_context, pdn_contex
 static void mme_app_delete_pdn_context(ue_context_t * const ue_context, pdn_context_t ** pdn_context_pp){
   OAILOG_FUNC_IN (LOG_MME_APP);
 
-  if((*pdn_context_pp)){
+  if(!(*pdn_context_pp)){
     OAILOG_FUNC_OUT(LOG_MME_APP);
   }
 
@@ -424,11 +447,11 @@ static void mme_app_free_pdn_context (pdn_context_t ** const pdn_context)
   if ((*pdn_context)->apn_oi_replacement) {
     bdestroy_wrapper(&(*pdn_context)->apn_oi_replacement);
   }
-  if ((*pdn_context)->pco) {
-    // todo: re-introduce this after all memory leaks are fixed..
-    DevAssert(0);
-//    free_protocol_configuration_options(&(*pdn_context)->pco);
-  }
+//  if ((*pdn_context)->pco) {
+//    // todo: re-introduce this after all memory leaks are fixed..
+//    DevAssert(0);
+////    free_protocol_configuration_options(&(*pdn_context)->pco);
+//  }
   // todo: free PAA
   if((*pdn_context)->paa){
     free_wrapper((void**)&((*pdn_context)->paa));

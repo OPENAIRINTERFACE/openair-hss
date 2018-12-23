@@ -134,6 +134,7 @@ void _nas_proc_esm_timeout_handler (void *args)
      * No changes in the state of the EMM context.
      */
     lowerlayer_data_req(esm_sap.ue_id, rsp); // todo: esm_cause
+    bdestroy_wrapper(&rsp);
   }
   OAILOG_FUNC_OUT (LOG_NAS_ESM);
 }
@@ -162,7 +163,10 @@ nas_esm_proc_data_ind (
      * No changes in the state of the EMM context.
      */
     rc = lowerlayer_data_req(esm_data_ind->ue_id, rsp);
+    bdestroy_wrapper(&rsp);
   }
+  /* Destroy the received message immediately. */
+  bdestroy_wrapper(&esm_data_ind->req);
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
 }
 
@@ -180,7 +184,6 @@ nas_esm_proc_esm_detach(
 
   esm_sap.primitive = ESM_DETACH_IND;
   esm_sap.ue_id     = esm_detach->ue_id;
-  memcpy((void*)&esm_sap.data.detach_ind.imsi, &esm_detach->imsi, sizeof(imsi_t));
   MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_ESM_MME, NULL, 0, "0 ESM_DETACH_IND " MME_UE_S1AP_ID_FMT " ", esm_detach->ue_id);
   /** Handle each bearer context separately. */
   /** Get the bearer contexts to be updated. */
@@ -212,6 +215,7 @@ nas_esm_proc_pdn_config_res (
      * No changes in the state of the EMM context.
      */
     rc = lowerlayer_data_req(esm_sap.ue_id, rsp);
+    bdestroy_wrapper(&rsp);
   }
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
 }
@@ -238,6 +242,7 @@ nas_esm_proc_pdn_config_fail (
      * No changes in the state of the EMM context.
      */
     rc = lowerlayer_data_req(esm_sap.ue_id, rsp);
+    bdestroy_wrapper(&rsp);
   }
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
 }
@@ -265,7 +270,8 @@ nas_esm_proc_pdn_connectivity_res (
      * No changes in the state of the EMM context.
      */
     rc = lowerlayer_data_req(esm_sap.ue_id, rsp);
-  }
+    bdestroy_wrapper(&rsp);
+ }
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
 }
 
@@ -292,6 +298,7 @@ nas_esm_proc_pdn_connectivity_fail (
      * No changes in the state of the EMM context.
      */
     rc = lowerlayer_data_req(esm_sap.ue_id, rsp);
+    bdestroy_wrapper(&rsp);
   }
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
 }
@@ -319,6 +326,7 @@ nas_esm_proc_pdn_disconnect_res(
      * No changes in the state of the EMM context.
      */
     rc = lowerlayer_data_req(esm_sap.ue_id, rsp);
+    bdestroy_wrapper(&rsp);
   }
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
 }
@@ -355,8 +363,8 @@ int nas_esm_proc_activate_eps_bearer_ctx(esm_eps_activate_eps_bearer_ctx_req_t *
           esm_sap.data.eps_bearer_context_activate.bc_tbc->bearer_level_qos.gbr.br_dl,
           esm_sap.data.eps_bearer_context_activate.bc_tbc->bearer_level_qos.gbr.br_ul,
           rsp);
+      bdestroy_wrapper(&rsp);
     }
-    rsp = NULL;
     esm_sap.data.eps_bearer_context_activate.bc_tbc = NULL;
   }
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
@@ -392,8 +400,8 @@ int nas_esm_proc_modify_eps_bearer_ctx(esm_eps_modify_esm_bearer_ctxs_req_t * es
           esm_sap.data.eps_bearer_context_modify.bc_tbu->bearer_level_qos->gbr.br_dl,
           esm_sap.data.eps_bearer_context_modify.bc_tbu->bearer_level_qos->gbr.br_ul,
           rsp);
+      bdestroy_wrapper(&rsp);
     }
-    rsp = NULL;
     /* Remove the APN-AMBR after the first iteration. */
     memset(&esm_sap.data.eps_bearer_context_modify.apn_ambr, 0, sizeof(ambr_t));
     esm_sap.data.eps_bearer_context_modify.bc_tbu = NULL;
@@ -421,8 +429,8 @@ int nas_esm_proc_deactivate_eps_bearer_ctx(esm_eps_deactivate_eps_bearer_ctx_req
     esm_sap_signal(&esm_sap, &rsp);
     if(rsp){
       rc = lowerlayer_deactivate_bearer_req(esm_cn_deactivate->ue_id, esm_sap.data.eps_bearer_context_deactivate.ded_ebi,rsp);
-     }
-    rsp = NULL;
+      bdestroy_wrapper(&rsp);
+    }
   }
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
 }

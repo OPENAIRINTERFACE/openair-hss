@@ -182,7 +182,6 @@ typedef struct itti_nas_esm_data_ind_s {
 
 typedef struct itti_nas_esm_detach_ind_s {
   mme_ue_s1ap_id_t  ue_id;
-  imsi_t            imsi;
 } itti_nas_esm_detach_ind_t;
 
 typedef struct itti_nas_dl_data_req_s {

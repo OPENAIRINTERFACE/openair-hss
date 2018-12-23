@@ -57,16 +57,33 @@
 int
 nas_itti_esm_data_ind(
   const mme_ue_s1ap_id_t  ue_id,
-  bstring                *esm_msg_p,
+  bstring                 esm_msg_p,
   bool                    is_attach,
   imsi_t                 *imsi,
   tai_t                  *visited_tai)
 {
   MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_EMM, NAS_ESM_DATA_IND);
   NAS_ESM_DATA_IND (message_p).ue_id   = ue_id;
-  NAS_ESM_DATA_IND (message_p).req     = *esm_msg_p;
-  *esm_msg_p = NULL;
-  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_S1AP_MME, NULL, 0, "0 NAS_ESM_DATA_IND ue id " MME_UE_S1AP_ID_FMT " len %u", ue_id, blength(nas_msg));
+  NAS_ESM_DATA_IND (message_p).req     = esm_msg_p;
+  if(imsi)
+    memcpy(&NAS_ESM_DATA_IND (message_p).imsi, imsi, sizeof(imsi_t));
+  if(visited_tai)
+    memcpy(&NAS_ESM_DATA_IND (message_p).visited_tai, visited_tai, sizeof(tai_t));
+
+  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_S1AP_MME, NULL, 0, "0 NAS_ESM_DATA_IND ue id " MME_UE_S1AP_ID_FMT " len %u", ue_id, blength(esm_msg_p));
+  // make a long way by MME_APP instead of S1AP to retrieve the sctp_association_id key.
+  return itti_send_msg_to_task (TASK_NAS_ESM, INSTANCE_DEFAULT, message_p);
+}
+
+//------------------------------------------------------------------------------
+int
+nas_itti_esm_detach_ind(
+  const mme_ue_s1ap_id_t  ue_id)
+{
+  MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_EMM, NAS_ESM_DETACH_IND);
+  NAS_ESM_DETACH_IND (message_p).ue_id   = ue_id;
+
+  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_S1AP_MME, NULL, 0, "0 NAS_ESM_DETACH_IND ue id " MME_UE_S1AP_ID_FMT, ue_id);
   // make a long way by MME_APP instead of S1AP to retrieve the sctp_association_id key.
   return itti_send_msg_to_task (TASK_NAS_ESM, INSTANCE_DEFAULT, message_p);
 }

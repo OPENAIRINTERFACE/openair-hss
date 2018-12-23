@@ -19,13 +19,8 @@
     <MESSAGE_TEST enabled="0" foreground_color="#585858" background_color="#ffffff"/>
     <MME_APP_CONNECTION_ESTABLISHMENT_IND enabled="1" foreground_color="#90ff40" background_color="#805000"/>
     <MME_APP_INITIAL_CONTEXT_SETUP_RSP enabled="1" foreground_color="#90ff40" background_color="#805000"/>
-    <NAS_AUTHENTICATION_PARAM_FAIL enabled="1" foreground_color="#585858" background_color="#ffffff"/>
-    <NAS_AUTHENTICATION_PARAM_REQ enabled="1" foreground_color="#585858" background_color="#ffffff"/>
-    <NAS_AUTHENTICATION_PARAM_RSP enabled="1" foreground_color="#585858" background_color="#ffffff"/>
-    <NAS_BEARER_PARAM enabled="1" foreground_color="#585858" background_color="#ffffff"/>
     <NAS_CONNECTION_ESTABLISHMENT_CNF enabled="1" foreground_color="#585858" background_color="#ffffff"/>
     <NAS_CONNECTION_ESTABLISHMENT_IND enabled="1" foreground_color="#585858" background_color="#ffffff"/>
-    <NAS_CONNECTION_RELEASE_IND enabled="1" foreground_color="#585858" background_color="#ffffff"/>
     <NAS_CONN_ESTABLI_REQ enabled="1" foreground_color="#585858" background_color="#ffffff"/>
     <NAS_DL_EMM_PLAIN_MSG enabled="1" foreground_color="#90ff40" background_color="#805000"/>
     <NAS_DL_EMM_PROTECTED_MSG enabled="1" foreground_color="#90ff40" background_color="#805000"/>
@@ -33,12 +28,11 @@
     <NAS_DL_ESM_PLAIN_MSG enabled="1" foreground_color="#90ff40" background_color="#906010"/>
     <NAS_DL_ESM_PROTECTED_MSG enabled="1" foreground_color="#90ff40" background_color="#906010"/>
     <NAS_DL_ESM_RAW_MSG enabled="1" foreground_color="#90ff40" background_color="#906010"/>
-    <NAS_DOWNLINK_DATA_CNF enabled="1" foreground_color="#585858" background_color="#ffffff"/>
-    <NAS_DOWNLINK_DATA_REJ enabled="1" foreground_color="#585858" background_color="#ffffff"/>
+    <NAS_DL_DATA_CNF enabled="1" foreground_color="#585858" background_color="#ffffff"/>
+    <NAS_DL_DATA_REJ enabled="1" foreground_color="#585858" background_color="#ffffff"/>
     <NAS_DOWNLINK_DATA_REQ enabled="1" foreground_color="#585858" background_color="#ffffff"/>
     <NAS_NON_DELIVERY_IND enabled="1" foreground_color="#585858" background_color="#ffffff"/>
     <NAS_PAGING_IND enabled="1" foreground_color="#e0e0e0" background_color="#2d315c"/>
-    <NAS_PDN_CONNECTIVITY_REQ enabled="1" foreground_color="#e0e0e0" background_color="#2d315c"/>
     <NAS_RAB_ESTABLI_RSP enabled="1" foreground_color="#585858" background_color="#ffffff"/>
     <NAS_RAB_ESTABLISHMENT_REQ enabled="1" foreground_color="#585858" background_color="#ffffff"/>
     <NAS_RAB_ESTABLISHMENT_RESP enabled="1" foreground_color="#585858" background_color="#ffffff"/>

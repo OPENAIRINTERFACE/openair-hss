@@ -254,6 +254,10 @@ esm_proc_detach_request (
   }
   OAILOG_INFO(LOG_MME_APP, "Triggered session deletion for all session. Removing ESM context of UE: " MME_UE_S1AP_ID_FMT " . \n", ue_id);
   mme_app_esm_detach(ue_id);
+
+  // Notify MME APP to remove the remaining MME_APP and S1AP contexts.. The tunnel endpoints might or might not be deleted at this time.
+  nas_itti_detach_req(ue_id);
+
   OAILOG_FUNC_OUT(LOG_NAS_ESM);
 }
 /****************************************************************************/

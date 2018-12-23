@@ -91,11 +91,8 @@ esm_proc_pdn_connectivity_request (
   mme_ue_s1ap_id_t             ue_id,
   imsi_t                      *imsi,
   tai_t                       *visited_tai,
-  const proc_tid_t             pti,
-  const apn_configuration_t   *apn_configuration,
-  const_bstring                const apn_subscribed,
-  const esm_proc_pdn_request_t request_type,
-  esm_proc_pdn_type_t          pdn_type);
+  nas_esm_proc_pdn_connectivity_t * const esm_proc_pdn_connectivity,
+  const apn_configuration_t   *apn_configuration);
 
 esm_cause_t esm_proc_pdn_connectivity_retx(const mme_ue_s1ap_id_t ue_id, const nas_esm_proc_pdn_connectivity_t * esm_proc_pdn_connectivity, ESM_msg * esm_rsp_msg);
 
@@ -119,6 +116,10 @@ esm_proc_pdn_disconnect_request (
   proc_tid_t pti,
   pdn_cid_t  pdn_cid,
   ebi_t linked_ebi);
+
+void
+esm_proc_detach_request (
+  mme_ue_s1ap_id_t ue_id);
 
 /*
  * --------------------------------------------------------------------------

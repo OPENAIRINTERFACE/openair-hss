@@ -183,21 +183,22 @@ int mme_app_send_s11_release_access_bearers_req (struct ue_context_s *const ue_c
 //------------------------------------------------------------------------------
 void
 mme_app_send_s11_create_session_req (
-  struct ue_context_s *const ue_context, const imsi_t * const imsi_p, pdn_context_t * pdn_context, tai_t * serving_tai, const bool is_from_s10_tau)
+  const mme_ue_s1ap_id_t ue_id, const imsi_t * const imsi_p, pdn_context_t * pdn_context, tai_t * serving_tai, const bool is_from_s10_tau)
 {
+  OAILOG_FUNC_IN (LOG_MME_APP);
   uint8_t                                 i = 0;
-
   /*
    * Keep the identifier to the default APN
    */
   context_identifier_t                    context_identifier = 0;
   MessageDef                             *message_p = NULL;
+  ue_context_t                           *ue_context = NULL;
   itti_s11_create_session_request_t      *session_request_p = NULL;
   int                                     rc = RETURNok;
 
   // todo: handover flag in operation-identifier?!
 
-  OAILOG_FUNC_IN (LOG_MME_APP);
+  ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, ue_id);
   DevAssert (ue_context);
   DevAssert (pdn_context);
   OAILOG_DEBUG (LOG_MME_APP, "Sending CSR for imsi " IMSI_64_FMT "\n", ue_context->imsi);
@@ -275,7 +276,7 @@ mme_app_send_s11_create_session_req (
    * and will generate unique id only for 32 bits platforms.
    */
   OAI_GCC_DIAG_OFF(pointer-to-int-cast);
-  session_request_p->sender_fteid_for_cp.teid = (teid_t) ue_context;
+  session_request_p->sender_fteid_for_cp.teid = ue_context->mme_teid_s11;
   OAI_GCC_DIAG_ON(pointer-to-int-cast);
   session_request_p->sender_fteid_for_cp.interface_type = S11_MME_GTP_C;
   mme_config_read_lock (&mme_config);
@@ -285,14 +286,6 @@ mme_app_send_s11_create_session_req (
 
   //ue_context->mme_teid_s11 = session_request_p->sender_fteid_for_cp.teid;
   pdn_context->s_gw_teid_s11_s4 = 0;
-
-  mme_ue_context_update_coll_keys (&mme_app_desc.mme_ue_contexts, ue_context,
-                                   ue_context->enb_s1ap_id_key,
-                                   ue_context->mme_ue_s1ap_id,
-                                   ue_context->imsi,
-                                   session_request_p->sender_fteid_for_cp.teid,       // mme_s11_teid is new
-                                   ue_context->local_mme_teid_s10,
-                                   &ue_context->guti);
 
   memcpy (session_request_p->apn, pdn_context->apn_subscribed->data, blength(pdn_context->apn_subscribed));
   // todo: set the full apn name
@@ -355,6 +348,7 @@ mme_app_send_s11_modify_bearer_req(const ue_context_t * ue_context, pdn_context_
   OAILOG_FUNC_IN (LOG_MME_APP);
   int rc = RETURNok;
   MessageDef                             *message_p = NULL;
+  message_p = itti_alloc_new_message (TASK_MME_APP, S11_MODIFY_BEARER_REQUEST);
 
   /*
    * WARNING:

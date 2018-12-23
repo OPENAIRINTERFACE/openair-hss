@@ -181,7 +181,6 @@ typedef union {
   esm_activate_eps_bearer_context_t         eps_bearer_context_activate;
   esm_modify_eps_bearer_context_t           eps_bearer_context_modify;
   esm_deactivate_eps_bearer_context_t       eps_bearer_context_deactivate;
-  itti_nas_esm_detach_ind_t                 detach_ind;
 } esm_sap_data_t;
 
 struct emm_data_context_s;

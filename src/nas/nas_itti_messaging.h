@@ -39,10 +39,14 @@
 int
 nas_itti_esm_data_ind(
   const mme_ue_s1ap_id_t  ue_id,
-  bstring                *esm_msg_p,
+  bstring                 esm_msg_p,
   bool                    is_attach,
   imsi_t                 *imsi,
   tai_t                  *visited_tai);
+
+int
+nas_itti_esm_detach_ind(
+  const mme_ue_s1ap_id_t  ue_id);
 
 int nas_itti_dl_data_req(
   const mme_ue_s1ap_id_t ue_idP,

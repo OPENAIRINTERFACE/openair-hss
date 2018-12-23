@@ -70,6 +70,7 @@ int lowerlayer_release(mme_ue_s1ap_id_t ue_id, int cause);
 
 //int lowerlayer_data_ind(mme_ue_s1ap_id_t ueid, const_bstring data);
 int lowerlayer_data_req(mme_ue_s1ap_id_t ueid, bstring data);
+
 int lowerlayer_activate_bearer_req(const mme_ue_s1ap_id_t ue_id, const ebi_t ebi,
     const bitrate_t        mbr_dl,
     const bitrate_t        mbr_ul,

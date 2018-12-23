@@ -301,7 +301,7 @@ mme_ue_context_exists_enb_ue_s1ap_id (
 
 //------------------------------------------------------------------------------
 subscription_data_t                           *
-subscription_data_exists_imsi (
+mme_ue_subscription_data_exists_imsi (
   mme_ue_context_t * const mme_ue_context_p,
   const imsi64_t imsi)
 {
@@ -2266,7 +2266,7 @@ pdn_context_t * mme_app_handle_pdn_connectivity_from_s10(ue_context_t *ue_contex
   int                     rc = RETURNok;
 
   /** Get and handle the PDN Connection element as pending PDN connection element (using the default_ebi and the apn). */
-  mme_app_get_pdn_context(ue_context, PDN_CONTEXT_IDENTIFIER_UNASSIGNED, pdn_connection->linked_eps_bearer_id, pdn_connection->apn_str, &pdn_context);
+  mme_app_get_pdn_context(ue_context->mme_ue_s1ap_id, PDN_CONTEXT_IDENTIFIER_UNASSIGNED, pdn_connection->linked_eps_bearer_id, pdn_connection->apn_str, &pdn_context);
   if(pdn_context){
     /* Found the PDN context. */
     OAILOG_ERROR(LOG_MME_APP, "PDN context for apn %s and default ebi %d already exists for UE_ID: " MME_UE_S1AP_ID_FMT". Skipping the establishment (or update). \n",
@@ -2287,7 +2287,7 @@ pdn_context_t * mme_app_handle_pdn_connectivity_from_s10(ue_context_t *ue_contex
   }
 
   pdn_context_t * pdn_test = NULL;
-  mme_app_get_pdn_context(ue_context, ue_context->next_def_ebi_offset + PDN_CONTEXT_IDENTIFIER_UNASSIGNED - 1, ue_context->next_def_ebi_offset + 5 -1 , pdn_connection->apn_str, &pdn_test);
+  mme_app_get_pdn_context(ue_context->mme_ue_s1ap_id, ue_context->next_def_ebi_offset + PDN_CONTEXT_IDENTIFIER_UNASSIGNED - 1, ue_context->next_def_ebi_offset + 5 -1 , pdn_connection->apn_str, &pdn_test);
   DevAssert(pdn_test);
 
   /*
@@ -2511,7 +2511,7 @@ mme_app_handle_s10_context_response(
    * When Create Session Response is received, continue to process the next PDN connection, until all are processed.
    * When all pdn_connections are completed, continue with handover request.
    */
-  mme_app_send_s11_create_session_req (ue_context, &s10_context_response_pP->imsi, pdn_context, &emm_context->originating_tai, true);
+  mme_app_send_s11_create_session_req (ue_context->mme_ue_s1ap_id, &s10_context_response_pP->imsi, pdn_context, &emm_context->originating_tai, true);
   OAILOG_INFO(LOG_MME_APP, "Successfully sent CSR for UE " MME_UE_S1AP_ID_FMT ". Waiting for CSResp to continue to process s10 context response on target MME side. \n", ue_context->mme_ue_s1ap_id);
   /*
    * Use the received PDN connectivity information to update the session/bearer information with the PDN connections IE, before informing the NAS layer about the context.

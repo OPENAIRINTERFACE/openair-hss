@@ -151,7 +151,7 @@ mme_app_register_dedicated_bearer_context(const mme_ue_s1ap_id_t ue_id, const es
     OAILOG_ERROR (LOG_MME_APP, "No MME_APP UE context could be found for UE: " MME_UE_S1AP_ID_FMT " to create a new dedicated bearer context. \n", ue_id);
     OAILOG_FUNC_RETURN (LOG_MME_APP, ESM_CAUSE_REQUEST_REJECTED_UNSPECIFIED);
   }
-  mme_app_get_pdn_context(ue_context, pdn_cid, linked_ebi, NULL, &pdn_context);
+  mme_app_get_pdn_context(ue_context->mme_ue_s1ap_id, pdn_cid, linked_ebi, NULL, &pdn_context);
   if(!pdn_context){
     OAILOG_ERROR (LOG_MME_APP, "No PDN context for UE: " MME_UE_S1AP_ID_FMT " could be found (cid=%d,ebi=%d) to create a new dedicated bearer context. \n", ue_id, pdn_cid, linked_ebi);
     OAILOG_FUNC_RETURN (LOG_MME_APP, ESM_CAUSE_UNKNOWN_ACCESS_POINT_NAME);
@@ -457,7 +457,7 @@ mme_app_finalize_bearer_context(mme_ue_s1ap_id_t ue_id, const pdn_cid_t pdn_cid,
   }
 
   if(pdn_cid != PDN_CONTEXT_IDENTIFIER_UNASSIGNED){
-    mme_app_get_pdn_context(ue_context, pdn_cid, linked_ebi, NULL, &pdn_context);
+    mme_app_get_pdn_context(ue_context->mme_ue_s1ap_id, pdn_cid, linked_ebi, NULL, &pdn_context);
     if(!pdn_context){
       OAILOG_ERROR (LOG_MME_APP, "No PDN context for UE: " MME_UE_S1AP_ID_FMT " could be found (cid=%d,ebi=%d) to create a new dedicated bearer context. \n", ue_id, pdn_cid, linked_ebi);
       OAILOG_FUNC_RETURN (LOG_MME_APP, ESM_CAUSE_UNKNOWN_ACCESS_POINT_NAME);

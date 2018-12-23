@@ -168,7 +168,6 @@ esm_recv_pdn_connectivity_request (
   const ESM_msg * esm_rsp_msg)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
-  pdn_context_t                          *new_pdn_context  = NULL;
   esm_proc_pdn_request_t                  pdn_request_type = 0;
   esm_proc_pdn_type_t                     pdn_type         = 0;
 
@@ -379,11 +378,8 @@ esm_recv_pdn_connectivity_request (
    * Execute the PDN connectivity procedure requested by the UE
    */
   esm_cause_t esm_cause = esm_proc_pdn_connectivity_request (ue_id, imsi,
-      visited_tai, pti,
-      apn_configuration,
-      esm_proc_pdn_connectivity->subscribed_apn,
-      esm_proc_pdn_connectivity->request_type,
-      esm_proc_pdn_connectivity->pdn_type);
+      visited_tai, esm_proc_pdn_connectivity,
+      apn_configuration);
 //      (pco.num_protocol_or_container_id ) ? &pco:NULL);
   if(esm_cause != ESM_CAUSE_SUCCESS){
     OAILOG_ERROR (LOG_NAS_ESM, "ESM-SAP   - Error while trying to establish an APN session for APN \"%s\" (cid=%d). " "(ue_id=%d, pti=%d)\n",
@@ -520,11 +516,8 @@ esm_cause_t esm_recv_information_response (
    * Execute the PDN connectivity procedure requested by the UE
    */
   if(esm_proc_pdn_connectivity_request (ue_id, &esm_proc_pdn_connectivity->imsi,
-      &esm_proc_pdn_connectivity->visited_tai, pti,
-      apn_configuration,
-      esm_proc_pdn_connectivity->subscribed_apn,
-      esm_proc_pdn_connectivity->request_type,
-      esm_proc_pdn_connectivity->pdn_type) != ESM_CAUSE_SUCCESS){
+      &esm_proc_pdn_connectivity->visited_tai, esm_proc_pdn_connectivity,
+      apn_configuration) != ESM_CAUSE_SUCCESS){
     //      (esm_context->esm_proc_data->pco.num_protocol_or_container_id ) ? &esm_context->esm_proc_data->pco:NULL);
     OAILOG_ERROR (LOG_NAS_ESM, "ESM-SAP   - Error while trying to establish an APN session for APN \"%s\" (cid=%d). " "(ue_id=%d, pti=%d)\n",
         bdata(esm_proc_pdn_connectivity->subscribed_apn), esm_proc_pdn_connectivity->pdn_cid, ue_id, pti);
@@ -663,11 +656,7 @@ esm_recv_activate_default_eps_bearer_context_accept (
   ebi_t ebi,
   const activate_default_eps_bearer_context_accept_msg * msg)
 {
-  esm_cause_t                              esm_cause = ESM_CAUSE_SUCCESS;
-
   OAILOG_FUNC_IN (LOG_NAS_ESM);
-
-  OAILOG_INFO(LOG_NAS_ESM, "ESM-SAP   - Received Activate Default EPS Bearer Context " "Accept message (ue_id=%d, pti=%d, ebi=%d)\n", ue_id, pti, ebi);
 
   /*
    * Procedure transaction identity checking
@@ -680,19 +669,14 @@ esm_recv_activate_default_eps_bearer_context_accept (
     OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Invalid PTI value (pti=%d)\n", pti);
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_PTI_VALUE);
   }
-  /*
-   * EPS bearer identity checking
-   */
-//  else
-//    if (esm_ebr_is_reserved (ebi)){
-//    /*
-//     * 3GPP TS 24.301, section 7.3.2, case f
-//     * * * * Reserved or assigned value that does not match an existing EPS
-//     * * * * bearer context
-//     */
-//    OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Invalid EPS bearer identity (ebi=%d)\n", ebi);
-//    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY);
-//  }
+  else if (ebi == ESM_EBI_UNASSIGNED) {
+    /*
+     * 3GPP TS 24.301, section 7.3.2, case b
+     * * * * Reserved or assigned EPS bearer identity value (Transaction Related messages).
+     */
+    OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Invalid EPS bearer identity (ebi=%d)\n", ebi);
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY);
+  }
 
   nas_esm_proc_pdn_connectivity_t * esm_pdn_connectivity_proc = _esm_proc_get_pdn_connectivity_procedure(ue_id, pti);
   if(!esm_pdn_connectivity_proc){
@@ -705,6 +689,7 @@ esm_recv_activate_default_eps_bearer_context_accept (
    * * * * by the UE
    */
   esm_proc_default_eps_bearer_context_accept (ue_id, esm_pdn_connectivity_proc);
+
   /*
    * Remove the PDN Connectivity procedure.
    * It stops T3485 timer if running
@@ -713,7 +698,7 @@ esm_recv_activate_default_eps_bearer_context_accept (
   /*
    * Return the ESM cause value
    */
-  OAILOG_FUNC_RETURN (LOG_NAS_ESM, esm_cause);
+  OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_SUCCESS);
 }
 
 /****************************************************************************

@@ -71,7 +71,8 @@ void itti_free_msg_content (MessageDef * const message_p)
 
   case NAS_PDN_CONNECTIVITY_RSP:
     clear_protocol_configuration_options(&message_p->ittiMsg.nas_pdn_connectivity_rsp.pco);
-    free_wrapper(&message_p->ittiMsg.nas_pdn_connectivity_rsp.paa);
+    if(message_p->ittiMsg.nas_pdn_connectivity_rsp.paa)
+      free_wrapper(&message_p->ittiMsg.nas_pdn_connectivity_rsp.paa);
     break;
   case NAS_PDN_CONNECTIVITY_FAIL:
   case NAS_PDN_DISCONNECT_REQ:

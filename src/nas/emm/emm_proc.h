@@ -99,7 +99,7 @@ typedef struct emm_attach_request_ies_s {
   ue_network_capability_t       *ue_network_capability;
   ms_network_capability_t       *ms_network_capability;
   drx_parameter_t               *drx_parameter;
-  bstring                        esm_msg;
+  bstring                        esm_msg_attach_proc;
   nas_message_decode_status_t    decode_status;
 } emm_attach_request_ies_t;
 
@@ -188,6 +188,8 @@ void free_emm_attach_request_ies(emm_attach_request_ies_t ** const params);
 int emm_proc_attach_request(mme_ue_s1ap_id_t ue_id,
                             emm_attach_request_ies_t * const params,
                             emm_data_context_t ** duplicate_emm_ue_ctx_pP);
+
+int _emm_wrapper_attach_accept (mme_ue_s1ap_id_t ue_id, bstring esm_msg);
 
 int _emm_attach_reject(emm_data_context_t * emm_context, nas_emm_attach_proc_t * attach_proc, bstring rsp);
 

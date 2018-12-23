@@ -161,13 +161,7 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
 
   case ESM_DETACH_IND:{
     pti_t pti = PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED;
-    esm_cause = esm_proc_pdn_config_res(msg->ue_id, &msg->is_attach, &pti, msg->data.pdn_config_res->imsi64);
-    if(esm_cause != ESM_CAUSE_SUCCESS) {
-      /*
-       * Send a PDN connectivity reject.
-       */
-      esm_send_pdn_connectivity_reject(pti, &esm_resp_msg, esm_cause);
-    }
+    esm_proc_detach_request(msg->ue_id);
   }
   break;
 
@@ -215,8 +209,8 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
     } else {
       msg->is_attach = esm_proc_pdn_connectivity->is_attach;
       esm_cause = esm_proc_pdn_connectivity_res(msg->ue_id, esm_proc_pdn_connectivity,
-          msg->data.pdn_connectivity_res->pdn_type, msg->data.pdn_connectivity_res->paa,
-          &msg->data.pdn_connectivity_res->apn_ambr, &msg->data.pdn_connectivity_res->bearer_qos);
+          &msg->data.pdn_connectivity_res->apn_ambr, &msg->data.pdn_connectivity_res->bearer_qos,
+          msg->data.pdn_connectivity_res->pdn_type, msg->data.pdn_connectivity_res->paa);
       if(esm_cause != ESM_CAUSE_SUCCESS) {
         /*
          * Send a PDN connectivity reject.
@@ -360,7 +354,7 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
     break;
   }
 
-  DevAssert(!rsp);
+  DevAssert(!*rsp);
   /*
    * ESM message processing failed and no response/reject message is received.
    * No status message for signaling.
@@ -377,11 +371,12 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
       /* Send Attach Reject. */
       if(msg->is_attach) {
         if(esm_cause != ESM_CAUSE_SUCCESS){
-          _emm_wrapper_attach_reject(msg->ue_id, rsp);
+          _emm_wrapper_attach_reject(msg->ue_id, *rsp);
         } else if (msg->primitive == ESM_PDN_CONNECTIVITY_CNF) {
-          _emm_wrapper_attach_accept(msg->ue_id, rsp);
+          _emm_wrapper_attach_accept(msg->ue_id, *rsp);
         }
-        *rsp = NULL;
+        /** Will be copied inside into the esm message. Remove it here. */
+        bdestroy_wrapper(rsp);
       }
     }
   }
@@ -733,8 +728,9 @@ _esm_sap_recv (
       *rsp = blk2bstr(esm_sap_buffer, size);
       /* Send Attach Reject. */
       if(is_attach && esm_cause != ESM_CAUSE_SUCCESS){
-        _emm_wrapper_attach_reject(mme_ue_s1ap_id, rsp);
-        *rsp = NULL;
+        _emm_wrapper_attach_reject(mme_ue_s1ap_id, *rsp);
+        /** Will be copied inside into the esm message. Remove it here. */
+        bdestroy_wrapper(rsp);
       }
     }
   }
