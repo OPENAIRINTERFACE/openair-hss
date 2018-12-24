@@ -194,7 +194,7 @@ esm_proc_eps_bearer_context_deactivate_request (
     /* Start the timer (this should not be in detach case). */
     nas_stop_esm_timer(ue_id, &esm_base_proc->esm_proc_timer);
     /** Start the T3485 timer for additional PDN connectivity. */
-    esm_base_proc->esm_proc_timer.id = nas_esm_timer_start (mme_config.nas_config.t3495_sec, 0, ue_id); /**< Address field should be big enough to save an ID. */
+    esm_base_proc->esm_proc_timer.id = nas_esm_timer_start (mme_config.nas_config.t3495_sec, 0, (void*)esm_base_proc); /**< Address field should be big enough to save an ID. */
     /* Set the timeout handler as the PDN Disconnection handler. */
     esm_base_proc->timeout_notif = _eps_bearer_deactivate_t3495_handler;
     /* Overwrite the EBI. */
@@ -209,7 +209,6 @@ esm_proc_eps_bearer_context_deactivate_request (
         mme_config.nas_config.t3495_sec, 0 /*usec*/, _eps_bearer_deactivate_t3495_handler);
     DevAssert(esm_base_proc);
   }
-
   /*
    * Set the (default) bearer context of the PDN context into INACTIVE PENDING state.
    */
@@ -226,8 +225,9 @@ esm_proc_eps_bearer_context_deactivate_request (
 
   esm_send_deactivate_eps_bearer_context_request (
       *pti, ebi,
-      &esm_rsp_msg,
+      esm_rsp_msg,
       ESM_CAUSE_REGULAR_DEACTIVATION);
+
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_SUCCESS);
 }
 

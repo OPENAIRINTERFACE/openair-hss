@@ -265,11 +265,19 @@ nas_esm_proc_pdn_connectivity_res (
   MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_ESM_MME, NULL, 0, "0 ESM_PDN_CONNECTIVITY_RES ue_id " MME_UE_S1AP_ID_FMT " ", pdn_conn_res->ue_id);
   esm_sap_signal(&esm_sap, &rsp); // todo: esm_cause
   if(rsp){
-    /**
-     * Will get and lock the EMM context to set the security header if there is a valid EMM context.
-     * No changes in the state of the EMM context.
-     */
-    rc = lowerlayer_data_req(esm_sap.ue_id, rsp);
+    if(esm_sap.esm_cause == ESM_CAUSE_SUCCESS) {
+      if(esm_sap.is_attach)
+        rc = _emm_wrapper_attach_accept(pdn_conn_res->ue_id, rsp);
+      else {
+        rc = lowerlayer_activate_bearer_req(pdn_conn_res->ue_id, esm_sap.data.pdn_connectivity_res->ebi, 0, 0, 0, 0, rsp);
+      }
+    } else {
+      /**
+       * Will get and lock the EMM context to set the security header if there is a valid EMM context.
+       * No changes in the state of the EMM context.
+       */
+      rc = lowerlayer_data_req(esm_sap.ue_id, rsp);
+    }
     bdestroy_wrapper(&rsp);
  }
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);

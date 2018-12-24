@@ -191,6 +191,7 @@ typedef struct esm_sap_s {
   bool                is_attach;  /* Define if it is an attach (may be edited inside the method).       */
   const_bstring       recv;       /* Encoded ESM message received                                       */
   esm_sap_data_t      data;       /* ESM message data parameters                                        */
+  esm_cause_t         esm_cause;
 } esm_sap_t;
 
 /****************************************************************************/

@@ -187,10 +187,10 @@ esm_proc_pdn_disconnect_request (
   }
 
   OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Creating an ESM procedure and starting T3495 for Deactivate Default EPS bearer context deactivation (ue_id=" MME_UE_S1AP_ID_FMT ", context_identifier=%d)\n",
-      ue_id, esm_proc_pdn_disconnect->pdn_cid);
+      ue_id, pdn_context->context_identifier);
   /** Create a procedure, but don't start the timer yet. */
   esm_proc_pdn_disconnect = _esm_proc_create_pdn_connectivity_procedure(ue_id, NULL, pti);
-  esm_proc_pdn_disconnect->default_ebi = linked_ebi;
+  esm_proc_pdn_disconnect->default_ebi = pdn_context->default_ebi;
   /** Update the PDN connectivity procedure with the PDN context information. */
   esm_proc_pdn_disconnect->pdn_cid = pdn_context->context_identifier;
   if(esm_proc_pdn_disconnect->subscribed_apn)
@@ -200,7 +200,7 @@ esm_proc_pdn_disconnect_request (
    * Trigger an S11 Delete Session Request to the SAE-GW.
    * No need to process the response.
    */
-  nas_itti_pdn_disconnect_req(ue_id, linked_ebi, pti, false,
+  nas_itti_pdn_disconnect_req(ue_id, pdn_context->default_ebi, pti, false,
       pdn_context->s_gw_address_s11_s4.address.ipv4_address, pdn_context->s_gw_teid_s11_s4,
       pdn_cid);
 

@@ -469,14 +469,16 @@ mme_app_esm_update_bearer_context(bearer_context_t * bearer_context, bearer_qos_
   /*
    * Setup the EPS bearer data with verified TFT and QoS.
    */
-  if(bearer_level_qos->qci && bearer_level_qos->pl){
-    bearer_context->bearer_level_qos.qci = bearer_level_qos->qci;
-    bearer_context->bearer_level_qos.pci = bearer_level_qos->pci; // todo: pcipreemption_capability    = // (*bearer_level_qos)->pci == 0 ? 1 : 0;
-    bearer_context->bearer_level_qos.pvi = bearer_level_qos->pvi; // todo: preemption_vulnerability = (*bearer_level_qos)->pvi == 0 ? 1 : 0;
-    bearer_context->bearer_level_qos.pl  = bearer_level_qos->pl;
-    DevAssert(!bearer_context->esm_ebr_context.tft);
-  } else {
-    memcpy((void*)bearer_level_qos, &bearer_context->bearer_level_qos, sizeof(bearer_qos_t));
+  if(bearer_level_qos){
+    if(bearer_level_qos->qci && bearer_level_qos->pl){
+      bearer_context->bearer_level_qos.qci = bearer_level_qos->qci;
+      bearer_context->bearer_level_qos.pci = bearer_level_qos->pci; // todo: pcipreemption_capability    = // (*bearer_level_qos)->pci == 0 ? 1 : 0;
+      bearer_context->bearer_level_qos.pvi = bearer_level_qos->pvi; // todo: preemption_vulnerability = (*bearer_level_qos)->pvi == 0 ? 1 : 0;
+      bearer_context->bearer_level_qos.pl  = bearer_level_qos->pl;
+      DevAssert(!bearer_context->esm_ebr_context.tft);
+    } else {
+      memcpy((void*)bearer_level_qos, &bearer_context->bearer_level_qos, sizeof(bearer_qos_t));
+    }
   }
   OAILOG_DEBUG(LOG_MME_APP, "Setting the ESM state of ebi %d to \"%s\". \n", bearer_context->ebi, esm_ebr_state2string(esm_ebr_state));
   bearer_context->esm_ebr_context.status = esm_ebr_state;

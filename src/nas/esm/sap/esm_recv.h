@@ -90,7 +90,7 @@ esm_cause_t esm_recv_status(mme_ue_s1ap_id_t ue_id, proc_tid_t pti, ebi_t ebi,
  * Transaction related messages
  * ----------------------------
  */
-esm_cause_t esm_recv_pdn_connectivity_request(bool is_attach, mme_ue_s1ap_id_t ue_id, const imsi_t *imsi, proc_tid_t pti, ebi_t ebi, tai_t *visited_tai,
+esm_cause_t esm_recv_pdn_connectivity_request(bool *is_attach, mme_ue_s1ap_id_t ue_id, const imsi_t *imsi, proc_tid_t pti, ebi_t ebi, tai_t *visited_tai,
     const pdn_connectivity_request_msg *msg, const ESM_msg * esm_rsp_msg);
 
 esm_cause_t esm_recv_information_response (bool *is_attach,mme_ue_s1ap_id_t ue_id, proc_tid_t pti,  ebi_t ebi,

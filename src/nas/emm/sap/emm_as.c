@@ -547,14 +547,9 @@ static int _emm_as_data_ind (emm_as_data_t * msg, int *emm_cause)
            */
           // shrink plain_msg
           btrunc(plain_msg, bytes);
-          nas_itti_esm_data_ind(emm_ctx->ue_id, plain_msg, false,
+          nas_itti_esm_data_ind(emm_ctx->ue_id, plain_msg,
               &emm_ctx->_imsi, &emm_ctx->originating_tai);
-
-//          rc = lowerlayer_data_ind (msg->ue_id, plain_msg);
         }
-
-        bdestroy_wrapper (&plain_msg);
-//        unlock_ue_contexts(ue_context);
       }
     } else {
       /*

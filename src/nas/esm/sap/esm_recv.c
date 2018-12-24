@@ -50,6 +50,7 @@
 #include "dynamic_memory_check.h"
 #include "common_types.h"
 #include "assertions.h"
+#include "conversions.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"
 #include "3gpp_29.274.h"
@@ -158,7 +159,7 @@ esm_recv_status (
  ***************************************************************************/
 esm_cause_t
 esm_recv_pdn_connectivity_request (
-  bool attach,
+  bool *is_attach,
   const mme_ue_s1ap_id_t ue_id,
   const imsi_t *imsi,
   proc_tid_t pti,
@@ -171,7 +172,7 @@ esm_recv_pdn_connectivity_request (
   esm_proc_pdn_request_t                  pdn_request_type = 0;
   esm_proc_pdn_type_t                     pdn_type         = 0;
 
-  OAILOG_INFO(LOG_NAS_ESM, "ESM-SAP   - Received PDN Connectivity Request message " "(ue_id=%u, pti=%d, ebi=%d, attach=%B)\n", ue_id, pti, ebi, attach);
+  OAILOG_INFO(LOG_NAS_ESM, "ESM-SAP   - Received PDN Connectivity Request message " "(ue_id=%u, pti=%d, ebi=%d)\n", ue_id, pti, ebi);
 
   /*
    * Procedure transaction identity checking
@@ -207,7 +208,7 @@ esm_recv_pdn_connectivity_request (
     /** We have another transactional procedure. If the PTIs don't match, reject the message. */
     if(esm_proc_pdn_connectivity->esm_base_proc.pti == pti){
       /* We have a duplicate PDN connectivity request. */
-      DevAssert(!attach);
+      DevAssert(!*is_attach);
       OAILOG_INFO(LOG_NAS_ESM, "ESM-SAP   - A PDN connectivity request (pti=%d) for UE " MME_UE_S1AP_ID_FMT " is already received. \n"
           " Continuing to check the new procedure (pti=%d).\n", esm_proc_pdn_connectivity->esm_base_proc.pti, ue_id, pti);
       esm_cause_t esm_cause = esm_proc_pdn_connectivity_retx(ue_id, esm_proc_pdn_connectivity, esm_rsp_msg);
@@ -286,8 +287,12 @@ esm_recv_pdn_connectivity_request (
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_UNKNOWN_ACCESS_POINT_NAME);
   }
 
+  ue_context_t        * ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, ue_id);
+  DevAssert(ue_context);
+  *is_attach = ue_context->mm_state == UE_UNREGISTERED;
+
   /** An APN Name must be present, if it is not attach. */
-  if(!attach && !(msg->presencemask & PDN_CONNECTIVITY_REQUEST_ACCESS_POINT_NAME_PRESENT)){
+  if(!*is_attach && !(msg->presencemask & PDN_CONNECTIVITY_REQUEST_ACCESS_POINT_NAME_PRESENT)){
     OAILOG_ERROR(LOG_NAS_ESM, "ESM-SAP   - No APN name present for extra PDN connectivity request. Rejecting the PDN connectivity procedure." "(ue_id=%d, pti=%d)\n", ue_id, pti);
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_UNKNOWN_ACCESS_POINT_NAME);
   }
@@ -301,7 +306,7 @@ esm_recv_pdn_connectivity_request (
   esm_proc_pdn_connectivity = _esm_proc_create_pdn_connectivity_procedure(ue_id, imsi, pti);
   esm_proc_pdn_connectivity->request_type = pdn_request_type;
   esm_proc_pdn_connectivity->pdn_type = pdn_type;
-  esm_proc_pdn_connectivity->is_attach = attach;
+  esm_proc_pdn_connectivity->is_attach = *is_attach;
   memcpy(&esm_proc_pdn_connectivity->imsi, imsi, sizeof(imsi_t));
   memcpy(&esm_proc_pdn_connectivity->visited_tai, visited_tai, sizeof(tai_t));
   if(msg->presencemask & PDN_CONNECTIVITY_REQUEST_ACCESS_POINT_NAME_PRESENT)

@@ -388,7 +388,7 @@ mme_app_esm_modify_bearer_context(mme_ue_s1ap_id_t ue_id, const ebi_t ebi, const
     OAILOG_FUNC_RETURN (LOG_MME_APP, ESM_CAUSE_REQUEST_REJECTED_UNSPECIFIED);
   }
   /** Update the FTEIDs and the bearers CN state. */
-  mme_app_get_session_bearer_context_from_all(ue_id, ebi, &bearer_context);
+  mme_app_get_session_bearer_context_from_all(ue_context, ebi, &bearer_context);
   if(!bearer_context){
     OAILOG_ERROR (LOG_MME_APP, "No MME_APP UE context could be found for UE: " MME_UE_S1AP_ID_FMT ". \n", ue_id);
     OAILOG_FUNC_RETURN (LOG_MME_APP, ESM_CAUSE_REQUEST_REJECTED_UNSPECIFIED);
@@ -427,9 +427,11 @@ mme_app_esm_modify_bearer_context(mme_ue_s1ap_id_t ue_id, const ebi_t ebi, const
       OAILOG_FUNC_RETURN (LOG_NAS_ESM, esm_cause);
     }
   }
-  /* Check the APN-AMBR, that it does not exceed the subscription. */
-  if(apn_ambr->br_dl && apn_ambr->br_ul){
-    // todo: update apn-ambr
+  if(apn_ambr){
+    /* Check the APN-AMBR, that it does not exceed the subscription. */
+      if(apn_ambr->br_dl && apn_ambr->br_ul){
+        // todo: update apn-ambr
+      }
   }
   bearer_context->esm_ebr_context.status = esm_ebr_state;
 

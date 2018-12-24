@@ -146,13 +146,13 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
   pdn_cid_t                               pid = MAX_APN_PER_UE;
   ESM_msg                                 esm_resp_msg;
   ebi_t                                   ebi = 0;
-  esm_cause_t                             esm_cause = ESM_CAUSE_SUCCESS;
 
   /*
    * Check the ESM-SAP primitive
    */
 
   memset((void*)&esm_resp_msg, 0, sizeof(ESM_msg));
+  msg->esm_cause = ESM_CAUSE_SUCCESS;
 
   assert ((msg->primitive > ESM_START) && (msg->primitive < ESM_END));
   OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Received primitive %s (%d)\n", _esm_sap_primitive_str[msg->primitive - ESM_START - 1], msg->primitive);
@@ -167,12 +167,12 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
 
   case ESM_PDN_CONFIG_RES:{
     pti_t pti = PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED;
-    esm_cause = esm_proc_pdn_config_res(msg->ue_id, &msg->is_attach, &pti, msg->data.pdn_config_res->imsi64);
-    if(esm_cause != ESM_CAUSE_SUCCESS) {
+    msg->esm_cause = esm_proc_pdn_config_res(msg->ue_id, &msg->is_attach, &pti, msg->data.pdn_config_res->imsi64);
+    if(msg->esm_cause != ESM_CAUSE_SUCCESS) {
       /*
        * Send a PDN connectivity reject.
        */
-      esm_send_pdn_connectivity_reject(pti, &esm_resp_msg, esm_cause);
+      esm_send_pdn_connectivity_reject(pti, &esm_resp_msg, msg->esm_cause);
     }
   }
   break;
@@ -188,7 +188,7 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
     } else{
       msg->is_attach = esm_proc_pdn_connectivity->is_attach;
       /** Send a PDN Connectivity Reject back. */
-      esm_send_pdn_connectivity_reject(esm_proc_pdn_connectivity->esm_base_proc.pti, &esm_resp_msg, esm_cause);
+      esm_send_pdn_connectivity_reject(esm_proc_pdn_connectivity->esm_base_proc.pti, &esm_resp_msg, msg->esm_cause);
       /** Directly process the ULA. A response message might be returned. */
       _esm_proc_free_pdn_connectivity_procedure(&esm_proc_pdn_connectivity);
     }
@@ -208,15 +208,15 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
           msg->ue_id);
     } else {
       msg->is_attach = esm_proc_pdn_connectivity->is_attach;
-      esm_cause = esm_proc_pdn_connectivity_res(msg->ue_id, esm_proc_pdn_connectivity,
+      msg->esm_cause = esm_proc_pdn_connectivity_res(msg->ue_id, esm_proc_pdn_connectivity,
           &msg->data.pdn_connectivity_res->apn_ambr, &msg->data.pdn_connectivity_res->bearer_qos,
           msg->data.pdn_connectivity_res->pdn_type, msg->data.pdn_connectivity_res->paa);
-      if(esm_cause != ESM_CAUSE_SUCCESS) {
+      if(msg->esm_cause != ESM_CAUSE_SUCCESS) {
         /*
          * Send a PDN connectivity reject.
          * The ESM procedure should have been removed by now.
          */
-        esm_send_pdn_connectivity_reject(esm_proc_pdn_connectivity->esm_base_proc.pti, &esm_resp_msg, esm_cause);
+        esm_send_pdn_connectivity_reject(esm_proc_pdn_connectivity->esm_base_proc.pti, &esm_resp_msg, msg->esm_cause);
       } else {
         /*
          * Directly process the PDN connectivity confirmation.
@@ -267,10 +267,10 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
      * Check if a procedure exists for PDN Connectivity. If so continue with it.
      */
     pti_t                                pti                         = PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED;
-    esm_cause = esm_proc_eps_bearer_context_deactivate_request(msg->ue_id, &pti,
+    msg->esm_cause = esm_proc_eps_bearer_context_deactivate_request(msg->ue_id, &pti,
         ESM_EBI_UNASSIGNED, &esm_resp_msg);
-    if(esm_cause != ESM_CAUSE_SUCCESS){
-      esm_send_pdn_disconnect_reject(pti, &esm_resp_msg, esm_cause);
+    if(msg->esm_cause != ESM_CAUSE_SUCCESS){
+      esm_send_pdn_disconnect_reject(pti, &esm_resp_msg, msg->esm_cause);
     }
   }
   break;
@@ -284,27 +284,27 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
      * If so, reject it (no response is sent).
      * Else process it.
      */
-    esm_cause = esm_proc_dedicated_eps_bearer_context (msg->ue_id,     /**< Create an ESM procedure and store the bearers in the procedure as pending. */
+    msg->esm_cause = esm_proc_dedicated_eps_bearer_context (msg->ue_id,     /**< Create an ESM procedure and store the bearers in the procedure as pending. */
         PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED,                     /**< No UE triggered bearer context activation is supported. */
         msg->data.eps_bearer_context_activate.linked_ebi,
         msg->data.eps_bearer_context_activate.pdn_cid,
         msg->data.eps_bearer_context_activate.bc_tbc,
         &esm_resp_msg);
     /** For each bearer separately process with the bearer establishment. */
-    if (esm_cause != ESM_CAUSE_SUCCESS) {   /**< We assume that no ESM procedure exists. */
+    if (msg->esm_cause != ESM_CAUSE_SUCCESS) {   /**< We assume that no ESM procedure exists. */
       /**
        * Send a NAS ITTI directly for the specific bearer. This will reduce the number of bearers to be processed.
        * No bearer should be allocated and no ESM procedure should be created.
        * We will check the remaining bearer requests and reject bearers individually (we might have a mix of rejected and accepted bearers).
        * The remaining must also be rejected, such that the procedure has no pending elements anymore.
        */
-      nas_itti_activate_eps_bearer_ctx_rej(msg->ue_id, msg->data.eps_bearer_context_activate.bc_tbc->s1u_sgw_fteid.teid, esm_cause); /**< Assuming, no other CN bearer procedure will intervene. */
+      nas_itti_activate_eps_bearer_ctx_rej(msg->ue_id, msg->data.eps_bearer_context_activate.bc_tbc->s1u_sgw_fteid.teid, msg->esm_cause); /**< Assuming, no other CN bearer procedure will intervene. */
     }
   }
   break;
 
   case ESM_EPS_BEARER_CONTEXT_MODIFY_REQ:{
-    esm_cause = esm_proc_modify_eps_bearer_context(msg->ue_id,     /**< Create an ESM procedure and store the bearers in the procedure as pending. */
+    msg->esm_cause = esm_proc_modify_eps_bearer_context(msg->ue_id,     /**< Create an ESM procedure and store the bearers in the procedure as pending. */
            PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED,
            msg->data.eps_bearer_context_modify.linked_ebi,
            msg->data.eps_bearer_context_modify.pdn_cid,
@@ -312,18 +312,18 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
            &msg->data.eps_bearer_context_modify.apn_ambr,
            &esm_resp_msg);
     /** For each bearer separately process with the bearer establishment. */
-    if (esm_cause != ESM_CAUSE_SUCCESS) {   /**< We assume that no ESM procedure exists. */
+    if (msg->esm_cause != ESM_CAUSE_SUCCESS) {   /**< We assume that no ESM procedure exists. */
       /** No Procedure is expected for the error case, should be handled internally. */
-      nas_itti_modify_eps_bearer_ctx_rej(msg->ue_id, msg->data.eps_bearer_context_modify.bc_tbu->eps_bearer_id, esm_cause); /**< Assuming, no other CN bearer procedure will intervene. */
+      nas_itti_modify_eps_bearer_ctx_rej(msg->ue_id, msg->data.eps_bearer_context_modify.bc_tbu->eps_bearer_id, msg->esm_cause); /**< Assuming, no other CN bearer procedure will intervene. */
     }
 
   }
   break;
 
   case ESM_EPS_BEARER_CONTEXT_DEACTIVATE_REQ:{
-   esm_cause = esm_proc_eps_bearer_context_deactivate_request(msg->ue_id, &msg->data.eps_bearer_context_deactivate.pti,
+    msg->esm_cause = esm_proc_eps_bearer_context_deactivate_request(msg->ue_id, &msg->data.eps_bearer_context_deactivate.pti,
        msg->data.eps_bearer_context_deactivate.ded_ebi, &esm_resp_msg);
-   if (esm_cause != ESM_CAUSE_SUCCESS) {   /**< We assume that no ESM procedure exists. */
+   if (msg->esm_cause != ESM_CAUSE_SUCCESS) {   /**< We assume that no ESM procedure exists. */
      /* Only if no bearer context. */
      nas_itti_dedicated_eps_bearer_deactivation_complete(msg->ue_id, msg->data.eps_bearer_context_deactivate.ded_ebi);
    }
@@ -370,13 +370,10 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
       *rsp = blk2bstr(esm_sap_buffer, size);
       /* Send Attach Reject. */
       if(msg->is_attach) {
-        if(esm_cause != ESM_CAUSE_SUCCESS){
+        if(msg->esm_cause != ESM_CAUSE_SUCCESS){
           _emm_wrapper_attach_reject(msg->ue_id, *rsp);
-        } else if (msg->primitive == ESM_PDN_CONNECTIVITY_CNF) {
-          _emm_wrapper_attach_accept(msg->ue_id, *rsp);
+          bdestroy_wrapper(rsp); /**< Will be copied inside into the esm message. Remove it here. */
         }
-        /** Will be copied inside into the esm message. Remove it here. */
-        bdestroy_wrapper(rsp);
       }
     }
   }

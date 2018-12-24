@@ -275,8 +275,10 @@ esm_proc_default_eps_bearer_context_accept (mme_ue_s1ap_id_t ue_id,
    * Update the ESM bearer context state of the default bearer as ACTIVE.
    * The CN state & FTEID will be set by the MME_APP layer in independently of this.
    */
-  rc = mme_app_esm_update_pdn_context(ue_id, esm_proc_pdn_connectivity->subscribed_apn, esm_proc_pdn_connectivity->pdn_cid, esm_proc_pdn_connectivity->default_ebi, ESM_EBR_ACTIVE,
-      NULL, NULL, NULL);
+
+  rc = mme_app_esm_update_pdn_context(ue_id, esm_proc_pdn_connectivity->subscribed_apn, esm_proc_pdn_connectivity->pdn_cid, esm_proc_pdn_connectivity->default_ebi,
+      esm_proc_pdn_connectivity->pdn_type, NULL,
+      ESM_EBR_ACTIVE, NULL, NULL, NULL);
   /** Trigger an MBReq. */
   ue_context_t * ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, ue_id);
   if(!ue_context){

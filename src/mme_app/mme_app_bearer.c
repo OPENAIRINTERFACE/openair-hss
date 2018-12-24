@@ -2083,17 +2083,17 @@ static void mme_app_handle_e_rab_setup_rsp_pdn_connectivity(const mme_ue_s1ap_id
       OAILOG_FUNC_OUT(LOG_MME_APP);
     }
   }
-  /** Continue here with a positive or negative session response. */
-  pdn_context_t * pdn_context = NULL;
-  mme_app_get_pdn_context(ue_context->mme_ue_s1ap_id, pdn_cid, def_ebi, NULL, &pdn_context);
-  /** Check if an S11 Dedicated Bearer procedure exists. If not, send an MBR (assume single bearer). */
-  if(pdn_context){
-    OAILOG_DEBUG (LOG_MME_APP, "Triggering MBReq for UE: " MME_UE_S1AP_ID_FMT " for PDN with ctxId %d and default ebi %d. \n", ue_context->mme_ue_s1ap_id, pdn_cid, def_ebi);
-    // todo: add flags and bc's to be removed
-    mme_app_send_s11_modify_bearer_req(ue_context, pdn_context, 0, NULL);
-  }else{
-    OAILOG_ERROR(LOG_MME_APP, "Cannot trigger MBReq for UE: " MME_UE_S1AP_ID_FMT ". No PDN with ctxId %d and default ebi %d was found. \n", ue_context->mme_ue_s1ap_id, pdn_cid, def_ebi);
-  }
+//  /** Continue here with a positive or negative session response. */
+//  pdn_context_t * pdn_context = NULL;
+//  mme_app_get_pdn_context(ue_context->mme_ue_s1ap_id, pdn_cid, def_ebi, NULL, &pdn_context);
+//  /** Check if an S11 Dedicated Bearer procedure exists. If not, send an MBR (assume single bearer). */
+//  if(pdn_context){
+//    OAILOG_DEBUG (LOG_MME_APP, "Triggering MBReq for UE: " MME_UE_S1AP_ID_FMT " for PDN with ctxId %d and default ebi %d. \n", ue_context->mme_ue_s1ap_id, pdn_cid, def_ebi);
+//    // todo: add flags and bc's to be removed
+//    mme_app_send_s11_modify_bearer_req(ue_context, pdn_context, 0, NULL);
+//  }else{
+//    OAILOG_ERROR(LOG_MME_APP, "Cannot trigger MBReq for UE: " MME_UE_S1AP_ID_FMT ". No PDN with ctxId %d and default ebi %d was found. \n", ue_context->mme_ue_s1ap_id, pdn_cid, def_ebi);
+//  }
   OAILOG_FUNC_OUT(LOG_MME_APP);
 }
 

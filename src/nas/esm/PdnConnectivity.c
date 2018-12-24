@@ -148,7 +148,8 @@ nas_esm_proc_pdn_connectivity_t *_esm_proc_create_pdn_connectivity_procedure(mme
   /** APN may be missing at the beginning. */
   nas_esm_proc_pdn_connectivity_t  *esm_proc_pdn_connectivity = mme_app_nas_esm_create_pdn_connectivity_procedure(ue_id, pti);
   AssertFatal(esm_proc_pdn_connectivity, "TODO Handle this");
-  memcpy((void*)&esm_proc_pdn_connectivity->imsi, imsi, sizeof(imsi_t));
+  if(imsi)
+    memcpy((void*)&esm_proc_pdn_connectivity->imsi, imsi, sizeof(imsi_t));
   return esm_proc_pdn_connectivity;
 }
 

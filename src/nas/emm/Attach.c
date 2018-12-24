@@ -1133,7 +1133,7 @@ static int _emm_attach_run_procedure(emm_data_context_t *emm_context)
        * due to MeshFlow reasons). Assume that the UE/MS network capabilities are not changed and don't need to be
        * replayed.
        */
-      nas_itti_esm_data_ind(emm_context->ue_id, attach_proc->ies->esm_msg_attach_proc, true,
+      nas_itti_esm_data_ind(emm_context->ue_id, attach_proc->ies->esm_msg_attach_proc,
           attach_proc->ies->imsi, attach_proc->ies->last_visited_registered_tai);
       attach_proc->ies->esm_msg_attach_proc = NULL;
       OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
@@ -1362,7 +1362,7 @@ static int _emm_attach_success_security_cb (struct emm_data_context_s *emm_conte
   nas_emm_attach_proc_t                  *attach_proc = get_nas_specific_procedure_attach(emm_context);
 
   if (attach_proc) {
-    nas_itti_esm_data_ind(emm_context->ue_id, attach_proc->ies->esm_msg_attach_proc, true,
+    nas_itti_esm_data_ind(emm_context->ue_id, attach_proc->ies->esm_msg_attach_proc,
         &emm_context->_imsi, attach_proc->ies->originating_tai);
     attach_proc->ies->esm_msg_attach_proc = NULL;
   }
@@ -1509,7 +1509,7 @@ int _emm_wrapper_attach_accept (mme_ue_s1ap_id_t ue_id, bstring esm_msg)
     OAILOG_FUNC_RETURN(LOG_NAS_ESM, RETURNerror);
   }
   nas_emm_attach_proc_t                  *attach_proc = get_nas_specific_procedure_attach(emm_context);
-  if(!emm_context){
+  if(!attach_proc){
     OAILOG_INFO (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " EMM-PROC  - No attach procedure for ue_id " MME_UE_S1AP_ID_FMT " exists. \n", ue_id);
     OAILOG_FUNC_RETURN(LOG_NAS_ESM, RETURNerror);
   }
