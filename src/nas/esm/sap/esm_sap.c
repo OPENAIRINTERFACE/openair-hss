@@ -253,6 +253,7 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
        */
       esm_send_pdn_connectivity_reject(esm_proc_pdn_connectivity->esm_base_proc.pti, &esm_resp_msg, ESM_CAUSE_NETWORK_FAILURE);
       esm_proc_pdn_connectivity_failure(msg->ue_id, esm_proc_pdn_connectivity);
+      msg->esm_cause = ESM_CAUSE_REQUEST_REJECTED_BY_GW;
     }
   }
   break;
@@ -268,7 +269,7 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
      */
     pti_t                                pti                         = PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED;
     msg->esm_cause = esm_proc_eps_bearer_context_deactivate_request(msg->ue_id, &pti,
-        ESM_EBI_UNASSIGNED, &esm_resp_msg);
+        &msg->data.pdn_disconnect_res->ebi, &esm_resp_msg);
     if(msg->esm_cause != ESM_CAUSE_SUCCESS){
       esm_send_pdn_disconnect_reject(pti, &esm_resp_msg, msg->esm_cause);
     }
@@ -322,7 +323,7 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
 
   case ESM_EPS_BEARER_CONTEXT_DEACTIVATE_REQ:{
     msg->esm_cause = esm_proc_eps_bearer_context_deactivate_request(msg->ue_id, &msg->data.eps_bearer_context_deactivate.pti,
-       msg->data.eps_bearer_context_deactivate.ded_ebi, &esm_resp_msg);
+       &msg->data.eps_bearer_context_deactivate.ded_ebi, &esm_resp_msg);
    if (msg->esm_cause != ESM_CAUSE_SUCCESS) {   /**< We assume that no ESM procedure exists. */
      /* Only if no bearer context. */
      nas_itti_dedicated_eps_bearer_deactivation_complete(msg->ue_id, msg->data.eps_bearer_context_deactivate.ded_ebi);

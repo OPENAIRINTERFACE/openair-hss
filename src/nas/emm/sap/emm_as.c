@@ -1000,7 +1000,9 @@ static int _emm_as_send (emm_as_t * msg)
    * Else skip this part.
    */
   if(msg->primitive != _EMMAS_STATUS_IND && msg->u.base.emm_cause){
-    if ((msg->u.base.emm_cause != EMM_CAUSE_SUCCESS) && (msg->u.base.emm_cause != EMM_CAUSE_UE_IDENTITY_CANT_BE_DERIVED_BY_NW)) {
+    if ((msg->u.base.emm_cause != EMM_CAUSE_SUCCESS) &&
+        (msg->u.base.emm_cause != EMM_CAUSE_UE_IDENTITY_CANT_BE_DERIVED_BY_NW
+            && msg->u.base.emm_cause != EMM_CAUSE_ESM_FAILURE)) {
       /*
        * Ignore received message that is too short to contain a complete
        * * * * message type information element
@@ -1052,11 +1054,11 @@ static int _emm_as_send (emm_as_t * msg)
     break;
 
   case _EMMAS_ERAB_MODIFY_REQ:
-    as_msg.msg_id = _emm_as_security_req (&msg->u.modify_bearer_context_req, &as_msg.msg.modify_bearer_context_req);
+    as_msg.msg_id = _emm_as_erab_modify_req(&msg->u.modify_bearer_context_req, &as_msg.msg.modify_bearer_context_req);
     break;
 
   case _EMMAS_ERAB_RELEASE_REQ:
-    as_msg.msg_id = _emm_as_security_req (&msg->u.deactivate_bearer_context_req, &as_msg.msg.rab_release_req);
+    as_msg.msg_id = _emm_as_erab_release_req(&msg->u.deactivate_bearer_context_req, &as_msg.msg.rab_release_req);
     break;
 
   case _EMMAS_SECURITY_REQ:

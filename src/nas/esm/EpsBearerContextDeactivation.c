@@ -182,7 +182,7 @@ esm_cause_t
 esm_proc_eps_bearer_context_deactivate_request (
   mme_ue_s1ap_id_t ue_id,
   pti_t *pti,
-  ebi_t ebi,
+  ebi_t *ebi,
   ESM_msg * esm_rsp_msg)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
@@ -198,23 +198,23 @@ esm_proc_eps_bearer_context_deactivate_request (
     /* Set the timeout handler as the PDN Disconnection handler. */
     esm_base_proc->timeout_notif = _eps_bearer_deactivate_t3495_handler;
     /* Overwrite the EBI. */
-    ebi = ((nas_esm_proc_pdn_connectivity_t*)esm_base_proc)->default_ebi;
+    *ebi = ((nas_esm_proc_pdn_connectivity_t*)esm_base_proc)->default_ebi;
     *pti = esm_base_proc->pti;
   } else {
     /*
      * Check for PDN connectivity procedures.
      * Create a new EPS bearer context transaction and starts the timer, since no further CN operation necessary for dedicated bearers.
      */
-    esm_base_proc = (nas_esm_proc_t*)_esm_proc_create_bearer_context_procedure(ue_id, *pti, ESM_EBI_UNASSIGNED, PDN_CONTEXT_IDENTIFIER_UNASSIGNED, ebi,
+    esm_base_proc = (nas_esm_proc_t*)_esm_proc_create_bearer_context_procedure(ue_id, *pti, ESM_EBI_UNASSIGNED, PDN_CONTEXT_IDENTIFIER_UNASSIGNED, *ebi,
         mme_config.nas_config.t3495_sec, 0 /*usec*/, _eps_bearer_deactivate_t3495_handler);
     DevAssert(esm_base_proc);
   }
   /*
    * Set the (default) bearer context of the PDN context into INACTIVE PENDING state.
    */
-  if(mme_app_esm_modify_bearer_context(ue_id, ebi, ESM_EBR_INACTIVE_PENDING, NULL, NULL, NULL) != ESM_CAUSE_SUCCESS){
+  if(mme_app_esm_modify_bearer_context(ue_id, *ebi, ESM_EBR_INACTIVE_PENDING, NULL, NULL, NULL) != ESM_CAUSE_SUCCESS){
     OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - No PDN connection found (ebi=%d, pti=%d) for UE " MME_UE_S1AP_ID_FMT ".\n",
-        ebi, *pti, ue_id);
+        *ebi, *pti, ue_id);
     if(esm_base_proc->type == ESM_PROC_EPS_BEARER_CONTEXT)
       _esm_proc_free_bearer_context_procedure((nas_esm_proc_bearer_context_t**)&esm_base_proc);
     else
@@ -224,7 +224,7 @@ esm_proc_eps_bearer_context_deactivate_request (
   }
 
   esm_send_deactivate_eps_bearer_context_request (
-      *pti, ebi,
+      *pti, *ebi,
       esm_rsp_msg,
       ESM_CAUSE_REGULAR_DEACTIVATION);
 

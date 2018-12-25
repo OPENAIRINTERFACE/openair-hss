@@ -45,13 +45,6 @@ void mme_app_get_session_bearer_context_from_all(ue_context_t * const ue_context
  */
 esm_cause_t mme_app_register_dedicated_bearer_context(const mme_ue_s1ap_id_t ue_id, const esm_ebr_state esm_ebr_state, pdn_cid_t pdn_cid, ebi_t linked_ebi, bearer_context_to_be_created_t * const bc_tbu);
 
-/*
- * Method to deregister a bearer context.
- * Could be called from the MME_APP layer as well as ESM layer.
- * It will not remove any ESM procedures/stop timers, that should be done in ESM layer before calling this method..
- */
-int mme_app_deregister_bearer_context(ue_context_t * const ue_context, ebi_t ebi, const pdn_context_t *pdn_context);
-
 void mme_app_free_bearer_context (bearer_context_t ** const bearer_context);
 void mme_app_bearer_context_s1_release_enb_informations(bearer_context_t * const bc);
 

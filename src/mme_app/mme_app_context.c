@@ -152,7 +152,7 @@ ue_context_t *mme_create_new_ue_context (void)
    * Get 11 new bearers from the bearer pool.
    * They might or might not be pre-allocated.
    */
-  for(uint8_t ebi = 5; ebi < 5 + MAX_NUM_BEARERS_UE - 1; ebi++) {
+  for(uint8_t ebi = 5; ebi < 5 + MAX_NUM_BEARERS_UE -1; ebi++) {
     /** Insert 11 new bearers. */
     bearer_context_t * bearer_ctx_p = mme_app_new_bearer();
     DevAssert (bearer_ctx_p != NULL);
@@ -219,25 +219,32 @@ void mme_app_ue_context_free_content (ue_context_t * const ue_context)
 //    /** The number of bearers will be incremented in the method. S10 should just pick the ebi. */
 //  }
 
-//  for (int i = 0; i < BEARERS_PER_UE; i++) {
-//    if (ue_context->bearer_contexts[i]) {
-//      mme_app_deregister_bearer_context(&ue_context->bearer_contexts[i]);
-//    }
-//  }
-//
-//
-//  // todo: when is this method called? it should put the bearer contexts of the pdn context back to the UE contexts bearer list!
-//  for (int i = 0; i < MAX_APN_PER_UE; i++) {
-//    if (ue_context->pdn_contexts[i]) {
-//      mme_app_free_pdn_context(&ue_context->pdn_contexts[i]);
-//    }
-//  }
-
-
   /** Will remove the S10 tunnel endpoints. */
   if (ue_context->s10_procedures) {
     mme_app_delete_s10_procedure_mme_handover(ue_context); // todo: generic s10 function
   }
+
+  /** Assert that 10 Bearers exist. Put them all back to the pool. */
+  for (int i = 0; i < BEARERS_PER_UE - 1; i++) {
+    bearer_context_t * bearer_context = RB_MAX(BearerPool, &ue_context->bearer_pool);
+    OAILOG_DEBUG(LOG_MME_APP, "Putting bearer context %p with ebi %d (i=%d) of UE "MME_UE_S1AP_ID_FMT ". \n",
+        bearer_context ? bearer_context : "NULL",
+        bearer_context ? bearer_context->ebi : "NULL",
+        i,
+        ue_context->mme_ue_s1ap_id);
+    DevAssert(bearer_context);
+    /** Remove from the UE list. */
+    bearer_context = RB_REMOVE(BearerPool, &ue_context->bearer_pool, bearer_context);
+    DevAssert(bearer_context);
+    mme_app_free_bearer_context(&bearer_context);
+  }
+  DevAssert(RB_EMPTY(&ue_context->bearer_pool));
+  RB_INIT(&ue_context->bearer_pool);
+
+//      mme_app_deregister_bearer_context(&ue_context->bearer_contexts[i]);
+//    }
+//  }
+
 //
 //  if (ue_context->s11_procedures) {
 //    mme_app_delete_s11_procedures(ue_context);
@@ -2270,7 +2277,7 @@ pdn_context_t * mme_app_handle_pdn_connectivity_from_s10(ue_context_t *ue_contex
   if(pdn_context){
     /* Found the PDN context. */
     OAILOG_ERROR(LOG_MME_APP, "PDN context for apn %s and default ebi %d already exists for UE_ID: " MME_UE_S1AP_ID_FMT". Skipping the establishment (or update). \n",
-        pdn_connection->apn_str, pdn_connection->linked_eps_bearer_id, ue_context->mme_ue_s1ap_id);
+        bdata(pdn_connection->apn_str), pdn_connection->linked_eps_bearer_id, ue_context->mme_ue_s1ap_id);
     OAILOG_FUNC_RETURN(LOG_MME_APP, NULL);
   }
   /*

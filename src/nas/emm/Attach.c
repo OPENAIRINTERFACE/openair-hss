@@ -1034,10 +1034,9 @@ int _emm_attach_reject(emm_data_context_t * emm_context, nas_emm_attach_proc_t *
   emm_sap.u.emm_as.u.establish.eps_id.guti = NULL;
   emm_sap.u.emm_as.u.establish.emm_cause = attach_proc->emm_cause;
   emm_sap.u.emm_as.u.establish.nas_info = EMM_AS_NAS_INFO_ATTACH;
-  if (attach_proc->emm_cause != EMM_CAUSE_ESM_FAILURE) {
-    emm_sap.u.emm_as.u.establish.nas_msg = NULL;
-  } else if (attach_proc->esm_msg_out) {
-    emm_sap.u.emm_as.u.establish.nas_msg = attach_proc->esm_msg_out;
+  if(rsp){
+    emm_sap.u.emm_as.u.establish.nas_msg = rsp;
+    emm_sap.u.emm_as.u.establish.emm_cause = EMM_CAUSE_ESM_FAILURE;
   } else {
     OAILOG_WARNING(LOG_NAS_EMM, "EMM-PROC  - ESM message is missing but attach reject reason due ESM. Continuing with attach reject.\n");
   }

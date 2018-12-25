@@ -205,7 +205,7 @@ esm_proc_modify_eps_bearer_context_reject (
  */
 esm_cause_t esm_proc_eps_bearer_context_deactivate_request (mme_ue_s1ap_id_t ue_id,
     proc_tid_t   * pti,
-    ebi_t        ebi,
+    ebi_t        * ebi,
     ESM_msg * esm_rsp_msg);
 
 #endif /* __ESM_PROC_H__*/

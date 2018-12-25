@@ -284,6 +284,7 @@ emm_proc_detach (
      rc = emm_sap_send (&emm_sap);
    }else{
      OAILOG_INFO (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " EMM-PROC  - No detach type is set for UE. We will not send detach request. \n", emm_context->ue_id);
+     rc = RETURNok;
    }
    /*
     * Release ESM PDN and bearer context
@@ -299,9 +300,7 @@ emm_proc_detach (
       * Notify EMM FSM that the UE has been implicitly detached
       */
      MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMREG_DETACH_CNF ue id " MME_UE_S1AP_ID_FMT " ", emm_context->ue_id);
-
      OAILOG_INFO (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " EMM-PROC  - Sending EMMREG_DETACH_CNF. \n", emm_context->ue_id);
-
      emm_sap.primitive = EMMREG_DETACH_CNF;
      emm_sap.u.emm_reg.ue_id = emm_context->ue_id;
      emm_sap.u.emm_reg.ctx = emm_context;
@@ -438,12 +437,12 @@ emm_proc_detach_request (
   /*
    * Notify EMM FSM that the UE has been implicitly detached
    */
-  MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMREG_DETACH_CNF ue id " MME_UE_S1AP_ID_FMT " ", emm_context->ue_id);
+  MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMREG_DETACH_CNF ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
 
-  OAILOG_INFO (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " EMM-PROC  - Sending EMMREG_DETACH_CNF. \n", emm_context->ue_id);
+  OAILOG_INFO (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " EMM-PROC  - Sending EMMREG_DETACH_CNF. \n", ue_id);
 
   emm_sap.primitive = EMMREG_DETACH_CNF;
-  emm_sap.u.emm_reg.ue_id = emm_context->ue_id;
+  emm_sap.u.emm_reg.ue_id = ue_id;
   emm_sap.u.emm_reg.ctx = emm_context;
   rc = emm_sap_send (&emm_sap);
 

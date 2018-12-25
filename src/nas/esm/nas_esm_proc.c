@@ -279,7 +279,7 @@ nas_esm_proc_pdn_connectivity_res (
       rc = lowerlayer_data_req(esm_sap.ue_id, rsp);
     }
     bdestroy_wrapper(&rsp);
- }
+  }
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
 }
 
@@ -326,15 +326,21 @@ nas_esm_proc_pdn_disconnect_res(
   esm_sap.primitive = ESM_PDN_DISCONNECT_CNF;
   esm_sap.ue_id = pdn_disconn_res->ue_id;
   esm_sap.data.pdn_disconnect_res = pdn_disconn_res;
+  esm_sap.data.pdn_disconnect_res->ebi = EPS_BEARER_IDENTITY_UNASSIGNED;
   MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_ESM_MME, NULL, 0, "0 ESM_PDN_DISCONNECT_RES ue_id " MME_UE_S1AP_ID_FMT " ", pdn_disconn_res->ue_id);
   esm_sap_signal(&esm_sap, &rsp);
   if(rsp){
-    /**
-     * Will get and lock the EMM context to set the security header if there is a valid EMM context.
-     * No changes in the state of the EMM context.
-     */
-    rc = lowerlayer_data_req(esm_sap.ue_id, rsp);
-    bdestroy_wrapper(&rsp);
+     if(esm_sap.esm_cause == ESM_CAUSE_SUCCESS) {
+       // todo: multiapn disconnection --> add multiple ebis.. in E-RAB but single NAS
+       rc = lowerlayer_deactivate_bearer_req(pdn_disconn_res->ue_id, esm_sap.data.pdn_disconnect_res->ebi, rsp);
+     } else {
+       /**
+        * Will get and lock the EMM context to set the security header if there is a valid EMM context.
+        * No changes in the state of the EMM context.
+        */
+       rc = lowerlayer_data_req(esm_sap.ue_id, rsp);
+     }
+     bdestroy_wrapper(&rsp);
   }
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
 }

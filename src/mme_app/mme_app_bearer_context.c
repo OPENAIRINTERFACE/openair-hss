@@ -103,15 +103,16 @@ void mme_app_bearer_context_initialize(bearer_context_t *bearer_context)
   ebi_t ebi = bearer_context->ebi;
   memset(bearer_context, 0, sizeof(*bearer_context));
   bearer_context->ebi = ebi;
-  bearer_context->next_bc = bearerContextPool;
-  bearerContextPool = bearer_context;
 }
 
 //------------------------------------------------------------------------------
 void mme_app_free_bearer_context (bearer_context_t ** const bearer_context)
 {
 //  free_esm_bearer_context(&(*bearer_context)->esm_ebr_context);
-  free_wrapper((void**)bearer_context);
+//  free_wrapper((void**)bearer_context);
+  memset(*bearer_context, 0, sizeof(bearer_context_t));
+  (*bearer_context)->next_bc = bearerContextPool;
+  bearerContextPool = (*bearer_context);
 }
 
 //------------------------------------------------------------------------------
