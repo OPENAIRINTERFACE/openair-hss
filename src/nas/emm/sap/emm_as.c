@@ -545,10 +545,18 @@ static int _emm_as_data_ind (emm_as_data_t * msg, int *emm_cause)
           /*
            * Foward ESM data to EPS session management
            */
-          // shrink plain_msg
-          btrunc(plain_msg, bytes);
-          nas_itti_esm_data_ind(emm_ctx->ue_id, plain_msg,
-              &emm_ctx->_imsi, &emm_ctx->originating_tai);
+          if(emm_ctx){
+            // shrink plain_msg
+                      btrunc(plain_msg, bytes);
+                      nas_itti_esm_data_ind(emm_ctx->ue_id, plain_msg,
+                          &emm_ctx->_imsi, &emm_ctx->originating_tai);
+          } else {
+            OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - No UE context exists for ue_id " MME_UE_S1AP_ID_FMT". "
+                "Cannot forward NAS_ESM message. \n", msg->ue_id);
+              if(plain_msg)
+                bdestroy(&plain_msg);
+          }
+
         }
       }
     } else {
