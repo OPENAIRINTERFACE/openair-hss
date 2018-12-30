@@ -191,6 +191,7 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
       esm_send_pdn_connectivity_reject(esm_proc_pdn_connectivity->esm_base_proc.pti, &esm_resp_msg, msg->esm_cause);
       /** Directly process the ULA. A response message might be returned. */
       _esm_proc_free_pdn_connectivity_procedure(&esm_proc_pdn_connectivity);
+      msg->esm_cause = ESM_CAUSE_USER_AUTHENTICATION_FAILED;
     }
   }
   break;
@@ -210,7 +211,7 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
       msg->is_attach = esm_proc_pdn_connectivity->is_attach;
       msg->esm_cause = esm_proc_pdn_connectivity_res(msg->ue_id, esm_proc_pdn_connectivity,
           &msg->data.pdn_connectivity_res->apn_ambr, &msg->data.pdn_connectivity_res->bearer_qos,
-          msg->data.pdn_connectivity_res->pdn_type, msg->data.pdn_connectivity_res->paa);
+          msg->data.pdn_connectivity_res->pdn_type, msg->data.pdn_connectivity_res->paa, &msg->data.pdn_connectivity_res->pco);
       if(msg->esm_cause != ESM_CAUSE_SUCCESS) {
         /*
          * Send a PDN connectivity reject.
@@ -269,9 +270,14 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
      */
     pti_t                                pti                         = PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED;
     msg->esm_cause = esm_proc_eps_bearer_context_deactivate_request(msg->ue_id, &pti,
-        &msg->data.pdn_disconnect_res->ebi, &esm_resp_msg);
+        &msg->data.pdn_disconnect_res->default_ebi, &msg->data.pdn_disconnect_res->ded_ebis, &esm_resp_msg);
     if(msg->esm_cause != ESM_CAUSE_SUCCESS){
-      esm_send_pdn_disconnect_reject(pti, &esm_resp_msg, msg->esm_cause);
+      if(msg->esm_cause != ESM_CAUSE_PDN_CONNECTION_DOES_NOT_EXIST){
+        esm_send_pdn_disconnect_reject(pti, &esm_resp_msg, msg->esm_cause);
+      } else {
+        OAILOG_WARNING(LOG_NAS_ESM, "ESM-SAP   - No PDN connection exists for received ESM PDN Disconnection request for UE " MME_UE_S1AP_ID_FMT".\n",
+            msg->ue_id);
+      }
     }
   }
   break;
@@ -322,7 +328,7 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
   break;
 
   case ESM_EPS_BEARER_CONTEXT_DEACTIVATE_REQ:{
-    msg->esm_cause = esm_proc_eps_bearer_context_deactivate_request(msg->ue_id, &msg->data.eps_bearer_context_deactivate.pti,
+    msg->esm_cause = esm_proc_eps_bearer_context_deactivate_request(msg->ue_id, NULL, &msg->data.eps_bearer_context_deactivate.pti,
        &msg->data.eps_bearer_context_deactivate.ded_ebi, &esm_resp_msg);
    if (msg->esm_cause != ESM_CAUSE_SUCCESS) {   /**< We assume that no ESM procedure exists. */
      /* Only if no bearer context. */
@@ -335,7 +341,7 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
     /*
      * Get the procedure of the timer.
      */
-    nas_esm_proc_t * esm_base_proc = (nas_esm_proc_t*)msg->data.esm_proc_timeout;
+    nas_esm_proc_t * esm_base_proc = ((nas_esm_proc_t*)msg->data.esm_proc_timeout);
     if(!esm_base_proc){
       OAILOG_ERROR(LOG_NAS_ESM, "ESM-SAP   - No procedure for timeout found.\n");
     }else {
@@ -345,7 +351,9 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
        * Process the timeout.
        * Encode the returned message. Currently, building and encoding a new message every time.
        */
-      esm_base_proc->timeout_notif(esm_base_proc);
+      msg->ue_id = esm_base_proc->ue_id;
+      msg->is_attach = esm_base_proc->type == ESM_PROC_PDN_CONTEXT ? ((nas_esm_proc_pdn_connectivity_t*)esm_base_proc)->is_attach : false;
+      msg->esm_cause = esm_base_proc->timeout_notif(esm_base_proc, &esm_resp_msg );
     }
   }
   break;

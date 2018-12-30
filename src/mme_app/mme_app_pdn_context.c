@@ -143,7 +143,7 @@ void mme_app_get_bearer_contexts_to_be_created(pdn_context_t * pdn_context, bear
 
 //------------------------------------------------------------------------------
 int
-mme_app_esm_create_pdn_context(mme_ue_s1ap_id_t ue_id, const apn_configuration_t *apn_configuration, const bstring apn, pdn_cid_t pdn_cid, pdn_context_t **pdn_context_pp)
+mme_app_esm_create_pdn_context(mme_ue_s1ap_id_t ue_id, const apn_configuration_t *apn_configuration, const bstring apn,  pdn_cid_t pdn_cid, pdn_context_t **pdn_context_pp)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
   DevAssert(apn);
@@ -159,14 +159,12 @@ mme_app_esm_create_pdn_context(mme_ue_s1ap_id_t ue_id, const apn_configuration_t
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
 
-
   pdn_context_t * pdn_ctx_TEST = NULL;
   RB_FOREACH (pdn_ctx_TEST, PdnContexts, &ue_context->pdn_contexts) {
     DevAssert(pdn_ctx_TEST);
     OAILOG_DEBUG (LOG_MME_APP, "PDN context %p for APN \"%s\" and cid=%d, ebi=%d (first bearer = %p) already exists UE: " MME_UE_S1AP_ID_FMT ". \n", pdn_ctx_TEST, bdata(pdn_ctx_TEST->apn_subscribed),
         pdn_ctx_TEST->context_identifier, pdn_ctx_TEST->default_ebi, RB_MIN(SessionBearers, &pdn_ctx_TEST->session_bearers), ue_id);
   }
-
 
   bearer_context_t * free_bearer = RB_MIN(BearerPool, &ue_context->bearer_pool);
   if(!free_bearer){
@@ -249,18 +247,9 @@ mme_app_esm_create_pdn_context(mme_ue_s1ap_id_t ue_id, const apn_configuration_t
     /** The subscribed APN should already exist from handover (forward relocation request). */
     free_bearer->esm_ebr_context.status = ESM_EBR_ACTIVE;
   }
-  // todo: PCOs
-  //     * Set the emergency bearer services indicator
-  //     */
+  /* Set the emergency bearer services indicator */
   //    (*pdn_context_pP)->esm_data.is_emergency = is_emergency;
-  //      if (pco) {
-  //        if (!(*pdn_context_pP)->pco) {
-  //          (*pdn_context_pP)->pco = calloc(1, sizeof(protocol_configuration_options_t));
-  //        } else {
-  //          clear_protocol_configuration_options((*pdn_context_pP)->pco);
-  //        }
-  //        copy_protocol_configuration_options((*pdn_context_pP)->pco, pco);
-  //      }
+  DevAssert(!(*pdn_context_pp)->pco);
   /** Insert the PDN context into the map of PDN contexts. */
   pdn_context_t * pdn_context_test = RB_INSERT (PdnContexts, &ue_context->pdn_contexts, (*pdn_context_pp));
   if(pdn_context_test){
@@ -278,7 +267,7 @@ int
 mme_app_esm_update_pdn_context(mme_ue_s1ap_id_t ue_id, const bstring apn, pdn_cid_t pdn_cid, ebi_t linked_ebi,
     const pdn_type_t pdn_type, const paa_t * const paa,
     esm_ebr_state esm_ebr_state, ambr_t * const apn_ambr, bearer_qos_t * const default_bearer_qos,
-    protocol_configuration_options_t *pcos){
+    protocol_configuration_options_t *pco){
   ue_context_t              *ue_context         = NULL;
   pdn_context_t             *pdn_context        = NULL;
   int                        rc                 = RETURNok;
@@ -319,23 +308,15 @@ mme_app_esm_update_pdn_context(mme_ue_s1ap_id_t ue_id, const bstring apn, pdn_ci
   DevAssert(default_bearer->ebi == default_bearer->linked_ebi);
   DevAssert(default_bearer->ebi == pdn_context->default_ebi);
   mme_app_esm_update_bearer_context(default_bearer, default_bearer_qos, esm_ebr_state, (traffic_flow_template_t*)NULL);
-  //    if(pco){
-  //      if (bearer_context->esm_ebr_context.pco) {
-  //        free_protocol_configuration_options(&bearer_context->esm_ebr_context.pco);
-  //      }
-  //      /** Make it with memcpy, don't use bearer.. */
-  //      bearer_context->esm_ebr_context.pco = (protocol_configuration_options_t *) calloc (1, sizeof (protocol_configuration_options_t));
-  //      memcpy(bearer_context->esm_ebr_context.pco, pco, sizeof (protocol_configuration_options_t));  /**< Should have the processed bitmap in the validation . */
-  //    }
-  ////    if (pco) {
-  ////      if (!(*pdn_context_pP)->pco) {
-  ////        (*pdn_context_pP)->pco = calloc(1, sizeof(protocol_configuration_options_t));
-  ////      } else {
-  ////        clear_protocol_configuration_options((*pdn_context_pP)->pco);
-  ////      }
-  ////      copy_protocol_configuration_options((*pdn_context_pP)->pco, pco);
-  ////    }
-  //    }
+  /** Save the PCO for handover purposes. */
+  if(pco){
+    if (!pdn_context->pco) {
+      pdn_context->pco = calloc(1, sizeof(protocol_configuration_options_t));
+    } else {
+      clear_protocol_configuration_options(pdn_context->pco);
+    }
+    copy_protocol_configuration_options(pdn_context->pco, pco);
+  }
 
   //  UNLOCK_UE_CONTEXT(ue_context);
   OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
@@ -473,11 +454,9 @@ static void mme_app_free_pdn_context (pdn_context_t ** const pdn_context)
   if ((*pdn_context)->apn_oi_replacement) {
     bdestroy_wrapper(&(*pdn_context)->apn_oi_replacement);
   }
-//  if ((*pdn_context)->pco) {
-//    // todo: re-introduce this after all memory leaks are fixed..
-//    DevAssert(0);
-////    free_protocol_configuration_options(&(*pdn_context)->pco);
-//  }
+  if ((*pdn_context)->pco) {
+    free_protocol_configuration_options(&((*pdn_context)->pco));
+  }
   // todo: free PAA
   if((*pdn_context)->paa){
     free_wrapper((void**)&((*pdn_context)->paa));

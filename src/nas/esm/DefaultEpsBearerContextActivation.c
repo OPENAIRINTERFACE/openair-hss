@@ -89,7 +89,7 @@
    retransmission counter */
 #define DEFAULT_EPS_BEARER_ACTIVATE_COUNTER_MAX   3
 
-static void
+static esm_cause_t
 _default_eps_bearer_activate_t3485_handler(nas_esm_proc_t * esm_base_proc, ESM_msg *esm_resp_msg);
 
 /****************************************************************************/
@@ -173,16 +173,16 @@ esm_send_activate_default_eps_bearer_context_request (
 //    msg->esmcause = esm_cause;
 //  }
 
-//  if (pco) {
-//    msg->presencemask |= ACTIVATE_DEFAULT_EPS_BEARER_CONTEXT_REQUEST_PROTOCOL_CONFIGURATION_OPTIONS_PRESENT;
-//    /**
-//     * The PCOs actually received by the SAE-GW.
-//     * todo: After handover, the received PCOs might have been changed (like DNS address), we need to check them and inform the UE.
-//     * todo: We also need to be able to ask the SAE-GW for specific PCOs?
-//     * In handover, any change in the ESM context information has to be forwarded to the UE --> MODIFY EPS BEARER CONTEXT REQUEST!! (probably not possible with TAU accept).
-//     */
-//    copy_protocol_configuration_options(&msg->protocolconfigurationoptions, pco);
-//  }
+  if (esm_proc_pdn_connectivity->pco.num_protocol_or_container_id) {
+    esm_resp_msg->activate_default_eps_bearer_context_request.presencemask |= ACTIVATE_DEFAULT_EPS_BEARER_CONTEXT_REQUEST_PROTOCOL_CONFIGURATION_OPTIONS_PRESENT;
+    /**
+     * The PCOs actually received by the SAE-GW.
+     * todo: After handover, the received PCOs might have been changed (like DNS address), we need to check them and inform the UE.
+     * todo: We also need to be able to ask the SAE-GW for specific PCOs?
+     * In handover, any change in the ESM context information has to be forwarded to the UE --> MODIFY EPS BEARER CONTEXT REQUEST!! (probably not possible with TAU accept).
+     */
+    copy_protocol_configuration_options(&esm_resp_msg->activate_default_eps_bearer_context_request.protocolconfigurationoptions, &esm_proc_pdn_connectivity->pco);
+  }
 
   /** Implementing subscribed values. */
   esm_resp_msg->activate_default_eps_bearer_context_request.presencemask |= ACTIVATE_DEFAULT_EPS_BEARER_CONTEXT_REQUEST_APNAMBR_PRESENT;
@@ -235,7 +235,7 @@ esm_proc_default_eps_bearer_context (
     /** Stop any timer if running. */
     nas_stop_esm_timer(ue_id, &esm_proc_pdn_connectivity->esm_base_proc.esm_proc_timer);
     /** Start the T3485 timer for additional PDN connectivity. */
-    esm_proc_pdn_connectivity->esm_base_proc.esm_proc_timer.id = nas_esm_timer_start (esm_proc_pdn_connectivity->esm_base_proc.esm_proc_timer.sec, 0 /*usec*/, ue_id); /**< Address field should be big enough to save an ID. */
+    esm_proc_pdn_connectivity->esm_base_proc.esm_proc_timer.id = nas_esm_timer_start (esm_proc_pdn_connectivity->esm_base_proc.esm_proc_timer.sec, 0 /*usec*/, (nas_esm_proc_t*)esm_proc_pdn_connectivity); /**< Address field should be big enough to save an ID. */
     esm_proc_pdn_connectivity->esm_base_proc.timeout_notif = _default_eps_bearer_activate_t3485_handler;
     OAILOG_FUNC_OUT(LOG_NAS_ESM);
   }
@@ -274,8 +274,8 @@ esm_proc_default_eps_bearer_context_accept (mme_ue_s1ap_id_t ue_id,
   /*
    * Update the ESM bearer context state of the default bearer as ACTIVE.
    * The CN state & FTEID will be set by the MME_APP layer in independently of this.
+   * The PCO of the ESM procedure should be updated.
    */
-
   rc = mme_app_esm_update_pdn_context(ue_id, esm_proc_pdn_connectivity->subscribed_apn, esm_proc_pdn_connectivity->pdn_cid, esm_proc_pdn_connectivity->default_ebi,
       esm_proc_pdn_connectivity->pdn_type, NULL,
       ESM_EBR_ACTIVE, NULL, NULL, NULL);
@@ -323,7 +323,7 @@ esm_proc_default_eps_bearer_context_accept (mme_ue_s1ap_id_t ue_id,
  **                                                                        **
  ***************************************************************************/
 
-static void
+static esm_cause_t
 _default_eps_bearer_activate_t3485_handler(nas_esm_proc_t * esm_base_proc, ESM_msg *esm_resp_msg) {
   OAILOG_FUNC_IN(LOG_NAS_ESM);
 
@@ -354,7 +354,7 @@ _default_eps_bearer_activate_t3485_handler(nas_esm_proc_t * esm_base_proc, ESM_m
         nas_stop_esm_timer(esm_proc_pdn_connectivity->esm_base_proc.ue_id, &esm_base_proc->esm_proc_timer);
         esm_base_proc->esm_proc_timer.id = nas_esm_timer_start(mme_config.nas_config.t3485_sec, 0 /*usec*/, (void*)esm_base_proc);
         esm_base_proc->timeout_notif = _default_eps_bearer_activate_t3485_handler;
-        OAILOG_FUNC_OUT(LOG_NAS_ESM);
+        OAILOG_FUNC_RETURN(LOG_NAS_ESM, ESM_CAUSE_SUCCESS);
       }
     }
   }
@@ -369,5 +369,5 @@ _default_eps_bearer_activate_t3485_handler(nas_esm_proc_t * esm_base_proc, ESM_m
    * Release the transactional PDN connectivity procedure.
    */
   _esm_proc_free_pdn_connectivity_procedure(&esm_proc_pdn_connectivity);
-  OAILOG_FUNC_OUT(LOG_NAS_ESM);
+  OAILOG_FUNC_RETURN(LOG_NAS_ESM, ESM_CAUSE_NETWORK_FAILURE);
 }

@@ -124,7 +124,7 @@ void _nas_proc_esm_timeout_handler (void *args)
   /*
    * Send an internal ESM signal to handle the timeout.
    */
-  memset(&esm_sap, 0, sizeof(ESM_msg));
+  memset(&esm_sap, 0, sizeof(esm_sap_t));
   esm_sap.primitive = ESM_TIMEOUT_IND;
   esm_sap.data.esm_proc_timeout = (uintptr_t)args;
   esm_sap_signal(&esm_sap, &rsp);
@@ -326,13 +326,18 @@ nas_esm_proc_pdn_disconnect_res(
   esm_sap.primitive = ESM_PDN_DISCONNECT_CNF;
   esm_sap.ue_id = pdn_disconn_res->ue_id;
   esm_sap.data.pdn_disconnect_res = pdn_disconn_res;
-  esm_sap.data.pdn_disconnect_res->ebi = EPS_BEARER_IDENTITY_UNASSIGNED;
+  esm_sap.data.pdn_disconnect_res->default_ebi = EPS_BEARER_IDENTITY_UNASSIGNED;
   MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_ESM_MME, NULL, 0, "0 ESM_PDN_DISCONNECT_RES ue_id " MME_UE_S1AP_ID_FMT " ", pdn_disconn_res->ue_id);
   esm_sap_signal(&esm_sap, &rsp);
   if(rsp){
      if(esm_sap.esm_cause == ESM_CAUSE_SUCCESS) {
-       // todo: multiapn disconnection --> add multiple ebis.. in E-RAB but single NAS
-       rc = lowerlayer_deactivate_bearer_req(pdn_disconn_res->ue_id, esm_sap.data.pdn_disconnect_res->ebi, rsp);
+       rc = lowerlayer_deactivate_bearer_req(pdn_disconn_res->ue_id, esm_sap.data.pdn_disconnect_res->default_ebi, rsp);
+       bdestroy_wrapper(&rsp);
+       int num_ded_ebi = 0;
+       while(num_ded_ebi < esm_sap.data.pdn_disconnect_res->ded_ebis.num_ebi && rc == RETURNok){
+         rc = lowerlayer_deactivate_bearer_req(pdn_disconn_res->ue_id, esm_sap.data.pdn_disconnect_res->ded_ebis.ebis[num_ded_ebi], NULL);
+         num_ded_ebi++;
+       }
      } else {
        /**
         * Will get and lock the EMM context to set the security header if there is a valid EMM context.

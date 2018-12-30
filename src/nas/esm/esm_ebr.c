@@ -115,14 +115,15 @@ const char * esm_ebr_state2string(esm_ebr_state esm_ebr_state)
  * Bearer Context Procedures
  */
 //-----------------------------------------------------------------------------
-nas_esm_proc_bearer_context_t *_esm_proc_create_bearer_context_procedure(mme_ue_s1ap_id_t ue_id, pti_t pti, ebi_t linked_ebi, pdn_cid_t pdn_cid, ebi_t ebi,
+nas_esm_proc_bearer_context_t *_esm_proc_create_bearer_context_procedure(mme_ue_s1ap_id_t ue_id, pti_t pti, ebi_t linked_ebi, pdn_cid_t pdn_cid, ebi_t ebi, teid_t s1u_sgw_teid,
     int timeout_sec, int timeout_usec, esm_timeout_cb_t timeout_notif)
 {
-  nas_esm_proc_bearer_context_t  *esm_proc_bearer_context = mme_app_nas_esm_create_bearer_context_procedure(ue_id, pti, ebi, timeout_sec, timeout_usec, timeout_notif, (void*)ue_id);
+  nas_esm_proc_bearer_context_t  *esm_proc_bearer_context = mme_app_nas_esm_create_bearer_context_procedure(ue_id, pti, ebi, timeout_sec, timeout_usec, timeout_notif);
   if(esm_proc_bearer_context){
     esm_proc_bearer_context->linked_ebi = linked_ebi;
     esm_proc_bearer_context->pdn_cid = pdn_cid; /**< Might be unassigned. */
     esm_proc_bearer_context->bearer_ebi = ebi;
+    esm_proc_bearer_context->s1u_saegw_teid = s1u_sgw_teid;
   }
   return esm_proc_bearer_context;
 }

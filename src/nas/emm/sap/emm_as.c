@@ -1809,28 +1809,28 @@ static int _emm_as_erab_release_req (const emm_as_deactivate_bearer_context_req_
   /*
    * Setup the NAS information message
    */
-  if (emm_msg) {
+  if (msg->nas_msg) {
       size = msg->nas_msg->slen;
       is_encoded = true;
   }
 
-  if (size > 0) {
-    int                                     bytes = 0;
-    emm_security_context_t                 *emm_security_context = NULL;
-    emm_data_context_t                     *emm_context = emm_data_context_get(&_emm_data, msg->ue_id);
+  int                                     bytes = 0;
+  emm_security_context_t                 *emm_security_context = NULL;
+  emm_data_context_t                     *emm_context = emm_data_context_get(&_emm_data, msg->ue_id);
 
-    emm_context = emm_data_context_get (&_emm_data, msg->ue_id);
-    if (emm_context) {
-      if (IS_EMM_CTXT_PRESENT_SECURITY(emm_context)) {
-        emm_security_context = &emm_context->_security;
-      }
+  emm_context = emm_data_context_get (&_emm_data, msg->ue_id);
+  if (emm_context) {
+    if (IS_EMM_CTXT_PRESENT_SECURITY(emm_context)) {
+      emm_security_context = &emm_context->_security;
     }
+  }
 
-    if (emm_security_context) {
-      nas_msg.header.sequence_number = emm_security_context->dl_count.seq_num;
-      OAILOG_DEBUG (LOG_NAS_EMM, "Set nas_msg.header.sequence_number -> %u\n", nas_msg.header.sequence_number);
-    }
+  if (emm_security_context) {
+    nas_msg.header.sequence_number = emm_security_context->dl_count.seq_num;
+    OAILOG_DEBUG (LOG_NAS_EMM, "Set nas_msg.header.sequence_number -> %u\n", nas_msg.header.sequence_number);
+  }
 
+  if(size > 0){
     if (!is_encoded) {
       /*
        * Encode the NAS information message
@@ -1846,6 +1846,9 @@ static int _emm_as_erab_release_req (const emm_as_deactivate_bearer_context_req_
     if (bytes > 0) {
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, AS_RAB_RELEASE_REQ);
     }
+  } else {
+    OAILOG_DEBUG (LOG_NAS_EMM, "Returning back AS_RAB Release Request without NAS message. \n");
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, AS_RAB_RELEASE_REQ);
   }
 
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, 0);

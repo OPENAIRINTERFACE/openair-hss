@@ -39,7 +39,7 @@
  */
 
 /** Method called inside the timeout. */
-typedef void (*esm_timeout_cb_t)(struct nas_esm_proc_s *);
+typedef esm_cause_t (*esm_timeout_cb_t)(struct nas_esm_proc_s *, ESM_msg *);
 
 
 typedef enum {
@@ -88,7 +88,7 @@ typedef struct nas_esm_proc_pdn_connectivity_s {
   tai_t                        visited_tai;
   pdn_cid_t                    pdn_cid;
   ebi_t                        default_ebi;
-  //  protocol_configuration_options_t  pco;
+  protocol_configuration_options_t  pco;
   LIST_ENTRY(nas_esm_proc_pdn_connectivity_s) entries;      /* List. */
 } nas_esm_proc_pdn_connectivity_t;
 
@@ -127,7 +127,7 @@ void mme_app_nas_esm_delete_pdn_connectivity_proc(nas_esm_proc_pdn_connectivity_
  * ESM Bearer Context Procedures.
  */
 void mme_app_nas_esm_free_bearer_context_procedures(ue_context_t * const ue_context_p); // todo: static!
-nas_esm_proc_bearer_context_t* mme_app_nas_esm_create_bearer_context_procedure(mme_ue_s1ap_id_t ue_id, pti_t pti, ebi_t ebi, int timeout_sec, int timeout_usec, esm_timeout_cb_t timeout_notif, void * arg);
+nas_esm_proc_bearer_context_t* mme_app_nas_esm_create_bearer_context_procedure(mme_ue_s1ap_id_t ue_id, pti_t pti, ebi_t ebi, int timeout_sec, int timeout_usec, esm_timeout_cb_t timeout_notif);
 nas_esm_proc_bearer_context_t* mme_app_nas_esm_get_bearer_context_procedure(mme_ue_s1ap_id_t mme_ue_s1ap_id, pti_t pti, ebi_t ebi);
 void mme_app_nas_esm_delete_bearer_context_proc(nas_esm_proc_bearer_context_t     **esm_bearer_context_proc);
 

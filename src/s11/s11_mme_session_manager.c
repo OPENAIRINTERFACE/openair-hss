@@ -408,17 +408,15 @@ s11_mme_handle_delete_session_response (
         (hash_key_t) resp_p->teid,
         (void **)(uintptr_t)&ulp_req.u_api_info.deleteLocalTunnelInfo.hTunnel);
     if (HASH_TABLE_OK != hash_rc) {
-      OAILOG_ERROR (LOG_S11, "Could not get GTPv2-C hTunnel for local teid %X\n", resp_p->teid);
+      OAILOG_ERROR (LOG_S11, "Could not get GTPv2-C hTunnel for local teid %X (skipping deletion of tunnel)\n", resp_p->teid);
       MSC_LOG_EVENT (MSC_S11_MME, "Failed to deleted teid " TEID_FMT "", resp_p->teid);
     } else {
       rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
       DevAssert (NW_OK == rc);
       MSC_LOG_EVENT (MSC_S11_MME, "Deleted teid " TEID_FMT "", resp_p->teid);
+      hash_rc = hashtable_ts_free(s11_mme_teid_2_gtv2c_teid_handle, (hash_key_t) resp_p->teid);
+      DevAssert (HASH_TABLE_OK == hash_rc);
     }
-
-    hash_rc = hashtable_ts_free(s11_mme_teid_2_gtv2c_teid_handle, (hash_key_t) resp_p->teid);
-
-    DevAssert (HASH_TABLE_OK == hash_rc);
 
   }
   return itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);

@@ -128,6 +128,7 @@ long int nas_timer_stop (long int timer_id, void **nas_timer_callback_arg)
   timer_remove (timer_id, (void**)&nas_itti_timer_arg);
   if (nas_itti_timer_arg) {
     *nas_timer_callback_arg = nas_itti_timer_arg->nas_timer_callback_arg;
+    nas_itti_timer_arg->nas_timer_callback_arg = NULL;
     free_wrapper((void**)&nas_itti_timer_arg);
   } else {
     *nas_timer_callback_arg = NULL;

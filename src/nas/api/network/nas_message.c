@@ -223,22 +223,24 @@ int nas_message_encrypt (
    * * * * overflow counter shall also be incremented by one (see
    * * * * subclause 4.4.3.5).
    */
-  if (SECU_DIRECTION_DOWNLINK == emm_security_context->direction_encode) {
-    emm_security_context->dl_count.seq_num += 1;
+  if(emm_security_context){
+    if (SECU_DIRECTION_DOWNLINK == emm_security_context->direction_encode) {
+      emm_security_context->dl_count.seq_num += 1;
 
-    if (!emm_security_context->dl_count.seq_num) {
-      emm_security_context->dl_count.overflow += 1;
+      if (!emm_security_context->dl_count.seq_num) {
+        emm_security_context->dl_count.overflow += 1;
+      }
+
+      OAILOG_DEBUG (LOG_NAS, "Incremented emm_security_context.dl_count.seq_num -> %u\n", emm_security_context->dl_count.seq_num);
+    } else {
+      emm_security_context->ul_count.seq_num += 1;
+
+      if (!emm_security_context->ul_count.seq_num) {
+        emm_security_context->ul_count.overflow += 1;
+      }
+
+      OAILOG_DEBUG (LOG_NAS, "Incremented emm_security_context.ul_count.seq_num -> %u\n", emm_security_context->ul_count.seq_num);
     }
-
-    OAILOG_DEBUG (LOG_NAS, "Incremented emm_security_context.dl_count.seq_num -> %u\n", emm_security_context->dl_count.seq_num);
-  } else {
-    emm_security_context->ul_count.seq_num += 1;
-
-    if (!emm_security_context->ul_count.seq_num) {
-      emm_security_context->ul_count.overflow += 1;
-    }
-
-    OAILOG_DEBUG (LOG_NAS, "Incremented emm_security_context.ul_count.seq_num -> %u\n", emm_security_context->ul_count.seq_num);
   }
 
   if (bytes < 0) {

@@ -84,9 +84,12 @@ int mme_app_handle_s6a_update_location_ans (
   /** Remove the cached subscription profile and set the new one. */
   subscription_data_t * subscription_data = ula_pP->subscription_data;
   mme_remove_subscription_profile(&mme_app_desc.mme_ue_contexts, imsi64);
-  mme_insert_subscription_profile(&mme_app_desc.mme_ue_contexts, imsi64, subscription_data);
+  if(ula_pP->subscription_data){
+    mme_insert_subscription_profile(&mme_app_desc.mme_ue_contexts, imsi64, subscription_data);
+  } else {
+    goto err;
+  }
   ula_pP->subscription_data = NULL;
-  subscription_data_t   *subscription_data_test = mme_ue_subscription_data_exists_imsi(&mme_app_desc.mme_ue_contexts, imsi64);
 
   OAILOG_INFO(LOG_MME_APP, "Updated the subscription profile for IMSI " IMSI_64_FMT " in the cache. \n", imsi64);
 

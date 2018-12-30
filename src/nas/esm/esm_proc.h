@@ -102,7 +102,7 @@ esm_cause_t esm_proc_pdn_config_res(mme_ue_s1ap_id_t ue_id, bool * is_attach, pt
 
 esm_cause_t esm_proc_pdn_connectivity_res (mme_ue_s1ap_id_t ue_id, nas_esm_proc_pdn_connectivity_t * esm_proc_pdn_connectivity,
     ambr_t * apn_ambr, bearer_qos_t * bearer_level_qos,
-    pdn_type_t pdn_type, paa_t * paa);
+    pdn_type_t pdn_type, paa_t * paa, protocol_configuration_options_t * pco);
 
 /*
  * --------------------------------------------------------------------------
@@ -206,6 +206,7 @@ esm_proc_modify_eps_bearer_context_reject (
 esm_cause_t esm_proc_eps_bearer_context_deactivate_request (mme_ue_s1ap_id_t ue_id,
     proc_tid_t   * pti,
     ebi_t        * ebi,
+    ebi_list_t *ded_ebis,
     ESM_msg * esm_rsp_msg);
 
 #endif /* __ESM_PROC_H__*/

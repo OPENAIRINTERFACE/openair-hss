@@ -562,7 +562,7 @@ gtpv2c_bearer_context_to_be_created_within_create_bearer_request_ie_get (
       break;
 
     case NW_GTPV2C_IE_BEARER_TFT:
-      if(bearer_context->tft)
+      if(!bearer_context->tft)
         bearer_context->tft = calloc(1, sizeof(traffic_flow_template_t));
       rc = gtpv2c_tft_ie_get (ie_p->t, ntohs (ie_p->l), ie_p->i, &ieValue[read + sizeof (nw_gtpv2c_ie_tlv_t)], bearer_context->tft);
       DevAssert (NW_OK == rc);

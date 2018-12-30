@@ -52,6 +52,7 @@
 #include "mme_app_esm_procedures.h"
 #include "nas_esm_proc.h"
 #include "esm_message.h"
+#include "esm_cause.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -61,13 +62,16 @@
 /*******************  L O C A L    D E F I N I T I O N S  *******************/
 /****************************************************************************/
 
-static void
+static esm_cause_t
 _esm_information_t3489_handler(
   nas_esm_proc_t * esm_base_proc, ESM_msg *esm_rsp_msg);
 
+static void esm_send_esm_information_request (pti_t pti, ebi_t ebi, ESM_msg * esm_req_msg);
+
+
 /* Maximum value of the deactivate EPS bearer context request
    retransmission counter */
-#define ESM_INFORMATION_COUNTER_MAX   3
+#define ESM_INFORMATION_COUNTER_MAX   2
 
 /****************************************************************************/
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
@@ -103,13 +107,13 @@ void esm_proc_esm_information_request (nas_esm_proc_pdn_connectivity_t *esm_proc
    * Send ESM information request message and
    * start timer T3489
    */
-  esm_send_esm_information_request (esm_proc_pdn_connectivity->esm_base_proc.pti, EPS_BEARER_IDENTITY_UNASSIGNED, &esm_result_msg);
+  esm_send_esm_information_request (esm_proc_pdn_connectivity->esm_base_proc.pti, EPS_BEARER_IDENTITY_UNASSIGNED, esm_result_msg);
 
   nas_stop_esm_timer(esm_proc_pdn_connectivity->esm_base_proc.ue_id, &esm_proc_pdn_connectivity->esm_base_proc.esm_proc_timer);
   /*
    * Start T3489 timer
    */
-  esm_proc_pdn_connectivity->esm_base_proc.esm_proc_timer.id = nas_esm_timer_start (mme_config.nas_config.t3489_sec, 0 /*usec*/, esm_proc_pdn_connectivity->esm_base_proc.ue_id);
+  esm_proc_pdn_connectivity->esm_base_proc.esm_proc_timer.id = nas_esm_timer_start (mme_config.nas_config.t3489_sec, 0 /*usec*/, (nas_esm_proc_t*)esm_proc_pdn_connectivity);
   /**< Address field should be big enough to save an ID. */
 
   esm_proc_pdn_connectivity->esm_base_proc.timeout_notif = _esm_information_t3489_handler;
@@ -127,7 +131,7 @@ void esm_proc_esm_information_response (mme_ue_s1ap_id_t ue_id, pti_t pti, nas_e
   nas_stop_esm_timer(ue_id, &esm_proc_pdn_connectivity->esm_base_proc.esm_proc_timer);
 
   /** Process the result. */
-  if (esm_information_resp->presencemask & PDN_CONNECTIVITY_REQUEST_ACCESS_POINT_NAME_PRESENT) {
+  if (esm_information_resp->presencemask & ESM_INFORMATION_RESPONSE_ACCESS_POINT_NAME_PRESENT) {
     if(esm_proc_pdn_connectivity->subscribed_apn)
       bdestroy_wrapper(&esm_proc_pdn_connectivity->subscribed_apn);
     esm_proc_pdn_connectivity->subscribed_apn = bstrcpy(esm_information_resp->accesspointname);
@@ -142,12 +146,12 @@ void esm_proc_esm_information_response (mme_ue_s1ap_id_t ue_id, pti_t pti, nas_e
         "Will attach to the default APN in the subscription information. " "(ue_id=%d, pti=%d)\n", ue_id, pti);
   }
 
-//  if ((pco) && (pco->num_protocol_or_container_id)) {
-//    if (esm_context->esm_proc_data->pco.num_protocol_or_container_id) {
-//      clear_protocol_configuration_options(&esm_context->esm_proc_data->pco);
-//    }
-//    copy_protocol_configuration_options(&esm_context->esm_proc_data->pco, pco);
-//  }
+  if (esm_information_resp->presencemask & ESM_INFORMATION_RESPONSE_PROTOCOL_CONFIGURATION_OPTIONS_PRESENT) {
+    if (esm_proc_pdn_connectivity->pco.num_protocol_or_container_id) {
+      clear_protocol_configuration_options(&esm_proc_pdn_connectivity->pco);
+    }
+    copy_protocol_configuration_options(&esm_proc_pdn_connectivity->pco, &esm_information_resp->protocolconfigurationoptions);
+  }
 
   OAILOG_FUNC_OUT(LOG_NAS_ESM);
 }
@@ -162,7 +166,7 @@ void esm_proc_esm_information_response (mme_ue_s1ap_id_t ue_id, pti_t pti, nas_e
    --------------------------------------------------------------------------
 */
 
-static void
+static esm_cause_t
 _esm_information_t3489_handler(nas_esm_proc_t * esm_base_proc, ESM_msg *esm_rsp_msg) {
   OAILOG_FUNC_IN(LOG_NAS_ESM);
 
@@ -174,7 +178,7 @@ _esm_information_t3489_handler(nas_esm_proc_t * esm_base_proc, ESM_msg *esm_rsp_
      * Keep the ESM transaction.
      */
     esm_proc_esm_information_request(esm_proc_pdn_connectivity, esm_rsp_msg);
-    OAILOG_FUNC_OUT(LOG_NAS_ESM);
+    OAILOG_FUNC_RETURN(LOG_NAS_ESM, ESM_CAUSE_SUCCESS);
   } else {
     /*
      * No PDN context is expected.
@@ -185,6 +189,6 @@ _esm_information_t3489_handler(nas_esm_proc_t * esm_base_proc, ESM_msg *esm_rsp_
      * Release the transactional PDN connectivity procedure.
      */
     _esm_proc_free_pdn_connectivity_procedure(&esm_proc_pdn_connectivity);
-    OAILOG_FUNC_OUT(LOG_NAS_ESM);
+    OAILOG_FUNC_RETURN(LOG_NAS_ESM, ESM_CAUSE_NETWORK_FAILURE);
   }
 }

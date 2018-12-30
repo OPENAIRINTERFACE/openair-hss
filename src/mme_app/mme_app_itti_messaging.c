@@ -183,7 +183,7 @@ int mme_app_send_s11_release_access_bearers_req (struct ue_context_s *const ue_c
 //------------------------------------------------------------------------------
 void
 mme_app_send_s11_create_session_req (
-  const mme_ue_s1ap_id_t ue_id, const imsi_t * const imsi_p, pdn_context_t * pdn_context, tai_t * serving_tai, const bool is_from_s10_tau)
+  const mme_ue_s1ap_id_t ue_id, const imsi_t * const imsi_p, pdn_context_t * pdn_context, tai_t * serving_tai, const protocol_configuration_options_t * const pco, const bool is_from_s10_tau)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
   uint8_t                                 i = 0;
@@ -310,9 +310,11 @@ mme_app_send_s11_create_session_req (
     session_request_p->paa.ipv6_prefix_length = pdn_context->paa->ipv6_prefix_length;
   }
   //  session_request_p->apn_restriction = 0x00; todo: set them where?
-//  if(pdn_context->pco){ /**< todo: Should not exist in handover, where to get them?. */
-//    copy_protocol_configuration_options (&session_request_p->pco, pdn_context->pco);
-//  }
+  if(pco && pco->num_protocol_or_container_id){ /**< todo: Should not exist in handover, where to get them?. */
+    copy_protocol_configuration_options (&session_request_p->pco, pco);
+  } else if (pdn_context->pco && pdn_context->pco->num_protocol_or_container_id){
+    copy_protocol_configuration_options (&session_request_p->pco, pdn_context->pco);
+  }
 
 //  mme_config_read_lock (&mme_config);
 //  session_request_p->peer_ip = mme_config.ipv4.sgw_s11;
@@ -387,7 +389,7 @@ mme_app_send_s11_modify_bearer_req(const ue_context_t * ue_context, pdn_context_
   RB_FOREACH (bearer_context_to_establish, SessionBearers, &pdn_context->session_bearers) {
     DevAssert(bearer_context_to_establish);
     /** Add them to the bearers list of the MBR. */
-    if(bearer_context_to_establish->s_gw_fteid_s1u.teid){
+    if(bearer_context_to_establish->enb_fteid_s1u.teid){
       OAILOG_DEBUG(LOG_MME_APP, "Adding EBI %d as bearer context to be modified for UE " MME_UE_S1AP_ID_FMT". \n", bearer_context_to_establish->ebi, ue_context->mme_ue_s1ap_id);
       s11_modify_bearer_request->bearer_contexts_to_be_modified.bearer_contexts[s11_modify_bearer_request->bearer_contexts_to_be_modified.num_bearer_context].eps_bearer_id =
           bearer_context_to_establish->ebi;
@@ -399,8 +401,9 @@ mme_app_send_s11_modify_bearer_req(const ue_context_t * ue_context, pdn_context_
       s11_modify_bearer_request->bearer_contexts_to_be_removed.bearer_contexts[s11_modify_bearer_request->bearer_contexts_to_be_modified.num_bearer_context].eps_bearer_id =
                 bearer_context_to_establish->ebi;
       s11_modify_bearer_request->bearer_contexts_to_be_removed.bearer_contexts[s11_modify_bearer_request->bearer_contexts_to_be_modified.num_bearer_context].cause.cause_value = NO_RESOURCES_AVAILABLE;
-      bcs_to_be_removed->bearer_contexts[bcs_to_be_removed->num_bearer_context].eps_bearer_id = bearer_context_to_establish->ebi;
-      bcs_to_be_removed->num_bearer_context++;
+      // todo: handle for congestion
+      //      bcs_to_be_removed->bearer_contexts[bcs_to_be_removed->num_bearer_context].eps_bearer_id = bearer_context_to_establish->ebi;
+//      bcs_to_be_removed->num_bearer_context++;
 
     }
     s11_modify_bearer_request->bearer_contexts_to_be_modified.num_bearer_context++;
@@ -1011,6 +1014,7 @@ void mme_app_send_s10_forward_relocation_response_err(teid_t mme_source_s10_teid
  * Send a NAS Context Response with error code.
  * It shall not trigger a TAU/Attach reject at the local (TARGET) MME, since no UE context information could be retrieved.
  */
+//------------------------------------------------------------------------------
 void _mme_app_send_nas_context_response_err(mme_ue_s1ap_id_t ueId, gtpv2c_cause_value_t cause_val){
   MessageDef * message_p = NULL;
   OAILOG_FUNC_IN (LOG_MME_APP);

@@ -133,9 +133,9 @@ static void *nas_esm_intertask_interface (void *args_p)
         /*
          * Call the NAS timer api
          */
-        nas_timer_handle_signal_expiry (TIMER_HAS_EXPIRED (received_message_p).timer_id, TIMER_HAS_EXPIRED (received_message_p).arg);
-      }
-      break;
+      nas_timer_handle_signal_expiry (TIMER_HAS_EXPIRED (received_message_p).timer_id, TIMER_HAS_EXPIRED (received_message_p).arg);
+    }
+    break;
 
     default:{
         OAILOG_DEBUG (LOG_NAS, "Unknown message ID %d:%s from %s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p), ITTI_MSG_ORIGIN_NAME (received_message_p));

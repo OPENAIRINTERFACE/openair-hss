@@ -207,9 +207,9 @@ mme_app_register_dedicated_bearer_context(const mme_ue_s1ap_id_t ue_id, const es
   bc_tbc->tft = NULL;
   memcpy((void*)&pBearerCtx->bearer_level_qos, &bc_tbc->bearer_level_qos, sizeof(bearer_qos_t));
   /* Insert the bearer context. */
-  pBearerCtx = RB_INSERT (SessionBearers, &pdn_context->session_bearers, pBearerCtx);
-  DevAssert(!pBearerCtx); /**< Collision Check. */
-  // todo: pco
+  DevAssert(!RB_INSERT (SessionBearers, &pdn_context->session_bearers, pBearerCtx)); /**< Collision Check. */
+  /** No dedicated bearer level PCO supported. */
+  bc_tbc->eps_bearer_id = pBearerCtx->ebi;
 
   /* Set the TEIDs. */
   memcpy((void*)&pBearerCtx->s_gw_fteid_s1u,      &bc_tbc->s1u_sgw_fteid,     sizeof(fteid_t));
@@ -332,7 +332,7 @@ mme_app_cn_update_bearer_context(mme_ue_s1ap_id_t ue_id, const ebi_t ebi,
     OAILOG_ERROR (LOG_MME_APP, "No MME_APP UE context could be found for UE: " MME_UE_S1AP_ID_FMT ". \n", ue_id);
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
-  mme_app_get_session_bearer_context_from_all(ue_id, ebi, &bearer_context);
+  mme_app_get_session_bearer_context_from_all(ue_context, ebi, &bearer_context);
   if(!bearer_context){
     OAILOG_ERROR (LOG_MME_APP, "No bearer context (ebi=%d) for UE: " MME_UE_S1AP_ID_FMT ". \n", ebi, ue_id);
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
@@ -377,9 +377,10 @@ mme_app_cn_update_bearer_context(mme_ue_s1ap_id_t ue_id, const ebi_t ebi,
  */
 //------------------------------------------------------------------------------
 esm_cause_t
-mme_app_esm_modify_bearer_context(mme_ue_s1ap_id_t ue_id, const ebi_t ebi, const esm_ebr_state esm_ebr_state, struct bearer_qos_s * bearer_level_qos, traffic_flow_template_t * tft, ambr_t *apn_ambr){
+mme_app_esm_modify_bearer_context(mme_ue_s1ap_id_t ue_id, const ebi_t ebi, ebi_list_t * const ded_ebis, const esm_ebr_state esm_ebr_state, struct bearer_qos_s * bearer_level_qos, traffic_flow_template_t * tft, ambr_t *apn_ambr){
   ue_context_t * ue_context         = NULL;
   bearer_context_t * bearer_context = NULL;
+  pdn_context_t * pdn_context       = NULL;
   int rc                            = RETURNok;
 
   OAILOG_FUNC_IN (LOG_MME_APP);
@@ -391,7 +392,12 @@ mme_app_esm_modify_bearer_context(mme_ue_s1ap_id_t ue_id, const ebi_t ebi, const
   /** Update the FTEIDs and the bearers CN state. */
   mme_app_get_session_bearer_context_from_all(ue_context, ebi, &bearer_context);
   if(!bearer_context){
-    OAILOG_ERROR (LOG_MME_APP, "No MME_APP UE context could be found for UE: " MME_UE_S1AP_ID_FMT ". \n", ue_id);
+    OAILOG_ERROR (LOG_MME_APP, "No bearer context for ebi=%d context could be found for UE: " MME_UE_S1AP_ID_FMT ". \n", ue_id);
+    OAILOG_FUNC_RETURN (LOG_MME_APP, ESM_CAUSE_REQUEST_REJECTED_UNSPECIFIED);
+  }
+  mme_app_get_pdn_context(ue_id, bearer_context->pdn_cx_id, bearer_context->linked_ebi, NULL, &pdn_context);
+  if(!pdn_context){
+    OAILOG_ERROR (LOG_MME_APP, "No PDN context for (cid=%d,linked_ebi=%d) could be found for UE: " MME_UE_S1AP_ID_FMT ". \n", bearer_context->pdn_cx_id, bearer_context->linked_ebi, ue_id);
     OAILOG_FUNC_RETURN (LOG_MME_APP, ESM_CAUSE_REQUEST_REJECTED_UNSPECIFIED);
   }
   /** We can set the FTEIDs right before the CBResp is set. */
@@ -435,7 +441,17 @@ mme_app_esm_modify_bearer_context(mme_ue_s1ap_id_t ue_id, const ebi_t ebi, const
       }
   }
   bearer_context->esm_ebr_context.status = esm_ebr_state;
-
+  if(esm_ebr_state == ESM_EBR_INACTIVE_PENDING && pdn_context->default_ebi == bearer_context->ebi){
+    DevAssert(ded_ebis);
+    memset(ded_ebis, 0, sizeof(ebi_list_t));
+    RB_FOREACH (bearer_context, SessionBearers, &pdn_context->session_bearers) {
+      // todo: better error handling
+      if(bearer_context->ebi != pdn_context->default_ebi){
+        ded_ebis->ebis[ded_ebis->num_ebi] = bearer_context->ebi;
+        ded_ebis->num_ebi++;
+      }
+    }
+  }
   // todo: UNLOCK_UE_CONTEXT
   OAILOG_INFO(LOG_NAS_EMM, "EMMCN-SAP  - " "ESM QoS and TFT could be verified of UBR received for UE " MME_UE_S1AP_ID_FMT".\n", ue_id);
   /** Not updating the parameters yet. Updating later when a success is received. State will be updated later. */

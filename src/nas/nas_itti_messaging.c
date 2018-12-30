@@ -172,8 +172,8 @@ nas_itti_erab_release_req (const mme_ue_s1ap_id_t ue_id,
 //------------------------------------------------------------------------------
 void nas_itti_activate_eps_bearer_ctx_cnf(
     const mme_ue_s1ap_id_t ue_idP,
-    const teid_t           saegw_s1u_teid,
-    const ebi_t            ebi)
+    const ebi_t            ebi,
+    const teid_t           saegw_s1u_teid)
 {
   OAILOG_FUNC_IN(LOG_NAS);
   MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_ESM, NAS_ACTIVATE_EPS_BEARER_CTX_CNF);

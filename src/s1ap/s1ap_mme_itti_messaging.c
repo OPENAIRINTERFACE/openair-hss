@@ -148,6 +148,8 @@ void s1ap_mme_itti_s1ap_initial_ue_message(
   S1AP_INITIAL_UE_MESSAGE(message_p).ecgi                    = *ecgi;
   S1AP_INITIAL_UE_MESSAGE(message_p).rrc_establishment_cause = rrc_cause + 1;
 
+  S1AP_INITIAL_UE_MESSAGE(message_p).test_plmn             = (plmn_t*)calloc(1, sizeof(plmn_t));
+
   if (opt_s_tmsi) {
     S1AP_INITIAL_UE_MESSAGE(message_p).is_s_tmsi_valid      = true;
     S1AP_INITIAL_UE_MESSAGE(message_p).opt_s_tmsi           = *opt_s_tmsi;

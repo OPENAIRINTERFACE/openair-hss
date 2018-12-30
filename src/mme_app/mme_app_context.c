@@ -165,6 +165,8 @@ ue_context_t *mme_create_new_ue_context (void)
 //------------------------------------------------------------------------------
 void mme_app_ue_context_free_content (ue_context_t * const ue_context)
 {
+  // todo: lock UE context
+
   bdestroy_wrapper (&ue_context->msisdn);
   bdestroy_wrapper (&ue_context->ue_radio_capability);
   bdestroy_wrapper (&ue_context->apn_oi_replacement);
@@ -224,23 +226,48 @@ void mme_app_ue_context_free_content (ue_context_t * const ue_context)
     mme_app_delete_s10_procedure_mme_handover(ue_context); // todo: generic s10 function
   }
 
-  /** Assert that 10 Bearers exist. Put them all back to the pool. */
-  for (int i = 0; i < BEARERS_PER_UE - 1; i++) {
-    bearer_context_t * bearer_context = RB_MAX(BearerPool, &ue_context->bearer_pool);
-    OAILOG_DEBUG(LOG_MME_APP, "Putting bearer context %p with ebi %d (i=%d) of UE "MME_UE_S1AP_ID_FMT ". \n",
-        bearer_context ? bearer_context : "NULL",
-        bearer_context ? bearer_context->ebi : "NULL",
-        i,
-        ue_context->mme_ue_s1ap_id);
-    DevAssert(bearer_context);
-    /** Remove from the UE list. */
-    bearer_context = RB_REMOVE(BearerPool, &ue_context->bearer_pool, bearer_context);
-    DevAssert(bearer_context);
-    mme_app_free_bearer_context(&bearer_context);
-  }
-  DevAssert(RB_EMPTY(&ue_context->bearer_pool));
-  RB_INIT(&ue_context->bearer_pool);
+  DevAssert(RB_EMPTY(&ue_context->pdn_contexts));
 
+  if(!RB_EMPTY(&ue_context->bearer_pool)){
+    /** Assert that 10 Bearers exist. Put them all back to the pool. */
+    for (int i = 0; i < BEARERS_PER_UE - 1; i++) {
+      bearer_context_t * bearer_context = RB_MAX(BearerPool, &ue_context->bearer_pool);
+      if(bearer_context){
+        OAILOG_DEBUG(LOG_MME_APP, "Putting bearer context %p with ebi %d (i=%d) of UE "MME_UE_S1AP_ID_FMT ". \n",
+          bearer_context, bearer_context->ebi, i, ue_context->mme_ue_s1ap_id);
+        DevAssert(bearer_context);
+        /** Remove from the UE list. */
+        bearer_context = RB_REMOVE(BearerPool, &ue_context->bearer_pool, bearer_context);
+        DevAssert(bearer_context);
+        mme_app_free_bearer_context(&bearer_context);
+      } else{
+        OAILOG_DEBUG(LOG_MME_APP, "Could not find MAX bearer context for (i=%d) of UE "MME_UE_S1AP_ID_FMT ". Removing all. \n",
+                  i, ue_context->mme_ue_s1ap_id);
+        break;
+      }
+    }
+    while(!RB_EMPTY(&ue_context->bearer_pool)){
+      bearer_context_t * bearer_context = NULL;
+      RB_FOREACH (bearer_context, BearerPool, &ue_context->bearer_pool) {
+        if(bearer_context)
+          break;
+      }
+      if(bearer_context){
+        OAILOG_ERROR(LOG_MME_APP, "Putting bearer context %p with ebi %d of UE "MME_UE_S1AP_ID_FMT " (second try). \n",
+            bearer_context, bearer_context->ebi, ue_context->mme_ue_s1ap_id);
+        DevAssert(bearer_context);
+        /** Remove from the UE list. */
+        bearer_context = RB_REMOVE(BearerPool, &ue_context->bearer_pool, bearer_context);
+        DevAssert(bearer_context);
+        mme_app_free_bearer_context(&bearer_context);
+      }else {
+        DevAssert(RB_EMPTY(&ue_context->bearer_pool));
+
+      }
+    }
+  }
+  OAILOG_DEBUG(LOG_MME_APP, "All bearers removed of UE "MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
+  RB_INIT(&ue_context->bearer_pool);
 //      mme_app_deregister_bearer_context(&ue_context->bearer_contexts[i]);
 //    }
 //  }
@@ -1629,7 +1656,12 @@ mme_app_handle_s1ap_ue_context_release_complete (
      */
 
     /** The S10 tunnel will be removed together with the S10 related process. */
-    mme_remove_ue_context(&mme_app_desc.mme_ue_contexts, ue_context);
+    if(RB_EMPTY(&ue_context->pdn_contexts))
+      mme_remove_ue_context(&mme_app_desc.mme_ue_contexts, ue_context);
+    else{
+      OAILOG_ERROR(LOG_MME_APP, "UE context mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " still has some PDN context. Not removing the UE context."
+          " Waiting for ESM cleanup.\n ", s1ap_ue_context_release_complete->mme_ue_s1ap_id);
+    }
     // todo
     ////      update_mme_app_stats_connected_ue_sub();
     ////      // return here avoid unlock_ue_contexts() // todo: don't we need to unlock it after retrieving an MME_APP ?
@@ -2343,6 +2375,8 @@ pdn_context_t * mme_app_handle_pdn_connectivity_from_s10(ue_context_t *ue_contex
 //    mme_app_register_bearer_context(ue_context, bearer_context_to_be_created_s10->eps_bearer_id, pdn_context, &bearer_context_registered);
     // todo: optimize this!
     DevAssert(bearer_context_registered);
+
+    // todo: PCO
     /*
      * Set the bearer level QoS parameters and update the statistics.
      */
@@ -2518,7 +2552,7 @@ mme_app_handle_s10_context_response(
    * When Create Session Response is received, continue to process the next PDN connection, until all are processed.
    * When all pdn_connections are completed, continue with handover request.
    */
-  mme_app_send_s11_create_session_req (ue_context->mme_ue_s1ap_id, &s10_context_response_pP->imsi, pdn_context, &emm_context->originating_tai, true);
+  mme_app_send_s11_create_session_req (ue_context->mme_ue_s1ap_id, &s10_context_response_pP->imsi, pdn_context, &emm_context->originating_tai, pdn_context->pco, true);
   OAILOG_INFO(LOG_MME_APP, "Successfully sent CSR for UE " MME_UE_S1AP_ID_FMT ". Waiting for CSResp to continue to process s10 context response on target MME side. \n", ue_context->mme_ue_s1ap_id);
   /*
    * Use the received PDN connectivity information to update the session/bearer information with the PDN connections IE, before informing the NAS layer about the context.

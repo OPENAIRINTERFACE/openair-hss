@@ -310,7 +310,8 @@ typedef struct itti_nas_pdn_disconnect_req_s {
 typedef struct itti_nas_pdn_disconnect_rsp_s {
   mme_ue_s1ap_id_t        ue_id;
   int                     cause;
-  ebi_t                   ebi;
+  ebi_t                   default_ebi;
+  ebi_list_t              ded_ebis;
 //  unsigned int            pdn_ctx_id;
 } itti_nas_pdn_disconnect_rsp_t;
 

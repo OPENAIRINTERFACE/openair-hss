@@ -35,7 +35,8 @@
 int mme_app_notify_s1ap_ue_context_released(const mme_ue_s1ap_id_t   ue_idP);
 int mme_app_send_nas_signalling_connection_rel_ind(const mme_ue_s1ap_id_t ue_id);
 int mme_app_send_s11_release_access_bearers_req (struct ue_context_s *const ue_context);
-void mme_app_send_s11_create_session_req (  const mme_ue_s1ap_id_t ue_id, const imsi_t * const imsi_p, pdn_context_t * pdn_context, tai_t * serving_tai, const bool is_from_s10_tau);
+void mme_app_send_s11_create_session_req (  const mme_ue_s1ap_id_t ue_id, const imsi_t * const imsi_p, pdn_context_t * pdn_context, tai_t * serving_tai,
+    const protocol_configuration_options_t * const pco, const bool is_from_s10_tau);
 //int mme_app_send_s11_modify_bearer_req(struct ue_context_s *const ue_context, pdn_context_t * pdn_context);
 mme_app_send_s11_modify_bearer_req(const ue_context_t * ue_context, pdn_context_t * pdn_context,
     uint8_t flags, bearer_contexts_to_be_removed_t *bcs_to_be_removed);

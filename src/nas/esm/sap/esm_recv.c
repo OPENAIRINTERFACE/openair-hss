@@ -352,8 +352,9 @@ esm_recv_pdn_connectivity_request (
   }
 
   if (msg->presencemask & PDN_CONNECTIVITY_REQUEST_PROTOCOL_CONFIGURATION_OPTIONS_PRESENT) {
-    // todo: implement this after checking for fixes..
-    //    copy_protocol_configuration_options(&esm_data->pco, &msg->protocolconfigurationoptions);
+    /** Copy the protocol configuration options. */
+    clear_protocol_configuration_options(&esm_proc_pdn_connectivity->pco);
+    copy_protocol_configuration_options(&esm_proc_pdn_connectivity->pco, &msg->protocolconfigurationoptions);
   }
   if(!apn_configuration) { /**< We should have an APN identifier by now. If no APN-Config is available, request subscription data. */
     OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Getting subscription profile for IMSI "IMSI_64_FMT ". " "(ue_id=%d, pti=%d)\n", imsi64, ue_id, pti);
@@ -601,7 +602,7 @@ esm_recv_pdn_disconnect_request (
     /** Procedure already exists. Check if a response message is appended to the procedure.. Return the procedure. */
     OAILOG_WARNING(LOG_NAS_ESM, "ESM-SAP   - Found a valid ESM pdn connectivity procedure (pti=%d) for UE " MME_UE_S1AP_ID_FMT ". Rehandling the ESM disconnection procedure. \n", pti, ue_id);
     /*
-     * Return deactivate EPS bearer context request message
+     * Return deactivate EPS bearer context request message for the default bearer of the pdn connection.
      * Sending the ESM Request directly, makes retransmission handling easier. We are not interested in the outcome of the Delete Session Response.
      */
     esm_send_deactivate_eps_bearer_context_request (pti, ebi, esm_rsp_msg, ESM_CAUSE_REGULAR_DEACTIVATION);
@@ -610,7 +611,7 @@ esm_recv_pdn_disconnect_request (
      */
     nas_stop_esm_timer(ue_id, &esm_proc_pdn_disconnect->esm_base_proc.esm_proc_timer);
     /** Start the T3485 timer for additional PDN connectivity. */
-    esm_proc_pdn_disconnect->esm_base_proc.esm_proc_timer.id = nas_esm_timer_start (mme_config.nas_config.t3495_sec, 0, ue_id); /**< Address field should be big enough to save an ID. */
+    esm_proc_pdn_disconnect->esm_base_proc.esm_proc_timer.id = nas_esm_timer_start (mme_config.nas_config.t3495_sec, 0, (nas_esm_proc_t*)esm_proc_pdn_disconnect); /**< Address field should be big enough to save an ID. */
     /* Don't change the timeout handler (should still be (_eps_bearer_deactivate_t3495_handler). */
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_SUCCESS);
   }
@@ -688,6 +689,8 @@ esm_recv_activate_default_eps_bearer_context_accept (
     OAILOG_WARNING(LOG_NAS_ESM, "ESM-SAP   - No procedure for UE " MME_UE_S1AP_ID_FMT " found. Ignoring the received ESM message ADBA.\n", ue_id);
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_SUCCESS);
   }
+
+  /** Not handling the PCO received. */
 
   /*
    * Execute the default EPS bearer context activation procedure accepted
@@ -1066,7 +1069,7 @@ esm_recv_deactivate_eps_bearer_context_accept (
   }else {
     nas_esm_proc_bearer_context_t * esm_proc_bearer_context = (nas_esm_proc_bearer_context_t*)esm_base_proc;
     /** Bearer Context Procedures may be transactional or not. */
-    mme_app_release_bearer_context(ue_id, NULL, ebi);
+    mme_app_release_bearer_context(ue_id, NULL, esm_proc_bearer_context->linked_ebi, ebi);
     _esm_proc_free_bearer_context_procedure(&esm_proc_bearer_context);
     /*
      * Deactivate the EPS bearer context (must be a dedicated bearer).

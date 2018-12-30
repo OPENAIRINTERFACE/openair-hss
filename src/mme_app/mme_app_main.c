@@ -168,7 +168,8 @@ void *mme_app_thread (void *args)
     break;
 
     case NAS_ERAB_RELEASE_REQ:{
-      mme_app_handle_nas_erab_release_req (&NAS_ERAB_RELEASE_REQ (received_message_p));
+      mme_app_handle_nas_erab_release_req (NAS_ERAB_RELEASE_REQ (received_message_p).ue_id,
+          NAS_ERAB_RELEASE_REQ (received_message_p).ebi, NAS_ERAB_RELEASE_REQ (received_message_p).nas_msg);
     }
     break;
 
