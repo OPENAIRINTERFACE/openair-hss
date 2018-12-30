@@ -166,4 +166,6 @@ int emm_msg_encode(EMM_msg *msg, uint8_t *buffer, uint32_t len);
 
 int emm_msg_encode_header (const emm_msg_header_t * header, uint8_t * buffer, uint32_t len);
 
+void emm_msg_free (EMM_msg * msg);
+
 #endif /* FILE_EMM_MSG_SEEN */

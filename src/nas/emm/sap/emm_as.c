@@ -1626,6 +1626,7 @@ static int _emm_as_security_rej (const emm_as_security_t * msg, dl_info_transfer
                                                                     &nas_msg,
                                                                     size,
                                                                     emm_security_context);
+    emm_msg_free(emm_msg);
 
     if (bytes > 0) {
       /* 
@@ -1703,6 +1704,7 @@ static int _emm_as_erab_setup_req (const emm_as_activate_bearer_context_req_t * 
       bytes = _emm_as_encrypt (&as_msg->nas_msg, &nas_msg.header, msg->nas_msg->data, size, emm_security_context);
     }
 
+    emm_msg_free(emm_msg);
     if (bytes > 0) {
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, AS_ACTIVATE_BEARER_CONTEXT_REQ);
     }
@@ -1775,6 +1777,7 @@ static int _emm_as_erab_modify_req (const emm_as_modify_bearer_context_req_t * m
       bytes = _emm_as_encrypt (&as_msg->nas_msg, &nas_msg.header, msg->nas_msg->data, size, emm_security_context);
     }
 
+    emm_msg_free(emm_msg);
     if (bytes > 0) {
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, AS_MODIFY_BEARER_CONTEXT_REQ);
     }
@@ -1843,6 +1846,7 @@ static int _emm_as_erab_release_req (const emm_as_deactivate_bearer_context_req_
       bytes = _emm_as_encrypt (&as_msg->nas_msg, &nas_msg.header, msg->nas_msg->data, size, emm_security_context);
     }
 
+    emm_msg_free(emm_msg);
     if (bytes > 0) {
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, AS_RAB_RELEASE_REQ);
     }
@@ -1960,6 +1964,9 @@ static int _emm_as_establish_cnf (const emm_as_establish_t * msg, nas_establish_
     as_msg->err_code = AS_SUCCESS;
     ret_val = AS_NAS_ESTABLISH_CNF;
   }
+  /** Free the emm message. */
+  emm_msg_free(emm_msg);
+
   emm_context_unlock(emm_ctx);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, ret_val);
 }

@@ -406,8 +406,6 @@ esm_msg_free (
   ESM_msg * msg)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
-  int                                     header_result = 0;
-  int                                     decode_result = 0;
   /*
    * First decode the ESM message header
    */
