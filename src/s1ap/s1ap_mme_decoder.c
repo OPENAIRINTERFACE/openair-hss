@@ -68,9 +68,6 @@ s1ap_mme_decode_initiating (
 
     case S1ap_ProcedureCode_id_S1Setup: {
         ret = s1ap_decode_s1ap_s1setuprequesties (&message->msg.s1ap_S1SetupRequestIEs, &initiating_p->value);
-
-        free_s1ap_s1setuprequest(&message->msg.s1ap_S1SetupRequestIEs);
-
         s1ap_xer_print_s1ap_s1setuprequest (s1ap_xer__print2sp, message_string, message);
         *message_id = S1AP_S1_SETUP_LOG;
       }
@@ -346,8 +343,8 @@ int s1ap_free_mme_decode_pdu(
   switch(message_id) {
 //  case S1AP_UPLINK_NAS_LOG:
 //    return free_s1ap_uplinknastransport(&message->msg.s1ap_UplinkNASTransportIEs);
-//  case S1AP_S1_SETUP_LOG:
-//    return free_s1ap_s1setuprequest(&message->msg.s1ap_S1SetupRequestIEs);
+  case S1AP_S1_SETUP_LOG:
+    return free_s1ap_s1setuprequest(&message->msg.s1ap_S1SetupRequestIEs);
 //  case S1AP_PATH_SWITCH_REQUEST_LOG:
 //    return free_s1ap_pathswitchrequest(&message->msg.s1ap_PathSwitchRequestIEs);
 //  case S1AP_HANDOVER_CANCEL_LOG:

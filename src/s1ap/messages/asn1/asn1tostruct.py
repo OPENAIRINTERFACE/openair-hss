@@ -1,23 +1,30 @@
 #
-#  Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
-#  contributor license agreements.  See the NOTICE file distributed with
-#  this work for additional information regarding copyright ownership.
-#  The OpenAirInterface Software Alliance licenses this file to You under
-#  the Apache License, Version 2.0  (the "License"); you may not use this file
-#  except in compliance with the License.
-#  You may obtain a copy of the License at
-# 
-#       http://www.apache.org/licenses/LICENSE-2.0
-# 
-#  Unless required by applicable law or agreed to in writing, software
-#  distributed under the License is distributed on an "AS IS" BASIS,
-#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#  See the License for the specific language governing permissions and
-#  limitations under the License.
-# -------------------------------------------------------------------------------
-#  For more information about the OpenAirInterface (OAI) Software Alliance:
-#       contact@openairinterface.org
-# 
+# Copyright (c) 2015, EURECOM (www.eurecom.fr)
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice, this
+#    list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+# The views and conclusions contained in the software and documentation are those
+# of the authors and should not be interpreted as representing official policies,
+# either expressed or implied, of the FreeBSD Project.
 
 import re, os, sys, string
 import datetime
@@ -55,24 +62,32 @@ def printDebug(string):
 def outputHeaderToFile(f, filename):
     now = datetime.datetime.now()
     f.write("""/*
- * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under
- * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.
- * You may obtain a copy of the License at
+ * Copyright (c) 2015, EURECOM (www.eurecom.fr)
+ * All rights reserved.
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *-------------------------------------------------------------------------------
- * For more information about the OpenAirInterface (OAI) Software Alliance:
- *      contact@openairinterface.org
+ * 1. Redistributions of source code must retain the above copyright notice, this
+ *    list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * The views and conclusions contained in the software and documentation are those
+ * of the authors and should not be interpreted as representing official policies,
+ * either expressed or implied, of the FreeBSD Project.
  */
 
 """)
@@ -332,6 +347,15 @@ for key in iesDefs:
 f.write("int %s_xer__print2sp(const void *buffer, size_t size, void *app_key);\n\n" % (fileprefix.lower()))
 f.write("int %s_xer__print2fp(const void *buffer, size_t size, void *app_key);\n\n" % (fileprefix.lower()))
 f.write("extern size_t %s_string_total_size;\n\n" % (fileprefix.lower()))
+
+for key in iesDefs:
+    if len(iesDefs[key]["ies"]) == 0:
+        continue
+    keyupperunderscore = re.sub('-', '_', key.upper())
+    keylowerunderscore = re.sub('-', '_', key.lower())
+    structName = re.sub('ies', '', key, flags=re.IGNORECASE)
+    f.write("int free_%s(\n" % (re.sub('-', '_', structName.lower())))
+    f.write("    %s_t *%s);\n\n" % (prefix + re.sub('-', '_', key), lowerFirstCamelWord(re.sub('-', '_', key))))
 f.write("#endif /* %s_IES_DEFS_H_ */\n\n" % (fileprefix.upper()))
 
 #Generate Decode functions
@@ -370,6 +394,7 @@ for key in iesDefs:
     f.write("    assert(any_p != NULL);\n")
     if len(iesDefs[key]["ies"]) != 0:
         f.write("    assert(%s != NULL);\n\n" % (lowerFirstCamelWord(re.sub('-', '_', key))))
+        f.write("    memset(%s, 0, sizeof(%s_t));\n" % (lowerFirstCamelWord(re.sub('-', '_', key)), prefix + re.sub('-', '_', key)))
 
     f.write("   OAILOG_DEBUG (LOG_%s, \"Decoding message %s (%%s:%%d)\\n\", __FILE__, __LINE__);\n\n" % (fileprefix.upper(), re.sub('-', '_', keyName)))
     f.write("    ANY_to_type_aper(any_p, &asn_DEF_%s, (void**)&%s_p);\n\n" % (asn1cStruct, asn1cStructfirstlower))
@@ -411,14 +436,76 @@ for key in iesDefs:
             f.write("                }\n")
         else:
             f.write("                memcpy(&%s->%s, %s_p, sizeof(%s_t));\n" % (lowerFirstCamelWord(re.sub('-', '_', key)), ienameunderscore, lowerFirstCamelWord(ietypesubst), ietypeunderscore))
-            #f.write("                ASN_STRUCT_FREE(asn_DEF_%s, %s_p);\n" % (ietypeunderscore, lowerFirstCamelWord(ietypesubst)))
+            f.write("                FREEMEM(%s_p);\n" % (lowerFirstCamelWord(ietypesubst)))
+            f.write("                %s_p = NULL;\n" % (lowerFirstCamelWord(ietypesubst)))
         f.write("            } break;\n")
     f.write("            default:\n")
     f.write("               OAILOG_ERROR (LOG_%s, \"Unknown protocol IE id (%%d) for message %s\\n\", (int)ie_p->id);\n" % (fileprefix.upper(), re.sub('-', '_', structName.lower())))
     f.write("                return -1;\n")
     f.write("        }\n")
     f.write("    }\n")
+    f.write("    ASN_STRUCT_FREE(asn_DEF_%s, %s_p);\n" % (asn1cStruct, asn1cStructfirstlower))
     f.write("    return decoded;\n")
+    f.write("}\n\n")
+
+
+# Generate free functions for encapsulated IEs
+for key in iesDefs:
+    if key not in ieofielist.values():
+        continue
+    if len(iesDefs[key]["ies"]) == 0:
+        continue
+    # TODO: Check if the encapsulated IE also contains further encap.
+    ie = iesDefs[key]["ies"][0]
+    ietypeunderscore = prefix + re.sub('-', '_', ie[2])
+    keyname = re.sub('IEs', '', re.sub('Item', 'List', key))
+    iesStructName = lowerFirstCamelWord(re.sub('Item', 'List', re.sub('-', '_', key)))
+    f.write("int free_%s(\n" % (re.sub('-', '_', keyname).lower()))
+    f.write("    %sIEs_t *%s) {\n\n" % (re.sub('-', '_', keyname), iesStructName))
+    f.write("    assert(%s != NULL);\n\n" % (iesStructName))
+    f.write("    for (int i = 0; i < %s->%s.count; i++) {\n" %
+            (iesStructName, re.sub('IEs', '', lowerFirstCamelWord(re.sub('-', '_', key)))))
+    f.write("        ASN_STRUCT_FREE_CONTENTS_ONLY(asn_DEF_%s, %s->%s.array[i]);\n" %
+            (ietypeunderscore, iesStructName, re.sub('IEs', '',lowerFirstCamelWord(re.sub('-', '_', key)))))
+    f.write("    }\n")
+    f.write("    return 0;\n")
+    f.write("}\n\n")
+
+
+
+for key in iesDefs:
+    if len(iesDefs[key]["ies"]) == 0:
+        continue
+    keyupperunderscore = re.sub('-', '_', key.upper())
+    keylowerunderscore = re.sub('-', '_', key.lower())
+    structName = re.sub('ies', '', key, flags=re.IGNORECASE)
+
+
+    f.write("int free_%s(\n" % (re.sub('-', '_', structName.lower())))
+    f.write("    %s_t *%s) {\n\n" % (prefix + re.sub('-', '_', key),
+                                     lowerFirstCamelWord(re.sub('-', '_', key))))
+
+    for ie in iesDefs[key]["ies"]:
+        ietypeunderscore = prefix + re.sub('-', '_', ie[2])
+        ieupperunderscore = re.sub('-', '_', re.sub('id-', '', ie[0])).upper()
+        if ie[3] != "mandatory":
+            if ie[3] == "optional":
+                f.write("    /* Optional field */\n")
+            elif ie[3] == "conditional":
+                f.write("    /* Conditional field */\n")
+            f.write("    if ((%s->presenceMask & %s_%s_PRESENT)\n" % (lowerFirstCamelWord(re.sub('-', '_', key)), keyupperunderscore, ieupperunderscore))
+            f.write("        == %s_%s_PRESENT) \n    " % (keyupperunderscore, ieupperunderscore))
+
+        iename = re.sub('id-', '', ie[0])
+        ienameunderscore = lowerFirstCamelWord(re.sub('-', '_', iename))
+        # Check if this is an encapsulated IE, if so call the free function.
+        if ie[2] in ieofielist.keys():
+            keyname = re.sub('IEs', '', re.sub('Item', 'List', ie[2]))
+            f.write("    free_%s(&%s->%s);\n" % (re.sub('-', '_', keyname).lower(),
+                                                 lowerFirstCamelWord(re.sub('-', '_', key)), ienameunderscore))
+        else:
+            f.write("    ASN_STRUCT_FREE_CONTENTS_ONLY(asn_DEF_%s, &%s->%s);\n" % (ietypeunderscore, lowerFirstCamelWord(re.sub('-', '_', key)), ienameunderscore))
+    f.write("    return 0;\n")
     f.write("}\n\n")
 
 for key in iesDefs:
@@ -433,8 +520,8 @@ for key in iesDefs:
     f.write("    int i, decoded = 0;\n")
     f.write("    int tempDecoded = 0;\n\n")
 
-    f.write("    assert(%s != NULL);\n" % (lowerFirstCamelWord(re.sub('-', '_', keyname))));
-    f.write("    assert(%sIEs != NULL);\n\n" % (lowerFirstCamelWord(re.sub('-', '_', keyname))));
+    f.write("    assert(%s != NULL);\n" % (lowerFirstCamelWord(re.sub('-', '_', keyname))))
+    f.write("    assert(%sIEs != NULL);\n\n" % (lowerFirstCamelWord(re.sub('-', '_', keyname))))
 
     f.write("    for (i = 0; i < %s->list.count; i++) {\n" % (lowerFirstCamelWord(re.sub('-', '_', keyname))))
     f.write("        %s_IE_t *ie_p = %s->list.array[i];\n" % (fileprefix[0].upper() + fileprefix[1:], lowerFirstCamelWord(re.sub('-', '_', keyname))))
@@ -449,7 +536,6 @@ for key in iesDefs:
         f.write("                if (tempDecoded < 0 || %s_p == NULL) {\n" % (lowerFirstCamelWord(re.sub('-', '', ie[2]))))
         f.write("                   OAILOG_ERROR (LOG_%s, \"Decoding of IE %s for message %s failed\\n\");\n" % (fileprefix.upper(), ienameunderscore, re.sub('-', '_', keyname)))
         f.write("                    if (%s_p)\n" % (lowerFirstCamelWord(re.sub('-', '', ie[2]))))
-        #f.write("                        free(%s_p);\n" % (lowerFirstCamelWord(re.sub('-', '', ie[2]))))
         f.write("                        ASN_STRUCT_FREE(asn_DEF_%s, %s_p);\n" % (re.sub('-', '_', ie[2]), lowerFirstCamelWord(re.sub('-', '', ie[2]))))
         f.write("                    return -1;\n")
         f.write("                }\n")
