@@ -528,7 +528,9 @@ s1ap_generate_s1_setup_response (
   bstring b = blk2bstr(buffer, length);
   free(buffer);
   rc = s1ap_mme_itti_send_sctp_request (&b, enb_association->sctp_assoc_id, 0, INVALID_MME_UE_S1AP_ID);
-//  free_s1ap_s1setupresponse(s1_setup_response_p);
+  free_s1ap_s1setupresponse(s1_setup_response_p);
+  FREEMEM(s1_setup_response_p->servedGUMMEIs.list.array);
+  s1_setup_response_p->servedGUMMEIs.list.array = 0;
   OAILOG_FUNC_RETURN (LOG_S1AP, rc);
 }
 

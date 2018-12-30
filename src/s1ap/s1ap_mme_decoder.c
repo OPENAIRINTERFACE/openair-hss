@@ -341,48 +341,54 @@ s1ap_mme_decode_pdu (
 int s1ap_free_mme_decode_pdu(
     s1ap_message *message, MessagesIds message_id) {
   switch(message_id) {
-//  case S1AP_UPLINK_NAS_LOG:
-//    return free_s1ap_uplinknastransport(&message->msg.s1ap_UplinkNASTransportIEs);
+  case S1AP_UPLINK_NAS_LOG:
+    return free_s1ap_uplinknastransport(&message->msg.s1ap_UplinkNASTransportIEs);
   case S1AP_S1_SETUP_LOG:
     return free_s1ap_s1setuprequest(&message->msg.s1ap_S1SetupRequestIEs);
-//  case S1AP_PATH_SWITCH_REQUEST_LOG:
-//    return free_s1ap_pathswitchrequest(&message->msg.s1ap_PathSwitchRequestIEs);
-//  case S1AP_HANDOVER_CANCEL_LOG:
-//    return free_s1ap_handovercancel(&message->msg.s1ap_HandoverCancelIEs);
-//  case S1AP_HANDOVER_REQUIRED_LOG:
-//    return free_s1ap_handoverrequired(&message->msg.s1ap_HandoverRequiredIEs);
-//  case S1AP_ENB_STATUS_TRANSFER_LOG:
-//    return free_s1ap_enbstatustransfer(&message->msg.s1ap_ENBStatusTransferIEs);
-//  case S1AP_HANDOVER_NOTIFY_LOG:
-//    return free_s1ap_handovernotify(&message->msg.s1ap_HandoverNotifyIEs);
-//  case S1AP_HANDOVER_REQUEST_ACKNOWLEDGE_LOG:
-//    return free_s1ap_handoverrequestacknowledge(&message->msg.s1ap_HandoverRequestAcknowledgeIEs);
-//  case S1AP_INITIAL_UE_MESSAGE_LOG:
-//    return free_s1ap_initialuemessage(&message->msg.s1ap_InitialUEMessageIEs);
-//  case S1AP_UE_CONTEXT_RELEASE_REQ_LOG:
-//    return free_s1ap_uecontextreleaserequest(&message->msg.s1ap_UEContextReleaseRequestIEs);
-//  case S1AP_UE_CAPABILITY_IND_LOG:
-//    return free_s1ap_uecapabilityinfoindication(&message->msg.s1ap_UECapabilityInfoIndicationIEs);
-//  case S1AP_NAS_NON_DELIVERY_IND_LOG:
-//    return free_s1ap_nasnondeliveryindication_(&message->msg.s1ap_NASNonDeliveryIndication_IEs);
-//  case S1AP_UE_CONTEXT_RELEASE_LOG:
-//    return free_s1ap_uecontextreleasecomplete(&message->msg.s1ap_UEContextReleaseCompleteIEs);
-//  case S1AP_E_RABSETUP_RESPONSE_LOG:
-//    return free_s1ap_e_rabsetupresponse(&message->msg.s1ap_E_RABSetupResponseIEs);
-//  case S1AP_E_RABMODIFY_RESPONSE_LOG:
-//    return free_s1ap_e_rabmodifyresponse(&message->msg.s1ap_E_RABModifyResponseIEs);
-//  case S1AP_E_RABRELEASE_RESPONSE_LOG:
-//    return free_s1ap_e_rabreleaseresponse(&message->msg.s1ap_E_RABReleaseResponseIEs);
-//  case S1AP_INITIAL_CONTEXT_SETUP_FAILURE_LOG:
-//    return free_s1ap_initialcontextsetupfailure(&message->msg.s1ap_E_RABReleaseResponseIEs);
-//  case S1AP_INITIAL_CONTEXT_SETUP_LOG:
-//    if (message->direction == S1AP_PDU_PR_successfulOutcome) {
-//      return free_s1ap_initialcontextsetupresponse(&message->msg.s1ap_InitialContextSetupResponseIEs);
-//    } else {
-//      return free_s1ap_initialcontextsetupfailure(&message->msg.s1ap_InitialContextSetupFailureIEs);
-//    }
-//  case S1AP_ENB_RESET_LOG:
-//    return free_s1ap_reset(&message->msg.s1ap_ResetIEs);
+  case S1AP_PATH_SWITCH_REQUEST_LOG:
+    return free_s1ap_pathswitchrequest(&message->msg.s1ap_PathSwitchRequestIEs);
+  case S1AP_HANDOVER_CANCEL_LOG:
+    return free_s1ap_handovercancel(&message->msg.s1ap_HandoverCancelIEs);
+  case S1AP_HANDOVER_REQUIRED_LOG:
+    return free_s1ap_handoverrequired(&message->msg.s1ap_HandoverRequiredIEs);
+  case S1AP_ENB_STATUS_TRANSFER_LOG:
+    return free_s1ap_enbstatustransfer(&message->msg.s1ap_ENBStatusTransferIEs);
+  case S1AP_HANDOVER_NOTIFY_LOG:
+    return free_s1ap_handovernotify(&message->msg.s1ap_HandoverNotifyIEs);
+  case S1AP_HANDOVER_REQUEST_ACKNOWLEDGE_LOG:
+    return free_s1ap_handoverrequestacknowledge(&message->msg.s1ap_HandoverRequestAcknowledgeIEs);
+  case S1AP_INITIAL_UE_MESSAGE_LOG:
+    return free_s1ap_initialuemessage(&message->msg.s1ap_InitialUEMessageIEs);
+  case S1AP_UE_CONTEXT_RELEASE_REQ_LOG:
+    return free_s1ap_uecontextreleaserequest(&message->msg.s1ap_UEContextReleaseRequestIEs);
+  case S1AP_UE_CAPABILITY_IND_LOG:
+    return free_s1ap_uecapabilityinfoindication(&message->msg.s1ap_UECapabilityInfoIndicationIEs);
+  case S1AP_NAS_NON_DELIVERY_IND_LOG:
+    return free_s1ap_nasnondeliveryindication_(&message->msg.s1ap_NASNonDeliveryIndication_IEs);
+  case S1AP_UE_CONTEXT_RELEASE_LOG:
+    return free_s1ap_uecontextreleasecomplete(&message->msg.s1ap_UEContextReleaseCompleteIEs);
+  case S1AP_E_RABSETUP_RESPONSE_LOG:{
+    int result = free_s1ap_e_rabsetupresponse(&message->msg.s1ap_E_RABSetupResponseIEs);
+    FREEMEM(message->msg.s1ap_E_RABSetupResponseIEs.e_RABSetupListBearerSURes.s1ap_E_RABSetupItemBearerSURes.array);
+    message->msg.s1ap_E_RABSetupResponseIEs.e_RABSetupListBearerSURes.s1ap_E_RABSetupItemBearerSURes.array = 0;
+    FREEMEM(message->msg.s1ap_E_RABSetupResponseIEs.e_RABFailedToSetupListBearerSURes.s1ap_E_RABItem.array);
+    message->msg.s1ap_E_RABSetupResponseIEs.e_RABFailedToSetupListBearerSURes.s1ap_E_RABItem.array = 0;
+    return result;
+  }
+  case S1AP_E_RABMODIFY_RESPONSE_LOG:
+    return free_s1ap_e_rabmodifyresponse(&message->msg.s1ap_E_RABModifyResponseIEs);
+  case S1AP_E_RABRELEASE_RESPONSE_LOG:
+    return free_s1ap_e_rabreleaseresponse(&message->msg.s1ap_E_RABReleaseResponseIEs);
+  case S1AP_INITIAL_CONTEXT_SETUP_FAILURE_LOG:
+    return free_s1ap_initialcontextsetupfailure(&message->msg.s1ap_E_RABReleaseResponseIEs);
+  case S1AP_INITIAL_CONTEXT_SETUP_LOG:
+    if (message->direction == S1AP_PDU_PR_successfulOutcome) {
+      return free_s1ap_initialcontextsetupresponse(&message->msg.s1ap_InitialContextSetupResponseIEs);
+    } else {
+      return free_s1ap_initialcontextsetupfailure(&message->msg.s1ap_InitialContextSetupFailureIEs);
+    }
+  case S1AP_ENB_RESET_LOG:
+    return free_s1ap_reset(&message->msg.s1ap_ResetIEs);
   default:
     DevAssert(false);
 
