@@ -85,6 +85,14 @@ void hash_free_int_func (void **memoryP) {}
 
 //------------------------------------------------------------------------------
 /*
+   free_wrapper function
+   hash_free_func() is used when this hashtable is used to store generic values as data (pointer = value).
+*/
+
+void hash_free_func (void **memoryP) { free_wrapper(memoryP); }
+
+//------------------------------------------------------------------------------
+/*
    Default hash function
    def_hashfunc() is the default used by hashtable_create() when the user didn't specify one.
    This is a simple/naive hash function which adds the key's ASCII char values. It will probably generate lots of collisions on large hash tables.

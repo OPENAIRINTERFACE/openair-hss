@@ -125,6 +125,7 @@ typedef struct hashtable_uint64_element_array_s {
 
 char*           hashtable_rc_code2string(hashtable_rc_t rc);
 void            hash_free_int_func(void** memory);
+void            hash_free_func(void** memory);
 hash_table_t * hashtable_init (hash_table_t * const hashtbl,const hash_size_t size,hash_size_t (*hashfunc) (const hash_key_t),void (*freefunc) (void **),bstring display_name_p);
 __attribute__ ((malloc)) hash_table_t   *hashtable_create (const hash_size_t   size, hash_size_t (*hashfunc)(const hash_key_t ), void (*freefunc)(void**), bstring name_p);
 hashtable_rc_t  hashtable_destroy(hash_table_t * hashtbl);

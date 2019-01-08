@@ -520,7 +520,7 @@ int mme_app_init (const mme_config_t * mme_config_p)
   mme_app_desc.mme_ue_contexts.enb_ue_s1ap_id_ue_context_htbl = hashtable_ts_create (mme_config.max_ues, NULL, NULL, b);
   btrunc(b, 0);
   bassigncstr(b, "mme_app_guti_ue_context_htbl");
-  mme_app_desc.mme_ue_contexts.guti_ue_context_htbl = obj_hashtable_uint64_ts_create (mme_config.max_ues, NULL, hash_free_int_func, b);
+  mme_app_desc.mme_ue_contexts.guti_ue_context_htbl = obj_hashtable_uint64_ts_create (mme_config.max_ues, NULL, hash_free_func, b);
   btrunc(b, 0);
   bassigncstr(b, "imsi_apn_configuration_htbl");
   mme_app_desc.mme_ue_contexts.imsi_subscription_profile_htbl = hashtable_uint64_ts_create (mme_config.max_ues, NULL, b);
