@@ -96,7 +96,7 @@ emm_recv_attach_request (
 
 int emm_recv_attach_complete(
     const mme_ue_s1ap_id_t                     ueid,
-    const attach_complete_msg                 *msg,
+    attach_complete_msg                * const msg,
     int                                * const emm_cause,
     const nas_message_decode_status_t  * const decode_status);
 

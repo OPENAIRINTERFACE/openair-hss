@@ -390,7 +390,7 @@ emm_recv_tracking_area_update_complete (
 int
 emm_recv_attach_complete (
   mme_ue_s1ap_id_t ue_id,
-  const attach_complete_msg * msg,
+  attach_complete_msg * const msg,
   int *emm_cause,
   const nas_message_decode_status_t * status)
 {
@@ -405,6 +405,7 @@ emm_recv_attach_complete (
   if(rc != RETURNerror){
 
     rc = nas_itti_esm_data_ind(ue_id, msg->esmmessagecontainer, NULL, NULL);
+    msg->esmmessagecontainer = NULL;
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
   }
   OAILOG_ERROR (LOG_NAS_EMM, "EMMAS-SAP - Failed handling Attach Complete message.. (ESM message won't be handled).\n");

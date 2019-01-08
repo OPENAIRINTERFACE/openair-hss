@@ -325,6 +325,7 @@ static int _emm_as_recv (
        // Requirement MME24.301R10_4.4.4.3_2
        ((1 == decode_status->security_context_available) && (0 == decode_status->mac_matched))) {
       *emm_cause = EMM_CAUSE_PROTOCOL_ERROR;
+      emm_msg_free(emm_msg);
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, decoder_rc);
     }
     rc = emm_recv_status (ue_id, &emm_msg->emm_status, emm_cause, decode_status);
@@ -361,6 +362,7 @@ static int _emm_as_recv (
        // Requirement MME24.301R10_4.4.4.3_2
        ((1 == decode_status->security_context_available) && (0 == decode_status->mac_matched))) {
       *emm_cause = EMM_CAUSE_PROTOCOL_ERROR;
+      emm_msg_free(emm_msg);
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, decoder_rc);
     }
 
@@ -380,6 +382,7 @@ static int _emm_as_recv (
        // Requirement MME24.301R10_4.4.4.3_2
        ((1 == decode_status->security_context_available) && (0 == decode_status->mac_matched))) {
       *emm_cause = EMM_CAUSE_PROTOCOL_ERROR;
+      emm_msg_free(emm_msg);
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, decoder_rc);
     }
 
@@ -394,6 +397,7 @@ static int _emm_as_recv (
       *emm_cause = EMM_CAUSE_UE_IDENTITY_CANT_BE_DERIVED_BY_NW;
       // Send Reject with cause "UE identity cannot be derived by the network" to trigger fresh attach
       rc = emm_proc_tracking_area_update_reject (ue_id, EMM_CAUSE_UE_IDENTITY_CANT_BE_DERIVED_BY_NW);
+      emm_msg_free(emm_msg);
       OAILOG_FUNC_RETURN (LOG_NAS_EMM,rc);
     }
     /** Check that a UE context/security_context exists for this UE, if  not request one via S10. */
@@ -425,6 +429,7 @@ static int _emm_as_recv (
         // Requirement MME24.301R10_4.4.4.3_2
         ((1 == decode_status->security_context_available) && (0 == decode_status->mac_matched))) {
       *emm_cause = EMM_CAUSE_PROTOCOL_ERROR;
+      emm_msg_free(emm_msg);
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, decoder_rc);
     }
     rc = emm_recv_tracking_area_update_complete (ue_id, &emm_msg->attach_complete, emm_cause, decode_status);
@@ -438,6 +443,7 @@ static int _emm_as_recv (
        // Requirement MME24.301R10_4.4.4.3_2
        ((1 == decode_status->security_context_available) && (0 == decode_status->mac_matched))) {
       *emm_cause = EMM_CAUSE_PROTOCOL_ERROR;
+      emm_msg_free(emm_msg);
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, decoder_rc);
     }
     break;
@@ -449,6 +455,7 @@ static int _emm_as_recv (
         ((0 == decode_status->integrity_protected_message) ||
        (0 == decode_status->mac_matched))) {
       *emm_cause = EMM_CAUSE_PROTOCOL_ERROR;
+      emm_msg_free(emm_msg);
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, decoder_rc);
     }
 
@@ -465,6 +472,7 @@ static int _emm_as_recv (
     *emm_cause = EMM_CAUSE_MESSAGE_TYPE_NOT_COMPATIBLE;
     break;
   }
+  emm_msg_free(emm_msg);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
@@ -531,6 +539,8 @@ static int _emm_as_data_ind (emm_as_data_t * msg, int *emm_cause)
            * Failed to decrypt the message
            */
           *emm_cause = EMM_CAUSE_PROTOCOL_ERROR;
+          if(plain_msg)
+            bdestroy_wrapper(&plain_msg);
 //          unlock_ue_contexts(ue_context);
           OAILOG_FUNC_RETURN (LOG_NAS_EMM, bytes);
         } else if (header.protocol_discriminator == EPS_MOBILITY_MANAGEMENT_MESSAGE) {
@@ -541,6 +551,8 @@ static int _emm_as_data_ind (emm_as_data_t * msg, int *emm_cause)
           memcpy(&originating_tai, msg->tai, sizeof(originating_tai));
 
           rc = _emm_as_recv (msg->ue_id, &originating_tai, &msg->ecgi, plain_msg, bytes, emm_cause, ul_nas_count, &decode_status);
+          if(plain_msg)
+            bdestroy_wrapper(&plain_msg);
         } else if (header.protocol_discriminator == EPS_SESSION_MANAGEMENT_MESSAGE) {
           /*
            * Foward ESM data to EPS session management
@@ -550,11 +562,12 @@ static int _emm_as_data_ind (emm_as_data_t * msg, int *emm_cause)
                       btrunc(plain_msg, bytes);
                       nas_itti_esm_data_ind(emm_ctx->ue_id, plain_msg,
                           &emm_ctx->_imsi, &emm_ctx->originating_tai);
+                      /** Not removing the truncated message. */
           } else {
             OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - No UE context exists for ue_id " MME_UE_S1AP_ID_FMT". "
                 "Cannot forward NAS_ESM message. \n", msg->ue_id);
               if(plain_msg)
-                bdestroy(&plain_msg);
+                bdestroy_wrapper(&plain_msg);
           }
 
         }
@@ -714,6 +727,7 @@ static int _emm_as_establish_req (emm_as_establish_t * msg, int *emm_cause)
       rc = emm_recv_detach_request (
           msg->ue_id, &emm_msg->detach_request, msg->is_initial, emm_cause, &decode_status);
 //      unlock_ue_contexts(ue_context);
+      emm_msg_free(emm_msg);
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
     }
     
@@ -727,6 +741,7 @@ static int _emm_as_establish_req (emm_as_establish_t * msg, int *emm_cause)
       // Delete EMM,ESM context, MMEAPP UE context and S1AP context
       nas_proc_implicit_detach_ue_ind(emm_ctx->ue_id, 0x00, 0x02);
       //      unlock_ue_contexts(ue_context);
+      emm_msg_free(emm_msg);
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
     }
     // Process Detach Request
@@ -746,6 +761,7 @@ static int _emm_as_establish_req (emm_as_establish_t * msg, int *emm_cause)
       // Send Service Reject with cause "UE identity cannot be derived by the network" to trigger fresh attach 
       rc = emm_proc_service_reject (msg->ue_id, EMM_CAUSE_UE_IDENTITY_CANT_BE_DERIVED_BY_NW); /**< MME_APP & S1APUE Context should not be removed. Reattach will happen. */
 //      unlock_ue_contexts(ue_context);
+      emm_msg_free(emm_msg);
       OAILOG_FUNC_RETURN (LOG_NAS_EMM,rc);
     }
     // Process Service request
@@ -760,6 +776,7 @@ static int _emm_as_establish_req (emm_as_establish_t * msg, int *emm_cause)
        ((1 == decode_status.security_context_available) && (0 == decode_status.mac_matched))) {
       *emm_cause = EMM_CAUSE_PROTOCOL_ERROR;
 //      unlock_ue_contexts(ue_context);
+      emm_msg_free(emm_msg);
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, decoder_rc);
     }
 
@@ -775,6 +792,7 @@ static int _emm_as_establish_req (emm_as_establish_t * msg, int *emm_cause)
   }
 
 //  unlock_ue_contexts(ue_context);
+  emm_msg_free(emm_msg);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 //
