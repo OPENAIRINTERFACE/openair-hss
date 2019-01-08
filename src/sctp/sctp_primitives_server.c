@@ -281,12 +281,12 @@ static int sctp_send_msg (
    * Send message_p on specified stream of the sd association
    */
   if (sctp_sendmsg (assoc_desc->sd, (const void *)bdata(*payload), blength(*payload), NULL, 0, htonl(assoc_desc->ppid), 0, stream, 0, 0) < 0) {
-    *payload = NULL;
+    bdestroy_wrapper(payload);
     OAILOG_ERROR (LOG_SCTP, "send: %s:%d", strerror (errno), errno);
     return -1;
   }
   OAILOG_DEBUG (LOG_SCTP, "Successfully sent %d bytes on stream %d\n", blength(*payload), stream);
-  *payload = NULL;
+  bdestroy_wrapper(payload);
 
   assoc_desc->messages_sent++;
   return 0;

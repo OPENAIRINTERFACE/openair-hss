@@ -442,6 +442,7 @@ s1ap_generate_downlink_nas_transport (
       ue_id, (mme_ue_s1ap_id_t)downlinkNasTransport->mme_ue_s1ap_id, (enb_ue_s1ap_id_t)downlinkNasTransport->eNB_UE_S1AP_ID, length);
   bstring b = blk2bstr(buffer_p, length);
   free(buffer_p);
+  FREEMEM(downlinkNasTransport->nas_pdu.buf);
   s1ap_mme_itti_send_sctp_request (&b , ue_ref->enb->sctp_assoc_id, ue_ref->sctp_stream_send, ue_ref->mme_ue_s1ap_id);
 
   OAILOG_FUNC_RETURN (LOG_S1AP, RETURNok);
