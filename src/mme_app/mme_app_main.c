@@ -421,17 +421,6 @@ void *mme_app_thread (void *args)
         itti_free_msg_content(received_message_p);
         itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
 
-        // todo: how to terminate them?
-        timer_remove(mme_app_desc.statistic_timer_id, NULL);
-        hashtable_ts_destroy (mme_app_desc.mme_ue_contexts.imsi_ue_context_htbl);
-        hashtable_ts_destroy (mme_app_desc.mme_ue_contexts.tun11_ue_context_htbl);
-        hashtable_ts_destroy (mme_app_desc.mme_ue_contexts.tun10_ue_context_htbl);
-        hashtable_ts_destroy (mme_app_desc.mme_ue_contexts.mme_ue_s1ap_id_ue_context_htbl);
-        hashtable_ts_destroy (mme_app_desc.mme_ue_contexts.enb_ue_s1ap_id_ue_context_htbl);
-        hashtable_ts_destroy (mme_app_desc.mme_ue_contexts.imsi_subscription_profile_htbl);
-        obj_hashtable_ts_destroy (mme_app_desc.mme_ue_contexts.guti_ue_context_htbl);
-
-
         OAI_FPRINTF_INFO("TASK_MME_APP terminated\n");
         itti_exit_task ();
       }
@@ -505,25 +494,25 @@ int mme_app_init (const mme_config_t * mme_config_p)
   bstring b = bfromcstr("mme_app_imsi_ue_context_htbl");
   mme_app_desc.mme_ue_contexts.imsi_ue_context_htbl = hashtable_uint64_ts_create (mme_config.max_ues, NULL, b);
   btrunc(b, 0);
+  bassigncstr(b, "mme_app_enb_ue_s1ap_id_ue_context_htbl");
+  mme_app_desc.mme_ue_contexts.enb_ue_s1ap_id_ue_context_htbl = hashtable_uint64_ts_create (mme_config.max_ues, NULL, b);
+  btrunc(b, 0);
   bassigncstr(b, "mme_app_tun11_ue_context_htbl");
   mme_app_desc.mme_ue_contexts.tun11_ue_context_htbl = hashtable_uint64_ts_create (mme_config.max_ues, NULL, b);
-  AssertFatal(sizeof(uintptr_t) >= sizeof(uint64_t), "Problem with mme_ue_s1ap_id_ue_context_htbl in MME_APP");
+  AssertFatal(sizeof(uintptr_t) >= sizeof(uint64_t), "Problem with tun11_ue_context_htbl in MME_APP");
   btrunc(b, 0);
   bassigncstr(b, "mme_app_tun10_ue_context_htbl");
   mme_app_desc.mme_ue_contexts.tun10_ue_context_htbl = hashtable_uint64_ts_create (mme_config.max_ues, NULL, b);
-  AssertFatal(sizeof(uintptr_t) >= sizeof(uint64_t), "Problem with mme_ue_s1ap_id_ue_context_htbl in MME_APP");
+  AssertFatal(sizeof(uintptr_t) >= sizeof(uint64_t), "Problem with mme_app_tun10_ue_context_htbl in MME_APP");
   btrunc(b, 0);
   bassigncstr(b, "mme_app_mme_ue_s1ap_id_ue_context_htbl");
-  mme_app_desc.mme_ue_contexts.mme_ue_s1ap_id_ue_context_htbl = hashtable_uint64_ts_create (mme_config.max_ues, NULL, b);
-  btrunc(b, 0);
-  bassigncstr(b, "mme_app_enb_ue_s1ap_id_ue_context_htbl");
-  mme_app_desc.mme_ue_contexts.enb_ue_s1ap_id_ue_context_htbl = hashtable_ts_create (mme_config.max_ues, NULL, NULL, b);
+  mme_app_desc.mme_ue_contexts.mme_ue_s1ap_id_ue_context_htbl = hashtable_ts_create (mme_config.max_ues, NULL, NULL, b);
   btrunc(b, 0);
   bassigncstr(b, "mme_app_guti_ue_context_htbl");
   mme_app_desc.mme_ue_contexts.guti_ue_context_htbl = obj_hashtable_uint64_ts_create (mme_config.max_ues, NULL, hash_free_func, b);
   btrunc(b, 0);
   bassigncstr(b, "imsi_apn_configuration_htbl");
-  mme_app_desc.mme_ue_contexts.imsi_subscription_profile_htbl = hashtable_uint64_ts_create (mme_config.max_ues, NULL, b);
+  mme_app_desc.mme_ue_contexts.imsi_subscription_profile_htbl = hashtable_ts_create (mme_config.max_ues, NULL, NULL, b);
   bdestroy_wrapper (&b);
 
   if (mme_app_edns_init(mme_config_p)) {
@@ -560,11 +549,12 @@ void mme_app_exit (void)
   timer_remove(mme_app_desc.statistic_timer_id, NULL);
   mme_app_edns_exit();
   hashtable_uint64_ts_destroy (mme_app_desc.mme_ue_contexts.imsi_ue_context_htbl);
+  hashtable_uint64_ts_destroy (mme_app_desc.mme_ue_contexts.enb_ue_s1ap_id_ue_context_htbl);
   hashtable_uint64_ts_destroy (mme_app_desc.mme_ue_contexts.tun11_ue_context_htbl);
   hashtable_uint64_ts_destroy (mme_app_desc.mme_ue_contexts.tun10_ue_context_htbl);
-  hashtable_uint64_ts_destroy (mme_app_desc.mme_ue_contexts.mme_ue_s1ap_id_ue_context_htbl);
-  hashtable_uint64_ts_destroy (mme_app_desc.mme_ue_contexts.imsi_subscription_profile_htbl);
-  hashtable_ts_destroy (mme_app_desc.mme_ue_contexts.enb_ue_s1ap_id_ue_context_htbl);
+  hashtable_ts_destroy (mme_app_desc.mme_ue_contexts.mme_ue_s1ap_id_ue_context_htbl);
+  hashtable_ts_destroy (mme_app_desc.mme_ue_contexts.imsi_subscription_profile_htbl);
   obj_hashtable_uint64_ts_destroy (mme_app_desc.mme_ue_contexts.guti_ue_context_htbl);
+
   mme_config_exit();
 }

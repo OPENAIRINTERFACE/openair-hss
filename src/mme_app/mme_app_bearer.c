@@ -466,8 +466,8 @@ mme_app_handle_initial_ue_message (
                  * Error during ue context malloc.
                  * todo: removing the UE reference?!
                  */
-                hashtable_rc_t result_deletion = hashtable_ts_remove (mme_app_desc.mme_ue_contexts.enb_ue_s1ap_id_ue_context_htbl,
-                    (const hash_key_t)enb_s1ap_id_key, (void **)&id);
+                hashtable_rc_t result_deletion = hashtable_uint64_ts_remove (mme_app_desc.mme_ue_contexts.enb_ue_s1ap_id_ue_context_htbl,
+                    (const hash_key_t)enb_s1ap_id_key);
                 OAILOG_ERROR (LOG_MME_APP, "MME_APP_INITAIL_UE_MESSAGE. ERROR***** enb_s1ap_id_key %ld has valid value %ld. Result of deletion %d.\n" ,
                     enb_s1ap_id_key,
                     initial_pP->enb_ue_s1ap_id,
@@ -498,8 +498,8 @@ mme_app_handle_initial_ue_message (
              * connection.
              * However if this key is valid, remove the key from the hashtable.
              */
-            hashtable_rc_t result_deletion = hashtable_ts_remove (mme_app_desc.mme_ue_contexts.enb_ue_s1ap_id_ue_context_htbl,
-                (const hash_key_t)ue_context->enb_s1ap_id_key, (void **)&id);
+            hashtable_rc_t result_deletion = hashtable_uint64_ts_remove (mme_app_desc.mme_ue_contexts.enb_ue_s1ap_id_ue_context_htbl,
+                (const hash_key_t)ue_context->enb_s1ap_id_key);
             OAILOG_ERROR (LOG_MME_APP, "MME_APP_INITAIL_UE_MESSAGE. ERROR***** enb_s1ap_id_key %ld has valid value %ld. Result of deletion %d.\n" ,
                 ue_context->enb_s1ap_id_key,
                 ue_context->enb_ue_s1ap_id,
@@ -554,8 +554,8 @@ mme_app_handle_initial_ue_message (
        * Error during UE context malloc.
        * todo: removing the UE reference?!
        */
-      hashtable_rc_t result_deletion = hashtable_ts_remove (mme_app_desc.mme_ue_contexts.enb_ue_s1ap_id_ue_context_htbl,
-          (const hash_key_t)ue_context->enb_s1ap_id_key, (void **)&id);
+      hashtable_rc_t result_deletion = hashtable_uint64_ts_remove (mme_app_desc.mme_ue_contexts.enb_ue_s1ap_id_ue_context_htbl,
+          (const hash_key_t)ue_context->enb_s1ap_id_key);
       OAILOG_ERROR (LOG_MME_APP, "MME_APP_INITAIL_UE_MESSAGE. ERROR***** enb_s1ap_id_key %ld has valid value %ld. Result of deletion %d.\n" ,
           ue_context->enb_s1ap_id_key,
           ue_context->enb_ue_s1ap_id,
@@ -845,7 +845,7 @@ mme_app_handle_delete_session_rsp (
   // todo: handle this! where to remove the S11 Tunnel?
 //  if(ue_context->num_pdns == 1){
 //    /** This was the last PDN, removing the S11 TEID. */
-//    hashtable_ts_remove(mme_app_desc.mme_ue_contexts.tun11_ue_context_htbl,
+//    hashtable_uint64_ts_remove(mme_app_desc.mme_ue_contexts.tun11_ue_context_htbl,
 //        (const hash_key_t) ue_context->mme_teid_s11, &id);
 //    ue_context->mme_teid_s11 = INVALID_TEID;
 //    /** SAE-GW TEID will be initialized when PDN context is purged. */

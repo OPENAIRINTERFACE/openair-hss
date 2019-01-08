@@ -358,7 +358,6 @@ hashtable_ts_destroy (
     pthread_mutex_unlock (&hashtblP->lock_nodes[n]);
     pthread_mutex_destroy (&hashtblP->lock_nodes[n]);
   }
-
   free_wrapper ((void**)&hashtblP->nodes);
   bdestroy_wrapper (&hashtblP->name);
   free_wrapper((void**)&hashtblP->lock_nodes);

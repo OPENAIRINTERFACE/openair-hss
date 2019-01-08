@@ -494,11 +494,11 @@ typedef struct mme_ue_context_s {
   hash_table_uint64_ts_t  *imsi_ue_context_htbl; // data is mme_ue_s1ap_id_t
   hash_table_uint64_ts_t  *tun10_ue_context_htbl;// data is mme_ue_s1ap_id_t
   hash_table_uint64_ts_t  *tun11_ue_context_htbl;// data is mme_ue_s1ap_id_t
-  hash_table_uint64_ts_t  *mme_ue_s1ap_id_ue_context_htbl; // data is enb_s1ap_id_key_t
-  hash_table_ts_t         *enb_ue_s1ap_id_ue_context_htbl;
+  hash_table_ts_t  *mme_ue_s1ap_id_ue_context_htbl;
+  hash_table_uint64_ts_t  *enb_ue_s1ap_id_ue_context_htbl; // data is enb_s1ap_id_key_t
   obj_hash_table_uint64_t *guti_ue_context_htbl;// data is mme_ue_s1ap_id_t
   /** Subscription profiles saved by IMSI. */
-  hash_table_uint64_ts_t  *imsi_subscription_profile_htbl; // data is imsi
+  hash_table_ts_t         *imsi_subscription_profile_htbl; // data is Subscription profile (not uint64)
 } mme_ue_context_t;
 
 
@@ -552,16 +552,6 @@ ue_context_t *mme_ue_context_exists_enb_ue_s1ap_id (
  **/
 ue_context_t *mme_ue_context_exists_guti(mme_ue_context_t * const mme_ue_context,
     const guti_t * const guti);
-
-/** \brief Create the association between mme_ue_s1ap_id and an UE context (enb_ue_s1ap_id key)
- * \param enb_key        The UE id identifier used in S1AP and MME_APP (agregated with a enb_id)
- * \param mme_ue_s1ap_id The UE id identifier used in MME_APP and NAS
- * @returns RETURNerror or RETURNok
- **/
-int
-mme_ue_context_notified_new_ue_s1ap_id_association (
-    const enb_s1ap_id_key_t  enb_key,
-    const mme_ue_s1ap_id_t   mme_ue_s1ap_id);
 
 /** \brief Update an UE context by selecting the provided guti
  * \param mme_ue_context_p The MME context
