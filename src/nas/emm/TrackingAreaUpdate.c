@@ -2164,6 +2164,9 @@ void free_emm_tau_request_ies(emm_tau_request_ies_t ** const ies)
   if ((*ies)->ue_network_capability) {
     free_wrapper((void**)&((*ies)->ue_network_capability));
   }
+  if ((*ies)->ms_network_capability) {
+    free_wrapper((void**)&((*ies)->ms_network_capability));
+  }
   if ((*ies)->last_visited_registered_tai) {
     free_wrapper((void**)&((*ies)->last_visited_registered_tai));
   }
@@ -2175,9 +2178,6 @@ void free_emm_tau_request_ies(emm_tau_request_ies_t ** const ies)
   }
   if ((*ies)->eps_bearer_context_status) {
     free_wrapper((void**)&((*ies)->eps_bearer_context_status));
-  }
-  if ((*ies)->ms_network_capability) {
-    free_wrapper((void**)&((*ies)->ms_network_capability));
   }
   if ((*ies)->tmsi_status) {
     free_wrapper((void**)&((*ies)->tmsi_status));

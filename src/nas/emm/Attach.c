@@ -2017,6 +2017,9 @@ void free_emm_attach_request_ies(emm_attach_request_ies_t ** const ies)
   if ((*ies)->ms_network_capability) {
     free_wrapper((void**)&(*ies)->ms_network_capability);
   }
+  if ((*ies)->ue_network_capability) {
+    free_wrapper((void**)&(*ies)->ue_network_capability);
+  }
   if ((*ies)->esm_msg_attach_proc) {
     bdestroy_wrapper(&((*ies)->esm_msg_attach_proc));
   }

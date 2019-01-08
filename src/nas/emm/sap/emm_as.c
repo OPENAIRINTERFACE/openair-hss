@@ -1552,7 +1552,8 @@ static int _emm_as_security_req (const emm_as_security_t * msg, dl_info_transfer
                                                                     &nas_msg,
                                                                     size,
                                                                     emm_security_context);
-
+    /** Free the EMM message. */
+    emm_msg_free(emm_msg);
     if (bytes > 0) {
       as_msg->err_code = AS_SUCCESS;
       nas_emm_procedure_register_emm_message(msg->ue_id, msg->puid, as_msg->nas_msg);
