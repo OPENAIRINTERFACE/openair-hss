@@ -750,7 +750,7 @@ extern                                  "C" {
   nw_gtpv2c_stack_handle_t hStack,
   uint8_t msgType) {
     nw_rc_t                                   rc;
-    nw_gtpv2c_msg_ie_parse_info_t                *thiz;
+    nw_gtpv2c_msg_ie_parse_info_t                *thiz = NULL;
 
     NW_GTPV2C_MALLOC (hStack, sizeof (nw_gtpv2c_msg_ie_parse_info_t), thiz, nw_gtpv2c_msg_ie_parse_info_t *);
 
@@ -953,7 +953,19 @@ extern                                  "C" {
 
   nw_rc_t                                   nwGtpv2cMsgIeParseInfoDelete (
   nw_gtpv2c_msg_ie_parse_info_t * thiz) {
-    NW_GTPV2C_FREE (thiz->hStack, thiz);
+    uint16_t ieInstance = 0;
+    uint16_t ieType = 0;
+
+    if(thiz){
+      /** Check if group info exists. */
+      for (ieType = 0; ieType < NW_GTPV2C_IE_TYPE_MAXIMUM; ieType++) {
+        for (ieInstance = 0; ieInstance < NW_GTPV2C_IE_INSTANCE_MAXIMUM; ieInstance++) {
+          if(thiz->ieParseInfo[ieType][ieInstance].pGroupedIeInfo)
+            NW_GTPV2C_FREE (thiz->hStack, thiz->ieParseInfo[ieType][ieInstance].pGroupedIeInfo);
+        }
+      }
+      NW_GTPV2C_FREE (thiz->hStack, thiz);
+    }
     return NW_OK;
   }
 

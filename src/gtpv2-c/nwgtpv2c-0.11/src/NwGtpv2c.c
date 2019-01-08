@@ -1242,33 +1242,49 @@ static nw_rc_t                            nwGtpv2cHandleTriggeredAck(
     if (!hGtpcStackHandle)
       return NW_FAILURE;
 
-//    nwGtpv2cMsgIeParseInfoDelete(((NwGtpv2cStackT*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_ECHO_RSP]);
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_ECHO_REQ]);
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_ECHO_RSP]);
     /*
      * For S11 interface
      */
-//    nwGtpv2cMsgIeParseInfoDelete(((NwGtpv2cStackT*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_CREATE_SESSION_REQ]);
-//    nwGtpv2cMsgIeParseInfoDelete(((NwGtpv2cStackT*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_CREATE_SESSION_RSP]);
-//    nwGtpv2cMsgIeParseInfoDelete(((NwGtpv2cStackT*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_DELETE_SESSION_REQ]);
-//    nwGtpv2cMsgIeParseInfoDelete(((NwGtpv2cStackT*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_DELETE_SESSION_RSP]);
-//    nwGtpv2cMsgIeParseInfoDelete(((NwGtpv2cStackT*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_MODIFY_BEARER_REQ]);
-//    nwGtpv2cMsgIeParseInfoDelete(((NwGtpv2cStackT*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_MODIFY_BEARER_RSP]);
-//    nwGtpv2cMsgIeParseInfoDelete(((NwGtpv2cStackT*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_CREATE_BEARER_REQ]);
-//    nwGtpv2cMsgIeParseInfoDelete(((NwGtpv2cStackT*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_CREATE_BEARER_RSP]);
-//    nwGtpv2cMsgIeParseInfoDelete(((NwGtpv2cStackT*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_RELEASE_ACCESS_BEARERS_REQ]);
-//    nwGtpv2cMsgIeParseInfoDelete(((NwGtpv2cStackT*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_RELEASE_ACCESS_BEARERS_RSP]);
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_CREATE_SESSION_REQ]);
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_CREATE_SESSION_RSP]);
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_DELETE_SESSION_REQ]);
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_DELETE_SESSION_RSP]);
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_MODIFY_BEARER_REQ]);
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_MODIFY_BEARER_RSP]);
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_CREATE_BEARER_REQ]);
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_CREATE_BEARER_RSP]);
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_UPDATE_BEARER_REQ]);
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_UPDATE_BEARER_RSP]);
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_DELETE_BEARER_REQ]);
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_DELETE_BEARER_RSP]);
+
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_RELEASE_ACCESS_BEARERS_REQ]);
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_RELEASE_ACCESS_BEARERS_RSP]);
+
+    /** Paging related GTPv2c signaling. */
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_DOWNLINK_DATA_NOTIFICATION]);
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_DOWNLINK_DATA_NOTIFICATION_ACK]);
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_DOWNLINK_DATA_NOTIFICATION_FAILURE_IND]);
 
     /*
      * For S10 interface
      */
-//    nwGtpv2cMsgIeParseInfoDelete(((NwGtpv2cStackT*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_FORWARD_RELOCATION_REQ]);
-//    nwGtpv2cMsgIeParseInfoDelete(((NwGtpv2cStackT*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_FORWARD_RELOCATION_RSP]);
-//    nwGtpv2cMsgIeParseInfoDelete(((NwGtpv2cStackT*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_FORWARD_RELOCATION_COMPLETE_NTF]);
-//    nwGtpv2cMsgIeParseInfoDelete(((NwGtpv2cStackT*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_FORWARD_RELOCATION_COMPLETE_ACK]);
-//    nwGtpv2cMsgIeParseInfoDelete(((NwGtpv2cStackT*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_CONTEXT_REQ]);
-//    nwGtpv2cMsgIeParseInfoDelete(((NwGtpv2cStackT*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_CONTEXT_REQ]);
-//    nwGtpv2cMsgIeParseInfoDelete(((NwGtpv2cStackT*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_CONTEXT_ACK]);
-//    nwGtpv2cMsgIeParseInfoDelete(((NwGtpv2cStackT*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_IDENTIFICATION_REQ]);
-//    nwGtpv2cMsgIeParseInfoDelete(((NwGtpv2cStackT*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_IDENTIFICATION_RSP]);
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_FORWARD_RELOCATION_REQ]);
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_FORWARD_RELOCATION_RSP]);
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_FORWARD_ACCESS_CONTEXT_NTF]);
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_FORWARD_ACCESS_CONTEXT_ACK]);
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_FORWARD_RELOCATION_COMPLETE_NTF]);
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_FORWARD_RELOCATION_COMPLETE_ACK]);
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_CONTEXT_REQ]);
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_CONTEXT_RSP]);
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_CONTEXT_ACK]);
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_RELOCATION_CANCEL_REQ]);
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_RELOCATION_CANCEL_RSP]);
+
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_IDENTIFICATION_REQ]);
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_IDENTIFICATION_RSP]);
 
     OAI_GCC_DIAG_OFF(int-to-pointer-cast);
     nwGtpv2cTmrMinHeapDelete((NwGtpv2cTmrMinHeapT*)((nw_gtpv2c_stack_t*)hGtpcStackHandle)->hTmrMinHeap);

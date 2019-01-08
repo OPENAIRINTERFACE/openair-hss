@@ -71,6 +71,8 @@ int mme_app_edns_add_wrr_entry(bstring id, struct in_addr in_addr)
       data->s_addr = in_addr.s_addr;
 
       hashtable_rc_t rc = obj_hashtable_insert (g_e_dns_entries, cid, strlen(cid), data);
+      /** Key is copied inside. */
+      free_wrapper(&cid);
       if (HASH_TABLE_OK == rc) return RETURNok;
     }
   }
@@ -91,7 +93,6 @@ int  mme_app_edns_init (const mme_config_t * mme_config_p)
 //    for (int i = 0; i < mme_config_p->e_dns_emulation.nb_mme_entries; i++) {
 //      rc |= mme_app_edns_add_mme_entry(mme_config_p->e_dns_emulation.mme_id[i], mme_config_p->e_dns_emulation.mme_ip_addr[i]);
 //    }
-
     return rc;
   }
   return RETURNerror;
