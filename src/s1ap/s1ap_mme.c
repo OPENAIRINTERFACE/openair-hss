@@ -330,6 +330,14 @@ s1ap_mme_thread (
 }
 
 //------------------------------------------------------------------------------
+static void free_enb (void **enb_ref){
+  if(*enb_ref){
+    s1ap_remove_enb(*enb_ref);
+    free_wrapper(enb_ref);
+  }
+}
+
+//------------------------------------------------------------------------------
 int
 s1ap_mme_init(void)
 {
@@ -345,7 +353,7 @@ s1ap_mme_init(void)
   OAILOG_DEBUG (LOG_S1AP, "S1AP Release v10.5\n");
   // 16 entries for n eNB.
   bstring bs1 = bfromcstr("s1ap_eNB_coll");
-  hash_table_ts_t* h = hashtable_ts_init (&g_s1ap_enb_coll, mme_config.max_enbs, NULL, free_wrapper, bs1);
+  hash_table_ts_t* h = hashtable_ts_init (&g_s1ap_enb_coll, mme_config.max_enbs, NULL, free_enb, bs1); /**< Use a better removal handler. */
   bdestroy_wrapper (&bs1);
   if (!h) return RETURNerror;
 
@@ -366,6 +374,7 @@ s1ap_mme_init(void)
 void s1ap_mme_exit (void)
 {
   OAILOG_DEBUG (LOG_S1AP, "Cleaning S1AP\n");
+
   if (hashtable_ts_destroy(&g_s1ap_enb_coll) != HASH_TABLE_OK) {
     OAILOG_ERROR(LOG_S1AP, "An error occured while destroying s1 eNB hash table. \n");
   }
