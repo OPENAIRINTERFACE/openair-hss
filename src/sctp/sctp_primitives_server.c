@@ -296,7 +296,7 @@ static int sctp_send_msg (
 static int sctp_create_new_listener (SctpInit * init_p)
 {
   struct sctp_event_subscribe             event = {0};
-  struct sockaddr                        *addr = NULL;
+//  struct sockaddr                        *addr = NULL;
   struct sctp_arg_s                      *sctp_arg_p = NULL;
   uint16_t                                i = 0,
                                           j = 0;
@@ -315,7 +315,8 @@ static int sctp_create_new_listener (SctpInit * init_p)
     return -1;
   }
 
-  addr = calloc (used_addresses, sizeof (struct sockaddr));
+  struct sockaddr addr[used_addresses];
+  memset(addr, 0, (sizeof(struct sockaddr) * used_addresses));
   OAILOG_DEBUG (LOG_SCTP, "Creating new listen socket on port %u with\n", init_p->port);
 
   if (init_p->ipv4 == 1) {

@@ -437,7 +437,7 @@ s1ap_generate_s1_setup_response (
   int                                     i,j;
   int                                     enc_rval = 0;
   S1ap_S1SetupResponseIEs_t              *s1_setup_response_p = NULL;
-  S1ap_ServedGUMMEIsItem_t                servedGUMMEI;
+  S1ap_ServedGUMMEIsItem_t               *servedGUMMEI = NULL;
   s1ap_message                            message = { 0 };
   uint8_t                                *buffer = NULL;
   uint32_t                                length = 0;
@@ -446,7 +446,7 @@ s1ap_generate_s1_setup_response (
   OAILOG_FUNC_IN (LOG_S1AP);
   DevAssert (enb_association != NULL);
   // memset for gcc 4.8.4 instead of {0}, servedGUMMEI.servedPLMNs
-  memset(&servedGUMMEI, 0, sizeof(S1ap_ServedGUMMEIsItem_t));
+  servedGUMMEI = calloc(1, sizeof *servedGUMMEI);
   // Generating response
   s1_setup_response_p = &message.msg.s1ap_S1SetupResponseIEs;
   mme_config_read_lock (&mme_config);
@@ -474,7 +474,7 @@ s1ap_generate_s1_setup_response (
        */
       plmn = calloc (1, sizeof (*plmn));
       MCC_MNC_TO_PLMNID (mme_config.served_tai.plmn_mcc[i], mme_config.served_tai.plmn_mnc[i], mme_config.served_tai.plmn_mnc_len[i], plmn);
-      ASN_SEQUENCE_ADD (&servedGUMMEI.servedPLMNs.list, plmn);
+      ASN_SEQUENCE_ADD (&servedGUMMEI->servedPLMNs.list, plmn);
     }
   }
 
@@ -487,14 +487,14 @@ s1ap_generate_s1_setup_response (
      */
     mme_gid = calloc (1, sizeof (*mme_gid));
     INT16_TO_OCTET_STRING (mme_config.gummei.gummei[i].mme_gid, mme_gid);
-    ASN_SEQUENCE_ADD (&servedGUMMEI.servedGroupIDs.list, mme_gid);
+    ASN_SEQUENCE_ADD (&servedGUMMEI->servedGroupIDs.list, mme_gid);
 
     /*
      * FIXME: free object from list once encoded
      */
     mmec = calloc (1, sizeof (*mmec));
     INT8_TO_OCTET_STRING (mme_config.gummei.gummei[i].mme_code, mmec);
-    ASN_SEQUENCE_ADD (&servedGUMMEI.servedMMECs.list, mmec);
+    ASN_SEQUENCE_ADD (&servedGUMMEI->servedMMECs.list, mmec);
 
   }
 
@@ -503,7 +503,7 @@ s1ap_generate_s1_setup_response (
   /*
    * The MME is only serving E-UTRAN RAT, so the list contains only one element
    */
-  ASN_SEQUENCE_ADD (&s1_setup_response_p->servedGUMMEIs, &servedGUMMEI);
+  ASN_SEQUENCE_ADD (&s1_setup_response_p->servedGUMMEIs, servedGUMMEI);
   message.procedureCode = S1ap_ProcedureCode_id_S1Setup;
   message.direction = S1AP_PDU_PR_successfulOutcome;
   enc_rval = s1ap_mme_encode_pdu (&message, &buffer, &length);
@@ -528,7 +528,7 @@ s1ap_generate_s1_setup_response (
   bstring b = blk2bstr(buffer, length);
   free(buffer);
   rc = s1ap_mme_itti_send_sctp_request (&b, enb_association->sctp_assoc_id, 0, INVALID_MME_UE_S1AP_ID);
-//  free_s1ap_s1setupresponse(s1_setup_response_p);
+  free_s1ap_s1setupresponse(s1_setup_response_p);
 //  FREEMEM(s1_setup_response_p->servedGUMMEIs.list.array);
 //  s1_setup_response_p->servedGUMMEIs.list.array = 0;
   OAILOG_FUNC_RETURN (LOG_S1AP, rc);
