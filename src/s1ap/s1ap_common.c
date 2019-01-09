@@ -106,6 +106,8 @@ s1ap_generate_successfull_outcome (
     return -1;
   }
 
+  free_wrapper(&pdu.choice.successfulOutcome.value.buf);
+
   *length = encoded;
   return encoded;
 }
