@@ -284,9 +284,6 @@ void itti_free_msg_content (MessageDef * const message_p)
 //    free_wrapper(&message_p->ittiMsg.s1ap_initial_ue_message.test_plmn);
     if(message_p->ittiMsg.s1ap_initial_ue_message.nas)
       bdestroy_wrapper (&message_p->ittiMsg.s1ap_initial_ue_message.nas);
-    else{
-      DevAssert(true);
-    }
     break;
 
   case S1AP_E_RAB_SETUP_REQ: {

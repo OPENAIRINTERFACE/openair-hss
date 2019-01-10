@@ -69,6 +69,7 @@ s1ap_mme_decode_initiating (
     case S1ap_ProcedureCode_id_S1Setup: {
         ret = s1ap_decode_s1ap_s1setuprequesties (&message->msg.s1ap_S1SetupRequestIEs, &initiating_p->value);
         s1ap_xer_print_s1ap_s1setuprequest (s1ap_xer__print2sp, message_string, message);
+        free_wrapper(&initiating_p->value.buf);
         *message_id = S1AP_S1_SETUP_LOG;
       }
       break;
@@ -368,12 +369,12 @@ int s1ap_free_mme_decode_pdu(
   case S1AP_UE_CONTEXT_RELEASE_LOG:
     return free_s1ap_uecontextreleasecomplete(&message->msg.s1ap_UEContextReleaseCompleteIEs);
   case S1AP_E_RABSETUP_RESPONSE_LOG:{
-    int result = free_s1ap_e_rabsetupresponse(&message->msg.s1ap_E_RABSetupResponseIEs);
-    FREEMEM(message->msg.s1ap_E_RABSetupResponseIEs.e_RABSetupListBearerSURes.s1ap_E_RABSetupItemBearerSURes.array);
-    message->msg.s1ap_E_RABSetupResponseIEs.e_RABSetupListBearerSURes.s1ap_E_RABSetupItemBearerSURes.array = 0;
-    FREEMEM(message->msg.s1ap_E_RABSetupResponseIEs.e_RABFailedToSetupListBearerSURes.s1ap_E_RABItem.array);
-    message->msg.s1ap_E_RABSetupResponseIEs.e_RABFailedToSetupListBearerSURes.s1ap_E_RABItem.array = 0;
-    return result;
+    return free_s1ap_e_rabsetupresponse(&message->msg.s1ap_E_RABSetupResponseIEs);
+//    FREEMEM(message->msg.s1ap_E_RABSetupResponseIEs.e_RABSetupListBearerSURes.s1ap_E_RABSetupItemBearerSURes.array);
+//    message->msg.s1ap_E_RABSetupResponseIEs.e_RABSetupListBearerSURes.s1ap_E_RABSetupItemBearerSURes.array = 0;
+//    FREEMEM(message->msg.s1ap_E_RABSetupResponseIEs.e_RABFailedToSetupListBearerSURes.s1ap_E_RABItem.array);
+//    message->msg.s1ap_E_RABSetupResponseIEs.e_RABFailedToSetupListBearerSURes.s1ap_E_RABItem.array = 0;
+//    return result;
   }
   case S1AP_E_RABMODIFY_RESPONSE_LOG:
     return free_s1ap_e_rabmodifyresponse(&message->msg.s1ap_E_RABModifyResponseIEs);

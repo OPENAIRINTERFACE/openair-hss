@@ -221,6 +221,7 @@ s1ap_mme_generate_s1_setup_failure (
   uint32_t                                length = 0;
   s1ap_message                            message = { 0 };
   S1ap_S1SetupFailureIEs_t               *s1_setup_failure_p = NULL;
+  MessagesIds                             message_id = MESSAGES_ID_MAX;
   int                                     rc = RETURNok;
 
   OAILOG_FUNC_IN (LOG_S1AP);
@@ -237,10 +238,11 @@ s1ap_mme_generate_s1_setup_failure (
     s1_setup_failure_p->timeToWait = time_to_wait;
   }
 
-  if (s1ap_mme_encode_pdu (&message, &buffer_p, &length) < 0) {
+  if (s1ap_mme_encode_pdu (&message, &message_id, &buffer_p, &length) < 0) {
     OAILOG_ERROR (LOG_S1AP, "Failed to encode s1 setup failure\n");
     OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
   }
+  s1ap_free_mme_encode_pdu(&message, message_id);
 
   MSC_LOG_TX_MESSAGE (MSC_S1AP_MME, MSC_S1AP_ENB, NULL, 0, "0 S1Setup/unsuccessfulOutcome  assoc_id %u cause %u value %u", assoc_id, cause_type, cause_value);
   bstring b = blk2bstr(buffer_p, length);
@@ -439,6 +441,7 @@ s1ap_generate_s1_setup_response (
   S1ap_S1SetupResponseIEs_t              *s1_setup_response_p = NULL;
   S1ap_ServedGUMMEIsItem_t               *servedGUMMEI = NULL;
   s1ap_message                            message = { 0 };
+  MessagesIds                             message_id = MESSAGES_ID_MAX;
   uint8_t                                *buffer = NULL;
   uint32_t                                length = 0;
   int                                     rc = RETURNok;
@@ -506,7 +509,7 @@ s1ap_generate_s1_setup_response (
   ASN_SEQUENCE_ADD (&s1_setup_response_p->servedGUMMEIs, servedGUMMEI);
   message.procedureCode = S1ap_ProcedureCode_id_S1Setup;
   message.direction = S1AP_PDU_PR_successfulOutcome;
-  enc_rval = s1ap_mme_encode_pdu (&message, &buffer, &length);
+  enc_rval = s1ap_mme_encode_pdu (&message, &message_id, &buffer, &length);
 
   /*
    * Failed to encode s1 setup response...
@@ -527,10 +530,8 @@ s1ap_generate_s1_setup_response (
    */
   bstring b = blk2bstr(buffer, length);
   free(buffer);
+  s1ap_free_mme_encode_pdu(&message, message_id);
   rc = s1ap_mme_itti_send_sctp_request (&b, enb_association->sctp_assoc_id, 0, INVALID_MME_UE_S1AP_ID);
-  free_s1ap_s1setupresponse(s1_setup_response_p);
-//  FREEMEM(s1_setup_response_p->servedGUMMEIs.list.array);
-//  s1_setup_response_p->servedGUMMEIs.list.array = 0;
   OAILOG_FUNC_RETURN (LOG_S1AP, rc);
 }
 
@@ -791,6 +792,7 @@ s1ap_mme_generate_ue_context_release_command (
   int                                     rc = RETURNok;
   S1ap_Cause_PR                           cause_type;
   long                                    cause_value;
+  MessagesIds                             message_id = MESSAGES_ID_MAX;
 
   bool                                    expect_release_complete = true;
   MessageDef                             *message_p = NULL;
@@ -853,7 +855,7 @@ s1ap_mme_generate_ue_context_release_command (
   }
   s1ap_mme_set_cause(&ueContextReleaseCommandIEs_p->cause, cause_type, cause_value);
 
-  if (s1ap_mme_encode_pdu (&message, &buffer, &length) < 0) {
+  if (s1ap_mme_encode_pdu (&message, &message_id, &buffer, &length) < 0) {
     MSC_LOG_EVENT (MSC_S1AP_MME, "0 UEContextRelease/initiatingMessage enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " encoding failed",
             ue_ref_p->enb_ue_s1ap_id, ue_ref_p->mme_ue_s1ap_id);
     OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
@@ -864,6 +866,8 @@ s1ap_mme_generate_ue_context_release_command (
 
   bstring b = blk2bstr(buffer, length);
   free(buffer);
+  s1ap_free_mme_encode_pdu(&message, message_id);
+
   rc = s1ap_mme_itti_send_sctp_request (&b, enb_ref_p->sctp_assoc_id, (ue_ref_p) ? ue_ref_p->sctp_stream_send : enb_ref_p->next_sctp_stream, mme_ue_s1ap_id);
   if(ue_ref_p){
     ue_ref_p->s1_release_cause = cause;
@@ -1299,6 +1303,7 @@ s1ap_send_path_switch_request_failure (
   S1ap_PathSwitchRequestFailureIEs_t     *pathSwitchRequestFailure_p = NULL;
   s1ap_message                            message = { 0 };
   uint8_t                                *buffer = NULL;
+  MessagesIds                             message_id = MESSAGES_ID_MAX;
   uint32_t                                length = 0;
   int                                     rc = RETURNok;
 
@@ -1318,7 +1323,7 @@ s1ap_send_path_switch_request_failure (
 
   message.procedureCode = S1ap_ProcedureCode_id_PathSwitchRequest;
   message.direction = S1AP_PDU_PR_unsuccessfulOutcome;
-  enc_rval = s1ap_mme_encode_pdu (&message, &buffer, &length);
+  enc_rval = s1ap_mme_encode_pdu (&message, &message_id, &buffer, &length);
 
   // Failed to encode
   if (enc_rval < 0) {
@@ -1328,6 +1333,7 @@ s1ap_send_path_switch_request_failure (
 
   bstring b = blk2bstr(buffer, length);
   free(buffer);
+  s1ap_free_mme_encode_pdu(&message, message_id);
   rc = s1ap_mme_itti_send_sctp_request (&b, assoc_id, 0, INVALID_MME_UE_S1AP_ID);
 
 //  free_s1ap_pathswitchrequestfailure(pathSwitchRequestFailure_p);
@@ -2775,8 +2781,7 @@ s1ap_handle_enb_initiated_reset_ack (
   S1ap_UE_associatedLogicalS1_ConnectionItem_t sig_conn_list[MAX_NUM_PARTIAL_S1_CONN_RESET] = {{0}};
   S1ap_MME_UE_S1AP_ID_t mme_ue_id[MAX_NUM_PARTIAL_S1_CONN_RESET] = {0};
   S1ap_ENB_UE_S1AP_ID_t enb_ue_id[MAX_NUM_PARTIAL_S1_CONN_RESET] = {0};
-
-
+  MessagesIds                             message_id = MESSAGES_ID_MAX;
   int                                     rc = RETURNok;
 
   OAILOG_FUNC_IN (LOG_S1AP);
@@ -2808,11 +2813,13 @@ s1ap_handle_enb_initiated_reset_ack (
 
     ASN_SEQUENCE_ADD (&s1ap_ResetAcknowledgeIEs_p->uE_associatedLogicalS1_ConnectionListResAck.s1ap_UE_associatedLogicalS1_ConnectionItemResAck, sig_conn_list);
   }
-  if (s1ap_mme_encode_pdu (&message, &buffer, &length) < 0) {
+  if (s1ap_mme_encode_pdu (&message, &message_id, &buffer, &length) < 0) {
     OAILOG_ERROR (LOG_S1AP, "Reset Ack encoding failed \n");
     OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
   }
   bstring b = blk2bstr(buffer, length);
+  free(buffer);
   rc = s1ap_mme_itti_send_sctp_request (&b, enb_reset_ack_p->sctp_assoc_id, enb_reset_ack_p->sctp_stream_id, INVALID_MME_UE_S1AP_ID);
+  s1ap_free_mme_encode_pdu(&message, message_id);
   OAILOG_FUNC_RETURN (LOG_S1AP, rc);
 }

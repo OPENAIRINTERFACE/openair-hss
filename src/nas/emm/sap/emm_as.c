@@ -472,6 +472,7 @@ static int _emm_as_recv (
     *emm_cause = EMM_CAUSE_MESSAGE_TYPE_NOT_COMPATIBLE;
     break;
   }
+  bdestroy_wrapper(&msg);
   emm_msg_free(emm_msg);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
@@ -663,30 +664,6 @@ static int _emm_as_establish_req (emm_as_establish_t * msg, int *emm_cause)
    * Process initial NAS message
    */
   EMM_msg                                *emm_msg = &nas_msg.plain.emm;
-
-  /*
-   * Check the status..
-   * if no security context is existing
-   * mac_matched == 0
-   * ATTACH_REQ or TAU
-   * don't purge the message! */
-  if(emm_ctx == NULL /**< Will reject the message if an EMM context exists. */
-      && decode_status.security_context_available == 0
-      && decode_status.integrity_protected_message == 1
-      && decode_status.mac_matched == 0
-      && (emm_msg->header.message_type == ATTACH_REQUEST
-          || emm_msg->header.message_type == TRACKING_AREA_UPDATE_REQUEST
-          || emm_msg->header.message_type == DETACH_REQUEST)){
-    /**
-     * Not purging the encoded nas_msg.. will send it to the source MME for security validation.
-     * It may be the ciphered message.
-     */
-    OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Not purging the nas_msg for later context request for integrity check! \n");
-  }else{
-    OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - purging the nas_msg %p\n", emm_ctx);
-    bdestroy_wrapper(&msg->nas_msg); /**< We don't need the encoded message anymore. */
-  }
-
   switch (emm_msg->header.message_type) {
   case ATTACH_REQUEST:
     rc = emm_recv_attach_request (msg->ue_id, msg->tai, &msg->ecgi, &emm_msg->attach_request, msg->is_initial, emm_cause, &decode_status);
@@ -711,8 +688,6 @@ static int _emm_as_establish_req (emm_as_establish_t * msg, int *emm_cause)
         &decode_status,
         ul_nas_count,
         msg->nas_msg);       /**< Send the encoded  NAS_EMM message together with it. */
-    /** If ask_ue_context is set.. Ask the MME_APP to send S10_UE_CONTEXT. */
-    bdestroy_wrapper(&msg->nas_msg);
     break;
 
   case DETACH_REQUEST:
@@ -727,26 +702,23 @@ static int _emm_as_establish_req (emm_as_establish_t * msg, int *emm_cause)
       rc = emm_recv_detach_request (
           msg->ue_id, &emm_msg->detach_request, msg->is_initial, emm_cause, &decode_status);
 //      unlock_ue_contexts(ue_context);
-      emm_msg_free(emm_msg);
-      OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
+    } else {
+      REQUIREMENT_3GPP_24_301(R10_4_4_4_3__1);
+      REQUIREMENT_3GPP_24_301(R10_4_4_4_3__2);
+      if ((1 == decode_status.security_context_available) &&
+                      (0 < emm_security_context->activated) &&
+                        ((0 == decode_status.integrity_protected_message) ||
+                                                  (0 == decode_status.mac_matched))) {
+        *emm_cause = EMM_CAUSE_UE_IDENTITY_CANT_BE_DERIVED_BY_NW;
+        // Delete EMM,ESM context, MMEAPP UE context and S1AP context
+        nas_proc_implicit_detach_ue_ind(emm_ctx->ue_id, 0x00, 0x02);
+        //      unlock_ue_contexts(ue_context);
+      } else {
+        // Process Detach Request
+        rc = emm_recv_detach_request (
+            msg->ue_id, &emm_msg->detach_request, msg->is_initial, emm_cause, &decode_status);
+      }
     }
-    
-    REQUIREMENT_3GPP_24_301(R10_4_4_4_3__1);
-    REQUIREMENT_3GPP_24_301(R10_4_4_4_3__2);
-    if ((1 == decode_status.security_context_available) && 
-                    (0 < emm_security_context->activated) &&
-                      ((0 == decode_status.integrity_protected_message) ||
-                                                (0 == decode_status.mac_matched))) {
-      *emm_cause = EMM_CAUSE_UE_IDENTITY_CANT_BE_DERIVED_BY_NW;
-      // Delete EMM,ESM context, MMEAPP UE context and S1AP context
-      nas_proc_implicit_detach_ue_ind(emm_ctx->ue_id, 0x00, 0x02);
-      //      unlock_ue_contexts(ue_context);
-      emm_msg_free(emm_msg);
-      OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
-    }
-    // Process Detach Request
-    rc = emm_recv_detach_request (
-      msg->ue_id, &emm_msg->detach_request, msg->is_initial, emm_cause, &decode_status);
     break;
 
   case SERVICE_REQUEST:
@@ -760,12 +732,10 @@ static int _emm_as_establish_req (emm_as_establish_t * msg, int *emm_cause)
       *emm_cause = EMM_CAUSE_UE_IDENTITY_CANT_BE_DERIVED_BY_NW;
       // Send Service Reject with cause "UE identity cannot be derived by the network" to trigger fresh attach 
       rc = emm_proc_service_reject (msg->ue_id, EMM_CAUSE_UE_IDENTITY_CANT_BE_DERIVED_BY_NW); /**< MME_APP & S1APUE Context should not be removed. Reattach will happen. */
-//      unlock_ue_contexts(ue_context);
-      emm_msg_free(emm_msg);
-      OAILOG_FUNC_RETURN (LOG_NAS_EMM,rc);
+    } else {
+      // Process Service request
+      rc = emm_recv_service_request (msg->ue_id, &emm_msg->service_request, false, /*msg->is_initial (idle tau), */ emm_cause, &decode_status);
     }
-    // Process Service request
-    rc = emm_recv_service_request (msg->ue_id, &emm_msg->service_request, false, /*msg->is_initial (idle tau), */ emm_cause, &decode_status);
     break;
 
   case EXTENDED_SERVICE_REQUEST:
@@ -775,14 +745,11 @@ static int _emm_as_establish_req (emm_as_establish_t * msg, int *emm_cause)
        // Requirement MME24.301R10_4.4.4.3_2
        ((1 == decode_status.security_context_available) && (0 == decode_status.mac_matched))) {
       *emm_cause = EMM_CAUSE_PROTOCOL_ERROR;
-//      unlock_ue_contexts(ue_context);
-      emm_msg_free(emm_msg);
-      OAILOG_FUNC_RETURN (LOG_NAS_EMM, decoder_rc);
+    } else {
+      OAILOG_ERROR (LOG_NAS_EMM, "EMMAS-SAP - Initial NAS message *****EXTENDED_SERVICE_REQUEST NOT SUPPORTED****\n");
+      *emm_cause = EMM_CAUSE_MESSAGE_TYPE_NOT_IMPLEMENTED;
+      rc = RETURNok;              /* TODO */
     }
-
-    OAILOG_ERROR (LOG_NAS_EMM, "EMMAS-SAP - Initial NAS message *****EXTENDED_SERVICE_REQUEST NOT SUPPORTED****\n");
-    *emm_cause = EMM_CAUSE_MESSAGE_TYPE_NOT_IMPLEMENTED;
-    rc = RETURNok;              /* TODO */
     break;
 
   default:
@@ -791,7 +758,9 @@ static int _emm_as_establish_req (emm_as_establish_t * msg, int *emm_cause)
     break;
   }
 
-//  unlock_ue_contexts(ue_context);
+  /** If ask_ue_context is set.. Ask the MME_APP to send S10_UE_CONTEXT. */
+  bdestroy_wrapper(&msg->nas_msg);
+  //  unlock_ue_contexts(ue_context);
   emm_msg_free(emm_msg);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
