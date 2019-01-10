@@ -62,6 +62,7 @@ s1ap_mme_decode_initiating (
     case S1ap_ProcedureCode_id_uplinkNASTransport: {
         ret = s1ap_decode_s1ap_uplinknastransporties (&message->msg.s1ap_UplinkNASTransportIEs, &initiating_p->value);
         s1ap_xer_print_s1ap_uplinknastransport (s1ap_xer__print2sp, message_string, message);
+        free_wrapper(&initiating_p->value.buf);
         *message_id = S1AP_UPLINK_NAS_LOG;
       }
       break;
@@ -77,6 +78,7 @@ s1ap_mme_decode_initiating (
     case S1ap_ProcedureCode_id_initialUEMessage: {
         ret = s1ap_decode_s1ap_initialuemessageies (&message->msg.s1ap_InitialUEMessageIEs, &initiating_p->value);
         s1ap_xer_print_s1ap_initialuemessage (s1ap_xer__print2sp, message_string, message);
+        free_wrapper(&initiating_p->value.buf);
         *message_id = S1AP_INITIAL_UE_MESSAGE_LOG;
       }
       break;
@@ -84,6 +86,7 @@ s1ap_mme_decode_initiating (
     case S1ap_ProcedureCode_id_UEContextReleaseRequest: {
         ret = s1ap_decode_s1ap_uecontextreleaserequesties (&message->msg.s1ap_UEContextReleaseRequestIEs, &initiating_p->value);
         s1ap_xer_print_s1ap_uecontextreleaserequest (s1ap_xer__print2sp, message_string, message);
+        free_wrapper(&initiating_p->value.buf);
         *message_id = S1AP_UE_CONTEXT_RELEASE_REQ_LOG;
       }
       break;
@@ -198,6 +201,7 @@ s1ap_mme_decode_successfull_outcome (
     case S1ap_ProcedureCode_id_InitialContextSetup: {
         ret = s1ap_decode_s1ap_initialcontextsetupresponseies (&message->msg.s1ap_InitialContextSetupResponseIEs, &successfullOutcome_p->value);
         s1ap_xer_print_s1ap_initialcontextsetupresponse (s1ap_xer__print2sp, message_string, message);
+        free_wrapper(&successfullOutcome_p->value.buf);
         *message_id = S1AP_INITIAL_CONTEXT_SETUP_LOG;
       }
       break;
@@ -205,6 +209,7 @@ s1ap_mme_decode_successfull_outcome (
     case S1ap_ProcedureCode_id_UEContextRelease: {
         ret = s1ap_decode_s1ap_uecontextreleasecompleteies (&message->msg.s1ap_UEContextReleaseCompleteIEs, &successfullOutcome_p->value);
         s1ap_xer_print_s1ap_uecontextreleasecomplete (s1ap_xer__print2sp, message_string, message);
+        free_wrapper(&successfullOutcome_p->value.buf);
         *message_id = S1AP_UE_CONTEXT_RELEASE_LOG;
       }
       break;
@@ -212,6 +217,7 @@ s1ap_mme_decode_successfull_outcome (
     case S1ap_ProcedureCode_id_E_RABSetup: {
         ret = s1ap_decode_s1ap_e_rabsetupresponseies (&message->msg.s1ap_E_RABSetupResponseIEs, &successfullOutcome_p->value);
         s1ap_xer_print_s1ap_e_rabsetupresponse (s1ap_xer__print2sp, message_string, message);
+        free_wrapper(&successfullOutcome_p->value.buf);
         *message_id = S1AP_E_RABSETUP_RESPONSE_LOG;
       }
       break;
@@ -219,6 +225,7 @@ s1ap_mme_decode_successfull_outcome (
     case S1ap_ProcedureCode_id_E_RABModify: {
         ret = s1ap_decode_s1ap_e_rabmodifyresponseies (&message->msg.s1ap_E_RABModifyResponseIEs, &successfullOutcome_p->value);
         s1ap_xer_print_s1ap_e_rabmodifyresponse (s1ap_xer__print2sp, message_string, message);
+        free_wrapper(&successfullOutcome_p->value.buf);
         *message_id = S1AP_E_RABMODIFY_RESPONSE_LOG;
       }
       break;
@@ -226,6 +233,7 @@ s1ap_mme_decode_successfull_outcome (
     case S1ap_ProcedureCode_id_E_RABRelease: {
         ret = s1ap_decode_s1ap_e_rabreleaseresponseies(&message->msg.s1ap_E_RABReleaseResponseIEs, &successfullOutcome_p->value);
         s1ap_xer_print_s1ap_e_rabreleaseresponse(s1ap_xer__print2sp, message_string, message);
+        free_wrapper(&successfullOutcome_p->value.buf);
         *message_id = S1AP_E_RABRELEASE_RESPONSE_LOG;
       }
       break;
@@ -234,6 +242,7 @@ s1ap_mme_decode_successfull_outcome (
     case S1ap_ProcedureCode_id_HandoverResourceAllocation: {
       ret = s1ap_decode_s1ap_handoverrequestacknowledgeies(&message->msg.s1ap_HandoverRequestAcknowledgeIEs, &successfullOutcome_p->value);
       s1ap_xer_print_s1ap_handoverrequestacknowledge(s1ap_xer__print2sp, message_string, message);
+      free_wrapper(&successfullOutcome_p->value.buf);
       *message_id = S1AP_HANDOVER_REQUEST_ACKNOWLEDGE_LOG;
     }
     break;
@@ -275,6 +284,7 @@ s1ap_mme_decode_unsuccessfull_outcome (
     case S1ap_ProcedureCode_id_InitialContextSetup: {
         ret = s1ap_decode_s1ap_initialcontextsetupfailureies (&message->msg.s1ap_InitialContextSetupFailureIEs, &unSuccessfulOutcome_p->value);
         s1ap_xer_print_s1ap_initialcontextsetupfailure (s1ap_xer__print2sp, message_string, message);
+        free_wrapper(&unSuccessfulOutcome_p->value.buf);
         *message_id = S1AP_INITIAL_CONTEXT_SETUP_FAILURE_LOG;
       }
       break;
@@ -283,6 +293,7 @@ s1ap_mme_decode_unsuccessfull_outcome (
     case S1ap_ProcedureCode_id_HandoverResourceAllocation: {
       ret = s1ap_decode_s1ap_handoverfailureies(&message->msg.s1ap_HandoverFailureIEs, &unSuccessfulOutcome_p->value);
       s1ap_xer_print_s1ap_handoverfailure(s1ap_xer__print2sp, message_string, message);
+      free_wrapper(&unSuccessfulOutcome_p->value.buf);
       *message_id = S1AP_HANDOVER_FAILURE_LOG;
     }
     break;
@@ -368,14 +379,13 @@ int s1ap_free_mme_decode_pdu(
     return free_s1ap_nasnondeliveryindication_(&message->msg.s1ap_NASNonDeliveryIndication_IEs);
   case S1AP_UE_CONTEXT_RELEASE_LOG:
     return free_s1ap_uecontextreleasecomplete(&message->msg.s1ap_UEContextReleaseCompleteIEs);
-  case S1AP_E_RABSETUP_RESPONSE_LOG:{
+  case S1AP_E_RABSETUP_RESPONSE_LOG:
     return free_s1ap_e_rabsetupresponse(&message->msg.s1ap_E_RABSetupResponseIEs);
 //    FREEMEM(message->msg.s1ap_E_RABSetupResponseIEs.e_RABSetupListBearerSURes.s1ap_E_RABSetupItemBearerSURes.array);
 //    message->msg.s1ap_E_RABSetupResponseIEs.e_RABSetupListBearerSURes.s1ap_E_RABSetupItemBearerSURes.array = 0;
 //    FREEMEM(message->msg.s1ap_E_RABSetupResponseIEs.e_RABFailedToSetupListBearerSURes.s1ap_E_RABItem.array);
 //    message->msg.s1ap_E_RABSetupResponseIEs.e_RABFailedToSetupListBearerSURes.s1ap_E_RABItem.array = 0;
 //    return result;
-  }
   case S1AP_E_RABMODIFY_RESPONSE_LOG:
     return free_s1ap_e_rabmodifyresponse(&message->msg.s1ap_E_RABModifyResponseIEs);
   case S1AP_E_RABRELEASE_RESPONSE_LOG:

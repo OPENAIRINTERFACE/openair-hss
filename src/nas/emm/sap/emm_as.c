@@ -116,7 +116,7 @@ static int _emm_as_recv (
     mme_ue_s1ap_id_t ue_id,
     tai_t  const *originating_tai,
     ecgi_t  const *originating_ecgi,
-    bstring msg,
+    bstring *msg,
     size_t len,
     int *emm_cause,
     uint8_t ul_nas_count,
@@ -265,7 +265,7 @@ static int _emm_as_recv (
   mme_ue_s1ap_id_t ue_id,
   tai_t  const *originating_tai,
   ecgi_t  const *originating_ecgi,
-  bstring msg,
+  bstring *msg,
   size_t len,
   int *emm_cause,
   uint8_t ul_nas_count,
@@ -304,7 +304,7 @@ static int _emm_as_recv (
   /*
    * Decode the received message
    */
-  decoder_rc = nas_message_decode (msg->data, &nas_msg, len, emm_security_context, NULL, decode_status);
+  decoder_rc = nas_message_decode ((*msg)->data, &nas_msg, len, emm_security_context, NULL, decode_status);
 
   if (decoder_rc < 0) {
     OAILOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - Failed to decode NAS message " "(err=%d)\n", decoder_rc);
@@ -418,7 +418,7 @@ static int _emm_as_recv (
         originating_ecgi,
         decode_status,
         ul_nas_count,
-        msg);       /**< Send the encoded  NAS_EMM message together with it. */
+        (*msg));       /**< Send the encoded  NAS_EMM message together with it. */
     /** If ask_ue_context is set.. Ask the MME_APP to send S10_UE_CONTEXT. */
     break;
 
@@ -472,7 +472,8 @@ static int _emm_as_recv (
     *emm_cause = EMM_CAUSE_MESSAGE_TYPE_NOT_COMPATIBLE;
     break;
   }
-  bdestroy_wrapper(&msg);
+  if((*msg))
+    bdestroy_wrapper(msg);
   emm_msg_free(emm_msg);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
@@ -551,7 +552,7 @@ static int _emm_as_data_ind (emm_as_data_t * msg, int *emm_cause)
           tai_t                                   originating_tai = {0}; // originating TAI
           memcpy(&originating_tai, msg->tai, sizeof(originating_tai));
 
-          rc = _emm_as_recv (msg->ue_id, &originating_tai, &msg->ecgi, plain_msg, bytes, emm_cause, ul_nas_count, &decode_status);
+          rc = _emm_as_recv (msg->ue_id, &originating_tai, &msg->ecgi, &plain_msg, bytes, emm_cause, ul_nas_count, &decode_status);
           if(plain_msg)
             bdestroy_wrapper(&plain_msg);
         } else if (header.protocol_discriminator == EPS_SESSION_MANAGEMENT_MESSAGE) {

@@ -431,9 +431,10 @@ for key in iesDefs:
         f.write("                    xer_fprint(stdout, &asn_DEF_%s, %s_p);\n" % (ietypeunderscore, lowerFirstCamelWord(ietypesubst)))
         if ie[2] in ieofielist.keys():
             f.write("                if (%s_decode_%s(&%s->%s, %s_p) < 0) {\n" % (fileprefix, ietypeunderscore.lower(), lowerFirstCamelWord(re.sub('-', '_', key)), ienameunderscore, lowerFirstCamelWord(ietypesubst)))
-            f.write("                   OAILOG_ERROR (LOG_%s, \"Decoding of encapsulated IE %s failed\\n\");\n" % (fileprefix.upper(), lowerFirstCamelWord(ietypesubst)))
-            f.write("                    ASN_STRUCT_FREE(asn_DEF_%s, %s_p);\n" % (ietypeunderscore, lowerFirstCamelWord(ietypesubst)))
+            f.write("                   OAILOG_ERROR (LOG_%s, \"Decoding of encapsulated IE %s failed (1) \\n\");\n" % (fileprefix.upper(), lowerFirstCamelWord(ietypesubst)))
+#            f.write("                    ASN_STRUCT_FREE(asn_DEF_%s, %s_p);\n" % (ietypeunderscore, lowerFirstCamelWord(ietypesubst)))
             f.write("                }\n")
+            f.write("                ASN_STRUCT_FREE(asn_DEF_%s, %s_p);\n" % (ietypeunderscore, lowerFirstCamelWord(ietypesubst)))
         else:
             f.write("                memcpy(&%s->%s, %s_p, sizeof(%s_t));\n" % (lowerFirstCamelWord(re.sub('-', '_', key)), ienameunderscore, lowerFirstCamelWord(ietypesubst), ietypeunderscore))
             f.write("                FREEMEM(%s_p);\n" % (lowerFirstCamelWord(ietypesubst)))
@@ -467,7 +468,12 @@ for key in iesDefs:
             (iesStructName, re.sub('IEs', '', lowerFirstCamelWord(re.sub('-', '_', key)))))
     f.write("        ASN_STRUCT_FREE_CONTENTS_ONLY(asn_DEF_%s, %s->%s.array[i]);\n" %
             (ietypeunderscore, iesStructName, re.sub('IEs', '',lowerFirstCamelWord(re.sub('-', '_', key)))))
+    f.write("    	 FREEMEM(%s->%s.array[i]);\n" %
+            (iesStructName, re.sub('IEs', '',lowerFirstCamelWord(re.sub('-', '_', key)))))
     f.write("    }\n")
+    f.write("    /* Remove the array containing the elements. */\n")
+    f.write("    FREEMEM(%s->%s.array);\n" %
+            (iesStructName, re.sub('IEs', '',lowerFirstCamelWord(re.sub('-', '_', key)))))
     f.write("    return 0;\n")
     f.write("}\n\n")
 
@@ -534,7 +540,7 @@ for key in iesDefs:
         f.write("                %s_t *%s_p = NULL;\n" % (re.sub('-', '_', ie[2]), lowerFirstCamelWord(re.sub('-', '', ie[2]))))
         f.write("                tempDecoded = ANY_to_type_aper(&ie_p->value, &asn_DEF_%s, (void**)&%s_p);\n" % (re.sub('-', '_', ie[2]), lowerFirstCamelWord(re.sub('-', '', ie[2]))))
         f.write("                if (tempDecoded < 0 || %s_p == NULL) {\n" % (lowerFirstCamelWord(re.sub('-', '', ie[2]))))
-        f.write("                   OAILOG_ERROR (LOG_%s, \"Decoding of IE %s for message %s failed\\n\");\n" % (fileprefix.upper(), ienameunderscore, re.sub('-', '_', keyname)))
+        f.write("                   OAILOG_ERROR (LOG_%s, \"Decoding of IE %s for message %s failed (2) \\n\");\n" % (fileprefix.upper(), ienameunderscore, re.sub('-', '_', keyname)))
         f.write("                    if (%s_p)\n" % (lowerFirstCamelWord(re.sub('-', '', ie[2]))))
         f.write("                        ASN_STRUCT_FREE(asn_DEF_%s, %s_p);\n" % (re.sub('-', '_', ie[2]), lowerFirstCamelWord(re.sub('-', '', ie[2]))))
         f.write("                    return -1;\n")
