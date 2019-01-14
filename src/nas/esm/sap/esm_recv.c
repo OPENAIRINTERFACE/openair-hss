@@ -221,7 +221,7 @@ esm_recv_pdn_connectivity_request (
       OAILOG_ERROR(LOG_NAS_ESM, "ESM-SAP   - Already an existing UE triggered ESM PDN connectivity procedure (pti=%d) for UE " MME_UE_S1AP_ID_FMT " (no pdn context)."
           "Removing old procedure and rejecting request for new procedure (pti=%d).\n", esm_proc_pdn_connectivity->esm_base_proc.pti, ue_id, pti);
       /* todo: We don't check the PDN context of the old procedure yet. */
-      _esm_proc_free_pdn_connectivity_procedure(&esm_proc_pdn_connectivity);
+//      _esm_proc_free_pdn_connectivity_procedure(&esm_proc_pdn_connectivity);
       OAILOG_FUNC_RETURN(LOG_NAS_ESM, ESM_CAUSE_REQUEST_REJECTED_BY_GW);
     }
   }
@@ -690,8 +690,6 @@ esm_recv_activate_default_eps_bearer_context_accept (
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_SUCCESS);
   }
 
-  /** Not handling the PCO received. */
-
   /*
    * Execute the default EPS bearer context activation procedure accepted
    * * * * by the UE
@@ -701,7 +699,7 @@ esm_recv_activate_default_eps_bearer_context_accept (
   /*
    * Remove the PDN Connectivity procedure.
    * It stops T3485 timer if running
-   */
+     */
   _esm_proc_free_pdn_connectivity_procedure(&esm_pdn_connectivity_proc);
   /*
    * Return the ESM cause value
@@ -762,7 +760,7 @@ esm_recv_activate_default_eps_bearer_context_reject (
   /*
    * Remove the PDN Context for the given APN.
    * No EMM message will be triggered, just a local remove.
-   * Inform the SAE-GW
+   * Inform the SAE-GW about the failed bearers.
    */
   esm_proc_pdn_connectivity_failure(ue_id, esm_pdn_connectivity_proc);
 

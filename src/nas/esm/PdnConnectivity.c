@@ -382,16 +382,22 @@ void esm_proc_pdn_connectivity_failure (mme_ue_s1ap_id_t ue_id, nas_esm_proc_pdn
   OAILOG_FUNC_IN (LOG_NAS_ESM);
 
   OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - PDN connectivity failure (ue_id=" MME_UE_S1AP_ID_FMT ", pdn_cid=%d, ebi%d)\n", ue_id, esm_proc_pdn_connectivity->pdn_cid, esm_proc_pdn_connectivity->default_ebi);
-  /*
-   * Delete the PDN connectivity in the MME_APP UE context.
-   */
-  mme_app_esm_delete_pdn_context(ue_id, esm_proc_pdn_connectivity->subscribed_apn, esm_proc_pdn_connectivity->pdn_cid, esm_proc_pdn_connectivity->default_ebi); /**< Frees it by putting it back to the pool. */
 
+  pdn_context_t *pdn_context = NULL;
+  mme_app_get_pdn_context(ue_id, esm_proc_pdn_connectivity->pdn_cid, esm_proc_pdn_connectivity->default_ebi, esm_proc_pdn_connectivity->subscribed_apn, &pdn_context);
+  if(pdn_context){
+    /*
+     * Delete the PDN connectivity in the MME_APP UE context.
+     */
+    nas_itti_pdn_disconnect_req(ue_id, esm_proc_pdn_connectivity->default_ebi, esm_proc_pdn_connectivity->esm_base_proc.pti, false,
+        pdn_context->s_gw_address_s11_s4.address.ipv4_address, pdn_context->s_gw_teid_s11_s4,
+        esm_proc_pdn_connectivity->pdn_cid);
+    mme_app_esm_delete_pdn_context(ue_id, esm_proc_pdn_connectivity->subscribed_apn, esm_proc_pdn_connectivity->pdn_cid, esm_proc_pdn_connectivity->default_ebi); /**< Frees it by putting it back to the pool. */
+  }
   /*
    * Remove the ESM procedure and stop the timer.
    */
   _esm_proc_free_pdn_connectivity_procedure(&esm_proc_pdn_connectivity);
-
   OAILOG_FUNC_OUT(LOG_NAS_ESM);
 }
 

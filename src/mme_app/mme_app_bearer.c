@@ -152,7 +152,6 @@ mme_app_handle_nas_pdn_disconnect_req (
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
   struct ue_context_s                    *ue_context  = NULL;
-  struct pdn_context_s                   *pdn_context = NULL;
   int                                     rc = RETURNok;
 
   DevAssert (nas_pdn_disconnect_req_pP );
@@ -1519,19 +1518,12 @@ mme_app_handle_initial_context_setup_rsp (
     }
   }
   pdn_context_t * registered_pdn_ctx = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
-  /** Setting as ACTIVE when MBResp received from SAE-GW. */
-  if(ue_context->mm_state == UE_REGISTERED && registered_pdn_ctx){
-    /** Send Modify Bearer Request for the APN. */
-    // todo: add flags and bearer contexts to be removed
-    mme_app_send_s11_modify_bearer_req(ue_context, registered_pdn_ctx, 0, NULL);
-    OAILOG_FUNC_OUT (LOG_MME_APP);
-    // todo: check Modify bearer request
-  }else{
-    /** Will send MBR with MM state change callbacks (with ATTACH_COMPLETE). */
-    OAILOG_INFO(LOG_MME_APP, "IMSI " IMSI_64_FMT " with ueId " MME_UE_S1AP_ID_FMT " is not registered or yet (%d) or no pdn context exist (interfered by detach procedure). "
-        "Waiting the UE to register to send the MBR or to detach..\n", ue_context->imsi, ue_context->mme_ue_s1ap_id, ue_context->mm_state);
-    OAILOG_FUNC_OUT (LOG_MME_APP);
-  }
+  /** Setting as ACTIVE when MBResp received from SAE-GW. Sending an MBR even if not online. */
+  /** Send Modify Bearer Request for the APN. */
+  // todo: add flags and bearer contexts to be removed
+  mme_app_send_s11_modify_bearer_req(ue_context, registered_pdn_ctx, 0, NULL);
+  OAILOG_FUNC_OUT (LOG_MME_APP);
+  // todo: check Modify bearer request
 }
 
 //------------------------------------------------------------------------------
@@ -2034,26 +2026,37 @@ static void mme_app_handle_e_rab_setup_rsp_pdn_connectivity(const mme_ue_s1ap_id
 
   if(e_rab_setup_item) {
     bearer_context_t * bc_success = NULL;
+    pdn_context_t * pdn_context   = NULL;
     mme_app_get_session_bearer_context_from_all(ue_context, (ebi_t) e_rab_setup_item->e_rab_id, &bc_success);
     if(bc_success){
-      DevAssert(bc_success->bearer_state & BEARER_STATE_SGW_CREATED);
-      pdn_cid = bc_success->pdn_cx_id;
-      def_ebi = bc_success->linked_ebi;
-      bc_success->enb_fteid_s1u.interface_type = S1_U_ENODEB_GTP_U;
-      bc_success->enb_fteid_s1u.teid           = e_rab_setup_item->gtp_teid;
-      /** Set the IP address. */
-      if (4 == blength(e_rab_setup_item->transport_layer_address)) {
-        bc_success->enb_fteid_s1u.ipv4         = 1;
-        memcpy(&bc_success->enb_fteid_s1u.ipv4_address, e_rab_setup_item->transport_layer_address->data, blength(e_rab_setup_item->transport_layer_address));
-      } else if (16 == blength(e_rab_setup_item->transport_layer_address)) {
-        bc_success->enb_fteid_s1u.ipv6         = 1;
-        memcpy(&bc_success->enb_fteid_s1u.ipv6_address, e_rab_setup_item->transport_layer_address->data, blength(e_rab_setup_item->transport_layer_address));
-      } else {
-        AssertFatal(0, "TODO IP address %d bytes", blength(e_rab_setup_item->transport_layer_address));
+      mme_app_get_pdn_context(ue_context->mme_ue_s1ap_id, bc_success->pdn_cx_id, bc_success->linked_ebi, NULL, &pdn_context);
+      if(pdn_context){
+        DevAssert(bc_success->bearer_state & BEARER_STATE_SGW_CREATED);
+        pdn_cid = bc_success->pdn_cx_id;
+        def_ebi = bc_success->linked_ebi;
+        bc_success->enb_fteid_s1u.interface_type = S1_U_ENODEB_GTP_U;
+        bc_success->enb_fteid_s1u.teid           = e_rab_setup_item->gtp_teid;
+        /** Set the IP address. */
+        if (4 == blength(e_rab_setup_item->transport_layer_address)) {
+          bc_success->enb_fteid_s1u.ipv4         = 1;
+          memcpy(&bc_success->enb_fteid_s1u.ipv4_address, e_rab_setup_item->transport_layer_address->data, blength(e_rab_setup_item->transport_layer_address));
+        } else if (16 == blength(e_rab_setup_item->transport_layer_address)) {
+          bc_success->enb_fteid_s1u.ipv6         = 1;
+          memcpy(&bc_success->enb_fteid_s1u.ipv6_address, e_rab_setup_item->transport_layer_address->data, blength(e_rab_setup_item->transport_layer_address));
+        } else {
+          AssertFatal(0, "TODO IP address %d bytes", blength(e_rab_setup_item->transport_layer_address));
+        }
+        bc_success->bearer_state |= BEARER_STATE_ENB_CREATED;
+        bc_success->bearer_state |= BEARER_STATE_MME_CREATED;
+        /*
+         * The APN-AMBR value will already be set.
+         * Independently from the ESM (not checking the ESM_EBR_STATE), send the MBR to the PGW.
+         * If the ESM procedure is rejected or gets into timeout, we must remove the session PGW session via ESM separately.
+         */
+        mme_app_send_s11_modify_bearer_req(ue_context, pdn_context, 0, NULL);
+      } else{
+        OAILOG_DEBUG (LOG_MME_APP, "For established default bearer with linked_(ebi=%d), no pdn context exists for UE: " MME_UE_S1AP_ID_FMT "\n", bc_success->linked_ebi, mme_ue_s1ap_id);
       }
-      bc_success->bearer_state |= BEARER_STATE_ENB_CREATED;
-      bc_success->bearer_state |= BEARER_STATE_MME_CREATED;
-      /** The APN-AMBR value will already be set. */
     }else{
       /**
        * We assume that some error happened in the ESM layer during attach, and therefore the bearer context does not exist in the session bearers.
@@ -2088,7 +2091,7 @@ static void mme_app_handle_e_rab_setup_rsp_pdn_connectivity(const mme_ue_s1ap_id
       mme_app_send_delete_session_request(ue_context, bc_failed->linked_ebi, pdn_context->s_gw_address_s11_s4.address.ipv4_address, pdn_context->s_gw_teid_s11_s4, true); /**< Don't delete the S11 Tunnel endpoint (still need for the default apn). */
       /** Release the PDN context. */
       mme_app_esm_delete_pdn_context(ue_context->mme_ue_s1ap_id, pdn_context->apn_subscribed, pdn_context->context_identifier, pdn_context->default_ebi);
-      OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
+      OAILOG_FUNC_OUT(LOG_MME_APP);
     }else {
       OAILOG_ERROR(LOG_MME_APP, "No bearer context was found for failed default ebi %d for UE: " MME_UE_S1AP_ID_FMT "\n", failed_ebi, ue_context->mme_ue_s1ap_id);
       OAILOG_FUNC_OUT(LOG_MME_APP);

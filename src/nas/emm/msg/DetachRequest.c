@@ -77,9 +77,6 @@ encode_detach_request (
   /*
    * Checking IEI and pointer
    */
-  /*
-   * Checking IEI and pointer
-   */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, DETACH_REQUEST_MINIMUM_LENGTH, len);
   *(buffer + encoded) = ((encode_u8_nas_key_set_identifier (&detach_request->naskeysetidentifier) << 4) | (encode_u8_detach_type (&detach_request->detachtype) & 0x0f));
   encoded++;

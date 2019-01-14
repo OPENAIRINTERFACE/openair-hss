@@ -238,66 +238,66 @@ emm_proc_detach (
     *
     */
 
-   /** Check if there are any active sessions, if so terminate them all. */
-   OAILOG_INFO (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " EMM-PROC  - Detach UE \n", emm_context->ue_id);
-   /*
-    * 3GPP TS 24.401, Figure 5.3.2.1-1, point 5a
-    * At this point, all NAS messages shall be protected by the NAS security
-    * functions (integrity and ciphering) indicated by the MME unless the UE
-    * is emergency attached and not successfully authenticated.
-    */
+  /** Check if there are any active sessions, if so terminate them all. */
+  OAILOG_INFO (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " EMM-PROC  - Detach UE \n", emm_context->ue_id);
+  /*
+   * 3GPP TS 24.401, Figure 5.3.2.1-1, point 5a
+   * At this point, all NAS messages shall be protected by the NAS security
+   * functions (integrity and ciphering) indicated by the MME unless the UE
+   * is emergency attached and not successfully authenticated.
+   */
 
-   if(detach_type) {
-     OAILOG_INFO (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " EMM-PROC  - Detach type is set for UE. We will send detach request. \n", emm_context->ue_id);
+  if(detach_type) {
+    OAILOG_INFO (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " EMM-PROC  - Detach type is set for UE. We will send detach request. \n", emm_context->ue_id);
 
-     emm_sap_t                               emm_sap = {0};
-     emm_as_data_t                          *emm_as = &emm_sap.u.emm_as.u.data;
+    emm_sap_t                               emm_sap = {0};
+    emm_as_data_t                          *emm_as = &emm_sap.u.emm_as.u.data;
 
-     MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMM_AS_NAS_INFO_DETACH_REQUEST ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
-     /*
-      * Setup NAS information message to transfer
-      */
-     emm_as->nas_info = EMM_AS_NAS_INFO_DETACH_REQ;
-     emm_as->nas_msg = NULL;
-     /*
-      * Set the UE identifier
-      */
-     emm_as->ue_id = ue_id;
-     /*
-      * Detach Type
-      */
-     emm_as->type = detach_type;
-     /*
-      * EMM Cause
-      */
-     emm_as->emm_cause = emm_cause;
+    MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMM_AS_NAS_INFO_DETACH_REQUEST ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
+    /*
+     * Setup NAS information message to transfer
+     */
+    emm_as->nas_info = EMM_AS_NAS_INFO_DETACH_REQ;
+    emm_as->nas_msg  = NULL;
+    /*
+     * Set the UE identifier
+     */
+    emm_as->ue_id = ue_id;
+    /*
+     * Detach Type
+     */
+    emm_as->type = detach_type;
+    /*
+     * EMM Cause
+     */
+    emm_as->emm_cause = emm_cause;
 
-     /*
-      * Setup EPS NAS security data
-      */
-     emm_as_set_security_data (&emm_as->sctx, &emm_context->_security, false, true);
-     /*
-      * Notify EMM-AS SAP that Detach Accept message has to
-      * be sent to the network
-      */
-     emm_sap.primitive = EMMAS_DATA_REQ;
-     rc = emm_sap_send (&emm_sap);
-   }else{
-     OAILOG_INFO (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " EMM-PROC  - No detach type is set for UE. We will not send detach request. \n", emm_context->ue_id);
-     rc = RETURNok;
-   }
-   /*
-    * Release ESM PDN and bearer context
-    */
+    /*
+     * Setup EPS NAS security data
+     */
+    emm_as_set_security_data (&emm_as->sctx, &emm_context->_security, false, true);
+    /*
+     * Notify EMM-AS SAP that Detach Accept message has to
+     * be sent to the network
+     */
+    emm_sap.primitive = EMMAS_DATA_REQ;
+    rc = emm_sap_send (&emm_sap);
+  }else{
+    OAILOG_INFO (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " EMM-PROC  - No detach type is set for UE. We will not send detach request. \n", emm_context->ue_id);
+    rc = RETURNok;
+  }
+  /*
+   * Release ESM PDN and bearer context
+   */
 
-   // todo: this might be in success_notif of detach_proc
-   if (rc != RETURNerror) {
-     /** Confirm the detach procedure and inform MME_APP. */
+  // todo: this might be in success_notif of detach_proc
+  if (rc != RETURNerror) {
+    /** Confirm the detach procedure and inform MME_APP. */
 
-     emm_sap_t                               emm_sap = {0};
+    emm_sap_t                               emm_sap = {0};
 
-     /*
-      * Notify EMM FSM that the UE has been implicitly detached
+    /*
+     * Notify EMM FSM that the UE has been implicitly detached
       */
      MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMREG_DETACH_CNF ue id " MME_UE_S1AP_ID_FMT " ", emm_context->ue_id);
      OAILOG_INFO (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " EMM-PROC  - Sending EMMREG_DETACH_CNF. \n", emm_context->ue_id);

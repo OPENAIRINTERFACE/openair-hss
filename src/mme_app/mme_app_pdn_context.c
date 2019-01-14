@@ -270,7 +270,6 @@ mme_app_esm_update_pdn_context(mme_ue_s1ap_id_t ue_id, const bstring apn, pdn_ci
     protocol_configuration_options_t *pco){
   ue_context_t              *ue_context         = NULL;
   pdn_context_t             *pdn_context        = NULL;
-  int                        rc                 = RETURNok;
 
   OAILOG_FUNC_IN (LOG_MME_APP);
   ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, ue_id);

@@ -502,38 +502,6 @@ int emm_cn_send (const emm_cn_t * msg)
     rc = _emm_cn_deregister_ue (msg->u.deregister.ue_id);
     break;
 
-//  case EMMCN_PDN_CONFIG_RES:
-//    rc = _emm_cn_pdn_config_res (msg->u.emm_cn_pdn_config_res);
-//    break;
-//
-//  case EMMCN_PDN_CONFIG_FAIL:
-//    rc = _emm_cn_pdn_config_fail (msg->u.emm_cn_pdn_config_fail);
-//    break;
-//
-//  case EMMCN_PDN_CONNECTIVITY_RES:
-//    rc = _emm_cn_pdn_connectivity_res (msg->u.emm_cn_pdn_res);
-//    break;
-//
-//  case EMMCN_PDN_CONNECTIVITY_FAIL:
-//    rc = _emm_cn_pdn_connectivity_fail (msg->u.emm_cn_pdn_fail);
-//    break;
-//
-//  case EMMCN_PDN_DISCONNECT_RES:
-//    rc = _emm_cn_pdn_disconnect_res (msg->u.emm_cn_pdn_disconnect_res);
-//    break;
-//
-//  case EMMCN_ACTIVATE_DEDICATED_BEARER_REQ:
-//    rc = _emm_cn_activate_dedicated_bearer_req (msg->u.emm_cn_activate_dedicated_bearer_req);
-//    break;
-//
-//  case EMMCN_MODIFY_EPS_BEARER_CTX_REQ:
-//    rc = _emm_cn_modify_eps_bearer_ctx_req (msg->u.emm_cn_modify_eps_bearer_ctx_req);
-//    break;
-//
-//  case EMMCN_DEACTIVATE_DEDICATED_BEARER_REQ:
-//    rc = _emm_cn_deactivate_dedicated_bearer_req (msg->u.emm_cn_deactivate_dedicated_bearer_req);
-//    break;
-
   case EMMCN_IMPLICIT_DETACH_UE:
     rc = _emm_cn_implicit_detach_ue (msg->u.emm_cn_implicit_detach.ue_id, msg->u.emm_cn_implicit_detach.detach_type, msg->u.emm_cn_implicit_detach.emm_cause);
     break;

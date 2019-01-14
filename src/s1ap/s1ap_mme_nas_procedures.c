@@ -506,9 +506,11 @@ int s1ap_generate_s1ap_e_rab_setup_req (itti_s1ap_e_rab_setup_req_t * const e_ra
 //      TO DO e_rabsetuprequesties->uEaggregateMaximumBitrate.uEaggregateMaximumBitRateDL.buf
 //    }
 
-    S1ap_E_RABToBeSetupItemBearerSUReq_t s1ap_E_RABToBeSetupItemBearerSUReq[e_rab_setup_req->e_rab_to_be_setup_list.no_of_items];
+//    S1ap_E_RABToBeSetupItemBearerSUReq_t s1ap_E_RABToBeSetupItemBearerSUReq[e_rab_setup_req->e_rab_to_be_setup_list.no_of_items];
+    S1ap_E_RABToBeSetupItemBearerSUReq_t  *s1ap_E_RABToBeSetupItemBearerSUReq; // [conn_est_cnf_pP->no_of_e_rabs]; // don't alloc on stack for automatic removal
     struct S1ap_GBR_QosInformation       gbrQosInformation[e_rab_setup_req->e_rab_to_be_setup_list.no_of_items];
 
+    s1ap_E_RABToBeSetupItemBearerSUReq = calloc(e_rab_setup_req->e_rab_to_be_setup_list.no_of_items, sizeof(S1ap_E_RABToBeSetupItemBearerSUReq_t));
     for  (int i= 0; i < e_rab_setup_req->e_rab_to_be_setup_list.no_of_items; i++) {
       memset(&s1ap_E_RABToBeSetupItemBearerSUReq[i], 0, sizeof(S1ap_E_RABToBeSetupItemBearerSUReq_t));
 
@@ -888,7 +890,7 @@ s1ap_handle_conn_est_cnf (
   if (conn_est_cnf_pP->ue_radio_cap_length) {
     OAILOG_DEBUG (LOG_S1AP, "UE radio capability found, adding to message\n");
     initialContextSetupRequest_p->presenceMask |=
-      S1AP_INITIALCONTEXTSETUPREQUESTIES_UERADIOCAPABILITY_PRESENT;
+        S1AP_INITIALCONTEXTSETUPREQUESTIES_UERADIOCAPABILITY_PRESENT;
     OCTET_STRING_fromBuf(&initialContextSetupRequest_p->ueRadioCapability,
                         (const char*) conn_est_cnf_pP->ue_radio_capabilities,
                          conn_est_cnf_pP->ue_radio_cap_length);
@@ -1123,7 +1125,7 @@ s1ap_handle_path_switch_req_ack(
   OAILOG_FUNC_OUT (LOG_S1AP);
 }
 
-
+//------------------------------------------------------------------------------
 int s1ap_handle_handover_preparation_failure (
     const itti_s1ap_handover_preparation_failure_t *handover_prep_failure_pP)
 {
@@ -1131,6 +1133,7 @@ int s1ap_handle_handover_preparation_failure (
   return s1ap_handover_preparation_failure (handover_prep_failure_pP->assoc_id, handover_prep_failure_pP->mme_ue_s1ap_id, handover_prep_failure_pP->enb_ue_s1ap_id, handover_prep_failure_pP->cause);
 }
 
+//------------------------------------------------------------------------------
 int s1ap_handover_preparation_failure (
     const sctp_assoc_id_t assoc_id,
     const mme_ue_s1ap_id_t mme_ue_s1ap_id,
@@ -1188,7 +1191,7 @@ int s1ap_handover_preparation_failure (
   OAILOG_FUNC_RETURN (LOG_S1AP, rc);
 }
 
-
+//------------------------------------------------------------------------------
 int s1ap_handle_path_switch_request_failure (
     const itti_s1ap_path_switch_request_failure_t *path_switch_request_failure_pP)
 {
@@ -1196,6 +1199,7 @@ int s1ap_handle_path_switch_request_failure (
   return s1ap_path_switch_request_failure (path_switch_request_failure_pP->assoc_id, path_switch_request_failure_pP->mme_ue_s1ap_id, path_switch_request_failure_pP->enb_ue_s1ap_id, path_switch_request_failure_pP->cause_type);
 }
 
+//------------------------------------------------------------------------------
 int s1ap_path_switch_request_failure (
     const sctp_assoc_id_t assoc_id,
     const mme_ue_s1ap_id_t mme_ue_s1ap_id,
@@ -1244,6 +1248,7 @@ int s1ap_path_switch_request_failure (
   OAILOG_FUNC_RETURN (LOG_S1AP, rc);
 }
 
+//------------------------------------------------------------------------------
 void
 s1ap_handle_handover_cancel_acknowledge (
   const itti_s1ap_handover_cancel_acknowledge_t* const handover_cancel_acknowledge_pP)
@@ -1308,6 +1313,7 @@ s1ap_handle_handover_cancel_acknowledge (
   OAILOG_FUNC_OUT (LOG_S1AP);
 }
 
+//------------------------------------------------------------------------------
 void
 s1ap_handle_handover_request (
   const itti_s1ap_handover_request_t * const handover_request_pP)
@@ -1611,7 +1617,6 @@ s1ap_handle_handover_command (
   /** Not changing the ECM state of the source eNB UE-Reference. */
   OAILOG_FUNC_OUT (LOG_S1AP);
 }
-
 
 //------------------------------------------------------------------------------
 void
