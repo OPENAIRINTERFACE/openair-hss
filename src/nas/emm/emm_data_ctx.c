@@ -477,7 +477,7 @@ inline void emm_ctx_set_valid_eps_bearer_context_status(emm_data_context_t * con
 }
 
 /** Update the EMM context from the received MM Context during Handover/TAU procedure. */
-//   todo: _clear_emm_ctxt(emm_ctx_p);
+//   todo: _clear_emm_ctxt(emm_ctx_p->ue_id);
 inline void emm_ctx_update_from_mm_eps_context(emm_data_context_t * const emm_ctx_p, void* const _mm_eps_ctxt){
   int                                     rc = RETURNerror;
   int                                     mme_eea = NAS_SECURITY_ALGORITHMS_EEA0;

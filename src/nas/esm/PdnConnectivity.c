@@ -149,8 +149,6 @@ nas_esm_proc_pdn_connectivity_t *_esm_proc_create_pdn_connectivity_procedure(mme
   nas_esm_proc_pdn_connectivity_t  *esm_proc_pdn_connectivity = mme_app_nas_esm_create_pdn_connectivity_procedure(ue_id, pti);
   AssertFatal(esm_proc_pdn_connectivity, "TODO Handle this");
 
-//  nas_esm_proc_t * test_block = (nas_esm_proc_t *)calloc(1,sizeof(nas_esm_proc_t));
-
   if(imsi)
     memcpy((void*)&esm_proc_pdn_connectivity->imsi, imsi, sizeof(imsi_t));
   return esm_proc_pdn_connectivity;
@@ -440,14 +438,13 @@ esm_proc_pdn_config_res(mme_ue_s1ap_id_t ue_id, bool * is_attach, pti_t * pti, i
   /** There may still be no APN set. Get a (default) APN configuration. */
   if(mme_app_select_apn(imsi, esm_proc_pdn_connectivity->subscribed_apn, &apn_config) == RETURNerror){
     DevAssert(esm_proc_pdn_connectivity->subscribed_apn);
-    _esm_proc_free_pdn_connectivity_procedure(&esm_proc_pdn_connectivity);
     OAILOG_ERROR(LOG_NAS_ESM, "ESM-SAP   - No APN configuration could be found for APN \"%s\". "
         "Rejecting the PDN connectivity procedure." "(ue_id=%d, pti=%d)\n", bdata(esm_proc_pdn_connectivity->subscribed_apn), ue_id, *pti);
+    _esm_proc_free_pdn_connectivity_procedure(&esm_proc_pdn_connectivity);
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_UNKNOWN_ACCESS_POINT_NAME);
   } else if (!apn_config){
     _esm_proc_free_pdn_connectivity_procedure(&esm_proc_pdn_connectivity);
-//    OAILOG_ERROR(LOG_NAS_ESM, "ESM-SAP   - No APN configuration could be found (after ULA)".
-//        " Rejecting the PDN connectivity procedure." "(ue_id=%d, pti=%d)\n", ue_id, *pti);
+    OAILOG_ERROR(LOG_NAS_ESM, "ESM-SAP   - No APN configuration could be found (after ULA). Rejecting the PDN connectivity procedure." "(ue_id="MME_UE_S1AP_ID_FMT", pti=%d)\n", ue_id, *pti);
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_UNKNOWN_ACCESS_POINT_NAME);
   }
 

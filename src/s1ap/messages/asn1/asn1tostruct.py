@@ -468,7 +468,7 @@ for key in iesDefs:
             (iesStructName, re.sub('IEs', '', lowerFirstCamelWord(re.sub('-', '_', key)))))
     f.write("        ASN_STRUCT_FREE_CONTENTS_ONLY(asn_DEF_%s, %s->%s.array[i]);\n" %
             (ietypeunderscore, iesStructName, re.sub('IEs', '',lowerFirstCamelWord(re.sub('-', '_', key)))))
-    f.write("    	 FREEMEM(%s->%s.array[i]);\n" %
+    f.write("    	  FREEMEM(%s->%s.array[i]);\n" %
             (iesStructName, re.sub('IEs', '',lowerFirstCamelWord(re.sub('-', '_', key)))))
     f.write("    }\n")
     f.write("    /* Remove the array containing the elements. */\n")

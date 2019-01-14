@@ -486,9 +486,9 @@ esm_cause_t esm_recv_information_response (
   apn_configuration_t * apn_configuration = NULL;
   if(mme_app_select_apn(imsi64, esm_proc_pdn_connectivity->subscribed_apn, &apn_configuration) == RETURNerror){
     DevAssert(esm_proc_pdn_connectivity->subscribed_apn);
-    _esm_proc_free_pdn_connectivity_procedure(&esm_proc_pdn_connectivity);
     OAILOG_ERROR(LOG_NAS_ESM, "ESM-SAP   - No APN configuration could be found for APN \"%s\". "
         "Rejecting the PDN connectivity procedure." "(ue_id=%d, pti=%d)\n", bdata(esm_proc_pdn_connectivity->subscribed_apn), ue_id, pti);
+    _esm_proc_free_pdn_connectivity_procedure(&esm_proc_pdn_connectivity);
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_UNKNOWN_ACCESS_POINT_NAME);
   }
 
@@ -699,7 +699,7 @@ esm_recv_activate_default_eps_bearer_context_accept (
   /*
    * Remove the PDN Connectivity procedure.
    * It stops T3485 timer if running
-     */
+   */
   _esm_proc_free_pdn_connectivity_procedure(&esm_pdn_connectivity_proc);
   /*
    * Return the ESM cause value

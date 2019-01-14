@@ -789,8 +789,9 @@ int s1ap_generate_s1ap_e_rab_release_req (itti_s1ap_e_rab_release_req_t * const 
 //      TO DO e_rabreleasecommandies->uEaggregateMaximumBitrate.uEaggregateMaximumBitRateDL.buf
 //    }
 
-    S1ap_E_RABItem_t s1ap_E_RABItem[e_rab_release_req->e_rab_to_be_release_list.no_of_items];
-
+//    S1ap_E_RABItem_t s1ap_E_RABItem[e_rab_release_req->e_rab_to_be_release_list.no_of_items];
+    S1ap_E_RABItem_t  *s1ap_E_RABItem = NULL; // [conn_est_cnf_pP->no_of_e_rabs]; // don't alloc on stack for automatic removal
+    s1ap_E_RABItem = calloc(e_rab_release_req->e_rab_to_be_release_list.no_of_items, sizeof(S1ap_E_RABItem_t));
     for  (int i= 0; i < e_rab_release_req->e_rab_to_be_release_list.no_of_items; i++) {
       memset(&s1ap_E_RABItem[i], 0, sizeof(S1ap_E_RABItem_t));
 
@@ -852,7 +853,6 @@ s1ap_handle_conn_est_cnf (
   ue_description_t                       *ue_ref = NULL;
   MessagesIds                             message_id = MESSAGES_ID_MAX;
   S1ap_InitialContextSetupRequestIEs_t   *initialContextSetupRequest_p = NULL;
-  S1ap_E_RABToBeSetupItemCtxtSUReq_t     *e_RABToBeSetup; // [conn_est_cnf_pP->no_of_e_rabs]; // don't alloc on stack for automatic removal
   S1ap_NAS_PDU_t                         *nas_pdu = NULL;  // Optional.
   s1ap_message                            message = {0}; // yes, alloc on stack
 
@@ -903,34 +903,35 @@ s1ap_handle_conn_est_cnf (
   asn_uint642INTEGER (&initialContextSetupRequest_p->uEaggregateMaximumBitrate.uEaggregateMaximumBitRateDL, conn_est_cnf_pP->ue_ambr.br_dl);
   asn_uint642INTEGER (&initialContextSetupRequest_p->uEaggregateMaximumBitrate.uEaggregateMaximumBitRateUL, conn_est_cnf_pP->ue_ambr.br_ul);
 
-  e_RABToBeSetup = calloc(conn_est_cnf_pP->no_of_e_rabs, sizeof(S1ap_E_RABToBeSetupItemCtxtSUReq_t));
   for (int item = 0; item < conn_est_cnf_pP->no_of_e_rabs; item++) {
-    e_RABToBeSetup[item].e_RAB_ID = conn_est_cnf_pP->e_rab_id[item];     //5;
-    e_RABToBeSetup[item].e_RABlevelQoSParameters.qCI = conn_est_cnf_pP->e_rab_level_qos_qci[item];
+    S1ap_E_RABToBeSetupItemCtxtSUReq_t     *e_RABToBeSetup = NULL; // [conn_est_cnf_pP->no_of_e_rabs]; // don't alloc on stack for automatic removal
+    e_RABToBeSetup = calloc(1, sizeof(S1ap_E_RABToBeSetupItemCtxtSUReq_t));
+    e_RABToBeSetup->e_RAB_ID = conn_est_cnf_pP->e_rab_id[item];     //5;
+    e_RABToBeSetup->e_RABlevelQoSParameters.qCI = conn_est_cnf_pP->e_rab_level_qos_qci[item];
     if(conn_est_cnf_pP->nas_pdu[item]){
       DevAssert(!nas_pdu);
       nas_pdu = calloc (1, sizeof(S1ap_NAS_PDU_t));
       nas_pdu->size = blength(conn_est_cnf_pP->nas_pdu[item]);
       nas_pdu->buf  = calloc(nas_pdu->size, sizeof(uint8_t)); // sizeof(conn_est_cnf_pP->nas_pdu[item]->data; /**< We need to unlink it. */
       memcpy(nas_pdu->buf, conn_est_cnf_pP->nas_pdu[item]->data, nas_pdu->size);
-      e_RABToBeSetup[item].nAS_PDU = nas_pdu;
+      e_RABToBeSetup->nAS_PDU = nas_pdu;
     }
 
 //    memcpy(nas_pdu.buf, (void*)conn_est_cnf_pP->nas_pdu[item]->data, blength(conn_est_cnf_pP->nas_pdu[item]));
 
-    e_RABToBeSetup[item].e_RABlevelQoSParameters.allocationRetentionPriority.priorityLevel = conn_est_cnf_pP->e_rab_level_qos_priority_level[item];
-    e_RABToBeSetup[item].e_RABlevelQoSParameters.allocationRetentionPriority.pre_emptionCapability = conn_est_cnf_pP->e_rab_level_qos_preemption_capability[item];
-    e_RABToBeSetup[item].e_RABlevelQoSParameters.allocationRetentionPriority.pre_emptionVulnerability = conn_est_cnf_pP->e_rab_level_qos_preemption_vulnerability[item];
+    e_RABToBeSetup->e_RABlevelQoSParameters.allocationRetentionPriority.priorityLevel = conn_est_cnf_pP->e_rab_level_qos_priority_level[item];
+    e_RABToBeSetup->e_RABlevelQoSParameters.allocationRetentionPriority.pre_emptionCapability = conn_est_cnf_pP->e_rab_level_qos_preemption_capability[item];
+    e_RABToBeSetup->e_RABlevelQoSParameters.allocationRetentionPriority.pre_emptionVulnerability = conn_est_cnf_pP->e_rab_level_qos_preemption_vulnerability[item];
     /*
      * Set the GTP-TEID. This is the S1-U S-GW TEID
      */
-    INT32_TO_OCTET_STRING (conn_est_cnf_pP->gtp_teid[item], &e_RABToBeSetup[item].gTP_TEID);
+    INT32_TO_OCTET_STRING (conn_est_cnf_pP->gtp_teid[item], &e_RABToBeSetup->gTP_TEID);
     // S-GW IP address(es) for user-plane
-    e_RABToBeSetup[item].transportLayerAddress.buf = calloc (blength(conn_est_cnf_pP->transport_layer_address[item]), sizeof (uint8_t));
-    memcpy (e_RABToBeSetup[item].transportLayerAddress.buf, conn_est_cnf_pP->transport_layer_address[item]->data, blength(conn_est_cnf_pP->transport_layer_address[item]));
-    e_RABToBeSetup[item].transportLayerAddress.size = blength(conn_est_cnf_pP->transport_layer_address[item]);
-    e_RABToBeSetup[item].transportLayerAddress.bits_unused = 0;
-    ASN_SEQUENCE_ADD (&initialContextSetupRequest_p->e_RABToBeSetupListCtxtSUReq, &e_RABToBeSetup[item]);
+    e_RABToBeSetup->transportLayerAddress.buf = calloc (blength(conn_est_cnf_pP->transport_layer_address[item]), sizeof (uint8_t));
+    memcpy (e_RABToBeSetup->transportLayerAddress.buf, conn_est_cnf_pP->transport_layer_address[item]->data, blength(conn_est_cnf_pP->transport_layer_address[item]));
+    e_RABToBeSetup->transportLayerAddress.size = blength(conn_est_cnf_pP->transport_layer_address[item]);
+    e_RABToBeSetup->transportLayerAddress.bits_unused = 0;
+    ASN_SEQUENCE_ADD (&initialContextSetupRequest_p->e_RABToBeSetupListCtxtSUReq, e_RABToBeSetup);
     // todo: IPv6 address of SAE-GW
 //    /*
 //     * S-GW IP address(es) for user-plane

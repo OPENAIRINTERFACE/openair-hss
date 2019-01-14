@@ -208,8 +208,10 @@ nas_esm_proc_pdn_connectivity_t* mme_app_nas_esm_get_pdn_connectivity_procedure(
 //------------------------------------------------------------------------------
 void mme_app_nas_esm_delete_pdn_connectivity_proc(nas_esm_proc_pdn_connectivity_t **esm_proc_pdn_connectivity)
 {
+  // todo: ADD LOCKS
   LIST_REMOVE((*esm_proc_pdn_connectivity), entries);
   mme_app_nas_esm_free_pdn_connectivity_proc(esm_proc_pdn_connectivity);
+
 }
 
 //------------------------------------------------------------------------------

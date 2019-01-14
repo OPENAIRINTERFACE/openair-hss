@@ -769,17 +769,16 @@ int emm_proc_attach_request_validity(emm_data_context_t * emm_context, mme_ue_s1
     } else {
       REQUIREMENT_3GPP_24_301(R10_5_5_1_2_7_e__2);
       /*
-       * if the information elements do not differ, then the network shall continue with the previous attach procedure
+       * If the information elements do not differ, then the network shall continue with the previous attach procedure
        * and shall ignore the second ATTACH REQUEST message.
+       *
+       * ** This does not work, beacause the previous MME_APP UE context will not be valid anymore. In this case, we had to transfer every modification
+       * of the old MME_APP UE context into the new one. ***
        */
-      // todo: this probably will not work, we need to update the enb_ue_s1ap_id of the old UE context
-      OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Received duplicated Attach Request, dropping it.\n");
-
-      if(new_ue_id != emm_context->ue_id)
-        nas_itti_detach_req(new_ue_id);
-      free_emm_attach_request_ies(&ies);
-
-      OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
+      OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Received duplicated Attach Request, dropping the newly received Attach request but .\n");
+      emm_context->emm_cause = EMM_CAUSE_ILLEGAL_UE;
+      // Allocate new context and process the new request as fresh attach request
+      OAILOG_FUNC_RETURN(LOG_NAS_EMM, RETURNok); /**< Return with the deallocated (NULL) EMM context and continue to process the Attach Request. */
     }
   }
   /** Check for collisions with tracking area update. */
@@ -1051,7 +1050,7 @@ int _emm_attach_reject(emm_data_context_t * emm_context, nas_emm_attach_proc_t *
   }
   int rc = emm_sap_send (&emm_sap);
   // Release EMM context
-  _clear_emm_ctxt(emm_context);
+  _clear_emm_ctxt(emm_context->ue_id);
 
 //  unlock_ue_contexts(ue_context);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);

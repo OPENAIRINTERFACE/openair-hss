@@ -151,7 +151,7 @@ _emm_service_reject (mme_ue_s1ap_id_t ue_id, int emm_cause)
   if (emm_ctx) {
     /** Not releasing the EMM context. */
 //    if (emm_ctx->is_dynamic) {
-//      _clear_emm_ctxt(emm_ctx);
+//      _clear_emm_ctxt(emm_ctx->ue_id);
 //    }
   }
 

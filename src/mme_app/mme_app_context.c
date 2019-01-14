@@ -226,6 +226,17 @@ void mme_app_ue_context_free_content (ue_context_t * const ue_context)
     mme_app_delete_s10_procedure_mme_handover(ue_context); // todo: generic s10 function
   }
 
+  /** Free the ESM procedures. */
+  if(ue_context->esm_procedures.pdn_connectivity_procedures){
+    OAILOG_WARNING(LOG_MME_APP, "ESM PDN Connectivity procedures still exist for UE "MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
+    mme_app_nas_esm_free_pdn_connectivity_procedures(ue_context);
+  }
+
+  if(ue_context->esm_procedures.bearer_context_procedures){
+    OAILOG_WARNING(LOG_MME_APP, "ESM Bearer Context procedures still exist for UE "MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
+    mme_app_nas_esm_free_bearer_context_procedures(ue_context);
+  }
+
   DevAssert(RB_EMPTY(&ue_context->pdn_contexts));
 
   if(!RB_EMPTY(&ue_context->bearer_pool)){

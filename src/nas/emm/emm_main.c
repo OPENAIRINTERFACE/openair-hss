@@ -131,6 +131,7 @@ emm_main_cleanup (
   hashtable_ts_destroy(_emm_data.ctx_coll_ue_id);
   hashtable_ts_destroy(_emm_data.ctx_coll_imsi);
   obj_hashtable_ts_destroy(_emm_data.ctx_coll_guti);
+  /** todo: Remove all EMM procedures. */
   OAILOG_FUNC_OUT(LOG_NAS_EMM);
 }
 

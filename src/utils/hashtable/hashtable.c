@@ -732,7 +732,7 @@ hashtable_ts_insert (
   while (node) {
     if (node->key == keyP) {
       if ((node->data) && (node->data != dataP)) {
-        hashtblP->freefunc (&node->data);
+        hashtblP->freefunc (&node->data); /**< Old EMM context will be freed. */
         node->data = dataP;
         pthread_mutex_unlock(&hashtblP->lock_nodes[hash]);
         PRINT_HASHTABLE (hashtblP, "%s(%s,key 0x%"PRIx64" data %p) return INSERT_OVERWRITTEN_DATA\n", __FUNCTION__, bdata(hashtblP->name), keyP, dataP);
