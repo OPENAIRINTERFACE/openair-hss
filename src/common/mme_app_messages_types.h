@@ -100,10 +100,7 @@ typedef struct itti_mme_app_connection_establishment_cnf_s {
 typedef struct itti_mme_app_initial_context_setup_rsp_s {
   mme_ue_s1ap_id_t        ue_id;
   uint8_t                 no_of_e_rabs;
-
-  ebi_t                   e_rab_id[BEARERS_PER_UE];
-  bstring                 transport_layer_address[BEARERS_PER_UE];
-  s1u_teid_t              gtp_teid[BEARERS_PER_UE];
+  bearer_contexts_to_be_modified_t    bcs_to_be_modified;
 } itti_mme_app_initial_context_setup_rsp_t;
 
 typedef struct itti_mme_app_s1ap_mme_ue_id_notification_s {

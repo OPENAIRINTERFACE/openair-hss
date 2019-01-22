@@ -1073,7 +1073,8 @@ int encode_traffic_flow_template (
   encoded++;
 
   /*
-   * Encoding packet filter list
+   * Encoding packet filter list.
+   * It should only be TFT.
    */
   if (trafficflowtemplate->tftoperationcode == TRAFFIC_FLOW_TEMPLATE_OPCODE_DELETE_PACKET_FILTERS_FROM_EXISTING_TFT) {
     for (int i = 0; i < trafficflowtemplate->numberofpacketfilters; i++) {

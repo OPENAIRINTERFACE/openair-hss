@@ -30,10 +30,6 @@
 /** PDN Context and Bearer Context operations from ESM (UE triggered) or handover. */
 int mme_app_esm_create_pdn_context(mme_ue_s1ap_id_t ue_id, const apn_configuration_t *apn_configuration, const bstring apn, pdn_cid_t pdn_cid, pdn_context_t **pdn_context_pp);
 
-int mme_app_esm_update_pdn_context(mme_ue_s1ap_id_t ue_id, const bstring apn, pdn_cid_t pdn_cid, ebi_t linked_ebi,
-    const pdn_type_t pdn_type, const paa_t * const paa,
-    esm_ebr_state esm_ebr_state, ambr_t * const apn_ambr, bearer_qos_t * const default_bearer_qos,
-    protocol_configuration_options_t *pcos);
 /**
  * Release all bearers of a PDN context and release the PDN context.
  * If this method is triggered by the ESM layer, the ESM procedures/timers need to be released before..
@@ -41,6 +37,16 @@ int mme_app_esm_update_pdn_context(mme_ue_s1ap_id_t ue_id, const bstring apn, pd
 void mme_app_esm_delete_pdn_context(mme_ue_s1ap_id_t ue_id, bstring apn, pdn_cid_t pdn_cid, ebi_t linked_ebi);
 
 void mme_app_esm_detach (mme_ue_s1ap_id_t ue_id);
+
+int
+mme_app_esm_update_ebr_state(const mme_ue_s1ap_id_t ue_id, const bstring apn_subscribed, const pdn_cid_t pdn_cid, const ebi_t linked_ebi, const ebi_t bearer_ebi, esm_ebr_state ebr_state);
+
+/*
+ * Process S11 session creation.
+ */
+int
+mme_app_pdn_process_session_creation(mme_ue_s1ap_id_t ue_id, fteid_t * saegw_s11_fteid, gtpv2c_cause_t *cause,
+    bearer_contexts_created_t * bcs_created, ambr_t *ambr, paa_t ** paa, protocol_configuration_options_t * pco);
 
 int
 mme_app_cn_update_bearer_context(mme_ue_s1ap_id_t ue_id, const ebi_t ebi,

@@ -26,8 +26,6 @@
 * \email: dbeken@blackned.de
 */
 
-
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>

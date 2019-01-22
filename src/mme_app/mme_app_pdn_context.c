@@ -57,7 +57,6 @@
 static void mme_app_pdn_context_init(ue_context_t * const ue_context, pdn_context_t *const  pdn_context);
 static void mme_app_delete_pdn_context(ue_context_t * const ue_context, pdn_context_t ** pdn_context_pp);
 static void mme_app_free_pdn_context (pdn_context_t ** const pdn_context);
-static void mme_app_esm_update_bearer_context(bearer_context_t * bearer_context, bearer_qos_t * const bearer_level_qos, esm_ebr_state esm_ebr_state, traffic_flow_template_t * bearer_tft);
 
 //------------------------------------------------------------------------------
 void mme_app_get_pdn_context (mme_ue_s1ap_id_t ue_id, pdn_cid_t const context_id, ebi_t const default_ebi, bstring const subscribed_apn, pdn_context_t **pdn_ctx)
@@ -84,7 +83,7 @@ void mme_app_get_pdn_context (mme_ue_s1ap_id_t ue_id, pdn_cid_t const context_id
       }
     }
   }
-  OAILOG_ERROR (LOG_MME_APP, "No PDN context for (ebi=%d,cid=%d,apn=\"%s\") was found for UE: " MME_UE_S1AP_ID_FMT ". \n", default_ebi, context_id,
+  OAILOG_WARNING (LOG_MME_APP, "No PDN context for (ebi=%d,cid=%d,apn=\"%s\") was found for UE: " MME_UE_S1AP_ID_FMT ". \n", default_ebi, context_id,
       (subscribed_apn) ? bdata(subscribed_apn) : "NULL",
       ue_id);
   OAILOG_FUNC_OUT(LOG_MME_APP);
@@ -127,6 +126,10 @@ void mme_app_get_bearer_contexts_to_be_created(pdn_context_t * pdn_context, bear
     bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].s1u_sgw_fteid.teid                = bearer_context_to_setup->s_gw_fteid_s1u.teid;
     // todo: ipv6, other interfaces!
 
+    /**
+     * TFTs not signalized to the UE or the eNB. If some bearers fail to be transferred, the UE should know about it.
+     * It will not be indicated in the Tracking Area Update.
+     */
 
     bc_tbc->num_bearer_context++;
     /*
@@ -136,7 +139,6 @@ void mme_app_get_bearer_contexts_to_be_created(pdn_context_t * pdn_context, bear
     if(bc_state != BEARER_STATE_NULL){
       bearer_context_to_setup->bearer_state   |= bc_state;
     }
-    // todo: set TFTs for dedicated bearers (currently PCRF triggered).
   }
   OAILOG_FUNC_OUT(LOG_MME_APP);
 }
@@ -191,7 +193,7 @@ mme_app_esm_create_pdn_context(mme_ue_s1ap_id_t ue_id, const apn_configuration_t
   bearer_context_t *bc_test = NULL;
   /** List all bearer contexts. */
   RB_FOREACH(bc_test, BearerPool, &ue_context->bearer_pool){
-    OAILOG_DEBUG (LOG_MME_APP, "Current bearer context %p with ebi %d for pdn_context %p for APN \"%s\" and cid=%d for UE: " MME_UE_S1AP_ID_FMT ". \n",
+    OAILOG_TRACE (LOG_MME_APP, "Current bearer context %p with ebi %d for pdn_context %p for APN \"%s\" and cid=%d for UE: " MME_UE_S1AP_ID_FMT ". \n",
         bc_test, bc_test->ebi, (*pdn_context_pp), bdata((*pdn_context_pp)->apn_subscribed),
         (*pdn_context_pp)->context_identifier, ue_id);
 
@@ -208,7 +210,7 @@ mme_app_esm_create_pdn_context(mme_ue_s1ap_id_t ue_id, const apn_configuration_t
   /* Insert the bearer context. */
   RB_INSERT (SessionBearers, &(*pdn_context_pp)->session_bearers, free_bearer);
 
-  OAILOG_CRITICAL(LOG_MME_APP, "Received first default bearer context %p with ebi %d for apn of UE: " MME_UE_S1AP_ID_FMT ". \n", free_bearer, free_bearer->ebi, ue_id);
+  OAILOG_INFO(LOG_MME_APP, "Received first default bearer context %p with ebi %d for apn of UE: " MME_UE_S1AP_ID_FMT ". \n", free_bearer, free_bearer->ebi, ue_id);
 
 
   (*pdn_context_pp)->default_ebi = free_bearer->ebi;
@@ -263,65 +265,6 @@ mme_app_esm_create_pdn_context(mme_ue_s1ap_id_t ue_id, const apn_configuration_t
 }
 
 //------------------------------------------------------------------------------
-int
-mme_app_esm_update_pdn_context(mme_ue_s1ap_id_t ue_id, const bstring apn, pdn_cid_t pdn_cid, ebi_t linked_ebi,
-    const pdn_type_t pdn_type, const paa_t * const paa,
-    esm_ebr_state esm_ebr_state, ambr_t * const apn_ambr, bearer_qos_t * const default_bearer_qos,
-    protocol_configuration_options_t *pco){
-  ue_context_t              *ue_context         = NULL;
-  pdn_context_t             *pdn_context        = NULL;
-
-  OAILOG_FUNC_IN (LOG_MME_APP);
-  ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, ue_id);
-  if(!ue_context){
-    OAILOG_ERROR (LOG_MME_APP, "No MME_APP UE context could be found for UE: " MME_UE_S1AP_ID_FMT ". \n", ue_id);
-    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
-  }
-  mme_app_get_pdn_context(ue_id, pdn_cid, linked_ebi, apn, &pdn_context);
-  if(!pdn_context){
-    OAILOG_ERROR (LOG_MME_APP, "No PDN context for could be found for APN \"%s\" for UE: " MME_UE_S1AP_ID_FMT ". \n", bdata(apn), ue_id);
-    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
-  }
-  //  LOCK_UE_CONTEXT(ue_context);
-  if(apn_ambr){
-    if(apn_ambr->br_dl && apn_ambr->br_ul){
-      /** Update the authorized APN ambr of the pdn context. */
-      // todo: check if UE apn-ambr reached, if so, just add the remaining. (todo: inform sae/pcrf)
-      pdn_context->subscribed_apn_ambr.br_dl = apn_ambr->br_dl;
-      pdn_context->subscribed_apn_ambr.br_ul = apn_ambr->br_ul;
-    } else {
-      /** No APN AMBR values are set, setting the current values. */
-      apn_ambr->br_dl = pdn_context->subscribed_apn_ambr.br_dl;
-      apn_ambr->br_ul = pdn_context->subscribed_apn_ambr.br_ul;
-    }
-  }
-  /** Set the new PAA. */
-  if (paa) {
-    /** Set the PAA. */
-    DevAssert(!pdn_context->paa);
-    pdn_context->paa = paa;
-  }
-  /** Get the default bearer context directly. */
-  bearer_context_t * default_bearer = RB_MIN(SessionBearers, &pdn_context->session_bearers);
-  DevAssert(default_bearer);
-  DevAssert(default_bearer->ebi == default_bearer->linked_ebi);
-  DevAssert(default_bearer->ebi == pdn_context->default_ebi);
-  mme_app_esm_update_bearer_context(default_bearer, default_bearer_qos, esm_ebr_state, (traffic_flow_template_t*)NULL);
-  /** Save the PCO for handover purposes. */
-  if(pco){
-    if (!pdn_context->pco) {
-      pdn_context->pco = calloc(1, sizeof(protocol_configuration_options_t));
-    } else {
-      clear_protocol_configuration_options(pdn_context->pco);
-    }
-    copy_protocol_configuration_options(pdn_context->pco, pco);
-  }
-
-  //  UNLOCK_UE_CONTEXT(ue_context);
-  OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
-}
-
-//------------------------------------------------------------------------------
 void
 mme_app_esm_delete_pdn_context(mme_ue_s1ap_id_t ue_id, bstring apn, pdn_cid_t pdn_cid, ebi_t linked_ebi){
   OAILOG_FUNC_IN (LOG_MME_APP);
@@ -367,8 +310,181 @@ mme_app_esm_detach(mme_ue_s1ap_id_t ue_id){
   }
   OAILOG_INFO(LOG_MME_APP, "Removed all ESM contexts of UE: " MME_UE_S1AP_ID_FMT " for detach. \n", ue_id);
   bearer_context_t * bc_free = RB_MIN(BearerPool, &ue_context->bearer_pool);
-  // todo: LOCK UE CONTEXTS
+  // todo: UNLOCK UE CONTEXTS
   OAILOG_FUNC_OUT(LOG_MME_APP);
+}
+
+//------------------------------------------------------------------------------
+int
+mme_app_esm_update_ebr_state(const mme_ue_s1ap_id_t ue_id, const bstring apn_subscribed, const pdn_cid_t pdn_cid, const ebi_t linked_ebi, const ebi_t bearer_ebi, esm_ebr_state ebr_state){
+  OAILOG_FUNC_IN (LOG_MME_APP);
+  ue_context_t        * ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, ue_id);
+  pdn_context_t       * pdn_context = NULL;
+  if(!ue_context){
+    OAILOG_ERROR(LOG_MME_APP, "No MME_APP UE context could be found for UE: " MME_UE_S1AP_ID_FMT " to release \"%s\". \n", ue_id, bdata(apn_subscribed));
+    OAILOG_FUNC_RETURN(LOG_MME_APP, RETURNerror);
+  }
+  mme_app_get_pdn_context(ue_id, pdn_cid, linked_ebi, apn_subscribed, &pdn_context);
+  if (!pdn_context) {
+    OAILOG_ERROR(LOG_NAS_ESM, "ESM-PROC  - PDN connection (cid=%d,linkeed_ebi=%d) and APN \"%s\" has not been allocated for UE "MME_UE_S1AP_ID_FMT". \n", pdn_cid, linked_ebi, bdata(apn_subscribed), ue_id);
+    OAILOG_FUNC_RETURN(LOG_MME_APP, RETURNerror);
+  }
+  /** Get the default EBI. */
+  bearer_context_t * bc = mme_app_get_session_bearer_context(pdn_context, bearer_ebi);
+  bc->esm_ebr_context.status = ebr_state;
+  // todo: UNLOCK UE CONTEXTS
+  OAILOG_FUNC_RETURN(LOG_MME_APP, RETURNok);
+}
+
+//------------------------------------------------------------------------------
+int
+mme_app_pdn_process_session_creation(mme_ue_s1ap_id_t ue_id, fteid_t * saegw_s11_fteid, gtpv2c_cause_t *cause,
+    bearer_contexts_created_t * bcs_created, ambr_t *ambr, paa_t ** paa, protocol_configuration_options_t * pco){
+
+  OAILOG_FUNC_IN(LOG_MME_APP);
+
+  pdn_context_t     * pdn_context = NULL;
+  ue_context_t      * ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, ue_id);
+  if(!ue_context) {
+    OAILOG_WARNING(LOG_MME_APP, "No MME_APP UE context could be found for UE: " MME_UE_S1AP_ID_FMT " to release \"%s\". \n", ue_id);
+    OAILOG_FUNC_RETURN(LOG_MME_APP, RETURNerror);
+  }
+  /** Get the first unestablished PDN context from the UE context. */
+  RB_FOREACH (pdn_context, PdnContexts, &ue_context->pdn_contexts) {
+    if(!pdn_context->s_gw_teid_s11_s4){
+      /** Found. */
+      break;
+    }
+  }
+  if(pdn_context->s_gw_teid_s11_s4){
+    OAILOG_WARNING(LOG_MME_APP, "No unestablished PDN context could be found for UE: " MME_UE_S1AP_ID_FMT ". \n", ue_id);
+    OAILOG_FUNC_RETURN(LOG_MME_APP, RETURNerror);
+  }
+  // LOCK_UE_CONTEXT
+  /** Set the S11 FTEID for each PDN connection. */
+  pdn_context->s_gw_teid_s11_s4 = saegw_s11_fteid->teid;
+  if(!ue_context->s_gw_teid_s11_s4)
+    ue_context->s_gw_teid_s11_s4 = pdn_context->s_gw_teid_s11_s4;
+  pdn_context->s_gw_address_s11_s4.address.ipv4_address.s_addr = saegw_s11_fteid->ipv4_address.s_addr;
+  /** Check the received cause. */
+  if(cause->cause_value != REQUEST_ACCEPTED && cause->cause_value != REQUEST_ACCEPTED_PARTIALLY){
+    OAILOG_ERROR (LOG_MME_APP, "Received S11_CREATE_SESSION_RESPONSE REJECTION with cause value %d for ue " MME_UE_S1AP_ID_FMT "from S+P-GW. \n", cause->cause_value, ue_id);
+    /** Destroy the PDN context (not in the ESM layer). */
+    mme_app_esm_delete_pdn_context(ue_id, pdn_context->apn_subscribed, pdn_context->context_identifier, pdn_context->default_ebi); /**< Frees it by putting it back to the pool. */
+    OAILOG_WARNING(LOG_MME_APP, "Destroyed the PDN context for APN \"%s\" (ctx_id=%d,default_ebi=%d) for ue_id " MME_UE_S1AP_ID_FMT "from S+P-GW. \n", bdata(pdn_context->apn_subscribed),
+        pdn_context->context_identifier, pdn_context->default_ebi, ue_id);
+    // todo: UNLOCK
+    OAILOG_FUNC_RETURN(LOG_MME_APP, RETURNok);
+  }
+  /** Process the success case, no bearer at this point. */
+  if (*paa) {
+    /** Set the PAA. */
+    if(pdn_context->paa){
+      free_wrapper((void**)&pdn_context->paa);
+    }
+    pdn_context->paa = *paa;
+    *paa = NULL;
+  }
+  if(pco){
+    if (!pdn_context->pco) {
+      pdn_context->pco = calloc(1, sizeof(protocol_configuration_options_t));
+    } else {
+      clear_protocol_configuration_options(pdn_context->pco);
+    }
+    copy_protocol_configuration_options(pdn_context->pco, pco);
+  }
+  //#define TEMPORARY_DEBUG 1
+  //#if TEMPORARY_DEBUG
+  // bstring b = protocol_configuration_options_to_xml(&ue_context->pending_pdn_connectivity_req_pco);
+  // OAILOG_DEBUG (LOG_MME_APP, "PCO %s\n", bdata(b));
+  // bdestroy_wrapper(&b);
+  //#endif
+
+  /** Check the received APN-AMBR is in bounds (a subscription profile may exist or not, but these values must exist). */
+  DevAssert(ue_context->subscribed_ue_ambr.br_dl && ue_context->subscribed_ue_ambr.br_ul);
+  if(ambr->br_dl && ambr->br_ul){ /**< New APN-AMBR received. */
+    ambr_t total_apn_ambr = mme_app_total_p_gw_apn_ambr_rest(ue_context, pdn_context->context_identifier);
+    total_apn_ambr.br_dl += ambr->br_dl;
+    total_apn_ambr.br_ul += ambr->br_ul;
+    /** Actualized, used total APN-AMBR. */
+    if(total_apn_ambr.br_dl > ue_context->subscribed_ue_ambr.br_dl || total_apn_ambr.br_ul > ue_context->subscribed_ue_ambr.br_ul){
+      OAILOG_ERROR( LOG_MME_APP, "Received new APN_AMBR for PDN \"%s\" (ctx_id=%d) for UE " MME_UE_S1AP_ID_FMT " exceeds the subscribed ue ambr (br_dl=%d,br_ul=%d). "
+          "Continuing to use the APN-AMBRs from the subscription profile. \n", bdata(pdn_context->apn_subscribed), pdn_context->context_identifier, ue_id,
+          ue_context->subscribed_ue_ambr.br_dl, ue_context->subscribed_ue_ambr.br_ul);
+      /** Will use the current APN bitrates, either from the APN configuration received from the HSS or from S10. */
+      // todo: inform PCRF, that default APN bitrates could not be updated.
+      DevAssert(pdn_context->subscribed_apn_ambr.br_dl && pdn_context->subscribed_apn_ambr.br_ul);
+    }else{
+      OAILOG_DEBUG( LOG_MME_APP, "Received new valid APN_AMBR for APN \"%s\" (ctx_id=%d) for UE " MME_UE_S1AP_ID_FMT ". Updating APN ambr. \n",
+          bdata(pdn_context->apn_subscribed), pdn_context->context_identifier, ue_id);
+      pdn_context->subscribed_apn_ambr.br_dl = ambr->br_dl;
+      pdn_context->subscribed_apn_ambr.br_ul = ambr->br_ul;
+    }
+  }
+
+  /** Traverse all bearers, including the default bearer. */
+  for (int i=0; i < bcs_created->num_bearer_context; i++) {
+    ebi_t bearer_id = bcs_created->bearer_contexts[i].eps_bearer_id;
+    bearer_context_created_t * bc_created = &bcs_created->bearer_contexts[i];
+    bearer_context_t * bearer_context = mme_app_get_session_bearer_context(pdn_context, bearer_id);
+    /*
+     * Depending on s11 result we have to send reject or accept for bearers
+     */
+    DevCheck ((bearer_id < BEARERS_PER_UE + 5) && (bearer_id >= 5), bearer_id, BEARERS_PER_UE, 0);
+    DevAssert (bcs_created->bearer_contexts[i].s1u_sgw_fteid.interface_type == S1_U_SGW_GTP_U);
+    /** Check if the bearer could be created in the PGW. */
+    if(bc_created->cause.cause_value != REQUEST_ACCEPTED){
+      /** Check that it is a dedicated bearer. */
+      DevAssert(pdn_context->default_ebi != bearer_id);
+      /*
+       * Release all session bearers of the PDN context back into the UE pool.
+       */
+      if(bearer_context){
+        DevAssert(RB_REMOVE(SessionBearers, &pdn_context->session_bearers, bearer_context));
+        /** Initialize the new bearer context. */
+        mme_app_bearer_context_initialize(bearer_context);
+        /** Insert the bearer context into the free bearer of the ue context. */
+        RB_INSERT (BearerPool, &ue_context->bearer_pool, bearer_context);
+        OAILOG_WARNING(LOG_MME_APP, "Successfully deregistered the bearer context (ebi=%d) from PDN \"%s\" and for ue_id " MME_UE_S1AP_ID_FMT "\n", bearer_id, bdata(pdn_context->apn_subscribed), ue_id);
+      }
+      continue;
+    }
+    /** Bearer context could be established successfully. */
+    if(bearer_context){
+      bearer_context->bearer_state |= BEARER_STATE_SGW_CREATED;
+      /** No context identifier might be set yet (multiple might exist and all might be 0. */
+      //      AssertFatal((pdn_cx_id >= 0) && (pdn_cx_id < MAX_APN_PER_UE), "Bad pdn id for bearer");
+      /** IP address not set here. Will be forwarded and set by ESM layer @ NAS_PDN_CONNECTIVITY_RES. */
+      /*
+       * Updating statistics
+       */
+      mme_app_desc.mme_ue_contexts.nb_bearers_managed++;
+      mme_app_desc.mme_ue_contexts.nb_bearers_since_last_stat++;
+      /** Update the FTEIDs of the SAE-GW. */
+      bearer_context->s_gw_fteid_s1u = bcs_created->bearer_contexts[i].s1u_sgw_fteid; /**< Also copying the IPv4/V6 address. */
+      bearer_context->p_gw_fteid_s5_s8_up = bcs_created->bearer_contexts[i].s5_s8_u_pgw_fteid;
+      /** Check if the bearer level QoS parameters have been modified by the PGW. */
+      if (bcs_created->bearer_contexts[i].bearer_level_qos.qci &&
+          bcs_created->bearer_contexts[i].bearer_level_qos.pl) {
+        /**
+         * We set them here, since we may not have a NAS context in (S10) mobility.
+         * We don't check the subscribed HSS values. The PGW may ask for more.
+         */
+        bearer_context->bearer_level_qos.qci = bcs_created->bearer_contexts[i].bearer_level_qos.qci;
+        bearer_context->bearer_level_qos.pl  = bcs_created->bearer_contexts[i].bearer_level_qos.pl;
+        bearer_context->bearer_level_qos.pvi = bcs_created->bearer_contexts[i].bearer_level_qos.pvi;
+        bearer_context->bearer_level_qos.pci = bcs_created->bearer_contexts[i].bearer_level_qos.pci;
+        OAILOG_DEBUG (LOG_MME_APP, "Set qci %u in bearer %u\n", bearer_context->bearer_level_qos.qci, bearer_id);
+      }
+      /** Not touching TFT, ESM-EBR-State here. */
+    } else {
+      DevMessage("Bearer context that could be established successfully in the SAE-GW could not be found in the MME session bearers."); /**< This should not happen, since we lock the pdn_context.. */
+//        continue;
+    }
+  }
+  // todo: UNLOCK_UE_CONTEXT(ue_context)
+  OAILOG_INFO(LOG_MME_APP, "Processed all %d bearer contexts for APN \"%s\" for ue_id " MME_UE_S1AP_ID_FMT ". \n", bcs_created->num_bearer_context, bdata(pdn_context->apn_subscribed), ue_id);
+  OAILOG_FUNC_RETURN(LOG_MME_APP, RETURNok);
 }
 
 /****************************************************************************/
@@ -463,38 +579,4 @@ static void mme_app_free_pdn_context (pdn_context_t ** const pdn_context)
   /** Clean the PDN context and deallocate it. */
   memset(*pdn_context, 0, sizeof(pdn_context_t));
   free_wrapper((void**)pdn_context);
-}
-
-// todo: move this into mme_app_bearer_context.c !
-//------------------------------------------------------------------------------
-static void
-mme_app_esm_update_bearer_context(bearer_context_t * bearer_context, bearer_qos_t * const bearer_level_qos, esm_ebr_state esm_ebr_state, traffic_flow_template_t * bearer_tft){
-  OAILOG_FUNC_IN (LOG_MME_APP);
-  /*
-   * Setup the EPS bearer data with verified TFT and QoS.
-   */
-  if(bearer_level_qos){
-    if(bearer_level_qos->qci && bearer_level_qos->pl){
-      bearer_context->bearer_level_qos.qci = bearer_level_qos->qci;
-      bearer_context->bearer_level_qos.pci = bearer_level_qos->pci; // todo: pcipreemption_capability    = // (*bearer_level_qos)->pci == 0 ? 1 : 0;
-      bearer_context->bearer_level_qos.pvi = bearer_level_qos->pvi; // todo: preemption_vulnerability = (*bearer_level_qos)->pvi == 0 ? 1 : 0;
-      bearer_context->bearer_level_qos.pl  = bearer_level_qos->pl;
-      DevAssert(!bearer_context->esm_ebr_context.tft);
-    } else {
-      memcpy((void*)bearer_level_qos, &bearer_context->bearer_level_qos, sizeof(bearer_qos_t));
-    }
-  }
-  OAILOG_DEBUG(LOG_MME_APP, "Setting the ESM state of ebi %d to \"%s\". \n", bearer_context->ebi, esm_ebr_state2string(esm_ebr_state));
-  bearer_context->esm_ebr_context.status = esm_ebr_state;
-  if(bearer_tft){
-    if(bearer_context->esm_ebr_context.tft)
-      free_traffic_flow_template(&bearer_context->esm_ebr_context.tft);
-    bearer_context->esm_ebr_context.tft = bearer_tft;
-    bearer_context->esm_ebr_context.status = esm_ebr_state;
-  }
-  /*
-   * Return the EPS bearer identity of the default EPS bearer
-   * * * * associated to the new EPS bearer context
-   */
-  OAILOG_FUNC_OUT(LOG_MME_APP);
 }

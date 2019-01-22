@@ -345,6 +345,9 @@ void nas_itti_pdn_disconnect_req(
   NAS_PDN_DISCONNECT_REQ(message_p).saegw_s11_ip_addr    = saegw_s11_addr;
   NAS_PDN_DISCONNECT_REQ(message_p).saegw_s11_teid       = saegw_teid;
 
+  if(saegw_s11_addr.s_addr == 0){
+    OAILOG_DEBUG (LOG_NAS_EMM, "EMM-PROC  - No SAE-GW IP for UE " MME_UE_S1AP_ID_FMT " to send PDN-Disc Req. \n", ue_idP);
+  }
   MSC_LOG_TX_MESSAGE(
         MSC_NAS_MME,
         MSC_MMEAPP_MME,

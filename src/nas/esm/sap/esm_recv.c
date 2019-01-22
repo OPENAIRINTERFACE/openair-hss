@@ -214,7 +214,7 @@ esm_recv_pdn_connectivity_request (
       esm_cause_t esm_cause = esm_proc_pdn_connectivity_retx(ue_id, esm_proc_pdn_connectivity, esm_rsp_msg);
       if(esm_cause == ESM_CAUSE_SUCCESS && esm_rsp_msg->header.message_type){
         /** Restart the T3485 timer and resend the ACTIVATE_DEFAULT_EPS_BEARER_CONTEXT message. */
-        esm_proc_default_eps_bearer_context(ue_id, esm_proc_pdn_connectivity);
+        esm_proc_default_eps_bearer_context(ue_id, esm_rsp_msg, esm_proc_pdn_connectivity);
       }
       OAILOG_FUNC_RETURN(LOG_NAS_ESM, esm_cause);
     } else {
@@ -287,6 +287,7 @@ esm_recv_pdn_connectivity_request (
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_UNKNOWN_ACCESS_POINT_NAME);
   }
 
+  // todo:
   ue_context_t        * ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, ue_id);
   DevAssert(ue_context);
   *is_attach = ue_context->mm_state == UE_UNREGISTERED;
@@ -350,7 +351,7 @@ esm_recv_pdn_connectivity_request (
     OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - No APN name received from UE to establish PDN connection and subscription exists. "
         "Will attach to the default APN in the subscription information. " "(ue_id=%d, pti=%d)\n", ue_id, pti);
   }
-
+  /** Copy what is received. */
   if (msg->presencemask & PDN_CONNECTIVITY_REQUEST_PROTOCOL_CONFIGURATION_OPTIONS_PRESENT) {
     /** Copy the protocol configuration options. */
     clear_protocol_configuration_options(&esm_proc_pdn_connectivity->pco);
@@ -366,13 +367,24 @@ esm_recv_pdn_connectivity_request (
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_SUCCESS);
   }
 
-  OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Found a valid (default) APN configuration (cid=%d). Continuing with the PDN Connectivity procedure." "(ue_id=%d, pti=%d)\n", apn_configuration->context_identifier, ue_id, pti);
+  OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Found a valid (default) APN configuration (cid=%d). Updating the UE context, if it is an attach procedure. Else, continuing with the PDN Connectivity procedure." "(ue_id=%d, pti=%d)\n", apn_configuration->context_identifier, ue_id, pti);
 
   if(!esm_proc_pdn_connectivity->subscribed_apn){
     esm_proc_pdn_connectivity->subscribed_apn = blk2bstr(apn_configuration->service_selection, apn_configuration->service_selection_length);  /**< Set the APN-NI from the service selection. */
   }
   /* The APN-Configuration must be the correct one. */
   esm_proc_pdn_connectivity->pdn_cid = apn_configuration->context_identifier;
+
+  if(esm_proc_pdn_connectivity->is_attach){
+    subscription_data_t   *subscription_data = mme_ue_subscription_data_exists_imsi(&mme_app_desc.mme_ue_contexts, imsi64);
+    if(mme_app_update_ue_subscription(esm_proc_pdn_connectivity->esm_base_proc.ue_id, subscription_data) == RETURNerror){
+      OAILOG_ERROR (LOG_NAS_ESM, "ESM-SAP   - Error while trying to update the subscription data for the UE_context for APN \"%s\" (cid=%d). " "(ue_id=" MME_UE_S1AP_ID_FMT ", pti=%d)\n",
+          bdata(esm_proc_pdn_connectivity->subscribed_apn), esm_proc_pdn_connectivity->pdn_cid, ue_id, pti);
+      /** Remove the procedure and send a pdn rejection back, which will trigger the attach reject. */
+      _esm_proc_free_pdn_connectivity_procedure(&esm_proc_pdn_connectivity);
+      OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_REQUEST_REJECTED_BY_GW);
+    }
+  }
 
   /*
    * Establish the PDN Connectivity, using the default APN-QoS values received in the subscription information, which will be processed in the MME_APP layer
@@ -509,6 +521,17 @@ esm_cause_t esm_recv_information_response (
     esm_proc_pdn_connectivity->subscribed_apn = blk2bstr(apn_configuration->service_selection, apn_configuration->service_selection_length);  /**< Set the APN-NI from the service selection. */
   }
   esm_proc_pdn_connectivity->pdn_cid = apn_configuration->context_identifier;
+
+  if(esm_proc_pdn_connectivity->is_attach){
+    subscription_data_t   *subscription_data = mme_ue_subscription_data_exists_imsi(&mme_app_desc.mme_ue_contexts, imsi64);
+    if(mme_app_update_ue_subscription(esm_proc_pdn_connectivity->esm_base_proc.ue_id, subscription_data) == RETURNerror){
+      OAILOG_ERROR (LOG_NAS_ESM, "ESM-SAP   - Error while trying to update the subscription data for the UE_context for APN \"%s\" (cid=%d). " "(ue_id=" MME_UE_S1AP_ID_FMT ", pti=%d)\n",
+          bdata(esm_proc_pdn_connectivity->subscribed_apn), esm_proc_pdn_connectivity->pdn_cid, ue_id, pti);
+      /** Remove the procedure and send a pdn rejection back, which will trigger the attach reject. */
+      _esm_proc_free_pdn_connectivity_procedure(&esm_proc_pdn_connectivity);
+      OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_REQUEST_REJECTED_BY_GW);
+    }
+  }
 
   /*
    * Establish the PDN Connectivity, using the default APN-QoS values received in the subscription information, which will be processed in the MME_APP layer

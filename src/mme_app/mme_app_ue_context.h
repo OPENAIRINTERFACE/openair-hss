@@ -135,9 +135,6 @@ typedef struct bearer_context_s {
   ebi_t                       ebi;
   ebi_t                       linked_ebi;
 
-  // TI Transaction Identifier
-  proc_tid_t                  transaction_identifier;
-
   // S-GW IP address for S1-u: IP address of the S-GW for the S1-u interfaces.
   // S-GW TEID for S1u: Tunnel Endpoint Identifier of the S-GW for the S1-u interface.
   fteid_t                      s_gw_fteid_s1u;            // set by S11 CREATE_SESSION_RESPONSE
@@ -604,6 +601,11 @@ int mme_insert_subscription_profile(mme_ue_context_t * const mme_ue_context,
  * \param imsi
  **/
 void mme_remove_subscription_profile(mme_ue_context_t * const mme_ue_context_p, imsi64_t imsi);
+
+/** \brief Update the UE context based on the subscription profile.
+ * \param ue_id, subscription data
+ **/
+int mme_app_update_ue_subscription(mme_ue_s1ap_id_t ue_id, subscription_data_t * subscription_data);
 
 /** \brief Allocate memory for a new UE context
  * @returns Pointer to the new structure, NULL if allocation failed

@@ -39,6 +39,8 @@ bearer_context_t* mme_app_get_session_bearer_context(pdn_context_t * const pdn_c
 // todo_: combine these two methods
 void mme_app_get_session_bearer_context_from_all(ue_context_t * const ue_context, const ebi_t ebi, bearer_context_t ** bc_pp);
 
+void mme_app_bearer_context_cleanup(mme_ue_s1ap_id_t mme_ue_s1ap_id, pdn_cid_t context_identifier, ebi_t default_ebi, bstring apn_subscribed);
+
 /*
  * New method to get a bearer context from the bearer pool of the UE context and add it into the pdn session.
  * If the file using this method does not include the header file, the returned pointer is garbage. We overcome this with giving the PP.
@@ -48,6 +50,9 @@ esm_cause_t mme_app_register_dedicated_bearer_context(const mme_ue_s1ap_id_t ue_
 void mme_app_free_bearer_context (bearer_context_t ** const bearer_context);
 void mme_app_bearer_context_s1_release_enb_informations(bearer_context_t * const bc);
 
-void mme_app_bearer_context_update_handover(bearer_context_t * bc_registered, bearer_context_to_be_created_t * const bc_tbc_s10);
+/*
+ * Update the bearer context for initial context setup response and handover.
+ */
+int mme_app_modify_bearers(const mme_ue_s1ap_id_t mme_ue_s1ap_id, bearer_contexts_to_be_modified_t *bcs_to_be_modified);
 
 #endif

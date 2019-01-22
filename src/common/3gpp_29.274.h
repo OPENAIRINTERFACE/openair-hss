@@ -431,7 +431,7 @@ typedef struct {
 typedef struct {
   uint8_t                  eps_bearer_id;    ///< EBI,  Mandatory CSR
   bearer_qos_t             bearer_level_qos;
-  traffic_flow_template_t  tft;              ///< Bearer TFT, Optional CSR, This IE may be included on the S4/S11 and S5/S8 interfaces.
+  traffic_flow_template_t *tft;              ///< Bearer TFT, Optional CSR, This IE may be included on the S4/S11 and S5/S8 interfaces.
 } bearer_to_create_t;
 
 //-----------------
@@ -841,6 +841,7 @@ typedef enum node_type_e {
 
 typedef struct mme_ue_eps_pdn_connections_s {
   uint8_t num_pdn_connections;
+  uint8_t num_processed_pdn_connections;
   pdn_connection_t pdn_connection[MSG_FORWARD_RELOCATION_REQUEST_MAX_PDN_CONNECTIONS];
 } mme_ue_eps_pdn_connections_t;
 //----------------------------

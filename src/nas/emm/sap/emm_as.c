@@ -386,7 +386,7 @@ static int _emm_as_recv (
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, decoder_rc);
     }
 
-    rc = emm_recv_attach_complete (ue_id, &emm_msg->attach_complete, emm_cause, decode_status);
+//    rc = emm_recv_attach_complete (ue_id, &emm_msg->attach_complete, emm_cause, decode_status);
     break;
 
   case TRACKING_AREA_UPDATE_REQUEST:
@@ -498,7 +498,7 @@ static int _emm_as_recv (
 static int _emm_as_data_ind (emm_as_data_t * msg, int *emm_cause)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
-  int                                     rc = RETURNerror;
+  int                                     rc = RETURNok;
   uint8_t                                 ul_nas_count = 0;
 
   OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received AS data transfer indication " "(ue_id=" MME_UE_S1AP_ID_FMT ", delivered=%s, length=%d)\n",
@@ -1264,6 +1264,9 @@ static int _emm_as_data_req (const emm_as_data_t * msg, dl_info_transfer_req_t *
       bytes = _emm_as_encrypt (&as_msg->nas_msg, &nas_msg.header, msg->nas_msg->data, size, emm_security_context);
     }
 
+    /** Free the emm message. */
+    emm_msg_free(emm_msg);
+
     if (bytes > 0) {
 //      if (msg->nas_info == EMM_AS_NAS_DATA_TAU) {
 //        as_msg->err_code = AS_TERMINATED_NAS;
@@ -1298,7 +1301,6 @@ static int _emm_as_data_req (const emm_as_data_t * msg, dl_info_transfer_req_t *
 
     }
   }
-
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, 0);
 }
 
@@ -1373,6 +1375,8 @@ static int _emm_as_status_ind (const emm_as_status_t * msg, dl_info_transfer_req
                                                                     size,
                                                                     emm_security_context);
 
+    /** Free the emm message. */
+    emm_msg_free(emm_msg);
     if (bytes > 0) {
       as_msg->err_code = AS_SUCCESS;
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, AS_DL_INFO_TRANSFER_REQ);
@@ -2071,6 +2075,9 @@ static int _emm_as_establish_rej (const emm_as_establish_t * msg, nas_establish_
                                                                     &nas_msg,
                                                                     size,
                                                                     emm_security_context);
+
+    /** Free the emm message. */
+    emm_msg_free(emm_msg);
     if (bytes > 0) {
       // This is to indicate MME-APP to release the S1AP UE context after sending the message. Must be dependent on the cause, because UE will perform attach depending on it.
       if(dont_remove_bearers){

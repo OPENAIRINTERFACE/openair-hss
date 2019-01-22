@@ -683,6 +683,7 @@ nas_emm_attach_proc_t* nas_new_attach_procedure(struct emm_data_context_s * cons
   emm_context->emm_procedures->emm_specific_proc->emm_proc.type  = NAS_EMM_PROC_TYPE_SPECIFIC;
   /** Timer. */
   emm_context->emm_procedures->emm_specific_proc->retry_timer.sec = TIMER_SPECIFIC_RETRY_DEFAULT_VALUE;
+  emm_context->emm_procedures->emm_specific_proc->retry_timer.usec= TIMER_SPECIFIC_RETRY_DEFAULT_VALUE_USEC;
   emm_context->emm_procedures->emm_specific_proc->retry_timer.id  = NAS_TIMER_INACTIVE_ID;
   emm_context->emm_procedures->emm_specific_proc->type  = EMM_SPEC_PROC_TYPE_ATTACH;
   /** Set the success notifications, entered when the UE goes from EMM_DEREGISTERED to EMM_REGISTERED (former MME_APP callbacks). */
@@ -712,8 +713,9 @@ nas_emm_tau_proc_t *nas_new_tau_procedure(struct emm_data_context_s * const emm_
   emm_context->emm_procedures->emm_specific_proc->emm_proc.base_proc.nas_puid = __sync_fetch_and_add (&nas_puid, 1);
   emm_context->emm_procedures->emm_specific_proc->emm_proc.type  = NAS_EMM_PROC_TYPE_SPECIFIC;
   /** Timer. */
-  emm_context->emm_procedures->emm_specific_proc->retry_timer.sec = TIMER_SPECIFIC_RETRY_DEFAULT_VALUE;
-  emm_context->emm_procedures->emm_specific_proc->retry_timer.id  = NAS_TIMER_INACTIVE_ID;
+  emm_context->emm_procedures->emm_specific_proc->retry_timer.sec  = TIMER_SPECIFIC_RETRY_DEFAULT_VALUE;
+  emm_context->emm_procedures->emm_specific_proc->retry_timer.usec = TIMER_SPECIFIC_RETRY_DEFAULT_VALUE_USEC;
+  emm_context->emm_procedures->emm_specific_proc->retry_timer.id   = NAS_TIMER_INACTIVE_ID;
   emm_context->emm_procedures->emm_specific_proc->type  = EMM_SPEC_PROC_TYPE_TAU;
 
   nas_emm_tau_proc_t * proc = (nas_emm_tau_proc_t*)emm_context->emm_procedures->emm_specific_proc;

@@ -931,23 +931,18 @@ int emm_data_context_update_security_parameters(const mme_ue_s1ap_id_t ue_id,
 }
 
 //------------------------------------------------------------------------------
-int mm_ue_eps_context_update_security_parameters(mme_ue_s1ap_id_t ue_id,
+void mm_ue_eps_context_update_security_parameters(mme_ue_s1ap_id_t ue_id,
     mm_context_eps_t *mm_eps_ue_context,
     uint16_t *encryption_algorithm_capabilities,
     uint16_t *integrity_algorithm_capabilities)
 {
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
+
   uint8_t                 kenb[32];
   uint32_t                ul_nas_count;
 
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
-
   ue_context_t                           *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, ue_id);
-
-  if (!mm_eps_ue_context) {
-    OAILOG_ERROR(LOG_NAS_EMM, "EMM-CTX - no MM EPS UE context existing. Cannot update the AS security for UE context with ueId " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
-    OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
-  }
-
+  DevAssert(mm_eps_ue_context);
   *encryption_algorithm_capabilities = ((uint16_t)mm_eps_ue_context->ue_nc.eea & ~(1 << 7)) << 1;
   *integrity_algorithm_capabilities = ((uint16_t)mm_eps_ue_context->ue_nc.eia & ~(1 << 7)) << 1;
 
@@ -985,7 +980,7 @@ int mm_ue_eps_context_update_security_parameters(mme_ue_s1ap_id_t ue_id,
 //    OAILOG_STREAM_HEX(OAILOG_LEVEL_DEBUG, LOG_NAS_EMM, "New NH_CONJ for ncc1: ", emm_ctx->_vector[emm_ctx->_security.vector_index].nh_conj, 32);
 //  }
   OAILOG_INFO(LOG_NAS_EMM, "EMM-CTX - Updated MM EPS UE context security context parameters for UE context with ueId " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
+  OAILOG_FUNC_OUT(LOG_NAS_EMM);
 }
 
 //------------------------------------------------------------------------------
@@ -1089,7 +1084,7 @@ void nas_start_Ts10_ctx_req(const mme_ue_s1ap_id_t ue_id, struct nas_timer_s * c
 void nas_start_T_retry_specific_procedure(const mme_ue_s1ap_id_t ue_id, struct nas_timer_s * const T_retry,  time_out_t time_out_cb, void *timer_callback_args)
 {
   if ((T_retry) && (T_retry->id == NAS_TIMER_INACTIVE_ID)) {
-    T_retry->id = nas_emm_timer_start (T_retry->sec, 0, time_out_cb, timer_callback_args);
+    T_retry->id = nas_emm_timer_start (T_retry->sec, T_retry->usec, time_out_cb, timer_callback_args);
     if (NAS_TIMER_INACTIVE_ID != T_retry->id) {
       MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 T_retry started UE " MME_UE_S1AP_ID_FMT " ", ue_id);
       OAILOG_DEBUG (LOG_NAS_EMM, "T_retry started UE " MME_UE_S1AP_ID_FMT "\n", ue_id);

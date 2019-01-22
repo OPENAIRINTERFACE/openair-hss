@@ -201,6 +201,15 @@ esm_proc_eps_bearer_context_deactivate_request (
     /* Overwrite the EBI. */
     *ebi = ((nas_esm_proc_pdn_connectivity_t*)esm_base_proc)->default_ebi;
     *pti = esm_base_proc->pti;
+
+    if(*ebi == 0){
+      OAILOG_ERROR(LOG_NAS_ESM, "ESM-PROC  - PDN_CONN_PROC_FOUND: EBI is 0 for UE " MME_UE_S1AP_ID_FMT ".\n", ue_id);
+    }
+    if(*pti == 0){
+      OAILOG_ERROR(LOG_NAS_ESM, "ESM-PROC  - PDN_CONN_PROC_FOUND: PTI is 0 for for UE " MME_UE_S1AP_ID_FMT ".\n", ue_id);
+    }
+  } else {
+    OAILOG_ERROR(LOG_NAS_ESM, "ESM-PROC  - NO PDN_CONN_PROC_FOUND for UE " MME_UE_S1AP_ID_FMT " while EPS bearer context deactivate request is received.\n", ue_id);
   }
 
   /*

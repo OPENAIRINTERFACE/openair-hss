@@ -506,7 +506,8 @@ esm_msg_free (
     break;
 
   default:
-    OAILOG_ERROR (LOG_NAS_ESM, "ESM-MSG   - Unexpected message type: 0x%x, Cannot clear contents. \n", msg->header.message_type);
+    if(msg->header.message_type)
+      OAILOG_ERROR (LOG_NAS_ESM, "ESM-MSG   - Unexpected message type: 0x%x, Cannot clear contents. \n", msg->header.message_type);
     break;
   }
 

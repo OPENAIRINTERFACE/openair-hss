@@ -216,7 +216,7 @@ s11_mme_modify_bearer_request (
   nw_gtpv2c_stack_handle_t * stack_p,
   itti_s11_modify_bearer_request_t * req_p)
 {
-  nw_gtpv2c_ulp_api_t                         ulp_req;
+  nw_gtpv2c_ulp_api_t                       ulp_req;
   nw_rc_t                                   rc;
   //uint8_t                                 restart_counter = 0;
 
@@ -228,8 +228,9 @@ s11_mme_modify_bearer_request (
    * Prepare a new Modify Bearer Request msg
    */
   rc = nwGtpv2cMsgNew (*stack_p, true, NW_GTP_MODIFY_BEARER_REQ, req_p->teid, 0, &(ulp_req.hMsg));
-  ulp_req.u_api_info.initialReqInfo.peerIp = req_p->peer_ip;
-  ulp_req.u_api_info.initialReqInfo.teidLocal  = req_p->local_teid;
+  ulp_req.u_api_info.initialReqInfo.peerIp         = req_p->peer_ip;
+  ulp_req.u_api_info.initialReqInfo.teidLocal      = req_p->local_teid;
+  ulp_req.u_api_info.initialReqInfo.internal_flags = req_p->internal_flags;
 
   hashtable_rc_t hash_rc = hashtable_ts_get(s11_mme_teid_2_gtv2c_teid_handle,
       (hash_key_t) ulp_req.u_api_info.initialReqInfo.teidLocal, (void **)(uintptr_t)&ulp_req.u_api_info.initialReqInfo.hTunnel);
@@ -248,22 +249,17 @@ s11_mme_modify_bearer_request (
 //                              req_p->sender_fteid_for_cp.ipv4 ? &req_p->sender_fteid_for_cp.ipv4_address : 0,
 //                              req_p->sender_fteid_for_cp.ipv6 ? &req_p->sender_fteid_for_cp.ipv6_address : NULL);
 
-
-
   for (int i=0; i < req_p->bearer_contexts_to_be_modified.num_bearer_context; i++) {
     rc = gtpv2c_bearer_context_to_be_modified_within_modify_bearer_request_ie_set (&(ulp_req.hMsg), & req_p->bearer_contexts_to_be_modified.bearer_contexts[i]);
     DevAssert (NW_OK == rc);
   }
 
-
-
   MSC_LOG_TX_MESSAGE (MSC_S11_MME, MSC_SGW, NULL, 0, "0 MODIFY_BEARER_REQUEST local S11 teid " TEID_FMT " num bearers ctx %u",
     req_p->local_teid, req_p->bearer_contexts_to_be_modified.num_bearer_context);
 
   rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
-   DevAssert (NW_OK == rc);
-   return RETURNok;
-
+  DevAssert (NW_OK == rc);
+  return RETURNok;
 }
 
 //------------------------------------------------------------------------------
@@ -285,6 +281,7 @@ s11_mme_handle_modify_bearer_response (
   resp_p = &message_p->ittiMsg.s11_modify_bearer_response;
 
   resp_p->teid = nwGtpv2cMsgGetTeid(pUlpApi->hMsg);
+  resp_p->internal_flags = pUlpApi->u_api_info.initialReqIndInfo.trx_flags;
 
   /*
    * Create a new message parser

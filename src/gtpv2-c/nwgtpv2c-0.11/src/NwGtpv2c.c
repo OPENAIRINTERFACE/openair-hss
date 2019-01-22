@@ -578,13 +578,14 @@ static nw_rc_t nwGtpv2cCreateLocalTunnel (
         }
       }
 
-      pTrxn->pMsg = (nw_gtpv2c_msg_t *) pUlpReq->hMsg;
-      pTrxn->hTunnel = pUlpReq->u_api_info.initialReqInfo.hTunnel;
-      pTrxn->hUlpTrxn = pUlpReq->u_api_info.initialReqInfo.hUlpTrxn;
-      pTrxn->peerIp = pUlpReq->u_api_info.initialReqInfo.peerIp; // todo: ((NwGtpv2cTunnelT *) (pTrxn->hTunnel))->ipv4AddrRemote;
-      pTrxn->peerPort = NW_GTPV2C_UDP_PORT;
+      pTrxn->pMsg      = (nw_gtpv2c_msg_t *) pUlpReq->hMsg;
+      pTrxn->hTunnel   = pUlpReq->u_api_info.initialReqInfo.hTunnel;
+      pTrxn->hUlpTrxn  = pUlpReq->u_api_info.initialReqInfo.hUlpTrxn;
+      pTrxn->peerIp    = pUlpReq->u_api_info.initialReqInfo.peerIp; // todo: ((NwGtpv2cTunnelT *) (pTrxn->hTunnel))->ipv4AddrRemote;
+      pTrxn->peerPort  = NW_GTPV2C_UDP_PORT;
       /* No Delete. */
-      pTrxn->noDelete = pUlpReq->u_api_info.initialReqInfo.noDelete;
+      pTrxn->noDelete  = pUlpReq->u_api_info.initialReqInfo.noDelete;
+      pTrxn->trx_flags = pUlpReq->u_api_info.initialReqInfo.internal_flags;
 
       if (pUlpReq->apiType & NW_GTPV2C_ULP_API_FLAG_IS_COMMAND_MESSAGE) {
         pTrxn->seqNum |= 0x00100000UL;
@@ -821,7 +822,8 @@ static nw_rc_t nwGtpv2cHandleUlpCreateLocalTunnel (NW_IN nw_gtpv2c_stack_t * thi
     ulpApi.u_api_info.initialReqIndInfo.hUlpTunnel = hUlpTunnel;
     ulpApi.u_api_info.initialReqIndInfo.peerIp.s_addr = peerIp->s_addr;
     ulpApi.u_api_info.initialReqIndInfo.peerPort = peerPort;
-    ulpApi.u_api_info.triggeredRspIndInfo.error = *pError;
+    ulpApi.u_api_info.initialReqIndInfo.error = *pError;
+    ulpApi.u_api_info.initialReqIndInfo.trx_flags = pTrxn->trx_flags;
     rc = thiz->ulp.ulpReqCallback (thiz->ulp.hUlp, &ulpApi);
     OAILOG_FUNC_RETURN (LOG_GTPV2C, rc);
   }
@@ -1859,7 +1861,7 @@ static nw_rc_t                            nwGtpv2cHandleTriggeredAck(
     OAI_GCC_DIAG_ON(int-to-pointer-cast);
     timeoutInfo->next = gpGtpv2cTimeoutInfoPool;
     gpGtpv2cTimeoutInfoPool = timeoutInfo;
-    OAILOG_DEBUG (LOG_GTPV2C, "Stopping active timer 0x%" PRIxPTR " for info 0x%p!\n", timeoutInfo->hTimer, timeoutInfo);
+//    OAILOG_DEBUG (LOG_GTPV2C, "Stopping active timer 0x%" PRIxPTR " for info 0x%p!\n", timeoutInfo->hTimer, timeoutInfo);
 
     if (thiz->activeTimerInfo == timeoutInfo) {
       OAILOG_DEBUG (LOG_GTPV2C, "Stopping active timer 0x%" PRIxPTR " for info 0x%p!\n", timeoutInfo->hTimer, timeoutInfo);

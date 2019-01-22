@@ -209,9 +209,7 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
           msg->ue_id);
     } else {
       msg->is_attach = esm_proc_pdn_connectivity->is_attach;
-      msg->esm_cause = esm_proc_pdn_connectivity_res(msg->ue_id, esm_proc_pdn_connectivity,
-          &msg->data.pdn_connectivity_res->apn_ambr, &msg->data.pdn_connectivity_res->bearer_qos,
-          msg->data.pdn_connectivity_res->pdn_type, msg->data.pdn_connectivity_res->paa, &msg->data.pdn_connectivity_res->pco);
+      msg->esm_cause = esm_proc_pdn_connectivity_res(msg->ue_id, esm_proc_pdn_connectivity);
       if(msg->esm_cause != ESM_CAUSE_SUCCESS) {
         /*
          * Send a PDN connectivity reject.
@@ -224,15 +222,7 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
          * Activate Default Bearer Req or PDN connectivity reject is expected.
          * The procedure exists until Activate Default Bearer Accept is received.
          */
-        esm_proc_default_eps_bearer_context(msg->ue_id, esm_proc_pdn_connectivity);
-        /*
-         * Send an Activate Default Bearer Request message.
-         * Check for attach to use the correct callback method.
-         */
-        esm_send_activate_default_eps_bearer_context_request(esm_proc_pdn_connectivity,
-            &msg->data.pdn_connectivity_res->apn_ambr, &msg->data.pdn_connectivity_res->bearer_qos,
-            msg->data.pdn_connectivity_res->paa, &esm_resp_msg);
-        msg->data.pdn_connectivity_res->paa = NULL;  /**< Unlink the PAA (only here). */
+        esm_proc_default_eps_bearer_context(msg->ue_id, esm_proc_pdn_connectivity, &esm_resp_msg);
       }
     }
   }

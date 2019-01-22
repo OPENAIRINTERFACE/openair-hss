@@ -94,11 +94,6 @@ static void *nas_esm_intertask_interface (void *args_p)
     }
     break;
 
-    case NAS_PDN_CONNECTIVITY_FAIL:{
-      nas_esm_proc_pdn_connectivity_fail (&NAS_PDN_CONNECTIVITY_FAIL (received_message_p));
-    }
-    break;
-
     case NAS_PDN_DISCONNECT_RSP:{
       nas_esm_proc_pdn_disconnect_res (&NAS_PDN_DISCONNECT_RSP (received_message_p));
     }

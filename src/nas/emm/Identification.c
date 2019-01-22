@@ -302,7 +302,7 @@ emm_proc_identification_complete (
               "Setting new EMM context with ueId " MME_UE_S1AP_ID_FMT " into pending mode "
               "and implicitly removing old MME_APP UE context. \n", ue_context_duplicate_imsi->mme_ue_s1ap_id, imsi64, emm_ctx->ue_id);
 
-          nas_itti_detach_req(ue_context_duplicate_imsi->mme_ue_s1ap_id);
+          nas_itti_esm_detach_ind(ue_context_duplicate_imsi->mme_ue_s1ap_id);
 
           void * unused= NULL;
           nas_stop_T_retry_specific_procedure(emm_ctx->ue_id, &((nas_emm_specific_proc_t*)(((nas_emm_base_proc_t *)ident_proc)->parent))->retry_timer, unused);
@@ -461,7 +461,7 @@ static void _identification_t3470_handler (void *args)
         OAILOG_FUNC_OUT (LOG_NAS_EMM);
       }else{
         OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - EMM Context for ueId " MME_UE_S1AP_ID_FMT " is not existing. Triggering an MME_APP detach.. \n", ident_proc->ue_id);
-        nas_itti_detach_req(ident_proc->ue_id);
+        nas_itti_esm_detach_ind(ident_proc->ue_id);
         OAILOG_FUNC_OUT (LOG_NAS_EMM);
       }
     }

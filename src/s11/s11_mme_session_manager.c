@@ -398,9 +398,9 @@ s11_mme_handle_delete_session_response (
 
   // delete local tunnel, if nothing against
   if(pUlpApi->u_api_info.triggeredRspIndInfo.noDelete){
-    OAILOG_ERROR (LOG_S11, "Not deleting the local tunnel since \"noDelete\" flag is set. \n");
+    OAILOG_INFO(LOG_S11, "Not deleting the local tunnel since \"noDelete\" flag is set. \n");
   }else{
-    OAILOG_ERROR (LOG_S11, "Deleting the local tunnel. \n");
+    OAILOG_INFO (LOG_S11, "Deleting the local tunnel. \n");
     nw_gtpv2c_ulp_api_t                         ulp_req;
     memset (&ulp_req, 0, sizeof (nw_gtpv2c_ulp_api_t));
     ulp_req.apiType = NW_GTPV2C_ULP_DELETE_LOCAL_TUNNEL;

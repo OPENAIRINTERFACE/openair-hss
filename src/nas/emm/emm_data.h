@@ -64,7 +64,8 @@ Description Defines internal private data handled by EPS Mobility
 
 #define TIMER_S6A_AUTH_INFO_RSP_DEFAULT_VALUE 2 // two second timeout value to wait for auth_info_rsp message from HSS
 #define TIMER_S10_CONTEXT_REQ_DEFAULT_VALUE   5 // two second timeout value to wait for context_rsp message from source MME
-#define TIMER_SPECIFIC_RETRY_DEFAULT_VALUE    1 // two second timeout value to wait for context_rsp message from source MME
+#define TIMER_SPECIFIC_RETRY_DEFAULT_VALUE         0 // two second timeout value to wait for context_rsp message from source MME
+#define TIMER_SPECIFIC_RETRY_DEFAULT_VALUE_USEC    300000 // two second timeout value to wait for context_rsp message from source MME
 
 /****************************************************************************/
 /************************  G L O B A L    T Y P E S  ************************/
@@ -360,7 +361,7 @@ int emm_data_context_update_security_parameters(const mme_ue_s1ap_id_t ue_id,
     uint16_t *encryption_algorithm_capabilities,
     uint16_t *integrity_algorithm_capabilities);
 
-int mm_ue_eps_context_update_security_parameters(const mme_ue_s1ap_id_t ue_id,
+void mm_ue_eps_context_update_security_parameters(const mme_ue_s1ap_id_t ue_id,
     mm_context_eps_t *mm_eps_ue_context,
     uint16_t *encryption_algorithm_capabilities,
     uint16_t *integrity_algorithm_capabilities);

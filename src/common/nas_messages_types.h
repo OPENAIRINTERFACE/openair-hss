@@ -43,7 +43,6 @@
 #define NAS_PDN_CONFIG_RSP(mSGpTR)                  (mSGpTR)->ittiMsg.nas_pdn_config_rsp
 #define NAS_PDN_CONFIG_FAIL(mSGpTR)                 (mSGpTR)->ittiMsg.nas_pdn_config_fail
 #define NAS_PDN_CONNECTIVITY_RSP(mSGpTR)            (mSGpTR)->ittiMsg.nas_pdn_connectivity_rsp
-#define NAS_PDN_CONNECTIVITY_FAIL(mSGpTR)           (mSGpTR)->ittiMsg.nas_pdn_connectivity_fail
 #define NAS_INITIAL_UE_MESSAGE(mSGpTR)              (mSGpTR)->ittiMsg.nas_initial_ue_message
 #define NAS_CONNECTION_ESTABLISHMENT_CNF(mSGpTR)    (mSGpTR)->ittiMsg.nas_conn_est_cnf
 #define NAS_DETACH_REQ(mSGpTR)                      (mSGpTR)->ittiMsg.nas_detach_req
@@ -84,34 +83,10 @@ typedef enum pdn_conn_rsp_cause_e {
 } pdn_conn_rsp_cause_t;
 
 typedef struct itti_nas_pdn_connectivity_rsp_s {
-  pdn_cid_t               pdn_cid;
-  proc_tid_t              pti;   // nas ref  Identity of the procedure transaction executed to activate the PDN connection entry
-  network_qos_t           qos;
-  protocol_configuration_options_t pco;
-  paa_t                  *paa;
-  int                     pdn_type;
-  int                     request_type;
   mme_ue_s1ap_id_t        ue_id;
-  /* Key eNB */
-
-  /* EPS bearer ID */
-  unsigned                ebi:4;
-
-  /* QoS */
-  bearer_qos_t                bearer_qos;
-  ambr_t                      apn_ambr;
-
-  /* S-GW TEID for user-plane */
-  /* S-GW IP address for User-Plane */
-  fteid_t                  sgw_s1u_fteid;
-} itti_nas_pdn_connectivity_rsp_t;
-
-typedef struct itti_nas_pdn_connectivity_fail_s {
-  mme_ue_s1ap_id_t        ue_id;
-  int                     pti;
-  pdn_conn_rsp_cause_t    cause;
   ebi_t                   linked_ebi;
-} itti_nas_pdn_connectivity_fail_t;
+  esm_cause_t             esm_cause;
+} itti_nas_pdn_connectivity_rsp_t;
 
 typedef struct itti_nas_pdn_config_rsp_s {
   mme_ue_s1ap_id_t        ue_id; // nas ref

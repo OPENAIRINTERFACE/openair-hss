@@ -80,6 +80,8 @@ extern mme_app_desc_t                   mme_app_desc;
 
 static mme_api_ip_version_t             _mme_api_ip_capability = MME_API_IPV4V6_ADDR;
 
+static tmsi_t                           mme_m_tmsi_generator = 0x00000001;
+
 
 /* Subscribed QCI */
 #define MME_API_QCI     3
@@ -399,11 +401,8 @@ mme_api_new_guti (
 //      unlock_ue_contexts(ue_context);
 //      OAILOG_FUNC_RETURN (LOG_NAS, RETURNerror);
 //    }
-//    if (RUN_MODE_TEST == mme_config.run_mode) {
-//      guti->m_tmsi = __sync_fetch_and_add (&mme_m_tmsi_generator, 0x00000001);
-//    } else {
-      guti->m_tmsi                 = (tmsi_t)(uintptr_t)ue_context;
-//    }
+    /** Definitely not using the UE structure as GUTI, since it should be unique even after reattaches. */
+    guti->m_tmsi = __sync_fetch_and_add (&mme_m_tmsi_generator, 0x00000001);
     if (guti->m_tmsi == INVALID_M_TMSI) {
       OAILOG_FUNC_RETURN (LOG_NAS, RETURNerror);
     }

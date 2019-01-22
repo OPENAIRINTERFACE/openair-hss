@@ -81,7 +81,6 @@ typedef enum esm_primitive_s {
 typedef struct itti_nas_pdn_config_rsp_s                    esm_cn_pdn_config_res_t;
 typedef struct itti_nas_pdn_config_fail_s                   esm_cn_pdn_config_fail_t;
 typedef struct itti_nas_pdn_connectivity_rsp_s              esm_cn_pdn_connectivity_res_t;
-typedef struct itti_nas_pdn_connectivity_fail_s             esm_cn_pdn_connectivity_fail_t;
 typedef struct itti_nas_pdn_disconnect_rsp_s                esm_cn_pdn_disconnect_res_t;
 
 typedef struct itti_nas_activate_eps_bearer_ctx_req_s       esm_eps_activate_eps_bearer_ctx_req_t;
@@ -173,7 +172,6 @@ typedef union {
   /** From here on just pointers. */
   esm_cn_pdn_config_res_t        *pdn_config_res;
   esm_cn_pdn_connectivity_res_t  *pdn_connectivity_res;
-  esm_cn_pdn_connectivity_fail_t *pdn_connectivity_fail;
   esm_cn_pdn_disconnect_res_t    *pdn_disconnect_res;
   uintptr_t                       esm_proc_timeout;
 

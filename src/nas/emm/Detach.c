@@ -212,7 +212,7 @@ emm_proc_detach (
   if (emm_context == NULL) {
     OAILOG_WARNING (LOG_NAS_EMM, "No EMM context exists for the UE (ue_id=" MME_UE_S1AP_ID_FMT ")", ue_id);
     // There may be MME APP Context. Trigger clean up in MME APP
-    nas_itti_detach_req(ue_id);
+    nas_itti_esm_detach_ind(ue_id);
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
   }
   /*
@@ -306,7 +306,6 @@ emm_proc_detach (
      emm_sap.u.emm_reg.ctx = emm_context;
      rc = emm_sap_send (&emm_sap);
      // Notify MME APP to remove the remaining MME_APP and S1AP contexts..
-//     nas_itti_detach_req(ue_id);
      // todo: review unlock
 
      /** Signal detach Free all ESM procedure, don't care about the rest. */
@@ -360,10 +359,10 @@ int
 emm_proc_detach_request (
   mme_ue_s1ap_id_t ue_id,
   emm_detach_request_ies_t * params)
-
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc;
+  bool                                    switch_off = params->switch_off;
 
   OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Detach type = %s (%d) requested (ue_id=" MME_UE_S1AP_ID_FMT ")\n", _emm_detach_type_str[params->type], params->type, ue_id);
   /*
@@ -372,29 +371,8 @@ emm_proc_detach_request (
   emm_data_context_t *emm_context = emm_data_context_get( &_emm_data, ue_id);
   ue_context_t       *ue_context  = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, ue_id);
 
-  if (emm_context) {
-    DevAssert(ue_context); /**< Might be implicitly detached. */
-    /*
-     * Validate, just check if a specific procedure exist, if so disregard the detach request.
-     * Assuming that DSR failed, with the timeout, we should send one without a security header.
-     */
-    nas_emm_specific_proc_t * specific_proc = get_nas_specific_procedure(emm_context);
-    if(specific_proc){
-      /** A specific procedure exists, abort the detach request, wait the specific procedure to complete. */
-      OAILOG_INFO (LOG_NAS_EMM, " EMM-PROC  - A specific procedure with type %d for ueId " MME_UE_S1AP_ID_FMT " exists. Dropping the detach request. \n", emm_context->ue_id, specific_proc->type);
-      OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
-    }
-    /** Create a specific procedure for detach request. */
-    _emm_proc_create_procedure_detach_request(emm_context, params);
-
-  }else{
-    /** No EMM context existing. */
-    rc = RETURNok;
-  }
-
-  // todo: this might be in success_notif of detach_proc
-
-  if (params->switch_off) {
+  /** First, always send a Detach Accept back if not switch-off. */
+  if (switch_off) {
     MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 Removing UE context ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
     rc = RETURNok;
   } else {
@@ -429,11 +407,54 @@ emm_proc_detach_request (
     emm_sap.primitive = EMMAS_DATA_REQ;
     rc = emm_sap_send (&emm_sap);
   }
-  /** Confirm the detach procedure and inform MME_APP. */
-  /** Confirm the detach procedure and inform MME_APP. */
 
+  if (emm_context) {
+    DevAssert(ue_context); /**< Might be implicitly detached. */
+    /*
+     * Validate, just check if a specific procedure exist, if so disregard the detach request.
+     * Assuming that DSR failed, with the timeout, we should send one without a security header.
+     */
+    nas_emm_specific_proc_t * specific_proc = get_nas_specific_procedure(emm_context);
+    if(specific_proc){
+      /** A specific procedure exists, abort the detach request, wait the specific procedure to complete. */
+
+      if(specific_proc->emm_proc.type == EMM_SPEC_PROC_TYPE_ATTACH){
+        OAILOG_INFO (LOG_NAS_EMM, " EMM-PROC  - An attach procedure for ueId " MME_UE_S1AP_ID_FMT " exists. "
+            "Aborting the attach procedure and continuing with the detach request. \n", emm_context->ue_id, specific_proc->type);
+
+        emm_sap_t                               emm_sap = {0};
+        emm_sap.primitive = EMMREG_ATTACH_ABORT;
+        emm_sap.u.emm_reg.ue_id = ue_id;
+        emm_sap.u.emm_reg.ctx = emm_context;
+        emm_sap.u.emm_reg.u.attach.proc = specific_proc;
+        rc = emm_sap_send (&emm_sap);
+        //     unlock_ue_contexts(ue_context);
+        free_emm_detach_request_ies(&params);
+        OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
+
+      } else if(specific_proc->emm_proc.type == EMM_SPEC_PROC_TYPE_TAU){
+        OAILOG_INFO (LOG_NAS_EMM, " EMM-PROC  - A TAU procedure for ueId " MME_UE_S1AP_ID_FMT " exists. "
+            "Aborting the attach procedure and continuing with the detach request. \n", emm_context->ue_id, specific_proc->type);
+          // todo
+        DevAssert(0);
+      } else {
+        OAILOG_ERROR(LOG_NAS_EMM, " EMM-PROC  - A detach procedure for ueId " MME_UE_S1AP_ID_FMT " exists. "
+            "This should not happen. \n", emm_context->ue_id, specific_proc->type);
+        // todo
+        DevAssert(0);
+      }
+    }
+    /** Create a specific procedure for detach request. */
+    _emm_proc_create_procedure_detach_request(emm_context, params);
+  }else{
+    /** No EMM context existing. Need to remove the procedure IEs immediately. */
+    rc = RETURNok;
+    // free content
+    free_emm_detach_request_ies(&params);
+  }
+
+  /** Confirm the detach procedure and inform MME_APP. */
   emm_sap_t                               emm_sap = {0};
-
   /*
    * Notify EMM FSM that the UE has been implicitly detached
    */
@@ -451,8 +472,6 @@ emm_proc_detach_request (
 
   //     unlock_ue_contexts(ue_context);
   OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
-  // todo: review this
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
 }
 
 //------------------------------------------------------------------------------

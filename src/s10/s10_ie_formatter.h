@@ -121,14 +121,6 @@ nw_rc_t s10_rat_type_ie_get(
 
 int s10_rat_type_ie_set(nw_gtpv2c_msg_handle_t *msg, const rat_type_t *rat_type);
 
-/* EPS Bearer Id Information Element
- * 3GPP TS 29.274 #8.8
- */
-nw_rc_t s10_ebi_ie_get(
-  uint8_t ieType, uint16_t ieLength, uint8_t ieInstance, uint8_t *ieValue, void *arg);
-
-int s10_ebi_ie_set(nw_gtpv2c_msg_handle_t *msg, const unsigned ebi);
-
 /* Bearer Contexts to Create Information Element as part of Create Session Request
  * 3GPP TS 29.274 Table 7.2.1-2.
  */
@@ -138,16 +130,8 @@ int s10_bearer_context_to_be_modified_ie_set (nw_gtpv2c_msg_handle_t * msg, cons
 
 nw_rc_t s10_bearer_context_to_be_modified_ie_get(uint8_t ieType, uint16_t ieLength, uint8_t ieInstance, uint8_t *ieValue, void *arg);
 
-/* EPS Bearer Id Information Element
- * 3GPP TS 29.274 #8.8
- * ebi is 4 bits long
- */
-int s10_ebi_ie_set(nw_gtpv2c_msg_handle_t *msg, const unsigned ebi);
-
-nw_rc_t s10_ebi_ie_get (uint8_t ieType, uint16_t ieLength, uint8_t ieInstance, uint8_t * ieValue, void *arg);
-
 /** Set the Bearer Context IE. */
-int s10_bearer_context_to_create_ie_set (nw_gtpv2c_msg_handle_t * msg, const bearer_contexts_to_be_created_t * bearer_contexts);
+int s10_bearer_context_to_create_ie_set (nw_gtpv2c_msg_handle_t * msg, const bearer_context_to_be_created_t * bearer_context);
 
 nw_rc_t
 s10_bearer_context_to_be_created_ie_get ( uint8_t ieType, uint16_t ieLength, uint8_t ieInstance, uint8_t * ieValue, void *arg);
@@ -180,15 +164,6 @@ nw_rc_t s10_pco_ie_get (uint8_t ieType, uint16_t ieLength,
 int s10_pco_ie_set (nw_gtpv2c_msg_handle_t * msg,
   const protocol_configuration_options_t * pco);
 
-/* Access Point Name Information Element
- * 3GPP TS 29.274 #8.6
- * NOTE: The APN field is not encoded as a dotted string as commonly used in
- * documentation.
- * The encoding of the APN field follows 3GPP TS 23.003 subclause 9.1
- */
-nw_rc_t s10_apn_ie_get(
-  uint8_t ieType, uint16_t ieLength, uint8_t ieInstance, uint8_t *ieValue, bstring *arg);
-
 int s10_apn_ie_set(nw_gtpv2c_msg_handle_t *msg, const bstring apn);
 
 int s10_apn_plmn_ie_set(nw_gtpv2c_msg_handle_t *msg, const char *apn, const ServingNetwork_t * serving_network);
@@ -202,13 +177,6 @@ nw_rc_t s10_uli_ie_get(
 /* APN restrtiction Information Element */
 int s10_apn_restriction_ie_set(
   nw_gtpv2c_msg_handle_t *msg, const uint8_t apn_restriction);
-
-/* Bearer level Qos Information Element
- * 3GPP TS 29.274 #8.15
- */
-nw_rc_t s10_bearer_qos_ie_get (uint8_t ieType, uint16_t ieLength, uint8_t ieInstance, uint8_t * ieValue, void *arg);
-
-int s10_bearer_qos_ie_set(nw_gtpv2c_msg_handle_t *msg, const bearer_qos_t *bearer_qos);
 
 /* IP address Information Element
  * 3GPP TS 29.274 #8.9

@@ -200,8 +200,14 @@ esm_proc_pdn_disconnect_request (
    * Trigger an S11 Delete Session Request to the SAE-GW.
    * No need to process the response.
    */
+
+  struct in_addr saegw_peer_ipv4 = pdn_context->s_gw_address_s11_s4.address.ipv4_address;
+  if(saegw_peer_ipv4.s_addr == 0){
+    mme_app_select_service(&esm_proc_pdn_disconnect->visited_tai, &saegw_peer_ipv4);
+  }
+
   nas_itti_pdn_disconnect_req(ue_id, pdn_context->default_ebi, pti, false,
-      pdn_context->s_gw_address_s11_s4.address.ipv4_address, pdn_context->s_gw_teid_s11_s4,
+      saegw_peer_ipv4, pdn_context->s_gw_teid_s11_s4,
       pdn_cid);
 
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_SUCCESS);
@@ -237,6 +243,7 @@ esm_proc_detach_request (
     OAILOG_WARNING(LOG_MME_APP, "No UE context could be found for UE: " MME_UE_S1AP_ID_FMT " to release ESM contexts. \n", ue_id);
     OAILOG_FUNC_OUT(LOG_MME_APP);
   }
+
   /**
    * Trigger all S11 messages, wihtouth removing the context.
    * Todo: check what happens, if the transactions stay but s11 tunnel is removed.
@@ -245,12 +252,15 @@ esm_proc_detach_request (
     DevAssert(pdn_context);
     // todo: check this!
     bool deleteTunnel = (RB_MIN(PdnContexts, &ue_context->pdn_contexts)== pdn_context);
+
     /*
      * Trigger an S11 Delete Session Request to the SAE-GW.
      * No need to process the response.
      */
-    nas_itti_pdn_disconnect_req(ue_id, pdn_context->default_ebi, PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED, deleteTunnel,
-        pdn_context->s_gw_address_s11_s4.address.ipv4_address, pdn_context->s_gw_teid_s11_s4, pdn_context->context_identifier);
+    if(pdn_context->s_gw_address_s11_s4.address.ipv4_address.s_addr != 0){
+      nas_itti_pdn_disconnect_req(ue_id, pdn_context->default_ebi, PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED, deleteTunnel,
+          pdn_context->s_gw_address_s11_s4.address.ipv4_address, pdn_context->s_gw_teid_s11_s4, pdn_context->context_identifier);
+    }
   }
   OAILOG_INFO(LOG_MME_APP, "Triggered session deletion for all session. Removing ESM context of UE: " MME_UE_S1AP_ID_FMT " . \n", ue_id);
   mme_app_esm_detach(ue_id);

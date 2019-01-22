@@ -133,6 +133,7 @@ esm_send_activate_default_eps_bearer_context_request (
   ambr_t * apn_ambr,
   bearer_qos_t * bearer_level_qos,
   paa_t   * paa,
+  protocol_configuration_options_t   * pco,
   ESM_msg * esm_resp_msg)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
@@ -171,7 +172,7 @@ esm_send_activate_default_eps_bearer_context_request (
 //    msg->esmcause = esm_cause;
 //  }
 
-  if (esm_proc_pdn_connectivity->pco.num_protocol_or_container_id) {
+  if (pco->num_protocol_or_container_id) {
     esm_resp_msg->activate_default_eps_bearer_context_request.presencemask |= ACTIVATE_DEFAULT_EPS_BEARER_CONTEXT_REQUEST_PROTOCOL_CONFIGURATION_OPTIONS_PRESENT;
     /**
      * The PCOs actually received by the SAE-GW.
@@ -179,7 +180,7 @@ esm_send_activate_default_eps_bearer_context_request (
      * todo: We also need to be able to ask the SAE-GW for specific PCOs?
      * In handover, any change in the ESM context information has to be forwarded to the UE --> MODIFY EPS BEARER CONTEXT REQUEST!! (probably not possible with TAU accept).
      */
-    copy_protocol_configuration_options(&esm_resp_msg->activate_default_eps_bearer_context_request.protocolconfigurationoptions, &esm_proc_pdn_connectivity->pco);
+    copy_protocol_configuration_options(&esm_resp_msg->activate_default_eps_bearer_context_request.protocolconfigurationoptions, pco);
   }
 
   /** Implementing subscribed values. */
@@ -217,7 +218,8 @@ esm_send_activate_default_eps_bearer_context_request (
 void
 esm_proc_default_eps_bearer_context (
   mme_ue_s1ap_id_t   ue_id,
-  nas_esm_proc_pdn_connectivity_t * const esm_proc_pdn_connectivity)
+  nas_esm_proc_pdn_connectivity_t * const esm_proc_pdn_connectivity,
+  ESM_msg * const esm_rsp_msg)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
 
@@ -226,7 +228,6 @@ esm_proc_default_eps_bearer_context (
   REQUIREMENT_3GPP_24_301(R10_6_4_1_2);
   if(esm_proc_pdn_connectivity->is_attach){
     /** Not starting the T3485 timer. */
-    OAILOG_FUNC_OUT(LOG_NAS_ESM);
   }else{
     OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Starting T3485 for Default EPS bearer context activation (ue_id=" MME_UE_S1AP_ID_FMT ", context_identifier=%d)\n",
         ue_id, esm_proc_pdn_connectivity->pdn_cid);
@@ -235,8 +236,21 @@ esm_proc_default_eps_bearer_context (
     /** Start the T3485 timer for additional PDN connectivity. */
     esm_proc_pdn_connectivity->esm_base_proc.esm_proc_timer.id = nas_esm_timer_start (mme_config.nas_config.t3485_sec, 0 /*usec*/, (nas_esm_proc_t*)esm_proc_pdn_connectivity); /**< Address field should be big enough to save an ID. */
     esm_proc_pdn_connectivity->esm_base_proc.timeout_notif = _default_eps_bearer_activate_t3485_handler;
-    OAILOG_FUNC_OUT(LOG_NAS_ESM);
   }
+  /** Build the ESM message. */
+  pdn_context_t * pdn_context = NULL;
+  mme_app_get_pdn_context(ue_id, esm_proc_pdn_connectivity->pdn_cid, esm_proc_pdn_connectivity->default_ebi, esm_proc_pdn_connectivity->subscribed_apn, &pdn_context);
+  if(pdn_context){
+    /** Get the default bearer. */
+    bearer_context_t *default_bc = RB_MIN(SessionBearers, &pdn_context->session_bearers);
+    if(default_bc){
+      esm_send_activate_default_eps_bearer_context_request(esm_proc_pdn_connectivity,
+          &pdn_context->subscribed_apn_ambr, &default_bc->bearer_level_qos, pdn_context->paa,
+          pdn_context->pco,
+          esm_rsp_msg);
+    }
+  }
+  OAILOG_FUNC_OUT(LOG_NAS_ESM);
 }
 
 /****************************************************************************
@@ -274,9 +288,8 @@ esm_proc_default_eps_bearer_context_accept (mme_ue_s1ap_id_t ue_id,
    * The CN state & FTEID will be set by the MME_APP layer in independently of this.
    * The PCO of the ESM procedure should be updated.
    */
-  rc = mme_app_esm_update_pdn_context(ue_id, esm_proc_pdn_connectivity->subscribed_apn, esm_proc_pdn_connectivity->pdn_cid, esm_proc_pdn_connectivity->default_ebi,
-      esm_proc_pdn_connectivity->pdn_type, NULL,
-      ESM_EBR_ACTIVE, NULL, NULL, NULL);
+  rc = mme_app_esm_update_ebr_state(ue_id, esm_proc_pdn_connectivity->subscribed_apn, esm_proc_pdn_connectivity->pdn_cid, esm_proc_pdn_connectivity->default_ebi,
+      esm_proc_pdn_connectivity->default_ebi, ESM_EBR_ACTIVE);
   if(rc != RETURNok){
     OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Default EPS bearer context activation accept, could not be processed for UE (ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d). "
         "Assuming implicit detach procedure is in progress. \n", ue_id, esm_proc_pdn_connectivity->default_ebi);
@@ -336,6 +349,7 @@ _default_eps_bearer_activate_t3485_handler(nas_esm_proc_t * esm_base_proc, ESM_m
             &pdn_context->subscribed_apn_ambr,
             &bearer_context->bearer_level_qos,
             pdn_context->paa,
+            pdn_context->pco,
             esm_resp_msg);
         OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Successfully retransmitted Default EPS bearer context activation request to UE (ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d)\n",
             esm_proc_pdn_connectivity->esm_base_proc.ue_id, esm_proc_pdn_connectivity->default_ebi);

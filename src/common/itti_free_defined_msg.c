@@ -70,11 +70,6 @@ void itti_free_msg_content (MessageDef * const message_p)
     break;
 
   case NAS_PDN_CONNECTIVITY_RSP:
-    clear_protocol_configuration_options(&message_p->ittiMsg.nas_pdn_connectivity_rsp.pco);
-    if(message_p->ittiMsg.nas_pdn_connectivity_rsp.paa)
-      free_wrapper(&message_p->ittiMsg.nas_pdn_connectivity_rsp.paa);
-    break;
-  case NAS_PDN_CONNECTIVITY_FAIL:
   case NAS_PDN_DISCONNECT_REQ:
   case NAS_PDN_DISCONNECT_RSP:
     /* Nothing to do. */
@@ -174,6 +169,10 @@ void itti_free_msg_content (MessageDef * const message_p)
     // DO nothing
     break;
 
+  case MME_APP_INITIAL_CONTEXT_SETUP_RSP:
+    // DO nothing
+    break;
+
   case MME_APP_CONNECTION_ESTABLISHMENT_CNF: {
     int num = message_p->ittiMsg.mme_app_connection_establishment_cnf.no_of_e_rabs;
     for (int i = 0; i < num; i++) {
@@ -184,21 +183,14 @@ void itti_free_msg_content (MessageDef * const message_p)
   }
   break;
 
-  case MME_APP_INITIAL_CONTEXT_SETUP_RSP: {
-    int num = message_p->ittiMsg.mme_app_initial_context_setup_rsp.no_of_e_rabs;
-    for (int i = 0; i < num; i++) {
-      bdestroy_wrapper (&message_p->ittiMsg.mme_app_initial_context_setup_rsp.transport_layer_address[i]);
-      AssertFatal(NULL == message_p->ittiMsg.mme_app_initial_context_setup_rsp.transport_layer_address[i], "TODO clean pointer");
-    }
-  }
-  break;
-
   case S11_CREATE_SESSION_REQUEST: {
-    clear_protocol_configuration_options(&message_p->ittiMsg.s11_create_session_request.pco);
+     clear_protocol_configuration_options(&message_p->ittiMsg.s11_create_session_request.pco);
   }
   break;
 
   case S11_CREATE_SESSION_RESPONSE: {
+    if(message_p->ittiMsg.s11_create_session_response.paa)
+        free_wrapper(&message_p->ittiMsg.s11_create_session_response.paa);
     clear_protocol_configuration_options(&message_p->ittiMsg.s11_create_session_response.pco);
   }
   break;
@@ -287,12 +279,12 @@ void itti_free_msg_content (MessageDef * const message_p)
     break;
 
   case S1AP_E_RAB_SETUP_REQ: {
-      for (int i = 0; i < message_p->ittiMsg.s1ap_e_rab_setup_req.e_rab_to_be_setup_list.no_of_items; i++) {
-        bdestroy_wrapper (&message_p->ittiMsg.s1ap_e_rab_setup_req.e_rab_to_be_setup_list.item[i].nas_pdu);
-        bdestroy_wrapper (&message_p->ittiMsg.s1ap_e_rab_setup_req.e_rab_to_be_setup_list.item[i].transport_layer_address);
-      }
+    for (int i = 0; i < message_p->ittiMsg.s1ap_e_rab_setup_req.e_rab_to_be_setup_list.no_of_items; i++) {
+      bdestroy_wrapper (&message_p->ittiMsg.s1ap_e_rab_setup_req.e_rab_to_be_setup_list.item[i].nas_pdu);
+      bdestroy_wrapper (&message_p->ittiMsg.s1ap_e_rab_setup_req.e_rab_to_be_setup_list.item[i].transport_layer_address);
     }
-    break;
+  }
+  break;
 
   case S1AP_E_RAB_SETUP_RSP: {
       for (int i = 0; i < message_p->ittiMsg.s1ap_e_rab_setup_rsp.e_rab_setup_list.no_of_items; i++) {

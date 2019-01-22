@@ -390,6 +390,38 @@ gtpv2c_paa_ie_set (
 }
 
 //------------------------------------------------------------------------------
+int
+gtpv2c_ebi_ie_set (
+  nw_gtpv2c_msg_handle_t * msg,
+  const unsigned ebi)
+{
+  nw_rc_t                                   rc;
+  uint8_t                                 value = 0;
+
+  value = ebi & 0x0F;
+  rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_EBI, 1, 0, &value);
+  DevAssert (NW_OK == rc);
+  return RETURNok;
+}
+
+//------------------------------------------------------------------------------
+nw_rc_t
+gtpv2c_ebi_ie_get (
+  uint8_t ieType,
+  uint16_t ieLength,
+  uint8_t ieInstance,
+  uint8_t * ieValue,
+  void *arg)
+{
+  uint8_t                                *ebi = (uint8_t *) arg;
+
+  DevAssert (ebi );
+  *ebi = ieValue[0] & 0x0F;
+  OAILOG_DEBUG (LOG_S11, "\t- EBI %u\n", *ebi);
+  return NW_OK;
+}
+
+//------------------------------------------------------------------------------
 nw_rc_t
 gtpv2c_ambr_ie_set (
     nw_gtpv2c_msg_handle_t * msg, ambr_t * ambr)
@@ -439,6 +471,147 @@ gtpv2c_ambr_ie_get (
   OAILOG_DEBUG (LOG_S11, "\t- AMBR UL %" PRIu64 "\n", ambr->br_ul);
   OAILOG_DEBUG (LOG_S11, "\t- AMBR DL %" PRIu64 "\n", ambr->br_dl);
   return NW_OK;
+}
+
+//------------------------------------------------------------------------------
+nw_rc_t
+gtpv2c_bearer_qos_ie_get (
+  uint8_t ieType,
+  uint16_t ieLength,
+  uint8_t ieInstance,
+  uint8_t * ieValue,
+  void *arg)
+{
+  bearer_qos_t                       *bearer_qos = (bearer_qos_t *) arg;
+
+  DevAssert (bearer_qos );
+
+  if (22 <= ieLength) {
+    int index = 0;
+    bearer_qos->pci = (ieValue[index] >> 6) & 0x01;
+    bearer_qos->pci = (ieValue[index] >> 6) & 0x01;
+    bearer_qos->pl  = (ieValue[index] >> 2) & 0x0F;
+    bearer_qos->pvi = ieValue[index++] & 0x01;
+    bearer_qos->qci = ieValue[index++];
+
+    bearer_qos->mbr.br_ul = ((bit_rate_t)ieValue[index++]) << 32;
+    bearer_qos->mbr.br_ul |= (((bit_rate_t)ieValue[index++]) << 24);
+    bearer_qos->mbr.br_ul |= (((bit_rate_t)ieValue[index++]) << 16);
+    bearer_qos->mbr.br_ul |= (((bit_rate_t)ieValue[index++]) << 8);
+    bearer_qos->mbr.br_ul |= (bit_rate_t)ieValue[index++];
+
+    bearer_qos->mbr.br_dl = ((bit_rate_t)ieValue[index++]) << 32;
+    bearer_qos->mbr.br_dl |= (((bit_rate_t)ieValue[index++]) << 24);
+    bearer_qos->mbr.br_dl |= (((bit_rate_t)ieValue[index++]) << 16);
+    bearer_qos->mbr.br_dl |= (((bit_rate_t)ieValue[index++]) << 8);
+    bearer_qos->mbr.br_dl |= (bit_rate_t)ieValue[index++];
+
+    bearer_qos->gbr.br_ul = ((bit_rate_t)ieValue[index++]) << 32;
+    bearer_qos->gbr.br_ul |= (((bit_rate_t)ieValue[index++]) << 24);
+    bearer_qos->gbr.br_ul |= (((bit_rate_t)ieValue[index++]) << 16);
+    bearer_qos->gbr.br_ul |= (((bit_rate_t)ieValue[index++]) << 8);
+    bearer_qos->gbr.br_ul |= (bit_rate_t)ieValue[index++];
+
+    bearer_qos->gbr.br_dl = ((bit_rate_t)ieValue[index++]) << 32;
+    bearer_qos->gbr.br_dl |= (((bit_rate_t)ieValue[index++]) << 24);
+    bearer_qos->gbr.br_dl |= (((bit_rate_t)ieValue[index++]) << 16);
+    bearer_qos->gbr.br_dl |= (((bit_rate_t)ieValue[index++]) << 8);
+    bearer_qos->gbr.br_dl |= (bit_rate_t)ieValue[index++];
+
+    if (22 < ieLength) {
+      OAILOG_ERROR (LOG_S11, "TODO gtpv2c_bearer_qos_ie_get() BearerQOS_t\n");
+      return NW_GTPV2C_IE_INCORRECT;
+    }
+    return NW_OK;
+  } else {
+    OAILOG_ERROR (LOG_S11, "Bad IE length %"PRIu8"\n", ieLength);
+    return NW_GTPV2C_IE_INCORRECT;
+  }
+}
+
+//------------------------------------------------------------------------------
+int
+gtpv2c_bearer_qos_ie_set (
+  nw_gtpv2c_msg_handle_t * msg,
+  const bearer_qos_t * bearer_qos)
+{
+  nw_rc_t                                   rc;
+  uint8_t                                 value[22];
+  int                                     index = 0;
+
+  DevAssert (msg );
+  DevAssert (bearer_qos );
+  value[index++] = (bearer_qos->pci << 6) | (bearer_qos->pl << 2) | (bearer_qos->pvi);
+  value[index++] = bearer_qos->qci;
+  /*
+   * TODO: check endianness
+   */
+  value[index++] = (bearer_qos->mbr.br_ul & 0xFF00000000) >> 32;
+  value[index++] = (bearer_qos->mbr.br_ul & 0x00FF000000) >> 24;
+  value[index++] = (bearer_qos->mbr.br_ul & 0x0000FF0000) >> 16;
+  value[index++] = (bearer_qos->mbr.br_ul & 0x000000FF00) >> 8;
+  value[index++] = (bearer_qos->mbr.br_ul & 0x00000000FF);
+
+  value[index++] = (bearer_qos->mbr.br_dl & 0xFF00000000) >> 32;
+  value[index++] = (bearer_qos->mbr.br_dl & 0x00FF000000) >> 24;
+  value[index++] = (bearer_qos->mbr.br_dl & 0x0000FF0000) >> 16;
+  value[index++] = (bearer_qos->mbr.br_dl & 0x000000FF00) >> 8;
+  value[index++] = (bearer_qos->mbr.br_dl & 0x00000000FF);
+
+  value[index++] = (bearer_qos->gbr.br_ul & 0xFF00000000) >> 32;
+  value[index++] = (bearer_qos->gbr.br_ul & 0x00FF000000) >> 24;
+  value[index++] = (bearer_qos->gbr.br_ul & 0x0000FF0000) >> 16;
+  value[index++] = (bearer_qos->gbr.br_ul & 0x000000FF00) >> 8;
+  value[index++] = (bearer_qos->gbr.br_ul & 0x00000000FF);
+
+  value[index++] = (bearer_qos->gbr.br_dl & 0xFF00000000) >> 32;
+  value[index++] = (bearer_qos->gbr.br_dl & 0x00FF000000) >> 24;
+  value[index++] = (bearer_qos->gbr.br_dl & 0x0000FF0000) >> 16;
+  value[index++] = (bearer_qos->gbr.br_dl & 0x000000FF00) >> 8;
+  value[index++] = (bearer_qos->gbr.br_dl & 0x00000000FF);
+
+  rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_BEARER_LEVEL_QOS, 22, 0, value);
+  DevAssert (NW_OK == rc);
+  return RETURNok;
+}
+
+//------------------------------------------------------------------------------
+nw_rc_t
+gtpv2c_tft_ie_get (
+  uint8_t ieType,
+  uint16_t ieLength,
+  uint8_t ieInstance,
+  uint8_t * ieValue,
+  void *arg)
+{
+  uint8_t                        offset = 0;
+  traffic_flow_template_t       *tft = (traffic_flow_template_t *) arg;
+
+  DevAssert (tft );
+  offset = decode_traffic_flow_template (tft, ieValue, ieLength);
+  if ((0 < offset) && (TRAFFIC_FLOW_TEMPLATE_MAXIMUM_LENGTH >= offset))
+    return NW_OK;
+  else {
+    OAILOG_ERROR (LOG_S11, "Incorrect TFT IE\n");
+    return NW_GTPV2C_IE_INCORRECT;
+  }
+}
+
+//------------------------------------------------------------------------------
+int
+gtpv2c_tft_ie_set (
+  nw_gtpv2c_msg_handle_t * msg,
+  const traffic_flow_template_t * tft)
+{
+  uint8_t                                 temp[TRAFFIC_FLOW_TEMPLATE_MAXIMUM_LENGTH];
+  uint8_t                                 offset = 0;
+  nw_rc_t                                 rc = NW_OK;
+
+  DevAssert (tft);
+  offset = encode_traffic_flow_template(tft, temp, TRAFFIC_FLOW_TEMPLATE_MAXIMUM_LENGTH);
+  rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_BEARER_TFT, offset, 0, temp);
+  DevAssert (NW_OK == rc);
+  return RETURNok;
 }
 
 //------------------------------------------------------------------------------

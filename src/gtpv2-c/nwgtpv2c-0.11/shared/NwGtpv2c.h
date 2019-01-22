@@ -196,9 +196,10 @@ typedef struct nw_gtpv2c_initial_req_info_s {
   NW_IN    nw_gtpv2c_ulp_trxn_handle_t  hUlpTrxn;       /**< Optional handle to be returned in rsp of this msg. */
 
   NW_IN    struct in_addr               peerIp;         /**< Required only in case when hTunnel == 0            */
+  NW_IN    uint8_t                      internal_flags; /**< Required only in case when hTunnel == 0            */
   NW_IN    uint32_t                     teidLocal;      /**< Required only in case when hTunnel == 0            */
-  NW_IN    nw_gtpv2c_ulp_tunnel_handle_t hUlpTunnel;     /**< Required only in case when hTunnel == 0            */
-  NW_IN    bool                         noDelete;      /**< Set if the tunnel shall not be deleted automatically by the response. */
+  NW_IN    nw_gtpv2c_ulp_tunnel_handle_t hUlpTunnel;    /**< Required only in case when hTunnel == 0            */
+  NW_IN    bool                         noDelete;       /**< Set if the tunnel shall not be deleted automatically by the response. */
 } nw_gtpv2c_initial_req_info_t;
 
 /**
@@ -255,6 +256,7 @@ typedef struct nw_gtpv2c_triggered_ack_info_s {
 
 typedef struct nw_gtpv2c_initial_req_ind_info_s {
   NW_IN    nw_gtpv2c_error_t              error;
+  NW_IN    uint8_t                        trx_flags;
   NW_IN    nw_gtpv2c_trxn_handle_t        hTrxn;
   NW_IN    nw_gtpv2c_ulp_trxn_handle_t    hUlpTrxn;
   NW_IN    nw_gtpv2c_msg_type_t           msgType;

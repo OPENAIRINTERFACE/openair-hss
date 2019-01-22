@@ -304,7 +304,7 @@ esm_proc_pdn_connectivity_retx(const mme_ue_s1ap_id_t ue_id, const nas_esm_proc_
       "Resending PDN connectivity request and restarting T3485." "(ue_id=%d, pti=%d)\n",
       bdata(esm_proc_pdn_connectivity->subscribed_apn), ue_id, esm_proc_pdn_connectivity->esm_base_proc.pti);
   esm_send_activate_default_eps_bearer_context_request(esm_proc_pdn_connectivity, &dup_pdn_context->subscribed_apn_ambr,
-      &bearer_context->bearer_level_qos, dup_pdn_context->paa, esm_rsp_msg);
+      &bearer_context->bearer_level_qos, dup_pdn_context->paa, dup_pdn_context->pco, esm_rsp_msg);
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_SUCCESS);
 }
 
@@ -327,25 +327,19 @@ esm_proc_pdn_connectivity_retx(const mme_ue_s1ap_id_t ue_id, const nas_esm_proc_
  **                  Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
-esm_cause_t esm_proc_pdn_connectivity_res (mme_ue_s1ap_id_t ue_id, nas_esm_proc_pdn_connectivity_t * esm_proc_pdn_connectivity,
-    ambr_t * apn_ambr, bearer_qos_t * bearer_level_qos,
-    pdn_type_t pdn_type, paa_t * paa, protocol_configuration_options_t * pco) {
+esm_cause_t esm_proc_pdn_connectivity_res (mme_ue_s1ap_id_t ue_id, nas_esm_proc_pdn_connectivity_t * esm_proc_pdn_connectivity) {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   int                           rc = RETURNok;
   /*
    * Update default EPS bearer context and pdn context.
-   * The PCO of the ESM procedure should be updated.
+   * The PCO of the ESM procedure does not need to be updated. The PDN context already has an updated PCO.
    */
-  if(pco && pco->num_protocol_or_container_id){
-    clear_protocol_configuration_options(&esm_proc_pdn_connectivity->pco);
-    copy_protocol_configuration_options(&esm_proc_pdn_connectivity->pco, pco);
-  }
-  rc = mme_app_esm_update_pdn_context(ue_id, esm_proc_pdn_connectivity->subscribed_apn, esm_proc_pdn_connectivity->pdn_cid, esm_proc_pdn_connectivity->default_ebi,
-      pdn_type, paa, ESM_EBR_ACTIVE_PENDING,
-      apn_ambr, bearer_level_qos, (protocol_configuration_options_t*)&esm_proc_pdn_connectivity->pco);
+
+  /** All fields must be set, just update the ESM_EBR_STATE. */
+  rc = mme_app_esm_update_ebr_state(ue_id, esm_proc_pdn_connectivity->subscribed_apn, esm_proc_pdn_connectivity->pdn_cid, esm_proc_pdn_connectivity->default_ebi, esm_proc_pdn_connectivity->default_ebi, ESM_EBR_ACTIVE_PENDING);
   if (rc == RETURNerror) {
-    OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Could not update the default EPS bearer context activation (ue_id=" MME_UE_S1AP_ID_FMT ", context_identifier=%d,  QCI %u). \n. ",
-        ue_id, esm_proc_pdn_connectivity->pdn_cid, bearer_level_qos->qci);
+    OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Could not update the default EPS bearer context activation (ue_id=" MME_UE_S1AP_ID_FMT ", context_identifier=%d). \n. ",
+        ue_id, esm_proc_pdn_connectivity->pdn_cid);
     /** Remove the ESM procedure. */
     _esm_proc_free_pdn_connectivity_procedure(&esm_proc_pdn_connectivity);
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_REQUEST_REJECTED_BY_GW);
@@ -387,8 +381,13 @@ void esm_proc_pdn_connectivity_failure (mme_ue_s1ap_id_t ue_id, nas_esm_proc_pdn
     /*
      * Delete the PDN connectivity in the MME_APP UE context.
      */
+    struct in_addr saegw_peer_ipv4 = pdn_context->s_gw_address_s11_s4.address.ipv4_address;
+    if(saegw_peer_ipv4.s_addr == 0){
+      mme_app_select_service(&esm_proc_pdn_connectivity->visited_tai, &saegw_peer_ipv4);
+    }
+
     nas_itti_pdn_disconnect_req(ue_id, esm_proc_pdn_connectivity->default_ebi, esm_proc_pdn_connectivity->esm_base_proc.pti, false,
-        pdn_context->s_gw_address_s11_s4.address.ipv4_address, pdn_context->s_gw_teid_s11_s4,
+        saegw_peer_ipv4, pdn_context->s_gw_teid_s11_s4,
         esm_proc_pdn_connectivity->pdn_cid);
     mme_app_esm_delete_pdn_context(ue_id, esm_proc_pdn_connectivity->subscribed_apn, esm_proc_pdn_connectivity->pdn_cid, esm_proc_pdn_connectivity->default_ebi); /**< Frees it by putting it back to the pool. */
   }

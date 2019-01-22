@@ -297,9 +297,7 @@ typedef struct nas_s10_context_s{
   imei_t                      _imei;
   mm_context_eps_t              *mm_eps_ctx;
   /** Information to update in the ESM layer. */
-  int                         n_active_ebrs;     /* Total number of active EPS bearer contexts   */
-  int                         n_active_pdns;     /* Number of active PDN connections     */
-  int                         n_pdns;
+  int                         n_processed_pdns;
 }nas_s10_context_t;
 
 typedef struct nas_ctx_req_proc_s {

@@ -627,7 +627,7 @@ itti_receive_msg_internal_event_fd (
       struct message_list_s                  *message = NULL;
       eventfd_t                               sem_counter;
       ssize_t                                 read_ret;
-      int                                     result;
+      int                                     result = EXIT_SUCCESS;
 
       /*
        * Read will always return 1
@@ -645,7 +645,10 @@ itti_receive_msg_internal_event_fd (
       AssertFatal (message != NULL, "Message from message queue is NULL!\n");
       *received_msg = message->msg;
       result = itti_free (ITTI_MSG_ORIGIN_ID (message->msg), message);
-      AssertFatal (result == EXIT_SUCCESS, "Failed to free memory (%d)!\n", result);
+//      AssertFatal (result == EXIT_SUCCESS, "Failed to free memory (%d)!\n", result);
+      if(result != EXIT_SUCCESS){
+        OAILOG_ERROR (LOG_ITTI, " Failed to free memory (%d)!\n", result);
+      }
       /*
        * Mark that the event has been processed
        */

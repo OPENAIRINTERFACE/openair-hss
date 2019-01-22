@@ -56,6 +56,7 @@ Description Timer utilities
 typedef struct nas_timer_s {
   long int id;     /* The timer identifier                 */
   long sec;        /* The timer interval value in seconds  */
+  long usec;       /* The timer interval value in micro-seconds (used for custom processes like retries). */
 } nas_timer_t;
 
 /* Type of the callback executed when the timer expired */

@@ -91,7 +91,6 @@ int nas_esm_proc_esm_detach(itti_nas_esm_detach_ind_t * esm_detach);
 int nas_esm_proc_pdn_config_res (esm_cn_pdn_config_res_t * emm_cn_pdn_config_res);
 int nas_esm_proc_pdn_config_fail (esm_cn_pdn_config_fail_t * emm_cn_pdn_config_fail);
 int nas_esm_proc_pdn_connectivity_res(esm_cn_pdn_connectivity_res_t *esm_cn_pdn_connectivity_rsp);
-int nas_esm_proc_pdn_connectivity_fail(esm_cn_pdn_connectivity_fail_t *esm_cn_pdn_connectivity_fail);
 
 int nas_esm_proc_activate_eps_bearer_ctx(esm_eps_activate_eps_bearer_ctx_req_t * esm_cn_activate);
 int nas_esm_proc_modify_eps_bearer_ctx(esm_eps_modify_esm_bearer_ctxs_req_t * esm_cn_modify);

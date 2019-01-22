@@ -746,7 +746,7 @@ int emm_proc_attach_request_validity(emm_data_context_t * emm_context, mme_ue_s1
 
       // Clean up new UE context that was created to handle new attach request
       if(new_ue_id != emm_context->ue_id)
-        nas_itti_detach_req(new_ue_id);
+        nas_itti_esm_detach_ind(new_ue_id);
       free_emm_attach_request_ies(&ies);
 
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
@@ -899,17 +899,15 @@ static void _emm_attach_t3450_handler (void *args)
   if (is_nas_specific_procedure_attach_running (emm_context)) {
     nas_emm_attach_proc_t *attach_proc = get_nas_specific_procedure_attach (emm_context);
 
-
     attach_proc->T3450.id = NAS_TIMER_INACTIVE_ID;
     attach_proc->attach_accept_sent++;
 
     OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - T3450 timer expired, retransmission " "counter = %d\n", attach_proc->attach_accept_sent);
 
-
     if (attach_proc->attach_accept_sent < ATTACH_COUNTER_MAX) {
       REQUIREMENT_3GPP_24_301(R10_5_5_1_2_7_c__1);
       /*
-       * On the first expiry of the timer, the network shall retransmit the ATTACH ACCEPT message and shall reset and
+       * On the first expiration of the timer, the network shall retransmit the ATTACH ACCEPT message and shall reset and
        * restart timer T3450.
        */
       _emm_attach_accept_retx (emm_context);
@@ -926,24 +924,6 @@ static void _emm_attach_t3450_handler (void *args)
 //      emm_sap.u.emm_reg.free_proc = true;
       emm_sap.u.emm_reg.u.attach.proc   = attach_proc;
       emm_sap_send (&emm_sap);
-
-      /*
-       * Check if the EMM context is removed removed.
-       * A non delivery indicator would just retrigger the message, not a guarantee for removal.
-       */
-      emm_data_context_t *emm_ctx = emm_data_context_get(&_emm_data, attach_proc->ue_id);
-      if(emm_ctx){
-        OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - EMM Context for ueId " MME_UE_S1AP_ID_FMT " is still existing. Removing failed EMM context.. \n", attach_proc->ue_id);
-        emm_sap_t                               emm_sap = {0};
-        emm_sap.primitive = EMMCN_IMPLICIT_DETACH_UE;
-        emm_sap.u.emm_cn.u.emm_cn_implicit_detach.ue_id = attach_proc->ue_id;
-        emm_sap_send (&emm_sap);
-        OAILOG_FUNC_OUT (LOG_NAS_EMM);
-      }else{
-        OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - EMM Context for ueId " MME_UE_S1AP_ID_FMT " is not existing. Triggering an MME_APP detach.. \n", attach_proc->ue_id);
-        nas_itti_detach_req(attach_proc->ue_id);
-        OAILOG_FUNC_OUT (LOG_NAS_EMM);
-      }
     }
     // TODO REQUIREMENT_3GPP_24_301(R10_5_5_1_2_7_c__3) not coded
   }
@@ -1075,7 +1055,6 @@ static int _emm_attach_abort (struct emm_data_context_s* emm_context, struct nas
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
-
 
   nas_emm_attach_proc_t *attach_proc = get_nas_specific_procedure_attach(emm_context);
   if (attach_proc) {
