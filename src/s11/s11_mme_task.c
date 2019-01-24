@@ -248,6 +248,11 @@ s11_mme_thread (
       }
       break;
 
+    case S11_DELETE_BEARER_COMMAND:{
+        s11_mme_delete_bearer_command (&s11_mme_stack_handle, &received_message_p->ittiMsg.s11_delete_bearer_command);
+      }
+      break;
+
     case S11_MODIFY_BEARER_REQUEST:{
         s11_mme_modify_bearer_request (&s11_mme_stack_handle, &received_message_p->ittiMsg.s11_modify_bearer_request);
       }

@@ -1134,6 +1134,28 @@ gtpv2c_bearer_context_within_delete_bearer_response_ie_get (
   return NW_OK;
 }
 
+//------------------------------------------------------------------------------
+int gtpv2c_bearer_context_ebi_only_ie_set (
+  nw_gtpv2c_msg_handle_t * const msg,
+  const ebi_t ebi)
+{
+  nw_rc_t                                   rc;
+
+  DevAssert (msg );
+  /*
+   * Start section for grouped IE: bearer context to create
+   */
+  rc = nwGtpv2cMsgGroupedIeStart (*msg, NW_GTPV2C_IE_BEARER_CONTEXT, NW_GTPV2C_IE_INSTANCE_ZERO);
+  DevAssert (NW_OK == rc);
+  gtpv2c_ebi_ie_set (msg, ebi);
+
+  /*
+   * End section for grouped IE: bearer context to create
+   */
+  rc = nwGtpv2cMsgGroupedIeEnd (*msg);
+  DevAssert (NW_OK == rc);
+  return RETURNok;
+}
 
 //------------------------------------------------------------------------------
 int

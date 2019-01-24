@@ -321,7 +321,7 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
     msg->esm_cause = esm_proc_eps_bearer_context_deactivate_request(msg->ue_id, NULL, &msg->data.eps_bearer_context_deactivate.pti,
        &msg->data.eps_bearer_context_deactivate.ded_ebi, &esm_resp_msg);
    if (msg->esm_cause != ESM_CAUSE_SUCCESS) {   /**< We assume that no ESM procedure exists. */
-     /* Only if no bearer context. */
+     /* Only if no bearer context, or the bearer context is implicitly detached by the eNB (DBC). */
      nas_itti_dedicated_eps_bearer_deactivation_complete(msg->ue_id, msg->data.eps_bearer_context_deactivate.ded_ebi);
    }
   }

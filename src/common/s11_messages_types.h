@@ -1243,6 +1243,7 @@ typedef struct itti_s11_modify_bearer_response_s {
   /* S11 stack specific parameter. Not used in standalone epc mode */
   void                         *trxn;                      ///< Transaction identifier
   uint8_t                      internal_flags;
+  struct in_addr               peer_ip;
 } itti_s11_modify_bearer_response_t;
 
 //-----------------------------------------------------------------------------
@@ -1364,6 +1365,7 @@ typedef struct itti_s11_release_access_bearers_response_s {
  */
 typedef struct itti_s11_delete_bearer_command_s {
   teid_t          teid;                   ///< Tunnel Endpoint Identifier
+  teid_t          local_teid;             ///< Tunnel Endpoint Identifier
 
   void           *trxn;
   struct in_addr  peer_ip;

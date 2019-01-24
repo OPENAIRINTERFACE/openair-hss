@@ -256,7 +256,6 @@ typedef struct nw_gtpv2c_triggered_ack_info_s {
 
 typedef struct nw_gtpv2c_initial_req_ind_info_s {
   NW_IN    nw_gtpv2c_error_t              error;
-  NW_IN    uint8_t                        trx_flags;
   NW_IN    nw_gtpv2c_trxn_handle_t        hTrxn;
   NW_IN    nw_gtpv2c_ulp_trxn_handle_t    hUlpTrxn;
   NW_IN    nw_gtpv2c_msg_type_t           msgType;
@@ -294,8 +293,10 @@ typedef struct nw_gtpv2c_triggered_rsp_ind_info_s {
   NW_IN    nw_gtpv2c_error_t               error;
   NW_IN    nw_gtpv2c_ulp_trxn_handle_t     hUlpTrxn;
   NW_IN    nw_gtpv2c_ulp_tunnel_handle_t   hUlpTunnel;
+  NW_IN    uint8_t                         trx_flags;
   NW_IN    nw_gtpv2c_msg_type_t            msgType;
   NW_IN    bool                            noDelete;
+  NW_IN    struct in_addr                  peerIp;
 } nw_gtpv2c_triggered_rsp_ind_info_t;
 
 /**

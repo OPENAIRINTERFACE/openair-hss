@@ -395,11 +395,10 @@ typedef struct itti_s1ap_handover_request_acknowledge_s {
   uint32_t                enb_ue_s1ap_id;
 //  sctp_assoc_id_t         sctp_assoc_id;
 //  sctp_stream_id_t        sctp_stream;
-//  uint8_t                 no_of_e_rabs;
-//  ebi_t                   e_rab_id[BEARERS_PER_UE];
-//  bstring                 transport_layer_address[BEARERS_PER_UE];
-//  s1u_teid_t              gtp_teid[BEARERS_PER_UE];
   bearer_contexts_to_be_modified_t    bcs_to_be_modified;
+
+  // E-RAB Released List
+  e_rab_list_t                        e_rab_release_list;
 
   bstring                 target_to_source_eutran_container; /**< Target-ToSource Transparent Container. */
 } itti_s1ap_handover_request_acknowledge_t;

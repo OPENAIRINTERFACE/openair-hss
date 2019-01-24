@@ -679,6 +679,14 @@ s1ap_mme_handle_initial_context_setup_response (
     bdestroy_wrapper(&transport_address);
   }
 
+  /** Get the failed bearers. */
+  for (int index = 0; index < initialContextSetupResponseIEs_p->e_RABFailedToSetupListCtxtSURes.s1ap_E_RABItem.count; index++) {
+    S1ap_E_RABItem_t * erab_item = (S1ap_E_RABItem_t *)initialContextSetupResponseIEs_p->e_RABFailedToSetupListCtxtSURes.s1ap_E_RABItem.array[index];
+    initial_context_setup_rsp->e_rab_release_list.item[index].e_rab_id  = erab_item->e_RAB_ID;
+    initial_context_setup_rsp->e_rab_release_list.item[index].cause     = erab_item->cause;
+    initial_context_setup_rsp->e_rab_release_list.no_of_items++;
+  }
+
   MSC_LOG_TX_MESSAGE (MSC_S1AP_MME,
                       MSC_MMEAPP_MME,
                       NULL, 0,
@@ -1820,6 +1828,14 @@ s1ap_mme_handle_handover_resource_allocation_response(const sctp_assoc_id_t asso
       AssertFatal(0, "TODO IP address %d bytes", blength(transport_address));
     }
     bdestroy_wrapper(&transport_address);
+  }
+
+  /** Get the failed bearers. */
+  for (int index = 0; index < handoverRequestAcknowledgeIEs_p->e_RABFailedToSetupListHOReqAck.s1ap_E_RABFailedToSetupItemHOReqAck.count; index++) {
+    S1ap_E_RABItem_t * erab_item = (S1ap_E_RABItem_t *)handoverRequestAcknowledgeIEs_p->e_RABFailedToSetupListHOReqAck.s1ap_E_RABFailedToSetupItemHOReqAck.array[index];
+    s1ap_handover_request_acknowledge->e_rab_release_list.item[index].e_rab_id  = erab_item->e_RAB_ID;
+    s1ap_handover_request_acknowledge->e_rab_release_list.item[index].cause     = erab_item->cause;
+    s1ap_handover_request_acknowledge->e_rab_release_list.no_of_items++;
   }
 
   /**

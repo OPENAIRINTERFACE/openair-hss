@@ -281,8 +281,8 @@ s11_mme_handle_modify_bearer_response (
   resp_p = &message_p->ittiMsg.s11_modify_bearer_response;
 
   resp_p->teid = nwGtpv2cMsgGetTeid(pUlpApi->hMsg);
-  resp_p->internal_flags = pUlpApi->u_api_info.initialReqIndInfo.trx_flags;
-
+  resp_p->internal_flags = pUlpApi->u_api_info.triggeredRspIndInfo.trx_flags;
+  resp_p->peer_ip.s_addr = pUlpApi->u_api_info.triggeredRspIndInfo.peerIp.s_addr;
   /*
    * Create a new message parser
    */
@@ -336,6 +336,49 @@ s11_mme_handle_modify_bearer_response (
   rc = nwGtpv2cMsgDelete (*stack_p, (pUlpApi->hMsg));
   DevAssert (NW_OK == rc);
   return itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
+}
+
+//------------------------------------------------------------------------------
+int
+s11_mme_delete_bearer_command(
+  nw_gtpv2c_stack_handle_t * stack_p,
+  itti_s11_delete_bearer_command_t * cmd_p)
+{
+  nw_gtpv2c_ulp_api_t                       ulp_req;
+  nw_rc_t                                   rc;
+
+  DevAssert (stack_p );
+  DevAssert (cmd_p );
+  memset (&ulp_req, 0, sizeof (nw_gtpv2c_ulp_api_t));
+  ulp_req.apiType = NW_GTPV2C_ULP_API_INITIAL_REQ;
+  /*
+   * Prepare a new Delete Session Request msg
+   */
+  rc = nwGtpv2cMsgNew (*stack_p, true, NW_GTP_DELETE_BEARER_CMD, cmd_p->teid, 0, &(ulp_req.hMsg));
+  ulp_req.u_api_info.initialReqInfo.peerIp = cmd_p->peer_ip;
+  ulp_req.u_api_info.initialReqInfo.teidLocal = cmd_p->local_teid;
+
+  hashtable_rc_t hash_rc = hashtable_ts_get(s11_mme_teid_2_gtv2c_teid_handle,
+      (hash_key_t) ulp_req.u_api_info.initialReqInfo.teidLocal,
+      (void **)(uintptr_t)&ulp_req.u_api_info.initialReqInfo.hTunnel);
+
+  if (HASH_TABLE_OK != hash_rc) {
+    OAILOG_WARNING (LOG_S11, "Could not get GTPv2-C hTunnel for local teid %X\n", ulp_req.u_api_info.initialReqInfo.teidLocal);
+    return RETURNerror;
+  }
+  /*
+   * Add bearer contexts to be removed.
+   */
+  for (int num_ebi=0; num_ebi < cmd_p->ebi_list.num_ebi; num_ebi++) {
+    rc = gtpv2c_bearer_context_ebi_only_ie_set (&(ulp_req.hMsg), cmd_p->ebi_list.ebis[num_ebi]);
+    DevAssert (NW_OK == rc);
+  }
+
+  rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
+  DevAssert (NW_OK == rc);
+  MSC_LOG_TX_MESSAGE (MSC_S11_MME, MSC_SGW, NULL, 0, "0 DELETE_BEARER_COMMAND local S11 teid " TEID_FMT " ", cmd_p->local_teid);
+
+  return RETURNok;
 }
 
 //------------------------------------------------------------------------------

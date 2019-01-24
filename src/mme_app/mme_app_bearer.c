@@ -1095,14 +1095,13 @@ mme_app_handle_modify_bearer_resp (
    * Remove any idles bearers, also in the case of (S10) S1 handover.
    * The PDN Connectivity element would always be more or equal than the actual number of established bearers.
    */
-  mme_app_bearer_context_cleanup(ue_context->mme_ue_s1ap_id, pdn_context->context_identifier, pdn_context->default_ebi, pdn_context->apn_subscribed);
   bearer_context_t * bc_to_act = NULL;
   RB_FOREACH (bc_to_act, SessionBearers, &pdn_context->session_bearers) {
     DevAssert(bc_to_act);
-    /** Add them to the bearers list of the MBR. */
-    bc_to_act->bearer_state = BEARER_STATE_ACTIVE;
+    // todo: should be in lock.
+    if(bc_to_act->bearer_state & BEARER_STATE_ENB_CREATED)
+      bc_to_act->bearer_state |= BEARER_STATE_ACTIVE;
   }
-
   // todo: set the downlink teid?
   /** No matter if there is an handover procedure or not, continue with the MBR for other PDNs. */
   pdn_context = NULL;
@@ -1110,7 +1109,8 @@ mme_app_handle_modify_bearer_resp (
     DevAssert(pdn_context);
     bearer_context_t * first_bearer = RB_MIN(SessionBearers, &pdn_context->session_bearers);
     DevAssert(first_bearer);
-    if(first_bearer->bearer_state == BEARER_STATE_ACTIVE){
+    // todo: here check, that it is not a deactivated bearer..
+    if(first_bearer->bearer_state & (BEARER_STATE_ENB_CREATED | BEARER_STATE_ACTIVE)){
       /** Continue to next pdn. */
       continue;
     }else{
@@ -1150,10 +1150,36 @@ mme_app_handle_modify_bearer_resp (
       /** The number of bearers will be incremented in the method. S10 should just pick the ebi. */
     }
     mme_app_send_s1ap_path_switch_request_acknowledge(ue_context->mme_ue_s1ap_id, encryption_algorithm_capabilities, integrity_algorithm_capabilities, &bcs_tbs);
-    /** Reset the flag. */
-    OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
   }
-  /** Nothing special to be done for S1 handover. */
+  /** If an S10 Handover procedure is ongoing, directly check for released bearers. */
+  mme_app_s10_proc_mme_handover_t * s10_handover_procedure = mme_app_get_s10_procedure_mme_handover(ue_context);
+  if(s10_handover_procedure){
+    if(s10_handover_procedure->failed_ebi_list.num_ebi){
+      mme_app_send_s11_delete_bearer_cmd(ue_context->mme_teid_s11, modify_bearer_resp_pP->teid, &modify_bearer_resp_pP->peer_ip, &s10_handover_procedure->failed_ebi_list);
+    }
+    OAILOG_FUNC_RETURN(LOG_MME_APP, RETURNok);
+  }
+  /** Nothing special to be done for S1 handover. Just trigger a Delete Bearer Command, if there are idle bearers. No need to check for per-pdn. */
+  ebi_list_t ebi_list;
+  memset(&ebi_list, 0, sizeof(ebi_list_t));
+  RB_FOREACH (pdn_context, PdnContexts, &ue_context->pdn_contexts) {
+    RB_FOREACH (current_bearer_p, SessionBearers, &pdn_context->session_bearers) {
+      if((!(current_bearer_p->bearer_state & BEARER_STATE_ENB_CREATED)) && !current_bearer_p->enb_fteid_s1u.teid){
+        /** Trigger a Delete Bearer Command. */
+        ebi_list.ebis[ebi_list.num_ebi] = current_bearer_p->ebi;
+        ebi_list.num_ebi++;
+      }
+    }
+  }
+  if(!ebi_list.num_ebi){
+    OAILOG_INFO(LOG_MME_APP, "No pending removal of bearers for ueId: " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
+    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
+  }
+  if(ebi_list.num_ebi){
+    OAILOG_INFO(LOG_MME_APP, "%d bearers pending for removal for ueId: " MME_UE_S1AP_ID_FMT ". Triggering a Delete Bearer Command. \n", ebi_list.num_ebi, ue_context->mme_ue_s1ap_id);
+    /** Trigger a Delete Bearer Command. */
+    mme_app_send_s11_delete_bearer_cmd(ue_context->mme_teid_s11, modify_bearer_resp_pP->teid, &modify_bearer_resp_pP->peer_ip, &ebi_list);
+  }
   OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
 }
 
@@ -1255,6 +1281,7 @@ mme_app_handle_initial_context_setup_rsp (
   OAILOG_FUNC_IN (LOG_MME_APP);
   struct ue_context_s                 *ue_context = NULL;
   MessageDef                          *message_p = NULL;
+  ebi_list_t                           ebi_list;
 
   OAILOG_DEBUG (LOG_MME_APP, "Received MME_APP_INITIAL_CONTEXT_SETUP_RSP from S1AP\n");
   ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, initial_ctxt_setup_rsp_pP->ue_id);
@@ -1310,14 +1337,15 @@ mme_app_handle_initial_context_setup_rsp (
 ////      goto found_pdn;
 ////    }
 ////  }
+  /** Process the failed bearers (for all APNs). */
+  memset(&ebi_list, 0, sizeof(ebi_list_t));
+  mme_app_release_bearers(initial_ctxt_setup_rsp_pP->ue_id, &initial_ctxt_setup_rsp_pP->e_rab_release_list, &ebi_list);
+
   if(!mme_app_modify_bearers(initial_ctxt_setup_rsp_pP->ue_id, &initial_ctxt_setup_rsp_pP->bcs_to_be_modified)){
     OAILOG_ERROR (LOG_MME_APP, "Error while initial context setup response handling for UE: " MME_UE_S1AP_ID_FMT "\n", initial_ctxt_setup_rsp_pP->ue_id);
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
   pdn_context_t * registered_pdn_ctx = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
-  /** Setting as ACTIVE when MBResp received from SAE-GW. Sending an MBR even if not online. */
-  /** Send Modify Bearer Request for the APN. */
-  // todo: add flags and bearer contexts to be removed
   mme_app_send_s11_modify_bearer_req(ue_context, registered_pdn_ctx, 0);
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
@@ -2057,14 +2085,7 @@ void mme_app_handle_e_rab_release_ind (const itti_s1ap_e_rab_release_ind_t   * c
     pdn_context = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
     if(pdn_context){
       /** Trigger a Delete Bearer Command. */
-      message_p = itti_alloc_new_message (TASK_MME_APP, S11_DELETE_BEARER_COMMAND);
-      DevAssert (message_p != NULL);
-      itti_s11_delete_bearer_command_t *s11_delete_bearer_command = &message_p->ittiMsg.s11_delete_bearer_command;
-      s11_delete_bearer_command->teid = pdn_context->s_gw_teid_s11_s4;
-      s11_delete_bearer_command->peer_ip.s_addr = pdn_context->s_gw_address_s11_s4.address.ipv4_address.s_addr;
-      memcpy(&s11_delete_bearer_command->ebi_list, &ebi_list, sizeof(ebi_list_t));
-      itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
-      OAILOG_INFO (LOG_MME_APP, "Triggered Delete Bearer Command from released e_rab indication for UE: " MME_UE_S1AP_ID_FMT "\n", e_rab_release_ind->mme_ue_s1ap_id);
+      mme_app_send_s11_delete_bearer_cmd(ue_context->mme_teid_s11, pdn_context->s_gw_teid_s11_s4, &pdn_context->s_gw_address_s11_s4.address.ipv4_address, &ebi_list);
       OAILOG_FUNC_OUT (LOG_MME_APP);
     }
   }
@@ -2509,6 +2530,7 @@ mme_app_handle_path_switch_req(
 
   struct ue_context_s                    *ue_context = NULL;
   MessageDef                             *message_p = NULL;
+  ebi_list_t                              ebi_list;
 
   OAILOG_DEBUG (LOG_MME_APP, "Received S1AP_PATH_SWITCH_REQUEST from S1AP\n");
   ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, s1ap_path_switch_req->mme_ue_s1ap_id);
@@ -2550,7 +2572,11 @@ mme_app_handle_path_switch_req(
    * todo: Currently, we assume that default bearers are not removed.
    */
   /** All bearers to be switched, perform without ESM layer. */
-  if (mme_app_modify_bearers(s1ap_path_switch_req->mme_ue_s1ap_id, &s1ap_path_switch_req->bcs_to_be_modified) == RETURNerror){
+  memset(&ebi_list, 0, sizeof(ebi_list_t));
+
+  /** Release all bearers. */
+  mme_app_release_bearers(s1ap_path_switch_req->mme_ue_s1ap_id, NULL, &ebi_list);
+  if (mme_app_modify_bearers(s1ap_path_switch_req->mme_ue_s1ap_id, &s1ap_path_switch_req->bcs_to_be_modified) == RETURNerror) {
     OAILOG_ERROR (LOG_MME_APP, "Error updating the bearers based on X2 path switch request for UE " MME_UE_S1AP_ID_FMT ". \n", s1ap_path_switch_req->mme_ue_s1ap_id);
     mme_app_send_s1ap_path_switch_request_failure(ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, ue_context->sctp_assoc_id_key, S1ap_Cause_PR_misc);
     OAILOG_FUNC_OUT(LOG_MME_APP);
@@ -3593,7 +3619,13 @@ mme_app_handle_handover_request_acknowledge(
  }
  AssertFatal(NULL == s10_handover_proc->source_to_target_eutran_f_container.container_value, "TODO clean pointer");
  /*
-  * For both cases, update the S1U eNB FTEIDs.
+  * Check bearers, which could not be established in the target cell (from the ones, remaining after the CSReq to target SAE-GW).
+  * We don't actually need this step, but just do it to be sure. We are not using the ebi_list.
+  */
+ memset(&s10_handover_proc->failed_ebi_list, 0, sizeof(ebi_list_t));
+ mme_app_release_bearers(ue_context->mme_ue_s1ap_id, &handover_request_acknowledge_pP->e_rab_release_list, &s10_handover_proc->failed_ebi_list);
+ /*
+  * For both cases, update the S1U eNB FTEIDs and the bearer state.
   */
  s10_handover_proc->target_enb_ue_s1ap_id = handover_request_acknowledge_pP->enb_ue_s1ap_id;
  mme_app_modify_bearers(ue_context->mme_ue_s1ap_id, &handover_request_acknowledge_pP->bcs_to_be_modified);

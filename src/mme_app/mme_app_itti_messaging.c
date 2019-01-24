@@ -140,6 +140,33 @@ int mme_app_send_nas_signalling_connection_rel_ind(const mme_ue_s1ap_id_t ue_id)
 }
 
 //------------------------------------------------------------------------------
+void mme_app_send_s11_delete_bearer_cmd(teid_t local_teid, teid_t saegw_s11_teid, struct in_addr *saegw_s11_ipv4_address, ebi_list_t * ebi_list)
+{
+  OAILOG_FUNC_IN (LOG_MME_APP);
+  /*
+   * Keep the identifier to the default APN.
+   */
+  MessageDef                                        *message_p = NULL;
+  itti_s11_delete_bearer_command_t                  *delete_bearer_command_p = NULL;
+  int                                                rc = RETURNok;
+
+  /** Trigger a Delete Bearer Command. */
+  message_p = itti_alloc_new_message (TASK_MME_APP, S11_DELETE_BEARER_COMMAND);
+  DevAssert (message_p != NULL);
+  itti_s11_delete_bearer_command_t *s11_delete_bearer_command = &message_p->ittiMsg.s11_delete_bearer_command;
+  /** Take the last one. */
+  s11_delete_bearer_command->local_teid = local_teid;
+  s11_delete_bearer_command->teid = saegw_s11_teid;
+  s11_delete_bearer_command->peer_ip.s_addr = saegw_s11_ipv4_address->s_addr;
+  memcpy(&s11_delete_bearer_command->ebi_list, ebi_list, sizeof(ebi_list_t));
+  itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
+  OAILOG_DEBUG(LOG_MME_APP, "Triggered Delete Bearer Command from released e_rab indication to teid %x from local teid %x", saegw_s11_teid, local_teid);
+
+  itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
+  OAILOG_FUNC_OUT(LOG_MME_APP);
+}
+
+//------------------------------------------------------------------------------
 int mme_app_send_s11_release_access_bearers_req (struct ue_context_s *const ue_context)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
@@ -384,7 +411,7 @@ void mme_app_send_s11_modify_bearer_req(const ue_context_t * ue_context, pdn_con
   RB_FOREACH (bearer_context_to_establish, SessionBearers, &pdn_context->session_bearers) {
     DevAssert(bearer_context_to_establish);
     /** Add them to the bearers list of the MBR. */
-    if(bearer_context_to_establish->enb_fteid_s1u.teid){
+    if(bearer_context_to_establish->bearer_state & BEARER_STATE_ENB_CREATED && bearer_context_to_establish->enb_fteid_s1u.teid){
       OAILOG_DEBUG(LOG_MME_APP, "Adding EBI %d as bearer context to be modified for UE " MME_UE_S1AP_ID_FMT". \n", bearer_context_to_establish->ebi, ue_context->mme_ue_s1ap_id);
       s11_modify_bearer_request->bearer_contexts_to_be_modified.bearer_contexts[s11_modify_bearer_request->bearer_contexts_to_be_modified.num_bearer_context].eps_bearer_id =
           bearer_context_to_establish->ebi;

@@ -101,6 +101,10 @@ typedef struct itti_mme_app_initial_context_setup_rsp_s {
   mme_ue_s1ap_id_t        ue_id;
   uint8_t                 no_of_e_rabs;
   bearer_contexts_to_be_modified_t    bcs_to_be_modified;
+
+  // E-RAB Released List
+  e_rab_list_t                  e_rab_release_list;
+
 } itti_mme_app_initial_context_setup_rsp_t;
 
 typedef struct itti_mme_app_s1ap_mme_ue_id_notification_s {

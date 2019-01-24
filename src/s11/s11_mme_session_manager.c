@@ -345,7 +345,7 @@ s11_mme_handle_delete_session_response (
   resp_p = &message_p->ittiMsg.s11_delete_session_response;
 
   resp_p->teid = nwGtpv2cMsgGetTeid(pUlpApi->hMsg);
-  resp_p->internal_flags = pUlpApi->u_api_info.initialReqIndInfo.trx_flags;
+  resp_p->internal_flags = pUlpApi->u_api_info.triggeredRspIndInfo.trx_flags;
 
   /*
    * Create a new message parser

@@ -2818,7 +2818,7 @@ int mme_app_mobility_complete(const mme_ue_s1ap_id_t mme_ue_s1ap_id, bool activa
   if(activate_bearers){
     /**
      * Use the MBR procedure to activate the bearers.
-     * MBReq will be sent for only those bearers which are not in ACTIVE state yet.
+     * MBReq will be sent for only those bearers which are not in ACTIVE state yet, but are established in the target eNB (ENB_CREATED).
      */
     pdn_context_t * first_pdn = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
     mme_app_send_s11_modify_bearer_req(ue_context, first_pdn, 0);

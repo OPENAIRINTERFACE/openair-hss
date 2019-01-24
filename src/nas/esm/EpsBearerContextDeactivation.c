@@ -220,8 +220,10 @@ esm_proc_eps_bearer_context_deactivate_request (
         *ebi, *pti, ue_id);
     if(esm_base_proc)
       _esm_proc_free_pdn_connectivity_procedure((nas_esm_proc_pdn_connectivity_t**)&esm_base_proc);
-
-    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_PDN_CONNECTION_DOES_NOT_EXIST);
+    /** Remove the bearer context directly and inform the MME_APP layer (congestion related implicit bearer removal). */
+    mme_app_release_bearer_context(esm_base_proc->ue_id, NULL, ESM_EBI_UNASSIGNED, *ebi);
+    /** Send a reject back to the MME_APP layer. */
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY);
   }
 
   if(!esm_base_proc){

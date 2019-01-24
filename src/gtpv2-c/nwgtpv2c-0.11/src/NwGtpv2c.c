@@ -823,7 +823,6 @@ static nw_rc_t nwGtpv2cHandleUlpCreateLocalTunnel (NW_IN nw_gtpv2c_stack_t * thi
     ulpApi.u_api_info.initialReqIndInfo.peerIp.s_addr = peerIp->s_addr;
     ulpApi.u_api_info.initialReqIndInfo.peerPort = peerPort;
     ulpApi.u_api_info.initialReqIndInfo.error = *pError;
-    ulpApi.u_api_info.initialReqIndInfo.trx_flags = pTrxn->trx_flags;
     rc = thiz->ulp.ulpReqCallback (thiz->ulp.hUlp, &ulpApi);
     OAILOG_FUNC_RETURN (LOG_GTPV2C, rc);
   }
@@ -870,6 +869,7 @@ static nw_rc_t                            nwGtpv2cSendTriggeredReqIndToUlp (
   NW_IN nw_gtpv2c_stack_t * thiz,
   NW_IN nw_gtpv2c_error_t * pError,
   NW_IN uint32_t hUlpTrxn,
+  NW_IN uint8_t trxFlags,
   NW_IN uint32_t hUlpTunnel,
   NW_IN uint32_t msgType,
   NW_IN bool     noDelete,
@@ -884,6 +884,7 @@ static nw_rc_t                            nwGtpv2cSendTriggeredReqIndToUlp (
     ulpApi.u_api_info.triggeredRspIndInfo.hUlpTrxn = hUlpTrxn;
     ulpApi.u_api_info.triggeredRspIndInfo.hUlpTunnel = hUlpTunnel;
     ulpApi.u_api_info.triggeredRspIndInfo.error = *pError;
+    ulpApi.u_api_info.triggeredRspIndInfo.trx_flags = trxFlags;
     ulpApi.u_api_info.triggeredRspIndInfo.noDelete = noDelete;
     rc = thiz->ulp.ulpReqCallback (thiz->ulp.hUlp, &ulpApi);
     OAILOG_FUNC_RETURN (LOG_GTPV2C, rc);
@@ -1161,10 +1162,12 @@ static nw_rc_t                            nwGtpv2cHandleUlpFindLocalTunnel (
 
 
     pTrxn = RB_FIND (NwGtpv2cOutstandingTxSeqNumTrxnMap, &(thiz->outstandingTxSeqNumMap), &keyTrxn);
-
+    uint8_t trx_flags = 0;
     if (pTrxn) {
       uint32_t                                hUlpTrxn;
       uint32_t                                hUlpTunnel;
+
+      trx_flags = pTrxn->trx_flags;
 
       hUlpTrxn = pTrxn->hUlpTrxn;
       noDelete = pTrxn->noDelete;
@@ -1183,7 +1186,7 @@ static nw_rc_t                            nwGtpv2cHandleUlpFindLocalTunnel (
         OAILOG_WARNING (LOG_GTPV2C,  "Malformed message received on TEID %u from peer %s. Notifying ULP.\n", ntohl ((*((uint32_t *) (msgBuf + 4)))), ipv4);
       }
 
-      rc = nwGtpv2cSendTriggeredRspIndToUlp (thiz, &error, keyTrxn.seqNum, hUlpTunnel, msgType, noDelete, hMsg);
+      rc = nwGtpv2cSendTriggeredRspIndToUlp (thiz, &error, keyTrxn.seqNum, trx_flags, hUlpTunnel, msgType, noDelete, hMsg);
     } else {
       OAILOG_WARNING (LOG_GTPV2C,  "Response message without a matching outstanding request received! Discarding.\n");
       rc = NW_OK;
