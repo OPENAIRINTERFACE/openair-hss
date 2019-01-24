@@ -329,7 +329,7 @@ void nas_itti_pdn_disconnect_req(
   pti_t                   pti,
   bool                    deleteTunnel,
   struct in_addr          saegw_s11_addr, /**< Put them into the UE context ? */
-  teid_t                  saegw_teid,
+  teid_t                  saegw_s11_teid,
   pdn_cid_t               pdn_cid)
 {
   OAILOG_FUNC_IN(LOG_NAS);
@@ -343,7 +343,7 @@ void nas_itti_pdn_disconnect_req(
   NAS_PDN_DISCONNECT_REQ(message_p).ue_id           = ue_idP;
   NAS_PDN_DISCONNECT_REQ(message_p).noDelete        = ((pti != PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED) || !deleteTunnel);
   NAS_PDN_DISCONNECT_REQ(message_p).saegw_s11_ip_addr    = saegw_s11_addr;
-  NAS_PDN_DISCONNECT_REQ(message_p).saegw_s11_teid       = saegw_teid;
+  NAS_PDN_DISCONNECT_REQ(message_p).saegw_s11_teid       = saegw_s11_teid;
 
   if(saegw_s11_addr.s_addr == 0){
     OAILOG_DEBUG (LOG_NAS_EMM, "EMM-PROC  - No SAE-GW IP for UE " MME_UE_S1AP_ID_FMT " to send PDN-Disc Req. \n", ue_idP);

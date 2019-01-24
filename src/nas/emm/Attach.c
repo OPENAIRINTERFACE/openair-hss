@@ -218,20 +218,20 @@ int emm_proc_attach_request (
   temp_emm_ue_ctx.ue_id = ue_id; /**< Set the new ue_id to send attach_reject over it. */
   
   /**
-    * First check if the MME_APP UE context is valid.
-    */
-   if (INVALID_MME_UE_S1AP_ID == ue_id) {
-     /** Received an invalid UE_ID. */
-     OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  ATTACH - Received an invalid ue_id. Not continuing with the attach request. \n", ue_id);
-     OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
-   }
-   /** Retrieve the MME_APP UE context. It must always exist. It may or may not be linked to an existing EMM Data context. */
-   ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, ue_id);
-   if(!ue_context){
-     OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  ATTACH - For ueId " MME_UE_S1AP_ID_FMT " no UE context exists. \n", ue_id);
-     OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
-   }
-   // Check whether request if for emergency bearer service.
+   * First check if the MME_APP UE context is valid.
+   */
+  if (INVALID_MME_UE_S1AP_ID == ue_id) {
+    /** Received an invalid UE_ID. */
+    OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  ATTACH - Received an invalid ue_id. Not continuing with the attach request. \n", ue_id);
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
+  }
+  /** Retrieve the MME_APP UE context. It must always exist. It may or may not be linked to an existing EMM Data context. */
+  ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, ue_id);
+  if(!ue_context){
+    OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  ATTACH - For ueId " MME_UE_S1AP_ID_FMT " no UE context exists. \n", ue_id);
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
+  }
+  // Check whether request if for emergency bearer service.
 
    /*
    * Requirement MME24.301R10_5.5.1.1_1

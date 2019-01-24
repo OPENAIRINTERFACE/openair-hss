@@ -829,6 +829,37 @@ static nw_rc_t nwGtpv2cHandleUlpCreateLocalTunnel (NW_IN nw_gtpv2c_stack_t * thi
   }
 
 /**
+  Send GTPv2c Triggered Request Message Indication to ULP entity.
+
+  @param[in] hGtpcStackHandle : Stack handle
+  @return NW_OK on success.
+*/
+
+static nw_rc_t                            nwGtpv2cSendTriggeredReqIndToUlp (
+  NW_IN nw_gtpv2c_stack_t * thiz,
+  NW_IN nw_gtpv2c_error_t * pError,
+  NW_IN nw_gtpv2c_trxn_t * pTrxn,
+  NW_IN uint32_t hUlpTunnel,
+  NW_IN uint32_t msgType,
+  NW_IN struct in_addr *peerIp,
+  NW_IN uint16_t peerPort,
+  NW_IN nw_gtpv2c_msg_handle_t hMsg) {
+  nw_rc_t                                   rc = NW_FAILURE;
+  nw_gtpv2c_ulp_api_t                         ulpApi;
+
+  OAILOG_FUNC_IN (LOG_GTPV2C);
+  ulpApi.hMsg = hMsg;
+  ulpApi.apiType = NW_GTPV2C_ULP_API_TRIGGERED_REQ_IND;
+
+  ulpApi.u_api_info.triggeredReqIndInfo.msgType = msgType;
+  ulpApi.u_api_info.triggeredReqIndInfo.hTrxn = (nw_gtpv2c_trxn_handle_t) pTrxn;
+  ulpApi.u_api_info.triggeredReqIndInfo.hUlpTunnel = hUlpTunnel;
+  ulpApi.u_api_info.triggeredReqIndInfo.error = *pError;
+  rc = thiz->ulp.ulpReqCallback (thiz->ulp.hUlp, &ulpApi);
+  OAILOG_FUNC_RETURN (LOG_GTPV2C, rc);
+}
+
+/**
   Send GTPv2c Triggered Response Indication to ULP entity.
 
   @param[in] hGtpcStackHandle : Stack handle
@@ -1014,6 +1045,92 @@ static nw_rc_t                            nwGtpv2cHandleUlpFindLocalTunnel (
     }
 
     return NW_OK;
+  }
+
+/**
+  Handle Triggered Request from Peer Entity.
+
+  @param[in] thiz : Stack context
+  @return NW_OK on success.
+*/
+
+  static nw_rc_t                            nwGtpv2cHandleTriggeredReq (
+  NW_IN nw_gtpv2c_stack_t * thiz,
+  NW_IN uint32_t msgType,
+  NW_IN uint8_t * msgBuf,
+  NW_IN uint32_t msgBufLen,
+  NW_IN uint16_t peerPort,
+  NW_IN struct in_addr* peerIp) {
+    nw_rc_t                                   rc = NW_FAILURE;
+    nw_gtpv2c_trxn_t                         *pTrxn = NULL,
+                                              keyTrxn;
+    nw_gtpv2c_tunnel_t                       *pLocalTunnel = NULL,
+                                              keyTunnel = {0};
+    uint32_t                                  teidLocal = 0;
+    nw_gtpv2c_msg_handle_t                    hMsg = 0;
+    nw_gtpv2c_ulp_tunnel_handle_t             hUlpTunnel = 0;
+    nw_gtpv2c_error_t                         error = {0};
+
+    bool                                       noDelete = false ;
+    keyTrxn.seqNum = ntohl (*((uint32_t *) (msgBuf + (((*msgBuf) & 0x08) ? 8 : 4)))) >> 8;;
+    keyTrxn.peerIp.s_addr = peerIp->s_addr;
+
+    OAILOG_DEBUG (LOG_GTPV2C,  "RECEIVED GTPV2c triggered request message of type %d, length %d and seqNum %x.\n", msgType, msgBufLen, keyTrxn.seqNum);
+
+    /** A transaction of the initial request (cmd) for the triggered request should exist. */
+    pTrxn = RB_FIND (NwGtpv2cOutstandingTxSeqNumTrxnMap, &(thiz->outstandingTxSeqNumMap), &keyTrxn);
+
+    if (pTrxn) {
+      uint32_t                                hUlpTrxn;
+      uint32_t                                hUlpTunnel;
+
+      hUlpTrxn = pTrxn->hUlpTrxn;
+      noDelete = pTrxn->noDelete;
+      hUlpTunnel = (pTrxn->hTunnel ? ((nw_gtpv2c_tunnel_t *) (pTrxn->hTunnel))->hUlpTunnel : 0);
+      /**
+       * We remove the transaction of the initial request and create a new transaction the the received triggered request.
+       */
+      RB_REMOVE (NwGtpv2cOutstandingTxSeqNumTrxnMap, &(thiz->outstandingTxSeqNumMap), pTrxn);
+      rc = nwGtpv2cTrxnDelete (&pTrxn);
+      NW_ASSERT (NW_OK == rc);
+    } else {
+      OAILOG_WARNING (LOG_GTPV2C,  "Triggered request message without a matching outstanding request (cmd) received! Discarding.\n");
+      rc = NW_OK;
+    }
+    NW_ASSERT (msgBuf && msgBufLen);
+
+    /** Process it like an initial request. */
+    if (teidLocal) {
+      keyTunnel.teid = ntohl (teidLocal);
+      keyTunnel.ipv4AddrRemote.s_addr = peerIp->s_addr;
+      pLocalTunnel = RB_FIND (NwGtpv2cTunnelMap, &(thiz->tunnelMap), &keyTunnel);
+
+      if (!pLocalTunnel) {
+        OAILOG_WARNING (LOG_GTPV2C,  "Request message received on non-existent teid 0x%x from peer %s received! Discarding.\n", ntohl (teidLocal), peerIp);
+        return NW_OK;
+      }
+      hUlpTunnel = pLocalTunnel->hUlpTunnel;
+    } else {
+      hUlpTunnel = 0;
+    }
+
+    /** Create a new transaction for the same transaction id. */
+    pTrxn = nwGtpv2cTrxnOutstandingRxNew (thiz, ntohl (teidLocal), peerIp, peerPort, (keyTrxn.seqNum));
+
+    if (pTrxn) {
+      rc = nwGtpv2cMsgFromBufferNew ((nw_gtpv2c_stack_handle_t) thiz, msgBuf, msgBufLen, &(hMsg));
+      NW_ASSERT (thiz->pGtpv2cMsgIeParseInfo[msgType]);
+      rc = nwGtpv2cMsgIeParse (thiz->pGtpv2cMsgIeParseInfo[msgType], hMsg, &error);
+
+      if (rc != NW_OK) {
+        char                                    ipv4[INET_ADDRSTRLEN];
+        inet_ntop (AF_INET, (void*)peerIp, ipv4, INET_ADDRSTRLEN);
+        OAILOG_WARNING (LOG_GTPV2C,  "Malformed triggered request message received on TEID %u from peer %s. Notifying ULP.\n", ntohl (teidLocal), ipv4);
+      }
+
+      rc = nwGtpv2cSendTriggeredReqIndToUlp (thiz, &error, pTrxn, hUlpTunnel, msgType, peerIp, peerPort, hMsg);
+    }
+    return rc;
   }
 
 /**
@@ -1399,6 +1516,7 @@ static nw_rc_t                            nwGtpv2cHandleTriggeredAck(
   NW_IN nw_gtpv2c_stack_handle_t hGtpcStackHandle,
   NW_IN uint8_t * udpData,
   NW_IN uint32_t udpDataLen,
+  NW_IN uint16_t localPort,
   NW_IN uint16_t peerPort,
   NW_IN struct in_addr * peerIp) {
     nw_rc_t                                   rc = NW_FAILURE;
@@ -1437,31 +1555,55 @@ static nw_rc_t                            nwGtpv2cHandleTriggeredAck(
 
     msgType = *((uint8_t *) (udpData + 1));
 
+    /** Check the received port, if it is an Initial Request, a Triggered Request or a Triggered Response. */
+    if(localPort == thiz->udp.gtpv2cStandardPort){
+      /** Message received on standard port, checking for Initial Requests. */
+
+    } else {
+      /** Message received on high port, checking for triggered requests and responses. */
+
+    }
     switch (msgType) {
     case NW_GTP_ECHO_REQ:{
         rc = nwGtpv2cHandleEchoReq (thiz, msgType, udpData, udpDataLen, peerPort, peerIp);
       }
       break;
 
+    /** Definitive Initial Requests. */
     case NW_GTP_CREATE_SESSION_REQ:
     case NW_GTP_MODIFY_BEARER_REQ:
     case NW_GTP_DELETE_SESSION_REQ:
-    case NW_GTP_CREATE_BEARER_REQ:
-    case NW_GTP_UPDATE_BEARER_REQ:
-    case NW_GTP_DELETE_BEARER_REQ:
     case NW_GTP_RELEASE_ACCESS_BEARERS_REQ:
     case NW_GTP_CREATE_INDIRECT_DATA_FORWARDING_TUNNEL_REQ:
     case NW_GTP_DELETE_INDIRECT_DATA_FORWARDING_TUNNEL_REQ:
-    /** Handover Related Messages. */
+      /** Handover Related Messages. */
     case NW_GTP_FORWARD_RELOCATION_REQ:
     case NW_GTP_FORWARD_ACCESS_CONTEXT_NTF:
     case NW_GTP_FORWARD_RELOCATION_COMPLETE_NTF:
     case NW_GTP_RELOCATION_CANCEL_REQ:
     case NW_GTP_CONTEXT_REQ:
-    /** S11: Paging. */
+      /** S11: Paging. */
     case NW_GTP_DOWNLINK_DATA_NOTIFICATION:
       rc = nwGtpv2cHandleInitialReq(thiz, msgType, udpData, udpDataLen, peerPort, peerIp);
       break;
+
+    /** May be initial request or triggered requests. */
+    case NW_GTP_CREATE_BEARER_REQ:
+    case NW_GTP_UPDATE_BEARER_REQ:
+    case NW_GTP_DELETE_BEARER_REQ:
+    {
+      /** Check the received port, if it is an Initial Request, a Triggered Request or a Triggered Response. */
+      if(localPort == thiz->udp.gtpv2cStandardPort){
+        /** Message received on standard port, checking for Initial Requests. */
+        rc = nwGtpv2cHandleInitialReq(thiz, msgType, udpData, udpDataLen, peerPort, peerIp);
+        break;
+      } else {
+        /** Message received on high port, checking for triggered requests and responses. */
+        rc = nwGtpv2cHandleTriggeredReq(thiz, msgType, udpData, udpDataLen, peerPort, peerIp);
+        break;
+      }
+    }
+    break;
 
     case NW_GTP_ECHO_RSP:
     case NW_GTP_CREATE_SESSION_RSP:

@@ -58,6 +58,8 @@ static void mme_app_pdn_context_init(ue_context_t * const ue_context, pdn_contex
 static void mme_app_delete_pdn_context(ue_context_t * const ue_context, pdn_context_t ** pdn_context_pp);
 static void mme_app_free_pdn_context (pdn_context_t ** const pdn_context);
 
+static teid_t                           mme_app_teid_generator = 0x00000001;
+
 //------------------------------------------------------------------------------
 void mme_app_get_pdn_context (mme_ue_s1ap_id_t ue_id, pdn_cid_t const context_id, ebi_t const default_ebi, bstring const subscribed_apn, pdn_context_t **pdn_ctx)
 {
@@ -101,7 +103,6 @@ void mme_app_get_bearer_contexts_to_be_created(pdn_context_t * pdn_context, bear
 
   RB_FOREACH (bearer_context_to_setup, SessionBearers, &pdn_context->session_bearers) {
     DevAssert(bearer_context_to_setup);
-    // todo: make it selective for multi PDN!
     /*
      * Set the bearer of the pdn context to establish.
      * Set regardless of GBR/NON-GBR QCI the MBR/GBR values.
@@ -109,7 +110,10 @@ void mme_app_get_bearer_contexts_to_be_created(pdn_context_t * pdn_context, bear
      */
     /** EBI. */
     bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].eps_bearer_id              = bearer_context_to_setup->ebi;
-    /** MBR/GBR values (setting indep. of QCI level). */
+    /**
+     * MBR/GBR values (setting indep. of QCI level).
+     * Dividing by 1000 happens later in S11/S10 only.
+     */
     bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].bearer_level_qos.gbr.br_ul = bearer_context_to_setup->bearer_level_qos.gbr.br_ul;
     bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].bearer_level_qos.gbr.br_dl = bearer_context_to_setup->bearer_level_qos.gbr.br_dl;
     bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].bearer_level_qos.mbr.br_ul = bearer_context_to_setup->bearer_level_qos.mbr.br_ul;
@@ -127,9 +131,14 @@ void mme_app_get_bearer_contexts_to_be_created(pdn_context_t * pdn_context, bear
     // todo: ipv6, other interfaces!
 
     /**
-     * TFTs not signalized to the UE or the eNB. If some bearers fail to be transferred, the UE should know about it.
-     * It will not be indicated in the Tracking Area Update.
+     * TFTs (method used for S11 CSReq).
      */
+    /** Set the TFT. */
+    if(bearer_context_to_setup->esm_ebr_context.tft){
+      DevAssert(!bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].tft);
+      bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].tft = (traffic_flow_template_t*)calloc(1, sizeof(traffic_flow_template_t));
+      copy_traffic_flow_template(bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].tft, bearer_context_to_setup->esm_ebr_context.tft);
+    }
 
     bc_tbc->num_bearer_context++;
     /*
@@ -145,19 +154,19 @@ void mme_app_get_bearer_contexts_to_be_created(pdn_context_t * pdn_context, bear
 
 //------------------------------------------------------------------------------
 int
-mme_app_esm_create_pdn_context(mme_ue_s1ap_id_t ue_id, const apn_configuration_t *apn_configuration, const bstring apn,  pdn_cid_t pdn_cid, pdn_context_t **pdn_context_pp)
+mme_app_esm_create_pdn_context(mme_ue_s1ap_id_t ue_id, const apn_configuration_t *apn_configuration, const bstring apn_subscribed,  pdn_cid_t pdn_cid, const ambr_t * const apn_ambr, pdn_context_t **pdn_context_pp)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
-  DevAssert(apn);
+  DevAssert(apn_subscribed);
   ue_context_t * ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, ue_id);
   if(!ue_context){
     OAILOG_ERROR (LOG_MME_APP, "No MME_APP UE context could be found for UE: " MME_UE_S1AP_ID_FMT ". \n", ue_id);
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
-  mme_app_get_pdn_context(ue_id, pdn_cid, EPS_BEARER_IDENTITY_UNASSIGNED, apn, pdn_context_pp);
+  mme_app_get_pdn_context(ue_id, pdn_cid, EPS_BEARER_IDENTITY_UNASSIGNED, apn_subscribed, pdn_context_pp);
   if((*pdn_context_pp)){
     /** No PDN context was found. */
-    OAILOG_ERROR (LOG_MME_APP, "A PDN context for APN \"%s\" and cid=%d already exists UE: " MME_UE_S1AP_ID_FMT ". \n", bdata(apn), pdn_cid, ue_id);
+    OAILOG_ERROR (LOG_MME_APP, "A PDN context for APN \"%s\" and cid=%d already exists UE: " MME_UE_S1AP_ID_FMT ". \n", bdata(apn_subscribed), pdn_cid, ue_id);
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
 
@@ -181,11 +190,12 @@ mme_app_esm_create_pdn_context(mme_ue_s1ap_id_t ue_id, const apn_configuration_t
   //  LOCK_UE_CONTEXT(ue_context);
   if(!RB_MIN(PdnContexts, &ue_context->pdn_contexts)){
     OAILOG_INFO(LOG_MME_APP, "For the first PDN context, creating S11 keys for UE: " MME_UE_S1AP_ID_FMT ". \n", ue_id);
+    teid_t teid = __sync_fetch_and_add (&mme_app_teid_generator, 0x00000001);
     mme_ue_context_update_coll_keys (&mme_app_desc.mme_ue_contexts, ue_context,
         ue_context->enb_s1ap_id_key,
         ue_context->mme_ue_s1ap_id,
         ue_context->imsi,
-        (teid_t) ue_context,       // mme_s11_teid is new
+        teid,       // mme_s11_teid is new
         ue_context->local_mme_teid_s10,
         &ue_context->guti);
   }
@@ -196,7 +206,6 @@ mme_app_esm_create_pdn_context(mme_ue_s1ap_id_t ue_id, const apn_configuration_t
     OAILOG_TRACE (LOG_MME_APP, "Current bearer context %p with ebi %d for pdn_context %p for APN \"%s\" and cid=%d for UE: " MME_UE_S1AP_ID_FMT ". \n",
         bc_test, bc_test->ebi, (*pdn_context_pp), bdata((*pdn_context_pp)->apn_subscribed),
         (*pdn_context_pp)->context_identifier, ue_id);
-
   }
   /*
    * Check if an APN configuration exists. If so, use it to update the fields.
@@ -210,16 +219,14 @@ mme_app_esm_create_pdn_context(mme_ue_s1ap_id_t ue_id, const apn_configuration_t
   /* Insert the bearer context. */
   RB_INSERT (SessionBearers, &(*pdn_context_pp)->session_bearers, free_bearer);
 
-  OAILOG_INFO(LOG_MME_APP, "Received first default bearer context %p with ebi %d for apn of UE: " MME_UE_S1AP_ID_FMT ". \n", free_bearer, free_bearer->ebi, ue_id);
-
+  OAILOG_INFO(LOG_MME_APP, "Received first default bearer context %p with ebi %d for apn \"%s\" of UE: " MME_UE_S1AP_ID_FMT ". \n", free_bearer, free_bearer->ebi, bdata(apn_subscribed), ue_id);
 
   (*pdn_context_pp)->default_ebi = free_bearer->ebi;
   ue_context->next_def_ebi_offset++;
   free_bearer->linked_ebi = free_bearer->ebi;
   /** Set the APN independently. */
-  (*pdn_context_pp)->apn_subscribed = bstrcpy(apn);
+  (*pdn_context_pp)->apn_subscribed = bstrcpy(apn_subscribed);
   if (apn_configuration) {
-    (*pdn_context_pp)->subscribed_apn_ambr          = apn_configuration->ambr; /**< APN received from the HSS APN configuration, to be updated with the PCRF. */
     (*pdn_context_pp)->pdn_type                     = apn_configuration->pdn_type;
     (*pdn_context_pp)->context_identifier           = apn_configuration->context_identifier;
     /** Set the subscribed APN-AMBR from the default profile. */
@@ -237,17 +244,34 @@ mme_app_esm_create_pdn_context(mme_ue_s1ap_id_t ue_id, const apn_configuration_t
     }
 #endif
     /** Set the default QoS values. */
+    (*pdn_context_pp)->subscribed_apn_ambr.br_dl = apn_ambr->br_dl;
+    (*pdn_context_pp)->subscribed_apn_ambr.br_ul = apn_ambr->br_ul;
     free_bearer->bearer_level_qos.qci = apn_configuration->subscribed_qos.qci;
     free_bearer->bearer_level_qos.pl  = apn_configuration->subscribed_qos.allocation_retention_priority.priority_level;
     free_bearer->bearer_level_qos.pvi = (apn_configuration->subscribed_qos.allocation_retention_priority.pre_emp_vulnerability) ? 0 : 1;
     free_bearer->bearer_level_qos.pci = (apn_configuration->subscribed_qos.allocation_retention_priority.pre_emp_capability) ? 0 : 1;
+    free_bearer->pdn_cx_id            = (*pdn_context_pp)->context_identifier;
+
+    //  if(pdn_connection->ipv4_address.s_addr) {
+    ////    IPV4_STR_ADDR_TO_INADDR ((const char *)pdn_connection->ipv4_address, pdn_context->paa->ipv4_address, "BAD IPv4 ADDRESS FORMAT FOR PAA!\n");
+    //    pdn_context->paa->ipv4_address.s_addr = pdn_connection->ipv4_address.s_addr;
+    //  }
+    //  if(pdn_connection->ipv6_address) {
+    //    //    memset (pdn_connections->pdn_connection[num_pdn].ipv6_address, 0, 16);
+    //    memcpy (pdn_context->paa->ipv6_address.s6_addr, pdn_connection->ipv6_address.s6_addr, 16);
+    //    pdn_context->paa->ipv6_prefix_length = pdn_connection->ipv6_prefix_length;
+    //    pdn_context->pdn_type++;
+    //    if(pdn_connection->ipv4_address.s_addr)
+    //      pdn_context->pdn_type++;
+    //  }
+
+
 //    (*pdn_context_pp)->apn_subscribed = blk2bstr(apn_configuration->service_selection, apn_configuration->service_selection_length);  /**< Set the APN-NI from the service selection. */
   } else {
     (*pdn_context_pp)->context_identifier = pdn_cid + (free_bearer->ebi - 5); /**< Add the temporary context ID from the ebi offset. */
     free_bearer->pdn_cx_id = (*pdn_context_pp)->context_identifier;
     OAILOG_INFO(LOG_MME_APP, "No APN configuration exists for UE " MME_UE_S1AP_ID_FMT ". Subscribed APN \"%s.\" \n", ue_id, bdata((*pdn_context_pp)->apn_subscribed));
     /** The subscribed APN should already exist from handover (forward relocation request). */
-    free_bearer->esm_ebr_context.status = ESM_EBR_ACTIVE;
   }
   /* Set the emergency bearer services indicator */
   //    (*pdn_context_pP)->esm_data.is_emergency = is_emergency;
@@ -262,6 +286,52 @@ mme_app_esm_create_pdn_context(mme_ue_s1ap_id_t ue_id, const apn_configuration_t
   // UNLOCK_UE_CONTEXT
   MSC_LOG_EVENT (MSC_NAS_ESM_MME, "0 Create PDN cid %u APN %s", (*pdn_context_pp)->context_identifier, bdata((*pdn_context_pp)->apn_subscribed));
   OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
+}
+
+//------------------------------------------------------------------------------
+int
+mme_app_update_pdn_context(mme_ue_s1ap_id_t ue_id, pdn_cid_t ctx_id, ebi_t linked_ebi, bstring apn_subscribed, const apn_configuration_t * const apn_configuration){
+  OAILOG_FUNC_IN (LOG_MME_APP);
+
+  ue_context_t        * ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, ue_id);
+  pdn_context_t       * pdn_context = NULL;
+
+  if(!ue_context){
+    OAILOG_WARNING(LOG_MME_APP, "No MME_APP UE context could be found for UE: " MME_UE_S1AP_ID_FMT " to release \"%s\". \n", ue_id, bdata(apn_subscribed));
+    OAILOG_FUNC_RETURN(LOG_MME_APP, RETURNerror);
+  }
+  mme_app_get_pdn_context(ue_id, ctx_id, linked_ebi, apn_subscribed, &pdn_context);
+  if (!pdn_context) {
+    OAILOG_WARNING(LOG_NAS_ESM, "ESM-PROC  - PDN connection for cid=%d and ebi=%d and APN \"%s\" has not been allocated for UE "MME_UE_S1AP_ID_FMT". \n",
+        ctx_id, linked_ebi, bdata(apn_subscribed), ue_id);
+    OAILOG_FUNC_RETURN(LOG_MME_APP, RETURNerror);
+  }
+
+  pdn_cid_t old_cid = pdn_context->context_identifier;
+  // LOCK_UE_CONTEXT
+  /** If it is an invalid context identifier, update it. */
+  if(pdn_context->context_identifier >= PDN_CONTEXT_IDENTIFIER_UNASSIGNED){
+    pdn_context = RB_REMOVE(PdnContexts, &ue_context->pdn_contexts, pdn_context);
+    DevAssert(pdn_context);
+    pdn_context->context_identifier = apn_configuration->context_identifier;
+    /** Set the context also to all the bearers. */
+    bearer_context_t * bearer_context = NULL;
+    RB_FOREACH (bearer_context, SessionBearers, &pdn_context->session_bearers) {
+      bearer_context->pdn_cx_id = apn_configuration->context_identifier; /**< Update for all bearer contexts. */
+    }
+    /** Update the PDN context ambr only if it was 0. */
+    if(!pdn_context->subscribed_apn_ambr.br_dl)
+      pdn_context->subscribed_apn_ambr.br_dl = apn_configuration->ambr.br_dl;
+    if(!pdn_context->subscribed_apn_ambr.br_ul)
+      pdn_context->subscribed_apn_ambr.br_ul = apn_configuration->ambr.br_ul;
+
+    DevAssert(!RB_INSERT (PdnContexts, &ue_context->pdn_contexts, pdn_context));
+  }
+  // UNLOCK_UE_CONTEXT
+  /** Set the context identifier when updating the pdn_context. */
+  OAILOG_INFO(LOG_NAS_EMM, "EMMCN-SAP  - " "Successfully updated PDN context for APN \"%s\" from old ctx_id=%d to new ctx_id for UE " MME_UE_S1AP_ID_FMT" which was established already from the apn_configuration. \n",
+      bdata(apn_subscribed), old_cid, pdn_context->context_identifier, ue_context->mme_ue_s1ap_id);
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
 }
 
 //------------------------------------------------------------------------------
@@ -346,7 +416,7 @@ mme_app_pdn_process_session_creation(mme_ue_s1ap_id_t ue_id, fteid_t * saegw_s11
   pdn_context_t     * pdn_context = NULL;
   ue_context_t      * ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, ue_id);
   if(!ue_context) {
-    OAILOG_WARNING(LOG_MME_APP, "No MME_APP UE context could be found for UE: " MME_UE_S1AP_ID_FMT " to release \"%s\". \n", ue_id);
+    OAILOG_WARNING(LOG_MME_APP, "No MME_APP UE context could be found for UE: " MME_UE_S1AP_ID_FMT " to process CSResp. \n", ue_id);
     OAILOG_FUNC_RETURN(LOG_MME_APP, RETURNerror);
   }
   /** Get the first unestablished PDN context from the UE context. */
@@ -356,7 +426,7 @@ mme_app_pdn_process_session_creation(mme_ue_s1ap_id_t ue_id, fteid_t * saegw_s11
       break;
     }
   }
-  if(pdn_context->s_gw_teid_s11_s4){
+  if(!pdn_context || pdn_context->s_gw_teid_s11_s4){
     OAILOG_WARNING(LOG_MME_APP, "No unestablished PDN context could be found for UE: " MME_UE_S1AP_ID_FMT ". \n", ue_id);
     OAILOG_FUNC_RETURN(LOG_MME_APP, RETURNerror);
   }
@@ -370,7 +440,7 @@ mme_app_pdn_process_session_creation(mme_ue_s1ap_id_t ue_id, fteid_t * saegw_s11
   if(cause->cause_value != REQUEST_ACCEPTED && cause->cause_value != REQUEST_ACCEPTED_PARTIALLY){
     OAILOG_ERROR (LOG_MME_APP, "Received S11_CREATE_SESSION_RESPONSE REJECTION with cause value %d for ue " MME_UE_S1AP_ID_FMT "from S+P-GW. \n", cause->cause_value, ue_id);
     /** Destroy the PDN context (not in the ESM layer). */
-    mme_app_esm_delete_pdn_context(ue_id, pdn_context->apn_subscribed, pdn_context->context_identifier, pdn_context->default_ebi); /**< Frees it by putting it back to the pool. */
+    mme_app_esm_delete_pdn_context(ue_id, pdn_context->apn_subscribed, pdn_context->context_identifier, pdn_context->default_ebi); /**< Frees it & puts session bearers back to the pool. */
     OAILOG_WARNING(LOG_MME_APP, "Destroyed the PDN context for APN \"%s\" (ctx_id=%d,default_ebi=%d) for ue_id " MME_UE_S1AP_ID_FMT "from S+P-GW. \n", bdata(pdn_context->apn_subscribed),
         pdn_context->context_identifier, pdn_context->default_ebi, ue_id);
     // todo: UNLOCK
@@ -383,6 +453,7 @@ mme_app_pdn_process_session_creation(mme_ue_s1ap_id_t ue_id, fteid_t * saegw_s11
       free_wrapper((void**)&pdn_context->paa);
     }
     pdn_context->paa = *paa;
+    /** Decouple it from the message. */
     *paa = NULL;
   }
   if(pco){
@@ -422,7 +493,7 @@ mme_app_pdn_process_session_creation(mme_ue_s1ap_id_t ue_id, fteid_t * saegw_s11
     }
   }
 
-  /** Traverse all bearers, including the default bearer. */
+  /** Updated all pdn (bearer generic) information. Traverse all bearers, including the default bearer. */
   for (int i=0; i < bcs_created->num_bearer_context; i++) {
     ebi_t bearer_id = bcs_created->bearer_contexts[i].eps_bearer_id;
     bearer_context_created_t * bc_created = &bcs_created->bearer_contexts[i];
@@ -454,15 +525,14 @@ mme_app_pdn_process_session_creation(mme_ue_s1ap_id_t ue_id, fteid_t * saegw_s11
       bearer_context->bearer_state |= BEARER_STATE_SGW_CREATED;
       /** No context identifier might be set yet (multiple might exist and all might be 0. */
       //      AssertFatal((pdn_cx_id >= 0) && (pdn_cx_id < MAX_APN_PER_UE), "Bad pdn id for bearer");
-      /** IP address not set here. Will be forwarded and set by ESM layer @ NAS_PDN_CONNECTIVITY_RES. */
       /*
        * Updating statistics
        */
       mme_app_desc.mme_ue_contexts.nb_bearers_managed++;
       mme_app_desc.mme_ue_contexts.nb_bearers_since_last_stat++;
       /** Update the FTEIDs of the SAE-GW. */
-      bearer_context->s_gw_fteid_s1u = bcs_created->bearer_contexts[i].s1u_sgw_fteid; /**< Also copying the IPv4/V6 address. */
-      bearer_context->p_gw_fteid_s5_s8_up = bcs_created->bearer_contexts[i].s5_s8_u_pgw_fteid;
+      memcpy(&bearer_context->s_gw_fteid_s1u, &bcs_created->bearer_contexts[i].s1u_sgw_fteid, sizeof(fteid_t)); /**< Also copying the IPv4/V6 address. */
+      memcpy(&bearer_context->p_gw_fteid_s5_s8_up, &bcs_created->bearer_contexts[i].s5_s8_u_pgw_fteid, sizeof(fteid_t));
       /** Check if the bearer level QoS parameters have been modified by the PGW. */
       if (bcs_created->bearer_contexts[i].bearer_level_qos.qci &&
           bcs_created->bearer_contexts[i].bearer_level_qos.pl) {
@@ -482,6 +552,8 @@ mme_app_pdn_process_session_creation(mme_ue_s1ap_id_t ue_id, fteid_t * saegw_s11
 //        continue;
     }
   }
+  /** Assert that the default bearer at least exists. */
+  DevAssert(mme_app_get_session_bearer_context(pdn_context, pdn_context->default_ebi));
   // todo: UNLOCK_UE_CONTEXT(ue_context)
   OAILOG_INFO(LOG_MME_APP, "Processed all %d bearer contexts for APN \"%s\" for ue_id " MME_UE_S1AP_ID_FMT ". \n", bcs_created->num_bearer_context, bdata(pdn_context->apn_subscribed), ue_id);
   OAILOG_FUNC_RETURN(LOG_MME_APP, RETURNok);

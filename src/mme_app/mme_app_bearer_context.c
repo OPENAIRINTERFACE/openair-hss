@@ -49,6 +49,7 @@
 #include "common_defs.h"
 #include "esm_cause.h"
 #include "mme_app_bearer_context.h"
+#include "mme_app_esm_procedures.h"
 
 /**
  * Create a bearer context pool, not to reallocate for each new UE.
@@ -155,52 +156,27 @@ void mme_app_bearer_context_cleanup(mme_ue_s1ap_id_t mme_ue_s1ap_id, pdn_cid_t c
     OAILOG_FUNC_OUT(LOG_MME_APP);
   }
   // TODO: LOCK_UE_CONTEXT!
-//  if(pdn_context) {
-    bool all_bearers_checked = false;
-    while(!all_bearers_checked){
-      RB_FOREACH (pBearerCtx, SessionBearers, &pdn_context->session_bearers) {
-        if(!pBearerCtx->enb_fteid_s1u.teid){
-          ebi_t removed_ebi = pBearerCtx->ebi;
-          /** Check that it is not the defaulb ebi. */
-          DevAssert(pdn_context->default_ebi != pBearerCtx->ebi);
-          DevAssert(RB_REMOVE(SessionBearers, &pdn_context->session_bearers, pBearerCtx));
-          mme_app_bearer_context_initialize(pBearerCtx);
-          /** Insert the bearer context into the free bearer of the ue context. */
-          RB_INSERT (BearerPool, &ue_context->bearer_pool, pBearerCtx);
-          OAILOG_DEBUG(LOG_MME_APP, "Removed the idle bearer context (ebi=%d) for UE: " MME_UE_S1AP_ID_FMT " for the pdn context (apn=\"%s\",pdn_cid=%d). \n",
-              removed_ebi, mme_ue_s1ap_id, bdata(pdn_context->apn_subscribed), pdn_context->context_identifier);
-          continue;
-        }
+  bool all_bearers_checked = false;
+  while(!all_bearers_checked){
+    RB_FOREACH (pBearerCtx, SessionBearers, &pdn_context->session_bearers) {
+      if(!pBearerCtx->enb_fteid_s1u.teid){
+        ebi_t removed_ebi = pBearerCtx->ebi;
+        /** Check that it is not the defaulb ebi. */
+        DevAssert(pdn_context->default_ebi != pBearerCtx->ebi);
+        DevAssert(RB_REMOVE(SessionBearers, &pdn_context->session_bearers, pBearerCtx));
+        mme_app_bearer_context_initialize(pBearerCtx);
+        /** Insert the bearer context into the free bearer of the ue context. */
+        RB_INSERT (BearerPool, &ue_context->bearer_pool, pBearerCtx);
+        OAILOG_DEBUG(LOG_MME_APP, "Removed the idle bearer context (ebi=%d) for UE: " MME_UE_S1AP_ID_FMT " for the pdn context (apn=\"%s\",pdn_cid=%d). \n",
+            removed_ebi, mme_ue_s1ap_id, bdata(pdn_context->apn_subscribed), pdn_context->context_identifier);
+        continue;
       }
-      /** We reached the end of the loop, no more bearer contexts to be removed. */
-      OAILOG_INFO(LOG_MME_APP, "We checked all bearers for UE: " MME_UE_S1AP_ID_FMT " for the pdn context (apn=\"%s\",pdn_cid=%d). \n", mme_ue_s1ap_id, bdata(pdn_context->apn_subscribed), pdn_context->context_identifier);
-      all_bearers_checked = true;
     }
-    OAILOG_FUNC_OUT(LOG_MME_APP);
-//  }
-//  else {
-//    /** Set all FTEIDs, also those not in the list to 0. */
-//    RB_FOREACH (pdn_context, PdnContexts, &ue_context->pdn_contexts) {
-//      bool all_bearers_checked = false;
-//      while(!all_bearers_checked){
-//        RB_FOREACH (pBearerCtx, SessionBearers, &pdn_context->session_bearers) {
-//          if(!pBearerCtx->enb_fteid_s1u.teid){
-//            ebi_t removed_ebi = pBearerCtx->ebi;
-//            DevAssert(RB_REMOVE(SessionBearers, &pdn_context->session_bearers, pBearerCtx));
-//            mme_app_bearer_context_initialize(pBearerCtx);
-//            /** Insert the bearer context into the free bearer of the ue context. */
-//            RB_INSERT (BearerPool, &ue_context->bearer_pool, pBearerCtx);
-//            OAILOG_DEBUG(LOG_MME_APP, "Removed the idle bearer context (ebi=%d) for UE: " MME_UE_S1AP_ID_FMT " for the pdn context (apn=\"%s\",pdn_cid=%d). \n", removed_ebi, mme_ue_s1ap_id, bdata(pdn_context->apn_subscribed), pdn_context->context_identifier);
-//            continue;
-//          }
-//        }
-//        /** We reached the end of the loop, no more bearer contexts to be removed. */
-//        OAILOG_INFO(LOG_MME_APP, "We checked all bearers for UE: " MME_UE_S1AP_ID_FMT " for the pdn context (apn=\"%s\",pdn_cid=%d). \n", mme_ue_s1ap_id, bdata(pdn_context->apn_subscribed), pdn_context->context_identifier);
-//        all_bearers_checked = true;
-//      }
-//    }
-//    OAILOG_FUNC_OUT(LOG_MME_APP);
-//  }
+    /** We reached the end of the loop, no more bearer contexts to be removed. */
+    OAILOG_INFO(LOG_MME_APP, "We checked all bearers for UE: " MME_UE_S1AP_ID_FMT " for the pdn context (apn=\"%s\",pdn_cid=%d). \n", mme_ue_s1ap_id, bdata(pdn_context->apn_subscribed), pdn_context->context_identifier);
+    all_bearers_checked = true;
+  }
+  OAILOG_FUNC_OUT(LOG_MME_APP);
 }
 
 //------------------------------------------------------------------------------
@@ -233,10 +209,6 @@ mme_app_register_dedicated_bearer_context(const mme_ue_s1ap_id_t ue_id, const es
     OAILOG_FUNC_RETURN (LOG_MME_APP, ESM_CAUSE_REQUEST_REJECTED_BY_GW);
     /** This should be enough, we don't need to additionally check for the states. */
   }
-
-  // Todo: LOCKS
-
-
   /** Removed a bearer context from the UE contexts bearer pool and adds it into the PDN sessions bearer pool. */
   pBearerCtx = RB_MIN(BearerPool, &ue_context->bearer_pool);
   if(!pBearerCtx){
@@ -360,7 +332,7 @@ mme_app_modify_bearers(const mme_ue_s1ap_id_t mme_ue_s1ap_id, bearer_contexts_to
   bearer_context_t  * bearer_context = NULL;
 
   if(!ue_context){
-    OAILOG_INFO(LOG_MME_APP, "No UE context is found" MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
+    OAILOG_INFO(LOG_MME_APP, "No UE context is found" MME_UE_S1AP_ID_FMT ". \n", mme_ue_s1ap_id);
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
   // todo: LOCK_UE_CONTEXT(ue_context);
@@ -408,6 +380,54 @@ mme_app_modify_bearers(const mme_ue_s1ap_id_t mme_ue_s1ap_id, bearer_contexts_to
    */
 //  UNLOCK_UE_CONTEXT(ue_context);
   OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
+}
+
+//------------------------------------------------------------------------------
+void
+mme_app_release_bearers(const mme_ue_s1ap_id_t mme_ue_s1ap_id, e_rab_list_t * e_rab_list, ebi_list_t * const ebi_list) {
+  OAILOG_FUNC_IN(LOG_MME_APP);
+
+  ue_context_t                  * ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, mme_ue_s1ap_id);
+  pdn_context_t                 * pdn_context = NULL;
+  bearer_context_t              * bearer_context = NULL;
+  nas_esm_proc_bearer_context_t * esm_proc_bearer_context = NULL;
+
+  if(!ue_context){
+    OAILOG_INFO(LOG_MME_APP, "No UE context is found" MME_UE_S1AP_ID_FMT ". \n", mme_ue_s1ap_id);
+    OAILOG_FUNC_OUT(LOG_MME_APP);
+  }
+  /** Check that no ESM procedures are running. */
+  esm_proc_bearer_context = mme_app_nas_esm_get_bearer_context_procedure(mme_ue_s1ap_id, PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED, EPS_BEARER_IDENTITY_UNASSIGNED);
+  if(esm_proc_bearer_context){
+    OAILOG_ERROR(LOG_MME_APP, "ESM bearer context procedure (pti=%d,ebi=%d) exists for ue_id" MME_UE_S1AP_ID_FMT ". Not releasing bearer. \n",
+        esm_proc_bearer_context->esm_base_proc.pti, esm_proc_bearer_context->bearer_ebi, mme_ue_s1ap_id);
+    OAILOG_FUNC_OUT(LOG_MME_APP);
+  }
+  // todo: LOCK_UE_CONTEXT(ue_context);
+  // todo: checking on procedures of the function.. mme_app_is_ue_context_clean(ue_context)?!?
+
+  /** Set all FTEIDs, also those not in the list to 0. */
+  for(int num_ebi = 0; num_ebi < e_rab_list->no_of_items; num_ebi++){
+    bearer_context = NULL;
+    mme_app_get_session_bearer_context_from_all(ue_context, e_rab_list->item[num_ebi].e_rab_id, &bearer_context);
+    if(bearer_context){
+      if( (bearer_context->bearer_state & BEARER_STATE_ACTIVE)
+          && (bearer_context->bearer_state & BEARER_STATE_ENB_CREATED)) {
+        ebi_list->ebis[ebi_list->num_ebi] = bearer_context->ebi;
+        bearer_context->bearer_state &= (~BEARER_STATE_ACTIVE);
+        bearer_context->bearer_state &= (~BEARER_STATE_ENB_CREATED);
+        memset(&bearer_context->enb_fteid_s1u, 0, sizeof(fteid_t));
+        OAILOG_INFO(LOG_MME_APP, "Set ebi=%d as released for ue_id " MME_UE_S1AP_ID_FMT ". \n", bearer_context->ebi, mme_ue_s1ap_id);
+        ebi_list->num_ebi++;
+      } else {
+        OAILOG_WARNING(LOG_MME_APP, "Skipping ebi=%d with invalid state %d for ue_id " MME_UE_S1AP_ID_FMT " from implicit removal. \n",
+            bearer_context->ebi, bearer_context->bearer_state, mme_ue_s1ap_id);
+      }
+    }
+  }
+  // UNLOCK_UE_CONTEXT
+  OAILOG_INFO(LOG_MME_APP, "Returning %d bearer ready to be released for ue_id " MME_UE_S1AP_ID_FMT ". \n", ebi_list->num_ebi, mme_ue_s1ap_id);
+  OAILOG_FUNC_OUT(LOG_MME_APP);
 }
 
 //------------------------------------------------------------------------------
@@ -700,6 +720,7 @@ mme_app_release_bearer_context(mme_ue_s1ap_id_t ue_id, const pdn_cid_t *pdn_cid,
 /**
  * The bearer context should be locked when using this..
  */
+//------------------------------------------------------------------------------
 esm_cause_t
 mme_app_esm_bearer_context_finalize_tft(mme_ue_s1ap_id_t ue_id, bearer_context_t * bearer_context, traffic_flow_template_t * tft){
   OAILOG_FUNC_IN (LOG_MME_APP);

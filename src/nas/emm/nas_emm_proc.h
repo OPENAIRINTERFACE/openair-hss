@@ -100,4 +100,8 @@ int nas_proc_implicit_detach_ue_ind (mme_ue_s1ap_id_t ue_id, uint8_t emm_cause, 
 /** NAS context response. */
 int nas_proc_context_res (itti_nas_context_res_t *nas_context_res);
 int nas_proc_context_fail (mme_ue_s1ap_id_t ue_id, gtpv2c_cause_value_t cause);
+/** PDN Config Response (S10). */
+int nas_proc_emm_pdn_config_res(itti_nas_pdn_config_rsp_t   *pdn_cfg_rsp_p);
+int nas_proc_emm_pdn_config_fail(itti_nas_pdn_config_fail_t *pdn_cfg_fail_p);
+
 #endif /* FILE_NAS_PROC_SEEN*/

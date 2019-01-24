@@ -154,6 +154,10 @@ udp_server_create_socket (
     close (sd);
     return -1;
   }
+  struct sockaddr_in                      addr_check;
+  socklen_t len = sizeof(addr_check);
+  if (getsockname(sd, (struct sockaddr *)&addr_check, &len) != -1)
+    OAILOG_DEBUG (LOG_UDP, "Listened on port %" PRIu16 "\n", ntohs(addr_check.sin_port));
 
   /*
    * Add the socket to list of fd monitored by ITTI
@@ -235,6 +239,7 @@ udp_server_receive_and_process (
       memcpy (udp_data_ind_p->msgBuf, udp_sock_pP->buffer, bytes_received);
 
       udp_data_ind_p->buffer_length = bytes_received;
+      udp_data_ind_p->local_port = udp_sock_pP->local_port;
       udp_data_ind_p->peer_port = htons (addr.sin_port);
       udp_data_ind_p->peer_address = addr.sin_addr;
       OAILOG_DEBUG (LOG_UDP, "Msg of length %d received from %s:%u\n", bytes_received, inet_ntoa (addr.sin_addr), ntohs (addr.sin_port));

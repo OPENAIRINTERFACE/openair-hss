@@ -115,6 +115,9 @@ typedef enum {
   EMMCN_CONTEXT_RES                   = _EMMCN_CONTEXT_RES,
   EMMCN_CONTEXT_FAIL                  = _EMMCN_CONTEXT_FAIL,
 
+  EMMCN_PDN_CONFIG_RES                = _EMMCN_PDN_CONFIG_RES,
+  EMMCN_PDN_CONFIG_FAIL               = _EMMCN_PDN_CONFIG_FAIL,
+
   EMMCN_DEREGISTER_UE                 = _EMMCN_DEREGISTER_UE,
 
 //  EMMCN_PDN_CONFIG_RES                = _ESMCN_PDN_CONFIG_RES,

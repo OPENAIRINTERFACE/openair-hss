@@ -716,10 +716,8 @@ typedef struct mm_context_eps_s {
   // todo : drx_t*                    drx;
   uint8_t                   nh[32];
   uint8_t                   ncc:3;
-  uint32_t                  ul_subscribed_ue_ambr;
-  uint32_t                  dl_subscribed_ue_ambr;
-  uint32_t                  ul_used_ue_ambr;
-  uint32_t                  dl_used_ue_ambr;
+  ambr_t                    subscribed_ue_ambr;
+  ambr_t                    used_ue_ambr;
   uint8_t                   ue_nc_length;
   ue_network_capability_t   ue_nc;
   uint8_t                   ms_nc_length;

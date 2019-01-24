@@ -323,7 +323,7 @@ s10_mme_handle_forward_relocation_request(
    */
   req_p->pdn_connections = calloc(1, sizeof(mme_ue_eps_pdn_connections_t));
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_PDN_CONNECTION, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
-       s10_pdn_connections_ie_get, req_p->pdn_connections);
+       s10_pdn_connection_ie_get, req_p->pdn_connections);
   DevAssert (NW_OK == rc);
 
   /*
@@ -1338,7 +1338,7 @@ s10_mme_handle_context_response(
    */
   resp_p->pdn_connections = calloc(1, sizeof(mme_ue_eps_pdn_connections_t));
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_PDN_CONNECTION, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
-      s10_pdn_connections_ie_get, resp_p->pdn_connections);
+      s10_pdn_connection_ie_get, resp_p->pdn_connections);
   DevAssert (NW_OK == rc);
 
    /*

@@ -34,6 +34,7 @@ MESSAGE_DEF(S11_CREATE_BEARER_REQUEST,   MESSAGE_PRIORITY_MED, itti_s11_create_b
 MESSAGE_DEF(S11_CREATE_BEARER_RESPONSE,  MESSAGE_PRIORITY_MED, itti_s11_create_bearer_response_t,  s11_create_bearer_response)
 MESSAGE_DEF(S11_UPDATE_BEARER_REQUEST,   MESSAGE_PRIORITY_MED, itti_s11_update_bearer_request_t,   s11_update_bearer_request)
 MESSAGE_DEF(S11_UPDATE_BEARER_RESPONSE,  MESSAGE_PRIORITY_MED, itti_s11_update_bearer_response_t,  s11_update_bearer_response)
+MESSAGE_DEF(S11_DELETE_BEARER_COMMAND,   MESSAGE_PRIORITY_MED, itti_s11_delete_bearer_command_t,   s11_delete_bearer_command)
 MESSAGE_DEF(S11_DELETE_BEARER_REQUEST,   MESSAGE_PRIORITY_MED, itti_s11_delete_bearer_request_t,   s11_delete_bearer_request)
 MESSAGE_DEF(S11_DELETE_BEARER_RESPONSE,  MESSAGE_PRIORITY_MED, itti_s11_delete_bearer_response_t,  s11_delete_bearer_response)
 MESSAGE_DEF(S11_MODIFY_BEARER_REQUEST,   MESSAGE_PRIORITY_MED, itti_s11_modify_bearer_request_t,   s11_modify_bearer_request)

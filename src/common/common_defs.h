@@ -64,7 +64,8 @@
 
 //------------------------------------------------------------------------------
 #define INTERNAL_FLAG_NULL        0
-#define INTERNAL_FLAG_X2_HANDOVER (1 << 0)
+#define INTERNAL_FLAG_X2_HANDOVER   (1 << 0)
+#define INTERNAL_FLAG_SKIP_RESPONSE (2 << 0)
 
 //------------------------------------------------------------------------------
 

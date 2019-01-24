@@ -77,7 +77,6 @@ void free_bearer_contexts_to_be_deleted(bearer_contexts_to_be_removed_t **bcs_tb
 // 7.3.1 PDN Connections IE
 //------------------------------------------------------------------------------
 
-
 //------------------------------------------------------------------------------
 static void free_pdn_connection(pdn_connection_t * pdn_connection)
 {

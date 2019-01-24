@@ -1340,13 +1340,11 @@ static int _emm_tracking_area_update_accept_retx (emm_data_context_t * emm_conte
     emm_sap.primitive = EMMAS_DATA_REQ;
     emm_sap.u.emm_as.u.data.ue_id = ue_id;
     emm_sap.u.emm_as.u.data.nas_info = EMM_AS_NAS_DATA_TAU;
-//    emm_sap.u.emm_as.u.data.tai_list.list_type = emm_context->_tai_list.list_type;
     emm_sap.u.emm_as.u.data.tai_list.numberoflists    = emm_context->_tai_list.numberoflists;
     for (i = 0; i < emm_context->_tai_list.numberoflists; i++) {
       memcpy(&emm_sap.u.emm_as.u.data.tai_list.partial_tai_list[i], &emm_context->_tai_list.partial_tai_list[i], sizeof(tai_t));
     }
 
-//    memcpy(&emm_sap.u.emm_as.u.data.tai_list, &emm_context->_tai_list, sizeof(tai_list_t));
     emm_sap.u.emm_as.u.data.eps_id.guti = &emm_context->_guti;
     OAILOG_DEBUG (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " EMM-PROC  - Include the same GUTI in the TAU Retx message\n", ue_id);
     emm_sap.u.emm_as.u.data.new_guti    = &emm_context->_guti;
@@ -1712,7 +1710,6 @@ static int _emm_tracking_area_update_run_procedure(emm_data_context_t *emm_conte
     /** Set the GUTI-Type (event is context there). */
     if (tau_proc->ies->old_guti_type) {
       /** Old GUTI Type present. Not setting anything in the EMM_CTX. */
-    }else{
     }
     /*
      * Requirements MME24.301R10_5.5.3.2.4_4
@@ -1899,15 +1896,7 @@ static int _context_req_proc_success_cb (emm_data_context_t *emm_context)
   emm_ctx_update_from_mm_eps_context(emm_context, nas_s10_ctx->mm_eps_ctx);
   OAILOG_INFO(LOG_NAS_EMM, "EMM-PROC  - " "Successfully updated the EMM context with ueId " MME_UE_S1AP_ID_FMT " from the received MM_EPS_Context from the MME for UE with imsi: " IMSI_64_FMT ". \n",
       emm_context->ue_id, emm_context->_imsi64);
-
-  // todo: esm context to update..
-//  /*
-//   * Update the ESM context (what was in esm_proc_default_eps_bearer_context).
-//   */
-//  emm_context->esm_ctx.n_pdns        += nas_s10_ctx->n_pdns;
-  // todo: num_active_pdns not used.
-  // todo: is_emergency not set
-  // todo; rest of ESM context will be set by MME_APP
+  /** No need to touch the ESM context. No ESM procedure is running. */
 
   /** Delete the CN procedure, if exists. */
   if(nas_ctx_req_proc)

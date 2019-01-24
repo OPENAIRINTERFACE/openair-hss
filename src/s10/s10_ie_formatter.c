@@ -346,7 +346,7 @@ s10_pdn_connection_ie_set ( nw_gtpv2c_msg_handle_t * msg, void * arg){
 }
 
 nw_rc_t
-s10_pdn_connections_ie_get (
+s10_pdn_connection_ie_get (
   uint8_t ieType,
   uint16_t ieLength,
   uint8_t ieInstance,
@@ -592,17 +592,17 @@ s10_mm_ue_context_ie_get (
 
     /** Get the Subscribed UE_AMBR. */
     if(ue_ambr_subscribed_present){
-      mm_ue_context->ul_subscribed_ue_ambr = ((*((uint32_t*)(p_ieValue))) / 1000);
+      mm_ue_context->subscribed_ue_ambr.br_ul = ((*((uint32_t*)(p_ieValue))) * 1000);
       p_ieValue = ((uint32_t *)p_ieValue) + 1; /**< Move by 4. */
-      mm_ue_context->dl_subscribed_ue_ambr = ((*((uint32_t*)(p_ieValue))) / 1000);
+      mm_ue_context->subscribed_ue_ambr.br_dl = ((*((uint32_t*)(p_ieValue))) * 1000);
       p_ieValue = ((uint32_t *)p_ieValue) + 1; /**< Move by 4. */
     }
 
     /** Get the Used UE_AMBR. */
     if(ue_ambr_used_present){
-      mm_ue_context->ul_used_ue_ambr = ((*((uint32_t*)(p_ieValue))) * 1000);
+      mm_ue_context->used_ue_ambr.br_ul = ((*((uint32_t*)(p_ieValue))) * 1000);
       p_ieValue = ((uint32_t *)p_ieValue) + 1; /**< Move by 4. */
-      mm_ue_context->dl_used_ue_ambr = ((*((uint32_t*)(p_ieValue))) * 1000);
+      mm_ue_context->used_ue_ambr.br_dl = ((*((uint32_t*)(p_ieValue))) * 1000);
       p_ieValue = ((uint32_t *)p_ieValue) + 1; /**< Move by 4. */
     }
 

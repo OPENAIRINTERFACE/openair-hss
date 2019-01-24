@@ -174,9 +174,9 @@ void *mme_app_thread (void *args)
     break;
 
     case NAS_PDN_DISCONNECT_REQ:{
-        mme_app_handle_nas_pdn_disconnect_req (&received_message_p->ittiMsg.nas_pdn_disconnect_req);
-      }
-      break;
+      mme_app_handle_nas_pdn_disconnect_req (&received_message_p->ittiMsg.nas_pdn_disconnect_req);
+    }
+    break;
 
     case S11_CREATE_BEARER_REQUEST:
       mme_app_handle_s11_create_bearer_req (&received_message_p->ittiMsg.s11_create_bearer_request);
@@ -232,6 +232,11 @@ void *mme_app_thread (void *args)
 
     case S1AP_E_RAB_MODIFY_RSP:{
         mme_app_handle_e_rab_modify_rsp (&S1AP_E_RAB_MODIFY_RSP (received_message_p));
+      }
+      break;
+
+    case S1AP_E_RAB_RELEASE_IND:{
+        mme_app_handle_e_rab_release_ind (&S1AP_E_RAB_RELEASE_IND (received_message_p));
       }
       break;
 

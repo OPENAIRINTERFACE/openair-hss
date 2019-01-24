@@ -126,8 +126,6 @@ int mme_app_handle_s6a_update_location_ans (
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_ESM, NULL, 0, "0 NAS_PDN_CONFIG_RESP IMSI " IMSI_64_FMT, imsi64);
   rc =  itti_send_msg_to_task (task_id, INSTANCE_DEFAULT, message_p);
 
-//  UNLOCK_UE_CONTEXTS(ue_context);
-
   OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
 
 err:

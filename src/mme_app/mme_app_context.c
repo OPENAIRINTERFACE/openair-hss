@@ -932,7 +932,7 @@ int mme_app_update_ue_subscription(mme_ue_s1ap_id_t ue_id, subscription_data_t *
   ue_context->subscriber_status = subscription_data->subscriber_status;
   ue_context->access_restriction_data = subscription_data->access_restriction;
   /*
-   * Copy the subscribed ambr to the sgw create session request message
+   * This is the UE-AMBR and will always be enforced upon all established PDN contexts as total used bitrate (to the eNB).
    */
   memcpy (&ue_context->subscribed_ue_ambr, &subscription_data->subscribed_ambr, sizeof (ambr_t));
 
@@ -951,6 +951,7 @@ int mme_app_update_ue_subscription(mme_ue_s1ap_id_t ue_id, subscription_data_t *
   ue_context->mobile_reachability_timer.sec = ((mme_config.nas_config.t3412_min) + MME_APP_DELTA_T3412_REACHABILITY_TIMER) * 60;
   ue_context->implicit_detach_timer.id = MME_APP_TIMER_INACTIVE_ID;
   ue_context->implicit_detach_timer.sec = (ue_context->mobile_reachability_timer.sec) + MME_APP_DELTA_REACHABILITY_IMPLICIT_DETACH_TIMER * 60;
+  // todo: UNLOCK UE_CONTEXT
   OAILOG_FUNC_RETURN(LOG_MME_APP, RETURNok);
 }
 
@@ -2030,6 +2031,14 @@ void mme_app_set_ue_eps_mm_context(mm_context_eps_t * ue_eps_mme_context_p, stru
   memset(ue_eps_mme_context_p->nh, 0, 32);
   memcpy(ue_eps_mme_context_p->nh, ue_nas_ctx->_vector[ue_nas_ctx->_security.vector_index].nh_conj, 32);
 
+  /**
+   * Set the UE ambr (subscribed).
+   * Not divide by 100 here.
+   */
+  ue_eps_mme_context_p->subscribed_ue_ambr = ue_context->subscribed_ue_ambr;
+  /** Calculate the total. */
+  ue_eps_mme_context_p->used_ue_ambr       = mme_app_total_p_gw_apn_ambr(ue_context);;
+
   // Add the UE Network Capability.
   ue_eps_mme_context_p->ue_nc.eea = ue_nas_ctx->_ue_network_capability.eea;
   ue_eps_mme_context_p->ue_nc.eia = ue_nas_ctx->_ue_network_capability.eia; /*<< Check that they exist.*/
@@ -2048,9 +2057,6 @@ void mme_app_set_ue_eps_mm_context(mm_context_eps_t * ue_eps_mme_context_p, stru
   ue_eps_mme_context_p->vdp_lenth    = 0;
   // todo: access restriction
   ue_eps_mme_context_p->access_restriction_flags        = ue_context->access_restriction_data & 0xFF;
-
-  OAILOG_INFO (LOG_MME_APP, "Setting MM UE context for UE " MME_UE_S1AP_ID_FMT " with KSI %d. \n", ue_context->mme_ue_s1ap_id, ue_eps_mme_context_p->ksi);
-
   OAILOG_FUNC_OUT(LOG_MME_APP);
 }
 
@@ -2288,81 +2294,39 @@ pdn_context_t * mme_app_handle_pdn_connectivity_from_s10(ue_context_t *ue_contex
    * No context identifier will be set.
    * Later set context identifier by ULA?
    */
-  /** Create a PDN connection and later set the ESM values when NAS layer is established. */
-  if(mme_app_esm_create_pdn_context(ue_context->mme_ue_s1ap_id, NULL, pdn_connection->apn_str, PDN_CONTEXT_IDENTIFIER_UNASSIGNED, &pdn_context) == RETURNerror){ /**< Create the pdn context using the APN network identifier. */
+  /** Create a PDN connection with a default bearer and later set the ESM values when NAS layer is established. */
+  if(mme_app_esm_create_pdn_context(ue_context->mme_ue_s1ap_id, NULL, pdn_connection->apn_str, PDN_CONTEXT_IDENTIFIER_UNASSIGNED, &pdn_connection->apn_ambr, &pdn_context) == RETURNerror){ /**< Create the pdn context using the APN network identifier. */
     OAILOG_ERROR(LOG_MME_APP, "Could not create a new pdn context for apn \" %s \" for UE_ID " MME_UE_S1AP_ID_FMT " from S10 PDN_CONNECTIONS IE. "
         "Skipping the establishment of pdn context. \n", bdata(pdn_connection->apn_str), ue_context->mme_ue_s1ap_id);
     OAILOG_FUNC_RETURN(LOG_MME_APP, NULL);
   }
-
   pdn_context_t * pdn_test = NULL;
   mme_app_get_pdn_context(ue_context->mme_ue_s1ap_id, ue_context->next_def_ebi_offset + PDN_CONTEXT_IDENTIFIER_UNASSIGNED - 1, ue_context->next_def_ebi_offset + 5 -1 , pdn_connection->apn_str, &pdn_test);
   DevAssert(pdn_test);
-
-  /*
-   * Will update the PDN context with the PCOs received from the SAE-GW.
-   * todo: No PCO elements received @ handover from source MME? MS to network PCO or the result of the first PCO?
-   * We receive PCO elements at Create Session Response, register them.
-   *
-   * Setup the IP address allocated by the network and the PDN type directly based
-   * on the received PDN information.
-   */
-  /* Create a PAA object. Usually not created, such that no empty IP addresses are sent with CSR of initial request. */
-  pdn_context->paa = calloc(1, sizeof(paa_t));
-
-  /* Set the default EBI. */
-  pdn_context->default_ebi = pdn_connection->linked_eps_bearer_id;
-
-  if(pdn_connection->ipv4_address.s_addr) {
-//    IPV4_STR_ADDR_TO_INADDR ((const char *)pdn_connection->ipv4_address, pdn_context->paa->ipv4_address, "BAD IPv4 ADDRESS FORMAT FOR PAA!\n");
-    pdn_context->paa->ipv4_address.s_addr = pdn_connection->ipv4_address.s_addr;
-  }
-//  if(pdn_connection->ipv6_address) {
-//    //    memset (pdn_connections->pdn_connection[num_pdn].ipv6_address, 0, 16);
-//    memcpy (pdn_context->paa->ipv6_address.s6_addr, pdn_connection->ipv6_address.s6_addr, 16);
-//    pdn_context->paa->ipv6_prefix_length = pdn_connection->ipv6_prefix_length;
-//    pdn_context->pdn_type++;
-//    if(pdn_connection->ipv4_address.s_addr)
-//      pdn_context->pdn_type++;
-//  }
-  /*
-   * The IP addresses of the ITTI message will later be erased automatically in the itti_free_defined_msg.
-   *
-   * No UE subscription data will be sent via FRR. APN subscription will be stored.
-   * They will later be updated/set with ULA at the target HSS.
-   *
-   * Allocate the bearer contexts and the bearer level QoS to immediately send .
-   */
-  pdn_context->subscribed_apn_ambr = pdn_connection->apn_ambr;
-
-  /** Just set it temporarily to the UE, too. */
-  ue_context->subscribed_ue_ambr = pdn_connection->apn_ambr;
-
-  /** Create the remaining bearer contexts. */
+  /** Create and finalize the remaining bearer contexts. */
   for (int num_bearer = 0; num_bearer < pdn_connection->bearer_context_list.num_bearer_context; num_bearer++){
     bearer_context_to_be_created_t * bearer_context_to_be_created_s10 = &pdn_connection->bearer_context_list.bearer_contexts[num_bearer];
     /*
-     * Create bearer contexts in the PDN context.
+     * Create bearer contexts in the PDN context, only for dedicated bearers.
      * Since no activation in the ESM is necessary, set them as active.
      */
     bearer_context_t * bearer_context_registered = NULL;
-    if(mme_app_register_dedicated_bearer_context(ue_context->mme_ue_s1ap_id, ESM_EBR_ACTIVE, pdn_context->context_identifier,
-        bearer_context_to_be_created_s10->eps_bearer_id, bearer_context_to_be_created_s10) == ESM_CAUSE_SUCCESS){
-      // todo: optimize this!
-      DevAssert(bearer_context_registered);
-
-      /** Finalize it, thereby set the qos values. */
-     if(mme_app_finalize_bearer_context(ue_context->mme_ue_s1ap_id, pdn_context->context_identifier, pdn_context->default_ebi, bearer_context_to_be_created_s10->eps_bearer_id,
-          NULL, &bearer_context_to_be_created_s10->bearer_level_qos, bearer_context_to_be_created_s10->tft, NULL) == ESM_CAUSE_SUCCESS) {
-       /*
-        * Set the bearer level QoS parameters and update the statistics.
-        */
-       mme_app_desc.mme_ue_contexts.nb_bearers_managed++;
-       mme_app_desc.mme_ue_contexts.nb_bearers_since_last_stat++;
-     }
+    esm_cause_t esm_cause = ESM_CAUSE_SUCCESS;
+    if(bearer_context_to_be_created_s10->eps_bearer_id != pdn_context->default_ebi){
+      esm_cause = mme_app_register_dedicated_bearer_context(ue_context->mme_ue_s1ap_id, ESM_EBR_ACTIVE, pdn_context->context_identifier,
+          bearer_context_to_be_created_s10->eps_bearer_id, bearer_context_to_be_created_s10);
+    } else {
+      /** Finalize the default bearer, updating qos. */
+      esm_cause = mme_app_finalize_bearer_context(ue_context->mme_ue_s1ap_id, pdn_context->context_identifier,
+          pdn_context->default_ebi, bearer_context_to_be_created_s10->eps_bearer_id,
+          NULL, &bearer_context_to_be_created_s10->bearer_level_qos, NULL, NULL);
+    }
+    /** Finalize it, thereby set the qos values. */
+    if(esm_cause != ESM_CAUSE_SUCCESS){
+      OAILOG_ERROR(LOG_MME_APP, "Error while preparing bearer (ebi=%d) for APN \"%s\" for UE " MME_UE_S1AP_ID_FMT" received via handover/TAU. "
+          "Currently ignoring (assuming implicit detach). \n", bearer_context_to_be_created_s10->eps_bearer_id, bdata(pdn_context->apn_subscribed), ue_context->mme_ue_s1ap_id);
     }
   }
-  // todo: handle PCO !! (Handover valuesgetoverwritten by PGW currently. )
   // todo: apn restriction data!
   OAILOG_INFO (LOG_MME_APP, "Successfully updated the MME_APP UE context with the pending pdn information for UE id  %d. \n", ue_context->mme_ue_s1ap_id);
   OAILOG_FUNC_RETURN(LOG_MME_APP, pdn_context);
@@ -2522,10 +2486,9 @@ mme_app_handle_s10_context_response(
   /** Handle PDN Connections. */
   OAILOG_INFO(LOG_MME_APP, "For ueId " MME_UE_S1AP_ID_FMT " processing the pdn_connections (continuing with CSR). \n", ue_context->mme_ue_s1ap_id);
   /** Process PDN Connections IE. Will initiate a Create Session Request message for the pending pdn_connections. */
-  pdn_connection_t * pdn_connection = &emm_cn_proc_ctx_req->pdn_connections->pdn_connection[emm_cn_proc_ctx_req->next_processed_pdn_connection];
+  pdn_connection_t * pdn_connection = &emm_cn_proc_ctx_req->pdn_connections->pdn_connection[emm_cn_proc_ctx_req->pdn_connections->num_processed_pdn_connections];
   pdn_context_t * pdn_context = mme_app_handle_pdn_connectivity_from_s10(ue_context, pdn_connection);
   DevAssert(pdn_context);
-  emm_cn_proc_ctx_req->next_processed_pdn_connection++;
   /*
    * When Create Session Response is received, continue to process the next PDN connection, until all are processed.
    * When all pdn_connections are completed, continue with handover request.
@@ -2767,34 +2730,11 @@ void mme_app_set_pdn_connections(struct mme_ue_eps_pdn_connections_s * pdn_conne
     pdn_connections->pdn_connection[num_pdn].pgw_address_for_cp.ipv4 = 1;
     /** APN Restriction. */
     pdn_connections->pdn_connection[num_pdn].apn_restriction = 0; // pdn_context_to_forward->apn_restriction
-    /** APN-AMBR */
-    pdn_connections->pdn_connection[num_pdn].apn_ambr.br_ul = ue_context->subscribed_ue_ambr.br_ul;
-    pdn_connections->pdn_connection[num_pdn].apn_ambr.br_dl = ue_context->subscribed_ue_ambr.br_dl; // pdn_context_to_forward->subscribed_apn_ambr.br_ul;
+    /** APN-AMBR : forward the currently used apn ambr. The MM Context will have the UE AMBR. */
+    pdn_connections->pdn_connection[num_pdn].apn_ambr.br_ul = pdn_context_to_forward->subscribed_apn_ambr.br_ul;
+    pdn_connections->pdn_connection[num_pdn].apn_ambr.br_dl = pdn_context_to_forward->subscribed_apn_ambr.br_dl;
     /** Set the bearer contexts for all existing bearers of the PDN. */
-    bearer_context_t * bearer_context_to_forward = NULL;
-    RB_FOREACH (bearer_context_to_forward, SessionBearers, &pdn_context_to_forward->session_bearers) {
-      int num_bearer = pdn_connections->pdn_connection[num_pdn].bearer_context_list.num_bearer_context;
-      bearer_contexts_to_be_created_t * bearer_list  = &pdn_connections->pdn_connection[num_pdn].bearer_context_list;
-      bearer_list->bearer_contexts[num_bearer].eps_bearer_id = bearer_context_to_forward->ebi;
-      bearer_list->bearer_contexts[num_bearer].s1u_sgw_fteid.teid = bearer_context_to_forward->s_gw_fteid_s1u.teid; /**< Which does not matter. */
-      bearer_list->bearer_contexts[num_bearer].s1u_sgw_fteid.interface_type = S1_U_SGW_GTP_U;
-      bearer_list->bearer_contexts[num_bearer].s1u_sgw_fteid.ipv4_address.s_addr = bearer_context_to_forward->s_gw_fteid_s1u.ipv4_address.s_addr;
-      bearer_list->bearer_contexts[num_bearer].s1u_sgw_fteid.ipv4 = bearer_context_to_forward->s_gw_fteid_s1u.ipv4;
-      /*
-       * Set the bearer level level qos values.
-       * Also set the MBR/GBR values for each bearer, the target side, then should send MBR/GBR as 0 for non-GBR bearers.
-       */
-      /** Divide by 1000. */
-      bearer_list->bearer_contexts[num_bearer].bearer_level_qos.gbr.br_ul = bearer_context_to_forward->bearer_level_qos.gbr.br_ul;
-      bearer_list->bearer_contexts[num_bearer].bearer_level_qos.gbr.br_dl = bearer_context_to_forward->bearer_level_qos.gbr.br_dl;
-      bearer_list->bearer_contexts[num_bearer].bearer_level_qos.mbr.br_ul = bearer_context_to_forward->bearer_level_qos.mbr.br_ul;
-      bearer_list->bearer_contexts[num_bearer].bearer_level_qos.mbr.br_dl = bearer_context_to_forward->bearer_level_qos.mbr.br_dl;
-      bearer_list->bearer_contexts[num_bearer].bearer_level_qos.qci       = bearer_context_to_forward->bearer_level_qos.qci;
-      bearer_list->bearer_contexts[num_bearer].bearer_level_qos.pvi       = bearer_context_to_forward->bearer_level_qos.pvi;
-      bearer_list->bearer_contexts[num_bearer].bearer_level_qos.pci       = bearer_context_to_forward->bearer_level_qos.pci;
-      bearer_list->bearer_contexts[num_bearer].bearer_level_qos.pl        = bearer_context_to_forward->bearer_level_qos.pl;
-      bearer_list->num_bearer_context++;
-    }
+    mme_app_get_bearer_contexts_to_be_created(pdn_context_to_forward, &pdn_connections->pdn_connection[num_pdn].bearer_context_list, BEARER_STATE_NULL);
     pdn_connections->num_pdn_connections++;
   }
   OAILOG_FUNC_OUT(LOG_MME_APP);

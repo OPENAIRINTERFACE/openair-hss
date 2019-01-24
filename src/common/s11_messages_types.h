@@ -1252,6 +1252,7 @@ typedef struct itti_s11_delete_session_request_s {
   ebi_t       lbi;                    ///< Linked EPS Bearer ID
   fteid_t     sender_fteid_for_cp;    ///< Sender F-TEID for control plane
   bool        noDelete;
+  uint8_t     internal_flags;
 
   /* Operation Indication: This flag shall be set over S4/S11 interface
    * if the SGW needs to forward the Delete Session Request message to
@@ -1286,8 +1287,9 @@ typedef struct itti_s11_delete_session_request_s {
  * - S1 Based handover cancel with SGW change
  */
 typedef struct itti_s11_delete_session_response_s {
-  teid_t         teid;                ///< Remote Tunnel Endpoint Identifier
-  gtpv2c_cause_t  cause;
+  teid_t                        teid;                ///< Remote Tunnel Endpoint Identifier
+  gtpv2c_cause_t                cause;
+  uint8_t                       internal_flags;
   //recovery_t recovery;              ///< This IE shall be included on the S5/S8, S4/S11 and S2b
                                       ///< interfaces if contacting the peer for the first time
   protocol_configuration_options_t pco;///< PGW shall include Protocol Configuration Options (PCO)
@@ -1296,8 +1298,8 @@ typedef struct itti_s11_delete_session_response_s {
                                       ///< SGSN/MME on the S4/S11 interface.
 
   /* GTPv2-C specific parameters */
-  void       *trxn;
-  struct in_addr  peer_ip;
+  void             *trxn;
+  struct in_addr    peer_ip;
 } itti_s11_delete_session_response_t;
 
 
@@ -1363,10 +1365,10 @@ typedef struct itti_s11_release_access_bearers_response_s {
 typedef struct itti_s11_delete_bearer_command_s {
   teid_t          teid;                   ///< Tunnel Endpoint Identifier
 
-  // TODO
   void           *trxn;
   struct in_addr  peer_ip;
-} itti_s11_delete_bearer_command_s;
+  ebi_list_t      ebi_list;
+} itti_s11_delete_bearer_command_t;
 
 //-----------------------------------------------------------------------------
 /** @struct itti_s11_downlink_data_notification_t

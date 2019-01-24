@@ -127,6 +127,16 @@ static void *nas_emm_intertask_interface (void *args_p)
     }
     break;
 
+    case NAS_PDN_CONFIG_RSP: {
+      nas_proc_emm_pdn_config_res(&NAS_CONTEXT_RES(received_message_p));
+    }
+    break;
+
+    case NAS_PDN_CONFIG_FAIL: {
+      nas_proc_emm_pdn_config_fail(&NAS_PDN_CONFIG_FAIL(received_message_p));
+    }
+    break;
+
     case NAS_SIGNALLING_CONNECTION_REL_IND:{
        nas_proc_signalling_connection_rel_ind (NAS_SIGNALLING_CONNECTION_REL_IND (received_message_p).ue_id);
     }

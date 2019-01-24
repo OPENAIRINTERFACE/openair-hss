@@ -1024,6 +1024,61 @@ esm_recv_modify_eps_bearer_context_reject (
 
 /****************************************************************************
  **                                                                        **
+ ** Name:    esm_recv_bearer_resource_modification()   **
+ **                                                                        **
+ ** Description: Processes Bearer Resource Modification Request    **
+ **                                                                        **
+ ** Inputs:  ue_id:      UE local identifier                        **
+ **          pti:       Procedure transaction identity             **
+ **      ebi:       EPS bearer identity                        **
+ **      msg:       The received ESM message                   **
+ **      Others:    None                                       **
+ **                                                                        **
+ ** Outputs:     None                                                      **
+ **      Return:    ESM cause code whenever the processing of  **
+ **             the ESM message fail                       **
+ **      Others:    None                                       **
+ **                                                                        **
+ ***************************************************************************/
+esm_cause_t
+esm_recv_bearer_resource_modification (
+  mme_ue_s1ap_id_t ue_id,
+  proc_tid_t pti,
+  ebi_t ebi,
+  const bearer_resource_modification_request_msg * const msg)
+{
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
+
+  /*
+   * Procedure transaction identity checking
+   */
+  if (esm_pt_is_reserved (pti)) {
+    /*
+     * 3GPP TS 24.301, section 7.3.1, case f
+     * * * * Reserved PTI value
+     */
+    OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Invalid PTI value (pti=%d)\n", pti);
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_PTI_VALUE);
+  }
+
+  nas_esm_proc_bearer_context_t * esm_proc_bearer_context = _esm_proc_get_bearer_context_procedure(ue_id, pti, ebi);
+  if(esm_proc_bearer_context){
+    OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - An EPS bearer context procedure exists for pti=%d" "BRM not accepted by the UE (ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d, cause=%d)\n",
+        pti, ue_id, ebi, msg->esmcause);
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_COLLISION_WITH_NETWORK_INITIATED_REQUEST);
+  }
+
+  /*
+   * Process the received BRM request.
+   * * * *  accepted by the UE
+   */
+//  esm_proc_bearer_resource_modification_request(ue_id, ebi, &msg->trafficflowaggregate, msg->esmcause);
+  OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_SUCCESS);
+}
+
+
+/****************************************************************************
+ **                                                                        **
  ** Name:    esm_recv_deactivate_eps_bearer_context_accept()           **
  **                                                                        **
  ** Description: Processes Deactivate EPS Bearer Context Accept message    **

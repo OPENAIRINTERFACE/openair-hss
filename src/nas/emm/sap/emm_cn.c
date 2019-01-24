@@ -64,10 +64,6 @@
 
 #include "emm_cause.h"
 #include "emm_sap.h"
-//#include "esm_proc.h"
-//#include "esm_cause.h"
-//#include "esm_sap.h"
-//#include "esm_send.h"
 #include "emm_data.h"
 #include "emm_proc.h"
 #include "bstrlib.h"
@@ -95,11 +91,12 @@ static const char                      *_emm_cn_primitive_str[] = {
   "EMM_CN_AUTHENTICATION_PARAM_FAIL",
   "EMMCN_CONTEXT_RES",
   "EMMCN_CONTEXT_FAIL",
+  "EMMCN_PDN_CONFIG_RES",
+  "EMMCN_PDN_CONFIG_FAIL",
   "EMM_CN_DEREGISTER_UE",
   "EMMCN_IMPLICIT_DETACH_UE",
   "EMMCN_SMC_PROC_FAIL",
 };
-
 
 //------------------------------------------------------------------------------
 static int _emm_cn_authentication_res (emm_cn_auth_res_t * const msg)
@@ -112,7 +109,6 @@ static int _emm_cn_authentication_res (emm_cn_auth_res_t * const msg)
    * We received security vector from HSS. Try to setup security with UE
    */
   emm_context = emm_data_context_get(&_emm_data, msg->ue_id);
-
   if (emm_context) {
     nas_auth_info_proc_t * auth_info_proc = get_nas_cn_procedure_auth_info(emm_context);
 
@@ -167,16 +163,21 @@ static int _emm_cn_smc_fail (const emm_cn_smc_fail_t * msg)
 static int _emm_cn_pdn_config_res (emm_cn_pdn_config_res_t * msg_pP)
 {
   emm_data_context_t                       *emm_context = NULL;
+  ue_context_t                             *ue_context  = NULL;
   int                                       rc = RETURNerror;
 
   OAILOG_FUNC_IN (LOG_NAS_EMM);
-  // todo: multi apn handover ?!
   emm_context = emm_data_context_get (&_emm_data, msg_pP->ue_id);
   if (!emm_context) { /**< We assume that an MME_APP UE context also should not exist here. */
     OAILOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - " "Failed to find UE associated to id " MME_UE_S1AP_ID_FMT ". "
         "Not further processing PDN config response (not removing it)...\n", msg_pP->ue_id);
     /** No procedure to remove. */
-    OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
+  }
+  ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, msg_pP->ue_id);
+  if(!ue_context){
+    OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  ATTACH - For ueId " MME_UE_S1AP_ID_FMT " no UE context exists. \n", msg_pP->ue_id);
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
   }
   /*
    * We already have an ESM PDN connectivity (due handover).
@@ -188,24 +189,76 @@ static int _emm_cn_pdn_config_res (emm_cn_pdn_config_res_t * msg_pP)
      * Not processing it if not due Tracking Request.
      */
     OAILOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - " "PDN configuration response not processed in EMM layer only due TAU. Ignoring (should be sent to ESM).. for id " MME_UE_S1AP_ID_FMT ". \n", msg_pP->ue_id);
-    OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
   }
-  if (!msg_pP->mobility) {
-//    OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - " "No mobility procedure is running (initial TAU) for UE " MME_UE_S1AP_ID_FMT. "Continuing with PDN connectivity. \n", msg_pP->ue_id);
-    // todo: process the APN-Configuration!
-    // todo: create a new PDN context with the received PDN configuration!
-    // todo: send an S11 message
-    // todo:
-//    nas_itti_pdn_connectivity_req (PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED, msg_pP->ue_id, pdn_cid, default_ebi, emm_context->_imsi64, &emm_context->_imsi,
-//        emm_context->esm_ctx.esm_proc_data, emm_context->esm_ctx.esm_proc_data->request_type);
-    OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
-  }else {
-    /*
-     * Send tracking area update accept message to the UE
-     */
-//    rc = esm_cn_wrapper_tracking_area_update_accept(emm_context);
-    OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc );
+
+  /*
+   * The UE context will already be updated by the S6a ULA.
+   * Get the APN configuration information.
+   * For each APN configuration, update the subscription and ctx-id information in the already established PDN contexts.
+   */
+  subscription_data_t *subscription_data = mme_ue_subscription_data_exists_imsi(&mme_app_desc.mme_ue_contexts, emm_context->_imsi64);
+  if(!subscription_data){
+    OAILOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - " "PDN configuration response not processed in EMM layer only due TAU. Ignoring (should be sent to ESM).. for id " MME_UE_S1AP_ID_FMT ". \n", msg_pP->ue_id);
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
   }
+  /**
+   * Update each existing PDN context with the received APN configuration.
+   * Remove all sessions of all PDN connections where no subscription is received implicitly.
+   * For each change in the pdn context, we have to traverse the tree from the beginning.
+   */
+  pdn_context_t * pdn_context = NULL, * pdn_context_safe = NULL;
+  bool changed = false;
+  /** Check if an APN configuration exists. */
+  apn_configuration_t * apn_configuration = NULL;
+  do {
+    RB_FOREACH_SAFE(pdn_context, PdnContexts, &ue_context->pdn_contexts, pdn_context_safe) {
+      /** Remove the pdn context. */
+      changed = false;
+      mme_app_select_apn(emm_context->_imsi64, pdn_context->apn_subscribed, &apn_configuration);
+      if(apn_configuration){
+        /**
+         * We found an APN configuration. Updating it. Might traverse the list new.
+         * We check if anything (ctxId) will be changed, that might alter the position of the element in the list.
+         */
+        OAILOG_INFO(LOG_NAS_EMM, "EMMCN-SAP  - " "Updating the created PDN context from the subscription profile for UE " MME_UE_S1AP_ID_FMT". \n", msg_pP->ue_id);
+        changed = pdn_context->context_identifier >= PDN_CONTEXT_IDENTIFIER_UNASSIGNED;
+        if(mme_app_update_pdn_context(ue_context->mme_ue_s1ap_id, pdn_context->context_identifier, pdn_context->default_ebi, pdn_context->apn_subscribed, apn_configuration) == RETURNerror){
+          OAILOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - " "Error while processing the created PDN context for APN \"%s\" for ue_id " MME_UE_S1AP_ID_FMT ". "
+              "Aborting TAU procedure. \n", bdata(pdn_context->apn_subscribed), msg_pP->ue_id);
+          // todo: better error handlign..
+          OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
+        }
+        if(changed)
+          break;
+        /** Nothing changed, continue processing the elements. */
+        continue;
+      }else {
+        /**
+         * Remove the PDN context and trigger a DSR.
+         * Set in the flags, that it should not be signaled back to the EMM layer. Might not need to traverse the list new.
+         */
+        OAILOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - " "PDN context for APN \"%s\" could not be found in subscription profile for UE "
+            "with ue_id " MME_UE_S1AP_ID_FMT " and IMSI " IMSI_64_FMT ". Triggering deactivation of PDN context. \n",
+            bdata(pdn_context->apn_subscribed), emm_context->ue_id, emm_context->_imsi64);
+        nas_itti_pdn_disconnect_req(emm_context->ue_id, pdn_context->default_ebi, PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED, false,
+            pdn_context->s_gw_address_s11_s4.address.ipv4_address, pdn_context->s_gw_teid_s11_s4, pdn_context->context_identifier);
+        /** No response is expected. */
+        // todo: handle the discrepance in the UE/eNB contexts..
+        mme_app_esm_delete_pdn_context(emm_context->ue_id, pdn_context->apn_subscribed, pdn_context->context_identifier, pdn_context->default_ebi);
+        OAILOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - " "Invalid PDN context removed successfully ue_id " MME_UE_S1AP_ID_FMT ". \n", msg_pP->ue_id);
+        continue;
+      }
+    }
+    OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - " "Completed the checking of PDN contexts for ue_id " MME_UE_S1AP_ID_FMT ". \n", msg_pP->ue_id);
+  } while(changed);
+
+  /*
+   * Send tracking area update accept message to the UE
+   */
+  rc = emm_cn_wrapper_tracking_area_update_accept(emm_context);
+  OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc );
+
 }
 
 //------------------------------------------------------------------------------
@@ -243,127 +296,6 @@ _emm_cn_pdn_config_fail (const emm_cn_pdn_config_fail_t * msg_pP){
   //    rc = emm_sap_send (&emm_sap);
   rc = emm_proc_tracking_area_update_reject(msg_pP->ue_id, EMM_CAUSE_ESM_FAILURE);
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
-}
-
-//------------------------------------------------------------------------------
-static int _emm_cn_pdn_connectivity_res (emm_cn_pdn_connectivity_resp_t * msg_pP)
-{
-  int                                     rc = RETURNerror;
-  struct emm_data_context_s              *emm_context = NULL;
-  struct pdn_context_s                   *pdn_context = NULL;
-  esm_proc_pdn_type_t                     esm_pdn_type = ESM_PDN_TYPE_IPV4;
-  ESM_msg                                 esm_msg = {.header = {0}};
-  EpsQualityOfService                     qos = {0};
-  bool                                    is_standalone = false;    // warning hardcoded
-  bool                                    triggered_by_ue = true;  // warning hardcoded
-//  esm_sap_t                               esm_sap = {0};
-
-  OAILOG_FUNC_IN (LOG_NAS_ESM);
-
-  //  clear_protocol_configuration_options(&msg_pP->pco); // todo: here or in the ITTI_FREE function
-  /** Only enter this method for standalone TAU Request case. */
-  if (!emm_context) {
-    OAILOG_ERROR (LOG_NAS_ESM, "EMMCN-SAP  - " "Failed to find UE associated to id " MME_UE_S1AP_ID_FMT "...\n", msg_pP->ue_id);
-    OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);
-  }
-  if (!is_nas_specific_procedure_tau_running(emm_context)){
-    OAILOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - " "PDN connectivity reject not processed in EMM layer only due TAU. Ignoring (should be sent to ESM).. for id " MME_UE_S1AP_ID_FMT ". \n", msg_pP->ue_id);
-    OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
-  }
-
-  // todo: update the UE/EMM context with the subscription data..
-  rc = emm_cn_wrapper_tracking_area_update_accept(emm_context);
-  /** We will set the UE into COMMON-PROCEDURE-INITIATED state inside this method. */
-  OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
-}
-
-//------------------------------------------------------------------------------
-static int
-_emm_cn_pdn_connectivity_fail (const emm_cn_pdn_connectivity_fail_t * msg)
-{
-//  OAILOG_FUNC_IN (LOG_NAS_ESM);
-//  int                                     rc = RETURNok;
-//  struct emm_data_context_s              *emm_context = NULL;
-//  ESM_msg                                 esm_msg = {.header = {0}};
-//  int                                     esm_cause;
-//  emm_context = emm_data_context_get (&_emm_data, msg->ue_id);
-//  if (emm_context == NULL) {
-//    OAILOG_ERROR (LOG_NAS_ESM, "EMMCN-SAP  - " "Failed to find UE associated to id " MME_UE_S1AP_ID_FMT "...\n", msg->ue_id);
-//    OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
-//  }
-//  memset (&esm_msg, 0, sizeof (ESM_msg));
-//
-//  // Map S11 cause to ESM cause
-//  switch (msg->cause) {
-//    case CAUSE_CONTEXT_NOT_FOUND:
-//      esm_cause = ESM_CAUSE_REQUEST_REJECTED_BY_GW;
-//      break;
-//    case CAUSE_INVALID_MESSAGE_FORMAT:
-//      esm_cause = ESM_CAUSE_REQUEST_REJECTED_BY_GW;
-//      break;
-//    case CAUSE_SERVICE_NOT_SUPPORTED:
-//      esm_cause = ESM_CAUSE_SERVICE_OPTION_NOT_SUPPORTED;
-//      break;
-//    case CAUSE_SYSTEM_FAILURE:
-//      esm_cause = ESM_CAUSE_NETWORK_FAILURE;
-//      break;
-//    case CAUSE_NO_RESOURCES_AVAILABLE:
-//      esm_cause = ESM_CAUSE_INSUFFICIENT_RESOURCES;
-//      break;
-//    case CAUSE_ALL_DYNAMIC_ADDRESSES_OCCUPIED:
-//      esm_cause = ESM_CAUSE_INSUFFICIENT_RESOURCES;
-//      break;
-//    default:
-//      esm_cause = ESM_CAUSE_REQUEST_REJECTED_BY_GW;
-//      break;
-//  }
-//
-//  if(is_nas_specific_procedure_attach_running(emm_context)){
-//    OAILOG_ERROR (LOG_NAS_ESM, "EMMCN-SAP  - " "Sending Attach/PDN Connectivity Reject message to id " MME_UE_S1AP_ID_FMT "...\n", msg->ue_id);
-//
-//    rc = esm_send_pdn_connectivity_reject (msg->pti, &esm_msg.pdn_connectivity_reject, esm_cause);
-//    /*
-//     * Encode the returned ESM response message
-//     */
-//    uint8_t                             esm_cn_sap_buffer[esm_cn_SAP_BUFFER_SIZE];
-//    int size = esm_msg_encode (&esm_msg, esm_cn_sap_buffer, esm_cn_SAP_BUFFER_SIZE);
-//    OAILOG_INFO (LOG_NAS_ESM, "ESM encoded MSG size %d\n", size);
-//
-//    if (size > 0) {
-//      nas_emm_attach_proc_t  *attach_proc = get_nas_specific_procedure_attach(emm_context);
-//      /*
-//       * Setup the ESM message container
-//       */
-//      if(attach_proc){
-//        /** Sending the PDN connection reject inside a Attach Reject to the UE. */
-//        attach_proc->esm_msg_out = blk2bstr(esm_cn_sap_buffer, size);
-//        rc = emm_proc_attach_reject (msg->ue_id, EMM_CAUSE_ESM_FAILURE);
-//      }else{
-//        // todo: send the pdn disconnect reject as a standalone message to the UE.
-//        // todo: must clean the created pdn_context elements (no bearers should exist).
-//      }
-//    }
-//  }else if (is_nas_specific_procedure_tau_running(emm_context)){
-//    OAILOG_ERROR (LOG_NAS_ESM, "EMMCN-SAP  - " "Sending TAU Reject message to id " MME_UE_S1AP_ID_FMT "..\n", msg->ue_id);
-//
-//    nas_emm_tau_proc_t  *tau_proc = get_nas_specific_procedure_tau(emm_context);
-//    rc = emm_proc_tracking_area_update_reject(msg->ue_id, EMM_CAUSE_ESM_FAILURE);
-//  }else{
-//    /** Forward the PDN Connectivity to the ESM layer. */
-//    OAILOG_DEBUG(LOG_NAS_ESM, "EMMCN-SAP  - " "Forwarding PDN Connectivity Failure for mmeUeS1apId " MME_UE_S1AP_ID_FMT " and enbId %d ..\n", msg->ue_id, msg->linked_ebi);
-//    esm_sap_t                               esm_sap = {0};
-//    esm_sap.primitive = ESM_PDN_CONNECTIVITY_REJ;
-//    esm_sap.ue_id = msg->ue_id;
-//    esm_sap.ctx = emm_context;
-//    esm_sap.recv = NULL;
-//    // todo: how to verify that esm proc is unique?!
-//    esm_sap.data.pdn_connect.linked_ebi = msg->linked_ebi; // pdn_context->default_ebi; /**< Default Bearer Id of default APN. */
-//// todo:   esm_sap.data.pdn_connect.cid = emm_context->esm_ctx.esm_proc_data->pdn_cid;
-//    esm_sap.data.pdn_connect.esm_cause = ESM_CAUSE_NETWORK_FAILURE;
-//    rc = esm_sap_send(&esm_sap);
-//    OAILOG_FUNC_RETURN(LOG_NAS_ESM, rc);
-//  }
-  OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);
 }
 
 //------------------------------------------------------------------------------
@@ -422,7 +354,6 @@ static int _emm_cn_context_res (const emm_cn_context_res_t * msg)
   }
 
   nas_ctx_req_proc_t * ctx_req_proc = get_nas_cn_procedure_ctx_req(emm_context);
-
   /** Update the context request procedure. */
   if (!ctx_req_proc) {
     OAILOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - " "Failed to find context request procedure associated to UE id " MME_UE_S1AP_ID_FMT "...\n", msg->ue_id);
@@ -450,7 +381,7 @@ static int _emm_cn_context_fail (const emm_cn_context_fail_t * msg)
    */
   emm_ctx = emm_data_context_get (&_emm_data, msg->ue_id);
   if (emm_ctx == NULL) {
-    OAILOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - " "Failed to find UE associated to id " MME_UE_S1AP_ID_FMT "...\n", msg->ue_id);
+    OAILOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - " "Failed to find UE associated to id " MME_UE_S1AP_ID_FMT " (S10 Ctx fail)...\n", msg->ue_id);
     /**
      * In this case, don't wait for the timer to remove the rest! Assume no timers exist.
      * Purge the rest of the UE context (MME_APP etc.).
@@ -481,11 +412,11 @@ int emm_cn_send (const emm_cn_t * msg)
   OAILOG_INFO (LOG_NAS_EMM, "EMMCN-SAP - Received primitive %s (%d)\n", _emm_cn_primitive_str[primitive - _EMMCN_START - 1], primitive);
 
   switch (primitive) {
-  case _EMMCN_AUTHENTICATION_PARAM_RES:
+  case EMMCN_AUTHENTICATION_PARAM_RES:
     rc = _emm_cn_authentication_res (msg->u.auth_res);
     break;
 
-  case _EMMCN_AUTHENTICATION_PARAM_FAIL:
+  case EMMCN_AUTHENTICATION_PARAM_FAIL:
     rc = _emm_cn_authentication_fail (msg->u.auth_fail);
     break;
 
@@ -499,6 +430,14 @@ int emm_cn_send (const emm_cn_t * msg)
 
   case EMMCN_SMC_PROC_FAIL:
     rc = _emm_cn_smc_fail (msg->u.smc_fail);
+    break;
+
+  case EMMCN_PDN_CONFIG_RES:
+    rc = _emm_cn_pdn_config_res(msg->u.pdn_cfg_res);
+    break;
+
+  case EMMCN_PDN_CONFIG_FAIL:
+    rc = _emm_cn_pdn_config_fail(msg->u.pdn_cfg_fail);
     break;
 
     /** S10 Context Response information. */

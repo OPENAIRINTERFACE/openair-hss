@@ -222,9 +222,9 @@ esm_proc_pdn_connectivity_request (
    * This will also allocate a bearer context (NULL bearer set).
    */
   pdn_context_t * pdn_context = NULL;
-  int rc = mme_app_esm_create_pdn_context(ue_id, apn_configuration, esm_proc_pdn_connectivity->subscribed_apn, apn_configuration->context_identifier, &pdn_context);
+  int rc = mme_app_esm_create_pdn_context(ue_id, apn_configuration, esm_proc_pdn_connectivity->subscribed_apn, apn_configuration->context_identifier, &apn_configuration->ambr, &pdn_context);
   if (rc != RETURNok) {
-    OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - Failed to create PDN connection for UE " MME_UE_S1AP_ID_FMT ", apn = \"%s\" (pti=%d).\n", ue_id, (char *)bdata(esm_proc_pdn_connectivity->subscribed_apn),
+    OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - Failed to create PDN connection for UE " MME_UE_S1AP_ID_FMT ", apn = \"%s\" (pti=%d).\n", ue_id, bdata(esm_proc_pdn_connectivity->subscribed_apn),
         esm_proc_pdn_connectivity->esm_base_proc.pti);
     /** No empty/garbage contexts. */
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_REQUEST_REJECTED_BY_GW);

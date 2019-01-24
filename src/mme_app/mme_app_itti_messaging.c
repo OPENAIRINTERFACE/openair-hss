@@ -267,7 +267,7 @@ mme_app_send_s11_create_session_req (
    * Default EBI
    */
   session_request_p->default_ebi = pdn_context->default_ebi;
-  /** Set the bearer contexts to be created. */
+  /** Set the bearer contexts to be created (incl. TFT). */
   mme_app_get_bearer_contexts_to_be_created(pdn_context, &session_request_p->bearer_contexts_to_be_created, BEARER_STATE_MME_CREATED);
 
   // todo: apn restrictions!
@@ -286,7 +286,7 @@ mme_app_send_s11_create_session_req (
   session_request_p->sender_fteid_for_cp.ipv4 = 1;
 
   //ue_context->mme_teid_s11 = session_request_p->sender_fteid_for_cp.teid;
-  pdn_context->s_gw_teid_s11_s4 = 0;
+  DevAssert(!pdn_context->s_gw_teid_s11_s4);
 
   memcpy (session_request_p->apn, pdn_context->apn_subscribed->data, blength(pdn_context->apn_subscribed));
   // todo: set the full apn name
@@ -511,7 +511,7 @@ int mme_app_remove_s10_tunnel_endpoint(teid_t local_teid, struct in_addr peer_ip
  * Cu
  */
 //------------------------------------------------------------------------------
-int mme_app_send_delete_session_request (struct ue_context_s * const ue_context_p, const ebi_t ebi, const struct in_addr saegw_s11_in_addr, const teid_t saegw_s11_teid, const bool noDelete)
+int mme_app_send_delete_session_request (struct ue_context_s * const ue_context_p, const ebi_t ebi, const struct in_addr saegw_s11_in_addr, const teid_t saegw_s11_teid, const bool noDelete, const uint8_t internal_flags)
 {
   MessageDef                             *message_p = NULL;
   int                                     rc = RETURNok;
@@ -523,6 +523,8 @@ int mme_app_send_delete_session_request (struct ue_context_s * const ue_context_
   S11_DELETE_SESSION_REQUEST (message_p).teid       = saegw_s11_teid;
   S11_DELETE_SESSION_REQUEST (message_p).lbi        = ebi; //default bearer
   S11_DELETE_SESSION_REQUEST (message_p).noDelete   = noDelete; //default bearer
+  S11_DELETE_SESSION_REQUEST (message_p).noDelete   = noDelete; //default bearer
+  S11_DELETE_SESSION_REQUEST (message_p).internal_flags = internal_flags;
 
   OAI_GCC_DIAG_OFF(pointer-to-int-cast);
   S11_DELETE_SESSION_REQUEST (message_p).sender_fteid_for_cp.teid = (teid_t) ue_context_p;
@@ -878,7 +880,6 @@ void mme_app_itti_nas_pdn_connectivity_response(mme_ue_s1ap_id_t ue_id, const eb
   MessageDef                             *message_p = NULL;
   int                                     rc = RETURNok;
   OAILOG_INFO (LOG_MME_APP, "Informing the NAS layer about the received CREATE_SESSION_REQUEST for UE " MME_UE_S1AP_ID_FMT ". \n", ue_id);
-  //uint8_t *keNB = NULL;
   message_p = itti_alloc_new_message (TASK_MME_APP, NAS_PDN_CONNECTIVITY_RSP);
   itti_nas_pdn_connectivity_rsp_t *nas_pdn_connectivity_rsp = &message_p->ittiMsg.nas_pdn_connectivity_rsp;
   nas_pdn_connectivity_rsp->ue_id = ue_id;
@@ -886,8 +887,8 @@ void mme_app_itti_nas_pdn_connectivity_response(mme_ue_s1ap_id_t ue_id, const eb
   nas_pdn_connectivity_rsp->esm_cause = (gtpv2c_cause_value == REQUEST_ACCEPTED || gtpv2c_cause_value == REQUEST_ACCEPTED_PARTIALLY) ?
       ESM_CAUSE_SUCCESS : ESM_CAUSE_NETWORK_FAILURE;
 
-  rc = itti_send_msg_to_task (TASK_NAS_ESM, INSTANCE_DEFAULT, message_p);
-  OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+  itti_send_msg_to_task (TASK_NAS_ESM, INSTANCE_DEFAULT, message_p);
+  OAILOG_FUNC_OUT(LOG_MME_APP);
 }
 
 //------------------------------------------------------------------------------

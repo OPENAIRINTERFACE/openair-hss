@@ -120,6 +120,9 @@ esm_cause_t esm_recv_modify_eps_bearer_context_accept(mme_ue_s1ap_id_t ue_id,
 esm_cause_t esm_recv_modify_eps_bearer_context_reject (mme_ue_s1ap_id_t ue_id,
     proc_tid_t pti, ebi_t ebi, const modify_eps_bearer_context_reject_msg * msg);
 
+esm_cause_t esm_recv_bearer_resource_modification (mme_ue_s1ap_id_t ue_id,
+  proc_tid_t pti, ebi_t ebi, const bearer_resource_modification_request_msg * const msg);
+
 esm_cause_t esm_recv_deactivate_eps_bearer_context_accept(mme_ue_s1ap_id_t ue_id,
     proc_tid_t pti, ebi_t ebi, const deactivate_eps_bearer_context_accept_msg *msg);
 

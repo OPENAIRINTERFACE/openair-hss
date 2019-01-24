@@ -48,6 +48,7 @@
 #define S1AP_E_RAB_MODIFY_RSP(mSGpTR)            (mSGpTR)->ittiMsg.s1ap_e_rab_modify_rsp
 #define S1AP_E_RAB_RELEASE_REQ(mSGpTR)           (mSGpTR)->ittiMsg.s1ap_e_rab_release_req
 #define S1AP_E_RAB_RELEASE_RSP(mSGpTR)           (mSGpTR)->ittiMsg.s1ap_e_rab_release_rsp
+#define S1AP_E_RAB_RELEASE_IND(mSGpTR)           (mSGpTR)->ittiMsg.s1ap_e_rab_release_ind
 
 #define S1AP_INITIAL_UE_MESSAGE(mSGpTR)          (mSGpTR)->ittiMsg.s1ap_initial_ue_message
 
@@ -279,6 +280,15 @@ typedef struct itti_s1ap_e_rab_release_rsp_s {
 //  e_rab_list_t        e_rab_failed_to_setup_list;
 
 } itti_s1ap_e_rab_release_rsp_t;
+
+typedef struct itti_s1ap_e_rab_release_ind_s {
+  mme_ue_s1ap_id_t    mme_ue_s1ap_id;
+  enb_ue_s1ap_id_t    enb_ue_s1ap_id;
+
+  // E-RAB Released List
+  e_rab_list_t                  e_rab_release_list;
+
+} itti_s1ap_e_rab_release_ind_t;
 
 
 // handover messaging

@@ -165,6 +165,14 @@ s1ap_mme_decode_initiating (
         *message_id = S1AP_HANDOVER_NOTIFY_LOG;
       }
       break;
+      /** Congestion messages. */
+      case S1ap_ProcedureCode_id_E_RABReleaseIndication: {
+        ret = s1ap_decode_s1ap_e_rabreleaseindicationies(&message->msg.s1ap_E_RABReleaseIndicationIEs, &initiating_p->value);
+        s1ap_xer_print_s1ap_e_rabreleaseindication(s1ap_xer__print2sp, message_string, message);
+        *message_id = S1AP_E_RABRELEASE_IND_LOG;
+      }
+      break;
+
     default: {
         OAILOG_ERROR (LOG_S1AP, "Unknown procedure ID (%d) for initiating message\n", (int)initiating_p->procedureCode);
         AssertFatal (0, "Unknown procedure ID (%d) for initiating message\n", (int)initiating_p->procedureCode);
@@ -381,15 +389,12 @@ int s1ap_free_mme_decode_pdu(
     return free_s1ap_uecontextreleasecomplete(&message->msg.s1ap_UEContextReleaseCompleteIEs);
   case S1AP_E_RABSETUP_RESPONSE_LOG:
     return free_s1ap_e_rabsetupresponse(&message->msg.s1ap_E_RABSetupResponseIEs);
-//    FREEMEM(message->msg.s1ap_E_RABSetupResponseIEs.e_RABSetupListBearerSURes.s1ap_E_RABSetupItemBearerSURes.array);
-//    message->msg.s1ap_E_RABSetupResponseIEs.e_RABSetupListBearerSURes.s1ap_E_RABSetupItemBearerSURes.array = 0;
-//    FREEMEM(message->msg.s1ap_E_RABSetupResponseIEs.e_RABFailedToSetupListBearerSURes.s1ap_E_RABItem.array);
-//    message->msg.s1ap_E_RABSetupResponseIEs.e_RABFailedToSetupListBearerSURes.s1ap_E_RABItem.array = 0;
-//    return result;
   case S1AP_E_RABMODIFY_RESPONSE_LOG:
     return free_s1ap_e_rabmodifyresponse(&message->msg.s1ap_E_RABModifyResponseIEs);
   case S1AP_E_RABRELEASE_RESPONSE_LOG:
     return free_s1ap_e_rabreleaseresponse(&message->msg.s1ap_E_RABReleaseResponseIEs);
+  case S1AP_E_RABRELEASE_IND_LOG:
+    return free_s1ap_e_rabreleaseindication(&message->msg.s1ap_E_RABReleaseIndicationIEs);
   case S1AP_INITIAL_CONTEXT_SETUP_FAILURE_LOG:
     return free_s1ap_initialcontextsetupfailure(&message->msg.s1ap_E_RABReleaseResponseIEs);
   case S1AP_INITIAL_CONTEXT_SETUP_LOG:

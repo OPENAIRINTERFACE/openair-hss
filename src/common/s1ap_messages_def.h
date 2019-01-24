@@ -58,6 +58,7 @@ MESSAGE_DEF(S1AP_UE_CONTEXT_RELEASE_LOG    , MESSAGE_PRIORITY_MED, IttiMsgText  
 MESSAGE_DEF(S1AP_E_RABSETUP_LOG             , MESSAGE_PRIORITY_MED, IttiMsgText                     , s1ap_e_rabsetup_log)
 MESSAGE_DEF(S1AP_E_RABMODIFY_LOG            , MESSAGE_PRIORITY_MED, IttiMsgText                     , s1ap_e_rabmodify_log)
 MESSAGE_DEF(S1AP_E_RABRELEASE_LOG           , MESSAGE_PRIORITY_MED, IttiMsgText                     , s1ap_e_rabrelease_log)
+MESSAGE_DEF(S1AP_E_RABRELEASE_IND_LOG       , MESSAGE_PRIORITY_MED, IttiMsgText                     , s1ap_e_rabrelease_ind_log)
 
 MESSAGE_DEF(S1AP_E_RABSETUP_RESPONSE_LOG    , MESSAGE_PRIORITY_MED, IttiMsgText                     , s1ap_e_rabsetup_response_log)
 MESSAGE_DEF(S1AP_E_RABMODIFY_RESPONSE_LOG   , MESSAGE_PRIORITY_MED, IttiMsgText                    , s1ap_e_rabmodify_response_log)
@@ -79,6 +80,7 @@ MESSAGE_DEF(S1AP_E_RAB_MODIFY_REQ           , MESSAGE_PRIORITY_MED, itti_s1ap_e_
 MESSAGE_DEF(S1AP_E_RAB_MODIFY_RSP           , MESSAGE_PRIORITY_MED, itti_s1ap_e_rab_modify_rsp_t  ,          s1ap_e_rab_modify_rsp)
 MESSAGE_DEF(S1AP_E_RAB_RELEASE_REQ          , MESSAGE_PRIORITY_MED, itti_s1ap_e_rab_release_req_t  ,         s1ap_e_rab_release_req)
 MESSAGE_DEF(S1AP_E_RAB_RELEASE_RSP          , MESSAGE_PRIORITY_MED, itti_s1ap_e_rab_release_rsp_t  ,         s1ap_e_rab_release_rsp)
+MESSAGE_DEF(S1AP_E_RAB_RELEASE_IND          , MESSAGE_PRIORITY_MED, itti_s1ap_e_rab_release_ind_t  ,         s1ap_e_rab_release_ind)
 
 MESSAGE_DEF(S1AP_ERROR_INDICATION           , MESSAGE_PRIORITY_MED, itti_s1ap_error_indication_t         ,  s1ap_error_indication)
 

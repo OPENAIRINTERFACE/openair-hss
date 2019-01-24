@@ -55,4 +55,10 @@ void mme_app_bearer_context_s1_release_enb_informations(bearer_context_t * const
  */
 int mme_app_modify_bearers(const mme_ue_s1ap_id_t mme_ue_s1ap_id, bearer_contexts_to_be_modified_t *bcs_to_be_modified);
 
+/*
+ * Set bearers as released (idle).
+ * todo: review idle mode..
+ */
+void mme_app_release_bearers(const mme_ue_s1ap_id_t mme_ue_s1ap_id, e_rab_list_t * e_rab_list, ebi_list_t * const ebi_list);
+
 #endif

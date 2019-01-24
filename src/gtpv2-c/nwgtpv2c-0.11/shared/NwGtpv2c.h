@@ -382,6 +382,7 @@ typedef struct nw_gtpv2c_ulp_entity_s{
 
 typedef struct nw_gtpv2c_udp_entity_s {
   nw_gtpv2c_udp_handle_t        hUdp;
+  uint16_t                      gtpv2cStandardPort;
   nw_rc_t (*udpDataReqCallback) ( NW_IN     nw_gtpv2c_udp_handle_t udpHandle,
                                 NW_IN     uint8_t* dataBuf,
                                 NW_IN     uint32_t dataSize,
@@ -564,6 +565,7 @@ nwGtpv2cSetLogLevel( NW_IN nw_gtpv2c_stack_handle_t hGtpcStackHandle,
  @param[in] hGtpcStackHandle : Stack handle
  @param[in] udpData : Pointer to received UDP data.
  @param[in] udpDataLen : Received data length.
+ @param[in] localPort : Received on local port.
  @param[in] dstPort : Received on port.
  @param[in] from : Received from peer information.
  @return NW_OK on success.
@@ -573,6 +575,7 @@ nw_rc_t
 nwGtpv2cProcessUdpReq( NW_IN nw_gtpv2c_stack_handle_t hGtpcStackHandle,
                        NW_IN uint8_t* udpData,
                        NW_IN uint32_t udpDataLen,
+                       NW_IN uint16_t localPort,
                        NW_IN uint16_t peerPort,
                        NW_IN struct in_addr *peerIP);
 

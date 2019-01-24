@@ -310,7 +310,6 @@ typedef struct nas_ctx_req_proc_s {
   nas_s10_context_t           nas_s10_context;
   /** Need to set it for multi-APN cases of Idle Mode TAU. */
   mme_ue_eps_pdn_connections_t  *pdn_connections;
-  uint8_t                     next_processed_pdn_connection;
   int                         nas_cause;
   fteid_t                     remote_mme_teid;
   struct nas_timer_s          timer_s10; // todo: necessary?
