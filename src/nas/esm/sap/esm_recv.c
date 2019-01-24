@@ -166,7 +166,7 @@ esm_recv_pdn_connectivity_request (
   ebi_t ebi,
   tai_t *visited_tai,
   const pdn_connectivity_request_msg * msg,
-  const ESM_msg * esm_rsp_msg)
+  ESM_msg * const esm_rsp_msg)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   esm_proc_pdn_request_t                  pdn_request_type = 0;
@@ -1024,6 +1024,56 @@ esm_recv_modify_eps_bearer_context_reject (
 
 /****************************************************************************
  **                                                                        **
+ ** Name:    esm_recv_bearer_resource_allocation()   **
+ **                                                                        **
+ ** Description: Processes Bearer Resource Allocation Request    **
+ **                                                                        **
+ ** Inputs:  ue_id:      UE local identifier                        **
+ **          pti:       Procedure transaction identity             **
+ **      ebi:       EPS bearer identity                        **
+ **      msg:       The received ESM message                   **
+ **      Others:    None                                       **
+ **                                                                        **
+ ** Outputs:     None                                                      **
+ **      Return:    ESM cause code whenever the processing of  **
+ **             the ESM message fail                       **
+ **      Others:    None                                       **
+ **                                                                        **
+ ***************************************************************************/
+esm_cause_t
+esm_recv_bearer_resource_allocation (
+  mme_ue_s1ap_id_t ue_id,
+  proc_tid_t pti,
+  ebi_t ebi,
+  const bearer_resource_allocation_request_msg* const msg,
+  ESM_msg * const esm_rsp_msg)
+{
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
+
+  /*
+   * Procedure transaction identity checking
+   */
+  if (esm_pt_is_reserved (pti)) {
+    /*
+     * 3GPP TS 24.301, section 7.3.1, case f
+     * * * * Reserved PTI value
+     */
+    OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Invalid PTI value (pti=%d)\n", pti);
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_PTI_VALUE);
+  }
+
+  // todo: Not checking any procedure..
+
+  /*
+   * Process the received BRM request.
+   * * * *  accepted by the UE
+   */
+  esm_proc_bearer_resource_allocation_request(ue_id, pti, ebi, &msg->trafficflowaggregate, esm_rsp_msg);
+  OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_SUCCESS);
+}
+
+/****************************************************************************
+ **                                                                        **
  ** Name:    esm_recv_bearer_resource_modification()   **
  **                                                                        **
  ** Description: Processes Bearer Resource Modification Request    **
@@ -1045,7 +1095,8 @@ esm_recv_bearer_resource_modification (
   mme_ue_s1ap_id_t ue_id,
   proc_tid_t pti,
   ebi_t ebi,
-  const bearer_resource_modification_request_msg * const msg)
+  const bearer_resource_modification_request_msg * const msg,
+  ESM_msg * const esm_rsp_msg)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
 
@@ -1072,7 +1123,7 @@ esm_recv_bearer_resource_modification (
    * Process the received BRM request.
    * * * *  accepted by the UE
    */
-//  esm_proc_bearer_resource_modification_request(ue_id, ebi, &msg->trafficflowaggregate, msg->esmcause);
+  esm_proc_bearer_resource_modification_request(ue_id, pti, ebi, &msg->trafficflowaggregate, msg->esmcause, esm_rsp_msg);
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_SUCCESS);
 }
 

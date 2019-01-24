@@ -208,4 +208,31 @@ esm_cause_t esm_proc_eps_bearer_context_deactivate_request (mme_ue_s1ap_id_t ue_
     ebi_list_t *ded_ebis,
     ESM_msg * esm_rsp_msg);
 
+/*
+ * --------------------------------------------------------------------------
+ *      EPS bearer context allocation procedure
+ * --------------------------------------------------------------------------
+ */
+esm_cause_t
+esm_proc_bearer_resource_allocation_request(
+  mme_ue_s1ap_id_t   ue_id,
+  const proc_tid_t   pti,
+  ebi_t              ebi,
+  const traffic_flow_aggregate_description_t * tft,
+  ESM_msg           * const esm_rsp_msg);
+
+/*
+ * --------------------------------------------------------------------------
+ *      EPS bearer context modification procedure
+ * --------------------------------------------------------------------------
+ */
+esm_cause_t
+esm_proc_bearer_resource_modification_request(
+  mme_ue_s1ap_id_t   ue_id,
+  const proc_tid_t   pti,
+  ebi_t              ebi,
+  const traffic_flow_aggregate_description_t * tft,
+  esm_cause_t          esm_cause_received,
+  ESM_msg            * const esm_rsp_msg);
+
 #endif /* __ESM_PROC_H__*/

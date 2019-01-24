@@ -91,7 +91,7 @@ esm_cause_t esm_recv_status(mme_ue_s1ap_id_t ue_id, proc_tid_t pti, ebi_t ebi,
  * ----------------------------
  */
 esm_cause_t esm_recv_pdn_connectivity_request(bool *is_attach, mme_ue_s1ap_id_t ue_id, const imsi_t *imsi, proc_tid_t pti, ebi_t ebi, tai_t *visited_tai,
-    const pdn_connectivity_request_msg *msg, const ESM_msg * esm_rsp_msg);
+    const pdn_connectivity_request_msg *msg, ESM_msg * const esm_rsp_msg);
 
 esm_cause_t esm_recv_information_response (bool *is_attach,mme_ue_s1ap_id_t ue_id, proc_tid_t pti,  ebi_t ebi,
     const esm_information_response_msg * msg);
@@ -120,8 +120,11 @@ esm_cause_t esm_recv_modify_eps_bearer_context_accept(mme_ue_s1ap_id_t ue_id,
 esm_cause_t esm_recv_modify_eps_bearer_context_reject (mme_ue_s1ap_id_t ue_id,
     proc_tid_t pti, ebi_t ebi, const modify_eps_bearer_context_reject_msg * msg);
 
-esm_cause_t esm_recv_bearer_resource_modification (mme_ue_s1ap_id_t ue_id,
-  proc_tid_t pti, ebi_t ebi, const bearer_resource_modification_request_msg * const msg);
+esm_recv_bearer_resource_allocation (mme_ue_s1ap_id_t ue_id,
+  proc_tid_t pti, ebi_t ebi, const bearer_resource_allocation_request_msg * const msg, ESM_msg * const esm_rsp_msg);
+
+esm_recv_bearer_resource_modification (mme_ue_s1ap_id_t ue_id,
+  proc_tid_t pti, ebi_t ebi, const bearer_resource_modification_request_msg * const msg, ESM_msg * const esm_rsp_msg);
 
 esm_cause_t esm_recv_deactivate_eps_bearer_context_accept(mme_ue_s1ap_id_t ue_id,
     proc_tid_t pti, ebi_t ebi, const deactivate_eps_bearer_context_accept_msg *msg);

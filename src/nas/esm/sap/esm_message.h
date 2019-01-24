@@ -120,4 +120,14 @@ void esm_send_modify_eps_bearer_context_request(pti_t pti, ebi_t ebi,
 void esm_send_deactivate_eps_bearer_context_request(pti_t pti, ebi_t ebi,
     ESM_msg * esm_rsp_msg, esm_cause_t esm_cause);
 
+int esm_send_bearer_resource_allocation_reject (
+  pti_t pti,
+  ESM_msg * esm_msg,
+  esm_cause_t esm_cause);
+
+int esm_send_bearer_resource_modification_reject (
+  pti_t pti,
+  ESM_msg * esm_msg,
+  esm_cause_t esm_cause);
+
 #endif /* __ESM_MESSAGES_H__*/
