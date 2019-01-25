@@ -1022,7 +1022,9 @@ int decode_traffic_flow_template_ie(traffic_flow_template_t *trafficflowtemplate
 void copy_traffic_flow_template (traffic_flow_template_t * const tft_dst, const traffic_flow_template_t * const tft_src);
 void clear_traffic_flow_template(traffic_flow_template_t * tft);
 void free_traffic_flow_template(traffic_flow_template_t ** tft);
-esm_cause_t verify_traffic_flow_template_syntactical(traffic_flow_template_t * tft, traffic_flow_template_t * tft_original);
+
+/** Verify a TFT received from the P-GW. */
+esm_cause_t verify_traffic_flow_template(traffic_flow_template_t * tft, traffic_flow_template_t * tft_original);
 
 //******************************************************************************
 // 10.5.7 GPRS Common information elements

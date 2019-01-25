@@ -188,7 +188,7 @@ mme_app_register_dedicated_bearer_context(const mme_ue_s1ap_id_t ue_id, const es
     OAILOG_FUNC_RETURN (LOG_MME_APP, ESM_CAUSE_SEMANTIC_ERROR_IN_THE_TFT_OPERATION);
   }
   DevAssert(!pBearerCtx->esm_ebr_context.tft);
-  esm_cause_t esm_cause = verify_traffic_flow_template_syntactical(bc_tbc->tft, pBearerCtx->esm_ebr_context.tft);
+  esm_cause_t esm_cause = verify_traffic_flow_template (bc_tbc->tft, pBearerCtx->esm_ebr_context.tft);
   if(esm_cause != ESM_CAUSE_SUCCESS){
     OAILOG_ERROR(LOG_NAS_EMM, "EMMCN-SAP  - " "EPS bearer context of CBR received for UE " MME_UE_S1AP_ID_FMT" could not be verified due erroneous TFT. EsmCause %d. \n",
         ue_id, pdn_cid, linked_ebi, esm_cause);
@@ -523,7 +523,7 @@ mme_app_esm_modify_bearer_context(mme_ue_s1ap_id_t ue_id, const ebi_t ebi, ebi_l
       OAILOG_FUNC_RETURN (LOG_MME_APP, ESM_CAUSE_SEMANTIC_ERROR_IN_THE_TFT_OPERATION);
     }
     /** Verify the TFT together with the original TFT. */
-    esm_cause_t esm_cause = verify_traffic_flow_template_syntactical(tft, bearer_context->esm_ebr_context.tft);
+    esm_cause_t esm_cause = verify_traffic_flow_template(tft, bearer_context->esm_ebr_context.tft);
     if(esm_cause != ESM_CAUSE_SUCCESS){
       OAILOG_ERROR(LOG_MME_APP, "EMMCN-SAP  - " "EPS bearer context of UBR received for UE " MME_UE_S1AP_ID_FMT" could not be verified due erroneous TFT. EsmCause %d. \n", ue_id, esm_cause);
       OAILOG_FUNC_RETURN (LOG_MME_APP, esm_cause);
@@ -592,7 +592,10 @@ mme_app_finalize_bearer_context(mme_ue_s1ap_id_t ue_id, const pdn_cid_t pdn_cid,
   bearer_context->esm_ebr_context.status = ESM_EBR_ACTIVE;
   /** Set the TFT, if exists. */
   if(tft){
-    mme_app_esm_bearer_context_finalize_tft(ue_id, bearer_context, tft);
+    esm_cause_t esm_cause = mme_app_esm_bearer_context_finalize_tft(ue_id, bearer_context, tft);
+    if(esm_cause != ESM_CAUSE_SUCCESS){
+      OAILOG_FUNC_RETURN (LOG_MME_APP, esm_cause);
+    }
     OAILOG_DEBUG(LOG_MME_APP, "Finalized the TFT of bearer (ebi=%d) for UE: " MME_UE_S1AP_ID_FMT ". \n", ue_id, bearer_context->ebi);
   }
   if(bearer_level_qos){
@@ -700,12 +703,126 @@ mme_app_release_bearer_context(mme_ue_s1ap_id_t ue_id, const pdn_cid_t *pdn_cid,
   OAILOG_FUNC_OUT(LOG_MME_APP);
 }
 
+//------------------------------------------------------------------------------
+esm_cause_t
+mme_app_validate_bearer_resource_modification(mme_ue_s1ap_id_t ue_id, ebi_t ebi, traffic_flow_aggregate_description_t ** tad_orig,
+    traffic_flow_aggregate_description_t *tad, flow_qos_t * flow_qos, ebi_t * linked_ebi, teid_t * mme_s11_teid, fteid_t * saegw_s11_fteid){
+  OAILOG_FUNC_IN (LOG_MME_APP);
+  pdn_context_t                       *pdn_context = NULL;
+  bearer_context_t                    *bearer_context = NULL;
+  ue_context_t                        *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, ue_id);
+  if(!ue_context){
+    OAILOG_ERROR (LOG_MME_APP, "No MME_APP UE context could be found for UE: " MME_UE_S1AP_ID_FMT ". \n", ue_id);
+    OAILOG_FUNC_RETURN(LOG_MME_APP, ESM_CAUSE_REQUEST_REJECTED_BY_GW);
+  }
+  if (ebi != EPS_BEARER_IDENTITY_UNASSIGNED) {
+    if ((ebi < ESM_EBI_MIN) || (ebi > ESM_EBI_MAX)) {
+      OAILOG_FUNC_RETURN(LOG_MME_APP, ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY);
+    }
+  } else{
+    OAILOG_FUNC_RETURN(LOG_MME_APP, ESM_CAUSE_INVALID_MANDATORY_INFO);
+  }
+
+  /** Get the bearer context from all session bearers. */
+  mme_app_get_session_bearer_context_from_all(ue_context, ebi, &bearer_context);
+  if(!bearer_context){
+    OAILOG_ERROR(LOG_MME_APP , "ESM-PROC  - Could not find bearer context from ebi %d for ue_id "MME_UE_S1AP_ID_FMT ". \n", ebi, ue_id);
+    OAILOG_FUNC_RETURN(LOG_MME_APP, ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY);
+  }
+
+  /** Find the PDN context. */
+  mme_app_get_pdn_context(ue_id, bearer_context->pdn_cx_id, bearer_context->linked_ebi, NULL, &pdn_context);
+  if(!pdn_context){
+    OAILOG_ERROR(LOG_MME_APP , "ESM-PROC  - Could not find pdn context from ebi %d for (linked_ebi=%d,pdn_cid=%d) for UE " MME_UE_S1AP_ID_FMT". \n", ebi, bearer_context->linked_ebi, bearer_context->pdn_cx_id, ue_id);
+    OAILOG_FUNC_RETURN(LOG_MME_APP, ESM_CAUSE_PDN_CONNECTION_DOES_NOT_EXIST);
+  }
+  *linked_ebi = pdn_context->default_ebi;
+  *mme_s11_teid = ue_context->mme_teid_s11;
+  saegw_s11_fteid->teid = pdn_context->s_gw_teid_s11_s4;
+  saegw_s11_fteid->ipv4 = 1;
+  saegw_s11_fteid->ipv4_address.s_addr = pdn_context->s_gw_address_s11_s4.address.ipv4_address.s_addr;
+  // todo: ipv6..
+
+  /*
+   * Check if it is a default ebi, if so release all the bearer contexts.
+   * If not, just release a single bearer context.
+   */
+  if (ebi == bearer_context->linked_ebi || ebi == ESM_SAP_ALL_EBI || (pdn_context && pdn_context->default_ebi == ebi)) {
+    OAILOG_FUNC_RETURN(LOG_MME_APP, ESM_CAUSE_REQUEST_REJECTED_BY_GW);
+  }
+
+  /** Check that the bearer has a TFT. */
+  if(!bearer_context->esm_ebr_context.tft){
+    OAILOG_ERROR(LOG_MME_APP , "ESM-PROC  - Bearer context to be modified (ebi=%d) does not contain  for (linked_ebi=%d,pdn_cid=%d) for ue_id" MME_UE_S1AP_ID_FMT". \n", ebi, bearer_context->linked_ebi, bearer_context->pdn_cx_id, ue_id);
+    OAILOG_FUNC_RETURN(LOG_MME_APP, ESM_CAUSE_REQUEST_REJECTED_BY_GW);
+  }
+  /*
+   * Verify the received TAD for any syntactical errors!
+   */
+  if(!((tad->tftoperationcode == TRAFFIC_FLOW_TEMPLATE_OPCODE_DELETE_PACKET_FILTERS_FROM_EXISTING_TFT )
+    || (tad->tftoperationcode != TRAFFIC_FLOW_TEMPLATE_OPCODE_NO_TFT_OPERATION))) {
+    OAILOG_ERROR(LOG_MME_APP , "ESM-PROC  - Received an invalid TFT operation (%d) for bearer (ebi=%d) pdn_cid=%d) for ue_id" MME_UE_S1AP_ID_FMT". \n",
+        tad->tftoperationcode, ebi, ue_id);
+    OAILOG_FUNC_RETURN(LOG_MME_APP, ESM_CAUSE_REQUEST_REJECTED_BY_GW);
+  }
+
+  /** Verify the TFT. */
+  esm_cause_t esm_cause = verify_traffic_flow_template(tad, bearer_context->esm_ebr_context.tft);
+  if(esm_cause != ESM_CAUSE_SUCCESS){
+    OAILOG_ERROR(LOG_MME_APP , "ESM-PROC  - ESM error (esm_cause=%d) for the to be modified bearer (ebi=%d) for ue_id " MME_UE_S1AP_ID_FMT". \n", esm_cause, ebi, ue_id);
+    /** If the operation code was DELETE from TFT, check if the bearer is rendered empty. */
+    if(tad->tftoperationcode != TRAFFIC_FLOW_TEMPLATE_OPCODE_DELETE_PACKET_FILTERS_FROM_EXISTING_TFT){
+      /** Return error. */
+      OAILOG_FUNC_RETURN(LOG_MME_APP, esm_cause);
+    }
+    if(esm_cause == ESM_CAUSE_SEMANTIC_ERROR_IN_THE_TFT_OPERATION) {
+      /**
+       * If a Semantic Error has been received, it means, that the current TFT has been rendered empty.
+       * Trigger a bearer removal. We don't care about packet filters being removed not in the original TFT.
+       */
+
+    } else if(esm_cause == ESM_CAUSE_SYNTACTICAL_ERROR_IN_THE_TFT_OPERATION) {
+      /*
+       * A packet filter is to be removed, which is not in the current TFT. Still forward it to the SAE-GW (with others).
+       * Save the TAD, to remove it from the UE, even it is not received by the SAE-GW.
+       */
+    } else {
+      DevAssert(0);
+    }
+  }
+  if(esm_cause != ESM_CAUSE_SUCCESS) {
+    OAILOG_ERROR(LOG_MME_APP, "EMMCN-SAP  - " "The received TAD for ue_id " MME_UE_S1AP_ID_FMT" (ebi=%d) resulted in esm_error=%d. Continuing to process it and ignoring the error.\n", ue_id, ebi, esm_cause);
+  }
+  esm_cause_t flow_esm_cause = ESM_CAUSE_SUCCESS;
+  if(flow_qos){
+    if((5 <= flow_qos->qci && flow_qos->qci <= 9) || (69 <= flow_qos->qci && flow_qos->qci <= 70) || (79 == flow_qos->qci)){
+      /** Return error, no modification on non-GBR is allowed. */
+      flow_esm_cause = ESM_CAUSE_EPS_QOS_NOT_ACCEPTED;
+    }
+    /** Verify the received gbr qos, if any is received. */
+    else if(validateEpsQosParameter(flow_qos->qci, PRE_EMPTION_VULNERABILITY_DISABLED, PRE_EMPTION_CAPABILITY_DISABLED, PRIORITY_LEVEL_MIN,
+        flow_qos->gbr.br_dl, flow_qos->gbr.br_ul, flow_qos->mbr.br_dl, flow_qos->mbr.br_ul) == RETURNerror){
+      OAILOG_ERROR(LOG_MME_APP, "EMMCN-SAP  - " "BRM-Request for UE " MME_UE_S1AP_ID_FMT" and ebi=%d could not be verified due erroneous EPS QoS.\n", ue_id, ebi);
+      flow_esm_cause = ESM_CAUSE_EPS_QOS_NOT_ACCEPTED;
+    }
+  }
+  /** If there is a flow-qos error, set the QCI to 0. */
+  if(!flow_qos || flow_qos != ESM_CAUSE_SUCCESS){
+    flow_qos->qci = 0;
+    if(tad->tftoperationcode == TRAFFIC_FLOW_TEMPLATE_OPCODE_NO_TFT_OPERATION){
+      OAILOG_ERROR(LOG_MME_APP, "EMMCN-SAP  - " "BRM Request for UE " MME_UE_S1AP_ID_FMT" and ebi=%d has no qos element and no TFT operation. Rejecting.\n", ue_id, ebi);
+      OAILOG_FUNC_RETURN(LOG_MME_APP, ESM_CAUSE_REQUEST_REJECTED_BY_GW);
+    }
+  }
+  OAILOG_FUNC_RETURN(LOG_MME_APP, esm_cause); /**< Return the TFT cause. */
+}
+
 /**
  * The bearer context should be locked when using this..
  */
 //------------------------------------------------------------------------------
 esm_cause_t
-mme_app_esm_bearer_context_finalize_tft(mme_ue_s1ap_id_t ue_id, bearer_context_t * bearer_context, traffic_flow_template_t * tft){
+static mme_app_esm_bearer_context_finalize_tft(mme_ue_s1ap_id_t ue_id, bearer_context_t * bearer_context, traffic_flow_template_t * tft){
   OAILOG_FUNC_IN (LOG_MME_APP);
   int                                     found = false;
 
@@ -809,8 +926,8 @@ mme_app_esm_bearer_context_finalize_tft(mme_ue_s1ap_id_t ue_id, bearer_context_t
        // todo: check that no other operation code is permitted, bearers without tft not permitted and default bearer may not have tft
        OAILOG_INFO (LOG_MME_APP, "ESM-PROC  - Received invalid TFT operation code %d for bearer with (ebi=%d) for UE with ueId " MME_UE_S1AP_ID_FMT ". \n",
            tft->tftoperationcode, bearer_context->ebi, ue_id);
-       OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+       OAILOG_FUNC_RETURN (LOG_MME_APP, ESM_CAUSE_SEMANTIC_ERROR_IN_THE_TFT_OPERATION);
     }
   }
-  OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
+  OAILOG_FUNC_RETURN (LOG_MME_APP, ESM_CAUSE_SUCCESS);
 }

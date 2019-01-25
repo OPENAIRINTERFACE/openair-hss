@@ -230,7 +230,7 @@ esm_proc_bearer_resource_modification_request(
   mme_ue_s1ap_id_t   ue_id,
   const proc_tid_t   pti,
   ebi_t              ebi,
-  const traffic_flow_aggregate_description_t * const tft,
+  const traffic_flow_aggregate_description_t * const tad,
   const EpsQualityOfService * const new_flow_qos,
   esm_cause_t          esm_cause_received);
 

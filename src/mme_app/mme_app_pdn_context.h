@@ -67,6 +67,9 @@ mme_app_esm_modify_bearer_context(mme_ue_s1ap_id_t ue_id, const ebi_t ebi, ebi_l
 
 void mme_app_get_pdn_context (mme_ue_s1ap_id_t ue_id, pdn_cid_t const context_id, ebi_t const default_ebi, bstring const subscribed_apn, pdn_context_t **pdn_ctx);
 
+esm_cause_t
+mme_app_validate_bearer_resource_modification(mme_ue_s1ap_id_t ue_id, ebi_t ebi, traffic_flow_aggregate_description_t ** tad_orig, traffic_flow_aggregate_description_t *tad, flow_qos_t * flow_qos, ebi_t * linked_ebi, teid_t * mme_s11_teid, fteid_t * saegw_s11_fteid);
+
 /*
  * Receive Bearer Context VOs to send in CSR/Handover Request, etc..
  * Will set bearer state, unless it is null.

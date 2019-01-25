@@ -164,7 +164,7 @@ esm_proc_bearer_resource_modification_request(
   mme_ue_s1ap_id_t   ue_id,
   const proc_tid_t   pti,
   ebi_t              ebi,
-  const traffic_flow_aggregate_description_t * const tft,
+  const traffic_flow_aggregate_description_t * const tad,
   const EpsQualityOfService * const new_flow_qos,
 
   esm_cause_t          esm_cause_received)
@@ -172,34 +172,66 @@ esm_proc_bearer_resource_modification_request(
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   ebi_t                                   linked_ebi = 0;
   esm_cause_t                             esm_cause = ESM_CAUSE_SUCCESS;
-  teid_t                                  mme_s11_teid = 0, saegw_s11_teid = 0;
-  struct in_addr                          saegw_s11_ipv4;
+  teid_t                                  mme_s11_teid = 0;
+  fteid_t                                 saegw_s11_fteid;
+  flow_qos_t                              flow_qos;
   OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Bearer Resource Modification Request " "(ebi=%d ue_id=" MME_UE_S1AP_ID_FMT ", pti=%d, esm_cause=%d)\n", ebi, ue_id, pti, esm_cause_received);
 
+  memset(&flow_qos, 0, sizeof(flow_qos_t));
+  memset(&saegw_s11_fteid, 0, sizeof(fteid_t));
+
   /** Process the message. */
-  /** Verify the received the bearer resource modification request. */
-//  todo: esm_cause = mme_app_validate_bearer_resource_modification(ue_id, ebi, &linked_ebi, tft, new_flow_qos, &pdn_context, &mme_s11_teid, &saegw_teid_s11, &saegw_s11_ipv4);
-  if(esm_cause != ESM_CAUSE_SUCCESS){
-    OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - Failed to verify the received Bearer Resource Modification Request " "(ebi=%d ue_id=" MME_UE_S1AP_ID_FMT ", pti=%d) with esm_cause %d. \n",
-        ebi, ue_id, pti, esm_cause);
-    OAILOG_FUNC_RETURN(LOG_MME_APP, esm_cause);
+  if(new_flow_qos && new_flow_qos->qci && (new_flow_qos->bitRatesPresent | new_flow_qos->bitRatesExtPresent)) {
+    if(new_flow_qos->bitRatesPresent){
+      flow_qos.gbr.br_dl = eps_qos_bit_rate_value(new_flow_qos->bitRates.guarBitRateForDL);
+      flow_qos.gbr.br_ul = eps_qos_bit_rate_value(new_flow_qos->bitRates.guarBitRateForUL);
+      flow_qos.mbr.br_dl = eps_qos_bit_rate_value(new_flow_qos->bitRates.maxBitRateForDL);
+      flow_qos.mbr.br_ul = eps_qos_bit_rate_value(new_flow_qos->bitRates.maxBitRateForUL);
+    }
+    if(new_flow_qos->bitRatesExtPresent){
+      flow_qos.gbr.br_dl += eps_qos_bit_rate_value(new_flow_qos->bitRates.guarBitRateForDL);
+      flow_qos.gbr.br_ul += eps_qos_bit_rate_value(new_flow_qos->bitRates.guarBitRateForUL);
+      flow_qos.mbr.br_dl += eps_qos_bit_rate_value(new_flow_qos->bitRates.maxBitRateForDL);
+      flow_qos.mbr.br_ul += eps_qos_bit_rate_value(new_flow_qos->bitRates.maxBitRateForUL);
+    }
+    flow_qos.qci = new_flow_qos->qci; /**< If not changed, must be the QCI of the current bearer. */
   }
-  OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Successfully verified the received Bearer Resource Modification Request " "(ebi=%d ue_id=" MME_UE_S1AP_ID_FMT ", pti=%d). \n",
-      ebi, ue_id, pti);
+
   void * brm_cb = NULL;
-  /** Create a new EPS bearer context procedure. */
   nas_esm_proc_bearer_context_t * esm_proc_bearer_context = _esm_proc_create_bearer_context_procedure(ue_id, pti, linked_ebi,
-      PDN_CONTEXT_IDENTIFIER_UNASSIGNED, ebi, INVALID_TEID, 0, 0, brm_cb);
+       PDN_CONTEXT_IDENTIFIER_UNASSIGNED, ebi, INVALID_TEID, 0, 0, brm_cb);
   if(!esm_proc_bearer_context) {
     OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - Error creating bearer context ESM procedure for the received Bearer Resource Modification Request " "(ebi=%d ue_id=" MME_UE_S1AP_ID_FMT ", pti=%d). \n",
         ebi, ue_id, pti);
     OAILOG_FUNC_RETURN(LOG_MME_APP, ESM_CAUSE_REQUEST_REJECTED_UNSPECIFIED);
   }
-  /** Don't start the timer on the ESM procedure. Trigger a Delete Bearer Command message. */
-  nas_itti_s11_bearer_resource_cmd(ue_id, pti, linked_ebi,
-      mme_s11_teid, saegw_s11_teid, &saegw_s11_ipv4,
-      ebi, tft, NULL);
 
+  /** Verify the received the bearer resource modification request. */
+  esm_cause = mme_app_validate_bearer_resource_modification(ue_id, ebi, &esm_proc_bearer_context->tft, &linked_ebi, tad, flow_qos.qci ? &flow_qos : NULL, &mme_s11_teid, &saegw_s11_fteid);
+  if(esm_cause != ESM_CAUSE_SUCCESS) {
+    /** If the error is due QoS, we have a valid TFT. And can continue to process it. */
+    if(esm_cause == ESM_CAUSE_SYNTACTICAL_ERROR_IN_THE_TFT_OPERATION){
+      DevAssert(!esm_proc_bearer_context->tft);
+      esm_proc_bearer_context->tft = calloc(1, sizeof(traffic_flow_template_t));
+      copy_traffic_flow_template(esm_proc_bearer_context->tft, tad);
+      OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - Since we have a valid TFT operation, ignoring the received flow-qos modification error" "(ebi=%d ue_id=" MME_UE_S1AP_ID_FMT ", pti=%d) with esm_cause %d. \n",
+          ebi, ue_id, pti, esm_cause);
+      /** continue. */
+    } else if (esm_cause == ESM_CAUSE_SEMANTIC_ERROR_IN_THE_TFT_OPERATION) {
+      /** Error, we rendered the bearer empty.. continue. */
+    }else {
+      /** Any other ESM causes should be rejected. */
+      _esm_proc_free_bearer_context_procedure(&esm_proc_bearer_context);
+      OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - Failed to verify the received Bearer Resource Modification Request " "(ebi=%d ue_id=" MME_UE_S1AP_ID_FMT ", pti=%d) with esm_cause %d. \n", ebi, ue_id, pti, esm_cause);
+      OAILOG_FUNC_RETURN(LOG_MME_APP, esm_cause);
+    }
+  }
+  OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Successfully verified the received Bearer Resource Modification Request " "(ebi=%d ue_id=" MME_UE_S1AP_ID_FMT ", pti=%d). \n",
+      ebi, ue_id, pti);
+  // todo: when the response is received.. check if a TAD is in the procedure, if so, use that one and not those in the GTPV2c message.
+  /** Don't start the timer on the ESM procedure. Trigger a Delete Bearer Command message. */
+  nas_itti_s11_bearer_resource_cmd(ue_id, pti, linked_ebi, mme_s11_teid, saegw_s11_fteid.teid, &saegw_s11_fteid.ipv4_address, ebi, tad,
+      esm_cause == ESM_CAUSE_SUCCESS ? &flow_qos: NULL);
   OAILOG_FUNC_RETURN(LOG_MME_APP, ESM_CAUSE_SUCCESS);
 }
 
