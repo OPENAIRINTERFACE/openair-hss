@@ -315,7 +315,7 @@ s10_pdn_connection_ie_set ( nw_gtpv2c_msg_handle_t * msg, void * arg){
   }
 
   /** EBI Set. */
-  gtpv2c_ebi_ie_set (msg, pdn_connection->linked_eps_bearer_id);
+  gtpv2c_ebi_ie_set (msg, pdn_connection->linked_eps_bearer_id, NW_GTPV2C_IE_INSTANCE_ZERO);
 
   /** Set the S5/S8 FTEID. */
   rc = nwGtpv2cMsgAddIeFteid (*msg, NW_GTPV2C_IE_INSTANCE_ZERO,
@@ -909,7 +909,7 @@ s10_bearer_context_to_create_ie_set (
    */
 
   /** Set the EBI. */
-  gtpv2c_ebi_ie_set (msg, bc_tbc->eps_bearer_id);
+  gtpv2c_ebi_ie_set (msg, bc_tbc->eps_bearer_id, NW_GTPV2C_IE_INSTANCE_ZERO);
   /** Set the Bearer Level QoS. */
   gtpv2c_bearer_qos_ie_set(msg, &bc_tbc->bearer_level_qos);
   /** Set the S1U-SGW FTEID. */
@@ -1021,7 +1021,7 @@ s10_bearer_context_to_be_modified_ie_set (
    */
   rc = nwGtpv2cMsgGroupedIeStart (*msg, NW_GTPV2C_IE_BEARER_CONTEXT, NW_GTPV2C_IE_INSTANCE_ZERO);
   DevAssert (NW_OK == rc);
-  gtpv2c_ebi_ie_set (msg, bearer_context->eps_bearer_id);
+  gtpv2c_ebi_ie_set (msg, bearer_context->eps_bearer_id, NW_GTPV2C_IE_INSTANCE_ZERO);
   gtpv2c_fteid_ie_set(msg, &bearer_context->s1_eNB_fteid, NW_GTPV2C_IE_INSTANCE_ZERO);
   /*
    * End section for grouped IE: bearer context to create
@@ -1169,7 +1169,7 @@ s10_bearer_context_created_ie_set (
    */
   rc = nwGtpv2cMsgGroupedIeStart (*msg, NW_GTPV2C_IE_BEARER_CONTEXT, NW_GTPV2C_IE_INSTANCE_ZERO);
   DevAssert (NW_OK == rc);
-  gtpv2c_ebi_ie_set (msg, bc_tbc->eps_bearer_id);
+  gtpv2c_ebi_ie_set (msg, bc_tbc->eps_bearer_id, NW_GTPV2C_IE_INSTANCE_ZERO);
   /** No need to set the TEIDs now.. maybe with indirect tunneling. */
 //  rc = nwGtpv2cMsgAddIeFteid (*msg, NW_GTPV2C_IE_INSTANCE_ZERO,
 //                              bearer->s1u_sgw_fteid.interface_type,

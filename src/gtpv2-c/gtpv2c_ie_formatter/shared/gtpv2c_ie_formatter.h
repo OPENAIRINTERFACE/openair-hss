@@ -68,7 +68,7 @@ int gtpv2c_paa_ie_set(nw_gtpv2c_msg_handle_t *msg, const paa_t *paa);
  */
 nw_rc_t gtpv2c_ebi_ie_get(uint8_t ieType, uint16_t ieLength, uint8_t ieInstance, uint8_t *ieValue, void *arg);
 
-int gtpv2c_ebi_ie_set(nw_gtpv2c_msg_handle_t *msg, const unsigned ebi);
+int gtpv2c_ebi_ie_set(nw_gtpv2c_msg_handle_t *msg, const unsigned ebi, const uint8_t   instance);
 
 /* traffic flow template */
 nw_rc_t gtpv2c_tft_ie_get (uint8_t ieType, uint16_t ieLength, uint8_t ieInstance, uint8_t * ieValue, void *arg);
@@ -91,6 +91,12 @@ gtpv2c_ambr_ie_get (
  */
 nw_rc_t gtpv2c_bearer_qos_ie_get (uint8_t ieType, uint16_t ieLength, uint8_t ieInstance, uint8_t * ieValue, void *arg);
 int gtpv2c_bearer_qos_ie_set(nw_gtpv2c_msg_handle_t *msg, const bearer_qos_t *bearer_qos);
+
+/* Flow Qos Information Element
+ * 3GPP TS 29.274 #8.16
+ */
+nw_rc_t gtpv2c_flow_qos_ie_get (uint8_t ieType, uint16_t ieLength, uint8_t ieInstance, uint8_t * ieValue, void *arg);
+int gtpv2c_flow_qos_ie_set(nw_gtpv2c_msg_handle_t *msg, const flow_qos_t *flow_qos);
 
 /* Target Identification Information Element
  * 3GPP TS 29.274 #8.51

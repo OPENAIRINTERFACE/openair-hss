@@ -170,8 +170,10 @@ nas_esm_proc_bearer_context_t* mme_app_nas_esm_create_bearer_context_procedure(m
   esm_proc_bearer_context->esm_base_proc.pti   = pti;
   esm_proc_bearer_context->esm_base_proc.type  = ESM_PROC_EPS_BEARER_CONTEXT;
   /* Set the timeout directly. Set the callback argument as the ue_id. */
-  esm_proc_bearer_context->esm_base_proc.esm_proc_timer.id = nas_esm_timer_start(timeout_sec, timeout_usec, (void*)&esm_proc_bearer_context->esm_base_proc);
-  esm_proc_bearer_context->esm_base_proc.timeout_notif = timeout_notif;
+  if(timeout_sec || timeout_usec){
+    esm_proc_bearer_context->esm_base_proc.esm_proc_timer.id = nas_esm_timer_start(timeout_sec, timeout_usec, (void*)&esm_proc_bearer_context->esm_base_proc);
+    esm_proc_bearer_context->esm_base_proc.timeout_notif = timeout_notif;
+  }
 
   /** Initialize the of the procedure. */
   if (!ue_context->esm_procedures.bearer_context_procedures) {

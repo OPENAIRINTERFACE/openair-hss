@@ -99,6 +99,10 @@ int gtpv2c_bearer_context_ebi_only_ie_set ( nw_gtpv2c_msg_handle_t * const msg, 
 int gtpv2c_bearer_context_to_be_modified_within_modify_bearer_request_ie_set (nw_gtpv2c_msg_handle_t * msg, const bearer_context_to_be_modified_t * bearer_context);
 nw_rc_t gtpv2c_bearer_context_to_be_modified_within_modify_bearer_request_ie_get(uint8_t ieType, uint16_t ieLength, uint8_t ieInstance, uint8_t *ieValue, void *arg);
 
+int gtpv2c_bearer_context_to_be_removed_within_modify_bearer_request_ie_set (nw_gtpv2c_msg_handle_t * msg, const bearer_context_to_be_removed_t * bearer_context);
+nw_rc_t gtpv2c_bearer_context_to_be_removed_within_modify_bearer_request_ie_get(uint8_t ieType, uint16_t ieLength, uint8_t ieInstance, uint8_t *ieValue, void *arg);
+
+nw_rc_t gtpv2c_pti_ie_set ( nw_gtpv2c_msg_handle_t * msg, const pti_t pti, const uint8_t ieInstance);
 nw_rc_t gtpv2c_pti_ie_get (uint8_t ieType, uint16_t ieLength, uint8_t ieInstance, uint8_t * ieValue, void *arg);
 
 nw_rc_t gtpv2c_ebi_ie_get_list (uint8_t ieType, uint16_t ieLength, uint8_t ieInstance, uint8_t * ieValue, void *arg);
@@ -110,6 +114,9 @@ nw_rc_t gtpv2c_bearer_context_created_ie_get(uint8_t ieType, uint16_t ieLength, 
 nw_rc_t gtpv2c_bearer_context_modified_ie_get(uint8_t ieType, uint16_t ieLength, uint8_t ieInstance, uint8_t *ieValue, void *arg);
 
 int gtpv2c_bearer_context_created_ie_set(nw_gtpv2c_msg_handle_t *msg, const bearer_context_created_t * const bearer);
+
+nw_rc_t gtpv2c_bearer_context_marked_for_removal_ie_get(uint8_t ieType, uint16_t ieLength, uint8_t ieInstance, uint8_t *ieValue, void *arg);
+int gtpv2c_bearer_context_marked_for_removal_ie_set(nw_gtpv2c_msg_handle_t *msg, const bearer_context_marked_for_removal_t * const bearer);
 
 /* Serving Network Information Element
  * 3GPP TS 29.274 #8.18

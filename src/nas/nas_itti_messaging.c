@@ -438,6 +438,44 @@ void nas_itti_auth_info_req(
 }
 
 //------------------------------------------------------------------------------
+void nas_itti_s11_bearer_resource_cmd (
+  const mme_ue_s1ap_id_t ue_idP,
+  const pti_t            pti,
+  const ebi_t            linked_ebi,
+  const teid_t           local_teid,
+  const teid_t           peer_teid,
+  const struct in_addr  *saegw_s11_ipv4,
+  const ebi_t                    ebi,
+  const traffic_flow_template_t * const tad,
+  const flow_qos_t              * const flow_qos)
+{
+  OAILOG_FUNC_IN(LOG_NAS);
+  MessageDef                             *message_p = NULL;
+  itti_s11_bearer_resource_command_t     *bearer_resource_cmd = NULL;
+
+  message_p = itti_alloc_new_message (TASK_NAS_EMM, S11_BEARER_RESOURCE_COMMAND);
+  bearer_resource_cmd = &message_p->ittiMsg.s11_bearer_resource_command;
+  bearer_resource_cmd->pti = pti;
+  bearer_resource_cmd->linked_ebi = linked_ebi;
+
+  bearer_resource_cmd->ebi = ebi;
+  copy_traffic_flow_template(&bearer_resource_cmd->tad, &tad);
+
+  if(flow_qos && flow_qos->qci){
+    memcpy(&bearer_resource_cmd->flow_qos, flow_qos, sizeof(flow_qos_t));
+  }
+
+  bearer_resource_cmd->local_teid = local_teid;
+  bearer_resource_cmd->teid       = peer_teid;
+  bearer_resource_cmd->peer_ip.s_addr = saegw_s11_ipv4->s_addr;
+
+  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_S6A_MME, NULL, 0, "0 S11_BEARER_RESOURCE_CMD LOCAL_TEID "TEID_FMT" PEER_TEID "TEID_FMT" ", local_teid, peer_teid);
+  itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
+
+  OAILOG_FUNC_OUT(LOG_NAS);
+}
+
+//------------------------------------------------------------------------------
 void nas_itti_establish_cnf(
   const mme_ue_s1ap_id_t ue_idP,
   const nas_error_code_t error_codeP,

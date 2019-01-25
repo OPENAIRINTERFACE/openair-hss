@@ -159,8 +159,7 @@ esm_proc_bearer_resource_allocation_request(
   mme_ue_s1ap_id_t   ue_id,
   const proc_tid_t   pti,
   ebi_t              ebi,
-  const traffic_flow_aggregate_description_t * tft,
-  ESM_msg           * const esm_rsp_msg)
+  const traffic_flow_aggregate_description_t * const tft)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   ebi_t                                   ded_ebi = 0;
@@ -168,15 +167,9 @@ esm_proc_bearer_resource_allocation_request(
   esm_cause_t                             esm_cause = ESM_CAUSE_SUCCESS;
   OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Bearer Resource Modification Request " "(ebi=%d ue_id=" MME_UE_S1AP_ID_FMT ", pti=%d)\n", ebi, ue_id, pti);
 
-
   OAILOG_ERROR (LOG_NAS_ESM , "ESM-SAP   - Not handling any UE triggered Bearer Resource Allocation messages (ue_id=" MME_UE_S1AP_ID_FMT "). \n", ue_id);
 
-  esm_send_bearer_resource_allocation_reject (
-      pti,
-      esm_rsp_msg,
-      ESM_CAUSE_MESSAGE_TYPE_NOT_IMPLEMENTED);
-
-  OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_SUCCESS);
+  OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_MESSAGE_TYPE_NOT_IMPLEMENTED);
 }
 
 /****************************************************************************/

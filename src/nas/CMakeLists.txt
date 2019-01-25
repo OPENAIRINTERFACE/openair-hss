@@ -204,6 +204,8 @@ set(libnas_mme_emm_sap_OBJS
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/esm)
 set (libnas_mme_esm_OBJS
+    ${CMAKE_CURRENT_SOURCE_DIR}/esm/BearerResourceAllocation.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/esm/BearerResourceModification.c
     ${CMAKE_CURRENT_SOURCE_DIR}/esm/DedicatedEpsBearerContextActivation.c
     ${CMAKE_CURRENT_SOURCE_DIR}/esm/DefaultEpsBearerContextActivation.c
     ${CMAKE_CURRENT_SOURCE_DIR}/esm/EpsBearerContextDeactivation.c

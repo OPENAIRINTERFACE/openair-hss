@@ -344,7 +344,7 @@ s11_sgw_handle_create_bearer_request (
 
  // TODO   pti_t                      pti; ///< C: This IE shall be sent on the S5/S8 and S4/S11 interfaces
 
-  gtpv2c_ebi_ie_set (&(ulp_req.hMsg), (unsigned)request_p->linked_eps_bearer_id);
+  gtpv2c_ebi_ie_set (&(ulp_req.hMsg), (unsigned)request_p->linked_eps_bearer_id, NW_GTPV2C_IE_INSTANCE_ZERO);
 
   if (request_p->pco.num_protocol_or_container_id) {
     rc = gtpv2c_pco_ie_set (&(ulp_req.hMsg), &request_p->pco);

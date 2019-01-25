@@ -254,6 +254,11 @@ s11_mme_modify_bearer_request (
     DevAssert (NW_OK == rc);
   }
 
+  for (int i=0; i < req_p->bearer_contexts_to_be_removed.num_bearer_context; i++) {
+    rc = gtpv2c_bearer_context_to_be_removed_within_modify_bearer_request_ie_set (&(ulp_req.hMsg), & req_p->bearer_contexts_to_be_removed.bearer_contexts[i]);
+    DevAssert (NW_OK == rc);
+  }
+
   MSC_LOG_TX_MESSAGE (MSC_S11_MME, MSC_SGW, NULL, 0, "0 MODIFY_BEARER_REQUEST local S11 teid " TEID_FMT " num bearers ctx %u",
     req_p->local_teid, req_p->bearer_contexts_to_be_modified.num_bearer_context);
 
@@ -309,7 +314,13 @@ s11_mme_handle_modify_bearer_response (
       gtpv2c_bearer_context_modified_ie_get, &resp_p->bearer_contexts_modified);
   DevAssert (NW_OK == rc);
 
-  // todo: BC's marked for removal
+  /*
+   * Bearer Contexts Marked For Removal IE.
+   * todo: we only process everything we marked locally. Currently disregardign this element
+   */
+  rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_BEARER_CONTEXT, NW_GTPV2C_IE_INSTANCE_ONE, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
+      gtpv2c_bearer_context_marked_for_removal_ie_get, &resp_p->bearer_contexts_marked_for_removal);
+
   /*
    * Run the parser
    */
@@ -351,6 +362,8 @@ s11_mme_delete_bearer_command(
   DevAssert (cmd_p );
   memset (&ulp_req, 0, sizeof (nw_gtpv2c_ulp_api_t));
   ulp_req.apiType = NW_GTPV2C_ULP_API_INITIAL_REQ;
+  ulp_req.apiType |= NW_GTPV2C_ULP_API_FLAG_IS_COMMAND_MESSAGE;
+
   /*
    * Prepare a new Delete Session Request msg
    */
@@ -373,6 +386,62 @@ s11_mme_delete_bearer_command(
     rc = gtpv2c_bearer_context_ebi_only_ie_set (&(ulp_req.hMsg), cmd_p->ebi_list.ebis[num_ebi]);
     DevAssert (NW_OK == rc);
   }
+
+  rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
+  DevAssert (NW_OK == rc);
+  MSC_LOG_TX_MESSAGE (MSC_S11_MME, MSC_SGW, NULL, 0, "0 DELETE_BEARER_COMMAND local S11 teid " TEID_FMT " ", cmd_p->local_teid);
+
+  return RETURNok;
+}
+
+//------------------------------------------------------------------------------
+int
+s11_mme_bearer_resource_command(
+  nw_gtpv2c_stack_handle_t * stack_p,
+  itti_s11_bearer_resource_command_t * cmd_p)
+{
+  nw_gtpv2c_ulp_api_t                       ulp_req;
+  nw_rc_t                                   rc;
+
+  DevAssert (stack_p );
+  DevAssert (cmd_p );
+  memset (&ulp_req, 0, sizeof (nw_gtpv2c_ulp_api_t));
+  ulp_req.apiType = NW_GTPV2C_ULP_API_INITIAL_REQ;
+  ulp_req.apiType |= NW_GTPV2C_ULP_API_FLAG_IS_COMMAND_MESSAGE;
+
+  /*
+   * Prepare a new Delete Session Request msg
+   */
+  rc = nwGtpv2cMsgNew (*stack_p, true, NW_GTP_BEARER_RESOURCE_CMD, cmd_p->teid, 0, &(ulp_req.hMsg));
+  ulp_req.u_api_info.initialReqInfo.peerIp = cmd_p->peer_ip;
+  ulp_req.u_api_info.initialReqInfo.teidLocal = cmd_p->local_teid;
+
+  hashtable_rc_t hash_rc = hashtable_ts_get(s11_mme_teid_2_gtv2c_teid_handle,
+      (hash_key_t) ulp_req.u_api_info.initialReqInfo.teidLocal,
+      (void **)(uintptr_t)&ulp_req.u_api_info.initialReqInfo.hTunnel);
+
+  if (HASH_TABLE_OK != hash_rc) {
+    OAILOG_WARNING (LOG_S11, "Could not get GTPv2-C hTunnel for local teid %X\n", ulp_req.u_api_info.initialReqInfo.teidLocal);
+    return RETURNerror;
+  }
+
+  /*
+   * Check if a Flow QoS exists, if so add it.
+   */
+  if(cmd_p->flow_qos.qci){
+    rc = gtpv2c_bearer_qos_ie_set(&(ulp_req.hMsg), &cmd_p->flow_qos);
+  }
+
+  /** Set the linked ebi and the ebi to be modified. */
+  gtpv2c_ebi_ie_set(&(ulp_req.hMsg), cmd_p->ebi, NW_GTPV2C_IE_INSTANCE_ZERO);
+
+  gtpv2c_pti_ie_set(&(ulp_req.hMsg), cmd_p->pti, NW_GTPV2C_IE_INSTANCE_ONE);
+
+  gtpv2c_ebi_ie_set(&(ulp_req.hMsg), cmd_p->linked_ebi, NW_GTPV2C_IE_INSTANCE_ONE);
+  /*
+   * Set the TAD.
+   */
+  gtpv2c_tft_ie_set(&(ulp_req.hMsg), (traffic_flow_template_t*)&cmd_p->tad);
 
   rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
   DevAssert (NW_OK == rc);
@@ -772,7 +841,7 @@ s11_mme_delete_bearer_response (
   gtpv2c_cause_ie_set (&(ulp_req.hMsg), &cause);
 
   if(response_p->linked_eps_bearer_id)
-    gtpv2c_ebi_ie_set (&(ulp_req.hMsg), (unsigned)response_p->linked_eps_bearer_id);
+    gtpv2c_ebi_ie_set (&(ulp_req.hMsg), (unsigned)response_p->linked_eps_bearer_id, NW_GTPV2C_IE_INSTANCE_ZERO);
 
   for (int i=0; i < response_p->bearer_contexts.num_bearer_context; i++) {
     rc = gtpv2c_bearer_context_within_delete_bearer_response_ie_set (&(ulp_req.hMsg), &response_p->bearer_contexts.bearer_contexts[i]);

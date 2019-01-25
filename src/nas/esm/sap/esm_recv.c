@@ -1045,8 +1045,7 @@ esm_recv_bearer_resource_allocation (
   mme_ue_s1ap_id_t ue_id,
   proc_tid_t pti,
   ebi_t ebi,
-  const bearer_resource_allocation_request_msg* const msg,
-  ESM_msg * const esm_rsp_msg)
+  const bearer_resource_allocation_request_msg* const msg)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
 
@@ -1062,14 +1061,12 @@ esm_recv_bearer_resource_allocation (
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_PTI_VALUE);
   }
 
-  // todo: Not checking any procedure..
-
   /*
    * Process the received BRM request.
    * * * *  accepted by the UE
    */
-  esm_proc_bearer_resource_allocation_request(ue_id, pti, ebi, &msg->trafficflowaggregate, esm_rsp_msg);
-  OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_SUCCESS);
+  esm_cause_t esm_cause = esm_proc_bearer_resource_allocation_request(ue_id, pti, ebi, &msg->trafficflowaggregate);
+  OAILOG_FUNC_RETURN (LOG_NAS_ESM, esm_cause);
 }
 
 /****************************************************************************
@@ -1095,8 +1092,7 @@ esm_recv_bearer_resource_modification (
   mme_ue_s1ap_id_t ue_id,
   proc_tid_t pti,
   ebi_t ebi,
-  const bearer_resource_modification_request_msg * const msg,
-  ESM_msg * const esm_rsp_msg)
+  const bearer_resource_modification_request_msg * const msg)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
 
@@ -1112,19 +1108,28 @@ esm_recv_bearer_resource_modification (
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_PTI_VALUE);
   }
 
-  nas_esm_proc_bearer_context_t * esm_proc_bearer_context = _esm_proc_get_bearer_context_procedure(ue_id, pti, ebi);
+  nas_esm_proc_bearer_context_t * esm_proc_bearer_context = _esm_proc_get_bearer_context_procedure(ue_id, PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED, ebi);
   if(esm_proc_bearer_context){
-    OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - An EPS bearer context procedure exists for pti=%d" "BRM not accepted by the UE (ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d, cause=%d)\n",
-        pti, ue_id, ebi, msg->esmcause);
-    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_COLLISION_WITH_NETWORK_INITIATED_REQUEST);
+    /** If there is a procedure already existing, check the PTI. */
+    if(esm_proc_bearer_context->esm_base_proc.pti == pti){
+      /** Ignore the currently received message, no matter if there is a change in the message or not. */
+      OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Ignoring received Bearer Resource Modification Request " "(ebi=%d ue_id=" MME_UE_S1AP_ID_FMT ", pti=%d), "
+          "since there already is a ESM procedure for this. \n", ebi, ue_id, pti);
+      OAILOG_FUNC_RETURN(LOG_MME_APP, ESM_CAUSE_SUCCESS);
+    } else {
+      /** Reject the newly received procedure and wait the old one to complete. */
+      OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Rejecting received Bearer Resource Modification Request " "(ebi=%d ue_id=" MME_UE_S1AP_ID_FMT ", pti=%d), "
+          "because there already is a ESM procedure for this bearer with pti=%d. \n", ebi, ue_id, pti, esm_proc_bearer_context->esm_base_proc.pti);
+      OAILOG_FUNC_RETURN(LOG_MME_APP, ESM_CAUSE_COLLISION_WITH_NETWORK_INITIATED_REQUEST);
+    }
   }
 
   /*
    * Process the received BRM request.
    * * * *  accepted by the UE
    */
-  esm_proc_bearer_resource_modification_request(ue_id, pti, ebi, &msg->trafficflowaggregate, msg->esmcause, esm_rsp_msg);
-  OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_SUCCESS);
+  esm_cause_t esm_cause = esm_proc_bearer_resource_modification_request(ue_id, pti, ebi, &msg->trafficflowaggregate, &msg->requiredtrafficflowqos, msg->esmcause);
+  OAILOG_FUNC_RETURN (LOG_NAS_ESM, esm_cause);
 }
 
 

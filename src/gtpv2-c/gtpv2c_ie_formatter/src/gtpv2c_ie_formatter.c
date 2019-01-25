@@ -393,13 +393,14 @@ gtpv2c_paa_ie_set (
 int
 gtpv2c_ebi_ie_set (
   nw_gtpv2c_msg_handle_t * msg,
-  const unsigned ebi)
+  const unsigned ebi,
+  const uint8_t   instance)
 {
   nw_rc_t                                   rc;
   uint8_t                                 value = 0;
 
   value = ebi & 0x0F;
-  rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_EBI, 1, 0, &value);
+  rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_EBI, 1, instance, &value);
   DevAssert (NW_OK == rc);
   return RETURNok;
 }
@@ -571,6 +572,103 @@ gtpv2c_bearer_qos_ie_set (
   value[index++] = (bearer_qos->gbr.br_dl & 0x00000000FF);
 
   rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_BEARER_LEVEL_QOS, 22, 0, value);
+  DevAssert (NW_OK == rc);
+  return RETURNok;
+}
+
+//------------------------------------------------------------------------------
+nw_rc_t
+gtpv2c_flow_qos_ie_get (
+  uint8_t ieType,
+  uint16_t ieLength,
+  uint8_t ieInstance,
+  uint8_t * ieValue,
+  void *arg)
+{
+  flow_qos_t                       *flow_qos = (flow_qos_t *) arg;
+
+  DevAssert (flow_qos );
+
+  if (21 <= ieLength) {
+    int index = 0;
+    flow_qos->qci = ieValue[index++];
+
+    flow_qos->mbr.br_ul = ((bit_rate_t)ieValue[index++]) << 32;
+    flow_qos->mbr.br_ul |= (((bit_rate_t)ieValue[index++]) << 24);
+    flow_qos->mbr.br_ul |= (((bit_rate_t)ieValue[index++]) << 16);
+    flow_qos->mbr.br_ul |= (((bit_rate_t)ieValue[index++]) << 8);
+    flow_qos->mbr.br_ul |= (bit_rate_t)ieValue[index++];
+
+    flow_qos->mbr.br_dl = ((bit_rate_t)ieValue[index++]) << 32;
+    flow_qos->mbr.br_dl |= (((bit_rate_t)ieValue[index++]) << 24);
+    flow_qos->mbr.br_dl |= (((bit_rate_t)ieValue[index++]) << 16);
+    flow_qos->mbr.br_dl |= (((bit_rate_t)ieValue[index++]) << 8);
+    flow_qos->mbr.br_dl |= (bit_rate_t)ieValue[index++];
+
+    flow_qos->gbr.br_ul = ((bit_rate_t)ieValue[index++]) << 32;
+    flow_qos->gbr.br_ul |= (((bit_rate_t)ieValue[index++]) << 24);
+    flow_qos->gbr.br_ul |= (((bit_rate_t)ieValue[index++]) << 16);
+    flow_qos->gbr.br_ul |= (((bit_rate_t)ieValue[index++]) << 8);
+    flow_qos->gbr.br_ul |= (bit_rate_t)ieValue[index++];
+
+    flow_qos->gbr.br_dl = ((bit_rate_t)ieValue[index++]) << 32;
+    flow_qos->gbr.br_dl |= (((bit_rate_t)ieValue[index++]) << 24);
+    flow_qos->gbr.br_dl |= (((bit_rate_t)ieValue[index++]) << 16);
+    flow_qos->gbr.br_dl |= (((bit_rate_t)ieValue[index++]) << 8);
+    flow_qos->gbr.br_dl |= (bit_rate_t)ieValue[index++];
+
+    if (21 < ieLength) {
+      OAILOG_ERROR (LOG_S11, "TODO gtpv2c_flow_qos_ie_get() FlowQOS_t\n");
+      return NW_GTPV2C_IE_INCORRECT;
+    }
+    return NW_OK;
+  } else {
+    OAILOG_ERROR (LOG_S11, "Bad IE length %"PRIu8"\n", ieLength);
+    return NW_GTPV2C_IE_INCORRECT;
+  }
+}
+
+//------------------------------------------------------------------------------
+int
+gtpv2c_flow_qos_ie_set (
+  nw_gtpv2c_msg_handle_t * msg,
+  const flow_qos_t * flow_qos)
+{
+  nw_rc_t                                   rc;
+  uint8_t                                 value[21];
+  int                                     index = 0;
+
+  DevAssert (msg );
+  DevAssert (flow_qos );
+  value[index++] = flow_qos->qci;
+  /*
+   * TODO: check endianness
+   */
+  value[index++] = (flow_qos->mbr.br_ul & 0xFF00000000) >> 32;
+  value[index++] = (flow_qos->mbr.br_ul & 0x00FF000000) >> 24;
+  value[index++] = (flow_qos->mbr.br_ul & 0x0000FF0000) >> 16;
+  value[index++] = (flow_qos->mbr.br_ul & 0x000000FF00) >> 8;
+  value[index++] = (flow_qos->mbr.br_ul & 0x00000000FF);
+
+  value[index++] = (flow_qos->mbr.br_dl & 0xFF00000000) >> 32;
+  value[index++] = (flow_qos->mbr.br_dl & 0x00FF000000) >> 24;
+  value[index++] = (flow_qos->mbr.br_dl & 0x0000FF0000) >> 16;
+  value[index++] = (flow_qos->mbr.br_dl & 0x000000FF00) >> 8;
+  value[index++] = (flow_qos->mbr.br_dl & 0x00000000FF);
+
+  value[index++] = (flow_qos->gbr.br_ul & 0xFF00000000) >> 32;
+  value[index++] = (flow_qos->gbr.br_ul & 0x00FF000000) >> 24;
+  value[index++] = (flow_qos->gbr.br_ul & 0x0000FF0000) >> 16;
+  value[index++] = (flow_qos->gbr.br_ul & 0x000000FF00) >> 8;
+  value[index++] = (flow_qos->gbr.br_ul & 0x00000000FF);
+
+  value[index++] = (flow_qos->gbr.br_dl & 0xFF00000000) >> 32;
+  value[index++] = (flow_qos->gbr.br_dl & 0x00FF000000) >> 24;
+  value[index++] = (flow_qos->gbr.br_dl & 0x0000FF0000) >> 16;
+  value[index++] = (flow_qos->gbr.br_dl & 0x000000FF00) >> 8;
+  value[index++] = (flow_qos->gbr.br_dl & 0x00000000FF);
+
+  rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_FLOW_QOS, 21, 0, value);
   DevAssert (NW_OK == rc);
   return RETURNok;
 }

@@ -190,7 +190,6 @@ typedef struct indication_flags_s {
 #define ISRAI_FLAG_BIT_POS    1
 #define SGWCI_FLAG_BIT_POS    0
 
-
 //-------------------------------------
 // 8.15 Bearer Quality of Service (Bearer QoS)
 #define PRE_EMPTION_CAPABILITY_ENABLED  (0x0)
@@ -239,6 +238,15 @@ typedef struct bearer_qos_s {
   ambr_t   gbr;           ///< Guaranteed bit rate
   ambr_t   mbr;           ///< Maximum bit rate
 } bearer_qos_t;
+
+//-------------------------------------
+// 8.16 Flow Quality of Service (Flow QoS)
+
+typedef struct flow_qos_s {
+  uint8_t  qci;
+  ambr_t   gbr;           ///< Guaranteed bit rate
+  ambr_t   mbr;           ///< Maximum bit rate
+} flow_qos_t;
 
 //-------------------------------------
 // 8.18 Serving Network
@@ -583,7 +591,7 @@ typedef struct bearer_contexts_modified_s {
 typedef struct bearer_context_marked_for_removal_s {
   uint8_t        eps_bearer_id;   ///< EPS bearer ID
   gtpv2c_cause_t cause;
-  fteid_t        s1u_sgw_fteid;   ///< Sender F-TEID for user plane
+//  fteid_t        s1u_sgw_fteid;   ///< Sender F-TEID for user plane
 } bearer_context_marked_for_removal_t;
 
 typedef struct bearer_contexts_marked_for_removal_s {

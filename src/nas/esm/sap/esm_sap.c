@@ -674,29 +674,17 @@ _esm_sap_recv (
 
     case BEARER_RESOURCE_ALLOCATION_REQUEST:
       /** Process congestion message. */
-      esm_cause = esm_recv_bearer_resource_allocation(mme_ue_s1ap_id, pti, ebi, &esm_msg.bearer_resource_modification_request, &esm_resp_msg);
-      if ((esm_cause == ESM_CAUSE_INVALID_PTI_VALUE) || (esm_cause == ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY)) {
-        /*
-         * 3GPP TS 24.301, section 7.3.1, case f
-         * * * * Ignore ESM message received with reserved PTI value
-         * * * * 3GPP TS 24.301, section 7.3.2, case f
-         * * * * Ignore ESM message received with reserved or assigned
-         * * * * value that does not match an existing EPS bearer context
-         */
+      esm_cause = esm_recv_bearer_resource_allocation(mme_ue_s1ap_id, pti, ebi, &esm_msg.bearer_resource_modification_request);
+      if ((esm_cause != ESM_CAUSE_SUCCESS)) {
+        esm_send_bearer_resource_allocation_reject (pti, &esm_resp_msg, esm_cause);
       }
       break;
 
     case BEARER_RESOURCE_MODIFICATION_REQUEST:
       /** Process congestion message. */
-      esm_cause = esm_recv_bearer_resource_modification(mme_ue_s1ap_id, pti, ebi, &esm_msg.bearer_resource_modification_request, &esm_resp_msg);
-      if ((esm_cause == ESM_CAUSE_INVALID_PTI_VALUE) || (esm_cause == ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY)) {
-        /*
-         * 3GPP TS 24.301, section 7.3.1, case f
-         * * * * Ignore ESM message received with reserved PTI value
-         * * * * 3GPP TS 24.301, section 7.3.2, case f
-         * * * * Ignore ESM message received with reserved or assigned
-         * * * * value that does not match an existing EPS bearer context
-         */
+      esm_cause = esm_recv_bearer_resource_modification(mme_ue_s1ap_id, pti, ebi, &esm_msg.bearer_resource_modification_request);
+      if ((esm_cause != ESM_CAUSE_SUCCESS)) {
+        esm_send_bearer_resource_modification_reject (pti, &esm_resp_msg, esm_cause);
       }
       break;
 

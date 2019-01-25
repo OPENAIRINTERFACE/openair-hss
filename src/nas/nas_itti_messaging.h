@@ -108,6 +108,17 @@ void nas_itti_auth_info_req(
   const uint8_t          num_vectorsP,
   const_bstring    const auts_pP);
 
+void nas_itti_s11_bearer_resource_cmd (
+  const mme_ue_s1ap_id_t ue_idP,
+  const pti_t            pti,
+  const ebi_t            linked_ebi,
+  const teid_t           local_teid,
+  const teid_t           peer_teid,
+  const struct in_addr  *saegw_s11_ipv4,
+  const ebi_t                    ebi,
+  const traffic_flow_template_t * const tad,
+  const flow_qos_t              * const flow_qos);
+
 void nas_itti_establish_cnf(
   const mme_ue_s1ap_id_t ue_idP,
   const nas_error_code_t error_codeP,

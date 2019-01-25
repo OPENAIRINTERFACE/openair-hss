@@ -31,22 +31,23 @@
 
 #include "3gpp_29.274.h"
 
-#define S11_CREATE_SESSION_REQUEST(mSGpTR)         (mSGpTR)->ittiMsg.s11_create_session_request
-#define S11_CREATE_SESSION_RESPONSE(mSGpTR)        (mSGpTR)->ittiMsg.s11_create_session_response
-#define S11_CREATE_BEARER_REQUEST(mSGpTR)          (mSGpTR)->ittiMsg.s11_create_bearer_request
-#define S11_CREATE_BEARER_RESPONSE(mSGpTR)         (mSGpTR)->ittiMsg.s11_create_bearer_response
-#define S11_UPDATE_BEARER_REQUEST(mSGpTR)          (mSGpTR)->ittiMsg.s11_update_bearer_request
-#define S11_UPDATE_BEARER_RESPONSE(mSGpTR)         (mSGpTR)->ittiMsg.s11_update_bearer_response
-#define S11_DELETE_BEARER_REQUEST(mSGpTR)          (mSGpTR)->ittiMsg.s11_delete_bearer_request
-#define S11_DELETE_BEARER_RESPONSE(mSGpTR)         (mSGpTR)->ittiMsg.s11_delete_bearer_response
+#define S11_CREATE_SESSION_REQUEST(mSGpTR)          (mSGpTR)->ittiMsg.s11_create_session_request
+#define S11_CREATE_SESSION_RESPONSE(mSGpTR)         (mSGpTR)->ittiMsg.s11_create_session_response
+#define S11_CREATE_BEARER_REQUEST(mSGpTR)           (mSGpTR)->ittiMsg.s11_create_bearer_request
+#define S11_CREATE_BEARER_RESPONSE(mSGpTR)          (mSGpTR)->ittiMsg.s11_create_bearer_response
+#define S11_UPDATE_BEARER_REQUEST(mSGpTR)           (mSGpTR)->ittiMsg.s11_update_bearer_request
+#define S11_UPDATE_BEARER_RESPONSE(mSGpTR)          (mSGpTR)->ittiMsg.s11_update_bearer_response
+#define S11_DELETE_BEARER_REQUEST(mSGpTR)           (mSGpTR)->ittiMsg.s11_delete_bearer_request
+#define S11_DELETE_BEARER_RESPONSE(mSGpTR)          (mSGpTR)->ittiMsg.s11_delete_bearer_response
 
-#define S11_MODIFY_BEARER_REQUEST(mSGpTR)          (mSGpTR)->ittiMsg.s11_modify_bearer_request
-#define S11_MODIFY_BEARER_RESPONSE(mSGpTR)         (mSGpTR)->ittiMsg.s11_modify_bearer_response
-#define S11_DELETE_SESSION_REQUEST(mSGpTR)         (mSGpTR)->ittiMsg.s11_delete_session_request
-#define S11_DELETE_BEARER_COMMAND(mSGpTR)          (mSGpTR)->ittiMsg.s11_delete_bearer_command
-#define S11_DELETE_SESSION_RESPONSE(mSGpTR)        (mSGpTR)->ittiMsg.s11_delete_session_response
-#define S11_RELEASE_ACCESS_BEARERS_REQUEST(mSGpTR) (mSGpTR)->ittiMsg.s11_release_access_bearers_request
+#define S11_MODIFY_BEARER_REQUEST(mSGpTR)           (mSGpTR)->ittiMsg.s11_modify_bearer_request
+#define S11_MODIFY_BEARER_RESPONSE(mSGpTR)          (mSGpTR)->ittiMsg.s11_modify_bearer_response
+#define S11_DELETE_SESSION_REQUEST(mSGpTR)          (mSGpTR)->ittiMsg.s11_delete_session_request
+#define S11_DELETE_BEARER_COMMAND(mSGpTR)           (mSGpTR)->ittiMsg.s11_delete_bearer_command
+#define S11_DELETE_SESSION_RESPONSE(mSGpTR)         (mSGpTR)->ittiMsg.s11_delete_session_response
+#define S11_RELEASE_ACCESS_BEARERS_REQUEST(mSGpTR)  (mSGpTR)->ittiMsg.s11_release_access_bearers_request
 #define S11_RELEASE_ACCESS_BEARERS_RESPONSE(mSGpTR) (mSGpTR)->ittiMsg.s11_release_access_bearers_response
+#define S11_BEARER_RESOURCE_COMMAND(mSGpTR)         (mSGpTR)->ittiMsg.s11_bearer_resource_command
 
 /** Paging related signaling.  */
 #define S11_DOWNLINK_DATAN_NOTIFICATION(mSGpTR) (mSGpTR)->ittiMsg.s11_downlink_data_notification
@@ -263,7 +264,7 @@ typedef struct itti_s11_create_session_request_s {
   ///< procedures), the MME/SGSN shall forward the PCO IE to
   ///< SGW. The SGW shall also forward it to PGW.
 
-  bearer_contexts_to_be_created_t bearer_contexts_to_be_created;    ///< Bearer Contexts to be created
+  bearer_contexts_to_be_created_t * bearer_contexts_to_be_created;    ///< Bearer Contexts to be created
   ///< Several IEs with the same type and instance value shall be
   ///< included on the S4/S11 and S5/S8 interfaces as necessary
   ///< to represent a list of Bearers. One single IE shall be
@@ -1371,6 +1372,29 @@ typedef struct itti_s11_delete_bearer_command_s {
   struct in_addr  peer_ip;
   ebi_list_t      ebi_list;
 } itti_s11_delete_bearer_command_t;
+
+
+//-----------------------------------------------------------------------------
+/** @struct itti_s11_bearer_resource_command_t
+ *  @brief Initiate Bearer Resource Command procedure
+ *
+ * A Bearer Resource Command message shall be sent on the S11 interface by the MME to the SGW and on the S5/S8
+ * interface by the SGW to the PGW as a part of the UE requested bearer resource modification.
+ */
+typedef struct itti_s11_bearer_resource_command_s {
+  teid_t          teid;                   ///< Tunnel Endpoint Identifier
+  teid_t          local_teid;             ///< Tunnel Endpoint Identifier
+  pti_t           pti;
+
+  ebi_t           linked_ebi;
+  ebi_t           ebi;
+
+  void           *trxn;
+  struct in_addr  peer_ip;
+
+  flow_qos_t               flow_qos;
+  traffic_flow_template_t  tad;
+} itti_s11_bearer_resource_command_t;
 
 //-----------------------------------------------------------------------------
 /** @struct itti_s11_downlink_data_notification_t

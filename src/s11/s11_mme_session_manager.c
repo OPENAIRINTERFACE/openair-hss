@@ -145,13 +145,13 @@ s11_mme_create_session_request (
   if(req_p->pco.num_protocol_or_container_id){
     gtpv2c_pco_ie_set (&(ulp_req.hMsg), &req_p->pco);
   }
-  for (int i = 0; i < req_p->bearer_contexts_to_be_created.num_bearer_context; i++) {
-    gtpv2c_bearer_context_to_be_created_within_create_session_request_ie_set (&(ulp_req.hMsg), &req_p->bearer_contexts_to_be_created.bearer_contexts[i]);
+  for (int i = 0; i < req_p->bearer_contexts_to_be_created->num_bearer_context; i++) {
+    gtpv2c_bearer_context_to_be_created_within_create_session_request_ie_set (&(ulp_req.hMsg), &req_p->bearer_contexts_to_be_created->bearer_contexts[i]);
   }
   rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
   DevAssert (NW_OK == rc);
   MSC_LOG_TX_MESSAGE (MSC_S11_MME, MSC_SGW, NULL, 0, "0 CREATE_SESSION_REQUEST local S11 teid " TEID_FMT " num bearers ctx %u",
-    req_p->sender_fteid_for_cp.teid, req_p->bearer_contexts_to_be_created.num_bearer_context);
+    req_p->sender_fteid_for_cp.teid, req_p->bearer_contexts_to_be_created->num_bearer_context);
 
   hashtable_rc_t hash_rc = hashtable_ts_insert(s11_mme_teid_2_gtv2c_teid_handle,
       (hash_key_t) req_p->sender_fteid_for_cp.teid,
@@ -239,6 +239,12 @@ s11_mme_handle_create_session_response (
       gtpv2c_bearer_context_created_ie_get, &resp_p->bearer_contexts_created);
   DevAssert (NW_OK == rc);
   /*
+   * Bearer Contexts Marked For Removal IE
+   */
+  rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_BEARER_CONTEXT, NW_GTPV2C_IE_INSTANCE_ONE, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
+      gtpv2c_bearer_context_marked_for_removal_ie_get, &resp_p->bearer_contexts_marked_for_removal);
+  DevAssert (NW_OK == rc);
+  /*
    * Run the parser
    */
   rc = nwGtpv2cMsgParserRun (pMsgParser, (pUlpApi->hMsg), &offendingIeType, &offendingIeInstance, &offendingIeLength);
@@ -310,8 +316,7 @@ s11_mme_delete_session_request (
                               req_p->sender_fteid_for_cp.ipv4 ? &req_p->sender_fteid_for_cp.ipv4_address : 0,
                               req_p->sender_fteid_for_cp.ipv6 ? &req_p->sender_fteid_for_cp.ipv6_address : NULL);
 
-  gtpv2c_ebi_ie_set (&(ulp_req.hMsg), (unsigned)req_p->lbi);
-
+  gtpv2c_ebi_ie_set (&(ulp_req.hMsg), (unsigned)req_p->lbi, NW_GTPV2C_IE_INSTANCE_ZERO);
 
   if ((req_p->indication_flags.oi) || (req_p->indication_flags.si)){
     gtpv2c_indication_flags_ie_set (&(ulp_req.hMsg), &req_p->indication_flags);

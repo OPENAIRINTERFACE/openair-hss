@@ -152,6 +152,7 @@ esm_send_bearer_resource_modification_reject (
  **             dedicated bearer context                   **
  **      default_ebi:   EPS bearer identity of the associated de-  **
  **             fault EPS bearer context                   **
+ **      bearer_level_qos : processed qos values prepared  **
  **      esm_cause: Cause code returned upon ESM procedure     **
  **             failure                                    **
  **      Return:    RETURNok, RETURNerror                      **
@@ -163,20 +164,56 @@ esm_proc_bearer_resource_modification_request(
   mme_ue_s1ap_id_t   ue_id,
   const proc_tid_t   pti,
   ebi_t              ebi,
-  const traffic_flow_aggregate_description_t * tft,
-  esm_cause_t          esm_cause_received,
-  ESM_msg            * const esm_rsp_msg)
+  const traffic_flow_aggregate_description_t * const tft,
+  const EpsQualityOfService * const new_flow_qos,
+
+  esm_cause_t          esm_cause_received)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
-  ebi_t                                   ded_ebi = 0;
-  pdn_context_t                          *pdn_context = NULL;
+  ebi_t                                   linked_ebi = 0;
   esm_cause_t                             esm_cause = ESM_CAUSE_SUCCESS;
-  OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Bearer Resource Modification Request " "(ebi=%d ue_id=" MME_UE_S1AP_ID_FMT ", pti=%d)\n", ebi, ue_id, pti);
+  teid_t                                  mme_s11_teid = 0, saegw_s11_teid = 0;
+  struct in_addr                          saegw_s11_ipv4;
+  OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Bearer Resource Modification Request " "(ebi=%d ue_id=" MME_UE_S1AP_ID_FMT ", pti=%d, esm_cause=%d)\n", ebi, ue_id, pti, esm_cause_received);
 
+  /** Process the message. */
+  /** Verify the received the bearer resource modification request. */
+//  todo: esm_cause = mme_app_validate_bearer_resource_modification(ue_id, ebi, &linked_ebi, tft, new_flow_qos, &pdn_context, &mme_s11_teid, &saegw_teid_s11, &saegw_s11_ipv4);
+  if(esm_cause != ESM_CAUSE_SUCCESS){
+    OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - Failed to verify the received Bearer Resource Modification Request " "(ebi=%d ue_id=" MME_UE_S1AP_ID_FMT ", pti=%d) with esm_cause %d. \n",
+        ebi, ue_id, pti, esm_cause);
+    OAILOG_FUNC_RETURN(LOG_MME_APP, esm_cause);
+  }
+  OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Successfully verified the received Bearer Resource Modification Request " "(ebi=%d ue_id=" MME_UE_S1AP_ID_FMT ", pti=%d). \n",
+      ebi, ue_id, pti);
+  void * brm_cb = NULL;
+  /** Create a new EPS bearer context procedure. */
+  nas_esm_proc_bearer_context_t * esm_proc_bearer_context = _esm_proc_create_bearer_context_procedure(ue_id, pti, linked_ebi,
+      PDN_CONTEXT_IDENTIFIER_UNASSIGNED, ebi, INVALID_TEID, 0, 0, brm_cb);
+  if(!esm_proc_bearer_context) {
+    OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - Error creating bearer context ESM procedure for the received Bearer Resource Modification Request " "(ebi=%d ue_id=" MME_UE_S1AP_ID_FMT ", pti=%d). \n",
+        ebi, ue_id, pti);
+    OAILOG_FUNC_RETURN(LOG_MME_APP, ESM_CAUSE_REQUEST_REJECTED_UNSPECIFIED);
+  }
+  /** Don't start the timer on the ESM procedure. Trigger a Delete Bearer Command message. */
+  nas_itti_s11_bearer_resource_cmd(ue_id, pti, linked_ebi,
+      mme_s11_teid, saegw_s11_teid, &saegw_s11_ipv4,
+      ebi, tft, NULL);
+
+  OAILOG_FUNC_RETURN(LOG_MME_APP, ESM_CAUSE_SUCCESS);
+}
+
+  /** If the ESM Cause is success, create t
+//
 //  /**
 //   * Get the UE triggered modification in the TFTs.
 //   * This may cause a bearer modification or a release.
 //   */
+//
+//  if ((ue_context = mme_apcontext_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, nas_pdn_disconnect_req_pP->ue_id)) == NULL) {
+//
+//  }
+
 //  mme_app_get_pdn_context(ue_id, pdn_cid, linked_ebi, NULL, &pdn_context);
 //  if(!pdn_context){
 //    OAILOG_ERROR(LOG_NAS_EMM, "EMMCN-SAP  - " "No PDN context was found for UE " MME_UE_S1AP_ID_FMT" for cid %d and default ebi %d to assign dedicated bearers.\n",
@@ -235,8 +272,8 @@ esm_proc_bearer_resource_modification_request(
 //      linked_ebi, &eps_qos,
 //      tft,
 //      &bc_tbc->pco);
-  OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_SUCCESS);
-}
+//  OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_SUCCESS);
+//}
 
 /****************************************************************************/
 /*********************  L O C A L    F U N C T I O N S  *********************/

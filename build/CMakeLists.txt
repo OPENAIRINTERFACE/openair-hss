@@ -805,6 +805,8 @@ set(libnas_mme_emm_sap_OBJS
   )
 
 set (libnas_mme_esm_OBJS
+  ${NAS_SRC}esm/BearerResourceAllocation.c
+  ${NAS_SRC}esm/BearerResourceModification.c
   ${NAS_SRC}esm/EpsBearerContextModification.c
   ${NAS_SRC}esm/DedicatedEpsBearerContextActivation.c
   ${NAS_SRC}esm/DefaultEpsBearerContextActivation.c

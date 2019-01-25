@@ -172,8 +172,6 @@ esm_send_activate_dedicated_eps_bearer_context_request (
   OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Send Activate Dedicated EPS Bearer Context " "Request message (pti=%d, ebi=%d). \n",
       esm_msg->activate_dedicated_eps_bearer_context_request.proceduretransactionidentity, esm_msg->activate_dedicated_eps_bearer_context_request.epsbeareridentity);
   OAILOG_FUNC_OUT(LOG_NAS_ESM);
-
-
 }
 
 /*

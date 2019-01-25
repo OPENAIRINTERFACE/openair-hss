@@ -295,7 +295,9 @@ mme_app_send_s11_create_session_req (
    */
   session_request_p->default_ebi = pdn_context->default_ebi;
   /** Set the bearer contexts to be created (incl. TFT). */
-  mme_app_get_bearer_contexts_to_be_created(pdn_context, &session_request_p->bearer_contexts_to_be_created, BEARER_STATE_MME_CREATED);
+  DevAssert(!session_request_p->bearer_contexts_to_be_created);
+  session_request_p->bearer_contexts_to_be_created = calloc(1, sizeof(bearer_contexts_to_be_created_t));
+  mme_app_get_bearer_contexts_to_be_created(pdn_context, session_request_p->bearer_contexts_to_be_created, BEARER_STATE_MME_CREATED);
 
   // todo: apn restrictions!
   /*

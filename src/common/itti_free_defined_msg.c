@@ -185,6 +185,9 @@ void itti_free_msg_content (MessageDef * const message_p)
 
   case S11_CREATE_SESSION_REQUEST: {
      clear_protocol_configuration_options(&message_p->ittiMsg.s11_create_session_request.pco);
+     if(message_p->ittiMsg.s11_create_session_request.bearer_contexts_to_be_created){
+       free_bearer_contexts_to_be_created(&message_p->ittiMsg.s11_create_session_request.bearer_contexts_to_be_created);
+     }
   }
   break;
 
@@ -219,6 +222,11 @@ void itti_free_msg_content (MessageDef * const message_p)
   }
   break;
 
+  case S11_BEARER_RESOURCE_COMMAND: {
+    clear_traffic_flow_template(&message_p->ittiMsg.s11_bearer_resource_command.tad);
+  }
+  break;
+
   case S11_CREATE_BEARER_RESPONSE: {
     clear_protocol_configuration_options(&message_p->ittiMsg.s11_create_bearer_response.pco);
   }
@@ -227,7 +235,8 @@ void itti_free_msg_content (MessageDef * const message_p)
   case S11_MODIFY_BEARER_REQUEST:
   case S11_MODIFY_BEARER_RESPONSE:
   case S11_DELETE_SESSION_REQUEST:
-    // DO nothing (trxn)
+  case S11_DELETE_BEARER_COMMAND:
+   // DO nothing (trxn)
     break;
 
   case S11_DELETE_SESSION_RESPONSE: {
