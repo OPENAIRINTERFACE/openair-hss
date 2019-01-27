@@ -164,21 +164,18 @@ esm_proc_bearer_resource_modification_request(
   mme_ue_s1ap_id_t   ue_id,
   const proc_tid_t   pti,
   ebi_t              ebi,
+  esm_cause_t        esm_cause_received,
   const traffic_flow_aggregate_description_t * const tad,
-  const EpsQualityOfService * const new_flow_qos,
-
-  esm_cause_t          esm_cause_received)
+  const EpsQualityOfService                  * const new_flow_qos
+  )
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   ebi_t                                   linked_ebi = 0;
   esm_cause_t                             esm_cause = ESM_CAUSE_SUCCESS;
-  teid_t                                  mme_s11_teid = 0;
-  fteid_t                                 saegw_s11_fteid;
   flow_qos_t                              flow_qos;
   OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Bearer Resource Modification Request " "(ebi=%d ue_id=" MME_UE_S1AP_ID_FMT ", pti=%d, esm_cause=%d)\n", ebi, ue_id, pti, esm_cause_received);
 
   memset(&flow_qos, 0, sizeof(flow_qos_t));
-  memset(&saegw_s11_fteid, 0, sizeof(fteid_t));
 
   /** Process the message. */
   if(new_flow_qos && new_flow_qos->qci && (new_flow_qos->bitRatesPresent | new_flow_qos->bitRatesExtPresent)) {
@@ -189,25 +186,26 @@ esm_proc_bearer_resource_modification_request(
       flow_qos.mbr.br_ul = eps_qos_bit_rate_value(new_flow_qos->bitRates.maxBitRateForUL);
     }
     if(new_flow_qos->bitRatesExtPresent){
-      flow_qos.gbr.br_dl += eps_qos_bit_rate_value(new_flow_qos->bitRates.guarBitRateForDL);
-      flow_qos.gbr.br_ul += eps_qos_bit_rate_value(new_flow_qos->bitRates.guarBitRateForUL);
-      flow_qos.mbr.br_dl += eps_qos_bit_rate_value(new_flow_qos->bitRates.maxBitRateForDL);
-      flow_qos.mbr.br_ul += eps_qos_bit_rate_value(new_flow_qos->bitRates.maxBitRateForUL);
+      flow_qos.gbr.br_dl += eps_qos_bit_rate_ext_value(new_flow_qos->bitRates.guarBitRateForDL);
+      flow_qos.gbr.br_ul += eps_qos_bit_rate_ext_value(new_flow_qos->bitRates.guarBitRateForUL);
+      flow_qos.mbr.br_dl += eps_qos_bit_rate_ext_value(new_flow_qos->bitRates.maxBitRateForDL);
+      flow_qos.mbr.br_ul += eps_qos_bit_rate_ext_value(new_flow_qos->bitRates.maxBitRateForUL);
     }
     flow_qos.qci = new_flow_qos->qci; /**< If not changed, must be the QCI of the current bearer. */
   }
 
+  /** Create an ESM bearer context but no timer. */
   void * brm_cb = NULL;
   nas_esm_proc_bearer_context_t * esm_proc_bearer_context = _esm_proc_create_bearer_context_procedure(ue_id, pti, linked_ebi,
        PDN_CONTEXT_IDENTIFIER_UNASSIGNED, ebi, INVALID_TEID, 0, 0, brm_cb);
   if(!esm_proc_bearer_context) {
-    OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - Error creating bearer context ESM procedure for the received Bearer Resource Modification Request " "(ebi=%d ue_id=" MME_UE_S1AP_ID_FMT ", pti=%d). \n",
+    OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - Error creating bearer context ESM procedure for the received Bearer Resource Modification Request " "(ebi=%d, ue_id=" MME_UE_S1AP_ID_FMT ", pti=%d). \n",
         ebi, ue_id, pti);
     OAILOG_FUNC_RETURN(LOG_MME_APP, ESM_CAUSE_REQUEST_REJECTED_UNSPECIFIED);
   }
 
   /** Verify the received the bearer resource modification request. */
-  esm_cause = mme_app_validate_bearer_resource_modification(ue_id, ebi, &esm_proc_bearer_context->tft, &linked_ebi, tad, flow_qos.qci ? &flow_qos : NULL, &mme_s11_teid, &saegw_s11_fteid);
+  esm_cause = mme_app_validate_bearer_resource_modification(ue_id, ebi, tad, flow_qos.qci ? &flow_qos : NULL);
   if(esm_cause != ESM_CAUSE_SUCCESS) {
     /** If the error is due QoS, we have a valid TFT. And can continue to process it. */
     if(esm_cause == ESM_CAUSE_SYNTACTICAL_ERROR_IN_THE_TFT_OPERATION){
@@ -216,10 +214,10 @@ esm_proc_bearer_resource_modification_request(
       copy_traffic_flow_template(esm_proc_bearer_context->tft, tad);
       OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - Since we have a valid TFT operation, ignoring the received flow-qos modification error" "(ebi=%d ue_id=" MME_UE_S1AP_ID_FMT ", pti=%d) with esm_cause %d. \n",
           ebi, ue_id, pti, esm_cause);
-      /** continue. */
+      /** Continue, but, in addition to those filters which are in the req/res message, we may also have filters in the TFT.. Need to remove them in the UE, as well.. */
     } else if (esm_cause == ESM_CAUSE_SEMANTIC_ERROR_IN_THE_TFT_OPERATION) {
       /** Error, we rendered the bearer empty.. continue. */
-    }else {
+    } else {
       /** Any other ESM causes should be rejected. */
       _esm_proc_free_bearer_context_procedure(&esm_proc_bearer_context);
       OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - Failed to verify the received Bearer Resource Modification Request " "(ebi=%d ue_id=" MME_UE_S1AP_ID_FMT ", pti=%d) with esm_cause %d. \n", ebi, ue_id, pti, esm_cause);
@@ -228,84 +226,11 @@ esm_proc_bearer_resource_modification_request(
   }
   OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Successfully verified the received Bearer Resource Modification Request " "(ebi=%d ue_id=" MME_UE_S1AP_ID_FMT ", pti=%d). \n",
       ebi, ue_id, pti);
-  // todo: when the response is received.. check if a TAD is in the procedure, if so, use that one and not those in the GTPV2c message.
   /** Don't start the timer on the ESM procedure. Trigger a Delete Bearer Command message. */
-  nas_itti_s11_bearer_resource_cmd(ue_id, pti, linked_ebi, mme_s11_teid, saegw_s11_fteid.teid, &saegw_s11_fteid.ipv4_address, ebi, tad,
-      esm_cause == ESM_CAUSE_SUCCESS ? &flow_qos: NULL);
+  nas_itti_s11_bearer_resource_cmd(pti, esm_proc_bearer_context->linked_ebi, esm_proc_bearer_context->mme_s11_teid,
+      esm_proc_bearer_context->saegw_s11_fteid.teid, &esm_proc_bearer_context->saegw_s11_fteid.ipv4_address, ebi, tad, &flow_qos);
   OAILOG_FUNC_RETURN(LOG_MME_APP, ESM_CAUSE_SUCCESS);
 }
-
-  /** If the ESM Cause is success, create t
-//
-//  /**
-//   * Get the UE triggered modification in the TFTs.
-//   * This may cause a bearer modification or a release.
-//   */
-//
-//  if ((ue_context = mme_apcontext_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, nas_pdn_disconnect_req_pP->ue_id)) == NULL) {
-//
-//  }
-
-//  mme_app_get_pdn_context(ue_id, pdn_cid, linked_ebi, NULL, &pdn_context);
-//  if(!pdn_context){
-//    OAILOG_ERROR(LOG_NAS_EMM, "EMMCN-SAP  - " "No PDN context was found for UE " MME_UE_S1AP_ID_FMT" for cid %d and default ebi %d to assign dedicated bearers.\n",
-//        ue_id, pdn_cid, linked_ebi);
-//    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_PDN_CONNECTION_DOES_NOT_EXIST);
-//  }
-//
-//  nas_esm_proc_pdn_connectivity_t * esm_proc_pdn_connectivity = _esm_proc_get_pdn_connectivity_procedure(ue_id, PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED);
-//  if(esm_proc_pdn_connectivity){
-//    if(esm_proc_pdn_connectivity->default_ebi == linked_ebi){
-//      OAILOG_ERROR(LOG_NAS_EMM, "EMMCN-SAP  - " "A PDN procedure for default ebi %d exists for UE " MME_UE_S1AP_ID_FMT" (cid=%d). Rejecting the establishment of the dedicated bearer.\n",
-//          linked_ebi, ue_id, esm_proc_pdn_connectivity->pdn_cid);
-//      OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_REQUEST_REJECTED_BY_GW);
-//    } else {
-//      OAILOG_WARNING(LOG_NAS_EMM, "EMMCN-SAP  - " "A PDN procedure for default ebi %d exists for UE " MME_UE_S1AP_ID_FMT" (cid=%d). Continuing with establishment of dedicated bearers.\n",
-//          esm_proc_pdn_connectivity->default_ebi, ue_id, esm_proc_pdn_connectivity->pdn_cid);
-//    }
-//  }
-//
-//  /*
-//   * Register a new EPS bearer context into the MME.
-//   * This should only be for dedicated bearers (todo: handover with dedicated bearers).
-//   */
-//  // todo: PCO handling
-//  traffic_flow_template_t * tft = bc_tbc->tft;
-//  esm_cause = mme_app_register_dedicated_bearer_context(ue_id, ESM_EBR_ACTIVE_PENDING, pdn_context->context_identifier, pdn_context->default_ebi, bc_tbc);  /**< We set the ESM state directly to active in handover. */
-//  if(esm_cause != ESM_CAUSE_SUCCESS){
-//    OAILOG_ERROR(LOG_NAS_ESM, "ESM-PROC  - Error assigning bearer context for ue " MME_UE_S1AP_ID_FMT ". \n", ue_id);
-//    OAILOG_FUNC_RETURN (LOG_NAS_ESM, esm_cause);
-//  }
-//
-//  /*
-//   * No need to check for PDN connectivity procedures.
-//   * They should be handled together.
-//   * Create a new EPS bearer context transaction and starts the timer, since no further CN operation necessary for dedicated bearers.
-//   */
-//  nas_esm_proc_bearer_context_t * esm_proc_bearer_context = _esm_proc_create_bearer_context_procedure(ue_id, pti, linked_ebi, pdn_cid, bc_tbc->eps_bearer_id, bc_tbc->s1u_sgw_fteid.teid,
-//      mme_config.nas_config.t3485_sec, 0 /*usec*/, _dedicated_eps_bearer_activate_t3485_handler);
-//  if(!esm_proc_bearer_context){
-//    OAILOG_ERROR(LOG_NAS_ESM, "ESM-PROC  - Error creating a new procedure for the bearer context (ebi=%d) for UE " MME_UE_S1AP_ID_FMT ". \n", bc_tbc->eps_bearer_id, ue_id);
-//    mme_app_release_bearer_context(ue_id, &pdn_context->context_identifier, pdn_context->default_ebi, bc_tbc->eps_bearer_id);
-//    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_REQUEST_REJECTED_BY_GW);
-//  }
-//  /** Send the response message back. */
-//  EpsQualityOfService eps_qos = {0};
-//  /** Sending a EBR-Request per bearer context. */
-//  memset((void*)&eps_qos, 0, sizeof(eps_qos));
-//  /** Set the EPS QoS. */
-//  qos_params_to_eps_qos(bc_tbc->bearer_level_qos.qci,
-//      bc_tbc->bearer_level_qos.mbr.br_dl, bc_tbc->bearer_level_qos.mbr.br_ul,
-//      bc_tbc->bearer_level_qos.gbr.br_dl, bc_tbc->bearer_level_qos.gbr.br_ul,
-//      &eps_qos, false);
-//  esm_send_activate_dedicated_eps_bearer_context_request (
-//      PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED, bc_tbc->eps_bearer_id,
-//      esm_rsp_msg,
-//      linked_ebi, &eps_qos,
-//      tft,
-//      &bc_tbc->pco);
-//  OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_SUCCESS);
-//}
 
 /****************************************************************************/
 /*********************  L O C A L    F U N C T I O N S  *********************/

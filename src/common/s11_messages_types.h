@@ -31,23 +31,28 @@
 
 #include "3gpp_29.274.h"
 
-#define S11_CREATE_SESSION_REQUEST(mSGpTR)          (mSGpTR)->ittiMsg.s11_create_session_request
-#define S11_CREATE_SESSION_RESPONSE(mSGpTR)         (mSGpTR)->ittiMsg.s11_create_session_response
-#define S11_CREATE_BEARER_REQUEST(mSGpTR)           (mSGpTR)->ittiMsg.s11_create_bearer_request
-#define S11_CREATE_BEARER_RESPONSE(mSGpTR)          (mSGpTR)->ittiMsg.s11_create_bearer_response
-#define S11_UPDATE_BEARER_REQUEST(mSGpTR)           (mSGpTR)->ittiMsg.s11_update_bearer_request
-#define S11_UPDATE_BEARER_RESPONSE(mSGpTR)          (mSGpTR)->ittiMsg.s11_update_bearer_response
-#define S11_DELETE_BEARER_REQUEST(mSGpTR)           (mSGpTR)->ittiMsg.s11_delete_bearer_request
-#define S11_DELETE_BEARER_RESPONSE(mSGpTR)          (mSGpTR)->ittiMsg.s11_delete_bearer_response
+#define S11_CREATE_SESSION_REQUEST(mSGpTR)              (mSGpTR)->ittiMsg.s11_create_session_request
+#define S11_CREATE_SESSION_RESPONSE(mSGpTR)             (mSGpTR)->ittiMsg.s11_create_session_response
+#define S11_CREATE_BEARER_REQUEST(mSGpTR)               (mSGpTR)->ittiMsg.s11_create_bearer_request
+#define S11_CREATE_BEARER_RESPONSE(mSGpTR)              (mSGpTR)->ittiMsg.s11_create_bearer_response
+#define S11_UPDATE_BEARER_REQUEST(mSGpTR)               (mSGpTR)->ittiMsg.s11_update_bearer_request
+#define S11_UPDATE_BEARER_RESPONSE(mSGpTR)              (mSGpTR)->ittiMsg.s11_update_bearer_response
+#define S11_DELETE_BEARER_REQUEST(mSGpTR)               (mSGpTR)->ittiMsg.s11_delete_bearer_request
+#define S11_DELETE_BEARER_RESPONSE(mSGpTR)              (mSGpTR)->ittiMsg.s11_delete_bearer_response
 
-#define S11_MODIFY_BEARER_REQUEST(mSGpTR)           (mSGpTR)->ittiMsg.s11_modify_bearer_request
-#define S11_MODIFY_BEARER_RESPONSE(mSGpTR)          (mSGpTR)->ittiMsg.s11_modify_bearer_response
-#define S11_DELETE_SESSION_REQUEST(mSGpTR)          (mSGpTR)->ittiMsg.s11_delete_session_request
-#define S11_DELETE_BEARER_COMMAND(mSGpTR)           (mSGpTR)->ittiMsg.s11_delete_bearer_command
-#define S11_DELETE_SESSION_RESPONSE(mSGpTR)         (mSGpTR)->ittiMsg.s11_delete_session_response
-#define S11_RELEASE_ACCESS_BEARERS_REQUEST(mSGpTR)  (mSGpTR)->ittiMsg.s11_release_access_bearers_request
-#define S11_RELEASE_ACCESS_BEARERS_RESPONSE(mSGpTR) (mSGpTR)->ittiMsg.s11_release_access_bearers_response
-#define S11_BEARER_RESOURCE_COMMAND(mSGpTR)         (mSGpTR)->ittiMsg.s11_bearer_resource_command
+#define S11_MODIFY_BEARER_REQUEST(mSGpTR)               (mSGpTR)->ittiMsg.s11_modify_bearer_request
+#define S11_MODIFY_BEARER_RESPONSE(mSGpTR)              (mSGpTR)->ittiMsg.s11_modify_bearer_response
+#define S11_DELETE_SESSION_REQUEST(mSGpTR)              (mSGpTR)->ittiMsg.s11_delete_session_request
+
+#define S11_DELETE_BEARER_COMMAND(mSGpTR)               (mSGpTR)->ittiMsg.s11_delete_bearer_command
+#define S11_DELETE_BEARER_FAILURE_INDICATION(mSGpTR)    (mSGpTR)->ittiMsg.s11_delete_bearer_failure_indication
+
+
+#define S11_DELETE_SESSION_RESPONSE(mSGpTR)             (mSGpTR)->ittiMsg.s11_delete_session_response
+#define S11_RELEASE_ACCESS_BEARERS_REQUEST(mSGpTR)      (mSGpTR)->ittiMsg.s11_release_access_bearers_request
+#define S11_RELEASE_ACCESS_BEARERS_RESPONSE(mSGpTR)     (mSGpTR)->ittiMsg.s11_release_access_bearers_response
+#define S11_BEARER_RESOURCE_COMMAND(mSGpTR)             (mSGpTR)->ittiMsg.s11_bearer_resource_command
+#define S11_BEARER_RESOURCE_FAILURE_INDICATION(mSGpTR)  (mSGpTR)->ittiMsg.s11_bearer_resource_failure_indication
 
 /** Paging related signaling.  */
 #define S11_DOWNLINK_DATAN_NOTIFICATION(mSGpTR) (mSGpTR)->ittiMsg.s11_downlink_data_notification
@@ -1373,6 +1378,24 @@ typedef struct itti_s11_delete_bearer_command_s {
   ebi_list_t      ebi_list;
 } itti_s11_delete_bearer_command_t;
 
+//-----------------------------------------------------------------------------
+/** @struct itti_s11_delete_bearer_failure_indication_t
+ *  @brief Terminate a Delete Bearer Command procedure
+ * A Delete Bearer Failure Indication shall be sent on the S5/S8 interface by the PGW to the SGW and on the S11
+ * interface by the SGW to the MME as part of failure of eNodeB requested bearer release or MME Initiated Dedicated
+ * Bearer Deactivation procedure.
+ * The message shall also be sent on the S5/S8 interface by the PGW to the SGW and on the S4 interface by the SGW to
+ * the SGSN as part of failure of MS and SGSN Initiated Bearer Deactivation procedure using S4.
+ */
+typedef struct itti_s11_delete_bearer_failure_indication_s {
+  teid_t          teid;                   ///< Tunnel Endpoint Identifier
+  teid_t          local_teid;             ///< Tunnel Endpoint Identifier
+
+  void           *trxn;
+  struct in_addr  peer_ip;
+  bearer_contexts_marked_for_removal_t      bcs_failed;
+  gtpv2c_cause_t  cause;
+} itti_s11_delete_bearer_failure_indication_t;
 
 //-----------------------------------------------------------------------------
 /** @struct itti_s11_bearer_resource_command_t
@@ -1395,6 +1418,29 @@ typedef struct itti_s11_bearer_resource_command_s {
   flow_qos_t               flow_qos;
   traffic_flow_template_t  tad;
 } itti_s11_bearer_resource_command_t;
+
+//-----------------------------------------------------------------------------
+/** @struct itti_s11_bearer_resource_failure_indication_t
+ *  @brief Initiate Bearer Resource Failure Indication
+ *
+ * A Bearer Resource Failure Indication shall be sent by the PGW to an SGW and forwarded to the MME to indicate
+ * failure of the UE requested bearer resource allocation procedure or UE requested bearer resource modification procedure.
+ *
+ * The message shall also be sent by a PGW to an SGW and forwarded to an SGSN as part of the failure of an MS
+ * initiated PDP Context modification procedure or secondary PDP context activation procedure.
+ */
+typedef struct itti_s11_bearer_resource_failure_indication_s {
+  teid_t          teid;                   ///< Tunnel Endpoint Identifier
+  teid_t          local_teid;             ///< Tunnel Endpoint Identifier
+
+  pti_t           pti;
+  gtpv2c_cause_t  cause;
+  ebi_t           linked_ebi;
+
+  void           *trxn;
+  struct in_addr  peer_ip;
+
+} itti_s11_bearer_resource_failure_indication_t;
 
 //-----------------------------------------------------------------------------
 /** @struct itti_s11_downlink_data_notification_t

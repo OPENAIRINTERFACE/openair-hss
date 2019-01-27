@@ -109,7 +109,6 @@ void nas_itti_auth_info_req(
   const_bstring    const auts_pP);
 
 void nas_itti_s11_bearer_resource_cmd (
-  const mme_ue_s1ap_id_t ue_idP,
   const pti_t            pti,
   const ebi_t            linked_ebi,
   const teid_t           local_teid,

@@ -705,8 +705,7 @@ mme_app_release_bearer_context(mme_ue_s1ap_id_t ue_id, const pdn_cid_t *pdn_cid,
 
 //------------------------------------------------------------------------------
 esm_cause_t
-mme_app_validate_bearer_resource_modification(mme_ue_s1ap_id_t ue_id, ebi_t ebi, traffic_flow_aggregate_description_t ** tad_orig,
-    traffic_flow_aggregate_description_t *tad, flow_qos_t * flow_qos, ebi_t * linked_ebi, teid_t * mme_s11_teid, fteid_t * saegw_s11_fteid){
+mme_app_validate_bearer_resource_modification(mme_ue_s1ap_id_t ue_id, ebi_t ebi, traffic_flow_aggregate_description_t *tad, flow_qos_t * flow_qos){
   OAILOG_FUNC_IN (LOG_MME_APP);
   pdn_context_t                       *pdn_context = NULL;
   bearer_context_t                    *bearer_context = NULL;
@@ -736,12 +735,6 @@ mme_app_validate_bearer_resource_modification(mme_ue_s1ap_id_t ue_id, ebi_t ebi,
     OAILOG_ERROR(LOG_MME_APP , "ESM-PROC  - Could not find pdn context from ebi %d for (linked_ebi=%d,pdn_cid=%d) for UE " MME_UE_S1AP_ID_FMT". \n", ebi, bearer_context->linked_ebi, bearer_context->pdn_cx_id, ue_id);
     OAILOG_FUNC_RETURN(LOG_MME_APP, ESM_CAUSE_PDN_CONNECTION_DOES_NOT_EXIST);
   }
-  *linked_ebi = pdn_context->default_ebi;
-  *mme_s11_teid = ue_context->mme_teid_s11;
-  saegw_s11_fteid->teid = pdn_context->s_gw_teid_s11_s4;
-  saegw_s11_fteid->ipv4 = 1;
-  saegw_s11_fteid->ipv4_address.s_addr = pdn_context->s_gw_address_s11_s4.address.ipv4_address.s_addr;
-  // todo: ipv6..
 
   /*
    * Check if it is a default ebi, if so release all the bearer contexts.
@@ -756,13 +749,14 @@ mme_app_validate_bearer_resource_modification(mme_ue_s1ap_id_t ue_id, ebi_t ebi,
     OAILOG_ERROR(LOG_MME_APP , "ESM-PROC  - Bearer context to be modified (ebi=%d) does not contain  for (linked_ebi=%d,pdn_cid=%d) for ue_id" MME_UE_S1AP_ID_FMT". \n", ebi, bearer_context->linked_ebi, bearer_context->pdn_cx_id, ue_id);
     OAILOG_FUNC_RETURN(LOG_MME_APP, ESM_CAUSE_REQUEST_REJECTED_BY_GW);
   }
+
   /*
    * Verify the received TAD for any syntactical errors!
    */
   if(!((tad->tftoperationcode == TRAFFIC_FLOW_TEMPLATE_OPCODE_DELETE_PACKET_FILTERS_FROM_EXISTING_TFT )
     || (tad->tftoperationcode != TRAFFIC_FLOW_TEMPLATE_OPCODE_NO_TFT_OPERATION))) {
-    OAILOG_ERROR(LOG_MME_APP , "ESM-PROC  - Received an invalid TFT operation (%d) for bearer (ebi=%d) pdn_cid=%d) for ue_id" MME_UE_S1AP_ID_FMT". \n",
-        tad->tftoperationcode, ebi, ue_id);
+    OAILOG_ERROR(LOG_MME_APP , "ESM-PROC  - Received an invalid TFT operation (%d) (not implemented) for bearer (ebi=%d, pdn_cid=%d) for ue_id" MME_UE_S1AP_ID_FMT". \n",
+        tad->tftoperationcode, ebi, bearer_context->pdn_cx_id, ue_id);
     OAILOG_FUNC_RETURN(LOG_MME_APP, ESM_CAUSE_REQUEST_REJECTED_BY_GW);
   }
 
@@ -780,21 +774,25 @@ mme_app_validate_bearer_resource_modification(mme_ue_s1ap_id_t ue_id, ebi_t ebi,
        * If a Semantic Error has been received, it means, that the current TFT has been rendered empty.
        * Trigger a bearer removal. We don't care about packet filters being removed not in the original TFT.
        */
-
+      if(!bearer_context->esm_ebr_context.tft->numberofpacketfilters){
+        OAILOG_FUNC_RETURN(LOG_MME_APP, esm_cause);
+      }
     } else if(esm_cause == ESM_CAUSE_SYNTACTICAL_ERROR_IN_THE_TFT_OPERATION) {
       /*
        * A packet filter is to be removed, which is not in the current TFT. Still forward it to the SAE-GW (with others).
        * Save the TAD, to remove it from the UE, even it is not received by the SAE-GW.
        */
     } else {
-      DevAssert(0);
+      OAILOG_FUNC_RETURN(LOG_MME_APP, esm_cause);
     }
   }
+
   if(esm_cause != ESM_CAUSE_SUCCESS) {
-    OAILOG_ERROR(LOG_MME_APP, "EMMCN-SAP  - " "The received TAD for ue_id " MME_UE_S1AP_ID_FMT" (ebi=%d) resulted in esm_error=%d. Continuing to process it and ignoring the error.\n", ue_id, ebi, esm_cause);
+    OAILOG_ERROR(LOG_MME_APP, "EMMCN-SAP  - " "The received TAD for ue_id " MME_UE_S1AP_ID_FMT" (ebi=%d) resulted in esm_error=%d. "
+        "Continuing to process it and ignoring the error.\n", ue_id, ebi, esm_cause);
   }
   esm_cause_t flow_esm_cause = ESM_CAUSE_SUCCESS;
-  if(flow_qos){
+  if(flow_qos && flow_qos->qci){
     if((5 <= flow_qos->qci && flow_qos->qci <= 9) || (69 <= flow_qos->qci && flow_qos->qci <= 70) || (79 == flow_qos->qci)){
       /** Return error, no modification on non-GBR is allowed. */
       flow_esm_cause = ESM_CAUSE_EPS_QOS_NOT_ACCEPTED;

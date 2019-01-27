@@ -1095,6 +1095,7 @@ esm_recv_bearer_resource_modification (
   const bearer_resource_modification_request_msg * const msg)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
+  esm_cause_t esm_cause = ESM_CAUSE_SUCCESS;
 
   /*
    * Procedure transaction identity checking
@@ -1128,7 +1129,7 @@ esm_recv_bearer_resource_modification (
    * Process the received BRM request.
    * * * *  accepted by the UE
    */
-  esm_cause_t esm_cause = esm_proc_bearer_resource_modification_request(ue_id, pti, ebi, &msg->trafficflowaggregate, &msg->requiredtrafficflowqos, msg->esmcause);
+  esm_cause = esm_proc_bearer_resource_modification_request(ue_id, pti, ebi, msg->esmcause, &msg->trafficflowaggregate, &msg->requiredtrafficflowqos);
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, esm_cause);
 }
 

@@ -101,6 +101,14 @@ s11_mme_ulp_process_stack_req_cb (
         ret = s11_mme_handle_release_access_bearer_response (&s11_mme_stack_handle, pUlpApi);
         break;
 
+      case NW_GTP_BEARER_RESOURCE_FAILURE_IND:
+        ret = s11_mme_handle_bearer_resource_failure_indication (&s11_mme_stack_handle, pUlpApi);
+        break;
+
+      case NW_GTP_DELETE_BEARER_FAILURE_IND:
+        ret = s11_mme_handle_delete_bearer_failure_indication (&s11_mme_stack_handle, pUlpApi);
+        break;
+
       default:
         OAILOG_WARNING (LOG_S11, "Received unhandled TRIGGERED_RSP_IND message type %d\n", pUlpApi->u_api_info.triggeredRspIndInfo.msgType);
       }
@@ -250,6 +258,11 @@ s11_mme_thread (
 
     case S11_DELETE_BEARER_COMMAND:{
         s11_mme_delete_bearer_command (&s11_mme_stack_handle, &received_message_p->ittiMsg.s11_delete_bearer_command);
+      }
+      break;
+
+    case S11_BEARER_RESOURCE_COMMAND:{
+        s11_mme_bearer_resource_command(&s11_mme_stack_handle, &received_message_p->ittiMsg.s11_bearer_resource_command);
       }
       break;
 

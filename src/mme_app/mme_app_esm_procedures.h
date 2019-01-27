@@ -102,9 +102,11 @@ typedef struct nas_esm_proc_bearer_context_s {
   pdn_cid_t                    pdn_cid;
   ebi_t                        bearer_ebi;
   ebi_t                        linked_ebi;
-  teid_t                       s1u_saegw_teid;
+  teid_t                       mme_s11_teid;
+  fteid_t                      saegw_s11_fteid;
   ambr_t                       apn_ambr;
   traffic_flow_template_t     *tft;
+  teid_t                       s1u_saegw_teid;
   bearer_qos_t                 bearer_level_qos;
 //  protocol_configuration_options_t  pco;
   LIST_ENTRY(nas_esm_proc_bearer_context_s) entries;      /* List. */
