@@ -219,6 +219,7 @@ esm_proc_modify_eps_bearer_context (
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   esm_cause_t                             esm_cause = ESM_CAUSE_SUCCESS;
+  nas_esm_proc_bearer_context_t          *esm_proc_bearer_context = NULL;
   int                                     rc = RETURNok;
 
   OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - EPS bearer context modification " "(ue_id=" MME_UE_S1AP_ID_FMT ")\n", ue_id);
@@ -240,12 +241,26 @@ esm_proc_modify_eps_bearer_context (
    * They should be handled together.
    * Create a new EPS bearer context transaction and starts the timer, since no further CN operation necessary for dedicated bearers.
    */
-  nas_esm_proc_bearer_context_t * esm_proc_bearer_context = _esm_proc_create_bearer_context_procedure(ue_id, pti, linked_ebi, pdn_cid, bc_tbu->eps_bearer_id, INVALID_TEID,
-      mme_config.nas_config.t3486_sec, 0 /*usec*/, _modify_eps_bearer_context_t3486_handler);
+  if(pti != PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED) {
+    esm_proc_bearer_context = _esm_proc_get_bearer_context_procedure(ue_id, pti, ESM_EBI_UNASSIGNED);
+    /** If no procedure.. reject the message. */
+    if(!esm_proc_bearer_context){
+      OAILOG_ERROR(LOG_NAS_EMM, "EMMCN-SAP  - " "No ESM procedure for the received bearer modification request from the SAE-GW exists for pti=%d. "
+          "Rejecting the message for the UE " MME_UE_S1AP_ID_FMT".\n", pti, ue_id);
+      OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_REQUEST_REJECTED_BY_GW);
+    }
+    OAILOG_INFO (LOG_NAS_EMM, "EMMCN-SAP  - " "Found an ESM procedure for the pti=%d for ue_id " MME_UE_S1AP_ID_FMT". Continuing to process the UBR.\n", pti, ue_id);
+    /** No timer should be running for the procedure. */
+  }
   if(!esm_proc_bearer_context){
-    OAILOG_ERROR(LOG_NAS_ESM, "ESM-PROC  - Error creating a new procedure for the bearer context (ebi=%d) for UE " MME_UE_S1AP_ID_FMT ". \n", bc_tbu->eps_bearer_id, ue_id);
-    /* We finalize the bearer context (no modification, just setting back to active mode). */
-    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_REQUEST_REJECTED_BY_GW);
+    /** We found an ESM procedure. */
+    esm_proc_bearer_context = _esm_proc_create_bearer_context_procedure(ue_id, pti, linked_ebi, pdn_cid, bc_tbu->eps_bearer_id, INVALID_TEID,
+        mme_config.nas_config.t3486_sec, 0 /*usec*/, _modify_eps_bearer_context_t3486_handler);
+    if(!esm_proc_bearer_context){
+      OAILOG_ERROR(LOG_NAS_ESM, "ESM-PROC  - Error creating a new procedure for the bearer context (ebi=%d) for UE " MME_UE_S1AP_ID_FMT ". \n", bc_tbu->eps_bearer_id, ue_id);
+      /* We finalize the bearer context (no modification, just setting back to active mode). */
+      OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_REQUEST_REJECTED_BY_GW);
+    }
   }
 
   esm_cause = mme_app_esm_modify_bearer_context(ue_id, bc_tbu->eps_bearer_id, NULL, ESM_EBR_MODIFY_PENDING, bc_tbu->bearer_level_qos, bc_tbu->tft, apn_ambr);

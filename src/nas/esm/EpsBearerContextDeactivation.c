@@ -231,9 +231,26 @@ esm_proc_eps_bearer_context_deactivate_request (
      * Check for PDN connectivity procedures.
      * Create a new EPS bearer context transaction and starts the timer, since no further CN operation necessary for dedicated bearers.
      */
-    esm_base_proc = (nas_esm_proc_t*)_esm_proc_create_bearer_context_procedure(ue_id, *pti, ESM_EBI_UNASSIGNED, PDN_CONTEXT_IDENTIFIER_UNASSIGNED, *ebi, INVALID_TEID,
-        mme_config.nas_config.t3495_sec, 0 /*usec*/, _eps_bearer_deactivate_t3495_handler);
-    DevAssert(esm_base_proc);
+    if(*pti != PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED) {
+      esm_base_proc = _esm_proc_get_bearer_context_procedure(ue_id, *pti, ESM_EBI_UNASSIGNED);
+      /** If no procedure.. reject the message. */
+      if(!esm_base_proc){
+        OAILOG_ERROR(LOG_NAS_EMM, "EMMCN-SAP  - " "No ESM procedure for the received bearer deactivation request from the SAE-GW exists for pti=%d. "
+            "Rejecting the message for the UE " MME_UE_S1AP_ID_FMT".\n", *pti, ue_id);
+        OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_REQUEST_REJECTED_BY_GW);
+      }
+      OAILOG_INFO (LOG_NAS_EMM, "EMMCN-SAP  - " "Found an ESM procedure for the pti=%d for ue_id " MME_UE_S1AP_ID_FMT". Continuing to process the UBR.\n", *pti, ue_id);
+    }
+    if(!esm_base_proc){
+      /** We found an ESM procedure. */
+      esm_base_proc = (nas_esm_proc_t*)_esm_proc_create_bearer_context_procedure(ue_id, *pti, ESM_EBI_UNASSIGNED, PDN_CONTEXT_IDENTIFIER_UNASSIGNED, *ebi, INVALID_TEID,
+              mme_config.nas_config.t3495_sec, 0 /*usec*/, _eps_bearer_deactivate_t3495_handler);
+      if(!esm_base_proc){
+        OAILOG_ERROR(LOG_NAS_ESM, "ESM-PROC  - Error creating a new procedure for the bearer context (ebi=%d) for UE " MME_UE_S1AP_ID_FMT ". \n", *ebi, ue_id);
+        /* We finalize the bearer context (no modification, just setting back to active mode). */
+        OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_REQUEST_REJECTED_BY_GW);
+      }
+    }
   }
 
   esm_send_deactivate_eps_bearer_context_request (

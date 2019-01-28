@@ -265,6 +265,7 @@ esm_proc_bearer_resource_failure(
 
   nas_esm_proc_bearer_context_t * esm_proc_bearer_context = _esm_proc_get_bearer_context_procedure(ue_id, pti, ESM_EBI_UNASSIGNED);
   if(esm_proc_bearer_context){
+    *ded_ebi = esm_proc_bearer_context->bearer_ebi;
     /** Prepare a response message. */
     esm_send_bearer_resource_modification_reject(pti, esm_rsp_msg, ESM_CAUSE_REQUEST_REJECTED_BY_GW);
     /** Delete the procedure. */
