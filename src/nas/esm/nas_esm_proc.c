@@ -425,3 +425,36 @@ int nas_esm_proc_deactivate_eps_bearer_ctx(esm_eps_deactivate_eps_bearer_ctx_req
   }
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
 }
+
+//------------------------------------------------------------------------------
+int nas_esm_proc_bearer_resource_failure_indication(itti_s11_bearer_resource_failure_indication_t * s11_bearer_resource_failure_ind)
+{
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
+
+  esm_sap_t                               esm_sap = {0};
+  bstring                                 rsp = NULL;
+  esm_cause_t                             esm_cause = ESM_CAUSE_SUCCESS;
+  int                                     rc = RETURNok;
+
+  /** Try to find the UE context from the TEID. */
+  ue_context_t * ue_context = mme_ue_context_exists_s11_teid (&mme_app_desc.mme_ue_contexts, s11_bearer_resource_failure_ind->teid);
+
+  if (ue_context == NULL) {
+    MSC_LOG_RX_DISCARDED_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 BEARER_RESOURCE_FAILRE_INDICATION local S11 teid " TEID_FMT " ",
+        s11_bearer_resource_failure_ind->teid);
+    OAILOG_DEBUG (LOG_MME_APP, "We didn't find this teid in list of UE: %" PRIX32 "\n", s11_bearer_resource_failure_ind->teid);
+    OAILOG_FUNC_RETURN(LOG_MME_APP, RETURNerror);
+  }
+
+  esm_sap.primitive = ESM_EPS_BEARER_RESOURCE_FAILURE_IND;
+  esm_sap.ue_id     = ue_context->mme_ue_s1ap_id;
+  esm_sap.data.eps_bearer_resource_modification_fail.pti = s11_bearer_resource_failure_ind->pti;
+  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_ESM_MME, NULL, 0, "0 ESM_EPS_BEARER_RESOURCE_FAILURE_IND " MME_UE_S1AP_ID_FMT " ", esm_sap.ue_id);
+  /** Get the bearer contexts to be updated. */
+  esm_sap_signal(&esm_sap, &rsp);
+  if(rsp){
+    rc = lowerlayer_deactivate_bearer_req(esm_sap.ue_id, esm_sap.data.eps_bearer_resource_modification_fail.ebi, rsp);
+    bdestroy_wrapper(&rsp);
+  }
+  OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
+}

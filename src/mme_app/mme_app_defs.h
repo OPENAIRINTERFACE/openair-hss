@@ -122,6 +122,8 @@ void mme_app_handle_s11_update_bearer_req        (itti_s11_update_bearer_request
 
 void mme_app_handle_s11_delete_bearer_req (    itti_s11_delete_bearer_request_t *  delete_bearer_request_pP);
 
+void mme_app_delete_bearer_failure_indication (itti_s11_delete_bearer_failure_indication_t  * const delete_bearer_failure_ind);
+
 void mme_app_bearer_create_workflow (ue_context_t * const ue_context, const pdn_cid_t cid);
 
 //nas_cause_t s6a_error_2_nas_cause            (const uint32_t s6a_errorP, const int experimentalP);

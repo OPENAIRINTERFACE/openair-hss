@@ -236,6 +236,8 @@ void itti_free_msg_content (MessageDef * const message_p)
   case S11_MODIFY_BEARER_RESPONSE:
   case S11_DELETE_SESSION_REQUEST:
   case S11_DELETE_BEARER_COMMAND:
+  case S11_DELETE_BEARER_FAILURE_INDICATION:
+  case S11_BEARER_RESOURCE_FAILURE_INDICATION:
    // DO nothing (trxn)
     break;
 

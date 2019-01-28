@@ -89,6 +89,7 @@ static const char                      *_esm_sap_primitive_str[] = {
     "ESM_EPS_BEARER_CONTEXT_ACTIVATE_REQ",
     "ESM_EPS_BEARER_CONTEXT_MODIFY_REQ",
     "ESM_EPS_BEARER_CONTEXT_DEACTIVATE_REQ",
+    "ESM_EPS_BEARER_RESOURCE_FAILURE_IND",
     "ESM_DETACH_IND",
 
     "ESM_TIMEOUT_IND",
@@ -324,6 +325,13 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
      /* Only if no bearer context, or the bearer context is implicitly detached by the eNB (DBC). */
      nas_itti_dedicated_eps_bearer_deactivation_complete(msg->ue_id, msg->data.eps_bearer_context_deactivate.ded_ebi);
    }
+  }
+  break;
+
+  case ESM_EPS_BEARER_RESOURCE_FAILURE_IND:{
+    /** Check if there is a bearer context procedure for the UE, if so abort it and send a reject to the UE. */
+    esm_proc_bearer_resource_failure(msg->ue_id, msg->data.eps_bearer_resource_modification_fail.pti,
+        &msg->data.eps_bearer_resource_modification_fail.ebi, &esm_resp_msg);
   }
   break;
 

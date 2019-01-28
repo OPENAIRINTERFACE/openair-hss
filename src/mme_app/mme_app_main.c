@@ -190,6 +190,11 @@ void *mme_app_thread (void *args)
       mme_app_handle_s11_delete_bearer_req (&received_message_p->ittiMsg.s11_delete_bearer_request);
       break;
 
+    case S11_DELETE_BEARER_FAILURE_INDICATION:{
+        mme_app_delete_bearer_failure_indication (&received_message_p->ittiMsg.s11_delete_bearer_failure_indication);
+      }
+      break;
+
     case S11_CREATE_SESSION_RESPONSE:{
         mme_app_handle_create_sess_resp (&received_message_p->ittiMsg.s11_create_session_response);
       }

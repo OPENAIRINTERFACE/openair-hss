@@ -115,6 +115,12 @@ static void *nas_esm_intertask_interface (void *args_p)
     }
     break;
 
+    /** S11 Message. */
+    case S11_BEARER_RESOURCE_FAILURE_INDICATION:{
+      nas_esm_proc_bearer_resource_failure_indication(&S11_BEARER_RESOURCE_FAILURE_INDICATION (received_message_p));
+    }
+    break;
+
     case TERMINATE_MESSAGE:{
         nas_esm_exit();
         OAI_FPRINTF_INFO("TASK_NAS_ESM terminated\n");

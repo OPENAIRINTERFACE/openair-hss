@@ -1644,6 +1644,47 @@ mme_app_handle_s11_delete_bearer_req (
 }
 
 //------------------------------------------------------------------------------
+void mme_app_delete_bearer_failure_indication (itti_s11_delete_bearer_failure_indication_t  * const delete_bearer_failure_ind){
+  MessageDef                               *message_p   = NULL;
+  struct ue_context_s                      *ue_context  = NULL;
+  struct pdn_context_s                     *pdn_context = NULL;
+
+  OAILOG_FUNC_IN (LOG_MME_APP);
+
+  ue_context = mme_ue_context_exists_s11_teid (&mme_app_desc.mme_ue_contexts, delete_bearer_failure_ind->teid);
+
+  if (ue_context == NULL) {
+    MSC_LOG_RX_DISCARDED_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 DELETE_BEARER_REQUEST local S11 teid " TEID_FMT " ",
+        delete_bearer_failure_ind->teid);
+    OAILOG_DEBUG (LOG_MME_APP, "We didn't find this teid in list of UE: %" PRIX32 "\n", delete_bearer_failure_ind->teid);
+    OAILOG_FUNC_OUT (LOG_MME_APP);
+  }
+
+  /** Check the cause is context not found, perform an implicit detach. */
+  if(delete_bearer_failure_ind->cause.cause_value == CONTEXT_NOT_FOUND){
+    OAILOG_DEBUG (LOG_MME_APP, "Received cause \"Context not found\" for ue_id " MME_UE_S1AP_ID_FMT" (Delete Bearer Failure Indication)."
+        "  Implicitly removing the UE context. \n", ue_context->mme_ue_s1ap_id);
+    message_p = itti_alloc_new_message (TASK_MME_APP, NAS_IMPLICIT_DETACH_UE_IND);
+    DevAssert (message_p != NULL);
+    message_p->ittiMsg.nas_implicit_detach_ue_ind.ue_id = ue_context->mme_ue_s1ap_id;
+    MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_IMPLICIT_DETACH_UE_IND_MESSAGE");
+    itti_send_msg_to_task (TASK_NAS_EMM, INSTANCE_DEFAULT, message_p);
+    OAILOG_FUNC_OUT (LOG_MME_APP);
+  }
+
+  OAILOG_DEBUG (LOG_MME_APP, "Implicitly removing the idle bearer of UE context for ue_id " MME_UE_S1AP_ID_FMT " for received error cause %d (DBFI). \n",
+      ue_context->mme_ue_s1ap_id, delete_bearer_failure_ind->cause.cause_value);
+  /** Check if the ebis, failed to be released are existing. Locally remove them. */
+  for(ebi_t num_ebi = 0; num_ebi < delete_bearer_failure_ind->bcs_failed.num_bearer_context; num_ebi++) {
+    mme_app_release_bearer_context(ue_context->mme_ue_s1ap_id, NULL, EPS_BEARER_IDENTITY_UNASSIGNED,
+        delete_bearer_failure_ind->bcs_failed.bearer_contexts[num_ebi].eps_bearer_id);
+    /** No procedures should exist. */
+  }
+
+  OAILOG_FUNC_OUT (LOG_MME_APP);
+}
+
+//------------------------------------------------------------------------------
 void mme_app_handle_e_rab_setup_rsp (itti_s1ap_e_rab_setup_rsp_t  * const e_rab_setup_rsp)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);

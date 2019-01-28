@@ -66,6 +66,9 @@ typedef enum esm_primitive_s {
   ESM_EPS_BEARER_CONTEXT_ACTIVATE_REQ,
   ESM_EPS_BEARER_CONTEXT_MODIFY_REQ,
   ESM_EPS_BEARER_CONTEXT_DEACTIVATE_REQ,
+
+  ESM_EPS_BEARER_RESOURCE_FAILURE_IND,
+
   ESM_DETACH_IND,
 
   /* Internal signal. */
@@ -120,7 +123,7 @@ typedef struct esm_bearer_resource_allocate_rej_s{
 
 typedef struct esm_bearer_resource_modify_rej_s{
   ebi_t             ebi;
-  bool              remove;
+  pti_t             pti;
 }esm_bearer_resource_modify_rej_t;
 
 /*
@@ -179,6 +182,7 @@ typedef union {
   esm_activate_eps_bearer_context_t         eps_bearer_context_activate;
   esm_modify_eps_bearer_context_t           eps_bearer_context_modify;
   esm_deactivate_eps_bearer_context_t       eps_bearer_context_deactivate;
+  esm_bearer_resource_modify_rej_t          eps_bearer_resource_modification_fail;
 } esm_sap_data_t;
 
 struct emm_data_context_s;

@@ -173,7 +173,7 @@ esm_proc_bearer_resource_modification_request(
   ebi_t                                   linked_ebi = 0;
   esm_cause_t                             esm_cause = ESM_CAUSE_SUCCESS;
   flow_qos_t                              flow_qos;
-  OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Bearer Resource Modification Request " "(ebi=%d ue_id=" MME_UE_S1AP_ID_FMT ", pti=%d, esm_cause=%d)\n", ebi, ue_id, pti, esm_cause_received);
+  OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Bearer Resource Modification Request " "(ebi=%d, ue_id=" MME_UE_S1AP_ID_FMT ", pti=%d, esm_cause=%d)\n", ebi, ue_id, pti, esm_cause_received);
 
   memset(&flow_qos, 0, sizeof(flow_qos_t));
 
@@ -229,6 +229,49 @@ esm_proc_bearer_resource_modification_request(
   /** Don't start the timer on the ESM procedure. Trigger a Delete Bearer Command message. */
   nas_itti_s11_bearer_resource_cmd(pti, esm_proc_bearer_context->linked_ebi, esm_proc_bearer_context->mme_s11_teid,
       esm_proc_bearer_context->saegw_s11_fteid.teid, &esm_proc_bearer_context->saegw_s11_fteid.ipv4_address, ebi, tad, &flow_qos);
+  OAILOG_FUNC_RETURN(LOG_MME_APP, ESM_CAUSE_SUCCESS);
+}
+
+/****************************************************************************
+ **                                                                        **
+ ** Name:    esm_proc_bearer_resource_failure()               **
+ **                                                                        **
+ ** Description: Handles Bearer Resource Failure indication from the       **
+ **              SAE-GW.                                                   **
+ **                                                                        **
+ ** Inputs:  ue_id:      UE local identifier                        **
+ **          pti:       Procedure Transaction Id                    **
+ **      Others:    None                                       **
+ **                                                                        **
+ ** Outputs:     ebi:       EPS bearer identity assigned to the new    **
+ **             dedicated bearer context                   **
+ **      Return:    RETURNok, RETURNerror                      **
+ **      Others:    None                                       **
+ **                                                                        **
+ ***************************************************************************/
+esm_cause_t
+esm_proc_bearer_resource_failure(
+  mme_ue_s1ap_id_t   ue_id,
+  const proc_tid_t   pti,
+  ebi_t              * ded_ebi,
+  ESM_msg            * const esm_rsp_msg)
+{
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
+  ebi_t                                   linked_ebi = 0;
+  esm_cause_t                             esm_cause = ESM_CAUSE_SUCCESS;
+  flow_qos_t                              flow_qos;
+
+  OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Bearer Resource Failure Indication " "(ue_id=" MME_UE_S1AP_ID_FMT ", pti=%d)\n", ue_id, pti);
+
+  nas_esm_proc_bearer_context_t * esm_proc_bearer_context = _esm_proc_get_bearer_context_procedure(ue_id, pti, ESM_EBI_UNASSIGNED);
+  if(esm_proc_bearer_context){
+    /** Prepare a response message. */
+    esm_send_bearer_resource_modification_reject(pti, esm_rsp_msg, ESM_CAUSE_REQUEST_REJECTED_BY_GW);
+    /** Delete the procedure. */
+    _esm_proc_free_bearer_context_procedure(&esm_proc_bearer_context);
+    OAILOG_FUNC_RETURN(LOG_MME_APP, esm_cause);
+  }
+
   OAILOG_FUNC_RETURN(LOG_MME_APP, ESM_CAUSE_SUCCESS);
 }
 

@@ -601,7 +601,7 @@ s11_mme_handle_bearer_resource_failure_indication (
   DevAssert (NW_OK == rc);
   rc = nwGtpv2cMsgDelete (*stack_p, (pUlpApi->hMsg));
   DevAssert (NW_OK == rc);
-  return itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
+  return itti_send_msg_to_task (TASK_NAS_ESM, INSTANCE_DEFAULT, message_p);
 }
 
 //------------------------------------------------------------------------------
