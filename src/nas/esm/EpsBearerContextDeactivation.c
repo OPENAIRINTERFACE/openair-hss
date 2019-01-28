@@ -239,7 +239,11 @@ esm_proc_eps_bearer_context_deactivate_request (
             "Rejecting the message for the UE " MME_UE_S1AP_ID_FMT".\n", *pti, ue_id);
         OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_REQUEST_REJECTED_BY_GW);
       }
-      OAILOG_INFO (LOG_NAS_EMM, "EMMCN-SAP  - " "Found an ESM procedure for the pti=%d for ue_id " MME_UE_S1AP_ID_FMT". Continuing to process the UBR.\n", *pti, ue_id);
+      OAILOG_INFO (LOG_NAS_EMM, "EMMCN-SAP  - " "Found an ESM procedure for the pti=%d for ue_id " MME_UE_S1AP_ID_FMT". Continuing to process the DBR.\n", *pti, ue_id);
+      /** No timer should be running for the procedure. Starting timer now. */
+      nas_stop_esm_timer(esm_base_proc->ue_id, &esm_base_proc->esm_proc_timer);
+      esm_base_proc->esm_proc_timer.id = nas_esm_timer_start(mme_config.nas_config.t3486_sec, 0 /*usec*/, (void*)esm_base_proc);
+      esm_base_proc->timeout_notif = _eps_bearer_deactivate_t3495_handler;
     }
     if(!esm_base_proc){
       /** We found an ESM procedure. */
@@ -252,12 +256,10 @@ esm_proc_eps_bearer_context_deactivate_request (
       }
     }
   }
-
   esm_send_deactivate_eps_bearer_context_request (
       *pti, *ebi,
       esm_rsp_msg,
       ESM_CAUSE_REGULAR_DEACTIVATION);
-
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_SUCCESS);
 }
 

@@ -68,7 +68,7 @@ extern                                  "C" {
     nw_rc_t                                   rc;
     NW_ASSERT (thiz);
     NW_ASSERT (thiz->pMsg);
-    rc = thiz->pStack->udp.udpDataReqCallback (thiz->pStack->udp.hUdp, thiz->pMsg->msgBuf, thiz->pMsg->msgLen, &thiz->peerIp, thiz->peerPort);
+    rc = thiz->pStack->udp.udpDataReqCallback (thiz->pStack->udp.hUdp, thiz->pMsg->msgBuf, thiz->pMsg->msgLen, thiz->localPort, &thiz->peerIp, thiz->peerPort);
     thiz->maxRetries--;
     return rc;
   }
@@ -96,9 +96,11 @@ extern                                  "C" {
       ulpApi.apiType = NW_GTPV2C_ULP_API_RSP_FAILURE_IND;
       ulpApi.u_api_info.rspFailureInfo.hUlpTrxn = thiz->hUlpTrxn;
       ulpApi.u_api_info.rspFailureInfo.noDelete = thiz->noDelete;
-      ulpApi.u_api_info.rspFailureInfo.msgType = thiz->pMsg ? thiz->pMsg->msgType: 0;
+      ulpApi.u_api_info.rspFailureInfo.msgType  = thiz->pMsg ? thiz->pMsg->msgType: 0;
       ulpApi.u_api_info.rspFailureInfo.hUlpTunnel = ((thiz->hTunnel) ? ((nw_gtpv2c_tunnel_t *) (thiz->hTunnel))->hUlpTunnel : 0);
-      ulpApi.u_api_info.rspFailureInfo.teidLocal = (thiz->hTunnel) ? ((nw_gtpv2c_tunnel_t*)(thiz->hTunnel))->teid: 0;
+      ulpApi.u_api_info.rspFailureInfo.teidLocal  = (thiz->hTunnel) ? ((nw_gtpv2c_tunnel_t*)(thiz->hTunnel))->teid: 0;
+      /** Set the flags. */
+      ulpApi.u_api_info.rspFailureInfo.trx_flags  = thiz->trx_flags;
       OAILOG_ERROR (LOG_GTPV2C, "N3 retries expired for transaction %p\n", thiz);
       RB_REMOVE (NwGtpv2cOutstandingTxSeqNumTrxnMap, &(pStack->outstandingTxSeqNumMap), thiz);
       rc = nwGtpv2cTrxnDelete (&thiz);
@@ -296,7 +298,7 @@ extern                                  "C" {
         if (pCollision->pMsg) {
           rc = pCollision->pStack->udp.udpDataReqCallback (pCollision->pStack->udp.hUdp,
               pCollision->pMsg->msgBuf, pCollision->pMsg->msgLen,
-              &pCollision->peerIp, pCollision->peerPort);
+              pCollision->localPort, &pCollision->peerIp, pCollision->peerPort);
         }
 
         rc = nwGtpv2cTrxnDelete (&pTrxn);

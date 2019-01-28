@@ -491,6 +491,7 @@ s11_mme_bearer_resource_command(
   rc = nwGtpv2cMsgNew (*stack_p, true, NW_GTP_BEARER_RESOURCE_CMD, cmd_p->teid, 0, &(ulp_req.hMsg));
   ulp_req.u_api_info.initialReqInfo.peerIp = cmd_p->peer_ip;
   ulp_req.u_api_info.initialReqInfo.teidLocal = cmd_p->local_teid;
+  ulp_req.u_api_info.initialReqInfo.internal_flags = cmd_p->pti;
 
   hashtable_rc_t hash_rc = hashtable_ts_get(s11_mme_teid_2_gtv2c_teid_handle,
       (hash_key_t) ulp_req.u_api_info.initialReqInfo.teidLocal,

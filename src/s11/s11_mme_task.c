@@ -158,6 +158,7 @@ s11_mme_send_udp_msg (
   nw_gtpv2c_udp_handle_t udpHandle,
   uint8_t * buffer,
   uint32_t buffer_len,
+  uint16_t localPort,
   struct in_addr *peerIpAddr,
   uint16_t peerPort)
 {
@@ -168,6 +169,7 @@ s11_mme_send_udp_msg (
 
   message_p = itti_alloc_new_message (TASK_S11, UDP_DATA_REQ);
   udp_data_req_p = &message_p->ittiMsg.udp_data_req;
+  udp_data_req_p->local_port = localPort;
   udp_data_req_p->peer_address.s_addr = peerIpAddr->s_addr;
   udp_data_req_p->peer_port = peerPort;
   udp_data_req_p->buffer = buffer;

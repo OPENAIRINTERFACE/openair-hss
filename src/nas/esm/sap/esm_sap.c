@@ -330,8 +330,7 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
 
   case ESM_EPS_BEARER_RESOURCE_FAILURE_IND:{
     /** Check if there is a bearer context procedure for the UE, if so abort it and send a reject to the UE. */
-    esm_proc_bearer_resource_failure(msg->ue_id, msg->data.eps_bearer_resource_modification_fail.pti,
-        &msg->data.eps_bearer_resource_modification_fail.ebi, &esm_resp_msg);
+    esm_proc_bearer_resource_failure(msg->ue_id, msg->pti, &esm_resp_msg);
   }
   break;
 

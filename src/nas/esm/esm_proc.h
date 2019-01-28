@@ -234,11 +234,10 @@ esm_proc_bearer_resource_modification_request(
   const traffic_flow_aggregate_description_t * const tad,
   const EpsQualityOfService * const new_flow_qos);
 
-esm_cause_t
+void
 esm_proc_bearer_resource_failure(
   mme_ue_s1ap_id_t   ue_id,
   const proc_tid_t   pti,
-  ebi_t              * ded_ebi,
   ESM_msg            * const esm_rsp_msg);
 
 #endif /* __ESM_PROC_H__*/

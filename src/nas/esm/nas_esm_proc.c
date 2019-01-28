@@ -445,15 +445,15 @@ int nas_esm_proc_bearer_resource_failure_indication(itti_s11_bearer_resource_fai
     OAILOG_DEBUG (LOG_MME_APP, "We didn't find this teid in list of UE: %" PRIX32 "\n", s11_bearer_resource_failure_ind->teid);
     OAILOG_FUNC_RETURN(LOG_MME_APP, RETURNerror);
   }
-
   esm_sap.primitive = ESM_EPS_BEARER_RESOURCE_FAILURE_IND;
   esm_sap.ue_id     = ue_context->mme_ue_s1ap_id;
-  esm_sap.data.eps_bearer_resource_modification_fail.pti = s11_bearer_resource_failure_ind->pti;
+  esm_sap.pti       = s11_bearer_resource_failure_ind->pti;
   MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_ESM_MME, NULL, 0, "0 ESM_EPS_BEARER_RESOURCE_FAILURE_IND " MME_UE_S1AP_ID_FMT " ", esm_sap.ue_id);
   /** Get the bearer contexts to be updated. */
   esm_sap_signal(&esm_sap, &rsp);
   if(rsp){
-    rc = lowerlayer_deactivate_bearer_req(esm_sap.ue_id, esm_sap.data.eps_bearer_resource_modification_fail.ebi, rsp);
+    /** If a message is received, just send it to ESM layer. */
+    rc = lowerlayer_data_req(esm_sap.ue_id, rsp);
     bdestroy_wrapper(&rsp);
   }
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);

@@ -83,13 +83,14 @@ static void                             udp_server_receive_and_process (
 static
 struct udp_socket_desc_s               *
 udp_server_get_socket_desc (
-  task_id_t task_id)
+  task_id_t task_id,
+  uint16_t  local_port)
 {
   struct udp_socket_desc_s               *udp_sock_p = NULL;
 
   OAILOG_DEBUG (LOG_UDP, "Looking for task %d\n", task_id);
   STAILQ_FOREACH (udp_sock_p, &udp_socket_list, entries) {
-    if (udp_sock_p->task_id == task_id) {
+    if (udp_sock_p->task_id == task_id && udp_sock_p->local_port == local_port) {
       OAILOG_DEBUG (LOG_UDP, "Found matching task desc\n");
       break;
     }
@@ -312,7 +313,7 @@ static void *udp_intertask_interface (void *args_p)
           peer_addr.sin_port = htons (udp_data_req_p->peer_port);
           peer_addr.sin_addr = udp_data_req_p->peer_address;
           pthread_mutex_lock (&udp_socket_list_mutex);
-          udp_sock_p = udp_server_get_socket_desc (ITTI_MSG_ORIGIN_ID (received_message_p));
+          udp_sock_p = udp_server_get_socket_desc (ITTI_MSG_ORIGIN_ID (received_message_p), udp_data_req_p->local_port);
 
           if (udp_sock_p == NULL) {
             OAILOG_ERROR (LOG_UDP, "Failed to retrieve the udp socket descriptor " "associated with task %d\n", ITTI_MSG_ORIGIN_ID (received_message_p));

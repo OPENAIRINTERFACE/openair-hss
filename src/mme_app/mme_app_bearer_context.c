@@ -802,6 +802,10 @@ mme_app_validate_bearer_resource_modification(mme_ue_s1ap_id_t ue_id, ebi_t ebi,
         flow_qos->gbr.br_dl, flow_qos->gbr.br_ul, flow_qos->mbr.br_dl, flow_qos->mbr.br_ul) == RETURNerror){
       OAILOG_ERROR(LOG_MME_APP, "EMMCN-SAP  - " "BRM-Request for UE " MME_UE_S1AP_ID_FMT" and ebi=%d could not be verified due erroneous EPS QoS.\n", ue_id, ebi);
       flow_esm_cause = ESM_CAUSE_EPS_QOS_NOT_ACCEPTED;
+    } else if (flow_qos->qci != bearer_context->bearer_level_qos.qci) {
+      OAILOG_ERROR(LOG_MME_APP, "EMMCN-SAP  - " "BRM-Request for UE " MME_UE_S1AP_ID_FMT" and ebi=%d has a qci=%d unequal to the current qci=%d of the bearer context.\n", ue_id, ebi,
+          flow_qos->qci, bearer_context->bearer_level_qos.qci);
+      flow_esm_cause = ESM_CAUSE_EPS_QOS_NOT_ACCEPTED;
     }
   }
   /** If there is a flow-qos error, set the QCI to 0. */

@@ -171,6 +171,7 @@ s10_mme_send_udp_msg (
   nw_gtpv2c_udp_handle_t udpHandle,
   uint8_t * buffer,
   uint32_t buffer_len,
+  uint16_t localPort,
   struct in_addr *peerIpAddr,
   uint16_t peerPort)
 {

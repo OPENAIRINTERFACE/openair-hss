@@ -77,7 +77,7 @@ int mme_app_handle_s6a_update_location_ans (
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
   task_id_t task_id = TASK_NAS_ESM;
-  if(!is_nas_specific_procedure_attach_running(emm_context)){
+  if(is_nas_specific_procedure_tau_running(emm_context)){
     task_id = TASK_NAS_EMM;
   }
 

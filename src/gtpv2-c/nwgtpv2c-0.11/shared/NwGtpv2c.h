@@ -309,6 +309,7 @@ typedef struct nw_gtpv2c_rsp_failure_ind_info_s {
   NW_IN    nw_gtpv2c_ulp_tunnel_handle_t     hUlpTunnel;
   NW_IN    nw_gtpv2c_msg_type_t              msgType;
   NW_IN    bool                              noDelete;
+  NW_IN    uint8_t                           trx_flags;
 
   NW_IN    uint32_t                          teidLocal;
 } nw_gtpv2c_rsp_failure_ind_info_t;
@@ -387,6 +388,7 @@ typedef struct nw_gtpv2c_udp_entity_s {
   nw_rc_t (*udpDataReqCallback) ( NW_IN     nw_gtpv2c_udp_handle_t udpHandle,
                                 NW_IN     uint8_t* dataBuf,
                                 NW_IN     uint32_t dataSize,
+                                NW_IN     uint16_t localPort,
                                 NW_IN     struct in_addr * peerIp,
                                 NW_IN     uint16_t peerPort);
 } nw_gtpv2c_udp_entity_t;
