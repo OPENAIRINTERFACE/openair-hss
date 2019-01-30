@@ -46,9 +46,19 @@ check_install_cassandra_software() {
     $SUDO add-apt-repository -y ppa:webupd8team/java
     ret=$?;[[ $ret -ne 0 ]] && return $ret
     $SUDO apt-get update
+    local PROXY_DISABLED=0
+    if [ -f /etc/apt/apt.conf.d/01proxy ]
+    then
+        PROXY_DISABLED=1
+        $SUDO mv /etc/apt/apt.conf.d/01proxy /tmp
+    fi
     echo oracle-java8-installer shared/accepted-oracle-license-v1-1 select true | $SUDO /usr/bin/debconf-set-selections
     # install Java 8
     $SUDO $INSTALLER install $OPTION curl oracle-java8-installer
+    if [ $PROXY_DISABLED -eq 1 ]
+    then
+        $SUDO mv /tmp/01proxy /etc/apt/apt.conf.d
+    fi
 
     echo "deb http://www.apache.org/dist/cassandra/debian 21x main" | $SUDO  tee -a /etc/apt/sources.list.d/cassandra.sources.list
     curl https://www.apache.org/dist/cassandra/KEYS | $SUDO  apt-key add -

@@ -225,6 +225,8 @@ check_install_hss_software() {
       cmake-curses-gui \
       python-cassandra \
       python3-cassandra \
+      python-blist \
+      python3-blist \
       gcc \
       bison \
       flex \
