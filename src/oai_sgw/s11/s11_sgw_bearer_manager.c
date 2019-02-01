@@ -188,6 +188,7 @@ s11_sgw_handle_modify_bearer_response (
   ulp_req.u_api_info.triggeredRspInfo.hTrxn = trxn;
   rc = nwGtpv2cMsgNew (*stack_p, true, NW_GTP_MODIFY_BEARER_RSP, 0, 0, &(ulp_req.hMsg));
   DevAssert (NW_OK == rc);
+
   /*
    * Set the remote TEID
    */
@@ -195,6 +196,15 @@ s11_sgw_handle_modify_bearer_response (
   DevAssert (NW_OK == rc);
   cause = response_p->cause;
   gtpv2c_cause_ie_set (&(ulp_req.hMsg), &cause);
+
+  /*
+   * Set the only bearer context
+   */
+  if (response_p->bearer_contexts_modified.num_bearer_context > 0) {
+    gtpv2c_bearer_context_modified_ie_set (&(ulp_req.hMsg), &response_p->bearer_contexts_modified.bearer_contexts[0]);
+  }
+
+
   rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
   DevAssert (NW_OK == rc);
   return RETURNok;
