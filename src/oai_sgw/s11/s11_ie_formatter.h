@@ -100,6 +100,8 @@ nw_rc_t gtpv2c_bearer_context_created_ie_get(uint8_t ieType, uint16_t ieLength, 
 
 int gtpv2c_bearer_context_created_ie_set(nw_gtpv2c_msg_handle_t *msg, const bearer_context_created_t * const bearer);
 
+int gtpv2c_bearer_context_modified_ie_set (nw_gtpv2c_msg_handle_t * msg, const bearer_context_modified_t * const bearer);
+
 /* Serving Network Information Element
  * 3GPP TS 29.274 #8.18
  */
