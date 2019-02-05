@@ -49,6 +49,7 @@
 #include "common_defs.h"
 #include "mme_app_pdn_context.h"
 #include "mme_app_apn_selection.h"
+#include "mme_app_bearer_context.h"
 
 /****************************************************************************/
 /*******************  L O C A L    D E F I N I T I O N S  *******************/

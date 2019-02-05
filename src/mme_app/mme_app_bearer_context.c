@@ -299,19 +299,13 @@ mme_app_modify_bearers(const mme_ue_s1ap_id_t mme_ue_s1ap_id, bearer_contexts_to
   // todo: checking on procedures of the function.. mme_app_is_ue_context_clean(ue_context)?!?
 
   /** Get the PDN Context. */
-  for(int nb_bearer = 0; bcs_to_be_modified->num_bearer_context; nb_bearer++) {
+  for(int nb_bearer = 0; nb_bearer < bcs_to_be_modified->num_bearer_context; nb_bearer++) {
     bearer_context_to_be_modified_t *bc_to_be_modified = &bcs_to_be_modified->bearer_contexts[nb_bearer];
     /** Get the bearer context. */
     bearer_context_t * bearer_context = NULL;
     mme_app_get_session_bearer_context_from_all(ue_context, bc_to_be_modified->eps_bearer_id, &bearer_context);
     if(!bearer_context){
       OAILOG_ERROR(LOG_MME_APP, "No bearer context (ebi=%d) could be found for " MME_UE_S1AP_ID_FMT ". Skipping.. \n", bc_to_be_modified->eps_bearer_id, mme_ue_s1ap_id);
-      continue;
-    }
-    if(!(bearer_context->bearer_state & BEARER_STATE_ENB_CREATED)){
-      /** May be due patsh switch request. */
-      OAILOG_WARNING(LOG_MME_APP, "Bearer context (ebi=%d) is not ENB_CREATED for " MME_UE_S1AP_ID_FMT ". Adding flag.. \n", bc_to_be_modified->eps_bearer_id, mme_ue_s1ap_id);
-      bearer_context->bearer_state |= BEARER_STATE_ENB_CREATED;
       continue;
     }
     /** Set all bearers, not in the failed list, to inactive. */

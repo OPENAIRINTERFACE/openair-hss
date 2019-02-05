@@ -386,7 +386,7 @@ static int _emm_as_recv (
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, decoder_rc);
     }
 
-//    rc = emm_recv_attach_complete (ue_id, &emm_msg->attach_complete, emm_cause, decode_status);
+    rc = emm_recv_attach_complete (ue_id, &emm_msg->attach_complete, emm_cause, decode_status);
     break;
 
   case TRACKING_AREA_UPDATE_REQUEST:

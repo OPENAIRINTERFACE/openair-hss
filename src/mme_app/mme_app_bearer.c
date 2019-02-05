@@ -1341,8 +1341,9 @@ mme_app_handle_initial_context_setup_rsp (
   memset(&ebi_list, 0, sizeof(ebi_list_t));
   mme_app_release_bearers(initial_ctxt_setup_rsp_pP->ue_id, &initial_ctxt_setup_rsp_pP->e_rab_release_list, &ebi_list);
 
-  if(!mme_app_modify_bearers(initial_ctxt_setup_rsp_pP->ue_id, &initial_ctxt_setup_rsp_pP->bcs_to_be_modified)){
+  if(mme_app_modify_bearers(initial_ctxt_setup_rsp_pP->ue_id, &initial_ctxt_setup_rsp_pP->bcs_to_be_modified) != RETURNok){
     OAILOG_ERROR (LOG_MME_APP, "Error while initial context setup response handling for UE: " MME_UE_S1AP_ID_FMT "\n", initial_ctxt_setup_rsp_pP->ue_id);
+    // todo: implicit detach..
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
   pdn_context_t * registered_pdn_ctx = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
