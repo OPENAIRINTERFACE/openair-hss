@@ -919,7 +919,9 @@ s10_bearer_context_to_create_ie_set (
       bc_tbc->s1u_sgw_fteid.ipv4 ? &bc_tbc->s1u_sgw_fteid.ipv4_address : 0,
           bc_tbc->s1u_sgw_fteid.ipv6 ? &bc_tbc->s1u_sgw_fteid.ipv6_address : NULL);
   /** Set the TFT. */
-  gtpv2c_tft_ie_set(msg, bc_tbc->tft);
+  if(bc_tbc->tft){
+	  gtpv2c_tft_ie_set(msg, bc_tbc->tft);
+  }
   DevAssert (NW_OK == rc);
 
   /*

@@ -85,9 +85,22 @@ extern                                  "C" {
     thiz->hRspTmr = 0;
 
     if (thiz->maxRetries) {
-      rc = nwGtpv2cTrxnSendMsgRetransmission (thiz);
-      NW_ASSERT (NW_OK == rc);
-      rc = nwGtpv2cStartTimer (thiz->pStack, thiz->t3Timer, 0, NW_GTPV2C_TMR_TYPE_ONE_SHOT, nwGtpv2cTrxnPeerRspWaitTimeout, thiz, &thiz->hRspTmr);
+    	/** Check if a tunnel endpoint exists. */
+    	nw_gtpv2c_tunnel_t                        *pLocalTunnel = NULL,
+    	                                            keyTunnel = {0};
+    	keyTunnel.teid = thiz->teidLocal;
+    	keyTunnel.ipv4AddrRemote = thiz->peerIp;
+    	pLocalTunnel = RB_FIND (NwGtpv2cTunnelMap, &(pStack->tunnelMap), &keyTunnel);
+		if(pLocalTunnel) {
+	    	rc = nwGtpv2cTrxnSendMsgRetransmission (thiz);
+	    	NW_ASSERT (NW_OK == rc);
+	    	rc = nwGtpv2cStartTimer (thiz->pStack, thiz->t3Timer, 0, NW_GTPV2C_TMR_TYPE_ONE_SHOT, nwGtpv2cTrxnPeerRspWaitTimeout, thiz, &thiz->hRspTmr);
+		} else {
+			OAILOG_WARNING (LOG_GTPV2C,  "Tunnel for local-TEID 0x%x is removed for request transaction %p (seqNo=0x%x)! Removing the trx and ignoring timeout. \n",
+					thiz->teidLocal, thiz, thiz->seqNum);
+			RB_REMOVE (NwGtpv2cOutstandingTxSeqNumTrxnMap, &(pStack->outstandingTxSeqNumMap), thiz);
+			rc = nwGtpv2cTrxnDelete (&thiz);
+		}
     } else {
       nw_gtpv2c_ulp_api_t                         ulpApi;
       memset(&ulpApi, 0, sizeof(nw_gtpv2c_ulp_api_t));

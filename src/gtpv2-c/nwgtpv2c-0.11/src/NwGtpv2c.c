@@ -581,6 +581,7 @@ static nw_rc_t nwGtpv2cCreateLocalTunnel (
       pTrxn->peerIp    = pUlpReq->u_api_info.initialReqInfo.peerIp; // todo: ((NwGtpv2cTunnelT *) (pTrxn->hTunnel))->ipv4AddrRemote;
       pTrxn->peerPort  = NW_GTPV2C_UDP_PORT;  /**< Initial Requests always to 2123. */
       /* No Delete. */
+      pTrxn->teidLocal = pUlpReq->u_api_info.initialReqInfo.teidLocal;
       pTrxn->noDelete  = pUlpReq->u_api_info.initialReqInfo.noDelete;
       pTrxn->trx_flags = pUlpReq->u_api_info.initialReqInfo.internal_flags;
       if (pUlpReq->apiType & NW_GTPV2C_ULP_API_FLAG_IS_COMMAND_MESSAGE) {

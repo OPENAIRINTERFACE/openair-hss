@@ -462,7 +462,8 @@ mme_app_handle_mobility_completion_timer_expiry (mme_app_s10_proc_mme_handover_t
           /** This should not happen. The Ho-Cancel should come first. */
           OAILOG_WARNING(LOG_MME_APP, "HO command not set yet for UE. Setting S1AP reference to idle mode for UE " MME_UE_S1AP_ID_FMT ". Not performing implicit detach. \n", ue_context->mme_ue_s1ap_id);
           mme_app_send_s1ap_handover_preparation_failure(ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, ue_context->sctp_assoc_id_key, S1AP_HANDOVER_FAILED);
-          /** Not setting UE into idle mode at source. */
+          /** Not setting UE into idle mode at source (not changing the UE state). Still removing the S10 tunnel (see what happens..). */
+          remove_s10_tunnel_endpoint(ue_context, s10_proc_mme_handover->proc.peer_ip);
           OAILOG_FUNC_OUT (LOG_MME_APP);
         }
       }else{

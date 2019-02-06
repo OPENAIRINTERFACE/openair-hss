@@ -173,6 +173,7 @@ typedef struct nw_gtpv2c_msg_s {
 
 typedef struct nw_gtpv2c_trxn_s {
   uint32_t                      seqNum;
+  uint32_t 						teidLocal;
   struct in_addr                peerIp;
   uint32_t                      localPort;
   uint32_t                      peerPort;
