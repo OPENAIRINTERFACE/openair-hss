@@ -1385,6 +1385,11 @@ static nw_rc_t                            nwGtpv2cHandleTriggeredAck(
     nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_DELETE_BEARER_REQ]);
     nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_DELETE_BEARER_RSP]);
 
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_BEARER_RESOURCE_CMD]);
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_BEARER_RESOURCE_FAILURE_IND]);
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_DELETE_BEARER_CMD]);
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_DELETE_BEARER_FAILURE_IND]);
+
     nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_RELEASE_ACCESS_BEARERS_REQ]);
     nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_RELEASE_ACCESS_BEARERS_RSP]);
 

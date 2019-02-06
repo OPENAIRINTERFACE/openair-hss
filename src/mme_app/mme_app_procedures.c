@@ -464,6 +464,7 @@ mme_app_handle_mobility_completion_timer_expiry (mme_app_s10_proc_mme_handover_t
           mme_app_send_s1ap_handover_preparation_failure(ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, ue_context->sctp_assoc_id_key, S1AP_HANDOVER_FAILED);
           /** Not setting UE into idle mode at source (not changing the UE state). Still removing the S10 tunnel (see what happens..). */
           remove_s10_tunnel_endpoint(ue_context, s10_proc_mme_handover->proc.peer_ip);
+          mme_app_delete_s10_procedure_mme_handover(ue_context);
           OAILOG_FUNC_OUT (LOG_MME_APP);
         }
       }else{
@@ -659,6 +660,10 @@ void mme_app_delete_s10_procedure_mme_handover(ue_context_t * const ue_context)
         OAILOG_FUNC_OUT (LOG_MME_APP);
       }
     }
+    /** Remove the list. */
+    LIST_INIT(ue_context->s10_procedures);
+    free_wrapper((void**)&ue_context->s10_procedures);
+
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
   OAILOG_INFO(LOG_MME_APP, "No S10 Procedures existing for UE " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);

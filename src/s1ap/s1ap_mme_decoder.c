@@ -94,6 +94,7 @@ s1ap_mme_decode_initiating (
     case S1ap_ProcedureCode_id_UECapabilityInfoIndication: {
         ret = s1ap_decode_s1ap_uecapabilityinfoindicationies (&message->msg.s1ap_UECapabilityInfoIndicationIEs, &initiating_p->value);
         s1ap_xer_print_s1ap_uecapabilityinfoindication (s1ap_xer__print2sp, message_string, message);
+        free_wrapper(&initiating_p->value.buf);
         *message_id = S1AP_UE_CAPABILITY_IND_LOG;
       }
       break;
@@ -101,6 +102,7 @@ s1ap_mme_decode_initiating (
     case S1ap_ProcedureCode_id_NASNonDeliveryIndication: {
         ret = s1ap_decode_s1ap_nasnondeliveryindication_ies (&message->msg.s1ap_NASNonDeliveryIndication_IEs, &initiating_p->value);
         s1ap_xer_print_s1ap_nasnondeliveryindication_ (s1ap_xer__print2sp, message_string, message);
+        free_wrapper(&initiating_p->value.buf);
         *message_id = S1AP_NAS_NON_DELIVERY_IND_LOG;
       }
       break;
@@ -136,32 +138,37 @@ s1ap_mme_decode_initiating (
     case S1ap_ProcedureCode_id_PathSwitchRequest: {
           ret = s1ap_decode_s1ap_pathswitchrequesties(&message->msg.s1ap_PathSwitchRequestIEs, &initiating_p->value);
           s1ap_xer_print_s1ap_pathswitchrequest (s1ap_xer__print2sp, message_string, message);
+          free_wrapper(&initiating_p->value.buf);
           *message_id = S1AP_PATH_SWITCH_REQUEST_LOG;
-        }
+    	}
         break;
 
       /** S1AP Handover. */
       case S1ap_ProcedureCode_id_HandoverPreparation: {
         ret = s1ap_decode_s1ap_handoverrequiredies(&message->msg.s1ap_HandoverRequiredIEs, &initiating_p->value);
         s1ap_xer_print_s1ap_handoverrequired(s1ap_xer__print2sp, message_string, message);
+        free_wrapper(&initiating_p->value.buf);
         *message_id = S1AP_HANDOVER_REQUIRED_LOG;
       }
       break;
       case S1ap_ProcedureCode_id_HandoverCancel: {
         ret = s1ap_decode_s1ap_handovercancelies(&message->msg.s1ap_HandoverCancelIEs, &initiating_p->value);
         s1ap_xer_print_s1ap_handovercancel (s1ap_xer__print2sp, message_string, message);
+        free_wrapper(&initiating_p->value.buf);
         *message_id = S1AP_HANDOVER_CANCEL_LOG;
       }
       break;
       case S1ap_ProcedureCode_id_eNBStatusTransfer: {
         ret = s1ap_decode_s1ap_enbstatustransferies(&message->msg.s1ap_ENBStatusTransferIEs, &initiating_p->value);
         s1ap_xer_print_s1ap_enbstatustransfer(s1ap_xer__print2sp, message_string, message);
+        free_wrapper(&initiating_p->value.buf);
         *message_id = S1AP_ENB_STATUS_TRANSFER_LOG;
       }
       break;
       case S1ap_ProcedureCode_id_HandoverNotification: {
         ret = s1ap_decode_s1ap_handovernotifyies(&message->msg.s1ap_HandoverNotifyIEs, &initiating_p->value);
         s1ap_xer_print_s1ap_handovernotify(s1ap_xer__print2sp, message_string, message);
+        free_wrapper(&initiating_p->value.buf);
         *message_id = S1AP_HANDOVER_NOTIFY_LOG;
       }
       break;
@@ -169,6 +176,7 @@ s1ap_mme_decode_initiating (
       case S1ap_ProcedureCode_id_E_RABReleaseIndication: {
         ret = s1ap_decode_s1ap_e_rabreleaseindicationies(&message->msg.s1ap_E_RABReleaseIndicationIEs, &initiating_p->value);
         s1ap_xer_print_s1ap_e_rabreleaseindication(s1ap_xer__print2sp, message_string, message);
+        free_wrapper(&initiating_p->value.buf);
         *message_id = S1AP_E_RABRELEASE_IND_LOG;
       }
       break;
