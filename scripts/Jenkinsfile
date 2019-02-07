@@ -45,6 +45,7 @@ pipeline {
         ansiColor('xterm')
     }
     environment {
+        // Some of these parameters will move to GUI Job configuration
         dns1 = "192.168.106.10"
         dns2 = "192.168.106.12"
         vm_display = "False"
@@ -61,10 +62,26 @@ pipeline {
             steps {
                 script {
                     echo '\u2705 \u001B[32mVerify Parameters\u001B[0m'
+                    echo "Node       is ${NODE_NAME}"
                     echo "Git URL    is ${GIT_URL}"
+
+                    removeGitHubInfo()
+                    if (env.ghprbPullId != null) {
+                        echo "======= THIS IS A PULL REQUEST ======"
+                        echo "PR ID      is ${env.ghprbPullId}"
+                        echo "PR LINK    is ${env.ghprbPullLink}"
+                        echo "PR TITLE   is ${env.ghprbPullTitle}"
+                        sh "./scripts/doGitHubPullRequestTempMerge.sh --src-branch ${env.ghprbSourceBranch} --src-commit ${env.ghprbActualCommit} --target-branch ${env.ghprbTargetBranch} --target-commit ${GIT_COMMIT}"
+                    } else {
+                        echo "======= THIS IS A PUSH EVENT ======"
+                        echo "Git Branch is ${GIT_BRANCH}"
+                        echo "Git Commit is ${GIT_COMMIT}"
+                        // Making a hard copy of the SHA-ONE
+                        getCommitSha()
+                    }
+
                     echo "Git Branch is ${GIT_BRANCH}"
                     echo "Git Commit is ${GIT_COMMIT}"
-                    echo "Node       is ${NODE_NAME}"
 
                     def allParametersPresent = true
 
@@ -227,7 +244,8 @@ pipeline {
                 stage ('Start SPGW') {
                     steps {
                         echo '\u2705 \u001B[32mStarting SPGW vNF\u001B[0m'
-                        sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci start-nf --nf-type spgw --job-name ${JOB_NAME} --build-id ${BUILD_NUMBER} > spgw_start.log 2>&1"
+                        // For the moment it crashes the SPGW VM and a zombie process remains
+                        //sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci start-nf --nf-type spgw --job-name ${JOB_NAME} --build-id ${BUILD_NUMBER} > spgw_start.log 2>&1"
                     }
                 }
             }
@@ -302,20 +320,42 @@ OAI CI Team''',
     }
 }
 
+// Removing all info -- do not know if git clean command removes them
+def removeGitHubInfo() {
+  if (fileExists('.git/remote-url')) {
+    sh "rm -f .git/remote-url"
+  }
+  if (fileExists('.git/current-commit')) {
+    sh "rm -f .git/current-commit"
+  }
+  if (fileExists('.git/commit-email')) {
+    sh "rm -f .git/commit-email"
+  }
+}
+
 // GitHub retrieve email of last committer
 def getCommitterEmail() {
-  sh "git log -1 --pretty=format:\"%ce\" > .git/commit-email"
+  if (!fileExists('.git/commit-email')) {
+      sh "git log -1 --pretty=format:\"%ce\" > .git/commit-email"
+      // Workaround for issue when merge to develop from the Pull Request GitHub webpage
+      // Click on merge button creates a commit with an email address in noreply@github.com
+      sh "if [ `egrep -c \"noreply@github.com\" .git/commit-email` -eq 1 ]; then echo \"raphael.defosseux@openairinterface.org\" > .git/commit-email; fi"
+  }
   return readFile(".git/commit-email").trim()
 }
 
 // Github commit update functions
 def getRepoURL() {
-  sh "git config --get remote.origin.url > .git/remote-url"
+  if (!fileExists('.git/remote-url')) {
+      sh "git config --get remote.origin.url > .git/remote-url"
+  }
   return readFile(".git/remote-url").trim()
 }
 
 def getCommitSha() {
-  sh "git rev-parse HEAD > .git/current-commit"
+  if (fileExists('.git/current-commit')) {
+    sh "git rev-parse HEAD > .git/current-commit"
+  }
   return readFile(".git/current-commit").trim()
 }
 
