@@ -1273,7 +1273,6 @@ s10_mme_context_response (
         "Not creating a local S10 Tunnel. \n", rsp_p->cause);
   }
 
-
   return RETURNok;
 }
 
@@ -1300,6 +1299,8 @@ s10_mme_handle_context_response(
 
   /** Set the transaction for the triggered acknowledgement. */
   resp_p->trxn = (void *)pUlpApi->u_api_info.triggeredRspIndInfo.hUlpTrxn;
+  resp_p->local_port = pUlpApi->u_api_info.triggeredRspIndInfo.localPort;
+  resp_p->peer_port  = pUlpApi->u_api_info.triggeredRspIndInfo.peerPort;
 
   /** Create a new message parser.     */
   rc = nwGtpv2cMsgParserNew (*stack_p, NW_GTP_CONTEXT_RSP, s10_ie_indication_generic, NULL, &pMsgParser);
@@ -1399,6 +1400,7 @@ s10_mme_context_acknowledge (
   ulp_ack.apiType = NW_GTPV2C_ULP_API_TRIGGERED_ACK;
   ulp_ack.u_api_info.triggeredAckInfo.peerIp = ack_p->peer_ip;
   ulp_ack.u_api_info.triggeredAckInfo.peerPort = ack_p->peer_port;
+  ulp_ack.u_api_info.triggeredAckInfo.localPort = ack_p->local_port;
 
   /*
    * Prepare a context ack to send to target MME.

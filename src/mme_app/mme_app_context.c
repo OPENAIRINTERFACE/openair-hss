@@ -2418,15 +2418,19 @@ mme_app_handle_s10_context_response(
   /** Set the transaction: Peer IP, Peer Port, Peer TEID should be deduced from this. */
   s10_context_ack_p->trxnId     = s10_context_response_pP->trxn;
   s10_context_ack_p->peer_ip    = s10_context_response_pP->s10_source_mme_teid.ipv4_address;
-  s10_context_ack_p->peer_port  = 2123; // todo: s10_context_response_pP->peer_port;
+  s10_context_ack_p->peer_port  = s10_context_response_pP->peer_port;
   s10_context_ack_p->teid       = s10_context_response_pP->s10_source_mme_teid.teid;
+  s10_context_ack_p->local_port = s10_context_response_pP->local_port;
 
   MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_S10_MME, NULL, 0, "0 S10 CONTEXT_ACK for UE " MME_UE_S1AP_ID_FMT "! \n", ue_context->mme_ue_s1ap_id);
   itti_send_msg_to_task (TASK_S10, INSTANCE_DEFAULT, message_p);
   OAILOG_INFO(LOG_MME_APP, "Sent S10 Context Acknowledge to the source MME FTEID " TEID_FMT " for UE with mmeUeS1apId " MME_UE_S1AP_ID_FMT ". \n",
       ue_context->mme_ue_s1ap_id, s10_context_ack_p->teid);
 
-//  ue_context->came_from_tau = true;
+  // todo: LOCK!!
+  /** Set the subscribed AMBR values. */
+  ue_context->subscribed_ue_ambr.br_dl = s10_context_response_pP->ue_eps_mm_context->subscribed_ue_ambr.br_dl;
+  ue_context->subscribed_ue_ambr.br_ul = s10_context_response_pP->ue_eps_mm_context->subscribed_ue_ambr.br_ul;
 
   /** Remove the S10 Tunnel. */
   mme_app_remove_s10_tunnel_endpoint(ue_context->local_mme_teid_s10, s10_context_response_pP->s10_source_mme_teid.ipv4_address);

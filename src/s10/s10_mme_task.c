@@ -127,7 +127,6 @@ s10_mme_ulp_process_stack_req_cb (
       ret = s10_mme_handle_forward_relocation_complete_acknowledge(&s10_mme_stack_handle, pUlpApi);
       break;
 
-
     case NW_GTP_CONTEXT_RSP:
       ret = s10_mme_handle_context_response(&s10_mme_stack_handle, pUlpApi);
       break;

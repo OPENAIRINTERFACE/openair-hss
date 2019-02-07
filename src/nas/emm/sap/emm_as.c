@@ -1268,34 +1268,18 @@ static int _emm_as_data_req (const emm_as_data_t * msg, dl_info_transfer_req_t *
     emm_msg_free(emm_msg);
 
     if (bytes > 0) {
-      if (msg->nas_info == EMM_AS_NAS_DATA_TAU) {
-        as_msg->err_code = AS_TERMINATED_NAS;
-      } else {
-        as_msg->err_code = AS_SUCCESS;
-      }
-//      OAILOG_FUNC_RETURN (LOG_NAS_EMM, AS_DL_INFO_TRANSFER_REQ);
-
       /** Immediately go into idle mode. */
       if (msg->nas_info == EMM_AS_NAS_DATA_TAU) {
-        /** Check the EMM state. */
-        // todo: review
-//        if(emm_ctx->_emm_fsm_state == EMM_REGISTERED && mme_api_get_pending_bearer_deactivation(emm_ctx->ue_id)){
-//          OAILOG_DEBUG (LOG_NAS_EMM, "UE with IMSI " IMSI_64_FMT " and valid GUTI " GUTI_FMT " will enter ECM_IDLE mode after TAU_ACCEPT. \n",
-//              emm_ctx->_imsi64, GUTI_ARG(&emm_ctx->_guti));
-//          as_msg->err_code = AS_TERMINATED_NAS; /**< Immediately terminate the session. This will not happen for a TAU with S10 since UE will be in EMM_COMMON state. */
-//          mme_api_set_pending_bearer_deactivation(emm_ctx->ue_id, false);
-//        }else{
-//          OAILOG_DEBUG (LOG_NAS_EMM, "UE with IMSI " IMSI_64_FMT " and valid GUTI " GUTI_FMT " will stay in ECM_CONNECTED mode after TAU_ACCEPT. \n",
-//              emm_ctx->_imsi64, GUTI_ARG(&emm_ctx->_guti));
-//          if(mme_api_get_pending_bearer_deactivation(emm_ctx->ue_id)){
-//            OAILOG_DEBUG (LOG_NAS_EMM, "UE with IMSI " IMSI_64_FMT " and valid GUTI " GUTI_FMT " will enter ECM_IDLE mode after TAU_COMPLETE (not EMM_REGISTERED yet). \n",
-//                emm_ctx->_imsi64, GUTI_ARG(&emm_ctx->_guti));
-//          }
-          as_msg->err_code = AS_SUCCESS;
-//
-//        }
+    	  /** Check the EMM state. */
+    	  if(emm_ctx->_emm_fsm_state == EMM_REGISTERED && msg->pending_deac){
+    		  OAILOG_DEBUG (LOG_NAS_EMM, "UE with IMSI " IMSI_64_FMT " and valid GUTI " GUTI_FMT " will enter ECM_IDLE mode after TAU_ACCEPT. \n",
+    				  emm_ctx->_imsi64, GUTI_ARG(&emm_ctx->_guti)); /**< No TAU Complete is expected. */
+    		  as_msg->err_code = AS_TERMINATED_NAS; /**< Immediately terminate the session. This will not happen for a TAU with S10 since UE will be in EMM_COMMON state. */
+    	  }else{
+    		  as_msg->err_code = AS_SUCCESS; /**< TAU Complete is expected (wait till receiving it (no pending deactivation). */
+    	  }
       } else {
-        as_msg->err_code = AS_SUCCESS;
+    	  as_msg->err_code = AS_SUCCESS;
       }
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, AS_DL_INFO_TRANSFER_REQ);
 

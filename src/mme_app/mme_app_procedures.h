@@ -107,6 +107,10 @@ typedef struct mme_app_s10_proc_mme_handover_s {
   ecgi_t                        target_ecgi;  /**< Target home/macro enb id. */
   bool                          pending_clear_location_request;
 
+  /** Flags just for Tester imperfections. */
+  bool 							mme_status_context_handled;
+  bool 							received_early_ho_notify;
+
   LIST_ENTRY(mme_app_handover_proc_s) entries;      /* List. */
 } mme_app_s10_proc_mme_handover_t;
 

@@ -84,15 +84,32 @@ static
 struct udp_socket_desc_s               *
 udp_server_get_socket_desc (
   task_id_t task_id,
-  uint16_t  local_port)
+  uint16_t  local_port,
+  uint16_t  peer_port)
 {
   struct udp_socket_desc_s               *udp_sock_p = NULL;
 
   OAILOG_DEBUG (LOG_UDP, "Looking for task %d\n", task_id);
   STAILQ_FOREACH (udp_sock_p, &udp_socket_list, entries) {
-    if (udp_sock_p->task_id == task_id && udp_sock_p->local_port == local_port) {
+    if (udp_sock_p->task_id == task_id) {
       OAILOG_DEBUG (LOG_UDP, "Found matching task desc\n");
-      break;
+      if(local_port){
+    	  if(udp_sock_p->local_port == local_port){
+    		  OAILOG_DEBUG (LOG_UDP, "Found matching local port %d. \n", local_port);
+    		  break;
+    	  } else {
+    		  continue;
+    	  }
+      }
+      /** Reach here only if no local port. */
+      if(udp_sock_p->local_port != peer_port){
+    	  /** Must be high port. */
+    	  OAILOG_DEBUG (LOG_UDP, "Found matching port with high port %d. \n", udp_sock_p->local_port);
+    	  break;
+      } else {
+    	  /** If no local port is given, the destination will be 2123. That cannot be the local port. */
+    	  continue;
+      }
     }
   }
   return udp_sock_p;
@@ -176,7 +193,7 @@ udp_server_create_socket (
   DevAssert (socket_desc_p != NULL);
   socket_desc_p->sd = sd;
   socket_desc_p->local_address.s_addr = address->s_addr;
-  socket_desc_p->local_port = port;
+  socket_desc_p->local_port = ntohs(addr_check.sin_port);
   socket_desc_p->task_id = task_id;
   OAILOG_DEBUG (LOG_UDP, "Inserting new descriptor for task %d, sd %d\n", socket_desc_p->task_id, socket_desc_p->sd);
   pthread_mutex_lock (&udp_socket_list_mutex);
@@ -313,7 +330,7 @@ static void *udp_intertask_interface (void *args_p)
           peer_addr.sin_port = htons (udp_data_req_p->peer_port);
           peer_addr.sin_addr = udp_data_req_p->peer_address;
           pthread_mutex_lock (&udp_socket_list_mutex);
-          udp_sock_p = udp_server_get_socket_desc (ITTI_MSG_ORIGIN_ID (received_message_p), udp_data_req_p->local_port);
+          udp_sock_p = udp_server_get_socket_desc (ITTI_MSG_ORIGIN_ID (received_message_p), udp_data_req_p->local_port, udp_data_req_p->peer_port);
 
           if (udp_sock_p == NULL) {
             OAILOG_ERROR (LOG_UDP, "Failed to retrieve the udp socket descriptor " "associated with task %d\n", ITTI_MSG_ORIGIN_ID (received_message_p));

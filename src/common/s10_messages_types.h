@@ -346,6 +346,7 @@ typedef struct itti_s10_context_response_s{
 
   struct in_addr                  peer_ip;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME
   uint16_t                        peer_port;           ///< MME port for S-GW or S-GW port for MME
+  uint16_t                        local_port;           ///< MME port for S-GW or S-GW port for MME
 } itti_s10_context_response_t;
 
 //-----------------------------------------------------------------------------
@@ -371,6 +372,7 @@ typedef struct itti_s10_context_acknowledge_s {
   /* S11 stack specific parameter. Not used in standalone epc mode */
   struct in_addr                peer_ip;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME
   uint16_t                      peer_port;      ///< MME port for S-GW or S-GW port for MME
+  uint16_t                      local_port;      ///< MME port for S-GW or S-GW port for MME
   uint32_t                      trxnId;           ///< Transaction identifier
 } itti_s10_context_acknowledge_t;
 

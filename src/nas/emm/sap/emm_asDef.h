@@ -255,6 +255,7 @@ typedef struct emm_as_data_s {
 #define EMM_AS_DATA_DELIVERED_LOWER_LAYER_NON_DELIVERY_INDICATION_DUE_TO_HO  2
   uint8_t                delivered;   /* Data message delivery indicator  */
   emm_proc_detach_type_t detach_type; /**< Set to true if reattach is required. */
+  bool					 pending_deac;
 #define EMM_AS_NAS_DATA_ATTACH          0x01  /* Attach complete      */
 #define EMM_AS_NAS_DATA_DETACH_ACCEPT   0x02  /* Detach request       */
 #define EMM_AS_NAS_DATA_TAU             0x03  /* TAU    Accept        */

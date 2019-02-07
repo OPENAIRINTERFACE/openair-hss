@@ -3586,6 +3586,32 @@ mme_app_handle_forward_access_context_notification(
 // todo: DevAssert(ue_context->ecm_state == ECM_CONNECTED); /**< Any timeouts here should erase the context, not change the signaling state back to IDLE but leave the context. */
   OAILOG_INFO(LOG_MME_APP, "Sending S1AP MME Status transfer to the target eNodeB %d for UE with enb_ue_s1ap_id: " ENB_UE_S1AP_ID_FMT", mme_ue_s1ap_id. "MME_UE_S1AP_ID_FMT ". \n",
       s10_handover_process->target_id.target_id.macro_enb_id.enb_id, s10_handover_process->target_enb_ue_s1ap_id, ue_context->mme_ue_s1ap_id);
+
+  /** (Tester malfunctions : Handover Notify is received). */
+  if(s10_handover_process->received_early_ho_notify){
+	  /** Trigger the Ho-Relocation Complete message. */
+	  message_p = itti_alloc_new_message (TASK_MME_APP, S10_FORWARD_RELOCATION_COMPLETE_NOTIFICATION);
+	  DevAssert (message_p != NULL);
+	  itti_s10_forward_relocation_complete_notification_t *forward_relocation_complete_notification_p = &message_p->ittiMsg.s10_forward_relocation_complete_notification;
+	  /** Set the destination TEID. */
+	  forward_relocation_complete_notification_p->teid = s10_handover_process->remote_mme_teid.teid;       /**< Target S10-MME TEID. todo: what if multiple? */
+	  /** Set the local TEID. */
+	  forward_relocation_complete_notification_p->local_teid = ue_context->local_mme_teid_s10;        /**< Local S10-MME TEID. */
+	  forward_relocation_complete_notification_p->peer_ip = s10_handover_process->remote_mme_teid.ipv4_address; /**< Set the target TEID. */
+	  OAILOG_INFO(LOG_MME_APP, "Sending FW_RELOC_COMPLETE_NOTIF TO %X with remote S10-TEID " TEID_FMT ". \n.",
+			  forward_relocation_complete_notification_p->peer_ip, forward_relocation_complete_notification_p->teid);
+
+	  // todo: remove this and set at correct position!
+	  mme_ue_context_update_ue_sig_connection_state (&mme_app_desc.mme_ue_contexts, ue_context, ECM_CONNECTED);
+
+	  /**
+	   * Sending a message to S10. Not changing any context information!
+	   * This message actually implies that the handover is finished. Resetting the flags and statuses here of after Forward Relocation Complete AcknowledgE?! (MBR)
+	   */
+	  itti_send_msg_to_task (TASK_S10, INSTANCE_DEFAULT, message_p);
+  } else {
+	  s10_handover_process->mme_status_context_handled = true;
+  }
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 
@@ -4054,25 +4080,31 @@ mme_app_handle_s1ap_handover_notify(
     * UE came from S10 inter-MME handover. Not clear the pending_handover state yet.
     * Sending Forward Relocation Complete Notification and waiting for acknowledgment.
     */
-   message_p = itti_alloc_new_message (TASK_MME_APP, S10_FORWARD_RELOCATION_COMPLETE_NOTIFICATION);
-   DevAssert (message_p != NULL);
-   itti_s10_forward_relocation_complete_notification_t *forward_relocation_complete_notification_p = &message_p->ittiMsg.s10_forward_relocation_complete_notification;
-   /** Set the destination TEID. */
-   forward_relocation_complete_notification_p->teid = s10_handover_proc->remote_mme_teid.teid;       /**< Target S10-MME TEID. todo: what if multiple? */
-   /** Set the local TEID. */
-   forward_relocation_complete_notification_p->local_teid = ue_context->local_mme_teid_s10;        /**< Local S10-MME TEID. */
-   forward_relocation_complete_notification_p->peer_ip = s10_handover_proc->remote_mme_teid.ipv4_address; /**< Set the target TEID. */
-   OAILOG_INFO(LOG_MME_APP, "Sending FW_RELOC_COMPLETE_NOTIF TO %X with remote S10-TEID " TEID_FMT ". \n.",
-       forward_relocation_complete_notification_p->peer_ip, forward_relocation_complete_notification_p->teid);
+   /** Only if MME_Status Context has been received (tester malfunctions). */
+   if(s10_handover_proc->mme_status_context_handled){
+	   message_p = itti_alloc_new_message (TASK_MME_APP, S10_FORWARD_RELOCATION_COMPLETE_NOTIFICATION);
+	      DevAssert (message_p != NULL);
+	      itti_s10_forward_relocation_complete_notification_t *forward_relocation_complete_notification_p = &message_p->ittiMsg.s10_forward_relocation_complete_notification;
+	      /** Set the destination TEID. */
+	      forward_relocation_complete_notification_p->teid = s10_handover_proc->remote_mme_teid.teid;       /**< Target S10-MME TEID. todo: what if multiple? */
+	      /** Set the local TEID. */
+	      forward_relocation_complete_notification_p->local_teid = ue_context->local_mme_teid_s10;        /**< Local S10-MME TEID. */
+	      forward_relocation_complete_notification_p->peer_ip = s10_handover_proc->remote_mme_teid.ipv4_address; /**< Set the target TEID. */
+	      OAILOG_INFO(LOG_MME_APP, "Sending FW_RELOC_COMPLETE_NOTIF TO %X with remote S10-TEID " TEID_FMT ". \n.",
+	          forward_relocation_complete_notification_p->peer_ip, forward_relocation_complete_notification_p->teid);
 
-   // todo: remove this and set at correct position!
-   mme_ue_context_update_ue_sig_connection_state (&mme_app_desc.mme_ue_contexts, ue_context, ECM_CONNECTED);
+	      // todo: remove this and set at correct position!
+	      mme_ue_context_update_ue_sig_connection_state (&mme_app_desc.mme_ue_contexts, ue_context, ECM_CONNECTED);
 
-   /**
-    * Sending a message to S10. Not changing any context information!
-    * This message actually implies that the handover is finished. Resetting the flags and statuses here of after Forward Relocation Complete AcknowledgE?! (MBR)
-    */
-   itti_send_msg_to_task (TASK_S10, INSTANCE_DEFAULT, message_p);
+	      /**
+	       * Sending a message to S10. Not changing any context information!
+	       * This message actually implies that the handover is finished. Resetting the flags and statuses here of after Forward Relocation Complete AcknowledgE?! (MBR)
+	       */
+	      itti_send_msg_to_task (TASK_S10, INSTANCE_DEFAULT, message_p);
+   } else{
+	   /** Late Ho-Notify. */
+	   s10_handover_proc->received_early_ho_notify = true;
+   }
  }
 }
 

@@ -247,6 +247,7 @@ typedef struct nw_gtpv2c_triggered_ack_info_s {
                                                              NW_GTPV2C_ULP_API_FLAG_CREATE_LOCAL_TUNNEL */
   NW_IN    struct in_addr                   peerIp;
   NW_IN    uint32_t                         peerPort;
+  NW_IN    uint32_t                         localPort;
 } nw_gtpv2c_triggered_ack_info_t;
 
 /**
@@ -297,6 +298,8 @@ typedef struct nw_gtpv2c_triggered_rsp_ind_info_s {
   NW_IN    nw_gtpv2c_msg_type_t            msgType;
   NW_IN    bool                            noDelete;
   NW_IN    struct in_addr                  peerIp;
+  NW_IN    uint32_t                        localPort;
+  NW_IN    uint32_t                        peerPort;
 } nw_gtpv2c_triggered_rsp_ind_info_t;
 
 /**

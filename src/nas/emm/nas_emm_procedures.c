@@ -571,6 +571,12 @@ static void nas_delete_context_req_procedure(struct emm_data_context_s *emm_cont
    if ((*ctx_req_proc)->cn_proc.base_proc.parent) {
      (*ctx_req_proc)->cn_proc.base_proc.parent->child = NULL;
    }
+   if((*ctx_req_proc)->pdn_connections){
+	   free_mme_ue_eps_pdn_connections(&(*ctx_req_proc)->pdn_connections);
+   }
+   if((*ctx_req_proc)->nas_s10_context.mm_eps_ctx){
+	   free_mm_context_eps(&(*ctx_req_proc)->nas_s10_context.mm_eps_ctx);
+   }
    ue_context_t * ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
 
    void *unused = NULL;
