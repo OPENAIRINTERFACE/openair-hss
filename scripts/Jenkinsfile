@@ -117,7 +117,13 @@ pipeline {
             steps {
                 echo '\u2705 \u001B[32mRetrieve Source Code\u001B[0m'
                 sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci init --management-nw '192.168.21.0/24' > init.log 2>&1"
-                sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci scm --job-name ${JOB_NAME} --build-id ${BUILD_NUMBER} > scm.log 2>&1"
+                script {
+                    if (env.ghprbPullId != null) {
+                        sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci scm --job-name ${JOB_NAME} --build-id ${BUILD_NUMBER} --git-pull-request True --git-commit-id ${env.ghprbActualCommit} --git-branch ${env.ghprbSourceBranch} --git-target-branch ${env.ghprbTargetBranch} > scm.log 2>&1"
+                    } else {
+                        sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci scm --job-name ${JOB_NAME} --build-id ${BUILD_NUMBER} > scm.log 2>&1"
+                    }
+                }
             }
         }
         stage ('Static Code Analysis') {
@@ -293,6 +299,10 @@ pipeline {
                 sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci report-html-build --job-name ${JOB_NAME} --build-id ${BUILD_NUMBER} > report-build.log 2>&1"
                 if (fileExists('test_results_oai_cn.html')) {
                     sh "sudo sed -i -e 's#Build-ID: ${BUILD_ID}#Build-ID: <a href=\"${BUILD_URL}\">${BUILD_ID}</a>#' test_results_oai_cn.html"
+                    if (env.ghprbPullId != null) {
+                        sh "sudo sed -i -e 's#TEMPLATE_PULL_REQUEST_LINK#${env.ghprbPullLink}#g' test_results_oai_cn.html"
+                        sh "sudo sed -i -e 's#TEMPLATE_PULL_REQUEST_TEMPLATE#${env.ghprbPullTitle}#' test_results_oai_cn.html"
+                    }
                     archiveArtifacts artifacts: 'test_results_oai_cn.html'
                 }
 
