@@ -122,6 +122,6 @@ s10_mme_handle_ulp_error_indicatior(
   nw_gtpv2c_ulp_api_t * pUlpApi);
 
 /** Remove UE Tunnel in unexpected situations. */
-int s10_mme_remove_ue_tunnel ( nw_gtpv2c_stack_handle_t *stack_p, itti_s10_remove_ue_tunnel_t *remove_ue_tunnel_p);
+int s10_mme_remove_ue_tunnel ( nw_gtpv2c_stack_handle_t *stack_p, itti_s10_remove_ue_tunnel_t * remove_ue_tunnel_p);
 
 #endif /* FILE_S10_MME_SESSION_MANAGER_SEEN */

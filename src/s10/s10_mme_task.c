@@ -283,7 +283,8 @@ s10_mme_thread (
       break;
 
     case S10_CONTEXT_ACKNOWLEDGE:{
-        s10_mme_context_acknowledge (&s10_mme_stack_handle, &received_message_p->ittiMsg.s10_context_acknowledge);
+    	s10_mme_context_acknowledge (&s10_mme_stack_handle, &received_message_p->ittiMsg.s10_context_acknowledge);
+        OAILOG_WARNING(LOG_S10, "S10 Context ACK not sent due memory reasons. \n");
       }
       break;
 
@@ -333,7 +334,7 @@ s10_mme_thread (
     }
 
     default:{
-        OAILOG_ERROR (LOG_S10, "Unkwnon message ID %d:%s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p));
+        OAILOG_ERROR (LOG_S10, "Unknown message ID %d:%s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p));
       }
       break;
     }

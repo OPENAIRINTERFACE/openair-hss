@@ -731,7 +731,9 @@ static nw_rc_t nwGtpv2cCreateLocalTunnel (
 
     OAILOG_DEBUG (LOG_GTPV2C, "Sending a triggered ACK message over seq '0x%x'\n", ((nw_gtpv2c_msg_t *) pUlpAck->hMsg)->seqNum );
     rc = nwGtpv2cCreateAndSendMsg (thiz, ((nw_gtpv2c_msg_t *) pUlpAck->hMsg)->seqNum , pUlpAck->u_api_info.triggeredAckInfo.localPort, &pUlpAck->u_api_info.triggeredAckInfo.peerIp, pUlpAck->u_api_info.triggeredAckInfo.peerPort, (nw_gtpv2c_msg_t *) pUlpAck->hMsg);
-    /** Don't start a timer. */
+
+    /** Remove the tunnel. */
+    rc = nwGtpv2cDeleteLocalTunnel (thiz, pUlpAck->u_api_info.triggeredAckInfo.hTunnel);
 
     OAILOG_FUNC_RETURN( LOG_GTPV2C, rc);
   }

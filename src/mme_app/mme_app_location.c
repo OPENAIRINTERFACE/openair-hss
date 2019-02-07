@@ -148,6 +148,7 @@ err:
   OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
 }
 
+//------------------------------------------------------------------------------
 int
 mme_app_handle_s6a_cancel_location_req(
   const s6a_cancel_location_req_t * const clr_pP)

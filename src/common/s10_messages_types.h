@@ -359,6 +359,7 @@ typedef struct itti_s10_context_response_s{
  */
 typedef struct itti_s10_context_acknowledge_s {
   teid_t                   teid;                ///< S11 MME Tunnel Endpoint Identifier
+  teid_t				   local_teid;
   uint32_t                 ue_id;
   // here fields listed in 3GPP TS 29.274
   gtpv2c_cause_t               cause;               ///<

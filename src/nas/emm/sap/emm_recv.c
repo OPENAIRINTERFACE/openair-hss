@@ -639,6 +639,7 @@ emm_recv_tracking_area_update_request (
   /** Not checking if it is initial or not. For NAS layer, it is the same. */
   // Mandatory fields
   ies->eps_update_type = msg->epsupdatetype;
+
   ies->is_native_sc    = (msg->naskeysetidentifier.tsc != NAS_KEY_SET_IDENTIFIER_MAPPED);
   ies->ksi             = msg->naskeysetidentifier.naskeysetidentifier;
   ies->is_initial      = is_initial;

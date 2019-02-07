@@ -2168,6 +2168,8 @@ mme_app_handle_s10_context_request(const itti_s10_context_request_t * const s10_
   */
  s10_proc_mme_tau = mme_app_create_s10_procedure_mme_handover(ue_context, false, MME_APP_S10_PROC_TYPE_INTER_MME_HANDOVER);
  DevAssert(s10_proc_mme_tau);
+ s10_proc_mme_tau->due_tau = true;
+
  /** S10 */
  tai_t target_tai;
  memset(&target_tai, 0, sizeof (tai_t));
@@ -2420,6 +2422,7 @@ mme_app_handle_s10_context_response(
   s10_context_ack_p->peer_ip    = s10_context_response_pP->s10_source_mme_teid.ipv4_address;
   s10_context_ack_p->peer_port  = s10_context_response_pP->peer_port;
   s10_context_ack_p->teid       = s10_context_response_pP->s10_source_mme_teid.teid;
+  s10_context_ack_p->local_teid = ue_context->local_mme_teid_s10;
   s10_context_ack_p->local_port = s10_context_response_pP->local_port;
 
   MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_S10_MME, NULL, 0, "0 S10 CONTEXT_ACK for UE " MME_UE_S1AP_ID_FMT "! \n", ue_context->mme_ue_s1ap_id);
@@ -2432,8 +2435,6 @@ mme_app_handle_s10_context_response(
   ue_context->subscribed_ue_ambr.br_dl = s10_context_response_pP->ue_eps_mm_context->subscribed_ue_ambr.br_dl;
   ue_context->subscribed_ue_ambr.br_ul = s10_context_response_pP->ue_eps_mm_context->subscribed_ue_ambr.br_ul;
 
-  /** Remove the S10 Tunnel. */
-  mme_app_remove_s10_tunnel_endpoint(ue_context->local_mme_teid_s10, s10_context_response_pP->s10_source_mme_teid.ipv4_address);
   /*
    * Update the coll_keys with the IMSI and remove the S10 Tunnel Endpoint.
    */
@@ -2540,13 +2541,6 @@ mme_app_handle_s10_context_acknowledge(
     OAILOG_ERROR(LOG_MME_APP, "The S10 Context Acknowledge for local teid " TEID_FMT " was not valid/could not be received. "
         "Ignoring the handover state. \n", s10_context_acknowledge_pP->teid);
     // todo: what to do in this case? Ignoring the S6a cancel location request?
-  }
-  /** Check if the UE is in idle mode, if so send a release request. */
-  if(ue_context->ecm_state == ECM_CONNECTED){
-    OAILOG_WARNING(LOG_MME_APP, "Context acknowledge received in ECM connected state for ueId " MME_UE_S1AP_ID_FMT ", enbUeS1apId " ENB_UE_S1AP_ID_FMT " enbId %d. \n",
-        ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, ue_context->e_utran_cgi.cell_identity.enb_id);
-    ue_context->s1_ue_context_release_cause = S1AP_NAS_NORMAL_RELEASE; /**< We will send the context release command. */
-    mme_app_itti_ue_context_release (ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, ue_context->s1_ue_context_release_cause, ue_context->e_utran_cgi.cell_identity.enb_id);
   }
 
   /** The S10 Tunnel endpoint will be removed with the completion of the MME-Mobility Completion timer of the procedure. */

@@ -1402,6 +1402,10 @@ s10_mme_context_acknowledge (
   ulp_ack.u_api_info.triggeredAckInfo.peerPort = ack_p->peer_port;
   ulp_ack.u_api_info.triggeredAckInfo.localPort = ack_p->local_port;
 
+  int hash_rc = hashtable_ts_get(s10_mme_teid_2_gtv2c_teid_handle,
+		  (hash_key_t) ack_p->local_teid,
+       (void **)(uintptr_t)&ulp_ack.u_api_info.triggeredAckInfo.hTunnel);
+
   /*
    * Prepare a context ack to send to target MME.
    */
@@ -1427,6 +1431,20 @@ s10_mme_context_acknowledge (
   DevAssert (NW_OK == rc);
   MSC_LOG_TX_MESSAGE (MSC_S10_MME, MSC_SGW, NULL, 0, "CONTEXT_ACKNOWLEDGE with cause %d ", ack_p->cause);
 
+  /**
+   * hash_free_int_func is set as the freeing function.
+   * The value is removed from the map. But the value itself (int) is not freed.
+   * The Tunnels are not deallocated but just set back to the Tunnel pool.
+   */
+  hash_rc = hashtable_ts_free(s10_mme_teid_2_gtv2c_teid_handle, (hash_key_t) ack_p->local_teid);
+  DevAssert (HASH_TABLE_OK == hash_rc);
+
+  usleep(100); /**< unfortunately, no other way.. */
+
+  /** Purge the message. */
+  rc = nwGtpv2cMsgDelete (s10_mme_teid_2_gtv2c_teid_handle, ulp_ack.hMsg);
+  DevAssert (NW_OK == rc);
+
   return RETURNok;
 }
 
@@ -1434,8 +1452,7 @@ s10_mme_context_acknowledge (
 // todo: evaluate later the error cause in the removal!! --> eventually if something goes wrong here.. check the reason!
 int
 s10_mme_remove_ue_tunnel (
-    nw_gtpv2c_stack_handle_t *stack_p,
-    itti_s10_remove_ue_tunnel_t *remove_ue_tunnel_p)
+    nw_gtpv2c_stack_handle_t *stack_p, itti_s10_remove_ue_tunnel_t * remove_ue_tunnel_p)
 {
   OAILOG_FUNC_IN (LOG_S10);
   nw_rc_t                                   rc = NW_OK;
