@@ -574,9 +574,6 @@ mme_app_finalize_bearer_context(mme_ue_s1ap_id_t ue_id, const pdn_cid_t pdn_cid,
   }else{
     mme_app_get_session_bearer_context_from_all(ue_context, ebi, &bearer_context);
   }
-
-  /** Update the FTEIDs and the bearers CN state. */
-  bearer_context = mme_app_get_session_bearer_context(pdn_context, ebi);
   if(!bearer_context){
     OAILOG_ERROR (LOG_MME_APP, "No MME_APP UE context could be found for UE: " MME_UE_S1AP_ID_FMT ". \n", ue_id);
     OAILOG_FUNC_RETURN (LOG_MME_APP, ESM_CAUSE_PDN_CONNECTION_DOES_NOT_EXIST);

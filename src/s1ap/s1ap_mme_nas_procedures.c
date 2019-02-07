@@ -29,8 +29,10 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <stddef.h>
 
 #include "bstrlib.h"
+
 
 #include "dynamic_memory_check.h"
 #include "assertions.h"
@@ -56,10 +58,10 @@
 
 extern const char                      *s1ap_direction2String[];
 extern hash_table_ts_t g_s1ap_mme_id2assoc_id_coll; // contains sctp association id, key is mme_ue_s1ap_id;
-
-static bool
-s1ap_add_bearer_context_to_setup_list (S1ap_E_RABToBeSetupListHOReqIEs_t * const e_RABToBeSetupListHOReq_p,
-    S1ap_E_RABToBeSetupItemHOReq_t        * e_RABToBeSetupHO_p, bearer_contexts_to_be_created_t * bc_tbc);
+//
+//static bool
+//s1ap_add_bearer_context_to_setup_list (S1ap_E_RABToBeSetupListHOReqIEs_t * const e_RABToBeSetupListHOReq_p,
+//    S1ap_E_RABToBeSetupItemHOReq_t        * e_RABToBeSetupHO_p, bearer_contexts_to_be_created_t * bc_tbc);
 
 //static bool
 //s1ap_add_bearer_context_to_switch_list (S1ap_E_RABToBeSwitchedULListIEs_t * const e_RABToBeSwitchedListHOReq_p,
@@ -908,6 +910,9 @@ s1ap_handle_conn_est_cnf (
     e_RABToBeSetup = calloc(1, sizeof(S1ap_E_RABToBeSetupItemCtxtSUReq_t));
     e_RABToBeSetup->e_RAB_ID = conn_est_cnf_pP->e_rab_id[item];     //5;
     e_RABToBeSetup->e_RABlevelQoSParameters.qCI = conn_est_cnf_pP->e_rab_level_qos_qci[item];
+    e_RABToBeSetup->e_RABlevelQoSParameters.allocationRetentionPriority.priorityLevel = conn_est_cnf_pP->e_rab_level_qos_priority_level[item];
+    e_RABToBeSetup->e_RABlevelQoSParameters.allocationRetentionPriority.pre_emptionCapability = conn_est_cnf_pP->e_rab_level_qos_preemption_capability[item];
+    e_RABToBeSetup->e_RABlevelQoSParameters.allocationRetentionPriority.pre_emptionVulnerability = conn_est_cnf_pP->e_rab_level_qos_preemption_vulnerability[item];
     if(conn_est_cnf_pP->nas_pdu[item]){
       DevAssert(!nas_pdu);
       nas_pdu = calloc (1, sizeof(S1ap_NAS_PDU_t));
@@ -918,10 +923,6 @@ s1ap_handle_conn_est_cnf (
     }
 
 //    memcpy(nas_pdu.buf, (void*)conn_est_cnf_pP->nas_pdu[item]->data, blength(conn_est_cnf_pP->nas_pdu[item]));
-
-    e_RABToBeSetup->e_RABlevelQoSParameters.allocationRetentionPriority.priorityLevel = conn_est_cnf_pP->e_rab_level_qos_priority_level[item];
-    e_RABToBeSetup->e_RABlevelQoSParameters.allocationRetentionPriority.pre_emptionCapability = conn_est_cnf_pP->e_rab_level_qos_preemption_capability[item];
-    e_RABToBeSetup->e_RABlevelQoSParameters.allocationRetentionPriority.pre_emptionVulnerability = conn_est_cnf_pP->e_rab_level_qos_preemption_vulnerability[item];
     /*
      * Set the GTP-TEID. This is the S1-U S-GW TEID
      */
@@ -1396,32 +1397,92 @@ s1ap_handle_handover_request (
   handoverRequest_p = &message.msg.s1ap_HandoverRequestIEs;
   handoverRequest_p->mme_ue_s1ap_id = (unsigned long)handover_request_pP->ue_id;
 
-  S1ap_E_RABToBeSetupItemHOReq_t          e_RABToBeSetupHO[handover_request_pP->bearer_ctx_to_be_setup_list->num_bearer_context]; // yes, alloc on stack
-  memset(e_RABToBeSetupHO, 0, sizeof(e_RABToBeSetupHO));
+//  S1ap_E_RABToBeSetupItemHOReq_t          e_RABToBeSetupHO[handover_request_pP->bearer_ctx_to_be_setup_list->num_bearer_context]; // yes, alloc on stack
+//  memset(e_RABToBeSetupHO, 0, sizeof(e_RABToBeSetupHO));
   // todo: only a single bearer assumed right now.
-  s1ap_add_bearer_context_to_setup_list(&handoverRequest_p->e_RABToBeSetupListHOReq, &e_RABToBeSetupHO, handover_request_pP->bearer_ctx_to_be_setup_list);
+//  s1ap_add_bearer_context_to_setup_list(&handoverRequest_p->e_RABToBeSetupListHOReq, &e_RABToBeSetupHO, handover_request_pP->bearer_ctx_to_be_setup_list);
   // e_RABToBeSetupHO --> todo: disappears inside
+
+
+  for (int item = 0; item < handover_request_pP->bearer_ctx_to_be_setup_list->num_bearer_context; item++) {
+	  S1ap_E_RABToBeSetupItemHOReq_t     *e_RABToBeSetupHO = NULL; // [conn_est_cnf_pP->no_of_e_rabs]; // don't alloc on stack for automatic removal
+	  e_RABToBeSetupHO = calloc(1, sizeof(S1ap_E_RABToBeSetupItemHOReq_t));
+	  e_RABToBeSetupHO->e_RAB_ID = handover_request_pP->bearer_ctx_to_be_setup_list->bearer_contexts[item].eps_bearer_id;
+	  e_RABToBeSetupHO->e_RABlevelQosParameters.qCI = handover_request_pP->bearer_ctx_to_be_setup_list->bearer_contexts[item].bearer_level_qos.qci;
+	  e_RABToBeSetupHO->e_RABlevelQosParameters.allocationRetentionPriority.priorityLevel = handover_request_pP->bearer_ctx_to_be_setup_list->bearer_contexts[item].bearer_level_qos.pl;
+	  e_RABToBeSetupHO->e_RABlevelQosParameters.allocationRetentionPriority.pre_emptionCapability = handover_request_pP->bearer_ctx_to_be_setup_list->bearer_contexts[item].bearer_level_qos.pci;
+	  e_RABToBeSetupHO->e_RABlevelQosParameters.allocationRetentionPriority.pre_emptionVulnerability = handover_request_pP->bearer_ctx_to_be_setup_list->bearer_contexts[item].bearer_level_qos.pvi;
+	  /** No NAS. */
+
+//	  /** Set transport level information. */
+//
+//	  INT32_TO_OCTET_STRING (bc_tbc->s1u_sgw_fteid.teid, &e_RABToBeSetupHO_p->gTP_TEID);
+//	  /*
+//	   * S-GW IP address(es) for user-plane
+//	   */
+//	  bstring transportLayerAddress = fteid_ip_address_to_bstring(&bc_tbc->s1u_sgw_fteid);
+//
+//	  e_RABToBeSetupHO_p->transportLayerAddress.buf = calloc (blength(transportLayerAddress), sizeof (uint8_t));
+//	  memcpy (e_RABToBeSetupHO_p->transportLayerAddress.buf,
+//	      transportLayerAddress->data,
+//	      blength(transportLayerAddress));
+//	  e_RABToBeSetupHO_p->transportLayerAddress.size = blength(transportLayerAddress);
+//
+//	  // todo: optimize this
+//	  /** Destroy the temporarily allocated bstring. */
+//	  bdestroy_wrapper(&transportLayerAddress);
+
+	  /*
+	   * Set the GTP-TEID. This is the S1-U S-GW TEID
+	   */
+	  INT32_TO_OCTET_STRING (handover_request_pP->bearer_ctx_to_be_setup_list->bearer_contexts[item].s1u_sgw_fteid.teid, &e_RABToBeSetupHO->gTP_TEID);
+	  // S-GW IP address(es) for user-plane
+	  bstring transportLayerAddress = fteid_ip_address_to_bstring(&handover_request_pP->bearer_ctx_to_be_setup_list->bearer_contexts[item].s1u_sgw_fteid);
+	  e_RABToBeSetupHO->transportLayerAddress.buf = calloc (blength(transportLayerAddress), sizeof (uint8_t));
+	  memcpy (e_RABToBeSetupHO->transportLayerAddress.buf,
+			  transportLayerAddress->data,
+			  blength(transportLayerAddress));
+	  e_RABToBeSetupHO->transportLayerAddress.size = blength(transportLayerAddress);
+	  e_RABToBeSetupHO->transportLayerAddress.bits_unused = 0;
+	  ASN_SEQUENCE_ADD (&handoverRequest_p->e_RABToBeSetupListHOReq, e_RABToBeSetupHO);
+	  // todo: optimize this
+	  /** Destroy the temporarily allocated bstring. */
+	  bdestroy_wrapper(&transportLayerAddress);
+//
+//	  e_RABToBeSetupHO->transportLayerAddress.buf = calloc (blength(handover_request_pP->bearer_ctx_to_be_setup_list->bearer_contexts[item].s1u_sgw_fteid.), sizeof (uint8_t));
+//	  memcpy (e_RABToBeSetupHO->transportLayerAddress.buf, conn_est_cnf_pP->transport_layer_address[item]->data, blength(conn_est_cnf_pP->transport_layer_address[item]));
+//	  e_RABToBeSetupHO->transportLayerAddress.size = blength(conn_est_cnf_pP->transport_layer_address[item]);
+//	  e_RABToBeSetupHO->transportLayerAddress.bits_unused = 0;
+//	  ASN_SEQUENCE_ADD (&initialContextSetupRequest_p->e_RABToBeSetupListCtxtSUReq, e_RABToBeSetup);
+  }
 
   /** Set the security context. */
   handoverRequest_p->securityContext.nextHopChainingCount = handover_request_pP->ncc;
-  handoverRequest_p->securityContext.nextHopParameter.buf  = calloc (32, sizeof(uint8_t));
-  memcpy (handoverRequest_p->securityContext.nextHopParameter.buf, handover_request_pP->nh, 32);
-  handoverRequest_p->securityContext.nextHopParameter.size = 32;
-  handoverRequest_p->securityContext.nextHopParameter.bits_unused = 0;
-
-  /** Add the security capabilities. */
-  OAILOG_DEBUG (LOG_S1AP, "security_capabilities_encryption_algorithms 0x%04X\n", handover_request_pP->security_capabilities_encryption_algorithms);
-  OAILOG_DEBUG (LOG_S1AP, "security_capabilities_integrity_algorithms 0x%04X\n" , handover_request_pP->security_capabilities_integrity_algorithms);
-
-  handoverRequest_p->ueSecurityCapabilities.encryptionAlgorithms.buf                  = (uint8_t *) & handover_request_pP->security_capabilities_encryption_algorithms;
+  handoverRequest_p->ueSecurityCapabilities.encryptionAlgorithms.buf = calloc(1, sizeof(uint16_t));
+  memcpy(handoverRequest_p->ueSecurityCapabilities.encryptionAlgorithms.buf, &handover_request_pP->security_capabilities_encryption_algorithms, sizeof(uint16_t));
+//  handoverRequest_p->ueSecurityCapabilities.encryptionAlgorithms.size = 2;
+//  handoverRequest_p->ueSecurityCapabilities.encryptionAlgorithms.bits_unused = 0;
+//  initialContextSetupRequest_p->ueSecurityCapabilities.integrityProtectionAlgorithms.buf = (uint8_t *) & conn_est_cnf_pP->ue_security_capabilities_integrity_algorithms;
+  handoverRequest_p->ueSecurityCapabilities.integrityProtectionAlgorithms.buf = calloc(1, sizeof(uint16_t));
+  memcpy(handoverRequest_p->ueSecurityCapabilities.integrityProtectionAlgorithms.buf, &handover_request_pP->security_capabilities_integrity_algorithms, sizeof(uint16_t));
   handoverRequest_p->ueSecurityCapabilities.encryptionAlgorithms.size                 = 2;
   handoverRequest_p->ueSecurityCapabilities.encryptionAlgorithms.bits_unused          = 0;
-  handoverRequest_p->ueSecurityCapabilities.integrityProtectionAlgorithms.buf         = (uint8_t *) & handover_request_pP->security_capabilities_integrity_algorithms;
   handoverRequest_p->ueSecurityCapabilities.integrityProtectionAlgorithms.size        = 2;
   handoverRequest_p->ueSecurityCapabilities.integrityProtectionAlgorithms.bits_unused = 0;
-  OAILOG_DEBUG (LOG_S1AP, "security_capabilities_encryption_algorithms 0x%04X\n", handover_request_pP->security_capabilities_encryption_algorithms);
-  OAILOG_DEBUG (LOG_S1AP, "security_capabilities_integrity_algorithms 0x%04X\n", handover_request_pP->security_capabilities_integrity_algorithms);
+  /** Add the security capabilities. */
+  OAILOG_DEBUG (LOG_S1AP, "S1AP-HO security_capabilities_encryption_algorithms 0x%04X\n", handover_request_pP->security_capabilities_encryption_algorithms);
+  OAILOG_DEBUG (LOG_S1AP, "S1AP-HO security_capabilities_integrity_algorithms 0x%04X\n" , handover_request_pP->security_capabilities_integrity_algorithms);
 
+  if (handover_request_pP->nh) {
+	  handoverRequest_p->securityContext.nextHopParameter.buf = calloc (AUTH_NH_SIZE, sizeof(uint8_t));
+	  memcpy (handoverRequest_p->securityContext.nextHopParameter.buf, handover_request_pP->nh, AUTH_NH_SIZE);
+	  handoverRequest_p->securityContext.nextHopParameter.size = AUTH_NH_SIZE;
+  } else {
+    OAILOG_DEBUG (LOG_S1AP, "No nh \n");
+    handoverRequest_p->securityContext.nextHopParameter.buf = NULL;
+    handoverRequest_p->securityContext.nextHopParameter.size = 0;
+  }
+  handoverRequest_p->securityContext.nextHopParameter.bits_unused = 0;
   /** Set Handover Type. */
   handoverRequest_p->handoverType = S1ap_HandoverType_intralte;
 
@@ -1458,9 +1519,9 @@ s1ap_handle_handover_request (
                       (mme_ue_s1ap_id_t)handoverRequest_p->mme_ue_s1ap_id);
   bstring b = blk2bstr(buffer_p, length);
   free(buffer_p);
-  s1ap_free_mme_encode_pdu(&message, message_id);
   // todo: the next_sctp_stream is the one without incrementation?
   s1ap_mme_itti_send_sctp_request (&b, target_enb_ref->sctp_assoc_id, target_enb_ref->next_sctp_stream, handover_request_pP->ue_id);
+  s1ap_free_mme_encode_pdu(&message, message_id);
 
   /*
    * Leave the state in as it is.
@@ -1469,28 +1530,28 @@ s1ap_handle_handover_request (
   OAILOG_FUNC_OUT (LOG_S1AP);
 }
 
-static
-S1ap_IE_t * s1ap_generate_bearer_to_forward(S1ap_E_RABDataForwardingItem_t *ie_ul, bearer_context_created_t *bc_to_forward){
-
-  ie_ul->e_RAB_ID = 8;
-
-//  ie_ul.uL_TransportLayerAddress = calloc(1, sizeof (S1ap_TransportLayerAddress_t));
-
-
-  GTP_TEID_TO_ASN1(0x11223344, ie_ul->uL_GTP_TEID);
-  ie_ul->uL_TransportLayerAddress->buf[0] = 0xC0;
-  ie_ul->uL_TransportLayerAddress->buf[1] = 0xA8;
-  ie_ul->uL_TransportLayerAddress->buf[2] = 0x0F;
-  ie_ul->uL_TransportLayerAddress->buf[3] = 0x0A;
-  ie_ul->uL_TransportLayerAddress->bits_unused = 0;
-  ie_ul->uL_TransportLayerAddress->size = 4;
-
-  S1ap_IE_t *s1ap_ie = s1ap_new_ie(S1ap_ProtocolIE_ID_id_E_RABDataForwardingItem,
-      S1ap_Criticality_ignore,
-      &asn_DEF_S1ap_E_RABDataForwardingItem,
-      &ie_ul);
-  return s1ap_ie;
-}
+//static
+//S1ap_IE_t * s1ap_generate_bearer_to_forward(S1ap_E_RABDataForwardingItem_t *ie_ul, bearer_context_created_t *bc_to_forward){
+//
+//  ie_ul->e_RAB_ID = 8;
+//
+////  ie_ul.uL_TransportLayerAddress = calloc(1, sizeof (S1ap_TransportLayerAddress_t));
+//
+//
+//  GTP_TEID_TO_ASN1(0x11223344, ie_ul->uL_GTP_TEID);
+//  ie_ul->uL_TransportLayerAddress->buf[0] = 0xC0;
+//  ie_ul->uL_TransportLayerAddress->buf[1] = 0xA8;
+//  ie_ul->uL_TransportLayerAddress->buf[2] = 0x0F;
+//  ie_ul->uL_TransportLayerAddress->buf[3] = 0x0A;
+//  ie_ul->uL_TransportLayerAddress->bits_unused = 0;
+//  ie_ul->uL_TransportLayerAddress->size = 4;
+//
+//  S1ap_IE_t *s1ap_ie = s1ap_new_ie(S1ap_ProtocolIE_ID_id_E_RABDataForwardingItem,
+//      S1ap_Criticality_ignore,
+//      &asn_DEF_S1ap_E_RABDataForwardingItem,
+//      &ie_ul);
+//  return s1ap_ie;
+//}
 
 /**
  * Informing the source eNodeB about the successfully established handover.
@@ -1514,10 +1575,6 @@ s1ap_handle_handover_command (
   enb_description_t                      *enb_ref = NULL;
 
   enb_ref = s1ap_is_enb_id_in_list(handover_command_pP->enb_id);
-  if(!enb_ref){
-    enb_ref = s1ap_is_enb_id_in_list(10);
-    enb_ref = s1ap_is_enb_id_in_list(256);
-  }
 
   OAILOG_FUNC_IN (LOG_S1AP);
   DevAssert (handover_command_pP != NULL);
@@ -1550,6 +1607,7 @@ s1ap_handle_handover_command (
   handoverCommand_p->eNB_UE_S1AP_ID = (unsigned long)ue_ref->enb_ue_s1ap_id;
   /** Set the handover type. */
   handoverCommand_p->handoverType = S1ap_HandoverType_intralte;
+  handoverCommand_p->presenceMask = 0;
   /*
    * E-UTRAN Target-ToSource Transparent Container.
    * todo: Lionel: ask if correct:
@@ -1559,40 +1617,210 @@ s1ap_handle_handover_command (
       ASN_STRUCT_FREE_CONTENTS_ONLY (*td, sptr);
    */
 
-  /** Add the new forwarding IEs. */
-  S1ap_IE_t *s1ap_ie_array[handover_command_pP->bearer_ctx_to_be_forwarded_list->num_bearer_context];
-  if(handover_command_pP->bearer_ctx_to_be_forwarded_list){
-      for(int num_bc = 0; num_bc < handover_command_pP->bearer_ctx_to_be_forwarded_list->num_bearer_context; num_bc++){
-        struct S1ap_E_RABDataForwardingItem ie_ul;
-        S1ap_GTP_TEID_t ul_gtp_teid;
-        S1ap_TransportLayerAddress_t uL_TransportLayerAddress;
-        uint8_t ipv4_addr[4];
 
-        memset(&ul_gtp_teid, 0, sizeof(S1ap_GTP_TEID_t));
-        memset(&ie_ul, 0, sizeof(struct S1ap_E_RABDataForwardingItem));
-        memset(&uL_TransportLayerAddress, 0, sizeof(S1ap_TransportLayerAddress_t));
-        memset(&ipv4_addr, 0, sizeof(ipv4_addr));
+  //  /** Add the new forwarding IEs. */
+  //  S1ap_IE_t *s1ap_ie_array[handover_command_pP->bearer_ctx_to_be_forwarded_list->num_bearer_context];
+  //  if(handover_command_pP->bearer_ctx_to_be_forwarded_list){
+  //      for(int num_bc = 0; num_bc < handover_command_pP->bearer_ctx_to_be_forwarded_list->num_bearer_context; num_bc++){
+  //        S1ap_GTP_TEID_t ul_gtp_teid;
+  //        S1ap_TransportLayerAddress_t uL_TransportLayerAddress;
+  //        uint8_t ipv4_addr[4];
+  //
+  //        memset(&ul_gtp_teid, 0, sizeof(S1ap_GTP_TEID_t));
+  //        memset(&uL_TransportLayerAddress, 0, sizeof(S1ap_TransportLayerAddress_t));
+  //        memset(&ipv4_addr, 0, sizeof(ipv4_addr));
+  //
+  //        ie_ul.e_RAB_ID = handover_command_pP->bearer_ctx_to_be_forwarded_list->bearer_contexts[num_bc].eps_bearer_id;
+  //        ie_ul.uL_GTP_TEID = &ul_gtp_teid;
+  //
+  //        GTP_TEID_TO_ASN1(handover_command_pP->bearer_ctx_to_be_forwarded_list->bearer_contexts[num_bc].s1u_sgw_fteid.teid, ie_ul.uL_GTP_TEID);
+  //        ie_ul.uL_TransportLayerAddress = &uL_TransportLayerAddress;
+  //        ie_ul.uL_TransportLayerAddress->buf = ipv4_addr;
+  //        memcpy(ie_ul.uL_TransportLayerAddress->buf, (uint32_t*)&handover_command_pP->bearer_ctx_to_be_forwarded_list->bearer_contexts[num_bc].s1u_sgw_fteid.ipv4_address.s_addr, 4);
+  //        ie_ul.uL_TransportLayerAddress->bits_unused = 0;
+  //        ie_ul.uL_TransportLayerAddress->size = 4;
+  //
+  //        s1ap_ie_array[num_bc] = s1ap_new_ie(S1ap_ProtocolIE_ID_id_E_RABDataForwardingItem,
+  //            S1ap_Criticality_ignore,
+  //            &asn_DEF_S1ap_E_RABDataForwardingItem,
+  //            &ie_ul);
+  //
+  //        ASN_SEQUENCE_ADD(&handoverCommand_p->e_RABSubjecttoDataForwardingList.s1ap_E_RABDataForwardingItem, s1ap_ie_array[num_bc]);
+  //
+  //      }
+  //  }
 
-        ie_ul.e_RAB_ID = handover_command_pP->bearer_ctx_to_be_forwarded_list->bearer_contexts[num_bc].eps_bearer_id;
-        ie_ul.uL_GTP_TEID = &ul_gtp_teid;
 
-        GTP_TEID_TO_ASN1(handover_command_pP->bearer_ctx_to_be_forwarded_list->bearer_contexts[num_bc].s1u_sgw_fteid.teid, ie_ul.uL_GTP_TEID);
-        ie_ul.uL_TransportLayerAddress = &uL_TransportLayerAddress;
-        ie_ul.uL_TransportLayerAddress->buf = ipv4_addr;
-        memcpy(ie_ul.uL_TransportLayerAddress->buf, (uint32_t*)&handover_command_pP->bearer_ctx_to_be_forwarded_list->bearer_contexts[num_bc].s1u_sgw_fteid.ipv4_address.s_addr, 4);
-        ie_ul.uL_TransportLayerAddress->bits_unused = 0;
-        ie_ul.uL_TransportLayerAddress->size = 4;
 
-        s1ap_ie_array[num_bc] = s1ap_new_ie(S1ap_ProtocolIE_ID_id_E_RABDataForwardingItem,
-            S1ap_Criticality_ignore,
-            &asn_DEF_S1ap_E_RABDataForwardingItem,
-            &ie_ul);
+//  /** Add the new forwarding IEs. */
+//  S1ap_IE_t *s1ap_ie_array[handover_command_pP->bearer_ctx_to_be_forwarded_list->num_bearer_context];
+//  if(handover_command_pP->bearer_ctx_to_be_forwarded_list){
+//      for(int num_bc = 0; num_bc < handover_command_pP->bearer_ctx_to_be_forwarded_list->num_bearer_context; num_bc++){
+//        struct S1ap_E_RABDataForwardingItem ie_ul;
+//        S1ap_GTP_TEID_t ul_gtp_teid;
+//        S1ap_TransportLayerAddress_t uL_TransportLayerAddress;
+//        uint8_t ipv4_addr[4];
+//
+//        memset(&ul_gtp_teid, 0, sizeof(S1ap_GTP_TEID_t));
+//        memset(&ie_ul, 0, sizeof(struct S1ap_E_RABDataForwardingItem));
+//        memset(&uL_TransportLayerAddress, 0, sizeof(S1ap_TransportLayerAddress_t));
+//        memset(&ipv4_addr, 0, sizeof(ipv4_addr));
+//
+//        ie_ul.e_RAB_ID = handover_command_pP->bearer_ctx_to_be_forwarded_list->bearer_contexts[num_bc].eps_bearer_id;
+//        ie_ul.uL_GTP_TEID = &ul_gtp_teid;
+//
+//        GTP_TEID_TO_ASN1(handover_command_pP->bearer_ctx_to_be_forwarded_list->bearer_contexts[num_bc].s1u_sgw_fteid.teid, ie_ul.uL_GTP_TEID);
+//        ie_ul.uL_TransportLayerAddress = &uL_TransportLayerAddress;
+//        ie_ul.uL_TransportLayerAddress->buf = ipv4_addr;
+//        memcpy(ie_ul.uL_TransportLayerAddress->buf, (uint32_t*)&handover_command_pP->bearer_ctx_to_be_forwarded_list->bearer_contexts[num_bc].s1u_sgw_fteid.ipv4_address.s_addr, 4);
+//        ie_ul.uL_TransportLayerAddress->bits_unused = 0;
+//        ie_ul.uL_TransportLayerAddress->size = 4;
+//
+//        s1ap_ie_array[num_bc] = s1ap_new_ie(S1ap_ProtocolIE_ID_id_E_RABDataForwardingItem,
+//            S1ap_Criticality_ignore,
+//            &asn_DEF_S1ap_E_RABDataForwardingItem,
+//            &ie_ul);
+//
+//        ASN_SEQUENCE_ADD(&handoverCommand_p->e_RABSubjecttoDataForwardingList.s1ap_E_RABDataForwardingItem, s1ap_ie_array[num_bc]);
+//
+//      }
+//      handoverCommand_p->presenceMask |= S1AP_HANDOVERCOMMANDIES_E_RABSUBJECTTODATAFORWARDINGLIST_PRESENT;
+//  }
 
-        ASN_SEQUENCE_ADD(&handoverCommand_p->e_RABSubjecttoDataForwardingList.s1ap_E_RABDataForwardingItem, s1ap_ie_array[num_bc]);
 
-      }
-      handoverCommand_p->presenceMask |= S1AP_HANDOVERCOMMANDIES_E_RABSUBJECTTODATAFORWARDINGLIST_PRESENT;
-  }
+//  S1ap_IE_t *s1ap_ie_array[handover_command_pP->bearer_ctx_to_be_forwarded_list->num_bearer_context];
+//  S1ap_E_RABDataForwardingItem_t *e_RABDataForwardingItem; // [conn_est_cnf_pP->no_of_e_rabs]; // don't alloc on stack for automatic removal
+//
+//  if(handover_command_pP->bearer_ctx_to_be_forwarded_list){
+//  	  e_RABDataForwardingItem = calloc(handover_command_pP->bearer_ctx_to_be_forwarded_list->num_bearer_context, sizeof(S1ap_E_RABDataForwardingItem_t));
+//
+//	  for (int item = 0; item < handover_command_pP->bearer_ctx_to_be_forwarded_list->num_bearer_context; item++) {
+//		  memset(&e_RABDataForwardingItem[item], 0, sizeof(S1ap_E_RABDataForwardingItem_t));
+//	  	  e_RABDataForwardingItem[item].e_RAB_ID = handover_command_pP->bearer_ctx_to_be_forwarded_list->bearer_contexts[item].eps_bearer_id;
+//
+////	  	  e_RABDataForwardingItem->uL_TransportLayerAddress = calloc(1, sizeof(S1ap_TransportLayerAddress_t));
+////	  	  &e_RABDataForwardingItem[item].uL_GTP_TEID = calloc(1, sizeof(S1ap_GTP_TEID_t));
+////	  	  memset(&e_RABDataForwardingItem[item].uL_GTP_TEID, 0, sizeof(S1ap_GTP_TEID_t));
+////	      INT32_TO_OCTET_STRING (handover_command_pP->bearer_ctx_to_be_forwarded_list->bearer_contexts[item].s1u_sgw_fteid.teid, &e_RABDataForwardingItem[item].uL_GTP_TEID);
+////	      bstring transportLayerAddress = fteid_ip_address_to_bstring(&handover_command_pP->bearer_ctx_to_be_forwarded_list->bearer_contexts[item].s1u_sgw_fteid);
+//
+////	      e_RABDataForwardingItem[item].uL_TransportLayerAddress.buf =
+////	    		  calloc (blength(transportLayerAddress), sizeof (uint8_t));
+////	      memcpy (e_RABDataForwardingItem[item].uL_TransportLayerAddress.buf,
+////	          transportLayerAddress->data,
+////	          blength(transportLayerAddress));
+////
+////	      e_RABDataForwardingItem[item].uL_TransportLayerAddress.size = blength(transportLayerAddress);
+////	      e_RABDataForwardingItem[item].uL_TransportLayerAddress.bits_unused = 0;
+//
+//
+////	      ASN_SEQUENCE_ADD (&e_rabsetuprequesties->e_RABToBeSetupListBearerSUReq, &s1ap_E_RABToBeSetupItemBearerSUReq[i]);
+//
+//
+////	  	  e_RABDataForwardingItem = calloc(1, sizeof(S1ap_E_RABDataForwardingItem_t));
+////	  	  e_RABDataForwardingItem.uL_GTP_TEID = ul_gtp_teid;
+////	  	  GTP_TEID_TO_ASN1(handover_command_pP->bearer_ctx_to_be_forwarded_list->bearer_contexts[item].s1u_sgw_fteid.teid, e_RABDataForwardingItem[item].uL_GTP_TEID);
+//
+////	  	  // S-GW IP address(es) for user-plane
+////	  	  bstring transportLayerAddress = fteid_ip_address_to_bstring(&handover_command_pP->bearer_ctx_to_be_forwarded_list->bearer_contexts[item].s1u_sgw_fteid);
+////	  	  e_RABDataForwardingItem->uL_TransportLayerAddress->buf = calloc (blength(transportLayerAddress), sizeof (uint8_t));
+////	  	  memcpy (e_RABDataForwardingItem->uL_TransportLayerAddress->buf,
+////	  			  transportLayerAddress->data,
+////	  			  blength(transportLayerAddress));
+////	  	  e_RABDataForwardingItem->uL_TransportLayerAddress->size = blength(transportLayerAddress);
+////	  	  e_RABDataForwardingItem->uL_TransportLayerAddress->bits_unused = 0;
+//
+//
+////	  	  e_RABDataForwardingItem->dL_transportLayerAddress= calloc(1, sizeof(S1ap_TransportLayerAddress_t));
+////	  	  e_RABDataForwardingItem->dL_gTP_TEID = calloc(1, sizeof(S1ap_GTP_TEID_t));
+//////	  	  e_RABDataForwardingItem = calloc(1, sizeof(S1ap_E_RABDataForwardingItem_t));
+//////	  	  e_RABDataForwardingItem.uL_GTP_TEID = ul_gtp_teid;
+////	  	  GTP_TEID_TO_ASN1(handover_command_pP->bearer_ctx_to_be_forwarded_list->bearer_contexts[item].s1u_sgw_fteid.teid, e_RABDataForwardingItem->dL_gTP_TEID);
+////
+////	  	  // S-GW IP address(es) for user-plane
+////	  	  bstring transportLayerAddress2 = fteid_ip_address_to_bstring(&handover_command_pP->bearer_ctx_to_be_forwarded_list->bearer_contexts[item].s1u_sgw_fteid);
+////	  	  e_RABDataForwardingItem->dL_transportLayerAddress->buf = calloc (blength(transportLayerAddress2), sizeof (uint8_t));
+////	  	  memcpy (e_RABDataForwardingItem->dL_transportLayerAddress->buf,
+////	  			  transportLayerAddress2->data,
+////	  			  blength(transportLayerAddress2));
+////	  	  e_RABDataForwardingItem->dL_transportLayerAddress->size = blength(transportLayerAddress2);
+////	  	  e_RABDataForwardingItem->dL_transportLayerAddress->bits_unused = 0;
+//
+////	  	  s1ap_ie_array[item] = s1ap_new_ie(S1ap_ProtocolIE_ID_id_E_RABDataForwardingItem,
+////	  			  S1ap_Criticality_ignore,
+////	  			  &asn_DEF_S1ap_E_RABDataForwardingItem,
+////	  			  e_RABDataForwardingItem);
+//
+////	  	  ASN_SEQUENCE_ADD (&handoverCommand_p->e_RABSubjecttoDataForwardingList.s1ap_E_RABDataForwardingItem, e_RABDataForwardingItem);
+//	  	  ASN_SEQUENCE_ADD(&handoverCommand_p->e_RABSubjecttoDataForwardingList, &e_RABDataForwardingItem[item]);
+//
+//	  	  // todo: optimize this
+//	  	  /** Destroy the temporarily allocated bstring. */
+////	  	  bdestroy_wrapper(&transportLayerAddress);
+////	  	  bdestroy_wrapper(&transportLayerAddress2);
+//	  }
+//  	  handoverCommand_p->presenceMask |= S1AP_HANDOVERCOMMANDIES_E_RABSUBJECTTODATAFORWARDINGLIST_PRESENT;
+//  }
+//  	//
+//	//        ie_ul.uL_TransportLayerAddress = &uL_TransportLayerAddress;
+//	//        ie_ul.uL_TransportLayerAddress->buf = ipv4_addr;
+//	//        memcpy(ie_ul.uL_TransportLayerAddress->buf, (uint32_t*)&handover_command_pP->bearer_ctx_to_be_forwarded_list->bearer_contexts[num_bc].s1u_sgw_fteid.ipv4_address.s_addr, 4);
+//	//        ie_ul.uL_TransportLayerAddress->bits_unused = 0;
+//	//        ie_ul.uL_TransportLayerAddress->size = 4;
+//	//
+//	//        s1ap_ie_array[num_bc] = s1ap_new_ie(S1ap_ProtocolIE_ID_id_E_RABDataForwardingItem,
+//	//            S1ap_Criticality_ignore,
+//	//            &asn_DEF_S1ap_E_RABDataForwardingItem,
+//	//            &ie_ul);
+//	//
+//	//        ASN_SEQUENCE_ADD(&handoverCommand_p->e_RABSubjecttoDataForwardingList.s1ap_E_RABDataForwardingItem, s1ap_ie_array[num_bc]);
+//	//
+//
+//
+////
+//////	  /** Set transport level information. */
+//////
+//////	  INT32_TO_OCTET_STRING (bc_tbc->s1u_sgw_fteid.teid, &e_RABToBeSetupHO_p->gTP_TEID);
+//////	  /*
+//////	   * S-GW IP address(es) for user-plane
+//////	   */
+//////	  bstring transportLayerAddress = fteid_ip_address_to_bstring(&bc_tbc->s1u_sgw_fteid);
+//////
+//////	  e_RABToBeSetupHO_p->transportLayerAddress.buf = calloc (blength(transportLayerAddress), sizeof (uint8_t));
+//////	  memcpy (e_RABToBeSetupHO_p->transportLayerAddress.buf,
+//////	      transportLayerAddress->data,
+//////	      blength(transportLayerAddress));
+//////	  e_RABToBeSetupHO_p->transportLayerAddress.size = blength(transportLayerAddress);
+//////
+//////	  // todo: optimize this
+//////	  /** Destroy the temporarily allocated bstring. */
+//////	  bdestroy_wrapper(&transportLayerAddress);
+////
+////	  /*
+////	   * Set the GTP-TEID. This is the S1-U S-GW TEID
+////	   */
+////	  INT32_TO_OCTET_STRING (handover_request_pP->bearer_ctx_to_be_setup_list->bearer_contexts[item].s1u_sgw_fteid.teid, &e_RABToBeSetupHO->gTP_TEID);
+////	  // S-GW IP address(es) for user-plane
+////	  bstring transportLayerAddress = fteid_ip_address_to_bstring(&handover_request_pP->bearer_ctx_to_be_setup_list->bearer_contexts[item].s1u_sgw_fteid);
+////	  e_RABToBeSetupHO->transportLayerAddress.buf = calloc (blength(transportLayerAddress), sizeof (uint8_t));
+////	  memcpy (e_RABToBeSetupHO->transportLayerAddress.buf,
+////			  transportLayerAddress->data,
+////			  blength(transportLayerAddress));
+////	  e_RABToBeSetupHO->transportLayerAddress.size = blength(transportLayerAddress);
+////	  e_RABToBeSetupHO->transportLayerAddress.bits_unused = 0;
+////	  ASN_SEQUENCE_ADD (&handoverRequest_p->e_RABToBeSetupListHOReq, e_RABToBeSetupHO);
+////	  // todo: optimize this
+////	  /** Destroy the temporarily allocated bstring. */
+////	  bdestroy_wrapper(&transportLayerAddress);
+//////
+//////	  e_RABToBeSetupHO->transportLayerAddress.buf = calloc (blength(handover_request_pP->bearer_ctx_to_be_setup_list->bearer_contexts[item].s1u_sgw_fteid.), sizeof (uint8_t));
+//////	  memcpy (e_RABToBeSetupHO->transportLayerAddress.buf, conn_est_cnf_pP->transport_layer_address[item]->data, blength(conn_est_cnf_pP->transport_layer_address[item]));
+//////	  e_RABToBeSetupHO->transportLayerAddress.size = blength(conn_est_cnf_pP->transport_layer_address[item]);
+//////	  e_RABToBeSetupHO->transportLayerAddress.bits_unused = 0;
+//////	  ASN_SEQUENCE_ADD (&initialContextSetupRequest_p->e_RABToBeSetupListCtxtSUReq, e_RABToBeSetup);
+////  }
+//
+
 
   OCTET_STRING_fromBuf(&handoverCommand_p->target_ToSource_TransparentContainer,
       handover_command_pP->eutran_target_to_source_container->data, blength(handover_command_pP->eutran_target_to_source_container));
@@ -1666,12 +1894,13 @@ s1ap_handle_mme_status_transfer( const itti_s1ap_status_transfer_t * const s1ap_
    * E-UTRAN Status-Transfer Source Transparent Container.
    */
   // Add a new element.
-  S1ap_IE_t                               status_container;
+  S1ap_IE_t                               *status_container;
   ssize_t                                 encoded;
 
-  memset (&status_container, 0, sizeof (S1ap_IE_t));
-  status_container.id = S1ap_ProtocolIE_ID_id_Bearers_SubjectToStatusTransfer_Item;
-  status_container.criticality = S1ap_Criticality_ignore;
+//  memset (&status_container, 0, sizeof (S1ap_IE_t));
+  status_container = calloc(1, sizeof(S1ap_IE_t));
+  status_container->id = S1ap_ProtocolIE_ID_id_Bearers_SubjectToStatusTransfer_Item;
+  status_container->criticality = S1ap_Criticality_ignore;
 
   /*
    * E-UTRAN Target-ToSource Transparent Container.
@@ -1683,11 +1912,13 @@ s1ap_handle_mme_status_transfer( const itti_s1ap_status_transfer_t * const s1ap_
    * Or can we use this?
    * What is exactly purged in the encoder? The list (without the contents)? the contents of the list? contents & list?
    */
-  status_container.value.buf  = s1ap_status_transfer_pP->bearerStatusTransferList_buffer->data + 6;
-  status_container.value.size = blength(s1ap_status_transfer_pP->bearerStatusTransferList_buffer) - 6; // s1ap_status_transfer_pP->bearerStatusTransferList_buffer->slen;
+  status_container->value.buf  = calloc(blength(s1ap_status_transfer_pP->bearerStatusTransferList_buffer) -6, sizeof(uint8_t));
+  memcpy(status_container->value.buf, s1ap_status_transfer_pP->bearerStatusTransferList_buffer->data + 6,
+		  blength(s1ap_status_transfer_pP->bearerStatusTransferList_buffer) - 6);
+  status_container->value.size = blength(s1ap_status_transfer_pP->bearerStatusTransferList_buffer) - 6; // s1ap_status_transfer_pP->bearerStatusTransferList_buffer->slen;
 
   /** Adding stacked value. */
-  ASN_SEQUENCE_ADD (&mmeStatusTransfer_p->eNB_StatusTransfer_TransparentContainer.bearers_SubjectToStatusTransferList, &status_container);
+  ASN_SEQUENCE_ADD (&mmeStatusTransfer_p->eNB_StatusTransfer_TransparentContainer, status_container);
 
   /** Encoding without allocating? */
   if (s1ap_mme_encode_pdu (&message, &message_id, &buffer_p, &length) < 0) {
@@ -1809,97 +2040,97 @@ s1ap_handle_paging( const itti_s1ap_paging_t * const s1ap_paging_pP){
   OAILOG_FUNC_OUT (LOG_S1AP);
 }
 
-//------------------------------------------------------------------------------
-static
-int s1ap_generate_bearer_context_to_setup(bearer_context_to_be_created_t * bc_tbc, S1ap_E_RABToBeSetupItemHOReq_t         *e_RABToBeSetupHO_p){
-  OAILOG_FUNC_IN (LOG_S1AP);
-
-  uint                                    offset = 0;
-
-  e_RABToBeSetupHO_p->e_RAB_ID = bc_tbc->eps_bearer_id;
-
-  /** Set QoS parameters of the bearer. */
-  e_RABToBeSetupHO_p->e_RABlevelQosParameters.qCI                                                  = bc_tbc->bearer_level_qos.qci;
-  e_RABToBeSetupHO_p->e_RABlevelQosParameters.allocationRetentionPriority.priorityLevel            = bc_tbc->bearer_level_qos.pl;
-  e_RABToBeSetupHO_p->e_RABlevelQosParameters.allocationRetentionPriority.pre_emptionCapability    = bc_tbc->bearer_level_qos.pci;
-  e_RABToBeSetupHO_p->e_RABlevelQosParameters.allocationRetentionPriority.pre_emptionVulnerability = bc_tbc->bearer_level_qos.pvi;
-
-  INT32_TO_OCTET_STRING (bc_tbc->s1u_sgw_fteid.teid, &e_RABToBeSetupHO_p->gTP_TEID);
-
-  /*
-   * S-GW IP address(es) for user-plane
-   */
-  bstring transportLayerAddress = fteid_ip_address_to_bstring(&bc_tbc->s1u_sgw_fteid);
-
-  e_RABToBeSetupHO_p->transportLayerAddress.buf = calloc (blength(transportLayerAddress), sizeof (uint8_t));
-  memcpy (e_RABToBeSetupHO_p->transportLayerAddress.buf,
-      transportLayerAddress->data,
-      blength(transportLayerAddress));
-  e_RABToBeSetupHO_p->transportLayerAddress.size = blength(transportLayerAddress);
-
-  // todo: optimize this
-  /** Destroy the temporarily allocated bstring. */
-  bdestroy_wrapper(&transportLayerAddress);
-  // todo: ipv6
-
-  // TODO: S1AP PDU..
-  /** Set the bearer as an ASN list element. */
-//  S1ap_IE_t                               s1ap_ie_ext;
-//  ssize_t                                 encoded;
-//  S1AP_PDU_t                              pdu;
+////------------------------------------------------------------------------------
+//static
+//int s1ap_generate_bearer_context_to_setup(bearer_context_to_be_created_t * bc_tbc, S1ap_E_RABToBeSetupItemHOReq_t         *e_RABToBeSetupHO_p){
+//  OAILOG_FUNC_IN (LOG_S1AP);
 //
-//  memset (&s1ap_ie_ext, 0, sizeof (S1ap_IE_t));
-//  s1ap_ie_ext.id = S1ap_ProtocolIE_ID_id_Data_Forwarding_Not_Possible;
-//  s1ap_ie_ext.criticality = S1ap_Criticality_ignore;
-//  s1ap_ie_ext.value.buf = NULL;
-//  s1ap_ie_ext.value.size = 0;
-//  ASN_SEQUENCE_ADD (e_RABToBeSetupHO_p->iE_Extensions, &pdu);
-  /** Adding stacked value. */
+//  uint                                    offset = 0;
 //
-//  if (bearer_ctx_p->s_gw_address.pdn_type == IPv6 ||bearer_ctx_p->s_gw_address.pdn_type == IPv4_AND_v6) {
-//    if (bearer_ctx_p->s_gw_address.pdn_type == IPv6) {
-//      /*
-//       * Only IPv6 supported
-//         */
-//      /*
-//       * TODO: check memory allocation
-//       */
-//      e_RABToBeSetupHO_p->transportLayerAddress.buf = calloc (16, sizeof (uint8_t));
-//    } else {
-//      /*
-//       * Both IPv4 and IPv6 provided
-//       */
-//      /*
-//       * TODO: check memory allocation
-//       */
-//      e_RABToBeSetupHO_p->transportLayerAddress.buf = realloc (e_RABToBeSetupHO_p->transportLayerAddress.buf, (16 + offset) * sizeof (uint8_t));
+//  e_RABToBeSetupHO_p->e_RAB_ID = bc_tbc->eps_bearer_id;
+//
+//  /** Set QoS parameters of the bearer. */
+//  e_RABToBeSetupHO_p->e_RABlevelQosParameters.qCI                                                  = bc_tbc->bearer_level_qos.qci;
+//  e_RABToBeSetupHO_p->e_RABlevelQosParameters.allocationRetentionPriority.priorityLevel            = bc_tbc->bearer_level_qos.pl;
+//  e_RABToBeSetupHO_p->e_RABlevelQosParameters.allocationRetentionPriority.pre_emptionCapability    = bc_tbc->bearer_level_qos.pci;
+//  e_RABToBeSetupHO_p->e_RABlevelQosParameters.allocationRetentionPriority.pre_emptionVulnerability = bc_tbc->bearer_level_qos.pvi;
+//
+//  INT32_TO_OCTET_STRING (bc_tbc->s1u_sgw_fteid.teid, &e_RABToBeSetupHO_p->gTP_TEID);
+//
+//  /*
+//   * S-GW IP address(es) for user-plane
+//   */
+//  bstring transportLayerAddress = fteid_ip_address_to_bstring(&bc_tbc->s1u_sgw_fteid);
+//
+//  e_RABToBeSetupHO_p->transportLayerAddress.buf = calloc (blength(transportLayerAddress), sizeof (uint8_t));
+//  memcpy (e_RABToBeSetupHO_p->transportLayerAddress.buf,
+//      transportLayerAddress->data,
+//      blength(transportLayerAddress));
+//  e_RABToBeSetupHO_p->transportLayerAddress.size = blength(transportLayerAddress);
+//
+//  // todo: optimize this
+//  /** Destroy the temporarily allocated bstring. */
+//  bdestroy_wrapper(&transportLayerAddress);
+//  // todo: ipv6
+//
+//  // TODO: S1AP PDU..
+//  /** Set the bearer as an ASN list element. */
+////  S1ap_IE_t                               s1ap_ie_ext;
+////  ssize_t                                 encoded;
+////  S1AP_PDU_t                              pdu;
+////
+////  memset (&s1ap_ie_ext, 0, sizeof (S1ap_IE_t));
+////  s1ap_ie_ext.id = S1ap_ProtocolIE_ID_id_Data_Forwarding_Not_Possible;
+////  s1ap_ie_ext.criticality = S1ap_Criticality_ignore;
+////  s1ap_ie_ext.value.buf = NULL;
+////  s1ap_ie_ext.value.size = 0;
+////  ASN_SEQUENCE_ADD (e_RABToBeSetupHO_p->iE_Extensions, &pdu);
+//  /** Adding stacked value. */
+////
+////  if (bearer_ctx_p->s_gw_address.pdn_type == IPv6 ||bearer_ctx_p->s_gw_address.pdn_type == IPv4_AND_v6) {
+////    if (bearer_ctx_p->s_gw_address.pdn_type == IPv6) {
+////      /*
+////       * Only IPv6 supported
+////         */
+////      /*
+////       * TODO: check memory allocation
+////       */
+////      e_RABToBeSetupHO_p->transportLayerAddress.buf = calloc (16, sizeof (uint8_t));
+////    } else {
+////      /*
+////       * Both IPv4 and IPv6 provided
+////       */
+////      /*
+////       * TODO: check memory allocation
+////       */
+////      e_RABToBeSetupHO_p->transportLayerAddress.buf = realloc (e_RABToBeSetupHO_p->transportLayerAddress.buf, (16 + offset) * sizeof (uint8_t));
+////    }
+////
+////    memcpy (&e_RABToBeSetupHO_p->transportLayerAddress.buf[offset], bearer_ctx_p->s_gw_address.address.ipv6_address, 16);
+////    e_RABToBeSetupHO_p->transportLayerAddress.size = 16 + offset;
+////    e_RABToBeSetupHO_p->transportLayerAddress.bits_unused = 0;
+////  }
+//
+//  return RETURNok;
+//}
+
+////------------------------------------------------------------------------------
+//static bool
+//s1ap_add_bearer_context_to_setup_list (S1ap_E_RABToBeSetupListHOReqIEs_t * const e_RABToBeSetupListHOReq_p,
+//    S1ap_E_RABToBeSetupItemHOReq_t        * e_RABToBeSetupHO_p, bearer_contexts_to_be_created_t * bcs_tbc)
+//{
+//
+//  int num_bc = 0;
+//  for(int num_bc = 0; num_bc < bcs_tbc->num_bearer_context; num_bc++){
+//    if(s1ap_generate_bearer_context_to_setup(&bcs_tbc->bearer_contexts[num_bc], &e_RABToBeSetupHO_p[num_bc]) != RETURNok){
+//      OAILOG_ERROR(LOG_S1AP, "Error adding bearer context with ebi %d to list of bearers to setup.\n", bcs_tbc->bearer_contexts[num_bc].eps_bearer_id);
+//      return false;
 //    }
-//
-//    memcpy (&e_RABToBeSetupHO_p->transportLayerAddress.buf[offset], bearer_ctx_p->s_gw_address.address.ipv6_address, 16);
-//    e_RABToBeSetupHO_p->transportLayerAddress.size = 16 + offset;
-//    e_RABToBeSetupHO_p->transportLayerAddress.bits_unused = 0;
+//    /** Add the E-RAB bearer to the message. */
+//    ASN_SEQUENCE_ADD (e_RABToBeSetupListHOReq_p, &e_RABToBeSetupHO_p[num_bc]);
 //  }
-
-  return RETURNok;
-}
-
-//------------------------------------------------------------------------------
-static bool
-s1ap_add_bearer_context_to_setup_list (S1ap_E_RABToBeSetupListHOReqIEs_t * const e_RABToBeSetupListHOReq_p,
-    S1ap_E_RABToBeSetupItemHOReq_t        * e_RABToBeSetupHO_p, bearer_contexts_to_be_created_t * bcs_tbc)
-{
-
-  int num_bc = 0;
-  for(int num_bc = 0; num_bc < bcs_tbc->num_bearer_context; num_bc++){
-    if(s1ap_generate_bearer_context_to_setup(&bcs_tbc->bearer_contexts[num_bc], &e_RABToBeSetupHO_p[num_bc]) != RETURNok){
-      OAILOG_ERROR(LOG_S1AP, "Error adding bearer context with ebi %d to list of bearers to setup.\n", bcs_tbc->bearer_contexts[num_bc].eps_bearer_id);
-      return false;
-    }
-    /** Add the E-RAB bearer to the message. */
-    ASN_SEQUENCE_ADD (e_RABToBeSetupListHOReq_p, &e_RABToBeSetupHO_p[num_bc]);
-  }
-  return true;
-}
+//  return true;
+//}
 
 //static bool
 //s1ap_add_bearer_context_to_switch_list (S1ap_E_RABToBeSwitchedULListIEs_t * const e_RABToBeSwitchedListHOReq_p,

@@ -182,6 +182,7 @@ s10_mme_send_udp_msg (
 
   message_p = itti_alloc_new_message (TASK_S10, UDP_DATA_REQ);
   udp_data_req_p = &message_p->ittiMsg.udp_data_req;
+  udp_data_req_p->local_port = localPort;
   udp_data_req_p->peer_address.s_addr = peerIpAddr->s_addr;
   udp_data_req_p->peer_port = peerPort;
   udp_data_req_p->buffer = buffer;
@@ -394,7 +395,7 @@ s10_mme_init (
    */
   udp.hUdp = (nw_gtpv2c_udp_handle_t) NULL;
   mme_config_read_lock (&mme_config);
-  udp.gtpv2cStandardPort = (nw_gtpv2c_udp_handle_t) NULL;
+  udp.gtpv2cStandardPort = mme_config.ipv4.port_s10;
   mme_config_unlock (&mme_config);
   udp.udpDataReqCallback = s10_mme_send_udp_msg;
   DevAssert (NW_OK == nwGtpv2cSetUdpEntity (s10_mme_stack_handle, &udp));
@@ -415,7 +416,9 @@ s10_mme_init (
   }
 
   DevAssert (NW_OK == nwGtpv2cSetLogLevel (s10_mme_stack_handle, NW_LOG_LEVEL_DEBG));
+  /** Create 2 sockets, one for 2123 (received initial requests), another high port. */
   s10_send_init_udp (&mme_config.ipv4.s10, udp.gtpv2cStandardPort); /**< Just once for high port. */
+  s10_send_init_udp (&mme_config.ipv4.s10, 0);
 
   bstring b = bfromcstr("s10_mme_teid_2_gtv2c_teid_handle");
   s10_mme_teid_2_gtv2c_teid_handle = hashtable_ts_create(mme_config_p->max_ues, HASH_TABLE_DEFAULT_HASH_FUNC, hash_free_int_func, b);

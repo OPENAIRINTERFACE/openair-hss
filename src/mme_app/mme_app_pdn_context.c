@@ -62,7 +62,7 @@ static void mme_app_free_pdn_context (pdn_context_t ** const pdn_context);
 static teid_t                           mme_app_teid_generator = 0x00000001;
 
 //------------------------------------------------------------------------------
-void mme_app_get_pdn_context (mme_ue_s1ap_id_t ue_id, pdn_cid_t const context_id, ebi_t const default_ebi, bstring const subscribed_apn, pdn_context_t **pdn_ctx)
+void mme_app_get_pdn_context (mme_ue_s1ap_id_t ue_id, pdn_cid_t const context_id, ebi_t const default_ebi, bstring const apn_subscribed, pdn_context_t **pdn_ctx)
 {
   ue_context_t *ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, ue_id);
   if(!ue_context){
@@ -71,15 +71,15 @@ void mme_app_get_pdn_context (mme_ue_s1ap_id_t ue_id, pdn_cid_t const context_id
   }
 
   /** Checking for valid fields inside the search comparison function. No locks are taken. */
-  pdn_context_t pdn_context_key = {.apn_subscribed = subscribed_apn, .default_ebi = default_ebi, .context_identifier = context_id};
+  pdn_context_t pdn_context_key = {.apn_subscribed = apn_subscribed, .default_ebi = default_ebi, .context_identifier = context_id};
   pdn_context_t * pdn_ctx_p = RB_FIND(PdnContexts, &ue_context->pdn_contexts, &pdn_context_key);
   *pdn_ctx = pdn_ctx_p;
-  if(!pdn_ctx_p && subscribed_apn){
+  if(!pdn_ctx_p && apn_subscribed){
     /** Could not find the PDN context, search again using the APN. */
     RB_FOREACH (pdn_ctx_p, PdnContexts, &ue_context->pdn_contexts) {
       DevAssert(pdn_ctx_p);
-      if(subscribed_apn){
-        if(!bstricmp (pdn_ctx_p->apn_subscribed, subscribed_apn)){
+      if(apn_subscribed){
+        if(!bstricmp (pdn_ctx_p->apn_subscribed, apn_subscribed)){
             *pdn_ctx = pdn_ctx_p;
             OAILOG_FUNC_OUT(LOG_MME_APP);
         }
@@ -87,7 +87,7 @@ void mme_app_get_pdn_context (mme_ue_s1ap_id_t ue_id, pdn_cid_t const context_id
     }
   }
   OAILOG_WARNING (LOG_MME_APP, "No PDN context for (ebi=%d,cid=%d,apn=\"%s\") was found for UE: " MME_UE_S1AP_ID_FMT ". \n", default_ebi, context_id,
-      (subscribed_apn) ? bdata(subscribed_apn) : "NULL",
+      (apn_subscribed) ? bdata(apn_subscribed) : "NULL",
       ue_id);
   OAILOG_FUNC_OUT(LOG_MME_APP);
 }
@@ -158,7 +158,6 @@ int
 mme_app_esm_create_pdn_context(mme_ue_s1ap_id_t ue_id, const apn_configuration_t *apn_configuration, const bstring apn_subscribed,  pdn_cid_t pdn_cid, const ambr_t * const apn_ambr, pdn_context_t **pdn_context_pp)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
-  DevAssert(apn_subscribed);
   ue_context_t * ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, ue_id);
   if(!ue_context){
     OAILOG_ERROR (LOG_MME_APP, "No MME_APP UE context could be found for UE: " MME_UE_S1AP_ID_FMT ". \n", ue_id);
@@ -167,7 +166,7 @@ mme_app_esm_create_pdn_context(mme_ue_s1ap_id_t ue_id, const apn_configuration_t
   mme_app_get_pdn_context(ue_id, pdn_cid, EPS_BEARER_IDENTITY_UNASSIGNED, apn_subscribed, pdn_context_pp);
   if((*pdn_context_pp)){
     /** No PDN context was found. */
-    OAILOG_ERROR (LOG_MME_APP, "A PDN context for APN \"%s\" and cid=%d already exists UE: " MME_UE_S1AP_ID_FMT ". \n", bdata(apn_subscribed), pdn_cid, ue_id);
+    OAILOG_ERROR (LOG_MME_APP, "A PDN context for APN \"%s\" and cid=%d already exists UE: " MME_UE_S1AP_ID_FMT ". \n", apn_subscribed ? bdata(apn_subscribed) : "NULL", pdn_cid, ue_id);
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
 

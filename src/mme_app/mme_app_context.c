@@ -936,6 +936,8 @@ int mme_app_update_ue_subscription(mme_ue_s1ap_id_t ue_id, subscription_data_t *
    */
   memcpy (&ue_context->subscribed_ue_ambr, &subscription_data->subscribed_ambr, sizeof (ambr_t));
 
+  if(ue_context->msisdn)
+	  bdestroy_wrapper(&ue_context->msisdn);
   ue_context->msisdn = blk2bstr(subscription_data->msisdn, subscription_data->msisdn_length);
   //  AssertFatal (ula_pP->subscription_data.msisdn_length != 0, "MSISDN LENGTH IS 0"); todo: msisdn
   AssertFatal (subscription_data->msisdn_length <= MSISDN_LENGTH, "MSISDN LENGTH is too high %u", MSISDN_LENGTH);

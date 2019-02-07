@@ -444,7 +444,11 @@ s10_ue_mm_eps_context_ie_set ( nw_gtpv2c_msg_handle_t * msg, const mm_context_ep
   mm_ue_ctx_length++;
   value[mm_ue_ctx_length] = 0x0;
   mm_ue_ctx_length++;
-  value[mm_ue_ctx_length] = (0x0 << 7) | (ue_eps_mm_context->nas_int_alg << 4) | (ue_eps_mm_context->nas_cipher_alg);
+  uint8_t sambr_present = 0x0;
+  if( ue_eps_mm_context->subscribed_ue_ambr.br_dl && ue_eps_mm_context->subscribed_ue_ambr.br_dl ){
+	  sambr_present = 0x01;
+  }
+  value[mm_ue_ctx_length] = (sambr_present << 7) | (ue_eps_mm_context->nas_int_alg << 4) | (ue_eps_mm_context->nas_cipher_alg);
   mm_ue_ctx_length++;
 
   /**
@@ -471,6 +475,23 @@ s10_ue_mm_eps_context_ie_set ( nw_gtpv2c_msg_handle_t * msg, const mm_context_ep
    */
   value[mm_ue_ctx_length] |= ue_eps_mm_context->ncc;
   mm_ue_ctx_length++;
+  /**
+   * Subscribed UE-AMBR.
+   */
+  if(sambr_present) {
+	  uint8_t                                 ambr_br[8];
+	  uint8_t                                 *p_ambr;
+	  p_ambr = ambr_br;
+	  memset(ambr_br, 0, 8);
+	  INT32_TO_BUFFER((ue_eps_mm_context->subscribed_ue_ambr.br_ul/1000), p_ambr);
+	  p_ambr+=4;
+
+	  INT32_TO_BUFFER((ue_eps_mm_context->subscribed_ue_ambr.br_dl/1000), p_ambr);
+	  // todo: byte order?
+	  memcpy (&value[mm_ue_ctx_length], p_ambr-4, 8);
+	  mm_ue_ctx_length+=8;
+  }
+
   /**
    * UE Network Capability.
    */

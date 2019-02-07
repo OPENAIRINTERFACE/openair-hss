@@ -145,9 +145,9 @@ mme_app_s11_proc_create_bearer_t* mme_app_get_s11_procedure_create_bearer(ue_con
 void mme_app_delete_s11_procedure_create_bearer(ue_context_t * const ue_context)
 {
   if (ue_context->s11_procedures) {
-    mme_app_s11_proc_t *s11_proc = NULL;
+    mme_app_s11_proc_t *s11_proc = NULL, *s11_proc_safe = NULL;
 
-    LIST_FOREACH(s11_proc, ue_context->s11_procedures, entries) {
+    LIST_FOREACH_SAFE(s11_proc, ue_context->s11_procedures, entries, s11_proc_safe) {
       if (MME_APP_S11_PROC_TYPE_CREATE_BEARER == s11_proc->type) {
         LIST_REMOVE(s11_proc, entries);
         mme_app_free_s11_procedure_create_bearer(&s11_proc);
@@ -204,9 +204,9 @@ void mme_app_delete_s11_procedure_update_bearer(ue_context_t * const ue_context)
 {
   /** Check if the list of S11 procedures is empty. */
   if (ue_context->s11_procedures) {
-    mme_app_s11_proc_t *s11_proc = NULL;
+    mme_app_s11_proc_t *s11_proc = NULL, *s11_proc_safe = NULL;
 
-    LIST_FOREACH(s11_proc, ue_context->s11_procedures, entries) {
+    LIST_FOREACH_SAFE(s11_proc, ue_context->s11_procedures, entries, s11_proc_safe) {
       if (MME_APP_S11_PROC_TYPE_UPDATE_BEARER == s11_proc->type) {
         LIST_REMOVE(s11_proc, entries);
         mme_app_free_s11_procedure_update_bearer(&s11_proc);
@@ -254,9 +254,9 @@ mme_app_s11_proc_delete_bearer_t* mme_app_get_s11_procedure_delete_bearer(ue_con
 void mme_app_delete_s11_procedure_delete_bearer(ue_context_t * const ue_context)
 {
   if (ue_context->s11_procedures) {
-    mme_app_s11_proc_t *s11_proc = NULL;
+    mme_app_s11_proc_t *s11_proc = NULL, *s11_proc_safe = NULL;
 
-    LIST_FOREACH(s11_proc, ue_context->s11_procedures, entries) {
+    LIST_FOREACH_SAFE(s11_proc, ue_context->s11_procedures, entries, s11_proc_safe) {
       if (MME_APP_S11_PROC_TYPE_DELETE_BEARER == s11_proc->type) {
         LIST_REMOVE(s11_proc, entries);
         mme_app_free_s11_procedure_delete_bearer(&s11_proc);
@@ -590,8 +590,9 @@ static void mme_app_free_s10_procedure_mme_handover(mme_app_s10_proc_t **s10_pro
    */
   /** PDN Connections. */
   if((*s10_proc_mme_handover_pp)->pdn_connections){
-    free_wrapper(&((*s10_proc_mme_handover_pp)->pdn_connections)); /**< Setting the reference inside the procedure also to null. */
+    free_mme_ue_eps_pdn_connections(&(*s10_proc_mme_handover_pp)->pdn_connections);
   }
+
   (*s10_proc_mme_handover_pp)->s10_mme_handover_timeout = NULL; // todo: deallocate too
 
 //  (*s10_proc_mme_handover_pp)->entries.le_next = NULL;
@@ -610,9 +611,9 @@ void mme_app_delete_s10_procedure_mme_handover(ue_context_t * const ue_context)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
   if (ue_context->s10_procedures) {
-    mme_app_s10_proc_t *s10_proc = NULL;
+    mme_app_s10_proc_t *s10_proc = NULL, *s10_proc_safe = NULL;
 
-    LIST_FOREACH(s10_proc, ue_context->s10_procedures, entries) {
+    LIST_FOREACH_SAFE(s10_proc, ue_context->s10_procedures, entries, s10_proc_safe) {
       if (MME_APP_S10_PROC_TYPE_INTER_MME_HANDOVER == s10_proc->type) {
         LIST_REMOVE(s10_proc, entries);
         /*
@@ -636,7 +637,6 @@ void mme_app_delete_s10_procedure_mme_handover(ue_context_t * const ue_context)
 //        if(s10_proc->target_mme)
         remove_s10_tunnel_endpoint(ue_context, s10_proc->peer_ip);
         mme_app_free_s10_procedure_mme_handover(&s10_proc);
-        OAILOG_FUNC_OUT (LOG_MME_APP);
       }else if (MME_APP_S10_PROC_TYPE_INTRA_MME_HANDOVER == s10_proc->type){
         LIST_REMOVE(s10_proc, entries);
         /*
@@ -655,9 +655,7 @@ void mme_app_delete_s10_procedure_mme_handover(ue_context_t * const ue_context)
         }
         s10_proc->timer.id = MME_APP_TIMER_INACTIVE_ID;
         /** Remove the S10 Tunnel endpoint and set the UE context S10 as invalid. */
-//        remove_s10_tunnel_endpoint(ue_context, s10_proc);
         mme_app_free_s10_procedure_mme_handover(&s10_proc);
-        OAILOG_FUNC_OUT (LOG_MME_APP);
       }
     }
     /** Remove the list. */

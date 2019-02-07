@@ -2124,7 +2124,7 @@ static void _emm_tracking_area_update_registration_complete(emm_data_context_t *
    * but we won't to separate them for the sake of locks as well as AMF/SMF separation..
    */
 //  rc = mme_api_registration_complete(emm_context->ue_id, tau_proc->ies->eps_update_type.active_flag);
-  DevAssert(rc == RETURNok); /**< Should always exist. Any mobility issue in which this could occur? */
+//  DevAssert(rc == RETURNok); /**< Should always exist. Any mobility issue in which this could occur? */
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 
@@ -2145,6 +2145,15 @@ void free_emm_tau_request_ies(emm_tau_request_ies_t ** const ies)
   }
   if ((*ies)->last_visited_registered_tai) {
     free_wrapper((void**)&((*ies)->last_visited_registered_tai));
+  }
+  if((*ies)->originating_ecgi){
+	free_wrapper((void**)&((*ies)->originating_ecgi));
+  }
+  if((*ies)->originating_tai){
+	free_wrapper((void**)&((*ies)->originating_tai));
+  }
+  if((*ies)->complete_tau_request){
+	bdestroy_wrapper(&(*ies)->complete_tau_request);
   }
   if ((*ies)->drx_parameter) {
     free_wrapper((void**)&((*ies)->drx_parameter));

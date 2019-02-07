@@ -3263,11 +3263,14 @@ mme_app_handle_forward_relocation_request(
   */
  /** Fill the values of the s10 handover procedure (and decouple them, such that remain after the ITTI message is removed). */
  memcpy((void*)&s10_proc_mme_handover->target_id, (void*)&forward_relocation_request_pP->target_identification, sizeof(target_identification_t));
+ /** Set the IMSI. */
  memcpy((void*)&s10_proc_mme_handover->nas_s10_context._imsi, (void*)&forward_relocation_request_pP->imsi, sizeof(imsi_t));
  s10_proc_mme_handover->nas_s10_context.imsi = imsi;
  /** Set the target tai also in the target-MME side. */
  memcpy((void*)&s10_proc_mme_handover->target_tai, &target_tai, sizeof(tai_t));
- /** Set the IMSI. */
+ /** Set the subscribed AMBR values. */
+ ue_context->subscribed_ue_ambr.br_dl = forward_relocation_request_pP->ue_eps_mm_context->subscribed_ue_ambr.br_dl;
+ ue_context->subscribed_ue_ambr.br_ul = forward_relocation_request_pP->ue_eps_mm_context->subscribed_ue_ambr.br_ul;
 
  s10_proc_mme_handover->nas_s10_context.mm_eps_ctx = forward_relocation_request_pP->ue_eps_mm_context;
  forward_relocation_request_pP->ue_eps_mm_context = NULL;
@@ -3289,7 +3292,7 @@ mme_app_handle_forward_relocation_request(
  forward_relocation_request_pP->pdn_connections = NULL; /**< Unlink the pdn_connections. */
  OAILOG_DEBUG(LOG_MME_APP, "UE_CONTEXT for UE " MME_UE_S1AP_ID_FMT " is a new UE_Context. Processing the received PDN_CONNECTIONS IEs (continuing with CSR). \n", ue_context->mme_ue_s1ap_id);
  /** Process PDN Connections IE. Will initiate a Create Session Request message for the pending pdn_connections. */
- pdn_connection_t * pdn_connection = &s10_proc_mme_handover->pdn_connections->pdn_connection[s10_proc_mme_handover->pdn_connections->num_pdn_connections];
+ pdn_connection_t * pdn_connection = &s10_proc_mme_handover->pdn_connections->pdn_connection[s10_proc_mme_handover->pdn_connections->num_pdn_connections -1];
  pdn_context_t * pdn_context = mme_app_handle_pdn_connectivity_from_s10(ue_context, pdn_connection);
  /*
   * When Create Session Response is received, continue to process the next PDN connection, until all are processed.
@@ -3561,7 +3564,10 @@ mme_app_handle_forward_access_context_notification(
   s10_mme_forward_access_context_acknowledge_p->peer_ip     = s10_handover_process->remote_mme_teid.ipv4_address; /**< Set the target TEID. */
   s10_mme_forward_access_context_acknowledge_p->trxn        = forward_access_context_notification_pP->trxn; /**< Set the target TEID. */
   /** Check that there is a pending handover process. */
-  DevAssert(ue_context->mm_state == UE_UNREGISTERED);
+  if(ue_context->mm_state != UE_UNREGISTERED){
+	  OAILOG_ERROR(LOG_MME_APP, "UE with enb_ue_s1ap_id: " ENB_UE_S1AP_ID_FMT", mme_ue_s1ap_id. "MME_UE_S1AP_ID_FMT " was REGISTERED when S10 Forward Access Context Notification was received (tester-bug: ignoring).. \n",
+			  s10_handover_process->target_enb_ue_s1ap_id, ue_context->mme_ue_s1ap_id);
+  }
   /** Deal with the error case. */
   s10_mme_forward_access_context_acknowledge_p->cause.cause_value = REQUEST_ACCEPTED;
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S10_MME, NULL, 0, "MME_APP Sending S10 FORWARD_ACCESS_CONTEXT_ACKNOWLEDGE.");

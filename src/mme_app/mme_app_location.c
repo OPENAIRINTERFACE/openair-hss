@@ -178,7 +178,7 @@ mme_app_handle_s6a_cancel_location_req(
      * Else remove the UE implicitly.. (not sending Purge_UE for this one).
      */
     OAILOG_INFO(LOG_MME_APP, "Handling CLR for MME_UPDATE_PROCEDURE for UE with imsi " IMSI_64_FMT " "
-        "Checking the MME_MOBILITY_COMPLETION timer %d. \n", imsi);
+        "Checking the MME_MOBILITY_COMPLETION timer. \n", imsi);
     /** Checking CLR in the handover procedure. */
     s10_handover_proc = mme_app_get_s10_procedure_mme_handover(ue_context);
     if(s10_handover_proc){
