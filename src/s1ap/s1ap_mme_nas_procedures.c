@@ -1617,210 +1617,37 @@ s1ap_handle_handover_command (
       ASN_STRUCT_FREE_CONTENTS_ONLY (*td, sptr);
    */
 
-
-  //  /** Add the new forwarding IEs. */
-  //  S1ap_IE_t *s1ap_ie_array[handover_command_pP->bearer_ctx_to_be_forwarded_list->num_bearer_context];
-  //  if(handover_command_pP->bearer_ctx_to_be_forwarded_list){
-  //      for(int num_bc = 0; num_bc < handover_command_pP->bearer_ctx_to_be_forwarded_list->num_bearer_context; num_bc++){
-  //        S1ap_GTP_TEID_t ul_gtp_teid;
-  //        S1ap_TransportLayerAddress_t uL_TransportLayerAddress;
-  //        uint8_t ipv4_addr[4];
-  //
-  //        memset(&ul_gtp_teid, 0, sizeof(S1ap_GTP_TEID_t));
-  //        memset(&uL_TransportLayerAddress, 0, sizeof(S1ap_TransportLayerAddress_t));
-  //        memset(&ipv4_addr, 0, sizeof(ipv4_addr));
-  //
-  //        ie_ul.e_RAB_ID = handover_command_pP->bearer_ctx_to_be_forwarded_list->bearer_contexts[num_bc].eps_bearer_id;
-  //        ie_ul.uL_GTP_TEID = &ul_gtp_teid;
-  //
-  //        GTP_TEID_TO_ASN1(handover_command_pP->bearer_ctx_to_be_forwarded_list->bearer_contexts[num_bc].s1u_sgw_fteid.teid, ie_ul.uL_GTP_TEID);
-  //        ie_ul.uL_TransportLayerAddress = &uL_TransportLayerAddress;
-  //        ie_ul.uL_TransportLayerAddress->buf = ipv4_addr;
-  //        memcpy(ie_ul.uL_TransportLayerAddress->buf, (uint32_t*)&handover_command_pP->bearer_ctx_to_be_forwarded_list->bearer_contexts[num_bc].s1u_sgw_fteid.ipv4_address.s_addr, 4);
-  //        ie_ul.uL_TransportLayerAddress->bits_unused = 0;
-  //        ie_ul.uL_TransportLayerAddress->size = 4;
-  //
-  //        s1ap_ie_array[num_bc] = s1ap_new_ie(S1ap_ProtocolIE_ID_id_E_RABDataForwardingItem,
-  //            S1ap_Criticality_ignore,
-  //            &asn_DEF_S1ap_E_RABDataForwardingItem,
-  //            &ie_ul);
-  //
-  //        ASN_SEQUENCE_ADD(&handoverCommand_p->e_RABSubjecttoDataForwardingList.s1ap_E_RABDataForwardingItem, s1ap_ie_array[num_bc]);
-  //
-  //      }
-  //  }
-
-
-
 //  /** Add the new forwarding IEs. */
-//  S1ap_IE_t *s1ap_ie_array[handover_command_pP->bearer_ctx_to_be_forwarded_list->num_bearer_context];
+////  S1ap_IE_t *s1ap_ie_array[handover_command_pP->bearer_ctx_to_be_forwarded_list->num_bearer_context];
+//  struct S1ap_E_RABDataForwardingItem *ie_ul = calloc(1, sizeof(struct S1ap_E_RABDataForwardingItem));
 //  if(handover_command_pP->bearer_ctx_to_be_forwarded_list){
-//      for(int num_bc = 0; num_bc < handover_command_pP->bearer_ctx_to_be_forwarded_list->num_bearer_context; num_bc++){
-//        struct S1ap_E_RABDataForwardingItem ie_ul;
-//        S1ap_GTP_TEID_t ul_gtp_teid;
-//        S1ap_TransportLayerAddress_t uL_TransportLayerAddress;
-//        uint8_t ipv4_addr[4];
+//	  for(int num_bc = 0; num_bc < handover_command_pP->bearer_ctx_to_be_forwarded_list->num_bearer_context; num_bc++){
+//		  S1ap_GTP_TEID_t *ul_gtp_teid = calloc(1, sizeof(S1ap_GTP_TEID_t));
+////		  S1ap_TransportLayerAddress_t *uL_TransportLayerAddress = calloc(1, sizeof(S1ap_TransportLayerAddress_t));
+////		  uint8_t ipv4_addr[4];
 //
-//        memset(&ul_gtp_teid, 0, sizeof(S1ap_GTP_TEID_t));
-//        memset(&ie_ul, 0, sizeof(struct S1ap_E_RABDataForwardingItem));
-//        memset(&uL_TransportLayerAddress, 0, sizeof(S1ap_TransportLayerAddress_t));
-//        memset(&ipv4_addr, 0, sizeof(ipv4_addr));
+////		  memset(&ul_gtp_teid, 0, sizeof(S1ap_GTP_TEID_t));
+////          memset(&ipv4_addr, 0, sizeof(ipv4_addr));
 //
-//        ie_ul.e_RAB_ID = handover_command_pP->bearer_ctx_to_be_forwarded_list->bearer_contexts[num_bc].eps_bearer_id;
-//        ie_ul.uL_GTP_TEID = &ul_gtp_teid;
+//          ie_ul[num_bc].e_RAB_ID = handover_command_pP->bearer_ctx_to_be_forwarded_list->bearer_contexts[num_bc].eps_bearer_id;
+//          ie_ul[num_bc].uL_GTP_TEID = ul_gtp_teid;
 //
-//        GTP_TEID_TO_ASN1(handover_command_pP->bearer_ctx_to_be_forwarded_list->bearer_contexts[num_bc].s1u_sgw_fteid.teid, ie_ul.uL_GTP_TEID);
-//        ie_ul.uL_TransportLayerAddress = &uL_TransportLayerAddress;
-//        ie_ul.uL_TransportLayerAddress->buf = ipv4_addr;
-//        memcpy(ie_ul.uL_TransportLayerAddress->buf, (uint32_t*)&handover_command_pP->bearer_ctx_to_be_forwarded_list->bearer_contexts[num_bc].s1u_sgw_fteid.ipv4_address.s_addr, 4);
-//        ie_ul.uL_TransportLayerAddress->bits_unused = 0;
-//        ie_ul.uL_TransportLayerAddress->size = 4;
-//
-//        s1ap_ie_array[num_bc] = s1ap_new_ie(S1ap_ProtocolIE_ID_id_E_RABDataForwardingItem,
-//            S1ap_Criticality_ignore,
-//            &asn_DEF_S1ap_E_RABDataForwardingItem,
-//            &ie_ul);
-//
-//        ASN_SEQUENCE_ADD(&handoverCommand_p->e_RABSubjecttoDataForwardingList.s1ap_E_RABDataForwardingItem, s1ap_ie_array[num_bc]);
-//
-//      }
-//      handoverCommand_p->presenceMask |= S1AP_HANDOVERCOMMANDIES_E_RABSUBJECTTODATAFORWARDINGLIST_PRESENT;
-//  }
-
-
-//  S1ap_IE_t *s1ap_ie_array[handover_command_pP->bearer_ctx_to_be_forwarded_list->num_bearer_context];
-//  S1ap_E_RABDataForwardingItem_t *e_RABDataForwardingItem; // [conn_est_cnf_pP->no_of_e_rabs]; // don't alloc on stack for automatic removal
-//
-//  if(handover_command_pP->bearer_ctx_to_be_forwarded_list){
-//  	  e_RABDataForwardingItem = calloc(handover_command_pP->bearer_ctx_to_be_forwarded_list->num_bearer_context, sizeof(S1ap_E_RABDataForwardingItem_t));
-//
-//	  for (int item = 0; item < handover_command_pP->bearer_ctx_to_be_forwarded_list->num_bearer_context; item++) {
-//		  memset(&e_RABDataForwardingItem[item], 0, sizeof(S1ap_E_RABDataForwardingItem_t));
-//	  	  e_RABDataForwardingItem[item].e_RAB_ID = handover_command_pP->bearer_ctx_to_be_forwarded_list->bearer_contexts[item].eps_bearer_id;
-//
-////	  	  e_RABDataForwardingItem->uL_TransportLayerAddress = calloc(1, sizeof(S1ap_TransportLayerAddress_t));
-////	  	  &e_RABDataForwardingItem[item].uL_GTP_TEID = calloc(1, sizeof(S1ap_GTP_TEID_t));
-////	  	  memset(&e_RABDataForwardingItem[item].uL_GTP_TEID, 0, sizeof(S1ap_GTP_TEID_t));
-////	      INT32_TO_OCTET_STRING (handover_command_pP->bearer_ctx_to_be_forwarded_list->bearer_contexts[item].s1u_sgw_fteid.teid, &e_RABDataForwardingItem[item].uL_GTP_TEID);
-////	      bstring transportLayerAddress = fteid_ip_address_to_bstring(&handover_command_pP->bearer_ctx_to_be_forwarded_list->bearer_contexts[item].s1u_sgw_fteid);
-//
-////	      e_RABDataForwardingItem[item].uL_TransportLayerAddress.buf =
-////	    		  calloc (blength(transportLayerAddress), sizeof (uint8_t));
-////	      memcpy (e_RABDataForwardingItem[item].uL_TransportLayerAddress.buf,
-////	          transportLayerAddress->data,
-////	          blength(transportLayerAddress));
+//          GTP_TEID_TO_ASN1(handover_command_pP->bearer_ctx_to_be_forwarded_list->bearer_contexts[num_bc].s1u_sgw_fteid.teid, ie_ul[num_bc].uL_GTP_TEID);
+////          ie_ul->uL_TransportLayerAddress = &uL_TransportLayerAddress;
+////          ie_ul->uL_TransportLayerAddress->buf = ipv4_addr;
+////          memcpy(ie_ul->uL_TransportLayerAddress->buf, (uint32_t*)&handover_command_pP->bearer_ctx_to_be_forwarded_list->bearer_contexts[num_bc].s1u_sgw_fteid.ipv4_address.s_addr, 4);
+////          ie_ul->uL_TransportLayerAddress->bits_unused = 0;
+////          ie_ul->uL_TransportLayerAddress->size = 4;
 ////
-////	      e_RABDataForwardingItem[item].uL_TransportLayerAddress.size = blength(transportLayerAddress);
-////	      e_RABDataForwardingItem[item].uL_TransportLayerAddress.bits_unused = 0;
+////          s1ap_ie_array[num_bc] = s1ap_new_ie(S1ap_ProtocolIE_ID_id_E_RABDataForwardingItem,
+////              S1ap_Criticality_ignore,
+////              &asn_DEF_S1ap_E_RABDataForwardingItem,
+////              ie_ul);
 //
-//
-////	      ASN_SEQUENCE_ADD (&e_rabsetuprequesties->e_RABToBeSetupListBearerSUReq, &s1ap_E_RABToBeSetupItemBearerSUReq[i]);
-//
-//
-////	  	  e_RABDataForwardingItem = calloc(1, sizeof(S1ap_E_RABDataForwardingItem_t));
-////	  	  e_RABDataForwardingItem.uL_GTP_TEID = ul_gtp_teid;
-////	  	  GTP_TEID_TO_ASN1(handover_command_pP->bearer_ctx_to_be_forwarded_list->bearer_contexts[item].s1u_sgw_fteid.teid, e_RABDataForwardingItem[item].uL_GTP_TEID);
-//
-////	  	  // S-GW IP address(es) for user-plane
-////	  	  bstring transportLayerAddress = fteid_ip_address_to_bstring(&handover_command_pP->bearer_ctx_to_be_forwarded_list->bearer_contexts[item].s1u_sgw_fteid);
-////	  	  e_RABDataForwardingItem->uL_TransportLayerAddress->buf = calloc (blength(transportLayerAddress), sizeof (uint8_t));
-////	  	  memcpy (e_RABDataForwardingItem->uL_TransportLayerAddress->buf,
-////	  			  transportLayerAddress->data,
-////	  			  blength(transportLayerAddress));
-////	  	  e_RABDataForwardingItem->uL_TransportLayerAddress->size = blength(transportLayerAddress);
-////	  	  e_RABDataForwardingItem->uL_TransportLayerAddress->bits_unused = 0;
-//
-//
-////	  	  e_RABDataForwardingItem->dL_transportLayerAddress= calloc(1, sizeof(S1ap_TransportLayerAddress_t));
-////	  	  e_RABDataForwardingItem->dL_gTP_TEID = calloc(1, sizeof(S1ap_GTP_TEID_t));
-//////	  	  e_RABDataForwardingItem = calloc(1, sizeof(S1ap_E_RABDataForwardingItem_t));
-//////	  	  e_RABDataForwardingItem.uL_GTP_TEID = ul_gtp_teid;
-////	  	  GTP_TEID_TO_ASN1(handover_command_pP->bearer_ctx_to_be_forwarded_list->bearer_contexts[item].s1u_sgw_fteid.teid, e_RABDataForwardingItem->dL_gTP_TEID);
-////
-////	  	  // S-GW IP address(es) for user-plane
-////	  	  bstring transportLayerAddress2 = fteid_ip_address_to_bstring(&handover_command_pP->bearer_ctx_to_be_forwarded_list->bearer_contexts[item].s1u_sgw_fteid);
-////	  	  e_RABDataForwardingItem->dL_transportLayerAddress->buf = calloc (blength(transportLayerAddress2), sizeof (uint8_t));
-////	  	  memcpy (e_RABDataForwardingItem->dL_transportLayerAddress->buf,
-////	  			  transportLayerAddress2->data,
-////	  			  blength(transportLayerAddress2));
-////	  	  e_RABDataForwardingItem->dL_transportLayerAddress->size = blength(transportLayerAddress2);
-////	  	  e_RABDataForwardingItem->dL_transportLayerAddress->bits_unused = 0;
-//
-////	  	  s1ap_ie_array[item] = s1ap_new_ie(S1ap_ProtocolIE_ID_id_E_RABDataForwardingItem,
-////	  			  S1ap_Criticality_ignore,
-////	  			  &asn_DEF_S1ap_E_RABDataForwardingItem,
-////	  			  e_RABDataForwardingItem);
-//
-////	  	  ASN_SEQUENCE_ADD (&handoverCommand_p->e_RABSubjecttoDataForwardingList.s1ap_E_RABDataForwardingItem, e_RABDataForwardingItem);
-//	  	  ASN_SEQUENCE_ADD(&handoverCommand_p->e_RABSubjecttoDataForwardingList, &e_RABDataForwardingItem[item]);
-//
-//	  	  // todo: optimize this
-//	  	  /** Destroy the temporarily allocated bstring. */
-////	  	  bdestroy_wrapper(&transportLayerAddress);
-////	  	  bdestroy_wrapper(&transportLayerAddress2);
+//          ASN_SEQUENCE_ADD(&handoverCommand_p->e_RABSubjecttoDataForwardingList, &ie_ul[num_bc]);
 //	  }
-//  	  handoverCommand_p->presenceMask |= S1AP_HANDOVERCOMMANDIES_E_RABSUBJECTTODATAFORWARDINGLIST_PRESENT;
-//  }
-//  	//
-//	//        ie_ul.uL_TransportLayerAddress = &uL_TransportLayerAddress;
-//	//        ie_ul.uL_TransportLayerAddress->buf = ipv4_addr;
-//	//        memcpy(ie_ul.uL_TransportLayerAddress->buf, (uint32_t*)&handover_command_pP->bearer_ctx_to_be_forwarded_list->bearer_contexts[num_bc].s1u_sgw_fteid.ipv4_address.s_addr, 4);
-//	//        ie_ul.uL_TransportLayerAddress->bits_unused = 0;
-//	//        ie_ul.uL_TransportLayerAddress->size = 4;
-//	//
-//	//        s1ap_ie_array[num_bc] = s1ap_new_ie(S1ap_ProtocolIE_ID_id_E_RABDataForwardingItem,
-//	//            S1ap_Criticality_ignore,
-//	//            &asn_DEF_S1ap_E_RABDataForwardingItem,
-//	//            &ie_ul);
-//	//
-//	//        ASN_SEQUENCE_ADD(&handoverCommand_p->e_RABSubjecttoDataForwardingList.s1ap_E_RABDataForwardingItem, s1ap_ie_array[num_bc]);
-//	//
-//
-//
-////
-//////	  /** Set transport level information. */
-//////
-//////	  INT32_TO_OCTET_STRING (bc_tbc->s1u_sgw_fteid.teid, &e_RABToBeSetupHO_p->gTP_TEID);
-//////	  /*
-//////	   * S-GW IP address(es) for user-plane
-//////	   */
-//////	  bstring transportLayerAddress = fteid_ip_address_to_bstring(&bc_tbc->s1u_sgw_fteid);
-//////
-//////	  e_RABToBeSetupHO_p->transportLayerAddress.buf = calloc (blength(transportLayerAddress), sizeof (uint8_t));
-//////	  memcpy (e_RABToBeSetupHO_p->transportLayerAddress.buf,
-//////	      transportLayerAddress->data,
-//////	      blength(transportLayerAddress));
-//////	  e_RABToBeSetupHO_p->transportLayerAddress.size = blength(transportLayerAddress);
-//////
-//////	  // todo: optimize this
-//////	  /** Destroy the temporarily allocated bstring. */
-//////	  bdestroy_wrapper(&transportLayerAddress);
-////
-////	  /*
-////	   * Set the GTP-TEID. This is the S1-U S-GW TEID
-////	   */
-////	  INT32_TO_OCTET_STRING (handover_request_pP->bearer_ctx_to_be_setup_list->bearer_contexts[item].s1u_sgw_fteid.teid, &e_RABToBeSetupHO->gTP_TEID);
-////	  // S-GW IP address(es) for user-plane
-////	  bstring transportLayerAddress = fteid_ip_address_to_bstring(&handover_request_pP->bearer_ctx_to_be_setup_list->bearer_contexts[item].s1u_sgw_fteid);
-////	  e_RABToBeSetupHO->transportLayerAddress.buf = calloc (blength(transportLayerAddress), sizeof (uint8_t));
-////	  memcpy (e_RABToBeSetupHO->transportLayerAddress.buf,
-////			  transportLayerAddress->data,
-////			  blength(transportLayerAddress));
-////	  e_RABToBeSetupHO->transportLayerAddress.size = blength(transportLayerAddress);
-////	  e_RABToBeSetupHO->transportLayerAddress.bits_unused = 0;
-////	  ASN_SEQUENCE_ADD (&handoverRequest_p->e_RABToBeSetupListHOReq, e_RABToBeSetupHO);
-////	  // todo: optimize this
-////	  /** Destroy the temporarily allocated bstring. */
-////	  bdestroy_wrapper(&transportLayerAddress);
-//////
-//////	  e_RABToBeSetupHO->transportLayerAddress.buf = calloc (blength(handover_request_pP->bearer_ctx_to_be_setup_list->bearer_contexts[item].s1u_sgw_fteid.), sizeof (uint8_t));
-//////	  memcpy (e_RABToBeSetupHO->transportLayerAddress.buf, conn_est_cnf_pP->transport_layer_address[item]->data, blength(conn_est_cnf_pP->transport_layer_address[item]));
-//////	  e_RABToBeSetupHO->transportLayerAddress.size = blength(conn_est_cnf_pP->transport_layer_address[item]);
-//////	  e_RABToBeSetupHO->transportLayerAddress.bits_unused = 0;
-//////	  ASN_SEQUENCE_ADD (&initialContextSetupRequest_p->e_RABToBeSetupListCtxtSUReq, e_RABToBeSetup);
-////  }
-//
-
+//	  handoverCommand_p->presenceMask |= S1AP_HANDOVERCOMMANDIES_E_RABSUBJECTTODATAFORWARDINGLIST_PRESENT;
+// }
 
   OCTET_STRING_fromBuf(&handoverCommand_p->target_ToSource_TransparentContainer,
       handover_command_pP->eutran_target_to_source_container->data, blength(handover_command_pP->eutran_target_to_source_container));
