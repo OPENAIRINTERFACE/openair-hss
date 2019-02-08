@@ -1439,7 +1439,7 @@ s10_mme_context_acknowledge (
   hash_rc = hashtable_ts_free(s10_mme_teid_2_gtv2c_teid_handle, (hash_key_t) ack_p->local_teid);
   DevAssert (HASH_TABLE_OK == hash_rc);
 
-  usleep(100); /**< unfortunately, no other way.. */
+  usleep(100); /**< unfortunately, no other way.. (todo: not removing trx for triggered response and keeping encoded message there) */
 
   /** Purge the message. */
   rc = nwGtpv2cMsgDelete (s10_mme_teid_2_gtv2c_teid_handle, ulp_ack.hMsg);

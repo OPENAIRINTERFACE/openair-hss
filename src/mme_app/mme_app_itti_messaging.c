@@ -556,7 +556,7 @@ int mme_app_send_delete_session_request (struct ue_context_s * const ue_context_
   S11_DELETE_SESSION_REQUEST (message_p).internal_flags = internal_flags;
 
   OAI_GCC_DIAG_OFF(pointer-to-int-cast);
-  S11_DELETE_SESSION_REQUEST (message_p).sender_fteid_for_cp.teid = (teid_t) ue_context_p;
+  S11_DELETE_SESSION_REQUEST (message_p).sender_fteid_for_cp.teid = ue_context_p->mme_teid_s11;
   OAI_GCC_DIAG_ON(pointer-to-int-cast);
   S11_DELETE_SESSION_REQUEST (message_p).sender_fteid_for_cp.interface_type = S11_MME_GTP_C;
   mme_config_read_lock (&mme_config);
