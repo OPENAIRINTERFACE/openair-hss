@@ -126,6 +126,18 @@ pipeline {
                 }
             }
         }
+        stage ('Verify Coding Guidelines') {
+            steps {
+                echo '\u2705 \u001B[32mVerifying Coding Guidelines\u001B[0m'
+                script {
+                    if (env.ghprbPullId != null) {
+                         sh "./ci-scripts/checkCodingFormattingRules.sh --src-branch ${env.ghprbSourceBranch} --target-branch ${env.ghprbTargetBranch}"
+                    } else {
+                         sh "./ci-scripts/checkCodingFormattingRules.sh"
+                    }
+                }
+            }
+        }
         stage ('Static Code Analysis') {
             steps {
                 echo '\u2705 \u001B[32mStatic Code Analysis with cppcheck\u001B[0m'
