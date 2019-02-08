@@ -2083,7 +2083,7 @@ void _mme_app_send_s10_context_response_err(teid_t mme_source_s10_teid, struct i
   /** Set the IPv4 address of the source MME. */
   s10_context_response_p->peer_ip = mme_source_ipv4_address;
   s10_context_response_p->cause.cause_value = cause_val;
-  s10_context_response_p->trxn  = trxn;
+  s10_context_response_p->trxnId  = trxn;
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "MME_APP Sending S10 CONTEXT_RESPONSE_ERR");
 
   /** Sending a message to S10. */
@@ -2202,7 +2202,7 @@ mme_app_handle_s10_context_request(const itti_s10_context_request_t * const s10_
  /** Set the target S10 TEID. */
  context_response_p->teid    = s10_context_request_pP->s10_target_mme_teid.teid; /**< Only a single target-MME TEID can exist at a time. */
  context_response_p->peer_ip = s10_context_request_pP->s10_target_mme_teid.ipv4_address; /**< todo: Check this is correct. */
- context_response_p->trxn    = s10_context_request_pP->trxn;
+ context_response_p->trxnId    = s10_context_request_pP->trxn;
  /** Set the cause. Since the UE context state has not been changed yet, nothing to do in the context if success or failure.*/
  context_response_p->cause.cause_value = REQUEST_ACCEPTED; // todo: check the NAS message here!
 
@@ -2418,7 +2418,7 @@ mme_app_handle_s10_context_response(
   /** Fill up . */
   s10_context_ack_p->cause.cause_value = REQUEST_ACCEPTED; /**< Since we entered UE_REGISTERED state. */
   /** Set the transaction: Peer IP, Peer Port, Peer TEID should be deduced from this. */
-  s10_context_ack_p->trxnId     = s10_context_response_pP->trxn;
+  s10_context_ack_p->trxnId       = s10_context_response_pP->trxnId;
   s10_context_ack_p->peer_ip    = s10_context_response_pP->s10_source_mme_teid.ipv4_address;
   s10_context_ack_p->peer_port  = s10_context_response_pP->peer_port;
   s10_context_ack_p->teid       = s10_context_response_pP->s10_source_mme_teid.teid;

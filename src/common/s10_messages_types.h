@@ -342,7 +342,7 @@ typedef struct itti_s10_context_response_s{
   // Private Extension Private Extension        ///< optional
 
   /* S11 stack specific parameter. Not used in standalone epc mode */
-  void*                           trxn;                      ///< Transaction identifier (received) or the transaction itself (when sent)
+  void*                           trxnId;                      ///< Transaction identifier (received) or the transaction itself (when sent)
 
   struct in_addr                  peer_ip;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME
   uint16_t                        peer_port;           ///< MME port for S-GW or S-GW port for MME
@@ -363,6 +363,7 @@ typedef struct itti_s10_context_acknowledge_s {
   uint32_t                 ue_id;
   // here fields listed in 3GPP TS 29.274
   gtpv2c_cause_t               cause;               ///<
+  void*                           trxnId;                      ///< Transaction identifier (received) or the transaction itself (when sent)
 
   // todo: indication flags
   // recovery_t(restart counter) recovery;      ///< This IE shall be included if contacting the peer for the first
@@ -374,7 +375,6 @@ typedef struct itti_s10_context_acknowledge_s {
   struct in_addr                peer_ip;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME
   uint16_t                      peer_port;      ///< MME port for S-GW or S-GW port for MME
   uint16_t                      local_port;      ///< MME port for S-GW or S-GW port for MME
-  uint32_t                      trxnId;           ///< Transaction identifier
 } itti_s10_context_acknowledge_t;
 
 //-----------------------------------------------------------------------------

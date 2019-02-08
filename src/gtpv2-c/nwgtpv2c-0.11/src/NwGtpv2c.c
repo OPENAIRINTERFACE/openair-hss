@@ -720,17 +720,40 @@ static nw_rc_t nwGtpv2cCreateLocalTunnel (
    */
   static
   nw_rc_t                            nwGtpv2cHandleUlpTriggeredAck (NW_IN nw_gtpv2c_stack_t * thiz, NW_IN nw_gtpv2c_ulp_api_t * pUlpAck) {
-    nw_rc_t                                   rc = NW_FAILURE;
+	  OAILOG_FUNC_IN (LOG_GTPV2C);
 
-    OAILOG_FUNC_IN (LOG_GTPV2C);
+	  nw_gtpv2c_trxn_t                         *pAckTrxn = NULL, keyTrxn;
+	  nw_rc_t                                   rc = NW_FAILURE;
 
-    if (((nw_gtpv2c_msg_t *) pUlpAck->hMsg)->seqNum == 0){
-      OAILOG_ERROR(LOG_GTPV2C, "The sequence number of a triggered ACK has to be set (!0) \n");
-      OAILOG_FUNC_RETURN( LOG_GTPV2C, NW_FAILURE);
-    }
+	  /** Try to find the initial request transaction for the triggered ACK. */
 
-    OAILOG_DEBUG (LOG_GTPV2C, "Sending a triggered ACK message over seq '0x%x'\n", ((nw_gtpv2c_msg_t *) pUlpAck->hMsg)->seqNum );
-    rc = nwGtpv2cCreateAndSendMsg (thiz, ((nw_gtpv2c_msg_t *) pUlpAck->hMsg)->seqNum , pUlpAck->u_api_info.triggeredAckInfo.localPort, &pUlpAck->u_api_info.triggeredAckInfo.peerIp, pUlpAck->u_api_info.triggeredAckInfo.peerPort, (nw_gtpv2c_msg_t *) pUlpAck->hMsg);
+	  OAILOG_FUNC_IN (LOG_GTPV2C);;
+
+      keyTrxn.seqNum = ((nw_gtpv2c_msg_t *) pUlpAck->hMsg)->seqNum;
+      keyTrxn.peerIp.s_addr = pUlpAck->u_api_info.triggeredAckInfo.peerIp.s_addr;
+      /** A transaction of the initial request (cmd) for the triggered request should exist. */
+      pAckTrxn = RB_FIND (NwGtpv2cOutstandingTxSeqNumTrxnMap, &(thiz->outstandingTxSeqNumMap), &keyTrxn);
+
+      if (pAckTrxn) {
+    	  OAILOG_INFO (LOG_GTPV2C,  "Found an initial request transaction for the triggered ACK. Appending the ACK and keeping the transaction for a while.\n");
+    	  /** Remove the original message and append the current message. */
+    	  DevAssert(!pAckTrxn->pMsg);
+
+    	  /** Append the triggered ACK to the message. */
+    	  pAckTrxn->pMsg = (nw_gtpv2c_msg_t *) pUlpAck->hMsg;
+    	  pAckTrxn->pMsg->seqNum = pAckTrxn->seqNum;
+
+      } else {
+        OAILOG_WARNING (LOG_GTPV2C,  "Triggered ACK message without a matching outstanding request (req) received! Discarding.\n");
+        if (pUlpAck->hMsg) {
+          rc = nwGtpv2cMsgDelete ((nw_gtpv2c_stack_handle_t) thiz, pUlpAck->hMsg);
+          NW_ASSERT (NW_OK == rc);
+        }
+        OAILOG_FUNC_RETURN( LOG_GTPV2C, NW_OK);
+      }
+
+    OAILOG_DEBUG (LOG_GTPV2C, "Sending a triggered ACK message over seq '0x%x'\n", pAckTrxn->seqNum);
+    rc = nwGtpv2cCreateAndSendMsg (thiz, pAckTrxn->seqNum , pUlpAck->u_api_info.triggeredAckInfo.localPort, &pUlpAck->u_api_info.triggeredAckInfo.peerIp, pUlpAck->u_api_info.triggeredAckInfo.peerPort, (nw_gtpv2c_msg_t *) pUlpAck->hMsg);
 
     /** Remove the tunnel. */
     rc = nwGtpv2cDeleteLocalTunnel (thiz, pUlpAck->u_api_info.triggeredAckInfo.hTunnel);
@@ -1152,7 +1175,8 @@ static nw_rc_t                            nwGtpv2cHandleUlpFindLocalTunnel (
   NW_IN uint32_t msgBufLen,
   NW_IN uint16_t localPort,
   NW_IN uint16_t peerPort,
-  NW_IN struct in_addr* peerIp) {
+  NW_IN struct in_addr* peerIp,
+  NW_IN bool remove) {
     nw_rc_t                                   rc = NW_FAILURE;
     nw_gtpv2c_trxn_t                          *pTrxn = NULL,
                                             keyTrxn;
@@ -1172,19 +1196,34 @@ static nw_rc_t                            nwGtpv2cHandleUlpFindLocalTunnel (
       uint32_t                                hUlpTrxn;
       uint32_t                                hUlpTunnel;
 
-      trx_flags = pTrxn->trx_flags;
-
       hUlpTrxn = pTrxn->hUlpTrxn;
       noDelete = pTrxn->noDelete;
       hUlpTunnel = (pTrxn->hTunnel ? ((nw_gtpv2c_tunnel_t *) (pTrxn->hTunnel))->hUlpTunnel : 0);
-      RB_REMOVE (NwGtpv2cOutstandingTxSeqNumTrxnMap, &(thiz->outstandingTxSeqNumMap), pTrxn);
-      rc = nwGtpv2cTrxnDelete (&pTrxn);
-      NW_ASSERT (NW_OK == rc);
+
+      if(remove){
+          trx_flags = pTrxn->trx_flags;
+          RB_REMOVE (NwGtpv2cOutstandingTxSeqNumTrxnMap, &(thiz->outstandingTxSeqNumMap), pTrxn);
+          rc = nwGtpv2cTrxnDelete (&pTrxn);
+          NW_ASSERT (NW_OK == rc);
+      } else {
+    	  OAILOG_WARNING (LOG_GTPV2C,  "Not removing the initial request transaction for message type %d, seqNo %x. \n",
+    			  msgType, keyTrxn.seqNum);
+    	  /** This transaction should be taken care automatically. No additional information is necessary. */
+    	  rc = nwGtpv2cMsgDelete((nw_gtpv2c_stack_handle_t)thiz,  (nw_gtpv2c_msg_handle_t)pTrxn->pMsg);
+          NW_ASSERT (NW_OK == rc);
+          pTrxn->pMsg = NULL;
+    	  NW_ASSERT (NW_OK == rc);
+    	  /** Mark the transaction as ACKed. */
+    	  pTrxn->trx_flags |= INTERNAL_FLAG_TRIGGERED_ACK;
+    	  trx_flags = pTrxn->trx_flags;
+      }
+
       NW_ASSERT (msgBuf && msgBufLen);
       rc = nwGtpv2cMsgFromBufferNew ((nw_gtpv2c_stack_handle_t) thiz, msgBuf, msgBufLen, &(hMsg));
       NW_ASSERT (thiz->pGtpv2cMsgIeParseInfo[msgType]);
       rc = nwGtpv2cMsgIeParse (thiz->pGtpv2cMsgIeParseInfo[msgType], hMsg, &error);
 
+      /** We just forward the remaining message. */
       if (rc != NW_OK) {
         char                                    ipv4[INET_ADDRSTRLEN];
         inet_ntop (AF_INET, (void*)peerIp, ipv4, INET_ADDRSTRLEN);
@@ -1199,90 +1238,6 @@ static nw_rc_t                            nwGtpv2cHandleUlpFindLocalTunnel (
 
     return rc;
   }
-
-
-  /**
-    Handle Initial Request from Peer Entity.
-
-    @param[in] thiz : Stack context
-    @return NW_OK on success.
-  */
-
-static nw_rc_t                            nwGtpv2cHandleTriggeredAck(
-    NW_IN nw_gtpv2c_stack_t * thiz,
-    NW_IN uint32_t msgType,
-    NW_IN uint8_t * msgBuf,
-    NW_IN uint32_t msgBufLen,
-    NW_IN uint16_t peerPort,
-    NW_IN struct in_addr *peerIp) {
-  nw_rc_t                                   rc = NW_FAILURE;
-  uint32_t                                seqNum = 0;
-  uint32_t                                teidLocal = 0;
-  nw_gtpv2c_trxn_t                          *pTrxn = NULL, keyTrxn;
-  nw_gtpv2c_tunnel_t                        *pLocalTunnel = NULL,
-      keyTunnel = {0};
-  nw_gtpv2c_msg_handle_t                      hMsg = 0;
-  nw_gtpv2c_ulp_tunnel_handle_t                hUlpTunnel = 0;
-  nw_gtpv2c_error_t                          error = {0};
-  char                                    ipv4[INET_ADDRSTRLEN];
-
-  teidLocal = *((uint32_t *) (msgBuf + 4));
-  inet_ntop (AF_INET, (void*)peerIp, ipv4, INET_ADDRSTRLEN);
-
-  if (teidLocal) {
-    keyTunnel.teid = ntohl (teidLocal);
-    keyTunnel.ipv4AddrRemote.s_addr = peerIp->s_addr;
-    pLocalTunnel = RB_FIND (NwGtpv2cTunnelMap, &(thiz->tunnelMap), &keyTunnel);
-
-    if (!pLocalTunnel) {
-      OAILOG_WARNING (LOG_GTPV2C,  "Request message received on non-existent teid 0x%x from peer %s received! Discarding.\n", ntohl (teidLocal), ipv4);
-      return NW_OK;
-    }
-
-    hUlpTunnel = pLocalTunnel->hUlpTunnel;
-  } else {
-    OAILOG_WARNING (LOG_GTPV2C,  "Ack message received has no valid TEID.! Discarding.\n");
-    return NW_OK;
-  }
-
-  keyTrxn.seqNum = ntohl (*((uint32_t *) (msgBuf + (((*msgBuf) & 0x08) ? 8 : 4)))) >> 8;;
-  keyTrxn.peerIp.s_addr = peerIp->s_addr;
-  keyTrxn.peerPort = peerPort;
-  pTrxn = RB_FIND (NwGtpv2cOutstandingRxSeqNumTrxnMap, &(thiz->outstandingRxSeqNumMap), &keyTrxn);
-
-  if(pTrxn){
-    RB_REMOVE (NwGtpv2cOutstandingRxSeqNumTrxnMap, &(thiz->outstandingRxSeqNumMap), pTrxn); /**< Remove the transaction for the Request. */
-    rc = nwGtpv2cTrxnDelete (&pTrxn);
-    NW_ASSERT (NW_OK == rc);
-    /** Parse the message. */
-    rc = nwGtpv2cMsgFromBufferNew ((nw_gtpv2c_stack_handle_t) thiz, msgBuf, msgBufLen, &(hMsg));
-    NW_ASSERT (thiz->pGtpv2cMsgIeParseInfo[msgType]);
-    rc = nwGtpv2cMsgIeParse (thiz->pGtpv2cMsgIeParseInfo[msgType], hMsg, &error);
-    if (rc != NW_OK) {
-      OAILOG_WARNING (LOG_GTPV2C,  "Malformed request message received on TEID %u from peer %s. Notifying ULP.\n", ntohl (teidLocal), ipv4);
-    }
-    rc = nwGtpv2cSendTriggeredAckIndToUlp(thiz, &error, pTrxn, hUlpTunnel, msgType, peerIp, peerPort, hMsg);
-
-  }else{
-    OAILOG_WARNING (LOG_GTPV2C,  "ACK message without a matching outstanding request received! Discarding.\n");
-    rc = NW_OK;
-  }
-
-
-//  if (pTrxn) {
-//    rc = nwGtpv2cMsgFromBufferNew ((nw_gtpv2c_stack_handle_t) thiz, msgBuf, msgBufLen, &(hMsg));
-//    NW_ASSERT (thiz->pGtpv2cMsgIeParseInfo[msgType]);
-//    rc = nwGtpv2cMsgIeParse (thiz->pGtpv2cMsgIeParseInfo[msgType], hMsg, &error);
-//
-//    if (rc != NW_OK) {
-//      OAILOG_WARNING (LOG_GTPV2C,  "Malformed request message received on TEID %u from peer %s. Notifying ULP.\n", ntohl (teidLocal), ipv4);
-//    }
-//
-////    rc = nwGtpv2cSendInitialReqIndToUlp (thiz, &error, pTrxn, hUlpTunnel, msgType, peerIp, peerPort, hMsg);
-//  }
-
-  return rc;
-}
 
 /*--------------------------------------------------------------------------*
                        P U B L I C   F U N C T I O N S
@@ -1632,13 +1587,16 @@ static nw_rc_t                            nwGtpv2cHandleTriggeredAck(
     case NW_GTP_DELETE_INDIRECT_DATA_FORWARDING_TUNNEL_RSP:
     case NW_GTP_FORWARD_RELOCATION_COMPLETE_ACK:
     case NW_GTP_RELOCATION_CANCEL_RSP:
+      rc = nwGtpv2cHandleTriggeredRsp (thiz, msgType, udpData, udpDataLen, localPort, peerPort, peerIp, true); /**< We will check inside, if the received response is to be acked. */
+      break;
     case NW_GTP_CONTEXT_RSP:
-      rc = nwGtpv2cHandleTriggeredRsp (thiz, msgType, udpData, udpDataLen, localPort, peerPort, peerIp);
-      break;
-
+      rc = nwGtpv2cHandleTriggeredRsp (thiz, msgType, udpData, udpDataLen, localPort, peerPort, peerIp, false); /**< We will check inside, if the received response is to be acked. */
+    break;
     case NW_GTP_CONTEXT_ACK:
-      rc = nwGtpv2cHandleTriggeredAck(thiz, msgType, udpData, udpDataLen, peerPort, peerIp);
-      break;
+      /** Ignore the received Ctx ACK (no transaction). */
+    	// todo: handle eventually..
+        rc = NW_OK;
+        break;
 
     default:{
         /*

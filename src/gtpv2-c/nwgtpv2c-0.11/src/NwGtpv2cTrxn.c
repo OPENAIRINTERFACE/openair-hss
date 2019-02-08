@@ -84,6 +84,13 @@ extern                                  "C" {
     OAILOG_WARNING (LOG_GTPV2C,  "T3 Response timer expired for transaction %p\n", thiz);
     thiz->hRspTmr = 0;
 
+    if(thiz->trx_flags & INTERNAL_FLAG_TRIGGERED_ACK){
+    	OAILOG_ERROR (LOG_GTPV2C, "Transaction transaction %p (seqNo=0x%x) was acknowledged. Removing for timeout. \n", thiz, thiz->seqNum);
+    	RB_REMOVE (NwGtpv2cOutstandingTxSeqNumTrxnMap, &(pStack->outstandingTxSeqNumMap), thiz);
+    	rc = nwGtpv2cTrxnDelete (&thiz);
+        return rc;
+    }
+
     if (thiz->maxRetries) {
     	/** Check if a tunnel endpoint exists. */
     	nw_gtpv2c_tunnel_t                        *pLocalTunnel = NULL,

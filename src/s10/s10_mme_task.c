@@ -186,6 +186,7 @@ s10_mme_send_udp_msg (
   udp_data_req_p->peer_port = peerPort;
   udp_data_req_p->buffer = buffer;
   udp_data_req_p->buffer_length = buffer_len;
+
   ret = itti_send_msg_to_task (TASK_UDP, INSTANCE_DEFAULT, message_p);
   return ((ret == 0) ? NW_OK : NW_FAILURE);
 }
