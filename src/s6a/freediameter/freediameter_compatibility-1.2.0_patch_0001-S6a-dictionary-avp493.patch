@@ -1,3 +1,11 @@
+From: Andreas Eberlein <aeberlein@blackned.de>
+Date: Tue, 5 Feb 2019 13:10:59 +0100
+Subject: [PATCH] fix AVP 493 Vendor
+
+---
+ extensions/dict_s6a/dict_s6a.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
 diff --git a/extensions/dict_s6a/dict_s6a.c b/extensions/dict_s6a/dict_s6a.c
 index 11518f2..9dcd87c 100644
 --- a/extensions/dict_s6a/dict_s6a.c
@@ -11,4 +19,6 @@ index 11518f2..9dcd87c 100644
  				"Service-Selection",			/* Name */
  				AVP_FLAG_VENDOR | AVP_FLAG_MANDATORY, 	/* Fixed flags */
  				AVP_FLAG_VENDOR | AVP_FLAG_MANDATORY,		 	/* Fixed flag values */
+-- 
+2.17.1
 
