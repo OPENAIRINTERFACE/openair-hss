@@ -239,11 +239,6 @@ s1ap_set_tai (enb_description_t * enb_ref, S1ap_SupportedTAs_t * ta_list);
  **/
 void s1ap_remove_ue(ue_description_t *ue_ref);
 
-/** \brief Remove target eNB from the list and remove any UE associated
- * \param enb_ref eNB structure reference to remove
- **/
-void s1ap_remove_enb(enb_description_t *enb_ref);
-
 ///**
 // * Add a bearer context to the list.
 // */

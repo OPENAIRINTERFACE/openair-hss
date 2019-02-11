@@ -83,6 +83,7 @@ typedef struct mme_api_emm_config_s {
   uint8_t           prefered_ciphering_algorithm[8];// choice in NAS_SECURITY_ALGORITHMS_EEA0, etc
   uint8_t           eps_network_feature_support;
   bool              force_push_pco;
+  bool				force_tau;
   tai_list_t        tai_list;
 } mme_api_emm_config_t;
 

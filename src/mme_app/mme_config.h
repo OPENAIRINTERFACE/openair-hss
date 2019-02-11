@@ -120,7 +120,7 @@
 
 #define MME_CONFIG_STRING_NAS_DISABLE_ESM_INFORMATION_PROCEDURE    "DISABLE_ESM_INFORMATION_PROCEDURE"
 #define MME_CONFIG_STRING_NAS_FORCE_PUSH_DEDICATED_BEARER "FORCE_PUSH_DEDICATED_BEARER"
-
+#define MME_CONFIG_STRING_NAS_FORCE_TAU					  "NAS_FORCE_TAU"
 
 //#define MME_CONFIG_STRING_NAS_FORCE_PUSH_DEDICATED_BEARER "FORCE_PUSH_DEDICATED_BEARER"
 #define MME_CONFIG_STRING_MME_IPV4_ADDRESS_FOR_S10        "MME_IPV4_ADDRESS_FOR_S10"
@@ -253,7 +253,7 @@ typedef struct mme_config_s {
     uint32_t t3495_sec;
 
     // non standart features
-    bool     force_reject_tau;
+    bool     force_tau;
     bool     force_reject_sr;
     bool     disable_esm_information;
   } nas_config;

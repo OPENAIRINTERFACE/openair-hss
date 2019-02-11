@@ -364,6 +364,17 @@ s11_mme_handle_modify_bearer_response (
   resp_p->teid = nwGtpv2cMsgGetTeid(pUlpApi->hMsg);
   resp_p->internal_flags = pUlpApi->u_api_info.triggeredRspIndInfo.trx_flags;
   resp_p->peer_ip.s_addr = pUlpApi->u_api_info.triggeredRspIndInfo.peerIp.s_addr;
+
+//  if(resp_p->internal_flags & INTERNAL_FLAG_TRIGGERED_REJECT){
+//	  /** Set the transaction for the triggered acknowledgment. */
+//	  resp_p->trxn = (void *)pUlpApi->u_api_info.rspFailureInfo.hUlpTrxn;
+//	  /** Set the cause. */
+//	  resp_p->cause.cause_value = SYSTEM_FAILURE; /**< Would mean that this message either did not come at all or could not be dealt with properly. */
+//	  rc = nwGtpv2cMsgDelete (*stack_p, (pUlpApi->hMsg));
+//	  DevAssert (NW_OK == rc);
+//	  return itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
+//  }
+
   /*
    * Create a new message parser
    */

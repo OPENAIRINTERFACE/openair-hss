@@ -515,7 +515,7 @@ s1ap_generate_s1_setup_response (
    */
   if (enc_rval < 0) {
     OAILOG_DEBUG (LOG_S1AP, "Removed eNB %d\n", enb_association->sctp_assoc_id);
-    s1ap_remove_enb (enb_association);
+    hashtable_ts_free (&g_s1ap_enb_coll, enb_association->sctp_assoc_id);
   } else {
     /*
      * Consider the response as sent. S1AP is ready to accept UE contexts
@@ -904,7 +904,7 @@ s1ap_mme_generate_ue_context_release_command (
           ue_ref_p->mme_ue_s1ap_id, cause);
       // Start timer to track UE context release complete from eNB
       if (timer_setup (ue_ref_p->s1ap_ue_context_rel_timer.sec, 0,
-          TASK_S1AP, INSTANCE_DEFAULT, TIMER_ONE_SHOT, (void *)(ue_ref_p), &(ue_ref_p->s1ap_ue_context_rel_timer.id)) < 0) {
+          TASK_S1AP, INSTANCE_DEFAULT, TIMER_ONE_SHOT, (void*)ue_ref_p->mme_ue_s1ap_id, &(ue_ref_p->s1ap_ue_context_rel_timer.id)) < 0) {
         OAILOG_ERROR (LOG_S1AP, "Failed to start UE context release complete timer for UE id %d \n", ue_ref_p->mme_ue_s1ap_id);
         ue_ref_p->s1ap_ue_context_rel_timer.id = S1AP_TIMER_INACTIVE_ID;
       } else {
@@ -2106,7 +2106,7 @@ s1ap_handle_sctp_disconnection (
       OAILOG_INFO(LOG_S1AP, "Moving eNB with association id %u to INIT state\n", assoc_id);
       update_mme_app_stats_connected_enb_sub();
     } else {
-      s1ap_remove_enb(enb_association);
+    	hashtable_ts_free (&g_s1ap_enb_coll, enb_association->sctp_assoc_id);
       update_mme_app_stats_connected_enb_sub();
       OAILOG_INFO(LOG_S1AP, "Removing eNB with association id %u \n", assoc_id);
     }

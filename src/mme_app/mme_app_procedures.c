@@ -155,6 +155,11 @@ void mme_app_delete_s11_procedure_create_bearer(ue_context_t * const ue_context)
       }
     }
   }
+  if(LIST_EMPTY(ue_context->s11_procedures)){
+	  LIST_INIT(ue_context->s11_procedures);
+	  free_wrapper((void**)&ue_context->s11_procedures);
+	  OAILOG_INFO (LOG_MME_APP, "UE with ueId " MME_UE_S1AP_ID_FMT " has no more S11 procedures left. Cleared the list. \n", ue_context->mme_ue_s1ap_id);
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -214,6 +219,11 @@ void mme_app_delete_s11_procedure_update_bearer(ue_context_t * const ue_context)
       }
     }
   }
+  if(LIST_EMPTY(ue_context->s11_procedures)){
+ 	  LIST_INIT(ue_context->s11_procedures);
+ 	  free_wrapper((void**)&ue_context->s11_procedures);
+ 	  OAILOG_INFO (LOG_MME_APP, "UE with ueId " MME_UE_S1AP_ID_FMT " has no more S11 procedures left. Cleared the list. \n", ue_context->mme_ue_s1ap_id);
+   }
 }
 
 //------------------------------------------------------------------------------
@@ -256,6 +266,7 @@ void mme_app_delete_s11_procedure_delete_bearer(ue_context_t * const ue_context)
   if (ue_context->s11_procedures) {
     mme_app_s11_proc_t *s11_proc = NULL, *s11_proc_safe = NULL;
 
+
     LIST_FOREACH_SAFE(s11_proc, ue_context->s11_procedures, entries, s11_proc_safe) {
       if (MME_APP_S11_PROC_TYPE_DELETE_BEARER == s11_proc->type) {
         LIST_REMOVE(s11_proc, entries);
@@ -264,6 +275,11 @@ void mme_app_delete_s11_procedure_delete_bearer(ue_context_t * const ue_context)
       }
     }
   }
+  if(LIST_EMPTY(ue_context->s11_procedures)){
+ 	  LIST_INIT(ue_context->s11_procedures);
+ 	  free_wrapper((void**)&ue_context->s11_procedures);
+ 	  OAILOG_INFO (LOG_MME_APP, "UE with ueId " MME_UE_S1AP_ID_FMT " has no more S11 procedures left. Cleared the list. \n", ue_context->mme_ue_s1ap_id);
+   }
 }
 
 //------------------------------------------------------------------------------

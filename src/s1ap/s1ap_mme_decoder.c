@@ -113,7 +113,8 @@ s1ap_mme_decode_initiating (
         if (ret != -1) {
 //          ret = free_s1ap_errorindication(&message->msg.s1ap_ErrorIndicationIEs);
         }
-        OAILOG_FUNC_RETURN (LOG_S1AP, ret);
+        free_wrapper(&initiating_p->value.buf);
+        *message_id = S1AP_ERROR_IND_LOG;
       }
       break;
 
@@ -121,12 +122,14 @@ s1ap_mme_decode_initiating (
         OAILOG_INFO (LOG_S1AP, "S1AP eNB RESET is received. Procedure code = %d\n", (int)initiating_p->procedureCode);
         ret = s1ap_decode_s1ap_reseties (&message->msg.s1ap_ResetIEs, &initiating_p->value);
         *message_id = S1AP_ENB_RESET_LOG;
-      }
+        free_wrapper(&initiating_p->value.buf);
+    }
       break;
 
     case S1ap_ProcedureCode_id_ENBConfigurationUpdate: {
         OAILOG_ERROR (LOG_S1AP, "eNB Configuration update is received. Ignoring it. Procedure code = %d\n", (int)initiating_p->procedureCode);
-        OAILOG_FUNC_RETURN (LOG_S1AP, ret);
+        *message_id = S1AP_ENB_CFG_UPDATE_LOG;
+        free_wrapper(&initiating_p->value.buf);
         /*
          * TODO- Add handling for eNB Configuration Update
          */
@@ -413,6 +416,10 @@ int s1ap_free_mme_decode_pdu(
     }
   case S1AP_ENB_RESET_LOG:
     return free_s1ap_reset(&message->msg.s1ap_ResetIEs);
+  case S1AP_ERROR_IND_LOG:
+    return free_s1ap_errorindication(&message->msg.s1ap_ErrorIndicationIEs);
+  case S1AP_ENB_CFG_UPDATE_LOG:
+	return free_s1ap_enbconfigurationupdate(&message->msg.s1ap_ENBConfigurationUpdateIEs);
   default:
     DevAssert(false);
 

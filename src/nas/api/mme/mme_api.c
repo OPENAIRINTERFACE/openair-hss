@@ -145,6 +145,7 @@ mme_api_get_emm_config (
         AssertFatal ((mme_config_p->served_tai.plmn_mnc_len[0] >= 2) && (mme_config_p->served_tai.plmn_mnc_len[0] <= 3), "BAD MNC length for GUMMEI");
       }
       config->tai_list.partial_tai_list[0].u.tai_one_plmn_consecutive_tacs.tac            = mme_config_p->served_tai.tac[0];
+      config->tai_list.partial_tai_list[0].numberofelements		                          = mme_config_p->served_tai.nb_tai -1;
       break;
 
     case TRACKING_AREA_IDENTITY_LIST_TYPE_MANY_PLMNS:
@@ -243,6 +244,9 @@ mme_api_get_emm_config (
     config->prefered_integrity_algorithm[i] = mme_config_p->nas_config.prefered_integrity_algorithm[i];
     config->prefered_ciphering_algorithm[i] = mme_config_p->nas_config.prefered_ciphering_algorithm[i];
   }
+
+  /** Set if TAU will be enforced. */
+  config->force_tau = mme_config_p->nas_config.force_tau;
   OAILOG_FUNC_RETURN (LOG_NAS, RETURNok);
 }
 
@@ -406,6 +410,23 @@ mme_api_new_guti (
     mme_api_notify_new_guti(ue_context->mme_ue_s1ap_id, guti);
   } else {
     OAILOG_FUNC_RETURN (LOG_NAS, RETURNerror);
+  }
+
+  if(_emm_data.conf.force_tau){
+	  /** Only give the current TAC in the list. */
+	  OAILOG_INFO (LOG_NAS, "UE " MME_UE_S1AP_ID_FMT "  with GUTI " GUTI_FMT " will only receive its TAC " TAC_FMT " in the TAI list to enforce "
+			  "TAU.\n", ue_context->mme_ue_s1ap_id, GUTI_ARG(guti), originating_tai->tac);
+	  tai_list->numberoflists = 1;
+	  tai_list->partial_tai_list[0].numberofelements = 0; /**< + 1. */
+	  tai_list->partial_tai_list[0].typeoflist = TRACKING_AREA_IDENTITY_LIST_ONE_PLMN_CONSECUTIVE_TACS;
+	  tai_list->partial_tai_list[0].u.tai_one_plmn_consecutive_tacs.tac = originating_tai->tac;
+	  tai_list->partial_tai_list[0].u.tai_one_plmn_consecutive_tacs.plmn.mcc_digit1 = originating_tai->plmn.mcc_digit1;
+	  tai_list->partial_tai_list[0].u.tai_one_plmn_consecutive_tacs.plmn.mcc_digit2 = originating_tai->plmn.mcc_digit2;
+	  tai_list->partial_tai_list[0].u.tai_one_plmn_consecutive_tacs.plmn.mcc_digit3 = originating_tai->plmn.mcc_digit3;
+	  tai_list->partial_tai_list[0].u.tai_one_plmn_consecutive_tacs.plmn.mnc_digit1 = originating_tai->plmn.mnc_digit1;
+	  tai_list->partial_tai_list[0].u.tai_one_plmn_consecutive_tacs.plmn.mnc_digit2 = originating_tai->plmn.mnc_digit2;
+	  tai_list->partial_tai_list[0].u.tai_one_plmn_consecutive_tacs.plmn.mnc_digit3 = originating_tai->plmn.mnc_digit3;
+	  OAILOG_FUNC_RETURN (LOG_NAS, RETURNok);
   }
 
   int  j = 0;

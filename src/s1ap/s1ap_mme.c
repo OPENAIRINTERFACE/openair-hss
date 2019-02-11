@@ -103,6 +103,22 @@ static int s1ap_send_init_sctp (void)
 }
 
 //------------------------------------------------------------------------------
+static void
+s1ap_remove_enb (
+  void ** enb_ref)
+{
+	enb_description_t                      *enb_description = NULL;
+
+  if (*enb_ref ) {
+	  enb_description = (enb_description_t*)(*enb_ref);
+	  hashtable_ts_destroy(&enb_description->ue_coll);
+	  free_wrapper(enb_ref);
+	  nb_enb_associated--;
+  }
+  return;
+}
+
+//------------------------------------------------------------------------------
 void                                   *
 s1ap_mme_thread (
   __attribute__((unused)) void *args)
@@ -271,12 +287,15 @@ s1ap_mme_thread (
       case TIMER_HAS_EXPIRED:{
         ue_description_t                       *ue_ref_p = NULL;
         if (received_message_p->ittiMsg.timer_has_expired.arg != NULL) {
-          ue_description_t* ue_ref_p = (ue_description_t *)(received_message_p->ittiMsg.timer_has_expired.arg);
+          mme_ue_s1ap_id_t mme_ue_s1ap_id = (mme_ue_s1ap_id_t)(received_message_p->ittiMsg.timer_has_expired.arg);
+          /** Check if the UE still exists. */
+          ue_ref_p = s1ap_is_ue_mme_id_in_list(mme_ue_s1ap_id);
           if (!ue_ref_p) {
             OAILOG_WARNING (LOG_S1AP, "Timer with id 0x%lx expired but no associated UE context!\n", received_message_p->ittiMsg.timer_has_expired.timer_id);
             break;
           }
-          OAILOG_WARNING (LOG_S1AP, "Processing expired timer with id 0x%lx for ueId "MME_UE_S1AP_ID_FMT " with s1ap_ue_context_rel_timer_id 0x%lx !\n", received_message_p->ittiMsg.timer_has_expired.timer_id,
+          OAILOG_WARNING (LOG_S1AP, "Processing expired timer with id 0x%lx for ueId "MME_UE_S1AP_ID_FMT " with s1ap_ue_context_rel_timer_id 0x%lx !\n",
+        		  received_message_p->ittiMsg.timer_has_expired.timer_id,
               ue_ref_p->mme_ue_s1ap_id, ue_ref_p->s1ap_ue_context_rel_timer.id);
           if (received_message_p->ittiMsg.timer_has_expired.timer_id == ue_ref_p->s1ap_ue_context_rel_timer.id) {
             // UE context release complete timer expiry handler
@@ -328,14 +347,6 @@ s1ap_mme_thread (
 }
 
 //------------------------------------------------------------------------------
-static void free_enb (void **enb_ref){
-  if(*enb_ref){
-    s1ap_remove_enb(*enb_ref);
-    free_wrapper(enb_ref);
-  }
-}
-
-//------------------------------------------------------------------------------
 int
 s1ap_mme_init(void)
 {
@@ -351,7 +362,7 @@ s1ap_mme_init(void)
   OAILOG_DEBUG (LOG_S1AP, "S1AP Release v10.5\n");
   // 16 entries for n eNB.
   bstring bs1 = bfromcstr("s1ap_eNB_coll");
-  hash_table_ts_t* h = hashtable_ts_init (&g_s1ap_enb_coll, mme_config.max_enbs, NULL, free_enb, bs1); /**< Use a better removal handler. */
+  hash_table_ts_t* h = hashtable_ts_init (&g_s1ap_enb_coll, mme_config.max_enbs, NULL, s1ap_remove_enb, bs1); /**< Use a better removal handler. */
   bdestroy_wrapper (&bs1);
   if (!h) return RETURNerror;
 
@@ -776,21 +787,9 @@ s1ap_remove_ue (
       update_mme_app_stats_connected_enb_sub();
     } else if (enb_ref->s1_state == S1AP_SHUTDOWN) {
       OAILOG_INFO(LOG_S1AP, "Deleting eNB");
-      s1ap_remove_enb(enb_ref);
+      hashtable_ts_free (&g_s1ap_enb_coll, enb_ref->sctp_assoc_id);
     }
   }
-}
-
-//------------------------------------------------------------------------------
-void
-s1ap_remove_enb (
-  enb_description_t * enb_ref)
-{
-  if (enb_ref == NULL)
-    return;
-  hashtable_ts_destroy(&enb_ref->ue_coll);
-  hashtable_ts_free (&g_s1ap_enb_coll, enb_ref->sctp_assoc_id);
-  nb_enb_associated--;
 }
 
 //bool

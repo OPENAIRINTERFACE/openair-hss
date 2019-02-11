@@ -1063,37 +1063,37 @@ s1ap_handle_path_switch_req_ack(
   pathSwitchRequestAcknowledge_p->mme_ue_s1ap_id = (unsigned long)ue_ref->mme_ue_s1ap_id;
   pathSwitchRequestAcknowledge_p->eNB_UE_S1AP_ID = (unsigned long)ue_ref->enb_ue_s1ap_id;
 
-  /* Set the GTP-TEID. This is the S1-U S-GW TEID. */
-  /** Add the new forwarding IEs. */
-  if(path_switch_req_ack_pP->bearer_ctx_to_be_switched_list){
-    S1ap_IE_t *s1ap_ie_array[path_switch_req_ack_pP->bearer_ctx_to_be_switched_list->num_bearer_context];
-    if(path_switch_req_ack_pP->bearer_ctx_to_be_switched_list){
-      for(int num_bc = 0; num_bc < path_switch_req_ack_pP->bearer_ctx_to_be_switched_list->num_bearer_context; num_bc++){
-        struct S1ap_E_RABToBeSwitchedULItem ie_ul;
-        uint8_t ipv4_addr[4];
-
-        memset(&ie_ul, 0, sizeof(struct S1ap_E_RABToBeSwitchedULItem));
-        memset(&ipv4_addr, 0, sizeof(ipv4_addr));
-
-        ie_ul.e_RAB_ID = path_switch_req_ack_pP->bearer_ctx_to_be_switched_list->bearer_contexts[num_bc].eps_bearer_id;
-
-        GTP_TEID_TO_ASN1(path_switch_req_ack_pP->bearer_ctx_to_be_switched_list->bearer_contexts[num_bc].s1u_sgw_fteid.teid, &ie_ul.gTP_TEID);
-        ie_ul.transportLayerAddress.buf = ipv4_addr;
-        memcpy(ie_ul.transportLayerAddress.buf, (uint32_t*)&path_switch_req_ack_pP->bearer_ctx_to_be_switched_list->bearer_contexts[num_bc].s1u_sgw_fteid.ipv4_address.s_addr, 4);
-        ie_ul.transportLayerAddress.bits_unused = 0;
-        ie_ul.transportLayerAddress.size = 4;
-
-        s1ap_ie_array[num_bc] = s1ap_new_ie(S1ap_ProtocolIE_ID_id_E_RABToBeSwitchedULItem,
-            S1ap_Criticality_ignore,
-            &asn_DEF_S1ap_E_RABToBeSwitchedULItem,
-            &ie_ul);
-
-        ASN_SEQUENCE_ADD(&pathSwitchRequestAcknowledge_p->e_RABToBeSwitchedULList.s1ap_E_RABToBeSwitchedULItem, s1ap_ie_array[num_bc]);
-
-      }
-      pathSwitchRequestAcknowledge_p->presenceMask |= S1AP_PATHSWITCHREQUESTACKNOWLEDGEIES_E_RABTOBESWITCHEDULLIST_PRESENT;
-    }
-  }
+  // todo : fix the deallocation method (& handover command)
+//  /* Set the GTP-TEID. This is the S1-U S-GW TEID. */
+//  /** Add the new forwarding IEs. */
+//  if(path_switch_req_ack_pP->bearer_ctx_to_be_switched_list){
+//    S1ap_IE_t *s1ap_ie_array[path_switch_req_ack_pP->bearer_ctx_to_be_switched_list->num_bearer_context];
+//    if(path_switch_req_ack_pP->bearer_ctx_to_be_switched_list){
+//      for(int num_bc = 0; num_bc < path_switch_req_ack_pP->bearer_ctx_to_be_switched_list->num_bearer_context; num_bc++){
+//        struct S1ap_E_RABToBeSwitchedULItem *ie_ul = calloc(1, sizeof(struct S1ap_E_RABToBeSwitchedULItem));
+//        uint8_t ipv4_addr[4];
+//
+//        memset(&ipv4_addr, 0, sizeof(ipv4_addr));
+//
+//        ie_ul->e_RAB_ID = path_switch_req_ack_pP->bearer_ctx_to_be_switched_list->bearer_contexts[num_bc].eps_bearer_id;
+//
+//        GTP_TEID_TO_ASN1(path_switch_req_ack_pP->bearer_ctx_to_be_switched_list->bearer_contexts[num_bc].s1u_sgw_fteid.teid, &ie_ul->gTP_TEID);
+//        ie_ul->transportLayerAddress.buf = ipv4_addr;
+//        memcpy(ie_ul->transportLayerAddress.buf, (uint32_t*)&path_switch_req_ack_pP->bearer_ctx_to_be_switched_list->bearer_contexts[num_bc].s1u_sgw_fteid.ipv4_address.s_addr, 4);
+//        ie_ul->transportLayerAddress.bits_unused = 0;
+//        ie_ul->transportLayerAddress.size = 4;
+//
+//        s1ap_ie_array[num_bc] = s1ap_new_ie(S1ap_ProtocolIE_ID_id_E_RABToBeSwitchedULItem,
+//            S1ap_Criticality_ignore,
+//            &asn_DEF_S1ap_E_RABToBeSwitchedULItem,
+//            ie_ul);
+//
+//        ASN_SEQUENCE_ADD(&pathSwitchRequestAcknowledge_p->e_RABToBeSwitchedULList.s1ap_E_RABToBeSwitchedULItem, s1ap_ie_array[num_bc]);
+//
+//      }
+//      pathSwitchRequestAcknowledge_p->presenceMask |= S1AP_PATHSWITCHREQUESTACKNOWLEDGEIES_E_RABTOBESWITCHEDULLIST_PRESENT;
+//    }
+//  }
 
 
   // todo: check if key exists :)

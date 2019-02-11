@@ -1347,7 +1347,13 @@ mme_app_handle_initial_context_setup_rsp (
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
   pdn_context_t * registered_pdn_ctx = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
-  mme_app_send_s11_modify_bearer_req(ue_context, registered_pdn_ctx, 0);
+
+  emm_data_context_t * emm_context = emm_data_context_get(&_emm_data, initial_ctxt_setup_rsp_pP->ue_id);
+
+  uint8_t flags = 0;
+//  if(!is_nas_specific_procedure_attach_running(emm_context))
+//	  flags |= INTERNAL_FLAG_TRIGGERED_REJECT;
+  mme_app_send_s11_modify_bearer_req(ue_context, registered_pdn_ctx, flags);
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 
@@ -1817,7 +1823,7 @@ static void mme_app_handle_e_rab_setup_rsp_dedicated_bearer(const itti_s1ap_e_ra
          * Not reducing the number of unhandled bearers. We will check this cause later when NAS response arrives.
          * We will not trigger a CBResp with this.
          */
-        OAILOG_DEBUG (LOG_MME_APP, "Setting the cause as ACCEPTED for ebi % for ueId : " MME_UE_S1AP_ID_FMT "\n", bc_tbc->eps_bearer_id, e_rab_setup_rsp->mme_ue_s1ap_id);
+        OAILOG_DEBUG (LOG_MME_APP, "Setting the cause as ACCEPTED for ebi %d for ueId : " MME_UE_S1AP_ID_FMT "\n", bc_tbc->eps_bearer_id, e_rab_setup_rsp->mme_ue_s1ap_id);
         bc_tbc->cause.cause_value = REQUEST_ACCEPTED;
       }
     }
@@ -3714,24 +3720,25 @@ mme_app_handle_handover_request_acknowledge(
    }
    OAILOG_INFO(LOG_MME_APP, "Intra-MME S10 Handover procedure is ongoing. Sending a Handover Command to the source-ENB with enbId: %d for UE with mmeUeS1APId : " MME_UE_S1AP_ID_FMT " and enbUeS1apId " ENB_UE_S1AP_ID_FMT ". \n",
        ue_context->e_utran_cgi.cell_identity.enb_id, handover_request_acknowledge_pP->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id);
-   /** Bearer will be in inactive state till HO-Notify triggers MBR. */
-   /*
+   /**
+    * Bearer will be in inactive state till HO-Notify triggers MBR.
     * Save the new ENB_UE_S1AP_ID
     * Don't update the coll_keys with the new enb_ue_s1ap_id.
     */
-//   bearer_contexts_to_be_created_t bcs_tbf;
-//    memset((void*)&bcs_tbf, 0, sizeof(bcs_tbf));
-//    pdn_context_t * registered_pdn_ctx = NULL;
-//    RB_FOREACH (registered_pdn_ctx, PdnContexts, &ue_context->pdn_contexts) {
-//      DevAssert(registered_pdn_ctx);
-//      mme_app_get_bearer_contexts_to_be_created(registered_pdn_ctx, &bcs_tbf, BEARER_STATE_NULL);
-//      /** The number of bearers will be incremented in the method. S10 should just pick the ebi. */
-//    }
+   bearer_contexts_to_be_created_t bcs_tbf;
+   memset((void*)&bcs_tbf, 0, sizeof(bcs_tbf));
+   pdn_context_t * registered_pdn_ctx = NULL;
+   RB_FOREACH (registered_pdn_ctx, PdnContexts, &ue_context->pdn_contexts) {
+	   DevAssert(registered_pdn_ctx);
+	   mme_app_get_bearer_contexts_to_be_created(registered_pdn_ctx, &bcs_tbf, BEARER_STATE_NULL);
+	   /** The number of bearers will be incremented in the method. S10 should just pick the ebi. */
+   }
+
    /** Check if there are any bearer contexts to be removed.. add them into the procedure. */
    mme_app_send_s1ap_handover_command(handover_request_acknowledge_pP->mme_ue_s1ap_id,
        ue_context->enb_ue_s1ap_id,
        s10_handover_proc->source_ecgi.cell_identity.enb_id,
-       NULL,
+       &bcs_tbf,
        handover_request_acknowledge_pP->target_to_source_eutran_container);
    s10_handover_proc->ho_command_sent = true;
    /** Unlink the transparent container. */
@@ -4180,7 +4187,7 @@ mme_app_handle_forward_relocation_complete_notification(
     * Timeout will occur in S1AP layer.
     */
    if (timer_setup (mme_config.mme_mobility_completion_timer, 0,
-       TASK_S1AP, INSTANCE_DEFAULT, TIMER_ONE_SHOT, (void *)old_ue_reference, &(old_ue_reference->s1ap_handover_completion_timer.id)) < 0) {
+       TASK_S1AP, INSTANCE_DEFAULT, TIMER_ONE_SHOT, (void *)old_ue_reference->mme_ue_s1ap_id, &(old_ue_reference->s1ap_handover_completion_timer.id)) < 0) {
      OAILOG_ERROR (LOG_MME_APP, "Failed to start >s1ap_handover_completion for enbUeS1apId " ENB_UE_S1AP_ID_FMT " for duration %d \n", old_ue_reference->enb_ue_s1ap_id, mme_config.mme_mobility_completion_timer);
      old_ue_reference->s1ap_handover_completion_timer.id = MME_APP_TIMER_INACTIVE_ID;
      s10_handover_proc->proc.timer.id = MME_APP_TIMER_INACTIVE_ID;

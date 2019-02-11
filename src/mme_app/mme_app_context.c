@@ -227,6 +227,11 @@ void mme_app_ue_context_free_content (ue_context_t * const ue_context)
     mme_app_delete_s10_procedure_mme_handover(ue_context); // todo: generic s10 function
   }
 
+  /** Will remove the S10 tunnel endpoints. */
+  if (ue_context->s11_procedures) {
+    mme_app_delete_s11_procedures(ue_context); // todo: generic s10 function
+  }
+
   /** Free the ESM procedures. */
   if(ue_context->esm_procedures.pdn_connectivity_procedures){
     OAILOG_WARNING(LOG_MME_APP, "ESM PDN Connectivity procedures still exist for UE "MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
@@ -279,15 +284,6 @@ void mme_app_ue_context_free_content (ue_context_t * const ue_context)
     OAILOG_DEBUG(LOG_MME_APP, "All bearers removed of UE "MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
     RB_INIT(&ue_context->bearer_pool);
   }
-
-  //      mme_app_deregister_bearer_context(&ue_context->bearer_contexts[i]);
-//    }
-//  }
-
-//
-//  if (ue_context->s11_procedures) {
-//    mme_app_delete_s11_procedures(ue_context);
-//  }
 
   // todo: unlock?
   memset(ue_context, 0, sizeof(*ue_context));

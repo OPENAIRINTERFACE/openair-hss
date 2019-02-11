@@ -584,6 +584,7 @@ static nw_rc_t nwGtpv2cCreateLocalTunnel (
       pTrxn->teidLocal = pUlpReq->u_api_info.initialReqInfo.teidLocal;
       pTrxn->noDelete  = pUlpReq->u_api_info.initialReqInfo.noDelete;
       pTrxn->trx_flags = pUlpReq->u_api_info.initialReqInfo.internal_flags;
+      pTrxn->localPort = 0; /**< Set the local port to 0 (initialize it). */
       if (pUlpReq->apiType & NW_GTPV2C_ULP_API_FLAG_IS_COMMAND_MESSAGE) {
         pTrxn->seqNum |= 0x00100000UL;
       }

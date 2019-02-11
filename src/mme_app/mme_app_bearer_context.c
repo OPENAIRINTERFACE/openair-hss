@@ -381,21 +381,22 @@ mme_app_release_bearers(const mme_ue_s1ap_id_t mme_ue_s1ap_id, e_rab_list_t * e_
       }
     }
   } else {
-    OAILOG_WARNING(LOG_MME_APP, "No EBI list has been received for ue_id " MME_UE_S1AP_ID_FMT ". Setting all bearers to released. \n",
-        bearer_context->ebi, bearer_context->bearer_state, mme_ue_s1ap_id);
-    RB_FOREACH (bearer_context, SessionBearers, &pdn_context->session_bearers) {
-      if( (bearer_context->bearer_state & BEARER_STATE_ACTIVE)
-          && (bearer_context->bearer_state & BEARER_STATE_ENB_CREATED)) {
-        ebi_list->ebis[ebi_list->num_ebi] = bearer_context->ebi;
-        bearer_context->bearer_state &= (~BEARER_STATE_ACTIVE);
-        bearer_context->bearer_state &= (~BEARER_STATE_ENB_CREATED);
-        memset(&bearer_context->enb_fteid_s1u, 0, sizeof(fteid_t));
-        OAILOG_INFO(LOG_MME_APP, "Set ebi=%d as released for ue_id " MME_UE_S1AP_ID_FMT ". \n", bearer_context->ebi, mme_ue_s1ap_id);
-        ebi_list->num_ebi++;
-      } else {
-        OAILOG_WARNING(LOG_MME_APP, "Skipping ebi=%d with invalid state %d for ue_id " MME_UE_S1AP_ID_FMT " from implicit removal. \n",
-            bearer_context->ebi, bearer_context->bearer_state, mme_ue_s1ap_id);
-      }
+    OAILOG_WARNING(LOG_MME_APP, "No EBI list has been received for ue_id " MME_UE_S1AP_ID_FMT ". Setting all bearers to released. \n", mme_ue_s1ap_id);
+    RB_FOREACH (pdn_context, PdnContexts, &ue_context->pdn_contexts) {
+    	RB_FOREACH (bearer_context, SessionBearers, &pdn_context->session_bearers) {
+    	      if( (bearer_context->bearer_state & BEARER_STATE_ACTIVE)
+    	          && (bearer_context->bearer_state & BEARER_STATE_ENB_CREATED)) {
+    	        ebi_list->ebis[ebi_list->num_ebi] = bearer_context->ebi;
+    	        bearer_context->bearer_state &= (~BEARER_STATE_ACTIVE);
+    	        bearer_context->bearer_state &= (~BEARER_STATE_ENB_CREATED);
+    	        memset(&bearer_context->enb_fteid_s1u, 0, sizeof(fteid_t));
+    	        OAILOG_INFO(LOG_MME_APP, "Set ebi=%d as released for ue_id " MME_UE_S1AP_ID_FMT ". \n", bearer_context->ebi, mme_ue_s1ap_id);
+    	        ebi_list->num_ebi++;
+    	      } else {
+    	        OAILOG_WARNING(LOG_MME_APP, "Skipping ebi=%d with invalid state %d for ue_id " MME_UE_S1AP_ID_FMT " from implicit removal. \n",
+    	            bearer_context->ebi, bearer_context->bearer_state, mme_ue_s1ap_id);
+    	      }
+    	}
     }
   }
   // UNLOCK_UE_CONTEXT

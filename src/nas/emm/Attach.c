@@ -1275,7 +1275,7 @@ static int _emm_attach_failure_authentication_cb (emm_data_context_t *emm_contex
   nas_emm_attach_proc_t                  *attach_proc = get_nas_specific_procedure_attach(emm_context);
 
   if (attach_proc) {
-    attach_proc->emm_cause = emm_context->emm_cause;
+    attach_proc->emm_cause = EMM_CAUSE_IMSI_UNKNOWN_IN_HSS;
 
     // TODO could be in callback of attach procedure triggered by EMMREG_ATTACH_REJ
     rc = _emm_attach_reject (emm_context, &attach_proc->emm_spec_proc.emm_proc.base_proc, NULL);
