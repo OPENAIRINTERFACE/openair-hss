@@ -510,7 +510,7 @@ int s1ap_generate_s1ap_e_rab_setup_req (itti_s1ap_e_rab_setup_req_t * const e_ra
 
 //    S1ap_E_RABToBeSetupItemBearerSUReq_t s1ap_E_RABToBeSetupItemBearerSUReq[e_rab_setup_req->e_rab_to_be_setup_list.no_of_items];
     S1ap_E_RABToBeSetupItemBearerSUReq_t  *s1ap_E_RABToBeSetupItemBearerSUReq; // [conn_est_cnf_pP->no_of_e_rabs]; // don't alloc on stack for automatic removal
-    struct S1ap_GBR_QosInformation       gbrQosInformation[e_rab_setup_req->e_rab_to_be_setup_list.no_of_items];
+//    struct S1ap_GBR_QosInformation       gbrQosInformation[e_rab_setup_req->e_rab_to_be_setup_list.no_of_items];
 
     s1ap_E_RABToBeSetupItemBearerSUReq = calloc(e_rab_setup_req->e_rab_to_be_setup_list.no_of_items, sizeof(S1ap_E_RABToBeSetupItemBearerSUReq_t));
     for  (int i= 0; i < e_rab_setup_req->e_rab_to_be_setup_list.no_of_items; i++) {
@@ -537,8 +537,7 @@ int s1ap_generate_s1ap_e_rab_setup_req (itti_s1ap_e_rab_setup_req_t * const e_ra
         OAILOG_NOTICE (LOG_S1AP, "Encoding of e_RABlevelQoSParameters.gbrQosInformation\n");
 
         //s1ap_E_RABToBeSetupItemBearerSUReq[i].e_RABlevelQoSParameters.gbrQosInformation = calloc(1, sizeof(struct S1ap_GBR_QosInformation));
-        s1ap_E_RABToBeSetupItemBearerSUReq[i].e_RABlevelQoSParameters.gbrQosInformation = &gbrQosInformation[i];
-        memset(&gbrQosInformation[i], 0, sizeof(gbrQosInformation[i]));
+        s1ap_E_RABToBeSetupItemBearerSUReq[i].e_RABlevelQoSParameters.gbrQosInformation = calloc(1, sizeof(struct S1ap_GBR_QosInformation));
         if (s1ap_E_RABToBeSetupItemBearerSUReq[i].e_RABlevelQoSParameters.gbrQosInformation) {
           asn_uint642INTEGER(&s1ap_E_RABToBeSetupItemBearerSUReq[i].e_RABlevelQoSParameters.gbrQosInformation->e_RAB_MaximumBitrateDL,
               gbr_qos_information->e_rab_maximum_bit_rate_downlink);
@@ -653,22 +652,21 @@ int s1ap_generate_s1ap_e_rab_modify_req (itti_s1ap_e_rab_modify_req_t * const e_
 //      TO DO e_rabsetuprequesties->uEaggregateMaximumBitrate.uEaggregateMaximumBitRateDL.buf
 //    }
 
-    S1ap_E_RABToBeModifiedItemBearerModReq_t s1ap_E_RABToBeModifiedItemBearerSUReq[e_rab_modify_req->e_rab_to_be_modified_list.no_of_items];
-    struct S1ap_GBR_QosInformation       gbrQosInformation[e_rab_modify_req->e_rab_to_be_modified_list.no_of_items];
+//    S1ap_E_RABToBeModifiedItemBearerModReq_t s1ap_E_RABToBeModifiedItemBearerSUReq[e_rab_modify_req->e_rab_to_be_modified_list.no_of_items];
 
     for  (int i= 0; i < e_rab_modify_req->e_rab_to_be_modified_list.no_of_items; i++) {
-      memset(&s1ap_E_RABToBeModifiedItemBearerSUReq[i], 0, sizeof(S1ap_E_RABToBeModifiedItemBearerModReq_t));
+      S1ap_E_RABToBeModifiedItemBearerModReq_t *s1ap_E_RABToBeModifiedItemBearerSUReq = calloc (1, sizeof(S1ap_E_RABToBeModifiedItemBearerModReq_t));
 
-      s1ap_E_RABToBeModifiedItemBearerSUReq[i].e_RAB_ID = e_rab_modify_req->e_rab_to_be_modified_list.item[i].e_rab_id;
-      s1ap_E_RABToBeModifiedItemBearerSUReq[i].e_RABLevelQoSParameters.qCI = e_rab_modify_req->e_rab_to_be_modified_list.item[i].e_rab_level_qos_parameters.qci;
+      s1ap_E_RABToBeModifiedItemBearerSUReq->e_RAB_ID = e_rab_modify_req->e_rab_to_be_modified_list.item[i].e_rab_id;
+      s1ap_E_RABToBeModifiedItemBearerSUReq->e_RABLevelQoSParameters.qCI = e_rab_modify_req->e_rab_to_be_modified_list.item[i].e_rab_level_qos_parameters.qci;
 
-      s1ap_E_RABToBeModifiedItemBearerSUReq[i].e_RABLevelQoSParameters.allocationRetentionPriority.priorityLevel =
+      s1ap_E_RABToBeModifiedItemBearerSUReq->e_RABLevelQoSParameters.allocationRetentionPriority.priorityLevel =
           e_rab_modify_req->e_rab_to_be_modified_list.item[i].e_rab_level_qos_parameters.allocation_and_retention_priority.priority_level;
 
-      s1ap_E_RABToBeModifiedItemBearerSUReq[i].e_RABLevelQoSParameters.allocationRetentionPriority.pre_emptionCapability =
+      s1ap_E_RABToBeModifiedItemBearerSUReq->e_RABLevelQoSParameters.allocationRetentionPriority.pre_emptionCapability =
           e_rab_modify_req->e_rab_to_be_modified_list.item[i].e_rab_level_qos_parameters.allocation_and_retention_priority.pre_emption_capability;
 
-      s1ap_E_RABToBeModifiedItemBearerSUReq[i].e_RABLevelQoSParameters.allocationRetentionPriority.pre_emptionVulnerability =
+      s1ap_E_RABToBeModifiedItemBearerSUReq->e_RABLevelQoSParameters.allocationRetentionPriority.pre_emptionVulnerability =
           e_rab_modify_req->e_rab_to_be_modified_list.item[i].e_rab_level_qos_parameters.allocation_and_retention_priority.pre_emption_vulnerability;
       /* OPTIONAL */
       gbr_qos_information_t *gbr_qos_information = &e_rab_modify_req->e_rab_to_be_modified_list.item[i].e_rab_level_qos_parameters.gbr_qos_information;
@@ -679,24 +677,20 @@ int s1ap_generate_s1ap_e_rab_modify_req (itti_s1ap_e_rab_modify_req_t * const e_
 
         OAILOG_NOTICE (LOG_S1AP, "Encoding of e_RABlevelQoSParameters.gbrQosInformation\n");
 
-        //s1ap_E_RABToBeModifiedItemBearerSUReq[i].e_RABlevelQoSParameters.gbrQosInformation = calloc(1, sizeof(struct S1ap_GBR_QosInformation));
-        s1ap_E_RABToBeModifiedItemBearerSUReq[i].e_RABLevelQoSParameters.gbrQosInformation = &gbrQosInformation[i];
-        memset(&gbrQosInformation[i], 0, sizeof(gbrQosInformation[i]));
-        if (s1ap_E_RABToBeModifiedItemBearerSUReq[i].e_RABLevelQoSParameters.gbrQosInformation) {
-          asn_uint642INTEGER(&s1ap_E_RABToBeModifiedItemBearerSUReq[i].e_RABLevelQoSParameters.gbrQosInformation->e_RAB_MaximumBitrateDL,
-              gbr_qos_information->e_rab_maximum_bit_rate_downlink);
+        struct S1ap_GBR_QosInformation       * gbrQosInformation = calloc(1, sizeof(struct S1ap_GBR_QosInformation));
+        s1ap_E_RABToBeModifiedItemBearerSUReq->e_RABLevelQoSParameters.gbrQosInformation = gbrQosInformation;
+        asn_uint642INTEGER(&s1ap_E_RABToBeModifiedItemBearerSUReq[i].e_RABLevelQoSParameters.gbrQosInformation->e_RAB_MaximumBitrateDL,
+        	gbr_qos_information->e_rab_maximum_bit_rate_downlink);
 
-          asn_uint642INTEGER(&s1ap_E_RABToBeModifiedItemBearerSUReq[i].e_RABLevelQoSParameters.gbrQosInformation->e_RAB_MaximumBitrateUL,
-              gbr_qos_information->e_rab_maximum_bit_rate_uplink);
+        asn_uint642INTEGER(&s1ap_E_RABToBeModifiedItemBearerSUReq[i].e_RABLevelQoSParameters.gbrQosInformation->e_RAB_MaximumBitrateUL,
+        	gbr_qos_information->e_rab_maximum_bit_rate_uplink);
 
-          asn_uint642INTEGER(&s1ap_E_RABToBeModifiedItemBearerSUReq[i].e_RABLevelQoSParameters.gbrQosInformation->e_RAB_GuaranteedBitrateDL,
-              gbr_qos_information->e_rab_guaranteed_bit_rate_downlink);
+        asn_uint642INTEGER(&s1ap_E_RABToBeModifiedItemBearerSUReq[i].e_RABLevelQoSParameters.gbrQosInformation->e_RAB_GuaranteedBitrateDL,
+            gbr_qos_information->e_rab_guaranteed_bit_rate_downlink);
 
-          asn_uint642INTEGER(&s1ap_E_RABToBeModifiedItemBearerSUReq[i].e_RABLevelQoSParameters.gbrQosInformation->e_RAB_GuaranteedBitrateUL,
-              gbr_qos_information->e_rab_guaranteed_bit_rate_uplink);
-        }
-      } else {
-        OAILOG_NOTICE (LOG_S1AP, "NOT Encoding of e_RABlevelQoSParameters.gbrQosInformation\n");
+        asn_uint642INTEGER(&s1ap_E_RABToBeModifiedItemBearerSUReq[i].e_RABLevelQoSParameters.gbrQosInformation->e_RAB_GuaranteedBitrateUL,
+            gbr_qos_information->e_rab_guaranteed_bit_rate_uplink);
+        OAILOG_DEBUG (LOG_S1AP, "Successfully encoded GBR context for E-RAB modify. \n");
       }
 
       // todo: transport information if SGW changes not implemented

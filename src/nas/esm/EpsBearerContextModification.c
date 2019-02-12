@@ -278,17 +278,21 @@ esm_proc_modify_eps_bearer_context (
   esm_proc_bearer_context->apn_ambr.br_ul   = apn_ambr->br_ul;
   esm_proc_bearer_context->tft = bc_tbu->tft;
   bc_tbu->tft = NULL;
-  memcpy((void*)&esm_proc_bearer_context->bearer_level_qos, bc_tbu->bearer_level_qos, sizeof(bearer_qos_t));
+  EpsQualityOfService eps_qos1 = {0}, *eps_qos = NULL;
+  if(bc_tbu->bearer_level_qos) {
+	  memcpy((void*)&esm_proc_bearer_context->bearer_level_qos, bc_tbu->bearer_level_qos, sizeof(bearer_qos_t));
 
-  OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Verified EPS bearer context modification " "(ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d)\n", ue_id, bc_tbu->eps_bearer_id);
-  EpsQualityOfService eps_qos = {0};
-  /** Sending a EBR-Request per bearer context. */
-  memset((void*)&eps_qos, 0, sizeof(eps_qos));
-  /** Set the EPS QoS. */
-  qos_params_to_eps_qos(bc_tbu->bearer_level_qos->qci,
-      bc_tbu->bearer_level_qos->mbr.br_dl, bc_tbu->bearer_level_qos->mbr.br_ul,
-      bc_tbu->bearer_level_qos->gbr.br_dl, bc_tbu->bearer_level_qos->gbr.br_ul,
-      &eps_qos, false);
+	  OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Verified EPS bearer context modification " "(ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d)\n", ue_id, bc_tbu->eps_bearer_id);
+	  /** Sending a EBR-Request per bearer context. */
+	  memset((void*)&eps_qos1, 0, sizeof(eps_qos1));
+	  /** Set the EPS QoS. */
+	  qos_params_to_eps_qos(bc_tbu->bearer_level_qos->qci,
+			  bc_tbu->bearer_level_qos->mbr.br_dl, bc_tbu->bearer_level_qos->mbr.br_ul,
+			  bc_tbu->bearer_level_qos->gbr.br_dl, bc_tbu->bearer_level_qos->gbr.br_ul,
+			  &eps_qos1, false);
+	  eps_qos = &eps_qos1;
+  }
+
   esm_send_modify_eps_bearer_context_request (
       pti, bc_tbu->eps_bearer_id,
       esm_rsp_msg,
@@ -352,6 +356,7 @@ esm_proc_modify_eps_bearer_context_accept (
      *
      * The current bearers are not updated yet.
      */
+
     nas_itti_modify_eps_bearer_ctx_cnf(ue_id, ebi);
   }else {
     /** Bearer not found, assuming due E-RAB error handling. */

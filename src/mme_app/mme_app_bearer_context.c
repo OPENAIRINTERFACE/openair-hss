@@ -690,7 +690,7 @@ mme_app_release_bearer_context(mme_ue_s1ap_id_t ue_id, const pdn_cid_t *pdn_cid,
   /** Insert the bearer context into the free bearer of the ue context. */
   RB_INSERT (BearerPool, &ue_context->bearer_pool, bearer_context);
   OAILOG_INFO(LOG_MME_APP, "Successfully deregistered the bearer context with ebi %d from PDN id %u and for ue_id " MME_UE_S1AP_ID_FMT "\n",
-      bearer_context->ebi, pdn_context->context_identifier, ue_id);
+      bearer_context->ebi, bearer_context->pdn_cx_id, ue_id);
   // TODO: UNLOCK_UE_CONTEXT!
   OAILOG_FUNC_OUT(LOG_MME_APP);
 }

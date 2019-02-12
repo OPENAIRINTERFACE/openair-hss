@@ -999,7 +999,8 @@ static int _emm_as_send (emm_as_t * msg)
     if (msg->u.base.emm_cause != EMM_CAUSE_SUCCESS &&
         msg->u.base.emm_cause != EMM_CAUSE_UE_IDENTITY_CANT_BE_DERIVED_BY_NW
             && msg->u.base.emm_cause != EMM_CAUSE_ESM_FAILURE
-			&& msg->u.base.emm_cause != EMM_CAUSE_NETWORK_FAILURE) {
+			&& msg->u.base.emm_cause != EMM_CAUSE_NETWORK_FAILURE
+			&& msg->u.base.emm_cause != EMM_CAUSE_IMSI_UNKNOWN_IN_HSS) {
       /*
        * Ignore received message that is too short to contain a complete
        * * * * message type information element

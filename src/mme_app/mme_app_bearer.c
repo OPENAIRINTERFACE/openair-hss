@@ -2000,7 +2000,7 @@ void mme_app_handle_e_rab_modify_rsp (itti_s1ap_e_rab_modify_rsp_t  * const e_ra
   }
   /** Get the PDN context. */
   mme_app_get_pdn_context(ue_context->mme_ue_s1ap_id, s11_proc_update_bearer->pci, s11_proc_update_bearer->linked_ebi, NULL, &pdn_context);
-  if(pdn_context){
+  if(!pdn_context){
     OAILOG_ERROR( LOG_MME_APP, "No PDN context (cid=%d,def_ebi=%d) could be found for UE " MME_UE_S1AP_ID_FMT ". Ignoring the message. \n",
         s11_proc_update_bearer->pci, s11_proc_update_bearer->linked_ebi, e_rab_modify_rsp->mme_ue_s1ap_id);
     /** All ESM messages may have returned immediately negative and the CBResp might have been sent (removing the S11 session). */
@@ -2346,10 +2346,18 @@ void mme_app_handle_modify_eps_bearer_ctx_cnf (itti_nas_modify_eps_bearer_ctx_cn
   /** Update the pending bearer contexts in the answer. */
   if(bc_tbu->cause.cause_value == 0){
     /** No response received yet from E-RAB. Will just set it as SUCCESS, but not trigger an UBResp. */
-    OAILOG_INFO(LOG_MME_APP, "Received NAS response before E-RAB modification response for ebi %d occurred for UE: " MME_UE_S1AP_ID_FMT ". Not triggering a UBResp. \n",
-            bc_tbu->eps_bearer_id, ue_context->mme_ue_s1ap_id);
+     /** Check if a QoS informaiton was received. */
     bc_tbu->cause.cause_value = REQUEST_ACCEPTED;
-    OAILOG_FUNC_OUT (LOG_MME_APP);
+    if(bc_tbu->bearer_level_qos) {
+    	OAILOG_INFO(LOG_MME_APP, "Received NAS response before E-RAB modification response for (ebi=%d) occurred for UE: " MME_UE_S1AP_ID_FMT ". Not triggering a UBResp. \n",
+    			bc_tbu->eps_bearer_id, ue_context->mme_ue_s1ap_id);
+    	OAILOG_FUNC_OUT (LOG_MME_APP);
+    } else {
+    	// todo: nothing expected..
+    	OAILOG_INFO(LOG_MME_APP, "No QoS information received for E-RAB modification (ebi=%d) occurred for UE: " MME_UE_S1AP_ID_FMT ". Continuing to handle it. \n",
+    			bc_tbu->eps_bearer_id, ue_context->mme_ue_s1ap_id);
+        bc_tbu->cause.cause_value = REQUEST_ACCEPTED;
+   }
   }else if (bc_tbu->cause.cause_value != REQUEST_ACCEPTED) {
     OAILOG_INFO(LOG_MME_APP, "Received NAS response after E-RAB modification reject for ebi %d occurred for UE: " MME_UE_S1AP_ID_FMT ". Not reducing number of unhandled bearers (assuming already done). \n",
         bc_tbu->eps_bearer_id, ue_context->mme_ue_s1ap_id);

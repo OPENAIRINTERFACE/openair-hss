@@ -74,7 +74,10 @@ void mme_app_get_pdn_context (mme_ue_s1ap_id_t ue_id, pdn_cid_t const context_id
   pdn_context_t pdn_context_key = {.apn_subscribed = apn_subscribed, .default_ebi = default_ebi, .context_identifier = context_id};
   pdn_context_t * pdn_ctx_p = RB_FIND(PdnContexts, &ue_context->pdn_contexts, &pdn_context_key);
   *pdn_ctx = pdn_ctx_p;
-  if(!pdn_ctx_p && apn_subscribed){
+  if(*pdn_ctx) {
+	  OAILOG_FUNC_OUT(LOG_MME_APP);
+  }
+  if(apn_subscribed){
     /** Could not find the PDN context, search again using the APN. */
     RB_FOREACH (pdn_ctx_p, PdnContexts, &ue_context->pdn_contexts) {
       DevAssert(pdn_ctx_p);
@@ -86,7 +89,7 @@ void mme_app_get_pdn_context (mme_ue_s1ap_id_t ue_id, pdn_cid_t const context_id
       }
     }
   }
-  OAILOG_WARNING (LOG_MME_APP, "No PDN context for (ebi=%d,cid=%d,apn=\"%s\") was found for UE: " MME_UE_S1AP_ID_FMT ". \n", default_ebi, context_id,
+  OAILOG_WARNING(LOG_MME_APP, "No PDN context for (ebi=%d,cid=%d,apn=\"%s\") was found for UE: " MME_UE_S1AP_ID_FMT ". \n", default_ebi, context_id,
       (apn_subscribed) ? bdata(apn_subscribed) : "NULL",
       ue_id);
   OAILOG_FUNC_OUT(LOG_MME_APP);

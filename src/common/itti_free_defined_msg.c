@@ -304,6 +304,21 @@ void itti_free_msg_content (MessageDef * const message_p)
     }
   break;
 
+  case S1AP_E_RAB_MODIFY_REQ: {
+    for (int i = 0; i < message_p->ittiMsg.s1ap_e_rab_modify_req.e_rab_to_be_modified_list.no_of_items; i++) {
+      bdestroy_wrapper (&message_p->ittiMsg.s1ap_e_rab_modify_req.e_rab_to_be_modified_list.item[i].nas_pdu);
+      bdestroy_wrapper (&message_p->ittiMsg.s1ap_e_rab_modify_req.e_rab_to_be_modified_list.item[i].transport_layer_address);
+    }
+  }
+  break;
+
+  case S1AP_E_RAB_MODIFY_RSP: {
+      for (int i = 0; i < message_p->ittiMsg.s1ap_e_rab_modify_rsp.e_rab_modify_list.no_of_items; i++) {
+        bdestroy_wrapper (&message_p->ittiMsg.s1ap_e_rab_modify_rsp.e_rab_modify_list.item[i].transport_layer_address);
+      }
+    }
+  break;
+
   case S1AP_E_RAB_RELEASE_REQ: {
     bdestroy_wrapper (&message_p->ittiMsg.s1ap_e_rab_release_req.nas_pdu);
     }

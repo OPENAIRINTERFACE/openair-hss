@@ -1179,7 +1179,7 @@ void free_traffic_flow_template(traffic_flow_template_t ** tft)
 static bool
 check_if_tft_is_rendered_empty(traffic_flow_template_t * tft_original, traffic_flow_template_t * tft) {
   /** Check if all TFTs are removed, if there are any more existing and the existing once have at least one DL/BD packet filter. */
-  long int removed_pfs     = tft_original->packet_filter_identifier_bitmap &= tft->packet_filter_identifier_bitmap;
+  long int removed_pfs     = tft_original->packet_filter_identifier_bitmap & tft->packet_filter_identifier_bitmap;
   long int remaining_pfs   = tft_original->packet_filter_identifier_bitmap - removed_pfs;
 
   /** Check if there is at least 1 PF with a downlink filter. */

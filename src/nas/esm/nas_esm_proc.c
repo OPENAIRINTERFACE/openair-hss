@@ -385,12 +385,20 @@ int nas_esm_proc_modify_eps_bearer_ctx(esm_eps_modify_esm_bearer_ctxs_req_t * es
     /* Set the APN-AMBR for the first bearer context. */
     esm_sap_signal(&esm_sap, &rsp);
     if(rsp){
-      rc = lowerlayer_modify_bearer_req(esm_cn_modify->ue_id, esm_sap.data.eps_bearer_context_modify.bc_tbu->eps_bearer_id,
-          esm_sap.data.eps_bearer_context_modify.bc_tbu->bearer_level_qos->mbr.br_dl,
-          esm_sap.data.eps_bearer_context_modify.bc_tbu->bearer_level_qos->mbr.br_ul,
-          esm_sap.data.eps_bearer_context_modify.bc_tbu->bearer_level_qos->gbr.br_dl,
-          esm_sap.data.eps_bearer_context_modify.bc_tbu->bearer_level_qos->gbr.br_ul,
-          rsp);
+      if(esm_sap.data.eps_bearer_context_modify.bc_tbu->bearer_level_qos){
+    	  OAILOG_DEBUG (LOG_MME_APP, "Triggering bearer modification for changed qos (ebi=%d) for UE " MME_UE_S1AP_ID_FMT ".\n",
+    			  esm_sap.data.eps_bearer_context_modify.bc_tbu->eps_bearer_id, esm_sap.ue_id);
+    	  rc = lowerlayer_modify_bearer_req(esm_cn_modify->ue_id, esm_sap.data.eps_bearer_context_modify.bc_tbu->eps_bearer_id,
+              esm_sap.data.eps_bearer_context_modify.bc_tbu->bearer_level_qos->mbr.br_dl,
+              esm_sap.data.eps_bearer_context_modify.bc_tbu->bearer_level_qos->mbr.br_ul,
+              esm_sap.data.eps_bearer_context_modify.bc_tbu->bearer_level_qos->gbr.br_dl,
+              esm_sap.data.eps_bearer_context_modify.bc_tbu->bearer_level_qos->gbr.br_ul,
+              rsp);
+      } else {
+    	  OAILOG_INFO(LOG_MME_APP, "Not triggering bearer modification since qos is not changed (ebi=%d) for UE " MME_UE_S1AP_ID_FMT ".\n",
+    			  esm_sap.data.eps_bearer_context_modify.bc_tbu->eps_bearer_id, esm_sap.ue_id);
+    	  rc = lowerlayer_data_req(esm_cn_modify->ue_id, rsp);
+      }
       bdestroy_wrapper(&rsp);
     }
     /* Remove the APN-AMBR after the first iteration. */
