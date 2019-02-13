@@ -1559,50 +1559,52 @@ static int _emm_send_attach_accept (emm_data_context_t * emm_context)
     ue_context_t                           *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
     mme_ue_s1ap_id_t                        ue_id = emm_context->ue_id;
 
-    if (attach_proc) {
+    if(!attach_proc){
+    	OAILOG_ERROR (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " EMM-PROC  - No Attach procedure exists for sending Attach Accept. \n", ue_id);
+    	OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+    }
 
-      _emm_attach_update(emm_context, attach_proc->ies);
-      /*
-       * Notify EMM-AS SAP that Attach Accept message together with an Activate
-       * Default EPS Bearer Context Request message has to be sent to the UE
-       */
-      emm_sap.primitive = EMMAS_ESTABLISH_CNF;
-      emm_sap.u.emm_as.u.establish.puid = attach_proc->emm_spec_proc.emm_proc.base_proc.nas_puid;
-      emm_sap.u.emm_as.u.establish.ue_id = ue_id;
-      emm_sap.u.emm_as.u.establish.nas_info = EMM_AS_NAS_INFO_ATTACH;
+    _emm_attach_update(emm_context, attach_proc->ies);
+    /*
+     * Notify EMM-AS SAP that Attach Accept message together with an Activate
+     * Default EPS Bearer Context Request message has to be sent to the UE
+     */
+    emm_sap.primitive = EMMAS_ESTABLISH_CNF;
+    emm_sap.u.emm_as.u.establish.puid = attach_proc->emm_spec_proc.emm_proc.base_proc.nas_puid;
+    emm_sap.u.emm_as.u.establish.ue_id = ue_id;
+    emm_sap.u.emm_as.u.establish.nas_info = EMM_AS_NAS_INFO_ATTACH;
 
-      NO_REQUIREMENT_3GPP_24_301(R10_5_5_1_2_4__3);
-      if (ue_context->ue_radio_capability) {
-        bdestroy_wrapper(&ue_context->ue_radio_capability);
-      }
-      //----------------------------------------
-      REQUIREMENT_3GPP_24_301(R10_5_5_1_2_4__9);
-      // the set of emm_sap.u.emm_as.u.establish.new_guti is for including the GUTI in the attach accept message
-      //ONLY ONE MME NOW NO S10
-      if (!IS_EMM_CTXT_PRESENT_GUTI(emm_context)) {
-        // Sure it is an unknown GUTI in this MME
-        guti_t old_guti = emm_context->_old_guti;
-        guti_t guti     = {.gummei.plmn = {0},
-                           .gummei.mme_gid = 0,
-                           .gummei.mme_code = 0,
-                           .m_tmsi = INVALID_M_TMSI};
-        clear_guti(&guti);
+    NO_REQUIREMENT_3GPP_24_301(R10_5_5_1_2_4__3);
+    if (ue_context->ue_radio_capability) {
+    	bdestroy_wrapper(&ue_context->ue_radio_capability);
+    }
+    //----------------------------------------
+    REQUIREMENT_3GPP_24_301(R10_5_5_1_2_4__9);
+    // the set of emm_sap.u.emm_as.u.establish.new_guti is for including the GUTI in the attach accept message
+    //ONLY ONE MME NOW NO S10
+    if (!IS_EMM_CTXT_PRESENT_GUTI(emm_context)) {
+    	// Sure it is an unknown GUTI in this MME
+    	guti_t old_guti = emm_context->_old_guti;
+    	guti_t guti     = {.gummei.plmn = {0},
+    			.gummei.mme_gid = 0,
+				.gummei.mme_code = 0,
+				.m_tmsi = INVALID_M_TMSI};
+    	clear_guti(&guti);
 
-        rc = mme_api_new_guti (&emm_context->_imsi, &old_guti, &guti, &emm_context->originating_tai, &emm_context->_tai_list);
-        if ( RETURNok == rc) {
-          emm_ctx_set_guti(emm_context, &guti);
-          emm_ctx_set_attribute_valid(emm_context, EMM_CTXT_MEMBER_TAI_LIST);
+    	rc = mme_api_new_guti (&emm_context->_imsi, &old_guti, &guti, &emm_context->originating_tai, &emm_context->_tai_list);
+    	if ( RETURNok == rc) {
+    		emm_ctx_set_guti(emm_context, &guti);
+    		emm_ctx_set_attribute_valid(emm_context, EMM_CTXT_MEMBER_TAI_LIST);
           //----------------------------------------
           REQUIREMENT_3GPP_24_301(R10_5_5_1_2_4__6);
           REQUIREMENT_3GPP_24_301(R10_5_5_1_2_4__10);
           memcpy(&emm_sap.u.emm_as.u.establish.tai_list, &emm_context->_tai_list, sizeof(tai_list_t));
-        } else {
-          OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
+    	} else {
+        	OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
         }
-      } else {
-      // Set the TAI attributes from the stored context for resends.
-        memcpy(&emm_sap.u.emm_as.u.establish.tai_list, &emm_context->_tai_list, sizeof(tai_list_t));
-      }
+    } else {
+    	// Set the TAI attributes from the stored context for resends.
+    	memcpy(&emm_sap.u.emm_as.u.establish.tai_list, &emm_context->_tai_list, sizeof(tai_list_t));
     }
 
     emm_sap.u.emm_as.u.establish.eps_id.guti = &emm_context->_guti;

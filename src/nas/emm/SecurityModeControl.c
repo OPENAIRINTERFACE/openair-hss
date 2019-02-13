@@ -442,20 +442,8 @@ emm_proc_security_mode_complete (mme_ue_s1ap_id_t ue_id, const imeisv_mobile_ide
 //    unlock_ue_contexts(ue_context);
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
   } else {
-    OAILOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - No EPS security context exists\n");
-    /*
-     * Notify EMM that the authentication procedure failed
-     */
-    MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMREG_COMMON_PROC_REJ (SMC) ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
-    emm_sap_t           emm_sap = {0};
-    emm_sap.primitive           = EMMREG_COMMON_PROC_REJ;
-    emm_sap.u.emm_reg.ue_id     = ue_id;
-    emm_sap.u.emm_reg.ctx       = emm_ctx;
-    emm_sap.u.emm_reg.notify    = true;
-    emm_sap.u.emm_reg.free_proc = true;
-    emm_sap.u.emm_reg.u.common.common_proc = NULL;
-    emm_sap.u.emm_reg.u.common.previous_emm_fsm_state = smc_proc->emm_com_proc.emm_proc.previous_emm_fsm_state;
-    rc = emm_sap_send (&emm_sap);
+    OAILOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - No EPS SMC procedure exists for UE " MME_UE_S1AP_ID_FMT". \n", ue_id);
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
   }
 
 //  unlock_ue_contexts(ue_context);

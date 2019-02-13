@@ -342,7 +342,7 @@ static int _start_authentication_information_procedure(struct emm_data_context_s
   bool is_initial_req = !(auth_info_proc->request_sent);
   auth_info_proc->request_sent = true;
 
-  nas_start_Ts6a_auth_info (auth_info_proc->ue_id, &auth_info_proc->timer_s6a, auth_info_proc->cn_proc.base_proc.time_out, emm_context);
+  nas_start_Ts6a_auth_info (auth_info_proc->ue_id, &auth_info_proc->timer_s6a, auth_info_proc->cn_proc.base_proc.time_out, auth_info_proc->ue_id);
 
   nas_itti_auth_info_req (ue_id, &emm_context->_imsi, is_initial_req, &visited_plmn, MAX_EPS_AUTH_VECTORS, auts);
 
@@ -576,8 +576,9 @@ int emm_proc_authentication_failure (
         bconcat(rand_bstr, auts);
         // TODO: Double check this case as there is no identity request being sent.
         _start_authentication_information_procedure_synch(emm_ctx, auth_proc, rand_bstr);
-//        free_wrapper((void**)&resync_param.data);
+        free_wrapper((void**)&resync_param.data);
         bdestroy_wrapper(&rand_bstr);
+
 
         emm_ctx_clear_auth_vectors(emm_ctx);
         rc = RETURNok;

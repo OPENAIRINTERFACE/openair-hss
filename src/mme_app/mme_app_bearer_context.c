@@ -802,7 +802,8 @@ mme_app_validate_bearer_resource_modification(mme_ue_s1ap_id_t ue_id, ebi_t ebi,
   }
   /** If there is a flow-qos error, set the QCI to 0. */
   if(!flow_qos || flow_qos != ESM_CAUSE_SUCCESS){
-    flow_qos->qci = 0;
+    if(flow_qos)
+    	flow_qos->qci = 0;
     if(tad->tftoperationcode == TRAFFIC_FLOW_TEMPLATE_OPCODE_NO_TFT_OPERATION){
       OAILOG_ERROR(LOG_MME_APP, "EMMCN-SAP  - " "BRM Request for UE " MME_UE_S1AP_ID_FMT" and ebi=%d has no qos element and no TFT operation. Rejecting.\n", ue_id, ebi);
       OAILOG_FUNC_RETURN(LOG_MME_APP, ESM_CAUSE_REQUEST_REJECTED_BY_GW);

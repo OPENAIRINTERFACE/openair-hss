@@ -114,21 +114,25 @@ ue_context_t *mme_create_new_ue_context (void)
   int rc = pthread_mutexattr_init(&mutexattr);
   if (rc) {
     OAILOG_ERROR (LOG_MME_APP, "Cannot create UE context, failed to init mutex attribute: %s\n", strerror(rc));
+    free_wrapper(&new_p);
     return NULL;
   }
   rc = pthread_mutexattr_settype(&mutexattr, PTHREAD_MUTEX_RECURSIVE);
   if (rc) {
     OAILOG_ERROR (LOG_MME_APP, "Cannot create UE context, failed to set mutex attribute type: %s\n", strerror(rc));
+    free_wrapper(&new_p);
     return NULL;
   }
   rc = pthread_mutex_init(&new_p->recmutex, &mutexattr);
   if (rc) {
     OAILOG_ERROR (LOG_MME_APP, "Cannot create UE context, failed to init mutex: %s\n", strerror(rc));
+    free_wrapper(&new_p);
     return NULL;
   }
 //  rc = lock_ue_contexts(new_p);
   if (rc) {
     OAILOG_ERROR (LOG_MME_APP, "Cannot create UE context, failed to lock mutex: %s\n", strerror(rc));
+    free_wrapper(&new_p);
     return NULL;
   }
 

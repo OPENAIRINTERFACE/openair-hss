@@ -1927,6 +1927,11 @@ static int _emm_as_establish_cnf (const emm_as_establish_t * msg, nas_establish_
     break;
   } 
 
+  if(!emm_security_context){
+	  OAILOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - No EMM secType of initial NAS " "message 0x%.2x is not valid\n", msg->nas_info);
+	  OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
+  }
+
   if (size > 0) {
     nas_msg.header.sequence_number = emm_security_context->dl_count.seq_num;
     OAILOG_DEBUG (LOG_NAS_EMM, "Set nas_msg.header.sequence_number -> %u\n", nas_msg.header.sequence_number);

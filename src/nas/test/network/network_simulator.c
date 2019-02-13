@@ -368,7 +368,7 @@ main (
       _network_simulator_msg_sent += 1;
     }
 
-    printf ("\nINFO\t: %d messages received, %d messages sent\n", _network_simulator_msg_recv, _network_simulator_msg_sent);
+    printf ("\nINFO\t: %u messages received, %u messages sent\n", _network_simulator_msg_recv, _network_simulator_msg_sent);
   }
 
   /*

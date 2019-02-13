@@ -569,9 +569,6 @@ int nas_message_encode (
     void *security)
 {
   OAILOG_FUNC_IN (LOG_NAS);
-
-  DevAssert(security);
-
   emm_security_context_t                 *emm_security_context = (emm_security_context_t *) security;
   int                                     bytes;
 
@@ -582,7 +579,7 @@ int nas_message_encode (
 
   if (size < 0) {
     OAILOG_FUNC_RETURN (LOG_NAS, TLV_BUFFER_TOO_SHORT);
-  } else if (size > 1) {
+  } else if (emm_security_context) {
     /*
      * Encode security protected NAS message
      */
@@ -617,12 +614,12 @@ int nas_message_encode (
        * * * * exchanged between the UE and the MME as part of the
        * * * * NAS signalling. After each new or retransmitted outbound
        * * * * security protected NAS message, the sender shall increase
-       * * * * the NAS COUNT number by one. Specifically, on the sender
-       * * * * side, the NAS sequence number shall be increased by one,
-       * * * * and if the result is zero (due to wrap around), the NAS
-       * * * * overflow counter shall also be incremented by one (see
-       * * * * subclause 4.4.3.5).
-       */
+         * * * * the NAS COUNT number by one. Specifically, on the sender
+         * * * * side, the NAS sequence number shall be increased by one,
+         * * * * and if the result is zero (due to wrap around), the NAS
+         * * * * overflow counter shall also be incremented by one (see
+         * * * * subclause 4.4.3.5).
+         */
       if (SECU_DIRECTION_DOWNLINK == emm_security_context->direction_encode) {
     	  emm_security_context->dl_count.seq_num += 1;
 
@@ -639,10 +636,6 @@ int nas_message_encode (
     	  OAILOG_DEBUG (LOG_NAS, "Incremented emm_security_context.ul_count.seq_num -> %u\n", emm_security_context->ul_count.seq_num);
       }
     }
-    /*
-     * Log message header
-     */
-
   } else {
     /*
      * Encode plain NAS message
