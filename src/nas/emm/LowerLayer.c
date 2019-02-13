@@ -473,7 +473,7 @@ int lowerlayer_deactivate_bearer_req (
    * Setup EPS NAS security data
    */
   emm_as_set_security_data (&emm_sap.u.emm_as.u.deactivate_bearer_context_req.sctx, sctx, false, true);
-  MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_MME, NULL, 0, "EMMAS_ERAB_RELEASE_REQ  (STATUS) ue id " MME_UE_S1AP_ID_FMT " ebi %u " ",
+  MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_MME, NULL, 0, "EMMAS_ERAB_RELEASE_REQ  (STATUS) ue id " MME_UE_S1AP_ID_FMT " ebi %u ",
       ue_id, ebi);
   rc = emm_sap_send (&emm_sap);
 //  unlock_ue_contexts(ue_context);

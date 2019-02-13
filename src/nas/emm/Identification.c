@@ -156,25 +156,22 @@ emm_proc_identification (
     if (!ident_proc) {
       ident_proc = nas_new_identification_procedure(emm_context);
     }
-    if (ident_proc) {
-      if (emm_proc) {
-        /** Maybe triggered due attach, tau request or just implicitly. */
-      }
-      ident_proc->identity_type                                 = type;
-      ident_proc->retransmission_count                          = 0;
-      ident_proc->ue_id                                         = ue_id;
-      ((nas_emm_base_proc_t *)ident_proc)->parent               = (nas_emm_base_proc_t*)emm_proc;
-      ident_proc->emm_com_proc.emm_proc.delivered               = NULL;
-      ident_proc->emm_com_proc.emm_proc.previous_emm_fsm_state  = emm_fsm_get_state(emm_context);
-      ident_proc->emm_com_proc.emm_proc.not_delivered           = _identification_ll_failure;
-      ident_proc->emm_com_proc.emm_proc.not_delivered_ho        = _identification_non_delivered_ho;
-      ident_proc->emm_com_proc.emm_proc.base_proc.success_notif = success;
-      ident_proc->emm_com_proc.emm_proc.base_proc.failure_notif = failure;
-      ident_proc->emm_com_proc.emm_proc.base_proc.abort         = _identification_abort;
-      ident_proc->emm_com_proc.emm_proc.base_proc.fail_in       = NULL; // only response
-      ident_proc->emm_com_proc.emm_proc.base_proc.time_out      = _identification_t3470_handler;
+    if (emm_proc) {
+    	/** Maybe triggered due attach, tau request or just implicitly. */
     }
-
+    ident_proc->identity_type                                 = type;
+    ident_proc->retransmission_count                          = 0;
+    ident_proc->ue_id                                         = ue_id;
+    ((nas_emm_base_proc_t *)ident_proc)->parent               = (nas_emm_base_proc_t*)emm_proc;
+    ident_proc->emm_com_proc.emm_proc.delivered               = NULL;
+    ident_proc->emm_com_proc.emm_proc.previous_emm_fsm_state  = emm_fsm_get_state(emm_context);
+    ident_proc->emm_com_proc.emm_proc.not_delivered           = _identification_ll_failure;
+    ident_proc->emm_com_proc.emm_proc.not_delivered_ho        = _identification_non_delivered_ho;
+    ident_proc->emm_com_proc.emm_proc.base_proc.success_notif = success;
+    ident_proc->emm_com_proc.emm_proc.base_proc.failure_notif = failure;
+    ident_proc->emm_com_proc.emm_proc.base_proc.abort         = _identification_abort;
+    ident_proc->emm_com_proc.emm_proc.base_proc.fail_in       = NULL; // only response
+    ident_proc->emm_com_proc.emm_proc.base_proc.time_out      = _identification_t3470_handler;
 
     rc = _identification_request (ident_proc);
 

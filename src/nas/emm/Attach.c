@@ -538,7 +538,8 @@ int emm_proc_attach_complete (
     }
   } else {
     NOT_REQUIREMENT_3GPP_24_301(R10_5_5_1_2_4__20);
-    OAILOG_INFO (LOG_NAS_EMM, "UE " MME_UE_S1AP_ID_FMT " ATTACH COMPLETE discarded (context not found)\n", ue_id);
+    OAILOG_ERROR (LOG_NAS_EMM, "UE " MME_UE_S1AP_ID_FMT " ATTACH COMPLETE discarded (context not found)\n", ue_id);
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
   }
 
   /*
@@ -560,7 +561,7 @@ int emm_proc_attach_complete (
   /*
    * Check if the UE is in registered state.
    */
-  if(emm_context && emm_context->_emm_fsm_state != EMM_REGISTERED){
+  if(emm_context->_emm_fsm_state != EMM_REGISTERED){
     OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - EMM Context for ueId " MME_UE_S1AP_ID_FMT " is still not in EMM_REGISTERED state although ATTACH_CNF has arrived. "
         "Removing failed EMM context implicitly.. \n", ue_id);
     emm_sap_t                               emm_sap = {0};
@@ -662,6 +663,8 @@ int emm_proc_attach_request_validity(emm_data_context_t * emm_context, mme_ue_s1
       DevAssert(rc == RETURNok);
     }
   }
+
+  DevAssert(emm_context);
 
   /*
    * We don't need to check the identification procedure. If it is not part of an attach procedure (no specific attach procedure is running - assuming all common procedures
@@ -782,14 +785,14 @@ int emm_proc_attach_request_validity(emm_data_context_t * emm_context, mme_ue_s1
     }
   }
   /** Check for collisions with tracking area update. */
-  else if (emm_context && (tau_procedure) && (is_nas_tau_accept_sent(tau_procedure))) {// && (!emm_ctx->is_tau_complete_received): implicit
+  else if (tau_procedure && is_nas_tau_accept_sent(tau_procedure)) {// && (!emm_ctx->is_tau_complete_received): implicit
     /** Check for a retransmission first. */
     //      new_emm_ue_ctx->num_attach_request++;
     /** Implicitly detach the UE context, which will remove all common and specific procedures. */
     emm_context->emm_cause = EMM_CAUSE_ILLEGAL_UE;
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
   }
-  else if ((emm_context) /* && (0 < new_emm_ue_ctx->num_attach_request) */ &&
+  else if (/* && (0 < new_emm_ue_ctx->num_attach_request) */
       (tau_procedure)){
     DevAssert(!is_nas_tau_accept_sent (tau_procedure));
     DevAssert(!is_nas_tau_reject_sent(tau_procedure));
@@ -800,7 +803,7 @@ int emm_proc_attach_request_validity(emm_data_context_t * emm_context, mme_ue_s1
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
     //
     /** No collision with a specific procedure and UE is in EMM_DEREGISTERED state (only state where we can continue with the UE context. */
-  } else if(emm_context && (EMM_DEREGISTERED == fsm_state)){
+  } else if(EMM_DEREGISTERED == fsm_state){
     /** We assume that no bearers etc.. exist when no MME_APP context exists. */
 
     // todo: is this an undefined state?

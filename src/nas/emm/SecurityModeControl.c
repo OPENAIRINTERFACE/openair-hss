@@ -453,7 +453,7 @@ emm_proc_security_mode_complete (mme_ue_s1ap_id_t ue_id, const imeisv_mobile_ide
     emm_sap.u.emm_reg.ctx       = emm_ctx;
     emm_sap.u.emm_reg.notify    = true;
     emm_sap.u.emm_reg.free_proc = true;
-    emm_sap.u.emm_reg.u.common.common_proc = &smc_proc->emm_com_proc;
+    emm_sap.u.emm_reg.u.common.common_proc = NULL;
     emm_sap.u.emm_reg.u.common.previous_emm_fsm_state = smc_proc->emm_com_proc.emm_proc.previous_emm_fsm_state;
     rc = emm_sap_send (&emm_sap);
   }
@@ -698,7 +698,7 @@ static int _security_request (nas_emm_smc_proc_t * const smc_proc)
 
     emm_ctx = emm_data_context_get(&_emm_data, smc_proc->ue_id);
     if (!emm_ctx) {
-      OAILOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - EMM context could not be found for ue_id=" MME_UE_S1AP_ID_FMT ". Cannot send SMC. \n", emm_ctx->ue_id);
+      OAILOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - EMM context could not be found for ue_id=" MME_UE_S1AP_ID_FMT ". Cannot send SMC. \n", smc_proc->ue_id);
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
     }
 

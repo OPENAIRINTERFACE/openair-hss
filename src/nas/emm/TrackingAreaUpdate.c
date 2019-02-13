@@ -1613,6 +1613,9 @@ static int _emm_tau_retry_procedure(emm_data_context_t *emm_context){
 static int _emm_tracking_area_update_run_procedure(emm_data_context_t *emm_context)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
+
+  DevAssert(emm_context);
+
   int                                     rc = RETURNerror;
   nas_emm_tau_proc_t                     *tau_proc = get_nas_specific_procedure_tau(emm_context);
   ue_context_t                           *ue_context = NULL;
@@ -1622,10 +1625,8 @@ static int _emm_tracking_area_update_run_procedure(emm_data_context_t *emm_conte
   if(!ue_context){
     OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  TAU - For ueId " MME_UE_S1AP_ID_FMT " no ue context exists (while running TAU procedure). Removing the EMM context without sending attach reject.. \n", emm_context->ue_id);
     // Release EMM context
-    if (emm_context) {
-      if(emm_context->is_dynamic) {
-        _clear_emm_ctxt(emm_context->ue_id);
-      }
+    if(emm_context->is_dynamic) {
+    	_clear_emm_ctxt(emm_context->ue_id);
     }
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
   }

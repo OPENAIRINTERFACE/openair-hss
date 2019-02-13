@@ -371,15 +371,14 @@ static int _start_authentication_information_procedure_synch(struct emm_data_con
 static int _auth_info_proc_success_cb (struct emm_data_context_s *emm_ctx)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
+  DevAssert(emm_ctx);
+
   nas_auth_info_proc_t * auth_info_proc = get_nas_cn_procedure_auth_info(emm_ctx);
   mme_ue_s1ap_id_t                        ue_id = emm_ctx->ue_id;
   int                                     rc = RETURNerror;
 
   if (auth_info_proc) {
-    if (!emm_ctx) {
-      OAILOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - " "Failed to find UE id " MME_UE_S1AP_ID_FMT "\n", ue_id);
-      OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
-    }
+
 
     // compute next eksi
     ksi_t eksi = 0;
