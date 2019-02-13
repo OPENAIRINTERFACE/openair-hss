@@ -470,9 +470,7 @@ s1ap_dump_ue (const ue_description_t * const ue_ref)
   UE_LIST_OUT ("MME UE s1ap id:   0x%08x", ue_ref->mme_ue_s1ap_id);
   UE_LIST_OUT ("SCTP stream recv: 0x%04x", ue_ref->sctp_stream_recv);
   UE_LIST_OUT ("SCTP stream send: 0x%04x", ue_ref->sctp_stream_send);
-#  else
-  ue_ref = ue_ref;
-#  endif
+# endif
 }
 
 //------------------------------------------------------------------------------

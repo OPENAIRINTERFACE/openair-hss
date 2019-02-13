@@ -1568,10 +1568,10 @@ s1ap_handle_handover_command (
 
   enb_description_t                      *enb_ref = NULL;
 
-  enb_ref = s1ap_is_enb_id_in_list(handover_command_pP->enb_id);
 
   OAILOG_FUNC_IN (LOG_S1AP);
   DevAssert (handover_command_pP != NULL);
+  enb_ref = s1ap_is_enb_id_in_list(handover_command_pP->enb_id);
 
   /**
    * Get the UE_REFERENCE structure via the received eNB_ID and enb_ue_s1ap_id pairs.
