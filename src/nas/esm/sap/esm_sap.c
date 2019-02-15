@@ -303,7 +303,7 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
 
   case ESM_EPS_BEARER_CONTEXT_MODIFY_REQ:{
     msg->esm_cause = esm_proc_modify_eps_bearer_context(msg->ue_id,     /**< Create an ESM procedure and store the bearers in the procedure as pending. */
-           PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED,
+           msg->data.eps_bearer_context_modify.pti,
            msg->data.eps_bearer_context_modify.linked_ebi,
            msg->data.eps_bearer_context_modify.pdn_cid,
            msg->data.eps_bearer_context_modify.bc_tbu,
