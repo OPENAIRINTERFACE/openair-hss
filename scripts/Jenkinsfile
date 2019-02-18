@@ -153,7 +153,7 @@ pipeline {
             steps {
                 echo '\u2705 \u001B[32mStarting MME VM\u001B[0m'
                 timeout(time: 2, unit: 'MINUTES') {
-                    sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci install-vm --clone-template True  --snapshot yes --start-vm True --vm-display ${vm_display} --nf-type mme --job-name ${JOB_NAME} --template-domain ${mme_vm_template} --build-id ${BUILD_NUMBER} --dns1 ${dns1} --dns2 ${dns2} > mme_start.log 2>&1"
+                    sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci install-vm --clone-template True  --snapshot yes --start-vm True --vm-display ${vm_display} --nf-type mme --job-name ${JOB_NAME} --template-domain ${mme_vm_template} --build-id ${BUILD_NUMBER} --dns1 ${dns1} --dns2 ${dns2} > mme_vm_start.log 2>&1"
                 }
             }
         }
@@ -161,7 +161,7 @@ pipeline {
             steps {
                 echo '\u2705 \u001B[32mStarting HSS VM\u001B[0m'
                 timeout(time: 2, unit: 'MINUTES') {
-                    sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci install-vm --clone-template True  --snapshot yes --start-vm True --vm-display ${vm_display} --nf-type hss --job-name ${JOB_NAME} --template-domain ${hss_vm_template} --build-id ${BUILD_NUMBER} --dns1 ${dns1} --dns2 ${dns2} > hss_start.log 2>&1"
+                    sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci install-vm --clone-template True  --snapshot yes --start-vm True --vm-display ${vm_display} --nf-type hss --job-name ${JOB_NAME} --template-domain ${hss_vm_template} --build-id ${BUILD_NUMBER} --dns1 ${dns1} --dns2 ${dns2} > hss_vm_start.log 2>&1"
                 }
             }
         }
@@ -169,7 +169,7 @@ pipeline {
             steps {
                 echo '\u2705 \u001B[32mStarting SPGW VM\u001B[0m'
                 timeout(time: 2, unit: 'MINUTES') {
-                    sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci install-vm --clone-template True  --snapshot yes --start-vm True --vm-display ${vm_display} --nf-type spgw --job-name ${JOB_NAME} --template-domain ${spgw_vm_template} --build-id ${BUILD_NUMBER} --dns1 ${dns1} --dns2 ${dns2} > spgw_start.log 2>&1"
+                    sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci install-vm --clone-template True  --snapshot yes --start-vm True --vm-display ${vm_display} --nf-type spgw --job-name ${JOB_NAME} --template-domain ${spgw_vm_template} --build-id ${BUILD_NUMBER} --dns1 ${dns1} --dns2 ${dns2} > spgw_vm_start.log 2>&1"
                 }
             }
         }
@@ -250,20 +250,43 @@ pipeline {
                 stage ('Start MME') {
                     steps {
                         echo '\u2705 \u001B[32mStarting MME vNF\u001B[0m'
-                        sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci start-nf --nf-type mme --job-name ${JOB_NAME} --build-id ${BUILD_NUMBER} > mme_start.log 2>&1"
+                        sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci start-nf --nf-type mme --job-name ${JOB_NAME} --build-id ${BUILD_NUMBER} > mme_vnf_start.log 2>&1"
                     }
                 }
                 stage ('Start HSS') {
                     steps {
                         echo '\u2705 \u001B[32mStarting HSS vNF\u001B[0m'
-                        sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci start-nf --nf-type hss --job-name ${JOB_NAME} --build-id ${BUILD_NUMBER} --option Release14 > hss_start.log 2>&1"
+                        sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci start-nf --nf-type hss --job-name ${JOB_NAME} --build-id ${BUILD_NUMBER} --option Release14 > hss_vnf_start.log 2>&1"
                     }
                 }
                 stage ('Start SPGW') {
                     steps {
                         echo '\u2705 \u001B[32mStarting SPGW vNF\u001B[0m'
                         // For the moment it crashes the SPGW VM and a zombie process remains
-                        //sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci start-nf --nf-type spgw --job-name ${JOB_NAME} --build-id ${BUILD_NUMBER} > spgw_start.log 2>&1"
+                        //sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci start-nf --nf-type spgw --job-name ${JOB_NAME} --build-id ${BUILD_NUMBER} > spgw_vnf_start.log 2>&1"
+                    }
+                }
+            }
+        }
+        stage('Stop Core Network Functions') {
+            parallel {
+                stage ('Stop MME') {
+                    steps {
+                        echo '\u2705 \u001B[32mStopping MME vNF\u001B[0m'
+                        sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci stop-nf --nf-type mme --job-name ${JOB_NAME} --build-id ${BUILD_NUMBER} > mme_vnf_stop.log 2>&1"
+                    }
+                }
+                stage ('Stop HSS') {
+                    steps {
+                        echo '\u2705 \u001B[32mStopping HSS vNF\u001B[0m'
+                        sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci stop-nf --nf-type hss --job-name ${JOB_NAME} --build-id ${BUILD_NUMBER} --option Release14 > hss_vnf_stop.log 2>&1"
+                    }
+                }
+                stage ('Stop SPGW') {
+                    steps {
+                        echo '\u2705 \u001B[32mStopping SPGW vNF\u001B[0m'
+                        // For the moment it crashes the SPGW VM and a zombie process remains
+                        //sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci stop-nf --nf-type spgw --job-name ${JOB_NAME} --build-id ${BUILD_NUMBER} > spgw_vnf_stop.log 2>&1"
                     }
                 }
             }
@@ -318,12 +341,20 @@ pipeline {
                     archiveArtifacts artifacts: 'test_results_oai_cn.html'
                 }
 
+                // Private Archives
                 if (fileExists("${WORKSPACE}/../../local_archives")) {
-                    sh "tar -cjhf ${JOB_NAME}-build-${BUILD_ID}.tar.bz2 *.log"
+                    sh "tar -cjhf ${JOB_NAME}-build-${BUILD_ID}.tar.bz2 *.log archives"
                     sh "mv ${JOB_NAME}-build-${BUILD_ID}.tar.bz2 ${WORKSPACE}/../../local_archives"
                 }
+                // Public Archives --> artifacts
+                if (fileExists("${WORKSPACE}/archives")) {
+                    sh "tar -cjhf ${JOB_NAME}-build-${BUILD_ID}.tar.bz2 archives"
+                    archiveArtifacts artifacts: '*-build-*.tar.bz2'
+                    sh "sudo rm -Rf ${WORKSPACE}/archives ${JOB_NAME}-build-${BUILD_ID}.tar.bz2 > /dev/null 2>&1"
+                }
+                // Full clean-up
                 if (fileExists("${WORKSPACE}/ci-scripts")) {
-                        sh "sudo rm -Rf ${WORKSPACE}/ci-scripts > /dev/null 2>&1"
+                    sh "sudo rm -Rf ${WORKSPACE}/ci-scripts > /dev/null 2>&1"
                 }
 
                 // Sending an email to the last committer. Maybe not the Pull Request's author.
