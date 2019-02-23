@@ -605,7 +605,7 @@ emm_recv_tracking_area_update_request (
     /*
      * Requirement MME24.301R10_5.5.1.2.7_b Protocol error
      */
-    rc = emm_proc_tracking_area_update_reject(ue_id, *emm_cause);
+    rc = emm_wrapper_tracking_area_update_reject(ue_id, *emm_cause);
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
   }
 
@@ -632,7 +632,7 @@ emm_recv_tracking_area_update_request (
   } else{
     OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received TAU-Request with unknown identity type %d for mmeS1apUeId " MME_UE_S1AP_ID_FMT ". \n", msg->oldguti.guti.typeofidentity, ue_id);
     *emm_cause = EMM_CAUSE_PROTOCOL_ERROR;
-    rc = emm_proc_tracking_area_update_reject(ue_id, *emm_cause);
+    rc = emm_wrapper_tracking_area_update_reject(ue_id, *emm_cause);
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
   }
 
@@ -666,7 +666,7 @@ emm_recv_tracking_area_update_request (
     OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received Tracking Area Update Request does not contain last visited TAI. "
         "Cannot retrieve UE context from source MME for mmeS1apUeId " MME_UE_S1AP_ID_FMT ". \n", ue_id);
     *emm_cause = EMM_CAUSE_PROTOCOL_ERROR;
-    rc = emm_proc_tracking_area_update_reject(ue_id, *emm_cause);
+    rc = emm_wrapper_tracking_area_update_reject(ue_id, *emm_cause);
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
   }
 

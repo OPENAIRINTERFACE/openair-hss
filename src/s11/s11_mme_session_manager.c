@@ -145,6 +145,10 @@ s11_mme_create_session_request (
   if(req_p->pco.num_protocol_or_container_id){
     gtpv2c_pco_ie_set (&(ulp_req.hMsg), &req_p->pco);
   }
+  if(req_p->bearer_contexts_to_be_created->num_bearer_context > 1){
+	  gtpv2c_ebi_ie_set (&(ulp_req.hMsg), (unsigned)req_p->default_ebi, NW_GTPV2C_IE_INSTANCE_ZERO);
+  }
+
   for (int i = 0; i < req_p->bearer_contexts_to_be_created->num_bearer_context; i++) {
     gtpv2c_bearer_context_to_be_created_within_create_session_request_ie_set (&(ulp_req.hMsg), &req_p->bearer_contexts_to_be_created->bearer_contexts[i]);
   }

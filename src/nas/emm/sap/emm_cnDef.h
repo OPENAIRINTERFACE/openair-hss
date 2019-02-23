@@ -49,8 +49,6 @@ typedef enum emmcn_primitive_s {
   _EMMCN_AUTHENTICATION_PARAM_FAIL,
   _EMMCN_CONTEXT_RES,
   _EMMCN_CONTEXT_FAIL,
-  _EMMCN_PDN_CONFIG_RES,
-  _EMMCN_PDN_CONFIG_FAIL,
   _EMMCN_DEREGISTER_UE,
   _EMMCN_IMPLICIT_DETACH_UE,
   _EMMCN_SMC_PROC_FAIL,
@@ -104,8 +102,6 @@ struct itti_nas_pdn_connectivity_fail_s;
 
 /** NAS UE context response. */
 typedef itti_nas_context_res_t    emm_cn_context_res_t;
-typedef struct itti_nas_pdn_config_rsp_s        emm_cn_pdn_config_res_t;
-typedef struct itti_nas_pdn_config_fail_s       emm_cn_pdn_config_fail_t;
 typedef struct itti_nas_pdn_connectivity_rsp_s  emm_cn_pdn_connectivity_resp_t;
 typedef struct itti_nas_pdn_connectivity_fail_s emm_cn_pdn_connectivity_fail_t;
 
@@ -132,9 +128,6 @@ typedef struct emm_mme_ul_s {
 
     emm_cn_context_res_t     *context_res;
     emm_cn_context_fail_t    *context_fail;
-
-    emm_cn_pdn_config_res_t  *pdn_cfg_res;
-    emm_cn_pdn_config_fail_t *pdn_cfg_fail;
 
     emm_cn_deregister_ue_t   deregister;
     emm_cn_implicit_detach_ue_t   emm_cn_implicit_detach;

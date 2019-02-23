@@ -147,7 +147,6 @@ mme_app_register_dedicated_bearer_context(const mme_ue_s1ap_id_t ue_id, const es
   OAILOG_FUNC_IN (LOG_MME_APP);
   pdn_context_t               *pdn_context = NULL;
   bearer_context_t            *pBearerCtx  = NULL; /**< Define a bearer context key. */
-  DevAssert(!bc_tbc->eps_bearer_id);              /**< Should be unassigned. */
 
   ue_context_t * ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, ue_id);
   if(!ue_context){
@@ -197,6 +196,7 @@ mme_app_register_dedicated_bearer_context(const mme_ue_s1ap_id_t ue_id, const es
   OAILOG_INFO(LOG_NAS_EMM, "EMMCN-SAP  - " "ESM QoS and TFT could be verified of CBR received for UE " MME_UE_S1AP_ID_FMT".\n", ue_id);
 
   // todo: LOCK_UE_CONTEXT(
+  // todo: EBI must match
   pBearerCtx = RB_REMOVE(BearerPool, &ue_context->bearer_pool, pBearerCtx);
   DevAssert(pBearerCtx);
   AssertFatal((EPS_BEARER_IDENTITY_LAST >= pBearerCtx->ebi) && (EPS_BEARER_IDENTITY_FIRST <= pBearerCtx->ebi), "Bad ebi %u", pBearerCtx->ebi);

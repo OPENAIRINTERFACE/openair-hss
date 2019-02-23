@@ -429,8 +429,16 @@ esm_proc_pdn_config_res(mme_ue_s1ap_id_t ue_id, bool * is_attach, pti_t * pti, i
    */
   nas_esm_proc_pdn_connectivity_t * esm_proc_pdn_connectivity = _esm_proc_get_pdn_connectivity_procedure(ue_id, PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED);
   if(!esm_proc_pdn_connectivity){
-    OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - No ESM PDN connectivity procedure for UE ueId " MME_UE_S1AP_ID_FMT " exists. Ignoring the received ULA. \n", ue_id);
-    OAILOG_FUNC_RETURN(LOG_NAS_ESM, ESM_CAUSE_SUCCESS);
+    OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - No ESM PDN connectivity procedure for UE ueId " MME_UE_S1AP_ID_FMT " exists. Handling the current pdn contexts. \n", ue_id);
+    *is_attach = true;
+    /** Update the current pdn contexts. */
+    subscription_data_t *subscription_data = mme_ue_subscription_data_exists_imsi(&mme_app_desc.mme_ue_contexts, imsi);
+    if(!subscription_data){
+      OAILOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - " "PDN configuration response not processed in EMM layer only due TAU. Ignoring (should be sent to ESM).. for id " MME_UE_S1AP_ID_FMT ". \n", ue_id);
+      OAILOG_FUNC_RETURN (LOG_NAS_EMM, ESM_CAUSE_NETWORK_FAILURE);
+    }
+    esm_cause_t esm_cause = mme_app_update_pdn_context(ue_id, subscription_data);
+    OAILOG_FUNC_RETURN(LOG_NAS_ESM, esm_cause);
   }
   *is_attach = esm_proc_pdn_connectivity->is_attach;
   *pti = esm_proc_pdn_connectivity->esm_base_proc.pti;

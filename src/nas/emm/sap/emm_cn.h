@@ -43,5 +43,6 @@ Description
 #include "emm_cnDef.h"
 int emm_cn_send(const emm_cn_t *msg);
 //int emm_cn_pdn_connectivity_res (emm_cn_pdn_res_t * msg_pP);
+int _emm_wrapper_esm_reject(mme_ue_s1ap_id_t ue_id, bstring *esm_rsp);
 
 #endif /* FILE_EMM_CN_SEEN */

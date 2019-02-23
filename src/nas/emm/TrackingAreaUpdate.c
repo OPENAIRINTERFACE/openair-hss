@@ -310,7 +310,7 @@ int emm_proc_tracking_area_update_request (
 
 /****************************************************************************
  **                                                                        **
- ** Name:        emm_proc_tracking_area_update_reject()                    **
+ ** Name:        emm_wrapper_tracking_area_update_reject()                    **
  **                                                                        **
  ** Description:                                                           **
  **                                                                        **
@@ -323,9 +323,9 @@ int emm_proc_tracking_area_update_request (
  **                  Others:    _emm_data                                  **
  **                                                                        **
  ***************************************************************************/
-int emm_proc_tracking_area_update_reject (
+int emm_wrapper_tracking_area_update_reject(
   const mme_ue_s1ap_id_t ue_id,
-  const int emm_cause)
+  const emm_cause_t emm_cause)
 {
   int                                     rc = RETURNerror;
   OAILOG_FUNC_IN (LOG_NAS_EMM);
@@ -630,14 +630,14 @@ int emm_proc_tracking_area_update_request_validity(emm_data_context_t * emm_cont
       emm_context->emm_cause = EMM_CAUSE_ILLEGAL_UE;
 
       /** Send a TAU-Reject back, removing the new MME_APP UE context, too. */
-      rc = emm_proc_tracking_area_update_reject(new_ue_id, EMM_CAUSE_IMPLICITLY_DETACHED); /**< Will remove the contexts for the TAU-Req. */
+      rc = emm_wrapper_tracking_area_update_reject(new_ue_id, EMM_CAUSE_IMPLICITLY_DETACHED); /**< Will remove the contexts for the TAU-Req. */
       free_emm_tau_request_ies(&ies);
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
     }else{
       OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - TAU request received for IMSI " IMSI_64_FMT " with mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " while an Attach Procedure is running (Attach Accept/Reject not sent yet). Discarding TAU Request. \n",
           emm_context->_imsi64, emm_context->ue_id);
       /** TAU before ATTACH_ACCEPT sent should be rejected directly. */
-//      rc = emm_proc_tracking_area_update_reject(attach_procedure->ue_id, EMM_CAUSE_MSC_NOT_REACHABLE); /**< Will remove the contexts for the TAU-Req. */
+//      rc = emm_wrapper_tracking_area_update_reject(attach_procedure->ue_id, EMM_CAUSE_MSC_NOT_REACHABLE); /**< Will remove the contexts for the TAU-Req. */
       if(new_ue_id != emm_context->ue_id)
         nas_itti_esm_detach_ind(new_ue_id);
       free_emm_tau_request_ies(&ies);
@@ -900,19 +900,25 @@ static int _emm_tracking_area_update_reject( const mme_ue_s1ap_id_t ue_id, const
 }
 
 //------------------------------------------------------------------------------
-int emm_cn_wrapper_tracking_area_update_accept (emm_data_context_t * emm_context)
+int emm_wrapper_tracking_area_update_accept (mme_ue_s1ap_id_t ue_id)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
 
-  DevAssert(emm_context);
-  nas_emm_tau_proc_t                     *tau_proc = get_nas_specific_procedure_tau(emm_context);
-  int                                     rc = RETURNerror;
+  emm_data_context_t 				     *emm_context = NULL;
+  nas_emm_tau_proc_t                     *tau_proc    = NULL;
 
-  if(!tau_proc){
-    OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  emm_context = emm_data_context_get(&_emm_data, ue_id);
+  if(!emm_context) {
+	  OAILOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - No EMM context for ue_id " MME_UE_S1AP_ID_FMT " exists. Cannot proceed with TAU.", ue_id);
+	  OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
+  }
+  tau_proc = get_nas_specific_procedure_tau(emm_context);
+  if(!tau_proc) {
+  	  OAILOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - No TAU procedure for ue_id " MME_UE_S1AP_ID_FMT " exists. Cannot proceed with TAU. Ignoring the message.", ue_id);
+  	  OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
   }
 
-  rc = _emm_tracking_area_update_accept (tau_proc);
+  int rc = _emm_tracking_area_update_accept (tau_proc);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
@@ -1688,7 +1694,7 @@ static int _emm_tracking_area_update_run_procedure(emm_data_context_t *emm_conte
 //      OAILOG_INFO(LOG_NAS_EMM, "TrackingAreaUpdate - Successfully updated TAI list of EMM context!\n");
 //    } else {
 //      OAILOG_ERROR(LOG_NAS_EMM, "TrackingAreaUpdate - Error updating TAI list of EMM context!\n");
-//      rc = emm_proc_tracking_area_update_reject (ue_id, EMM_CAUSE_TA_NOT_ALLOWED);
+//      rc = emm_wrapper_tracking_area_update_reject (ue_id, EMM_CAUSE_TA_NOT_ALLOWED);
 //      OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 //    }
 
@@ -1745,9 +1751,10 @@ static int _emm_tracking_area_update_run_procedure(emm_data_context_t *emm_conte
       if(!subscription_data) { /**< Means, that the MM UE context is received from the sourc MME already due HO (and only due HO). */
         OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC- THE UE with ue_id=" MME_UE_S1AP_ID_FMT ", does not have a subscription profile set. Requesting a new subscription profile. \n",
             emm_context->ue_id, EMM_CAUSE_IE_NOT_IMPLEMENTED);
-        /** The EPS update type will be stored as pending IEs. */
-        /** ESM context will not change, no ESM_PROC data will be created. */
-        rc = nas_itti_pdn_config_req (emm_context->ue_id, &emm_context->_imsi);
+        /**
+         * Always use initial to trigger a CLR.
+         */
+        rc = nas_itti_pdn_config_req(emm_context->ue_id, &emm_context->_imsi, REQUEST_TYPE_INITIAL_REQUEST, &emm_context->originating_tai.plmn);
         OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
       } else{
         OAILOG_DEBUG (LOG_NAS_EMM, "EMM-PROC- Sending Tracking Area Update Accept for UE with valid subscription ue_id=" MME_UE_S1AP_ID_FMT ", active flag=%d)\n", emm_context->ue_id, tau_proc->ies->eps_update_type.active_flag);
@@ -1758,7 +1765,7 @@ static int _emm_tracking_area_update_run_procedure(emm_data_context_t *emm_conte
         }else{
           OAILOG_INFO(LOG_NAS_EMM, "EMM-PROC  - EMM context for the ue_id=" MME_UE_S1AP_ID_FMT " has a valid and active EPS security context and subscription but is not in EMM_REGISTERED state. Instead %d. "
               "Continuing with the tracking area update reject. \n", emm_context->ue_id);
-          rc = emm_proc_tracking_area_update_reject (emm_context, EMM_CAUSE_NETWORK_FAILURE);
+          rc = emm_wrapper_tracking_area_update_reject (emm_context, EMM_CAUSE_NETWORK_FAILURE);
           OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
         }
       }
@@ -1808,7 +1815,7 @@ static int _emm_tracking_area_update_run_procedure(emm_data_context_t *emm_conte
         }else{
           if(!tau_proc->ies->is_initial){
             OAILOG_DEBUG (LOG_NAS_EMM, "EMM-PROC- No handover procedure exists for non-initial TAU request for UE with ue_id=" MME_UE_S1AP_ID_FMT ". \n", emm_context->ue_id);
-            rc = emm_proc_tracking_area_update_reject (emm_context, EMM_CAUSE_NETWORK_FAILURE);
+            rc = emm_wrapper_tracking_area_update_reject (emm_context, EMM_CAUSE_NETWORK_FAILURE);
             OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
           }
           /**
@@ -1837,7 +1844,7 @@ static int _emm_tracking_area_update_run_procedure(emm_data_context_t *emm_conte
     /** Not freeing the IEs of the TAU procedure. */
   }else{
     OAILOG_WARNING(LOG_NAS_EMM, "EMM-PROC  - For UE " MME_UE_S1AP_ID_FMT " no TAU specific procedure is running. Not proceeding with TAU Request. ", emm_context->ue_id);
-    rc = emm_proc_tracking_area_update_reject (emm_context, EMM_CAUSE_NETWORK_FAILURE);
+    rc = emm_wrapper_tracking_area_update_reject (emm_context, EMM_CAUSE_NETWORK_FAILURE);
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
   }
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
@@ -1892,7 +1899,7 @@ static int _context_req_proc_success_cb (emm_data_context_t *emm_context)
     nas_delete_cn_procedure(emm_context, nas_ctx_req_proc);
 
   /** ESM context will not change, no ESM_PROC data will be created. */
-  rc = nas_itti_pdn_config_req (emm_context->ue_id, &emm_context->_imsi);
+  rc = nas_itti_pdn_config_req(emm_context->ue_id, &emm_context->_imsi, REQUEST_TYPE_INITIAL_REQUEST, &emm_context->originating_tai.plmn);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
@@ -2050,25 +2057,12 @@ static int _emm_tracking_area_update_success_security_cb (emm_data_context_t *em
 //  esm_sap_t                               esm_sap = {0};
 
   if (tau_proc) {
-//    if (!emm_context->esm_ctx.esm_proc_data) {
-//       // todo: why not checking if another ESM procedure is running?
-//       // todo: timers will be reset like in EMM procedures?
-//       emm_context->esm_ctx.esm_proc_data  = (esm_proc_data_t *) calloc(1, sizeof(*emm_context->esm_ctx.esm_proc_data));
-//     }
-//
-//     struct esm_proc_data_s * esm_data = emm_context->esm_ctx.esm_proc_data;
-//     esm_data->request_type = REQUEST_TYPE_INITIAL_REQUEST;
-
-//     esm_data->pti = 0;
-     /** Request the ESM Information. */
-//    esm_sap.primitive = ESM_REQUEST_ESM_INFORMATION;
-//    esm_sap.ue_id = emm_context->ue_id;
-////    esm_sap.recv = esm_msg_pP;
-//    esm_sap.ctx = emm_context;
-//    rc = esm_sap_send (&esm_sap);
-    rc = nas_itti_pdn_config_req (emm_context->ue_id, &emm_context->_imsi);
+	/**
+	 * Not checking if any ESM process is running, should not.
+	 * Ask for subscription information.
+	 */
+    rc = nas_itti_pdn_config_req(emm_context->ue_id, &emm_context->_imsi, REQUEST_TYPE_INITIAL_REQUEST, &emm_context->originating_tai.plmn);
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
-//    rc = _emm_tracking_area_update(emm_context);
   }
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }

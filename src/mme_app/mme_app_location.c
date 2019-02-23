@@ -76,10 +76,6 @@ int mme_app_handle_s6a_update_location_ans (
     OAILOG_ERROR (LOG_MME_APP, "That's embarrassing as we don't know this IMSI " IMSI_64_FMT " for the EMM Data Context. \n", imsi64);
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
-  task_id_t task_id = TASK_NAS_ESM;
-  if(is_nas_specific_procedure_tau_running(emm_context)){
-    task_id = TASK_NAS_EMM;
-  }
 
   /** Remove the cached subscription profile and set the new one. */
   subscription_data_t * subscription_data = ula_pP->subscription_data;
@@ -124,7 +120,7 @@ int mme_app_handle_s6a_update_location_ans (
   /** Check if an attach procedure is running, if so send it to the ESM layer, if not, we assume it is triggered by a TAU request, send it to the EMM. */
   /** For error codes, use nas_pdn_cfg_fail. */
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_ESM, NULL, 0, "0 NAS_PDN_CONFIG_RESP IMSI " IMSI_64_FMT, imsi64);
-  rc =  itti_send_msg_to_task (task_id, INSTANCE_DEFAULT, message_p);
+  rc =  itti_send_msg_to_task (TASK_NAS_ESM, INSTANCE_DEFAULT, message_p);
 
   OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
 
@@ -141,9 +137,12 @@ err:
   itti_nas_pdn_config_fail_t *nas_pdn_config_fail = &message_p->ittiMsg.nas_pdn_config_fail;
   nas_pdn_config_fail->ue_id  = ue_context->mme_ue_s1ap_id;
 
-  /** For error codes, use nas_pdn_cfg_fail. */
+  /**
+   * For error codes, use nas_pdn_cfg_fail.
+   * Also in case of TAU, send back to ESM layer.
+   */
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_PDN_CONFIG_FAIL IMSI " IMSI_64_FMT, imsi64);
-  rc =  itti_send_msg_to_task (task_id, INSTANCE_DEFAULT, message_p);
+  rc =  itti_send_msg_to_task (TASK_NAS_ESM, INSTANCE_DEFAULT, message_p);
 //  UNLOCK_UE_CONTEXTS(ue_context);
   OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
 }

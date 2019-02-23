@@ -79,7 +79,6 @@ nas_itti_erab_release_req (const mme_ue_s1ap_id_t ue_id,
 
 void nas_itti_pdn_config_req(
   unsigned int            ue_idP,
-  task_id_t               task_id,
   const imsi_t           *const imsi_pP,
   esm_proc_pdn_request_t  request_type,
   plmn_t                 *visited_plmn);

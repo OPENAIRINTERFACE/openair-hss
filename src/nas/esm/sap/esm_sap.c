@@ -168,10 +168,10 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
 
   case ESM_PDN_CONFIG_RES:{
     pti_t pti = PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED;
-    msg->esm_cause = esm_proc_pdn_config_res(msg->ue_id, &msg->is_attach, &pti, msg->data.pdn_config_res->imsi64);
+    msg->esm_cause = esm_proc_pdn_config_res(msg->ue_id, &msg->is_attach_tau, &pti, msg->data.pdn_config_res->imsi64);
     if(msg->esm_cause != ESM_CAUSE_SUCCESS) {
       /*
-       * Send a PDN connectivity reject.
+       * Create a PDN connectivity reject.
        */
       esm_send_pdn_connectivity_reject(pti, &esm_resp_msg, msg->esm_cause);
     }
@@ -183,17 +183,15 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
      * Check if a procedure exists for PDN Connectivity. If so continue with it.
      */
     nas_esm_proc_pdn_connectivity_t * esm_proc_pdn_connectivity = _esm_proc_get_pdn_connectivity_procedure(msg->ue_id, PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED);
-    if(!esm_proc_pdn_connectivity){
-      OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - No ESM transaction for UE ueId " MME_UE_S1AP_ID_FMT " exists. Ignoring the received ULA. \n",
-          msg->ue_id);
-    } else{
-      msg->is_attach = esm_proc_pdn_connectivity->is_attach;
+    if(esm_proc_pdn_connectivity){
+      msg->is_attach_tau = esm_proc_pdn_connectivity->is_attach;
       /** Send a PDN Connectivity Reject back. */
       esm_send_pdn_connectivity_reject(esm_proc_pdn_connectivity->esm_base_proc.pti, &esm_resp_msg, msg->esm_cause);
       /** Directly process the ULA. A response message might be returned. */
       _esm_proc_free_pdn_connectivity_procedure(&esm_proc_pdn_connectivity);
       msg->esm_cause = ESM_CAUSE_USER_AUTHENTICATION_FAILED;
     }
+    /** Handle in the outer function. */
   }
   break;
 
@@ -209,7 +207,7 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
       OAILOG_ERROR (LOG_NAS_ESM, "ESM-SAP   - No ESM transaction for UE ueId " MME_UE_S1AP_ID_FMT " exists. Ignoring the received PDN Connectivity confirmation. \n",
           msg->ue_id);
     } else {
-      msg->is_attach = esm_proc_pdn_connectivity->is_attach;
+      msg->is_attach_tau = esm_proc_pdn_connectivity->is_attach;
       msg->esm_cause = esm_proc_pdn_connectivity_res(msg->ue_id, esm_proc_pdn_connectivity);
       if(msg->esm_cause != ESM_CAUSE_SUCCESS) {
         /*
@@ -238,7 +236,7 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
       OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - No ESM transaction for UE ueId " MME_UE_S1AP_ID_FMT " exists. Ignoring the received PDN Connectivity reject. \n",
           msg->ue_id);
     } else {
-      msg->is_attach = esm_proc_pdn_connectivity->is_attach;
+      msg->is_attach_tau = esm_proc_pdn_connectivity->is_attach;
       /*
        * The ESM procedure will be removed and any timer will be stopped.
        * Also the pending PDN context will be removed.
@@ -348,7 +346,7 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
        * Encode the returned message. Currently, building and encoding a new message every time.
        */
       msg->ue_id = esm_base_proc->ue_id;
-      msg->is_attach = esm_base_proc->type == ESM_PROC_PDN_CONTEXT ? ((nas_esm_proc_pdn_connectivity_t*)esm_base_proc)->is_attach : false;
+      msg->is_attach_tau = esm_base_proc->type == ESM_PROC_PDN_CONTEXT ? ((nas_esm_proc_pdn_connectivity_t*)esm_base_proc)->is_attach : false;
       msg->esm_cause = esm_base_proc->timeout_notif(esm_base_proc, &esm_resp_msg );
     }
   }
@@ -374,9 +372,9 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
     if (size > 0) {
       *rsp = blk2bstr(esm_sap_buffer, size);
       /* Send Attach Reject. */
-      if(msg->is_attach) {
-        if(msg->esm_cause != ESM_CAUSE_SUCCESS){
-          _emm_wrapper_attach_reject(msg->ue_id, *rsp);
+      if(msg->is_attach_tau) {
+        if(msg->esm_cause != ESM_CAUSE_SUCCESS) {
+          _emm_wrapper_esm_reject(msg->ue_id, rsp);
           bdestroy_wrapper(rsp); /**< Will be copied inside into the esm message. Remove it here. */
         }
       }

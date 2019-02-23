@@ -503,6 +503,12 @@ gtpv2c_bearer_context_to_be_created_within_create_session_request_ie_set (
   DevAssert (NW_OK == rc);
   gtpv2c_ebi_ie_set (msg, bearer_context->eps_bearer_id, NW_GTPV2C_IE_INSTANCE_ZERO);
   gtpv2c_bearer_qos_ie_set(msg, &bearer_context->bearer_level_qos);
+  /** Set the TFT. */
+  if(bearer_context->tft){
+	  gtpv2c_tft_ie_set(msg, bearer_context->tft);
+  }
+
+
   /*
    * End section for grouped IE: bearer context to create
    */

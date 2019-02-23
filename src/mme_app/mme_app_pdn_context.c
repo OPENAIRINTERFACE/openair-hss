@@ -47,6 +47,7 @@
 #include "mme_app_ue_context.h"
 #include "mme_app_defs.h"
 #include "common_defs.h"
+#include "esm_cause.h"
 #include "mme_app_pdn_context.h"
 #include "mme_app_apn_selection.h"
 #include "mme_app_bearer_context.h"
@@ -292,49 +293,96 @@ mme_app_esm_create_pdn_context(mme_ue_s1ap_id_t ue_id, const apn_configuration_t
 }
 
 //------------------------------------------------------------------------------
-int
-mme_app_update_pdn_context(mme_ue_s1ap_id_t ue_id, pdn_cid_t ctx_id, ebi_t linked_ebi, bstring apn_subscribed, const apn_configuration_t * const apn_configuration){
+esm_cause_t
+mme_app_update_pdn_context(mme_ue_s1ap_id_t ue_id, const subscription_data_t * const subscription_data){
   OAILOG_FUNC_IN (LOG_MME_APP);
 
   ue_context_t        * ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, ue_id);
-  pdn_context_t       * pdn_context = NULL;
+  pdn_context_t 	  * pdn_context = NULL, * pdn_context_safe = NULL;
+  apn_configuration_t * apn_configuration = NULL;
 
   if(!ue_context){
-    OAILOG_WARNING(LOG_MME_APP, "No MME_APP UE context could be found for UE: " MME_UE_S1AP_ID_FMT " to release \"%s\". \n", ue_id, bdata(apn_subscribed));
-    OAILOG_FUNC_RETURN(LOG_MME_APP, RETURNerror);
-  }
-  mme_app_get_pdn_context(ue_id, ctx_id, linked_ebi, apn_subscribed, &pdn_context);
-  if (!pdn_context) {
-    OAILOG_WARNING(LOG_NAS_ESM, "ESM-PROC  - PDN connection for cid=%d and ebi=%d and APN \"%s\" has not been allocated for UE "MME_UE_S1AP_ID_FMT". \n",
-        ctx_id, linked_ebi, bdata(apn_subscribed), ue_id);
-    OAILOG_FUNC_RETURN(LOG_MME_APP, RETURNerror);
+    OAILOG_WARNING(LOG_MME_APP, "No MME_APP UE context could be found for UE: " MME_UE_S1AP_ID_FMT " to update the pdn context information from subscription data. \n", ue_id);
+    OAILOG_FUNC_RETURN(LOG_MME_APP, ESM_CAUSE_REQUEST_REJECTED_BY_GW);
   }
 
-  pdn_cid_t old_cid = pdn_context->context_identifier;
-  // LOCK_UE_CONTEXT
-  /** If it is an invalid context identifier, update it. */
-  if(pdn_context->context_identifier >= PDN_CONTEXT_IDENTIFIER_UNASSIGNED){
-    pdn_context = RB_REMOVE(PdnContexts, &ue_context->pdn_contexts, pdn_context);
-    DevAssert(pdn_context);
-    pdn_context->context_identifier = apn_configuration->context_identifier;
-    /** Set the context also to all the bearers. */
-    bearer_context_t * bearer_context = NULL;
-    RB_FOREACH (bearer_context, SessionBearers, &pdn_context->session_bearers) {
-      bearer_context->pdn_cx_id = apn_configuration->context_identifier; /**< Update for all bearer contexts. */
+  // todo: LOCK_UE_CONTEXT_HERE
+  /**
+   * Iterate through all the pdn contexts of the UE.
+   * Check if for each pdn context, an APN configuration exists.
+   * If not remove those PDN contexts.
+   */
+  bool changed = false;
+  do {
+    RB_FOREACH_SAFE(pdn_context, PdnContexts, &ue_context->pdn_contexts, pdn_context_safe) { /**< Use the safe iterator. */
+      /** Remove the pdn context. */
+      changed = false;
+      mme_app_select_apn(ue_context->imsi, pdn_context->apn_subscribed, &apn_configuration);
+      if(apn_configuration){
+        /**
+         * We found an APN configuration. Updating it. Might traverse the list new.
+         * We check if anything (ctxId) will be changed, that might alter the position of the element in the list.
+         */
+        OAILOG_INFO(LOG_NAS_EMM, "EMMCN-SAP  - " "Updating the created PDN context from the subscription profile for UE " MME_UE_S1AP_ID_FMT". \n", ue_id);
+        changed = pdn_context->context_identifier >= PDN_CONTEXT_IDENTIFIER_UNASSIGNED;
+        pdn_cid_t old_cid = pdn_context->context_identifier;
+        /** If it is an invalid context identifier, update it. */
+        if(pdn_context->context_identifier >= PDN_CONTEXT_IDENTIFIER_UNASSIGNED){
+          pdn_context = RB_REMOVE(PdnContexts, &ue_context->pdn_contexts, pdn_context);
+          DevAssert(pdn_context);
+          pdn_context->context_identifier = apn_configuration->context_identifier;
+          /** Set the context also to all the bearers. */
+          bearer_context_t * bearer_context = NULL;
+          RB_FOREACH (bearer_context, SessionBearers, &pdn_context->session_bearers) {
+            bearer_context->pdn_cx_id = apn_configuration->context_identifier; /**< Update for all bearer contexts. */
+          }
+          /** Update the PDN context ambr only if it was 0. */
+          if(!pdn_context->subscribed_apn_ambr.br_dl)
+            pdn_context->subscribed_apn_ambr.br_dl = apn_configuration->ambr.br_dl;
+          if(!pdn_context->subscribed_apn_ambr.br_ul)
+            pdn_context->subscribed_apn_ambr.br_ul = apn_configuration->ambr.br_ul;
+
+          DevAssert(!RB_INSERT (PdnContexts, &ue_context->pdn_contexts, pdn_context));
+        }
+
+        if(changed)
+          break;
+        /** Nothing changed, continue processing the elements. */
+        continue;
+      }else {
+        /**
+         * Remove the PDN context and trigger a DSR.
+         * Set in the flags, that it should not be signaled back to the EMM layer. Might not need to traverse the list new.
+         */
+        OAILOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - " "PDN context for APN \"%s\" could not be found in subscription profile for UE "
+            "with ue_id " MME_UE_S1AP_ID_FMT " and IMSI " IMSI_64_FMT ". Triggering deactivation of PDN context. \n",
+            bdata(pdn_context->apn_subscribed), ue_id, ue_context->imsi);
+
+        /** Set the flag for the delete tunnel. */
+        bool deleteTunnel = (RB_MIN(PdnContexts, &ue_context->pdn_contexts)== pdn_context);
+        nas_itti_pdn_disconnect_req(ue_id, pdn_context->default_ebi, PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED, deleteTunnel,
+            pdn_context->s_gw_address_s11_s4.address.ipv4_address, pdn_context->s_gw_teid_s11_s4, pdn_context->context_identifier);
+        /**
+         * No response is expected.
+         * Implicitly detach the PDN conte bearer contexts from the UE.
+         */
+        mme_app_delete_pdn_context(ue_context, &pdn_context);
+        OAILOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - " "Invalid PDN context removed successfully ue_id " MME_UE_S1AP_ID_FMT ". \n", ue_id);
+        continue;
+      }
     }
-    /** Update the PDN context ambr only if it was 0. */
-    if(!pdn_context->subscribed_apn_ambr.br_dl)
-      pdn_context->subscribed_apn_ambr.br_dl = apn_configuration->ambr.br_dl;
-    if(!pdn_context->subscribed_apn_ambr.br_ul)
-      pdn_context->subscribed_apn_ambr.br_ul = apn_configuration->ambr.br_ul;
+    OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - " "Completed the checking of PDN contexts for ue_id " MME_UE_S1AP_ID_FMT ". \n", ue_id);
+  } while(changed);
 
-    DevAssert(!RB_INSERT (PdnContexts, &ue_context->pdn_contexts, pdn_context));
-  }
-  // UNLOCK_UE_CONTEXT
+  // todo: UNLOCK_UE_CONTEXT
   /** Set the context identifier when updating the pdn_context. */
-  OAILOG_INFO(LOG_NAS_EMM, "EMMCN-SAP  - " "Successfully updated PDN context for APN \"%s\" from old ctx_id=%d to new ctx_id for UE " MME_UE_S1AP_ID_FMT" which was established already from the apn_configuration. \n",
-      bdata(apn_subscribed), old_cid, pdn_context->context_identifier, ue_context->mme_ue_s1ap_id);
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
+  OAILOG_INFO(LOG_NAS_EMM, "EMMCN-SAP  - " "Successfully updated all PDN contexts for UE " MME_UE_S1AP_ID_FMT". \n", ue_id);
+
+  if(RB_EMPTY(&ue_context->pdn_contexts)){
+	  OAILOG_ERROR(LOG_NAS_EMM, "EMMCN-SAP  - " "No PDN contexts left for UE " MME_UE_S1AP_ID_FMT" after updating for the received subscription information. \n", ue_id);
+	  OAILOG_FUNC_RETURN (LOG_NAS_EMM, ESM_CAUSE_REQUEST_REJECTED_BY_GW);
+  }
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, ESM_CAUSE_SUCCESS);
 }
 
 //------------------------------------------------------------------------------

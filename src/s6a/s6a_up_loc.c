@@ -112,6 +112,23 @@ s6a_ula_cb (
   }
 
   /*
+   * Get the ULR flag.
+   */
+  CHECK_FCT (fd_msg_search_avp (qry_p, s6a_fd_cnf.dataobj_s6a_ulr_flags, &avp_p));
+  if(avp_p) {
+	  CHECK_FCT (fd_msg_avp_hdr (avp_p, &hdr_p));
+
+//	  /*
+//	   * This bit, when set, indicates that the HSS stores SGSN number
+//	   * * * * and MME number in separate memory. A Rel-8 HSS shall set
+//	   * * * * the bit.
+//	   */
+//	  if (FLAG_IS_SET (hdr_p->avp_value->u32, ULR_INITIAL_ATTACH_IND)) {
+//		  s6a_update_location_ans_p->initial_attach = true;
+//	  }
+  }
+
+  /*
    * Retrieving the ULA flags
    */
   CHECK_FCT (fd_msg_search_avp (ans_p, s6a_fd_cnf.dataobj_s6a_ula_flags, &avp_p));
@@ -150,8 +167,6 @@ err:
   OAILOG_DEBUG (LOG_S6A, "Sending S6A_UPDATE_LOCATION_ANS to task MME_APP\n");
   return RETURNok;
 }
-
-
 
 int
 s6a_generate_update_location (
@@ -272,12 +287,16 @@ s6a_generate_update_location (
     FLAGS_SET (value.u32, ULR_SKIP_SUBSCRIBER_DATA);
   }
 
-//  if (ulr_pP->initial_attach) { // todo: set them again and check in new HSS
+  if (ulr_pP->initial_attach) {
     FLAGS_SET (value.u32, ULR_INITIAL_ATTACH_IND);
-//  }
+  }
 
   CHECK_FCT (fd_msg_avp_setvalue (avp_p, &value));
   CHECK_FCT (fd_msg_avp_add (msg_p, MSG_BRW_LAST_CHILD, avp_p));
+
+  struct avp                             *avp1_p = NULL;
+  CHECK_FCT (fd_msg_search_avp (msg_p, s6a_fd_cnf.dataobj_s6a_ulr_flags, &avp1_p));
+
   CHECK_FCT (fd_msg_send (&msg_p, NULL, NULL));
   OAILOG_DEBUG (LOG_S6A, "Sending s6a ulr for imsi=%s\n", ulr_pP->imsi);
   return RETURNok;

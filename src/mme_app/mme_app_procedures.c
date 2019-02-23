@@ -401,24 +401,30 @@ mme_app_handle_mme_s10_handover_completion_timer_expiry (mme_app_s10_proc_mme_ha
     MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_IMPLICIT_DETACH_UE_IND_MESSAGE");
     itti_send_msg_to_task (TASK_NAS_EMM, INSTANCE_DEFAULT, message_p);
     OAILOG_FUNC_OUT (LOG_MME_APP);
-  }
+  } else {
+	  ue_context->s1_ue_context_release_cause = S1AP_HANDOVER_CANCELLED;
+	  /*
+	   * Send a UE Context Release Command which would trigger a context release.
+	   * The e_cgi IE will be set with Handover Notify.
+	   */
+	  /** Send a FW-Relocation Response error if no local teid is set (no FW-Relocation Response is send yet). */
+	  if(!ue_context->local_mme_teid_s10){
+	    mme_app_send_s10_forward_relocation_response_err(s10_proc_mme_handover->remote_mme_teid.teid,
+	        s10_proc_mme_handover->remote_mme_teid.ipv4_address,
+	        s10_proc_mme_handover->forward_relocation_trxn, REQUEST_REJECTED);
+	  }
+	  /** Delete the procedure. */
+	  mme_app_delete_s10_procedure_mme_handover(ue_context);
 
-  ue_context->s1_ue_context_release_cause = S1AP_HANDOVER_CANCELLED;
-  /*
-   * Send a UE Context Release Command which would trigger a context release.
-   * The e_cgi IE will be set with Handover Notify.
-   */
-  mme_app_itti_ue_context_release(ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, ue_context->s1_ue_context_release_cause, s10_proc_mme_handover->target_id.target_id.macro_enb_id.enb_id);
-  /** Send a FW-Relocation Response error if no local teid is set (no FW-Relocation Response is send yet). */
-  if(!ue_context->local_mme_teid_s10){
-    mme_app_send_s10_forward_relocation_response_err(s10_proc_mme_handover->remote_mme_teid.teid,
-        s10_proc_mme_handover->remote_mme_teid.ipv4_address,
-        s10_proc_mme_handover->forward_relocation_trxn, REQUEST_REJECTED);
-  }
-  /** Delete the procedure. */
-  mme_app_delete_s10_procedure_mme_handover(ue_context);
+	  /** Trigger an ESM detach, also removing all PDN contexts in the MME and the SAE-GW. */
+	  message_p = itti_alloc_new_message (TASK_MME_APP, NAS_ESM_DETACH_IND);
+	  DevAssert (message_p != NULL);
+	  message_p->ittiMsg.nas_esm_detach_ind.ue_id = ue_context->mme_ue_s1ap_id; /**< We don't send a Detach Type such that no Detach Request is sent to the UE if handover is performed. */
 
-  OAILOG_FUNC_OUT (LOG_MME_APP);
+	  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_ESM_DETACH_IND");
+	  itti_send_msg_to_task (TASK_NAS_EMM, INSTANCE_DEFAULT, message_p);
+	  OAILOG_FUNC_OUT (LOG_MME_APP);
+  }
 }
 
 //------------------------------------------------------------------------------

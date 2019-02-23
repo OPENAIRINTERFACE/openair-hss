@@ -2318,7 +2318,7 @@ pdn_context_t * mme_app_handle_pdn_connectivity_from_s10(ue_context_t *ue_contex
     esm_cause_t esm_cause = ESM_CAUSE_SUCCESS;
     if(bearer_context_to_be_created_s10->eps_bearer_id != pdn_context->default_ebi){
       esm_cause = mme_app_register_dedicated_bearer_context(ue_context->mme_ue_s1ap_id, ESM_EBR_ACTIVE, pdn_context->context_identifier,
-          bearer_context_to_be_created_s10->eps_bearer_id, bearer_context_to_be_created_s10);
+    		  pdn_context->default_ebi, bearer_context_to_be_created_s10);
     } else {
       /** Finalize the default bearer, updating qos. */
       esm_cause = mme_app_finalize_bearer_context(ue_context->mme_ue_s1ap_id, pdn_context->context_identifier,

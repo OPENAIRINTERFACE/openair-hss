@@ -183,7 +183,7 @@ struct emm_data_context_s;
 typedef struct esm_sap_s {
   esm_primitive_t primitive;      /* ESM-SAP primitive to process                                       */
   unsigned int        ue_id;      /* Local UE identifier                                                */
-  bool                is_attach;  /* Define if it is an attach (may be edited inside the method).       */
+  bool                is_attach_tau;  /* Define if it is an attach (may be edited inside the method).       */
   pti_t               pti;        /* Procedure transaction Id (needed for BRC - at least.               */
   const_bstring       recv;       /* Encoded ESM message received                                       */
   esm_sap_data_t      data;       /* ESM message data parameters                                        */

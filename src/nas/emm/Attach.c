@@ -954,11 +954,12 @@ static int _emm_attach_release (emm_data_context_t *emm_context)
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
+
 /*
  *
- * Name:    _emm_wrapper_attach_reject()
+ * Name:    _emm_attach_reject()
  *
- * Description: Performs the attach procedure not accepted by the network.
+ * Description: Checks if an attach procedure is ongoing and proceeds with the accept.
  *
  *              3GPP TS 24.301, section 5.5.1.2.5
  *      If the attach request cannot be accepted by the network,
@@ -973,31 +974,6 @@ static int _emm_attach_release (emm_data_context_t *emm_context)
  *      Others:    None
  *
  */
-int _emm_wrapper_attach_reject (mme_ue_s1ap_id_t ue_id, bstring esm_rsp)
-{
-  emm_data_context_t                     * emm_context = NULL;
-  int                                     rc = RETURNerror;
-
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
-
-  // todo: get the EMM_CONTEXT, if exists lock it!!
-  emm_context = emm_data_context_get(&_emm_data, ue_id);
-  if(!emm_context){
-    OAILOG_WARNING(LOG_NAS_EMM, "EMM-PROC  - No EMM context was found for ue_id " MME_UE_S1AP_ID_FMT ". Ignoring attach reject. \n", ue_id);
-    OAILOG_FUNC_RETURN(LOG_NAS_EMM, RETURNok);
-  }
-  nas_emm_attach_proc_t                  * attach_proc                 = (nas_emm_attach_proc_t*)get_nas_specific_procedure(emm_context);
-  if(!attach_proc){
-    OAILOG_WARNING(LOG_NAS_EMM, "EMM-PROC  - No attach procedure was found for ue_id " MME_UE_S1AP_ID_FMT ". Ignoring attach reject. \n", ue_id);
-    OAILOG_FUNC_RETURN(LOG_NAS_EMM, RETURNok);
-  }
-
-  rc = _emm_attach_reject(emm_context, attach_proc, esm_rsp);
-
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
-}
-
-// todo: put back as static
 int _emm_attach_reject(emm_data_context_t * emm_context, nas_emm_attach_proc_t * attach_proc, bstring rsp)
 {
   emm_sap_t                               emm_sap = {0};
@@ -1523,6 +1499,26 @@ int _emm_wrapper_attach_accept (mme_ue_s1ap_id_t ue_id, bstring esm_msg)
   // todo: unlock_emm_context
 
   OAILOG_FUNC_RETURN(LOG_NAS_EMM, RETURNok);
+}
+
+//------------------------------------------------------------------------------
+int _emm_wrapper_attach_reject (mme_ue_s1ap_id_t ue_id, bstring esm_msg)
+{
+  OAILOG_FUNC_IN(LOG_NAS_EMM);
+  /** Check for the validity of the EMM context. No need to inform the ESM layer immediately. */
+  emm_data_context_t                     * emm_context                 = emm_data_context_get(&_emm_data, ue_id);
+  if(!emm_context){
+    OAILOG_INFO (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " EMM-PROC  - No EMM context for ue_id " MME_UE_S1AP_ID_FMT " exists. \n", ue_id);
+    OAILOG_FUNC_RETURN(LOG_NAS_ESM, RETURNerror);
+  }
+  nas_emm_attach_proc_t                  *attach_proc = get_nas_specific_procedure_attach(emm_context);
+  if(!attach_proc){
+    OAILOG_INFO (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " EMM-PROC  - No attach procedure for ue_id " MME_UE_S1AP_ID_FMT " exists. \n", ue_id);
+    OAILOG_FUNC_RETURN(LOG_NAS_ESM, RETURNerror);
+  }
+
+  int rc =  _emm_attach_reject(emm_context, attach_proc, esm_msg);
+  OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
 }
 
 /*

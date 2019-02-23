@@ -189,13 +189,17 @@ int emm_proc_attach_request(mme_ue_s1ap_id_t ue_id,
                             emm_attach_request_ies_t * const params,
                             emm_data_context_t ** duplicate_emm_ue_ctx_pP);
 
-int _emm_wrapper_attach_accept (mme_ue_s1ap_id_t ue_id, bstring esm_msg);
-
-int _emm_wrapper_attach_reject (mme_ue_s1ap_id_t ue_id, bstring esm_msg);
 
 int _emm_attach_reject(emm_data_context_t * emm_context, nas_emm_attach_proc_t * attach_proc, bstring rsp);
-
 int emm_proc_attach_reject(mme_ue_s1ap_id_t ue_id, emm_cause_t emm_cause);
+
+/** EMM Attach Accept/Reject from ESM layer. */
+int _emm_wrapper_attach_accept (mme_ue_s1ap_id_t ue_id, bstring esm_msg);
+int _emm_wrapper_attach_reject (mme_ue_s1ap_id_t ue_id, bstring esm_msg);
+
+/** EMM TAU Accept/Reject from ESM layer. */
+int emm_wrapper_tracking_area_update_accept (mme_ue_s1ap_id_t ue_id);
+int emm_wrapper_tracking_area_update_reject (mme_ue_s1ap_id_t ue_id, emm_cause_t emm_cause);
 
 int emm_proc_attach_complete (
   mme_ue_s1ap_id_t                  ue_id,
@@ -211,10 +215,6 @@ int emm_proc_tracking_area_update_request (
   const bool gprs_present,
   int *emm_cause,
   emm_data_context_t ** emm_context_pP);
-
-int emm_proc_tracking_area_update_reject (
-  const mme_ue_s1ap_id_t ue_id,
-  const int emm_cause);
 
 int
 emm_proc_tracking_area_update_complete (

@@ -210,12 +210,19 @@ nas_esm_proc_pdn_config_res (
   MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_ESM_MME, NULL, 0, "0 ESM_PDN_CONFIG_RES ue_id " MME_UE_S1AP_ID_FMT " ", pdn_config_res->ue_id);
   esm_sap_signal(&esm_sap, &rsp);
   if(rsp){
-    /**
-     * Will get and lock the EMM context to set the security header if there is a valid EMM context.
-     * No changes in the state of the EMM context.
-     */
-    rc = lowerlayer_data_req(esm_sap.ue_id, rsp);
-    bdestroy_wrapper(&rsp);
+	  /**
+	   * Will get and lock the EMM context to set the security header if there is a valid EMM context.
+	   * No changes in the state of the EMM context.
+	   */
+	  rc = lowerlayer_data_req(esm_sap.ue_id, rsp);
+	  bdestroy_wrapper(&rsp);
+  } else {
+	  if(esm_sap.is_attach_tau){
+		  rc = emm_wrapper_tracking_area_update_accept(esm_sap.ue_id);
+	  } else {
+		  OAILOG_ERROR (LOG_MME_APP, "No ESM data received and no atta/tau in procedd for UE " MME_UE_S1AP_ID_FMT ".\n", esm_sap.ue_id);
+		  rc = RETURNerror;
+	  }
   }
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
 }
@@ -237,12 +244,16 @@ nas_esm_proc_pdn_config_fail (
   MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_ESM_MME, NULL, 0, "0 ESM_PDN_CONFIG_FAIL ue_id " MME_UE_S1AP_ID_FMT " ", pdn_config_fail->ue_id);
   esm_sap_signal(&esm_sap, &rsp); // todo: esm_cause
   if(rsp){
-    /**
-     * Will get and lock the EMM context to set the security header if there is a valid EMM context.
-     * No changes in the state of the EMM context.
-     */
-    rc = lowerlayer_data_req(esm_sap.ue_id, rsp);
-    bdestroy_wrapper(&rsp);
+	  if(esm_sap.is_attach_tau){
+		  rc = _emm_wrapper_esm_reject(esm_sap.ue_id, &rsp);
+	  } else {
+		  /**
+		   * Will get and lock the EMM context to set the security header if there is a valid EMM context.
+		   * No changes in the state of the EMM context.
+		   */
+		  rc = lowerlayer_data_req(esm_sap.ue_id, rsp);
+	  }
+	  bdestroy_wrapper(&rsp);
   }
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
 }
@@ -266,7 +277,7 @@ nas_esm_proc_pdn_connectivity_res (
   esm_sap_signal(&esm_sap, &rsp); // todo: esm_cause
   if(rsp){
     if(pdn_conn_res->esm_cause == ESM_CAUSE_SUCCESS && esm_sap.esm_cause == ESM_CAUSE_SUCCESS) {
-      if(esm_sap.is_attach)
+      if(esm_sap.is_attach_tau)
         rc = _emm_wrapper_attach_accept(pdn_conn_res->ue_id, rsp);
       else {
         rc = lowerlayer_activate_bearer_req(pdn_conn_res->ue_id, esm_sap.data.pdn_connectivity_res->linked_ebi, 0, 0, 0, 0, rsp);

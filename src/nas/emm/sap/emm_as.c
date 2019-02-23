@@ -396,7 +396,7 @@ static int _emm_as_recv (
       /** Reject the TAU Request rightaway. */
       *emm_cause = EMM_CAUSE_UE_IDENTITY_CANT_BE_DERIVED_BY_NW;
       // Send Reject with cause "UE identity cannot be derived by the network" to trigger fresh attach
-      rc = emm_proc_tracking_area_update_reject (ue_id, EMM_CAUSE_UE_IDENTITY_CANT_BE_DERIVED_BY_NW);
+      rc = emm_wrapper_tracking_area_update_reject(ue_id, EMM_CAUSE_UE_IDENTITY_CANT_BE_DERIVED_BY_NW);
       emm_msg_free(emm_msg);
       OAILOG_FUNC_RETURN (LOG_NAS_EMM,rc);
     }

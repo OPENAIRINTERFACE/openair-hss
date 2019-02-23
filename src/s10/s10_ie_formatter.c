@@ -355,7 +355,7 @@ s10_pdn_connection_ie_get (
 {
   mme_ue_eps_pdn_connections_t           *pdn_connections = (mme_ue_eps_pdn_connections_t *) arg;
   DevAssert (pdn_connections );
-  uint8_t                                 read = 0;
+  uint16_t                                 read = 0;
   nw_rc_t                                 rc;
   pdn_connection_t                       *pdn_connection = &pdn_connections->pdn_connection[pdn_connections->num_pdn_connections];
   while (ieLength > read) {

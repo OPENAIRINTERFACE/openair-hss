@@ -289,7 +289,6 @@ void nas_itti_dedicated_eps_bearer_deactivation_complete(
 //------------------------------------------------------------------------------
 void nas_itti_pdn_config_req(
   unsigned int            ue_idP,
-  task_id_t               task_id,
   const imsi_t           *const imsi_pP,
   esm_proc_pdn_request_t  request_type,
   plmn_t                 *visited_plmn)
@@ -298,7 +297,7 @@ void nas_itti_pdn_config_req(
   MessageDef *message_p = NULL;
   AssertFatal(imsi_pP       != NULL, "imsi_pP param is NULL");
 
-  message_p = itti_alloc_new_message (task_id, S6A_UPDATE_LOCATION_REQ);
+  message_p = itti_alloc_new_message (TASK_NAS_ESM, S6A_UPDATE_LOCATION_REQ);
 
   if (message_p == NULL) {
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);

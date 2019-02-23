@@ -69,6 +69,8 @@ typedef struct s6a_update_location_ans_s {
   mme_ue_s1ap_id_t     ue_id;
   s6a_result_t         result;              // Result of the update location request procedure
   subscription_data_t *subscription_data;   // subscriber status,
+//  bool 			       initial_attach;
+
   // Maximum Requested Bandwidth Uplink, downlink
   // access restriction data
   // msisdn
