@@ -102,6 +102,8 @@ void mme_app_handle_initial_ue_message       (itti_s1ap_initial_ue_message_t * c
 
 int mme_app_handle_create_sess_resp          (itti_s11_create_session_response_t * const create_sess_resp_pP); //not const because we need to free internal stucts
 
+void mme_app_handle_bearer_ctx_retry(itti_nas_retry_bearer_ctx_proc_ind_t * nas_retry_ind);
+
 void mme_app_handle_nas_erab_setup_req (itti_nas_erab_setup_req_t * const itti_nas_erab_setup_req);
 
 void mme_app_handle_nas_erab_modify_req (itti_nas_erab_modify_req_t * const itti_nas_erab_modify_setup_req);

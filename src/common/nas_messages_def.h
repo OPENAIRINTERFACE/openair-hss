@@ -52,6 +52,7 @@ MESSAGE_DEF(NAS_PDN_CONFIG_FAIL,                MESSAGE_PRIORITY_MED,   itti_nas
 MESSAGE_DEF(NAS_SIGNALLING_CONNECTION_REL_IND,  MESSAGE_PRIORITY_MED,   itti_nas_signalling_connection_rel_ind_t, nas_signalling_connection_rel_ind)
 
 /** Dedicated Bearer Messaging. */
+MESSAGE_DEF(NAS_RETRY_BEARER_CTX_PROC_IND     , MESSAGE_PRIORITY_MED, itti_nas_retry_bearer_ctx_proc_ind_t     ,  nas_retry_bearer_ctx_proc_ind)
 MESSAGE_DEF(NAS_ACTIVATE_EPS_BEARER_CTX_REQ   , MESSAGE_PRIORITY_MED, itti_nas_activate_eps_bearer_ctx_req_t   ,  nas_activate_eps_bearer_ctx_req)
 MESSAGE_DEF(NAS_ACTIVATE_EPS_BEARER_CTX_CNF   , MESSAGE_PRIORITY_MED, itti_nas_activate_eps_bearer_ctx_cnf_t   ,  nas_activate_eps_bearer_ctx_cnf)
 MESSAGE_DEF(NAS_ACTIVATE_EPS_BEARER_CTX_REJ   , MESSAGE_PRIORITY_MED, itti_nas_activate_eps_bearer_ctx_rej_t   ,  nas_activate_eps_bearer_ctx_rej)

@@ -127,6 +127,15 @@ mme_app_s11_proc_create_bearer_t* mme_app_create_s11_procedure_create_bearer(ue_
 }
 
 //------------------------------------------------------------------------------
+mme_app_s11_proc_t* mme_app_get_s11_procedure (ue_context_t * const ue_context)
+{
+  if (ue_context->s11_procedures) {
+    return LIST_FIRST(ue_context->s11_procedures);
+  }
+  return NULL;
+}
+
+//------------------------------------------------------------------------------
 mme_app_s11_proc_create_bearer_t* mme_app_get_s11_procedure_create_bearer(ue_context_t * const ue_context)
 {
   if (ue_context->s11_procedures) {

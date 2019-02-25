@@ -159,7 +159,7 @@ void mme_app_get_bearer_contexts_to_be_created(pdn_context_t * pdn_context, bear
 
 //------------------------------------------------------------------------------
 int
-mme_app_esm_create_pdn_context(mme_ue_s1ap_id_t ue_id, const apn_configuration_t *apn_configuration, const bstring apn_subscribed,  pdn_cid_t pdn_cid, const ambr_t * const apn_ambr, pdn_context_t **pdn_context_pp)
+mme_app_esm_create_pdn_context(mme_ue_s1ap_id_t ue_id, const ebi_t linked_ebi, const apn_configuration_t *apn_configuration, const bstring apn_subscribed,  pdn_cid_t pdn_cid, const ambr_t * const apn_ambr, pdn_context_t **pdn_context_pp)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
   ue_context_t * ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, ue_id);
@@ -181,9 +181,14 @@ mme_app_esm_create_pdn_context(mme_ue_s1ap_id_t ue_id, const apn_configuration_t
         pdn_ctx_TEST->context_identifier, pdn_ctx_TEST->default_ebi, RB_MIN(SessionBearers, &pdn_ctx_TEST->session_bearers), ue_id);
   }
 
-  bearer_context_t * free_bearer = RB_MIN(BearerPool, &ue_context->bearer_pool);
+  bearer_context_t * free_bearer = NULL;
+  if(linked_ebi != EPS_BEARER_IDENTITY_UNASSIGNED){
+	  mme_app_get_free_bearer_context(ue_context, linked_ebi, &free_bearer); /**< Find the EBI which is matching (should be available). */
+  } else{
+	  free_bearer = RB_MIN(BearerPool, &ue_context->bearer_pool); /**< Find the EBI which is matching (should be available). */
+  }
   if(!free_bearer){
-    OAILOG_ERROR(LOG_MME_APP, "No available bearer context could be found for UE: " MME_UE_S1AP_ID_FMT ". \n", ue_id);
+    OAILOG_ERROR(LOG_MME_APP, "No available bearer context could be found for UE: " MME_UE_S1AP_ID_FMT " with linked_ebi=%d. \n", ue_id, linked_ebi);
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
   (*pdn_context_pp) = calloc(1, sizeof(pdn_context_t));

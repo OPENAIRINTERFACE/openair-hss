@@ -157,6 +157,11 @@ void *mme_app_thread (void *args)
       }
       break;
 
+    case NAS_RETRY_BEARER_CTX_PROC_IND: {
+        mme_app_handle_bearer_ctx_retry(&NAS_RETRY_BEARER_CTX_PROC_IND (received_message_p));
+    }
+    break;
+
     case NAS_ERAB_SETUP_REQ:{
       mme_app_handle_nas_erab_setup_req (&NAS_ERAB_SETUP_REQ (received_message_p));
     }
@@ -548,7 +553,7 @@ int mme_app_init (const mme_config_t * mme_config_p)
     mme_app_desc.statistic_timer_id = 0;
   }
 
-  OAILOG_DEBUG (LOG_MME_APP, "Initializing MME applicative layer: DONE\n");
+  OAILOG_DEBUG (LOG_MME_APP, "Initializing MME applicative layer: DONE -- ASSERTING\n");
   OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
 }
 

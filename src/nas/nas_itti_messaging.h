@@ -47,6 +47,10 @@ int
 nas_itti_esm_detach_ind(
   const mme_ue_s1ap_id_t  ue_id);
 
+int
+nas_itti_s11_retry_ind(
+  const mme_ue_s1ap_id_t  ue_id);
+
 int nas_itti_dl_data_req(
   const mme_ue_s1ap_id_t ue_idP,
   bstring                nas_msgP,

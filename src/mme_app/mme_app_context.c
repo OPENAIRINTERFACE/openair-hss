@@ -2299,7 +2299,8 @@ pdn_context_t * mme_app_handle_pdn_connectivity_from_s10(ue_context_t *ue_contex
    * Later set context identifier by ULA?
    */
   /** Create a PDN connection with a default bearer and later set the ESM values when NAS layer is established. */
-  if(mme_app_esm_create_pdn_context(ue_context->mme_ue_s1ap_id, NULL, pdn_connection->apn_str, PDN_CONTEXT_IDENTIFIER_UNASSIGNED, &pdn_connection->apn_ambr, &pdn_context) == RETURNerror){ /**< Create the pdn context using the APN network identifier. */
+  if(mme_app_esm_create_pdn_context(ue_context->mme_ue_s1ap_id, pdn_connection->linked_eps_bearer_id,
+		  NULL, pdn_connection->apn_str, PDN_CONTEXT_IDENTIFIER_UNASSIGNED, &pdn_connection->apn_ambr, &pdn_context) == RETURNerror){ /**< Create the pdn context using the APN network identifier. */
     OAILOG_ERROR(LOG_MME_APP, "Could not create a new pdn context for apn \" %s \" for UE_ID " MME_UE_S1AP_ID_FMT " from S10 PDN_CONNECTIONS IE. "
         "Skipping the establishment of pdn context. \n", bdata(pdn_connection->apn_str), ue_context->mme_ue_s1ap_id);
     OAILOG_FUNC_RETURN(LOG_MME_APP, NULL);
@@ -2318,7 +2319,7 @@ pdn_context_t * mme_app_handle_pdn_connectivity_from_s10(ue_context_t *ue_contex
     esm_cause_t esm_cause = ESM_CAUSE_SUCCESS;
     if(bearer_context_to_be_created_s10->eps_bearer_id != pdn_context->default_ebi){
       esm_cause = mme_app_register_dedicated_bearer_context(ue_context->mme_ue_s1ap_id, ESM_EBR_ACTIVE, pdn_context->context_identifier,
-    		  pdn_context->default_ebi, bearer_context_to_be_created_s10);
+    		  pdn_context->default_ebi, bearer_context_to_be_created_s10, bearer_context_to_be_created_s10->eps_bearer_id);
     } else {
       /** Finalize the default bearer, updating qos. */
       esm_cause = mme_app_finalize_bearer_context(ue_context->mme_ue_s1ap_id, pdn_context->context_identifier,

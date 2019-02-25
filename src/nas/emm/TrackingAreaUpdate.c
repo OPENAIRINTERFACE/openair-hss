@@ -361,12 +361,10 @@ emm_proc_tracking_area_update_complete (
   int                                     rc = RETURNerror;
   emm_sap_t                               emm_sap = {0};
   nas_emm_tau_proc_t                     *tau_proc = NULL;
-  ue_context_t 						     *ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, ue_id);
 
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - EPS TAU complete (ue_id=" MME_UE_S1AP_ID_FMT ")\n", ue_id);
 
-  bool pending_deactivation = false;
   /*
    * Get the UE context
    */
@@ -376,7 +374,6 @@ emm_proc_tracking_area_update_complete (
     if (is_nas_specific_procedure_tau_running(emm_context)) {
       tau_proc = (nas_emm_tau_proc_t*)emm_context->emm_procedures->emm_specific_proc;
 
-      pending_deactivation = !tau_proc->ies->eps_update_type.active_flag;
       /*
        * Upon receiving an TRACKING AREA UPDATE COMPLETE message, the MME shall enter state EMM-REGISTERED
        * and consider the GUTI sent in the TRACKING AREA UPDATE ACCEPT message as valid.
@@ -442,22 +439,6 @@ emm_proc_tracking_area_update_complete (
     emm_sap_send (&emm_sap);
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
   }
-
-  /**
-   * Check for an S10 procedure. If so release it.
-   * If no procedure exists (idle-TAU), check for pending deactivation.
-   */
-
-  if(!mme_app_get_s10_procedure_mme_handover(ue_context)){
-	  if(pending_deactivation){
-		  /** No MBR should be send because no InitialContextSetupResponse is received. */
-		  OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - EMM Context for ueId " MME_UE_S1AP_ID_FMT " hs done an IDLE-TAU without active flag. Triggering UE context release. \n", ue_id);
-		  mme_app_itti_ue_context_release(ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, S1AP_NAS_NORMAL_RELEASE, ue_context->e_utran_cgi.cell_identity.enb_id);
-	  }
-  } else {
-	  mme_app_delete_s10_procedure_mme_handover(ue_context);
-  }
-//  unlock_ue_contexts(ue_context);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
  }
 
@@ -2101,14 +2082,30 @@ static void _emm_tracking_area_update_registration_complete(emm_data_context_t *
   int                            rc = RETURNerror;
 
   nas_emm_tau_proc_t                     *tau_proc = get_nas_specific_procedure_tau(emm_context);
+  ue_context_t 						     *ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
   DevAssert(tau_proc);
+
   /**
-   * Inform the ESM layer about the registration. It would look prettier to have ESM as a child procedure,
-   * but we won't to separate them for the sake of locks as well as AMF/SMF separation..
+   * Check for an S10 procedure. If so release it.
+   * If no procedure exists (idle-TAU), check for pending deactivation.
    */
-  /** End the TAU procedure. */
-//  rc = mme_api_registration_complete(emm_context->ue_id, tau_proc->ies->eps_update_type.active_flag);
-//  DevAssert(rc == RETURNok); /**< Should always exist. Any mobility issue in which this could occur? */
+  mme_app_s10_proc_mme_handover_t * s10_proc_handover = mme_app_get_s10_procedure_mme_handover(ue_context);
+  if(!s10_proc_handover){
+	  if(!tau_proc->ies->eps_update_type.active_flag){
+		  /** No MBR should be send because no InitialContextSetupResponse is received. */
+ 		  OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - EMM Context for ueId " MME_UE_S1AP_ID_FMT " has done an IDLE-TAU without active flag. Triggering UE context release. \n", emm_context->ue_id);
+ 		  mme_app_itti_ue_context_release(ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, S1AP_NAS_NORMAL_RELEASE, ue_context->e_utran_cgi.cell_identity.enb_id);
+	  }
+  } else {
+	  bool pending_qos = s10_proc_handover->pending_qos;
+	  mme_app_delete_s10_procedure_mme_handover(ue_context);
+	  if(pending_qos){
+		  OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - UE for ueId " MME_UE_S1AP_ID_FMT " has pendign QoS information. \n", ue_context->mme_ue_s1ap_id);
+		  nas_itti_s11_retry_ind(ue_context->mme_ue_s1ap_id);
+	  }
+  }
+  //  unlock_ue_contexts(ue_context);
+
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 

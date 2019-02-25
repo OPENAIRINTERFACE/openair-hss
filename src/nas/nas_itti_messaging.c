@@ -89,6 +89,19 @@ nas_itti_esm_detach_ind(
 
 //------------------------------------------------------------------------------
 int
+nas_itti_s11_retry_ind(
+  const mme_ue_s1ap_id_t  ue_id)
+{
+  MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_EMM, NAS_RETRY_BEARER_CTX_PROC_IND);
+  NAS_RETRY_BEARER_CTX_PROC_IND (message_p).ue_id   = ue_id;
+
+  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_S1AP_MME, NULL, 0, "0 NAS_RETRY_BEARER_CTX_PROC_IND ue id " MME_UE_S1AP_ID_FMT, ue_id);
+  // make a long way by MME_APP instead of S1AP to retrieve the sctp_association_id key.
+  return itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
+}
+
+//------------------------------------------------------------------------------
+int
 nas_itti_dl_data_req (
   const mme_ue_s1ap_id_t ue_id,
   bstring                nas_msg,

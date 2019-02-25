@@ -74,7 +74,6 @@ static void *nas_esm_intertask_interface (void *args_p)
       nas_esm_proc_esm_detach(&NAS_ESM_DETACH_IND (received_message_p));
     }
     break;
-
     /**
      * Due to specification 23.401 and the request-type flag, do ULR in ESM.
      * Makes also handover procedures easier.

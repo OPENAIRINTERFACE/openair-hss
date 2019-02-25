@@ -375,11 +375,16 @@ int lowerlayer_activate_bearer_req (
   emm_security_context_t                 *sctx = NULL;
   emm_data_context_t                     *emm_data_context = emm_data_context_get(&_emm_data, ue_id);
 
-  if (!emm_data_context || emm_data_context->_emm_fsm_state != EMM_REGISTERED) {
+  if (!emm_data_context) {
     // todo: check no (implicit) detach procedure is ongoing
-    OAILOG_ERROR(LOG_NAS_EMM, "EMM context not existing or not in EMM_REGISTERED state for UE " MME_UE_S1AP_ID_FMT ". "
+    OAILOG_ERROR(LOG_NAS_EMM, "EMM context not existing UE " MME_UE_S1AP_ID_FMT ". "
         "Aborting the dedicated bearer activation. \n", ue_id);
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
+  } else if (emm_data_context->_emm_fsm_state != EMM_REGISTERED){
+	  /** Check if a TAU procedure is ongoing. Set the pending flag for pending QoS. */
+	  OAILOG_ERROR(LOG_NAS_EMM, "EMM context not in EMM_REGISTERED state for UE " MME_UE_S1AP_ID_FMT ". "
+				"Cannot activate bearers. \n", ue_id);
+	  OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
   }
 
   sctx = &emm_data_context->_security;
@@ -417,11 +422,17 @@ int lowerlayer_modify_bearer_req (
   emm_security_context_t                 *sctx = NULL;
   emm_data_context_t                     *emm_data_context = emm_data_context_get(&_emm_data, ue_id);
 
-  if (!emm_data_context || emm_data_context->_emm_fsm_state != EMM_REGISTERED) {
+
+  if (!emm_data_context) {
     // todo: check no (implicit) detach procedure is ongoing
-    OAILOG_ERROR(LOG_NAS_EMM, "EMM context not existing or not in EMM_REGISTERED state for UE " MME_UE_S1AP_ID_FMT ". "
-        "Aborting the dedicated bearer modification. \n", ue_id);
+    OAILOG_ERROR(LOG_NAS_EMM, "EMM context not existing UE " MME_UE_S1AP_ID_FMT ". "
+        "Aborting the dedicated bearer activation. \n", ue_id);
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
+  } else if (emm_data_context->_emm_fsm_state != EMM_REGISTERED){
+	  /** Check if a TAU procedure is ongoing. Set the pending flag for pending QoS. */
+	  OAILOG_ERROR(LOG_NAS_EMM, "EMM context not in EMM_REGISTERED state for UE " MME_UE_S1AP_ID_FMT ". "
+				"Cannot modify bearers. \n", ue_id);
+	  OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
   }
 
   emm_sap.primitive = EMMAS_ERAB_MODIFY_REQ;
@@ -457,11 +468,17 @@ int lowerlayer_deactivate_bearer_req (
   emm_security_context_t                 *sctx = NULL;
   emm_data_context_t                     *emm_data_context = emm_data_context_get(&_emm_data, ue_id);
 
-  if (!emm_data_context || emm_data_context->_emm_fsm_state != EMM_REGISTERED) {
+
+  if (!emm_data_context) {
     // todo: check no (implicit) detach procedure is ongoing
-    OAILOG_ERROR(LOG_NAS_EMM, "EMM context not existing or not in EMM_REGISTERED state for UE " MME_UE_S1AP_ID_FMT ". "
-        "Aborting the dedicated bearer removal. \n", ue_id);
+    OAILOG_ERROR(LOG_NAS_EMM, "EMM context not existing UE " MME_UE_S1AP_ID_FMT ". "
+        "Aborting the dedicated bearer activation. \n", ue_id);
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
+  } else if (emm_data_context->_emm_fsm_state != EMM_REGISTERED){
+	  /** Check if a TAU procedure is ongoing. Set the pending flag for pending QoS. */
+	  OAILOG_ERROR(LOG_NAS_EMM, "EMM context not in EMM_REGISTERED state for UE " MME_UE_S1AP_ID_FMT ". "
+			  "Cannot delete bearers. \n", ue_id);
+	  OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
   }
 
   emm_sap.primitive = EMMAS_ERAB_RELEASE_REQ;

@@ -209,7 +209,7 @@ esm_proc_eps_bearer_context_deactivate_request (
       OAILOG_ERROR(LOG_NAS_ESM, "ESM-PROC  - PDN_CONN_PROC_FOUND: PTI is 0 for for UE " MME_UE_S1AP_ID_FMT ".\n", ue_id);
     }
   } else {
-    OAILOG_ERROR(LOG_NAS_ESM, "ESM-PROC  - NO PDN_CONN_PROC_FOUND for UE " MME_UE_S1AP_ID_FMT " while EPS bearer context deactivate request is received.\n", ue_id);
+    OAILOG_INFO(LOG_NAS_ESM, "ESM-PROC  - NO PDN_CONN_PROC_FOUND for UE " MME_UE_S1AP_ID_FMT " while EPS bearer context deactivate request is received.\n", ue_id);
   }
 
   /*

@@ -179,6 +179,17 @@ emm_recv_attach_request (
     /*
      * Requirement MME24.301R10_5.5.1.2.7_b Protocol error
      */
+	emm_data_context_t temp_emm_ue_ctx;
+	memset(&temp_emm_ue_ctx, 0, sizeof(emm_data_context_t));
+	temp_emm_ue_ctx.ue_id = ue_id;
+	temp_emm_ue_ctx.emm_cause = *emm_cause;
+	/*
+	 * Do not accept the UE to attach for emergency services
+	 */
+	struct nas_emm_attach_proc_s   no_attach_proc = {0};
+	no_attach_proc.ue_id       = ue_id;
+	no_attach_proc.emm_cause   = temp_emm_ue_ctx.emm_cause;
+	no_attach_proc.esm_msg_out = NULL;
     rc = emm_proc_attach_reject (ue_id, *emm_cause);
     *emm_cause = EMM_CAUSE_SUCCESS;
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);

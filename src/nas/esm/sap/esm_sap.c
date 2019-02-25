@@ -90,6 +90,7 @@ static const char                      *_esm_sap_primitive_str[] = {
     "ESM_EPS_BEARER_CONTEXT_MODIFY_REQ",
     "ESM_EPS_BEARER_CONTEXT_DEACTIVATE_REQ",
     "ESM_EPS_BEARER_RESOURCE_FAILURE_IND",
+
     "ESM_DETACH_IND",
 
     "ESM_TIMEOUT_IND",

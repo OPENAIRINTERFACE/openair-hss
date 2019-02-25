@@ -124,6 +124,13 @@ bearer_context_t* mme_app_get_session_bearer_context(pdn_context_t * const pdn_c
 }
 
 //------------------------------------------------------------------------------
+void mme_app_get_free_bearer_context(ue_context_t * const ue_context, const ebi_t ebi, bearer_context_t ** bc_pp)
+{
+  bearer_context_t    bc_key = {.ebi = ebi};
+  (*bc_pp) = RB_FIND(BearerPool, &ue_context->bearer_pool, &bc_key);
+}
+
+//------------------------------------------------------------------------------
 void mme_app_get_session_bearer_context_from_all(ue_context_t * const ue_context, const ebi_t ebi, bearer_context_t ** bc_pp)
 {
   bearer_context_t  * bearer_context = NULL;
@@ -142,7 +149,7 @@ void mme_app_get_session_bearer_context_from_all(ue_context_t * const ue_context
 //------------------------------------------------------------------------------
 esm_cause_t
 mme_app_register_dedicated_bearer_context(const mme_ue_s1ap_id_t ue_id, const esm_ebr_state esm_ebr_state, pdn_cid_t pdn_cid, ebi_t linked_ebi,
-    bearer_context_to_be_created_t * const bc_tbc)
+    bearer_context_to_be_created_t * const bc_tbc, const ebi_t ded_ebi)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
   pdn_context_t               *pdn_context = NULL;
@@ -169,9 +176,13 @@ mme_app_register_dedicated_bearer_context(const mme_ue_s1ap_id_t ue_id, const es
     /** This should be enough, we don't need to additionally check for the states. */
   }
   /** Removed a bearer context from the UE contexts bearer pool and adds it into the PDN sessions bearer pool. */
-  pBearerCtx = RB_MIN(BearerPool, &ue_context->bearer_pool);
+  if(ded_ebi == EPS_BEARER_IDENTITY_UNASSIGNED)
+	  pBearerCtx = RB_MIN(BearerPool, &ue_context->bearer_pool);
+  else {
+	  mme_app_get_free_bearer_context(ue_context, ded_ebi, &pBearerCtx);
+  }
   if(!pBearerCtx){
-    OAILOG_ERROR(LOG_MME_APP,  "Could not find a free bearer context with for ue_id " MME_UE_S1AP_ID_FMT"! \n", ue_id);
+    OAILOG_ERROR(LOG_MME_APP,  "Could not find a free bearer context with for ue_id " MME_UE_S1AP_ID_FMT" for ded_ebi=%d! \n", ue_id, ded_ebi);
     OAILOG_FUNC_RETURN (LOG_MME_APP, ESM_CAUSE_REQUEST_REJECTED_BY_GW);
   }
   if(validateEpsQosParameter(bc_tbc->bearer_level_qos.qci, bc_tbc->bearer_level_qos.pvi, bc_tbc->bearer_level_qos.pci, bc_tbc->bearer_level_qos.pl,
@@ -662,7 +673,13 @@ mme_app_release_bearer_context(mme_ue_s1ap_id_t ue_id, const pdn_cid_t *pdn_cid,
     /** Get the bearer context from all session bearers. */
     mme_app_get_session_bearer_context_from_all(ue_context, ebi, &bearer_context);
     if(!bearer_context){
-      OAILOG_ERROR(LOG_MME_APP , "ESM-PROC  - Could not find bearer context from ebi %d. \n", ebi);
+      OAILOG_ERROR(LOG_MME_APP , "ESM-PROC  - Could not find bearer context from ebi=%d for UE " MME_UE_S1AP_ID_FMT". \n", ebi, ue_id);
+      OAILOG_FUNC_OUT(LOG_MME_APP);
+    }
+    /** Get the PDN context. */
+    mme_app_get_pdn_context(ue_id, bearer_context->pdn_cx_id, bearer_context->linked_ebi, NULL, &pdn_context);
+    if(!pdn_context){
+      OAILOG_ERROR(LOG_MME_APP , "ESM-PROC  - Could not find pdn context from bearer context with ebi=%d for UE " MME_UE_S1AP_ID_FMT". \n", ebi, ue_id);
       OAILOG_FUNC_OUT(LOG_MME_APP);
     }
   }

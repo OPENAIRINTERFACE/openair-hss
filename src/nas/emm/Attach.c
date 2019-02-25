@@ -475,6 +475,7 @@ int emm_proc_attach_reject (mme_ue_s1ap_id_t ue_id, emm_cause_t emm_cause)
   }else{
     OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - No EMM Context for (ue_id=" MME_UE_S1AP_ID_FMT ")\n", ue_id);
 
+
   }
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }

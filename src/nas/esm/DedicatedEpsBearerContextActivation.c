@@ -242,7 +242,7 @@ esm_proc_dedicated_eps_bearer_context (
    */
   // todo: PCO handling
   traffic_flow_template_t * tft = bc_tbc->tft;
-  esm_cause = mme_app_register_dedicated_bearer_context(ue_id, ESM_EBR_ACTIVE_PENDING, pdn_context->context_identifier, pdn_context->default_ebi, bc_tbc);  /**< We set the ESM state directly to active in handover. */
+  esm_cause = mme_app_register_dedicated_bearer_context(ue_id, ESM_EBR_ACTIVE_PENDING, pdn_context->context_identifier, pdn_context->default_ebi, bc_tbc, ESM_EBI_UNASSIGNED);  /**< We set the ESM state directly to active in handover. */
   if(esm_cause != ESM_CAUSE_SUCCESS){
     OAILOG_ERROR(LOG_NAS_ESM, "ESM-PROC  - Error assigning bearer context for ue " MME_UE_S1AP_ID_FMT ". \n", ue_id);
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, esm_cause);
