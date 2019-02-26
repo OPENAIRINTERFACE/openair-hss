@@ -343,7 +343,11 @@ pipeline {
 
                 // Private Archives
                 if (fileExists("${WORKSPACE}/../../local_archives")) {
-                    sh "tar -cjhf ${JOB_NAME}-build-${BUILD_ID}.tar.bz2 *.log archives"
+                    sh "tar -cf ${JOB_NAME}-build-${BUILD_ID}.tar *.log"
+                    if (fileExists("${WORKSPACE}/archives")) {
+                        sh "tar -rf ${JOB_NAME}-build-${BUILD_ID}.tar archives"
+                    }
+                    sh "bzip2 ${JOB_NAME}-build-${BUILD_ID}.tar"
                     sh "mv ${JOB_NAME}-build-${BUILD_ID}.tar.bz2 ${WORKSPACE}/../../local_archives"
                 }
                 // Public Archives --> artifacts
