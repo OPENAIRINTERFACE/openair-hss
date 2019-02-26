@@ -475,8 +475,8 @@ s10_mme_forward_relocation_response (
      }
 
      /** Setting the Bearer Context to Setup. Just EBI needed. */
-     for (int i = 0; i < forward_relocation_response_p->handovered_bearers->num_bearer_context; i++) {
-       s10_bearer_context_created_ie_set( &(ulp_req.hMsg), &forward_relocation_response_p->handovered_bearers->bearer_contexts[i]);
+     for (int i = 0; i < forward_relocation_response_p->handovered_bearers.num_bearer_context; i++) {
+       gtpv2c_bearer_context_created_ie_set(&(ulp_req.hMsg), &forward_relocation_response_p->handovered_bearers.bearer_contexts[i]);
      }
    }
    /** No allocated context remains. */
@@ -538,9 +538,8 @@ s10_mme_handle_forward_relocation_response(
   /*
    * Bearer Contexts Created IE
    */
-  resp_p->handovered_bearers = calloc(1, sizeof(bearer_contexts_to_be_created_t));
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_BEARER_CONTEXT, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
-      s10_bearer_context_created_ie_get, resp_p->handovered_bearers);
+		  gtpv2c_bearer_context_created_ie_get, &resp_p->handovered_bearers);
   DevAssert (NW_OK == rc);
   /*
    * Run the parser

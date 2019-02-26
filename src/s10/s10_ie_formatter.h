@@ -136,10 +136,7 @@ int s10_bearer_context_to_create_ie_set (nw_gtpv2c_msg_handle_t * msg, const bea
 nw_rc_t
 s10_bearer_context_to_be_created_ie_get ( uint8_t ieType, uint16_t ieLength, uint8_t ieInstance, uint8_t * ieValue, void *arg);
 
-/* Bearer Context Created grouped Information Element */
-nw_rc_t s10_bearer_context_created_ie_get(uint8_t ieType, uint16_t ieLength, uint8_t ieInstance, uint8_t *ieValue, void *arg);
-
-int s10_bearer_context_created_ie_set(nw_gtpv2c_msg_handle_t *msg, const bearer_context_to_be_created_t *bc_tbc);
+int s10_bearer_context_created_ie_set(nw_gtpv2c_msg_handle_t *msg, const bearer_context_created_t *bc_tbc);
 
 /* Serving Network Information Element
  * 3GPP TS 29.274 #8.18

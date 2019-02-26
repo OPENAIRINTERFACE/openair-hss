@@ -117,7 +117,7 @@ esm_proc_pdn_disconnect_request (
 
 void
 esm_proc_detach_request (
-  mme_ue_s1ap_id_t ue_id);
+  mme_ue_s1ap_id_t ue_id, bool clr);
 
 /*
  * --------------------------------------------------------------------------

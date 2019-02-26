@@ -113,6 +113,7 @@ typedef struct emm_cn_implicit_detach_ue_s {
   uint32_t ue_id;
   nas_cause_t emm_cause;
   emm_proc_detach_type_t detach_type;
+  bool clr;
 } emm_cn_implicit_detach_ue_t;
 
 typedef struct emm_cn_smc_fail_s {

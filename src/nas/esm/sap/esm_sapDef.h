@@ -188,6 +188,7 @@ typedef struct esm_sap_s {
   const_bstring       recv;       /* Encoded ESM message received                                       */
   esm_sap_data_t      data;       /* ESM message data parameters                                        */
   esm_cause_t         esm_cause;
+  bool                clr;
 } esm_sap_t;
 
 /****************************************************************************/

@@ -206,7 +206,7 @@ esm_proc_pdn_disconnect_request (
     mme_app_select_service(&esm_proc_pdn_disconnect->visited_tai, &saegw_peer_ipv4);
   }
 
-  nas_itti_pdn_disconnect_req(ue_id, pdn_context->default_ebi, pti, false,
+  nas_itti_pdn_disconnect_req(ue_id, pdn_context->default_ebi, pti, false, false,
       saegw_peer_ipv4, pdn_context->s_gw_teid_s11_s4,
       pdn_cid);
 
@@ -230,7 +230,7 @@ esm_proc_pdn_disconnect_request (
  ***************************************************************************/
 void
 esm_proc_detach_request (
-  mme_ue_s1ap_id_t ue_id)
+  mme_ue_s1ap_id_t ue_id, bool clr)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
 
@@ -258,7 +258,7 @@ esm_proc_detach_request (
      * No need to process the response.
      */
     if(pdn_context->s_gw_address_s11_s4.address.ipv4_address.s_addr != 0){
-      nas_itti_pdn_disconnect_req(ue_id, pdn_context->default_ebi, PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED, deleteTunnel,
+      nas_itti_pdn_disconnect_req(ue_id, pdn_context->default_ebi, PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED, deleteTunnel, clr,
           pdn_context->s_gw_address_s11_s4.address.ipv4_address, pdn_context->s_gw_teid_s11_s4, pdn_context->context_identifier);
     }
   }

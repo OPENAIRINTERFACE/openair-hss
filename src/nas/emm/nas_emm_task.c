@@ -99,7 +99,8 @@ static void *nas_emm_intertask_interface (void *args_p)
       break;
 
     case NAS_IMPLICIT_DETACH_UE_IND:{
-      nas_proc_implicit_detach_ue_ind (NAS_IMPLICIT_DETACH_UE_IND (received_message_p).ue_id, NAS_IMPLICIT_DETACH_UE_IND (received_message_p).emm_cause, NAS_IMPLICIT_DETACH_UE_IND (received_message_p).detach_type);
+      nas_proc_implicit_detach_ue_ind (NAS_IMPLICIT_DETACH_UE_IND (received_message_p).ue_id, NAS_IMPLICIT_DETACH_UE_IND (received_message_p).emm_cause, NAS_IMPLICIT_DETACH_UE_IND (received_message_p).detach_type,
+    		  NAS_IMPLICIT_DETACH_UE_IND (received_message_p).clr);
     }
     break;
 

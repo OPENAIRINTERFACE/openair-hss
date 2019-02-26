@@ -184,6 +184,7 @@ nas_esm_proc_esm_detach(
 
   esm_sap.primitive = ESM_DETACH_IND;
   esm_sap.ue_id     = esm_detach->ue_id;
+  esm_sap.clr       = esm_detach->clr;
   MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_ESM_MME, NULL, 0, "0 ESM_DETACH_IND " MME_UE_S1AP_ID_FMT " ", esm_detach->ue_id);
   /** Handle each bearer context separately. */
   /** Get the bearer contexts to be updated. */

@@ -167,7 +167,7 @@ static int _emm_cn_deregister_ue (const mme_ue_s1ap_id_t ue_id)
 }
 
 //------------------------------------------------------------------------------
-static int _emm_cn_implicit_detach_ue (const uint32_t ue_id, const emm_proc_detach_type_t detach_type, const int emm_cause)
+static int _emm_cn_implicit_detach_ue (const uint32_t ue_id, const emm_proc_detach_type_t detach_type, const int emm_cause, const bool clr)
 {
   int                                     rc = RETURNok;
 
@@ -184,7 +184,7 @@ static int _emm_cn_implicit_detach_ue (const uint32_t ue_id, const emm_proc_deta
 //  params.type = EMM_DETACH_TYPE_EPS;
 
   /** No detach procedure for implicit detach. Set the UE state into EMM-DEREGISTER-INITIATED state. */
-  emm_proc_detach(ue_id, detach_type, emm_cause);
+  emm_proc_detach(ue_id, detach_type, emm_cause, clr);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
@@ -316,7 +316,8 @@ int emm_cn_send (const emm_cn_t * msg)
     break;
 
   case EMMCN_IMPLICIT_DETACH_UE:
-    rc = _emm_cn_implicit_detach_ue (msg->u.emm_cn_implicit_detach.ue_id, msg->u.emm_cn_implicit_detach.detach_type, msg->u.emm_cn_implicit_detach.emm_cause);
+    rc = _emm_cn_implicit_detach_ue (msg->u.emm_cn_implicit_detach.ue_id, msg->u.emm_cn_implicit_detach.detach_type, msg->u.emm_cn_implicit_detach.emm_cause,
+    		msg->u.emm_cn_implicit_detach.clr);
     break;
 
   case EMMCN_SMC_PROC_FAIL:

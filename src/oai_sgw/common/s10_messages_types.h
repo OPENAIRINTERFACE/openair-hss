@@ -130,10 +130,7 @@ typedef struct itti_s10_forward_relocation_response_s {
   fteid_t                  s10_target_mme_teid;        ///< Target MME S10 control plane (sender fteid)
   ///< This IE shall be sent on the S10 interfaces.
 
-  // todo: Indication : This IE shall be included if any of the flags are set to 1. SGW Change Indication:   - This flag shall be set to 1 if the target MME/SGSN   has selected a new SGW.
-
-  // todo: list of bearer contexts (todo: after RAB has been established?)
-  bearer_contexts_to_be_created_t  *handovered_bearers;
+  bearer_contexts_created_t  handovered_bearers;
 
   // todo: This IE is included if cause value is contained in S1-AP message. Refer to the 3GPP TS 29.010 [42] for the mapping of cause values between S1AP, RANAP and BSSGP.
 

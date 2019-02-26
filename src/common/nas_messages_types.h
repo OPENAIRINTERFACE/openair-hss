@@ -156,6 +156,7 @@ typedef struct itti_nas_esm_data_ind_s {
 
 typedef struct itti_nas_esm_detach_ind_s {
   mme_ue_s1ap_id_t  ue_id;
+  bool              clr;
 } itti_nas_esm_detach_ind_t;
 
 typedef struct itti_nas_dl_data_req_s {
@@ -246,6 +247,7 @@ typedef struct itti_nas_implicit_detach_ue_ind_s {
   mme_ue_s1ap_id_t ue_id;
   uint8_t emm_cause;
   uint8_t detach_type;
+  bool clr;
 } itti_nas_implicit_detach_ue_ind_t;
 
 /** NAS Context request and response. */
@@ -280,6 +282,7 @@ typedef struct itti_nas_pdn_disconnect_req_s {
   struct in_addr          saegw_s11_ip_addr;
   teid_t                  saegw_s11_teid;
   bool                    noDelete;
+  bool  				  handover;
 } itti_nas_pdn_disconnect_req_t;
 
 typedef struct itti_nas_pdn_disconnect_rsp_s {

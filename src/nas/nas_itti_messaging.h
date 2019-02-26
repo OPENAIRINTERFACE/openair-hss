@@ -45,7 +45,8 @@ nas_itti_esm_data_ind(
 
 int
 nas_itti_esm_detach_ind(
-  const mme_ue_s1ap_id_t  ue_id);
+  const mme_ue_s1ap_id_t  ue_id,
+  const bool clr);
 
 int
 nas_itti_s11_retry_ind(
@@ -92,6 +93,7 @@ void nas_itti_pdn_disconnect_req(
   ebi_t                   default_ebi,
   pti_t                   pti,
   bool                    deleteTunnel,
+  bool                    handover,
   struct in_addr          saegw_s11_addr, /**< Put them into the UE context ? */
   teid_t                  saegw_s11_teid,
   pdn_cid_t               pdn_cid);

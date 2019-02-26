@@ -540,7 +540,7 @@ int mme_app_remove_s10_tunnel_endpoint(teid_t local_teid, struct in_addr peer_ip
  * Cu
  */
 //------------------------------------------------------------------------------
-int mme_app_send_delete_session_request (struct ue_context_s * const ue_context_p, const ebi_t ebi, const struct in_addr saegw_s11_in_addr, const teid_t saegw_s11_teid, const bool noDelete, const uint8_t internal_flags)
+int mme_app_send_delete_session_request (struct ue_context_s * const ue_context_p, const ebi_t ebi, const struct in_addr saegw_s11_in_addr, const teid_t saegw_s11_teid, const bool noDelete, const bool handover, const uint8_t internal_flags)
 {
   MessageDef                             *message_p = NULL;
   int                                     rc = RETURNok;
@@ -564,7 +564,14 @@ int mme_app_send_delete_session_request (struct ue_context_s * const ue_context_
   mme_config_unlock (&mme_config);
   S11_DELETE_SESSION_REQUEST (message_p).sender_fteid_for_cp.ipv4 = 1;
 
-  S11_DELETE_SESSION_REQUEST (message_p).indication_flags.oi = 1;
+  if(handover){
+	  S11_DELETE_SESSION_REQUEST (message_p).indication_flags.oi = 0x0;
+	  S11_DELETE_SESSION_REQUEST (message_p).indication_flags.si = 0x1;
+  }else {
+	  S11_DELETE_SESSION_REQUEST (message_p).indication_flags.oi = 0x1;
+	  S11_DELETE_SESSION_REQUEST (message_p).indication_flags.si = 0x0;
+  }
+
 
   /*
    * S11 stack specific parameter. Not used in standalone epc mode
@@ -951,10 +958,16 @@ void mme_app_itti_forward_relocation_response(ue_context_t *ue_context, mme_app_
   /** Set all bearers. */
   pdn_context_t * registered_pdn_ctx = NULL;
   RB_FOREACH (registered_pdn_ctx, PdnContexts, &ue_context->pdn_contexts) {
-    DevAssert(registered_pdn_ctx);
-    forward_relocation_response_p->handovered_bearers = calloc (1, sizeof (bearer_contexts_to_be_created_t));
-    mme_app_get_bearer_contexts_to_be_created(registered_pdn_ctx, forward_relocation_response_p->handovered_bearers, BEARER_STATE_NULL);
-    /** The number of bearers will be incremented in the method. S10 should just pick the ebi. */
+    if(!registered_pdn_ctx)
+    	continue;
+    bearer_context_t *bearer_context_setup = NULL;
+    RB_FOREACH (bearer_context_setup, SessionBearers, &registered_pdn_ctx->session_bearers) {
+      if(!bearer_context_setup)
+    	  continue;
+      /** EBI. */
+      forward_relocation_response_p->handovered_bearers.bearer_contexts[forward_relocation_response_p->handovered_bearers.num_bearer_context].eps_bearer_id = bearer_context_setup->ebi;
+      forward_relocation_response_p->handovered_bearers.num_bearer_context++;
+    }
   }
 
   /** Set the Source MME_S10_FTEID the same as in S11. */

@@ -712,7 +712,7 @@ static int _emm_as_establish_req (emm_as_establish_t * msg, int *emm_cause)
                                                   (0 == decode_status.mac_matched))) {
         *emm_cause = EMM_CAUSE_UE_IDENTITY_CANT_BE_DERIVED_BY_NW;
         // Delete EMM,ESM context, MMEAPP UE context and S1AP context
-        nas_proc_implicit_detach_ue_ind(emm_ctx->ue_id, 0x00, 0x02);
+        nas_proc_implicit_detach_ue_ind(emm_ctx->ue_id, 0x00, 0x02, false);
         //      unlock_ue_contexts(ue_context);
       } else {
         // Process Detach Request

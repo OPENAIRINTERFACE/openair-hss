@@ -873,7 +873,7 @@ static void  _authentication_t3460_handler (void *args)
         OAILOG_FUNC_OUT (LOG_NAS_EMM);
       }else{
         OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - EMM Context for ueId " MME_UE_S1AP_ID_FMT " is not existing. Triggering an MME_APP detach.. \n", auth_proc->ue_id);
-        nas_itti_esm_detach_ind(ue_id);
+        nas_itti_esm_detach_ind(ue_id, false);
         OAILOG_FUNC_OUT (LOG_NAS_EMM);
       }
     }

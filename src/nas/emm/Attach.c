@@ -750,7 +750,7 @@ int emm_proc_attach_request_validity(emm_data_context_t * emm_context, mme_ue_s1
 
       // Clean up new UE context that was created to handle new attach request
       if(new_ue_id != emm_context->ue_id)
-        nas_itti_esm_detach_ind(new_ue_id);
+        nas_itti_esm_detach_ind(new_ue_id, false);
       free_emm_attach_request_ies(&ies);
 
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);

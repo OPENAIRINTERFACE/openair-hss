@@ -67,12 +67,6 @@ nw_rc_t gtpv2c_rat_type_ie_get(uint8_t ieType, uint16_t ieLength, uint8_t ieInst
 
 int gtpv2c_rat_type_ie_set(nw_gtpv2c_msg_handle_t *msg, const rat_type_t *rat_type);
 
-/* Bearer Contexts to Create Information Element as part of Create Session Request
- * 3GPP TS 29.274 Table 7.2.1-2.
- */
-nw_rc_t gtpv2c_bearer_context_to_be_created_within_create_session_request_ie_get (uint8_t ieType, uint16_t ieLength, uint8_t ieInstance, uint8_t * ieValue, void *arg);
-int gtpv2c_bearer_context_to_be_created_within_create_session_request_ie_set (nw_gtpv2c_msg_handle_t * msg, const bearer_context_to_be_created_t * bearer_context);
-
 nw_rc_t gtpv2c_bearer_context_to_be_created_within_create_bearer_request_ie_get (uint8_t ieType, uint16_t ieLength, uint8_t ieInstance, uint8_t * ieValue, void *arg);
 int gtpv2c_bearer_context_to_be_created_within_create_bearer_request_ie_set (nw_gtpv2c_msg_handle_t * msg, const bearer_context_to_be_created_t * bearer_context);
 
@@ -108,12 +102,7 @@ nw_rc_t gtpv2c_pti_ie_get (uint8_t ieType, uint16_t ieLength, uint8_t ieInstance
 nw_rc_t gtpv2c_ebi_ie_get_list (uint8_t ieType, uint16_t ieLength, uint8_t ieInstance, uint8_t * ieValue, void *arg);
 
 /* Bearer Context Created grouped Information Element */
-nw_rc_t gtpv2c_bearer_context_created_ie_get(uint8_t ieType, uint16_t ieLength, uint8_t ieInstance, uint8_t *ieValue, void *arg);
-
-/* Bearer Context Created grouped Information Element */
 nw_rc_t gtpv2c_bearer_context_modified_ie_get(uint8_t ieType, uint16_t ieLength, uint8_t ieInstance, uint8_t *ieValue, void *arg);
-
-int gtpv2c_bearer_context_created_ie_set(nw_gtpv2c_msg_handle_t *msg, const bearer_context_created_t * const bearer);
 
 nw_rc_t gtpv2c_bearer_context_marked_for_removal_ie_get(uint8_t ieType, uint16_t ieLength, uint8_t ieInstance, uint8_t *ieValue, void *arg);
 int gtpv2c_bearer_context_marked_for_removal_ie_set(nw_gtpv2c_msg_handle_t *msg, const bearer_context_marked_for_removal_t * const bearer);

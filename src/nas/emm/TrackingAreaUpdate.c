@@ -620,7 +620,7 @@ int emm_proc_tracking_area_update_request_validity(emm_data_context_t * emm_cont
       /** TAU before ATTACH_ACCEPT sent should be rejected directly. */
 //      rc = emm_wrapper_tracking_area_update_reject(attach_procedure->ue_id, EMM_CAUSE_MSC_NOT_REACHABLE); /**< Will remove the contexts for the TAU-Req. */
       if(new_ue_id != emm_context->ue_id)
-        nas_itti_esm_detach_ind(new_ue_id);
+        nas_itti_esm_detach_ind(new_ue_id, false);
       free_emm_tau_request_ies(&ies);
       /** Not touching the ATTACH procedure. */
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
@@ -662,7 +662,7 @@ int emm_proc_tracking_area_update_request_validity(emm_data_context_t * emm_cont
         _emm_tracking_area_update_accept_retx(emm_context); /**< Resend the TAU_ACCEPT with the old EMM context (with old UE IDs). */
         // Clean up new UE context that was created to handle new tau request
         if(new_ue_id != emm_context->ue_id)
-          nas_itti_esm_detach_ind(new_ue_id);
+          nas_itti_esm_detach_ind(new_ue_id, false);
         free_emm_tau_request_ies(&ies);
 
         OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Received duplicated TAU Request\n");
@@ -699,7 +699,7 @@ int emm_proc_tracking_area_update_request_validity(emm_data_context_t * emm_cont
           */
          // Clean up new UE context that was created to handle new attach request
          if(new_ue_id != emm_context->ue_id)
-           nas_itti_esm_detach_ind(new_ue_id);
+           nas_itti_esm_detach_ind(new_ue_id, false);
          free_emm_tau_request_ies(&ies);
 
          OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Received duplicated TAU Request\n");

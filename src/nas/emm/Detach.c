@@ -188,7 +188,8 @@ int
 emm_proc_detach (
   mme_ue_s1ap_id_t ue_id,
   emm_proc_detach_type_t detach_type,
-  int emm_cause)
+  int emm_cause,
+  bool clr)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
@@ -212,7 +213,7 @@ emm_proc_detach (
   if (emm_context == NULL) {
     OAILOG_WARNING (LOG_NAS_EMM, "No EMM context exists for the UE (ue_id=" MME_UE_S1AP_ID_FMT ")", ue_id);
     // There may be MME APP Context. Trigger clean up in MME APP
-    nas_itti_esm_detach_ind(ue_id);
+    nas_itti_esm_detach_ind(ue_id, clr);
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
   }
   /*
@@ -309,7 +310,7 @@ emm_proc_detach (
      // todo: review unlock
 
      /** Signal detach Free all ESM procedure, don't care about the rest. */
-     nas_itti_esm_detach_ind(ue_id);
+     nas_itti_esm_detach_ind(ue_id, clr);
 
      //     unlock_ue_contexts(ue_context);
      OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
@@ -468,7 +469,7 @@ emm_proc_detach_request (
   rc = emm_sap_send (&emm_sap);
 
   /** Signal detach Free all ESM procedure, don't care about the rest. */
-  nas_itti_esm_detach_ind(ue_id);
+  nas_itti_esm_detach_ind(ue_id, false);
 
   //     unlock_ue_contexts(ue_context);
   OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);

@@ -228,7 +228,7 @@ int emm_proc_service_reject (const mme_ue_s1ap_id_t ue_id, const int emm_cause);
  */
 
 void free_emm_detach_request_ies(emm_detach_request_ies_t ** const ies);
-int emm_proc_detach(mme_ue_s1ap_id_t ue_id, emm_proc_detach_type_t detach_type, int emm_cause);
+int emm_proc_detach(mme_ue_s1ap_id_t ue_id, emm_proc_detach_type_t detach_type, int emm_cause, bool clr);
 int emm_proc_detach_request(mme_ue_s1ap_id_t ue_id, emm_detach_request_ies_t * params);
 
 /*

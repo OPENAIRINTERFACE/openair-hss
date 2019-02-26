@@ -96,7 +96,7 @@ int nas_proc_auth_param_fail(mme_ue_s1ap_id_t ue_id, nas_cause_t cause);
 int nas_proc_deregister_ue(uint32_t ue_id);
 
 int nas_proc_signalling_connection_rel_ind (mme_ue_s1ap_id_t ue_id);
-int nas_proc_implicit_detach_ue_ind (mme_ue_s1ap_id_t ue_id, uint8_t emm_cause, uint8_t detach_type);
+int nas_proc_implicit_detach_ue_ind (mme_ue_s1ap_id_t ue_id, uint8_t emm_cause, uint8_t detach_type, bool clr);
 /** NAS context response. */
 int nas_proc_context_res (itti_nas_context_res_t *nas_context_res);
 int nas_proc_context_fail (mme_ue_s1ap_id_t ue_id, gtpv2c_cause_value_t cause);

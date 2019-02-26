@@ -1114,74 +1114,10 @@ s10_bearer_context_to_be_modified_ie_get (
   return NW_OK;
 }
 
-nw_rc_t
-s10_bearer_context_created_ie_get (
-  uint8_t ieType,
-  uint16_t ieLength,
-  uint8_t ieInstance,
-  uint8_t * ieValue,
-  void *arg)
-{
-  bearer_contexts_created_t              *bearer_contexts = (bearer_contexts_created_t *) arg;
-  DevAssert (bearer_contexts);
-  DevAssert (0 <= bearer_contexts->num_bearer_context);
-  DevAssert (MSG_CREATE_SESSION_REQUEST_MAX_BEARER_CONTEXTS >= bearer_contexts->num_bearer_context);
-  bearer_context_created_t               *bearer_context = &bearer_contexts->bearer_contexts[bearer_contexts->num_bearer_context];
-  uint8_t                                 read = 0;
-  nw_rc_t                                   rc;
-
-  while (ieLength > read) {
-    nw_gtpv2c_ie_tlv_t                         *ie_p;
-
-    ie_p = (nw_gtpv2c_ie_tlv_t *) & ieValue[read];
-
-    switch (ie_p->t) {
-    case NW_GTPV2C_IE_EBI:
-      rc = gtpv2c_ebi_ie_get (ie_p->t, ie_p->l, ie_p->i, &ieValue[read + sizeof (nw_gtpv2c_ie_tlv_t)], &bearer_context->eps_bearer_id);
-      DevAssert (NW_OK == rc);
-      break;
-
-    case NW_GTPV2C_IE_FTEID:
-      switch (ie_p->i) {
-        case 0:
-          rc = gtpv2c_fteid_ie_get (ie_p->t, ie_p->l, ie_p->i, &ieValue[read + sizeof (nw_gtpv2c_ie_tlv_t)], &bearer_context->s1u_sgw_fteid);
-          break;
-        case 1:
-          rc = gtpv2c_fteid_ie_get (ie_p->t, ie_p->l, ie_p->i, &ieValue[read + sizeof (nw_gtpv2c_ie_tlv_t)], &bearer_context->s4u_sgw_fteid);
-          break;
-        case 2:
-          rc = gtpv2c_fteid_ie_get (ie_p->t, ie_p->l, ie_p->i, &ieValue[read + sizeof (nw_gtpv2c_ie_tlv_t)], &bearer_context->s5_s8_u_pgw_fteid);
-          break;
-        case 3:
-          rc = gtpv2c_fteid_ie_get (ie_p->t, ie_p->l, ie_p->i, &ieValue[read + sizeof (nw_gtpv2c_ie_tlv_t)], &bearer_context->s12_sgw_fteid);
-          break;
-        default:
-          OAILOG_ERROR (LOG_S10, "Received unexpected IE %u instance %u\n", ie_p->t, ie_p->i);
-          return NW_GTPV2C_IE_INCORRECT;
-
-      }
-      DevAssert (NW_OK == rc);
-      break;
-
-    case NW_GTPV2C_IE_CAUSE:
-      rc = gtpv2c_cause_ie_get (ie_p->t, ie_p->l, ie_p->i, &ieValue[read + sizeof (nw_gtpv2c_ie_tlv_t)], &bearer_context->cause);
-      break;
-
-    default:
-      OAILOG_ERROR (LOG_S10, "Received unexpected IE %u\n", ie_p->t);
-      return NW_GTPV2C_IE_INCORRECT;
-    }
-
-    read += (ntohs (ie_p->l) + sizeof (nw_gtpv2c_ie_tlv_t));
-  }
-  bearer_contexts->num_bearer_context += 1;
-  return NW_OK;
-}
-
 int
 s10_bearer_context_created_ie_set (
   nw_gtpv2c_msg_handle_t * msg,
-  const bearer_context_to_be_created_t * bc_tbc)
+  const bearer_context_created_t * bc_tbc)
 {
   nw_rc_t                                   rc;
 

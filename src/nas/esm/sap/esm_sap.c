@@ -163,7 +163,7 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
 
   case ESM_DETACH_IND:{
     pti_t pti = PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED;
-    esm_proc_detach_request(msg->ue_id);
+    esm_proc_detach_request(msg->ue_id, msg->clr);
   }
   break;
 

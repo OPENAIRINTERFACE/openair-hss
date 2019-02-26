@@ -526,7 +526,7 @@ int emm_proc_security_mode_reject (mme_ue_s1ap_id_t ue_id)
     rc = emm_sap_send (&emm_sap);
   }
 
-  nas_itti_esm_detach_ind(ue_id);
+  nas_itti_esm_detach_ind(ue_id, false);
 //  unlock_ue_contexts(ue_context);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
@@ -619,7 +619,7 @@ static void _security_t3460_handler  (void *args)
         OAILOG_FUNC_OUT (LOG_NAS_EMM);
       }else{
         OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - EMM Context for ueId " MME_UE_S1AP_ID_FMT " is not existing. Triggering an MME_APP detach.. \n", smc_proc->ue_id);
-        nas_itti_esm_detach_ind(ue_id);
+        nas_itti_esm_detach_ind(ue_id, false);
         OAILOG_FUNC_OUT (LOG_NAS_EMM);
       }
 

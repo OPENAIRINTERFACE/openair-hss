@@ -77,10 +77,12 @@ nas_itti_esm_data_ind(
 //------------------------------------------------------------------------------
 int
 nas_itti_esm_detach_ind(
-  const mme_ue_s1ap_id_t  ue_id)
+  const mme_ue_s1ap_id_t  ue_id,
+  const bool clr)
 {
   MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_EMM, NAS_ESM_DETACH_IND);
   NAS_ESM_DETACH_IND (message_p).ue_id   = ue_id;
+  NAS_ESM_DETACH_IND (message_p).clr     = clr;
 
   MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_S1AP_MME, NULL, 0, "0 NAS_ESM_DETACH_IND ue id " MME_UE_S1AP_ID_FMT, ue_id);
   // make a long way by MME_APP instead of S1AP to retrieve the sctp_association_id key.
@@ -340,6 +342,7 @@ void nas_itti_pdn_disconnect_req(
   ebi_t                   default_ebi,
   pti_t                   pti,
   bool                    deleteTunnel,
+  bool                    handover,
   struct in_addr          saegw_s11_addr, /**< Put them into the UE context ? */
   teid_t                  saegw_s11_teid,
   pdn_cid_t               pdn_cid)
@@ -352,6 +355,7 @@ void nas_itti_pdn_disconnect_req(
   NAS_PDN_DISCONNECT_REQ(message_p).pdn_cid         = pdn_cid;
   NAS_PDN_DISCONNECT_REQ(message_p).pti             = pti;
   NAS_PDN_DISCONNECT_REQ(message_p).default_ebi     = default_ebi;
+  NAS_PDN_DISCONNECT_REQ(message_p).handover		= handover;
   NAS_PDN_DISCONNECT_REQ(message_p).ue_id           = ue_idP;
   NAS_PDN_DISCONNECT_REQ(message_p).noDelete        = ((pti != PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED) || !deleteTunnel);
   NAS_PDN_DISCONNECT_REQ(message_p).saegw_s11_ip_addr    = saegw_s11_addr;

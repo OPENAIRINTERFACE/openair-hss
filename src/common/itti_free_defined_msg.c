@@ -462,11 +462,6 @@ void itti_free_msg_content (MessageDef * const message_p)
   case S10_FORWARD_RELOCATION_RESPONSE:
     /** Transparent Container. */
     bdestroy_wrapper(&message_p->ittiMsg.s10_forward_relocation_response.eutran_container.container_value);
-
-    /** Handovered Bearers. */
-    if(message_p->ittiMsg.s10_forward_relocation_response.handovered_bearers){
-      free_bearer_contexts_to_be_created(&message_p->ittiMsg.s10_forward_relocation_response.handovered_bearers);
-    }
     break;
 
   case S10_FORWARD_ACCESS_CONTEXT_NOTIFICATION:

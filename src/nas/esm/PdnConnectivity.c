@@ -386,7 +386,7 @@ void esm_proc_pdn_connectivity_failure (mme_ue_s1ap_id_t ue_id, nas_esm_proc_pdn
       mme_app_select_service(&esm_proc_pdn_connectivity->visited_tai, &saegw_peer_ipv4);
     }
 
-    nas_itti_pdn_disconnect_req(ue_id, esm_proc_pdn_connectivity->default_ebi, esm_proc_pdn_connectivity->esm_base_proc.pti, false,
+    nas_itti_pdn_disconnect_req(ue_id, esm_proc_pdn_connectivity->default_ebi, esm_proc_pdn_connectivity->esm_base_proc.pti, false, false,
         saegw_peer_ipv4, pdn_context->s_gw_teid_s11_s4,
         esm_proc_pdn_connectivity->pdn_cid);
     mme_app_esm_delete_pdn_context(ue_id, esm_proc_pdn_connectivity->subscribed_apn, esm_proc_pdn_connectivity->pdn_cid, esm_proc_pdn_connectivity->default_ebi); /**< Frees it by putting it back to the pool. */
