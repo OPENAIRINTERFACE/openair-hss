@@ -1408,6 +1408,29 @@ s1ap_handle_handover_request (
 	  e_RABToBeSetupHO->e_RABlevelQosParameters.allocationRetentionPriority.pre_emptionVulnerability = handover_request_pP->bearer_ctx_to_be_setup_list->bearer_contexts[item].bearer_level_qos.pvi;
 	  /** No NAS. */
 
+      bearer_qos_t * bearer_qos_information = &handover_request_pP->bearer_ctx_to_be_setup_list->bearer_contexts[item].bearer_level_qos;
+      if (handover_request_pP->bearer_ctx_to_be_setup_list->bearer_contexts[item].bearer_level_qos.qci <= 4) {
+
+        OAILOG_NOTICE (LOG_S1AP, "Encoding of GBR level qos information for bearer (ebi=%d,qci=%d).\n",
+        		handover_request_pP->bearer_ctx_to_be_setup_list->bearer_contexts[item].eps_bearer_id,
+				handover_request_pP->bearer_ctx_to_be_setup_list->bearer_contexts[item].bearer_level_qos.qci);
+
+        e_RABToBeSetupHO->e_RABlevelQosParameters.gbrQosInformation = calloc(1, sizeof(struct S1ap_GBR_QosInformation));
+        DevAssert(e_RABToBeSetupHO->e_RABlevelQosParameters.gbrQosInformation);
+        //s1ap_E_RABToBeSetupItemBearerSUReq[i].e_RABlevelQoSParameters.gbrQosInformation = calloc(1, sizeof(struct S1ap_GBR_QosInformation));
+        asn_uint642INTEGER(&e_RABToBeSetupHO->e_RABlevelQosParameters.gbrQosInformation->e_RAB_MaximumBitrateDL,
+        		bearer_qos_information->mbr.br_dl);
+
+        asn_uint642INTEGER(&e_RABToBeSetupHO->e_RABlevelQosParameters.gbrQosInformation->e_RAB_MaximumBitrateUL,
+        		bearer_qos_information->mbr.br_ul);
+
+        asn_uint642INTEGER(&e_RABToBeSetupHO->e_RABlevelQosParameters.gbrQosInformation->e_RAB_GuaranteedBitrateDL,
+        		bearer_qos_information->gbr.br_dl);
+
+        asn_uint642INTEGER(&e_RABToBeSetupHO->e_RABlevelQosParameters.gbrQosInformation->e_RAB_GuaranteedBitrateUL,
+        		bearer_qos_information->gbr.br_ul);
+      }
+
 //	  /** Set transport level information. */
 //
 //	  INT32_TO_OCTET_STRING (bc_tbc->s1u_sgw_fteid.teid, &e_RABToBeSetupHO_p->gTP_TEID);

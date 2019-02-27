@@ -500,24 +500,28 @@ gtpv2c_bearer_qos_ie_get (
     bearer_qos->mbr.br_ul |= (((bit_rate_t)ieValue[index++]) << 16);
     bearer_qos->mbr.br_ul |= (((bit_rate_t)ieValue[index++]) << 8);
     bearer_qos->mbr.br_ul |= (bit_rate_t)ieValue[index++];
+    bearer_qos->mbr.br_ul *=1000;
 
     bearer_qos->mbr.br_dl = ((bit_rate_t)ieValue[index++]) << 32;
     bearer_qos->mbr.br_dl |= (((bit_rate_t)ieValue[index++]) << 24);
     bearer_qos->mbr.br_dl |= (((bit_rate_t)ieValue[index++]) << 16);
     bearer_qos->mbr.br_dl |= (((bit_rate_t)ieValue[index++]) << 8);
     bearer_qos->mbr.br_dl |= (bit_rate_t)ieValue[index++];
+    bearer_qos->mbr.br_dl *=1000;
 
     bearer_qos->gbr.br_ul = ((bit_rate_t)ieValue[index++]) << 32;
     bearer_qos->gbr.br_ul |= (((bit_rate_t)ieValue[index++]) << 24);
     bearer_qos->gbr.br_ul |= (((bit_rate_t)ieValue[index++]) << 16);
     bearer_qos->gbr.br_ul |= (((bit_rate_t)ieValue[index++]) << 8);
     bearer_qos->gbr.br_ul |= (bit_rate_t)ieValue[index++];
+    bearer_qos->gbr.br_ul *=1000;
 
     bearer_qos->gbr.br_dl = ((bit_rate_t)ieValue[index++]) << 32;
     bearer_qos->gbr.br_dl |= (((bit_rate_t)ieValue[index++]) << 24);
     bearer_qos->gbr.br_dl |= (((bit_rate_t)ieValue[index++]) << 16);
     bearer_qos->gbr.br_dl |= (((bit_rate_t)ieValue[index++]) << 8);
     bearer_qos->gbr.br_dl |= (bit_rate_t)ieValue[index++];
+    bearer_qos->gbr.br_dl *=1000;
 
     if (22 < ieLength) {
       OAILOG_ERROR (LOG_S11, "TODO gtpv2c_bearer_qos_ie_get() BearerQOS_t\n");
@@ -547,29 +551,29 @@ gtpv2c_bearer_qos_ie_set (
   /*
    * TODO: check endianness
    */
-  value[index++] = (bearer_qos->mbr.br_ul & 0xFF00000000) >> 32;
-  value[index++] = (bearer_qos->mbr.br_ul & 0x00FF000000) >> 24;
-  value[index++] = (bearer_qos->mbr.br_ul & 0x0000FF0000) >> 16;
-  value[index++] = (bearer_qos->mbr.br_ul & 0x000000FF00) >> 8;
-  value[index++] = (bearer_qos->mbr.br_ul & 0x00000000FF);
+  value[index++] = ((bearer_qos->mbr.br_ul/1000) & 0xFF00000000) >> 32;
+  value[index++] = ((bearer_qos->mbr.br_ul/1000) & 0x00FF000000) >> 24;
+  value[index++] = ((bearer_qos->mbr.br_ul/1000) & 0x0000FF0000) >> 16;
+  value[index++] = ((bearer_qos->mbr.br_ul/1000) & 0x000000FF00) >> 8;
+  value[index++] = ((bearer_qos->mbr.br_ul/1000) & 0x00000000FF);
 
-  value[index++] = (bearer_qos->mbr.br_dl & 0xFF00000000) >> 32;
-  value[index++] = (bearer_qos->mbr.br_dl & 0x00FF000000) >> 24;
-  value[index++] = (bearer_qos->mbr.br_dl & 0x0000FF0000) >> 16;
-  value[index++] = (bearer_qos->mbr.br_dl & 0x000000FF00) >> 8;
-  value[index++] = (bearer_qos->mbr.br_dl & 0x00000000FF);
+  value[index++] = ((bearer_qos->mbr.br_dl/1000) & 0xFF00000000) >> 32;
+  value[index++] = ((bearer_qos->mbr.br_dl/1000) & 0x00FF000000) >> 24;
+  value[index++] = ((bearer_qos->mbr.br_dl/1000) & 0x0000FF0000) >> 16;
+  value[index++] = ((bearer_qos->mbr.br_dl/1000) & 0x000000FF00) >> 8;
+  value[index++] = ((bearer_qos->mbr.br_dl/1000) & 0x00000000FF);
 
-  value[index++] = (bearer_qos->gbr.br_ul & 0xFF00000000) >> 32;
-  value[index++] = (bearer_qos->gbr.br_ul & 0x00FF000000) >> 24;
-  value[index++] = (bearer_qos->gbr.br_ul & 0x0000FF0000) >> 16;
-  value[index++] = (bearer_qos->gbr.br_ul & 0x000000FF00) >> 8;
-  value[index++] = (bearer_qos->gbr.br_ul & 0x00000000FF);
+  value[index++] = ((bearer_qos->gbr.br_ul/1000) & 0xFF00000000) >> 32;
+  value[index++] = ((bearer_qos->gbr.br_ul/1000) & 0x00FF000000) >> 24;
+  value[index++] = ((bearer_qos->gbr.br_ul/1000) & 0x0000FF0000) >> 16;
+  value[index++] = ((bearer_qos->gbr.br_ul/1000) & 0x000000FF00) >> 8;
+  value[index++] = ((bearer_qos->gbr.br_ul/1000) & 0x00000000FF);
 
-  value[index++] = (bearer_qos->gbr.br_dl & 0xFF00000000) >> 32;
-  value[index++] = (bearer_qos->gbr.br_dl & 0x00FF000000) >> 24;
-  value[index++] = (bearer_qos->gbr.br_dl & 0x0000FF0000) >> 16;
-  value[index++] = (bearer_qos->gbr.br_dl & 0x000000FF00) >> 8;
-  value[index++] = (bearer_qos->gbr.br_dl & 0x00000000FF);
+  value[index++] = ((bearer_qos->gbr.br_dl/1000) & 0xFF00000000) >> 32;
+  value[index++] = ((bearer_qos->gbr.br_dl/1000) & 0x00FF000000) >> 24;
+  value[index++] = ((bearer_qos->gbr.br_dl/1000) & 0x0000FF0000) >> 16;
+  value[index++] = ((bearer_qos->gbr.br_dl/1000) & 0x000000FF00) >> 8;
+  value[index++] = ((bearer_qos->gbr.br_dl/1000) & 0x00000000FF);
 
   rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_BEARER_LEVEL_QOS, 22, 0, value);
   DevAssert (NW_OK == rc);
@@ -1006,12 +1010,13 @@ gtpv2c_bearer_context_created_ie_set (
   gtpv2c_ebi_ie_set (msg, bearer->eps_bearer_id, NW_GTPV2C_IE_INSTANCE_ZERO);
   rc = gtpv2c_cause_ie_set (msg, &bearer->cause);
   DevAssert (NW_OK == rc);
-  rc = nwGtpv2cMsgAddIeFteid (*msg, NW_GTPV2C_IE_INSTANCE_ZERO,
-                              bearer->s1u_sgw_fteid.interface_type,
-                              bearer->s1u_sgw_fteid.teid,
-                              bearer->s1u_sgw_fteid.ipv4 ? &bearer->s1u_sgw_fteid.ipv4_address : 0,
-                              bearer->s1u_sgw_fteid.ipv6 ? &bearer->s1u_sgw_fteid.ipv6_address : NULL);
-  DevAssert (NW_OK == rc);
+  // todo: data forwarding..
+//  rc = nwGtpv2cMsgAddIeFteid (*msg, NW_GTPV2C_IE_INSTANCE_,
+//                              bearer->s1u_sgw_fteid.interface_type,
+//                              bearer->s1u_sgw_fteid.teid,
+//                              bearer->s1u_sgw_fteid.ipv4 ? &bearer->s1u_sgw_fteid.ipv4_address : 0,
+//                              bearer->s1u_sgw_fteid.ipv6 ? &bearer->s1u_sgw_fteid.ipv6_address : NULL);
+//  DevAssert (NW_OK == rc);
   /*
    * End section for grouped IE: bearer context created
    */

@@ -966,6 +966,7 @@ void mme_app_itti_forward_relocation_response(ue_context_t *ue_context, mme_app_
     	  continue;
       /** EBI. */
       forward_relocation_response_p->handovered_bearers.bearer_contexts[forward_relocation_response_p->handovered_bearers.num_bearer_context].eps_bearer_id = bearer_context_setup->ebi;
+      forward_relocation_response_p->handovered_bearers.bearer_contexts[forward_relocation_response_p->handovered_bearers.num_bearer_context].cause.cause_value = REQUEST_ACCEPTED;
       forward_relocation_response_p->handovered_bearers.num_bearer_context++;
     }
   }
