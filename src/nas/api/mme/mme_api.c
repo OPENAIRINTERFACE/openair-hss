@@ -339,23 +339,6 @@ mme_api_notify_new_guti (
   OAILOG_FUNC_RETURN (LOG_NAS, RETURNerror);
 }
 
-//------------------------------------------------------------------------------
-/*
- *
- *  Name:    mme_api_mobility_complete()
- *
- *  Description: Notify the MME that a UE has successfully completed a mobility procedure including a TAU.
- *
- *  Inputs:
- *         ueid:      emm_context id
- *         bool:      activate_bearers
- *  Return:    void
- *
- */
-int mme_api_mobility_complete(const mme_ue_s1ap_id_t mme_ue_s1ap_id, bool activate_bearers){
-  return mme_app_mobility_complete(mme_ue_s1ap_id, activate_bearers);
-}
-
 /****************************************************************************
  **                                                                        **
  ** Name:    mme_api_new_guti()                                        **

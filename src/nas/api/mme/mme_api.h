@@ -138,8 +138,6 @@ mme_api_notify_imsi ( const mme_ue_s1ap_id_t id, const imsi64_t imsi64);
 
 int mme_api_notify_new_guti (const mme_ue_s1ap_id_t ueid, guti_t * const guti);
 
-int mme_api_mobility_complete(const mme_ue_s1ap_id_t mme_ue_s1ap_id, bool activate_bearers);
-
 int mme_api_new_guti(const imsi_t * const imsi,
                      const guti_t * const old_guti,
                      guti_t       * const guti,

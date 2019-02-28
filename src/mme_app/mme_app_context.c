@@ -2796,6 +2796,7 @@ int mme_app_mobility_complete(const mme_ue_s1ap_id_t mme_ue_s1ap_id, bool activa
        */
       mme_app_delete_s10_procedure_mme_handover(ue_context);
     }else{
+      s10_handover_proc->handover_completed = true;
       /*
        * INTRA-MME Handover (INTER-MME idle TAU won't have this procedure).
        * If the UE is registered, remove the handover procedure.

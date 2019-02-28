@@ -307,14 +307,6 @@ int EmmCommonProcedureInitiated (emm_reg_t * const evt)
       nas_delete_tau_procedure(emm_ctx);
     }
 
-//    struct ue_context_s * ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, evt->ue_id);
-//
-//       /** Delete the local Tunnel. */
-//          mme_app_s10_proc_mme_handover_t * s10_handover_proc = mme_app_get_s10_procedure_mme_handover(ue_context);
-//          if(s10_handover_proc){
-//            mme_app_remove_s10_tunnel_endpoint(ue_context->local_mme_teid_s10, s10_handover_proc->remote_mme_teid.ipv4_address);
-//          }
-
     break;
 
   case _EMMREG_TAU_REJ:

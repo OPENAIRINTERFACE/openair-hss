@@ -654,6 +654,12 @@ void mme_app_delete_s10_procedure_mme_handover(ue_context_t * const ue_context)
 
     LIST_FOREACH_SAFE(s10_proc, ue_context->s10_procedures, entries, s10_proc_safe) {
       if (MME_APP_S10_PROC_TYPE_INTER_MME_HANDOVER == s10_proc->type) {
+
+    	if(s10_proc->target_mme && !((mme_app_s10_proc_mme_handover_t*)s10_proc)->handover_completed){
+    		OAILOG_ERROR(LOG_MME_APP, "Handover for UE " MME_UE_S1AP_ID_FMT " on target MME has not been completed yet.. Cannot delete. \n", ue_context->mme_ue_s1ap_id);
+    		OAILOG_FUNC_OUT (LOG_MME_APP);
+    	}
+
         LIST_REMOVE(s10_proc, entries);
         /*
          * Cannot remove the S10 tunnel endpoint with transaction.

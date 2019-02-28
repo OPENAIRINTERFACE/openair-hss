@@ -941,13 +941,6 @@ s10_mme_handle_forward_relocation_complete_acknowledge(
 
   ack_p->teid = nwGtpv2cMsgGetTeid(pUlpApi->hMsg);
 
-  nw_gtpv2c_tunnel_handle_t    hTunnel_test = (nw_gtpv2c_tunnel_handle_t)0;
-  hashtable_rc_t hash_rc = hashtable_ts_get(s10_mme_teid_2_gtv2c_teid_handle,
-       (hash_key_t) ack_p->teid,
-       (void **)(uintptr_t)&hTunnel_test);
-  DevAssert(HASH_TABLE_OK == hash_rc);
-
-
   /*
    * Create a new message parser
    */
