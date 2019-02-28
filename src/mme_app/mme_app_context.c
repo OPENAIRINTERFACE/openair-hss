@@ -2639,15 +2639,32 @@ mme_app_handle_relocation_cancel_request(
   */
  relocation_cancel_response_p->cause.cause_value = REQUEST_ACCEPTED;
  itti_send_msg_to_task (TASK_S10, INSTANCE_DEFAULT, message_p);
+
+ /** Send an EMM/ESM implicit detach message. */
+ message_p = itti_alloc_new_message (TASK_MME_APP, NAS_IMPLICIT_DETACH_UE_IND);
+ DevAssert (message_p != NULL);
+ message_p->ittiMsg.nas_implicit_detach_ue_ind.ue_id = ue_context->mme_ue_s1ap_id; /**< Rest won't be sent, so no NAS Detach Request will be sent. */
+ MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_IMPLICIT_DETACH_UE_IND_MESSAGE");
+ itti_send_msg_to_task (TASK_NAS_EMM, INSTANCE_DEFAULT, message_p);
+
  /** Delete the handover procedure. */
  mme_app_delete_s10_procedure_mme_handover(ue_context);
 
- /**
-  * Send a S1AP Context Release Request.
-  * If no S1AP UE reference is existing, we will send a UE context release command with the MME_UE_S1AP_ID.
-  * todo: macro/home
-  */
- mme_app_itti_ue_context_release(ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, ue_context->s1_ue_context_release_cause, s10_handover_process->target_id.target_id.macro_enb_id.enb_id);
+ /** Trigger an ESM detach, also removing all PDN contexts in the MME and the SAE-GW. */
+ message_p = itti_alloc_new_message (TASK_MME_APP, NAS_ESM_DETACH_IND);
+ DevAssert (message_p != NULL);
+ message_p->ittiMsg.nas_esm_detach_ind.ue_id = ue_context->mme_ue_s1ap_id; /**< We don't send a Detach Type such that no Detach Request is sent to the UE if handover is performed. */
+
+ MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_ESM_DETACH_IND");
+ itti_send_msg_to_task (TASK_NAS_ESM, INSTANCE_DEFAULT, message_p);
+ OAILOG_FUNC_OUT (LOG_MME_APP);
+
+// /**
+//  * Send a S1AP Context Release Request.
+//  * If no S1AP UE reference is existing, we will send a UE context release command with the MME_UE_S1AP_ID.
+//  * todo: macro/home
+//  */
+// mme_app_itti_ue_context_release(ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, ue_context->s1_ue_context_release_cause, s10_handover_process->target_id.target_id.macro_enb_id.enb_id);
 
  /** Triggered an Implicit Detach Message back. */
  OAILOG_FUNC_OUT (LOG_MME_APP);

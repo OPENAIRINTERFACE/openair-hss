@@ -393,9 +393,9 @@ void *mme_app_thread (void *args)
       break;
       /** Handover Messages from target-eNB. */
       case S1AP_HANDOVER_REQUEST_ACKNOWLEDGE:{
-        mme_app_handle_handover_request_acknowledge(
-            &S1AP_HANDOVER_REQUEST_ACKNOWLEDGE(received_message_p)
-        );
+//        mme_app_handle_handover_request_acknowledge(
+//            &S1AP_HANDOVER_REQUEST_ACKNOWLEDGE(received_message_p)
+//        );
       }
       break;
      case S1AP_HANDOVER_FAILURE:{
