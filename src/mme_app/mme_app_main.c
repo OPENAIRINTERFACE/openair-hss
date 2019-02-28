@@ -425,8 +425,7 @@ void *mme_app_thread (void *args)
               &S1AP_HANDOVER_NOTIFY(received_message_p)
               );
           }
-          break;
-
+      	   break;
 
     case TERMINATE_MESSAGE:{
         /*

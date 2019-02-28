@@ -1507,11 +1507,19 @@ mme_app_handle_s1ap_ue_context_release_complete (
               s1ap_ue_context_release_complete->mme_ue_s1ap_id, s1ap_ue_context_release_complete->enb_ue_s1ap_id);
         /** Not releasing any bearer information. */
         /* Update keys and ECM state. */
+        /** Set the ECM state to IDLE. */
+        mme_ue_context_update_ue_sig_connection_state (&mme_app_desc.mme_ue_contexts, ue_context, ECM_IDLE);
         if(ue_context->mm_state == UE_UNREGISTERED){
-          OAILOG_DEBUG(LOG_MME_APP, "Received UE context release complete for the main ue_reference of the UE with mme_ue_s1ap_id "MME_UE_S1AP_ID_FMT" and enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT" in UE_UNREGISTERED state. "
-              "Performing implicit detach (failed handover). \n", s1ap_ue_context_release_complete->mme_ue_s1ap_id, s1ap_ue_context_release_complete->enb_ue_s1ap_id);
-          /* We may have an EMM context but the common and specific procedure timeouts should remove the EMM context. */
-          mme_remove_ue_context(&mme_app_desc.mme_ue_contexts, ue_context);
+          OAILOG_DEBUG(LOG_MME_APP, "Received UE context release complete for the main ue_reference of the UE with mme_ue_s1ap_id "MME_UE_S1AP_ID_FMT" "
+        		  "for an UNREGISTERED UE. \n", s1ap_ue_context_release_complete->mme_ue_s1ap_id);
+          /* Don't remove it directly, do it over the ESM. */
+          OAILOG_INFO (LOG_MME_APP, "Implicitly detaching the UE due CLR flag @ completion of MME_MOBILITY timer for UE id  %d \n", ue_context->mme_ue_s1ap_id);
+          message_p = itti_alloc_new_message (TASK_MME_APP, NAS_IMPLICIT_DETACH_UE_IND);
+          DevAssert (message_p != NULL);
+          message_p->ittiMsg.nas_implicit_detach_ue_ind.ue_id = ue_context->mme_ue_s1ap_id; /**< Rest won't be sent, so no NAS Detach Request will be sent. */
+          MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_IMPLICIT_DETACH_UE_IND_MESSAGE");
+          itti_send_msg_to_task (TASK_NAS_EMM, INSTANCE_DEFAULT, message_p);
+//          mme_remove_ue_context(&mme_app_desc.mme_ue_contexts, ue_context);
           OAILOG_FUNC_OUT (LOG_MME_APP);
         }
         OAILOG_DEBUG(LOG_MME_APP, "Received UE context release complete for the main ue_reference of the UE with mme_ue_s1ap_id "MME_UE_S1AP_ID_FMT" and enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT" in UE_REGISTERED state. "
@@ -2840,7 +2848,10 @@ int mme_app_mobility_complete(const mme_ue_s1ap_id_t mme_ue_s1ap_id, bool activa
      * MBReq will be sent for only those bearers which are not in ACTIVE state yet, but are established in the target eNB (ENB_CREATED).
      */
     pdn_context_t * first_pdn = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
-    mme_app_send_s11_modify_bearer_req(ue_context, first_pdn, 0);
+    if(first_pdn){
+    	OAILOG_INFO(LOG_MME_APP, " Triggering MBReq for completed handover for UE " MME_UE_S1AP_ID_FMT ". \n", mme_ue_s1ap_id);
+        mme_app_send_s11_modify_bearer_req(ue_context, first_pdn, 0);
+    }
   }
   OAILOG_INFO(LOG_MME_APP, "Completed registration of UE " MME_UE_S1AP_ID_FMT ". \n", mme_ue_s1ap_id);
   OAILOG_FUNC_OUT(LOG_MME_APP);
