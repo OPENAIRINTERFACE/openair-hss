@@ -656,8 +656,13 @@ void mme_app_delete_s10_procedure_mme_handover(ue_context_t * const ue_context)
       if (MME_APP_S10_PROC_TYPE_INTER_MME_HANDOVER == s10_proc->type) {
 
     	if(s10_proc->target_mme && !((mme_app_s10_proc_mme_handover_t*)s10_proc)->handover_completed){
-    		OAILOG_ERROR(LOG_MME_APP, "Handover for UE " MME_UE_S1AP_ID_FMT " on target MME has not been completed yet.. Cannot delete. \n", ue_context->mme_ue_s1ap_id);
-    		OAILOG_FUNC_OUT (LOG_MME_APP);
+    		if(ue_context->s1_ue_context_release_cause == S1AP_HANDOVER_CANCELLED
+    				|| ue_context->s1_ue_context_release_cause == S1AP_HANDOVER_FAILED){
+        		OAILOG_ERROR(LOG_MME_APP, "Handover for UE " MME_UE_S1AP_ID_FMT " on target MME has not been completed yet.. Cannot delete. \n", ue_context->mme_ue_s1ap_id);
+        		OAILOG_FUNC_OUT (LOG_MME_APP);
+    		}else {
+        		OAILOG_WARNING(LOG_MME_APP, "Handover for UE " MME_UE_S1AP_ID_FMT " failed on the target side. Continuing with the deletion. \n", ue_context->mme_ue_s1ap_id);
+    		}
     	}
 
         LIST_REMOVE(s10_proc, entries);

@@ -4034,6 +4034,7 @@ mme_app_handle_handover_failure (
  mme_app_send_s10_forward_relocation_response_err(s10_handover_proc->remote_mme_teid.teid, s10_handover_proc->remote_mme_teid.ipv4_address, s10_handover_proc->forward_relocation_trxn, RELOCATION_FAILURE);
 
  ue_context->s1_ue_context_release_cause = S1AP_HANDOVER_FAILED;
+ mme_app_delete_s10_procedure_mme_handover(ue_context);
  /** No timers, etc. is needed. */
  OAILOG_FUNC_OUT (LOG_MME_APP);
 }
