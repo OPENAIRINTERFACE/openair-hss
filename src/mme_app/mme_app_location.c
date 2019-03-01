@@ -89,11 +89,6 @@ int mme_app_handle_s6a_update_location_ans (
 
   OAILOG_INFO(LOG_MME_APP, "Updated the subscription profile for IMSI " IMSI_64_FMT " in the cache. \n", imsi64);
 
-  /** Send the S6a message. */
-  message_p = itti_alloc_new_message (TASK_MME_APP, NAS_PDN_CONFIG_RSP);
-  if (message_p == NULL) {
-    goto err;
-  }
   if (ula_pP->result.present == S6A_RESULT_BASE) {
     if (ula_pP->result.choice.base != DIAMETER_SUCCESS) {
       /*
@@ -112,10 +107,18 @@ int mme_app_handle_s6a_update_location_ans (
     goto err;
   }
 
+  /** Send the S6a message. */
+  message_p = itti_alloc_new_message (TASK_MME_APP, NAS_PDN_CONFIG_RSP);
+  if (message_p == NULL) {
+    goto err;
+  }
   mme_app_update_ue_subscription(ue_context->mme_ue_s1ap_id, subscription_data);
 
-  message_p->ittiMsg.s6a_update_location_req.ue_id  = ue_context->mme_ue_s1ap_id;
-  message_p->ittiMsg.s6a_update_location_req.imsi64 = imsi64;
+  message_p->ittiMsg.nas_pdn_config_rsp.ue_id  = ue_context->mme_ue_s1ap_id;
+  message_p->ittiMsg.nas_pdn_config_rsp.imsi64 = imsi64;
+  imsi64_t imsi64_2 = imsi_to_imsi64(&emm_context->_imsi);
+  memcpy(&message_p->ittiMsg.nas_pdn_config_rsp.imsi, &emm_context->_imsi, sizeof(imsi_t));
+  memcpy(&message_p->ittiMsg.nas_pdn_config_rsp.target_tai, &emm_context->originating_tai, sizeof(tai_t));
 
   /** Check if an attach procedure is running, if so send it to the ESM layer, if not, we assume it is triggered by a TAU request, send it to the EMM. */
   /** For error codes, use nas_pdn_cfg_fail. */

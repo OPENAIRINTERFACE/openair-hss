@@ -169,7 +169,8 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
 
   case ESM_PDN_CONFIG_RES:{
     pti_t pti = PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED;
-    msg->esm_cause = esm_proc_pdn_config_res(msg->ue_id, &msg->is_attach_tau, &pti, msg->data.pdn_config_res->imsi64);
+    msg->esm_cause = esm_proc_pdn_config_res(msg->ue_id, &msg->is_attach_tau, &pti, &msg->data.pdn_config_res->imsi, &msg->data.pdn_config_res->target_tai,
+    		&msg->active_ebrs);
     if(msg->esm_cause != ESM_CAUSE_SUCCESS) {
       /*
        * Create a PDN connectivity reject.
@@ -191,6 +192,12 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
       /** Directly process the ULA. A response message might be returned. */
       _esm_proc_free_pdn_connectivity_procedure(&esm_proc_pdn_connectivity);
       msg->esm_cause = ESM_CAUSE_USER_AUTHENTICATION_FAILED;
+    } else {
+      OAILOG_ERROR (LOG_NAS_ESM, "ESM-SAP   - No ESM procedure for for UE ueId " MME_UE_S1AP_ID_FMT " found. "
+    		  "Removing any PDN contexts established via handover and rejecting the request. \n", msg->ue_id);
+      msg->is_attach_tau = true; /**< Wrapper should be activated. */
+//      esm_proc_detach_request(msg->ue_id, false, false); /**< Removed the sessions in the SAE-GW. */
+      esm_proc_pdn_connectivity_failure (msg->ue_id, NULL);
     }
     /** Handle in the outer function. */
   }
@@ -210,6 +217,7 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
     } else {
       msg->is_attach_tau = esm_proc_pdn_connectivity->is_attach;
       msg->esm_cause = esm_proc_pdn_connectivity_res(msg->ue_id, esm_proc_pdn_connectivity);
+      msg->active_ebrs = esm_proc_pdn_connectivity->bc_status;
       if(msg->esm_cause != ESM_CAUSE_SUCCESS) {
         /*
          * Send a PDN connectivity reject.

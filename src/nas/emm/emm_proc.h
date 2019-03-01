@@ -198,7 +198,7 @@ int _emm_wrapper_attach_accept (mme_ue_s1ap_id_t ue_id, bstring esm_msg);
 int _emm_wrapper_attach_reject (mme_ue_s1ap_id_t ue_id, bstring esm_msg);
 
 /** EMM TAU Accept/Reject from ESM layer. */
-int emm_wrapper_tracking_area_update_accept (mme_ue_s1ap_id_t ue_id);
+int emm_wrapper_tracking_area_update_accept (mme_ue_s1ap_id_t ue_id, eps_bearer_context_status_t ebr_status);
 int emm_wrapper_tracking_area_update_reject (mme_ue_s1ap_id_t ue_id, emm_cause_t emm_cause);
 
 int emm_proc_attach_complete (

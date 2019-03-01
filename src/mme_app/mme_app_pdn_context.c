@@ -299,7 +299,7 @@ mme_app_esm_create_pdn_context(mme_ue_s1ap_id_t ue_id, const ebi_t linked_ebi, c
 
 //------------------------------------------------------------------------------
 esm_cause_t
-mme_app_update_pdn_context(mme_ue_s1ap_id_t ue_id, const subscription_data_t * const subscription_data){
+mme_app_update_pdn_context(mme_ue_s1ap_id_t ue_id, const subscription_data_t * const subscription_data, eps_bearer_context_status_t * const bc_status){
   OAILOG_FUNC_IN (LOG_MME_APP);
 
   ue_context_t        * ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, ue_id);
@@ -310,6 +310,8 @@ mme_app_update_pdn_context(mme_ue_s1ap_id_t ue_id, const subscription_data_t * c
     OAILOG_WARNING(LOG_MME_APP, "No MME_APP UE context could be found for UE: " MME_UE_S1AP_ID_FMT " to update the pdn context information from subscription data. \n", ue_id);
     OAILOG_FUNC_RETURN(LOG_MME_APP, ESM_CAUSE_REQUEST_REJECTED_BY_GW);
   }
+
+  /** Check if any PDN context is there (idle TAU) with failed S10. */
 
   // todo: LOCK_UE_CONTEXT_HERE
   /**
@@ -332,7 +334,7 @@ mme_app_update_pdn_context(mme_ue_s1ap_id_t ue_id, const subscription_data_t * c
         changed = pdn_context->context_identifier >= PDN_CONTEXT_IDENTIFIER_UNASSIGNED;
         pdn_cid_t old_cid = pdn_context->context_identifier;
         /** If it is an invalid context identifier, update it. */
-        if(pdn_context->context_identifier >= PDN_CONTEXT_IDENTIFIER_UNASSIGNED){
+        if(changed){
           pdn_context = RB_REMOVE(PdnContexts, &ue_context->pdn_contexts, pdn_context);
           DevAssert(pdn_context);
           pdn_context->context_identifier = apn_configuration->context_identifier;
@@ -351,7 +353,7 @@ mme_app_update_pdn_context(mme_ue_s1ap_id_t ue_id, const subscription_data_t * c
         }
 
         if(changed)
-          break;
+          break; /**< Start from beginning. */
         /** Nothing changed, continue processing the elements. */
         continue;
       }else {
@@ -383,9 +385,17 @@ mme_app_update_pdn_context(mme_ue_s1ap_id_t ue_id, const subscription_data_t * c
   /** Set the context identifier when updating the pdn_context. */
   OAILOG_INFO(LOG_NAS_EMM, "EMMCN-SAP  - " "Successfully updated all PDN contexts for UE " MME_UE_S1AP_ID_FMT". \n", ue_id);
 
+  RB_FOREACH(pdn_context, PdnContexts, &ue_context->pdn_contexts) { /**< Use the safe iterator. */
+	  bearer_context_t * bearer_context = NULL;
+	  RB_FOREACH (bearer_context, SessionBearers, &pdn_context->session_bearers) {
+		  (*bc_status) |= (0x01 << bearer_context->ebi);
+	  }
+  }
+  (*bc_status) = ntohs(*bc_status);
+
   if(RB_EMPTY(&ue_context->pdn_contexts)){
 	  OAILOG_ERROR(LOG_NAS_EMM, "EMMCN-SAP  - " "No PDN contexts left for UE " MME_UE_S1AP_ID_FMT" after updating for the received subscription information. \n", ue_id);
-	  OAILOG_FUNC_RETURN (LOG_NAS_EMM, ESM_CAUSE_REQUEST_REJECTED_BY_GW);
+	  OAILOG_FUNC_RETURN (LOG_NAS_EMM, ESM_CAUSE_PDN_CONNECTION_DOES_NOT_EXIST);
   }
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, ESM_CAUSE_SUCCESS);
 }

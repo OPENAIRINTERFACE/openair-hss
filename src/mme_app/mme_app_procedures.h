@@ -96,6 +96,7 @@ typedef struct mme_app_s10_proc_mme_handover_s {
   mme_ue_eps_pdn_connections_t *pdn_connections;
 
   ebi_list_t                    failed_ebi_list;
+  imsi_t                        imsi;
 
   /** Target Information to store on the source side. */
   //  S1ap_ENB_ID_PR                target_enb_type;

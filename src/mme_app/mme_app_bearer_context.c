@@ -169,9 +169,8 @@ mme_app_register_dedicated_bearer_context(const mme_ue_s1ap_id_t ue_id, const es
   /* Check that it is active. */
   bearer_context_t * default_bc = mme_app_get_session_bearer_context(pdn_context, linked_ebi);
   if(!default_bc || default_bc->esm_ebr_context.status != ESM_EBR_ACTIVE){
-    OAILOG_ERROR (LOG_MME_APP, "Default bearer (ebi=%d) of PDN context for UE: " MME_UE_S1AP_ID_FMT " (cid=%d) is not existing or not in active state, instead: \"%s\". \n",
-        linked_ebi, ue_id, pdn_context->context_identifier,
-        (default_bc) ? esm_ebr_state2string(default_bc->esm_ebr_context.status) : "NULL");
+    OAILOG_ERROR (LOG_MME_APP, "Default bearer (ebi=%d) of PDN context for UE: " MME_UE_S1AP_ID_FMT " (cid=%d) is not existing or not in active state. \n",
+        linked_ebi, ue_id, pdn_context->context_identifier);
     OAILOG_FUNC_RETURN (LOG_MME_APP, ESM_CAUSE_REQUEST_REJECTED_BY_GW);
     /** This should be enough, we don't need to additionally check for the states. */
   }

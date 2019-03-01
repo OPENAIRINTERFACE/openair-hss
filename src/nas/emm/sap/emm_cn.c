@@ -256,6 +256,49 @@ static int _emm_cn_context_fail (const emm_cn_context_fail_t * msg)
 
 /*
  *
+ * Name:    _emm_wrapper_esm_accept()
+ *
+ * Description: Checks if an attach or TAU procedure is ongoing and proceeds with the accept.
+ *
+ * Inputs:  args:      UE context data
+ *      Others:    None
+ *
+ * Outputs:     None
+ *      Return:    RETURNok, RETURNerror
+ *      Others:    None
+ *
+ */
+int _emm_wrapper_esm_accept(mme_ue_s1ap_id_t ue_id, bstring *esm_rsp, eps_bearer_context_status_t ebr_status)
+{
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  emm_data_context_t                     * emm_context = NULL;
+  int                                     rc = RETURNerror;
+
+  // todo: get the EMM_CONTEXT, if exists lock it!!
+  emm_context = emm_data_context_get(&_emm_data, ue_id);
+  if(!emm_context){
+    OAILOG_WARNING(LOG_NAS_EMM, "EMM-PROC  - No EMM context was found for ue_id " MME_UE_S1AP_ID_FMT ". Ignoring ESM accept. \n", ue_id);
+    bdestroy_wrapper(esm_rsp);
+    OAILOG_FUNC_RETURN(LOG_NAS_EMM, RETURNerror);
+  }
+  if(is_nas_specific_procedure_attach_running(emm_context)){
+	  if(esm_rsp){
+		  rc = _emm_wrapper_attach_accept(ue_id, *esm_rsp);
+		  OAILOG_FUNC_RETURN(LOG_NAS_EMM, RETURNok);
+	  }
+  } else if(is_nas_specific_procedure_tau_running(emm_context)) {
+	  if(esm_rsp)
+		  bdestroy_wrapper(esm_rsp);
+	  rc = emm_wrapper_tracking_area_update_accept(ue_id, ebr_status);
+	  OAILOG_FUNC_RETURN(LOG_NAS_EMM, RETURNok);
+  }
+  OAILOG_WARNING(LOG_NAS_EMM, "EMM-PROC  - Neither attach nor TAU procedure is ongoing for ue_id " MME_UE_S1AP_ID_FMT ". Ignoring the received ESM reject. \n", ue_id);
+  bdestroy_wrapper(esm_rsp);
+  OAILOG_FUNC_RETURN(LOG_NAS_EMM, RETURNerror);
+}
+
+/*
+ *
  * Name:    _emm_wrapper_esm_reject()
  *
  * Description: Checks if an attach or TAU procedure is ongoing and proceeds with the reject.
@@ -278,6 +321,7 @@ int _emm_wrapper_esm_reject(mme_ue_s1ap_id_t ue_id, bstring *esm_rsp)
   emm_context = emm_data_context_get(&_emm_data, ue_id);
   if(!emm_context){
     OAILOG_WARNING(LOG_NAS_EMM, "EMM-PROC  - No EMM context was found for ue_id " MME_UE_S1AP_ID_FMT ". Ignoring ESM reject. \n", ue_id);
+    bdestroy_wrapper(esm_rsp);
     OAILOG_FUNC_RETURN(LOG_NAS_EMM, RETURNerror);
   }
   if(is_nas_specific_procedure_attach_running(emm_context)){

@@ -92,6 +92,9 @@ typedef struct itti_nas_pdn_connectivity_rsp_s {
 typedef struct itti_nas_pdn_config_rsp_s {
   mme_ue_s1ap_id_t        ue_id; // nas ref
   imsi64_t                imsi64;
+  /** Visited TAI for idle TAU without S10. */
+  tai_t                   target_tai;
+  imsi_t                  imsi;
 } itti_nas_pdn_config_rsp_t;
 
 typedef struct itti_nas_pdn_config_fail_s {

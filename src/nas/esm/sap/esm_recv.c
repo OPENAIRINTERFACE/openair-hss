@@ -308,7 +308,6 @@ esm_recv_pdn_connectivity_request (
   esm_proc_pdn_connectivity->request_type = pdn_request_type;
   esm_proc_pdn_connectivity->pdn_type = pdn_type;
   esm_proc_pdn_connectivity->is_attach = *is_attach;
-  memcpy(&esm_proc_pdn_connectivity->imsi, imsi, sizeof(imsi_t));
   memcpy(&esm_proc_pdn_connectivity->visited_tai, visited_tai, sizeof(tai_t));
   if(msg->presencemask & PDN_CONNECTIVITY_REQUEST_ACCESS_POINT_NAME_PRESENT)
     esm_proc_pdn_connectivity->subscribed_apn = bstrcpy(msg->accesspointname);

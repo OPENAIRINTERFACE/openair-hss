@@ -657,7 +657,7 @@ emm_send_tracking_area_update_accept (
   if (msg->eps_bearer_context_status) {
     size += EPS_BEARER_CONTEXT_STATUS_MAXIMUM_LENGTH;
     emm_msg->presencemask |= TRACKING_AREA_UPDATE_ACCEPT_EPS_BEARER_CONTEXT_STATUS_PRESENT;
-    emm_msg->epsbearercontextstatus = *(msg->eps_bearer_context_status);
+    emm_msg->epsbearercontextstatus = msg->eps_bearer_context_status;
     OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - size += " "EPS_BEARER_CONTEXT_STATUS_MAXIMUM_LENGTH(%d)  (%d)\n", EPS_BEARER_CONTEXT_STATUS_MAXIMUM_LENGTH, size);
   }
   /* Useless actually, Optional - Location Area Identification

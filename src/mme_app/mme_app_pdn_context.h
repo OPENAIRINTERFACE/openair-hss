@@ -31,7 +31,7 @@
 int mme_app_esm_create_pdn_context(mme_ue_s1ap_id_t ue_id, const ebi_t linked_ebi, const apn_configuration_t *apn_configuration, const bstring apn, pdn_cid_t pdn_cid, const ambr_t * const apn_ambr, pdn_context_t **pdn_context_pp);
 
 /** Update the created PDN context from the APN configuration of the subscription. */
-esm_cause_t mme_app_update_pdn_context(mme_ue_s1ap_id_t ue_id, const subscription_data_t * const subscription_data);
+esm_cause_t mme_app_update_pdn_context(mme_ue_s1ap_id_t ue_id, const subscription_data_t * const subscription_data, eps_bearer_context_status_t * const bc_status);
 
 /**
  * Release all bearers of a PDN context and release the PDN context.

@@ -223,8 +223,8 @@ esm_proc_default_eps_bearer_context (
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
 
-  OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Default EPS bearer context activation (ue_id=" MME_UE_S1AP_ID_FMT ", context_identifier=%d)\n",
-      ue_id, esm_proc_pdn_connectivity->pdn_cid);
+  OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Default EPS bearer context activation (ue_id=" MME_UE_S1AP_ID_FMT ", context_identifier=%d, bc_status %d)\n",
+      ue_id, esm_proc_pdn_connectivity->pdn_cid, esm_proc_pdn_connectivity->bc_status);
   REQUIREMENT_3GPP_24_301(R10_6_4_1_2);
   if(esm_proc_pdn_connectivity->is_attach){
     /** Not starting the T3485 timer. */
@@ -250,6 +250,8 @@ esm_proc_default_eps_bearer_context (
           esm_rsp_msg);
     }
   }
+  if(esm_proc_pdn_connectivity->bc_status)
+	  _esm_proc_free_pdn_connectivity_procedure(&esm_proc_pdn_connectivity); /**< Procedure is completed. */
   OAILOG_FUNC_OUT(LOG_NAS_ESM);
 }
 

@@ -218,11 +218,11 @@ nas_esm_proc_pdn_config_res (
 	  rc = lowerlayer_data_req(esm_sap.ue_id, rsp);
 	  bdestroy_wrapper(&rsp);
   } else {
-	  if(esm_sap.is_attach_tau){
-		  rc = emm_wrapper_tracking_area_update_accept(esm_sap.ue_id);
+	  if(esm_sap.is_attach_tau && esm_sap.active_ebrs){
+		  rc = _emm_wrapper_esm_accept(esm_sap.ue_id, NULL, esm_sap.active_ebrs);
 	  } else {
-		  OAILOG_ERROR (LOG_MME_APP, "No ESM data received and no atta/tau in procedd for UE " MME_UE_S1AP_ID_FMT ".\n", esm_sap.ue_id);
-		  rc = RETURNerror;
+		  OAILOG_WARNING(LOG_MME_APP, "No ESM data received and no attach/tau signaled for UE " MME_UE_S1AP_ID_FMT ".\n", esm_sap.ue_id);
+		  rc = RETURNok;
 	  }
   }
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
@@ -255,6 +255,11 @@ nas_esm_proc_pdn_config_fail (
 		  rc = lowerlayer_data_req(esm_sap.ue_id, rsp);
 	  }
 	  bdestroy_wrapper(&rsp);
+  } else {
+	  if(esm_sap.is_attach_tau){
+		  rc = _emm_wrapper_esm_reject(esm_sap.ue_id, &rsp);
+		  OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
+	  }
   }
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
 }
@@ -279,7 +284,7 @@ nas_esm_proc_pdn_connectivity_res (
   if(rsp){
     if(pdn_conn_res->esm_cause == ESM_CAUSE_SUCCESS && esm_sap.esm_cause == ESM_CAUSE_SUCCESS) {
       if(esm_sap.is_attach_tau)
-        rc = _emm_wrapper_attach_accept(pdn_conn_res->ue_id, rsp);
+        rc = _emm_wrapper_esm_accept(pdn_conn_res->ue_id, &rsp, esm_sap.active_ebrs);
       else {
         rc = lowerlayer_activate_bearer_req(pdn_conn_res->ue_id, esm_sap.data.pdn_connectivity_res->linked_ebi, 0, 0, 0, 0, rsp);
       }

@@ -112,7 +112,7 @@ nas_esm_proc_pdn_connectivity_t* mme_app_nas_esm_create_pdn_connectivity_procedu
   if (ue_context->esm_procedures.pdn_connectivity_procedures) {
     LIST_FOREACH(esm_proc_pdn_connectivity, ue_context->esm_procedures.pdn_connectivity_procedures, entries) {
       if(esm_proc_pdn_connectivity){
-        if(esm_proc_pdn_connectivity->esm_base_proc.pti != pti){
+        if(esm_proc_pdn_connectivity->esm_base_proc.pti != pti){ /**< PTI may be invalid for idle TAU. */
           OAILOG_FUNC_RETURN(LOG_MME_APP, NULL);
         } else {
           /** We may have other pdn connectivity procedure with the same PTI and other EBI. Continuing. */

@@ -182,6 +182,7 @@ typedef struct emm_as_establish_s {
   uint8_t                nas_info;    /* Type of NAS information to transfer  */
   bstring                nas_msg;     /* NAS message to be transfered     */
   uint8_t                eps_update_result;           /* TAU EPS update result   */
+  uint16_t               eps_bearer_context_status;   /* TAU EPS bearer context result   */
 
   uint64_t               puid;                        /* linked to procedure UID */
   bool                   is_initial;                  /* true if contained in initial message    */
@@ -201,7 +202,6 @@ typedef struct emm_as_establish_s {
 #define EMM_AS_NAS_INFO_NONE    0xFF                  /* No Nas Message  */
 
   uint32_t              *t3412;                       /* GPRS T3412 timer   */
-  uint16_t              *eps_bearer_context_status;   /* TAU EPS bearer context status   */
   void                  *location_area_identification;/* TAU Location area identification */
   //void                *ms_identity;                 /* TAU 8.2.26.7   MS identity This IE may be included to assign or unassign a new TMSI to a UE during a combined TA/LA update. */
   int                   *combined_tau_emm_cause;      /* TAU EMM failure cause code   */
@@ -249,6 +249,7 @@ typedef struct emm_as_data_s {
   uint8_t                nas_info;    /* Type of NAS information to transfer  */
   bstring                nas_msg;     /* NAS message to be transfered     */
   uint8_t                eps_update_result;           /* TAU EPS update result   */
+  uint16_t               eps_bearer_context_status;           /* EPS bearer context result   */
 
 #define EMM_AS_DATA_DELIVERED_LOWER_LAYER_FAILURE                  0
 #define EMM_AS_DATA_DELIVERED_TRUE                                 1

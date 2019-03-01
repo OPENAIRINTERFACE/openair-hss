@@ -1368,7 +1368,17 @@ s10_mme_handle_context_response(
 
   MSC_LOG_RX_MESSAGE (MSC_S10_MME, MSC_SGW, NULL, 0, "0 CONTEXT_RESPONSE local S10 teid " TEID_FMT " num pdn connections %u", resp_p->teid,
     resp_p->pdn_connections.num_pdn_connections);
-  return itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
+  int result = itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
+
+  if(resp_p->cause.cause_value != REQUEST_ACCEPTED){
+	  OAILOG_ERROR (LOG_S10, "Context request for local teid " TEID_FMT " failed. Removing S10 tunnel endpoint on target side. \n", resp_p->teid);
+	  itti_s10_remove_ue_tunnel_t remove_s10_tunnel;
+	  memset(&remove_s10_tunnel, 0, sizeof(itti_s10_remove_ue_tunnel_t));
+	  remove_s10_tunnel.local_teid = resp_p->teid;
+	  remove_s10_tunnel.peer_ip.s_addr = resp_p->peer_ip.s_addr;
+	  s10_mme_remove_ue_tunnel(stack_p, &remove_s10_tunnel);
+  }
+  return result;
 }
 
 //------------------------------------------------------------------------------

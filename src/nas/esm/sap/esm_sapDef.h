@@ -189,6 +189,7 @@ typedef struct esm_sap_s {
   esm_sap_data_t      data;       /* ESM message data parameters                                        */
   esm_cause_t         esm_cause;
   bool                clr;
+  uint16_t			  active_ebrs;
 } esm_sap_t;
 
 /****************************************************************************/

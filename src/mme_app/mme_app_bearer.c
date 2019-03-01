@@ -2997,6 +2997,8 @@ mme_app_handle_s1ap_handover_required(
    */
   memcpy((void*)&s10_handover_procedure->target_tai, (void*)&handover_required_pP->selected_tai, sizeof(handover_required_pP->selected_tai));
   memcpy((void*)&s10_handover_procedure->target_ecgi, (void*)&handover_required_pP->global_enb_id, sizeof(handover_required_pP->global_enb_id)); /**< Home or macro enb id. */
+  memcpy((void*)&s10_handover_procedure->imsi, &ue_nas_ctx->_imsi, sizeof(imsi_t));
+  s10_handover_procedure->proc.peer_ip.s_addr = neigh_mme_ipv4_addr.s_addr;
 
   /** Set the eNB type. */
 //  s10_handover_procedure->target_enb_type = handover_required_pP->target_enb_type;
@@ -3182,7 +3184,7 @@ mme_app_handle_handover_cancel(
     /** Keeping the UE context as it is. */
     OAILOG_FUNC_OUT (LOG_MME_APP);
  }else{
-    /* Intra MME procedure.
+    /* Inter MME procedure.
      *
      * Target-TAI was not in the current MME. Sending a S10 Context Release Request.
      *
@@ -3192,14 +3194,12 @@ mme_app_handle_handover_cancel(
      */
     // todo: currently only a single neighboring MME supported.
    /** Get the neighboring MME IP. */
-   struct in_addr neigh_mme_ipv4_addr;
-   neigh_mme_ipv4_addr.s_addr = 0;
 
    if (1) {
      // TODO prototype may change
-     mme_app_select_service(&s10_handover_proc->target_tai, &neigh_mme_ipv4_addr);
+//     mme_app_select_service(&s10_handover_proc->target_tai, &neigh_mme_ipv4_addr);
      //    session_request_p->peer_ip.in_addr = mme_config.ipv4.
-     if(neigh_mme_ipv4_addr.s_addr == 0){
+     if(s10_handover_proc->proc.peer_ip.s_addr == 0){
        /** Send a Handover Preparation Failure back. */
        mme_app_send_s1ap_handover_cancel_acknowledge(handover_cancel_pP->mme_ue_s1ap_id, handover_cancel_pP->enb_ue_s1ap_id, handover_cancel_pP->assoc_id);
        mme_app_delete_s10_procedure_mme_handover(ue_context);
@@ -3218,7 +3218,7 @@ mme_app_handle_handover_cancel(
    relocation_cancel_request_p->teid = s10_handover_proc->remote_mme_teid.teid; /**< May or may not be 0. */
    relocation_cancel_request_p->local_teid = ue_context->local_mme_teid_s10; /**< May or may not be 0. */
    // todo: check the table!
-   relocation_cancel_request_p->peer_ip.s_addr = neigh_mme_ipv4_addr.s_addr;
+   relocation_cancel_request_p->peer_ip.s_addr = s10_handover_proc->proc.peer_ip.s_addr;
    /** IMSI. */
    memcpy((void*)&relocation_cancel_request_p->imsi, &emm_context->_imsi, sizeof(imsi_t));
    MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S10_MME, NULL, 0, "0 RELOCATION_CANCEL_REQUEST_MESSAGE");

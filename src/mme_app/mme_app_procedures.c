@@ -500,6 +500,21 @@ mme_app_handle_mobility_completion_timer_expiry (mme_app_s10_proc_mme_handover_t
         		/** This should not happen. The Ho-Cancel should come first. */
         		OAILOG_WARNING(LOG_MME_APP, "HO command not set yet for UE. Setting S1AP reference to idle mode for UE " MME_UE_S1AP_ID_FMT ". Not performing implicit detach. \n", ue_context->mme_ue_s1ap_id);
         		mme_app_send_s1ap_handover_preparation_failure(ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, ue_context->sctp_assoc_id_key, S1AP_HANDOVER_FAILED);
+
+        		/** Inform the target side of the failure. */
+        		message_p = itti_alloc_new_message (TASK_MME_APP, S10_RELOCATION_CANCEL_REQUEST);
+        		DevAssert (message_p != NULL);
+        		itti_s10_relocation_cancel_request_t *relocation_cancel_request_p = &message_p->ittiMsg.s10_relocation_cancel_request;
+        		memset ((void*)relocation_cancel_request_p, 0, sizeof (itti_s10_relocation_cancel_request_t));
+        		relocation_cancel_request_p->teid = s10_proc_mme_handover->proc.remote_teid; /**< May or may not be 0. */
+        		relocation_cancel_request_p->local_teid = ue_context->local_mme_teid_s10; /**< May or may not be 0. */
+        		// todo: check the table!
+        		relocation_cancel_request_p->peer_ip.s_addr = s10_proc_mme_handover->proc.peer_ip.s_addr;
+        		/** IMSI. */
+        		memcpy((void*)&relocation_cancel_request_p->imsi, &s10_proc_mme_handover->imsi, sizeof(imsi_t));
+        		MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S10_MME, NULL, 0, "0 RELOCATION_CANCEL_REQUEST_MESSAGE");
+        		itti_send_msg_to_task (TASK_S10, INSTANCE_DEFAULT, message_p);
+
         		/** Not setting UE into idle mode at source (not changing the UE state). Still removing the S10 tunnel (see what happens..). */
         		remove_s10_tunnel_endpoint(ue_context, s10_proc_mme_handover->proc.peer_ip);
         		mme_app_delete_s10_procedure_mme_handover(ue_context);
