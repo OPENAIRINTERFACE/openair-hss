@@ -1421,16 +1421,14 @@ mme_app_handle_initial_context_setup_rsp (
 
   if(mme_app_modify_bearers(initial_ctxt_setup_rsp_pP->ue_id, &initial_ctxt_setup_rsp_pP->bcs_to_be_modified) != RETURNok){
     OAILOG_ERROR (LOG_MME_APP, "Error while initial context setup response handling for UE: " MME_UE_S1AP_ID_FMT "\n", initial_ctxt_setup_rsp_pP->ue_id);
-    // todo: implicit detach..
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
   pdn_context_t * registered_pdn_ctx = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
-
-  emm_data_context_t * emm_context = emm_data_context_get(&_emm_data, initial_ctxt_setup_rsp_pP->ue_id);
-
+  if(registered_pdn_ctx){
+	  OAILOG_ERROR (LOG_MME_APP, "Error while initial context setup response handling for UE: " MME_UE_S1AP_ID_FMT ". No PDN context could be found. \n", initial_ctxt_setup_rsp_pP->ue_id);
+	  OAILOG_FUNC_OUT (LOG_MME_APP);
+  }
   uint8_t flags = 0;
-//  if(!is_nas_specific_procedure_attach_running(emm_context))
-//	  flags |= INTERNAL_FLAG_TRIGGERED_REJECT;
   mme_app_send_s11_modify_bearer_req(ue_context, registered_pdn_ctx, flags);
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
