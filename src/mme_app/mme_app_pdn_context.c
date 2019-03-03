@@ -507,8 +507,6 @@ mme_app_pdn_process_session_creation(mme_ue_s1ap_id_t ue_id, fteid_t * saegw_s11
     OAILOG_ERROR (LOG_MME_APP, "Received S11_CREATE_SESSION_RESPONSE REJECTION with cause value %d for ue " MME_UE_S1AP_ID_FMT "from S+P-GW. \n", cause->cause_value, ue_id);
     /** Destroy the PDN context (not in the ESM layer). */
     mme_app_esm_delete_pdn_context(ue_id, pdn_context->apn_subscribed, pdn_context->context_identifier, pdn_context->default_ebi); /**< Frees it & puts session bearers back to the pool. */
-    OAILOG_WARNING(LOG_MME_APP, "Destroyed the PDN context for APN \"%s\" (ctx_id=%d,default_ebi=%d) for ue_id " MME_UE_S1AP_ID_FMT "from S+P-GW. \n", bdata(pdn_context->apn_subscribed),
-        pdn_context->context_identifier, pdn_context->default_ebi, ue_id);
     // todo: UNLOCK
     OAILOG_FUNC_RETURN(LOG_MME_APP, RETURNok);
   }

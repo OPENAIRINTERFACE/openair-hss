@@ -250,51 +250,54 @@ emm_proc_identification_complete (
 
         emm_data_context_t * imsi_emm_ctx_duplicate = emm_data_context_get_by_imsi (&_emm_data, imsi64);
         if(imsi_emm_ctx_duplicate){ /**< We have the UE with this IMSI (different GUTI). */
-          OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - We already have EMM context with ueId " MME_UE_S1AP_ID_FMT " and IMSI " IMSI_64_FMT ". Setting new EMM context with ueId " MME_UE_S1AP_ID_FMT " into pending mode "
-              "and implicitly detaching old EMM context. \n", imsi_emm_ctx_duplicate->ue_id, imsi64, emm_ctx->ue_id);
-          void * unused= NULL;
-          nas_stop_T_retry_specific_procedure(emm_ctx->ue_id, &((nas_emm_specific_proc_t*)(((nas_emm_base_proc_t *)ident_proc)->parent))->retry_timer, unused);
-          nas_start_T_retry_specific_procedure(emm_ctx->ue_id, &((nas_emm_specific_proc_t*)(((nas_emm_base_proc_t *)ident_proc)->parent))->retry_timer, ((nas_emm_specific_proc_t*)(((nas_emm_base_proc_t *)ident_proc)->parent))->retry_cb, emm_ctx);
-          /** Set the old mme_ue_s1ap id which will be checked. */
-          ((nas_emm_specific_proc_t*)(((nas_emm_base_proc_t *)ident_proc)->parent))->old_ue_id = imsi_emm_ctx_duplicate->ue_id;
-          /*
-           * Perform an implicit detach on the new one.
-           */
-          imsi_emm_ctx_duplicate->emm_cause = EMM_CAUSE_ILLEGAL_UE;
+          if(imsi_emm_ctx_duplicate->ue_id != emm_ctx->ue_id){
+			  OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - We already have EMM context with ueId " MME_UE_S1AP_ID_FMT " and IMSI " IMSI_64_FMT ". Setting new EMM context with ueId " MME_UE_S1AP_ID_FMT " into pending mode "
+				  "and implicitly detaching old EMM context. \n", imsi_emm_ctx_duplicate->ue_id, imsi64, emm_ctx->ue_id);
+			  void * unused= NULL;
+			  nas_stop_T_retry_specific_procedure(emm_ctx->ue_id, &((nas_emm_specific_proc_t*)(((nas_emm_base_proc_t *)ident_proc)->parent))->retry_timer, unused);
+			  nas_start_T_retry_specific_procedure(emm_ctx->ue_id, &((nas_emm_specific_proc_t*)(((nas_emm_base_proc_t *)ident_proc)->parent))->retry_timer, ((nas_emm_specific_proc_t*)(((nas_emm_base_proc_t *)ident_proc)->parent))->retry_cb, emm_ctx);
+			  /** Set the old mme_ue_s1ap id which will be checked. */
+			  ((nas_emm_specific_proc_t*)(((nas_emm_base_proc_t *)ident_proc)->parent))->old_ue_id = imsi_emm_ctx_duplicate->ue_id;
+			  /*
+			   * Perform an implicit detach on the new one.
+			   */
+			  imsi_emm_ctx_duplicate->emm_cause = EMM_CAUSE_ILLEGAL_UE;
 
-          /** Clean up new UE context that was created to handle new attach request. */
-          memset(&emm_sap, 0 , sizeof(emm_sap_t));
-          emm_sap.primitive = EMMCN_IMPLICIT_DETACH_UE; /**< UE context will be purged. */
-          emm_sap.u.emm_cn.u.emm_cn_implicit_detach.emm_cause   = imsi_emm_ctx_duplicate->emm_cause; /**< Not sending detach type. */
-          emm_sap.u.emm_cn.u.emm_cn_implicit_detach.detach_type = 0; /**< Not sending detach type. */
-          emm_sap.u.emm_cn.u.emm_cn_implicit_detach.ue_id = imsi_emm_ctx_duplicate->ue_id;
-          /*
-           * Don't send the detach type, such that no NAS Detach Request is sent to the UE.
-           * Depending on the cause, the MME_APP will check and inform the NAS layer to continue with the procedure, before the timer expires.
-           */
-          emm_sap_send (&emm_sap);
+			  /** Clean up new UE context that was created to handle new attach request. */
+			  memset(&emm_sap, 0 , sizeof(emm_sap_t));
+			  emm_sap.primitive = EMMCN_IMPLICIT_DETACH_UE; /**< UE context will be purged. */
+			  emm_sap.u.emm_cn.u.emm_cn_implicit_detach.emm_cause   = imsi_emm_ctx_duplicate->emm_cause; /**< Not sending detach type. */
+			  emm_sap.u.emm_cn.u.emm_cn_implicit_detach.detach_type = 0; /**< Not sending detach type. */
+			  emm_sap.u.emm_cn.u.emm_cn_implicit_detach.ue_id = imsi_emm_ctx_duplicate->ue_id;
+			  /*
+			   * Don't send the detach type, such that no NAS Detach Request is sent to the UE.
+			   * Depending on the cause, the MME_APP will check and inform the NAS layer to continue with the procedure, before the timer expires.
+			   */
+			  emm_sap_send (&emm_sap);
 
-          /*
-           * Notify EMM that the identification procedure successfully completed.
-           * Free the procedure, but don't continue.
-           */
-          memset(&emm_sap, 0 , sizeof(emm_sap_t));
-          MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMREG_COMMON_PROC_CNF (IDENT) ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
-          emm_sap.primitive = EMMREG_COMMON_PROC_CNF;
-          emm_sap.u.emm_reg.ue_id    = ue_id;
-          emm_sap.u.emm_reg.ctx      = emm_ctx;
-          emm_sap.u.emm_reg.notify   = false;
-          emm_sap.u.emm_reg.free_proc = true;
-          emm_sap.u.emm_reg.u.common.common_proc            = &ident_proc->emm_com_proc;
-          emm_sap.u.emm_reg.u.common.previous_emm_fsm_state = ident_proc->emm_com_proc.emm_proc.previous_emm_fsm_state;
-          rc = emm_sap_send (&emm_sap);
+			  /*
+			   * Notify EMM that the identification procedure successfully completed.
+			   * Free the procedure, but don't continue.
+			   */
+			  memset(&emm_sap, 0 , sizeof(emm_sap_t));
+			  MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMREG_COMMON_PROC_CNF (IDENT) ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
+			  emm_sap.primitive = EMMREG_COMMON_PROC_CNF;
+			  emm_sap.u.emm_reg.ue_id    = ue_id;
+			  emm_sap.u.emm_reg.ctx      = emm_ctx;
+			  emm_sap.u.emm_reg.notify   = false;
+			  emm_sap.u.emm_reg.free_proc = true;
+			  emm_sap.u.emm_reg.u.common.common_proc            = &ident_proc->emm_com_proc;
+			  emm_sap.u.emm_reg.u.common.previous_emm_fsm_state = ident_proc->emm_com_proc.emm_proc.previous_emm_fsm_state;
+			  rc = emm_sap_send (&emm_sap);
 
-          //              unlock_ue_contexts(ue_context);
-          //             unlock_ue_contexts(imsi_ue_mm_ctx);
-          OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
+			  //              unlock_ue_contexts(ue_context);
+			  //             unlock_ue_contexts(imsi_ue_mm_ctx);
+			  OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
+          }
         }
         ue_context_t * ue_context_duplicate_imsi = mme_ue_context_exists_imsi(&mme_app_desc.mme_ue_contexts, imsi64);
-        if(ue_context_duplicate_imsi){
+        if(ue_context_duplicate_imsi &&
+        		(ue_context_duplicate_imsi->mme_ue_s1ap_id != emm_ctx->ue_id)){
           OAILOG_ERROR(LOG_NAS_EMM, "EMM-PROC  - We already have MME_APP UE context with ueId " MME_UE_S1AP_ID_FMT " and IMSI " IMSI_64_FMT ". "
               "Setting new EMM context with ueId " MME_UE_S1AP_ID_FMT " into pending mode "
               "and implicitly removing old MME_APP UE context. \n", ue_context_duplicate_imsi->mme_ue_s1ap_id, imsi64, emm_ctx->ue_id);

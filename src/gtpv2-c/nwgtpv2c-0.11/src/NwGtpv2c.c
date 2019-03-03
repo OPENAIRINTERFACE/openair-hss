@@ -1382,7 +1382,6 @@ static nw_rc_t                            nwGtpv2cHandleUlpFindLocalTunnel (
     OAI_GCC_DIAG_OFF(int-to-pointer-cast);
     nwGtpv2cTmrMinHeapDelete((NwGtpv2cTmrMinHeapT*)((nw_gtpv2c_stack_t*)hGtpcStackHandle)->hTmrMinHeap);
     OAI_GCC_DIAG_ON(int-to-pointer-cast);
-
     free_wrapper ((void**)&hGtpcStackHandle);
     return NW_OK;
   }
