@@ -718,11 +718,19 @@ esm_recv_activate_default_eps_bearer_context_accept (
    */
   esm_proc_default_eps_bearer_context_accept (ue_id, esm_pdn_connectivity_proc);
 
+  bool pending_qos = esm_pdn_connectivity_proc->pending_qos;
   /*
    * Remove the PDN Connectivity procedure.
    * It stops T3485 timer if running
    */
   _esm_proc_free_pdn_connectivity_procedure(&esm_pdn_connectivity_proc);
+
+  if(pending_qos){
+	  OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - UE for ueId " MME_UE_S1AP_ID_FMT " has a pending QoS procedure waiting the ESM PDN "
+			  "procedure to complete. \n", ue_id);
+	  nas_itti_s11_retry_ind(ue_id);
+  }
+
   /*
    * Return the ESM cause value
    */

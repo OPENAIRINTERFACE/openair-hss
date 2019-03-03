@@ -215,6 +215,7 @@ esm_proc_modify_eps_bearer_context (
   const pdn_cid_t    pdn_cid,
   bearer_context_to_be_updated_t * bc_tbu,
   ambr_t             *apn_ambr,
+  bool               * const pending_pdn_proc,
   ESM_msg            *esm_rsp_msg)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
@@ -229,6 +230,8 @@ esm_proc_modify_eps_bearer_context (
     if(esm_proc_pdn_connectivity->default_ebi == linked_ebi){
       OAILOG_ERROR(LOG_NAS_EMM, "EMMCN-SAP  - " "A PDN procedure for default ebi %d exists for UE " MME_UE_S1AP_ID_FMT" (cid=%d). Rejecting the establishment of the dedicated bearer.\n",
           linked_ebi, ue_id, esm_proc_pdn_connectivity->pdn_cid);
+      *pending_pdn_proc = true;
+      esm_proc_pdn_connectivity->pending_qos = true;
       OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_REQUEST_REJECTED_BY_GW);
     } else {
       OAILOG_WARNING(LOG_NAS_EMM, "EMMCN-SAP  - " "A PDN procedure for default ebi %d exists for UE " MME_UE_S1AP_ID_FMT" (cid=%d). Continuing with establishment of dedicated bearers.\n",

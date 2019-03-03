@@ -363,6 +363,11 @@ int nas_esm_proc_activate_eps_bearer_ctx(esm_eps_activate_eps_bearer_ctx_req_t *
   for(int num_bc = 0; num_bc < bcs_tbc->num_bearer_context; num_bc++) {
     esm_sap.data.eps_bearer_context_activate.bc_tbc   = &bcs_tbc->bearer_contexts[num_bc];
     esm_sap_signal(&esm_sap, &rsp);
+    if(esm_sap.data.eps_bearer_context_activate.pending_pdn_proc){
+    	OAILOG_DEBUG (LOG_MME_APP, "For UE " MME_UE_S1AP_ID_FMT " an colliding ESM procedure exists. "
+    			"Aborting activate bearer request and waiting for ESM procedure to complete.\n", esm_sap.ue_id);
+		break;
+    }
     if(rsp){
       rc = lowerlayer_activate_bearer_req(esm_cn_activate->ue_id,
           esm_sap.data.eps_bearer_context_activate.bc_tbc->eps_bearer_id,
@@ -401,6 +406,11 @@ int nas_esm_proc_modify_eps_bearer_ctx(esm_eps_modify_esm_bearer_ctxs_req_t * es
     esm_sap.data.eps_bearer_context_modify.bc_tbu       = &bcs_tbu->bearer_contexts[num_bc];
     /* Set the APN-AMBR for the first bearer context. */
     esm_sap_signal(&esm_sap, &rsp);
+    if(esm_sap.data.eps_bearer_context_modify.pending_pdn_proc){
+    	OAILOG_DEBUG (LOG_MME_APP, "For UE " MME_UE_S1AP_ID_FMT " an colliding ESM procedure exists. "
+    			"Aborting modify bearer request and waiting for ESM procedure to complete.\n", esm_sap.ue_id);
+    	break;
+    }
     if(rsp){
       if(esm_sap.data.eps_bearer_context_modify.bc_tbu->bearer_level_qos){
     	  OAILOG_DEBUG (LOG_MME_APP, "Triggering bearer modification for changed qos (ebi=%d) for UE " MME_UE_S1AP_ID_FMT ".\n",
@@ -443,6 +453,11 @@ int nas_esm_proc_deactivate_eps_bearer_ctx(esm_eps_deactivate_eps_bearer_ctx_req
   for(int num_ebi= 0; num_ebi < esm_cn_deactivate->ebis.num_ebi; num_ebi++){
     esm_sap.data.eps_bearer_context_deactivate.ded_ebi = esm_cn_deactivate->ebis.ebis[num_ebi];
     esm_sap_signal(&esm_sap, &rsp);
+    if(esm_sap.data.eps_bearer_context_deactivate.pending_pdn_proc){
+    	OAILOG_DEBUG (LOG_MME_APP, "For UE " MME_UE_S1AP_ID_FMT " an colliding ESM procedure exists. "
+    			"Aborting deactivate bearer request and waiting for ESM procedure to complete.\n", esm_sap.ue_id);
+    	break;
+    }
     if(rsp){
       rc = lowerlayer_deactivate_bearer_req(esm_cn_deactivate->ue_id, esm_sap.data.eps_bearer_context_deactivate.ded_ebi,rsp);
       bdestroy_wrapper(&rsp);

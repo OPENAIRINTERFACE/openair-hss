@@ -2102,7 +2102,7 @@ static void _emm_tracking_area_update_registration_complete(emm_data_context_t *
 	  bool pending_qos = s10_proc_handover->pending_qos;
 	  mme_app_delete_s10_procedure_mme_handover(ue_context);
 	  if(pending_qos){
-		  OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - UE for ueId " MME_UE_S1AP_ID_FMT " has pendign QoS information. \n", ue_context->mme_ue_s1ap_id);
+		  OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - UE for ueId " MME_UE_S1AP_ID_FMT " has pending QoS information. \n", ue_context->mme_ue_s1ap_id);
 		  nas_itti_s11_retry_ind(ue_context->mme_ue_s1ap_id);
 	  }
   }

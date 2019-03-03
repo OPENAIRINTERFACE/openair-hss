@@ -90,6 +90,7 @@ typedef struct nas_esm_proc_pdn_connectivity_s {
   ebi_t                        default_ebi;
   protocol_configuration_options_t  pco;
   eps_bearer_context_status_t  bc_status;
+  bool 						   pending_qos;  /**< If an S11 request has been received while handling the ESM PDN procedure. */
   LIST_ENTRY(nas_esm_proc_pdn_connectivity_s) entries;      /* List. */
 } nas_esm_proc_pdn_connectivity_t;
 
