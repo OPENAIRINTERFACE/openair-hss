@@ -670,7 +670,6 @@ void notify_s1ap_new_ue_mme_s1ap_id_association (const sctp_assoc_id_t   assoc_i
 int
 mme_app_send_s11_create_bearer_rsp (
   struct ue_context_s *const ue_context,
-  pdn_context_t       *pdn_ctx,
   void                *trxn,
   gtpv2c_cause_value_t cause_value,
   bearer_contexts_to_be_created_t *bcs_tbc)
@@ -700,7 +699,6 @@ mme_app_send_s11_create_bearer_rsp (
   /** Check if a direct reject-cause is given, if so set it for all bearer contexts. */
   /** Iterate through the bearers to be created and check which ones where established. */
   for(int num_bc = 0; num_bc < bcs_tbc->num_bearer_context; num_bc++){
-    DevAssert(pdn_ctx);
     if(cause_value && cause_value != REQUEST_ACCEPTED){
       bcs_tbc->bearer_contexts[num_bc].cause.cause_value = cause_value;
     }

@@ -1162,7 +1162,7 @@ mme_app_handle_modify_bearer_resp (
   /** In this case, we will ignore the MBR and assume a detach process is ongoing. */
   if(!current_bearer_p){
     OAILOG_INFO(LOG_MME_APP, "We could not find the first bearer with eBI %d in the set of bearers. Ignoring the MBResp for UE with ueId: " MME_UE_S1AP_ID_FMT ". \n",
-        ue_context->mme_ue_s1ap_id);
+    		modify_bearer_resp_pP->bearer_contexts_modified.bearer_contexts[0].eps_bearer_id, ue_context->mme_ue_s1ap_id);
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
   }
   mme_app_get_pdn_context(ue_context->mme_ue_s1ap_id, current_bearer_p->pdn_cx_id, current_bearer_p->linked_ebi, NULL, &pdn_context);
@@ -1495,7 +1495,7 @@ mme_app_handle_s11_create_bearer_req (
     MSC_LOG_RX_DISCARDED_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 CREATE_BEARER_REQUEST local S11 teid " TEID_FMT " ",
         create_bearer_request_pP->teid);
     OAILOG_ERROR(LOG_MME_APP, "Default ebi %d not found in list of UE: %" PRIX32 "\n", create_bearer_request_pP->linked_eps_bearer_id, create_bearer_request_pP->teid);
-    mme_app_send_s11_create_bearer_rsp(ue_context, NULL, (uintptr_t)create_bearer_request_pP->trxn, REQUEST_REJECTED, create_bearer_request_pP->bearer_contexts);
+    mme_app_send_s11_create_bearer_rsp(ue_context, (uintptr_t)create_bearer_request_pP->trxn, REQUEST_REJECTED, create_bearer_request_pP->bearer_contexts);
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
   bearer_context_t * bc_ded = NULL;
@@ -1507,7 +1507,7 @@ mme_app_handle_s11_create_bearer_req (
           create_bearer_request_pP->teid);
       OAILOG_ERROR(LOG_MME_APP, "Ded ebi %d already existing in list of UE with ueId " MME_UE_S1AP_ID_FMT" \n",
           create_bearer_request_pP->bearer_contexts->bearer_contexts[num_bc].eps_bearer_id, ue_context->mme_ue_s1ap_id);
-      mme_app_send_s11_create_bearer_rsp(ue_context, NULL, (uintptr_t)create_bearer_request_pP->trxn, REQUEST_REJECTED, create_bearer_request_pP->bearer_contexts);
+      mme_app_send_s11_create_bearer_rsp(ue_context, (uintptr_t)create_bearer_request_pP->trxn, REQUEST_REJECTED, create_bearer_request_pP->bearer_contexts);
       OAILOG_FUNC_OUT (LOG_MME_APP);
     }
   }
@@ -1517,7 +1517,7 @@ mme_app_handle_s11_create_bearer_req (
   if(s10_proc_handover){
 	  if(s10_proc_handover->pending_qos){
 		  OAILOG_ERROR(LOG_MME_APP, "A pending QoS procedure for the handovered UE " MME_UE_S1AP_ID_FMT" already exists, rejecting a second one. \n", ue_context->mme_ue_s1ap_id);
-		  mme_app_send_s11_create_bearer_rsp(ue_context, NULL, (uintptr_t)create_bearer_request_pP->trxn, REQUEST_REJECTED, create_bearer_request_pP->bearer_contexts);
+		  mme_app_send_s11_create_bearer_rsp(ue_context, (uintptr_t)create_bearer_request_pP->trxn, REQUEST_REJECTED, create_bearer_request_pP->bearer_contexts);
 		  OAILOG_FUNC_OUT (LOG_MME_APP);
 	  }
   }
@@ -1528,7 +1528,7 @@ mme_app_handle_s11_create_bearer_req (
     MSC_LOG_RX_DISCARDED_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 CREATE_BEARER_REQUEST local S11 teid " TEID_FMT " ",
         create_bearer_request_pP->teid);
     OAILOG_ERROR(LOG_MME_APP, "No CBR procedure could be created for of UE with ueId " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
-    mme_app_send_s11_create_bearer_rsp(ue_context, NULL, (uintptr_t)create_bearer_request_pP->trxn, REQUEST_REJECTED, create_bearer_request_pP->bearer_contexts);
+    mme_app_send_s11_create_bearer_rsp(ue_context, (uintptr_t)create_bearer_request_pP->trxn, REQUEST_REJECTED, create_bearer_request_pP->bearer_contexts);
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
 
@@ -2015,7 +2015,7 @@ static void mme_app_handle_e_rab_setup_rsp_dedicated_bearer(const itti_s1ap_e_ra
   }else{
     OAILOG_DEBUG (LOG_MME_APP, "For the S11 dedicated bearer procedure, no pending bearers left (either success or failure) for UE " MME_UE_S1AP_ID_FMT ". "
         "Sending CBResp immediately. \n", ue_context->mme_ue_s1ap_id);
-    mme_app_send_s11_create_bearer_rsp(ue_context, pdn_context, s11_proc_create_bearer->proc.s11_trxn, 0, s11_proc_create_bearer->bcs_tbc);
+    mme_app_send_s11_create_bearer_rsp(ue_context, s11_proc_create_bearer->proc.s11_trxn, 0, s11_proc_create_bearer->bcs_tbc);
     /** Delete the procedure if it exists. */
     mme_app_delete_s11_procedure_update_bearer(ue_context);
   }
@@ -2352,7 +2352,7 @@ void mme_app_handle_activate_eps_bearer_ctx_cnf (itti_nas_activate_eps_bearer_ct
   }
   OAILOG_INFO(LOG_MME_APP, "No unhandled bearers left for s11 CBR procedure for UE: " MME_UE_S1AP_ID_FMT ". "
       "Sending CBResp back immediately. \n", ue_context->mme_ue_s1ap_id);
-  mme_app_send_s11_create_bearer_rsp(ue_context, pdn_context, s11_proc_create_bearer->proc.s11_trxn, 0, s11_proc_create_bearer->bcs_tbc);
+  mme_app_send_s11_create_bearer_rsp(ue_context, s11_proc_create_bearer->proc.s11_trxn, 0, s11_proc_create_bearer->bcs_tbc);
   /** Delete the procedure if it exists. */
   mme_app_delete_s11_procedure_create_bearer(ue_context);
   OAILOG_FUNC_OUT (LOG_MME_APP);
@@ -2425,7 +2425,7 @@ void mme_app_handle_activate_eps_bearer_ctx_rej (itti_nas_activate_eps_bearer_ct
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
   OAILOG_INFO(LOG_MME_APP, "No unhandled bearers left for s11 create bearer procedure for UE: " MME_UE_S1AP_ID_FMT ". Sending CBResp back immediately. \n", ue_context->mme_ue_s1ap_id);
-  mme_app_send_s11_create_bearer_rsp(ue_context, pdn_context, s11_proc_create_bearer->proc.s11_trxn, 0, s11_proc_create_bearer->bcs_tbc);
+  mme_app_send_s11_create_bearer_rsp(ue_context, s11_proc_create_bearer->proc.s11_trxn, 0, s11_proc_create_bearer->bcs_tbc);
   /** Delete the procedure if it exists. No ESM procedure expected to be removed (should not exist here). */
   mme_app_delete_s11_procedure_create_bearer(ue_context);
   OAILOG_FUNC_OUT (LOG_MME_APP);
