@@ -289,7 +289,7 @@ s1ap_mme_thread (
         if (received_message_p->ittiMsg.timer_has_expired.arg != NULL) {
           enb_s1ap_id_key_t enb_s1ap_id_key = (enb_s1ap_id_key_t)(received_message_p->ittiMsg.timer_has_expired.arg);
           enb_ue_s1ap_id_t enb_ue_s1ap_id = MME_APP_ENB_S1AP_ID_KEY2ENB_S1AP_ID(enb_s1ap_id_key);
-          enb_s1ap_id_key = enb_s1ap_id_key & 0xFFFFFFFFFF0000;
+          enb_s1ap_id_key = enb_s1ap_id_key & 0xFFFFFFFFFF000000;
           uint32_t enb_id = enb_s1ap_id_key >> 24;
 
           /** Check if the UE still exists. */
