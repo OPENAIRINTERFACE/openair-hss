@@ -287,9 +287,13 @@ s1ap_mme_thread (
       case TIMER_HAS_EXPIRED:{
         ue_description_t                       *ue_ref_p = NULL;
         if (received_message_p->ittiMsg.timer_has_expired.arg != NULL) {
-          mme_ue_s1ap_id_t mme_ue_s1ap_id = (mme_ue_s1ap_id_t)(received_message_p->ittiMsg.timer_has_expired.arg);
+          enb_s1ap_id_key_t enb_s1ap_id_key = (enb_s1ap_id_key_t)(received_message_p->ittiMsg.timer_has_expired.arg);
+          enb_ue_s1ap_id_t enb_ue_s1ap_id = MME_APP_ENB_S1AP_ID_KEY2ENB_S1AP_ID(enb_s1ap_id_key);
+          enb_s1ap_id_key = enb_s1ap_id_key & 0xFFFFFFFFFF0000;
+          uint32_t enb_id = enb_s1ap_id_key >> 24;
+
           /** Check if the UE still exists. */
-          ue_ref_p = s1ap_is_ue_mme_id_in_list(mme_ue_s1ap_id);
+          ue_ref_p = s1ap_is_enb_ue_s1ap_id_in_list_per_enb(enb_ue_s1ap_id, enb_id);
           if (!ue_ref_p) {
             OAILOG_WARNING (LOG_S1AP, "Timer with id 0x%lx expired but no associated UE context!\n", received_message_p->ittiMsg.timer_has_expired.timer_id);
             break;

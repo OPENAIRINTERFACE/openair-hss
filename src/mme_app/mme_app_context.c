@@ -2798,8 +2798,10 @@ int mme_app_mobility_complete(const mme_ue_s1ap_id_t mme_ue_s1ap_id, bool activa
       ue_description_t * old_ue_reference = s1ap_is_enb_ue_s1ap_id_in_list_per_enb(s10_handover_proc->source_enb_ue_s1ap_id, s10_handover_proc->source_ecgi.cell_identity.enb_id);
       if(old_ue_reference){
         /** For INTRA-MME handover, start the timer to remove the old UE reference here. No timer should be started for the S10 Handover Process. */
-        if (timer_setup (mme_config.mme_mobility_completion_timer, 0,
-            TASK_S1AP, INSTANCE_DEFAULT, TIMER_ONE_SHOT, (void *)old_ue_reference, &(old_ue_reference->s1ap_handover_completion_timer.id)) < 0) {
+    	enb_s1ap_id_key_t enb_ue_s1ap_id_key = 0;
+    	MME_APP_ENB_S1AP_ID_KEY(enb_ue_s1ap_id_key, s10_handover_proc->source_ecgi.cell_identity.enb_id, old_ue_reference->enb_ue_s1ap_id);
+		if (timer_setup (mme_config.mme_mobility_completion_timer, 0,
+            TASK_S1AP, INSTANCE_DEFAULT, TIMER_ONE_SHOT, enb_ue_s1ap_id_key, &(old_ue_reference->s1ap_handover_completion_timer.id)) < 0) {
           OAILOG_ERROR (LOG_MME_APP, "Failed to start s1ap_mobility_completion timer for source eNB for enbUeS1apId " ENB_UE_S1AP_ID_FMT " for duration %d. "
               "Still continuing with MBR. \n",
               old_ue_reference->enb_ue_s1ap_id, mme_config.mme_mobility_completion_timer);
