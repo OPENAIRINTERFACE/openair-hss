@@ -1424,7 +1424,7 @@ mme_app_handle_initial_context_setup_rsp (
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
   pdn_context_t * registered_pdn_ctx = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
-  if(registered_pdn_ctx){
+  if(!registered_pdn_ctx){
 	  OAILOG_ERROR (LOG_MME_APP, "Error while initial context setup response handling for UE: " MME_UE_S1AP_ID_FMT ". No PDN context could be found. \n", initial_ctxt_setup_rsp_pP->ue_id);
 	  OAILOG_FUNC_OUT (LOG_MME_APP);
   }
