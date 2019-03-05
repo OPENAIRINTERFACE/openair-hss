@@ -503,6 +503,7 @@ void *mme_app_thread (void *args)
 int mme_app_init (const mme_config_t * mme_config_p)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
+
   memset (&mme_app_desc, 0, sizeof (mme_app_desc));
   // todo: (from develop)   pthread_rwlock_init (&mme_app_desc.rw_lock, NULL); && where to unlock it?
   bstring b = bfromcstr("mme_app_imsi_ue_context_htbl");
