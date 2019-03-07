@@ -285,6 +285,7 @@ emm_proc_detach (
     rc = emm_sap_send (&emm_sap);
   }else{
     OAILOG_INFO (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " EMM-PROC  - No detach type is set for UE. We will not send detach request. \n", emm_context->ue_id);
+    ue_context->s1_ue_context_release_cause = S1AP_IMPLICIT_CONTEXT_RELEASE;
     rc = RETURNok;
   }
   /*

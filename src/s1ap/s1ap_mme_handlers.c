@@ -903,8 +903,10 @@ s1ap_mme_generate_ue_context_release_command (
       OAILOG_DEBUG (LOG_S1AP, "UE_CONTEXT_RELEASE_REQUEST will be sent for UE with mmeUeS1apId " MME_UE_S1AP_ID_FMT ". Waiting for RELEASE-COMPLETE to remove the UE-Reference due reason %d. \n",
           ue_ref_p->mme_ue_s1ap_id, cause);
       // Start timer to track UE context release complete from eNB
+      enb_s1ap_id_key_t enb_ue_s1ap_id_key = INVALID_ENB_UE_S1AP_ID_KEY;
+      MME_APP_ENB_S1AP_ID_KEY(enb_ue_s1ap_id_key, enb_ref_p->enb_id, ue_ref_p->enb_ue_s1ap_id);
       if (timer_setup (ue_ref_p->s1ap_ue_context_rel_timer.sec, 0,
-          TASK_S1AP, INSTANCE_DEFAULT, TIMER_ONE_SHOT, (void*)ue_ref_p->mme_ue_s1ap_id, &(ue_ref_p->s1ap_ue_context_rel_timer.id)) < 0) {
+          TASK_S1AP, INSTANCE_DEFAULT, TIMER_ONE_SHOT, (void*)enb_ue_s1ap_id_key, &(ue_ref_p->s1ap_ue_context_rel_timer.id)) < 0) {
         OAILOG_ERROR (LOG_S1AP, "Failed to start UE context release complete timer for UE id %d \n", ue_ref_p->mme_ue_s1ap_id);
         ue_ref_p->s1ap_ue_context_rel_timer.id = S1AP_TIMER_INACTIVE_ID;
       } else {
