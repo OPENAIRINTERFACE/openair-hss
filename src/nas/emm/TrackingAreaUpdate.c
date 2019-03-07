@@ -255,14 +255,64 @@ int emm_proc_tracking_area_update_request (
      * We have an EMM context with GUTI from a previous registration.
      * Validate it, if the message has been received with a security header and if the security header can be validated we can continue using it.
      */
-    new_emm_ue_context = (*duplicate_emm_ue_ctx_pP);
-    /*
-     * The old UE Id can not already be in REGISTERED state.
-     * If there are some differences of the current structure to the received message, the context will be
-     * implicitly detached (together with all its layers).
-     * Else, if we can use it, we can also continue with the newly created UE references and don't
-     * have to re-link any of them to the old UE context.
-     */
+     if((*duplicate_emm_ue_ctx_pP)->ue_id != ue_id) {
+    	 new_emm_ue_context = calloc(1, sizeof(emm_data_context_t));
+    	 memcpy(new_emm_ue_context, (*duplicate_emm_ue_ctx_pP), sizeof(**duplicate_emm_ue_ctx_pP));
+
+    	mme_ue_s1ap_id_t old_ue_id = (*duplicate_emm_ue_ctx_pP)->ue_id;
+        /** Remove the (old) EMM context from the tables, update the EMM context ue_id. */
+        new_emm_ue_context->ue_id = ue_id;
+        /*
+         * The old UE Id can not already be in REGISTERED state.
+         * If there are some differences of the current structure to the received message, the context will be
+         * implicitly detached (together with all its layers).
+         * Else, if we can use it, we can also continue with the newly created UE references and don't
+         * have to re-link any of them to the old UE context.
+         */
+    	OAILOG_WARNING(LOG_NAS_EMM, "EMM-PROC  - Updated the EMM Context with IMSI " IMSI_64_FMT" from old ueId " MME_UE_S1AP_ID_FMT " to new ueId " MME_UE_S1AP_ID_FMT ". \n",
+    			new_emm_ue_context->_imsi64, old_ue_id, ue_id);
+    	/** Remove the subscription profile and add it into the TAU procedure. */
+        subscription_data_t * subscription_data = mme_api_remove_subscription_data(new_emm_ue_context->_imsi64);
+        if(subscription_data){
+            if(ies->subscription_data)
+            	free_wrapper((void**)&(ies->subscription_data));
+            ies->subscription_data = subscription_data;
+        }
+    	emm_sap_t                               emm_sap = {0};
+    	emm_sap.primitive = EMMCN_IMPLICIT_DETACH_UE; /**< UE context will be purged. */
+    	emm_sap.u.emm_cn.u.emm_cn_implicit_detach.emm_cause   = 0; /**< Not sending detach type. */
+    	emm_sap.u.emm_cn.u.emm_cn_implicit_detach.detach_type = 0; /**< Not sending detach type. */
+    	emm_sap.u.emm_cn.u.emm_cn_implicit_detach.ue_id = old_ue_id;
+    	/*
+    	 * Don't send the detach type, such that no NAS Detach Request is sent to the UE.
+    	 * Depending on the cause, the MME_APP will check and inform the NAS layer to continue with the procedure, before the timer expires.
+    	 */
+    	emm_sap_send (&emm_sap);
+
+        /** Set the new attach procedure into pending mode and continue with it after the completion of the duplicate removal. */
+        void *unused = NULL;
+        _emm_proc_create_procedure_tracking_area_update_request(new_emm_ue_context, ies, _emm_tau_retry_procedure);
+        nas_emm_tau_proc_t * tau_proc = get_nas_specific_procedure_tau(new_emm_ue_context);
+        nas_stop_T_retry_specific_procedure(new_emm_ue_context->ue_id, &tau_proc->emm_spec_proc.retry_timer, unused);
+        nas_start_T_retry_specific_procedure(new_emm_ue_context->ue_id, &tau_proc->emm_spec_proc.retry_timer, tau_proc->emm_spec_proc.retry_cb, new_emm_ue_context);
+        /** Set the old mme_ue_s1ap id which will be checked. */
+        tau_proc->emm_spec_proc.old_ue_id = old_ue_id;
+        *duplicate_emm_ue_ctx_pP = NULL;
+        /*
+         * Nothing else to do with the current TAU procedure. Leave it on hold.
+         * Continue to handle the new TAU procedure.
+         */
+        /*
+         * Perform implicit detach on the old UE with cause of duplicate detection.
+         * Not continuing with the new TAU procedure until the old one has been successfully deallocated.
+         */
+        // todo: this probably will not work, we need to update the enb_ue_s1ap_id of the old UE context to continue to work with it!
+        //              unlock_ue_contexts(ue_context);
+        //             unlock_ue_contexts(imsi_ue_mm_ctx);
+        OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
+    } else{
+    	 new_emm_ue_context = (*duplicate_emm_ue_ctx_pP);
+    }
   }else{
     OAILOG_WARNING (LOG_NAS_EMM, "We have an invalid EMM context with IMSI " IMSI_64_FMT " from a previous registration with ueId " MME_UE_S1AP_ID_FMT " in an undefined state. Performing implicit detach first. \n",
         (*duplicate_emm_ue_ctx_pP)->_imsi64, (*duplicate_emm_ue_ctx_pP)->ue_id);
@@ -720,11 +770,31 @@ int emm_proc_tracking_area_update_request_validity(emm_data_context_t * emm_cont
   if (!(IS_EMM_CTXT_PRESENT_SECURITY(emm_context)
       && ies->decode_status.integrity_protected_message
       && ies->decode_status.mac_matched)){
-    OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Received TAU Request while UE context does not have a valid security context. Performing an implicit detach. \n");
-    /** Set the EMM cause to invalid. */
-    emm_context->emm_cause = EMM_CAUSE_ILLEGAL_UE;
-    /** Continue to handle the TAU Request inside a new EMM context. */
-    OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
+
+	  nas_message_t                           nas_msg = {.security_protected.header = {0},
+	                                                       .security_protected.plain.emm.header = {0},
+	                                                       .security_protected.plain.esm.header = {0}};
+	  memset (&nas_msg,       0, sizeof (nas_msg));
+	  /*
+	   * Decode the received message
+	   */
+	  int                                     decoder_rc = 0;
+	  decoder_rc = nas_message_decode (ies->complete_tau_request->data, &nas_msg, blength(ies->complete_tau_request), &emm_context->_security, NULL, &ies->decode_status);
+
+	  if(decoder_rc < 0){
+		  OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Received TAU Request while UE context does not have a valid security context (could not decode, rc=%d). Performing an implicit detach. \n", decoder_rc);
+		  /** Set the EMM cause to invalid. */
+		  emm_context->emm_cause = EMM_CAUSE_ILLEGAL_UE;
+		  /** Continue to handle the TAU Request inside a new EMM context. */
+		  OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
+	  }
+	  if(!ies->decode_status.mac_matched){
+		  OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Received TAU Request while UE context does not have a valid security context (mac not matched). Performing an implicit detach. \n");
+		  /** Set the EMM cause to invalid. */
+		  emm_context->emm_cause = EMM_CAUSE_ILLEGAL_UE;
+		  /** Continue to handle the TAU Request inside a new EMM context. */
+		  OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
+	  }
   }
   /** Return Ok: Can process with the TAU request (and EMM context is validated). */
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
@@ -1013,12 +1083,24 @@ static int _emm_send_tracking_area_update_accept(emm_data_context_t * const emm_
 
     /** Set the GUTI fields. */
     emm_sap.u.emm_as.u.data.eps_id.guti = &emm_context->_guti;
+  } else {
+	  //----------------------------------------
+	  /**
+	   * Set the TAI_LIST valid with TAI_ACCEPT.
+	   * The TAU may be changed, so update the TAI-List.
+	   */
+	  REQUIREMENT_3GPP_24_301(R10_5_5_3_2_4__1c);
+	  if(_emm_data.conf.force_tau){
+		  /** Only give the current TAC in the list. */
+		  OAILOG_INFO (LOG_NAS, "UE " MME_UE_S1AP_ID_FMT " has an intra-MME TAU. Only updating the TAI-List to new TAC " TAC_FMT ".\n",
+				  ue_context->mme_ue_s1ap_id, emm_context->originating_tai.tac);
+		  emm_context->_tai_list.numberoflists = 1;
+		  emm_context->_tai_list.partial_tai_list[0].numberofelements = 0; /**< + 1. */
+		  emm_context->_tai_list.partial_tai_list[0].typeoflist = TRACKING_AREA_IDENTITY_LIST_ONE_PLMN_CONSECUTIVE_TACS;
+		  emm_context->_tai_list.partial_tai_list[0].u.tai_one_plmn_consecutive_tacs.tac = emm_context->originating_tai.tac;
+		  /** PLMN may not differ. */
+	  }
   }
-  //----------------------------------------
-  /**
-   * Set the TAI_LIST valid with TAI_ACCEPT. todo: not checking what it was?
-   */
-  REQUIREMENT_3GPP_24_301(R10_5_5_3_2_4__1c);
   memcpy(&emm_sap.u.emm_as.u.data.tai_list, &emm_context->_tai_list, sizeof(tai_list_t)); /**< Updated in the EMM context with new GUTI reallocation. */
 
   /** An old GUTI must always exist. */
@@ -1594,6 +1676,13 @@ static int _emm_tau_retry_procedure(emm_data_context_t *emm_context){
   OAILOG_WARNING(LOG_NAS_EMM, "EMM-PROC  - No old EMM/UE context exists for ue_id=" MME_UE_S1AP_ID_FMT ". Continuing with TAU procedure for new ueId " MME_UE_S1AP_ID_FMT ". \n",
       tau_proc->emm_spec_proc.old_ue_id, emm_context->ue_id);
 
+  if(!emm_data_context_get(&_emm_data, emm_context->ue_id)){
+	  if (RETURNok != emm_data_context_add (&_emm_data, emm_context)) {
+		  rc = _emm_tracking_area_update_reject(emm_context->ue_id, EMM_CAUSE_ILLEGAL_UE);
+		  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+	  }
+  }
+
   rc = _emm_tracking_area_update_run_procedure(emm_context);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
@@ -1732,13 +1821,33 @@ static int _emm_tracking_area_update_run_procedure(emm_data_context_t *emm_conte
       /** Check for subscription data. */
       subscription_data_t *subscription_data = mme_ue_subscription_data_exists_imsi(&mme_app_desc.mme_ue_contexts, emm_context->_imsi64);
       if(!subscription_data) { /**< Means, that the MM UE context is received from the sourc MME already due HO (and only due HO). */
-        OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC- THE UE with ue_id=" MME_UE_S1AP_ID_FMT ", does not have a subscription profile set. Requesting a new subscription profile. \n",
-            emm_context->ue_id, EMM_CAUSE_IE_NOT_IMPLEMENTED);
-        /**
-         * Always use initial to trigger a CLR.
-         */
-        rc = nas_itti_pdn_config_req(emm_context->ue_id, &emm_context->_imsi, REQUEST_TYPE_INITIAL_REQUEST, &emm_context->originating_tai.plmn);
-        OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+        if(tau_proc->ies->subscription_data){
+        	subscription_data = tau_proc->ies->subscription_data;
+            mme_insert_subscription_profile(&mme_app_desc.mme_ue_contexts, emm_context->_imsi64, subscription_data);
+        	mme_app_update_ue_subscription(emm_context->ue_id, tau_proc->ies->subscription_data);
+        	tau_proc->ies->subscription_data = NULL;
+        	/** Send the S6a message. */
+        	MessageDef * message_p = itti_alloc_new_message (TASK_MME_APP, NAS_PDN_CONFIG_RSP);
+        	mme_app_update_ue_subscription(ue_context->mme_ue_s1ap_id, subscription_data);
+        	message_p->ittiMsg.nas_pdn_config_rsp.ue_id  = ue_context->mme_ue_s1ap_id;
+        	message_p->ittiMsg.nas_pdn_config_rsp.imsi64 = emm_context->_imsi64;
+        	imsi64_t imsi64_2 = imsi_to_imsi64(&emm_context->_imsi);
+        	memcpy(&message_p->ittiMsg.nas_pdn_config_rsp.imsi, &emm_context->_imsi, sizeof(imsi_t));
+        	memcpy(&message_p->ittiMsg.nas_pdn_config_rsp.target_tai, &emm_context->originating_tai, sizeof(tai_t));
+        	/** Check if an attach procedure is running, if so send it to the ESM layer, if not, we assume it is triggered by a TAU request, send it to the EMM. */
+        	/** For error codes, use nas_pdn_cfg_fail. */
+        	MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_ESM, NULL, 0, "0 NAS_PDN_CONFIG_RESP IMSI " IMSI_64_FMT, emm_context->_imsi64);
+        	rc =  itti_send_msg_to_task (TASK_NAS_ESM, INSTANCE_DEFAULT, message_p);
+        	OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
+    	} else {
+            OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC- THE UE with ue_id=" MME_UE_S1AP_ID_FMT ", does not have a subscription profile set for IMSI " IMSI_64_FMT". "
+            		"Requesting a new subscription profile. \n", emm_context->ue_id, emm_context->_imsi64);
+            /**
+             * Always use initial to trigger a CLR.
+             */
+            rc = nas_itti_pdn_config_req(emm_context->ue_id, &emm_context->_imsi, REQUEST_TYPE_INITIAL_REQUEST, &emm_context->originating_tai.plmn);
+            OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+    	}
       } else{
         OAILOG_DEBUG (LOG_NAS_EMM, "EMM-PROC- Sending Tracking Area Update Accept for UE with valid subscription ue_id=" MME_UE_S1AP_ID_FMT ", active flag=%d)\n", emm_context->ue_id, tau_proc->ies->eps_update_type.active_flag);
         /* Check the state of the EMM context. If it is REGISTERED, send an TAU_ACCEPT back and remove the tau procedure. */
@@ -2091,9 +2200,12 @@ static void _emm_tracking_area_update_registration_complete(emm_data_context_t *
    * Check for an S10 procedure. If so release it.
    * If no procedure exists (idle-TAU), check for pending deactivation.
    */
+  bool active_flag = tau_proc->ies->eps_update_type.active_flag;
+  nas_delete_tau_procedure(emm_context);
+
   mme_app_s10_proc_mme_handover_t * s10_proc_handover = mme_app_get_s10_procedure_mme_handover(ue_context);
   if(!s10_proc_handover){
-	  if(!tau_proc->ies->eps_update_type.active_flag){
+	  if(!active_flag){
 		  /** No MBR should be send because no InitialContextSetupResponse is received. */
  		  OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - EMM Context for ueId " MME_UE_S1AP_ID_FMT " has done an IDLE-TAU without active flag. Triggering UE context release. \n", emm_context->ue_id);
  		  mme_app_itti_ue_context_release(ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, S1AP_NAS_NORMAL_RELEASE, ue_context->e_utran_cgi.cell_identity.enb_id);
@@ -2161,6 +2273,9 @@ void free_emm_tau_request_ies(emm_tau_request_ies_t ** const ies)
   }
   if ((*ies)->old_guti_type) {
     free_wrapper((void**)&((*ies)->old_guti_type));
+  }
+  if((*ies)->subscription_data){
+	free_wrapper((void**)&((*ies)->subscription_data));
   }
   free_wrapper((void**)ies);
 }

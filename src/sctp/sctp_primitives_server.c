@@ -751,6 +751,7 @@ static void sctp_exit (void)
     }
     free_wrapper ((void**)&sctp_assoc_p);
     sctp_desc.number_of_connections--;
+    sctp_assoc_p = next_sctp_assoc_p;
   }
   OAI_FPRINTF_INFO("TASK_SCTP terminated\n");
 }

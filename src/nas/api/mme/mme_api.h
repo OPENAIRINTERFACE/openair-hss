@@ -146,6 +146,6 @@ int mme_api_new_guti(const imsi_t * const imsi,
 
 void mme_ue_context_update_ue_emm_state (mme_ue_s1ap_id_t mme_ue_s1ap_id, mm_state_t new_emm_state);
 
-int mme_api_remove_subscription_data (const imsi64_t const imsi64);
+subscription_data_t * mme_api_remove_subscription_data (const imsi64_t const imsi64);
 
 #endif /* FILE_MME_API_SEEN*/

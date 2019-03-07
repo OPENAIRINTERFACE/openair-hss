@@ -730,7 +730,8 @@ int emm_context_unlock (struct emm_data_context_s *emm_context_p)
 struct emm_data_context_s              *
 emm_data_context_remove (
   emm_data_t * emm_data,
-  struct emm_data_context_s *elm)
+  struct emm_data_context_s *elm,
+  bool clear_fields)
 {
   struct emm_data_context_s              *emm_data_context_p = NULL;
   mme_ue_s1ap_id_t                       *emm_ue_id          = NULL;
@@ -745,7 +746,8 @@ emm_data_context_remove (
       OAILOG_DEBUG (LOG_NAS_EMM, "EMM-CTX - Remove in ctx_coll_guti context %p UE id "
           MME_UE_S1AP_ID_FMT " guti " " " GUTI_FMT "\n", elm, (mme_ue_s1ap_id_t) (*emm_ue_id), GUTI_ARG(&elm->_guti));
     }
-    emm_ctx_clear_guti(elm);
+    if(clear_fields)
+    	emm_ctx_clear_guti(elm);
   }
 
   if ( IS_EMM_CTXT_PRESENT_IMSI(elm)) {
@@ -754,7 +756,8 @@ emm_data_context_remove (
 
     OAILOG_DEBUG (LOG_NAS_EMM, "EMM-CTX - Remove in ctx_coll_imsi context %p UE id " MME_UE_S1AP_ID_FMT " imsi " IMSI_64_FMT "\n",
                   elm, (mme_ue_s1ap_id_t)((uintptr_t)emm_ue_id), imsi64);
-    emm_ctx_clear_imsi(elm);
+    if(clear_fields)
+    	emm_ctx_clear_imsi(elm);
   }
 
   hashtable_ts_remove (emm_data->ctx_coll_ue_id, (const hash_key_t)(elm->ue_id), (void **)&emm_data_context_p);

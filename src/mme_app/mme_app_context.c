@@ -807,14 +807,14 @@ void mme_remove_ue_context (
   // eNB UE S1P UE ID
   hash_rc = hashtable_uint64_ts_remove (mme_ue_context_p->enb_ue_s1ap_id_ue_context_htbl, (const hash_key_t)ue_context->enb_s1ap_id_key);
   if (HASH_TABLE_OK != hash_rc)
-    OAILOG_DEBUG(LOG_MME_APP, "UE context enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT ", ENB_UE_S1AP_ID not ENB_UE_S1AP_ID collection",
+    OAILOG_DEBUG(LOG_MME_APP, "UE context enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT ", ENB_UE_S1AP_ID not ENB_UE_S1AP_ID collection. \n",
       ue_context->enb_ue_s1ap_id, ue_context->mme_ue_s1ap_id);
 
   // filled S11 tun id
   if (ue_context->mme_teid_s11) {
     hash_rc = hashtable_uint64_ts_remove (mme_ue_context_p->tun11_ue_context_htbl, (const hash_key_t)ue_context->mme_teid_s11);
     if (HASH_TABLE_OK != hash_rc)
-      OAILOG_DEBUG(LOG_MME_APP, "UE context enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT ", MME TEID_S11 " TEID_FMT "  not in S11 collection",
+      OAILOG_DEBUG(LOG_MME_APP, "UE context enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT ", MME TEID_S11 " TEID_FMT "  not in S11 collection. \n",
           ue_context->enb_ue_s1ap_id, ue_context->mme_ue_s1ap_id, ue_context->mme_teid_s11);
   }
 
@@ -822,7 +822,7 @@ void mme_remove_ue_context (
   if (ue_context->local_mme_teid_s10) {
     hash_rc = hashtable_uint64_ts_remove (mme_ue_context_p->tun11_ue_context_htbl, (const hash_key_t)ue_context->local_mme_teid_s10);
     if (HASH_TABLE_OK != hash_rc)
-      OAILOG_DEBUG(LOG_MME_APP, "UE context enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT ", LOCAL MME TEID S10 " TEID_FMT "  not in S10 collection",
+      OAILOG_DEBUG(LOG_MME_APP, "UE context enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT ", LOCAL MME TEID S10 " TEID_FMT "  not in S10 collection. \n",
           ue_context->enb_ue_s1ap_id, ue_context->mme_ue_s1ap_id, ue_context->local_mme_teid_s10);
   }
 
@@ -889,7 +889,7 @@ mme_insert_subscription_profile(
 }
 
 //------------------------------------------------------------------------------
-void mme_remove_subscription_profile(mme_ue_context_t * const mme_ue_context_p, imsi64_t imsi){
+subscription_data_t * mme_remove_subscription_profile(mme_ue_context_t * const mme_ue_context_p, imsi64_t imsi){
   // filled NAS UE ID/ MME UE S1AP ID
 //  LOCK_SUBSCRIPTION_DATA_TREE();
   hashtable_rc_t                          hash_rc = HASH_TABLE_OK;
@@ -898,17 +898,14 @@ void mme_remove_subscription_profile(mme_ue_context_t * const mme_ue_context_p, 
   hash_rc = hashtable_ts_remove (mme_ue_context_p->imsi_subscription_profile_htbl, (const hash_key_t)imsi, (void **)&subscription_data);
   if (HASH_TABLE_OK != hash_rc){
     OAILOG_WARNING(LOG_MME_APP, "No subscription data was found for IMSI " IMSI_64_FMT " in the subscription profile cache.", imsi);
-    OAILOG_FUNC_OUT (LOG_MME_APP);
+    OAILOG_FUNC_RETURN( LOG_MME_APP, NULL);
   }
-  /** Free the old subscription data. */
-  free_wrapper ((void**) &subscription_data);
-
   /*
    * Updating statistics
    */
   __sync_fetch_and_sub(&mme_ue_context_p->nb_apn_configuration, 1);
 
-  OAILOG_FUNC_OUT (LOG_MME_APP);
+  OAILOG_FUNC_RETURN(LOG_MME_APP, subscription_data);
 }
 
 //------------------------------------------------------------------------------

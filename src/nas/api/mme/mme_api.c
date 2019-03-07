@@ -509,14 +509,13 @@ mme_api_new_guti (
  ** Outputs:        None                                       **
  **                                                                        **
  ***************************************************************************/
-int
+subscription_data_t *
 mme_api_remove_subscription_data (
   const imsi64_t const imsi64)
 {
   OAILOG_FUNC_IN (LOG_NAS);
 
   /* Remove the subscription information. */
-  mme_remove_subscription_profile(&mme_app_desc.mme_ue_contexts, imsi64);
-
-  OAILOG_FUNC_RETURN (LOG_NAS, RETURNok);
+  subscription_data_t * subscription_data = mme_remove_subscription_profile(&mme_app_desc.mme_ue_contexts, imsi64);
+  OAILOG_FUNC_RETURN (LOG_NAS, subscription_data);
 }

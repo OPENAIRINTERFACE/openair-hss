@@ -87,6 +87,7 @@ static const char                      *_emm_cn_primitive_str[] = {
   "EMMCN_CONTEXT_FAIL",
   "EMM_CN_DEREGISTER_UE",
   "EMMCN_IMPLICIT_DETACH_UE",
+  "EMMCN_REPLACE_UE",
   "EMMCN_SMC_PROC_FAIL",
 };
 //------------------------------------------------------------------------------

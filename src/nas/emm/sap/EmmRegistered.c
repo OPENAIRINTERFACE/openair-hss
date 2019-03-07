@@ -182,7 +182,10 @@ EmmRegistered (
       nas_delete_detach_procedure(emm_ctx);
     }
     /* Remove the subscription information. */
-    mme_api_remove_subscription_data(emm_ctx->_imsi64);
+    subscription_data_t * subscription_data = mme_api_remove_subscription_data(emm_ctx->_imsi64);
+    if(subscription_data){
+    	free_wrapper ((void**) &subscription_data);
+    }
 
     /*
      * Don't clear the EMM context here.

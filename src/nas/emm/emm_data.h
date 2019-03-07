@@ -349,7 +349,8 @@ int                   emm_context_unlock (struct emm_data_context_s *emm_context
 struct emm_data_context_s              *
 emm_data_context_remove (
   emm_data_t * emm_data,
-  struct emm_data_context_s *elm);
+  struct emm_data_context_s *elm,
+  bool clear_fields);
 
 //int emm_context_upsert_imsi (emm_data_t * emm_data, struct emm_data_context_s *elm) __attribute__((nonnull));
 

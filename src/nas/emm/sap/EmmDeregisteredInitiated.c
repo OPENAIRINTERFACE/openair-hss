@@ -167,7 +167,10 @@ EmmDeregisteredInitiated (
      * Clear the ESM message, if exists.
      */
     /* Remove the subscription information. */
-    mme_api_remove_subscription_data(emm_ctx->_imsi64);
+    subscription_data_t * subscription_data = mme_api_remove_subscription_data(emm_ctx->_imsi64);
+    if(subscription_data){
+   	  free_wrapper ((void**) &subscription_data);
+    }
 
     // Release emm context
     _clear_emm_ctxt(emm_ctx->ue_id);

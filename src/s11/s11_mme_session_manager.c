@@ -95,7 +95,10 @@ s11_mme_create_session_request (
   gtpv2c_pdn_type_ie_set (&(ulp_req.hMsg), &req_p->pdn_type);
   gtpv2c_paa_ie_set(&(ulp_req.hMsg), &req_p->paa);
   gtpv2c_apn_restriction_ie_set(&(ulp_req.hMsg), 0);
-  gtpv2c_ambr_ie_set (&(ulp_req.hMsg), &req_p->ambr);
+  /**
+   * Set the AMBR.
+   */
+  gtpv2c_ambr_ie_set(&ulp_req.hMsg, &req_p->ambr);
 
   /**
    * Indication Flags.
@@ -110,11 +113,6 @@ s11_mme_create_session_request (
                               req_p->sender_fteid_for_cp.teid,
                               req_p->sender_fteid_for_cp.ipv4 ? &req_p->sender_fteid_for_cp.ipv4_address : 0,
                               req_p->sender_fteid_for_cp.ipv6 ? &req_p->sender_fteid_for_cp.ipv6_address : NULL);
-
-  /**
-   * Set the AMBR.
-   */
-  gtpv2c_ambr_ie_set(&ulp_req.hMsg, &req_p->ambr);
 
   /*
    * The P-GW TEID should be present on the S11 interface.

@@ -600,7 +600,7 @@ int mme_insert_subscription_profile(mme_ue_context_t * const mme_ue_context,
 /** \brief Remove subscription data of an IMSI cached from the HSS.
  * \param imsi
  **/
-void mme_remove_subscription_profile(mme_ue_context_t * const mme_ue_context_p, imsi64_t imsi);
+subscription_data_t * mme_remove_subscription_profile(mme_ue_context_t * const mme_ue_context_p, imsi64_t imsi);
 
 /** \brief Update the UE context based on the subscription profile.
  * \param ue_id, subscription data

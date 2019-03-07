@@ -115,7 +115,7 @@ _clear_emm_ctxt(mme_ue_s1ap_id_t ue_id) {
 //            ue_ref, ue_ref->mme_ue_s1ap_id, ue_ref->enb_ue_s1ap_id, ue_ref->s1_ue_state, ue_ref->enb);
 //  }
 
-  emm_data_context_remove(&_emm_data, emm_context);
+  emm_data_context_remove(&_emm_data, emm_context, true);
   emm_ctx_clear_old_guti(emm_context);
   emm_ctx_clear_guti(emm_context);
   emm_ctx_clear_imsi(emm_context);

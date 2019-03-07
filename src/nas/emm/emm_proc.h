@@ -145,6 +145,9 @@ typedef struct emm_tau_request_ies_s {
 
   bstring                        complete_tau_request;
 
+  /** Re-link structures. */
+  subscription_data_t           *subscription_data;
+
   nas_message_decode_status_t    decode_status;
 } emm_tau_request_ies_t;
 /****************************************************************************/
