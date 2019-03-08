@@ -258,6 +258,7 @@ int emm_proc_tracking_area_update_request (
      if((*duplicate_emm_ue_ctx_pP)->ue_id != ue_id) {
     	 new_emm_ue_context = calloc(1, sizeof(emm_data_context_t));
     	 memcpy(new_emm_ue_context, (*duplicate_emm_ue_ctx_pP), sizeof(**duplicate_emm_ue_ctx_pP));
+    	 new_emm_ue_context->_emm_fsm_state = EMM_DEREGISTERED;
 
     	mme_ue_s1ap_id_t old_ue_id = (*duplicate_emm_ue_ctx_pP)->ue_id;
         /** Remove the (old) EMM context from the tables, update the EMM context ue_id. */
@@ -1221,12 +1222,12 @@ static int _emm_tracking_area_update_accept (nas_emm_tau_proc_t * const tau_proc
      */
     if (IS_EMM_CTXT_VALID_GUTI(emm_context)) { /**< If its invalid --> directly enter EMM-REGISTERED state from EMM-DEREGISTERED state, no T3450, no COMMON_PROCEDURE. */
       /** Assert that the UE is in REGISTERED state. */
-      if(emm_context->_emm_fsm_state != EMM_REGISTERED){
-        OAILOG_ERROR(LOG_NAS_EMM, "EMM-PROC  - IMSI " IMSI_64_FMT " has already a valid GUTI "GUTI_FMT " but is not in EMM-REGISTERED state, instead %d. \n",
-            emm_context->_imsi64, GUTI_ARG(&emm_context->_guti), emm_context->_emm_fsm_state);
-        rc = _emm_tracking_area_update_reject (emm_context->ue_id, SYSTEM_FAILURE);
-        OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
-      }
+//      if(emm_context->_emm_fsm_state != EMM_REGISTERED){
+//        OAILOG_ERROR(LOG_NAS_EMM, "EMM-PROC  - IMSI " IMSI_64_FMT " has already a valid GUTI "GUTI_FMT " but is not in EMM-REGISTERED state, instead %d. \n",
+//            emm_context->_imsi64, GUTI_ARG(&emm_context->_guti), emm_context->_emm_fsm_state);
+//        rc = _emm_tracking_area_update_reject (emm_context->ue_id, SYSTEM_FAILURE);
+//        OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
+//      }
       OAILOG_WARNING(LOG_NAS_EMM, "EMM-PROC  - IMSI " IMSI_64_FMT " has already a valid GUTI "GUTI_FMT ". A new GUTI will not be allocated and send. UE staying in EMM_REGISTERED state. \n",
           emm_context->_imsi64, GUTI_ARG(&emm_context->_guti));
       /**
@@ -1235,17 +1236,29 @@ static int _emm_tracking_area_update_accept (nas_emm_tau_proc_t * const tau_proc
        * todo: check that there are no new parameters (DRX, UE/MS NC,).
        */
       DevAssert(IS_EMM_CTXT_VALID_UE_NETWORK_CAPABILITY(emm_context));
-      DevAssert(IS_EMM_CTXT_VALID_MS_NETWORK_CAPABILITY(emm_context));
+      /** No assert on the MS network capabilites.. taking all as 0. */
 
       /**
        * Send a TAU-Accept without GUTI.
        * Not waiting for TAU-Complete.
        * Might release bearers depending on the ECM state and the active flag without waiting for TAU-Complete.
        */
+
+      /** We are in the DEREGISTERED state.. we should be in REGISTERED state. */
+      if(emm_context->_emm_fsm_state != EMM_REGISTERED){
+    	  OAILOG_INFO(LOG_NAS_EMM, "EMM-PROC  - IMSI " IMSI_64_FMT " for UE_ID " MME_UE_S1AP_ID_FMT " not in EMM-REGISTERED state but in state %d. \n",
+    	          emm_context->_imsi64, emm_context->ue_id, emm_context->_emm_fsm_state);
+    	  emm_sap.primitive = EMMREG_TAU_CNF;
+    	  emm_sap.u.emm_reg.ue_id = emm_context->ue_id;
+    	  emm_sap.u.emm_reg.ctx  = emm_context;
+    	  MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMREG_COMMON_PROC_REQ ue id " MME_UE_S1AP_ID_FMT " ", msg_pP->ue_id);
+    	  rc = emm_sap_send (&emm_sap);
+      }
       /** Send the TAU accept. */
       // todo: GUTI for periodic TAU?!
       rc = _emm_send_tracking_area_update_accept (emm_context, tau_proc);
       nas_delete_tau_procedure(emm_context);
+
       /** No GUTI will be set. State should not be changed. */
       /**
        * All parameters must be validated at this point since valid GUTI.
@@ -1260,7 +1273,6 @@ static int _emm_tracking_area_update_accept (nas_emm_tau_proc_t * const tau_proc
 
       // todo: if later a new GUTI is still send, although a VALID GUTI exists, invalidate the existing valid GUTI of the emm_ctx before sending tau_accept with new_guti.
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
-
 
     }else if (IS_EMM_CTXT_PRESENT_GUTI(emm_context)){
       /** This case should be handled in the old_context verification when the TAU_REQUEST is arrived. */
@@ -1828,7 +1840,6 @@ static int _emm_tracking_area_update_run_procedure(emm_data_context_t *emm_conte
         	tau_proc->ies->subscription_data = NULL;
         	/** Send the S6a message. */
         	MessageDef * message_p = itti_alloc_new_message (TASK_MME_APP, NAS_PDN_CONFIG_RSP);
-        	mme_app_update_ue_subscription(ue_context->mme_ue_s1ap_id, subscription_data);
         	message_p->ittiMsg.nas_pdn_config_rsp.ue_id  = ue_context->mme_ue_s1ap_id;
         	message_p->ittiMsg.nas_pdn_config_rsp.imsi64 = emm_context->_imsi64;
         	imsi64_t imsi64_2 = imsi_to_imsi64(&emm_context->_imsi);

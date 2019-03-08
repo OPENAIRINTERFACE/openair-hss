@@ -427,6 +427,16 @@ void mme_app_send_s11_modify_bearer_req(const ue_context_t * ue_context, pdn_con
       s11_modify_bearer_request->bearer_contexts_to_be_removed.num_bearer_context++;
     }
   }
+
+  OAI_GCC_DIAG_OFF(pointer-to-int-cast);
+  s11_modify_bearer_request->sender_fteid_for_cp.teid = ue_context->mme_teid_s11;
+  OAI_GCC_DIAG_ON(pointer-to-int-cast);
+  s11_modify_bearer_request->sender_fteid_for_cp.interface_type = S11_MME_GTP_C;
+  mme_config_read_lock (&mme_config);
+  s11_modify_bearer_request->sender_fteid_for_cp.ipv4_address = mme_config.ipv4.s11;
+  mme_config_unlock (&mme_config);
+  s11_modify_bearer_request->sender_fteid_for_cp.ipv4 = 1;
+
   /** These should already be removed.. */
   s11_modify_bearer_request->mme_fq_csid.node_id_type = GLOBAL_UNICAST_IPv4; // TO DO
   s11_modify_bearer_request->mme_fq_csid.csid = 0;   // TO DO ...

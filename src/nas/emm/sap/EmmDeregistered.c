@@ -193,9 +193,11 @@ int EmmDeregistered (emm_reg_t * const evt)
     break;
 
   case _EMMREG_TAU_CNF:
-    OAILOG_ERROR (LOG_NAS_EMM, "EMM-FSM state EMM_DEREGISTERED - Primitive _EMMREG_TAU_CNF is not valid\n");
-    MSC_LOG_RX_DISCARDED_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "_EMMREG_TAU_CNF ue id " MME_UE_S1AP_ID_FMT " ", evt->ue_id);
-    break;
+    OAILOG_INFO (LOG_NAS_EMM, "EMM-FSM state EMM_DEREGISTERED - Setting UE to registered state via _EMMREG_TAU_CNF. \n");
+    rc = emm_fsm_set_state (evt->ue_id, emm_ctx, EMM_REGISTERED);
+	emm_ctx_set_valid_imsi(emm_ctx, &emm_ctx->_imsi, emm_ctx->_imsi64);
+    mme_api_notify_new_guti(emm_ctx->ue_id, &emm_ctx->_guti);
+	break;
 
   case _EMMREG_TAU_REJ:
     MSC_LOG_RX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "_EMMREG_TAU_REJ ue id " MME_UE_S1AP_ID_FMT " ", evt->ue_id);

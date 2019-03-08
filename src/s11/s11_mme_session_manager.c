@@ -307,9 +307,6 @@ s11_mme_delete_session_request (
   }
 
   /*
-   * Putting the information Elements
-   */
-  /*
    * Sender F-TEID for Control Plane (MME S11)
    */
   rc = nwGtpv2cMsgAddIeFteid ((ulp_req.hMsg), NW_GTPV2C_IE_INSTANCE_ZERO,
