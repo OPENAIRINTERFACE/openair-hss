@@ -970,6 +970,8 @@ int emm_wrapper_tracking_area_update_accept (mme_ue_s1ap_id_t ue_id, eps_bearer_
   	  OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
   }
   /** Update the EPS bearer contexts in the TAU procedure. */
+  if(!tau_proc->ies->eps_bearer_context_status)
+	  tau_proc->ies->eps_bearer_context_status = calloc(1, sizeof(eps_bearer_context_status_t));
   *tau_proc->ies->eps_bearer_context_status = ebr_status;
   int rc = _emm_tracking_area_update_accept (tau_proc);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
@@ -1126,7 +1128,9 @@ static int _emm_send_tracking_area_update_accept(emm_data_context_t * const emm_
   REQUIREMENT_3GPP_24_301(R10_5_5_1_2_4__14);
   emm_sap.u.emm_as.u.data.eps_network_feature_support = &_emm_data.conf.eps_network_feature_support;
   emm_sap.u.emm_as.u.data.eps_update_result = ( tau_proc->ies->eps_update_type.eps_update_type_value == 1 || tau_proc->ies->eps_update_type.eps_update_type_value == 2) ? 1 : 0; /**< Set the UPDATE_RESULT irrelevant of data/establish. */
-  emm_sap.u.emm_as.u.data.eps_bearer_context_status = *(tau_proc->ies->eps_bearer_context_status);
+  if(tau_proc->ies->eps_bearer_context_status)
+	  emm_sap.u.emm_as.u.data.eps_bearer_context_status = *(tau_proc->ies->eps_bearer_context_status);
+
   emm_sap.u.emm_as.u.data.nas_msg = NULL;
 
   /*
@@ -1887,7 +1891,7 @@ static int _emm_tracking_area_update_run_procedure(emm_data_context_t *emm_conte
       struct in_addr neigh_mme_ipv4_addr;
       neigh_mme_ipv4_addr.s_addr = 0;
 
-      mme_app_select_service(tau_proc->ies->last_visited_registered_tai, &neigh_mme_ipv4_addr);
+      mme_app_select_service(tau_proc->ies->last_visited_registered_tai, &neigh_mme_ipv4_addr, S10_MME_GTP_C);
       if(neigh_mme_ipv4_addr.s_addr ==0){
         OAILOG_WARNING(LOG_NAS_EMM, "EMM-PROC  - For UE " MME_UE_S1AP_ID_FMT " the last visited TAI " TAI_FMT " is not configured as a MME S10 neighbor. "
             "Proceeding with identification procedure. \n", TAI_ARG(tau_proc->ies->last_visited_registered_tai), emm_context->ue_id);

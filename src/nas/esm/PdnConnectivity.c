@@ -389,7 +389,7 @@ void esm_proc_pdn_connectivity_failure (mme_ue_s1ap_id_t ue_id, nas_esm_proc_pdn
 	     */
 	    struct in_addr saegw_peer_ipv4 = pdn_context->s_gw_address_s11_s4.address.ipv4_address;
 	    if(saegw_peer_ipv4.s_addr == 0){
-	      mme_app_select_service(&esm_proc_pdn_connectivity->visited_tai, &saegw_peer_ipv4);
+	      mme_app_select_service(&esm_proc_pdn_connectivity->visited_tai, &saegw_peer_ipv4, S11_SGW_GTP_C);
 	    }
 
 	    nas_itti_pdn_disconnect_req(ue_id, esm_proc_pdn_connectivity->default_ebi, esm_proc_pdn_connectivity->esm_base_proc.pti, false, false,

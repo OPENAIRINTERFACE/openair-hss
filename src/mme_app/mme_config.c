@@ -956,6 +956,7 @@ static int mme_config_parse_file (mme_config_t * config_pP)
           AssertFatal(2 == list->qty, "Bad CIDR address %s", bdata(cidr));
           address = list->entry[0];
           IPV4_STR_ADDR_TO_INADDR (bdata(address), config_pP->e_dns_emulation.service_ip_addr[i], "BAD IP ADDRESS FORMAT FOR SGW S11 !\n");
+          config_pP->e_dns_emulation.interface_type[i] = S11_SGW_GTP_C;
           bstrListDestroy(list);
           bdestroy_wrapper(&cidr);
           OAILOG_INFO (LOG_MME_APP, "Parsing configuration file found S-GW S11: %s\n", inet_ntoa (config_pP->e_dns_emulation.service_ip_addr[i]));
@@ -971,6 +972,7 @@ static int mme_config_parse_file (mme_config_t * config_pP)
           AssertFatal(2 == list->qty, "Bad CIDR address %s", bdata(cidr));
           address = list->entry[0];
           IPV4_STR_ADDR_TO_INADDR (bdata(address), config_pP->e_dns_emulation.service_ip_addr[i], "BAD IP ADDRESS FORMAT FOR MME S10 !\n");
+          config_pP->e_dns_emulation.interface_type[i] = S10_MME_GTP_C;
           bstrListDestroy(list);
           bdestroy_wrapper(&cidr);
           OAILOG_INFO (LOG_MME_APP, "Parsing configuration file found MME S10: %s\n", inet_ntoa (config_pP->e_dns_emulation.service_ip_addr[i]));

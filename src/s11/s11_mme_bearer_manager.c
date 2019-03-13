@@ -1042,6 +1042,10 @@ s11_mme_handle_downlink_data_notification(
   notif_p->trxn = (void *)pUlpApi->u_api_info.initialReqIndInfo.hTrxn;
 
   MSC_LOG_RX_MESSAGE (MSC_S10_MME, MSC_SGW, NULL, 0, "DOWNLINK DATA NOTIFICATION to local S10 teid " TEID_FMT , notif_p->teid);
+  /** Message will not be removed as part of the transaction. */
+  rc = nwGtpv2cMsgDelete (*stack_p, (pUlpApi->hMsg));
+  DevAssert (NW_OK == rc);
+
   return itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
 }
 

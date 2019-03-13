@@ -203,7 +203,7 @@ esm_proc_pdn_disconnect_request (
 
   struct in_addr saegw_peer_ipv4 = pdn_context->s_gw_address_s11_s4.address.ipv4_address;
   if(saegw_peer_ipv4.s_addr == 0){
-    mme_app_select_service(&esm_proc_pdn_disconnect->visited_tai, &saegw_peer_ipv4);
+    mme_app_select_service(&esm_proc_pdn_disconnect->visited_tai, &saegw_peer_ipv4, S11_SGW_GTP_C);
   }
 
   nas_itti_pdn_disconnect_req(ue_id, pdn_context->default_ebi, pti, false, false,

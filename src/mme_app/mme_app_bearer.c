@@ -2936,11 +2936,10 @@ mme_app_handle_s1ap_handover_required(
       OAILOG_FUNC_OUT (LOG_MME_APP);
     }else{
       /** Send a Handover Preparation Failure back. */
-      mme_app_send_s1ap_handover_preparation_failure(handover_required_pP->mme_ue_s1ap_id, handover_required_pP->enb_ue_s1ap_id, handover_required_pP->sctp_assoc_id, S1AP_SYSTEM_FAILURE);
+//      mme_app_send_s1ap_handover_preparation_failure(handover_required_pP->mme_ue_s1ap_id, handover_required_pP->enb_ue_s1ap_id, handover_required_pP->sctp_assoc_id, S1AP_SYSTEM_FAILURE);
       /** The target eNB-ID is not served by this MME. */
-      OAILOG_DEBUG (LOG_MME_APP, "Target ENB_ID %d of target TAI " TAI_FMT " is NOT served by current MME. \n",
+      OAILOG_WARNING(LOG_MME_APP, "Target ENB_ID %d of target TAI " TAI_FMT " is NOT served by current MME. Checking for neighboring MMEs. \n",
           handover_required_pP->global_enb_id.cell_identity.enb_id, TAI_ARG(&handover_required_pP->selected_tai));
-      OAILOG_FUNC_OUT (LOG_MME_APP);
     }
   }
   OAILOG_DEBUG (LOG_MME_APP, "Target TA  "TAI_FMT " is NOT served by current MME. Searching for a neighboring MME. \n", TAI_ARG(&handover_required_pP->selected_tai));
@@ -2949,7 +2948,7 @@ mme_app_handle_s1ap_handover_required(
 
   if (1) {
     // TODO prototype may change
-    mme_app_select_service(&handover_required_pP->selected_tai, &neigh_mme_ipv4_addr);
+    mme_app_select_service(&handover_required_pP->selected_tai, &neigh_mme_ipv4_addr, S10_MME_GTP_C);
     //    session_request_p->peer_ip.in_addr = mme_config.ipv4.
     if(neigh_mme_ipv4_addr.s_addr == 0){
       /** Send a Handover Preparation Failure back. */
@@ -4031,9 +4030,12 @@ mme_app_handle_handover_failure (
   * Sending FW_RELOCATION_RESPONSE with error code and implicit detach.
   */
  mme_app_send_s10_forward_relocation_response_err(s10_handover_proc->remote_mme_teid.teid, s10_handover_proc->remote_mme_teid.ipv4_address, s10_handover_proc->forward_relocation_trxn, RELOCATION_FAILURE);
-
- ue_context->s1_ue_context_release_cause = S1AP_HANDOVER_FAILED;
+ /** Trigger an implicit detach. */
  mme_app_delete_s10_procedure_mme_handover(ue_context);
+ message_p = itti_alloc_new_message (TASK_MME_APP, NAS_IMPLICIT_DETACH_UE_IND);
+ DevAssert (message_p != NULL);
+ message_p->ittiMsg.nas_implicit_detach_ue_ind.ue_id = ue_context->mme_ue_s1ap_id;
+ itti_send_msg_to_task (TASK_NAS_EMM, INSTANCE_DEFAULT, message_p);
  /** No timers, etc. is needed. */
  OAILOG_FUNC_OUT (LOG_MME_APP);
 }

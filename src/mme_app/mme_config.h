@@ -32,6 +32,7 @@
 
 #include "mme_default_values.h"
 #include "3gpp_23.003.h"
+#include "3gpp_29.274.h"
 #include "common_dim.h"
 #include "common_types.h"
 #include "bstrlib.h"
@@ -264,6 +265,7 @@ typedef struct mme_config_s {
 #define MME_CONFIG_MAX_SERVICE 64
 
     bstring        service_id[MME_CONFIG_MAX_SERVICE];
+    interface_type_t interface_type[MME_CONFIG_MAX_SERVICE];
     struct in_addr service_ip_addr[MME_CONFIG_MAX_SERVICE];
     /** MME entries. */
 

@@ -23,7 +23,7 @@
 #ifndef EMM_CAUSE_SEEN
 #define EMM_CAUSE_SEEN
 
-#define EMM_CAUSE_MINIMUM_LENGTH 2
+#define EMM_CAUSE_MINIMUM_LENGTH 1
 #define EMM_CAUSE_MAXIMUM_LENGTH 2
 
 typedef uint8_t emm_cause_t;

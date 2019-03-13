@@ -353,7 +353,7 @@ mme_app_send_s11_create_session_req (
   // Actually, since S and P GW are bundled together, there is no PGW selection (based on PGW id in ULA, or DNS query based on FQDN)
   if (1) {
     // TODO prototype may change
-    mme_app_select_service(serving_tai, &session_request_p->peer_ip);
+    mme_app_select_service(serving_tai, &session_request_p->peer_ip, S11_SGW_GTP_C);
 //    session_request_p->peer_ip.in_addr = mme_config.ipv4.
   }
 

@@ -382,6 +382,8 @@ int s1ap_free_mme_decode_pdu(
     return free_s1ap_handovercancel(&message->msg.s1ap_HandoverCancelIEs);
   case S1AP_HANDOVER_REQUIRED_LOG:
     return free_s1ap_handoverrequired(&message->msg.s1ap_HandoverRequiredIEs);
+  case S1AP_HANDOVER_FAILURE_LOG:
+      return free_s1ap_handoverfailure(&message->msg.s1ap_HandoverFailureIEs);
   case S1AP_ENB_STATUS_TRANSFER_LOG:
     return free_s1ap_enbstatustransfer(&message->msg.s1ap_ENBStatusTransferIEs);
   case S1AP_HANDOVER_NOTIFY_LOG:

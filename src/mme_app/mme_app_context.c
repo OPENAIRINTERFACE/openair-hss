@@ -1558,7 +1558,7 @@ mme_app_handle_s1ap_ue_context_release_complete (
 
         if (ue_context->s10_procedures) {
             mme_app_delete_s10_procedure_mme_handover(ue_context); // todo: generic s10 function
-          }
+        }
 
         /** Re-Establish the UE-Reference as the main reference. */
         if(ue_context->enb_ue_s1ap_id != s1ap_ue_context_release_complete->enb_ue_s1ap_id){
@@ -1581,19 +1581,25 @@ mme_app_handle_s1ap_ue_context_release_complete (
             notify_s1ap_new_ue_mme_s1ap_id_association (ue_context->sctp_assoc_id_key, ue_context->enb_ue_s1ap_id, ue_context->mme_ue_s1ap_id);
           }
         }
-        OAILOG_FUNC_OUT (LOG_MME_APP);
+        /** Continue below, check if the UE is in DEREGISTERED state. */
       }
     }
   }
-  /* No handover procedure ongoing or no CLR is received yet from the HSs. Assume that this is the main connection and release it. */
-  OAILOG_DEBUG(LOG_MME_APP, "No Handover procedure ongoing. Received UE context release complete for the main ue_reference of the UE with mme_ue_s1ap_id "MME_UE_S1AP_ID_FMT" and enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT". \n",
-        s1ap_ue_context_release_complete->mme_ue_s1ap_id, s1ap_ue_context_release_complete->enb_ue_s1ap_id);
-  /** Set the bearers into IDLE mode. */
-  mme_app_ue_context_s1_release_enb_informations(ue_context);
-  /* Update keys and ECM state. */
-  mme_ue_context_update_ue_sig_connection_state (&mme_app_desc.mme_ue_contexts, ue_context, ECM_IDLE);
-
-
+  if(ue_context->enb_ue_s1ap_id == s1ap_ue_context_release_complete->enb_ue_s1ap_id
+		  && (ue_context->e_utran_cgi.cell_identity.enb_id == s1ap_ue_context_release_complete->enb_id)){
+	  /* No handover procedure ongoing or no CLR is received yet from the HSs. Assume that this is the main connection and release it. */
+	  OAILOG_DEBUG(LOG_MME_APP, "No Handover procedure ongoing. Received UE context release complete for the main ue_reference of the UE with mme_ue_s1ap_id "MME_UE_S1AP_ID_FMT" and enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT""
+			  " with enb_id %d. \n",
+	        s1ap_ue_context_release_complete->mme_ue_s1ap_id, s1ap_ue_context_release_complete->enb_ue_s1ap_id, s1ap_ue_context_release_complete->enb_id);
+	  /** Set the bearers into IDLE mode. */
+	  mme_app_ue_context_s1_release_enb_informations(ue_context);
+	  /* Update keys and ECM state. */
+	  mme_ue_context_update_ue_sig_connection_state (&mme_app_desc.mme_ue_contexts, ue_context, ECM_IDLE);
+  } else {
+	  OAILOG_DEBUG(LOG_MME_APP, "Not setting UE context with with mme_ue_s1ap_id "MME_UE_S1AP_ID_FMT" and enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT" to idle. "
+			  "Complete received from enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT" and enb_id %d.. \n", ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id,
+			  s1ap_ue_context_release_complete->enb_ue_s1ap_id, s1ap_ue_context_release_complete->enb_id);
+  }
   /* ****************************************************************************************************************************************** *
    *      BELOW EVERYTHING EXCEPT update_ue_sig_connection will be THROWN OUT! NAS won't and should not be affected by this message!
    *      All the session deletion procedures for all PDN sessions should be triggered by NAS only. S1AP signaling radio errors should be treated locally.
@@ -1918,7 +1924,7 @@ mme_app_handle_nas_context_req(itti_nas_context_req_t * const nas_context_req_pP
 
   if (1) {
     // TODO prototype may change
-    mme_app_select_service(&nas_context_req_pP->originating_tai, &neigh_mme_ipv4_addr);
+    mme_app_select_service(&nas_context_req_pP->originating_tai, &neigh_mme_ipv4_addr, S10_MME_GTP_C);
     //    session_request_p->peer_ip.in_addr = mme_config.ipv4.
     if(neigh_mme_ipv4_addr.s_addr == 0){
       OAILOG_ERROR(LOG_MME_APP, "Could not find a neighboring MME for handling missing NAS context. \n");

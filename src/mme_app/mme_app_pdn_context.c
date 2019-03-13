@@ -235,12 +235,12 @@ mme_app_esm_create_pdn_context(mme_ue_s1ap_id_t ue_id, const ebi_t linked_ebi, c
   free_bearer->linked_ebi = free_bearer->ebi;
   /** Set the APN independently. */
   (*pdn_context_pp)->apn_subscribed = bstrcpy(apn_subscribed);
+  /** Set the default QoS values. */
+  (*pdn_context_pp)->subscribed_apn_ambr.br_dl = apn_ambr->br_dl;
+  (*pdn_context_pp)->subscribed_apn_ambr.br_ul = apn_ambr->br_ul;
   if (apn_configuration) {
     (*pdn_context_pp)->pdn_type                     = apn_configuration->pdn_type;
     (*pdn_context_pp)->context_identifier           = apn_configuration->context_identifier;
-    /** Set the subscribed APN-AMBR from the default profile. */
-    (*pdn_context_pp)->subscribed_apn_ambr.br_dl    = apn_configuration->ambr.br_dl;
-    (*pdn_context_pp)->subscribed_apn_ambr.br_ul    = apn_configuration->ambr.br_ul;
 #ifdef APN_CONFIG_IP_ADDR
     if (apn_configuration->nb_ip_address) { // todo: later
       *pdn_context_pp->paa = calloc(1, sizeof(paa_t));
@@ -252,9 +252,6 @@ mme_app_esm_create_pdn_context(mme_ue_s1ap_id_t ue_id, const ebi_t linked_ebi, c
       }
     }
 #endif
-    /** Set the default QoS values. */
-    (*pdn_context_pp)->subscribed_apn_ambr.br_dl = apn_ambr->br_dl;
-    (*pdn_context_pp)->subscribed_apn_ambr.br_ul = apn_ambr->br_ul;
     free_bearer->bearer_level_qos.qci = apn_configuration->subscribed_qos.qci;
     free_bearer->bearer_level_qos.pl  = apn_configuration->subscribed_qos.allocation_retention_priority.priority_level;
     free_bearer->bearer_level_qos.pvi = (apn_configuration->subscribed_qos.allocation_retention_priority.pre_emp_vulnerability) ? 0 : 1;

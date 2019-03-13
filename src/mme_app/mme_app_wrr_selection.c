@@ -45,7 +45,7 @@
 #include "mme_app_wrr_selection.h"
 
 //------------------------------------------------------------------------------
-void mme_app_select_service(const tai_t * const tai, struct in_addr * const service_in_addr)
+void mme_app_select_service(const tai_t * const tai, struct in_addr * const service_in_addr, const interface_type_t interface_type)
 {
 
   // see in 3GPP TS 29.303 version 10.5.0 Release 10:
@@ -89,7 +89,7 @@ void mme_app_select_service(const tai_t * const tai, struct in_addr * const serv
   }
   bcatcstr(application_unique_string, ".3gppnetwork.org");
 
-  struct in_addr* entry = mme_app_edns_get_wrr_entry(application_unique_string);
+  struct in_addr* entry = mme_app_edns_get_wrr_entry(application_unique_string, interface_type);
 
   if (entry) {
     service_in_addr->s_addr = entry->s_addr;

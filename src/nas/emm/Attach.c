@@ -1056,6 +1056,7 @@ static int _emm_attach_abort (struct emm_data_context_s* emm_context, struct nas
     emm_sap_t                               emm_sap = {0};
     emm_sap.primitive = EMMCN_IMPLICIT_DETACH_UE;
     emm_sap.u.emm_cn.u.emm_cn_implicit_detach.ue_id = ue_id;
+    emm_sap.u.emm_cn.u.emm_cn_implicit_detach.detach_type = EMM_DETACH_TYPE_NOT_REATTACH;
     rc = emm_sap_send (&emm_sap);
   }
 
