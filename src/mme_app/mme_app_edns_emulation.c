@@ -103,8 +103,8 @@ int mme_app_edns_add_wrr_entry(bstring id, struct in_addr in_addr, const interfa
 int  mme_app_edns_init (const mme_config_t * mme_config_p)
 {
   int rc = RETURNok;
-  sgw_e_dns_entries = obj_hashtable_create (min(32, MME_CONFIG_MAX_SERVICE), NULL, free_wrapper, free_wrapper, NULL);
-  mme_e_dns_entries = obj_hashtable_create (min(32, MME_CONFIG_MAX_SERVICE), NULL, free_wrapper, free_wrapper, NULL);
+  sgw_e_dns_entries = obj_hashtable_create (min(64, MME_CONFIG_MAX_SERVICE), NULL, free_wrapper, free_wrapper, NULL);
+  mme_e_dns_entries = obj_hashtable_create (min(64, MME_CONFIG_MAX_SERVICE), NULL, free_wrapper, free_wrapper, NULL);
   if (sgw_e_dns_entries && mme_e_dns_entries) {
     /** Add the service (s10 or s11). */
     for (int i = 0; i < mme_config_p->e_dns_emulation.nb_service_entries; i++) {

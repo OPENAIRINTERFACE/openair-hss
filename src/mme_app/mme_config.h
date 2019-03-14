@@ -262,7 +262,7 @@ typedef struct mme_config_s {
   struct {
     int nb_service_entries;
 //#define MME_CONFIG_MAX_SGW 16
-#define MME_CONFIG_MAX_SERVICE 64
+#define MME_CONFIG_MAX_SERVICE 128
 
     bstring        service_id[MME_CONFIG_MAX_SERVICE];
     interface_type_t interface_type[MME_CONFIG_MAX_SERVICE];
