@@ -503,10 +503,11 @@ int s1ap_generate_s1ap_e_rab_setup_req (itti_s1ap_e_rab_setup_req_t * const e_ra
      * Fill in the NAS pdu
      */
     e_rabsetuprequesties->presenceMask = 0;
-//    if (e_rab_setup_req->ue_aggregate_maximum_bit_rate_present) {
-//      e_rabsetuprequesties->presenceMask |= S1AP_E_RABSETUPREQUESTIES_UEAGGREGATEMAXIMUMBITRATE_PRESENT;
-//      TO DO e_rabsetuprequesties->uEaggregateMaximumBitrate.uEaggregateMaximumBitRateDL.buf
-//    }
+    if (e_rab_setup_req->ue_aggregate_maximum_bit_rate_present) {
+      e_rabsetuprequesties->presenceMask |= S1AP_E_RABSETUPREQUESTIES_UEAGGREGATEMAXIMUMBITRATE_PRESENT;
+      asn_uint642INTEGER (&e_rabsetuprequesties->uEaggregateMaximumBitrate.uEaggregateMaximumBitRateDL, e_rab_setup_req->ue_aggregate_maximum_bit_rate.dl);
+      asn_uint642INTEGER (&e_rabsetuprequesties->uEaggregateMaximumBitrate.uEaggregateMaximumBitRateUL, e_rab_setup_req->ue_aggregate_maximum_bit_rate.ul);
+    }
 
 //    S1ap_E_RABToBeSetupItemBearerSUReq_t s1ap_E_RABToBeSetupItemBearerSUReq[e_rab_setup_req->e_rab_to_be_setup_list.no_of_items];
     S1ap_E_RABToBeSetupItemBearerSUReq_t  *s1ap_E_RABToBeSetupItemBearerSUReq; // [conn_est_cnf_pP->no_of_e_rabs]; // don't alloc on stack for automatic removal

@@ -218,10 +218,11 @@ esm_proc_eps_bearer_context_deactivate_request (
   if(mme_app_esm_modify_bearer_context(ue_id, *ebi, ded_ebis, ESM_EBR_INACTIVE_PENDING, NULL, NULL, NULL) != ESM_CAUSE_SUCCESS){
     OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - Error modifying bearer contxt (ebi=%d, pti=%d) (deactivation) for UE " MME_UE_S1AP_ID_FMT ".\n",
         *ebi, *pti, ue_id);
-    if(esm_base_proc)
+    if(esm_base_proc) {
+    	/** Remove the bearer context directly and inform the MME_APP layer (congestion related implicit bearer removal). */
+    	mme_app_release_bearer_context(esm_base_proc->ue_id, NULL, ESM_EBI_UNASSIGNED, *ebi);
       _esm_proc_free_pdn_connectivity_procedure((nas_esm_proc_pdn_connectivity_t**)&esm_base_proc);
-    /** Remove the bearer context directly and inform the MME_APP layer (congestion related implicit bearer removal). */
-    mme_app_release_bearer_context(esm_base_proc->ue_id, NULL, ESM_EBI_UNASSIGNED, *ebi);
+    }
     /** Send a reject back to the MME_APP layer. */
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY);
   }

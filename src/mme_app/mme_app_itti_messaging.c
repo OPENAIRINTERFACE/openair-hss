@@ -930,6 +930,10 @@ void mme_app_itti_nas_pdn_connectivity_response(mme_ue_s1ap_id_t ue_id, const eb
   nas_pdn_connectivity_rsp->linked_ebi = default_ebi;
   nas_pdn_connectivity_rsp->esm_cause = (gtpv2c_cause_value == REQUEST_ACCEPTED || gtpv2c_cause_value == REQUEST_ACCEPTED_PARTIALLY) ?
       ESM_CAUSE_SUCCESS : ESM_CAUSE_NETWORK_FAILURE;
+  if(nas_pdn_connectivity_rsp->esm_cause == ESM_CAUSE_NETWORK_FAILURE){
+	  if(gtpv2c_cause_value == NO_RESOURCES_AVAILABLE)
+		  nas_pdn_connectivity_rsp->esm_cause = ESM_CAUSE_INSUFFICIENT_RESOURCES;
+  }
 
   itti_send_msg_to_task (TASK_NAS_ESM, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT(LOG_MME_APP);

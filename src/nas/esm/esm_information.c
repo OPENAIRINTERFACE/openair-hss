@@ -184,7 +184,7 @@ _esm_information_t3489_handler(nas_esm_proc_t * esm_base_proc, ESM_msg *esm_rsp_
      * No PDN context is expected.
      * Prepare the reject message.
      */
-    esm_send_pdn_connectivity_reject(esm_base_proc->pti, esm_rsp_msg, ESM_CAUSE_ESM_INFORMATION_NOT_RECEIVED);
+    esm_send_pdn_connectivity_reject(esm_base_proc->pti, esm_proc_pdn_connectivity->default_ebi, esm_rsp_msg, ESM_CAUSE_ESM_INFORMATION_NOT_RECEIVED);
     /*
      * Release the transactional PDN connectivity procedure.
      */

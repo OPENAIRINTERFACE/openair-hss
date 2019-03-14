@@ -1026,7 +1026,7 @@ mme_app_handle_create_sess_resp (
   OAILOG_INFO(LOG_MME_APP, "Processing the CSResp for mobility procedure for UE " MME_UE_S1AP_ID_FMT " (cause_value=%d). \n", mme_ue_s1ap_id, create_sess_resp_pP->cause.cause_value);
   /** Check if there are other PDN contexts to be established. */
   pdn_connections->num_processed_pdn_connections++;
-  if(pdn_connections->num_pdn_connections > pdn_connections->num_processed_pdn_connections){
+  if(pdn_connections->num_pdn_connections > pdn_connections->num_processed_pdn_connections) {
     OAILOG_INFO(LOG_MME_APP, "We have %d further PDN connections that need to be established via mobile of UE " MME_UE_S1AP_ID_FMT ". \n", (pdn_connections->num_pdn_connections - pdn_connections->num_processed_pdn_connections), mme_ue_s1ap_id);
     pdn_connection_t * pdn_connection = &pdn_connections->pdn_connection[pdn_connections->num_processed_pdn_connections];
     /*

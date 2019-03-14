@@ -1009,8 +1009,11 @@ int _emm_attach_reject(emm_data_context_t * emm_context, nas_emm_attach_proc_t *
     emm_as_set_security_data (&emm_sap.u.emm_as.u.establish.sctx, NULL, false, false);
   }
   int rc = emm_sap_send (&emm_sap);
+  /** Remove the subscription. */
+  mme_api_remove_subscription_data(emm_context->_imsi64);
   // Release EMM context
   _clear_emm_ctxt(emm_context->ue_id);
+
 
 //  unlock_ue_contexts(ue_context);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);

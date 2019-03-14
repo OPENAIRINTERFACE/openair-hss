@@ -49,6 +49,7 @@
 #include "common_defs.h"
 #include "esm_cause.h"
 #include "mme_app_pdn_context.h"
+#include "mme_app_esm_procedures.h"
 #include "mme_app_apn_selection.h"
 #include "mme_app_bearer_context.h"
 
@@ -534,18 +535,77 @@ mme_app_pdn_process_session_creation(mme_ue_s1ap_id_t ue_id, fteid_t * saegw_s11
 
   /** Check the received APN-AMBR is in bounds (a subscription profile may exist or not, but these values must exist). */
   DevAssert(ue_context->subscribed_ue_ambr.br_dl && ue_context->subscribed_ue_ambr.br_ul);
-  if(ambr->br_dl && ambr->br_ul){ /**< New APN-AMBR received. */
-    ambr_t total_apn_ambr = mme_app_total_p_gw_apn_ambr_rest(ue_context, pdn_context->context_identifier);
-    total_apn_ambr.br_dl += ambr->br_dl;
-    total_apn_ambr.br_ul += ambr->br_ul;
+  if(ambr->br_dl && ambr->br_ul) { /**< New APN-AMBR received. */
+    ambr_t current_apn_ambr = mme_app_total_p_gw_apn_ambr_rest(ue_context, pdn_context->context_identifier);
+    ambr_t total_apn_ambr;
+    total_apn_ambr.br_dl = current_apn_ambr.br_dl + ambr->br_dl;
+    total_apn_ambr.br_ul = current_apn_ambr.br_ul + ambr->br_ul;
     /** Actualized, used total APN-AMBR. */
     if(total_apn_ambr.br_dl > ue_context->subscribed_ue_ambr.br_dl || total_apn_ambr.br_ul > ue_context->subscribed_ue_ambr.br_ul){
-      OAILOG_ERROR( LOG_MME_APP, "Received new APN_AMBR for PDN \"%s\" (ctx_id=%d) for UE " MME_UE_S1AP_ID_FMT " exceeds the subscribed ue ambr (br_dl=%d,br_ul=%d). "
-          "Continuing to use the APN-AMBRs from the subscription profile. \n", bdata(pdn_context->apn_subscribed), pdn_context->context_identifier, ue_id,
-          ue_context->subscribed_ue_ambr.br_dl, ue_context->subscribed_ue_ambr.br_ul);
+      OAILOG_ERROR( LOG_MME_APP, "Received new APN_AMBR for PDN \"%s\" (ctx_id=%d) for UE " MME_UE_S1AP_ID_FMT " exceeds the subscribed ue ambr (br_dl=%d,br_ul=%d). \n",
+    		  bdata(pdn_context->apn_subscribed), pdn_context->context_identifier, ue_id, ue_context->subscribed_ue_ambr.br_dl, ue_context->subscribed_ue_ambr.br_ul);
       /** Will use the current APN bitrates, either from the APN configuration received from the HSS or from S10. */
       // todo: inform PCRF, that default APN bitrates could not be updated.
       DevAssert(pdn_context->subscribed_apn_ambr.br_dl && pdn_context->subscribed_apn_ambr.br_ul);
+      if(ue_context->mm_state == UE_REGISTERED) {
+    	  /**
+    	   * This case is only if it is a multi-APN, including the handover case.
+    	   * Check if there is any AMBR left in the UE-AMBR, so the remaining and inform the PGW about it.
+    	   * If not reject the request.
+    	   */
+    	  /** Check if any PDN connectivity procedure is running, if not reject the request. */
+    	  nas_esm_proc_pdn_connectivity_t * esm_proc_pdn_connectivity = mme_app_nas_esm_get_pdn_connectivity_procedure(ue_id, PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED);
+    	  if(esm_proc_pdn_connectivity == NULL){
+    		  OAILOG_ERROR( LOG_MME_APP, "For APN \"%s\" (ctx_id=%d) for UE " MME_UE_S1AP_ID_FMT ", no PDN connectivity procedure is running.\n",
+    				  bdata(pdn_context->apn_subscribed), pdn_context->context_identifier, ue_id);
+    		  OAILOG_FUNC_RETURN(LOG_MME_APP, RETURNerror);
+    	  }
+    	  if((current_apn_ambr.br_dl >= ue_context->subscribed_ue_ambr.br_dl)
+    			  || (current_apn_ambr.br_ul >= ue_context->subscribed_ue_ambr.br_ul)){
+    		  OAILOG_ERROR( LOG_MME_APP, "No more AMBR left for UE " MME_UE_S1AP_ID_FMT ". Rejecting the request for an additional PDN (apn_subscribed=\"%s\", ctx_id=%d). \n",
+    				  ue_id, bdata(pdn_context->apn_subscribed), pdn_context->context_identifier);
+    		  cause->cause_value = NO_RESOURCES_AVAILABLE; /**< Reject the pdn connection in particular, remove the PDN context. */
+//    		  mme_app_esm_delete_pdn_context(ue_id, pdn_context->apn_subscribed, pdn_context->context_identifier, pdn_context->default_ebi); /**< Frees it & puts session bearers back to the pool. */
+    		  OAILOG_FUNC_RETURN(LOG_MME_APP, RETURNok);
+    	  }
+    	  pdn_context->subscribed_apn_ambr.br_dl = ue_context->subscribed_ue_ambr.br_dl - current_apn_ambr.br_dl;
+    	  pdn_context->subscribed_apn_ambr.br_ul = ue_context->subscribed_ue_ambr.br_ul - current_apn_ambr.br_ul;
+    	  OAILOG_WARNING( LOG_MME_APP, "For the UE " MME_UE_S1AP_ID_FMT ", enforcing the remaining AMBR (br_dl=%d,br_ul=%d) on the additionally requested PDN (apn_subscribed=\"%s\", ctx_id=%d). \n",
+    			  ue_id, pdn_context->subscribed_apn_ambr.br_dl, pdn_context->subscribed_apn_ambr.br_ul, bdata(pdn_context->apn_subscribed), pdn_context->context_identifier);
+    	  /** Continue to process it. */
+    	  esm_proc_pdn_connectivity->saegw_qos_modification = true;
+      } else {
+    	  /**
+    	   * If it is a handover, or S10 triggered idle TAU, there should be no subscription data at this point. So reject it.
+    	   *
+    	   * Else, it is either initial attach or an initial tau without the S10 procedure. In that case the PDN should also be the default PDN.
+    	   * Use the UE-AMBR for the PDN AMBR. Mark it as changed to update the AMBR in the PGW/PCRF.
+    	   */
+    	   subscription_data_t * subscription_data = mme_ue_subscription_data_exists_imsi(&mme_app_desc.mme_ue_contexts, ue_context->imsi);
+    	   if(subscription_data && !(current_apn_ambr.br_dl | current_apn_ambr.br_ul)) {
+    		   nas_esm_proc_pdn_connectivity_t * esm_proc_pdn_connectivity = mme_app_nas_esm_get_pdn_connectivity_procedure(ue_id, PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED);
+    		   if(esm_proc_pdn_connectivity == NULL){
+    			   OAILOG_ERROR( LOG_MME_APP, "For APN \"%s\" (ctx_id=%d) for UE " MME_UE_S1AP_ID_FMT ", no PDN connectivity procedure is running (initial attach/tau).\n",
+    					   bdata(pdn_context->apn_subscribed), pdn_context->context_identifier, ue_id);
+    			   OAILOG_FUNC_RETURN(LOG_MME_APP, RETURNerror);
+    		   }
+    		   /* Put the remaining PDN AMBR as the UE AMBR. There should be no other PDN context allocated (no remaining AMBR). */
+    		   pdn_context->subscribed_apn_ambr.br_dl = subscription_data->subscribed_ambr.br_dl;
+    		   pdn_context->subscribed_apn_ambr.br_ul = subscription_data->subscribed_ambr.br_ul;
+    		   /** Mark the procedure as modified. */
+    		   esm_proc_pdn_connectivity->saegw_qos_modification = true;
+    	   } else {
+    		   /**
+    		    * No subscription data exists. Assuming a handover/S10 TAU procedure (even if a (decoupled) subscription data exists.
+    		    * Rejecting the handover or the S10 part of the idle TAU (continue with initial-TAU).
+    		    */
+    		   OAILOG_ERROR(LOG_MME_APP, "Requested PDN (apn_subscribed=\"%s\", ctx_id=%d) exceeds UE AMBR for UE " MME_UE_S1AP_ID_FMT " with IMSI "IMSI_64_FMT ". "
+    				   "Rejecting the PDN connectivity for the inter-MME mobility procedure. \n", bdata(pdn_context->apn_subscribed), pdn_context->context_identifier, ue_id, ue_context->imsi);
+    		   cause->cause_value = NO_RESOURCES_AVAILABLE; /**< Reject the request for this PDN connectivity procedure. */
+    		   mme_app_esm_delete_pdn_context(ue_id, pdn_context->apn_subscribed, pdn_context->context_identifier, pdn_context->default_ebi); /**< Frees it & puts session bearers back to the pool. */
+    		   OAILOG_FUNC_RETURN(LOG_MME_APP, RETURNok);
+    	   }
+      }
     }else{
       OAILOG_DEBUG( LOG_MME_APP, "Received new valid APN_AMBR for APN \"%s\" (ctx_id=%d) for UE " MME_UE_S1AP_ID_FMT ". Updating APN ambr. \n",
           bdata(pdn_context->apn_subscribed), pdn_context->context_identifier, ue_id);
@@ -554,7 +614,7 @@ mme_app_pdn_process_session_creation(mme_ue_s1ap_id_t ue_id, fteid_t * saegw_s11
     }
   }
 
-  /** Updated all pdn (bearer generic) information. Traverse all bearers, including the default bearer. */
+  /** Updated all PDN (bearer generic) information. Traverse all bearers, including the default bearer. */
   for (int i=0; i < bcs_created->num_bearer_context; i++) {
     ebi_t bearer_id = bcs_created->bearer_contexts[i].eps_bearer_id;
     bearer_context_created_t * bc_created = &bcs_created->bearer_contexts[i];
