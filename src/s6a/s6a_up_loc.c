@@ -160,6 +160,7 @@ s6a_ula_cb (
     CHECK_FCT (s6a_parse_subscription_data (avp_p, s6a_update_location_ans_p->subscription_data));
     // LG COMMENTED THIS (2014/04/01)-> DevParam(0, 0, 0);
   }
+  *msg_pP = NULL;
 
 err:
   ans_p = NULL;

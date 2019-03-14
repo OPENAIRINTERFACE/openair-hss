@@ -294,6 +294,7 @@ s6a_aia_cb (
     }
   }
 
+  *msg = NULL;
   itti_send_msg_to_task (TASK_NAS_EMM, INSTANCE_DEFAULT, message_p);
 err:
   return RETURNok;

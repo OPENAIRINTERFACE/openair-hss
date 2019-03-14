@@ -157,6 +157,7 @@ s6a_clr_cb (
    CHECK_FCT (s6a_add_result_code_mme (ans, failed_avp, result_code, experimental));
    CHECK_FCT (fd_msg_send (msg, NULL, NULL));
 
+   *msg = NULL;
 
   err:
   itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);

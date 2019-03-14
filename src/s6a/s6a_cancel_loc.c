@@ -167,6 +167,7 @@ s6a_clr_cb (
 //  CHECK_FCT (fd_msg_avp_hdr (origin_realm, &origin_realm_hdr));
 //  sprintf (mysql_push.mme_identity.mme_host, "%*s", (int)origin_host_hdr->avp_value->os.len, (char *)origin_host_hdr->avp_value->os.data);
 //  sprintf (mysql_push.mme_identity.mme_realm, "%*s", (int)origin_realm_hdr->avp_value->os.len, (char *)origin_realm_hdr->avp_value->os.data);
+  *msg = NULL;
 
   itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
   OAILOG_DEBUG (LOG_S6A, "Sending S6A_CANCEL_LOCATION_REQUEST to task MME_APP\n");

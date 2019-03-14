@@ -122,6 +122,7 @@ s6a_na_cb (
   }
 
   OAILOG_INFO(LOG_S6A, "Successfully parsed Notify Answer from HSS. \n");
+  *msg = NULL;
 
 err:
   return RETURNok;
