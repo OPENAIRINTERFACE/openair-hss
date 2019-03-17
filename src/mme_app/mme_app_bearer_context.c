@@ -391,6 +391,7 @@ mme_app_release_bearers(const mme_ue_s1ap_id_t mme_ue_s1ap_id, e_rab_list_t * e_
       }
     }
   } else {
+    /** X2 Case. */
     OAILOG_WARNING(LOG_MME_APP, "No EBI list has been received for ue_id " MME_UE_S1AP_ID_FMT ". Setting all bearers to released. \n", mme_ue_s1ap_id);
     RB_FOREACH (pdn_context, PdnContexts, &ue_context->pdn_contexts) {
     	RB_FOREACH (bearer_context, SessionBearers, &pdn_context->session_bearers) {
@@ -398,9 +399,12 @@ mme_app_release_bearers(const mme_ue_s1ap_id_t mme_ue_s1ap_id, e_rab_list_t * e_
     	          && (bearer_context->bearer_state & BEARER_STATE_ENB_CREATED)) {
     	        ebi_list->ebis[ebi_list->num_ebi] = bearer_context->ebi;
     	        bearer_context->bearer_state &= (~BEARER_STATE_ACTIVE);
-    	        bearer_context->bearer_state &= (~BEARER_STATE_ENB_CREATED);
+//    	        bearer_context->bearer_state &= (~BEARER_STATE_ENB_CREATED);
     	        memset(&bearer_context->enb_fteid_s1u, 0, sizeof(fteid_t));
-    	        OAILOG_INFO(LOG_MME_APP, "Set ebi=%d as released for ue_id " MME_UE_S1AP_ID_FMT ". \n", bearer_context->ebi, mme_ue_s1ap_id);
+    	        DevAssert(!(bearer_context->bearer_state & BEARER_STATE_ACTIVE));
+
+    	        OAILOG_INFO(LOG_MME_APP, "Set ebi=%d (%p) as released for ue_id " MME_UE_S1AP_ID_FMT ". \n",
+    	        		bearer_context->ebi, bearer_context, mme_ue_s1ap_id);
     	        ebi_list->num_ebi++;
     	      } else {
     	        OAILOG_WARNING(LOG_MME_APP, "Skipping ebi=%d with invalid state %d for ue_id " MME_UE_S1AP_ID_FMT " from implicit removal. \n",
@@ -489,21 +493,22 @@ mme_app_esm_modify_bearer_context(mme_ue_s1ap_id_t ue_id, const ebi_t ebi, ebi_l
   mme_app_get_session_bearer_context_from_all(ue_context, ebi, &bearer_context);
   if(!bearer_context){
     OAILOG_ERROR (LOG_MME_APP, "No bearer context for ebi=%d context could be found for UE: " MME_UE_S1AP_ID_FMT ". \n", ebi, ue_id);
-    OAILOG_FUNC_RETURN (LOG_MME_APP, ESM_CAUSE_REQUEST_REJECTED_UNSPECIFIED);
-  }
-  if(!(bearer_context->bearer_state & (BEARER_STATE_ACTIVE | BEARER_STATE_ENB_CREATED))){
-    OAILOG_WARNING (LOG_MME_APP, "Bearer context for ebi=%d not in correct bearer state %d for UE: " MME_UE_S1AP_ID_FMT ". \n", ebi, bearer_context->bearer_state, ue_id);
-    OAILOG_FUNC_RETURN (LOG_MME_APP, ESM_CAUSE_REQUEST_REJECTED_UNSPECIFIED);
+    OAILOG_FUNC_RETURN (LOG_MME_APP, ESM_CAUSE_PDN_CONNECTION_DOES_NOT_EXIST);
   }
   mme_app_get_pdn_context(ue_id, bearer_context->pdn_cx_id, bearer_context->linked_ebi, NULL, &pdn_context);
   if(!pdn_context){
     OAILOG_ERROR (LOG_MME_APP, "No PDN context for (cid=%d,linked_ebi=%d) could be found for UE: " MME_UE_S1AP_ID_FMT ". \n", bearer_context->pdn_cx_id, bearer_context->linked_ebi, ue_id);
-    OAILOG_FUNC_RETURN (LOG_MME_APP, ESM_CAUSE_REQUEST_REJECTED_UNSPECIFIED);
+    OAILOG_FUNC_RETURN (LOG_MME_APP, ESM_CAUSE_PDN_CONNECTION_DOES_NOT_EXIST);
   }
+  if(!(bearer_context->bearer_state & (BEARER_STATE_ACTIVE | BEARER_STATE_ENB_CREATED))){
+	  OAILOG_WARNING (LOG_MME_APP, "Bearer context for ebi=%d not in correct bearer state %d for UE: " MME_UE_S1AP_ID_FMT ". \n", ebi, bearer_context->bearer_state, ue_id);
+	  OAILOG_FUNC_RETURN (LOG_MME_APP, ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY);
+  }
+
   /** We can set the FTEIDs right before the CBResp is set. */
   if(bearer_context->esm_ebr_context.status != ESM_EBR_ACTIVE){
     OAILOG_ERROR(LOG_MME_APP, "ESM-PROC  - ESM Bearer Context for ebi %d is not ACTIVE for ue " MME_UE_S1AP_ID_FMT ". \n", bearer_context->ebi, ue_id);
-    OAILOG_FUNC_RETURN (LOG_MME_APP, ESM_CAUSE_REQUEST_REJECTED_UNSPECIFIED);
+    OAILOG_FUNC_RETURN (LOG_MME_APP, ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY);
   }
 
   // todo: LOCK_UE_CONTEXT

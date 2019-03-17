@@ -117,7 +117,6 @@
 void
 esm_send_pdn_connectivity_reject (
   pti_t pti,
-  ebi_t default_ebi,
   ESM_msg * esm_msg,
   esm_cause_t esm_cause)
 {
@@ -128,7 +127,7 @@ esm_send_pdn_connectivity_reject (
    * Mandatory - ESM message header
    */
   esm_msg->pdn_connectivity_reject.protocoldiscriminator = EPS_SESSION_MANAGEMENT_MESSAGE;
-  esm_msg->pdn_connectivity_reject.epsbeareridentity = default_ebi;
+  esm_msg->pdn_connectivity_reject.epsbeareridentity = EPS_BEARER_IDENTITY_UNASSIGNED;
   esm_msg->pdn_connectivity_reject.messagetype = PDN_CONNECTIVITY_REJECT;
   esm_msg->pdn_connectivity_reject.proceduretransactionidentity = pti;
   /*
@@ -453,7 +452,7 @@ void esm_proc_pdn_connectivity_failure (mme_ue_s1ap_id_t ue_id, nas_esm_proc_pdn
  ***************************************************************************/
 
 esm_cause_t
-esm_proc_pdn_config_res(mme_ue_s1ap_id_t ue_id, bool * is_attach, pti_t * pti, ebi_t * default_ebi, imsi_t *imsi, tai_t * visited_tai, eps_bearer_context_status_t* active_ebrs){
+esm_proc_pdn_config_res(mme_ue_s1ap_id_t ue_id, bool * is_attach, pti_t * pti, imsi_t *imsi, tai_t * visited_tai, eps_bearer_context_status_t* active_ebrs){
   OAILOG_FUNC_IN (LOG_NAS_ESM);
 
   ebi_t                                   new_ebi = 0;
@@ -538,9 +537,6 @@ esm_proc_pdn_config_res(mme_ue_s1ap_id_t ue_id, bool * is_attach, pti_t * pti, e
         bdata(esm_proc_pdn_connectivity->subscribed_apn), ue_id, esm_proc_pdn_connectivity->esm_base_proc.pti);
     /** Not removing the ESM procedure. */
     OAILOG_FUNC_RETURN(LOG_NAS_ESM, ESM_CAUSE_SUCCESS);
-  }
-  if(esm_proc_pdn_connectivity){
-	  *default_ebi = esm_proc_pdn_connectivity->default_ebi;
   }
   /** Directly process the ULA. A response message might be returned. */
   /*

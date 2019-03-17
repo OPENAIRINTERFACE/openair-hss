@@ -83,7 +83,6 @@ int esm_send_status(pti_t pti, ebi_t ebi, ESM_msg *msg, int esm_cause);
 
 int esm_send_pdn_connectivity_reject (
   pti_t pti,
-  ebi_t default_ebi,
   ESM_msg * esm_msg,
   esm_cause_t esm_cause);
 

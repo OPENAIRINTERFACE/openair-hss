@@ -122,6 +122,7 @@ s6a_na_cb (
   }
 
   OAILOG_INFO(LOG_S6A, "Successfully parsed Notify Answer from HSS. \n");
+  fd_msg_free(*msg);
   *msg = NULL;
 
 err:

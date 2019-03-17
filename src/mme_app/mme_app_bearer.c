@@ -1188,7 +1188,7 @@ mme_app_handle_modify_bearer_resp (
     bearer_context_t * first_bearer = RB_MIN(SessionBearers, &pdn_context->session_bearers);
     DevAssert(first_bearer);
     // todo: here check, that it is not a deactivated bearer..
-    if(first_bearer->bearer_state & (BEARER_STATE_ENB_CREATED | BEARER_STATE_ACTIVE)){
+    if(first_bearer->bearer_state & BEARER_STATE_ACTIVE){
       /** Continue to next pdn. */
       continue;
     }else{
@@ -3445,7 +3445,7 @@ mme_app_handle_forward_relocation_request(
  forward_relocation_request_pP->pdn_connections = NULL; /**< Unlink the pdn_connections. */
  OAILOG_DEBUG(LOG_MME_APP, "UE_CONTEXT for UE " MME_UE_S1AP_ID_FMT " is a new UE_Context. Processing the received PDN_CONNECTIONS IEs (continuing with CSR). \n", ue_context->mme_ue_s1ap_id);
  /** Process PDN Connections IE. Will initiate a Create Session Request message for the pending pdn_connections. */
- pdn_connection_t * pdn_connection = &s10_proc_mme_handover->pdn_connections->pdn_connection[s10_proc_mme_handover->pdn_connections->num_pdn_connections -1];
+ pdn_connection_t * pdn_connection = &s10_proc_mme_handover->pdn_connections->pdn_connection[0];
  pdn_context_t * pdn_context = mme_app_handle_pdn_connectivity_from_s10(ue_context, pdn_connection);
  /*
   * When Create Session Response is received, continue to process the next PDN connection, until all are processed.

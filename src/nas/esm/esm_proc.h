@@ -98,7 +98,7 @@ esm_cause_t esm_proc_pdn_connectivity_retx(const mme_ue_s1ap_id_t ue_id, const n
 
 void esm_proc_pdn_connectivity_failure (mme_ue_s1ap_id_t ue_id, nas_esm_proc_pdn_connectivity_t * esm_pdn_connectivity_proc);
 
-esm_cause_t esm_proc_pdn_config_res(mme_ue_s1ap_id_t ue_id, bool * is_attach, pti_t * pti, ebi_t * default_ebi, imsi_t *imsi, tai_t * visited_tai, eps_bearer_context_status_t * active_ebrs);
+esm_cause_t esm_proc_pdn_config_res(mme_ue_s1ap_id_t ue_id, bool * is_attach, pti_t * pti, imsi_t *imsi, tai_t * visited_tai, eps_bearer_context_status_t * active_ebrs);
 
 esm_cause_t esm_proc_pdn_connectivity_res (mme_ue_s1ap_id_t ue_id, nas_esm_proc_pdn_connectivity_t * esm_proc_pdn_connectivity);
 

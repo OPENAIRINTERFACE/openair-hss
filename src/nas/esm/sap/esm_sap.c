@@ -169,14 +169,13 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
 
   case ESM_PDN_CONFIG_RES:{
     pti_t pti = PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED;
-    ebi_t default_ebi = ESM_EBI_UNASSIGNED;
-    msg->esm_cause = esm_proc_pdn_config_res(msg->ue_id, &msg->is_attach_tau, &pti, &default_ebi, &msg->data.pdn_config_res->imsi, &msg->data.pdn_config_res->target_tai,
+    msg->esm_cause = esm_proc_pdn_config_res(msg->ue_id, &msg->is_attach_tau, &pti, &msg->data.pdn_config_res->imsi, &msg->data.pdn_config_res->target_tai,
     		&msg->active_ebrs);
     if(msg->esm_cause != ESM_CAUSE_SUCCESS) {
       /*
        * Create a PDN connectivity reject.
        */
-      esm_send_pdn_connectivity_reject(pti, default_ebi, &esm_resp_msg, msg->esm_cause);
+      esm_send_pdn_connectivity_reject(pti, &esm_resp_msg, msg->esm_cause);
     }
   }
   break;
@@ -189,7 +188,7 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
     if(esm_proc_pdn_connectivity){
       msg->is_attach_tau = esm_proc_pdn_connectivity->is_attach;
       /** Send a PDN Connectivity Reject back. */
-      esm_send_pdn_connectivity_reject(esm_proc_pdn_connectivity->esm_base_proc.pti, esm_proc_pdn_connectivity->default_ebi, &esm_resp_msg, msg->esm_cause);
+      esm_send_pdn_connectivity_reject(esm_proc_pdn_connectivity->esm_base_proc.pti, &esm_resp_msg, msg->esm_cause);
       /** Directly process the ULA. A response message might be returned. */
       _esm_proc_free_pdn_connectivity_procedure(&esm_proc_pdn_connectivity);
       msg->esm_cause = ESM_CAUSE_USER_AUTHENTICATION_FAILED;
@@ -224,7 +223,7 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
          * Send a PDN connectivity reject.
          * The ESM procedure should have been removed by now.
          */
-        esm_send_pdn_connectivity_reject(esm_proc_pdn_connectivity->esm_base_proc.pti, esm_proc_pdn_connectivity->default_ebi, &esm_resp_msg, msg->esm_cause);
+        esm_send_pdn_connectivity_reject(esm_proc_pdn_connectivity->esm_base_proc.pti, &esm_resp_msg, msg->esm_cause);
       } else {
         /*
          * Directly process the PDN connectivity confirmation.
@@ -251,7 +250,7 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
        * The ESM procedure will be removed and any timer will be stopped.
        * Also the pending PDN context will be removed.
        */
-      esm_send_pdn_connectivity_reject(esm_proc_pdn_connectivity->esm_base_proc.pti, esm_proc_pdn_connectivity->default_ebi, &esm_resp_msg, ESM_CAUSE_NETWORK_FAILURE);
+      esm_send_pdn_connectivity_reject(esm_proc_pdn_connectivity->esm_base_proc.pti, &esm_resp_msg, ESM_CAUSE_NETWORK_FAILURE);
       esm_proc_pdn_connectivity_failure(msg->ue_id, esm_proc_pdn_connectivity);
       msg->esm_cause = ESM_CAUSE_REQUEST_REJECTED_BY_GW;
     }
@@ -540,7 +539,7 @@ _esm_sap_recv (
         /*
          * No transaction expected (not touching network triggered transactions.
          */
-        esm_send_pdn_connectivity_reject(pti, ebi, &esm_resp_msg, esm_cause);
+        esm_send_pdn_connectivity_reject(pti, &esm_resp_msg, esm_cause);
       }
     }
     break;
@@ -552,7 +551,7 @@ _esm_sap_recv (
          * No transaction expected (not touching network triggered transactions).
          * Directly encode the message.
          */
-        esm_send_pdn_connectivity_reject(pti, ebi, &esm_resp_msg, esm_cause);
+        esm_send_pdn_connectivity_reject(pti, &esm_resp_msg, esm_cause);
       }
     }
     break;
