@@ -609,7 +609,7 @@ add_library(S6A
   ${S6A_DIR}/s6a_task.c
   ${S6A_DIR}/s6a_up_loc.c
   ${S6A_DIR}/s6a_reset.c
-  ${S6A_DIR}/s6a_clear_loc.c
+  ${S6A_DIR}/s6a_cancel_loc.c
   ${S6A_DIR}/s6a_notify.c  
  )
 
