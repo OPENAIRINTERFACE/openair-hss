@@ -575,6 +575,49 @@ hashtable_ts_apply_callback_on_elements (
   return HASH_TABLE_OK;
 }
 
+//------------------------------------------------------------------------------
+// may cost a lot CPU...
+// Also useful if we want to find an element in the collection based on compare criteria different than the single key
+// The compare criteria in implemented in the funct_cb function
+hashtable_rc_t
+hashtable_ts_apply_list_callback_on_elements (
+  hash_table_ts_t * const hashtblP,
+  bool funct_cb (const hash_key_t keyP,
+               void * const dataP,
+               void *parameterP,
+               void ** resultP),
+  void *parameterP,
+  hashtable_element_array_t              *ea) /**< Stacked list. */
+{
+  hash_node_t                            *node = NULL;
+  unsigned int                            i = 0;
+  unsigned int                            num_elements = 0;
+
+  if (!hashtblP || !ea) {
+    return HASH_TABLE_BAD_PARAMETER_HASHTABLE;
+  }
+
+  while ((ea->num_elements <= hashtblP->num_elements) && (num_elements < hashtblP->num_elements) && (i < hashtblP->size)) {
+    pthread_mutex_lock(&hashtblP->lock_nodes[i]);
+    if (hashtblP->nodes[i] != NULL) {
+      node = hashtblP->nodes[i];
+
+      while (node) {
+        num_elements++;
+        void* resultP = NULL;
+        if (funct_cb (node->key, node->data, parameterP, &resultP)) {
+        	/** Don't return, continue searching. */
+        	ea->elements[ea->num_elements++] = node->data;
+        }
+        node = node->next;
+      }
+    }
+    pthread_mutex_unlock(&hashtblP->lock_nodes[i]);
+    i++;
+  }
+
+  return HASH_TABLE_OK;
+}
 
 //------------------------------------------------------------------------------
 hashtable_rc_t

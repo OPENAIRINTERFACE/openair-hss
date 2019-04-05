@@ -457,6 +457,7 @@ mme_app_handle_mobility_completion_timer_expiry (mme_app_s10_proc_mme_handover_t
     message_p = itti_alloc_new_message (TASK_MME_APP, NAS_IMPLICIT_DETACH_UE_IND);
     DevAssert (message_p != NULL);
     message_p->ittiMsg.nas_implicit_detach_ue_ind.ue_id = ue_context->mme_ue_s1ap_id; /**< We don't send a Detach Type such that no Detach Request is sent to the UE if handover is performed. */
+    message_p->ittiMsg.nas_implicit_detach_ue_ind.clr = s10_proc_mme_handover->pending_clear_location_request; /**< Inform about the CLR. */
 
     MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_IMPLICIT_DETACH_UE_IND_MESSAGE");
     itti_send_msg_to_task (TASK_NAS_EMM, INSTANCE_DEFAULT, message_p);

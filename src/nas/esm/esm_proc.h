@@ -94,7 +94,7 @@ esm_proc_pdn_connectivity_request (
   nas_esm_proc_pdn_connectivity_t * const esm_proc_pdn_connectivity,
   const apn_configuration_t   *apn_configuration);
 
-esm_cause_t esm_proc_pdn_connectivity_retx(const mme_ue_s1ap_id_t ue_id, const nas_esm_proc_pdn_connectivity_t * esm_proc_pdn_connectivity, ESM_msg * esm_rsp_msg);
+esm_cause_t esm_proc_pdn_connectivity_retx(const mme_ue_s1ap_id_t ue_id, nas_esm_proc_pdn_connectivity_t * const esm_proc_pdn_connectivity, ESM_msg * esm_rsp_msg);
 
 void esm_proc_pdn_connectivity_failure (mme_ue_s1ap_id_t ue_id, nas_esm_proc_pdn_connectivity_t * esm_pdn_connectivity_proc);
 
@@ -233,7 +233,8 @@ esm_proc_bearer_resource_modification_request(
   const proc_tid_t   pti,
   ebi_t              ebi,
   esm_cause_t        esm_cause_received,
-  const traffic_flow_aggregate_description_t * const tad,
+//  const traffic_flow_aggregate_description_t * const tad,
+  traffic_flow_aggregate_description_t * const tad,
   const EpsQualityOfService * const new_flow_qos);
 
 void

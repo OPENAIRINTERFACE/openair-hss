@@ -159,7 +159,7 @@ esm_send_activate_default_eps_bearer_context_request (
    * Mandatory - PDN address
    */
   OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - pdn_type is %u\n", esm_proc_pdn_connectivity->pdn_type);
-  esm_resp_msg->activate_default_eps_bearer_context_request.pdnaddress.pdntypevalue = esm_proc_pdn_connectivity->pdn_type;
+  esm_resp_msg->activate_default_eps_bearer_context_request.pdnaddress.pdntypevalue = esm_proc_pdn_connectivity->pdn_type; /**< PDN Type from PAA. */
   esm_resp_msg->activate_default_eps_bearer_context_request.pdnaddress.pdnaddressinformation = paa_to_bstring(paa);
   /*
    * Optional - ESM cause code
@@ -244,6 +244,8 @@ esm_proc_default_eps_bearer_context (
     /** Get the default bearer. */
     bearer_context_t *default_bc = RB_MIN(SessionBearers, &pdn_context->session_bearers);
     if(default_bc){
+      /** Update the PDN type from the received PDN type. */
+	  esm_proc_pdn_connectivity->pdn_type = 1 + pdn_context->paa->pdn_type;
       esm_send_activate_default_eps_bearer_context_request(esm_proc_pdn_connectivity,
           &pdn_context->subscribed_apn_ambr, &default_bc->bearer_level_qos, pdn_context->paa,
           pdn_context->pco,
@@ -347,6 +349,7 @@ _default_eps_bearer_activate_t3485_handler(nas_esm_proc_t * esm_base_proc, ESM_m
     if(pdn_context){
       bearer_context_t * bearer_context = mme_app_get_session_bearer_context(pdn_context, esm_proc_pdn_connectivity->default_ebi);
       if(bearer_context){
+    	esm_proc_pdn_connectivity->pdn_type = 1 + pdn_context->paa->pdn_type;
         esm_send_activate_default_eps_bearer_context_request(esm_proc_pdn_connectivity,
             &pdn_context->subscribed_apn_ambr,
             &bearer_context->bearer_level_qos,

@@ -56,6 +56,7 @@
 #include "s1ap_mme_retransmission.h"
 #include "s1ap_mme_itti_messaging.h"
 #include "dynamic_memory_check.h"
+#include "3gpp_23.003.h"
 #include "mme_config.h"
 
 
@@ -460,6 +461,7 @@ bool s1ap_dump_ue_hash_cb (__attribute__((unused)) const hash_key_t keyP,
   s1ap_dump_ue(ue_ref);
   return false;
 }
+
 //------------------------------------------------------------------------------
 void
 s1ap_dump_ue (const ue_description_t * const ue_ref)
@@ -489,6 +491,21 @@ bool s1ap_enb_compare_by_enb_id_cb (__attribute__((unused)) const hash_key_t key
   }
   return false;
 }
+
+//------------------------------------------------------------------------------
+bool s1ap_enb_compare_by_tac_cb (__attribute__((unused)) const hash_key_t keyP,
+                                    void * const elementP,
+                                    void * parameterP, void **resultP)
+{
+  const tac_t                  * const tac_p = (const tac_t*const)parameterP;
+  enb_description_t                      *enb_ref  = (enb_description_t*)elementP;
+  if ( *tac_p == enb_ref->tai_list.partial_tai_list[0].u.tai_one_plmn_consecutive_tacs.tac) {
+    *resultP = elementP;
+    return true;
+  }
+  return false;
+}
+
 //------------------------------------------------------------------------------
 enb_description_t                      *
 s1ap_is_enb_id_in_list (
@@ -498,6 +515,28 @@ s1ap_is_enb_id_in_list (
   uint32_t                               *enb_id_p  = (uint32_t*)&enb_id;
   hashtable_ts_apply_callback_on_elements((hash_table_ts_t * const)&g_s1ap_enb_coll, s1ap_enb_compare_by_enb_id_cb, (void *)enb_id_p, (void**)&enb_ref);
   return enb_ref;
+}
+
+//------------------------------------------------------------------------------
+void s1ap_is_tac_in_list (
+  const tac_t tac,
+  int *num_enbs,
+  enb_description_t ** enbs)
+{
+  enb_description_t                      *enb_ref = NULL;
+  tac_t                                  *tac_p   = (tac_t*)&tac;
+
+  /** Collect all eNBs for the given TAC. */
+  hashtable_element_array_t              ea;
+//  enb_description_t *			         enb_p_elements[mme_config.max_enbs];
+  memset(&ea, 0, sizeof(hashtable_element_array_t));
+//  memset(&enb_p_elements, 0, (sizeof(enb_description_t*) * mme_config.max_enbs));
+  ea.elements = enbs;
+
+  hashtable_ts_apply_list_callback_on_elements((hash_table_ts_t * const)&g_s1ap_enb_coll, s1ap_enb_compare_by_tac_cb, (void *)tac_p, &ea);
+  OAILOG_DEBUG(LOG_S1AP, "Found %d matching enb references based on the received tac " TAC_FMT ". \n", ea.num_elements, tac);
+  *num_enbs = ea.num_elements;
+//  *enbs = enb_p_elements;
 }
 
 //------------------------------------------------------------------------------

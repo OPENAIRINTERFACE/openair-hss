@@ -284,6 +284,7 @@ typedef struct itti_s1ap_e_rab_release_rsp_s {
 typedef struct itti_s1ap_e_rab_release_ind_s {
   mme_ue_s1ap_id_t    mme_ue_s1ap_id;
   enb_ue_s1ap_id_t    enb_ue_s1ap_id;
+  uint32_t            enb_id;
 
   // E-RAB Released List
   e_rab_list_t                  e_rab_release_list;
@@ -475,7 +476,8 @@ typedef struct itti_s1ap_handover_notify_s {
 
 typedef struct itti_s1ap_paging_s {
   mme_ue_s1ap_id_t        mme_ue_s1ap_id;
-  sctp_assoc_id_t         sctp_assoc_id_key; // link with eNB id
+//  sctp_assoc_id_t         sctp_assoc_id_key; // link with eNB id
+  tac_t					  tac;
 
   uint16_t                ue_identity_index;
   tmsi_t                  tmsi;

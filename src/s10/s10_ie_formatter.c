@@ -613,18 +613,22 @@ s10_mm_ue_context_ie_get (
 
     /** Get the Subscribed UE_AMBR. */
     if(ue_ambr_subscribed_present){
-      mm_ue_context->subscribed_ue_ambr.br_ul = ((*((uint32_t*)(p_ieValue))) * 1000);
-      p_ieValue = ((uint32_t *)p_ieValue) + 1; /**< Move by 4. */
-      mm_ue_context->subscribed_ue_ambr.br_dl = ((*((uint32_t*)(p_ieValue))) * 1000);
-      p_ieValue = ((uint32_t *)p_ieValue) + 1; /**< Move by 4. */
+    	BUFFER_TO_INT32(p_ieValue, mm_ue_context->subscribed_ue_ambr.br_ul);
+        p_ieValue = ((uint32_t *)p_ieValue) + 1; /**< Move by 4. */
+        BUFFER_TO_INT32((p_ieValue), mm_ue_context->subscribed_ue_ambr.br_dl);
+        p_ieValue = ((uint32_t *)p_ieValue) + 1; /**< Move by 4. */
+        mm_ue_context->subscribed_ue_ambr.br_ul *= 1000;
+    	mm_ue_context->subscribed_ue_ambr.br_dl *= 1000;
     }
 
     /** Get the Used UE_AMBR. */
     if(ue_ambr_used_present){
-      mm_ue_context->used_ue_ambr.br_ul = ((*((uint32_t*)(p_ieValue))) * 1000);
-      p_ieValue = ((uint32_t *)p_ieValue) + 1; /**< Move by 4. */
-      mm_ue_context->used_ue_ambr.br_dl = ((*((uint32_t*)(p_ieValue))) * 1000);
-      p_ieValue = ((uint32_t *)p_ieValue) + 1; /**< Move by 4. */
+    	BUFFER_TO_INT32(p_ieValue, mm_ue_context->subscribed_ue_ambr.br_ul);
+        p_ieValue = ((uint32_t *)p_ieValue) + 1; /**< Move by 4. */
+    	BUFFER_TO_INT32((p_ieValue), mm_ue_context->subscribed_ue_ambr.br_dl);
+        p_ieValue = ((uint32_t *)p_ieValue) + 1; /**< Move by 4. */
+    	mm_ue_context->subscribed_ue_ambr.br_ul *= 1000;
+    	mm_ue_context->subscribed_ue_ambr.br_dl *= 1000;
     }
 
     /** Get the UE Network Capability. */
@@ -967,7 +971,7 @@ s10_bearer_context_to_be_created_ie_get (
   DevAssert (0 <= bearer_contexts->num_bearer_context);
   DevAssert (MSG_FORWARD_RELOCATION_REQUEST_MAX_BEARER_CONTEXTS >= bearer_contexts->num_bearer_context);
   bearer_context_to_be_created_t          *bearer_context  = &bearer_contexts->bearer_contexts[bearer_contexts->num_bearer_context];
-  uint8_t                                  read = 0;
+  uint16_t                                 read = 0;
   nw_rc_t                                  rc;
 
   while (ieLength > read) {
@@ -989,7 +993,11 @@ s10_bearer_context_to_be_created_ie_get (
       if(bearer_context->tft)
         free_traffic_flow_template(&bearer_context->tft);
       bearer_context->tft = calloc(1, sizeof(traffic_flow_template_t));
-      rc = gtpv2c_tft_ie_get (ie_p->t, ntohs (ie_p->l), ie_p->i, &ieValue[read + sizeof (nw_gtpv2c_ie_tlv_t)], bearer_context->tft);
+      if(ie_p->l > 150){
+    	  rc = gtpv2c_tft_ie_get (ie_p->t, ntohs (ie_p->l), ie_p->i, &ieValue[read + sizeof (nw_gtpv2c_ie_tlv_t)], bearer_context->tft);
+      } else {
+    	  rc = gtpv2c_tft_ie_get (ie_p->t, ntohs (ie_p->l), ie_p->i, &ieValue[read + sizeof (nw_gtpv2c_ie_tlv_t)], bearer_context->tft);
+      }
       break;
 
     case NW_GTPV2C_IE_FTEID:
@@ -1067,7 +1075,7 @@ s10_bearer_context_to_be_modified_ie_get (
   DevAssert (0 <= bearer_contexts->num_bearer_context);
   DevAssert (MSG_MODIFY_BEARER_REQUEST_MAX_BEARER_CONTEXTS >= bearer_contexts->num_bearer_context);
   bearer_context_to_be_modified_t        *bearer_context = &bearer_contexts->bearer_contexts[bearer_contexts->num_bearer_context];
-  uint8_t                                 read = 0;
+  uint16_t                                 read = 0;
   nw_rc_t                                   rc;
 
   DevAssert (bearer_context);

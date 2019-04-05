@@ -76,9 +76,7 @@
    procedure in the MME
    --------------------------------------------------------------------------
 */
-/*
-   No timer handlers necessary.
-*/
+static esm_cause_t _bearer_resource_modification_timeout_handler (nas_esm_proc_t * esm_base_proc, ESM_msg *esm_resp_msg);
 
 /****************************************************************************/
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
@@ -165,7 +163,8 @@ esm_proc_bearer_resource_modification_request(
   const proc_tid_t   pti,
   ebi_t              ebi,
   esm_cause_t        esm_cause_received,
-  const traffic_flow_aggregate_description_t * const tad,
+//  const traffic_flow_aggregate_description_t * const tad,
+  traffic_flow_aggregate_description_t * const tad,
   const EpsQualityOfService                  * const new_flow_qos
   )
 {
@@ -194,36 +193,40 @@ esm_proc_bearer_resource_modification_request(
     flow_qos.qci = new_flow_qos->qci; /**< If not changed, must be the QCI of the current bearer. */
   }
 
+  /** Verify the received the bearer resource modification request. */
+  esm_cause = mme_app_validate_bearer_resource_modification(ue_id, ebi, &linked_ebi, tad, flow_qos.qci ? &flow_qos : NULL);
+  if(esm_cause != ESM_CAUSE_SUCCESS) {
+     /** If the error is due QoS, we have a valid TFT. And can continue to process it. */
+     if(esm_cause != ESM_CAUSE_SYNTACTICAL_ERROR_IN_THE_TFT_OPERATION && esm_cause != ESM_CAUSE_SEMANTIC_ERROR_IN_THE_TFT_OPERATION){
+       /** Any other ESM causes should be rejected. */
+       OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - Failed to verify the received Bearer Resource Modification Request " "(ebi=%d ue_id=" MME_UE_S1AP_ID_FMT ", pti=%d) with esm_cause %d. \n", ebi, ue_id, pti, esm_cause);
+       OAILOG_FUNC_RETURN(LOG_MME_APP, esm_cause);
+     }
+  }
+
   /** Create an ESM bearer context but no timer. */
-  void * brm_cb = NULL;
   nas_esm_proc_bearer_context_t * esm_proc_bearer_context = _esm_proc_create_bearer_context_procedure(ue_id, pti, linked_ebi,
-       PDN_CONTEXT_IDENTIFIER_UNASSIGNED, ebi, INVALID_TEID, 0, 0, brm_cb);
+       PDN_CONTEXT_IDENTIFIER_UNASSIGNED, ebi, INVALID_TEID, 3, 0, _bearer_resource_modification_timeout_handler);
   if(!esm_proc_bearer_context) {
     OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - Error creating bearer context ESM procedure for the received Bearer Resource Modification Request " "(ebi=%d, ue_id=" MME_UE_S1AP_ID_FMT ", pti=%d). \n",
         ebi, ue_id, pti);
     OAILOG_FUNC_RETURN(LOG_MME_APP, ESM_CAUSE_REQUEST_REJECTED_UNSPECIFIED);
   }
 
-  /** Verify the received the bearer resource modification request. */
-  esm_cause = mme_app_validate_bearer_resource_modification(ue_id, ebi, tad, flow_qos.qci ? &flow_qos : NULL);
   if(esm_cause != ESM_CAUSE_SUCCESS) {
-    /** If the error is due QoS, we have a valid TFT. And can continue to process it. */
-    if(esm_cause == ESM_CAUSE_SYNTACTICAL_ERROR_IN_THE_TFT_OPERATION){
-      DevAssert(!esm_proc_bearer_context->tft);
-      esm_proc_bearer_context->tft = calloc(1, sizeof(traffic_flow_template_t));
-      copy_traffic_flow_template(esm_proc_bearer_context->tft, tad);
-      OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - Since we have a valid TFT operation, ignoring the received flow-qos modification error" "(ebi=%d ue_id=" MME_UE_S1AP_ID_FMT ", pti=%d) with esm_cause %d. \n",
-          ebi, ue_id, pti, esm_cause);
-      /** Continue, but, in addition to those filters which are in the req/res message, we may also have filters in the TFT.. Need to remove them in the UE, as well.. */
-    } else if (esm_cause == ESM_CAUSE_SEMANTIC_ERROR_IN_THE_TFT_OPERATION) {
-      /** Error, we rendered the bearer empty.. continue. */
-    } else {
-      /** Any other ESM causes should be rejected. */
-      _esm_proc_free_bearer_context_procedure(&esm_proc_bearer_context);
-      OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - Failed to verify the received Bearer Resource Modification Request " "(ebi=%d ue_id=" MME_UE_S1AP_ID_FMT ", pti=%d) with esm_cause %d. \n", ebi, ue_id, pti, esm_cause);
-      OAILOG_FUNC_RETURN(LOG_MME_APP, esm_cause);
-    }
+     /** If the error is due QoS, we have a valid TFT. And can continue to process it. */
+     if(esm_cause == ESM_CAUSE_SYNTACTICAL_ERROR_IN_THE_TFT_OPERATION){
+       DevAssert(!esm_proc_bearer_context->tft);
+       esm_proc_bearer_context->tft = calloc(1, sizeof(traffic_flow_template_t));
+       copy_traffic_flow_template(esm_proc_bearer_context->tft, tad);
+       OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - Since we have a valid TFT operation, ignoring the received flow-qos modification error" "(ebi=%d ue_id=" MME_UE_S1AP_ID_FMT ", pti=%d) with esm_cause %d. \n",
+           ebi, ue_id, pti, esm_cause);
+       /** Continue, but, in addition to those filters which are in the req/res message, we may also have filters in the TFT.. Need to remove them in the UE, as well.. */
+     } else { /* if (esm_cause == ESM_CAUSE_SEMANTIC_ERROR_IN_THE_TFT_OPERATION) { */
+    	 /** Error, we rendered the bearer empty.. continue. */
+     }
   }
+
   OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Successfully verified the received Bearer Resource Modification Request " "(ebi=%d ue_id=" MME_UE_S1AP_ID_FMT ", pti=%d). \n",
       ebi, ue_id, pti);
   /** Don't start the timer on the ESM procedure. Trigger a Delete Bearer Command message. */
@@ -262,7 +265,7 @@ esm_proc_bearer_resource_failure(
   nas_esm_proc_bearer_context_t * esm_proc_bearer_context = _esm_proc_get_bearer_context_procedure(ue_id, pti, ESM_EBI_UNASSIGNED);
   if(esm_proc_bearer_context){
     /** Prepare a response message. */
-    esm_send_bearer_resource_modification_reject(pti, esm_rsp_msg, ESM_CAUSE_REQUEST_REJECTED_BY_GW);
+    esm_send_bearer_resource_modification_reject(esm_proc_bearer_context->esm_base_proc.pti, esm_rsp_msg, ESM_CAUSE_REQUEST_REJECTED_BY_GW);
     /** Delete the procedure. */
     _esm_proc_free_bearer_context_procedure(&esm_proc_bearer_context);
     OAILOG_WARNING(LOG_NAS_ESM, "ESM-PROC  - Removed the current ESM procedure for the received Bearer Resource Failure Indication " "(ue_id=" MME_UE_S1AP_ID_FMT ", pti=%d)\n", ue_id, pti);
@@ -282,9 +285,48 @@ esm_proc_bearer_resource_failure(
    --------------------------------------------------------------------------
 */
 
+/****************************************************************************
+ **                                                                        **
+ ** Name:    _bearer_resource_modification_timeout_handler()                    **
+ **                                                                        **
+ ** Description: BRM  timeout handler                                      **
+ **                                                                        **
+ ** Custom timer, when nothing from the BRM came.
+ ** We might have an inconsistent state. 								   **
+ **                                                                        **
+ ** Inputs:  args:      handler parameters                         **
+ **      Others:    None                                       **
+ **                                                                        **
+ ** Outputs:     None                                                      **
+ **      Return:    None                                       **
+ **      Others:    None                                       **
+ **                                                                        **
+ ***************************************************************************/
+static esm_cause_t _bearer_resource_modification_timeout_handler (nas_esm_proc_t * esm_base_proc, ESM_msg *esm_resp_msg)
+{
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
+
+  nas_esm_proc_bearer_context_t * esm_proc_bearer_context = (nas_esm_proc_bearer_context_t*) esm_base_proc;
+
+  /*
+   * The maximum number of activate dedicated EPS bearer context request
+   * message retransmission has exceed
+   */
+  pdn_cid_t                               pid = MAX_APN_PER_UE;
+  /*
+   * Finalize the bearer (set to ESM_EBR_STATE ACTIVE).
+   */
+  esm_send_bearer_resource_modification_reject(esm_base_proc->pti, esm_resp_msg, ESM_CAUSE_NETWORK_FAILURE);
+
+  /*
+   * Release the transactional PDN connectivity procedure.
+   */
+  _esm_proc_free_bearer_context_procedure(&esm_proc_bearer_context);
+  OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_SUCCESS);
+}
+
 /*
    --------------------------------------------------------------------------
                 MME specific local functions
    --------------------------------------------------------------------------
 */
-

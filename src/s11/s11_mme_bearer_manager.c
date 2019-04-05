@@ -514,13 +514,13 @@ s11_mme_bearer_resource_command(
   }
 
   /** Set the linked ebi and the ebi to be modified. */
-  gtpv2c_ebi_ie_set(&(ulp_req.hMsg), cmd_p->ebi, NW_GTPV2C_IE_INSTANCE_ZERO);
-  gtpv2c_pti_ie_set(&(ulp_req.hMsg), cmd_p->pti, NW_GTPV2C_IE_INSTANCE_ONE);
-  gtpv2c_ebi_ie_set(&(ulp_req.hMsg), cmd_p->linked_ebi, NW_GTPV2C_IE_INSTANCE_ONE);
+  gtpv2c_ebi_ie_set(&(ulp_req.hMsg), cmd_p->linked_ebi, NW_GTPV2C_IE_INSTANCE_ZERO);
+  gtpv2c_pti_ie_set(&(ulp_req.hMsg), cmd_p->pti, NW_GTPV2C_IE_INSTANCE_ZERO);
+  gtpv2c_ebi_ie_set(&(ulp_req.hMsg), cmd_p->ebi, NW_GTPV2C_IE_INSTANCE_ONE);
   /*
    * Set the TAD.
    */
-  gtpv2c_tft_ie_set(&(ulp_req.hMsg), (traffic_flow_template_t*)&cmd_p->tad);
+  gtpv2c_tad_ie_set(&(ulp_req.hMsg), (traffic_flow_aggregate_description_t*)&cmd_p->tad);
 
   /*
    * Check if a Flow QoS exists, if so add it.

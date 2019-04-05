@@ -452,6 +452,7 @@ int nas_esm_proc_deactivate_eps_bearer_ctx(esm_eps_deactivate_eps_bearer_ctx_req
   /** Get the bearer contexts to be updated. */
   for(int num_ebi= 0; num_ebi < esm_cn_deactivate->ebis.num_ebi; num_ebi++){
     esm_sap.data.eps_bearer_context_deactivate.ded_ebi = esm_cn_deactivate->ebis.ebis[num_ebi];
+    esm_sap.data.eps_bearer_context_deactivate.pti 	   = esm_cn_deactivate->pti;
     esm_sap_signal(&esm_sap, &rsp);
     if(esm_sap.data.eps_bearer_context_deactivate.pending_pdn_proc){
     	OAILOG_DEBUG (LOG_MME_APP, "For UE " MME_UE_S1AP_ID_FMT " an colliding ESM procedure exists. "

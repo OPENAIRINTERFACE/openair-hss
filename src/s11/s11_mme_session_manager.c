@@ -507,28 +507,8 @@ s11_mme_handle_ulp_error_indicatior(
      OAILOG_ERROR (LOG_S11, "RELEASE_ACCESS_BEARERS_RESPONSE could not be received for for local teid " TEID_FMT". Sending ACCEPTED back (ignoring the network failure). \n", rsp_p->teid);
    }
      break;
-   /** Failed commands. */
-  case NW_GTP_BEARER_RESOURCE_FAILURE_IND:
-  {
-    /**
-     * We will omit the error and send success back.
-     * UE context should always be removed.
-     */
-    itti_s11_bearer_resource_failure_indication_t            *ind_p;
-    message_p = itti_alloc_new_message (TASK_S11, S11_BEARER_RESOURCE_FAILURE_INDICATION);
-    ind_p = &message_p->ittiMsg.s11_bearer_resource_failure_indication;
-    /** Set the destination TEID (our TEID). */
-    ind_p->teid = pUlpApi->u_api_info.rspFailureInfo.teidLocal;
-    /** Set the transaction for the triggered acknowledgment. */
-    ind_p->trxn = (void *)pUlpApi->u_api_info.rspFailureInfo.hUlpTrxn;
-    /** Set the PTI from the flags. */
-    ind_p->pti  = pUlpApi->u_api_info.rspFailureInfo.trx_flags;
-    /** Set the cause. */
-    ind_p->cause.cause_value = SYSTEM_FAILURE; /**< Would mean that this message either did not come at all or could not be dealt with properly. */
-  }
-    break;
-    /** Failed commands. */
-  case NW_GTP_DELETE_BEARER_FAILURE_IND:
+       /** Failed commands. */
+  case NW_GTP_DELETE_BEARER_CMD:
   {
     /**
      * We will omit the error and send success back.
@@ -545,6 +525,30 @@ s11_mme_handle_ulp_error_indicatior(
     ind_p->cause.cause_value = SYSTEM_FAILURE; /**< Would mean that this message either did not come at all or could not be dealt with properly. */
   }
   break;
+
+  /** Failed commands --> Send to NAS_ESM layer.. */
+  case NW_GTP_BEARER_RESOURCE_CMD:
+  {
+	  /**
+       * We will omit the error and send success back.
+       * UE context should always be removed.
+       */
+      itti_s11_bearer_resource_failure_indication_t            *ind_p;
+      message_p = itti_alloc_new_message (TASK_S11, S11_BEARER_RESOURCE_FAILURE_INDICATION);
+      ind_p = &message_p->ittiMsg.s11_bearer_resource_failure_indication;
+      /** Set the destination TEID (our TEID). */
+      ind_p->teid = pUlpApi->u_api_info.rspFailureInfo.teidLocal;
+      /** Set the transaction for the triggered acknowledgment. */
+      ind_p->trxn = (void *)pUlpApi->u_api_info.rspFailureInfo.hUlpTrxn;
+      /** Set the PTI from the flags. */
+      ind_p->pti  = pUlpApi->u_api_info.rspFailureInfo.trx_flags;
+      /** Set the cause. */
+      ind_p->cause.cause_value = SYSTEM_FAILURE; /**< Would mean that this message either did not come at all or could not be dealt with properly. */
+  }
+  /** Send this one directly to the ESM. */
+  int rc = itti_send_msg_to_task (TASK_NAS_ESM, INSTANCE_DEFAULT, message_p);
+  OAILOG_FUNC_RETURN (LOG_S11, rc);
+
   default:
     OAILOG_ERROR (LOG_S10, "Received an unhandled error indicator for the local S11-TEID " TEID_FMT " and message type %d. \n",
         pUlpApi->u_api_info.rspFailureInfo.teidLocal, pUlpApi->u_api_info.rspFailureInfo.msgType);

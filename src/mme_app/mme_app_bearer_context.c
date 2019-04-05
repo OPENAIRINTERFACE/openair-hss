@@ -465,6 +465,12 @@ mme_app_cn_update_bearer_context(mme_ue_s1ap_id_t ue_id, const ebi_t ebi,
     //      memcpy((void*)&bearer_context->p_gw_fteid_s5_s8_up , fteid_set->s5_fteid, sizeof(fteid_t));
     bearer_context->bearer_state |= BEARER_STATE_SGW_CREATED;
   }
+  /** Check, if the ESM context is active, set the bearer as active. */
+  if(bearer_context->esm_ebr_context.status == ESM_EBR_ACTIVE){
+	  OAILOG_INFO(LOG_MME_APP, "Bearer context (ebi=%d) for UE: " MME_UE_S1AP_ID_FMT " is in ACTIVE ESM state. "
+			  "Setting bearer context state as active. \n", ebi, ue_id);
+	  bearer_context->bearer_state |= BEARER_STATE_ACTIVE;
+  }
   /** Set the MME_APP states (todo: may be with Activate Dedicated Bearer Response). */
   // todo:     bearer_context->bearer_state   |= BEARER_STATE_MME_CREATED;
   //  UNLOCK_UE_CONTEXT(ue_context);
@@ -594,6 +600,15 @@ mme_app_finalize_bearer_context(mme_ue_s1ap_id_t ue_id, const pdn_cid_t pdn_cid,
     OAILOG_ERROR (LOG_MME_APP, "No MME_APP UE context could be found for UE: " MME_UE_S1AP_ID_FMT ". \n", ue_id);
     OAILOG_FUNC_RETURN (LOG_MME_APP, ESM_CAUSE_PDN_CONNECTION_DOES_NOT_EXIST);
   }
+  /** Get the pdn context. */
+  if(!pdn_context){
+	  mme_app_get_pdn_context(ue_context->mme_ue_s1ap_id, bearer_context->pdn_cx_id, bearer_context->linked_ebi, NULL, &pdn_context);
+	  if(!pdn_context){
+		  OAILOG_ERROR (LOG_MME_APP, "No PDN context could be found for UE: " MME_UE_S1AP_ID_FMT " for (cid=%d,linked_ebi=%d). \n",
+				  ue_id, bearer_context->pdn_cx_id, bearer_context->linked_ebi);
+		  OAILOG_FUNC_RETURN (LOG_MME_APP, ESM_CAUSE_PDN_CONNECTION_DOES_NOT_EXIST);
+	  }
+  }
   /** We can set the FTEIDs right before the CBResp is set. */
   // todo: LOCK_UE_CONTEXT
   bearer_context->esm_ebr_context.status = ESM_EBR_ACTIVE;
@@ -623,9 +638,9 @@ mme_app_finalize_bearer_context(mme_ue_s1ap_id_t ue_id, const pdn_cid_t pdn_cid,
   }
   if(ambr){
     if(ambr->br_dl && ambr->br_ul){
-      /** The APN-AMBR is checked at the beginning of the S11 CBR and the possible UE AMBR is also calculated there. */
-      pdn_context->subscribed_apn_ambr.br_dl = ambr->br_dl;
-      pdn_context->subscribed_apn_ambr.br_ul = ambr->br_ul;
+    	/** The APN-AMBR is checked at the beginning of the S11 CBR and the possible UE AMBR is also calculated there. */
+    	pdn_context->subscribed_apn_ambr.br_dl = ambr->br_dl;
+    	pdn_context->subscribed_apn_ambr.br_ul = ambr->br_ul;
     }
   }
 //  if(pco){
@@ -637,6 +652,12 @@ mme_app_finalize_bearer_context(mme_ue_s1ap_id_t ue_id, const pdn_cid_t pdn_cid,
 //     memcpy(bearer_context->esm_ebr_context.pco, pco, sizeof (protocol_configuration_options_t));  /**< Should have the processed bitmap in the validation . */
 //   }
 
+  /** Update the bearer context state. */
+  if(bearer_context->bearer_state & BEARER_STATE_ENB_CREATED){
+	  OAILOG_INFO(LOG_MME_APP, "Bearer state of (ebi=%d) is ESM_ACTIVE for UE: " MME_UE_S1AP_ID_FMT ". "
+			  "Activating bearer context state.. \n",bearer_context->ebi,  ue_id);
+	  bearer_context->bearer_state |= BEARER_STATE_ACTIVE;
+  }
 
   // todo: UNLOCK_UE_CONTEXT
   OAILOG_FUNC_RETURN (LOG_MME_APP, ESM_CAUSE_SUCCESS);
@@ -706,7 +727,7 @@ mme_app_release_bearer_context(mme_ue_s1ap_id_t ue_id, const pdn_cid_t *pdn_cid,
    * So the delete function is unlike to GTPv2c tunnels.
    */
   // no timers to stop, no DSR to be sent..
-  /** Initialize the new bearer context. */
+  /** Initialize the new bearer context. Nothing needs to be done in the ESM layer. */
   mme_app_bearer_context_initialize(bearer_context);
   /** Insert the bearer context into the free bearer of the ue context. */
   RB_INSERT (BearerPool, &ue_context->bearer_pool, bearer_context);
@@ -718,7 +739,7 @@ mme_app_release_bearer_context(mme_ue_s1ap_id_t ue_id, const pdn_cid_t *pdn_cid,
 
 //------------------------------------------------------------------------------
 esm_cause_t
-mme_app_validate_bearer_resource_modification(mme_ue_s1ap_id_t ue_id, ebi_t ebi, traffic_flow_aggregate_description_t *tad, flow_qos_t * flow_qos){
+mme_app_validate_bearer_resource_modification(mme_ue_s1ap_id_t ue_id, ebi_t ebi, ebi_t * linked_ebi, traffic_flow_aggregate_description_t *tad, flow_qos_t * flow_qos){
   OAILOG_FUNC_IN (LOG_MME_APP);
   pdn_context_t                       *pdn_context = NULL;
   bearer_context_t                    *bearer_context = NULL;
@@ -748,6 +769,8 @@ mme_app_validate_bearer_resource_modification(mme_ue_s1ap_id_t ue_id, ebi_t ebi,
     OAILOG_ERROR(LOG_MME_APP , "ESM-PROC  - Could not find pdn context from ebi %d for (linked_ebi=%d,pdn_cid=%d) for UE " MME_UE_S1AP_ID_FMT". \n", ebi, bearer_context->linked_ebi, bearer_context->pdn_cx_id, ue_id);
     OAILOG_FUNC_RETURN(LOG_MME_APP, ESM_CAUSE_PDN_CONNECTION_DOES_NOT_EXIST);
   }
+
+  *linked_ebi = pdn_context->default_ebi;
 
   /*
    * Check if it is a default ebi, if so release all the bearer contexts.
@@ -862,6 +885,11 @@ static mme_app_esm_bearer_context_finalize_tft(mme_ue_s1ap_id_t ue_id, bearer_co
              new_packet_filter = &bearer_context->esm_ebr_context.tft->packetfilterlist.createnewtft[num_pf1];
              break;
            }
+         }
+         if(!new_packet_filter){
+        	 OAILOG_ERROR(LOG_MME_APP, "ESM-PROC  - Could extend the packet filter for UE " MME_UE_S1AP_ID_FMT". "
+        			 "Current number of packet filters: %d.", ue_id, bearer_context->esm_ebr_context.tft->numberofpacketfilters);
+             OAILOG_FUNC_RETURN (LOG_MME_APP, ESM_CAUSE_SEMANTIC_ERROR_IN_THE_TFT_OPERATION);
          }
          DevAssert(new_packet_filter); /**< todo: make synctactical check before. */
          /** Clean up the packet filter. */

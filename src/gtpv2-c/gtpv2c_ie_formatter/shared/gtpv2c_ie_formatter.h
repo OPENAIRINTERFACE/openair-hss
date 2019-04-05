@@ -74,6 +74,10 @@ int gtpv2c_ebi_ie_set(nw_gtpv2c_msg_handle_t *msg, const unsigned ebi, const uin
 nw_rc_t gtpv2c_tft_ie_get (uint8_t ieType, uint16_t ieLength, uint8_t ieInstance, uint8_t * ieValue, void *arg);
 int gtpv2c_tft_ie_set (nw_gtpv2c_msg_handle_t * msg, const traffic_flow_template_t * tft);
 
+/* traffic aggregate description */
+nw_rc_t gtpv2c_tad_ie_get (uint8_t ieType, uint16_t ieLength, uint8_t ieInstance, uint8_t * ieValue, void *arg);
+int gtpv2c_tad_ie_set (nw_gtpv2c_msg_handle_t * msg, const traffic_flow_aggregate_description_t * tad);
+
 nw_rc_t
 gtpv2c_ambr_ie_set (
     nw_gtpv2c_msg_handle_t * msg, ambr_t * ambr);

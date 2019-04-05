@@ -1276,7 +1276,11 @@ static int _emm_as_data_req (const emm_as_data_t * msg, dl_info_transfer_req_t *
     	  if(emm_ctx->_emm_fsm_state == EMM_REGISTERED && msg->pending_deac){
     		  OAILOG_DEBUG (LOG_NAS_EMM, "UE with IMSI " IMSI_64_FMT " and valid GUTI " GUTI_FMT " will enter ECM_IDLE mode after TAU_ACCEPT. \n",
     				  emm_ctx->_imsi64, GUTI_ARG(&emm_ctx->_guti)); /**< No TAU Complete is expected. */
-    		  as_msg->err_code = AS_TERMINATED_NAS; /**< Immediately terminate the session. This will not happen for a TAU with S10 since UE will be in EMM_COMMON state. */
+    		  as_msg->err_code = AS_TERMINATED_NAS;
+    		  /**
+    		   * Immediately terminate the session. This will not happen for a TAU with S10 since UE will be in EMM_COMMON state.
+    		   * If the UE is in
+    		   */
     	  }else{
     		  as_msg->err_code = AS_SUCCESS; /**< TAU Complete is expected (wait till receiving it (no pending deactivation). */
     	  }

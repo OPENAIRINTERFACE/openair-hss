@@ -136,6 +136,7 @@ typedef struct e_rab_item_s {
 typedef struct e_rab_list_s {
   uint16_t              no_of_items;
   e_rab_item_t          item[MAX_NO_OF_E_RABS];
+  uint8_t				erab_bitmap;
 } e_rab_list_t;
 
 #endif /* FILE_3GPP_36_413_SEEN */

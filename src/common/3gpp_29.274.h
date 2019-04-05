@@ -35,6 +35,7 @@
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"
 #include "3gpp_25.413.h"
+#include "TrafficFlowAggregateDescription.h"
 
 //-------------------------------------
 // 8.4 Cause

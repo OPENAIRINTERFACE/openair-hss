@@ -70,6 +70,7 @@
 #include "esm_proc.h"
 #include "esm_cause.h"
 #include "nas_esm_proc.h"
+#include "mme_app_bearer_context.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -92,7 +93,7 @@ static esm_cause_t   _modify_eps_bearer_context_t3486_handler (nas_esm_proc_t * 
 
 /* Maximum value of the modify EPS bearer context request
    retransmission counter */
-#define EPS_BEARER_CONTEXT_MODIFY_COUNTER_MAX   5
+#define EPS_BEARER_CONTEXT_MODIFY_COUNTER_MAX   3
 
 /****************************************************************************/
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
@@ -146,7 +147,7 @@ esm_send_modify_eps_bearer_context_request (
    */
   if(qos) {
     esm_msg->modify_eps_bearer_context_request.newepsqos = *qos;
-    esm_msg->modify_eps_bearer_context_request.presencemask |= MODIFY_EPS_BEARER_CONTEXT_REQUEST_NEW_QOS_PRESENT;
+    esm_msg->modify_eps_bearer_context_request.presencemask |= MODIFY_EPS_BEARER_CONTEXT_REQUEST_NEW_EPS_QOS_PRESENT;
   }
   /*
    * Optional - traffic flow template.
@@ -299,7 +300,7 @@ esm_proc_modify_eps_bearer_context (
   esm_send_modify_eps_bearer_context_request (
       pti, bc_tbu->eps_bearer_id,
       esm_rsp_msg,
-      &eps_qos,
+      eps_qos,
       esm_proc_bearer_context->tft,
       apn_ambr,     /**< (If non-zero, then only in the first bearer context). */
       &bc_tbu->pco);
@@ -484,8 +485,7 @@ static esm_cause_t _modify_eps_bearer_context_t3486_handler (nas_esm_proc_t * es
     mme_app_get_pdn_context(esm_base_proc->ue_id, esm_proc_bearer_context->pdn_cid,
         esm_proc_bearer_context->linked_ebi, NULL , &pdn_context);
     if(pdn_context){
-      bearer_context_t * bearer_context = NULL;
-      mme_app_get_session_bearer_context(pdn_context, esm_proc_bearer_context->bearer_ebi);
+      bearer_context_t * bearer_context = mme_app_get_session_bearer_context(pdn_context, esm_proc_bearer_context->bearer_ebi);
       if(bearer_context){
         /* Resend the message and restart the timer. */
         EpsQualityOfService eps_qos = {0};
@@ -523,14 +523,15 @@ static esm_cause_t _modify_eps_bearer_context_t3486_handler (nas_esm_proc_t * es
    /** Send a reject back to the MME_APP layer. */
    nas_itti_modify_eps_bearer_ctx_rej(esm_proc_bearer_context->esm_base_proc.ue_id, esm_proc_bearer_context->bearer_ebi, ESM_CAUSE_REQUEST_REJECTED_BY_GW);
    /*
-    * Release the transactional PDN connectivity procedure.
-    */
-   _esm_proc_free_bearer_context_procedure(&esm_proc_bearer_context);
-   /*
     * Release the dedicated EPS bearer context and enter state INACTIVE
     */
    mme_app_finalize_bearer_context(esm_proc_bearer_context->esm_base_proc.ue_id, esm_proc_bearer_context->pdn_cid, esm_proc_bearer_context->linked_ebi,
        esm_proc_bearer_context->bearer_ebi, NULL, NULL, NULL, NULL);
+   /*
+    * Release the transactional PDN connectivity procedure.
+    */
+   _esm_proc_free_bearer_context_procedure(&esm_proc_bearer_context);
+
    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_NETWORK_FAILURE);
 }
 

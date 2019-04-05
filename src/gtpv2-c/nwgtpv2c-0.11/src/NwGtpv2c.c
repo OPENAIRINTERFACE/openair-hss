@@ -1578,7 +1578,7 @@ static nw_rc_t                            nwGtpv2cHandleUlpFindLocalTunnel (
     case NW_GTP_UPDATE_BEARER_RSP:
     case NW_GTP_DELETE_BEARER_RSP:
     case NW_GTP_DELETE_BEARER_FAILURE_IND:
-    case NW_GTP_BEARER_RESOURCE_FAILURE_IND:
+//    case NW_GTP_BEARER_RESOURCE_FAILURE_IND:
     case NW_GTP_RELEASE_ACCESS_BEARERS_RSP:
     case NW_GTP_CREATE_INDIRECT_DATA_FORWARDING_TUNNEL_RSP:
     /** Handover Related Messages. */

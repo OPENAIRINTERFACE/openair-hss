@@ -276,7 +276,7 @@ esm_proc_pdn_connectivity_request (
  ***************************************************************************/
 
 esm_cause_t
-esm_proc_pdn_connectivity_retx(const mme_ue_s1ap_id_t ue_id, const nas_esm_proc_pdn_connectivity_t * esm_proc_pdn_connectivity, ESM_msg * esm_rsp_msg){
+esm_proc_pdn_connectivity_retx(const mme_ue_s1ap_id_t ue_id, nas_esm_proc_pdn_connectivity_t * const esm_proc_pdn_connectivity, ESM_msg * esm_rsp_msg){
   OAILOG_FUNC_IN(LOG_NAS_ESM);
   /*
    * Check that the PDN context exists and is in the correct ACTIVATION-PENDING state.
@@ -304,6 +304,7 @@ esm_proc_pdn_connectivity_retx(const mme_ue_s1ap_id_t ue_id, const nas_esm_proc_
   OAILOG_WARNING(LOG_NAS_ESM, "ESM-SAP   - Found an established PDN context for the APN \"%s\" from an earlier message. "
       "Resending PDN connectivity request and restarting T3485." "(ue_id=%d, pti=%d)\n",
       bdata(esm_proc_pdn_connectivity->subscribed_apn), ue_id, esm_proc_pdn_connectivity->esm_base_proc.pti);
+  esm_proc_pdn_connectivity->pdn_type = 1 + dup_pdn_context->paa->pdn_type;
   esm_send_activate_default_eps_bearer_context_request(esm_proc_pdn_connectivity, &dup_pdn_context->subscribed_apn_ambr,
       &bearer_context->bearer_level_qos, dup_pdn_context->paa, dup_pdn_context->pco, esm_rsp_msg);
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_SUCCESS);

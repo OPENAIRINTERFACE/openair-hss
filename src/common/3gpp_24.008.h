@@ -941,7 +941,7 @@ typedef packet_filter_identifier_t delete_packet_filter_t;
  * in existing TFT" shall contain a variable number of packet filters
  * ------------------------------------------------------------------
  */
-#define TRAFFIC_FLOW_TEMPLATE_NB_PACKET_FILTERS_MAX 8
+#define TRAFFIC_FLOW_TEMPLATE_NB_PACKET_FILTERS_MAX 16
 typedef struct packet_filter_s {
   uint8_t         spare:2;
 #define TRAFFIC_FLOW_TEMPLATE_PRE_REL7_TFT_FILTER 0b00

@@ -599,11 +599,19 @@ mme_app_pdn_process_session_creation(mme_ue_s1ap_id_t ue_id, fteid_t * saegw_s11
     		    * No subscription data exists. Assuming a handover/S10 TAU procedure (even if a (decoupled) subscription data exists.
     		    * Rejecting the handover or the S10 part of the idle TAU (continue with initial-TAU).
     		    */
-    		   OAILOG_ERROR(LOG_MME_APP, "Requested PDN (apn_subscribed=\"%s\", ctx_id=%d) exceeds UE AMBR for UE " MME_UE_S1AP_ID_FMT " with IMSI "IMSI_64_FMT ". "
-    				   "Rejecting the PDN connectivity for the inter-MME mobility procedure. \n", bdata(pdn_context->apn_subscribed), pdn_context->context_identifier, ue_id, ue_context->imsi);
-    		   cause->cause_value = NO_RESOURCES_AVAILABLE; /**< Reject the request for this PDN connectivity procedure. */
-    		   mme_app_esm_delete_pdn_context(ue_id, pdn_context->apn_subscribed, pdn_context->context_identifier, pdn_context->default_ebi); /**< Frees it & puts session bearers back to the pool. */
-    		   OAILOG_FUNC_RETURN(LOG_MME_APP, RETURNok);
+    		   if(pdn_context->subscribed_apn_ambr.br_dl && pdn_context->subscribed_apn_ambr.br_ul){
+        		   OAILOG_WARNING(LOG_MME_APP, "Using the PDN-AMBR (br_dl=%d, br_ul=%d) from handover for APN (apn_subscribed=\"%s\", ctx_id=%d) exceeds UE AMBR for UE " MME_UE_S1AP_ID_FMT " with IMSI "IMSI_64_FMT ". "
+        				   "Rejecting the PDN connectivity for the inter-MME mobility procedure. \n",
+						   pdn_context->subscribed_apn_ambr.br_dl, pdn_context->subscribed_apn_ambr.br_ul,
+						   bdata(pdn_context->apn_subscribed), pdn_context->context_identifier, ue_id, ue_context->imsi);
+        		   // todo: no ESM proc exists.
+    		   } else {
+        		   OAILOG_ERROR(LOG_MME_APP, "Requested PDN (apn_subscribed=\"%s\", ctx_id=%d) exceeds UE AMBR for UE " MME_UE_S1AP_ID_FMT " with IMSI "IMSI_64_FMT ". "
+        				   "Rejecting the PDN connectivity for the inter-MME mobility procedure. \n", bdata(pdn_context->apn_subscribed), pdn_context->context_identifier, ue_id, ue_context->imsi);
+        		   cause->cause_value = NO_RESOURCES_AVAILABLE; /**< Reject the request for this PDN connectivity procedure. */
+        		   mme_app_esm_delete_pdn_context(ue_id, pdn_context->apn_subscribed, pdn_context->context_identifier, pdn_context->default_ebi); /**< Frees it & puts session bearers back to the pool. */
+        		   OAILOG_FUNC_RETURN(LOG_MME_APP, RETURNok);
+    		   }
     	   }
       }
     }else{

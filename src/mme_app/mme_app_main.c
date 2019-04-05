@@ -478,9 +478,6 @@ void *mme_app_thread (void *args)
             OAILOG_WARNING (LOG_MME_APP, "Timer expired but no associated timer_id for UE id " MME_UE_S1AP_ID_FMT "\n",mme_ue_s1ap_id);
           }
         }
-
-
-
       }
       break;
 

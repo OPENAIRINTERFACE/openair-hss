@@ -1494,6 +1494,8 @@ mme_app_handle_s1ap_ue_context_release_complete (
         message_p = itti_alloc_new_message (TASK_MME_APP, NAS_IMPLICIT_DETACH_UE_IND);
         DevAssert (message_p != NULL);
         message_p->ittiMsg.nas_implicit_detach_ue_ind.ue_id = ue_context->mme_ue_s1ap_id; /**< Rest won't be sent, so no NAS Detach Request will be sent. */
+        message_p->ittiMsg.nas_implicit_detach_ue_ind.clr = true; /**< Inform about the CLR. */
+
         MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_IMPLICIT_DETACH_UE_IND_MESSAGE");
         itti_send_msg_to_task (TASK_NAS_EMM, INSTANCE_DEFAULT, message_p);
 

@@ -161,8 +161,6 @@ void mme_app_send_s11_delete_bearer_cmd(teid_t local_teid, teid_t saegw_s11_teid
   memcpy(&s11_delete_bearer_command->ebi_list, ebi_list, sizeof(ebi_list_t));
   itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
   OAILOG_DEBUG(LOG_MME_APP, "Triggered Delete Bearer Command from released e_rab indication to teid %x from local teid %x", saegw_s11_teid, local_teid);
-
-  itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT(LOG_MME_APP);
 }
 

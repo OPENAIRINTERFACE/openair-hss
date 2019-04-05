@@ -110,7 +110,7 @@ s11_mme_ulp_process_stack_req_cb (
         break;
 
       default:
-        OAILOG_WARNING (LOG_S11, "Received unhandled TRIGGERED_RSP_IND message type %d\n", pUlpApi->u_api_info.triggeredRspIndInfo.msgType);
+        OAILOG_ERROR(LOG_S11, "Received unhandled TRIGGERED_RSP_IND message type %d\n", pUlpApi->u_api_info.triggeredRspIndInfo.msgType);
       }
       break;
 
@@ -145,7 +145,7 @@ s11_mme_ulp_process_stack_req_cb (
        // todo: add initial reqs --> CBR / UBR / DBR !
 
     default:
-      OAILOG_WARNING (LOG_S11, "Received unhandled message type %d\n", pUlpApi->apiType);
+      OAILOG_ERROR(LOG_S11, "Received unhandled message type %d\n", pUlpApi->apiType);
       break;
   }
 

@@ -152,6 +152,12 @@ hashtable_rc_t  hashtable_ts_apply_callback_on_elements (hash_table_ts_t * const
                                                       bool func_cb(const hash_key_t key, void* const element, void* parameter, void**result),
                                                       void* parameter,
                                                       void**result);
+hashtable_rc_t
+hashtable_ts_apply_list_callback_on_elements (hash_table_ts_t * const hashtblP,
+									 	 bool funct_cb (const hash_key_t keyP, void * const dataP, void *parameterP, void ** resultP),
+										 void *parameterP,
+										 hashtable_element_array_t              *ea);
+
 hashtable_rc_t  hashtable_ts_dump_content (const hash_table_ts_t * const hashtbl, bstring str);
 hashtable_rc_t  hashtable_ts_insert (hash_table_ts_t * const hashtbl, const hash_key_t key, void *element);
 hashtable_rc_t  hashtable_ts_free (hash_table_ts_t * const hashtbl, const hash_key_t key);

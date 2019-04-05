@@ -1793,14 +1793,9 @@ void
 s1ap_handle_paging( const itti_s1ap_paging_t * const s1ap_paging_pP){
 
   uint                                    offset = 0;
-  uint8_t                                *buffer_p = NULL;
-  uint32_t                                length = 0;
   ue_description_t                       *ue_ref = NULL;
   enb_description_t                      *eNB_ref = NULL;
   S1ap_PagingIEs_t                       *paging_p = NULL;
-  MessagesIds                             message_id = MESSAGES_ID_MAX;
-
-  s1ap_message                            message = {0}; // yes, alloc on stack
 
   OAILOG_FUNC_IN (LOG_S1AP);
   DevAssert (s1ap_paging_pP != NULL);
@@ -1814,74 +1809,99 @@ s1ap_handle_paging( const itti_s1ap_paging_t * const s1ap_paging_pP){
     OAILOG_FUNC_OUT (LOG_S1AP);
   }
 
-  /** Get the last eNB. */
-  if ((eNB_ref = s1ap_is_enb_assoc_id_in_list (s1ap_paging_pP->sctp_assoc_id_key)) == NULL) {
-    OAILOG_WARNING (LOG_S1AP, "Unknown eNB on assoc_id %d\n", s1ap_paging_pP->sctp_assoc_id_key);
-    OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
+  /** Collect all eNBs for the given TAC. */
+//  hashtable_element_array_t              ea;
+  enb_description_t *			         enb_p_elements[mme_config.max_enbs];
+//  memset(&ea, 0, sizeof(hashtable_element_array_t));
+  memset(&enb_p_elements, 0, (sizeof(enb_description_t*) * mme_config.max_enbs));
+//  ea.elements = enb_p_elements;
+
+  int num_enbs = 0;
+  s1ap_is_tac_in_list (s1ap_paging_pP->tac, &num_enbs, &enb_p_elements);
+
+//  void * enb_list_next_element = enb_list;
+  if(!num_enbs){
+	  OAILOG_ERROR (LOG_S1AP, " No eNBs could be found for the received TAC " TAC_FMT " for the UE " MME_UE_S1AP_ID_FMT". \n",
+			  s1ap_paging_pP->tac, s1ap_paging_pP->mme_ue_s1ap_id);
+	  OAILOG_FUNC_OUT (LOG_S1AP);
   }
 
-  /** Just create the message and send it without creating a S1AP UE reference. */
-  message.procedureCode = S1ap_ProcedureCode_id_Paging;
-  message.direction = S1AP_PDU_PR_initiatingMessage;
-  paging_p = &message.msg.s1ap_PagingIEs;
+  for(int i = 0; i < num_enbs; i++){
+	  if((eNB_ref = enb_p_elements[i])){
 
-  /** Encode and set the UE Identity Index Value. */
-  paging_p->ueIdentityIndexValue.buf = calloc (2, sizeof(uint8_t));
-  uint16_t index_val = htons(s1ap_paging_pP->ue_identity_index << 6);
-  memcpy(paging_p->ueIdentityIndexValue.buf, (uint8_t*)&index_val, 2);
+		  uint8_t                                *buffer_p = NULL;
+		  uint32_t                                length = 0;
+		  MessagesIds                             message_id = MESSAGES_ID_MAX;
+		  s1ap_message                            message = {0}; // yes, alloc on stack
 
-  paging_p->ueIdentityIndexValue.size = 2;
-  paging_p->ueIdentityIndexValue.bits_unused = 6;
+		  /** Trigger a paging signal to the target eNB. */
+		  /** Just create the message and send it without creating a S1AP UE reference. */
+		  message.procedureCode = S1ap_ProcedureCode_id_Paging;
+		  message.direction = S1AP_PDU_PR_initiatingMessage;
+		  paging_p = &message.msg.s1ap_PagingIEs;
 
-  /** Encode the CN Domain. */
-  paging_p->cnDomain = S1ap_CNDomain_ps;
+		  /** Encode and set the UE Identity Index Value. */
+		  paging_p->ueIdentityIndexValue.buf = calloc (2, sizeof(uint8_t));
+		  uint16_t index_val = htons(s1ap_paging_pP->ue_identity_index << 6);
+		  memcpy(paging_p->ueIdentityIndexValue.buf, (uint8_t*)&index_val, 2);
 
-  /** Set the UE Paging Identity . */
-  paging_p->uePagingID.present = S1ap_UEPagingID_PR_s_TMSI;
-  INT32_TO_OCTET_STRING(s1ap_paging_pP->tmsi, &paging_p->uePagingID.choice.s_TMSI.m_TMSI);
-  // todo: chose the right gummei or get it from the request!
-  INT8_TO_OCTET_STRING(mme_config.gummei.gummei[0].mme_code, &paging_p->uePagingID.choice.s_TMSI.mMEC);
+		  paging_p->ueIdentityIndexValue.size = 2;
+		  paging_p->ueIdentityIndexValue.bits_unused = 6;
 
-  /** Set the TAI-List. */
-  uint8_t                                 plmn[3] = { 0x00, 0x00, 0x00 };     //{ 0x02, 0xF8, 0x29 };
-  S1ap_TAIItemIEs_t * tai_item = calloc(1, sizeof(S1ap_TAIItemIEs_t));
-  PLMN_T_TO_TBCD (eNB_ref->tai_list.partial_tai_list[0].u.tai_one_plmn_non_consecutive_tacs.plmn,
-                     plmn,
-                     mme_config_find_mnc_length(
-                         eNB_ref->tai_list.partial_tai_list[0].u.tai_one_plmn_non_consecutive_tacs.plmn.mcc_digit1, eNB_ref->tai_list.partial_tai_list[0].u.tai_one_plmn_non_consecutive_tacs.plmn.mcc_digit2, eNB_ref->tai_list.partial_tai_list[0].u.tai_one_plmn_non_consecutive_tacs.plmn.mcc_digit3,
-                         eNB_ref->tai_list.partial_tai_list[0].u.tai_one_plmn_non_consecutive_tacs.plmn.mnc_digit1, eNB_ref->tai_list.partial_tai_list[0].u.tai_one_plmn_non_consecutive_tacs.plmn.mnc_digit2, eNB_ref->tai_list.partial_tai_list[0].u.tai_one_plmn_non_consecutive_tacs.plmn.mnc_digit3)
-                         )
-  ;
-  OCTET_STRING_fromBuf(&tai_item->taiItem.tAI.pLMNidentity, plmn, 3);
-  INT16_TO_OCTET_STRING(eNB_ref->tai_list.partial_tai_list[0].u.tai_one_plmn_non_consecutive_tacs.tac[0], &tai_item->taiItem.tAI.tAC);
-  /** Set the TAI. */
-  ASN_SEQUENCE_ADD (&paging_p->taiList, tai_item);
+		  /** Encode the CN Domain. */
+		  paging_p->cnDomain = S1ap_CNDomain_ps;
 
-  for(int ntac = 1; ntac < eNB_ref->tai_list.partial_tai_list[0].numberofelements; ntac++){
-    tai_item = calloc(1, sizeof(S1ap_TAIItemIEs_t));
-    INT16_TO_OCTET_STRING(eNB_ref->tai_list.partial_tai_list[0].u.tai_one_plmn_non_consecutive_tacs.tac[ntac], &tai_item->taiItem.tAI.tAC);
-    /** Set the TAI. */
-    ASN_SEQUENCE_ADD (&paging_p->taiList, tai_item);
+		  /** Set the UE Paging Identity . */
+		  paging_p->uePagingID.present = S1ap_UEPagingID_PR_s_TMSI;
+		  INT32_TO_OCTET_STRING(s1ap_paging_pP->tmsi, &paging_p->uePagingID.choice.s_TMSI.m_TMSI);
+		  // todo: chose the right gummei or get it from the request!
+		  INT8_TO_OCTET_STRING(mme_config.gummei.gummei[0].mme_code, &paging_p->uePagingID.choice.s_TMSI.mMEC);
+
+		  /** Set the TAI-List. */
+		  uint8_t                                 plmn[3] = { 0x00, 0x00, 0x00 };     //{ 0x02, 0xF8, 0x29 };
+		  S1ap_TAIItemIEs_t * tai_item = calloc(1, sizeof(S1ap_TAIItemIEs_t));
+		  PLMN_T_TO_TBCD (eNB_ref->tai_list.partial_tai_list[0].u.tai_one_plmn_non_consecutive_tacs.plmn,
+				  plmn,
+				  mme_config_find_mnc_length(
+						  eNB_ref->tai_list.partial_tai_list[0].u.tai_one_plmn_non_consecutive_tacs.plmn.mcc_digit1, eNB_ref->tai_list.partial_tai_list[0].u.tai_one_plmn_non_consecutive_tacs.plmn.mcc_digit2, eNB_ref->tai_list.partial_tai_list[0].u.tai_one_plmn_non_consecutive_tacs.plmn.mcc_digit3,
+						  eNB_ref->tai_list.partial_tai_list[0].u.tai_one_plmn_non_consecutive_tacs.plmn.mnc_digit1, eNB_ref->tai_list.partial_tai_list[0].u.tai_one_plmn_non_consecutive_tacs.plmn.mnc_digit2, eNB_ref->tai_list.partial_tai_list[0].u.tai_one_plmn_non_consecutive_tacs.plmn.mnc_digit3)
+		  )
+		  ;
+		  OCTET_STRING_fromBuf(&tai_item->taiItem.tAI.pLMNidentity, plmn, 3);
+		  INT16_TO_OCTET_STRING(eNB_ref->tai_list.partial_tai_list[0].u.tai_one_plmn_non_consecutive_tacs.tac[0], &tai_item->taiItem.tAI.tAC);
+		  /** Set the TAI. */
+		  ASN_SEQUENCE_ADD (&paging_p->taiList, tai_item);
+
+		  for(int ntac = 1; ntac < eNB_ref->tai_list.partial_tai_list[0].numberofelements; ntac++){
+			  tai_item = calloc(1, sizeof(S1ap_TAIItemIEs_t));
+			  INT16_TO_OCTET_STRING(eNB_ref->tai_list.partial_tai_list[0].u.tai_one_plmn_non_consecutive_tacs.tac[ntac], &tai_item->taiItem.tAI.tAC);
+			  /** Set the TAI. */
+			  ASN_SEQUENCE_ADD (&paging_p->taiList, tai_item);
+		  }
+
+		  /** Encoding without allocating? */
+		  if (s1ap_mme_encode_pdu (&message, &message_id, &buffer_p, &length) < 0) {
+			  OAILOG_ERROR (LOG_S1AP, "Failed to encode S1AP paging for enb# %d with tac " TAC_FMT" for UE " MME_UE_S1AP_ID_FMT ".\n",
+					  i, s1ap_paging_pP->tac, s1ap_paging_pP->mme_ue_s1ap_id);
+			  // todo: in this case we will ignore this. no UE contex modification should occure
+			  OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
+		  }
+
+		  OAILOG_NOTICE (LOG_S1AP, "Send S1AP_PAGING message MME_UE_S1AP_ID = " MME_UE_S1AP_ID_FMT " \n",
+				  (mme_ue_s1ap_id_t)s1ap_paging_pP->mme_ue_s1ap_id);
+		  MSC_LOG_TX_MESSAGE (MSC_S1AP_MME,
+				  MSC_S1AP_ENB,
+				  NULL, 0,
+				  "0 S1AP Paging/successfullOutcome mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT,
+				  (mme_ue_s1ap_id_t)s1ap_paging_pP->mme_ue_s1ap_id);
+		  bstring b = blk2bstr(buffer_p, length);
+		  free(buffer_p);
+		  s1ap_free_mme_encode_pdu(&message, message_id);
+		  s1ap_mme_itti_send_sctp_request (&b, eNB_ref->sctp_assoc_id, eNB_ref->next_sctp_stream, s1ap_paging_pP->mme_ue_s1ap_id);
+	  }
   }
 
-  /** Encoding without allocating? */
-  if (s1ap_mme_encode_pdu (&message, &message_id, &buffer_p, &length) < 0) {
-    OAILOG_ERROR (LOG_S1AP, "Failed to encode S1AP paging \n");
-    // todo: in this case we will ignore this. no UE contex modification should occure
-    OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
-  }
 
-  OAILOG_NOTICE (LOG_S1AP, "Send S1AP_PAGING message MME_UE_S1AP_ID = " MME_UE_S1AP_ID_FMT " \n",
-              (mme_ue_s1ap_id_t)s1ap_paging_pP->mme_ue_s1ap_id);
-  MSC_LOG_TX_MESSAGE (MSC_S1AP_MME,
-                      MSC_S1AP_ENB,
-                      NULL, 0,
-                      "0 S1AP Paging/successfullOutcome mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT,
-                      (mme_ue_s1ap_id_t)s1ap_paging_pP->mme_ue_s1ap_id);
-  bstring b = blk2bstr(buffer_p, length);
-  free(buffer_p);
-  s1ap_free_mme_encode_pdu(&message, message_id);
-  s1ap_mme_itti_send_sctp_request (&b, eNB_ref->sctp_assoc_id, eNB_ref->next_sctp_stream, s1ap_paging_pP->mme_ue_s1ap_id);
   OAILOG_FUNC_OUT (LOG_S1AP);
 }
 

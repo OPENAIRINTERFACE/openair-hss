@@ -718,6 +718,45 @@ gtpv2c_tft_ie_set (
 
 //------------------------------------------------------------------------------
 nw_rc_t
+gtpv2c_tad_ie_get (
+  uint8_t ieType,
+  uint16_t ieLength,
+  uint8_t ieInstance,
+  uint8_t * ieValue,
+  void *arg)
+{
+  uint8_t                        				offset = 0;
+  traffic_flow_aggregate_description_t         *tad = (traffic_flow_aggregate_description_t *) arg;
+
+  DevAssert (tad );
+  offset = decode_traffic_flow_template (tad, ieValue, ieLength);
+  if ((0 < offset) && (TRAFFIC_FLOW_TEMPLATE_MAXIMUM_LENGTH >= offset))
+    return NW_OK;
+  else {
+    OAILOG_ERROR (LOG_S11, "Incorrect TAD IE\n");
+    return NW_GTPV2C_IE_INCORRECT;
+  }
+}
+
+//------------------------------------------------------------------------------
+int
+gtpv2c_tad_ie_set (
+  nw_gtpv2c_msg_handle_t * msg,
+  const traffic_flow_aggregate_description_t * tad)
+{
+  uint8_t                                 temp[TRAFFIC_FLOW_TEMPLATE_MAXIMUM_LENGTH];
+  uint8_t                                 offset = 0;
+  nw_rc_t                                 rc = NW_OK;
+
+  DevAssert (tad);
+  offset = encode_traffic_flow_template(tad, temp, TRAFFIC_FLOW_TEMPLATE_MAXIMUM_LENGTH);
+  rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_TAD, offset, 0, temp);
+  DevAssert (NW_OK == rc);
+  return RETURNok;
+}
+
+//------------------------------------------------------------------------------
+nw_rc_t
 gtpv2c_target_identification_ie_get (
   uint8_t ieType,
   uint16_t ieLength,
@@ -930,7 +969,7 @@ gtpv2c_bearer_context_created_ie_get (
   DevAssert (0 <= bearer_contexts->num_bearer_context);
   DevAssert (MSG_CREATE_SESSION_REQUEST_MAX_BEARER_CONTEXTS >= bearer_contexts->num_bearer_context);
   bearer_context_created_t               *bearer_context = &bearer_contexts->bearer_contexts[bearer_contexts->num_bearer_context];
-  uint8_t                                 read = 0;
+  uint16_t                                 read = 0;
   nw_rc_t                                   rc;
 
   while (ieLength > read) {
@@ -1039,7 +1078,7 @@ gtpv2c_bearer_context_to_be_created_ie_get (
   DevAssert (0 <= bearer_contexts->num_bearer_context);
   DevAssert (MSG_CREATE_SESSION_REQUEST_MAX_BEARER_CONTEXTS >= bearer_contexts->num_bearer_context);
   bearer_context_to_be_created_t          *bearer_context  = &bearer_contexts->bearer_contexts[bearer_contexts->num_bearer_context];
-  uint8_t                                 read = 0;
+  uint16_t                                 read = 0;
   nw_rc_t                                   rc;
 
   while (ieLength > read) {
