@@ -1260,7 +1260,6 @@ static int _emm_attach_failure_authentication_cb (emm_data_context_t *emm_contex
 
   if (attach_proc) {
     attach_proc->emm_cause = EMM_CAUSE_IMSI_UNKNOWN_IN_HSS;
-    mme_ue_s1ap_id_t ue_id = attach_proc->ue_id;
     // TODO could be in callback of attach procedure triggered by EMMREG_ATTACH_REJ
     rc = _emm_attach_reject (emm_context, &attach_proc->emm_spec_proc.emm_proc.base_proc, NULL);
 

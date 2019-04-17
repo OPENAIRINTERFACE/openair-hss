@@ -664,27 +664,20 @@ s1ap_mme_handle_initial_context_setup_response (
     eRABSetupItemCtxtSURes_p = (S1ap_E_RABSetupItemCtxtSURes_t *)
         initialContextSetupResponseIEs_p->e_RABSetupListCtxtSURes.s1ap_E_RABSetupItemCtxtSURes.array[item];
 
-    // todo: remove
-    if(eRABSetupItemCtxtSURes_p->e_RAB_ID != 7){
-        initial_context_setup_rsp->bcs_to_be_modified.bearer_contexts[item].eps_bearer_id = eRABSetupItemCtxtSURes_p->e_RAB_ID;
-        initial_context_setup_rsp->bcs_to_be_modified.bearer_contexts[item].s1_eNB_fteid.teid = htonl (*((uint32_t *) eRABSetupItemCtxtSURes_p->gTP_TEID.buf));
-        bstring transport_address = blk2bstr(eRABSetupItemCtxtSURes_p->transportLayerAddress.buf, eRABSetupItemCtxtSURes_p->transportLayerAddress.size);
-        /** Set the IP address from the FTEID. */
-        if (4 == blength(transport_address)) {
-          initial_context_setup_rsp->bcs_to_be_modified.bearer_contexts[item].s1_eNB_fteid.ipv4 = 1;
-          memcpy(&initial_context_setup_rsp->bcs_to_be_modified.bearer_contexts[item].s1_eNB_fteid.ipv4_address, transport_address->data, blength(transport_address));
-        } else if (16 == blength(transport_address)) {
-          initial_context_setup_rsp->bcs_to_be_modified.bearer_contexts[item].s1_eNB_fteid.ipv6 = 1;
-          memcpy(&initial_context_setup_rsp->bcs_to_be_modified.bearer_contexts[item].s1_eNB_fteid.ipv6_address, transport_address->data, blength(transport_address));
-        } else {
-          AssertFatal(0, "TODO IP address %d bytes", blength(transport_address));
-        }
-        bdestroy_wrapper(&transport_address);
+    initial_context_setup_rsp->bcs_to_be_modified.bearer_contexts[item].eps_bearer_id = eRABSetupItemCtxtSURes_p->e_RAB_ID;
+    initial_context_setup_rsp->bcs_to_be_modified.bearer_contexts[item].s1_eNB_fteid.teid = htonl (*((uint32_t *) eRABSetupItemCtxtSURes_p->gTP_TEID.buf));
+    bstring transport_address = blk2bstr(eRABSetupItemCtxtSURes_p->transportLayerAddress.buf, eRABSetupItemCtxtSURes_p->transportLayerAddress.size);
+    /** Set the IP address from the FTEID. */
+    if (4 == blength(transport_address)) {
+    	initial_context_setup_rsp->bcs_to_be_modified.bearer_contexts[item].s1_eNB_fteid.ipv4 = 1;
+    	memcpy(&initial_context_setup_rsp->bcs_to_be_modified.bearer_contexts[item].s1_eNB_fteid.ipv4_address, transport_address->data, blength(transport_address));
+    } else if (16 == blength(transport_address)) {
+    	initial_context_setup_rsp->bcs_to_be_modified.bearer_contexts[item].s1_eNB_fteid.ipv6 = 1;
+    	memcpy(&initial_context_setup_rsp->bcs_to_be_modified.bearer_contexts[item].s1_eNB_fteid.ipv6_address, transport_address->data, blength(transport_address));
     } else {
-    	initial_context_setup_rsp->e_rab_release_list.item[initial_context_setup_rsp->e_rab_release_list.no_of_items].e_rab_id  = 7;
-//    	initial_context_setup_rsp->e_rab_release_list.item[initial_context_setup_rsp->e_rab_release_list.no_of_items].cause.present    = erab_item->cause;
-    	initial_context_setup_rsp->e_rab_release_list.no_of_items++;
+    	AssertFatal(0, "TODO IP address %d bytes", blength(transport_address));
     }
+    bdestroy_wrapper(&transport_address);
   }
 
   /** Get the failed bearers. */
