@@ -110,7 +110,8 @@ int mme_app_handle_nas_dl_req (
     		  OAILOG_ERROR(LOG_MME_APP, " MME_APP: No valid first PDN context for UE MME_UE_S1AP_ID " MME_UE_S1AP_ID_FMT " was found. Neglecting resource freeing.\n", nas_dl_req_pP->ue_id);
     	  }
       } else {
-    	  OAILOG_ERROR(LOG_MME_APP, " MME_APP: UE MME_UE_S1AP_ID " MME_UE_S1AP_ID_FMT " is in UE_REGISTERED state. Neglecting resource freeing.\n", nas_dl_req_pP->ue_id);
+    	  OAILOG_ERROR(LOG_MME_APP, " MME_APP: UE MME_UE_S1AP_ID " MME_UE_S1AP_ID_FMT " is in UE_UNREGISTERED state. Triggering detach (S11 should already be removeD).\n", nas_dl_req_pP->ue_id);
+    	  mme_app_itti_ue_context_release (ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, ue_context->s1_ue_context_release_cause, ue_context->e_utran_cgi.cell_identity.enb_id);
       }
     }else{
 //      OAILOG_ERROR(LOG_MME_APP, "DOWNLINK NAS TRANSPORT failed mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " not found. Not terminating bearers due error cause %d.\n", nas_dl_req_pP->ue_id, nas_dl_req_pP->transaction_status);
