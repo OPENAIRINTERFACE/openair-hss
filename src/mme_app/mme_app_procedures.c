@@ -110,6 +110,15 @@ void mme_app_delete_s11_procedures(ue_context_t * const ue_context)
 //------------------------------------------------------------------------------
 mme_app_s11_proc_create_bearer_t* mme_app_create_s11_procedure_create_bearer(ue_context_t * const ue_context)
 {
+	/** Check if the list of S11 procedures is empty. */
+	if(ue_context->s11_procedures){
+		if(!LIST_EMPTY(ue_context->s11_procedures)){
+			OAILOG_ERROR (LOG_MME_APP, "UE with ueId " MME_UE_S1AP_ID_FMT " has already a S11 procedure ongoing. Cannot create CBR procedure. \n",
+					ue_context->mme_ue_s1ap_id);
+			return NULL;
+		}
+	}
+
   mme_app_s11_proc_create_bearer_t *s11_proc_create_bearer = calloc(1, sizeof(mme_app_s11_proc_create_bearer_t));
   s11_proc_create_bearer->proc.proc.type = MME_APP_BASE_PROC_TYPE_S11;
   s11_proc_create_bearer->proc.type      = MME_APP_S11_PROC_TYPE_CREATE_BEARER;
@@ -238,6 +247,14 @@ void mme_app_delete_s11_procedure_update_bearer(ue_context_t * const ue_context)
 //------------------------------------------------------------------------------
 mme_app_s11_proc_delete_bearer_t* mme_app_create_s11_procedure_delete_bearer(ue_context_t * const ue_context)
 {
+	if(ue_context->s11_procedures){
+		if(!LIST_EMPTY(ue_context->s11_procedures)){
+			OAILOG_ERROR (LOG_MME_APP, "UE with ueId " MME_UE_S1AP_ID_FMT " has already a S11 procedure ongoing. Cannot create DBR procedure. \n",
+					ue_context->mme_ue_s1ap_id);
+			return NULL;
+		}
+	}
+
   mme_app_s11_proc_delete_bearer_t *s11_proc_delete_bearer = calloc(1, sizeof(mme_app_s11_proc_delete_bearer_t));
   s11_proc_delete_bearer->proc.proc.type = MME_APP_BASE_PROC_TYPE_S11;
   s11_proc_delete_bearer->proc.type      = MME_APP_S11_PROC_TYPE_DELETE_BEARER;

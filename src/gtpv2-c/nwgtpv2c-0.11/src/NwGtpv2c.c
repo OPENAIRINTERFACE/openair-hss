@@ -690,7 +690,16 @@ static nw_rc_t nwGtpv2cCreateLocalTunnel (
 
     OAILOG_DEBUG (LOG_GTPV2C, "Sending response message over seq '0x%x'\n", pReqTrxn->seqNum);
     rc = nwGtpv2cCreateAndSendMsg (thiz, pReqTrxn->seqNum, pReqTrxn->localPort, &pReqTrxn->peerIp, pReqTrxn->peerPort, (nw_gtpv2c_msg_t *) pUlpRsp->hMsg);
-    pReqTrxn->pMsg = (nw_gtpv2c_msg_t *) pUlpRsp->hMsg;
+    /** Depending on the cause type, add it or not. */
+    if(pUlpRsp->u_api_info.triggeredRspInfo.remove_trx) {
+    	OAILOG_DEBUG (LOG_GTPV2C, "Removing transaction with seq '0x%x' due temprary reject. Not continuing with message. \n", pReqTrxn->seqNum);
+        RB_REMOVE (NwGtpv2cOutstandingRxSeqNumTrxnMap, &(thiz->outstandingRxSeqNumMap), pReqTrxn);
+        rc = nwGtpv2cTrxnDelete (&pReqTrxn);
+        NW_ASSERT (NW_OK == rc);
+        OAILOG_FUNC_RETURN( LOG_GTPV2C, rc);
+    } else {
+    	pReqTrxn->pMsg = (nw_gtpv2c_msg_t *) pUlpRsp->hMsg;
+    }
     rc = nwGtpv2cTrxnStartDulpicateRequestWaitTimer (pReqTrxn);
 
     /** Creating a local tunnel if flag is set. */

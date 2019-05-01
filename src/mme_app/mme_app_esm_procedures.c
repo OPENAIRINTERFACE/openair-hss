@@ -281,11 +281,11 @@ nas_esm_proc_bearer_context_t* mme_app_nas_esm_get_bearer_context_procedure(mme_
     /** Search by EBI only. */
     if ((PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED == pti || esm_proc_bearer_context->esm_base_proc.pti == pti)
         && (EPS_BEARER_IDENTITY_UNASSIGNED == ebi || esm_proc_bearer_context->bearer_ebi == ebi)){
-        return esm_proc_bearer_context;
+        OAILOG_FUNC_RETURN(LOG_MME_APP, esm_proc_bearer_context);
       }
     }
   }
-  return NULL;
+  OAILOG_FUNC_RETURN(LOG_MME_APP, NULL);
 }
 
 //------------------------------------------------------------------------------

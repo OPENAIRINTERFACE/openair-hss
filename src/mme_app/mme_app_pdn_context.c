@@ -66,7 +66,10 @@ static teid_t                           mme_app_teid_generator = 0x00000001;
 //------------------------------------------------------------------------------
 void mme_app_get_pdn_context (mme_ue_s1ap_id_t ue_id, pdn_cid_t const context_id, ebi_t const default_ebi, bstring const apn_subscribed, pdn_context_t **pdn_ctx)
 {
-  ue_context_t *ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, ue_id);
+	OAILOG_FUNC_IN (LOG_MME_APP);
+
+	ue_context_t *ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, ue_id);
+
   if(!ue_context){
     OAILOG_ERROR (LOG_MME_APP, "No MME_APP UE context could be found for UE: " MME_UE_S1AP_ID_FMT ". \n", ue_id);
     OAILOG_FUNC_OUT(LOG_MME_APP);
