@@ -2312,8 +2312,9 @@ pdn_context_t * mme_app_handle_pdn_connectivity_from_s10(ue_context_t *ue_contex
    * Later set context identifier by ULA?
    */
   /** Create a PDN connection with a default bearer and later set the ESM values when NAS layer is established. */
+  // todo: correct pdn type
   if(mme_app_esm_create_pdn_context(ue_context->mme_ue_s1ap_id, pdn_connection->linked_eps_bearer_id,
-		  NULL, pdn_connection->apn_str, PDN_CONTEXT_IDENTIFIER_UNASSIGNED, &pdn_connection->apn_ambr, &pdn_context) == RETURNerror){ /**< Create the pdn context using the APN network identifier. */
+		  NULL, pdn_connection->apn_str, PDN_CONTEXT_IDENTIFIER_UNASSIGNED, &pdn_connection->apn_ambr, 0, &pdn_context) == RETURNerror){ /**< Create the pdn context using the APN network identifier. */
     OAILOG_ERROR(LOG_MME_APP, "Could not create a new pdn context for apn \" %s \" for UE_ID " MME_UE_S1AP_ID_FMT " from S10 PDN_CONNECTIONS IE. "
         "Skipping the establishment of pdn context. \n", bdata(pdn_connection->apn_str), ue_context->mme_ue_s1ap_id);
     OAILOG_FUNC_RETURN(LOG_MME_APP, NULL);

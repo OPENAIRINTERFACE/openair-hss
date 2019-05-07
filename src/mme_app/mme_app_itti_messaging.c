@@ -322,8 +322,8 @@ mme_app_send_s11_create_session_req (
   /*
    * Set PDN type for pdn_type and PAA even if this IE is redundant
    */
-  session_request_p->pdn_type = 0; // pdn_context->pdn_type;
-  session_request_p->paa.pdn_type = 0; //pdn_context->pdn_type;
+  session_request_p->pdn_type = pdn_context->pdn_type;
+  session_request_p->paa.pdn_type = pdn_context->pdn_type;
 
   if (!pdn_context->paa) {
     /*
