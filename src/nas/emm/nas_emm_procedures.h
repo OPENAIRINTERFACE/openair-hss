@@ -154,6 +154,7 @@ typedef struct nas_emm_tau_proc_s {
   mme_ue_s1ap_id_t                 ue_id;
   ksi_t                            ksi;
   int                              emm_cause;
+  bool						       pending_qos;
 } nas_emm_tau_proc_t;
 
 //------------------------------------------------------------------------------

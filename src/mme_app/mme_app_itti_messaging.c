@@ -322,8 +322,8 @@ mme_app_send_s11_create_session_req (
   /*
    * Set PDN type for pdn_type and PAA even if this IE is redundant
    */
-  session_request_p->pdn_type = 0; // pdn_context->pdn_type;
-  session_request_p->paa.pdn_type = 0; //pdn_context->pdn_type;
+  session_request_p->pdn_type = pdn_context->pdn_type;
+  session_request_p->paa.pdn_type = pdn_context->pdn_type;
 
   if (!pdn_context->paa) {
     /*
@@ -755,6 +755,7 @@ mme_app_send_s11_create_bearer_rsp (
 int
 mme_app_send_s11_update_bearer_rsp (
   struct ue_context_s *const ue_context,
+  gtpv2c_cause_value_t extra_cause,
   void                *trxn,
   bearer_contexts_to_be_updated_t *bcs_tbu)
 {
@@ -803,6 +804,8 @@ mme_app_send_s11_update_bearer_rsp (
     s11_update_bearer_response->bearer_contexts.num_bearer_context++;
   }
   s11_update_bearer_response->teid = ue_context->s_gw_teid_s11_s4;
+  if(extra_cause)
+	  s11_update_bearer_response->cause.cause_value = extra_cause;
 ////  ////  mme_config_read_lock (&mme_config);
 ////////  session_request_p->peer_ip = mme_config.ipv4.sgw_s11;
 ////////  mme_config_unlock (&mme_config);

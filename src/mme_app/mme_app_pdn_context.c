@@ -66,7 +66,10 @@ static teid_t                           mme_app_teid_generator = 0x00000001;
 //------------------------------------------------------------------------------
 void mme_app_get_pdn_context (mme_ue_s1ap_id_t ue_id, pdn_cid_t const context_id, ebi_t const default_ebi, bstring const apn_subscribed, pdn_context_t **pdn_ctx)
 {
-  ue_context_t *ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, ue_id);
+	OAILOG_FUNC_IN (LOG_MME_APP);
+
+	ue_context_t *ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, ue_id);
+
   if(!ue_context){
     OAILOG_ERROR (LOG_MME_APP, "No MME_APP UE context could be found for UE: " MME_UE_S1AP_ID_FMT ". \n", ue_id);
     OAILOG_FUNC_OUT(LOG_MME_APP);
@@ -160,7 +163,7 @@ void mme_app_get_bearer_contexts_to_be_created(pdn_context_t * pdn_context, bear
 
 //------------------------------------------------------------------------------
 int
-mme_app_esm_create_pdn_context(mme_ue_s1ap_id_t ue_id, const ebi_t linked_ebi, const apn_configuration_t *apn_configuration, const bstring apn_subscribed,  pdn_cid_t pdn_cid, const ambr_t * const apn_ambr, pdn_context_t **pdn_context_pp)
+mme_app_esm_create_pdn_context(mme_ue_s1ap_id_t ue_id, const ebi_t linked_ebi, const apn_configuration_t *apn_configuration, const bstring apn_subscribed,  pdn_cid_t pdn_cid, const ambr_t * const apn_ambr, pdn_type_t pdn_type, pdn_context_t **pdn_context_pp)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
   ue_context_t * ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, ue_id);
@@ -240,7 +243,7 @@ mme_app_esm_create_pdn_context(mme_ue_s1ap_id_t ue_id, const ebi_t linked_ebi, c
   (*pdn_context_pp)->subscribed_apn_ambr.br_dl = apn_ambr->br_dl;
   (*pdn_context_pp)->subscribed_apn_ambr.br_ul = apn_ambr->br_ul;
   if (apn_configuration) {
-    (*pdn_context_pp)->pdn_type                     = apn_configuration->pdn_type;
+    (*pdn_context_pp)->pdn_type                     = pdn_type;
     (*pdn_context_pp)->context_identifier           = apn_configuration->context_identifier;
 #ifdef APN_CONFIG_IP_ADDR
     if (apn_configuration->nb_ip_address) { // todo: later

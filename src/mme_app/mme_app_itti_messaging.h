@@ -56,6 +56,7 @@ mme_app_send_s11_create_bearer_rsp (
 int
 mme_app_send_s11_update_bearer_rsp (
   struct ue_context_s *const ue_context,
+  gtpv2c_cause_value_t extra_cause,
   void                *trxn,
   bearer_contexts_to_be_updated_t *bcs_tbu);
 

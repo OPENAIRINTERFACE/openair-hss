@@ -1016,8 +1016,14 @@ static int _emm_send_tracking_area_update_accept(emm_data_context_t * const emm_
      * Check the active flag. If false, set a notification to release the bearers after TAU_ACCEPT/COMPLETE (depending on the EMM state).
      */
     if(!tau_proc->ies->eps_update_type.active_flag){
-      emm_sap.primitive = EMMAS_DATA_REQ;
-      emm_sap.u.emm_as.u.data.pending_deac = true; /**< Only set for emm_as.data. */
+    	if(!tau_proc->pending_qos) {
+        	emm_sap.primitive = EMMAS_DATA_REQ;
+        	emm_sap.u.emm_as.u.data.pending_deac = true; /**< Only set for emm_as.data. */
+    	} else {
+    	  	  OAILOG_WARNING(LOG_NAS_EMM, "EMM-PROC  - TAU procedure for ue_id " MME_UE_S1AP_ID_FMT " has pending QoS. Overwriting the active flag.", ue_context->mme_ue_s1ap_id);
+    	  	  tau_proc->ies->eps_update_type.active_flag = true;
+    	  	  emm_sap.primitive = EMMAS_ESTABLISH_CNF;
+    	}
     }else{
       /**
        * Notify EMM-AS SAP that Tracking Area Update Accept message together with an Activate
@@ -2216,17 +2222,25 @@ static void _emm_tracking_area_update_registration_complete(emm_data_context_t *
    * If no procedure exists (idle-TAU), check for pending deactivation.
    */
   bool active_flag = tau_proc->ies->eps_update_type.active_flag;
+  bool pending_qos = tau_proc->pending_qos;
   nas_delete_tau_procedure(emm_context);
 
   mme_app_s10_proc_mme_handover_t * s10_proc_handover = mme_app_get_s10_procedure_mme_handover(ue_context);
+
   if(!s10_proc_handover){
-	  if(!active_flag){
+	  if(!active_flag) {
 		  /** No MBR should be send because no InitialContextSetupResponse is received. */
- 		  OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - EMM Context for ueId " MME_UE_S1AP_ID_FMT " has done an IDLE-TAU without active flag. Triggering UE context release. \n", emm_context->ue_id);
- 		  mme_app_itti_ue_context_release(ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, S1AP_NAS_NORMAL_RELEASE, ue_context->e_utran_cgi.cell_identity.enb_id);
+		  OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - EMM Context for ueId " MME_UE_S1AP_ID_FMT " has done an IDLE-TAU without active flag. Triggering UE context release. \n", emm_context->ue_id);
+		  mme_app_itti_ue_context_release(ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, S1AP_NAS_NORMAL_RELEASE, ue_context->e_utran_cgi.cell_identity.enb_id);
+	  } else if (pending_qos) {
+		  /** Check if a pending QoS procedure exists. */
+		  OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - EMM Context for ueId " MME_UE_S1AP_ID_FMT " has done an IDLE-TAU without active flag but bearer QoS modification is pending. "
+				  "Not releasing UE context, retriggering qos operation. \n", emm_context->ue_id);
+		  /** Send an retry. */
+		  nas_itti_s11_retry_ind(ue_context->mme_ue_s1ap_id);
 	  }
   } else {
-	  bool pending_qos = s10_proc_handover->pending_qos;
+	  pending_qos = s10_proc_handover->pending_qos;
 	  mme_app_delete_s10_procedure_mme_handover(ue_context);
 	  if(pending_qos){
 		  OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - UE for ueId " MME_UE_S1AP_ID_FMT " has pending QoS information. \n", ue_context->mme_ue_s1ap_id);
