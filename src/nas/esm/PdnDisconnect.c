@@ -59,44 +59,84 @@
 #include "common_defs.h"
 #include "mme_app_ue_context.h"
 #include "mme_app_defs.h"
-#include "esm_proc.h"
-#include "commonDef.h"
+#include "common_defs.h"
 #include "log.h"
 #include "assertions.h"
 
-#include "esm_data.h"
-#include "esm_cause.h"
-#include "esm_pt.h"
-#include "emm_sap.h"
 #include "mme_app_pdn_context.h"
+#include "emm_sap.h"
+#include "esm_data.h"
+#include "esm_proc.h"
+#include "esm_pt.h"
+#include "esm_cause.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
 /****************************************************************************/
 
-extern int _pdn_connectivity_delete (emm_data_context_t * emm_context, pdn_cid_t pid, ebi_t default_ebi);
-
 /****************************************************************************/
 /*******************  L O C A L    D E F I N I T I O N S  *******************/
 /****************************************************************************/
-
 
 /*
    --------------------------------------------------------------------------
     Internal data handled by the PDN disconnect procedure in the MME
    --------------------------------------------------------------------------
 */
-/*
-   PDN disconnection handlers
-*/
-static int _pdn_disconnect_get_pid (emm_data_context_t * emm_context, ebi_t default_ebi, proc_tid_t pti);
 
+/* Maximum value of the deactivate EPS bearer context request
+   retransmission counter */
+#define EPS_PDN_CONTEXT_DEACTIVATE_COUNTER_MAX 5
 
 /****************************************************************************/
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
 /****************************************************************************/
 
+/****************************************************************************
+ **                                                                        **
+ ** Name:    esm_send_pdn_disconnect_reject()                          **
+ **                                                                        **
+ ** Description: Builds PDN Disconnect Reject message                      **
+ **                                                                        **
+ **      The PDN disconnect reject message is sent by the network  **
+ **      to the UE to reject release of a PDN connection.          **
+ **                                                                        **
+ ** Inputs:  pti:       Procedure transaction identity             **
+ **      esm_cause: ESM cause code                             **
+ **      Others:    None                                       **
+ **                                                                        **
+ ** Outputs:     msg:       The ESM message to be sent                 **
+ **      Return:    RETURNok, RETURNerror                      **
+ **      Others:    None                                       **
+ **                                                                        **
+ ***************************************************************************/
+void
+esm_send_pdn_disconnect_reject (
+  pti_t pti,
+  ESM_msg * esm_rsp_msg,
+  int esm_cause)
+{
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
 
+  memset(esm_rsp_msg, 0, sizeof(ESM_msg));
+  /*
+   * Mandatory - ESM message header
+   */
+  esm_rsp_msg->pdn_disconnect_reject.protocoldiscriminator = EPS_SESSION_MANAGEMENT_MESSAGE;
+  esm_rsp_msg->pdn_disconnect_reject.epsbeareridentity = EPS_BEARER_IDENTITY_UNASSIGNED;
+  esm_rsp_msg->pdn_disconnect_reject.messagetype = PDN_DISCONNECT_REJECT;
+  esm_rsp_msg->pdn_disconnect_reject.proceduretransactionidentity = pti;
+  /*
+   * Mandatory - ESM cause code
+   */
+  esm_rsp_msg->pdn_disconnect_reject.esmcause = esm_cause;
+  /*
+   * Optional IEs
+   */
+  esm_rsp_msg->pdn_disconnect_reject.presencemask = 0;
+  OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Send PDN Disconnect Reject message " "(pti=%d, ebi=%d)\n", esm_rsp_msg->pdn_disconnect_reject.proceduretransactionidentity, esm_rsp_msg->pdn_disconnect_reject.epsbeareridentity);
+  OAILOG_FUNC_OUT(LOG_NAS_ESM);
+}
 
 /*
    --------------------------------------------------------------------------
@@ -127,199 +167,112 @@ static int _pdn_disconnect_get_pid (emm_data_context_t * emm_context, ebi_t defa
  **      Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
-int
+esm_cause_t
 esm_proc_pdn_disconnect_request (
-  emm_data_context_t * emm_context,
+  mme_ue_s1ap_id_t ue_id,
   proc_tid_t pti,
   pdn_cid_t  pdn_cid,
-  ebi_t default_ebi,
-  esm_cause_t *esm_cause)
+  ebi_t linked_ebi)
 {
-
   OAILOG_FUNC_IN (LOG_NAS_ESM);
-  pdn_cid_t                               pid = RETURNerror;
-  mme_ue_s1ap_id_t                        ue_id = emm_context->ue_id;
-  pdn_context_t                          *pdn_context = NULL;
 
-  OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - PDN disconnect requested by the UE " "(ue_id=" MME_UE_S1AP_ID_FMT ", default_ebi %d, pti=%d)\n", ue_id, default_ebi, pti);
+  nas_esm_proc_pdn_connectivity_t * esm_proc_pdn_disconnect = NULL;
+  pdn_context_t * pdn_context = NULL;
 
+  OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - PDN disconnect requested by the UE " "(ue_id=" MME_UE_S1AP_ID_FMT ", default_ebi %d, pti=%d)\n", ue_id, linked_ebi, pti);
+  mme_app_get_pdn_context(ue_id, pdn_cid, linked_ebi, NULL, &pdn_context);
+  if(!pdn_context){
+    OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - No PDN context found (after update) (ebi=%d, pti=%d) for UE " MME_UE_S1AP_ID_FMT ".\n", linked_ebi, pti, ue_id);
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_PDN_CONNECTION_DOES_NOT_EXIST);
+  }
+
+  OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Creating an ESM procedure and starting T3495 for Deactivate Default EPS bearer context deactivation (ue_id=" MME_UE_S1AP_ID_FMT ", context_identifier=%d)\n",
+      ue_id, pdn_context->context_identifier);
+  /** Create a procedure, but don't start the timer yet. */
+  esm_proc_pdn_disconnect = _esm_proc_create_pdn_connectivity_procedure(ue_id, NULL, pti);
+  esm_proc_pdn_disconnect->default_ebi = pdn_context->default_ebi;
+  /** Update the PDN connectivity procedure with the PDN context information. */
+  esm_proc_pdn_disconnect->pdn_cid = pdn_context->context_identifier;
+  if(esm_proc_pdn_disconnect->subscribed_apn)
+    bdestroy_wrapper(&esm_proc_pdn_disconnect->subscribed_apn);
+  esm_proc_pdn_disconnect->subscribed_apn = bstrcpy(pdn_context->apn_subscribed);
   /*
-   * Get UE's ESM context
+   * Trigger an S11 Delete Session Request to the SAE-GW.
+   * No need to process the response.
    */
-//  if (emm_context->esm_ctx.n_active_pdns > 1) {
-    /*
-     * Get the identifier of the PDN connection entry assigned to the
-     * * * * procedure transaction identity
-     */
-//    pid = _pdn_disconnect_get_pid (emm_context, default_ebi, pti);
-  ue_context_t                        *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
-  DevAssert(ue_context);
 
-  bearer_context_t * bearer_context_to_deactivate = NULL;
-  mme_app_get_session_bearer_context_from_all(ue_context, default_ebi, &bearer_context_to_deactivate); /**< Might be locally removed. */
-  if(bearer_context_to_deactivate){
-    pdn_cid_t pdn_cx_id = bearer_context_to_deactivate->pdn_cx_id;
-    mme_app_get_pdn_context(ue_context, pdn_cx_id, default_ebi, NULL, &pdn_context);
-  }else{
-    mme_app_get_pdn_context(ue_context, pdn_cid, default_ebi, NULL, &pdn_context);
+  struct in_addr saegw_peer_ipv4 = pdn_context->s_gw_address_s11_s4.address.ipv4_address;
+  if(saegw_peer_ipv4.s_addr == 0){
+    mme_app_select_service(&esm_proc_pdn_disconnect->visited_tai, &saegw_peer_ipv4, S11_SGW_GTP_C);
   }
 
-  if(!pdn_context || pdn_context->context_identifier >= MAX_APN_PER_UE){
-    OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - No PDN connection found (pti=%d)\n", pti);
-    *esm_cause = ESM_CAUSE_PROTOCOL_ERROR;
-    OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
-  }
-//    return pdn_context->context_identifier;
-//  return MAX_APN_PER_UE;
-//
-//    if (pid >= MAX_APN_PER_UE) {
-//      OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - No PDN connection found (pti=%d)\n", pti);
-//      *esm_cause = ESM_CAUSE_PROTOCOL_ERROR;
-//      OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
-//    }
-  /*
-   * Create a ESM proc data.
-   * todo: validate that no ESM Proc is running before starting a new ESM message!
-   * Currently, just overwriting the old one.
-   */
-  if (!emm_context->esm_ctx.esm_proc_data) {
-    emm_context->esm_ctx.esm_proc_data  = (esm_proc_data_t *) calloc(1, sizeof(*emm_context->esm_ctx.esm_proc_data));
-  }else{
-    // todo: don't start a new esm_proc without completing the first one
-  }
-  emm_context->esm_ctx.esm_proc_data->pti = pti;
-  emm_context->esm_ctx.esm_proc_data->pdn_cid = pdn_context->context_identifier;
-  emm_context->esm_ctx.esm_proc_data->apn = NULL;
-  emm_context->esm_ctx.esm_proc_data->ebi = pdn_context->default_ebi;
+  nas_itti_pdn_disconnect_req(ue_id, pdn_context->default_ebi, pti, false, false,
+      saegw_peer_ipv4, pdn_context->s_gw_teid_s11_s4,
+      pdn_cid);
 
-  /** Found the PDN context. Informing the MME_APP layer to release the bearers. */
-  nas_itti_pdn_disconnect_req(emm_context->ue_id, default_ebi, pdn_context->s_gw_address_s11_s4.address.ipv4_address, pdn_context->s_gw_teid_s11_s4,
-      (emm_context->esm_ctx.n_pdns > 1),
-      emm_context->esm_ctx.esm_proc_data);
-//  } else {
-//    /*
-//     * Attempt to disconnect from the last PDN disconnection
-//     * * * * is not allowed
-//     */
-//    *esm_cause = ESM_CAUSE_LAST_PDN_DISCONNECTION_NOT_ALLOWED;
-//  }
-
-  OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);
+  OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_SUCCESS);
 }
 
 /****************************************************************************
  **                                                                        **
- ** Name:    esm_proc_pdn_disconnect_accept()                          **
+ ** Name:    esm_proc_detach_request()                         **
  **                                                                        **
- ** Description: Performs PDN disconnect procedure accepted by the UE.     **
+ ** Description: Performs a local detach, removing all PDN contexts.       **
  **                                                                        **
- **              3GPP TS 24.301, section 6.5.2.3                           **
- **      On reception of DEACTIVATE EPS BEARER CONTEXT ACCEPT mes- **
- **      sage from the UE, the MME releases all the resources re-  **
- **      served for the PDN in the network.                        **
- **                                                                        **
+ **              Triggers an internal local detach procedure for all ESM   **
+ **              contexts.                                                 **
+ **                                                                 **
  ** Inputs:  ue_id:      UE lower layer identifier                  **
- **      pid:       Identifier of the PDN connection to be     **
- **             released                                   **
- **      Others:    _esm_data                                  **
+ **      Others:    None                                            **
  **                                                                        **
- ** Outputs:     esm_cause: Cause code returned upon ESM procedure     **
- **             failure                                    **
- **      Return:    RETURNok, RETURNerror                      **
- **      Others:    None                                       **
+ ** Outputs:     None                                               **
  **                                                                        **
  ***************************************************************************/
-int
-esm_proc_pdn_disconnect_accept (
-  emm_data_context_t * emm_context,
-  pdn_cid_t pid,
-  ebi_t     default_ebi,
-  esm_cause_t *esm_cause)
+void
+esm_proc_detach_request (
+  mme_ue_s1ap_id_t ue_id, bool clr)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
-  mme_ue_s1ap_id_t      ue_id = emm_context->ue_id;
-  OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - PDN disconnect accepted by the UE " "(ue_id=" MME_UE_S1AP_ID_FMT ", pid=%d)\n", ue_id, pid);
-  /*
-   * Release the connectivity with the requested PDN
+
+  OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Detach requested by the UE " "(ue_id=" MME_UE_S1AP_ID_FMT ")\n", ue_id);
+
+  ue_context_t        * ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, ue_id);
+  pdn_context_t       * pdn_context = NULL;
+
+  if(!ue_context){
+    OAILOG_WARNING(LOG_MME_APP, "No UE context could be found for UE: " MME_UE_S1AP_ID_FMT " to release ESM contexts. \n", ue_id);
+    OAILOG_FUNC_OUT(LOG_MME_APP);
+  }
+
+  /**
+   * Trigger all S11 messages, wihtouth removing the context.
+   * Todo: check what happens, if the transactions stay but s11 tunnel is removed.
    */
-  int                                     rc = mme_api_unsubscribe (NULL);
+  RB_FOREACH (pdn_context, PdnContexts, &ue_context->pdn_contexts) {
+    DevAssert(pdn_context);
+    // todo: check this!
+    bool deleteTunnel = (RB_MIN(PdnContexts, &ue_context->pdn_contexts)== pdn_context);
 
-  if (rc != RETURNerror) {
     /*
-     * Delete the PDN connection entry
+     * Trigger an S11 Delete Session Request to the SAE-GW.
+     * No need to process the response.
      */
-    proc_tid_t                            pti = _pdn_connectivity_delete (emm_context, pid, default_ebi);
-
-    if (pti != ESM_PT_UNASSIGNED) {
-      OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);
+    if(pdn_context->s_gw_address_s11_s4.address.ipv4_address.s_addr != 0){
+      nas_itti_pdn_disconnect_req(ue_id, pdn_context->default_ebi, PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED, deleteTunnel, clr,
+          pdn_context->s_gw_address_s11_s4.address.ipv4_address, pdn_context->s_gw_teid_s11_s4, pdn_context->context_identifier);
     }
   }
+  OAILOG_INFO(LOG_MME_APP, "Triggered session deletion for all session. Removing ESM context of UE: " MME_UE_S1AP_ID_FMT " . \n", ue_id);
+  mme_app_esm_detach(ue_id);
 
-  *esm_cause = ESM_CAUSE_PROTOCOL_ERROR;
-  OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
+  // Notify MME APP to remove the remaining MME_APP and S1AP contexts.. The tunnel endpoints might or might not be deleted at this time.
+  nas_itti_detach_req(ue_id);
+
+  OAILOG_FUNC_OUT(LOG_NAS_ESM);
 }
-
-/****************************************************************************
- **                                                                        **
- ** Name:    esm_proc_pdn_disconnect_reject()                          **
- **                                                                        **
- ** Description: Performs PDN disconnect procedure not accepted by the     **
- **      network.                                                  **
- **                                                                        **
- **              3GPP TS 24.301, section 6.5.2.4                           **
- **      Upon receipt of the PDN DISCONNECT REQUEST message, if it **
- **      is not accepted by the network, the MME shall send a PDN  **
- **      DISCONNECT REJECT message to the UE.                      **
- **                                                                        **
- ** Inputs:  is_standalone: Not used - Always true                     **
- **      ue_id:      UE lower layer identifier                  **
- **      ebi:       Not used                                   **
- **      msg:       Encoded PDN disconnect reject message to   **
- **             be sent                                    **
- **      ue_triggered:  Not used                                   **
- **      Others:    None                                       **
- **                                                                        **
- ** Outputs:     None                                                      **
- **      Return:    RETURNok, RETURNerror                      **
- **      Others:    None                                       **
- **                                                                        **
- ***************************************************************************/
-int
-esm_proc_pdn_disconnect_reject (
-  const bool is_standalone,
-  emm_data_context_t * emm_context,
-  ebi_t ebi,
-  STOLEN_REF bstring *msg,
-  const bool ue_triggered)
-{
-  OAILOG_FUNC_IN (LOG_NAS_ESM);
-  int                                     rc;
-  emm_sap_t                               emm_sap = {0};
-  mme_ue_s1ap_id_t                        ue_id = emm_context->ue_id;
-
-  OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - PDN disconnect not accepted by the network " "(ue_id=" MME_UE_S1AP_ID_FMT ")\n", ue_id);
-  /*
-   * Notity EMM that ESM PDU has to be forwarded to lower layers
-   */
-  emm_sap.primitive = EMMESM_UNITDATA_REQ;
-  emm_sap.u.emm_esm.ue_id = ue_id;
-  emm_sap.u.emm_esm.ctx = emm_context;
-  emm_sap.u.emm_esm.u.data.msg = *msg;
-  *msg = NULL;
-  MSC_LOG_TX_MESSAGE (MSC_NAS_ESM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMESM_UNITDATA_REQ  (PDN DISCONNECT REJECT) ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
-  rc = emm_sap_send (&emm_sap);
-  OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
-}
-
 /****************************************************************************/
 /*********************  L O C A L    F U N C T I O N S  *********************/
 /****************************************************************************/
-
-/*
-   --------------------------------------------------------------------------
-                Timer handlers
-   --------------------------------------------------------------------------
-*/
 
 
 /*
@@ -327,41 +280,3 @@ esm_proc_pdn_disconnect_reject (
                 PDN disconnection handlers
   ---------------------------------------------------------------------------
 */
-
-
-/****************************************************************************
- **                                                                        **
- ** Name:    _pdn_disconnect_get_pid()                                 **
- **                                                                        **
- ** Description: Returns the identifier of the PDN connection to which the **
- **      given procedure transaction identity has been assigned    **
- **      to establish connectivity to the specified UE             **
- **                                                                        **
- ** Inputs:  ue_id:      UE local identifier                        **
- **      pti:       The procedure transaction identity         **
- **      Others:    _esm_data                                  **
- **                                                                        **
- ** Outputs:     None                                                      **
- **      Return:    The identifier of the PDN connection if    **
- **             found in the list; -1 otherwise.           **
- **      Others:    None                                       **
- **                                                                        **
- ***************************************************************************/
-static pdn_cid_t
-_pdn_disconnect_get_pid (
-  emm_data_context_t * emm_context,
-  ebi_t default_ebi,
-  proc_tid_t pti)
-{
-  if (emm_context) {
-    ue_context_t                        *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
-
-    pdn_context_t pdn_context_key = {.default_ebi = default_ebi};
-
-    pdn_context_t * pdn_context = RB_FIND(PdnContexts, &ue_context->pdn_contexts, &pdn_context_key);
-    if(pdn_context)
-      return pdn_context->context_identifier;
-    return MAX_APN_PER_UE;
-  }
-  return RETURNerror;
-}

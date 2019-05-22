@@ -72,6 +72,6 @@ typedef uint8_t                       pti_t;
 #define PROCEDURE_TRANSACTION_IDENTITY_LAST         (pti_t)254
 #define PROCEDURE_TRANSACTION_IDENTITY_RESERVED     (pti_t)255
 
-#define PDN_CONTEXT_IDENTIFIER_UNASSIGNED   (ebi_t)100
+#define PDN_CONTEXT_IDENTIFIER_UNASSIGNED   (pdn_cid_t)100
 
 #endif /* FILE_3GPP_24_007_SEEN */

@@ -22,14 +22,14 @@
 #ifndef FILE_GUTI_REALLOCATION_COMMAND_SEEN
 #define FILE_GUTI_REALLOCATION_COMMAND_SEEN
 
-#include "SecurityHeaderType.h"
-#include "MessageType.h"
-#include "NasMessageContainer.h"
-#include "EpsMobileIdentity.h"
-#include "TrackingAreaIdentityList.h"
 #include "3gpp_23.003.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"
+#include "EpsMobileIdentity.h"
+#include "MessageType.h"
+#include "NasMessageContainer.h"
+#include "SecurityHeaderType.h"
+#include "TrackingAreaIdentityList.h"
 
 
 /* Minimum length macro. Formed by minimum length of each mandatory field */

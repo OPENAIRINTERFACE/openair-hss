@@ -39,6 +39,7 @@
         and to request ESM unit data transfer to under layer.
 
 *****************************************************************************/
+
 #include <pthread.h>
 #include <inttypes.h>
 #include <stdint.h>
@@ -51,19 +52,20 @@
 #include "log.h"
 #include "msc.h"
 #include "gcc_diag.h"
-#include "commonDef.h"
+#include "common_defs.h"
 #include "common_defs.h"
 #include "common_types.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"
 #include "3gpp_29.274.h"
-#include "mme_app_ue_context.h"
+
 #include "emm_data.h"
 #include "emm_sap.h"
 #include "esm_sap.h"
-#include "log.h"
-#include "LowerLayer.h"
+
+#include "mme_app_ue_context.h"
 #include "mme_app_defs.h"
+#include "LowerLayer.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -278,40 +280,39 @@ int lowerlayer_release (mme_ue_s1ap_id_t ue_id, int cause)
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
-/****************************************************************************
- **                                                                        **
- ** Name:    lowerlayer_data_ind()                                     **
- **                                                                        **
- ** Description: Notify the EPS Session Management entity that data have   **
- **      been received from lower layers                           **
- **                                                                        **
- ** Inputs:  ue_id:      UE lower layer identifier                  **
- **      data:      Data transfered from lower layers          **
- **      Others:    None                                       **
- **                                                                        **
- ** Outputs:     None                                                      **
- **      Return:    RETURNok, RETURNerror                      **
- **      Others:    None                                       **
- **                                                                        **
- ***************************************************************************/
-int lowerlayer_data_ind (mme_ue_s1ap_id_t ue_id, const_bstring    data)
-{
-  esm_sap_t                               esm_sap = {0};
-  int                                     rc = RETURNok;
-
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
-
-  emm_data_context_t                     *emm_data_context = emm_data_context_get(&_emm_data, ue_id);
-  esm_sap.primitive = ESM_UNITDATA_IND;
-  esm_sap.is_standalone = true;
-  esm_sap.ue_id = ue_id;
-  esm_sap.ctx = emm_data_context;
-  esm_sap.recv = data;
-  data = NULL;
-  rc = esm_sap_send (&esm_sap);
-//  unlock_ue_contexts(ue_context);
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
-}
+///****************************************************************************
+// **                                                                        **
+// ** Name:    lowerlayer_data_ind()                                     **
+// **                                                                        **
+// ** Description: Notify the EPS Session Management entity that data have   **
+// **      been received from lower layers                           **
+// **                                                                        **
+// ** Inputs:  ue_id:      UE lower layer identifier                  **
+// **      data:      Data transfered from lower layers          **
+// **      Others:    None                                       **
+// **                                                                        **
+// ** Outputs:     None                                                      **
+// **      Return:    RETURNok, RETURNerror                      **
+// **      Others:    None                                       **
+// **                                                                        **
+// ***************************************************************************/
+//int lowerlayer_data_ind (mme_ue_s1ap_id_t ue_id, const_bstring    data)
+//{
+//  esm_sap_t                               esm_sap = {0};
+//  int                                     rc = RETURNok;
+//
+//  OAILOG_FUNC_IN (LOG_NAS_EMM);
+//
+//  emm_data_context_t                     *emm_data_context = emm_data_context_get(&_emm_data, ue_id);
+//  esm_sap.primitive = ESM_UNITDATA_IND;
+//  esm_sap.ue_id = ue_id;
+//  esm_sap.ctx = emm_data_context;
+//  esm_sap.recv = data;
+//  data = NULL;
+//  rc = esm_sap_send (&esm_sap);
+////  unlock_ue_contexts(ue_context);
+//  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+//}
 
 /****************************************************************************
  **                                                                        **
@@ -329,6 +330,7 @@ int lowerlayer_data_ind (mme_ue_s1ap_id_t ue_id, const_bstring    data)
  **      Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
+
 int lowerlayer_data_req (mme_ue_s1ap_id_t ue_id, bstring data)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
@@ -348,7 +350,6 @@ int lowerlayer_data_req (mme_ue_s1ap_id_t ue_id, bstring data)
 
   emm_sap.u.emm_as.u.data.nas_info = 0;
   emm_sap.u.emm_as.u.data.nas_msg = data;
-  data = NULL;
   /*
    * Setup EPS NAS security data
    */
@@ -374,6 +375,19 @@ int lowerlayer_activate_bearer_req (
   emm_security_context_t                 *sctx = NULL;
   emm_data_context_t                     *emm_data_context = emm_data_context_get(&_emm_data, ue_id);
 
+  if (!emm_data_context) {
+    // todo: check no (implicit) detach procedure is ongoing
+    OAILOG_ERROR(LOG_NAS_EMM, "EMM context not existing UE " MME_UE_S1AP_ID_FMT ". "
+        "Aborting the dedicated bearer activation. \n", ue_id);
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
+  } else if (emm_data_context->_emm_fsm_state != EMM_REGISTERED){
+	  /** Check if a TAU procedure is ongoing. Set the pending flag for pending QoS. */
+	  OAILOG_ERROR(LOG_NAS_EMM, "EMM context not in EMM_REGISTERED state for UE " MME_UE_S1AP_ID_FMT ". "
+				"Cannot activate bearers. \n", ue_id);
+	  OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
+  }
+
+  sctx = &emm_data_context->_security;
   emm_sap.primitive = EMMAS_ERAB_SETUP_REQ;
   emm_sap.u.emm_as.u.activate_bearer_context_req.ebi    = ebi;
   emm_sap.u.emm_as.u.activate_bearer_context_req.ue_id  = ue_id;
@@ -381,14 +395,7 @@ int lowerlayer_activate_bearer_req (
   emm_sap.u.emm_as.u.activate_bearer_context_req.mbr_ul = mbr_ul;
   emm_sap.u.emm_as.u.activate_bearer_context_req.gbr_dl = gbr_dl;
   emm_sap.u.emm_as.u.activate_bearer_context_req.gbr_ul = gbr_ul;
-
-
-  if (emm_data_context) {
-    sctx = &emm_data_context->_security;
-  }
-
   emm_sap.u.emm_as.u.activate_bearer_context_req.nas_msg = data;
-  data = NULL;
   /*
    * Setup EPS NAS security data
    */
@@ -396,7 +403,6 @@ int lowerlayer_activate_bearer_req (
   MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_MME, NULL, 0, "EMMAS_ERAB_SETUP_REQ  (STATUS) ue id " MME_UE_S1AP_ID_FMT " ebi %u gbr_dl %" PRIu64 " gbr_ul %" PRIu64 " ",
       ue_id, ebi, emm_sap.u.emm_as.u.activate_bearer_context_req.gbr_dl, emm_sap.u.emm_as.u.activate_bearer_context_req.gbr_ul);
   rc = emm_sap_send (&emm_sap);
-//  unlock_ue_contexts(ue_context);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
@@ -416,6 +422,19 @@ int lowerlayer_modify_bearer_req (
   emm_security_context_t                 *sctx = NULL;
   emm_data_context_t                     *emm_data_context = emm_data_context_get(&_emm_data, ue_id);
 
+
+  if (!emm_data_context) {
+    // todo: check no (implicit) detach procedure is ongoing
+    OAILOG_ERROR(LOG_NAS_EMM, "EMM context not existing UE " MME_UE_S1AP_ID_FMT ". "
+        "Aborting the dedicated bearer activation. \n", ue_id);
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
+  } else if (emm_data_context->_emm_fsm_state != EMM_REGISTERED){
+	  /** Check if a TAU procedure is ongoing. Set the pending flag for pending QoS. */
+	  OAILOG_ERROR(LOG_NAS_EMM, "EMM context not in EMM_REGISTERED state for UE " MME_UE_S1AP_ID_FMT ". "
+				"Cannot modify bearers. \n", ue_id);
+	  OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
+  }
+
   emm_sap.primitive = EMMAS_ERAB_MODIFY_REQ;
   emm_sap.u.emm_as.u.modify_bearer_context_req.ebi    = ebi;
   emm_sap.u.emm_as.u.modify_bearer_context_req.ue_id  = ue_id;
@@ -424,13 +443,8 @@ int lowerlayer_modify_bearer_req (
   emm_sap.u.emm_as.u.modify_bearer_context_req.gbr_dl = gbr_dl;
   emm_sap.u.emm_as.u.modify_bearer_context_req.gbr_ul = gbr_ul;
 
-
-  if (emm_data_context) {
-    sctx = &emm_data_context->_security;
-  }
-
+  sctx = &emm_data_context->_security;
   emm_sap.u.emm_as.u.modify_bearer_context_req.nas_msg = data;
-  data = NULL;
   /*
    * Setup EPS NAS security data
    */
@@ -454,21 +468,29 @@ int lowerlayer_deactivate_bearer_req (
   emm_security_context_t                 *sctx = NULL;
   emm_data_context_t                     *emm_data_context = emm_data_context_get(&_emm_data, ue_id);
 
+
+  if (!emm_data_context) {
+    // todo: check no (implicit) detach procedure is ongoing
+    OAILOG_ERROR(LOG_NAS_EMM, "EMM context not existing UE " MME_UE_S1AP_ID_FMT ". "
+        "Aborting the dedicated bearer activation. \n", ue_id);
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
+  } else if (emm_data_context->_emm_fsm_state != EMM_REGISTERED){
+	  /** Check if a TAU procedure is ongoing. Set the pending flag for pending QoS. */
+	  OAILOG_ERROR(LOG_NAS_EMM, "EMM context not in EMM_REGISTERED state for UE " MME_UE_S1AP_ID_FMT ". "
+			  "Cannot delete bearers. \n", ue_id);
+	  OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
+  }
+
   emm_sap.primitive = EMMAS_ERAB_RELEASE_REQ;
   emm_sap.u.emm_as.u.deactivate_bearer_context_req.ebi    = ebi;
   emm_sap.u.emm_as.u.deactivate_bearer_context_req.ue_id  = ue_id;
-
-  if (emm_data_context) {
-    sctx = &emm_data_context->_security;
-  }
-
+  sctx = &emm_data_context->_security;
   emm_sap.u.emm_as.u.deactivate_bearer_context_req.nas_msg = data;
-  data = NULL;
   /*
    * Setup EPS NAS security data
    */
   emm_as_set_security_data (&emm_sap.u.emm_as.u.deactivate_bearer_context_req.sctx, sctx, false, true);
-  MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_MME, NULL, 0, "EMMAS_ERAB_RELEASE_REQ  (STATUS) ue id " MME_UE_S1AP_ID_FMT " ebi %u " ",
+  MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_MME, NULL, 0, "EMMAS_ERAB_RELEASE_REQ  (STATUS) ue id " MME_UE_S1AP_ID_FMT " ebi %u ",
       ue_id, ebi);
   rc = emm_sap_send (&emm_sap);
 //  unlock_ue_contexts(ue_context);

@@ -40,15 +40,14 @@
 
 *****************************************************************************/
 
-#include "nas_data.h"
-
-#include "emm_msgDef.h"
-#include "esm_msgDef.h"
-
-#include "emm_cause.h"
-#include "esm_cause.h"
+#include "../../test/as_simulator/nas_data.h"
 
 #include <stdio.h>              // snprintf
+
+#include "../../emm/msg/emm_cause.h"
+#include "../../emm/msg/emm_msgDef.h"
+#include "../../esm/msg/esm_cause.h"
+#include "../../esm/msg/esm_msgDef.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/

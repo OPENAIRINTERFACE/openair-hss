@@ -17,6 +17,7 @@ include_directories("${SRC_TOP_DIR}/nas")
 include_directories("${SRC_TOP_DIR}/nas/emm")
 include_directories("${SRC_TOP_DIR}/nas/emm/msg")
 include_directories("${SRC_TOP_DIR}/nas/emm/sap")
+include_directories("${SRC_TOP_DIR}/nas/api")
 include_directories("${SRC_TOP_DIR}/nas/ies")
 include_directories("${SRC_TOP_DIR}/nas/util")
 include_directories("${SRC_TOP_DIR}/nas/esm")
@@ -163,6 +164,9 @@ set(libnas_mme_emm_OBJS
     ${CMAKE_CURRENT_SOURCE_DIR}/emm/EmmStatusHdl.c
     ${CMAKE_CURRENT_SOURCE_DIR}/emm/Identification.c
     ${CMAKE_CURRENT_SOURCE_DIR}/emm/LowerLayer.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/emm/nas_emm_proc.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/emm/nas_emm_procedures.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/emm/nas_emm_task.c
     ${CMAKE_CURRENT_SOURCE_DIR}/emm/SecurityModeControl.c
     ${CMAKE_CURRENT_SOURCE_DIR}/emm/ServiceRequestHdl.c
     ${CMAKE_CURRENT_SOURCE_DIR}/emm/TrackingAreaUpdate.c
@@ -200,6 +204,8 @@ set(libnas_mme_emm_sap_OBJS
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/esm)
 set (libnas_mme_esm_OBJS
+    ${CMAKE_CURRENT_SOURCE_DIR}/esm/BearerResourceAllocation.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/esm/BearerResourceModification.c
     ${CMAKE_CURRENT_SOURCE_DIR}/esm/DedicatedEpsBearerContextActivation.c
     ${CMAKE_CURRENT_SOURCE_DIR}/esm/DefaultEpsBearerContextActivation.c
     ${CMAKE_CURRENT_SOURCE_DIR}/esm/EpsBearerContextDeactivation.c
@@ -212,6 +218,9 @@ set (libnas_mme_esm_OBJS
     ${CMAKE_CURRENT_SOURCE_DIR}/esm/esm_main.c
     ${CMAKE_CURRENT_SOURCE_DIR}/esm/esm_pt.c
     ${CMAKE_CURRENT_SOURCE_DIR}/esm/EsmStatusHdl.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/emm/nas_esm_proc.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/emm/nas_esm_procedures.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/emm/nas_esm_task.c
     ${CMAKE_CURRENT_SOURCE_DIR}/esm/PdnConnectivity.c
     ${CMAKE_CURRENT_SOURCE_DIR}/esm/PdnDisconnect.c
     )
@@ -226,8 +235,6 @@ set(libnas_mme_esm_sap_OBJS
 add_library(LIB_NAS_MME
     nas_itti_messaging.c
     nas_network.c
-    nas_proc.c
-    nas_procedures.c
     ${libnas_api_OBJS}
     ${libnas_mme_api_OBJS}
     ${libnas_emm_msg_OBJS}

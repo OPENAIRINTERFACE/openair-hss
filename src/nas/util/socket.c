@@ -37,7 +37,8 @@
  *****************************************************************************/
 
 #include "socket.h"
-#include "commonDef.h"
+
+#include "common_defs.h"
 
 #include <stdlib.h>             // malloc, free, atoi
 #include <string.h>             // memset

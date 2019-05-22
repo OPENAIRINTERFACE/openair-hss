@@ -22,11 +22,11 @@
 #ifndef BEARER_RESOURCE_MODIFICATION_REQUEST_H_
 #define BEARER_RESOURCE_MODIFICATION_REQUEST_H_
 
-#include "MessageType.h"
-#include "LinkedEpsBearerIdentity.h"
-#include "TrafficFlowAggregateDescription.h"
 #include "EpsQualityOfService.h"
 #include "EsmCause.h"
+#include "LinkedEpsBearerIdentity.h"
+#include "MessageType.h"
+#include "TrafficFlowAggregateDescription.h"
 #include "3gpp_23.003.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"

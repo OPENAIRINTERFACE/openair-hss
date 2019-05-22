@@ -35,6 +35,7 @@
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"
 #include "3gpp_25.413.h"
+#include "TrafficFlowAggregateDescription.h"
 
 //-------------------------------------
 // 8.4 Cause
@@ -190,7 +191,6 @@ typedef struct indication_flags_s {
 #define ISRAI_FLAG_BIT_POS    1
 #define SGWCI_FLAG_BIT_POS    0
 
-
 //-------------------------------------
 // 8.15 Bearer Quality of Service (Bearer QoS)
 #define PRE_EMPTION_CAPABILITY_ENABLED  (0x0)
@@ -239,6 +239,15 @@ typedef struct bearer_qos_s {
   ambr_t   gbr;           ///< Guaranteed bit rate
   ambr_t   mbr;           ///< Maximum bit rate
 } bearer_qos_t;
+
+//-------------------------------------
+// 8.16 Flow Quality of Service (Flow QoS)
+
+typedef struct flow_qos_s {
+  uint8_t  qci;
+  ambr_t   gbr;           ///< Guaranteed bit rate
+  ambr_t   mbr;           ///< Maximum bit rate
+} flow_qos_t;
 
 //-------------------------------------
 // 8.18 Serving Network
@@ -431,13 +440,13 @@ typedef struct {
 typedef struct {
   uint8_t                  eps_bearer_id;    ///< EBI,  Mandatory CSR
   bearer_qos_t             bearer_level_qos;
-  traffic_flow_template_t  tft;              ///< Bearer TFT, Optional CSR, This IE may be included on the S4/S11 and S5/S8 interfaces.
+  traffic_flow_template_t *tft;              ///< Bearer TFT, Optional CSR, This IE may be included on the S4/S11 and S5/S8 interfaces.
 } bearer_to_create_t;
 
 //-----------------
 typedef struct bearer_context_to_be_created_s {
   uint8_t                  eps_bearer_id;       ///< EBI,  Mandatory CSR
-  traffic_flow_template_t  tft;                 ///< Bearer TFT, Optional CSR, This IE may be included on the S4/S11 and S5/S8 interfaces.
+  traffic_flow_template_t *tft;                 ///< Bearer TFT, Optional CSR, This IE may be included on the S4/S11 and S5/S8 interfaces.
   fteid_t                  s1u_enb_fteid;       ///< S1-U eNodeB F-TEID, Conditional CSR, This IE shall be included on the S11 interface for X2-based handover with SGW relocation.
   fteid_t                  s1u_sgw_fteid;       ///< S1-U SGW F-TEID, Conditional CSR, This IE shall be included on the S11 interface for X2-based handover with SGW relocation.
   fteid_t                  s4u_sgsn_fteid;      ///< S4-U SGSN F-TEID, Conditional CSR, This IE shall be included on the S4 interface if the S4-U interface is used.
@@ -479,9 +488,9 @@ bearer_context_to_be_created_t bearer_contexts[MSG_CREATE_SESSION_REQUEST_MAX_BE
 //-----------------
 typedef struct bearer_context_to_be_updated_s {
   uint8_t                  eps_bearer_id;       ///< EBI,  Mandatory CSR
-  traffic_flow_template_t  tft;                 ///< Bearer TFT, Optional CSR, This IE may be included on the S4/S11 and S5/S8 interfaces.
+  traffic_flow_template_t  *tft;                 ///< Bearer TFT, Optional CSR, This IE may be included on the S4/S11 and S5/S8 interfaces.
   /* This parameter is received only if the QoS parameters have been modified */
-  bearer_qos_t                     *bearer_level_qos;    ///< Bearer QoS, Mandatory CSR
+  bearer_qos_t                      *bearer_level_qos;    ///< Bearer QoS, Mandatory CSR
   protocol_configuration_options_t  pco;///< This IE may be sent on the S5/S8 and S4/S11 interfaces
                                     ///< if ePCO is not supported by the UE or the network. This bearer level IE takes precedence
                                     ///< over the PCO IE in the message body if they both exist.
@@ -583,7 +592,7 @@ typedef struct bearer_contexts_modified_s {
 typedef struct bearer_context_marked_for_removal_s {
   uint8_t        eps_bearer_id;   ///< EPS bearer ID
   gtpv2c_cause_t cause;
-  fteid_t        s1u_sgw_fteid;   ///< Sender F-TEID for user plane
+//  fteid_t        s1u_sgw_fteid;   ///< Sender F-TEID for user plane
 } bearer_context_marked_for_removal_t;
 
 typedef struct bearer_contexts_marked_for_removal_s {
@@ -716,10 +725,8 @@ typedef struct mm_context_eps_s {
   // todo : drx_t*                    drx;
   uint8_t                   nh[32];
   uint8_t                   ncc:3;
-  uint32_t                  ul_subscribed_ue_ambr;
-  uint32_t                  dl_subscribed_ue_ambr;
-  uint32_t                  ul_used_ue_ambr;
-  uint32_t                  dl_used_ue_ambr;
+  ambr_t                    subscribed_ue_ambr;
+  ambr_t                    used_ue_ambr;
   uint8_t                   ue_nc_length;
   ue_network_capability_t   ue_nc;
   uint8_t                   ms_nc_length;
@@ -841,6 +848,7 @@ typedef enum node_type_e {
 
 typedef struct mme_ue_eps_pdn_connections_s {
   uint8_t num_pdn_connections;
+  uint8_t num_processed_pdn_connections;
   pdn_connection_t pdn_connection[MSG_FORWARD_RELOCATION_REQUEST_MAX_PDN_CONNECTIONS];
 } mme_ue_eps_pdn_connections_t;
 //----------------------------

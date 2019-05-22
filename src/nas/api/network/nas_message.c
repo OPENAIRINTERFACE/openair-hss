@@ -48,18 +48,18 @@
 #include "log.h"
 #include "3gpp_36.401.h"
 #include "common_types.h"
-#include "nas_message.h"
 #include "gcc_diag.h"
 #include "TLVDecoder.h"
 #include "TLVEncoder.h"
-#include "mme_api.h"
 #include "mme_config.h"
-#include "emm_main.h"
-#include "esm_main.h"
-#include "emm_sap.h"
-#include "emm_data.h"
 #include "secu_defs.h"
 #include "dynamic_memory_check.h"
+#include "nas_message.h"
+#include "mme_api.h"
+#include "emm_data.h"
+#include "emm_main.h"
+#include "emm_sap.h"
+#include "esm_main.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -223,22 +223,24 @@ int nas_message_encrypt (
    * * * * overflow counter shall also be incremented by one (see
    * * * * subclause 4.4.3.5).
    */
-  if (SECU_DIRECTION_DOWNLINK == emm_security_context->direction_encode) {
-    emm_security_context->dl_count.seq_num += 1;
+  if(emm_security_context){
+    if (SECU_DIRECTION_DOWNLINK == emm_security_context->direction_encode) {
+      emm_security_context->dl_count.seq_num += 1;
 
-    if (!emm_security_context->dl_count.seq_num) {
-      emm_security_context->dl_count.overflow += 1;
+      if (!emm_security_context->dl_count.seq_num) {
+        emm_security_context->dl_count.overflow += 1;
+      }
+
+      OAILOG_DEBUG (LOG_NAS, "Incremented emm_security_context.dl_count.seq_num -> %u\n", emm_security_context->dl_count.seq_num);
+    } else {
+      emm_security_context->ul_count.seq_num += 1;
+
+      if (!emm_security_context->ul_count.seq_num) {
+        emm_security_context->ul_count.overflow += 1;
+      }
+
+      OAILOG_DEBUG (LOG_NAS, "Incremented emm_security_context.ul_count.seq_num -> %u\n", emm_security_context->ul_count.seq_num);
     }
-
-    OAILOG_DEBUG (LOG_NAS, "Incremented emm_security_context.dl_count.seq_num -> %u\n", emm_security_context->dl_count.seq_num);
-  } else {
-    emm_security_context->ul_count.seq_num += 1;
-
-    if (!emm_security_context->ul_count.seq_num) {
-      emm_security_context->ul_count.overflow += 1;
-    }
-
-    OAILOG_DEBUG (LOG_NAS, "Incremented emm_security_context.ul_count.seq_num -> %u\n", emm_security_context->ul_count.seq_num);
   }
 
   if (bytes < 0) {
@@ -577,7 +579,7 @@ int nas_message_encode (
 
   if (size < 0) {
     OAILOG_FUNC_RETURN (LOG_NAS, TLV_BUFFER_TOO_SHORT);
-  } else if (size > 1) {
+  } else if (emm_security_context) {
     /*
      * Encode security protected NAS message
      */
@@ -606,42 +608,34 @@ int nas_message_encode (
        */
       *(uint32_t *) (buffer + sizeof (uint8_t)) = htonl (mac);
 
-      if (emm_security_context) {
-        /*
-         * TS 124.301, section 4.4.3.1
-         * * * * The NAS sequence number part of the NAS COUNT shall be
-         * * * * exchanged between the UE and the MME as part of the
-         * * * * NAS signalling. After each new or retransmitted outbound
-         * * * * security protected NAS message, the sender shall increase
+      /*
+       * TS 124.301, section 4.4.3.1
+       * * * * The NAS sequence number part of the NAS COUNT shall be
+       * * * * exchanged between the UE and the MME as part of the
+       * * * * NAS signalling. After each new or retransmitted outbound
+       * * * * security protected NAS message, the sender shall increase
          * * * * the NAS COUNT number by one. Specifically, on the sender
          * * * * side, the NAS sequence number shall be increased by one,
          * * * * and if the result is zero (due to wrap around), the NAS
          * * * * overflow counter shall also be incremented by one (see
          * * * * subclause 4.4.3.5).
          */
-        if (SECU_DIRECTION_DOWNLINK == emm_security_context->direction_encode) {
-          emm_security_context->dl_count.seq_num += 1;
+      if (SECU_DIRECTION_DOWNLINK == emm_security_context->direction_encode) {
+    	  emm_security_context->dl_count.seq_num += 1;
 
-          if (!emm_security_context->dl_count.seq_num) {
-            emm_security_context->dl_count.overflow += 1;
-          }
-          OAILOG_DEBUG (LOG_NAS, "Incremented emm_security_context.dl_count.seq_num -> %u\n", emm_security_context->dl_count.seq_num);
-        } else {
-          emm_security_context->ul_count.seq_num += 1;
-
-          if (!emm_security_context->ul_count.seq_num) {
-            emm_security_context->ul_count.overflow += 1;
-          }
-          OAILOG_DEBUG (LOG_NAS, "Incremented emm_security_context.ul_count.seq_num -> %u\n", emm_security_context->ul_count.seq_num);
-        }
+    	  if (!emm_security_context->dl_count.seq_num) {
+    		  emm_security_context->dl_count.overflow += 1;
+    	  }
+    	  OAILOG_DEBUG (LOG_NAS, "Incremented emm_security_context.dl_count.seq_num -> %u\n", emm_security_context->dl_count.seq_num);
       } else {
-        OAILOG_DEBUG (LOG_NAS, "Did not increment emm_security_context.xl_count.seq_num because no security context\n");
+    	  emm_security_context->ul_count.seq_num += 1;
+
+    	  if (!emm_security_context->ul_count.seq_num) {
+    		  emm_security_context->ul_count.overflow += 1;
+    	  }
+    	  OAILOG_DEBUG (LOG_NAS, "Incremented emm_security_context.ul_count.seq_num -> %u\n", emm_security_context->ul_count.seq_num);
       }
     }
-    /*
-     * Log message header
-     */
-
   } else {
     /*
      * Encode plain NAS message

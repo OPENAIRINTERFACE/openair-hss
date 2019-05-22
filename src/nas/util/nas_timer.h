@@ -56,6 +56,7 @@ Description Timer utilities
 typedef struct nas_timer_s {
   long int id;     /* The timer identifier                 */
   long sec;        /* The timer interval value in seconds  */
+  long usec;       /* The timer interval value in micro-seconds (used for custom processes like retries). */
 } nas_timer_t;
 
 /* Type of the callback executed when the timer expired */
@@ -74,9 +75,14 @@ typedef struct nas_itti_timer_arg_s {
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
 /****************************************************************************/
 
+void _nas_proc_esm_timeout_handler (void *args);
+
 int nas_timer_init(void);
 void nas_timer_cleanup (void);
-long int nas_timer_start (long sec, long usec, nas_timer_callback_t nas_timer_callback, void *nas_timer_callback_args);
+
+long int nas_emm_timer_start (long sec, long usec, nas_timer_callback_t nas_timer_callback, void *nas_timer_callback_args);
+long int nas_esm_timer_start (long sec, long usec, void *nas_timer_callback_args);
+
 long int nas_timer_stop (long int timer_id, void **nas_timer_callback_arg);
 void nas_timer_handle_signal_expiry (long timer_id, nas_itti_timer_arg_t *nas_itti_timer_arg);
 

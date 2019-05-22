@@ -172,7 +172,7 @@ s6a_fd_new_peer (
             FILE *fp = NULL;
             bstring  filename = bformat("/tmp/mme_%d.status", g_pid);
             fp = fopen(bdata(filename), "w+");
-            bdestroy(filename);
+            bdestroy_wrapper(&filename);
             fflush(fp);
             fclose(fp);
           }
@@ -189,7 +189,7 @@ s6a_fd_new_peer (
     }
     sleep(timeout);
   }
-  bdestroy(hss_name);
+  bdestroy_wrapper(&hss_name);
   if(fd_g_config->cnf_diamid){
     free_wrapper((void **) &fd_g_config->cnf_diamid);
   }

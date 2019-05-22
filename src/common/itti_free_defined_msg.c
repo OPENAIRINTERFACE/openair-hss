@@ -59,6 +59,87 @@ void itti_free_msg_content (MessageDef * const message_p)
     }
     break;
 
+  /* NAS ESM. */
+  case NAS_ESM_DATA_IND:
+    bdestroy_wrapper (&message_p->ittiMsg.nas_esm_data_ind.req);
+    break;
+  case NAS_ESM_DETACH_IND:
+  case NAS_PDN_CONFIG_RSP:
+  case NAS_PDN_CONFIG_FAIL:
+    /** Nothing to do. */
+    break;
+
+  case NAS_PDN_CONNECTIVITY_RSP:
+  case NAS_PDN_DISCONNECT_REQ:
+  case NAS_PDN_DISCONNECT_RSP:
+    /* Nothing to do. */
+    break;
+
+    break;
+  case NAS_ACTIVATE_EPS_BEARER_CTX_REQ:
+  case NAS_MODIFY_EPS_BEARER_CTX_REQ:
+    /** Not removing the uintptr.
+     * The structure will be removed together with the MME_APP S11 procedure. */
+    break;
+  case NAS_ACTIVATE_EPS_BEARER_CTX_CNF:
+  case NAS_ACTIVATE_EPS_BEARER_CTX_REJ:
+    /* Nothing to do. */
+    break;
+
+  case NAS_MODIFY_EPS_BEARER_CTX_CNF:
+  case NAS_MODIFY_EPS_BEARER_CTX_REJ:
+    /* Nothing to do. */
+    break;
+
+  case NAS_DEACTIVATE_EPS_BEARER_CTX_REQ:
+  case NAS_DEACTIVATE_EPS_BEARER_CTX_CNF:
+    /** Nothing to do. */
+    break;
+  /* NAS EMM. */
+  case NAS_DOWNLINK_DATA_REQ:
+    bdestroy_wrapper(&message_p->ittiMsg.nas_dl_data_req.nas_msg);
+    AssertFatal(NULL == message_p->ittiMsg.nas_dl_data_req.nas_msg, "TODO clean pointer");
+   break;
+  case NAS_ERAB_SETUP_REQ:
+    bdestroy_wrapper(&message_p->ittiMsg.nas_erab_setup_req.nas_msg);
+    break;
+  case NAS_ERAB_MODIFY_REQ:
+    bdestroy_wrapper(&message_p->ittiMsg.nas_erab_modify_req.nas_msg);
+    break;
+  case NAS_ERAB_RELEASE_REQ:
+    bdestroy_wrapper (&message_p->ittiMsg.nas_erab_release_req.nas_msg);
+    break;
+  case NAS_CONTEXT_REQ:
+    bdestroy_wrapper (&message_p->ittiMsg.nas_context_req.nas_msg);
+    break;
+  case NAS_CONTEXT_RES:
+  case NAS_CONTEXT_FAIL:
+    // DO nothing
+    break;
+  case NAS_CONNECTION_ESTABLISHMENT_CNF:
+    bdestroy_wrapper (&message_p->ittiMsg.nas_conn_est_cnf.nas_msg);
+    AssertFatal(NULL == message_p->ittiMsg.nas_conn_est_cnf.nas_msg, "TODO clean pointer");
+    break;
+  case NAS_DL_DATA_CNF:
+    // DO nothing
+    break;
+  case NAS_DL_DATA_REJ:
+    bdestroy_wrapper (&message_p->ittiMsg.nas_dl_data_rej.nas_msg);
+    AssertFatal(NULL == message_p->ittiMsg.nas_dl_data_rej.nas_msg, "TODO clean pointer");
+    break;
+
+  case NAS_INITIAL_UE_MESSAGE:
+    bdestroy_wrapper (&message_p->ittiMsg.nas_initial_ue_message.nas.initial_nas_msg);
+    AssertFatal(NULL == message_p->ittiMsg.nas_initial_ue_message.nas.initial_nas_msg, "TODO clean pointer");
+    break;
+  case NAS_UPLINK_DATA_IND:
+    bdestroy_wrapper (&message_p->ittiMsg.nas_ul_data_ind.nas_msg);
+    AssertFatal(NULL == message_p->ittiMsg.nas_ul_data_ind.nas_msg, "TODO clean pointer");
+    break;
+  case NAS_DETACH_REQ:
+    // DO nothing
+    break;
+
   case GTPV1U_CREATE_TUNNEL_REQ:
   case GTPV1U_CREATE_TUNNEL_RESP:
   case GTPV1U_UPDATE_TUNNEL_REQ:
@@ -88,6 +169,10 @@ void itti_free_msg_content (MessageDef * const message_p)
     // DO nothing
     break;
 
+  case MME_APP_INITIAL_CONTEXT_SETUP_RSP:
+    // DO nothing
+    break;
+
   case MME_APP_CONNECTION_ESTABLISHMENT_CNF: {
     int num = message_p->ittiMsg.mme_app_connection_establishment_cnf.no_of_e_rabs;
     for (int i = 0; i < num; i++) {
@@ -98,111 +183,17 @@ void itti_free_msg_content (MessageDef * const message_p)
   }
   break;
 
-  case MME_APP_INITIAL_CONTEXT_SETUP_RSP: {
-    int num = message_p->ittiMsg.mme_app_initial_context_setup_rsp.no_of_e_rabs;
-    for (int i = 0; i < num; i++) {
-      bdestroy_wrapper (&message_p->ittiMsg.mme_app_initial_context_setup_rsp.transport_layer_address[i]);
-      AssertFatal(NULL == message_p->ittiMsg.mme_app_initial_context_setup_rsp.transport_layer_address[i], "TODO clean pointer");
-    }
-  }
-  break;
-
-  case MME_APP_UPDATE_ESM_BEARER_CTXS_REQ: {
-    /** Bearer Context to Be updated. */
-    if(message_p->ittiMsg.mme_app_update_esm_bearer_ctxs_req.bcs_to_be_updated){
-      free_bearer_contexts_to_be_updated(&message_p->ittiMsg.mme_app_update_esm_bearer_ctxs_req.bcs_to_be_updated);
-    }
-  }
-  break;
-
-  case NAS_PDN_CONNECTIVITY_REQ:{
-    clear_protocol_configuration_options(&message_p->ittiMsg.nas_pdn_connectivity_req.pco);
-    bdestroy_wrapper (&message_p->ittiMsg.nas_pdn_connectivity_req.apn);
-    bdestroy_wrapper (&message_p->ittiMsg.nas_pdn_connectivity_req.pdn_addr);
-    AssertFatal(NULL == message_p->ittiMsg.nas_pdn_connectivity_req.pdn_addr, "TODO clean pointer");
-  }
-  break;
-
-  case NAS_INITIAL_UE_MESSAGE:
-    bdestroy_wrapper (&message_p->ittiMsg.nas_initial_ue_message.nas.initial_nas_msg);
-    AssertFatal(NULL == message_p->ittiMsg.nas_initial_ue_message.nas.initial_nas_msg, "TODO clean pointer");
-    break;
-
-  case NAS_CONNECTION_ESTABLISHMENT_CNF:
-    bdestroy_wrapper (&message_p->ittiMsg.nas_conn_est_cnf.nas_msg);
-    AssertFatal(NULL == message_p->ittiMsg.nas_conn_est_cnf.nas_msg, "TODO clean pointer");
-    break;
-
-  case NAS_CONNECTION_RELEASE_IND:
-    // DO nothing
-    break;
-
-  case NAS_UPLINK_DATA_IND:
-    bdestroy_wrapper (&message_p->ittiMsg.nas_ul_data_ind.nas_msg);
-    AssertFatal(NULL == message_p->ittiMsg.nas_ul_data_ind.nas_msg, "TODO clean pointer");
-    break;
-
-  case NAS_DOWNLINK_DATA_REQ:
-    bdestroy_wrapper (&message_p->ittiMsg.nas_dl_data_req.nas_msg);
-    AssertFatal(NULL == message_p->ittiMsg.nas_dl_data_req.nas_msg, "TODO clean pointer");
-    break;
-
-  case NAS_DOWNLINK_DATA_CNF:
-    // DO nothing
-    break;
-
-  case NAS_DOWNLINK_DATA_REJ:
-    bdestroy_wrapper (&message_p->ittiMsg.nas_dl_data_rej.nas_msg);
-    AssertFatal(NULL == message_p->ittiMsg.nas_dl_data_rej.nas_msg, "TODO clean pointer");
-    break;
-
-  case NAS_AUTHENTICATION_PARAM_REQ:
-  case NAS_DETACH_REQ:
-    // DO nothing
-    break;
-
-  case NAS_PDN_CONNECTIVITY_RSP:{
-    clear_protocol_configuration_options(&message_p->ittiMsg.nas_pdn_connectivity_rsp.pco);
-    bdestroy_wrapper (&message_p->ittiMsg.nas_pdn_connectivity_rsp.pdn_addr);
-    AssertFatal(NULL == message_p->ittiMsg.nas_pdn_connectivity_rsp.pdn_addr, "TODO clean pointer");
-  }
-  break;
-
-  case NAS_PDN_DISCONNECT_REQ:{
-    bdestroy_wrapper (&message_p->ittiMsg.nas_pdn_disconnect_req.apn);
-    AssertFatal(NULL == message_p->ittiMsg.nas_pdn_disconnect_req.apn, "TODO clean pointer");
-  }
-  break;
-
-  case NAS_PDN_CONNECTIVITY_FAIL:
-    // DO nothing
-    break;
-
-  case NAS_ERAB_SETUP_REQ:
-    bdestroy_wrapper (&message_p->ittiMsg.nas_erab_setup_req.nas_msg);
-    break;
-
-  case NAS_ERAB_RELEASE_REQ:
-    bdestroy_wrapper (&message_p->ittiMsg.nas_erab_release_req.nas_msg);
-    break;
-
-  case NAS_PDN_CONFIG_REQ:
-    bdestroy_wrapper (&message_p->ittiMsg.nas_pdn_config_req.apn);
-    bdestroy_wrapper (&message_p->ittiMsg.nas_pdn_config_req.pdn_addr);
-    AssertFatal(NULL == message_p->ittiMsg.nas_pdn_config_req.pdn_addr, "TODO clean pointer");
-   break;
-
-  case NAS_CONTEXT_REQ:
-    bdestroy_wrapper (&message_p->ittiMsg.nas_context_req.nas_msg);
-    AssertFatal(NULL == message_p->ittiMsg.nas_context_req.nas_msg, "TODO clean pointer");
-    break;
-
   case S11_CREATE_SESSION_REQUEST: {
-    clear_protocol_configuration_options(&message_p->ittiMsg.s11_create_session_request.pco);
+     clear_protocol_configuration_options(&message_p->ittiMsg.s11_create_session_request.pco);
+     if(message_p->ittiMsg.s11_create_session_request.bearer_contexts_to_be_created){
+       free_bearer_contexts_to_be_created(&message_p->ittiMsg.s11_create_session_request.bearer_contexts_to_be_created);
+     }
   }
   break;
 
   case S11_CREATE_SESSION_RESPONSE: {
+    if(message_p->ittiMsg.s11_create_session_response.paa)
+        free_wrapper(&message_p->ittiMsg.s11_create_session_response.paa);
     clear_protocol_configuration_options(&message_p->ittiMsg.s11_create_session_response.pco);
   }
   break;
@@ -231,6 +222,11 @@ void itti_free_msg_content (MessageDef * const message_p)
   }
   break;
 
+  case S11_BEARER_RESOURCE_COMMAND: {
+    clear_traffic_flow_template(&message_p->ittiMsg.s11_bearer_resource_command.tad);
+  }
+  break;
+
   case S11_CREATE_BEARER_RESPONSE: {
     clear_protocol_configuration_options(&message_p->ittiMsg.s11_create_bearer_response.pco);
   }
@@ -239,7 +235,10 @@ void itti_free_msg_content (MessageDef * const message_p)
   case S11_MODIFY_BEARER_REQUEST:
   case S11_MODIFY_BEARER_RESPONSE:
   case S11_DELETE_SESSION_REQUEST:
-    // DO nothing (trxn)
+  case S11_DELETE_BEARER_COMMAND:
+  case S11_DELETE_BEARER_FAILURE_INDICATION:
+  case S11_BEARER_RESOURCE_FAILURE_INDICATION:
+   // DO nothing (trxn)
     break;
 
   case S11_DELETE_SESSION_RESPONSE: {
@@ -285,20 +284,37 @@ void itti_free_msg_content (MessageDef * const message_p)
     break;
 
   case S1AP_INITIAL_UE_MESSAGE:
-    bdestroy_wrapper (&message_p->ittiMsg.s1ap_initial_ue_message.nas);
+//    free_wrapper(&message_p->ittiMsg.s1ap_initial_ue_message.test_plmn);
+    if(message_p->ittiMsg.s1ap_initial_ue_message.nas)
+      bdestroy_wrapper (&message_p->ittiMsg.s1ap_initial_ue_message.nas);
     break;
 
   case S1AP_E_RAB_SETUP_REQ: {
-      for (int i = 0; i < message_p->ittiMsg.s1ap_e_rab_setup_req.e_rab_to_be_setup_list.no_of_items; i++) {
-        bdestroy_wrapper (&message_p->ittiMsg.s1ap_e_rab_setup_req.e_rab_to_be_setup_list.item[i].nas_pdu);
-        bdestroy_wrapper (&message_p->ittiMsg.s1ap_e_rab_setup_req.e_rab_to_be_setup_list.item[i].transport_layer_address);
-      }
+    for (int i = 0; i < message_p->ittiMsg.s1ap_e_rab_setup_req.e_rab_to_be_setup_list.no_of_items; i++) {
+      bdestroy_wrapper (&message_p->ittiMsg.s1ap_e_rab_setup_req.e_rab_to_be_setup_list.item[i].nas_pdu);
+      bdestroy_wrapper (&message_p->ittiMsg.s1ap_e_rab_setup_req.e_rab_to_be_setup_list.item[i].transport_layer_address);
     }
-    break;
+  }
+  break;
 
   case S1AP_E_RAB_SETUP_RSP: {
       for (int i = 0; i < message_p->ittiMsg.s1ap_e_rab_setup_rsp.e_rab_setup_list.no_of_items; i++) {
         bdestroy_wrapper (&message_p->ittiMsg.s1ap_e_rab_setup_rsp.e_rab_setup_list.item[i].transport_layer_address);
+      }
+    }
+  break;
+
+  case S1AP_E_RAB_MODIFY_REQ: {
+    for (int i = 0; i < message_p->ittiMsg.s1ap_e_rab_modify_req.e_rab_to_be_modified_list.no_of_items; i++) {
+      bdestroy_wrapper (&message_p->ittiMsg.s1ap_e_rab_modify_req.e_rab_to_be_modified_list.item[i].nas_pdu);
+      bdestroy_wrapper (&message_p->ittiMsg.s1ap_e_rab_modify_req.e_rab_to_be_modified_list.item[i].transport_layer_address);
+    }
+  }
+  break;
+
+  case S1AP_E_RAB_MODIFY_RSP: {
+      for (int i = 0; i < message_p->ittiMsg.s1ap_e_rab_modify_rsp.e_rab_modify_list.no_of_items; i++) {
+        bdestroy_wrapper (&message_p->ittiMsg.s1ap_e_rab_modify_rsp.e_rab_modify_list.item[i].transport_layer_address);
       }
     }
   break;
@@ -339,12 +355,15 @@ void itti_free_msg_content (MessageDef * const message_p)
     break;
 
   case S6A_UPDATE_LOCATION_REQ:
-  case S6A_UPDATE_LOCATION_ANS:
   case S6A_AUTH_INFO_REQ:
   case S6A_AUTH_INFO_ANS:
   case S6A_CANCEL_LOCATION_REQ:
   case S6A_RESET_REQ:
     // DO nothing
+    break;
+  case S6A_UPDATE_LOCATION_ANS:
+    if(message_p->ittiMsg.s6a_update_location_ans.subscription_data)
+      free_wrapper((void**)&message_p->ittiMsg.s6a_update_location_ans.subscription_data);
     break;
 
   case SCTP_INIT_MSG:
@@ -396,13 +415,13 @@ void itti_free_msg_content (MessageDef * const message_p)
     }
     break;
 
-  case S1AP_HANDOVER_REQUEST_ACKNOWLEDGE:
-    bdestroy_wrapper(&message_p->ittiMsg.s1ap_handover_request_acknowledge.target_to_source_eutran_container);
-    for (int i = 0; i < message_p->ittiMsg.s1ap_handover_request_acknowledge.no_of_e_rabs; i++) {
-      bdestroy_wrapper (&message_p->ittiMsg.s1ap_handover_request_acknowledge.transport_layer_address[i]);
-//          bdestroy_wrapper (&message_p->ittiMsg.s1ap_e_rab_setup_req.e_rab_to_be_setup_list.item[i].transport_layer_address);
-    }
-    break;
+//  case S1AP_HANDOVER_REQUEST_ACKNOWLEDGE:
+//    bdestroy_wrapper(&message_p->ittiMsg.s1ap_handover_request_acknowledge.target_to_source_eutran_container);
+//    for (int i = 0; i < message_p->ittiMsg.s1ap_handover_request_acknowledge.no_of_e_rabs; i++) {
+//      bdestroy_wrapper (&message_p->ittiMsg.s1ap_handover_request_acknowledge.transport_layer_address[i]);
+////          bdestroy_wrapper (&message_p->ittiMsg.s1ap_e_rab_setup_req.e_rab_to_be_setup_list.item[i].transport_layer_address);
+//    }
+//    break;
 
   case S1AP_HANDOVER_COMMAND:
     bdestroy_wrapper(&message_p->ittiMsg.s1ap_handover_command.eutran_target_to_source_container);
@@ -443,11 +462,6 @@ void itti_free_msg_content (MessageDef * const message_p)
   case S10_FORWARD_RELOCATION_RESPONSE:
     /** Transparent Container. */
     bdestroy_wrapper(&message_p->ittiMsg.s10_forward_relocation_response.eutran_container.container_value);
-
-    /** Handovered Bearers. */
-    if(message_p->ittiMsg.s10_forward_relocation_response.handovered_bearers){
-      free_bearer_contexts_to_be_created(&message_p->ittiMsg.s10_forward_relocation_response.handovered_bearers);
-    }
     break;
 
   case S10_FORWARD_ACCESS_CONTEXT_NOTIFICATION:

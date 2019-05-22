@@ -59,14 +59,14 @@
 #include "3gpp_24.301.h"
 #include "security_types.h"
 #include "common_types.h"
-#include "emm_msg.h"
-#include "esm_msg.h"
 #include "intertask_interface.h"
 #include "common_defs.h"
-#include "mme_api.h"
 #include "mme_app_ue_context.h"
 #include "mme_app_defs.h"
 #include "mme_config.h"
+#include "mme_api.h"
+#include "emm_msg.h"
+#include "esm_msg.h"
 
 #include "mme_app_procedures.h"
 /****************************************************************************/
@@ -78,11 +78,7 @@ extern mme_app_desc_t                   mme_app_desc;
 /*******************  L O C A L    D E F I N I T I O N S  *******************/
 /****************************************************************************/
 
-/* Maximum number of PDN connections the MME may simultaneously support */
-#define MME_API_PDN_MAX         10
-
 static mme_api_ip_version_t             _mme_api_ip_capability = MME_API_IPV4V6_ADDR;
-
 
 /* Subscribed QCI */
 #define MME_API_QCI     3
@@ -92,9 +88,6 @@ static mme_api_ip_version_t             _mme_api_ip_capability = MME_API_IPV4V6_
 #define MME_API_BIT_RATE_128K   0x48
 #define MME_API_BIT_RATE_512K   0x78
 #define MME_API_BIT_RATE_1024K  0x87
-
-/* Total number of PDN connections (should not exceed MME_API_PDN_MAX) */
-static int                              _mme_api_pdn_id = 0;
 
 /****************************************************************************/
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
@@ -152,6 +145,7 @@ mme_api_get_emm_config (
         AssertFatal ((mme_config_p->served_tai.plmn_mnc_len[0] >= 2) && (mme_config_p->served_tai.plmn_mnc_len[0] <= 3), "BAD MNC length for GUMMEI");
       }
       config->tai_list.partial_tai_list[0].u.tai_one_plmn_consecutive_tacs.tac            = mme_config_p->served_tai.tac[0];
+      config->tai_list.partial_tai_list[0].numberofelements		                          = mme_config_p->served_tai.nb_tai -1;
       break;
 
     case TRACKING_AREA_IDENTITY_LIST_TYPE_MANY_PLMNS:
@@ -250,44 +244,11 @@ mme_api_get_emm_config (
     config->prefered_integrity_algorithm[i] = mme_config_p->nas_config.prefered_integrity_algorithm[i];
     config->prefered_ciphering_algorithm[i] = mme_config_p->nas_config.prefered_ciphering_algorithm[i];
   }
+
+  /** Set if TAU will be enforced. */
+  config->force_tau = mme_config_p->nas_config.force_tau;
   OAILOG_FUNC_RETURN (LOG_NAS, RETURNok);
 }
-
-
-/****************************************************************************
- **                                                                        **
- ** Name:    mme_api_get_config()                                      **
- **                                                                        **
- ** Description: Retreives MME configuration data related to EPS session   **
- **      management                                                **
- **                                                                        **
- ** Inputs:  None                                                      **
- **      Others:    None                                       **
- **                                                                        **
- ** Outputs:     None                                                      **
- **      Return:    RETURNok, RETURNerror                      **
- **      Others:    None                                       **
- **                                                                        **
- ***************************************************************************/
-int
-mme_api_get_esm_config (
-  mme_api_esm_config_t * config)
-{
-  OAILOG_FUNC_IN (LOG_NAS);
-
-  if (_mme_api_ip_capability == MME_API_IPV4_ADDR) {
-    config->features = MME_API_IPV4;
-  } else if (_mme_api_ip_capability == MME_API_IPV6_ADDR) {
-    config->features = MME_API_IPV6;
-  } else if (_mme_api_ip_capability == MME_API_IPV4V6_ADDR) {
-    config->features = MME_API_IPV4 | MME_API_IPV6;
-  } else {
-    config->features = 0;
-  }
-
-  OAILOG_FUNC_RETURN (LOG_NAS, RETURNok);
-}
-
 
 /*
  *
@@ -378,28 +339,9 @@ mme_api_notify_new_guti (
   OAILOG_FUNC_RETURN (LOG_NAS, RETURNerror);
 }
 
-//------------------------------------------------------------------------------
-/*
- *
- *  Name:    mme_api_registration_complete()
- *
- *  Description: Notify the MME that a UE has successfully registered via Attach or Tracking Area Update specific procedure.
- *
- *  Inputs:
- *         ueid:      emm_context id
- *  Return:    void
- *
- */
-int mme_api_registration_complete(const mme_ue_s1ap_id_t mme_ue_s1ap_id){
-  return mme_app_registration_complete(mme_ue_s1ap_id);
-}
-
 /****************************************************************************
  **                                                                        **
  ** Name:    mme_api_new_guti()                                        **
- **                                                                        **
- ** Description: Requests the MME to assign a new GUTI to the UE identi-   **
- **      fied by the given IMSI.                                   **
  **                                                                        **
  ** Description: Requests the MME to assign a new GUTI to the UE identi-   **
  **      fied by the given IMSI and returns the list of consecu-   **
@@ -424,7 +366,7 @@ mme_api_new_guti (
 {
   OAILOG_FUNC_IN (LOG_NAS);
   ue_context_t                       *ue_context = NULL;
-  imsi64_t                               imsi64 = imsi_to_imsi64 (imsi);
+  imsi64_t                            imsi64 = imsi_to_imsi64 (imsi);
 
   ue_context = mme_ue_context_exists_imsi (&mme_app_desc.mme_ue_contexts, imsi64);
 
@@ -443,17 +385,31 @@ mme_api_new_guti (
 //      unlock_ue_contexts(ue_context);
 //      OAILOG_FUNC_RETURN (LOG_NAS, RETURNerror);
 //    }
-//    if (RUN_MODE_TEST == mme_config.run_mode) {
-//      guti->m_tmsi = __sync_fetch_and_add (&mme_m_tmsi_generator, 0x00000001);
-//    } else {
-      guti->m_tmsi                 = (tmsi_t)(uintptr_t)ue_context;
-//    }
+    /** Definitely not using the UE structure as GUTI, since it should be unique even after reattaches. */
+    guti->m_tmsi = ue_context->mme_teid_s11;
     if (guti->m_tmsi == INVALID_M_TMSI) {
       OAILOG_FUNC_RETURN (LOG_NAS, RETURNerror);
     }
     mme_api_notify_new_guti(ue_context->mme_ue_s1ap_id, guti);
   } else {
     OAILOG_FUNC_RETURN (LOG_NAS, RETURNerror);
+  }
+
+  if(_emm_data.conf.force_tau){
+	  /** Only give the current TAC in the list. */
+	  OAILOG_INFO (LOG_NAS, "UE " MME_UE_S1AP_ID_FMT "  with GUTI " GUTI_FMT " will only receive its TAC " TAC_FMT " in the TAI list to enforce "
+			  "TAU.\n", ue_context->mme_ue_s1ap_id, GUTI_ARG(guti), originating_tai->tac);
+	  tai_list->numberoflists = 1;
+	  tai_list->partial_tai_list[0].numberofelements = 0; /**< + 1. */
+	  tai_list->partial_tai_list[0].typeoflist = TRACKING_AREA_IDENTITY_LIST_ONE_PLMN_CONSECUTIVE_TACS;
+	  tai_list->partial_tai_list[0].u.tai_one_plmn_consecutive_tacs.tac = originating_tai->tac;
+	  tai_list->partial_tai_list[0].u.tai_one_plmn_consecutive_tacs.plmn.mcc_digit1 = originating_tai->plmn.mcc_digit1;
+	  tai_list->partial_tai_list[0].u.tai_one_plmn_consecutive_tacs.plmn.mcc_digit2 = originating_tai->plmn.mcc_digit2;
+	  tai_list->partial_tai_list[0].u.tai_one_plmn_consecutive_tacs.plmn.mcc_digit3 = originating_tai->plmn.mcc_digit3;
+	  tai_list->partial_tai_list[0].u.tai_one_plmn_consecutive_tacs.plmn.mnc_digit1 = originating_tai->plmn.mnc_digit1;
+	  tai_list->partial_tai_list[0].u.tai_one_plmn_consecutive_tacs.plmn.mnc_digit2 = originating_tai->plmn.mnc_digit2;
+	  tai_list->partial_tai_list[0].u.tai_one_plmn_consecutive_tacs.plmn.mnc_digit3 = originating_tai->plmn.mnc_digit3;
+	  OAILOG_FUNC_RETURN (LOG_NAS, RETURNok);
   }
 
   int  j = 0;
@@ -540,95 +496,26 @@ mme_api_new_guti (
   OAILOG_FUNC_RETURN (LOG_NAS, RETURNok);
 }
 
-//------------------------------------------------------------------------------
-bool
-mme_api_get_pending_bearer_deactivation (mme_ue_s1ap_id_t mme_ue_s1ap_id) {
-  OAILOG_FUNC_IN (LOG_NAS);
-  int                                     rc = RETURNok;
-  ue_context_t                           *ue_context = NULL;
-  ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, mme_ue_s1ap_id);
-  if(ue_context){
-    return ue_context->pending_bearer_deactivation;
-  }
-}
-
-//------------------------------------------------------------------------------
-void
-mme_api_set_pending_bearer_deactivation (mme_ue_s1ap_id_t mme_ue_s1ap_id, bool pending_bearer_deactivation) {
-  OAILOG_FUNC_IN (LOG_NAS);
-  int                                     rc = RETURNok;
-  ue_context_t                           *ue_context = NULL;
-  ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, mme_ue_s1ap_id);
-  if(ue_context){
-    ue_context->pending_bearer_deactivation = pending_bearer_deactivation;
-  }
-}
-
 /****************************************************************************
  **                                                                        **
- ** Name:        mme_api_subscribe()                                       **
+ ** Name:    mme_api_remove_subscription_data()                                        **
  **                                                                        **
- ** Description: Requests the MME to check whether connectivity with the   **
- **              requested PDN can be established using the specified APN. **
- **              If accepted the MME returns PDN subscription context con- **
- **              taining EPS subscribed QoS profile, the default APN if    **
- **              required and UE's IPv4 address and/or the IPv6 prefix.    **
+ ** Description: Removes the subscription profile downloaded from the HSS
+ **      based on the IMSI.                                   **
  **                                                                        **
- ** Inputs:  apn:               If not NULL, Access Point Name of the PDN  **
- **                             to connect to                              **
- **              is_emergency:  true if the PDN connectivity is requested  **
- **                             for emergency bearer services              **
- **                  Others:    None                                       **
+ ** Inputs:  imsi:      International Mobile Subscriber Identity   **
+ **      Others:    None                                       **
  **                                                                        **
- ** Outputs:         apn:       If NULL, default APN or APN configured for **
- **                             emergency bearer services                  **
- **                  pdn_addr:  PDN connection IPv4 address or IPv6 inter- **
- **                             face identifier to be used to build the    **
- **                             IPv6 link local address                    **
- **                  qos:       EPS subscribed QoS profile                 **
- **                  Return:    RETURNok, RETURNerror                      **
- **                  Others:    None                                       **
+ ** Outputs:        None                                       **
  **                                                                        **
  ***************************************************************************/
-int
-mme_api_subscribe (
-  bstring * apn,
-  mme_api_ip_version_t mme_pdn_index,
-  bstring * pdn_addr,
-  int is_emergency,
-  mme_api_qos_t * qos)
-{
-  int                                     rc = RETURNok;
-
-  OAILOG_FUNC_IN (LOG_NAS);
-  OAILOG_FUNC_RETURN (LOG_NAS, rc);
-}
-
-/****************************************************************************
- **                                                                        **
- ** Name:        mme_api_unsubscribe()                                     **
- **                                                                        **
- ** Description: Requests the MME to release connectivity with the reques- **
- **              ted PDN using the specified APN.                          **
- **                                                                        **
- ** Inputs:  apn:               Access Point Name of the PDN to disconnect **
- **                             from                                       **
- **                  Others:    None                                       **
- **                                                                        **
- ** Outputs:     None                                                      **
- **                  Return:    RETURNok, RETURNerror                      **
- **                  Others:    None                                       **
- **                                                                        **
- ***************************************************************************/
-int
-mme_api_unsubscribe ( bstring apn)
+subscription_data_t *
+mme_api_remove_subscription_data (
+  const imsi64_t const imsi64)
 {
   OAILOG_FUNC_IN (LOG_NAS);
-  int                                     rc = RETURNok;
 
-  /*
-   * Decrement the total number of PDN connections
-   */
-  _mme_api_pdn_id -= 1;
-  OAILOG_FUNC_RETURN (LOG_NAS, rc);
+  /* Remove the subscription information. */
+  subscription_data_t * subscription_data = mme_remove_subscription_profile(&mme_app_desc.mme_ue_contexts, imsi64);
+  OAILOG_FUNC_RETURN (LOG_NAS, subscription_data);
 }

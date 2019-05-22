@@ -48,59 +48,20 @@
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"
 #include "3gpp_29.274.h"
-#include "emm_data.h"
-#include "nas_timer.h"
-#include "esm_data.h"
-#include "commonDef.h"
+#include "common_defs.h"
 #include "networkDef.h"
 #include "log.h"
-#include "esm_ebr_context.h"
-
 #include "dynamic_memory_check.h"
 
 #include "common_defs.h"
 
 #include "mme_app_ue_context.h"
 #include "mme_config.h"
+
+#include "emm_data.h"
 #include "esm_proc.h"
-
-
-// free allocated structs
-//------------------------------------------------------------------------------
-void free_esm_bearer_context(esm_ebr_context_t * esm_ebr_context)
-{
-  if (esm_ebr_context) {
-    if (esm_ebr_context->pco) {
-      free_protocol_configuration_options(&esm_ebr_context->pco);
-    }
-    if (esm_ebr_context->tft) {
-      free_traffic_flow_template(&esm_ebr_context->tft);
-    }
-    if (NAS_TIMER_INACTIVE_ID != esm_ebr_context->timer.id) {
-      esm_ebr_timer_data_t * esm_ebr_timer_data = NULL;
-      esm_ebr_context->timer.id = nas_timer_stop (esm_ebr_context->timer.id, (void**)&esm_ebr_timer_data);
-      /*
-       * Release the retransmisison timer parameters
-       */
-      if (esm_ebr_timer_data) {
-        if (esm_ebr_timer_data->msg) {
-          bdestroy_wrapper (&esm_ebr_timer_data->msg);
-        }
-        free_wrapper ((void**)&esm_ebr_timer_data);
-      }
-    }
-  }
-}
-
-//------------------------------------------------------------------------------
-void esm_bearer_context_init(esm_ebr_context_t * esm_ebr_context)
-{
-  if (esm_ebr_context) {
-    memset(esm_ebr_context, 0, sizeof(*esm_ebr_context));
-    esm_ebr_context->status   = ESM_EBR_INACTIVE;
-    esm_ebr_context->timer.id = NAS_TIMER_INACTIVE_ID;
-  }
-}
+#include "esm_data.h"
+#include "nas_timer.h"
 
 // free allocated structs
 //------------------------------------------------------------------------------
@@ -115,46 +76,3 @@ void esm_bearer_context_init(esm_ebr_context_t * esm_ebr_context)
 //    free_wrapper((void**)&pdn);
 //  }
 //}
-
-//------------------------------------------------------------------------------
-void nas_stop_T3489(esm_context_t * const esm_ctx)
-{
-
-  if ((esm_ctx) && (esm_ctx->T3489.id != NAS_TIMER_INACTIVE_ID)) {
-    emm_data_context_t        *emm_context   = PARENT_STRUCT(esm_ctx, struct emm_data_context_s, esm_ctx);
-    mme_ue_s1ap_id_t       ue_id = emm_context->ue_id;
-    void *nas_timer_callback_args;
-    esm_ctx->T3489.id = nas_timer_stop (esm_ctx->T3489.id, (void**)&nas_timer_callback_args);
-    if (NAS_TIMER_INACTIVE_ID == esm_ctx->T3489.id) {
-      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 T3489 stopped UE " MME_UE_S1AP_ID_FMT " ", ue_id);
-      OAILOG_INFO (LOG_NAS_EMM, "T3489 stopped UE " MME_UE_S1AP_ID_FMT "\n", ue_id);
-    } else {
-      OAILOG_ERROR (LOG_NAS_EMM, "Could not stop T3489 UE " MME_UE_S1AP_ID_FMT "\n", ue_id);
-    }
-  }
-}
-
-// free allocated structs
-//------------------------------------------------------------------------------
-void free_esm_context_content(esm_context_t * esm_ctx)
-{
-  if (esm_ctx) {
-    nas_stop_T3489(esm_ctx);
-    /** Delete the ESM context. */
-    if(esm_ctx->esm_proc_data){
-      bdestroy_wrapper(&esm_ctx->esm_proc_data->apn);
-      bdestroy_wrapper(&esm_ctx->esm_proc_data->pdn_addr);
-      free_wrapper((void **) &esm_ctx->esm_proc_data);
-    }
-  }
-}
-
-//------------------------------------------------------------------------------
-void esm_init_context(struct esm_context_s *esm_context)
-{
-  emm_data_context_t        *emm_context   = PARENT_STRUCT(esm_context, struct emm_data_context_s, esm_ctx);
-  OAILOG_DEBUG (LOG_NAS_ESM, "ESM-CTX - Init UE id " MME_UE_S1AP_ID_FMT "\n", emm_context->ue_id);
-  memset(esm_context, 0, sizeof(*esm_context));
-  esm_context->T3489.id        = NAS_TIMER_INACTIVE_ID;
-  esm_context->T3489.sec       = mme_config.nas_config.t3489_sec;
-}

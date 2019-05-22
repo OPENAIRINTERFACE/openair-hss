@@ -269,6 +269,9 @@ install_freediameter_from_source() {
     cd freediameter
     #patch -p1 < $OPENAIRCN_DIR/src/s6a/freediameter/freediameter-1.2.0.patch
     patch -p1 < $OPENAIRCN_DIR/src/s6a/freediameter/freediameter_eurecom-1.2.0_0001-S6a-dictionary-add-CLR-Flags.patch
+    if [ -n "$fd_install_conformity" ] && [ $fd_install_conformity -gt 0 ]; then
+      patch -p1 < $OPENAIRCN_DIR/src/s6a/freediameter/freediameter_compatibility-1.2.0_patch_0001-S6a-dictionary-avp493.patch
+    fi
     mkdir build
     cd build
     $CMAKE -DCMAKE_INSTALL_PREFIX:PATH=/usr/local ../

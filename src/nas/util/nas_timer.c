@@ -48,10 +48,11 @@
 
 #include "intertask_interface.h"
 #include "timer.h"
-#include "nas_timer.h"
-#include "commonDef.h"
+#include "common_defs.h"
 #include "common_defs.h"
 #include "dynamic_memory_check.h"
+#include "intertask_interface_types.h"
+#include "nas_timer.h"
 
 //------------------------------------------------------------------------------
 int nas_timer_init (void)
@@ -64,11 +65,13 @@ void nas_timer_cleanup (void)
 {
 }
 
-//------------------------------------------------------------------------------
 
-long int nas_timer_start (
+
+//------------------------------------------------------------------------------
+static long int nas_timer_start (
     long sec,
     long usec,
+    bool is_emm,
     nas_timer_callback_t nas_timer_callback,
     void *nas_timer_callback_args)
 {
@@ -86,7 +89,9 @@ long int nas_timer_start (
   nas_itti_timer_arg->nas_timer_callback = nas_timer_callback;
   nas_itti_timer_arg->nas_timer_callback_arg = nas_timer_callback_args;
 
-  ret = timer_setup (sec, usec, TASK_NAS_MME, INSTANCE_DEFAULT, TIMER_ONE_SHOT, nas_itti_timer_arg, &timer_id);
+  ret = timer_setup (sec, usec,
+      ((is_emm) ? TASK_NAS_EMM : TASK_NAS_ESM),
+      INSTANCE_DEFAULT, TIMER_ONE_SHOT, nas_itti_timer_arg, &timer_id);
 
   if (ret == -1) {
     free_wrapper((void*)&nas_itti_timer_arg);
@@ -98,12 +103,32 @@ long int nas_timer_start (
 }
 
 //------------------------------------------------------------------------------
+long int nas_emm_timer_start (
+    long sec,
+    long usec,
+    nas_timer_callback_t nas_timer_callback,
+    void *nas_timer_callback_args)
+{
+  return nas_timer_start(sec, usec, true, nas_timer_callback, nas_timer_callback_args);
+}
+
+//------------------------------------------------------------------------------
+long int nas_esm_timer_start (
+    long sec,
+    long usec,
+    void *nas_timer_callback_args)
+{
+  return nas_timer_start(sec, usec, false, _nas_proc_esm_timeout_handler, nas_timer_callback_args);
+}
+
+//------------------------------------------------------------------------------
 long int nas_timer_stop (long int timer_id, void **nas_timer_callback_arg)
 {
   nas_itti_timer_arg_t                   *nas_itti_timer_arg = NULL;
   timer_remove (timer_id, (void**)&nas_itti_timer_arg);
   if (nas_itti_timer_arg) {
     *nas_timer_callback_arg = nas_itti_timer_arg->nas_timer_callback_arg;
+    nas_itti_timer_arg->nas_timer_callback_arg = NULL;
     free_wrapper((void**)&nas_itti_timer_arg);
   } else {
     *nas_timer_callback_arg = NULL;

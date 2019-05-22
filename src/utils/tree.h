@@ -675,4 +675,9 @@ name##_RB_MINMAX(struct name *head, int val)        \
        (x) != NULL;           \
        (x) = name##_RB_NEXT(x))
 
+#define RB_FOREACH_SAFE(x, name, head, y)       \
+  for ((x) = RB_MIN(name, head);          \
+      ((x) != NULL) && ((y) = name##_RB_NEXT(x), (x) != NULL);  \
+       (x) = (y))
+
 #endif  /* _SYS_TREE_H_ */

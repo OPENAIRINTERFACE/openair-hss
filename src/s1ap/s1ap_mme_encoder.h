@@ -25,7 +25,8 @@
 #ifndef FILE_S1AP_MME_ENCODER_SEEN
 #define FILE_S1AP_MME_ENCODER_SEEN
 
-int s1ap_mme_encode_pdu(s1ap_message *message, uint8_t **buffer, uint32_t *len)
-__attribute__ ((warn_unused_result));
+int s1ap_mme_encode_pdu(s1ap_message *message, MessagesIds *message_id, uint8_t **buffer, uint32_t *len)__attribute__ ((warn_unused_result));
+
+int s1ap_free_mme_encode_pdu(s1ap_message *message, MessagesIds message_id);
 
 #endif /* FILE_S1AP_MME_ENCODER_SEEN */

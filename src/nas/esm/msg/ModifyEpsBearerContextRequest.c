@@ -33,9 +33,9 @@
 #include "3gpp_24.301.h"
 #include "TLVEncoder.h"
 #include "TLVDecoder.h"
+#include "ApnAggregateMaximumBitRate.h"
 #include "EpsQualityOfService.h"
 #include "RadioPriority.h"
-#include "ApnAggregateMaximumBitRate.h"
 #include "ModifyEpsBearerContextRequest.h"
 
 int

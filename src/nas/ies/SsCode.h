@@ -21,7 +21,6 @@
 
 #ifndef SS_CODE_SEEN
 #define SS_CODE_SEEN
-#include <stdint.h>
 
 #define SS_CODE_MINIMUM_LENGTH 2
 #define SS_CODE_MAXIMUM_LENGTH 2

@@ -42,21 +42,31 @@
 
 
 
-static obj_hash_table_t * g_e_dns_entries = NULL;
+static obj_hash_table_t * sgw_e_dns_entries = NULL;
+static obj_hash_table_t * mme_e_dns_entries = NULL;
 
 //------------------------------------------------------------------------------
-struct in_addr* mme_app_edns_get_wrr_entry(bstring id)
+struct in_addr* mme_app_edns_get_wrr_entry(bstring id, const interface_type_t interface_type)
 {
   struct in_addr *in_addr = NULL;
-  obj_hashtable_get (g_e_dns_entries, bdata(id), blength(id),
-    (void **)&in_addr);
+  switch(interface_type){
+  case S10_MME_GTP_C:
+	  obj_hashtable_get (mme_e_dns_entries, bdata(id), blength(id),
+	      (void **)&in_addr);
+	  break;
+  case S11_SGW_GTP_C:
+  	  obj_hashtable_get (sgw_e_dns_entries, bdata(id), blength(id),
+  	      (void **)&in_addr);
+  	  break;
+  default :
+	  break;
+  }
 
   return in_addr;
 }
 
-
 //------------------------------------------------------------------------------
-int mme_app_edns_add_wrr_entry(bstring id, struct in_addr in_addr)
+int mme_app_edns_add_wrr_entry(bstring id, struct in_addr in_addr, const interface_type_t interface_type)
 {
   if (INADDR_ANY == in_addr.s_addr) {
     // Do not halt the config process
@@ -69,8 +79,20 @@ int mme_app_edns_add_wrr_entry(bstring id, struct in_addr in_addr)
     struct in_addr *data = malloc(sizeof(struct in_addr));
     if (data) {
       data->s_addr = in_addr.s_addr;
+      hashtable_rc_t rc;
+      switch(interface_type){
+      case S10_MME_GTP_C:
+    	  rc = obj_hashtable_insert (mme_e_dns_entries, cid, strlen(cid), data);
+    	  break;
+      case S11_SGW_GTP_C:
+          rc = obj_hashtable_insert (sgw_e_dns_entries, cid, strlen(cid), data);
+      	  break;
+      default :
+    	  return RETURNerror;
+      }
 
-      hashtable_rc_t rc = obj_hashtable_insert (g_e_dns_entries, cid, strlen(cid), data);
+      /** Key is copied inside. */
+      free_wrapper(&cid);
       if (HASH_TABLE_OK == rc) return RETURNok;
     }
   }
@@ -81,17 +103,17 @@ int mme_app_edns_add_wrr_entry(bstring id, struct in_addr in_addr)
 int  mme_app_edns_init (const mme_config_t * mme_config_p)
 {
   int rc = RETURNok;
-  g_e_dns_entries = obj_hashtable_create (min(32, MME_CONFIG_MAX_SERVICE), NULL, free_wrapper, free_wrapper, NULL);
-  if (g_e_dns_entries) {
+  sgw_e_dns_entries = obj_hashtable_create (min(64, MME_CONFIG_MAX_SERVICE), NULL, free_wrapper, free_wrapper, NULL);
+  mme_e_dns_entries = obj_hashtable_create (min(64, MME_CONFIG_MAX_SERVICE), NULL, free_wrapper, free_wrapper, NULL);
+  if (sgw_e_dns_entries && mme_e_dns_entries) {
     /** Add the service (s10 or s11). */
     for (int i = 0; i < mme_config_p->e_dns_emulation.nb_service_entries; i++) {
-      rc |= mme_app_edns_add_wrr_entry(mme_config_p->e_dns_emulation.service_id[i], mme_config_p->e_dns_emulation.service_ip_addr[i]);
+    	rc |= mme_app_edns_add_wrr_entry(mme_config_p->e_dns_emulation.service_id[i], mme_config_p->e_dns_emulation.service_ip_addr[i], mme_config_p->e_dns_emulation.interface_type[i]);
     }
 //    /** Add the neighboring MMEs. */
 //    for (int i = 0; i < mme_config_p->e_dns_emulation.nb_mme_entries; i++) {
 //      rc |= mme_app_edns_add_mme_entry(mme_config_p->e_dns_emulation.mme_id[i], mme_config_p->e_dns_emulation.mme_ip_addr[i]);
 //    }
-
     return rc;
   }
   return RETURNerror;
@@ -100,5 +122,6 @@ int  mme_app_edns_init (const mme_config_t * mme_config_p)
 //------------------------------------------------------------------------------
 void  mme_app_edns_exit (void)
 {
-  obj_hashtable_destroy (g_e_dns_entries);
+  obj_hashtable_destroy (sgw_e_dns_entries);
+  obj_hashtable_destroy (mme_e_dns_entries);
 }

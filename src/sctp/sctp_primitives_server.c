@@ -281,12 +281,12 @@ static int sctp_send_msg (
    * Send message_p on specified stream of the sd association
    */
   if (sctp_sendmsg (assoc_desc->sd, (const void *)bdata(*payload), blength(*payload), NULL, 0, htonl(assoc_desc->ppid), 0, stream, 0, 0) < 0) {
-    *payload = NULL;
+    bdestroy_wrapper(payload);
     OAILOG_ERROR (LOG_SCTP, "send: %s:%d", strerror (errno), errno);
     return -1;
   }
   OAILOG_DEBUG (LOG_SCTP, "Successfully sent %d bytes on stream %d\n", blength(*payload), stream);
-  *payload = NULL;
+  bdestroy_wrapper(payload);
 
   assoc_desc->messages_sent++;
   return 0;
@@ -296,7 +296,7 @@ static int sctp_send_msg (
 static int sctp_create_new_listener (SctpInit * init_p)
 {
   struct sctp_event_subscribe             event = {0};
-  struct sockaddr                        *addr = NULL;
+//  struct sockaddr                        *addr = NULL;
   struct sctp_arg_s                      *sctp_arg_p = NULL;
   uint16_t                                i = 0,
                                           j = 0;
@@ -315,7 +315,8 @@ static int sctp_create_new_listener (SctpInit * init_p)
     return -1;
   }
 
-  addr = calloc (used_addresses, sizeof (struct sockaddr));
+  struct sockaddr addr[used_addresses];
+  memset(addr, 0, (sizeof(struct sockaddr) * used_addresses));
   OAILOG_DEBUG (LOG_SCTP, "Creating new listen socket on port %u with\n", init_p->port);
 
   if (init_p->ipv4 == 1) {
@@ -750,6 +751,7 @@ static void sctp_exit (void)
     }
     free_wrapper ((void**)&sctp_assoc_p);
     sctp_desc.number_of_connections--;
+    sctp_assoc_p = next_sctp_assoc_p;
   }
   OAI_FPRINTF_INFO("TASK_SCTP terminated\n");
 }

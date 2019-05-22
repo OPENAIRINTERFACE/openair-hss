@@ -36,7 +36,7 @@
 #include "hashtable.h"
 #include "obj_hashtable.h"
 
-#include "commonDef.h"
+#include "common_defs.h"
 #include "common_types.h"
 #include "sgw_context_manager.h"
 #include "gtpv1u_sgw_defs.h"

@@ -95,7 +95,10 @@ s11_mme_create_session_request (
   gtpv2c_pdn_type_ie_set (&(ulp_req.hMsg), &req_p->pdn_type);
   gtpv2c_paa_ie_set(&(ulp_req.hMsg), &req_p->paa);
   gtpv2c_apn_restriction_ie_set(&(ulp_req.hMsg), 0);
-  gtpv2c_ambr_ie_set (&(ulp_req.hMsg), &req_p->ambr);
+  /**
+   * Set the AMBR.
+   */
+  gtpv2c_ambr_ie_set(&ulp_req.hMsg, &req_p->ambr);
 
   /**
    * Indication Flags.
@@ -110,11 +113,6 @@ s11_mme_create_session_request (
                               req_p->sender_fteid_for_cp.teid,
                               req_p->sender_fteid_for_cp.ipv4 ? &req_p->sender_fteid_for_cp.ipv4_address : 0,
                               req_p->sender_fteid_for_cp.ipv6 ? &req_p->sender_fteid_for_cp.ipv6_address : NULL);
-
-  /**
-   * Set the AMBR.
-   */
-  gtpv2c_ambr_ie_set(&ulp_req.hMsg, &req_p->ambr);
 
   /*
    * The P-GW TEID should be present on the S11 interface.
@@ -145,13 +143,17 @@ s11_mme_create_session_request (
   if(req_p->pco.num_protocol_or_container_id){
     gtpv2c_pco_ie_set (&(ulp_req.hMsg), &req_p->pco);
   }
-  for (int i = 0; i < req_p->bearer_contexts_to_be_created.num_bearer_context; i++) {
-    gtpv2c_bearer_context_to_be_created_within_create_session_request_ie_set (&(ulp_req.hMsg), &req_p->bearer_contexts_to_be_created.bearer_contexts[i]);
+  if(req_p->bearer_contexts_to_be_created->num_bearer_context > 1){
+	  gtpv2c_ebi_ie_set (&(ulp_req.hMsg), (unsigned)req_p->default_ebi, NW_GTPV2C_IE_INSTANCE_ZERO);
+  }
+
+  for (int i = 0; i < req_p->bearer_contexts_to_be_created->num_bearer_context; i++) {
+    gtpv2c_bearer_context_to_be_created_ie_set (&(ulp_req.hMsg), &req_p->bearer_contexts_to_be_created->bearer_contexts[i]);
   }
   rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
   DevAssert (NW_OK == rc);
   MSC_LOG_TX_MESSAGE (MSC_S11_MME, MSC_SGW, NULL, 0, "0 CREATE_SESSION_REQUEST local S11 teid " TEID_FMT " num bearers ctx %u",
-    req_p->sender_fteid_for_cp.teid, req_p->bearer_contexts_to_be_created.num_bearer_context);
+    req_p->sender_fteid_for_cp.teid, req_p->bearer_contexts_to_be_created->num_bearer_context);
 
   hashtable_rc_t hash_rc = hashtable_ts_insert(s11_mme_teid_2_gtv2c_teid_handle,
       (hash_key_t) req_p->sender_fteid_for_cp.teid,
@@ -239,6 +241,12 @@ s11_mme_handle_create_session_response (
       gtpv2c_bearer_context_created_ie_get, &resp_p->bearer_contexts_created);
   DevAssert (NW_OK == rc);
   /*
+   * Bearer Contexts Marked For Removal IE
+   */
+  rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_BEARER_CONTEXT, NW_GTPV2C_IE_INSTANCE_ONE, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
+      gtpv2c_bearer_context_marked_for_removal_ie_get, &resp_p->bearer_contexts_marked_for_removal);
+  DevAssert (NW_OK == rc);
+  /*
    * Run the parser
    */
   rc = nwGtpv2cMsgParserRun (pMsgParser, (pUlpApi->hMsg), &offendingIeType, &offendingIeInstance, &offendingIeLength);
@@ -299,9 +307,6 @@ s11_mme_delete_session_request (
   }
 
   /*
-   * Putting the information Elements
-   */
-  /*
    * Sender F-TEID for Control Plane (MME S11)
    */
   rc = nwGtpv2cMsgAddIeFteid ((ulp_req.hMsg), NW_GTPV2C_IE_INSTANCE_ZERO,
@@ -310,8 +315,7 @@ s11_mme_delete_session_request (
                               req_p->sender_fteid_for_cp.ipv4 ? &req_p->sender_fteid_for_cp.ipv4_address : 0,
                               req_p->sender_fteid_for_cp.ipv6 ? &req_p->sender_fteid_for_cp.ipv6_address : NULL);
 
-  gtpv2c_ebi_ie_set (&(ulp_req.hMsg), (unsigned)req_p->lbi);
-
+  gtpv2c_ebi_ie_set (&(ulp_req.hMsg), (unsigned)req_p->lbi, NW_GTPV2C_IE_INSTANCE_ZERO);
 
   if ((req_p->indication_flags.oi) || (req_p->indication_flags.si)){
     gtpv2c_indication_flags_ie_set (&(ulp_req.hMsg), &req_p->indication_flags);
@@ -345,6 +349,7 @@ s11_mme_handle_delete_session_response (
   resp_p = &message_p->ittiMsg.s11_delete_session_response;
 
   resp_p->teid = nwGtpv2cMsgGetTeid(pUlpApi->hMsg);
+  resp_p->internal_flags = pUlpApi->u_api_info.triggeredRspIndInfo.trx_flags;
 
   /*
    * Create a new message parser
@@ -398,9 +403,9 @@ s11_mme_handle_delete_session_response (
 
   // delete local tunnel, if nothing against
   if(pUlpApi->u_api_info.triggeredRspIndInfo.noDelete){
-    OAILOG_ERROR (LOG_S11, "Not deleting the local tunnel since \"noDelete\" flag is set. \n");
+    OAILOG_INFO(LOG_S11, "Not deleting the local tunnel since \"noDelete\" flag is set. \n");
   }else{
-    OAILOG_ERROR (LOG_S11, "Deleting the local tunnel. \n");
+    OAILOG_INFO (LOG_S11, "Deleting the local tunnel. \n");
     nw_gtpv2c_ulp_api_t                         ulp_req;
     memset (&ulp_req, 0, sizeof (nw_gtpv2c_ulp_api_t));
     ulp_req.apiType = NW_GTPV2C_ULP_DELETE_LOCAL_TUNNEL;
@@ -408,17 +413,15 @@ s11_mme_handle_delete_session_response (
         (hash_key_t) resp_p->teid,
         (void **)(uintptr_t)&ulp_req.u_api_info.deleteLocalTunnelInfo.hTunnel);
     if (HASH_TABLE_OK != hash_rc) {
-      OAILOG_ERROR (LOG_S11, "Could not get GTPv2-C hTunnel for local teid %X\n", resp_p->teid);
+      OAILOG_ERROR (LOG_S11, "Could not get GTPv2-C hTunnel for local teid %X (skipping deletion of tunnel)\n", resp_p->teid);
       MSC_LOG_EVENT (MSC_S11_MME, "Failed to deleted teid " TEID_FMT "", resp_p->teid);
     } else {
       rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
       DevAssert (NW_OK == rc);
       MSC_LOG_EVENT (MSC_S11_MME, "Deleted teid " TEID_FMT "", resp_p->teid);
+      hash_rc = hashtable_ts_free(s11_mme_teid_2_gtv2c_teid_handle, (hash_key_t) resp_p->teid);
+      DevAssert (HASH_TABLE_OK == hash_rc);
     }
-
-    hash_rc = hashtable_ts_free(s11_mme_teid_2_gtv2c_teid_handle, (hash_key_t) resp_p->teid);
-
-    DevAssert (HASH_TABLE_OK == hash_rc);
 
   }
   return itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
@@ -455,7 +458,7 @@ s11_mme_handle_ulp_error_indicatior(
   case NW_GTP_MODIFY_BEARER_REQ:
   {
     itti_s11_modify_bearer_response_t            *rsp_p;
-    message_p = itti_alloc_new_message (TASK_S10, S11_MODIFY_BEARER_RESPONSE);
+    message_p = itti_alloc_new_message (TASK_S11, S11_MODIFY_BEARER_RESPONSE);
     rsp_p = &message_p->ittiMsg.s11_modify_bearer_response;
     memset(rsp_p, 0, sizeof(*rsp_p));
     /** Set the destination TEID (our TEID). */
@@ -473,7 +476,7 @@ s11_mme_handle_ulp_error_indicatior(
      * UE context should always be removed.
      */
     itti_s11_delete_session_response_t            *rsp_p;
-    message_p = itti_alloc_new_message (TASK_S10, S11_DELETE_SESSION_RESPONSE);
+    message_p = itti_alloc_new_message (TASK_S11, S11_DELETE_SESSION_RESPONSE);
     rsp_p = &message_p->ittiMsg.s11_delete_session_response;
     memset(rsp_p, 0, sizeof(*rsp_p));
     /** Set the destination TEID (our TEID). */
@@ -492,7 +495,7 @@ s11_mme_handle_ulp_error_indicatior(
       * UE context should always be removed.
       */
      itti_s11_release_access_bearers_response_t            *rsp_p;
-     message_p = itti_alloc_new_message (TASK_S10, S11_RELEASE_ACCESS_BEARERS_RESPONSE);
+     message_p = itti_alloc_new_message (TASK_S11, S11_RELEASE_ACCESS_BEARERS_RESPONSE);
      rsp_p = &message_p->ittiMsg.s11_release_access_bearers_response;
      memset(rsp_p, 0, sizeof(*rsp_p));
      /** Set the destination TEID (our TEID). */
@@ -504,6 +507,48 @@ s11_mme_handle_ulp_error_indicatior(
      OAILOG_ERROR (LOG_S11, "RELEASE_ACCESS_BEARERS_RESPONSE could not be received for for local teid " TEID_FMT". Sending ACCEPTED back (ignoring the network failure). \n", rsp_p->teid);
    }
      break;
+       /** Failed commands. */
+  case NW_GTP_DELETE_BEARER_CMD:
+  {
+    /**
+     * We will omit the error and send success back.
+     * UE context should always be removed.
+     */
+    itti_s11_delete_bearer_failure_indication_t            *ind_p;
+    message_p = itti_alloc_new_message (TASK_S11, S11_DELETE_BEARER_FAILURE_INDICATION);
+    ind_p = &message_p->ittiMsg.s11_delete_bearer_failure_indication;
+    /** Set the destination TEID (our TEID). */
+    ind_p->teid = pUlpApi->u_api_info.rspFailureInfo.teidLocal;
+    /** Set the transaction for the triggered acknowledgment. */
+    ind_p->trxn = (void *)pUlpApi->u_api_info.rspFailureInfo.hUlpTrxn;
+    /** Set the cause. */
+    ind_p->cause.cause_value = SYSTEM_FAILURE; /**< Would mean that this message either did not come at all or could not be dealt with properly. */
+  }
+  break;
+
+  /** Failed commands --> Send to NAS_ESM layer.. */
+  case NW_GTP_BEARER_RESOURCE_CMD:
+  {
+	  /**
+       * We will omit the error and send success back.
+       * UE context should always be removed.
+       */
+      itti_s11_bearer_resource_failure_indication_t            *ind_p;
+      message_p = itti_alloc_new_message (TASK_S11, S11_BEARER_RESOURCE_FAILURE_INDICATION);
+      ind_p = &message_p->ittiMsg.s11_bearer_resource_failure_indication;
+      /** Set the destination TEID (our TEID). */
+      ind_p->teid = pUlpApi->u_api_info.rspFailureInfo.teidLocal;
+      /** Set the transaction for the triggered acknowledgment. */
+      ind_p->trxn = (void *)pUlpApi->u_api_info.rspFailureInfo.hUlpTrxn;
+      /** Set the PTI from the flags. */
+      ind_p->pti  = pUlpApi->u_api_info.rspFailureInfo.trx_flags;
+      /** Set the cause. */
+      ind_p->cause.cause_value = SYSTEM_FAILURE; /**< Would mean that this message either did not come at all or could not be dealt with properly. */
+  }
+  /** Send this one directly to the ESM. */
+  int rc = itti_send_msg_to_task (TASK_NAS_ESM, INSTANCE_DEFAULT, message_p);
+  OAILOG_FUNC_RETURN (LOG_S11, rc);
+
   default:
     OAILOG_ERROR (LOG_S10, "Received an unhandled error indicator for the local S11-TEID " TEID_FMT " and message type %d. \n",
         pUlpApi->u_api_info.rspFailureInfo.teidLocal, pUlpApi->u_api_info.rspFailureInfo.msgType);

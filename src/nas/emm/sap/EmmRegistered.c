@@ -57,14 +57,15 @@
 
 #include "log.h"
 #include "common_defs.h"
-#include "emm_fsm.h"
-#include "commonDef.h"
+#include "common_defs.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"
 #include "3gpp_29.274.h"
 #include "networkDef.h"
-#include "emm_proc.h"
 
+#include "emm_proc.h"
+#include "emm_fsm.h"
+#include "emm_regDef.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -180,15 +181,21 @@ EmmRegistered (
     if (evt->free_proc) {
       nas_delete_detach_procedure(emm_ctx);
     }
+    /* Remove the subscription information. */
+    subscription_data_t * subscription_data = mme_api_remove_subscription_data(emm_ctx->_imsi64);
+    if(subscription_data){
+    	free_wrapper ((void**) &subscription_data);
+    }
+
     /*
      * Don't clear the EMM context here.
      * todo: make it optional!
      * Clear the ESM message, if exists.
      */
-    bdestroy_wrapper(&emm_ctx->esm_msg);
+
     // todo: temporarily also remove the EMM context
-    // Release emm and esm context
-    _clear_emm_ctxt(emm_ctx);
+    // Release emm context
+    _clear_emm_ctxt(emm_ctx->ue_id);
     break;
 
   case _EMMREG_TAU_REQ:
@@ -276,7 +283,7 @@ EmmRegistered (
   case _EMMREG_LOWERLAYER_RELEASE:
     MSC_LOG_RX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "_EMMREG_LOWERLAYER_RELEASE ue id " MME_UE_S1AP_ID_FMT " ", evt->ue_id);
     nas_delete_all_emm_procedures(emm_ctx);
-    nas_delete_all_esm_procedures(emm_ctx);
+    /** The ESM procedures will handle the EMM session termination independently, checking the EMM state when transmitting a message. */
     rc = RETURNok;
     break;
 

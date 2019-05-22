@@ -40,21 +40,23 @@ Description Defines internal private data handled by EPS Mobility
 #define FILE_EMM_DATA_SEEN
 
 #include <sys/types.h>
+
 #include "queue.h"
 #include "hashtable.h"
 #include "obj_hashtable.h"
-#include "securityDef.h"
-#include "TrackingAreaIdentityList.h"
-#include "emm_fsm.h"
-#include "nas_timer.h"
-#include "nas_procedures.h"
 #include "3gpp_24.301.h"
 #include "3gpp_24.008.h"
+#include "securityDef.h"
+
+#include "nas_emm_procedures.h"
+#include "emm_fsm.h"
 #include "AdditionalUpdateType.h"
-#include "UeNetworkCapability.h"
 #include "EpsBearerContextStatus.h"
 #include "EpsNetworkFeatureSupport.h"
-#include "esm_data.h"
+#include "TrackingAreaIdentityList.h"
+#include "UeNetworkCapability.h"
+#include "nas_timer.h"
+#include "mme_api.h"
 
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/
@@ -62,7 +64,8 @@ Description Defines internal private data handled by EPS Mobility
 
 #define TIMER_S6A_AUTH_INFO_RSP_DEFAULT_VALUE 2 // two second timeout value to wait for auth_info_rsp message from HSS
 #define TIMER_S10_CONTEXT_REQ_DEFAULT_VALUE   5 // two second timeout value to wait for context_rsp message from source MME
-#define TIMER_SPECIFIC_RETRY_DEFAULT_VALUE    1 // two second timeout value to wait for context_rsp message from source MME
+#define TIMER_SPECIFIC_RETRY_DEFAULT_VALUE         0 // two second timeout value to wait for context_rsp message from source MME
+#define TIMER_SPECIFIC_RETRY_DEFAULT_VALUE_USEC    300000 // two second timeout value to wait for context_rsp message from source MME
 
 /****************************************************************************/
 /************************  G L O B A L    T Y P E S  ************************/
@@ -123,7 +126,6 @@ struct emm_common_data_s;
 typedef struct emm_data_context_s {
   mme_ue_s1ap_id_t ue_id;        /* UE identifier                                  */
   bool             is_dynamic;  /* Dynamically allocated context indicator         */
-//  bool             is_attached; /* Attachment indicator                            */
   bool             is_emergency;/* Emergency bearer services indicator             */
   bool             is_has_been_attached; /* Attachment indicator                   */
   bool             is_initial_identity_imsi; // If the IMSI was used for identification in the initial NAS message
@@ -205,18 +207,7 @@ typedef struct emm_data_context_s {
 
   emm_fsm_state_t          _emm_fsm_state;
 
-
-  struct esm_context_s     esm_ctx;
-
-//  ue_network_capability_t  tau_ue_network_capability;         /* stored TAU Request IE Requirement MME24.301R10_5.5.3.2.4_4*/
-//  ms_network_capability_t  tau_ms_network_capability;         /* stored TAU Request IE Requirement MME24.301R10_5.5.3.2.4_4*/
   drx_parameter_t          _current_drx_parameter;            /* stored TAU Request IE Requirement MME24.301R10_5.5.3.2.4_4*/
-  eps_bearer_context_status_t   _eps_bearer_context_status;/* stored TAU Request IE Requirement MME24.301R10_5.5.3.2.4_5*/
-  eps_network_feature_support_t _eps_network_feature_support;
-
-
-  // TODO: DO BETTER  WITH BELOW
-  bstring         esm_msg;      /* ESM message contained within the initial request*/
 #  define EMM_CN_SAP_BUFFER_SIZE 4096
 
 
@@ -358,7 +349,8 @@ int                   emm_context_unlock (struct emm_data_context_s *emm_context
 struct emm_data_context_s              *
 emm_data_context_remove (
   emm_data_t * emm_data,
-  struct emm_data_context_s *elm);
+  struct emm_data_context_s *elm,
+  bool clear_fields);
 
 //int emm_context_upsert_imsi (emm_data_t * emm_data, struct emm_data_context_s *elm) __attribute__((nonnull));
 
@@ -370,12 +362,8 @@ int emm_data_context_update_security_parameters(const mme_ue_s1ap_id_t ue_id,
     uint16_t *encryption_algorithm_capabilities,
     uint16_t *integrity_algorithm_capabilities);
 
-int mm_ue_eps_context_update_security_parameters(const mme_ue_s1ap_id_t ue_id,
+void mm_ue_eps_context_update_security_parameters(const mme_ue_s1ap_id_t ue_id,
     mm_context_eps_t *mm_eps_ue_context,
-    uint16_t *encryption_algorithm_capabilities,
-    uint16_t *integrity_algorithm_capabilities);
-
-void emm_data_context_get_security_parameters(const mme_ue_s1ap_id_t ue_id,
     uint16_t *encryption_algorithm_capabilities,
     uint16_t *integrity_algorithm_capabilities);
 

@@ -25,6 +25,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "EsmCause.h"
+#include "MessageType.h"
 #include "bstrlib.h"
 
 #include "log.h"
@@ -32,8 +34,6 @@
 #include "3gpp_24.301.h"
 #include "TLVEncoder.h"
 #include "TLVDecoder.h"
-#include "MessageType.h"
-#include "EsmCause.h"
 #include "EsmStatus.h"
 
 int

@@ -22,16 +22,14 @@
 #ifndef PDN_CONNECTIVITY_REQUEST_H_
 #define PDN_CONNECTIVITY_REQUEST_H_
 
-#include "MessageType.h"
-#include "NasRequestType.h"
-#include "EsmInformationTransferFlag.h"
 #include "3gpp_23.003.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"
 #include "3gpp_33.401.h"
 #include "security_types.h"
-#include "common_types.h"
-
+#include "EsmInformationTransferFlag.h"
+#include "MessageType.h"
+#include "NasRequestType.h"
 #include "PdnType.h"
 
 /* Minimum length macro. Formed by minimum length of each mandatory field */

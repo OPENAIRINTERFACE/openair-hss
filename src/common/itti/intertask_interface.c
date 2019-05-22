@@ -627,7 +627,7 @@ itti_receive_msg_internal_event_fd (
       struct message_list_s                  *message = NULL;
       eventfd_t                               sem_counter;
       ssize_t                                 read_ret;
-      int                                     result;
+      int                                     result = EXIT_SUCCESS;
 
       /*
        * Read will always return 1

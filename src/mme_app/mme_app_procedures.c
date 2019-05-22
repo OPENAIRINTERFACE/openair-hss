@@ -110,6 +110,15 @@ void mme_app_delete_s11_procedures(ue_context_t * const ue_context)
 //------------------------------------------------------------------------------
 mme_app_s11_proc_create_bearer_t* mme_app_create_s11_procedure_create_bearer(ue_context_t * const ue_context)
 {
+	/** Check if the list of S11 procedures is empty. */
+	if(ue_context->s11_procedures){
+		if(!LIST_EMPTY(ue_context->s11_procedures)){
+			OAILOG_ERROR (LOG_MME_APP, "UE with ueId " MME_UE_S1AP_ID_FMT " has already a S11 procedure ongoing. Cannot create CBR procedure. \n",
+					ue_context->mme_ue_s1ap_id);
+			return NULL;
+		}
+	}
+
   mme_app_s11_proc_create_bearer_t *s11_proc_create_bearer = calloc(1, sizeof(mme_app_s11_proc_create_bearer_t));
   s11_proc_create_bearer->proc.proc.type = MME_APP_BASE_PROC_TYPE_S11;
   s11_proc_create_bearer->proc.type      = MME_APP_S11_PROC_TYPE_CREATE_BEARER;
@@ -124,6 +133,15 @@ mme_app_s11_proc_create_bearer_t* mme_app_create_s11_procedure_create_bearer(ue_
   LIST_INSERT_HEAD((ue_context->s11_procedures), s11_proc, entries);
 
   return s11_proc_create_bearer;
+}
+
+//------------------------------------------------------------------------------
+mme_app_s11_proc_t* mme_app_get_s11_procedure (ue_context_t * const ue_context)
+{
+  if (ue_context->s11_procedures) {
+    return LIST_FIRST(ue_context->s11_procedures);
+  }
+  return NULL;
 }
 
 //------------------------------------------------------------------------------
@@ -145,15 +163,20 @@ mme_app_s11_proc_create_bearer_t* mme_app_get_s11_procedure_create_bearer(ue_con
 void mme_app_delete_s11_procedure_create_bearer(ue_context_t * const ue_context)
 {
   if (ue_context->s11_procedures) {
-    mme_app_s11_proc_t *s11_proc = NULL;
+    mme_app_s11_proc_t *s11_proc = NULL, *s11_proc_safe = NULL;
 
-    LIST_FOREACH(s11_proc, ue_context->s11_procedures, entries) {
+    LIST_FOREACH_SAFE(s11_proc, ue_context->s11_procedures, entries, s11_proc_safe) {
       if (MME_APP_S11_PROC_TYPE_CREATE_BEARER == s11_proc->type) {
         LIST_REMOVE(s11_proc, entries);
         mme_app_free_s11_procedure_create_bearer(&s11_proc);
         return;
       }
     }
+  }
+  if(LIST_EMPTY(ue_context->s11_procedures)){
+	  LIST_INIT(ue_context->s11_procedures);
+	  free_wrapper((void**)&ue_context->s11_procedures);
+	  OAILOG_INFO (LOG_MME_APP, "UE with ueId " MME_UE_S1AP_ID_FMT " has no more S11 procedures left. Cleared the list. \n", ue_context->mme_ue_s1ap_id);
   }
 }
 
@@ -204,9 +227,9 @@ void mme_app_delete_s11_procedure_update_bearer(ue_context_t * const ue_context)
 {
   /** Check if the list of S11 procedures is empty. */
   if (ue_context->s11_procedures) {
-    mme_app_s11_proc_t *s11_proc = NULL;
+    mme_app_s11_proc_t *s11_proc = NULL, *s11_proc_safe = NULL;
 
-    LIST_FOREACH(s11_proc, ue_context->s11_procedures, entries) {
+    LIST_FOREACH_SAFE(s11_proc, ue_context->s11_procedures, entries, s11_proc_safe) {
       if (MME_APP_S11_PROC_TYPE_UPDATE_BEARER == s11_proc->type) {
         LIST_REMOVE(s11_proc, entries);
         mme_app_free_s11_procedure_update_bearer(&s11_proc);
@@ -214,11 +237,24 @@ void mme_app_delete_s11_procedure_update_bearer(ue_context_t * const ue_context)
       }
     }
   }
+  if(LIST_EMPTY(ue_context->s11_procedures)){
+ 	  LIST_INIT(ue_context->s11_procedures);
+ 	  free_wrapper((void**)&ue_context->s11_procedures);
+ 	  OAILOG_INFO (LOG_MME_APP, "UE with ueId " MME_UE_S1AP_ID_FMT " has no more S11 procedures left. Cleared the list. \n", ue_context->mme_ue_s1ap_id);
+   }
 }
 
 //------------------------------------------------------------------------------
 mme_app_s11_proc_delete_bearer_t* mme_app_create_s11_procedure_delete_bearer(ue_context_t * const ue_context)
 {
+	if(ue_context->s11_procedures){
+		if(!LIST_EMPTY(ue_context->s11_procedures)){
+			OAILOG_ERROR (LOG_MME_APP, "UE with ueId " MME_UE_S1AP_ID_FMT " has already a S11 procedure ongoing. Cannot create DBR procedure. \n",
+					ue_context->mme_ue_s1ap_id);
+			return NULL;
+		}
+	}
+
   mme_app_s11_proc_delete_bearer_t *s11_proc_delete_bearer = calloc(1, sizeof(mme_app_s11_proc_delete_bearer_t));
   s11_proc_delete_bearer->proc.proc.type = MME_APP_BASE_PROC_TYPE_S11;
   s11_proc_delete_bearer->proc.type      = MME_APP_S11_PROC_TYPE_DELETE_BEARER;
@@ -254,9 +290,10 @@ mme_app_s11_proc_delete_bearer_t* mme_app_get_s11_procedure_delete_bearer(ue_con
 void mme_app_delete_s11_procedure_delete_bearer(ue_context_t * const ue_context)
 {
   if (ue_context->s11_procedures) {
-    mme_app_s11_proc_t *s11_proc = NULL;
+    mme_app_s11_proc_t *s11_proc = NULL, *s11_proc_safe = NULL;
 
-    LIST_FOREACH(s11_proc, ue_context->s11_procedures, entries) {
+
+    LIST_FOREACH_SAFE(s11_proc, ue_context->s11_procedures, entries, s11_proc_safe) {
       if (MME_APP_S11_PROC_TYPE_DELETE_BEARER == s11_proc->type) {
         LIST_REMOVE(s11_proc, entries);
         mme_app_free_s11_procedure_delete_bearer(&s11_proc);
@@ -264,6 +301,11 @@ void mme_app_delete_s11_procedure_delete_bearer(ue_context_t * const ue_context)
       }
     }
   }
+  if(LIST_EMPTY(ue_context->s11_procedures)){
+ 	  LIST_INIT(ue_context->s11_procedures);
+ 	  free_wrapper((void**)&ue_context->s11_procedures);
+ 	  OAILOG_INFO (LOG_MME_APP, "UE with ueId " MME_UE_S1AP_ID_FMT " has no more S11 procedures left. Cleared the list. \n", ue_context->mme_ue_s1ap_id);
+   }
 }
 
 //------------------------------------------------------------------------------
@@ -369,7 +411,7 @@ mme_app_handle_mme_s10_handover_completion_timer_expiry (mme_app_s10_proc_mme_ha
 //  imsi64_t imsi64 = imsi_to_imsi64(&s10_proc_mme_handover->imsi);
   ue_context_t * ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, s10_proc_mme_handover->mme_ue_s1ap_id);
   DevAssert(ue_context);
-  OAILOG_INFO (LOG_MME_APP, "Expired- MME S10 Handover Completion timer for UE " MME_UE_S1AP_ID_FMT " run out. "
+  OAILOG_WARNING(LOG_MME_APP, "Expired- MME S10 Handover Completion timer for UE " MME_UE_S1AP_ID_FMT " run out. "
       "Performing S1AP UE Context Release Command and successive NAS implicit detach. \n", ue_context->mme_ue_s1ap_id);
   s10_proc_mme_handover->proc.timer.id = MME_APP_TIMER_INACTIVE_ID;
 
@@ -383,26 +425,32 @@ mme_app_handle_mme_s10_handover_completion_timer_expiry (mme_app_s10_proc_mme_ha
     message_p->ittiMsg.nas_implicit_detach_ue_ind.ue_id = ue_context->mme_ue_s1ap_id; /**< We don't send a Detach Type such that no Detach Request is sent to the UE if handover is performed. */
 
     MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_IMPLICIT_DETACH_UE_IND_MESSAGE");
-    itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+    itti_send_msg_to_task (TASK_NAS_EMM, INSTANCE_DEFAULT, message_p);
     OAILOG_FUNC_OUT (LOG_MME_APP);
-  }
+  } else {
+	  ue_context->s1_ue_context_release_cause = S1AP_HANDOVER_CANCELLED;
+	  /*
+	   * Send a UE Context Release Command which would trigger a context release.
+	   * The e_cgi IE will be set with Handover Notify.
+	   */
+	  /** Send a FW-Relocation Response error if no local teid is set (no FW-Relocation Response is send yet). */
+	  if(!ue_context->local_mme_teid_s10){
+	    mme_app_send_s10_forward_relocation_response_err(s10_proc_mme_handover->remote_mme_teid.teid,
+	        s10_proc_mme_handover->remote_mme_teid.ipv4_address,
+	        s10_proc_mme_handover->forward_relocation_trxn, REQUEST_REJECTED);
+	  }
+	  /** Delete the procedure. */
+	  mme_app_delete_s10_procedure_mme_handover(ue_context);
 
-  ue_context->s1_ue_context_release_cause = S1AP_HANDOVER_CANCELLED;
-  /*
-   * Send a UE Context Release Command which would trigger a context release.
-   * The e_cgi IE will be set with Handover Notify.
-   */
-  mme_app_itti_ue_context_release(ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, ue_context->s1_ue_context_release_cause, s10_proc_mme_handover->target_id.target_id.macro_enb_id.enb_id);
-  /** Send a FW-Relocation Response error if no local teid is set (no FW-Relocation Response is send yet). */
-  if(!ue_context->local_mme_teid_s10){
-    mme_app_send_s10_forward_relocation_response_err(s10_proc_mme_handover->remote_mme_teid.teid,
-        s10_proc_mme_handover->remote_mme_teid.ipv4_address,
-        s10_proc_mme_handover->forward_relocation_trxn, REQUEST_REJECTED);
-  }
-  /** Delete the procedure. */
-  mme_app_delete_s10_procedure_mme_handover(ue_context);
+	  /** Trigger an ESM detach, also removing all PDN contexts in the MME and the SAE-GW. */
+	  message_p = itti_alloc_new_message (TASK_MME_APP, NAS_ESM_DETACH_IND);
+	  DevAssert (message_p != NULL);
+	  message_p->ittiMsg.nas_esm_detach_ind.ue_id = ue_context->mme_ue_s1ap_id; /**< We don't send a Detach Type such that no Detach Request is sent to the UE if handover is performed. */
 
-  OAILOG_FUNC_OUT (LOG_MME_APP);
+	  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_ESM_DETACH_IND");
+	  itti_send_msg_to_task (TASK_NAS_ESM, INSTANCE_DEFAULT, message_p);
+	  OAILOG_FUNC_OUT (LOG_MME_APP);
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -426,9 +474,10 @@ mme_app_handle_mobility_completion_timer_expiry (mme_app_s10_proc_mme_handover_t
     message_p = itti_alloc_new_message (TASK_MME_APP, NAS_IMPLICIT_DETACH_UE_IND);
     DevAssert (message_p != NULL);
     message_p->ittiMsg.nas_implicit_detach_ue_ind.ue_id = ue_context->mme_ue_s1ap_id; /**< We don't send a Detach Type such that no Detach Request is sent to the UE if handover is performed. */
+    message_p->ittiMsg.nas_implicit_detach_ue_ind.clr = s10_proc_mme_handover->pending_clear_location_request; /**< Inform about the CLR. */
 
     MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_IMPLICIT_DETACH_UE_IND_MESSAGE");
-    itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+    itti_send_msg_to_task (TASK_NAS_EMM, INSTANCE_DEFAULT, message_p);
   }else{
     OAILOG_WARNING(LOG_MME_APP, "CLR flag is NOT set for UE " MME_UE_S1AP_ID_FMT ". Not performing implicit detach. \n", ue_context->mme_ue_s1ap_id);
     /*
@@ -459,11 +508,36 @@ mme_app_handle_mobility_completion_timer_expiry (mme_app_s10_proc_mme_handover_t
           OAILOG_FUNC_OUT (LOG_MME_APP);
 
         }else{
-          /** This should not happen. The Ho-Cancel should come first. */
-          OAILOG_WARNING(LOG_MME_APP, "HO command not set yet for UE. Setting S1AP reference to idle mode for UE " MME_UE_S1AP_ID_FMT ". Not performing implicit detach. \n", ue_context->mme_ue_s1ap_id);
-          mme_app_send_s1ap_handover_preparation_failure(ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, ue_context->sctp_assoc_id_key, S1AP_HANDOVER_FAILED);
-          /** Not setting UE into idle mode at source. */
-          OAILOG_FUNC_OUT (LOG_MME_APP);
+        	if(s10_proc_mme_handover->due_tau) {
+        		/** Send a Notify Request to trigger idle TAU. */
+        		OAILOG_WARNING(LOG_MME_APP, "Source MME CLR not received (Idle Tau - source side) for UE " MME_UE_S1AP_ID_FMT ". Triggering a notify to HSS. \n", ue_context->mme_ue_s1ap_id);
+        		mme_app_itti_notify_request(ue_context->imsi, &s10_proc_mme_handover->target_tai.plmn, true);
+        		mme_app_delete_s10_procedure_mme_handover(ue_context);
+        		OAILOG_FUNC_OUT (LOG_MME_APP);
+        	} else {
+        		/** This should not happen. The Ho-Cancel should come first. */
+        		OAILOG_WARNING(LOG_MME_APP, "HO command not set yet for UE. Setting S1AP reference to idle mode for UE " MME_UE_S1AP_ID_FMT ". Not performing implicit detach. \n", ue_context->mme_ue_s1ap_id);
+        		mme_app_send_s1ap_handover_preparation_failure(ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, ue_context->sctp_assoc_id_key, S1AP_HANDOVER_FAILED);
+
+        		/** Inform the target side of the failure. */
+        		message_p = itti_alloc_new_message (TASK_MME_APP, S10_RELOCATION_CANCEL_REQUEST);
+        		DevAssert (message_p != NULL);
+        		itti_s10_relocation_cancel_request_t *relocation_cancel_request_p = &message_p->ittiMsg.s10_relocation_cancel_request;
+        		memset ((void*)relocation_cancel_request_p, 0, sizeof (itti_s10_relocation_cancel_request_t));
+        		relocation_cancel_request_p->teid = s10_proc_mme_handover->proc.remote_teid; /**< May or may not be 0. */
+        		relocation_cancel_request_p->local_teid = ue_context->local_mme_teid_s10; /**< May or may not be 0. */
+        		// todo: check the table!
+        		relocation_cancel_request_p->peer_ip.s_addr = s10_proc_mme_handover->proc.peer_ip.s_addr;
+        		/** IMSI. */
+        		memcpy((void*)&relocation_cancel_request_p->imsi, &s10_proc_mme_handover->imsi, sizeof(imsi_t));
+        		MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S10_MME, NULL, 0, "0 RELOCATION_CANCEL_REQUEST_MESSAGE");
+        		itti_send_msg_to_task (TASK_S10, INSTANCE_DEFAULT, message_p);
+
+        		/** Not setting UE into idle mode at source (not changing the UE state). Still removing the S10 tunnel (see what happens..). */
+        		remove_s10_tunnel_endpoint(ue_context, s10_proc_mme_handover->proc.peer_ip);
+        		mme_app_delete_s10_procedure_mme_handover(ue_context);
+        		OAILOG_FUNC_OUT (LOG_MME_APP);
+        	}
         }
       }else{
         OAILOG_DEBUG(LOG_MME_APP, "UE " MME_UE_S1AP_ID_FMT " is in idle state (assuming idle tau). Removing handover procedure. \n", ue_context->mme_ue_s1ap_id);
@@ -588,8 +662,9 @@ static void mme_app_free_s10_procedure_mme_handover(mme_app_s10_proc_t **s10_pro
    */
   /** PDN Connections. */
   if((*s10_proc_mme_handover_pp)->pdn_connections){
-    free_wrapper(&((*s10_proc_mme_handover_pp)->pdn_connections)); /**< Setting the reference inside the procedure also to null. */
+    free_mme_ue_eps_pdn_connections(&(*s10_proc_mme_handover_pp)->pdn_connections);
   }
+
   (*s10_proc_mme_handover_pp)->s10_mme_handover_timeout = NULL; // todo: deallocate too
 
 //  (*s10_proc_mme_handover_pp)->entries.le_next = NULL;
@@ -608,10 +683,21 @@ void mme_app_delete_s10_procedure_mme_handover(ue_context_t * const ue_context)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
   if (ue_context->s10_procedures) {
-    mme_app_s10_proc_t *s10_proc = NULL;
+    mme_app_s10_proc_t *s10_proc = NULL, *s10_proc_safe = NULL;
 
-    LIST_FOREACH(s10_proc, ue_context->s10_procedures, entries) {
+    LIST_FOREACH_SAFE(s10_proc, ue_context->s10_procedures, entries, s10_proc_safe) {
       if (MME_APP_S10_PROC_TYPE_INTER_MME_HANDOVER == s10_proc->type) {
+
+    	if(s10_proc->target_mme && !((mme_app_s10_proc_mme_handover_t*)s10_proc)->handover_completed){
+    		if(ue_context->s1_ue_context_release_cause == S1AP_HANDOVER_CANCELLED
+    				|| ue_context->s1_ue_context_release_cause == S1AP_HANDOVER_FAILED){
+        		OAILOG_WARNING(LOG_MME_APP, "Handover for UE " MME_UE_S1AP_ID_FMT " failed on the target side. Continuing with the deletion. \n", ue_context->mme_ue_s1ap_id);
+    		}else {
+        		OAILOG_ERROR(LOG_MME_APP, "Handover for UE " MME_UE_S1AP_ID_FMT " on target MME has not been completed yet.. Cannot delete. \n", ue_context->mme_ue_s1ap_id);
+        		OAILOG_FUNC_OUT (LOG_MME_APP);
+    		}
+    	}
+
         LIST_REMOVE(s10_proc, entries);
         /*
          * Cannot remove the S10 tunnel endpoint with transaction.
@@ -634,7 +720,6 @@ void mme_app_delete_s10_procedure_mme_handover(ue_context_t * const ue_context)
 //        if(s10_proc->target_mme)
         remove_s10_tunnel_endpoint(ue_context, s10_proc->peer_ip);
         mme_app_free_s10_procedure_mme_handover(&s10_proc);
-        OAILOG_FUNC_OUT (LOG_MME_APP);
       }else if (MME_APP_S10_PROC_TYPE_INTRA_MME_HANDOVER == s10_proc->type){
         LIST_REMOVE(s10_proc, entries);
         /*
@@ -653,11 +738,13 @@ void mme_app_delete_s10_procedure_mme_handover(ue_context_t * const ue_context)
         }
         s10_proc->timer.id = MME_APP_TIMER_INACTIVE_ID;
         /** Remove the S10 Tunnel endpoint and set the UE context S10 as invalid. */
-//        remove_s10_tunnel_endpoint(ue_context, s10_proc);
         mme_app_free_s10_procedure_mme_handover(&s10_proc);
-        OAILOG_FUNC_OUT (LOG_MME_APP);
       }
     }
+    /** Remove the list. */
+    LIST_INIT(ue_context->s10_procedures);
+    free_wrapper((void**)&ue_context->s10_procedures);
+
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
   OAILOG_INFO(LOG_MME_APP, "No S10 Procedures existing for UE " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);

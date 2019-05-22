@@ -50,69 +50,14 @@
 #include "mme_app_procedures.h"
 
 //------------------------------------------------------------------------------
-int mme_app_send_s6a_update_location_req (
-  struct ue_context_s *const ue_context)
-{
-  MessageDef                             *message_p = NULL;
-  s6a_update_location_req_t              *s6a_ulr_p = NULL;
-  emm_data_context_t                     *emm_context = NULL;
-  int                                     rc = RETURNok;
-
-  OAILOG_FUNC_IN (LOG_MME_APP);
-  OAILOG_DEBUG (LOG_MME_APP, "Handling ULR request for imsi " IMSI_64_FMT "\n", ue_context->imsi);
-
-  /** Recheck that the UE context is found by the IMSI. */
-  if ((emm_context = emm_data_context_get_by_imsi(&_emm_data, ue_context->imsi)) == NULL) {
-    OAILOG_ERROR (LOG_MME_APP, "That's embarrassing as we don't know this IMSI " IMSI_64_FMT ". \n", ue_context->imsi);
-    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
-  }
-
-  message_p = itti_alloc_new_message (TASK_MME_APP, S6A_UPDATE_LOCATION_REQ);
-
-  if (message_p == NULL) {
-    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
-  }
-
-  s6a_ulr_p = &message_p->ittiMsg.s6a_update_location_req;
-
-//  IMSI64_TO_STRING (ue_context->imsi, s6a_ulr_p->imsi);
-  IMSI_TO_STRING(&emm_context->_imsi, s6a_ulr_p->imsi, IMSI_BCD_DIGITS_MAX+1);
-  s6a_ulr_p->imsi_length = strlen (s6a_ulr_p->imsi);
-  if(!is_nas_specific_procedure_tau_running(emm_context)){
-    s6a_ulr_p->initial_attach = INITIAL_ATTACH;
-  }
-
-  plmn_t visited_plmn = {0};
-  visited_plmn.mcc_digit1 = emm_context->originating_tai.plmn.mcc_digit1;
-  visited_plmn.mcc_digit2 = emm_context->originating_tai.plmn.mcc_digit2;
-  visited_plmn.mcc_digit3 = emm_context->originating_tai.plmn.mcc_digit3;
-  visited_plmn.mnc_digit1 = emm_context->originating_tai.plmn.mnc_digit1;
-  visited_plmn.mnc_digit2 = emm_context->originating_tai.plmn.mnc_digit2;
-  visited_plmn.mnc_digit3 = emm_context->originating_tai.plmn.mnc_digit3;
-
-  memcpy (&s6a_ulr_p->visited_plmn, &visited_plmn, sizeof (plmn_t));
-  s6a_ulr_p->rat_type = RAT_EUTRAN;
-  /*
-   * Check if we already have UE data
-   * todo: remove this?
-   */
-  s6a_ulr_p->skip_subscriber_data = 0;
-  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S6A_MME, NULL, 0, "0 S6A_UPDATE_LOCATION_REQ imsi %s", s6a_ulr_p->imsi);
-  rc =  itti_send_msg_to_task (TASK_S6A, INSTANCE_DEFAULT, message_p);
-  OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
-}
-
-//------------------------------------------------------------------------------
 int mme_app_handle_s6a_update_location_ans (
-  const s6a_update_location_ans_t * const ula_pP)
+  s6a_update_location_ans_t * ula_pP)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
   MessageDef                             *message_p = NULL;
-  itti_nas_pdn_config_rsp_t              *nas_pdn_config_rsp = NULL;
   uint64_t                                imsi64 = 0;
   struct ue_context_s                    *ue_context  = NULL;
   struct emm_data_context_s              *emm_context = NULL;
-  struct apn_configuration_s             *apn_config  = NULL;
   int                                     rc = RETURNok;
 
   DevAssert (ula_pP );
@@ -132,12 +77,17 @@ int mme_app_handle_s6a_update_location_ans (
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
 
-  /** Send the S6a message. */
-  message_p = itti_alloc_new_message (TASK_MME_APP, NAS_PDN_CONFIG_RSP);
-
-  if (message_p == NULL) {
+  /** Remove the cached subscription profile and set the new one. */
+  subscription_data_t * subscription_data = ula_pP->subscription_data;
+  mme_remove_subscription_profile(&mme_app_desc.mme_ue_contexts, imsi64);
+  if(ula_pP->subscription_data){
+    mme_insert_subscription_profile(&mme_app_desc.mme_ue_contexts, imsi64, subscription_data);
+  } else {
     goto err;
   }
+  ula_pP->subscription_data = NULL;
+
+  OAILOG_INFO(LOG_MME_APP, "Updated the subscription profile for IMSI " IMSI_64_FMT " in the cache. \n", imsi64);
 
   if (ula_pP->result.present == S6A_RESULT_BASE) {
     if (ula_pP->result.choice.base != DIAMETER_SUCCESS) {
@@ -157,51 +107,24 @@ int mme_app_handle_s6a_update_location_ans (
     goto err;
   }
 
-  ue_context->subscription_known = SUBSCRIPTION_KNOWN;
-  ue_context->subscriber_status = ula_pP->subscription_data.subscriber_status;
-  ue_context->access_restriction_data = ula_pP->subscription_data.access_restriction;
-  /*
-   * Copy the subscribed ambr to the sgw create session request message
-   */
-  memcpy (&ue_context->subscribed_ue_ambr, &ula_pP->subscription_data.subscribed_ambr, sizeof (ambr_t));
-
-  ue_context->msisdn = blk2bstr(ula_pP->subscription_data.msisdn, ula_pP->subscription_data.msisdn_length);
-//  AssertFatal (ula_pP->subscription_data.msisdn_length != 0, "MSISDN LENGTH IS 0"); todo: msisdn
-  AssertFatal (ula_pP->subscription_data.msisdn_length <= MSISDN_LENGTH, "MSISDN LENGTH is too high %u", MSISDN_LENGTH);
-
-  ue_context->rau_tau_timer = ula_pP->subscription_data.rau_tau_timer;
-  ue_context->network_access_mode = ula_pP->subscription_data.access_mode;
-  memcpy (&ue_context->apn_config_profile, &ula_pP->subscription_data.apn_config_profile, sizeof (apn_config_profile_t));
-
-  /*
-   * Check that the all the established PDN Context exists (handover).
-   * todo: detach the PDNs which don't have a subscription.
-   */
-  pdn_context_t * first_pdn = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
-  if(first_pdn){
-    apn_config = mme_app_select_apn(ue_context, first_pdn->apn_subscribed);
-    DevAssert(apn_config);
+  /** Send the S6a message. */
+  message_p = itti_alloc_new_message (TASK_MME_APP, NAS_PDN_CONFIG_RSP);
+  if (message_p == NULL) {
+    goto err;
   }
+  mme_app_update_ue_subscription(ue_context->mme_ue_s1ap_id, subscription_data);
 
-  /*
-   * Set the value of  Mobile Reachability timer based on value of T3412 (Periodic TAU timer) sent in Attach accept /TAU accept.
-   * Set it to MME_APP_DELTA_T3412_REACHABILITY_TIMER minutes greater than T3412.
-   * Set the value of Implicit timer. Set it to MME_APP_DELTA_REACHABILITY_IMPLICIT_DETACH_TIMER minutes greater than  Mobile Reachability timer
-   */
-  ue_context->mobile_reachability_timer.id = MME_APP_TIMER_INACTIVE_ID;
-  ue_context->mobile_reachability_timer.sec = ((mme_config.nas_config.t3412_min) + MME_APP_DELTA_T3412_REACHABILITY_TIMER) * 60;
-  ue_context->implicit_detach_timer.id = MME_APP_TIMER_INACTIVE_ID;
-  ue_context->implicit_detach_timer.sec = (ue_context->mobile_reachability_timer.sec) + MME_APP_DELTA_REACHABILITY_IMPLICIT_DETACH_TIMER * 60;
+  message_p->ittiMsg.nas_pdn_config_rsp.ue_id  = ue_context->mme_ue_s1ap_id;
+  message_p->ittiMsg.nas_pdn_config_rsp.imsi64 = imsi64;
+  imsi64_t imsi64_2 = imsi_to_imsi64(&emm_context->_imsi);
+  memcpy(&message_p->ittiMsg.nas_pdn_config_rsp.imsi, &emm_context->_imsi, sizeof(imsi_t));
+  memcpy(&message_p->ittiMsg.nas_pdn_config_rsp.target_tai, &emm_context->originating_tai, sizeof(tai_t));
 
-
-  nas_pdn_config_rsp = &message_p->ittiMsg.nas_pdn_config_rsp;
-  nas_pdn_config_rsp->ue_id  = ue_context->mme_ue_s1ap_id;
-  nas_pdn_config_rsp->imsi64 = imsi64;
-
+  /** Check if an attach procedure is running, if so send it to the ESM layer, if not, we assume it is triggered by a TAU request, send it to the EMM. */
   /** For error codes, use nas_pdn_cfg_fail. */
-  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_PDN_CONFIG_RESP IMSI " IMSI_64_FMT, imsi64);
-  rc =  itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
-// todo:    unlock_ue_contexts(ue_context);
+  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_ESM, NULL, 0, "0 NAS_PDN_CONFIG_RESP IMSI " IMSI_64_FMT, imsi64);
+  rc =  itti_send_msg_to_task (TASK_NAS_ESM, INSTANCE_DEFAULT, message_p);
+
   OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
 
 err:
@@ -217,12 +140,17 @@ err:
   itti_nas_pdn_config_fail_t *nas_pdn_config_fail = &message_p->ittiMsg.nas_pdn_config_fail;
   nas_pdn_config_fail->ue_id  = ue_context->mme_ue_s1ap_id;
 
-  /** For error codes, use nas_pdn_cfg_fail. */
+  /**
+   * For error codes, use nas_pdn_cfg_fail.
+   * Also in case of TAU, send back to ESM layer.
+   */
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_PDN_CONFIG_FAIL IMSI " IMSI_64_FMT, imsi64);
-  rc =  itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+  rc =  itti_send_msg_to_task (TASK_NAS_ESM, INSTANCE_DEFAULT, message_p);
+//  UNLOCK_UE_CONTEXTS(ue_context);
   OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
 }
 
+//------------------------------------------------------------------------------
 int
 mme_app_handle_s6a_cancel_location_req(
   const s6a_cancel_location_req_t * const clr_pP)
@@ -253,7 +181,7 @@ mme_app_handle_s6a_cancel_location_req(
      * Else remove the UE implicitly.. (not sending Purge_UE for this one).
      */
     OAILOG_INFO(LOG_MME_APP, "Handling CLR for MME_UPDATE_PROCEDURE for UE with imsi " IMSI_64_FMT " "
-        "Checking the MME_MOBILITY_COMPLETION timer %d. \n", imsi);
+        "Checking the MME_MOBILITY_COMPLETION timer. \n", imsi);
     /** Checking CLR in the handover procedure. */
     s10_handover_proc = mme_app_get_s10_procedure_mme_handover(ue_context);
     if(s10_handover_proc){
@@ -283,11 +211,11 @@ mme_app_handle_s6a_cancel_location_req(
   message_p = itti_alloc_new_message (TASK_MME_APP, NAS_IMPLICIT_DETACH_UE_IND);
   DevAssert (message_p != NULL);
   message_p->ittiMsg.nas_implicit_detach_ue_ind.ue_id = ue_context->mme_ue_s1ap_id;
+  message_p->ittiMsg.nas_implicit_detach_ue_ind.clr   = true;
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_IMPLICIT_DETACH_UE_IND_MESSAGE");
-  itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+  itti_send_msg_to_task (TASK_NAS_EMM, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
 }
-
 
 int
 mme_app_handle_s6a_reset_req(

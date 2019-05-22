@@ -196,9 +196,10 @@ typedef struct nw_gtpv2c_initial_req_info_s {
   NW_IN    nw_gtpv2c_ulp_trxn_handle_t  hUlpTrxn;       /**< Optional handle to be returned in rsp of this msg. */
 
   NW_IN    struct in_addr               peerIp;         /**< Required only in case when hTunnel == 0            */
+  NW_IN    uint8_t                      internal_flags; /**< Required only in case when hTunnel == 0            */
   NW_IN    uint32_t                     teidLocal;      /**< Required only in case when hTunnel == 0            */
-  NW_IN    nw_gtpv2c_ulp_tunnel_handle_t hUlpTunnel;     /**< Required only in case when hTunnel == 0            */
-  NW_IN    bool                         noDelete;      /**< Set if the tunnel shall not be deleted automatically by the response. */
+  NW_IN    nw_gtpv2c_ulp_tunnel_handle_t hUlpTunnel;    /**< Required only in case when hTunnel == 0            */
+  NW_IN    bool                         noDelete;       /**< Set if the tunnel shall not be deleted automatically by the response. */
 } nw_gtpv2c_initial_req_info_t;
 
 /**
@@ -227,6 +228,7 @@ typedef struct nw_gtpv2c_triggered_rsp_info_s {
   NW_IN    nw_gtpv2c_trxn_handle_t          hTrxn;          /**< Request Trxn handle which to which triggered rsp is being sent */
   NW_IN    uint32_t                         teidLocal;      /**< Required only if NW_GTPV2C_ULP_API_FLAG_CREATE_LOCAL_TUNNEL is set to flags. */
   NW_IN    nw_gtpv2c_ulp_tunnel_handle_t    hUlpTunnel;     /**< Required only if NW_GTPV2C_ULP_API_FLAG_CREATE_LOCAL_TUNNEL is set to flags. */
+  NW_IN    bool	                            remove_trx;
 
   NW_OUT   nw_gtpv2c_tunnel_handle_t        hTunnel;        /**< Returned only in case flags is set to
                                                              NW_GTPV2C_ULP_API_FLAG_CREATE_LOCAL_TUNNEL */
@@ -246,6 +248,7 @@ typedef struct nw_gtpv2c_triggered_ack_info_s {
                                                              NW_GTPV2C_ULP_API_FLAG_CREATE_LOCAL_TUNNEL */
   NW_IN    struct in_addr                   peerIp;
   NW_IN    uint32_t                         peerPort;
+  NW_IN    uint32_t                         localPort;
 } nw_gtpv2c_triggered_ack_info_t;
 
 /**
@@ -292,8 +295,12 @@ typedef struct nw_gtpv2c_triggered_rsp_ind_info_s {
   NW_IN    nw_gtpv2c_error_t               error;
   NW_IN    nw_gtpv2c_ulp_trxn_handle_t     hUlpTrxn;
   NW_IN    nw_gtpv2c_ulp_tunnel_handle_t   hUlpTunnel;
+  NW_IN    uint8_t                         trx_flags;
   NW_IN    nw_gtpv2c_msg_type_t            msgType;
   NW_IN    bool                            noDelete;
+  NW_IN    struct in_addr                  peerIp;
+  NW_IN    uint32_t                        localPort;
+  NW_IN    uint32_t                        peerPort;
 } nw_gtpv2c_triggered_rsp_ind_info_t;
 
 /**
@@ -306,6 +313,7 @@ typedef struct nw_gtpv2c_rsp_failure_ind_info_s {
   NW_IN    nw_gtpv2c_ulp_tunnel_handle_t     hUlpTunnel;
   NW_IN    nw_gtpv2c_msg_type_t              msgType;
   NW_IN    bool                              noDelete;
+  NW_IN    uint8_t                           trx_flags;
 
   NW_IN    uint32_t                          teidLocal;
 } nw_gtpv2c_rsp_failure_ind_info_t;
@@ -380,9 +388,11 @@ typedef struct nw_gtpv2c_ulp_entity_s{
 
 typedef struct nw_gtpv2c_udp_entity_s {
   nw_gtpv2c_udp_handle_t        hUdp;
+  uint16_t                      gtpv2cStandardPort;
   nw_rc_t (*udpDataReqCallback) ( NW_IN     nw_gtpv2c_udp_handle_t udpHandle,
                                 NW_IN     uint8_t* dataBuf,
                                 NW_IN     uint32_t dataSize,
+                                NW_IN     uint16_t localPort,
                                 NW_IN     struct in_addr * peerIp,
                                 NW_IN     uint16_t peerPort);
 } nw_gtpv2c_udp_entity_t;
@@ -562,6 +572,7 @@ nwGtpv2cSetLogLevel( NW_IN nw_gtpv2c_stack_handle_t hGtpcStackHandle,
  @param[in] hGtpcStackHandle : Stack handle
  @param[in] udpData : Pointer to received UDP data.
  @param[in] udpDataLen : Received data length.
+ @param[in] localPort : Received on local port.
  @param[in] dstPort : Received on port.
  @param[in] from : Received from peer information.
  @return NW_OK on success.
@@ -571,6 +582,7 @@ nw_rc_t
 nwGtpv2cProcessUdpReq( NW_IN nw_gtpv2c_stack_handle_t hGtpcStackHandle,
                        NW_IN uint8_t* udpData,
                        NW_IN uint32_t udpDataLen,
+                       NW_IN uint16_t localPort,
                        NW_IN uint16_t peerPort,
                        NW_IN struct in_addr *peerIP);
 

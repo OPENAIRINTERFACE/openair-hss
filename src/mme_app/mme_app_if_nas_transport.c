@@ -95,7 +95,7 @@ int itf_mme_app_nas_initial_ue_message(
   // sizeof (nas_establish_ind_t));
 
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_CONNECTION_ESTABLISHMENT_IND");
-  itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+  itti_send_msg_to_task (TASK_NAS_EMM, INSTANCE_DEFAULT, message_p);
 */
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }

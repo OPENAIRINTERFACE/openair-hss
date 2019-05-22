@@ -46,10 +46,10 @@
 #include "bstrlib.h"
 
 #include "log.h"
-#include "as_message.h"
 #include "common_types.h"
 #include "dynamic_memory_check.h"
 #include "common_defs.h"
+#include "as_message.h"
 
 
 /****************************************************************************/

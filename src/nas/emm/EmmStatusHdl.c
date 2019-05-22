@@ -48,22 +48,22 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "bstrlib.h"
-
 #include "log.h"
 #include "common_types.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"
 #include "3gpp_29.274.h"
-#include "mme_app_ue_context.h"
+
+#include "emm_data.h"
 #include "emm_proc.h"
-#include "commonDef.h"
+#include "emm_cause.h"
+#include "emm_sap.h"
+#include "bstrlib.h"
+
+#include "mme_app_ue_context.h"
+#include "common_defs.h"
 #include "common_defs.h"
 
-#include "emm_cause.h"
-#include "emm_data.h"
-
-#include "emm_sap.h"
 #include "mme_app_defs.h"
 
 /****************************************************************************/

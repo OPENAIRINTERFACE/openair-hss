@@ -23,10 +23,10 @@
 #ifndef FILE_ATTACH_REJECT_SEEN
 #define FILE_ATTACH_REJECT_SEEN
 
-#include "SecurityHeaderType.h"
-#include "MessageType.h"
 #include "EmmCause.h"
 #include "EsmMessageContainer.h"
+#include "MessageType.h"
+#include "SecurityHeaderType.h"
 #include "3gpp_23.003.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"

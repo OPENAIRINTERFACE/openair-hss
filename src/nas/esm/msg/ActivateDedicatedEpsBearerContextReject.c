@@ -26,13 +26,13 @@
 #include <stdbool.h>
 
 #include "bstrlib.h"
+#include "ActivateDedicatedEpsBearerContextReject.h"
 
 #include "log.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.301.h"
 #include "TLVEncoder.h"
 #include "TLVDecoder.h"
-#include "ActivateDedicatedEpsBearerContextReject.h"
 
 int
 decode_activate_dedicated_eps_bearer_context_reject (

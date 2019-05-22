@@ -174,9 +174,9 @@ int sctp_get_peeraddresses (
 
       addr = (struct sockaddr_in6 *)&temp_addr_p[j];
 
-      if (inet_ntop (AF_INET6, &addr->sin6_addr.s6_addr, address, sizeof (address)) != NULL) {
-        OAILOG_DEBUG (LOG_SCTP, "    - [%s]\n", address);
-      }
+//      if (inet_ntop (AF_INET6, &addr->sin6_addr.s6_addr, address, sizeof (address)) != NULL) {
+//        OAILOG_DEBUG (LOG_SCTP, "    - [%s]\n", address);
+//      }
     }
   }
 
@@ -229,10 +229,10 @@ int sctp_get_localaddresses (
         char                                    address[40] = {0};
 
         addr = (struct sockaddr_in6 *)&temp_addr_p[j];
-
-        if (inet_ntop (AF_INET6, &addr->sin6_addr.s6_addr, address, sizeof (address)) != NULL) {
-          OAILOG_DEBUG (LOG_SCTP, "    - [%s]\n", address);
-        }
+//
+//        if (inet_ntop (AF_INET6, &addr->sin6_addr.s6_addr, address, sizeof (address)) != NULL) {
+//          OAILOG_DEBUG (LOG_SCTP, "    - [%s]\n", address);
+//        }
       } else {
         OAILOG_DEBUG (LOG_SCTP, "    - unhandled address family %d\n", temp_addr_p[j].sa_family);
       }

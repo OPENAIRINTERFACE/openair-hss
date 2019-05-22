@@ -39,8 +39,36 @@ Description Defines EPS Mobility Management messages and functions used
 #ifndef FILE_EMM_MSG_SEEN
 #define FILE_EMM_MSG_SEEN
 
+#include "AttachAccept.h"
+#include "AttachComplete.h"
+#include "AttachReject.h"
+#include "AttachRequest.h"
+#include "AuthenticationFailure.h"
+#include "AuthenticationReject.h"
+#include "AuthenticationRequest.h"
+#include "AuthenticationResponse.h"
+#include "CsServiceNotification.h"
+#include "DetachAccept.h"
+#include "DetachRequest.h"
+#include "DownlinkNasTransport.h"
 #include "emm_msgDef.h"
-
+#include "EmmInformation.h"
+#include "EmmStatus.h"
+#include "ExtendedServiceRequest.h"
+#include "GutiReallocationCommand.h"
+#include "GutiReallocationComplete.h"
+#include "IdentityRequest.h"
+#include "IdentityResponse.h"
+#include "NASSecurityModeCommand.h"
+#include "NASSecurityModeComplete.h"
+#include "SecurityModeReject.h"
+#include "ServiceReject.h"
+#include "ServiceRequest.h"
+#include "TrackingAreaUpdateAccept.h"
+#include "TrackingAreaUpdateComplete.h"
+#include "TrackingAreaUpdateReject.h"
+#include "TrackingAreaUpdateRequest.h"
+#include "UplinkNasTransport.h"
 #include "AdditionalUpdateResult.h"
 #include "AdditionalUpdateType.h"
 #include "Cli.h"
@@ -71,39 +99,10 @@ Description Defines EPS Mobility Management messages and functions used
 #include "SsCode.h"
 #include "TrackingAreaIdentity.h"
 #include "TrackingAreaIdentityList.h"
-#include "3gpp_24.301.h"
 #include "UeNetworkCapability.h"
 #include "UeRadioCapabilityInformationUpdateNeeded.h"
 #include "UeSecurityCapability.h"
-#include "AttachAccept.h"
-#include "AttachComplete.h"
-#include "AttachReject.h"
-#include "AttachRequest.h"
-#include "AuthenticationFailure.h"
-#include "AuthenticationReject.h"
-#include "AuthenticationRequest.h"
-#include "AuthenticationResponse.h"
-#include "CsServiceNotification.h"
-#include "DetachAccept.h"
-#include "DetachRequest.h"
-#include "DownlinkNasTransport.h"
-#include "EmmInformation.h"
-#include "EmmStatus.h"
-#include "ExtendedServiceRequest.h"
-#include "GutiReallocationCommand.h"
-#include "GutiReallocationComplete.h"
-#include "IdentityRequest.h"
-#include "IdentityResponse.h"
-#include "NASSecurityModeCommand.h"
-#include "NASSecurityModeComplete.h"
-#include "SecurityModeReject.h"
-#include "ServiceReject.h"
-#include "ServiceRequest.h"
-#include "TrackingAreaUpdateAccept.h"
-#include "TrackingAreaUpdateComplete.h"
-#include "TrackingAreaUpdateReject.h"
-#include "TrackingAreaUpdateRequest.h"
-#include "UplinkNasTransport.h"
+#include "3gpp_24.301.h"
 
 
 /****************************************************************************/
@@ -166,5 +165,7 @@ int emm_msg_decode(EMM_msg *msg, uint8_t *buffer, uint32_t len);
 int emm_msg_encode(EMM_msg *msg, uint8_t *buffer, uint32_t len);
 
 int emm_msg_encode_header (const emm_msg_header_t * header, uint8_t * buffer, uint32_t len);
+
+void emm_msg_free (EMM_msg * msg);
 
 #endif /* FILE_EMM_MSG_SEEN */

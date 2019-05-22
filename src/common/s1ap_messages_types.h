@@ -48,6 +48,7 @@
 #define S1AP_E_RAB_MODIFY_RSP(mSGpTR)            (mSGpTR)->ittiMsg.s1ap_e_rab_modify_rsp
 #define S1AP_E_RAB_RELEASE_REQ(mSGpTR)           (mSGpTR)->ittiMsg.s1ap_e_rab_release_req
 #define S1AP_E_RAB_RELEASE_RSP(mSGpTR)           (mSGpTR)->ittiMsg.s1ap_e_rab_release_rsp
+#define S1AP_E_RAB_RELEASE_IND(mSGpTR)           (mSGpTR)->ittiMsg.s1ap_e_rab_release_ind
 
 #define S1AP_INITIAL_UE_MESSAGE(mSGpTR)          (mSGpTR)->ittiMsg.s1ap_initial_ue_message
 
@@ -280,20 +281,26 @@ typedef struct itti_s1ap_e_rab_release_rsp_s {
 
 } itti_s1ap_e_rab_release_rsp_t;
 
+typedef struct itti_s1ap_e_rab_release_ind_s {
+  mme_ue_s1ap_id_t    mme_ue_s1ap_id;
+  enb_ue_s1ap_id_t    enb_ue_s1ap_id;
+  uint32_t            enb_id;
+
+  // E-RAB Released List
+  e_rab_list_t                  e_rab_release_list;
+
+} itti_s1ap_e_rab_release_ind_t;
+
 
 // handover messaging
 typedef struct itti_s1ap_path_switch_request_s {
-  uint32_t                mme_ue_s1ap_id;
-  uint32_t                enb_ue_s1ap_id;
-  sctp_assoc_id_t         sctp_assoc_id;
-  sctp_stream_id_t        sctp_stream;
-  uint32_t                enb_id;
-  uint8_t                 no_of_e_rabs;
-  ebi_t                   e_rab_id[BEARERS_PER_UE];
-  bstring                 transport_layer_address[BEARERS_PER_UE];
-  s1u_teid_t              gtp_teid[BEARERS_PER_UE];
-  ecgi_t                  e_utran_cgi;
-
+  uint32_t                            mme_ue_s1ap_id;
+  uint32_t                            enb_ue_s1ap_id;
+  sctp_assoc_id_t                     sctp_assoc_id;
+  sctp_stream_id_t                    sctp_stream;
+  uint32_t                            enb_id;
+  ecgi_t                              e_utran_cgi;
+  bearer_contexts_to_be_modified_t    bcs_to_be_modified;
 //  /* Key eNB */
 //  uint8_t                 kenb[32];
 //
@@ -308,11 +315,6 @@ typedef struct itti_s1ap_path_switch_request_s {
 //  priority_level_t        prio_level;
 //  pre_emp_vulnerability_t pre_emp_vulnerability;
 //  pre_emp_capability_t    pre_emp_capability;
-//
-//  /* S-GW TEID for user-plane */
-//  teid_t                  teid;
-//  /* S-GW IP address for User-Plane */
-//  ip_address_t            s_gw_address;
 } itti_s1ap_path_switch_request_t;
 
 /** Path Switch Request Acknowledgment sent from MME_APP to S1AP layer. */
@@ -394,10 +396,10 @@ typedef struct itti_s1ap_handover_request_acknowledge_s {
   uint32_t                enb_ue_s1ap_id;
 //  sctp_assoc_id_t         sctp_assoc_id;
 //  sctp_stream_id_t        sctp_stream;
-  uint8_t                 no_of_e_rabs;
-  ebi_t                   e_rab_id[BEARERS_PER_UE];
-  bstring                 transport_layer_address[BEARERS_PER_UE];
-  s1u_teid_t              gtp_teid[BEARERS_PER_UE];
+  bearer_contexts_to_be_modified_t    bcs_to_be_modified;
+
+  // E-RAB Released List
+  e_rab_list_t                        e_rab_release_list;
 
   bstring                 target_to_source_eutran_container; /**< Target-ToSource Transparent Container. */
 } itti_s1ap_handover_request_acknowledge_t;
@@ -434,7 +436,7 @@ typedef struct itti_s1ap_path_switch_request_failure_s {
   mme_ue_s1ap_id_t        mme_ue_s1ap_id;
   enb_ue_s1ap_id_t        enb_ue_s1ap_id:24;
   sctp_assoc_id_t         assoc_id;
-  enum s1cause            cause;
+  S1ap_Cause_PR           cause_type;
 } itti_s1ap_path_switch_request_failure_t;
 
 /** Handover Cancel. */
@@ -474,7 +476,8 @@ typedef struct itti_s1ap_handover_notify_s {
 
 typedef struct itti_s1ap_paging_s {
   mme_ue_s1ap_id_t        mme_ue_s1ap_id;
-  sctp_assoc_id_t         sctp_assoc_id_key; // link with eNB id
+//  sctp_assoc_id_t         sctp_assoc_id_key; // link with eNB id
+  tac_t					  tac;
 
   uint16_t                ue_identity_index;
   tmsi_t                  tmsi;

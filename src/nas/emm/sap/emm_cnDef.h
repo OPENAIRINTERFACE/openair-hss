@@ -40,8 +40,8 @@ Description
 
 #ifndef FILE_EMM_CNDEF_SEEN
 #define FILE_EMM_CNDEF_SEEN
-#include "intertask_interface.h"
 #include "emm_proc.h"
+#include "intertask_interface.h"
 
 typedef enum emmcn_primitive_s {
   _EMMCN_START = 400,
@@ -50,15 +50,6 @@ typedef enum emmcn_primitive_s {
   _EMMCN_CONTEXT_RES,
   _EMMCN_CONTEXT_FAIL,
   _EMMCN_DEREGISTER_UE,
-  _EMMCN_PDN_CONFIG_RES, // LG
-  _EMMCN_PDN_CONFIG_FAIL, // DB
-  _EMMCN_PDN_CONNECTIVITY_RES, // LG
-  _EMMCN_PDN_CONNECTIVITY_FAIL,// LG
-  _EMMCN_PDN_DISCONNECT_RES,// LG
-  _EMMCN_ACTIVATE_DEDICATED_BEARER_REQ,// LG
-  _EMMCN_MODIFY_EPS_BEARER_CTX_REQ,// LG
-  _EMMCN_DEACTIVATE_DEDICATED_BEARER_REQ,// LG
-  _EMMCN_UPDATE_ESM_BEARERS_REQ,// LG
   _EMMCN_IMPLICIT_DETACH_UE,
   _EMMCN_SMC_PROC_FAIL,
   _EMMCN_END
@@ -109,18 +100,10 @@ struct itti_nas_pdn_config_rsp_s;
 struct itti_nas_pdn_connectivity_rsp_s;
 struct itti_nas_pdn_connectivity_fail_s;
 
-typedef struct itti_nas_pdn_config_rsp_s        emm_cn_pdn_config_res_t;
-typedef struct itti_nas_pdn_config_fail_s       emm_cn_pdn_config_fail_t;
-typedef struct itti_nas_pdn_connectivity_rsp_s  emm_cn_pdn_res_t;
-typedef struct itti_nas_pdn_connectivity_fail_s emm_cn_pdn_fail_t;
-typedef struct itti_nas_pdn_disconnect_rsp_s    emm_cn_pdn_disconnect_res_t;
-typedef struct itti_mme_app_activate_eps_bearer_ctx_req_s emm_cn_activate_dedicated_bearer_req_t;
-typedef struct itti_mme_app_modify_eps_bearer_ctx_req_s emm_cn_modify_eps_bearer_ctx_req_t;
-typedef struct itti_mme_app_deactivate_eps_bearer_ctx_req_s emm_cn_deactivate_dedicated_bearer_req_t;
-typedef struct itti_mme_app_update_esm_bearer_ctxs_req_s emm_cn_update_esm_bearer_ctxs_req_t;
-
 /** NAS UE context response. */
-typedef itti_nas_context_res_t  emm_cn_context_res_t;
+typedef itti_nas_context_res_t    emm_cn_context_res_t;
+typedef struct itti_nas_pdn_connectivity_rsp_s  emm_cn_pdn_connectivity_resp_t;
+typedef struct itti_nas_pdn_connectivity_fail_s emm_cn_pdn_connectivity_fail_t;
 
 typedef struct emm_cn_deregister_ue_s {
   uint32_t ue_id;
@@ -130,6 +113,7 @@ typedef struct emm_cn_implicit_detach_ue_s {
   uint32_t ue_id;
   nas_cause_t emm_cause;
   emm_proc_detach_type_t detach_type;
+  bool clr;
 } emm_cn_implicit_detach_ue_t;
 
 typedef struct emm_cn_smc_fail_s {
@@ -147,15 +131,6 @@ typedef struct emm_mme_ul_s {
     emm_cn_context_fail_t    *context_fail;
 
     emm_cn_deregister_ue_t   deregister;
-    emm_cn_pdn_config_res_t  *emm_cn_pdn_config_res;
-    emm_cn_pdn_config_fail_t *emm_cn_pdn_config_fail;
-    emm_cn_pdn_res_t        *emm_cn_pdn_res;
-    emm_cn_pdn_fail_t       *emm_cn_pdn_fail;
-    emm_cn_pdn_disconnect_res_t *emm_cn_pdn_disconnect_res;
-    emm_cn_activate_dedicated_bearer_req_t *emm_cn_activate_dedicated_bearer_req;
-    emm_cn_modify_eps_bearer_ctx_req_t *emm_cn_modify_eps_bearer_ctx_req;
-    emm_cn_deactivate_dedicated_bearer_req_t *emm_cn_deactivate_dedicated_bearer_req;
-    emm_cn_update_esm_bearer_ctxs_req_t *emm_cn_update_esm_bearer_ctxs_req;
     emm_cn_implicit_detach_ue_t   emm_cn_implicit_detach;
     emm_cn_smc_fail_t        *smc_fail;
   } u;

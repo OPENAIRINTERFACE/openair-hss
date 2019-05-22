@@ -24,6 +24,8 @@
 #ifndef DETACH_TYPE_SEEN
 #define DETACH_TYPE_SEEN
 
+#include "3gpp_24.301.h"
+
 #define DETACH_TYPE_MINIMUM_LENGTH 1
 #define DETACH_TYPE_MAXIMUM_LENGTH 1
 

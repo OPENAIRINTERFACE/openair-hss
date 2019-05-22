@@ -54,16 +54,17 @@
 
 #include "log.h"
 #include "common_defs.h"
-#include "emm_fsm.h"
-#include "commonDef.h"
+#include "common_defs.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"
 #include "3gpp_29.274.h"
 #include "mme_app_ue_context.h"
-#include "emm_proc.h"
 #include "mme_app_defs.h"
 
 #include "mme_app_procedures.h"
+#include "emm_proc.h"
+#include "emm_fsm.h"
+#include "emm_regDef.h"
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
 /****************************************************************************/
@@ -116,7 +117,7 @@ int EmmCommonProcedureInitiated (emm_reg_t * const evt)
     if (evt->u.common.common_proc) {
       MSC_LOG_RX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "_EMMREG_COMMON_PROC_CNF ue id " MME_UE_S1AP_ID_FMT " ", evt->ue_id);
       if (evt->u.common.common_proc->emm_proc.base_proc.parent) {
-        rc = nas_unlink_procedures(evt->u.common.common_proc->emm_proc.base_proc.parent, (nas_base_proc_t*)&evt->u.common.common_proc->emm_proc.base_proc);
+        rc = nas_unlink_emm_procedures(evt->u.common.common_proc->emm_proc.base_proc.parent, (nas_emm_base_proc_t*)&evt->u.common.common_proc->emm_proc.base_proc);
       }
 
       // todo: need to check if another common procedure is existing?
@@ -174,7 +175,7 @@ int EmmCommonProcedureInitiated (emm_reg_t * const evt)
     MSC_LOG_RX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "_EMMREG_COMMON_PROC_ABORT ue id " MME_UE_S1AP_ID_FMT " ", evt->ue_id);
     if (evt->u.common.common_proc) {
       if (evt->u.common.common_proc->emm_proc.base_proc.parent) {
-        rc = nas_unlink_procedures(evt->u.common.common_proc->emm_proc.base_proc.parent, (nas_base_proc_t*)&evt->u.common.common_proc->emm_proc.base_proc);
+        rc = nas_unlink_emm_procedures(evt->u.common.common_proc->emm_proc.base_proc.parent, (nas_emm_base_proc_t*)&evt->u.common.common_proc->emm_proc.base_proc);
       }
 
       if ((emm_ctx) && (evt->u.common.common_proc->emm_proc.base_proc.abort)) { /**< Just stops the timer. */
@@ -246,7 +247,7 @@ int EmmCommonProcedureInitiated (emm_reg_t * const evt)
       rc = emm_fsm_set_state (evt->ue_id, emm_ctx, EMM_DEREGISTERED);
 
       if ((emm_ctx) && (evt->u.attach.proc->emm_spec_proc.emm_proc.base_proc.abort)) { /**< Currently, will perform IMPLICIT detach. For any case we will remove the procedures here. */
-        (*evt->u.attach.proc->emm_spec_proc.emm_proc.base_proc.abort)((nas_base_proc_t*) emm_ctx, evt->u.attach.proc); // &evt->u.attach.proc->emm_spec_proc.emm_proc.base_proc);
+        (*evt->u.attach.proc->emm_spec_proc.emm_proc.base_proc.abort)((nas_emm_base_proc_t*) emm_ctx, evt->u.attach.proc); // &evt->u.attach.proc->emm_spec_proc.emm_proc.base_proc);
       }
 
 //        nas_delete_attach_procedure(emm_ctx);
@@ -306,14 +307,6 @@ int EmmCommonProcedureInitiated (emm_reg_t * const evt)
       nas_delete_tau_procedure(emm_ctx);
     }
 
-//    struct ue_context_s * ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, evt->ue_id);
-//
-//       /** Delete the local Tunnel. */
-//          mme_app_s10_proc_mme_handover_t * s10_handover_proc = mme_app_get_s10_procedure_mme_handover(ue_context);
-//          if(s10_handover_proc){
-//            mme_app_remove_s10_tunnel_endpoint(ue_context->local_mme_teid_s10, s10_handover_proc->remote_mme_teid.ipv4_address);
-//          }
-
     break;
 
   case _EMMREG_TAU_REJ:
@@ -343,7 +336,7 @@ int EmmCommonProcedureInitiated (emm_reg_t * const evt)
       nas_stop_T3450(evt->u.tau.proc->ue_id, &evt->u.tau.proc->T3450, timer_callback_args);
 
       if ((emm_ctx) && (evt->u.tau.proc->emm_spec_proc.emm_proc.base_proc.abort)) { /**< Currently, will perform IMPLICIT detach. */
-        (*evt->u.tau.proc->emm_spec_proc.emm_proc.base_proc.abort)((nas_base_proc_t*) emm_ctx, evt->u.tau.proc); // &evt->u.tau.proc->emm_spec_proc.emm_proc.base_proc);
+        (*evt->u.tau.proc->emm_spec_proc.emm_proc.base_proc.abort)((nas_emm_base_proc_t*) emm_ctx, evt->u.tau.proc); // &evt->u.tau.proc->emm_spec_proc.emm_proc.base_proc);
       }
 //
 //      if ((rc != RETURNerror) && (emm_ctx) && (evt->notify) && (evt->u.tau.proc->emm_spec_proc.emm_proc.base_proc.failure_notif)) {
@@ -409,8 +402,7 @@ int EmmCommonProcedureInitiated (emm_reg_t * const evt)
   case _EMMREG_LOWERLAYER_RELEASE:
     MSC_LOG_RX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "_EMMREG_LOWERLAYER_RELEASE ue id " MME_UE_S1AP_ID_FMT " ", evt->ue_id);
     nas_delete_all_emm_procedures(emm_ctx);
-    nas_delete_all_esm_procedures(emm_ctx);
-
+    /** The ESM procedures will handle the EMM session termination independently, checking the EMM state when transmitting a message. */
     rc = RETURNok;
     break;
 

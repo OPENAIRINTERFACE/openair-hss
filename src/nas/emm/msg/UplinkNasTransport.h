@@ -21,13 +21,12 @@
 
 #ifndef FILE_UPLINK_NAS_TRANSPORT_SEEN
 #define FILE_UPLINK_NAS_TRANSPORT_SEEN
-#include "SecurityHeaderType.h"
-#include "MessageType.h"
-#include "NasMessageContainer.h"
-
 #include "3gpp_23.003.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"
+#include "MessageType.h"
+#include "NasMessageContainer.h"
+#include "SecurityHeaderType.h"
 
 /* Minimum length macro. Formed by minimum length of each mandatory field */
 #define UPLINK_NAS_TRANSPORT_MINIMUM_LENGTH ( \
