@@ -1,4 +1,4 @@
-/*
+  /*
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
@@ -51,6 +51,7 @@
 #include "mme_config.h"
 #include "enum_string.h"
 #include "timer.h"
+#include "esm_cause.h"
 #include "mme_app_ue_context.h"
 #include "mme_app_bearer_context.h"
 #include "mme_app_defs.h"
@@ -113,21 +114,25 @@ ue_context_t *mme_create_new_ue_context (void)
   int rc = pthread_mutexattr_init(&mutexattr);
   if (rc) {
     OAILOG_ERROR (LOG_MME_APP, "Cannot create UE context, failed to init mutex attribute: %s\n", strerror(rc));
+    free_wrapper(&new_p);
     return NULL;
   }
   rc = pthread_mutexattr_settype(&mutexattr, PTHREAD_MUTEX_RECURSIVE);
   if (rc) {
     OAILOG_ERROR (LOG_MME_APP, "Cannot create UE context, failed to set mutex attribute type: %s\n", strerror(rc));
+    free_wrapper(&new_p);
     return NULL;
   }
   rc = pthread_mutex_init(&new_p->recmutex, &mutexattr);
   if (rc) {
     OAILOG_ERROR (LOG_MME_APP, "Cannot create UE context, failed to init mutex: %s\n", strerror(rc));
+    free_wrapper(&new_p);
     return NULL;
   }
 //  rc = lock_ue_contexts(new_p);
   if (rc) {
     OAILOG_ERROR (LOG_MME_APP, "Cannot create UE context, failed to lock mutex: %s\n", strerror(rc));
+    free_wrapper(&new_p);
     return NULL;
   }
 
@@ -152,7 +157,7 @@ ue_context_t *mme_create_new_ue_context (void)
    * Get 11 new bearers from the bearer pool.
    * They might or might not be pre-allocated.
    */
-  for(uint8_t ebi = 5; ebi < 5 + MAX_NUM_BEARERS_UE - 1; ebi++) {
+  for(uint8_t ebi = 5; ebi < 5 + MAX_NUM_BEARERS_UE -1; ebi++) {
     /** Insert 11 new bearers. */
     bearer_context_t * bearer_ctx_p = mme_app_new_bearer();
     DevAssert (bearer_ctx_p != NULL);
@@ -162,18 +167,11 @@ ue_context_t *mme_create_new_ue_context (void)
   return new_p;
 }
 
-
-//------------------------------------------------------------------------------
-void mme_app_free_pdn_connection (pdn_context_t ** const pdn_connection)
-{
-  bdestroy_wrapper(&(*pdn_connection)->apn_in_use);
-  bdestroy_wrapper(&(*pdn_connection)->apn_oi_replacement);
-  free_wrapper((void**)pdn_connection);
-}
-
 //------------------------------------------------------------------------------
 void mme_app_ue_context_free_content (ue_context_t * const ue_context)
 {
+  // todo: lock UE context
+
   bdestroy_wrapper (&ue_context->msisdn);
   bdestroy_wrapper (&ue_context->ue_radio_capability);
   bdestroy_wrapper (&ue_context->apn_oi_replacement);
@@ -228,68 +226,72 @@ void mme_app_ue_context_free_content (ue_context_t * const ue_context)
 //    /** The number of bearers will be incremented in the method. S10 should just pick the ebi. */
 //  }
 
-//  for (int i = 0; i < BEARERS_PER_UE; i++) {
-//    if (ue_context->bearer_contexts[i]) {
-//      mme_app_deregister_bearer_context(&ue_context->bearer_contexts[i]);
-//    }
-//  }
-//
-//
-//  // todo: when is this method called? it should put the bearer contexts of the pdn context back to the UE contexts bearer list!
-//  for (int i = 0; i < MAX_APN_PER_UE; i++) {
-//    if (ue_context->pdn_contexts[i]) {
-//      mme_app_free_pdn_connection(&ue_context->pdn_contexts[i]);
-//    }
-//  }
-
-
   /** Will remove the S10 tunnel endpoints. */
   if (ue_context->s10_procedures) {
     mme_app_delete_s10_procedure_mme_handover(ue_context); // todo: generic s10 function
   }
-//
-//  if (ue_context->s11_procedures) {
-//    mme_app_delete_s11_procedures(ue_context);
-//  }
+
+  /** Will remove the S10 tunnel endpoints. */
+  if (ue_context->s11_procedures) {
+    mme_app_delete_s11_procedures(ue_context); // todo: generic s10 function
+  }
+
+  /** Free the ESM procedures. */
+  if(ue_context->esm_procedures.pdn_connectivity_procedures){
+    OAILOG_WARNING(LOG_MME_APP, "ESM PDN Connectivity procedures still exist for UE "MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
+    mme_app_nas_esm_free_pdn_connectivity_procedures(ue_context);
+  }
+
+  if(ue_context->esm_procedures.bearer_context_procedures){
+    OAILOG_WARNING(LOG_MME_APP, "ESM Bearer Context procedures still exist for UE "MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
+    mme_app_nas_esm_free_bearer_context_procedures(ue_context);
+  }
+
+  DevAssert(RB_EMPTY(&ue_context->pdn_contexts));
+
+  if(!RB_EMPTY(&ue_context->bearer_pool)){
+    /** Assert that 10 Bearers exist. Put them all back to the pool. */
+    for (int i = 0; i < BEARERS_PER_UE - 1; i++) {
+      bearer_context_t * bearer_context = RB_MAX(BearerPool, &ue_context->bearer_pool);
+      if(bearer_context){
+        OAILOG_DEBUG(LOG_MME_APP, "Putting bearer context %p with ebi %d (i=%d) of UE "MME_UE_S1AP_ID_FMT ". \n",
+            bearer_context, bearer_context->ebi, i, ue_context->mme_ue_s1ap_id);
+        DevAssert(bearer_context);
+        /** Remove from the UE list. */
+        bearer_context = RB_REMOVE(BearerPool, &ue_context->bearer_pool, bearer_context);
+        DevAssert(bearer_context);
+        mme_app_free_bearer_context(&bearer_context);
+      } else{
+        OAILOG_DEBUG(LOG_MME_APP, "Could not find MAX bearer context for (i=%d) of UE "MME_UE_S1AP_ID_FMT ". Removing all. \n",
+            i, ue_context->mme_ue_s1ap_id);
+        break;
+      }
+    }
+    while(!RB_EMPTY(&ue_context->bearer_pool)){
+      bearer_context_t * bearer_context = NULL;
+      RB_FOREACH (bearer_context, BearerPool, &ue_context->bearer_pool) {
+        if(bearer_context)
+          break;
+      }
+      if(bearer_context){
+        OAILOG_ERROR(LOG_MME_APP, "Putting bearer context %p with ebi %d of UE "MME_UE_S1AP_ID_FMT " (second try). \n",
+            bearer_context, bearer_context->ebi, ue_context->mme_ue_s1ap_id);
+        DevAssert(bearer_context);
+        /** Remove from the UE list. */
+        bearer_context = RB_REMOVE(BearerPool, &ue_context->bearer_pool, bearer_context);
+        DevAssert(bearer_context);
+        mme_app_free_bearer_context(&bearer_context);
+      }else {
+        DevAssert(RB_EMPTY(&ue_context->bearer_pool));
+      }
+    }
+    OAILOG_DEBUG(LOG_MME_APP, "All bearers removed of UE "MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
+    RB_INIT(&ue_context->bearer_pool);
+  }
 
   // todo: unlock?
   memset(ue_context, 0, sizeof(*ue_context));
 }
-
-////------------------------------------------------------------------------------
-//ue_context_t                           *
-//mme_ue_context_exists_enb_ue_s1ap_id (
-//  mme_ue_context_t * const mme_ue_context_p,
-//  const enb_s1ap_id_key_t enb_key)
-//{
-//  struct ue_context_s                    *ue_context = NULL;
-//
-//  hashtable_ts_get (mme_ue_context_p->enb_ue_s1ap_id_ue_context_htbl, (const hash_key_t)enb_key, (void **)&ue_context);
-//  if (ue_context) {
-//    OAILOG_TRACE (LOG_MME_APP, "Fetched ue_context (key " MME_APP_ENB_S1AP_ID_KEY_FORMAT ") MME_UE_S1AP_ID=" MME_UE_S1AP_ID_FMT " ENB_UE_S1AP_ID=" ENB_UE_S1AP_ID_FMT " @%p\n",
-//        enb_key, ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, ue_context);
-//  }
-//  return ue_context;
-//}
-
-////------------------------------------------------------------------------------
-//ue_context_t                           *
-//mme_ue_context_exists_mme_ue_s1ap_id (
-//  mme_ue_context_t * const mme_ue_context_p,
-//  const mme_ue_s1ap_id_t mme_ue_s1ap_id)
-//{
-//  hashtable_rc_t                          h_rc = HASH_TABLE_OK;
-//  uint64_t                                enb_s1ap_id_key64 = 0;
-//
-//  h_rc = hashtable_uint64_ts_get (mme_ue_context_p->mme_ue_s1ap_id_ue_context_htbl, (const hash_key_t)mme_ue_s1ap_id, &enb_s1ap_id_key64);
-//
-//  if (HASH_TABLE_OK == h_rc) {
-//    return mme_ue_context_exists_enb_ue_s1ap_id (mme_ue_context_p, (enb_s1ap_id_key_t) enb_s1ap_id_key64);
-//  }
-//
-//  return NULL;
-//}
-
 
 //------------------------------------------------------------------------------
 ue_context_t                           *
@@ -306,6 +308,24 @@ mme_ue_context_exists_enb_ue_s1ap_id (
     return mme_ue_context_exists_mme_ue_s1ap_id (mme_ue_context_p, (mme_ue_s1ap_id_t) mme_ue_s1ap_id64);
   }
   return NULL;
+}
+
+//------------------------------------------------------------------------------
+subscription_data_t                           *
+mme_ue_subscription_data_exists_imsi (
+  mme_ue_context_t * const mme_ue_context_p,
+  const imsi64_t imsi)
+{
+  struct subscription_data_t                    *subscription_data = NULL;
+
+  hashtable_ts_get (mme_ue_context_p->imsi_subscription_profile_htbl, (const hash_key_t)imsi, (void **)&subscription_data);
+  if (subscription_data) {
+//    lock_ue_contexts(ue_context);
+//    OAILOG_TRACE (LOG_MME_APP, "UE  " MME_UE_S1AP_ID_FMT " fetched MM state %s, ECM state %s\n ",mme_ue_s1ap_id,
+//        (ue_context->mm_state == UE_UNREGISTERED) ? "UE_UNREGISTERED":(ue_context->mm_state == UE_REGISTERED) ? "UE_REGISTERED":"UNKNOWN",
+//        (ue_context->ecm_state == ECM_IDLE) ? "ECM_IDLE":(ue_context->ecm_state == ECM_CONNECTED) ? "ECM_CONNECTED":"UNKNOWN");
+  }
+  return subscription_data;
 }
 
 //------------------------------------------------------------------------------
@@ -397,54 +417,6 @@ mme_ue_context_exists_guti (
   return NULL;
 }
 
-//------------------------------------------------------------------------------
-int
-mme_ue_context_notified_new_ue_s1ap_id_association (
-  const enb_s1ap_id_key_t  enb_key,
-  const mme_ue_s1ap_id_t   mme_ue_s1ap_id)
-{
-  hashtable_rc_t                          h_rc = HASH_TABLE_OK;
-  ue_context_t                           *ue_context = NULL;
-  enb_ue_s1ap_id_t                        enb_ue_s1ap_id = 0;
-
-  OAILOG_FUNC_IN (LOG_MME_APP);
-  enb_ue_s1ap_id = MME_APP_ENB_S1AP_ID_KEY2ENB_S1AP_ID(enb_key);
-
-  if (INVALID_MME_UE_S1AP_ID == mme_ue_s1ap_id) {
-    OAILOG_ERROR (LOG_MME_APP,
-        "Error could not associate this enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " with mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n",
-        enb_ue_s1ap_id, mme_ue_s1ap_id);
-    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
-  }
-
-  ue_context = mme_ue_context_exists_enb_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, enb_key);
-  if (ue_context) {
-    if (ue_context->enb_s1ap_id_key == enb_key) { // useless
-      if (INVALID_MME_UE_S1AP_ID == ue_context->mme_ue_s1ap_id) {
-        // new insertion of mme_ue_s1ap_id, not a change in the id
-        h_rc = hashtable_uint64_ts_insert (mme_app_desc.mme_ue_contexts.mme_ue_s1ap_id_ue_context_htbl, (const hash_key_t)mme_ue_s1ap_id, (uint64_t)enb_key);
-        // todo: insert via mme_app_ue_s1ap_id
-//                h_rc = hashtable_ts_insert (mme_app_desc.mme_ue_contexts.mme_ue_s1ap_id_ue_context_htbl, (const hash_key_t)mme_ue_s1ap_id, (void *)ue_context);
-        if (HASH_TABLE_OK == h_rc) {
-          ue_context->mme_ue_s1ap_id = mme_ue_s1ap_id;
-          OAILOG_DEBUG (LOG_MME_APP,
-              "Associated this enb_ue_s1ap_ue_id " ENB_UE_S1AP_ID_FMT " with mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n",
-              ue_context->enb_ue_s1ap_id, ue_context->mme_ue_s1ap_id);
-
-          s1ap_notified_new_ue_mme_s1ap_id_association (ue_context->sctp_assoc_id_key, enb_ue_s1ap_id, mme_ue_s1ap_id);
-          //          unlock_ue_contexts(ue_context);
-          OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
-        }
-      }
-    }
-    //    unlock_ue_contexts(ue_context);
-  }
-  OAILOG_ERROR (LOG_MME_APP,
-      "Error could not associate this enb_ue_s1ap_ue_id " ENB_UE_S1AP_ID_FMT " with mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n",
-      enb_ue_s1ap_id, mme_ue_s1ap_id);
-  OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
-}
-
 // todo: eventually remove GUTI and also no need for variablility in mme_app_ue_s1ap_id.
 // first of all we assert here and second we register the newly created object once with the mme_insert_ue_context method!
 
@@ -487,8 +459,8 @@ mme_ue_context_update_coll_keys (
 
   if ((INVALID_ENB_UE_S1AP_ID_KEY != enb_s1ap_id_key) && (ue_context->enb_s1ap_id_key != enb_s1ap_id_key)) {
     // new insertion of enb_ue_s1ap_id_key,
-    h_rc = hashtable_ts_remove (mme_ue_context_p->enb_ue_s1ap_id_ue_context_htbl, (const hash_key_t)ue_context->enb_s1ap_id_key, (void **)&id);
-    h_rc = hashtable_ts_insert (mme_ue_context_p->enb_ue_s1ap_id_ue_context_htbl, (const hash_key_t)enb_s1ap_id_key, (void *)(uintptr_t)mme_ue_s1ap_id);
+    h_rc = hashtable_uint64_ts_remove (mme_ue_context_p->enb_ue_s1ap_id_ue_context_htbl, (const hash_key_t)ue_context->enb_s1ap_id_key);
+    h_rc = hashtable_uint64_ts_insert (mme_ue_context_p->enb_ue_s1ap_id_ue_context_htbl, (const hash_key_t)enb_s1ap_id_key, (void *)(uintptr_t)mme_ue_s1ap_id);
 
     if (HASH_TABLE_OK != h_rc) {
       OAILOG_ERROR (LOG_MME_APP,
@@ -512,8 +484,8 @@ mme_ue_context_update_coll_keys (
     ue_context->mme_ue_s1ap_id = mme_ue_s1ap_id;
 
     if (INVALID_IMSI64 != imsi) {
-      h_rc = hashtable_ts_remove (mme_ue_context_p->imsi_ue_context_htbl, (const hash_key_t)ue_context->imsi, (void **)&id);
-      h_rc = hashtable_ts_insert (mme_ue_context_p->imsi_ue_context_htbl, (const hash_key_t)imsi, (void *)(uintptr_t)mme_ue_s1ap_id);
+      h_rc = hashtable_uint64_ts_remove (mme_ue_context_p->imsi_ue_context_htbl, (const hash_key_t)ue_context->imsi);
+      h_rc = hashtable_uint64_ts_insert (mme_ue_context_p->imsi_ue_context_htbl, (const hash_key_t)imsi, (void *)(uintptr_t)mme_ue_s1ap_id);
       if (HASH_TABLE_OK != h_rc) {
         OAILOG_ERROR (LOG_MME_APP,
             "Error could not update this ue context %p enb_ue_s1ap_ue_id " ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " imsi " IMSI_64_FMT ": %s\n",
@@ -522,8 +494,8 @@ mme_ue_context_update_coll_keys (
         ue_context->imsi = imsi;
       }
       /** S11 Key. */
-      h_rc = hashtable_ts_remove (mme_ue_context_p->tun11_ue_context_htbl, (const hash_key_t)ue_context->mme_teid_s11, (void **)&id);
-      h_rc = hashtable_ts_insert (mme_ue_context_p->tun11_ue_context_htbl, (const hash_key_t)mme_teid_s11, (void *)(uintptr_t)mme_ue_s1ap_id);
+      h_rc = hashtable_uint64_ts_remove (mme_ue_context_p->tun11_ue_context_htbl, (const hash_key_t)ue_context->mme_teid_s11);
+      h_rc = hashtable_uint64_ts_insert (mme_ue_context_p->tun11_ue_context_htbl, (const hash_key_t)mme_teid_s11, (void *)(uintptr_t)mme_ue_s1ap_id);
       if (HASH_TABLE_OK != h_rc) {
         OAILOG_TRACE (LOG_MME_APP,
             "Error could not update this ue context %p enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " mme_teid_s11 " TEID_FMT " : %s\n",
@@ -532,8 +504,8 @@ mme_ue_context_update_coll_keys (
       ue_context->mme_teid_s11= mme_teid_s11;
 
       /** S10 Key. */
-      h_rc = hashtable_ts_remove (mme_ue_context_p->tun10_ue_context_htbl, (const hash_key_t)ue_context->local_mme_teid_s10, (void **)&id);
-      h_rc = hashtable_ts_insert (mme_ue_context_p->tun10_ue_context_htbl, (const hash_key_t)local_mme_teid_s10, (void *)(uintptr_t)mme_ue_s1ap_id);
+      h_rc = hashtable_uint64_ts_remove (mme_ue_context_p->tun10_ue_context_htbl, (const hash_key_t)ue_context->local_mme_teid_s10);
+      h_rc = hashtable_uint64_ts_insert (mme_ue_context_p->tun10_ue_context_htbl, (const hash_key_t)local_mme_teid_s10, (void *)(uintptr_t)mme_ue_s1ap_id);
       if (HASH_TABLE_OK != h_rc) {
         OAILOG_TRACE (LOG_MME_APP,
             "Error could not update this ue context %p enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " local_mme_teid_s10 " TEID_FMT " : %s\n",
@@ -544,8 +516,8 @@ mme_ue_context_update_coll_keys (
 
       if (guti_p)
       {
-        h_rc = obj_hashtable_ts_remove (mme_ue_context_p->guti_ue_context_htbl, (const void *const)&ue_context->guti, sizeof (ue_context->guti), (void **)&id);
-        h_rc = obj_hashtable_ts_insert (mme_ue_context_p->guti_ue_context_htbl, (const void *const)guti_p, sizeof (*guti_p), (void *)(uintptr_t)mme_ue_s1ap_id);
+        h_rc = obj_hashtable_uint64_ts_remove(mme_ue_context_p->guti_ue_context_htbl, (const void *const)&ue_context->guti, sizeof (ue_context->guti));
+        h_rc = obj_hashtable_uint64_ts_insert (mme_ue_context_p->guti_ue_context_htbl, (const void *const)guti_p, sizeof (*guti_p), (void *)(uintptr_t)mme_ue_s1ap_id);
         if (HASH_TABLE_OK != h_rc) {
           OAILOG_TRACE (LOG_MME_APP, "Error could not update this ue context %p enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " guti " GUTI_FMT " %s\n",
               ue_context, ue_context->enb_ue_s1ap_id, ue_context->mme_ue_s1ap_id, GUTI_ARG(guti_p), hashtable_rc_code2string(h_rc));
@@ -556,9 +528,9 @@ mme_ue_context_update_coll_keys (
 
   if ((ue_context->imsi != imsi)
       || (ue_context->mme_ue_s1ap_id != mme_ue_s1ap_id)) {
-    h_rc = hashtable_ts_remove (mme_ue_context_p->imsi_ue_context_htbl, (const hash_key_t)ue_context->imsi, (void **)&id);
+    h_rc = hashtable_uint64_ts_remove (mme_ue_context_p->imsi_ue_context_htbl, (const hash_key_t)ue_context->imsi);
     if (INVALID_MME_UE_S1AP_ID != mme_ue_s1ap_id) {
-      h_rc = hashtable_ts_insert (mme_ue_context_p->imsi_ue_context_htbl, (const hash_key_t)imsi, (void *)(uintptr_t)mme_ue_s1ap_id);
+      h_rc = hashtable_uint64_ts_insert (mme_ue_context_p->imsi_ue_context_htbl, (const hash_key_t)imsi, (void *)(uintptr_t)mme_ue_s1ap_id);
     } else {
       h_rc = HASH_TABLE_KEY_NOT_EXISTS;
     }
@@ -573,9 +545,9 @@ mme_ue_context_update_coll_keys (
   /** S11. */
   if ((ue_context->mme_teid_s11 != mme_teid_s11)
       || (ue_context->mme_ue_s1ap_id != mme_ue_s1ap_id)) {
-    h_rc = hashtable_ts_remove (mme_ue_context_p->tun11_ue_context_htbl, (const hash_key_t)ue_context->mme_teid_s11, (void **)&id);
+    h_rc = hashtable_uint64_ts_remove (mme_ue_context_p->tun11_ue_context_htbl, (const hash_key_t)ue_context->mme_teid_s11);
     if (INVALID_MME_UE_S1AP_ID != mme_ue_s1ap_id && INVALID_TEID != mme_teid_s11) {
-      h_rc = hashtable_ts_insert (mme_ue_context_p->tun11_ue_context_htbl, (const hash_key_t)mme_teid_s11, (void *)(uintptr_t)mme_ue_s1ap_id);
+      h_rc = hashtable_uint64_ts_insert (mme_ue_context_p->tun11_ue_context_htbl, (const hash_key_t)mme_teid_s11, (void *)(uintptr_t)mme_ue_s1ap_id);
     } else {
       h_rc = HASH_TABLE_KEY_NOT_EXISTS;
     }
@@ -591,9 +563,9 @@ mme_ue_context_update_coll_keys (
   /** S10. */
   if ((ue_context->local_mme_teid_s10 != local_mme_teid_s10)
       || (ue_context->mme_ue_s1ap_id != mme_ue_s1ap_id)) {
-    h_rc = hashtable_ts_remove (mme_ue_context_p->tun10_ue_context_htbl, (const hash_key_t)ue_context->local_mme_teid_s10, (void **)&id);
+    h_rc = hashtable_uint64_ts_remove (mme_ue_context_p->tun10_ue_context_htbl, (const hash_key_t)ue_context->local_mme_teid_s10);
     if (INVALID_MME_UE_S1AP_ID != mme_ue_s1ap_id && INVALID_TEID != local_mme_teid_s10) {
-      h_rc = hashtable_ts_insert (mme_ue_context_p->tun10_ue_context_htbl, (const hash_key_t)local_mme_teid_s10, (void *)(uintptr_t)mme_ue_s1ap_id);
+      h_rc = hashtable_uint64_ts_insert (mme_ue_context_p->tun10_ue_context_htbl, (const hash_key_t)local_mme_teid_s10, (void *)(uintptr_t)mme_ue_s1ap_id);
     } else {
       h_rc = HASH_TABLE_KEY_NOT_EXISTS;
     }
@@ -617,9 +589,9 @@ mme_ue_context_update_coll_keys (
         || (ue_context->mme_ue_s1ap_id != mme_ue_s1ap_id)) {
 
         // may check guti_p with a kind of instanceof()?
-        h_rc = obj_hashtable_ts_remove (mme_ue_context_p->guti_ue_context_htbl, &ue_context->guti, sizeof (*guti_p), (void **)&id);
+        h_rc = obj_hashtable_uint64_ts_remove (mme_ue_context_p->guti_ue_context_htbl, &ue_context->guti, sizeof (*guti_p));
         if (INVALID_MME_UE_S1AP_ID != mme_ue_s1ap_id) {
-          h_rc = obj_hashtable_ts_insert (mme_ue_context_p->guti_ue_context_htbl, (const void *const)guti_p, sizeof (*guti_p), (void *)(uintptr_t)mme_ue_s1ap_id);
+          h_rc = obj_hashtable_uint64_ts_insert (mme_ue_context_p->guti_ue_context_htbl, (const void *const)guti_p, sizeof (*guti_p), (void *)(uintptr_t)mme_ue_s1ap_id);
         } else {
           h_rc = HASH_TABLE_KEY_NOT_EXISTS;
         }
@@ -653,11 +625,11 @@ void mme_ue_context_dump_coll_keys(void)
   OAILOG_TRACE (LOG_MME_APP,"tun10_ue_context_htbl %s\n", bdata(tmp));
 
   btrunc(tmp, 0);
-  hashtable_uint64_ts_dump_content (mme_app_desc.mme_ue_contexts.mme_ue_s1ap_id_ue_context_htbl, tmp);
+  hashtable_ts_dump_content(mme_app_desc.mme_ue_contexts.mme_ue_s1ap_id_ue_context_htbl, tmp);
   OAILOG_TRACE (LOG_MME_APP,"mme_ue_s1ap_id_ue_context_htbl %s\n", bdata(tmp));
 
   btrunc(tmp, 0);
-  hashtable_ts_dump_content (mme_app_desc.mme_ue_contexts.enb_ue_s1ap_id_ue_context_htbl, tmp);
+  hashtable_uint64_ts_dump_content (mme_app_desc.mme_ue_contexts.enb_ue_s1ap_id_ue_context_htbl, tmp);
   OAILOG_TRACE (LOG_MME_APP,"enb_ue_s1ap_id_ue_context_htbl %s\n", bdata(tmp));
 
   btrunc(tmp, 0);
@@ -682,13 +654,13 @@ mme_insert_ue_context (
     // filled ENB UE S1AP ID
     /** Check that the eNB_S1AP_ID_KEY exists. */
     if(ue_context->enb_s1ap_id_key != INVALID_ENB_UE_S1AP_ID_KEY){
-      h_rc = hashtable_ts_is_key_exists (mme_ue_context_p->enb_ue_s1ap_id_ue_context_htbl, (const hash_key_t)ue_context->enb_s1ap_id_key);
+      h_rc = hashtable_uint64_ts_is_key_exists (mme_ue_context_p->enb_ue_s1ap_id_ue_context_htbl, (const hash_key_t)ue_context->enb_s1ap_id_key);
       if (HASH_TABLE_OK == h_rc) {
         OAILOG_DEBUG (LOG_MME_APP, "This ue context %p already exists enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT "\n",
             ue_context, ue_context->enb_ue_s1ap_id);
         OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
       }
-      h_rc = hashtable_ts_insert (mme_ue_context_p->enb_ue_s1ap_id_ue_context_htbl,
+      h_rc = hashtable_uint64_ts_insert (mme_ue_context_p->enb_ue_s1ap_id_ue_context_htbl,
                                  (const hash_key_t)ue_context->enb_s1ap_id_key,
                                   (void *)((uintptr_t)ue_context->mme_ue_s1ap_id));
     }else{
@@ -723,7 +695,7 @@ mme_insert_ue_context (
 
       // filled IMSI
       if (ue_context->imsi) {
-        h_rc = hashtable_ts_insert (mme_ue_context_p->imsi_ue_context_htbl,
+        h_rc = hashtable_uint64_ts_insert (mme_ue_context_p->imsi_ue_context_htbl,
                                     (const hash_key_t)ue_context->imsi,
                                     (void *)((uintptr_t)ue_context->mme_ue_s1ap_id));
 
@@ -736,7 +708,7 @@ mme_insert_ue_context (
 
       // filled S11 tun id
       if (ue_context->mme_teid_s11) {
-        h_rc = hashtable_ts_insert (mme_ue_context_p->tun11_ue_context_htbl,
+        h_rc = hashtable_uint64_ts_insert (mme_ue_context_p->tun11_ue_context_htbl,
                                    (const hash_key_t)ue_context->mme_teid_s11,
                                    (void *)((uintptr_t)ue_context->mme_ue_s1ap_id));
 
@@ -749,7 +721,7 @@ mme_insert_ue_context (
 
       // filled S10 tun id
       if (ue_context->local_mme_teid_s10) {
-        h_rc = hashtable_ts_insert (mme_ue_context_p->tun10_ue_context_htbl,
+        h_rc = hashtable_uint64_ts_insert (mme_ue_context_p->tun10_ue_context_htbl,
             (const hash_key_t)ue_context->local_mme_teid_s10,
             (void *)((uintptr_t)ue_context->mme_ue_s1ap_id));
 
@@ -765,7 +737,7 @@ mme_insert_ue_context (
           (0 != ue_context->guti.gummei.plmn.mcc_digit2)
           || (0 != ue_context->guti.gummei.plmn.mcc_digit3)) {
 
-        h_rc = obj_hashtable_ts_insert (mme_ue_context_p->guti_ue_context_htbl,
+        h_rc = obj_hashtable_uint64_ts_insert (mme_ue_context_p->guti_ue_context_htbl,
                                        (const void *const)&ue_context->guti,
                                        sizeof (ue_context->guti),
                                        (void *)((uintptr_t)ue_context->mme_ue_s1ap_id));
@@ -826,38 +798,38 @@ void mme_remove_ue_context (
 
   // IMSI
   if (ue_context->imsi) {
-    hash_rc = hashtable_ts_remove (mme_ue_context_p->imsi_ue_context_htbl, (const hash_key_t)ue_context->imsi, (void **)&id);
+    hash_rc = hashtable_uint64_ts_remove (mme_ue_context_p->imsi_ue_context_htbl, (const hash_key_t)ue_context->imsi);
     if (HASH_TABLE_OK != hash_rc)
       OAILOG_DEBUG(LOG_MME_APP, "UE context enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT ", IMSI %" SCNu64 "  not in IMSI collection",
           ue_context->enb_ue_s1ap_id, ue_context->mme_ue_s1ap_id, ue_context->imsi);
   }
 
   // eNB UE S1P UE ID
-  hash_rc = hashtable_ts_remove (mme_ue_context_p->enb_ue_s1ap_id_ue_context_htbl, (const hash_key_t)ue_context->enb_s1ap_id_key, (void **)&id);
+  hash_rc = hashtable_uint64_ts_remove (mme_ue_context_p->enb_ue_s1ap_id_ue_context_htbl, (const hash_key_t)ue_context->enb_s1ap_id_key);
   if (HASH_TABLE_OK != hash_rc)
-    OAILOG_DEBUG(LOG_MME_APP, "UE context enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT ", ENB_UE_S1AP_ID not ENB_UE_S1AP_ID collection",
+    OAILOG_DEBUG(LOG_MME_APP, "UE context enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT ", ENB_UE_S1AP_ID not ENB_UE_S1AP_ID collection. \n",
       ue_context->enb_ue_s1ap_id, ue_context->mme_ue_s1ap_id);
 
   // filled S11 tun id
   if (ue_context->mme_teid_s11) {
-    hash_rc = hashtable_ts_remove (mme_ue_context_p->tun11_ue_context_htbl, (const hash_key_t)ue_context->mme_teid_s11, (void **)&id);
+    hash_rc = hashtable_uint64_ts_remove (mme_ue_context_p->tun11_ue_context_htbl, (const hash_key_t)ue_context->mme_teid_s11);
     if (HASH_TABLE_OK != hash_rc)
-      OAILOG_DEBUG(LOG_MME_APP, "UE context enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT ", MME TEID_S11 " TEID_FMT "  not in S11 collection",
+      OAILOG_DEBUG(LOG_MME_APP, "UE context enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT ", MME TEID_S11 " TEID_FMT "  not in S11 collection. \n",
           ue_context->enb_ue_s1ap_id, ue_context->mme_ue_s1ap_id, ue_context->mme_teid_s11);
   }
 
   // filled S10 tun id
   if (ue_context->local_mme_teid_s10) {
-    hash_rc = hashtable_ts_remove (mme_ue_context_p->tun11_ue_context_htbl, (const hash_key_t)ue_context->local_mme_teid_s10, (void **)&id);
+    hash_rc = hashtable_uint64_ts_remove (mme_ue_context_p->tun11_ue_context_htbl, (const hash_key_t)ue_context->local_mme_teid_s10);
     if (HASH_TABLE_OK != hash_rc)
-      OAILOG_DEBUG(LOG_MME_APP, "UE context enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT ", LOCAL MME TEID S10 " TEID_FMT "  not in S10 collection",
+      OAILOG_DEBUG(LOG_MME_APP, "UE context enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT ", LOCAL MME TEID S10 " TEID_FMT "  not in S10 collection. \n",
           ue_context->enb_ue_s1ap_id, ue_context->mme_ue_s1ap_id, ue_context->local_mme_teid_s10);
   }
 
   // filled guti
   if ((ue_context->guti.gummei.mme_code) || (ue_context->guti.gummei.mme_gid) || (ue_context->guti.m_tmsi) ||
       (ue_context->guti.gummei.plmn.mcc_digit1) || (ue_context->guti.gummei.plmn.mcc_digit2) || (ue_context->guti.gummei.plmn.mcc_digit3)) { // MCC 000 does not exist in ITU table
-    hash_rc = obj_hashtable_ts_remove (mme_ue_context_p->guti_ue_context_htbl, (const void *const)&ue_context->guti, sizeof (ue_context->guti), (void **)&id);
+    hash_rc = obj_hashtable_uint64_ts_remove (mme_ue_context_p->guti_ue_context_htbl, (const void *const)&ue_context->guti, sizeof (ue_context->guti));
     if (HASH_TABLE_OK != hash_rc)
       OAILOG_DEBUG(LOG_MME_APP, "UE context enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT ", GUTI  not in GUTI collection",
           ue_context->enb_ue_s1ap_id, ue_context->mme_ue_s1ap_id);
@@ -878,6 +850,108 @@ void mme_remove_ue_context (
   free_wrapper ((void**) &ue_context);
 
   OAILOG_FUNC_OUT (LOG_MME_APP);
+}
+
+//------------------------------------------------------------------------------
+int
+mme_insert_subscription_profile(
+  mme_ue_context_t * const mme_ue_context_p,
+  const imsi64_t imsi, const subscription_data_t * subscription_profile)
+{
+  hashtable_rc_t                          h_rc = HASH_TABLE_OK;
+
+  OAILOG_FUNC_IN (LOG_MME_APP);
+  DevAssert (mme_ue_context_p );
+  DevAssert (subscription_profile);
+
+  h_rc = hashtable_ts_is_key_exists (mme_ue_context_p->imsi_subscription_profile_htbl, (const hash_key_t)imsi);
+
+  if (HASH_TABLE_OK == h_rc) {
+    OAILOG_DEBUG (LOG_MME_APP, "Subscription profile for IMSI " IMSI_64_FMT " already exists.\n", imsi);
+    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+  }
+
+  h_rc = hashtable_ts_insert (mme_ue_context_p->imsi_subscription_profile_htbl,
+      (const hash_key_t)imsi, (void *)subscription_profile);
+
+  if (HASH_TABLE_OK != h_rc) {
+    OAILOG_DEBUG (LOG_MME_APP, "Error could not register the subscription profile for IMSI " IMSI_64_FMT ". \n", imsi);
+    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+  }
+  OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
+
+  /*
+   * Updating statistics
+   */
+  __sync_fetch_and_add (&mme_ue_context_p->nb_apn_configuration, 1);
+
+  OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
+}
+
+//------------------------------------------------------------------------------
+subscription_data_t * mme_remove_subscription_profile(mme_ue_context_t * const mme_ue_context_p, imsi64_t imsi){
+  // filled NAS UE ID/ MME UE S1AP ID
+//  LOCK_SUBSCRIPTION_DATA_TREE();
+  hashtable_rc_t                          hash_rc = HASH_TABLE_OK;
+  subscription_data_t                    *subscription_data = NULL;
+  OAILOG_FUNC_IN (LOG_MME_APP);
+  hash_rc = hashtable_ts_remove (mme_ue_context_p->imsi_subscription_profile_htbl, (const hash_key_t)imsi, (void **)&subscription_data);
+  if (HASH_TABLE_OK != hash_rc){
+    OAILOG_WARNING(LOG_MME_APP, "No subscription data was found for IMSI " IMSI_64_FMT " in the subscription profile cache.", imsi);
+    OAILOG_FUNC_RETURN( LOG_MME_APP, NULL);
+  }
+  /*
+   * Updating statistics
+   */
+  __sync_fetch_and_sub(&mme_ue_context_p->nb_apn_configuration, 1);
+
+  OAILOG_FUNC_RETURN(LOG_MME_APP, subscription_data);
+}
+
+//------------------------------------------------------------------------------
+int mme_app_update_ue_subscription(mme_ue_s1ap_id_t ue_id, subscription_data_t * subscription_data){
+  OAILOG_FUNC_IN (LOG_MME_APP);
+
+  struct ue_context_s                    *ue_context = NULL;
+
+  ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, ue_id);
+  if (!ue_context) {
+    /*
+     * Use enb_ue_s1ap_id_key to get the UE context - In case MME APP could not update S1AP with valid mme_ue_s1ap_id
+     * before context release is triggered from s1ap.
+     */
+    OAILOG_WARNING (LOG_MME_APP, "No UE context was found for ue_id " MME_UE_S1AP_ID_FMT ". Cannot update subscription profile. \n", ue_id);
+    OAILOG_FUNC_RETURN(LOG_MME_APP, RETURNerror);
+  }
+
+  // todo: LOCK UE_CONTEXT
+
+  ue_context->subscriber_status = subscription_data->subscriber_status;
+  ue_context->access_restriction_data = subscription_data->access_restriction;
+  /*
+   * This is the UE-AMBR and will always be enforced upon all established PDN contexts as total used bitrate (to the eNB).
+   */
+  memcpy (&ue_context->subscribed_ue_ambr, &subscription_data->subscribed_ambr, sizeof (ambr_t));
+
+  if(ue_context->msisdn)
+	  bdestroy_wrapper(&ue_context->msisdn);
+  ue_context->msisdn = blk2bstr(subscription_data->msisdn, subscription_data->msisdn_length);
+  //  AssertFatal (ula_pP->subscription_data.msisdn_length != 0, "MSISDN LENGTH IS 0"); todo: msisdn
+  AssertFatal (subscription_data->msisdn_length <= MSISDN_LENGTH, "MSISDN LENGTH is too high %u", MSISDN_LENGTH);
+  ue_context->rau_tau_timer = subscription_data->rau_tau_timer;
+  ue_context->network_access_mode = subscription_data->access_mode;
+
+  /*
+   * Set the value of  Mobile Reachability timer based on value of T3412 (Periodic TAU timer) sent in Attach accept /TAU accept.
+   * Set it to MME_APP_DELTA_T3412_REACHABILITY_TIMER minutes greater than T3412.
+   * Set the value of Implicit timer. Set it to MME_APP_DELTA_REACHABILITY_IMPLICIT_DETACH_TIMER minutes greater than  Mobile Reachability timer
+    */
+  ue_context->mobile_reachability_timer.id = MME_APP_TIMER_INACTIVE_ID;
+  ue_context->mobile_reachability_timer.sec = ((mme_config.nas_config.t3412_min) + MME_APP_DELTA_T3412_REACHABILITY_TIMER) * 60;
+  ue_context->implicit_detach_timer.id = MME_APP_TIMER_INACTIVE_ID;
+  ue_context->implicit_detach_timer.sec = (ue_context->mobile_reachability_timer.sec) + MME_APP_DELTA_REACHABILITY_IMPLICIT_DETACH_TIMER * 60;
+  // todo: UNLOCK UE_CONTEXT
+  OAILOG_FUNC_RETURN(LOG_MME_APP, RETURNok);
 }
 
 //------------------------------------------------------------------------------
@@ -1010,7 +1084,6 @@ void mme_app_dump_protocol_configuration_options (const protocol_configuration_o
 void mme_app_dump_bearer_context (const bearer_context_t * const bc, uint8_t indent_spaces, bstring bstr_dump)
 {
   bformata (bstr_dump, "%*s - Bearer id .......: %02u\n", indent_spaces, " ", bc->ebi);
-  bformata (bstr_dump, "%*s - Transaction ID ..: %x\n", indent_spaces, " ", bc->transaction_identifier);
   if (bc->s_gw_fteid_s1u.ipv4) {
     char ipv4[INET_ADDRSTRLEN];
     inet_ntop (AF_INET, (void*)&bc->s_gw_fteid_s1u.ipv4_address.s_addr, ipv4, INET_ADDRSTRLEN);
@@ -1031,21 +1104,22 @@ void mme_app_dump_bearer_context (const bearer_context_t * const bc, uint8_t ind
     bformata (bstr_dump, "%*s - P-GW S5-S8 IPv6..: [%s]\n", indent_spaces, " ", ipv6);
   }
   bformata (bstr_dump, "%*s - P-GW TEID S5-S8..: " TEID_FMT "\n", indent_spaces, " ", bc->p_gw_fteid_s5_s8_up.teid);
-  bformata (bstr_dump, "%*s - QCI .............: %u\n", indent_spaces, " ", bc->qci);
-  bformata (bstr_dump, "%*s - Priority level ..: %u\n", indent_spaces, " ", bc->priority_level);
-  bformata (bstr_dump, "%*s - Pre-emp vul .....: %s\n", indent_spaces, " ", (bc->preemption_vulnerability == PRE_EMPTION_VULNERABILITY_ENABLED) ? "ENABLED" : "DISABLED");
-  bformata (bstr_dump, "%*s - Pre-emp cap .....: %s\n", indent_spaces, " ", (bc->preemption_capability == PRE_EMPTION_CAPABILITY_ENABLED) ? "ENABLED" : "DISABLED");
-  bformata (bstr_dump, "%*s - GBR UL ..........: %010" PRIu64 "\n", indent_spaces, " ", bc->esm_ebr_context.gbr_ul);
-  bformata (bstr_dump, "%*s - GBR DL ..........: %010" PRIu64 "\n", indent_spaces, " ", bc->esm_ebr_context.gbr_dl);
-  bformata (bstr_dump, "%*s - MBR UL ..........: %010" PRIu64 "\n", indent_spaces, " ", bc->esm_ebr_context.mbr_ul);
-  bformata (bstr_dump, "%*s - MBR DL ..........: %010" PRIu64 "\n", indent_spaces, " ", bc->esm_ebr_context.mbr_dl);
+  bformata (bstr_dump, "%*s - QCI .............: %u\n", indent_spaces, " ", bc->bearer_level_qos.qci);
+  bformata (bstr_dump, "%*s - Priority level ..: %u\n", indent_spaces, " ", bc->bearer_level_qos.pl);
+  // todo: use real values else than s11
+//  bformata (bstr_dump, "%*s - Pre-emp vul .....: %s\n", indent_spaces, " ", ((bc->bearer_level_qos.pci) == PRE_EMPTION_VULNERABILITY_ENABLED) ? "ENABLED" : "DISABLED");
+//  bformata (bstr_dump, "%*s - Pre-emp cap .....: %s\n", indent_spaces, " ", (bc->bearer_level_qos.pvi   == PRE_EMPTION_CAPABILITY_ENABLED) ? "ENABLED" : "DISABLED");
+  bformata (bstr_dump, "%*s - GBR UL ..........: %010" PRIu64 "\n", indent_spaces, " ", bc->bearer_level_qos.gbr.br_ul);
+  bformata (bstr_dump, "%*s - GBR DL ..........: %010" PRIu64 "\n", indent_spaces, " ", bc->bearer_level_qos.gbr.br_dl);
+  bformata (bstr_dump, "%*s - MBR UL ..........: %010" PRIu64 "\n", indent_spaces, " ", bc->bearer_level_qos.mbr.br_ul);
+  bformata (bstr_dump, "%*s - MBR DL ..........: %010" PRIu64 "\n", indent_spaces, " ", bc->bearer_level_qos.mbr.br_ul);
   bstring bstate = bearer_state2string(bc->bearer_state);
   bformata (bstr_dump, "%*s - State ...........: %s\n", indent_spaces, " ", bdata(bstate));
   bdestroy_wrapper(&bstate);
   bformata (bstr_dump, "%*s - "ANSI_COLOR_BOLD_ON"NAS ESM bearer private data .:\n", indent_spaces, " ");
   bformata (bstr_dump, "%*s -     ESM State .......: %s\n", indent_spaces, " ", esm_ebr_state2string(bc->esm_ebr_context.status));
-  bformata (bstr_dump, "%*s -     Timer id ........: %lx\n", indent_spaces, " ", bc->esm_ebr_context.timer.id);
-  bformata (bstr_dump, "%*s -     Timer TO(seconds): %ld\n", indent_spaces, " ", bc->esm_ebr_context.timer.sec);
+//  bformata (bstr_dump, "%*s -     Timer id ........: %lx\n", indent_spaces, " ", bc->esm_ebr_context.timer.id);
+//  bformata (bstr_dump, "%*s -     Timer TO(seconds): %ld\n", indent_spaces, " ", bc->esm_ebr_context.timer.sec);
 //  bformata (bstr_dump, "%*s -     Timer arg .......: %p\n", indent_spaces, " ", bc->esm_ebr_context.timer.args);
 //  if (bc->esm_ebr_context.args) {
 //    bformata (bstr_dump, "%*s -     Ctx ...........: %p\n", indent_spaces, " ", bc->esm_ebr_context.args->ctx);
@@ -1068,7 +1142,6 @@ void mme_app_dump_pdn_context (const struct ue_context_s *const ue_context,
   if (pdn_context) {
     bformata (bstr_dump, "%*s - PDN ID %u:\n", indent_spaces, " ", pdn_cid);
     bformata (bstr_dump, "%*s - Context Identifier .: %x\n", indent_spaces, " ", pdn_context->context_identifier);
-    bformata (bstr_dump, "%*s - Is active          .: %s\n", indent_spaces, " ", (pdn_context->is_active) ? "yes":"no");
     bformata (bstr_dump, "%*s - APN in use .........: %s\n", indent_spaces, " ", bdata(pdn_context->apn_in_use));
     bformata (bstr_dump, "%*s - APN subscribed......: %s\n", indent_spaces, " ", bdata(pdn_context->apn_subscribed));
     bformata (bstr_dump, "%*s - APN OI replacement .: %s\n", indent_spaces, " ", bdata(pdn_context->apn_oi_replacement));
@@ -1104,20 +1177,15 @@ void mme_app_dump_pdn_context (const struct ue_context_s *const ue_context,
     }
     bformata (bstr_dump, "%*s - S-GW TEID s5 s8 cp .: " TEID_FMT "\n", indent_spaces, " ", pdn_context->s_gw_teid_s11_s4);
 
-    bformata (bstr_dump, "%*s - Default bearer eps subscribed qos profile:\n", indent_spaces, " ");
-    bformata (bstr_dump, "%*s     - QCI ......................: %u\n", indent_spaces, " ", pdn_context->default_bearer_eps_subscribed_qos_profile.qci);
-    bformata (bstr_dump, "%*s     - Priority level ...........: %u\n", indent_spaces, " ", pdn_context->default_bearer_eps_subscribed_qos_profile.allocation_retention_priority.priority_level);
-    bformata (bstr_dump, "%*s     - Pre-emp vulnerabil .......: %s\n", indent_spaces, " ", (pdn_context->default_bearer_eps_subscribed_qos_profile.allocation_retention_priority.pre_emp_vulnerability == PRE_EMPTION_VULNERABILITY_ENABLED) ? "ENABLED" : "DISABLED");
-    bformata (bstr_dump, "%*s     - Pre-emp capability .......: %s\n", indent_spaces, " ", (pdn_context->default_bearer_eps_subscribed_qos_profile.allocation_retention_priority.pre_emp_capability == PRE_EMPTION_CAPABILITY_ENABLED) ? "ENABLED" : "DISABLED");
     bformata (bstr_dump, "%*s     - APN-AMBR (bits/s) DL .....: %010" PRIu64 "\n", indent_spaces, " ", pdn_context->subscribed_apn_ambr.br_dl);
     bformata (bstr_dump, "%*s     - APN-AMBR (bits/s) UL .....: %010" PRIu64 "\n", indent_spaces, " ", pdn_context->subscribed_apn_ambr.br_ul);
     bformata (bstr_dump, "%*s     - Default EBI ..............: %u\n", indent_spaces, " ", pdn_context->default_ebi);
     bformata (bstr_dump, "%*s - NAS ESM private data:\n");
-    bformata (bstr_dump, "%*s     - Procedure transaction ID .: %x\n", indent_spaces, " ", pdn_context->esm_data.pti);
-    bformata (bstr_dump, "%*s     -  Is emergency .............: %s\n", indent_spaces, " ", (pdn_context->esm_data.is_emergency) ? "yes":"no");
-    bformata (bstr_dump, "%*s     -  APN AMBR .................: %u\n", indent_spaces, " ", pdn_context->esm_data.ambr);
-    bformata (bstr_dump, "%*s     -  Addr realloc allowed......: %s\n", indent_spaces, " ", (pdn_context->esm_data.addr_realloc) ? "yes":"no");
-    bformata (bstr_dump, "%*s     -  Num allocated EPS bearers.: %d\n", indent_spaces, " ", pdn_context->esm_data.n_bearers);
+//    bformata (bstr_dump, "%*s     - Procedure transaction ID .: %x\n", indent_spaces, " ", pdn_context->pti);
+//    bformata (bstr_dump, "%*s     -  Is emergency .............: %s\n", indent_spaces, " ", (pdn_context->esm_data.is_emergency) ? "yes":"no");
+//    bformata (bstr_dump, "%*s     -  APN AMBR .................: %u\n", indent_spaces, " ", pdn_context->esm_data.ambr);
+//    bformata (bstr_dump, "%*s     -  Addr realloc allowed......: %s\n", indent_spaces, " ", (pdn_context->esm_data.addr_realloc) ? "yes":"no");
+//    bformata (bstr_dump, "%*s     -  Num allocated EPS bearers.: %d\n", indent_spaces, " ", pdn_context->esm_data.n_bearers);
     bformata (bstr_dump, "%*s - Bearer List:\n");
 
     /** Set all bearers of the EBI to valid. */
@@ -1144,7 +1212,6 @@ mme_app_dump_ue_context (
   if (ue_context) {
     bstring                                 bstr_dump = bfromcstralloc(4096, "\n-----------------------UE MM context ");
     bformata (bstr_dump, "%p --------------------\n", ue_context);
-    bformata (bstr_dump, "    - Authenticated ..: %s\n", (ue_context->imsi_auth == IMSI_UNAUTHENTICATED) ? "FALSE" : "TRUE");
     bformata (bstr_dump, "    - eNB UE s1ap ID .: %08x\n", ue_context->enb_ue_s1ap_id);
     bformata (bstr_dump, "    - MME UE s1ap ID .: %08x\n", ue_context->mme_ue_s1ap_id);
     bformata (bstr_dump, "    - MME S11 TEID ...: " TEID_FMT "\n", ue_context->mme_teid_s11);
@@ -1166,80 +1233,81 @@ mme_app_dump_ue_context (
     /*
      * Display UE info only if we know them
      */
-    if (SUBSCRIPTION_KNOWN == ue_context->subscription_known) {
-      // TODO bformata (bstr_dump, "    - Status .........: %s\n", (ue_context->sub_status == SS_SERVICE_GRANTED) ? "Granted" : "Barred");
-#define DISPLAY_BIT_MASK_PRESENT(mASK)   \
-    ((ue_context->access_restriction_data & mASK) ? 'X' : 'O')
-      bformata (bstr_dump, "    (O = allowed, X = !O) |UTRAN|GERAN|GAN|HSDPA EVO|E_UTRAN|HO TO NO 3GPP|\n");
-      bformata (bstr_dump, "    - Access restriction  |  %c  |  %c  | %c |    %c    |   %c   |      %c      |\n",
-          DISPLAY_BIT_MASK_PRESENT (ARD_UTRAN_NOT_ALLOWED),
-          DISPLAY_BIT_MASK_PRESENT (ARD_GERAN_NOT_ALLOWED),
-          DISPLAY_BIT_MASK_PRESENT (ARD_GAN_NOT_ALLOWED), DISPLAY_BIT_MASK_PRESENT (ARD_I_HSDPA_EVO_NOT_ALLOWED), DISPLAY_BIT_MASK_PRESENT (ARD_E_UTRAN_NOT_ALLOWED), DISPLAY_BIT_MASK_PRESENT (ARD_HO_TO_NON_3GPP_NOT_ALLOWED));
-      // TODO bformata (bstr_dump, "    - Access Mode ....: %s\n", ACCESS_MODE_TO_STRING (ue_context->access_mode));
-      // TODO MSISDN
-      //bformata (bstr_dump, "    - MSISDN .........: %s\n", (ue_context->msisdn) ? ue_context->msisdn->data:"None");
-      bformata (bstr_dump, "    - RAU/TAU timer ..: %u\n", ue_context->rau_tau_timer);
-      // TODO IMEISV
-      //if (IS_EMM_CTXT_PRESENT_IMEISV(&ue_context->nas_emm_context)) {
-      //  bformata (bstr_dump, "    - IMEISV .........: %*s\n", IMEISV_DIGITS_MAX, ue_context->nas_emm_context._imeisv);
-      //}
-      bformata (bstr_dump, "    - AMBR (bits/s)     ( Downlink |  Uplink  )\n");
-      // TODO bformata (bstr_dump, "        Subscribed ...: (%010" PRIu64 "|%010" PRIu64 ")\n", ue_context->subscribed_ambr.br_dl, ue_context->subscribed_ambr.br_ul);
-      bformata (bstr_dump, "        Allocated ....: (%010" PRIu64 "|%010" PRIu64 ")\n", ue_context->subscribed_ue_ambr.br_dl, ue_context->subscribed_ue_ambr.br_ul);
-
-      bformata (bstr_dump, "    - APN config list:\n");
-
-      for (j = 0; j < ue_context->apn_config_profile.nb_apns; j++) {
-        struct apn_configuration_s             *apn_config_p;
-
-        apn_config_p = &ue_context->apn_config_profile.apn_configuration[j];
-        /*
-         * Default APN ?
-         */
-        bformata (bstr_dump, "        - Default APN ...: %s\n", (apn_config_p->context_identifier == ue_context->apn_config_profile.context_identifier)
-                     ? "TRUE" : "FALSE");
-        bformata (bstr_dump, "        - APN ...........: %s\n", apn_config_p->service_selection);
-        bformata (bstr_dump, "        - AMBR (bits/s) ( Downlink |  Uplink  )\n");
-        bformata (bstr_dump, "                        (%010" PRIu64 "|%010" PRIu64 ")\n", apn_config_p->ambr.br_dl, apn_config_p->ambr.br_ul);
-        bformata (bstr_dump, "        - PDN type ......: %s\n", PDN_TYPE_TO_STRING (apn_config_p->pdn_type));
-        bformata (bstr_dump, "        - QOS\n");
-        bformata (bstr_dump, "            QCI .........: %u\n", apn_config_p->subscribed_qos.qci);
-        bformata (bstr_dump, "            Prio level ..: %u\n", apn_config_p->subscribed_qos.allocation_retention_priority.priority_level);
-        bformata (bstr_dump, "            Pre-emp vul .: %s\n", (apn_config_p->subscribed_qos.allocation_retention_priority.pre_emp_vulnerability == PRE_EMPTION_VULNERABILITY_ENABLED) ? "ENABLED" : "DISABLED");
-        bformata (bstr_dump, "            Pre-emp cap .: %s\n", (apn_config_p->subscribed_qos.allocation_retention_priority.pre_emp_capability == PRE_EMPTION_CAPABILITY_ENABLED) ? "ENABLED" : "DISABLED");
-
-        if (apn_config_p->nb_ip_address == 0) {
-          bformata (bstr_dump, "            IP addr .....: Dynamic allocation\n");
-        } else {
-          int                                     i;
-
-          bformata (bstr_dump, "            IP addresses :\n");
-
-          for (i = 0; i < apn_config_p->nb_ip_address; i++) {
-            if (apn_config_p->ip_address[i].pdn_type == IPv4) {
-              char ipv4[INET_ADDRSTRLEN];
-              inet_ntop (AF_INET, (void*)&apn_config_p->ip_address[i].address.ipv4_address, ipv4, INET_ADDRSTRLEN);
-              bformata (bstr_dump, "                           [%s]\n", ipv4);
-            } else {
-              char                                    ipv6[INET6_ADDRSTRLEN];
-              inet_ntop (AF_INET6, &apn_config_p->ip_address[i].address.ipv6_address, ipv6, INET6_ADDRSTRLEN);
-              bformata (bstr_dump, "                           [%s]\n", ipv6);
-            }
-          }
-        }
-        bformata (bstr_dump, "\n");
-      }
-      bformata (bstr_dump, "    - PDNs:\n");
-
-      /** No matter if it is a INTRA or INTER MME handover, continue with the MBR for other PDNs. */
-      pdn_context_t * pdn_context_to_dump = NULL;
-      RB_FOREACH (pdn_context_to_dump, PdnContexts, &ue_context->pdn_contexts) {
-        AssertFatal(pdn_context_to_dump, "Mismatch in configuration bearer context NULL\n");
-        mme_app_dump_pdn_context(ue_context, pdn_context_to_dump, pdn_context_to_dump->context_identifier, 8, bstr_dump);
-      }
-
-
-    }
+    // todo: subscription-known
+//    if (SUBSCRIPTION_KNOWN == ue_context->subscription_known) {
+//      // TODO bformata (bstr_dump, "    - Status .........: %s\n", (ue_context->sub_status == SS_SERVICE_GRANTED) ? "Granted" : "Barred");
+//#define DISPLAY_BIT_MASK_PRESENT(mASK)   \
+//    ((ue_context->access_restriction_data & mASK) ? 'X' : 'O')
+//      bformata (bstr_dump, "    (O = allowed, X = !O) |UTRAN|GERAN|GAN|HSDPA EVO|E_UTRAN|HO TO NO 3GPP|\n");
+//      bformata (bstr_dump, "    - Access restriction  |  %c  |  %c  | %c |    %c    |   %c   |      %c      |\n",
+//          DISPLAY_BIT_MASK_PRESENT (ARD_UTRAN_NOT_ALLOWED),
+//          DISPLAY_BIT_MASK_PRESENT (ARD_GERAN_NOT_ALLOWED),
+//          DISPLAY_BIT_MASK_PRESENT (ARD_GAN_NOT_ALLOWED), DISPLAY_BIT_MASK_PRESENT (ARD_I_HSDPA_EVO_NOT_ALLOWED), DISPLAY_BIT_MASK_PRESENT (ARD_E_UTRAN_NOT_ALLOWED), DISPLAY_BIT_MASK_PRESENT (ARD_HO_TO_NON_3GPP_NOT_ALLOWED));
+//      // TODO bformata (bstr_dump, "    - Access Mode ....: %s\n", ACCESS_MODE_TO_STRING (ue_context->access_mode));
+//      // TODO MSISDN
+//      //bformata (bstr_dump, "    - MSISDN .........: %s\n", (ue_context->msisdn) ? ue_context->msisdn->data:"None");
+//      bformata (bstr_dump, "    - RAU/TAU timer ..: %u\n", ue_context->rau_tau_timer);
+//      // TODO IMEISV
+//      //if (IS_EMM_CTXT_PRESENT_IMEISV(&ue_context->nas_emm_context)) {
+//      //  bformata (bstr_dump, "    - IMEISV .........: %*s\n", IMEISV_DIGITS_MAX, ue_context->nas_emm_context._imeisv);
+//      //}
+//      bformata (bstr_dump, "    - AMBR (bits/s)     ( Downlink |  Uplink  )\n");
+//      // TODO bformata (bstr_dump, "        Subscribed ...: (%010" PRIu64 "|%010" PRIu64 ")\n", ue_context->subscribed_ambr.br_dl, ue_context->subscribed_ambr.br_ul);
+//      bformata (bstr_dump, "        Allocated ....: (%010" PRIu64 "|%010" PRIu64 ")\n", ue_context->subscribed_ue_ambr.br_dl, ue_context->subscribed_ue_ambr.br_ul);
+//
+//      bformata (bstr_dump, "    - APN config list:\n");
+//
+//      for (j = 0; j < ue_context->apn_config_profile.nb_apns; j++) {
+//        struct apn_configuration_s             *apn_config_p;
+//
+//        apn_config_p = &ue_context->apn_config_profile.apn_configuration[j];
+//        /*
+//         * Default APN ?
+//         */
+//        bformata (bstr_dump, "        - Default APN ...: %s\n", (apn_config_p->context_identifier == ue_context->apn_config_profile.context_identifier)
+//                     ? "TRUE" : "FALSE");
+//        bformata (bstr_dump, "        - APN ...........: %s\n", apn_config_p->service_selection);
+//        bformata (bstr_dump, "        - AMBR (bits/s) ( Downlink |  Uplink  )\n");
+//        bformata (bstr_dump, "                        (%010" PRIu64 "|%010" PRIu64 ")\n", apn_config_p->ambr.br_dl, apn_config_p->ambr.br_ul);
+//        bformata (bstr_dump, "        - PDN type ......: %s\n", PDN_TYPE_TO_STRING (apn_config_p->pdn_type));
+//        bformata (bstr_dump, "        - QOS\n");
+//        bformata (bstr_dump, "            QCI .........: %u\n", apn_config_p->subscribed_qos.qci);
+//        bformata (bstr_dump, "            Prio level ..: %u\n", apn_config_p->subscribed_qos.allocation_retention_priority.priority_level);
+//        bformata (bstr_dump, "            Pre-emp vul .: %s\n", (apn_config_p->subscribed_qos.allocation_retention_priority.pre_emp_vulnerability == PRE_EMPTION_VULNERABILITY_ENABLED) ? "ENABLED" : "DISABLED");
+//        bformata (bstr_dump, "            Pre-emp cap .: %s\n", (apn_config_p->subscribed_qos.allocation_retention_priority.pre_emp_capability == PRE_EMPTION_CAPABILITY_ENABLED) ? "ENABLED" : "DISABLED");
+//
+//        if (apn_config_p->nb_ip_address == 0) {
+//          bformata (bstr_dump, "            IP addr .....: Dynamic allocation\n");
+//        } else {
+//          int                                     i;
+//
+//          bformata (bstr_dump, "            IP addresses :\n");
+//
+//          for (i = 0; i < apn_config_p->nb_ip_address; i++) {
+//            if (apn_config_p->ip_address[i].pdn_type == IPv4) {
+//              char ipv4[INET_ADDRSTRLEN];
+//              inet_ntop (AF_INET, (void*)&apn_config_p->ip_address[i].address.ipv4_address, ipv4, INET_ADDRSTRLEN);
+//              bformata (bstr_dump, "                           [%s]\n", ipv4);
+//            } else {
+//              char                                    ipv6[INET6_ADDRSTRLEN];
+//              inet_ntop (AF_INET6, &apn_config_p->ip_address[i].address.ipv6_address, ipv6, INET6_ADDRSTRLEN);
+//              bformata (bstr_dump, "                           [%s]\n", ipv6);
+//            }
+//          }
+//        }
+//        bformata (bstr_dump, "\n");
+//      }
+//      bformata (bstr_dump, "    - PDNs:\n");
+//
+//      /** No matter if it is a INTRA or INTER MME handover, continue with the MBR for other PDNs. */
+//      pdn_context_t * pdn_context_to_dump = NULL;
+//      RB_FOREACH (pdn_context_to_dump, PdnContexts, &ue_context->pdn_contexts) {
+//        AssertFatal(pdn_context_to_dump, "Mismatch in configuration bearer context NULL\n");
+//        mme_app_dump_pdn_context(ue_context, pdn_context_to_dump, pdn_context_to_dump->context_identifier, 8, bstr_dump);
+//      }
+//
+//
+//    }
     bcatcstr (bstr_dump, "---------------------------------------------------------\n");
     OAILOG_DEBUG(LOG_MME_APP, "%s\n", bdata(bstr_dump));
     bdestroy_wrapper(&bstr_dump);
@@ -1255,7 +1323,7 @@ mme_app_dump_ue_contexts (
   const mme_ue_context_t * const mme_ue_context_p)
 //------------------------------------------------------------------------------
 {
-  hashtable_ts_apply_callback_on_elements (mme_ue_context_p->enb_ue_s1ap_id_ue_context_htbl, mme_app_dump_ue_context, NULL, NULL);
+  hashtable_uint64_ts_apply_callback_on_elements (mme_ue_context_p->enb_ue_s1ap_id_ue_context_htbl, mme_app_dump_ue_context, NULL, NULL);
 }
 
 //------------------------------------------------------------------------------
@@ -1325,7 +1393,7 @@ _mme_app_handle_s1ap_ue_context_release (const mme_ue_s1ap_id_t mme_ue_s1ap_id,
       DevAssert (message_p != NULL);
       message_p->ittiMsg.nas_implicit_detach_ue_ind.ue_id = ue_context->mme_ue_s1ap_id; /**< Rest won't be sent, so no NAS Detach Request will be sent. */
       MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_IMPLICIT_DETACH_UE_IND_MESSAGE");
-      itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+      itti_send_msg_to_task (TASK_NAS_EMM, INSTANCE_DEFAULT, message_p);
       OAILOG_FUNC_OUT (LOG_MME_APP);
     }else{
       /*
@@ -1426,8 +1494,10 @@ mme_app_handle_s1ap_ue_context_release_complete (
         message_p = itti_alloc_new_message (TASK_MME_APP, NAS_IMPLICIT_DETACH_UE_IND);
         DevAssert (message_p != NULL);
         message_p->ittiMsg.nas_implicit_detach_ue_ind.ue_id = ue_context->mme_ue_s1ap_id; /**< Rest won't be sent, so no NAS Detach Request will be sent. */
+        message_p->ittiMsg.nas_implicit_detach_ue_ind.clr = true; /**< Inform about the CLR. */
+
         MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_IMPLICIT_DETACH_UE_IND_MESSAGE");
-        itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+        itti_send_msg_to_task (TASK_NAS_EMM, INSTANCE_DEFAULT, message_p);
 
         OAILOG_FUNC_OUT (LOG_MME_APP);
       }else{
@@ -1436,11 +1506,19 @@ mme_app_handle_s1ap_ue_context_release_complete (
               s1ap_ue_context_release_complete->mme_ue_s1ap_id, s1ap_ue_context_release_complete->enb_ue_s1ap_id);
         /** Not releasing any bearer information. */
         /* Update keys and ECM state. */
+        /** Set the ECM state to IDLE. */
+        mme_ue_context_update_ue_sig_connection_state (&mme_app_desc.mme_ue_contexts, ue_context, ECM_IDLE);
         if(ue_context->mm_state == UE_UNREGISTERED){
-          OAILOG_DEBUG(LOG_MME_APP, "Received UE context release complete for the main ue_reference of the UE with mme_ue_s1ap_id "MME_UE_S1AP_ID_FMT" and enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT" in UE_UNREGISTERED state. "
-              "Performing implicit detach (failed handover). \n", s1ap_ue_context_release_complete->mme_ue_s1ap_id, s1ap_ue_context_release_complete->enb_ue_s1ap_id);
-          /* We may have an EMM context but the common and specific procedure timeouts should remove the EMM context. */
-          mme_remove_ue_context(&mme_app_desc.mme_ue_contexts, ue_context);
+          OAILOG_DEBUG(LOG_MME_APP, "Received UE context release complete for the main ue_reference of the UE with mme_ue_s1ap_id "MME_UE_S1AP_ID_FMT" "
+        		  "for an UNREGISTERED UE. \n", s1ap_ue_context_release_complete->mme_ue_s1ap_id);
+          /* Don't remove it directly, do it over the ESM. */
+          OAILOG_INFO (LOG_MME_APP, "Implicitly detaching the UE due CLR flag @ completion of MME_MOBILITY timer for UE id  %d \n", ue_context->mme_ue_s1ap_id);
+          message_p = itti_alloc_new_message (TASK_MME_APP, NAS_IMPLICIT_DETACH_UE_IND);
+          DevAssert (message_p != NULL);
+          message_p->ittiMsg.nas_implicit_detach_ue_ind.ue_id = ue_context->mme_ue_s1ap_id; /**< Rest won't be sent, so no NAS Detach Request will be sent. */
+          MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_IMPLICIT_DETACH_UE_IND_MESSAGE");
+          itti_send_msg_to_task (TASK_NAS_EMM, INSTANCE_DEFAULT, message_p);
+//          mme_remove_ue_context(&mme_app_desc.mme_ue_contexts, ue_context);
           OAILOG_FUNC_OUT (LOG_MME_APP);
         }
         OAILOG_DEBUG(LOG_MME_APP, "Received UE context release complete for the main ue_reference of the UE with mme_ue_s1ap_id "MME_UE_S1AP_ID_FMT" and enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT" in UE_REGISTERED state. "
@@ -1482,7 +1560,7 @@ mme_app_handle_s1ap_ue_context_release_complete (
 
         if (ue_context->s10_procedures) {
             mme_app_delete_s10_procedure_mme_handover(ue_context); // todo: generic s10 function
-          }
+        }
 
         /** Re-Establish the UE-Reference as the main reference. */
         if(ue_context->enb_ue_s1ap_id != s1ap_ue_context_release_complete->enb_ue_s1ap_id){
@@ -1505,19 +1583,25 @@ mme_app_handle_s1ap_ue_context_release_complete (
             notify_s1ap_new_ue_mme_s1ap_id_association (ue_context->sctp_assoc_id_key, ue_context->enb_ue_s1ap_id, ue_context->mme_ue_s1ap_id);
           }
         }
-        OAILOG_FUNC_OUT (LOG_MME_APP);
+        /** Continue below, check if the UE is in DEREGISTERED state. */
       }
     }
   }
-  /* No handover procedure ongoing or no CLR is received yet from the HSs. Assume that this is the main connection and release it. */
-  OAILOG_DEBUG(LOG_MME_APP, "No Handover procedure ongoing. Received UE context release complete for the main ue_reference of the UE with mme_ue_s1ap_id "MME_UE_S1AP_ID_FMT" and enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT". \n",
-        s1ap_ue_context_release_complete->mme_ue_s1ap_id, s1ap_ue_context_release_complete->enb_ue_s1ap_id);
-  /** Set the bearers into IDLE mode. */
-  mme_app_ue_context_s1_release_enb_informations(ue_context);
-  /* Update keys and ECM state. */
-  mme_ue_context_update_ue_sig_connection_state (&mme_app_desc.mme_ue_contexts, ue_context, ECM_IDLE);
-
-
+  if(ue_context->enb_ue_s1ap_id == s1ap_ue_context_release_complete->enb_ue_s1ap_id
+		  && (ue_context->e_utran_cgi.cell_identity.enb_id == s1ap_ue_context_release_complete->enb_id)){
+	  /* No handover procedure ongoing or no CLR is received yet from the HSs. Assume that this is the main connection and release it. */
+	  OAILOG_DEBUG(LOG_MME_APP, "No Handover procedure ongoing. Received UE context release complete for the main ue_reference of the UE with mme_ue_s1ap_id "MME_UE_S1AP_ID_FMT" and enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT""
+			  " with enb_id %d. \n",
+	        s1ap_ue_context_release_complete->mme_ue_s1ap_id, s1ap_ue_context_release_complete->enb_ue_s1ap_id, s1ap_ue_context_release_complete->enb_id);
+	  /** Set the bearers into IDLE mode. */
+	  mme_app_ue_context_s1_release_enb_informations(ue_context);
+	  /* Update keys and ECM state. */
+	  mme_ue_context_update_ue_sig_connection_state (&mme_app_desc.mme_ue_contexts, ue_context, ECM_IDLE);
+  } else {
+	  OAILOG_DEBUG(LOG_MME_APP, "Not setting UE context with with mme_ue_s1ap_id "MME_UE_S1AP_ID_FMT" and enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT" to idle. "
+			  "Complete received from enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT" and enb_id %d.. \n", ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id,
+			  s1ap_ue_context_release_complete->enb_ue_s1ap_id, s1ap_ue_context_release_complete->enb_id);
+  }
   /* ****************************************************************************************************************************************** *
    *      BELOW EVERYTHING EXCEPT update_ue_sig_connection will be THROWN OUT! NAS won't and should not be affected by this message!
    *      All the session deletion procedures for all PDN sessions should be triggered by NAS only. S1AP signaling radio errors should be treated locally.
@@ -1559,7 +1643,12 @@ mme_app_handle_s1ap_ue_context_release_complete (
      */
 
     /** The S10 tunnel will be removed together with the S10 related process. */
-    mme_remove_ue_context(&mme_app_desc.mme_ue_contexts, ue_context);
+    if(RB_EMPTY(&ue_context->pdn_contexts))
+      mme_remove_ue_context(&mme_app_desc.mme_ue_contexts, ue_context);
+    else{
+      OAILOG_ERROR(LOG_MME_APP, "UE context mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " still has some PDN context. Not removing the UE context."
+          " Waiting for ESM cleanup.\n ", s1ap_ue_context_release_complete->mme_ue_s1ap_id);
+    }
     // todo
     ////      update_mme_app_stats_connected_ue_sub();
     ////      // return here avoid unlock_ue_contexts() // todo: don't we need to unlock it after retrieving an MME_APP ?
@@ -1586,7 +1675,7 @@ void mme_ue_context_update_ue_sig_connection_state (
   DevAssert (ue_context);
   if (new_ecm_state == ECM_IDLE)
   {
-    hash_rc = hashtable_ts_remove (mme_ue_context_p->enb_ue_s1ap_id_ue_context_htbl, (const hash_key_t)ue_context->enb_s1ap_id_key, (void **)&id);
+    hash_rc = hashtable_uint64_ts_remove (mme_ue_context_p->enb_ue_s1ap_id_ue_context_htbl, (const hash_key_t)ue_context->enb_s1ap_id_key);
     if (HASH_TABLE_OK != hash_rc)
     {
       OAILOG_DEBUG(LOG_MME_APP, "UE context enb_ue_s1ap_ue_id_key %ld mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT ", ENB_UE_S1AP_ID_KEY could not be found",
@@ -1669,7 +1758,7 @@ void mme_ue_context_update_ue_emm_state (
     // Update Stats
     update_mme_app_stats_attached_ue_sub();
   }else{
-    OAILOG_CRITICAL(LOG_MME_APP, "**** Abnormal - No handler for state transition of UE with mme_ue_s1ap_ue_id "MME_UE_S1AP_ID_FMT " "
+    OAILOG_INFO(LOG_MME_APP, "**** Abnormal - No handler for state transition of UE with mme_ue_s1ap_ue_id "MME_UE_S1AP_ID_FMT " "
         "entering %d state from %d state. ****\n", mme_ue_s1ap_id, ue_context->mm_state, new_mm_state);
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
@@ -1837,7 +1926,7 @@ mme_app_handle_nas_context_req(itti_nas_context_req_t * const nas_context_req_pP
 
   if (1) {
     // TODO prototype may change
-    mme_app_select_service(&nas_context_req_pP->originating_tai, &neigh_mme_ipv4_addr);
+    mme_app_select_service(&nas_context_req_pP->originating_tai, &neigh_mme_ipv4_addr, S10_MME_GTP_C);
     //    session_request_p->peer_ip.in_addr = mme_config.ipv4.
     if(neigh_mme_ipv4_addr.s_addr == 0){
       OAILOG_ERROR(LOG_MME_APP, "Could not find a neighboring MME for handling missing NAS context. \n");
@@ -1957,6 +2046,14 @@ void mme_app_set_ue_eps_mm_context(mm_context_eps_t * ue_eps_mme_context_p, stru
   memset(ue_eps_mme_context_p->nh, 0, 32);
   memcpy(ue_eps_mme_context_p->nh, ue_nas_ctx->_vector[ue_nas_ctx->_security.vector_index].nh_conj, 32);
 
+  /**
+   * Set the UE ambr (subscribed).
+   * Not divide by 100 here.
+   */
+  ue_eps_mme_context_p->subscribed_ue_ambr = ue_context->subscribed_ue_ambr;
+  /** Calculate the total. */
+  ue_eps_mme_context_p->used_ue_ambr       = mme_app_total_p_gw_apn_ambr(ue_context);;
+
   // Add the UE Network Capability.
   ue_eps_mme_context_p->ue_nc.eea = ue_nas_ctx->_ue_network_capability.eea;
   ue_eps_mme_context_p->ue_nc.eia = ue_nas_ctx->_ue_network_capability.eia; /*<< Check that they exist.*/
@@ -1975,9 +2072,6 @@ void mme_app_set_ue_eps_mm_context(mm_context_eps_t * ue_eps_mme_context_p, stru
   ue_eps_mme_context_p->vdp_lenth    = 0;
   // todo: access restriction
   ue_eps_mme_context_p->access_restriction_flags        = ue_context->access_restriction_data & 0xFF;
-
-  OAILOG_INFO (LOG_MME_APP, "Setting MM UE context for UE " MME_UE_S1AP_ID_FMT " with KSI %d. \n", ue_context->mme_ue_s1ap_id, ue_eps_mme_context_p->ksi);
-
   OAILOG_FUNC_OUT(LOG_MME_APP);
 }
 
@@ -2002,7 +2096,7 @@ void _mme_app_send_s10_context_response_err(teid_t mme_source_s10_teid, struct i
   /** Set the IPv4 address of the source MME. */
   s10_context_response_p->peer_ip = mme_source_ipv4_address;
   s10_context_response_p->cause.cause_value = cause_val;
-  s10_context_response_p->trxn  = trxn;
+  s10_context_response_p->trxnId  = trxn;
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "MME_APP Sending S10 CONTEXT_RESPONSE_ERR");
 
   /** Sending a message to S10. */
@@ -2087,6 +2181,8 @@ mme_app_handle_s10_context_request(const itti_s10_context_request_t * const s10_
   */
  s10_proc_mme_tau = mme_app_create_s10_procedure_mme_handover(ue_context, false, MME_APP_S10_PROC_TYPE_INTER_MME_HANDOVER);
  DevAssert(s10_proc_mme_tau);
+ s10_proc_mme_tau->due_tau = true;
+
  /** S10 */
  tai_t target_tai;
  memset(&target_tai, 0, sizeof (tai_t));
@@ -2119,7 +2215,7 @@ mme_app_handle_s10_context_request(const itti_s10_context_request_t * const s10_
  /** Set the target S10 TEID. */
  context_response_p->teid    = s10_context_request_pP->s10_target_mme_teid.teid; /**< Only a single target-MME TEID can exist at a time. */
  context_response_p->peer_ip = s10_context_request_pP->s10_target_mme_teid.ipv4_address; /**< todo: Check this is correct. */
- context_response_p->trxn    = s10_context_request_pP->trxn;
+ context_response_p->trxnId    = s10_context_request_pP->trxn;
  /** Set the cause. Since the UE context state has not been changed yet, nothing to do in the context if success or failure.*/
  context_response_p->cause.cause_value = REQUEST_ACCEPTED; // todo: check the NAS message here!
 
@@ -2203,11 +2299,11 @@ pdn_context_t * mme_app_handle_pdn_connectivity_from_s10(ue_context_t *ue_contex
   int                     rc = RETURNok;
 
   /** Get and handle the PDN Connection element as pending PDN connection element (using the default_ebi and the apn). */
-  mme_app_get_pdn_context(ue_context, PDN_CONTEXT_IDENTIFIER_UNASSIGNED, pdn_connection->linked_eps_bearer_id, pdn_connection->apn_str, &pdn_context);
+  mme_app_get_pdn_context(ue_context->mme_ue_s1ap_id, PDN_CONTEXT_IDENTIFIER_UNASSIGNED, pdn_connection->linked_eps_bearer_id, pdn_connection->apn_str, &pdn_context);
   if(pdn_context){
     /* Found the PDN context. */
     OAILOG_ERROR(LOG_MME_APP, "PDN context for apn %s and default ebi %d already exists for UE_ID: " MME_UE_S1AP_ID_FMT". Skipping the establishment (or update). \n",
-        pdn_connection->apn_str, pdn_connection->linked_eps_bearer_id, ue_context->mme_ue_s1ap_id);
+        bdata(pdn_connection->apn_str), pdn_connection->linked_eps_bearer_id, ue_context->mme_ue_s1ap_id);
     OAILOG_FUNC_RETURN(LOG_MME_APP, NULL);
   }
   /*
@@ -2215,71 +2311,40 @@ pdn_context_t * mme_app_handle_pdn_connectivity_from_s10(ue_context_t *ue_contex
    * No context identifier will be set.
    * Later set context identifier by ULA?
    */
-  /** Craete a PDN connection and later set the ESM values when NAS layer is established. */
-  pdn_context = mme_app_create_pdn_context(ue_context, pdn_connection->apn_str, PDN_CONTEXT_IDENTIFIER_UNASSIGNED); /**< Create the pdn context using the APN network identifier. */
-  if(!pdn_context) {
+  /** Create a PDN connection with a default bearer and later set the ESM values when NAS layer is established. */
+  // todo: correct pdn type
+  if(mme_app_esm_create_pdn_context(ue_context->mme_ue_s1ap_id, pdn_connection->linked_eps_bearer_id,
+		  NULL, pdn_connection->apn_str, PDN_CONTEXT_IDENTIFIER_UNASSIGNED, &pdn_connection->apn_ambr, 0, &pdn_context) == RETURNerror){ /**< Create the pdn context using the APN network identifier. */
     OAILOG_ERROR(LOG_MME_APP, "Could not create a new pdn context for apn \" %s \" for UE_ID " MME_UE_S1AP_ID_FMT " from S10 PDN_CONNECTIONS IE. "
-        "Skipping the establishment of pdn context. \n", pdn_connection->apn_str, ue_context->mme_ue_s1ap_id);
+        "Skipping the establishment of pdn context. \n", bdata(pdn_connection->apn_str), ue_context->mme_ue_s1ap_id);
     OAILOG_FUNC_RETURN(LOG_MME_APP, NULL);
   }
-
   pdn_context_t * pdn_test = NULL;
-  mme_app_get_pdn_context(ue_context, ue_context->next_def_ebi_offset + PDN_CONTEXT_IDENTIFIER_UNASSIGNED - 1, ue_context->next_def_ebi_offset + 5 -1 , pdn_connection->apn_str, &pdn_test);
+  mme_app_get_pdn_context(ue_context->mme_ue_s1ap_id, ue_context->next_def_ebi_offset + PDN_CONTEXT_IDENTIFIER_UNASSIGNED - 1, ue_context->next_def_ebi_offset + 5 -1 , pdn_connection->apn_str, &pdn_test);
   DevAssert(pdn_test);
-
-  /*
-   * Will update the PDN context with the PCOs received from the SAE-GW.
-   * todo: No PCO elements received @ handover from source MME? MS to network PCO or the result of the first PCO?
-   * We receive PCO elements at Create Session Response, register them.
-   *
-   * Setup the IP address allocated by the network and the PDN type directly based
-   * on the received PDN information.
-   */
-  /* Create a PAA object. Usually not created, such that no empty IP addresses are sent with CSR of initial request. */
-  pdn_context->paa = calloc(1, sizeof(paa_t));
-
-  /* Set the default EBI. */
-  pdn_context->default_ebi = pdn_connection->linked_eps_bearer_id;
-
-  if(pdn_connection->ipv4_address.s_addr) {
-//    IPV4_STR_ADDR_TO_INADDR ((const char *)pdn_connection->ipv4_address, pdn_context->paa->ipv4_address, "BAD IPv4 ADDRESS FORMAT FOR PAA!\n");
-    pdn_context->paa->ipv4_address.s_addr = pdn_connection->ipv4_address.s_addr;
-  }
-//  if(pdn_connection->ipv6_address) {
-//    //    memset (pdn_connections->pdn_connection[num_pdn].ipv6_address, 0, 16);
-//    memcpy (pdn_context->paa->ipv6_address.s6_addr, pdn_connection->ipv6_address.s6_addr, 16);
-//    pdn_context->paa->ipv6_prefix_length = pdn_connection->ipv6_prefix_length;
-//    pdn_context->pdn_type++;
-//    if(pdn_connection->ipv4_address.s_addr)
-//      pdn_context->pdn_type++;
-//  }
-  /*
-   * The IP addresses of the ITTI message will later be erased automatically in the itti_free_defined_msg.
-   *
-   * No UE subscription data will be sent via FRR. APN subscription will be stored.
-   * They will later be updated/set with ULA at the target HSS.
-   *
-   * Allocate the bearer contexts and the bearer level QoS to immediately send .
-   */
-  pdn_context->subscribed_apn_ambr = pdn_connection->apn_ambr;
-
-  /** Just set it temporarily to the UE, too. */
-  ue_context->subscribed_ue_ambr = pdn_connection->apn_ambr;
-
+  /** Create and finalize the remaining bearer contexts. */
   for (int num_bearer = 0; num_bearer < pdn_connection->bearer_context_list.num_bearer_context; num_bearer++){
     bearer_context_to_be_created_t * bearer_context_to_be_created_s10 = &pdn_connection->bearer_context_list.bearer_contexts[num_bearer];
-    /* Create bearer contexts in the PDN context. */
-    bearer_context_t * bearer_context_registered = NULL;
-    mme_app_register_bearer_context(ue_context, bearer_context_to_be_created_s10->eps_bearer_id, pdn_context, &bearer_context_registered);
-    // todo: optimize this!
-    DevAssert(bearer_context_registered);
     /*
-     * Set the bearer level QoS parameters and update the statistics.
+     * Create bearer contexts in the PDN context, only for dedicated bearers.
+     * Since no activation in the ESM is necessary, set them as active.
      */
-    mme_app_desc.mme_ue_contexts.nb_bearers_managed++;
-    mme_app_desc.mme_ue_contexts.nb_bearers_since_last_stat++;
-    /* Received an initialized bearer context, set the QoS values from the pdn_connections IE. */
-    mme_app_bearer_context_update_handover(bearer_context_registered, bearer_context_to_be_created_s10);
+    bearer_context_t * bearer_context_registered = NULL;
+    esm_cause_t esm_cause = ESM_CAUSE_SUCCESS;
+    if(bearer_context_to_be_created_s10->eps_bearer_id != pdn_context->default_ebi){
+      esm_cause = mme_app_register_dedicated_bearer_context(ue_context->mme_ue_s1ap_id, ESM_EBR_ACTIVE, pdn_context->context_identifier,
+    		  pdn_context->default_ebi, bearer_context_to_be_created_s10, bearer_context_to_be_created_s10->eps_bearer_id);
+    } else {
+      /** Finalize the default bearer, updating qos. */
+      esm_cause = mme_app_finalize_bearer_context(ue_context->mme_ue_s1ap_id, pdn_context->context_identifier,
+          pdn_context->default_ebi, bearer_context_to_be_created_s10->eps_bearer_id,
+          NULL, &bearer_context_to_be_created_s10->bearer_level_qos, NULL, NULL);
+    }
+    /** Finalize it, thereby set the qos values. */
+    if(esm_cause != ESM_CAUSE_SUCCESS){
+      OAILOG_ERROR(LOG_MME_APP, "Error while preparing bearer (ebi=%d) for APN \"%s\" for UE " MME_UE_S1AP_ID_FMT" received via handover/TAU. "
+          "Currently ignoring (assuming implicit detach). \n", bearer_context_to_be_created_s10->eps_bearer_id, bdata(pdn_context->apn_subscribed), ue_context->mme_ue_s1ap_id);
+    }
   }
   // todo: apn restriction data!
   OAILOG_INFO (LOG_MME_APP, "Successfully updated the MME_APP UE context with the pending pdn information for UE id  %d. \n", ue_context->mme_ue_s1ap_id);
@@ -2368,20 +2433,23 @@ mme_app_handle_s10_context_response(
   /** Fill up . */
   s10_context_ack_p->cause.cause_value = REQUEST_ACCEPTED; /**< Since we entered UE_REGISTERED state. */
   /** Set the transaction: Peer IP, Peer Port, Peer TEID should be deduced from this. */
-  s10_context_ack_p->trxnId     = s10_context_response_pP->trxn;
+  s10_context_ack_p->trxnId       = s10_context_response_pP->trxnId;
   s10_context_ack_p->peer_ip    = s10_context_response_pP->s10_source_mme_teid.ipv4_address;
-  s10_context_ack_p->peer_port  = 2123; // todo: s10_context_response_pP->peer_port;
+  s10_context_ack_p->peer_port  = s10_context_response_pP->peer_port;
   s10_context_ack_p->teid       = s10_context_response_pP->s10_source_mme_teid.teid;
+  s10_context_ack_p->local_teid = ue_context->local_mme_teid_s10;
+  s10_context_ack_p->local_port = s10_context_response_pP->local_port;
 
   MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_S10_MME, NULL, 0, "0 S10 CONTEXT_ACK for UE " MME_UE_S1AP_ID_FMT "! \n", ue_context->mme_ue_s1ap_id);
   itti_send_msg_to_task (TASK_S10, INSTANCE_DEFAULT, message_p);
   OAILOG_INFO(LOG_MME_APP, "Sent S10 Context Acknowledge to the source MME FTEID " TEID_FMT " for UE with mmeUeS1apId " MME_UE_S1AP_ID_FMT ". \n",
       ue_context->mme_ue_s1ap_id, s10_context_ack_p->teid);
 
-//  ue_context->came_from_tau = true;
+  // todo: LOCK!!
+  /** Set the subscribed AMBR values. */
+  ue_context->subscribed_ue_ambr.br_dl = s10_context_response_pP->ue_eps_mm_context->subscribed_ue_ambr.br_dl;
+  ue_context->subscribed_ue_ambr.br_ul = s10_context_response_pP->ue_eps_mm_context->subscribed_ue_ambr.br_ul;
 
-  /** Remove the S10 Tunnel. */
-  mme_app_remove_s10_tunnel_endpoint(ue_context->local_mme_teid_s10, s10_context_response_pP->s10_source_mme_teid.ipv4_address);
   /*
    * Update the coll_keys with the IMSI and remove the S10 Tunnel Endpoint.
    */
@@ -2407,7 +2475,7 @@ mme_app_handle_s10_context_response(
     DevAssert (message_p != NULL);
     message_p->ittiMsg.nas_implicit_detach_ue_ind.ue_id = ue_context_old->mme_ue_s1ap_id; /**< Rest won't be sent, so no NAS Detach Request will be sent. */
     MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_IMPLICIT_DETACH_UE_IND_MESSAGE");
-    itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+    itti_send_msg_to_task (TASK_NAS_EMM, INSTANCE_DEFAULT, message_p);
     OAILOG_FUNC_OUT (LOG_MME_APP);
     /** Waiting timeout for detaching the new UE context. */
   }
@@ -2424,7 +2492,6 @@ mme_app_handle_s10_context_response(
       INVALID_TEID,
       &ue_context->guti);
 
-  ue_context->imsi_auth = IMSI_AUTHENTICATED;
   memcpy((void*)&emm_cn_proc_ctx_req->nas_s10_context._imsi, &s10_context_response_pP->imsi, sizeof(imsi_t));
 
   emm_cn_proc_ctx_req->nas_s10_context.mm_eps_ctx = s10_context_response_pP->ue_eps_mm_context;
@@ -2441,23 +2508,14 @@ mme_app_handle_s10_context_response(
   /** Handle PDN Connections. */
   OAILOG_INFO(LOG_MME_APP, "For ueId " MME_UE_S1AP_ID_FMT " processing the pdn_connections (continuing with CSR). \n", ue_context->mme_ue_s1ap_id);
   /** Process PDN Connections IE. Will initiate a Create Session Request message for the pending pdn_connections. */
-  pdn_connection_t * pdn_connection = &emm_cn_proc_ctx_req->pdn_connections->pdn_connection[emm_cn_proc_ctx_req->next_processed_pdn_connection];
+  pdn_connection_t * pdn_connection = &emm_cn_proc_ctx_req->pdn_connections->pdn_connection[emm_cn_proc_ctx_req->pdn_connections->num_processed_pdn_connections];
   pdn_context_t * pdn_context = mme_app_handle_pdn_connectivity_from_s10(ue_context, pdn_connection);
   DevAssert(pdn_context);
-  emm_cn_proc_ctx_req->next_processed_pdn_connection++;
   /*
    * When Create Session Response is received, continue to process the next PDN connection, until all are processed.
    * When all pdn_connections are completed, continue with handover request.
    */
-  if(mme_app_send_s11_create_session_req (ue_context, &s10_context_response_pP->imsi, pdn_context, &emm_context->originating_tai, true) != RETURNok){
-    /**
-     * Error sending CSReq. Send S10 Context Response error to NAS.
-     */
-    OAILOG_ERROR(LOG_MME_APP, "Error sending Create Session Request for UE with mmeS1apUeId " MME_UE_S1AP_ID_FMT " for context request procedure. "
-               "Rejecting attach/tau & implicit detach. \n", s10_context_response_pP->cause, ue_context->mme_ue_s1ap_id, ue_context->mm_state);
-    _mme_app_send_nas_context_response_err(ue_context->mme_ue_s1ap_id, s10_context_response_pP->cause.cause_value);
-    OAILOG_FUNC_OUT (LOG_MME_APP);
-  }
+  mme_app_send_s11_create_session_req (ue_context->mme_ue_s1ap_id, &s10_context_response_pP->imsi, pdn_context, &emm_context->originating_tai, pdn_context->pco, true);
   OAILOG_INFO(LOG_MME_APP, "Successfully sent CSR for UE " MME_UE_S1AP_ID_FMT ". Waiting for CSResp to continue to process s10 context response on target MME side. \n", ue_context->mme_ue_s1ap_id);
   /*
    * Use the received PDN connectivity information to update the session/bearer information with the PDN connections IE, before informing the NAS layer about the context.
@@ -2498,13 +2556,6 @@ mme_app_handle_s10_context_acknowledge(
     OAILOG_ERROR(LOG_MME_APP, "The S10 Context Acknowledge for local teid " TEID_FMT " was not valid/could not be received. "
         "Ignoring the handover state. \n", s10_context_acknowledge_pP->teid);
     // todo: what to do in this case? Ignoring the S6a cancel location request?
-  }
-  /** Check if the UE is in idle mode, if so send a release request. */
-  if(ue_context->ecm_state == ECM_CONNECTED){
-    OAILOG_WARNING(LOG_MME_APP, "Context acknowledge received in ECM connected state for ueId " MME_UE_S1AP_ID_FMT ", enbUeS1apId " ENB_UE_S1AP_ID_FMT " enbId %d. \n",
-        ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, ue_context->e_utran_cgi.cell_identity.enb_id);
-    ue_context->s1_ue_context_release_cause = S1AP_NAS_NORMAL_RELEASE; /**< We will send the context release command. */
-    mme_app_itti_ue_context_release (ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, ue_context->s1_ue_context_release_cause, ue_context->e_utran_cgi.cell_identity.enb_id);
   }
 
   /** The S10 Tunnel endpoint will be removed with the completion of the MME-Mobility Completion timer of the procedure. */
@@ -2602,15 +2653,32 @@ mme_app_handle_relocation_cancel_request(
   */
  relocation_cancel_response_p->cause.cause_value = REQUEST_ACCEPTED;
  itti_send_msg_to_task (TASK_S10, INSTANCE_DEFAULT, message_p);
+
  /** Delete the handover procedure. */
  mme_app_delete_s10_procedure_mme_handover(ue_context);
 
- /**
-  * Send a S1AP Context Release Request.
-  * If no S1AP UE reference is existing, we will send a UE context release command with the MME_UE_S1AP_ID.
-  * todo: macro/home
-  */
- mme_app_itti_ue_context_release(ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, ue_context->s1_ue_context_release_cause, s10_handover_process->target_id.target_id.macro_enb_id.enb_id);
+ /** Send an EMM/ESM implicit detach message. */
+ message_p = itti_alloc_new_message (TASK_MME_APP, NAS_IMPLICIT_DETACH_UE_IND);
+ DevAssert (message_p != NULL);
+ message_p->ittiMsg.nas_implicit_detach_ue_ind.ue_id = ue_context->mme_ue_s1ap_id; /**< Rest won't be sent, so no NAS Detach Request will be sent. */
+ MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_IMPLICIT_DETACH_UE_IND_MESSAGE");
+ itti_send_msg_to_task (TASK_NAS_EMM, INSTANCE_DEFAULT, message_p);
+
+ /** Trigger an ESM detach, also removing all PDN contexts in the MME and the SAE-GW. */
+ message_p = itti_alloc_new_message (TASK_MME_APP, NAS_ESM_DETACH_IND);
+ DevAssert (message_p != NULL);
+ message_p->ittiMsg.nas_esm_detach_ind.ue_id = ue_context->mme_ue_s1ap_id; /**< We don't send a Detach Type such that no Detach Request is sent to the UE if handover is performed. */
+
+ MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_ESM_DETACH_IND");
+ itti_send_msg_to_task (TASK_NAS_ESM, INSTANCE_DEFAULT, message_p);
+ OAILOG_FUNC_OUT (LOG_MME_APP);
+
+// /**
+//  * Send a S1AP Context Release Request.
+//  * If no S1AP UE reference is existing, we will send a UE context release command with the MME_UE_S1AP_ID.
+//  * todo: macro/home
+//  */
+// mme_app_itti_ue_context_release(ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, ue_context->s1_ue_context_release_cause, s10_handover_process->target_id.target_id.macro_enb_id.enb_id);
 
  /** Triggered an Implicit Detach Message back. */
  OAILOG_FUNC_OUT (LOG_MME_APP);
@@ -2662,12 +2730,12 @@ mme_app_handle_relocation_cancel_response( /**< Will only be sent to cancel a ha
 void mme_app_set_pdn_connections(struct mme_ue_eps_pdn_connections_s * pdn_connections, struct ue_context_s * ue_context){
 
   OAILOG_FUNC_IN (LOG_MME_APP);
+  pdn_context_t *pdn_context_to_forward = NULL;
 
   DevAssert(ue_context);
   DevAssert(pdn_connections);
 
   /** Set the PDN connections for all available PDN contexts. */
-  pdn_context_t *pdn_context_to_forward = NULL;
   RB_FOREACH (pdn_context_to_forward, PdnContexts, &ue_context->pdn_contexts) {
     DevAssert(pdn_context_to_forward);
     int num_pdn = pdn_connections->num_pdn_connections;
@@ -2694,34 +2762,11 @@ void mme_app_set_pdn_connections(struct mme_ue_eps_pdn_connections_s * pdn_conne
     pdn_connections->pdn_connection[num_pdn].pgw_address_for_cp.ipv4 = 1;
     /** APN Restriction. */
     pdn_connections->pdn_connection[num_pdn].apn_restriction = 0; // pdn_context_to_forward->apn_restriction
-    /** APN-AMBR */
-    pdn_connections->pdn_connection[num_pdn].apn_ambr.br_ul = ue_context->subscribed_ue_ambr.br_ul;
-    pdn_connections->pdn_connection[num_pdn].apn_ambr.br_dl = ue_context->subscribed_ue_ambr.br_dl; // pdn_context_to_forward->subscribed_apn_ambr.br_ul;
+    /** APN-AMBR : forward the currently used apn ambr. The MM Context will have the UE AMBR. */
+    pdn_connections->pdn_connection[num_pdn].apn_ambr.br_ul = pdn_context_to_forward->subscribed_apn_ambr.br_ul;
+    pdn_connections->pdn_connection[num_pdn].apn_ambr.br_dl = pdn_context_to_forward->subscribed_apn_ambr.br_dl;
     /** Set the bearer contexts for all existing bearers of the PDN. */
-    bearer_context_t * bearer_context_to_forward = NULL;
-    RB_FOREACH (bearer_context_to_forward, SessionBearers, &pdn_context_to_forward->session_bearers) {
-      int num_bearer = pdn_connections->pdn_connection[num_pdn].bearer_context_list.num_bearer_context;
-      bearer_contexts_to_be_created_t * bearer_list  = &pdn_connections->pdn_connection[num_pdn].bearer_context_list;
-      bearer_list->bearer_contexts[num_bearer].eps_bearer_id = bearer_context_to_forward->ebi;
-      bearer_list->bearer_contexts[num_bearer].s1u_sgw_fteid.teid = bearer_context_to_forward->s_gw_fteid_s1u.teid; /**< Which does not matter. */
-      bearer_list->bearer_contexts[num_bearer].s1u_sgw_fteid.interface_type = S1_U_SGW_GTP_U;
-      bearer_list->bearer_contexts[num_bearer].s1u_sgw_fteid.ipv4_address.s_addr = bearer_context_to_forward->s_gw_fteid_s1u.ipv4_address.s_addr;
-      bearer_list->bearer_contexts[num_bearer].s1u_sgw_fteid.ipv4 = bearer_context_to_forward->s_gw_fteid_s1u.ipv4;
-      /*
-       * Set the bearer level level qos values.
-       * Also set the MBR/GBR values for each bearer, the target side, then should send MBR/GBR as 0 for non-GBR bearers.
-       */
-      // todo: divide by 1000?
-      bearer_list->bearer_contexts[num_bearer].bearer_level_qos.gbr.br_ul = bearer_context_to_forward->esm_ebr_context.gbr_ul;
-      bearer_list->bearer_contexts[num_bearer].bearer_level_qos.gbr.br_dl = bearer_context_to_forward->esm_ebr_context.gbr_dl;
-      bearer_list->bearer_contexts[num_bearer].bearer_level_qos.mbr.br_ul = bearer_context_to_forward->esm_ebr_context.mbr_ul;
-      bearer_list->bearer_contexts[num_bearer].bearer_level_qos.mbr.br_dl = bearer_context_to_forward->esm_ebr_context.mbr_dl;
-      bearer_list->bearer_contexts[num_bearer].bearer_level_qos.qci       = bearer_context_to_forward->qci;
-      bearer_list->bearer_contexts[num_bearer].bearer_level_qos.pvi       = bearer_context_to_forward->preemption_vulnerability;
-      bearer_list->bearer_contexts[num_bearer].bearer_level_qos.pci       = bearer_context_to_forward->preemption_capability;
-      bearer_list->bearer_contexts[num_bearer].bearer_level_qos.pl        = bearer_context_to_forward->priority_level;
-      bearer_list->num_bearer_context++;
-    }
+    mme_app_get_bearer_contexts_to_be_created(pdn_context_to_forward, &pdn_connections->pdn_connection[num_pdn].bearer_context_list, BEARER_STATE_NULL);
     pdn_connections->num_pdn_connections++;
   }
   OAILOG_FUNC_OUT(LOG_MME_APP);
@@ -2730,26 +2775,27 @@ void mme_app_set_pdn_connections(struct mme_ue_eps_pdn_connections_s * pdn_conne
 //------------------------------------------------------------------------------
 /*
  *
- *  Name:    mme_app_registration_complete()
+ *  Name:    mme_app_mobility_complete()
  *
- *  Description: Notify the MME that a UE has successfully registered via Attach or Tracking Area Update specific procedure.
+ *  Description: Notify the MME that a UE has successfully completed a mobility (handover/tau) procedure.
  *
  *  Inputs:
  *         ueid:      emm_context id
+ *         bool:
  *  Return:    void
  *
  */
-int mme_app_registration_complete(const mme_ue_s1ap_id_t mme_ue_s1ap_id){
-
-  ue_context_t                           *ue_context = NULL;
-  int                                     rc = RETURNok;
-
+int mme_app_mobility_complete(const mme_ue_s1ap_id_t mme_ue_s1ap_id, bool activate_bearers){
   OAILOG_FUNC_IN (LOG_NAS);
+
+  ue_context_t                           * ue_context = NULL;
+  mme_app_s10_proc_mme_handover_t        * s10_handover_proc = NULL;
+
   ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, mme_ue_s1ap_id);
   DevAssert(ue_context);
   /** Get the handover procedure if exists. */
-  mme_app_s10_proc_mme_handover_t * s10_handover_proc = NULL;
   if(((s10_handover_proc = mme_app_get_s10_procedure_mme_handover(ue_context)) != NULL)){
+    activate_bearers = true;
     if(s10_handover_proc->proc.type == MME_APP_S10_PROC_TYPE_INTRA_MME_HANDOVER){
       /** Complete the Intra Handover. */
       OAILOG_DEBUG(LOG_MME_APP, "UE MME context with imsi " IMSI_64_FMT " and mmeS1apUeId " MME_UE_S1AP_ID_FMT " has successfully completed intra-MME handover process after HANDOVER_NOTIFY. \n",
@@ -2758,8 +2804,10 @@ int mme_app_registration_complete(const mme_ue_s1ap_id_t mme_ue_s1ap_id){
       ue_description_t * old_ue_reference = s1ap_is_enb_ue_s1ap_id_in_list_per_enb(s10_handover_proc->source_enb_ue_s1ap_id, s10_handover_proc->source_ecgi.cell_identity.enb_id);
       if(old_ue_reference){
         /** For INTRA-MME handover, start the timer to remove the old UE reference here. No timer should be started for the S10 Handover Process. */
-        if (timer_setup (mme_config.mme_mobility_completion_timer, 0,
-            TASK_S1AP, INSTANCE_DEFAULT, TIMER_ONE_SHOT, (void *)old_ue_reference, &(old_ue_reference->s1ap_handover_completion_timer.id)) < 0) {
+    	enb_s1ap_id_key_t enb_ue_s1ap_id_key = INVALID_ENB_UE_S1AP_ID_KEY;
+    	MME_APP_ENB_S1AP_ID_KEY(enb_ue_s1ap_id_key, s10_handover_proc->source_ecgi.cell_identity.enb_id, old_ue_reference->enb_ue_s1ap_id);
+		if (timer_setup (mme_config.mme_mobility_completion_timer, 0,
+            TASK_S1AP, INSTANCE_DEFAULT, TIMER_ONE_SHOT, enb_ue_s1ap_id_key, &(old_ue_reference->s1ap_handover_completion_timer.id)) < 0) {
           OAILOG_ERROR (LOG_MME_APP, "Failed to start s1ap_mobility_completion timer for source eNB for enbUeS1apId " ENB_UE_S1AP_ID_FMT " for duration %d. "
               "Still continuing with MBR. \n",
               old_ue_reference->enb_ue_s1ap_id, mme_config.mme_mobility_completion_timer);
@@ -2773,7 +2821,7 @@ int mme_app_registration_complete(const mme_ue_s1ap_id_t mme_ue_s1ap_id){
       }else{
         OAILOG_DEBUG(LOG_MME_APP, "No old UE_REFERENCE was found for mmeS1apUeId " MME_UE_S1AP_ID_FMT " and enbUeS1apId "ENB_UE_S1AP_ID_FMT ". Not starting a new timer. \n",
             ue_context->enb_ue_s1ap_id, s10_handover_proc->source_ecgi.cell_identity.enb_id);
-        OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
+        OAILOG_FUNC_OUT(LOG_MME_APP);
       }
       /*
        * Delete the handover procedure.
@@ -2781,6 +2829,7 @@ int mme_app_registration_complete(const mme_ue_s1ap_id_t mme_ue_s1ap_id){
        */
       mme_app_delete_s10_procedure_mme_handover(ue_context);
     }else{
+      s10_handover_proc->handover_completed = true;
       /*
        * INTRA-MME Handover (INTER-MME idle TAU won't have this procedure).
        * If the UE is registered, remove the handover procedure.
@@ -2800,92 +2849,20 @@ int mme_app_registration_complete(const mme_ue_s1ap_id_t mme_ue_s1ap_id){
         */
       }
     }
-  }else{
-    /*
-     * No handover procedure exist. Normal idle TAU/Attach procedure.
-     * Continue with the normal MBR/Pending_deactivation procedure.
-     */
   }
-  /** Check if there is a pending deactivation flag is set. */
-  if(ue_context->pending_bearer_deactivation && ue_context->mm_state == UE_REGISTERED){
-    OAILOG_INFO(LOG_MME_APP, "After UE entered UE_REGISTERED state, initiating bearer deactivation for UE with mmeUeS1apId " MME_UE_S1AP_ID_FMT ". \n", mme_ue_s1ap_id);
-    ue_context->pending_bearer_deactivation = false;
-    ue_context->s1_ue_context_release_cause = S1AP_NAS_NORMAL_RELEASE;
-    // Notify S1AP to send UE Context Release Command to eNB.
-    mme_app_itti_ue_context_release (ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, ue_context->s1_ue_context_release_cause, ue_context->e_utran_cgi.cell_identity.enb_id);
-    OAILOG_FUNC_OUT (LOG_MME_APP);
-  }else{
-    OAILOG_INFO(LOG_MME_APP, "After UE entered UE_REGISTERED state, no pending_deactivation flag set for UE with mmeUeS1apId " MME_UE_S1AP_ID_FMT ". "
-        "Checking for unestablished EPS bearers. \n", mme_ue_s1ap_id);
-    /*
-     * No pending bearer deactivation.
-     * Check if there is are any pending unestablished downlink bearers (DL-GTP Tunnel Information to the SAE-GW).
-     * In case of successfully completed inter-MME S10 handover. Nothing further will be done.
+  if(activate_bearers){
+    /**
+     * Use the MBR procedure to activate the bearers.
+     * MBReq will be sent for only those bearers which are not in ACTIVE state yet, but are established in the target eNB (ENB_CREATED).
      */
-    // todo: how to do this in multi apn?
-    pdn_context_t * registered_pdn_ctx = NULL;
-    bearer_context_t * bearer_context_to_establish = NULL;
-    registered_pdn_ctx = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
-    bearer_context_to_establish = RB_MIN(SessionBearers, &registered_pdn_ctx->session_bearers);
-    if(BEARER_STATE_ENB_CREATED & bearer_context_to_establish->bearer_state){
-      if(bearer_context_to_establish->bearer_state != BEARER_STATE_ACTIVE){ /**< We enter here for the EMM registration, triggering is independent of multi APN. */
-        if(mme_app_send_s11_modify_bearer_req(ue_context, registered_pdn_ctx) != RETURNok){
-          OAILOG_ERROR(LOG_MME_APP, "Error sending MBR for mmeUeS1apId " MME_UE_S1AP_ID_FMT ". Implicitly detaching the UE. \n", mme_ue_s1ap_id);
-          // todo!
-          DevAssert(0);
-        }
-      }else{
-        OAILOG_WARNING(LOG_MME_APP, "Bearer with ebi %d is already in ACTIVE state for mmeUeS1apId " MME_UE_S1AP_ID_FMT ". Skipping MBR. \n", mme_ue_s1ap_id);
-      }
-    }else{
-      OAILOG_INFO(LOG_MME_APP, "Bearer with ebi %d has not ENB context established yet for mmeUeS1apId " MME_UE_S1AP_ID_FMT ". Skipping MBR. \n", mme_ue_s1ap_id);
+    pdn_context_t * first_pdn = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
+    if(first_pdn){
+    	OAILOG_INFO(LOG_MME_APP, " Triggering MBReq for completed handover for UE " MME_UE_S1AP_ID_FMT ". \n", mme_ue_s1ap_id);
+        mme_app_send_s11_modify_bearer_req(ue_context, first_pdn, 0);
     }
-
-    //      /** Update the PDN session information directly in the new UE_Context. */
-    //      pdn_context_t * pdn_context = NULL;
-    //      RB_FOREACH (pdn_context, PdnContexts, &ue_context->pdn_contexts) {
-    //        DevAssert(pdn_context);
-    //        bearer_context_t * first_bearer = RB_MIN(SessionBearers, &pdn_context->session_bearers);
-    //        DevAssert(first_bearer);
-    //        if(first_bearer->bearer_state == BEARER_STATE_ACTIVE){
-    //          /** Continue to next pdn. */
-    //          continue;
-    //        }else{
-    //          /** Found a PDN. Establish the bearer contexts. */
-    //          OAILOG_INFO(LOG_MME_APP, "Establishing the bearers for UE_CONTEXT for UE " MME_UE_S1AP_ID_FMT " triggered by handover notify. Successfully handled handover notify. \n", ue_context->mme_ue_s1ap_id);
-    //          mme_app_send_s11_modify_bearer_req(ue_context, pdn_context);
-    ////          OAILOG_FUNC_OUT (LOG_MME_APP);
-    //        }
-    //      }
-
-
-//    RB_FOREACH (registered_pdn_ctx, PdnContexts, &ue_context->pdn_contexts) {
-//      DevAssert(registered_pdn_ctx);
-//      /*
-//       * Get the first PDN whose bearers are not established yet.
-//       * Do the MBR just one PDN at a time.
-//       */
-//      RB_FOREACH (bearer_context_to_establish, SessionBearers, &registered_pdn_ctx->session_bearers) {
-//        DevAssert(bearer_context_to_establish);
-//        /** Add them to the bearears list of the MBR. */
-//        if (bearer_context_to_establish->bearer_state != BEARER_STATE_ACTIVE){
-//          OAILOG_INFO(LOG_MME_APP, "Found a PDN with unestablished bearers for mmeUeS1apId " MME_UE_S1AP_ID_FMT ". Sending MBR. \n", mme_ue_s1ap_id);
-//          /** Send the S11 MBR and return. */
-//          // todo: error handling! this might occur if some error with OVS happens.
-//          if(mme_app_send_s11_modify_bearer_req(ue_context, registered_pdn_ctx) != RETURNok){
-//            OAILOG_ERROR(LOG_MME_APP, "Error sending MBR for mmeUeS1apId " MME_UE_S1AP_ID_FMT ". Implicitly detaching the UE. \n", mme_ue_s1ap_id);
-//            // todo!
-//            DevAssert(0);
-//          }
-//          OAILOG_INFO(LOG_MME_APP, "Successfully sent MBR for mmeUeS1apId " MME_UE_S1AP_ID_FMT ". Returning from REGISTRERED callback. \n", mme_ue_s1ap_id);
-//          OAILOG_FUNC_OUT (LOG_MME_APP);
-//        }
-//      }
-//      registered_pdn_ctx = NULL;
-//    }
-    OAILOG_ERROR(LOG_MME_APP, "No PDN context found with unestablished bearers for mmeUeS1apId " MME_UE_S1AP_ID_FMT ". \n", mme_ue_s1ap_id);
-    OAILOG_FUNC_OUT (LOG_MME_APP);
   }
+  OAILOG_INFO(LOG_MME_APP, "Completed registration of UE " MME_UE_S1AP_ID_FMT ". \n", mme_ue_s1ap_id);
+  OAILOG_FUNC_OUT(LOG_MME_APP);
 }
 
 ////-------------------------------------------------------------------------------------------

@@ -57,7 +57,7 @@ mme_app_handle_detach_req (
   /*
    * Reset the flags of the UE.
    */
-   ue_context->subscription_known = SUBSCRIPTION_UNKNOWN;
+//   ue_context->subscription_known = SUBSCRIPTION_UNKNOWN;
 
    /** We will remove the mme_app handover procedures. */
 
@@ -110,9 +110,10 @@ mme_app_handle_detach_req (
       OAILOG_DEBUG (LOG_MME_APP, "UE context will not be released for UE with IMSI: " IMSI_64_FMT " and MME_UE_S1AP_ID : %d (already idle). \n",
            ue_context->imsi, ue_context->mme_ue_s1ap_id);
       mme_app_itti_ue_context_release (ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, S1AP_IMPLICIT_CONTEXT_RELEASE, ue_context->e_utran_cgi.cell_identity.enb_id); /**< Set the signaling connection to ECM_IDLE when the Context-Removal-Completion has arrived. */
-      ue_context->s1_ue_context_release_cause = S1AP_INVALID_CAUSE;
       // todo: not released --> remove the handover procedure
+      ue_context->s1_ue_context_release_cause = S1AP_HANDOVER_CANCELLED;
       mme_app_delete_s10_procedure_mme_handover(ue_context);
+      ue_context->s1_ue_context_release_cause = S1AP_INVALID_CAUSE;
 
     }
   } else {  /**< UE has an active context. Setting NAS_DETACH as S1AP cause and sending the context removal command! */
@@ -164,10 +165,11 @@ mme_app_handle_detach_req (
       OAILOG_DEBUG (LOG_MME_APP, "UE context will not be released since only NAS is invalidated for IMSI: " IMSI_64_FMT " and MME_UE_S1AP_ID : %d. \n",
           ue_context->imsi, ue_context->mme_ue_s1ap_id);
       mme_ue_context_update_ue_sig_connection_state (&mme_app_desc.mme_ue_contexts, ue_context, ECM_IDLE);
-      ue_context->s1_ue_context_release_cause = S1AP_INVALID_CAUSE;
       // todo: manually release the mme_app_handover procedure // emm_cn_procedure?!
       // todo: not released --> remove the handover procedure
+      ue_context->s1_ue_context_release_cause = S1AP_HANDOVER_CANCELLED;
       mme_app_delete_s10_procedure_mme_handover(ue_context);
+      ue_context->s1_ue_context_release_cause = S1AP_INVALID_CAUSE;
     }
   }
   OAILOG_FUNC_OUT (LOG_MME_APP);

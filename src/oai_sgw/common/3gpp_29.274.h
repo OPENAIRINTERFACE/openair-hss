@@ -31,7 +31,7 @@
 #include <arpa/inet.h>
 
 #include "common_root_types.h"
-#include "3gpp_24.301.h"
+#include "../common/3gpp_24.301.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"
 #include "3gpp_25.413.h"

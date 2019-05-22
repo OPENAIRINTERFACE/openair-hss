@@ -41,26 +41,24 @@ Description Defines functions executed at the EMMAS Service Access
 #ifndef FILE_EMM_RECV_SEEN
 #define FILE_EMM_RECV_SEEN
 
-#include "EmmStatus.h"
-
-#include "DetachRequest.h"
-#include "DetachAccept.h"
-
-
-#include "AttachRequest.h"
 #include "AttachComplete.h"
-#include "TrackingAreaUpdateRequest.h"
-#include "TrackingAreaUpdateComplete.h"
-#include "ServiceRequest.h"
+#include "AttachRequest.h"
+#include "AuthenticationFailure.h"
+#include "AuthenticationResponse.h"
+#include "DetachAccept.h"
+#include "DetachRequest.h"
+#include "EmmStatus.h"
 #include "ExtendedServiceRequest.h"
 #include "GutiReallocationComplete.h"
-#include "AuthenticationResponse.h"
-#include "AuthenticationFailure.h"
 #include "IdentityResponse.h"
 #include "NASSecurityModeComplete.h"
 #include "SecurityModeReject.h"
+#include "ServiceRequest.h"
+#include "TrackingAreaUpdateComplete.h"
+#include "TrackingAreaUpdateRequest.h"
 #include "UplinkNasTransport.h"
 #include "nas_message.h"
+#include "DetachRequest.h"
 
 
 /****************************************************************************/
@@ -98,7 +96,7 @@ emm_recv_attach_request (
 
 int emm_recv_attach_complete(
     const mme_ue_s1ap_id_t                     ueid,
-    const attach_complete_msg                 *msg,
+    attach_complete_msg                * const msg,
     int                                * const emm_cause,
     const nas_message_decode_status_t  * const decode_status);
 

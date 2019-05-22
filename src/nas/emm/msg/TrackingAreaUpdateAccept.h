@@ -22,19 +22,19 @@
 #ifndef FILE_TRACKING_AREA_UPDATE_ACCEPT_SEEN
 #define FILE_TRACKING_AREA_UPDATE_ACCEPT_SEEN
 
-#include "SecurityHeaderType.h"
-#include "MessageType.h"
-#include "EpsUpdateResult.h"
-#include "EpsMobileIdentity.h"
-#include "TrackingAreaIdentityList.h"
-#include "EpsBearerContextStatus.h"
-#include "EmmCause.h"
-#include "EpsNetworkFeatureSupport.h"
-#include "AdditionalUpdateResult.h"
 #include "3gpp_23.003.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"
 
+#include "AdditionalUpdateResult.h"
+#include "EmmCause.h"
+#include "EpsBearerContextStatus.h"
+#include "EpsMobileIdentity.h"
+#include "EpsNetworkFeatureSupport.h"
+#include "EpsUpdateResult.h"
+#include "MessageType.h"
+#include "SecurityHeaderType.h"
+#include "TrackingAreaIdentityList.h"
 
 /* Minimum length macro. Formed by minimum length of each mandatory field */
 #define TRACKING_AREA_UPDATE_ACCEPT_MINIMUM_LENGTH ( \

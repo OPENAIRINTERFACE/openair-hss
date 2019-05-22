@@ -42,14 +42,7 @@
 
 *****************************************************************************/
 
-#include "as_simulator_parser.h"
-
-#include "as_data.h"
-#include "as_process.h"
-
-#include "commonDef.h"
-#include "socket.h"
-
+#include "common_defs.h"
 #include "log.h"
 
 #include <stdio.h>              // printf, perror, snprintf
@@ -60,6 +53,10 @@
 #include <poll.h>               // poll
 #include <signal.h>             // sigaction
 #include <pthread.h>
+#include "../../test/as_simulator/as_data.h"
+#include "../../test/as_simulator/as_process.h"
+#include "../../test/as_simulator/as_simulator_parser.h"
+#include "../../util/socket.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/

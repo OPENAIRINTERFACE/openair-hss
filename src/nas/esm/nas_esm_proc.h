@@ -20,30 +20,28 @@
  */
 
 /*****************************************************************************
-Source      nas_proc.h
+Source      nas_esm_proc.h
 
 Version     0.1
 
 Date        2012/09/20
 
-Product     NAS stack
+Product     NAS ESM stack
 
-Subsystem   NAS main process
+Subsystem   NAS ESM main process
 
-Author      Frederic Maurel, Lionel GAUTHIER
+Author      Frederic Maurel, Lionel GAUTHIER, Dincer Beken
 
-Description NAS procedure call manager
+Description NAS ESM procedure call manager
 
 *****************************************************************************/
-#ifndef FILE_NAS_PROC_SEEN
-#define FILE_NAS_PROC_SEEN
+#ifndef FILE_NAS_ESM_PROC_SEEN
+#define FILE_NAS_ESM_PROC_SEEN
 
 #include "common_defs.h"
 #include "mme_config.h"
-#include "emm_cnDef.h"
-
-#include "commonDef.h"
 #include "networkDef.h"
+#include "esm_sapDef.h"
 
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/
@@ -61,11 +59,6 @@ Description NAS procedure call manager
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
 /****************************************************************************/
 
-
-void nas_proc_initialize(mme_config_t *mme_config_p);
-
-void nas_proc_cleanup(void);
-
 /*
  * --------------------------------------------------------------------------
  *          NAS procedures triggered by the user
@@ -78,45 +71,29 @@ void nas_proc_cleanup(void);
  *      NAS procedures triggered by the network
  * --------------------------------------------------------------------------
  */
-
-
+void nas_stop_esm_timer(mme_ue_s1ap_id_t ue_id, nas_timer_t * const nas_timer);
 
 int nas_proc_establish_ind(const mme_ue_s1ap_id_t ue_id,
                             const tai_t originating_tai,
                             const ecgi_t ecgi,
                             const as_cause_t as_cause,
                             STOLEN_REF bstring *msg);
-
-int nas_proc_dl_transfer_cnf(const mme_ue_s1ap_id_t ueid, const nas_error_code_t status, STOLEN_REF bstring *  nas_msg);
-int nas_proc_dl_transfer_rej(const mme_ue_s1ap_id_t ueid, const nas_error_code_t status, STOLEN_REF bstring *  nas_msg);
-int nas_proc_ul_transfer_ind(const mme_ue_s1ap_id_t ueid,
-                             const tai_t originating_tai,
-                             const ecgi_t cgi,
-                             STOLEN_REF bstring *msg);
-
 /*
  * --------------------------------------------------------------------------
- *      NAS procedures triggered by the mme applicative layer
+ *      NAS ESM procedures triggered by the mme applicative layer
  * --------------------------------------------------------------------------
  */
-int nas_proc_authentication_info_answer (s6a_auth_info_ans_t * ans);
-int nas_proc_auth_param_res (mme_ue_s1ap_id_t ue_id, uint8_t nb_vectors, eutran_vector_t *vectors);
-int nas_proc_auth_param_fail(mme_ue_s1ap_id_t ue_id, nas_cause_t cause);
-int nas_proc_deregister_ue(uint32_t ue_id);
-int nas_proc_pdn_config_res (emm_cn_pdn_config_res_t * emm_cn_pdn_config_res);
-int nas_proc_pdn_config_fail (emm_cn_pdn_config_fail_t * emm_cn_pdn_config_fail);
-int nas_proc_pdn_connectivity_res(emm_cn_pdn_res_t *nas_pdn_connectivity_rsp);
-int nas_proc_pdn_connectivity_fail(emm_cn_pdn_fail_t *nas_pdn_connectivity_fail);
-int nas_proc_pdn_disconnect_res (emm_cn_pdn_disconnect_res_t * emm_cn_pdn_disconnect_res);
-int nas_proc_activate_dedicated_bearer(emm_cn_activate_dedicated_bearer_req_t * emm_cn_activate);
-int nas_proc_modify_eps_bearer_ctx(emm_cn_modify_eps_bearer_ctx_req_t * emm_cn_modify_eps_bearer_ctx);
-int nas_proc_deactivate_dedicated_bearer(emm_cn_deactivate_dedicated_bearer_req_t * emm_cn_deactivate);
-int nas_proc_establish_bearer_update(emm_cn_update_esm_bearer_ctxs_req_t * emm_cn_update_esm_bearer_ctxs);
+/** Messages sent by the EMM layer (directly from UE). */
+int nas_esm_proc_data_ind (itti_nas_esm_data_ind_t * esm_data_ind);
+int nas_esm_proc_esm_detach(itti_nas_esm_detach_ind_t * esm_detach);
 
-int nas_proc_e_rab_failure(mme_ue_s1ap_id_t ue_id, ebi_t ebi, bool modify, bool remove);
-int nas_proc_signalling_connection_rel_ind (mme_ue_s1ap_id_t ue_id);
-int nas_proc_implicit_detach_ue_ind (mme_ue_s1ap_id_t ue_id, uint8_t emm_cause, uint8_t detach_type);
-/** NAS context response. */
-int nas_proc_context_res (itti_nas_context_res_t *nas_context_res);
-int nas_proc_context_fail (mme_ue_s1ap_id_t ue_id, gtpv2c_cause_value_t cause);
+/** Messages triggered by the core network. */
+int nas_esm_proc_pdn_config_res (esm_cn_pdn_config_res_t * emm_cn_pdn_config_res);
+int nas_esm_proc_pdn_config_fail (esm_cn_pdn_config_fail_t * emm_cn_pdn_config_fail);
+int nas_esm_proc_pdn_connectivity_res(esm_cn_pdn_connectivity_res_t *esm_cn_pdn_connectivity_rsp);
+
+int nas_esm_proc_activate_eps_bearer_ctx(esm_eps_activate_eps_bearer_ctx_req_t * esm_cn_activate);
+int nas_esm_proc_modify_eps_bearer_ctx(esm_eps_modify_esm_bearer_ctxs_req_t * esm_cn_modify);
+int nas_esm_proc_deactivate_eps_bearer_ctx(esm_eps_deactivate_eps_bearer_ctx_req_t * esm_cn_deactivate);
+
 #endif /* FILE_NAS_PROC_SEEN*/

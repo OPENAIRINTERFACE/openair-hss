@@ -51,22 +51,24 @@
 #include <stdlib.h>
 
 #include "bstrlib.h"
-
 #include "log.h"
 #include "msc.h"
 #include "gcc_diag.h"
 #include "dynamic_memory_check.h"
 #include "assertions.h"
 #include "common_types.h"
-#include "nas_timer.h"
+
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"
 #include "3gpp_29.274.h"
+
 #include "emm_data.h"
-#include "mme_app_ue_context.h"
 #include "emm_proc.h"
 #include "emm_sap.h"
 #include "esm_sap.h"
+#include "nas_timer.h"
+
+#include "mme_app_ue_context.h"
 #include "nas_itti_messaging.h" 
 #include "mme_app_defs.h"
 
@@ -86,30 +88,34 @@ static const char                      *_emm_detach_type_str[] = {
   "RE-ATTACH REQUIRED", "RE-ATTACH NOT REQUIRED", "RESERVED"
 };
 
+//#include "s1ap_mme.h"
 
 void
-_clear_emm_ctxt(emm_data_context_t *emm_context) {
-  
+_clear_emm_ctxt(mme_ue_s1ap_id_t ue_id) {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
-  if (!emm_context) {
+  emm_data_context_t                     *emm_context = emm_data_context_get (&_emm_data, ue_id);
+  if(!emm_context){
+    OAILOG_DEBUG(LOG_NAS_EMM, "No EMM context was found to clear for ue_id " MME_UE_S1AP_ID_FMT ". \n", ue_id);
     OAILOG_FUNC_OUT(LOG_NAS_EMM);
   }
-  mme_ue_s1ap_id_t  ue_id = emm_context->ue_id;
+  if(!emm_context->is_dynamic) {
+    OAILOG_DEBUG(LOG_NAS_EMM, "Cannot clear not-dynamic EMM context for ue_id " MME_UE_S1AP_ID_FMT ". \n", ue_id);
+    OAILOG_FUNC_OUT(LOG_NAS_EMM);
+  }
+//  if(s1ap_is_ue_mme_id_in_list(emm_context->ue_id)ue_ref){
+//    OAILOG_DEBUG(LOG_NAS_EMM, "EMM-PROC  -  * * * * * (0) ueREF %p has mmeId " MME_UE_S1AP_ID_FMT ", enbId " ENB_UE_S1AP_ID_FMT " state %d and eNB_ref %p. \n",
+//             ue_ref, ue_ref->mme_ue_s1ap_id, ue_ref->enb_ue_s1ap_id, ue_ref->s1_ue_state, ue_ref->enb);
+//  }
 
+//  LOCK_EMM_CONTEXT(emm_context);
   // todo: check if necessary!
   nas_delete_all_emm_procedures(emm_context);
-  
-  /** Free all ESM procedure. */
-  nas_delete_all_esm_procedures(emm_context);
+//  if(ue_ref){
+//    OAILOG_DEBUG(LOG_NAS_EMM, "EMM-PROC  -  * * * * * (1) ueREF %p has mmeId " MME_UE_S1AP_ID_FMT ", enbId " ENB_UE_S1AP_ID_FMT " state %d and eNB_ref %p. \n",
+//            ue_ref, ue_ref->mme_ue_s1ap_id, ue_ref->enb_ue_s1ap_id, ue_ref->s1_ue_state, ue_ref->enb);
+//  }
 
-  /** Stop/Delete all ESM procedurs & timers. */
-  free_esm_context_content(&emm_context->esm_ctx);
-
-  if (emm_context->esm_msg) {
-    bdestroy_wrapper(&emm_context->esm_msg);
-  }
-  emm_data_context_remove(&_emm_data, emm_context);
-
+  emm_data_context_remove(&_emm_data, emm_context, true);
   emm_ctx_clear_old_guti(emm_context);
   emm_ctx_clear_guti(emm_context);
   emm_ctx_clear_imsi(emm_context);
@@ -117,15 +123,14 @@ _clear_emm_ctxt(emm_data_context_t *emm_context) {
   emm_ctx_clear_auth_vectors(emm_context);
   emm_ctx_clear_security(emm_context);
   emm_ctx_clear_non_current_security(emm_context);
-
   /*
    * Release the EMM context
    */
+  // todo: need to unlock freed context?!
+//  UNLOCK_EMM_CONTEXT(emm_context);
   free_wrapper((void **) &emm_context);
   OAILOG_FUNC_OUT(LOG_NAS_EMM);
 }
-
-
 
 /*
    --------------------------------------------------------------------------
@@ -183,7 +188,8 @@ int
 emm_proc_detach (
   mme_ue_s1ap_id_t ue_id,
   emm_proc_detach_type_t detach_type,
-  int emm_cause)
+  int emm_cause,
+  bool clr)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
@@ -207,7 +213,7 @@ emm_proc_detach (
   if (emm_context == NULL) {
     OAILOG_WARNING (LOG_NAS_EMM, "No EMM context exists for the UE (ue_id=" MME_UE_S1AP_ID_FMT ")", ue_id);
     // There may be MME APP Context. Trigger clean up in MME APP
-    nas_itti_detach_req(ue_id);
+    nas_itti_esm_detach_ind(ue_id, clr);
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
   }
   /*
@@ -233,112 +239,82 @@ emm_proc_detach (
     *
     */
 
-   /** Check if there are any active sessions, if so terminate them all. */
-   OAILOG_INFO (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " EMM-PROC  - Detach UE \n", emm_context->ue_id);
-   /*
-    * 3GPP TS 24.401, Figure 5.3.2.1-1, point 5a
-    * At this point, all NAS messages shall be protected by the NAS security
-    * functions (integrity and ciphering) indicated by the MME unless the UE
-    * is emergency attached and not successfully authenticated.
-    */
+  /** Check if there are any active sessions, if so terminate them all. */
+  OAILOG_INFO (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " EMM-PROC  - Detach UE \n", emm_context->ue_id);
+  /*
+   * 3GPP TS 24.401, Figure 5.3.2.1-1, point 5a
+   * At this point, all NAS messages shall be protected by the NAS security
+   * functions (integrity and ciphering) indicated by the MME unless the UE
+   * is emergency attached and not successfully authenticated.
+   */
 
-   if(detach_type) {
-     OAILOG_INFO (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " EMM-PROC  - Detach type is set for UE. We will send detach request. \n", emm_context->ue_id);
+  if(detach_type) {
+    OAILOG_INFO (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " EMM-PROC  - Detach type is set for UE. We will send detach request. \n", emm_context->ue_id);
 
-     emm_sap_t                               emm_sap = {0};
-     emm_as_data_t                          *emm_as = &emm_sap.u.emm_as.u.data;
+    emm_sap_t                               emm_sap = {0};
+    emm_as_data_t                          *emm_as = &emm_sap.u.emm_as.u.data;
 
-     MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMM_AS_NAS_INFO_DETACH_REQUEST ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
-     /*
-      * Setup NAS information message to transfer
-      */
-     emm_as->nas_info = EMM_AS_NAS_INFO_DETACH_REQ;
-     emm_as->nas_msg = NULL;
-     /*
-      * Set the UE identifier
-      */
-     emm_as->ue_id = ue_id;
-     /*
-      * Detach Type
-      */
-     emm_as->type = detach_type;
-     /*
-      * EMM Cause
-      */
-     emm_as->emm_cause = emm_cause;
+    MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMM_AS_NAS_INFO_DETACH_REQUEST ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
+    /*
+     * Setup NAS information message to transfer
+     */
+    emm_as->nas_info = EMM_AS_NAS_INFO_DETACH_REQ;
+    emm_as->nas_msg  = NULL;
+    /*
+     * Set the UE identifier
+     */
+    emm_as->ue_id = ue_id;
+    /*
+     * Detach Type
+     */
+    /*
+     * EMM Cause
+     */
+    emm_as->emm_cause = emm_cause;
+    emm_as->detach_type = detach_type;
 
-     /*
-      * Setup EPS NAS security data
-      */
-     emm_as_set_security_data (&emm_as->sctx, &emm_context->_security, false, true);
-     /*
-      * Notify EMM-AS SAP that Detach Accept message has to
-      * be sent to the network
-      */
-     emm_sap.primitive = EMMAS_DATA_REQ;
-     rc = emm_sap_send (&emm_sap);
-   }else{
-     OAILOG_INFO (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " EMM-PROC  - No detach type is set for UE. We will not send detach request. \n", emm_context->ue_id);
-   }
-   /*
-    * Release ESM PDN and bearer context
-    */
+    /*
+     * Setup EPS NAS security data
+     */
+    emm_as_set_security_data (&emm_as->sctx, &emm_context->_security, false, true);
+    /*
+     * Notify EMM-AS SAP that Detach Accept message has to
+     * be sent to the network
+     */
+    emm_sap.primitive = EMMAS_DATA_REQ;
+    rc = emm_sap_send (&emm_sap);
+  }else{
+    OAILOG_INFO (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " EMM-PROC  - No detach type is set for UE. We will not send detach request. \n", emm_context->ue_id);
+    if(ue_context)
+    	ue_context->s1_ue_context_release_cause = S1AP_IMPLICIT_CONTEXT_RELEASE;
+    rc = RETURNok;
+  }
+  /*
+   * Release ESM PDN and bearer context
+   */
 
-   if(emm_context->esm_ctx.n_pdns && ue_context){
-      esm_sap_t                               esm_sap = {0};
-      /** Send Disconnect Request to all PDNs. */
-      pdn_context_t * pdn_context = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
+  // todo: this might be in success_notif of detach_proc
+  if (rc != RETURNerror) {
+    /** Confirm the detach procedure and inform MME_APP. */
 
-      esm_sap.primitive = ESM_PDN_DISCONNECT_REQ;
-      esm_sap.is_standalone = false;
-      esm_sap.ue_id = emm_context->ue_id;
-      esm_sap.ctx = emm_context;
-      esm_sap.recv = emm_context->esm_msg;
-      /** Locally delete the PDN context first. */
-      esm_sap.data.pdn_disconnect.default_ebi  = pdn_context->default_ebi;        /**< Default Bearer Id of default APN. */
-      esm_sap.data.pdn_disconnect.cid          = pdn_context->context_identifier; /**< Context Identifier of default APN. */
-      esm_sap.data.pdn_disconnect.local_delete = true;                            /**< Local deletion of PDN contexts. */
-      esm_sap_send(&esm_sap);
-      /*
-       * Remove the contexts and send S11 Delete Session Request to the SAE-GW.
-       * Will continue with the detach procedure when S11 Delete Session Response arrives.
-       */
+    emm_sap_t                               emm_sap = {0};
 
-      /** Not needed anymore. */
-      bdestroy_wrapper(&emm_context->esm_msg);
-
-      OAILOG_INFO (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " EMM-PROC  - Deactivating PDN Connection via ESM for detach before continuing. \n", ue_id);
-      /**
-       * Not waiting for a response. Will assume that the session is correctly purged.. Continuing with the detach and assuming that the SAE-GW session is purged.
-       * Assuming, that in 5G AMF/SMF structure, it is like in PCRF, sending DELETE_SESSION_REQUEST and not caring about the response. Assuming the session is deactivated.
-       */
-      OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
-
-    }else{
-      OAILOG_INFO (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " EMM-PROC  - No PDNs existing, continue with the EMM detach. \n", ue_id);
-      rc = RETURNok;
-    }
-    // todo: this might be in success_notif of detach_proc
-   if (rc != RETURNerror) {
-     /** Confirm the detach procedure and inform MME_APP. */
-
-     emm_sap_t                               emm_sap = {0};
-
-     /*
-      * Notify EMM FSM that the UE has been implicitly detached
+    /*
+     * Notify EMM FSM that the UE has been implicitly detached
       */
      MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMREG_DETACH_CNF ue id " MME_UE_S1AP_ID_FMT " ", emm_context->ue_id);
-
      OAILOG_INFO (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " EMM-PROC  - Sending EMMREG_DETACH_CNF. \n", emm_context->ue_id);
-
      emm_sap.primitive = EMMREG_DETACH_CNF;
      emm_sap.u.emm_reg.ue_id = emm_context->ue_id;
      emm_sap.u.emm_reg.ctx = emm_context;
      rc = emm_sap_send (&emm_sap);
      // Notify MME APP to remove the remaining MME_APP and S1AP contexts..
-     nas_itti_detach_req(ue_id);
      // todo: review unlock
-//     unlock_ue_contexts(ue_context);
+
+     /** Signal detach Free all ESM procedure, don't care about the rest. */
+     nas_itti_esm_detach_ind(ue_id, clr);
+
+     //     unlock_ue_contexts(ue_context);
      OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
      // todo: review this
    }
@@ -386,10 +362,10 @@ int
 emm_proc_detach_request (
   mme_ue_s1ap_id_t ue_id,
   emm_detach_request_ies_t * params)
-
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc;
+  bool                                    switch_off = params->switch_off;
 
   OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Detach type = %s (%d) requested (ue_id=" MME_UE_S1AP_ID_FMT ")\n", _emm_detach_type_str[params->type], params->type, ue_id);
   /*
@@ -397,64 +373,9 @@ emm_proc_detach_request (
    */
   emm_data_context_t *emm_context = emm_data_context_get( &_emm_data, ue_id);
   ue_context_t       *ue_context  = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, ue_id);
-  DevAssert(ue_context);
 
-  if (emm_context) {
-    /*
-     * Validate, just check if a specific procedure exist, if so disregard the detach request.
-     * Assuming that DSR failed, with the timeout, we should send one without a security header.
-     */
-    nas_emm_specific_proc_t * specific_proc = get_nas_specific_procedure(emm_context);
-    if(specific_proc){
-      /** A specific procedure exists, abort the detach request, wait the specific procedure to complete. */
-      OAILOG_INFO (LOG_NAS_EMM, " EMM-PROC  - A specific procedure with type %d for ueId " MME_UE_S1AP_ID_FMT " exists. Dropping the detach request. \n", emm_context->ue_id, specific_proc->type);
-      OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
-    }
-
-    /** Create a specific procedure for detach request. */
-    _emm_proc_create_procedure_detach_request(emm_context, params);
-    /* Check if any PDN Connections exist. */
-    // todo: check that any session exists.
-    if(emm_context->esm_ctx.n_pdns){
-      esm_sap_t                               esm_sap = {0};
-      /** Send Disconnect Request to all PDNs. */
-      pdn_context_t * pdn_context = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
-
-      esm_sap.primitive = ESM_PDN_DISCONNECT_REQ;
-      esm_sap.is_standalone = false;
-      esm_sap.ue_id = emm_context->ue_id;
-      esm_sap.ctx = emm_context;
-      esm_sap.recv = emm_context->esm_msg;
-      esm_sap.data.pdn_disconnect.default_ebi = pdn_context->default_ebi; /**< Default Bearer Id of default APN. */
-      esm_sap.data.pdn_disconnect.cid         = pdn_context->context_identifier; /**< Context Identifier of default APN. */
-      esm_sap.data.pdn_disconnect.local_delete = true;                            /**< Local deletion of PDN contexts. */
-      esm_sap_send(&esm_sap);
-      /*
-       * Remove the contexts and send S11 Delete Session Request to the SAE-GW.
-       * Will continue with the detach procedure when S11 Delete Session Response arrives.
-       */
-
-      /** Not needed anymore. */
-      bdestroy_wrapper(&emm_context->esm_msg);
-
-      OAILOG_INFO (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " EMM-PROC  - Deactivating PDN Connection via ESM for detach before continuing. \n", emm_context->ue_id);
-      /**
-       * Not waiting for a response. Will assume that the session is correctly purged.. Continuing with the detach and assuming that the SAE-GW session is purged.
-       * Assuming, that in 5G AMF/SMF structure, it is like in PCRF, sending DELETE_SESSION_REQUEST and not caring about the response. Assuming the session is deactivated.
-       */
-      OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
-    }else{
-      /** No PDNs existing, continue with the EMM detach. */
-      rc = RETURNok;
-    }
-  }else{
-    /** No EMM context existing. */
-    rc = RETURNok;
-  }
-
-  // todo: this might be in success_notif of detach_proc
-
-  if (params->switch_off) {
+  /** First, always send a Detach Accept back if not switch-off. */
+  if (switch_off) {
     MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 Removing UE context ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
     rc = RETURNok;
   } else {
@@ -489,29 +410,71 @@ emm_proc_detach_request (
     emm_sap.primitive = EMMAS_DATA_REQ;
     rc = emm_sap_send (&emm_sap);
   }
-  /** Confirm the detach procedure and inform MME_APP. */
-  if(!emm_context || !emm_context->esm_ctx.n_pdns){
-    OAILOG_INFO (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " EMM-PROC  - No EMM context/PDNs existing. Directly continuing with UE context removal. \n", ue_id);
-    nas_itti_detach_req(ue_id);
-    OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
+
+  if (emm_context) {
+    DevAssert(ue_context); /**< Might be implicitly detached. */
+    /*
+     * Validate, just check if a specific procedure exist, if so disregard the detach request.
+     * Assuming that DSR failed, with the timeout, we should send one without a security header.
+     */
+    nas_emm_specific_proc_t * specific_proc = get_nas_specific_procedure(emm_context);
+    if(specific_proc){
+      /** A specific procedure exists, abort the detach request, wait the specific procedure to complete. */
+
+      if(specific_proc->emm_proc.type == EMM_SPEC_PROC_TYPE_ATTACH){
+        OAILOG_INFO (LOG_NAS_EMM, " EMM-PROC  - An attach procedure for ueId " MME_UE_S1AP_ID_FMT " exists. "
+            "Aborting the attach procedure and continuing with the detach request. \n", emm_context->ue_id, specific_proc->type);
+
+        emm_sap_t                               emm_sap = {0};
+        emm_sap.primitive = EMMREG_ATTACH_ABORT;
+        emm_sap.u.emm_reg.ue_id = ue_id;
+        emm_sap.u.emm_reg.ctx = emm_context;
+        emm_sap.u.emm_reg.u.attach.proc = specific_proc;
+        rc = emm_sap_send (&emm_sap);
+        //     unlock_ue_contexts(ue_context);
+        free_emm_detach_request_ies(&params);
+        OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
+
+      } else if(specific_proc->emm_proc.type == EMM_SPEC_PROC_TYPE_TAU){
+        OAILOG_INFO (LOG_NAS_EMM, " EMM-PROC  - A TAU procedure for ueId " MME_UE_S1AP_ID_FMT " exists. "
+            "Aborting the attach procedure and continuing with the detach request. \n", emm_context->ue_id, specific_proc->type);
+          // todo
+        DevAssert(0);
+      } else {
+        OAILOG_ERROR(LOG_NAS_EMM, " EMM-PROC  - A detach procedure for ueId " MME_UE_S1AP_ID_FMT " exists. "
+            "This should not happen. \n", emm_context->ue_id, specific_proc->type);
+        // todo
+        DevAssert(0);
+      }
+    }
+    /** Create a specific procedure for detach request. */
+    _emm_proc_create_procedure_detach_request(emm_context, params);
+  }else{
+    /** No EMM context existing. Need to remove the procedure IEs immediately. */
+    rc = RETURNok;
+    // free content
+    free_emm_detach_request_ies(&params);
   }
 
+  /** Confirm the detach procedure and inform MME_APP. */
+  emm_sap_t                               emm_sap = {0};
   /*
    * Notify EMM FSM that the UE has been implicitly detached
    */
-//  MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMREG_DETACH_CNF ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
-//  emm_sap.primitive = EMMREG_DETACH_CNF;
-//  emm_sap.u.emm_reg.ue_id = emm_context->ue_id;
-//  emm_sap.u.emm_reg.ctx = emm_context;
-//  rc = emm_sap_send (&emm_sap);
-  // Notify MME APP to remove the remaining MME_APP and S1AP contexts..
-//  nas_itti_detach_req(emm_context->ue_id);
-  // todo: review unlock
-//  unlock_ue_contexts(ue_context);
-//  OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
-  // todo: review this
-//  unlock_ue_contexts(ue_context);
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
+  MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMREG_DETACH_CNF ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
+
+  OAILOG_INFO (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " EMM-PROC  - Sending EMMREG_DETACH_CNF. \n", ue_id);
+
+  emm_sap.primitive = EMMREG_DETACH_CNF;
+  emm_sap.u.emm_reg.ue_id = ue_id;
+  emm_sap.u.emm_reg.ctx = emm_context;
+  rc = emm_sap_send (&emm_sap);
+
+  /** Signal detach Free all ESM procedure, don't care about the rest. */
+  nas_itti_esm_detach_ind(ue_id, false);
+
+  //     unlock_ue_contexts(ue_context);
+  OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
 }
 
 //------------------------------------------------------------------------------

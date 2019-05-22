@@ -44,6 +44,9 @@
 #define RESYNC_PARAM_LENGTH AUTS_LENGTH + RAND_LENGTH_OCTETS
 
 typedef struct s6a_update_location_req_s {
+  mme_ue_s1ap_id_t    ue_id;
+  imsi64_t            imsi64;
+
 #define SKIP_SUBSCRIBER_DATA (0x1)
   unsigned skip_subscriber_data:1;
 #define INITIAL_ATTACH       (0x1)
@@ -63,8 +66,11 @@ typedef struct s6a_update_location_req_s {
 } s6a_update_location_req_t;
 
 typedef struct s6a_update_location_ans_s {
-  s6a_result_t        result;              // Result of the update location request procedure
-  subscription_data_t subscription_data;   // subscriber status,
+  mme_ue_s1ap_id_t     ue_id;
+  s6a_result_t         result;              // Result of the update location request procedure
+  subscription_data_t *subscription_data;   // subscriber status,
+//  bool 			       initial_attach;
+
   // Maximum Requested Bandwidth Uplink, downlink
   // access restriction data
   // msisdn

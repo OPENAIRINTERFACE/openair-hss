@@ -22,9 +22,9 @@
 #ifndef FILE_DOWNLINK_NAS_TRANSPORT_SEEN
 #define FILE_DOWNLINK_NAS_TRANSPORT_SEEN
 
-#include "SecurityHeaderType.h"
 #include "MessageType.h"
 #include "NasMessageContainer.h"
+#include "SecurityHeaderType.h"
 #include "3gpp_23.003.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"

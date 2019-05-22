@@ -22,10 +22,10 @@
 #ifndef BEARER_RESOURCE_ALLOCATION_REQUEST_H_
 #define BEARER_RESOURCE_ALLOCATION_REQUEST_H_
 
-#include "MessageType.h"
-#include "LinkedEpsBearerIdentity.h"
 #include "TrafficFlowAggregateDescription.h"
 #include "EpsQualityOfService.h"
+#include "LinkedEpsBearerIdentity.h"
+#include "MessageType.h"
 #include "3gpp_23.003.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"

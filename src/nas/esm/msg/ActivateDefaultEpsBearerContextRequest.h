@@ -22,12 +22,12 @@
 #ifndef ACTIVATE_DEFAULT_EPS_BEARER_CONTEXT_REQUEST_H_
 #define ACTIVATE_DEFAULT_EPS_BEARER_CONTEXT_REQUEST_H_
 
-#include "MessageType.h"
-#include "EpsQualityOfService.h"
-#include "PdnAddress.h"
-#include "RadioPriority.h"
 #include "ApnAggregateMaximumBitRate.h"
+#include "PdnAddress.h"
+#include "EpsQualityOfService.h"
 #include "EsmCause.h"
+#include "MessageType.h"
+#include "RadioPriority.h"
 #include "3gpp_23.003.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"

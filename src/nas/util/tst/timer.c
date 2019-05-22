@@ -36,14 +36,15 @@
 
 *****************************************************************************/
 
-#include "nas_timer.h"
-#include "commonDef.h"
+#include "common_defs.h"
 
 #include <pthread.h>
 #include <stdio.h>              // printf
 #include <stdlib.h>             // exit
 #include <time.h>               // clock_gettime
 #include <poll.h>               // poll
+
+#include "../../util/nas_timer.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -111,7 +112,7 @@ main (
    */
   for (int i = 0; i < NB_TIMERS_MAX; i++) {
     if (_start (&timer[i], i) != RETURNok) {
-      printf ("ERROR: timer_start(i=%u) failed\n", i);
+      printf ("ERROR: timer_start(i=%d) failed\n", i);
     }
   }
 

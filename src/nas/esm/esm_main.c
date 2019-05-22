@@ -44,21 +44,20 @@
 #include <stdlib.h>
 
 #include "bstrlib.h"
+#include "log.h"
 
 #include "common_types.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"
 #include "3gpp_29.274.h"
-#include "common_defs.h"
 #include "mme_app_ue_context.h"
-#include "esm_main.h"
-#include "commonDef.h"
-#include "log.h"
-
+#include "common_defs.h"
 #include "emm_data.h"
-#include "esm_data.h"
-#include "esm_pt.h"
+#include "esm_main.h"
 #include "esm_ebr.h"
+#include "esm_pt.h"
+#include "esm_data.h"
+
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -92,17 +91,10 @@ esm_main_initialize (
   void)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
-
   /*
-   * Retreive MME supported configuration data
-   */
-  if (mme_api_get_esm_config (&_esm_data.conf) != RETURNok) {
-    OAILOG_ERROR (LOG_NAS_ESM, "ESM-MAIN  - Failed to get MME configuration data\n");
-  }
-  /*
+   * No ESM Data/configuration.
    * Initialize the EPS bearer context manager
    */
-  esm_ebr_initialize ();
   OAILOG_FUNC_OUT (LOG_NAS_ESM);
 }
 
@@ -125,6 +117,7 @@ esm_main_cleanup (
   void)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
+  /** Currently no hash tables. */
   OAILOG_FUNC_OUT (LOG_NAS_ESM);
 }
 

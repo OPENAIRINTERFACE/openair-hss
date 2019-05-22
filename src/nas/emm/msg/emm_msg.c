@@ -59,13 +59,13 @@
 #include "security_types.h"
 #include "common_types.h"
 #include "mme_app_ue_context.h"
-#include "emm_msg.h"
-#include "esm_msg.h"
 #include "intertask_interface.h"
 #include "TLVDecoder.h"
 #include "TLVEncoder.h"
-#include "esm_proc.h"
 #include "nas_itti_messaging.h"
+#include "emm_msg.h"
+#include "esm_proc.h"
+#include "esm_msg.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -420,6 +420,130 @@ emm_msg_encode (
   }
 
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, header_result + encode_result);
+}
+
+/****************************************************************************
+ **                                                                        **
+ ** Name:  emg_free()                                          **
+ **                                                                        **
+ ** Description: Frees the contents of the EMM messages **
+ **                                                                        **
+ ** Inputs:  msg: message contents which are allocated (esmmsgcontainer..) to       **
+ **               be freed                                                 **
+ **    Others:  None                                       **
+ **                                                                        **
+ ** Outputs:   None                                       **
+ **                                                                        **
+ ***************************************************************************/
+
+void
+emm_msg_free (
+  EMM_msg * msg)
+{
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
+  int                                     header_result = 0;
+  int                                     decode_result = 0;
+  /*
+   * First decode the ESM message header
+   */
+
+//  buffer += header_result;
+//  len -= header_result;
+  OAILOG_DEBUG (LOG_NAS_EMM, "EMM-MSG   - Message Type 0x%02x\n", msg->header.message_type);
+
+  switch (msg->header.message_type) {
+  case ATTACH_ACCEPT:
+    bdestroy_wrapper(&msg->attach_accept.esmmessagecontainer);
+    break;
+
+  case ATTACH_COMPLETE:
+    bdestroy_wrapper(&msg->attach_complete.esmmessagecontainer);
+    break;
+
+  case ATTACH_REJECT:
+    bdestroy_wrapper(&msg->attach_reject.esmmessagecontainer);
+    break;
+
+  case ATTACH_REQUEST:
+    bdestroy_wrapper(&msg->attach_request.esmmessagecontainer);
+    break;
+
+  case AUTHENTICATION_REQUEST:
+    bdestroy_wrapper(&msg->authentication_request.authenticationparameterautn);
+    if(msg->authentication_request.authenticationparameterrand)
+      bdestroy_wrapper(&msg->authentication_request.authenticationparameterrand);
+    break;
+
+  case AUTHENTICATION_RESPONSE:
+    bdestroy_wrapper(&msg->authentication_response.authenticationresponseparameter);
+    break;
+
+  case AUTHENTICATION_FAILURE:
+    bdestroy_wrapper(&msg->authentication_failure.authenticationfailureparameter);
+    break;
+
+  case EMM_INFORMATION:
+    if(msg->emm_information.fullnamefornetwork.textstring)
+      bdestroy_wrapper(&msg->emm_information.fullnamefornetwork.textstring);
+    if(msg->emm_information.shortnamefornetwork.textstring)
+      bdestroy_wrapper(&msg->emm_information.shortnamefornetwork.textstring);
+    break;
+
+  case DOWNLINK_NAS_TRANSPORT:
+    bdestroy_wrapper(&msg->downlink_nas_transport.nasmessagecontainer);
+    break;
+
+  case TRACKING_AREA_UPDATE_REQUEST:
+    bdestroy_wrapper(&msg->tracking_area_update_request.supportedcodecs);
+    break;
+
+  case UPLINK_NAS_TRANSPORT:
+    bdestroy_wrapper(&msg->uplink_nas_transport.nasmessagecontainer);
+    break;
+
+  case AUTHENTICATION_REJECT:
+  case DETACH_REQUEST:
+  case DETACH_ACCEPT:
+  case EMM_STATUS:
+  case IDENTITY_REQUEST:
+  case IDENTITY_RESPONSE:
+  case SERVICE_REQUEST:
+  case SERVICE_REJECT:
+  case SECURITY_MODE_COMMAND:
+  case SECURITY_MODE_COMPLETE:
+  case SECURITY_MODE_REJECT:
+  case TRACKING_AREA_UPDATE_ACCEPT:
+  case TRACKING_AREA_UPDATE_COMPLETE:
+  case TRACKING_AREA_UPDATE_REJECT:
+    /** Nothing to do. */
+    break;
+
+//  case CS_SERVICE_NOTIFICATION:
+//    decode_result = decode_cs_service_notification (&msg->cs_service_notification, buffer, len);
+//    break;
+
+//
+//  case EXTENDED_SERVICE_REQUEST:
+//    decode_result = decode_extended_service_request (&msg->extended_service_request, buffer, len);
+//    break;
+//
+//  case GUTI_REALLOCATION_COMMAND:
+//    decode_result = decode_guti_reallocation_command (&msg->guti_reallocation_command, buffer, len);
+//    break;
+//
+//  case GUTI_REALLOCATION_COMPLETE:
+//    decode_result = decode_guti_reallocation_complete (&msg->guti_reallocation_complete, buffer, len);
+//    break;
+
+//  default:
+//    OAILOG_ERROR (LOG_NAS_EMM, "EMM-MSG   - Unexpected message type: 0x%x\n", msg->header.message_type);
+//    decode_result = TLV_WRONG_MESSAGE_TYPE;
+//    /*
+//     * TODO: Handle not standard layer 3 messages: SERVICE_REQUEST
+//     */
+  }
+
+  OAILOG_FUNC_OUT(LOG_NAS_ESM);
 }
 
 /****************************************************************************/

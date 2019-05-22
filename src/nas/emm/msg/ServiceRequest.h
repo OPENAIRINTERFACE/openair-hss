@@ -22,13 +22,13 @@
 #ifndef FILE_SERVICE_REQUEST_SEEN
 #define FILE_SERVICE_REQUEST_SEEN
 
-#include "SecurityHeaderType.h"
-#include "MessageType.h"
-#include "KsiAndSequenceNumber.h"
-#include "ShortMac.h"
 #include "3gpp_23.003.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"
+#include "KsiAndSequenceNumber.h"
+#include "MessageType.h"
+#include "SecurityHeaderType.h"
+#include "ShortMac.h"
 
 /* Minimum length macro. Formed by minimum length of each mandatory field */
 #define SERVICE_REQUEST_MINIMUM_LENGTH ( \

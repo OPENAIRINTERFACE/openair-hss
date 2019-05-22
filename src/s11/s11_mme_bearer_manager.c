@@ -212,11 +212,87 @@ s11_mme_handle_release_access_bearer_response (
 
 //------------------------------------------------------------------------------
 int
+s11_mme_handle_delete_bearer_failure_indication (
+  nw_gtpv2c_stack_handle_t * stack_p,
+  nw_gtpv2c_ulp_api_t * pUlpApi)
+{
+  nw_rc_t                                   rc = NW_OK;
+  uint8_t                                 offendingIeType,
+                                          offendingIeInstance;
+  uint16_t                                offendingIeLength;
+  itti_s11_delete_bearer_failure_indication_t *ind_p;
+  MessageDef                                  *message_p;
+  nw_gtpv2c_msg_parser_t                      *pMsgParser;
+
+  DevAssert (stack_p );
+  message_p = itti_alloc_new_message (TASK_S11, S11_DELETE_BEARER_FAILURE_INDICATION);
+  ind_p = &message_p->ittiMsg.s11_delete_bearer_failure_indication;
+
+  ind_p->teid = nwGtpv2cMsgGetTeid(pUlpApi->hMsg);
+
+  /*
+   * Create a new message parser
+   */
+  rc = nwGtpv2cMsgParserNew (*stack_p, NW_GTP_DELETE_BEARER_FAILURE_IND, s11_ie_indication_generic, NULL, &pMsgParser);
+  DevAssert (NW_OK == rc);
+
+  /*
+   * Cause IE
+   */
+  rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_CAUSE, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_MANDATORY, gtpv2c_cause_ie_get,
+      &ind_p->cause);
+  DevAssert (NW_OK == rc);
+
+  /*
+   * Failed Bearer Contexts Created IE
+   */
+  rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_BEARER_CONTEXT, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_MANDATORY,
+      gtpv2c_bearer_context_marked_for_removal_ie_get, &ind_p->bcs_failed);
+  DevAssert (NW_OK == rc);
+
+  /*
+   * Recovery IE
+   */
+  /*rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_RECOVERY, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_OPTIONAL, s11_fteid_ie_get,
+      &resp_p->recovery);
+  DevAssert (NW_OK == rc);*/
+
+  /*
+   * Run the parser
+   */
+  rc = nwGtpv2cMsgParserRun (pMsgParser, (pUlpApi->hMsg), &offendingIeType, &offendingIeInstance, &offendingIeLength);
+
+  if (rc != NW_OK) {
+    MSC_LOG_RX_DISCARDED_MESSAGE (MSC_S11_MME, MSC_SGW, NULL, 0, "0 DELETE_BEARER_FAILURE_INDICATION local S11 teid " TEID_FMT " ", ind_p->teid);
+    /*
+     * TODO: handle this case
+     */
+    itti_free (ITTI_MSG_ORIGIN_ID (message_p), message_p);
+    message_p = NULL;
+    rc = nwGtpv2cMsgParserDelete (*stack_p, pMsgParser);
+    DevAssert (NW_OK == rc);
+    rc = nwGtpv2cMsgDelete (*stack_p, (pUlpApi->hMsg));
+    DevAssert (NW_OK == rc);
+    return RETURNerror;
+  }
+
+  MSC_LOG_RX_MESSAGE (MSC_S11_MME, MSC_SGW, NULL, 0, "0 DELETE_BEARER_FAILURE_INDICATION local S11 teid " TEID_FMT " cause %u",
+      ind_p->teid, ind_p->cause);
+
+  rc = nwGtpv2cMsgParserDelete (*stack_p, pMsgParser);
+  DevAssert (NW_OK == rc);
+  rc = nwGtpv2cMsgDelete (*stack_p, (pUlpApi->hMsg));
+  DevAssert (NW_OK == rc);
+  return itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
+}
+
+//------------------------------------------------------------------------------
+int
 s11_mme_modify_bearer_request (
   nw_gtpv2c_stack_handle_t * stack_p,
   itti_s11_modify_bearer_request_t * req_p)
 {
-  nw_gtpv2c_ulp_api_t                         ulp_req;
+  nw_gtpv2c_ulp_api_t                       ulp_req;
   nw_rc_t                                   rc;
   //uint8_t                                 restart_counter = 0;
 
@@ -228,8 +304,9 @@ s11_mme_modify_bearer_request (
    * Prepare a new Modify Bearer Request msg
    */
   rc = nwGtpv2cMsgNew (*stack_p, true, NW_GTP_MODIFY_BEARER_REQ, req_p->teid, 0, &(ulp_req.hMsg));
-  ulp_req.u_api_info.initialReqInfo.peerIp = req_p->peer_ip;
-  ulp_req.u_api_info.initialReqInfo.teidLocal  = req_p->local_teid;
+  ulp_req.u_api_info.initialReqInfo.peerIp         = req_p->peer_ip;
+  ulp_req.u_api_info.initialReqInfo.teidLocal      = req_p->local_teid;
+  ulp_req.u_api_info.initialReqInfo.internal_flags = req_p->internal_flags;
 
   hashtable_rc_t hash_rc = hashtable_ts_get(s11_mme_teid_2_gtv2c_teid_handle,
       (hash_key_t) ulp_req.u_api_info.initialReqInfo.teidLocal, (void **)(uintptr_t)&ulp_req.u_api_info.initialReqInfo.hTunnel);
@@ -239,31 +316,31 @@ s11_mme_modify_bearer_request (
     return RETURNerror;
   }
 
-//  /*
-//   * Sender F-TEID for Control Plane (MME S11)
-//   */
-//  rc = nwGtpv2cMsgAddIeFteid ((ulp_req.hMsg), NW_GTPV2C_IE_INSTANCE_ZERO,
-//                              S11_MME_GTP_C,
-//                              req_p->sender_fteid_for_cp.teid,
-//                              req_p->sender_fteid_for_cp.ipv4 ? &req_p->sender_fteid_for_cp.ipv4_address : 0,
-//                              req_p->sender_fteid_for_cp.ipv6 ? &req_p->sender_fteid_for_cp.ipv6_address : NULL);
-
-
+  /*
+   * Sender F-TEID for Control Plane (MME S11)
+   */
+  rc = nwGtpv2cMsgAddIeFteid ((ulp_req.hMsg), NW_GTPV2C_IE_INSTANCE_ZERO,
+                              S11_MME_GTP_C,
+                              req_p->sender_fteid_for_cp.teid,
+                              req_p->sender_fteid_for_cp.ipv4 ? &req_p->sender_fteid_for_cp.ipv4_address : 0,
+                              req_p->sender_fteid_for_cp.ipv6 ? &req_p->sender_fteid_for_cp.ipv6_address : NULL);
 
   for (int i=0; i < req_p->bearer_contexts_to_be_modified.num_bearer_context; i++) {
     rc = gtpv2c_bearer_context_to_be_modified_within_modify_bearer_request_ie_set (&(ulp_req.hMsg), & req_p->bearer_contexts_to_be_modified.bearer_contexts[i]);
     DevAssert (NW_OK == rc);
   }
 
-
+  for (int i=0; i < req_p->bearer_contexts_to_be_removed.num_bearer_context; i++) {
+    rc = gtpv2c_bearer_context_to_be_removed_within_modify_bearer_request_ie_set (&(ulp_req.hMsg), & req_p->bearer_contexts_to_be_removed.bearer_contexts[i]);
+    DevAssert (NW_OK == rc);
+  }
 
   MSC_LOG_TX_MESSAGE (MSC_S11_MME, MSC_SGW, NULL, 0, "0 MODIFY_BEARER_REQUEST local S11 teid " TEID_FMT " num bearers ctx %u",
     req_p->local_teid, req_p->bearer_contexts_to_be_modified.num_bearer_context);
 
   rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
-   DevAssert (NW_OK == rc);
-   return RETURNok;
-
+  DevAssert (NW_OK == rc);
+  return RETURNok;
 }
 
 //------------------------------------------------------------------------------
@@ -285,6 +362,18 @@ s11_mme_handle_modify_bearer_response (
   resp_p = &message_p->ittiMsg.s11_modify_bearer_response;
 
   resp_p->teid = nwGtpv2cMsgGetTeid(pUlpApi->hMsg);
+  resp_p->internal_flags = pUlpApi->u_api_info.triggeredRspIndInfo.trx_flags;
+  resp_p->peer_ip.s_addr = pUlpApi->u_api_info.triggeredRspIndInfo.peerIp.s_addr;
+
+//  if(resp_p->internal_flags & INTERNAL_FLAG_TRIGGERED_REJECT){
+//	  /** Set the transaction for the triggered acknowledgment. */
+//	  resp_p->trxn = (void *)pUlpApi->u_api_info.rspFailureInfo.hUlpTrxn;
+//	  /** Set the cause. */
+//	  resp_p->cause.cause_value = SYSTEM_FAILURE; /**< Would mean that this message either did not come at all or could not be dealt with properly. */
+//	  rc = nwGtpv2cMsgDelete (*stack_p, (pUlpApi->hMsg));
+//	  DevAssert (NW_OK == rc);
+//	  return itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
+//  }
 
   /*
    * Create a new message parser
@@ -312,7 +401,13 @@ s11_mme_handle_modify_bearer_response (
       gtpv2c_bearer_context_modified_ie_get, &resp_p->bearer_contexts_modified);
   DevAssert (NW_OK == rc);
 
-  // todo: BC's marked for removal
+  /*
+   * Bearer Contexts Marked For Removal IE.
+   * todo: we only process everything we marked locally. Currently disregardign this element
+   */
+  rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_BEARER_CONTEXT, NW_GTPV2C_IE_INSTANCE_ONE, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
+      gtpv2c_bearer_context_marked_for_removal_ie_get, &resp_p->bearer_contexts_marked_for_removal);
+
   /*
    * Run the parser
    */
@@ -339,6 +434,186 @@ s11_mme_handle_modify_bearer_response (
   rc = nwGtpv2cMsgDelete (*stack_p, (pUlpApi->hMsg));
   DevAssert (NW_OK == rc);
   return itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
+}
+
+//------------------------------------------------------------------------------
+int
+s11_mme_delete_bearer_command(
+  nw_gtpv2c_stack_handle_t * stack_p,
+  itti_s11_delete_bearer_command_t * cmd_p)
+{
+  nw_gtpv2c_ulp_api_t                       ulp_req;
+  nw_rc_t                                   rc;
+
+  DevAssert (stack_p );
+  DevAssert (cmd_p );
+  memset (&ulp_req, 0, sizeof (nw_gtpv2c_ulp_api_t));
+  ulp_req.apiType = NW_GTPV2C_ULP_API_INITIAL_REQ;
+  ulp_req.apiType |= NW_GTPV2C_ULP_API_FLAG_IS_COMMAND_MESSAGE;
+
+  /*
+   * Prepare a new Delete Session Request msg
+   */
+  rc = nwGtpv2cMsgNew (*stack_p, true, NW_GTP_DELETE_BEARER_CMD, cmd_p->teid, 0, &(ulp_req.hMsg));
+  ulp_req.u_api_info.initialReqInfo.peerIp = cmd_p->peer_ip;
+  ulp_req.u_api_info.initialReqInfo.teidLocal = cmd_p->local_teid;
+
+  hashtable_rc_t hash_rc = hashtable_ts_get(s11_mme_teid_2_gtv2c_teid_handle,
+      (hash_key_t) ulp_req.u_api_info.initialReqInfo.teidLocal,
+      (void **)(uintptr_t)&ulp_req.u_api_info.initialReqInfo.hTunnel);
+
+  if (HASH_TABLE_OK != hash_rc) {
+    OAILOG_WARNING (LOG_S11, "Could not get GTPv2-C hTunnel for local teid %X\n", ulp_req.u_api_info.initialReqInfo.teidLocal);
+    return RETURNerror;
+  }
+  /*
+   * Add bearer contexts to be removed.
+   */
+  for (int num_ebi=0; num_ebi < cmd_p->ebi_list.num_ebi; num_ebi++) {
+    rc = gtpv2c_bearer_context_ebi_only_ie_set (&(ulp_req.hMsg), cmd_p->ebi_list.ebis[num_ebi]);
+    DevAssert (NW_OK == rc);
+  }
+
+  rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
+  DevAssert (NW_OK == rc);
+  MSC_LOG_TX_MESSAGE (MSC_S11_MME, MSC_SGW, NULL, 0, "0 DELETE_BEARER_COMMAND local S11 teid " TEID_FMT " ", cmd_p->local_teid);
+
+  return RETURNok;
+}
+
+//------------------------------------------------------------------------------
+int
+s11_mme_bearer_resource_command(
+  nw_gtpv2c_stack_handle_t * stack_p,
+  itti_s11_bearer_resource_command_t * cmd_p)
+{
+  nw_gtpv2c_ulp_api_t                       ulp_req;
+  nw_rc_t                                   rc;
+
+  DevAssert (stack_p );
+  DevAssert (cmd_p );
+  memset (&ulp_req, 0, sizeof (nw_gtpv2c_ulp_api_t));
+  ulp_req.apiType = NW_GTPV2C_ULP_API_INITIAL_REQ;
+  ulp_req.apiType |= NW_GTPV2C_ULP_API_FLAG_IS_COMMAND_MESSAGE;
+
+  /*
+   * Prepare a new Delete Session Request msg
+   */
+  rc = nwGtpv2cMsgNew (*stack_p, true, NW_GTP_BEARER_RESOURCE_CMD, cmd_p->teid, 0, &(ulp_req.hMsg));
+  ulp_req.u_api_info.initialReqInfo.peerIp = cmd_p->peer_ip;
+  ulp_req.u_api_info.initialReqInfo.teidLocal = cmd_p->local_teid;
+  ulp_req.u_api_info.initialReqInfo.internal_flags = cmd_p->pti;
+
+  hashtable_rc_t hash_rc = hashtable_ts_get(s11_mme_teid_2_gtv2c_teid_handle,
+      (hash_key_t) ulp_req.u_api_info.initialReqInfo.teidLocal,
+      (void **)(uintptr_t)&ulp_req.u_api_info.initialReqInfo.hTunnel);
+
+  if (HASH_TABLE_OK != hash_rc) {
+    OAILOG_WARNING (LOG_S11, "Could not get GTPv2-C hTunnel for local teid %X\n", ulp_req.u_api_info.initialReqInfo.teidLocal);
+    return RETURNerror;
+  }
+
+  /** Set the linked ebi and the ebi to be modified. */
+  gtpv2c_ebi_ie_set(&(ulp_req.hMsg), cmd_p->linked_ebi, NW_GTPV2C_IE_INSTANCE_ZERO);
+  gtpv2c_pti_ie_set(&(ulp_req.hMsg), cmd_p->pti, NW_GTPV2C_IE_INSTANCE_ZERO);
+  gtpv2c_ebi_ie_set(&(ulp_req.hMsg), cmd_p->ebi, NW_GTPV2C_IE_INSTANCE_ONE);
+  /*
+   * Set the TAD.
+   */
+  gtpv2c_tad_ie_set(&(ulp_req.hMsg), (traffic_flow_aggregate_description_t*)&cmd_p->tad);
+
+  /*
+   * Check if a Flow QoS exists, if so add it.
+   */
+  if(cmd_p->flow_qos.qci){
+    rc = gtpv2c_flow_qos_ie_set(&(ulp_req.hMsg), &cmd_p->flow_qos);
+  }
+
+  rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
+  DevAssert (NW_OK == rc);
+  MSC_LOG_TX_MESSAGE (MSC_S11_MME, MSC_SGW, NULL, 0, "0 DELETE_BEARER_COMMAND local S11 teid " TEID_FMT " ", cmd_p->local_teid);
+  return RETURNok;
+}
+
+//------------------------------------------------------------------------------
+int
+s11_mme_handle_bearer_resource_failure_indication (
+  nw_gtpv2c_stack_handle_t * stack_p,
+  nw_gtpv2c_ulp_api_t * pUlpApi)
+{
+  nw_rc_t                                   rc = NW_OK;
+  uint8_t                                 offendingIeType,
+                                          offendingIeInstance;
+  uint16_t                                offendingIeLength;
+  itti_s11_bearer_resource_failure_indication_t *ind_p;
+  MessageDef                                  *message_p;
+  nw_gtpv2c_msg_parser_t                      *pMsgParser;
+
+  DevAssert (stack_p );
+  message_p = itti_alloc_new_message (TASK_S11, S11_BEARER_RESOURCE_FAILURE_INDICATION);
+  ind_p = &message_p->ittiMsg.s11_bearer_resource_failure_indication;
+
+  ind_p->teid = nwGtpv2cMsgGetTeid(pUlpApi->hMsg);
+
+  /*
+   * Create a new message parser
+   */
+  rc = nwGtpv2cMsgParserNew (*stack_p, NW_GTP_BEARER_RESOURCE_FAILURE_IND, s11_ie_indication_generic, NULL, &pMsgParser);
+  DevAssert (NW_OK == rc);
+
+  /*
+   * Cause IE
+   */
+  rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_CAUSE, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_MANDATORY, gtpv2c_cause_ie_get,
+      &ind_p->cause);
+  DevAssert (NW_OK == rc);
+
+  /*
+   * Failed Bearer Contexts Created IE
+   */
+  rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_EBI, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_MANDATORY,
+      gtpv2c_ebi_ie_get, &ind_p->linked_ebi);
+  DevAssert (NW_OK == rc);
+
+  /** Add the PTI to inform to UEs. */
+  rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_BEARER_CONTEXT, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL, gtpv2c_pti_ie_get,
+      &ind_p->pti);
+  DevAssert (NW_OK == rc);
+
+  /*
+   * Recovery IE
+   */
+  /*rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_RECOVERY, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_OPTIONAL, s11_fteid_ie_get,
+      &resp_p->recovery);
+  DevAssert (NW_OK == rc);*/
+
+  /*
+   * Run the parser
+   */
+  rc = nwGtpv2cMsgParserRun (pMsgParser, (pUlpApi->hMsg), &offendingIeType, &offendingIeInstance, &offendingIeLength);
+
+  if (rc != NW_OK) {
+    MSC_LOG_RX_DISCARDED_MESSAGE (MSC_S11_MME, MSC_SGW, NULL, 0, "0 BEARER_RESOURCE_FAILURE_INDICATION local S11 teid " TEID_FMT " ", ind_p->teid);
+    /*
+     * TODO: handle this case
+     */
+    itti_free (ITTI_MSG_ORIGIN_ID (message_p), message_p);
+    message_p = NULL;
+    rc = nwGtpv2cMsgParserDelete (*stack_p, pMsgParser);
+    DevAssert (NW_OK == rc);
+    rc = nwGtpv2cMsgDelete (*stack_p, (pUlpApi->hMsg));
+    DevAssert (NW_OK == rc);
+    return RETURNerror;
+  }
+
+  MSC_LOG_RX_MESSAGE (MSC_S11_MME, MSC_SGW, NULL, 0, "0 BEARER_RESOURCE_FAILURE_INDICATION local S11 teid " TEID_FMT " cause %u",
+      ind_p->teid, ind_p->cause);
+
+  rc = nwGtpv2cMsgParserDelete (*stack_p, pMsgParser);
+  DevAssert (NW_OK == rc);
+  rc = nwGtpv2cMsgDelete (*stack_p, (pUlpApi->hMsg));
+  DevAssert (NW_OK == rc);
+  return itti_send_msg_to_task (TASK_NAS_ESM, INSTANCE_DEFAULT, message_p);
 }
 
 //------------------------------------------------------------------------------
@@ -459,6 +734,8 @@ s11_mme_create_bearer_response (
   // TODO relay cause
   cause = response_p->cause;
   gtpv2c_cause_ie_set (&(ulp_req.hMsg), &cause);
+  if(cause.cause_value == TEMP_REJECT_HO_IN_PROGRESS)
+	  ulp_req.u_api_info.triggeredRspInfo.remove_trx = true; /**< Using boolean, such that not to add any dependencies in NwGtpv2c.h etc.. */
 
   for (int i=0; i < response_p->bearer_contexts.num_bearer_context; i++) {
     rc = gtpv2c_bearer_context_within_create_bearer_response_ie_set (&(ulp_req.hMsg), & response_p->bearer_contexts.bearer_contexts[i]);
@@ -592,6 +869,8 @@ s11_mme_update_bearer_response (
   // TODO relay cause
   cause = response_p->cause;
   gtpv2c_cause_ie_set (&(ulp_req.hMsg), &cause);
+  if(cause.cause_value == TEMP_REJECT_HO_IN_PROGRESS)
+  	  ulp_req.u_api_info.triggeredRspInfo.remove_trx = true; /**< Using boolean, such that not to add any dependencies in NwGtpv2c.h etc.. */
 
   for (int i=0; i < response_p->bearer_contexts.num_bearer_context; i++) {
     rc = gtpv2c_bearer_context_within_update_bearer_response_ie_set(&(ulp_req.hMsg), & response_p->bearer_contexts.bearer_contexts[i]);
@@ -730,9 +1009,11 @@ s11_mme_delete_bearer_response (
   // TODO relay cause
   cause = response_p->cause;
   gtpv2c_cause_ie_set (&(ulp_req.hMsg), &cause);
+  if(cause.cause_value == TEMP_REJECT_HO_IN_PROGRESS)
+  	  ulp_req.u_api_info.triggeredRspInfo.remove_trx = true; /**< Using boolean, such that not to add any dependencies in NwGtpv2c.h etc.. */
 
   if(response_p->linked_eps_bearer_id)
-    gtpv2c_ebi_ie_set (&(ulp_req.hMsg), (unsigned)response_p->linked_eps_bearer_id);
+    gtpv2c_ebi_ie_set (&(ulp_req.hMsg), (unsigned)response_p->linked_eps_bearer_id, NW_GTPV2C_IE_INSTANCE_ZERO);
 
   for (int i=0; i < response_p->bearer_contexts.num_bearer_context; i++) {
     rc = gtpv2c_bearer_context_within_delete_bearer_response_ie_set (&(ulp_req.hMsg), &response_p->bearer_contexts.bearer_contexts[i]);
@@ -767,6 +1048,10 @@ s11_mme_handle_downlink_data_notification(
   notif_p->trxn = (void *)pUlpApi->u_api_info.initialReqIndInfo.hTrxn;
 
   MSC_LOG_RX_MESSAGE (MSC_S10_MME, MSC_SGW, NULL, 0, "DOWNLINK DATA NOTIFICATION to local S10 teid " TEID_FMT , notif_p->teid);
+  /** Message will not be removed as part of the transaction. */
+  rc = nwGtpv2cMsgDelete (*stack_p, (pUlpApi->hMsg));
+  DevAssert (NW_OK == rc);
+
   return itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
 }
 

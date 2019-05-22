@@ -81,6 +81,7 @@ extern                                  "C" {
       gpGtpv2cMsgPool = gpGtpv2cMsgPool->next;
     } else {
       NW_GTPV2C_MALLOC (pStack, sizeof (nw_gtpv2c_msg_t), pMsg, nw_gtpv2c_msg_t *);
+      OAILOG_DEBUG (LOG_GTPV2C, "ALLOCATED NEW MESSAGE %p!\n", pMsg);
     }
 
     if (pMsg) {
@@ -150,6 +151,9 @@ extern                                  "C" {
     OAILOG_DEBUG (LOG_GTPV2C, "Purging message %" PRIxPTR "!\n", hMsg);
     ((nw_gtpv2c_msg_t *) hMsg)->next = gpGtpv2cMsgPool;
     gpGtpv2cMsgPool = (nw_gtpv2c_msg_t *) hMsg;
+    OAILOG_DEBUG (LOG_GTPV2C, "Message pool %" PRIxPTR "! Next element %" PRIxPTR "! \n",
+    		gpGtpv2cMsgPool, gpGtpv2cMsgPool->next);
+
     return NW_OK;
   }
 

@@ -20,19 +20,19 @@
  */
 
 /*****************************************************************************
-  Source      nas_proc.c
+  Source      nas_emm_proc.c
 
   Version     0.1
 
   Date        2012/09/20
 
-  Product     NAS stack
+  Product     NAS EMM stack
 
-  Subsystem   NAS main process
+  Subsystem   NAS EMM main process
 
-  Author      Frederic Maurel, Lionel GAUTHIER
+  Author      Frederic Maurel, Lionel GAUTHIER, Dincer Beken
 
-  Description NAS procedure call manager
+  Description NAS EMM procedure call manager
 
 *****************************************************************************/
 #include <stdbool.h>
@@ -40,16 +40,14 @@
 #include <pthread.h>
 
 #include "bstrlib.h"
+#include "emm_main.h"
+#include "emm_sap.h"
+#include "nas_emm_proc.h"
 
 #include "log.h"
 #include "msc.h"
 #include "assertions.h"
 #include "conversions.h"
-#include "nas_proc.h"
-#include "emm_main.h"
-#include "emm_sap.h"
-#include "esm_main.h"
-#include "esm_sap.h"
 #include "msc.h"
 #include "s6a_defs.h"
 #include "dynamic_memory_check.h"
@@ -69,68 +67,6 @@ static nas_cause_t s6a_error_2_nas_cause (uint32_t s6a_error,int experimental);
 /****************************************************************************/
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
 /****************************************************************************/
-
-/****************************************************************************
- **                                                                        **
- ** Name:    nas_proc_initialize()                                     **
- **                                                                        **
- ** Description:                                                           **
- **                                                                        **
- ** Inputs:  None                                                      **
- **      Others:    None                                       **
- **                                                                        **
- ** Outputs:     None                                                      **
- **      Return:    None                                       **
- **      Others:    None                                       **
- **                                                                        **
- ***************************************************************************/
-void
-nas_proc_initialize (
-  mme_config_t * mme_config_p)
-{
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
-  /*
-   * Initialize the EMM procedure manager
-   */
-  emm_main_initialize (mme_config_p);
-  /*
-   * Initialize the ESM procedure manager
-   */
-  esm_main_initialize ();
-  OAILOG_FUNC_OUT (LOG_NAS_EMM);
-}
-
-
-/****************************************************************************
- **                                                                        **
- ** Name:    nas_proc_cleanup()                                        **
- **                                                                        **
- ** Description: Performs clean up procedure before the system is shutdown **
- **                                                                        **
- ** Inputs:  None                                                      **
- **          Others:    None                                       **
- **                                                                        **
- ** Outputs:     None                                                      **
- **          Return:    None                                       **
- **          Others:    None                                       **
- **                                                                        **
- ***************************************************************************/
-void
-nas_proc_cleanup (
-  void)
-{
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
-  /*
-   * Perform the EPS Mobility Manager's clean up procedure
-   */
-  emm_main_cleanup ();
-  /*
-   * Perform the EPS Session Manager's clean up procedure
-   */
-  esm_main_cleanup ();
-  OAILOG_FUNC_OUT (LOG_NAS_EMM);
-}
-
 /*
    --------------------------------------------------------------------------
             NAS procedures triggered by the user
@@ -174,7 +110,7 @@ nas_proc_establish_ind (
     /*
      * Notify the EMM procedure call manager that NAS signaling
      * connection establishment indication message has been received
-     * from the Access-Stratum sublayer
+     * from the Access-Stratum sublayer.
      */
     emm_sap.primitive = EMMAS_ESTABLISH_REQ;
     emm_sap.u.emm_as.u.establish.ue_id              = ue_id;
@@ -467,159 +403,6 @@ nas_proc_deregister_ue (
 }
 
 //------------------------------------------------------------------------------
-int
-nas_proc_pdn_config_res (
-  emm_cn_pdn_config_res_t * emm_cn_pdn_config_res)
-{
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
-  int                                     rc = RETURNerror;
-  emm_sap_t                               emm_sap = {0};
-  emm_data_context_t                     *emm_context = NULL;
-
-  emm_sap.primitive = EMMCN_PDN_CONFIG_RES;
-  emm_sap.u.emm_cn.u.emm_cn_pdn_config_res = emm_cn_pdn_config_res;
-  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMCN_PDN_CONFIG_RES ue_id " MME_UE_S1AP_ID_FMT " ", emm_cn_pdn_config_res->ue_id);
-  rc = emm_sap_send (&emm_sap);
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
-}
-
-//------------------------------------------------------------------------------
-int
-nas_proc_pdn_config_fail (
-  emm_cn_pdn_config_fail_t * emm_cn_pdn_config_fail)
-{
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
-  int                                     rc = RETURNerror;
-  emm_sap_t                               emm_sap = {0};
-
-  emm_sap.primitive = EMMCN_PDN_CONFIG_FAIL;
-  emm_sap.u.emm_cn.u.emm_cn_pdn_config_fail = emm_cn_pdn_config_fail;
-  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMCN_PDN_CONFIG_FAIL ue_id " MME_UE_S1AP_ID_FMT " ", emm_cn_pdn_config_fail->ue_id);
-  rc = emm_sap_send (&emm_sap);
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
-}
-
-//------------------------------------------------------------------------------
-int
-nas_proc_pdn_connectivity_res (
-  emm_cn_pdn_res_t * emm_cn_pdn_res)
-{
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
-  int                                     rc = RETURNerror;
-  emm_sap_t                               emm_sap = {0};
-
-  emm_sap.primitive = EMMCN_PDN_CONNECTIVITY_RES;
-  emm_sap.u.emm_cn.u.emm_cn_pdn_res = emm_cn_pdn_res;
-  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMCN_PDN_CONNECTIVITY_RES ue_id " MME_UE_S1AP_ID_FMT " ", emm_cn_pdn_res->ue_id);
-  rc = emm_sap_send (&emm_sap);
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
-}
-
-//------------------------------------------------------------------------------
-int
-nas_proc_pdn_connectivity_fail (
-  emm_cn_pdn_fail_t * emm_cn_pdn_fail)
-{
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
-  int                                     rc = RETURNerror;
-  emm_sap_t                               emm_sap = {0};
-
-  emm_sap.primitive = EMMCN_PDN_CONNECTIVITY_FAIL;
-  emm_sap.u.emm_cn.u.emm_cn_pdn_fail = emm_cn_pdn_fail;
-  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMCN_PDN_CONNECTIVITY_FAIL ue_id " MME_UE_S1AP_ID_FMT " ", emm_cn_pdn_fail->ue_id);
-  rc = emm_sap_send (&emm_sap);
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
-}
-
-//------------------------------------------------------------------------------
-int
-nas_proc_pdn_disconnect_res (
-  emm_cn_pdn_disconnect_res_t * emm_cn_pdn_disc_res)
-{
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
-  int                                     rc = RETURNerror;
-  emm_sap_t                               emm_sap = {0};
-
-  emm_sap.primitive = EMMCN_PDN_DISCONNECT_RES;
-  emm_sap.u.emm_cn.u.emm_cn_pdn_disconnect_res = emm_cn_pdn_disc_res;
-  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMCN_PDN_DISCONNECT_RES ue_id " MME_UE_S1AP_ID_FMT " ", emm_cn_pdn_disc_res->ue_id);
-  rc = emm_sap_send (&emm_sap);
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
-}
-
-//------------------------------------------------------------------------------
-int nas_proc_activate_dedicated_bearer(emm_cn_activate_dedicated_bearer_req_t * emm_cn_activate)
-{
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
-  int                                     rc = RETURNerror;
-  emm_sap_t                               emm_sap = {0};
-  emm_sap.primitive = _EMMCN_ACTIVATE_DEDICATED_BEARER_REQ;
-  emm_sap.u.emm_cn.u.emm_cn_activate_dedicated_bearer_req = emm_cn_activate;
-  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMM_CN_ACTIVATE_DEDICATED_BEARER_REQ " MME_UE_S1AP_ID_FMT " ", emm_cn_activate->ue_id);
-  rc = emm_sap_send (&emm_sap);
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
-}
-
-//------------------------------------------------------------------------------
-int nas_proc_modify_eps_bearer_ctx(emm_cn_modify_eps_bearer_ctx_req_t * emm_cn_modify_eps_bearer_ctx)
-{
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
-  int                                     rc = RETURNerror;
-  emm_sap_t                               emm_sap = {0};
-  emm_sap.primitive = _EMMCN_MODIFY_EPS_BEARER_CTX_REQ;
-  emm_sap.u.emm_cn.u.emm_cn_modify_eps_bearer_ctx_req = emm_cn_modify_eps_bearer_ctx;
-  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMM_CN_MODIFY_EPS_BEARER_CTX_REQ " MME_UE_S1AP_ID_FMT " ", emm_cn_modify->ue_id);
-  rc = emm_sap_send (&emm_sap);
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
-}
-
-//------------------------------------------------------------------------------
-int nas_proc_deactivate_dedicated_bearer(emm_cn_deactivate_dedicated_bearer_req_t * emm_cn_deactivate)
-{
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
-  int                                     rc = RETURNerror;
-  emm_sap_t                               emm_sap = {0};
-  emm_sap.primitive = _EMMCN_DEACTIVATE_DEDICATED_BEARER_REQ;
-  emm_sap.u.emm_cn.u.emm_cn_deactivate_dedicated_bearer_req = emm_cn_deactivate;
-  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMM_CN_DEACTIVATE_DEDICATED_BEARER_REQ " MME_UE_S1AP_ID_FMT " ", emm_cn_deactivate->ue_id);
-  rc = emm_sap_send (&emm_sap);
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
-}
-
-//------------------------------------------------------------------------------
-int nas_proc_establish_bearer_update(emm_cn_update_esm_bearer_ctxs_req_t * emm_cn_update_esm_bearer_ctxs)
-{
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
-  int                                     rc = RETURNerror;
-  emm_sap_t                               emm_sap = {0};
-  emm_sap.primitive = _EMMCN_UPDATE_ESM_BEARERS_REQ;
-  emm_sap.u.emm_cn.u.emm_cn_update_esm_bearer_ctxs_req = emm_cn_update_esm_bearer_ctxs;
-  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMM_CN_UPDATE_ESM_BEARER_CTXS_REQ" MME_UE_S1AP_ID_FMT " ", emm_cn_update_esm_bearer_ctxs->ue_id);
-  rc = emm_sap_send (&emm_sap);
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
-}
-
-//------------------------------------------------------------------------------
-int nas_proc_e_rab_failure(mme_ue_s1ap_id_t ue_id, ebi_t ebi, bool modify, bool remove)
-{
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
-  int                                     rc = RETURNerror;
-  emm_sap_t                               emm_sap = {0};
-  emm_sap.u.emm_as.u.erab_setup_rej.ue_id = ue_id;
-  emm_sap.u.emm_as.u.erab_setup_rej.ebi   = ebi;
-  if(!modify){
-    emm_sap.primitive = _EMMAS_ERAB_SETUP_REJ;
-    MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMM_AS_ERAB_SETUP_REJ " MME_UE_S1AP_ID_FMT " ", ue_id);
-  }else{
-    emm_sap.primitive = _EMMAS_ERAB_MODIFY_REJ;
-    emm_sap.u.emm_as.u.erab_modify_rej.remove_bearer = remove; /**< Union stuff. */
-    MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMM_AS_ERAB_MODIFY_REJ " MME_UE_S1AP_ID_FMT " ", ue_id);
-  }
-  rc = emm_sap_send (&emm_sap);
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
-}
-
-//------------------------------------------------------------------------------
 int nas_proc_signalling_connection_rel_ind (mme_ue_s1ap_id_t ue_id)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
@@ -637,7 +420,8 @@ int
 nas_proc_implicit_detach_ue_ind (
   mme_ue_s1ap_id_t ue_id,
   uint8_t emm_cause,
-  uint8_t detach_type)
+  uint8_t detach_type,
+  bool    clr)
 {
   int                                     rc = RETURNerror;
   emm_sap_t                               emm_sap = {0};
@@ -647,6 +431,7 @@ nas_proc_implicit_detach_ue_ind (
   emm_sap.u.emm_cn.u.emm_cn_implicit_detach.ue_id = ue_id;
   emm_sap.u.emm_cn.u.emm_cn_implicit_detach.emm_cause = emm_cause;
   emm_sap.u.emm_cn.u.emm_cn_implicit_detach.detach_type = detach_type;
+  emm_sap.u.emm_cn.u.emm_cn_implicit_detach.clr = clr;
   MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMCN_IMPLICIT_DETACH_UE " MME_UE_S1AP_ID_FMT " ", ue_id);
   rc = emm_sap_send (&emm_sap);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);

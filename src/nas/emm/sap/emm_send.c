@@ -38,6 +38,7 @@
         Access Stratum sublayer.
 
 *****************************************************************************/
+
 #include <pthread.h>
 #include <inttypes.h>
 #include <stdint.h>
@@ -50,19 +51,19 @@
 
 #include "log.h"
 #include "assertions.h"
-#include "commonDef.h"
+#include "common_defs.h"
 #include "common_types.h"
 #include "common_defs.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"
 #include "3gpp_29.274.h"
 #include "3gpp_24.301.h"
-#include "emm_msgDef.h"
-#include "emm_proc.h"
 #include "mme_config.h"
-#include "emm_send.h"
-#include "emm_data.h"
 #include "mme_app_ue_context.h"
+#include "emm_send.h"
+#include "emm_msgDef.h"
+#include "emm_data.h"
+#include "emm_proc.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -552,7 +553,7 @@ emm_send_attach_reject (
   if (msg->nas_msg) {
     size += ESM_MESSAGE_CONTAINER_MINIMUM_LENGTH + blength(msg->nas_msg) + 1; // Adding 1 byte since ESM Container is optional IE in Attach Reject
     emm_msg->presencemask |= ATTACH_REJECT_ESM_MESSAGE_CONTAINER_PRESENT;
-    emm_msg->esmmessagecontainer = msg->nas_msg;
+    emm_msg->esmmessagecontainer = bstrcpy(msg->nas_msg);
   }
 
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, size);
@@ -656,7 +657,7 @@ emm_send_tracking_area_update_accept (
   if (msg->eps_bearer_context_status) {
     size += EPS_BEARER_CONTEXT_STATUS_MAXIMUM_LENGTH;
     emm_msg->presencemask |= TRACKING_AREA_UPDATE_ACCEPT_EPS_BEARER_CONTEXT_STATUS_PRESENT;
-    emm_msg->epsbearercontextstatus = *(msg->eps_bearer_context_status);
+    emm_msg->epsbearercontextstatus = msg->eps_bearer_context_status;
     OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - size += " "EPS_BEARER_CONTEXT_STATUS_MAXIMUM_LENGTH(%d)  (%d)\n", EPS_BEARER_CONTEXT_STATUS_MAXIMUM_LENGTH, size);
   }
   /* Useless actually, Optional - Location Area Identification

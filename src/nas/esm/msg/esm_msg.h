@@ -39,35 +39,34 @@ Description Defines EPS Session Management messages and functions used
 #ifndef __ESM_MSG_H__
 #define __ESM_MSG_H__
 
+#include "ActivateDedicatedEpsBearerContextAccept.h"
+#include "ActivateDedicatedEpsBearerContextReject.h"
+#include "ActivateDedicatedEpsBearerContextRequest.h"
+#include "ActivateDefaultEpsBearerContextAccept.h"
+#include "ActivateDefaultEpsBearerContextReject.h"
+#include "ActivateDefaultEpsBearerContextRequest.h"
+#include "BearerResourceAllocationReject.h"
+#include "BearerResourceAllocationRequest.h"
+#include "BearerResourceModificationReject.h"
+#include "BearerResourceModificationRequest.h"
+#include "DeactivateEpsBearerContextAccept.h"
+#include "DeactivateEpsBearerContextRequest.h"
 #include "esm_msgDef.h"
-
+#include "EsmInformationRequest.h"
+#include "EsmInformationResponse.h"
+#include "EsmStatus.h"
+#include "ModifyEpsBearerContextAccept.h"
+#include "ModifyEpsBearerContextReject.h"
+#include "ModifyEpsBearerContextRequest.h"
+#include "PdnConnectivityReject.h"
+#include "PdnConnectivityRequest.h"
+#include "PdnDisconnectReject.h"
+#include "PdnDisconnectRequest.h"
 #include "EsmInformationTransferFlag.h"
 #include "NasRequestType.h"
 #include "PdnType.h"
 #include "TrafficFlowAggregateDescription.h"
 
-#include "ActivateDedicatedEpsBearerContextRequest.h"
-#include "ActivateDedicatedEpsBearerContextAccept.h"
-#include "ActivateDedicatedEpsBearerContextReject.h"
-#include "ActivateDefaultEpsBearerContextRequest.h"
-#include "ActivateDefaultEpsBearerContextAccept.h"
-#include "ActivateDefaultEpsBearerContextReject.h"
-#include "ModifyEpsBearerContextRequest.h"
-#include "ModifyEpsBearerContextAccept.h"
-#include "ModifyEpsBearerContextReject.h"
-#include "DeactivateEpsBearerContextRequest.h"
-#include "DeactivateEpsBearerContextAccept.h"
-#include "PdnDisconnectRequest.h"
-#include "PdnDisconnectReject.h"
-#include "PdnConnectivityRequest.h"
-#include "PdnConnectivityReject.h"
-#include "BearerResourceAllocationRequest.h"
-#include "BearerResourceAllocationReject.h"
-#include "BearerResourceModificationRequest.h"
-#include "BearerResourceModificationReject.h"
-#include "EsmInformationRequest.h"
-#include "EsmInformationResponse.h"
-#include "EsmStatus.h"
 
 
 /****************************************************************************/
@@ -121,5 +120,7 @@ int esm_msg_decode_header (esm_msg_header_t * header, const uint8_t * buffer, ui
 int esm_msg_decode(ESM_msg *msg, uint8_t *buffer, uint32_t len);
 
 int esm_msg_encode(ESM_msg *msg, uint8_t *buffer, uint32_t len);
+
+void esm_msg_free ( ESM_msg * msg);
 
 #endif /* __ESM_MSG_H__ */

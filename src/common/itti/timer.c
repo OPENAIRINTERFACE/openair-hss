@@ -128,7 +128,7 @@ int
 timer_setup (
   uint32_t interval_sec,
   uint32_t interval_us,
-  task_id_t task_id,
+  task_id_t     task_id,
   int32_t instance,
   timer_type_t type,
   void *timer_arg,
@@ -232,7 +232,7 @@ int timer_remove (long timer_id, void ** arg)
   if (timer_p == NULL) {
     pthread_mutex_unlock (&timer_desc.timer_list_mutex);
     if (arg) *arg = NULL;
-    OAILOG_ERROR (LOG_ITTI, "Didn't find timer 0x%lx in list\n", timer_id);
+    OAILOG_WARNING (LOG_ITTI, "Didn't find timer 0x%lx in list\n", timer_id);
     return -1;
   }
 

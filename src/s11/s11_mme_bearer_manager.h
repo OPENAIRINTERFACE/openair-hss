@@ -39,6 +39,18 @@ int s11_mme_handle_release_access_bearer_response (nw_gtpv2c_stack_handle_t * st
 /* @brief Handle a Modify Bearer Response received from S-GW. */
 int s11_mme_handle_modify_bearer_response (nw_gtpv2c_stack_handle_t * stack_p, nw_gtpv2c_ulp_api_t * pUlpApi);
 
+/* @brief Create a new Delete Bearer Command and send it to provided S-GW. */
+int s11_mme_delete_bearer_command(nw_gtpv2c_stack_handle_t * stack_p, itti_s11_delete_bearer_command_t * cmd_p);
+
+/* @brief Handle a Delete Bearer Failure Indication received from S-GW. */
+int s11_mme_handle_delete_bearer_failure_indication ( nw_gtpv2c_stack_handle_t * stack_p, nw_gtpv2c_ulp_api_t * pUlpApi);
+
+/* @brief Create a new Bearer Resource Command and send it to provided S-GW. */
+int s11_mme_bearer_resource_command(nw_gtpv2c_stack_handle_t * stack_p, itti_s11_bearer_resource_command_t * cmd_p);
+
+/* @brief Handle a Bearer Resource Failure Indication received from S-GW. */
+int s11_mme_handle_bearer_resource_failure_indication ( nw_gtpv2c_stack_handle_t * stack_p, nw_gtpv2c_ulp_api_t * pUlpApi);
+
 /* @brief Handle a Create Bearer Request received from S-GW. */
 int s11_mme_handle_create_bearer_request (nw_gtpv2c_stack_handle_t * stack_p, nw_gtpv2c_ulp_api_t * pUlpApi);
 

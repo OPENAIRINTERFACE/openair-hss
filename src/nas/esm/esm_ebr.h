@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -38,6 +38,8 @@ Description Defines functions used to handle state of EPS bearer contexts
 *****************************************************************************/
 #ifndef ESM_EBR_SEEN
 #define ESM_EBR_SEEN
+// todo: remove
+#include "mme_app_esm_procedures.h"
 
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/
@@ -60,22 +62,19 @@ Description Defines functions used to handle state of EPS bearer contexts
 
 const char * esm_ebr_state2string(esm_ebr_state esm_ebr_state);
 
-bool esm_ebr_is_reserved(ebi_t ebi);
+/*
+ * Bearer Context Procedures
+ */
+//-----------------------------------------------------------------------------
+nas_esm_proc_bearer_context_t *_esm_proc_create_bearer_context_procedure(mme_ue_s1ap_id_t ue_id, pti_t pti, ebi_t linked_ebi, pdn_cid_t pdn_cid, ebi_t ebi, teid_t s1u_sgw_teid,
+    int timeout_sec, int timeout_usec, esm_timeout_cb_t timeout_notif);
 
-void esm_ebr_initialize(void);
-int esm_ebr_assign(emm_data_context_t * emm_context, ebi_t ebi, pdn_context_t *pdn_context);
-int esm_ebr_release (emm_data_context_t * emm_context, bearer_context_t * bearer_context, pdn_context_t * pdn_context, bool ue_requested);
+//-----------------------------------------------------------------------------
+void _esm_proc_free_bearer_context_procedure(nas_esm_proc_bearer_context_t ** esm_proc_bearer_context);
 
-int esm_ebr_start_timer(emm_data_context_t * emm_context, ebi_t ebi, CLONE_REF const_bstring msg,
-                        long sec, nas_timer_callback_t cb);
-int esm_ebr_stop_timer(emm_data_context_t * emm_context, ebi_t ebi);
+//-----------------------------------------------------------------------------
+nas_esm_proc_bearer_context_t *_esm_proc_get_bearer_context_procedure(mme_ue_s1ap_id_t ue_id, pti_t pti, ebi_t ebi);
 
-ebi_t esm_ebr_get_pending_ebi(emm_data_context_t * emm_context, esm_ebr_state status);
+esm_ebr_state _esm_ebr_get_status(mme_ue_s1ap_id_t ue_id, ebi_t ebi);
 
-int esm_ebr_set_status(emm_data_context_t * emm_context, ebi_t ebi, esm_ebr_state status,
-                       bool ue_requested);
-esm_ebr_state esm_ebr_get_status(emm_data_context_t * emm_context, ebi_t ebi);
-
-//bool esm_ebr_is_not_in_use(emm_data_context_t * emm_context, ebi_t ebi);
-
-#endif /* ESM_EBR_SEEN*/
+#endif /* ESM_EBR_SEEN */

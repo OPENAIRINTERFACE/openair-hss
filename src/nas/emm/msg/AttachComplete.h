@@ -22,10 +22,9 @@
 
 #ifndef FILE_ATTACH_COMPLETE_SEEN
 #define FILE_ATTACH_COMPLETE_SEEN
-
-#include "SecurityHeaderType.h"
-#include "MessageType.h"
 #include "EsmMessageContainer.h"
+#include "MessageType.h"
+#include "SecurityHeaderType.h"
 #include "3gpp_23.003.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"

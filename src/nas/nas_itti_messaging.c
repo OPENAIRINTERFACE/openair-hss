@@ -47,13 +47,60 @@
 #include "common_defs.h"
 #include "secu_defs.h"
 #include "mme_app_ue_context.h"
-#include "esm_proc.h"
 #include "nas_itti_messaging.h"
-#include "nas_proc.h"
+
+#include "nas_emm_proc.h"
+#include "esm_proc.h"
 #include "mme_app_defs.h"
 
+//------------------------------------------------------------------------------
+int
+nas_itti_esm_data_ind(
+  const mme_ue_s1ap_id_t  ue_id,
+  bstring                 esm_msg_p,
+  imsi_t                 *imsi,
+  tai_t                  *visited_tai)
+{
+  MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_EMM, NAS_ESM_DATA_IND);
+  NAS_ESM_DATA_IND (message_p).ue_id   = ue_id;
+  NAS_ESM_DATA_IND (message_p).req     = esm_msg_p;
+  if(imsi)
+    memcpy(&NAS_ESM_DATA_IND (message_p).imsi, imsi, sizeof(imsi_t));
+  if(visited_tai)
+    memcpy(&NAS_ESM_DATA_IND (message_p).visited_tai, visited_tai, sizeof(tai_t));
 
-#define TASK_ORIGIN  TASK_NAS_MME
+  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_S1AP_MME, NULL, 0, "0 NAS_ESM_DATA_IND ue id " MME_UE_S1AP_ID_FMT " len %u", ue_id, blength(esm_msg_p));
+  // make a long way by MME_APP instead of S1AP to retrieve the sctp_association_id key.
+  return itti_send_msg_to_task (TASK_NAS_ESM, INSTANCE_DEFAULT, message_p);
+}
+
+//------------------------------------------------------------------------------
+int
+nas_itti_esm_detach_ind(
+  const mme_ue_s1ap_id_t  ue_id,
+  const bool clr)
+{
+  MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_EMM, NAS_ESM_DETACH_IND);
+  NAS_ESM_DETACH_IND (message_p).ue_id   = ue_id;
+  NAS_ESM_DETACH_IND (message_p).clr     = clr;
+
+  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_S1AP_MME, NULL, 0, "0 NAS_ESM_DETACH_IND ue id " MME_UE_S1AP_ID_FMT, ue_id);
+  // make a long way by MME_APP instead of S1AP to retrieve the sctp_association_id key.
+  return itti_send_msg_to_task (TASK_NAS_ESM, INSTANCE_DEFAULT, message_p);
+}
+
+//------------------------------------------------------------------------------
+int
+nas_itti_s11_retry_ind(
+  const mme_ue_s1ap_id_t  ue_id)
+{
+  MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_EMM, NAS_RETRY_BEARER_CTX_PROC_IND);
+  NAS_RETRY_BEARER_CTX_PROC_IND (message_p).ue_id   = ue_id;
+
+  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_S1AP_MME, NULL, 0, "0 NAS_RETRY_BEARER_CTX_PROC_IND ue id " MME_UE_S1AP_ID_FMT, ue_id);
+  // make a long way by MME_APP instead of S1AP to retrieve the sctp_association_id key.
+  return itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
+}
 
 //------------------------------------------------------------------------------
 int
@@ -63,7 +110,7 @@ nas_itti_dl_data_req (
   nas_error_code_t transaction_status
   )
 {
-  MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_MME, NAS_DOWNLINK_DATA_REQ);
+  MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_EMM, NAS_DOWNLINK_DATA_REQ);
   NAS_DOWNLINK_DATA_REQ (message_p).ue_id   = ue_id;
   NAS_DOWNLINK_DATA_REQ (message_p).nas_msg = nas_msg;
   nas_msg = NULL;
@@ -83,7 +130,7 @@ nas_itti_erab_setup_req (const mme_ue_s1ap_id_t ue_id,
     const bitrate_t        gbr_ul,
     bstring                nas_msg)
 {
-  MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_MME, NAS_ERAB_SETUP_REQ);
+  MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_ESM, NAS_ERAB_SETUP_REQ);
   NAS_ERAB_SETUP_REQ (message_p).ue_id   = ue_id;
   NAS_ERAB_SETUP_REQ (message_p).ebi     = ebi;
   NAS_ERAB_SETUP_REQ (message_p).mbr_dl  = mbr_dl;
@@ -107,7 +154,7 @@ nas_itti_erab_modify_req (const mme_ue_s1ap_id_t ue_id,
     const bitrate_t        gbr_ul,
     bstring                nas_msg)
 {
-  MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_MME, NAS_ERAB_MODIFY_REQ);
+  MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_ESM, NAS_ERAB_MODIFY_REQ);
   NAS_ERAB_MODIFY_REQ (message_p).ue_id   = ue_id;
   NAS_ERAB_MODIFY_REQ (message_p).ebi     = ebi;
   NAS_ERAB_MODIFY_REQ (message_p).mbr_dl  = mbr_dl;
@@ -127,7 +174,7 @@ nas_itti_erab_release_req (const mme_ue_s1ap_id_t ue_id,
     const ebi_t ebi,
     bstring                nas_msg)
 {
-  MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_MME, NAS_ERAB_RELEASE_REQ);
+  MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_ESM, NAS_ERAB_RELEASE_REQ);
   NAS_ERAB_RELEASE_REQ (message_p).ue_id   = ue_id;
   NAS_ERAB_RELEASE_REQ (message_p).ebi     = ebi;
   NAS_ERAB_RELEASE_REQ (message_p).nas_msg = nas_msg;
@@ -140,13 +187,15 @@ nas_itti_erab_release_req (const mme_ue_s1ap_id_t ue_id,
 //------------------------------------------------------------------------------
 void nas_itti_activate_eps_bearer_ctx_cnf(
     const mme_ue_s1ap_id_t ue_idP,
-    const ebi_t            ebi)
+    const ebi_t            ebi,
+    const teid_t           saegw_s1u_teid)
 {
   OAILOG_FUNC_IN(LOG_NAS);
-  MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_MME, MME_APP_ACTIVATE_EPS_BEARER_CTX_CNF);
-  MME_APP_ACTIVATE_EPS_BEARER_CTX_CNF (message_p).ue_id   = ue_idP;
-  MME_APP_ACTIVATE_EPS_BEARER_CTX_CNF (message_p).ebi     = ebi;
-  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_MMEAPP_MME, NULL, 0, "0 MME_APP_ACTIVATE_EPS_BEARER_CTX_CNF ue id " MME_UE_S1AP_ID_FMT, ue_idP);
+  MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_ESM, NAS_ACTIVATE_EPS_BEARER_CTX_CNF);
+  NAS_ACTIVATE_EPS_BEARER_CTX_CNF (message_p).ue_id   = ue_idP;
+  NAS_ACTIVATE_EPS_BEARER_CTX_CNF (message_p).ebi     = ebi;
+  NAS_ACTIVATE_EPS_BEARER_CTX_CNF (message_p).saegw_s1u_teid  = saegw_s1u_teid;
+  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_MMEAPP_MME, NULL, 0, "0 NAS_ACTIVATE_EPS_BEARER_CTX_CNF ue id " MME_UE_S1AP_ID_FMT, ue_idP);
   itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT(LOG_NAS);
 }
@@ -158,30 +207,30 @@ void nas_itti_activate_eps_bearer_ctx_rej(
     const esm_cause_t      esm_cause)
 {
   OAILOG_FUNC_IN(LOG_NAS);
-  MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_MME, MME_APP_ACTIVATE_EPS_BEARER_CTX_REJ);
-  MME_APP_ACTIVATE_EPS_BEARER_CTX_REJ (message_p).ue_id           = ue_idP;
-  MME_APP_ACTIVATE_EPS_BEARER_CTX_REJ (message_p).saegw_s1u_teid  = saegw_s1u_teid;
+  MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_ESM, NAS_ACTIVATE_EPS_BEARER_CTX_REJ);
+  NAS_ACTIVATE_EPS_BEARER_CTX_REJ (message_p).ue_id           = ue_idP;
+  NAS_ACTIVATE_EPS_BEARER_CTX_REJ (message_p).saegw_s1u_teid  = saegw_s1u_teid;
   switch(esm_cause){
   case ESM_CAUSE_SEMANTIC_ERROR_IN_THE_TFT_OPERATION:
-    MME_APP_ACTIVATE_EPS_BEARER_CTX_REJ (message_p).cause_value = SEMANTIC_ERROR_IN_TFT;
+    NAS_ACTIVATE_EPS_BEARER_CTX_REJ (message_p).cause_value = SEMANTIC_ERROR_IN_TFT;
     break;
   case ESM_CAUSE_SYNTACTICAL_ERROR_IN_THE_TFT_OPERATION:
-    MME_APP_ACTIVATE_EPS_BEARER_CTX_REJ (message_p).cause_value = SYNTACTIC_ERROR_IN_TFT;
+    NAS_ACTIVATE_EPS_BEARER_CTX_REJ (message_p).cause_value = SYNTACTIC_ERROR_IN_TFT;
     break;
   case ESM_CAUSE_SEMANTIC_ERRORS_IN_PACKET_FILTER:
-    MME_APP_ACTIVATE_EPS_BEARER_CTX_REJ (message_p).cause_value = SEMANTIC_ERRORS_IN_PF;
+    NAS_ACTIVATE_EPS_BEARER_CTX_REJ (message_p).cause_value = SEMANTIC_ERRORS_IN_PF;
     break;
   case ESM_CAUSE_SYNTACTICAL_ERROR_IN_PACKET_FILTER:
-    MME_APP_ACTIVATE_EPS_BEARER_CTX_REJ (message_p).cause_value = SYNTACTIC_ERRORS_IN_PF;
+    NAS_ACTIVATE_EPS_BEARER_CTX_REJ (message_p).cause_value = SYNTACTIC_ERRORS_IN_PF;
     break;
   case ESM_CAUSE_EPS_QOS_NOT_ACCEPTED:
-    MME_APP_ACTIVATE_EPS_BEARER_CTX_REJ (message_p).cause_value = MANDATORY_IE_INCORRECT;
+    NAS_ACTIVATE_EPS_BEARER_CTX_REJ (message_p).cause_value = MANDATORY_IE_INCORRECT;
     break;
   default:
-    MME_APP_ACTIVATE_EPS_BEARER_CTX_REJ (message_p).cause_value = REQUEST_REJECTED;
+    NAS_ACTIVATE_EPS_BEARER_CTX_REJ (message_p).cause_value = REQUEST_REJECTED;
     break;
   }
-  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_MMEAPP_MME, NULL, 0, "0 MME_APP_ACTIVATE_EPS_BEARER_CTX_REJ ue id " MME_UE_S1AP_ID_FMT, ue_idP);
+  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_MMEAPP_MME, NULL, 0, "0 NAS_ACTIVATE_EPS_BEARER_CTX_REJ ue id " MME_UE_S1AP_ID_FMT, ue_idP);
   itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT(LOG_NAS);
 }
@@ -192,10 +241,10 @@ void nas_itti_modify_eps_bearer_ctx_cnf(
     const ebi_t            ebi)
 {
   OAILOG_FUNC_IN(LOG_NAS);
-  MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_MME, MME_APP_MODIFY_EPS_BEARER_CTX_CNF);
-  MME_APP_MODIFY_EPS_BEARER_CTX_CNF (message_p).ue_id   = ue_idP;
-  MME_APP_MODIFY_EPS_BEARER_CTX_CNF (message_p).ebi     = ebi;
-  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_MMEAPP_MME, NULL, 0, "0 MME_APP_MODIFY_EPS_BEARER_CTX_CNF ue id " MME_UE_S1AP_ID_FMT, ue_idP);
+  MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_ESM, NAS_MODIFY_EPS_BEARER_CTX_CNF);
+  NAS_MODIFY_EPS_BEARER_CTX_CNF (message_p).ue_id   = ue_idP;
+  NAS_MODIFY_EPS_BEARER_CTX_CNF (message_p).ebi     = ebi;
+  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_MMEAPP_MME, NULL, 0, "0 NAS_MODIFY_EPS_BEARER_CTX_CNF ue id " MME_UE_S1AP_ID_FMT, ue_idP);
   itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT(LOG_NAS);
 }
@@ -207,33 +256,33 @@ void nas_itti_modify_eps_bearer_ctx_rej(
     const esm_cause_t      esm_cause)
 {
   OAILOG_FUNC_IN(LOG_NAS);
-  MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_MME, MME_APP_MODIFY_EPS_BEARER_CTX_REJ);
-  MME_APP_MODIFY_EPS_BEARER_CTX_REJ (message_p).ue_id   = ue_idP;
-  MME_APP_MODIFY_EPS_BEARER_CTX_REJ (message_p).ebi     = ebi;
+  MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_ESM, NAS_MODIFY_EPS_BEARER_CTX_REJ);
+  NAS_MODIFY_EPS_BEARER_CTX_REJ (message_p).ue_id   = ue_idP;
+  NAS_MODIFY_EPS_BEARER_CTX_REJ (message_p).ebi     = ebi;
   switch(esm_cause){
   case ESM_CAUSE_SEMANTIC_ERROR_IN_THE_TFT_OPERATION:
-    MME_APP_MODIFY_EPS_BEARER_CTX_REJ (message_p).cause_value = SEMANTIC_ERROR_IN_TFT;
+    NAS_MODIFY_EPS_BEARER_CTX_REJ (message_p).cause_value = SEMANTIC_ERROR_IN_TFT;
     break;
   case ESM_CAUSE_SYNTACTICAL_ERROR_IN_THE_TFT_OPERATION:
-    MME_APP_MODIFY_EPS_BEARER_CTX_REJ (message_p).cause_value = SYNTACTIC_ERROR_IN_TFT;
+    NAS_MODIFY_EPS_BEARER_CTX_REJ (message_p).cause_value = SYNTACTIC_ERROR_IN_TFT;
     break;
   case ESM_CAUSE_SEMANTIC_ERRORS_IN_PACKET_FILTER:
-    MME_APP_MODIFY_EPS_BEARER_CTX_REJ (message_p).cause_value = SEMANTIC_ERRORS_IN_PF;
+    NAS_MODIFY_EPS_BEARER_CTX_REJ (message_p).cause_value = SEMANTIC_ERRORS_IN_PF;
     break;
   case ESM_CAUSE_SYNTACTICAL_ERROR_IN_PACKET_FILTER:
-    MME_APP_MODIFY_EPS_BEARER_CTX_REJ (message_p).cause_value = SYNTACTIC_ERRORS_IN_PF;
+    NAS_MODIFY_EPS_BEARER_CTX_REJ (message_p).cause_value = SYNTACTIC_ERRORS_IN_PF;
     break;
   case ESM_CAUSE_EPS_QOS_NOT_ACCEPTED:
-    MME_APP_MODIFY_EPS_BEARER_CTX_REJ (message_p).cause_value = MANDATORY_IE_INCORRECT;
+    NAS_MODIFY_EPS_BEARER_CTX_REJ (message_p).cause_value = MANDATORY_IE_INCORRECT;
     break;
   case ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY:
-    MME_APP_MODIFY_EPS_BEARER_CTX_REJ (message_p).cause_value = NO_RESOURCES_AVAILABLE;
+    NAS_MODIFY_EPS_BEARER_CTX_REJ (message_p).cause_value = NO_RESOURCES_AVAILABLE;
     break;
   default:
-    MME_APP_MODIFY_EPS_BEARER_CTX_REJ (message_p).cause_value = REQUEST_REJECTED;
+    NAS_MODIFY_EPS_BEARER_CTX_REJ (message_p).cause_value = REQUEST_REJECTED;
     break;
   }
-  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_MMEAPP_MME, NULL, 0, "0 MME_APP_MODIFY_EPS_BEARER_CTX_REJ ue id " MME_UE_S1AP_ID_FMT, ue_idP);
+  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_MMEAPP_MME, NULL, 0, "0 NAS_MODIFY_EPS_BEARER_CTX_REJ ue id " MME_UE_S1AP_ID_FMT, ue_idP);
   itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT(LOG_NAS);
 }
@@ -244,10 +293,10 @@ void nas_itti_dedicated_eps_bearer_deactivation_complete(
     const ebi_t ded_ebi)
 {
   OAILOG_FUNC_IN(LOG_NAS);
-  MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_MME, MME_APP_DEACTIVATE_EPS_BEARER_CTX_CNF);
-  MME_APP_DEACTIVATE_EPS_BEARER_CTX_CNF (message_p).ue_id     = ue_idP;
-  MME_APP_DEACTIVATE_EPS_BEARER_CTX_CNF (message_p).ded_ebi   = ded_ebi;
-  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_MMEAPP_MME, NULL, 0, "0 MME_APP_DEACTIVATE_EPS_BEARER_CTX_CNF ue id " MME_UE_S1AP_ID_FMT " ebi %u", ue_idP, ded_ebi);
+  MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_ESM, NAS_DEACTIVATE_EPS_BEARER_CTX_CNF);
+  NAS_DEACTIVATE_EPS_BEARER_CTX_CNF (message_p).ue_id     = ue_idP;
+  NAS_DEACTIVATE_EPS_BEARER_CTX_CNF (message_p).ded_ebi   = ded_ebi;
+  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_MMEAPP_MME, NULL, 0, "0 NAS_DEACTIVATE_EPS_BEARER_CTX_CNF ue id " MME_UE_S1AP_ID_FMT " ebi %u", ue_idP, ded_ebi);
   itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT(LOG_NAS);
 }
@@ -256,166 +305,65 @@ void nas_itti_dedicated_eps_bearer_deactivation_complete(
 void nas_itti_pdn_config_req(
   unsigned int            ue_idP,
   const imsi_t           *const imsi_pP,
-  esm_proc_data_t        *proc_data_pP,
-  esm_proc_pdn_request_t  request_typeP)
+  esm_proc_pdn_request_t  request_type,
+  plmn_t                 *visited_plmn)
 {
   OAILOG_FUNC_IN(LOG_NAS);
   MessageDef *message_p = NULL;
-
   AssertFatal(imsi_pP       != NULL, "imsi_pP param is NULL");
-//  AssertFatal(proc_data_pP  != NULL, "proc_data_pP param is NULL"); for ULR from TAU, this may be null, since it is not triggered by an UE ESM message.
 
+  message_p = itti_alloc_new_message (TASK_NAS_ESM, S6A_UPDATE_LOCATION_REQ);
 
-  message_p = itti_alloc_new_message(TASK_NAS_MME, NAS_PDN_CONFIG_REQ);
-
-//  hexa_to_ascii((uint8_t *)imsi_pP->u.value,
-//      NAS_PDN_CONFIG_REQ(message_p).imsi,
-//      imsi_pP->length);
-  IMSI_TO_STRING(imsi_pP, NAS_PDN_CONFIG_REQ(message_p).imsi, IMSI_BCD_DIGITS_MAX+1);
-  NAS_PDN_CONFIG_REQ(message_p).imsi_length = imsi_pP->length;
-
-  NAS_PDN_CONFIG_REQ(message_p).ue_id           = ue_idP;
-
-  if(proc_data_pP){
-    NAS_PDN_CONFIG_REQ(message_p).apn = bstrcpy(proc_data_pP->apn);
-    NAS_PDN_CONFIG_REQ(message_p).pdn_addr = bstrcpy(proc_data_pP->pdn_addr);
-
-    switch (proc_data_pP->pdn_type) {
-    case ESM_PDN_TYPE_IPV4:
-      NAS_PDN_CONFIG_REQ(message_p).pdn_type = IPv4;
-      break;
-
-    case ESM_PDN_TYPE_IPV6:
-      NAS_PDN_CONFIG_REQ(message_p).pdn_type = IPv6;
-      break;
-
-    case ESM_PDN_TYPE_IPV4V6:
-      NAS_PDN_CONFIG_REQ(message_p).pdn_type = IPv4_AND_v6;
-      break;
-
-    default:
-      NAS_PDN_CONFIG_REQ(message_p).pdn_type = IPv4;
-      break;
-    }
+  if (message_p == NULL) {
+    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
 
-  NAS_PDN_CONFIG_REQ(message_p).request_type  = request_typeP;
+  s6a_update_location_req_t *s6a_ulr_p = &message_p->ittiMsg.s6a_update_location_req;
 
-  /** Not setting PTI and originating TAI. */
+  IMSI_TO_STRING(imsi_pP, s6a_ulr_p->imsi, IMSI_BCD_DIGITS_MAX+1);
+  s6a_ulr_p->imsi_length = strlen (s6a_ulr_p->imsi);
+  s6a_ulr_p->initial_attach = request_type;
 
-  MSC_LOG_TX_MESSAGE(
-        MSC_NAS_MME,
-        MSC_MMEAPP_MME,
-        NULL,0,
-        "NAS_PDN_CONFIG_REQ ue id " MME_UE_S1AP_ID_FMT " IMSI %X",
-        ue_idP, NAS_PDN_CONFIG_REQ(message_p).imsi);
-
-  itti_send_msg_to_task(TASK_MME_APP, INSTANCE_DEFAULT, message_p);
-  OAILOG_FUNC_OUT(LOG_NAS);
-}
-
-//------------------------------------------------------------------------------
-void nas_itti_pdn_connectivity_req(
-  int                     ptiP,
-  mme_ue_s1ap_id_t        ue_idP,
-  pdn_cid_t               pdn_cidP,
-  const ebi_t             default_ebi,
-  const imsi64_t          imsi,
-  const imsi_t           *const imsi_pP,
-  esm_proc_data_t        *proc_data_pP,
-  esm_proc_pdn_request_t  request_typeP)
-{
-  OAILOG_FUNC_IN(LOG_NAS);
-  MessageDef *message_p = NULL;
-
-  AssertFatal(imsi_pP       != NULL, "imsi_pP param is NULL");
-  AssertFatal(proc_data_pP  != NULL, "proc_data_pP param is NULL");
-
-
-  message_p = itti_alloc_new_message(TASK_NAS_MME, NAS_PDN_CONNECTIVITY_REQ);
-
-  NAS_PDN_CONNECTIVITY_REQ(message_p).pdn_cid         = pdn_cidP;
-  NAS_PDN_CONNECTIVITY_REQ(message_p).default_ebi     = default_ebi;
-  NAS_PDN_CONNECTIVITY_REQ(message_p).pti             = ptiP;
-  NAS_PDN_CONNECTIVITY_REQ(message_p).ue_id           = ue_idP;
-  NAS_PDN_CONNECTIVITY_REQ(message_p).imsi            = imsi;
-  memcpy((void*)&NAS_PDN_CONNECTIVITY_REQ(message_p)._imsi, imsi_pP, sizeof (imsi_t));
-//
-//  if (isdigit(NAS_PDN_CONNECTIVITY_REQ(message_p).imsi[14])) {
-//    NAS_PDN_CONNECTIVITY_REQ(message_p).imsi_length = 15;
-//  } else {
-//    NAS_PDN_CONNECTIVITY_REQ(message_p).imsi_length = 14;
-//    NAS_PDN_CONNECTIVITY_REQ(message_p).imsi[14] = '\0';
-//  }
-
-  NAS_PDN_CONNECTIVITY_REQ(message_p).apn       = bstrcpy(proc_data_pP->apn);
-  NAS_PDN_CONNECTIVITY_REQ(message_p).pdn_addr  = bstrcpy(proc_data_pP->pdn_addr);
-
-  switch (proc_data_pP->pdn_type) {
-  case ESM_PDN_TYPE_IPV4:
-    NAS_PDN_CONNECTIVITY_REQ(message_p).pdn_type = IPv4;
-    break;
-
-  case ESM_PDN_TYPE_IPV6:
-    NAS_PDN_CONNECTIVITY_REQ(message_p).pdn_type = IPv6;
-    break;
-
-  case ESM_PDN_TYPE_IPV4V6:
-    NAS_PDN_CONNECTIVITY_REQ(message_p).pdn_type = IPv4_AND_v6;
-    break;
-
-  default:
-    NAS_PDN_CONNECTIVITY_REQ(message_p).pdn_type = IPv4;
-    break;
-  }
-
-  // not efficient but be careful about "typedef network_qos_t esm_proc_qos_t;"
-  memcpy(&NAS_PDN_CONNECTIVITY_REQ(message_p).bearer_qos, &proc_data_pP->bearer_qos, sizeof (proc_data_pP->bearer_qos));
-
-  NAS_PDN_CONNECTIVITY_REQ(message_p).request_type  = request_typeP;
-
-  copy_protocol_configuration_options (&NAS_PDN_CONNECTIVITY_REQ(message_p).pco, &proc_data_pP->pco);
-
-  MSC_LOG_TX_MESSAGE(
-        MSC_NAS_MME,
-        MSC_MMEAPP_MME,
-        NULL,0,
-        "NAS_PDN_CONNECTIVITY_REQ ue id " MME_UE_S1AP_ID_FMT " IMSI %X",
-        ue_idP, NAS_PDN_CONNECTIVITY_REQ(message_p).imsi);
-
-  itti_send_msg_to_task(TASK_MME_APP, INSTANCE_DEFAULT, message_p);
-
-  OAILOG_FUNC_OUT(LOG_NAS);
+  memcpy (&s6a_ulr_p->visited_plmn, visited_plmn, sizeof (plmn_t));
+  s6a_ulr_p->rat_type = RAT_EUTRAN;
+  /*
+   * Check if we already have UE data
+   * todo: remove this?
+   */
+  s6a_ulr_p->skip_subscriber_data = 0;
+  MSC_LOG_TX_MESSAGE (MSC_NAS_ESM, MSC_S6A_MME, NULL, 0, "0 S6A_UPDATE_LOCATION_REQ imsi %s", s6a_ulr_p->imsi);
+  int rc =  itti_send_msg_to_task (TASK_S6A, INSTANCE_DEFAULT, message_p);
+  OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
 }
 
 //------------------------------------------------------------------------------
 void nas_itti_pdn_disconnect_req(
   mme_ue_s1ap_id_t        ue_idP,
   ebi_t                   default_ebi,
+  pti_t                   pti,
+  bool                    deleteTunnel,
+  bool                    handover,
   struct in_addr          saegw_s11_addr, /**< Put them into the UE context ? */
-  teid_t                  saegw_teid,
-  bool                    noDelete,
-  esm_proc_data_t        *proc_data_pP)
+  teid_t                  saegw_s11_teid,
+  pdn_cid_t               pdn_cid)
 {
   OAILOG_FUNC_IN(LOG_NAS);
   MessageDef *message_p = NULL;
 
-  AssertFatal(proc_data_pP  != NULL, "proc_data_pP param is NULL");
+  message_p = itti_alloc_new_message(TASK_NAS_ESM, NAS_PDN_DISCONNECT_REQ);
 
-
-  message_p = itti_alloc_new_message(TASK_NAS_MME, NAS_PDN_DISCONNECT_REQ);
-
-  NAS_PDN_DISCONNECT_REQ(message_p).pdn_cid         = proc_data_pP->pdn_cid;
-  NAS_PDN_DISCONNECT_REQ(message_p).pti             = proc_data_pP->pti;
+  NAS_PDN_DISCONNECT_REQ(message_p).pdn_cid         = pdn_cid;
+  NAS_PDN_DISCONNECT_REQ(message_p).pti             = pti;
   NAS_PDN_DISCONNECT_REQ(message_p).default_ebi     = default_ebi;
+  NAS_PDN_DISCONNECT_REQ(message_p).handover		= handover;
   NAS_PDN_DISCONNECT_REQ(message_p).ue_id           = ue_idP;
-  NAS_PDN_DISCONNECT_REQ(message_p).noDelete        = noDelete;
-
+  NAS_PDN_DISCONNECT_REQ(message_p).noDelete        = ((pti != PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED) || !deleteTunnel);
   NAS_PDN_DISCONNECT_REQ(message_p).saegw_s11_ip_addr    = saegw_s11_addr;
-  NAS_PDN_DISCONNECT_REQ(message_p).saegw_s11_teid       = saegw_teid;
+  NAS_PDN_DISCONNECT_REQ(message_p).saegw_s11_teid       = saegw_s11_teid;
 
-  NAS_PDN_DISCONNECT_REQ(message_p).apn = bstrcpy(proc_data_pP->apn);
-
+  if(saegw_s11_addr.s_addr == 0){
+    OAILOG_DEBUG (LOG_NAS_EMM, "EMM-PROC  - No SAE-GW IP for UE " MME_UE_S1AP_ID_FMT " to send PDN-Disc Req. \n", ue_idP);
+  }
   MSC_LOG_TX_MESSAGE(
         MSC_NAS_MME,
         MSC_MMEAPP_MME,
@@ -440,7 +388,7 @@ void nas_itti_ctx_req(
   MessageDef                             *message_p = NULL;
   itti_nas_context_req_t                 *nas_context_req_p = NULL;
 
-  message_p = itti_alloc_new_message (TASK_NAS_MME, NAS_CONTEXT_REQ);
+  message_p = itti_alloc_new_message (TASK_NAS_EMM, NAS_CONTEXT_REQ);
   nas_context_req_p = &message_p->ittiMsg.s10_context_request;
   memset(nas_context_req_p, 0, sizeof(itti_nas_context_req_t));
 
@@ -477,7 +425,7 @@ void nas_itti_auth_info_req(
   MessageDef                             *message_p = NULL;
   s6a_auth_info_req_t                    *auth_info_req = NULL;
 
-  message_p = itti_alloc_new_message (TASK_NAS_MME, S6A_AUTH_INFO_REQ);
+  message_p = itti_alloc_new_message (TASK_NAS_EMM, S6A_AUTH_INFO_REQ);
   auth_info_req = &message_p->ittiMsg.s6a_auth_info_req;
 
   IMSI_TO_STRING(imsiP,auth_info_req->imsi, IMSI_BCD_DIGITS_MAX+1);
@@ -506,39 +454,39 @@ void nas_itti_auth_info_req(
 }
 
 //------------------------------------------------------------------------------
-void nas_itti_establish_rej(
-  const mme_ue_s1ap_id_t  ue_idP,
-  const imsi_t     *const imsi_pP
-  , uint8_t               initial_reqP)
+void nas_itti_s11_bearer_resource_cmd (
+  const pti_t            pti,
+  const ebi_t            linked_ebi,
+  const teid_t           local_teid,
+  const teid_t           peer_teid,
+  const struct in_addr  *saegw_s11_ipv4,
+  const ebi_t            ebi,
+  const traffic_flow_template_t * const tad,
+  const flow_qos_t              * const flow_qos)
 {
   OAILOG_FUNC_IN(LOG_NAS);
-  MessageDef *message_p;
+  MessageDef                             *message_p = NULL;
+  itti_s11_bearer_resource_command_t     *bearer_resource_cmd = NULL;
 
-  message_p = itti_alloc_new_message(TASK_NAS_MME, NAS_AUTHENTICATION_PARAM_REQ);
+  message_p = itti_alloc_new_message (TASK_NAS_EMM, S11_BEARER_RESOURCE_COMMAND);
+  bearer_resource_cmd = &message_p->ittiMsg.s11_bearer_resource_command;
+  bearer_resource_cmd->pti = pti;
+  bearer_resource_cmd->linked_ebi = linked_ebi;
 
-  hexa_to_ascii((uint8_t *)imsi_pP->u.value,
-                NAS_AUTHENTICATION_PARAM_REQ(message_p).imsi, 8);
+  bearer_resource_cmd->ebi = ebi;
+  copy_traffic_flow_template(&bearer_resource_cmd->tad, tad);
 
-  NAS_AUTHENTICATION_PARAM_REQ(message_p).imsi[15] = '\0';
-
-  if (isdigit(NAS_AUTHENTICATION_PARAM_REQ(message_p).imsi[14])) {
-    NAS_AUTHENTICATION_PARAM_REQ(message_p).imsi_length = 15;
-  } else {
-    NAS_AUTHENTICATION_PARAM_REQ(message_p).imsi_length = 14;
-    NAS_AUTHENTICATION_PARAM_REQ(message_p).imsi[14]    = '\0';
+  if(flow_qos && flow_qos->qci){
+    memcpy(&bearer_resource_cmd->flow_qos, flow_qos, sizeof(flow_qos_t));
   }
 
-  NAS_AUTHENTICATION_PARAM_REQ(message_p).initial_req = initial_reqP;
-  NAS_AUTHENTICATION_PARAM_REQ(message_p).ue_id       = ue_idP;
+  bearer_resource_cmd->local_teid = local_teid;
+  bearer_resource_cmd->teid       = peer_teid;
+  bearer_resource_cmd->peer_ip.s_addr = saegw_s11_ipv4->s_addr;
 
-  MSC_LOG_TX_MESSAGE(
-        MSC_NAS_MME,
-        MSC_MMEAPP_MME,
-        NULL,0,
-        "NAS_AUTHENTICATION_PARAM_REQ ue id " MME_UE_S1AP_ID_FMT " IMSI %s (establish reject)",
-        ue_idP, NAS_AUTHENTICATION_PARAM_REQ(message_p).imsi);
+  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_S6A_MME, NULL, 0, "0 S11_BEARER_RESOURCE_CMD LOCAL_TEID "TEID_FMT" PEER_TEID "TEID_FMT" ", local_teid, peer_teid);
+  itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
 
-  itti_send_msg_to_task(TASK_MME_APP, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT(LOG_NAS);
 }
 
@@ -557,7 +505,7 @@ void nas_itti_establish_cnf(
 
   emm_ctx = emm_data_context_get(&_emm_data, ue_idP);
 
-  message_p = itti_alloc_new_message(TASK_NAS_MME, NAS_CONNECTION_ESTABLISHMENT_CNF);
+  message_p = itti_alloc_new_message(TASK_NAS_EMM, NAS_CONNECTION_ESTABLISHMENT_CNF);
 
   NAS_CONNECTION_ESTABLISHMENT_CNF(message_p).ue_id                           = ue_idP;
   NAS_CONNECTION_ESTABLISHMENT_CNF(message_p).err_code                        = error_codeP;
@@ -637,7 +585,7 @@ void nas_itti_detach_req(const mme_ue_s1ap_id_t ue_id)
 
   OAILOG_INFO(LOG_NAS_EMM, "EMM-PROC  - Sending NAS_ITTI_DETACH_REQ for UE " MME_UE_S1AP_ID_FMT ". \n", ue_id);
 
-  message_p = itti_alloc_new_message(TASK_NAS_MME, NAS_DETACH_REQ);
+  message_p = itti_alloc_new_message(TASK_NAS_EMM, NAS_DETACH_REQ);
 
   NAS_DETACH_REQ(message_p).ue_id = ue_id;
 
@@ -655,7 +603,9 @@ void nas_itti_detach_req(const mme_ue_s1ap_id_t ue_id)
 void  s6a_auth_info_rsp_timer_expiry_handler (void *args)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
-  emm_data_context_t  *emm_ctx = (emm_data_context_t *) (args);
+  mme_ue_s1ap_id_t ue_id = (mme_ue_s1ap_id_t) (args);
+
+  emm_data_context_t * emm_ctx = emm_data_context_get(&_emm_data, ue_id);
 
   if (emm_ctx) {
 
@@ -682,7 +632,7 @@ void  s6a_auth_info_rsp_timer_expiry_handler (void *args)
     // Send Attach Reject with cause NETWORK FAILURE and delete UE context
     nas_proc_auth_param_fail (auth_info_proc->ue_id, NAS_CAUSE_NETWORK_FAILURE);
   } else {
-    OAILOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - Timer timer_s6_auth_info_rsp expired. Null EMM Context for UE " MME_UE_S1AP_ID_FMT ". \n", emm_ctx->ue_id);
+    OAILOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - Timer timer_s6_auth_info_rsp expired. Null EMM Context for UE " MME_UE_S1AP_ID_FMT". \n", ue_id);
   }
 
   OAILOG_FUNC_OUT (LOG_NAS_EMM);

@@ -19,6 +19,7 @@
  *      contact@openairinterface.org
  */
 
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -73,9 +74,6 @@ encode_detach_request (
   int                                     encoded = 0;
   int                                     encode_result = 0;
 
-  /*
-   * Checking IEI and pointer
-   */
   /*
    * Checking IEI and pointer
    */

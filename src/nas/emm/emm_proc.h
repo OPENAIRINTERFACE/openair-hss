@@ -38,13 +38,13 @@ Description Defines the EPS Mobility Management procedures executed at
 *****************************************************************************/
 #ifndef FILE_EMM_PROC_SEEN
 #define FILE_EMM_PROC_SEEN
-
-#include "commonDef.h"
 #include "bstrlib.h"
 
-#include "emm_data.h"
-
 #include "nas_message.h" //nas_message_decode_status_t
+#include "emm_data.h"
+#include "common_defs.h"
+
+
 
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/
@@ -99,7 +99,7 @@ typedef struct emm_attach_request_ies_s {
   ue_network_capability_t       *ue_network_capability;
   ms_network_capability_t       *ms_network_capability;
   drx_parameter_t               *drx_parameter;
-  bstring                        esm_msg;
+  bstring                        esm_msg_attach_proc;
   nas_message_decode_status_t    decode_status;
 } emm_attach_request_ies_t;
 
@@ -134,8 +134,8 @@ typedef struct emm_tau_request_ies_s {
 
   drx_parameter_t               *drx_parameter;
   bool                           is_ue_radio_capability_information_update_needed;
-  eps_bearer_context_status_t   *eps_bearer_context_status;
-  ms_network_capability_t       *ms_network_capability;
+    eps_bearer_context_status_t   *eps_bearer_context_status;
+    ms_network_capability_t       *ms_network_capability;
   tmsi_status_t                 *tmsi_status;
   mobile_station_classmark2_t   *mobile_station_classmark2;
   mobile_station_classmark3_t   *mobile_station_classmark3;
@@ -144,6 +144,9 @@ typedef struct emm_tau_request_ies_s {
   guti_type_t                   *old_guti_type;
 
   bstring                        complete_tau_request;
+
+  /** Re-link structures. */
+  subscription_data_t           *subscription_data;
 
   nas_message_decode_status_t    decode_status;
 } emm_tau_request_ies_t;
@@ -189,13 +192,20 @@ int emm_proc_attach_request(mme_ue_s1ap_id_t ue_id,
                             emm_attach_request_ies_t * const params,
                             emm_data_context_t ** duplicate_emm_ue_ctx_pP);
 
-int _emm_attach_reject (emm_data_context_t *emm_context, struct nas_base_proc_s * nas_base_proc);
 
+int _emm_attach_reject(emm_data_context_t * emm_context, nas_emm_attach_proc_t * attach_proc, bstring rsp);
 int emm_proc_attach_reject(mme_ue_s1ap_id_t ue_id, emm_cause_t emm_cause);
+
+/** EMM Attach Accept/Reject from ESM layer. */
+int _emm_wrapper_attach_accept (mme_ue_s1ap_id_t ue_id, bstring esm_msg);
+int _emm_wrapper_attach_reject (mme_ue_s1ap_id_t ue_id, bstring esm_msg);
+
+/** EMM TAU Accept/Reject from ESM layer. */
+int emm_wrapper_tracking_area_update_accept (mme_ue_s1ap_id_t ue_id, eps_bearer_context_status_t ebr_status);
+int emm_wrapper_tracking_area_update_reject (mme_ue_s1ap_id_t ue_id, emm_cause_t emm_cause);
 
 int emm_proc_attach_complete (
   mme_ue_s1ap_id_t                  ue_id,
-  const_bstring                     esm_msg_pP,
   int                               emm_cause,
   const nas_message_decode_status_t status);
 
@@ -209,10 +219,6 @@ int emm_proc_tracking_area_update_request (
   int *emm_cause,
   emm_data_context_t ** emm_context_pP);
 
-int emm_proc_tracking_area_update_reject (
-  const mme_ue_s1ap_id_t ue_id,
-  const int emm_cause);
-
 int
 emm_proc_tracking_area_update_complete (
   mme_ue_s1ap_id_t ue_id);
@@ -225,7 +231,7 @@ int emm_proc_service_reject (const mme_ue_s1ap_id_t ue_id, const int emm_cause);
  */
 
 void free_emm_detach_request_ies(emm_detach_request_ies_t ** const ies);
-int emm_proc_detach(mme_ue_s1ap_id_t ue_id, emm_proc_detach_type_t detach_type, int emm_cause);
+int emm_proc_detach(mme_ue_s1ap_id_t ue_id, emm_proc_detach_type_t detach_type, int emm_cause, bool clr);
 int emm_proc_detach_request(mme_ue_s1ap_id_t ue_id, emm_detach_request_ies_t * params);
 
 /*
@@ -295,7 +301,7 @@ int emm_proc_security_mode_complete(mme_ue_s1ap_id_t ue_id, const imeisv_mobile_
 int emm_proc_security_mode_reject(mme_ue_s1ap_id_t ue_id);
 
 void
-_clear_emm_ctxt(emm_data_context_t *emm_ctx);
+_clear_emm_ctxt(mme_ue_s1ap_id_t ue_id);
 /*
  *---------------------------------------------------------------------------
  *             Network indication handlers

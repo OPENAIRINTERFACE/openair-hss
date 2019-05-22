@@ -28,7 +28,7 @@ include_directories("${SRC_TOP_DIR}/s1ap")
 
 add_library(S6A
     s6a_auth_info.c
-    s6a_clear_loc.c
+    s6a_cancel_loc.c
     s6a_common.c
     s6a_dict.c
     s6a_error.c

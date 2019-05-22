@@ -40,11 +40,10 @@ Description Defines the layer 3 messages supported by the NAS sublayer
 #ifndef FILE_NAS_MESSAGE_SEEN
 #define FILE_NAS_MESSAGE_SEEN
 
-#include "commonDef.h"
-#include "emm_msg.h"
-#include "emm_data.h"
+#include "common_defs.h"
 #include "esm_msg.h"
-
+#include "emm_data.h"
+#include "emm_msg.h"
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/
 /****************************************************************************/

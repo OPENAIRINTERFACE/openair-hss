@@ -38,6 +38,7 @@
         from the Access Stratum sublayer.
 
 *****************************************************************************/
+
 #include <pthread.h>
 #include <inttypes.h>
 #include <stdint.h>
@@ -52,19 +53,17 @@
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"
 #include "3gpp_29.274.h"
-#include "emm_recv.h"
-
-#include "commonDef.h"
+#include "common_defs.h"
 #include "common_defs.h"
 #include "log.h"
-#include "emm_msgDef.h"
-#include "emm_cause.h"
-#include "emm_proc.h"
 #include "mme_config.h"
 #include "3gpp_requirements_24.301.h"
 #include "mme_app_defs.h"
+#include "emm_recv.h"
+#include "emm_proc.h"
+#include "emm_cause.h"
+#include "emm_msgDef.h"
 #include "emm_sap.h"
-
 extern mme_app_desc_t                          mme_app_desc;
 
 /****************************************************************************/
@@ -180,6 +179,17 @@ emm_recv_attach_request (
     /*
      * Requirement MME24.301R10_5.5.1.2.7_b Protocol error
      */
+	emm_data_context_t temp_emm_ue_ctx;
+	memset(&temp_emm_ue_ctx, 0, sizeof(emm_data_context_t));
+	temp_emm_ue_ctx.ue_id = ue_id;
+	temp_emm_ue_ctx.emm_cause = *emm_cause;
+	/*
+	 * Do not accept the UE to attach for emergency services
+	 */
+	struct nas_emm_attach_proc_s   no_attach_proc = {0};
+	no_attach_proc.ue_id       = ue_id;
+	no_attach_proc.emm_cause   = temp_emm_ue_ctx.emm_cause;
+	no_attach_proc.esm_msg_out = NULL;
     rc = emm_proc_attach_reject (ue_id, *emm_cause);
     *emm_cause = EMM_CAUSE_SUCCESS;
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
@@ -312,7 +322,7 @@ emm_recv_attach_request (
     params->ms_network_capability = calloc(1, sizeof(ms_network_capability_t));
     memcpy(params->ms_network_capability, &msg->msnetworkcapability, sizeof(ms_network_capability_t));
   }
-  params->esm_msg = msg->esmmessagecontainer;
+  params->esm_msg_attach_proc = msg->esmmessagecontainer;
   msg->esmmessagecontainer = NULL;
 
   params->decode_status = *decode_status;
@@ -391,7 +401,7 @@ emm_recv_tracking_area_update_complete (
 int
 emm_recv_attach_complete (
   mme_ue_s1ap_id_t ue_id,
-  const attach_complete_msg * msg,
+  attach_complete_msg * const msg,
   int *emm_cause,
   const nas_message_decode_status_t * status)
 {
@@ -402,7 +412,14 @@ emm_recv_attach_complete (
   /*
    * Execute the attach procedure completion
    */
-  rc = emm_proc_attach_complete (ue_id, msg->esmmessagecontainer, *emm_cause, *status);
+  rc = emm_proc_attach_complete (ue_id, *emm_cause, *status);
+  if(rc != RETURNerror){
+
+    rc = nas_itti_esm_data_ind(ue_id, msg->esmmessagecontainer, NULL, NULL);
+    msg->esmmessagecontainer = NULL;
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  }
+  OAILOG_ERROR (LOG_NAS_EMM, "EMMAS-SAP - Failed handling Attach Complete message.. (ESM message won't be handled).\n");
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
@@ -599,7 +616,7 @@ emm_recv_tracking_area_update_request (
     /*
      * Requirement MME24.301R10_5.5.1.2.7_b Protocol error
      */
-    rc = emm_proc_tracking_area_update_reject(ue_id, *emm_cause);
+    rc = emm_wrapper_tracking_area_update_reject(ue_id, *emm_cause);
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
   }
 
@@ -626,13 +643,14 @@ emm_recv_tracking_area_update_request (
   } else{
     OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received TAU-Request with unknown identity type %d for mmeS1apUeId " MME_UE_S1AP_ID_FMT ". \n", msg->oldguti.guti.typeofidentity, ue_id);
     *emm_cause = EMM_CAUSE_PROTOCOL_ERROR;
-    rc = emm_proc_tracking_area_update_reject(ue_id, *emm_cause);
+    rc = emm_wrapper_tracking_area_update_reject(ue_id, *emm_cause);
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
   }
 
   /** Not checking if it is initial or not. For NAS layer, it is the same. */
   // Mandatory fields
   ies->eps_update_type = msg->epsupdatetype;
+
   ies->is_native_sc    = (msg->naskeysetidentifier.tsc != NAS_KEY_SET_IDENTIFIER_MAPPED);
   ies->ksi             = msg->naskeysetidentifier.naskeysetidentifier;
   ies->is_initial      = is_initial;
@@ -659,7 +677,7 @@ emm_recv_tracking_area_update_request (
     OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received Tracking Area Update Request does not contain last visited TAI. "
         "Cannot retrieve UE context from source MME for mmeS1apUeId " MME_UE_S1AP_ID_FMT ". \n", ue_id);
     *emm_cause = EMM_CAUSE_PROTOCOL_ERROR;
-    rc = emm_proc_tracking_area_update_reject(ue_id, *emm_cause);
+    rc = emm_wrapper_tracking_area_update_reject(ue_id, *emm_cause);
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
   }
 

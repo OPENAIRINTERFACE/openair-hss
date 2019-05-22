@@ -384,6 +384,7 @@ extern                                  "C" {
 
    @param[in] thiz : Pointer to stack.
    @param[in] peerIp : Peer Ip address.
+   @param[in] peerPort : Local Ip port to send the message from.
    @param[in] peerPort : Peer Ip port.
    @param[in] pMsg : Message to be sent.
    @return NW_OK on success.
@@ -391,6 +392,7 @@ extern                                  "C" {
   static nw_rc_t                            nwGtpv2cCreateAndSendMsg (
   NW_IN nw_gtpv2c_stack_t * thiz,
   NW_IN uint32_t seqNum,
+  NW_IN uint32_t localPort,
   NW_IN struct in_addr * peerIp,
   NW_IN uint32_t peerPort,
   NW_IN nw_gtpv2c_msg_t * pMsg) {
@@ -430,7 +432,7 @@ extern                                  "C" {
      * Call UDP data request callback
      */
     NW_ASSERT (thiz->udp.udpDataReqCallback != NULL);
-    rc = thiz->udp.udpDataReqCallback (thiz->udp.hUdp, pMsg->msgBuf, pMsg->msgLen, peerIp, peerPort);
+    rc = thiz->udp.udpDataReqCallback (thiz->udp.hUdp, pMsg->msgBuf, pMsg->msgLen, localPort, peerIp, peerPort);
     NW_ASSERT (NW_OK == rc);
     return rc;
   }
@@ -453,7 +455,7 @@ extern                                  "C" {
     rc = nwGtpv2cMsgNew ((nw_gtpv2c_stack_handle_t) thiz, false, NW_GTP_VERSION_NOT_SUPPORTED_IND, 0x00, seqNum, (&hMsg));
     NW_ASSERT (NW_OK == rc);
     OAILOG_NOTICE (LOG_GTPV2C,  "Sending Version Not Supported Indication message to %x:%x with seq %u\n", peerIp->s_addr, peerPort, seqNum);
-    rc = nwGtpv2cCreateAndSendMsg (thiz, seqNum, peerIp, peerPort, (nw_gtpv2c_msg_t *) hMsg);
+    rc = nwGtpv2cCreateAndSendMsg (thiz, seqNum, NW_GTPV2C_UDP_PORT, peerIp, peerPort, (nw_gtpv2c_msg_t *) hMsg);
     rc = nwGtpv2cMsgDelete ((nw_gtpv2c_stack_handle_t) thiz, hMsg);
     NW_ASSERT (NW_OK == rc);
     return rc;
@@ -563,13 +565,9 @@ static nw_rc_t nwGtpv2cCreateLocalTunnel (
         keyTunnel.teid = pUlpReq->u_api_info.initialReqInfo.teidLocal;
         keyTunnel.ipv4AddrRemote = pUlpReq->u_api_info.initialReqInfo.peerIp;
         pLocalTunnel = RB_FIND (NwGtpv2cTunnelMap, &(thiz->tunnelMap), &keyTunnel);
-
-
         if (!pLocalTunnel) {
-
           pLocalTunnel = RB_MIN (NwGtpv2cTunnelMap, &(thiz->tunnelMap));
 //          DevAssert(!pLocalTunnel);
-
           OAILOG_WARNING (LOG_GTPV2C,  "Request message received on non-existent teid 0x%x from peer 0x%x received! Discarding.\n", ntohl (pUlpReq->u_api_info.initialReqInfo.teidLocal), htonl (pUlpReq->u_api_info.initialReqInfo.peerIp.s_addr));
           rc = nwGtpv2cCreateLocalTunnel (thiz, pUlpReq->u_api_info.initialReqInfo.teidLocal, &pUlpReq->u_api_info.initialReqInfo.peerIp, pUlpReq->u_api_info.initialReqInfo.hUlpTunnel, &pUlpReq->u_api_info.initialReqInfo.hTunnel);
           NW_ASSERT (NW_OK == rc);
@@ -577,21 +575,20 @@ static nw_rc_t nwGtpv2cCreateLocalTunnel (
           pUlpReq->u_api_info.initialReqInfo.hTunnel = (nw_gtpv2c_tunnel_handle_t) pLocalTunnel;
         }
       }
-
-      pTrxn->pMsg = (nw_gtpv2c_msg_t *) pUlpReq->hMsg;
-      pTrxn->hTunnel = pUlpReq->u_api_info.initialReqInfo.hTunnel;
-      pTrxn->hUlpTrxn = pUlpReq->u_api_info.initialReqInfo.hUlpTrxn;
-      pTrxn->peerIp = pUlpReq->u_api_info.initialReqInfo.peerIp; // todo: ((NwGtpv2cTunnelT *) (pTrxn->hTunnel))->ipv4AddrRemote;
-      pTrxn->peerPort = NW_GTPV2C_UDP_PORT;
+      pTrxn->pMsg      = (nw_gtpv2c_msg_t *) pUlpReq->hMsg;
+      pTrxn->hTunnel   = pUlpReq->u_api_info.initialReqInfo.hTunnel;
+      pTrxn->hUlpTrxn  = pUlpReq->u_api_info.initialReqInfo.hUlpTrxn;
+      pTrxn->peerIp    = pUlpReq->u_api_info.initialReqInfo.peerIp; // todo: ((NwGtpv2cTunnelT *) (pTrxn->hTunnel))->ipv4AddrRemote;
+      pTrxn->peerPort  = NW_GTPV2C_UDP_PORT;  /**< Initial Requests always to 2123. */
       /* No Delete. */
-      pTrxn->noDelete = pUlpReq->u_api_info.initialReqInfo.noDelete;
-
+      pTrxn->teidLocal = pUlpReq->u_api_info.initialReqInfo.teidLocal;
+      pTrxn->noDelete  = pUlpReq->u_api_info.initialReqInfo.noDelete;
+      pTrxn->trx_flags = pUlpReq->u_api_info.initialReqInfo.internal_flags;
+      pTrxn->localPort = 0; /**< Set the local port to 0 (initialize it). */
       if (pUlpReq->apiType & NW_GTPV2C_ULP_API_FLAG_IS_COMMAND_MESSAGE) {
         pTrxn->seqNum |= 0x00100000UL;
       }
-
-      rc = nwGtpv2cCreateAndSendMsg (thiz, pTrxn->seqNum, &pTrxn->peerIp, pTrxn->peerPort, pTrxn->pMsg);
-
+      rc = nwGtpv2cCreateAndSendMsg (thiz, pTrxn->seqNum, 0, &pTrxn->peerIp, pTrxn->peerPort, pTrxn->pMsg); /**< Send it from the socket with the high port. */
       if (NW_OK == rc) {
         /*
          * Start guard timer
@@ -641,7 +638,7 @@ static nw_rc_t nwGtpv2cCreateLocalTunnel (
       pTrxn->peerIp.s_addr = pReqTrxn->peerIp.s_addr;
       pTrxn->peerPort = pReqTrxn->peerPort;
       pTrxn->pMsg = (nw_gtpv2c_msg_t *) pUlpReq->hMsg;
-      rc = nwGtpv2cCreateAndSendMsg (thiz, pTrxn->seqNum, &pTrxn->peerIp, pTrxn->peerPort, pTrxn->pMsg);
+      rc = nwGtpv2cCreateAndSendMsg (thiz, pTrxn->seqNum, NW_GTPV2C_UDP_PORT, &pTrxn->peerIp, pTrxn->peerPort, pTrxn->pMsg);
 
       if (NW_OK == rc) {
         /*
@@ -692,8 +689,17 @@ static nw_rc_t nwGtpv2cCreateLocalTunnel (
       ((nw_gtpv2c_msg_t *) pUlpRsp->hMsg)->seqNum = pReqTrxn->seqNum;
 
     OAILOG_DEBUG (LOG_GTPV2C, "Sending response message over seq '0x%x'\n", pReqTrxn->seqNum);
-    rc = nwGtpv2cCreateAndSendMsg (thiz, pReqTrxn->seqNum, &pReqTrxn->peerIp, pReqTrxn->peerPort, (nw_gtpv2c_msg_t *) pUlpRsp->hMsg);
-    pReqTrxn->pMsg = (nw_gtpv2c_msg_t *) pUlpRsp->hMsg;
+    rc = nwGtpv2cCreateAndSendMsg (thiz, pReqTrxn->seqNum, pReqTrxn->localPort, &pReqTrxn->peerIp, pReqTrxn->peerPort, (nw_gtpv2c_msg_t *) pUlpRsp->hMsg);
+    /** Depending on the cause type, add it or not. */
+    if(pUlpRsp->u_api_info.triggeredRspInfo.remove_trx) {
+    	OAILOG_DEBUG (LOG_GTPV2C, "Removing transaction with seq '0x%x' due temprary reject. Not continuing with message. \n", pReqTrxn->seqNum);
+        RB_REMOVE (NwGtpv2cOutstandingRxSeqNumTrxnMap, &(thiz->outstandingRxSeqNumMap), pReqTrxn);
+        rc = nwGtpv2cTrxnDelete (&pReqTrxn);
+        NW_ASSERT (NW_OK == rc);
+        OAILOG_FUNC_RETURN( LOG_GTPV2C, rc);
+    } else {
+    	pReqTrxn->pMsg = (nw_gtpv2c_msg_t *) pUlpRsp->hMsg;
+    }
     rc = nwGtpv2cTrxnStartDulpicateRequestWaitTimer (pReqTrxn);
 
     /** Creating a local tunnel if flag is set. */
@@ -724,18 +730,43 @@ static nw_rc_t nwGtpv2cCreateLocalTunnel (
    */
   static
   nw_rc_t                            nwGtpv2cHandleUlpTriggeredAck (NW_IN nw_gtpv2c_stack_t * thiz, NW_IN nw_gtpv2c_ulp_api_t * pUlpAck) {
-    nw_rc_t                                   rc = NW_FAILURE;
+	  OAILOG_FUNC_IN (LOG_GTPV2C);
 
-    OAILOG_FUNC_IN (LOG_GTPV2C);
+	  nw_gtpv2c_trxn_t                         *pAckTrxn = NULL, keyTrxn;
+	  nw_rc_t                                   rc = NW_FAILURE;
 
-    if (((nw_gtpv2c_msg_t *) pUlpAck->hMsg)->seqNum == 0){
-      OAILOG_ERROR(LOG_GTPV2C, "The sequence number of a triggered ACK has to be set (!0) \n");
-      OAILOG_FUNC_RETURN( LOG_GTPV2C, NW_FAILURE);
-    }
+	  /** Try to find the initial request transaction for the triggered ACK. */
 
-    OAILOG_DEBUG (LOG_GTPV2C, "Sending a triggered ACK message over seq '0x%x'\n", ((nw_gtpv2c_msg_t *) pUlpAck->hMsg)->seqNum );
-    rc = nwGtpv2cCreateAndSendMsg (thiz, ((nw_gtpv2c_msg_t *) pUlpAck->hMsg)->seqNum , &pUlpAck->u_api_info.triggeredAckInfo.peerIp, pUlpAck->u_api_info.triggeredAckInfo.peerPort, (nw_gtpv2c_msg_t *) pUlpAck->hMsg);
-    /** Don't start a timer. */
+	  OAILOG_FUNC_IN (LOG_GTPV2C);;
+
+      keyTrxn.seqNum = ((nw_gtpv2c_msg_t *) pUlpAck->hMsg)->seqNum;
+      keyTrxn.peerIp.s_addr = pUlpAck->u_api_info.triggeredAckInfo.peerIp.s_addr;
+      /** A transaction of the initial request (cmd) for the triggered request should exist. */
+      pAckTrxn = RB_FIND (NwGtpv2cOutstandingTxSeqNumTrxnMap, &(thiz->outstandingTxSeqNumMap), &keyTrxn);
+
+      if (pAckTrxn) {
+    	  OAILOG_INFO (LOG_GTPV2C,  "Found an initial request transaction for the triggered ACK. Appending the ACK and keeping the transaction for a while.\n");
+    	  /** Remove the original message and append the current message. */
+    	  DevAssert(!pAckTrxn->pMsg);
+
+    	  /** Append the triggered ACK to the message. */
+    	  pAckTrxn->pMsg = (nw_gtpv2c_msg_t *) pUlpAck->hMsg;
+    	  pAckTrxn->pMsg->seqNum = pAckTrxn->seqNum;
+
+      } else {
+        OAILOG_WARNING (LOG_GTPV2C,  "Triggered ACK message without a matching outstanding request (req) received! Discarding.\n");
+        if (pUlpAck->hMsg) {
+          rc = nwGtpv2cMsgDelete ((nw_gtpv2c_stack_handle_t) thiz, pUlpAck->hMsg);
+          NW_ASSERT (NW_OK == rc);
+        }
+        OAILOG_FUNC_RETURN( LOG_GTPV2C, NW_OK);
+      }
+
+    OAILOG_DEBUG (LOG_GTPV2C, "Sending a triggered ACK message over seq '0x%x'\n", pAckTrxn->seqNum);
+    rc = nwGtpv2cCreateAndSendMsg (thiz, pAckTrxn->seqNum , pUlpAck->u_api_info.triggeredAckInfo.localPort, &pUlpAck->u_api_info.triggeredAckInfo.peerIp, pUlpAck->u_api_info.triggeredAckInfo.peerPort, (nw_gtpv2c_msg_t *) pUlpAck->hMsg);
+
+    /** Remove the tunnel. */
+    rc = nwGtpv2cDeleteLocalTunnel (thiz, pUlpAck->u_api_info.triggeredAckInfo.hTunnel);
 
     OAILOG_FUNC_RETURN( LOG_GTPV2C, rc);
   }
@@ -821,10 +852,41 @@ static nw_rc_t nwGtpv2cHandleUlpCreateLocalTunnel (NW_IN nw_gtpv2c_stack_t * thi
     ulpApi.u_api_info.initialReqIndInfo.hUlpTunnel = hUlpTunnel;
     ulpApi.u_api_info.initialReqIndInfo.peerIp.s_addr = peerIp->s_addr;
     ulpApi.u_api_info.initialReqIndInfo.peerPort = peerPort;
-    ulpApi.u_api_info.triggeredRspIndInfo.error = *pError;
+    ulpApi.u_api_info.initialReqIndInfo.error = *pError;
     rc = thiz->ulp.ulpReqCallback (thiz->ulp.hUlp, &ulpApi);
     OAILOG_FUNC_RETURN (LOG_GTPV2C, rc);
   }
+
+/**
+  Send GTPv2c Triggered Request Message Indication to ULP entity.
+
+  @param[in] hGtpcStackHandle : Stack handle
+  @return NW_OK on success.
+*/
+
+static nw_rc_t                            nwGtpv2cSendTriggeredReqIndToUlp (
+  NW_IN nw_gtpv2c_stack_t * thiz,
+  NW_IN nw_gtpv2c_error_t * pError,
+  NW_IN nw_gtpv2c_trxn_t * pTrxn,
+  NW_IN uint32_t hUlpTunnel,
+  NW_IN uint32_t msgType,
+  NW_IN struct in_addr *peerIp,
+  NW_IN uint16_t peerPort,
+  NW_IN nw_gtpv2c_msg_handle_t hMsg) {
+  nw_rc_t                                   rc = NW_FAILURE;
+  nw_gtpv2c_ulp_api_t                         ulpApi;
+
+  OAILOG_FUNC_IN (LOG_GTPV2C);
+  ulpApi.hMsg = hMsg;
+  ulpApi.apiType = NW_GTPV2C_ULP_API_TRIGGERED_REQ_IND;
+
+  ulpApi.u_api_info.triggeredReqIndInfo.msgType = msgType;
+  ulpApi.u_api_info.triggeredReqIndInfo.hTrxn = (nw_gtpv2c_trxn_handle_t) pTrxn;
+  ulpApi.u_api_info.triggeredReqIndInfo.hUlpTunnel = hUlpTunnel;
+  ulpApi.u_api_info.triggeredReqIndInfo.error = *pError;
+  rc = thiz->ulp.ulpReqCallback (thiz->ulp.hUlp, &ulpApi);
+  OAILOG_FUNC_RETURN (LOG_GTPV2C, rc);
+}
 
 /**
   Send GTPv2c Triggered Response Indication to ULP entity.
@@ -837,6 +899,9 @@ static nw_rc_t nwGtpv2cHandleUlpCreateLocalTunnel (NW_IN nw_gtpv2c_stack_t * thi
   NW_IN nw_gtpv2c_stack_t * thiz,
   NW_IN nw_gtpv2c_error_t * pError,
   NW_IN uint32_t hUlpTrxn,
+  NW_IN uint8_t trxFlags,
+  NW_IN uint16_t localPort,
+  NW_IN uint16_t peerPort,
   NW_IN uint32_t hUlpTunnel,
   NW_IN uint32_t msgType,
   NW_IN bool     noDelete,
@@ -849,8 +914,11 @@ static nw_rc_t nwGtpv2cHandleUlpCreateLocalTunnel (NW_IN nw_gtpv2c_stack_t * thi
     ulpApi.apiType = NW_GTPV2C_ULP_API_TRIGGERED_RSP_IND;
     ulpApi.u_api_info.triggeredRspIndInfo.msgType = msgType;
     ulpApi.u_api_info.triggeredRspIndInfo.hUlpTrxn = hUlpTrxn;
+    ulpApi.u_api_info.triggeredRspIndInfo.localPort = localPort;
+    ulpApi.u_api_info.triggeredRspIndInfo.peerPort  = peerPort;
     ulpApi.u_api_info.triggeredRspIndInfo.hUlpTunnel = hUlpTunnel;
     ulpApi.u_api_info.triggeredRspIndInfo.error = *pError;
+    ulpApi.u_api_info.triggeredRspIndInfo.trx_flags = trxFlags;
     ulpApi.u_api_info.triggeredRspIndInfo.noDelete = noDelete;
     rc = thiz->ulp.ulpReqCallback (thiz->ulp.hUlp, &ulpApi);
     OAILOG_FUNC_RETURN (LOG_GTPV2C, rc);
@@ -945,7 +1013,7 @@ static nw_rc_t                            nwGtpv2cHandleUlpFindLocalTunnel (
     char                                    ipv4[INET_ADDRSTRLEN];
     inet_ntop (AF_INET, (void*)peerIp, ipv4, INET_ADDRSTRLEN);
     OAILOG_ERROR (LOG_GTPV2C, "Sending NW_GTP_ECHO_RSP message to %s:%u with seq %u\n", ipv4, peerPort, (seqNum));
-    rc = nwGtpv2cCreateAndSendMsg (thiz, (seqNum), peerIp, peerPort, (nw_gtpv2c_msg_t *) hMsg);
+    rc = nwGtpv2cCreateAndSendMsg (thiz, (seqNum), NW_GTPV2C_UDP_PORT, peerIp, peerPort, (nw_gtpv2c_msg_t *) hMsg);
     rc = nwGtpv2cMsgDelete ((nw_gtpv2c_stack_handle_t) thiz, hMsg);
     NW_ASSERT (NW_OK == rc);
     return rc;
@@ -966,15 +1034,15 @@ static nw_rc_t                            nwGtpv2cHandleUlpFindLocalTunnel (
   NW_IN uint16_t peerPort,
   NW_IN struct in_addr *peerIp) {
     nw_rc_t                                   rc = NW_FAILURE;
-    uint32_t                                seqNum = 0;
-    uint32_t                                teidLocal = 0;
+    uint32_t                                  seqNum = 0;
+    uint32_t                                  teidLocal = 0;
     nw_gtpv2c_trxn_t                          *pTrxn = NULL;
     nw_gtpv2c_tunnel_t                        *pLocalTunnel = NULL,
-                                            keyTunnel = {0};
+                                              keyTunnel = {0};
     nw_gtpv2c_msg_handle_t                      hMsg = 0;
     nw_gtpv2c_ulp_tunnel_handle_t                hUlpTunnel = 0;
     nw_gtpv2c_error_t                          error = {0};
-    char                                    ipv4[INET_ADDRSTRLEN];
+    char                                      ipv4[INET_ADDRSTRLEN];
 
     teidLocal = *((uint32_t *) (msgBuf + 4));
     inet_ntop (AF_INET, (void*)peerIp, ipv4, INET_ADDRSTRLEN);
@@ -1000,6 +1068,7 @@ static nw_rc_t                            nwGtpv2cHandleUlpFindLocalTunnel (
     pTrxn = nwGtpv2cTrxnOutstandingRxNew (thiz, ntohl (teidLocal), peerIp, peerPort, (seqNum));
 
     if (pTrxn) {
+      pTrxn->localPort = thiz->udp.gtpv2cStandardPort;
       rc = nwGtpv2cMsgFromBufferNew ((nw_gtpv2c_stack_handle_t) thiz, msgBuf, msgBufLen, &(hMsg));
       NW_ASSERT (thiz->pGtpv2cMsgIeParseInfo[msgType]);
       rc = nwGtpv2cMsgIeParse (thiz->pGtpv2cMsgIeParseInfo[msgType], hMsg, &error);
@@ -1015,6 +1084,94 @@ static nw_rc_t                            nwGtpv2cHandleUlpFindLocalTunnel (
   }
 
 /**
+  Handle Triggered Request from Peer Entity.
+
+  @param[in] thiz : Stack context
+  @return NW_OK on success.
+*/
+
+  static nw_rc_t                            nwGtpv2cHandleTriggeredReq (
+  NW_IN nw_gtpv2c_stack_t * thiz,
+  NW_IN uint32_t msgType,
+  NW_IN uint8_t * msgBuf,
+  NW_IN uint32_t msgBufLen,
+  NW_IN uint16_t localPort,
+  NW_IN uint16_t peerPort,
+  NW_IN struct in_addr* peerIp) {
+    nw_rc_t                                   rc = NW_FAILURE;
+    nw_gtpv2c_trxn_t                         *pTrxn = NULL,
+                                              keyTrxn;
+    nw_gtpv2c_tunnel_t                       *pLocalTunnel = NULL,
+                                              keyTunnel = {0};
+    uint32_t                                  teidLocal = 0;
+    nw_gtpv2c_msg_handle_t                    hMsg = 0;
+    nw_gtpv2c_ulp_tunnel_handle_t             hUlpTunnel = 0;
+    nw_gtpv2c_error_t                         error = {0};
+
+    bool                                       noDelete = false ;
+    keyTrxn.seqNum = ntohl (*((uint32_t *) (msgBuf + (((*msgBuf) & 0x08) ? 8 : 4)))) >> 8;;
+    keyTrxn.peerIp.s_addr = peerIp->s_addr;
+
+    OAILOG_DEBUG (LOG_GTPV2C,  "RECEIVED GTPV2c triggered request message of type %d, length %d and seqNum %x.\n", msgType, msgBufLen, keyTrxn.seqNum);
+
+    /** A transaction of the initial request (cmd) for the triggered request should exist. */
+    pTrxn = RB_FIND (NwGtpv2cOutstandingTxSeqNumTrxnMap, &(thiz->outstandingTxSeqNumMap), &keyTrxn);
+
+    if (pTrxn) {
+      uint32_t                                hUlpTrxn;
+      uint32_t                                hUlpTunnel;
+
+      hUlpTrxn = pTrxn->hUlpTrxn;
+      noDelete = pTrxn->noDelete;
+      hUlpTunnel = (pTrxn->hTunnel ? ((nw_gtpv2c_tunnel_t *) (pTrxn->hTunnel))->hUlpTunnel : 0);
+      /**
+       * We remove the transaction of the initial request and create a new transaction the the received triggered request.
+       */
+      RB_REMOVE (NwGtpv2cOutstandingTxSeqNumTrxnMap, &(thiz->outstandingTxSeqNumMap), pTrxn);
+      rc = nwGtpv2cTrxnDelete (&pTrxn);
+      NW_ASSERT (NW_OK == rc);
+    } else {
+      OAILOG_WARNING (LOG_GTPV2C,  "Triggered request message without a matching outstanding request (cmd) received! Discarding.\n");
+      rc = NW_OK;
+    }
+    NW_ASSERT (msgBuf && msgBufLen);
+
+    /** Process it like an initial request. */
+    if (teidLocal) {
+      keyTunnel.teid = ntohl (teidLocal);
+      keyTunnel.ipv4AddrRemote.s_addr = peerIp->s_addr;
+      pLocalTunnel = RB_FIND (NwGtpv2cTunnelMap, &(thiz->tunnelMap), &keyTunnel);
+
+      if (!pLocalTunnel) {
+        OAILOG_WARNING (LOG_GTPV2C,  "Request message received on non-existent teid 0x%x from peer %s received! Discarding.\n", ntohl (teidLocal), peerIp);
+        return NW_OK;
+      }
+      hUlpTunnel = pLocalTunnel->hUlpTunnel;
+    } else {
+      hUlpTunnel = 0;
+    }
+
+    /** Create a new transaction for the same transaction id. */
+    pTrxn = nwGtpv2cTrxnOutstandingRxNew (thiz, ntohl (teidLocal), peerIp, peerPort, (keyTrxn.seqNum));
+
+    if (pTrxn) {
+      pTrxn->localPort = localPort;
+      rc = nwGtpv2cMsgFromBufferNew ((nw_gtpv2c_stack_handle_t) thiz, msgBuf, msgBufLen, &(hMsg));
+      NW_ASSERT (thiz->pGtpv2cMsgIeParseInfo[msgType]);
+      rc = nwGtpv2cMsgIeParse (thiz->pGtpv2cMsgIeParseInfo[msgType], hMsg, &error);
+
+      if (rc != NW_OK) {
+        char                                    ipv4[INET_ADDRSTRLEN];
+        inet_ntop (AF_INET, (void*)peerIp, ipv4, INET_ADDRSTRLEN);
+        OAILOG_WARNING (LOG_GTPV2C,  "Malformed triggered request message received on TEID %u from peer %s. Notifying ULP.\n", ntohl (teidLocal), ipv4);
+      }
+
+      rc = nwGtpv2cSendTriggeredReqIndToUlp (thiz, &error, pTrxn, hUlpTunnel, msgType, peerIp, peerPort, hMsg);
+    }
+    return rc;
+  }
+
+/**
   Handle Triggered Response from Peer Entity.
 
   @param[in] thiz : Stack context
@@ -1026,8 +1183,10 @@ static nw_rc_t                            nwGtpv2cHandleUlpFindLocalTunnel (
   NW_IN uint32_t msgType,
   NW_IN uint8_t * msgBuf,
   NW_IN uint32_t msgBufLen,
+  NW_IN uint16_t localPort,
   NW_IN uint16_t peerPort,
-  NW_IN struct in_addr* peerIp) {
+  NW_IN struct in_addr* peerIp,
+  NW_IN bool remove) {
     nw_rc_t                                   rc = NW_FAILURE;
     nw_gtpv2c_trxn_t                          *pTrxn = NULL,
                                             keyTrxn;
@@ -1042,7 +1201,7 @@ static nw_rc_t                            nwGtpv2cHandleUlpFindLocalTunnel (
 
 
     pTrxn = RB_FIND (NwGtpv2cOutstandingTxSeqNumTrxnMap, &(thiz->outstandingTxSeqNumMap), &keyTrxn);
-
+    uint8_t trx_flags = 0;
     if (pTrxn) {
       uint32_t                                hUlpTrxn;
       uint32_t                                hUlpTunnel;
@@ -1050,21 +1209,38 @@ static nw_rc_t                            nwGtpv2cHandleUlpFindLocalTunnel (
       hUlpTrxn = pTrxn->hUlpTrxn;
       noDelete = pTrxn->noDelete;
       hUlpTunnel = (pTrxn->hTunnel ? ((nw_gtpv2c_tunnel_t *) (pTrxn->hTunnel))->hUlpTunnel : 0);
-      RB_REMOVE (NwGtpv2cOutstandingTxSeqNumTrxnMap, &(thiz->outstandingTxSeqNumMap), pTrxn);
-      rc = nwGtpv2cTrxnDelete (&pTrxn);
-      NW_ASSERT (NW_OK == rc);
+
+      if(remove){
+          trx_flags = pTrxn->trx_flags;
+          RB_REMOVE (NwGtpv2cOutstandingTxSeqNumTrxnMap, &(thiz->outstandingTxSeqNumMap), pTrxn);
+          rc = nwGtpv2cTrxnDelete (&pTrxn);
+          NW_ASSERT (NW_OK == rc);
+      } else {
+    	  OAILOG_WARNING (LOG_GTPV2C,  "Not removing the initial request transaction for message type %d, seqNo %x. \n",
+    			  msgType, keyTrxn.seqNum);
+    	  /** This transaction should be taken care automatically. No additional information is necessary. */
+    	  rc = nwGtpv2cMsgDelete((nw_gtpv2c_stack_handle_t)thiz,  (nw_gtpv2c_msg_handle_t)pTrxn->pMsg);
+          NW_ASSERT (NW_OK == rc);
+          pTrxn->pMsg = NULL;
+    	  NW_ASSERT (NW_OK == rc);
+    	  /** Mark the transaction as ACKed. */
+    	  pTrxn->trx_flags |= INTERNAL_FLAG_TRIGGERED_ACK;
+    	  trx_flags = pTrxn->trx_flags;
+      }
+
       NW_ASSERT (msgBuf && msgBufLen);
       rc = nwGtpv2cMsgFromBufferNew ((nw_gtpv2c_stack_handle_t) thiz, msgBuf, msgBufLen, &(hMsg));
       NW_ASSERT (thiz->pGtpv2cMsgIeParseInfo[msgType]);
       rc = nwGtpv2cMsgIeParse (thiz->pGtpv2cMsgIeParseInfo[msgType], hMsg, &error);
 
+      /** We just forward the remaining message. */
       if (rc != NW_OK) {
         char                                    ipv4[INET_ADDRSTRLEN];
         inet_ntop (AF_INET, (void*)peerIp, ipv4, INET_ADDRSTRLEN);
         OAILOG_WARNING (LOG_GTPV2C,  "Malformed message received on TEID %u from peer %s. Notifying ULP.\n", ntohl ((*((uint32_t *) (msgBuf + 4)))), ipv4);
       }
 
-      rc = nwGtpv2cSendTriggeredRspIndToUlp (thiz, &error, keyTrxn.seqNum, hUlpTunnel, msgType, noDelete, hMsg);
+      rc = nwGtpv2cSendTriggeredRspIndToUlp (thiz, &error, keyTrxn.seqNum, trx_flags, localPort, peerPort, hUlpTunnel, msgType, noDelete, hMsg);
     } else {
       OAILOG_WARNING (LOG_GTPV2C,  "Response message without a matching outstanding request received! Discarding.\n");
       rc = NW_OK;
@@ -1072,90 +1248,6 @@ static nw_rc_t                            nwGtpv2cHandleUlpFindLocalTunnel (
 
     return rc;
   }
-
-
-  /**
-    Handle Initial Request from Peer Entity.
-
-    @param[in] thiz : Stack context
-    @return NW_OK on success.
-  */
-
-static nw_rc_t                            nwGtpv2cHandleTriggeredAck(
-    NW_IN nw_gtpv2c_stack_t * thiz,
-    NW_IN uint32_t msgType,
-    NW_IN uint8_t * msgBuf,
-    NW_IN uint32_t msgBufLen,
-    NW_IN uint16_t peerPort,
-    NW_IN struct in_addr *peerIp) {
-  nw_rc_t                                   rc = NW_FAILURE;
-  uint32_t                                seqNum = 0;
-  uint32_t                                teidLocal = 0;
-  nw_gtpv2c_trxn_t                          *pTrxn = NULL, keyTrxn;
-  nw_gtpv2c_tunnel_t                        *pLocalTunnel = NULL,
-      keyTunnel = {0};
-  nw_gtpv2c_msg_handle_t                      hMsg = 0;
-  nw_gtpv2c_ulp_tunnel_handle_t                hUlpTunnel = 0;
-  nw_gtpv2c_error_t                          error = {0};
-  char                                    ipv4[INET_ADDRSTRLEN];
-
-  teidLocal = *((uint32_t *) (msgBuf + 4));
-  inet_ntop (AF_INET, (void*)peerIp, ipv4, INET_ADDRSTRLEN);
-
-  if (teidLocal) {
-    keyTunnel.teid = ntohl (teidLocal);
-    keyTunnel.ipv4AddrRemote.s_addr = peerIp->s_addr;
-    pLocalTunnel = RB_FIND (NwGtpv2cTunnelMap, &(thiz->tunnelMap), &keyTunnel);
-
-    if (!pLocalTunnel) {
-      OAILOG_WARNING (LOG_GTPV2C,  "Request message received on non-existent teid 0x%x from peer %s received! Discarding.\n", ntohl (teidLocal), ipv4);
-      return NW_OK;
-    }
-
-    hUlpTunnel = pLocalTunnel->hUlpTunnel;
-  } else {
-    OAILOG_WARNING (LOG_GTPV2C,  "Ack message received has no valid TEID.! Discarding.\n");
-    return NW_OK;
-  }
-
-  keyTrxn.seqNum = ntohl (*((uint32_t *) (msgBuf + (((*msgBuf) & 0x08) ? 8 : 4)))) >> 8;;
-  keyTrxn.peerIp.s_addr = peerIp->s_addr;
-  keyTrxn.peerPort = peerPort;
-  pTrxn = RB_FIND (NwGtpv2cOutstandingRxSeqNumTrxnMap, &(thiz->outstandingRxSeqNumMap), &keyTrxn);
-
-  if(pTrxn){
-    RB_REMOVE (NwGtpv2cOutstandingRxSeqNumTrxnMap, &(thiz->outstandingRxSeqNumMap), pTrxn); /**< Remove the transaction for the Request. */
-    rc = nwGtpv2cTrxnDelete (&pTrxn);
-    NW_ASSERT (NW_OK == rc);
-    /** Parse the message. */
-    rc = nwGtpv2cMsgFromBufferNew ((nw_gtpv2c_stack_handle_t) thiz, msgBuf, msgBufLen, &(hMsg));
-    NW_ASSERT (thiz->pGtpv2cMsgIeParseInfo[msgType]);
-    rc = nwGtpv2cMsgIeParse (thiz->pGtpv2cMsgIeParseInfo[msgType], hMsg, &error);
-    if (rc != NW_OK) {
-      OAILOG_WARNING (LOG_GTPV2C,  "Malformed request message received on TEID %u from peer %s. Notifying ULP.\n", ntohl (teidLocal), ipv4);
-    }
-    rc = nwGtpv2cSendTriggeredAckIndToUlp(thiz, &error, pTrxn, hUlpTunnel, msgType, peerIp, peerPort, hMsg);
-
-  }else{
-    OAILOG_WARNING (LOG_GTPV2C,  "ACK message without a matching outstanding request received! Discarding.\n");
-    rc = NW_OK;
-  }
-
-
-//  if (pTrxn) {
-//    rc = nwGtpv2cMsgFromBufferNew ((nw_gtpv2c_stack_handle_t) thiz, msgBuf, msgBufLen, &(hMsg));
-//    NW_ASSERT (thiz->pGtpv2cMsgIeParseInfo[msgType]);
-//    rc = nwGtpv2cMsgIeParse (thiz->pGtpv2cMsgIeParseInfo[msgType], hMsg, &error);
-//
-//    if (rc != NW_OK) {
-//      OAILOG_WARNING (LOG_GTPV2C,  "Malformed request message received on TEID %u from peer %s. Notifying ULP.\n", ntohl (teidLocal), ipv4);
-//    }
-//
-////    rc = nwGtpv2cSendInitialReqIndToUlp (thiz, &error, pTrxn, hUlpTunnel, msgType, peerIp, peerPort, hMsg);
-//  }
-
-  return rc;
-}
 
 /*--------------------------------------------------------------------------*
                        P U B L I C   F U N C T I O N S
@@ -1201,6 +1293,11 @@ static nw_rc_t                            nwGtpv2cHandleTriggeredAck(
       NW_GTPV2C_INIT_MSG_IE_PARSE_INFO (thiz, NW_GTP_UPDATE_BEARER_RSP);
       NW_GTPV2C_INIT_MSG_IE_PARSE_INFO (thiz, NW_GTP_DELETE_BEARER_REQ);
       NW_GTPV2C_INIT_MSG_IE_PARSE_INFO (thiz, NW_GTP_DELETE_BEARER_RSP);
+      /** Congestion related command. */
+      NW_GTPV2C_INIT_MSG_IE_PARSE_INFO (thiz, NW_GTP_DELETE_BEARER_CMD);
+      NW_GTPV2C_INIT_MSG_IE_PARSE_INFO (thiz, NW_GTP_DELETE_BEARER_FAILURE_IND);
+      NW_GTPV2C_INIT_MSG_IE_PARSE_INFO (thiz, NW_GTP_BEARER_RESOURCE_CMD);
+      NW_GTPV2C_INIT_MSG_IE_PARSE_INFO (thiz, NW_GTP_BEARER_RESOURCE_FAILURE_IND);
       NW_GTPV2C_INIT_MSG_IE_PARSE_INFO (thiz, NW_GTP_RELEASE_ACCESS_BEARERS_REQ);
       NW_GTPV2C_INIT_MSG_IE_PARSE_INFO (thiz, NW_GTP_RELEASE_ACCESS_BEARERS_RSP);
       /** Paging related GTPv2c signaling. */
@@ -1242,38 +1339,58 @@ static nw_rc_t                            nwGtpv2cHandleTriggeredAck(
     if (!hGtpcStackHandle)
       return NW_FAILURE;
 
-//    nwGtpv2cMsgIeParseInfoDelete(((NwGtpv2cStackT*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_ECHO_RSP]);
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_ECHO_REQ]);
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_ECHO_RSP]);
     /*
      * For S11 interface
      */
-//    nwGtpv2cMsgIeParseInfoDelete(((NwGtpv2cStackT*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_CREATE_SESSION_REQ]);
-//    nwGtpv2cMsgIeParseInfoDelete(((NwGtpv2cStackT*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_CREATE_SESSION_RSP]);
-//    nwGtpv2cMsgIeParseInfoDelete(((NwGtpv2cStackT*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_DELETE_SESSION_REQ]);
-//    nwGtpv2cMsgIeParseInfoDelete(((NwGtpv2cStackT*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_DELETE_SESSION_RSP]);
-//    nwGtpv2cMsgIeParseInfoDelete(((NwGtpv2cStackT*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_MODIFY_BEARER_REQ]);
-//    nwGtpv2cMsgIeParseInfoDelete(((NwGtpv2cStackT*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_MODIFY_BEARER_RSP]);
-//    nwGtpv2cMsgIeParseInfoDelete(((NwGtpv2cStackT*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_CREATE_BEARER_REQ]);
-//    nwGtpv2cMsgIeParseInfoDelete(((NwGtpv2cStackT*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_CREATE_BEARER_RSP]);
-//    nwGtpv2cMsgIeParseInfoDelete(((NwGtpv2cStackT*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_RELEASE_ACCESS_BEARERS_REQ]);
-//    nwGtpv2cMsgIeParseInfoDelete(((NwGtpv2cStackT*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_RELEASE_ACCESS_BEARERS_RSP]);
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_CREATE_SESSION_REQ]);
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_CREATE_SESSION_RSP]);
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_DELETE_SESSION_REQ]);
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_DELETE_SESSION_RSP]);
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_MODIFY_BEARER_REQ]);
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_MODIFY_BEARER_RSP]);
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_CREATE_BEARER_REQ]);
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_CREATE_BEARER_RSP]);
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_UPDATE_BEARER_REQ]);
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_UPDATE_BEARER_RSP]);
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_DELETE_BEARER_REQ]);
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_DELETE_BEARER_RSP]);
+
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_BEARER_RESOURCE_CMD]);
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_BEARER_RESOURCE_FAILURE_IND]);
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_DELETE_BEARER_CMD]);
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_DELETE_BEARER_FAILURE_IND]);
+
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_RELEASE_ACCESS_BEARERS_REQ]);
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_RELEASE_ACCESS_BEARERS_RSP]);
+
+    /** Paging related GTPv2c signaling. */
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_DOWNLINK_DATA_NOTIFICATION]);
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_DOWNLINK_DATA_NOTIFICATION_ACK]);
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_DOWNLINK_DATA_NOTIFICATION_FAILURE_IND]);
 
     /*
      * For S10 interface
      */
-//    nwGtpv2cMsgIeParseInfoDelete(((NwGtpv2cStackT*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_FORWARD_RELOCATION_REQ]);
-//    nwGtpv2cMsgIeParseInfoDelete(((NwGtpv2cStackT*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_FORWARD_RELOCATION_RSP]);
-//    nwGtpv2cMsgIeParseInfoDelete(((NwGtpv2cStackT*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_FORWARD_RELOCATION_COMPLETE_NTF]);
-//    nwGtpv2cMsgIeParseInfoDelete(((NwGtpv2cStackT*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_FORWARD_RELOCATION_COMPLETE_ACK]);
-//    nwGtpv2cMsgIeParseInfoDelete(((NwGtpv2cStackT*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_CONTEXT_REQ]);
-//    nwGtpv2cMsgIeParseInfoDelete(((NwGtpv2cStackT*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_CONTEXT_REQ]);
-//    nwGtpv2cMsgIeParseInfoDelete(((NwGtpv2cStackT*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_CONTEXT_ACK]);
-//    nwGtpv2cMsgIeParseInfoDelete(((NwGtpv2cStackT*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_IDENTIFICATION_REQ]);
-//    nwGtpv2cMsgIeParseInfoDelete(((NwGtpv2cStackT*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_IDENTIFICATION_RSP]);
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_FORWARD_RELOCATION_REQ]);
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_FORWARD_RELOCATION_RSP]);
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_FORWARD_ACCESS_CONTEXT_NTF]);
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_FORWARD_ACCESS_CONTEXT_ACK]);
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_FORWARD_RELOCATION_COMPLETE_NTF]);
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_FORWARD_RELOCATION_COMPLETE_ACK]);
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_CONTEXT_REQ]);
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_CONTEXT_RSP]);
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_CONTEXT_ACK]);
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_RELOCATION_CANCEL_REQ]);
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_RELOCATION_CANCEL_RSP]);
+
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_IDENTIFICATION_REQ]);
+    nwGtpv2cMsgIeParseInfoDelete(((nw_gtpv2c_stack_t*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_IDENTIFICATION_RSP]);
 
     OAI_GCC_DIAG_OFF(int-to-pointer-cast);
     nwGtpv2cTmrMinHeapDelete((NwGtpv2cTmrMinHeapT*)((nw_gtpv2c_stack_t*)hGtpcStackHandle)->hTmrMinHeap);
     OAI_GCC_DIAG_ON(int-to-pointer-cast);
-
     free_wrapper ((void**)&hGtpcStackHandle);
     return NW_OK;
   }
@@ -1381,6 +1498,7 @@ static nw_rc_t                            nwGtpv2cHandleTriggeredAck(
   NW_IN nw_gtpv2c_stack_handle_t hGtpcStackHandle,
   NW_IN uint8_t * udpData,
   NW_IN uint32_t udpDataLen,
+  NW_IN uint16_t localPort,
   NW_IN uint16_t peerPort,
   NW_IN struct in_addr * peerIp) {
     nw_rc_t                                   rc = NW_FAILURE;
@@ -1425,25 +1543,41 @@ static nw_rc_t                            nwGtpv2cHandleTriggeredAck(
       }
       break;
 
+    /** Definitive Initial Requests. */
     case NW_GTP_CREATE_SESSION_REQ:
     case NW_GTP_MODIFY_BEARER_REQ:
     case NW_GTP_DELETE_SESSION_REQ:
-    case NW_GTP_CREATE_BEARER_REQ:
-    case NW_GTP_UPDATE_BEARER_REQ:
-    case NW_GTP_DELETE_BEARER_REQ:
     case NW_GTP_RELEASE_ACCESS_BEARERS_REQ:
     case NW_GTP_CREATE_INDIRECT_DATA_FORWARDING_TUNNEL_REQ:
     case NW_GTP_DELETE_INDIRECT_DATA_FORWARDING_TUNNEL_REQ:
-    /** Handover Related Messages. */
+      /** Handover Related Messages. */
     case NW_GTP_FORWARD_RELOCATION_REQ:
     case NW_GTP_FORWARD_ACCESS_CONTEXT_NTF:
     case NW_GTP_FORWARD_RELOCATION_COMPLETE_NTF:
     case NW_GTP_RELOCATION_CANCEL_REQ:
     case NW_GTP_CONTEXT_REQ:
-    /** S11: Paging. */
+      /** S11: Paging. */
     case NW_GTP_DOWNLINK_DATA_NOTIFICATION:
       rc = nwGtpv2cHandleInitialReq(thiz, msgType, udpData, udpDataLen, peerPort, peerIp);
       break;
+
+    /** May be initial request or triggered requests. */
+    case NW_GTP_CREATE_BEARER_REQ:
+    case NW_GTP_UPDATE_BEARER_REQ:
+    case NW_GTP_DELETE_BEARER_REQ:
+    {
+      /** Check the received port, if it is an Initial Request, a Triggered Request or a Triggered Response. */
+      if(localPort == thiz->udp.gtpv2cStandardPort){
+        /** Message received on standard port, checking for Initial Requests. */
+        rc = nwGtpv2cHandleInitialReq(thiz, msgType, udpData, udpDataLen, peerPort, peerIp);
+        break;
+      } else {
+        /** Message received on high port, checking for triggered requests and responses. */
+        rc = nwGtpv2cHandleTriggeredReq(thiz, msgType, udpData, udpDataLen, localPort, peerPort, peerIp);
+        break;
+      }
+    }
+    break;
 
     case NW_GTP_ECHO_RSP:
     case NW_GTP_CREATE_SESSION_RSP:
@@ -1452,21 +1586,26 @@ static nw_rc_t                            nwGtpv2cHandleTriggeredAck(
     case NW_GTP_CREATE_BEARER_RSP:
     case NW_GTP_UPDATE_BEARER_RSP:
     case NW_GTP_DELETE_BEARER_RSP:
+    case NW_GTP_DELETE_BEARER_FAILURE_IND:
+//    case NW_GTP_BEARER_RESOURCE_FAILURE_IND:
     case NW_GTP_RELEASE_ACCESS_BEARERS_RSP:
     case NW_GTP_CREATE_INDIRECT_DATA_FORWARDING_TUNNEL_RSP:
     /** Handover Related Messages. */
     case NW_GTP_FORWARD_RELOCATION_RSP:
     case NW_GTP_FORWARD_ACCESS_CONTEXT_ACK:
     case NW_GTP_DELETE_INDIRECT_DATA_FORWARDING_TUNNEL_RSP:
-    case NW_GTP_CONTEXT_RSP:
     case NW_GTP_FORWARD_RELOCATION_COMPLETE_ACK:
     case NW_GTP_RELOCATION_CANCEL_RSP:
-      rc = nwGtpv2cHandleTriggeredRsp (thiz, msgType, udpData, udpDataLen, peerPort, peerIp);
+      rc = nwGtpv2cHandleTriggeredRsp (thiz, msgType, udpData, udpDataLen, localPort, peerPort, peerIp, true); /**< We will check inside, if the received response is to be acked. */
       break;
-
+    case NW_GTP_CONTEXT_RSP:
+      rc = nwGtpv2cHandleTriggeredRsp (thiz, msgType, udpData, udpDataLen, localPort, peerPort, peerIp, false); /**< We will check inside, if the received response is to be acked. */
+    break;
     case NW_GTP_CONTEXT_ACK:
-      rc = nwGtpv2cHandleTriggeredAck(thiz, msgType, udpData, udpDataLen, peerPort, peerIp);
-      break;
+      /** Ignore the received Ctx ACK (no transaction). */
+    	// todo: handle eventually..
+        rc = NW_OK;
+        break;
 
     default:{
         /*
@@ -1843,7 +1982,7 @@ static nw_rc_t                            nwGtpv2cHandleTriggeredAck(
     OAI_GCC_DIAG_ON(int-to-pointer-cast);
     timeoutInfo->next = gpGtpv2cTimeoutInfoPool;
     gpGtpv2cTimeoutInfoPool = timeoutInfo;
-    OAILOG_DEBUG (LOG_GTPV2C, "Stopping active timer 0x%" PRIxPTR " for info 0x%p!\n", timeoutInfo->hTimer, timeoutInfo);
+//    OAILOG_DEBUG (LOG_GTPV2C, "Stopping active timer 0x%" PRIxPTR " for info 0x%p!\n", timeoutInfo->hTimer, timeoutInfo);
 
     if (thiz->activeTimerInfo == timeoutInfo) {
       OAILOG_DEBUG (LOG_GTPV2C, "Stopping active timer 0x%" PRIxPTR " for info 0x%p!\n", timeoutInfo->hTimer, timeoutInfo);

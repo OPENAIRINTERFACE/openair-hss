@@ -50,8 +50,8 @@ decode_bearer_resource_modification_request (
   /*
    * Decoding mandatory fields
    */
-  if ((decoded_result = decode_u8_linked_eps_bearer_identity (&bearer_resource_modification_request->epsbeareridentityforpacketfilter, 0, *(buffer + decoded) >> 4, len - decoded)) < 0)
-    return decoded_result;
+  if ((decoded_result = decode_u8_linked_eps_bearer_identity (&bearer_resource_modification_request->epsbeareridentityforpacketfilter, 0, *(buffer + decoded) & 0x0f, len - decoded)) < 0)
+     return decoded_result;
 
   decoded++;
 

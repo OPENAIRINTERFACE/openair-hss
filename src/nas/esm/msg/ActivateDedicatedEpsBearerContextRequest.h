@@ -23,12 +23,12 @@
 #define ACTIVATE_DEDICATED_EPS_BEARER_CONTEXT_REQUEST_H_
 
 #include "MessageType.h"
-#include "LinkedEpsBearerIdentity.h"
-#include "EpsQualityOfService.h"
-#include "RadioPriority.h"
 #include "3gpp_23.003.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"
+#include "LinkedEpsBearerIdentity.h"
+#include "RadioPriority.h"
+#include "EpsQualityOfService.h"
 
 /* Minimum length macro. Formed by minimum length of each mandatory field */
 #define ACTIVATE_DEDICATED_EPS_BEARER_CONTEXT_REQUEST_MINIMUM_LENGTH ( \

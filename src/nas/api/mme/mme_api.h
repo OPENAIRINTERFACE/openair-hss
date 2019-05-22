@@ -39,9 +39,9 @@ Description Implements the API used by the NAS layer running in the MME
 #ifndef FILE_MME_API_SEEN
 #define FILE_MME_API_SEEN
 
-#include "TrackingAreaIdentityList.h"
 #include "3gpp_23.003.h"
 #include "common_types.h"
+#include "TrackingAreaIdentityList.h"
 
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/
@@ -83,6 +83,7 @@ typedef struct mme_api_emm_config_s {
   uint8_t           prefered_ciphering_algorithm[8];// choice in NAS_SECURITY_ALGORITHMS_EEA0, etc
   uint8_t           eps_network_feature_support;
   bool              force_push_pco;
+  bool				force_tau;
   tai_list_t        tai_list;
 } mme_api_emm_config_t;
 
@@ -132,14 +133,10 @@ void mme_api_duplicate_enb_ue_s1ap_id_detected (
     const mme_ue_s1ap_id_t mme_ue_s1ap_id,
     const bool             is_remove_old);
 
-int mme_api_get_esm_config(mme_api_esm_config_t *config);
-
 int
 mme_api_notify_imsi ( const mme_ue_s1ap_id_t id, const imsi64_t imsi64);
 
 int mme_api_notify_new_guti (const mme_ue_s1ap_id_t ueid, guti_t * const guti);
-
-int mme_api_registration_complete(const mme_ue_s1ap_id_t mme_ue_s1ap_id);
 
 int mme_api_new_guti(const imsi_t * const imsi,
                      const guti_t * const old_guti,
@@ -147,16 +144,8 @@ int mme_api_new_guti(const imsi_t * const imsi,
                      const tai_t  * const originating_tai,
                      tai_list_t   * const tai_list);
 
-bool
-mme_api_get_pending_bearer_deactivation (mme_ue_s1ap_id_t mme_ue_s1ap_id);
-
-void
-mme_api_set_pending_bearer_deactivation (mme_ue_s1ap_id_t mme_ue_s1ap_id, bool pending_bearer_deactivation);
-
-int mme_api_subscribe(bstring *apn, mme_api_ip_version_t mme_pdn_index, bstring *pdn_addr,
-                      int is_emergency, mme_api_qos_t *qos);
-int mme_api_unsubscribe(bstring apn);
-
 void mme_ue_context_update_ue_emm_state (mme_ue_s1ap_id_t mme_ue_s1ap_id, mm_state_t new_emm_state);
+
+subscription_data_t * mme_api_remove_subscription_data (const imsi64_t const imsi64);
 
 #endif /* FILE_MME_API_SEEN*/

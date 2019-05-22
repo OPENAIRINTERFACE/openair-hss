@@ -86,7 +86,7 @@ static void oai_fd_logger(int loglevel, const char * format, va_list args)
   if ((0 > rv2) || ((FD_LOG_MAX_MESSAGE_LENGTH - rv1) < rv2)) {
     return;
   }
-  fprintf (stdout, "%s\n", buffer);
+  OAILOG_EXTERNAL (loglevel, LOG_S6A, "%s\n", buffer);
 }
 
 //------------------------------------------------------------------------------

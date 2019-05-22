@@ -40,10 +40,7 @@
 
 *****************************************************************************/
 
-#include "user_parser.h"
-
 #include "include/commonDef.h"
-#include "util/socket.h"
 #include "util/device.h"
 
 #include <stdio.h>              // printf, perror
@@ -55,6 +52,8 @@
 #include <string.h>             // memset
 #include <pthread.h>
 #include <poll.h>
+#include "../../test/user/user_parser.h"
+#include "../../util/socket.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -168,7 +167,6 @@ main (
       exit (EXIT_FAILURE);
     }
 
-    printf ("INFO\t: The User Simulator is now connected to %s (%d)\n", devpath, USER_GETFD ());
   } else {
     /*
      * Initialize network socket handlers
@@ -190,7 +188,6 @@ main (
       exit (EXIT_FAILURE);
     }
 
-    printf ("INFO\t: The User Simulator is now connected to %s/%s (%d)\n", host, port, USER_GETFD ());
   }
 
   /*
@@ -279,7 +276,6 @@ main (
   /*
    * Termination cleanup
    */
-  printf ("INFO\t: Closing user endpoint descriptor %d\n", USER_GETFD ());
   USER_CLOSE ();
   printf ("INFO\t: User simulator exited\n");
   exit (EXIT_SUCCESS);
@@ -337,7 +333,6 @@ _signal_handler (
   int signal_number)
 {
   printf ("\nWARNING\t: Signal %d received\n", signal_number);
-  printf ("INFO\t: Closing user socket %d\n", USER_GETFD ());
   USER_CLOSE ();
   printf ("INFO\t: User simulator exited\n");
   exit (EXIT_SUCCESS);

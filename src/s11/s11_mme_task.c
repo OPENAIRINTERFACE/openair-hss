@@ -101,12 +101,21 @@ s11_mme_ulp_process_stack_req_cb (
         ret = s11_mme_handle_release_access_bearer_response (&s11_mme_stack_handle, pUlpApi);
         break;
 
+      case NW_GTP_BEARER_RESOURCE_FAILURE_IND:
+        ret = s11_mme_handle_bearer_resource_failure_indication (&s11_mme_stack_handle, pUlpApi);
+        break;
+
+      case NW_GTP_DELETE_BEARER_FAILURE_IND:
+        ret = s11_mme_handle_delete_bearer_failure_indication (&s11_mme_stack_handle, pUlpApi);
+        break;
+
       default:
-        OAILOG_WARNING (LOG_S11, "Received unhandled TRIGGERED_RSP_IND message type %d\n", pUlpApi->u_api_info.triggeredRspIndInfo.msgType);
+        OAILOG_ERROR(LOG_S11, "Received unhandled TRIGGERED_RSP_IND message type %d\n", pUlpApi->u_api_info.triggeredRspIndInfo.msgType);
       }
       break;
 
     case NW_GTPV2C_ULP_API_INITIAL_REQ_IND:
+    case NW_GTPV2C_ULP_API_TRIGGERED_REQ_IND:
       switch (pUlpApi->u_api_info.initialReqIndInfo.msgType) {
         case NW_GTP_CREATE_BEARER_REQ:
           ret = s11_mme_handle_create_bearer_request (&s11_mme_stack_handle, pUlpApi);
@@ -136,7 +145,7 @@ s11_mme_ulp_process_stack_req_cb (
        // todo: add initial reqs --> CBR / UBR / DBR !
 
     default:
-      OAILOG_WARNING (LOG_S11, "Received unhandled message type %d\n", pUlpApi->apiType);
+      OAILOG_ERROR(LOG_S11, "Received unhandled message type %d\n", pUlpApi->apiType);
       break;
   }
 
@@ -149,6 +158,7 @@ s11_mme_send_udp_msg (
   nw_gtpv2c_udp_handle_t udpHandle,
   uint8_t * buffer,
   uint32_t buffer_len,
+  uint16_t localPort,
   struct in_addr *peerIpAddr,
   uint16_t peerPort)
 {
@@ -159,10 +169,12 @@ s11_mme_send_udp_msg (
 
   message_p = itti_alloc_new_message (TASK_S11, UDP_DATA_REQ);
   udp_data_req_p = &message_p->ittiMsg.udp_data_req;
+  udp_data_req_p->local_port = localPort;
   udp_data_req_p->peer_address.s_addr = peerIpAddr->s_addr;
   udp_data_req_p->peer_port = peerPort;
   udp_data_req_p->buffer = buffer;
   udp_data_req_p->buffer_length = buffer_len;
+
   ret = itti_send_msg_to_task (TASK_UDP, INSTANCE_DEFAULT, message_p);
   return ((ret == 0) ? NW_OK : NW_FAILURE);
 }
@@ -203,6 +215,7 @@ s11_mme_stop_timer_wrapper (
   return ((timer_remove (timer_id, &timeoutArg) == 0) ? NW_OK : NW_FAILURE);
 }
 
+//------------------------------------------------------------------------------
 static void                            *
 s11_mme_thread (
   void *args)
@@ -246,6 +259,16 @@ s11_mme_thread (
       }
       break;
 
+    case S11_DELETE_BEARER_COMMAND:{
+        s11_mme_delete_bearer_command (&s11_mme_stack_handle, &received_message_p->ittiMsg.s11_delete_bearer_command);
+      }
+      break;
+
+    case S11_BEARER_RESOURCE_COMMAND:{
+        s11_mme_bearer_resource_command(&s11_mme_stack_handle, &received_message_p->ittiMsg.s11_bearer_resource_command);
+      }
+      break;
+
     case S11_MODIFY_BEARER_REQUEST:{
         s11_mme_modify_bearer_request (&s11_mme_stack_handle, &received_message_p->ittiMsg.s11_modify_bearer_request);
       }
@@ -282,7 +305,7 @@ s11_mme_thread (
         udp_data_ind_t                         *udp_data_ind;
 
         udp_data_ind = &received_message_p->ittiMsg.udp_data_ind;
-        rc = nwGtpv2cProcessUdpReq (s11_mme_stack_handle, udp_data_ind->msgBuf, udp_data_ind->buffer_length, udp_data_ind->peer_port, &udp_data_ind->peer_address);
+        rc = nwGtpv2cProcessUdpReq (s11_mme_stack_handle, udp_data_ind->msgBuf, udp_data_ind->buffer_length, udp_data_ind->local_port, udp_data_ind->peer_port, &udp_data_ind->peer_address);
         DevAssert (rc == NW_OK);
       }
       break;
@@ -343,6 +366,9 @@ int s11_mme_init (const mme_config_t * const mme_config_p)
    * Set UDP entity
    */
   udp.hUdp = (nw_gtpv2c_udp_handle_t) NULL;
+  mme_config_read_lock (&mme_config);
+  udp.gtpv2cStandardPort = mme_config.ipv4.port_s11;
+  mme_config_unlock (&mme_config);
   udp.udpDataReqCallback = s11_mme_send_udp_msg;
   DevAssert (NW_OK == nwGtpv2cSetUdpEntity (s11_mme_stack_handle, &udp));
   /*
@@ -362,9 +388,9 @@ int s11_mme_init (const mme_config_t * const mme_config_p)
   }
 
   DevAssert (NW_OK == nwGtpv2cSetLogLevel (s11_mme_stack_handle, NW_LOG_LEVEL_DEBG));
-  mme_config_read_lock (&mme_config);
-  s11_send_init_udp (&mme_config.ipv4.s11, mme_config.ipv4.port_s11);
-  mme_config_unlock (&mme_config);
+  /** Create 2 sockets, one for 2123 (received initial requests), another high port. */
+  s11_send_init_udp (&mme_config.ipv4.s11, udp.gtpv2cStandardPort);
+  s11_send_init_udp (&mme_config.ipv4.s11, 0);
 
   bstring b = bfromcstr("s11_mme_teid_2_gtv2c_teid_handle");
   s11_mme_teid_2_gtv2c_teid_handle = hashtable_ts_create(mme_config_p->max_ues, HASH_TABLE_DEFAULT_HASH_FUNC, hash_free_int_func, b);

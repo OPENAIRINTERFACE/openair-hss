@@ -173,7 +173,9 @@ typedef struct nw_gtpv2c_msg_s {
 
 typedef struct nw_gtpv2c_trxn_s {
   uint32_t                      seqNum;
+  uint32_t 						teidLocal;
   struct in_addr                peerIp;
+  uint32_t                      localPort;
   uint32_t                      peerPort;
   uint32_t                      noDelete;
   uint8_t                       t3Timer;
@@ -183,6 +185,7 @@ typedef struct nw_gtpv2c_trxn_s {
   nw_gtpv2c_timer_handle_t      hRspTmr;                                /**< Handle to reponse timer            */
   nw_gtpv2c_tunnel_handle_t     hTunnel;                                /**< Handle to local tunnel context     */
   nw_gtpv2c_ulp_trxn_handle_t   hUlpTrxn;                               /**< Handle to ULP tunnel context       */
+  uint8_t                       trx_flags;                              /**< Flags in the trx to be signalized back. */
   RB_ENTRY (nw_gtpv2c_trxn_s)   outstandingTxSeqNumMapRbtNode;          /**< RB Tree Data Structure Node        */
   RB_ENTRY (nw_gtpv2c_trxn_s)   outstandingRxSeqNumMapRbtNode;          /**< RB Tree Data Structure Node        */
   struct nw_gtpv2c_trxn_s*      next;

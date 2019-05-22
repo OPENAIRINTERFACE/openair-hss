@@ -22,8 +22,8 @@
 #ifndef DEACTIVATE_EPS_BEARER_CONTEXT_REQUEST_H_
 #define DEACTIVATE_EPS_BEARER_CONTEXT_REQUEST_H_
 
-#include "MessageType.h"
 #include "EsmCause.h"
+#include "MessageType.h"
 #include "3gpp_23.003.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"

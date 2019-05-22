@@ -40,7 +40,7 @@
 
 *****************************************************************************/
 
-#include "as_data.h"
+#include "../../test/as_simulator/as_data.h"
 
 #include "as_message.h"
 

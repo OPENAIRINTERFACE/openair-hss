@@ -41,24 +41,23 @@ Description Defines functions executed at the EMMAS Service Access
 #ifndef FILE_EMM_SEND_SEEN
 #define FILE_EMM_SEND_SEEN
 
-#include "EmmStatus.h"
-
-#include "DetachRequest.h"
-#include "DetachAccept.h"
+#include "emm_asDef.h"
 #include "AttachAccept.h"
 #include "AttachReject.h"
-#include "TrackingAreaUpdateAccept.h"
-#include "TrackingAreaUpdateReject.h"
-#include "ServiceReject.h"
-#include "GutiReallocationCommand.h"
-#include "AuthenticationRequest.h"
 #include "AuthenticationReject.h"
+#include "AuthenticationRequest.h"
+#include "CsServiceNotification.h"
+#include "DownlinkNasTransport.h"
+#include "EmmInformation.h"
+#include "GutiReallocationCommand.h"
 #include "IdentityRequest.h"
 #include "NASSecurityModeCommand.h"
-#include "EmmInformation.h"
-#include "DownlinkNasTransport.h"
-#include "CsServiceNotification.h"
-#include "emm_asDef.h"
+#include "ServiceReject.h"
+#include "TrackingAreaUpdateAccept.h"
+#include "TrackingAreaUpdateReject.h"
+#include "DetachAccept.h"
+#include "DetachRequest.h"
+#include "EmmStatus.h"
 
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/

@@ -32,6 +32,25 @@
 #include "nas_message.h"
 #include "as_message.h"
 #include "esm_proc.h"
+// todo: find a better place for this
+#include "mme_app_esm_procedures.h"
+#include "intertask_interface_types.h"
+
+int
+nas_itti_esm_data_ind(
+  const mme_ue_s1ap_id_t  ue_id,
+  bstring                 esm_msg_p,
+  imsi_t                 *imsi,
+  tai_t                  *visited_tai);
+
+int
+nas_itti_esm_detach_ind(
+  const mme_ue_s1ap_id_t  ue_id,
+  const bool clr);
+
+int
+nas_itti_s11_retry_ind(
+  const mme_ue_s1ap_id_t  ue_id);
 
 int nas_itti_dl_data_req(
   const mme_ue_s1ap_id_t ue_idP,
@@ -66,26 +85,18 @@ nas_itti_erab_release_req (const mme_ue_s1ap_id_t ue_id,
 void nas_itti_pdn_config_req(
   unsigned int            ue_idP,
   const imsi_t           *const imsi_pP,
-  esm_proc_data_t        *proc_data_pP,
-  esm_proc_pdn_request_t  request_typeP);
-
-void nas_itti_pdn_connectivity_req(
-  int                     ptiP,
-  const mme_ue_s1ap_id_t  ue_idP,
-  const pdn_cid_t         pdn_cidP,
-  const ebi_t             default_ebi,
-  const imsi64_t          imsi,
-  const imsi_t           *const imsi_pP,
-  esm_proc_data_t        *proc_data_pP,
-  esm_proc_pdn_request_t  request_typeP);
+  esm_proc_pdn_request_t  request_type,
+  plmn_t                 *visited_plmn);
 
 void nas_itti_pdn_disconnect_req(
   mme_ue_s1ap_id_t        ue_idP,
   ebi_t                   default_ebi,
+  pti_t                   pti,
+  bool                    deleteTunnel,
+  bool                    handover,
   struct in_addr          saegw_s11_addr, /**< Put them into the UE context ? */
   teid_t                  saegw_s11_teid,
-  bool                    noDelete,
-  esm_proc_data_t        *proc_data_pP);
+  pdn_cid_t               pdn_cid);
 
 void nas_itti_ctx_req(
   const uint32_t        ue_idP,
@@ -102,10 +113,15 @@ void nas_itti_auth_info_req(
   const uint8_t          num_vectorsP,
   const_bstring    const auts_pP);
 
-void nas_itti_establish_rej(
-  const mme_ue_s1ap_id_t ue_idP,
-  const imsi_t  * const imsi_pP,
-  uint8_t             initial_reqP);
+void nas_itti_s11_bearer_resource_cmd (
+  const pti_t            pti,
+  const ebi_t            linked_ebi,
+  const teid_t           local_teid,
+  const teid_t           peer_teid,
+  const struct in_addr  *saegw_s11_ipv4,
+  const ebi_t                    ebi,
+  const traffic_flow_template_t * const tad,
+  const flow_qos_t              * const flow_qos);
 
 void nas_itti_establish_cnf(
   const mme_ue_s1ap_id_t ue_idP,
@@ -120,7 +136,8 @@ void nas_itti_detach_req(
 
 void nas_itti_activate_eps_bearer_ctx_cnf(
     const mme_ue_s1ap_id_t ue_idP,
-    const ebi_t            ebi);
+    const ebi_t            ebi,
+    const teid_t           saegw_s1u_teid);
 
 void nas_itti_activate_eps_bearer_ctx_rej(
     const mme_ue_s1ap_id_t ue_idP,

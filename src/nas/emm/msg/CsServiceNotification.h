@@ -22,13 +22,13 @@
 #ifndef FILE_CS_SERVICE_NOTIFICATION_SEEN
 #define FILE_CS_SERVICE_NOTIFICATION_SEEN
 
-#include "SecurityHeaderType.h"
+#include "Cli.h"
+#include "LcsClientIdentity.h"
+#include "LcsIndicator.h"
 #include "MessageType.h"
 #include "PagingIdentity.h"
-#include "Cli.h"
+#include "SecurityHeaderType.h"
 #include "SsCode.h"
-#include "LcsIndicator.h"
-#include "LcsClientIdentity.h"
 #include "3gpp_23.003.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"

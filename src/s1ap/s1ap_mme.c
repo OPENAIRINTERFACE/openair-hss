@@ -56,6 +56,7 @@
 #include "s1ap_mme_retransmission.h"
 #include "s1ap_mme_itti_messaging.h"
 #include "dynamic_memory_check.h"
+#include "3gpp_23.003.h"
 #include "mme_config.h"
 
 
@@ -100,6 +101,22 @@ static int s1ap_send_init_sctp (void)
     return itti_send_msg_to_task (TASK_SCTP, INSTANCE_DEFAULT, message_p);
   }
   return RETURNerror;
+}
+
+//------------------------------------------------------------------------------
+static void
+s1ap_remove_enb (
+  void ** enb_ref)
+{
+	enb_description_t                      *enb_description = NULL;
+
+  if (*enb_ref ) {
+	  enb_description = (enb_description_t*)(*enb_ref);
+	  hashtable_ts_destroy(&enb_description->ue_coll);
+	  free_wrapper(enb_ref);
+	  nb_enb_associated--;
+  }
+  return;
 }
 
 //------------------------------------------------------------------------------
@@ -173,9 +190,7 @@ s1ap_mme_thread (
 
     // From MME_APP task
     case S1AP_UE_CONTEXT_RELEASE_COMMAND:{
-      OAILOG_ERROR (LOG_S1AP, "ENTERED S1AP_UE_CONTEXT_RELEASE_COMMAND\n");
       s1ap_handle_ue_context_release_command (&received_message_p->ittiMsg.s1ap_ue_context_release_command);
-        OAILOG_ERROR (LOG_S1AP, "AFTER S1AP_UE_CONTEXT_RELEASE_COMMAND\n");
       }
       break;
 
@@ -273,12 +288,18 @@ s1ap_mme_thread (
       case TIMER_HAS_EXPIRED:{
         ue_description_t                       *ue_ref_p = NULL;
         if (received_message_p->ittiMsg.timer_has_expired.arg != NULL) {
-          ue_description_t* ue_ref_p = (ue_description_t *)(received_message_p->ittiMsg.timer_has_expired.arg);
+          enb_s1ap_id_key_t enb_s1ap_id_key = (enb_s1ap_id_key_t)(received_message_p->ittiMsg.timer_has_expired.arg);
+          enb_ue_s1ap_id_t enb_ue_s1ap_id = MME_APP_ENB_S1AP_ID_KEY2ENB_S1AP_ID(enb_s1ap_id_key);
+          uint32_t enb_id = ((enb_s1ap_id_key >> 24) & 0xFFFFFFFFFF);
+
+          /** Check if the UE still exists. */
+          ue_ref_p = s1ap_is_enb_ue_s1ap_id_in_list_per_enb(enb_ue_s1ap_id, enb_id);
           if (!ue_ref_p) {
             OAILOG_WARNING (LOG_S1AP, "Timer with id 0x%lx expired but no associated UE context!\n", received_message_p->ittiMsg.timer_has_expired.timer_id);
             break;
           }
-          OAILOG_WARNING (LOG_S1AP, "Processing expired timer with id 0x%lx for ueId "MME_UE_S1AP_ID_FMT " with s1ap_ue_context_rel_timer_id 0x%lx !\n", received_message_p->ittiMsg.timer_has_expired.timer_id,
+          OAILOG_WARNING (LOG_S1AP, "Processing expired timer with id 0x%lx for ueId "MME_UE_S1AP_ID_FMT " with s1ap_ue_context_rel_timer_id 0x%lx !\n",
+        		  received_message_p->ittiMsg.timer_has_expired.timer_id,
               ue_ref_p->mme_ue_s1ap_id, ue_ref_p->s1ap_ue_context_rel_timer.id);
           if (received_message_p->ittiMsg.timer_has_expired.timer_id == ue_ref_p->s1ap_ue_context_rel_timer.id) {
             // UE context release complete timer expiry handler
@@ -345,7 +366,7 @@ s1ap_mme_init(void)
   OAILOG_DEBUG (LOG_S1AP, "S1AP Release v10.5\n");
   // 16 entries for n eNB.
   bstring bs1 = bfromcstr("s1ap_eNB_coll");
-  hash_table_ts_t* h = hashtable_ts_init (&g_s1ap_enb_coll, mme_config.max_enbs, NULL, free_wrapper, bs1);
+  hash_table_ts_t* h = hashtable_ts_init (&g_s1ap_enb_coll, mme_config.max_enbs, NULL, s1ap_remove_enb, bs1); /**< Use a better removal handler. */
   bdestroy_wrapper (&bs1);
   if (!h) return RETURNerror;
 
@@ -366,6 +387,7 @@ s1ap_mme_init(void)
 void s1ap_mme_exit (void)
 {
   OAILOG_DEBUG (LOG_S1AP, "Cleaning S1AP\n");
+
   if (hashtable_ts_destroy(&g_s1ap_enb_coll) != HASH_TABLE_OK) {
     OAILOG_ERROR(LOG_S1AP, "An error occured while destroying s1 eNB hash table. \n");
   }
@@ -439,6 +461,7 @@ bool s1ap_dump_ue_hash_cb (__attribute__((unused)) const hash_key_t keyP,
   s1ap_dump_ue(ue_ref);
   return false;
 }
+
 //------------------------------------------------------------------------------
 void
 s1ap_dump_ue (const ue_description_t * const ue_ref)
@@ -452,9 +475,7 @@ s1ap_dump_ue (const ue_description_t * const ue_ref)
   UE_LIST_OUT ("MME UE s1ap id:   0x%08x", ue_ref->mme_ue_s1ap_id);
   UE_LIST_OUT ("SCTP stream recv: 0x%04x", ue_ref->sctp_stream_recv);
   UE_LIST_OUT ("SCTP stream send: 0x%04x", ue_ref->sctp_stream_send);
-#  else
-  ue_ref = ue_ref;
-#  endif
+# endif
 }
 
 //------------------------------------------------------------------------------
@@ -470,6 +491,21 @@ bool s1ap_enb_compare_by_enb_id_cb (__attribute__((unused)) const hash_key_t key
   }
   return false;
 }
+
+//------------------------------------------------------------------------------
+bool s1ap_enb_compare_by_tac_cb (__attribute__((unused)) const hash_key_t keyP,
+                                    void * const elementP,
+                                    void * parameterP, void **resultP)
+{
+  const tac_t                  * const tac_p = (const tac_t*const)parameterP;
+  enb_description_t                      *enb_ref  = (enb_description_t*)elementP;
+  if ( *tac_p == enb_ref->tai_list.partial_tai_list[0].u.tai_one_plmn_consecutive_tacs.tac) {
+    *resultP = elementP;
+    return true;
+  }
+  return false;
+}
+
 //------------------------------------------------------------------------------
 enb_description_t                      *
 s1ap_is_enb_id_in_list (
@@ -479,6 +515,28 @@ s1ap_is_enb_id_in_list (
   uint32_t                               *enb_id_p  = (uint32_t*)&enb_id;
   hashtable_ts_apply_callback_on_elements((hash_table_ts_t * const)&g_s1ap_enb_coll, s1ap_enb_compare_by_enb_id_cb, (void *)enb_id_p, (void**)&enb_ref);
   return enb_ref;
+}
+
+//------------------------------------------------------------------------------
+void s1ap_is_tac_in_list (
+  const tac_t tac,
+  int *num_enbs,
+  enb_description_t ** enbs)
+{
+  enb_description_t                      *enb_ref = NULL;
+  tac_t                                  *tac_p   = (tac_t*)&tac;
+
+  /** Collect all eNBs for the given TAC. */
+  hashtable_element_array_t              ea;
+//  enb_description_t *			         enb_p_elements[mme_config.max_enbs];
+  memset(&ea, 0, sizeof(hashtable_element_array_t));
+//  memset(&enb_p_elements, 0, (sizeof(enb_description_t*) * mme_config.max_enbs));
+  ea.elements = enbs;
+
+  hashtable_ts_apply_list_callback_on_elements((hash_table_ts_t * const)&g_s1ap_enb_coll, s1ap_enb_compare_by_tac_cb, (void *)tac_p, &ea);
+  OAILOG_DEBUG(LOG_S1AP, "Found %d matching enb references based on the received tac " TAC_FMT ". \n", ea.num_elements, tac);
+  *num_enbs = ea.num_elements;
+//  *enbs = enb_p_elements;
 }
 
 //------------------------------------------------------------------------------
@@ -594,7 +652,7 @@ s1ap_is_ue_mme_id_in_list (
   mme_ue_s1ap_id_t                       *mme_ue_s1ap_id_p = (mme_ue_s1ap_id_t*)&mme_ue_s1ap_id;
 
   hashtable_ts_apply_callback_on_elements(&g_s1ap_enb_coll, s1ap_enb_find_ue_by_mme_ue_id_cb, (void*)mme_ue_s1ap_id_p, (void**)&ue_ref);
-  OAILOG_TRACE(LOG_S1AP, "Return ue_ref %p \n", ue_ref);
+//  OAILOG_TRACE(LOG_S1AP, "Return ue_ref %p \n", ue_ref);
   return ue_ref;
 }
 
@@ -769,21 +827,9 @@ s1ap_remove_ue (
       update_mme_app_stats_connected_enb_sub();
     } else if (enb_ref->s1_state == S1AP_SHUTDOWN) {
       OAILOG_INFO(LOG_S1AP, "Deleting eNB");
-      s1ap_remove_enb(enb_ref);
+      hashtable_ts_free (&g_s1ap_enb_coll, enb_ref->sctp_assoc_id);
     }
   }
-}
-
-//------------------------------------------------------------------------------
-void
-s1ap_remove_enb (
-  enb_description_t * enb_ref)
-{
-  if (enb_ref == NULL)
-    return;
-  hashtable_ts_destroy(&enb_ref->ue_coll);
-  hashtable_ts_free (&g_s1ap_enb_coll, enb_ref->sctp_assoc_id);
-  nb_enb_associated--;
 }
 
 //bool

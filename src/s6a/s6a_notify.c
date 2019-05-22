@@ -122,6 +122,8 @@ s6a_na_cb (
   }
 
   OAILOG_INFO(LOG_S6A, "Successfully parsed Notify Answer from HSS. \n");
+  fd_msg_free(*msg);
+  *msg = NULL;
 
 err:
   return RETURNok;
@@ -181,7 +183,7 @@ s6a_generate_notify_req (
     value.os.len = blength(host);
     CHECK_FCT (fd_msg_avp_setvalue (avp, &value));
     CHECK_FCT (fd_msg_avp_add (msg, MSG_BRW_LAST_CHILD, avp));
-    bdestroy(host);
+    bdestroy_wrapper(&host);
   }
   /*
    * Destination_Realm

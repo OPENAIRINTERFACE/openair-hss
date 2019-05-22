@@ -55,6 +55,7 @@ add_library(MME_APP
     mme_app_main.c
     mme_app_pdn_context.c
     mme_app_procedures.c
+    mme_app_esm_procedures.c
     mme_app_sgw_selection.c
     mme_app_statistics.c
     mme_app_transport.c

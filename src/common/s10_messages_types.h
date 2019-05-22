@@ -133,7 +133,7 @@ typedef struct itti_s10_forward_relocation_response_s {
   // todo: Indication : This IE shall be included if any of the flags are set to 1. SGW Change Indication:   - This flag shall be set to 1 if the target MME/SGSN   has selected a new SGW.
 
   // todo: list of bearer contexts (todo: after RAB has been established?)
-  bearer_contexts_to_be_created_t  *handovered_bearers;
+  bearer_contexts_created_t  handovered_bearers;
 
   // todo: This IE is included if cause value is contained in S1-AP message. Refer to the 3GPP TS 29.010 [42] for the mapping of cause values between S1AP, RANAP and BSSGP.
 
@@ -342,10 +342,11 @@ typedef struct itti_s10_context_response_s{
   // Private Extension Private Extension        ///< optional
 
   /* S11 stack specific parameter. Not used in standalone epc mode */
-  void*                           trxn;                      ///< Transaction identifier (received) or the transaction itself (when sent)
+  void*                           trxnId;                      ///< Transaction identifier (received) or the transaction itself (when sent)
 
   struct in_addr                  peer_ip;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME
   uint16_t                        peer_port;           ///< MME port for S-GW or S-GW port for MME
+  uint16_t                        local_port;           ///< MME port for S-GW or S-GW port for MME
 } itti_s10_context_response_t;
 
 //-----------------------------------------------------------------------------
@@ -358,9 +359,11 @@ typedef struct itti_s10_context_response_s{
  */
 typedef struct itti_s10_context_acknowledge_s {
   teid_t                   teid;                ///< S11 MME Tunnel Endpoint Identifier
+  teid_t				   local_teid;
   uint32_t                 ue_id;
   // here fields listed in 3GPP TS 29.274
   gtpv2c_cause_t               cause;               ///<
+  void*                           trxnId;                      ///< Transaction identifier (received) or the transaction itself (when sent)
 
   // todo: indication flags
   // recovery_t(restart counter) recovery;      ///< This IE shall be included if contacting the peer for the first
@@ -371,7 +374,7 @@ typedef struct itti_s10_context_acknowledge_s {
   /* S11 stack specific parameter. Not used in standalone epc mode */
   struct in_addr                peer_ip;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME
   uint16_t                      peer_port;      ///< MME port for S-GW or S-GW port for MME
-  uint32_t                      trxnId;           ///< Transaction identifier
+  uint16_t                      local_port;      ///< MME port for S-GW or S-GW port for MME
 } itti_s10_context_acknowledge_t;
 
 //-----------------------------------------------------------------------------

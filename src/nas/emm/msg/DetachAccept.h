@@ -22,8 +22,8 @@
 #ifndef FILE_DETACH_ACCEPT_SEEN
 #define FILE_DETACH_ACCEPT_SEEN
 
-#include "SecurityHeaderType.h"
 #include "MessageType.h"
+#include "SecurityHeaderType.h"
 #include "3gpp_23.003.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"

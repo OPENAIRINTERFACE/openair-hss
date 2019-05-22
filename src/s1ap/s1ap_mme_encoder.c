@@ -83,14 +83,17 @@ static inline int                       s1ap_mme_encode_paging(
 
 static inline int                       s1ap_mme_encode_initiating (
   s1ap_message * message_p,
+  MessagesIds *message_id,
   uint8_t ** buffer,
   uint32_t * length);
 static inline int                       s1ap_mme_encode_successfull_outcome (
   s1ap_message * message_p,
+  MessagesIds *message_id,
   uint8_t ** buffer,
   uint32_t * len);
 static inline int                       s1ap_mme_encode_unsuccessfull_outcome (
   s1ap_message * message_p,
+  MessagesIds *message_id,
   uint8_t ** buffer,
   uint32_t * len);
 
@@ -159,22 +162,25 @@ s1ap_mme_encode_initial_context_setup_request (
 int
 s1ap_mme_encode_pdu (
   s1ap_message * message_p,
+  MessagesIds *message_id,
   uint8_t ** buffer,
   uint32_t * length)
 {
+
   DevAssert (message_p != NULL);
   DevAssert (buffer != NULL);
   DevAssert (length != NULL);
 
+
   switch (message_p->direction) {
   case S1AP_PDU_PR_initiatingMessage:
-    return s1ap_mme_encode_initiating (message_p, buffer, length);
+    return s1ap_mme_encode_initiating (message_p, message_id, buffer, length);
 
   case S1AP_PDU_PR_successfulOutcome:
-    return s1ap_mme_encode_successfull_outcome (message_p, buffer, length);
+    return s1ap_mme_encode_successfull_outcome (message_p, message_id, buffer, length);
 
   case S1AP_PDU_PR_unsuccessfulOutcome:
-    return s1ap_mme_encode_unsuccessfull_outcome (message_p, buffer, length);
+    return s1ap_mme_encode_unsuccessfull_outcome (message_p, message_id, buffer, length);
 
   default:
     OAILOG_NOTICE (LOG_S1AP, "Unknown message outcome (%d) or not implemented", (int)message_p->direction);
@@ -185,38 +191,94 @@ s1ap_mme_encode_pdu (
 }
 
 //------------------------------------------------------------------------------
+int s1ap_free_mme_encode_pdu(
+    s1ap_message *message, MessagesIds message_id) {
+  switch(message_id) {
+  case S1AP_S1_SETUP_LOG:
+     return free_s1ap_s1setupresponse(&message->msg.s1ap_S1SetupResponseIEs);
+  case S1AP_DOWNLINK_NAS_LOG:
+    return free_s1ap_uplinknastransport(&message->msg.s1ap_UplinkNASTransportIEs);
+  case S1AP_INITIAL_CONTEXT_SETUP_LOG:
+    return free_s1ap_initialcontextsetuprequest(&message->msg.s1ap_InitialContextSetupRequestIEs);
+  case S1AP_UE_CONTEXT_RELEASE_LOG:
+    return free_s1ap_uecontextreleasecommand(&message->msg.s1ap_UEContextReleaseCommandIEs);
+  case S1AP_E_RABSETUP_LOG:
+    return free_s1ap_e_rabsetuprequest(&message->msg.s1ap_E_RABSetupRequestIEs);
+  case S1AP_E_RABMODIFY_LOG:
+    return free_s1ap_e_rabmodifyrequest(&message->msg.s1ap_E_RABModifyRequestIEs);
+  case S1AP_E_RABRELEASE_LOG:
+    return free_s1ap_e_rabreleasecommand(&message->msg.s1ap_E_RABReleaseCommandIEs);
+
+  /** Free Handover Messages. */
+  case S1AP_HANDOVER_REQUEST_LOG:
+    return free_s1ap_handoverrequest(&message->msg.s1ap_HandoverRequestIEs);
+  case S1AP_MME_STATUS_TRANSFER_LOG:
+    return free_s1ap_mmestatustransfer(&message->msg.s1ap_MMEStatusTransferIEs);
+  case S1AP_PAGING_LOG:
+    return free_s1ap_paging(&message->msg.s1ap_PagingIEs);
+  case S1AP_PATH_SWITCH_ACK_LOG:
+    return free_s1ap_pathswitchrequestacknowledge(&message->msg.s1ap_PathSwitchRequestAcknowledgeIEs);
+  case S1AP_HANDOVER_COMMAND_LOG:
+    return free_s1ap_handovercommand(&message->msg.s1ap_HandoverCommandIEs);
+  case S1AP_HANDOVER_CANCEL_ACK_LOG:
+    return free_s1ap_handovercancelacknowledge(&message->msg.s1ap_HandoverCancelAcknowledgeIEs);
+  /** Failure Messages. */
+  case S1AP_S1_SETUP_FAILURE_LOG:
+    return free_s1ap_s1setupfailure(&message->msg.s1ap_S1SetupFailureIEs);
+  case S1AP_HANDOVER_FAILURE_LOG:
+    return free_s1ap_handoverpreparationfailure(&message->msg.s1ap_HandoverPreparationFailureIEs);
+  case S1AP_PATH_SWITCH_FAILURE_LOG:
+    return free_s1ap_pathswitchrequestfailure(&message->msg.s1ap_PathSwitchRequestFailureIEs);
+
+  default:
+    DevAssert(false);
+
+  }
+}
+
+//------------------------------------------------------------------------------
 static inline int
 s1ap_mme_encode_initiating (
   s1ap_message * message_p,
+  MessagesIds *message_id,
   uint8_t ** buffer,
   uint32_t * length)
 {
   switch (message_p->procedureCode) {
   case S1ap_ProcedureCode_id_downlinkNASTransport:
+    *message_id = S1AP_DOWNLINK_NAS_LOG;
     return s1ap_mme_encode_downlink_nas_transport (message_p, buffer, length);
 
   case S1ap_ProcedureCode_id_InitialContextSetup:
+    *message_id = S1AP_INITIAL_CONTEXT_SETUP_LOG;
     return s1ap_mme_encode_initial_context_setup_request (message_p, buffer, length);
 
   case S1ap_ProcedureCode_id_UEContextRelease:
+    *message_id = S1AP_UE_CONTEXT_RELEASE_LOG;
     return s1ap_mme_encode_ue_context_release_command (message_p, buffer, length);
 
   case S1ap_ProcedureCode_id_E_RABSetup:
+    *message_id = S1AP_E_RABSETUP_LOG;
     return s1ap_mme_encode_e_rab_setup (message_p, buffer, length);
 
   case S1ap_ProcedureCode_id_E_RABModify:
+    *message_id = S1AP_E_RABMODIFY_LOG;
     return s1ap_mme_encode_e_rab_modify (message_p, buffer, length);
 
   case S1ap_ProcedureCode_id_E_RABRelease:
+    *message_id = S1AP_E_RABRELEASE_LOG;
     return s1ap_mme_encode_e_rab_release (message_p, buffer, length);
 
   case S1ap_ProcedureCode_id_HandoverResourceAllocation:
+    *message_id = S1AP_HANDOVER_REQUEST_LOG;
     return s1ap_mme_encode_handover_resource_allocation (message_p, buffer, length);
 
   case S1ap_ProcedureCode_id_MMEStatusTransfer:
+    *message_id = S1AP_MME_STATUS_TRANSFER_LOG;
     return s1ap_mme_encode_mme_status_transfer (message_p, buffer, length);
 
   case S1ap_ProcedureCode_id_Paging:
+    *message_id = S1AP_PAGING_LOG;
     return s1ap_mme_encode_paging(message_p, buffer, length);
 
   default:
@@ -231,21 +293,26 @@ s1ap_mme_encode_initiating (
 static inline int
 s1ap_mme_encode_successfull_outcome (
   s1ap_message * message_p,
+  MessagesIds *message_id,
   uint8_t ** buffer,
   uint32_t * length)
 {
   switch (message_p->procedureCode) {
   case S1ap_ProcedureCode_id_S1Setup:
+    *message_id = S1AP_S1_SETUP_LOG;
     return s1ap_mme_encode_s1setupresponse (message_p, buffer, length);
 
   // Add handover related messages
   case S1ap_ProcedureCode_id_PathSwitchRequest:
+    *message_id = S1AP_PATH_SWITCH_ACK_LOG;
     return s1ap_mme_encode_pathSwitchRequestAcknowledge(message_p, buffer, length);
 
   case S1ap_ProcedureCode_id_HandoverPreparation:
+    *message_id = S1AP_HANDOVER_COMMAND_LOG;
     return s1ap_mme_encode_handoverCommand(message_p, buffer, length);
 
   case S1ap_ProcedureCode_id_HandoverCancel:
+    *message_id = S1AP_HANDOVER_CANCEL_ACK_LOG;
     return s1ap_mme_encode_handoverCancelAck(message_p, buffer, length);
 
   default:
@@ -260,15 +327,19 @@ s1ap_mme_encode_successfull_outcome (
 static inline int
 s1ap_mme_encode_unsuccessfull_outcome (
   s1ap_message * message_p,
+  MessagesIds *message_id,
   uint8_t ** buffer,
   uint32_t * length)
 {
   switch (message_p->procedureCode) {
   case S1ap_ProcedureCode_id_S1Setup:
+    *message_id = S1AP_S1_SETUP_FAILURE_LOG;
     return s1ap_mme_encode_s1setupfailure (message_p, buffer, length);
   case S1ap_ProcedureCode_id_PathSwitchRequest:
+    *message_id = S1AP_PATH_SWITCH_FAILURE_LOG;
     return s1ap_mme_encode_pathSwitchRequestFailure (message_p, buffer, length);
   case S1ap_ProcedureCode_id_HandoverPreparation:
+    *message_id = S1AP_HANDOVER_FAILURE_LOG;
     return s1ap_mme_encode_handoverPreparationFailure(message_p, buffer, length);
 
   default:

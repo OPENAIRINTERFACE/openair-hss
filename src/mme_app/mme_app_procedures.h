@@ -28,8 +28,6 @@
   \email: lionel.gauthier@eurecom.fr
 */
 
-#include "queue.h"
-
 //typedef int (*mme_app_pdu_in_resp_t)(void *arg);
 //typedef int (*mme_app_pdu_in_rej_t)(void *arg);
 //typedef int (*mme_app_time_out_t)(void *arg);
@@ -81,7 +79,6 @@ typedef struct mme_app_s10_proc_mme_handover_s {
   mme_app_s10_proc_t            proc;
 
   mme_ue_s1ap_id_t              mme_ue_s1ap_id;
-
   enb_ue_s1ap_id_t              source_enb_ue_s1ap_id;
   enb_ue_s1ap_id_t              target_enb_ue_s1ap_id;
   time_out_t                   *s10_mme_handover_timeout;
@@ -97,16 +94,25 @@ typedef struct mme_app_s10_proc_mme_handover_s {
   nas_s10_context_t             nas_s10_context;
   /** PDN Connections. */
   mme_ue_eps_pdn_connections_t *pdn_connections;
-  uint8_t                       next_processed_pdn_connection;
+
+  ebi_list_t                    failed_ebi_list;
+  imsi_t                        imsi;
 
   /** Target Information to store on the source side. */
-//  S1ap_ENB_ID_PR                target_enb_type;
+  //  S1ap_ENB_ID_PR                target_enb_type;
 
   tai_t                         target_tai;
   bool                          ho_command_sent;
+  bool                          pending_qos;
   ecgi_t                        source_ecgi;  /**< Source home/macro enb id. */
   ecgi_t                        target_ecgi;  /**< Target home/macro enb id. */
   bool                          pending_clear_location_request;
+  bool                          due_tau;
+
+  /** Flags just for Tester imperfections. */
+  bool 							mme_status_context_handled;
+  bool 							received_early_ho_notify;
+  bool 							handover_completed; /*< Because S9 completing TAU before handover completes. */
 
   LIST_ENTRY(mme_app_handover_proc_s) entries;      /* List. */
 } mme_app_s10_proc_mme_handover_t;
@@ -122,6 +128,7 @@ typedef enum {
 typedef struct mme_app_s11_proc_s {
   mme_app_base_proc_t         proc;
   mme_app_s11_proc_type_t     type;
+  pti_t					      pti;
   uintptr_t                   s11_trxn;
   LIST_ENTRY(mme_app_s11_proc_s) entries;      /* List. */
 } mme_app_s11_proc_t;
@@ -151,17 +158,18 @@ typedef struct mme_app_s11_proc_update_bearer_s {
   int                          num_status_received;
 
   pdn_cid_t                    pci;
+  pti_t                        pti;
   ambr_t                       new_used_ue_ambr;
+  ambr_t					   apn_ambr;
   ebi_t                        linked_ebi;
   // TODO here give a NAS/S1AP/.. reason -> GTPv2-C reason
-  ambr_t                        apn_ambr;
   bearer_contexts_to_be_updated_t *bcs_tbu; /**< Store the bearer contexts to be created here, and don't register them yet in the MME_APP context. */
 } mme_app_s11_proc_update_bearer_t;
 
 typedef struct mme_app_s11_proc_delete_bearer_s {
   mme_app_s11_proc_t           proc;
   int                          num_bearers_unhandled;
-//  ebi_t                        linked_eps_bearer_id;
+  ebi_t                        def_ebi;
   int                          num_status_received;
   ebi_list_t                   ebis;
 
@@ -178,6 +186,8 @@ typedef enum {
 //RB_PROTOTYPE(BearerFteids, fteid_set_s, fteid_set_rbt_Node, fteid_set_compare_s1u_saegw)
 
 void mme_app_delete_s11_procedures(ue_context_t * const ue_context_p);
+
+mme_app_s11_proc_t* mme_app_get_s11_procedure (ue_context_t * const ue_context);
 
 mme_app_s11_proc_create_bearer_t* mme_app_create_s11_procedure_create_bearer(ue_context_t * const ue_context_p);
 mme_app_s11_proc_create_bearer_t* mme_app_get_s11_procedure_create_bearer(ue_context_t * const ue_context_p);

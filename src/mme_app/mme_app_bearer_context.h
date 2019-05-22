@@ -32,9 +32,11 @@
 bstring bearer_state2string(const mme_app_bearer_state_t bearer_state);
 /** Create & deallocate a bearer context. */
 bearer_context_t *mme_app_new_bearer();
-int mme_app_bearer_context_delete (bearer_context_t *bearer_context);
+void mme_app_bearer_context_initialize(bearer_context_t *bearer_context);
 /** Find an allocated PDN session bearer context. */
 bearer_context_t* mme_app_get_session_bearer_context(pdn_context_t * const pdn_context, const ebi_t ebi);
+
+void mme_app_get_free_bearer_context(ue_context_t * const ue_context, const ebi_t ebi, bearer_context_t ** bc_pp);
 
 // todo_: combine these two methods
 void mme_app_get_session_bearer_context_from_all(ue_context_t * const ue_context, const ebi_t ebi, bearer_context_t ** bc_pp);
@@ -43,13 +45,20 @@ void mme_app_get_session_bearer_context_from_all(ue_context_t * const ue_context
  * New method to get a bearer context from the bearer pool of the UE context and add it into the pdn session.
  * If the file using this method does not include the header file, the returned pointer is garbage. We overcome this with giving the PP.
  */
-void mme_app_register_bearer_context(ue_context_t * const ue_context, ebi_t ebi, const pdn_context_t *pdn_context, bearer_context_t ** bc_pp);
-
-int mme_app_deregister_bearer_context(ue_context_t * const ue_context, ebi_t ebi, const pdn_context_t *pdn_context);
+esm_cause_t mme_app_register_dedicated_bearer_context(const mme_ue_s1ap_id_t ue_id, const esm_ebr_state esm_ebr_state, pdn_cid_t pdn_cid, ebi_t linked_ebi, bearer_context_to_be_created_t * const bc_tbu, const ebi_t ded_ebi);
 
 void mme_app_free_bearer_context (bearer_context_t ** const bearer_context);
 void mme_app_bearer_context_s1_release_enb_informations(bearer_context_t * const bc);
 
-void mme_app_bearer_context_update_handover(bearer_context_t * bc_registered, bearer_context_to_be_created_t * const bc_tbc_s10);
+/*
+ * Update the bearer context for initial context setup response and handover.
+ */
+int mme_app_modify_bearers(const mme_ue_s1ap_id_t mme_ue_s1ap_id, bearer_contexts_to_be_modified_t *bcs_to_be_modified);
+
+/*
+ * Set bearers as released (idle).
+ * todo: review idle mode..
+ */
+void mme_app_release_bearers(const mme_ue_s1ap_id_t mme_ue_s1ap_id, e_rab_list_t * e_rab_list, ebi_list_t * const ebi_list);
 
 #endif

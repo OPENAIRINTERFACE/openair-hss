@@ -89,11 +89,8 @@ void mme_app_itti_ue_context_release (    mme_ue_s1ap_id_t mme_ue_s1ap_id, enb_u
 
 void mme_app_itti_notify_request(const imsi64_t imsi, const plmn_t * handovered_plmn, const bool mobility_completion);
 
-int mme_app_send_s6a_update_location_req     (struct ue_context_s * const ue_context);
-
-int mme_app_handle_s6a_update_location_ans   (const s6a_update_location_ans_t * const ula_pP);
-
-int mme_app_handle_nas_pdn_connectivity_req  ( itti_nas_pdn_connectivity_req_t * const nas_pdn_connectivity_req_p);
+// todo: put back in consts
+int mme_app_handle_s6a_update_location_ans   (s6a_update_location_ans_t * ula_pP);
 
 int mme_app_handle_nas_pdn_disconnect_req    ( itti_nas_pdn_disconnect_req_t * const nas_pdn_disconnect_req_pP);
 
@@ -105,11 +102,13 @@ void mme_app_handle_initial_ue_message       (itti_s1ap_initial_ue_message_t * c
 
 int mme_app_handle_create_sess_resp          (itti_s11_create_session_response_t * const create_sess_resp_pP); //not const because we need to free internal stucts
 
+void mme_app_handle_bearer_ctx_retry(itti_nas_retry_bearer_ctx_proc_ind_t * nas_retry_ind);
+
 void mme_app_handle_nas_erab_setup_req (itti_nas_erab_setup_req_t * const itti_nas_erab_setup_req);
 
 void mme_app_handle_nas_erab_modify_req (itti_nas_erab_modify_req_t * const itti_nas_erab_modify_setup_req);
 
-void mme_app_handle_nas_erab_release_req (itti_nas_erab_release_req_t * const itti_nas_erab_release_req);
+void mme_app_handle_nas_erab_release_req (mme_ue_s1ap_id_t ue_id, ebi_t ebi, bstring nas_msg);
 
 void mme_app_handle_delete_session_rsp	     (const itti_s11_delete_session_response_t * const delete_sess_respP);
 
@@ -125,11 +124,11 @@ void mme_app_handle_s11_update_bearer_req        (itti_s11_update_bearer_request
 
 void mme_app_handle_s11_delete_bearer_req (    itti_s11_delete_bearer_request_t *  delete_bearer_request_pP);
 
+void mme_app_delete_bearer_failure_indication (itti_s11_delete_bearer_failure_indication_t  * const delete_bearer_failure_ind);
+
 void mme_app_bearer_create_workflow (ue_context_t * const ue_context, const pdn_cid_t cid);
 
 //nas_cause_t s6a_error_2_nas_cause            (const uint32_t s6a_errorP, const int experimentalP);
-
-void mme_app_handle_nas_auth_param_req       (const itti_nas_auth_param_req_t * const nas_auth_param_req_pP);
 
 void mme_app_handle_initial_context_setup_rsp(itti_mme_app_initial_context_setup_rsp_t * const initial_ctxt_setup_rsp_pP);
 
@@ -141,15 +140,17 @@ void mme_app_handle_e_rab_setup_rsp (itti_s1ap_e_rab_setup_rsp_t  * const e_rab_
 
 void mme_app_handle_e_rab_modify_rsp (itti_s1ap_e_rab_modify_rsp_t  * const e_rab_modify_rsp);
 
-void mme_app_handle_activate_eps_bearer_ctx_cnf (itti_mme_app_activate_eps_bearer_ctx_cnf_t   * const activate_eps_bearer_ctx_cnf);
+void mme_app_handle_e_rab_release_ind (const itti_s1ap_e_rab_release_ind_t   * const e_rab_release_ind);
 
-void mme_app_handle_activate_eps_bearer_ctx_rej (itti_mme_app_activate_eps_bearer_ctx_rej_t   * const activate_eps_bearer_ctx_rej);
+void mme_app_handle_activate_eps_bearer_ctx_cnf (itti_nas_activate_eps_bearer_ctx_cnf_t   * const activate_eps_bearer_ctx_cnf);
 
-void mme_app_handle_modify_eps_bearer_ctx_cnf (itti_mme_app_modify_eps_bearer_ctx_cnf_t   * const modify_eps_bearer_ctx_cnf);
+void mme_app_handle_activate_eps_bearer_ctx_rej (itti_nas_activate_eps_bearer_ctx_rej_t   * const activate_eps_bearer_ctx_rej);
 
-void mme_app_handle_modify_eps_bearer_ctx_rej (itti_mme_app_modify_eps_bearer_ctx_rej_t   * const modify_eps_bearer_ctx_rej);
+void mme_app_handle_modify_eps_bearer_ctx_cnf (itti_nas_modify_eps_bearer_ctx_cnf_t   * const modify_eps_bearer_ctx_cnf);
 
-void mme_app_handle_deactivate_eps_bearer_ctx_cnf (itti_mme_app_deactivate_eps_bearer_ctx_cnf_t   * const deactivate_bearer_cnf);
+void mme_app_handle_modify_eps_bearer_ctx_rej (itti_nas_modify_eps_bearer_ctx_rej_t   * const modify_eps_bearer_ctx_rej);
+
+void mme_app_handle_deactivate_eps_bearer_ctx_cnf (itti_nas_deactivate_eps_bearer_ctx_cnf_t   * const deactivate_bearer_cnf);
 
 void mme_app_trigger_mme_initiated_dedicated_bearer_deactivation_procedure (ue_context_t * const ue_context, const pdn_cid_t cid);
 

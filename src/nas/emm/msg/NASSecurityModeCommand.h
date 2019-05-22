@@ -22,15 +22,15 @@
 #ifndef FILE_NAS_SECURITY_MODE_COMMAND_SEEN
 #define FILE_NAS_SECURITY_MODE_COMMAND_SEEN
 
-#include "SecurityHeaderType.h"
-#include "MessageType.h"
-#include "NasSecurityAlgorithms.h"
-#include "NasKeySetIdentifier.h"
-#include "UeSecurityCapability.h"
-#include "Nonce.h"
 #include "3gpp_23.003.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"
+#include "MessageType.h"
+#include "NasKeySetIdentifier.h"
+#include "NasSecurityAlgorithms.h"
+#include "Nonce.h"
+#include "SecurityHeaderType.h"
+#include "UeSecurityCapability.h"
 
 /* Minimum length macro. Formed by minimum length of each mandatory field */
 #define SECURITY_MODE_COMMAND_MINIMUM_LENGTH ( \

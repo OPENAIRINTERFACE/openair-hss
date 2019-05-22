@@ -85,6 +85,14 @@ void hash_free_int_func (void **memoryP) {}
 
 //------------------------------------------------------------------------------
 /*
+   free_wrapper function
+   hash_free_func() is used when this hashtable is used to store generic values as data (pointer = value).
+*/
+
+void hash_free_func (void **memoryP) { free_wrapper(memoryP); }
+
+//------------------------------------------------------------------------------
+/*
    Default hash function
    def_hashfunc() is the default used by hashtable_create() when the user didn't specify one.
    This is a simple/naive hash function which adds the key's ASCII char values. It will probably generate lots of collisions on large hash tables.
@@ -350,7 +358,6 @@ hashtable_ts_destroy (
     pthread_mutex_unlock (&hashtblP->lock_nodes[n]);
     pthread_mutex_destroy (&hashtblP->lock_nodes[n]);
   }
-
   free_wrapper ((void**)&hashtblP->nodes);
   bdestroy_wrapper (&hashtblP->name);
   free_wrapper((void**)&hashtblP->lock_nodes);
@@ -568,6 +575,49 @@ hashtable_ts_apply_callback_on_elements (
   return HASH_TABLE_OK;
 }
 
+//------------------------------------------------------------------------------
+// may cost a lot CPU...
+// Also useful if we want to find an element in the collection based on compare criteria different than the single key
+// The compare criteria in implemented in the funct_cb function
+hashtable_rc_t
+hashtable_ts_apply_list_callback_on_elements (
+  hash_table_ts_t * const hashtblP,
+  bool funct_cb (const hash_key_t keyP,
+               void * const dataP,
+               void *parameterP,
+               void ** resultP),
+  void *parameterP,
+  hashtable_element_array_t              *ea) /**< Stacked list. */
+{
+  hash_node_t                            *node = NULL;
+  unsigned int                            i = 0;
+  unsigned int                            num_elements = 0;
+
+  if (!hashtblP || !ea) {
+    return HASH_TABLE_BAD_PARAMETER_HASHTABLE;
+  }
+
+  while ((ea->num_elements <= hashtblP->num_elements) && (num_elements < hashtblP->num_elements) && (i < hashtblP->size)) {
+    pthread_mutex_lock(&hashtblP->lock_nodes[i]);
+    if (hashtblP->nodes[i] != NULL) {
+      node = hashtblP->nodes[i];
+
+      while (node) {
+        num_elements++;
+        void* resultP = NULL;
+        if (funct_cb (node->key, node->data, parameterP, &resultP)) {
+        	/** Don't return, continue searching. */
+        	ea->elements[ea->num_elements++] = node->data;
+        }
+        node = node->next;
+      }
+    }
+    pthread_mutex_unlock(&hashtblP->lock_nodes[i]);
+    i++;
+  }
+
+  return HASH_TABLE_OK;
+}
 
 //------------------------------------------------------------------------------
 hashtable_rc_t
@@ -725,7 +775,7 @@ hashtable_ts_insert (
   while (node) {
     if (node->key == keyP) {
       if ((node->data) && (node->data != dataP)) {
-        hashtblP->freefunc (&node->data);
+        hashtblP->freefunc (&node->data); /**< Old EMM context will be freed. */
         node->data = dataP;
         pthread_mutex_unlock(&hashtblP->lock_nodes[hash]);
         PRINT_HASHTABLE (hashtblP, "%s(%s,key 0x%"PRIx64" data %p) return INSERT_OVERWRITTEN_DATA\n", __FUNCTION__, bdata(hashtblP->name), keyP, dataP);

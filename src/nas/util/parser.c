@@ -36,11 +36,11 @@
 
 *****************************************************************************/
 
-#include "parser.h"
-#include "commonDef.h"
+#include "common_defs.h"
 
 #include <stdio.h>              // fprintf
 #include <string.h>             // strcmp, strncpy
+#include "parser.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/

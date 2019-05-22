@@ -58,9 +58,6 @@ Description NAS procedure functions triggered by the network
 
 void nas_network_initialize(mme_config_t *mme_config_p);
 
-
-void nas_network_cleanup(void);
-
 int nas_network_process_data(int command_id, const void *data);
 
 const void *nas_network_get_data(void);

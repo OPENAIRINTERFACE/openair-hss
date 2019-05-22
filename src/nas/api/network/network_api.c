@@ -38,17 +38,17 @@
 
 *****************************************************************************/
 
-#include "network_api.h"
-#include "common_types.h"
-#include "log.h"
-#include "socket.h"
-
-#include "as_message.h"
 
 #include <string.h>             // strerror, memset
 #include <netdb.h>              // gai_strerror
 #include <errno.h>              // errno
 #include <unistd.h>             // gethostname
+
+#include "network_api.h"
+#include "socket.h"
+#include "as_message.h"
+#include "common_types.h"
+#include "log.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
