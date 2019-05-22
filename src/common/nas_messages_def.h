@@ -37,6 +37,7 @@ MESSAGE_DEF(NAS_DOWNLINK_DATA_REQ,              MESSAGE_PRIORITY_MED,   itti_nas
 MESSAGE_DEF(NAS_DOWNLINK_DATA_CNF,              MESSAGE_PRIORITY_MED,   itti_nas_dl_data_cnf_t,          nas_dl_data_cnf)
 MESSAGE_DEF(NAS_DOWNLINK_DATA_REJ,              MESSAGE_PRIORITY_MED,   itti_nas_dl_data_rej_t,          nas_dl_data_rej)
 MESSAGE_DEF(NAS_ERAB_SETUP_REQ,                 MESSAGE_PRIORITY_MED,   itti_nas_erab_setup_req_t,       nas_erab_setup_req)
+MESSAGE_DEF(NAS_ERAB_MODIFY_REQ,                MESSAGE_PRIORITY_MED,   itti_nas_erab_modify_req_t,      nas_erab_modify_req)
 MESSAGE_DEF(NAS_ERAB_RELEASE_REQ,               MESSAGE_PRIORITY_MED,   itti_nas_erab_release_req_t,     nas_erab_release_req)
 
 /* NAS layer -> MME app messages */

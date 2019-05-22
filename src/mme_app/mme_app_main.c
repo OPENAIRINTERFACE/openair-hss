@@ -104,18 +104,28 @@ void *mme_app_thread (void *args)
       }
       break;
 
-    case MME_APP_ACTIVATE_BEARER_CNF:{
-      mme_app_handle_activate_bearer_cnf (&MME_APP_ACTIVATE_BEARER_CNF (received_message_p));
+    case MME_APP_ACTIVATE_EPS_BEARER_CTX_CNF:{
+      mme_app_handle_activate_eps_bearer_ctx_cnf (&MME_APP_ACTIVATE_EPS_BEARER_CTX_CNF (received_message_p));
     }
     break;
 
-    case MME_APP_ACTIVATE_BEARER_REJ:{
-      mme_app_handle_activate_bearer_rej (&MME_APP_ACTIVATE_BEARER_REJ (received_message_p));
+    case MME_APP_ACTIVATE_EPS_BEARER_CTX_REJ:{
+      mme_app_handle_activate_eps_bearer_ctx_rej (&MME_APP_ACTIVATE_EPS_BEARER_CTX_REJ (received_message_p));
     }
     break;
 
-    case MME_APP_DEACTIVATE_BEARER_CNF:{
-      mme_app_handle_deactivate_bearer_cnf (&MME_APP_DEACTIVATE_BEARER_CNF (received_message_p));
+    case MME_APP_MODIFY_EPS_BEARER_CTX_CNF:{
+      mme_app_handle_modify_eps_bearer_ctx_cnf (&MME_APP_MODIFY_EPS_BEARER_CTX_CNF (received_message_p));
+    }
+    break;
+
+    case MME_APP_MODIFY_EPS_BEARER_CTX_REJ:{
+      mme_app_handle_modify_eps_bearer_ctx_rej (&MME_APP_MODIFY_EPS_BEARER_CTX_REJ (received_message_p));
+    }
+    break;
+
+    case MME_APP_DEACTIVATE_EPS_BEARER_CTX_CNF:{
+      mme_app_handle_deactivate_eps_bearer_ctx_cnf (&MME_APP_DEACTIVATE_EPS_BEARER_CTX_CNF (received_message_p));
     }
     break;
 
@@ -141,6 +151,11 @@ void *mme_app_thread (void *args)
 
     case NAS_ERAB_SETUP_REQ:{
       mme_app_handle_nas_erab_setup_req (&NAS_ERAB_SETUP_REQ (received_message_p));
+    }
+    break;
+
+    case NAS_ERAB_MODIFY_REQ:{
+      mme_app_handle_nas_erab_modify_req (&NAS_ERAB_MODIFY_REQ (received_message_p));
     }
     break;
 
@@ -174,6 +189,10 @@ void *mme_app_thread (void *args)
 
     case S11_CREATE_BEARER_REQUEST:
       mme_app_handle_s11_create_bearer_req (&received_message_p->ittiMsg.s11_create_bearer_request);
+      break;
+
+    case S11_UPDATE_BEARER_REQUEST:
+      mme_app_handle_s11_update_bearer_req (&received_message_p->ittiMsg.s11_update_bearer_request);
       break;
 
     case S11_DELETE_BEARER_REQUEST:
@@ -217,6 +236,11 @@ void *mme_app_thread (void *args)
 
     case S1AP_E_RAB_SETUP_RSP:{
         mme_app_handle_e_rab_setup_rsp (&S1AP_E_RAB_SETUP_RSP (received_message_p));
+      }
+      break;
+
+    case S1AP_E_RAB_MODIFY_RSP:{
+        mme_app_handle_e_rab_modify_rsp (&S1AP_E_RAB_MODIFY_RSP (received_message_p));
       }
       break;
 
@@ -291,8 +315,6 @@ void *mme_app_thread (void *args)
 
       /** S10 Forward Relocation Messages. */
       case S10_FORWARD_RELOCATION_REQUEST:{
-
-
           mme_app_handle_forward_relocation_request(
               &S10_FORWARD_RELOCATION_REQUEST(received_message_p)
               );
@@ -438,6 +460,8 @@ void *mme_app_thread (void *args)
          */
         if (received_message_p->ittiMsg.timer_has_expired.timer_id == mme_app_desc.statistic_timer_id) {
           mme_app_statistics_display ();
+          /** Display the ITTI buffer. */
+          itti_print_DEBUG ();
         } else if (received_message_p->ittiMsg.timer_has_expired.arg != NULL) {
           mme_ue_s1ap_id_t mme_ue_s1ap_id = *((mme_ue_s1ap_id_t *)(received_message_p->ittiMsg.timer_has_expired.arg));
           ue_context_p = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, mme_ue_s1ap_id);
@@ -481,12 +505,12 @@ void *mme_app_thread (void *args)
       break;
     }
 
-    itti_free_msg_content(received_message_p);
-    itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
-    received_message_p = NULL;
     }
-  }
 
+    itti_free_msg_content(received_message_p);
+    itti_free(ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
+    received_message_p = NULL;
+  }
   return NULL;
 }
 

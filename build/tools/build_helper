@@ -300,6 +300,526 @@ check_enable_epel_repos() {
 }
 
 #-------------------------------------------------------------------------------
+#arg1 is force (no interactive script)
+check_install_hss_software() {
+  if ! check_supported_distribution; then
+    echo_error "Your distribution $(get_distribution_release) is not supported by openair-cn"
+    exit 1
+  fi
+  if [ $1 -gt 0 ]; then
+    OPTION="-y"
+  else
+    OPTION=""
+  fi
+
+  check_enable_epel_repos
+
+  # Compilers, generators, ...
+  if [[ $OS_DISTRO == "ubuntu" ]]; then
+    PACKAGE_LIST="\
+      autoconf \
+      automake \
+      bison \
+      build-essential \
+      cmake \
+      cmake-curses-gui \
+      doxygen \
+      doxygen-gui \
+      flex \
+      gdb \
+      pkg-config \
+      git \
+      subversion"
+  elif [[ "$OS_BASEDISTRO" == "fedora" ]]; then
+    PACKAGE_LIST="\
+      autoconf  \
+      automake  \
+      bison     \
+      $CMAKE \
+      doxygen \
+      flex  \
+      gdb  \
+      pkgconfig \
+      git \
+      subversion"
+  else
+    echo_fatal "$OS_DISTRO is not a supported distribution."
+  fi
+  $SUDO $INSTALLER install $OPTION $PACKAGE_LIST
+
+  # Libraries
+  if [[ $OS_DISTRO == "ubuntu" ]]; then
+    PACKAGE_LIST="\
+      libconfig8-dev \
+      libgcrypt11-dev \
+      libidn2-0-dev \
+      libidn11-dev \
+      libmysqlclient-dev \
+      libpthread-stubs0-dev \
+      libsctp1 \
+      libsctp-dev \
+      libssl-dev \
+      libtool \
+      mysql-client \
+      mysql-server \
+      openssl"
+  elif [[ "$OS_BASEDISTRO" == "fedora" ]]; then
+    PACKAGE_LIST="\
+      libconfig-devel \
+      libgcrypt-devel \
+      libidn2-devel \
+      libidn-devel \
+      lksctp-tools \
+      lksctp-tools-devel \
+      openssl-devel \
+      libtool \
+      mariadb \
+      mariadb-devel \
+      mariadb-server \
+      openssl \
+      nettle-devel \
+      gnutls-devel"
+  else
+    echo_fatal "$OS_DISTRO is not a supported distribution."
+  fi
+  $SUDO $INSTALLER install $OPTION $PACKAGE_LIST
+
+  if [[ $OS_BASEDISTRO == 'fedora' ]]; then
+    $SUDO systemctl enable mariadb
+    $SUDO systemctl start mariadb
+  fi
+
+  if [[ $OS_DISTRO == 'ubuntu' ]]; then
+    #Remove old gnutls/nettle installation that was done from sources
+    remove_nettle_from_source
+    $SUDO $INSTALLER install -y nettle-dev nettle-bin
+  fi
+
+  install_freediameter_from_source $1
+
+  case "$(get_distribution_release)" in
+    "ubuntu14.04")
+      PACKAGE_LIST="\
+        php5 \
+        python-pexpect \
+        libapache2-mod-php*"
+      ;;
+    "ubuntu16.04")
+      PACKAGE_LIST="\
+        php \
+        python-pexpect \
+        libapache2-mod-php*"
+      ;;
+    "rhel7" | "centos7")
+      PACKAGE_LIST="\
+        pexpect"
+      ;;
+    "fedora")
+      PACKAGE_LIST="\
+        python2-pexpect"
+      ;;
+    *)
+      echo_fatal "$OS_DISTRO is not a supported distribution."
+      ;;
+  esac
+
+  $SUDO $INSTALLER install $OPTION $PACKAGE_LIST
+}
+
+#-------------------------------------------------------------------------------
+#arg1 is force (no interactive script)
+check_install_mme_software() {
+  if ! check_supported_distribution; then
+    echo_error "Your distribution $(get_distribution_release) is not supported by openair-cn"
+    exit 1
+  fi
+  if [ $1 -gt 0 ]; then
+    OPTION="-y"
+  else
+    OPTION=""
+  fi
+
+  check_enable_epel_repos
+
+  # Compilers, generators, ...
+  if [[ $OS_DISTRO == "ubuntu" ]]; then
+    PACKAGE_LIST="\
+      autoconf \
+      automake \
+      bison \
+      build-essential \
+      cmake \
+      cmake-curses-gui \
+      doxygen \
+      doxygen-gui \
+      flex \
+      gccxml \
+      gdb \
+      git \
+      pkg-config \
+      subversion"
+  elif [[ "$OS_BASEDISTRO" == "fedora" ]]; then
+    PACKAGE_LIST="\
+      autoconf \
+      automake \
+      bison \
+      $CMAKE \
+      doxygen \
+      flex \
+      gdb \
+      git \
+      pkgconfig \
+      subversion"
+  else
+    echo_fatal "$OS_DISTRO is not a supported distribution."
+  fi
+  $SUDO $INSTALLER install $OPTION $PACKAGE_LIST
+  if [ $? -ne 0 ]; then
+    echo_fatal "Failed to install package list $PACKAGE_LIST"
+  fi
+
+  # Libraries
+  if [[ $OS_DISTRO == "ubuntu" ]]; then
+    PACKAGE_LIST="\
+      guile-2.0-dev \
+      libconfig8-dev \
+      libgcrypt11-dev \
+      libgmp-dev \
+      libhogweed? \
+      libgtk-3-dev \
+      libidn2-0-dev \
+      libidn11-dev \
+      libpthread-stubs0-dev \
+      libsctp1 \
+      libsctp-dev \
+      libssl-dev \
+      libtool \
+      libxml2 \
+      libxml2-dev \
+      mscgen \
+      openssl \
+      check \
+      python"
+  elif [[ "$OS_BASEDISTRO" == "fedora" ]]; then
+    PACKAGE_LIST="\
+      guile-devel \
+      libconfig-devel \
+      libgcrypt-devel \
+      gmp-devel \
+      gtk3-devel \
+      libidn2-devel \
+      libidn-devel \
+      lksctp-tools \
+      lksctp-tools-devel \
+      openssl-devel \
+      libtool \
+      libxml2 \
+      libxml2-devel \
+      mscgen \
+      openssl \
+      check \
+      check-devel \
+      python \
+      nettle-devel \
+      gnutls-devel"
+  else
+    echo_fatal "$OS_DISTRO is not a supported distribution."
+  fi
+  $SUDO $INSTALLER install $OPTION $PACKAGE_LIST
+  if [ $? -ne 0 ]; then
+    echo_fatal "Failed to install package list $PACKAGE_LIST"
+  fi
+
+  if [[ $OS_DISTRO == 'ubuntu' ]]; then
+    #Remove old gnutls/nettle installation that was done from sources
+    remove_nettle_from_source
+    remove_gnutls_from_source
+    $SUDO apt-get install -y nettle-dev nettle-bin
+    $SUDO apt-get install -y libgnutls-dev
+  fi
+
+  install_freediameter_from_source $1
+  install_asn1c_from_source $1
+  install_liblfds7.1.0_from_source $1
+
+  install_libgtpnl_from_source $1
+
+  # Networking
+  if [[ $OS_DISTRO == "ubuntu" ]]; then
+    PACKAGE_LIST="\
+      ethtool \
+      iproute \
+      vlan \
+      tshark"
+  elif [[ "$OS_BASEDISTRO" == "fedora" ]]; then
+    PACKAGE_LIST="\
+      ethtool \
+      iproute \
+      vconfig \
+      wireshark"
+  else
+    echo_fatal "$OS_DISTRO is not a supported distribution."
+  fi
+  $SUDO $INSTALLER install $OPTION $PACKAGE_LIST
+  if [ $? -ne 0 ]; then
+    echo_fatal "Failed to install package list $PACKAGE_LIST"
+  fi
+
+  if [[ "$OS_DISTRO" == "ubuntu" ]]; then
+    PACKAGE_LIST="\
+      check \
+      python-dev \
+      python-pexpect \
+      unzip"
+  elif [[ "$OS_DISTRO" == "rhel" ]] || [[ "$OS_DISTRO" == "centos" ]]; then
+    PACKAGE_LIST="\
+      check \
+      check-devel \
+      python-devel \
+      pexpect \
+      psmisc \
+      unzip"
+  elif [[ "$OS_DISTRO" == "fedora" ]]; then
+    PACKAGE_LIST="\
+      check \
+      check-devel \
+      python-devel \
+      python2-pexpect \
+      unzip"
+  else
+    echo_fatal "$OS_DISTRO is not a supported distribution."
+  fi
+  $SUDO $INSTALLER install $OPTION $PACKAGE_LIST
+
+  if [ $? -ne 0 ]; then
+    echo_fatal "Failed to install package list $PACKAGE_LIST"
+  fi
+}
+
+#-------------------------------------------------------------------------------
+#arg1 is force (no interactive script)
+check_install_spgw_software() {
+
+  required_gcc_version=4.9.0
+
+  if ! check_supported_distribution; then
+    echo_error "Your distribution $(get_distribution_release) is not supported by openair-cn"
+    exit 1
+  fi
+
+  current_kernel_release=`uname -r | cut -d '-' -f1`
+  if [ "$current_kernel_release" != "$SUPPORTED_KERNEL_VERSION" ]; then
+    echo_error "Kernel $SUPPORTED_KERNEL_VERSION is required. Aborting installation"
+    #exit 1
+  fi
+
+  gcc_version=`gcc --version | head -n1 | cut -d" " -f4`
+  if ! version_gt $gcc_version $required_gcc_version; then
+    read -p "gcc-$required_gcc_version is required. Do you want to upgrade gcc? <y/N> " prompt
+    if [[ $prompt =~ [yY](es)* ]]; then
+      add-apt-repository -y ppa:ubuntu-toolchain-r/test
+      apt-get update
+    else
+      exit 1
+    fi
+  fi
+
+  if [ $1 -gt 0 ]; then
+    OPTION="-y"
+  else
+    OPTION=""
+  fi
+
+  check_enable_epel_repos
+
+  # Compilers, generators, ...
+  if [[ $OS_DISTRO == "ubuntu" ]]; then
+    PACKAGE_LIST="\
+      autoconf \
+      automake \
+      bison \
+      build-essential \
+      cmake \
+      cmake-curses-gui \
+      doxygen \
+      doxygen-gui \
+      flex \
+      gccxml \
+      gdb \
+      git \
+      pkg-config \
+      subversion"
+  elif [[ "$OS_BASEDISTRO" == "fedora" ]]; then
+    PACKAGE_LIST="\
+      autoconf \
+      automake \
+      bison \
+      $CMAKE \
+      doxygen \
+      flex \
+      gccxml \
+      gdb \
+      git \
+      pkgconfig \
+      subversion"
+  else
+    echo_fatal "$OS_DISTRO is not a supported distribution."
+  fi
+  $SUDO $INSTALLER install $OPTION $PACKAGE_LIST
+
+  if [ $? -ne 0 ]; then
+    echo_fatal "Failed to install package list $PACKAGE_LIST"
+  fi
+
+  update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.9 60 --slave /usr/bin/g++ g++ /usr/bin/g++-4.9
+  update-alternatives --config gcc
+
+  # Libraries
+  if [[ $OS_DISTRO == "ubuntu" ]]; then
+    PACKAGE_LIST="\
+      guile-2.0-dev \
+      libconfig8-dev \
+      libgcrypt11-dev \
+      libgmp-dev \
+      libhogweed? \
+      libgtk-3-dev \
+      libidn2-0-dev \
+      libidn11-dev \
+      libpthread-stubs0-dev \
+      libtool \
+      libxml2 \
+      libxml2-dev \
+      mscgen \
+      openssl \
+      python"
+  elif [[ "$OS_BASEDISTRO" == "fedora" ]]; then
+    PACKAGE_LIST="\
+      guile-devel \
+      libconfig-devel \
+      libgcrypt-devel \
+      gmp-devel \
+      gtk3-devel \
+      libidn2-devel \
+      libidn-devel \
+      lksctp-tools \
+      lksctp-tools-devel \
+      openssl-devel \
+      libtool \
+      libxml2 \
+      libxml2-devel \
+      mscgen \
+      openssl \
+      check \
+      python"
+  else
+    echo_fatal "$OS_DISTRO is not a supported distribution."
+  fi
+  $SUDO $INSTALLER install $OPTION $PACKAGE_LIST
+  if [ $? -ne 0 ]; then
+    echo_fatal "Failed to install package list $PACKAGE_LIST"
+  fi
+
+  # Networking
+  if [[ $OS_DISTRO == "ubuntu" ]]; then
+    PACKAGE_LIST="\
+      ethtool \
+      iperf \
+      iproute \
+      vlan \
+      tshark"
+  elif [[ "$OS_BASEDISTRO" == "fedora" ]]; then
+    PACKAGE_LIST="\
+      ethtool \
+      iperf \
+      iproute \
+      vconfig \
+      wireshark"
+  else
+    echo_fatal "$OS_DISTRO is not a supported distribution."
+  fi
+  $SUDO $INSTALLER install $OPTION $PACKAGE_LIST
+  if [ $? -ne 0 ]; then
+    echo_fatal "Failed to install package list $PACKAGE_LIST"
+  fi
+
+  if [[ "$OS_DISTRO" == "ubuntu" ]]; then
+    PACKAGE_LIST="\
+      check \
+      python-dev \
+      python-pexpect \
+      unzip"
+  elif [[ "$OS_DISTRO" == "rhel" ]] || [[ "$OS_DISTRO" == "centos" ]]; then
+    PACKAGE_LIST="\
+      check \
+      python-devel \
+      pexpect \
+      unzip"
+  elif [[ "$OS_DISTRO" == "fedora" ]]; then
+    PACKAGE_LIST="\
+      check \
+      python-devel \
+      python2-pexpect \
+      unzip"
+  else
+    echo_fatal "$OS_DISTRO is not a supported distribution."
+  fi
+  $SUDO $INSTALLER install $OPTION $PACKAGE_LIST
+  if [ $? -ne 0 ]; then
+    echo_fatal "Failed to install package list $PACKAGE_LIST"
+  fi
+
+  install_libgtpnl_from_source $1
+  install_liblfds7.1.0_from_source $1
+  install_ovs_from_source $1
+}
+
+
+#-------------------------------------------------------------------------------
+install_asn1c_from_source(){
+  if [ $1 -eq 0 ]; then
+    OPTION=""
+    read -p "Do you want to install asn1c rev 1516 patched? <y/N> " prompt
+  else
+    prompt='y'
+    OPTION="-y"
+  fi
+
+  if [[ "$OS_DISTRO" == "ubuntu" ]]; then
+    PACKAGE_LIST="\
+      autoconf \
+      automake \
+      bison \
+      build-essential \
+      flex \
+      gcc \
+      libtool"
+  elif [[ "$OS_BASEDISTRO" == "fedora" ]]; then
+    PACKAGE_LIST="\
+      autoconf \
+      automake \
+      bison \
+      patch \
+      flex \
+      gcc \
+      libtool"
+  else
+    echo_fatal "$OS_DISTRO is not a supported distribution."
+  fi
+  $SUDO $INSTALLER install $OPTION $PACKAGE_LIST
+
+  if [[ $prompt =~ [yY](es)* ]]
+  then
+    $SUDO rm -rf /tmp/asn1c
+    mkdir -p /tmp/asn1c
+    GIT_SSL_NO_VERIFY=true git clone https://gitlab.eurecom.fr/oai/asn1c.git /tmp/asn1c
+    cd /tmp/asn1c
+    ./configure
+    make > /tmp/log_compile_asn1c 2>&1
+    $SUDO make install
+  fi
+}
+
+#-------------------------------------------------------------------------------
 cidr2mask(){
   local i mask=""
   local full_octets=$(($1/8))

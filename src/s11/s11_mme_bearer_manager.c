@@ -457,7 +457,7 @@ s11_mme_create_bearer_response (
   }
 
   // TODO relay cause
-  cause =response_p->cause;
+  cause = response_p->cause;
   gtpv2c_cause_ie_set (&(ulp_req.hMsg), &cause);
 
   for (int i=0; i < response_p->bearer_contexts.num_bearer_context; i++) {
@@ -466,6 +466,139 @@ s11_mme_create_bearer_response (
   }
 
   MSC_LOG_TX_MESSAGE (MSC_S11_MME, MSC_SGW, NULL, 0, "0 CREATE_BEARER_RESPONSE S11 teid " TEID_FMT " num bearers ctx %u",
+      response_p->teid, response_p->bearer_contexts.num_bearer_context);
+
+  rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
+  DevAssert (NW_OK == rc);
+  return RETURNok;
+}
+
+//------------------------------------------------------------------------------
+int
+s11_mme_handle_update_bearer_request (
+  nw_gtpv2c_stack_handle_t * stack_p,
+  nw_gtpv2c_ulp_api_t * pUlpApi)
+{
+  nw_rc_t                                   rc = NW_OK;
+  uint8_t                                 offendingIeType,
+                                          offendingIeInstance;
+  uint16_t                                offendingIeLength;
+  itti_s11_update_bearer_request_t       *req_p;
+  MessageDef                             *message_p;
+  nw_gtpv2c_msg_parser_t                     *pMsgParser;
+
+  DevAssert (stack_p );
+  message_p = itti_alloc_new_message (TASK_S11, S11_UPDATE_BEARER_REQUEST);
+
+  if (message_p) {
+    req_p = &message_p->ittiMsg.s11_update_bearer_request;
+
+    req_p->teid = nwGtpv2cMsgGetTeid(pUlpApi->hMsg);
+    req_p->trxn = (void *)pUlpApi->u_api_info.initialReqIndInfo.hTrxn;
+
+    /*
+     * Create a new message parser
+     */
+    rc = nwGtpv2cMsgParserNew (*stack_p, NW_GTP_UPDATE_BEARER_REQ, s11_ie_indication_generic, NULL, &pMsgParser);
+    DevAssert (NW_OK == rc);
+
+    DevAssert(!req_p->bearer_contexts);
+    req_p->bearer_contexts = calloc(1, sizeof(bearer_contexts_to_be_updated_t));
+    rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_BEARER_CONTEXT, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_MANDATORY,
+        gtpv2c_bearer_context_to_be_updated_within_update_bearer_request_ie_get,
+        req_p->bearer_contexts);
+    DevAssert (NW_OK == rc);
+
+    rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_PCO, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL, gtpv2c_pco_ie_get,
+        &req_p->pco);
+    DevAssert (NW_OK == rc);
+
+    /** Add the PTI to inform to UEs. */
+    rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_PROCEDURE_TRANSACTION_ID, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL, gtpv2c_pti_ie_get,
+        &req_p->pti);
+    DevAssert (NW_OK == rc);
+
+    /** Add the AMBR. */
+    rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_AMBR, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_MANDATORY, gtpv2c_ambr_ie_get,
+        &req_p->apn_ambr);
+    DevAssert (NW_OK == rc);
+
+    /*
+     * Run the parser
+     */
+    rc = nwGtpv2cMsgParserRun (pMsgParser, (pUlpApi->hMsg), &offendingIeType, &offendingIeInstance, &offendingIeLength);
+
+    if (rc != NW_OK) {
+      MSC_LOG_RX_DISCARDED_MESSAGE (MSC_S11_MME, MSC_SGW, NULL, 0, "0 UPDATE_BEARER_REQUEST local S11 teid " TEID_FMT " ", req_p->teid);
+      /*
+       * TODO: handle this case
+       */
+      itti_free (ITTI_MSG_ORIGIN_ID (message_p), message_p);
+      message_p = NULL;
+      rc = nwGtpv2cMsgParserDelete (*stack_p, pMsgParser);
+      DevAssert (NW_OK == rc);
+      rc = nwGtpv2cMsgDelete (*stack_p, (pUlpApi->hMsg));
+      DevAssert (NW_OK == rc);
+      return RETURNerror;
+    }
+
+    MSC_LOG_RX_MESSAGE (MSC_S11_MME, MSC_SGW, NULL, 0, "0 UPDATE_BEARER_REQUEST local S11 teid " TEID_FMT " lebi %u",
+        req_p->teid, req_p->linked_eps_bearer_id);
+    rc = nwGtpv2cMsgParserDelete (*stack_p, pMsgParser);
+    DevAssert (NW_OK == rc);
+    rc = nwGtpv2cMsgDelete (*stack_p, (pUlpApi->hMsg));
+    DevAssert (NW_OK == rc);
+    return itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
+  }
+  return RETURNerror;
+}
+
+//------------------------------------------------------------------------------
+int
+s11_mme_update_bearer_response (
+  nw_gtpv2c_stack_handle_t * stack_p,
+  itti_s11_update_bearer_response_t * response_p)
+{
+  gtpv2c_cause_t                           cause;
+  nw_rc_t                                   rc;
+  nw_gtpv2c_ulp_api_t                         ulp_req;
+  nw_gtpv2c_trxn_handle_t                     trxn;
+
+  DevAssert (stack_p );
+  DevAssert (response_p );
+  trxn = (nw_gtpv2c_trxn_handle_t) response_p->trxn;
+  /*
+   * Prepare a update bearer response to send to SGW.
+   */
+  memset (&ulp_req, 0, sizeof (nw_gtpv2c_ulp_api_t));
+  memset (&cause, 0, sizeof (gtpv2c_cause_t));
+  ulp_req.apiType = NW_GTPV2C_ULP_API_TRIGGERED_RSP;
+  ulp_req.u_api_info.triggeredRspInfo.hTrxn = trxn;
+  rc = nwGtpv2cMsgNew (*stack_p, true, NW_GTP_UPDATE_BEARER_RSP, response_p->teid, 0, &(ulp_req.hMsg));
+  DevAssert (NW_OK == rc);
+  /*
+   * Set the remote TEID
+   */
+  ulp_req.u_api_info.triggeredRspInfo.teidLocal  = response_p->local_teid;
+
+  hashtable_rc_t hash_rc = hashtable_ts_get(s11_mme_teid_2_gtv2c_teid_handle,
+      (hash_key_t) response_p->local_teid, (void **)(uintptr_t)&ulp_req.u_api_info.triggeredRspInfo.hTunnel);
+
+  if (HASH_TABLE_OK != hash_rc) {
+    OAILOG_WARNING (LOG_S11, "Could not get GTPv2-C hTunnel for local teid %X\n", response_p->local_teid);
+    return RETURNerror;
+  }
+
+  // TODO relay cause
+  cause = response_p->cause;
+  gtpv2c_cause_ie_set (&(ulp_req.hMsg), &cause);
+
+  for (int i=0; i < response_p->bearer_contexts.num_bearer_context; i++) {
+    rc = gtpv2c_bearer_context_within_update_bearer_response_ie_set(&(ulp_req.hMsg), & response_p->bearer_contexts.bearer_contexts[i]);
+    DevAssert (NW_OK == rc);
+  }
+
+  MSC_LOG_TX_MESSAGE (MSC_S11_MME, MSC_SGW, NULL, 0, "0 UPDATE_BEARER_RESPONSE S11 teid " TEID_FMT " num bearers ctx %u",
       response_p->teid, response_p->bearer_contexts.num_bearer_context);
 
   rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
@@ -514,14 +647,18 @@ s11_mme_handle_delete_bearer_request (
         &req_p->ebi_list);
     DevAssert (NW_OK == rc);
 
-    rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_BEARER_CONTEXT, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_OPTIONAL,
-        gtpv2c_failed_bearer_contexts_within_delete_bearer_request_ie_get,
-        &req_p->failed_bearer_contexts);
-    DevAssert (NW_OK == rc);
+//    rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_BEARER_CONTEXT, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_OPTIONAL,
+//        gtpv2c_failed_bearer_contexts_within_delete_bearer_request_ie_get,
+//        &req_p->failed_bearer_contexts);
+//    DevAssert (NW_OK == rc);
 
     /** Add the PTI to inform to UEs. */
     rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_BEARER_CONTEXT, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL, gtpv2c_pti_ie_get,
         &req_p->pti);
+    DevAssert (NW_OK == rc);
+
+    rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_PROCEDURE_TRANSACTION_ID, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL, gtpv2c_pti_ie_get,
+         &req_p->pti);
     DevAssert (NW_OK == rc);
 
     /*
@@ -591,10 +728,11 @@ s11_mme_delete_bearer_response (
   }
 
   // TODO relay cause
-  cause =response_p->cause;
+  cause = response_p->cause;
   gtpv2c_cause_ie_set (&(ulp_req.hMsg), &cause);
 
-  gtpv2c_ebi_ie_set (&(ulp_req.hMsg), (unsigned)response_p->linked_eps_bearer_id);
+  if(response_p->linked_eps_bearer_id)
+    gtpv2c_ebi_ie_set (&(ulp_req.hMsg), (unsigned)response_p->linked_eps_bearer_id);
 
   for (int i=0; i < response_p->bearer_contexts.num_bearer_context; i++) {
     rc = gtpv2c_bearer_context_within_delete_bearer_response_ie_set (&(ulp_req.hMsg), &response_p->bearer_contexts.bearer_contexts[i]);

@@ -112,6 +112,10 @@ s11_mme_ulp_process_stack_req_cb (
           ret = s11_mme_handle_create_bearer_request (&s11_mme_stack_handle, pUlpApi);
           break;
 
+        case NW_GTP_UPDATE_BEARER_REQ:
+          ret = s11_mme_handle_update_bearer_request (&s11_mme_stack_handle, pUlpApi);
+          break;
+
         case NW_GTP_DELETE_BEARER_REQ:
           ret = s11_mme_handle_delete_bearer_request (&s11_mme_stack_handle, pUlpApi);
           break;
@@ -222,6 +226,11 @@ s11_mme_thread (
       }
       break;
 
+    case S11_UPDATE_BEARER_RESPONSE:{
+      s11_mme_update_bearer_response(&s11_mme_stack_handle, &received_message_p->ittiMsg.s11_update_bearer_response);
+    }
+    break;
+
     case S11_DELETE_BEARER_RESPONSE:{
       s11_mme_delete_bearer_response (&s11_mme_stack_handle, &received_message_p->ittiMsg.s11_delete_bearer_response);
       }
@@ -273,13 +282,13 @@ s11_mme_thread (
         udp_data_ind_t                         *udp_data_ind;
 
         udp_data_ind = &received_message_p->ittiMsg.udp_data_ind;
-        rc = nwGtpv2cProcessUdpReq (s11_mme_stack_handle, udp_data_ind->buffer, udp_data_ind->buffer_length, udp_data_ind->peer_port, &udp_data_ind->peer_address);
+        rc = nwGtpv2cProcessUdpReq (s11_mme_stack_handle, udp_data_ind->msgBuf, udp_data_ind->buffer_length, udp_data_ind->peer_port, &udp_data_ind->peer_address);
         DevAssert (rc == NW_OK);
       }
       break;
 
     default:
-        OAILOG_ERROR (LOG_S11, "Unkwnon message ID %d:%s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p));
+        OAILOG_ERROR (LOG_S11, "Unknown message ID %d:%s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p));
     }
 
     itti_free_msg_content(received_message_p);

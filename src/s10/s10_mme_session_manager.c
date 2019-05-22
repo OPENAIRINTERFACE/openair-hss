@@ -250,6 +250,8 @@ s10_mme_forward_relocation_request (
   MSC_LOG_TX_MESSAGE (MSC_S10_MME, MSC_S10_MME, NULL, 0, "0 FORWARD_RELOCATION_REQUEST local S10 teid " TEID_FMT " num pdn connections %u",
     req_p->s10_source_mme_teid.teid, req_p->pdn_connections.num_pdn_connections);
 
+  OAILOG_INFO (LOG_S10, "INSERTING INTO S10 HASHTABLE (2) teid " TEID_FMT " and tunnel object %p. \n", req_p->s10_source_mme_teid.teid, ulp_req.u_api_info.initialReqInfo.hTunnel);
+
   hashtable_rc_t hash_rc = hashtable_ts_insert(s10_mme_teid_2_gtv2c_teid_handle,
       (hash_key_t) req_p->s10_source_mme_teid.teid,
       (void *)ulp_req.u_api_info.initialReqInfo.hTunnel);
@@ -419,6 +421,7 @@ s10_mme_forward_relocation_response (
 
 
      OAILOG_INFO(LOG_S10, "Successfully created tunnel while FW_RELOCA_RESP!. \n");
+     OAILOG_INFO (LOG_S10, "INSERTING INTO S10 HASHTABLE (3) teid " TEID_FMT " and tunnel object %p. \n", ulp_req.u_api_info.createLocalTunnelInfo.teidLocal, ulp_req.u_api_info.createLocalTunnelInfo.hTunnel);
 
      hashtable_rc_t hash_rc = hashtable_ts_insert(s10_mme_teid_2_gtv2c_teid_handle,
          (hash_key_t) ulp_req.u_api_info.createLocalTunnelInfo.teidLocal,
@@ -1058,7 +1061,8 @@ s10_mme_context_request (
    * Just an int is stored. When the value is removed from the tunnel pool, nothing will be deallocated.
    * Free method does nothing!
    */
-  hashtable_rc_t hash_rc = hashtable_ts_insert(s10_mme_teid_2_gtv2c_teid_handle,
+  OAILOG_INFO (LOG_S10, "INSERTING INTO S10 HASHTABLE (4) teid " TEID_FMT " and tunnel object %p. \n", req_p->s10_target_mme_teid.teid, ulp_req.u_api_info.initialReqInfo.hTunnel);
+ hashtable_rc_t hash_rc = hashtable_ts_insert(s10_mme_teid_2_gtv2c_teid_handle,
       (hash_key_t) req_p->s10_target_mme_teid.teid,
       (void *)ulp_req.u_api_info.initialReqInfo.hTunnel);
   if (HASH_TABLE_OK == hash_rc) {
@@ -1095,7 +1099,7 @@ s10_mme_handle_context_request(
 
   /** Check the destination TEID is 0. */
   if(req_p->teid != (teid_t)0){
-    OAILOG_WARNING (LOG_S10, "Destination TEID of S10 Context Request is not 0, insted " TEID_FMT ". Ignoring s10 context requetst. \n", req_p->teid);
+    OAILOG_WARNING (LOG_S10, "Destination TEID of S10 Context Request is not 0, instead " TEID_FMT ". Ignoring s10 context request. \n", req_p->teid);
     return RETURNerror;
   }
   /*
@@ -1257,12 +1261,14 @@ s10_mme_context_response (
   /**
    * Create a tunnel for the GTPv2-C stack if its a positive response.
    */
+
   if(rsp_p->cause.cause_value == REQUEST_ACCEPTED){
+    OAILOG_INFO (LOG_S10, "INSERTING INTO S10 HASHTABLE teid " TEID_FMT " and tunnel object %p. \n", ulp_rsp.u_api_info.triggeredRspInfo.teidLocal, ulp_rsp.u_api_info.triggeredRspInfo.hTunnel);
     hashtable_rc_t hash_rc = hashtable_ts_insert(s10_mme_teid_2_gtv2c_teid_handle, /**< Directly register the created tunnel. */
-        (hash_key_t) ulp_rsp.u_api_info.createLocalTunnelInfo.teidLocal,
-        (void *)ulp_rsp.u_api_info.createLocalTunnelInfo.hTunnel); /**< Just store the value as int (no free method) after allocating the S10 GTPv2c Tunnel from the tunnel pool. */
+        (hash_key_t) ulp_rsp.u_api_info.triggeredRspInfo.teidLocal,
+        (void *)ulp_rsp.u_api_info.triggeredRspInfo.hTunnel); /**< Just store the value as int (no free method) after allocating the S10 GTPv2c Tunnel from the tunnel pool. */
     hash_rc = hashtable_ts_get(s10_mme_teid_2_gtv2c_teid_handle,
-        (hash_key_t) ulp_rsp.u_api_info.createLocalTunnelInfo.teidLocal, (void **)(uintptr_t)&ulp_rsp.u_api_info.createLocalTunnelInfo.hTunnel);
+        (hash_key_t) ulp_rsp.u_api_info.triggeredRspInfo.teidLocal, (void **)(uintptr_t)&ulp_rsp.u_api_info.triggeredRspInfo.hTunnel);
     DevAssert(hash_rc == HASH_TABLE_OK);
   }else{
     OAILOG_WARNING (LOG_S10, "The cause is not REQUEST_ACCEPTED but %d for S10_CONTEXT_RESPONSE. "
@@ -1431,16 +1437,21 @@ s10_mme_remove_ue_tunnel (
     nw_gtpv2c_stack_handle_t *stack_p,
     itti_s10_remove_ue_tunnel_t *remove_ue_tunnel_p)
 {
+  OAILOG_FUNC_IN (LOG_S10);
   nw_rc_t                                   rc = NW_OK;
   hashtable_rc_t                          hash_rc = HASH_TABLE_OK;
   DevAssert (stack_p );
   DevAssert (remove_ue_tunnel_p );
-  OAILOG_FUNC_IN (LOG_S10);
   MSC_LOG_RX_MESSAGE (MSC_S10_MME, MSC_SGW, NULL, 0, "Removing S10 UE Tunnels for local S10 teid " TEID_FMT " ",
       remove_ue_tunnel_p->local_teid);
   // delete local s10 tunnel
   nw_gtpv2c_ulp_api_t                         ulp_req;
   memset (&ulp_req, 0, sizeof (nw_gtpv2c_ulp_api_t));
+
+  if(remove_ue_tunnel_p->local_teid == (teid_t)0){
+    OAILOG_ERROR (LOG_S10, "Cannot remove S10 tunnel endpoint for local teid 0. \n");
+    OAILOG_FUNC_RETURN(LOG_S10, rc);
+  }
 
   hash_rc = hashtable_ts_get(s10_mme_teid_2_gtv2c_teid_handle,
       (hash_key_t) remove_ue_tunnel_p->local_teid,
@@ -1455,7 +1466,7 @@ s10_mme_remove_ue_tunnel (
 //    pLocalTunnel = RB_FIND (NwGtpv2cTunnelMap, &(thiz->tunnelMap), &keyTunnel);
 
 
-    OAILOG_ERROR (LOG_S10, "Could not get GTPv2-C hTunnel for local teid %X\n", remove_ue_tunnel_p->local_teid);
+    OAILOG_ERROR (LOG_S10, "Could not get GTPv2-C hTunnel for local teid " TEID_FMT". \n", remove_ue_tunnel_p->local_teid);
     MSC_LOG_EVENT (MSC_S10_MME, "Failed to deleted local teid " TEID_FMT "", remove_ue_tunnel_p->local_teid);
     // todo: error in error handling.. asserting?! extreme error handling?
     // Currently ignoring and continue to remove the remains of the tunnel.
@@ -1466,9 +1477,9 @@ s10_mme_remove_ue_tunnel (
     rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
     DevAssert (NW_OK == rc);
     if(ulp_req.u_api_info.findLocalTunnelInfo.hTunnel){
-      OAILOG_ERROR (LOG_S10, "Could FIND A GTPv2-C hTunnel for local teid %X @ DELETION \n", remove_ue_tunnel_p->local_teid);
+      OAILOG_ERROR (LOG_S10, "Could FIND A GTPv2-C hTunnel for local teid " TEID_FMT " @ DELETION \n", remove_ue_tunnel_p->local_teid);
     }else{
-      OAILOG_ERROR (LOG_S10, "Could NOT FIND A GTPv2-C hTunnel for local teid %X @ DELETION \n", remove_ue_tunnel_p->local_teid);
+      OAILOG_ERROR (LOG_S10, "Could NOT FIND A GTPv2-C hTunnel for local teid " TEID_FMT " @ DELETION \n", remove_ue_tunnel_p->local_teid);
     }
     OAILOG_FUNC_RETURN(LOG_S10, RETURNerror);
 
@@ -1488,9 +1499,9 @@ s10_mme_remove_ue_tunnel (
     rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
     DevAssert (NW_OK == rc);
     if(ulp_req.u_api_info.findLocalTunnelInfo.hTunnel){
-      OAILOG_WARNING (LOG_S10, "Could FIND A GTPv2-C hTunnel for local teid %X @ DELETION (2) \n", remove_ue_tunnel_p->local_teid);
+      OAILOG_WARNING (LOG_S10, "Could FIND A GTPv2-C hTunnel for local teid " TEID_FMT " @ DELETION (2) \n", remove_ue_tunnel_p->local_teid);
     }else{
-      OAILOG_WARNING(LOG_S10, "Could NOT FIND A GTPv2-C hTunnel for local teid %X @ DELETION  (2) \n", remove_ue_tunnel_p->local_teid);
+      OAILOG_WARNING(LOG_S10, "Could NOT FIND A GTPv2-C hTunnel for local teid " TEID_FMT " @ DELETION  (2) \n", remove_ue_tunnel_p->local_teid);
     }
 
     /**
@@ -1501,7 +1512,7 @@ s10_mme_remove_ue_tunnel (
     hash_rc = hashtable_ts_free(s10_mme_teid_2_gtv2c_teid_handle, (hash_key_t) remove_ue_tunnel_p->local_teid);
     DevAssert (HASH_TABLE_OK == hash_rc);
 
-    OAILOG_DEBUG(LOG_S10, "Successfully removed S10 Tunnel local teid %X\n", remove_ue_tunnel_p->local_teid);
+    OAILOG_DEBUG(LOG_S10, "Successfully removed S10 Tunnel local teid " TEID_FMT ".\n", remove_ue_tunnel_p->local_teid);
     OAILOG_FUNC_RETURN(LOG_S10, RETURNok);
   }
 }

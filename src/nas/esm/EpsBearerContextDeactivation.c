@@ -61,6 +61,7 @@
 #include "3gpp_24.008.h"
 #include "3gpp_29.274.h"
 #include "mme_app_ue_context.h"
+#include "mme_app_bearer_context.h"
 #include "esm_proc.h"
 #include "commonDef.h"
 #include "emm_data.h"
@@ -148,18 +149,19 @@ esm_proc_eps_bearer_context_deactivate (
   pdn_cid_t pid,
   esm_cause_t * const esm_cause)
 {
-
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   int                                     rc = RETURNerror;
   ue_context_t                           *ue_context  = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
   pdn_context_t                          *pdn_context = NULL;
   DevAssert(ue_context);
 
+  OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - EPS default bearer context deactivation " "(ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d)\n", ue_context->mme_ue_s1ap_id, ebi);
   /** Get the PDN Context. */
   mme_app_get_pdn_context(ue_context, pid, ESM_EBI_UNASSIGNED, NULL, &pdn_context);
-  DevAssert(pdn_context);
-
-  OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - EPS default bearer context deactivation " "(ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d)\n", ue_context->mme_ue_s1ap_id, ebi);
+  if(!pdn_context){
+    OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - EPS bearer context deactivation " "(ue_id=" MME_UE_S1AP_ID_FMT ", hat no valid PDN-Context for pid=%d, ebi=%d)\n", ue_context->mme_ue_s1ap_id, pid, ebi);
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
+  }
 
   if (is_local) {
     /*
@@ -168,6 +170,12 @@ esm_proc_eps_bearer_context_deactivate (
      */
     rc = _eps_bearer_release (emm_context, ebi, &pid);
     /** Return after releasing. */
+    if(!pdn_context->is_active){
+      // todo: check that only 1 deactivate message for the default bearer exists
+      *esm_cause = ESM_CAUSE_INSUFFICIENT_RESOURCES;
+      OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - We released  the default EBI. Deregistering the PDN context (E-RAB failure). (ebi=%d,pid=%d)\n", ebi,pid);
+      rc = esm_proc_pdn_disconnect_accept (emm_context, pdn_context->context_identifier, ebi, esm_cause); /**< Delete Session Request is already sent at the beginning. We don't care for the response. */
+    }
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
   }
 
@@ -185,7 +193,14 @@ esm_proc_eps_bearer_context_deactivate (
       /** Only validate the current bearer, the others might be in a pending deactivation state. */
       bearer_context_t *session_bearer = NULL;
       session_bearer = mme_app_get_session_bearer_context(pdn_context, ebi);
-      DevAssert(session_bearer && session_bearer->pdn_cx_id == pid && session_bearer->esm_ebr_context.status == ESM_EBR_ACTIVE);
+      if(!session_bearer){
+        /** Bearer to release not existing. */
+        OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - Bearer with ebi %d for UE with ue_id " MME_UE_S1AP_ID_FMT " already released. \n", ebi, ue_context->mme_ue_s1ap_id);
+        OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
+      }else{
+        DevAssert(session_bearer->pdn_cx_id == pid && session_bearer->esm_ebr_context.status == ESM_EBR_ACTIVE);
+
+      }
       /*
        * todo: validate a single bearer!
        * todo: better, more meaningful validation

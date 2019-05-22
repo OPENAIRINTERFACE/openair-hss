@@ -49,7 +49,6 @@
 #include "sgw_ie_defs.h"
 #include "3gpp_23.401.h"
 #include "common_types.h"
-#include "mme_config.h"
 #include "sgw_defs.h"
 #include "sgw_handlers.h"
 #include "sgw_context_manager.h"

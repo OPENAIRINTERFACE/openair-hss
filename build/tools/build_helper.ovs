@@ -132,11 +132,12 @@ install_gtp_ovs_kernel_module() {
     ret=$?;[[ $ret -ne 0 ]] && return $ret
     $SUDO make install  # this overwrites the old gtp.ko
     ret=$?;[[ $ret -ne 0 ]] && return $ret
+    $SUDO depmod -a
+
     $SUDO modprobe udp_tunnel
     $SUDO modprobe ip6_udp_tunnel
     $SUDO modprobe gtp
     ret=$?;[[ $ret -ne 0 ]] && return $ret
-    $SUDO depmod -a
   fi
   return 0
 }

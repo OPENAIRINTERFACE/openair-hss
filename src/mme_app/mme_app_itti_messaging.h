@@ -40,24 +40,35 @@ int mme_app_send_s11_modify_bearer_req(struct ue_context_s *const ue_context, pd
 int mme_app_remove_s10_tunnel_endpoint(teid_t local_teid, struct in_addr peer_ip);
 int mme_app_send_delete_session_request (struct ue_context_s * const ue_context_p, const ebi_t ebi, const struct in_addr saegw_s11_in_addr, const teid_t saegw_s11_teid, const bool noDelete); /**< Moved Delete Session Request from mme_app_detach. */
 
-void mme_app_itti_e_rab_failure(mme_ue_s1ap_id_t ue_id, ebi_t ebi);
+void mme_app_itti_e_rab_failure(mme_ue_s1ap_id_t ue_id, ebi_t ebi, bool modify, bool remove);
 
+/**
+ * If cause value is nonzero, it will be set.
+ * If it is zero, it will be derived from the cause values of the bearer contexts.
+ */
 int
 mme_app_send_s11_create_bearer_rsp (
   struct ue_context_s *const ue_context,
   pdn_context_t       *pdn_ctx,
   void                *trxn,
-  bearer_contexts_to_be_created_t * bcs_tbc);
+  gtpv2c_cause_value_t cause_value,
+  bearer_contexts_to_be_created_t *bcs_tbc);
+
+int
+mme_app_send_s11_update_bearer_rsp (
+  struct ue_context_s *const ue_context,
+  void                *trxn,
+  bearer_contexts_to_be_updated_t *bcs_tbu);
 
 int
 mme_app_send_s11_delete_bearer_rsp (
   struct ue_context_s *const ue_context,
-  pdn_context_t       *pdn_ctx,
+  gtpv2c_cause_value_t cause_value,
   void                *trxn,
   ebi_list_t          *ebi_list);
 
 void mme_app_itti_nas_context_response(ue_context_t * ue_context, nas_s10_context_t * s10_context_val);
-void mme_app_itti_nas_pdn_connectivity_response(ue_context_t * ue_context, paa_t *paa, protocol_configuration_options_t * pco, bearer_context_t * bc);
+void mme_app_itti_nas_pdn_connectivity_response(ue_context_t * ue_context, paa_t *paa, protocol_configuration_options_t * pco, pdn_context_t * pdn_context, bearer_context_t * bc);
 void mme_app_itti_forward_relocation_response(ue_context_t *ue_context, mme_app_s10_proc_mme_handover_t *s10_handover_proc, bstring target_to_source_container);
 void mme_app_send_s1ap_handover_cancel_acknowledge(mme_ue_s1ap_id_t mme_ue_s1ap_id, enb_ue_s1ap_id_t enb_ue_s1ap_id, sctp_assoc_id_t assoc_id);
 void mme_app_send_s1ap_handover_preparation_failure(mme_ue_s1ap_id_t mme_ue_s1ap_id, enb_ue_s1ap_id_t enb_ue_s1ap_id, sctp_assoc_id_t assoc_id, enum s1cause cause);

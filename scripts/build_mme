@@ -213,16 +213,16 @@ function main()
   $CMAKE $cmake_args .. > /dev/null
   ret=$?;[[ $ret -ne 0 ]] && return $ret
 
-  compilations mme mme $OPENAIRCN_DIR/build/mme/build/mme_app $verbose
+  compilations mme mme $OPENAIRCN_DIR/build/mme/build/mme $verbose
   ret=$?;[[ $ret -ne 0 ]] && return $ret
 
   if [ $unit_tests -ne 0 ]; then
-    make_test mme mme $OPENAIRCN_DIR/build/mme/build/mme_app $verbose
+    make_test mme mme $OPENAIRCN_DIR/build/mme/build/mme $verbose
     ret=$?;[[ $ret -ne 0 ]] && return $ret
   fi 
 
   $SUDO killall -q mme
-  $SUDO cp -upv $OPENAIRCN_DIR/build/mme/build/mme_app/mme /usr/local/bin && $SUDO chmod 755 /usr/local/bin/mme && echo_success "mme installed"  
+  $SUDO cp -upv $OPENAIRCN_DIR/build/mme/build/mme /usr/local/bin && $SUDO chmod 755 /usr/local/bin/mme && echo_success "mme installed"  
   return 0
 }
 

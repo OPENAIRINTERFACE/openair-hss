@@ -107,10 +107,10 @@ void itti_free_msg_content (MessageDef * const message_p)
   }
   break;
 
-  case MME_APP_ACTIVATE_BEARER_REQ: {
-    /** Bearer Context to Be Setup. */
-    if(message_p->ittiMsg.mme_app_activate_bearer_req.bcs_to_be_created){
-      free_bearer_contexts_to_be_created(&message_p->ittiMsg.mme_app_activate_bearer_req.bcs_to_be_created);
+  case MME_APP_UPDATE_ESM_BEARER_CTXS_REQ: {
+    /** Bearer Context to Be updated. */
+    if(message_p->ittiMsg.mme_app_update_esm_bearer_ctxs_req.bcs_to_be_updated){
+      free_bearer_contexts_to_be_updated(&message_p->ittiMsg.mme_app_update_esm_bearer_ctxs_req.bcs_to_be_updated);
     }
   }
   break;
@@ -215,8 +215,19 @@ void itti_free_msg_content (MessageDef * const message_p)
   }
   break;
 
+  case S11_UPDATE_BEARER_REQUEST: {
+    clear_protocol_configuration_options(&message_p->ittiMsg.s11_update_bearer_request.pco);
+    if(message_p->ittiMsg.s11_update_bearer_request.bearer_contexts){
+      free_bearer_contexts_to_be_updated(&message_p->ittiMsg.s11_update_bearer_request.bearer_contexts);
+    }
+  }
+  break;
+
   case S11_DELETE_BEARER_REQUEST: {
     clear_protocol_configuration_options(&message_p->ittiMsg.s11_delete_bearer_request.pco);
+//    if(message_p->ittiMsg.s11_delete_bearer_request.failed_bearer_contexts){
+//      free_bearer_contexts_to_be_deleted(&message_p->ittiMsg.s11_delete_bearer_request.failed_bearer_contexts);
+//    }
   }
   break;
 
@@ -254,7 +265,21 @@ void itti_free_msg_content (MessageDef * const message_p)
   case S1AP_UE_CONTEXT_RELEASE_COMMAND_LOG:
   case S1AP_UE_CONTEXT_RELEASE_LOG:
   case S1AP_E_RABSETUP_RESPONSE_LOG:
+  case S1AP_E_RABMODIFY_RESPONSE_LOG:
   case S1AP_E_RABRELEASE_RESPONSE_LOG:
+    /* *** */
+  case S1AP_HANDOVER_NOTIFY_LOG:
+  case S1AP_ENB_STATUS_TRANSFER_LOG:
+  case S1AP_HANDOVER_CANCEL_LOG:
+  case S1AP_HANDOVER_REQUIRED_LOG:
+  case S1AP_PATH_SWITCH_REQUEST_LOG:
+  case S1AP_ENB_RESET_LOG:
+
+    /* *** */
+  case S1AP_INITIAL_CONTEXT_SETUP_FAILURE_LOG:
+  case S1AP_HANDOVER_FAILURE_LOG:
+    /* *** */
+  case S1AP_HANDOVER_REQUEST_ACKNOWLEDGE_LOG:
 
     // DO nothing
     break;
@@ -345,7 +370,7 @@ void itti_free_msg_content (MessageDef * const message_p)
   case UDP_INIT:
   case UDP_DATA_REQ:
   case UDP_DATA_IND:
-    // TODO
+    /** Changed to stacked buffer. */
    break;
 
   case S1AP_PATH_SWITCH_REQUEST_ACKNOWLEDGE:

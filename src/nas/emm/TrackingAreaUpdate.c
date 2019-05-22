@@ -69,7 +69,6 @@
 #include "esm_proc.h"
 #include "emm_sap.h"
 #include "emm_cause.h"
-#include "mme_config.h"
 #include "mme_app_defs.h"
 #include "mme_config.h"
 #include "mme_app_procedures.h"
@@ -160,8 +159,12 @@ int emm_proc_tracking_area_update_request (
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
   }
   /** Retrieve the MME_APP UE context. */
+  // todo: add a lock here before processing the ue contexts
   ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, ue_id);
-  DevAssert(ue_context);
+  if(!ue_context){
+    OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  TAU - For ueId " MME_UE_S1AP_ID_FMT " no UE context exists. \n", ue_id);
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
+  }
 
   OAILOG_DEBUG(LOG_NAS_EMM, "EMM-PROC-  Tracking Area Update request for new UeId " MME_UE_S1AP_ID_FMT ". TAU_Type=%d, active_flag=%d)\n", ue_id,
       ies->eps_update_type.eps_update_type_value, ies->eps_update_type.active_flag);
@@ -177,6 +180,22 @@ int emm_proc_tracking_area_update_request (
       if(((*duplicate_emm_ue_ctx_pP) = emm_data_context_get_by_guti (&_emm_data, &ies->old_guti)) != NULL){ /**< May be set if S-TMSI is set. */
         OAILOG_DEBUG(LOG_NAS_EMM, "EMM-PROC-  Found a valid UE with correct GUTI " GUTI_FMT " and (old) ue_id " MME_UE_S1AP_ID_FMT ". "
             "Continuing with the Tracking Area Update Request. \n", GUTI_ARG(&(*duplicate_emm_ue_ctx_pP)->_guti), (*duplicate_emm_ue_ctx_pP)->ue_id);
+      }
+    }
+    OAILOG_DEBUG(LOG_NAS_EMM, "CHECKING DUPLICATE CONTEXT BY IMSI \n");
+    if(!(*duplicate_emm_ue_ctx_pP)){
+      /** Check if there is an ongoing handover procedure and if the IMSI already exists. */
+      if(!ies->is_initial){
+        mme_app_s10_proc_mme_handover_t * s10_handover_proc = mme_app_get_s10_procedure_mme_handover(ue_context);
+        if(s10_handover_proc){
+          DevAssert(s10_handover_proc->nas_s10_context.mm_eps_ctx);
+          OAILOG_INFO(LOG_NAS_EMM, "EMM-PROC  - We have receive the TAU as part of an S10 procedure for ue_id = " MME_UE_S1AP_ID_FMT ". "
+              "Checking for duplicate EMM contexts for the IMSI "IMSI_64_FMT ". \n", ue_id, s10_handover_proc->nas_s10_context.imsi);
+          if(((*duplicate_emm_ue_ctx_pP) = emm_data_context_get_by_imsi(&_emm_data, s10_handover_proc->nas_s10_context.imsi)) != NULL){ /**< May be set if S-TMSI is set. */
+            OAILOG_DEBUG(LOG_NAS_EMM, "EMM-PROC-  Found a valid UE with IMSI " IMSI_64_FMT " and (old) ue_id " MME_UE_S1AP_ID_FMT ". "
+                "Continuing with the Tracking Area Update Request. \n", s10_handover_proc->nas_s10_context.imsi, (*duplicate_emm_ue_ctx_pP)->ue_id);
+          }
+        }
       }
     }
   }else{
@@ -1630,7 +1649,16 @@ static int _emm_tracking_area_update_run_procedure(emm_data_context_t *emm_conte
 
   /** Retrieve the MME_APP UE context. */
   ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
-  DevAssert(ue_context);
+  if(!ue_context){
+    OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  TAU - For ueId " MME_UE_S1AP_ID_FMT " no ue context exists (while running TAU procedure). Removing the EMM context without sending attach reject.. \n", emm_context->ue_id);
+    // Release EMM context
+    if (emm_context) {
+      if(emm_context->is_dynamic) {
+        _clear_emm_ctxt(emm_context);
+      }
+    }
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
+  }
 
   if (tau_proc->ies->last_visited_registered_tai) {
     emm_ctx_set_valid_lvr_tai(emm_context, tau_proc->ies->last_visited_registered_tai);
@@ -1763,6 +1791,14 @@ static int _emm_tracking_area_update_run_procedure(emm_data_context_t *emm_conte
       }
       /** Not finishing the TAU procedure. */
     }else{
+      /** Check if the origin TAI is belonging to the same MME (RF issues). */
+      if (mme_app_check_ta_local(&tau_proc->ies->last_visited_registered_tai->plmn, tau_proc->ies->last_visited_registered_tai->tac)) {
+        OAILOG_WARNING(LOG_NAS_EMM, "EMM-PROC  - For UE " MME_UE_S1AP_ID_FMT " the last visited TAI " TAI_FMT " is attached to current MME (assuming RF issues). "
+            "Proceeding with identification procedure. \n", TAI_ARG(tau_proc->ies->last_visited_registered_tai), emm_context->ue_id);
+        rc = emm_proc_identification (emm_context, (nas_emm_proc_t *)tau_proc, IDENTITY_TYPE_2_IMSI, _emm_tracking_area_update_success_identification_cb, _emm_tracking_area_update_failure_identification_cb);
+        OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+      }
+
       /** Check if the origin TAI is a neighboring MME where we can request the UE MM context. */
       struct in_addr neigh_mme_ipv4_addr;
       neigh_mme_ipv4_addr.s_addr = 0;
@@ -1771,9 +1807,8 @@ static int _emm_tracking_area_update_run_procedure(emm_data_context_t *emm_conte
       if(neigh_mme_ipv4_addr.s_addr ==0){
         OAILOG_WARNING(LOG_NAS_EMM, "EMM-PROC  - For UE " MME_UE_S1AP_ID_FMT " the last visited TAI " TAI_FMT " is not configured as a MME S10 neighbor. "
             "Proceeding with identification procedure. \n", TAI_ARG(tau_proc->ies->last_visited_registered_tai), emm_context->ue_id);
-        /** Invalidate the EMM context. */
-        OAILOG_INFO(LOG_NAS_EMM, "EMM-PROC  - EMM context for the ue_id=" MME_UE_S1AP_ID_FMT " missing a valid security context. \n", emm_context->ue_id);
         rc = emm_proc_identification (emm_context, (nas_emm_proc_t *)tau_proc, IDENTITY_TYPE_2_IMSI, _emm_tracking_area_update_success_identification_cb, _emm_tracking_area_update_failure_identification_cb);
+        OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
       }else{
         /*
          * Originating TAI is configured as an MME neighbor.
@@ -1796,11 +1831,16 @@ static int _emm_tracking_area_update_run_procedure(emm_data_context_t *emm_conte
           rc = _context_req_proc_success_cb(emm_context);
           OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
         }else{
+          if(!tau_proc->ies->is_initial){
+            OAILOG_DEBUG (LOG_NAS_EMM, "EMM-PROC- No handover procedure exists for non-initial TAU request for UE with ue_id=" MME_UE_S1AP_ID_FMT ". \n", emm_context->ue_id);
+            rc = emm_proc_tracking_area_update_reject (emm_context, EMM_CAUSE_NETWORK_FAILURE);
+            OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+          }
           /**
            * Send an S10 context request. Send the PLMN together (will be serving network IE). New TAI not need to be sent.
            * Set the new TAI and the new PLMN to the UE context. In case of a TAC-Accept, will be sent and registered.
            */
-          OAILOG_DEBUG (LOG_NAS_EMM, "EMM-PROC- Security context for EMM_DATA_CONTEXT is missing. Sending a S10 context request for UE with ue_id=" MME_UE_S1AP_ID_FMT " to old MME. \n", emm_context->ue_id);
+          OAILOG_DEBUG (LOG_NAS_EMM, "EMM-PROC- Security context for EMM_DATA_CONTEXT is missing & no S10 procedu. Sending a S10 context request for UE with ue_id=" MME_UE_S1AP_ID_FMT " to old MME. \n", emm_context->ue_id);
           /**
            * Directly inform the MME_APP of the new context.
            * Depending on if there is a pending MM_EPS_CONTEXT or not, it should send S10 message..
@@ -1861,9 +1901,6 @@ static int _context_req_proc_success_cb (emm_data_context_t *emm_context)
   nas_s10_ctx->imsi = imsi_to_imsi64(&nas_s10_ctx->_imsi);
   emm_ctx_set_valid_imsi(emm_context, &nas_s10_ctx->_imsi, nas_s10_ctx->imsi);
   emm_data_context_upsert_imsi(&_emm_data, emm_context); /**< Register the IMSI in the hash table. */
-
-  ue_context_t * test_ue_ctx = mme_ue_context_exists_imsi (&mme_app_desc.mme_ue_contexts, nas_s10_ctx->imsi);
-  DevAssert(test_ue_ctx);
 
   /*
    * Update the security context & security vectors of the UE independent of TAU/Attach here (set fields valid/present).

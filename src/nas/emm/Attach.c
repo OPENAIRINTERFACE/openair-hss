@@ -230,7 +230,13 @@ int emm_proc_attach_request (
    }
    /** Retrieve the MME_APP UE context. It must always exist. It may or may not be linked to an existing EMM Data context. */
    ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, ue_id);
-   DevAssert(ue_context);
+//   ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, ue_id);
+   if(!ue_context){
+     OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  ATTACH - For ueId " MME_UE_S1AP_ID_FMT " no UE context exists. \n", ue_id);
+     OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
+   }
+
+//   DevAssert(ue_context);
 
    // Check whether request if for emergency bearer service.
 
@@ -783,7 +789,7 @@ int emm_proc_attach_request_validity(emm_data_context_t * emm_context, mme_ue_s1
       // Clean up new UE context that was created to handle new attach request
       if(new_ue_id != emm_context->ue_id)
         nas_itti_detach_req(new_ue_id);
-      free_emm_tau_request_ies(&ies);
+      free_emm_attach_request_ies(&ies);
 
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
     }

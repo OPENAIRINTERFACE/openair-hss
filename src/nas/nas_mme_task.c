@@ -80,16 +80,25 @@ static void *nas_intertask_interface (void *args_p)
         }
         break;
 
-    case MME_APP_ACTIVATE_BEARER_REQ:
-      nas_proc_activate_dedicated_bearer(&MME_APP_ACTIVATE_BEARER_REQ (received_message_p));
+    case MME_APP_ACTIVATE_EPS_BEARER_CTX_REQ:
+      nas_proc_activate_dedicated_bearer(&MME_APP_ACTIVATE_EPS_BEARER_CTX_REQ (received_message_p));
       break;
 
-    case MME_APP_DEACTIVATE_BEARER_REQ:
-      nas_proc_deactivate_dedicated_bearer(&MME_APP_DEACTIVATE_BEARER_REQ (received_message_p));
+    case MME_APP_MODIFY_EPS_BEARER_CTX_REQ:
+      nas_proc_modify_eps_bearer_ctx(&MME_APP_MODIFY_EPS_BEARER_CTX_REQ (received_message_p));
+      break;
+
+    case MME_APP_DEACTIVATE_EPS_BEARER_CTX_REQ:
+      nas_proc_deactivate_dedicated_bearer(&MME_APP_DEACTIVATE_EPS_BEARER_CTX_REQ (received_message_p));
+      break;
+
+    case MME_APP_UPDATE_ESM_BEARER_CTXS_REQ:
+      nas_proc_establish_bearer_update(&MME_APP_UPDATE_ESM_BEARER_CTXS_REQ (received_message_p));
       break;
 
     case MME_APP_E_RAB_FAILURE:
-      nas_proc_e_rab_failure(&MME_APP_E_RAB_FAILURE (received_message_p));
+      nas_proc_e_rab_failure(MME_APP_E_RAB_FAILURE (received_message_p).mme_ue_s1ap_id, MME_APP_E_RAB_FAILURE (received_message_p).ebi,
+          MME_APP_E_RAB_FAILURE (received_message_p).modify, MME_APP_E_RAB_FAILURE (received_message_p).remove);
       break;
 
     case NAS_DOWNLINK_DATA_CNF:{
@@ -161,6 +170,11 @@ static void *nas_intertask_interface (void *args_p)
 
     case NAS_CONTEXT_FAIL: {
       nas_proc_context_fail(NAS_CONTEXT_FAIL(received_message_p).ue_id, NAS_CONTEXT_FAIL(received_message_p).cause);
+    }
+    break;
+
+    case NAS_SIGNALLING_CONNECTION_REL_IND:{
+       nas_proc_signalling_connection_rel_ind (NAS_SIGNALLING_CONNECTION_REL_IND (received_message_p).ue_id);
     }
     break;
 

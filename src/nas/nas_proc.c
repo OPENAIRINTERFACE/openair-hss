@@ -554,8 +554,21 @@ int nas_proc_activate_dedicated_bearer(emm_cn_activate_dedicated_bearer_req_t * 
   int                                     rc = RETURNerror;
   emm_sap_t                               emm_sap = {0};
   emm_sap.primitive = _EMMCN_ACTIVATE_DEDICATED_BEARER_REQ;
-  emm_sap.u.emm_cn.u.activate_dedicated_bearer_req = emm_cn_activate;
+  emm_sap.u.emm_cn.u.emm_cn_activate_dedicated_bearer_req = emm_cn_activate;
   MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMM_CN_ACTIVATE_DEDICATED_BEARER_REQ " MME_UE_S1AP_ID_FMT " ", emm_cn_activate->ue_id);
+  rc = emm_sap_send (&emm_sap);
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+}
+
+//------------------------------------------------------------------------------
+int nas_proc_modify_eps_bearer_ctx(emm_cn_modify_eps_bearer_ctx_req_t * emm_cn_modify_eps_bearer_ctx)
+{
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  int                                     rc = RETURNerror;
+  emm_sap_t                               emm_sap = {0};
+  emm_sap.primitive = _EMMCN_MODIFY_EPS_BEARER_CTX_REQ;
+  emm_sap.u.emm_cn.u.emm_cn_modify_eps_bearer_ctx_req = emm_cn_modify_eps_bearer_ctx;
+  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMM_CN_MODIFY_EPS_BEARER_CTX_REQ " MME_UE_S1AP_ID_FMT " ", emm_cn_modify->ue_id);
   rc = emm_sap_send (&emm_sap);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
@@ -567,23 +580,54 @@ int nas_proc_deactivate_dedicated_bearer(emm_cn_deactivate_dedicated_bearer_req_
   int                                     rc = RETURNerror;
   emm_sap_t                               emm_sap = {0};
   emm_sap.primitive = _EMMCN_DEACTIVATE_DEDICATED_BEARER_REQ;
-  emm_sap.u.emm_cn.u.deactivate_dedicated_bearer_req = emm_cn_deactivate;
-  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMM_CN_DEACTIVATE_DEDICATED_BEARER_REQ " MME_UE_S1AP_ID_FMT " ", emm_cn_activate->ue_id);
+  emm_sap.u.emm_cn.u.emm_cn_deactivate_dedicated_bearer_req = emm_cn_deactivate;
+  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMM_CN_DEACTIVATE_DEDICATED_BEARER_REQ " MME_UE_S1AP_ID_FMT " ", emm_cn_deactivate->ue_id);
   rc = emm_sap_send (&emm_sap);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
 //------------------------------------------------------------------------------
-int nas_proc_e_rab_failure(mme_ue_s1ap_id_t ue_id, ebi_t ebi)
+int nas_proc_establish_bearer_update(emm_cn_update_esm_bearer_ctxs_req_t * emm_cn_update_esm_bearer_ctxs)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
   emm_sap_t                               emm_sap = {0};
-  emm_sap.primitive = _EMMAS_ERAB_SETUP_REJ;
+  emm_sap.primitive = _EMMCN_UPDATE_ESM_BEARERS_REQ;
+  emm_sap.u.emm_cn.u.emm_cn_update_esm_bearer_ctxs_req = emm_cn_update_esm_bearer_ctxs;
+  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMM_CN_UPDATE_ESM_BEARER_CTXS_REQ" MME_UE_S1AP_ID_FMT " ", emm_cn_update_esm_bearer_ctxs->ue_id);
+  rc = emm_sap_send (&emm_sap);
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+}
+
+//------------------------------------------------------------------------------
+int nas_proc_e_rab_failure(mme_ue_s1ap_id_t ue_id, ebi_t ebi, bool modify, bool remove)
+{
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  int                                     rc = RETURNerror;
+  emm_sap_t                               emm_sap = {0};
   emm_sap.u.emm_as.u.erab_setup_rej.ue_id = ue_id;
   emm_sap.u.emm_as.u.erab_setup_rej.ebi   = ebi;
+  if(!modify){
+    emm_sap.primitive = _EMMAS_ERAB_SETUP_REJ;
+    MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMM_AS_ERAB_SETUP_REJ " MME_UE_S1AP_ID_FMT " ", ue_id);
+  }else{
+    emm_sap.primitive = _EMMAS_ERAB_MODIFY_REJ;
+    emm_sap.u.emm_as.u.erab_modify_rej.remove_bearer = remove; /**< Union stuff. */
+    MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMM_AS_ERAB_MODIFY_REJ " MME_UE_S1AP_ID_FMT " ", ue_id);
+  }
+  rc = emm_sap_send (&emm_sap);
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+}
 
-  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMM_AS_ERAB_SETUP_REJ " MME_UE_S1AP_ID_FMT " ", ue_id);
+//------------------------------------------------------------------------------
+int nas_proc_signalling_connection_rel_ind (mme_ue_s1ap_id_t ue_id)
+{
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  int                                     rc = RETURNerror;
+  emm_sap_t                               emm_sap = {0};
+  emm_sap.primitive = _EMMAS_RELEASE_IND;
+  emm_sap.u.emm_as.u.release.ue_id = ue_id;
+  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMAS_RELEASE_IND " MME_UE_S1AP_ID_FMT " ", ue_id);
   rc = emm_sap_send (&emm_sap);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }

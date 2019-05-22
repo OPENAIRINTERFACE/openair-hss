@@ -111,6 +111,10 @@ s6a_fd_init_dict_objs (
    */
   CHECK_FD_FCT (fd_disp_register (s6a_ula_cb, DISP_HOW_CC, &when, NULL, &s6a_fd_cnf.ula_hdl));
   DevAssert (s6a_fd_cnf.ula_hdl );
+
+
+
+
   when.command = s6a_fd_cnf.dataobj_s6a_aia;
   when.app = s6a_fd_cnf.dataobj_s6a_app;
   /*
@@ -118,13 +122,18 @@ s6a_fd_init_dict_objs (
    */
   CHECK_FD_FCT (fd_disp_register (s6a_aia_cb, DISP_HOW_CC, &when, NULL, &s6a_fd_cnf.aia_hdl));
   DevAssert (s6a_fd_cnf.aia_hdl );
+
+
+  when.command = s6a_fd_cnf.dataobj_s6a_na;
+  when.app = s6a_fd_cnf.dataobj_s6a_app;
   /*
    * Register the callback for Notify Answer S6A Application
    */
   CHECK_FD_FCT (fd_disp_register (s6a_na_cb, DISP_HOW_CC, &when, NULL, &s6a_fd_cnf.na_hdl));
   DevAssert (s6a_fd_cnf.na_hdl );
-  when.command = s6a_fd_cnf.dataobj_s6a_na;
-  when.app = s6a_fd_cnf.dataobj_s6a_app;
+
+
+
   /**
    * Register the callback for the Cancel Location Request S6A Application
    */

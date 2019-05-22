@@ -134,6 +134,8 @@ void s1ap_mme_itti_s1ap_initial_ue_message(
 
   OAILOG_FUNC_IN (LOG_S1AP);
   AssertFatal((nas_msg_length < 1000), "Bad length for NAS message %lu", nas_msg_length);
+  OAILOG_ERROR (LOG_S1AP, "S1AP:Initial UE Message- Size %d: \n", nas_msg_length);
+
   message_p = itti_alloc_new_message(TASK_S1AP, S1AP_INITIAL_UE_MESSAGE);
 
   S1AP_INITIAL_UE_MESSAGE(message_p).sctp_assoc_id          = assoc_id;

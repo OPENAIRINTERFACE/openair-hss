@@ -161,6 +161,11 @@ s1ap_mme_thread (
       }
       break;
 
+    case S1AP_E_RAB_MODIFY_REQ:{
+        s1ap_generate_s1ap_e_rab_modify_req (&S1AP_E_RAB_MODIFY_REQ (received_message_p));
+      }
+      break;
+
     case S1AP_E_RAB_RELEASE_REQ:{
         s1ap_generate_s1ap_e_rab_release_req (&S1AP_E_RAB_RELEASE_REQ (received_message_p));
       }
@@ -168,7 +173,9 @@ s1ap_mme_thread (
 
     // From MME_APP task
     case S1AP_UE_CONTEXT_RELEASE_COMMAND:{
-        s1ap_handle_ue_context_release_command (&received_message_p->ittiMsg.s1ap_ue_context_release_command);
+      OAILOG_ERROR (LOG_S1AP, "ENTERED S1AP_UE_CONTEXT_RELEASE_COMMAND\n");
+      s1ap_handle_ue_context_release_command (&received_message_p->ittiMsg.s1ap_ue_context_release_command);
+        OAILOG_ERROR (LOG_S1AP, "AFTER S1AP_UE_CONTEXT_RELEASE_COMMAND\n");
       }
       break;
 
@@ -623,6 +630,7 @@ void s1ap_notified_new_ue_mme_s1ap_id_association (
           sctp_assoc_id, enb_ue_s1ap_id, mme_ue_s1ap_id, hashtable_rc_code2string(h_rc));
 
       ue_ref_test = s1ap_is_ue_mme_id_in_list (mme_ue_s1ap_id);
+      DevAssert(ue_ref_test);
       return;
     }
     OAILOG_DEBUG(LOG_S1AP, "Could not find  ue  with enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT "\n", enb_ue_s1ap_id);
@@ -683,6 +691,26 @@ s1ap_new_ue (
   }
   MSC_LOG_EVENT (MSC_S1AP_MME, " Associating ue  (enb_ue_s1ap_id: " ENB_UE_S1AP_ID_FMT ") to eNB %s", ue_ref->mme_ue_s1ap_id, enb_ref->enb_name);
   return ue_ref;
+}
+
+//------------------------------------------------------------------------------
+void
+s1ap_set_tai (enb_description_t * enb_ref, S1ap_SupportedTAs_t * ta_list){
+  S1ap_SupportedTAs_Item_t               * ta = NULL;
+  S1ap_PLMNidentity_t                    * plmn_i = NULL;
+  tac_t                                    tac_value = 0;
+
+  /** Get the PLMN. */
+  ta = ta_list->list.array[0];
+  plmn_i = ta_list->list.array[0]->broadcastPLMNs.list.array[0];
+  enb_ref->tai_list.partial_tai_list[0].typeoflist = TRACKING_AREA_IDENTITY_LIST_ONE_PLMN_NON_CONSECUTIVE_TACS;
+  TBCD_TO_PLMN_T (plmn_i, &enb_ref->tai_list.partial_tai_list[0].u.tai_one_plmn_non_consecutive_tacs.plmn);
+
+  for (int i = 0; i < ta_list->list.count && i < 3; i++) {
+    OCTET_STRING_TO_TAC (&ta->tAC, tac_value);
+    enb_ref->tai_list.partial_tai_list[0].u.tai_one_plmn_non_consecutive_tacs.tac[i] = tac_value;
+    enb_ref->tai_list.partial_tai_list[0].numberofelements++;
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -758,7 +786,6 @@ s1ap_remove_enb (
   nb_enb_associated--;
 }
 
-//
 //bool
 //s1ap_add_bearer_context_to_list (__attribute__((unused))const hash_key_t keyP,
 //               void * const bearer_ctx_void,

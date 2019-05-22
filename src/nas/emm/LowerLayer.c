@@ -401,6 +401,48 @@ int lowerlayer_activate_bearer_req (
 }
 
 //------------------------------------------------------------------------------
+int lowerlayer_modify_bearer_req (
+    const mme_ue_s1ap_id_t ue_id,
+    const ebi_t            ebi,
+    const bitrate_t        mbr_dl,
+    const bitrate_t        mbr_ul,
+    const bitrate_t        gbr_dl,
+    const bitrate_t        gbr_ul,
+    bstring data)
+{
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  int                                     rc = RETURNok;
+  emm_sap_t                               emm_sap = {0};
+  emm_security_context_t                 *sctx = NULL;
+  emm_data_context_t                     *emm_data_context = emm_data_context_get(&_emm_data, ue_id);
+
+  emm_sap.primitive = EMMAS_ERAB_MODIFY_REQ;
+  emm_sap.u.emm_as.u.modify_bearer_context_req.ebi    = ebi;
+  emm_sap.u.emm_as.u.modify_bearer_context_req.ue_id  = ue_id;
+  emm_sap.u.emm_as.u.modify_bearer_context_req.mbr_dl = mbr_dl;
+  emm_sap.u.emm_as.u.modify_bearer_context_req.mbr_ul = mbr_ul;
+  emm_sap.u.emm_as.u.modify_bearer_context_req.gbr_dl = gbr_dl;
+  emm_sap.u.emm_as.u.modify_bearer_context_req.gbr_ul = gbr_ul;
+
+
+  if (emm_data_context) {
+    sctx = &emm_data_context->_security;
+  }
+
+  emm_sap.u.emm_as.u.modify_bearer_context_req.nas_msg = data;
+  data = NULL;
+  /*
+   * Setup EPS NAS security data
+   */
+  emm_as_set_security_data (&emm_sap.u.emm_as.u.modify_bearer_context_req.sctx, sctx, false, true);
+  MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_MME, NULL, 0, "EMMAS_ERAB_MODIFY_REQ  (STATUS) ue id " MME_UE_S1AP_ID_FMT " ebi %u gbr_dl %" PRIu64 " gbr_ul %" PRIu64 " ",
+      ue_id, ebi, emm_sap.u.emm_as.u.modify_bearer_context_req.gbr_dl, emm_sap.u.emm_as.u.modify_bearer_context_req.gbr_ul);
+  rc = emm_sap_send (&emm_sap);
+//  unlock_ue_contexts(ue_context);
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+}
+
+//------------------------------------------------------------------------------
 int lowerlayer_deactivate_bearer_req (
     const mme_ue_s1ap_id_t ue_id,
     const ebi_t            ebi,

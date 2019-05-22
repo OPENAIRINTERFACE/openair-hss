@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under
+ * The OpenAirInterface Software Alliance licenses this file to You under 
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.
+ * except in compliance with the License.  
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -18,45 +18,18 @@
  * For more information about the OpenAirInterface (OAI) Software Alliance:
  *      contact@openairinterface.org
  */
-/*! \file udp_messages_types.h
+
+/*! \file s1ap_mme_ta.h
   \brief
   \author Sebastien ROUX, Lionel Gauthier
   \company Eurecom
   \email: lionel.gauthier@eurecom.fr
 */
-#ifndef FILE_UDP_MESSAGES_TYPES_SEEN
-#define FILE_UDP_MESSAGES_TYPES_SEEN
+#ifndef FILE_S1AP_MME_GUMMEI_SEEN
+#define FILE_S1AP_MME_GUMMEI_SEEN
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+int
+s1ap_mme_compare_gummei (
+  const S1ap_PLMNidentity_t * const tbcd_plmn);
 
-#define UDP_INIT(mSGpTR)        ((udp_init_t*)(mSGpTR)->itti_msg)
-#define UDP_DATA_IND(mSGpTR)    ((udp_data_ind_t*)(mSGpTR)->itti_msg)
-#define UDP_DATA_REQ(mSGpTR)    ((udp_data_req_t*)(mSGpTR)->itti_msg)
-#define UDP_DATA_MAX_MSG_LEN    (4096)  /**< Maximum supported gtpv2c packet length including header */
-
-typedef struct {
-  struct in_addr  address;
-  uint16_t        port;
-} udp_init_t;
-
-typedef struct {
-  uint8_t  *buffer;
-  uint32_t  buffer_length;
-  uint32_t  buffer_offset;
-  struct in_addr  peer_address;
-  uint16_t  peer_port;
-} udp_data_req_t;
-
-typedef struct {
-  uint8_t  *buffer;
-  uint32_t  buffer_length;
-  struct in_addr  peer_address;
-  uint16_t  peer_port;
-} udp_data_ind_t;
-
-#ifdef __cplusplus
-}
-#endif
-#endif /* FILE_UDP_MESSAGES_TYPES_SEEN */
+#endif /* FILE_S1AP_MME_TA_SEEN */

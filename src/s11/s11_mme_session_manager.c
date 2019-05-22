@@ -67,6 +67,7 @@ s11_mme_create_session_request (
   nw_gtpv2c_ulp_api_t                         ulp_req;
   nw_rc_t                                   rc;
   uint8_t                                 restart_counter = 0;
+  OAILOG_FUNC_IN (LOG_S11);
 
   DevAssert (stack_p );
   DevAssert (req_p );
@@ -109,6 +110,12 @@ s11_mme_create_session_request (
                               req_p->sender_fteid_for_cp.teid,
                               req_p->sender_fteid_for_cp.ipv4 ? &req_p->sender_fteid_for_cp.ipv4_address : 0,
                               req_p->sender_fteid_for_cp.ipv6 ? &req_p->sender_fteid_for_cp.ipv6_address : NULL);
+
+  /**
+   * Set the AMBR.
+   */
+  gtpv2c_ambr_ie_set(&ulp_req.hMsg, &req_p->ambr);
+
   /*
    * The P-GW TEID should be present on the S11 interface.
    * * * * In case of an initial attach it should be set to 0...
@@ -151,9 +158,9 @@ s11_mme_create_session_request (
       (void *)ulp_req.u_api_info.initialReqInfo.hTunnel);
   if (HASH_TABLE_OK != hash_rc) {
     OAILOG_WARNING (LOG_S11, "Could not save GTPv2-C hTunnel %p for local teid %X\n", (void*)ulp_req.u_api_info.initialReqInfo.hTunnel, ulp_req.u_api_info.initialReqInfo.teidLocal);
-    return RETURNerror;
+    OAILOG_FUNC_RETURN (LOG_S11, RETURNerror);
   }
-  return RETURNok;
+  OAILOG_FUNC_RETURN (LOG_S11, RETURNok);
 }
 
 //------------------------------------------------------------------------------
@@ -213,6 +220,12 @@ s11_mme_handle_create_session_response (
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_APN_RESTRICTION, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
       gtpv2c_apn_restriction_ie_get, &resp_p->apn_restriction);
   DevAssert (NW_OK == rc);
+
+  /** Add the AMBR. */
+  rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_AMBR, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL, gtpv2c_ambr_ie_get,
+      &resp_p->ambr);
+  DevAssert (NW_OK == rc);
+
   /*
    * PCO IE
    */
@@ -492,11 +505,11 @@ s11_mme_handle_ulp_error_indicatior(
    }
      break;
   default:
-    OAILOG_ERROR (LOG_S10, "Received an unhandled error indicator for the local S10-TEID " TEID_FMT " and message type %d. \n",
+    OAILOG_ERROR (LOG_S10, "Received an unhandled error indicator for the local S11-TEID " TEID_FMT " and message type %d. \n",
         pUlpApi->u_api_info.rspFailureInfo.teidLocal, pUlpApi->u_api_info.rspFailureInfo.msgType);
     OAILOG_FUNC_RETURN (LOG_S11, RETURNerror);
   }
-  OAILOG_WARNING (LOG_S10, "Received an error indicator for the local S10-TEID " TEID_FMT " and message type %d. \n",
+  OAILOG_WARNING (LOG_S10, "Received an error indicator for the local S11-TEID " TEID_FMT " and message type %d. \n",
       pUlpApi->u_api_info.rspFailureInfo.teidLocal, pUlpApi->u_api_info.rspFailureInfo.msgType);
   int rc = itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_RETURN (LOG_S11, rc);

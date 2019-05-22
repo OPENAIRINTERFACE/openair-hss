@@ -257,6 +257,7 @@ esm_send_activate_default_eps_bearer_context_request (
   activate_default_eps_bearer_context_request_msg * msg,
   bstring apn,
   const protocol_configuration_options_t * pco,
+  const ambr_t * ambr,
   int pdn_type,
   bstring pdn_addr,
   const EpsQualityOfService * qos,
@@ -330,18 +331,21 @@ esm_send_activate_default_eps_bearer_context_request (
      */
     copy_protocol_configuration_options(&msg->protocolconfigurationoptions, pco);
   }
-//#pragma message  "TEST LG FORCE APN-AMBR"
-  OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - FORCE APN-AMBR\n");
-  msg->presencemask |= ACTIVATE_DEFAULT_EPS_BEARER_CONTEXT_REQUEST_APNAMBR_PRESENT;
-  // APN AMBR is hardcoded to DL AMBR = 200 Mbps and UL APN MBR = 100 Mbps - Which is ok for now for TDD 20 MHz
-  // TODO task#14477798 - need to change these to apm-subscribed values 
-  msg->apnambr.apnambrfordownlink = 0xfe;       // (8640kbps)
-  msg->apnambr.apnambrforuplink = 0xfe; // (8640kbps)
-  msg->apnambr.apnambrfordownlink_extended = 0xde;      // (200Mbps)
-  msg->apnambr.apnambrforuplink_extended = 0x9e;        // (100Mbps)
-  msg->apnambr.apnambrfordownlink_extended2 = 0;
-  msg->apnambr.apnambrforuplink_extended2 = 0;
-  msg->apnambr.extensions = 0 | APN_AGGREGATE_MAXIMUM_BIT_RATE_MAXIMUM_EXTENSION_PRESENT;
+
+  /** Implementing subscribed values. */
+  if(ambr){
+    msg->presencemask |= ACTIVATE_DEFAULT_EPS_BEARER_CONTEXT_REQUEST_APNAMBR_PRESENT;
+    ambr_kbps_calc(&msg->apnambr, (ambr->br_dl/1000), (ambr->br_ul/1000));
+//    msg->apnambr.apnambrfordownlink = 0xfe;       // (8640kbps)
+//    msg->apnambr.apnambrforuplink = 0xfe; // (8640kbps)
+//    msg->apnambr.apnambrfordownlink_extended = 0xde;      // (200Mbps)
+//    msg->apnambr.apnambrforuplink_extended = 0x9e;        // (100Mbps)
+//    msg->apnambr.apnambrfordownlink_extended2 = 0;
+//    msg->apnambr.apnambrforuplink_extended2 = 0;
+//    msg->apnambr.extensions = 0 | APN_AGGREGATE_MAXIMUM_BIT_RATE_MAXIMUM_EXTENSION_PRESENT;
+  }else {
+    OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - no APN AMBR is present for activating default eps bearer. \n");
+  }
   OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Send Activate Default EPS Bearer Context " "Request message (pti=%d, ebi=%d)\n",
       msg->proceduretransactionidentity, msg->epsbeareridentity);
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);
@@ -413,6 +417,84 @@ esm_send_activate_dedicated_eps_bearer_context_request (
     msg->presencemask |= ACTIVATE_DEDICATED_EPS_BEARER_CONTEXT_REQUEST_PROTOCOL_CONFIGURATION_OPTIONS_PRESENT;
   }
   OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Send Activate Dedicated EPS Bearer Context " "Request message (pti=%d, ebi=%d). \n", msg->proceduretransactionidentity, msg->epsbeareridentity);
+  OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);
+}
+
+/****************************************************************************
+ **                                                                        **
+ ** Name:    esm_send_modify_eps_bearer_context_request()  **
+ **                                                                        **
+ ** Description: Builds Modify EPS Bearer Context Request message  **
+ **                                                                        **
+ **      The modify EPS bearer context request message **
+ **      is sent by the network to the UE to request modification of **
+ **      an EPS bearer context which is already activated..          **
+ **                                                                        **
+ ** Inputs:  pti:       Procedure transaction identity             **
+ **      ebi:       EPS bearer identity                        **
+ **      qos:       EPS quality of service                     **
+ **      tft:       Traffic flow template                      **
+ **      Others:    None                                       **
+ **                                                                        **
+ ** Outputs:     msg:       The ESM message to be sent                 **
+ **      Return:    RETURNok, RETURNerror                      **
+ **      Others:    None                                       **
+ **                                                                        **
+ ***************************************************************************/
+int
+esm_send_modify_eps_bearer_context_request (
+  pti_t pti,
+  ebi_t ebi,
+  modify_eps_bearer_context_request_msg * msg,
+  const EpsQualityOfService * qos,
+  traffic_flow_template_t *tft,
+  ambr_t *ambr,
+  protocol_configuration_options_t *pco)
+{
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
+  /*
+   * Mandatory - ESM message header
+   */
+  msg->protocoldiscriminator = EPS_SESSION_MANAGEMENT_MESSAGE;
+  msg->epsbeareridentity = ebi;
+  msg->messagetype = MODIFY_EPS_BEARER_CONTEXT_REQUEST;
+  msg->proceduretransactionidentity = pti;
+  msg->presencemask = 0;
+
+  /*
+   * Optional - EPS QoS
+   */
+  if(qos) {
+    msg->newepsqos = *qos;
+    msg->presencemask |= MODIFY_EPS_BEARER_CONTEXT_REQUEST_NEW_QOS_PRESENT;
+  }
+  /*
+   * Optional - traffic flow template.
+   * Send the TFT as it is. It will contain the operation.
+   * We will modify the bearer context when the bearers are accepted.
+   */
+  if (tft) {
+    memcpy(&msg->tft, tft, sizeof(traffic_flow_template_t));
+    msg->presencemask |= MODIFY_EPS_BEARER_CONTEXT_REQUEST_TFT_PRESENT;
+  }
+  /*
+   * Optional - APN AMBR
+   * Implementing subscribed values.
+   */
+  if(ambr){
+    if(ambr->br_dl && ambr->br_ul){
+      msg->presencemask |= MODIFY_EPS_BEARER_CONTEXT_REQUEST_APNAMBR_PRESENT;
+      ambr_kbps_calc(&msg->apnambr, (ambr->br_dl/1000), (ambr->br_ul/1000));
+    }
+  }else {
+    OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - no APN AMBR is present for activating default eps bearer. \n");
+  }
+
+  if (pco) {
+    memcpy(&msg->protocolconfigurationoptions, pco, sizeof(protocol_configuration_options_t));
+    msg->presencemask |= MODIFY_EPS_BEARER_CONTEXT_REQUEST_PROTOCOL_CONFIGURATION_OPTIONS_PRESENT;
+  }
+  OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Send Modify EPS Bearer Context " "Request message (pti=%d, ebi=%d). \n", msg->proceduretransactionidentity, msg->epsbeareridentity);
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);
 }
 
