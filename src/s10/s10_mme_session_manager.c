@@ -77,7 +77,7 @@ s10_mme_forward_relocation_request (
    * Prepare a new Forward Relocation Request msg
    */
   rc = nwGtpv2cMsgNew (*stack_p, true, NW_GTP_FORWARD_RELOCATION_REQ, req_p->teid, 0, &(ulp_req.hMsg));
-  ulp_req.u_api_info.initialReqInfo.peerIp.s_addr  = req_p->peer_ip.s_addr;
+  ulp_req.u_api_info.initialReqInfo.edns_peer_ip = req_p->peer_ip;
   ulp_req.u_api_info.initialReqInfo.teidLocal  = req_p->s10_source_mme_teid.teid;
   ulp_req.u_api_info.initialReqInfo.hUlpTunnel = 0; /** Will create a local tunnel with type INIT_REQ. */
   ulp_req.u_api_info.initialReqInfo.hTunnel    = 0;
@@ -586,7 +586,7 @@ s10_mme_forward_access_context_notification(nw_gtpv2c_stack_handle_t *stack_p,
   memset (&ulp_req, 0, sizeof (nw_gtpv2c_ulp_api_t));
   ulp_req.u_api_info.initialReqInfo.teidLocal = forward_access_context_notif_p->local_teid;
   ulp_req.apiType = NW_GTPV2C_ULP_API_INITIAL_REQ; /**< Sending Side. */
-  ulp_req.u_api_info.initialReqInfo.peerIp     = forward_access_context_notif_p->peer_ip;
+  ulp_req.u_api_info.initialReqInfo.edns_peer_ip = forward_access_context_notif_p->peer_ip;
   hashtable_rc_t hash_rc = hashtable_ts_get(s10_mme_teid_2_gtv2c_teid_handle,
       (hash_key_t) ulp_req.u_api_info.initialReqInfo.teidLocal, (void **)(uintptr_t)&ulp_req.u_api_info.initialReqInfo.hTunnel);
   if (HASH_TABLE_OK != hash_rc) {
@@ -815,10 +815,7 @@ s10_mme_forward_relocation_complete_notification(
 
   /** Setting the destination TEID from MME_APP. */
   rc = nwGtpv2cMsgNew (*stack_p, true, NW_GTP_FORWARD_RELOCATION_COMPLETE_NTF, notif_p->teid, 0, &(ulp_req.hMsg));
-  ulp_req.u_api_info.initialReqInfo.peerIp     = notif_p->peer_ip;
-
-  OAILOG_INFO(LOG_S10, "Sending FW_RELOC_COMPLETE_NOTIF TO %x. \n", ulp_req.u_api_info.initialReqInfo.peerIp);
-
+  ulp_req.u_api_info.initialReqInfo.edns_peer_ip = notif_p->peer_ip;
   /** Setting the local teid twice, once here once later. */
   ulp_req.u_api_info.initialReqInfo.teidLocal  = notif_p->local_teid;  /**< Used to get the local tunnel... */
   /** Get the already existing local tunnel info. */
@@ -1005,7 +1002,7 @@ s10_mme_context_request (
    * Prepare a new Context Request msg
    */
   rc = nwGtpv2cMsgNew (*stack_p, true, NW_GTP_CONTEXT_REQ, req_p->teid, 0, &(ulp_req.hMsg));
-  ulp_req.u_api_info.initialReqInfo.peerIp     = req_p->peer_ip;
+  ulp_req.u_api_info.initialReqInfo.edns_peer_ip = req_p->peer_ip;
   ulp_req.u_api_info.initialReqInfo.teidLocal  = req_p->s10_target_mme_teid.teid;
   ulp_req.u_api_info.initialReqInfo.hUlpTunnel = 0;
   ulp_req.u_api_info.initialReqInfo.hTunnel    = 0;
@@ -1378,7 +1375,7 @@ s10_mme_handle_context_response(
 	  itti_s10_remove_ue_tunnel_t remove_s10_tunnel;
 	  memset(&remove_s10_tunnel, 0, sizeof(itti_s10_remove_ue_tunnel_t));
 	  remove_s10_tunnel.local_teid = resp_p->teid;
-	  remove_s10_tunnel.peer_ip.s_addr = resp_p->peer_ip.s_addr;
+	  remove_s10_tunnel.peer_ip = resp_p->peer_ip;
 	  s10_mme_remove_ue_tunnel(stack_p, &remove_s10_tunnel);
   }
   return result;
@@ -1490,7 +1487,7 @@ s10_mme_remove_ue_tunnel (
 
     ulp_req.apiType = NW_GTPV2C_ULP_FIND_LOCAL_TUNNEL;
     ulp_req.u_api_info.findLocalTunnelInfo.teidLocal = remove_ue_tunnel_p->local_teid;
-    ulp_req.u_api_info.findLocalTunnelInfo.peerIp = remove_ue_tunnel_p->peer_ip;
+    ulp_req.u_api_info.findLocalTunnelInfo.edns_peer_ip = remove_ue_tunnel_p->peer_ip;
     rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
     DevAssert (NW_OK == rc);
     if(ulp_req.u_api_info.findLocalTunnelInfo.hTunnel){
@@ -1512,7 +1509,7 @@ s10_mme_remove_ue_tunnel (
 
     ulp_req.apiType = NW_GTPV2C_ULP_FIND_LOCAL_TUNNEL;
     ulp_req.u_api_info.findLocalTunnelInfo.teidLocal = remove_ue_tunnel_p->local_teid;
-    ulp_req.u_api_info.findLocalTunnelInfo.peerIp = remove_ue_tunnel_p->peer_ip;
+    ulp_req.u_api_info.findLocalTunnelInfo.edns_peer_ip = remove_ue_tunnel_p->peer_ip;
     rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
     DevAssert (NW_OK == rc);
     if(ulp_req.u_api_info.findLocalTunnelInfo.hTunnel){
@@ -1623,7 +1620,7 @@ s10_mme_relocation_cancel_request(
 
   /** Setting the destination TEID from MME_APP. */
   rc = nwGtpv2cMsgNew (*stack_p, true, NW_GTP_RELOCATION_CANCEL_REQ, req_p->teid, 0, &(ulp_req.hMsg));
-  ulp_req.u_api_info.initialReqInfo.peerIp     = req_p->peer_ip;
+  ulp_req.u_api_info.initialReqInfo.edns_peer_ip = req_p->peer_ip;
 
   /*
    * Set the destination TEID
@@ -1633,8 +1630,6 @@ s10_mme_relocation_cancel_request(
 
   /** IMSI. */
   gtpv2c_imsi_ie_set (&(ulp_req.hMsg), &req_p->imsi);
-
-  OAILOG_WARNING (LOG_S10, "Sending RELOCATION_CANCEL_REQUEST TO %x and removing local S10 Tunnel endpoint. Transactions will timeout and should be ignored. \n", ulp_req.u_api_info.initialReqInfo.peerIp);
   /** We assume that we already send the FW_RELOCATION_REQ. */
   MSC_LOG_TX_MESSAGE (MSC_S10_MME, MSC_SGW, NULL, 0, "0 RELOCATION_CANCEL_REQUEST local S10 teid " TEID_FMT,
       req_p->local_teid);
@@ -1720,7 +1715,7 @@ s10_mme_handle_relocation_cancel_request(
   /*
    * Add the peer-IP just in case.
    */
-  req_p->peer_ip.s_addr = pUlpApi->u_api_info.initialReqIndInfo.peerIp.s_addr;
+  req_p->peer_ip = pUlpApi->u_api_info.initialReqIndInfo.peerIp;
   if (rc != NW_OK) {
     MSC_LOG_RX_DISCARDED_MESSAGE (MSC_S10_MME, MSC_SGW, NULL, 0, "0 RELOCATION_CANCEL_REQUEST local S10 teid " TEID_FMT " ", req_p->teid);
     /*

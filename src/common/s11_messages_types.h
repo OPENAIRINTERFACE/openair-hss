@@ -338,9 +338,9 @@ typedef struct itti_s11_create_session_request_s {
   // Private Extension
 
   /* S11 stack specific parameter. Not used in standalone epc mode */
-  void              *trxn;                ///< Transaction identifier
-  struct in_addr     peer_ip;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME
-  uint16_t           peer_port;           ///< MME port for S-GW or S-GW port for MME
+  void              	   *trxn;                ///< Transaction identifier
+  struct sockaddr          *edns_peer_ip;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME
+  uint16_t           	   peer_port;           ///< MME port for S-GW or S-GW port for MME
 } itti_s11_create_session_request_t;
 
 
@@ -511,7 +511,7 @@ typedef struct itti_s11_create_session_response_s {
 
   /* S11 stack specific parameter. Not used in standalone epc mode */
   void                    *trxn;               ///< Transaction identifier
-  struct in_addr           peer_ip;            ///< MME ipv4 address
+  struct sockaddr		  *peer_ip;            ///< MME ipv4 address
 } itti_s11_create_session_response_t;
 
 //-----------------------------------------------------------------------------
@@ -569,7 +569,7 @@ typedef struct itti_s11_create_bearer_request_s {
 
   /* GTPv2-C specific parameters */
   void                      *trxn;                        ///< Transaction identifier
-  struct in_addr             peer_ip;
+  struct sockaddr           *peer_ip;
 } itti_s11_create_bearer_request_t;
 
 //-----------------------------------------------------------------------------
@@ -701,7 +701,7 @@ typedef struct itti_s11_update_bearer_request_s {
 
   /* GTPv2-C specific parameters */
   void                      *trxn;                        ///< Transaction identifier
-  struct in_addr             peer_ip;
+  struct sockaddr           *peer_ip;
 } itti_s11_update_bearer_request_t;
 
 //-----------------------------------------------------------------------------
@@ -835,7 +835,7 @@ typedef struct itti_s11_delete_bearer_request_s {
 
   /* GTPv2-C specific parameters */
   void                      *trxn;                        ///< Transaction identifier
-  struct in_addr             peer_ip;
+  struct sockaddr           *peer_ip;
 } itti_s11_delete_bearer_request_t;
 
 //-----------------------------------------------------------------------------
@@ -1139,7 +1139,7 @@ typedef struct itti_s11_modify_bearer_request_s {
 
   /* GTPv2-C specific parameters */
   void                      *trxn;                        ///< Transaction identifier
-  struct in_addr             peer_ip;
+  struct sockaddr			*edns_peer_ip;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME
   uint8_t                    internal_flags;
 } itti_s11_modify_bearer_request_t;
 
@@ -1249,7 +1249,7 @@ typedef struct itti_s11_modify_bearer_response_s {
   /* S11 stack specific parameter. Not used in standalone epc mode */
   void                         *trxn;                      ///< Transaction identifier
   uint8_t                      internal_flags;
-  struct in_addr               peer_ip;
+  struct sockaddr 			   *edns_peer_ip;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME
 } itti_s11_modify_bearer_response_t;
 
 //-----------------------------------------------------------------------------
@@ -1274,8 +1274,8 @@ typedef struct itti_s11_delete_session_request_s {
   indication_flags_t indication_flags;
 
   /* GTPv2-C specific parameters */
-  void          *trxn;
-  struct in_addr peer_ip;
+  void          	*trxn;
+  struct sockaddr 	*edns_peer_ip;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME
 } itti_s11_delete_session_request_t;
 
 
@@ -1305,8 +1305,8 @@ typedef struct itti_s11_delete_session_response_s {
                                       ///< SGSN/MME on the S4/S11 interface.
 
   /* GTPv2-C specific parameters */
-  void             *trxn;
-  struct in_addr    peer_ip;
+  void             	*trxn;
+  struct sockaddr	 *edns_peer_ip;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME
 } itti_s11_delete_session_response_t;
 
 
@@ -1329,8 +1329,8 @@ typedef struct itti_s11_release_access_bearers_request_s {
                                          ///< This IE shall be sent on S4 interface, if ISR is active in the SGSN
   // Private Extension Private Extension ///< optional
   /* GTPv2-C specific parameters */
-  void           *trxn;
-  struct in_addr  peer_ip;
+  void           	*trxn;
+  struct sockaddr 	*edns_peer_ip;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME
 } itti_s11_release_access_bearers_request_t;
 
 
@@ -1355,8 +1355,8 @@ typedef struct itti_s11_release_access_bearers_response_s {
   // Recovery           ///< optional This IE shall be included if contacting the peer for the first time
   // Private Extension  ///< optional
   /* GTPv2-C specific parameters */
-  void           *trxn;
-  struct in_addr  peer_ip;
+  void            *trxn;
+  struct sockaddr *edns_peer_ip;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME
 } itti_s11_release_access_bearers_response_t;
 
 //-----------------------------------------------------------------------------
@@ -1373,8 +1373,8 @@ typedef struct itti_s11_delete_bearer_command_s {
   teid_t          teid;                   ///< Tunnel Endpoint Identifier
   teid_t          local_teid;             ///< Tunnel Endpoint Identifier
 
-  void           *trxn;
-  struct in_addr  peer_ip;
+  void           	*trxn;
+  struct sockaddr	*edns_peer_ip;
   ebi_list_t      ebi_list;
 } itti_s11_delete_bearer_command_t;
 
@@ -1412,8 +1412,8 @@ typedef struct itti_s11_bearer_resource_command_s {
   ebi_t           linked_ebi;
   ebi_t           ebi;
 
-  void           *trxn;
-  struct in_addr  peer_ip;
+  void            *trxn;
+  struct sockaddr *edns_peer_ip;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME
 
   flow_qos_t               flow_qos;
   traffic_flow_template_t  tad;
@@ -1437,9 +1437,8 @@ typedef struct itti_s11_bearer_resource_failure_indication_s {
   gtpv2c_cause_t  cause;
   ebi_t           linked_ebi;
 
-  void           *trxn;
-  struct in_addr  peer_ip;
-
+  void            *trxn;
+  struct sockaddr *peer_ip;
 } itti_s11_bearer_resource_failure_indication_t;
 
 //-----------------------------------------------------------------------------
@@ -1449,13 +1448,13 @@ typedef struct itti_s11_bearer_resource_failure_indication_s {
  * The Downlink Data Notification message is sent on the S11 interface by the SGW to the MME as part of the S1 paging procedure.
  */
 typedef struct itti_s11_downlink_data_notification_s {
-  teid_t          teid;                   ///< Tunnel Endpoint Identifier
-  gtpv2c_cause_t  cause;
+  teid_t           teid;                   ///< Tunnel Endpoint Identifier
+  gtpv2c_cause_t   cause;
   // Recovery           ///< optional This IE shall be included if contacting the peer for the first time
   // Private Extension  ///< optional
   /* GTPv2-C specific parameters */
-  void       *trxn;
-  uint32_t    peer_ip;
+  void       	   *trxn;
+  struct sockaddr  *peer_ip;
 }itti_s11_downlink_data_notification_t;
 
 //-----------------------------------------------------------------------------
@@ -1471,7 +1470,7 @@ typedef struct itti_s11_downlink_data_notification_acknowledge_s {
   // Recovery           ///< optional This IE shall be included if contacting the peer for the first time
   // Private Extension  ///< optional
   /* GTPv2-C specific parameters */
-  void       *trxn;
-  uint32_t    peer_ip;
+  void       	  *trxn;
+  struct sockaddr *peer_ip;
 }itti_s11_downlink_data_notification_acknowledge_t;
 #endif /* FILE_S11_MESSAGES_TYPES_SEEN */

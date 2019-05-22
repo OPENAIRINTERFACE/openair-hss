@@ -95,11 +95,14 @@
 #define MME_CONFIG_STRING_NETWORK_INTERFACES_CONFIG      "NETWORK_INTERFACES"
 #define MME_CONFIG_STRING_INTERFACE_NAME_FOR_S1_MME      "MME_INTERFACE_NAME_FOR_S1_MME"
 #define MME_CONFIG_STRING_IPV4_ADDRESS_FOR_S1_MME        "MME_IPV4_ADDRESS_FOR_S1_MME"
+#define MME_CONFIG_STRING_IPV6_ADDRESS_FOR_S1_MME        "MME_IPV6_ADDRESS_FOR_S1_MME"
 #define MME_CONFIG_STRING_INTERFACE_NAME_FOR_S11         "MME_INTERFACE_NAME_FOR_S11"
 #define MME_CONFIG_STRING_IPV4_ADDRESS_FOR_S11           "MME_IPV4_ADDRESS_FOR_S11"
+#define MME_CONFIG_STRING_IPV6_ADDRESS_FOR_S11           "MME_IPV6_ADDRESS_FOR_S11"
 #define MME_CONFIG_STRING_MME_PORT_FOR_S11               "MME_PORT_FOR_S11"
 #define MME_CONFIG_STRING_INTERFACE_NAME_FOR_S10         "MME_INTERFACE_NAME_FOR_S10"
 #define MME_CONFIG_STRING_IPV4_ADDRESS_FOR_S10           "MME_IPV4_ADDRESS_FOR_S10"
+#define MME_CONFIG_STRING_IPV6_ADDRESS_FOR_S10           "MME_IPV6_ADDRESS_FOR_S10"
 #define MME_CONFIG_STRING_MME_PORT_FOR_S10               "MME_PORT_FOR_S10"
 
 
@@ -132,7 +135,7 @@
 #define MME_CONFIG_STRING_ASN1_VERBOSITY_INFO            "info"
 
 #define MME_CONFIG_STRING_WRR_LIST_SELECTION             "WRR_LIST_SELECTION"
-#define MME_CONFIG_STRING_PEER_MME_IPV4_ADDRESS_FOR_S10  "MME_IPV4_ADDRESS_FOR_S10"
+#define MME_CONFIG_STRING_PEER_MME_IP_ADDRESS_FOR_S10  	 "MME_IP_ADDRESS_FOR_S10"
 ///** MME S10 List --> todo: later FULL WRR : Finding MME via eNB. */
 //#define MME_CONFIG_STRING_MME_LIST_SELECTION             "MME_LIST_SELECTION"
 
@@ -228,6 +231,26 @@ typedef struct mme_config_s {
   } ipv4;
 
   struct {
+    bstring    if_name_s1_mme;
+    struct in6_addr s1_mme;
+    int        cidr_s1_mme;
+
+    bstring    if_name_s11;
+    struct in6_addr s11;
+    int        cidr_s11;
+    uint16_t   port_s11;
+
+    bstring    if_name_s10;
+    struct in6_addr s10;
+    int        cidr_s10;
+    uint16_t   port_s10;
+
+    // todo: sgw_s11 removed, finding it dynamically?
+//    ipv4_nbo_t sgw_s11;
+
+  } ipv6;
+
+  struct {
     bstring conf_file;
     bstring hss_host_name;
     bstring mme_host_name;
@@ -263,12 +286,13 @@ typedef struct mme_config_s {
     int nb_service_entries;
 //#define MME_CONFIG_MAX_SGW 16
 #define MME_CONFIG_MAX_SERVICE 128
-
-    bstring        service_id[MME_CONFIG_MAX_SERVICE];
-    interface_type_t interface_type[MME_CONFIG_MAX_SERVICE];
-    struct in_addr service_ip_addr[MME_CONFIG_MAX_SERVICE];
+    bstring        			 service_id[MME_CONFIG_MAX_SERVICE];
+    interface_type_t 		 interface_type[MME_CONFIG_MAX_SERVICE];
+    union{
+    	struct sockaddr_in   v4; //   service_ip_addr[MME_CONFIG_MAX_SERVICE]; /**< Just allocating sockaddr was not enough. */
+    	struct sockaddr_in6  v6; //; /**< Just allocating sockaddr was not enough. */
+    }sockaddr[MME_CONFIG_MAX_SERVICE];
     /** MME entries. */
-
   } e_dns_emulation;
 
 #if TRACE_XML

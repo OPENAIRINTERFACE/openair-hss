@@ -209,9 +209,9 @@ mme_app_handle_nas_pdn_disconnect_req (
    * TAU might be sent in deregistered, but the S11 response might be received in REGISTERED state (response currently not used).
    */
   /** Don't change the bearer state. Send Delete Session Request to SAE-GW. No transaction needed. */
-  if(nas_pdn_disconnect_req_pP->saegw_s11_ip_addr.s_addr != 0){
+  if(nas_pdn_disconnect_req_pP->saegw_s11_ip_addr.sa_family != 0){
 	uint8_t internal_flags = (ue_context->mm_state == UE_UNREGISTERED) ? INTERNAL_FLAG_SKIP_RESPONSE : INTERNAL_FLAG_NULL;
-    rc =  mme_app_send_delete_session_request(ue_context, nas_pdn_disconnect_req_pP->default_ebi, nas_pdn_disconnect_req_pP->saegw_s11_ip_addr, nas_pdn_disconnect_req_pP->saegw_s11_teid, nas_pdn_disconnect_req_pP->noDelete,
+    rc =  mme_app_send_delete_session_request(ue_context, nas_pdn_disconnect_req_pP->default_ebi, &nas_pdn_disconnect_req_pP->saegw_s11_ip_addr, nas_pdn_disconnect_req_pP->saegw_s11_teid, nas_pdn_disconnect_req_pP->noDelete,
     		nas_pdn_disconnect_req_pP->handover, internal_flags);
   } else {
     OAILOG_WARNING(LOG_MME_APP, "NO S11 SAE-GW S11 IPv4 address in nas_pdn_connectivity of ueId : " MME_UE_S1AP_ID_FMT "\n", nas_pdn_disconnect_req_pP->ue_id);
@@ -1088,7 +1088,7 @@ mme_app_handle_create_sess_resp (
   if(s10_handover_procedure){
     /** No NAS layer exists, because CSR is only sent for S10 handover. */
     mme_app_send_s10_forward_relocation_response_err(s10_handover_procedure->remote_mme_teid.teid,
-        s10_handover_procedure->remote_mme_teid.ipv4_address,
+        s10_handover_procedure->proc.peer_ip,
         s10_handover_procedure->forward_relocation_trxn, RELOCATION_FAILURE);
     /** Perform an implicit NAS detach. */
     message_p = itti_alloc_new_message (TASK_MME_APP, NAS_IMPLICIT_DETACH_UE_IND);
@@ -1233,7 +1233,7 @@ mme_app_handle_modify_bearer_resp (
       pdn_context_t * registered_pdn_ctx = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
       if(registered_pdn_ctx){
           mme_app_send_s11_delete_bearer_cmd(ue_context->mme_teid_s11, registered_pdn_ctx->s_gw_teid_s11_s4,
-        		  &registered_pdn_ctx->s_gw_address_s11_s4.address.ipv4_address, &s10_handover_procedure->failed_ebi_list);
+        		  &registered_pdn_ctx->s_gw_address_s11_s4, &s10_handover_procedure->failed_ebi_list);
       }
     }
     OAILOG_FUNC_RETURN(LOG_MME_APP, RETURNok);
@@ -1260,7 +1260,7 @@ mme_app_handle_modify_bearer_resp (
     pdn_context_t * registered_pdn_ctx = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
     if(registered_pdn_ctx){
     	mme_app_send_s11_delete_bearer_cmd(ue_context->mme_teid_s11, registered_pdn_ctx->s_gw_teid_s11_s4,
-    			&registered_pdn_ctx->s_gw_address_s11_s4.address.ipv4_address, &ebi_list);
+    			&registered_pdn_ctx->s_gw_address_s11_s4, &ebi_list);
     }
   }
   OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
@@ -2175,8 +2175,8 @@ static void mme_app_handle_e_rab_setup_rsp_pdn_connectivity(const mme_ue_s1ap_id
         OAILOG_DEBUG (LOG_MME_APP, "Freed the NAS ESM procedure for PDN connectivity ueId : " MME_UE_S1AP_ID_FMT "\n", ue_context->mme_ue_s1ap_id);
       }
       /** Set cause as rejected. */
-      if(pdn_context->s_gw_address_s11_s4.address.ipv4_address.s_addr != 0)
-        mme_app_send_delete_session_request(ue_context, bc_failed->linked_ebi, pdn_context->s_gw_address_s11_s4.address.ipv4_address, pdn_context->s_gw_teid_s11_s4, true,
+      if(pdn_context->s_gw_address_s11_s4.sa_family != 0)
+        mme_app_send_delete_session_request(ue_context, bc_failed->linked_ebi, &pdn_context->s_gw_address_s11_s4, pdn_context->s_gw_teid_s11_s4, true,
             false, INTERNAL_FLAG_NULL); /**< Don't delete the S11 Tunnel endpoint (still need for the default apn). */
       else {
         OAILOG_WARNING(LOG_MME_APP, "NO S11 SAE-GW Ipv4 in PDN context of ueId : " MME_UE_S1AP_ID_FMT "\n", ue_context->mme_ue_s1ap_id);
@@ -2367,7 +2367,7 @@ void mme_app_handle_e_rab_release_ind (const itti_s1ap_e_rab_release_ind_t   * c
     pdn_context = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
     if(pdn_context){
       /** Trigger a Delete Bearer Command. */
-      mme_app_send_s11_delete_bearer_cmd(ue_context->mme_teid_s11, pdn_context->s_gw_teid_s11_s4, &pdn_context->s_gw_address_s11_s4.address.ipv4_address, &ebi_list);
+      mme_app_send_s11_delete_bearer_cmd(ue_context->mme_teid_s11, pdn_context->s_gw_teid_s11_s4, &pdn_context->s_gw_address_s11_s4, &ebi_list);
       OAILOG_FUNC_OUT (LOG_MME_APP);
     }
   }
@@ -3036,13 +3036,12 @@ mme_app_handle_s1ap_handover_required(
   }
   OAILOG_DEBUG (LOG_MME_APP, "Target TA  "TAI_FMT " is NOT served by current MME. Searching for a neighboring MME. \n", TAI_ARG(&handover_required_pP->selected_tai));
 
-  struct in_addr neigh_mme_ipv4_addr = {.s_addr = 0};
-
+  struct sockaddr *neigh_mme_ip_addr = NULL;
   if (1) {
     // TODO prototype may change
-    mme_app_select_service(&handover_required_pP->selected_tai, &neigh_mme_ipv4_addr, S10_MME_GTP_C);
+    mme_app_select_service(&handover_required_pP->selected_tai, &neigh_mme_ip_addr, S10_MME_GTP_C);
     //    session_request_p->peer_ip.in_addr = mme_config.ipv4.
-    if(neigh_mme_ipv4_addr.s_addr == 0){
+    if(!neigh_mme_ip_addr){
       /** Send a Handover Preparation Failure back. */
       mme_app_send_s1ap_handover_preparation_failure(handover_required_pP->mme_ue_s1ap_id, handover_required_pP->enb_ue_s1ap_id, handover_required_pP->sctp_assoc_id, S1AP_SYSTEM_FAILURE);
       OAILOG_DEBUG (LOG_MME_APP, "The selected TAI " TAI_FMT " is not configured as an S10 MME neighbor. "
@@ -3059,7 +3058,7 @@ mme_app_handle_s1ap_handover_required(
   itti_s10_forward_relocation_request_t *forward_relocation_request_p = &message_p->ittiMsg.s10_forward_relocation_request;
   memset ((void*)forward_relocation_request_p, 0, sizeof (itti_s10_forward_relocation_request_t));
   forward_relocation_request_p->teid = 0;
-  forward_relocation_request_p->peer_ip.s_addr = neigh_mme_ipv4_addr.s_addr;
+  forward_relocation_request_p->peer_ip = neigh_mme_ip_addr;
   /** Add it into the procedure (todo: hardcoded to ipv4). */
 //  s10_handover_procedure->remote_mme_teid.ipv4 = 1;
 //  s10_handover_procedure->remote_mme_teid.interface_type = S10_MME_GTP_C;
@@ -3087,7 +3086,9 @@ mme_app_handle_s1ap_handover_required(
   memcpy((void*)&s10_handover_procedure->target_tai, (void*)&handover_required_pP->selected_tai, sizeof(handover_required_pP->selected_tai));
   memcpy((void*)&s10_handover_procedure->target_ecgi, (void*)&handover_required_pP->global_enb_id, sizeof(handover_required_pP->global_enb_id)); /**< Home or macro enb id. */
   memcpy((void*)&s10_handover_procedure->imsi, &ue_nas_ctx->_imsi, sizeof(imsi_t));
-  s10_handover_procedure->proc.peer_ip.s_addr = neigh_mme_ipv4_addr.s_addr;
+
+  s10_handover_procedure->proc.peer_ip = neigh_mme_ip_addr;
+  // todo: teid also needs to be set.
 
   /** Set the eNB type. */
 //  s10_handover_procedure->target_enb_type = handover_required_pP->target_enb_type;
@@ -3288,7 +3289,7 @@ mme_app_handle_handover_cancel(
      // TODO prototype may change
 //     mme_app_select_service(&s10_handover_proc->target_tai, &neigh_mme_ipv4_addr);
      //    session_request_p->peer_ip.in_addr = mme_config.ipv4.
-     if(s10_handover_proc->proc.peer_ip.s_addr == 0){
+     if(!s10_handover_proc->proc.peer_ip){
        /** Send a Handover Preparation Failure back. */
        mme_app_send_s1ap_handover_cancel_acknowledge(handover_cancel_pP->mme_ue_s1ap_id, handover_cancel_pP->enb_ue_s1ap_id, handover_cancel_pP->assoc_id);
        mme_app_delete_s10_procedure_mme_handover(ue_context);
@@ -3307,7 +3308,7 @@ mme_app_handle_handover_cancel(
    relocation_cancel_request_p->teid = s10_handover_proc->remote_mme_teid.teid; /**< May or may not be 0. */
    relocation_cancel_request_p->local_teid = ue_context->local_mme_teid_s10; /**< May or may not be 0. */
    // todo: check the table!
-   relocation_cancel_request_p->peer_ip.s_addr = s10_handover_proc->proc.peer_ip.s_addr;
+   relocation_cancel_request_p->peer_ip = s10_handover_proc->proc.peer_ip;
    /** IMSI. */
    memcpy((void*)&relocation_cancel_request_p->imsi, &emm_context->_imsi, sizeof(imsi_t));
    MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S10_MME, NULL, 0, "0 RELOCATION_CANCEL_REQUEST_MESSAGE");
@@ -3422,7 +3423,7 @@ mme_app_handle_forward_relocation_request(
      OAILOG_DEBUG (LOG_MME_APP, "Target ENB type %d cannot be handovered to. Rejecting S10 handover request.. \n",
          forward_relocation_request_pP->target_identification.target_type);
      mme_app_send_s10_forward_relocation_response_err(forward_relocation_request_pP->s10_source_mme_teid.teid,
-         forward_relocation_request_pP->s10_source_mme_teid.ipv4_address, forward_relocation_request_pP->trxn, RELOCATION_FAILURE);
+         forward_relocation_request_pP->peer_ip, forward_relocation_request_pP->trxn, RELOCATION_FAILURE);
      OAILOG_FUNC_OUT (LOG_MME_APP);
  }
  /** Check the target-ENB is reachable. */
@@ -3439,20 +3440,21 @@ mme_app_handle_forward_relocation_request(
    }else{
      /** The target PLMN and TAC are not served by this MME. */
      OAILOG_ERROR(LOG_MME_APP, "Target ENB_ID %u is NOT served by the current MME. \n", enb_id);
-     mme_app_send_s10_forward_relocation_response_err(forward_relocation_request_pP->s10_source_mme_teid.teid, forward_relocation_request_pP->s10_source_mme_teid.ipv4_address, forward_relocation_request_pP->trxn, RELOCATION_FAILURE);
+     mme_app_send_s10_forward_relocation_response_err(forward_relocation_request_pP->s10_source_mme_teid.teid, forward_relocation_request_pP->peer_ip, forward_relocation_request_pP->trxn, RELOCATION_FAILURE);
      OAILOG_FUNC_OUT (LOG_MME_APP);
    }
  }else{
    /** The target PLMN and TAC are not served by this MME. */
    OAILOG_ERROR(LOG_MME_APP, "TARGET TAC " TAC_FMT " is NOT served by current MME. \n", forward_relocation_request_pP->target_identification.target_id.macro_enb_id.tac);
-   mme_app_send_s10_forward_relocation_response_err(forward_relocation_request_pP->s10_source_mme_teid.teid, forward_relocation_request_pP->s10_source_mme_teid.ipv4_address, forward_relocation_request_pP->trxn, RELOCATION_FAILURE);
+   mme_app_send_s10_forward_relocation_response_err(forward_relocation_request_pP->s10_source_mme_teid.teid,
+		   forward_relocation_request_pP->peer_ip, forward_relocation_request_pP->trxn, RELOCATION_FAILURE);
    /** No UE context or tunnel endpoint is allocated yet. */
    OAILOG_FUNC_OUT (LOG_MME_APP);
  }
  /** We should only send the handover request and not deal with anything else. */
  if ((ue_context = mme_create_new_ue_context ()) == NULL) {
    /** Send a negative response before crashing. */
-   mme_app_send_s10_forward_relocation_response_err(forward_relocation_request_pP->s10_source_mme_teid.teid, forward_relocation_request_pP->s10_source_mme_teid.ipv4_address, forward_relocation_request_pP->trxn, SYSTEM_FAILURE);
+   mme_app_send_s10_forward_relocation_response_err(forward_relocation_request_pP->s10_source_mme_teid.teid, forward_relocation_request_pP->peer_ip, forward_relocation_request_pP->trxn, SYSTEM_FAILURE);
    /**
     * Error during UE context malloc
     */
@@ -3465,7 +3467,7 @@ mme_app_handle_forward_relocation_request(
    /** Deallocate the ue context and remove from MME_APP map. */
    mme_remove_ue_context (&mme_app_desc.mme_ue_contexts, ue_context);
    /** Send back failure. */
-   mme_app_send_s10_forward_relocation_response_err(forward_relocation_request_pP->s10_source_mme_teid.teid, forward_relocation_request_pP->s10_source_mme_teid.ipv4_address, forward_relocation_request_pP->trxn, RELOCATION_FAILURE);
+   mme_app_send_s10_forward_relocation_response_err(forward_relocation_request_pP->s10_source_mme_teid.teid, forward_relocation_request_pP->peer_ip, forward_relocation_request_pP->trxn, RELOCATION_FAILURE);
    OAILOG_FUNC_OUT (LOG_MME_APP);
  }
  OAILOG_DEBUG (LOG_MME_APP, "MME_APP_INITIAL_UE_MESSAGE. Allocated new MME UE context and new mme_ue_s1ap_id. " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
@@ -3806,7 +3808,7 @@ mme_app_handle_forward_access_context_notification(
       &message_p->ittiMsg.s10_forward_access_context_acknowledge;
   s10_mme_forward_access_context_acknowledge_p->teid        = s10_handover_process->remote_mme_teid.teid;  /**< Set the target TEID. */
   s10_mme_forward_access_context_acknowledge_p->local_teid  = ue_context->local_mme_teid_s10;   /**< Set the local TEID. */
-  s10_mme_forward_access_context_acknowledge_p->peer_ip     = s10_handover_process->remote_mme_teid.ipv4_address; /**< Set the target TEID. */
+  s10_mme_forward_access_context_acknowledge_p->peer_ip     = s10_handover_process->proc.peer_ip; /**< Set the target TEID. */
   s10_mme_forward_access_context_acknowledge_p->trxn        = forward_access_context_notification_pP->trxn; /**< Set the target TEID. */
   /** Check that there is a pending handover process. */
   if(ue_context->mm_state != UE_UNREGISTERED){
@@ -3842,7 +3844,7 @@ mme_app_handle_forward_access_context_notification(
 	  forward_relocation_complete_notification_p->teid = s10_handover_process->remote_mme_teid.teid;       /**< Target S10-MME TEID. todo: what if multiple? */
 	  /** Set the local TEID. */
 	  forward_relocation_complete_notification_p->local_teid = ue_context->local_mme_teid_s10;        /**< Local S10-MME TEID. */
-	  forward_relocation_complete_notification_p->peer_ip = s10_handover_process->remote_mme_teid.ipv4_address; /**< Set the target TEID. */
+	  forward_relocation_complete_notification_p->peer_ip = s10_handover_process->proc.peer_ip; /**< Set the target TEID. */
 	  OAILOG_INFO(LOG_MME_APP, "Sending FW_RELOC_COMPLETE_NOTIF TO %X with remote S10-TEID " TEID_FMT ". \n.",
 			  forward_relocation_complete_notification_p->peer_ip, forward_relocation_complete_notification_p->teid);
 
@@ -4120,7 +4122,7 @@ mme_app_handle_handover_failure (
   * UE is in UE_UNREGISTERED state. Assuming inter-MME S1AP Handover was triggered.
   * Sending FW_RELOCATION_RESPONSE with error code and implicit detach.
   */
- mme_app_send_s10_forward_relocation_response_err(s10_handover_proc->remote_mme_teid.teid, s10_handover_proc->remote_mme_teid.ipv4_address, s10_handover_proc->forward_relocation_trxn, RELOCATION_FAILURE);
+ mme_app_send_s10_forward_relocation_response_err(s10_handover_proc->remote_mme_teid.teid, s10_handover_proc->proc.peer_ip, s10_handover_proc->forward_relocation_trxn, RELOCATION_FAILURE);
  /** Trigger an implicit detach. */
  mme_app_delete_s10_procedure_mme_handover(ue_context);
  message_p = itti_alloc_new_message (TASK_MME_APP, NAS_IMPLICIT_DETACH_UE_IND);
@@ -4212,7 +4214,7 @@ mme_app_handle_enb_status_transfer(
    /** Set the target S10 TEID. */
    forward_access_context_notification_p->teid           = s10_handover_proc->remote_mme_teid.teid; /**< Only a single target-MME TEID can exist at a time. */
    forward_access_context_notification_p->local_teid     = ue_context->local_mme_teid_s10; /**< Only a single target-MME TEID can exist at a time. */
-   forward_access_context_notification_p->peer_ip.s_addr = s10_handover_proc->remote_mme_teid.ipv4_address.s_addr;
+   forward_access_context_notification_p->peer_ip 		 = s10_handover_proc->proc.peer_ip;
    /** Set the E-UTRAN container. */
    forward_access_context_notification_p->eutran_container.container_type = 3;
    forward_access_context_notification_p->eutran_container.container_value = s1ap_status_transfer_pP->bearerStatusTransferList_buffer;
@@ -4338,7 +4340,7 @@ mme_app_handle_s1ap_handover_notify(
 	      forward_relocation_complete_notification_p->teid = s10_handover_proc->remote_mme_teid.teid;       /**< Target S10-MME TEID. todo: what if multiple? */
 	      /** Set the local TEID. */
 	      forward_relocation_complete_notification_p->local_teid = ue_context->local_mme_teid_s10;        /**< Local S10-MME TEID. */
-	      forward_relocation_complete_notification_p->peer_ip = s10_handover_proc->remote_mme_teid.ipv4_address; /**< Set the target TEID. */
+	      forward_relocation_complete_notification_p->peer_ip = s10_handover_proc->proc.peer_ip; /**< Set the target TEID. */
 	      OAILOG_INFO(LOG_MME_APP, "Sending FW_RELOC_COMPLETE_NOTIF TO %X with remote S10-TEID " TEID_FMT ". \n.",
 	          forward_relocation_complete_notification_p->peer_ip, forward_relocation_complete_notification_p->teid);
 
@@ -4401,7 +4403,7 @@ mme_app_handle_forward_relocation_complete_notification(
  /** Set the cause. */
  forward_relocation_complete_acknowledge_p->cause.cause_value      = REQUEST_ACCEPTED;                       /**< Check the cause.. */
  /** Set the peer IP. */
- forward_relocation_complete_acknowledge_p->peer_ip.s_addr = s10_handover_proc->remote_mme_teid.ipv4_address.s_addr; /**< Set the target TEID. */
+ forward_relocation_complete_acknowledge_p->peer_ip = s10_handover_proc->proc.peer_ip; /**< Set the target TEID. */
  /** Set the transaction. */
  forward_relocation_complete_acknowledge_p->trxn = forward_relocation_complete_notification_pP->trxn; /**< Set the target TEID. */
  itti_send_msg_to_task (TASK_S10, INSTANCE_DEFAULT, message_p);

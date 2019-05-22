@@ -90,14 +90,17 @@ static int s1ap_send_init_sctp (void)
     message_p->ittiMsg.sctpInit.port = S1AP_PORT_NUMBER;
     message_p->ittiMsg.sctpInit.ppid = S1AP_SCTP_PPID;
     message_p->ittiMsg.sctpInit.ipv4 = 1;
-    message_p->ittiMsg.sctpInit.ipv6 = 0;
+    message_p->ittiMsg.sctpInit.ipv6 = 1;
     message_p->ittiMsg.sctpInit.nb_ipv4_addr = 1;
+    message_p->ittiMsg.sctpInit.nb_ipv6_addr = 1;
     message_p->ittiMsg.sctpInit.ipv4_address[0].s_addr = mme_config.ipv4.s1_mme.s_addr;
+    memcpy(message_p->ittiMsg.sctpInit.ipv6_address[0].s6_addr, mme_config.ipv6.s1_mme.s6_addr, 16);
     /*
      * SR WARNING: ipv6 multi-homing fails sometimes for localhost.
      * Disable it for now.
+     * todo : ?!?!?
      */
-    message_p->ittiMsg.sctpInit.nb_ipv6_addr = 0;
+//    message_p->ittiMsg.sctpInit.nb_ipv6_addr = 0;
     return itti_send_msg_to_task (TASK_SCTP, INSTANCE_DEFAULT, message_p);
   }
   return RETURNerror;

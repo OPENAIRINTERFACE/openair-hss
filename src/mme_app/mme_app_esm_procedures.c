@@ -174,7 +174,7 @@ nas_esm_proc_bearer_context_t* mme_app_nas_esm_create_bearer_context_procedure(m
   pdn_context_t * pdn_context = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
   DevAssert(pdn_context);
   esm_proc_bearer_context->saegw_s11_fteid.teid                = pdn_context->s_gw_teid_s11_s4;
-  esm_proc_bearer_context->saegw_s11_fteid.ipv4_address.s_addr = pdn_context->s_gw_address_s11_s4.address.ipv4_address.s_addr;
+//  todo: esm_proc_bearer_context->saegw_s11_fteid.ipv4_address.s_addr = pdn_context->s_gw_address_s11_s4.address.ipv4_address.s_addr;
   /* Set the timeout directly. Set the callback argument as the ue_id. */
   if(timeout_sec || timeout_usec){
     esm_proc_bearer_context->esm_base_proc.esm_proc_timer.id = nas_esm_timer_start(timeout_sec, timeout_usec, (void*)&esm_proc_bearer_context->esm_base_proc);

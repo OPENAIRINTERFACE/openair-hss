@@ -37,7 +37,8 @@ extern "C" {
 #define UDP_DATA_MAX_MSG_LEN    (4096)  /**< Maximum supported gtpv2c packet length including header */
 
 typedef struct {
-  struct in_addr  address;
+  struct in_addr  in_addr;
+  struct in6_addr  in6_addr;
   uint16_t        port;
 } udp_init_t;
 
@@ -45,14 +46,14 @@ typedef struct {
   uint8_t  *buffer;
   uint32_t  buffer_length;
   uint32_t  buffer_offset;
-  struct in_addr  peer_address;
+  struct sockaddr  *peer_address;
   uint16_t  peer_port;
 } udp_data_req_t;
 
 typedef struct {
   uint8_t  *buffer;
   uint32_t  buffer_length;
-  struct in_addr  peer_address;
+  struct sockaddr   peer_address;
   uint16_t  peer_port;
 } udp_data_ind_t;
 

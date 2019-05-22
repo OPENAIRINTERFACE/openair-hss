@@ -45,7 +45,7 @@
 #include "mme_app_wrr_selection.h"
 
 //------------------------------------------------------------------------------
-void mme_app_select_service(const tai_t * const tai, struct in_addr * const service_in_addr, const interface_type_t interface_type)
+void mme_app_select_service(const tai_t * const tai, const struct sockaddr ** service_ip_addr, const interface_type_t interface_type)
 {
 
   // see in 3GPP TS 29.303 version 10.5.0 Release 10:
@@ -59,7 +59,7 @@ void mme_app_select_service(const tai_t * const tai, struct in_addr * const serv
   if (0 < snprintf(tmp, 8, "%02x", tai->tac & 0x00FF)) {
     bcatcstr(application_unique_string, tmp);
   } else {
-    service_in_addr->s_addr = 0;
+	  memset(service_ip_addr, 0, sizeof(struct sockaddr));
     return;
   }
   bcatcstr(application_unique_string, ".tac-hb");
@@ -89,18 +89,25 @@ void mme_app_select_service(const tai_t * const tai, struct in_addr * const serv
   }
   bcatcstr(application_unique_string, ".3gppnetwork.org");
 
-  struct in_addr* entry = mme_app_edns_get_wrr_entry(application_unique_string, interface_type);
+  *service_ip_addr = mme_app_edns_get_wrr_entry(application_unique_string, interface_type);
 
-  if (entry) {
-    service_in_addr->s_addr = entry->s_addr;
+  if(*service_ip_addr){
+	  if((*service_ip_addr)->sa_family == AF_INET) {
+		  OAILOG_DEBUG (LOG_MME_APP, "Service lookup %s returned %s\n", application_unique_string->data, inet_ntoa (((struct sockaddr_in*)*service_ip_addr)->sin_addr));
+	  } else {
+		  char ipv6[INET6_ADDRSTRLEN];
+		  inet_ntop (AF_INET6, (void*)*service_ip_addr, ipv6, INET6_ADDRSTRLEN);
+		  OAILOG_DEBUG (LOG_MME_APP, "Service lookup %s returned %s\n", application_unique_string->data, ipv6);
+	  }
   }
-  OAILOG_DEBUG (LOG_MME_APP, "Service lookup %s returned %s\n", application_unique_string->data, inet_ntoa (*service_in_addr));
+
+
   bdestroy_wrapper(&application_unique_string);
   return;
 
 lookup_error:
   OAILOG_WARNING (LOG_MME_APP, "Failed service lookup for TAI " TAI_FMT "\n", TAI_ARG(tai));
-  service_in_addr->s_addr = 0;
+  memset((void*)service_ip_addr, 0, sizeof(struct sockaddr));
   bdestroy_wrapper(&application_unique_string);
   return;
 }

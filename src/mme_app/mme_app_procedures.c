@@ -341,7 +341,7 @@ static void mme_app_free_s11_procedure_delete_bearer(mme_app_s11_proc_t **s11_pr
 /**
  * S10 Procedures.
  */
-static int remove_s10_tunnel_endpoint(ue_context_t * ue_context, struct in_addr peer_ip){
+static int remove_s10_tunnel_endpoint(ue_context_t * ue_context, struct sockaddr *peer_ip){
   OAILOG_FUNC_IN(LOG_MME_APP);
   int             rc = RETURNerror;
 //  /** Removed S10 tunnel endpoint. */
@@ -436,7 +436,7 @@ mme_app_handle_mme_s10_handover_completion_timer_expiry (mme_app_s10_proc_mme_ha
 	  /** Send a FW-Relocation Response error if no local teid is set (no FW-Relocation Response is send yet). */
 	  if(!ue_context->local_mme_teid_s10){
 	    mme_app_send_s10_forward_relocation_response_err(s10_proc_mme_handover->remote_mme_teid.teid,
-	        s10_proc_mme_handover->remote_mme_teid.ipv4_address,
+	        s10_proc_mme_handover->proc.peer_ip,
 	        s10_proc_mme_handover->forward_relocation_trxn, REQUEST_REJECTED);
 	  }
 	  /** Delete the procedure. */
@@ -527,7 +527,7 @@ mme_app_handle_mobility_completion_timer_expiry (mme_app_s10_proc_mme_handover_t
         		relocation_cancel_request_p->teid = s10_proc_mme_handover->proc.remote_teid; /**< May or may not be 0. */
         		relocation_cancel_request_p->local_teid = ue_context->local_mme_teid_s10; /**< May or may not be 0. */
         		// todo: check the table!
-        		relocation_cancel_request_p->peer_ip.s_addr = s10_proc_mme_handover->proc.peer_ip.s_addr;
+        		relocation_cancel_request_p->peer_ip = s10_proc_mme_handover->proc.peer_ip;
         		/** IMSI. */
         		memcpy((void*)&relocation_cancel_request_p->imsi, &s10_proc_mme_handover->imsi, sizeof(imsi_t));
         		MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S10_MME, NULL, 0, "0 RELOCATION_CANCEL_REQUEST_MESSAGE");

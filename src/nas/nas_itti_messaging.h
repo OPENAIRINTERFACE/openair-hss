@@ -94,7 +94,7 @@ void nas_itti_pdn_disconnect_req(
   pti_t                   pti,
   bool                    deleteTunnel,
   bool                    handover,
-  struct in_addr          saegw_s11_addr, /**< Put them into the UE context ? */
+  struct sockaddr         saegw_s11_addr, /**< Put them into the UE context ? */
   teid_t                  saegw_s11_teid,
   pdn_cid_t               pdn_cid);
 
@@ -118,7 +118,7 @@ void nas_itti_s11_bearer_resource_cmd (
   const ebi_t            linked_ebi,
   const teid_t           local_teid,
   const teid_t           peer_teid,
-  const struct in_addr  *saegw_s11_ipv4,
+  const struct sockaddr  *saegw_s11_ipv4,
   const ebi_t                    ebi,
   const traffic_flow_template_t * const tad,
   const flow_qos_t              * const flow_qos);

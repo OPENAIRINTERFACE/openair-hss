@@ -259,7 +259,7 @@ typedef struct pdn_context_s {
   //bstring                     pgw_id;            // an ID for P-GW through which a user can access the Subscribed APN
 
   /* S-GW IP address for User-Plane */
-  ip_address_t                s_gw_address_s11_s4;
+  struct sockaddr             s_gw_address_s11_s4;
   teid_t                      s_gw_teid_s11_s4;            // set by S11 CREATE_SESSION_RESPONSE
 
   protocol_configuration_options_t *pco; // temp storage of information waiting for activation of required procedure

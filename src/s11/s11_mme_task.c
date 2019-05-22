@@ -159,7 +159,7 @@ s11_mme_send_udp_msg (
   uint8_t * buffer,
   uint32_t buffer_len,
   uint16_t localPort,
-  struct in_addr *peerIpAddr,
+  struct sockaddr *peerIpAddr,
   uint16_t peerPort)
 {
   // Create and alloc new message
@@ -170,7 +170,7 @@ s11_mme_send_udp_msg (
   message_p = itti_alloc_new_message (TASK_S11, UDP_DATA_REQ);
   udp_data_req_p = &message_p->ittiMsg.udp_data_req;
   udp_data_req_p->local_port = localPort;
-  udp_data_req_p->peer_address.s_addr = peerIpAddr->s_addr;
+  udp_data_req_p->peer_address = peerIpAddr;
   udp_data_req_p->peer_port = peerPort;
   udp_data_req_p->buffer = buffer;
   udp_data_req_p->buffer_length = buffer_len;
@@ -305,7 +305,10 @@ s11_mme_thread (
         udp_data_ind_t                         *udp_data_ind;
 
         udp_data_ind = &received_message_p->ittiMsg.udp_data_ind;
-        rc = nwGtpv2cProcessUdpReq (s11_mme_stack_handle, udp_data_ind->msgBuf, udp_data_ind->buffer_length, udp_data_ind->local_port, udp_data_ind->peer_port, &udp_data_ind->peer_address);
+        rc = nwGtpv2cProcessUdpReq (s11_mme_stack_handle,
+        		udp_data_ind->msgBuf, udp_data_ind->buffer_length,
+				udp_data_ind->local_port, udp_data_ind->peer_port,
+				udp_data_ind->peer_address);
         DevAssert (rc == NW_OK);
       }
       break;
@@ -326,6 +329,7 @@ s11_mme_thread (
 static int
 s11_send_init_udp (
   struct in_addr *address,
+  struct in6_addr *address6,
   uint16_t port_number)
 {
   MessageDef                             *message_p = itti_alloc_new_message (TASK_S11, UDP_INIT);
@@ -333,10 +337,18 @@ s11_send_init_udp (
     return RETURNerror;
   }
   message_p->ittiMsg.udp_init.port = port_number;
-  message_p->ittiMsg.udp_init.address.s_addr = address->s_addr;
-  char ipv4[INET_ADDRSTRLEN];
-  inet_ntop (AF_INET, (void*)&message_p->ittiMsg.udp_init.address, ipv4, INET_ADDRSTRLEN);
-  OAILOG_DEBUG (LOG_S11, "Tx UDP_INIT IP addr %s:%" PRIu16 "\n", ipv4, message_p->ittiMsg.udp_init.port);
+  if(address && address->s_addr){
+	  message_p->ittiMsg.udp_init.in_addr = address;
+	  char ipv4[INET_ADDRSTRLEN];
+	  inet_ntop (AF_INET, (void*)message_p->ittiMsg.udp_init.in_addr, ipv4, INET_ADDRSTRLEN);
+	  OAILOG_DEBUG (LOG_S11, "Tx UDP_INIT IP addr %s:%" PRIu16 "\n", ipv4, message_p->ittiMsg.udp_init.port);
+  }
+  if(address6 && memcmp(address6->s6_addr, (void*)&in6addr_any, 16)){
+	  message_p->ittiMsg.udp_init.in6_addr = address6;
+	  char ipv6[INET6_ADDRSTRLEN];
+	  inet_ntop (AF_INET6, (void*)&message_p->ittiMsg.udp_init.in6_addr, ipv6, INET6_ADDRSTRLEN);
+	  OAILOG_DEBUG (LOG_S11, "Tx UDP_INIT IPv6 addr %s:%" PRIu16 "\n", ipv6, message_p->ittiMsg.udp_init.port);
+  }
   return itti_send_msg_to_task (TASK_UDP, INSTANCE_DEFAULT, message_p);
 }
 
@@ -389,8 +401,8 @@ int s11_mme_init (const mme_config_t * const mme_config_p)
 
   DevAssert (NW_OK == nwGtpv2cSetLogLevel (s11_mme_stack_handle, NW_LOG_LEVEL_DEBG));
   /** Create 2 sockets, one for 2123 (received initial requests), another high port. */
-  s11_send_init_udp (&mme_config.ipv4.s11, udp.gtpv2cStandardPort);
-  s11_send_init_udp (&mme_config.ipv4.s11, 0);
+  s11_send_init_udp(&mme_config.ipv4.s11, &mme_config.ipv6.s11, udp.gtpv2cStandardPort);
+  s11_send_init_udp(&mme_config.ipv4.s11, &mme_config.ipv6.s11, 0);
 
   bstring b = bfromcstr("s11_mme_teid_2_gtv2c_teid_handle");
   s11_mme_teid_2_gtv2c_teid_handle = hashtable_ts_create(mme_config_p->max_ues, HASH_TABLE_DEFAULT_HASH_FUNC, hash_free_int_func, b);

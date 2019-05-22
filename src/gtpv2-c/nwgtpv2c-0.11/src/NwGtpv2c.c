@@ -276,11 +276,25 @@ extern                                  "C" {
     if (a->teid < b->teid)
       return -1;
 
-    if (a->ipv4AddrRemote.s_addr > b->ipv4AddrRemote.s_addr)
-      return 1;
+    /** Compare the sa_family. */
+    if (a->ipAddrRemote->sa_family > b->ipAddrRemote->sa_family)
+    	return 1;
 
-    if (a->ipv4AddrRemote.s_addr < b->ipv4AddrRemote.s_addr)
-      return -1;
+    if (a->ipAddrRemote->sa_family < b->ipAddrRemote->sa_family)
+    	return -1;
+
+    /** compare the address. */
+    if(a->ipAddrRemote->sa_family == AF_INET) {
+    	if (((struct sockaddr_in*)a->ipAddrRemote)->sin_addr.s_addr > ((struct sockaddr_in*)b->ipAddrRemote)->sin_addr.s_addr)
+    		return 1;
+
+    	if (((struct sockaddr_in*)a->ipAddrRemote)->sin_addr.s_addr < ((struct sockaddr_in*)b->ipAddrRemote)->sin_addr.s_addr)
+    		return -1;
+    } else {
+    	DevAssert(a->ipAddrRemote->sa_family == AF_INET6);
+       	/** Should return 1 if a is bigger. */
+    	return memcmp (((struct sockaddr_in6*)a->ipAddrRemote)->sin6_addr.s6_addr, ((struct sockaddr_in6*)b->ipAddrRemote)->sin6_addr.s6_addr, 16);
+    }
 
     return 0;
   }
@@ -307,11 +321,25 @@ extern                                  "C" {
     if (a->seqNum < b->seqNum)
       return -1;
 
-    if (a->peerIp.s_addr > b->peerIp.s_addr)
-      return 1;
+    /** Compare the sa_family. */
+    if (a->peerIp->sa_family > b->peerIp->sa_family)
+       return 1;
 
-    if (a->peerIp.s_addr < b->peerIp.s_addr)
-      return -1;
+    if (a->peerIp->sa_family < b->peerIp->sa_family)
+       return -1;
+
+    /** compare the address. */
+    if(a->peerIp->sa_family == AF_INET) {
+        if (((struct sockaddr_in*)a->peerIp)->sin_addr.s_addr > ((struct sockaddr_in*)b->peerIp)->sin_addr.s_addr)
+           return 1;
+
+        if (((struct sockaddr_in*)a->peerIp)->sin_addr.s_addr < ((struct sockaddr_in*)b->peerIp)->sin_addr.s_addr)
+          return -1;
+    } else {
+    	DevAssert(a->peerIp->sa_family == AF_INET6);
+    	/** Should return 1 if a is bigger. */
+    	return memcmp (((struct sockaddr_in6*)a->peerIp)->sin6_addr.s6_addr, ((struct sockaddr_in6*)b->peerIp)->sin6_addr.s6_addr, 16);
+    }
 
     return 0;
   }
@@ -334,12 +362,25 @@ extern                                  "C" {
 
     if (a->seqNum < b->seqNum)
       return -1;
+    /** Compare the sa_family. */
+    if (a->peerIp->sa_family > b->peerIp->sa_family)
+    	return 1;
 
-    if (a->peerIp.s_addr > b->peerIp.s_addr)
-      return 1;
+    if (a->peerIp->sa_family < b->peerIp->sa_family)
+    	return -1;
 
-    if (a->peerIp.s_addr < b->peerIp.s_addr)
-      return -1;
+    /** compare the address. */
+    if(a->peerIp->sa_family == AF_INET) {
+    	if (((struct sockaddr_in*)a->peerIp)->sin_addr.s_addr > ((struct sockaddr_in*)b->peerIp)->sin_addr.s_addr)
+    		return 1;
+
+    	if (((struct sockaddr_in*)a->peerIp)->sin_addr.s_addr < ((struct sockaddr_in*)b->peerIp)->sin_addr.s_addr)
+    		return -1;
+    } else {
+    	DevAssert(a->peerIp->sa_family == AF_INET6);
+    	/** Should return 1 if a is bigger. */
+       	return memcmp (((struct sockaddr_in6*)a->peerIp)->sin6_addr.s6_addr, ((struct sockaddr_in6*)b->peerIp)->sin6_addr.s6_addr, 16);
+    }
 
     if (a->peerPort > b->peerPort)
       return 1;
@@ -393,7 +434,7 @@ extern                                  "C" {
   NW_IN nw_gtpv2c_stack_t * thiz,
   NW_IN uint32_t seqNum,
   NW_IN uint32_t localPort,
-  NW_IN struct in_addr * peerIp,
+  NW_IN struct sockaddr * peerIp,
   NW_IN uint32_t peerPort,
   NW_IN nw_gtpv2c_msg_t * pMsg) {
     nw_rc_t                                   rc = NW_FAILURE;
@@ -446,7 +487,7 @@ extern                                  "C" {
 
   static nw_rc_t                            nwGtpv2cSendVersionNotSupportedInd (
   NW_IN nw_gtpv2c_stack_t * thiz,
-  NW_IN struct in_addr *peerIp,
+  NW_IN struct sockaddr *peerIp,
   NW_IN uint32_t peerPort,
   NW_IN uint32_t seqNum) {
     nw_rc_t                                   rc = NW_FAILURE;
@@ -454,7 +495,7 @@ extern                                  "C" {
 
     rc = nwGtpv2cMsgNew ((nw_gtpv2c_stack_handle_t) thiz, false, NW_GTP_VERSION_NOT_SUPPORTED_IND, 0x00, seqNum, (&hMsg));
     NW_ASSERT (NW_OK == rc);
-    OAILOG_NOTICE (LOG_GTPV2C,  "Sending Version Not Supported Indication message to %x:%x with seq %u\n", peerIp->s_addr, peerPort, seqNum);
+// todo:   OAILOG_NOTICE (LOG_GTPV2C,  "Sending Version Not Supported Indication message to %x:%x with seq %u\n", peerIp->s_addr, peerPort, seqNum);
     rc = nwGtpv2cCreateAndSendMsg (thiz, seqNum, NW_GTPV2C_UDP_PORT, peerIp, peerPort, (nw_gtpv2c_msg_t *) hMsg);
     rc = nwGtpv2cMsgDelete ((nw_gtpv2c_stack_handle_t) thiz, hMsg);
     NW_ASSERT (NW_OK == rc);
@@ -471,7 +512,7 @@ extern                                  "C" {
 static nw_rc_t nwGtpv2cCreateLocalTunnel (
   NW_IN nw_gtpv2c_stack_t * thiz,
   NW_IN uint32_t teid,
-  NW_IN struct in_addr *ipv4Remote,
+  NW_IN struct sockaddr *fa,
   NW_IN nw_gtpv2c_ulp_tunnel_handle_t hUlpTunnel,
   NW_OUT nw_gtpv2c_tunnel_handle_t * phTunnel)
 {
@@ -481,9 +522,9 @@ static nw_rc_t nwGtpv2cCreateLocalTunnel (
     char                                    ipv4[INET_ADDRSTRLEN];
 
     OAILOG_FUNC_IN (LOG_GTPV2C);
-    inet_ntop (AF_INET, (void*)ipv4Remote, ipv4, INET_ADDRSTRLEN);
+//    inet_ntop (AF_INET, (void*)ipv4Remote, ipv4, INET_ADDRSTRLEN);
     OAILOG_DEBUG (LOG_GTPV2C, "Creating local tunnel with teid '0x%x' and peer IP %s\n", teid, ipv4);
-    pTunnel = nwGtpv2cTunnelNew (thiz, teid, ipv4Remote, hUlpTunnel);
+//    pTunnel = nwGtpv2cTunnelNew (thiz, teid, ipv4Remote, hUlpTunnel);
 
     if (pTunnel) {
       pCollision = RB_INSERT (NwGtpv2cTunnelMap, &(thiz->tunnelMap), pTunnel);
@@ -519,12 +560,13 @@ static nw_rc_t nwGtpv2cCreateLocalTunnel (
     char                                    ipv4[INET_ADDRSTRLEN];
 
     OAILOG_FUNC_IN (LOG_GTPV2C);
-    pTunnel = RB_REMOVE (NwGtpv2cTunnelMap, &(thiz->tunnelMap), (nw_gtpv2c_tunnel_t *) hTunnel);
-    NW_ASSERT (pTunnel == (nw_gtpv2c_tunnel_t *) hTunnel);
-    inet_ntop (AF_INET, (void*)&pTunnel->ipv4AddrRemote, ipv4, INET_ADDRSTRLEN);
-    OAILOG_DEBUG (LOG_GTPV2C, "Deleting local tunnel with teid '0x%x' and peer IP %s\n", pTunnel->teid, ipv4);
-    rc = nwGtpv2cTunnelDelete (thiz, pTunnel);
-    NW_ASSERT (NW_OK == rc);
+    // todo:
+//    pTunnel = RB_REMOVE (NwGtpv2cTunnelMap, &(thiz->tunnelMap), (nw_gtpv2c_tunnel_t *) hTunnel);
+//    NW_ASSERT (pTunnel == (nw_gtpv2c_tunnel_t *) hTunnel);
+//    inet_ntop (AF_INET, (void*)&pTunnel->ipv4AddrRemote, ipv4, INET_ADDRSTRLEN);
+//    OAILOG_DEBUG (LOG_GTPV2C, "Deleting local tunnel with teid '0x%x' and peer IP %s\n", pTunnel->teid, ipv4);
+//    rc = nwGtpv2cTunnelDelete (thiz, pTunnel);
+//    NW_ASSERT (NW_OK == rc);
 
     nw_gtpv2c_tunnel_t *pLocalTunnel_test = RB_MIN (NwGtpv2cTunnelMap, &(thiz->tunnelMap));
 //    DevAssert(!pLocalTunnel_test);
@@ -563,13 +605,12 @@ static nw_rc_t nwGtpv2cCreateLocalTunnel (
       if (!pUlpReq->u_api_info.initialReqInfo.hTunnel) {
         /** Check if a tunnel already exists depending on the flag. */
         keyTunnel.teid = pUlpReq->u_api_info.initialReqInfo.teidLocal;
-        keyTunnel.ipv4AddrRemote = pUlpReq->u_api_info.initialReqInfo.peerIp;
+        keyTunnel.ipAddrRemote = pUlpReq->u_api_info.initialReqInfo.edns_peer_ip;
         pLocalTunnel = RB_FIND (NwGtpv2cTunnelMap, &(thiz->tunnelMap), &keyTunnel);
         if (!pLocalTunnel) {
           pLocalTunnel = RB_MIN (NwGtpv2cTunnelMap, &(thiz->tunnelMap));
-//          DevAssert(!pLocalTunnel);
-          OAILOG_WARNING (LOG_GTPV2C,  "Request message received on non-existent teid 0x%x from peer 0x%x received! Discarding.\n", ntohl (pUlpReq->u_api_info.initialReqInfo.teidLocal), htonl (pUlpReq->u_api_info.initialReqInfo.peerIp.s_addr));
-          rc = nwGtpv2cCreateLocalTunnel (thiz, pUlpReq->u_api_info.initialReqInfo.teidLocal, &pUlpReq->u_api_info.initialReqInfo.peerIp, pUlpReq->u_api_info.initialReqInfo.hUlpTunnel, &pUlpReq->u_api_info.initialReqInfo.hTunnel);
+          OAILOG_WARNING (LOG_GTPV2C,  "Request message received on non-existent teid 0x%x received! Creating new tunnel.\n", ntohl (pUlpReq->u_api_info.initialReqInfo.teidLocal));
+          rc = nwGtpv2cCreateLocalTunnel (thiz, pUlpReq->u_api_info.initialReqInfo.teidLocal, &pUlpReq->u_api_info.initialReqInfo.edns_peer_ip, pUlpReq->u_api_info.initialReqInfo.hUlpTunnel, &pUlpReq->u_api_info.initialReqInfo.hTunnel);
           NW_ASSERT (NW_OK == rc);
         }else{
           pUlpReq->u_api_info.initialReqInfo.hTunnel = (nw_gtpv2c_tunnel_handle_t) pLocalTunnel;
@@ -578,7 +619,7 @@ static nw_rc_t nwGtpv2cCreateLocalTunnel (
       pTrxn->pMsg      = (nw_gtpv2c_msg_t *) pUlpReq->hMsg;
       pTrxn->hTunnel   = pUlpReq->u_api_info.initialReqInfo.hTunnel;
       pTrxn->hUlpTrxn  = pUlpReq->u_api_info.initialReqInfo.hUlpTrxn;
-      pTrxn->peerIp    = pUlpReq->u_api_info.initialReqInfo.peerIp; // todo: ((NwGtpv2cTunnelT *) (pTrxn->hTunnel))->ipv4AddrRemote;
+      pTrxn->peerIp    = pUlpReq->u_api_info.initialReqInfo.edns_peer_ip;
       pTrxn->peerPort  = NW_GTPV2C_UDP_PORT;  /**< Initial Requests always to 2123. */
       /* No Delete. */
       pTrxn->teidLocal = pUlpReq->u_api_info.initialReqInfo.teidLocal;
@@ -588,7 +629,7 @@ static nw_rc_t nwGtpv2cCreateLocalTunnel (
       if (pUlpReq->apiType & NW_GTPV2C_ULP_API_FLAG_IS_COMMAND_MESSAGE) {
         pTrxn->seqNum |= 0x00100000UL;
       }
-      rc = nwGtpv2cCreateAndSendMsg (thiz, pTrxn->seqNum, 0, &pTrxn->peerIp, pTrxn->peerPort, pTrxn->pMsg); /**< Send it from the socket with the high port. */
+      rc = nwGtpv2cCreateAndSendMsg (thiz, pTrxn->seqNum, 0, pTrxn->peerIp, pTrxn->peerPort, pTrxn->pMsg); /**< Send it from the socket with the high port. */
       if (NW_OK == rc) {
         /*
          * Start guard timer
@@ -635,10 +676,10 @@ static nw_rc_t nwGtpv2cCreateLocalTunnel (
     if (pTrxn) {
       pReqTrxn = (nw_gtpv2c_trxn_t *) pUlpReq->u_api_info.triggeredReqInfo.hTrxn;
       pTrxn->hUlpTrxn = pUlpReq->u_api_info.triggeredReqInfo.hUlpTrxn;
-      pTrxn->peerIp.s_addr = pReqTrxn->peerIp.s_addr;
+      pTrxn->peerIp = pReqTrxn->peerIp;
       pTrxn->peerPort = pReqTrxn->peerPort;
       pTrxn->pMsg = (nw_gtpv2c_msg_t *) pUlpReq->hMsg;
-      rc = nwGtpv2cCreateAndSendMsg (thiz, pTrxn->seqNum, NW_GTPV2C_UDP_PORT, &pTrxn->peerIp, pTrxn->peerPort, pTrxn->pMsg);
+      rc = nwGtpv2cCreateAndSendMsg (thiz, pTrxn->seqNum, NW_GTPV2C_UDP_PORT, pTrxn->peerIp, pTrxn->peerPort, pTrxn->pMsg);
 
       if (NW_OK == rc) {
         /*
@@ -708,14 +749,14 @@ static nw_rc_t nwGtpv2cCreateLocalTunnel (
       nw_gtpv2c_tunnel_t                        *pLocalTunnel = NULL,
                                                  keyTunnel = {0};
       keyTunnel.teid = pUlpRsp->u_api_info.triggeredRspInfo.teidLocal;
-      keyTunnel.ipv4AddrRemote = pReqTrxn->peerIp;
+      keyTunnel.ipAddrRemote = pReqTrxn->peerIp;
       pLocalTunnel = RB_FIND (NwGtpv2cTunnelMap, &(thiz->tunnelMap), &keyTunnel);
       if (!pLocalTunnel) {
-        OAILOG_WARNING (LOG_GTPV2C,  "Triggered response not containing a tunnel. Creating one for local_teid 0x%x and peer 0x%x!\n", pUlpRsp->u_api_info.triggeredRspInfo.teidLocal, htonl (pReqTrxn->peerIp.s_addr));
+//     todo:    OAILOG_WARNING (LOG_GTPV2C,  "Triggered response not containing a tunnel. Creating one for local_teid 0x%x and peer 0x%x!\n", pUlpRsp->u_api_info.triggeredRspInfo.teidLocal, htonl (pReqTrxn->peerIp.s_addr));
         rc = nwGtpv2cCreateLocalTunnel (thiz, pUlpRsp->u_api_info.triggeredRspInfo.teidLocal, &pReqTrxn->peerIp, pUlpRsp->u_api_info.triggeredRspInfo.hUlpTunnel, &pUlpRsp->u_api_info.triggeredRspInfo.hTunnel);
         NW_ASSERT (NW_OK == rc);
       }else{
-        OAILOG_WARNING (LOG_GTPV2C,  "Triggered response already containing a tunnel. Not creating a new one for local_teid 0x%x and peer 0x%x.\n", (pUlpRsp->u_api_info.triggeredRspInfo.teidLocal), htonl (pReqTrxn->peerIp.s_addr));
+       // todo: OAILOG_WARNING (LOG_GTPV2C,  "Triggered response already containing a tunnel. Not creating a new one for local_teid 0x%x and peer 0x%x.\n", (pUlpRsp->u_api_info.triggeredRspInfo.teidLocal), htonl (pReqTrxn->peerIp.s_addr));
       }
     }
     OAILOG_FUNC_RETURN( LOG_GTPV2C, rc);
@@ -740,7 +781,7 @@ static nw_rc_t nwGtpv2cCreateLocalTunnel (
 	  OAILOG_FUNC_IN (LOG_GTPV2C);;
 
       keyTrxn.seqNum = ((nw_gtpv2c_msg_t *) pUlpAck->hMsg)->seqNum;
-      keyTrxn.peerIp.s_addr = pUlpAck->u_api_info.triggeredAckInfo.peerIp.s_addr;
+      keyTrxn.peerIp = pUlpAck->u_api_info.triggeredAckInfo.peerIp;
       /** A transaction of the initial request (cmd) for the triggered request should exist. */
       pAckTrxn = RB_FIND (NwGtpv2cOutstandingTxSeqNumTrxnMap, &(thiz->outstandingTxSeqNumMap), &keyTrxn);
 
@@ -838,7 +879,7 @@ static nw_rc_t nwGtpv2cHandleUlpCreateLocalTunnel (NW_IN nw_gtpv2c_stack_t * thi
   NW_IN nw_gtpv2c_trxn_t * pTrxn,
   NW_IN uint32_t hUlpTunnel,
   NW_IN uint32_t msgType,
-  NW_IN struct in_addr *peerIp,
+  NW_IN struct sockaddr *peerIp,
   NW_IN uint16_t peerPort,
   NW_IN nw_gtpv2c_msg_handle_t hMsg) {
     nw_rc_t                                   rc = NW_FAILURE;
@@ -850,7 +891,7 @@ static nw_rc_t nwGtpv2cHandleUlpCreateLocalTunnel (NW_IN nw_gtpv2c_stack_t * thi
     ulpApi.u_api_info.initialReqIndInfo.msgType = msgType;
     ulpApi.u_api_info.initialReqIndInfo.hTrxn = (nw_gtpv2c_trxn_handle_t) pTrxn;
     ulpApi.u_api_info.initialReqIndInfo.hUlpTunnel = hUlpTunnel;
-    ulpApi.u_api_info.initialReqIndInfo.peerIp.s_addr = peerIp->s_addr;
+    ulpApi.u_api_info.initialReqIndInfo.peerIp = peerIp;
     ulpApi.u_api_info.initialReqIndInfo.peerPort = peerPort;
     ulpApi.u_api_info.initialReqIndInfo.error = *pError;
     rc = thiz->ulp.ulpReqCallback (thiz->ulp.hUlp, &ulpApi);
@@ -937,7 +978,7 @@ static nw_rc_t                            nwGtpv2cSendTriggeredAckIndToUlp (
     NW_IN nw_gtpv2c_trxn_t * pTrxn,
     NW_IN uint32_t hUlpTunnel,
     NW_IN uint32_t msgType,
-    NW_IN struct in_addr *peerIp,
+    NW_IN struct sockaddr *peerIp,
     NW_IN uint16_t peerPort,
     NW_IN nw_gtpv2c_msg_handle_t hMsg) {
   nw_rc_t                                   rc = NW_FAILURE;
@@ -949,7 +990,7 @@ static nw_rc_t                            nwGtpv2cSendTriggeredAckIndToUlp (
   ulpApi.u_api_info.triggeredAckIndInfo.msgType = msgType;
   ulpApi.u_api_info.triggeredAckIndInfo.hTrxn = (nw_gtpv2c_trxn_handle_t) pTrxn;
   ulpApi.u_api_info.triggeredAckIndInfo.hUlpTunnel = hUlpTunnel;
-  ulpApi.u_api_info.triggeredAckIndInfo.peerIp.s_addr = peerIp->s_addr;
+  ulpApi.u_api_info.triggeredAckIndInfo.peerIp = peerIp;
   ulpApi.u_api_info.triggeredAckIndInfo.peerPort = peerPort;
   ulpApi.u_api_info.triggeredAckIndInfo.error = *pError;
   rc = thiz->ulp.ulpReqCallback (thiz->ulp.hUlp, &ulpApi);
@@ -967,15 +1008,15 @@ static nw_rc_t                            nwGtpv2cHandleUlpFindLocalTunnel (
     nw_gtpv2c_tunnel_t                        *pLocalTunnel = NULL,
         keyTunnel = {0};
     keyTunnel.teid = pUlpReq->u_api_info.findLocalTunnelInfo.teidLocal;
-    keyTunnel.ipv4AddrRemote = pUlpReq->u_api_info.findLocalTunnelInfo.peerIp;
+    keyTunnel.ipAddrRemote = pUlpReq->u_api_info.findLocalTunnelInfo.edns_peer_ip;
     pLocalTunnel = RB_FIND (NwGtpv2cTunnelMap, &(thiz->tunnelMap), &keyTunnel);
     pUlpReq->u_api_info.findLocalTunnelInfo.hTunnel = (nw_gtpv2c_tunnel_handle_t) pLocalTunnel;
 
     if(pLocalTunnel){
-      OAILOG_DEBUG (LOG_GTPV2C, "FOUND local tunnel with teid '0x%x' and peer IP 0x%x\n", keyTunnel.teid, keyTunnel.ipv4AddrRemote);
+//    todo:  OAILOG_DEBUG (LOG_GTPV2C, "FOUND local tunnel with teid '0x%x' and peer IP 0x%x\n", keyTunnel.teid, keyTunnel.ipv4AddrRemote);
 
     }else{
-      OAILOG_DEBUG (LOG_GTPV2C, "DID NOT FOUND local tunnel with teid '0x%x' and peer IP 0x%x\n", keyTunnel.teid, keyTunnel.ipv4AddrRemote);
+// todo:      OAILOG_DEBUG (LOG_GTPV2C, "DID NOT FOUND local tunnel with teid '0x%x' and peer IP 0x%x\n", keyTunnel.teid, keyTunnel.ipv4AddrRemote);
 
     }
     return RETURNok;
@@ -1032,7 +1073,7 @@ static nw_rc_t                            nwGtpv2cHandleUlpFindLocalTunnel (
   NW_IN uint8_t * msgBuf,
   NW_IN uint32_t msgBufLen,
   NW_IN uint16_t peerPort,
-  NW_IN struct in_addr *peerIp) {
+  NW_IN struct sockaddr *peerIp) {
     nw_rc_t                                   rc = NW_FAILURE;
     uint32_t                                  seqNum = 0;
     uint32_t                                  teidLocal = 0;
@@ -1045,11 +1086,11 @@ static nw_rc_t                            nwGtpv2cHandleUlpFindLocalTunnel (
     char                                      ipv4[INET_ADDRSTRLEN];
 
     teidLocal = *((uint32_t *) (msgBuf + 4));
-    inet_ntop (AF_INET, (void*)peerIp, ipv4, INET_ADDRSTRLEN);
+  // todo:  inet_ntop (AF_INET, (void*)peerIp, ipv4, INET_ADDRSTRLEN);
 
     if (teidLocal) {
       keyTunnel.teid = ntohl (teidLocal);
-      keyTunnel.ipv4AddrRemote.s_addr = peerIp->s_addr;
+      keyTunnel.ipAddrRemote = peerIp;
       pLocalTunnel = RB_FIND (NwGtpv2cTunnelMap, &(thiz->tunnelMap), &keyTunnel);
 
       if (!pLocalTunnel) {
@@ -1097,7 +1138,7 @@ static nw_rc_t                            nwGtpv2cHandleUlpFindLocalTunnel (
   NW_IN uint32_t msgBufLen,
   NW_IN uint16_t localPort,
   NW_IN uint16_t peerPort,
-  NW_IN struct in_addr* peerIp) {
+  NW_IN struct sockaddr* peerIp) {
     nw_rc_t                                   rc = NW_FAILURE;
     nw_gtpv2c_trxn_t                         *pTrxn = NULL,
                                               keyTrxn;
@@ -1110,7 +1151,7 @@ static nw_rc_t                            nwGtpv2cHandleUlpFindLocalTunnel (
 
     bool                                       noDelete = false ;
     keyTrxn.seqNum = ntohl (*((uint32_t *) (msgBuf + (((*msgBuf) & 0x08) ? 8 : 4)))) >> 8;;
-    keyTrxn.peerIp.s_addr = peerIp->s_addr;
+    keyTrxn.peerIp = peerIp;
 
     OAILOG_DEBUG (LOG_GTPV2C,  "RECEIVED GTPV2c triggered request message of type %d, length %d and seqNum %x.\n", msgType, msgBufLen, keyTrxn.seqNum);
 
@@ -1139,7 +1180,7 @@ static nw_rc_t                            nwGtpv2cHandleUlpFindLocalTunnel (
     /** Process it like an initial request. */
     if (teidLocal) {
       keyTunnel.teid = ntohl (teidLocal);
-      keyTunnel.ipv4AddrRemote.s_addr = peerIp->s_addr;
+      keyTunnel.ipAddrRemote = peerIp;
       pLocalTunnel = RB_FIND (NwGtpv2cTunnelMap, &(thiz->tunnelMap), &keyTunnel);
 
       if (!pLocalTunnel) {
@@ -1185,7 +1226,7 @@ static nw_rc_t                            nwGtpv2cHandleUlpFindLocalTunnel (
   NW_IN uint32_t msgBufLen,
   NW_IN uint16_t localPort,
   NW_IN uint16_t peerPort,
-  NW_IN struct in_addr* peerIp,
+  NW_IN struct sockaddr* peerIp,
   NW_IN bool remove) {
     nw_rc_t                                   rc = NW_FAILURE;
     nw_gtpv2c_trxn_t                          *pTrxn = NULL,
@@ -1195,7 +1236,7 @@ static nw_rc_t                            nwGtpv2cHandleUlpFindLocalTunnel (
 
     bool                                       noDelete = false ;
     keyTrxn.seqNum = ntohl (*((uint32_t *) (msgBuf + (((*msgBuf) & 0x08) ? 8 : 4)))) >> 8;;
-    keyTrxn.peerIp.s_addr = peerIp->s_addr;
+    keyTrxn.peerIp = peerIp;
 
     OAILOG_DEBUG (LOG_GTPV2C,  "RECEIVED GTPV2c  response message of type %d, length %d and seqNum %x.\n", msgType, msgBufLen, keyTrxn.seqNum);
 
@@ -1500,7 +1541,7 @@ static nw_rc_t                            nwGtpv2cHandleUlpFindLocalTunnel (
   NW_IN uint32_t udpDataLen,
   NW_IN uint16_t localPort,
   NW_IN uint16_t peerPort,
-  NW_IN struct in_addr * peerIp) {
+  NW_IN struct sockaddr * peerIp) {
     nw_rc_t                                   rc = NW_FAILURE;
     nw_gtpv2c_stack_t                         *thiz = NULL;
     uint16_t                                msgType = 0;

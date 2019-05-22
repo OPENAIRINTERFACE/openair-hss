@@ -140,7 +140,7 @@ int mme_app_send_nas_signalling_connection_rel_ind(const mme_ue_s1ap_id_t ue_id)
 }
 
 //------------------------------------------------------------------------------
-void mme_app_send_s11_delete_bearer_cmd(teid_t local_teid, teid_t saegw_s11_teid, struct in_addr *saegw_s11_ipv4_address, ebi_list_t * ebi_list)
+void mme_app_send_s11_delete_bearer_cmd(teid_t local_teid, teid_t saegw_s11_teid, struct sockaddr *saegw_s11_ip_address, ebi_list_t * ebi_list)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
   /*
@@ -157,7 +157,7 @@ void mme_app_send_s11_delete_bearer_cmd(teid_t local_teid, teid_t saegw_s11_teid
   /** Take the last one. */
   s11_delete_bearer_command->local_teid = local_teid;
   s11_delete_bearer_command->teid = saegw_s11_teid;
-  s11_delete_bearer_command->peer_ip.s_addr = saegw_s11_ipv4_address->s_addr;
+  memcpy((void*)&s11_delete_bearer_command->edns_peer_ip, saegw_s11_ip_address, sizeof(struct sockaddr));
   memcpy(&s11_delete_bearer_command->ebi_list, ebi_list, sizeof(ebi_list_t));
   itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
   OAILOG_DEBUG(LOG_MME_APP, "Triggered Delete Bearer Command from released e_rab indication to teid %x from local teid %x", saegw_s11_teid, local_teid);
@@ -184,10 +184,7 @@ int mme_app_send_s11_release_access_bearers_req (struct ue_context_s *const ue_c
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
 
-
-
 //  DevAssert(pdn_context);
-
 
   message_p = itti_alloc_new_message (TASK_MME_APP, S11_RELEASE_ACCESS_BEARERS_REQUEST);
   release_access_bearers_request_p = &message_p->ittiMsg.s11_release_access_bearers_request;
@@ -196,7 +193,7 @@ int mme_app_send_s11_release_access_bearers_req (struct ue_context_s *const ue_c
   /** Sending one RAB for all PDNs also in the specification. */
   release_access_bearers_request_p->local_teid = ue_context->mme_teid_s11;
   release_access_bearers_request_p->teid = pdn_context->s_gw_teid_s11_s4;
-  release_access_bearers_request_p->peer_ip = pdn_context->s_gw_address_s11_s4.address.ipv4_address; /**< Not reading from the MME config. */
+  release_access_bearers_request_p->edns_peer_ip = &pdn_context->s_gw_address_s11_s4; /**< Not reading from the MME config. */
 
   release_access_bearers_request_p->originating_node = NODE_TYPE_MME;
 
@@ -351,7 +348,7 @@ mme_app_send_s11_create_session_req (
   // Actually, since S and P GW are bundled together, there is no PGW selection (based on PGW id in ULA, or DNS query based on FQDN)
   if (1) {
     // TODO prototype may change
-    mme_app_select_service(serving_tai, &session_request_p->peer_ip, S11_SGW_GTP_C);
+    mme_app_select_service(serving_tai, &session_request_p->edns_peer_ip, S11_SGW_GTP_C);
 //    session_request_p->peer_ip.in_addr = mme_config.ipv4.
   }
 
@@ -403,7 +400,7 @@ void mme_app_send_s11_modify_bearer_req(const ue_context_t * ue_context, pdn_con
    * Delay Value in integer multiples of 50 millisecs, or zero
    */
   s11_modify_bearer_request->delay_dl_packet_notif_req = 0;  // TO DO
-  s11_modify_bearer_request->peer_ip.s_addr = pdn_context->s_gw_address_s11_s4.address.ipv4_address.s_addr;
+  s11_modify_bearer_request->edns_peer_ip = &pdn_context->s_gw_address_s11_s4;
   // todo: IPv6 SAE-GW address
   s11_modify_bearer_request->teid           = pdn_context->s_gw_teid_s11_s4;
   /** Add the bearers to establish. */
@@ -525,7 +522,7 @@ void mme_app_send_s1ap_path_switch_request_failure(mme_ue_s1ap_id_t mme_ue_s1ap_
 //}
 
 //------------------------------------------------------------------------------
-int mme_app_remove_s10_tunnel_endpoint(teid_t local_teid, struct in_addr peer_ip){
+int mme_app_remove_s10_tunnel_endpoint(teid_t local_teid, struct sockaddr *peer_ip){
   OAILOG_FUNC_IN(LOG_MME_APP);
 
   MessageDef *message_p = itti_alloc_new_message (TASK_MME_APP, S10_REMOVE_UE_TUNNEL);
@@ -535,7 +532,7 @@ int mme_app_remove_s10_tunnel_endpoint(teid_t local_teid, struct in_addr peer_ip
 //  message_p->ittiMsg.s10_remove_ue_tunnel.cause = LOCAL_DETACH;
   if(local_teid == (teid_t)0 ){
     OAILOG_DEBUG (LOG_MME_APP, "Sending remove tunnel request for with null teid! \n");
-  } else if (peer_ip.s_addr == 0){
+  } else if (!peer_ip->sa_family){
     OAILOG_DEBUG (LOG_MME_APP, "Sending remove tunnel request for with null peer ip! \n");
   }
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_IMPLICIT_DETACH_UE_IND_MESSAGE");
@@ -548,7 +545,7 @@ int mme_app_remove_s10_tunnel_endpoint(teid_t local_teid, struct in_addr peer_ip
  * Cu
  */
 //------------------------------------------------------------------------------
-int mme_app_send_delete_session_request (struct ue_context_s * const ue_context_p, const ebi_t ebi, const struct in_addr saegw_s11_in_addr, const teid_t saegw_s11_teid, const bool noDelete, const bool handover, const uint8_t internal_flags)
+int mme_app_send_delete_session_request (struct ue_context_s * const ue_context_p, const ebi_t ebi, const struct sockaddr* saegw_s11_addr, const teid_t saegw_s11_teid, const bool noDelete, const bool handover, const uint8_t internal_flags)
 {
   MessageDef                             *message_p = NULL;
   int                                     rc = RETURNok;
@@ -586,7 +583,7 @@ int mme_app_send_delete_session_request (struct ue_context_s * const ue_context_
    */
   S11_DELETE_SESSION_REQUEST  (message_p).trxn = NULL;
   mme_config_read_lock (&mme_config);
-  S11_DELETE_SESSION_REQUEST (message_p).peer_ip = saegw_s11_in_addr;
+  memcpy((void*)&S11_DELETE_SESSION_REQUEST (message_p).edns_peer_ip, saegw_s11_addr, sizeof(struct sockaddr));
   mme_config_unlock (&mme_config);
 
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME,
@@ -964,7 +961,7 @@ void mme_app_itti_forward_relocation_response(ue_context_t *ue_context, mme_app_
    * todo: Get the MME from the origin TAI.
    * Currently only one MME is supported.
    */
-  forward_relocation_response_p->peer_ip.s_addr = s10_handover_proc->remote_mme_teid.ipv4_address.s_addr; /**< todo: Check this is correct. */
+  forward_relocation_response_p->peer_ip = s10_handover_proc->proc.peer_ip; /**< todo: Check this is correct. */
   forward_relocation_response_p->trxn    = s10_handover_proc->forward_relocation_trxn;
   /** Set the cause. */
   forward_relocation_response_p->cause.cause_value = REQUEST_ACCEPTED;
@@ -1022,7 +1019,7 @@ void mme_app_itti_forward_relocation_response(ue_context_t *ue_context, mme_app_
  * It shall not trigger creating a local S10 tunnel.
  * Parameter is the TEID & IP of the SOURCE-MME.
  */
-void mme_app_send_s10_forward_relocation_response_err(teid_t mme_source_s10_teid, struct in_addr mme_source_ipv4_address, void *trxn,  gtpv2c_cause_value_t gtpv2cCause){
+void mme_app_send_s10_forward_relocation_response_err(teid_t mme_source_s10_teid, struct sockaddr *mme_source_ip_address, void *trxn,  gtpv2c_cause_value_t gtpv2cCause){
   OAILOG_FUNC_IN (LOG_MME_APP);
 
   /** Send a Forward Relocation RESPONSE with error cause: RELOCATION_FAILURE. */
@@ -1038,7 +1035,7 @@ void mme_app_send_s10_forward_relocation_response_err(teid_t mme_source_s10_teid
    */
   forward_relocation_response_p->teid = mme_source_s10_teid;
   /** Set the IPv4 address of the source MME. */
-  forward_relocation_response_p->peer_ip = mme_source_ipv4_address;
+  forward_relocation_response_p->peer_ip = mme_source_ip_address;
   forward_relocation_response_p->cause.cause_value = gtpv2cCause;
   forward_relocation_response_p->trxn  = trxn;
 

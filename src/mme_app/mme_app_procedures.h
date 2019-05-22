@@ -65,7 +65,7 @@ typedef struct mme_app_s10_proc_s {
   /** S10 Tunnel Endpoint information. */
   teid_t                      local_teid;
   teid_t                      remote_teid;
-  struct in_addr              peer_ip;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME.
+  struct sockaddr             *peer_ip;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME.
   bool                        target_mme;
   uintptr_t                   s10_trxn;
   LIST_ENTRY(mme_app_s10_proc_s) entries;      /* List. */
@@ -86,6 +86,7 @@ typedef struct mme_app_s10_proc_mme_handover_s {
   uintptr_t                     forward_relocation_trxn;
   /** Peer Information. */
   fteid_t                       remote_mme_teid;
+//  struct sockaddr				*peer_addr; /**< Actually used address. */
   uint16_t                      peer_port;
   target_identification_t       target_id;
   F_Container_t                 source_to_target_eutran_f_container;

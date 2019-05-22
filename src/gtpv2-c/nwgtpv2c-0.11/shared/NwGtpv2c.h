@@ -195,7 +195,7 @@ typedef struct nw_gtpv2c_initial_req_info_s {
   NW_IN    uint16_t                     maxRetries;
   NW_IN    nw_gtpv2c_ulp_trxn_handle_t  hUlpTrxn;       /**< Optional handle to be returned in rsp of this msg. */
 
-  NW_IN    struct in_addr               peerIp;         /**< Required only in case when hTunnel == 0            */
+  NW_IN    struct sockaddr			    *edns_peer_ip;         /**< Required only in case when hTunnel == 0            */
   NW_IN    uint8_t                      internal_flags; /**< Required only in case when hTunnel == 0            */
   NW_IN    uint32_t                     teidLocal;      /**< Required only in case when hTunnel == 0            */
   NW_IN    nw_gtpv2c_ulp_tunnel_handle_t hUlpTunnel;    /**< Required only in case when hTunnel == 0            */
@@ -210,12 +210,12 @@ typedef struct nw_gtpv2c_initial_req_info_s {
 typedef struct nw_gtpv2c_triggered_req_info_s {
   NW_IN    nw_gtpv2c_tunnel_handle_t      hTunnel;        /**< Tunnel handle over which the mesasge is to be sent */
   NW_IN    nw_gtpv2c_trxn_handle_t        hTrxn;          /**< Request Trxn handle which to which triggered req is being sent */
-  NW_IN    uint16_t                     t3Timer;
-  NW_IN    uint16_t                     maxRetries;
-  NW_IN    nw_gtpv2c_ulp_trxn_handle_t  hUlpTrxn;       /**< Optional handle to be returned in rsp of this msg. */
-  NW_IN    struct in_addr               peerIp;         /**< Required only in case when hTunnel == 0            */
-  NW_IN    uint32_t                     teidLocal;      /**< Required only in case when hTunnel == 0            */
-  NW_IN    nw_gtpv2c_ulp_tunnel_handle_t hUlpTunnel;     /**< Required only in case when hTunnel == 0            */
+  NW_IN    uint16_t                       t3Timer;
+  NW_IN    uint16_t                       maxRetries;
+  NW_IN    nw_gtpv2c_ulp_trxn_handle_t    hUlpTrxn;       /**< Optional handle to be returned in rsp of this msg. */
+  NW_IN    struct sockaddr_in             *peerIp;         /**< Required only in case when hTunnel == 0            */
+  NW_IN    uint32_t                       teidLocal;      /**< Required only in case when hTunnel == 0            */
+  NW_IN    nw_gtpv2c_ulp_tunnel_handle_t  hUlpTunnel;     /**< Required only in case when hTunnel == 0            */
 
 } nw_gtpv2c_triggered_req_info_t;
 
@@ -246,7 +246,7 @@ typedef struct nw_gtpv2c_triggered_ack_info_s {
 
   NW_OUT   nw_gtpv2c_tunnel_handle_t        hTunnel;        /**< Returned only in case flags is set to
                                                              NW_GTPV2C_ULP_API_FLAG_CREATE_LOCAL_TUNNEL */
-  NW_IN    struct in_addr                   peerIp;
+  NW_IN    struct sockaddr 		     		*peerIp;
   NW_IN    uint32_t                         peerPort;
   NW_IN    uint32_t                         localPort;
 } nw_gtpv2c_triggered_ack_info_t;
@@ -261,7 +261,7 @@ typedef struct nw_gtpv2c_initial_req_ind_info_s {
   NW_IN    nw_gtpv2c_trxn_handle_t        hTrxn;
   NW_IN    nw_gtpv2c_ulp_trxn_handle_t    hUlpTrxn;
   NW_IN    nw_gtpv2c_msg_type_t           msgType;
-  NW_IN    struct in_addr                 peerIp;
+  NW_IN    struct sockaddr       	      *peerIp;
   NW_IN    uint32_t                       peerPort;
   NW_IN    nw_gtpv2c_ulp_tunnel_handle_t  hUlpTunnel;
   NW_INOUT nw_gtpv2c_tunnel_handle_t      hTunnel;
@@ -298,7 +298,7 @@ typedef struct nw_gtpv2c_triggered_rsp_ind_info_s {
   NW_IN    uint8_t                         trx_flags;
   NW_IN    nw_gtpv2c_msg_type_t            msgType;
   NW_IN    bool                            noDelete;
-  NW_IN    struct in_addr                  peerIp;
+  NW_IN    struct sockaddr                 *peerIp;
   NW_IN    uint32_t                        localPort;
   NW_IN    uint32_t                        peerPort;
 } nw_gtpv2c_triggered_rsp_ind_info_t;
@@ -327,7 +327,7 @@ typedef struct nw_gtpv2c_create_local_tunnel_info_s {
   NW_OUT   nw_gtpv2c_tunnel_handle_t     hTunnel;
   NW_IN    nw_gtpv2c_ulp_tunnel_handle_t hUlpTunnel;
   NW_IN    uint32_t                      teidLocal;
-  NW_IN    struct in_addr                peerIp;
+  NW_IN    struct sockaddr               *peerIp;
 } nw_gtpv2c_create_local_tunnel_info_t;
 
 
@@ -393,7 +393,7 @@ typedef struct nw_gtpv2c_udp_entity_s {
                                 NW_IN     uint8_t* dataBuf,
                                 NW_IN     uint32_t dataSize,
                                 NW_IN     uint16_t localPort,
-                                NW_IN     struct in_addr * peerIp,
+                                NW_IN     struct sockaddr * peerIp,
                                 NW_IN     uint16_t peerPort);
 } nw_gtpv2c_udp_entity_t;
 
@@ -584,7 +584,7 @@ nwGtpv2cProcessUdpReq( NW_IN nw_gtpv2c_stack_handle_t hGtpcStackHandle,
                        NW_IN uint32_t udpDataLen,
                        NW_IN uint16_t localPort,
                        NW_IN uint16_t peerPort,
-                       NW_IN struct in_addr *peerIP);
+                       NW_IN struct sockaddr *peerIp);
 
 /**
  Process Request from ULP entity.

@@ -282,7 +282,7 @@ typedef struct itti_nas_pdn_disconnect_req_s {
   pti_t                   pti;
   pdn_cid_t               pdn_cid;
   ebi_t                   default_ebi;
-  struct in_addr          saegw_s11_ip_addr;
+  struct sockaddr         saegw_s11_ip_addr;
   teid_t                  saegw_s11_teid;
   bool                    noDelete;
   bool  				  handover;

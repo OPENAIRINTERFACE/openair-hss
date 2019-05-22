@@ -369,7 +369,7 @@ mme_app_update_pdn_context(mme_ue_s1ap_id_t ue_id, const subscription_data_t * c
         /** Set the flag for the delete tunnel. */
         bool deleteTunnel = (RB_MIN(PdnContexts, &ue_context->pdn_contexts)== pdn_context);
         nas_itti_pdn_disconnect_req(ue_id, pdn_context->default_ebi, PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED, deleteTunnel, false,
-            pdn_context->s_gw_address_s11_s4.address.ipv4_address, pdn_context->s_gw_teid_s11_s4, pdn_context->context_identifier);
+            pdn_context->s_gw_address_s11_s4, pdn_context->s_gw_teid_s11_s4, pdn_context->context_identifier);
         /**
          * No response is expected.
          * Implicitly detach the PDN conte bearer contexts from the UE.
@@ -502,7 +502,7 @@ mme_app_pdn_process_session_creation(mme_ue_s1ap_id_t ue_id, fteid_t * saegw_s11
   pdn_context->s_gw_teid_s11_s4 = saegw_s11_fteid->teid;
   if(!ue_context->s_gw_teid_s11_s4)
     ue_context->s_gw_teid_s11_s4 = pdn_context->s_gw_teid_s11_s4;
-  pdn_context->s_gw_address_s11_s4.address.ipv4_address.s_addr = saegw_s11_fteid->ipv4_address.s_addr;
+// todo: pdn_context->s_gw_address_s11_s4 = saegw_s11_fteid->ipv4_address;
   /** Check the received cause. */
   if(cause->cause_value != REQUEST_ACCEPTED && cause->cause_value != REQUEST_ACCEPTED_PARTIALLY){
     OAILOG_ERROR (LOG_MME_APP, "Received S11_CREATE_SESSION_RESPONSE REJECTION with cause value %d for ue " MME_UE_S1AP_ID_FMT "from S+P-GW. \n", cause->cause_value, ue_id);

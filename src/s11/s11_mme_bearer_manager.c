@@ -72,7 +72,7 @@ s11_mme_release_access_bearers_request (
    * Prepare a new Create Session Request msg
    */
   rc = nwGtpv2cMsgNew (*stack_p, true, NW_GTP_RELEASE_ACCESS_BEARERS_REQ, req_p->teid, 0, &(ulp_req.hMsg));
-  ulp_req.u_api_info.initialReqInfo.peerIp = req_p->peer_ip;
+  ulp_req.u_api_info.initialReqInfo.edns_peer_ip = req_p->edns_peer_ip;
   ulp_req.u_api_info.initialReqInfo.teidLocal  = req_p->local_teid;
 
   hashtable_rc_t hash_rc = hashtable_ts_get(s11_mme_teid_2_gtv2c_teid_handle,
@@ -304,7 +304,7 @@ s11_mme_modify_bearer_request (
    * Prepare a new Modify Bearer Request msg
    */
   rc = nwGtpv2cMsgNew (*stack_p, true, NW_GTP_MODIFY_BEARER_REQ, req_p->teid, 0, &(ulp_req.hMsg));
-  ulp_req.u_api_info.initialReqInfo.peerIp         = req_p->peer_ip;
+  ulp_req.u_api_info.initialReqInfo.edns_peer_ip   = req_p->edns_peer_ip;
   ulp_req.u_api_info.initialReqInfo.teidLocal      = req_p->local_teid;
   ulp_req.u_api_info.initialReqInfo.internal_flags = req_p->internal_flags;
 
@@ -363,7 +363,7 @@ s11_mme_handle_modify_bearer_response (
 
   resp_p->teid = nwGtpv2cMsgGetTeid(pUlpApi->hMsg);
   resp_p->internal_flags = pUlpApi->u_api_info.triggeredRspIndInfo.trx_flags;
-  resp_p->peer_ip.s_addr = pUlpApi->u_api_info.triggeredRspIndInfo.peerIp.s_addr;
+  resp_p->edns_peer_ip 	 = pUlpApi->u_api_info.triggeredRspIndInfo.peerIp;
 
 //  if(resp_p->internal_flags & INTERNAL_FLAG_TRIGGERED_REJECT){
 //	  /** Set the transaction for the triggered acknowledgment. */
@@ -455,7 +455,7 @@ s11_mme_delete_bearer_command(
    * Prepare a new Delete Session Request msg
    */
   rc = nwGtpv2cMsgNew (*stack_p, true, NW_GTP_DELETE_BEARER_CMD, cmd_p->teid, 0, &(ulp_req.hMsg));
-  ulp_req.u_api_info.initialReqInfo.peerIp = cmd_p->peer_ip;
+  ulp_req.u_api_info.initialReqInfo.edns_peer_ip = cmd_p->edns_peer_ip;
   ulp_req.u_api_info.initialReqInfo.teidLocal = cmd_p->local_teid;
 
   hashtable_rc_t hash_rc = hashtable_ts_get(s11_mme_teid_2_gtv2c_teid_handle,
@@ -500,7 +500,7 @@ s11_mme_bearer_resource_command(
    * Prepare a new Delete Session Request msg
    */
   rc = nwGtpv2cMsgNew (*stack_p, true, NW_GTP_BEARER_RESOURCE_CMD, cmd_p->teid, 0, &(ulp_req.hMsg));
-  ulp_req.u_api_info.initialReqInfo.peerIp = cmd_p->peer_ip;
+  ulp_req.u_api_info.initialReqInfo.edns_peer_ip = cmd_p->edns_peer_ip;
   ulp_req.u_api_info.initialReqInfo.teidLocal = cmd_p->local_teid;
   ulp_req.u_api_info.initialReqInfo.internal_flags = cmd_p->pti;
 

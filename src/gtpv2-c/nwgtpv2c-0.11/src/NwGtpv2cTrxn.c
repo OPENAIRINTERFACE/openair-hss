@@ -68,7 +68,9 @@ extern                                  "C" {
     nw_rc_t                                   rc;
     NW_ASSERT (thiz);
     NW_ASSERT (thiz->pMsg);
-    rc = thiz->pStack->udp.udpDataReqCallback (thiz->pStack->udp.hUdp, thiz->pMsg->msgBuf, thiz->pMsg->msgLen, thiz->localPort, &thiz->peerIp, thiz->peerPort);
+    rc = thiz->pStack->udp.udpDataReqCallback (thiz->pStack->udp.hUdp, thiz->pMsg->msgBuf, thiz->pMsg->msgLen, thiz->localPort,
+    		thiz->peerIp,
+    		thiz->peerPort);
     thiz->maxRetries--;
     return rc;
   }
@@ -96,7 +98,7 @@ extern                                  "C" {
     	nw_gtpv2c_tunnel_t                        *pLocalTunnel = NULL,
     	                                            keyTunnel = {0};
     	keyTunnel.teid = thiz->teidLocal;
-    	keyTunnel.ipv4AddrRemote = thiz->peerIp;
+    	keyTunnel.ipAddrRemote = thiz->peerIp;
     	pLocalTunnel = RB_FIND (NwGtpv2cTunnelMap, &(pStack->tunnelMap), &keyTunnel);
 		if(pLocalTunnel) {
 	    	rc = nwGtpv2cTrxnSendMsgRetransmission (thiz);
@@ -284,12 +286,14 @@ extern                                  "C" {
   nw_gtpv2c_trxn_t                          *nwGtpv2cTrxnOutstandingRxNew (
   NW_IN nw_gtpv2c_stack_t * thiz,
   __attribute__ ((unused)) NW_IN uint32_t teidLocal,
-  NW_IN struct in_addr * peerIp,
+  NW_IN struct sockaddr * peerIp,
   NW_IN uint32_t peerPort,
   NW_IN uint32_t seqNum) {
     nw_rc_t                                   rc;
     nw_gtpv2c_trxn_t                          *pTrxn,
                                            *pCollision;
+
+    // todo: ipv6 for retransmission1
 
     if (gpGtpv2cTrxnPool) {
       pTrxn = gpGtpv2cTrxnPool;
@@ -303,7 +307,7 @@ extern                                  "C" {
       pTrxn->maxRetries = 2;
       pTrxn->t3Timer = 2;
       pTrxn->seqNum = seqNum;
-      pTrxn->peerIp.s_addr = peerIp->s_addr;
+      memcpy((void*)&pTrxn->peerIp, peerIp, sizeof(struct sockaddr));
       pTrxn->peerPort = peerPort;
       pTrxn->pMsg = NULL;
       pTrxn->hRspTmr = 0;

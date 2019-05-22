@@ -46,39 +46,43 @@ static obj_hash_table_t * sgw_e_dns_entries = NULL;
 static obj_hash_table_t * mme_e_dns_entries = NULL;
 
 //------------------------------------------------------------------------------
-struct in_addr* mme_app_edns_get_wrr_entry(bstring id, const interface_type_t interface_type)
+struct sockaddr* mme_app_edns_get_wrr_entry(bstring id, const interface_type_t interface_type)
 {
-  struct in_addr *in_addr = NULL;
+  struct sockaddr *sockaddr = NULL;
   switch(interface_type){
   case S10_MME_GTP_C:
 	  obj_hashtable_get (mme_e_dns_entries, bdata(id), blength(id),
-	      (void **)&in_addr);
+	      (void **)&sockaddr);
 	  break;
   case S11_SGW_GTP_C:
   	  obj_hashtable_get (sgw_e_dns_entries, bdata(id), blength(id),
-  	      (void **)&in_addr);
+  	      (void **)&sockaddr);
   	  break;
   default :
 	  break;
   }
 
-  return in_addr;
+  return sockaddr;
 }
 
 //------------------------------------------------------------------------------
-int mme_app_edns_add_wrr_entry(bstring id, struct in_addr in_addr, const interface_type_t interface_type)
+int mme_app_edns_add_wrr_entry(bstring id, struct sockaddr *edns_ip_addr, const interface_type_t interface_type)
 {
-  if (INADDR_ANY == in_addr.s_addr) {
-    // Do not halt the config process
-    return RETURNok;
-  }
   char * cid = calloc(1, blength(id)+1);
   if (cid) {
     strncpy(cid, (const char *)id->data, blength(id));
 
-    struct in_addr *data = malloc(sizeof(struct in_addr));
+    struct sockaddr_in *data;
+    if(edns_ip_addr->sa_family == AF_INET) {
+    	data = malloc(sizeof(struct sockaddr_in));
+    	memcpy((struct sockaddr_in*)data, (struct sockaddr_in*)edns_ip_addr, sizeof(struct sockaddr_in));
+    } else if (edns_ip_addr->sa_family == AF_INET6) {
+    	data = malloc(sizeof(struct sockaddr_in6));
+    	memcpy((struct sockaddr_in6*)data, (struct sockaddr_in6*)edns_ip_addr, sizeof(struct sockaddr_in6));
+    } else {
+    	return RETURNerror;
+    }
     if (data) {
-      data->s_addr = in_addr.s_addr;
       hashtable_rc_t rc;
       switch(interface_type){
       case S10_MME_GTP_C:
@@ -90,7 +94,6 @@ int mme_app_edns_add_wrr_entry(bstring id, struct in_addr in_addr, const interfa
       default :
     	  return RETURNerror;
       }
-
       /** Key is copied inside. */
       free_wrapper(&cid);
       if (HASH_TABLE_OK == rc) return RETURNok;
@@ -108,7 +111,7 @@ int  mme_app_edns_init (const mme_config_t * mme_config_p)
   if (sgw_e_dns_entries && mme_e_dns_entries) {
     /** Add the service (s10 or s11). */
     for (int i = 0; i < mme_config_p->e_dns_emulation.nb_service_entries; i++) {
-    	rc |= mme_app_edns_add_wrr_entry(mme_config_p->e_dns_emulation.service_id[i], mme_config_p->e_dns_emulation.service_ip_addr[i], mme_config_p->e_dns_emulation.interface_type[i]);
+    	rc |= mme_app_edns_add_wrr_entry(mme_config_p->e_dns_emulation.service_id[i], &mme_config_p->e_dns_emulation.sockaddr[i], mme_config_p->e_dns_emulation.interface_type[i]);
     }
 //    /** Add the neighboring MMEs. */
 //    for (int i = 0; i < mme_config_p->e_dns_emulation.nb_mme_entries; i++) {

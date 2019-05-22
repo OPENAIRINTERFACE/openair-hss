@@ -1166,13 +1166,17 @@ void mme_app_dump_pdn_context (const struct ue_context_s *const ue_context,
       bformata (bstr_dump, "%*s - P-GW s5 s8 cp (IPv6): %s\n", indent_spaces, " ", ipv6);
     }
     bformata (bstr_dump, "%*s - P-GW TEID s5 s8 cp .: " TEID_FMT "\n", indent_spaces, " ", pdn_context->p_gw_teid_s5_s8_cp);
-    if (pdn_context->s_gw_address_s11_s4.pdn_type == IPv4) {
+    if (pdn_context->s_gw_address_s11_s4.sa_family == AF_INET) {
       char ipv4[INET_ADDRSTRLEN];
-      inet_ntop (AF_INET, (void*)&pdn_context->s_gw_address_s11_s4.address.ipv4_address, ipv4, INET_ADDRSTRLEN);
+//      struct sockaddr_in * test = (struct sockaddr_in *)&pdn_context->s_gw_address_s11_s4;
+      inet_ntop (AF_INET,
+    		  (void*)&((struct sockaddr_in *)&pdn_context->s_gw_address_s11_s4)->sin_addr,
+
+			  ipv4, INET_ADDRSTRLEN);
       bformata (bstr_dump, "%*s - S-GW s11_s4 (IPv4) .: %s\n", indent_spaces, " ", ipv4);
     } else {
       char                                    ipv6[INET6_ADDRSTRLEN];
-      inet_ntop (AF_INET6, &pdn_context->s_gw_address_s11_s4.address.ipv6_address, ipv6, INET6_ADDRSTRLEN);
+      inet_ntop (AF_INET6, & ((struct sockaddr_in6*)&pdn_context->s_gw_address_s11_s4)->sin6_addr, ipv6, INET6_ADDRSTRLEN);
       bformata (bstr_dump, "%*s - S-GW s11_s4 (IPv6) .: %s\n", indent_spaces, " ", indent_spaces, " ", ipv6);
     }
     bformata (bstr_dump, "%*s - S-GW TEID s5 s8 cp .: " TEID_FMT "\n", indent_spaces, " ", pdn_context->s_gw_teid_s11_s4);
@@ -1921,14 +1925,12 @@ mme_app_handle_nas_context_req(itti_nas_context_req_t * const nas_context_req_pP
 //    OAILOG_FUNC_OUT (LOG_MME_APP);
 //  }
 
-  struct in_addr neigh_mme_ipv4_addr;
-  neigh_mme_ipv4_addr.s_addr = 0;
-
+  struct sockaddr *neigh_mme_ip_addr;
   if (1) {
     // TODO prototype may change
-    mme_app_select_service(&nas_context_req_pP->originating_tai, &neigh_mme_ipv4_addr, S10_MME_GTP_C);
+    mme_app_select_service(&nas_context_req_pP->originating_tai, &neigh_mme_ip_addr, S10_MME_GTP_C);
     //    session_request_p->peer_ip.in_addr = mme_config.ipv4.
-    if(neigh_mme_ipv4_addr.s_addr == 0){
+    if(!neigh_mme_ip_addr){
       OAILOG_ERROR(LOG_MME_APP, "Could not find a neighboring MME for handling missing NAS context. \n");
       OAILOG_DEBUG (LOG_MME_APP, "The selected TAI " TAI_FMT " is not configured as an S10 MME neighbor. "
           "Not proceeding with the NAS UE context request for mme_ue_s1ap_id of UE: "MME_UE_S1AP_ID_FMT ". \n",
@@ -1958,7 +1960,7 @@ mme_app_handle_nas_context_req(itti_nas_context_req_t * const nas_context_req_pP
   s10_context_request_p->teid = 0;
   /** Prepare the S10 message and initialize the S10 GTPv2c tunnel endpoints. */
   // todo: search the list of neighboring MMEs for the correct origin TAI
-  s10_context_request_p->peer_ip.s_addr = neigh_mme_ipv4_addr.s_addr;
+  s10_context_request_p->peer_ip = neigh_mme_ip_addr;
   /** Set the Target MME_S10_FTEID (this MME's S10 Tunnel endpoint). */
   OAI_GCC_DIAG_OFF(pointer-to-int-cast);
   s10_context_request_p->s10_target_mme_teid.teid = local_teid;
@@ -2082,7 +2084,7 @@ void mme_app_set_ue_eps_mm_context(mm_context_eps_t * ue_eps_mme_context_p, stru
  * Parameter is the TEID of the Source-MME.
  */
 static
-void _mme_app_send_s10_context_response_err(teid_t mme_source_s10_teid, struct in_addr mme_source_ipv4_address, void *trxn,  gtpv2c_cause_value_t cause_val){
+void _mme_app_send_s10_context_response_err(teid_t mme_source_s10_teid, struct sockaddr *mme_source_ip_address, void *trxn,  gtpv2c_cause_value_t cause_val){
   OAILOG_FUNC_IN (LOG_MME_APP);
 
   /** Send a Context RESPONSE with error cause. */
@@ -2094,7 +2096,7 @@ void _mme_app_send_s10_context_response_err(teid_t mme_source_s10_teid, struct i
   /** Set the TEID of the source MME. */
   s10_context_response_p->teid = mme_source_s10_teid; /**< Not set into the UE context yet. */
   /** Set the IPv4 address of the source MME. */
-  s10_context_response_p->peer_ip = mme_source_ipv4_address;
+  s10_context_response_p->peer_ip = mme_source_ip_address;
   s10_context_response_p->cause.cause_value = cause_val;
   s10_context_response_p->trxnId  = trxn;
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "MME_APP Sending S10 CONTEXT_RESPONSE_ERR");
@@ -2129,7 +2131,7 @@ mme_app_handle_s10_context_request(const itti_s10_context_request_t * const s10_
    OAILOG_ERROR (LOG_MME_APP, "No UE for GUTI " GUTI_FMT " was found. Cannot proceed with context request. \n", GUTI_ARG(&s10_context_request_pP->old_guti));
    MSC_LOG_EVENT (MSC_MMEAPP_MME, "S10_CONTEXT_REQUEST. No UE existing for guti: " GUTI_FMT, GUTI_ARG(&s10_context_request_pP->old_guti));
    // todo: error check
-   _mme_app_send_s10_context_response_err(s10_context_request_pP->s10_target_mme_teid.teid, s10_context_request_pP->s10_target_mme_teid.ipv4_address, s10_context_request_pP->trxn, CONTEXT_NOT_FOUND);
+   _mme_app_send_s10_context_response_err(s10_context_request_pP->s10_target_mme_teid.teid, s10_context_request_pP->peer_ip, s10_context_request_pP->trxn, CONTEXT_NOT_FOUND);
    OAILOG_FUNC_OUT (LOG_MME_APP);
  }
  OAILOG_INFO(LOG_MME_APP, "Received a CONTEXT_REQUEST for new UE with GUTI" GUTI_FMT ". \n", GUTI_ARG(&s10_context_request_pP->old_guti));
@@ -2138,20 +2140,20 @@ mme_app_handle_s10_context_request(const itti_s10_context_request_t * const s10_
  emm_data_context_t *ue_nas_ctx = emm_data_context_get_by_guti(&_emm_data, &s10_context_request_pP->old_guti);
  if (!ue_nas_ctx) {
    OAILOG_ERROR(LOG_MME_APP, "A NAS EMM context is not existing for this GUTI "GUTI_FMT " already exists. \n", GUTI_ARG(&s10_context_request_pP->old_guti));
-   _mme_app_send_s10_context_response_err(s10_context_request_pP->s10_target_mme_teid.teid, s10_context_request_pP->s10_target_mme_teid.ipv4_address, s10_context_request_pP->trxn, CONTEXT_NOT_FOUND);
+   _mme_app_send_s10_context_response_err(s10_context_request_pP->s10_target_mme_teid.teid, s10_context_request_pP->peer_ip, s10_context_request_pP->trxn, CONTEXT_NOT_FOUND);
    OAILOG_FUNC_OUT (LOG_MME_APP);
  }
  /** Check that a valid security context exists for the MME_UE_CONTEXT. */
  if (!IS_EMM_CTXT_PRESENT_SECURITY(ue_nas_ctx)) {
    OAILOG_ERROR(LOG_MME_APP, "A NAS EMM context is present but no security context is existing for this GUTI "GUTI_FMT ". \n", GUTI_ARG(&s10_context_request_pP->old_guti));
-   _mme_app_send_s10_context_response_err(s10_context_request_pP->s10_target_mme_teid.teid, s10_context_request_pP->s10_target_mme_teid.ipv4_address, s10_context_request_pP->trxn, CONTEXT_NOT_FOUND);
+   _mme_app_send_s10_context_response_err(s10_context_request_pP->s10_target_mme_teid.teid, s10_context_request_pP->peer_ip, s10_context_request_pP->trxn, CONTEXT_NOT_FOUND);
    OAILOG_FUNC_OUT (LOG_MME_APP);
  }
  /** Check that the UE is registered. Due to some errors in the RRC, it may be idle or connected. Don't know. */
  if (UE_REGISTERED != ue_context->mm_state) { /**< Should also mean EMM_REGISTERED. */
    /** UE may be in idle mode or it may be detached. */
    OAILOG_ERROR(LOG_MME_APP, "UE NAS EMM context is not in UE_REGISTERED state for GUTI "GUTI_FMT ". \n", GUTI_ARG(&s10_context_request_pP->old_guti));
-   _mme_app_send_s10_context_response_err(s10_context_request_pP->s10_target_mme_teid.teid, s10_context_request_pP->s10_target_mme_teid.ipv4_address, s10_context_request_pP->trxn, REQUEST_REJECTED);
+   _mme_app_send_s10_context_response_err(s10_context_request_pP->s10_target_mme_teid.teid, s10_context_request_pP->peer_ip, s10_context_request_pP->trxn, REQUEST_REJECTED);
    OAILOG_FUNC_OUT (LOG_MME_APP);
  }
 
@@ -2163,7 +2165,7 @@ mme_app_handle_s10_context_request(const itti_s10_context_request_t * const s10_
  if(s10_proc_mme_tau){
    OAILOG_WARNING (LOG_MME_APP, "EMM context for UE with ue_id " MME_UE_S1AP_ID_FMT " IMSI " IMSI_64_FMT " in EMM_REGISTERED state has a running S10 procedure. "
          "Rejecting further procedures. \n", ue_context->mme_ue_s1ap_id, ue_context->imsi);
-   _mme_app_send_s10_context_response_err(s10_context_request_pP->s10_target_mme_teid.teid, s10_context_request_pP->s10_target_mme_teid.ipv4_address, s10_context_request_pP->trxn, REQUEST_REJECTED);
+   _mme_app_send_s10_context_response_err(s10_context_request_pP->s10_target_mme_teid.teid, s10_context_request_pP->peer_ip, s10_context_request_pP->trxn, REQUEST_REJECTED);
    // todo: here abort the procedure! and continue with the handover
    // todo: mme_app_delete_s10_procedure_mme_handover(ue_context); /**< Should remove all pending data. */
    // todo: aborting should just clear all pending information
@@ -2214,7 +2216,7 @@ mme_app_handle_s10_context_request(const itti_s10_context_request_t * const s10_
 
  /** Set the target S10 TEID. */
  context_response_p->teid    = s10_context_request_pP->s10_target_mme_teid.teid; /**< Only a single target-MME TEID can exist at a time. */
- context_response_p->peer_ip = s10_context_request_pP->s10_target_mme_teid.ipv4_address; /**< todo: Check this is correct. */
+ context_response_p->peer_ip = s10_context_request_pP->peer_ip; /**< todo: Check this is correct. */
  context_response_p->trxnId    = s10_context_request_pP->trxn;
  /** Set the cause. Since the UE context state has not been changed yet, nothing to do in the context if success or failure.*/
  context_response_p->cause.cause_value = REQUEST_ACCEPTED; // todo: check the NAS message here!
@@ -2251,7 +2253,7 @@ mme_app_handle_s10_context_request(const itti_s10_context_request_t * const s10_
    OAI_GCC_DIAG_ON(pointer-to-int-cast);
    context_response_p->s11_sgw_teid.interface_type = S11_MME_GTP_C;
    mme_config_read_lock (&mme_config);
-   context_response_p->s11_sgw_teid.ipv4_address = first_pdn->s_gw_address_s11_s4.address.ipv4_address;
+// todo:   context_response_p->s11_sgw_teid.ipv4_address = first_pdn->s_gw_address_s11_s4.address.ipv4_address;
    mme_config_unlock (&mme_config);
    context_response_p->s11_sgw_teid.ipv4 = 1;
 
@@ -2434,7 +2436,7 @@ mme_app_handle_s10_context_response(
   s10_context_ack_p->cause.cause_value = REQUEST_ACCEPTED; /**< Since we entered UE_REGISTERED state. */
   /** Set the transaction: Peer IP, Peer Port, Peer TEID should be deduced from this. */
   s10_context_ack_p->trxnId       = s10_context_response_pP->trxnId;
-  s10_context_ack_p->peer_ip    = s10_context_response_pP->s10_source_mme_teid.ipv4_address;
+  s10_context_ack_p->peer_ip    = s10_context_response_pP->peer_ip;
   s10_context_ack_p->peer_port  = s10_context_response_pP->peer_port;
   s10_context_ack_p->teid       = s10_context_response_pP->s10_source_mme_teid.teid;
   s10_context_ack_p->local_teid = ue_context->local_mme_teid_s10;
@@ -2590,7 +2592,7 @@ mme_app_handle_relocation_cancel_request(
  DevAssert (message_p != NULL);
  relocation_cancel_response_p = &message_p->ittiMsg.s10_relocation_cancel_response;
  memset ((void*)relocation_cancel_response_p, 0, sizeof (itti_s10_relocation_cancel_response_t));
- relocation_cancel_response_p->peer_ip.s_addr = relocation_cancel_request_pP->peer_ip.s_addr;
+ relocation_cancel_response_p->peer_ip		  = relocation_cancel_request_pP->peer_ip;
  relocation_cancel_response_p->trxn           = relocation_cancel_request_pP->trxn;
  if(!ue_context){
    OAILOG_ERROR (LOG_MME_APP, "We didn't find this UE in list of UE: " IMSI_64_FMT". \n", imsi64);
