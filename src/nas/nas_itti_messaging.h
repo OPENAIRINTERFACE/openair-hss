@@ -94,7 +94,7 @@ void nas_itti_pdn_disconnect_req(
   pti_t                   pti,
   bool                    deleteTunnel,
   bool                    handover,
-  struct sockaddr         saegw_s11_addr, /**< Put them into the UE context ? */
+  struct sockaddr         *saegw_s11_addr, /**< Put them into the UE context ? */
   teid_t                  saegw_s11_teid,
   pdn_cid_t               pdn_cid);
 

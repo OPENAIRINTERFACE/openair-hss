@@ -174,7 +174,14 @@ nas_esm_proc_bearer_context_t* mme_app_nas_esm_create_bearer_context_procedure(m
   pdn_context_t * pdn_context = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
   DevAssert(pdn_context);
   esm_proc_bearer_context->saegw_s11_fteid.teid                = pdn_context->s_gw_teid_s11_s4;
-//  todo: esm_proc_bearer_context->saegw_s11_fteid.ipv4_address.s_addr = pdn_context->s_gw_address_s11_s4.address.ipv4_address.s_addr;
+  if(((struct sockaddr*)&pdn_context->s_gw_addr_s11_s4)->sa_family == AF_INET){
+	  esm_proc_bearer_context->saegw_s11_fteid.ipv4 = 1;
+	  esm_proc_bearer_context->saegw_s11_fteid.ipv4_address.s_addr = ((struct sockaddr_in*)&pdn_context->s_gw_addr_s11_s4)->sin_addr.s_addr;
+  } else {
+	  esm_proc_bearer_context->saegw_s11_fteid.ipv6 = 1;
+	  memcpy(&esm_proc_bearer_context->saegw_s11_fteid.ipv6_address, &((struct sockaddr_in6*)&pdn_context->s_gw_addr_s11_s4)->sin6_addr,
+			  sizeof(((struct sockaddr_in6*)&pdn_context->s_gw_addr_s11_s4)->sin6_addr));
+  }
   /* Set the timeout directly. Set the callback argument as the ue_id. */
   if(timeout_sec || timeout_usec){
     esm_proc_bearer_context->esm_base_proc.esm_proc_timer.id = nas_esm_timer_start(timeout_sec, timeout_usec, (void*)&esm_proc_bearer_context->esm_base_proc);

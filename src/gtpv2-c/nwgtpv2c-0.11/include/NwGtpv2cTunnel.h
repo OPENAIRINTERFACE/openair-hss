@@ -52,7 +52,11 @@ struct nw_gtpv2c_stack_s;
 
 typedef struct nw_gtpv2c_tunnel_s {
   uint32_t                      teid;
-  struct sockaddr               *ipAddrRemote;
+  union {
+	  struct sockaddr_in        ipv4_addr;
+	  struct sockaddr_in6       ipv6_addr;
+  }ipAddrRemote;
+
   nw_gtpv2c_ulp_tunnel_handle_t      hUlpTunnel;
   RB_ENTRY (nw_gtpv2c_tunnel_s)     tunnelMapRbtNode;            /**< RB Tree Data Structure Node        */
   struct nw_gtpv2c_tunnel_s*        next;

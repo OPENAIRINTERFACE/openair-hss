@@ -209,9 +209,10 @@ mme_app_handle_nas_pdn_disconnect_req (
    * TAU might be sent in deregistered, but the S11 response might be received in REGISTERED state (response currently not used).
    */
   /** Don't change the bearer state. Send Delete Session Request to SAE-GW. No transaction needed. */
-  if(nas_pdn_disconnect_req_pP->saegw_s11_ip_addr.sa_family != 0){
+  if(((struct sockaddr*)&nas_pdn_disconnect_req_pP->saegw_s11_ip_addr)->sa_family != 0){
 	uint8_t internal_flags = (ue_context->mm_state == UE_UNREGISTERED) ? INTERNAL_FLAG_SKIP_RESPONSE : INTERNAL_FLAG_NULL;
-    rc =  mme_app_send_delete_session_request(ue_context, nas_pdn_disconnect_req_pP->default_ebi, &nas_pdn_disconnect_req_pP->saegw_s11_ip_addr, nas_pdn_disconnect_req_pP->saegw_s11_teid, nas_pdn_disconnect_req_pP->noDelete,
+    rc =  mme_app_send_delete_session_request(ue_context, nas_pdn_disconnect_req_pP->default_ebi, &nas_pdn_disconnect_req_pP->saegw_s11_ip_addr,
+    		nas_pdn_disconnect_req_pP->saegw_s11_teid, nas_pdn_disconnect_req_pP->noDelete,
     		nas_pdn_disconnect_req_pP->handover, internal_flags);
   } else {
     OAILOG_WARNING(LOG_MME_APP, "NO S11 SAE-GW S11 IPv4 address in nas_pdn_connectivity of ueId : " MME_UE_S1AP_ID_FMT "\n", nas_pdn_disconnect_req_pP->ue_id);
@@ -1233,7 +1234,7 @@ mme_app_handle_modify_bearer_resp (
       pdn_context_t * registered_pdn_ctx = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
       if(registered_pdn_ctx){
           mme_app_send_s11_delete_bearer_cmd(ue_context->mme_teid_s11, registered_pdn_ctx->s_gw_teid_s11_s4,
-        		  &registered_pdn_ctx->s_gw_address_s11_s4, &s10_handover_procedure->failed_ebi_list);
+        		  &registered_pdn_ctx->s_gw_addr_s11_s4, &s10_handover_procedure->failed_ebi_list);
       }
     }
     OAILOG_FUNC_RETURN(LOG_MME_APP, RETURNok);
@@ -1260,7 +1261,7 @@ mme_app_handle_modify_bearer_resp (
     pdn_context_t * registered_pdn_ctx = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
     if(registered_pdn_ctx){
     	mme_app_send_s11_delete_bearer_cmd(ue_context->mme_teid_s11, registered_pdn_ctx->s_gw_teid_s11_s4,
-    			&registered_pdn_ctx->s_gw_address_s11_s4, &ebi_list);
+    			&registered_pdn_ctx->s_gw_addr_s11_s4, &ebi_list);
     }
   }
   OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
@@ -2175,8 +2176,8 @@ static void mme_app_handle_e_rab_setup_rsp_pdn_connectivity(const mme_ue_s1ap_id
         OAILOG_DEBUG (LOG_MME_APP, "Freed the NAS ESM procedure for PDN connectivity ueId : " MME_UE_S1AP_ID_FMT "\n", ue_context->mme_ue_s1ap_id);
       }
       /** Set cause as rejected. */
-      if(pdn_context->s_gw_address_s11_s4.sa_family != 0)
-        mme_app_send_delete_session_request(ue_context, bc_failed->linked_ebi, &pdn_context->s_gw_address_s11_s4, pdn_context->s_gw_teid_s11_s4, true,
+      if(((struct sockaddr*)&pdn_context->s_gw_addr_s11_s4)->sa_family != 0)
+        mme_app_send_delete_session_request(ue_context, bc_failed->linked_ebi, &pdn_context->s_gw_addr_s11_s4, pdn_context->s_gw_teid_s11_s4, true,
             false, INTERNAL_FLAG_NULL); /**< Don't delete the S11 Tunnel endpoint (still need for the default apn). */
       else {
         OAILOG_WARNING(LOG_MME_APP, "NO S11 SAE-GW Ipv4 in PDN context of ueId : " MME_UE_S1AP_ID_FMT "\n", ue_context->mme_ue_s1ap_id);
@@ -2367,7 +2368,7 @@ void mme_app_handle_e_rab_release_ind (const itti_s1ap_e_rab_release_ind_t   * c
     pdn_context = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
     if(pdn_context){
       /** Trigger a Delete Bearer Command. */
-      mme_app_send_s11_delete_bearer_cmd(ue_context->mme_teid_s11, pdn_context->s_gw_teid_s11_s4, &pdn_context->s_gw_address_s11_s4, &ebi_list);
+      mme_app_send_s11_delete_bearer_cmd(ue_context->mme_teid_s11, pdn_context->s_gw_teid_s11_s4, &pdn_context->s_gw_addr_s11_s4, &ebi_list);
       OAILOG_FUNC_OUT (LOG_MME_APP);
     }
   }

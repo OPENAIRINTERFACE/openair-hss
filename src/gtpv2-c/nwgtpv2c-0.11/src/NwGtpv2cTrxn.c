@@ -69,7 +69,7 @@ extern                                  "C" {
     NW_ASSERT (thiz);
     NW_ASSERT (thiz->pMsg);
     rc = thiz->pStack->udp.udpDataReqCallback (thiz->pStack->udp.hUdp, thiz->pMsg->msgBuf, thiz->pMsg->msgLen, thiz->localPort,
-    		thiz->peerIp,
+    		&thiz->peer_ip,
     		thiz->peerPort);
     thiz->maxRetries--;
     return rc;
@@ -98,8 +98,8 @@ extern                                  "C" {
     	nw_gtpv2c_tunnel_t                        *pLocalTunnel = NULL,
     	                                            keyTunnel = {0};
     	keyTunnel.teid = thiz->teidLocal;
-    	keyTunnel.ipAddrRemote = thiz->peerIp;
-    	pLocalTunnel = RB_FIND (NwGtpv2cTunnelMap, &(pStack->tunnelMap), &keyTunnel);
+    	memcpy((void*)&keyTunnel.ipAddrRemote, (void*)&thiz->peer_ip, sizeof(thiz->peer_ip));
+        pLocalTunnel = RB_FIND (NwGtpv2cTunnelMap, &(pStack->tunnelMap), &keyTunnel);
 		if(pLocalTunnel) {
 	    	rc = nwGtpv2cTrxnSendMsgRetransmission (thiz);
 	    	NW_ASSERT (NW_OK == rc);
@@ -307,7 +307,7 @@ extern                                  "C" {
       pTrxn->maxRetries = 2;
       pTrxn->t3Timer = 2;
       pTrxn->seqNum = seqNum;
-      memcpy((void*)&pTrxn->peerIp, peerIp, sizeof(struct sockaddr));
+      memcpy((void*)&pTrxn->peer_ip, peerIp, (peerIp->sa_family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
       pTrxn->peerPort = peerPort;
       pTrxn->pMsg = NULL;
       pTrxn->hRspTmr = 0;
@@ -322,7 +322,7 @@ extern                                  "C" {
         if (pCollision->pMsg) {
           rc = pCollision->pStack->udp.udpDataReqCallback (pCollision->pStack->udp.hUdp,
               pCollision->pMsg->msgBuf, pCollision->pMsg->msgLen,
-              pCollision->localPort, &pCollision->peerIp, pCollision->peerPort);
+              pCollision->localPort, &pCollision->peer_ip, pCollision->peerPort);
         }
 
         rc = nwGtpv2cTrxnDelete (&pTrxn);

@@ -318,7 +318,8 @@ s10_mme_thread (
       udp_data_ind_t                         *udp_data_ind;
 
       udp_data_ind = &received_message_p->ittiMsg.udp_data_ind;
-      rc = nwGtpv2cProcessUdpReq (s10_mme_stack_handle, udp_data_ind->msgBuf, udp_data_ind->buffer_length, udp_data_ind->local_port, udp_data_ind->peer_port, udp_data_ind->peer_address);
+      rc = nwGtpv2cProcessUdpReq (s10_mme_stack_handle, udp_data_ind->msgBuf, udp_data_ind->buffer_length, udp_data_ind->local_port,
+    		  udp_data_ind->peer_port, &udp_data_ind->sock_addr);
       DevAssert (rc == NW_OK);
       }
       break;

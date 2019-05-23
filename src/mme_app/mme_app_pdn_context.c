@@ -369,7 +369,7 @@ mme_app_update_pdn_context(mme_ue_s1ap_id_t ue_id, const subscription_data_t * c
         /** Set the flag for the delete tunnel. */
         bool deleteTunnel = (RB_MIN(PdnContexts, &ue_context->pdn_contexts)== pdn_context);
         nas_itti_pdn_disconnect_req(ue_id, pdn_context->default_ebi, PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED, deleteTunnel, false,
-            pdn_context->s_gw_address_s11_s4, pdn_context->s_gw_teid_s11_s4, pdn_context->context_identifier);
+            &pdn_context->s_gw_addr_s11_s4, pdn_context->s_gw_teid_s11_s4, pdn_context->context_identifier);
         /**
          * No response is expected.
          * Implicitly detach the PDN conte bearer contexts from the UE.
@@ -502,7 +502,23 @@ mme_app_pdn_process_session_creation(mme_ue_s1ap_id_t ue_id, fteid_t * saegw_s11
   pdn_context->s_gw_teid_s11_s4 = saegw_s11_fteid->teid;
   if(!ue_context->s_gw_teid_s11_s4)
     ue_context->s_gw_teid_s11_s4 = pdn_context->s_gw_teid_s11_s4;
-// todo: pdn_context->s_gw_address_s11_s4 = saegw_s11_fteid->ipv4_address;
+
+  if(pco){
+    if (!pdn_context->pco) {
+      pdn_context->pco = calloc(1, sizeof(protocol_configuration_options_t));
+    } else {
+      clear_protocol_configuration_options(pdn_context->pco);
+    }
+    copy_protocol_configuration_options(pdn_context->pco, pco);
+  }
+
+  if(saegw_s11_fteid->ipv4){
+	  ((struct sockaddr_in*)&pdn_context->s_gw_addr_s11_s4)->sin_addr.s_addr = saegw_s11_fteid->ipv4_address.s_addr;
+	  ((struct sockaddr_in*)&pdn_context->s_gw_addr_s11_s4)->sin_family = AF_INET;
+  } else {
+	  ((struct sockaddr_in6*)&pdn_context->s_gw_addr_s11_s4)->sin6_family = AF_INET6;
+	  memcpy(&((struct sockaddr_in6*)&pdn_context->s_gw_addr_s11_s4)->sin6_addr, &saegw_s11_fteid->ipv6_address, sizeof(saegw_s11_fteid->ipv6_address));
+  }
   /** Check the received cause. */
   if(cause->cause_value != REQUEST_ACCEPTED && cause->cause_value != REQUEST_ACCEPTED_PARTIALLY){
     OAILOG_ERROR (LOG_MME_APP, "Received S11_CREATE_SESSION_RESPONSE REJECTION with cause value %d for ue " MME_UE_S1AP_ID_FMT "from S+P-GW. \n", cause->cause_value, ue_id);
@@ -521,14 +537,7 @@ mme_app_pdn_process_session_creation(mme_ue_s1ap_id_t ue_id, fteid_t * saegw_s11
     /** Decouple it from the message. */
     *paa = NULL;
   }
-  if(pco){
-    if (!pdn_context->pco) {
-      pdn_context->pco = calloc(1, sizeof(protocol_configuration_options_t));
-    } else {
-      clear_protocol_configuration_options(pdn_context->pco);
-    }
-    copy_protocol_configuration_options(pdn_context->pco, pco);
-  }
+
   //#define TEMPORARY_DEBUG 1
   //#if TEMPORARY_DEBUG
   // bstring b = protocol_configuration_options_to_xml(&ue_context->pending_pdn_connectivity_req_pco);

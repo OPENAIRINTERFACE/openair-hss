@@ -147,7 +147,6 @@ void mme_app_send_s11_delete_bearer_cmd(teid_t local_teid, teid_t saegw_s11_teid
    * Keep the identifier to the default APN.
    */
   MessageDef                                        *message_p = NULL;
-  itti_s11_delete_bearer_command_t                  *delete_bearer_command_p = NULL;
   int                                                rc = RETURNok;
 
   /** Trigger a Delete Bearer Command. */
@@ -157,7 +156,9 @@ void mme_app_send_s11_delete_bearer_cmd(teid_t local_teid, teid_t saegw_s11_teid
   /** Take the last one. */
   s11_delete_bearer_command->local_teid = local_teid;
   s11_delete_bearer_command->teid = saegw_s11_teid;
-  memcpy((void*)&s11_delete_bearer_command->edns_peer_ip, saegw_s11_ip_address, sizeof(struct sockaddr));
+  memcpy((void*)&s11_delete_bearer_command->edns_peer_ip, saegw_s11_ip_address,
+		  saegw_s11_ip_address->sa_family == AF_INET ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
+
   memcpy(&s11_delete_bearer_command->ebi_list, ebi_list, sizeof(ebi_list_t));
   itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
   OAILOG_DEBUG(LOG_MME_APP, "Triggered Delete Bearer Command from released e_rab indication to teid %x from local teid %x", saegw_s11_teid, local_teid);
@@ -193,10 +194,10 @@ int mme_app_send_s11_release_access_bearers_req (struct ue_context_s *const ue_c
   /** Sending one RAB for all PDNs also in the specification. */
   release_access_bearers_request_p->local_teid = ue_context->mme_teid_s11;
   release_access_bearers_request_p->teid = pdn_context->s_gw_teid_s11_s4;
-  release_access_bearers_request_p->edns_peer_ip = &pdn_context->s_gw_address_s11_s4; /**< Not reading from the MME config. */
+  memcpy((void*)&release_access_bearers_request_p->edns_peer_ip, (struct sockaddr *)&pdn_context->s_gw_addr_s11_s4,
+  ((struct sockaddr *)&pdn_context->s_gw_addr_s11_s4)->sa_family == AF_INET ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
 
   release_access_bearers_request_p->originating_node = NODE_TYPE_MME;
-
 
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 S11_RELEASE_ACCESS_BEARERS_REQUEST teid %u", release_access_bearers_request_p->teid);
   rc = itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
@@ -295,6 +296,16 @@ mme_app_send_s11_create_session_req (
   mme_app_get_bearer_contexts_to_be_created(pdn_context, session_request_p->bearer_contexts_to_be_created, BEARER_STATE_MME_CREATED);
 
   // todo: apn restrictions!
+
+  // Actually, since S and P GW are bundled together, there is no PGW selection (based on PGW id in ULA, or DNS query based on FQDN)
+  struct sockaddr * edns_peer_ip = NULL;
+  if (1) {
+    // TODO prototype may change
+    mme_app_select_service(serving_tai, &edns_peer_ip, S11_SGW_GTP_C);
+    //    session_request_p->peer_ip.in_addr = mme_config.ipv4.
+  }
+  memcpy((void*)&session_request_p->edns_peer_ip, edns_peer_ip, edns_peer_ip->sa_family == AF_INET ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
+
   /*
    * Asking for default bearer in initial UE message.
    * Use the address of ue_context as unique TEID: Need to find better here
@@ -305,9 +316,15 @@ mme_app_send_s11_create_session_req (
   OAI_GCC_DIAG_ON(pointer-to-int-cast);
   session_request_p->sender_fteid_for_cp.interface_type = S11_MME_GTP_C;
   mme_config_read_lock (&mme_config);
-  session_request_p->sender_fteid_for_cp.ipv4_address = mme_config.ipv4.s11;
+  if(mme_config.ipv4.s11.s_addr){
+	  session_request_p->sender_fteid_for_cp.ipv4_address = mme_config.ipv4.s11;
+	  session_request_p->sender_fteid_for_cp.ipv4 = 1;
+  }
+  if(memcmp(&mme_config.ipv6.s11.s6_addr, (void*)&in6addr_any, sizeof(mme_config.ipv6.s11.s6_addr)) != 0) {
+	  memcpy(session_request_p->sender_fteid_for_cp.ipv6_address.s6_addr, mme_config.ipv6.s11.s6_addr,  sizeof(mme_config.ipv6.s11.s6_addr));
+	  session_request_p->sender_fteid_for_cp.ipv6 = 1;
+  }
   mme_config_unlock (&mme_config);
-  session_request_p->sender_fteid_for_cp.ipv4 = 1;
 
   //ue_context->mme_teid_s11 = session_request_p->sender_fteid_for_cp.teid;
   DevAssert(!pdn_context->s_gw_teid_s11_s4);
@@ -339,17 +356,6 @@ mme_app_send_s11_create_session_req (
     copy_protocol_configuration_options (&session_request_p->pco, pco);
   } else if (pdn_context->pco && pdn_context->pco->num_protocol_or_container_id){
     copy_protocol_configuration_options (&session_request_p->pco, pdn_context->pco);
-  }
-
-//  mme_config_read_lock (&mme_config);
-//  session_request_p->peer_ip = mme_config.ipv4.sgw_s11;
-//  mme_config_unlock (&mme_config);
-  // TODO perform SGW selection
-  // Actually, since S and P GW are bundled together, there is no PGW selection (based on PGW id in ULA, or DNS query based on FQDN)
-  if (1) {
-    // TODO prototype may change
-    mme_app_select_service(serving_tai, &session_request_p->edns_peer_ip, S11_SGW_GTP_C);
-//    session_request_p->peer_ip.in_addr = mme_config.ipv4.
   }
 
   session_request_p->serving_network.mcc[0] = serving_tai->plmn.mcc_digit1;
@@ -400,7 +406,9 @@ void mme_app_send_s11_modify_bearer_req(const ue_context_t * ue_context, pdn_con
    * Delay Value in integer multiples of 50 millisecs, or zero
    */
   s11_modify_bearer_request->delay_dl_packet_notif_req = 0;  // TO DO
-  s11_modify_bearer_request->edns_peer_ip = &pdn_context->s_gw_address_s11_s4;
+  memcpy((void*)&s11_modify_bearer_request->edns_peer_ip, (struct sockaddr *)&pdn_context->s_gw_addr_s11_s4,
+		  ((struct sockaddr *)&pdn_context->s_gw_addr_s11_s4)->sa_family == AF_INET ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
+
   // todo: IPv6 SAE-GW address
   s11_modify_bearer_request->teid           = pdn_context->s_gw_teid_s11_s4;
   /** Add the bearers to establish. */
@@ -428,7 +436,14 @@ void mme_app_send_s11_modify_bearer_req(const ue_context_t * ue_context, pdn_con
   OAI_GCC_DIAG_ON(pointer-to-int-cast);
   s11_modify_bearer_request->sender_fteid_for_cp.interface_type = S11_MME_GTP_C;
   mme_config_read_lock (&mme_config);
-  s11_modify_bearer_request->sender_fteid_for_cp.ipv4_address = mme_config.ipv4.s11;
+  if(mme_config.ipv4.s11.s_addr){
+	  s11_modify_bearer_request->sender_fteid_for_cp.ipv4_address = mme_config.ipv4.s11;
+	  s11_modify_bearer_request->sender_fteid_for_cp.ipv4 = 1;
+  }
+  if(memcmp(&mme_config.ipv6.s11.s6_addr, (void*)&in6addr_any, sizeof(mme_config.ipv6.s11.s6_addr)) != 0) {
+	  memcpy(s11_modify_bearer_request->sender_fteid_for_cp.ipv6_address.s6_addr, mme_config.ipv6.s11.s6_addr,  sizeof(mme_config.ipv6.s11.s6_addr));
+	  s11_modify_bearer_request->sender_fteid_for_cp.ipv6 = 1;
+  }
   mme_config_unlock (&mme_config);
   s11_modify_bearer_request->sender_fteid_for_cp.ipv4 = 1;
 
@@ -564,10 +579,18 @@ int mme_app_send_delete_session_request (struct ue_context_s * const ue_context_
   S11_DELETE_SESSION_REQUEST (message_p).sender_fteid_for_cp.teid = ue_context_p->mme_teid_s11;
   OAI_GCC_DIAG_ON(pointer-to-int-cast);
   S11_DELETE_SESSION_REQUEST (message_p).sender_fteid_for_cp.interface_type = S11_MME_GTP_C;
+
+
   mme_config_read_lock (&mme_config);
-  S11_DELETE_SESSION_REQUEST (message_p).sender_fteid_for_cp.ipv4_address = mme_config.ipv4.s11;
+  if(saegw_s11_addr->sa_family == AF_INET){
+	  S11_DELETE_SESSION_REQUEST (message_p).sender_fteid_for_cp.ipv4 = 1;
+	  S11_DELETE_SESSION_REQUEST (message_p).sender_fteid_for_cp.ipv4_address = mme_config.ipv4.s11;
+  } else {
+	  S11_DELETE_SESSION_REQUEST (message_p).sender_fteid_for_cp.ipv6 = 1;
+	  memcpy((void*)&S11_DELETE_SESSION_REQUEST (message_p).sender_fteid_for_cp.ipv6_address,
+			  (void*)&mme_config.ipv6.s11, sizeof(mme_config.ipv6.s11));
+  }
   mme_config_unlock (&mme_config);
-  S11_DELETE_SESSION_REQUEST (message_p).sender_fteid_for_cp.ipv4 = 1;
 
   if(handover){
 	  S11_DELETE_SESSION_REQUEST (message_p).indication_flags.oi = 0x0;
@@ -577,13 +600,13 @@ int mme_app_send_delete_session_request (struct ue_context_s * const ue_context_
 	  S11_DELETE_SESSION_REQUEST (message_p).indication_flags.si = 0x0;
   }
 
-
   /*
    * S11 stack specific parameter. Not used in standalone epc mode
    */
   S11_DELETE_SESSION_REQUEST  (message_p).trxn = NULL;
   mme_config_read_lock (&mme_config);
-  memcpy((void*)&S11_DELETE_SESSION_REQUEST (message_p).edns_peer_ip, saegw_s11_addr, sizeof(struct sockaddr));
+  memcpy((void*)&S11_DELETE_SESSION_REQUEST (message_p).edns_peer_ip, saegw_s11_addr,
+		  saegw_s11_addr->sa_family == AF_INET ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
   mme_config_unlock (&mme_config);
 
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME,

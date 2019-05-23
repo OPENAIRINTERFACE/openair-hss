@@ -51,7 +51,11 @@ typedef struct {
   uint8_t                       msgBuf[UDP_DATA_MAX_MSG_LEN];
   uint32_t  buffer_length;
   uint16_t  local_port;
-  struct sockaddr  *peer_address;
+  union {
+	  struct sockaddr_in    addrv4;
+	  struct sockaddr_in6   addrv6;
+  }sock_addr;
+
   uint16_t  peer_port;
 } udp_data_ind_t;
 

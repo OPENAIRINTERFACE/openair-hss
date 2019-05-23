@@ -343,7 +343,7 @@ void nas_itti_pdn_disconnect_req(
   pti_t                   pti,
   bool                    deleteTunnel,
   bool                    handover,
-  struct sockaddr         saegw_s11_addr, /**< Put them into the UE context ? */
+  struct sockaddr         *saegw_s11_addr, /**< Put them into the UE context ? */
   teid_t                  saegw_s11_teid,
   pdn_cid_t               pdn_cid)
 {
@@ -358,10 +358,11 @@ void nas_itti_pdn_disconnect_req(
   NAS_PDN_DISCONNECT_REQ(message_p).handover		= handover;
   NAS_PDN_DISCONNECT_REQ(message_p).ue_id           = ue_idP;
   NAS_PDN_DISCONNECT_REQ(message_p).noDelete        = ((pti != PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED) || !deleteTunnel);
-  NAS_PDN_DISCONNECT_REQ(message_p).saegw_s11_ip_addr    = saegw_s11_addr;
+  memcpy((void*)&NAS_PDN_DISCONNECT_REQ(message_p).saegw_s11_ip_addr, saegw_s11_addr, saegw_s11_addr->sa_family == AF_INET ?
+		  sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
   NAS_PDN_DISCONNECT_REQ(message_p).saegw_s11_teid       = saegw_s11_teid;
 
-  if(saegw_s11_addr.sa_family == 0){
+  if(saegw_s11_addr->sa_family == 0){
     OAILOG_DEBUG (LOG_NAS_EMM, "EMM-PROC  - No SAE-GW IP for UE " MME_UE_S1AP_ID_FMT " to send PDN-Disc Req. \n", ue_idP);
   }
   MSC_LOG_TX_MESSAGE(

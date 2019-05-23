@@ -269,8 +269,8 @@ udp_server_receive_and_process (
       udp_data_ind_p->buffer_length = bytes_received;
       udp_data_ind_p->local_port = udp_sock_pP->local_port;
       udp_data_ind_p->peer_port = ipv6 ? htons (addr6.sin6_port) : htons (addr.sin_port);
-      memcpy((void*)udp_data_ind_p->peer_address, (ipv6) ? (struct sockaddr*)&addr6 : (struct sockaddr*)&addr,
-    		  sizeof(*udp_data_ind_p->peer_address));
+      memcpy((void*)&udp_data_ind_p->sock_addr, (ipv6) ? (struct sockaddr_in6*)&addr6 : (struct sockaddr_in*)&addr,
+    		  (ipv6) ? sizeof(struct sockaddr_in6) : sizeof(struct sockaddr_in));
 
       // todo: log
 //      OAILOG_DEBUG (LOG_UDP, "Msg of length %d received from %s:%u\n", bytes_received,

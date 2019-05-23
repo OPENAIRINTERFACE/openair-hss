@@ -277,23 +277,23 @@ extern                                  "C" {
       return -1;
 
     /** Compare the sa_family. */
-    if (a->ipAddrRemote->sa_family > b->ipAddrRemote->sa_family)
+    if (((struct sockaddr*)&a->ipAddrRemote)->sa_family > ((struct sockaddr*)&b->ipAddrRemote)->sa_family)
     	return 1;
 
-    if (a->ipAddrRemote->sa_family < b->ipAddrRemote->sa_family)
+    if (((struct sockaddr*)&a->ipAddrRemote)->sa_family <((struct sockaddr*)&b->ipAddrRemote)->sa_family)
     	return -1;
 
     /** compare the address. */
-    if(a->ipAddrRemote->sa_family == AF_INET) {
-    	if (((struct sockaddr_in*)a->ipAddrRemote)->sin_addr.s_addr > ((struct sockaddr_in*)b->ipAddrRemote)->sin_addr.s_addr)
+    if(((struct sockaddr*)&a->ipAddrRemote)->sa_family == AF_INET) {
+    	if (((struct sockaddr_in*)&a->ipAddrRemote)->sin_addr.s_addr > ((struct sockaddr_in*)&b->ipAddrRemote)->sin_addr.s_addr)
     		return 1;
 
-    	if (((struct sockaddr_in*)a->ipAddrRemote)->sin_addr.s_addr < ((struct sockaddr_in*)b->ipAddrRemote)->sin_addr.s_addr)
+    	if (((struct sockaddr_in*)&a->ipAddrRemote)->sin_addr.s_addr < ((struct sockaddr_in*)&b->ipAddrRemote)->sin_addr.s_addr)
     		return -1;
     } else {
-    	DevAssert(a->ipAddrRemote->sa_family == AF_INET6);
+    	DevAssert(((struct sockaddr*)&a->ipAddrRemote)->sa_family == AF_INET6);
        	/** Should return 1 if a is bigger. */
-    	return memcmp (((struct sockaddr_in6*)a->ipAddrRemote)->sin6_addr.s6_addr, ((struct sockaddr_in6*)b->ipAddrRemote)->sin6_addr.s6_addr, 16);
+    	return memcmp (((struct sockaddr_in6*)&a->ipAddrRemote)->sin6_addr.s6_addr, ((struct sockaddr_in6*)&b->ipAddrRemote)->sin6_addr.s6_addr, 16);
     }
 
     return 0;
@@ -322,23 +322,23 @@ extern                                  "C" {
       return -1;
 
     /** Compare the sa_family. */
-    if (a->peerIp->sa_family > b->peerIp->sa_family)
+    if (((struct sockaddr *)&a->peer_ip)->sa_family > ((struct sockaddr *)&b->peer_ip)->sa_family)
        return 1;
 
-    if (a->peerIp->sa_family < b->peerIp->sa_family)
+    if (((struct sockaddr *)&a->peer_ip)->sa_family < ((struct sockaddr *)&b->peer_ip)->sa_family)
        return -1;
 
     /** compare the address. */
-    if(a->peerIp->sa_family == AF_INET) {
-        if (((struct sockaddr_in*)a->peerIp)->sin_addr.s_addr > ((struct sockaddr_in*)b->peerIp)->sin_addr.s_addr)
+    if(((struct sockaddr *)&a->peer_ip)->sa_family == AF_INET) {
+        if (((struct sockaddr_in*)&a->peer_ip)->sin_addr.s_addr > ((struct sockaddr_in*)&b->peer_ip)->sin_addr.s_addr)
            return 1;
 
-        if (((struct sockaddr_in*)a->peerIp)->sin_addr.s_addr < ((struct sockaddr_in*)b->peerIp)->sin_addr.s_addr)
+        if (((struct sockaddr_in*)&a->peer_ip)->sin_addr.s_addr < ((struct sockaddr_in*)&b->peer_ip)->sin_addr.s_addr)
           return -1;
     } else {
-    	DevAssert(a->peerIp->sa_family == AF_INET6);
+    	DevAssert(((struct sockaddr *)&a->peer_ip)->sa_family == AF_INET6);
     	/** Should return 1 if a is bigger. */
-    	return memcmp (((struct sockaddr_in6*)a->peerIp)->sin6_addr.s6_addr, ((struct sockaddr_in6*)b->peerIp)->sin6_addr.s6_addr, 16);
+    	return memcmp (((struct sockaddr_in6*)&a->peer_ip)->sin6_addr.s6_addr, ((struct sockaddr_in6*)&b->peer_ip)->sin6_addr.s6_addr, 16);
     }
 
     return 0;
@@ -363,23 +363,23 @@ extern                                  "C" {
     if (a->seqNum < b->seqNum)
       return -1;
     /** Compare the sa_family. */
-    if (a->peerIp->sa_family > b->peerIp->sa_family)
+    if (((struct sockaddr *)&a->peer_ip)->sa_family > ((struct sockaddr *)&b->peer_ip)->sa_family)
     	return 1;
 
-    if (a->peerIp->sa_family < b->peerIp->sa_family)
+    if (((struct sockaddr *)&a->peer_ip)->sa_family < ((struct sockaddr *)&b->peer_ip)->sa_family)
     	return -1;
 
     /** compare the address. */
-    if(a->peerIp->sa_family == AF_INET) {
-    	if (((struct sockaddr_in*)a->peerIp)->sin_addr.s_addr > ((struct sockaddr_in*)b->peerIp)->sin_addr.s_addr)
+    if(((struct sockaddr *)&a->peer_ip)->sa_family == AF_INET) {
+    	if (((struct sockaddr_in*)&a->peer_ip)->sin_addr.s_addr > ((struct sockaddr_in*)&b->peer_ip)->sin_addr.s_addr)
     		return 1;
 
-    	if (((struct sockaddr_in*)a->peerIp)->sin_addr.s_addr < ((struct sockaddr_in*)b->peerIp)->sin_addr.s_addr)
+    	if (((struct sockaddr_in*)&a->peer_ip)->sin_addr.s_addr < ((struct sockaddr_in*)&b->peer_ip)->sin_addr.s_addr)
     		return -1;
     } else {
-    	DevAssert(a->peerIp->sa_family == AF_INET6);
+    	DevAssert(((struct sockaddr *)&a->peer_ip)->sa_family == AF_INET6);
     	/** Should return 1 if a is bigger. */
-       	return memcmp (((struct sockaddr_in6*)a->peerIp)->sin6_addr.s6_addr, ((struct sockaddr_in6*)b->peerIp)->sin6_addr.s6_addr, 16);
+       	return memcmp (((struct sockaddr_in6*)&a->peer_ip)->sin6_addr.s6_addr, ((struct sockaddr_in6*)&b->peer_ip)->sin6_addr.s6_addr, 16);
     }
 
     if (a->peerPort > b->peerPort)
@@ -519,12 +519,19 @@ static nw_rc_t nwGtpv2cCreateLocalTunnel (
     nw_rc_t                                   rc = NW_FAILURE;
     nw_gtpv2c_tunnel_t                        *pTunnel = NULL,
                                            *pCollision = NULL;
-    char                                    ipv4[INET_ADDRSTRLEN];
+
+    char                                    ip[INET6_ADDRSTRLEN];
+
+    if (fa->sa_family == AF_INET) {
+    	inet_ntop (AF_INET, &((struct sockaddr_in*)fa)->sin_addr, ip, INET_ADDRSTRLEN);
+        OAILOG_DEBUG (LOG_GTPV2C, "Creating local tunnel with teid '0x%x' and peer IPv4 %s\n", teid, ip);
+    } else {
+    	inet_ntop (AF_INET6, &((struct sockaddr_in6*)fa)->sin6_addr, ip, INET6_ADDRSTRLEN);
+        OAILOG_DEBUG (LOG_GTPV2C, "Creating local tunnel with teid '0x%x' and peer IPv6 %s\n", teid, ip);
+   }
 
     OAILOG_FUNC_IN (LOG_GTPV2C);
-//    inet_ntop (AF_INET, (void*)ipv4Remote, ipv4, INET_ADDRSTRLEN);
-    OAILOG_DEBUG (LOG_GTPV2C, "Creating local tunnel with teid '0x%x' and peer IP %s\n", teid, ipv4);
-//    pTunnel = nwGtpv2cTunnelNew (thiz, teid, ipv4Remote, hUlpTunnel);
+    pTunnel = nwGtpv2cTunnelNew (thiz, teid, fa, hUlpTunnel);
 
     if (pTunnel) {
       pCollision = RB_INSERT (NwGtpv2cTunnelMap, &(thiz->tunnelMap), pTunnel);
@@ -533,7 +540,7 @@ static nw_rc_t nwGtpv2cCreateLocalTunnel (
         rc = nwGtpv2cTunnelDelete (thiz, pTunnel);
         NW_ASSERT (NW_OK == rc);
         *phTunnel = (nw_gtpv2c_tunnel_handle_t) 0;
-        OAILOG_WARNING (LOG_GTPV2C,  "Local tunnel creation failed for teid '0x%x' and peer IP %s. Tunnel already exists!\n", teid, ipv4);
+        OAILOG_WARNING (LOG_GTPV2C,  "Local tunnel creation failed for teid '0x%x' and peer IP %s. Tunnel already exists!\n", teid, ip);
 //        NW_ASSERT (0);
         OAILOG_FUNC_RETURN (LOG_GTPV2C, NW_FAILURE);
       }
@@ -557,19 +564,20 @@ static nw_rc_t nwGtpv2cCreateLocalTunnel (
   NW_OUT nw_gtpv2c_tunnel_handle_t hTunnel) {
     nw_rc_t                                   rc = NW_FAILURE;
     nw_gtpv2c_tunnel_t                        *pTunnel = (nw_gtpv2c_tunnel_t *) hTunnel;
-    char                                    ipv4[INET_ADDRSTRLEN];
+    char                                      ip[INET6_ADDRSTRLEN];
 
     OAILOG_FUNC_IN (LOG_GTPV2C);
-    // todo:
-//    pTunnel = RB_REMOVE (NwGtpv2cTunnelMap, &(thiz->tunnelMap), (nw_gtpv2c_tunnel_t *) hTunnel);
-//    NW_ASSERT (pTunnel == (nw_gtpv2c_tunnel_t *) hTunnel);
-//    inet_ntop (AF_INET, (void*)&pTunnel->ipv4AddrRemote, ipv4, INET_ADDRSTRLEN);
-//    OAILOG_DEBUG (LOG_GTPV2C, "Deleting local tunnel with teid '0x%x' and peer IP %s\n", pTunnel->teid, ipv4);
-//    rc = nwGtpv2cTunnelDelete (thiz, pTunnel);
-//    NW_ASSERT (NW_OK == rc);
 
+    pTunnel = RB_REMOVE (NwGtpv2cTunnelMap, &(thiz->tunnelMap), (nw_gtpv2c_tunnel_t *) hTunnel);
+    NW_ASSERT (pTunnel == (nw_gtpv2c_tunnel_t *) hTunnel);
+
+    inet_ntop (((struct sockaddr*)&pTunnel->ipAddrRemote)->sa_family, (void*)&pTunnel->ipAddrRemote, ip,
+    		((struct sockaddr*)&pTunnel->ipAddrRemote)->sa_family == AF_INET ? INET_ADDRSTRLEN : INET6_ADDRSTRLEN);
+    OAILOG_DEBUG (LOG_GTPV2C, "Deleting local tunnel with teid '0x%x' and peer IP %s\n", pTunnel->teid, ip);
+    rc = nwGtpv2cTunnelDelete (thiz, pTunnel);
+    NW_ASSERT (NW_OK == rc);
     nw_gtpv2c_tunnel_t *pLocalTunnel_test = RB_MIN (NwGtpv2cTunnelMap, &(thiz->tunnelMap));
-//    DevAssert(!pLocalTunnel_test);
+    DevAssert(!pLocalTunnel_test);
 
     OAILOG_FUNC_RETURN (LOG_GTPV2C, NW_OK);
   }
@@ -605,12 +613,13 @@ static nw_rc_t nwGtpv2cCreateLocalTunnel (
       if (!pUlpReq->u_api_info.initialReqInfo.hTunnel) {
         /** Check if a tunnel already exists depending on the flag. */
         keyTunnel.teid = pUlpReq->u_api_info.initialReqInfo.teidLocal;
-        keyTunnel.ipAddrRemote = pUlpReq->u_api_info.initialReqInfo.edns_peer_ip;
+        memcpy(((struct sockaddr*)&keyTunnel.ipAddrRemote), pUlpReq->u_api_info.initialReqInfo.edns_peer_ip,
+        		pUlpReq->u_api_info.initialReqInfo.edns_peer_ip->sa_family==AF_INET ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
         pLocalTunnel = RB_FIND (NwGtpv2cTunnelMap, &(thiz->tunnelMap), &keyTunnel);
         if (!pLocalTunnel) {
           pLocalTunnel = RB_MIN (NwGtpv2cTunnelMap, &(thiz->tunnelMap));
           OAILOG_WARNING (LOG_GTPV2C,  "Request message received on non-existent teid 0x%x received! Creating new tunnel.\n", ntohl (pUlpReq->u_api_info.initialReqInfo.teidLocal));
-          rc = nwGtpv2cCreateLocalTunnel (thiz, pUlpReq->u_api_info.initialReqInfo.teidLocal, &pUlpReq->u_api_info.initialReqInfo.edns_peer_ip, pUlpReq->u_api_info.initialReqInfo.hUlpTunnel, &pUlpReq->u_api_info.initialReqInfo.hTunnel);
+          rc = nwGtpv2cCreateLocalTunnel (thiz, pUlpReq->u_api_info.initialReqInfo.teidLocal, pUlpReq->u_api_info.initialReqInfo.edns_peer_ip, pUlpReq->u_api_info.initialReqInfo.hUlpTunnel, &pUlpReq->u_api_info.initialReqInfo.hTunnel);
           NW_ASSERT (NW_OK == rc);
         }else{
           pUlpReq->u_api_info.initialReqInfo.hTunnel = (nw_gtpv2c_tunnel_handle_t) pLocalTunnel;
@@ -619,7 +628,11 @@ static nw_rc_t nwGtpv2cCreateLocalTunnel (
       pTrxn->pMsg      = (nw_gtpv2c_msg_t *) pUlpReq->hMsg;
       pTrxn->hTunnel   = pUlpReq->u_api_info.initialReqInfo.hTunnel;
       pTrxn->hUlpTrxn  = pUlpReq->u_api_info.initialReqInfo.hUlpTrxn;
-      pTrxn->peerIp    = pUlpReq->u_api_info.initialReqInfo.edns_peer_ip;
+      /** This will stay. */
+      memcpy((void*)&pTrxn->peer_ip, pUlpReq->u_api_info.initialReqInfo.edns_peer_ip,
+    		  (pUlpReq->u_api_info.initialReqInfo.edns_peer_ip->sa_family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
+
+
       pTrxn->peerPort  = NW_GTPV2C_UDP_PORT;  /**< Initial Requests always to 2123. */
       /* No Delete. */
       pTrxn->teidLocal = pUlpReq->u_api_info.initialReqInfo.teidLocal;
@@ -629,7 +642,7 @@ static nw_rc_t nwGtpv2cCreateLocalTunnel (
       if (pUlpReq->apiType & NW_GTPV2C_ULP_API_FLAG_IS_COMMAND_MESSAGE) {
         pTrxn->seqNum |= 0x00100000UL;
       }
-      rc = nwGtpv2cCreateAndSendMsg (thiz, pTrxn->seqNum, 0, pTrxn->peerIp, pTrxn->peerPort, pTrxn->pMsg); /**< Send it from the socket with the high port. */
+      rc = nwGtpv2cCreateAndSendMsg (thiz, pTrxn->seqNum, 0, &pTrxn->peer_ip, pTrxn->peerPort, pTrxn->pMsg); /**< Send it from the socket with the high port. */
       if (NW_OK == rc) {
         /*
          * Start guard timer
@@ -676,10 +689,12 @@ static nw_rc_t nwGtpv2cCreateLocalTunnel (
     if (pTrxn) {
       pReqTrxn = (nw_gtpv2c_trxn_t *) pUlpReq->u_api_info.triggeredReqInfo.hTrxn;
       pTrxn->hUlpTrxn = pUlpReq->u_api_info.triggeredReqInfo.hUlpTrxn;
-      pTrxn->peerIp = pReqTrxn->peerIp;
+      memcpy((void*)&pTrxn->peer_ip, pUlpReq->u_api_info.initialReqInfo.edns_peer_ip,
+    		  (((struct sockaddr*)&pReqTrxn->peer_ip)->sa_family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
+
       pTrxn->peerPort = pReqTrxn->peerPort;
       pTrxn->pMsg = (nw_gtpv2c_msg_t *) pUlpReq->hMsg;
-      rc = nwGtpv2cCreateAndSendMsg (thiz, pTrxn->seqNum, NW_GTPV2C_UDP_PORT, pTrxn->peerIp, pTrxn->peerPort, pTrxn->pMsg);
+      rc = nwGtpv2cCreateAndSendMsg (thiz, pTrxn->seqNum, NW_GTPV2C_UDP_PORT, &pTrxn->peer_ip, pTrxn->peerPort, pTrxn->pMsg);
 
       if (NW_OK == rc) {
         /*
@@ -693,7 +708,7 @@ static nw_rc_t nwGtpv2cCreateLocalTunnel (
         RB_INSERT (NwGtpv2cOutstandingTxSeqNumTrxnMap, &(thiz->outstandingTxSeqNumMap), pTrxn);
 
         if (!pUlpReq->u_api_info.triggeredReqInfo.hTunnel) {
-          rc = nwGtpv2cCreateLocalTunnel (thiz, pUlpReq->u_api_info.triggeredReqInfo.teidLocal, &pReqTrxn->peerIp,
+          rc = nwGtpv2cCreateLocalTunnel (thiz, pUlpReq->u_api_info.triggeredReqInfo.teidLocal, &pReqTrxn->peer_ip,
               pUlpReq->u_api_info.triggeredReqInfo.hUlpTunnel,
               &pUlpReq->u_api_info.triggeredReqInfo.hTunnel);
         }
@@ -730,7 +745,7 @@ static nw_rc_t nwGtpv2cCreateLocalTunnel (
       ((nw_gtpv2c_msg_t *) pUlpRsp->hMsg)->seqNum = pReqTrxn->seqNum;
 
     OAILOG_DEBUG (LOG_GTPV2C, "Sending response message over seq '0x%x'\n", pReqTrxn->seqNum);
-    rc = nwGtpv2cCreateAndSendMsg (thiz, pReqTrxn->seqNum, pReqTrxn->localPort, &pReqTrxn->peerIp, pReqTrxn->peerPort, (nw_gtpv2c_msg_t *) pUlpRsp->hMsg);
+    rc = nwGtpv2cCreateAndSendMsg (thiz, pReqTrxn->seqNum, pReqTrxn->localPort, &pReqTrxn->peer_ip, pReqTrxn->peerPort, (nw_gtpv2c_msg_t *) pUlpRsp->hMsg);
     /** Depending on the cause type, add it or not. */
     if(pUlpRsp->u_api_info.triggeredRspInfo.remove_trx) {
     	OAILOG_DEBUG (LOG_GTPV2C, "Removing transaction with seq '0x%x' due temprary reject. Not continuing with message. \n", pReqTrxn->seqNum);
@@ -749,11 +764,14 @@ static nw_rc_t nwGtpv2cCreateLocalTunnel (
       nw_gtpv2c_tunnel_t                        *pLocalTunnel = NULL,
                                                  keyTunnel = {0};
       keyTunnel.teid = pUlpRsp->u_api_info.triggeredRspInfo.teidLocal;
-      keyTunnel.ipAddrRemote = pReqTrxn->peerIp;
+//      keyTunnel.ipAddrRemote = &pReqTrxn->peer_ip;
+      memcpy(((struct sockaddr*)&keyTunnel.ipAddrRemote), ((struct sockaddr*)&pReqTrxn->peer_ip),
+    		  ((struct sockaddr*)&pReqTrxn->peer_ip)->sa_family==AF_INET ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
+
       pLocalTunnel = RB_FIND (NwGtpv2cTunnelMap, &(thiz->tunnelMap), &keyTunnel);
       if (!pLocalTunnel) {
 //     todo:    OAILOG_WARNING (LOG_GTPV2C,  "Triggered response not containing a tunnel. Creating one for local_teid 0x%x and peer 0x%x!\n", pUlpRsp->u_api_info.triggeredRspInfo.teidLocal, htonl (pReqTrxn->peerIp.s_addr));
-        rc = nwGtpv2cCreateLocalTunnel (thiz, pUlpRsp->u_api_info.triggeredRspInfo.teidLocal, &pReqTrxn->peerIp, pUlpRsp->u_api_info.triggeredRspInfo.hUlpTunnel, &pUlpRsp->u_api_info.triggeredRspInfo.hTunnel);
+        rc = nwGtpv2cCreateLocalTunnel (thiz, pUlpRsp->u_api_info.triggeredRspInfo.teidLocal, &pReqTrxn->peer_ip, pUlpRsp->u_api_info.triggeredRspInfo.hUlpTunnel, &pUlpRsp->u_api_info.triggeredRspInfo.hTunnel);
         NW_ASSERT (NW_OK == rc);
       }else{
        // todo: OAILOG_WARNING (LOG_GTPV2C,  "Triggered response already containing a tunnel. Not creating a new one for local_teid 0x%x and peer 0x%x.\n", (pUlpRsp->u_api_info.triggeredRspInfo.teidLocal), htonl (pReqTrxn->peerIp.s_addr));
@@ -781,7 +799,9 @@ static nw_rc_t nwGtpv2cCreateLocalTunnel (
 	  OAILOG_FUNC_IN (LOG_GTPV2C);;
 
       keyTrxn.seqNum = ((nw_gtpv2c_msg_t *) pUlpAck->hMsg)->seqNum;
-      keyTrxn.peerIp = pUlpAck->u_api_info.triggeredAckInfo.peerIp;
+      memcpy((void*)&keyTrxn.peer_ip, pUlpAck->u_api_info.triggeredAckInfo.peerIp,
+    		  (((struct sockaddr*)pUlpAck->u_api_info.triggeredAckInfo.peerIp)->sa_family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
+
       /** A transaction of the initial request (cmd) for the triggered request should exist. */
       pAckTrxn = RB_FIND (NwGtpv2cOutstandingTxSeqNumTrxnMap, &(thiz->outstandingTxSeqNumMap), &keyTrxn);
 
@@ -804,7 +824,7 @@ static nw_rc_t nwGtpv2cCreateLocalTunnel (
       }
 
     OAILOG_DEBUG (LOG_GTPV2C, "Sending a triggered ACK message over seq '0x%x'\n", pAckTrxn->seqNum);
-    rc = nwGtpv2cCreateAndSendMsg (thiz, pAckTrxn->seqNum , pUlpAck->u_api_info.triggeredAckInfo.localPort, &pUlpAck->u_api_info.triggeredAckInfo.peerIp, pUlpAck->u_api_info.triggeredAckInfo.peerPort, (nw_gtpv2c_msg_t *) pUlpAck->hMsg);
+    rc = nwGtpv2cCreateAndSendMsg (thiz, pAckTrxn->seqNum , pUlpAck->u_api_info.triggeredAckInfo.localPort, pUlpAck->u_api_info.triggeredAckInfo.peerIp, pUlpAck->u_api_info.triggeredAckInfo.peerPort, (nw_gtpv2c_msg_t *) pUlpAck->hMsg);
 
     /** Remove the tunnel. */
     rc = nwGtpv2cDeleteLocalTunnel (thiz, pUlpAck->u_api_info.triggeredAckInfo.hTunnel);
@@ -828,11 +848,11 @@ static nw_rc_t nwGtpv2cHandleUlpCreateLocalTunnel (NW_IN nw_gtpv2c_stack_t * thi
                                          *pCollision = NULL;
   char                                    ipv4[INET_ADDRSTRLEN];
 
-  inet_ntop (AF_INET, (void*)&pUlpReq->u_api_info.createLocalTunnelInfo.peerIp, ipv4, INET_ADDRSTRLEN);
+  inet_ntop (AF_INET, (void*)pUlpReq->u_api_info.createLocalTunnelInfo.peerIp, ipv4, INET_ADDRSTRLEN);
   OAILOG_DEBUG (LOG_GTPV2C, "Creating local tunnel with teid '0x%x' and peer IP %s\n", pUlpReq->u_api_info.createLocalTunnelInfo.teidLocal, ipv4);
   pTunnel = nwGtpv2cTunnelNew (thiz,
                               pUlpReq->u_api_info.createLocalTunnelInfo.teidLocal,
-                              &pUlpReq->u_api_info.createLocalTunnelInfo.peerIp,
+                              pUlpReq->u_api_info.createLocalTunnelInfo.peerIp,
                               pUlpReq->u_api_info.triggeredRspInfo.hUlpTunnel);
   NW_ASSERT (pTunnel);
   pCollision = RB_INSERT (NwGtpv2cTunnelMap, &(thiz->tunnelMap), pTunnel);
@@ -1008,16 +1028,15 @@ static nw_rc_t                            nwGtpv2cHandleUlpFindLocalTunnel (
     nw_gtpv2c_tunnel_t                        *pLocalTunnel = NULL,
         keyTunnel = {0};
     keyTunnel.teid = pUlpReq->u_api_info.findLocalTunnelInfo.teidLocal;
-    keyTunnel.ipAddrRemote = pUlpReq->u_api_info.findLocalTunnelInfo.edns_peer_ip;
+    memcpy((void*)&keyTunnel.ipAddrRemote, pUlpReq->u_api_info.findLocalTunnelInfo.edns_peer_ip,
+      		  (((struct sockaddr*)&keyTunnel.ipAddrRemote)->sa_family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
     pLocalTunnel = RB_FIND (NwGtpv2cTunnelMap, &(thiz->tunnelMap), &keyTunnel);
     pUlpReq->u_api_info.findLocalTunnelInfo.hTunnel = (nw_gtpv2c_tunnel_handle_t) pLocalTunnel;
 
     if(pLocalTunnel){
 //    todo:  OAILOG_DEBUG (LOG_GTPV2C, "FOUND local tunnel with teid '0x%x' and peer IP 0x%x\n", keyTunnel.teid, keyTunnel.ipv4AddrRemote);
-
     }else{
 // todo:      OAILOG_DEBUG (LOG_GTPV2C, "DID NOT FOUND local tunnel with teid '0x%x' and peer IP 0x%x\n", keyTunnel.teid, keyTunnel.ipv4AddrRemote);
-
     }
     return RETURNok;
   }
@@ -1090,7 +1109,7 @@ static nw_rc_t                            nwGtpv2cHandleUlpFindLocalTunnel (
 
     if (teidLocal) {
       keyTunnel.teid = ntohl (teidLocal);
-      keyTunnel.ipAddrRemote = peerIp;
+      memcpy((void*)&keyTunnel.ipAddrRemote, &peerIp, (peerIp->sa_family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
       pLocalTunnel = RB_FIND (NwGtpv2cTunnelMap, &(thiz->tunnelMap), &keyTunnel);
 
       if (!pLocalTunnel) {
@@ -1151,7 +1170,7 @@ static nw_rc_t                            nwGtpv2cHandleUlpFindLocalTunnel (
 
     bool                                       noDelete = false ;
     keyTrxn.seqNum = ntohl (*((uint32_t *) (msgBuf + (((*msgBuf) & 0x08) ? 8 : 4)))) >> 8;;
-    keyTrxn.peerIp = peerIp;
+    memcpy((void*)&keyTrxn.peer_ip, peerIp, (peerIp->sa_family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
 
     OAILOG_DEBUG (LOG_GTPV2C,  "RECEIVED GTPV2c triggered request message of type %d, length %d and seqNum %x.\n", msgType, msgBufLen, keyTrxn.seqNum);
 
@@ -1180,7 +1199,7 @@ static nw_rc_t                            nwGtpv2cHandleUlpFindLocalTunnel (
     /** Process it like an initial request. */
     if (teidLocal) {
       keyTunnel.teid = ntohl (teidLocal);
-      keyTunnel.ipAddrRemote = peerIp;
+      memcpy((void*)&keyTunnel.ipAddrRemote, &peerIp, (peerIp->sa_family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
       pLocalTunnel = RB_FIND (NwGtpv2cTunnelMap, &(thiz->tunnelMap), &keyTunnel);
 
       if (!pLocalTunnel) {
@@ -1236,7 +1255,7 @@ static nw_rc_t                            nwGtpv2cHandleUlpFindLocalTunnel (
 
     bool                                       noDelete = false ;
     keyTrxn.seqNum = ntohl (*((uint32_t *) (msgBuf + (((*msgBuf) & 0x08) ? 8 : 4)))) >> 8;;
-    keyTrxn.peerIp = peerIp;
+    memcpy((void*)&keyTrxn.peer_ip, peerIp, (peerIp->sa_family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
 
     OAILOG_DEBUG (LOG_GTPV2C,  "RECEIVED GTPV2c  response message of type %d, length %d and seqNum %x.\n", msgType, msgBufLen, keyTrxn.seqNum);
 

@@ -398,8 +398,8 @@ void esm_proc_pdn_connectivity_failure (mme_ue_s1ap_id_t ue_id, nas_esm_proc_pdn
 	    /*
 	     * Delete the PDN connectivity in the MME_APP UE context.
 	     */
-	    struct sockaddr saegw_peer_ip = pdn_context->s_gw_address_s11_s4;
-	    if(saegw_peer_ip.sa_family == 0){
+	    struct sockaddr *saegw_peer_ip = (struct sockaddr *)&pdn_context->s_gw_addr_s11_s4;
+	    if(saegw_peer_ip->sa_family == 0){
 	      mme_app_select_service(&esm_proc_pdn_connectivity->visited_tai, &saegw_peer_ip, S11_SGW_GTP_C);
 	    }
 
@@ -435,9 +435,9 @@ void esm_proc_pdn_connectivity_failure (mme_ue_s1ap_id_t ue_id, nas_esm_proc_pdn
 	       * Trigger an S11 Delete Session Request to the SAE-GW.
 	       * No need to process the response.
 	       */
-		  if(pdn_context->s_gw_address_s11_s4.sa_family != 0){
+		  if(((struct sockaddr *)&pdn_context->s_gw_addr_s11_s4)->sa_family != 0){
 			  nas_itti_pdn_disconnect_req(ue_id, pdn_context->default_ebi, PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED, deleteTunnel, false,
-					  pdn_context->s_gw_address_s11_s4, pdn_context->s_gw_teid_s11_s4, pdn_context->context_identifier);
+					  (struct sockaddr *)&pdn_context->s_gw_addr_s11_s4, pdn_context->s_gw_teid_s11_s4, pdn_context->context_identifier);
 		  }
 	  }
 	  OAILOG_INFO(LOG_MME_APP, "Triggered session deletion for all session. Removing ESM context of UE: " MME_UE_S1AP_ID_FMT " . \n", ue_id);

@@ -308,7 +308,7 @@ s11_mme_thread (
         rc = nwGtpv2cProcessUdpReq (s11_mme_stack_handle,
         		udp_data_ind->msgBuf, udp_data_ind->buffer_length,
 				udp_data_ind->local_port, udp_data_ind->peer_port,
-				udp_data_ind->peer_address);
+				&udp_data_ind->sock_addr);
         DevAssert (rc == NW_OK);
       }
       break;

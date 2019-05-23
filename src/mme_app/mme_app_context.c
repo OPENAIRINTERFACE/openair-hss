@@ -1166,17 +1166,17 @@ void mme_app_dump_pdn_context (const struct ue_context_s *const ue_context,
       bformata (bstr_dump, "%*s - P-GW s5 s8 cp (IPv6): %s\n", indent_spaces, " ", ipv6);
     }
     bformata (bstr_dump, "%*s - P-GW TEID s5 s8 cp .: " TEID_FMT "\n", indent_spaces, " ", pdn_context->p_gw_teid_s5_s8_cp);
-    if (pdn_context->s_gw_address_s11_s4.sa_family == AF_INET) {
+    if (((struct sockaddr*)&pdn_context->s_gw_addr_s11_s4)->sa_family == AF_INET) {
       char ipv4[INET_ADDRSTRLEN];
 //      struct sockaddr_in * test = (struct sockaddr_in *)&pdn_context->s_gw_address_s11_s4;
       inet_ntop (AF_INET,
-    		  (void*)&((struct sockaddr_in *)&pdn_context->s_gw_address_s11_s4)->sin_addr,
+    		  (void*)&((struct sockaddr_in *)&pdn_context->s_gw_addr_s11_s4)->sin_addr,
 
 			  ipv4, INET_ADDRSTRLEN);
       bformata (bstr_dump, "%*s - S-GW s11_s4 (IPv4) .: %s\n", indent_spaces, " ", ipv4);
     } else {
       char                                    ipv6[INET6_ADDRSTRLEN];
-      inet_ntop (AF_INET6, & ((struct sockaddr_in6*)&pdn_context->s_gw_address_s11_s4)->sin6_addr, ipv6, INET6_ADDRSTRLEN);
+      inet_ntop (AF_INET6, & ((struct sockaddr_in6*)&pdn_context->s_gw_addr_s11_s4)->sin6_addr, ipv6, INET6_ADDRSTRLEN);
       bformata (bstr_dump, "%*s - S-GW s11_s4 (IPv6) .: %s\n", indent_spaces, " ", indent_spaces, " ", ipv6);
     }
     bformata (bstr_dump, "%*s - S-GW TEID s5 s8 cp .: " TEID_FMT "\n", indent_spaces, " ", pdn_context->s_gw_teid_s11_s4);

@@ -1897,11 +1897,11 @@ static int _emm_tracking_area_update_run_procedure(emm_data_context_t *emm_conte
 //      struct in_addr neigh_mme_ipv4_addr;
 //      neigh_mme_ipv4_addr.s_addr = 0;
 
-      struct sockaddr edns_neigh_mme_ipv4_addr;
+      struct sockaddr *edns_neigh_mme_ipv4_addr;
 //      edns_neigh_mme_ipv4_addr.addr.ipv4_addr.s_addr = 0;
 
       mme_app_select_service(tau_proc->ies->last_visited_registered_tai, &edns_neigh_mme_ipv4_addr, S10_MME_GTP_C);
-      if(edns_neigh_mme_ipv4_addr.sa_family ==0){
+      if(edns_neigh_mme_ipv4_addr->sa_family ==0){
         OAILOG_WARNING(LOG_NAS_EMM, "EMM-PROC  - For UE " MME_UE_S1AP_ID_FMT " the last visited TAI " TAI_FMT " is not configured as a MME S10 neighbor. "
             "Proceeding with identification procedure. \n", TAI_ARG(tau_proc->ies->last_visited_registered_tai), emm_context->ue_id);
         rc = emm_proc_identification (emm_context, (nas_emm_proc_t *)tau_proc, IDENTITY_TYPE_2_IMSI, _emm_tracking_area_update_success_identification_cb, _emm_tracking_area_update_failure_identification_cb);

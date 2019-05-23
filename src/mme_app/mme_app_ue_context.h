@@ -258,8 +258,12 @@ typedef struct pdn_context_s {
   //apn_configuration_t         apn_configuration; // set by S6A UPDATE LOCATION ANSWER
   //bstring                     pgw_id;            // an ID for P-GW through which a user can access the Subscribed APN
 
-  /* S-GW IP address for User-Plane */
-  struct sockaddr             s_gw_address_s11_s4;
+  /* S-GW IP address for Control-Plane */
+  union {
+	  struct sockaddr_in     ipv4_addr;
+	  struct sockaddr_in6    ipv6_addr;
+  } s_gw_addr_s11_s4;
+
   teid_t                      s_gw_teid_s11_s4;            // set by S11 CREATE_SESSION_RESPONSE
 
   protocol_configuration_options_t *pco; // temp storage of information waiting for activation of required procedure

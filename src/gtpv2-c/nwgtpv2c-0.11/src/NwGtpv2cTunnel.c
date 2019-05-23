@@ -66,7 +66,8 @@ nw_gtpv2c_tunnel_t  *nwGtpv2cTunnelNew (struct nw_gtpv2c_stack_s *pStack,
   if (thiz) {
     memset (thiz, 0, sizeof (nw_gtpv2c_tunnel_t));
     thiz->teid = teid;
-    memcpy((void*)&thiz->ipAddrRemote, ipAddrRemote, sizeof(struct sockaddr));
+    memcpy((void*)&thiz->ipAddrRemote, ipAddrRemote, ipAddrRemote->sa_family == AF_INET ? sizeof(struct sockaddr_in)
+    		: sizeof(struct sockaddr_in6));
     thiz->hUlpTunnel = hUlpTunnel;
   }
   return thiz;
