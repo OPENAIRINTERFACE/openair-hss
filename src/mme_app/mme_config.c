@@ -205,13 +205,17 @@ static void mme_config_init (mme_config_t * config_pP)
   /*
    * IP configuration
    */
-  config_pP->ipv4.if_name_s1_mme = NULL;
-  config_pP->ipv4.s1_mme.s_addr = INADDR_ANY;
-  config_pP->ipv4.if_name_s11 = NULL;
-  config_pP->ipv4.s11.s_addr = INADDR_ANY;
-  config_pP->ipv4.port_s11 = 2123;
-  config_pP->ipv4.s10.s_addr = INADDR_ANY;
-  config_pP->ipv4.port_s10 = 2123;
+  config_pP->ip.if_name_s1_mme = NULL;
+  config_pP->ip.s1_mme_v4.s_addr = INADDR_ANY;
+  config_pP->ip.s1_mme_v6 = in6addr_any;
+  config_pP->ip.if_name_s11 = NULL;
+  config_pP->ip.s11_mme_v4.s_addr = INADDR_ANY;
+  config_pP->ip.s11_mme_v6 = in6addr_any;
+  config_pP->ip.port_s11 = 2123;
+  config_pP->ip.s10_mme_v4.s_addr = INADDR_ANY;
+  config_pP->ip.s10_mme_v6 = in6addr_any;
+  config_pP->ip.port_s10 = 2123;
+
   config_pP->s6a_config.conf_file = bfromcstr(S6A_CONF_FILE);
   config_pP->itti_config.queue_size = ITTI_QUEUE_MAX_ELEMENTS;
   config_pP->itti_config.log_file = NULL;
@@ -279,8 +283,8 @@ void mme_config_exit (void)
   /*
    * IP configuration
    */
-  bdestroy_wrapper(&mme_config.ipv4.if_name_s1_mme);
-  bdestroy_wrapper(&mme_config.ipv4.if_name_s11);
+  bdestroy_wrapper(&mme_config.ip.if_name_s1_mme);
+  bdestroy_wrapper(&mme_config.ip.if_name_s11);
   bdestroy_wrapper(&mme_config.s6a_config.conf_file);
   bdestroy_wrapper(&mme_config.s6a_config.hss_host_name);
   bdestroy_wrapper(&mme_config.itti_config.log_file);
@@ -318,15 +322,18 @@ static int mme_config_parse_file (mme_config_t * config_pP)
   const char                             *mcc = NULL;
   const char                             *mnc = NULL;
   char                                   *if_name_s1_mme = NULL;
-  char                                   *s1_mme = NULL;
+  char                                   *s1_mme_v4 = NULL;
+  char                                   *s1_mme_v6 = NULL;
   char                                   *if_name_s11 = NULL;
-  char                                   *s11 = NULL;
+  char                                   *s11_mme_v4 = NULL;
+  char                                   *s11_mme_v6 = NULL;
   char                                   *sgw_ip_address_for_s11 = NULL;
   char                                   *mme_ip_address_for_s10 = NULL;
 
 
   char                                   *if_name_s10 = NULL;
-  char                                   *s10 = NULL;
+  char                                   *s10_mme_v4 = NULL;
+  char                                   *s10_mme_v6 = NULL;
   char                                   *ngh_s10 = NULL;
 
   bool                                    swap = false;
@@ -766,131 +773,133 @@ static int mme_config_parse_file (mme_config_t * config_pP)
     // NETWORK INTERFACE SETTING
     setting = config_setting_get_member (setting_mme, MME_CONFIG_STRING_NETWORK_INTERFACES_CONFIG);
 
+    config_setting_lookup_string (setting, MME_CONFIG_STRING_IPV4_ADDRESS_FOR_S1_MME, (const char **)&s1_mme_v4);
+	config_setting_lookup_string (setting, MME_CONFIG_STRING_IPV6_ADDRESS_FOR_S1_MME, (const char **)&s1_mme_v6);
+	config_setting_lookup_string (setting, MME_CONFIG_STRING_IPV4_ADDRESS_FOR_S11, (const char **)&s11_mme_v4);
+	config_setting_lookup_string (setting, MME_CONFIG_STRING_IPV6_ADDRESS_FOR_S11, (const char **)&s11_mme_v6);
+	config_setting_lookup_string (setting, MME_CONFIG_STRING_IPV4_ADDRESS_FOR_S10, (const char **)&s10_mme_v4);
+	config_setting_lookup_string (setting, MME_CONFIG_STRING_IPV6_ADDRESS_FOR_S10, (const char **)&s10_mme_v6);
+
     if (setting != NULL) {
-      if ((config_setting_lookup_string (setting, MME_CONFIG_STRING_INTERFACE_NAME_FOR_S1_MME, (const char **)&if_name_s1_mme)
-           && config_setting_lookup_string (setting, MME_CONFIG_STRING_IPV4_ADDRESS_FOR_S1_MME, (const char **)&s1_mme)
-           && config_setting_lookup_string (setting, MME_CONFIG_STRING_INTERFACE_NAME_FOR_S11, (const char **)&if_name_s11)
-           && config_setting_lookup_string (setting, MME_CONFIG_STRING_IPV4_ADDRESS_FOR_S11, (const char **)&s11)
-           && config_setting_lookup_int (setting, MME_CONFIG_STRING_MME_PORT_FOR_S11, &aint_s11)
-           /** S10. */
-           && config_setting_lookup_string (setting, MME_CONFIG_STRING_INTERFACE_NAME_FOR_S10, (const char **)&if_name_s10)
-           && config_setting_lookup_string (setting, MME_CONFIG_STRING_IPV4_ADDRESS_FOR_S10, (const char **)&s10)
-           && config_setting_lookup_int (setting, MME_CONFIG_STRING_MME_PORT_FOR_S10, &aint_s10)
-          )
-        ) {
-        config_pP->ipv4.port_s11 = (uint16_t)aint_s11;
-        config_pP->ipv4.port_s10 = (uint16_t)aint_s10;
+        if (
+        	(
+        		/** S1. */
+        		config_setting_lookup_string (setting, MME_CONFIG_STRING_INTERFACE_NAME_FOR_S1_MME, (const char **)&if_name_s1_mme) && (s1_mme_v4 || s1_mme_v6)
+				/** S11. */
+				&& config_setting_lookup_string (setting, MME_CONFIG_STRING_INTERFACE_NAME_FOR_S11, (const char **)&if_name_s11) && (s11_mme_v4 || s11_mme_v6)
+				&& config_setting_lookup_int (setting, MME_CONFIG_STRING_MME_PORT_FOR_S11, &aint_s11)
+				/** S10. */
+				&& config_setting_lookup_string (setting, MME_CONFIG_STRING_INTERFACE_NAME_FOR_S10, (const char **)&if_name_s10) && (s10_mme_v4 || s10_mme_v6)
+				&& config_setting_lookup_int (setting, MME_CONFIG_STRING_MME_PORT_FOR_S10, &aint_s10)
+            )
+          ) {
+        	config_pP->ip.port_s11 = (uint16_t)aint_s11;
+        	config_pP->ip.port_s10 = (uint16_t)aint_s10;
+        	struct bstrList *list = NULL;
 
-        config_pP->ipv4.if_name_s1_mme = bfromcstr(if_name_s1_mme);
-        cidr = bfromcstr (s1_mme);
-        struct bstrList *list = bsplit (cidr, '/');
-        AssertFatal(2 == list->qty, "Bad CIDR address %s", bdata(cidr));
-        address = list->entry[0];
-        mask    = list->entry[1];
-        IPV4_STR_ADDR_TO_INADDR (bdata(address), config_pP->ipv4.s1_mme, "BAD IP ADDRESS FORMAT FOR S1-MME !\n");
-        config_pP->ipv4.netmask_s1_mme = atoi ((const char*)mask->data);
-        bstrListDestroy(list);
-        in_addr_var.s_addr = config_pP->ipv4.s1_mme.s_addr;
-        OAILOG_INFO (LOG_MME_APP, "Parsing configuration file found S1-MME: %s/%d on %s\n",
-                       inet_ntoa (in_addr_var), config_pP->ipv4.netmask_s1_mme, bdata(config_pP->ipv4.if_name_s1_mme));
-        bdestroy_wrapper(&cidr);
+        	/** S1: IPv4. */
+        	config_pP->ip.if_name_s1_mme = bfromcstr(if_name_s1_mme);
+        	if(s1_mme_v4) {
+        		cidr = bfromcstr (s1_mme_v4);
+        		list = bsplit (cidr, '/');
+        		AssertFatal(2 == list->qty, "Bad CIDR address %s", bdata(cidr));
+        		address = list->entry[0];
+        		mask    = list->entry[1];
+        		IPV4_STR_ADDR_TO_INADDR (bdata(address), config_pP->ip.s1_mme_v4, "BAD IP ADDRESS FORMAT FOR S1-MME !\n");
+        		config_pP->ip.s1_mme_cidrv4 = atoi ((const char*)mask->data);
+        		bstrListDestroy(list);
+        		in_addr_var.s_addr = config_pP->ip.s10_mme_v4.s_addr;
+        		OAILOG_INFO (LOG_MME_APP, "Parsing configuration file found S1-MME: %s/%d on %s\n",
+        				inet_ntoa (in_addr_var), config_pP->ip.s1_mme_cidrv4, bdata(config_pP->ip.if_name_s1_mme));
+        		bdestroy_wrapper(&cidr);
+        	}
+        	/** S1: IPv6. */
+        	if(s1_mme_v6) {
+        		// TODO: IPV6 S1 MME
+        		cidr = bfromcstr (s1_mme_v6);
+        		list = bsplit (cidr, '/');
+        		AssertFatal(2 == list->qty, "Bad CIDR address %s", bdata(cidr));
+        		address = list->entry[0];
+        		mask    = list->entry[1];
+        		IPV6_STR_ADDR_TO_INADDR (bdata(address), config_pP->ip.s1_mme_v6, "BAD IPV6 ADDRESS FORMAT FOR S1-MME !\n");
+        		//    	config_pP->ipv6.netmask_s1_mme = atoi ((const char*)mask->data);
+        		bstrListDestroy(list);
+        		//    	memcpy(in6_addr_var.s6_addr, config_pP->ipv6.s1_mme.s6_addr, 16);
 
-        /** S11. */
-        config_pP->ipv4.if_name_s11 = bfromcstr(if_name_s11);
-        cidr = bfromcstr (s11);
-        list = bsplit (cidr, '/');
-        AssertFatal(2 == list->qty, "Bad CIDR address %s", bdata(cidr));
-        address = list->entry[0];
-        mask    = list->entry[1];
-        IPV4_STR_ADDR_TO_INADDR (bdata(address), config_pP->ipv4.s11, "BAD IP ADDRESS FORMAT FOR S11 !\n");
-        config_pP->ipv4.netmask_s11 = atoi ((const char*)mask->data);
-        bstrListDestroy(list);
-        bdestroy_wrapper(&cidr);
-        in_addr_var.s_addr = config_pP->ipv4.s11.s_addr;
-        OAILOG_INFO (LOG_MME_APP, "Parsing configuration file found S11: %s/%d on %s\n",
-                       inet_ntoa (in_addr_var), config_pP->ipv4.netmask_s11, bdata(config_pP->ipv4.if_name_s11));
-
-        /** S10. */
-        config_pP->ipv4.if_name_s10 = bfromcstr(if_name_s10);
-        cidr = bfromcstr (s10);
-        list = bsplit (cidr, '/');
-        AssertFatal(2 == list->qty, "Bad CIDR address %s", bdata(cidr));
-        address = list->entry[0];
-        mask    = list->entry[1];
-        IPV4_STR_ADDR_TO_INADDR (bdata(address), config_pP->ipv4.s10, "BAD IP ADDRESS FORMAT FOR S10 !\n");
-        config_pP->ipv4.netmask_s10 = atoi ((const char*)mask->data);
-        bstrListDestroy(list);
-        bdestroy_wrapper(&cidr);
-        in_addr_var.s_addr = config_pP->ipv4.s10.s_addr;
-        OAILOG_INFO (LOG_MME_APP, "Parsing configuration file found S10: %s/%d on %s\n",
-                       inet_ntoa (in_addr_var), config_pP->ipv4.netmask_s10, bdata(config_pP->ipv4.if_name_s10));
-      }
-      /** Check IPV6 settings. */
-      if (config_setting_lookup_string (setting, MME_CONFIG_STRING_INTERFACE_NAME_FOR_S1_MME, (const char **)&if_name_s1_mme)
-    		  && config_setting_lookup_string (setting, MME_CONFIG_STRING_IPV6_ADDRESS_FOR_S1_MME, (const char **)&s1_mme))
-      {
-
-    	config_pP->ipv6.if_name_s1_mme = bfromcstr(if_name_s1_mme);
-    	cidr = bfromcstr (s1_mme);
-    	struct bstrList *list = bsplit (cidr, '/');
-    	AssertFatal(2 == list->qty, "Bad CIDR address %s", bdata(cidr));
-    	address = list->entry[0];
-    	mask    = list->entry[1];
-    	IPV6_STR_ADDR_TO_INADDR (bdata(address), config_pP->ipv6.s1_mme, "BAD IPV6 ADDRESS FORMAT FOR S1-MME !\n");
-//    	config_pP->ipv6.netmask_s1_mme = atoi ((const char*)mask->data);
-    	bstrListDestroy(list);
-//    	memcpy(in6_addr_var.s6_addr, config_pP->ipv6.s1_mme.s6_addr, 16);
-
-    	char strv6[16];
-    	OAILOG_INFO (LOG_MME_APP, "Parsing configuration file found S1-MME: %s/%d on %s\n",
-    			inet_ntop(AF_INET6, &in6_addr_var, strv6, 16), config_pP->ipv6.cidr_s1_mme, bdata(config_pP->ipv6.if_name_s1_mme));
-    	bdestroy_wrapper(&cidr);
-      }
-      if (config_setting_lookup_string (setting, MME_CONFIG_STRING_INTERFACE_NAME_FOR_S11, (const char **)&if_name_s11)
-    		  && config_setting_lookup_string (setting, MME_CONFIG_STRING_IPV6_ADDRESS_FOR_S11, (const char **)&s11)
-			  && config_setting_lookup_int (setting, MME_CONFIG_STRING_MME_PORT_FOR_S11, &aint_s11)
-      )
-      {
-//      	cidr = bfromcstr (s11);
-    	  config_pP->ipv6.port_s11 = (uint16_t)aint_s11;
-    	  config_pP->ipv4.if_name_s11 = bfromcstr(if_name_s11);
-    	  cidr = bfromcstr (s1_mme);
-    	  struct bstrList *list = bsplit (cidr, '/');
-    	  AssertFatal(2 == list->qty, "Bad CIDR address %s", bdata(cidr));
-    	  address = list->entry[0];
-    	  mask    = list->entry[1];
-    	  IPV6_STR_ADDR_TO_INADDR (bdata(address), config_pP->ipv6.s11, "BAD IPV6 ADDRESS FORMAT FOR S11-MME !\n");
-    	  //    	config_pP->ipv6.netmask_s1_mme = atoi ((const char*)mask->data);
-    	  bstrListDestroy(list);
-//    	  memcpy(in6_addr_var.s6_addr, config_pP->ipv6.s1_mme.s6_addr, 16);
-    	  char strv6[16];
-    	  OAILOG_INFO (LOG_MME_APP, "Parsing configuration file found S11-MME: %s/%d on %s\n",
-    			  inet_ntop(AF_INET6, &in6_addr_var, strv6, 16), config_pP->ipv6.cidr_s11, bdata(config_pP->ipv6.if_name_s11));
-    	  bdestroy_wrapper(&cidr);
-//      	config_pP->ipv6.netmask_s11 = atoi ((const char*)mask->data);
-      }
-      if (config_setting_lookup_string (setting, MME_CONFIG_STRING_INTERFACE_NAME_FOR_S10, (const char **)&if_name_s10)
-      			  && config_setting_lookup_string (setting, MME_CONFIG_STRING_IPV6_ADDRESS_FOR_S10, (const char **)&s10)
-      			  && config_setting_lookup_int (setting, MME_CONFIG_STRING_MME_PORT_FOR_S10, &aint_s10)
-      )
-      {
-    	/** S10. */
-    	config_pP->ipv6.port_s10 = (uint16_t)aint_s10;
-    	config_pP->ipv4.if_name_s10 = bfromcstr(if_name_s10);
-    	cidr = bfromcstr (s1_mme);
-    	struct bstrList *list = bsplit (cidr, '/');
-    	AssertFatal(2 == list->qty, "Bad CIDR address %s", bdata(cidr));
-    	address = list->entry[0];
-    	mask    = list->entry[1];
-    	IPV6_STR_ADDR_TO_INADDR (bdata(address), config_pP->ipv6.s10, "BAD IPV6 ADDRESS FORMAT FOR S10-MME !\n");
-    	//    	config_pP->ipv6.netmask_s1_mme = atoi ((const char*)mask->data);
-    	bstrListDestroy(list);
-    	//    	  memcpy(in6_addr_var.s6_addr, config_pP->ipv6.s1_mme.s6_addr, 16);
-    	char strv6[16];
-    	OAILOG_INFO (LOG_MME_APP, "Parsing configuration file found S10-MME: %s/%d on %s\n",
-    			inet_ntop(AF_INET6, &in6_addr_var, strv6, 16), config_pP->ipv6.cidr_s10, bdata(config_pP->ipv6.if_name_s10));
-    	bdestroy_wrapper(&cidr);
-    	//      	config_pP->ipv6.netmask_s11 = atoi ((const char*)mask->data);
+        		char strv6[16];
+        		OAILOG_INFO (LOG_MME_APP, "Parsing configuration file found S1-MME: %s/%d on %s\n",
+        				inet_ntop(AF_INET6, &in6_addr_var, strv6, 16), config_pP->ip.s1_mme_cidrv6, bdata(config_pP->ip.if_name_s1_mme));
+        		bdestroy_wrapper(&cidr);
+        	}
+        	/** S11: IPv4. */
+        	config_pP->ip.if_name_s11 = bfromcstr(if_name_s11);
+        	if(s11_mme_v4) {
+        		cidr = bfromcstr (s11_mme_v4);
+        		list = bsplit (cidr, '/');
+        		AssertFatal(2 == list->qty, "Bad CIDR address %s", bdata(cidr));
+        		address = list->entry[0];
+        		mask    = list->entry[1];
+            IPV4_STR_ADDR_TO_INADDR (bdata(address), config_pP->ip.s11_mme_v4, "BAD IP ADDRESS FORMAT FOR S11 !\n");
+            config_pP->ip.s11_mme_cidrv4 = atoi ((const char*)mask->data);
+            bstrListDestroy(list);
+            bdestroy_wrapper(&cidr);
+            in_addr_var.s_addr = config_pP->ip.s11_mme_v4.s_addr;
+            OAILOG_INFO (LOG_MME_APP, "Parsing configuration file found S11: %s/%d on %s\n",
+            		inet_ntoa (in_addr_var), config_pP->ip.s11_mme_cidrv4, bdata(config_pP->ip.if_name_s11));
+        }
+        /** S11: IPv6. */
+        if(s11_mme_v6) {
+      	  config_pP->ip.port_s11 = (uint16_t)aint_s11;
+      	  cidr = bfromcstr (s11_mme_v6);
+      	  list = bsplit (cidr, '/');
+      	  AssertFatal(2 == list->qty, "Bad CIDR address %s", bdata(cidr));
+      	  address = list->entry[0];
+      	  mask    = list->entry[1];
+      	  IPV6_STR_ADDR_TO_INADDR (bdata(address), config_pP->ip.s11_mme_v4, "BAD IPV6 ADDRESS FORMAT FOR S11-MME !\n");
+      	  //    	config_pP->ipv6.netmask_s1_mme = atoi ((const char*)mask->data);
+      	  bstrListDestroy(list);
+  //    	  memcpy(in6_addr_var.s6_addr, config_pP->ipv6.s1_mme.s6_addr, 16);
+      	  char strv6[16];
+      	  OAILOG_INFO (LOG_MME_APP, "Parsing configuration file found S11-MME: %s/%d on %s\n",
+      			  inet_ntop(AF_INET6, &in6_addr_var, strv6, 16), config_pP->ip.s11_mme_cidrv6, bdata(config_pP->ip.if_name_s11));
+      	  bdestroy_wrapper(&cidr);
+  //      	config_pP->ipv6.netmask_s11 = atoi ((const char*)mask->data);
+        }
+        /** S10: IPv4. */
+        config_pP->ip.if_name_s10 = bfromcstr(if_name_s10);
+        if(s10_mme_v4) {
+            cidr = bfromcstr (s10_mme_v4);
+            list = bsplit (cidr, '/');
+            AssertFatal(2 == list->qty, "Bad CIDR address %s", bdata(cidr));
+            address = list->entry[0];
+            mask    = list->entry[1];
+            IPV4_STR_ADDR_TO_INADDR (bdata(address), config_pP->ip.s10_mme_v4, "BAD IP ADDRESS FORMAT FOR S10 !\n");
+            config_pP->ip.s10_mme_cidrv4 = atoi ((const char*)mask->data);
+            bstrListDestroy(list);
+            bdestroy_wrapper(&cidr);
+            in_addr_var.s_addr = config_pP->ip.s10_mme_v4.s_addr;
+            OAILOG_INFO (LOG_MME_APP, "Parsing configuration file found S10: %s/%d on %s\n",
+                           inet_ntoa (in_addr_var), config_pP->ip.s10_mme_cidrv4, bdata(config_pP->ip.if_name_s10));
+        }
+        /** S10: IPv6. */
+        if(s10_mme_v6){
+        	/** S10. */
+        	config_pP->ip.port_s10 = (uint16_t)aint_s10;
+        	cidr = bfromcstr (s10_mme_v6);
+        	list = bsplit (cidr, '/');
+        	AssertFatal(2 == list->qty, "Bad CIDR address %s", bdata(cidr));
+        	address = list->entry[0];
+        	mask    = list->entry[1];
+        	IPV6_STR_ADDR_TO_INADDR (bdata(address), config_pP->ip.s10_mme_cidrv4, "BAD IPV6 ADDRESS FORMAT FOR S10-MME !\n");
+        	//    	config_pP->ipv6.netmask_s1_mme = atoi ((const char*)mask->data);
+        	bstrListDestroy(list);
+        	//    	  memcpy(in6_addr_var.s6_addr, config_pP->ipv6.s1_mme.s6_addr, 16);
+        	char strv6[16];
+        	OAILOG_INFO (LOG_MME_APP, "Parsing configuration file found S10-MME: %s/%d on %s\n",
+        			inet_ntop(AF_INET6, &in6_addr_var, strv6, 16), config_pP->ip.s10_mme_cidrv6, bdata(config_pP->ip.if_name_s10));
+        	bdestroy_wrapper(&cidr);
+        	//      	config_pP->ipv6.netmask_s11 = atoi ((const char*)mask->data);
+        }
       }
     }
     // NAS SETTING
@@ -1026,7 +1035,7 @@ static int mme_config_parse_file (mme_config_t * config_pP)
           AssertFatal(2 == list->qty, "Bad CIDR address %s", bdata(cidr));
           address = list->entry[0];
           struct addrinfo hints, *result, *rp;
-          int sfd, s;
+          int s;
           memset(&hints, 0, sizeof(struct addrinfo));
           hints.ai_family = AF_UNSPEC;    /* Allow IPv4 or IPv6 */
           hints.ai_socktype = SOCK_DGRAM; /* Stream socket */
@@ -1038,8 +1047,6 @@ static int mme_config_parse_file (mme_config_t * config_pP)
           }
           for (rp = result; rp != NULL; rp = rp->ai_next) {
         	  /** Check the type. */
-        	  if (sfd == -1)
-        		  continue;
         	  AssertFatal(!rp->ai_next, "A single IPv4 address should be per neighboring SGW node.");
         	  if(rp->ai_family == AF_INET){
         		  if (INADDR_ANY == ((struct sockaddr_in*)rp->ai_addr)->sin_addr.s_addr) {
@@ -1075,7 +1082,7 @@ static int mme_config_parse_file (mme_config_t * config_pP)
         	AssertFatal(2 == list->qty, "Bad CIDR address %s", bdata(cidr));
         	address = list->entry[0];
         	struct addrinfo hints, *result, *rp;
-        	int sfd, s;
+        	int s;
         	memset(&hints, 0, sizeof(struct addrinfo));
         	hints.ai_family = AF_UNSPEC;    /* Allow IPv4 or IPv6 */
         	hints.ai_socktype = SOCK_DGRAM; /* Stream socket */
@@ -1087,8 +1094,6 @@ static int mme_config_parse_file (mme_config_t * config_pP)
         	}
         	for (rp = result; rp != NULL; rp = rp->ai_next) {
         		/** Check the type. */
-        		if (sfd == -1)
-        			continue;
         		AssertFatal(!rp->ai_next, "A single IPv4 address should be per neighboring MME node.");
         		if(rp->ai_family == AF_INET){
         			if (INADDR_ANY == ((struct sockaddr_in*)rp)->sin_addr.s_addr) {
@@ -1108,6 +1113,9 @@ static int mme_config_parse_file (mme_config_t * config_pP)
         		config_pP->e_dns_emulation.interface_type[i] = S10_MME_GTP_C;
         		((struct sockaddr*)&config_pP->e_dns_emulation.sockaddr[i])->sa_family = rp->ai_family;
         	}
+        	freeaddrinfo(result);
+        	bstrListDestroy(list);
+        	bdestroy_wrapper(&cidr);
         }
         config_pP->e_dns_emulation.nb_service_entries++;
       }
@@ -1157,14 +1165,15 @@ static void mme_config_display (mme_config_t * config_pP)
   OAILOG_INFO (LOG_CONFIG, "- S1-MME:\n");
   OAILOG_INFO (LOG_CONFIG, "    port number ......: %d\n", config_pP->s1ap_config.port_number);
   OAILOG_INFO (LOG_CONFIG, "- IP:\n");
-  OAILOG_INFO (LOG_CONFIG, "    s1-MME iface .....: %s\n", bdata(config_pP->ipv4.if_name_s1_mme));
-  OAILOG_INFO (LOG_CONFIG, "    s1-MME ip ........: %s\n", inet_ntoa (*((struct in_addr *)&config_pP->ipv4.s1_mme)));
-  OAILOG_INFO (LOG_CONFIG, "    s11 MME iface ....: %s\n", bdata(config_pP->ipv4.if_name_s11));
-  OAILOG_INFO (LOG_CONFIG, "    s11 MME port .....: %d\n", config_pP->ipv4.port_s11);
-  OAILOG_INFO (LOG_CONFIG, "    s11 MME ip .......: %s\n", inet_ntoa (*((struct in_addr *)&config_pP->ipv4.s11)));
-  OAILOG_INFO (LOG_CONFIG, "    s10 MME iface ....: %s\n", bdata(config_pP->ipv4.if_name_s10));
-  OAILOG_INFO (LOG_CONFIG, "    s10 MME port .....: %d\n", config_pP->ipv4.port_s10);
-  OAILOG_INFO (LOG_CONFIG, "    s10 MME ip .......: %s\n", inet_ntoa (*((struct in_addr *)&config_pP->ipv4.s10)));
+  // todo: print ipv6 addresses
+  OAILOG_INFO (LOG_CONFIG, "    s1-MME iface .....: %s\n", bdata(config_pP->ip.if_name_s1_mme));
+  OAILOG_INFO (LOG_CONFIG, "    s1-MME ip ........: %s\n", inet_ntoa (*((struct in_addr *)&config_pP->ip.s1_mme_cidrv4)));
+  OAILOG_INFO (LOG_CONFIG, "    s11 MME iface ....: %s\n", bdata(config_pP->ip.if_name_s11));
+  OAILOG_INFO (LOG_CONFIG, "    s11 MME port .....: %d\n", config_pP->ip.port_s11);
+  OAILOG_INFO (LOG_CONFIG, "    s11 MME ip .......: %s\n", inet_ntoa (*((struct in_addr *)&config_pP->ip.s11_mme_v4)));
+  OAILOG_INFO (LOG_CONFIG, "    s10 MME iface ....: %s\n", bdata(config_pP->ip.if_name_s10));
+  OAILOG_INFO (LOG_CONFIG, "    s10 MME port .....: %d\n", config_pP->ip.port_s10);
+  OAILOG_INFO (LOG_CONFIG, "    s10 MME ip .......: %s\n", inet_ntoa (*((struct in_addr *)&config_pP->ip.s10_mme_v4)));
   OAILOG_INFO (LOG_CONFIG, "- ITTI:\n");
   OAILOG_INFO (LOG_CONFIG, "    queue size .......: %u (bytes)\n", config_pP->itti_config.queue_size);
   OAILOG_INFO (LOG_CONFIG, "    log file .........: %s\n", bdata(config_pP->itti_config.log_file));

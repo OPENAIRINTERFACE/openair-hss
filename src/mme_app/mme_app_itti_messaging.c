@@ -316,12 +316,12 @@ mme_app_send_s11_create_session_req (
   OAI_GCC_DIAG_ON(pointer-to-int-cast);
   session_request_p->sender_fteid_for_cp.interface_type = S11_MME_GTP_C;
   mme_config_read_lock (&mme_config);
-  if(mme_config.ipv4.s11.s_addr){
-	  session_request_p->sender_fteid_for_cp.ipv4_address = mme_config.ipv4.s11;
+  if(mme_config.ip.s11_mme_v4.s_addr){
+	  session_request_p->sender_fteid_for_cp.ipv4_address = mme_config.ip.s11_mme_v4;
 	  session_request_p->sender_fteid_for_cp.ipv4 = 1;
   }
-  if(memcmp(&mme_config.ipv6.s11.s6_addr, (void*)&in6addr_any, sizeof(mme_config.ipv6.s11.s6_addr)) != 0) {
-	  memcpy(session_request_p->sender_fteid_for_cp.ipv6_address.s6_addr, mme_config.ipv6.s11.s6_addr,  sizeof(mme_config.ipv6.s11.s6_addr));
+  if(memcmp(&mme_config.ip.s11_mme_v6.s6_addr, (void*)&in6addr_any, sizeof(mme_config.ip.s11_mme_v6.s6_addr)) != 0) {
+	  memcpy(session_request_p->sender_fteid_for_cp.ipv6_address.s6_addr, mme_config.ip.s11_mme_v6.s6_addr,  sizeof(mme_config.ip.s11_mme_v6.s6_addr));
 	  session_request_p->sender_fteid_for_cp.ipv6 = 1;
   }
   mme_config_unlock (&mme_config);
@@ -435,17 +435,17 @@ void mme_app_send_s11_modify_bearer_req(const ue_context_t * ue_context, pdn_con
   s11_modify_bearer_request->sender_fteid_for_cp.teid = ue_context->mme_teid_s11;
   OAI_GCC_DIAG_ON(pointer-to-int-cast);
   s11_modify_bearer_request->sender_fteid_for_cp.interface_type = S11_MME_GTP_C;
+
   mme_config_read_lock (&mme_config);
-  if(mme_config.ipv4.s11.s_addr){
-	  s11_modify_bearer_request->sender_fteid_for_cp.ipv4_address = mme_config.ipv4.s11;
+  if(mme_config.ip.s11_mme_v4.s_addr){
+	  s11_modify_bearer_request->sender_fteid_for_cp.ipv4_address = mme_config.ip.s11_mme_v4;
 	  s11_modify_bearer_request->sender_fteid_for_cp.ipv4 = 1;
   }
-  if(memcmp(&mme_config.ipv6.s11.s6_addr, (void*)&in6addr_any, sizeof(mme_config.ipv6.s11.s6_addr)) != 0) {
-	  memcpy(s11_modify_bearer_request->sender_fteid_for_cp.ipv6_address.s6_addr, mme_config.ipv6.s11.s6_addr,  sizeof(mme_config.ipv6.s11.s6_addr));
+  if(memcmp(&mme_config.ip.s11_mme_v6.s6_addr, (void*)&in6addr_any, sizeof(mme_config.ip.s11_mme_v6.s6_addr)) != 0) {
+	  memcpy(s11_modify_bearer_request->sender_fteid_for_cp.ipv6_address.s6_addr, mme_config.ip.s11_mme_v6.s6_addr,  sizeof(mme_config.ip.s11_mme_v6.s6_addr));
 	  s11_modify_bearer_request->sender_fteid_for_cp.ipv6 = 1;
   }
   mme_config_unlock (&mme_config);
-  s11_modify_bearer_request->sender_fteid_for_cp.ipv4 = 1;
 
   /** These should already be removed.. */
   s11_modify_bearer_request->mme_fq_csid.node_id_type = GLOBAL_UNICAST_IPv4; // TO DO
@@ -584,11 +584,11 @@ int mme_app_send_delete_session_request (struct ue_context_s * const ue_context_
   mme_config_read_lock (&mme_config);
   if(saegw_s11_addr->sa_family == AF_INET){
 	  S11_DELETE_SESSION_REQUEST (message_p).sender_fteid_for_cp.ipv4 = 1;
-	  S11_DELETE_SESSION_REQUEST (message_p).sender_fteid_for_cp.ipv4_address = mme_config.ipv4.s11;
+	  S11_DELETE_SESSION_REQUEST (message_p).sender_fteid_for_cp.ipv4_address = mme_config.ip.s11_mme_v4;
   } else {
 	  S11_DELETE_SESSION_REQUEST (message_p).sender_fteid_for_cp.ipv6 = 1;
 	  memcpy((void*)&S11_DELETE_SESSION_REQUEST (message_p).sender_fteid_for_cp.ipv6_address,
-			  (void*)&mme_config.ipv6.s11, sizeof(mme_config.ipv6.s11));
+			  (void*)&mme_config.ip.s11_mme_v6, sizeof(mme_config.ip.s11_mme_v6));
   }
   mme_config_unlock (&mme_config);
 
@@ -604,10 +604,8 @@ int mme_app_send_delete_session_request (struct ue_context_s * const ue_context_
    * S11 stack specific parameter. Not used in standalone epc mode
    */
   S11_DELETE_SESSION_REQUEST  (message_p).trxn = NULL;
-  mme_config_read_lock (&mme_config);
   memcpy((void*)&S11_DELETE_SESSION_REQUEST (message_p).edns_peer_ip, saegw_s11_addr,
 		  saegw_s11_addr->sa_family == AF_INET ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
-  mme_config_unlock (&mme_config);
 
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME,
                       NULL, 0, "0  S11_DELETE_SESSION_REQUEST teid %u lbi %u",
@@ -1009,10 +1007,17 @@ void mme_app_itti_forward_relocation_response(ue_context_t *ue_context, mme_app_
   forward_relocation_response_p->s10_target_mme_teid.teid = ue_context->local_mme_teid_s10; /**< This one also sets the context pointer. */
   OAI_GCC_DIAG_ON(pointer-to-int-cast);
   forward_relocation_response_p->s10_target_mme_teid.interface_type = S10_MME_GTP_C;
+  /** Set the MME address. */
   mme_config_read_lock (&mme_config);
-  forward_relocation_response_p->s10_target_mme_teid.ipv4_address = mme_config.ipv4.s10;
+  if(mme_config.ip.s11_mme_v4.s_addr){
+	  forward_relocation_response_p->s10_target_mme_teid.ipv4_address = mme_config.ip.s11_mme_v4;
+	  forward_relocation_response_p->s10_target_mme_teid.ipv4 = 1;
+  }
+  if(memcmp(&mme_config.ip.s11_mme_v6.s6_addr, (void*)&in6addr_any, sizeof(mme_config.ip.s11_mme_v6.s6_addr)) != 0) {
+	  memcpy(forward_relocation_response_p->s10_target_mme_teid.ipv6_address.s6_addr, mme_config.ip.s11_mme_v6.s6_addr,  sizeof(mme_config.ip.s11_mme_v6.s6_addr));
+	  forward_relocation_response_p->s10_target_mme_teid.ipv6 = 1;
+  }
   mme_config_unlock (&mme_config);
-  forward_relocation_response_p->s10_target_mme_teid.ipv4 = 1;
 
   /** Set S10 F-Cause. */
   forward_relocation_response_p->f_cause.fcause_type      = FCAUSE_S1AP;

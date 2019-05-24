@@ -3101,21 +3101,17 @@ mme_app_handle_s1ap_handover_required(
   s10_handover_procedure->source_enb_ue_s1ap_id = ue_context->enb_ue_s1ap_id;
   s10_handover_procedure->source_ecgi = ue_context->e_utran_cgi;
 
+
+
   if(!ue_context->local_mme_teid_s10){
     /** Set the Source MME_S10_FTEID the same as in S11. */
     teid_t local_teid = 0x0;
     do{
       local_teid = (teid_t) (rand() % 0xFFFFFFFF);
     }while(mme_ue_context_exists_s10_teid(&mme_app_desc.mme_ue_contexts, local_teid) != NULL);
-
     OAI_GCC_DIAG_OFF(pointer-to-int-cast);
     forward_relocation_request_p->s10_source_mme_teid.teid = local_teid;
     OAI_GCC_DIAG_ON(pointer-to-int-cast);
-    forward_relocation_request_p->s10_source_mme_teid.interface_type = S10_MME_GTP_C;
-    mme_config_read_lock (&mme_config);
-    forward_relocation_request_p->s10_source_mme_teid.ipv4_address = mme_config.ipv4.s10;
-    mme_config_unlock (&mme_config);
-    forward_relocation_request_p->s10_source_mme_teid.ipv4 = 1;
     /**
      * Update the local_s10_key.
      * Not setting the key directly in the  ue_context structure. Only over this function!
@@ -3133,22 +3129,40 @@ mme_app_handle_s1ap_handover_required(
     OAI_GCC_DIAG_OFF(pointer-to-int-cast);
     forward_relocation_request_p->s10_source_mme_teid.teid = ue_context->local_mme_teid_s10;
     OAI_GCC_DIAG_ON(pointer-to-int-cast);
-    forward_relocation_request_p->s10_source_mme_teid.interface_type = S10_MME_GTP_C;
-    mme_config_read_lock (&mme_config);
-    forward_relocation_request_p->s10_source_mme_teid.ipv4_address = mme_config.ipv4.s10;
-    mme_config_unlock (&mme_config);
-    forward_relocation_request_p->s10_source_mme_teid.ipv4 = 1;
   }
+
+  forward_relocation_request_p->s10_source_mme_teid.interface_type = S10_MME_GTP_C;
+  /** Set the MME IPv4 and IPv6 addresses in the FTEID. */
+  mme_config_read_lock (&mme_config);
+  if(mme_config.ip.s10_mme_v4.s_addr){
+	  forward_relocation_request_p->s10_source_mme_teid.ipv4_address = mme_config.ip.s10_mme_v4;
+	  forward_relocation_request_p->s10_source_mme_teid.ipv4 = 1;
+  }
+  if(memcmp(&mme_config.ip.s10_mme_v6.s6_addr, (void*)&in6addr_any, sizeof(mme_config.ip.s10_mme_v6.s6_addr)) != 0) {
+	  	  memcpy(forward_relocation_request_p->s10_source_mme_teid.ipv6_address.s6_addr, mme_config.ip.s10_mme_v6.s6_addr,  sizeof(mme_config.ip.s10_mme_v6.s6_addr));
+	  	  forward_relocation_request_p->s10_source_mme_teid.ipv6 = 1;
+  }
+  mme_config_unlock (&mme_config);
+
+
   /** Set the SGW_S11_FTEID the same as in S11. */
   OAI_GCC_DIAG_OFF(pointer-to-int-cast);
   forward_relocation_request_p->s11_sgw_teid.teid = first_pdn->s_gw_teid_s11_s4;
   OAI_GCC_DIAG_ON(pointer-to-int-cast);
   forward_relocation_request_p->s11_sgw_teid.interface_type = S11_MME_GTP_C;
-  mme_config_read_lock (&mme_config);
-  forward_relocation_request_p->s11_sgw_teid.ipv4_address = mme_config.ipv4.s11;
-  mme_config_unlock (&mme_config);
-  forward_relocation_request_p->s11_sgw_teid.ipv4 = 1;
-
+  /** Set the SGW CP IPv4 and IPv6 addresses from the PDN context. */
+  pdn_context_t * pdn_context_to_forward = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
+  if(pdn_context_to_forward){
+	  /** Set the PGW soure side CP IP addresses. */
+	  if(pdn_context_to_forward->s_gw_addr_s11_s4.ipv4_addr.sin_addr.s_addr){
+		  forward_relocation_request_p->s11_sgw_teid.ipv4_address = pdn_context_to_forward->s_gw_addr_s11_s4.ipv4_addr.sin_addr;
+		  forward_relocation_request_p->s11_sgw_teid.ipv4 = 1;
+	  }
+	  if(memcmp(&pdn_context_to_forward->s_gw_addr_s11_s4.ipv6_addr.sin6_addr.s6_addr, (void*)&in6addr_any, sizeof(pdn_context_to_forward->s_gw_addr_s11_s4.ipv6_addr.sin6_addr.s6_addr)) != 0) {
+		  memcpy(forward_relocation_request_p->s11_sgw_teid.ipv6_address.s6_addr, pdn_context_to_forward->s_gw_addr_s11_s4.ipv6_addr.sin6_addr.s6_addr,  sizeof(pdn_context_to_forward->s_gw_addr_s11_s4.ipv6_addr.sin6_addr.s6_addr));
+		  forward_relocation_request_p->s11_sgw_teid.ipv6 = 1;
+	  }
+  }
   /** Set the F-Cause. */
   forward_relocation_request_p->f_cause.fcause_type      = FCAUSE_S1AP;
   forward_relocation_request_p->f_cause.fcause_s1ap_type = FCAUSE_S1AP_RNL;

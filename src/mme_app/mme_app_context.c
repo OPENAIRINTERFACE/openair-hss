@@ -1966,9 +1966,18 @@ mme_app_handle_nas_context_req(itti_nas_context_req_t * const nas_context_req_pP
   s10_context_request_p->s10_target_mme_teid.teid = local_teid;
   OAI_GCC_DIAG_ON(pointer-to-int-cast);
   s10_context_request_p->s10_target_mme_teid.interface_type = S10_MME_GTP_C;
+  /** Set the MME IPv4 and IPv6 addresses in the FTEID. */
   mme_config_read_lock (&mme_config);
-  s10_context_request_p->s10_target_mme_teid.ipv4_address = mme_config.ipv4.s10;
+  if(mme_config.ip.s11_mme_v4.s_addr){
+	  s10_context_request_p->s10_target_mme_teid.ipv4_address = mme_config.ip.s11_mme_v4;
+	  s10_context_request_p->s10_target_mme_teid.ipv4 = 1;
+  }
+  if(memcmp(&mme_config.ip.s11_mme_v6.s6_addr, (void*)&in6addr_any, sizeof(mme_config.ip.s11_mme_v6.s6_addr)) != 0) {
+	  memcpy(s10_context_request_p->s10_target_mme_teid.ipv6_address.s6_addr, mme_config.ip.s11_mme_v6.s6_addr,  sizeof(mme_config.ip.s11_mme_v6.s6_addr));
+	  s10_context_request_p->s10_target_mme_teid.ipv6 = 1;
+  }
   mme_config_unlock (&mme_config);
+
   s10_context_request_p->s10_target_mme_teid.ipv4 = 1;
 
   /** Update the MME_APP UE context with the new S10 local TEID to find it from the S10 answer. */
@@ -2227,10 +2236,18 @@ mme_app_handle_s10_context_request(const itti_s10_context_request_t * const s10_
    context_response_p->s10_source_mme_teid.teid = (teid_t) ue_context; /**< This one also sets the context pointer. */
    OAI_GCC_DIAG_ON(pointer-to-int-cast);
    context_response_p->s10_source_mme_teid.interface_type = S10_MME_GTP_C;
+
+   /** Set the MME IPv4 and IPv6 addresses in the FTEID. */
    mme_config_read_lock (&mme_config);
-   context_response_p->s10_source_mme_teid.ipv4_address = mme_config.ipv4.s10;
+   if(mme_config.ip.s11_mme_v4.s_addr){
+	   context_response_p->s10_source_mme_teid.ipv4_address = mme_config.ip.s11_mme_v4;
+	   context_response_p->s10_source_mme_teid.ipv4 = 1;
+   }
+   if(memcmp(&mme_config.ip.s11_mme_v6.s6_addr, (void*)&in6addr_any, sizeof(mme_config.ip.s11_mme_v6.s6_addr)) != 0) {
+	   memcpy(context_response_p->s10_source_mme_teid.ipv6_address.s6_addr, mme_config.ip.s11_mme_v6.s6_addr,  sizeof(mme_config.ip.s11_mme_v6.s6_addr));
+	   context_response_p->s10_source_mme_teid.ipv6 = 1;
+   }
    mme_config_unlock (&mme_config);
-   context_response_p->s10_source_mme_teid.ipv4 = 1;
 
    /**
     * Update the local_s10_key.
@@ -2252,10 +2269,16 @@ mme_app_handle_s10_context_request(const itti_s10_context_request_t * const s10_
    context_response_p->s11_sgw_teid.teid = first_pdn->s_gw_teid_s11_s4;
    OAI_GCC_DIAG_ON(pointer-to-int-cast);
    context_response_p->s11_sgw_teid.interface_type = S11_MME_GTP_C;
-   mme_config_read_lock (&mme_config);
-// todo:   context_response_p->s11_sgw_teid.ipv4_address = first_pdn->s_gw_address_s11_s4.address.ipv4_address;
-   mme_config_unlock (&mme_config);
-   context_response_p->s11_sgw_teid.ipv4 = 1;
+
+   /** Set the MME IPv4 and IPv6 addresses in the FTEID. */
+   if(first_pdn->s_gw_addr_s11_s4.ipv4_addr.sin_addr.s_addr){
+	   context_response_p->s11_sgw_teid.ipv4_address = first_pdn->s_gw_addr_s11_s4.ipv4_addr.sin_addr;
+	   context_response_p->s11_sgw_teid.ipv4 = 1;
+   }
+   if(memcmp(&first_pdn->s_gw_addr_s11_s4.ipv6_addr.sin6_addr.s6_addr, (void*)&in6addr_any, sizeof(first_pdn->s_gw_addr_s11_s4.ipv6_addr.sin6_addr.s6_addr)) != 0) {
+	   memcpy(context_response_p->s11_sgw_teid.ipv6_address.s6_addr, first_pdn->s_gw_addr_s11_s4.ipv6_addr.sin6_addr.s6_addr,  sizeof(first_pdn->s_gw_addr_s11_s4.ipv6_addr.sin6_addr.s6_addr));
+	   context_response_p->s11_sgw_teid.ipv6 = 1;
+   }
 
    /** IMSI. */
    memcpy((void*)&context_response_p->imsi, &ue_nas_ctx->_imsi, sizeof(imsi_t));
@@ -2758,10 +2781,17 @@ void mme_app_set_pdn_connections(struct mme_ue_eps_pdn_connections_s * pdn_conne
     pdn_connections->pdn_connection[num_pdn].pgw_address_for_cp.teid = (teid_t) 0x000000; /**< Which does not matter. */
     OAI_GCC_DIAG_ON(pointer-to-int-cast);
     pdn_connections->pdn_connection[num_pdn].pgw_address_for_cp.interface_type = S5_S8_PGW_GTP_C;
-    mme_config_read_lock (&mme_config);
-    pdn_connections->pdn_connection[num_pdn].pgw_address_for_cp.ipv4_address = mme_config.ipv4.s11;
-    mme_config_unlock (&mme_config);
-    pdn_connections->pdn_connection[num_pdn].pgw_address_for_cp.ipv4 = 1;
+
+    /** Set the PGW soure side CP IP addresses. */
+    if(pdn_context_to_forward->s_gw_addr_s11_s4.ipv4_addr.sin_addr.s_addr){
+    	pdn_connections->pdn_connection[num_pdn].pgw_address_for_cp.ipv4_address = pdn_context_to_forward->s_gw_addr_s11_s4.ipv4_addr.sin_addr;
+    	pdn_connections->pdn_connection[num_pdn].pgw_address_for_cp.ipv4 = 1;
+    }
+    if(memcmp(&pdn_context_to_forward->s_gw_addr_s11_s4.ipv6_addr.sin6_addr.s6_addr, (void*)&in6addr_any, sizeof(pdn_context_to_forward->s_gw_addr_s11_s4.ipv6_addr.sin6_addr.s6_addr)) != 0) {
+    	memcpy(pdn_connections->pdn_connection[num_pdn].pgw_address_for_cp.ipv6_address.s6_addr, pdn_context_to_forward->s_gw_addr_s11_s4.ipv6_addr.sin6_addr.s6_addr,  sizeof(pdn_context_to_forward->s_gw_addr_s11_s4.ipv6_addr.sin6_addr.s6_addr));
+    	pdn_connections->pdn_connection[num_pdn].pgw_address_for_cp.ipv6 = 1;
+    }
+
     /** APN Restriction. */
     pdn_connections->pdn_connection[num_pdn].apn_restriction = 0; // pdn_context_to_forward->apn_restriction
     /** APN-AMBR : forward the currently used apn ambr. The MM Context will have the UE AMBR. */

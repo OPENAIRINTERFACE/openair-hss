@@ -315,81 +315,79 @@ static int sctp_create_new_listener (SctpInit * init_p)
     return -1;
   }
 
-  struct sockaddr addr[used_addresses];
-  memset(addr, 0, (sizeof(struct sockaddr) * used_addresses));
-  OAILOG_DEBUG (LOG_SCTP, "Creating new listen socket on port %u with\n", init_p->port);
+  union{
+	  struct sockaddr_in  addr_v4;
+	  struct sockaddr_in6 addr_v6;
+  }addr[used_addresses];
+  memset((void*)addr, 0, sizeof(addr));
+
+ OAILOG_DEBUG (LOG_SCTP, "Creating new listen socket on port %u with\n", init_p->port);
 
   if (init_p->ipv4 == 1) {
-    struct sockaddr_in                     *ip4_addr;
-
-    OAILOG_DEBUG (LOG_SCTP, "ipv4 addresses:\n");
-
-    for (i = 0; i < init_p->nb_ipv4_addr; i++) {
-      ip4_addr = (struct sockaddr_in *)&addr[i];
-      ip4_addr->sin_family = AF_INET;
-      ip4_addr->sin_port = htons (init_p->port);
-      ip4_addr->sin_addr.s_addr = init_p->ipv4_address[i].s_addr;
+	  OAILOG_DEBUG (LOG_SCTP, "ipv4 addresses:\n");
+	  for (i = 0; i < init_p->nb_ipv4_addr; i++) {
+		  addr[i].addr_v4.sin_family = AF_INET;
+		  addr[i].addr_v4.sin_port = htons (init_p->port);
+		  addr[i].addr_v4.sin_addr.s_addr = init_p->ipv4_address[i].s_addr;
       char ipv4[INET_ADDRSTRLEN];
-      inet_ntop (AF_INET, (void*)&ip4_addr->sin_addr.s_addr, ipv4, INET_ADDRSTRLEN);
+      inet_ntop (AF_INET, (void*)&addr[i].addr_v4.sin_addr.s_addr, ipv4, INET_ADDRSTRLEN);
       OAILOG_DEBUG (LOG_SCTP, "\t- %s\n", ipv4);
     }
   }
 
   if (init_p->ipv6 == 1) {
-    struct sockaddr_in6                    *ip6_addr = NULL;
-
     OAILOG_DEBUG (LOG_SCTP, "ipv6 addresses:\n");
-
     for (j = 0; j < init_p->nb_ipv6_addr; j++) {
+      addr[i+j].addr_v6.sin6_family = AF_INET6;
+      addr[i+j].addr_v6.sin6_port = htons (init_p->port);
+      addr[i+j].addr_v6.sin6_addr = init_p->ipv6_address[j];
       char ipv6[INET6_ADDRSTRLEN];
       inet_ntop (AF_INET6, (void*)&init_p->ipv6_address[j], ipv6, INET6_ADDRSTRLEN);
       OAILOG_DEBUG (LOG_SCTP, "\t- %s\n", ipv6);
-      ip6_addr = (struct sockaddr_in6 *)&addr[i + j];
-      ip6_addr->sin6_family = AF_INET6;
-      ip6_addr->sin6_port = htons (init_p->port);
-      ip6_addr->sin6_addr = init_p->ipv6_address[j];
     }
   }
 
-  if ((sd = socket (AF_INET6, SOCK_STREAM, IPPROTO_SCTP)) < 0) {
-    OAILOG_ERROR (LOG_SCTP, "socket: %s:%d\n", strerror (errno), errno);
-    return -1;
-  }
+  /** Create for each received address a socket. */
+  for(int i = 0; i < used_addresses; i++){
+	  if ((sd = socket (((struct sockaddr*)&addr[i])->sa_family, SOCK_STREAM, IPPROTO_SCTP)) < 0) {
+		  OAILOG_ERROR (LOG_SCTP, "socket: %s:%d\n", strerror (errno), errno);
+		  return -1;
+	  }
 
-  memset ((void *)&event, 1, sizeof (struct sctp_event_subscribe));
+	  memset ((void *)&event, 1, sizeof (struct sctp_event_subscribe));
+	  if (setsockopt (sd, IPPROTO_SCTP, SCTP_EVENTS, &event, sizeof (struct sctp_event_subscribe)) < 0) {
+		  OAILOG_ERROR (LOG_SCTP, "setsockopt: %s:%d\n", strerror (errno), errno);
+		  return -1;
+	  }
 
-  if (setsockopt (sd, IPPROTO_SCTP, SCTP_EVENTS, &event, sizeof (struct sctp_event_subscribe)) < 0) {
-    OAILOG_ERROR (LOG_SCTP, "setsockopt: %s:%d\n", strerror (errno), errno);
-    return -1;
-  }
+	  /*
+	   * Some pre-bind socket configuration
+	   */
+	  if (sctp_set_init_opt (sd, sctp_desc.nb_instreams, sctp_desc.nb_outstreams, 0, 0) < 0) {
+		  goto err;
+	  }
 
-  /*
-   * Some pre-bind socket configuration
-   */
-  if (sctp_set_init_opt (sd, sctp_desc.nb_instreams, sctp_desc.nb_outstreams, 0, 0) < 0) {
-    goto err;
-  }
+	  if (sctp_bindx (sd, (struct sockaddr*)&addr[i], 1, SCTP_BINDX_ADD_ADDR) != 0) {
+		  OAILOG_ERROR (LOG_SCTP, "sctp_bindx: %s:%d\n", strerror (errno), errno);
+		  return -1;
+	  }
 
-  if (sctp_bindx (sd, addr, used_addresses, SCTP_BINDX_ADD_ADDR) != 0) {
-    OAILOG_ERROR (LOG_SCTP, "sctp_bindx: %s:%d\n", strerror (errno), errno);
-    return -1;
-  }
+	  if (listen (sd, 5) < 0) {
+		  OAILOG_ERROR (LOG_SCTP, "listen: %s:%d\n", strerror (errno), errno);
+		  return -1;
+	  }
 
-  if (listen (sd, 5) < 0) {
-    OAILOG_ERROR (LOG_SCTP, "listen: %s:%d\n", strerror (errno), errno);
-    return -1;
-  }
+	  if ((sctp_arg_p = malloc (sizeof (struct sctp_arg_s))) == NULL) {
+		  return -1;
+	  }
 
-  if ((sctp_arg_p = malloc (sizeof (struct sctp_arg_s))) == NULL) {
-    return -1;
-  }
+	  sctp_arg_p->sd = sd;
+	  sctp_arg_p->ppid = init_p->ppid;
 
-  sctp_arg_p->sd = sd;
-  sctp_arg_p->ppid = init_p->ppid;
-
-  if (pthread_create (&assoc_thread, NULL, &sctp_receiver_thread, (void *)sctp_arg_p) < 0) {
-    OAILOG_ERROR (LOG_SCTP, "pthread_create: %s:%d\n", strerror (errno), errno);
-    return -1;
+	  if (pthread_create (&assoc_thread, NULL, &sctp_receiver_thread, (void *)sctp_arg_p) < 0) {
+		  OAILOG_ERROR (LOG_SCTP, "pthread_create: %s:%d\n", strerror (errno), errno);
+		  return -1;
+	  }
   }
 
   return sd;

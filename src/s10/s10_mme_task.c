@@ -407,7 +407,7 @@ s10_mme_init (
    */
   udp.hUdp = (nw_gtpv2c_udp_handle_t) NULL;
   mme_config_read_lock (&mme_config);
-  udp.gtpv2cStandardPort = mme_config.ipv4.port_s10;
+  udp.gtpv2cStandardPort = mme_config.ip.port_s10;
   mme_config_unlock (&mme_config);
   udp.udpDataReqCallback = s10_mme_send_udp_msg;
   DevAssert (NW_OK == nwGtpv2cSetUdpEntity (s10_mme_stack_handle, &udp));
@@ -429,8 +429,8 @@ s10_mme_init (
 
   DevAssert (NW_OK == nwGtpv2cSetLogLevel (s10_mme_stack_handle, NW_LOG_LEVEL_DEBG));
   /** Create 2 sockets, one for 2123 (received initial requests), another high port. */
-//  s10_send_init_udp(&mme_config.ipv4.s10, &mme_config.ipv6.s10, udp.gtpv2cStandardPort);
-//  s10_send_init_udp(&mme_config.ipv4.s10, &mme_config.ipv6.s10, 0);
+  s10_send_init_udp(&mme_config.ip.s10_mme_v4, &mme_config.ip.s10_mme_v6, udp.gtpv2cStandardPort);
+  s10_send_init_udp(&mme_config.ip.s10_mme_v4, &mme_config.ip.s10_mme_v6, 0);
 
   bstring b = bfromcstr("s10_mme_teid_2_gtv2c_teid_handle");
   s10_mme_teid_2_gtv2c_teid_handle = hashtable_ts_create(mme_config_p->max_ues, HASH_TABLE_DEFAULT_HASH_FUNC, hash_free_int_func, b);

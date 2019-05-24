@@ -212,43 +212,27 @@ typedef struct mme_config_s {
 
   struct {
     bstring    if_name_s1_mme;
-    struct in_addr s1_mme;
-    int        netmask_s1_mme;
+    struct in_addr  s1_mme_v4;
+    struct in6_addr s1_mme_v6;
+    int        s1_mme_cidrv4;
+    int        s1_mme_cidrv6;
 
     bstring    if_name_s11;
-    struct in_addr s11;
-    int        netmask_s11;
+    struct in_addr 	s11_mme_v4;
+    struct in6_addr s11_mme_v6;
+    int        s11_mme_cidrv4;
+    int        s11_mme_cidrv6;
     uint16_t   port_s11;
 
     bstring    if_name_s10;
-    struct in_addr s10;
-    int        netmask_s10;
+    struct in_addr  s10_mme_v4;
+    struct in6_addr s10_mme_v6;
+    int        s10_mme_cidrv4;
+    int        s10_mme_cidrv6;
     uint16_t   port_s10;
-
     // todo: sgw_s11 removed, finding it dynamically?
-//    ipv4_nbo_t sgw_s11;
-
-  } ipv4;
-
-  struct {
-    bstring    if_name_s1_mme;
-    struct in6_addr s1_mme;
-    int        cidr_s1_mme;
-
-    bstring    if_name_s11;
-    struct in6_addr s11;
-    int        cidr_s11;
-    uint16_t   port_s11;
-
-    bstring    if_name_s10;
-    struct in6_addr s10;
-    int        cidr_s10;
-    uint16_t   port_s10;
-
-    // todo: sgw_s11 removed, finding it dynamically?
-//    ipv4_nbo_t sgw_s11;
-
-  } ipv6;
+    //    ipv4_nbo_t sgw_s11;
+  } ip;
 
   struct {
     bstring conf_file;
