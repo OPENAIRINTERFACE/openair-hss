@@ -1010,7 +1010,11 @@ int _emm_attach_reject(emm_data_context_t * emm_context, nas_emm_attach_proc_t *
   }
   int rc = emm_sap_send (&emm_sap);
   /** Remove the subscription. */
-  mme_api_remove_subscription_data(emm_context->_imsi64);
+  subscription_data_t * subscription_data = mme_api_remove_subscription_data(emm_context->_imsi64);
+  if(subscription_data){
+	  free_wrapper ((void**) &subscription_data);
+  }
+
   // Release EMM context
   _clear_emm_ctxt(emm_context->ue_id);
 

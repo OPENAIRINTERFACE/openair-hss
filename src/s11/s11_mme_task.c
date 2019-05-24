@@ -343,7 +343,7 @@ s11_send_init_udp (
 	  inet_ntop (AF_INET, (void*)message_p->ittiMsg.udp_init.in_addr, ipv4, INET_ADDRSTRLEN);
 	  OAILOG_DEBUG (LOG_S11, "Tx UDP_INIT IP addr %s:%" PRIu16 "\n", ipv4, message_p->ittiMsg.udp_init.port);
   }
-  if(address6 && memcmp(address6->s6_addr, (void*)&in6addr_any, 16)){
+  if(address6 && memcmp(address6->s6_addr, (void*)&in6addr_any, 16) != 0){
 	  message_p->ittiMsg.udp_init.in6_addr = address6;
 	  char ipv6[INET6_ADDRSTRLEN];
 	  inet_ntop (AF_INET6, (void*)&message_p->ittiMsg.udp_init.in6_addr, ipv6, INET6_ADDRSTRLEN);

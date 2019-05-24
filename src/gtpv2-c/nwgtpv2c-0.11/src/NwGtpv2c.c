@@ -1109,7 +1109,7 @@ static nw_rc_t                            nwGtpv2cHandleUlpFindLocalTunnel (
 
     if (teidLocal) {
       keyTunnel.teid = ntohl (teidLocal);
-      memcpy((void*)&keyTunnel.ipAddrRemote, &peerIp, (peerIp->sa_family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
+      memcpy((void*)&keyTunnel.ipAddrRemote, peerIp, (peerIp->sa_family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
       pLocalTunnel = RB_FIND (NwGtpv2cTunnelMap, &(thiz->tunnelMap), &keyTunnel);
 
       if (!pLocalTunnel) {
@@ -1199,7 +1199,7 @@ static nw_rc_t                            nwGtpv2cHandleUlpFindLocalTunnel (
     /** Process it like an initial request. */
     if (teidLocal) {
       keyTunnel.teid = ntohl (teidLocal);
-      memcpy((void*)&keyTunnel.ipAddrRemote, &peerIp, (peerIp->sa_family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
+      memcpy((void*)&keyTunnel.ipAddrRemote, peerIp, (peerIp->sa_family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
       pLocalTunnel = RB_FIND (NwGtpv2cTunnelMap, &(thiz->tunnelMap), &keyTunnel);
 
       if (!pLocalTunnel) {
