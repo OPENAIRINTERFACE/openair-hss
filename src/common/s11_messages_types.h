@@ -1305,7 +1305,6 @@ typedef struct itti_s11_delete_session_response_s {
 
   /* GTPv2-C specific parameters */
   void             	*trxn;
-  struct sockaddr	 *edns_peer_ip;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME
 } itti_s11_delete_session_response_t;
 
 
@@ -1434,9 +1433,7 @@ typedef struct itti_s11_bearer_resource_failure_indication_s {
   pti_t           pti;
   gtpv2c_cause_t  cause;
   ebi_t           linked_ebi;
-
   void            *trxn;
-  struct sockaddr *peer_ip;
 } itti_s11_bearer_resource_failure_indication_t;
 
 //-----------------------------------------------------------------------------

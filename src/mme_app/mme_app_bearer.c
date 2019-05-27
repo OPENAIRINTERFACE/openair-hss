@@ -1269,7 +1269,7 @@ mme_app_handle_modify_bearer_resp (
 
 //------------------------------------------------------------------------------
 static
-void mme_app_send_downlink_data_notification_acknowledge(gtpv2c_cause_value_t cause, teid_t saegw_s11_teid, teid_t local_s11_teid, uint32_t peer_ip, void *trxn){
+void mme_app_send_downlink_data_notification_acknowledge(gtpv2c_cause_value_t cause, teid_t saegw_s11_teid, teid_t local_s11_teid, struct sockaddr* peer_ip, void *trxn){
   OAILOG_FUNC_IN (LOG_MME_APP);
 
   /** Send a Downlink Data Notification Acknowledge with cause. */

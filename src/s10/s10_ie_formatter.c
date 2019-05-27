@@ -307,10 +307,12 @@ s10_pdn_connection_ie_set ( nw_gtpv2c_msg_handle_t * msg, void * arg){
   s10_apn_ie_set (msg, pdn_connection->apn_str);
 
   /** Set the IPv4 Address. */
-  s10_ipv4_address_ie_set(msg, &(pdn_connection->ipv4_address));
+  if(pdn_connection->ipv4_address.s_addr)
+	  s10_ipv4_address_ie_set(msg, &(pdn_connection->ipv4_address));
 
   /** Set the IPv6 Address. */
-  if(pdn_connection->ipv6_prefix_length){
+  if(pdn_connection->ipv6_prefix_length &&
+		  memcmp((void*)&pdn_connection->ipv6_address, (void*)&in6addr_any, sizeof (in6addr_any)) != 0){
     s10_ipv6_address_ie_set(msg, &(pdn_connection->ipv6_address));
   }
 
@@ -1552,7 +1554,7 @@ s10_ipv6_address_ie_set (
   memcpy (temp, ipv6Addr->__in6_u.__u6_addr8, 16);
   offset += 16;
 
-  rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_IP_ADDRESS, offset, 0, temp);
+  rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_IP_ADDRESS, offset, 1, temp);
   DevAssert (NW_OK == rc);
 
   return RETURNok;
