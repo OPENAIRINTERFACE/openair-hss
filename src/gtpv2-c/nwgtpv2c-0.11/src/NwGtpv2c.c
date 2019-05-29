@@ -963,6 +963,7 @@ static nw_rc_t                            nwGtpv2cSendTriggeredReqIndToUlp (
   NW_IN uint8_t trxFlags,
   NW_IN uint16_t localPort,
   NW_IN uint16_t peerPort,
+  NW_IN struct sockaddr *peerIp,
   NW_IN uint32_t hUlpTunnel,
   NW_IN uint32_t msgType,
   NW_IN bool     noDelete,
@@ -977,6 +978,7 @@ static nw_rc_t                            nwGtpv2cSendTriggeredReqIndToUlp (
     ulpApi.u_api_info.triggeredRspIndInfo.hUlpTrxn = hUlpTrxn;
     ulpApi.u_api_info.triggeredRspIndInfo.localPort = localPort;
     ulpApi.u_api_info.triggeredRspIndInfo.peerPort  = peerPort;
+    ulpApi.u_api_info.triggeredRspIndInfo.peerIp    = peerIp;
     ulpApi.u_api_info.triggeredRspIndInfo.hUlpTunnel = hUlpTunnel;
     ulpApi.u_api_info.triggeredRspIndInfo.error = *pError;
     ulpApi.u_api_info.triggeredRspIndInfo.trx_flags = trxFlags;
@@ -1102,10 +1104,10 @@ static nw_rc_t                            nwGtpv2cHandleUlpFindLocalTunnel (
     nw_gtpv2c_msg_handle_t                      hMsg = 0;
     nw_gtpv2c_ulp_tunnel_handle_t                hUlpTunnel = 0;
     nw_gtpv2c_error_t                          error = {0};
-    char                                      ipv4[INET_ADDRSTRLEN];
+    char                                      ip[INET6_ADDRSTRLEN];
 
     teidLocal = *((uint32_t *) (msgBuf + 4));
-  // todo:  inet_ntop (AF_INET, (void*)peerIp, ipv4, INET_ADDRSTRLEN);
+    inet_ntop (AF_INET, (void*)peerIp, ip, peerIp->sa_family == AF_INET ? INET_ADDRSTRLEN : INET6_ADDRSTRLEN);
 
     if (teidLocal) {
       keyTunnel.teid = ntohl (teidLocal);
@@ -1113,7 +1115,7 @@ static nw_rc_t                            nwGtpv2cHandleUlpFindLocalTunnel (
       pLocalTunnel = RB_FIND (NwGtpv2cTunnelMap, &(thiz->tunnelMap), &keyTunnel);
 
       if (!pLocalTunnel) {
-        OAILOG_WARNING (LOG_GTPV2C,  "Request message received on non-existent teid 0x%x from peer %s received! Discarding.\n", ntohl (teidLocal), ipv4);
+        OAILOG_WARNING (LOG_GTPV2C,  "Request message received on non-existent teid 0x%x from peer %s received! Discarding.\n", ntohl (teidLocal), ip);
         return NW_OK;
       }
 
@@ -1134,7 +1136,7 @@ static nw_rc_t                            nwGtpv2cHandleUlpFindLocalTunnel (
       rc = nwGtpv2cMsgIeParse (thiz->pGtpv2cMsgIeParseInfo[msgType], hMsg, &error);
 
       if (rc != NW_OK) {
-        OAILOG_WARNING (LOG_GTPV2C,  "Malformed request message received on TEID %u from peer %s. Notifying ULP.\n", ntohl (teidLocal), ipv4);
+        OAILOG_WARNING (LOG_GTPV2C,  "Malformed request message received on TEID %u from peer %s. Notifying ULP.\n", ntohl (teidLocal), ip);
       }
 
       rc = nwGtpv2cSendInitialReqIndToUlp (thiz, &error, pTrxn, hUlpTunnel, msgType, peerIp, peerPort, hMsg);
@@ -1295,12 +1297,11 @@ static nw_rc_t                            nwGtpv2cHandleUlpFindLocalTunnel (
 
       /** We just forward the remaining message. */
       if (rc != NW_OK) {
-        char                                    ipv4[INET_ADDRSTRLEN];
-        inet_ntop (AF_INET, (void*)peerIp, ipv4, INET_ADDRSTRLEN);
-        OAILOG_WARNING (LOG_GTPV2C,  "Malformed message received on TEID %u from peer %s. Notifying ULP.\n", ntohl ((*((uint32_t *) (msgBuf + 4)))), ipv4);
+        char                                    ip[INET6_ADDRSTRLEN];
+        inet_ntop (peerIp->sa_family, (void*)peerIp, ip, peerIp->sa_family == AF_INET ? INET_ADDRSTRLEN : INET_ADDRSTRLEN);
+        OAILOG_WARNING (LOG_GTPV2C,  "Malformed message received on TEID %u from peer %s. Notifying ULP.\n", ntohl ((*((uint32_t *) (msgBuf + 4)))), ip);
       }
-
-      rc = nwGtpv2cSendTriggeredRspIndToUlp (thiz, &error, keyTrxn.seqNum, trx_flags, localPort, peerPort, hUlpTunnel, msgType, noDelete, hMsg);
+      rc = nwGtpv2cSendTriggeredRspIndToUlp (thiz, &error, keyTrxn.seqNum, trx_flags, localPort, peerPort, peerIp, hUlpTunnel, msgType, noDelete, hMsg);
     } else {
       OAILOG_WARNING (LOG_GTPV2C,  "Response message without a matching outstanding request received! Discarding.\n");
       rc = NW_OK;
@@ -1612,7 +1613,6 @@ static nw_rc_t                            nwGtpv2cHandleUlpFindLocalTunnel (
     case NW_GTP_DELETE_INDIRECT_DATA_FORWARDING_TUNNEL_REQ:
       /** Handover Related Messages. */
     case NW_GTP_FORWARD_RELOCATION_REQ:
-    case NW_GTP_FORWARD_ACCESS_CONTEXT_NTF:
     case NW_GTP_FORWARD_RELOCATION_COMPLETE_NTF:
     case NW_GTP_RELOCATION_CANCEL_REQ:
     case NW_GTP_CONTEXT_REQ:
@@ -1620,6 +1620,10 @@ static nw_rc_t                            nwGtpv2cHandleUlpFindLocalTunnel (
     case NW_GTP_DOWNLINK_DATA_NOTIFICATION:
       rc = nwGtpv2cHandleInitialReq(thiz, msgType, udpData, udpDataLen, peerPort, peerIp);
       break;
+
+    case NW_GTP_FORWARD_ACCESS_CONTEXT_NTF:
+        rc = nwGtpv2cHandleInitialReq(thiz, msgType, udpData, udpDataLen, peerPort, peerIp);
+        break;
 
     /** May be initial request or triggered requests. */
     case NW_GTP_CREATE_BEARER_REQ:

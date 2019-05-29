@@ -242,8 +242,8 @@ mme_app_esm_create_pdn_context(mme_ue_s1ap_id_t ue_id, const ebi_t linked_ebi, c
   /** Set the default QoS values. */
   (*pdn_context_pp)->subscribed_apn_ambr.br_dl = apn_ambr->br_dl;
   (*pdn_context_pp)->subscribed_apn_ambr.br_ul = apn_ambr->br_ul;
+  (*pdn_context_pp)->pdn_type                     = pdn_type;
   if (apn_configuration) {
-    (*pdn_context_pp)->pdn_type                     = pdn_type;
     (*pdn_context_pp)->context_identifier           = apn_configuration->context_identifier;
 #ifdef APN_CONFIG_IP_ADDR
     if (apn_configuration->nb_ip_address) { // todo: later

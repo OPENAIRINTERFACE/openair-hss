@@ -429,8 +429,8 @@ s10_mme_init (
 
   DevAssert (NW_OK == nwGtpv2cSetLogLevel (s10_mme_stack_handle, NW_LOG_LEVEL_DEBG));
   /** Create 2 sockets, one for 2123 (received initial requests), another high port. */
-//  s10_send_init_udp(&mme_config.ip.s10_mme_v4, &mme_config.ip.s10_mme_v6, udp.gtpv2cStandardPort);
-//  s10_send_init_udp(&mme_config.ip.s10_mme_v4, &mme_config.ip.s10_mme_v6, 0);
+  s10_send_init_udp(&mme_config.ip.s10_mme_v4, &mme_config.ip.s10_mme_v6, udp.gtpv2cStandardPort);
+  s10_send_init_udp(&mme_config.ip.s10_mme_v4, &mme_config.ip.s10_mme_v6, 0);
 
   bstring b = bfromcstr("s10_mme_teid_2_gtv2c_teid_handle");
   s10_mme_teid_2_gtv2c_teid_handle = hashtable_ts_create(mme_config_p->max_ues, HASH_TABLE_DEFAULT_HASH_FUNC, hash_free_int_func, b);

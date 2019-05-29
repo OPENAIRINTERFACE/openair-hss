@@ -1897,7 +1897,7 @@ static int _emm_tracking_area_update_run_procedure(emm_data_context_t *emm_conte
 //      struct in_addr neigh_mme_ipv4_addr;
 //      neigh_mme_ipv4_addr.s_addr = 0;
 
-      struct sockaddr *edns_neigh_mme_ipv4_addr;
+      struct sockaddr *edns_neigh_mme_ipv4_addr = NULL;
 //      edns_neigh_mme_ipv4_addr.addr.ipv4_addr.s_addr = 0;
 
       mme_app_select_service(tau_proc->ies->last_visited_registered_tai, &edns_neigh_mme_ipv4_addr, S10_MME_GTP_C);

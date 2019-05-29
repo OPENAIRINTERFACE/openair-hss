@@ -174,7 +174,13 @@ udp_server_receive_and_process (
 
     bool ipv6 = udp_sock_pP->local_addr.sa_family == AF_INET6;
 
-    from_len = ipv6 ? (socklen_t) sizeof (struct sockaddr_in6) : (socklen_t) sizeof (struct sockaddr_in);
+    if(ipv6) {
+    	from_len = (socklen_t) sizeof (struct sockaddr_in6);
+    	memset(&addr, 0 , sizeof (struct sockaddr_in6));
+    } else {
+    	from_len = (socklen_t) sizeof (struct sockaddr_in);
+    	memset(&addr6, 0 , sizeof (struct sockaddr_in));
+    }
 
     if ((bytes_received = recvfrom (udp_sock_pP->sd, udp_sock_pP->buffer, sizeof (udp_sock_pP->buffer), 0,
     		ipv6 ? (struct sockaddr *)&addr6 : (struct sockaddr *)&addr, &from_len)) <= 0) {
@@ -195,10 +201,8 @@ udp_server_receive_and_process (
       memcpy((void*)&udp_data_ind_p->sock_addr, (ipv6) ? (struct sockaddr_in6*)&addr6 : (struct sockaddr_in*)&addr,
     		  (ipv6) ? sizeof(struct sockaddr_in6) : sizeof(struct sockaddr_in));
 
-      // todo: log
-//      OAILOG_DEBUG (LOG_UDP, "Msg of length %d received from %s:%u\n", bytes_received,
-//    		  (udp_sock_pP->ipv6) ? inet_ntoa (addr.sin_addr),
-//			  ntohs (addr.sin_port));
+      OAILOG_DEBUG (LOG_UDP, "Msg of length %d received from %s:%u\n", bytes_received,
+    		  (!ipv6) ? inet_ntoa (addr.sin_addr) : "TODO_IPV6", ntohs (addr.sin_port));
 
       if (itti_send_msg_to_task (udp_sock_pP->task_id, INSTANCE_DEFAULT, message_p) < 0) {
         OAILOG_DEBUG (LOG_UDP, "Failed to send message %d to task %d\n", UDP_DATA_IND, udp_sock_pP->task_id);

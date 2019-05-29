@@ -46,23 +46,21 @@ static obj_hash_table_t * sgw_e_dns_entries = NULL;
 static obj_hash_table_t * mme_e_dns_entries = NULL;
 
 //------------------------------------------------------------------------------
-struct sockaddr* mme_app_edns_get_wrr_entry(bstring id, const interface_type_t interface_type)
+void mme_app_edns_get_wrr_entry(bstring id, const interface_type_t interface_type, struct sockaddr** sockaddr)
 {
-  struct sockaddr *sockaddr = NULL;
   switch(interface_type){
   case S10_MME_GTP_C:
 	  obj_hashtable_get (mme_e_dns_entries, bdata(id), blength(id),
-	      (void **)&sockaddr);
-	  break;
+	      (void **)sockaddr);
+	  return;
   case S11_SGW_GTP_C:
   	  obj_hashtable_get (sgw_e_dns_entries, bdata(id), blength(id),
-  	      (void **)&sockaddr);
-  	  break;
+  	      (void **)sockaddr);
+  	  return;
   default :
-	  break;
+	  return;
   }
 
-  return sockaddr;
 }
 
 //------------------------------------------------------------------------------

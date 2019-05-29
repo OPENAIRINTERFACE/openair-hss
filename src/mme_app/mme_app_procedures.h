@@ -65,7 +65,9 @@ typedef struct mme_app_s10_proc_s {
   /** S10 Tunnel Endpoint information. */
   teid_t                      local_teid;
   teid_t                      remote_teid;
+
   struct sockaddr             *peer_ip;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME.
+
   bool                        target_mme;
   uintptr_t                   s10_trxn;
   LIST_ENTRY(mme_app_s10_proc_s) entries;      /* List. */
@@ -210,7 +212,8 @@ void mme_app_delete_s11_procedure_delete_bearer(ue_context_t * const ue_context_
 void mme_app_delete_s10_procedures(ue_context_t * const ue_context_p);
 //------------------------------------------------------------------------------
 void mme_app_delete_s10_procedures(ue_context_t * const ue_context_p);
-mme_app_s10_proc_mme_handover_t* mme_app_create_s10_procedure_mme_handover(ue_context_t * const ue_context, bool target_mme, mme_app_s10_proc_type_t  s1ap_ho_type);
+mme_app_s10_proc_mme_handover_t* mme_app_create_s10_procedure_mme_handover(ue_context_t * const ue_context, bool target_mme,
+		mme_app_s10_proc_type_t  s1ap_ho_type, struct sockaddr* sockaddr);
 
 mme_app_s10_proc_mme_handover_t* mme_app_get_s10_procedure_mme_handover(ue_context_t * const ue_context_p);
 void mme_app_delete_s10_procedure_mme_handover(ue_context_t * const ue_context_p);

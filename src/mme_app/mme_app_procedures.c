@@ -527,7 +527,8 @@ mme_app_handle_mobility_completion_timer_expiry (mme_app_s10_proc_mme_handover_t
         		relocation_cancel_request_p->teid = s10_proc_mme_handover->proc.remote_teid; /**< May or may not be 0. */
         		relocation_cancel_request_p->local_teid = ue_context->local_mme_teid_s10; /**< May or may not be 0. */
         		// todo: check the table!
-        		relocation_cancel_request_p->peer_ip = s10_proc_mme_handover->proc.peer_ip;
+        		memcpy((void*)&relocation_cancel_request_p->peer_ip, s10_proc_mme_handover->proc.peer_ip,
+        				(s10_proc_mme_handover->proc.peer_ip->sa_family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
         		/** IMSI. */
         		memcpy((void*)&relocation_cancel_request_p->imsi, &s10_proc_mme_handover->imsi, sizeof(imsi_t));
         		MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S10_MME, NULL, 0, "0 RELOCATION_CANCEL_REQUEST_MESSAGE");
@@ -553,14 +554,19 @@ mme_app_handle_mobility_completion_timer_expiry (mme_app_s10_proc_mme_handover_t
 }
 
 //------------------------------------------------------------------------------
-mme_app_s10_proc_mme_handover_t* mme_app_create_s10_procedure_mme_handover(ue_context_t * const ue_context, bool target_mme, mme_app_s10_proc_type_t  s1ap_ho_type){
+mme_app_s10_proc_mme_handover_t* mme_app_create_s10_procedure_mme_handover(ue_context_t * const ue_context,
+		bool target_mme, mme_app_s10_proc_type_t  s1ap_ho_type, struct sockaddr* sockaddr){
   mme_app_s10_proc_mme_handover_t *s10_proc_mme_handover = calloc(1, sizeof(mme_app_s10_proc_mme_handover_t));
   // todo: checking hear for correct allocation
   if(!s10_proc_mme_handover){
     return NULL;
   }
   s10_proc_mme_handover->proc.type      = s1ap_ho_type;
-  s10_proc_mme_handover->proc.type      = s1ap_ho_type;
+  if(sockaddr) {
+	  s10_proc_mme_handover->proc.peer_ip   = calloc(1, (sockaddr->sa_family == AF_INET6) ? sizeof(struct sockaddr_in6) :  sizeof(struct sockaddr_in));
+	  memcpy(s10_proc_mme_handover->proc.peer_ip, sockaddr, (sockaddr->sa_family == AF_INET6) ? sizeof(struct sockaddr_in6) :  sizeof(struct sockaddr_in));
+  }
+
   s10_proc_mme_handover->mme_ue_s1ap_id = ue_context->mme_ue_s1ap_id;
 
   /*
@@ -663,6 +669,10 @@ static void mme_app_free_s10_procedure_mme_handover(mme_app_s10_proc_t **s10_pro
   /** PDN Connections. */
   if((*s10_proc_mme_handover_pp)->pdn_connections){
     free_mme_ue_eps_pdn_connections(&(*s10_proc_mme_handover_pp)->pdn_connections);
+  }
+
+  if((*s10_proc_mme_handover_pp)->proc.peer_ip){
+    free_wrapper(&(*s10_proc_mme_handover_pp)->proc.peer_ip);
   }
 
   (*s10_proc_mme_handover_pp)->s10_mme_handover_timeout = NULL; // todo: deallocate too

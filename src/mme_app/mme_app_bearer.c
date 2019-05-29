@@ -2960,7 +2960,7 @@ mme_app_handle_s1ap_handover_required(
       /*
        * Create a new handover procedure and begin processing.
        */
-      s10_handover_procedure = mme_app_create_s10_procedure_mme_handover(ue_context, false, MME_APP_S10_PROC_TYPE_INTRA_MME_HANDOVER);
+      s10_handover_procedure = mme_app_create_s10_procedure_mme_handover(ue_context, false, MME_APP_S10_PROC_TYPE_INTRA_MME_HANDOVER, NULL);
       if(!s10_handover_procedure){
         OAILOG_ERROR (LOG_MME_APP, "Could not create new handover procedure for UE with ue_id " MME_UE_S1AP_ID_FMT " IMSI " IMSI_64_FMT " in EMM_REGISTERED state. Rejecting further procedures. \n",
             handover_required_pP->mme_ue_s1ap_id, ue_context->imsi);
@@ -3059,7 +3059,9 @@ mme_app_handle_s1ap_handover_required(
   itti_s10_forward_relocation_request_t *forward_relocation_request_p = &message_p->ittiMsg.s10_forward_relocation_request;
   memset ((void*)forward_relocation_request_p, 0, sizeof (itti_s10_forward_relocation_request_t));
   forward_relocation_request_p->teid = 0;
-  forward_relocation_request_p->peer_ip = neigh_mme_ip_addr;
+  memcpy((void*)&forward_relocation_request_p->peer_ip, neigh_mme_ip_addr,
+   		  (neigh_mme_ip_addr->sa_family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
+
   /** Add it into the procedure (todo: hardcoded to ipv4). */
 //  s10_handover_procedure->remote_mme_teid.ipv4 = 1;
 //  s10_handover_procedure->remote_mme_teid.interface_type = S10_MME_GTP_C;
@@ -3072,7 +3074,7 @@ mme_app_handle_s1ap_handover_required(
   /*
    * Create a new handover procedure and begin processing.
    */
-  s10_handover_procedure = mme_app_create_s10_procedure_mme_handover(ue_context, false, MME_APP_S10_PROC_TYPE_INTER_MME_HANDOVER);
+  s10_handover_procedure = mme_app_create_s10_procedure_mme_handover(ue_context, false, MME_APP_S10_PROC_TYPE_INTER_MME_HANDOVER, neigh_mme_ip_addr);
   if(!s10_handover_procedure){
     OAILOG_ERROR (LOG_MME_APP, "Could not create new handover procedure for UE with ue_id " MME_UE_S1AP_ID_FMT " IMSI " IMSI_64_FMT " in EMM_REGISTERED state. Rejecting further procedures. \n",
         handover_required_pP->mme_ue_s1ap_id, ue_context->imsi);
@@ -3088,11 +3090,8 @@ mme_app_handle_s1ap_handover_required(
   memcpy((void*)&s10_handover_procedure->target_ecgi, (void*)&handover_required_pP->global_enb_id, sizeof(handover_required_pP->global_enb_id)); /**< Home or macro enb id. */
   memcpy((void*)&s10_handover_procedure->imsi, &ue_nas_ctx->_imsi, sizeof(imsi_t));
 
-  s10_handover_procedure->proc.peer_ip = neigh_mme_ip_addr;
-  // todo: teid also needs to be set.
-
   /** Set the eNB type. */
-//  s10_handover_procedure->target_enb_type = handover_required_pP->target_enb_type;
+  //  s10_handover_procedure->target_enb_type = handover_required_pP->target_enb_type;
 
   /*
    * Set the source values, too. We might need it if the MME_STATUS_TRANSFER has to be sent after Handover Notify (emulator errors).
@@ -3323,7 +3322,9 @@ mme_app_handle_handover_cancel(
    relocation_cancel_request_p->teid = s10_handover_proc->remote_mme_teid.teid; /**< May or may not be 0. */
    relocation_cancel_request_p->local_teid = ue_context->local_mme_teid_s10; /**< May or may not be 0. */
    // todo: check the table!
-   relocation_cancel_request_p->peer_ip = s10_handover_proc->proc.peer_ip;
+   memcpy((void*)&relocation_cancel_request_p->peer_ip, s10_handover_proc->proc.peer_ip,
+ 		  (s10_handover_proc->proc.peer_ip->sa_family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
+
    /** IMSI. */
    memcpy((void*)&relocation_cancel_request_p->imsi, &emm_context->_imsi, sizeof(imsi_t));
    MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S10_MME, NULL, 0, "0 RELOCATION_CANCEL_REQUEST_MESSAGE");
@@ -3438,7 +3439,7 @@ mme_app_handle_forward_relocation_request(
      OAILOG_DEBUG (LOG_MME_APP, "Target ENB type %d cannot be handovered to. Rejecting S10 handover request.. \n",
          forward_relocation_request_pP->target_identification.target_type);
      mme_app_send_s10_forward_relocation_response_err(forward_relocation_request_pP->s10_source_mme_teid.teid,
-         forward_relocation_request_pP->peer_ip, forward_relocation_request_pP->trxn, RELOCATION_FAILURE);
+         &forward_relocation_request_pP->peer_ip, forward_relocation_request_pP->trxn, RELOCATION_FAILURE);
      OAILOG_FUNC_OUT (LOG_MME_APP);
  }
  /** Check the target-ENB is reachable. */
@@ -3455,21 +3456,21 @@ mme_app_handle_forward_relocation_request(
    }else{
      /** The target PLMN and TAC are not served by this MME. */
      OAILOG_ERROR(LOG_MME_APP, "Target ENB_ID %u is NOT served by the current MME. \n", enb_id);
-     mme_app_send_s10_forward_relocation_response_err(forward_relocation_request_pP->s10_source_mme_teid.teid, forward_relocation_request_pP->peer_ip, forward_relocation_request_pP->trxn, RELOCATION_FAILURE);
+     mme_app_send_s10_forward_relocation_response_err(forward_relocation_request_pP->s10_source_mme_teid.teid, &forward_relocation_request_pP->peer_ip, forward_relocation_request_pP->trxn, RELOCATION_FAILURE);
      OAILOG_FUNC_OUT (LOG_MME_APP);
    }
  }else{
    /** The target PLMN and TAC are not served by this MME. */
    OAILOG_ERROR(LOG_MME_APP, "TARGET TAC " TAC_FMT " is NOT served by current MME. \n", forward_relocation_request_pP->target_identification.target_id.macro_enb_id.tac);
    mme_app_send_s10_forward_relocation_response_err(forward_relocation_request_pP->s10_source_mme_teid.teid,
-		   forward_relocation_request_pP->peer_ip, forward_relocation_request_pP->trxn, RELOCATION_FAILURE);
+		   &forward_relocation_request_pP->peer_ip, forward_relocation_request_pP->trxn, RELOCATION_FAILURE);
    /** No UE context or tunnel endpoint is allocated yet. */
    OAILOG_FUNC_OUT (LOG_MME_APP);
  }
  /** We should only send the handover request and not deal with anything else. */
  if ((ue_context = mme_create_new_ue_context ()) == NULL) {
    /** Send a negative response before crashing. */
-   mme_app_send_s10_forward_relocation_response_err(forward_relocation_request_pP->s10_source_mme_teid.teid, forward_relocation_request_pP->peer_ip, forward_relocation_request_pP->trxn, SYSTEM_FAILURE);
+   mme_app_send_s10_forward_relocation_response_err(forward_relocation_request_pP->s10_source_mme_teid.teid, &forward_relocation_request_pP->peer_ip, forward_relocation_request_pP->trxn, SYSTEM_FAILURE);
    /**
     * Error during UE context malloc
     */
@@ -3482,7 +3483,7 @@ mme_app_handle_forward_relocation_request(
    /** Deallocate the ue context and remove from MME_APP map. */
    mme_remove_ue_context (&mme_app_desc.mme_ue_contexts, ue_context);
    /** Send back failure. */
-   mme_app_send_s10_forward_relocation_response_err(forward_relocation_request_pP->s10_source_mme_teid.teid, forward_relocation_request_pP->peer_ip, forward_relocation_request_pP->trxn, RELOCATION_FAILURE);
+   mme_app_send_s10_forward_relocation_response_err(forward_relocation_request_pP->s10_source_mme_teid.teid, &forward_relocation_request_pP->peer_ip, forward_relocation_request_pP->trxn, RELOCATION_FAILURE);
    OAILOG_FUNC_OUT (LOG_MME_APP);
  }
  OAILOG_DEBUG (LOG_MME_APP, "MME_APP_INITIAL_UE_MESSAGE. Allocated new MME UE context and new mme_ue_s1ap_id. " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
@@ -3515,7 +3516,7 @@ mme_app_handle_forward_relocation_request(
   * Store all pending PDN connections in it.
   * Each time a CSResp for a specific APN arrives, send another CSReq if needed.
   */
- s10_proc_mme_handover = mme_app_create_s10_procedure_mme_handover(ue_context, true, MME_APP_S10_PROC_TYPE_INTER_MME_HANDOVER);
+ s10_proc_mme_handover = mme_app_create_s10_procedure_mme_handover(ue_context, true, MME_APP_S10_PROC_TYPE_INTER_MME_HANDOVER, &forward_relocation_request_pP->peer_ip);
  DevAssert(s10_proc_mme_handover);
 
  /*
@@ -3823,7 +3824,8 @@ mme_app_handle_forward_access_context_notification(
       &message_p->ittiMsg.s10_forward_access_context_acknowledge;
   s10_mme_forward_access_context_acknowledge_p->teid        = s10_handover_process->remote_mme_teid.teid;  /**< Set the target TEID. */
   s10_mme_forward_access_context_acknowledge_p->local_teid  = ue_context->local_mme_teid_s10;   /**< Set the local TEID. */
-  s10_mme_forward_access_context_acknowledge_p->peer_ip     = s10_handover_process->proc.peer_ip; /**< Set the target TEID. */
+  memcpy((void*)&s10_mme_forward_access_context_acknowledge_p->peer_ip, s10_handover_process->proc.peer_ip, s10_handover_process->proc.peer_ip->sa_family == AF_INET ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
+
   s10_mme_forward_access_context_acknowledge_p->trxn        = forward_access_context_notification_pP->trxn; /**< Set the target TEID. */
   /** Check that there is a pending handover process. */
   if(ue_context->mm_state != UE_UNREGISTERED){
@@ -3859,7 +3861,9 @@ mme_app_handle_forward_access_context_notification(
 	  forward_relocation_complete_notification_p->teid = s10_handover_process->remote_mme_teid.teid;       /**< Target S10-MME TEID. todo: what if multiple? */
 	  /** Set the local TEID. */
 	  forward_relocation_complete_notification_p->local_teid = ue_context->local_mme_teid_s10;        /**< Local S10-MME TEID. */
-	  forward_relocation_complete_notification_p->peer_ip = s10_handover_process->proc.peer_ip; /**< Set the target TEID. */
+	  memcpy((void*)&forward_relocation_complete_notification_p->peer_ip, s10_handover_process->proc.peer_ip,
+			  s10_handover_process->proc.peer_ip->sa_family == AF_INET ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
+
 	  OAILOG_INFO(LOG_MME_APP, "Sending FW_RELOC_COMPLETE_NOTIF TO %X with remote S10-TEID " TEID_FMT ". \n.",
 			  forward_relocation_complete_notification_p->peer_ip, forward_relocation_complete_notification_p->teid);
 
@@ -4229,7 +4233,9 @@ mme_app_handle_enb_status_transfer(
    /** Set the target S10 TEID. */
    forward_access_context_notification_p->teid           = s10_handover_proc->remote_mme_teid.teid; /**< Only a single target-MME TEID can exist at a time. */
    forward_access_context_notification_p->local_teid     = ue_context->local_mme_teid_s10; /**< Only a single target-MME TEID can exist at a time. */
-   forward_access_context_notification_p->peer_ip 		 = s10_handover_proc->proc.peer_ip;
+   memcpy((void*)&forward_access_context_notification_p->peer_ip, s10_handover_proc->proc.peer_ip,
+    		  (s10_handover_proc->proc.peer_ip->sa_family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
+
    /** Set the E-UTRAN container. */
    forward_access_context_notification_p->eutran_container.container_type = 3;
    forward_access_context_notification_p->eutran_container.container_value = s1ap_status_transfer_pP->bearerStatusTransferList_buffer;
@@ -4355,9 +4361,8 @@ mme_app_handle_s1ap_handover_notify(
 	      forward_relocation_complete_notification_p->teid = s10_handover_proc->remote_mme_teid.teid;       /**< Target S10-MME TEID. todo: what if multiple? */
 	      /** Set the local TEID. */
 	      forward_relocation_complete_notification_p->local_teid = ue_context->local_mme_teid_s10;        /**< Local S10-MME TEID. */
-	      forward_relocation_complete_notification_p->peer_ip = s10_handover_proc->proc.peer_ip; /**< Set the target TEID. */
-	      OAILOG_INFO(LOG_MME_APP, "Sending FW_RELOC_COMPLETE_NOTIF TO %X with remote S10-TEID " TEID_FMT ". \n.",
-	          forward_relocation_complete_notification_p->peer_ip, forward_relocation_complete_notification_p->teid);
+	      memcpy((void*)&forward_relocation_complete_notification_p->peer_ip, s10_handover_proc->proc.peer_ip,
+	        		  (s10_handover_proc->proc.peer_ip->sa_family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
 
 	      // todo: remove this and set at correct position!
 	      mme_ue_context_update_ue_sig_connection_state (&mme_app_desc.mme_ue_contexts, ue_context, ECM_CONNECTED);
@@ -4418,7 +4423,7 @@ mme_app_handle_forward_relocation_complete_notification(
  /** Set the cause. */
  forward_relocation_complete_acknowledge_p->cause.cause_value      = REQUEST_ACCEPTED;                       /**< Check the cause.. */
  /** Set the peer IP. */
- forward_relocation_complete_acknowledge_p->peer_ip = s10_handover_proc->proc.peer_ip; /**< Set the target TEID. */
+// forward_relocation_complete_acknowledge_p->peer_ip = s10_handover_proc->proc.peer_ip; /**< Set the target TEID. */
  /** Set the transaction. */
  forward_relocation_complete_acknowledge_p->trxn = forward_relocation_complete_notification_pP->trxn; /**< Set the target TEID. */
  itti_send_msg_to_task (TASK_S10, INSTANCE_DEFAULT, message_p);

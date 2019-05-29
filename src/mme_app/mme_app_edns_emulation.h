@@ -35,7 +35,8 @@
 //int mme_app_edns_add_sgw_entry(bstring id, struct in_addr in_addr);
 //int mme_app_edns_add_mme_entry(bstring id, struct in_addr in_addr);
 
-struct sockaddr* mme_app_edns_get_wrr_entry(bstring id, const interface_type_t interface_type);
+void mme_app_edns_get_wrr_entry(bstring id, const interface_type_t interface_type, struct sockaddr** sockaddr);
+
 int mme_app_edns_add_wrr_entry(bstring id, struct sockaddr *edns_ip_addr, const interface_type_t interface_type);
 
 int  mme_app_edns_init (const mme_config_t * mme_config_p);

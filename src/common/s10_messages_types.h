@@ -105,9 +105,9 @@ typedef struct itti_s10_forward_relocation_request_s {
   // todo: if this is an buffer, how is it freed? does everything needs to be stacked
 
   /* S11 stack specific parameter. Not used in standalone epc mode */
-  uintptr_t                       trxn;                ///< Transaction identifier
-  struct sockaddr                 *peer_ip;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME
-  uint16_t                        peer_port;           ///< MME port for S-GW or S-GW port for MME
+  uintptr_t                       trxn;                 ///< Transaction identifier
+  struct sockaddr                 peer_ip;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME
+  uint16_t                        peer_port;            ///< MME port for S-GW or S-GW port for MME
 } itti_s10_forward_relocation_request_t;
 
 
@@ -156,8 +156,8 @@ typedef struct itti_s10_forward_relocation_response_s {
   ///< interfaces.
 
   /* S11 stack specific parameter. Not used in standalone epc mode */
-  void                    *trxn;               ///< Transaction identifier
-  struct sockaddr         *peer_ip;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME
+  struct sockaddr                 peer_ip;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME
+  void                    	      *trxn;               ///< Transaction identifier
 } itti_s10_forward_relocation_response_t;
 
 
@@ -182,7 +182,7 @@ typedef struct itti_s10_forward_access_context_notification_s {
 
   /* GTPv2-C specific parameters */
   void                      *trxn;                        ///< Transaction identifier
-  struct sockaddr           *peer_ip;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME
+  struct sockaddr           peer_ip;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME
 } itti_s10_forward_access_context_notification_t;
 
 /** @struct itti_s10_forward_access_context_notification_acknowledge_t
@@ -202,7 +202,7 @@ typedef struct itti_s10_forward_access_context_acknowledge_s {
 
   /* GTPv2-C specific parameters */
   void                      *trxn;                        ///< Transaction identifier
-  struct sockaddr           *peer_ip;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME
+  struct sockaddr           peer_ip;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME
 } itti_s10_forward_access_context_acknowledge_t;
 
 
@@ -230,7 +230,7 @@ typedef struct itti_s10_forward_relocation_complete_notification_s {
 
   /* GTPv2-C specific parameters */
   void                      *trxn;                        ///< Transaction identifier
-  struct sockaddr           *peer_ip;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME
+  struct sockaddr           peer_ip;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME
 } itti_s10_forward_relocation_complete_notification_t;
 
 //-----------------------------------------------------------------------------
@@ -251,7 +251,7 @@ typedef struct itti_s10_forward_relocation_complete_acknowledge_s {
   gtpv2c_cause_t                 cause;               ///<
   // Private Extension Private Extension        ///< optional
   /* S11 stack specific parameter. Not used in standalone epc mode */
-  struct sockaddr           *peer_ip;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME
+//  struct sockaddr           *peer_ip;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME
   void                      *trxn;                      ///< Transaction identifier
 } itti_s10_forward_relocation_complete_acknowledge_t;
 
@@ -287,9 +287,8 @@ typedef struct itti_s10_context_request_s{
   /* S11 stack specific parameter. Not used in standalone epc mode */
 
   void                            *trxn;                ///< Transaction identifier
-  struct sockaddr                 *peer_ip;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME
+  struct sockaddr                 peer_ip;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME
   uint16_t                        peer_port;           ///< MME port for S-GW or S-GW port for MME
-
 } itti_s10_context_request_t;
 
 //-----------------------------------------------------------------------------
@@ -344,7 +343,7 @@ typedef struct itti_s10_context_response_s{
   /* S11 stack specific parameter. Not used in standalone epc mode */
   void*                           trxnId;                      ///< Transaction identifier (received) or the transaction itself (when sent)
 
-  struct sockaddr                 *peer_ip;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME
+  struct sockaddr                 peer_ip;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME
   uint16_t                        peer_port;           ///< MME port for S-GW or S-GW port for MME
   uint16_t                        local_port;           ///< MME port for S-GW or S-GW port for MME
 } itti_s10_context_response_t;
@@ -372,7 +371,7 @@ typedef struct itti_s10_context_acknowledge_s {
   // Private Extension Private Extension        ///< optional
 
   /* S11 stack specific parameter. Not used in standalone epc mode */
-  struct sockaddr              *peer_ip;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME
+  struct sockaddr               peer_ip;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME
   uint16_t                      peer_port;      ///< MME port for S-GW or S-GW port for MME
   uint16_t                      local_port;      ///< MME port for S-GW or S-GW port for MME
 } itti_s10_context_acknowledge_t;
@@ -391,7 +390,7 @@ typedef struct itti_s10_relocation_cancel_request_s {
   // Private Extension Private Extension        ///< optional
 
   /* S11 stack specific parameter. Not used in standalone epc mode */
-  struct sockaddr              *peer_ip;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME
+  struct sockaddr              peer_ip;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME
   uint16_t                      peer_port;      ///< MME port for S-GW or S-GW port for MME
   void                         *trxn;           ///< Transaction identifier
 } itti_s10_relocation_cancel_request_t;
@@ -410,7 +409,7 @@ typedef struct itti_s10_relocation_cancel_response_s {
   // Private Extension Private Extension        ///< optional
 
   /* S11 stack specific parameter. Not used in standalone epc mode */
-  struct sockaddr              *peer_ip;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME
+//  struct sockaddr              peer_ip;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME
   uint16_t                      peer_port;      ///< MME port for S-GW or S-GW port for MME
   void                         *trxn;           ///< Transaction identifier
 } itti_s10_relocation_cancel_response_t;
@@ -423,7 +422,7 @@ typedef struct itti_s10_remove_ue_tunnel_s {
   /** Local Tunnel TEID. */
   teid_t                  local_teid;                ///< S10 MME Tunnel Endpoint Identifier
 
-  struct sockaddr         *peer_ip;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME
+  struct sockaddr         peer_ip;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME
   // here fields listed in 3GPP TS 29.274
 
   /** Cause to set (like error cause in GTPV2c State Machine). */

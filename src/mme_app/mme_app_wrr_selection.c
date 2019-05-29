@@ -59,7 +59,7 @@ void mme_app_select_service(const tai_t * const tai, const struct sockaddr ** se
   if (0 < snprintf(tmp, 8, "%02x", tai->tac & 0x00FF)) {
     bcatcstr(application_unique_string, tmp);
   } else {
-	  memset(service_ip_addr, 0, sizeof(struct sockaddr));
+	  memset(*service_ip_addr, 0, sizeof(struct sockaddr));
     return;
   }
   bcatcstr(application_unique_string, ".tac-hb");
@@ -89,7 +89,7 @@ void mme_app_select_service(const tai_t * const tai, const struct sockaddr ** se
   }
   bcatcstr(application_unique_string, ".3gppnetwork.org");
 
-  *service_ip_addr = mme_app_edns_get_wrr_entry(application_unique_string, interface_type);
+  mme_app_edns_get_wrr_entry(application_unique_string, interface_type, service_ip_addr);
 
   if(*service_ip_addr){
 	  if((*service_ip_addr)->sa_family == AF_INET) {

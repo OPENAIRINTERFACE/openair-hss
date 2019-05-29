@@ -543,7 +543,10 @@ int mme_app_remove_s10_tunnel_endpoint(teid_t local_teid, struct sockaddr *peer_
   MessageDef *message_p = itti_alloc_new_message (TASK_MME_APP, S10_REMOVE_UE_TUNNEL);
   DevAssert (message_p != NULL);
   message_p->ittiMsg.s10_remove_ue_tunnel.local_teid   = local_teid;
-  message_p->ittiMsg.s10_remove_ue_tunnel.peer_ip      = peer_ip;
+
+  memcpy((void*)&message_p->ittiMsg.s10_remove_ue_tunnel.peer_ip, peer_ip,
+   		  (peer_ip->sa_family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
+
 //  message_p->ittiMsg.s10_remove_ue_tunnel.cause = LOCAL_DETACH;
   if(local_teid == (teid_t)0 ){
     OAILOG_DEBUG (LOG_MME_APP, "Sending remove tunnel request for with null teid! \n");
@@ -982,7 +985,9 @@ void mme_app_itti_forward_relocation_response(ue_context_t *ue_context, mme_app_
    * todo: Get the MME from the origin TAI.
    * Currently only one MME is supported.
    */
-  forward_relocation_response_p->peer_ip = s10_handover_proc->proc.peer_ip; /**< todo: Check this is correct. */
+  memcpy((void*)&forward_relocation_response_p->peer_ip, s10_handover_proc->proc.peer_ip,
+  (s10_handover_proc->proc.peer_ip->sa_family == AF_INET ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6)));
+
   forward_relocation_response_p->trxn    = s10_handover_proc->forward_relocation_trxn;
   /** Set the cause. */
   forward_relocation_response_p->cause.cause_value = REQUEST_ACCEPTED;
@@ -1063,7 +1068,8 @@ void mme_app_send_s10_forward_relocation_response_err(teid_t mme_source_s10_teid
    */
   forward_relocation_response_p->teid = mme_source_s10_teid;
   /** Set the IPv4 address of the source MME. */
-  forward_relocation_response_p->peer_ip = mme_source_ip_address;
+  memcpy((void*)&forward_relocation_response_p->peer_ip, mme_source_ip_address, mme_source_ip_address->sa_family == AF_INET ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
+
   forward_relocation_response_p->cause.cause_value = gtpv2cCause;
   forward_relocation_response_p->trxn  = trxn;
 
