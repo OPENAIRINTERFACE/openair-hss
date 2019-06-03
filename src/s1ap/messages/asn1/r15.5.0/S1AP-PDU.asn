@@ -1,0 +1,516 @@
+S1AP-PDU {
+    itu-t (0) identified-organization (4) etsi (0) mobileDomain (0)
+    eps-Access (21) modules (3) s1ap (1) version1 (1) }
+
+DEFINITIONS AUTOMATIC TAGS ::=
+
+BEGIN
+
+IMPORTS
+    S1ap-Criticality,
+    S1ap-ProcedureCode,
+    S1ap-ProtocolIE-ID
+
+FROM S1AP-CommonDataTypes
+
+    s1ap-maxProtocolIEs
+
+FROM S1AP-Constants;
+
+S1AP-PDU ::= CHOICE {
+    initiatingMessage       InitiatingMessage,
+    successfulOutcome       SuccessfulOutcome,
+    unsuccessfulOutcome     UnsuccessfulOutcome,
+    ...
+}
+
+InitiatingMessage ::= SEQUENCE {
+    procedureCode   S1ap-ProcedureCode,
+    criticality     S1ap-Criticality,
+    value           ANY
+}
+
+SuccessfulOutcome ::= SEQUENCE {
+    procedureCode   S1ap-ProcedureCode,
+    criticality     S1ap-Criticality,
+    value           ANY
+}
+
+UnsuccessfulOutcome ::= SEQUENCE {
+    procedureCode   S1ap-ProcedureCode,
+    criticality     S1ap-Criticality,
+    value           ANY
+}
+
+HandoverRequired ::= SEQUENCE {
+    s1ap-HandoverRequired-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+HandoverCommand ::= SEQUENCE {
+    s1ap-HandoverCommand-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+HandoverPreparationFailure ::= SEQUENCE {
+    s1ap-HandoverPreparationFailure-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+HandoverRequest ::= SEQUENCE {
+    s1ap-HandoverRequest-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+HandoverRequestAcknowledge ::= SEQUENCE {
+    s1ap-HandoverRequestAcknowledge-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+HandoverFailure ::= SEQUENCE {
+    s1ap-HandoverFailure-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+HandoverNotify ::= SEQUENCE {
+    s1ap-HandoverNotify-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+PathSwitchRequest ::= SEQUENCE {
+    s1ap-PathSwitchRequest-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+PathSwitchRequestAcknowledge ::= SEQUENCE {
+    s1ap-PathSwitchRequestAcknowledge-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+PathSwitchRequestFailure ::= SEQUENCE {
+    s1ap-PathSwitchRequestFailure-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+HandoverCancel ::= SEQUENCE {
+    s1ap-HandoverCancel-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+HandoverCancelAcknowledge ::= SEQUENCE {
+    s1ap-HandoverCancelAcknowledge-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+E-RABSetupRequest ::= SEQUENCE {
+    s1ap-E-RABSetupRequest-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+E-RABSetupResponse ::= SEQUENCE {
+    s1ap-E-RABSetupResponse-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+E-RABModifyRequest ::= SEQUENCE {
+    s1ap-E-RABModifyRequest-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+E-RABModifyResponse ::= SEQUENCE {
+    s1ap-E-RABModifyResponse-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+E-RABReleaseCommand ::= SEQUENCE {
+    s1ap-E-RABReleaseCommand-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+E-RABReleaseResponse ::= SEQUENCE {
+    s1ap-E-RABReleaseResponse-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+E-RABReleaseIndication ::= SEQUENCE {
+    s1ap-E-RABReleaseIndication-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+InitialContextSetupRequest ::= SEQUENCE {
+    s1ap-InitialContextSetupRequest-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+InitialContextSetupResponse ::= SEQUENCE {
+    s1ap-InitialContextSetupResponse-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+InitialContextSetupFailure ::= SEQUENCE {
+    s1ap-InitialContextSetupFailure-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+Paging ::= SEQUENCE {
+    s1ap-Paging-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+UEContextReleaseRequest ::= SEQUENCE {
+    s1ap-UEContextReleaseRequest-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+UEContextReleaseCommand ::= SEQUENCE {
+    s1ap-UEContextReleaseCommand-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+UEContextReleaseComplete ::= SEQUENCE {
+    s1ap-UEContextReleaseComplete-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+UEContextModificationRequest ::= SEQUENCE {
+    s1ap-UEContextModificationRequest-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+UEContextModificationResponse ::= SEQUENCE {
+    s1ap-UEContextModificationResponse-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+UEContextModificationFailure ::= SEQUENCE {
+    s1ap-UEContextModificationFailure-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+UERadioCapabilityMatchRequest ::= SEQUENCE {
+    s1ap-UERadioCapabilityMatchRequest-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+UERadioCapabilityMatchResponse ::= SEQUENCE {
+    s1ap-UERadioCapabilityMatchResponse-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+DownlinkNASTransport ::= SEQUENCE {
+    s1ap-DownlinkNASTransport-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+InitialUEMessage ::= SEQUENCE {
+    s1ap-InitialUEMessage-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+UplinkNASTransport ::= SEQUENCE {
+    s1ap-UplinkNASTransport-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+NASNonDeliveryIndication ::= SEQUENCE {
+    s1ap-NASNonDeliveryIndication-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+RerouteNASRequest ::= SEQUENCE {
+    s1ap-RerouteNASRequest-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+NASDeliveryIndication ::= SEQUENCE {
+    s1ap-NASDeliveryIndication-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+Reset ::= SEQUENCE {
+    s1ap-Reset-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+ResetAcknowledge ::= SEQUENCE {
+    s1ap-ResetAcknowledge-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+ErrorIndication ::= SEQUENCE {
+    s1ap-ErrorIndication-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+S1SetupRequest ::= SEQUENCE {
+    s1ap-S1SetupRequest-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+S1SetupResponse ::= SEQUENCE {
+    s1ap-S1SetupResponse-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+S1SetupFailure ::= SEQUENCE {
+    s1ap-S1SetupFailure-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+ENBConfigurationUpdate ::= SEQUENCE {
+    s1ap-ENBConfigurationUpdate-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+ENBConfigurationUpdateAcknowledge ::= SEQUENCE {
+    s1ap-ENBConfigurationUpdateAcknowledge-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+ENBConfigurationUpdateFailure ::= SEQUENCE {
+    s1ap-ENBConfigurationUpdateFailure-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+MMEConfigurationUpdate ::= SEQUENCE {
+    s1ap-MMEConfigurationUpdate-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+MMEConfigurationUpdateAcknowledge ::= SEQUENCE {
+    s1ap-MMEConfigurationUpdateAcknowledge-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+MMEConfigurationUpdateFailure ::= SEQUENCE {
+    s1ap-MMEConfigurationUpdateFailure-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+DownlinkS1cdma2000tunneling ::= SEQUENCE {
+    s1ap-DownlinkS1cdma2000tunneling-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+UplinkS1cdma2000tunneling ::= SEQUENCE {
+    s1ap-UplinkS1cdma2000tunneling-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+UECapabilityInfoIndication ::= SEQUENCE {
+    s1ap-UECapabilityInfoIndication-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+ENBStatusTransfer ::= SEQUENCE {
+    s1ap-ENBStatusTransfer-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+MMEStatusTransfer ::= SEQUENCE {
+    s1ap-MMEStatusTransfer-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+TraceStart ::= SEQUENCE {
+    s1ap-TraceStart-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+TraceFailureIndication ::= SEQUENCE {
+    s1ap-TraceFailureIndication-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+DeactivateTrace ::= SEQUENCE {
+    s1ap-DeactivateTrace-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+CellTrafficTrace ::= SEQUENCE {
+    s1ap-CellTrafficTrace-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+LocationReportingControl ::= SEQUENCE {
+    s1ap-LocationReportingControl-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+LocationReportingFailureIndication ::= SEQUENCE {
+    s1ap-LocationReportingFailureIndication-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+LocationReport ::= SEQUENCE {
+    s1ap-LocationReport-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+OverloadStart ::= SEQUENCE {
+    s1ap-OverloadStart-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+OverloadStop ::= SEQUENCE {
+    s1ap-OverloadStop-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+WriteReplaceWarningRequest ::= SEQUENCE {
+    s1ap-WriteReplaceWarningRequest-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+WriteReplaceWarningResponse ::= SEQUENCE {
+    s1ap-WriteReplaceWarningResponse-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+ENBDirectInformationTransfer ::= SEQUENCE {
+    s1ap-ENBDirectInformationTransfer-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+MMEDirectInformationTransfer ::= SEQUENCE {
+    s1ap-MMEDirectInformationTransfer-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+ENBConfigurationTransfer ::= SEQUENCE {
+    s1ap-ENBConfigurationTransfer-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+MMEConfigurationTransfer ::= SEQUENCE {
+    s1ap-MMEConfigurationTransfer-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+PrivateMessage ::= SEQUENCE {
+    s1ap-PrivateMessage-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+KillRequest ::= SEQUENCE {
+    s1ap-KillRequest-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+KillResponse ::= SEQUENCE {
+    s1ap-KillResponse-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+PWSRestartIndication ::= SEQUENCE {
+    s1ap-PWSRestartIndication-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+PWSFailureIndication ::= SEQUENCE {
+    s1ap-PWSFailureIndication-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+DownlinkUEAssociatedLPPaTransport ::= SEQUENCE {
+    s1ap-DownlinkUEAssociatedLPPaTransport-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+UplinkUEAssociatedLPPaTransport ::= SEQUENCE {
+    s1ap-UplinkUEAssociatedLPPaTransport-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+DownlinkNonUEAssociatedLPPaTransport ::= SEQUENCE {
+    s1ap-DownlinkNonUEAssociatedLPPaTransport-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+UplinkNonUEAssociatedLPPaTransport ::= SEQUENCE {
+    s1ap-UplinkNonUEAssociatedLPPaTransport-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+E-RABModificationIndication ::= SEQUENCE {
+    s1ap-E-RABModificationIndication-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+E-RABModificationConfirm ::= SEQUENCE {
+    s1ap-E-RABModificationIndication-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+UEContextModificationIndication ::= SEQUENCE {
+    s1ap-UEContextModificationIndication-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+UEContextModificationConfirm ::= SEQUENCE {
+    s1ap-UEContextModificationConfirm-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+UEContextSuspendRequest ::= SEQUENCE {
+    s1ap-UEContextSuspendRequest-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+UEContextSuspendResponse ::= SEQUENCE {
+    s1ap-UEContextSuspendResponse-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+UEContextResumeRequest ::= SEQUENCE {
+    s1ap-UEContextResumeRequest-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+UEContextResumeResponse ::= SEQUENCE {
+    s1ap-UEContextResumeResponse-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+UEContextResumeFailure ::= SEQUENCE {
+    s1ap-UEContextResumeFailure-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+ConnectionEstablishmentIndication ::= SEQUENCE {
+    s1ap-ConnectionEstablishmentIndication-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+RetrieveUEInformation ::= SEQUENCE {
+    s1ap-RetrieveUEInformation-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+UEInformationTransfer ::= SEQUENCE {
+    s1ap-UEInformationTransfer-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+ENBCPRelocationIndication ::= SEQUENCE {
+    s1ap-ENBCPRelocationIndication-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+MMECPRelocationIndication ::= SEQUENCE {
+    s1ap-MMECPRelocationIndication-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+SecondaryRATDataUsageReport ::= SEQUENCE {
+    s1ap-SecondaryRATDataUsageReport-ies SEQUENCE (SIZE (0..s1ap-maxProtocolIEs)) OF S1ap-IE,
+    ...
+}
+
+S1ap-IE ::= SEQUENCE {
+    id          S1ap-ProtocolIE-ID,
+    criticality S1ap-Criticality,
+    value       ANY
+}
+
+END
