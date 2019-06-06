@@ -576,8 +576,6 @@ static nw_rc_t nwGtpv2cCreateLocalTunnel (
     OAILOG_DEBUG (LOG_GTPV2C, "Deleting local tunnel with teid '0x%x' and peer IP %s\n", pTunnel->teid, ip);
     rc = nwGtpv2cTunnelDelete (thiz, pTunnel);
     NW_ASSERT (NW_OK == rc);
-    nw_gtpv2c_tunnel_t *pLocalTunnel_test = RB_MIN (NwGtpv2cTunnelMap, &(thiz->tunnelMap));
-    DevAssert(!pLocalTunnel_test);
 
     OAILOG_FUNC_RETURN (LOG_GTPV2C, NW_OK);
   }
