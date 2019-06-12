@@ -98,6 +98,7 @@ build_cpp_driver()
 build_pistache()
 {
   pushd $OPENAIRCN_DIR/build/git_submodules/pistache
+  git checkout -f 117db02eda9d63935193ad98be813987f6c32b33
   rm -rf build
   mkdir -p build
   cd build
