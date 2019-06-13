@@ -3603,6 +3603,10 @@ void mme_app_send_s1ap_handover_request(mme_ue_s1ap_id_t mme_ue_s1ap_id,
   /** Set the bearer contexts to be created. Not changing any bearer state. */
   handover_request_p->bearer_ctx_to_be_setup_list = calloc(1, sizeof(bearer_contexts_to_be_created_t));
   memcpy((void*)handover_request_p->bearer_ctx_to_be_setup_list, bcs_tbc, sizeof(*bcs_tbc));
+  if(!handover_request_p->bearer_ctx_to_be_setup_list->bearer_contexts[0].bearer_level_qos.pl) {
+	  OAILOG_ERROR (LOG_MME_APP, "Handover REQUEST HAS NO PL SET for UE "MME_UE_S1AP_ID_FMT " Setting 13!!. \n.", mme_ue_s1ap_id);
+	  handover_request_p->bearer_ctx_to_be_setup_list->bearer_contexts[0].bearer_level_qos.pl = 13;
+  }
 
   /** Set the Security Capabilities. */
   handover_request_p->security_capabilities_encryption_algorithms = encryption_algorithm_capabilities;
