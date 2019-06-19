@@ -3844,9 +3844,9 @@ mme_app_handle_forward_access_context_notification(
   /** Send a S1AP MME Status Transfer Message the target eNodeB. */
   // todo: macro/home enb id
   mme_app_send_s1ap_mme_status_transfer(ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, s10_handover_process->target_id.target_id.macro_enb_id.enb_id,
-      (void*)NULL/*forward_access_context_notification_pP->eutran_container.container_value*/);
+      forward_access_context_notification_pP->status_transfer_bearer_list);
   /** Unlink it from the message. */
-  forward_access_context_notification_pP->eutran_container.container_value = NULL;
+  forward_access_context_notification_pP->status_transfer_bearer_list = NULL;
 
   /*
    * Setting the ECM state to ECM_CONNECTED with Handover Request Acknowledge.
@@ -4222,9 +4222,6 @@ mme_app_handle_enb_status_transfer(
     * We do not check that the target-eNB exists. We did not modify any contexts.
     * Concatenate with header (todo: OAI: how to do this properly?)
     */
-//   char enbStatusPrefix[] = {0x00, 0x00, 0x00, 0x59, 0x40, 0x0b};
-//   bstring enbStatusPrefixBstr = blk2bstr (enbStatusPrefix, 6);
-//   bconcat(enbStatusPrefixBstr, s1ap_status_transfer_pP->bearerStatusTransferList_buffer);
    /** No need to unlink here. */
    // todo: macro/home
    mme_app_send_s1ap_mme_status_transfer(ue_context->mme_ue_s1ap_id, s10_handover_proc->target_enb_ue_s1ap_id, s10_handover_proc->target_ecgi.cell_identity.enb_id,
@@ -4233,6 +4230,10 @@ mme_app_handle_enb_status_transfer(
    /** eNB-Status-Transfer message message will be freed. */
    OAILOG_FUNC_OUT (LOG_MME_APP);
  }else{
+   if (s1ap_status_transfer_pP->status_transfer_bearer_list == NULL){
+	   OAILOG_ERROR (LOG_MME_APP, " NULL UE transparent container\n" );
+	   OAILOG_FUNC_OUT (LOG_MME_APP);
+   }
    /* UE is DEREGISTERED. Assuming that it came from S10 inter-MME handover. Forwarding the eNB status information to the target-MME via Forward Access Context Notification. */
    message_p = itti_alloc_new_message (TASK_MME_APP, S10_FORWARD_ACCESS_CONTEXT_NOTIFICATION);
    DevAssert (message_p != NULL);
@@ -4245,14 +4246,10 @@ mme_app_handle_enb_status_transfer(
     		  (s10_handover_proc->proc.peer_ip->sa_family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
 
    /** Set the E-UTRAN container. */
-   forward_access_context_notification_p->eutran_container.container_type = 3;
-   forward_access_context_notification_p->eutran_container.container_value = NULL;//s1ap_status_transfer_pP->bearerStatusTransferList_buffer;
+   forward_access_context_notification_p->status_transfer_bearer_list = s1ap_status_transfer_pP->status_transfer_bearer_list;
    /** Unlink. */
-   // todo: inside array!! s1ap_status_transfer_pP->bearerStatusTransferList_buffer = NULL;
-   if (forward_access_context_notification_p->eutran_container.container_value == NULL){
-     OAILOG_ERROR (LOG_MME_APP, " NULL UE transparent container\n" );
-     OAILOG_FUNC_OUT (LOG_MME_APP);
-   }
+   s1ap_status_transfer_pP->status_transfer_bearer_list = NULL;
+
    MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S10_MME, NULL, 0, "MME_APP Sending S10 FORWARD_ACCESS_CONTEXT_NOTIFICATION to TARGET-MME with TEID " TEID_FMT,
        forward_access_context_notification_p->teid);
    /**

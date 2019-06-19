@@ -476,7 +476,12 @@ void itti_free_msg_content (MessageDef * const message_p)
 
   case S10_FORWARD_ACCESS_CONTEXT_NOTIFICATION:
     /** EUTRAN Container. */
-    bdestroy_wrapper(&message_p->ittiMsg.s10_forward_access_context_notification.eutran_container.container_value);
+	if(message_p->ittiMsg.s10_forward_access_context_notification.status_transfer_bearer_list) {
+		for(int i = 0; i < message_p->ittiMsg.s10_forward_access_context_notification.status_transfer_bearer_list->num_bearers; i++) {
+			bdestroy_wrapper(&message_p->ittiMsg.s10_forward_access_context_notification.status_transfer_bearer_list->bearerStatusTransferList_buffer[i]);
+		}
+		free_wrapper(&message_p->ittiMsg.s10_forward_access_context_notification.status_transfer_bearer_list);
+	}
     break;
   case S10_CONTEXT_REQUEST:
     bdestroy_wrapper(&message_p->ittiMsg.s10_context_request.complete_request_message.request_value);

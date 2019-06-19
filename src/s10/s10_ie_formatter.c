@@ -740,15 +740,21 @@ s10_f_container_ie_get_2 (
   uint8_t * ieValue,
   void *arg)
 {
-  F_Container_t                       *f_container= (F_Container_t*) arg;
-  DevAssert (f_container );
-  // todo: check the minimum length!
   uint8_t * p_ieValue = ieValue;
-
-  f_container->container_type = *p_ieValue & 0x0F;
-  p_ieValue++;
-  /** Allocating a new bstring. It will stay until it is manually deallocated. */
-  f_container->container_value = blk2bstr((void*)p_ieValue, ieLength -2); /**< Will it stay after ITTI message is sent, also in the destination ?*/
+  /** Skip the container type. */
+  status_transfer_bearer_list_t         *status = (status_transfer_bearer_list_t*) arg;
+  DevAssert (status);
+  p_ieValue = ((uint16_t *)p_ieValue) + 1; /**< Move by 2 (assuming first byte is 0). */
+  status->num_bearers = (*(p_ieValue)) + 1; /**< Skip to number of bearers. */
+  for(int i = 0; i < status->num_bearers; i++){
+	  p_ieValue = ((uint32_t *)p_ieValue) + 1; /**< Move by 4. */
+	  int length = *p_ieValue;
+	  p_ieValue++;
+	  // todo: check the minimum/maximum length!
+	  /** Allocating a new bstring. It will stay until it is manually deallocated. */
+	  status->bearerStatusTransferList_buffer[i] = blk2bstr((void*)p_ieValue, length);
+	  p_ieValue+=(length-1);
+  }
   return NW_OK;
 }
 

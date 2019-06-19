@@ -607,18 +607,25 @@ s10_mme_forward_access_context_notification(nw_gtpv2c_stack_handle_t *stack_p,
   /**
    * Concatenate with header (todo: OAI: how to do this properly?)
    */
-  char enbStatusPrefix[] = {0x00, 0x00, 0x00, 0x59, 0x40, 0x0b};
-  bstring enbStatusPrefixBstr = blk2bstr (enbStatusPrefix, 6);
-  bconcat(enbStatusPrefixBstr, forward_access_context_notif_p->eutran_container.container_value);
-
-  /** F-Container. */
-  rc = nwGtpv2cMsgAddIeFContainer((ulp_req.hMsg), NW_GTPV2C_IE_INSTANCE_ZERO,
-      (uint8_t*)enbStatusPrefixBstr->data,
-      blength(enbStatusPrefixBstr) + 1,
-      forward_access_context_notif_p->eutran_container.container_type);
-  DevAssert( NW_OK == rc );
-  /** Destroy the container. */
-  bdestroy_wrapper(&enbStatusPrefixBstr);
+  if(forward_access_context_notif_p->status_transfer_bearer_list){
+	  char enbStatusPrefix_length[] = {0x00, (forward_access_context_notif_p->status_transfer_bearer_list->num_bearers -1)};
+	  bstring enbStatusPrefixBstr_final = blk2bstr (enbStatusPrefix_length, 2);
+	  for(int num_bearer = 0; num_bearer < forward_access_context_notif_p->status_transfer_bearer_list->num_bearers; num_bearer ++) {
+		  char enbStatusPrefix[] = {0x00, 0x59, 0x40, forward_access_context_notif_p->status_transfer_bearer_list->bearerStatusTransferList_buffer[num_bearer]->slen};
+	  	  bstring enbStatusPrefixBstr = blk2bstr (enbStatusPrefix, 4);
+	  	  bconcat(enbStatusPrefixBstr, forward_access_context_notif_p->status_transfer_bearer_list->bearerStatusTransferList_buffer[num_bearer]);
+	  	  bconcat(enbStatusPrefixBstr_final, enbStatusPrefixBstr);
+	  	  bdestroy_wrapper(&enbStatusPrefixBstr);
+	  }
+	  /** F-Container. */
+	  rc = nwGtpv2cMsgAddIeFContainer((ulp_req.hMsg), NW_GTPV2C_IE_INSTANCE_ZERO,
+			  (uint8_t*)enbStatusPrefixBstr_final->data,
+			  blength(enbStatusPrefixBstr_final) + 1,
+			  3);
+	  DevAssert( NW_OK == rc );
+	  /** Destroy the container. */
+	  bdestroy_wrapper(&enbStatusPrefixBstr_final);
+  }
 
   /** Send the message. */
   rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
@@ -653,9 +660,11 @@ s10_mme_handle_forward_access_context_notification( nw_gtpv2c_stack_handle_t * s
    * E-UTRAN container (F-Container) Information Element.
    * Instance Zero is E-UTRAN. Only E-UTRAN will be supported.
    */
+  notif_p->status_transfer_bearer_list = calloc(1, sizeof(status_transfer_bearer_list_t));
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_F_CONTAINER, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
-      s10_f_container_ie_get_2, &notif_p->eutran_container);
+      s10_f_container_ie_get_2, notif_p->status_transfer_bearer_list);
   DevAssert (NW_OK == rc);
+  // todo: remove when error!
 
   /**
    * Run the parser

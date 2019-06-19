@@ -32,6 +32,7 @@
 
 #include "mme_ie_defs.h"
 #include "3gpp_29.274.h"
+#include "3gpp_36.413.h"
 
 // todo: the sender and receiver side both use the same messages?
 #define S10_FORWARD_RELOCATION_REQUEST(mSGpTR)                  (mSGpTR)->ittiMsg.s10_forward_relocation_request
@@ -175,7 +176,7 @@ typedef struct itti_s10_forward_access_context_notification_s {
   teid_t                     local_teid;  /**< Local TEID. */
   teid_t                     teid;       ///< not in specs for inner MME use
 
-  F_Container_t              eutran_container;
+  status_transfer_bearer_list_t *status_transfer_bearer_list;
   // todo: Indication : This IE shall be included if any of the flags are set to 1. SGW Change Indication:   - This flag shall be set to 1 if the target MME/SGSN   has selected a new SGW.
 
   // Private Extension   Private Extension
