@@ -432,6 +432,14 @@ s11_mme_handle_modify_bearer_response (
   DevAssert (NW_OK == rc);
   rc = nwGtpv2cMsgDelete (*stack_p, (pUlpApi->hMsg));
   DevAssert (NW_OK == rc);
+
+  /** Check the cause. */
+  if(resp_p->cause.cause_value == LATE_OVERLAPPING_REQUEST){
+	  pUlpApi->u_api_info.triggeredRspIndInfo.trx_flags |= LATE_OVERLAPPING_REQUEST;
+	  OAILOG_WARNING (LOG_S11, "Received a late overlapping request (MBR). Not forwarding message to MME_APP layer. \n");
+	  return RETURNok;
+  }
+
   return itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
 }
 

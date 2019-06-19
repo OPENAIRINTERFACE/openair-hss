@@ -1558,12 +1558,22 @@ mme_app_handle_s1ap_ue_context_release_complete (
          * Assuming normal completion of S10 Intra-MME handover.
          * Delete the S10 Handover Procedure.
          */
-        // todo: review this
         /* Update keys and ECM state. */
 //        mme_ue_context_update_ue_sig_connection_state (&mme_app_desc.mme_ue_contexts, ue_context, ECM_IDLE);
 
         if (ue_context->s10_procedures) {
-            mme_app_delete_s10_procedure_mme_handover(ue_context); // todo: generic s10 function
+        	/** If the procedure currently running does not have the enb_ue_s1ap_id in source or target, dismiss. */
+        	mme_app_s10_proc_mme_handover_t *s10_proc = mme_app_get_s10_procedure_mme_handover(ue_context);
+        	if(s10_proc) {
+        		if(ue_context->enb_ue_s1ap_id != s1ap_ue_context_release_complete->enb_ue_s1ap_id
+        				&& s10_proc->source_enb_ue_s1ap_id != s1ap_ue_context_release_complete->enb_ue_s1ap_id
+        				&& s10_proc->target_enb_ue_s1ap_id != s1ap_ue_context_release_complete->enb_ue_s1ap_id){
+        			 OAILOG_WARNING(LOG_MME_APP, "Received a late UE context release complete for ENB_UE_S1AP_ID " ENB_UE_S1AP_ID_FMT " for ueId " MME_UE_S1AP_ID_FMT ". "
+        					 "Not further processing the request.", s1ap_ue_context_release_complete->enb_ue_s1ap_id, ue_context->mme_ue_s1ap_id);
+        			 OAILOG_FUNC_OUT (LOG_MME_APP);
+        		}
+        	}
+            mme_app_delete_s10_procedure_mme_handover(ue_context);
         }
 
         /** Re-Establish the UE-Reference as the main reference. */
@@ -1578,7 +1588,7 @@ mme_app_handle_s1ap_ue_context_release_complete (
             mme_app_itti_ue_context_release(ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, ue_context->s1_ue_context_release_cause, ue_context->e_utran_cgi.cell_identity.enb_id);
 
           }else{
-            OAILOG_DEBUG(LOG_MME_APP, "No handover failure. Establishing the SCTP current UE_REFERENCE enb_ue_s1ap_ue_id " ENB_UE_S1AP_ID_FMT ". ", s1ap_ue_context_release_complete->enb_ue_s1ap_id);
+            OAILOG_DEBUG(LOG_MME_APP, "No handover failure. Establishing the SCTP current UE_REFERENCE enb_ue_s1ap_ue_id " ENB_UE_S1AP_ID_FMT ". ", ue_context->enb_ue_s1ap_id);
 
             /**
              * This will overwrite the association towards the old eNB if single MME S1AP handover.

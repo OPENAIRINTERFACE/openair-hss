@@ -271,6 +271,14 @@ s11_mme_handle_create_session_response (
   rc = nwGtpv2cMsgDelete (*stack_p, (pUlpApi->hMsg));
   DevAssert (NW_OK == rc);
 
+  /** Check the cause. */
+  if(resp_p->cause.cause_value == LATE_OVERLAPPING_REQUEST){
+	  pUlpApi->u_api_info.triggeredRspIndInfo.trx_flags |= LATE_OVERLAPPING_REQUEST;
+	  OAILOG_WARNING (LOG_S11, "Received a late overlapping request. Not forwarding message to MME_APP layer. \n");
+	  free_wrapper((void**)&resp_p->paa);
+	  return RETURNok;
+  }
+
   MSC_LOG_RX_MESSAGE (MSC_S11_MME, MSC_SGW, NULL, 0, "0 CREATE_SESSION_RESPONSE local S11 teid " TEID_FMT " num bearer ctxt %u", resp_p->teid,
     resp_p->bearer_contexts_created.num_bearer_context);
   return itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);

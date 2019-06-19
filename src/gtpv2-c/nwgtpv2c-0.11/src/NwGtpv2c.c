@@ -958,7 +958,7 @@ static nw_rc_t                            nwGtpv2cSendTriggeredReqIndToUlp (
   NW_IN nw_gtpv2c_stack_t * thiz,
   NW_IN nw_gtpv2c_error_t * pError,
   NW_IN uint32_t hUlpTrxn,
-  NW_IN uint8_t trxFlags,
+  NW_IN uint8_t * trxFlags_p,
   NW_IN uint16_t localPort,
   NW_IN uint16_t peerPort,
   NW_IN struct sockaddr *peerIp,
@@ -979,9 +979,10 @@ static nw_rc_t                            nwGtpv2cSendTriggeredReqIndToUlp (
     ulpApi.u_api_info.triggeredRspIndInfo.peerIp    = peerIp;
     ulpApi.u_api_info.triggeredRspIndInfo.hUlpTunnel = hUlpTunnel;
     ulpApi.u_api_info.triggeredRspIndInfo.error = *pError;
-    ulpApi.u_api_info.triggeredRspIndInfo.trx_flags = trxFlags;
+    ulpApi.u_api_info.triggeredRspIndInfo.trx_flags = *trxFlags_p;
     ulpApi.u_api_info.triggeredRspIndInfo.noDelete = noDelete;
     rc = thiz->ulp.ulpReqCallback (thiz->ulp.hUlp, &ulpApi);
+    *trxFlags_p = ulpApi.u_api_info.triggeredRspIndInfo.trx_flags;
     OAILOG_FUNC_RETURN (LOG_GTPV2C, rc);
   }
 
@@ -1271,10 +1272,14 @@ static nw_rc_t                            nwGtpv2cHandleUlpFindLocalTunnel (
       hUlpTunnel = (pTrxn->hTunnel ? ((nw_gtpv2c_tunnel_t *) (pTrxn->hTunnel))->hUlpTunnel : 0);
 
       if(remove){
+    	  /**
+    	   * Remove all except create session request.
+    	   * The remove flag might be changed for CSR.
+    	   */
           trx_flags = pTrxn->trx_flags;
-          RB_REMOVE (NwGtpv2cOutstandingTxSeqNumTrxnMap, &(thiz->outstandingTxSeqNumMap), pTrxn);
-          rc = nwGtpv2cTrxnDelete (&pTrxn);
-          NW_ASSERT (NW_OK == rc);
+          OAILOG_DEBUG (LOG_GTPV2C,  "Not removing the initial request transaction for message type %d, seqNo %x (altough remove flag set). \n",
+    	      			  msgType, keyTrxn.seqNum);
+
       } else {
     	  OAILOG_WARNING (LOG_GTPV2C,  "Not removing the initial request transaction for message type %d, seqNo %x. \n",
     			  msgType, keyTrxn.seqNum);
@@ -1299,7 +1304,20 @@ static nw_rc_t                            nwGtpv2cHandleUlpFindLocalTunnel (
         inet_ntop (peerIp->sa_family, (void*)peerIp, ip, peerIp->sa_family == AF_INET ? INET_ADDRSTRLEN : INET_ADDRSTRLEN);
         OAILOG_WARNING (LOG_GTPV2C,  "Malformed message received on TEID %u from peer %s. Notifying ULP.\n", ntohl ((*((uint32_t *) (msgBuf + 4)))), ip);
       }
-      rc = nwGtpv2cSendTriggeredRspIndToUlp (thiz, &error, keyTrxn.seqNum, trx_flags, localPort, peerPort, peerIp, hUlpTunnel, msgType, noDelete, hMsg);
+      rc = nwGtpv2cSendTriggeredRspIndToUlp (thiz, &error, keyTrxn.seqNum, &trx_flags, localPort, peerPort, peerIp, hUlpTunnel, msgType, noDelete, hMsg);
+      if(remove && !(trx_flags & INTERNAL_LATE_RESPONS_IND)){
+    	  OAILOG_WARNING (LOG_GTPV2C,  "Removing the initial request transaction for message type %d, seqNo %x in conclusion (not late response). \n",
+    			  msgType, keyTrxn.seqNum);
+    	  /** Remove the transaction. */
+    	  RB_REMOVE (NwGtpv2cOutstandingTxSeqNumTrxnMap, &(thiz->outstandingTxSeqNumMap), pTrxn);
+    	  rc = nwGtpv2cTrxnDelete (&pTrxn);
+    	  NW_ASSERT (NW_OK == rc);
+    	  remove = false;
+      } else {
+    	  OAILOG_WARNING (LOG_GTPV2C,  "Not removing the initial request transaction for message type %d, seqNo %x since it was a late response. \n",
+    			  msgType, keyTrxn.seqNum);
+    	  rc = NW_OK;
+      }
     } else {
       OAILOG_WARNING (LOG_GTPV2C,  "Response message without a matching outstanding request received! Discarding.\n");
       rc = NW_OK;

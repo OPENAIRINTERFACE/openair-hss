@@ -213,7 +213,7 @@ int s1ap_free_mme_encode_pdu(
   case S1AP_HANDOVER_REQUEST_LOG:
     return free_s1ap_handoverrequest(&message->msg.s1ap_HandoverRequestIEs);
   case S1AP_MME_STATUS_TRANSFER_LOG:
-    return free_s1ap_mmestatustransfer(&message->msg.s1ap_MMEStatusTransferIEs);
+	return free_s1ap_mmestatustransfer(&message->msg.s1ap_MMEStatusTransferIEs);
   case S1AP_PAGING_LOG:
     return free_s1ap_paging(&message->msg.s1ap_PagingIEs);
   case S1AP_PATH_SWITCH_ACK_LOG:

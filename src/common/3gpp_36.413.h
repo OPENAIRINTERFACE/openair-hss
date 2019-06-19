@@ -128,6 +128,12 @@ typedef struct e_rab_modify_list_s {
 
 #include "S1ap-Cause.h"
 
+typedef struct status_transfer_bearer_list_s{
+#define MSG_STATUS_TRANSFER_MAX_BEARER_CONTEXTS   11
+	  int					  num_bearers;
+	  bstring                 bearerStatusTransferList_buffer[MSG_STATUS_TRANSFER_MAX_BEARER_CONTEXTS]; /**< Target-ToSource Transparent Container bearer items. */
+}status_transfer_bearer_list_t;
+
 typedef struct e_rab_item_s {
   e_rab_id_t                       e_rab_id;
   S1ap_Cause_t                     cause;

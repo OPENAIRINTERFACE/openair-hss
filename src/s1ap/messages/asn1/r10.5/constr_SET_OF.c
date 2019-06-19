@@ -989,7 +989,7 @@ SET_OF_decode_aper(asn_codec_ctx_t *opt_codec_ctx, asn_TYPE_descriptor_t *td,
 	if(ct && ct->effective_bits >= 0) {
 		/* X.691, #19.5: No length determinant */
 // 		nelems = per_get_few_bits(pd, ct->effective_bits);
-		nelems = aper_get_nsnnwn(pd, ct->upper_bound - ct->lower_bound);
+		nelems = aper_get_nsnnwn(pd, ct->upper_bound - ct->lower_bound + 1);
 		ASN_DEBUG("Preparing to fetch %ld+%"PRIdMAX" elements from %s",
 			(long)nelems, ct->lower_bound, td->name);
 		if(nelems < 0)  _ASN_DECODE_STARVED;

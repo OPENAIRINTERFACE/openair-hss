@@ -1798,11 +1798,6 @@ s1ap_mme_handle_handover_resource_allocation_response(const sctp_assoc_id_t asso
   message_p = itti_alloc_new_message (TASK_S1AP, S1AP_HANDOVER_REQUEST_ACKNOWLEDGE);
   AssertFatal (message_p != NULL, "itti_alloc_new_message Failed");
   memset ((void *)&message_p->ittiMsg.s1ap_handover_request_acknowledge, 0, sizeof (itti_s1ap_handover_request_acknowledge_t));
-  /*
-   * Bad, very bad cast...
-   */
-  eRABAdmittedItemIEs_p = (S1ap_E_RABAdmittedItemIEs_t *)
-    handoverRequestAcknowledgeIEs_p->e_RABAdmittedList.s1ap_E_RABAdmittedItem.array[0];
 
   S1AP_HANDOVER_REQUEST_ACKNOWLEDGE (message_p).mme_ue_s1ap_id = handoverRequestAcknowledgeIEs_p->mme_ue_s1ap_id;
   S1AP_HANDOVER_REQUEST_ACKNOWLEDGE (message_p).enb_ue_s1ap_id = ue_ref_p->enb_ue_s1ap_id;
@@ -1991,9 +1986,11 @@ s1ap_mme_handle_enb_status_transfer(const sctp_assoc_id_t assoc_id, const sctp_s
   enb_status_transfer_p->mme_ue_s1ap_id = ue_ref_p->mme_ue_s1ap_id;
   enb_status_transfer_p->enb_ue_s1ap_id = ue_ref_p->enb_ue_s1ap_id;
   /** Set the E-UTRAN container. The S1AP octet string should be purged in the outer method. */
-  enb_status_transfer_p->bearerStatusTransferList_buffer = blk2bstr(enbStatusTransfer_p->eNB_StatusTransfer_TransparentContainer.bearers_SubjectToStatusTransferList.list.array[0]->value.buf,
-      enbStatusTransfer_p->eNB_StatusTransfer_TransparentContainer.bearers_SubjectToStatusTransferList.list.array[0]->value.size);
-
+  for(int i = 0; i < enbStatusTransfer_p->eNB_StatusTransfer_TransparentContainer.bearers_SubjectToStatusTransferList.list.count; i++) {
+	  enb_status_transfer_p->status_transfer_bearer_list.bearerStatusTransferList_buffer[i] = blk2bstr(enbStatusTransfer_p->eNB_StatusTransfer_TransparentContainer.bearers_SubjectToStatusTransferList.list.array[i]->value.buf,
+	        enbStatusTransfer_p->eNB_StatusTransfer_TransparentContainer.bearers_SubjectToStatusTransferList.list.array[i]->value.size);
+	  enb_status_transfer_p->status_transfer_bearer_list.num_bearers++;
+  }
   /** Assuming that the OCTET-STRING will be freed automatically. */
   MSC_LOG_TX_MESSAGE (MSC_S1AP_MME,
       MSC_MMEAPP_MME,

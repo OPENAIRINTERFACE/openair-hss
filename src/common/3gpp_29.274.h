@@ -109,6 +109,7 @@ typedef enum gtpv2c_cause_value_e {
   BEARER_HANDLING_NOT_SUPPORTED   = 114,
   UE_ALREADY_RE_ATTACHED          = 115,
   M_PDN_APN_NOT_ALLOWED           = 116, ///< Multiple PDN connections for a given APN not allowed.
+  LATE_OVERLAPPING_REQUEST 		  = 121, ///< If the response message has not been received yet..
   SGW_CAUSE_MAX
 } gtpv2c_cause_value_t;
 

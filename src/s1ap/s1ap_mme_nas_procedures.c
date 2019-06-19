@@ -1739,13 +1739,11 @@ s1ap_handle_mme_status_transfer( const itti_s1ap_status_transfer_t * const s1ap_
    * E-UTRAN Status-Transfer Source Transparent Container.
    */
   // Add a new element.
-  S1ap_IE_t                               *status_container;
+  S1ap_IE_t                               *status_item[s1ap_status_transfer_pP->status_transfer_bearer_list.num_bearers];
   ssize_t                                 encoded;
 
 //  memset (&status_container, 0, sizeof (S1ap_IE_t));
-  status_container = calloc(1, sizeof(S1ap_IE_t));
-  status_container->id = S1ap_ProtocolIE_ID_id_Bearers_SubjectToStatusTransfer_Item;
-  status_container->criticality = S1ap_Criticality_ignore;
+
 
   /*
    * E-UTRAN Target-ToSource Transparent Container.
@@ -1757,13 +1755,28 @@ s1ap_handle_mme_status_transfer( const itti_s1ap_status_transfer_t * const s1ap_
    * Or can we use this?
    * What is exactly purged in the encoder? The list (without the contents)? the contents of the list? contents & list?
    */
-  status_container->value.buf  = calloc(blength(s1ap_status_transfer_pP->bearerStatusTransferList_buffer) -6, sizeof(uint8_t));
-  memcpy(status_container->value.buf, s1ap_status_transfer_pP->bearerStatusTransferList_buffer->data + 6,
-		  blength(s1ap_status_transfer_pP->bearerStatusTransferList_buffer) - 6);
-  status_container->value.size = blength(s1ap_status_transfer_pP->bearerStatusTransferList_buffer) - 6; // s1ap_status_transfer_pP->bearerStatusTransferList_buffer->slen;
 
-  /** Adding stacked value. */
-  ASN_SEQUENCE_ADD (&mmeStatusTransfer_p->eNB_StatusTransfer_TransparentContainer, status_container);
+  for(int num_b = 0; num_b < s1ap_status_transfer_pP->status_transfer_bearer_list.num_bearers; num_b++){
+
+	  status_item[num_b] = calloc(1, sizeof(S1ap_IE_t));
+	  status_item[num_b]->id = S1ap_ProtocolIE_ID_id_Bearers_SubjectToStatusTransfer_Item;
+	  status_item[num_b]->criticality = S1ap_Criticality_ignore;
+
+	  char enbStatusPrefix[] = {0x00, 0x00, 0x00, 0x59, 0x40, 0x0b};
+	  bstring enbStatusPrefixBstr = blk2bstr (enbStatusPrefix, 6);
+	  bconcat(enbStatusPrefixBstr, s1ap_status_transfer_pP->status_transfer_bearer_list.bearerStatusTransferList_buffer[num_b]);
+	  bdestroy_wrapper(&s1ap_status_transfer_pP->status_transfer_bearer_list.bearerStatusTransferList_buffer[num_b]);
+
+	  status_item[num_b]->value.buf  = calloc(blength(enbStatusPrefixBstr) -6,
+			  sizeof(uint8_t));
+	  memcpy(status_item[num_b]->value.buf, enbStatusPrefixBstr->data + 6,
+			  blength(enbStatusPrefixBstr) -6);
+	  status_item[num_b]->value.size = blength(enbStatusPrefixBstr) - 6; // s1ap_status_transfer_pP->bearerStatusTransferList_buffer->slen;
+	  bdestroy_wrapper(&enbStatusPrefixBstr);
+	  /** Adding stacked value. */
+	  ASN_SEQUENCE_ADD (&mmeStatusTransfer_p->eNB_StatusTransfer_TransparentContainer, status_item[num_b]);
+  }
+
 
   /** Encoding without allocating? */
   if (s1ap_mme_encode_pdu (&message, &message_id, &buffer_p, &length) < 0) {
@@ -1771,9 +1784,8 @@ s1ap_handle_mme_status_transfer( const itti_s1ap_status_transfer_t * const s1ap_
     /** We rely on the handover_notify timeout to remove the UE context. */
     OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
   }
-  // todo: do we need this destroy?
-  bdestroy_wrapper(&s1ap_status_transfer_pP->bearerStatusTransferList_buffer);
-//  OAILOG_NOTICE (LOG_S1AP, "Send S1AP_MME_STATUS_TRANSFER message MME_UE_S1AP_ID = " MME_UE_S1AP_ID_FMT " eNB_UE_S1AP_ID = " ENB_UE_S1AP_ID_FMT "\n",
+
+  //  OAILOG_NOTICE (LOG_S1AP, "Send S1AP_MME_STATUS_TRANSFER message MME_UE_S1AP_ID = " MME_UE_S1AP_ID_FMT " eNB_UE_S1AP_ID = " ENB_UE_S1AP_ID_FMT "\n",
 //              (mme_ue_s1ap_id_t)mmeStatusTransfer_p->mme_ue_s1ap_id, (enb_ue_s1ap_id_t)mmeStatusTransfer_p->eNB_UE_S1AP_ID);
   MSC_LOG_TX_MESSAGE (MSC_S1AP_MME,
                       MSC_S1AP_ENB,

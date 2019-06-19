@@ -433,10 +433,10 @@ void itti_free_msg_content (MessageDef * const message_p)
     break;
 
   case S1AP_ENB_STATUS_TRANSFER:
-    bdestroy_wrapper(&message_p->ittiMsg.s1ap_enb_status_transfer.bearerStatusTransferList_buffer);
+   // todo: fix bdestroy_wrapper(&message_p->ittiMsg.s1ap_enb_status_transfer.bearerStatusTransferList_buffer);
     break;
   case S1AP_MME_STATUS_TRANSFER:
-    bdestroy_wrapper(&message_p->ittiMsg.s1ap_mme_status_transfer.bearerStatusTransferList_buffer);
+    // tdotodo: fixbdestroy_wrapper(&message_p->ittiMsg.s1ap_mme_status_transfer.bearerStatusTransferList_buffer);
     break;
 
 

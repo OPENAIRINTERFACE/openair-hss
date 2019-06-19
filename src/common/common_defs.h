@@ -63,10 +63,11 @@
 #define TAC_LIST_T(SIZE) struct {uint8_t n_tacs; TAC_t tac[SIZE];}
 
 //------------------------------------------------------------------------------
-#define INTERNAL_FLAG_NULL        0
+#define INTERNAL_FLAG_NULL        	(0)
 #define INTERNAL_FLAG_X2_HANDOVER   (1 << 0)
 #define INTERNAL_FLAG_SKIP_RESPONSE (1 << 2)
 #define INTERNAL_FLAG_TRIGGERED_ACK (1 << 3)
+#define INTERNAL_LATE_RESPONS_IND	(1 << 4)
 //#define INTERNAL_FLAG_TRIGGERED_REJECT (4 << 0)
 
 //------------------------------------------------------------------------------

@@ -3361,7 +3361,7 @@ mme_app_handle_handover_cancel(
  * No F-Container will/needs to be stored temporarily.
  */
 static
-void mme_app_send_s1ap_mme_status_transfer(mme_ue_s1ap_id_t mme_ue_s1ap_id, enb_ue_s1ap_id_t enb_ue_s1ap_id, uint32_t enb_id, bstring source_to_target_cont){
+void mme_app_send_s1ap_mme_status_transfer(mme_ue_s1ap_id_t mme_ue_s1ap_id, enb_ue_s1ap_id_t enb_ue_s1ap_id, uint32_t enb_id, status_transfer_bearer_list_t * status_transfer){
   MessageDef * message_p = NULL;
 
   OAILOG_FUNC_IN (LOG_MME_APP);
@@ -3377,7 +3377,7 @@ void mme_app_send_s1ap_mme_status_transfer(mme_ue_s1ap_id_t mme_ue_s1ap_id, enb_
   /** Set the current enb_id. */
   status_transfer_p->enb_id = enb_id;
   /** Set the E-UTRAN Target-To-Source-Transparent-Container. */
-  status_transfer_p->bearerStatusTransferList_buffer = source_to_target_cont;
+  memcpy((void*)&status_transfer_p->status_transfer_bearer_list, status_transfer, sizeof(*status_transfer));
   // todo: what will the enb_ue_s1ap_ids for single mme s1ap handover will be.. ?
   OAILOG_INFO(LOG_MME_APP, "Sending S1AP MME_STATUS_TRANSFER command to the target eNodeB for enbUeS1apId " ENB_UE_S1AP_ID_FMT " and enbId %d. \n", enb_ue_s1ap_id, enb_id);
   /** The ENB_ID/Stream information in the UE_Context are still the ones for the source-ENB and the SCTP-UE_ID association is not set yet for the new eNB. */
@@ -3844,7 +3844,7 @@ mme_app_handle_forward_access_context_notification(
   /** Send a S1AP MME Status Transfer Message the target eNodeB. */
   // todo: macro/home enb id
   mme_app_send_s1ap_mme_status_transfer(ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, s10_handover_process->target_id.target_id.macro_enb_id.enb_id,
-      forward_access_context_notification_pP->eutran_container.container_value);
+      (void*)NULL/*forward_access_context_notification_pP->eutran_container.container_value*/);
   /** Unlink it from the message. */
   forward_access_context_notification_pP->eutran_container.container_value = NULL;
 
@@ -4199,17 +4199,18 @@ mme_app_handle_enb_status_transfer(
  }
  mme_app_s10_proc_mme_handover_t * s10_handover_proc = mme_app_get_s10_procedure_mme_handover(ue_context);
  if(!s10_handover_proc){
-   OAILOG_ERROR(LOG_MME_APP, "No S10 handover procedure exists for UE with mmeS1apUeId " MME_UE_S1AP_ID_FMT" Ignoring ENB_STATUS_TRANSFER. \n", s1ap_status_transfer_pP->mme_ue_s1ap_id);
-   MSC_LOG_EVENT (MSC_MMEAPP_MME, "S1AP_ENB_STATUS_TRANSFER. No UE existing mmeS1apUeId " MME_UE_S1AP_ID_FMT" Ignoring ENB_STATUS_TRANSFER. \n", s1ap_status_transfer_pP->mme_ue_s1ap_id);
+   OAILOG_ERROR(LOG_MME_APP, "No S10 handover procedure exists for UE with mmeS1apUeId " MME_UE_S1AP_ID_FMT". \n",
+		   s1ap_status_transfer_pP->mme_ue_s1ap_id);
+   MSC_LOG_EVENT (MSC_MMEAPP_MME, "S1AP_ENB_STATUS_TRANSFER. No UE existing mmeS1apUeId " MME_UE_S1AP_ID_FMT". \n",
+		   s1ap_status_transfer_pP->mme_ue_s1ap_id);
    /**
-    * We don't really expect an error at this point. Just forward the message to the target enb.
+    * We don't really expect an error at this point. Just forward the message to the target enb. (happens just with ng4t).
+    * Header on both bearer items.
     */
-   char enbStatusPrefix[] = {0x00, 0x00, 0x00, 0x59, 0x40, 0x0b};
-   bstring enbStatusPrefixBstr = blk2bstr (enbStatusPrefix, 6);
-   bconcat(enbStatusPrefixBstr, s1ap_status_transfer_pP->bearerStatusTransferList_buffer);
    /** No need to unlink here. */
    // todo: macro/home
-   mme_app_send_s1ap_mme_status_transfer(ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, ue_context->e_utran_cgi.cell_identity.enb_id, enbStatusPrefixBstr);
+   mme_app_send_s1ap_mme_status_transfer(ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, ue_context->e_utran_cgi.cell_identity.enb_id,
+		   &s1ap_status_transfer_pP->status_transfer_bearer_list);
    /** eNB-Status-Transfer message message will be freed. */
    OAILOG_FUNC_OUT (LOG_MME_APP);
  }
@@ -4220,12 +4221,13 @@ mme_app_handle_enb_status_transfer(
     * We do not check that the target-eNB exists. We did not modify any contexts.
     * Concatenate with header (todo: OAI: how to do this properly?)
     */
-   char enbStatusPrefix[] = {0x00, 0x00, 0x00, 0x59, 0x40, 0x0b};
-   bstring enbStatusPrefixBstr = blk2bstr (enbStatusPrefix, 6);
-   bconcat(enbStatusPrefixBstr, s1ap_status_transfer_pP->bearerStatusTransferList_buffer);
+//   char enbStatusPrefix[] = {0x00, 0x00, 0x00, 0x59, 0x40, 0x0b};
+//   bstring enbStatusPrefixBstr = blk2bstr (enbStatusPrefix, 6);
+//   bconcat(enbStatusPrefixBstr, s1ap_status_transfer_pP->bearerStatusTransferList_buffer);
    /** No need to unlink here. */
    // todo: macro/home
-   mme_app_send_s1ap_mme_status_transfer(ue_context->mme_ue_s1ap_id, s10_handover_proc->target_enb_ue_s1ap_id, s10_handover_proc->target_ecgi.cell_identity.enb_id, enbStatusPrefixBstr);
+   mme_app_send_s1ap_mme_status_transfer(ue_context->mme_ue_s1ap_id, s10_handover_proc->target_enb_ue_s1ap_id, s10_handover_proc->target_ecgi.cell_identity.enb_id,
+		   &s1ap_status_transfer_pP->status_transfer_bearer_list);
    /** eNB-Status-Transfer message message will be freed. */
    OAILOG_FUNC_OUT (LOG_MME_APP);
  }else{
@@ -4242,9 +4244,9 @@ mme_app_handle_enb_status_transfer(
 
    /** Set the E-UTRAN container. */
    forward_access_context_notification_p->eutran_container.container_type = 3;
-   forward_access_context_notification_p->eutran_container.container_value = s1ap_status_transfer_pP->bearerStatusTransferList_buffer;
+   forward_access_context_notification_p->eutran_container.container_value = NULL;//s1ap_status_transfer_pP->bearerStatusTransferList_buffer;
    /** Unlink. */
-   s1ap_status_transfer_pP->bearerStatusTransferList_buffer = NULL;
+   // todo: inside array!! s1ap_status_transfer_pP->bearerStatusTransferList_buffer = NULL;
    if (forward_access_context_notification_p->eutran_container.container_value == NULL){
      OAILOG_ERROR (LOG_MME_APP, " NULL UE transparent container\n" );
      OAILOG_FUNC_OUT (LOG_MME_APP);
