@@ -1986,10 +1986,11 @@ s1ap_mme_handle_enb_status_transfer(const sctp_assoc_id_t assoc_id, const sctp_s
   enb_status_transfer_p->mme_ue_s1ap_id = ue_ref_p->mme_ue_s1ap_id;
   enb_status_transfer_p->enb_ue_s1ap_id = ue_ref_p->enb_ue_s1ap_id;
   /** Set the E-UTRAN container. The S1AP octet string should be purged in the outer method. */
+  enb_status_transfer_p->status_transfer_bearer_list = calloc(1, sizeof(status_transfer_bearer_list_t));
   for(int i = 0; i < enbStatusTransfer_p->eNB_StatusTransfer_TransparentContainer.bearers_SubjectToStatusTransferList.list.count; i++) {
-	  enb_status_transfer_p->status_transfer_bearer_list.bearerStatusTransferList_buffer[i] = blk2bstr(enbStatusTransfer_p->eNB_StatusTransfer_TransparentContainer.bearers_SubjectToStatusTransferList.list.array[i]->value.buf,
+	  enb_status_transfer_p->status_transfer_bearer_list->bearerStatusTransferList_buffer[i] = blk2bstr(enbStatusTransfer_p->eNB_StatusTransfer_TransparentContainer.bearers_SubjectToStatusTransferList.list.array[i]->value.buf,
 	        enbStatusTransfer_p->eNB_StatusTransfer_TransparentContainer.bearers_SubjectToStatusTransferList.list.array[i]->value.size);
-	  enb_status_transfer_p->status_transfer_bearer_list.num_bearers++;
+	  enb_status_transfer_p->status_transfer_bearer_list->num_bearers++;
   }
   /** Assuming that the OCTET-STRING will be freed automatically. */
   MSC_LOG_TX_MESSAGE (MSC_S1AP_MME,

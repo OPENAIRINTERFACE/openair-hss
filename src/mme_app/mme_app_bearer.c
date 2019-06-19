@@ -3377,7 +3377,7 @@ void mme_app_send_s1ap_mme_status_transfer(mme_ue_s1ap_id_t mme_ue_s1ap_id, enb_
   /** Set the current enb_id. */
   status_transfer_p->enb_id = enb_id;
   /** Set the E-UTRAN Target-To-Source-Transparent-Container. */
-  memcpy((void*)&status_transfer_p->status_transfer_bearer_list, status_transfer, sizeof(*status_transfer));
+  status_transfer_p->status_transfer_bearer_list = status_transfer;
   // todo: what will the enb_ue_s1ap_ids for single mme s1ap handover will be.. ?
   OAILOG_INFO(LOG_MME_APP, "Sending S1AP MME_STATUS_TRANSFER command to the target eNodeB for enbUeS1apId " ENB_UE_S1AP_ID_FMT " and enbId %d. \n", enb_ue_s1ap_id, enb_id);
   /** The ENB_ID/Stream information in the UE_Context are still the ones for the source-ENB and the SCTP-UE_ID association is not set yet for the new eNB. */
@@ -4210,7 +4210,8 @@ mme_app_handle_enb_status_transfer(
    /** No need to unlink here. */
    // todo: macro/home
    mme_app_send_s1ap_mme_status_transfer(ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, ue_context->e_utran_cgi.cell_identity.enb_id,
-		   &s1ap_status_transfer_pP->status_transfer_bearer_list);
+		   s1ap_status_transfer_pP->status_transfer_bearer_list);
+   s1ap_status_transfer_pP->status_transfer_bearer_list = NULL;
    /** eNB-Status-Transfer message message will be freed. */
    OAILOG_FUNC_OUT (LOG_MME_APP);
  }
@@ -4227,7 +4228,8 @@ mme_app_handle_enb_status_transfer(
    /** No need to unlink here. */
    // todo: macro/home
    mme_app_send_s1ap_mme_status_transfer(ue_context->mme_ue_s1ap_id, s10_handover_proc->target_enb_ue_s1ap_id, s10_handover_proc->target_ecgi.cell_identity.enb_id,
-		   &s1ap_status_transfer_pP->status_transfer_bearer_list);
+		   s1ap_status_transfer_pP->status_transfer_bearer_list);
+   s1ap_status_transfer_pP->status_transfer_bearer_list = NULL;
    /** eNB-Status-Transfer message message will be freed. */
    OAILOG_FUNC_OUT (LOG_MME_APP);
  }else{

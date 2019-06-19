@@ -433,11 +433,21 @@ void itti_free_msg_content (MessageDef * const message_p)
     break;
 
   case S1AP_ENB_STATUS_TRANSFER:
-   // todo: fix bdestroy_wrapper(&message_p->ittiMsg.s1ap_enb_status_transfer.bearerStatusTransferList_buffer);
-    break;
+	  if(message_p->ittiMsg.s1ap_mme_status_transfer.status_transfer_bearer_list) {
+		  for(int i = 0; i < message_p->ittiMsg.s1ap_enb_status_transfer.status_transfer_bearer_list->num_bearers; i++) {
+		  bdestroy_wrapper(&message_p->ittiMsg.s1ap_enb_status_transfer.status_transfer_bearer_list->bearerStatusTransferList_buffer[i]);
+		  }
+		  free_wrapper(&message_p->ittiMsg.s1ap_enb_status_transfer.status_transfer_bearer_list);
+	  }
+	break;
   case S1AP_MME_STATUS_TRANSFER:
-    // tdotodo: fixbdestroy_wrapper(&message_p->ittiMsg.s1ap_mme_status_transfer.bearerStatusTransferList_buffer);
-    break;
+	  if(message_p->ittiMsg.s1ap_mme_status_transfer.status_transfer_bearer_list) {
+		  for(int i = 0; i < message_p->ittiMsg.s1ap_mme_status_transfer.status_transfer_bearer_list->num_bearers; i++) {
+			  bdestroy_wrapper(&message_p->ittiMsg.s1ap_mme_status_transfer.status_transfer_bearer_list->bearerStatusTransferList_buffer[i]);
+		  }
+		  free_wrapper(&message_p->ittiMsg.s1ap_mme_status_transfer.status_transfer_bearer_list);
+	  }
+	break;
 
 
     /**

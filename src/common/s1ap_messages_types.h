@@ -460,7 +460,7 @@ typedef struct itti_s1ap_status_transfer_s {
   /** enb_id to find the correct UE_Reference. */
   uint32_t                enb_id;
   /** F-Container. */
-  status_transfer_bearer_list_t status_transfer_bearer_list;
+  status_transfer_bearer_list_t *status_transfer_bearer_list;
 } itti_s1ap_status_transfer_t;
 
 typedef struct itti_s1ap_handover_notify_s {

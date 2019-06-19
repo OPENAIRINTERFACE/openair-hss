@@ -1735,48 +1735,36 @@ s1ap_handle_mme_status_transfer( const itti_s1ap_status_transfer_t * const s1ap_
   mmeStatusTransfer_p->mme_ue_s1ap_id = (unsigned long)s1ap_status_transfer_pP->mme_ue_s1ap_id;
   mmeStatusTransfer_p->eNB_UE_S1AP_ID = (unsigned long)ue_ref->enb_ue_s1ap_id;
 
-  /*
-   * E-UTRAN Status-Transfer Source Transparent Container.
-   */
-  // Add a new element.
-  S1ap_IE_t                               *status_item[s1ap_status_transfer_pP->status_transfer_bearer_list.num_bearers];
-  ssize_t                                 encoded;
-
-//  memset (&status_container, 0, sizeof (S1ap_IE_t));
-
-
-  /*
-   * E-UTRAN Target-ToSource Transparent Container.
-   */
-
   /**
    * todo: lionel:
    * Here, do we need to allocate an OCTET String container because of the purge of the message in the encode?
    * Or can we use this?
    * What is exactly purged in the encoder? The list (without the contents)? the contents of the list? contents & list?
    */
+  if(s1ap_status_transfer_pP->status_transfer_bearer_list) {
+	  /*
+	   * E-UTRAN Status-Transfer Source Transparent Container.
+	   */
+	  // Add a new element.
+	  S1ap_IE_t                               *status_item[s1ap_status_transfer_pP->status_transfer_bearer_list->num_bearers];
+	  for(int num_b = 0; num_b < s1ap_status_transfer_pP->status_transfer_bearer_list->num_bearers; num_b++){
+	  	  status_item[num_b] = calloc(1, sizeof(S1ap_IE_t));
+	  	  status_item[num_b]->id = S1ap_ProtocolIE_ID_id_Bearers_SubjectToStatusTransfer_Item;
+	  	  status_item[num_b]->criticality = S1ap_Criticality_ignore;
 
-  for(int num_b = 0; num_b < s1ap_status_transfer_pP->status_transfer_bearer_list.num_bearers; num_b++){
-
-	  status_item[num_b] = calloc(1, sizeof(S1ap_IE_t));
-	  status_item[num_b]->id = S1ap_ProtocolIE_ID_id_Bearers_SubjectToStatusTransfer_Item;
-	  status_item[num_b]->criticality = S1ap_Criticality_ignore;
-
-	  char enbStatusPrefix[] = {0x00, 0x00, 0x00, 0x59, 0x40, 0x0b};
-	  bstring enbStatusPrefixBstr = blk2bstr (enbStatusPrefix, 6);
-	  bconcat(enbStatusPrefixBstr, s1ap_status_transfer_pP->status_transfer_bearer_list.bearerStatusTransferList_buffer[num_b]);
-	  bdestroy_wrapper(&s1ap_status_transfer_pP->status_transfer_bearer_list.bearerStatusTransferList_buffer[num_b]);
-
-	  status_item[num_b]->value.buf  = calloc(blength(enbStatusPrefixBstr) -6,
-			  sizeof(uint8_t));
-	  memcpy(status_item[num_b]->value.buf, enbStatusPrefixBstr->data + 6,
-			  blength(enbStatusPrefixBstr) -6);
-	  status_item[num_b]->value.size = blength(enbStatusPrefixBstr) - 6; // s1ap_status_transfer_pP->bearerStatusTransferList_buffer->slen;
-	  bdestroy_wrapper(&enbStatusPrefixBstr);
-	  /** Adding stacked value. */
-	  ASN_SEQUENCE_ADD (&mmeStatusTransfer_p->eNB_StatusTransfer_TransparentContainer, status_item[num_b]);
+	  	  char enbStatusPrefix[] = {0x00, 0x00, 0x00, 0x59, 0x40, 0x0b};
+	  	  bstring enbStatusPrefixBstr = blk2bstr (enbStatusPrefix, 6);
+	  	  bconcat(enbStatusPrefixBstr, s1ap_status_transfer_pP->status_transfer_bearer_list->bearerStatusTransferList_buffer[num_b]);
+	  	  status_item[num_b]->value.buf  = calloc(blength(enbStatusPrefixBstr) -6,
+	  			  sizeof(uint8_t));
+	  	  memcpy(status_item[num_b]->value.buf, enbStatusPrefixBstr->data + 6,
+	  			  blength(enbStatusPrefixBstr) -6);
+	  	  status_item[num_b]->value.size = blength(enbStatusPrefixBstr) - 6; // s1ap_status_transfer_pP->bearerStatusTransferList_buffer->slen;
+	  	  bdestroy_wrapper(&enbStatusPrefixBstr);
+	  	  /** Adding stacked value. */
+	  	  ASN_SEQUENCE_ADD (&mmeStatusTransfer_p->eNB_StatusTransfer_TransparentContainer, status_item[num_b]);
+	  }
   }
-
 
   /** Encoding without allocating? */
   if (s1ap_mme_encode_pdu (&message, &message_id, &buffer_p, &length) < 0) {
