@@ -634,7 +634,7 @@ mme_app_finalize_bearer_context(mme_ue_s1ap_id_t ue_id, const pdn_cid_t pdn_cid,
     /** Set the priority values. */
     bearer_context->bearer_level_qos.pci = bearer_level_qos->pci;
     bearer_context->bearer_level_qos.pvi = bearer_level_qos->pvi;
-    bearer_context->bearer_level_qos.pvi = bearer_level_qos->pl;
+    bearer_context->bearer_level_qos.pl  = bearer_level_qos->pl;
     OAILOG_DEBUG(LOG_MME_APP, "Finalized the bearer level QoS of bearer (ebi=%d) for UE: " MME_UE_S1AP_ID_FMT ". \n", ue_id, bearer_context->ebi);
   }
   if(ambr){
