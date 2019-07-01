@@ -94,6 +94,11 @@ timer_handle_signal (
   timer_expired_p->timer_id = (long)timer_p->timer;
   timer_expired_p->arg = timer_p->timer_arg;
 
+  if(timer_p->task_id > 3 && timer_p->task_id < 10){
+	  OAILOG_ERROR(LOG_ITTI, "HANDLING TIMER SIGNAL FOR TIMER OBJECT %x with task_id %d. \n",
+	  		  timer_p, timer_p->task_id);
+  }
+
   /*
    * Timer is a one shot timer, remove it
    */
@@ -169,6 +174,11 @@ timer_setup (
   se.sigev_notify = SIGEV_SIGNAL;
   se.sigev_signo = SIGTIMER;
   se.sigev_value.sival_ptr = timer_p;
+
+  if(timer_p->task_id > 3 && timer_p->task_id < 10){
+	  OAILOG_ERROR(LOG_ITTI, "ALLOCATED TIMER OBJECT %x with task_id %d. \n",
+			  timer_p, timer_p->task_id);
+  }
 
   /*
    * At the timer creation, the timer structure will be filled in with timer_id,

@@ -197,11 +197,11 @@ itti_malloc (
 //  }
 
   ptr = memory_pools_allocate (itti_desc.memory_pools_handle, size, origin_task_id, destination_task_id);
-//  if(size<52){
-//    char                                   *statistics = memory_pools_statistics (itti_desc.memory_pools_handle);
-//    OAILOG_ERROR(LOG_ITTI, " New message size: %d, Memory pools statistics:\n%s", (int)size, statistics);
-//    free_wrapper ((void**)&statistics);
-//  }
+  if(size > 20000){
+    char                                   *statistics = memory_pools_statistics (itti_desc.memory_pools_handle);
+    OAILOG_ERROR(LOG_ITTI, " New message size: %d, Memory pools statistics:\n%s", (int)size, statistics);
+    free_wrapper ((void**)&statistics);
+  }
 
   if (ptr == NULL) {
     char                                   *statistics = memory_pools_statistics (itti_desc.memory_pools_handle);

@@ -82,6 +82,7 @@
 #define S1AP_HANDOVER_FAILURE(mSGpTR)                 (mSGpTR)->ittiMsg.s1ap_handover_failure
 
 #define S1AP_ERROR_INDICATION(mSGpTR)                 (mSGpTR)->ittiMsg.s1ap_error_indication
+#define S1AP_ENB_CONFIGURATION_TRANSFER(mSGpTR)		  (mSGpTR)->ittiMsg.s1ap_enb_configuration_transfer
 
 /** S1AP Paging. */
 #define S1AP_PAGING(mSGpTR)                           (mSGpTR)->ittiMsg.s1ap_paging
@@ -183,6 +184,21 @@ typedef struct itti_s1ap_ue_context_release_complete_s {
   uint32_t          enb_id;
   uint32_t          sctp_assoc_id;
 } itti_s1ap_ue_context_release_complete_t;
+
+
+typedef struct enb_conf_reply_s {
+    int 			reply_count;
+    bstring    		addresses[10] ;
+}enb_conf_reply_t;
+
+typedef struct itti_s1ap_enb_configuration_transfer_s {
+	target_type_t 	target_enb_type;
+    tai_t           target_tai;
+    uint32_t        sctp_assoc_id;
+    ecgi_t          global_enb_id;
+    int 			conf_type;
+    enb_conf_reply_t conf_reply;
+} itti_s1ap_enb_configuration_transfer_t;
 
 typedef struct itti_s1ap_initial_ue_message_s {
   sctp_assoc_id_t     sctp_assoc_id; // key stored in MME_APP for MME_APP forward NAS response to S1AP

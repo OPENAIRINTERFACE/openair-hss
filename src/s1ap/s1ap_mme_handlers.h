@@ -118,6 +118,9 @@ int s1ap_mme_handle_error_ind_message (const sctp_assoc_id_t assoc_id,
 int s1ap_mme_handle_enb_reset (const sctp_assoc_id_t assoc_id,
                                const sctp_stream_id_t stream, struct s1ap_message_s *message);
 
+int s1ap_mme_handle_enb_configuration_transfer (const sctp_assoc_id_t assoc_id,
+        const sctp_stream_id_t stream, struct s1ap_message_s *message);
+
 /***************************** *
  * HANDOVER MESSAGING.
  * **************************  */

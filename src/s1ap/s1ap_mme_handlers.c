@@ -122,7 +122,7 @@ s1ap_message_decoded_callback           messages_callback[][3] = {
   {0, 0, 0},                    /* eNBDirectInformationTransfer */
   {0, 0, 0},                    /* MMEDirectInformationTransfer */
   {0, 0, 0},                    /* PrivateMessage */
-  {0, 0, 0},                    /* eNBConfigurationTransfer */
+  {s1ap_mme_handle_enb_configuration_transfer, 0, 0},                    /* eNBConfigurationTransfer */
   {0, 0, 0},                    /* MMEConfigurationTransfer */
   {0, 0, 0},                    /* CellTrafficTrace */
 // UPDATE RELEASE 9
@@ -2002,7 +2002,6 @@ s1ap_mme_handle_enb_status_transfer(const sctp_assoc_id_t assoc_id, const sctp_s
   OAILOG_FUNC_RETURN (LOG_S1AP, RETURNok);
 }
 
-
 //------------------------------------------------------------------------------
 typedef struct arg_s1ap_send_enb_dereg_ind_s {
   uint         current_ue_index;
@@ -2745,6 +2744,118 @@ s1ap_mme_handle_enb_reset (
   rc =  itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_RETURN (LOG_S1AP, rc);
 }
+
+//------------------------------------------------------------------------------
+int s1ap_mme_handle_enb_configuration_transfer (const sctp_assoc_id_t assoc_id,
+        const sctp_stream_id_t stream, struct s1ap_message_s *message){
+	S1ap_ENBConfigurationTransferIEs_t         *enbConfigurationTransfer_p = NULL;
+
+	MessageDef                               *message_p = NULL;
+	int                                       rc = RETURNok;
+    uint32_t                                  source_enb_id = 0;
+    uint32_t                                  target_enb_id = 0;
+    tai_t                                  	  target_tai;
+    plmn_t 									  enb_id_plmn;
+
+	OAILOG_FUNC_IN (LOG_S1AP);
+	enbConfigurationTransfer_p= &message->msg.s1ap_ENBConfigurationTransferIEs;
+
+	if(!(enbConfigurationTransfer_p->presenceMask & S1AP_ENBCONFIGURATIONTRANSFERIES_SONCONFIGURATIONTRANSFERECT_PRESENT)) {
+		OAILOG_ERROR(LOG_S1AP, "eNB configuration transfer currently only implementd for 4G. \n");
+		OAILOG_FUNC_RETURN (LOG_S1AP, rc);
+	}
+
+	/** Get the target tai information. */
+	if(!enbConfigurationTransfer_p->sonConfigurationTransferECT.targeteNB_ID.global_ENB_ID.pLMNidentity.buf
+			|| !enbConfigurationTransfer_p->sonConfigurationTransferECT.targeteNB_ID.selected_TAI.tAC.buf
+			|| !enbConfigurationTransfer_p->sonConfigurationTransferECT.targeteNB_ID.global_ENB_ID.pLMNidentity.buf ){
+		OAILOG_ERROR(LOG_S1AP, "eNB configuration transfer message for has no target_tai or enb_id information. \n");
+	    OAILOG_FUNC_RETURN (LOG_S1AP, rc);
+	}
+	memset((void*)&target_tai, 0, sizeof(tai_t));
+
+	TBCD_TO_PLMN_T (&enbConfigurationTransfer_p->sonConfigurationTransferECT.targeteNB_ID.selected_TAI.pLMNidentity, &target_tai.plmn);
+	target_tai.tac = htons(*((uint16_t *) enbConfigurationTransfer_p->sonConfigurationTransferECT.targeteNB_ID.selected_TAI.tAC.buf));
+
+	/** Not changing any ue_reference properties. */
+	message_p = itti_alloc_new_message (TASK_S1AP, S1AP_ENB_CONFIGURATION_TRANSFER);
+	AssertFatal (message_p != NULL, "itti_alloc_new_message Failed");
+
+	/** Selected-TAI. */
+	itti_s1ap_enb_configuration_transfer_t *enb_configuration_transfer_p = &message_p->ittiMsg.s1ap_enb_configuration_transfer;
+
+	enb_configuration_transfer_p->target_tai  = target_tai;
+
+	/** Set SCTP Assoc Id. */
+	enb_configuration_transfer_p->sctp_assoc_id  = assoc_id;
+
+	/** Global-ENB-ID. */
+	memset(&enb_id_plmn, 0, sizeof(plmn_t));
+	TBCD_TO_PLMN_T (&enbConfigurationTransfer_p->sonConfigurationTransferECT.targeteNB_ID.global_ENB_ID.pLMNidentity, &enb_id_plmn);
+	enb_configuration_transfer_p->global_enb_id.plmn = enb_id_plmn;
+
+	// Macro eNB = 20 bits
+	/** Get the enb id. */
+	uint32_t enb_id = 0;
+	if(enbConfigurationTransfer_p->sonConfigurationTransferECT.targeteNB_ID.global_ENB_ID.eNB_ID.present == S1ap_ENB_ID_PR_homeENB_ID){
+		/** Target is a home eNB Id. */
+		// Home eNB ID = 28 bits
+		uint8_t *enb_id_buf = enbConfigurationTransfer_p->sonConfigurationTransferECT.targeteNB_ID.global_ENB_ID.eNB_ID.choice.homeENB_ID.buf;
+	    if (enbConfigurationTransfer_p->sonConfigurationTransferECT.targeteNB_ID.global_ENB_ID.eNB_ID.choice.homeENB_ID.size != 28) {
+	      //TODO: handle case were size != 28 -> notify ? reject ?
+	    }
+	    enb_id = (enb_id_buf[0] << 20) + (enb_id_buf[1] << 12) + (enb_id_buf[2] << 4) + ((enb_id_buf[3] & 0xf0) >> 4);
+	    enb_configuration_transfer_p->target_enb_type = TARGET_ID_HOME_ENB_ID;
+	    //    OAILOG_MESSAGE_ADD (context, "home eNB id: %07x", target_enb_id);
+	}else{
+		/** Target is a macro eNB Id (Macro eNB = 20 bits). */
+	    uint8_t *enb_id_buf = enbConfigurationTransfer_p->sonConfigurationTransferECT.targeteNB_ID.global_ENB_ID.eNB_ID.choice.macroENB_ID.buf;
+	    if (enbConfigurationTransfer_p->sonConfigurationTransferECT.targeteNB_ID.global_ENB_ID.eNB_ID.choice.macroENB_ID.size != 20) {
+	      //TODO: handle case were size != 28 -> notify ? reject ?
+	    }
+	    enb_id = (enb_id_buf[0] << 12) + (enb_id_buf[1] << 4) + ((enb_id_buf[2] & 0xf0) >> 4);
+	    //    OAILOG_MESSAGE_ADD (context, "macro eNB id: %05x", target_enb_id);
+	    enb_configuration_transfer_p->target_enb_type = TARGET_ID_MACRO_ENB_ID;
+	}
+
+	enb_configuration_transfer_p->global_enb_id.cell_identity.enb_id = enb_id;
+	OAILOG_DEBUG(LOG_S1AP, "Successfully decoded targetID IE in ENB Configuration Transfer. \n");
+
+	if(enbConfigurationTransfer_p->sonConfigurationTransferECT.sONInformation.present == S1ap_SONInformation_PR_sONInformationRequest) { // todo: check.. recompile..
+		OAILOG_DEBUG(LOG_S1AP, "Received S1AP SON information request. \n");
+		enb_configuration_transfer_p->conf_type = S1ap_SONInformation_PR_sONInformationRequest;
+	} else if(enbConfigurationTransfer_p->sonConfigurationTransferECT.sONInformation.present == S1ap_SONInformation_PR_sONInformationRequest) {
+		OAILOG_DEBUG(LOG_S1AP, "Received S1AP SON information reply. \n");
+		/** Create a bstring array for the iterated message. */
+		struct S1ap_X2TNLConfigurationInfo	*x2TNLConfigurationInfo = enbConfigurationTransfer_p->sonConfigurationTransferECT.sONInformation.choice.sONInformationReply.x2TNLConfigurationInfo;
+		if(x2TNLConfigurationInfo){
+			enb_configuration_transfer_p->conf_reply.reply_count = x2TNLConfigurationInfo->eNBX2TransportLayerAddresses.list.count;
+			for (int item = 0; x2TNLConfigurationInfo->eNBX2TransportLayerAddresses.list.count; item++) {
+				/*
+			     * Bad, very bad cast...
+			     */
+				S1ap_TransportLayerAddress_t * s1ap_transportLayerAddress_p = (S1ap_TransportLayerAddress_t *)
+			        		&x2TNLConfigurationInfo->eNBX2TransportLayerAddresses.list.array[item];
+				/** Set the IP address from the FTEID. */
+				enb_configuration_transfer_p->conf_reply.addresses[item] = blk2bstr(s1ap_transportLayerAddress_p->buf, s1ap_transportLayerAddress_p->size);
+			}
+			OAILOG_INFO(LOG_S1AP, "Successfully decoded X2 configuration transfer reply. \n");
+		} else {
+			OAILOG_WARNING(LOG_S1AP, "No X2 reply object is received in the eNB status reply.\n");
+		}
+	} else {
+		OAILOG_ERROR(LOG_S1AP, "Received invalida S1AP SON information type %d. \n", enbConfigurationTransfer_p->sonConfigurationTransferECT.sONInformation.choice);
+		OAILOG_FUNC_RETURN (LOG_S1AP, RETURNok);
+	}
+
+	/**
+	 * The transparent container bstr must be deallocated later.
+	 * No automatic deallocation function for that is present.
+	 */
+	rc =  itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
+	OAILOG_FUNC_RETURN (LOG_S1AP, RETURNok);
+}
+
 //------------------------------------------------------------------------------
 int
 s1ap_handle_enb_initiated_reset_ack (

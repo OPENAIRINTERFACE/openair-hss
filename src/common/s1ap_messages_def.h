@@ -94,10 +94,11 @@ MESSAGE_DEF(S1AP_PATH_SWITCH_REQUEST       , MESSAGE_PRIORITY_MED, itti_s1ap_pat
 MESSAGE_DEF(S1AP_PATH_SWITCH_REQUEST_FAILURE, MESSAGE_PRIORITY_MED, itti_s1ap_path_switch_request_failure_t,    s1ap_path_switch_request_failure)
 MESSAGE_DEF(S1AP_PATH_SWITCH_REQUEST_ACKNOWLEDGE, MESSAGE_PRIORITY_MED, itti_s1ap_path_switch_request_ack_t  ,    s1ap_path_switch_request_ack)
 
+/** ENB Configuration Transfer. */
+MESSAGE_DEF(S1AP_ENB_CONFIGURATION_TRANSFER, MESSAGE_PRIORITY_MED, itti_s1ap_enb_configuration_transfer_t  ,    s1ap_enb_configuration_transfer)
 
 /** Handover Required. */
 MESSAGE_DEF(S1AP_HANDOVER_REQUIRED         , MESSAGE_PRIORITY_MED, itti_s1ap_handover_required_t        , s1ap_handover_required)
-
 
 /** Handover Preparation Failure. */
 MESSAGE_DEF(S1AP_HANDOVER_PREPARATION_FAILURE, MESSAGE_PRIORITY_MED, itti_s1ap_handover_preparation_failure_t,    s1ap_handover_preparation_failure)
