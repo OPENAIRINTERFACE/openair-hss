@@ -288,6 +288,11 @@ s1ap_mme_thread (
       }
       break;
 
+      case S1AP_CONFIGURATION_TRANSFER:{
+        s1ap_mme_configuration_transfer (&S1AP_CONFIGURATION_TRANSFER (received_message_p));
+      }
+      break;
+
       case TIMER_HAS_EXPIRED:{
         ue_description_t                       *ue_ref_p = NULL;
         if (received_message_p->ittiMsg.timer_has_expired.arg != NULL) {

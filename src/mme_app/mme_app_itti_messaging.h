@@ -81,4 +81,14 @@ void notify_s1ap_new_ue_mme_s1ap_id_association (const sctp_assoc_id_t   assoc_i
     const enb_ue_s1ap_id_t  enb_ue_s1ap_id,
     const mme_ue_s1ap_id_t  mme_ue_s1ap_id);
 
+void mme_app_send_s1ap_mme_configuration_transfer(
+		target_type_t 	target_enb_type,
+		tai_t           *target_tai,
+		ecgi_t          *target_global_enb_id,
+		target_type_t 	source_enb_type,
+		tai_t           *source_tai,
+		ecgi_t          *source_global_enb_id,
+		bool 			conf_type,
+		enb_conf_reply_t *conf_reply);
+
 #endif /* FILE_MME_APP_ITTI_MESSAGING_SEEN */

@@ -3045,7 +3045,7 @@ mme_app_handle_s1ap_handover_required(
     if(!neigh_mme_ip_addr){
       /** Send a Handover Preparation Failure back. */
       mme_app_send_s1ap_handover_preparation_failure(handover_required_pP->mme_ue_s1ap_id, handover_required_pP->enb_ue_s1ap_id, handover_required_pP->sctp_assoc_id, S1AP_SYSTEM_FAILURE);
-      OAILOG_DEBUG (LOG_MME_APP, "The selected TAI " TAI_FMT " is not configured as an S10 MME neighbor. "
+      OAILOG_ERROR (LOG_MME_APP, "The selected TAI " TAI_FMT " is not configured as an S10 MME neighbor. "
           "Not proceeding with the handover formme_ue_s1ap_id in list of UE: %08x %d(dec)\n",
           TAI_ARG(&handover_required_pP->selected_tai), handover_required_pP->mme_ue_s1ap_id, handover_required_pP->mme_ue_s1ap_id);
       MSC_LOG_EVENT (MSC_MMEAPP_MME, "S1AP_HANDOVER_REQUIRED Unknown ue %u", handover_required_pP->mme_ue_s1ap_id);
@@ -4377,6 +4377,60 @@ mme_app_handle_s1ap_handover_notify(
 	   /** Late Ho-Notify. */
 	   s10_handover_proc->received_early_ho_notify = true;
    }
+ }
+}
+
+//------------------------------------------------------------------------------
+void
+mme_app_handle_s1ap_enb_configuration_transfer(
+     itti_s1ap_configuration_transfer_t * const const enb_conf_transfer_pP
+    )
+{
+ MessageDef                             *message_p  = NULL;
+
+ OAILOG_FUNC_IN (LOG_MME_APP);
+
+ /** Check if the target eNB is local or remote. */
+ if (mme_app_check_ta_local(&enb_conf_transfer_pP->target_tai.plmn, enb_conf_transfer_pP->target_tai.tac)) {
+   /** Check if the eNB with the given eNB-ID is served. */
+   if(s1ap_is_enb_id_in_list(enb_conf_transfer_pP->target_global_enb_id.cell_identity.enb_id) != NULL){
+	   OAILOG_DEBUG (LOG_MME_APP, "Target ENB_ID %d of target TAI " TAI_FMT " is served by current MME. Forwarding eNB configuration transfer. \n",
+			   enb_conf_transfer_pP->target_global_enb_id.cell_identity.enb_id, TAI_ARG(&enb_conf_transfer_pP->target_tai));
+
+	   /** ENB is local, directly forward the request to the target eNB. */
+	   mme_app_send_s1ap_mme_configuration_transfer(enb_conf_transfer_pP->target_enb_type, &enb_conf_transfer_pP->target_tai,
+			   &enb_conf_transfer_pP->target_global_enb_id,
+			   enb_conf_transfer_pP->source_enb_type, &enb_conf_transfer_pP->source_tai,
+			   &enb_conf_transfer_pP->source_global_enb_id,
+			   enb_conf_transfer_pP->conf_type, enb_conf_transfer_pP->conf_reply);
+	   enb_conf_transfer_pP->conf_reply = NULL; /**< Unlink. */
+	   OAILOG_FUNC_OUT (LOG_MME_APP);
+   } else {
+     /*
+      * Create a new handover procedure and begin processing.
+      */
+	   OAILOG_ERROR(LOG_MME_APP, "The selected eNB Id %d is not known for local TAI " TAI_FMT " is not configured as an S10 MME neighbor. "
+			   "Not proceeding with the enb configuration transfer. \n", enb_conf_transfer_pP->target_global_enb_id.cell_identity.enb_id,
+			   TAI_ARG(&enb_conf_transfer_pP->target_tai));
+	   OAILOG_FUNC_OUT (LOG_MME_APP);
+   }
+ } else {
+	 /** Get the target MME. */
+	 struct sockaddr *neigh_mme_ip_addr = NULL;
+	 if (1) {
+		 // TODO prototype may change
+	    mme_app_select_service(&enb_conf_transfer_pP->target_tai, &neigh_mme_ip_addr, S10_MME_GTP_C);
+	    //    session_request_p->peer_ip.in_addr = mme_config.ipv4.
+	    if(!neigh_mme_ip_addr){
+	      OAILOG_ERROR(LOG_MME_APP, "The selected TAI " TAI_FMT " is not configured as an S10 MME neighbor. "
+	          "Not proceeding with the enb configuration transfer. \n", TAI_ARG(&enb_conf_transfer_pP->target_tai));
+	      OAILOG_FUNC_OUT (LOG_MME_APP);
+	    }
+	    OAILOG_INFO(LOG_MME_APP, "Target ENB_ID %d of target TAI " TAI_FMT " is served by current MME. Forwarding eNB configuration transfer. \n",
+	    		enb_conf_transfer_pP->target_global_enb_id.cell_identity.enb_id, TAI_ARG(&enb_conf_transfer_pP->target_tai));
+	    OAILOG_WARNING(LOG_MME_APP, "ENB CONFIG TRANSFER VIA S10 NOT IMPLEMENTED YET!\n"); // todo: implement? fcontainer?
+	  }
+	 OAILOG_FUNC_OUT (LOG_MME_APP);
  }
 }
 

@@ -494,6 +494,47 @@ void mme_app_send_s1ap_path_switch_request_failure(mme_ue_s1ap_id_t mme_ue_s1ap_
 }
 
 
+target_type_t 	target_enb_type;
+    tai_t           target_tai;
+    uint32_t        sctp_assoc_id;
+    ecgi_t          global_enb_id;
+    int 			conf_type;
+    enb_conf_reply_t *conf_reply;
+
+
+//------------------------------------------------------------------------------
+/**
+ * Send an S1AP MME Configuration Transfer to the S1AP layer.
+ */
+void mme_app_send_s1ap_mme_configuration_transfer(
+		target_type_t 	target_enb_type,
+		tai_t           *target_tai,
+		ecgi_t          *target_global_enb_id,
+		target_type_t 	source_enb_type,
+		tai_t           *source_tai,
+		ecgi_t          *source_global_enb_id,
+		bool 			conf_type,
+		enb_conf_reply_t *conf_reply) {
+  OAILOG_FUNC_IN (LOG_MME_APP);
+  /** Send a S1AP Path Switch Request Failure TO THE TARGET ENB. */
+  MessageDef * message_p = itti_alloc_new_message (TASK_MME_APP, S1AP_CONFIGURATION_TRANSFER);
+  DevAssert (message_p != NULL);
+
+  itti_s1ap_configuration_transfer_t *s1ap_mme_configuration_transfer_p = &message_p->ittiMsg.s1ap_configuration_transfer;
+
+  /** Set the identifiers. */
+  s1ap_mme_configuration_transfer_p->target_enb_type = target_enb_type;
+  s1ap_mme_configuration_transfer_p->source_enb_type = source_enb_type;
+  s1ap_mme_configuration_transfer_p->target_global_enb_id = *target_global_enb_id;
+  s1ap_mme_configuration_transfer_p->source_global_enb_id = *source_global_enb_id;
+  s1ap_mme_configuration_transfer_p->target_tai = *target_tai;
+  s1ap_mme_configuration_transfer_p->source_tai = *source_tai;
+  s1ap_mme_configuration_transfer_p->conf_type  = conf_type;
+  s1ap_mme_configuration_transfer_p->conf_reply = conf_reply;  /** Sending a message to S1AP. */
+  itti_send_msg_to_task (TASK_S1AP, INSTANCE_DEFAULT, message_p);
+  OAILOG_FUNC_OUT (LOG_MME_APP);
+}
+
 ////------------------------------------------------------------------------------
 //int
 //mme_app_modify_bearers(const mme_ue_s1ap_id_t mme_ue_s1ap_id, bearer_contexts_to_be_removed_t * bcs_to_be_removed)

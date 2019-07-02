@@ -81,6 +81,11 @@ static inline int                       s1ap_mme_encode_paging(
   uint8_t ** buffer,
   uint32_t * length);
 
+static inline int                       s1ap_mme_encode_mme_configuration_transfer(
+  s1ap_message * message_p,
+  uint8_t ** buffer,
+  uint32_t * length);
+
 static inline int                       s1ap_mme_encode_initiating (
   s1ap_message * message_p,
   MessagesIds *message_id,
@@ -214,8 +219,6 @@ int s1ap_free_mme_encode_pdu(
     return free_s1ap_handoverrequest(&message->msg.s1ap_HandoverRequestIEs);
   case S1AP_MME_STATUS_TRANSFER_LOG:
 	return free_s1ap_mmestatustransfer(&message->msg.s1ap_MMEStatusTransferIEs);
-  case S1AP_PAGING_LOG:
-    return free_s1ap_paging(&message->msg.s1ap_PagingIEs);
   case S1AP_PATH_SWITCH_ACK_LOG:
     return free_s1ap_pathswitchrequestacknowledge(&message->msg.s1ap_PathSwitchRequestAcknowledgeIEs);
   case S1AP_HANDOVER_COMMAND_LOG:
@@ -229,6 +232,13 @@ int s1ap_free_mme_encode_pdu(
     return free_s1ap_handoverpreparationfailure(&message->msg.s1ap_HandoverPreparationFailureIEs);
   case S1AP_PATH_SWITCH_FAILURE_LOG:
     return free_s1ap_pathswitchrequestfailure(&message->msg.s1ap_PathSwitchRequestFailureIEs);
+
+  /** Free Other Messages. */
+  case S1AP_PAGING_LOG:
+      return free_s1ap_paging(&message->msg.s1ap_PagingIEs);
+
+  case S1AP_MME_CFG_TRANSFER_LOG:
+        return free_s1ap_mmeconfigurationtransfer(&message->msg.s1ap_MMEConfigurationTransferIEs);
 
   default:
     DevAssert(false);
@@ -280,6 +290,10 @@ s1ap_mme_encode_initiating (
   case S1ap_ProcedureCode_id_Paging:
     *message_id = S1AP_PAGING_LOG;
     return s1ap_mme_encode_paging(message_p, buffer, length);
+
+  case S1ap_ProcedureCode_id_MMEConfigurationTransfer:
+    *message_id = S1AP_MME_CFG_TRANSFER_LOG;
+    return s1ap_mme_encode_mme_configuration_transfer (message_p, buffer, length);
 
   default:
     OAILOG_NOTICE (LOG_S1AP, "Unknown procedure ID (%d) for initiating message_p\n", (int)message_p->procedureCode);
@@ -542,6 +556,24 @@ static inline int s1ap_mme_encode_mme_status_transfer (
 
   return s1ap_generate_initiating_message(buffer, length, S1ap_ProcedureCode_id_MMEStatusTransfer, S1ap_Criticality_ignore,
       &asn_DEF_S1ap_MMEStatusTransfer, s1MmeStatusTransfer_p);
+}
+
+static inline int s1ap_mme_encode_mme_configuration_transfer (
+    s1ap_message * message_p,
+    uint8_t ** buffer,
+    uint32_t * length)
+{
+  S1ap_MMEConfigurationTransfer_t        s1MmeConfigurationTransfer;
+  S1ap_MMEConfigurationTransfer_t       *s1MmeConfigurationTransfer_p = &s1MmeConfigurationTransfer;
+
+  memset (s1MmeConfigurationTransfer_p, 0, sizeof (S1ap_MMEConfigurationTransfer_t));
+
+  if (s1ap_encode_s1ap_mmeconfigurationtransferies(s1MmeConfigurationTransfer_p, &message_p->msg.s1ap_MMEConfigurationTransferIEs) < 0) {
+    return -1;
+  }
+
+  return s1ap_generate_initiating_message(buffer, length, S1ap_ProcedureCode_id_MMEConfigurationTransfer, S1ap_Criticality_ignore,
+      &asn_DEF_S1ap_MMEConfigurationTransfer, s1MmeConfigurationTransfer_p);
 }
 
 //------------------------------------------------------------------------------

@@ -1905,6 +1905,107 @@ s1ap_handle_paging( const itti_s1ap_paging_t * const s1ap_paging_pP){
   OAILOG_FUNC_OUT (LOG_S1AP);
 }
 
+//------------------------------------------------------------------------------
+void
+s1ap_mme_configuration_transfer( const itti_s1ap_configuration_transfer_t* const s1ap_mme_configuration_transfer_pP){
+	S1ap_MMEConfigurationTransferIEs_t              *mmeConfigurationTransfer_p = NULL;
+	s1ap_message                           			 message = {0}; // yes, alloc on stack
+	MessagesIds                            			 message_id = MESSAGES_ID_MAX;
+	uint8_t                               			*buffer_p = NULL;
+	uint32_t                                		 length = 0;
+
+	OAILOG_FUNC_IN (LOG_S1AP);
+	DevAssert (s1ap_mme_configuration_transfer_pP != NULL);
+
+	/** Check that the eNB exists. */
+	enb_description_t *target_enb_ref = s1ap_is_enb_id_in_list(s1ap_mme_configuration_transfer_pP->target_global_enb_id.cell_identity.enb_id);
+	if(!target_enb_ref){
+		OAILOG_ERROR (LOG_S1AP, "No target-enb could be found for enb-id %u. Cannot transfer enb configuration. \n",
+				s1ap_mme_configuration_transfer_pP->target_global_enb_id.cell_identity.enb_id);
+	    /** No need to remove any UE_Reference to the target_enb, not existing. */
+	    OAILOG_FUNC_OUT (LOG_S1AP);
+	}
+
+	/** Target PLMN. */
+	uint8_t                                 target_plmn[3] = { 0x00, 0x00, 0x00 };
+	PLMN_T_TO_TBCD (s1ap_mme_configuration_transfer_pP->target_tai.plmn,
+			target_plmn,
+			mme_config_find_mnc_length(
+					s1ap_mme_configuration_transfer_pP->target_tai.plmn.mcc_digit1, s1ap_mme_configuration_transfer_pP->target_tai.plmn.mcc_digit2, s1ap_mme_configuration_transfer_pP->target_tai.plmn.mcc_digit3,
+					s1ap_mme_configuration_transfer_pP->target_tai.plmn.mnc_digit1, s1ap_mme_configuration_transfer_pP->target_tai.plmn.mnc_digit2, s1ap_mme_configuration_transfer_pP->target_tai.plmn.mnc_digit3)
+		  )
+	;
+
+	/** Source PLMN. */
+	uint8_t                                 source_plmn[3] = { 0x00, 0x00, 0x00 };
+	PLMN_T_TO_TBCD (s1ap_mme_configuration_transfer_pP->target_tai.plmn,
+			source_plmn,
+			mme_config_find_mnc_length(
+					s1ap_mme_configuration_transfer_pP->target_tai.plmn.mcc_digit1, s1ap_mme_configuration_transfer_pP->target_tai.plmn.mcc_digit2, s1ap_mme_configuration_transfer_pP->target_tai.plmn.mcc_digit3,
+					s1ap_mme_configuration_transfer_pP->target_tai.plmn.mnc_digit1, s1ap_mme_configuration_transfer_pP->target_tai.plmn.mnc_digit2, s1ap_mme_configuration_transfer_pP->target_tai.plmn.mnc_digit3)
+	)
+	;
+
+
+	/** Encode the Message. */
+	message.procedureCode = S1ap_ProcedureCode_id_MMEConfigurationTransfer;
+	message.direction = S1AP_PDU_PR_initiatingMessage;
+	mmeConfigurationTransfer_p = &message.msg.s1ap_MMEConfigurationTransferIEs;
+	mmeConfigurationTransfer_p->presenceMask |= S1AP_MMECONFIGURATIONTRANSFERIES_SONCONFIGURATIONTRANSFERMCT_PRESENT;
+
+	/** Set target eNB. */
+	OCTET_STRING_fromBuf(&mmeConfigurationTransfer_p->sonConfigurationTransferMCT.targeteNB_ID.global_ENB_ID.pLMNidentity, target_plmn, 3);
+	mmeConfigurationTransfer_p->sonConfigurationTransferMCT.targeteNB_ID.global_ENB_ID.eNB_ID.present = s1ap_mme_configuration_transfer_pP->target_enb_type;
+	mmeConfigurationTransfer_p->sonConfigurationTransferMCT.targeteNB_ID.global_ENB_ID.eNB_ID.choice.macroENB_ID.buf = calloc (3, sizeof(uint8_t));
+	uint32_t target_enb_id = s1ap_mme_configuration_transfer_pP->target_global_enb_id.cell_identity.enb_id;
+	target_enb_id = target_enb_id <<4;
+	uint32_t target_enb_id1 = htonl(target_enb_id << 8);
+	memcpy(mmeConfigurationTransfer_p->sonConfigurationTransferMCT.targeteNB_ID.global_ENB_ID.eNB_ID.choice.macroENB_ID.buf, (uint8_t*)&target_enb_id1, 3);
+	mmeConfigurationTransfer_p->sonConfigurationTransferMCT.targeteNB_ID.global_ENB_ID.eNB_ID.choice.macroENB_ID.size = 3;
+	mmeConfigurationTransfer_p->sonConfigurationTransferMCT.targeteNB_ID.global_ENB_ID.eNB_ID.choice.macroENB_ID.bits_unused = 4;
+  // mmeConfigurationTransfer_p->sonConfigurationTransferMCT.targeteNB_ID.global_ENB_ID.eNB_ID.present = ENB_ID_PR_macroENB_ID;
+	INT16_TO_OCTET_STRING(s1ap_mme_configuration_transfer_pP->target_tai.tac, &mmeConfigurationTransfer_p->sonConfigurationTransferMCT.targeteNB_ID.selected_TAI.tAC);
+	OCTET_STRING_fromBuf(&mmeConfigurationTransfer_p->sonConfigurationTransferMCT.targeteNB_ID.selected_TAI.pLMNidentity, target_plmn, 3);
+
+	/** Set source eNB. */
+	OCTET_STRING_fromBuf(&mmeConfigurationTransfer_p->sonConfigurationTransferMCT.sourceeNB_ID.global_ENB_ID.pLMNidentity, source_plmn, 3);
+	mmeConfigurationTransfer_p->sonConfigurationTransferMCT.sourceeNB_ID.global_ENB_ID.eNB_ID.present = s1ap_mme_configuration_transfer_pP->source_enb_type;
+	// mmeConfigurationTransfer_p->sonConfigurationTransferMCT.sourceeNB_ID.global_ENB_ID.eNB_ID.choice.macroENB_ID.buf = id_source_p;
+	mmeConfigurationTransfer_p->sonConfigurationTransferMCT.sourceeNB_ID.global_ENB_ID.eNB_ID.choice.macroENB_ID.buf = calloc (3, sizeof(uint8_t));
+	uint32_t source_enb_id = s1ap_mme_configuration_transfer_pP->source_global_enb_id.cell_identity.enb_id;
+	source_enb_id = source_enb_id <<4;
+	uint32_t source_enb_id1 = htonl(source_enb_id << 8);
+	memcpy(mmeConfigurationTransfer_p->sonConfigurationTransferMCT.sourceeNB_ID.global_ENB_ID.eNB_ID.choice.macroENB_ID.buf, (uint8_t*)&source_enb_id1, 3);
+
+	mmeConfigurationTransfer_p->sonConfigurationTransferMCT.sourceeNB_ID.global_ENB_ID.eNB_ID.choice.macroENB_ID.size = 3;
+	mmeConfigurationTransfer_p->sonConfigurationTransferMCT.sourceeNB_ID.global_ENB_ID.eNB_ID.choice.macroENB_ID.bits_unused = 4;
+	INT16_TO_OCTET_STRING(s1ap_mme_configuration_transfer_pP->source_tai.tac, &mmeConfigurationTransfer_p->sonConfigurationTransferMCT.sourceeNB_ID.selected_TAI.tAC);
+	OCTET_STRING_fromBuf(&mmeConfigurationTransfer_p->sonConfigurationTransferMCT.sourceeNB_ID.selected_TAI.pLMNidentity, source_plmn, 3);
+
+	if(!s1ap_mme_configuration_transfer_pP->conf_type) {
+		mmeConfigurationTransfer_p->sonConfigurationTransferMCT.sONInformation.present = S1ap_SONInformation_PR_sONInformationRequest;
+		mmeConfigurationTransfer_p->sonConfigurationTransferMCT.sONInformation.choice.sONInformationRequest = S1ap_SONInformationRequest_x2TNL_Configuration_Info;
+	} else {
+		mmeConfigurationTransfer_p->sonConfigurationTransferMCT.sONInformation.present = S1ap_SONInformation_PR_sONInformationReply;
+		// todo:
+	}
+
+	/** Send the message to the target eNB. */
+	if (s1ap_mme_encode_pdu (&message, &message_id, &buffer_p, &length) < 0) {
+		OAILOG_ERROR (LOG_S1AP, "Failed to encode S1AP eNB configuration transfer to target tac " TAC_FMT".\n",
+				s1ap_mme_configuration_transfer_pP->target_tai.tac);
+		// todo: in this case we will ignore this. no UE contex modification should occure
+		OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
+	}
+
+	bstring b = blk2bstr(buffer_p, length);
+	free(buffer_p);
+	s1ap_free_mme_encode_pdu(&message, message_id);
+	s1ap_mme_itti_send_sctp_request (&b, target_enb_ref->sctp_assoc_id, target_enb_ref->next_sctp_stream, INVALID_MME_UE_S1AP_ID);
+	/** Free the message. */
+	OAILOG_FUNC_OUT (LOG_S1AP);
+}
+
 ////------------------------------------------------------------------------------
 //static
 //int s1ap_generate_bearer_context_to_setup(bearer_context_to_be_created_t * bc_tbc, S1ap_E_RABToBeSetupItemHOReq_t         *e_RABToBeSetupHO_p){

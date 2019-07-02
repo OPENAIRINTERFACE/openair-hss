@@ -68,6 +68,8 @@ MESSAGE_DEF(S1AP_PAGING_LOG                 , MESSAGE_PRIORITY_MED, IttiMsgText 
 MESSAGE_DEF(S1AP_ENB_RESET_LOG             , MESSAGE_PRIORITY_MED, IttiMsgText                      , s1ap_enb_reset_log)
 MESSAGE_DEF(S1AP_ERROR_IND_LOG             , MESSAGE_PRIORITY_MED, IttiMsgText                      , s1ap_error_ind_log)
 MESSAGE_DEF(S1AP_ENB_CFG_UPDATE_LOG        , MESSAGE_PRIORITY_MED, IttiMsgText                      , s1ap_enb_cfg_update_log)
+MESSAGE_DEF(S1AP_ENB_CFG_TRANSFER_LOG      , MESSAGE_PRIORITY_MED, IttiMsgText                      , s1ap_enb_cfg_transfer_log)
+MESSAGE_DEF(S1AP_MME_CFG_TRANSFER_LOG      , MESSAGE_PRIORITY_MED, IttiMsgText                      , s1ap_mme_cfg_transfer_log)
 
 MESSAGE_DEF(S1AP_UE_CAPABILITIES_IND       ,  MESSAGE_PRIORITY_MED, itti_s1ap_ue_cap_ind_t                ,  s1ap_ue_cap_ind)
 MESSAGE_DEF(S1AP_ENB_DEREGISTERED_IND      ,  MESSAGE_PRIORITY_MED, itti_s1ap_eNB_deregistered_ind_t      ,  s1ap_eNB_deregistered_ind)
@@ -95,7 +97,7 @@ MESSAGE_DEF(S1AP_PATH_SWITCH_REQUEST_FAILURE, MESSAGE_PRIORITY_MED, itti_s1ap_pa
 MESSAGE_DEF(S1AP_PATH_SWITCH_REQUEST_ACKNOWLEDGE, MESSAGE_PRIORITY_MED, itti_s1ap_path_switch_request_ack_t  ,    s1ap_path_switch_request_ack)
 
 /** ENB Configuration Transfer. */
-MESSAGE_DEF(S1AP_ENB_CONFIGURATION_TRANSFER, MESSAGE_PRIORITY_MED, itti_s1ap_enb_configuration_transfer_t  ,    s1ap_enb_configuration_transfer)
+MESSAGE_DEF(S1AP_CONFIGURATION_TRANSFER, 	MESSAGE_PRIORITY_MED, itti_s1ap_configuration_transfer_t  ,    s1ap_configuration_transfer)
 
 /** Handover Required. */
 MESSAGE_DEF(S1AP_HANDOVER_REQUIRED         , MESSAGE_PRIORITY_MED, itti_s1ap_handover_required_t        , s1ap_handover_required)

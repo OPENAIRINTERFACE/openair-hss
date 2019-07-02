@@ -114,4 +114,6 @@ s1ap_handle_mme_ue_id_notification (
 /** S1AP Paging. */
 void s1ap_handle_paging( const itti_s1ap_paging_t * const s1ap_paging_pP);
 
+void s1ap_mme_configuration_transfer( const itti_s1ap_configuration_transfer_t* const s1ap_mme_configuration_transfer_pP);
+
 #endif /* FILE_S1AP_MME_NAS_PROCEDURES_SEEN */

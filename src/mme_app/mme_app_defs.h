@@ -181,6 +181,8 @@ void mme_app_handle_forward_relocation_complete_notification(const itti_s10_forw
 
 void mme_app_handle_forward_relocation_complete_acknowledge(const itti_s10_forward_relocation_complete_acknowledge_t* const forward_relocation_complete_acknowledge_pP    );
 
+void mme_app_handle_s1ap_enb_configuration_transfer( itti_s1ap_configuration_transfer_t * const enb_conf_transfer_pP);
+
 /** Relocation Cancel Request & Response. */
 void
 mme_app_handle_relocation_cancel_request(

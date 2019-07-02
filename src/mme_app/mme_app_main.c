@@ -422,10 +422,17 @@ void *mme_app_thread (void *args)
 
       case S1AP_HANDOVER_NOTIFY:{
           mme_app_handle_s1ap_handover_notify(
-              &S1AP_HANDOVER_NOTIFY(received_message_p)
+        		  &S1AP_HANDOVER_NOTIFY(received_message_p)
+          );
+      }
+      break;
+
+      case S1AP_CONFIGURATION_TRANSFER:{
+          mme_app_handle_s1ap_enb_configuration_transfer(
+              &S1AP_CONFIGURATION_TRANSFER(received_message_p)
               );
-          }
-      	   break;
+      }
+      break;
 
     case TERMINATE_MESSAGE:{
         /*

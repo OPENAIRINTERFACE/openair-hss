@@ -184,6 +184,15 @@ s1ap_mme_decode_initiating (
       }
       break;
 
+      /** Congestion messages. */
+      case S1ap_ProcedureCode_id_eNBConfigurationTransfer: {
+    	  ret = s1ap_decode_s1ap_enbconfigurationtransferies(&message->msg.s1ap_ENBConfigurationTransferIEs, &initiating_p->value);
+    	  s1ap_xer_print_s1ap_enbconfigurationtransfer(s1ap_xer__print2sp, message_string, message);
+    	  free_wrapper(&initiating_p->value.buf);
+    	  *message_id = S1AP_ENB_CFG_TRANSFER_LOG;
+      }
+      break;
+
     default: {
         OAILOG_ERROR (LOG_S1AP, "Unknown procedure ID (%d) for initiating message\n", (int)initiating_p->procedureCode);
         AssertFatal (0, "Unknown procedure ID (%d) for initiating message\n", (int)initiating_p->procedureCode);
@@ -422,6 +431,8 @@ int s1ap_free_mme_decode_pdu(
     return free_s1ap_errorindication(&message->msg.s1ap_ErrorIndicationIEs);
   case S1AP_ENB_CFG_UPDATE_LOG:
 	return free_s1ap_enbconfigurationupdate(&message->msg.s1ap_ENBConfigurationUpdateIEs);
+  case S1AP_ENB_CFG_TRANSFER_LOG:
+	return free_s1ap_enbconfigurationtransfer(&message->msg.s1ap_ENBConfigurationUpdateIEs);
   default:
     DevAssert(false);
 

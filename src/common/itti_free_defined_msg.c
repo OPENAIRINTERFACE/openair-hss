@@ -370,6 +370,16 @@ void itti_free_msg_content (MessageDef * const message_p)
     // DO nothing (ipv6_address statically allocated)
     break;
 
+
+  case S1AP_CONFIGURATION_TRANSFER:
+	  if(message_p->ittiMsg.s1ap_configuration_transfer.conf_reply) {
+		  for(int reply_count = 0; reply_count < message_p->ittiMsg.s1ap_configuration_transfer.conf_reply->reply_count; reply_count++){
+			  bdestroy_wrapper (&message_p->ittiMsg.s1ap_configuration_transfer.conf_reply->addresses[reply_count]);
+		  }
+		  free_wrapper((void**)&message_p->ittiMsg.s1ap_configuration_transfer.conf_reply);
+	  }
+    break;
+
   case SCTP_DATA_REQ:
     bdestroy_wrapper (&message_p->ittiMsg.sctp_data_req.payload);
     AssertFatal(NULL == message_p->ittiMsg.sctp_data_req.payload, "TODO clean pointer");
