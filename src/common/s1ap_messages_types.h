@@ -198,8 +198,6 @@ typedef struct itti_s1ap_configuration_transfer_s {
     tai_t           source_tai;
     ecgi_t          target_global_enb_id;
     ecgi_t          source_global_enb_id;
-
-    bool 			  conf_type;
     enb_conf_reply_t *conf_reply;
 } itti_s1ap_configuration_transfer_t;
 

@@ -513,7 +513,6 @@ void mme_app_send_s1ap_mme_configuration_transfer(
 		target_type_t 	source_enb_type,
 		tai_t           *source_tai,
 		ecgi_t          *source_global_enb_id,
-		bool 			conf_type,
 		enb_conf_reply_t *conf_reply) {
   OAILOG_FUNC_IN (LOG_MME_APP);
   /** Send a S1AP Path Switch Request Failure TO THE TARGET ENB. */
@@ -529,7 +528,6 @@ void mme_app_send_s1ap_mme_configuration_transfer(
   s1ap_mme_configuration_transfer_p->source_global_enb_id = *source_global_enb_id;
   s1ap_mme_configuration_transfer_p->target_tai = *target_tai;
   s1ap_mme_configuration_transfer_p->source_tai = *source_tai;
-  s1ap_mme_configuration_transfer_p->conf_type  = conf_type;
   s1ap_mme_configuration_transfer_p->conf_reply = conf_reply;  /** Sending a message to S1AP. */
   itti_send_msg_to_task (TASK_S1AP, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT (LOG_MME_APP);

@@ -88,7 +88,6 @@ void mme_app_send_s1ap_mme_configuration_transfer(
 		target_type_t 	source_enb_type,
 		tai_t           *source_tai,
 		ecgi_t          *source_global_enb_id,
-		bool 			conf_type,
 		enb_conf_reply_t *conf_reply);
 
 #endif /* FILE_MME_APP_ITTI_MESSAGING_SEEN */

@@ -424,6 +424,7 @@ s1ap_mme_handle_s1_setup_request (
      */
     OAILOG_ERROR (LOG_S1AP, "Rejecting s1 setup request Can not process the request, MME is not connected to HSS\n");
     rc = s1ap_mme_generate_s1_setup_failure (assoc_id, S1ap_Cause_PR_misc, S1ap_CauseMisc_unspecified, -1);
+
     OAILOG_FUNC_RETURN (LOG_S1AP, rc);
   }
   OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
@@ -2856,8 +2857,6 @@ int s1ap_mme_handle_enb_configuration_transfer (const sctp_assoc_id_t assoc_id,
 
 	enb_conf_reply_t *conf_reply = NULL;
 	if(enbConfigurationTransfer_p->sonConfigurationTransferECT.sONInformation.present == S1ap_SONInformation_PR_NOTHING) { // todo: check.. recompile..
-		// OAILOG_DEBUG(LOG_S1AP, "Received S1AP SON information request. \n");
-		// conf_type = S1ap_SONInformation_PR_NOTHING;
 		OAILOG_WARNING(LOG_S1AP, "Received invalid S1AP SON information type %d. \n", enbConfigurationTransfer_p->sonConfigurationTransferECT.sONInformation.present);
 		OAILOG_FUNC_RETURN (LOG_S1AP, RETURNok);
 	} else if(enbConfigurationTransfer_p->sonConfigurationTransferECT.sONInformation.present == S1ap_SONInformation_PR_sONInformationRequest) {
@@ -2869,12 +2868,12 @@ int s1ap_mme_handle_enb_configuration_transfer (const sctp_assoc_id_t assoc_id,
 		if(x2TNLConfigurationInfo){
 			conf_reply = calloc(1, sizeof(enb_conf_reply_t));
 			conf_reply->reply_count = x2TNLConfigurationInfo->eNBX2TransportLayerAddresses.list.count;
-			for (int item = 0; x2TNLConfigurationInfo->eNBX2TransportLayerAddresses.list.count; item++) {
+			for (int item = 0; item < x2TNLConfigurationInfo->eNBX2TransportLayerAddresses.list.count; item++) {
 				/*
 			     * Bad, very bad cast...
 			     */
 				S1ap_TransportLayerAddress_t * s1ap_transportLayerAddress_p = (S1ap_TransportLayerAddress_t *)
-			        		&x2TNLConfigurationInfo->eNBX2TransportLayerAddresses.list.array[item];
+			        		x2TNLConfigurationInfo->eNBX2TransportLayerAddresses.list.array[item];
 				/** Set the IP address from the FTEID. */
 				conf_reply->addresses[item] = blk2bstr(s1ap_transportLayerAddress_p->buf, s1ap_transportLayerAddress_p->size);
 			}

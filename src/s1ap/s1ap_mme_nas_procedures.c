@@ -1981,15 +1981,28 @@ s1ap_mme_configuration_transfer( const itti_s1ap_configuration_transfer_t* const
 	mmeConfigurationTransfer_p->sonConfigurationTransferMCT.sourceeNB_ID.global_ENB_ID.eNB_ID.choice.macroENB_ID.bits_unused = 4;
 	INT16_TO_OCTET_STRING(s1ap_mme_configuration_transfer_pP->source_tai.tac, &mmeConfigurationTransfer_p->sonConfigurationTransferMCT.sourceeNB_ID.selected_TAI.tAC);
 	OCTET_STRING_fromBuf(&mmeConfigurationTransfer_p->sonConfigurationTransferMCT.sourceeNB_ID.selected_TAI.pLMNidentity, source_plmn, 3);
+	mmeConfigurationTransfer_p->presenceMask |= S1AP_MMECONFIGURATIONTRANSFERIES_SONCONFIGURATIONTRANSFERMCT_PRESENT;
 
-	if(!s1ap_mme_configuration_transfer_pP->conf_type) {
+	if(!s1ap_mme_configuration_transfer_pP->conf_reply) {
 		mmeConfigurationTransfer_p->sonConfigurationTransferMCT.sONInformation.present = S1ap_SONInformation_PR_sONInformationRequest;
 		mmeConfigurationTransfer_p->sonConfigurationTransferMCT.sONInformation.choice.sONInformationRequest = S1ap_SONInformationRequest_x2TNL_Configuration_Info;
 	} else {
 		mmeConfigurationTransfer_p->sonConfigurationTransferMCT.sONInformation.present = S1ap_SONInformation_PR_sONInformationReply;
-		// todo:
-	}
+		/** Build a list of transport addresses. */
+		struct S1ap_X2TNLConfigurationInfo * s1ap_x2tnl_conf = calloc (1, sizeof(struct S1ap_X2TNLConfigurationInfo));
+		mmeConfigurationTransfer_p->sonConfigurationTransferMCT.sONInformation.choice.sONInformationReply.x2TNLConfigurationInfo = s1ap_x2tnl_conf;
 
+		for(int num_addr = 0; num_addr < s1ap_mme_configuration_transfer_pP->conf_reply->reply_count; num_addr++) {
+			S1ap_TransportLayerAddress_t *addr = calloc(1, sizeof(S1ap_TransportLayerAddress_t));
+			addr->buf  = calloc(4, sizeof(uint8_t));
+			memcpy(addr->buf, s1ap_mme_configuration_transfer_pP->conf_reply->addresses[num_addr]->data,
+					blength(s1ap_mme_configuration_transfer_pP->conf_reply->addresses[num_addr]));
+			addr->size = blength(s1ap_mme_configuration_transfer_pP->conf_reply->addresses[num_addr]);
+			addr->bits_unused = 0;
+			ASN_SEQUENCE_ADD(&mmeConfigurationTransfer_p->sonConfigurationTransferMCT.sONInformation.choice.sONInformationReply.x2TNLConfigurationInfo->eNBX2TransportLayerAddresses,
+					addr);
+		}
+	}
 	/** Send the message to the target eNB. */
 	if (s1ap_mme_encode_pdu (&message, &message_id, &buffer_p, &length) < 0) {
 		OAILOG_ERROR (LOG_S1AP, "Failed to encode S1AP eNB configuration transfer to target tac " TAC_FMT".\n",

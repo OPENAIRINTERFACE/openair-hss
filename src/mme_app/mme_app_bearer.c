@@ -4402,7 +4402,7 @@ mme_app_handle_s1ap_enb_configuration_transfer(
 			   &enb_conf_transfer_pP->target_global_enb_id,
 			   enb_conf_transfer_pP->source_enb_type, &enb_conf_transfer_pP->source_tai,
 			   &enb_conf_transfer_pP->source_global_enb_id,
-			   enb_conf_transfer_pP->conf_type, enb_conf_transfer_pP->conf_reply);
+			   enb_conf_transfer_pP->conf_reply);
 	   enb_conf_transfer_pP->conf_reply = NULL; /**< Unlink. */
 	   OAILOG_FUNC_OUT (LOG_MME_APP);
    } else {
