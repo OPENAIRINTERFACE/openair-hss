@@ -1445,7 +1445,12 @@ typedef struct itti_s11_bearer_resource_command_s {
   ebi_t           ebi;
 
   void            *trxn;
-  struct sockaddr edns_peer_ip;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME
+
+  union {
+  	  struct sockaddr_in			addr_v4;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME
+  	  struct sockaddr_in6			addr_v6;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME
+  }edns_peer_ip;
+
 
   flow_qos_t               flow_qos;
   traffic_flow_template_t  tad;

@@ -231,7 +231,7 @@ esm_proc_bearer_resource_modification_request(
       ebi, ue_id, pti);
   /** Don't start the timer on the ESM procedure. Trigger a Delete Bearer Command message. */
   nas_itti_s11_bearer_resource_cmd(pti, esm_proc_bearer_context->linked_ebi, esm_proc_bearer_context->mme_s11_teid,
-      esm_proc_bearer_context->saegw_s11_fteid.teid, &esm_proc_bearer_context->saegw_s11_fteid.ipv4_address, ebi, tad, &flow_qos);
+      &esm_proc_bearer_context->saegw_s11_fteid, ebi, tad, &flow_qos);
   OAILOG_FUNC_RETURN(LOG_MME_APP, ESM_CAUSE_SUCCESS);
 }
 

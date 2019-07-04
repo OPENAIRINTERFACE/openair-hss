@@ -690,7 +690,6 @@ s1ap_mme_handle_initial_context_setup_response (
   }
 
 
-
   MSC_LOG_TX_MESSAGE (MSC_S1AP_MME,
                       MSC_MMEAPP_MME,
                       NULL, 0,

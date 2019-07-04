@@ -117,8 +117,7 @@ void nas_itti_s11_bearer_resource_cmd (
   const pti_t            pti,
   const ebi_t            linked_ebi,
   const teid_t           local_teid,
-  const teid_t           peer_teid,
-  const struct sockaddr  *saegw_s11_ipv4,
+  const fteid_t	        *saegw_s11_fteid,
   const ebi_t                    ebi,
   const traffic_flow_template_t * const tad,
   const flow_qos_t              * const flow_qos);

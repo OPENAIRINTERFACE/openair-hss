@@ -459,8 +459,7 @@ void nas_itti_s11_bearer_resource_cmd (
   const pti_t            pti,
   const ebi_t            linked_ebi,
   const teid_t           local_teid,
-  const teid_t           peer_teid,
-  const struct sockaddr  *saegw_s11_ip,
+  const fteid_t	        *saegw_s11_fteid,
   const ebi_t            ebi,
   const traffic_flow_template_t * const tad,
   const flow_qos_t              * const flow_qos)
@@ -482,8 +481,18 @@ void nas_itti_s11_bearer_resource_cmd (
   }
 
   bearer_resource_cmd->local_teid = local_teid;
-  bearer_resource_cmd->teid       = peer_teid;
-  memcpy((void*)&bearer_resource_cmd->edns_peer_ip, (void*)saegw_s11_ip, sizeof(struct sockaddr));
+  bearer_resource_cmd->teid       = saegw_s11_fteid->teid;
+
+  struct sockaddr_in6 sockaddr = {0};
+  if(saegw_s11_fteid->ipv4) {
+	  bearer_resource_cmd->edns_peer_ip.addr_v4.sin_family = AF_INET;
+	  bearer_resource_cmd->edns_peer_ip.addr_v4.sin_addr = saegw_s11_fteid->ipv4_address;
+  } else if(saegw_s11_fteid->ipv6){
+	  bearer_resource_cmd->edns_peer_ip.addr_v6.sin6_family = AF_INET6;
+	  memcpy((void*)&bearer_resource_cmd->edns_peer_ip.addr_v6.sin6_addr, &saegw_s11_fteid->ipv6_address, sizeof(struct in6_addr));
+  } else {
+	  AssertFatal(0, "Received neither IPv4 not IPv6 address for BRC sending via S11.");
+  }
 
   MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_S6A_MME, NULL, 0, "0 S11_BEARER_RESOURCE_CMD LOCAL_TEID "TEID_FMT" PEER_TEID "TEID_FMT" ", local_teid, peer_teid);
   itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
