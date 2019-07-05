@@ -122,12 +122,6 @@ nas_proc_establish_ind (
     emm_sap.u.emm_as.u.establish.tai                = &originating_tai;
     emm_sap.u.emm_as.u.establish.ecgi               = ecgi;
 
-    MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMAS_ESTABLISH_REQ ue id " MME_UE_S1AP_ID_FMT " tai:  plmn %c%c%c.%c%c%c tac %u",
-        ue_id,
-        (char)(originating_tai.mcc_digit1 + 0x30), (char)(originating_tai.mcc_digit2 + 0x30), (char)(originating_tai.mcc_digit3 + 0x30),
-        (char)(originating_tai.mnc_digit1 + 0x30), (char)(originating_tai.mnc_digit2 + 0x30),
-        (9 < originating_tai.mnc_digit3) ? ' ': (char)(originating_tai.mnc_digit3 + 0x30),
-            originating_tai.tac);
     rc = emm_sap_send (&emm_sap);
   }
 
@@ -277,12 +271,6 @@ nas_proc_ul_transfer_ind (
     *msg = NULL;
     emm_sap.u.emm_as.u.data.tai       = &originating_tai;
     emm_sap.u.emm_as.u.data.ecgi      = cgi;
-    MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMAS_DATA_IND (UL_TRANSFER) ue id " MME_UE_S1AP_ID_FMT " len %u tai:  plmn %c%c%c.%c%c%c tac %u",
-        ue_id, blength(*msg),
-        (char)(originating_tai.mcc_digit1 + 0x30), (char)(originating_tai.mcc_digit2 + 0x30), (char)(originating_tai.mcc_digit3 + 0x30),
-        (char)(originating_tai.mnc_digit1 + 0x30), (char)(originating_tai.mnc_digit2 + 0x30),
-        (9 < originating_tai.mnc_digit3) ? ' ': (char)(originating_tai.mnc_digit3 + 0x30),
-            originating_tai.tac);
     rc = emm_sap_send (&emm_sap);
   }
 

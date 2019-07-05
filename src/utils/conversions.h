@@ -266,6 +266,11 @@ do {                                                                \
     (pLMN)->mcc_digit3 = ((tBCDsTRING)->buf[1]  & 0x0f);            \
     (pLMN)->mnc_digit2 = ((tBCDsTRING)->buf[2]  & 0x0f);      		\
     (pLMN)->mnc_digit1 = (((tBCDsTRING)->buf[1]  & 0xf0) >> 4);     \
+    if((pLMN)->mnc_digit1 == 0x0F) {							    \
+    	(pLMN)->mnc_digit1 = (pLMN)->mnc_digit2;					\
+    	(pLMN)->mnc_digit2 = (pLMN)->mnc_digit3;					\
+    	(pLMN)->mnc_digit3 = 0x0F;									\
+    }																\
 } while(0)
 
 #define PLMN_T_TO_TBCD(pLMN, tBCDsTRING, mNClENGTH)                 \
