@@ -2513,6 +2513,10 @@ mme_app_handle_s10_context_response(
   if(ue_context_old && (ue_context->mme_ue_s1ap_id != ue_context_old->mme_ue_s1ap_id)){
     OAILOG_ERROR(LOG_MME_APP, "An old UE context already exists with ueId " MME_UE_S1AP_ID_FMT " for the UE with IMSI " IMSI_64_FMT ". Rejecting NAS context request procedure. \n",
         ue_context_old->mme_ue_s1ap_id, ue_context_old->imsi);
+
+    /** Reject the TAU of the new UE context and implictly detach the old context. */
+    _mme_app_send_nas_context_response_err(ue_context->mme_ue_s1ap_id, REQUEST_REJECTED);
+
     /*
      * Let the timeout happen for the new UE context. Will discard this information and continue with normal identification procedure.
      * Meanwhile remove the old UE.

@@ -1901,9 +1901,15 @@ static int _emm_tracking_area_update_run_procedure(emm_data_context_t *emm_conte
 //      edns_neigh_mme_ipv4_addr.addr.ipv4_addr.s_addr = 0;
 
       mme_app_select_service(tau_proc->ies->last_visited_registered_tai, &edns_neigh_mme_ipv4_addr, S10_MME_GTP_C);
+      if(!edns_neigh_mme_ipv4_addr) {
+    	  OAILOG_WARNING(LOG_NAS_EMM, "EMM-PROC  - For UE " MME_UE_S1AP_ID_FMT " the last visited TAI " TAI_FMT ", no neighboring object for MME S10 could be found. \n",
+    			  emm_context->ue_id, TAI_ARG(tau_proc->ies->last_visited_registered_tai));
+          rc = emm_proc_identification (emm_context, (nas_emm_proc_t *)tau_proc, IDENTITY_TYPE_2_IMSI, _emm_tracking_area_update_success_identification_cb, _emm_tracking_area_update_failure_identification_cb);
+          OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+      }
       if(edns_neigh_mme_ipv4_addr->sa_family ==0){
         OAILOG_WARNING(LOG_NAS_EMM, "EMM-PROC  - For UE " MME_UE_S1AP_ID_FMT " the last visited TAI " TAI_FMT " is not configured as a MME S10 neighbor. "
-            "Proceeding with identification procedure. \n", TAI_ARG(tau_proc->ies->last_visited_registered_tai), emm_context->ue_id);
+            "Proceeding with identification procedure. \n", emm_context->ue_id, TAI_ARG(tau_proc->ies->last_visited_registered_tai));
         rc = emm_proc_identification (emm_context, (nas_emm_proc_t *)tau_proc, IDENTITY_TYPE_2_IMSI, _emm_tracking_area_update_success_identification_cb, _emm_tracking_area_update_failure_identification_cb);
         OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
       }else{
@@ -2232,23 +2238,23 @@ static void _emm_tracking_area_update_registration_complete(emm_data_context_t *
 
   if(!s10_proc_handover){
 	  if(!active_flag) {
-		  /** No MBR should be send because no InitialContextSetupResponse is received. */
+		  /**
+		   * No MBR should be send because no InitialContextSetupResponse is received.
+		   * Also no CBR is received and waiting in pending state.
+		   */
 		  OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - EMM Context for ueId " MME_UE_S1AP_ID_FMT " has done an IDLE-TAU without active flag. Triggering UE context release. \n", emm_context->ue_id);
 		  mme_app_itti_ue_context_release(ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, S1AP_NAS_NORMAL_RELEASE, ue_context->e_utran_cgi.cell_identity.enb_id);
 	  } else if (pending_qos) {
 		  /** Check if a pending QoS procedure exists. */
 		  OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - EMM Context for ueId " MME_UE_S1AP_ID_FMT " has done an IDLE-TAU without active flag but bearer QoS modification is pending. "
-				  "Not releasing UE context, retriggering qos operation. \n", emm_context->ue_id);
-		  /** Send an retry. */
-		  nas_itti_s11_retry_ind(ue_context->mme_ue_s1ap_id);
+				  "Not releasing UE context. MBResp should retrigger qos operation. \n", emm_context->ue_id);
 	  }
   } else {
-	  pending_qos = s10_proc_handover->pending_qos;
 	  mme_app_delete_s10_procedure_mme_handover(ue_context);
-	  if(pending_qos){
-		  OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - UE for ueId " MME_UE_S1AP_ID_FMT " has pending QoS information. \n", ue_context->mme_ue_s1ap_id);
-		  nas_itti_s11_retry_ind(ue_context->mme_ue_s1ap_id);
-	  }
+	  /**
+	   * No S11 retry should be triggered here. Only by the modify bearer response.
+	   * If we sent a CBResp before the MBR procedure completes, we might trigger an initial detach in the PGW.
+	   */
   }
   //  unlock_ue_contexts(ue_context);
 

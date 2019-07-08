@@ -158,7 +158,7 @@ void *mme_app_thread (void *args)
       break;
 
     case NAS_RETRY_BEARER_CTX_PROC_IND: {
-        mme_app_handle_bearer_ctx_retry(&NAS_RETRY_BEARER_CTX_PROC_IND (received_message_p));
+        mme_app_handle_bearer_ctx_retry(NAS_RETRY_BEARER_CTX_PROC_IND (received_message_p).ue_id);
     }
     break;
 
