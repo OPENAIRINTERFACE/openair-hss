@@ -235,10 +235,13 @@ int s1ap_free_mme_encode_pdu(
 
   /** Free Other Messages. */
   case S1AP_PAGING_LOG:
-      return free_s1ap_paging(&message->msg.s1ap_PagingIEs);
+	return free_s1ap_paging(&message->msg.s1ap_PagingIEs);
+
+  case S1AP_RESET_ACK_LOG:
+    return free_s1ap_resetacknowledge(&message->msg.s1ap_ResetAcknowledgeIEs);
 
   case S1AP_MME_CFG_TRANSFER_LOG:
-        return free_s1ap_mmeconfigurationtransfer(&message->msg.s1ap_MMEConfigurationTransferIEs);
+    return free_s1ap_mmeconfigurationtransfer(&message->msg.s1ap_MMEConfigurationTransferIEs);
 
   default:
     DevAssert(false);
@@ -296,7 +299,7 @@ s1ap_mme_encode_initiating (
     return s1ap_mme_encode_mme_configuration_transfer (message_p, buffer, length);
 
   default:
-    OAILOG_NOTICE (LOG_S1AP, "Unknown procedure ID (%d) for initiating message_p\n", (int)message_p->procedureCode);
+    OAILOG_ERROR(LOG_S1AP, "Unknown procedure ID (%d) for initiating message_p\n", (int)message_p->procedureCode);
     break;
   }
 
@@ -329,8 +332,12 @@ s1ap_mme_encode_successfull_outcome (
     *message_id = S1AP_HANDOVER_CANCEL_ACK_LOG;
     return s1ap_mme_encode_handoverCancelAck(message_p, buffer, length);
 
+  case S1ap_ProcedureCode_id_Reset:
+    *message_id = S1AP_RESET_ACK_LOG;
+    return s1ap_mme_encode_resetack(message_p, buffer, length);
+
   default:
-    OAILOG_DEBUG (LOG_S1AP, "Unknown procedure ID (%d) for successfull outcome message\n", (int)message_p->procedureCode);
+    OAILOG_ERROR(LOG_S1AP, "Unknown procedure ID (%d) for successfull outcome message\n", (int)message_p->procedureCode);
     break;
   }
 
@@ -357,7 +364,7 @@ s1ap_mme_encode_unsuccessfull_outcome (
     return s1ap_mme_encode_handoverPreparationFailure(message_p, buffer, length);
 
   default:
-    OAILOG_DEBUG (LOG_S1AP, "Unknown procedure ID (%d) for unsuccessfull outcome message\n", (int)message_p->procedureCode);
+    OAILOG_ERROR(LOG_S1AP, "Unknown procedure ID (%d) for unsuccessfull outcome message\n", (int)message_p->procedureCode);
     break;
   }
 

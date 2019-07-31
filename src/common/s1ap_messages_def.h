@@ -66,6 +66,9 @@ MESSAGE_DEF(S1AP_E_RABRELEASE_RESPONSE_LOG  , MESSAGE_PRIORITY_MED, IttiMsgText 
 MESSAGE_DEF(S1AP_PAGING_LOG                 , MESSAGE_PRIORITY_MED, IttiMsgText                     , s1ap_paging_log)
 
 MESSAGE_DEF(S1AP_ENB_RESET_LOG             , MESSAGE_PRIORITY_MED, IttiMsgText                      , s1ap_enb_reset_log)
+MESSAGE_DEF(S1AP_RESET_ACK_LOG             , MESSAGE_PRIORITY_MED, IttiMsgText                      , s1ap_enb_reset_ack_log)
+
+
 MESSAGE_DEF(S1AP_ERROR_IND_LOG             , MESSAGE_PRIORITY_MED, IttiMsgText                      , s1ap_error_ind_log)
 MESSAGE_DEF(S1AP_ENB_CFG_UPDATE_LOG        , MESSAGE_PRIORITY_MED, IttiMsgText                      , s1ap_enb_cfg_update_log)
 MESSAGE_DEF(S1AP_ENB_CFG_TRANSFER_LOG      , MESSAGE_PRIORITY_MED, IttiMsgText                      , s1ap_enb_cfg_transfer_log)

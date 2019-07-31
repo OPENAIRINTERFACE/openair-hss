@@ -328,11 +328,13 @@ void itti_free_msg_content (MessageDef * const message_p)
   break;
 
   case S1AP_ENB_INITIATED_RESET_REQ:
-    free_wrapper ((void**) &message_p->ittiMsg.s1ap_enb_initiated_reset_req.ue_to_reset_list);
+	if(message_p->ittiMsg.s1ap_enb_initiated_reset_req.ue_to_reset_list)
+		free_wrapper ((void**) &message_p->ittiMsg.s1ap_enb_initiated_reset_req.ue_to_reset_list);
     break;
 
   case S1AP_ENB_INITIATED_RESET_ACK:
-    free_wrapper ((void**) &message_p->ittiMsg.s1ap_enb_initiated_reset_ack.ue_to_reset_list);
+    if(message_p->ittiMsg.s1ap_enb_initiated_reset_ack.ue_to_reset_list)
+    	free_wrapper ((void**) &message_p->ittiMsg.s1ap_enb_initiated_reset_ack.ue_to_reset_list);
     break;
   case S1AP_UE_CAPABILITIES_IND:
     break;

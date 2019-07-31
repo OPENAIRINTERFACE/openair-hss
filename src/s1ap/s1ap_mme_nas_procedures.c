@@ -425,7 +425,8 @@ s1ap_generate_downlink_nas_transport (
    */
   downlinkNasTransport->mme_ue_s1ap_id = ue_ref->mme_ue_s1ap_id;
   downlinkNasTransport->eNB_UE_S1AP_ID = ue_ref->enb_ue_s1ap_id;
-  /*eNB
+  /*
+   * eNB
    * Fill in the NAS pdu
    */
   OCTET_STRING_fromBuf (&downlinkNasTransport->nas_pdu, (char *)bdata(*payload), blength(*payload));
