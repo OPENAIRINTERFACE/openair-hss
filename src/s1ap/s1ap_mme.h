@@ -68,13 +68,13 @@ enum s1_ue_state_s {
  *  Generated every time a new InitialUEMessage is received
  **/
 typedef struct ue_description_s {
+  enb_ue_s1ap_id_t enb_ue_s1ap_id:24;    ///< Unique UE id over eNB (24 bits wide)
   struct enb_description_s *enb;           ///< Which eNB this UE is attached to
 
   enum s1_ue_state_s        s1_ue_state;       ///< S1AP UE state
   /** Set the release cause, since we must now differentiate between them. */
   enum s1cause              s1_release_cause;  ///< S1AP Release Cause
 
-  enb_ue_s1ap_id_t enb_ue_s1ap_id:24;    ///< Unique UE id over eNB (24 bits wide)
   mme_ue_s1ap_id_t mme_ue_s1ap_id;       ///< Unique UE id over MME (32 bits wide)
 
   /** SCTP stream on which S1 message will be sent/received.

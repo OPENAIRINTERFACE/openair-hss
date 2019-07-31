@@ -2064,12 +2064,10 @@ static bool construct_s1ap_mme_full_reset_req (
 {
   arg_s1ap_construct_enb_reset_req_t          *arg = (arg_s1ap_construct_enb_reset_req_t*) argP;
   ue_description_t                       *ue_ref_p = (ue_description_t*)dataP;
-  enb_ue_s1ap_id_t enb_ue_s1ap_id;
   uint32_t i = arg->current_ue_index;
   if (ue_ref_p) {
-    enb_ue_s1ap_id = ue_ref_p->enb_ue_s1ap_id;
     S1AP_ENB_INITIATED_RESET_REQ (arg->message_p).ue_to_reset_list[i].mme_ue_s1ap_id = &(ue_ref_p->mme_ue_s1ap_id);
-    S1AP_ENB_INITIATED_RESET_REQ (arg->message_p).ue_to_reset_list[i].enb_ue_s1ap_id = &enb_ue_s1ap_id;
+    S1AP_ENB_INITIATED_RESET_REQ (arg->message_p).ue_to_reset_list[i].enb_ue_s1ap_id = (enb_ue_s1ap_id_t*)ue_ref_p; /**< Should be the address of the id. */
     arg->current_ue_index++;
     *resultP = arg->message_p;
   } else {
