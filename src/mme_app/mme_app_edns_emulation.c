@@ -78,7 +78,8 @@ int mme_app_edns_add_wrr_entry(bstring id, struct sockaddr *edns_ip_addr, const 
     	data = malloc(sizeof(struct sockaddr_in6));
     	memcpy((struct sockaddr_in6*)data, (struct sockaddr_in6*)edns_ip_addr, sizeof(struct sockaddr_in6));
     } else {
-    	return RETURNerror;
+        free_wrapper(&cid);
+        return RETURNerror;
     }
     if (data) {
       hashtable_rc_t rc;
@@ -96,6 +97,8 @@ int mme_app_edns_add_wrr_entry(bstring id, struct sockaddr *edns_ip_addr, const 
       free_wrapper(&cid);
       if (HASH_TABLE_OK == rc) return RETURNok;
     }
+    if(cid)
+    	free_wrapper(&cid);
   }
   return RETURNerror;
 }

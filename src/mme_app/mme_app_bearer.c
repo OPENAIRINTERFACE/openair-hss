@@ -1000,7 +1000,17 @@ mme_app_handle_create_sess_resp (
     emm_cn_proc_ctx_req = get_nas_cn_procedure_ctx_req(emm_context);
   }
   /** Either continue with another CSReq or signal it to the EMM layer. */
-  mme_ue_eps_pdn_connections_t * pdn_connections = s10_handover_procedure ? s10_handover_procedure->pdn_connections : ((emm_cn_proc_ctx_req) ? emm_cn_proc_ctx_req->pdn_connections : NULL);
+  mme_ue_eps_pdn_connections_t * pdn_connections = NULL;
+  if(s10_handover_procedure) {
+	  pdn_connections = s10_handover_procedure->pdn_connections;
+  } else {
+	  if(emm_cn_proc_ctx_req) {
+		  pdn_connections = emm_cn_proc_ctx_req->pdn_connections;
+	  } else {
+		  pdn_connections = NULL;
+	  }
+  }
+
   MSC_LOG_RX_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 CREATE_SESSION_RESPONSE local S11 teid " TEID_FMT " ",
       create_sess_resp_pP->teid);
   /** Process the received CSResp, equally for handover/TAU or not. If success, the pdn context will be edited, if not it will be freed. */

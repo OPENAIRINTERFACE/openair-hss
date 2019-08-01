@@ -2793,13 +2793,6 @@ s1ap_mme_handle_enb_reset (
     OAILOG_INFO (LOG_S1AP, "S1 setup is not done.Invalid state.Ignoring ENB Initiated Reset.eNB Id = %d , S1AP state = %d \n", enb_association->enb_id, enb_association->s1_state);
     OAILOG_FUNC_RETURN (LOG_S1AP, RETURNok);
   }
-
-  // Check if there are no UEs connected
-  if (!enb_association->nb_ue_associated) {
-    // Ignore the message
-    OAILOG_INFO (LOG_S1AP, "No UEs is connected.Ignoring ENB Initiated Reset.eNB Id = %d\n", enb_association->enb_id);
-    OAILOG_FUNC_RETURN (LOG_S1AP, RETURNok);
-  }
   // Check the reset type - partial_reset OR reset_all
   enb_reset_p = &message->msg.s1ap_ResetIEs;
   switch (enb_reset_p->resetType.present) {
@@ -2819,6 +2812,12 @@ s1ap_mme_handle_enb_reset (
   int num_ue_assoc = 0;
   // Partial Reset
   if (s1ap_reset_type != RESET_ALL) {
+	  // Check if there are no UEs connected
+	  if (!enb_association->nb_ue_associated) {
+	    // Ignore the message
+	    OAILOG_INFO (LOG_S1AP, "No UEs is connected.Ignoring ENB Initiated Reset.eNB Id = %d\n", enb_association->enb_id);
+	    OAILOG_FUNC_RETURN (LOG_S1AP, RETURNok);
+	  }
 	  num_ue_assoc = enb_reset_p->resetType.choice.partOfS1_Interface.list.count;
 	  s1_sig_conn_id_t ue_to_reset_list[num_ue_assoc]; /**< Create a stacked array. */
 	  memset(ue_to_reset_list, 0, sizeof(ue_to_reset_list));
