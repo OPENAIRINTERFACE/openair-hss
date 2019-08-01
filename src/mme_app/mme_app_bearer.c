@@ -1256,6 +1256,12 @@ mme_app_handle_modify_bearer_resp (
   RB_FOREACH (pdn_context, PdnContexts, &ue_context->pdn_contexts) {
     RB_FOREACH (current_bearer_p, SessionBearers, &pdn_context->session_bearers) {
       if((!(current_bearer_p->bearer_state & BEARER_STATE_ENB_CREATED)) && !current_bearer_p->enb_fteid_s1u.teid){
+    	/** Check that it is not a default bearer. */
+    	if(current_bearer_p->ebi == pdn_context->default_ebi){
+    		  OAILOG_WARNING(LOG_MME_APP, "Not triggering a delete bearer request for non-established default bearer %d for UE: " MME_UE_S1AP_ID_FMT ".\n",
+					  current_bearer_p->ebi, ue_context->mme_ue_s1ap_id);
+    		  continue;
+    	}
         /** Trigger a Delete Bearer Command. */
         ebi_list.ebis[ebi_list.num_ebi] = current_bearer_p->ebi;
         ebi_list.num_ebi++;

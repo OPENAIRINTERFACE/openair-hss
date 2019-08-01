@@ -2771,9 +2771,6 @@ s1ap_mme_handle_enb_reset (
   arg_s1ap_construct_enb_reset_req_t      arg = {0};
   uint32_t                                i = 0;
   int                                     rc = RETURNok;
-  mme_ue_s1ap_id_t  mme_ue_s1ap_id;
-  enb_ue_s1ap_id_t  enb_ue_s1ap_id;
-
 
   OAILOG_FUNC_IN (LOG_S1AP);
 
@@ -2845,14 +2842,14 @@ s1ap_mme_handle_enb_reset (
 		  }
 
 		  if (s1_sig_conn_id_p->mME_UE_S1AP_ID != NULL) {
-			  mme_ue_s1ap_id = (mme_ue_s1ap_id_t) *(s1_sig_conn_id_p->mME_UE_S1AP_ID);
+			  mme_ue_s1ap_id_t mme_ue_s1ap_id = (mme_ue_s1ap_id_t) *(s1_sig_conn_id_p->mME_UE_S1AP_ID);
 			  if ((ue_ref_p = s1ap_is_ue_mme_id_in_list (mme_ue_s1ap_id)) != NULL) {
 				  if (s1_sig_conn_id_p->eNB_UE_S1AP_ID != NULL) {
-					  enb_ue_s1ap_id = (enb_ue_s1ap_id_t) *(s1_sig_conn_id_p->eNB_UE_S1AP_ID);
-					  if (ue_ref_p->enb_ue_s1ap_id == (enb_ue_s1ap_id & ENB_UE_S1AP_ID_MASK)) {
+					  enb_ue_s1ap_id_t enb_ue_s1ap_id = (enb_ue_s1ap_id_t) *(s1_sig_conn_id_p->eNB_UE_S1AP_ID);
+					  enb_ue_s1ap_id &= ENB_UE_S1AP_ID_MASK;
+					  if (ue_ref_p->enb_ue_s1ap_id == enb_ue_s1ap_id) {
 						  ue_to_reset_list[i].mme_ue_s1ap_id = &(ue_ref_p->mme_ue_s1ap_id);
-						  enb_ue_s1ap_id &= ENB_UE_S1AP_ID_MASK;
-						  ue_to_reset_list[i].enb_ue_s1ap_id = &enb_ue_s1ap_id;
+						  ue_to_reset_list[i].enb_ue_s1ap_id = (enb_ue_s1ap_id_t*)ue_ref_p;
 					  } else {
 						  // mismatch in enb_ue_s1ap_id sent by eNB and stored in S1AP ue context in EPC. Abnormal case.
 						  ue_to_reset_list[i].mme_ue_s1ap_id = NULL;
@@ -2872,10 +2869,10 @@ s1ap_mme_handle_enb_reset (
 			  }
 		  } else {
 			  if (s1_sig_conn_id_p->eNB_UE_S1AP_ID != NULL) {
-				  enb_ue_s1ap_id = (enb_ue_s1ap_id_t) *(s1_sig_conn_id_p->eNB_UE_S1AP_ID);
+				  enb_ue_s1ap_id_t enb_ue_s1ap_id = (enb_ue_s1ap_id_t) *(s1_sig_conn_id_p->eNB_UE_S1AP_ID);
+				  enb_ue_s1ap_id &= ENB_UE_S1AP_ID_MASK;
 				  if ((ue_ref_p = s1ap_is_ue_enb_id_in_list (enb_association, enb_ue_s1ap_id)) != NULL) {
-					  enb_ue_s1ap_id &= ENB_UE_S1AP_ID_MASK;
-					  ue_to_reset_list[i].enb_ue_s1ap_id = &enb_ue_s1ap_id;
+					  ue_to_reset_list[i].enb_ue_s1ap_id = (enb_ue_s1ap_id_t*)ue_ref_p;
 					  if (ue_ref_p->mme_ue_s1ap_id != INVALID_MME_UE_S1AP_ID) {
 						  ue_to_reset_list[i].mme_ue_s1ap_id = &(ue_ref_p->mme_ue_s1ap_id);
 					  } else {
@@ -2968,15 +2965,19 @@ s1ap_handle_enb_initiated_reset_ack (
     	/** MME UE. */
     	S1ap_UE_associatedLogicalS1_ConnectionItemResAck_t * sig_conn_item = calloc (1, sizeof (S1ap_UE_associatedLogicalS1_ConnectionItemResAck_t));
     	/** MME UE S1AP ID. */
+    	S1ap_MME_UE_S1AP_ID_t mme_ue_s1ap_id  = 0;
+    	S1ap_ENB_UE_S1AP_ID_t enb_ue_s1ap_id  = 0;
     	if (enb_reset_ack_p->ue_to_reset_list[i].mme_ue_s1ap_id != NULL) {
-    		sig_conn_item->uE_associatedLogicalS1_ConnectionItem.mME_UE_S1AP_ID = enb_reset_ack_p->ue_to_reset_list[i].mme_ue_s1ap_id;
+    		mme_ue_s1ap_id = *enb_reset_ack_p->ue_to_reset_list[i].mme_ue_s1ap_id;
+    		sig_conn_item->uE_associatedLogicalS1_ConnectionItem.mME_UE_S1AP_ID = &mme_ue_s1ap_id;
     	}
     	else {
     		sig_conn_item->uE_associatedLogicalS1_ConnectionItem.mME_UE_S1AP_ID = NULL;
     	}
     	/** ENB UE S1AP ID. */
     	if (enb_reset_ack_p->ue_to_reset_list[i].enb_ue_s1ap_id != NULL) {
-    		sig_conn_item->uE_associatedLogicalS1_ConnectionItem.eNB_UE_S1AP_ID = enb_reset_ack_p->ue_to_reset_list[i].enb_ue_s1ap_id;
+    		enb_ue_s1ap_id = *enb_reset_ack_p->ue_to_reset_list[i].enb_ue_s1ap_id;
+    		sig_conn_item->uE_associatedLogicalS1_ConnectionItem.eNB_UE_S1AP_ID = &enb_ue_s1ap_id;
     	}
     	else {
     		sig_conn_item->uE_associatedLogicalS1_ConnectionItem.eNB_UE_S1AP_ID = NULL;

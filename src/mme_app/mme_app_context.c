@@ -108,6 +108,8 @@
 //------------------------------------------------------------------------------
 ue_context_t *mme_create_new_ue_context (void)
 {
+  OAILOG_FUNC_IN(LOG_MME_APP);
+
   ue_context_t                           *new_p = calloc (1, sizeof (ue_context_t));
   // todo: if MME_APP is to be locked,
   pthread_mutexattr_t mutexattr = {0};
@@ -115,25 +117,25 @@ ue_context_t *mme_create_new_ue_context (void)
   if (rc) {
     OAILOG_ERROR (LOG_MME_APP, "Cannot create UE context, failed to init mutex attribute: %s\n", strerror(rc));
     free_wrapper(&new_p);
-    return NULL;
+    OAILOG_FUNC_RETURN (LOG_MME_APP, NULL);
   }
   rc = pthread_mutexattr_settype(&mutexattr, PTHREAD_MUTEX_RECURSIVE);
   if (rc) {
     OAILOG_ERROR (LOG_MME_APP, "Cannot create UE context, failed to set mutex attribute type: %s\n", strerror(rc));
     free_wrapper(&new_p);
-    return NULL;
+    OAILOG_FUNC_RETURN (LOG_MME_APP, NULL);
   }
   rc = pthread_mutex_init(&new_p->recmutex, &mutexattr);
   if (rc) {
     OAILOG_ERROR (LOG_MME_APP, "Cannot create UE context, failed to init mutex: %s\n", strerror(rc));
     free_wrapper(&new_p);
-    return NULL;
+    OAILOG_FUNC_RETURN (LOG_MME_APP, NULL);
   }
 //  rc = lock_ue_contexts(new_p);
   if (rc) {
     OAILOG_ERROR (LOG_MME_APP, "Cannot create UE context, failed to lock mutex: %s\n", strerror(rc));
     free_wrapper(&new_p);
-    return NULL;
+    OAILOG_FUNC_RETURN (LOG_MME_APP, NULL);
   }
 
   new_p->mme_ue_s1ap_id = INVALID_MME_UE_S1AP_ID;
@@ -162,9 +164,11 @@ ue_context_t *mme_create_new_ue_context (void)
     bearer_context_t * bearer_ctx_p = mme_app_new_bearer();
     DevAssert (bearer_ctx_p != NULL);
     bearer_ctx_p->ebi = ebi;
+//    OAILOG_DEBUG(LOG_MME_APP, "Created new bearer with ebi %d and address %p. Put into bearer pool for UE id  " MME_UE_S1AP_ID_FMT ".\n",
+//    		bearer_ctx_p->ebi, bearer_ctx_p, new_p->mme_ue_s1ap_id);
     RB_INSERT (BearerPool, &(new_p->bearer_pool), bearer_ctx_p);
   }
-  return new_p;
+  OAILOG_FUNC_RETURN (LOG_MME_APP, new_p);
 }
 
 //------------------------------------------------------------------------------
@@ -254,7 +258,7 @@ void mme_app_ue_context_free_content (ue_context_t * const ue_context)
     for (int i = 0; i < BEARERS_PER_UE - 1; i++) {
       bearer_context_t * bearer_context = RB_MAX(BearerPool, &ue_context->bearer_pool);
       if(bearer_context){
-        OAILOG_DEBUG(LOG_MME_APP, "Putting bearer context %p with ebi %d (i=%d) of UE "MME_UE_S1AP_ID_FMT ". \n",
+        OAILOG_DEBUG(LOG_MME_APP, "Freeing bearer context %p with ebi %d (i=%d) of UE "MME_UE_S1AP_ID_FMT ". \n",
             bearer_context, bearer_context->ebi, i, ue_context->mme_ue_s1ap_id);
         DevAssert(bearer_context);
         /** Remove from the UE list. */
@@ -274,7 +278,7 @@ void mme_app_ue_context_free_content (ue_context_t * const ue_context)
           break;
       }
       if(bearer_context){
-        OAILOG_ERROR(LOG_MME_APP, "Putting bearer context %p with ebi %d of UE "MME_UE_S1AP_ID_FMT " (second try). \n",
+        OAILOG_ERROR(LOG_MME_APP, "Freeing bearer context %p with ebi %d of UE "MME_UE_S1AP_ID_FMT " (second try). \n",
             bearer_context, bearer_context->ebi, ue_context->mme_ue_s1ap_id);
         DevAssert(bearer_context);
         /** Remove from the UE list. */
