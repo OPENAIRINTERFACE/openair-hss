@@ -215,8 +215,8 @@ esm_proc_pdn_connectivity_request (
   OAILOG_FUNC_IN (LOG_NAS_ESM);
 
   OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - PDN connectivity requested by the UE "
-             "(ue_id=" MME_UE_S1AP_ID_FMT ", pti=%d) PDN type = %s, APN = %s \n", ue_id, esm_proc_pdn_connectivity->esm_base_proc.pti,
-             (esm_proc_pdn_connectivity->pdn_type == ESM_PDN_TYPE_IPV4) ? "IPv4" : (esm_proc_pdn_connectivity->pdn_type == ESM_PDN_TYPE_IPV6) ? "IPv6" : "IPv4v6",
+             "(ue_id=" MME_UE_S1AP_ID_FMT ", pti=%d) PDN type = (%d), APN = %s \n", ue_id, esm_proc_pdn_connectivity->esm_base_proc.pti,
+              esm_proc_pdn_connectivity->pdn_type,
              (char *)bdata(esm_proc_pdn_connectivity->subscribed_apn));
   /*
    * Create new PDN context in the MME_APP UE context.
@@ -224,14 +224,16 @@ esm_proc_pdn_connectivity_request (
    */
   pdn_context_t * pdn_context = NULL;
   pdn_type_t pdn_type = 0;
-  if(esm_proc_pdn_connectivity->pdn_type -1 != apn_configuration->pdn_type){
+  if(esm_proc_pdn_connectivity->pdn_type && (esm_proc_pdn_connectivity->pdn_type -1 != apn_configuration->pdn_type)){
 	  if(apn_configuration->pdn_type == 2){
-		  pdn_type = esm_proc_pdn_connectivity->pdn_type -1;
+		  pdn_type = esm_proc_pdn_connectivity->pdn_type -1; /**< Take the one which was received. */
 	  } else {
 		  pdn_type = apn_configuration->pdn_type;
 	  }
-  } else {
+  } else if(esm_proc_pdn_connectivity->pdn_type){
 	  pdn_type = esm_proc_pdn_connectivity->pdn_type -1;
+  } else {
+	  pdn_type = apn_configuration->pdn_type;
   }
   int rc = mme_app_esm_create_pdn_context(ue_id, ESM_EBI_UNASSIGNED, apn_configuration, esm_proc_pdn_connectivity->subscribed_apn, apn_configuration->context_identifier, &apn_configuration->ambr, pdn_type, &pdn_context);
   if (rc != RETURNok) {
