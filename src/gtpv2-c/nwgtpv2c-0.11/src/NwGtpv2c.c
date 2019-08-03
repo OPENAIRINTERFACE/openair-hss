@@ -767,7 +767,7 @@ static nw_rc_t nwGtpv2cCreateLocalTunnel (
 
       pLocalTunnel = RB_FIND (NwGtpv2cTunnelMap, &(thiz->tunnelMap), &keyTunnel);
       char                                      ip[INET6_ADDRSTRLEN];
-      inet_ntop (AF_INET, (void*)&pReqTrxn->peerIp, ip, pReqTrxn->peerIp.sa_family == AF_INET ? INET_ADDRSTRLEN : INET6_ADDRSTRLEN);
+      inet_ntop (AF_INET, (void*)&pReqTrxn->peer_ip, ip, ((struct sockaddr*)&pReqTrxn->peer_ip)->sa_family == AF_INET ? INET_ADDRSTRLEN : INET6_ADDRSTRLEN);
       if (!pLocalTunnel) {
     	  OAILOG_WARNING (LOG_GTPV2C,  "Triggered response not containing a tunnel. Creating one for local_teid 0x%x and peer %s!\n",
     			pUlpRsp->u_api_info.triggeredRspInfo.teidLocal, ip);
