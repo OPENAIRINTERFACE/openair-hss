@@ -762,17 +762,20 @@ static nw_rc_t nwGtpv2cCreateLocalTunnel (
       nw_gtpv2c_tunnel_t                        *pLocalTunnel = NULL,
                                                  keyTunnel = {0};
       keyTunnel.teid = pUlpRsp->u_api_info.triggeredRspInfo.teidLocal;
-//      keyTunnel.ipAddrRemote = &pReqTrxn->peer_ip;
       memcpy(((struct sockaddr*)&keyTunnel.ipAddrRemote), ((struct sockaddr*)&pReqTrxn->peer_ip),
     		  ((struct sockaddr*)&pReqTrxn->peer_ip)->sa_family==AF_INET ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
 
       pLocalTunnel = RB_FIND (NwGtpv2cTunnelMap, &(thiz->tunnelMap), &keyTunnel);
+      char                                      ip[INET6_ADDRSTRLEN];
+      inet_ntop (AF_INET, (void*)&pReqTrxn->peerIp, ip, pReqTrxn->peerIp.sa_family == AF_INET ? INET_ADDRSTRLEN : INET6_ADDRSTRLEN);
       if (!pLocalTunnel) {
-//     todo:    OAILOG_WARNING (LOG_GTPV2C,  "Triggered response not containing a tunnel. Creating one for local_teid 0x%x and peer 0x%x!\n", pUlpRsp->u_api_info.triggeredRspInfo.teidLocal, htonl (pReqTrxn->peerIp.s_addr));
-        rc = nwGtpv2cCreateLocalTunnel (thiz, pUlpRsp->u_api_info.triggeredRspInfo.teidLocal, &pReqTrxn->peer_ip, pUlpRsp->u_api_info.triggeredRspInfo.hUlpTunnel, &pUlpRsp->u_api_info.triggeredRspInfo.hTunnel);
-        NW_ASSERT (NW_OK == rc);
+    	  OAILOG_WARNING (LOG_GTPV2C,  "Triggered response not containing a tunnel. Creating one for local_teid 0x%x and peer %s!\n",
+    			pUlpRsp->u_api_info.triggeredRspInfo.teidLocal, ip);
+    	  rc = nwGtpv2cCreateLocalTunnel (thiz, pUlpRsp->u_api_info.triggeredRspInfo.teidLocal, &pReqTrxn->peer_ip, pUlpRsp->u_api_info.triggeredRspInfo.hUlpTunnel, &pUlpRsp->u_api_info.triggeredRspInfo.hTunnel);
+    	  NW_ASSERT (NW_OK == rc);
       }else{
-       // todo: OAILOG_WARNING (LOG_GTPV2C,  "Triggered response already containing a tunnel. Not creating a new one for local_teid 0x%x and peer 0x%x.\n", (pUlpRsp->u_api_info.triggeredRspInfo.teidLocal), htonl (pReqTrxn->peerIp.s_addr));
+       OAILOG_WARNING (LOG_GTPV2C,  "Triggered response already containing a tunnel. Not creating a new one for local_teid 0x%x and peer %s.\n",
+    		   (pUlpRsp->u_api_info.triggeredRspInfo.teidLocal), ip);
       }
     }
     OAILOG_FUNC_RETURN( LOG_GTPV2C, rc);
@@ -1316,6 +1319,7 @@ static nw_rc_t                            nwGtpv2cHandleUlpFindLocalTunnel (
       } else {
     	  OAILOG_WARNING (LOG_GTPV2C,  "Not removing the initial request transaction for message type %d, seqNo %x since it was a late response. \n",
     			  msgType, keyTrxn.seqNum);
+    	  /** Remove the decoded message. */
     	  rc = NW_OK;
       }
     } else {
@@ -2069,8 +2073,9 @@ static nw_rc_t                            nwGtpv2cHandleUlpFindLocalTunnel (
       rc = thiz->tmrMgr.tmrStopCallback (thiz->tmrMgr.tmrMgrHandle, timeoutInfo->hTimer);
       thiz->activeTimerInfo = NULL;
       if (NW_OK != rc) {
-        OAILOG_INFO (LOG_GTPV2C, "Stopping active timer 0x%" PRIxPTR " for info 0x%p failed!\n", timeoutInfo->hTimer, timeoutInfo);
+        OAILOG_ERROR(LOG_GTPV2C, "Stopping active timer 0x%" PRIxPTR " for info 0x%p failed!\n", timeoutInfo->hTimer, timeoutInfo);
       }
+      OAILOG_INFO (LOG_GTPV2C, "Stopped active timer 0x%" PRIxPTR " for info 0x%p!\n", timeoutInfo->hTimer, timeoutInfo);
       OAI_GCC_DIAG_OFF(int-to-pointer-cast);
       timeoutInfo = nwGtpv2cTmrMinHeapPeek ((NwGtpv2cTmrMinHeapT *)thiz->hTmrMinHeap);
       OAI_GCC_DIAG_ON(int-to-pointer-cast);

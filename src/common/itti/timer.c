@@ -94,11 +94,6 @@ timer_handle_signal (
   timer_expired_p->timer_id = (long)timer_p->timer;
   timer_expired_p->arg = timer_p->timer_arg;
 
-  if(timer_p->task_id > 3 && timer_p->task_id < 10){
-	  OAILOG_ERROR(LOG_ITTI, "HANDLING TIMER SIGNAL FOR TIMER OBJECT %x with task_id %d. \n",
-	  		  timer_p, timer_p->task_id);
-  }
-
   /*
    * Timer is a one shot timer, remove it
    */
@@ -120,6 +115,11 @@ timer_handle_signal (
   /*
    * Notify task of timer expiry
    */
+  if(abs(task_id) > 100) {
+	  OAILOG_ERROR(LOG_ITTI, " TIMER OBJECT %x with task_id %d is invalid. \n", timer_p, timer_p->task_id);
+	  itti_free (TASK_TIMER, message_p);
+	  return -1;
+  }
   if (itti_send_msg_to_task (task_id, instance, message_p) < 0) {
     OAILOG_DEBUG (LOG_ITTI, "Failed to send msg TIMER_HAS_EXPIRED to task %u\n", task_id);
     itti_free (TASK_TIMER, message_p);

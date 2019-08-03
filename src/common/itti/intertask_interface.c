@@ -226,28 +226,6 @@ itti_free (
   return (result);
 }
 
-
-int
-itti_free_DEBUG (
-  task_id_t task_id,
-  void *ptr)
-{
-  int                                     result = EXIT_SUCCESS;
-
- char                                   *statistics = memory_pools_statistics (itti_desc.memory_pools_handle);
- OAILOG_ERROR(LOG_ITTI, " (before free) Memory pools statistics:\n%s",  statistics);
- free_wrapper ((void**)&statistics);
-  AssertFatal (ptr != NULL, "Trying to free a NULL pointer (%d)!\n", task_id);
-  result = memory_pools_free (itti_desc.memory_pools_handle, ptr, task_id);
-  AssertError (result == EXIT_SUCCESS, {
-               }, "Failed to free memory at %p (%d)!\n", ptr, task_id);
-
-  statistics = memory_pools_statistics (itti_desc.memory_pools_handle);
-  OAILOG_ERROR(LOG_ITTI, " (after free) Memory pools statistics:\n%s", statistics);
-  free_wrapper ((void**)&statistics);
-  return (result);
-}
-
 void
 itti_print_DEBUG ()
 {

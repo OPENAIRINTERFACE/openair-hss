@@ -257,12 +257,14 @@ s11_mme_handle_create_session_response (
     /*
      * TODO: handle this case
      */
-    itti_free (ITTI_MSG_ORIGIN_ID (message_p), message_p);
-    message_p = NULL;
     rc = nwGtpv2cMsgParserDelete (*stack_p, pMsgParser);
     DevAssert (NW_OK == rc);
     rc = nwGtpv2cMsgDelete (*stack_p, (pUlpApi->hMsg));
     DevAssert (NW_OK == rc);
+    if(resp_p->paa)
+    	free_wrapper((void**)&resp_p->paa);
+    itti_free (ITTI_MSG_ORIGIN_ID (message_p), message_p);
+    message_p = NULL;
     return RETURNerror;
   }
 
@@ -275,7 +277,10 @@ s11_mme_handle_create_session_response (
   if(resp_p->cause.cause_value == LATE_OVERLAPPING_REQUEST){
 	  pUlpApi->u_api_info.triggeredRspIndInfo.trx_flags |= LATE_OVERLAPPING_REQUEST;
 	  OAILOG_WARNING (LOG_S11, "Received a late overlapping request. Not forwarding message to MME_APP layer. \n");
-	  free_wrapper((void**)&resp_p->paa);
+	  if(resp_p->paa)
+		  free_wrapper((void**)&resp_p->paa);
+	  itti_free (ITTI_MSG_ORIGIN_ID (message_p), message_p);
+	  message_p = NULL;
 	  return RETURNok;
   }
 
