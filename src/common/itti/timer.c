@@ -115,7 +115,7 @@ timer_handle_signal (
   /*
    * Notify task of timer expiry
    */
-  if(abs(task_id) > 100) {
+  if(abs(task_id) < TASK_MAX){
 	  OAILOG_ERROR(LOG_ITTI, " TIMER OBJECT %x with task_id %d is invalid. \n", timer_p, timer_p->task_id);
 	  itti_free (TASK_TIMER, message_p);
 	  return -1;
