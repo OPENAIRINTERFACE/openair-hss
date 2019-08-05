@@ -116,7 +116,8 @@ timer_handle_signal (
    * Notify task of timer expiry
    */
   if(abs(task_id) > TASK_MAX){
-	  OAILOG_ERROR(LOG_ITTI, " TIMER OBJECT %x with task_id %d is invalid. \n", timer_p, timer_p->task_id);
+	  OAILOG_ERROR(LOG_ITTI, " TIMER OBJECT %x (with inner timer %x) task_id %d is invalid. \n",
+			  timer_p, timer_p->timer, timer_p->task_id);
 	  itti_free (TASK_TIMER, message_p);
 	  return -1;
   }
@@ -256,6 +257,9 @@ int timer_remove (long timer_id, void ** arg)
     OAILOG_ERROR (LOG_ITTI, "Failed to delete timer 0x%lx\n", (long)timer_p->timer);
     rc = -1;
   }
+
+  OAILOG_ERROR(LOG_ITTI, "REMOVED TIMER OBJECT %x (inner timer %x) with task_id %d. \n",
+		  timer_p, timer_p->timer, timer_p->task_id);
 
   free_wrapper ((void**)&timer_p);
   return rc;

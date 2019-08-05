@@ -92,7 +92,6 @@ udp_server_get_socket_desc (
   OAILOG_DEBUG (LOG_UDP, "Looking for task %d\n", task_id);
   STAILQ_FOREACH (udp_sock_p, &udp_socket_list, entries) {
     if (udp_sock_p->task_id == task_id && udp_sock_p->local_addr.sa_family == sa_family) {
-      OAILOG_DEBUG (LOG_UDP, "Found matching task desc\n");
       if(local_port){
     	  if(udp_sock_p->local_port == local_port){
     		  OAILOG_DEBUG (LOG_UDP, "Found matching local port %d. \n", local_port);
@@ -125,7 +124,6 @@ udp_server_get_socket_desc_by_sd (
   OAILOG_DEBUG (LOG_UDP, "Looking for sd %d\n", sdP);
   STAILQ_FOREACH (udp_sock_p, &udp_socket_list, entries) {
     if (udp_sock_p->sd == sdP) {
-      OAILOG_DEBUG (LOG_UDP, "Found matching task desc\n");
       break;
     }
   }

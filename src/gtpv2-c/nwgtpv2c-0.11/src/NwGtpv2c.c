@@ -2074,8 +2074,8 @@ static nw_rc_t                            nwGtpv2cHandleUlpFindLocalTunnel (
       thiz->activeTimerInfo = NULL;
       if (NW_OK != rc) {
         OAILOG_ERROR(LOG_GTPV2C, "Stopping active timer 0x%" PRIxPTR " for info 0x%p failed!\n", timeoutInfo->hTimer, timeoutInfo);
-      }
-      OAILOG_INFO (LOG_GTPV2C, "Stopped active timer 0x%" PRIxPTR " for info 0x%p!\n", timeoutInfo->hTimer, timeoutInfo);
+      }else
+    	  OAILOG_INFO (LOG_GTPV2C, "Stopped active timer 0x%" PRIxPTR " for info 0x%p!\n", timeoutInfo->hTimer, timeoutInfo);
       OAI_GCC_DIAG_OFF(int-to-pointer-cast);
       timeoutInfo = nwGtpv2cTmrMinHeapPeek ((NwGtpv2cTmrMinHeapT *)thiz->hTmrMinHeap);
       OAI_GCC_DIAG_ON(int-to-pointer-cast);
