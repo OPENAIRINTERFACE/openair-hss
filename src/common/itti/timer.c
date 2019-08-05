@@ -258,7 +258,7 @@ int timer_remove (long timer_id, void ** arg)
     rc = -1;
   }
 
-  OAILOG_ERROR(LOG_ITTI, "REMOVED TIMER OBJECT %x (inner timer %x) with task_id %d. \n",
+  OAILOG_DEBUG(LOG_ITTI, "REMOVED TIMER OBJECT %x (inner timer %x) with task_id %d. \n",
 		  timer_p, timer_p->timer, timer_p->task_id);
 
   free_wrapper ((void**)&timer_p);
