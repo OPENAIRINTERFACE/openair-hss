@@ -176,11 +176,6 @@ timer_setup (
   se.sigev_signo = SIGTIMER;
   se.sigev_value.sival_ptr = timer_p;
 
-  if(timer_p->task_id > 3 && timer_p->task_id < 10){
-	  OAILOG_ERROR(LOG_ITTI, "ALLOCATED TIMER OBJECT %x with task_id %d. \n",
-			  timer_p, timer_p->task_id);
-  }
-
   /*
    * At the timer creation, the timer structure will be filled in with timer_id,
    * * * which is unique for this process. This id is allocated by kernel and the
@@ -258,7 +253,7 @@ int timer_remove (long timer_id, void ** arg)
     rc = -1;
   }
 
-  OAILOG_ERROR(LOG_ITTI, "REMOVED TIMER OBJECT %x (inner timer %x) with task_id %d. \n",
+  OAILOG_DEBUG(LOG_ITTI, "REMOVED TIMER OBJECT %x (inner timer %x) with task_id %d. \n",
 		  timer_p, timer_p->timer, timer_p->task_id);
 
   free_wrapper ((void**)&timer_p);
