@@ -462,7 +462,7 @@ itti_send_msg_to_task (
      */
     int                                     result = itti_free (origin_task_id, message);
 
-    AssertFatal (result == EXIT_SUCCESS, "Failed to free memory (%d)!\n", result);
+    AssertError(result == EXIT_SUCCESS, {}, "Failed to free memory (%d)!\n", result);
   }
 
   VCD_SIGNAL_DUMPER_DUMP_VARIABLE_BY_NAME (VCD_SIGNAL_DUMPER_VARIABLE_ITTI_SEND_MSG, __sync_and_and_fetch (&itti_desc.vcd_send_msg, ~(1L << destination_task_id)));
@@ -605,13 +605,14 @@ itti_receive_msg_internal_event_fd (
         /*
          * No element in list -> this should not happen
          */
-        AssertFatal (0, "No message in queue for task %d while there are %d events and some for the messages queue!\n", task_id, epoll_ret);
+        AssertError(0, {}, "No message in queue for task %d while there are %d events and some for the messages queue!\n", task_id, epoll_ret);
+        return;
       }
 
       AssertFatal (message != NULL, "Message from message queue is NULL!\n");
       *received_msg = message->msg;
       result = itti_free (ITTI_MSG_ORIGIN_ID (message->msg), message);
-      AssertFatal (result == EXIT_SUCCESS, "Failed to free memory (%d)!\n", result);
+      AssertError(result == EXIT_SUCCESS,{}, "Failed to free memory (%d)!\n", result);
       /*
        * Mark that the event has been processed
        */

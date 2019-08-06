@@ -505,7 +505,7 @@ memory_pools_allocate (
     /*
      * Sanity check on item status, must be free
      */
-    AssertFatal (memory_pool_item->start.item_status == ITEM_STATUS_FREE, "Item status is not set to free (%d) in pool %u, item %d!\n", memory_pool_item->start.item_status, pool, item_index);
+    AssertError(memory_pool_item->start.item_status == ITEM_STATUS_FREE, {}, "Item status is not set to free (%d) in pool %u, item %d!\n", memory_pool_item->start.item_status, pool, item_index);
     memory_pool_item->start.item_status = ITEM_STATUS_ALLOCATED;
     memory_pool_item->start.info[0] = info_0;
     memory_pool_item->start.info[1] = info_1;

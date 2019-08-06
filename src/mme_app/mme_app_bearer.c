@@ -2091,7 +2091,17 @@ static void mme_app_handle_e_rab_setup_rsp_dedicated_bearer(const itti_s1ap_e_ra
         bc_tbc = &s11_proc_create_bearer->bcs_tbc->bearer_contexts[num_bc];
       }
     }
-    DevAssert(bc_tbc);
+    if(!bc_tbc){
+    	OAILOG_ERROR(LOG_MME_APP, "The ebi %d could not be found in the s11 process for ueId : " MME_UE_S1AP_ID_FMT "\n", e_rab_id , e_rab_setup_rsp->mme_ue_s1ap_id);
+    	MessageDef                          * message_p = itti_alloc_new_message (TASK_MME_APP, NAS_IMPLICIT_DETACH_UE_IND);
+    	DevAssert (message_p != NULL);
+    	message_p->ittiMsg.nas_implicit_detach_ue_ind.ue_id = ue_context->mme_ue_s1ap_id;
+    	message_p->ittiMsg.nas_implicit_detach_ue_ind.emm_cause = EMM_CAUSE_NETWORK_FAILURE;
+    	message_p->ittiMsg.nas_implicit_detach_ue_ind.detach_type = 0x02; // Re-Attach Not required;
+    	MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_IMPLICIT_DETACH_UE_IND_MESSAGE");
+    	itti_send_msg_to_task (TASK_NAS_EMM, INSTANCE_DEFAULT, message_p);
+    	OAILOG_FUNC_OUT (LOG_MME_APP);
+    }
 
     /** Check if the message needs to be processed (if it has already failed, in that case the number of unhandled bearers already will be reduced). */
     if(bc_tbc->cause.cause_value != 0 && bc_tbc->cause.cause_value != REQUEST_ACCEPTED){
@@ -4288,9 +4298,7 @@ mme_app_handle_enb_status_transfer(
  }
  mme_app_s10_proc_mme_handover_t * s10_handover_proc = mme_app_get_s10_procedure_mme_handover(ue_context);
  if(!s10_handover_proc){
-   OAILOG_ERROR(LOG_MME_APP, "No S10 handover procedure exists for UE with mmeS1apUeId " MME_UE_S1AP_ID_FMT". \n",
-		   s1ap_status_transfer_pP->mme_ue_s1ap_id);
-   MSC_LOG_EVENT (MSC_MMEAPP_MME, "S1AP_ENB_STATUS_TRANSFER. No UE existing mmeS1apUeId " MME_UE_S1AP_ID_FMT". \n",
+   OAILOG_WARNING(LOG_MME_APP, "No S10 handover procedure exists for UE with mmeS1apUeId " MME_UE_S1AP_ID_FMT". \n",
 		   s1ap_status_transfer_pP->mme_ue_s1ap_id);
    /**
     * We don't really expect an error at this point. Just forward the message to the target enb. (happens just with ng4t).
