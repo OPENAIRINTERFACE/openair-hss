@@ -29,6 +29,7 @@
 #include "fdjson.h"
 
 #include "rapidjson/document.h"
+#include "statshss.h"
 
 
 #define MSISDN_LEN                        10
@@ -286,7 +287,8 @@ int processSimpleImsi(FDMessageRequest *req,
    EvenStatusMap *hss_db_rst = new EvenStatusMap();
    processHssDb( cir, msisdn, hss_db_rst, m_app );
 
-
+   //The CIA response will be built on the s6as6d interface once the IDA coming from the MME is
+   //received
    int ret = fdHss.sendINSDRreq(cir.monitoring_event_configuration, imsi, req, hss_db_rst, NULL);
 
    if( ret == MME_DOWN || ret == IMSI_NOT_ACTIVE ) {
@@ -327,6 +329,7 @@ ans.dump();
       ans.send();
       delete hss_db_rst;
       delete req;
+      StatsHss::singleton().registerStatResult(stat_hss_cir, 0, ER_DIAMETER_SUCCESS);
    }
    return 0;
 }
@@ -337,12 +340,12 @@ int processMultiImsi(FDMessageRequest *req,
                       Application &m_app) {
 
 
-   //GROUP_CONFIGURATION_IN_PROGRESS
+   //For group imsi, a CIA is sent straight away and the results will be reported on the RIR
    FDMessageAnswer ans( req );
    ans.addOrigin();
    ans.add( m_app.getDict().avpAuthSessionState(), 1 );
    ans.add( m_app.getDict().avpResultCode(), ER_DIAMETER_SUCCESS);
-   uint32_t flag_cia;
+   uint32_t flag_cia = 0;
    FLAGS_SET(flag_cia, GROUP_CONFIGURATION_IN_PROGRESS);
    ans.add(m_app.getDict().avpCiaFlags(), flag_cia);
 
@@ -382,6 +385,8 @@ int processMultiImsi(FDMessageRequest *req,
    //Once the CIA has been sent, we indicate the RIR builder
    rir_builder->postMessage( HANDLE_CIA_SENT );
 
+   StatsHss::singleton().registerStatResult(stat_hss_cir, 0, ER_DIAMETER_SUCCESS);
+
    return 0;
 }
 
@@ -392,14 +397,11 @@ int COIRcmd::process( FDMessageRequest *req )
 
    std::string    s;
    bool           experimental;
-   bool           mme_down;
    int            result_code = ER_DIAMETER_SUCCESS;
 
    uint8_t        msisdn[MSISDN_LEN];
    char           msisdnchar[MSISDN_LEN + 1];
    int64_t        msisdn64;
-
-   EvenStatusMap *evt_map  = new EvenStatusMap();
 
    DAImsiList list_imsi;
 
@@ -463,8 +465,14 @@ ans.dump();
 
    ans.send();
    delete req;
-   return 0;
 
+   if(experimental){
+      StatsHss::singleton().registerStatResult(stat_hss_cir, VENDOR_3GPP, result_code);
+   }
+   else{
+      StatsHss::singleton().registerStatResult(stat_hss_cir, 0, result_code);
+   }
+   return 0;
 }
  
 // REIR Request (req) Command member functions
@@ -514,6 +522,19 @@ REIRreq *Application::createREIRreq(FDPeer &peer)
 void REIRreq::processAnswer( FDMessageAnswer &ans )
 {
    ans.dump();
+   ReportingInformationAnswerExtractor ria (ans, getApplication().getDict());
+
+   uint32_t vendor_code = 0;
+   uint32_t ria_result_code = 0;
+   //check the global status from the IDA response
+   if(ria.result_code.get(ria_result_code)){
+      StatsHss::singleton().registerStatResult(stat_hss_rir, 0, ria_result_code);
+   }
+   else{
+      ria.experimental_result.vendor_id.get(vendor_code);
+      ria.experimental_result.experimental_result_code.get(ria_result_code);
+      StatsHss::singleton().registerStatResult(stat_hss_idr, vendor_code, ria_result_code);
+   }
 }
 
 // REIR Command (cmd) member function
@@ -611,7 +632,7 @@ int NIIRcmd::process( FDMessageRequest *req )
     uint8_t          imsi[IMSI_LEN];
     char             imsichar[IMSI_LEN + 1];
     std::string      apn;
-    bool             experimental;
+    bool             experimental =  false;
     //STime            reqValidTime;
     int              result_code = DIAMETER_SUCCESS;
 
@@ -643,7 +664,7 @@ int NIIRcmd::process( FDMessageRequest *req )
         }
 
         if( m_app.getDbObj().getMsisdnFromImsi( imsichar, msisdnFromDB ) &&
-            m_app.getDbObj().getExtIdsFromImsi( imsichar, extids ) )
+            m_app.getDbObj().getExtIdsFromImsi( imsichar, extids, NULL, NULL ) )
         {
              //include the MSISDN and the appropriate External Identifier assigned to the IMSI
              //in the NIDD-Authorization-Response.
@@ -704,7 +725,7 @@ int NIIRcmd::process( FDMessageRequest *req )
             FDAvp ga( m_app.getDict().avpNiddAuthorizationResponse() );
             ga.add( m_app.getDict().avpUserName(), imsiFromDB );
 
-            if( m_app.getDbObj().getExtIdsFromImsi( imsiFromDB, extids ) )
+            if( m_app.getDbObj().getExtIdsFromImsi( imsiFromDB, extids, NULL, NULL ) )
             {
                 for( DAExtIdList::iterator it = extids.begin() ; it != extids.end(); it++ )
                 {
@@ -806,11 +827,17 @@ int NIIRcmd::process( FDMessageRequest *req )
    }
 
     handleGlobalErrorCode( ans, m_app, result_code, experimental);
-
     ans.dump();
-
     ans.send();
     delete req;
+
+    if(experimental){
+       StatsHss::singleton().registerStatResult(stat_hss_nir, VENDOR_3GPP, result_code);
+    }
+    else{
+       StatsHss::singleton().registerStatResult(stat_hss_nir, 0, result_code);
+    }
+
     return 0;
 
 }

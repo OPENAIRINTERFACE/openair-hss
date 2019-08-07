@@ -14,24 +14,31 @@
 * limitations under the License.
 */
 
+
+
 #ifndef HSSGTW_INCLUDE_PROVISIONHANDLER_H_
 #define HSSGTW_INCLUDE_PROVISIONHANDLER_H_
 
 #include <iostream>
 #include <pistache/endpoint.h>
+#include <pistache/router.h>
 
-#define RAPIDJSON_NAMESPACE hssrapidjson
+#include <memory>
+
+#define RAPIDJSON_NAMESPACE fdrapidjson
 #include "rapidjson/filereadstream.h"
 #include "rapidjson/document.h"
 
+
 extern RAPIDJSON_NAMESPACE::Document docSchema;
+
+class SStats;
 
 class RestHandler : public Pistache::Http::Handler {
 
 public:
     HTTP_PROTOTYPE(RestHandler)
-
     void onRequest(const Pistache::Http::Request& request, Pistache::Http::ResponseWriter response);
 };
 
-#endif /* HSSGTW_INCLUDE_PROVISIONHANDLER_H_ */
+#endif  /* HSSGTW_INCLUDE_PROVISIONHANDLER_H_ */

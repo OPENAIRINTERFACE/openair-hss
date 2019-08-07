@@ -7,12 +7,16 @@ TARGET := $(TARGETDIR)/$(LIBNAME)
 INSTDIRINC := /usr/local/include/hsssec
 INSTDIRLIB := /usr/local/lib
 INSTLIB := $(INSTDIRLIB)/$(LIBNAME)
+
+SECURITY_FLAGS := -D_FORTIFY_SOURCE=2 -fasynchronous-unwind-tables -fexceptions
+SECURITY_FLAGS += -fstack-protector-all -fstack-protector-strong -Wall
+SECURITY_FLAGS += -Werror=format-security -Werror=implicit-function-declaration
  
 SRCEXT := c
 SOURCES := $(shell find $(SRCDIR) -type f -name *.$(SRCEXT))
 OBJECTS := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(SOURCES:.$(SRCEXT)=.o))
 DEPENDS := $(OBJECTS:%.o=%.d)
-CFLAGS := -std=c99 -Wreturn-type -g -pthread -lrt # -Wall
+CFLAGS := -std=c99 -Wreturn-type -g -pthread -lrt -DNODEBUG $(SECURITY_FLAGS)# -Wall
 INC := -I include
 
 $(TARGET): $(OBJECTS)

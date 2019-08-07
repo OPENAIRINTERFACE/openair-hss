@@ -335,6 +335,5 @@ Query* Cache::processQuery( ns_type rtype, const std::string &domain )
 
 void Cache::ares_callback( void *arg, int status, int timeouts, unsigned char *abuf, int alen )
 {
-   Query *q = (Query*)arg;
 }
 

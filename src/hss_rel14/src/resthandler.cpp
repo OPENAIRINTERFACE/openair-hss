@@ -14,9 +14,15 @@
 * limitations under the License.
 */
 
+
 #include "resthandler.h"
 #include "rapidjson/error/en.h"
 #include "fdhss.h"
+
+#include "logger.h"
+#include "sstats.h"
+
+#include <pistache/endpoint.h>
 
 void RestHandler::onRequest(const Pistache::Http::Request& request, Pistache::Http::ResponseWriter response)
 {
@@ -62,3 +68,4 @@ void RestHandler::onRequest(const Pistache::Http::Request& request, Pistache::Ht
       response.send(Pistache::Http::Code::Bad_Request, ss.str() );
    }
 }
+

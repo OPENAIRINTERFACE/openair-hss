@@ -326,9 +326,10 @@ void SCassResult::release()
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-SCassFuture::SCassFuture( CassFuture *future )
-   : m_future( future ),
-     m_error( (CassError)-1 )
+SCassFuture::SCassFuture( CassFuture *future, bool incb )
+   : m_error( (CassError)-1 ),
+     m_future( future ),
+     m_incb( incb )
 {
 }
 
@@ -358,7 +359,8 @@ void SCassFuture::release()
 {
    if ( m_future )
    {
-      cass_future_free( m_future );
+      if ( !m_incb )
+         cass_future_free( m_future );
       m_future = NULL;
    }
 
@@ -379,16 +381,16 @@ SCassStatement::SCassStatement()
 {
 }
 
-SCassStatement::SCassStatement( const char *query )
-   : m_statement( NULL ),
-     m_query( query )
+SCassStatement::SCassStatement( const char *qry )
+   : m_statement( NULL )
 {
+   query( qry );
 }
 
-SCassStatement::SCassStatement( std::string &query )
-   : m_statement( NULL ),
-     m_query( query )
+SCassStatement::SCassStatement( const std::string &qry )
+   : m_statement( NULL )
 {
+   query( qry );
 }
 
 SCassStatement::~SCassStatement()
@@ -396,18 +398,17 @@ SCassStatement::~SCassStatement()
    release();
 }
 
-SCassStatement &SCassStatement::query( const char *query )
+SCassStatement &SCassStatement::query( const char *qry )
 {
    release();
-   m_query = query;
+   m_query = qry;
+   m_statement = cass_statement_new( m_query.c_str(), 0 );
    return *this;
 }
 
-SCassStatement &SCassStatement::query( std::string &query )
+SCassStatement &SCassStatement::query( const std::string &qry )
 {
-   release();
-   m_query = query;
-   return *this;
+   return query( qry.c_str() );
 }
 
 void SCassStatement::release()
@@ -421,9 +422,17 @@ void SCassStatement::release()
 
 SCassFuture SCassStatement::execute( CassSession *session )
 {
-   m_statement = cass_statement_new( m_query.c_str(), 0 );
-
    return SCassFuture( cass_session_execute( session, m_statement ) );
+}
+
+CassError SCassStatement::setPagingSize(int page_size)
+{
+   return cass_statement_set_paging_size( m_statement, page_size );
+}
+
+CassError SCassStatement::setPagingState(SCassResult &result)
+{
+   return cass_statement_set_paging_state( m_statement, result.getResult() );
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -484,3 +493,25 @@ void SCassandra::disconnect()
    release();
 }
 
+bool SCassandra::setCoreConnectionsPerHost(uint32_t num)
+{
+   return cass_cluster_set_core_connections_per_host(m_cluster, num) == CASS_OK;;
+}
+
+bool SCassandra::setMaxConnectionsPerHost(uint32_t num)
+{
+   return cass_cluster_set_max_connections_per_host(m_cluster, num) == CASS_OK;;
+}
+
+bool SCassandra::setIONumberThreads(uint32_t num)
+{
+   cass_cluster_set_queue_size_io(m_cluster, 32768);
+   cass_cluster_set_core_connections_per_host(m_cluster, 2);
+   cass_cluster_set_max_connections_per_host(m_cluster, 8);
+   return cass_cluster_set_num_threads_io(m_cluster, num) == CASS_OK;
+}
+
+bool SCassandra::setIOQueueSize(uint32_t size)
+{
+   return cass_cluster_set_queue_size_io(m_cluster, size) == CASS_OK;;
+}

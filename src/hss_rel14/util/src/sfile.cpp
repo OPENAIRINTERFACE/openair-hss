@@ -16,6 +16,8 @@
 
 #include <iostream>
 #include <unistd.h>
+#include <stdio.h>
+#include <string.h>
 
 #include "sfile.h"
 
@@ -30,8 +32,11 @@ SFile::~SFile()
 
 void SFile::close()
 {
-   if ( m_stream.is_open() )
-      m_stream.close();
+   if (csv_file != NULL)
+	fclose(csv_file);
+
+   if (stream_buffer)
+	free(stream_buffer);
 
    m_filename.clear();
    m_data.clear();
@@ -39,6 +44,8 @@ void SFile::close()
    m_dataofs = 0;
    m_nextrn = 1;
    m_nextofs = 0;
+   csv_file = NULL;
+   stream_buffer = NULL;
 }
 
 bool SFile::open( const char *filename )
@@ -47,29 +54,34 @@ bool SFile::open( const char *filename )
 
    m_filename = filename;
 
-   m_stream.open( m_filename.c_str(), std::ifstream::in );
+   csv_file = fopen(m_filename.c_str(), "r");
 
-   return m_stream.is_open();
+   return (csv_file != NULL);
 }
 
 bool SFile::seek( uint32_t recnbr, std::ios::streampos offset )
 {
-   m_stream.clear();
-   std::ios::streampos old = m_stream.tellg();
+   clearerr(csv_file);
 
-   m_stream.seekg( offset );
+   long old = ftell(csv_file);
 
-   if ( m_stream.good() )
+   fseek(csv_file,(long)offset, SEEK_SET);
+
+   if (!feof(csv_file))
    {
       m_nextrn = recnbr;
       m_nextofs = offset;
       return true;
    }
-else { std::cout << "m_stream is not good after seekg, good=" << m_stream.good() << " eof=" << m_stream.eof() << " fail=" << m_stream.fail() << " bad=" << m_stream.bad() << std::endl; }
-   
-   m_stream.clear();
-   m_stream.seekg( old );
+   else
+   {
+      std::cout << "m_stream is not good after seekg, good=" <<
+            ferror(csv_file) << " eof=" << feof(csv_file) << std::endl;
+   }
 
+   clearerr(csv_file);
+
+   fseek(csv_file,old,SEEK_SET);
    return false;
 }
 
@@ -79,18 +91,21 @@ bool SFile::read()
    char data[2048];
 
    // seek to the beginning of the record
-   m_stream.clear();
-   m_stream.seekg( m_nextofs );
+   clearerr(csv_file);
+
+   fseek(csv_file,(long)m_nextofs,SEEK_SET);
 
    // read the next line
-   m_stream.getline( data, sizeof(data), '\n' );
-   if ( m_stream.good() )
+   fgets(data, sizeof(data), csv_file);
+   data[strlen(data)-1] = '\0';
+
+   if (!feof(csv_file))
    {
       // update the info
       m_data = data;
       m_dataofs = m_nextofs;
       m_datarn = m_nextrn;
-      m_nextofs = m_stream.tellg();
+      m_nextofs = ftell(csv_file);
       m_nextrn++;
       return true;
    }

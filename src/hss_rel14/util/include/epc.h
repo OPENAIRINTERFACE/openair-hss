@@ -71,6 +71,10 @@
    PARSE_MNC(mnc,a); \
    PARSE_MCC(mcc,a);
 
+#define PARSE_PLMNID_MCC(a) \
+   char mcc[4]; \
+   PARSE_MCC(mcc,a);
+
 #define APPEND_MNC(a) append("mnc").append(a).append(".")
 #define APPEND_MCC(a) append("mcc").append(a).append(".")
 #define APPEND_3GPPNETWORK append("3gppnetwork.org")
