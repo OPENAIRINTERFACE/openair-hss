@@ -1,354 +1,468 @@
-/*
-* Copyright (c) 2017 Sprint
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*    http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
-
+#include <stdlib.h>
 #include <time.h>
 #include <sys/time.h>
 #include <stdint.h>
-#include <ctype.h>
 #include <string.h>
-#include <string>
-#include <stdlib.h>
+#include <ctype.h>
 #include "stime.h"
 
 
-#define ft_strnicmp(str1, str2, count) __builtin_strncasecmp(str1, str2, count)
-#define ft_localtime_s(a,b) localtime_r(b,a)
-#define ft_gmtime_s(a,b) gmtime_r(b,a)
-#define ft_sprintf_s __builtin_snprintf
+static const char *g_day_names[] = {
+	"Sunday",
+	"Monday",
+	"Tuesday",
+	"Wednesday",
+	"Thursday",
+	"Friday",
+	"Saturday"
+};
 
+static const char *g_day_names_short[] = {
+	"Sun",
+	"Mon",
+	"Tue",
+	"Wed",
+	"Thu",
+	"Fri",
+	"Sat"
+};
 
-static const char *_days[] = { "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
-static const char *_days_abbrev[] = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
-static const char *_months[] = { "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" };
-static const char *_months_abbrev[] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+static const char *g_mnth_names[] = {
+	"January",
+	"February",
+	"March",
+	"April",
+	"May",
+	"June",
+	"July",
+	"August",
+	"September",
+	"October",
+	"November",
+	"December"
+};
 
-#define TM_YEAR_BASE   1900
+static const char *g_mnth_names_short[] = {
+	"Jan",
+	"Feb",
+	"Mar",
+	"Apr",
+	"May",
+	"Jun",
+	"Jul",
+	"Aug",
+	"Sep",
+	"Oct",
+	"Nov",
+	"Dec"
+};
 
-#define DAYSPERLYEAR   366
-#define DAYSPERNYEAR   365
-#define DAYSPERWEEK    7
-
-#define LEAPYEAR(year) (!((year) % 4) && (((year) % 100) || !((year) % 400)))
-
-static char *_fmt(const char *format, const struct tm *t, char *pt, const char *ptlim, const struct timeval* tv);
-static char *_conv(const int32_t n, const char *format, char *pt, const char *ptlim);
-static char *_add(const char *str, char *pt, const char *ptlim);
-
-inline long fttimezone()
+void cal_year_week(int32_t *year, int32_t *w, const struct tm *t)
 {
-    return timezone;
-}
 
-inline int32_t ftdaylight()
-{
-    return daylight;
-}
+	int32_t  yday;
+	int32_t  wday;
 
-size_t ftstrftime(char *s, size_t maxsize, const char *format, const struct tm *t, const struct timeval* tv)
-{
-  char *p;
+	*year = t->tm_year + BASE_YEAR;
+	yday = t->tm_yday;
+	wday = t->tm_wday;
 
-  p = _fmt(((format == NULL) ? "%c" : format), t, s, s + maxsize, tv);
-  if (p == s + maxsize) return 0;
-  *p = '\0';
-  return p - s;
-}
+	while (1) {
 
-static char *_fmt(const char *format, const struct tm *t, char *pt, const char *ptlim, const struct timeval* tv)
-{
-  for ( ; *format; ++format)
-  {
-    if (*format == '%')
-    {
-      if (*format == 'E')
-        format++; // Alternate Era
-      else if (*format == 'O')
-        format++; // Alternate numeric symbols
+		int32_t  length;
+		int32_t  bottom;
+		int32_t  top;
 
-      switch (*++format)
-      {
-        case '\0':
-          --format;
-          break;
+		if(IF_LEAPYEAR(*year))
+			length = NUM_OF_DAYS_LEAPYEAR;
+		else
+			length = NUM_OF_DAYS_YEAR;
 
-        case '0': // milliseconds
-            pt = _conv(tv->tv_usec / 1000, "%03d", pt, ptlim);
-          continue;
 
-        case '1': // microseconds
-            pt = _conv(tv->tv_usec, "%06d", pt, ptlim);
-            continue;
+		bottom = ((yday + 11 - wday) % NUM_OF_DAYS_WEEK) - 3;
+		top = bottom - (length % NUM_OF_DAYS_WEEK);
 
-        case 'A':
-          pt = _add((t->tm_wday < 0 || t->tm_wday > 6) ? "?" : _days[t->tm_wday], pt, ptlim);
-          continue;
+		if (top < -3) top += NUM_OF_DAYS_WEEK;
 
-        case 'a':
-          pt = _add((t->tm_wday < 0 || t->tm_wday > 6) ? "?" : _days_abbrev[t->tm_wday], pt, ptlim);
-          continue;
+		top += length;
+		if (yday >= top) {
+			++(*year);
+			*w = 1;
+			break;
+		}
 
-        case 'B':
-          pt = _add((t->tm_mon < 0 || t->tm_mon > 11) ? "?" : _months[t->tm_mon], pt, ptlim);
-          continue;
+		if (yday >= bottom) {
+			*w = 1 + ((yday - bottom) / NUM_OF_DAYS_WEEK);
+			break;
+		}
 
-        case 'b':
-        case 'h':
-          pt = _add((t->tm_mon < 0 || t->tm_mon > 11) ? "?" : _months_abbrev[t->tm_mon], pt, ptlim);
-          continue;
+		--*year;
+		yday += IF_LEAPYEAR(*year) ? NUM_OF_DAYS_LEAPYEAR : NUM_OF_DAYS_YEAR;
+	}
 
-        case 'C':
-          pt = _conv((t->tm_year + TM_YEAR_BASE) / 100, "%02d", pt, ptlim);
-          continue;
-
-        case 'c':
-          pt = _fmt("%a %b %e %H:%M:%S %Y", t, pt, ptlim, tv);
-          continue;
-
-        case 'D':
-          pt = _fmt("%m/%d/%y", t, pt, ptlim, tv);
-          continue;
-
-        case 'd':
-          pt = _conv(t->tm_mday, "%02d", pt, ptlim);
-          continue;
-
-        case 'e':
-          pt = _conv(t->tm_mday, "%2d", pt, ptlim);
-          continue;
-
-        case 'F':
-          pt = _fmt("%Y-%m-%d", t, pt, ptlim, tv);
-          continue;
-
-        case 'H':
-          pt = _conv(t->tm_hour, "%02d", pt, ptlim);
-          continue;
-
-        case 'i':
-          pt = _fmt("%Y-%m-%dT%H:%M:%S.%0", t, pt, ptlim, tv);
-          continue;
-
-        case 'I':
-          pt = _conv((t->tm_hour % 12) ? (t->tm_hour % 12) : 12, "%02d", pt, ptlim);
-          continue;
-
-        case 'j':
-          pt = _conv(t->tm_yday + 1, "%03d", pt, ptlim);
-          continue;
-
-        case 'k':
-          pt = _conv(t->tm_hour, "%2d", pt, ptlim);
-          continue;
-
-        case 'l':
-          pt = _conv((t->tm_hour % 12) ? (t->tm_hour % 12) : 12, "%2d", pt, ptlim);
-          continue;
-
-        case 'M':
-          pt = _conv(t->tm_min, "%02d", pt, ptlim);
-          continue;
-
-        case 'm':
-          pt = _conv(t->tm_mon + 1, "%02d", pt, ptlim);
-          continue;
-
-        case 'n':
-          pt = _add("\n", pt, ptlim);
-          continue;
-
-        case 'p':
-          pt = _add((t->tm_hour >= 12) ? "pm" : "am", pt, ptlim);
-          continue;
-
-        case 'R':
-          pt = _fmt("%H:%M", t, pt, ptlim, tv);
-          continue;
-
-        case 'r':
-          pt = _fmt("%I:%M:%S %p", t, pt, ptlim, tv);
-          continue;
-
-        case 'S':
-          pt = _conv(t->tm_sec, "%02d", pt, ptlim);
-          continue;
-
-        case 's':
-        {
-          struct tm  tm;
-          char buf[32];
-          time_t mkt;
-
-          tm = *t;
-          mkt = mktime(&tm);
-          ft_sprintf_s(buf, sizeof(buf), "%lu", mkt);
-          pt = _add(buf, pt, ptlim);
-          continue;
-        }
-
-        case 'T':
-          pt = _fmt("%H:%M:%S", t, pt, ptlim, tv);
-          continue;
-
-        case 't':
-          pt = _add("\t", pt, ptlim);
-          continue;
-
-        case 'U':
-          pt = _conv((t->tm_yday + 7 - t->tm_wday) / 7, "%02d", pt, ptlim);
-          continue;
-
-        case 'u':
-          pt = _conv((t->tm_wday == 0) ? 7 : t->tm_wday, "%d", pt, ptlim);
-          continue;
-
-        case 'V':  // ISO 8601 week number
-        case 'G':  // ISO 8601 year (four digits)
-        case 'g':  // ISO 8601 year (two digits)
-        {
-          int32_t  year;
-          int32_t  yday;
-          int32_t  wday;
-          int32_t  w;
-
-          year = t->tm_year + TM_YEAR_BASE;
-          yday = t->tm_yday;
-          wday = t->tm_wday;
-          while (1)
-          {
-            int32_t  len;
-            int32_t  bot;
-            int32_t  top;
-
-            len = LEAPYEAR(year) ? DAYSPERLYEAR : DAYSPERNYEAR;
-            bot = ((yday + 11 - wday) % DAYSPERWEEK) - 3;
-            top = bot - (len % DAYSPERWEEK);
-            if (top < -3) top += DAYSPERWEEK;
-            top += len;
-            if (yday >= top)
-            {
-              ++year;
-              w = 1;
-              break;
-            }
-            if (yday >= bot)
-            {
-              w = 1 + ((yday - bot) / DAYSPERWEEK);
-              break;
-            }
-            --year;
-            yday += LEAPYEAR(year) ? DAYSPERLYEAR : DAYSPERNYEAR;
-          }
-          if (*format == 'V')
-            pt = _conv(w, "%02d", pt, ptlim);
-          else if (*format == 'g')
-            pt = _conv(year % 100, "%02d", pt, ptlim);
-          else
-            pt = _conv(year, "%04d", pt, ptlim);
-
-          continue;
-        }
-
-        case 'v':
-          pt = _fmt("%e-%b-%Y", t, pt, ptlim, tv);
-          continue;
-
-        case 'W':
-          pt = _conv((t->tm_yday + 7 - (t->tm_wday ? (t->tm_wday - 1) : 6)) / 7, "%02d", pt, ptlim);
-          continue;
-
-        case 'w':
-          pt = _conv(t->tm_wday, "%d", pt, ptlim);
-          continue;
-
-        case 'X':
-          pt = _fmt("%H:%M:%S", t, pt, ptlim, tv);
-          continue;
-
-        case 'x':
-          pt = _fmt("%m/%d/%y", t, pt, ptlim, tv);
-          continue;
-
-        case 'y':
-          pt = _conv((t->tm_year + TM_YEAR_BASE) % 100, "%02d", pt, ptlim);
-          continue;
-
-        case 'Y':
-          pt = _conv(t->tm_year + TM_YEAR_BASE, "%04d", pt, ptlim);
-          continue;
-
-        case 'Z':
-          pt = _add("?", pt, ptlim);
-          continue;
-
-        case 'z':
-        {
-          long absoff;
-          if (fttimezone() >= 0)
-          {
-            absoff = fttimezone();
-            pt = _add("+", pt, ptlim);
-          }
-          else
-          {
-            absoff = fttimezone();
-            pt = _add("-", pt, ptlim);
-          }
-          pt = _conv(absoff / 3600, "%02d", pt, ptlim);
-          pt = _conv((absoff % 3600) / 60, "%02d", pt, ptlim);
-
-          continue;
-        }
-
-        case '+':
-          pt = _fmt("%a, %d %b %Y %H:%M:%S %z", t, pt, ptlim, tv);
-          continue;
-
-        case '%':
-        default:
-          break;
-      }
-    }
-
-    if (pt == ptlim) break;
-    *pt++ = *format;
-  }
-
-  return pt;
-}
-
-static char *_conv(const int32_t n, const char *format, char *pt, const char *ptlim)
-{
-  char  buf[32];
-
-  ft_sprintf_s(buf, sizeof(buf), format, n);
-  return _add(buf, pt, ptlim);
-}
-
-static char *_add(const char *str, char *pt, const char *ptlim)
-{
-  while (pt < ptlim && (*pt = *str++) != '\0') ++pt;
-  return pt;
 }
 
 
+size_t format_time_into_string(char *st, size_t max_limit, const char* type_format,
+			struct tm *time_f, const struct timeval* tval)
+{
+	char *ptr = NULL;
+
+	if (NULL == type_format) {
+		ptr = format_time_into_specs("%c", time_f, (char *)st, st + max_limit, tval);
+	} else {
+		ptr = format_time_into_specs(type_format,time_f,st,st + max_limit, tval);
+	}
+
+	if (ptr == (st + max_limit))
+		return 0;
+
+	*ptr = '\0';
+
+	return ptr-st;
+}
+
+char *
+format_time_into_specs(const char *time_format, const struct tm *t, char *dest,
+		const char *max_limit, const struct timeval* p_timeval)
+{
+	int32_t tim_sec = 0;
+	int i = 0;
+
+	while(time_format[i] != '\0') {
+
+		if (time_format[i] == LITERAL) {
+
+			if (time_format[i] == ALTERNATE_ERA)
+				i++;
+			else if (time_format[i] == MODIFIER)
+				i++;
+
+		char temp = time_format[i +1];
+		switch (temp) {
+
+			case FULL_DAY_NAME:
+				if ((t->tm_wday < 0 || t->tm_wday > 6))
+					dest = add_timeformat_to_string("?", dest, max_limit);
+				else
+					dest = add_timeformat_to_string(g_day_names[t->tm_wday], dest, max_limit);
+
+				i++;
+				continue;
+
+			case NAME_DAY_WEEK_ABB:
+				if ((t->tm_wday < 0 || t->tm_wday > 6))
+				    dest = add_timeformat_to_string("?", dest, max_limit);
+				else
+					dest = add_timeformat_to_string( g_day_names_short[t->tm_wday], dest, max_limit);
+
+				i++;
+				continue;
 
 
+			case NULL_CHAR:
+				 --i;
+				break;
 
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
+			case MILLI_SEC:
+				tim_sec = p_timeval->tv_usec /1000;
+				dest = convert_date_time_format(tim_sec, "%03d", dest, max_limit);
+				i++;
+				continue;
+
+			case MICRO_SEC:
+				tim_sec = p_timeval->tv_usec;
+				dest = convert_date_time_format(tim_sec, "%06d", dest, max_limit);
+				i++;
+				continue;
+
+			case FULL_MON_NAME:
+				if ((t->tm_mon < 0 || t->tm_mon > 11))
+					dest = add_timeformat_to_string("?", dest, max_limit);
+				else
+					dest = add_timeformat_to_string(g_mnth_names[t->tm_mon], dest, max_limit);
+
+				i++;
+				continue;
+
+			case ABBRE_MON_NAME:
+				/*fallback to next case*/
+
+			case ABBRE_MON_NAME_2:
+
+				if(t->tm_mon < 0 || t->tm_mon > 11)
+					dest = add_timeformat_to_string("?", dest, max_limit);
+				else
+					dest = add_timeformat_to_string(g_mnth_names_short[t->tm_mon], dest, max_limit);
+
+				i++;
+				continue;
+
+			case DATE_TIME:
+
+				dest = format_time_into_specs("%a %b %e %H:%M:%S %Y", t, dest, max_limit, p_timeval);
+				i++;
+				continue;
+
+			case MON_DAY_YEAR:
+				dest = format_time_into_specs("%m/%d/%y", t, dest, max_limit, p_timeval);
+				i++;
+				continue;
+
+			case CENTURY_NUMBER:
+				tim_sec = (t->tm_year + BASE_YEAR) / 100 ;
+				dest = convert_date_time_format(tim_sec, "%02d", dest, max_limit);
+				i++;
+				continue;
+
+
+			case DEC_DATE_MON:
+				dest = convert_date_time_format(t->tm_mday, "%02d", dest, max_limit);
+				i++;
+				continue;
+
+			case YEAR_MON_DAY:
+				dest = format_time_into_specs("%Y-%m-%d", t, dest, max_limit, p_timeval);
+				i++;
+				continue;
+
+			case DAY_AS_DECIMAL_0:
+				dest = convert_date_time_format(t->tm_mday, "%2d", dest, max_limit);
+				i++;
+				continue;
+
+			case HOUR_AS_24_CLK:
+				dest = convert_date_time_format(t->tm_hour, "%02d", dest, max_limit);
+				i++;
+				continue;
+
+			case RAND_VALUE_1:
+				dest = format_time_into_specs("%Y-%m-%dT%H:%M:%S.%0", t, dest, max_limit, p_timeval);
+				i++;
+				continue;
+
+			case HOUR_AS_12_CLK:
+
+				if((t->tm_hour % 12) == 0)
+					dest = convert_date_time_format(12, "%02d", dest, max_limit);
+				else
+					dest = convert_date_time_format((t->tm_hour % 12), "%02d", dest, max_limit);
+
+				i++;
+				continue;
+
+			case HOUR_AS_24_SINGLE:
+				dest = convert_date_time_format(t->tm_hour, "%2d", dest, max_limit);
+				i++;
+				continue;
+
+			case HOUR_AS_12_SINGLE:
+				dest = convert_date_time_format((t->tm_hour % 12) ? (t->tm_hour % 12) : 12, "%2d", dest, max_limit);
+				i++;
+				continue;
+
+			case DAY_AS_DECIMAL:
+				dest = convert_date_time_format(t->tm_yday + 1, "%03d", dest, max_limit);
+				i++;
+				continue;
+
+			case MIN_AS_DECIMAL:
+				dest = convert_date_time_format(t->tm_min, "%02d", dest, max_limit);
+				i++;
+				continue;
+
+			case MON_AS_DECIMAL:
+				dest = convert_date_time_format(t->tm_mon + 1, "%02d", dest, max_limit);
+				i++;
+				continue;
+
+			case AM_PM:
+				if ((t->tm_hour >= 12))
+					dest = add_timeformat_to_string("pm", dest, max_limit);
+				else
+					dest = add_timeformat_to_string("am", dest, max_limit);
+
+				i++;
+				continue;
+
+			case NEW_LINE:
+				dest = add_timeformat_to_string("\n", dest, max_limit);
+
+				i++;
+				continue;
+
+			case TIME_HOUR_MIN:
+				dest = format_time_into_specs("%H:%M", t, dest, max_limit, p_timeval);
+				i++;
+				continue;
+
+			case TIME_AM_PM:
+				dest = format_time_into_specs("%I:%M:%S %p", t, dest, max_limit, p_timeval);
+
+				i++;
+				continue;
+
+			case SECONDS_AS_DEC:
+				 dest = convert_date_time_format(t->tm_sec, "%02d", dest, max_limit);
+
+				 i++;
+				 continue;
+
+			case EPOCH_TIME:
+				{
+
+					struct tm tm_val = *t;
+					char buffer[32] = {0};
+					format_sprintf_s(buffer, sizeof(buffer), "%lu", mktime(&tm_val));
+					dest = add_timeformat_to_string(buffer, dest, max_limit);
+
+					i++;
+					continue;
+				}
+
+			case TAB_CHARACTER:
+					dest = add_timeformat_to_string("\t", dest, max_limit);
+					i++;
+					continue;
+
+			case TIME_IN_24_HOUR:
+					dest = format_time_into_specs("%H:%M:%S", t, dest, max_limit, p_timeval);
+					i++;
+					continue;
+
+			case DAY_WEEK_AS_DEC:
+					if(t->tm_wday == 0)
+						dest = convert_date_time_format(7, "%d", dest, max_limit);
+					else
+						dest = convert_date_time_format(t->tm_wday, "%d", dest, max_limit);
+					i++;
+					continue;
+
+			case WEEK_NUM_AS_DEC:
+					tim_sec = ((t->tm_yday + 7) - (t->tm_wday)) / 7;
+					dest = convert_date_time_format(tim_sec, "%02d", dest, max_limit);
+					i++;
+					continue;
+
+
+			case ISO_WEEK_NUM:
+			case FOUR_DIG_YEAR:
+			case TWO_DIG_YEAR :
+				{
+
+					int32_t yr;
+					int32_t wk;
+					cal_year_week(&yr, &wk, t);
+					if (time_format[i] == ISO_WEEK_NUM)
+						dest = convert_date_time_format(wk, "%02d", dest, max_limit);
+					else if (time_format[i] == TWO_DIG_YEAR)
+						dest = convert_date_time_format(yr % 100, "%02d", dest, max_limit);
+					else
+						dest = convert_date_time_format(yr, "%04d", dest, max_limit);
+
+					i++;
+					continue;
+				}
+
+			case RAND_VALUE_2:
+
+				dest = format_time_into_specs("%e-%b-%Y", t, dest, max_limit, p_timeval);
+				i++;
+				continue;
+
+			case DAY_OF_WEEK:
+				dest = convert_date_time_format(t->tm_wday, "%d", dest, max_limit);
+				i++;
+				continue;
+
+			case WEEK_NUM_AS_DEC_MON:
+
+				dest = convert_date_time_format((t->tm_yday + 7 - (t->tm_wday ? (t->tm_wday - 1) : 6)) / 7, "%02d", dest, max_limit);
+				i++;
+				continue;
+
+			case DATE_WITHOUT_TIME:
+				dest = format_time_into_specs("%m/%d/%y", t, dest, max_limit, p_timeval);
+				i++;
+				continue;
+
+			case TIME_WITHOUT_DATE:
+				dest = format_time_into_specs("%H:%M:%S", t, dest, max_limit, p_timeval);
+				i++;
+				continue;
+
+			case YEAR_WIT_CEN:
+				tim_sec = t->tm_year + BASE_YEAR;
+				dest = convert_date_time_format(tim_sec, "%04d", dest, max_limit);
+				i++;
+				continue;
+
+			case YEAR_WITHOUT_CEN:
+				tim_sec = (t->tm_year + BASE_YEAR) % 100;
+				dest = convert_date_time_format(tim_sec, "%02d", dest, max_limit);
+				i++;
+				continue;
+
+			case TIMEZONE_NAME:
+				dest = add_timeformat_to_string("?", dest, max_limit);
+				i++;
+				continue;
+
+			case HOUR_MIN_OFFSET:
+				{
+
+					long temp_var = 0;
+
+					((temp_var = FORMAT_TIMEZONE)  >= 0) ? (dest = add_timeformat_to_string("+", dest, max_limit))
+												 : (dest = add_timeformat_to_string("-", dest, max_limit));
+
+					dest = convert_date_time_format(temp_var / 3600, "%02d", dest, max_limit);
+					dest = convert_date_time_format((temp_var % 3600) / 60, "%02d", dest, max_limit);
+
+					i++;
+					continue;
+				}
+
+			case DATE_TIME_TZ:
+				dest = format_time_into_specs("%a, %d %b %Y %H:%M:%S %z", t, dest, max_limit, p_timeval);
+				i++;
+				continue;
+
+			case LITERAL:
+			default:
+			break;
+			}
+		}
+
+		if (dest == max_limit) break;
+			*dest++ = time_format[i+1];
+			i = i+2;
+
+	}
+
+	return dest;
+}
+
+char *convert_date_time_format(const int32_t n, const char* date_time_format,
+									char* dest_buffer, const char *max_dest_limit)
+{
+	char  buffer[32] = {0};
+	format_sprintf_s(buffer, sizeof(buffer), date_time_format, n);
+
+	return add_timeformat_to_string(buffer, dest_buffer, max_dest_limit);
+}
+
+
+char *add_timeformat_to_string(const char *buffer, char *dest_buffer,
+									  const char *max_dest_limit)
+{
+
+	for(; (dest_buffer < max_dest_limit && (*dest_buffer = *buffer++) != '\0') ; ++dest_buffer);
+
+	return dest_buffer;
+}
+
+
 
 
 time_t timegm(struct tm *t)
@@ -379,220 +493,180 @@ time_t timegm(struct tm *t)
     return (tl - (tb - tl));
 }
 
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
+static bool validate_date(uint32_t day, uint32_t month, uint32_t year) {
+	if (month < 1 || month > 12) {
+		return false;
+	}
+	if (day < 1) {
+		return false;
+	}
 
-/* Date string parsing */
-#define DP_TIMESEP 0x01 /* Time separator ( _must_ remain 0x1, used as a bitmask) */
-#define DP_DATESEP 0x02 /* Date separator */
-#define DP_MONTH   0x04 /* Month name */
-#define DP_AM      0x08 /* AM */
-#define DP_PM      0x10 /* PM */
+	uint32_t numg_day_names = 31;
+	if (month == 2) {
+		numg_day_names = 28;
+		if (IF_LEAPYEAR(year)) {
+			numg_day_names = 29;
+		}
+	} else if (month == 4 || month == 6 || month == 9 || month == 11) {
+		numg_day_names = 30;
+	}
 
-typedef struct tagDATEPARSE
-{
-    uint32_t dwCount;      /* Number of fields found so far (maximum 6) */
-    uint32_t dwParseFlags; /* Global parse flags (DP_ Flags above) */
-    uint32_t dwFlags[7];   /* Flags for each field */
-    uint32_t dwValues[7];  /* Value of each field */
-} DATEPARSE;
+	if (day > numg_day_names) {
+		return false;
+	}
 
-#define TIMEFLAG(i) ((dp.dwFlags[i] & DP_TIMESEP) << i)
-
-#define IsLeapYear(y) (((y % 4) == 0) && (((y % 100) != 0) || ((y % 400) == 0)))
-
-/* Determine if a day is valid in a given month of a given year */
-static bool VARIANT_IsValidMonthDay(uint32_t day, uint32_t month, uint32_t year)
-{
-  static const unsigned char days[] = { 0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
-
-  if (day && month && month < 13)
-  {
-    if (day <= days[month] || (month == 2 && day == 29 && IsLeapYear(year)))
-      return true;
-  }
-  return false;
+	return true;
 }
 
-/* Possible orders for 3 numbers making up a date */
-#define ORDER_MDY 0x01
-#define ORDER_YMD 0x02
-#define ORDER_YDM 0x04
-#define ORDER_DMY 0x08
-#define ORDER_MYD 0x10 /* Synthetic order, used only for funky 2 digit dates */
-
-/* Determine a date for a particular locale, from 3 numbers */
-static bool MakeDate(DATEPARSE *dp, uint32_t iDate, uint32_t offset, struct tm *ptm)
+static bool  create_date(parse_date *pd, struct tm *time_ptr,
+						int day, int month, int year)
 {
-    uint32_t dwAllOrders, dwTry, dwCount = 0, v1, v2, v3;
+	if (time_ptr->tm_hour > 23 || time_ptr->tm_min > 59 || time_ptr->tm_sec > 59)
+		return false;
 
-    if (!dp->dwCount)
-    {
-        v1 = 30; /* Default to (Variant) 0 date part */
-        v2 = 12;
-        v3 = 1899;
-        goto VARIANT_MakeDate_OK;
-    }
+	if (time_ptr->tm_hour < 12 && (pd->field_parse_flags & PM_SEP))
+		time_ptr->tm_hour += 12;
+	else if (time_ptr->tm_hour == 12 && (pd->field_parse_flags & AM_SEP))
+	time_ptr->tm_hour = 0;
 
-    v1 = dp->dwValues[offset + 0];
-    v2 = dp->dwValues[offset + 1];
-    if (dp->dwCount == 2)
-    {
-        struct tm current;
-        time_t t = time(NULL);
-        ft_gmtime_s(&current, &t);
-        v3 = current.tm_year + 1900;
-    }
-    else
-        v3 = dp->dwValues[offset + 2];
-
-    //TRACE("(%d,%d,%d,%d,%d)\n", v1, v2, v3, iDate, offset);
-
-    /* If one number must be a month (Because a month name was given), then only
-    * consider orders with the month in that position.
-    * If we took the current year as 'v3', then only allow a year in that position.
-    */
-    if (dp->dwFlags[offset + 0] & DP_MONTH)
-    {
-        dwAllOrders = ORDER_MDY;
-    }
-    else if (dp->dwFlags[offset + 1] & DP_MONTH)
-    {
-        dwAllOrders = ORDER_DMY;
-        if (dp->dwCount > 2)
-            dwAllOrders |= ORDER_YMD;
-    }
-    else if (dp->dwCount > 2 && dp->dwFlags[offset + 2] & DP_MONTH)
-    {
-        dwAllOrders = ORDER_YDM;
-    }
-    else
-    {
-        dwAllOrders = ORDER_MDY|ORDER_DMY;
-        if (dp->dwCount > 2)
-              dwAllOrders |= (ORDER_YMD|ORDER_YDM);
-    }
-
-VARIANT_MakeDate_Start:
-    //TRACE("dwAllOrders is 0x%08x\n", dwAllOrders);
-
-    while (dwAllOrders)
-    {
-        uint32_t dwTemp;
-
-        if (dwCount == 0)
-        {
-            /* First: Try the order given by iDate */
-            switch (iDate)
-            {
-                case 0:  dwTry = dwAllOrders & ORDER_MDY; break;
-                case 1:  dwTry = dwAllOrders & ORDER_DMY; break;
-                default: dwTry = dwAllOrders & ORDER_YMD; break;
-            }
-        }
-        else if (dwCount == 1)
-        {
-            /* Second: Try all the orders compatible with iDate */
-            switch (iDate)
-            {
-                case 0:  dwTry = dwAllOrders & ~(ORDER_DMY|ORDER_YDM); break;
-                case 1:  dwTry = dwAllOrders & ~(ORDER_MDY|ORDER_YMD|ORDER_MYD); break;
-                default: dwTry = dwAllOrders & ~(ORDER_DMY|ORDER_YDM); break;
-            }
-        }
-        else
-        {
-            /* Finally: Try any remaining orders */
-            dwTry = dwAllOrders;
-        }
-
-        //TRACE("Attempt %d, dwTry is 0x%08x\n", dwCount, dwTry);
-
-        dwCount++;
-        if (!dwTry)
-            continue;
-
-#define DATE_SWAP(x,y) do { dwTemp = x; x = y; y = dwTemp; } while (0)
-
-        if (dwTry & ORDER_MDY)
-        {
-            if (VARIANT_IsValidMonthDay(v2,v1,v3))
-            {
-                DATE_SWAP(v1,v2);
-                goto VARIANT_MakeDate_OK;
-            }
-            dwAllOrders &= ~ORDER_MDY;
-        }
-        if (dwTry & ORDER_YMD)
-        {
-            if (VARIANT_IsValidMonthDay(v3,v2,v1))
-            {
-                DATE_SWAP(v1,v3);
-                goto VARIANT_MakeDate_OK;
-            }
-            dwAllOrders &= ~ORDER_YMD;
-        }
-        if (dwTry & ORDER_YDM)
-        {
-            if (VARIANT_IsValidMonthDay(v2,v3,v1))
-            {
-                DATE_SWAP(v1,v2);
-                DATE_SWAP(v2,v3);
-                goto VARIANT_MakeDate_OK;
-            }
-            dwAllOrders &= ~ORDER_YDM;
-        }
-        if (dwTry & ORDER_DMY)
-        {
-            if (VARIANT_IsValidMonthDay(v1,v2,v3))
-                goto VARIANT_MakeDate_OK;
-            dwAllOrders &= ~ORDER_DMY;
-        }
-        if (dwTry & ORDER_MYD)
-        {
-            /* Only occurs if we are trying a 2 year date as M/Y not D/M */
-            if (VARIANT_IsValidMonthDay(v3,v1,v2))
-            {
-                DATE_SWAP(v1,v3);
-                DATE_SWAP(v2,v3);
-                goto VARIANT_MakeDate_OK;
-            }
-            dwAllOrders &= ~ORDER_MYD;
-        }
-    }
-
-    if (dp->dwCount == 2)
-    {
-        /* We couldn't make a date as D/M or M/D, so try M/Y or Y/M */
-        v3 = 1; /* 1st of the month */
-        dwAllOrders = ORDER_YMD|ORDER_MYD;
-        dp->dwCount = 0; /* Don't return to this code path again */
-        dwCount = 0;
-        goto VARIANT_MakeDate_Start;
-    }
-
-    /* No valid dates were able to be constructed */
-    return false;
-
-VARIANT_MakeDate_OK:
-
-    /* Check that the time part is ok */
-    if (ptm->tm_hour > 23 || ptm->tm_min > 59 || ptm->tm_sec > 59)
-        return false; //return DISP_E_TYPEMISMATCH;
-
-    //TRACE("Time %d %d %d\n", st->wHour, st->wMinute, st->wSecond);
-    if (ptm->tm_hour < 12 && (dp->dwParseFlags & DP_PM))
-        ptm->tm_hour += 12;
-    else if (ptm->tm_hour == 12 && (dp->dwParseFlags & DP_AM))
-        ptm->tm_hour = 0;
-    //TRACE("Time %d %d %d\n", st->wHour, st->wMinute, st->wSecond);
-
-    ptm->tm_mday = v1;
-    ptm->tm_mon = v2;
-    ptm->tm_year = v3 < 30 ? 2000 + v3 : v3 < 100 ? 1900 + v3 : v3;
-    //TRACE("Returning date %d/%d/%d\n", v1, v2, st->wYear);
-    return true; //return S_OK;
+	time_ptr->tm_mday = day;
+	time_ptr->tm_mon = month;
+	GIVE_YEAR(year);
+	time_ptr->tm_year = year;
+	return true;
 }
+
+static bool initiate_and_create_date(parse_date *pd, struct tm *time_ptr,
+			uint32_t date, uint32_t date_order, int day, int month, int year)
+{
+	uint32_t day_count = 0;
+	uint32_t day_try = 0;
+
+	switch (date_order) {
+		case 0:  day_try = date_order & MON_DAY_YEAR_ORDER; break;
+	    case 1:  day_try = date_order & DAY_MON_YEAR_ORDER; break;
+	    default: day_try = date_order & YEAR_MON_DAY_ORDER; break;
+	}
+
+	for( uint32_t i =0; i< date_order; i++, day_count++) {
+
+		if (1 == day_count) {
+
+			if(0==date) {
+				day_try = date_order & ~(DAY_MON_YEAR_ORDER|YEAR_DAY_MON_ORDER);
+
+		    } else if (1 == date) {
+				day_try = date_order & ~(MON_DAY_YEAR_ORDER|YEAR_MON_DAY_ORDER|MON_YEAR_DAY_ORDER);
+			 } else
+				 day_try = date_order & ~(DAY_MON_YEAR_ORDER|YEAR_DAY_MON_ORDER);
+
+		} else
+			day_try = date_order;
+
+
+		if (!day_try)
+			continue;
+
+
+		if (day_try & MON_DAY_YEAR_ORDER) {
+
+			 if (validate_date(month,day,year)) {
+
+				SWAP_POSITION(day,month);
+				return create_date(pd, time_ptr, day, month, year);
+			 }
+			 date_order &= ~MON_DAY_YEAR_ORDER;
+		} else if (day_try & YEAR_MON_DAY_ORDER) {
+
+			if (validate_date(year,month,day)){
+	                SWAP_POSITION(day,year);
+	                return create_date(pd, time_ptr, day, month, year);
+	        }
+
+		    date_order &= ~YEAR_MON_DAY_ORDER;
+		} else if (day_try & YEAR_DAY_MON_ORDER) {
+
+			if (validate_date(month,year,day)) {
+	                SWAP_POSITION(day,month);
+	                SWAP_POSITION(month,year);
+	                return create_date(pd, time_ptr, day, month, year);
+	        }
+	            date_order &= ~YEAR_DAY_MON_ORDER;
+		} else if (day_try & DAY_MON_YEAR_ORDER) {
+
+			if (validate_date(day,month,year))
+				return create_date(pd, time_ptr, day, month, year);
+
+	            date_order &= ~DAY_MON_YEAR_ORDER;
+	    } else if (day_try & MON_YEAR_DAY_ORDER ) {
+				if(validate_date(year, day, month)) {
+
+					SWAP_POSITION(day,year);
+					SWAP_POSITION(month,year);
+					return create_date(pd, time_ptr, day, month, year);
+				}
+				date_order &= ~MON_YEAR_DAY_ORDER;
+		}
+
+	} //for
+
+	if (2 == pd->field_count ) {
+		day_count = 0;
+	    year = 1;
+	    pd->field_count = 0;
+	    date_order = YEAR_MON_DAY_ORDER|MON_YEAR_DAY_ORDER;
+		return initiate_and_create_date(pd, time_ptr, date, date_order, day, month, year);
+	}
+
+	return false;
+
+}
+
+static bool determine_date(parse_date *pd, uint32_t date,
+		uint32_t seek, struct tm *timer_ptr)
+{
+	int  day =30, month = 12, year = 1899;
+	uint32_t date_order;
+
+	if (0 == pd->field_count ) {
+	         return create_date(pd, timer_ptr, day, month, year);
+	}
+
+	day = pd->field_values[seek + 0];
+	month = pd->field_values[seek + 1];
+
+	if (2 == pd->field_count) {
+		struct tm current;
+		time_t t = time(NULL);
+		format_gmtime_s(&current, &t);
+
+		year = current.tm_year + 1900;
+
+	}
+	else
+		year = pd->field_values[seek + 2];
+
+
+	if (pd->field_flags[seek + 0] & MONTH_SEP) {
+		date_order = MON_DAY_YEAR_ORDER;
+	}  else if (pd->field_flags[seek + 1] & MONTH_SEP) {
+		date_order = DAY_MON_YEAR_ORDER;
+		if (pd->field_count > 2)
+			date_order |= YEAR_MON_DAY_ORDER;
+	} else if (pd->field_count > 2 && (pd->field_flags[seek + 2] & MONTH_SEP)) {
+
+		date_order = YEAR_DAY_MON_ORDER;
+	} else {
+		date_order = MON_DAY_YEAR_ORDER|DAY_MON_YEAR_ORDER;
+		if (pd->field_count > 2)
+			date_order |= (YEAR_MON_DAY_ORDER|YEAR_DAY_MON_ORDER);
+	}
+
+	return initiate_and_create_date(pd, timer_ptr, date, date_order, day, month, year);
+	return false;
+
+}
+
 
 bool DateFromStr(const char * strIn, struct timeval* ptvout, bool isLocal)
 {
@@ -650,7 +724,7 @@ bool DateFromStr(const char * strIn, struct timeval* ptvout, bool isLocal)
 
     unsigned int i;
 
-    DATEPARSE dp;
+    parse_date dp;
     uint32_t dwDateSeps = 0, iDate = 0;
 
     if (!strIn)
@@ -664,13 +738,13 @@ bool DateFromStr(const char * strIn, struct timeval* ptvout, bool isLocal)
     /* Parse the string into our structure */
     while (*strIn)
     {
-        if (dp.dwCount >= 7)
+        if (dp.field_count >= 7)
             break;
 
         if (isdigit(*strIn))
         {
-            dp.dwValues[dp.dwCount] = strtoul(strIn, (char**)&strIn, 10);
-            dp.dwCount++;
+            dp.field_values[dp.field_count] = strtoul(strIn, (char**)&strIn, 10);
+            dp.field_count++;
             strIn--;
         }
         else if (isalpha(*strIn))
@@ -680,22 +754,22 @@ bool DateFromStr(const char * strIn, struct timeval* ptvout, bool isLocal)
             for (i = 0; i < sizeof(tokens)/sizeof(tokens[0]); i++)
             {
                 size_t dwLen = strlen(tokens[i]);
-                if (dwLen && !ft_strnicmp(strIn, tokens[i], dwLen))
+                if (dwLen && !(stringcmp_format(strIn, tokens[i], dwLen)))
                 {
                     if (i <= 25)
                     {
-                        dp.dwValues[dp.dwCount] = ParseDateMonths[i];
-                        dp.dwFlags[dp.dwCount] |= (DP_MONTH|DP_DATESEP);
-                        dp.dwCount++;
+                        dp.field_values[dp.field_count] = ParseDateMonths[i];
+                        dp.field_flags[dp.field_count] |= (MONTH_SEP|DATE_SEP);
+                        dp.field_count++;
                     }
                     else if (i > 39)
                     {
-                        if (!dp.dwCount || dp.dwParseFlags & (DP_AM|DP_PM))
+                        if (!dp.field_count || dp.field_parse_flags & (AM_SEP|PM_SEP))
                             return false; //hRet = DISP_E_TYPEMISMATCH;
                         else
                         {
-                            dp.dwFlags[dp.dwCount - 1] |= (i == 40 ? DP_AM : DP_PM);
-                            dp.dwParseFlags |= (i == 40 ? DP_AM : DP_PM);
+                            dp.field_flags[dp.field_count - 1] |= (i == 40 ? AM_SEP : PM_SEP);
+                            dp.field_parse_flags |= (i == 40 ? AM_SEP : PM_SEP);
                         }
                     }
                     strIn += (dwLen - 1);
@@ -707,18 +781,18 @@ bool DateFromStr(const char * strIn, struct timeval* ptvout, bool isLocal)
             if (!bFound)
             {
                 if ((*strIn == 'a' || *strIn == 'A' || *strIn == 'p' || *strIn == 'P') &&
-                    (dp.dwCount && !(dp.dwParseFlags & (DP_AM|DP_PM))))
+                    (dp.field_count && !(dp.field_parse_flags & (AM_SEP|PM_SEP))))
                 {
                     /* Special case - 'a' and 'p' are recognised as short for am/pm */
                     if (*strIn == 'a' || *strIn == 'A')
                     {
-                        dp.dwFlags[dp.dwCount - 1] |= DP_AM;
-                        dp.dwParseFlags |=  DP_AM;
+                        dp.field_flags[dp.field_count - 1] |= AM_SEP;
+                        dp.field_parse_flags |=  AM_SEP;
                     }
                     else
                     {
-                        dp.dwFlags[dp.dwCount - 1] |= DP_PM;
-                        dp.dwParseFlags |=  DP_PM;
+                        dp.field_flags[dp.field_count - 1] |= PM_SEP;
+                        dp.field_parse_flags |=  PM_SEP;
                     }
                     strIn++;
                 }
@@ -736,18 +810,18 @@ bool DateFromStr(const char * strIn, struct timeval* ptvout, bool isLocal)
         }
         else if (*strIn == ':' ||  *strIn == '.')
         {
-            if (!dp.dwCount || !strIn[1])
+            if (!dp.field_count || !strIn[1])
                 return false; //hRet = DISP_E_TYPEMISMATCH;
             else
-                dp.dwFlags[dp.dwCount - 1] |= DP_TIMESEP;
+                dp.field_flags[dp.field_count - 1] |= TIME_SEP;
         }
         else if (*strIn == '-' || *strIn == '/')
         {
             dwDateSeps++;
-            if (dwDateSeps > 2 || !dp.dwCount || !strIn[1])
+            if (dwDateSeps > 2 || !dp.field_count || !strIn[1])
                 return false; //hRet = DISP_E_TYPEMISMATCH;
             else
-                dp.dwFlags[dp.dwCount - 1] |= DP_DATESEP;
+                dp.field_flags[dp.field_count - 1] |= DATE_SEP;
         }
         else if (*strIn == ',' || isspace(*strIn))
         {
@@ -761,13 +835,13 @@ bool DateFromStr(const char * strIn, struct timeval* ptvout, bool isLocal)
         strIn++;
     }
 
-    if (!dp.dwCount || dp.dwCount > 7 ||
-        (dp.dwCount == 1 && !(dp.dwParseFlags & (DP_AM|DP_PM))))
+    if (!dp.field_count || dp.field_count > 7 ||
+        (dp.field_count == 1 && !(dp.field_parse_flags & (AM_SEP|PM_SEP))))
         return false; //hRet = DISP_E_TYPEMISMATCH;
 
     struct tm t;
     int32_t milliseconds;
-    uint32_t dwOffset = 0; /* Start of date fields in dp.dwValues */
+    uint32_t dwOffset = 0; /* Start of date fields in dp.field_values */
 
     t.tm_wday = t.tm_hour = t.tm_min = t.tm_sec = milliseconds = 0;
     //st.wDayOfWeek = t.tm_hour = t.tm_min = t.tm_sec = st.wMilliseconds = 0;
@@ -779,91 +853,94 @@ bool DateFromStr(const char * strIn, struct timeval* ptvout, bool isLocal)
      * fields. Thus we construct a value from 0-32 where each set bit indicates
      * a time field. This encapsulates the hundreds of permutations of 2-6 fields.
      * For valid permutations, we set dwOffset to point32_t to the first date field
-     * and shorten dp.dwCount by the number of time fields found. The real
+     * and shorten dp.field_count by the number of time fields found. The real
      * magic here occurs in MakeDate() above, where we determine what
      * each date number must represent in the context of iDate.
      */
     //TRACE("0x%08x\n", TIMEFLAG(0)|TIMEFLAG(1)|TIMEFLAG(2)|TIMEFLAG(3)|TIMEFLAG(4));
+	int val = ((dp.field_flags[0] & TIME_SEP) << 0) | ((dp.field_flags[1] & TIME_SEP) << 1) |
+			  ((dp.field_flags[2] & TIME_SEP) << 2) | ((dp.field_flags[3] & TIME_SEP) << 3) |
+			  ((dp.field_flags[4] & TIME_SEP) << 4);
 
-    switch (TIMEFLAG(0)|TIMEFLAG(1)|TIMEFLAG(2)|TIMEFLAG(3)|TIMEFLAG(4))
+	switch (val)
     {
         case 0x1: /* TT TTDD TTDDD */
-            if (dp.dwCount > 3 &&
-                ((dp.dwFlags[2] & (DP_AM|DP_PM)) || (dp.dwFlags[3] & (DP_AM|DP_PM)) ||
-                (dp.dwFlags[4] & (DP_AM|DP_PM))))
+            if (dp.field_count > 3 &&
+                ((dp.field_flags[2] & (AM_SEP|PM_SEP)) || (dp.field_flags[3] & (AM_SEP|PM_SEP)) ||
+                (dp.field_flags[4] & (AM_SEP|PM_SEP))))
                 return false; //hRet = DISP_E_TYPEMISMATCH;
-            else if (dp.dwCount != 2 && dp.dwCount != 4 && dp.dwCount != 5)
+            else if (dp.field_count != 2 && dp.field_count != 4 && dp.field_count != 5)
                 return false; //hRet = DISP_E_TYPEMISMATCH;
-            t.tm_hour = dp.dwValues[0];
-            t.tm_min  = dp.dwValues[1];
-            dp.dwCount -= 2;
+            t.tm_hour = dp.field_values[0];
+            t.tm_min  = dp.field_values[1];
+            dp.field_count -= 2;
             dwOffset = 2;
             break;
 
         case 0x3: /* TTT TTTDD TTTDDD */
-            if (dp.dwCount > 4 &&
-                ((dp.dwFlags[3] & (DP_AM|DP_PM)) || (dp.dwFlags[4] & (DP_AM|DP_PM)) ||
-                (dp.dwFlags[5] & (DP_AM|DP_PM))))
+            if (dp.field_count > 4 &&
+                ((dp.field_flags[3] & (AM_SEP|PM_SEP)) || (dp.field_flags[4] & (AM_SEP|PM_SEP)) ||
+                (dp.field_flags[5] & (AM_SEP|PM_SEP))))
                 return false; //hRet = DISP_E_TYPEMISMATCH;
-            else if (dp.dwCount != 3 && dp.dwCount != 5 && dp.dwCount != 6)
+            else if (dp.field_count != 3 && dp.field_count != 5 && dp.field_count != 6)
                 return false; //hRet = DISP_E_TYPEMISMATCH;
-            t.tm_hour   = dp.dwValues[0];
-            t.tm_min = dp.dwValues[1];
-            t.tm_sec = dp.dwValues[2];
-            milliseconds = dp.dwValues[3];
+            t.tm_hour   = dp.field_values[0];
+            t.tm_min = dp.field_values[1];
+            t.tm_sec = dp.field_values[2];
+            milliseconds = dp.field_values[3];
             dwOffset = 3;
-            dp.dwCount -= 3;
+            dp.field_count -= 3;
             break;
 
         case 0x4: /* DDTT */
-            if (dp.dwCount != 4 ||
-                (dp.dwFlags[0] & (DP_AM|DP_PM)) || (dp.dwFlags[1] & (DP_AM|DP_PM)))
+            if (dp.field_count != 4 ||
+                (dp.field_flags[0] & (AM_SEP|PM_SEP)) || (dp.field_flags[1] & (AM_SEP|PM_SEP)))
                 return false; //hRet = DISP_E_TYPEMISMATCH;
-            t.tm_hour = dp.dwValues[2];
-            t.tm_min  = dp.dwValues[3];
-            dp.dwCount -= 2;
+            t.tm_hour = dp.field_values[2];
+            t.tm_min  = dp.field_values[3];
+            dp.field_count -= 2;
             break;
 
         case 0x0: /* T DD DDD TDDD TDDD */
-            if (dp.dwCount == 1 && (dp.dwParseFlags & (DP_AM|DP_PM)))
+            if (dp.field_count == 1 && (dp.field_parse_flags & (AM_SEP|PM_SEP)))
             {
-                t.tm_hour = dp.dwValues[0]; /* T */
-                dp.dwCount = 0;
+                t.tm_hour = dp.field_values[0]; /* T */
+                dp.field_count = 0;
                 break;
             }
-            else if (dp.dwCount > 4 || (dp.dwCount < 3 && dp.dwParseFlags & (DP_AM|DP_PM)))
+            else if (dp.field_count > 4 || (dp.field_count < 3 && dp.field_parse_flags & (AM_SEP|PM_SEP)))
             {
                 return false; //hRet = DISP_E_TYPEMISMATCH;
             }
-            else if (dp.dwCount == 3)
+            else if (dp.field_count == 3)
             {
-                if (dp.dwFlags[0] & (DP_AM|DP_PM)) /* TDD */
+                if (dp.field_flags[0] & (AM_SEP|PM_SEP)) /* TDD */
                 {
-                    dp.dwCount = 2;
-                    t.tm_hour = dp.dwValues[0];
+                    dp.field_count = 2;
+                    t.tm_hour = dp.field_values[0];
                     dwOffset = 1;
                     break;
                 }
-                if (dp.dwFlags[2] & (DP_AM|DP_PM)) /* DDT */
+                if (dp.field_flags[2] & (AM_SEP|PM_SEP)) /* DDT */
                 {
-                    dp.dwCount = 2;
-                    t.tm_hour = dp.dwValues[2];
+                    dp.field_count = 2;
+                    t.tm_hour = dp.field_values[2];
                     break;
                 }
-                else if (dp.dwParseFlags & (DP_AM|DP_PM))
+                else if (dp.field_parse_flags & (AM_SEP|PM_SEP))
                     return false; //hRet = DISP_E_TYPEMISMATCH;
             }
-            else if (dp.dwCount == 4)
+            else if (dp.field_count == 4)
             {
-                dp.dwCount = 3;
-                if (dp.dwFlags[0] & (DP_AM|DP_PM)) /* TDDD */
+                dp.field_count = 3;
+                if (dp.field_flags[0] & (AM_SEP|PM_SEP)) /* TDDD */
                 {
-                    t.tm_hour = dp.dwValues[0];
+                    t.tm_hour = dp.field_values[0];
                     dwOffset = 1;
                 }
-                else if (dp.dwFlags[3] & (DP_AM|DP_PM)) /* DDDT */
+                else if (dp.field_flags[3] & (AM_SEP|PM_SEP)) /* DDDT */
                 {
-                    t.tm_hour = dp.dwValues[3];
+                    t.tm_hour = dp.field_values[3];
                 }
                 else
                     return false; //hRet = DISP_E_TYPEMISMATCH;
@@ -872,37 +949,37 @@ bool DateFromStr(const char * strIn, struct timeval* ptvout, bool isLocal)
             /* .. fall through .. */
 
         case 0x8: /* DDDTT */
-            if ((dp.dwCount == 2 && (dp.dwParseFlags & (DP_AM|DP_PM))) ||
-                (dp.dwCount == 5 && ((dp.dwFlags[0] & (DP_AM|DP_PM)) ||
-                (dp.dwFlags[1] & (DP_AM|DP_PM)) || (dp.dwFlags[2] & (DP_AM|DP_PM)))) ||
-                dp.dwCount == 4 || dp.dwCount == 6)
+            if ((dp.field_count == 2 && (dp.field_parse_flags & (AM_SEP|PM_SEP))) ||
+                (dp.field_count == 5 && ((dp.field_flags[0] & (AM_SEP|PM_SEP)) ||
+                (dp.field_flags[1] & (AM_SEP|PM_SEP)) || (dp.field_flags[2] & (AM_SEP|PM_SEP)))) ||
+                dp.field_count == 4 || dp.field_count == 6)
                 return false; //hRet = DISP_E_TYPEMISMATCH;
-            t.tm_hour   = dp.dwValues[3];
-            t.tm_min = dp.dwValues[4];
-            if (dp.dwCount == 5)
-                dp.dwCount -= 2;
+            t.tm_hour   = dp.field_values[3];
+            t.tm_min = dp.field_values[4];
+            if (dp.field_count == 5)
+                dp.field_count -= 2;
             break;
 
         case 0xC: /* DDTTT */
-            if (dp.dwCount != 5 ||
-                (dp.dwFlags[0] & (DP_AM|DP_PM)) || (dp.dwFlags[1] & (DP_AM|DP_PM)))
+            if (dp.field_count != 5 ||
+                (dp.field_flags[0] & (AM_SEP|PM_SEP)) || (dp.field_flags[1] & (AM_SEP|PM_SEP)))
                 return false; //hRet = DISP_E_TYPEMISMATCH;
-            t.tm_hour   = dp.dwValues[2];
-            t.tm_min = dp.dwValues[3];
-            t.tm_sec = dp.dwValues[4];
-            milliseconds = dp.dwValues[5];
-            dp.dwCount -= 3;
+            t.tm_hour   = dp.field_values[2];
+            t.tm_min = dp.field_values[3];
+            t.tm_sec = dp.field_values[4];
+            milliseconds = dp.field_values[5];
+            dp.field_count -= 3;
             break;
 
         case 0x18: /* DDDTTT */
-            if ((dp.dwFlags[0] & (DP_AM|DP_PM)) || (dp.dwFlags[1] & (DP_AM|DP_PM)) ||
-                (dp.dwFlags[2] & (DP_AM|DP_PM)))
+            if ((dp.field_flags[0] & (AM_SEP|PM_SEP)) || (dp.field_flags[1] & (AM_SEP|PM_SEP)) ||
+                (dp.field_flags[2] & (AM_SEP|PM_SEP)))
                 return false; //hRet = DISP_E_TYPEMISMATCH;
-            t.tm_hour   = dp.dwValues[3];
-            t.tm_min = dp.dwValues[4];
-            t.tm_sec = dp.dwValues[5];
-            milliseconds = dp.dwValues[6];
-            dp.dwCount -= 3;
+            t.tm_hour   = dp.field_values[3];
+            t.tm_min = dp.field_values[4];
+            t.tm_sec = dp.field_values[5];
+            milliseconds = dp.field_values[6];
+            dp.field_count -= 3;
             break;
 
         default:
@@ -910,7 +987,7 @@ bool DateFromStr(const char * strIn, struct timeval* ptvout, bool isLocal)
             break;
     }
 
-    if (MakeDate(&dp, iDate, dwOffset, &t))
+    if (determine_date(&dp, iDate, dwOffset, &t))
     {
         if (t.tm_year > 2037)
         {
@@ -978,7 +1055,7 @@ int32_t STime::year()
 {
    struct tm tms;
    time_t tv_sec  = (time_t)m_time.tv_sec;
-    ft_localtime_s(&tms, &tv_sec);
+    format_localtime_s(&tms, &tv_sec);
     return tms.tm_year + 1900;
 }
 
@@ -986,7 +1063,7 @@ int32_t STime::month()
 {
    struct tm tms;
    time_t tv_sec  = (time_t)m_time.tv_sec;
-    ft_localtime_s(&tms, &tv_sec);
+    format_localtime_s(&tms, &tv_sec);
     return tms.tm_mon + 1;
 }
 
@@ -994,7 +1071,7 @@ int32_t STime::day()
 {
    struct tm tms;
    time_t tv_sec  = (time_t)m_time.tv_sec;
-    ft_localtime_s(&tms, &tv_sec);
+    format_localtime_s(&tms, &tv_sec);
     return tms.tm_mday;
 }
 
@@ -1002,7 +1079,7 @@ int32_t STime::hour()
 {
    struct tm tms;
    time_t tv_sec  = (time_t)m_time.tv_sec;
-    ft_localtime_s(&tms, &tv_sec);
+    format_localtime_s(&tms, &tv_sec);
     return tms.tm_hour;
 }
 
@@ -1010,7 +1087,7 @@ int32_t STime::minute()
 {
    struct tm tms;
    time_t tv_sec  = (time_t)m_time.tv_sec;
-    ft_localtime_s(&tms, &tv_sec);
+    format_localtime_s(&tms, &tv_sec);
     return tms.tm_min;
 }
 
@@ -1018,7 +1095,7 @@ int32_t STime::second()
 {
    struct tm tms;
    time_t tv_sec  = (time_t)m_time.tv_sec;
-    ft_localtime_s(&tms, &tv_sec);
+    format_localtime_s(&tms, &tv_sec);
     return tms.tm_sec;
 }
 
@@ -1045,11 +1122,11 @@ void STime::Format(char * dest, int32_t maxsize, const char * fmt, bool local)
     time_t t = m_time.tv_sec;
 
     if (local)
-        ft_localtime_s(&ts, &t);
+        format_localtime_s(&ts, &t);
     else
-        ft_gmtime_s(&ts, &t);
+        format_gmtime_s(&ts, &t);
 
-    ftstrftime(dest, maxsize, fmt, &ts, &m_time);
+    format_time_into_string(dest, maxsize, fmt, &ts, &m_time);
 }
 
 bool STime::ParseDateTime(const char * pszDate, bool isLocal)
@@ -1068,3 +1145,4 @@ void STime::setNTPTime(const ntp_time_t &ntp)
     m_time.tv_sec = ntp.second - 0x83AA7E80;
     m_time.tv_usec = (uint32_t)((double)ntp.fraction * 1.0e6 / (double)(1LL<<32));
 }
+

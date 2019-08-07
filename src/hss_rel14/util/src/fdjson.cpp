@@ -61,6 +61,7 @@
 
 #include "fdjson.h"
 #include "stime.h"
+#include "ssync.h"
 
 #define ISHEXDIGIT(x) \
 ( \
@@ -142,6 +143,134 @@ enum AvpDataType
    ADTIPFilterRule
 };
 
+class AvpDictionaryEntry
+{
+public:
+   AvpDictionaryEntry()
+   {
+      m_baseentry = NULL;
+      memset(&m_basedata, 0, sizeof(m_basedata));
+      m_type = ADTUnknown;
+   }
+   ~AvpDictionaryEntry()
+   {
+   }
+
+   void init(const char *avp_name)
+   {
+      int ret = 0;
+
+      m_avp_name = avp_name;
+
+      /* get the dictionary entry for the AVP */
+      ret = fd_dict_search( fd_g_config->cnf_dict, DICT_AVP, AVP_BY_NAME_ALL_VENDORS, avp_name, &m_baseentry, ENOENT );
+      if (ret != 0)
+         throw runtimeInfo(
+            string_format("%s:%d - INFO - Unable to find AVP dictionary entry  for [%s]",
+            __FILE__, __LINE__, avp_name)
+         );
+
+      /* get the dictionary data for the AVP's dictionary entry */
+      ret = fd_dict_getval( m_baseentry, &m_basedata );
+      if (ret != 0)
+         throw runtimeInfo(
+            string_format("%s:%d - INFO - Unable to retrieve the dictionary data for the [%s] dictionary entry",
+            __FILE__, __LINE__, avp_name)
+         );
+
+      struct dictionary *dict = NULL;
+      struct dict_object *derivedtype = NULL;
+
+      /* get the dictionary associated with the AVP dictionary entry */
+      ret = fd_dict_getdict( m_baseentry, &dict );
+      if (ret != 0)
+         throw runtimeInfo(
+            string_format("%s:%d - INFO - Unable to retrieve the dictionary for the [%s] dictionary entry",
+            __FILE__, __LINE__, avp_name)
+         );
+
+      /* get the dictionary entry associated with the derived type */
+      ret = fd_dict_search( dict, DICT_TYPE, TYPE_OF_AVP, m_baseentry, &derivedtype, EINVAL );
+      if (ret == 0) /* if found, then derived */
+      {
+         struct dict_type_data derived_type_data;
+
+         ret = fd_dict_getval( derivedtype, &derived_type_data );
+
+         if (ret == 0)
+         {
+            if      ( !strcmp( derived_type_data.type_name, "Enumerated" ) )        m_type = ADTEnumerated;
+            else if ( !strcmp( derived_type_data.type_name, "Time" ) )              m_type = ADTTime;
+            else if ( !strcmp( derived_type_data.type_name, "Address" ) )           m_type = ADTAddress;
+            else if ( !strcmp( derived_type_data.type_name, "UTF8String" ) )        m_type = ADTUTF8String;
+            else if ( !strcmp( derived_type_data.type_name, "DiameterIdentity" ) )  m_type = ADTDiameterIdentity;
+            else if ( !strcmp( derived_type_data.type_name, "DiameterURI" ) )       m_type = ADTDiameterURI;
+            else if ( !strcmp( derived_type_data.type_name, "IPFilterRule" ) )      m_type = ADTIPFilterRule;
+            else
+            {
+               switch ( m_basedata.avp_basetype )
+               {
+                  case AVP_TYPE_GROUPED:     { m_type = ADTGrouped; break; }
+                  case AVP_TYPE_INTEGER32:   { m_type = ADTI32; break; }
+                  case AVP_TYPE_INTEGER64:   { m_type = ADTI64; break; }
+                  case AVP_TYPE_UNSIGNED32:  { m_type = ADTU32; break; }
+                  case AVP_TYPE_UNSIGNED64:  { m_type = ADTU64; break; }
+                  case AVP_TYPE_FLOAT32:     { m_type = ADTF32; break; }
+                  case AVP_TYPE_FLOAT64:     { m_type = ADTF64; break; }
+                  case AVP_TYPE_OCTETSTRING: { m_type = ADTOctetString; break; }
+                  default:                   { m_type = ADTUnknown; break; }
+               }
+            }
+         }
+         else
+         {
+            switch ( m_basedata.avp_basetype )
+            {
+               case AVP_TYPE_GROUPED:     { m_type = ADTGrouped; break; }
+               case AVP_TYPE_INTEGER32:   { m_type = ADTI32; break; }
+               case AVP_TYPE_INTEGER64:   { m_type = ADTI64; break; }
+               case AVP_TYPE_UNSIGNED32:  { m_type = ADTU32; break; }
+               case AVP_TYPE_UNSIGNED64:  { m_type = ADTU64; break; }
+               case AVP_TYPE_FLOAT32:     { m_type = ADTF32; break; }
+               case AVP_TYPE_FLOAT64:     { m_type = ADTF64; break; }
+               case AVP_TYPE_OCTETSTRING: { m_type = ADTOctetString; break; }
+               default:                   { m_type = ADTUnknown; break; }
+            }
+         }
+      }
+      else
+      {
+         switch ( m_basedata.avp_basetype )
+         {
+            case AVP_TYPE_GROUPED:     { m_type = ADTGrouped; break; }
+            case AVP_TYPE_INTEGER32:   { m_type = ADTI32; break; }
+            case AVP_TYPE_INTEGER64:   { m_type = ADTI64; break; }
+            case AVP_TYPE_UNSIGNED32:  { m_type = ADTU32; break; }
+            case AVP_TYPE_UNSIGNED64:  { m_type = ADTU64; break; }
+            case AVP_TYPE_FLOAT32:     { m_type = ADTF32; break; }
+            case AVP_TYPE_FLOAT64:     { m_type = ADTF64; break; }
+            case AVP_TYPE_OCTETSTRING: { m_type = ADTOctetString; break; }
+            default:                   { m_type = ADTUnknown; break; }
+         }
+      }
+
+   }
+
+   const std::string &getAvpName() { return m_avp_name; }
+   struct dict_object *getBaseEntry() { return m_baseentry; }
+   struct dict_avp_data &getBaseData() { return m_basedata; }
+   AvpDataType getType() { return m_type; }
+
+private:
+   std::string m_avp_name;
+   struct dict_object *m_baseentry;
+   struct dict_avp_data m_basedata;
+   AvpDataType m_type;
+};
+
+static SMutex dictEntriesMutex;
+static std::unordered_map<std::string,AvpDictionaryEntry*> dictEntries;
+
 class AVP
 {
 public:
@@ -186,9 +315,9 @@ public:
    AvpDataType getType() { return mType; }
 
 private:
+
    void _init( const char *avp_name )
    {
-      int ret = 0;
 
       mName = avp_name;
       mBaseEntry = NULL;
@@ -198,97 +327,36 @@ private:
       mAvp = NULL;
       memset( &mValue, 0, sizeof(mValue) );
 
-      /* get the dictionary entry for the AVP */
-      ret = fd_dict_search( fd_g_config->cnf_dict, DICT_AVP, AVP_BY_NAME_ALL_VENDORS, mName, &mBaseEntry, ENOENT );
-      if (ret != 0)
-         throw runtimeInfo(
-            string_format("%s:%d - INFO - Unable to find AVP dictionary entry  for [%s]",
-            __FILE__, __LINE__, mName)
-         );
-
-      /* get the dictionary data for the AVP's dictionary entry */
-      ret = fd_dict_getval( mBaseEntry, &mBaseData );
-      if (ret != 0)
-         throw runtimeInfo(
-            string_format("%s:%d - INFO - Unable to retrieve the dictionary data for the [%s] dictionary entry",
-            __FILE__, __LINE__, mName)
-         );
-
-      struct dictionary *dict = NULL;
-      struct dict_object *derivedtype = NULL;
-
-      /* get the dictionary associated with the AVP dictionary entry */
-      ret = fd_dict_getdict( mBaseEntry, &dict );
-      if (ret != 0)
-         throw runtimeInfo(
-            string_format("%s:%d - INFO - Unable to retrieve the dictionary for the [%s] dictionary entry",
-            __FILE__, __LINE__, mName)
-         );
-
-      /* get the dictionary entry associated with the derived type */
-      ret = fd_dict_search( dict, DICT_TYPE, TYPE_OF_AVP, mBaseEntry, &derivedtype, EINVAL );
-      if (ret == 0) /* if found, then derived */
+      /* check if an entry exists in dictEntries */
+      std::string an = avp_name;
+      auto it = dictEntries.find(an);
+      if (it == dictEntries.end())
       {
-         struct dict_type_data derived_type_data;
+         SMutexLock l(dictEntriesMutex);
 
-         ret = fd_dict_getval( derivedtype, &derived_type_data );
+         it = dictEntries.find(an);
+         if (it == dictEntries.end())
+         {
+            AvpDictionaryEntry *ade = new AvpDictionaryEntry();
+            ade->init(avp_name);
+            std::pair<std::string,AvpDictionaryEntry*> data(ade->getAvpName(), ade);
+            auto result = dictEntries.insert(data);
+            if (result.second == false)
+            {
+               delete ade;
+               throw runtimeInfo(
+                  string_format("%s:%d - WARN - Unable to insert AvpDictionaryEntry for [%s]",
+                  __FILE__, __LINE__, avp_name)
+               );
+            }
 
-         if (ret == 0)
-         {
-            if      ( !strcmp( derived_type_data.type_name, "Enumerated" ) )        mType = ADTEnumerated;
-            else if ( !strcmp( derived_type_data.type_name, "Time" ) )              mType = ADTTime;
-            else if ( !strcmp( derived_type_data.type_name, "Address" ) )           mType = ADTAddress;
-            else if ( !strcmp( derived_type_data.type_name, "UTF8String" ) )        mType = ADTUTF8String;
-            else if ( !strcmp( derived_type_data.type_name, "DiameterIdentity" ) )  mType = ADTDiameterIdentity;
-            else if ( !strcmp( derived_type_data.type_name, "DiameterURI" ) )       mType = ADTDiameterURI;
-            else if ( !strcmp( derived_type_data.type_name, "IPFilterRule" ) )      mType = ADTIPFilterRule;
-            else
-            {
-               switch ( mBaseData.avp_basetype )
-               {
-                  case AVP_TYPE_GROUPED:     { mType = ADTGrouped; break; }
-                  case AVP_TYPE_INTEGER32:   { mType = ADTI32; break; }
-                  case AVP_TYPE_INTEGER64:   { mType = ADTI64; break; }
-                  case AVP_TYPE_UNSIGNED32:  { mType = ADTU32; break; }
-                  case AVP_TYPE_UNSIGNED64:  { mType = ADTU64; break; }
-                  case AVP_TYPE_FLOAT32:     { mType = ADTF32; break; }
-                  case AVP_TYPE_FLOAT64:     { mType = ADTF64; break; }
-                  case AVP_TYPE_OCTETSTRING: { mType = ADTOctetString; break; }
-                  default:                   { mType = ADTUnknown; break; }
-               }
-            }
-         }
-         else
-         {
-            switch ( mBaseData.avp_basetype )
-            {
-               case AVP_TYPE_GROUPED:     { mType = ADTGrouped; break; }
-               case AVP_TYPE_INTEGER32:   { mType = ADTI32; break; }
-               case AVP_TYPE_INTEGER64:   { mType = ADTI64; break; }
-               case AVP_TYPE_UNSIGNED32:  { mType = ADTU32; break; }
-               case AVP_TYPE_UNSIGNED64:  { mType = ADTU64; break; }
-               case AVP_TYPE_FLOAT32:     { mType = ADTF32; break; }
-               case AVP_TYPE_FLOAT64:     { mType = ADTF64; break; }
-               case AVP_TYPE_OCTETSTRING: { mType = ADTOctetString; break; }
-               default:                   { mType = ADTUnknown; break; }
-            }
+            it = result.first;
          }
       }
-      else
-      {
-         switch ( mBaseData.avp_basetype )
-         {
-            case AVP_TYPE_GROUPED:     { mType = ADTGrouped; break; }
-            case AVP_TYPE_INTEGER32:   { mType = ADTI32; break; }
-            case AVP_TYPE_INTEGER64:   { mType = ADTI64; break; }
-            case AVP_TYPE_UNSIGNED32:  { mType = ADTU32; break; }
-            case AVP_TYPE_UNSIGNED64:  { mType = ADTU64; break; }
-            case AVP_TYPE_FLOAT32:     { mType = ADTF32; break; }
-            case AVP_TYPE_FLOAT64:     { mType = ADTF64; break; }
-            case AVP_TYPE_OCTETSTRING: { mType = ADTOctetString; break; }
-            default:                   { mType = ADTUnknown; break; }
-         }
-      }
+
+      mBaseEntry = it->second->getBaseEntry();
+      memcpy( &mBaseData, &it->second->getBaseData(), sizeof(mBaseData));
+      mType = it->second->getType();
    }
 
    void _addTo( msg_or_avp *reference )
@@ -419,7 +487,6 @@ static void fdJsonAddAvps( msg_or_avp *reference, const RAPIDJSON_NAMESPACE::Val
 
 static void fdJsonAddAvp( msg_or_avp *reference, const char *name, const RAPIDJSON_NAMESPACE::Value &value, void (*errfunc)(const char*) )
 {
-   int ret;
    AVP avp( name );
 
    switch (value.GetType())
@@ -556,7 +623,7 @@ static void fdJsonAddAvp( msg_or_avp *reference, const char *name, const RAPIDJS
                 * start index at 1 (first hex digit divided by number of digits per byte, 2 / 2 = 1)
                 * to start at the first hex digit
                 */
-               for (int i = 1; i < binlen; i++)
+               for (uint32_t i = 1; i < binlen; i++)
                   avp.getBuffer().get()[i-1] = (HEX2BIN(p[i * 2] ) << 4) + HEX2BIN(p[i * 2 + 1]);
 
                /*

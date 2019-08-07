@@ -31,7 +31,12 @@
 #include "auc.h"
 #include "hss_config.h"
 
+#ifdef NODEBUG
+#define DEBUG_AUC_KDF 0
+#else
 #define DEBUG_AUC_KDF 1
+#endif
+
 //extern hss_config_t                     hss_config;
 
 /*

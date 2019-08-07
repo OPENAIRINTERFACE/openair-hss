@@ -2,9 +2,9 @@
 # Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
 # contributor license agreements.  See the NOTICE file distributed with
 # this work for additional information regarding copyright ownership.
-# The OpenAirInterface Software Alliance licenses this file to You under 
+# The OpenAirInterface Software Alliance licenses this file to You under
 # the Apache License, Version 2.0  (the "License"); you may not use this file
-# except in compliance with the License.  
+# except in compliance with the License.
 # You may obtain a copy of the License at
 #
 #      http://www.apache.org/licenses/LICENSE-2.0
@@ -20,7 +20,7 @@
 ################################################################################
 cmake_minimum_required(VERSION 2.8)
 set(CMAKE_VERBOSE_MAKEFILE ON)
-SET(CMAKE_CXX_FLAGS "-std=c++0x")
+SET(CMAKE_CXX_FLAGS "-std=c++11")
 
 project(HSS_UTIL)
 
@@ -79,16 +79,20 @@ set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING "Choose the type of build, op
 endif()
 set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS Debug Release RelWithDebInfo MinSizeRel)
 
+set(SECURITY_FLAGS                  "-D_FORTIFY_SOURCE=2 -fasynchronous-unwind-tables -fexceptions"
+set(SECURITY_FLAGS                  "${SECURITY_FLAGS} -fstack-protector-all -fstack-protector-strong -Wall"
+set(SECURITY_FLAGS                  "${SECURITY_FLAGS} -Werror=format-security -Werror=implicit-function-declaration"
+
+SET(CMAKE_CXX_FLAGS "-std=c++11 -Wreturn-type -g -pthread -lrt ${SECURITY_FLAGS}")
+
 #
-set(CMAKE_C_FLAGS                  "${CMAKE_C_FLAGS} -msse4.2 -std=gnu99 -Wall -Wstrict-prototypes -fno-strict-aliasing -rdynamic -funroll-loops -Wno-packed-bitfield-compat -DCMAKER")
-set(CMAKE_C_FLAGS_DEBUG            "${CMAKE_C_FLAGS_DEBUG} -ggdb -DMALLOC_CHECK_=3")
-set(CMAKE_C_FLAGS_RELWITHDEBINFO   "${CMAKE_C_FLAGS_RELWITHDEBINFO} -ggdb -DMALLOC_CHECK_=3 -O2")
+set(CMAKE_C_FLAGS                  "${CMAKE_C_FLAGS} std=c++11 -Wreturn-type -g -pthread -lrt $(SECURITY_FLAGS) -DCMAKER")
+set(CMAKE_C_FLAGS_DEBUG            "${CMAKE_C_FLAGS_DEBUG} -std=c++11 -Wreturn-type -g -pthread -lrt $(SECURITY_FLAGS)-ggdb -DMALLOC_CHECK_=3")
+set(CMAKE_C_FLAGS_RELWITHDEBINFO   "${CMAKE_C_FLAGS_RELWITHDEBINFO} std=c++11 -Wreturn-type -g -pthread -lrt $(SECURITY_FLAGS) -ggdb -DMALLOC_CHECK_=3 -O2")
 
 
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 find_package(Threads REQUIRED)
-
-
 
 set(GIT_BRANCH        "UNKNOWN")
 set(GIT_COMMIT_HASH   "UNKNOWN")
@@ -113,7 +117,7 @@ if(GIT_FOUND)
     OUTPUT_VARIABLE GIT_COMMIT_HASH
     OUTPUT_STRIP_TRAILING_WHITESPACE
   )
-  
+
   # Get the latest commit date of the working branch
   execute_process(
     COMMAND git log -1 --format=%cd
@@ -137,23 +141,23 @@ add_definitions("-DPACKAGE_BUGREPORT=\"openaircn-user@lists.eurecom.fr\"")
 link_directories(${OAI_HSS_DIR}/util)
 link_directories(${OAI_HSS_DIR}/hsssec)
 
-include_directories( ${OAI_HSS_DIR}/../git_submodules/rapidjson/include ${OAI_HSS_DIR}/util/include ${OAI_HSS_DIR}/include /usr/local/include/freeDiameter ${OAI_HSS_DIR}/hsssec/include /usr/local/include ${OAI_HSS_DIR}/../git_submodules/cpp-driver/include )
+include_directories( ${OAI_HSS_DIR}/../git_submodules/rapidjson/include ${OAI_HSS_DIR}/util/include ${OAI_HSS_DIR}/include /usr/local/include/freeDiameter ${OAI_HSS_DIR}/hsssec/include /usr/local/include ${OAI_HSS_DIR}/../git_submodules/cpp-driver/include ${OAI_HSS_DIR}/../git_submodules/spdlog/include)
 ADD_EXECUTABLE(oai_hss  ${OAI_HSS_DIR}/src/main.cpp)
-target_link_libraries (oai_hss 
-                       -Wl,-whole-archive 
-                       hss_modules  
+target_link_libraries (oai_hss
+                       -Wl,-whole-archive
+                       hss_modules
                        -Wl,-no-whole-archive
                        gmp
                        /usr/local/lib/
                        /usr/local/lib/x86_64-linux-gnu
-                       ${MySQL_LIBRARY} 
-                       ${NETTLE_LIBRARIES} 
+                       ${MySQL_LIBRARY}
+                       ${NETTLE_LIBRARIES}
                        ${FREEDIAMETER_LIBRARIES}
-                       ${CONFIG_LIBRARIES}  
-                       ${CMAKE_THREAD_LIBS_INIT} 
+                       ${CONFIG_LIBRARIES}
+                       ${CMAKE_THREAD_LIBS_INIT}
                        gnutls)
 
 # Default parameters
 # Does not work on simple install (fqdn in /etc/hosts 127.0.1.1)
-add_boolean_option(DAEMONIZE         false          "If true, HSS execute like a daemon (fork).")  
+add_boolean_option(DAEMONIZE         false          "If true, HSS execute like a daemon (fork).")
 

@@ -20,6 +20,7 @@
 
 #include "dataaccess.h"
 #include "s6c_impl.h"
+#include "statshss.h"
 
 namespace s6c {
 
@@ -157,6 +158,7 @@ int SERIFSRcmd::process( FDMessageRequest *req )
       fa.add( getDict().avpMsisdn(), "" );
       ans.add( fa );
       ans.send();
+      StatsHss::singleton().registerStatResult(stat_hss_srr, 0, 5005);
       return 0;
    }
 
@@ -181,6 +183,7 @@ int SERIFSRcmd::process( FDMessageRequest *req )
          er.add( getDict().avpVendorId(), getDict().vnd3GPP().getId() );
          er.add( getDict().avpExperimentalResultCode(), 5001 ); // DIAMETER_ERROR_USER_UNKNOWN
          ans.send();
+         StatsHss::singleton().registerStatResult(stat_hss_srr, getDict().vnd3GPP().getId(), 5001);
          return 0;
       }
    }
@@ -188,13 +191,14 @@ int SERIFSRcmd::process( FDMessageRequest *req )
    //
    // lookup the imsi
    //
-   if ( !getApplication().getDbObj().getImsiInfo( imsi, info ) )
+   if ( !getApplication().getDbObj().getImsiInfo( imsi, info, NULL, NULL ) )
    {
       FDAvp er( getDict().avpExperimentalResult() );
       er.add( getDict().avpVendorId(), getDict().vnd3GPP().getId() );
       er.add( getDict().avpExperimentalResultCode(), 5001 ); // DIAMETER_ERROR_USER_UNKNOWN
       ans.add( er );
       ans.send();
+      StatsHss::singleton().registerStatResult(stat_hss_srr, getDict().vnd3GPP().getId(), 5001);
       return 0;
    }
 
@@ -208,6 +212,7 @@ int SERIFSRcmd::process( FDMessageRequest *req )
       er.add( getDict().avpExperimentalResultCode(), 5001 ); // DIAMETER_ERROR_USER_UNKNOWN
       ans.add( er );
       ans.send();
+      StatsHss::singleton().registerStatResult(stat_hss_srr, getDict().vnd3GPP().getId(), 5001);
       return 0;
    }
 
@@ -221,6 +226,7 @@ int SERIFSRcmd::process( FDMessageRequest *req )
       er.add( getDict().avpExperimentalResultCode(), 5550 ); // DIAMETER_ERROR_ABSENT_USER
       ans.add( er );
       ans.send();
+      StatsHss::singleton().registerStatResult(stat_hss_srr, getDict().vnd3GPP().getId(), 5550);
       return 0;
    }
 
@@ -228,6 +234,7 @@ int SERIFSRcmd::process( FDMessageRequest *req )
    // add the Result-Code
    //
    ans.add( getDict().avpResultCode(), 2001 ); // DIAMETER_SUCCESS
+   StatsHss::singleton().registerStatResult(stat_hss_srr, 0, 2001);
 
    //
    // add the User-Name AVP
@@ -274,7 +281,7 @@ int SERIFSRcmd::process( FDMessageRequest *req )
    {
       FDAvp ui( getDict().avpUserIdentifier() );
       uint8_t buf[ MAX_MSISDN_LENGTH ];
-      size_t len = FDUtility::str2tbcd( info.str_msisdn, buf, len );
+      size_t len = FDUtility::str2tbcd( info.str_msisdn, buf, sizeof( buf ) );
       ui.add( getDict().avpMsisdn(), buf, len );
 
       ans.add( ui );

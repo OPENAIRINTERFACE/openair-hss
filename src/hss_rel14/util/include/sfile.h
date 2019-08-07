@@ -18,6 +18,7 @@
 #define __SFILE_H
 
 #include <stdint.h>
+#include <stdio.h>
 #include <string>
 #include <fstream>
 
@@ -28,13 +29,31 @@ public:
    ~SFile();
 
    bool open( const char *filename );
-   bool open( const std::string &filename ) { return open( filename.c_str() ); }
+   bool open( const std::string &filename )
+   {
+      return open(filename.c_str());
+   }
+
+   void setStream( FILE *stream )
+   {
+      csv_file = stream;
+   }
+
+   void setfilename( std::string &filename )
+   {
+      m_filename  = filename;
+   }
+
+   char *getStreamBuffer()
+   {
+      return stream_buffer;
+   }
 
    void close();
 
    bool read();
 
-   bool is_open() { return m_stream.is_open(); }
+   bool is_open() { return (csv_file != NULL); }
 
    const std::string &filename() { return m_filename; }
    const std::string &data() { return m_data; }
@@ -46,6 +65,8 @@ public:
    bool seek( uint32_t recnbr, std::ios::streampos offset );
 
 private:
+   FILE *csv_file;
+   char *stream_buffer;
    std::ifstream m_stream;
    std::string m_filename;
    std::string m_data;

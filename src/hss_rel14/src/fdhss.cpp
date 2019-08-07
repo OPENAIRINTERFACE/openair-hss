@@ -27,6 +27,9 @@
 #include "s6c_impl.h"
 #include "dataaccess.h"
 #include "common_def.h"
+#include "msg_event.h"
+
+
 
 #include "resthandler.h"
 
@@ -36,6 +39,33 @@ extern "C" {
    #include "hss_config.h"
    #include "aucpp.h"
 }
+
+HSSWorkerQueue::HSSWorkerQueue()
+{
+}
+
+HSSWorkerQueue::~HSSWorkerQueue()
+{
+}
+
+void HSSWorkerQueue::addProcessor(QueueProcessor *processor)
+{
+   addEntry(processor);
+}
+
+void HSSWorkerQueue::startProcessor()
+{
+   QueueProcessor *processor = (QueueProcessor*)startMessage();
+   if (processor)
+      processor->triggerNextPhase();
+}
+
+void HSSWorkerQueue::finishProcessor()
+{
+   finishMessage();
+}
+
+////////////////////////////////////////////////////////////////////////////////
 
 FDHss::FDHss() :
       m_s6tapp (NULL),
@@ -62,7 +92,7 @@ FDHss::~FDHss() {
 
 bool FDHss::isMmeValid(std::string &mmehost) {
    int32_t mmeid(0);
-   return m_dbobj.getMmeIdFromHost(mmehost, mmeid);
+   return m_dbobj.getMmeIdFromHost(mmehost, mmeid, NULL, NULL);
 }
 
 int FDHss::s6a_peer_validate ( struct peer_info *info, int *auth, int (**cb2) (struct peer_info *)){
@@ -123,9 +153,9 @@ bool FDHss::init(hss_config_t * hss_config_p){
       fd_peer_validate_register (s6a_peer_validate);
 
       //TODO get the list of peers from the database
-      FDPeer *peer = new FDPeer( (char*)"mme.localdomain" );
+      char *mme = std::getenv("MME_IDENTITY");
+      FDPeer *peer = new FDPeer( mme ? mme : (char*)"mme.localdomain" );
       m_mme_peers.push_back( peer );
-
 
       if(!m_diameter.start()){
          return false;
@@ -154,20 +184,41 @@ bool FDHss::init(hss_config_t * hss_config_p){
       Pistache::Address addr( Pistache::Ipv4::any(), Pistache::Port(Options::getrestport()) );
       auto opts = Pistache::Http::Endpoint::options()
          .threads(1)
-         .flags( Pistache::Tcp::Options::InstallSignalHandler | Pistache::Tcp::Options::ReuseAddr );
+         .flags( Pistache::Tcp::Options::ReuseAddr );
+//      .flags( Pistache::Tcp::Options::InstallSignalHandler | Pistache::Tcp::Options::ReuseAddr );
 
       m_endpoint = new Pistache::Http::Endpoint( addr );
       m_endpoint->init( opts );
       m_endpoint->setHandler( Pistache::Http::make_handler<RestHandler>() );
       m_endpoint->serveThreaded();
 
-      std::cout << "Started REST server on port [" << Options::getrestport() << "]" << std::endl;
+      Pistache::Address addrOss( Pistache::Ipv4::any(), Pistache::Port(Options::getossport()) );
+
+      m_ossendpoint = new OssEndpoint<Logger>(addrOss, &StatsHss::singleton(), &Logger::singleton().audit(), &Logger::singleton(), Options::getossfile());
+      m_ossendpoint->init();
+      m_ossendpoint->start();
+
+      Logger::system().startup( "Started REST server on port [%i]",   Options::getrestport());
+      Logger::system().startup( "Started OSS  server on port [%i]",   Options::getossport());
    }
    catch ( std::runtime_error &e )
    {
       std::cout << "Exception starting REST server - " << e.what() << std::endl;
       return false;
    }
+
+   HookEvent::init(&StatsHss::singleton(), m_s6tapp, m_s6aapp, m_s6capp);
+
+   //
+   // set the ULR queue concurrent value
+   //
+   m_workerqueue.setConcurrent(Options::getconcurrent());
+
+   //
+   // starts the stats
+   //
+   StatsHss::singleton().setInterval(Options::statsFrequency());
+   StatsHss::singleton().init( NULL );
 
    return true;
 }
@@ -181,18 +232,29 @@ void FDHss::shutdown()
 {
    if ( m_endpoint )
    {
-      std::cout << "REST server on port [9080] shutdown" << std::endl;
+      std::cout << "REST server on port [" << Options::getrestport() << "] shutdown" << std::endl;
       m_endpoint->shutdown();
       delete m_endpoint;
       m_endpoint = NULL;
    }
 
+   if ( m_ossendpoint ){
+      m_ossendpoint->shutdown();
+      delete m_ossendpoint;
+      m_ossendpoint = NULL;
+   }
+
    m_diameter.uninit( false );
+
+   if ( StatsHss::singleton().isRunning() ){
+      StatsHss::singleton().quit();
+   }
 }
 
 void FDHss::waitForShutdown()
 {
    m_diameter.waitForShutdown();
+   StatsHss::singleton().join();
 }
 
 int FDHss::sendINSDRreq(s6t::MonitoringEventConfigurationExtractorList &cir_monevtcfg, std::string& imsi,
@@ -271,7 +333,7 @@ bool FDHss::synchFix()
    if (!parsehex(Options::getsynchauts().c_str(), auts, -1))
       return false;
 
-   if (!m_dbobj.getImsiSec(Options::getsynchimsi(), imsisec))
+   if (!m_dbobj.getImsiSec(Options::getsynchimsi(), imsisec, NULL, NULL))
       return false;
 
    sqn = sqn_ms_derive_cpp (imsisec.opc, imsisec.key, auts, imsisec.rand);
@@ -288,7 +350,7 @@ bool FDHss::synchFix()
      eu.u64 += 32;
      U64_TO_SQN(eu, sqn);
 
-     result = m_dbobj.updateRandSqn(Options::getsynchimsi(), rand, sqn);
+     result = m_dbobj.updateRandSqn(Options::getsynchimsi(), rand, sqn, false, NULL, NULL);
 
      free (sqn);
    }
@@ -363,27 +425,27 @@ s->dump();
 ////////////////////////////////////////////////////////////////////////////////
 
 MonitoringConfEventStatus::MonitoringConfEventStatus(bool is_remove):
-            mon_duration_set(false),
-            max_nb_reports_set(false),
-            type_set(false),
-            is_remove(is_remove),
-            is_long_term(false),
-            result(0),
+            scef_ref_id(0),
             max_nb_reports(0),
-            scef_ref_id(0)
+            max_nb_reports_set(false),
+            mon_duration_set(false),
+            result(0),
+            is_remove(is_remove),
+            type_set(false),
+            is_long_term(false)
 
 {
 }
 
 MonitoringConfEventStatus::MonitoringConfEventStatus() :
-            mon_duration_set(false),
+            scef_ref_id(0),
+            max_nb_reports(0),
             max_nb_reports_set(false),
+            mon_duration_set(false),
+            result(0),
             is_remove(false),
             type_set(false),
-            is_long_term(false),
-            result(0),
-            max_nb_reports(0),
-            scef_ref_id(0)
+            is_long_term(false)
 {
 }
 
@@ -412,9 +474,9 @@ RIRBuilder::RIRBuilder(int nb_ida_proc, EvenStatusMap * hss_insert_status,
                        std::string &destination_host, std::string &destination_realm)
 : m_interval(0),
   m_nb_ida_proc( nb_ida_proc ),
-  m_hss_insert_status( hss_insert_status ),
   m_destination_host( destination_host ),
   m_destination_realm ( destination_realm ),
+  m_hss_insert_status( hss_insert_status ),
   m_ciasent(false)
 {
 
@@ -440,11 +502,8 @@ void RIRBuilder::onTimer( SEventThread::Timer &t )
    }
 }
 
-
 void RIRBuilder::sendRIR()
 {
-   printf("RIRBuilder::sendRIR \n\n");
-
    //build the RIR
    s6t::REIRreq *s = new s6t::REIRreq( *fdHss.gets6tApp() );
 
@@ -614,8 +673,6 @@ void RIRBuilder::dispatch( SEventThreadMessage &msg )
    }
 }
 
-
-
 HandleMmeResponseEvtMsg::HandleMmeResponseEvtMsg( EvenStatusMap* mme_response, std::string &imsi, int imsi_reachable, std::string &msisdn)
  : SEventThreadMessage( HANDLE_MME_RESPONSE ),
    m_mme_response    ( mme_response ),
@@ -625,4 +682,3 @@ HandleMmeResponseEvtMsg::HandleMmeResponseEvtMsg( EvenStatusMap* mme_response, s
 {
 
 }
-

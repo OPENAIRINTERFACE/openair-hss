@@ -1,30 +1,125 @@
-/*
-* Copyright (c) 2017 Sprint
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*    http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
 #ifndef __STIME_H
 #define __STIME_H
 
 #include <sys/time.h>
 #include <string>
+#include <stdint.h>
 
-size_t ftstrftime(char *s, size_t maxsize, const char *format, const struct tm *t, const struct timeval* tv);
+#define TIME_SEP   1
+#define DATE_SEP   2
+#define MONTH_SEP  4
+#define AM_SEP     8
+#define PM_SEP     16
+
+
+#define MON_DAY_YEAR_ORDER  1
+#define YEAR_MON_DAY_ORDER  2
+#define YEAR_DAY_MON_ORDER  4
+#define DAY_MON_YEAR_ORDER  8
+#define MON_YEAR_DAY_ORDER  16
+
+
+#define DATE_FIELDS        7
+#define SWAP_POSITION(a,b) {int temp_buf; temp_buf=a; a=b; b=temp_buf;}
+#define GIVE_YEAR(year) do { year = year < 30 ? 2000 + year : year < 100 ? 1900 + year : year; } while (0)
+
+#define stringcmp_format(string1, string2, count) __builtin_strncasecmp(string1, string2, count)
+#define format_localtime_s(a,b) localtime_r(b,a)
+#define format_gmtime_s(a,b) gmtime_r(b,a)
+#define format_sprintf_s __builtin_snprintf
+
+#define BASE_YEAR              1900
+#define NUM_OF_DAYS_LEAPYEAR   366
+#define NUM_OF_DAYS_YEAR       365
+#define NUM_OF_DAYS_WEEK       7
+
+
+#define IF_LEAPYEAR(year) (!((year) % 4) && (((year) % 100) || !((year) % 400)))
+
+
+#define FORMAT_TIMEZONE timezone
+
+#define FORMAT_DAYLIGHT daylight
+
+size_t format_time_into_string(char *st, size_t max_limit,
+		const char* type_format,const struct tm *time_f, const struct timeval* tval);
+
+
+
+char *format_time_into_specs(const char *format, const struct tm *t, char *pt, const char *ptlim, const struct timeval* tv);
+char *convert_date_time_format(const int32_t n, const char *format, char *pt, const char *ptlim);
+char *add_timeformat_to_string(const char *str, char *pt, const char *ptlim);
+
+
+enum strftime_format {
+
+	NAME_DAY_WEEK_ABB  = 'a',
+	FULL_DAY_NAME      = 'A',
+	ABBRE_MON_NAME     = 'b',
+	FULL_MON_NAME      = 'B',
+	DATE_TIME          = 'c',
+	CENTURY_NUMBER     = 'C',
+	DEC_DATE_MON       = 'd',
+	MON_DAY_YEAR       = 'D',
+	DAY_AS_DECIMAL_0   = 'e',
+	ALTERNATE_ERA      = 'E',
+	YEAR_MON_DAY       = 'F',
+	TWO_DIG_YEAR       = 'g',
+	FOUR_DIG_YEAR      = 'G',
+	ABBRE_MON_NAME_2   = 'h',
+	HOUR_AS_24_CLK     = 'H',
+	HOUR_AS_12_CLK     = 'I',
+	DAY_AS_DECIMAL     = 'j',
+	HOUR_AS_24_SINGLE  = 'k',
+	HOUR_AS_12_SINGLE  = 'l',
+	MON_AS_DECIMAL     = 'm',
+	MIN_AS_DECIMAL     = 'M',
+	NEW_LINE           = 'n',
+	MODIFIER           = 'O',
+	AM_PM              = 'p',
+	am_pm              = 'P',
+	TIME_AM_PM         = 'r',
+	TIME_HOUR_MIN      = 'R',
+	EPOCH_TIME         = 's',
+	SECONDS_AS_DEC     = 'S',
+	TAB_CHARACTER      = 't',
+	TIME_IN_24_HOUR    = 'T',
+	DAY_WEEK_AS_DEC    = 'u',
+	WEEK_NUM_AS_DEC    = 'U',
+	ISO_WEEK_NUM       = 'V',
+	DAY_OF_WEEK        = 'w',
+	WEEK_NUM_AS_DEC_MON= 'W',
+	DATE_WITHOUT_TIME  = 'x',
+	TIME_WITHOUT_DATE  = 'X',
+	YEAR_WITHOUT_CEN   = 'y',
+	YEAR_WIT_CEN       = 'Y',
+	HOUR_MIN_OFFSET    = 'z',
+	TIMEZONE_NAME      = 'Z',
+	DATE_TIME_TZ       = '+',
+	LITERAL            = '%',
+	RAND_VALUE_1       = 'i',
+	RAND_VALUE_2       = 'v',
+	MICRO_SEC          = '1',
+	MILLI_SEC          = '0',
+	NULL_CHAR          = '\0'
+};
+
+
+
+
+struct  parse_date
+{
+	uint32_t field_flags[DATE_FIELDS];
+	uint32_t field_parse_flags;
+	uint32_t field_values[DATE_FIELDS];
+	uint32_t field_count;
+};
+
 
 struct ntp_time_t
 {
-    uint32_t second;
-    uint32_t fraction;
+	uint32_t second;
+	uint32_t fraction;
 };
 
 class STime
@@ -249,3 +344,4 @@ private:
 };
 
 #endif // #define __STIME_H
+

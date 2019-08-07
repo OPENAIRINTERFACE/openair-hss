@@ -89,7 +89,7 @@ apply_access_restriction (
   uint8_t                                 vmcc[3],
                                           vmnc[3];
   uint8_t                                 hmcc[3],
-                                          hmnc[3];
+                                          hmnc[3] = {0} ;
   uint8_t                                 imsi_hex[15];
 
   if (bcd_to_hex (imsi_hex, imsi, strlen (imsi)) != 0) {
@@ -105,7 +105,7 @@ apply_access_restriction (
     return -1;
   }
 
-  FPRINTF_ERROR ( "Converted %02x%02x%02x to plmn %u.%u\n", vplmn[0], vplmn[1], vplmn[2], FORMAT_MCC (vmcc), FORMAT_MNC (vmnc));
+  FPRINTF_DEBUG ( "Converted %02x%02x%02x to plmn %u.%u\n", vplmn[0], vplmn[1], vplmn[2], FORMAT_MCC (vmcc), FORMAT_MNC (vmnc));
   /*
    * MCC is always 3 digits
    */

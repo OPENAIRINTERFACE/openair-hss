@@ -104,7 +104,7 @@ void SUtility::deletefile( const char *fn )
 void SUtility::_string_format( std::string &dest, const char *format, va_list &args )
 {
    char buf[2048];
-   int len = vsnprintf( buf, sizeof(buf), format, args  );
+   uint32_t len = vsnprintf( buf, sizeof(buf), format, args  );
    dest.assign( buf, len < sizeof(buf) ? len : sizeof(buf) );
 }
 

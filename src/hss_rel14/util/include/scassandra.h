@@ -100,8 +100,12 @@ private:
    CassIterator *m_iterator;
 };
 
+class SCassStatement;
+
 class SCassResult
 {
+   friend SCassStatement;
+
 public:
    SCassResult();
    SCassResult( const CassResult *result );
@@ -121,6 +125,9 @@ public:
 
    bool morePages();
 
+protected:
+   const CassResult *getResult() { return m_result; }
+
 private:
    void release();
 
@@ -130,7 +137,7 @@ private:
 class SCassFuture
 {
 public:
-   SCassFuture( CassFuture *future );
+   SCassFuture( CassFuture *future, bool incb=false );
    ~SCassFuture();
 
    SCassFuture &operator=( SCassFuture &rval );
@@ -138,6 +145,10 @@ public:
    bool ready() { return cass_future_ready( m_future ); }
    void wait() { cass_future_wait( m_future ); }
    bool wait( uint64_t us ) { return cass_future_wait_timed( m_future, us ); }
+   bool setCallback(CassFutureCallback cb, void *data)
+   {
+      return (m_error = cass_future_set_callback(m_future, cb, data)) == CASS_OK;
+   }
 
    CassError errorCode();
    SCassResult result();
@@ -148,6 +159,7 @@ private:
 
    CassError m_error;
    CassFuture *m_future;
+   bool m_incb;
 };
 
 class SCassandra;
@@ -157,12 +169,15 @@ class SCassStatement
    friend SCassandra;
 public:
    SCassStatement();
-   SCassStatement( const char *query );
-   SCassStatement( std::string &query );
+   SCassStatement( const char *qry );
+   SCassStatement( const std::string &qry );
    ~SCassStatement();
 
-   SCassStatement &query( const char *query );
-   SCassStatement &query( std::string &query );
+   SCassStatement &query( const char *qry );
+   SCassStatement &query( const std::string &qry );
+
+   CassError setPagingSize(int page_size);
+   CassError setPagingState( SCassResult &result );
 
 protected:
    void release();
@@ -194,6 +209,11 @@ public:
 
    int protocolVersion( int protver ) { return m_protver = protver; }
    int protocolVersion() { return m_protver; }
+
+   bool setCoreConnectionsPerHost(uint32_t num);
+   bool setMaxConnectionsPerHost(uint32_t num);
+   bool setIONumberThreads(uint32_t num);
+   bool setIOQueueSize(uint32_t size);
 
 private:
    void release();

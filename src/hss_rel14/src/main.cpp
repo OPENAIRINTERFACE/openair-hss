@@ -25,6 +25,7 @@
 #include <syslog.h>
 #include <string.h>
 #include <iostream>
+#include <time.h>
 #include "serror.h"
 
 #include <pistache/endpoint.h>
@@ -34,6 +35,7 @@
 #include "s6t_impl.h"
 #include "fdhss.h"
 #include "options.h"
+#include "logger.h"
 #include "resthandler.h"
 
 extern "C" {
@@ -42,40 +44,97 @@ extern "C" {
    #include "auc.h"
 }
 
-
 hss_config_t hss_config;
 FDHss fdHss;
+static bool shutdownFlag = false;
 static SEvent shutdownEvent;
+#ifdef MONITOR_PENDING_MESSAGE_LEVEL
+static timer_t timer;
+#endif
 
-void handler(int signo, siginfo_t *pinfo, void *pcontext)
+#ifdef PERFORMANCE_TIMING
+void dumpUlrTimers();
+#endif
+
+void handler(int signal)
 {
-   std::cout << "caught signal (" << signo << ") initiating shutdown" << std::endl;
-   shutdownEvent.set();
+   if (signal == SIGRTMIN+1)
+   {
+      size_t cnt = fdHss.getWorkerQueue().queueDepth();
+
+      if (cnt > 0)
+         printf("pending messages %ld\n", cnt);
+   }
+   else
+   {
+      Logger::system().startup( "Caught signal (%d)", signal );
+
+      switch (signal)
+      {
+         case SIGINT:
+         case SIGTERM:
+         {
+            Logger::system().startup( "Setting shutdown event" );
+            shutdownFlag = true;
+            shutdownEvent.set();
+            break;
+         }
+#ifdef PERFORMACE_TIMING
+         case SIGUSR1:
+         {
+            dumpUlrTimers();
+            break;
+         }
+#endif
+      }
+   }
 }
 
 void initHandler()
 {
    struct sigaction sa;
-   sa.sa_flags = SA_SIGINFO;
-   sa.sa_sigaction = handler;
-   sigemptyset(&sa.sa_mask);
-   int signo = SIGINT;
-   if (sigaction(signo, &sa, NULL) == -1)
+
+   /* Setup the signal handler */
+   sa.sa_handler = handler;
+
+   /* Restart the system call, if at all possible */
+   sa.sa_flags = SA_RESTART;
+
+   /* Block every signal during the handler */
+   sigfillset(&sa.sa_mask);
+
+   if (sigaction(SIGINT, &sa, NULL) == -1)
       SError::throwRuntimeExceptionWithErrno( "Unable to register SIGINT handler" );
-   signo = SIGTERM;
-   if (sigaction(signo, &sa, NULL) == -1)
+   Logger::system().startup( "signal handler registered for SIGINT" );
+
+   if (sigaction(SIGTERM, &sa, NULL) == -1)
       SError::throwRuntimeExceptionWithErrno( "Unable to register SIGTERM handler" );
+   Logger::system().startup( "signal handler registered for SIGTERM" );
+
+   if (sigaction(SIGRTMIN+1, &sa, NULL) == -1)
+      SError::throwRuntimeExceptionWithErrno( "Unable to register SIGRTMIN handler" );
+   Logger::system().startup( "signal handler registered for SIGRTMIN" );
+
+#ifdef PERFORMANCE_TIMING
+   if (sigaction(SIGUSR1, &sa, NULL) == -1)
+      SError::throwRuntimeExceptionWithErrno( "Unable to register SIGUSR1 handler" );
+   Logger::system().startup( "signal handler registered for SIGUSR1" );
+#endif
 }
 
 #include "util.h"
 
 int main(int argc, char **argv)
 {
+
    if ( !Options::parse( argc, argv ) )
    {
       std::cout << "Options::parse() failed" << std::endl;
       return 1;
    }
+
+   Logger::init( "hss" );
+   StatsHss::initstats(&Logger::singleton().stat());
 
    /////////////////////////////////////////////////////////////////////////////
    /////////////////////////////////////////////////////////////////////////////
@@ -106,7 +165,9 @@ int main(int argc, char **argv)
    memset (&hss_config, 0, sizeof (hss_config_t));
    Options::fillhssconfig(&hss_config);
 
-   random_init ();
+   fdHss.getWorkMgr().init(Options::getnumworkers());
+
+   random_init();
 
    fdHss.initdb(&hss_config);
 
@@ -119,53 +180,39 @@ int main(int argc, char **argv)
       fdHss.updateOpcKeys( (uint8_t *) hss_config.operator_key_bin );
    }
 
-#if 0
-   if ( !Options::getsynchimsi().empty() && Options::getsynchauts().empty() )
-   {
-      DAImsiSec  imsisec;
-      uint8_t sqn[6]    = { 0x00, 0x00, 0x00, 0x00, 0x03, 0x80 };
-      uint8_t amf[2]    = { 0x00, 0x00 };
-      uint8_t mac_s[8];
-      uint8_t ak[6];
-      uint8_t sqn_ms[6];
-
-      if (!fdHss.getDb().getImsiSec(Options::getsynchimsi(), imsisec))
-         return false;
-
-      f1star( imsisec.opc, imsisec.key, imsisec.rand, imsisec.sqn, amf, mac_s );
-      f5star( imsisec.opc, imsisec.key, imsisec.rand, ak );
-
-      for (int i=0; i<sizeof(sqn_ms); i++)
-         sqn_ms[i] = imsisec.sqn[i] ^ ak[i];
-
-      std::cout << "OPC    : " << Utility::bytes2hex(imsisec.opc, 16, '.') << std::endl;
-      std::cout << "KEY    : " << Utility::bytes2hex(imsisec.key, 16, '.') << std::endl;
-      std::cout << "RAND   : " << Utility::bytes2hex(imsisec.rand, 16, '.') << std::endl;
-      std::cout << "AK     : " << Utility::bytes2hex(ak, 6, '.') << std::endl;
-      std::cout << "SQN    : " << Utility::bytes2hex(sqn, 6, '.') << std::endl;
-      std::cout << "SQN_MS : " << Utility::bytes2hex(sqn_ms, 6, '.') << std::endl;
-      std::cout << "MAC_S  : " << Utility::bytes2hex(mac_s, 8, '.') << std::endl;
-
-      std::string auts;
-      auts = Utility::bytes2hex(sqn_ms,6);
-      auts.append(Utility::bytes2hex(mac_s,8));
-      std::cout << "AUTS   : " << auts << std::endl;
-      Options::setsynchauts(auts);
-      return 0;
-   }
-#endif
-
    if ( !Options::getsynchimsi().empty() && !Options::getsynchauts().empty() ) {
       fdHss.synchFix();
       return 0;
    }
 
+#ifdef MONITOR_PENDING_MESSAGE_LEVEL
+   {
+      struct sigevent sev;
+      sev.sigev_notify = SIGEV_SIGNAL;
+      sev.sigev_signo = SIGRTMIN+1;
+      timer_create(CLOCK_REALTIME, &sev, &timer);
+
+      struct itimerspec its;
+      its.it_value.tv_sec = 1; // seconds
+      its.it_value.tv_nsec = 0; // nano-seconds
+      its.it_interval.tv_sec = its.it_value.tv_sec;
+      its.it_interval.tv_nsec = its.it_value.tv_nsec;
+      timer_settime(timer, 0, &its, NULL);
+   }
+#endif
+
    if ( fdHss.init(&hss_config) )
       shutdownEvent.wait();
+
+   // initiate the shutdown
+   Logger::system().startup( "exiting" );
 
    fdHss.shutdown();
 
    fdHss.waitForShutdown();
+
+   Logger::flush();
+   Logger::cleanup();
 
    return 0;
 }

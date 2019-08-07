@@ -24,6 +24,8 @@
 #include "common_def.h"
 
 #include "util.h"
+#include "logger.h"
+#include "options.h"
 
 extern "C" {
    #include "auc.h"
@@ -123,17 +125,22 @@ void DataAccess::connect( const char *hst, const char *ks )
 
 void DataAccess::connect()
 {
-	SCassFuture connect_future = m_db.connect();
+   SCassFuture connect_future = m_db.connect();
 
-	connect_future.wait();
+   connect_future.wait();
 
-	if ( connect_future.errorCode() != CASS_OK )
-	{
-		throw DAException(
-				SUtility::string_format( "DataAccess::%s - Unable to connect to %s - error_code=%d",
-						__func__, m_db.host().c_str(), connect_future.errorCode() )
-		);
-	}
+   if ( connect_future.errorCode() != CASS_OK )
+   {
+      throw DAException(
+      SUtility::string_format( "DataAccess::%s - Unable to connect to %s - error_code=%d",
+            __func__, m_db.host().c_str(), connect_future.errorCode() )
+      );
+   }
+
+   m_db.setCoreConnectionsPerHost(Options::getcasscoreconnections());
+   m_db.setMaxConnectionsPerHost(Options::getcassmaxconnections());
+   m_db.setIOQueueSize(Options::getcassioqueuesize());
+   m_db.setIONumberThreads(Options::getcassiothreads());
 }
 
 void DataAccess::disconnect()
@@ -271,6 +278,71 @@ bool DataAccess::getEvent( const char *scef_id, uint32_t scef_ref_id, DAEvent &e
    }
 
    return false;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+bool DataAccess::getEvents( const char *scef_id, std::list<uint32_t> scef_ref_ids, DAEventList &events, CassFutureCallback cb, void *data )
+{
+   std::stringstream ss;
+
+   ss << "SELECT * FROM events WHERE "
+      << "scef_id = '" << scef_id << "' "
+      << "AND scef_ref_id = (";
+
+   bool first = true;
+   for (auto it = scef_ref_ids.begin(); it != scef_ref_ids.end(); ++it)
+   {
+      if (first)
+         first = false;
+      else
+         ss << ",";
+      ss << *it;
+   }
+
+   ss << ")";
+
+   SCassStatement stmt( ss.str().c_str() );
+
+   SCassFuture future = m_db.execute( stmt );
+
+   if (cb)
+      return future.setCallback(cb, data);
+
+   return getEventsData( future, events );
+}
+
+bool DataAccess::getEventsData( SCassFuture &future, DAEventList &events )
+{
+   if ( future.errorCode() != CASS_OK )
+   {
+      Logger::system().error( "DataAccess::%s - Error %d executing getEvents()",
+            __func__, future.errorCode() );
+      return false;
+   }
+
+   SCassResult res = future.result();
+
+   SCassIterator rows = res.rows();
+
+   while ( rows.nextRow() )
+   {
+      SCassRow row = rows.row();
+      DAEvent *event = new DAEvent();
+
+      GET_EVENT_DATA ( row, scef_id, event->scef_id );
+      GET_EVENT_DATA ( row, scef_ref_id, event->scef_ref_id );
+      GET_EVENT_DATA ( row, msisdn, event->msisdn );
+      GET_EVENT_DATA ( row, extid, event->extid );
+      GET_EVENT_DATA ( row, monitoring_event_configuration, event->mec_json );
+      GET_EVENT_DATA ( row, monitoring_type, event->monitoring_type );
+      GET_EVENT_DATA ( row, user_identifier, event->ui_json );
+
+      events.push_back( event );
+   }
+
+   return true;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -477,22 +549,13 @@ bool DataAccess::getImsiListFromExtId( const char *extid, DAImsiList &imsilst)
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-bool DataAccess::getExtIdsFromImsi( const char *imsi, DAExtIdList &extids )
+bool DataAccess::getExtIdsFromImsiData( SCassFuture &future, DAExtIdList &extids )
 {
-   std::stringstream ss;
-
-   ss << "SELECT extid FROM extid_imsi_xref WHERE imsi = '" << imsi << "'";
-
-   SCassStatement stmt( ss.str().c_str() );
-
-   SCassFuture future = m_db.execute( stmt );
-
    if ( future.errorCode() != CASS_OK )
    {
-      throw DAException(
-         SUtility::string_format( "DataAccess::%s - Error %d executing [%s]",
-         __func__, future.errorCode(), ss.str().c_str() )
-      );
+      Logger::system().error( "DataAccess::%s - Error %d executing getExtIdsFromImsi()",
+            __func__, future.errorCode() );
+      return false;
    }
 
    SCassResult res = future.result();
@@ -509,6 +572,22 @@ bool DataAccess::getExtIdsFromImsi( const char *imsi, DAExtIdList &extids )
    }
 
    return true;
+}
+
+bool DataAccess::getExtIdsFromImsi( const char *imsi, DAExtIdList &extids, CassFutureCallback cb, void *data )
+{
+   std::stringstream ss;
+
+   ss << "SELECT extid FROM extid_imsi_xref WHERE imsi = '" << imsi << "'";
+
+   SCassStatement stmt( ss.str().c_str() );
+
+   SCassFuture future = m_db.execute( stmt );
+
+   if ( cb )
+      return future.setCallback( cb, data );
+
+   return getExtIdsFromImsiData( future, extids );
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -642,21 +721,12 @@ bool DataAccess::getMsisdnFromImsi( const char *imsi, int64_t &msisdn )
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-bool DataAccess::getImsiInfo ( const char *imsi, DAImsiInfo &info )
+bool DataAccess::getImsiInfoData( SCassFuture &future, DAImsiInfo &info )
 {
-   std::stringstream ss;
-
-   ss << "SELECT imsi, mmehost, mmerealm, ms_ps_status, subscription_data, msisdn, visited_plmnid, access_restriction, mmeidentity_idmmeidentity FROM users_imsi where imsi = '"
-      << imsi << "' ;" ;
-
-   SCassStatement stmt( ss.str().c_str() );
-
-   SCassFuture future = m_db.execute( stmt );
-
    if ( future.errorCode() != CASS_OK ) {
       throw DAException(
-            SUtility::string_format( "DataAccess::%s - Error %d executing [%s]",
-                  __func__, future.errorCode(), ss.str().c_str() )
+            SUtility::string_format( "DataAccess::%s - Error %d executing getImsiInfo()",
+                  __func__, future.errorCode() )
       );
    }
 
@@ -680,28 +750,35 @@ bool DataAccess::getImsiInfo ( const char *imsi, DAImsiInfo &info )
    }
 
    return false;
-
 }
 
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
-void DataAccess::getEventIdsFromMsisdn( int64_t msisdn, DAEventIdList &eil )
+bool DataAccess::getImsiInfo ( const char *imsi, DAImsiInfo &info, CassFutureCallback cb, void *data )
 {
    std::stringstream ss;
 
-   ss << "SELECT scef_id, scef_ref_id FROM events_msisdn WHERE msisdn = " << msisdn;
+   ss << "SELECT imsi, mmehost, mmerealm, ms_ps_status, subscription_data, msisdn, visited_plmnid, access_restriction, mmeidentity_idmmeidentity FROM users_imsi where imsi = '"
+      << imsi << "' ;" ;
 
    SCassStatement stmt( ss.str().c_str() );
 
    SCassFuture future = m_db.execute( stmt );
 
+   if (cb)
+      return future.setCallback( cb, data );
+
+   return getImsiInfoData( future, info );
+}
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+bool DataAccess::getEventIdsFromMsisdnData( SCassFuture &future, DAEventIdList &eil )
+{
    if ( future.errorCode() != CASS_OK )
    {
-      throw DAException(
-         SUtility::string_format( "DataAccess::%s - Error %d executing [%s]",
-         __func__, future.errorCode(), ss.str().c_str() )
-      );
+      Logger::system().error( "DataAccess::%s - Error %d executing getEventIdsFromMsisdn()",
+            __func__, future.errorCode() );
+      return false;
    }
 
    SCassResult res = future.result();
@@ -718,6 +795,31 @@ void DataAccess::getEventIdsFromMsisdn( int64_t msisdn, DAEventIdList &eil )
 
       eil.push_back( ei );
    }
+
+   return true;
+}
+
+bool DataAccess::getEventIdsFromMsisdn( int64_t msisdn, DAEventIdList &eil, CassFutureCallback cb, void *data )
+{
+   std::stringstream ss;
+
+   ss << "SELECT scef_id, scef_ref_id FROM events_msisdn WHERE msisdn = " << msisdn << " order by scef_id, scef_ref_id";
+
+   SCassStatement stmt( ss.str().c_str() );
+
+   SCassFuture future = m_db.execute( stmt );
+
+   if (cb)
+   {
+      bool rval = future.setCallback( cb, data );
+      if (!rval)
+         printf("%s:%d - DataAccess::getEventIdsFromMsisdn() failed CassError (%d)\n", __FILE__, __LINE__, future.errorCode());
+      return rval;
+   }
+
+   getEventIdsFromMsisdnData( future, eil );
+
+   return true;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -760,19 +862,80 @@ void DataAccess::getEventIdsFromExtId( const char *extid, DAEventIdList &eil )
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
+bool DataAccess::getEventIdsFromExtIds( const char *extids, DAEventIdList &el, CassFutureCallback cb, void *data )
+{
+   std::stringstream ss;
+
+   ss << "SELECT scef_id, scef_ref_id FROM events_extid WHERE extid in (" << extids << ")";
+
+   SCassStatement stmt( ss.str().c_str() );
+
+   SCassFuture future = m_db.execute( stmt );
+
+   if (cb)
+      return future.setCallback(cb, data);
+
+   return getEventIdsFromExtIdsData(future, el);
+}
+
+bool DataAccess::getEventIdsFromExtIdsData( SCassFuture &future, DAEventIdList &el)
+{
+   if ( future.errorCode() != CASS_OK )
+   {
+      Logger::system().error( "DataAccess::%s - Error %d executing getEventIdsFromExtIds()",
+            __func__, future.errorCode() );
+      return false;
+   }
+
+   SCassResult res = future.result();
+
+   SCassIterator rows = res.rows();
+
+   try
+   {
+      while ( rows.nextRow() )
+      {
+         SCassRow row = rows.row();
+         DAEventId *ei = new DAEventId();
+
+         GET_EVENT_DATA( row, scef_id, ei->scef_id );
+         GET_EVENT_DATA( row, scef_ref_id, ei->scef_ref_id );
+
+         el.push_back( ei );
+      }
+   }
+   catch (DAException &ex)
+   {
+      Logger::system().error( "DataAccess::%s - EXCEPTION - %s",
+            __func__, ex.what() );
+      return false;
+   }
+
+   return true;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
 void DataAccess::getEventsFromImsi( const char *imsi, DAEventList &el )
 {
    DAImsiInfo info;
+
+   if ( !getImsiInfo( imsi, info, NULL, NULL ) )
+      return;
+
+   getEventsFromImsi( info, el );
+}
+
+void DataAccess::getEventsFromImsi( DAImsiInfo &info, DAEventList &el )
+{
    DAExtIdList extIdLst;
    DAEventIdList evtIdLst;
 
-   if ( !getImsiInfo( imsi, info ) )
-      return;
-
-   getExtIdsFromImsi( imsi, extIdLst );
+   getExtIdsFromImsi( info.imsi, extIdLst, NULL, NULL );
 
    // get the EventId's associated with the msisdn
-   getEventIdsFromMsisdn( info.msisdn, evtIdLst );
+   getEventIdsFromMsisdn( info.msisdn, evtIdLst, NULL, NULL );
 
    // get the EventId's associated with the external identifiers
    for ( DAExtIdList::iterator it = extIdLst.begin(); it != extIdLst.end(); ++it )
@@ -794,57 +957,57 @@ void DataAccess::getEventsFromImsi( const char *imsi, DAEventList &el )
 
 bool DataAccess::checkOpcKeys( const uint8_t opP[16] )
 {
-   //statement = cass_statement_new("SELECT imsi,key,OPc from vhss.users_imsi",0);
+   bool more_pages = true;
+   int cnt = 0;
    SCassStatement stmt( "SELECT imsi,key,OPc from vhss.users_imsi" );
-   SCassFuture future = m_db.execute( stmt );
 
-   if ( future.errorCode() != CASS_OK )
+   stmt.setPagingSize(5000);
+
+   while (more_pages)
    {
-       throw DAException(
-           SUtility::string_format( "DataAccess::%s - Error %d executing [%s]",
-           __func__, future.errorCode(), "SELECT imsi,key,OPc from vhss.users_imsi" )
-       );
-   }
-   SCassResult res = future.result();
-   SCassIterator rows = res.rows();
+      SCassFuture future = m_db.execute( stmt );
 
-   std::cout << std::endl << std::endl;
-
-   while ( rows.nextRow() )
-   {
-      SCassRow row = rows.row();
-
-      std::string imsi;
-      std::string key;
-      std::string opc;
-
-      GET_EVENT_DATA( row, imsi, imsi );
-      GET_EVENT_DATA( row, key, key );
-      GET_EVENT_DATA( row, OPc, opc );
-
-      std::cout << "******************************************" << std::endl;
-      std::cout << "IMSI:" << imsi << std::endl;
-      std::cout << "KEY :" << key << std::endl;
-      std::cout << "OPC :" << opc << std::endl;
-
-      uint8_t opccalc[16];
-      uint8_t key_bin[16];
-      convert_ascii_to_binary (key_bin, (uint8_t *)key.c_str(), KEY_LENGTH);
-      ComputeOPc (key_bin, opP, opccalc);
-
-      std::stringstream ss;
-      ss << std::hex << std::setfill('0') << std::setw(2);
-      for(int i(0);i<KEY_LENGTH;++i){
-          ss<< (unsigned int)opccalc[i];
-      }
-      std::string newopc = ss.str();
-      std::cout << "NEW OPC :" << newopc << std::endl;
-      std::cout << "******************************************" << std::endl;
-
-      if( !updateOpc(imsi, newopc) ) {
-         return false;
+      if ( future.errorCode() != CASS_OK )
+      {
+          throw DAException(
+              SUtility::string_format( "DataAccess::%s - Error %d executing [%s]",
+              __func__, future.errorCode(), "SELECT imsi,key,OPc from vhss.users_imsi" )
+          );
       }
 
+      SCassResult res = future.result();
+      SCassIterator rows = res.rows();
+
+      while ( rows.nextRow() )
+      {
+         SCassRow row = rows.row();
+
+         std::string imsi;
+         std::string key;
+         std::string opc;
+
+         GET_EVENT_DATA( row, imsi, imsi );
+         GET_EVENT_DATA( row, key, key );
+         GET_EVENT_DATA( row, OPc, opc );
+
+         uint8_t opccalc[16];
+         uint8_t key_bin[16];
+         convert_ascii_to_binary (key_bin, (uint8_t *)key.c_str(), KEY_LENGTH);
+         ComputeOPc (key_bin, opP, opccalc);
+
+         std::string newopc = Utility::bytes2hex(opccalc, OPC_LENGTH);
+
+         Logger::system().info("COUNT: %d IMSI: %s KEY: %s OPC: %s NEW OPC: %s", ++cnt, imsi, key, opc, newopc);
+
+         if( !updateOpc(imsi, newopc) ) {
+            return false;
+         }
+      }
+
+      more_pages = res.morePages();
+
+      if (more_pages)
+         stmt.setPagingState(res);
    }
 
    return true;
@@ -852,10 +1015,9 @@ bool DataAccess::checkOpcKeys( const uint8_t opP[16] )
 
 bool DataAccess::updateOpc ( std::string &imsi, std::string& opc )
 {
-
    std::stringstream ss;
    ss << "UPDATE vhss.users_imsi SET OPc='" << opc << "' WHERE imsi='" << imsi << "';";
-   std::cout  << ss.str() << std::endl;
+   Logger::system().debug(ss.str());
 
    SCassStatement stmt( ss.str().c_str() );
 
@@ -868,7 +1030,6 @@ bool DataAccess::updateOpc ( std::string &imsi, std::string& opc )
       );
 
    return true;
-
 }
 
 bool DataAccess::purgeUE ( std::string &imsi )
@@ -878,7 +1039,7 @@ bool DataAccess::purgeUE ( std::string &imsi )
 
    std::stringstream ss;
    ss << "UPDATE vhss.users_imsi SET ms_ps_status='PURGED' WHERE imsi='" << imsi << "';";
-   std::cout  << ss.str() << std::endl;
+   Logger::system().debug(ss.str());
 
    SCassStatement stmt( ss.str().c_str() );
 
@@ -900,7 +1061,7 @@ bool DataAccess::getMmeIdentityFromImsi ( std::string &imsi, DAMmeIdentity& mmei
 
    ss << "SELECT mmeidentity_idmmeidentity FROM vhss.users_imsi WHERE imsi = '"
       << imsi << "';" ;
-   std::cout  << ss.str() << std::endl;
+   Logger::system().debug(ss.str());
 
    SCassStatement stmt( ss.str().c_str() );
 
@@ -934,7 +1095,7 @@ bool DataAccess::getMmeIdentity ( std::string &mme_id, DAMmeIdentity& mmeid )
 
    ss << "SELECT mmehost,mmerealm,mmeisdn FROM vhss.mmeidentity WHERE idmmeidentity='"
       << mme_id << "';" ;
-   std::cout  << ss.str() << std::endl;
+   Logger::system().debug(ss.str());
 
    SCassStatement stmt( ss.str().c_str() );
 
@@ -961,7 +1122,6 @@ bool DataAccess::getMmeIdentity ( std::string &mme_id, DAMmeIdentity& mmeid )
    }
 
    return false;
-
 }
 
 bool DataAccess::getMmeIdentity ( int32_t mme_id, DAMmeIdentity& mmeid )
@@ -970,7 +1130,7 @@ bool DataAccess::getMmeIdentity ( int32_t mme_id, DAMmeIdentity& mmeid )
 
    ss << "SELECT mmehost,mmerealm,mmeisdn FROM vhss.mmeidentity WHERE idmmeidentity="
       << mme_id << ";" ;
-   std::cout  << ss.str() << std::endl;
+   Logger::system().debug(ss.str());
 
    SCassStatement stmt( ss.str().c_str() );
 
@@ -997,90 +1157,86 @@ bool DataAccess::getMmeIdentity ( int32_t mme_id, DAMmeIdentity& mmeid )
    }
 
    return false;
-
 }
 
-
-bool DataAccess::getLatestIdentity(std::string& table_name, int64_t &id)
+bool DataAccess::getLatestIdentity(const char *table_name, int64_t &id, CassFutureCallback cb, void *data)
 {
    std::stringstream ss;
 
    ss << "SELECT id from vhss.global_ids WHERE table_name='"
       << table_name << "';" ;
-   std::cout  << ss.str() << std::endl;
+   Logger::system().debug(ss.str());
 
    SCassStatement stmt( ss.str().c_str() );
 
    SCassFuture future = m_db.execute( stmt );
 
+   if (cb)
+      return future.setCallback(cb, data);
+
+   return getLatestIdentityData(future, id);
+}
+
+bool DataAccess::getLatestIdentityData(SCassFuture &future, int64_t &id)
+{
    if ( future.errorCode() != CASS_OK )
    {
-       throw DAException(
-           SUtility::string_format( "DataAccess::%s - Error %d executing [%s]",
-           __func__, future.errorCode(), ss.str().c_str() )
-       );
+      Logger::system().error( "DataAccess::%s - Error %d executing getLatestIdentity()",
+            __func__, future.errorCode() );
+      return false;
    }
 
    SCassResult res = future.result();
 
    SCassRow row = res.firstRow();
-
 
    if ( row.valid() )
    {
        GET_EVENT_DATA( row, id, id );
-       return true;
+   }
+   else
+   {
+      id = 0;
    }
 
-   return false;
+   return true;
 }
 
-bool DataAccess::updateLatestIdentity(std::string& table_name)
+bool DataAccess::updateLatestIdentity(const char *table_name, CassFutureCallback cb, void *data)
 {
-   //update vhss.global_ids set id=id+1 where table_name='%s'; ", table_name"
-
    std::stringstream ss;
    ss << "UPDATE vhss.global_ids set id=id+1 where table_name='" << table_name << "';";
-   std::cout  << ss.str() << std::endl;
+   Logger::system().debug(ss.str());
 
    SCassStatement stmt( ss.str().c_str() );
 
    SCassFuture future = m_db.execute( stmt );
 
-   if ( future.errorCode() != CASS_OK )
-      throw DAException(
-         SUtility::string_format( "DataAcces::%s - Error %d executing [%s]",
-               __func__, future.errorCode(), ss.str().c_str() )
-      );
-
-   return true;
-
-}
-
-bool DataAccess::getMmeIdFromHost ( std::string& host, int32_t &mmeid)
-{
-   std::stringstream ss;
-
-   ss << "SELECT idmmeidentity FROM vhss.mmeidentity_host WHERE mmehost='"
-      << host << "';" ;
-   std::cout  << ss.str() << std::endl;
-
-   SCassStatement stmt( ss.str().c_str() );
-
-   SCassFuture future = m_db.execute( stmt );
+   if (cb)
+      return future.setCallback(cb, data);
 
    if ( future.errorCode() != CASS_OK )
    {
-       throw DAException(
-           SUtility::string_format( "DataAccess::%s - Error %d executing [%s]",
-           __func__, future.errorCode(), ss.str().c_str() )
-       );
+      Logger::system().error("DataAccess::%s - Error %d executing updateLatestIdentity()",
+            __func__, future.errorCode() );
+      return false;
+   }
+
+   return true;
+}
+
+bool DataAccess::getMmeIdFromHostData( SCassFuture &future, int32_t &mmeid )
+{
+   if ( future.errorCode() != CASS_OK )
+   {
+      Logger::system().error("DataAccess::%s - Error %d executing getMmeIdFromHost()",
+            __func__, future.errorCode() );
+      return false;
    }
 
    SCassResult res = future.result();
 
    SCassRow row = res.firstRow();
-
 
    if ( row.valid() )
    {
@@ -1091,87 +1247,92 @@ bool DataAccess::getMmeIdFromHost ( std::string& host, int32_t &mmeid)
    return false;
 }
 
-bool DataAccess::addMmeIdentity(std::string &host, std::string &realm, int32_t &mmeid )
+bool DataAccess::getMmeIdFromHost ( std::string& host, int32_t &mmeid, CassFutureCallback cb, void *data )
 {
+   std::stringstream ss;
 
+   ss << "SELECT idmmeidentity FROM vhss.mmeidentity_host WHERE mmehost='"
+      << host << "';" ;
+   Logger::system().debug(ss.str());
+
+   SCassStatement stmt( ss.str() );
+
+   SCassFuture future = m_db.execute( stmt );
+
+   if (cb)
+      return future.setCallback( cb, data );
+
+   return getMmeIdFromHostData( future, mmeid );
+}
+
+bool DataAccess::addMmeIdentity(std::string &host, std::string &realm, int32_t mmeid)
+{
+   if (!addMmeIdentity1(host,realm,mmeid,NULL,NULL))
+      return false;
+
+   return addMmeIdentity2(host,realm,mmeid,NULL,NULL);
+}
+
+bool DataAccess::addMmeIdentity1(std::string &host, std::string &realm, int32_t mmeid, CassFutureCallback cb, void *data)
+{
+   std::stringstream ss;
+   ss << "INSERT INTO vhss.mmeidentity ("
+         << "mmehost, mmerealm, idmmeidentity"
+      << ") VALUES ("
+         << "'" << host  << "',"
+         << "'" << realm << "',"
+                << mmeid
+      << ");";
+   Logger::system().debug(ss.str());
+
+   SCassStatement stmt( ss.str().c_str() );
+
+   SCassFuture future = m_db.execute( stmt );
+
+   if (cb)
+      return future.setCallback(cb, data);
+
+   if ( future.errorCode() != CASS_OK )
    {
-      std::stringstream ss;
-      ss << "INSERT INTO vhss.mmeidentity ("
-            << "mmehost, mmerealm, idmmeidentity"
-         << ") VALUES ("
-            << "'" << host  << "',"
-            << "'" << realm << "',"
-                   << mmeid
-         << ");";
-
-      std::cout  << ss.str() << std::endl;
-      SCassStatement stmt( ss.str().c_str() );
-
-      SCassFuture future = m_db.execute( stmt );
-
-      if ( future.errorCode() != CASS_OK )
-      {
-         throw DAException(
-            SUtility::string_format( "DataAccess::%s - Error %d executing [%s]",
-            __func__, future.errorCode(), ss.str().c_str() )
-         );
-      }
-   }
-
-   {
-      std::stringstream ss;
-      ss << "INSERT INTO vhss.mmeidentity_host ("
-            << "mmehost, idmmeidentity, mmerealm"
-         << ") VALUES ("
-            << "'" << host  << "',"
-                   << mmeid << ","
-            << "'" << realm << "'"
-         << ");";
-
-      std::cout  << ss.str() << std::endl;
-      SCassStatement stmt( ss.str().c_str() );
-
-      SCassFuture future = m_db.execute( stmt );
-
-      if ( future.errorCode() != CASS_OK )
-      {
-         throw DAException(
-            SUtility::string_format( "DataAccess::%s - Error %d executing [%s]",
-            __func__, future.errorCode(), ss.str().c_str() )
-         );
-      }
+      Logger::system().error("DataAccess::%s - Error %d executing addMmeIdentity1()",
+            __func__, future.errorCode() );
+      return false;
    }
 
    return true;
 }
 
-bool DataAccess::updateLocation ( DAImsiInfo &location, uint32_t present_flags )
+bool DataAccess::addMmeIdentity2(std::string &host, std::string &realm, int32_t mmeid, CassFutureCallback cb, void *data)
 {
-   std::string table_name("vhss.mmeidentity");
-   int64_t current_id(0);
-   int32_t idmmeidentity(0);
-   int64_t new_id(0);
+   std::stringstream ss;
+   ss << "INSERT INTO vhss.mmeidentity_host ("
+         << "mmehost, idmmeidentity, mmerealm"
+      << ") VALUES ("
+         << "'" << host  << "',"
+                << mmeid << ","
+         << "'" << realm << "'"
+      << ");";
+   Logger::system().debug(ss.str());
 
-   getLatestIdentity(table_name, current_id);
+   SCassStatement stmt( ss.str().c_str() );
 
-   if( !getMmeIdFromHost(location.mmehost, idmmeidentity ))
+   SCassFuture future = m_db.execute( stmt );
+
+   if (cb)
+      return future.setCallback(cb, data);
+
+   if ( future.errorCode() != CASS_OK )
    {
-      do
-      {
-         current_id++;
-         getLatestIdentity(table_name, new_id);
-      }
-      while(current_id - 1 != new_id);
-
-      if( !updateLatestIdentity(table_name) )
-         return false;
-
-      idmmeidentity=current_id;
-
-      if( !addMmeIdentity(location.mmehost, location.mmerealm, idmmeidentity) )
-         return false;
+      Logger::system().error("DataAccess::%s - Error %d executing addMmeIdentity2()",
+            __func__, future.errorCode() );
+      return false;
    }
 
+   return true;
+}
+
+bool DataAccess::updateLocation( DAImsiInfo &location, uint32_t present_flags, int32_t idmmeidentity, CassFutureCallback cb, void *data )
+{
    std::stringstream ss;
    ss << "UPDATE vhss.users_imsi SET ";
 
@@ -1194,11 +1355,14 @@ bool DataAccess::updateLocation ( DAImsiInfo &location, uint32_t present_flags )
 
    ss << "WHERE imsi='" << location.imsi << "';";
 
-   std::cout << ss.str() << std::endl;
+   Logger::system().debug(ss.str());
 
    SCassStatement stmt( ss.str().c_str() );
 
    SCassFuture future = m_db.execute( stmt );
+
+   if (cb)
+      return future.setCallback( cb, data );
 
    if ( future.errorCode() != CASS_OK )
       throw DAException(
@@ -1209,26 +1373,55 @@ bool DataAccess::updateLocation ( DAImsiInfo &location, uint32_t present_flags )
    return true;
 }
 
-bool DataAccess::getImsiSec ( const std::string &imsi, DAImsiSec &imsisec )
+bool DataAccess::updateLocation ( DAImsiInfo &location, uint32_t present_flags, CassFutureCallback cb, void *data )
 {
-   //SELECT key,sqn,rand,OPc FROM vhss.users_imsi WHERE imsi='%s'
-
    std::stringstream ss;
+   ss << "UPDATE vhss.users_imsi SET ";
 
-   ss << "SELECT key,sqn,rand,OPc FROM vhss.users_imsi WHERE imsi='"
-      << imsi << "';" ;
+   if ( FLAG_IS_SET( present_flags, IMEI_PRESENT) ) {
+      ss << "imei='" << location.imei << "',";
+   }
 
-   std::cout << ss.str() << std::endl;
+   if ( FLAG_IS_SET( present_flags, SV_PRESENT) ) {
+      ss << "imeisv='" << location.imei_sv << "',";
+   }
+
+   if ( FLAG_IS_SET( present_flags, MME_IDENTITY_PRESENT ) ) {
+      ss << "mmeidentity_idmmeidentity=" << location.mme_id << ",";
+      ss << "mmehost='" << location.mmehost << "',";
+      ss << "mmerealm='" << location.mmerealm << "',";
+   }
+
+   ss << "ms_ps_status='" << "ATTACHED" << "',";
+   ss << "visited_plmnid='" << location.visited_plmnid << "' ";
+
+   ss << "WHERE imsi='" << location.imsi << "';";
+
+   Logger::system().debug(ss.str());
 
    SCassStatement stmt( ss.str().c_str() );
 
    SCassFuture future = m_db.execute( stmt );
 
+   if (cb)
+      return future.setCallback( cb, data );
+
+   if ( future.errorCode() != CASS_OK )
+      throw DAException(
+         SUtility::string_format( "DataAcces::%s - Error %d executing [%s]",
+               __func__, future.errorCode(), ss.str().c_str() )
+      );
+
+   return true;
+}
+
+bool DataAccess::getImsiSecData(SCassFuture &future, DAImsiSec &imsisec)
+{
    if ( future.errorCode() != CASS_OK )
    {
        throw DAException(
-           SUtility::string_format( "DataAccess::%s - Error %d executing [%s]",
-           __func__, future.errorCode(), ss.str().c_str() )
+           SUtility::string_format( "DataAccess::%s - Error %d executing getImsiSec()",
+           __func__, future.errorCode() )
        );
    }
 
@@ -1265,23 +1458,48 @@ bool DataAccess::getImsiSec ( const std::string &imsi, DAImsiSec &imsisec )
    return false;
 }
 
-bool DataAccess::updateRandSqn ( const std::string &imsi, uint8_t * rand_p, uint8_t * sqn )
+bool DataAccess::getImsiSec ( const std::string &imsi, DAImsiSec &imsisec, CassFutureCallback cb, void *data )
+{
+   std::stringstream ss;
+
+   ss << "SELECT key,sqn,rand,OPc FROM vhss.users_imsi WHERE imsi='"
+      << imsi << "';" ;
+
+   Logger::system().debug(ss.str());
+
+   SCassStatement stmt( ss.str().c_str() );
+
+   SCassFuture future = m_db.execute( stmt );
+
+   if (cb)
+      return future.setCallback(cb, data);
+
+   return getImsiSecData(future, imsisec);
+}
+
+bool DataAccess::updateRandSqn ( const std::string &imsi, uint8_t * rand_p, uint8_t * sqn, bool inc_sqn, CassFutureCallback cb, void *data )
 {
    SqnU64Union eu;
 
    SQN_TO_U64(sqn, eu);
 
+   if (inc_sqn)
+      eu.u64 += 32;
+
    std::string rand = Utility::bytes2hex(rand_p, RAND_LENGTH);
 
-   std::cout << "sqn=" << Utility::bytes2hex(sqn,6,'.') << " eu.u8[]=" << Utility::bytes2hex(eu.u8,8,'.') << " eu.u64=" << eu.u64 << " rand=[" << rand << "]" << std::endl;
+//   std::cout << "sqn=" << Utility::bytes2hex(sqn,6,'.') << " eu.u8[]=" << Utility::bytes2hex(eu.u8,8,'.') << " eu.u64=" << eu.u64 << " rand=[" << rand << "]" << std::endl;
 
    std::stringstream ss;
    ss << "UPDATE vhss.users_imsi SET rand='" << rand << "', sqn=" << eu.u64 << " WHERE imsi='" << imsi << "';";
-   std::cout << ss.str() << std::endl;
+   Logger::system().debug(ss.str());
 
    SCassStatement stmt( ss.str().c_str() );
 
    SCassFuture future = m_db.execute( stmt );
+
+   if (cb)
+      return future.setCallback(cb, data);
 
    if ( future.errorCode() != CASS_OK )
       throw DAException(
@@ -1302,7 +1520,7 @@ bool DataAccess::incSqn ( std::string &imsi, uint8_t * sqn )
 
    std::stringstream ss;
    ss << "UPDATE vhss.users_imsi SET sqn =" << eu.u64 << " WHERE imsi='" << imsi << "';";
-   std::cout << ss.str() << std::endl;
+   Logger::system().debug(ss.str());
 
    SCassStatement stmt( ss.str().c_str() );
 
@@ -1347,51 +1565,48 @@ bool DataAccess::getSubDataFromImsi( const char *imsi, std::string &sub_data )
     }
 
     return false;
-
 }
 
 void DataAccess::UpdateValidityTime( const char *imsi, std::string &validity_time )
 {
-       std::stringstream ss;
+   std::stringstream ss;
 
-       ss << "UPDATE users_imsi SET niddvalidity = '"
-          << validity_time << "' WHERE imsi= '" << imsi << "' ;" ;
+   ss << "UPDATE users_imsi SET niddvalidity = '"
+      << validity_time << "' WHERE imsi= '" << imsi << "' ;" ;
 
-       SCassStatement stmt( ss.str().c_str() );
+   SCassStatement stmt( ss.str().c_str() );
 
-       SCassFuture future = m_db.execute( stmt );
+   SCassFuture future = m_db.execute( stmt );
 
-       if ( future.errorCode() != CASS_OK )
-       {
-               throw DAException(
-                   SUtility::string_format( "DataAccess::%s - Error %d executing [%s]",
-                   __func__, future.errorCode(), ss.str().c_str() )
-               );
-       }
-
+   if ( future.errorCode() != CASS_OK )
+   {
+      throw DAException(
+         SUtility::string_format( "DataAccess::%s - Error %d executing [%s]",
+         __func__, future.errorCode(), ss.str().c_str() )
+      );
+   }
 }
 
 void DataAccess::UpdateNIRDestination( const char *imsi, std::string &host, std::string &realm )
 {
-       std::stringstream ss;
+   std::stringstream ss;
 
-       ss << "UPDATE users_imsi SET nir_dest_host = '"
-          << host << "' , nir_dest_realm = '"
-          << realm << "' WHERE imsi='"
-          << imsi << "' ;" ;
+   ss << "UPDATE users_imsi SET nir_dest_host = '"
+      << host << "' , nir_dest_realm = '"
+      << realm << "' WHERE imsi='"
+      << imsi << "' ;" ;
 
-       SCassStatement stmt( ss.str().c_str() );
+   SCassStatement stmt( ss.str().c_str() );
 
-       SCassFuture future = m_db.execute( stmt );
+   SCassFuture future = m_db.execute( stmt );
 
-       if ( future.errorCode() != CASS_OK )
-       {
-               throw DAException(
-                               SUtility::string_format( "DataAccess::%s - Error %d executing [%s]",
-                                               __func__, future.errorCode(), ss.str().c_str() )
-               );
-       }
-
+   if ( future.errorCode() != CASS_OK )
+   {
+      throw DAException(
+         SUtility::string_format( "DataAccess::%s - Error %d executing [%s]",
+            __func__, future.errorCode(), ss.str().c_str() )
+      );
+   }
 }
 
 
