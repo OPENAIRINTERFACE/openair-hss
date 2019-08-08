@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -212,21 +212,18 @@ s1ap_mme_thread (
          * New message received from SCTP layer.
          * Decode and handle it.
          */
-        s1ap_message                            message = {0};
+        S1AP_S1AP_PDU_t                            pdu = {0};
 
         /*
          * Invoke S1AP message decoder
          */
-        if (s1ap_mme_decode_pdu (&message, SCTP_DATA_IND (received_message_p).payload, &message_id) < 0) {
+        if (s1ap_mme_decode_pdu (&pdu, SCTP_DATA_IND (received_message_p).payload) < 0) {
           // TODO: Notify eNB of failure with right cause
           OAILOG_ERROR (LOG_S1AP, "Failed to decode new buffer\n");
         } else {
-          s1ap_mme_handle_message (SCTP_DATA_IND (received_message_p).assoc_id, SCTP_DATA_IND (received_message_p).stream, &message);
+          s1ap_mme_handle_message (SCTP_DATA_IND (received_message_p).assoc_id, SCTP_DATA_IND (received_message_p).stream, &pdu);
         }
 
-        if (message_id != MESSAGES_ID_MAX) {
-          s1ap_free_mme_decode_pdu(&message, message_id);
-        }
 
         /*
          * Free received PDU array
@@ -753,9 +750,9 @@ s1ap_new_ue (
 
 //------------------------------------------------------------------------------
 void
-s1ap_set_tai (enb_description_t * enb_ref, S1ap_SupportedTAs_t * ta_list){
-  S1ap_SupportedTAs_Item_t               * ta = NULL;
-  S1ap_PLMNidentity_t                    * plmn_i = NULL;
+s1ap_set_tai (enb_description_t * enb_ref, S1AP_SupportedTAs_t * ta_list){
+  S1AP_SupportedTAs_Item_t               * ta = NULL;
+  S1AP_PLMNidentity_t                    * plmn_i = NULL;
   tac_t                                    tac_value = 0;
 
   /** Get the PLMN. */
@@ -843,11 +840,11 @@ s1ap_remove_ue (
 //    return false;
 //  }
 //
-//  const S1ap_E_RABToBeSetupListHOReqIEs_t * const e_RABToBeSetupListHOReq_p = (const S1ap_E_RABToBeSetupListHOReqIEs_t *)parameterP_bearer_list;
+//  const S1AP_E_RABToBeSetupListHOReqIEs_t * const e_RABToBeSetupListHOReq_p = (const S1AP_E_RABToBeSetupListHOReqIEs_t *)parameterP_bearer_list;
 //  if (e_RABToBeSetupListHOReq_p == NULL) {
 //    return false;
 //  }
-//  S1ap_E_RABToBeSetupItemHOReq_t          e_RABToBeSetupHO = {0}; // yes, alloc on stack
+//  S1AP_E_RABToBeSetupItemHOReq_t          e_RABToBeSetupHO = {0}; // yes, alloc on stack
 //
 //  if(s1ap_generate_bearer_context_to_setup(bearer_ctxt_p, &e_RABToBeSetupHO) != RETURNok){
 //    OAILOG_ERROR(LOG_S1AP, "Error adding bearer context with ebi %d to list of bearers to setup.\n", bearer_ctxt_p->ebi);

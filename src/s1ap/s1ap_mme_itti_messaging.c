@@ -191,23 +191,23 @@ void s1ap_mme_itti_s1ap_initial_ue_message(
 }
 
 //------------------------------------------------------------------------------
-static int s1ap_mme_non_delivery_cause_2_nas_data_rej_cause(const S1ap_Cause_t * const cause)
+static int s1ap_mme_non_delivery_cause_2_nas_data_rej_cause(const S1AP_Cause_t * const cause)
 {
   switch (cause->present) {
 
-  case  S1ap_Cause_PR_radioNetwork:
+  case  S1AP_Cause_PR_radioNetwork:
     switch (cause->choice.radioNetwork) {
-      case S1ap_CauseRadioNetwork_handover_cancelled:
-      case S1ap_CauseRadioNetwork_partial_handover :
-      case S1ap_CauseRadioNetwork_successful_handover:
-      case S1ap_CauseRadioNetwork_ho_failure_in_target_EPC_eNB_or_target_system:
-      case S1ap_CauseRadioNetwork_ho_target_not_allowed:
-      case S1ap_CauseRadioNetwork_handover_desirable_for_radio_reason: /// ?
-      case S1ap_CauseRadioNetwork_time_critical_handover:
-      case S1ap_CauseRadioNetwork_resource_optimisation_handover:
-      case S1ap_CauseRadioNetwork_s1_intra_system_handover_triggered:
-      case S1ap_CauseRadioNetwork_s1_inter_system_handover_triggered:
-      case S1ap_CauseRadioNetwork_x2_handover_triggered:
+      case S1AP_CauseRadioNetwork_handover_cancelled:
+      case S1AP_CauseRadioNetwork_partial_handover :
+      case S1AP_CauseRadioNetwork_successful_handover:
+      case S1AP_CauseRadioNetwork_ho_failure_in_target_EPC_eNB_or_target_system:
+      case S1AP_CauseRadioNetwork_ho_target_not_allowed:
+      case S1AP_CauseRadioNetwork_handover_desirable_for_radio_reason: /// ?
+      case S1AP_CauseRadioNetwork_time_critical_handover:
+      case S1AP_CauseRadioNetwork_resource_optimisation_handover:
+      case S1AP_CauseRadioNetwork_s1_intra_system_handover_triggered:
+      case S1AP_CauseRadioNetwork_s1_inter_system_handover_triggered:
+      case S1AP_CauseRadioNetwork_x2_handover_triggered:
         return AS_NON_DELIVERED_DUE_HO;
         break;
 
@@ -224,7 +224,7 @@ static int s1ap_mme_non_delivery_cause_2_nas_data_rej_cause(const S1ap_Cause_t *
 }
 //------------------------------------------------------------------------------
 void s1ap_mme_itti_nas_non_delivery_ind(
-    const mme_ue_s1ap_id_t ue_id, uint8_t * const nas_msg, const size_t nas_msg_length, const S1ap_Cause_t * const cause)
+    const mme_ue_s1ap_id_t ue_id, uint8_t * const nas_msg, const size_t nas_msg_length, const S1AP_Cause_t * const cause)
 {
   MessageDef     *message_p = NULL;
   // TODO translate, insert, cause in message

@@ -459,7 +459,7 @@ void mme_app_send_s11_modify_bearer_req(const ue_context_t * ue_context, pdn_con
  * Not triggering release of resources, everything will stay as it it.
  * The MME_APP ITTI message elements though need to be deallocated.
  */
-void mme_app_send_s1ap_path_switch_request_failure(mme_ue_s1ap_id_t mme_ue_s1ap_id, enb_ue_s1ap_id_t enb_ue_s1ap_id, sctp_assoc_id_t assoc_id, const S1ap_Cause_PR cause_type){
+void mme_app_send_s1ap_path_switch_request_failure(mme_ue_s1ap_id_t mme_ue_s1ap_id, enb_ue_s1ap_id_t enb_ue_s1ap_id, sctp_assoc_id_t assoc_id, const S1AP_Cause_PR cause_type){
   OAILOG_FUNC_IN (LOG_MME_APP);
   /** Send a S1AP Path Switch Request Failure TO THE TARGET ENB. */
   MessageDef * message_p = itti_alloc_new_message (TASK_MME_APP, S1AP_PATH_SWITCH_REQUEST_FAILURE);

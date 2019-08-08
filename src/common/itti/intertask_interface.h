@@ -224,7 +224,7 @@ int itti_free(task_id_t task_id, void *ptr);
 
 int itti_free_DEBUG(task_id_t task_id, void *ptr);
 
-void itti_print_DEBUG();
+void itti_print_DEBUG(void);
 
 #endif /* INTERTASK_INTERFACE_H_ */
 /* @} */

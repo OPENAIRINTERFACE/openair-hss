@@ -293,7 +293,7 @@ typedef struct ue_context_s {
   ecm_state_t             ecm_state;                // ECM state ECM-IDLE, ECM-CONNECTED.
                                                     // not set/read
 
-//  S1ap_Cause_t            s1_ue_context_release_cause;
+//  S1AP_Cause_t            s1_ue_context_release_cause;
   // todo: enum s1cause
   enum s1cause            s1_ue_context_release_cause;
 

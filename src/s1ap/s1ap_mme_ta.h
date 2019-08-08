@@ -38,6 +38,6 @@ enum {
   TA_LIST_COMPLETE_MATCH = 0x3,
 };
 
-int s1ap_mme_compare_ta_lists(S1ap_SupportedTAs_t *ta_list);
+int s1ap_mme_compare_ta_lists(S1AP_SupportedTAs_t *ta_list);
 
 #endif /* FILE_S1AP_MME_TA_SEEN */

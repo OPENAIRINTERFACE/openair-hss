@@ -75,7 +75,7 @@ echo_info()    { cecho "$*" $blue         ;}
 
 #-------------------------------------------------------------------------------
 # From https://stackoverflow.com/questions/4023830/how-to-compare-two-strings-in-dot-separated-version-format-in-bash
-# arg1 is a dotted (or not) version number (ex 4.10.6.56-ubunutu) 
+# arg1 is a dotted (or not) version number (ex 4.10.6.56-ubunutu)
 # arg2 is a dotted (or not) version number (ex 4.10.6.56-ubunutu)
 # return 0 if $1 lower or equal $2, else 1
 version_le() {
@@ -155,7 +155,7 @@ clean_kernel() {
 clean_all_files() {
   set_openair_env
   dir=$OPENAIRCN_DIR/build
-  rm -rf $dir/log 
+  rm -rf $dir/log
   rm -rf $dir/spgw/build $dir/spgw/CMakeLists.txt
   rm -rf $dir/mme/build $dir/mme/CMakeLists.txt
   rm -rf $dir/hss/build
@@ -174,8 +174,8 @@ disable_ipv6() {
 # arg2 = req_version
 #
 
-function version_gt() { 
-  test "$(printf '%s\n' "$@" | sort -V | head -n 1)" != "$1"; 
+function version_gt() {
+  test "$(printf '%s\n' "$@" | sort -V | head -n 1)" != "$1";
 }
 
 
@@ -771,52 +771,6 @@ check_install_spgw_software() {
   install_libgtpnl_from_source $1
   install_liblfds7.1.0_from_source $1
   install_ovs_from_source $1
-}
-
-
-#-------------------------------------------------------------------------------
-install_asn1c_from_source(){
-  if [ $1 -eq 0 ]; then
-    OPTION=""
-    read -p "Do you want to install asn1c rev 1516 patched? <y/N> " prompt
-  else
-    prompt='y'
-    OPTION="-y"
-  fi
-
-  if [[ "$OS_DISTRO" == "ubuntu" ]]; then
-    PACKAGE_LIST="\
-      autoconf \
-      automake \
-      bison \
-      build-essential \
-      flex \
-      gcc \
-      libtool"
-  elif [[ "$OS_BASEDISTRO" == "fedora" ]]; then
-    PACKAGE_LIST="\
-      autoconf \
-      automake \
-      bison \
-      patch \
-      flex \
-      gcc \
-      libtool"
-  else
-    echo_fatal "$OS_DISTRO is not a supported distribution."
-  fi
-  $SUDO $INSTALLER install $OPTION $PACKAGE_LIST
-
-  if [[ $prompt =~ [yY](es)* ]]
-  then
-    $SUDO rm -rf /tmp/asn1c
-    mkdir -p /tmp/asn1c
-    GIT_SSL_NO_VERIFY=true git clone https://gitlab.eurecom.fr/oai/asn1c.git /tmp/asn1c
-    cd /tmp/asn1c
-    ./configure
-    make > /tmp/log_compile_asn1c 2>&1
-    $SUDO make install
-  fi
 }
 
 #-------------------------------------------------------------------------------

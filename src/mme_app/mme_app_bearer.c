@@ -1141,7 +1141,7 @@ mme_app_handle_modify_bearer_resp (
       pdn_context_t    * pdn_context = NULL;
       bearer_context_t * pBearerCtx  = NULL;
       /** Set all FTEIDs, also those not in the list to 0. */
-      mme_app_send_s1ap_path_switch_request_failure(ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, ue_context->sctp_assoc_id_key, S1ap_Cause_PR_misc);
+      mme_app_send_s1ap_path_switch_request_failure(ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, ue_context->sctp_assoc_id_key, S1AP_Cause_PR_misc);
       /** We continue with the implicit detach, since handover already happened. */
     }
     /** Implicitly detach the UE --> If EMM context is missing, still continue with the resource removal. */
@@ -1206,7 +1206,7 @@ mme_app_handle_modify_bearer_resp (
     if(emm_data_context_update_security_parameters(ue_context->mme_ue_s1ap_id, &encryption_algorithm_capabilities, &integrity_algorithm_capabilities) != RETURNok){
       OAILOG_ERROR(LOG_MME_APP, "Error updating AS security parameters for UE with ueId: " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
       mme_app_send_s1ap_path_switch_request_failure(ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id,
-          ue_context->sctp_assoc_id_key, S1ap_Cause_PR_nas);
+          ue_context->sctp_assoc_id_key, S1AP_Cause_PR_nas);
       /** Implicitly detach the UE --> If EMM context is missing, still continue with the resource removal. */
       message_p = itti_alloc_new_message (TASK_MME_APP, NAS_IMPLICIT_DETACH_UE_IND);
       DevAssert (message_p != NULL);
@@ -1464,9 +1464,9 @@ mme_app_handle_release_access_bearers_resp (
   }
   MSC_LOG_RX_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 RELEASE_ACCESS_BEARERS_RESPONSE local S11 teid " TEID_FMT " IMSI " IMSI_64_FMT " ", rel_access_bearers_rsp_pP->teid, ue_context->emm_context._imsi64);
 
-  S1ap_Cause_t            s1_ue_context_release_cause = {0};
-  s1_ue_context_release_cause.present = S1ap_Cause_PR_radioNetwork;
-  s1_ue_context_release_cause.choice.radioNetwork = S1ap_CauseRadioNetwork_release_due_to_eutran_generated_reason;
+  S1AP_Cause_t            s1_ue_context_release_cause = {0};
+  s1_ue_context_release_cause.present = S1AP_Cause_PR_radioNetwork;
+  s1_ue_context_release_cause.choice.radioNetwork = S1AP_CauseRadioNetwork_release_due_to_eutran_generated_reason;
 
   // Send UE Context Release Command
   if(ue_context->s1_ue_context_release_cause == S1AP_INVALID_CAUSE)
@@ -2288,8 +2288,8 @@ void mme_app_handle_e_rab_modify_rsp (itti_s1ap_e_rab_modify_rsp_t  * const e_ra
     /** The cause is either not set yet or positive. In either case we will reduce the number of unhandled bearers. */
     s11_proc_update_bearer->num_bearers_unhandled--;
     /** Check the result code, and inform the ESM layer of removal, if necessary.. */
-    if((e_rab_modify_rsp->e_rab_failed_to_modify_list.item[i].cause.present == S1ap_Cause_PR_radioNetwork)
-          && (e_rab_modify_rsp->e_rab_failed_to_modify_list.item[i].cause.choice.radioNetwork == S1ap_CauseRadioNetwork_unknown_E_RAB_ID)){
+    if((e_rab_modify_rsp->e_rab_failed_to_modify_list.item[i].cause.present == S1AP_Cause_PR_radioNetwork)
+          && (e_rab_modify_rsp->e_rab_failed_to_modify_list.item[i].cause.choice.radioNetwork == S1AP_CauseRadioNetwork_unknown_E_RAB_ID)){
       /** No EBI was found. Check if a session bearer exist, if so trigger implicit removal by setting correct cause. */
       bc_tbu->cause.cause_value = NO_RESOURCES_AVAILABLE;
       /** Bearer was implicitly removed in the access network. */
@@ -2866,7 +2866,7 @@ mme_app_handle_path_switch_req(
   mme_app_release_bearers(s1ap_path_switch_req->mme_ue_s1ap_id, NULL, &ebi_list);
   if (mme_app_modify_bearers(s1ap_path_switch_req->mme_ue_s1ap_id, &s1ap_path_switch_req->bcs_to_be_modified) == RETURNerror) {
     OAILOG_ERROR (LOG_MME_APP, "Error updating the bearers based on X2 path switch request for UE " MME_UE_S1AP_ID_FMT ". \n", s1ap_path_switch_req->mme_ue_s1ap_id);
-    mme_app_send_s1ap_path_switch_request_failure(ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, ue_context->sctp_assoc_id_key, S1ap_Cause_PR_misc);
+    mme_app_send_s1ap_path_switch_request_failure(ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, ue_context->sctp_assoc_id_key, S1AP_Cause_PR_misc);
     OAILOG_FUNC_OUT(LOG_MME_APP);
   }
   /** Updated the bearers, send an S11 Modify Bearer Request on the updated bearers. */

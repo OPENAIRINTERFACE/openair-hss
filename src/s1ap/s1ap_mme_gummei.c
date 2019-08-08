@@ -45,7 +45,7 @@
 
   int
 s1ap_mme_compare_gummei (
-  const S1ap_PLMNidentity_t * const tbcd_plmn)
+  const S1AP_PLMNidentity_t * const tbcd_plmn)
 {
   int num_gummei;
   int rc = RETURNerror;
