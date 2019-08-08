@@ -226,30 +226,27 @@ s11_mme_thread (
     MessageDef                             *received_message_p = NULL;
 
     itti_receive_msg (TASK_S11, &received_message_p);
-    if(!received_message_p) {
-    	OAILOG_CRITICAL (LOG_S1AP, "Error: no message could be received, although event was received.\n");
-    } else {
+    assert(received_message_p);
+    switch (ITTI_MSG_ID (received_message_p)) {
+    case MESSAGE_TEST:{
+    	OAI_FPRINTF_INFO("TASK_S11 received MESSAGE_TEST\n");
+    }
+    break;
 
-        switch (ITTI_MSG_ID (received_message_p)) {
-        case MESSAGE_TEST:{
-            OAI_FPRINTF_INFO("TASK_S11 received MESSAGE_TEST\n");
-          }
-          break;
+    case S11_CREATE_BEARER_RESPONSE:{
+    	s11_mme_create_bearer_response (&s11_mme_stack_handle, &received_message_p->ittiMsg.s11_create_bearer_response);
+    }
+    break;
 
-        case S11_CREATE_BEARER_RESPONSE:{
-          s11_mme_create_bearer_response (&s11_mme_stack_handle, &received_message_p->ittiMsg.s11_create_bearer_response);
-          }
-          break;
+    case S11_UPDATE_BEARER_RESPONSE:{
+    	s11_mme_update_bearer_response(&s11_mme_stack_handle, &received_message_p->ittiMsg.s11_update_bearer_response);
+    }
+    break;
 
-        case S11_UPDATE_BEARER_RESPONSE:{
-          s11_mme_update_bearer_response(&s11_mme_stack_handle, &received_message_p->ittiMsg.s11_update_bearer_response);
-        }
-        break;
-
-        case S11_DELETE_BEARER_RESPONSE:{
-          s11_mme_delete_bearer_response (&s11_mme_stack_handle, &received_message_p->ittiMsg.s11_delete_bearer_response);
-          }
-          break;
+    case S11_DELETE_BEARER_RESPONSE:{
+    	s11_mme_delete_bearer_response (&s11_mme_stack_handle, &received_message_p->ittiMsg.s11_delete_bearer_response);
+    }
+    break;
 
         case S11_CREATE_SESSION_REQUEST:{
             s11_mme_create_session_request (&s11_mme_stack_handle, &received_message_p->ittiMsg.s11_create_session_request);
@@ -317,12 +314,12 @@ s11_mme_thread (
 
         default:
             OAILOG_ERROR (LOG_S11, "Unknown message ID %d:%s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p));
-        }
-
-        itti_free_msg_content(received_message_p);
-        itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
-        received_message_p = NULL;
+            break;
     }
+
+    itti_free_msg_content(received_message_p);
+    itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
+    received_message_p = NULL;
   }
   return NULL;
 }

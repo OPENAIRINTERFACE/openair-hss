@@ -2089,18 +2089,13 @@ static void mme_app_handle_e_rab_setup_rsp_dedicated_bearer(const itti_s1ap_e_ra
     for(int num_bc = 0; num_bc < s11_proc_create_bearer->bcs_tbc->num_bearer_context; num_bc ++){
       if(s11_proc_create_bearer->bcs_tbc->bearer_contexts[num_bc].eps_bearer_id == e_rab_id){
         bc_tbc = &s11_proc_create_bearer->bcs_tbc->bearer_contexts[num_bc];
+        break;
       }
     }
     if(!bc_tbc){
-    	OAILOG_ERROR(LOG_MME_APP, "The ebi %d could not be found in the s11 process for ueId : " MME_UE_S1AP_ID_FMT "\n", e_rab_id , e_rab_setup_rsp->mme_ue_s1ap_id);
-    	MessageDef                          * message_p = itti_alloc_new_message (TASK_MME_APP, NAS_IMPLICIT_DETACH_UE_IND);
-    	DevAssert (message_p != NULL);
-    	message_p->ittiMsg.nas_implicit_detach_ue_ind.ue_id = ue_context->mme_ue_s1ap_id;
-    	message_p->ittiMsg.nas_implicit_detach_ue_ind.emm_cause = EMM_CAUSE_NETWORK_FAILURE;
-    	message_p->ittiMsg.nas_implicit_detach_ue_ind.detach_type = 0x02; // Re-Attach Not required;
-    	MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_IMPLICIT_DETACH_UE_IND_MESSAGE");
-    	itti_send_msg_to_task (TASK_NAS_EMM, INSTANCE_DEFAULT, message_p);
-    	OAILOG_FUNC_OUT (LOG_MME_APP);
+    	OAILOG_ERROR(LOG_MME_APP, "The established ebi %d could not be found in the s11 procedure for ueId : " MME_UE_S1AP_ID_FMT ". "
+    			"Skipping EBI in the received e_rab setup response. \n", e_rab_id , e_rab_setup_rsp->mme_ue_s1ap_id);
+    	continue;
     }
 
     /** Check if the message needs to be processed (if it has already failed, in that case the number of unhandled bearers already will be reduced). */
@@ -2157,9 +2152,15 @@ static void mme_app_handle_e_rab_setup_rsp_dedicated_bearer(const itti_s1ap_e_ra
     for(int num_bc = 0; num_bc < s11_proc_create_bearer->bcs_tbc->num_bearer_context; num_bc ++){
       if(s11_proc_create_bearer->bcs_tbc->bearer_contexts[num_bc].eps_bearer_id == e_rab_id){
         bc_tbc = &s11_proc_create_bearer->bcs_tbc->bearer_contexts[num_bc];
+        break;
       }
     }
-    DevAssert(bc_tbc);
+    if(!bc_tbc){
+    	OAILOG_ERROR(LOG_MME_APP, "The failed to be established ebi %d could not be found in the s11 procedure for ueId : " MME_UE_S1AP_ID_FMT ". "
+    			"Skipping EBI in the received e_rab setup response. \n", e_rab_id , e_rab_setup_rsp->mme_ue_s1ap_id);
+    	continue;
+    }
+
     /** Check if there is already a negative result. */
     if(bc_tbc->cause.cause_value && bc_tbc->cause.cause_value != REQUEST_ACCEPTED){
       OAILOG_DEBUG (LOG_MME_APP, "The ebi %d has already a negative error cause %d for ueId : " MME_UE_S1AP_ID_FMT "\n", bc_tbc->eps_bearer_id, e_rab_setup_rsp->mme_ue_s1ap_id);
@@ -2334,10 +2335,14 @@ void mme_app_handle_e_rab_modify_rsp (itti_s1ap_e_rab_modify_rsp_t  * const e_ra
     for(int num_bc = 0; num_bc < s11_proc_update_bearer->bcs_tbu->num_bearer_context; num_bc ++){
       if(s11_proc_update_bearer->bcs_tbu->bearer_contexts[num_bc].eps_bearer_id == e_rab_id){
         bc_tbu = &s11_proc_update_bearer->bcs_tbu->bearer_contexts[num_bc];
+        break;
       }
     }
-    DevAssert(bc_tbu);
-
+    if(!bc_tbu){
+    	OAILOG_ERROR(LOG_MME_APP, "The updated ebi %d could not be found in the s11 procedure for ueId : " MME_UE_S1AP_ID_FMT ". "
+    			"Skipping EBI in the received e_rab setup response. \n", e_rab_id , e_rab_modify_rsp->mme_ue_s1ap_id);
+      	continue;
+    }
     /*
      * Modifications (QoS, TFT) on the bearer context itself will be done by the ESM layer.
      * If UE accepts with success, but eNB does not, we may have a discrepancy.
@@ -2380,9 +2385,15 @@ void mme_app_handle_e_rab_modify_rsp (itti_s1ap_e_rab_modify_rsp_t  * const e_ra
     for(int num_bc = 0; num_bc < s11_proc_update_bearer->bcs_tbu->num_bearer_context; num_bc ++){
       if(s11_proc_update_bearer->bcs_tbu->bearer_contexts[num_bc].eps_bearer_id == e_rab_id){
         bc_tbu = &s11_proc_update_bearer->bcs_tbu->bearer_contexts[num_bc];
+        break;
       }
     }
-    DevAssert(bc_tbu);
+    if(!bc_tbu){
+       	OAILOG_ERROR(LOG_MME_APP, "The failed to be updated ebi %d could not be found in the s11 procedure for ueId : " MME_UE_S1AP_ID_FMT ". "
+       			"Skipping EBI in the received e_rab setup response. \n", e_rab_id , e_rab_modify_rsp->mme_ue_s1ap_id);
+       	continue;
+    }
+
     /** Check if there is already a negative result. */
     if(bc_tbu->cause.cause_value != 0 && bc_tbu->cause.cause_value != REQUEST_ACCEPTED){
       OAILOG_DEBUG (LOG_MME_APP, "The ebi %d has already a negative error cause %d for ueId : " MME_UE_S1AP_ID_FMT "\n", bc_tbu->eps_bearer_id, e_rab_modify_rsp->mme_ue_s1ap_id);
@@ -2518,9 +2529,14 @@ void mme_app_handle_activate_eps_bearer_ctx_cnf (itti_nas_activate_eps_bearer_ct
   for(int num_bc = 0; num_bc < s11_proc_create_bearer->bcs_tbc->num_bearer_context; num_bc++){
     if(s11_proc_create_bearer->bcs_tbc->bearer_contexts[num_bc].s1u_sgw_fteid.teid == activate_eps_bearer_ctx_cnf->saegw_s1u_teid){
       bc_tbc = &s11_proc_create_bearer->bcs_tbc->bearer_contexts[num_bc];
+      break;
     }
   }
-  DevAssert(bc_tbc);
+  if(!bc_tbc){
+	  OAILOG_ERROR(LOG_MME_APP, "The bearer with s1u saegw teid" TEID_FMT " could not be found in the s11 procedure for ueId : " MME_UE_S1AP_ID_FMT ". "
+			  "Skipping EBI in the received e_rab setup response. \n", activate_eps_bearer_ctx_cnf->saegw_s1u_teid, activate_eps_bearer_ctx_cnf->ue_id);
+	  OAILOG_FUNC_OUT (LOG_MME_APP);
+  }
 
   /** Update the pending bearer contexts in the answer. */
   // todo: here a minimal lock may be ok (for the cause setting - like atomic boolean)
@@ -2598,9 +2614,15 @@ void mme_app_handle_activate_eps_bearer_ctx_rej (itti_nas_activate_eps_bearer_ct
   for(int num_bc = 0; num_bc < s11_proc_create_bearer->bcs_tbc->num_bearer_context; num_bc++ ){
     if(s11_proc_create_bearer->bcs_tbc->bearer_contexts[num_bc].s1u_sgw_fteid.teid == activate_eps_bearer_ctx_rej->saegw_s1u_teid){
       bc_tbc = &s11_proc_create_bearer->bcs_tbc->bearer_contexts[num_bc];
+      break;
     }
   }
-  DevAssert(bc_tbc);
+  if(!bc_tbc){
+	  OAILOG_ERROR(LOG_MME_APP, "The failed to be activated bearer with s1u saegw teid " TEID_FMT " could not be found in the s11 procedure for ueId : " MME_UE_S1AP_ID_FMT ". "
+			  "Skipping EBI in the received e_rab setup response. \n", activate_eps_bearer_ctx_rej->saegw_s1u_teid, activate_eps_bearer_ctx_rej->ue_id);
+	  OAILOG_FUNC_OUT (LOG_MME_APP);
+  }
+
   /** The bearer is assumed to be removed from the session bearers by the ESM layer. */
   if (bc_tbc->cause.cause_value != 0 && bc_tbc->cause.cause_value != REQUEST_ACCEPTED) {
     OAILOG_INFO(LOG_MME_APP, "Received NAS reject after E-RAB activation reject for ebi %d occurred for UE: " MME_UE_S1AP_ID_FMT ". Not reducing number of unhandled bearers (assuming already done). \n",
@@ -2678,9 +2700,15 @@ void mme_app_handle_modify_eps_bearer_ctx_cnf (itti_nas_modify_eps_bearer_ctx_cn
   for(int num_bc = 0; num_bc < s11_proc_update_bearer->bcs_tbu->num_bearer_context; num_bc ++){
     if(s11_proc_update_bearer->bcs_tbu->bearer_contexts[num_bc].eps_bearer_id == modify_eps_bearer_ctx_cnf->ebi){
       bc_tbu = &s11_proc_update_bearer->bcs_tbu->bearer_contexts[num_bc];
+      break;
     }
   }
-  DevAssert(bc_tbu);
+  if(!bc_tbu){
+	  OAILOG_ERROR(LOG_MME_APP, "The modified ebi %d could not be found in the s11 procedure for ueId : " MME_UE_S1AP_ID_FMT ". "
+			  "Skipping EBI in the received e_rab setup response. \n", modify_eps_bearer_ctx_cnf->ebi, modify_eps_bearer_ctx_cnf->ue_id);
+	  OAILOG_FUNC_OUT (LOG_MME_APP);
+  }
+
   /** Update the pending bearer contexts in the answer. */
   if(bc_tbu->cause.cause_value == 0){
     /** No response received yet from E-RAB. Will just set it as SUCCESS, but not trigger an UBResp. */
@@ -2759,9 +2787,14 @@ void mme_app_handle_modify_eps_bearer_ctx_rej (itti_nas_modify_eps_bearer_ctx_re
   for(int num_bc = 0; num_bc < s11_proc_update_bearer->bcs_tbu->num_bearer_context; num_bc++ ){
     if(s11_proc_update_bearer->bcs_tbu->bearer_contexts[num_bc].eps_bearer_id == modify_eps_bearer_ctx_rej->ebi){
       bc_tbu = &s11_proc_update_bearer->bcs_tbu->bearer_contexts[num_bc];
+      break;
     }
   }
-  DevAssert(bc_tbu);
+  if(!bc_tbu){
+	  OAILOG_ERROR(LOG_MME_APP, "failed to be modified ebi %d could not be found in the s11 procedure for ueId : " MME_UE_S1AP_ID_FMT ". "
+			  "Skipping EBI in the received e_rab setup response. \n", modify_eps_bearer_ctx_rej->ebi, modify_eps_bearer_ctx_rej->ue_id);
+	  OAILOG_FUNC_OUT (LOG_MME_APP);
+  }
 
   /** Update the pending bearer contexts in the answer. */
   if (bc_tbu->cause.cause_value != 0 && bc_tbu->cause.cause_value != REQUEST_ACCEPTED) {

@@ -140,35 +140,31 @@ s1ap_mme_thread (
      * * * * message is sent to the task.
      */
     itti_receive_msg (TASK_S1AP, &received_message_p);
-    if(!received_message_p){
-        OAILOG_CRITICAL (LOG_S1AP, "Error: no message could be received, although event was received.\n");
-        //   DevAssert (received_message_p != NULL);
-    } else {
+    DevAssert(received_message_p != NULL);
 
-        switch (ITTI_MSG_ID (received_message_p)) {
-        case ACTIVATE_MESSAGE:{
-            hss_associated = true;
-            if (s1ap_send_init_sctp () < 0) {
-              OAILOG_CRITICAL (LOG_S1AP, "Error while sending SCTP_INIT_MSG to SCTP\n");
-            }
-          }
-          break;
+    switch (ITTI_MSG_ID (received_message_p)) {
+    case ACTIVATE_MESSAGE:{
+    	hss_associated = true;
+    	if (s1ap_send_init_sctp () < 0) {
+    		OAILOG_CRITICAL (LOG_S1AP, "Error while sending SCTP_INIT_MSG to SCTP\n");
+    	}
+    }
+    break;
 
-        case MESSAGE_TEST:{
-            OAI_FPRINTF_INFO("TASK_S1AP received MESSAGE_TEST\n");
-          }
-          break;
+    case MESSAGE_TEST:{
+    	OAI_FPRINTF_INFO("TASK_S1AP received MESSAGE_TEST\n");
+    }
+    break;
 
+    // From MME_APP task
+    case MME_APP_CONNECTION_ESTABLISHMENT_CNF:{
+    	s1ap_handle_conn_est_cnf (&MME_APP_CONNECTION_ESTABLISHMENT_CNF (received_message_p));
+    }
+    break;
 
-        // From MME_APP task
-        case MME_APP_CONNECTION_ESTABLISHMENT_CNF:{
-            s1ap_handle_conn_est_cnf (&MME_APP_CONNECTION_ESTABLISHMENT_CNF (received_message_p));
-          }
-          break;
-
-          // Forwarded from MME_APP layer (origin NAS).
-        case NAS_DOWNLINK_DATA_REQ:{
-            /*
+    // Forwarded from MME_APP layer (origin NAS).
+    case NAS_DOWNLINK_DATA_REQ:{
+    	/*
              * New message received from NAS task.
              * * * * This corresponds to a S1AP downlink nas transport message.
              */
@@ -351,13 +347,11 @@ s1ap_mme_thread (
             OAILOG_ERROR (LOG_S1AP, "Unknown message ID %d:%s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p));
           }
           break;
-        }
-
-        itti_free_msg_content(received_message_p);
-        itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
-        received_message_p = NULL;
     }
 
+    itti_free_msg_content(received_message_p);
+    itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
+    received_message_p = NULL;
   }
 
   return NULL;
