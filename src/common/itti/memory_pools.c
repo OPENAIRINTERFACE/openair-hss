@@ -572,7 +572,7 @@ memory_pools_free (
   /*
    * Sanity check on item status, must be allocated
    */
-  AssertFatal (memory_pool_item->start.item_status == ITEM_STATUS_ALLOCATED, "Trying to free a non allocated (%x) memory pool item (pool %u, item %d)!\n", memory_pool_item->start.item_status, pool, item_index);
+  AssertError (memory_pool_item->start.item_status == ITEM_STATUS_ALLOCATED, return (EXIT_FAILURE), "Trying to free a non allocated (%x) memory pool item (pool %u, item %d)!\n", memory_pool_item->start.item_status, pool, item_index);
   memory_pool_item->start.item_status = ITEM_STATUS_FREE;
   result = items_group_put_free_item (&memory_pools->pools[pool].items_group_free, item_index);
   AssertError (result == EXIT_SUCCESS, {

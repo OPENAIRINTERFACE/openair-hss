@@ -2026,7 +2026,7 @@ void mme_app_handle_e_rab_setup_rsp (itti_s1ap_e_rab_setup_rsp_t  * const e_rab_
         bearer_context_t * bc_success = NULL;
         mme_app_get_session_bearer_context_from_all(ue_context, ebi_success, &bc_success);
         /** Check if it is a default ebi. */
-        if(bc_success->linked_ebi == bc_success->ebi){
+        if(bc_success && bc_success->linked_ebi == bc_success->ebi){
           /** Returned a response for a successful bearer establishment for a pdn creation. */
           // todo: handle Multi apn success
           mme_app_handle_e_rab_setup_rsp_pdn_connectivity(e_rab_setup_rsp->mme_ue_s1ap_id, e_rab_setup_rsp->enb_ue_s1ap_id, &e_rab_setup_rsp->e_rab_setup_list.item[0], 0);
@@ -2036,7 +2036,7 @@ void mme_app_handle_e_rab_setup_rsp (itti_s1ap_e_rab_setup_rsp_t  * const e_rab_
         ebi_t ebi_failed = e_rab_setup_rsp->e_rab_failed_to_setup_list.item[0].e_rab_id;
         bearer_context_t * bc_failed = NULL;
         mme_app_get_session_bearer_context_from_all(ue_context, ebi_failed, &bc_failed);
-        if(bc_failed->linked_ebi == bc_failed->ebi){
+        if(bc_failed && bc_failed->linked_ebi == bc_failed->ebi){
           /** Returned a response for a failed bearer establishment for a pdn creation. */
           // todo: handle Multi apn failure
           mme_app_handle_e_rab_setup_rsp_pdn_connectivity(e_rab_setup_rsp->mme_ue_s1ap_id, e_rab_setup_rsp->enb_ue_s1ap_id, NULL, ebi_failed);
