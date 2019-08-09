@@ -140,214 +140,213 @@ s1ap_mme_thread (
      * * * * message is sent to the task.
      */
     itti_receive_msg (TASK_S1AP, &received_message_p);
-    DevAssert (received_message_p != NULL);
+    DevAssert(received_message_p != NULL);
 
     switch (ITTI_MSG_ID (received_message_p)) {
     case ACTIVATE_MESSAGE:{
-        hss_associated = true;
-        if (s1ap_send_init_sctp () < 0) {
-          OAILOG_CRITICAL (LOG_S1AP, "Error while sending SCTP_INIT_MSG to SCTP\n");
-        }
-      }
-      break;
+    	hss_associated = true;
+    	if (s1ap_send_init_sctp () < 0) {
+    		OAILOG_CRITICAL (LOG_S1AP, "Error while sending SCTP_INIT_MSG to SCTP\n");
+    	}
+    }
+    break;
 
     case MESSAGE_TEST:{
-        OAI_FPRINTF_INFO("TASK_S1AP received MESSAGE_TEST\n");
-      }
-      break;
-
+    	OAI_FPRINTF_INFO("TASK_S1AP received MESSAGE_TEST\n");
+    }
+    break;
 
     // From MME_APP task
     case MME_APP_CONNECTION_ESTABLISHMENT_CNF:{
-        s1ap_handle_conn_est_cnf (&MME_APP_CONNECTION_ESTABLISHMENT_CNF (received_message_p));
-      }
-      break;
+    	s1ap_handle_conn_est_cnf (&MME_APP_CONNECTION_ESTABLISHMENT_CNF (received_message_p));
+    }
+    break;
 
-      // Forwarded from MME_APP layer (origin NAS).
+    // Forwarded from MME_APP layer (origin NAS).
     case NAS_DOWNLINK_DATA_REQ:{
-        /*
-         * New message received from NAS task.
-         * * * * This corresponds to a S1AP downlink nas transport message.
-         */
-        s1ap_generate_downlink_nas_transport (NAS_DOWNLINK_DATA_REQ (received_message_p).enb_ue_s1ap_id,
-            NAS_DOWNLINK_DATA_REQ (received_message_p).ue_id,
-            NAS_DOWNLINK_DATA_REQ (received_message_p).enb_id,
-            &NAS_DOWNLINK_DATA_REQ (received_message_p).nas_msg);
-      }
-      break;
-
-    case S1AP_E_RAB_SETUP_REQ:{
-        s1ap_generate_s1ap_e_rab_setup_req (&S1AP_E_RAB_SETUP_REQ (received_message_p));
-      }
-      break;
-
-    case S1AP_E_RAB_MODIFY_REQ:{
-        s1ap_generate_s1ap_e_rab_modify_req (&S1AP_E_RAB_MODIFY_REQ (received_message_p));
-      }
-      break;
-
-    case S1AP_E_RAB_RELEASE_REQ:{
-        s1ap_generate_s1ap_e_rab_release_req (&S1AP_E_RAB_RELEASE_REQ (received_message_p));
-      }
-      break;
-
-    // From MME_APP task
-    case S1AP_UE_CONTEXT_RELEASE_COMMAND:{
-      s1ap_handle_ue_context_release_command (&received_message_p->ittiMsg.s1ap_ue_context_release_command);
-      }
-      break;
-
-      // From SCTP layer, notifies S1AP of disconnection of a peer (eNB).
-    case SCTP_CLOSE_ASSOCIATION:{
-        s1ap_handle_sctp_disconnection(SCTP_CLOSE_ASSOCIATION (received_message_p).assoc_id,
-            SCTP_CLOSE_ASSOCIATION (received_message_p).reset);
-      }
-      break;
-
-    // From SCTP
-    case SCTP_DATA_CNF:
-      s1ap_mme_itti_nas_downlink_cnf(SCTP_DATA_CNF (received_message_p).mme_ue_s1ap_id, SCTP_DATA_CNF (received_message_p).is_success);
-      break;
-
-      // From SCTP
-    case SCTP_DATA_IND:{
-        /*
-         * New message received from SCTP layer.
-         * Decode and handle it.
-         */
-        s1ap_message                            message = {0};
-
-        /*
-         * Invoke S1AP message decoder
-         */
-        if (s1ap_mme_decode_pdu (&message, SCTP_DATA_IND (received_message_p).payload, &message_id) < 0) {
-          // TODO: Notify eNB of failure with right cause
-          OAILOG_ERROR (LOG_S1AP, "Failed to decode new buffer\n");
-        } else {
-          s1ap_mme_handle_message (SCTP_DATA_IND (received_message_p).assoc_id, SCTP_DATA_IND (received_message_p).stream, &message);
-        }
-
-        if (message_id != MESSAGES_ID_MAX) {
-          s1ap_free_mme_decode_pdu(&message, message_id);
-        }
-
-        /*
-         * Free received PDU array
-         */
-        bdestroy_wrapper (&SCTP_DATA_IND (received_message_p).payload);
-      }
-      break;
-
-
-      // Handover messages from MME_APP after validation or rejection from nas and S11/SAE-GW --> the respective handover method will be checked inside
-      case S1AP_PATH_SWITCH_REQUEST_FAILURE: {
-        s1ap_handle_path_switch_request_failure(&S1AP_PATH_SWITCH_REQUEST_FAILURE (received_message_p));
-      }
-      break;
-      case S1AP_HANDOVER_PREPARATION_FAILURE: {
-        s1ap_handle_handover_preparation_failure(&S1AP_HANDOVER_PREPARATION_FAILURE (received_message_p));
-      }
-      break;
-      case S1AP_HANDOVER_REQUEST: {
-          s1ap_handle_handover_request(&S1AP_HANDOVER_REQUEST (received_message_p));
-      }
-      break;
-
-      case S1AP_HANDOVER_CANCEL_ACKNOWLEDGE: {
-          s1ap_handle_handover_cancel_acknowledge(&S1AP_HANDOVER_CANCEL_ACKNOWLEDGE(received_message_p));
-      }
-      break;
-
-      case S1AP_PATH_SWITCH_REQUEST_ACKNOWLEDGE: {
-        s1ap_handle_path_switch_req_ack(&S1AP_PATH_SWITCH_REQUEST_ACKNOWLEDGE (received_message_p));
-      }
-      break;
-      case S1AP_HANDOVER_COMMAND: {
-        s1ap_handle_handover_command(&S1AP_HANDOVER_COMMAND(received_message_p));
-      }
-      break;
-
-      case S1AP_MME_STATUS_TRANSFER: {
-        s1ap_handle_mme_status_transfer(&S1AP_MME_STATUS_TRANSFER (received_message_p));
-      }
-      break;
-
-      /** PAGING. */
-      case S1AP_PAGING: {
-        s1ap_handle_paging(&S1AP_PAGING (received_message_p));
-      }
-      break;
-
-      case MME_APP_S1AP_MME_UE_ID_NOTIFICATION:{
-        s1ap_handle_mme_ue_id_notification (&MME_APP_S1AP_MME_UE_ID_NOTIFICATION (received_message_p));
-      }
-      break;
-
-      case S1AP_ENB_INITIATED_RESET_ACK:{
-        s1ap_handle_enb_initiated_reset_ack (&S1AP_ENB_INITIATED_RESET_ACK (received_message_p));
-      }
-      break;
-
-      case S1AP_CONFIGURATION_TRANSFER:{
-        s1ap_mme_configuration_transfer (&S1AP_CONFIGURATION_TRANSFER (received_message_p));
-      }
-      break;
-
-      case TIMER_HAS_EXPIRED:{
-        ue_description_t                       *ue_ref_p = NULL;
-        if (received_message_p->ittiMsg.timer_has_expired.arg != NULL) {
-          enb_s1ap_id_key_t enb_s1ap_id_key = (enb_s1ap_id_key_t)(received_message_p->ittiMsg.timer_has_expired.arg);
-          enb_ue_s1ap_id_t enb_ue_s1ap_id = MME_APP_ENB_S1AP_ID_KEY2ENB_S1AP_ID(enb_s1ap_id_key);
-          uint32_t enb_id = ((enb_s1ap_id_key >> 24) & 0xFFFFFFFFFF);
-
-          /** Check if the UE still exists. */
-          ue_ref_p = s1ap_is_enb_ue_s1ap_id_in_list_per_enb(enb_ue_s1ap_id, enb_id);
-          if (!ue_ref_p) {
-            OAILOG_WARNING (LOG_S1AP, "Timer with id 0x%lx expired but no associated UE context!\n", received_message_p->ittiMsg.timer_has_expired.timer_id);
-            break;
+    	/*
+             * New message received from NAS task.
+             * * * * This corresponds to a S1AP downlink nas transport message.
+             */
+            s1ap_generate_downlink_nas_transport (NAS_DOWNLINK_DATA_REQ (received_message_p).enb_ue_s1ap_id,
+                NAS_DOWNLINK_DATA_REQ (received_message_p).ue_id,
+                NAS_DOWNLINK_DATA_REQ (received_message_p).enb_id,
+                &NAS_DOWNLINK_DATA_REQ (received_message_p).nas_msg);
           }
-          OAILOG_WARNING (LOG_S1AP, "Processing expired timer with id 0x%lx for ueId "MME_UE_S1AP_ID_FMT " with s1ap_ue_context_rel_timer_id 0x%lx !\n",
-        		  received_message_p->ittiMsg.timer_has_expired.timer_id,
-              ue_ref_p->mme_ue_s1ap_id, ue_ref_p->s1ap_ue_context_rel_timer.id);
-          if (received_message_p->ittiMsg.timer_has_expired.timer_id == ue_ref_p->s1ap_ue_context_rel_timer.id) {
-            // UE context release complete timer expiry handler
-            s1ap_mme_handle_ue_context_rel_comp_timer_expiry (ue_ref_p);
-          } else if (received_message_p->ittiMsg.timer_has_expired.timer_id == ue_ref_p->s1ap_handover_completion_timer.id) {
-            s1ap_mme_handle_mme_mobility_completion_timer_expiry(ue_ref_p);
+          break;
+
+        case S1AP_E_RAB_SETUP_REQ:{
+            s1ap_generate_s1ap_e_rab_setup_req (&S1AP_E_RAB_SETUP_REQ (received_message_p));
           }
-        }
-        /* TODO - Commenting out below function as it is not used as of now.
-         * Need to handle it when we support other timers in S1AP
-         */
+          break;
 
-        //s1ap_handle_timer_expiry (&received_message_p->ittiMsg.timer_has_expired);
-      }
-      break;
+        case S1AP_E_RAB_MODIFY_REQ:{
+            s1ap_generate_s1ap_e_rab_modify_req (&S1AP_E_RAB_MODIFY_REQ (received_message_p));
+          }
+          break;
 
-      // From SCTP layer, notifies S1AP of connection of a peer (eNB).
-    case SCTP_NEW_ASSOCIATION:{
-        s1ap_handle_new_association (&received_message_p->ittiMsg.sctp_new_peer);
-      }
-      break;
+        case S1AP_E_RAB_RELEASE_REQ:{
+            s1ap_generate_s1ap_e_rab_release_req (&S1AP_E_RAB_RELEASE_REQ (received_message_p));
+          }
+          break;
 
-    case TERMINATE_MESSAGE:{
-        s1ap_mme_exit();
-        itti_free_msg_content(received_message_p);
-        itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
-        OAI_FPRINTF_INFO("TASK_S1AP terminated\n");
-        itti_exit_task ();
-      }
-      break;
+        // From MME_APP task
+        case S1AP_UE_CONTEXT_RELEASE_COMMAND:{
+          s1ap_handle_ue_context_release_command (&received_message_p->ittiMsg.s1ap_ue_context_release_command);
+          }
+          break;
 
-//    case TIMER_HAS_EXPIRED:{
-//        s1ap_handle_timer_expiry (&received_message_p->ittiMsg.timer_has_expired);
-//      }
-//      break;
+          // From SCTP layer, notifies S1AP of disconnection of a peer (eNB).
+        case SCTP_CLOSE_ASSOCIATION:{
+            s1ap_handle_sctp_disconnection(SCTP_CLOSE_ASSOCIATION (received_message_p).assoc_id,
+                SCTP_CLOSE_ASSOCIATION (received_message_p).reset);
+          }
+          break;
 
-    default:{
-        OAILOG_ERROR (LOG_S1AP, "Unknown message ID %d:%s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p));
-      }
-      break;
+        // From SCTP
+        case SCTP_DATA_CNF:
+          s1ap_mme_itti_nas_downlink_cnf(SCTP_DATA_CNF (received_message_p).mme_ue_s1ap_id, SCTP_DATA_CNF (received_message_p).is_success);
+          break;
+
+          // From SCTP
+        case SCTP_DATA_IND:{
+            /*
+             * New message received from SCTP layer.
+             * Decode and handle it.
+             */
+            s1ap_message                            message = {0};
+
+            /*
+             * Invoke S1AP message decoder
+             */
+            if (s1ap_mme_decode_pdu (&message, SCTP_DATA_IND (received_message_p).payload, &message_id) < 0) {
+              // TODO: Notify eNB of failure with right cause
+              OAILOG_ERROR (LOG_S1AP, "Failed to decode new buffer\n");
+            } else {
+              s1ap_mme_handle_message (SCTP_DATA_IND (received_message_p).assoc_id, SCTP_DATA_IND (received_message_p).stream, &message);
+            }
+
+            if (message_id != MESSAGES_ID_MAX) {
+              s1ap_free_mme_decode_pdu(&message, message_id);
+            }
+
+            /*
+             * Free received PDU array
+             */
+            bdestroy_wrapper (&SCTP_DATA_IND (received_message_p).payload);
+          }
+          break;
+
+
+          // Handover messages from MME_APP after validation or rejection from nas and S11/SAE-GW --> the respective handover method will be checked inside
+          case S1AP_PATH_SWITCH_REQUEST_FAILURE: {
+            s1ap_handle_path_switch_request_failure(&S1AP_PATH_SWITCH_REQUEST_FAILURE (received_message_p));
+          }
+          break;
+          case S1AP_HANDOVER_PREPARATION_FAILURE: {
+            s1ap_handle_handover_preparation_failure(&S1AP_HANDOVER_PREPARATION_FAILURE (received_message_p));
+          }
+          break;
+          case S1AP_HANDOVER_REQUEST: {
+              s1ap_handle_handover_request(&S1AP_HANDOVER_REQUEST (received_message_p));
+          }
+          break;
+
+          case S1AP_HANDOVER_CANCEL_ACKNOWLEDGE: {
+              s1ap_handle_handover_cancel_acknowledge(&S1AP_HANDOVER_CANCEL_ACKNOWLEDGE(received_message_p));
+          }
+          break;
+
+          case S1AP_PATH_SWITCH_REQUEST_ACKNOWLEDGE: {
+            s1ap_handle_path_switch_req_ack(&S1AP_PATH_SWITCH_REQUEST_ACKNOWLEDGE (received_message_p));
+          }
+          break;
+          case S1AP_HANDOVER_COMMAND: {
+            s1ap_handle_handover_command(&S1AP_HANDOVER_COMMAND(received_message_p));
+          }
+          break;
+
+          case S1AP_MME_STATUS_TRANSFER: {
+            s1ap_handle_mme_status_transfer(&S1AP_MME_STATUS_TRANSFER (received_message_p));
+          }
+          break;
+
+          /** PAGING. */
+          case S1AP_PAGING: {
+            s1ap_handle_paging(&S1AP_PAGING (received_message_p));
+          }
+          break;
+
+          case MME_APP_S1AP_MME_UE_ID_NOTIFICATION:{
+            s1ap_handle_mme_ue_id_notification (&MME_APP_S1AP_MME_UE_ID_NOTIFICATION (received_message_p));
+          }
+          break;
+
+          case S1AP_ENB_INITIATED_RESET_ACK:{
+            s1ap_handle_enb_initiated_reset_ack (&S1AP_ENB_INITIATED_RESET_ACK (received_message_p));
+          }
+          break;
+
+          case S1AP_CONFIGURATION_TRANSFER:{
+            s1ap_mme_configuration_transfer (&S1AP_CONFIGURATION_TRANSFER (received_message_p));
+          }
+          break;
+
+          case TIMER_HAS_EXPIRED:{
+            ue_description_t                       *ue_ref_p = NULL;
+            if (received_message_p->ittiMsg.timer_has_expired.arg != NULL) {
+              enb_s1ap_id_key_t enb_s1ap_id_key = (enb_s1ap_id_key_t)(received_message_p->ittiMsg.timer_has_expired.arg);
+              enb_ue_s1ap_id_t enb_ue_s1ap_id = MME_APP_ENB_S1AP_ID_KEY2ENB_S1AP_ID(enb_s1ap_id_key);
+              uint32_t enb_id = ((enb_s1ap_id_key >> 24) & 0xFFFFFFFFFF);
+
+              /** Check if the UE still exists. */
+              ue_ref_p = s1ap_is_enb_ue_s1ap_id_in_list_per_enb(enb_ue_s1ap_id, enb_id);
+              if (!ue_ref_p) {
+                OAILOG_WARNING (LOG_S1AP, "Timer with id 0x%lx expired but no associated UE context!\n", received_message_p->ittiMsg.timer_has_expired.timer_id);
+                break;
+              }
+              OAILOG_WARNING (LOG_S1AP, "Processing expired timer with id 0x%lx for ueId "MME_UE_S1AP_ID_FMT " with s1ap_ue_context_rel_timer_id 0x%lx !\n",
+            		  received_message_p->ittiMsg.timer_has_expired.timer_id,
+                  ue_ref_p->mme_ue_s1ap_id, ue_ref_p->s1ap_ue_context_rel_timer.id);
+              if (received_message_p->ittiMsg.timer_has_expired.timer_id == ue_ref_p->s1ap_ue_context_rel_timer.id) {
+                // UE context release complete timer expiry handler
+                s1ap_mme_handle_ue_context_rel_comp_timer_expiry (ue_ref_p);
+              } else if (received_message_p->ittiMsg.timer_has_expired.timer_id == ue_ref_p->s1ap_handover_completion_timer.id) {
+                s1ap_mme_handle_mme_mobility_completion_timer_expiry(ue_ref_p);
+              }
+            }
+            /* TODO - Commenting out below function as it is not used as of now.
+             * Need to handle it when we support other timers in S1AP
+             */
+
+            //s1ap_handle_timer_expiry (&received_message_p->ittiMsg.timer_has_expired);
+          }
+          break;
+
+          // From SCTP layer, notifies S1AP of connection of a peer (eNB).
+        case SCTP_NEW_ASSOCIATION:{
+            s1ap_handle_new_association (&received_message_p->ittiMsg.sctp_new_peer);
+          }
+          break;
+
+        case TERMINATE_MESSAGE:{
+            s1ap_mme_exit();
+            itti_free_msg_content(received_message_p);
+            itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
+            OAI_FPRINTF_INFO("TASK_S1AP terminated\n");
+            itti_exit_task ();
+          }
+          break;
+
+    //    case TIMER_HAS_EXPIRED:{
+    //        s1ap_handle_timer_expiry (&received_message_p->ittiMsg.timer_has_expired);
+    //      }
+    //      break;
+
+        default:{
+            OAILOG_ERROR (LOG_S1AP, "Unknown message ID %d:%s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p));
+          }
+          break;
     }
 
     itti_free_msg_content(received_message_p);

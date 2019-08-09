@@ -226,102 +226,101 @@ s11_mme_thread (
     MessageDef                             *received_message_p = NULL;
 
     itti_receive_msg (TASK_S11, &received_message_p);
-    assert (received_message_p );
-
+    assert(received_message_p);
     switch (ITTI_MSG_ID (received_message_p)) {
     case MESSAGE_TEST:{
-        OAI_FPRINTF_INFO("TASK_S11 received MESSAGE_TEST\n");
-      }
-      break;
+    	OAI_FPRINTF_INFO("TASK_S11 received MESSAGE_TEST\n");
+    }
+    break;
 
     case S11_CREATE_BEARER_RESPONSE:{
-      s11_mme_create_bearer_response (&s11_mme_stack_handle, &received_message_p->ittiMsg.s11_create_bearer_response);
-      }
-      break;
+    	s11_mme_create_bearer_response (&s11_mme_stack_handle, &received_message_p->ittiMsg.s11_create_bearer_response);
+    }
+    break;
 
     case S11_UPDATE_BEARER_RESPONSE:{
-      s11_mme_update_bearer_response(&s11_mme_stack_handle, &received_message_p->ittiMsg.s11_update_bearer_response);
+    	s11_mme_update_bearer_response(&s11_mme_stack_handle, &received_message_p->ittiMsg.s11_update_bearer_response);
     }
     break;
 
     case S11_DELETE_BEARER_RESPONSE:{
-      s11_mme_delete_bearer_response (&s11_mme_stack_handle, &received_message_p->ittiMsg.s11_delete_bearer_response);
-      }
-      break;
+    	s11_mme_delete_bearer_response (&s11_mme_stack_handle, &received_message_p->ittiMsg.s11_delete_bearer_response);
+    }
+    break;
 
-    case S11_CREATE_SESSION_REQUEST:{
-        s11_mme_create_session_request (&s11_mme_stack_handle, &received_message_p->ittiMsg.s11_create_session_request);
-      }
-      break;
+        case S11_CREATE_SESSION_REQUEST:{
+            s11_mme_create_session_request (&s11_mme_stack_handle, &received_message_p->ittiMsg.s11_create_session_request);
+          }
+          break;
 
-    case S11_DELETE_SESSION_REQUEST:{
-        s11_mme_delete_session_request (&s11_mme_stack_handle, &received_message_p->ittiMsg.s11_delete_session_request);
-      }
-      break;
+        case S11_DELETE_SESSION_REQUEST:{
+            s11_mme_delete_session_request (&s11_mme_stack_handle, &received_message_p->ittiMsg.s11_delete_session_request);
+          }
+          break;
 
-    case S11_DELETE_BEARER_COMMAND:{
-        s11_mme_delete_bearer_command (&s11_mme_stack_handle, &received_message_p->ittiMsg.s11_delete_bearer_command);
-      }
-      break;
+        case S11_DELETE_BEARER_COMMAND:{
+            s11_mme_delete_bearer_command (&s11_mme_stack_handle, &received_message_p->ittiMsg.s11_delete_bearer_command);
+          }
+          break;
 
-    case S11_BEARER_RESOURCE_COMMAND:{
-        s11_mme_bearer_resource_command(&s11_mme_stack_handle, &received_message_p->ittiMsg.s11_bearer_resource_command);
-      }
-      break;
+        case S11_BEARER_RESOURCE_COMMAND:{
+            s11_mme_bearer_resource_command(&s11_mme_stack_handle, &received_message_p->ittiMsg.s11_bearer_resource_command);
+          }
+          break;
 
-    case S11_MODIFY_BEARER_REQUEST:{
-        s11_mme_modify_bearer_request (&s11_mme_stack_handle, &received_message_p->ittiMsg.s11_modify_bearer_request);
-      }
-      break;
+        case S11_MODIFY_BEARER_REQUEST:{
+            s11_mme_modify_bearer_request (&s11_mme_stack_handle, &received_message_p->ittiMsg.s11_modify_bearer_request);
+          }
+          break;
 
-    case S11_RELEASE_ACCESS_BEARERS_REQUEST:{
-        s11_mme_release_access_bearers_request (&s11_mme_stack_handle, &received_message_p->ittiMsg.s11_release_access_bearers_request);
-      }
-      break;
+        case S11_RELEASE_ACCESS_BEARERS_REQUEST:{
+            s11_mme_release_access_bearers_request (&s11_mme_stack_handle, &received_message_p->ittiMsg.s11_release_access_bearers_request);
+          }
+          break;
 
-    case S11_DOWNLINK_DATA_NOTIFICATION_ACKNOWLEDGE:{
-        s11_mme_downlink_data_notification_acknowledge(&s11_mme_stack_handle, &received_message_p->ittiMsg.s11_downlink_data_notification_acknowledge);
-      }
-      break;
+        case S11_DOWNLINK_DATA_NOTIFICATION_ACKNOWLEDGE:{
+            s11_mme_downlink_data_notification_acknowledge(&s11_mme_stack_handle, &received_message_p->ittiMsg.s11_downlink_data_notification_acknowledge);
+          }
+          break;
 
-    case TERMINATE_MESSAGE:{
-        s11_mme_exit();
-        OAI_FPRINTF_INFO("TASK_S11 terminated\n");
-        itti_exit_task ();
-      }
-      break;
+        case TERMINATE_MESSAGE:{
+            s11_mme_exit();
+            OAI_FPRINTF_INFO("TASK_S11 terminated\n");
+            itti_exit_task ();
+          }
+          break;
 
-    case TIMER_HAS_EXPIRED:{
-        OAILOG_DEBUG (LOG_S11, "Processing timeout for timer_id 0x%lx and arg %p\n", received_message_p->ittiMsg.timer_has_expired.timer_id, received_message_p->ittiMsg.timer_has_expired.arg);
-        DevAssert (nwGtpv2cProcessTimeout (received_message_p->ittiMsg.timer_has_expired.arg) == NW_OK);
-      }
-      break;
+        case TIMER_HAS_EXPIRED:{
+            OAILOG_DEBUG (LOG_S11, "Processing timeout for timer_id 0x%lx and arg %p\n", received_message_p->ittiMsg.timer_has_expired.timer_id, received_message_p->ittiMsg.timer_has_expired.arg);
+            DevAssert (nwGtpv2cProcessTimeout (received_message_p->ittiMsg.timer_has_expired.arg) == NW_OK);
+          }
+          break;
 
-    case UDP_DATA_IND:{
-        /*
-         * We received new data to handle from the UDP layer
-         */
-        nw_rc_t                                   rc;
-        udp_data_ind_t                         *udp_data_ind;
+        case UDP_DATA_IND:{
+            /*
+             * We received new data to handle from the UDP layer
+             */
+            nw_rc_t                                   rc;
+            udp_data_ind_t                         *udp_data_ind;
 
-        udp_data_ind = &received_message_p->ittiMsg.udp_data_ind;
-        rc = nwGtpv2cProcessUdpReq (s11_mme_stack_handle,
-        		udp_data_ind->msgBuf, udp_data_ind->buffer_length,
-				udp_data_ind->local_port, udp_data_ind->peer_port,
-				&udp_data_ind->sock_addr);
-        DevAssert (rc == NW_OK);
-      }
-      break;
+            udp_data_ind = &received_message_p->ittiMsg.udp_data_ind;
+            rc = nwGtpv2cProcessUdpReq (s11_mme_stack_handle,
+            		udp_data_ind->msgBuf, udp_data_ind->buffer_length,
+    				udp_data_ind->local_port, udp_data_ind->peer_port,
+    				&udp_data_ind->sock_addr);
+            DevAssert (rc == NW_OK);
+          }
+          break;
 
-    default:
-        OAILOG_ERROR (LOG_S11, "Unknown message ID %d:%s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p));
+        default:
+            OAILOG_ERROR (LOG_S11, "Unknown message ID %d:%s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p));
+            break;
     }
 
     itti_free_msg_content(received_message_p);
     itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
     received_message_p = NULL;
   }
-
   return NULL;
 }
 

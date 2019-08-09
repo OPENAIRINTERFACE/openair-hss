@@ -2026,7 +2026,7 @@ void mme_app_handle_e_rab_setup_rsp (itti_s1ap_e_rab_setup_rsp_t  * const e_rab_
         bearer_context_t * bc_success = NULL;
         mme_app_get_session_bearer_context_from_all(ue_context, ebi_success, &bc_success);
         /** Check if it is a default ebi. */
-        if(bc_success->linked_ebi == bc_success->ebi){
+        if(bc_success && bc_success->linked_ebi == bc_success->ebi){
           /** Returned a response for a successful bearer establishment for a pdn creation. */
           // todo: handle Multi apn success
           mme_app_handle_e_rab_setup_rsp_pdn_connectivity(e_rab_setup_rsp->mme_ue_s1ap_id, e_rab_setup_rsp->enb_ue_s1ap_id, &e_rab_setup_rsp->e_rab_setup_list.item[0], 0);
@@ -2036,7 +2036,7 @@ void mme_app_handle_e_rab_setup_rsp (itti_s1ap_e_rab_setup_rsp_t  * const e_rab_
         ebi_t ebi_failed = e_rab_setup_rsp->e_rab_failed_to_setup_list.item[0].e_rab_id;
         bearer_context_t * bc_failed = NULL;
         mme_app_get_session_bearer_context_from_all(ue_context, ebi_failed, &bc_failed);
-        if(bc_failed->linked_ebi == bc_failed->ebi){
+        if(bc_failed && bc_failed->linked_ebi == bc_failed->ebi){
           /** Returned a response for a failed bearer establishment for a pdn creation. */
           // todo: handle Multi apn failure
           mme_app_handle_e_rab_setup_rsp_pdn_connectivity(e_rab_setup_rsp->mme_ue_s1ap_id, e_rab_setup_rsp->enb_ue_s1ap_id, NULL, ebi_failed);
@@ -2089,9 +2089,14 @@ static void mme_app_handle_e_rab_setup_rsp_dedicated_bearer(const itti_s1ap_e_ra
     for(int num_bc = 0; num_bc < s11_proc_create_bearer->bcs_tbc->num_bearer_context; num_bc ++){
       if(s11_proc_create_bearer->bcs_tbc->bearer_contexts[num_bc].eps_bearer_id == e_rab_id){
         bc_tbc = &s11_proc_create_bearer->bcs_tbc->bearer_contexts[num_bc];
+        break;
       }
     }
-    DevAssert(bc_tbc);
+    if(!bc_tbc){
+    	OAILOG_ERROR(LOG_MME_APP, "The established ebi %d could not be found in the s11 procedure for ueId : " MME_UE_S1AP_ID_FMT ". "
+    			"Skipping EBI in the received e_rab setup response. \n", e_rab_id , e_rab_setup_rsp->mme_ue_s1ap_id);
+    	continue;
+    }
 
     /** Check if the message needs to be processed (if it has already failed, in that case the number of unhandled bearers already will be reduced). */
     if(bc_tbc->cause.cause_value != 0 && bc_tbc->cause.cause_value != REQUEST_ACCEPTED){
@@ -2147,9 +2152,15 @@ static void mme_app_handle_e_rab_setup_rsp_dedicated_bearer(const itti_s1ap_e_ra
     for(int num_bc = 0; num_bc < s11_proc_create_bearer->bcs_tbc->num_bearer_context; num_bc ++){
       if(s11_proc_create_bearer->bcs_tbc->bearer_contexts[num_bc].eps_bearer_id == e_rab_id){
         bc_tbc = &s11_proc_create_bearer->bcs_tbc->bearer_contexts[num_bc];
+        break;
       }
     }
-    DevAssert(bc_tbc);
+    if(!bc_tbc){
+    	OAILOG_ERROR(LOG_MME_APP, "The failed to be established ebi %d could not be found in the s11 procedure for ueId : " MME_UE_S1AP_ID_FMT ". "
+    			"Skipping EBI in the received e_rab setup response. \n", e_rab_id , e_rab_setup_rsp->mme_ue_s1ap_id);
+    	continue;
+    }
+
     /** Check if there is already a negative result. */
     if(bc_tbc->cause.cause_value && bc_tbc->cause.cause_value != REQUEST_ACCEPTED){
       OAILOG_DEBUG (LOG_MME_APP, "The ebi %d has already a negative error cause %d for ueId : " MME_UE_S1AP_ID_FMT "\n", bc_tbc->eps_bearer_id, e_rab_setup_rsp->mme_ue_s1ap_id);
@@ -2324,10 +2335,14 @@ void mme_app_handle_e_rab_modify_rsp (itti_s1ap_e_rab_modify_rsp_t  * const e_ra
     for(int num_bc = 0; num_bc < s11_proc_update_bearer->bcs_tbu->num_bearer_context; num_bc ++){
       if(s11_proc_update_bearer->bcs_tbu->bearer_contexts[num_bc].eps_bearer_id == e_rab_id){
         bc_tbu = &s11_proc_update_bearer->bcs_tbu->bearer_contexts[num_bc];
+        break;
       }
     }
-    DevAssert(bc_tbu);
-
+    if(!bc_tbu){
+    	OAILOG_ERROR(LOG_MME_APP, "The updated ebi %d could not be found in the s11 procedure for ueId : " MME_UE_S1AP_ID_FMT ". "
+    			"Skipping EBI in the received e_rab setup response. \n", e_rab_id , e_rab_modify_rsp->mme_ue_s1ap_id);
+      	continue;
+    }
     /*
      * Modifications (QoS, TFT) on the bearer context itself will be done by the ESM layer.
      * If UE accepts with success, but eNB does not, we may have a discrepancy.
@@ -2370,9 +2385,15 @@ void mme_app_handle_e_rab_modify_rsp (itti_s1ap_e_rab_modify_rsp_t  * const e_ra
     for(int num_bc = 0; num_bc < s11_proc_update_bearer->bcs_tbu->num_bearer_context; num_bc ++){
       if(s11_proc_update_bearer->bcs_tbu->bearer_contexts[num_bc].eps_bearer_id == e_rab_id){
         bc_tbu = &s11_proc_update_bearer->bcs_tbu->bearer_contexts[num_bc];
+        break;
       }
     }
-    DevAssert(bc_tbu);
+    if(!bc_tbu){
+       	OAILOG_ERROR(LOG_MME_APP, "The failed to be updated ebi %d could not be found in the s11 procedure for ueId : " MME_UE_S1AP_ID_FMT ". "
+       			"Skipping EBI in the received e_rab setup response. \n", e_rab_id , e_rab_modify_rsp->mme_ue_s1ap_id);
+       	continue;
+    }
+
     /** Check if there is already a negative result. */
     if(bc_tbu->cause.cause_value != 0 && bc_tbu->cause.cause_value != REQUEST_ACCEPTED){
       OAILOG_DEBUG (LOG_MME_APP, "The ebi %d has already a negative error cause %d for ueId : " MME_UE_S1AP_ID_FMT "\n", bc_tbu->eps_bearer_id, e_rab_modify_rsp->mme_ue_s1ap_id);
@@ -2508,9 +2529,14 @@ void mme_app_handle_activate_eps_bearer_ctx_cnf (itti_nas_activate_eps_bearer_ct
   for(int num_bc = 0; num_bc < s11_proc_create_bearer->bcs_tbc->num_bearer_context; num_bc++){
     if(s11_proc_create_bearer->bcs_tbc->bearer_contexts[num_bc].s1u_sgw_fteid.teid == activate_eps_bearer_ctx_cnf->saegw_s1u_teid){
       bc_tbc = &s11_proc_create_bearer->bcs_tbc->bearer_contexts[num_bc];
+      break;
     }
   }
-  DevAssert(bc_tbc);
+  if(!bc_tbc){
+	  OAILOG_ERROR(LOG_MME_APP, "The bearer with s1u saegw teid" TEID_FMT " could not be found in the s11 procedure for ueId : " MME_UE_S1AP_ID_FMT ". "
+			  "Skipping EBI in the received e_rab setup response. \n", activate_eps_bearer_ctx_cnf->saegw_s1u_teid, activate_eps_bearer_ctx_cnf->ue_id);
+	  OAILOG_FUNC_OUT (LOG_MME_APP);
+  }
 
   /** Update the pending bearer contexts in the answer. */
   // todo: here a minimal lock may be ok (for the cause setting - like atomic boolean)
@@ -2588,9 +2614,15 @@ void mme_app_handle_activate_eps_bearer_ctx_rej (itti_nas_activate_eps_bearer_ct
   for(int num_bc = 0; num_bc < s11_proc_create_bearer->bcs_tbc->num_bearer_context; num_bc++ ){
     if(s11_proc_create_bearer->bcs_tbc->bearer_contexts[num_bc].s1u_sgw_fteid.teid == activate_eps_bearer_ctx_rej->saegw_s1u_teid){
       bc_tbc = &s11_proc_create_bearer->bcs_tbc->bearer_contexts[num_bc];
+      break;
     }
   }
-  DevAssert(bc_tbc);
+  if(!bc_tbc){
+	  OAILOG_ERROR(LOG_MME_APP, "The failed to be activated bearer with s1u saegw teid " TEID_FMT " could not be found in the s11 procedure for ueId : " MME_UE_S1AP_ID_FMT ". "
+			  "Skipping EBI in the received e_rab setup response. \n", activate_eps_bearer_ctx_rej->saegw_s1u_teid, activate_eps_bearer_ctx_rej->ue_id);
+	  OAILOG_FUNC_OUT (LOG_MME_APP);
+  }
+
   /** The bearer is assumed to be removed from the session bearers by the ESM layer. */
   if (bc_tbc->cause.cause_value != 0 && bc_tbc->cause.cause_value != REQUEST_ACCEPTED) {
     OAILOG_INFO(LOG_MME_APP, "Received NAS reject after E-RAB activation reject for ebi %d occurred for UE: " MME_UE_S1AP_ID_FMT ". Not reducing number of unhandled bearers (assuming already done). \n",
@@ -2668,9 +2700,15 @@ void mme_app_handle_modify_eps_bearer_ctx_cnf (itti_nas_modify_eps_bearer_ctx_cn
   for(int num_bc = 0; num_bc < s11_proc_update_bearer->bcs_tbu->num_bearer_context; num_bc ++){
     if(s11_proc_update_bearer->bcs_tbu->bearer_contexts[num_bc].eps_bearer_id == modify_eps_bearer_ctx_cnf->ebi){
       bc_tbu = &s11_proc_update_bearer->bcs_tbu->bearer_contexts[num_bc];
+      break;
     }
   }
-  DevAssert(bc_tbu);
+  if(!bc_tbu){
+	  OAILOG_ERROR(LOG_MME_APP, "The modified ebi %d could not be found in the s11 procedure for ueId : " MME_UE_S1AP_ID_FMT ". "
+			  "Skipping EBI in the received e_rab setup response. \n", modify_eps_bearer_ctx_cnf->ebi, modify_eps_bearer_ctx_cnf->ue_id);
+	  OAILOG_FUNC_OUT (LOG_MME_APP);
+  }
+
   /** Update the pending bearer contexts in the answer. */
   if(bc_tbu->cause.cause_value == 0){
     /** No response received yet from E-RAB. Will just set it as SUCCESS, but not trigger an UBResp. */
@@ -2749,9 +2787,14 @@ void mme_app_handle_modify_eps_bearer_ctx_rej (itti_nas_modify_eps_bearer_ctx_re
   for(int num_bc = 0; num_bc < s11_proc_update_bearer->bcs_tbu->num_bearer_context; num_bc++ ){
     if(s11_proc_update_bearer->bcs_tbu->bearer_contexts[num_bc].eps_bearer_id == modify_eps_bearer_ctx_rej->ebi){
       bc_tbu = &s11_proc_update_bearer->bcs_tbu->bearer_contexts[num_bc];
+      break;
     }
   }
-  DevAssert(bc_tbu);
+  if(!bc_tbu){
+	  OAILOG_ERROR(LOG_MME_APP, "failed to be modified ebi %d could not be found in the s11 procedure for ueId : " MME_UE_S1AP_ID_FMT ". "
+			  "Skipping EBI in the received e_rab setup response. \n", modify_eps_bearer_ctx_rej->ebi, modify_eps_bearer_ctx_rej->ue_id);
+	  OAILOG_FUNC_OUT (LOG_MME_APP);
+  }
 
   /** Update the pending bearer contexts in the answer. */
   if (bc_tbu->cause.cause_value != 0 && bc_tbu->cause.cause_value != REQUEST_ACCEPTED) {
@@ -4288,9 +4331,7 @@ mme_app_handle_enb_status_transfer(
  }
  mme_app_s10_proc_mme_handover_t * s10_handover_proc = mme_app_get_s10_procedure_mme_handover(ue_context);
  if(!s10_handover_proc){
-   OAILOG_ERROR(LOG_MME_APP, "No S10 handover procedure exists for UE with mmeS1apUeId " MME_UE_S1AP_ID_FMT". \n",
-		   s1ap_status_transfer_pP->mme_ue_s1ap_id);
-   MSC_LOG_EVENT (MSC_MMEAPP_MME, "S1AP_ENB_STATUS_TRANSFER. No UE existing mmeS1apUeId " MME_UE_S1AP_ID_FMT". \n",
+   OAILOG_WARNING(LOG_MME_APP, "No S10 handover procedure exists for UE with mmeS1apUeId " MME_UE_S1AP_ID_FMT". \n",
 		   s1ap_status_transfer_pP->mme_ue_s1ap_id);
    /**
     * We don't really expect an error at this point. Just forward the message to the target enb. (happens just with ng4t).

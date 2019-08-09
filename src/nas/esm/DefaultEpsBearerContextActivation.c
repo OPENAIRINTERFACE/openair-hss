@@ -68,6 +68,7 @@
 #include "esm_proc.h"
 #include "esm_ebr.h"
 #include "esm_cause.h"
+#include "mme_app_bearer_context.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/

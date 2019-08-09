@@ -480,7 +480,7 @@ static void *udp_intertask_interface (void *args_p)
     on_error:
       itti_free_msg_content(received_message_p);
       rc = itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
-      AssertFatal (rc == EXIT_SUCCESS, "Failed to free memory (%d)!\n", rc);
+      AssertFatal(rc == EXIT_SUCCESS, "Failed to free memory (%d)!\n", rc);
       received_message_p = NULL;
     }
 

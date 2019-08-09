@@ -670,7 +670,7 @@ s11_mme_handle_create_bearer_request (
     DevAssert (NW_OK == rc);
 
     /** Add the PTI to inform to UEs. */
-    rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_BEARER_CONTEXT, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL, gtpv2c_pti_ie_get,
+    rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_PROCEDURE_TRANSACTION_ID, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL, gtpv2c_pti_ie_get,
         &req_p->pti);
     DevAssert (NW_OK == rc);
 
