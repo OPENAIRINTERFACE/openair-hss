@@ -432,7 +432,7 @@ static esm_cause_t _dedicated_eps_bearer_activate_t3485_handler (nas_esm_proc_t 
   OAILOG_FUNC_IN(LOG_NAS_ESM);
   nas_esm_proc_bearer_context_t * esm_proc_bearer_context = (nas_esm_proc_bearer_context_t*)esm_base_proc;
   pdn_context_t * pdn_context = NULL;
-  bearer_context_t * bearer_context = NULL;
+  bearer_context_new_t * bearer_context = NULL;
 
   esm_base_proc->retx_count += 1;
   if (esm_base_proc->retx_count < DEDICATED_EPS_BEARER_ACTIVATE_COUNTER_MAX) {

@@ -108,9 +108,9 @@ void mme_app_get_bearer_contexts_to_be_created(pdn_context_t * pdn_context, bear
 
   OAILOG_FUNC_IN (LOG_MME_APP);
 
-  bearer_context_t * bearer_context_to_setup  = NULL;
+  bearer_context_new_t * bearer_context_to_setup  = NULL;
 
-  RB_FOREACH (bearer_context_to_setup, SessionBearers, &pdn_context->session_bearers) {
+  LIST_FOREACH (bearer_context_to_setup, pdn_context->session_bearers, entries) {
     DevAssert(bearer_context_to_setup);
     /*
      * Set the bearer of the pdn context to establish.
@@ -182,14 +182,14 @@ mme_app_esm_create_pdn_context(mme_ue_s1ap_id_t ue_id, const ebi_t linked_ebi, c
   RB_FOREACH (pdn_ctx_TEST, PdnContexts, &ue_context->pdn_contexts) {
     DevAssert(pdn_ctx_TEST);
     OAILOG_DEBUG (LOG_MME_APP, "PDN context %p for APN \"%s\" and cid=%d, ebi=%d (first bearer = %p) already exists UE: " MME_UE_S1AP_ID_FMT ". \n", pdn_ctx_TEST, bdata(pdn_ctx_TEST->apn_subscribed),
-        pdn_ctx_TEST->context_identifier, pdn_ctx_TEST->default_ebi, RB_MIN(SessionBearers, &pdn_ctx_TEST->session_bearers), ue_id);
+        pdn_ctx_TEST->context_identifier, pdn_ctx_TEST->default_ebi, LIST_FIRST(pdn_ctx_TEST->session_bearers), ue_id);
   }
 
-  bearer_context_t * free_bearer = NULL;
+  bearer_context_new_t * free_bearer = NULL;
   if(linked_ebi != EPS_BEARER_IDENTITY_UNASSIGNED){
 	  mme_app_get_free_bearer_context(ue_context, linked_ebi, &free_bearer); /**< Find the EBI which is matching (should be available). */
   } else{
-	  free_bearer = RB_MIN(BearerPool, &ue_context->bearer_pool); /**< Find the EBI which is matching (should be available). */
+	  free_bearer = LIST_FIRST(ue_context->ue_bearer_pool->free_bearers); /**< Find the EBI which is matching (should be available). */
   }
   if(!free_bearer){
     OAILOG_ERROR(LOG_MME_APP, "No available bearer context could be found for UE: " MME_UE_S1AP_ID_FMT " with linked_ebi=%d. \n", ue_id, linked_ebi);
@@ -213,9 +213,9 @@ mme_app_esm_create_pdn_context(mme_ue_s1ap_id_t ue_id, const ebi_t linked_ebi, c
         &ue_context->guti);
   }
 
-  bearer_context_t *bc_test = NULL;
+  bearer_context_new_t *bc_test = NULL;
   /** List all bearer contexts. */
-  RB_FOREACH(bc_test, BearerPool, &ue_context->bearer_pool){
+  LIST_FOREACH(bc_test, ue_context->ue_bearer_pool->free_bearers, entries){
     OAILOG_TRACE (LOG_MME_APP, "Current bearer context %p with ebi %d for pdn_context %p for APN \"%s\" and cid=%d for UE: " MME_UE_S1AP_ID_FMT ". \n",
         bc_test, bc_test->ebi, (*pdn_context_pp), bdata((*pdn_context_pp)->apn_subscribed),
         (*pdn_context_pp)->context_identifier, ue_id);
@@ -225,12 +225,12 @@ mme_app_esm_create_pdn_context(mme_ue_s1ap_id_t ue_id, const ebi_t linked_ebi, c
    */
   mme_app_pdn_context_init(ue_context, (*pdn_context_pp));
   /** Get the default bearer context directly. */
-  free_bearer = RB_REMOVE(BearerPool, &ue_context->bearer_pool, free_bearer);
+  LIST_REMOVE(free_bearer, entries);
   DevAssert(free_bearer);
   AssertFatal((EPS_BEARER_IDENTITY_LAST >= free_bearer->ebi) && (EPS_BEARER_IDENTITY_FIRST <= free_bearer->ebi), "Bad ebi %u", free_bearer->ebi);
   /* Check that there is no collision when adding the bearer context into the PDN sessions bearer pool. */
   /* Insert the bearer context. */
-  RB_INSERT (SessionBearers, &(*pdn_context_pp)->session_bearers, free_bearer);
+  LIST_INSERT_HEAD((*pdn_context_pp)->session_bearers, free_bearer, entries);
 
   OAILOG_INFO(LOG_MME_APP, "Received first default bearer context %p with ebi %d for apn \"%s\" of UE: " MME_UE_S1AP_ID_FMT ". \n", free_bearer, free_bearer->ebi, bdata(apn_subscribed), ue_id);
 
@@ -340,8 +340,8 @@ mme_app_update_pdn_context(mme_ue_s1ap_id_t ue_id, const subscription_data_t * c
           DevAssert(pdn_context);
           pdn_context->context_identifier = apn_configuration->context_identifier;
           /** Set the context also to all the bearers. */
-          bearer_context_t * bearer_context = NULL;
-          RB_FOREACH (bearer_context, SessionBearers, &pdn_context->session_bearers) {
+          bearer_context_new_t * bearer_context = NULL;
+          LIST_FOREACH (bearer_context, pdn_context->session_bearers, entries) {
             bearer_context->pdn_cx_id = apn_configuration->context_identifier; /**< Update for all bearer contexts. */
           }
           /** Update the PDN context ambr only if it was 0. */
@@ -387,8 +387,8 @@ mme_app_update_pdn_context(mme_ue_s1ap_id_t ue_id, const subscription_data_t * c
   OAILOG_INFO(LOG_NAS_EMM, "EMMCN-SAP  - " "Successfully updated all PDN contexts for UE " MME_UE_S1AP_ID_FMT". \n", ue_id);
 
   RB_FOREACH(pdn_context, PdnContexts, &ue_context->pdn_contexts) { /**< Use the safe iterator. */
-	  bearer_context_t * bearer_context = NULL;
-	  RB_FOREACH (bearer_context, SessionBearers, &pdn_context->session_bearers) {
+	  bearer_context_new_t * bearer_context = NULL;
+	  LIST_FOREACH (bearer_context, pdn_context->session_bearers, entries) {
 		  (*bc_status) |= (0x01 << bearer_context->ebi);
 	  }
   }
@@ -446,7 +446,7 @@ mme_app_esm_detach(mme_ue_s1ap_id_t ue_id){
     pdn_context = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
   }
   OAILOG_INFO(LOG_MME_APP, "Removed all ESM contexts of UE: " MME_UE_S1AP_ID_FMT " for detach. \n", ue_id);
-  bearer_context_t * bc_free = RB_MIN(BearerPool, &ue_context->bearer_pool);
+  bearer_context_new_t * bc_free = LIST_FIRST(ue_context->ue_bearer_pool->free_bearers);
   // todo: UNLOCK UE CONTEXTS
   OAILOG_FUNC_OUT(LOG_MME_APP);
 }
@@ -467,7 +467,7 @@ mme_app_esm_update_ebr_state(const mme_ue_s1ap_id_t ue_id, const bstring apn_sub
     OAILOG_FUNC_RETURN(LOG_MME_APP, RETURNerror);
   }
   /** Get the default EBI. */
-  bearer_context_t * bc = mme_app_get_session_bearer_context(pdn_context, bearer_ebi);
+  bearer_context_new_t * bc = mme_app_get_session_bearer_context(pdn_context, bearer_ebi);
   bc->esm_ebr_context.status = ebr_state;
   // todo: UNLOCK UE CONTEXTS
   OAILOG_FUNC_RETURN(LOG_MME_APP, RETURNok);
@@ -638,7 +638,7 @@ mme_app_pdn_process_session_creation(mme_ue_s1ap_id_t ue_id, fteid_t * saegw_s11
   for (int i=0; i < bcs_created->num_bearer_context; i++) {
     ebi_t bearer_id = bcs_created->bearer_contexts[i].eps_bearer_id;
     bearer_context_created_t * bc_created = &bcs_created->bearer_contexts[i];
-    bearer_context_t * bearer_context = mme_app_get_session_bearer_context(pdn_context, bearer_id);
+    bearer_context_new_t * bearer_context = mme_app_get_session_bearer_context(pdn_context, bearer_id);
     /*
      * Depending on s11 result we have to send reject or accept for bearers
      */
@@ -652,12 +652,10 @@ mme_app_pdn_process_session_creation(mme_ue_s1ap_id_t ue_id, fteid_t * saegw_s11
        * Release all session bearers of the PDN context back into the UE pool.
        */
       if(bearer_context){
-        DevAssert(RB_REMOVE(SessionBearers, &pdn_context->session_bearers, bearer_context));
         /** Initialize the new bearer context. */
-        mme_app_bearer_context_initialize(bearer_context);
-        /** Insert the bearer context into the free bearer of the ue context. */
-        RB_INSERT (BearerPool, &ue_context->bearer_pool, bearer_context);
-        OAILOG_WARNING(LOG_MME_APP, "Successfully deregistered the bearer context (ebi=%d) from PDN \"%s\" and for ue_id " MME_UE_S1AP_ID_FMT "\n", bearer_id, bdata(pdn_context->apn_subscribed), ue_id);
+        clear_bearer_context(ue_context->ue_bearer_pool, bearer_context);
+        OAILOG_WARNING(LOG_MME_APP, "Successfully deregistered the bearer context (ebi=%d) from PDN \"%s\" and for ue_id " MME_UE_S1AP_ID_FMT "\n",
+        		bearer_id, bdata(pdn_context->apn_subscribed), ue_id);
       }
       continue;
     }
@@ -709,9 +707,8 @@ static void mme_app_pdn_context_init(ue_context_t * const ue_context, pdn_contex
 {
   if ((pdn_context) && (ue_context)) {
     memset(pdn_context, 0, sizeof(*pdn_context));
-//    pdn_context->is_active = false;
     /** Initialize the session bearers map. */
-    RB_INIT(&pdn_context->session_bearers);
+    LIST_INIT(pdn_context->session_bearers);
   }
 }
 
@@ -724,14 +721,14 @@ static void mme_app_delete_pdn_context(ue_context_t * const ue_context, pdn_cont
   }
 
   /** We found the PDN context, we will remove it directly from the UE context, remove & clean up the session bearers and free the PDN context. */
-  pdn_context_t *pdn_context_removed = RB_REMOVE(PdnContexts, &ue_context->pdn_contexts, (*pdn_context_pp));
-  DevAssert(pdn_context_removed);
+  pdn_context_t *pdn_context = RB_REMOVE(PdnContexts, &ue_context->pdn_contexts, *pdn_context_pp);
+  DevAssert(pdn_context);
+
   /*
    * Release all session bearers of the PDN context back into the UE pool.
    */
-  bearer_context_t * pBearerCtx = RB_MIN(SessionBearers, &(*pdn_context_pp)->session_bearers);
+  bearer_context_new_t * pBearerCtx = LIST_FIRST((*pdn_context_pp)->session_bearers);
   while(pBearerCtx){
-    DevAssert(RB_REMOVE(SessionBearers, &(*pdn_context_pp)->session_bearers, pBearerCtx));
     /*
      * Delete the TFT,
      * todo: check any other allocated fields..
@@ -756,13 +753,11 @@ static void mme_app_delete_pdn_context(ue_context_t * const ue_context, pdn_cont
     //        }
     //        copy_protocol_configuration_options((*pdn_context_pP)->pco, pco);
     //      }
+
     /** Initialize the new bearer context. */
-    mme_app_bearer_context_initialize(pBearerCtx);
-    /** Insert the bearer context into the free bearer of the ue context. */
-    RB_INSERT (BearerPool, &ue_context->bearer_pool, pBearerCtx);
+    clear_bearer_context(ue_context->ue_bearer_pool, pBearerCtx);
     OAILOG_INFO(LOG_MME_APP, "Successfully deregistered the bearer context with ebi %d from PDN id %u and for ue_id " MME_UE_S1AP_ID_FMT "\n",
         pBearerCtx->ebi, (*pdn_context_pp)->context_identifier, ue_context->mme_ue_s1ap_id);
-    pBearerCtx = RB_MIN(SessionBearers, &(*pdn_context_pp)->session_bearers);
   }
   /** Successfully removed all bearer contexts, clean up the PDN context procedure. */
   mme_app_free_pdn_context(pdn_context_pp); /**< Frees it by putting it back to the pool. */

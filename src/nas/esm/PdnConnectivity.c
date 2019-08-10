@@ -303,7 +303,7 @@ esm_proc_pdn_connectivity_retx(const mme_ue_s1ap_id_t ue_id, nas_esm_proc_pdn_co
     OAILOG_FUNC_RETURN(LOG_NAS_ESM, ESM_CAUSE_REQUEST_REJECTED_UNSPECIFIED);
   }
   /** Check that it is in the correct state. */
-  bearer_context_t * bearer_context = mme_app_get_session_bearer_context(dup_pdn_context, dup_pdn_context->default_ebi);
+  bearer_context_new_t * bearer_context = mme_app_get_session_bearer_context(dup_pdn_context, dup_pdn_context->default_ebi);
   if(!bearer_context || bearer_context->esm_ebr_context.status != ESM_EBR_ACTIVE_PENDING){
     OAILOG_WARNING(LOG_NAS_ESM, "ESM-SAP   - No default bearer for PDN context for the APN \"%s\" exists yet or is not in ACTIVE_PENDING state (%d). "
         "Ignoring received PDN connectivity request." "(ue_id=%d, pti=%d)\n",
@@ -471,7 +471,7 @@ esm_proc_pdn_config_res(mme_ue_s1ap_id_t ue_id, bool * is_attach, pti_t * pti, i
   ebi_t                                   new_ebi = 0;
   pdn_context_t                          *pdn_context = NULL;
   struct apn_configuration_s             *apn_config = NULL;
-  bearer_context_t                       *bearer_context = NULL;
+  bearer_context_new_t                   *bearer_context = NULL;
   int                                     rc = RETURNok;
 
   /*

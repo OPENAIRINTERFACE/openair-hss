@@ -243,7 +243,7 @@ esm_proc_default_eps_bearer_context (
   mme_app_get_pdn_context(ue_id, esm_proc_pdn_connectivity->pdn_cid, esm_proc_pdn_connectivity->default_ebi, esm_proc_pdn_connectivity->subscribed_apn, &pdn_context);
   if(pdn_context){
     /** Get the default bearer. */
-    bearer_context_t *default_bc = RB_MIN(SessionBearers, &pdn_context->session_bearers);
+    bearer_context_new_t *default_bc = LIST_FIRST(pdn_context->session_bearers);
     if(default_bc){
       /** Update the PDN type from the received PDN type. */
 	  esm_proc_pdn_connectivity->pdn_type = 1 + pdn_context->paa->pdn_type;
@@ -348,7 +348,7 @@ _default_eps_bearer_activate_t3485_handler(nas_esm_proc_t * esm_base_proc, ESM_m
     mme_app_get_pdn_context(esm_base_proc->ue_id, esm_proc_pdn_connectivity->pdn_cid,
         esm_proc_pdn_connectivity->default_ebi, esm_proc_pdn_connectivity->subscribed_apn, &pdn_context);
     if(pdn_context){
-      bearer_context_t * bearer_context = mme_app_get_session_bearer_context(pdn_context, esm_proc_pdn_connectivity->default_ebi);
+      bearer_context_new_t * bearer_context = mme_app_get_session_bearer_context(pdn_context, esm_proc_pdn_connectivity->default_ebi);
       if(bearer_context){
     	esm_proc_pdn_connectivity->pdn_type = 1 + pdn_context->paa->pdn_type;
         esm_send_activate_default_eps_bearer_context_request(esm_proc_pdn_connectivity,

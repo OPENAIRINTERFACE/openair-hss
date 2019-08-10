@@ -120,8 +120,8 @@ typedef struct fteid_set_s {
 };
 
 /*
- * @struct bearer_context_t
- * @brief Parameters that should be kept for an eps bearer.
+ * @struct bearer_context_new_t
+ * @brief Parameters that should be kept for an eps bearer. Used for stacked memory
  *
  * Structure of an EPS bearer
  * --------------------------
@@ -130,7 +130,7 @@ typedef struct fteid_set_s {
  * butes. An EPS bearer corresponds to one Quality of Service policy
  * applied within the EPC and E-UTRAN.
  */
-typedef struct bearer_context_s {
+typedef struct bearer_context_new_s {
   // EPS Bearer ID: An EPS bearer identity uniquely identifies an EP S bearer for one UE accessing via E-UTRAN
   ebi_t                       ebi;
   ebi_t                       linked_ebi;
@@ -147,7 +147,7 @@ typedef struct bearer_context_s {
   // NOTE:
   // The PDN GW IP address for user plane is needed in MME context as S-GW relocation is triggered without interaction with the source S-GW,
   // e.g. when a TAU occurs. The Target S GW requires this Information Element, so it must be stored by the MME.
-  fteid_t                      p_gw_fteid_s5_s8_up;
+  fteid_t                      		p_gw_fteid_s5_s8_up;
 
   // EPS bearer QoS: QCI and ARP, optionally: GBR and MBR for GBR bearer
 
@@ -163,17 +163,28 @@ typedef struct bearer_context_s {
   fteid_t                           enb_fteid_s1u;
 
   /* QoS for this bearer */
-  bearer_qos_t                bearer_level_qos;
+  bearer_qos_t                		bearer_level_qos;
 
-  /** Add an entry field to make it part of a list. */
-  LIST_ENTRY(bearer_context_s) entries;      /* List. */
+  /** Add an entry field to make it part of a list (session or UE, no need to save more lists). */
+  LIST_ENTRY(bearer_context_new_s) 	entries;
+}__attribute__((__packed__)) bearer_context_new_t;
 
-  LIST_ENTRY(bearer_context_s) temp_entries; /* List to establish or reject the bearer contexts. */
+/**
+ * Bearer Pool elements.
+ * Contains list of free bearer elements.
+ */
+typedef struct ue_bearer_pool_s {
+#define MAX_NUM_BEARERS_UE    11 /**< Maximum number of bearers. */
+	bearer_context_new_t bcs_ue[MAX_NUM_BEARERS_UE];
+	/*
+	 * List of empty bearer context.
+	 * Take the bearer contexts from here and put them into the PDN context.
+	 */
+	LIST_HEAD(free_bearers_s, bearer_context_new_s) *free_bearers;
 
-  struct bearer_context_s*     next_bc;
-  RB_ENTRY (bearer_context_s)    bearerContextRbtNode;            /**< RB Tree Data Structure Node        */
-
-} bearer_context_t;
+	/** Point to the next free bearer pool. */
+	struct ue_bearer_pool_s*     		next_free_bp;
+}ue_bearer_pool_t;
 
 /** @struct subscribed_apn_t
  *  @brief Parameters that should be kept for a subscribed apn by the UE.
@@ -253,9 +264,8 @@ typedef struct pdn_context_s {
   /*
    * List of bearer contexts of the PDN session.
    */
-  RB_HEAD(SessionBearers, bearer_context_s) session_bearers;
+  LIST_HEAD(session_bearers_s, bearer_context_new_s) *session_bearers;
 
-  //apn_configuration_t         apn_configuration; // set by S6A UPDATE LOCATION ANSWER
   //bstring                     pgw_id;            // an ID for P-GW through which a user can access the Subscribed APN
 
   /* S-GW IP address for Control-Plane */
@@ -280,21 +290,17 @@ typedef struct pdn_context_s {
  */
 typedef struct ue_context_s {
 
-
-//  bool came_from_tau; /**< For test. */
-
-  // todo: ue context mutex
   pthread_mutex_t recmutex;  // mutex on the ue_context_t
 
   /* Basic identifier for ue. IMSI is encoded on maximum of 15 digits of 4 bits,
    * so usage of an unsigned integer on 64 bits is necessary.
    */
-  imsi64_t         imsi;                        // set by nas_auth_param_req_t
+  imsi64_t         		 imsi;                      // set by nas_auth_param_req_t
 
   bstring                msisdn;                    // The basic MSISDN of the UE. The presence is dictated by its storage in the HSS.
                                                     // set by S6A UPDATE LOCATION ANSWER
 
-  ecm_state_t             ecm_state;                // ECM state ECM-IDLE, ECM-CONNECTED.
+  ecm_state_t            ecm_state;                 // ECM state ECM-IDLE, ECM-CONNECTED.
                                                     // not set/read
 
 //  S1ap_Cause_t            s1_ue_context_release_cause;
@@ -427,15 +433,7 @@ typedef struct ue_context_s {
    * Take the bearer contexts from here and put them into the PDN context.
    */
   // todo: check if they are necessary!
-  #define MAX_NUM_BEARERS_UE    11 /**< Maximum number of bearers. */
-  RB_HEAD(BearerPool, bearer_context_s) bearer_pool;
-
-  /*
-   * List of empty bearer context.
-   * Take the bearer contexts from here and put them into the PDN context.
-   */
-  // todo: check if they are necessary!
-  #define MAX_APN_PER_UE    5 /**< Maximum number of PDN sessions per UE. */
+#define MAX_APN_PER_UE    5 /**< Maximum number of PDN sessions per UE. */
   RB_HEAD(PdnContexts, pdn_context_s) pdn_contexts;
 
   // Subscribed UE-AMBR: The Maximum Aggregated uplink and downlink MBR values to be shared across all Non-GBR bearers according to the subscription of the user.
@@ -443,6 +441,14 @@ typedef struct ue_context_s {
 
   subscriber_status_t    subscriber_status;        // set by S6A UPDATE LOCATION ANSWER
   network_access_mode_t  network_access_mode;       // set by S6A UPDATE LOCATION ANSWER
+
+  /*
+   * List of empty bearer context.
+   * Take the bearer contexts from here and put them into the PDN context.
+   */
+  // todo: check if they are necessary!
+#define MAX_NUM_BEARERS_UE    11 /**< Maximum number of bearers. */
+  ue_bearer_pool_t      *ue_bearer_pool;
 
   /* S10 and S11 procedures. */
   LIST_HEAD(s10_procedures_s, mme_app_s10_proc_s) *s10_procedures;
@@ -479,7 +485,6 @@ typedef struct ue_context_s {
   ebi_t                        next_def_ebi_offset;
 
 } ue_context_t;
-
 
 typedef struct mme_ue_context_s {
   uint32_t               nb_ue_managed;
@@ -629,11 +634,9 @@ void mme_app_handle_s1ap_ue_context_release_req(const itti_s1ap_ue_context_relea
 
 //bearer_context_t* mme_app_get_bearer_context(ue_context_t  * const ue_context, const ebi_t ebi);
 
-bearer_context_t* mme_app_get_bearer_context_by_state(ue_context_t * const ue_context, const pdn_cid_t cid, const mme_app_bearer_state_t state);
+bearer_context_new_t* mme_app_get_bearer_context_by_state(ue_context_t * const ue_context, const pdn_cid_t cid, const mme_app_bearer_state_t state);
 
 ebi_t mme_app_get_free_bearer_id(ue_context_t * const ue_context);
-
-void mme_app_free_bearer_context(bearer_context_t ** bc);
 
 void mme_app_ue_context_s1_release_enb_informations(ue_context_t *ue_context);
 
@@ -643,10 +646,6 @@ ambr_t mme_app_total_p_gw_apn_ambr_rest(ue_context_t *ue_context, pdn_cid_t pci)
 
 /* Declaration (prototype) of the function to store pdn and bearer contexts. */
 RB_PROTOTYPE(PdnContexts, pdn_context_s, pdn_ctx_rbt_Node, mme_app_compare_pdn_context)
-
-RB_PROTOTYPE(BearerPool, bearer_context_s, bearer_ctx_rbt_Node, mme_app_compare_bearer_context)
-
-RB_PROTOTYPE(SessionBearers, bearer_context_s, bearer_ctx_rbt_Node, mme_app_compare_bearer_context)
 
 #endif /* FILE_MME_APP_UE_CONTEXT_SEEN */
 

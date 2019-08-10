@@ -54,35 +54,6 @@ static void mme_app_free_s11_procedure_update_bearer(mme_app_s11_proc_t **s11_pr
 static void mme_app_free_s11_procedure_delete_bearer(mme_app_s11_proc_t **s11_proc);
 static void mme_app_free_s10_procedure_mme_handover(mme_app_s10_proc_t **s10_proc);
 
-/*---------------------------------------------------------------------------
-   FTEID Set RBTree Search Data Structure
-  --------------------------------------------------------------------------*/
-//
-///**
-//  Comparator function for comparing two fteids.
-//
-//  @param[in] a: Pointer to bearer context a.
-//  @param[in] b: Pointer to bearer context b.
-//  @return  An integer greater than, equal to or less than zero according to whether the
-//  object pointed to by a is greater than, equal to or less than the object pointed to by b.
-//*/
-//
-//static
-//inline int32_t                    mme_app_compare_bearer_context(
-//    struct fteid_set_s *a,
-//    struct fteid_set_s *b) {
-//    if (a->s1u_fteid.teid > b->s1u_fteid.teid)
-//      return 1;
-//
-//    if (a->s1u_fteid.teid < b->s1u_fteid.teid )
-//      return -1;
-//
-//    /* Not more field to compare. */
-//    return 0;
-//}
-//
-//RB_GENERATE (BearerF0teids, fteid_set_s, fteid_set_rbt_Node, fteid_set_compare_s1u_saegw)
-
 //------------------------------------------------------------------------------
 void mme_app_delete_s11_procedures(ue_context_t * const ue_context)
 {

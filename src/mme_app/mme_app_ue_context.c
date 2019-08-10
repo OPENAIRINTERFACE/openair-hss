@@ -51,36 +51,6 @@
 static mme_ue_s1ap_id_t mme_app_ue_s1ap_id_generator = 1;
 
 /*---------------------------------------------------------------------------
-   Bearer Context RBTree Search Data Structure
-  --------------------------------------------------------------------------*/
-
-/**
-  Comparator funtion for comparing two ebis.
-
-  @param[in] a: Pointer to bearer context a.
-  @param[in] b: Pointer to bearer context b.
-  @return  An integer greater than, equal to or less than zero according to whether the
-  object pointed to by a is greater than, equal to or less than the object pointed to by b.
-*/
-
-static
-inline int32_t                    mme_app_compare_bearer_context(
-    struct bearer_context_s *a,
-    struct bearer_context_s *b) {
-    if (a->ebi > b->ebi )
-      return 1;
-
-    if (a->ebi < b->ebi)
-      return -1;
-
-    /* Not more field to compare. */
-    return 0;
-}
-
-//RB_GENERATE (BearerPool, bearer_context_s, bearer_ctx_rbt_Node, mme_app_compare_bearer_context)
-
-
-/*---------------------------------------------------------------------------
    PDN Context RBTree Search Data Structure
   --------------------------------------------------------------------------*/
 
@@ -257,8 +227,8 @@ void mme_app_ue_context_s1_release_enb_informations(ue_context_t *ue_context)
      * Get the first PDN whose bearers are not established yet.
      * Do the MBR just one PDN at a time.
      */
-    bearer_context_t * bearer_context_to_set_idle = NULL;
-    RB_FOREACH (bearer_context_to_set_idle, SessionBearers, &registered_pdn_ctx->session_bearers) {
+    bearer_context_new_t * bearer_context_to_set_idle = NULL, * bearer_context_to_set_idle_safe = NULL;
+    LIST_FOREACH_SAFE (bearer_context_to_set_idle, registered_pdn_ctx->session_bearers, entries, bearer_context_to_set_idle_safe) {
       DevAssert(bearer_context_to_set_idle);
       /** Add them to the bearears list of the MBR. */
       mme_app_bearer_context_s1_release_enb_informations(bearer_context_to_set_idle);
@@ -301,10 +271,3 @@ mme_ue_s1ap_id_t mme_app_ctx_get_new_ue_id(void)
   tmp = __sync_fetch_and_add (&mme_app_ue_s1ap_id_generator, 1);
   return tmp;
 }
-
-/*
- * Generate the functions to operate inside the bearer pool.
- */
-RB_GENERATE (SessionBearers, bearer_context_s, bearerContextRbtNode, mme_app_compare_bearer_context)
-
-RB_GENERATE (BearerPool, bearer_context_s, bearerContextRbtNode, mme_app_compare_bearer_context)

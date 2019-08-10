@@ -36,7 +36,9 @@
 #define FILE_MME_APP_DEFS_SEEN
 #include "intertask_interface.h"
 #include "mme_app_ue_context.h"
+#define CHANGEABLE_VALUE 10000
 
+#define MAX_UE_BEARER mme_config.max_ues
 typedef struct mme_app_desc_s {
   /* UE contexts + some statistics variables */
   mme_ue_context_t mme_ue_contexts;
@@ -44,6 +46,10 @@ typedef struct mme_app_desc_s {
   long statistic_timer_id;
   uint32_t statistic_timer_period;
 
+  /** Create an array of bearer pools. */
+  // todo: lock for the bearer pool?!
+  ue_bearer_pool_t ue_bearer_pool[CHANGEABLE_VALUE];
+  struct ue_bearer_pool_s *free_bp; /**< Initialize this as ue_bearer_pool[0]. */
 
   uint32_t mme_mobility_management_timer_period;
 

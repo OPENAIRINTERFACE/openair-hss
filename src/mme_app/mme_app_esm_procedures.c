@@ -48,35 +48,6 @@
 #include "common_defs.h"
 #include "mme_app_esm_procedures.h"
 
-/*---------------------------------------------------------------------------
-   FTEID Set RBTree Search Data Structure
-  --------------------------------------------------------------------------*/
-//
-///**
-//  Comparator function for comparing two fteids.
-//
-//  @param[in] a: Pointer to bearer context a.
-//  @param[in] b: Pointer to bearer context b.
-//  @return  An integer greater than, equal to or less than zero according to whether the
-//  object pointed to by a is greater than, equal to or less than the object pointed to by b.
-//*/
-//
-//static
-//inline int32_t                    mme_app_compare_bearer_context(
-//    struct fteid_set_s *a,
-//    struct fteid_set_s *b) {
-//    if (a->s1u_fteid.teid > b->s1u_fteid.teid)
-//      return 1;
-//
-//    if (a->s1u_fteid.teid < b->s1u_fteid.teid )
-//      return -1;
-//
-//    /* Not more field to compare. */
-//    return 0;
-//}
-//
-//RB_GENERATE (BearerF0teids, fteid_set_s, fteid_set_rbt_Node, fteid_set_compare_s1u_saegw)
-
 static void mme_app_nas_esm_free_bearer_context_proc(nas_esm_proc_bearer_context_t **esm_proc_bearer_context);
 static void mme_app_nas_esm_free_pdn_connectivity_proc(nas_esm_proc_pdn_connectivity_t **esm_proc_pdn_connectivity);
 

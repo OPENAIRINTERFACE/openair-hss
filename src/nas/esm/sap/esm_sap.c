@@ -208,7 +208,7 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
      * Check if a procedure exists for PDN Connectivity. If so continue with it.
      */
     pdn_context_t                       * pdn_context                 = NULL;
-    bearer_context_t                    * bearer_context              = NULL;
+    bearer_context_new_t                * bearer_context              = NULL;
     nas_esm_proc_pdn_connectivity_t     * esm_proc_pdn_connectivity   = _esm_proc_get_pdn_connectivity_procedure(msg->ue_id, PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED);
 
     if(!esm_proc_pdn_connectivity){

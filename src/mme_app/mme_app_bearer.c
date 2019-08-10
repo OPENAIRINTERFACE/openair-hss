@@ -59,7 +59,6 @@
 #include "s1ap_mme_ta.h"
 
 //----------------------------------------------------------------------------
-// todo: check which one needed
 static void mme_app_send_s1ap_path_switch_request_acknowledge(mme_ue_s1ap_id_t mme_ue_s1ap_id,
     uint16_t encryption_algorithm_capabilities, uint16_t integrity_algorithm_capabilities,
     bearer_contexts_to_be_created_t * bcs_tbc);
@@ -84,7 +83,6 @@ void mme_app_send_s1ap_handover_request(mme_ue_s1ap_id_t mme_ue_s1ap_id,
 /** External definitions in MME_APP UE Data Context. */
 extern void mme_app_set_ue_eps_mm_context(mm_context_eps_t * ue_eps_mme_context_p, struct ue_context_s *ue_context, emm_data_context_t *ue_nas_ctx);
 extern void mme_app_set_pdn_connections(struct mme_ue_eps_pdn_connections_s * pdn_connections, struct ue_context_s * ue_context);
-//extern void mme_app_handle_pending_pdn_connectivity_information(ue_context_t *ue_context, pdn_connection_t * pdn_conn_pP);
 extern pdn_context_t * mme_app_handle_pdn_connectivity_from_s10(ue_context_t *ue_context, pdn_connection_t * pdn_connection);
 
 //------------------------------------------------------------------------------
@@ -279,8 +277,8 @@ mme_app_handle_conn_est_cnf (
   pdn_context_t * established_pdn = NULL;
   RB_FOREACH (established_pdn, PdnContexts, &ue_context->pdn_contexts) {
     DevAssert(established_pdn);
-    bearer_context_t * bc_session = NULL;
-    RB_FOREACH (bc_session, SessionBearers, &established_pdn->session_bearers) { // todo: @ handover (idle mode tau) this should give us the default ebi!
+    bearer_context_new_t * bc_session = NULL;
+    LIST_FOREACH(bc_session, established_pdn->session_bearers, entries) { // todo: @ handover (idle mode tau) this should give us the default ebi!
       if(bc_session){ // todo: check for error cases in handover.. if this can ever be null..
 //        if ((BEARER_STATE_SGW_CREATED  || BEARER_STATE_S1_RELEASED) & bc_session->bearer_state) {    /**< It could be in IDLE mode. */
           establishment_cnf_p->e_rab_id[establishment_cnf_p->no_of_e_rabs]                                 = bc_session->ebi ;//+ EPS_BEARER_IDENTITY_FIRST;
@@ -726,7 +724,7 @@ mme_app_handle_nas_erab_setup_req (itti_nas_erab_setup_req_t * const itti_nas_er
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
 
-  bearer_context_t* bearer_context = NULL;
+  bearer_context_new_t* bearer_context = NULL;
   mme_app_get_session_bearer_context_from_all(ue_context, itti_nas_erab_setup_req->ebi, &bearer_context);
 
   if (bearer_context) {
@@ -807,7 +805,7 @@ mme_app_handle_nas_erab_modify_req (itti_nas_erab_modify_req_t * const itti_nas_
   mme_app_s11_proc_update_bearer_t * s11_proc_update_bearer = mme_app_get_s11_procedure_update_bearer(ue_context);
   DevAssert(s11_proc_update_bearer);
 
-  bearer_context_t* bearer_context = NULL;
+  bearer_context_new_t* bearer_context = NULL;
   mme_app_get_session_bearer_context_from_all(ue_context, itti_nas_erab_modify_req->ebi, &bearer_context);
 
   if (bearer_context) {
@@ -1122,7 +1120,7 @@ mme_app_handle_modify_bearer_resp (
 {
   struct ue_context_s                    *ue_context       = NULL;
   struct pdn_context_s                   *pdn_context      = NULL;
-  bearer_context_t                       *current_bearer_p = NULL;
+  bearer_context_new_t                   *current_bearer_p = NULL;
   MessageDef                             *message_p = NULL;
   int16_t                                 bearer_id =5;
   int                                     rc = RETURNok;
@@ -1150,8 +1148,8 @@ mme_app_handle_modify_bearer_resp (
     if(modify_bearer_resp_pP->internal_flags & INTERNAL_FLAG_X2_HANDOVER){
       OAILOG_ERROR(LOG_MME_APP, "Error modifying SAE-GW bearers for UE with ueId: " MME_UE_S1AP_ID_FMT " (no implicit detach - waiting explicit detach.). \n", ue_context->mme_ue_s1ap_id);
       /** Remove any idles bearers for all the PDNs. */
-      pdn_context_t    * pdn_context = NULL;
-      bearer_context_t * pBearerCtx  = NULL;
+      pdn_context_t    		* pdn_context = NULL;
+      bearer_context_new_t  * pBearerCtx  = NULL;
       /** Set all FTEIDs, also those not in the list to 0. */
       mme_app_send_s1ap_path_switch_request_failure(ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, ue_context->sctp_assoc_id_key, S1ap_Cause_PR_misc);
       /** We continue with the implicit detach, since handover already happened. */
@@ -1182,8 +1180,8 @@ mme_app_handle_modify_bearer_resp (
    * Remove any idles bearers, also in the case of (S10) S1 handover.
    * The PDN Connectivity element would always be more or equal than the actual number of established bearers.
    */
-  bearer_context_t * bc_to_act = NULL;
-  RB_FOREACH (bc_to_act, SessionBearers, &pdn_context->session_bearers) {
+  bearer_context_new_t * bc_to_act = NULL;
+  LIST_FOREACH (bc_to_act, pdn_context->session_bearers, entries) {
     DevAssert(bc_to_act);
     // todo: should be in lock.
     if(bc_to_act->bearer_state & BEARER_STATE_ENB_CREATED)
@@ -1194,7 +1192,7 @@ mme_app_handle_modify_bearer_resp (
   pdn_context = NULL;
   RB_FOREACH (pdn_context, PdnContexts, &ue_context->pdn_contexts) {
     DevAssert(pdn_context);
-    bearer_context_t * first_bearer = RB_MIN(SessionBearers, &pdn_context->session_bearers);
+    bearer_context_new_t * first_bearer = LIST_FIRST(pdn_context->session_bearers);
     DevAssert(first_bearer);
     // todo: here check, that it is not a deactivated bearer..
     if(first_bearer->bearer_state & BEARER_STATE_ACTIVE){
@@ -1254,7 +1252,7 @@ mme_app_handle_modify_bearer_resp (
   ebi_list_t ebi_list;
   memset(&ebi_list, 0, sizeof(ebi_list_t));
   RB_FOREACH (pdn_context, PdnContexts, &ue_context->pdn_contexts) {
-    RB_FOREACH (current_bearer_p, SessionBearers, &pdn_context->session_bearers) {
+    LIST_FOREACH (current_bearer_p, pdn_context->session_bearers, entries) {
       if((!(current_bearer_p->bearer_state & BEARER_STATE_ENB_CREATED)) && !current_bearer_p->enb_fteid_s1u.teid){
     	/** Check that it is not a default bearer. */
     	if(current_bearer_p->ebi == pdn_context->default_ebi){
@@ -1431,12 +1429,6 @@ mme_app_handle_initial_context_setup_rsp (
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
 
-//  if(ue_context->came_from_tau){
-//    OAILOG_DEBUG (LOG_MME_APP, "Sleeping @ MME_APP_INITIAL_CONTEXT_SETUP_RSP from S1AP\n");
-//    sleep(1);
-//    OAILOG_DEBUG (LOG_MME_APP, "After sleeping @ MME_APP_INITIAL_CONTEXT_SETUP_RSP from S1AP\n");
-//  }
-
   // Stop Initial context setup process guard timer,if running
   if (ue_context->initial_context_setup_rsp_timer.id != MME_APP_TIMER_INACTIVE_ID) {
     if (timer_remove(ue_context->initial_context_setup_rsp_timer.id, NULL)) {
@@ -1535,7 +1527,7 @@ mme_app_handle_s11_create_bearer_req (
   MessageDef                               *message_p   = NULL;
   struct ue_context_s                      *ue_context  = NULL;
   struct pdn_context_s                     *pdn_context = NULL;
-  bearer_context_t                         *default_bc  = NULL;
+  bearer_context_new_t                     *default_bc  = NULL;
   emm_data_context_t 					   *emm_context = NULL;
 
   OAILOG_FUNC_IN (LOG_MME_APP);
@@ -1567,7 +1559,7 @@ mme_app_handle_s11_create_bearer_req (
     mme_app_send_s11_create_bearer_rsp(ue_context, (uintptr_t)create_bearer_request_pP->trxn, REQUEST_REJECTED, create_bearer_request_pP->bearer_contexts);
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
-  bearer_context_t * bc_ded = NULL;
+  bearer_context_new_t * bc_ded = NULL;
   /** Check that the remaining bearers are not existing. */
   for(int num_bc = 0; num_bc < create_bearer_request_pP->bearer_contexts->num_bearer_context ; num_bc++){
     mme_app_get_session_bearer_context_from_all(ue_context, create_bearer_request_pP->bearer_contexts->bearer_contexts[num_bc].eps_bearer_id, &bc_ded);
@@ -1635,7 +1627,7 @@ mme_app_handle_s11_create_bearer_req (
 	  DevAssert(registered_pdn_ctx);
 // 		  if(registered_pdn_ctx->session_bearers)
 	  /** The number of bearers will be incremented in the method. S10 should just pick the ebi. */
-	  bearer_context_t * bc_session = mme_app_get_session_bearer_context(registered_pdn_ctx, registered_pdn_ctx->default_ebi);
+	  bearer_context_new_t * bc_session = mme_app_get_session_bearer_context(registered_pdn_ctx, registered_pdn_ctx->default_ebi);
 	  if(!(bc_session->bearer_state & BEARER_STATE_ACTIVE)) {
 		  OAILOG_WARNING(LOG_MME_APP, "Bearer %d for UE " MME_UE_S1AP_ID_FMT" is in state %d. Not processing dedicated bearer requests until "
 				  "session establishment has been completed successfully. \n", bc_session->ebi, ue_context->mme_ue_s1ap_id, bc_session->bearer_state);
@@ -1705,7 +1697,7 @@ mme_app_handle_s11_update_bearer_req (
   pdn_cid_t cid = 0;
   /** No default EBI will be sent. Need to check all dedicated EBIs. */
   for(int num_bearer = 0; num_bearer < update_bearer_request_pP->bearer_contexts->num_bearer_context; num_bearer++){
-    bearer_context_t * ded_bc = NULL;
+	  bearer_context_new_t * ded_bc = NULL;
     mme_app_get_session_bearer_context_from_all(ue_context, update_bearer_request_pP->bearer_contexts->bearer_contexts[num_bearer].eps_bearer_id, &ded_bc);
     if(!ded_bc || ded_bc->esm_ebr_context.status != ESM_EBR_ACTIVE){ /**< Status is active if it is idle TAU. */
       MSC_LOG_RX_DISCARDED_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 UPDATE_BEARER_REQUEST local S11 teid " TEID_FMT " ",
@@ -1799,7 +1791,7 @@ mme_app_handle_s11_update_bearer_req (
 	  DevAssert(registered_pdn_ctx);
 // 		  if(registered_pdn_ctx->session_bearers)
 	  /** The number of bearers will be incremented in the method. S10 should just pick the ebi. */
-	  bearer_context_t * bc_session = mme_app_get_session_bearer_context(registered_pdn_ctx, registered_pdn_ctx->default_ebi);
+	  bearer_context_new_t * bc_session = mme_app_get_session_bearer_context(registered_pdn_ctx, registered_pdn_ctx->default_ebi);
 	  if(!(bc_session->bearer_state & BEARER_STATE_ACTIVE)) {
 		  OAILOG_WARNING(LOG_MME_APP, "Bearer %d for UE " MME_UE_S1AP_ID_FMT" is in state %d. Not processing dedicated bearer requests until "
 				  "session establishment has been completed successfully. \n", bc_session->ebi, ue_context->mme_ue_s1ap_id, bc_session->bearer_state);
@@ -1925,7 +1917,7 @@ mme_app_handle_s11_delete_bearer_req (
 	  DevAssert(registered_pdn_ctx);
 // 		  if(registered_pdn_ctx->session_bearers)
 	  /** The number of bearers will be incremented in the method. S10 should just pick the ebi. */
-	  bearer_context_t * bc_session = mme_app_get_session_bearer_context(registered_pdn_ctx, registered_pdn_ctx->default_ebi);
+	  bearer_context_new_t * bc_session = mme_app_get_session_bearer_context(registered_pdn_ctx, registered_pdn_ctx->default_ebi);
 	  if(!(bc_session->bearer_state & BEARER_STATE_ACTIVE)) {
 		  OAILOG_WARNING(LOG_MME_APP, "Bearer %d for UE " MME_UE_S1AP_ID_FMT" is in state %d. Not processing dedicated bearer requests until "
 				  "session establishment has been completed successfully. \n", bc_session->ebi, ue_context->mme_ue_s1ap_id, bc_session->bearer_state);
@@ -2023,7 +2015,7 @@ void mme_app_handle_e_rab_setup_rsp (itti_s1ap_e_rab_setup_rsp_t  * const e_rab_
       /** Received a single bearer, check if it is the default ebi. */
       if(e_rab_setup_rsp->e_rab_setup_list.no_of_items){
         ebi_t ebi_success = e_rab_setup_rsp->e_rab_setup_list.item[0].e_rab_id;
-        bearer_context_t * bc_success = NULL;
+        bearer_context_new_t * bc_success = NULL;
         mme_app_get_session_bearer_context_from_all(ue_context, ebi_success, &bc_success);
         /** Check if it is a default ebi. */
         if(bc_success && bc_success->linked_ebi == bc_success->ebi){
@@ -2034,7 +2026,7 @@ void mme_app_handle_e_rab_setup_rsp (itti_s1ap_e_rab_setup_rsp_t  * const e_rab_
         }
       }else{
         ebi_t ebi_failed = e_rab_setup_rsp->e_rab_failed_to_setup_list.item[0].e_rab_id;
-        bearer_context_t * bc_failed = NULL;
+        bearer_context_new_t * bc_failed = NULL;
         mme_app_get_session_bearer_context_from_all(ue_context, ebi_failed, &bc_failed);
         if(bc_failed && bc_failed->linked_ebi == bc_failed->ebi){
           /** Returned a response for a failed bearer establishment for a pdn creation. */
@@ -2084,7 +2076,7 @@ static void mme_app_handle_e_rab_setup_rsp_dedicated_bearer(const itti_s1ap_e_ra
 
   for (int i = 0; i < e_rab_setup_rsp->e_rab_setup_list.no_of_items; i++) {
     e_rab_id_t e_rab_id = e_rab_setup_rsp->e_rab_setup_list.item[i].e_rab_id;
-    bearer_context_t * bc_success = NULL;
+    bearer_context_new_t * bc_success = NULL;
     bearer_context_to_be_created_t * bc_tbc = NULL;
     for(int num_bc = 0; num_bc < s11_proc_create_bearer->bcs_tbc->num_bearer_context; num_bc ++){
       if(s11_proc_create_bearer->bcs_tbc->bearer_contexts[num_bc].eps_bearer_id == e_rab_id){
@@ -2147,7 +2139,7 @@ static void mme_app_handle_e_rab_setup_rsp_dedicated_bearer(const itti_s1ap_e_ra
   /** Iterate through the failed bearers. */
   for (int i = 0; i < e_rab_setup_rsp->e_rab_failed_to_setup_list.no_of_items; i++) {
     e_rab_id_t e_rab_id = e_rab_setup_rsp->e_rab_failed_to_setup_list.item[i].e_rab_id;
-    bearer_context_t * bc_failed = NULL;
+    bearer_context_new_t * bc_failed = NULL;
     bearer_context_to_be_created_t* bc_tbc = NULL;
     for(int num_bc = 0; num_bc < s11_proc_create_bearer->bcs_tbc->num_bearer_context; num_bc ++){
       if(s11_proc_create_bearer->bcs_tbc->bearer_contexts[num_bc].eps_bearer_id == e_rab_id){
@@ -2217,7 +2209,7 @@ static void mme_app_handle_e_rab_setup_rsp_pdn_connectivity(const mme_ue_s1ap_id
   }
 
   if(e_rab_setup_item) {
-    bearer_context_t * bc_success = NULL;
+	  bearer_context_new_t * bc_success = NULL;
     pdn_context_t * pdn_context   = NULL;
     mme_app_get_session_bearer_context_from_all(ue_context, (ebi_t) e_rab_setup_item->e_rab_id, &bc_success);
     if(bc_success){
@@ -2258,7 +2250,7 @@ static void mme_app_handle_e_rab_setup_rsp_pdn_connectivity(const mme_ue_s1ap_id
     }
   }else {
     /** Failed to establish the default bearer. */
-    bearer_context_t * bc_failed = NULL;
+	  bearer_context_new_t * bc_failed = NULL;
     mme_app_get_session_bearer_context_from_all(ue_context, failed_ebi, &bc_failed);
     if(bc_failed){
       pdn_cid = bc_failed->pdn_cx_id;
@@ -2330,7 +2322,7 @@ void mme_app_handle_e_rab_modify_rsp (itti_s1ap_e_rab_modify_rsp_t  * const e_ra
   /** Handle the bearer contexts for multi-APN and dedicated bearer cases. */
   for (int i = 0; i < e_rab_modify_rsp->e_rab_modify_list.no_of_items; i++) {
     e_rab_id_t e_rab_id = e_rab_modify_rsp->e_rab_modify_list.item[i].e_rab_id;
-    bearer_context_t * bc_success = NULL;
+    bearer_context_new_t * bc_success = NULL;
     bearer_context_to_be_updated_t * bc_tbu = NULL;
     for(int num_bc = 0; num_bc < s11_proc_update_bearer->bcs_tbu->num_bearer_context; num_bc ++){
       if(s11_proc_update_bearer->bcs_tbu->bearer_contexts[num_bc].eps_bearer_id == e_rab_id){
@@ -2380,7 +2372,7 @@ void mme_app_handle_e_rab_modify_rsp (itti_s1ap_e_rab_modify_rsp_t  * const e_ra
   /** Iterate through the failed bearers. */
   for (int i = 0; i < e_rab_modify_rsp->e_rab_failed_to_modify_list.no_of_items; i++) {
     e_rab_id_t e_rab_id = e_rab_modify_rsp->e_rab_failed_to_modify_list.item[i].e_rab_id;
-    bearer_context_t * bc_failed = NULL;
+    bearer_context_new_t * bc_failed = NULL;
     bearer_context_to_be_updated_t * bc_tbu = NULL;
     for(int num_bc = 0; num_bc < s11_proc_update_bearer->bcs_tbu->num_bearer_context; num_bc ++){
       if(s11_proc_update_bearer->bcs_tbu->bearer_contexts[num_bc].eps_bearer_id == e_rab_id){
@@ -2657,7 +2649,7 @@ void mme_app_handle_modify_eps_bearer_ctx_cnf (itti_nas_modify_eps_bearer_ctx_cn
   OAILOG_FUNC_IN (LOG_MME_APP);
   struct ue_context_s                 *ue_context = NULL;
   struct pdn_context_s                *pdn_context = NULL;
-  struct bearer_context_s             *bearer_context = NULL;
+  struct bearer_context_new_s         *bearer_context = NULL;
   MessageDef                          *message_p = NULL;
 
   ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, modify_eps_bearer_ctx_cnf->ue_id);
@@ -2847,7 +2839,7 @@ void mme_app_handle_deactivate_eps_bearer_ctx_cnf (itti_nas_deactivate_eps_beare
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
   /** Check if the bearer context exists as a session bearer. */
-  bearer_context_t * bc = NULL;
+  bearer_context_new_t * bc = NULL;
   mme_app_get_session_bearer_context_from_all(ue_context, deactivate_eps_bearer_ctx_cnf->ded_ebi, &bc);
   DevAssert(!bc);
 
@@ -2885,7 +2877,7 @@ void mme_app_send_s1ap_path_switch_request_acknowledge(mme_ue_s1ap_id_t mme_ue_s
     uint16_t encryption_algorithm_capabilities, uint16_t integrity_algorithm_capabilities,
     bearer_contexts_to_be_created_t * bcs_tbc){
   MessageDef * message_p = NULL;
-  bearer_context_t                       *current_bearer_p = NULL;
+  bearer_context_new_t                   *current_bearer_p = NULL;
   ebi_t                                   bearer_id = 0;
   ue_context_t                           *ue_context = NULL;
   emm_data_context_t                     *ue_nas_ctx = NULL;

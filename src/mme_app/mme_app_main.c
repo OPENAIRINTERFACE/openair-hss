@@ -537,6 +537,11 @@ int mme_app_init (const mme_config_t * mme_config_p)
   if (mme_app_edns_init(mme_config_p)) {
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
+
+  /** Initialize the next free one as the first element in the list. */
+  mme_app_desc.free_bp = &mme_app_desc.ue_bearer_pool[0];
+  mme_app_desc.free_bp->next_free_bp = &mme_app_desc.ue_bearer_pool[1];
+
   /*
    * Create the thread associated with MME applicative layer
    */

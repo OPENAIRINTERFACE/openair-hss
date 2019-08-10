@@ -484,7 +484,7 @@ static esm_cause_t _modify_eps_bearer_context_t3486_handler (nas_esm_proc_t * es
     mme_app_get_pdn_context(esm_base_proc->ue_id, esm_proc_bearer_context->pdn_cid,
         esm_proc_bearer_context->linked_ebi, NULL , &pdn_context);
     if(pdn_context){
-      bearer_context_t * bearer_context = mme_app_get_session_bearer_context(pdn_context, esm_proc_bearer_context->bearer_ebi);
+      bearer_context_new_t * bearer_context = mme_app_get_session_bearer_context(pdn_context, esm_proc_bearer_context->bearer_ebi);
       if(bearer_context){
         /* Resend the message and restart the timer. */
         EpsQualityOfService eps_qos = {0};

@@ -153,20 +153,13 @@ ue_context_t *mme_create_new_ue_context (void)
 
 //  new_p->ue_radio_cap_length = 0;
   new_p->s1_ue_context_release_cause = S1AP_INVALID_CAUSE;
-  RB_INIT(&new_p->pdn_contexts);
 
-  /*
-   * Get 11 new bearers from the bearer pool.
-   * They might or might not be pre-allocated.
-   */
-  for(uint8_t ebi = 5; ebi < 5 + MAX_NUM_BEARERS_UE -1; ebi++) {
-    /** Insert 11 new bearers. */
-    bearer_context_t * bearer_ctx_p = mme_app_new_bearer();
-    DevAssert (bearer_ctx_p != NULL);
-    bearer_ctx_p->ebi = ebi;
-//    OAILOG_DEBUG(LOG_MME_APP, "Created new bearer with ebi %d and address %p. Put into bearer pool for UE id  " MME_UE_S1AP_ID_FMT ".\n",
-//    		bearer_ctx_p->ebi, bearer_ctx_p, new_p->mme_ue_s1ap_id);
-    RB_INSERT (BearerPool, &(new_p->bearer_pool), bearer_ctx_p);
+  /** Lock the mme_desc and try to get a new bearer pool. */
+  new_p->ue_bearer_pool = get_new_bearer_pool();
+  if(!new_p->ue_bearer_pool){
+	   OAILOG_ERROR (LOG_MME_APP, "No free bearer pool could be received. Cannot create UE " MME_UE_S1AP_ID_FMT ". \n");
+	   free_wrapper(&new_p);
+	   OAILOG_FUNC_RETURN (LOG_MME_APP, new_p);
   }
   OAILOG_FUNC_RETURN (LOG_MME_APP, new_p);
 }
@@ -253,46 +246,8 @@ void mme_app_ue_context_free_content (ue_context_t * const ue_context)
 
   DevAssert(RB_EMPTY(&ue_context->pdn_contexts));
 
-  if(!RB_EMPTY(&ue_context->bearer_pool)){
-    /** Assert that 10 Bearers exist. Put them all back to the pool. */
-    for (int i = 0; i < BEARERS_PER_UE - 1; i++) {
-      bearer_context_t * bearer_context = RB_MAX(BearerPool, &ue_context->bearer_pool);
-      if(bearer_context){
-        OAILOG_DEBUG(LOG_MME_APP, "Freeing bearer context %p with ebi %d (i=%d) of UE "MME_UE_S1AP_ID_FMT ". \n",
-            bearer_context, bearer_context->ebi, i, ue_context->mme_ue_s1ap_id);
-        DevAssert(bearer_context);
-        /** Remove from the UE list. */
-        bearer_context = RB_REMOVE(BearerPool, &ue_context->bearer_pool, bearer_context);
-        DevAssert(bearer_context);
-        mme_app_free_bearer_context(&bearer_context);
-      } else{
-        OAILOG_DEBUG(LOG_MME_APP, "Could not find MAX bearer context for (i=%d) of UE "MME_UE_S1AP_ID_FMT ". Removing all. \n",
-            i, ue_context->mme_ue_s1ap_id);
-        break;
-      }
-    }
-    while(!RB_EMPTY(&ue_context->bearer_pool)){
-      bearer_context_t * bearer_context = NULL;
-      RB_FOREACH (bearer_context, BearerPool, &ue_context->bearer_pool) {
-        if(bearer_context)
-          break;
-      }
-      if(bearer_context){
-        OAILOG_ERROR(LOG_MME_APP, "Freeing bearer context %p with ebi %d of UE "MME_UE_S1AP_ID_FMT " (second try). \n",
-            bearer_context, bearer_context->ebi, ue_context->mme_ue_s1ap_id);
-        DevAssert(bearer_context);
-        /** Remove from the UE list. */
-        bearer_context = RB_REMOVE(BearerPool, &ue_context->bearer_pool, bearer_context);
-        DevAssert(bearer_context);
-        mme_app_free_bearer_context(&bearer_context);
-      }else {
-        DevAssert(RB_EMPTY(&ue_context->bearer_pool));
-      }
-    }
-    OAILOG_DEBUG(LOG_MME_APP, "All bearers removed of UE "MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
-    RB_INIT(&ue_context->bearer_pool);
-  }
-
+  /** Just put the UE bearer pool back. */
+  release_bearer_pool(&ue_context->ue_bearer_pool);
   // todo: unlock?
   memset(ue_context, 0, sizeof(*ue_context));
 }
@@ -1085,7 +1040,7 @@ void mme_app_dump_protocol_configuration_options (const protocol_configuration_o
 }
 
 //------------------------------------------------------------------------------
-void mme_app_dump_bearer_context (const bearer_context_t * const bc, uint8_t indent_spaces, bstring bstr_dump)
+void mme_app_dump_bearer_context (const bearer_context_new_t * const bc, uint8_t indent_spaces, bstring bstr_dump)
 {
   bformata (bstr_dump, "%*s - Bearer id .......: %02u\n", indent_spaces, " ", bc->ebi);
   if (bc->s_gw_fteid_s1u.ipv4) {
@@ -1197,8 +1152,8 @@ void mme_app_dump_pdn_context (const struct ue_context_s *const ue_context,
     bformata (bstr_dump, "%*s - Bearer List:\n");
 
     /** Set all bearers of the EBI to valid. */
-    bearer_context_t * bc_to_dump = NULL;
-    RB_FOREACH (bc_to_dump, SessionBearers, &pdn_context->session_bearers) {
+    bearer_context_new_t * bc_to_dump = NULL;
+    LIST_FOREACH(bc_to_dump, pdn_context->session_bearers, entries) {
       AssertFatal(bc_to_dump, "Mismatch in configuration bearer context NULL\n");
       bformata (bstr_dump, "%*s - Bearer item ----------------------------\n");
       mme_app_dump_bearer_context(bc_to_dump, indent_spaces + 4, bstr_dump);
@@ -2375,7 +2330,7 @@ pdn_context_t * mme_app_handle_pdn_connectivity_from_s10(ue_context_t *ue_contex
      * Create bearer contexts in the PDN context, only for dedicated bearers.
      * Since no activation in the ESM is necessary, set them as active.
      */
-    bearer_context_t * bearer_context_registered = NULL;
+    bearer_context_new_t * bearer_context_registered = NULL;
     esm_cause_t esm_cause = ESM_CAUSE_SUCCESS;
     if(bearer_context_to_be_created_s10->eps_bearer_id != pdn_context->default_ebi){
       esm_cause = mme_app_register_dedicated_bearer_context(ue_context->mme_ue_s1ap_id, ESM_EBR_ACTIVE, pdn_context->context_identifier,
