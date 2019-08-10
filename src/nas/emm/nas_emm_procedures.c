@@ -57,6 +57,7 @@
 #include "nas_message.h"
 #include "as_message.h"
 #include "mme_app_ue_context.h"
+#include "mme_app_session_context.h"
 #include "networkDef.h"
 #include "mme_api.h"
 #include "mme_config.h"

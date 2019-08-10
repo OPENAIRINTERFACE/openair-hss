@@ -64,7 +64,7 @@
 #include "3gpp_24.008.h"
 #include "3gpp_29.274.h"
 #include "3gpp_36.401.h"
-#include "mme_app_ue_context.h"
+#include "mme_app_session_context.h"
 #include "common_defs.h"
 #include "mme_api.h"
 #include "mme_app_apn_selection.h"
@@ -416,11 +416,11 @@ void esm_proc_pdn_connectivity_failure (mme_ue_s1ap_id_t ue_id, nas_esm_proc_pdn
 	  _esm_proc_free_pdn_connectivity_procedure(&esm_proc_pdn_connectivity);
 	  OAILOG_FUNC_OUT(LOG_NAS_ESM);
   } else {
-	  ue_context_t        * ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, ue_id);
+	  ue_session_pool_t	  * ue_session_pool = mme_ue_session_pool_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_session_pools, ue_id);
 	  pdn_context_t       * pdn_context = NULL;
 
-	  if(!ue_context){
-		  OAILOG_WARNING(LOG_MME_APP, "No UE context could be found for UE: " MME_UE_S1AP_ID_FMT " to release ESM contexts. \n", ue_id);
+	  if(!ue_session_pool){
+		  OAILOG_WARNING(LOG_MME_APP, "No UE session pool could be found for UE: " MME_UE_S1AP_ID_FMT " to release ESM contexts. \n", ue_id);
 		  OAILOG_FUNC_OUT(LOG_MME_APP);
 	  }
 
@@ -428,11 +428,10 @@ void esm_proc_pdn_connectivity_failure (mme_ue_s1ap_id_t ue_id, nas_esm_proc_pdn
 	   * Trigger all S11 messages, wihtouth removing the context.
 	   * Todo: check what happens, if the transactions stay but s11 tunnel is removed.
 	   */
-	  RB_FOREACH (pdn_context, PdnContexts, &ue_context->pdn_contexts) {
+	  RB_FOREACH (pdn_context, PdnContexts, &ue_session_pool->pdn_contexts) {
 		  DevAssert(pdn_context);
 		  // todo: check this!
-		  bool deleteTunnel = (RB_MIN(PdnContexts, &ue_context->pdn_contexts)== pdn_context);
-
+		  bool deleteTunnel = (RB_MIN(PdnContexts, &ue_session_pool->pdn_contexts)== pdn_context);
 		  /*
 	       * Trigger an S11 Delete Session Request to the SAE-GW.
 	       * No need to process the response.
@@ -491,7 +490,7 @@ esm_proc_pdn_config_res(mme_ue_s1ap_id_t ue_id, bool * is_attach, pti_t * pti, i
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, ESM_CAUSE_NETWORK_FAILURE);
     }
     /** Check if there are any PDN contexts. */
-    esm_cause_t esm_cause = mme_app_update_pdn_context(ue_id, subscription_data, active_ebrs);
+    esm_cause_t esm_cause = mme_app_update_pdn_context(ue_id, imsi64, subscription_data, active_ebrs);
     if(esm_cause == ESM_CAUSE_PDN_CONNECTION_DOES_NOT_EXIST){
     	/**
     	 * Trigger a new ESM procedure and handle.

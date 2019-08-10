@@ -29,7 +29,6 @@
 #ifndef FILE_MME_APP_BEARER_CONTEXT_SEEN
 #define FILE_MME_APP_BEARER_CONTEXT_SEEN
 
-bstring bearer_state2string(const mme_app_bearer_state_t bearer_state);
 
 /** Create & deallocate a bearer context. Will also initialize the bearer contexts. */
 void clear_bearer_context(ue_session_pool_t * ue_session_pool, bearer_context_new_t * bc);
@@ -38,6 +37,12 @@ void clear_bearer_context(ue_session_pool_t * ue_session_pool, bearer_context_ne
 bearer_context_new_t* mme_app_get_session_bearer_context(pdn_context_t * const pdn_context, const ebi_t ebi);
 
 void mme_app_get_free_bearer_context(ue_session_pool_t * const ue_sp, const ebi_t ebi, bearer_context_new_t** bc_pp);
+
+/*
+ * Receive Bearer Context VOs to send in CSR/Handover Request, etc..
+ * Will set bearer state, unless it is null.
+ */
+void mme_app_get_bearer_contexts_to_be_created(pdn_context_t * pdn_context, bearer_contexts_to_be_created_t *bc_tbc, mme_app_bearer_state_t bc_state);
 
 // todo_: combine these two methods
 void mme_app_get_session_bearer_context_from_all(ue_session_pool_t * const ue_session_pool, const ebi_t ebi, bearer_context_new_t ** bc_pp);

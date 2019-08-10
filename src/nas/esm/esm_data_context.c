@@ -55,7 +55,7 @@
 
 #include "common_defs.h"
 
-#include "mme_app_ue_context.h"
+#include "mme_app_session_context.h"
 #include "mme_config.h"
 
 #include "emm_data.h"

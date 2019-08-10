@@ -58,22 +58,6 @@ static esm_cause_t
 mme_app_esm_bearer_context_finalize_tft(mme_ue_s1ap_id_t ue_id, bearer_context_new_t * bearer_context, traffic_flow_template_t * tft);
 
 //------------------------------------------------------------------------------
-bstring bearer_state2string(const mme_app_bearer_state_t bearer_state)
-{
-  bstring bsstr = NULL;
-  if  (BEARER_STATE_NULL == bearer_state) {
-    bsstr = bfromcstr("BEARER_STATE_NULL");
-    return bsstr;
-  }
-  bsstr = bfromcstr(" ");
-  if  (BEARER_STATE_SGW_CREATED & bearer_state) bcatcstr(bsstr, "SGW_CREATED ");
-  if  (BEARER_STATE_MME_CREATED & bearer_state) bcatcstr(bsstr, "MME_CREATED ");
-  if  (BEARER_STATE_ENB_CREATED & bearer_state) bcatcstr(bsstr, "ENB_CREATED ");
-  if  (BEARER_STATE_ACTIVE & bearer_state) bcatcstr(bsstr, "ACTIVE");
-  return bsstr;
-}
-
-//------------------------------------------------------------------------------
 void clear_bearer_context(ue_session_pool_t * ue_session_pool, bearer_context_new_t * bc) {
 	/*
 	 * Release all session bearers of the PDN context back into the UE pool.
@@ -412,7 +396,7 @@ mme_app_release_bearers(const mme_ue_s1ap_id_t mme_ue_s1ap_id, e_rab_list_t * e_
     OAILOG_WARNING(LOG_MME_APP, "No EBI list has been received for ue_id " MME_UE_S1AP_ID_FMT ". Setting all bearers to released. \n", mme_ue_s1ap_id);
     /** Traverse all lists. */
 	pdn_context_t     	  * pdn_context = NULL, * pdn_context_safe = NULL;
-    RB_FOREACH_SAFE(pdn_context, PdnContexts, &ue_context->pdn_contexts, pdn_context_safe) { /**< Use the safe iterator. */
+    RB_FOREACH_SAFE(pdn_context, PdnContexts, &ue_session_pool->pdn_contexts, pdn_context_safe) { /**< Use the safe iterator. */
     	bearer_context_new_t *bc_new = NULL, *bc_new_safe = NULL;
 		LIST_FOREACH_SAFE(bc_new, pdn_context->session_bearers, entries, bc_new_safe) {
 			// todo: better error handling
@@ -545,7 +529,7 @@ mme_app_esm_modify_bearer_context(mme_ue_s1ap_id_t ue_id, const ebi_t ebi, ebi_l
   if(bearer_level_qos){
     if(validateEpsQosParameter(bearer_level_qos->qci, bearer_level_qos->pvi, bearer_level_qos->pci, bearer_level_qos->pl,
         bearer_level_qos->gbr.br_dl, bearer_level_qos->gbr.br_ul, bearer_level_qos->mbr.br_dl, bearer_level_qos->mbr.br_ul) == RETURNerror){
-      OAILOG_ERROR(LOG_MME_APP, "EMMCN-SAP  - " "EPS bearer context of UBR received for UE " MME_UE_S1AP_ID_FMT" could not be verified due erroneous EPS QoS.\n", ue_context->mme_ue_s1ap_id);
+      OAILOG_ERROR(LOG_MME_APP, "EMMCN-SAP  - " "EPS bearer context of UBR received for UE " MME_UE_S1AP_ID_FMT" could not be verified due erroneous EPS QoS.\n", ue_session_pool->mme_ue_s1ap_id);
       OAILOG_FUNC_RETURN (LOG_MME_APP, ESM_CAUSE_EPS_QOS_NOT_ACCEPTED);
     }
   }
@@ -745,7 +729,7 @@ mme_app_release_bearer_context(mme_ue_s1ap_id_t ue_id, const pdn_cid_t *pdn_cid,
    */
   // no timers to stop, no DSR to be sent..
   /** Initialize the new bearer context. Nothing needs to be done in the ESM layer. */
-  clear_bearer_context(ue_session_pool->ue_bearer_pool, bearer_context);
+  clear_bearer_context(ue_session_pool, bearer_context);
   OAILOG_INFO(LOG_MME_APP, "Successfully deregistered the bearer context with ebi %d from PDN id %u and for ue_id " MME_UE_S1AP_ID_FMT "\n",
       bearer_context->ebi, bearer_context->pdn_cx_id, ue_id);
   // TODO: UNLOCK_UE_SESSION_POOL!

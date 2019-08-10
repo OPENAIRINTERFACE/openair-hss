@@ -54,6 +54,7 @@
 #include "3gpp_29.274.h"
 
 #include "mme_app_ue_context.h"
+#include "mme_app_session_context.h"
 #include "esm_msg.h"
 #include "esm_proc.h"
 #include "nas_itti_messaging.h"

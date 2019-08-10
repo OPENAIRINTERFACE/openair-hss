@@ -61,6 +61,24 @@
 
 //------------------------------------------------------------------------------
 static void clear_session_pool(ue_session_pool_t * ue_session_pool) {
+	/** Release the procedures. */
+	if (ue_session_pool->s11_procedures) {
+		mme_app_delete_s11_procedures(ue_session_pool);
+	}
+
+	/** Free the ESM procedures. */
+	if(ue_session_pool->esm_procedures.pdn_connectivity_procedures){
+		OAILOG_WARNING(LOG_MME_APP, "ESM PDN Connectivity procedures still exist for UE "MME_UE_S1AP_ID_FMT ". \n", ue_session_pool->mme_ue_s1ap_id);
+	    mme_app_nas_esm_free_pdn_connectivity_procedures(ue_session_pool);
+	}
+
+	if(ue_session_pool->esm_procedures.bearer_context_procedures){
+		OAILOG_WARNING(LOG_MME_APP, "ESM Bearer Context procedures still exist for UE "MME_UE_S1AP_ID_FMT ". \n", ue_session_pool->mme_ue_s1ap_id);
+	    mme_app_nas_esm_free_bearer_context_procedures(ue_session_pool);
+	}
+
+	DevAssert(RB_EMPTY(&ue_session_pool->pdn_contexts));
+
 	/** No need to check if list is full, since it is stacked. Just clear the allocations in each session context. */
 	LIST_INIT(ue_session_pool->free_bearers);
 	for(int num_bearer = 0; num_bearer < MAX_NUM_BEARERS_UE; num_bearer++) {
@@ -282,10 +300,10 @@ mme_app_pdn_process_session_creation(mme_ue_s1ap_id_t ue_id, imsi64_t imsi, mm_s
     		    * Rejecting the handover or the S10 part of the idle TAU (continue with initial-TAU).
     		    */
     		   if(pdn_context->subscribed_apn_ambr.br_dl && pdn_context->subscribed_apn_ambr.br_ul){
-        		   OAILOG_WARNING(LOG_MME_APP, "Using the PDN-AMBR (br_dl=%d, br_ul=%d) from handover for APN (apn_subscribed=\"%s\", ctx_id=%d) exceeds UE AMBR for UE " MME_UE_S1AP_ID_FMT " with IMSI "IMSI_64_FMT ". "
+        		   OAILOG_WARNING(LOG_MME_APP, "Using the PDN-AMBR (br_dl=%d, br_ul=%d) from handover for APN (apn_subscribed=\"%s\", ctx_id=%d) exceeds UE AMBR for UE " MME_UE_S1AP_ID_FMT "."
         				   "Rejecting the PDN connectivity for the inter-MME mobility procedure. \n",
 						   pdn_context->subscribed_apn_ambr.br_dl, pdn_context->subscribed_apn_ambr.br_ul,
-						   bdata(pdn_context->apn_subscribed), pdn_context->context_identifier, ue_id, ue_context->imsi);
+						   bdata(pdn_context->apn_subscribed), pdn_context->context_identifier, ue_id);
         		   // todo: no ESM proc exists.
     		   } else {
         		   OAILOG_ERROR(LOG_MME_APP, "Requested PDN (apn_subscribed=\"%s\", ctx_id=%d) exceeds UE AMBR for UE " MME_UE_S1AP_ID_FMT " with IMSI "IMSI_64_FMT ". "
@@ -370,6 +388,33 @@ mme_app_pdn_process_session_creation(mme_ue_s1ap_id_t ue_id, imsi64_t imsi, mm_s
 }
 
 //------------------------------------------------------------------------------
+ambr_t mme_app_total_p_gw_apn_ambr(ue_session_pool_t *ue_session_pool){
+  pdn_context_t * registered_pdn_ctx = NULL;
+  ambr_t apn_ambr_sum= {0, 0};
+  RB_FOREACH (registered_pdn_ctx, PdnContexts, &ue_session_pool->pdn_contexts) {
+    DevAssert(registered_pdn_ctx);
+    apn_ambr_sum.br_dl += registered_pdn_ctx->subscribed_apn_ambr.br_dl;
+    apn_ambr_sum.br_ul += registered_pdn_ctx->subscribed_apn_ambr.br_ul;
+  }
+  return apn_ambr_sum;
+}
+
+//------------------------------------------------------------------------------
+ambr_t mme_app_total_p_gw_apn_ambr_rest(ue_session_pool_t *ue_session_pool, pdn_cid_t pci){
+  /** Get the total APN AMBR excluding the given PCI. */
+  pdn_context_t * registered_pdn_ctx = NULL;
+  ambr_t apn_ambr_sum= {0, 0};
+  RB_FOREACH (registered_pdn_ctx, PdnContexts, &ue_session_pool->pdn_contexts) {
+    DevAssert(registered_pdn_ctx);
+    if(registered_pdn_ctx->context_identifier == pci)
+      continue;
+    apn_ambr_sum.br_dl += registered_pdn_ctx->subscribed_apn_ambr.br_dl;
+    apn_ambr_sum.br_ul += registered_pdn_ctx->subscribed_apn_ambr.br_ul;
+  }
+  return apn_ambr_sum;
+}
+
+//------------------------------------------------------------------------------
 void mme_app_ue_session_pool_s1_release_enb_informations(mme_ue_s1ap_id_t ue_id)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
@@ -378,9 +423,8 @@ void mme_app_ue_session_pool_s1_release_enb_informations(mme_ue_s1ap_id_t ue_id)
   // LOCK UE_SESSION
   pdn_context_t * registered_pdn_ctx = NULL;
   /** Update all bearers and get the pdn context id. */
-  RB_FOREACH (registered_pdn_ctx, PdnContexts, &ue_ue_session_pool->pdn_contexts) {
+  RB_FOREACH (registered_pdn_ctx, PdnContexts, &ue_session_pool->pdn_contexts) {
     DevAssert(registered_pdn_ctx);
-
     /*
      * Get the first PDN whose bearers are not established yet.
      * Do the MBR just one PDN at a time.

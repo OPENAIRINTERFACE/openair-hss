@@ -32,8 +32,6 @@
 #include "nas_message.h"
 #include "as_message.h"
 #include "esm_proc.h"
-// todo: find a better place for this
-#include "mme_app_esm_procedures.h"
 #include "intertask_interface_types.h"
 
 int

@@ -64,6 +64,7 @@
 #include "3gpp_29.274.h"
 
 #include "mme_app_ue_context.h"
+#include "mme_app_session_context.h"
 #include "emm_data.h"
 #include "emm_proc.h"
 #include "emm_cause.h"

@@ -47,6 +47,7 @@
 #include "mme_config.h"
 #include "mme_app_extern.h"
 #include "mme_app_ue_context.h"
+#include "mme_app_session_context.h"
 #include "mme_app_defs.h"
 #include "mme_app_apn_selection.h"
 #include "mme_app_pdn_context.h"
@@ -166,7 +167,7 @@ void mme_app_send_s11_delete_bearer_cmd(teid_t local_teid, teid_t saegw_s11_teid
 }
 
 //------------------------------------------------------------------------------
-int mme_app_send_s11_release_access_bearers_req (struct ue_context_s *const ue_context)
+int mme_app_send_s11_release_access_bearers_req (struct ue_session_pool_s * const ue_session_pool)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
   /*
@@ -176,29 +177,23 @@ int mme_app_send_s11_release_access_bearers_req (struct ue_context_s *const ue_c
   itti_s11_release_access_bearers_request_t         *release_access_bearers_request_p = NULL;
   pdn_context_t                                     *pdn_context = NULL;
   int                                                rc = RETURNok;
-
-  DevAssert (ue_context );
-
-  pdn_context = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
+  DevAssert (ue_session_pool);
+  pdn_context = RB_MIN(PdnContexts, &ue_session_pool->pdn_contexts);
   if(!pdn_context){
-    OAILOG_ERROR (LOG_MME_APP, "NO PDN Context for UE with Id " MME_UE_S1AP_ID_FMT " and imsi " IMSI_64_FMT "\n", ue_context->mme_ue_s1ap_id, ue_context->imsi);
+    OAILOG_ERROR (LOG_MME_APP, "NO PDN Context for UE with Id " MME_UE_S1AP_ID_FMT ". \n", ue_session_pool->mme_ue_s1ap_id);
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
-
-//  DevAssert(pdn_context);
 
   message_p = itti_alloc_new_message (TASK_MME_APP, S11_RELEASE_ACCESS_BEARERS_REQUEST);
   release_access_bearers_request_p = &message_p->ittiMsg.s11_release_access_bearers_request;
   memset ((void*)release_access_bearers_request_p, 0, sizeof (itti_s11_release_access_bearers_request_t));
 
   /** Sending one RAB for all PDNs also in the specification. */
-  release_access_bearers_request_p->local_teid = ue_context->mme_teid_s11;
+  release_access_bearers_request_p->local_teid = ue_session_pool->mme_teid_s11;
   release_access_bearers_request_p->teid = pdn_context->s_gw_teid_s11_s4;
   memcpy((void*)&release_access_bearers_request_p->edns_peer_ip, (struct sockaddr *)&pdn_context->s_gw_addr_s11_s4,
   ((struct sockaddr *)&pdn_context->s_gw_addr_s11_s4)->sa_family == AF_INET ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
-
   release_access_bearers_request_p->originating_node = NODE_TYPE_MME;
-
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 S11_RELEASE_ACCESS_BEARERS_REQUEST teid %u", release_access_bearers_request_p->teid);
   rc = itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
@@ -737,9 +732,10 @@ void notify_s1ap_new_ue_mme_s1ap_id_association (const sctp_assoc_id_t   assoc_i
 //------------------------------------------------------------------------------
 int
 mme_app_send_s11_create_bearer_rsp (
-  struct ue_context_s *const ue_context,
-  void                *trxn,
-  gtpv2c_cause_value_t cause_value,
+  teid_t						   mme_teid_s11,
+  teid_t						   s_gw_teid_s11_s4,
+  gtpv2c_cause_value_t 			   cause_value,
+  void                		      *trxn,
   bearer_contexts_to_be_created_t *bcs_tbc)
 {
   /*
@@ -752,15 +748,12 @@ mme_app_send_s11_create_bearer_rsp (
   // todo: handover flag in operation-identifier?!
 
   OAILOG_FUNC_IN (LOG_MME_APP);
-  DevAssert (ue_context);
   DevAssert(bcs_tbc);
-
-  OAILOG_DEBUG (LOG_MME_APP, "Sending Create Bearer Response for imsi " IMSI_64_FMT "\n", ue_context->imsi);
 
   message_p = itti_alloc_new_message (TASK_MME_APP, S11_CREATE_BEARER_RESPONSE);
   AssertFatal (message_p , "itti_alloc_new_message Failed");
   itti_s11_create_bearer_response_t *s11_create_bearer_response = &message_p->ittiMsg.s11_create_bearer_response;
-  s11_create_bearer_response->local_teid = ue_context->mme_teid_s11;
+  s11_create_bearer_response->local_teid = mme_teid_s11;
   s11_create_bearer_response->trxn = trxn;
   s11_create_bearer_response->cause.cause_value = 0;
 
@@ -794,7 +787,7 @@ mme_app_send_s11_create_bearer_rsp (
         &bcs_tbc->bearer_contexts[num_bc].s1u_sgw_fteid, sizeof(bcs_tbc->bearer_contexts[num_bc].s1u_sgw_fteid));       ///< This IE shall be sent on the S11 interface. It shall be used
     s11_create_bearer_response->bearer_contexts.num_bearer_context++;
   }
-  s11_create_bearer_response->teid = pdn_context->s_gw_teid_s11_s4;
+  s11_create_bearer_response->teid = s_gw_teid_s11_s4;
 ////  ////  mme_config_read_lock (&mme_config);
 ////////  session_request_p->peer_ip = mme_config.ipv4.sgw_s11;
 ////////  mme_config_unlock (&mme_config);
@@ -814,9 +807,10 @@ mme_app_send_s11_create_bearer_rsp (
 //------------------------------------------------------------------------------
 int
 mme_app_send_s11_update_bearer_rsp (
-  struct ue_context_s *const ue_context,
-  gtpv2c_cause_value_t extra_cause,
-  void                *trxn,
+  teid_t						   mme_teid_s11,
+  teid_t						   s_gw_teid_s11_s4,
+  gtpv2c_cause_value_t 			   extra_cause,
+  void                 			  *trxn,
   bearer_contexts_to_be_updated_t *bcs_tbu)
 {
   /*
@@ -828,15 +822,12 @@ mme_app_send_s11_update_bearer_rsp (
 
   // todo: handover flag in operation-identifier?!
   OAILOG_FUNC_IN (LOG_MME_APP);
-  DevAssert (ue_context);
   DevAssert(bcs_tbu);
-
-  OAILOG_DEBUG (LOG_MME_APP, "Sending Update Bearer Response for imsi " IMSI_64_FMT "\n", ue_context->imsi);
 
   message_p = itti_alloc_new_message (TASK_MME_APP, S11_UPDATE_BEARER_RESPONSE);
   AssertFatal (message_p , "itti_alloc_new_message Failed");
   itti_s11_update_bearer_response_t *s11_update_bearer_response = &message_p->ittiMsg.s11_update_bearer_response;
-  s11_update_bearer_response->local_teid = ue_context->mme_teid_s11;
+  s11_update_bearer_response->local_teid = mme_teid_s11;
   s11_update_bearer_response->trxn = trxn;
   s11_update_bearer_response->cause.cause_value = 0;
   // todo: pco, uli
@@ -853,8 +844,8 @@ mme_app_send_s11_update_bearer_rsp (
       if(!s11_update_bearer_response->cause.cause_value)
         s11_update_bearer_response->cause.cause_value = REQUEST_REJECTED;
     }
-    OAILOG_DEBUG (LOG_MME_APP, "Bearer with ebi %d updated with result code %d for ueId " MME_UE_S1AP_ID_FMT ". New UBResp cause value %d. \n",
-        bcs_tbu->bearer_contexts[num_bc].eps_bearer_id, bcs_tbu->bearer_contexts[num_bc].cause, ue_context->mme_ue_s1ap_id, s11_update_bearer_response->cause.cause_value);
+    OAILOG_DEBUG (LOG_MME_APP, "Bearer with ebi %d updated with result code %d. New UBResp cause value %d. \n",
+        bcs_tbu->bearer_contexts[num_bc].eps_bearer_id, bcs_tbu->bearer_contexts[num_bc].cause, s11_update_bearer_response->cause.cause_value);
 
     /** The error case is at least PARTIALLY ACCEPTED. */
     s11_update_bearer_response->bearer_contexts.bearer_contexts[num_bc].eps_bearer_id     = bcs_tbu->bearer_contexts[num_bc].eps_bearer_id;
@@ -863,7 +854,7 @@ mme_app_send_s11_update_bearer_rsp (
     /** No FTEIDs to be set. */
     s11_update_bearer_response->bearer_contexts.num_bearer_context++;
   }
-  s11_update_bearer_response->teid = pdn_context->s_gw_teid_s11_s4;
+  s11_update_bearer_response->teid = s_gw_teid_s11_s4;
   if(extra_cause)
 	  s11_update_bearer_response->cause.cause_value = extra_cause;
 ////  ////  mme_config_read_lock (&mme_config);
@@ -885,34 +876,27 @@ mme_app_send_s11_update_bearer_rsp (
 //------------------------------------------------------------------------------
 int
 mme_app_send_s11_delete_bearer_rsp (
-  struct ue_context_s *const ue_context,
-  gtpv2c_cause_value_t cause_value,
-  void                *trxn,
-  ebi_list_t          *ebi_list)
+  teid_t						   	mme_teid_s11,
+  teid_t						    s_gw_teid_s11_s4,
+  gtpv2c_cause_value_t 				cause_value,
+  void                			   *trxn,
+  ebi_list_t          			   *ebi_list)
 {
   /*
    * Keep the identifier to the default APN.
    */
   MessageDef                             *message_p = NULL;
   int                                     rc = RETURNok;
-
   // todo: handover flag in operation-identifier?!
-
   OAILOG_FUNC_IN (LOG_MME_APP);
-  DevAssert (ue_context);
   DevAssert(ebi_list);
-
-  if(cause_value == 0){
-    OAILOG_DEBUG (LOG_MME_APP, "No cause value is set for sending Bearer Response for imsi " IMSI_64_FMT ". Setting to REJECT. \n", ue_context->imsi);
+  if(cause_value == 0)
     cause_value = REQUEST_REJECTED;
-  }
-
-  OAILOG_DEBUG (LOG_MME_APP, "Sending Delete Bearer Response for imsi " IMSI_64_FMT "\n", ue_context->imsi);
 
   message_p = itti_alloc_new_message (TASK_MME_APP, S11_DELETE_BEARER_RESPONSE);
   AssertFatal (message_p , "itti_alloc_new_message Failed");
   itti_s11_delete_bearer_response_t *s11_delete_bearer_response = &message_p->ittiMsg.s11_delete_bearer_response;
-  s11_delete_bearer_response->local_teid = ue_context->mme_teid_s11;
+  s11_delete_bearer_response->local_teid = mme_teid_s11;
   s11_delete_bearer_response->trxn = trxn;
   s11_delete_bearer_response->cause.cause_value = cause_value;
   /** Not setting the default ebi. */
@@ -924,7 +908,7 @@ mme_app_send_s11_delete_bearer_rsp (
     s11_delete_bearer_response->bearer_contexts.bearer_contexts[num_ebi].eps_bearer_id  = ebi_list->ebis[num_ebi];
     s11_delete_bearer_response->bearer_contexts.num_bearer_context++;
   }
-  s11_delete_bearer_response->teid = pdn_context->s_gw_teid_s11_s4;
+  s11_delete_bearer_response->teid = s_gw_teid_s11_s4;
 ////  ////  mme_config_read_lock (&mme_config);
 ////////  session_request_p->peer_ip = mme_config.ipv4.sgw_s11;
 ////////  mme_config_unlock (&mme_config);
@@ -1001,7 +985,7 @@ void mme_app_itti_nas_pdn_connectivity_response(mme_ue_s1ap_id_t ue_id, const eb
 }
 
 //------------------------------------------------------------------------------
-void mme_app_itti_forward_relocation_response(ue_context_t *ue_context, mme_app_s10_proc_mme_handover_t *s10_handover_proc, bstring target_to_source_container){
+void mme_app_itti_forward_relocation_response(ue_context_t *ue_context, struct PdnContexts * pdn_contexts, mme_app_s10_proc_mme_handover_t *s10_handover_proc, bstring target_to_source_container){
 
   MessageDef                             *message_p = NULL;
   int                                     rc = RETURNok;
@@ -1032,7 +1016,7 @@ void mme_app_itti_forward_relocation_response(ue_context_t *ue_context, mme_app_
   forward_relocation_response_p->cause.cause_value = REQUEST_ACCEPTED;
   /** Set all bearers. */
   pdn_context_t * registered_pdn_ctx = NULL;
-  RB_FOREACH (registered_pdn_ctx, PdnContexts, &ue_context->pdn_contexts) {
+  RB_FOREACH (registered_pdn_ctx, PdnContexts, pdn_contexts) {
     if(!registered_pdn_ctx)
     	continue;
     bearer_context_new_t *bearer_context_setup = NULL;
@@ -1084,7 +1068,6 @@ void mme_app_itti_forward_relocation_response(ue_context_t *ue_context, mme_app_
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 
-
 //------------------------------------------------------------------------------
 /**
  * Send an S10 Forward Relocation response with error cause.
@@ -1108,15 +1091,10 @@ void mme_app_send_s10_forward_relocation_response_err(teid_t mme_source_s10_teid
   forward_relocation_response_p->teid = mme_source_s10_teid;
   /** Set the IPv4 address of the source MME. */
   memcpy((void*)&forward_relocation_response_p->peer_ip, mme_source_ip_address, mme_source_ip_address->sa_family == AF_INET ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
-
   forward_relocation_response_p->cause.cause_value = gtpv2cCause;
   forward_relocation_response_p->trxn  = trxn;
-
-  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S10_MME, NULL, 0, "MME_APP Sending S10 FORWARD_RELOCATION_RESPONSE_ERR to source TEID " TEID_FMT ". \n", mme_source_s10_teid);
-
   /** Sending a message to S10. */
   itti_send_msg_to_task (TASK_S10, INSTANCE_DEFAULT, message_p);
-
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 

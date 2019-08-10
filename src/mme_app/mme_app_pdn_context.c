@@ -57,13 +57,13 @@
 /*******************  L O C A L    D E F I N I T I O N S  *******************/
 /****************************************************************************/
 
-static void mme_app_delete_pdn_context(ue_session_pool_t * const ue_session_pool, pdn_context_t ** pdn_context_pp);
 static void mme_app_free_pdn_context (pdn_context_t ** const pdn_context);
 
 //------------------------------------------------------------------------------
-void mme_app_get_pdn_context (ue_session_pool_t * ue_session_pool, pdn_cid_t const context_id, ebi_t const default_ebi, bstring const apn_subscribed, pdn_context_t **pdn_ctx)
+void mme_app_get_pdn_context (mme_ue_s1ap_id_t ue_id, pdn_cid_t const context_id, ebi_t const default_ebi, bstring const apn_subscribed, pdn_context_t **pdn_ctx)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
+  ue_session_pool_t * ue_session_pool =  mme_ue_session_pool_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_session_pools, ue_id);
   if(!ue_session_pool){
     OAILOG_ERROR (LOG_MME_APP, "No UE session pool could be found for UE: " MME_UE_S1AP_ID_FMT ". \n", ue_id);
     OAILOG_FUNC_OUT(LOG_MME_APP);
@@ -77,7 +77,7 @@ void mme_app_get_pdn_context (ue_session_pool_t * ue_session_pool, pdn_cid_t con
   }
   if(apn_subscribed){
     /** Could not find the PDN context, search again using the APN. */
-    RB_FOREACH (pdn_ctx_p, PdnContexts, &ue_context->pdn_contexts) {
+    RB_FOREACH (pdn_ctx_p, PdnContexts, &ue_session_pool->pdn_contexts) {
       DevAssert(pdn_ctx_p);
       if(apn_subscribed){
         if(!bstricmp (pdn_ctx_p->apn_subscribed, apn_subscribed)){
@@ -93,76 +93,14 @@ void mme_app_get_pdn_context (ue_session_pool_t * ue_session_pool, pdn_cid_t con
   OAILOG_FUNC_OUT(LOG_MME_APP);
 }
 
-/*
- * Method to generate bearer contexts to be created.
- */
-//------------------------------------------------------------------------------
-void mme_app_get_bearer_contexts_to_be_created(pdn_context_t * pdn_context, bearer_contexts_to_be_created_t *bc_tbc, mme_app_bearer_state_t bc_state){
-
-  OAILOG_FUNC_IN (LOG_MME_APP);
-
-  bearer_context_new_t * bearer_context_to_setup  = NULL;
-
-  LIST_FOREACH (bearer_context_to_setup, pdn_context->session_bearers, entries) {
-    DevAssert(bearer_context_to_setup);
-    /*
-     * Set the bearer of the pdn context to establish.
-     * Set regardless of GBR/NON-GBR QCI the MBR/GBR values.
-     * They are already set to zero if non-gbr in the registration of the bearer contexts.
-     */
-    /** EBI. */
-    bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].eps_bearer_id              = bearer_context_to_setup->ebi;
-    /**
-     * MBR/GBR values (setting indep. of QCI level).
-     * Dividing by 1000 happens later in S11/S10 only.
-     */
-    bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].bearer_level_qos.gbr.br_ul = bearer_context_to_setup->bearer_level_qos.gbr.br_ul;
-    bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].bearer_level_qos.gbr.br_dl = bearer_context_to_setup->bearer_level_qos.gbr.br_dl;
-    bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].bearer_level_qos.mbr.br_ul = bearer_context_to_setup->bearer_level_qos.mbr.br_ul;
-    bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].bearer_level_qos.mbr.br_dl = bearer_context_to_setup->bearer_level_qos.mbr.br_dl;
-    /** QCI. */
-    bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].bearer_level_qos.qci       = bearer_context_to_setup->bearer_level_qos.qci;
-    bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].bearer_level_qos.pvi       = bearer_context_to_setup->bearer_level_qos.pvi;
-    bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].bearer_level_qos.pci       = bearer_context_to_setup->bearer_level_qos.pci;
-    bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].bearer_level_qos.pl        = bearer_context_to_setup->bearer_level_qos.pl;
-    /** Set the S1U SAE-GW FTEID. */
-    bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].s1u_sgw_fteid.ipv4                = bearer_context_to_setup->s_gw_fteid_s1u.ipv4;
-    bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].s1u_sgw_fteid.interface_type      = bearer_context_to_setup->s_gw_fteid_s1u.interface_type;
-    bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].s1u_sgw_fteid.ipv4_address.s_addr = bearer_context_to_setup->s_gw_fteid_s1u.ipv4_address.s_addr;
-    bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].s1u_sgw_fteid.teid                = bearer_context_to_setup->s_gw_fteid_s1u.teid;
-    // todo: ipv6, other interfaces!
-
-    /**
-     * TFTs (method used for S11 CSReq).
-     */
-    /** Set the TFT. */
-    if(bearer_context_to_setup->esm_ebr_context.tft){
-      DevAssert(!bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].tft);
-      bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].tft = (traffic_flow_template_t*)calloc(1, sizeof(traffic_flow_template_t));
-      copy_traffic_flow_template(bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].tft, bearer_context_to_setup->esm_ebr_context.tft);
-    }
-
-    bc_tbc->num_bearer_context++;
-    /*
-     * Update the bearer state.
-     * Setting the bearer state as MME_CREATED when successful CSResp is received and as ACTIVE after successful MBResp is received!!
-     */
-    if(bc_state != BEARER_STATE_NULL){
-      bearer_context_to_setup->bearer_state   |= bc_state;
-    }
-  }
-  OAILOG_FUNC_OUT(LOG_MME_APP);
-}
-
 //------------------------------------------------------------------------------
 int
 mme_app_esm_create_pdn_context(mme_ue_s1ap_id_t ue_id, const ebi_t linked_ebi, const apn_configuration_t *apn_configuration, const bstring apn_subscribed,  pdn_cid_t pdn_cid, const ambr_t * const apn_ambr, pdn_type_t pdn_type, pdn_context_t **pdn_context_pp)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
 
-  ue_session_pool_t   * ue_session_pool = mme_ue_session_pool_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_session_pool, ue_id);
-
-  if(!*ue_session_pool){
+  ue_session_pool_t   * ue_session_pool = mme_ue_session_pool_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_session_pools, ue_id);
+  if(!ue_session_pool){
 	  /** No UE session pool exists: should be created when the UE is created. */
 	  OAILOG_ERROR (LOG_MME_APP, "No UE session pool for UE: " MME_UE_S1AP_ID_FMT ". "
 			  "Cannot create a new pdn context for APN \"%s\" and cid=%d. \n",
@@ -276,10 +214,10 @@ mme_app_esm_create_pdn_context(mme_ue_s1ap_id_t ue_id, const ebi_t linked_ebi, c
 
 //------------------------------------------------------------------------------
 esm_cause_t
-mme_app_update_pdn_context(mme_ue_s1ap_id_t ue_id, const subscription_data_t * const subscription_data, eps_bearer_context_status_t * const bc_status){
+mme_app_update_pdn_context(mme_ue_s1ap_id_t ue_id, imsi64_t imsi, const subscription_data_t * const subscription_data, eps_bearer_context_status_t * const bc_status){
   OAILOG_FUNC_IN (LOG_MME_APP);
 
-  ue_session_pool_t   * ue_session_pool   = mme_ue_session_pool_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_session_pool, ue_id);
+  ue_session_pool_t   * ue_session_pool   = mme_ue_session_pool_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_session_pools, ue_id);
   pdn_context_t 	  * pdn_context 	  = NULL, * pdn_context_safe = NULL;
   apn_configuration_t * apn_configuration = NULL;
 
@@ -300,7 +238,7 @@ mme_app_update_pdn_context(mme_ue_s1ap_id_t ue_id, const subscription_data_t * c
     RB_FOREACH_SAFE(pdn_context, PdnContexts, &ue_session_pool->pdn_contexts, pdn_context_safe) { /**< Use the safe iterator. */
       /** Remove the pdn context. */
       changed = false;
-      mme_app_select_apn(ue_context->imsi, pdn_context->apn_subscribed, &apn_configuration);
+      mme_app_select_apn(imsi, pdn_context->apn_subscribed, &apn_configuration);
       if(apn_configuration){
         /**
          * We found an APN configuration. Updating it. Might traverse the list new.
@@ -325,9 +263,8 @@ mme_app_update_pdn_context(mme_ue_s1ap_id_t ue_id, const subscription_data_t * c
           if(!pdn_context->subscribed_apn_ambr.br_ul)
             pdn_context->subscribed_apn_ambr.br_ul = apn_configuration->ambr.br_ul;
 
-          DevAssert(!RB_INSERT (PdnContexts, &ue_context->pdn_contexts, pdn_context));
+          DevAssert(!RB_INSERT (PdnContexts, &ue_session_pool->pdn_contexts, pdn_context));
         }
-
         if(changed)
           break; /**< Start from beginning. */
         /** Nothing changed, continue processing the elements. */
@@ -338,9 +275,7 @@ mme_app_update_pdn_context(mme_ue_s1ap_id_t ue_id, const subscription_data_t * c
          * Set in the flags, that it should not be signaled back to the EMM layer. Might not need to traverse the list new.
          */
         OAILOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - " "PDN context for APN \"%s\" could not be found in subscription profile for UE "
-            "with ue_id " MME_UE_S1AP_ID_FMT " and IMSI " IMSI_64_FMT ". Triggering deactivation of PDN context. \n",
-            bdata(pdn_context->apn_subscribed), ue_id, ue_context->imsi);
-
+            "with ue_id " MME_UE_S1AP_ID_FMT ". Triggering deactivation of PDN context. \n", bdata(pdn_context->apn_subscribed), ue_id);
         /** Set the flag for the delete tunnel. */
         bool deleteTunnel = (RB_MIN(PdnContexts, &ue_session_pool->pdn_contexts)== pdn_context);
         nas_itti_pdn_disconnect_req(ue_id, pdn_context->default_ebi, PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED, deleteTunnel, false,
@@ -378,35 +313,7 @@ mme_app_update_pdn_context(mme_ue_s1ap_id_t ue_id, const subscription_data_t * c
 }
 
 //------------------------------------------------------------------------------
-void
-mme_app_esm_delete_pdn_context(mme_ue_s1ap_id_t ue_id, bstring apn, pdn_cid_t pdn_cid, ebi_t linked_ebi){
-  OAILOG_FUNC_IN (LOG_MME_APP);
-  ue_session_pool_t   * ue_session_pool = mme_ue_session_pool_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_session_pool, ue_id);
-  pdn_context_t       * pdn_context = NULL;
-
-  if(!ue_session_pool){
-    OAILOG_WARNING(LOG_MME_APP, "No MME_APP UE session pool could be found for UE: " MME_UE_S1AP_ID_FMT " to release \"%s\". \n",
-    		ue_id, bdata(apn));
-    OAILOG_FUNC_OUT(LOG_MME_APP);
-  }
-  mme_app_get_pdn_context(ue_id, pdn_cid, linked_ebi, apn, &pdn_context);
-  if (!pdn_context) {
-    OAILOG_WARNING(LOG_NAS_ESM, "ESM-PROC  - PDN connection for cid=%d and ebi=%d and APN \"%s\" has not been allocated for UE "MME_UE_S1AP_ID_FMT". \n", pdn_cid, linked_ebi, bdata(apn), ue_id);
-    OAILOG_FUNC_OUT(LOG_MME_APP);
-  }
-  //  LOCK_UE_CONTEXT(ue_context);
-  mme_app_delete_pdn_context(ue_session_pool, &pdn_context);
-  // UNLOCK_UE_CONTEXT
-  MSC_LOG_EVENT (MSC_NAS_ESM_MME, "0 Create PDN cid %u APN %s", (*pdn_context_pp)->context_identifier, (*pdn_context_pp)->apn_in_use);
-  OAILOG_FUNC_OUT(LOG_MME_APP);
-}
-
-/****************************************************************************/
-/*********************  L O C A L    F U N C T I O N S  *********************/
-/****************************************************************************/
-
-//------------------------------------------------------------------------------
-static void mme_app_delete_pdn_context(ue_session_pool_t * const ue_session_pool, pdn_context_t ** pdn_context_pp){
+void mme_app_delete_pdn_context(ue_session_pool_t * const ue_session_pool, pdn_context_t ** pdn_context_pp){
   OAILOG_FUNC_IN (LOG_MME_APP);
 
   if(!(*pdn_context_pp)){
@@ -457,6 +364,35 @@ static void mme_app_delete_pdn_context(ue_session_pool_t * const ue_session_pool
   /** Insert the PDN context into the map of PDN contexts. */
   OAILOG_FUNC_OUT(LOG_MME_APP);
 }
+
+//------------------------------------------------------------------------------
+void
+mme_app_esm_delete_pdn_context(mme_ue_s1ap_id_t ue_id, bstring apn, pdn_cid_t pdn_cid, ebi_t linked_ebi){
+  OAILOG_FUNC_IN (LOG_MME_APP);
+  ue_session_pool_t   * ue_session_pool = mme_ue_session_pool_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_session_pools, ue_id);
+  pdn_context_t       * pdn_context = NULL;
+
+  if(!ue_session_pool){
+    OAILOG_WARNING(LOG_MME_APP, "No MME_APP UE session pool could be found for UE: " MME_UE_S1AP_ID_FMT " to release \"%s\". \n",
+    		ue_id, bdata(apn));
+    OAILOG_FUNC_OUT(LOG_MME_APP);
+  }
+  mme_app_get_pdn_context(ue_id, pdn_cid, linked_ebi, apn, &pdn_context);
+  if (!pdn_context) {
+    OAILOG_WARNING(LOG_NAS_ESM, "ESM-PROC  - PDN connection for cid=%d and ebi=%d and APN \"%s\" has not been allocated for UE "MME_UE_S1AP_ID_FMT". \n",
+    		pdn_cid, linked_ebi, bdata(apn), ue_id);
+    OAILOG_FUNC_OUT(LOG_MME_APP);
+  }
+  //  LOCK_UE_CONTEXT(ue_context);
+  mme_app_delete_pdn_context(ue_session_pool, &pdn_context);
+  // UNLOCK_UE_CONTEXT
+  MSC_LOG_EVENT (MSC_NAS_ESM_MME, "0 Create PDN cid %u APN %s", (*pdn_context_pp)->context_identifier, (*pdn_context_pp)->apn_in_use);
+  OAILOG_FUNC_OUT(LOG_MME_APP);
+}
+
+/****************************************************************************/
+/*********************  L O C A L    F U N C T I O N S  *********************/
+/****************************************************************************/
 
 //------------------------------------------------------------------------------
 static void mme_app_free_pdn_context (pdn_context_t ** const pdn_context)

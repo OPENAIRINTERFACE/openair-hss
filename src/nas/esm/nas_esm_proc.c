@@ -48,7 +48,7 @@
 #include "msc.h"
 #include "s6a_defs.h"
 #include "dynamic_memory_check.h"
-#include "mme_app_ue_context.h"
+#include "mme_app_session_context.h"
 #include "mme_app_defs.h"
 #include "esm_main.h"
 #include "esm_cause.h"

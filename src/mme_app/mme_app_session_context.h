@@ -196,7 +196,7 @@ typedef struct pdn_context_s {
    * Lists per APN, to keep bearer contexts and UE/EMM context separated.
    * We will store the bearers with the linked ebi, because the context id may change with S10 handovers.
    */
-  LIST_HEAD(session_bearers_s, bearer_context_new_s) *session_bearers[MAX_NUM_BEARERS_UE];
+  LIST_HEAD(session_bearers_s, bearer_context_new_s) *session_bearers;
 
   /* S-GW IP address for Control-Plane */
   union {
@@ -216,6 +216,7 @@ typedef struct pdn_context_s {
  */
 typedef struct ue_session_pool_s {
 	mme_ue_s1ap_id_t		mme_ue_s1ap_id;
+	teid_t					mme_teid_s11;
 
 	bearer_context_new_t 	bcs_ue[MAX_NUM_BEARERS_UE];
 	pdn_context_t 			pdn_ue[MAX_APN_PER_UE];
@@ -268,13 +269,13 @@ int mme_app_pdn_process_session_creation(mme_ue_s1ap_id_t ue_id, imsi64_t imsi, 
 ue_session_pool_t *mme_ue_session_pool_exists_mme_ue_s1ap_id(mme_ue_session_pool_t * const mme_ue_context,
     const mme_ue_s1ap_id_t mme_ue_s1ap_id);
 
-ebi_t mme_app_get_free_bearer_id(ue_context_t * const ue_context);
+ebi_t mme_app_get_free_bearer_id(ue_session_pool_t * const ue_session_pool);
 
 void mme_app_ue_session_pool_s1_release_enb_informations(mme_ue_s1ap_id_t ue_id);
 
-ambr_t mme_app_total_p_gw_apn_ambr(ue_context_t *ue_context);
+ambr_t mme_app_total_p_gw_apn_ambr(ue_session_pool_t *ue_session_pool);
 
-ambr_t mme_app_total_p_gw_apn_ambr_rest(ue_context_t *ue_context, pdn_cid_t pci);
+ambr_t mme_app_total_p_gw_apn_ambr_rest(ue_session_pool_t *ue_session_pool, pdn_cid_t pci);
 
 #endif /* FILE_MME_APP_UE_CONTEXT_SEEN */
 

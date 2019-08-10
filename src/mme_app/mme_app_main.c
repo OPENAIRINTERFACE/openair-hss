@@ -538,8 +538,8 @@ int mme_app_init (const mme_config_t * mme_config_p)
   }
 
   /** Initialize the next free one as the first element in the list. */
-  mme_app_desc.free_bp = &mme_app_desc.ue_bearer_pool[0];
-  mme_app_desc.free_bp->next_free_bp = &mme_app_desc.ue_bearer_pool[1];
+  mme_app_desc.free_sp = &mme_app_desc.ue_session_pool[0];
+  mme_app_desc.free_sp->next_free_sp = &mme_app_desc.ue_session_pool[1];
 
   /*
    * Create the thread associated with MME applicative layer

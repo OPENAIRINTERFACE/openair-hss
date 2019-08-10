@@ -459,22 +459,8 @@ int s1ap_generate_s1ap_e_rab_setup_req (itti_s1ap_e_rab_setup_req_t * const e_ra
   uint8_t                                *buffer_p = NULL;
   uint32_t                                length = 0;
   MessagesIds                             message_id = MESSAGES_ID_MAX;
-  void                                   *id = NULL;
-  const enb_ue_s1ap_id_t                  enb_ue_s1ap_id = e_rab_setup_req->enb_ue_s1ap_id;
   const mme_ue_s1ap_id_t                  ue_id       = e_rab_setup_req->mme_ue_s1ap_id;
-
-  hashtable_ts_get (&g_s1ap_mme_id2assoc_id_coll, (const hash_key_t)ue_id, (void **)&id);
-  if (id) {
-    sctp_assoc_id_t sctp_assoc_id = (sctp_assoc_id_t)(uintptr_t)id;
-    enb_description_t  *enb_ref = s1ap_is_enb_assoc_id_in_list (sctp_assoc_id);
-    if (enb_ref) {
-      ue_ref = s1ap_is_ue_enb_id_in_list (enb_ref,enb_ue_s1ap_id);
-    }
-  }
-  // TODO remove soon:
-  if (!ue_ref) {
-    ue_ref = s1ap_is_ue_mme_id_in_list (ue_id);
-  }
+  ue_ref = s1ap_is_ue_mme_id_in_list (ue_id);
   // finally!
   if (!ue_ref) {
     /*
@@ -605,21 +591,10 @@ int s1ap_generate_s1ap_e_rab_modify_req (itti_s1ap_e_rab_modify_req_t * const e_
   MessagesIds                             message_id = MESSAGES_ID_MAX;
   uint32_t                                length = 0;
   void                                   *id = NULL;
-  const enb_ue_s1ap_id_t                  enb_ue_s1ap_id = e_rab_modify_req->enb_ue_s1ap_id;
-  const mme_ue_s1ap_id_t                  ue_id       = e_rab_modify_req->mme_ue_s1ap_id;
+  const mme_ue_s1ap_id_t                  ue_id       	 = e_rab_modify_req->mme_ue_s1ap_id;
 
   hashtable_ts_get (&g_s1ap_mme_id2assoc_id_coll, (const hash_key_t)ue_id, (void **)&id);
-  if (id) {
-    sctp_assoc_id_t sctp_assoc_id = (sctp_assoc_id_t)(uintptr_t)id;
-    enb_description_t  *enb_ref = s1ap_is_enb_assoc_id_in_list (sctp_assoc_id);
-    if (enb_ref) {
-      ue_ref = s1ap_is_ue_enb_id_in_list (enb_ref,enb_ue_s1ap_id);
-    }
-  }
-  // TODO remove soon:
-  if (!ue_ref) {
-    ue_ref = s1ap_is_ue_mme_id_in_list (ue_id);
-  }
+  ue_ref = s1ap_is_ue_mme_id_in_list (ue_id);
   // finally!
   if (!ue_ref) {
     /*
@@ -738,18 +713,8 @@ int s1ap_generate_s1ap_e_rab_release_req (itti_s1ap_e_rab_release_req_t * const 
   uint32_t                                length = 0;
   MessagesIds                             message_id = MESSAGES_ID_MAX;
   void                                   *id = NULL;
-  const enb_ue_s1ap_id_t                  enb_ue_s1ap_id = e_rab_release_req->enb_ue_s1ap_id;
   const mme_ue_s1ap_id_t                  ue_id       = e_rab_release_req->mme_ue_s1ap_id;
-
-  hashtable_ts_get (&g_s1ap_mme_id2assoc_id_coll, (const hash_key_t)ue_id, (void **)&id);
-  if (id) {
-    sctp_assoc_id_t sctp_assoc_id = (sctp_assoc_id_t)(uintptr_t)id;
-    enb_description_t  *enb_ref = s1ap_is_enb_assoc_id_in_list (sctp_assoc_id);
-    if (enb_ref) {
-      ue_ref = s1ap_is_ue_enb_id_in_list (enb_ref,enb_ue_s1ap_id);
-    }
-  }
-  // TODO remove soon:
+  ue_ref = s1ap_is_ue_mme_id_in_list (ue_id);
   if (!ue_ref) {
     ue_ref = s1ap_is_ue_mme_id_in_list (ue_id);
   }
@@ -830,9 +795,7 @@ int s1ap_generate_s1ap_e_rab_release_req (itti_s1ap_e_rab_release_req_t * const 
     s1ap_free_mme_encode_pdu(&message, message_id);
     s1ap_mme_itti_send_sctp_request (&b , ue_ref->enb->sctp_assoc_id, ue_ref->sctp_stream_send, ue_ref->mme_ue_s1ap_id);
   }
-
   OAILOG_FUNC_RETURN (LOG_S1AP, RETURNok);
-
 }
 
 //------------------------------------------------------------------------------

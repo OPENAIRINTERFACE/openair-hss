@@ -59,6 +59,7 @@
 #include "security_types.h"
 #include "common_types.h"
 #include "mme_app_ue_context.h"
+#include "mme_app_session_context.h"
 #include "intertask_interface.h"
 #include "TLVDecoder.h"
 #include "TLVEncoder.h"

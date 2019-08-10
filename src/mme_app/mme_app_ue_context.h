@@ -194,7 +194,8 @@ typedef struct ue_context_s {
   // MME TEID for S11             // MME Tunnel Endpoint Identifier for S11 interface.
   // LOCATED IN THIS.subscribed_apns[MAX_APN_PER_UE].mme_teid_s11
   teid_t                      local_mme_teid_s10;                // needed to get the UE context from S10 messages
-  teid_t                      mme_teid_s11;                // set by mme_app_send_s11_create_session_req
+  teid_t                      mme_teid_s11;                	// set by mme_app_send_s11_create_session_req
+  teid_t                      saegw_teid_s11;                // set by mme_app_send_s11_create_session_req
 
   // Subscribed UE-AMBR: The Maximum Aggregated uplink and downlink MBR values to be shared across all Non-GBR bearers according to the subscription of the user. The used UE-AMBR will be calculated.
   ambr_t                 subscribed_ue_ambr;

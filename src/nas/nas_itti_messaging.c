@@ -47,6 +47,7 @@
 #include "common_defs.h"
 #include "secu_defs.h"
 #include "mme_app_ue_context.h"
+#include "mme_app_session_context.h"
 #include "nas_itti_messaging.h"
 
 #include "nas_emm_proc.h"

@@ -76,6 +76,7 @@
 #include "nas_timer.h"
 
 #include "mme_app_ue_context.h"
+#include "mme_app_session_context.h"
 #include "nas_itti_messaging.h"
 #include "mme_app_defs.h"
 

@@ -46,6 +46,7 @@
 #include "3gpp_29.274.h"
 #include "3gpp_24.301.h"
 #include "mme_app_ue_context.h"
+#include "mme_app_session_context.h"
 #include "mme_app_bearer_context.h"
 
 static mme_ue_s1ap_id_t mme_app_ue_s1ap_id_generator = 1;

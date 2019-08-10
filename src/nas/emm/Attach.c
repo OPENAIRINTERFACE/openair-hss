@@ -75,6 +75,7 @@
 #include "conversions.h"
 
 #include "mme_app_ue_context.h"
+#include "mme_app_session_context.h"
 
 #include "emm_data.h"
 #include "emm_proc.h"
