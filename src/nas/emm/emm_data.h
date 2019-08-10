@@ -77,7 +77,15 @@ Description Defines internal private data handled by EPS Mobility
  * capabilities, and the uplink and downlink NAS COUNT values. In particular, separate pairs of NAS COUNT values are
  * used for each EPS NAS security contexts, respectively. The distinction between native and mapped EPS security
  * contexts also applies to EPS NAS security contexts. The EPS NAS security context is called 'full' if it additionally
- * contains the keys K NASint and K NASenc and the identifiers of the selected NAS integrity and encryption algorithms.*/
+ * contains the keys K NASint and K NASenc and the identifiers of the selected NAS integrity and encryption algorithms.
+ *
+  // Authentication Vector Temporary authentication and key agreement data that enables an MME to
+  // engage in AKA with a particular user. An EPS Authentication Vector consists of four elements:
+  // a) network challenge RAND,
+  // b) an expected response XRES,
+  // c) Key K ASME ,
+  // d) a network authentication token AUTN.
+ */
 typedef struct emm_security_context_s {
   emm_sc_type_t sc_type;     /* Type of security context        */
                       /* state of security context is implicit due to its storage location (current/non-current)*/

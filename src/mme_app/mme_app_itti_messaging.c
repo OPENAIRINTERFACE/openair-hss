@@ -258,7 +258,7 @@ mme_app_send_s11_create_session_req (
    * no tunnel had been previously setup, the distant teid is set to 0.
    * The remote teid will be provided in the response message.
    */
-  session_request_p->teid = ue_context->s_gw_teid_s11_s4;
+  session_request_p->teid = pdn_context->s_gw_teid_s11_s4;
   /** IMSI. */
   memcpy((void*)&session_request_p->imsi, imsi_p, sizeof(imsi_t));
   // message content was set to 0
@@ -794,7 +794,7 @@ mme_app_send_s11_create_bearer_rsp (
         &bcs_tbc->bearer_contexts[num_bc].s1u_sgw_fteid, sizeof(bcs_tbc->bearer_contexts[num_bc].s1u_sgw_fteid));       ///< This IE shall be sent on the S11 interface. It shall be used
     s11_create_bearer_response->bearer_contexts.num_bearer_context++;
   }
-  s11_create_bearer_response->teid = ue_context->s_gw_teid_s11_s4;
+  s11_create_bearer_response->teid = pdn_context->s_gw_teid_s11_s4;
 ////  ////  mme_config_read_lock (&mme_config);
 ////////  session_request_p->peer_ip = mme_config.ipv4.sgw_s11;
 ////////  mme_config_unlock (&mme_config);
@@ -863,7 +863,7 @@ mme_app_send_s11_update_bearer_rsp (
     /** No FTEIDs to be set. */
     s11_update_bearer_response->bearer_contexts.num_bearer_context++;
   }
-  s11_update_bearer_response->teid = ue_context->s_gw_teid_s11_s4;
+  s11_update_bearer_response->teid = pdn_context->s_gw_teid_s11_s4;
   if(extra_cause)
 	  s11_update_bearer_response->cause.cause_value = extra_cause;
 ////  ////  mme_config_read_lock (&mme_config);
@@ -924,7 +924,7 @@ mme_app_send_s11_delete_bearer_rsp (
     s11_delete_bearer_response->bearer_contexts.bearer_contexts[num_ebi].eps_bearer_id  = ebi_list->ebis[num_ebi];
     s11_delete_bearer_response->bearer_contexts.num_bearer_context++;
   }
-  s11_delete_bearer_response->teid = ue_context->s_gw_teid_s11_s4;
+  s11_delete_bearer_response->teid = pdn_context->s_gw_teid_s11_s4;
 ////  ////  mme_config_read_lock (&mme_config);
 ////////  session_request_p->peer_ip = mme_config.ipv4.sgw_s11;
 ////////  mme_config_unlock (&mme_config);

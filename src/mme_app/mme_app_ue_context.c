@@ -215,56 +215,6 @@ mme_app_imsi_to_u64 (mme_app_imsi_t imsi_src)
 }
 
 //------------------------------------------------------------------------------
-void mme_app_ue_context_s1_release_enb_informations(ue_context_t *ue_context)
-{
-  OAILOG_FUNC_IN (LOG_MME_APP);
-  pdn_context_t * registered_pdn_ctx = NULL;
-  /** Update all bearers and get the pdn context id. */
-  RB_FOREACH (registered_pdn_ctx, PdnContexts, &ue_context->pdn_contexts) {
-    DevAssert(registered_pdn_ctx);
-
-    /*
-     * Get the first PDN whose bearers are not established yet.
-     * Do the MBR just one PDN at a time.
-     */
-    bearer_context_new_t * bearer_context_to_set_idle = NULL, * bearer_context_to_set_idle_safe = NULL;
-    LIST_FOREACH_SAFE (bearer_context_to_set_idle, registered_pdn_ctx->session_bearers, entries, bearer_context_to_set_idle_safe) {
-      DevAssert(bearer_context_to_set_idle);
-      /** Add them to the bearears list of the MBR. */
-      mme_app_bearer_context_s1_release_enb_informations(bearer_context_to_set_idle);
-    }
-  }
-  OAILOG_FUNC_OUT(LOG_MME_APP);
-}
-
-//------------------------------------------------------------------------------
-ambr_t mme_app_total_p_gw_apn_ambr(ue_context_t *ue_context){
-  pdn_context_t * registered_pdn_ctx = NULL;
-  ambr_t apn_ambr_sum= {0, 0};
-  RB_FOREACH (registered_pdn_ctx, PdnContexts, &ue_context->pdn_contexts) {
-    DevAssert(registered_pdn_ctx);
-    apn_ambr_sum.br_dl += registered_pdn_ctx->subscribed_apn_ambr.br_dl;
-    apn_ambr_sum.br_ul += registered_pdn_ctx->subscribed_apn_ambr.br_ul;
-  }
-  return apn_ambr_sum;
-}
-
-//------------------------------------------------------------------------------
-ambr_t mme_app_total_p_gw_apn_ambr_rest(ue_context_t *ue_context, pdn_cid_t pci){
-  /** Get the total APN AMBR excluding the given PCI. */
-  pdn_context_t * registered_pdn_ctx = NULL;
-  ambr_t apn_ambr_sum= {0, 0};
-  RB_FOREACH (registered_pdn_ctx, PdnContexts, &ue_context->pdn_contexts) {
-    DevAssert(registered_pdn_ctx);
-    if(registered_pdn_ctx->context_identifier == pci)
-      continue;
-    apn_ambr_sum.br_dl += registered_pdn_ctx->subscribed_apn_ambr.br_dl;
-    apn_ambr_sum.br_ul += registered_pdn_ctx->subscribed_apn_ambr.br_ul;
-  }
-  return apn_ambr_sum;
-}
-
-//------------------------------------------------------------------------------
 mme_ue_s1ap_id_t mme_app_ctx_get_new_ue_id(void)
 {
   mme_ue_s1ap_id_t tmp = 0;

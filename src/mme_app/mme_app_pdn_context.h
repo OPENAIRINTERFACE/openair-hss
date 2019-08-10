@@ -39,18 +39,12 @@ esm_cause_t mme_app_update_pdn_context(mme_ue_s1ap_id_t ue_id, const subscriptio
  */
 void mme_app_esm_delete_pdn_context(mme_ue_s1ap_id_t ue_id, bstring apn, pdn_cid_t pdn_cid, ebi_t linked_ebi);
 
-void mme_app_esm_detach (mme_ue_s1ap_id_t ue_id);
-
 int
 mme_app_esm_update_ebr_state(const mme_ue_s1ap_id_t ue_id, const bstring apn_subscribed, const pdn_cid_t pdn_cid, const ebi_t linked_ebi, const ebi_t bearer_ebi, esm_ebr_state ebr_state);
 
 /*
  * Process S11 session creation.
  */
-int
-mme_app_pdn_process_session_creation(mme_ue_s1ap_id_t ue_id, fteid_t * saegw_s11_fteid, gtpv2c_cause_t *cause,
-    bearer_contexts_created_t * bcs_created, ambr_t *ambr, paa_t ** paa, protocol_configuration_options_t * pco);
-
 int
 mme_app_cn_update_bearer_context(mme_ue_s1ap_id_t ue_id, const ebi_t ebi,
     struct e_rab_setup_item_s * s1u_erab_setup_item, struct fteid_s * s1u_saegw_fteid);

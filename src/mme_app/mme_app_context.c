@@ -1567,7 +1567,7 @@ mme_app_handle_s1ap_ue_context_release_complete (
 			  " with enb_id %d. \n",
 	        s1ap_ue_context_release_complete->mme_ue_s1ap_id, s1ap_ue_context_release_complete->enb_ue_s1ap_id, s1ap_ue_context_release_complete->enb_id);
 	  /** Set the bearers into IDLE mode. */
-	  mme_app_ue_context_s1_release_enb_informations(ue_context);
+	  mme_app_ue_context_s1_release_enb_informations(ue_context->mme_ue_s1ap_id);
 	  /* Update keys and ECM state. */
 	  mme_ue_context_update_ue_sig_connection_state (&mme_app_desc.mme_ue_contexts, ue_context, ECM_IDLE);
   } else {

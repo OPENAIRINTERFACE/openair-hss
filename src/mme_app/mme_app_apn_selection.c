@@ -45,6 +45,7 @@
 #include "mme_config.h"
 #include "mme_app_extern.h"
 #include "mme_app_ue_context.h"
+#include "mme_app_session_context.h"
 #include "common_defs.h"
 #include "mme_app_apn_selection.h"
 #include "mme_app_defs.h"
@@ -55,7 +56,6 @@ mme_app_select_apn(imsi64_t imsi, const_bstring const ue_selected_apn, apn_confi
 {
   OAILOG_FUNC_IN(LOG_MME_APP);
   /** Get the APN config profile from the IMSI. */
-  apn_config_profile_t   apn_config_profile;                  // set by S6A UPDATE LOCATION ANSWER
   /** Subscription profile. */
   subscription_data_t   *subscription_data = mme_ue_subscription_data_exists_imsi(&mme_app_desc.mme_ue_contexts, imsi);
 

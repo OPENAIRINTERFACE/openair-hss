@@ -32,17 +32,15 @@
 bstring bearer_state2string(const mme_app_bearer_state_t bearer_state);
 
 /** Create & deallocate a bearer context. Will also initialize the bearer contexts. */
-ue_bearer_pool_t * get_new_bearer_pool();
-void release_bearer_pool(ue_bearer_pool_t ** ue_bearer_pool);
-void clear_bearer_context(ue_bearer_pool_t * ue_bearer_pool, bearer_context_new_t * bc);
+void clear_bearer_context(ue_session_pool_t * ue_session_pool, bearer_context_new_t * bc);
 
 /** Find an allocated PDN session bearer context. */
 bearer_context_new_t* mme_app_get_session_bearer_context(pdn_context_t * const pdn_context, const ebi_t ebi);
 
-void mme_app_get_free_bearer_context(ue_bearer_pool_t * const ue_bp, const ebi_t ebi, bearer_context_new_t** bc_pp);
+void mme_app_get_free_bearer_context(ue_session_pool_t * const ue_sp, const ebi_t ebi, bearer_context_new_t** bc_pp);
 
 // todo_: combine these two methods
-void mme_app_get_session_bearer_context_from_all(ue_context_t * const ue_context, const ebi_t ebi, bearer_context_new_t ** bc_pp);
+void mme_app_get_session_bearer_context_from_all(ue_session_pool_t * const ue_session_pool, const ebi_t ebi, bearer_context_new_t ** bc_pp);
 
 /*
  * New method to get a bearer context from the bearer pool of the UE context and add it into the pdn session.

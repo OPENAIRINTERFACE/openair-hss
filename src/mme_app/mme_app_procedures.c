@@ -55,13 +55,13 @@ static void mme_app_free_s11_procedure_delete_bearer(mme_app_s11_proc_t **s11_pr
 static void mme_app_free_s10_procedure_mme_handover(mme_app_s10_proc_t **s10_proc);
 
 //------------------------------------------------------------------------------
-void mme_app_delete_s11_procedures(ue_context_t * const ue_context)
+void mme_app_delete_s11_procedures(ue_session_pool_t * const ue_session_pool)
 {
-  if (ue_context->s11_procedures) {
+  if (ue_session_pool->s11_procedures) {
     mme_app_s11_proc_t *s11_proc1 = NULL;
     mme_app_s11_proc_t *s11_proc2 = NULL;
 
-    s11_proc1 = LIST_FIRST(ue_context->s11_procedures);                 /* Faster List Deletion. */
+    s11_proc1 = LIST_FIRST(ue_session_pool->s11_procedures);                 /* Faster List Deletion. */
     while (s11_proc1) {
       s11_proc2 = LIST_NEXT(s11_proc1, entries);
       if (MME_APP_S11_PROC_TYPE_CREATE_BEARER == s11_proc1->type) {
@@ -73,19 +73,19 @@ void mme_app_delete_s11_procedures(ue_context_t * const ue_context)
       } // else ...
       s11_proc1 = s11_proc2;
     }
-    LIST_INIT(ue_context->s11_procedures);
-    free_wrapper((void**)&ue_context->s11_procedures);
+    LIST_INIT(ue_session_pool->s11_procedures);
+    free_wrapper((void**)&ue_session_pool->s11_procedures);
   }
 }
 
 //------------------------------------------------------------------------------
-mme_app_s11_proc_create_bearer_t* mme_app_create_s11_procedure_create_bearer(ue_context_t * const ue_context)
+mme_app_s11_proc_create_bearer_t* mme_app_create_s11_procedure_create_bearer(ue_session_pool_t * const ue_session_pool)
 {
 	/** Check if the list of S11 procedures is empty. */
-	if(ue_context->s11_procedures){
-		if(!LIST_EMPTY(ue_context->s11_procedures)){
+	if(ue_session_pool->s11_procedures){
+		if(!LIST_EMPTY(ue_session_pool->s11_procedures)){
 			OAILOG_ERROR (LOG_MME_APP, "UE with ueId " MME_UE_S1AP_ID_FMT " has already a S11 procedure ongoing. Cannot create CBR procedure. \n",
-					ue_context->mme_ue_s1ap_id);
+					ue_session_pool->mme_ue_s1ap_id);
 			return NULL;
 		}
 	}
@@ -97,31 +97,31 @@ mme_app_s11_proc_create_bearer_t* mme_app_create_s11_procedure_create_bearer(ue_
 
   /** Initialize the of the procedure. */
 
-  if (!ue_context->s11_procedures) {
-    ue_context->s11_procedures = calloc(1, sizeof(struct s11_procedures_s));
-    LIST_INIT(ue_context->s11_procedures);
+  if (!ue_session_pool->s11_procedures) {
+    ue_session_pool->s11_procedures = calloc(1, sizeof(struct s11_procedures_s));
+    LIST_INIT(ue_session_pool->s11_procedures);
   }
-  LIST_INSERT_HEAD((ue_context->s11_procedures), s11_proc, entries);
+  LIST_INSERT_HEAD((ue_session_pool->s11_procedures), s11_proc, entries);
 
   return s11_proc_create_bearer;
 }
 
 //------------------------------------------------------------------------------
-mme_app_s11_proc_t* mme_app_get_s11_procedure (ue_context_t * const ue_context)
+mme_app_s11_proc_t* mme_app_get_s11_procedure (ue_session_pool_t * const ue_session_pool)
 {
-  if (ue_context->s11_procedures) {
-    return LIST_FIRST(ue_context->s11_procedures);
+  if (ue_session_pool->s11_procedures) {
+    return LIST_FIRST(ue_session_pool->s11_procedures);
   }
   return NULL;
 }
 
 //------------------------------------------------------------------------------
-mme_app_s11_proc_create_bearer_t* mme_app_get_s11_procedure_create_bearer(ue_context_t * const ue_context)
+mme_app_s11_proc_create_bearer_t* mme_app_get_s11_procedure_create_bearer(ue_session_pool_t * const ue_session_pool)
 {
-  if (ue_context->s11_procedures) {
+  if (ue_session_pool->s11_procedures) {
     mme_app_s11_proc_t *s11_proc = NULL;
 
-    LIST_FOREACH(s11_proc, ue_context->s11_procedures, entries) {
+    LIST_FOREACH(s11_proc, ue_session_pool->s11_procedures, entries) {
       if (MME_APP_S11_PROC_TYPE_CREATE_BEARER == s11_proc->type) {
         return (mme_app_s11_proc_create_bearer_t*)s11_proc;
       }
@@ -131,12 +131,12 @@ mme_app_s11_proc_create_bearer_t* mme_app_get_s11_procedure_create_bearer(ue_con
 }
 
 //------------------------------------------------------------------------------
-void mme_app_delete_s11_procedure_create_bearer(ue_context_t * const ue_context)
+void mme_app_delete_s11_procedure_create_bearer(ue_session_pool_t * const ue_session_pool)
 {
-  if (ue_context->s11_procedures) {
+  if (ue_session_pool->s11_procedures) {
     mme_app_s11_proc_t *s11_proc = NULL, *s11_proc_safe = NULL;
 
-    LIST_FOREACH_SAFE(s11_proc, ue_context->s11_procedures, entries, s11_proc_safe) {
+    LIST_FOREACH_SAFE(s11_proc, ue_session_pool->s11_procedures, entries, s11_proc_safe) {
       if (MME_APP_S11_PROC_TYPE_CREATE_BEARER == s11_proc->type) {
         LIST_REMOVE(s11_proc, entries);
         mme_app_free_s11_procedure_create_bearer(&s11_proc);
@@ -144,21 +144,21 @@ void mme_app_delete_s11_procedure_create_bearer(ue_context_t * const ue_context)
       }
     }
   }
-  if(LIST_EMPTY(ue_context->s11_procedures)){
-	  LIST_INIT(ue_context->s11_procedures);
-	  free_wrapper((void**)&ue_context->s11_procedures);
-	  OAILOG_INFO (LOG_MME_APP, "UE with ueId " MME_UE_S1AP_ID_FMT " has no more S11 procedures left. Cleared the list. \n", ue_context->mme_ue_s1ap_id);
+  if(LIST_EMPTY(ue_session_pool->s11_procedures)){
+	  LIST_INIT(ue_session_pool->s11_procedures);
+	  free_wrapper((void**)&ue_session_pool->s11_procedures);
+	  OAILOG_INFO (LOG_MME_APP, "UE with ueId " MME_UE_S1AP_ID_FMT " has no more S11 procedures left. Cleared the list. \n", ue_session_pool->mme_ue_s1ap_id);
   }
 }
 
 //------------------------------------------------------------------------------
-mme_app_s11_proc_update_bearer_t* mme_app_create_s11_procedure_update_bearer(ue_context_t * const ue_context)
+mme_app_s11_proc_update_bearer_t* mme_app_create_s11_procedure_update_bearer(ue_session_pool_t * const ue_session_pool)
 {
   /** Check if the list of S11 procedures is empty. */
-  if(ue_context->s11_procedures){
-    if(!LIST_EMPTY(ue_context->s11_procedures)){
+  if(ue_session_pool->s11_procedures){
+    if(!LIST_EMPTY(ue_session_pool->s11_procedures)){
       OAILOG_ERROR (LOG_MME_APP, "UE with ueId " MME_UE_S1AP_ID_FMT " has already a S11 procedure ongoing. Cannot create UBR procedure. \n",
-          ue_context->mme_ue_s1ap_id);
+    		  ue_session_pool->mme_ue_s1ap_id);
       return NULL;
     }
   }
@@ -169,22 +169,22 @@ mme_app_s11_proc_update_bearer_t* mme_app_create_s11_procedure_update_bearer(ue_
 
   /** Initialize the of the procedure. */
 
-  if (!ue_context->s11_procedures) {
-    ue_context->s11_procedures = calloc(1, sizeof(struct s11_procedures_s));
-    LIST_INIT(ue_context->s11_procedures);
+  if (!ue_session_pool->s11_procedures) {
+	  ue_session_pool->s11_procedures = calloc(1, sizeof(struct s11_procedures_s));
+    LIST_INIT(ue_session_pool->s11_procedures);
   }
-  LIST_INSERT_HEAD((ue_context->s11_procedures), s11_proc, entries);
+  LIST_INSERT_HEAD((ue_session_pool->s11_procedures), s11_proc, entries);
 
   return s11_proc_update_bearer;
 }
 
 //------------------------------------------------------------------------------
-mme_app_s11_proc_update_bearer_t* mme_app_get_s11_procedure_update_bearer(ue_context_t * const ue_context)
+mme_app_s11_proc_update_bearer_t* mme_app_get_s11_procedure_update_bearer(ue_session_pool_t * const ue_session_pool)
 {
-  if (ue_context->s11_procedures) {
+  if (ue_session_pool->s11_procedures) {
     mme_app_s11_proc_t *s11_proc = NULL;
 
-    LIST_FOREACH(s11_proc, ue_context->s11_procedures, entries) {
+    LIST_FOREACH(s11_proc, ue_session_pool->s11_procedures, entries) {
       if (MME_APP_S11_PROC_TYPE_UPDATE_BEARER == s11_proc->type) {
         return (mme_app_s11_proc_create_bearer_t*)s11_proc;
       }
@@ -194,13 +194,13 @@ mme_app_s11_proc_update_bearer_t* mme_app_get_s11_procedure_update_bearer(ue_con
 }
 
 //------------------------------------------------------------------------------
-void mme_app_delete_s11_procedure_update_bearer(ue_context_t * const ue_context)
+void mme_app_delete_s11_procedure_update_bearer(ue_session_pool_t * const ue_session_pool)
 {
   /** Check if the list of S11 procedures is empty. */
-  if (ue_context->s11_procedures) {
+  if (ue_session_pool->s11_procedures) {
     mme_app_s11_proc_t *s11_proc = NULL, *s11_proc_safe = NULL;
 
-    LIST_FOREACH_SAFE(s11_proc, ue_context->s11_procedures, entries, s11_proc_safe) {
+    LIST_FOREACH_SAFE(s11_proc, ue_session_pool->s11_procedures, entries, s11_proc_safe) {
       if (MME_APP_S11_PROC_TYPE_UPDATE_BEARER == s11_proc->type) {
         LIST_REMOVE(s11_proc, entries);
         mme_app_free_s11_procedure_update_bearer(&s11_proc);
@@ -208,20 +208,20 @@ void mme_app_delete_s11_procedure_update_bearer(ue_context_t * const ue_context)
       }
     }
   }
-  if(LIST_EMPTY(ue_context->s11_procedures)){
- 	  LIST_INIT(ue_context->s11_procedures);
- 	  free_wrapper((void**)&ue_context->s11_procedures);
- 	  OAILOG_INFO (LOG_MME_APP, "UE with ueId " MME_UE_S1AP_ID_FMT " has no more S11 procedures left. Cleared the list. \n", ue_context->mme_ue_s1ap_id);
+  if(LIST_EMPTY(ue_session_pool->s11_procedures)){
+ 	  LIST_INIT(ue_session_pool->s11_procedures);
+ 	  free_wrapper((void**)&ue_session_pool->s11_procedures);
+ 	  OAILOG_INFO (LOG_MME_APP, "UE with ueId " MME_UE_S1AP_ID_FMT " has no more S11 procedures left. Cleared the list. \n", ue_session_pool->mme_ue_s1ap_id);
    }
 }
 
 //------------------------------------------------------------------------------
-mme_app_s11_proc_delete_bearer_t* mme_app_create_s11_procedure_delete_bearer(ue_context_t * const ue_context)
+mme_app_s11_proc_delete_bearer_t* mme_app_create_s11_procedure_delete_bearer(ue_session_pool_t * const ue_session_pool)
 {
-	if(ue_context->s11_procedures){
-		if(!LIST_EMPTY(ue_context->s11_procedures)){
+	if(ue_session_pool->s11_procedures){
+		if(!LIST_EMPTY(ue_session_pool->s11_procedures)){
 			OAILOG_ERROR (LOG_MME_APP, "UE with ueId " MME_UE_S1AP_ID_FMT " has already a S11 procedure ongoing. Cannot create DBR procedure. \n",
-					ue_context->mme_ue_s1ap_id);
+					ue_session_pool->mme_ue_s1ap_id);
 			return NULL;
 		}
 	}
@@ -233,22 +233,22 @@ mme_app_s11_proc_delete_bearer_t* mme_app_create_s11_procedure_delete_bearer(ue_
 
   /** Initialize the of the procedure. */
 
-  if (!ue_context->s11_procedures) {
-    ue_context->s11_procedures = calloc(1, sizeof(struct s11_procedures_s));
-    LIST_INIT(ue_context->s11_procedures);
+  if (!ue_session_pool->s11_procedures) {
+	  ue_session_pool->s11_procedures = calloc(1, sizeof(struct s11_procedures_s));
+    LIST_INIT(ue_session_pool->s11_procedures);
   }
-  LIST_INSERT_HEAD((ue_context->s11_procedures), s11_proc, entries);
+  LIST_INSERT_HEAD((ue_session_pool->s11_procedures), s11_proc, entries);
 
   return s11_proc_delete_bearer;
 }
 
 //------------------------------------------------------------------------------
-mme_app_s11_proc_delete_bearer_t* mme_app_get_s11_procedure_delete_bearer(ue_context_t * const ue_context)
+mme_app_s11_proc_delete_bearer_t* mme_app_get_s11_procedure_delete_bearer(ue_session_pool_t * const ue_session_pool)
 {
-  if (ue_context->s11_procedures) {
+  if (ue_session_pool->s11_procedures) {
     mme_app_s11_proc_t *s11_proc = NULL;
 
-    LIST_FOREACH(s11_proc, ue_context->s11_procedures, entries) {
+    LIST_FOREACH(s11_proc, ue_session_pool->s11_procedures, entries) {
       if (MME_APP_S11_PROC_TYPE_DELETE_BEARER == s11_proc->type) {
         return (mme_app_s11_proc_delete_bearer_t*)s11_proc;
       }
@@ -258,13 +258,13 @@ mme_app_s11_proc_delete_bearer_t* mme_app_get_s11_procedure_delete_bearer(ue_con
 }
 
 //------------------------------------------------------------------------------
-void mme_app_delete_s11_procedure_delete_bearer(ue_context_t * const ue_context)
+void mme_app_delete_s11_procedure_delete_bearer(ue_session_pool_t * const ue_session_pool)
 {
-  if (ue_context->s11_procedures) {
+  if (ue_session_pool->s11_procedures) {
     mme_app_s11_proc_t *s11_proc = NULL, *s11_proc_safe = NULL;
 
 
-    LIST_FOREACH_SAFE(s11_proc, ue_context->s11_procedures, entries, s11_proc_safe) {
+    LIST_FOREACH_SAFE(s11_proc, ue_session_pool->s11_procedures, entries, s11_proc_safe) {
       if (MME_APP_S11_PROC_TYPE_DELETE_BEARER == s11_proc->type) {
         LIST_REMOVE(s11_proc, entries);
         mme_app_free_s11_procedure_delete_bearer(&s11_proc);
@@ -272,10 +272,10 @@ void mme_app_delete_s11_procedure_delete_bearer(ue_context_t * const ue_context)
       }
     }
   }
-  if(LIST_EMPTY(ue_context->s11_procedures)){
- 	  LIST_INIT(ue_context->s11_procedures);
- 	  free_wrapper((void**)&ue_context->s11_procedures);
- 	  OAILOG_INFO (LOG_MME_APP, "UE with ueId " MME_UE_S1AP_ID_FMT " has no more S11 procedures left. Cleared the list. \n", ue_context->mme_ue_s1ap_id);
+  if(LIST_EMPTY(ue_session_pool->s11_procedures)){
+ 	  LIST_INIT(ue_session_pool->s11_procedures);
+ 	  free_wrapper((void**)&ue_session_pool->s11_procedures);
+ 	  OAILOG_INFO (LOG_MME_APP, "UE with ueId " MME_UE_S1AP_ID_FMT " has no more S11 procedures left. Cleared the list. \n", ue_session_pool->mme_ue_s1ap_id);
    }
 }
 

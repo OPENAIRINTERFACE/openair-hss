@@ -44,15 +44,14 @@
 #include "timer.h"
 #include "mme_app_extern.h"
 #include "mme_app_ue_context.h"
+#include "mme_app_session_context.h"
 #include "mme_app_defs.h"
 #include "mme_app_statistics.h"
 #include "common_defs.h"
 #include "mme_app_edns_emulation.h"
 #include "mme_app_procedures.h"
 
-//mme_app_desc_t                          mme_app_desc;
 mme_app_desc_t                          mme_app_desc = {.rw_lock = PTHREAD_RWLOCK_INITIALIZER, 0} ;
-
 
 void     *mme_app_thread (void *args);
 
