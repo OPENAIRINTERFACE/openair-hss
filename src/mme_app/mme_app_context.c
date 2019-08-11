@@ -554,7 +554,6 @@ mme_ue_context_update_coll_keys (
   OAILOG_FUNC_OUT(LOG_MME_APP);
 }
 
-
 //------------------------------------------------------------------------------
 void mme_ue_context_dump_coll_keys(void)
 {
@@ -711,26 +710,6 @@ mme_insert_ue_context (
  * 1- EMM and MME_APP are decoupled. That MME_APP is removed or not is/should be no problem for the EMM.
  * 2- The PDN session deletion process from the SAE-GW is now done always before the detach. That eases stuff.
  */
-////------------------------------------------------------------------------------
-//void mme_notify_ue_context_released (
-//    mme_ue_context_t * const mme_ue_context_p,
-//    struct ue_context_s *ue_context)
-//{
-//  OAILOG_FUNC_IN (LOG_MME_APP);
-//  DevAssert (mme_ue_context_p );
-//  DevAssert (ue_context );
-//  /*
-//   * Updating statistics
-//   */
-//  __sync_fetch_and_sub (&mme_ue_context_p->nb_ue_managed, 1);
-//  __sync_fetch_and_sub (&mme_ue_context_p->nb_ue_since_last_stat, 1);
-//
-////  mme_app_send_nas_signalling_connection_rel_ind(ue_context->mme_ue_s1ap_id);
-//
-//  // TODO HERE free resources
-//
-//  OAILOG_FUNC_OUT (LOG_MME_APP);
-//}
 
 //------------------------------------------------------------------------------
 void mme_remove_ue_context (
@@ -796,6 +775,11 @@ void mme_remove_ue_context (
   //  unlock_ue_contexts(ue_context);
 
   free_wrapper ((void**) &ue_context);
+  /*
+   * Updating statistics
+   */
+  __sync_fetch_and_sub (&mme_ue_context_p->nb_ue_context_managed, 1);
+  __sync_fetch_and_sub (&mme_ue_context_p->nb_ue_context_since_last_stat, 1);
 
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
@@ -1142,7 +1126,7 @@ void mme_app_dump_pdn_context (const struct ue_context_s *const ue_context,
 
     /** Set all bearers of the EBI to valid. */
     bearer_context_new_t * bc_to_dump = NULL;
-    LIST_FOREACH(bc_to_dump, pdn_context->session_bearers, entries) {
+    LIST_FOREACH(bc_to_dump, &pdn_context->session_bearers, entries) {
       AssertFatal(bc_to_dump, "Mismatch in configuration bearer context NULL\n");
       bformata (bstr_dump, "%*s - Bearer item ----------------------------\n");
       mme_app_dump_bearer_context(bc_to_dump, indent_spaces + 4, bstr_dump);

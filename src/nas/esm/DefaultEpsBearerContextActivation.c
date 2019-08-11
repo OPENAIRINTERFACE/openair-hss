@@ -243,7 +243,7 @@ esm_proc_default_eps_bearer_context (
   mme_app_get_pdn_context(ue_id, esm_proc_pdn_connectivity->pdn_cid, esm_proc_pdn_connectivity->default_ebi, esm_proc_pdn_connectivity->subscribed_apn, &pdn_context);
   if(pdn_context){
     /** Get the default bearer. */
-    bearer_context_new_t *default_bc = LIST_FIRST(pdn_context->session_bearers);
+    bearer_context_new_t *default_bc = LIST_FIRST(&pdn_context->session_bearers);
     if(default_bc){
       /** Update the PDN type from the received PDN type. */
 	  esm_proc_pdn_connectivity->pdn_type = 1 + pdn_context->paa->pdn_type;

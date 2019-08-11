@@ -58,34 +58,168 @@
 /****************************************************************************/
 /*******************  L O C A L    D E F I N I T I O N S  *******************/
 /****************************************************************************/
+static void clear_session_pool(ue_session_pool_t * ue_session_pool);
+
+// todo: check the locks here
+//------------------------------------------------------------------------------
+void
+mme_ue_session_pool_update_coll_keys (
+  mme_ue_session_pool_t * const mme_ue_session_pool_p,
+  ue_session_pool_t     * const ue_session_pool,
+  const mme_ue_s1ap_id_t   mme_ue_s1ap_id,
+  const s11_teid_t         mme_teid_s11)
+{
+  hashtable_rc_t                          h_rc = HASH_TABLE_OK;
+  void                                   *id = NULL;
+
+  OAILOG_FUNC_IN(LOG_MME_APP);
+
+  OAILOG_TRACE (LOG_MME_APP, "Update ue_session_pool.mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " teid " TEID_FMT ". \n",
+      ue_session_pool->mme_ue_s1ap_id, ue_session_pool->mme_teid_s11);
+
+  AssertFatal((ue_session_pool->mme_ue_s1ap_id == mme_ue_s1ap_id)
+      && (INVALID_MME_UE_S1AP_ID != mme_ue_s1ap_id),
+      "Mismatch in UE session pool mme_ue_s1ap_id "MME_UE_S1AP_ID_FMT"/"MME_UE_S1AP_ID_FMT"\n",
+      ue_session_pool->mme_ue_s1ap_id, mme_ue_s1ap_id);
+
+  if ((INVALID_MME_UE_S1AP_ID != mme_ue_s1ap_id) && (ue_session_pool->mme_ue_s1ap_id != mme_ue_s1ap_id)) {
+    // new insertion of mme_ue_s1ap_id, not a change in the id
+    h_rc = hashtable_ts_remove (mme_ue_session_pool_p->mme_ue_s1ap_id_ue_session_pool_htbl, (const hash_key_t)ue_session_pool->mme_ue_s1ap_id,  (void **)&ue_session_pool);
+    h_rc = hashtable_ts_insert (mme_ue_session_pool_p->mme_ue_s1ap_id_ue_session_pool_htbl, (const hash_key_t)mme_ue_s1ap_id, (void *)ue_session_pool);
+
+    if (HASH_TABLE_OK != h_rc) {
+      OAILOG_ERROR (LOG_MME_APP,
+          "Error could not update this ue session pool mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " %s\n",
+          ue_session_pool, ue_session_pool->mme_ue_s1ap_id, hashtable_rc_code2string(h_rc));
+    }
+    ue_session_pool->mme_ue_s1ap_id = mme_ue_s1ap_id;
+  }
+  /** S11 Key. */
+  if ((ue_session_pool->mme_teid_s11 != mme_teid_s11)
+		  || (ue_session_pool->mme_ue_s1ap_id != mme_ue_s1ap_id)) {
+	  h_rc = hashtable_uint64_ts_remove (mme_ue_session_pool_p->tun11_ue_session_pool_htbl, (const hash_key_t)ue_session_pool->mme_teid_s11);
+	  if (INVALID_MME_UE_S1AP_ID != mme_ue_s1ap_id && INVALID_TEID != mme_teid_s11) {
+		  h_rc = hashtable_uint64_ts_insert (mme_ue_session_pool_p->tun11_ue_session_pool_htbl, (const hash_key_t)mme_teid_s11, (void *)(uintptr_t)mme_ue_s1ap_id);
+	  } else {
+		  h_rc = HASH_TABLE_KEY_NOT_EXISTS;
+	  }
+
+    if (HASH_TABLE_OK != h_rc && INVALID_TEID != mme_teid_s11) {
+      OAILOG_TRACE (LOG_MME_APP,
+          "Error could not update this ue session pool %p mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " mme_s11_teid " TEID_FMT " : %s\n",
+          ue_session_pool, ue_session_pool->mme_ue_s1ap_id, mme_teid_s11, hashtable_rc_code2string(h_rc));
+    }
+    ue_session_pool->mme_teid_s11 = mme_teid_s11;
+  }
+
+  OAILOG_FUNC_OUT(LOG_MME_APP);
+}
 
 //------------------------------------------------------------------------------
-static void clear_session_pool(ue_session_pool_t * ue_session_pool) {
-	/** Release the procedures. */
-	if (ue_session_pool->s11_procedures) {
-		mme_app_delete_s11_procedures(ue_session_pool);
-	}
+void mme_ue_session_pool_dump_coll_keys(void)
+{
+  bstring tmp = bfromcstr(" ");
+  btrunc(tmp, 0);
 
-	/** Free the ESM procedures. */
-	if(ue_session_pool->esm_procedures.pdn_connectivity_procedures){
-		OAILOG_WARNING(LOG_MME_APP, "ESM PDN Connectivity procedures still exist for UE "MME_UE_S1AP_ID_FMT ". \n", ue_session_pool->mme_ue_s1ap_id);
-	    mme_app_nas_esm_free_pdn_connectivity_procedures(ue_session_pool);
-	}
+  hashtable_uint64_ts_dump_content (mme_app_desc.mme_ue_contexts.tun11_ue_context_htbl, tmp);
+  OAILOG_TRACE (LOG_MME_APP,"tun11_ue_context_htbl %s\n", bdata(tmp));
 
-	if(ue_session_pool->esm_procedures.bearer_context_procedures){
-		OAILOG_WARNING(LOG_MME_APP, "ESM Bearer Context procedures still exist for UE "MME_UE_S1AP_ID_FMT ". \n", ue_session_pool->mme_ue_s1ap_id);
-	    mme_app_nas_esm_free_bearer_context_procedures(ue_session_pool);
-	}
+  btrunc(tmp, 0);
+  hashtable_ts_dump_content(mme_app_desc.mme_ue_contexts.mme_ue_s1ap_id_ue_context_htbl, tmp);
+  OAILOG_TRACE (LOG_MME_APP,"mme_ue_s1ap_id_ue_context_htbl %s\n", bdata(tmp));
+}
 
-	DevAssert(RB_EMPTY(&ue_session_pool->pdn_contexts));
+//------------------------------------------------------------------------------
+int
+mme_insert_ue_session_pool (
+  mme_ue_session_pool_t * const mme_ue_session_pool_p,
+  const struct ue_session_pool_s *const ue_session_pool)
+{
+  hashtable_rc_t                          h_rc = HASH_TABLE_OK;
 
-	/** No need to check if list is full, since it is stacked. Just clear the allocations in each session context. */
-	LIST_INIT(ue_session_pool->free_bearers);
-	for(int num_bearer = 0; num_bearer < MAX_NUM_BEARERS_UE; num_bearer++) {
-		clear_bearer_context(ue_session_pool, &ue_session_pool->bcs_ue[num_bearer]);
-	}
-	/** Re-initialize the empty list: it should not point to a next free variable: determined when it is put back into the list (like LIST_INIT). */
-	ue_session_pool->next_free_sp = NULL;
+  OAILOG_FUNC_IN (LOG_MME_APP);
+  DevAssert (mme_ue_session_pool_p );
+  DevAssert (ue_session_pool );
+
+  if (INVALID_MME_UE_S1AP_ID != ue_session_pool->mme_ue_s1ap_id) {
+	  h_rc = hashtable_ts_is_key_exists (mme_ue_session_pool_p->mme_ue_s1ap_id_ue_session_pool_htbl, (const hash_key_t)ue_session_pool->mme_ue_s1ap_id);
+
+	  if (HASH_TABLE_OK == h_rc) {
+        OAILOG_DEBUG (LOG_MME_APP, "This ue session pool %p already exists mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n",
+            ue_session_pool, ue_session_pool->mme_ue_s1ap_id);
+        OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+	  }
+
+      h_rc = hashtable_ts_insert (mme_ue_session_pool_p->mme_ue_s1ap_id_ue_session_pool_htbl,
+                                  (const hash_key_t)ue_session_pool->mme_ue_s1ap_id,
+                                  (void *)ue_session_pool);
+
+      if (HASH_TABLE_OK != h_rc) {
+        OAILOG_DEBUG (LOG_MME_APP, "Error could not register this ue session pool %p mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n",
+            ue_session_pool, ue_session_pool->mme_ue_s1ap_id);
+        OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+      }
+
+      // filled S11 tun id
+      if (ue_session_pool->mme_teid_s11) {
+        h_rc = hashtable_uint64_ts_insert (mme_ue_session_pool_p->tun11_ue_session_pool_htbl,
+                                   (const hash_key_t)ue_session_pool->mme_teid_s11,
+                                   (void *)((uintptr_t)ue_session_pool->mme_ue_s1ap_id));
+
+        if (HASH_TABLE_OK != h_rc) {
+          OAILOG_DEBUG (LOG_MME_APP, "Error could not register this ue session pool %p mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " mme_teid_s11 " TEID_FMT "\n",
+              ue_session_pool, ue_session_pool->mme_ue_s1ap_id, ue_session_pool->mme_teid_s11);
+          OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+        }
+      }
+  }
+  /*
+   * Updating statistics
+   */
+  __sync_fetch_and_add (&mme_ue_session_pool_p->nb_ue_session_pools_managed, 1);
+  __sync_fetch_and_add (&mme_ue_session_pool_p->nb_ue_session_pools_since_last_stat, 1);
+
+  OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
+}
+
+//------------------------------------------------------------------------------
+void mme_remove_ue_session_pool(
+  mme_ue_session_pool_t * const mme_ue_session_pool_p,
+  struct ue_session_pool_s *ue_session_pool)
+{
+  unsigned int                           *id = NULL;
+  hashtable_rc_t                          hash_rc = HASH_TABLE_OK;
+
+  OAILOG_FUNC_IN (LOG_MME_APP);
+  DevAssert (mme_ue_session_pool_p);
+  DevAssert (ue_session_pool);
+
+  // filled S11 tun id
+  if (ue_session_pool->mme_teid_s11) {
+    hash_rc = hashtable_uint64_ts_remove (mme_ue_session_pool_p->tun11_ue_session_pool_htbl, (const hash_key_t)ue_session_pool->mme_teid_s11);
+    if (HASH_TABLE_OK != hash_rc)
+      OAILOG_DEBUG(LOG_MME_APP, "UE session_pool mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT ", MME TEID_S11 " TEID_FMT "  not in S11 collection. \n",
+          ue_session_pool->mme_ue_s1ap_id, ue_session_pool->mme_teid_s11);
+  }
+
+  // filled NAS UE ID/ MME UE S1AP ID
+  if (INVALID_MME_UE_S1AP_ID != ue_session_pool->mme_ue_s1ap_id) {
+    hash_rc = hashtable_ts_remove (mme_ue_session_pool_p->mme_ue_s1ap_id_ue_session_pool_htbl, (const hash_key_t)ue_session_pool->mme_ue_s1ap_id, (void **)&ue_session_pool);
+    if (HASH_TABLE_OK != hash_rc)
+      OAILOG_DEBUG(LOG_MME_APP, "UE session_pool mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " not in MME UE S1AP ID collection",
+          ue_session_pool->mme_ue_s1ap_id);
+  }
+  release_session_pool(&ue_session_pool);
+  // todo: unlock?
+  //  unlock_ue_contexts(ue_context);
+
+  /*
+   * Updating statistics
+   */
+  __sync_fetch_and_sub (&mme_ue_session_pool_p->nb_ue_session_pools_managed, 1);
+  __sync_fetch_and_sub (&mme_ue_session_pool_p->nb_ue_session_pools_since_last_stat, 1);
+
+  OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 
 //------------------------------------------------------------------------------
@@ -158,7 +292,7 @@ mme_app_esm_detach(mme_ue_s1ap_id_t ue_id){
     pdn_context = RB_MIN(PdnContexts, &ue_session_pool->pdn_contexts);
   }
   OAILOG_INFO(LOG_MME_APP, "Removed all ESM contexts of UE: " MME_UE_S1AP_ID_FMT " for detach. \n", ue_id);
-  bearer_context_new_t * bc_free = LIST_FIRST(ue_session_pool->free_bearers);
+  bearer_context_new_t * bc_free = LIST_FIRST(&ue_session_pool->free_bearers);
   // todo: UNLOCK UE SESSION POOL
   OAILOG_FUNC_OUT(LOG_MME_APP);
 }
@@ -430,7 +564,7 @@ void mme_app_ue_session_pool_s1_release_enb_informations(mme_ue_s1ap_id_t ue_id)
      * Do the MBR just one PDN at a time.
      */
     bearer_context_new_t * bearer_context_to_set_idle = NULL, * bearer_context_to_set_idle_safe = NULL;
-    LIST_FOREACH_SAFE (bearer_context_to_set_idle, registered_pdn_ctx->session_bearers, entries, bearer_context_to_set_idle_safe) {
+    LIST_FOREACH_SAFE (bearer_context_to_set_idle, &registered_pdn_ctx->session_bearers, entries, bearer_context_to_set_idle_safe) {
       DevAssert(bearer_context_to_set_idle);
       /** Add them to the bearears list of the MBR. */
       mme_app_bearer_context_s1_release_enb_informations(bearer_context_to_set_idle);
@@ -459,7 +593,52 @@ mme_ue_session_pool_exists_mme_ue_s1ap_id (
   return ue_session_pool;
 }
 
+//------------------------------------------------------------------------------
+struct ue_session_pool_s                    *
+mme_ue_session_pool_exists_s11_teid (
+  mme_ue_session_pool_t * const mme_ue_session_pool_p,
+  const s11_teid_t teid)
+{
+  hashtable_rc_t                          h_rc = HASH_TABLE_OK;
+  uint64_t                                mme_ue_s1ap_id64 = 0;
+
+  h_rc = hashtable_uint64_ts_get (mme_ue_session_pool_p->tun11_ue_session_pool_htbl, (const hash_key_t)teid, &mme_ue_s1ap_id64);
+
+  if (HASH_TABLE_OK == h_rc) {
+    return mme_ue_session_pool_exists_mme_ue_s1ap_id (mme_ue_session_pool_p, (mme_ue_s1ap_id_t) mme_ue_s1ap_id64);
+  }
+  return NULL;
+}
+
 /****************************************************************************/
 /*********************  L O C A L    F U N C T I O N S  *********************/
 /****************************************************************************/
 
+//------------------------------------------------------------------------------
+static void clear_session_pool(ue_session_pool_t * ue_session_pool) {
+	/** Release the procedures. */
+	if (ue_session_pool->s11_procedures) {
+		mme_app_delete_s11_procedures(ue_session_pool);
+	}
+
+	/** Free the ESM procedures. */
+	if(ue_session_pool->esm_procedures.pdn_connectivity_procedures){
+		OAILOG_WARNING(LOG_MME_APP, "ESM PDN Connectivity procedures still exist for UE "MME_UE_S1AP_ID_FMT ". \n", ue_session_pool->mme_ue_s1ap_id);
+	    mme_app_nas_esm_free_pdn_connectivity_procedures(ue_session_pool);
+	}
+
+	if(ue_session_pool->esm_procedures.bearer_context_procedures){
+		OAILOG_WARNING(LOG_MME_APP, "ESM Bearer Context procedures still exist for UE "MME_UE_S1AP_ID_FMT ". \n", ue_session_pool->mme_ue_s1ap_id);
+	    mme_app_nas_esm_free_bearer_context_procedures(ue_session_pool);
+	}
+
+	DevAssert(RB_EMPTY(&ue_session_pool->pdn_contexts));
+
+	/** No need to check if list is full, since it is stacked. Just clear the allocations in each session context. */
+	LIST_INIT(&ue_session_pool->free_bearers);
+	for(int num_bearer = 0; num_bearer < MAX_NUM_BEARERS_UE; num_bearer++) {
+		clear_bearer_context(ue_session_pool, &ue_session_pool->bcs_ue[num_bearer]);
+	}
+	/** Re-initialize the empty list: it should not point to a next free variable: determined when it is put back into the list (like LIST_INIT). */
+	ue_session_pool->next_free_sp = NULL;
+}

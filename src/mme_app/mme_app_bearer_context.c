@@ -79,14 +79,14 @@ void clear_bearer_context(ue_session_pool_t * ue_session_pool, bearer_context_ne
 	/** Reset the ebi. */
 	bc->ebi = ebi;
 	/** Insert the list into the empty list. */
-	LIST_INSERT_HEAD(ue_session_pool->free_bearers, bc, entries);
+	LIST_INSERT_HEAD(&ue_session_pool->free_bearers, bc, entries);
 }
 
 //------------------------------------------------------------------------------
 bearer_context_new_t* mme_app_get_session_bearer_context(pdn_context_t * const pdn_context, const ebi_t ebi)
 {
 	bearer_context_new_t *bc_new = NULL, *bc_new_safe = NULL;
-	LIST_FOREACH_SAFE(bc_new, pdn_context->session_bearers, entries, bc_new_safe) {
+	LIST_FOREACH_SAFE(bc_new, &pdn_context->session_bearers, entries, bc_new_safe) {
 		if(bc_new->ebi == ebi){
 			return bc_new;
 		}
@@ -98,7 +98,7 @@ bearer_context_new_t* mme_app_get_session_bearer_context(pdn_context_t * const p
 void mme_app_get_free_bearer_context(ue_session_pool_t * const ue_sp, const ebi_t ebi, bearer_context_new_t** bc_pp)
 {
 	bearer_context_new_t *bc_new = NULL, *bc_new_safe = NULL;
-	LIST_FOREACH_SAFE(bc_new, ue_sp->free_bearers, entries, bc_new_safe) {
+	LIST_FOREACH_SAFE(bc_new, &ue_sp->free_bearers, entries, bc_new_safe) {
 		if(bc_new->ebi == ebi){
 			*bc_pp = bc_new;
 			break;
@@ -127,7 +127,7 @@ void mme_app_get_bearer_contexts_to_be_created(pdn_context_t * pdn_context, bear
 
   bearer_context_new_t * bearer_context_to_setup  = NULL;
 
-  LIST_FOREACH (bearer_context_to_setup, pdn_context->session_bearers, entries) {
+  LIST_FOREACH (bearer_context_to_setup, &pdn_context->session_bearers, entries) {
     DevAssert(bearer_context_to_setup);
     /*
      * Set the bearer of the pdn context to establish.
@@ -206,7 +206,7 @@ mme_app_register_dedicated_bearer_context(const mme_ue_s1ap_id_t ue_id, const es
   }
   /** Removed a bearer context from the UE contexts bearer pool and adds it into the PDN sessions bearer pool. */
   if(ded_ebi == EPS_BEARER_IDENTITY_UNASSIGNED)
-	  pBearerCtx = LIST_FIRST(ue_session_pool->free_bearers);
+	  pBearerCtx = LIST_FIRST(&ue_session_pool->free_bearers);
   else {
 	  mme_app_get_free_bearer_context(ue_session_pool, ded_ebi, &pBearerCtx);
   }
@@ -247,7 +247,7 @@ mme_app_register_dedicated_bearer_context(const mme_ue_s1ap_id_t ue_id, const es
   bc_tbc->tft = NULL;
   memcpy((void*)&pBearerCtx->bearer_level_qos, &bc_tbc->bearer_level_qos, sizeof(bearer_qos_t));
   /* Insert the bearer context into the session list. */
-  LIST_INSERT_HEAD(pdn_context->session_bearers, pBearerCtx, entries);
+  LIST_INSERT_HEAD(&pdn_context->session_bearers, pBearerCtx, entries);
   /** No dedicated bearer level PCO supported. */
   bc_tbc->eps_bearer_id = pBearerCtx->ebi;
 
@@ -398,7 +398,7 @@ mme_app_release_bearers(const mme_ue_s1ap_id_t mme_ue_s1ap_id, e_rab_list_t * e_
 	pdn_context_t     	  * pdn_context = NULL, * pdn_context_safe = NULL;
     RB_FOREACH_SAFE(pdn_context, PdnContexts, &ue_session_pool->pdn_contexts, pdn_context_safe) { /**< Use the safe iterator. */
     	bearer_context_new_t *bc_new = NULL, *bc_new_safe = NULL;
-		LIST_FOREACH_SAFE(bc_new, pdn_context->session_bearers, entries, bc_new_safe) {
+		LIST_FOREACH_SAFE(bc_new, &pdn_context->session_bearers, entries, bc_new_safe) {
 			// todo: better error handling
 			if( (bearer_context->bearer_state & BEARER_STATE_ACTIVE)
 					&& (bearer_context->bearer_state & BEARER_STATE_ENB_CREATED)) {
@@ -560,7 +560,7 @@ mme_app_esm_modify_bearer_context(mme_ue_s1ap_id_t ue_id, const ebi_t ebi, ebi_l
     DevAssert(ded_ebis);
     memset(ded_ebis, 0, sizeof(ebi_list_t));
 	bearer_context_new_t *bc_new_safe = NULL;
-	LIST_FOREACH_SAFE(bearer_context, pdn_context->session_bearers, entries, bc_new_safe) {
+	LIST_FOREACH_SAFE(bearer_context, &pdn_context->session_bearers, entries, bc_new_safe) {
 		// todo: better error handling
 		if(bearer_context->ebi != pdn_context->default_ebi){
 			ded_ebis->ebis[ded_ebis->num_ebi] = bearer_context->ebi;

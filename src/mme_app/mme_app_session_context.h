@@ -196,7 +196,7 @@ typedef struct pdn_context_s {
    * Lists per APN, to keep bearer contexts and UE/EMM context separated.
    * We will store the bearers with the linked ebi, because the context id may change with S10 handovers.
    */
-  LIST_HEAD(session_bearers_s, bearer_context_new_s) *session_bearers;
+  LIST_HEAD(session_bearers_s, bearer_context_new_s) session_bearers;
 
   /* S-GW IP address for Control-Plane */
   union {
@@ -217,6 +217,7 @@ typedef struct pdn_context_s {
 typedef struct ue_session_pool_s {
 	mme_ue_s1ap_id_t		mme_ue_s1ap_id;
 	teid_t					mme_teid_s11;
+	teid_t					saegw_teid_s11;
 
 	bearer_context_new_t 	bcs_ue[MAX_NUM_BEARERS_UE];
 	pdn_context_t 			pdn_ue[MAX_APN_PER_UE];
@@ -224,7 +225,7 @@ typedef struct ue_session_pool_s {
 	 * List of empty bearer context.
 	 * Take the bearer contexts from here and put them into the PDN context.
 	 */
-	LIST_HEAD(free_bearers_s, bearer_context_new_s) *free_bearers;
+	LIST_HEAD(free_bearers_s, bearer_context_new_s) free_bearers;
 
 	/**
 	 * Map of PDN
@@ -250,15 +251,35 @@ typedef struct ue_session_pool_s {
 RB_PROTOTYPE(PdnContexts, pdn_context_s, pdn_ctx_rbt_Node, mme_app_compare_pdn_context)
 
 typedef struct mme_ue_session_pool_s {
-  uint32_t               nb_session_pools_managed;
+  uint32_t               nb_ue_session_pools_managed;
+  uint32_t               nb_ue_session_pools_since_last_stat;
   uint32_t               nb_bearers_managed;
   uint32_t               nb_bearers_since_last_stat;
   // todo: check if necessary hash_table_uint64_ts_t  *tun11_ue_context_htbl;// data is mme_ue_s1ap_id_t
   hash_table_ts_t 		  *mme_ue_s1ap_id_ue_session_pool_htbl;
+  hash_table_uint64_ts_t  *tun11_ue_session_pool_htbl;// data is mme_ue_s1ap_id_t
 } mme_ue_session_pool_t;
 
-void mme_app_esm_detach (mme_ue_s1ap_id_t ue_id);
+ue_session_pool_t * get_new_session_pool();
+void release_session_pool(ue_session_pool_t ** ue_session_pool);
 
+void
+mme_ue_session_pool_update_coll_keys (
+  mme_ue_session_pool_t * const mme_ue_session_pool_p,
+  ue_session_pool_t     * const ue_session_pool,
+  const mme_ue_s1ap_id_t   mme_ue_s1ap_id,
+  const s11_teid_t         mme_teid_s11);
+
+void mme_ue_session_pool_dump_coll_keys(void);
+
+int mme_insert_ue_session_pool (
+  mme_ue_session_pool_t * const mme_ue_session_pool_p,
+  const struct ue_session_pool_s *const ue_session_pool);
+void mme_remove_ue_session_pool(
+  mme_ue_session_pool_t * const mme_ue_session_pool_p,
+  struct ue_session_pool_s *ue_session_pool);
+
+void mme_app_esm_detach (mme_ue_s1ap_id_t ue_id);
 int mme_app_pdn_process_session_creation(mme_ue_s1ap_id_t ue_id, imsi64_t imsi, mm_state_t mm_state, ambr_t subscribed_ue_ambr, fteid_t * saegw_s11_fteid, gtpv2c_cause_t *cause,
     bearer_contexts_created_t * bcs_created, ambr_t *ambr, paa_t ** paa, protocol_configuration_options_t * pco);
 
@@ -266,8 +287,8 @@ int mme_app_pdn_process_session_creation(mme_ue_s1ap_id_t ue_id, imsi64_t imsi, 
  * \param mme_ue_s1ap_id The UE id identifier used in S1AP MME (and NAS)
  * @returns an UE context matching the mme_ue_s1ap_id or NULL if the context doesn't exists
  **/
-ue_session_pool_t *mme_ue_session_pool_exists_mme_ue_s1ap_id(mme_ue_session_pool_t * const mme_ue_context,
-    const mme_ue_s1ap_id_t mme_ue_s1ap_id);
+ue_session_pool_t *mme_ue_session_pool_exists_mme_ue_s1ap_id(mme_ue_session_pool_t * const mme_ue_context, const mme_ue_s1ap_id_t mme_ue_s1ap_id);
+struct ue_session_pool_s * mme_ue_session_pool_exists_s11_teid ( mme_ue_session_pool_t * const mme_ue_session_pool_p,  const s11_teid_t teid);
 
 ebi_t mme_app_get_free_bearer_id(ue_session_pool_t * const ue_session_pool);
 
