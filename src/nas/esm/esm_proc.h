@@ -137,8 +137,8 @@ void esm_proc_esm_information_response (mme_ue_s1ap_id_t ue_id, pti_t pti, nas_e
 void
 esm_proc_default_eps_bearer_context (
   mme_ue_s1ap_id_t   ue_id,
-  nas_esm_proc_pdn_connectivity_t * const esm_proc_pdn_connectivity,
-  ESM_msg * const esm_rsp_msg);
+  ESM_msg * const esm_rsp_msg,
+  nas_esm_proc_pdn_connectivity_t * const esm_proc_pdn_connectivity);
 
 void esm_proc_default_eps_bearer_context_accept (mme_ue_s1ap_id_t ue_id, const nas_esm_proc_pdn_connectivity_t* const esm_pdn_connectivity_proc);
 

@@ -61,9 +61,8 @@ mme_app_esm_bearer_context_finalize_tft(mme_ue_s1ap_id_t ue_id, bearer_context_n
 void clear_bearer_context(ue_session_pool_t * ue_session_pool, bearer_context_new_t * bc) {
 	/*
 	 * Release all session bearers of the PDN context back into the UE pool.
+	 * Bearer context has to be removed from the PDN session, before this method is triggered.
 	 */
-//	LIST_REMOVE(bc, entries);
-
 	bc->esm_ebr_context.status   = ESM_EBR_INACTIVE;
 	if(bc->esm_ebr_context.tft){
 		free_traffic_flow_template(&bc->esm_ebr_context.tft);
@@ -241,7 +240,7 @@ mme_app_register_dedicated_bearer_context(const mme_ue_s1ap_id_t ue_id, const es
   OAILOG_INFO(LOG_NAS_EMM, "EMMCN-SAP  - " "ESM QoS and TFT could be verified of CBR received for UE " MME_UE_S1AP_ID_FMT".\n", ue_id);
 
   // todo: LOCK_SESSION_POOL(
-  // todo: check STAILQ_REMOVE(&pdn_context->pBearerCtx, entries);
+  STAILQ_REMOVE(&ue_session_pool->free_bearers, pBearerCtx, bearer_context_new_s, entries);
   AssertFatal((EPS_BEARER_IDENTITY_LAST >= pBearerCtx->ebi) && (EPS_BEARER_IDENTITY_FIRST <= pBearerCtx->ebi), "Bad ebi %u", pBearerCtx->ebi);
   /* Check that there is no collision when adding the bearer context into the PDN sessions bearer pool. */
   pBearerCtx->pdn_cx_id              = pdn_context->context_identifier;
@@ -586,7 +585,7 @@ mme_app_finalize_bearer_context(mme_ue_s1ap_id_t ue_id, const pdn_cid_t pdn_cid,
     protocol_configuration_options_t * pco){
   OAILOG_FUNC_IN (LOG_MME_APP);
 
-  ue_context_t 			* ue_session_pool   = NULL;
+  ue_session_pool_t     * ue_session_pool   = NULL;
   bearer_context_new_t 	* bearer_context 	= NULL;
   pdn_context_t    		* pdn_context    	= NULL;
   int rc                		            = RETURNok;
@@ -735,6 +734,7 @@ mme_app_release_bearer_context(mme_ue_s1ap_id_t ue_id, const pdn_cid_t *pdn_cid,
    */
   // no timers to stop, no DSR to be sent..
   /** Initialize the new bearer context. Nothing needs to be done in the ESM layer. */
+  STAILQ_REMOVE(&pdn_context->session_bearers, bearer_context, bearer_context_new_s, entries);
   clear_bearer_context(ue_session_pool, bearer_context);
   OAILOG_INFO(LOG_MME_APP, "Successfully deregistered the bearer context with ebi %d from PDN id %u and for ue_id " MME_UE_S1AP_ID_FMT "\n",
       bearer_context->ebi, bearer_context->pdn_cx_id, ue_id);

@@ -37,7 +37,7 @@
 #include "intertask_interface.h"
 #include "mme_app_ue_context.h"
 #include "mme_app_session_context.h"
-#define CHANGEABLE_VALUE 10000
+#define CHANGEABLE_VALUE 4096
 
 #define MAX_UE_BEARER mme_config.max_ues
 typedef struct mme_app_desc_s {

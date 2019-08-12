@@ -230,7 +230,7 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
          * Activate Default Bearer Req or PDN connectivity reject is expected.
          * The procedure exists until Activate Default Bearer Accept is received.
          */
-        esm_proc_default_eps_bearer_context(msg->ue_id, esm_proc_pdn_connectivity, &esm_resp_msg);
+        esm_proc_default_eps_bearer_context(msg->ue_id, &esm_resp_msg, esm_proc_pdn_connectivity);
       }
     }
   }

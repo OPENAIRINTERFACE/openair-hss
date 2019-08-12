@@ -2849,7 +2849,7 @@ int mme_app_mobility_complete(const mme_ue_s1ap_id_t mme_ue_s1ap_id, bool activa
     pdn_context_t * first_pdn = RB_MIN(PdnContexts, &ue_session_pool->pdn_contexts);
     if(first_pdn){
     	OAILOG_INFO(LOG_MME_APP, " Triggering MBReq for completed handover for UE " MME_UE_S1AP_ID_FMT ". \n", mme_ue_s1ap_id);
-        mme_app_send_s11_modify_bearer_req(ue_context, first_pdn, 0);
+        mme_app_send_s11_modify_bearer_req(ue_session_pool, first_pdn, 0);
     }
   }
   OAILOG_INFO(LOG_MME_APP, "Completed registration of UE " MME_UE_S1AP_ID_FMT ". \n", mme_ue_s1ap_id);

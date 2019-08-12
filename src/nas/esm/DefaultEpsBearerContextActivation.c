@@ -219,8 +219,8 @@ esm_send_activate_default_eps_bearer_context_request (
 void
 esm_proc_default_eps_bearer_context (
   mme_ue_s1ap_id_t   ue_id,
-  nas_esm_proc_pdn_connectivity_t * const esm_proc_pdn_connectivity,
-  ESM_msg * const esm_rsp_msg)
+  ESM_msg * const esm_rsp_msg,
+  nas_esm_proc_pdn_connectivity_t * const esm_proc_pdn_connectivity)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
 

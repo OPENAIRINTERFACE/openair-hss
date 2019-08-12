@@ -104,12 +104,12 @@ mme_app_esm_create_pdn_context(mme_ue_s1ap_id_t ue_id, const ebi_t linked_ebi, c
 	  /** No UE session pool exists: should be created when the UE is created. */
 	  OAILOG_ERROR (LOG_MME_APP, "No UE session pool for UE: " MME_UE_S1AP_ID_FMT ". "
 			  "Cannot create a new pdn context for APN \"%s\" and cid=%d. \n",
-			  apn_subscribed ? bdata(apn_subscribed) : "NULL", pdn_cid, ue_id);
+			  ue_id, apn_subscribed ? bdata(apn_subscribed) : "NULL", pdn_cid);
 	  OAILOG_FUNC_RETURN(LOG_MME_APP, RETURNerror);
   }
   // todo: unlock the mme_desc
 
-  mme_app_get_pdn_context(ue_session_pool, pdn_cid, EPS_BEARER_IDENTITY_UNASSIGNED, apn_subscribed, pdn_context_pp);
+  mme_app_get_pdn_context(ue_id, pdn_cid, EPS_BEARER_IDENTITY_UNASSIGNED, apn_subscribed, pdn_context_pp);
   if((*pdn_context_pp)){
     OAILOG_ERROR (LOG_MME_APP, "A PDN context for APN \"%s\" and cid=%d already exists UE: " MME_UE_S1AP_ID_FMT ". \n",
     		apn_subscribed ? bdata(apn_subscribed) : "NULL", pdn_cid, ue_id);
@@ -117,6 +117,14 @@ mme_app_esm_create_pdn_context(mme_ue_s1ap_id_t ue_id, const ebi_t linked_ebi, c
   }
 
   // todo: lock the session pool
+  /** Get a PDN context. */
+  *pdn_context_pp = STAILQ_FIRST(&ue_session_pool->free_pdn_contexts);
+  if(!*pdn_context_pp) {
+	  OAILOG_ERROR(LOG_MME_APP, "No free PDN context left for UE: " MME_UE_S1AP_ID_FMT ". \n", ue_id);
+	  OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+  }
+  STAILQ_REMOVE(&ue_session_pool->free_pdn_contexts, *pdn_context_pp, pdn_context_s, entries);
+
   bearer_context_new_t * free_bearer = NULL;
   if(linked_ebi != EPS_BEARER_IDENTITY_UNASSIGNED){
 	  mme_app_get_free_bearer_context(ue_session_pool, linked_ebi, &free_bearer); /**< Find the EBI which is matching (should be available). */
@@ -127,12 +135,6 @@ mme_app_esm_create_pdn_context(mme_ue_s1ap_id_t ue_id, const ebi_t linked_ebi, c
     OAILOG_ERROR(LOG_MME_APP, "No available bearer context could be found for UE: " MME_UE_S1AP_ID_FMT " with linked_ebi=%d. \n", ue_id, linked_ebi);
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
-  (*pdn_context_pp) = calloc(1, sizeof(pdn_context_t));
-  if (!(*pdn_context_pp)) {
-    OAILOG_CRITICAL(LOG_MME_APP, "Error creating PDN context for UE: " MME_UE_S1AP_ID_FMT ". \n", ue_id);
-    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
-  }
-  //  LOCK_UE_SESSION_POOL;
 
   /*
    * Check if an APN configuration exists. If so, use it to update the fields.
@@ -159,6 +161,9 @@ mme_app_esm_create_pdn_context(mme_ue_s1ap_id_t ue_id, const ebi_t linked_ebi, c
   (*pdn_context_pp)->subscribed_apn_ambr.br_dl = apn_ambr->br_dl;
   (*pdn_context_pp)->subscribed_apn_ambr.br_ul = apn_ambr->br_ul;
   (*pdn_context_pp)->pdn_type                     = pdn_type;
+  /** Set the SAE-GW TEID. */
+  (*pdn_context_pp)->s_gw_teid_s11_s4 = ue_session_pool->saegw_teid_s11;
+
   if (apn_configuration) {
     (*pdn_context_pp)->context_identifier           = apn_configuration->context_identifier;
 #ifdef APN_CONFIG_IP_ADDR
@@ -356,13 +361,16 @@ void mme_app_delete_pdn_context(ue_session_pool_t * const ue_session_pool, pdn_c
     //      }
 
     /** Initialize the new bearer context. */
+	STAILQ_REMOVE(&pdn_context->session_bearers, pBearerCtx, bearer_context_new_s, entries);
     clear_bearer_context(ue_session_pool, pBearerCtx);
     OAILOG_INFO(LOG_MME_APP, "Successfully deregistered the bearer context with ebi %d from PDN id %u. \n",
         pBearerCtx->ebi, (*pdn_context_pp)->context_identifier);
+    pBearerCtx = STAILQ_FIRST(&(*pdn_context_pp)->session_bearers);
   }
   /** Successfully removed all bearer contexts, clean up the PDN context procedure. */
   mme_app_free_pdn_context(pdn_context_pp); /**< Frees it by putting it back to the pool. */
   /** Insert the PDN context into the map of PDN contexts. */
+  STAILQ_INSERT_TAIL(&ue_session_pool->free_pdn_contexts, *pdn_context_pp, entries);
   OAILOG_FUNC_OUT(LOG_MME_APP);
 }
 

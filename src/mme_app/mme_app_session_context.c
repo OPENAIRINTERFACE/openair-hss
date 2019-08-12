@@ -121,12 +121,12 @@ void mme_ue_session_pool_dump_coll_keys(void)
   bstring tmp = bfromcstr(" ");
   btrunc(tmp, 0);
 
-  hashtable_uint64_ts_dump_content (mme_app_desc.mme_ue_contexts.tun11_ue_context_htbl, tmp);
-  OAILOG_TRACE (LOG_MME_APP,"tun11_ue_context_htbl %s\n", bdata(tmp));
+  hashtable_uint64_ts_dump_content (mme_app_desc.mme_ue_session_pools.tun11_ue_session_pool_htbl, tmp);
+  OAILOG_TRACE (LOG_MME_APP,"tun11_ue_session_pool_htbl %s\n", bdata(tmp));
 
   btrunc(tmp, 0);
-  hashtable_ts_dump_content(mme_app_desc.mme_ue_contexts.mme_ue_s1ap_id_ue_context_htbl, tmp);
-  OAILOG_TRACE (LOG_MME_APP,"mme_ue_s1ap_id_ue_context_htbl %s\n", bdata(tmp));
+  hashtable_ts_dump_content(mme_app_desc.mme_ue_session_pools.mme_ue_s1ap_id_ue_session_pool_htbl, tmp);
+  OAILOG_TRACE (LOG_MME_APP,"mme_ue_s1ap_id_ue_session_pool_htbl %s\n", bdata(tmp));
 }
 
 //------------------------------------------------------------------------------
@@ -228,26 +228,33 @@ ue_session_pool_t * get_new_session_pool() {
 	// todo: lock the mme_desc
 	ue_session_pool_t * free_sp = NULL;
 	free_sp = mme_app_desc.free_sp;
+
 	if(!free_sp) {
-		OAILOG_ERROR(LOG_NAS_EMM, "EMMCN-SAP  - " "No session pool left to allocate for UE.\n");
+		OAILOG_ERROR(LOG_NAS_EMM, "EMMCN-SAP  - " "No session pool left to allocate.\n");
 		OAILOG_FUNC_RETURN (LOG_MME_APP, NULL);
 	}
+	OAILOG_INFO(LOG_NAS_EMM, "EMMCN-SAP  - " "Allocated next free session pool %p.\n", free_sp);
 	if(!free_sp->next_free_sp){
+		OAILOG_INFO(LOG_NAS_EMM, "EMMCN-SAP  - " "No next free sp for current sp %p.\n", free_sp);
 		/** Check if this is the last session pool. */
-		if(mme_app_desc.free_sp != &mme_app_desc.ue_session_pool[CHANGEABLE_VALUE])
-			mme_app_desc.free_sp = free_sp++;
-		else {
+		if(mme_app_desc.free_sp != &mme_app_desc.ue_session_pool[CHANGEABLE_VALUE]){
+			mme_app_desc.free_sp = free_sp + 1;
+			OAILOG_INFO(LOG_NAS_EMM, "EMMCN-SAP  - " "Set new free sp as %p for current sp %p (1).\n", free_sp);
+		}else {
 			/** This was the last one. Don't specify a new value. */
 			mme_app_desc.free_sp = NULL;
+			OAILOG_INFO(LOG_NAS_EMM, "EMMCN-SAP  - " "No free after current sp %p left.\n", free_sp);
 		}
 	} else {
 		mme_app_desc.free_sp = free_sp->next_free_sp;
+		OAILOG_INFO(LOG_NAS_EMM, "EMMCN-SAP  - " "Set new free sp as %p as next_sp %p of current sp %p.\n", free_sp->next_free_sp, free_sp->next_free_sp, free_sp);
 	}
 	// todo: unlock the mme_desc
 
 	/** Initialize the bearers in the pool. */
 	/** Remove the EMS-EBR context of the bearer-context. */
 	if(free_sp){
+		OAILOG_INFO(LOG_NAS_EMM, "EMMCN-SAP  - " "Clearing received current sp %p.\n", free_sp);
 		clear_session_pool(free_sp);
 	}
 	OAILOG_FUNC_RETURN (LOG_MME_APP, free_sp);
@@ -299,7 +306,8 @@ mme_app_esm_detach(mme_ue_s1ap_id_t ue_id){
 
 //------------------------------------------------------------------------------
 int
-mme_app_pdn_process_session_creation(mme_ue_s1ap_id_t ue_id, imsi64_t imsi, mm_state_t mm_state, ambr_t subscribed_ue_ambr, fteid_t * saegw_s11_fteid, gtpv2c_cause_t *cause,
+mme_app_pdn_process_session_creation(mme_ue_s1ap_id_t ue_id, imsi64_t imsi, mm_state_t mm_state, ambr_t subscribed_ue_ambr,
+		ebi_t default_ebi, fteid_t * saegw_s11_fteid, gtpv2c_cause_t *cause,
     bearer_contexts_created_t * bcs_created, ambr_t *ambr, paa_t ** paa, protocol_configuration_options_t * pco){
 
   OAILOG_FUNC_IN(LOG_MME_APP);
@@ -312,18 +320,21 @@ mme_app_pdn_process_session_creation(mme_ue_s1ap_id_t ue_id, imsi64_t imsi, mm_s
   }
   /** Get the first unestablished PDN context from the UE context. */
   RB_FOREACH (pdn_context, PdnContexts, &ue_session_pool->pdn_contexts) {
-    if(!pdn_context->s_gw_teid_s11_s4){
+    if(pdn_context->default_ebi == default_ebi){
       /** Found. */
       break;
     }
   }
-  if(!pdn_context || pdn_context->s_gw_teid_s11_s4){
+  if(!pdn_context){
     OAILOG_WARNING(LOG_MME_APP, "No unestablished PDN context could be found for UE: " MME_UE_S1AP_ID_FMT ". \n", ue_id);
     OAILOG_FUNC_RETURN(LOG_MME_APP, RETURNerror);
   }
   // LOCK_UE_CONTEXT
   /** Set the S11 FTEID for each PDN connection. */
-  pdn_context->s_gw_teid_s11_s4 = saegw_s11_fteid->teid;
+  if(saegw_s11_fteid->teid)
+	  pdn_context->s_gw_teid_s11_s4 = saegw_s11_fteid->teid;
+  if(!ue_session_pool->saegw_teid_s11)
+    ue_session_pool->saegw_teid_s11 = pdn_context->s_gw_teid_s11_s4;
 
   if(pco){
     if (!pdn_context->pco) {
@@ -475,6 +486,7 @@ mme_app_pdn_process_session_creation(mme_ue_s1ap_id_t ue_id, imsi64_t imsi, mm_s
        */
       if(bearer_context){
         /** Initialize the new bearer context. */
+	    STAILQ_REMOVE(&pdn_context->session_bearers, bearer_context, bearer_context_new_s, entries);
         clear_bearer_context(ue_session_pool, bearer_context);
         OAILOG_WARNING(LOG_MME_APP, "Successfully deregistered the bearer context (ebi=%d) from PDN \"%s\" and for ue_id " MME_UE_S1AP_ID_FMT "\n",
         		bearer_id, bdata(pdn_context->apn_subscribed), ue_id);
@@ -617,9 +629,7 @@ mme_ue_session_pool_exists_s11_teid (
 //------------------------------------------------------------------------------
 static void clear_session_pool(ue_session_pool_t * ue_session_pool) {
 	/** Release the procedures. */
-	if (ue_session_pool->s11_procedures) {
-		mme_app_delete_s11_procedures(ue_session_pool);
-	}
+	mme_app_delete_s11_procedures(ue_session_pool);
 
 	/** Free the ESM procedures. */
 	if(ue_session_pool->esm_procedures.pdn_connectivity_procedures){
@@ -637,13 +647,23 @@ static void clear_session_pool(ue_session_pool_t * ue_session_pool) {
 	/** No need to check if list is full, since it is stacked. Just clear the allocations in each session context. */
 	//LIST_INIT(&ue_session_pool->free_bearers);
 	STAILQ_INIT (&ue_session_pool->free_bearers);
+	STAILQ_INIT (&ue_session_pool->free_pdn_contexts);
 
+	/** Initialize the bearer contexts. */
 	for(int num_bearer = 0; num_bearer < MAX_NUM_BEARERS_UE; num_bearer++) {
 		/** Set the EBI, if nothing set. */
 		if(!ue_session_pool->bcs_ue[num_bearer].ebi)
 			ue_session_pool->bcs_ue[num_bearer].ebi = num_bearer + 5;
 		clear_bearer_context(ue_session_pool, &ue_session_pool->bcs_ue[num_bearer]);
 	}
+
+	/** Initialize the PDN contexts. */
+	for(int num_pdn = 0; num_pdn < MAX_APN_PER_UE; num_pdn++) {
+		memset(&ue_session_pool->pdn_ue[num_pdn], 0, sizeof(pdn_context_t)); /**< Sets the SM status to ESM_STATUS_INVALID. */
+		/** Insert the list into the empty list. */
+		STAILQ_INSERT_TAIL(&ue_session_pool->free_pdn_contexts, &ue_session_pool->pdn_ue[num_pdn], entries);
+	}
+
 	/** Re-initialize the empty list: it should not point to a next free variable: determined when it is put back into the list (like LIST_INIT). */
 	ue_session_pool->next_free_sp = NULL;
 }

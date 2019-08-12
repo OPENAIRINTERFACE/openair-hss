@@ -303,7 +303,7 @@ esm_recv_pdn_connectivity_request (
    * the received messages (no specific callback needed).
    */
   DevAssert(!esm_proc_pdn_connectivity);
-  OAILOG_DEBUG(LOG_NAS_ESM, "ESM-SAP   - No ESM procedure for UE " MME_UE_S1AP_ID_FMT " exists. Proceeding with handling the new ESM request (pti=%d) for PDN connectivity.\n", pti, ue_id);
+  OAILOG_DEBUG(LOG_NAS_ESM, "ESM-SAP   - No ESM procedure for UE " MME_UE_S1AP_ID_FMT " exists. Proceeding with handling the new ESM request (pti=%d) for PDN connectivity.\n", ue_id, pti);
   esm_proc_pdn_connectivity = _esm_proc_create_pdn_connectivity_procedure(ue_id, imsi, pti);
   esm_proc_pdn_connectivity->request_type = pdn_request_type;
   esm_proc_pdn_connectivity->pdn_type = pdn_type;

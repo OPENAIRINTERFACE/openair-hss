@@ -108,7 +108,7 @@ nas_esm_proc_pdn_connectivity_t* mme_app_nas_esm_create_pdn_connectivity_procedu
   }
   LIST_INSERT_HEAD((ue_session_pool ->esm_procedures.pdn_connectivity_procedures), esm_proc_pdn_connectivity, entries);
 
-  return esm_proc_pdn_connectivity;
+  OAILOG_FUNC_RETURN(LOG_MME_APP, esm_proc_pdn_connectivity);
 }
 
 //------------------------------------------------------------------------------
@@ -166,7 +166,8 @@ nas_esm_proc_bearer_context_t* mme_app_nas_esm_create_bearer_context_procedure(m
   }
   LIST_INSERT_HEAD((ue_session_pool ->esm_procedures.bearer_context_procedures), esm_proc_bearer_context, entries);
   // todo: UNLOCK_UE_CONTEXT!
-  return esm_proc_bearer_context;
+  OAILOG_FUNC_RETURN(LOG_MME_APP, esm_proc_bearer_context);
+
 }
 
 //------------------------------------------------------------------------------

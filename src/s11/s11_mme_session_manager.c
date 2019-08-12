@@ -210,6 +210,14 @@ s11_mme_handle_create_session_response (
       gtpv2c_fteid_ie_get, &resp_p->s5_s8_pgw_fteid);
   DevAssert (NW_OK == rc);
   /*
+   * Linked EBI
+   */
+
+  rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_EBI, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL, gtpv2c_ebi_ie_get,
+      &resp_p->linked_eps_bearer_id);
+  DevAssert (NW_OK == rc);
+
+  /*
    * PAA IE
    */
   /** Allocate the PAA IE. */

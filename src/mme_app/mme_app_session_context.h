@@ -206,9 +206,12 @@ typedef struct pdn_context_s {
 	  struct sockaddr_in6    ipv6_addr;
   } s_gw_addr_s11_s4;
 
-  teid_t                      s_gw_teid_s11_s4;            // set by S11 CREATE_SESSION_RESPONSE
+  teid_t                      	s_gw_teid_s11_s4;            // set by S11 CREATE_SESSION_RESPONSE
   protocol_configuration_options_t *pco; // temp storage of information waiting for activation of required procedure
-  RB_ENTRY (pdn_context_s)    pdnCtxRbtNode;            /**< RB Tree Data Structure Node        */
+  RB_ENTRY (pdn_context_s)    	pdnCtxRbtNode;            /**< RB Tree Data Structure Node        */
+
+  /** For empty PDN context list. */
+  STAILQ_ENTRY (pdn_context_s)	entries;
 } pdn_context_t;
 
 /**
@@ -220,6 +223,7 @@ typedef struct ue_session_pool_s {
 	mme_ue_s1ap_id_t		mme_ue_s1ap_id;
 	teid_t					mme_teid_s11;
 	teid_t					saegw_teid_s11;
+	int 					num_pdn_contexts;
 
 	bearer_context_new_t 	bcs_ue[MAX_NUM_BEARERS_UE];
 	pdn_context_t 			pdn_ue[MAX_APN_PER_UE];
@@ -233,7 +237,8 @@ typedef struct ue_session_pool_s {
 	/**
 	 * Map of PDN
 	 */
-	RB_HEAD(PdnContexts, pdn_context_s) pdn_contexts;
+	RB_HEAD(PdnContexts, pdn_context_s) 	pdn_contexts;
+	STAILQ_HEAD(free_pdn_s, pdn_context_s) 	free_pdn_contexts;
 
 	/** ESM Procedures */
 	struct esm_procedures_s {
@@ -241,7 +246,7 @@ typedef struct ue_session_pool_s {
 		LIST_HEAD(esm_bearer_context_procedures_s, nas_esm_proc_bearer_context_s)   *bearer_context_procedures;
 	}esm_procedures;
 
-	LIST_HEAD(s11_procedures_s, mme_app_s11_proc_s) *s11_procedures;
+	LIST_HEAD(s11_procedures_s, mme_app_s11_proc_s) s11_procedures;
 
 	// todo: remove later
 	ebi_t                        next_def_ebi_offset;
@@ -283,7 +288,8 @@ void mme_remove_ue_session_pool(
   struct ue_session_pool_s *ue_session_pool);
 
 void mme_app_esm_detach (mme_ue_s1ap_id_t ue_id);
-int mme_app_pdn_process_session_creation(mme_ue_s1ap_id_t ue_id, imsi64_t imsi, mm_state_t mm_state, ambr_t subscribed_ue_ambr, fteid_t * saegw_s11_fteid, gtpv2c_cause_t *cause,
+int mme_app_pdn_process_session_creation(mme_ue_s1ap_id_t ue_id, imsi64_t imsi, mm_state_t mm_state, ambr_t subscribed_ue_ambr,
+		ebi_t default_ebi, fteid_t * saegw_s11_fteid, gtpv2c_cause_t *cause,
     bearer_contexts_created_t * bcs_created, ambr_t *ambr, paa_t ** paa, protocol_configuration_options_t * pco);
 
 /** \brief Retrieve an UE context by selecting the provided mme_ue_s1ap_id

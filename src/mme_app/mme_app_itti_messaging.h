@@ -38,7 +38,7 @@ void mme_app_send_s11_delete_bearer_cmd(teid_t local_teid, teid_t saegw_s11_teid
 int mme_app_send_s11_release_access_bearers_req (struct ue_session_pool_s *const ue_session_pool);
 void mme_app_send_s11_create_session_req (  const mme_ue_s1ap_id_t ue_id, const imsi_t * const imsi_p, pdn_context_t * pdn_context, tai_t * serving_tai,
     const protocol_configuration_options_t * const pco, const bool is_from_s10_tau);
-void mme_app_send_s11_modify_bearer_req(const ue_context_t * ue_context, pdn_context_t * pdn_context, uint8_t flags);
+void mme_app_send_s11_modify_bearer_req(const struct ue_session_pool_s * const ue_session_pool, pdn_context_t * pdn_context, uint8_t flags);
 int mme_app_remove_s10_tunnel_endpoint(teid_t local_teid, struct sockaddr *peer_ip);
 int mme_app_send_delete_session_request (struct ue_context_s * const ue_context_p, const ebi_t ebi, const struct sockaddr* saegw_s11_addr, const teid_t saegw_s11_teid, const bool noDelete, const bool handover, const uint8_t internal_flags); /**< Moved Delete Session Request from mme_app_detach. */
 

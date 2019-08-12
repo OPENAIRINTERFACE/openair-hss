@@ -321,9 +321,6 @@ mme_app_send_s11_create_session_req (
   }
   mme_config_unlock (&mme_config);
 
-  //ue_context->mme_teid_s11 = session_request_p->sender_fteid_for_cp.teid;
-  DevAssert(!pdn_context->s_gw_teid_s11_s4);
-
   memcpy (session_request_p->apn, pdn_context->apn_subscribed->data, blength(pdn_context->apn_subscribed));
   // todo: set the full apn name
   // memcpy (session_request_p->apn, ue_context_p->pending_pdn_connectivity_req_apn->data, ue_context_p->pending_pdn_connectivity_req_apn->slen);
@@ -368,7 +365,7 @@ mme_app_send_s11_create_session_req (
 }
 
 //------------------------------------------------------------------------------
-void mme_app_send_s11_modify_bearer_req(const ue_context_t * ue_context, pdn_context_t * pdn_context, uint8_t flags){
+void mme_app_send_s11_modify_bearer_req(const ue_session_pool_t * const ue_session_pool, pdn_context_t * pdn_context, uint8_t flags){
   OAILOG_FUNC_IN (LOG_MME_APP);
 
   MessageDef                             *message_p = NULL;
@@ -396,7 +393,7 @@ void mme_app_send_s11_modify_bearer_req(const ue_context_t * ue_context, pdn_con
    * The remote teid will be provided in the response message.
    */
 
-  s11_modify_bearer_request->local_teid = ue_context->mme_teid_s11;
+  s11_modify_bearer_request->local_teid = ue_session_pool->mme_teid_s11;
   /*
    * Delay Value in integer multiples of 50 millisecs, or zero
    */
@@ -412,14 +409,14 @@ void mme_app_send_s11_modify_bearer_req(const ue_context_t * ue_context, pdn_con
     DevAssert(bearer_context_to_establish);
     /** Add them to the bearers list of the MBR. */
     if(bearer_context_to_establish->bearer_state & BEARER_STATE_ENB_CREATED && bearer_context_to_establish->enb_fteid_s1u.teid){
-      OAILOG_DEBUG(LOG_MME_APP, "Adding EBI %d as bearer context to be modified for UE " MME_UE_S1AP_ID_FMT". \n", bearer_context_to_establish->ebi, ue_context->mme_ue_s1ap_id);
+      OAILOG_DEBUG(LOG_MME_APP, "Adding EBI %d as bearer context to be modified for UE " MME_UE_S1AP_ID_FMT". \n", bearer_context_to_establish->ebi, ue_session_pool->mme_ue_s1ap_id);
       s11_modify_bearer_request->bearer_contexts_to_be_modified.bearer_contexts[s11_modify_bearer_request->bearer_contexts_to_be_modified.num_bearer_context].eps_bearer_id =
           bearer_context_to_establish->ebi;
       memcpy (&s11_modify_bearer_request->bearer_contexts_to_be_modified.bearer_contexts[s11_modify_bearer_request->bearer_contexts_to_be_modified.num_bearer_context].s1_eNB_fteid,
           &bearer_context_to_establish->enb_fteid_s1u, sizeof(bearer_context_to_establish->enb_fteid_s1u));
       s11_modify_bearer_request->bearer_contexts_to_be_modified.num_bearer_context++;
     } else {
-      OAILOG_WARNING(LOG_MME_APP, "Adding EBI %d as bearer context to be removed for UE " MME_UE_S1AP_ID_FMT". \n", bearer_context_to_establish->ebi, ue_context->mme_ue_s1ap_id);
+      OAILOG_WARNING(LOG_MME_APP, "Adding EBI %d as bearer context to be removed for UE " MME_UE_S1AP_ID_FMT". \n", bearer_context_to_establish->ebi, ue_session_pool->mme_ue_s1ap_id);
       s11_modify_bearer_request->bearer_contexts_to_be_removed.bearer_contexts[s11_modify_bearer_request->bearer_contexts_to_be_removed.num_bearer_context].eps_bearer_id = bearer_context_to_establish->ebi;
       s11_modify_bearer_request->bearer_contexts_to_be_removed.bearer_contexts[s11_modify_bearer_request->bearer_contexts_to_be_removed.num_bearer_context].cause.cause_value = NO_RESOURCES_AVAILABLE;
       s11_modify_bearer_request->bearer_contexts_to_be_removed.num_bearer_context++;
@@ -427,7 +424,7 @@ void mme_app_send_s11_modify_bearer_req(const ue_context_t * ue_context, pdn_con
   }
 
   OAI_GCC_DIAG_OFF(pointer-to-int-cast);
-  s11_modify_bearer_request->sender_fteid_for_cp.teid = ue_context->mme_teid_s11;
+  s11_modify_bearer_request->sender_fteid_for_cp.teid = ue_session_pool->mme_teid_s11;
   OAI_GCC_DIAG_ON(pointer-to-int-cast);
   s11_modify_bearer_request->sender_fteid_for_cp.interface_type = S11_MME_GTP_C;
 
@@ -454,8 +451,6 @@ void mme_app_send_s11_modify_bearer_req(const ue_context_t * ue_context, pdn_con
   s11_modify_bearer_request->trxn = NULL;
   /** Update the bearer state with Modify Bearer Response, not here. */
   // todo: apn restrictions!
-  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0,
-      "0 S11_MODIFY_BEARER_REQUEST imsi " IMSI_64_FMT, ue_context_pP->imsi);
   itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT(LOG_MME_APP);
 }
@@ -562,7 +557,7 @@ void mme_app_send_s1ap_mme_configuration_transfer(
 //          if(bearer_context->bearer_state & BEARER_STATE_ENB_CREATED){
 //            /** Found a PDN. Establish the bearer contexts. */
 //            OAILOG_INFO(LOG_MME_APP, "Establishing the bearers for UE_CONTEXT for UE " MME_UE_S1AP_ID_FMT " triggered by handover notify (not active but ENB Created). \n", ue_context->mme_ue_s1ap_id);
-//            mme_app_send_s11_modify_bearer_req(ue_context, pdn_context);
+//            mme_app_send_s11_modify_bearer_req(ue_session_pool, pdn_context);
 //            OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
 //          }
 //        }
