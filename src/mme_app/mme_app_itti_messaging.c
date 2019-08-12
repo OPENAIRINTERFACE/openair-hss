@@ -408,7 +408,7 @@ void mme_app_send_s11_modify_bearer_req(const ue_context_t * ue_context, pdn_con
   s11_modify_bearer_request->teid           = pdn_context->s_gw_teid_s11_s4;
   /** Add the bearers to establish. */
   bearer_context_new_t * bearer_context_to_establish = NULL;
-  LIST_FOREACH (bearer_context_to_establish, &pdn_context->session_bearers, entries) {
+  STAILQ_FOREACH (bearer_context_to_establish, &pdn_context->session_bearers, entries) {
     DevAssert(bearer_context_to_establish);
     /** Add them to the bearers list of the MBR. */
     if(bearer_context_to_establish->bearer_state & BEARER_STATE_ENB_CREATED && bearer_context_to_establish->enb_fteid_s1u.teid){
@@ -1020,7 +1020,7 @@ void mme_app_itti_forward_relocation_response(ue_context_t *ue_context, struct P
     if(!registered_pdn_ctx)
     	continue;
     bearer_context_new_t *bearer_context_setup = NULL;
-    LIST_FOREACH (bearer_context_setup, &registered_pdn_ctx->session_bearers, entries) {
+    STAILQ_FOREACH (bearer_context_setup, &registered_pdn_ctx->session_bearers, entries) {
       if(!bearer_context_setup)
     	  continue;
       /** EBI. */

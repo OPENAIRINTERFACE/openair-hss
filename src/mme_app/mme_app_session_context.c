@@ -292,7 +292,7 @@ mme_app_esm_detach(mme_ue_s1ap_id_t ue_id){
     pdn_context = RB_MIN(PdnContexts, &ue_session_pool->pdn_contexts);
   }
   OAILOG_INFO(LOG_MME_APP, "Removed all ESM contexts of UE: " MME_UE_S1AP_ID_FMT " for detach. \n", ue_id);
-  bearer_context_new_t * bc_free = LIST_FIRST(&ue_session_pool->free_bearers);
+  bearer_context_new_t * bc_free = STAILQ_FIRST(&ue_session_pool->free_bearers);
   // todo: UNLOCK UE SESSION POOL
   OAILOG_FUNC_OUT(LOG_MME_APP);
 }
@@ -564,7 +564,7 @@ void mme_app_ue_session_pool_s1_release_enb_informations(mme_ue_s1ap_id_t ue_id)
      * Do the MBR just one PDN at a time.
      */
     bearer_context_new_t * bearer_context_to_set_idle = NULL, * bearer_context_to_set_idle_safe = NULL;
-    LIST_FOREACH_SAFE (bearer_context_to_set_idle, &registered_pdn_ctx->session_bearers, entries, bearer_context_to_set_idle_safe) {
+    STAILQ_FOREACH(bearer_context_to_set_idle, &registered_pdn_ctx->session_bearers, entries) {
       DevAssert(bearer_context_to_set_idle);
       /** Add them to the bearears list of the MBR. */
       mme_app_bearer_context_s1_release_enb_informations(bearer_context_to_set_idle);
@@ -635,8 +635,13 @@ static void clear_session_pool(ue_session_pool_t * ue_session_pool) {
 	DevAssert(RB_EMPTY(&ue_session_pool->pdn_contexts));
 
 	/** No need to check if list is full, since it is stacked. Just clear the allocations in each session context. */
-	LIST_INIT(&ue_session_pool->free_bearers);
+	//LIST_INIT(&ue_session_pool->free_bearers);
+	STAILQ_INIT (&ue_session_pool->free_bearers);
+
 	for(int num_bearer = 0; num_bearer < MAX_NUM_BEARERS_UE; num_bearer++) {
+		/** Set the EBI, if nothing set. */
+		if(!ue_session_pool->bcs_ue[num_bearer].ebi)
+			ue_session_pool->bcs_ue[num_bearer].ebi = num_bearer + 5;
 		clear_bearer_context(ue_session_pool, &ue_session_pool->bcs_ue[num_bearer]);
 	}
 	/** Re-initialize the empty list: it should not point to a next free variable: determined when it is put back into the list (like LIST_INIT). */

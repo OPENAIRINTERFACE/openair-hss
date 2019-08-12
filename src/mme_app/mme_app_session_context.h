@@ -112,7 +112,8 @@ typedef struct bearer_context_new_s {
   bearer_qos_t                		bearer_level_qos;
 
   /** Add an entry field to make it part of a list (session or UE, no need to save more lists). */
-  LIST_ENTRY(bearer_context_new_s) 	entries;
+  // LIST_ENTRY(bearer_context_new_s) 	entries;
+  STAILQ_ENTRY (bearer_context_new_s)	entries;
 }__attribute__((__packed__)) bearer_context_new_t;
 
 /** @struct subscribed_apn_t
@@ -196,7 +197,8 @@ typedef struct pdn_context_s {
    * Lists per APN, to keep bearer contexts and UE/EMM context separated.
    * We will store the bearers with the linked ebi, because the context id may change with S10 handovers.
    */
-  LIST_HEAD(session_bearers_s, bearer_context_new_s) session_bearers;
+ // LIST_HEAD(session_bearers_s, bearer_context_new_s) session_bearers;
+  STAILQ_HEAD(session_bearers_s, bearer_context_new_s) session_bearers;
 
   /* S-GW IP address for Control-Plane */
   union {
@@ -225,7 +227,8 @@ typedef struct ue_session_pool_s {
 	 * List of empty bearer context.
 	 * Take the bearer contexts from here and put them into the PDN context.
 	 */
-	LIST_HEAD(free_bearers_s, bearer_context_new_s) free_bearers;
+	//LIST_HEAD(free_bearers_s, bearer_context_new_s) free_bearers;
+	STAILQ_HEAD(free_bearers_s, bearer_context_new_s) free_bearers;
 
 	/**
 	 * Map of PDN

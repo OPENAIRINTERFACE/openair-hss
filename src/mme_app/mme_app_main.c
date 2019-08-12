@@ -533,6 +533,17 @@ int mme_app_init (const mme_config_t * mme_config_p)
   mme_app_desc.mme_ue_contexts.imsi_subscription_profile_htbl = hashtable_ts_create (mme_config.max_ues, NULL, NULL, b);
   bdestroy_wrapper (&b);
 
+  /** Initialize for the UE session pool. */
+  // todo: (from develop)   pthread_rwlock_init (&mme_app_desc.rw_lock, NULL); && where to unlock it?
+  b = bfromcstr("mme_app_imsi_ue_session_pool_htbl");
+  bassigncstr(b, "mme_app_tun11_session_pool_htbl");
+  mme_app_desc.mme_ue_session_pools.tun11_ue_session_pool_htbl = hashtable_uint64_ts_create (mme_config.max_ues, NULL, b);
+  AssertFatal(sizeof(uintptr_t) >= sizeof(uint64_t), "Problem with tun11_ue_session_pool_htbl in MME_APP");
+  btrunc(b, 0);
+  bassigncstr(b, "mme_app_mme_ue_s1ap_id_ue_session_pool_htbl");
+  mme_app_desc.mme_ue_session_pools.mme_ue_s1ap_id_ue_session_pool_htbl = hashtable_ts_create (mme_config.max_ues, NULL, NULL, b);
+  bdestroy_wrapper (&b);
+
   if (mme_app_edns_init(mme_config_p)) {
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
@@ -578,6 +589,10 @@ void mme_app_exit (void)
   hashtable_ts_destroy (mme_app_desc.mme_ue_contexts.mme_ue_s1ap_id_ue_context_htbl);
   hashtable_ts_destroy (mme_app_desc.mme_ue_contexts.imsi_subscription_profile_htbl);
   obj_hashtable_uint64_ts_destroy (mme_app_desc.mme_ue_contexts.guti_ue_context_htbl);
+
+  /** Destroy the session pool. */
+  hashtable_uint64_ts_destroy (mme_app_desc.mme_ue_session_pools.tun11_ue_session_pool_htbl);
+  hashtable_ts_destroy (mme_app_desc.mme_ue_session_pools.mme_ue_s1ap_id_ue_session_pool_htbl);
 
   mme_config_exit();
 }

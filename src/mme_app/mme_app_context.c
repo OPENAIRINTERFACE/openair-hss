@@ -1126,7 +1126,7 @@ void mme_app_dump_pdn_context (const struct ue_context_s *const ue_context,
 
     /** Set all bearers of the EBI to valid. */
     bearer_context_new_t * bc_to_dump = NULL;
-    LIST_FOREACH(bc_to_dump, &pdn_context->session_bearers, entries) {
+    STAILQ_FOREACH(bc_to_dump, &pdn_context->session_bearers, entries) {
       AssertFatal(bc_to_dump, "Mismatch in configuration bearer context NULL\n");
       bformata (bstr_dump, "%*s - Bearer item ----------------------------\n");
       mme_app_dump_bearer_context(bc_to_dump, indent_spaces + 4, bstr_dump);

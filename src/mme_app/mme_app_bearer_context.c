@@ -62,7 +62,7 @@ void clear_bearer_context(ue_session_pool_t * ue_session_pool, bearer_context_ne
 	/*
 	 * Release all session bearers of the PDN context back into the UE pool.
 	 */
-	LIST_REMOVE(bc, entries);
+//	LIST_REMOVE(bc, entries);
 
 	bc->esm_ebr_context.status   = ESM_EBR_INACTIVE;
 	if(bc->esm_ebr_context.tft){
@@ -79,14 +79,14 @@ void clear_bearer_context(ue_session_pool_t * ue_session_pool, bearer_context_ne
 	/** Reset the ebi. */
 	bc->ebi = ebi;
 	/** Insert the list into the empty list. */
-	LIST_INSERT_HEAD(&ue_session_pool->free_bearers, bc, entries);
+	STAILQ_INSERT_TAIL(&ue_session_pool->free_bearers, bc, entries);
 }
 
 //------------------------------------------------------------------------------
 bearer_context_new_t* mme_app_get_session_bearer_context(pdn_context_t * const pdn_context, const ebi_t ebi)
 {
 	bearer_context_new_t *bc_new = NULL, *bc_new_safe = NULL;
-	LIST_FOREACH_SAFE(bc_new, &pdn_context->session_bearers, entries, bc_new_safe) {
+	STAILQ_FOREACH(bc_new, &pdn_context->session_bearers, entries) {
 		if(bc_new->ebi == ebi){
 			return bc_new;
 		}
@@ -98,7 +98,8 @@ bearer_context_new_t* mme_app_get_session_bearer_context(pdn_context_t * const p
 void mme_app_get_free_bearer_context(ue_session_pool_t * const ue_sp, const ebi_t ebi, bearer_context_new_t** bc_pp)
 {
 	bearer_context_new_t *bc_new = NULL, *bc_new_safe = NULL;
-	LIST_FOREACH_SAFE(bc_new, &ue_sp->free_bearers, entries, bc_new_safe) {
+	// todo: stailq_foreach safe
+	STAILQ_FOREACH(bc_new, &ue_sp->free_bearers, entries) {
 		if(bc_new->ebi == ebi){
 			*bc_pp = bc_new;
 			break;
@@ -127,7 +128,7 @@ void mme_app_get_bearer_contexts_to_be_created(pdn_context_t * pdn_context, bear
 
   bearer_context_new_t * bearer_context_to_setup  = NULL;
 
-  LIST_FOREACH (bearer_context_to_setup, &pdn_context->session_bearers, entries) {
+  STAILQ_FOREACH (bearer_context_to_setup, &pdn_context->session_bearers, entries) {
     DevAssert(bearer_context_to_setup);
     /*
      * Set the bearer of the pdn context to establish.
@@ -188,9 +189,13 @@ mme_app_register_dedicated_bearer_context(const mme_ue_s1ap_id_t ue_id, const es
   bearer_context_new_t            *pBearerCtx  = NULL; /**< Define a bearer context key. */
 
   /** Get the UE session pool from the UE_ID. */
-  ue_session_pool_t * ue_session_pool = NULL;
+  ue_session_pool_t   * ue_session_pool = mme_ue_session_pool_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_session_pools, ue_id);
+  if(!ue_session_pool){
+    OAILOG_ERROR(LOG_MME_APP, "No MME_APP UE session pool could be found for UE: " MME_UE_S1AP_ID_FMT " to register new dedicated bearer context with ebi %d.\n", ue_id, ded_ebi);
+    OAILOG_FUNC_RETURN(LOG_MME_APP, RETURNerror);
+  }
 
-  mme_app_get_pdn_context(ue_session_pool, pdn_cid, linked_ebi, NULL, &pdn_context);
+  mme_app_get_pdn_context(ue_id, pdn_cid, linked_ebi, NULL, &pdn_context);
   if(!pdn_context){
     OAILOG_ERROR (LOG_MME_APP, "No PDN context for UE: " MME_UE_S1AP_ID_FMT " could be found (cid=%d,ebi=%d) to create a new dedicated bearer context. \n", ue_id, pdn_cid, linked_ebi);
     OAILOG_FUNC_RETURN (LOG_MME_APP, ESM_CAUSE_UNKNOWN_ACCESS_POINT_NAME);
@@ -206,7 +211,7 @@ mme_app_register_dedicated_bearer_context(const mme_ue_s1ap_id_t ue_id, const es
   }
   /** Removed a bearer context from the UE contexts bearer pool and adds it into the PDN sessions bearer pool. */
   if(ded_ebi == EPS_BEARER_IDENTITY_UNASSIGNED)
-	  pBearerCtx = LIST_FIRST(&ue_session_pool->free_bearers);
+	  pBearerCtx = STAILQ_FIRST(&ue_session_pool->free_bearers);
   else {
 	  mme_app_get_free_bearer_context(ue_session_pool, ded_ebi, &pBearerCtx);
   }
@@ -236,7 +241,7 @@ mme_app_register_dedicated_bearer_context(const mme_ue_s1ap_id_t ue_id, const es
   OAILOG_INFO(LOG_NAS_EMM, "EMMCN-SAP  - " "ESM QoS and TFT could be verified of CBR received for UE " MME_UE_S1AP_ID_FMT".\n", ue_id);
 
   // todo: LOCK_SESSION_POOL(
-  LIST_REMOVE(pBearerCtx, entries);
+  // todo: check STAILQ_REMOVE(&pdn_context->pBearerCtx, entries);
   AssertFatal((EPS_BEARER_IDENTITY_LAST >= pBearerCtx->ebi) && (EPS_BEARER_IDENTITY_FIRST <= pBearerCtx->ebi), "Bad ebi %u", pBearerCtx->ebi);
   /* Check that there is no collision when adding the bearer context into the PDN sessions bearer pool. */
   pBearerCtx->pdn_cx_id              = pdn_context->context_identifier;
@@ -247,7 +252,7 @@ mme_app_register_dedicated_bearer_context(const mme_ue_s1ap_id_t ue_id, const es
   bc_tbc->tft = NULL;
   memcpy((void*)&pBearerCtx->bearer_level_qos, &bc_tbc->bearer_level_qos, sizeof(bearer_qos_t));
   /* Insert the bearer context into the session list. */
-  LIST_INSERT_HEAD(&pdn_context->session_bearers, pBearerCtx, entries);
+  STAILQ_INSERT_HEAD(&pdn_context->session_bearers, pBearerCtx, entries);
   /** No dedicated bearer level PCO supported. */
   bc_tbc->eps_bearer_id = pBearerCtx->ebi;
 
@@ -276,8 +281,9 @@ void mme_app_bearer_context_s1_release_enb_informations(bearer_context_new_t * c
 int
 mme_app_esm_update_ebr_state(const mme_ue_s1ap_id_t ue_id, const bstring apn_subscribed, const pdn_cid_t pdn_cid, const ebi_t linked_ebi, const ebi_t bearer_ebi, esm_ebr_state ebr_state){
   OAILOG_FUNC_IN (LOG_MME_APP);
-  ue_session_pool_t   * ue_session_pool = mme_ue_session_pool_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_session_pools, ue_id);
   pdn_context_t       * pdn_context = NULL;
+  ue_session_pool_t   * ue_session_pool = mme_ue_session_pool_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_session_pools, ue_id);
+
   if(!ue_session_pool){
     OAILOG_ERROR(LOG_MME_APP, "No MME_APP UE session pool could be found for UE: " MME_UE_S1AP_ID_FMT " to release \"%s\". \n", ue_id, bdata(apn_subscribed));
     OAILOG_FUNC_RETURN(LOG_MME_APP, RETURNerror);
@@ -298,10 +304,11 @@ mme_app_esm_update_ebr_state(const mme_ue_s1ap_id_t ue_id, const bstring apn_sub
 //------------------------------------------------------------------------------
 int
 mme_app_modify_bearers(const mme_ue_s1ap_id_t mme_ue_s1ap_id, bearer_contexts_to_be_modified_t *bcs_to_be_modified){
+
   OAILOG_FUNC_IN(LOG_MME_APP);
 
-  ue_session_pool_t   	* ue_session_pool = mme_ue_session_pool_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_session_pools, mme_ue_s1ap_id);
   pdn_context_t     	* pdn_context = NULL;
+  ue_session_pool_t   	* ue_session_pool = mme_ue_session_pool_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_session_pools, mme_ue_s1ap_id);
 
   if(!ue_session_pool){
     OAILOG_INFO(LOG_MME_APP, "No UE session pool is found" MME_UE_S1AP_ID_FMT ". \n", mme_ue_s1ap_id);
@@ -398,7 +405,7 @@ mme_app_release_bearers(const mme_ue_s1ap_id_t mme_ue_s1ap_id, e_rab_list_t * e_
 	pdn_context_t     	  * pdn_context = NULL, * pdn_context_safe = NULL;
     RB_FOREACH_SAFE(pdn_context, PdnContexts, &ue_session_pool->pdn_contexts, pdn_context_safe) { /**< Use the safe iterator. */
     	bearer_context_new_t *bc_new = NULL, *bc_new_safe = NULL;
-		LIST_FOREACH_SAFE(bc_new, &pdn_context->session_bearers, entries, bc_new_safe) {
+		STAILQ_FOREACH(bc_new, &pdn_context->session_bearers, entries) {
 			// todo: better error handling
 			if( (bearer_context->bearer_state & BEARER_STATE_ACTIVE)
 					&& (bearer_context->bearer_state & BEARER_STATE_ENB_CREATED)) {
@@ -425,13 +432,12 @@ mme_app_release_bearers(const mme_ue_s1ap_id_t mme_ue_s1ap_id, e_rab_list_t * e_
 //------------------------------------------------------------------------------
 int
 mme_app_cn_update_bearer_context(mme_ue_s1ap_id_t ue_id, const ebi_t ebi, struct e_rab_setup_item_s * s1u_erab_setup_item, struct fteid_s * s1u_saegw_fteid){
-  ue_session_pool_t * ue_session_pool   = NULL;
   bearer_context_new_t * bearer_context = NULL;
   int rc                            	= RETURNok;
 
   OAILOG_FUNC_IN (LOG_MME_APP);
 
-  ue_session_pool = mme_ue_session_pool_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_session_pools, ue_id);
+  ue_session_pool_t * ue_session_pool = mme_ue_session_pool_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_session_pools, ue_id);
   if(!ue_session_pool){
     OAILOG_ERROR (LOG_MME_APP, "No MME_APP UE session pool could be found for UE: " MME_UE_S1AP_ID_FMT ". \n", ue_id);
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
@@ -560,7 +566,7 @@ mme_app_esm_modify_bearer_context(mme_ue_s1ap_id_t ue_id, const ebi_t ebi, ebi_l
     DevAssert(ded_ebis);
     memset(ded_ebis, 0, sizeof(ebi_list_t));
 	bearer_context_new_t *bc_new_safe = NULL;
-	LIST_FOREACH_SAFE(bearer_context, &pdn_context->session_bearers, entries, bc_new_safe) {
+	STAILQ_FOREACH(bearer_context, &pdn_context->session_bearers, entries) {
 		// todo: better error handling
 		if(bearer_context->ebi != pdn_context->default_ebi){
 			ded_ebis->ebis[ded_ebis->num_ebi] = bearer_context->ebi;

@@ -94,7 +94,7 @@ int mme_app_handle_nas_dl_req (
     	  /** The ECM Connection will always be active, check the bearers. */
     	  pdn_context_t * pdn_context = RB_MIN(PdnContexts, &ue_session_pool->pdn_contexts);
     	  if(pdn_context){
-    		  bearer_context_new_t * first_bearer = LIST_FIRST(&pdn_context->session_bearers);
+    		  bearer_context_new_t * first_bearer = STAILQ_FIRST(&pdn_context->session_bearers);
     		  if(first_bearer){
     			  if(first_bearer->bearer_state & BEARER_STATE_ACTIVE){
     	        	  OAILOG_INFO(LOG_MME_APP, " MME_APP: Bearer of UE MME_UE_S1AP_ID " MME_UE_S1AP_ID_FMT " are active. Triggering bearer release first. \n", nas_dl_req_pP->ue_id);
