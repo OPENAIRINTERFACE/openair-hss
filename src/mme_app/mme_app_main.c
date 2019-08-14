@@ -549,8 +549,14 @@ int mme_app_init (const mme_config_t * mme_config_p)
   }
 
   /** Initialize the next free one as the first element in the list. */
-  mme_app_desc.free_sp = &mme_app_desc.ue_session_pool[0];
-  mme_app_desc.free_sp->next_free_sp = &mme_app_desc.ue_session_pool[1];
+  STAILQ_INIT(&mme_app_desc.mme_ue_session_pool_lists);
+  /** Iterate through the list of ue session pools. */
+  ue_session_pool_t * ue_session_pool;
+  for(int num_sp = 0; num_sp < CHANGEABLE_VALUE; num_sp++) {
+	  /** Put them into the list. */
+	  STAILQ_INSERT_TAIL(&mme_app_desc.mme_ue_session_pool_lists,
+			  &mme_app_desc.ue_session_pool[num_sp], entries);
+  }
 
   /*
    * Create the thread associated with MME applicative layer

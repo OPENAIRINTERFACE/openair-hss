@@ -220,39 +220,42 @@ typedef struct pdn_context_s {
  * A lock should be kept for all of it.
  */
 typedef struct ue_session_pool_s {
-	mme_ue_s1ap_id_t		mme_ue_s1ap_id;
-	teid_t					mme_teid_s11;
-	teid_t					saegw_teid_s11;
-	int 					num_pdn_contexts;
+	struct {
+		struct {
+			/** Put field here only. */
+			mme_ue_s1ap_id_t		mme_ue_s1ap_id;
+			teid_t					mme_teid_s11;
+			teid_t					saegw_teid_s11;
+			int 					num_pdn_contexts;
 
-	bearer_context_new_t 	bcs_ue[MAX_NUM_BEARERS_UE];
-	pdn_context_t 			pdn_ue[MAX_APN_PER_UE];
+			pdn_context_t 			pdn_ue[MAX_APN_PER_UE];
+
+			/** ESM Procedures */
+			struct esm_procedures_s {
+				LIST_HEAD(esm_pdn_connectivity_procedures_s, nas_esm_proc_pdn_connectivity_s) *pdn_connectivity_procedures;
+				LIST_HEAD(esm_bearer_context_procedures_s, nas_esm_proc_bearer_context_s)   *bearer_context_procedures;
+			}esm_procedures;
+			// todo: remove later
+			ebi_t                        next_def_ebi_offset;
+		}fields;
+		bearer_context_new_t 	bcs_ue[MAX_NUM_BEARERS_UE];
+	}privates;
+
 	/*
 	 * List of empty bearer context.
 	 * Take the bearer contexts from here and put them into the PDN context.
 	 */
 	//LIST_HEAD(free_bearers_s, bearer_context_new_s) free_bearers;
 	STAILQ_HEAD(free_bearers_s, bearer_context_new_s) free_bearers;
-
 	/**
 	 * Map of PDN
 	 */
 	RB_HEAD(PdnContexts, pdn_context_s) 	pdn_contexts;
 	STAILQ_HEAD(free_pdn_s, pdn_context_s) 	free_pdn_contexts;
-
-	/** ESM Procedures */
-	struct esm_procedures_s {
-		LIST_HEAD(esm_pdn_connectivity_procedures_s, nas_esm_proc_pdn_connectivity_s) *pdn_connectivity_procedures;
-		LIST_HEAD(esm_bearer_context_procedures_s, nas_esm_proc_bearer_context_s)   *bearer_context_procedures;
-	}esm_procedures;
-
 	LIST_HEAD(s11_procedures_s, mme_app_s11_proc_s) s11_procedures;
 
-	// todo: remove later
-	ebi_t                        next_def_ebi_offset;
-
 	/** Point to the next free session pool. */
-	struct ue_session_pool_s*     					 next_free_sp;
+	STAILQ_ENTRY (ue_session_pool_s)		entries;
 }ue_session_pool_t;
 
 /* Declaration (prototype) of the function to store pdn and bearer contexts. */
@@ -268,7 +271,7 @@ typedef struct mme_ue_session_pool_s {
   hash_table_uint64_ts_t  *tun11_ue_session_pool_htbl;// data is mme_ue_s1ap_id_t
 } mme_ue_session_pool_t;
 
-ue_session_pool_t * get_new_session_pool();
+ue_session_pool_t * get_new_session_pool(mme_ue_s1ap_id_t ue_id);
 void release_session_pool(ue_session_pool_t ** ue_session_pool);
 
 void

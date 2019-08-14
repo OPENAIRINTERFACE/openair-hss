@@ -61,8 +61,7 @@ int mme_app_handle_nas_dl_req (
   message_p = itti_alloc_new_message (TASK_MME_APP, NAS_DOWNLINK_DATA_REQ);
 
   ue_context_t   		*ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, nas_dl_req_pP->ue_id);
-  ue_session_pool_t   	*ue_session_pool = mme_ue_session_pool_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_session_pools, nas_dl_req_pP->ue_id);
-  if (ue_context && ue_session_pool) {
+  if (ue_context) {
     OAILOG_DEBUG (LOG_MME_APP, "DOWNLINK NAS TRANSPORT Found enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n",
         ue_context->enb_ue_s1ap_id, nas_dl_req_pP->ue_id);
 
@@ -83,7 +82,7 @@ int mme_app_handle_nas_dl_req (
     rc = itti_send_msg_to_task (to_task, INSTANCE_DEFAULT, message_p);
 
     /* We don't set the ECM state to connected, this is not the place, it should be connected when initial UE context release request is received. */
-    OAILOG_INFO(LOG_MME_APP, " MME_APP:DOWNLINK NAS TRANSPORT. MME_UE_S1AP_ID " MME_UE_S1AP_ID_FMT " and ENB_UE_S1AP_ID " ENB_UE_S1AP_ID_FMT". \n",
+    OAILOG_TRACE(LOG_MME_APP, " MME_APP:DOWNLINK NAS TRANSPORT. MME_UE_S1AP_ID " MME_UE_S1AP_ID_FMT " and ENB_UE_S1AP_ID " ENB_UE_S1AP_ID_FMT". \n",
         nas_dl_req_pP->ue_id, ue_context->enb_ue_s1ap_id);
 
     // Check the transaction status. And trigger the UE context release command accrordingly.
@@ -91,24 +90,30 @@ int mme_app_handle_nas_dl_req (
       ue_context->s1_ue_context_release_cause = S1AP_NAS_NORMAL_RELEASE;
 
       if(ue_context->mm_state == UE_REGISTERED) {
-    	  /** The ECM Connection will always be active, check the bearers. */
-    	  pdn_context_t * pdn_context = RB_MIN(PdnContexts, &ue_session_pool->pdn_contexts);
-    	  if(pdn_context){
-    		  bearer_context_new_t * first_bearer = STAILQ_FIRST(&pdn_context->session_bearers);
-    		  if(first_bearer){
-    			  if(first_bearer->bearer_state & BEARER_STATE_ACTIVE){
-    	        	  OAILOG_INFO(LOG_MME_APP, " MME_APP: Bearer of UE MME_UE_S1AP_ID " MME_UE_S1AP_ID_FMT " are active. Triggering bearer release first. \n", nas_dl_req_pP->ue_id);
-    	        	  mme_app_send_s11_release_access_bearers_req (nas_dl_req_pP->ue_id); /**< Release Access bearers and then send context release request.  */
+    	  ue_session_pool_t   	*ue_session_pool = mme_ue_session_pool_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_session_pools, nas_dl_req_pP->ue_id);
+    	  if(ue_session_pool){
+    		  /** The ECM Connection will always be active, check the bearers. */
+    		  pdn_context_t * pdn_context = RB_MIN(PdnContexts, &ue_session_pool->pdn_contexts);
+    		  if(pdn_context){
+    			  bearer_context_new_t * first_bearer = STAILQ_FIRST(&pdn_context->session_bearers);
+    			  if(first_bearer){
+    				  if(first_bearer->bearer_state & BEARER_STATE_ACTIVE){
+    					  OAILOG_INFO(LOG_MME_APP, " MME_APP: Bearer of UE MME_UE_S1AP_ID " MME_UE_S1AP_ID_FMT " are active. Triggering bearer release first. \n", nas_dl_req_pP->ue_id);
+    					  mme_app_send_s11_release_access_bearers_req (nas_dl_req_pP->ue_id); /**< Release Access bearers and then send context release request.  */
+    				  } else {
+    					  OAILOG_INFO(LOG_MME_APP, " MME_APP: Bearer of UE MME_UE_S1AP_ID " MME_UE_S1AP_ID_FMT " are NOT active. Continuing directly with S1AP release. \n", nas_dl_req_pP->ue_id);
+    					  // Notify S1AP to send UE Context Release Command to eNB.
+    					  mme_app_itti_ue_context_release (ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, ue_context->s1_ue_context_release_cause, ue_context->e_utran_cgi.cell_identity.enb_id);
+    				  }
     			  } else {
-    				  OAILOG_INFO(LOG_MME_APP, " MME_APP: Bearer of UE MME_UE_S1AP_ID " MME_UE_S1AP_ID_FMT " are NOT active. Continuing directly with S1AP release. \n", nas_dl_req_pP->ue_id);
-    	              // Notify S1AP to send UE Context Release Command to eNB.
-    	        	  mme_app_itti_ue_context_release (ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, ue_context->s1_ue_context_release_cause, ue_context->e_utran_cgi.cell_identity.enb_id);
+    				  OAILOG_ERROR(LOG_MME_APP, " MME_APP: No valid first bearer for UE MME_UE_S1AP_ID " MME_UE_S1AP_ID_FMT " was found. Neglecting resource freeing.\n", nas_dl_req_pP->ue_id);
     			  }
     		  } else {
-    			  OAILOG_ERROR(LOG_MME_APP, " MME_APP: No valid first bearer for UE MME_UE_S1AP_ID " MME_UE_S1AP_ID_FMT " was found. Neglecting resource freeing.\n", nas_dl_req_pP->ue_id);
+    			  OAILOG_ERROR(LOG_MME_APP, " MME_APP: No valid first PDN context for UE MME_UE_S1AP_ID " MME_UE_S1AP_ID_FMT " was found. Neglecting resource freeing.\n", nas_dl_req_pP->ue_id);
     		  }
     	  } else {
-    		  OAILOG_ERROR(LOG_MME_APP, " MME_APP: No valid first PDN context for UE MME_UE_S1AP_ID " MME_UE_S1AP_ID_FMT " was found. Neglecting resource freeing.\n", nas_dl_req_pP->ue_id);
+    		  OAILOG_WARNING(LOG_MME_APP, " MME_APP:DOWNLINK NAS TRANSPORT (termination). No UE session pool was found for REGISTERED UE: MME_UE_S1AP_ID " MME_UE_S1AP_ID_FMT " and ENB_UE_S1AP_ID " ENB_UE_S1AP_ID_FMT". \n",
+    				  nas_dl_req_pP->ue_id, ue_context->enb_ue_s1ap_id);
     	  }
       } else {
     	  OAILOG_ERROR(LOG_MME_APP, " MME_APP: UE MME_UE_S1AP_ID " MME_UE_S1AP_ID_FMT " is in UE_UNREGISTERED state. Triggering detach (S11 should already be removeD).\n", nas_dl_req_pP->ue_id);

@@ -1696,8 +1696,8 @@ void mme_ue_context_update_ue_emm_state (
     // Update Stats
     update_mme_app_stats_attached_ue_sub();
   }else{
-    OAILOG_INFO(LOG_MME_APP, "**** Abnormal - No handler for state transition of UE with mme_ue_s1ap_ue_id "MME_UE_S1AP_ID_FMT " "
-        "entering %d state from %d state. ****\n", mme_ue_s1ap_id, ue_context->mm_state, new_mm_state);
+    //OAILOG_TRACE(LOG_MME_APP, "**** Abnormal - No handler for state transition of UE with mme_ue_s1ap_ue_id "MME_UE_S1AP_ID_FMT " "
+    //    "entering %d state from %d state. ****\n", mme_ue_s1ap_id, ue_context->mm_state, new_mm_state);
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
   // todo: transition to/from UE_HANDOVER state!
@@ -2270,11 +2270,11 @@ pdn_context_t * mme_app_handle_pdn_connectivity_from_s10(ue_session_pool_t * ue_
   int                     rc = RETURNok;
 
   /** Get and handle the PDN Connection element as pending PDN connection element (using the default_ebi and the apn). */
-  mme_app_get_pdn_context(ue_session_pool->mme_ue_s1ap_id, PDN_CONTEXT_IDENTIFIER_UNASSIGNED, pdn_connection->linked_eps_bearer_id, pdn_connection->apn_str, &pdn_context);
+  mme_app_get_pdn_context(ue_session_pool->privates.fields.mme_ue_s1ap_id, PDN_CONTEXT_IDENTIFIER_UNASSIGNED, pdn_connection->linked_eps_bearer_id, pdn_connection->apn_str, &pdn_context);
   if(pdn_context){
     /* Found the PDN context. */
     OAILOG_ERROR(LOG_MME_APP, "PDN context for apn %s and default ebi %d already exists for UE_ID: " MME_UE_S1AP_ID_FMT". Skipping the establishment (or update). \n",
-        bdata(pdn_connection->apn_str), pdn_connection->linked_eps_bearer_id, ue_session_pool->mme_ue_s1ap_id);
+        bdata(pdn_connection->apn_str), pdn_connection->linked_eps_bearer_id, ue_session_pool->privates.fields.mme_ue_s1ap_id);
     OAILOG_FUNC_RETURN(LOG_MME_APP, NULL);
   }
   /*
@@ -2287,14 +2287,14 @@ pdn_context_t * mme_app_handle_pdn_connectivity_from_s10(ue_session_pool_t * ue_
 		  ((memcmp(&pdn_connection->ipv6_address, &in6addr_any, sizeof(in6addr_any)) != 0) ? (1 << 1) : 0) -1);
 
   // todo: store the received IPs
-  if(mme_app_esm_create_pdn_context(ue_session_pool->mme_ue_s1ap_id, pdn_connection->linked_eps_bearer_id,
+  if(mme_app_esm_create_pdn_context(ue_session_pool->privates.fields.mme_ue_s1ap_id, pdn_connection->linked_eps_bearer_id,
 		  NULL, pdn_connection->apn_str, PDN_CONTEXT_IDENTIFIER_UNASSIGNED, &pdn_connection->apn_ambr, pdn_type, &pdn_context) == RETURNerror){ /**< Create the pdn context using the APN network identifier. */
     OAILOG_ERROR(LOG_MME_APP, "Could not create a new pdn context for apn \" %s \" for UE_ID " MME_UE_S1AP_ID_FMT " from S10 PDN_CONNECTIONS IE. "
-        "Skipping the establishment of pdn context. \n", bdata(pdn_connection->apn_str), ue_session_pool->mme_ue_s1ap_id);
+        "Skipping the establishment of pdn context. \n", bdata(pdn_connection->apn_str), ue_session_pool->privates.fields.mme_ue_s1ap_id);
     OAILOG_FUNC_RETURN(LOG_MME_APP, NULL);
   }
   pdn_context_t * pdn_test = NULL;
-  mme_app_get_pdn_context(ue_session_pool->mme_ue_s1ap_id, ue_session_pool->next_def_ebi_offset + PDN_CONTEXT_IDENTIFIER_UNASSIGNED - 1, ue_session_pool->next_def_ebi_offset + 5 -1 , pdn_connection->apn_str, &pdn_test);
+  mme_app_get_pdn_context(ue_session_pool->privates.fields.mme_ue_s1ap_id, ue_session_pool->privates.fields.next_def_ebi_offset + PDN_CONTEXT_IDENTIFIER_UNASSIGNED - 1, ue_session_pool->privates.fields.next_def_ebi_offset + 5 -1 , pdn_connection->apn_str, &pdn_test);
   DevAssert(pdn_test);
   /** Create and finalize the remaining bearer contexts. */
   for (int num_bearer = 0; num_bearer < pdn_connection->bearer_context_list.num_bearer_context; num_bearer++){
@@ -2306,22 +2306,22 @@ pdn_context_t * mme_app_handle_pdn_connectivity_from_s10(ue_session_pool_t * ue_
     bearer_context_new_t * bearer_context_registered = NULL;
     esm_cause_t esm_cause = ESM_CAUSE_SUCCESS;
     if(bearer_context_to_be_created_s10->eps_bearer_id != pdn_context->default_ebi){
-      esm_cause = mme_app_register_dedicated_bearer_context(ue_session_pool->mme_ue_s1ap_id, ESM_EBR_ACTIVE, pdn_context->context_identifier,
+      esm_cause = mme_app_register_dedicated_bearer_context(ue_session_pool->privates.fields.mme_ue_s1ap_id, ESM_EBR_ACTIVE, pdn_context->context_identifier,
     		  pdn_context->default_ebi, bearer_context_to_be_created_s10, bearer_context_to_be_created_s10->eps_bearer_id);
     } else {
       /** Finalize the default bearer, updating qos. */
-      esm_cause = mme_app_finalize_bearer_context(ue_session_pool->mme_ue_s1ap_id, pdn_context->context_identifier,
+      esm_cause = mme_app_finalize_bearer_context(ue_session_pool->privates.fields.mme_ue_s1ap_id, pdn_context->context_identifier,
           pdn_context->default_ebi, bearer_context_to_be_created_s10->eps_bearer_id,
           NULL, &bearer_context_to_be_created_s10->bearer_level_qos, NULL, NULL);
     }
     /** Finalize it, thereby set the qos values. */
     if(esm_cause != ESM_CAUSE_SUCCESS){
       OAILOG_ERROR(LOG_MME_APP, "Error while preparing bearer (ebi=%d) for APN \"%s\" for UE " MME_UE_S1AP_ID_FMT" received via handover/TAU. "
-          "Currently ignoring (assuming implicit detach). \n", bearer_context_to_be_created_s10->eps_bearer_id, bdata(pdn_context->apn_subscribed), ue_session_pool->mme_ue_s1ap_id);
+          "Currently ignoring (assuming implicit detach). \n", bearer_context_to_be_created_s10->eps_bearer_id, bdata(pdn_context->apn_subscribed), ue_session_pool->privates.fields.mme_ue_s1ap_id);
     }
   }
   // todo: apn restriction data!
-  OAILOG_INFO (LOG_MME_APP, "Successfully updated the MME_APP UE context with the pending pdn information for UE id  %d. \n", ue_session_pool->mme_ue_s1ap_id);
+  OAILOG_INFO (LOG_MME_APP, "Successfully updated the MME_APP UE context with the pending pdn information for UE id  %d. \n", ue_session_pool->privates.fields.mme_ue_s1ap_id);
   OAILOG_FUNC_RETURN(LOG_MME_APP, pdn_context);
 }
 

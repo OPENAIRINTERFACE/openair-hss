@@ -1127,10 +1127,6 @@ static int _emm_attach_run_procedure(emm_data_context_t *emm_context)
       imsi64_t imsi64 = imsi_to_imsi64(attach_proc->ies->imsi);
       emm_ctx_set_valid_imsi(emm_context, attach_proc->ies->imsi, imsi64);
       emm_data_context_upsert_imsi(&_emm_data, emm_context);
-
-      emm_data_context_t * emm_context_test = emm_data_context_get_by_imsi (&_emm_data, imsi64);
-      DevAssert(emm_context_test);
-
       OAILOG_INFO(LOG_NAS_EMM, "EMM-PROC  - EMM context for the ue_id=" MME_UE_S1AP_ID_FMT " missing valid and active EPS security context. \n", emm_context->ue_id);
       rc = _emm_start_attach_proc_authentication (emm_context, attach_proc);
     } else if (attach_proc->ies->guti) {

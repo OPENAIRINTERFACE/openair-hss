@@ -441,7 +441,7 @@ void esm_proc_pdn_connectivity_failure (mme_ue_s1ap_id_t ue_id, nas_esm_proc_pdn
 					  (struct sockaddr *)&pdn_context->s_gw_addr_s11_s4, pdn_context->s_gw_teid_s11_s4, pdn_context->context_identifier);
 		  }
 	  }
-	  OAILOG_INFO(LOG_MME_APP, "Triggered session deletion for all session. Removing ESM context of UE: " MME_UE_S1AP_ID_FMT " . \n", ue_id);
+	  OAILOG_INFO(LOG_MME_APP, "Triggered session deletion for all session. Removing ESM session pool for UE: " MME_UE_S1AP_ID_FMT " . \n", ue_id);
 	  mme_app_esm_detach(ue_id);
   }
 

@@ -238,33 +238,31 @@ esm_proc_detach_request (
 
   if(!ue_session_pool){
     OAILOG_WARNING(LOG_MME_APP, "No UE session pool could be found for UE: " MME_UE_S1AP_ID_FMT " to release ESM contexts. \n", ue_id);
-    OAILOG_FUNC_OUT(LOG_MME_APP);
+  } else {
+	  OAILOG_WARNING(LOG_MME_APP, "Found a session pool for UE: " MME_UE_S1AP_ID_FMT ". Releasing session pool. \n", ue_id);
+	  /**
+	   * Trigger all S11 messages, wihtouth removing the context.
+	   * Todo: check what happens, if the transactions stay but s11 tunnel is removed.
+	   */
+	  RB_FOREACH (pdn_context, PdnContexts, &ue_session_pool->pdn_contexts) {
+		  DevAssert(pdn_context);
+		  // todo: check this!
+		  bool deleteTunnel = (RB_MIN(PdnContexts, &ue_session_pool->pdn_contexts)== pdn_context);
+
+		  /*
+		   * Trigger an S11 Delete Session Request to the SAE-GW.
+		   * No need to process the response.
+		   */
+		  if(((struct sockaddr *)&pdn_context->s_gw_addr_s11_s4)->sa_family != 0){
+			  nas_itti_pdn_disconnect_req(ue_id, pdn_context->default_ebi, PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED, deleteTunnel, clr,
+					  &pdn_context->s_gw_addr_s11_s4, pdn_context->s_gw_teid_s11_s4, pdn_context->context_identifier);
+		  }
+	  }
+	  OAILOG_INFO(LOG_MME_APP, "Triggered session deletion for all session. Removing ESM context of UE: " MME_UE_S1AP_ID_FMT " . \n", ue_id);
+	  mme_app_esm_detach(ue_id);
   }
-
-  /**
-   * Trigger all S11 messages, wihtouth removing the context.
-   * Todo: check what happens, if the transactions stay but s11 tunnel is removed.
-   */
-  RB_FOREACH (pdn_context, PdnContexts, &ue_session_pool->pdn_contexts) {
-    DevAssert(pdn_context);
-    // todo: check this!
-    bool deleteTunnel = (RB_MIN(PdnContexts, &ue_session_pool->pdn_contexts)== pdn_context);
-
-    /*
-     * Trigger an S11 Delete Session Request to the SAE-GW.
-     * No need to process the response.
-     */
-    if(((struct sockaddr *)&pdn_context->s_gw_addr_s11_s4)->sa_family != 0){
-      nas_itti_pdn_disconnect_req(ue_id, pdn_context->default_ebi, PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED, deleteTunnel, clr,
-          &pdn_context->s_gw_addr_s11_s4, pdn_context->s_gw_teid_s11_s4, pdn_context->context_identifier);
-    }
-  }
-  OAILOG_INFO(LOG_MME_APP, "Triggered session deletion for all session. Removing ESM context of UE: " MME_UE_S1AP_ID_FMT " . \n", ue_id);
-  mme_app_esm_detach(ue_id);
-
   // Notify MME APP to remove the remaining MME_APP and S1AP contexts.. The tunnel endpoints might or might not be deleted at this time.
   nas_itti_detach_req(ue_id);
-
   OAILOG_FUNC_OUT(LOG_NAS_ESM);
 }
 /****************************************************************************/

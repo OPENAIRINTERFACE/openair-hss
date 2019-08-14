@@ -194,7 +194,7 @@ int mme_app_send_s11_release_access_bearers_req (mme_ue_s1ap_id_t ue_id)
   memset ((void*)release_access_bearers_request_p, 0, sizeof (itti_s11_release_access_bearers_request_t));
 
   /** Sending one RAB for all PDNs also in the specification. */
-  release_access_bearers_request_p->local_teid = ue_session_pool->mme_teid_s11;
+  release_access_bearers_request_p->local_teid = ue_session_pool->privates.fields.mme_teid_s11;
   release_access_bearers_request_p->teid = pdn_context->s_gw_teid_s11_s4;
   memcpy((void*)&release_access_bearers_request_p->edns_peer_ip, (struct sockaddr *)&pdn_context->s_gw_addr_s11_s4,
   ((struct sockaddr *)&pdn_context->s_gw_addr_s11_s4)->sa_family == AF_INET ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
@@ -405,7 +405,7 @@ void mme_app_send_s11_modify_bearer_req(const ue_session_pool_t * const ue_sessi
    * The remote teid will be provided in the response message.
    */
 
-  s11_modify_bearer_request->local_teid = ue_session_pool->mme_teid_s11;
+  s11_modify_bearer_request->local_teid = ue_session_pool->privates.fields.mme_teid_s11;
   /*
    * Delay Value in integer multiples of 50 millisecs, or zero
    */
@@ -421,14 +421,14 @@ void mme_app_send_s11_modify_bearer_req(const ue_session_pool_t * const ue_sessi
     DevAssert(bearer_context_to_establish);
     /** Add them to the bearers list of the MBR. */
     if(bearer_context_to_establish->bearer_state & BEARER_STATE_ENB_CREATED && bearer_context_to_establish->enb_fteid_s1u.teid){
-      OAILOG_DEBUG(LOG_MME_APP, "Adding EBI %d as bearer context to be modified for UE " MME_UE_S1AP_ID_FMT". \n", bearer_context_to_establish->ebi, ue_session_pool->mme_ue_s1ap_id);
+      OAILOG_DEBUG(LOG_MME_APP, "Adding EBI %d as bearer context to be modified for UE " MME_UE_S1AP_ID_FMT". \n", bearer_context_to_establish->ebi, ue_session_pool->privates.fields.mme_ue_s1ap_id);
       s11_modify_bearer_request->bearer_contexts_to_be_modified.bearer_contexts[s11_modify_bearer_request->bearer_contexts_to_be_modified.num_bearer_context].eps_bearer_id =
           bearer_context_to_establish->ebi;
       memcpy (&s11_modify_bearer_request->bearer_contexts_to_be_modified.bearer_contexts[s11_modify_bearer_request->bearer_contexts_to_be_modified.num_bearer_context].s1_eNB_fteid,
           &bearer_context_to_establish->enb_fteid_s1u, sizeof(bearer_context_to_establish->enb_fteid_s1u));
       s11_modify_bearer_request->bearer_contexts_to_be_modified.num_bearer_context++;
     } else {
-      OAILOG_WARNING(LOG_MME_APP, "Adding EBI %d as bearer context to be removed for UE " MME_UE_S1AP_ID_FMT". \n", bearer_context_to_establish->ebi, ue_session_pool->mme_ue_s1ap_id);
+      OAILOG_WARNING(LOG_MME_APP, "Adding EBI %d as bearer context to be removed for UE " MME_UE_S1AP_ID_FMT". \n", bearer_context_to_establish->ebi, ue_session_pool->privates.fields.mme_ue_s1ap_id);
       s11_modify_bearer_request->bearer_contexts_to_be_removed.bearer_contexts[s11_modify_bearer_request->bearer_contexts_to_be_removed.num_bearer_context].eps_bearer_id = bearer_context_to_establish->ebi;
       s11_modify_bearer_request->bearer_contexts_to_be_removed.bearer_contexts[s11_modify_bearer_request->bearer_contexts_to_be_removed.num_bearer_context].cause.cause_value = NO_RESOURCES_AVAILABLE;
       s11_modify_bearer_request->bearer_contexts_to_be_removed.num_bearer_context++;
@@ -436,7 +436,7 @@ void mme_app_send_s11_modify_bearer_req(const ue_session_pool_t * const ue_sessi
   }
 
   OAI_GCC_DIAG_OFF(pointer-to-int-cast);
-  s11_modify_bearer_request->sender_fteid_for_cp.teid = ue_session_pool->mme_teid_s11;
+  s11_modify_bearer_request->sender_fteid_for_cp.teid = ue_session_pool->privates.fields.mme_teid_s11;
   OAI_GCC_DIAG_ON(pointer-to-int-cast);
   s11_modify_bearer_request->sender_fteid_for_cp.interface_type = S11_MME_GTP_C;
 

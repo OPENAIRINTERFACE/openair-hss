@@ -649,7 +649,6 @@ add_library(MME_APP
   ${MME_DIR}/mme_app_ue_context.c
   ${MME_DIR}/mme_app_session_context.c
   ${MME_DIR}/mme_config.c
-  ${MME_DIR}/s6a_2_nas_cause.c
   )
 
 

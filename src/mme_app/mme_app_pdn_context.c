@@ -153,7 +153,7 @@ mme_app_esm_create_pdn_context(mme_ue_s1ap_id_t ue_id, const ebi_t linked_ebi, c
   OAILOG_INFO(LOG_MME_APP, "Received first default bearer context %p with ebi %d for apn \"%s\" of UE: " MME_UE_S1AP_ID_FMT ". \n",
 		  free_bearer, free_bearer->ebi, bdata(apn_subscribed), ue_id);
   (*pdn_context_pp)->default_ebi = free_bearer->ebi;
-  ue_session_pool->next_def_ebi_offset++;
+  ue_session_pool->privates.fields.next_def_ebi_offset++;
   free_bearer->linked_ebi = free_bearer->ebi;
   /** Set the APN independently. */
   (*pdn_context_pp)->apn_subscribed = bstrcpy(apn_subscribed);
@@ -162,7 +162,7 @@ mme_app_esm_create_pdn_context(mme_ue_s1ap_id_t ue_id, const ebi_t linked_ebi, c
   (*pdn_context_pp)->subscribed_apn_ambr.br_ul = apn_ambr->br_ul;
   (*pdn_context_pp)->pdn_type                     = pdn_type;
   /** Set the SAE-GW TEID. */
-  (*pdn_context_pp)->s_gw_teid_s11_s4 = ue_session_pool->saegw_teid_s11;
+  (*pdn_context_pp)->s_gw_teid_s11_s4 = ue_session_pool->privates.fields.saegw_teid_s11;
 
   if (apn_configuration) {
     (*pdn_context_pp)->context_identifier           = apn_configuration->context_identifier;

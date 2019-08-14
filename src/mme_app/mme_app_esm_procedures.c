@@ -55,18 +55,18 @@ static void mme_app_nas_esm_free_pdn_connectivity_proc(nas_esm_proc_pdn_connecti
 void mme_app_nas_esm_free_pdn_connectivity_procedures(ue_session_pool_t * const ue_session_pool)
 {
   // todo: LOCK UE SESSION POOL
-  if (ue_session_pool->esm_procedures.pdn_connectivity_procedures) {
+  if (ue_session_pool->privates.fields.esm_procedures.pdn_connectivity_procedures) {
     nas_esm_proc_pdn_connectivity_t *esm_pdn_connectivity_proc1 = NULL;
     nas_esm_proc_pdn_connectivity_t *esm_pdn_connectivity_proc2 = NULL;
 
-    esm_pdn_connectivity_proc1 = LIST_FIRST(ue_session_pool->esm_procedures.pdn_connectivity_procedures);                 /* Faster List Deletion. */
+    esm_pdn_connectivity_proc1 = LIST_FIRST(ue_session_pool->privates.fields.esm_procedures.pdn_connectivity_procedures);                 /* Faster List Deletion. */
     while (esm_pdn_connectivity_proc1) {
       esm_pdn_connectivity_proc2 = LIST_NEXT(esm_pdn_connectivity_proc1, entries);
       mme_app_nas_esm_free_pdn_connectivity_proc(&esm_pdn_connectivity_proc1);
       esm_pdn_connectivity_proc1 = esm_pdn_connectivity_proc2;
     }
-    LIST_INIT(ue_session_pool->esm_procedures.pdn_connectivity_procedures);
-    free_wrapper((void**)&ue_session_pool->esm_procedures.pdn_connectivity_procedures);
+    LIST_INIT(ue_session_pool->privates.fields.esm_procedures.pdn_connectivity_procedures);
+    free_wrapper((void**)&ue_session_pool->privates.fields.esm_procedures.pdn_connectivity_procedures);
   }
 }
 
@@ -80,8 +80,8 @@ nas_esm_proc_pdn_connectivity_t* mme_app_nas_esm_create_pdn_connectivity_procedu
   }
   /* Check the first pdn connectivity procedure, if it has another PTI, reject the request. */
   nas_esm_proc_pdn_connectivity_t *esm_proc_pdn_connectivity = NULL;
-  if (ue_session_pool ->esm_procedures.pdn_connectivity_procedures) {
-    LIST_FOREACH(esm_proc_pdn_connectivity, ue_session_pool ->esm_procedures.pdn_connectivity_procedures, entries) {
+  if (ue_session_pool->privates.fields.esm_procedures.pdn_connectivity_procedures) {
+    LIST_FOREACH(esm_proc_pdn_connectivity, ue_session_pool->privates.fields.esm_procedures.pdn_connectivity_procedures, entries) {
       if(esm_proc_pdn_connectivity){
         if(esm_proc_pdn_connectivity->esm_base_proc.pti != pti){ /**< PTI may be invalid for idle TAU. */
           OAILOG_FUNC_RETURN(LOG_MME_APP, NULL);
@@ -100,11 +100,11 @@ nas_esm_proc_pdn_connectivity_t* mme_app_nas_esm_create_pdn_connectivity_procedu
   /* Set the timeout directly. Set the callback argument as the ue_id. */
 
   /** Initialize the of the procedure. */
-  if (!ue_session_pool ->esm_procedures.pdn_connectivity_procedures) {
-	ue_session_pool ->esm_procedures.pdn_connectivity_procedures = calloc(1, sizeof(struct nas_esm_proc_pdn_connectivity_s));
-    LIST_INIT(ue_session_pool ->esm_procedures.pdn_connectivity_procedures);
+  if (!ue_session_pool->privates.fields.esm_procedures.pdn_connectivity_procedures) {
+	ue_session_pool->privates.fields.esm_procedures.pdn_connectivity_procedures = calloc(1, sizeof(struct nas_esm_proc_pdn_connectivity_s));
+    LIST_INIT(ue_session_pool->privates.fields.esm_procedures.pdn_connectivity_procedures);
   }
-  LIST_INSERT_HEAD((ue_session_pool ->esm_procedures.pdn_connectivity_procedures), esm_proc_pdn_connectivity, entries);
+  LIST_INSERT_HEAD((ue_session_pool->privates.fields.esm_procedures.pdn_connectivity_procedures), esm_proc_pdn_connectivity, entries);
 
   OAILOG_FUNC_RETURN(LOG_MME_APP, esm_proc_pdn_connectivity);
 }
@@ -119,8 +119,8 @@ nas_esm_proc_bearer_context_t* mme_app_nas_esm_create_bearer_context_procedure(m
   }
   /* Check the first bearer context procedure, if it has another PTI, reject the request. */
   nas_esm_proc_bearer_context_t *esm_proc_bearer_context = NULL;
-  if (ue_session_pool ->esm_procedures.bearer_context_procedures) {
-    LIST_FOREACH(esm_proc_bearer_context, ue_session_pool ->esm_procedures.bearer_context_procedures, entries) {
+  if (ue_session_pool->privates.fields.esm_procedures.bearer_context_procedures) {
+    LIST_FOREACH(esm_proc_bearer_context, ue_session_pool->privates.fields.esm_procedures.bearer_context_procedures, entries) {
       if(esm_proc_bearer_context){
         if(esm_proc_bearer_context->esm_base_proc.pti != pti){
           OAILOG_FUNC_RETURN(LOG_MME_APP, NULL);
@@ -139,8 +139,8 @@ nas_esm_proc_bearer_context_t* mme_app_nas_esm_create_bearer_context_procedure(m
   esm_proc_bearer_context->esm_base_proc.pti   = pti;
   esm_proc_bearer_context->esm_base_proc.type  = ESM_PROC_EPS_BEARER_CONTEXT;
   /* Set the SAE-GW information. */
-  esm_proc_bearer_context->mme_s11_teid = ue_session_pool ->mme_teid_s11;
-  pdn_context_t * pdn_context = RB_MIN(PdnContexts, &ue_session_pool ->pdn_contexts);
+  esm_proc_bearer_context->mme_s11_teid = ue_session_pool->privates.fields.mme_teid_s11;
+  pdn_context_t * pdn_context = RB_MIN(PdnContexts, &ue_session_pool->pdn_contexts);
   DevAssert(pdn_context);
   esm_proc_bearer_context->saegw_s11_fteid.teid                = pdn_context->s_gw_teid_s11_s4;
   if(((struct sockaddr*)&pdn_context->s_gw_addr_s11_s4)->sa_family == AF_INET){
@@ -158,11 +158,11 @@ nas_esm_proc_bearer_context_t* mme_app_nas_esm_create_bearer_context_procedure(m
   }
 
   /** Initialize the of the procedure. */
-  if (!ue_session_pool ->esm_procedures.bearer_context_procedures) {
-	ue_session_pool ->esm_procedures.bearer_context_procedures = calloc(1, sizeof(struct nas_esm_proc_bearer_context_s));
-    LIST_INIT(ue_session_pool->esm_procedures.bearer_context_procedures);
+  if (!ue_session_pool->privates.fields.esm_procedures.bearer_context_procedures) {
+	ue_session_pool->privates.fields.esm_procedures.bearer_context_procedures = calloc(1, sizeof(struct nas_esm_proc_bearer_context_s));
+    LIST_INIT(ue_session_pool->privates.fields.esm_procedures.bearer_context_procedures);
   }
-  LIST_INSERT_HEAD((ue_session_pool ->esm_procedures.bearer_context_procedures), esm_proc_bearer_context, entries);
+  LIST_INSERT_HEAD((ue_session_pool->privates.fields.esm_procedures.bearer_context_procedures), esm_proc_bearer_context, entries);
   // todo: UNLOCK_UE_CONTEXT!
   OAILOG_FUNC_RETURN(LOG_MME_APP, esm_proc_bearer_context);
 
@@ -177,9 +177,9 @@ nas_esm_proc_pdn_connectivity_t* mme_app_nas_esm_get_pdn_connectivity_procedure(
     OAILOG_FUNC_RETURN(LOG_MME_APP, NULL);
   }
 
-  if (ue_session_pool ->esm_procedures.pdn_connectivity_procedures) {
+  if (ue_session_pool->privates.fields.esm_procedures.pdn_connectivity_procedures) {
     nas_esm_proc_pdn_connectivity_t *esm_pdn_connectivity_proc = NULL;
-    LIST_FOREACH(esm_pdn_connectivity_proc, ue_session_pool->esm_procedures.pdn_connectivity_procedures, entries) {
+    LIST_FOREACH(esm_pdn_connectivity_proc, ue_session_pool->privates.fields.esm_procedures.pdn_connectivity_procedures, entries) {
       /** Search by PTI only. */
       if (pti == PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED || pti == esm_pdn_connectivity_proc->esm_base_proc.pti) {
         OAILOG_FUNC_RETURN(LOG_MME_APP, esm_pdn_connectivity_proc);
@@ -225,18 +225,18 @@ static void mme_app_nas_esm_free_pdn_connectivity_proc(nas_esm_proc_pdn_connecti
 void mme_app_nas_esm_free_bearer_context_procedures(ue_session_pool_t * const ue_session_pool)
 {
   // todo: LOCK UE CONTEXT?
-  if (ue_session_pool->esm_procedures.bearer_context_procedures) {
+  if (ue_session_pool->privates.fields.esm_procedures.bearer_context_procedures) {
     nas_esm_proc_bearer_context_t *esm_bearer_context_proc1 = NULL;
     nas_esm_proc_bearer_context_t *esm_bearer_context_proc2 = NULL;
 
-    esm_bearer_context_proc1 = LIST_FIRST(ue_session_pool->esm_procedures.bearer_context_procedures);                 /* Faster List Deletion. */
+    esm_bearer_context_proc1 = LIST_FIRST(ue_session_pool->privates.fields.esm_procedures.bearer_context_procedures);                 /* Faster List Deletion. */
     while (esm_bearer_context_proc1) {
       esm_bearer_context_proc2 = LIST_NEXT(esm_bearer_context_proc1, entries);
       mme_app_nas_esm_free_bearer_context_proc(&esm_bearer_context_proc1);
       esm_bearer_context_proc1 = esm_bearer_context_proc2;
     }
-    LIST_INIT(ue_session_pool->esm_procedures.bearer_context_procedures);
-    free_wrapper((void**)&ue_session_pool->esm_procedures.bearer_context_procedures);
+    LIST_INIT(ue_session_pool->privates.fields.esm_procedures.bearer_context_procedures);
+    free_wrapper((void**)&ue_session_pool->privates.fields.esm_procedures.bearer_context_procedures);
   }
 }
 
@@ -249,10 +249,10 @@ nas_esm_proc_bearer_context_t* mme_app_nas_esm_get_bearer_context_procedure(mme_
     OAILOG_FUNC_RETURN(LOG_MME_APP, NULL);
   }
 
-  if (ue_session_pool->esm_procedures.bearer_context_procedures) {
+  if (ue_session_pool->privates.fields.esm_procedures.bearer_context_procedures) {
     nas_esm_proc_bearer_context_t *esm_proc_bearer_context = NULL;
 
-    LIST_FOREACH(esm_proc_bearer_context, ue_session_pool->esm_procedures.bearer_context_procedures, entries) {
+    LIST_FOREACH(esm_proc_bearer_context, ue_session_pool->privates.fields.esm_procedures.bearer_context_procedures, entries) {
     /** Search by EBI only. */
     if ((PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED == pti || esm_proc_bearer_context->esm_base_proc.pti == pti)
         && (EPS_BEARER_IDENTITY_UNASSIGNED == ebi || esm_proc_bearer_context->bearer_ebi == ebi)){

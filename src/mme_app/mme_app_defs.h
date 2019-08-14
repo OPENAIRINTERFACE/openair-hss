@@ -37,7 +37,7 @@
 #include "intertask_interface.h"
 #include "mme_app_ue_context.h"
 #include "mme_app_session_context.h"
-#define CHANGEABLE_VALUE 4096
+#define CHANGEABLE_VALUE 256
 
 #define MAX_UE_BEARER mme_config.max_ues
 typedef struct mme_app_desc_s {
@@ -52,7 +52,7 @@ typedef struct mme_app_desc_s {
   // todo: lock for the bearer pool?!
   // todo: put into a separate place for allocation!
   ue_session_pool_t ue_session_pool[CHANGEABLE_VALUE];
-  struct ue_session_pool_s *free_sp; /**< Initialize this as ue_bearer_pool[0]. */
+  STAILQ_HEAD(ue_session_pools_s, ue_session_pool_s)  mme_ue_session_pool_lists;
 
   uint32_t mme_mobility_management_timer_period;
 

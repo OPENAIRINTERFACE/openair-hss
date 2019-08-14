@@ -81,7 +81,7 @@ mme_app_s11_proc_create_bearer_t* mme_app_create_s11_procedure_create_bearer(ue_
   /** Check if the list of S11 procedures is empty. */
   if(!LIST_EMPTY(&ue_session_pool->s11_procedures)){
 	  OAILOG_ERROR (LOG_MME_APP, "UE with ueId " MME_UE_S1AP_ID_FMT " has already a S11 procedure ongoing. Cannot create CBR procedure. \n",
-			  ue_session_pool->mme_ue_s1ap_id);
+			  ue_session_pool->privates.fields.mme_ue_s1ap_id);
 	  return NULL;
   }
 
@@ -132,7 +132,7 @@ void mme_app_delete_s11_procedure_create_bearer(ue_session_pool_t * const ue_ses
 
   if(LIST_EMPTY(&ue_session_pool->s11_procedures)){
 	  LIST_INIT(&ue_session_pool->s11_procedures);
-	  OAILOG_INFO (LOG_MME_APP, "UE with ueId " MME_UE_S1AP_ID_FMT " has no more S11 procedures left. Cleared the list. \n", ue_session_pool->mme_ue_s1ap_id);
+	  OAILOG_INFO (LOG_MME_APP, "UE with ueId " MME_UE_S1AP_ID_FMT " has no more S11 procedures left. Cleared the list. \n", ue_session_pool->privates.fields.mme_ue_s1ap_id);
   }
 }
 
@@ -142,7 +142,7 @@ mme_app_s11_proc_update_bearer_t* mme_app_create_s11_procedure_update_bearer(ue_
   /** Check if the list of S11 procedures is empty. */
   if(!LIST_EMPTY(&ue_session_pool->s11_procedures)){
 	OAILOG_ERROR (LOG_MME_APP, "UE with ueId " MME_UE_S1AP_ID_FMT " has already a S11 procedure ongoing. Cannot create UBR procedure. \n",
-			ue_session_pool->mme_ue_s1ap_id);
+			ue_session_pool->privates.fields.mme_ue_s1ap_id);
 	return NULL;
   }
   mme_app_s11_proc_update_bearer_t *s11_proc_update_bearer = calloc(1, sizeof(mme_app_s11_proc_update_bearer_t));
@@ -187,7 +187,7 @@ void mme_app_delete_s11_procedure_update_bearer(ue_session_pool_t * const ue_ses
 
   if(LIST_EMPTY(&ue_session_pool->s11_procedures)){
  	  LIST_INIT(&ue_session_pool->s11_procedures);
- 	  OAILOG_INFO (LOG_MME_APP, "UE with ueId " MME_UE_S1AP_ID_FMT " has no more S11 procedures left. Cleared the list. \n", ue_session_pool->mme_ue_s1ap_id);
+ 	  OAILOG_INFO (LOG_MME_APP, "UE with ueId " MME_UE_S1AP_ID_FMT " has no more S11 procedures left. Cleared the list. \n", ue_session_pool->privates.fields.mme_ue_s1ap_id);
    }
 }
 
@@ -196,7 +196,7 @@ mme_app_s11_proc_delete_bearer_t* mme_app_create_s11_procedure_delete_bearer(ue_
 {
 	if(!LIST_EMPTY(&ue_session_pool->s11_procedures)){
 		OAILOG_ERROR (LOG_MME_APP, "UE with ueId " MME_UE_S1AP_ID_FMT " has already a S11 procedure ongoing. Cannot create DBR procedure. \n",
-				ue_session_pool->mme_ue_s1ap_id);
+				ue_session_pool->privates.fields.mme_ue_s1ap_id);
 		return NULL;
 	}
 
@@ -244,7 +244,7 @@ void mme_app_delete_s11_procedure_delete_bearer(ue_session_pool_t * const ue_ses
   if(LIST_EMPTY(&ue_session_pool->s11_procedures)){
  	  LIST_INIT(&ue_session_pool->s11_procedures);
 
- 	  OAILOG_INFO (LOG_MME_APP, "UE with ueId " MME_UE_S1AP_ID_FMT " has no more S11 procedures left. Cleared the list. \n", ue_session_pool->mme_ue_s1ap_id);
+ 	  OAILOG_INFO (LOG_MME_APP, "UE with ueId " MME_UE_S1AP_ID_FMT " has no more S11 procedures left. Cleared the list. \n", ue_session_pool->privates.fields.mme_ue_s1ap_id);
    }
 }
 
