@@ -582,6 +582,7 @@ void mme_ue_context_dump_coll_keys(void)
   btrunc(tmp, 0);
   obj_hashtable_uint64_ts_dump_content (mme_app_desc.mme_ue_contexts.guti_ue_context_htbl, tmp);
   OAILOG_TRACE (LOG_MME_APP,"guti_ue_context_htbl %s", bdata(tmp));
+  bdestroy_wrapper(&tmp);
 }
 
 // todo: check the locks here
@@ -1367,12 +1368,11 @@ _mme_app_handle_s1ap_ue_context_release (const mme_ue_s1ap_id_t mme_ue_s1ap_id,
      *
      */
 
-	ue_session_pool_t      * ue_session_pool = mme_ue_session_pool_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_session_pools, mme_ue_s1ap_id);
     // release S1-U tunnel mapping in S_GW for all the active bearers for the UE
     // /** Check if this is the main S1AP UE reference, if o
     // todo:   Assert(at_least_1_BEARER_IS_ESTABLISHED_TO_SAEGW)!?!?
 	OAILOG_INFO(LOG_MME_APP, "UE is REGISTERED. Sending Release Access Bearer Request for ueId "MME_UE_S1AP_ID_FMT". \n.", mme_ue_s1ap_id);
-    mme_app_send_s11_release_access_bearers_req(ue_session_pool); /**< Release Access bearers and then send context release request.  */
+    mme_app_send_s11_release_access_bearers_req(ue_context->mme_ue_s1ap_id); /**< Release Access bearers and then send context release request.  */
     // todo: not sending all together, send one by one when release access bearer response is received.
   }
 //  unlock_ue_contexts(ue_context);

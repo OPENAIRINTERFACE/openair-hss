@@ -239,7 +239,7 @@ ue_session_pool_t * get_new_session_pool() {
 		/** Check if this is the last session pool. */
 		if(mme_app_desc.free_sp != &mme_app_desc.ue_session_pool[CHANGEABLE_VALUE]){
 			mme_app_desc.free_sp = free_sp + 1;
-			OAILOG_INFO(LOG_NAS_EMM, "EMMCN-SAP  - " "Set new free sp as %p for current sp %p (1).\n", free_sp);
+			OAILOG_INFO(LOG_NAS_EMM, "EMMCN-SAP  - " "Set new free sp as %p for current sp %p (1).\n", mme_app_desc.free_sp , free_sp);
 		}else {
 			/** This was the last one. Don't specify a new value. */
 			mme_app_desc.free_sp = NULL;
@@ -247,7 +247,7 @@ ue_session_pool_t * get_new_session_pool() {
 		}
 	} else {
 		mme_app_desc.free_sp = free_sp->next_free_sp;
-		OAILOG_INFO(LOG_NAS_EMM, "EMMCN-SAP  - " "Set new free sp as %p as next_sp %p of current sp %p.\n", free_sp->next_free_sp, free_sp->next_free_sp, free_sp);
+		OAILOG_INFO(LOG_NAS_EMM, "EMMCN-SAP  - " "Set new free sp as %p of current sp %p.\n", free_sp->next_free_sp, free_sp);
 	}
 	// todo: unlock the mme_desc
 

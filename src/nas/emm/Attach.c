@@ -143,8 +143,7 @@ static bool _emm_attach_ies_have_changed (mme_ue_s1ap_id_t ue_id, emm_attach_req
 
 static void _emm_proc_create_procedure_attach_request(emm_data_context_t * const ue_context, emm_attach_request_ies_t * const ies, retry_cb_t retry_cb);
 
-static int _emm_attach_retry_procedure(emm_data_context_t *emm_ctx);
-
+static int _emm_attach_retry_procedure(mme_ue_s1ap_id_t ue_id);
 
 static int _emm_attach_update (emm_data_context_t * const emm_context, emm_attach_request_ies_t * const ies);
 
@@ -379,7 +378,7 @@ int emm_proc_attach_request (
     void *unused = NULL;
     nas_emm_attach_proc_t * attach_proc = get_nas_specific_procedure_attach(new_emm_ue_ctx);
     nas_stop_T_retry_specific_procedure(new_emm_ue_ctx->ue_id, &attach_proc->emm_spec_proc.retry_timer, unused);
-    nas_start_T_retry_specific_procedure(new_emm_ue_ctx->ue_id, &attach_proc->emm_spec_proc.retry_timer, attach_proc->emm_spec_proc.retry_cb, new_emm_ue_ctx);
+    nas_start_T_retry_specific_procedure(new_emm_ue_ctx->ue_id, &attach_proc->emm_spec_proc.retry_timer, attach_proc->emm_spec_proc.retry_cb, (void*)new_emm_ue_ctx->ue_id);
     /** Set the old mme_ue_s1ap id which will be checked. */
     attach_proc->emm_spec_proc.old_ue_id =(*duplicate_emm_ue_ctx_pP)->ue_id;
     /*
@@ -899,16 +898,21 @@ static void _emm_proc_create_procedure_attach_request(emm_data_context_t * const
 static void _emm_attach_t3450_handler (void *args)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
-  emm_data_context_t                          *emm_context = (emm_data_context_t *) (args);
+  mme_ue_s1ap_id_t ue_id = (mme_ue_s1ap_id_t) (args);
+
+  /** Get the emm context. */
+  emm_data_context_t * emm_context = emm_data_context_get(&_emm_data, ue_id);
+  if(!emm_context){
+	  OAILOG_ERROR(LOG_NAS_EMM, "EMM-PROC  - T3450 timer expired, no EMM context for UE " MME_UE_S1AP_ID_FMT". Removing the attach procedure. \n", ue_id);
+	  nas_itti_esm_detach_ind(ue_id, false);
+	  OAILOG_FUNC_OUT (LOG_NAS_EMM);
+  }
 
   if (is_nas_specific_procedure_attach_running (emm_context)) {
     nas_emm_attach_proc_t *attach_proc = get_nas_specific_procedure_attach (emm_context);
-
     attach_proc->T3450.id = NAS_TIMER_INACTIVE_ID;
     attach_proc->attach_accept_sent++;
-
     OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - T3450 timer expired, retransmission " "counter = %d\n", attach_proc->attach_accept_sent);
-
     if (attach_proc->attach_accept_sent < ATTACH_COUNTER_MAX) {
       REQUIREMENT_3GPP_24_301(R10_5_5_1_2_7_c__1);
       /*
@@ -1131,7 +1135,8 @@ static int _emm_attach_run_procedure(emm_data_context_t *emm_context)
       rc = _emm_start_attach_proc_authentication (emm_context, attach_proc);
     } else if (attach_proc->ies->guti) {
       /** Check if a valid imsi exists. */
-      OAILOG_WARNING(LOG_NAS_EMM, "EMM-PROC  - Received an GUTI in the attach request IE for ue_id=" MME_UE_S1AP_ID_FMT ". Continuing with identification procedure. \n", emm_context->ue_id);
+      OAILOG_WARNING(LOG_NAS_EMM, "EMM-PROC  - Received an GUTI "GUTI_FMT " in the attach request IE for ue_id=" MME_UE_S1AP_ID_FMT ". "
+    		  "Continuing with identification procedure. \n", GUTI_ARG(attach_proc->ies->guti), emm_context->ue_id);
       rc = emm_proc_identification (emm_context, (nas_emm_proc_t *)attach_proc, IDENTITY_TYPE_2_IMSI, _emm_attach_success_identification_cb, _emm_attach_failure_identification_cb);
     } else if (attach_proc->ies->imei) {
       // emergency allowed if go here, but have to be implemented...
@@ -1142,18 +1147,32 @@ static int _emm_attach_run_procedure(emm_data_context_t *emm_context)
 }
 
 //------------------------------------------------------------------------------
-static int _emm_attach_retry_procedure(emm_data_context_t *emm_ctx){
+static int _emm_attach_retry_procedure(mme_ue_s1ap_id_t ue_id){
   /** Validate that no old EMM context exists. */
   OAILOG_FUNC_IN (LOG_NAS_EMM);
 
+  OAILOG_DEBUG(LOG_NAS_EMM, "EMM-PROC  - ENTERED Attach retry: UE " MME_UE_S1AP_ID_FMT". \n", ue_id);
+
   int                                      rc = RETURNerror;
-  nas_emm_attach_proc_t                  * attach_proc = (nas_emm_attach_proc_t*)get_nas_specific_procedure(emm_ctx);
-  emm_data_context_t                     * emm_context                 = emm_data_context_get(&_emm_data, attach_proc->ue_id);
+  emm_data_context_t                     * emm_context                 = emm_data_context_get(&_emm_data, ue_id);
+  if(!emm_context){
+	  OAILOG_ERROR(LOG_NAS_EMM, "EMM-PROC  - Attach retry: no EMM context for UE " MME_UE_S1AP_ID_FMT". Triggering implicit detach. \n", ue_id);
+ 	  nas_itti_esm_detach_ind(ue_id, false);
+ 	  OAILOG_FUNC_OUT (LOG_NAS_EMM);
+  }
+
+  nas_emm_attach_proc_t                  * attach_proc = (nas_emm_attach_proc_t*)get_nas_specific_procedure(emm_context);
   emm_data_context_t                     * duplicate_emm_context       = emm_data_context_get(&_emm_data, attach_proc->emm_spec_proc.old_ue_id);
   ue_context_t                           * duplicate_ue_context        = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, attach_proc->emm_spec_proc.old_ue_id);
 
   /** Get the attach procedure. */
 //  DevAssert(attach_proc);
+
+//  if(attach_proc){
+//	  /** Stop the timer. */
+//	   void * unused = NULL;
+//	   nas_stop_T_retry_specific_procedure(attach_proc->ue_id, &attach_proc->emm_spec_proc.retry_timer, unused);
+//  }
 
   if(duplicate_emm_context){
     /** Send an attach reject back. */
@@ -1193,6 +1212,7 @@ static int _emm_attach_retry_procedure(emm_data_context_t *emm_ctx){
   }
   OAILOG_WARNING(LOG_NAS_EMM, "EMM-PROC  - No old EMM/UE context exists for ue_id=" MME_UE_S1AP_ID_FMT ". Continuing with attach procedure for new ueId " MME_UE_S1AP_ID_FMT ". \n",
       attach_proc->emm_spec_proc.old_ue_id, emm_context->ue_id);
+
 
   rc = _emm_attach_run_procedure(emm_context);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
@@ -1678,8 +1698,9 @@ static int _emm_send_attach_accept (emm_data_context_t * emm_context)
       /*
        * Start T3450 timer
        */
-      nas_stop_T3450(attach_proc->ue_id, &attach_proc->T3450, NULL);
-      nas_start_T3450(attach_proc->ue_id, &attach_proc->T3450, attach_proc->emm_spec_proc.emm_proc.base_proc.time_out, (void*)emm_context);
+        void * unused = NULL;
+        nas_stop_T3450(attach_proc->ue_id, &attach_proc->T3450, unused);
+      nas_start_T3450(attach_proc->ue_id, &attach_proc->T3450, attach_proc->emm_spec_proc.emm_proc.base_proc.time_out, (void*)attach_proc->ue_id);
     }
 
     /**
@@ -1768,8 +1789,9 @@ static int _emm_attach_accept_retx (emm_data_context_t * emm_context)
       /*
        * Re-start T3450 timer
        */
-      nas_stop_T3450(ue_id, &attach_proc->T3450, NULL);
-      nas_start_T3450(ue_id, &attach_proc->T3450, attach_proc->emm_spec_proc.emm_proc.base_proc.time_out, (void*)emm_context);
+      void * unused = NULL;
+      nas_stop_T3450(ue_id, &attach_proc->T3450, unused);
+      nas_start_T3450(ue_id, &attach_proc->T3450, attach_proc->emm_spec_proc.emm_proc.base_proc.time_out, (void*)ue_id);
     } else {
       OAILOG_WARNING (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " EMM-PROC  - Send failed- Retx Attach Accept message\n", ue_id);
     }

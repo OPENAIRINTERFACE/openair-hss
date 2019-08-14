@@ -147,6 +147,7 @@ static void *nas_emm_intertask_interface (void *args_p)
          * Call the NAS timer api
          */
         nas_timer_handle_signal_expiry (TIMER_HAS_EXPIRED (received_message_p).timer_id, TIMER_HAS_EXPIRED (received_message_p).arg);
+        free_wrapper((void**)&TIMER_HAS_EXPIRED (received_message_p).arg);
       }
       break;
 

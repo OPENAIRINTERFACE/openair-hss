@@ -167,7 +167,7 @@ void mme_app_send_s11_delete_bearer_cmd(teid_t local_teid, teid_t saegw_s11_teid
 }
 
 //------------------------------------------------------------------------------
-int mme_app_send_s11_release_access_bearers_req (struct ue_session_pool_s * const ue_session_pool)
+int mme_app_send_s11_release_access_bearers_req (mme_ue_s1ap_id_t ue_id)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
   /*
@@ -177,10 +177,15 @@ int mme_app_send_s11_release_access_bearers_req (struct ue_session_pool_s * cons
   itti_s11_release_access_bearers_request_t         *release_access_bearers_request_p = NULL;
   pdn_context_t                                     *pdn_context = NULL;
   int                                                rc = RETURNok;
-  DevAssert (ue_session_pool);
+
+  ue_session_pool_t      * ue_session_pool = mme_ue_session_pool_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_session_pools, ue_id);
+  if(!ue_session_pool){
+    OAILOG_ERROR (LOG_MME_APP, "NO UE session pool for UE with Id " MME_UE_S1AP_ID_FMT ". \n", ue_id);
+    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+  }
   pdn_context = RB_MIN(PdnContexts, &ue_session_pool->pdn_contexts);
   if(!pdn_context){
-    OAILOG_ERROR (LOG_MME_APP, "NO PDN Context for UE with Id " MME_UE_S1AP_ID_FMT ". \n", ue_session_pool->mme_ue_s1ap_id);
+    OAILOG_ERROR (LOG_MME_APP, "NO PDN Context for UE with Id " MME_UE_S1AP_ID_FMT ". \n", ue_id);
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
 
@@ -218,8 +223,15 @@ mme_app_send_s11_create_session_req (
   // todo: handover flag in operation-identifier?!
 
   ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, ue_id);
-  DevAssert (ue_context);
-  DevAssert (pdn_context);
+  if(!ue_context){
+	  OAILOG_ERROR (LOG_MME_APP, "No UE context for UE " MME_UE_S1AP_ID_FMT ". Cannot send CSR. \n", ue_id);
+	  OAILOG_FUNC_OUT(LOG_MME_APP);
+  }
+  if(!pdn_context) {
+	  OAILOG_ERROR (LOG_MME_APP, "No pdn context for UE " MME_UE_S1AP_ID_FMT ". Cannot send CSR. \n", ue_id);
+	  OAILOG_FUNC_OUT(LOG_MME_APP);
+  }
+
   OAILOG_DEBUG (LOG_MME_APP, "Sending CSR for imsi " IMSI_64_FMT "\n", ue_context->imsi);
 
   if (ue_context->sub_status != SS_SERVICE_GRANTED) {

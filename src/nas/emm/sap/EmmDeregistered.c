@@ -222,8 +222,8 @@ int EmmDeregistered (emm_reg_t * const evt)
        /*
         * Stop timer T3450 (if exists).
         */
-       void * timer_callback_args = NULL;
-       nas_stop_T3450(evt->u.tau.proc->ue_id, &evt->u.tau.proc->T3450, timer_callback_args);
+       void * unused = NULL;
+       nas_stop_T3450(evt->u.tau.proc->ue_id, &evt->u.tau.proc->T3450, unused);
 
        if ((emm_ctx) && (evt->u.tau.proc->emm_spec_proc.emm_proc.base_proc.abort)) { /**< Currently, will perform IMPLICIT detach. */
          (*evt->u.tau.proc->emm_spec_proc.emm_proc.base_proc.abort)((nas_emm_base_proc_t*) emm_ctx, evt->u.tau.proc); // &evt->u.tau.proc->emm_spec_proc.emm_proc.base_proc);

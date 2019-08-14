@@ -132,21 +132,20 @@ struct emm_common_data_s;
  * ---------------------------------------------------------------------------
  */
 typedef struct emm_data_context_s {
-  mme_ue_s1ap_id_t ue_id;        /* UE identifier                                  */
-  bool             is_dynamic;  /* Dynamically allocated context indicator         */
-  bool             is_emergency;/* Emergency bearer services indicator             */
-  bool             is_has_been_attached; /* Attachment indicator                   */
-  bool             is_initial_identity_imsi; // If the IMSI was used for identification in the initial NAS message
-  bool             is_guti_based_attach;
-  /*
+  mme_ue_s1ap_id_t 	ue_id;        /* UE identifier                                  */
+  bool             	is_dynamic;  /* Dynamically allocated context indicator         */
+  bool             	is_emergency;/* Emergency bearer services indicator             */
+  bool             	is_has_been_attached; /* Attachment indicator                   */
+  bool             	is_initial_identity_imsi; // If the IMSI was used for identification in the initial NAS message
+  bool             	is_guti_based_attach;
+  emm_procedures_t  *emm_procedures;
+ /*
    * attach_type has type emm_proc_attach_type_t.
    *
    * Here, it is un-typedef'ed as uint8_t to avoid circular dependency issues.
    */
   uint8_t                    attach_type;  /* EPS/Combined/etc. */
   additional_update_type_t   additional_update_type;
-
-  emm_procedures_t  *emm_procedures;
 
   uint32_t         member_present_mask; /* bitmask, see significance of bits below */
   uint32_t         member_valid_mask;   /* bitmask, see significance of bits below */
@@ -270,6 +269,11 @@ typedef struct emm_data_s {
   hash_table_ts_t             *ctx_coll_ue_id; // key is emm ue id, data is struct emm_data_context_s
   hash_table_uint64_ts_t      *ctx_coll_imsi;  // key is imsi_t, data is emm ue id (unsigned int)
   obj_hash_table_uint64_t     *ctx_coll_guti;  // key is guti, data is emm ue id (unsigned int)
+  /*
+   * EMM procedures
+   * ------------
+   */
+  // todo: hash_table_ts_t             *proc_coll_ue_id; // key is emm ue id, data is struct emm_procedures_s
 } emm_data_t;
 
 /* Timer for S6a. */
@@ -352,6 +356,7 @@ struct emm_data_context_s * emm_data_context_create(const mme_ue_s1ap_id_t mme_u
 struct emm_data_context_s *emm_data_context_get (emm_data_t * emm_data, const mme_ue_s1ap_id_t ue_id);
 struct emm_data_context_s *emm_data_context_get_by_imsi (emm_data_t * emm_data, imsi64_t imsi64);
 struct emm_data_context_s *emm_data_context_get_by_guti (emm_data_t * emm_data, guti_t * guti);
+//struct emm_procedures_s *emm_procedure_get (emm_data_t * emm_data, const mme_ue_s1ap_id_t ue_id);
 int                   emm_context_unlock (struct emm_data_context_s *emm_context_p);
 
 struct emm_data_context_s              *

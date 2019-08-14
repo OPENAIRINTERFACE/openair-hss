@@ -98,8 +98,6 @@ nas_esm_proc_pdn_connectivity_t* mme_app_nas_esm_create_pdn_connectivity_procedu
   esm_proc_pdn_connectivity->esm_base_proc.type = ESM_PROC_PDN_CONTEXT;
   esm_proc_pdn_connectivity->esm_base_proc.ue_id = ue_id;
   /* Set the timeout directly. Set the callback argument as the ue_id. */
-//  esm_proc_pdn_connectivity->esm_base_proc.esm_proc_timer.id = nas_esm_timer_start(timeout_sec, timeout_usec, arg);
-//  esm_proc_pdn_connectivity->esm_base_proc.timeout_notif = timeout_notif;
 
   /** Initialize the of the procedure. */
   if (!ue_session_pool ->esm_procedures.pdn_connectivity_procedures) {

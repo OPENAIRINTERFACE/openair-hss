@@ -296,7 +296,7 @@ int emm_proc_tracking_area_update_request (
         _emm_proc_create_procedure_tracking_area_update_request(new_emm_ue_context, ies, _emm_tau_retry_procedure);
         nas_emm_tau_proc_t * tau_proc = get_nas_specific_procedure_tau(new_emm_ue_context);
         nas_stop_T_retry_specific_procedure(new_emm_ue_context->ue_id, &tau_proc->emm_spec_proc.retry_timer, unused);
-        nas_start_T_retry_specific_procedure(new_emm_ue_context->ue_id, &tau_proc->emm_spec_proc.retry_timer, tau_proc->emm_spec_proc.retry_cb, new_emm_ue_context);
+        nas_start_T_retry_specific_procedure(new_emm_ue_context->ue_id, &tau_proc->emm_spec_proc.retry_timer, tau_proc->emm_spec_proc.retry_cb, (void*)new_emm_ue_context->ue_id);
         /** Set the old mme_ue_s1ap id which will be checked. */
         tau_proc->emm_spec_proc.old_ue_id = old_ue_id;
         *duplicate_emm_ue_ctx_pP = NULL;
@@ -330,7 +330,7 @@ int emm_proc_tracking_area_update_request (
     void *unused = NULL;
     nas_emm_tau_proc_t * tau_proc = get_nas_specific_procedure_tau(new_emm_ue_context);
     nas_stop_T_retry_specific_procedure(new_emm_ue_context->ue_id, &tau_proc->emm_spec_proc.retry_timer, unused);
-    nas_start_T_retry_specific_procedure(new_emm_ue_context->ue_id, &tau_proc->emm_spec_proc.retry_timer, tau_proc->emm_spec_proc.retry_cb, new_emm_ue_context);
+    nas_start_T_retry_specific_procedure(new_emm_ue_context->ue_id, &tau_proc->emm_spec_proc.retry_timer, tau_proc->emm_spec_proc.retry_cb, (void*)new_emm_ue_context->ue_id);
     /** Set the old mme_ue_s1ap id which will be checked. */
     tau_proc->emm_spec_proc.old_ue_id =(*duplicate_emm_ue_ctx_pP)->ue_id;
     /*
@@ -443,7 +443,8 @@ emm_proc_tracking_area_update_complete (
        */
       OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3450 (%d)\n", tau_proc->T3450.id);
 //      tau_proc->T3450.id = nas_timer_stop (tau_proc->T3450.id);
-      nas_stop_T3450(emm_context->ue_id, &tau_proc->T3450, NULL);
+      void * unused = NULL;
+      nas_stop_T3450(emm_context->ue_id, &tau_proc->T3450, unused);
 
       MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3450 stopped UE " MME_UE_S1AP_ID_FMT " ", ue_id);
       /*
@@ -844,10 +845,12 @@ During this period the network acts as described for case a above.
 static void _emm_tracking_area_update_t3450_handler (void *args)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
-  emm_data_context_t                       *emm_context = (emm_data_context_t *) (args);
+  mme_ue_s1ap_id_t                          ue_id = (mme_ue_s1ap_id_t) (args);
 
+  emm_data_context_t * emm_context = emm_data_context_get(&_emm_data, ue_id);
   if (!(emm_context)) {
-    OAILOG_ERROR (LOG_NAS_EMM, "T3450 timer expired No EMM context\n");
+    OAILOG_ERROR (LOG_NAS_EMM, "T3450 timer expired No EMM context for UE " MME_UE_S1AP_ID_FMT ". \n", ue_id);
+    nas_itti_esm_detach_ind(ue_id, false);
     OAILOG_FUNC_OUT (LOG_NAS_EMM);
   }
   nas_emm_tau_proc_t    *tau_proc = get_nas_specific_procedure_tau(emm_context);
@@ -1164,9 +1167,9 @@ static int _emm_send_tracking_area_update_accept(emm_data_context_t * const emm_
       /*
        * Re-start T3450 timer
        */
-      void * timer_callback_arg = NULL;
-      nas_stop_T3450(tau_proc->ue_id, &tau_proc->T3450, timer_callback_arg);
-      nas_start_T3450 (tau_proc->ue_id, &tau_proc->T3450, tau_proc->emm_spec_proc.emm_proc.base_proc.time_out, emm_context);
+      void * unused = NULL;
+      nas_stop_T3450(tau_proc->ue_id, &tau_proc->T3450, unused);
+      nas_start_T3450 (tau_proc->ue_id, &tau_proc->T3450, tau_proc->emm_spec_proc.emm_proc.base_proc.time_out, (void*)tau_proc->ue_id);
 //      unlock_ue_contexts(ue_context);
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 
@@ -1361,8 +1364,8 @@ static int _emm_tracking_area_update_abort (struct emm_data_context_s *emm_conte
     /*
      * Stop timer T3450 (if exists).
      */
-    void * timer_callback_args = NULL;
-    nas_stop_T3450(tau_proc->ue_id, &tau_proc->T3450, timer_callback_args);
+    void * unused = NULL;
+    nas_stop_T3450(tau_proc->ue_id, &tau_proc->T3450, unused);
 
 //    /*
 //     * TAU only should be aborted. No explicit REJECT has to be sent.
@@ -1458,8 +1461,9 @@ static int _emm_tracking_area_update_accept_retx (emm_data_context_t * emm_conte
       /*
        * Re-start T3450 timer
        */
-      nas_stop_T3450(ue_id, &tau_proc->T3450, NULL);
-      nas_start_T3450(ue_id, &tau_proc->T3450, tau_proc->emm_spec_proc.emm_proc.base_proc.time_out, (void*)emm_context);
+      void * unused = NULL;
+      nas_stop_T3450(ue_id, &tau_proc->T3450, unused);
+      nas_start_T3450(ue_id, &tau_proc->T3450, tau_proc->emm_spec_proc.emm_proc.base_proc.time_out, (void*)tau_proc->ue_id);
     } else {
       OAILOG_WARNING (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " EMM-PROC  - Send failed- Retx TAU Accept message\n", ue_id);
     }

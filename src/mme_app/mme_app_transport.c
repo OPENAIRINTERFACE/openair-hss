@@ -98,7 +98,7 @@ int mme_app_handle_nas_dl_req (
     		  if(first_bearer){
     			  if(first_bearer->bearer_state & BEARER_STATE_ACTIVE){
     	        	  OAILOG_INFO(LOG_MME_APP, " MME_APP: Bearer of UE MME_UE_S1AP_ID " MME_UE_S1AP_ID_FMT " are active. Triggering bearer release first. \n", nas_dl_req_pP->ue_id);
-    	        	  mme_app_send_s11_release_access_bearers_req (ue_session_pool); /**< Release Access bearers and then send context release request.  */
+    	        	  mme_app_send_s11_release_access_bearers_req (nas_dl_req_pP->ue_id); /**< Release Access bearers and then send context release request.  */
     			  } else {
     				  OAILOG_INFO(LOG_MME_APP, " MME_APP: Bearer of UE MME_UE_S1AP_ID " MME_UE_S1AP_ID_FMT " are NOT active. Continuing directly with S1AP release. \n", nas_dl_req_pP->ue_id);
     	              // Notify S1AP to send UE Context Release Command to eNB.

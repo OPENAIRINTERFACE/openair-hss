@@ -625,8 +625,8 @@ void  s6a_auth_info_rsp_timer_expiry_handler (void *args)
       OAILOG_FUNC_OUT (LOG_NAS_EMM);
     }
 
-    void * timer_callback_args = NULL;
-    nas_stop_Ts6a_auth_info(auth_info_proc->ue_id, &auth_info_proc->timer_s6a, timer_callback_args);
+    void * unused = NULL;
+    nas_stop_Ts6a_auth_info(auth_info_proc->ue_id, &auth_info_proc->timer_s6a, unused);
 
     auth_info_proc->timer_s6a.id = NAS_TIMER_INACTIVE_ID;
     if (auth_info_proc->resync) {
@@ -644,6 +644,7 @@ void  s6a_auth_info_rsp_timer_expiry_handler (void *args)
     nas_proc_auth_param_fail (auth_info_proc->ue_id, NAS_CAUSE_NETWORK_FAILURE);
   } else {
     OAILOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - Timer timer_s6_auth_info_rsp expired. Null EMM Context for UE " MME_UE_S1AP_ID_FMT". \n", ue_id);
+    nas_itti_esm_detach_ind(ue_id, false);
   }
 
   OAILOG_FUNC_OUT (LOG_NAS_EMM);
@@ -653,7 +654,9 @@ void  s6a_auth_info_rsp_timer_expiry_handler (void *args)
 void  s10_context_req_timer_expiry_handler (void *args)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
-  emm_data_context_t  *emm_ctx = (emm_data_context_t *) (args);
+  mme_ue_s1ap_id_t  ue_id = (mme_ue_s1ap_id_t) (args);
+  emm_data_context_t * emm_ctx = emm_data_context_get(&_emm_data, ue_id);
+
   if (emm_ctx) {
 
     nas_ctx_req_proc_t * ctx_req_proc = get_nas_cn_procedure_ctx_req(emm_ctx);
@@ -672,7 +675,8 @@ void  s10_context_req_timer_expiry_handler (void *args)
      */
     nas_proc_context_fail(emm_ctx->ue_id, NAS_CAUSE_NETWORK_FAILURE);
   } else { 
-    OAILOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - Timer timer_s10_context_req expired. Null EMM Context for UE \n");
+	  nas_itti_esm_detach_ind(ue_id, false);
+	  OAILOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - Timer timer_s10_context_req expired. Null EMM Context for UE " MME_UE_S1AP_ID_FMT". \n", ue_id);
   }
 
   OAILOG_FUNC_OUT (LOG_NAS_EMM);

@@ -343,7 +343,7 @@ static int _start_authentication_information_procedure(struct emm_data_context_s
   bool is_initial_req = !(auth_info_proc->request_sent);
   auth_info_proc->request_sent = true;
 
-  nas_start_Ts6a_auth_info (auth_info_proc->ue_id, &auth_info_proc->timer_s6a, auth_info_proc->cn_proc.base_proc.time_out, auth_info_proc->ue_id);
+  nas_start_Ts6a_auth_info (auth_info_proc->ue_id, &auth_info_proc->timer_s6a, auth_info_proc->cn_proc.base_proc.time_out, (void*)auth_info_proc->ue_id);
 
   nas_itti_auth_info_req (ue_id, &emm_context->_imsi, is_initial_req, &visited_plmn, MAX_EPS_AUTH_VECTORS, auts);
 
@@ -545,8 +545,8 @@ int emm_proc_authentication_failure (
   if (auth_proc){
     // Stop timer T3460
     REQUIREMENT_3GPP_24_301(R10_5_4_2_4__3);
-    void * callback_args = NULL;
-    nas_stop_T3460(emm_ctx->ue_id, &auth_proc->T3460, callback_args);
+    void * unused = NULL;
+    nas_stop_T3460(emm_ctx->ue_id, &auth_proc->T3460, unused);
 
 
     switch (emm_cause) {
@@ -761,8 +761,8 @@ emm_proc_authentication_complete (
     // Stop timer T3460
     REQUIREMENT_3GPP_24_301(R10_5_4_2_4__1);
 
-    void * callback_arg = NULL;
-    nas_stop_T3460(ue_id, &auth_proc->T3460, callback_arg); /**< Stop the timer, leave the procedure?. */
+    void * unused = NULL;
+    nas_stop_T3460(ue_id, &auth_proc->T3460, unused); /**< Stop the timer, leave the procedure?. */
 
     // todo: check RES!
 
@@ -821,15 +821,15 @@ emm_proc_authentication_complete (
 static void  _authentication_t3460_handler (void *args)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
-  emm_data_context_t                       *emm_ctx = (emm_data_context_t *) (args);
+  mme_ue_s1ap_id_t                       ue_id = (mme_ue_s1ap_id_t) (args);
 
+  emm_data_context_t *emm_ctx = emm_data_context_get(&_emm_data, ue_id);
   if (!(emm_ctx)) {
-    OAILOG_ERROR (LOG_NAS_EMM, "T3460 timer expired No EMM context\n");
+    OAILOG_ERROR (LOG_NAS_EMM, "T3460 timer expired No EMM context. Triggering an MME_APP detach.. \n", ue_id);
+    nas_itti_esm_detach_ind(ue_id, false);
     OAILOG_FUNC_OUT (LOG_NAS_EMM);
   }
   nas_emm_auth_proc_t * auth_proc = get_nas_common_procedure_authentication(emm_ctx);
-
-  mme_ue_s1ap_id_t ue_id = emm_ctx->ue_id;
 
   if (auth_proc){
     /*
@@ -864,19 +864,8 @@ static void  _authentication_t3460_handler (void *args)
        * Check if the EMM context is removed removed.
        * A non delivery indicator would just retrigger the message, not a guarantee for removal.
        */
-      emm_ctx = emm_data_context_get(&_emm_data, auth_proc->ue_id);
-      if(emm_ctx){
-        OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - EMM Context for ueId " MME_UE_S1AP_ID_FMT " is still existing. Removing failed EMM context.. \n", auth_proc->ue_id);
-        emm_sap_t                               emm_sap = {0};
-        emm_sap.primitive = EMMCN_IMPLICIT_DETACH_UE;
-        emm_sap.u.emm_cn.u.emm_cn_implicit_detach.ue_id = auth_proc->ue_id;
-        emm_sap_send (&emm_sap);
-        OAILOG_FUNC_OUT (LOG_NAS_EMM);
-      }else{
-        OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - EMM Context for ueId " MME_UE_S1AP_ID_FMT " is not existing. Triggering an MME_APP detach.. \n", auth_proc->ue_id);
-        nas_itti_esm_detach_ind(ue_id, false);
-        OAILOG_FUNC_OUT (LOG_NAS_EMM);
-      }
+      OAILOG_INFO(LOG_NAS_EMM, "EMM-PROC  - T3460 timer expired: aborted authentication for ueId " MME_UE_S1AP_ID_FMT ". Not continuing further. \n", ue_id);
+      OAILOG_FUNC_OUT (LOG_NAS_EMM);
     }
   }else{
     OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - T3460 timer expired, but no authentication procedure exists for ueId " MME_UE_S1AP_ID_FMT ". Ignoring. \n", ue_id);
@@ -1020,13 +1009,13 @@ static int _authentication_request (nas_emm_auth_proc_t * auth_proc)
     if (rc != RETURNerror) {
       if (emm_ctx_p) {
         if (auth_proc->T3460.id != NAS_TIMER_INACTIVE_ID) { /**< NAS timer will be restarted after sending S6a. */
-          void * timer_callback_args = NULL;
-          nas_stop_T3460(auth_proc->ue_id, &auth_proc->T3460, timer_callback_args);
+          void * unused = NULL;
+          nas_stop_T3460(auth_proc->ue_id, &auth_proc->T3460, unused);
         }
         /*
          * Start T3460 timer
          */
-        nas_start_T3460(auth_proc->ue_id, &auth_proc->T3460, auth_proc->emm_com_proc.emm_proc.base_proc.time_out, (void*)emm_ctx_p);
+        nas_start_T3460(auth_proc->ue_id, &auth_proc->T3460, auth_proc->emm_com_proc.emm_proc.base_proc.time_out, (void*)auth_proc->ue_id);
       }
     }
 //    unlock_ue_contexts(ue_context);
@@ -1164,8 +1153,8 @@ static int _authentication_abort (emm_data_context_t *emm_ctx, struct nas_emm_ba
     /*
      * Stop timer T3460
      */
-    void * timer_callback_args = NULL;
-    nas_stop_T3460(emm_ctx->ue_id, &auth_proc->T3460, timer_callback_args);
+    void * unused = NULL;
+    nas_stop_T3460(emm_ctx->ue_id, &auth_proc->T3460, unused);
   }
 
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);

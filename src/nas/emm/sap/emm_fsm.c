@@ -209,7 +209,8 @@ emm_fsm_set_state (
       // Update mme_ue_context's emm_state and overall stats
       mme_ue_context_update_ue_emm_state (ue_id, new_emm_state);
     }else {
-      OAILOG_WARNING (LOG_NAS_EMM, "UE " MME_UE_S1AP_ID_FMT" EMM-FSM   - Status not changed changed: %s \n", ue_id, _emm_fsm_status_str[emm_context->_emm_fsm_state]);
+      OAILOG_WARNING (LOG_NAS_EMM, "UE " MME_UE_S1AP_ID_FMT" EMM-FSM   - Status not changed changed: %s \n",
+    		  ue_id, _emm_fsm_status_str[emm_context->_emm_fsm_state]);
       /** Setting this as error to abort implicit detach procedures for ex.. */
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
     }

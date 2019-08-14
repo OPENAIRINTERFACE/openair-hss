@@ -4789,7 +4789,7 @@ mme_app_handle_initial_context_setup_rsp_timer_expiry (struct ue_context_s *ue_c
     itti_send_msg_to_task (TASK_NAS_EMM, INSTANCE_DEFAULT, message_p);
   } else {
     // Release S1-U bearer and move the UE to idle mode
-    mme_app_send_s11_release_access_bearers_req(ue_context);
+    mme_app_send_s11_release_access_bearers_req(ue_context->mme_ue_s1ap_id);
   }
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
@@ -4831,7 +4831,7 @@ mme_app_handle_initial_context_setup_failure (
     itti_send_msg_to_task (TASK_NAS_EMM, INSTANCE_DEFAULT, message_p);
   } else {
     // Release S1-U bearer and move the UE to idle mode
-    mme_app_send_s11_release_access_bearers_req(ue_context);
+    mme_app_send_s11_release_access_bearers_req(initial_ctxt_setup_failure_pP->mme_ue_s1ap_id);
   }
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }

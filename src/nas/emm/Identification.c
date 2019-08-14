@@ -239,8 +239,8 @@ emm_proc_identification_complete (
       /*
        * Stop timer T3470
        */
-      void *timer_callback_args = NULL;
-      nas_stop_T3470(ue_id, &ident_proc->T3470, timer_callback_args);
+      void *unused = NULL;
+      nas_stop_T3470(ue_id, &ident_proc->T3470, unused);
 
       if (imsi) {
         /*
@@ -255,7 +255,7 @@ emm_proc_identification_complete (
 				  "and implicitly detaching old EMM context. \n", imsi_emm_ctx_duplicate->ue_id, imsi64, emm_ctx->ue_id);
 			  void * unused= NULL;
 			  nas_stop_T_retry_specific_procedure(emm_ctx->ue_id, &((nas_emm_specific_proc_t*)(((nas_emm_base_proc_t *)ident_proc)->parent))->retry_timer, unused);
-			  nas_start_T_retry_specific_procedure(emm_ctx->ue_id, &((nas_emm_specific_proc_t*)(((nas_emm_base_proc_t *)ident_proc)->parent))->retry_timer, ((nas_emm_specific_proc_t*)(((nas_emm_base_proc_t *)ident_proc)->parent))->retry_cb, emm_ctx);
+			  nas_start_T_retry_specific_procedure(emm_ctx->ue_id, &((nas_emm_specific_proc_t*)(((nas_emm_base_proc_t *)ident_proc)->parent))->retry_timer, ((nas_emm_specific_proc_t*)(((nas_emm_base_proc_t *)ident_proc)->parent))->retry_cb, (void*)emm_ctx->ue_id);
 			  /** Set the old mme_ue_s1ap id which will be checked. */
 			  ((nas_emm_specific_proc_t*)(((nas_emm_base_proc_t *)ident_proc)->parent))->old_ue_id = imsi_emm_ctx_duplicate->ue_id;
 			  /*
@@ -306,7 +306,7 @@ emm_proc_identification_complete (
 
           void * unused= NULL;
           nas_stop_T_retry_specific_procedure(emm_ctx->ue_id, &((nas_emm_specific_proc_t*)(((nas_emm_base_proc_t *)ident_proc)->parent))->retry_timer, unused);
-          nas_start_T_retry_specific_procedure(emm_ctx->ue_id, &((nas_emm_specific_proc_t*)(((nas_emm_base_proc_t *)ident_proc)->parent))->retry_timer, ((nas_emm_specific_proc_t*)(((nas_emm_base_proc_t *)ident_proc)->parent))->retry_cb, emm_ctx);
+          nas_start_T_retry_specific_procedure(emm_ctx->ue_id, &((nas_emm_specific_proc_t*)(((nas_emm_base_proc_t *)ident_proc)->parent))->retry_timer, ((nas_emm_specific_proc_t*)(((nas_emm_base_proc_t *)ident_proc)->parent))->retry_cb, (void*)emm_ctx->ue_id);
           /** Set the old mme_ue_s1ap id which will be checked. */
           ((nas_emm_specific_proc_t*)(((nas_emm_base_proc_t *)ident_proc)->parent))->old_ue_id = ue_context_duplicate_imsi->mme_ue_s1ap_id;
 
@@ -403,10 +403,12 @@ emm_proc_identification_complete (
 static void _identification_t3470_handler (void *args)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
-  emm_data_context_t                       *emm_ctx = (emm_data_context_t *) (args);
+  mme_ue_s1ap_id_t                       ue_id = (mme_ue_s1ap_id_t) (args);
+  emm_data_context_t * emm_ctx = emm_data_context_get(&_emm_data, ue_id);
 
   if (!(emm_ctx)) {
-    OAILOG_ERROR (LOG_NAS_EMM, "T3470 timer expired No EMM context\n");
+    OAILOG_ERROR (LOG_NAS_EMM, "T3470 timer expired No EMM context for UE "MME_UE_S1AP_ID_FMT ". \n", ue_id);
+    nas_itti_esm_detach_ind(ue_id, false);
     OAILOG_FUNC_OUT (LOG_NAS_EMM);
   }
   nas_emm_ident_proc_t * ident_proc = get_nas_common_procedure_identification(emm_ctx);
@@ -444,26 +446,20 @@ static void _identification_t3470_handler (void *args)
       emm_sap.u.emm_reg.u.common.previous_emm_fsm_state   =  ((nas_emm_proc_t*)ident_proc)->previous_emm_fsm_state;
       MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMREG_PROC_ABORT (identification) ue id " MME_UE_S1AP_ID_FMT " ", ident_proc->ue_id);
       emm_sap_send (&emm_sap);
-      nas_delete_all_emm_procedures(emm_ctx);
 
       /*
        * We need also to check if the EMM context exists or not.
        * A non delivery indicator, might have triggered another identity request, and in the meantime, the MME_APP context might have been removed, due to a Context Release Complete.
        */
-
-      emm_ctx = emm_data_context_get(&_emm_data, ident_proc->ue_id);
-      if(emm_ctx){
-        OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - EMM Context for ueId " MME_UE_S1AP_ID_FMT " is still existing. Removing failed EMM context.. \n", ident_proc->ue_id);
-        emm_sap_t                               emm_sap = {0};
-        emm_sap.primitive = EMMCN_IMPLICIT_DETACH_UE;
-        emm_sap.u.emm_cn.u.emm_cn_implicit_detach.ue_id = ident_proc->ue_id;
-        emm_sap_send (&emm_sap);
-        OAILOG_FUNC_OUT (LOG_NAS_EMM);
-      }else{
-        OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - EMM Context for ueId " MME_UE_S1AP_ID_FMT " is not existing. Triggering an MME_APP detach.. \n", ident_proc->ue_id);
-        nas_itti_esm_detach_ind(ident_proc->ue_id, false);
-        OAILOG_FUNC_OUT (LOG_NAS_EMM);
+      if((emm_ctx = emm_data_context_get(&_emm_data, ue_id))){
+    	  OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - EMM Context for ueId " MME_UE_S1AP_ID_FMT " is still existing after aborted identification. "
+    			  "Removing failed EMM context.. \n", ue_id);
+    	  memset((void*)&emm_sap, 0, sizeof(emm_sap_t));
+    	  emm_sap.primitive = EMMCN_IMPLICIT_DETACH_UE;
+    	  emm_sap.u.emm_cn.u.emm_cn_implicit_detach.ue_id = ue_id;
+    	  emm_sap_send (&emm_sap);
       }
+      OAILOG_FUNC_OUT (LOG_NAS_EMM);
     }
   } else {
     OAILOG_ERROR (LOG_NAS_EMM, "T3470 timer expired, No Identification procedure found\n");
@@ -524,7 +520,7 @@ static int _identification_request (nas_emm_ident_proc_t * const proc)
     /*
      * Start T3470 timer
      */
-    nas_start_T3470(proc->ue_id, &proc->T3470, proc->emm_com_proc.emm_proc.base_proc.time_out, (void*)emm_ctx);
+    nas_start_T3470(proc->ue_id, &proc->T3470, proc->emm_com_proc.emm_proc.base_proc.time_out, (void*)proc->ue_id);
   }
 
 //  unlock_ue_contexts(ue_context);
@@ -584,8 +580,8 @@ static int _identification_abort (struct emm_data_context_s *emm_context, struct
     /*
      * Stop timer T3470
      */
-    void * callback_arg = NULL;
-    nas_stop_T3470(ident_proc->ue_id, &ident_proc->T3470, callback_arg);
+    void * unused = NULL;
+    nas_stop_T3470(ident_proc->ue_id, &ident_proc->T3470, unused);
   }
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }

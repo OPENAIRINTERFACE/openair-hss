@@ -389,8 +389,8 @@ emm_proc_security_mode_complete (mme_ue_s1ap_id_t ue_id, const imeisv_mobile_ide
      * Stop timer T3460
      */
     REQUIREMENT_3GPP_24_301(R10_5_4_3_4__1);
-    void * timer_callback_arg = NULL;
-    nas_stop_T3460(ue_id, &smc_proc->T3460, timer_callback_arg);
+    void * unused = NULL;
+    nas_stop_T3460(ue_id, &smc_proc->T3460, unused);
 
     /** Set the SMC flag in the parent procedure. */
     if(((nas_emm_base_proc_t *)smc_proc)->parent){
@@ -497,8 +497,8 @@ int emm_proc_security_mode_reject (mme_ue_s1ap_id_t ue_id)
      * Stop timer T3460
      */
     REQUIREMENT_3GPP_24_301(R10_5_4_3_5__2);
-    void * timer_callback_arg = NULL;
-    nas_stop_T3460(ue_id, &smc_proc->T3460, timer_callback_arg);
+    void * unused = NULL;
+    nas_stop_T3460(ue_id, &smc_proc->T3460, unused);
 
     // restore previous values
     REQUIREMENT_3GPP_24_301(R10_5_4_3_5__3);
@@ -566,15 +566,15 @@ int emm_proc_security_mode_reject (mme_ue_s1ap_id_t ue_id)
 static void _security_t3460_handler  (void *args)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
-  emm_data_context_t                       *emm_ctx = (emm_data_context_t *) (args);
+  mme_ue_s1ap_id_t                       ue_id = (mme_ue_s1ap_id_t) (args);
+  emm_data_context_t					*emm_ctx = emm_data_context_get( &_emm_data, ue_id);
 
   if (!(emm_ctx)) {
-    OAILOG_ERROR (LOG_NAS_EMM, "T3460 timer expired No EMM context\n");
+    OAILOG_ERROR (LOG_NAS_EMM, "T3460 timer expired No EMM context for UE " MME_UE_S1AP_ID_FMT ".\n", ue_id);
+    nas_itti_esm_detach_ind(ue_id, false);
     OAILOG_FUNC_OUT (LOG_NAS_EMM);
   }
   nas_emm_smc_proc_t * smc_proc = get_nas_common_procedure_smc(emm_ctx);
-
-  mme_ue_s1ap_id_t ue_id = emm_ctx->ue_id;
 
   if (smc_proc){
     /*
@@ -604,25 +604,12 @@ static void _security_t3460_handler  (void *args)
       emm_sap.u.emm_reg.u.common.previous_emm_fsm_state = smc_proc->emm_com_proc.emm_proc.previous_emm_fsm_state;
       emm_sap_send (&emm_sap);
 
-
       /*
        * Check if the EMM context is removed removed.
        * A non delivery indicator would just retrigger the message, not a guarantee for removal.
        */
-      emm_ctx = emm_data_context_get(&_emm_data, smc_proc->ue_id);
-      if(emm_ctx){
-        OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - EMM Context for ueId " MME_UE_S1AP_ID_FMT " is still existing. Removing failed EMM context.. \n", smc_proc->ue_id);
-        emm_sap_t                               emm_sap = {0};
-        emm_sap.primitive = EMMCN_IMPLICIT_DETACH_UE;
-        emm_sap.u.emm_cn.u.emm_cn_implicit_detach.ue_id = smc_proc->ue_id;
-        emm_sap_send (&emm_sap);
-        OAILOG_FUNC_OUT (LOG_NAS_EMM);
-      }else{
-        OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - EMM Context for ueId " MME_UE_S1AP_ID_FMT " is not existing. Triggering an MME_APP detach.. \n", smc_proc->ue_id);
-        nas_itti_esm_detach_ind(ue_id, false);
-        OAILOG_FUNC_OUT (LOG_NAS_EMM);
-      }
-
+      OAILOG_INFO(LOG_NAS_EMM, "EMM-PROC  - T3460 timer expired: aborted SMC for ueId " MME_UE_S1AP_ID_FMT ". Not continuing further. \n", ue_id);
+      OAILOG_FUNC_OUT (LOG_NAS_EMM);
     }
   }else{
     OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - T3460 timer expired, but no SMC procedure exists for ueId " MME_UE_S1AP_ID_FMT ". Ignoring. \n", ue_id);
@@ -699,12 +686,12 @@ static int _security_request (nas_emm_smc_proc_t * const smc_proc)
 
     if (rc != RETURNerror) {
       REQUIREMENT_3GPP_24_301(R10_5_4_3_2__1);
-      void * timer_callback_args = NULL;
-      nas_stop_T3460(smc_proc->ue_id, &smc_proc->T3460, timer_callback_args);
+      void * unused= NULL;
+      nas_stop_T3460(smc_proc->ue_id, &smc_proc->T3460, unused);
       /*
        * Start T3460 timer
        */
-      nas_start_T3460 (smc_proc->ue_id, &smc_proc->T3460, smc_proc->emm_com_proc.emm_proc.base_proc.time_out, emm_ctx);
+      nas_start_T3460 (smc_proc->ue_id, &smc_proc->T3460, smc_proc->emm_com_proc.emm_proc.base_proc.time_out, (void*)smc_proc->ue_id);
     }
   }
 //  unlock_ue_contexts(ue_context);
@@ -778,8 +765,8 @@ static int _security_abort (emm_data_context_t * emm_context, struct nas_emm_bas
     /*
      * Stop timer T3460
      */
-    void * timer_callback_args = NULL;
-    nas_stop_T3460(smc_proc->ue_id, &smc_proc->T3460, timer_callback_args);
+    void * unused = NULL;
+    nas_stop_T3460(smc_proc->ue_id, &smc_proc->T3460, unused);
     rc = RETURNok;
     if (emm_context) {
       // Clean up MME APP UE context

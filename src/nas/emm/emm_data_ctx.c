@@ -664,6 +664,22 @@ emm_data_context_get (
   return emm_data_context_p;
 }
 
+////------------------------------------------------------------------------------
+//struct emm_procedures_s              *
+//emm_procedure_get (
+//  emm_data_t * emm_data,
+//  const mme_ue_s1ap_id_t ue_id)
+//{
+//  struct emm_procedures_s              *emm_procedure_p = NULL;
+//
+//  DevAssert (emm_data );
+//  if (INVALID_MME_UE_S1AP_ID != ue_id) {
+//    hashtable_ts_get (emm_data->proc_coll_ue_id, (const hash_key_t)(ue_id), (void **)&emm_procedure_p);
+//    OAILOG_INFO (LOG_NAS_EMM, "EMM-CTX - get UE id " MME_UE_S1AP_ID_FMT " procedure %p\n", ue_id, emm_procedure_p);
+//  }
+//  return emm_procedure_p;
+//}
+
 //------------------------------------------------------------------------------
 struct emm_data_context_s              *
 emm_data_context_get_by_imsi (
@@ -1010,7 +1026,7 @@ int _start_context_request_procedure(struct emm_data_context_s *emm_context, nas
   ctx_req_proc->cn_proc.base_proc.time_out = s10_context_req_timer_expiry_handler;
   ctx_req_proc->ue_id = ue_id;
 
-  nas_start_Ts10_ctx_req( ctx_req_proc->ue_id, &ctx_req_proc->timer_s10, ctx_req_proc->cn_proc.base_proc.time_out, emm_context);
+  nas_start_Ts10_ctx_req( ctx_req_proc->ue_id, &ctx_req_proc->timer_s10, ctx_req_proc->cn_proc.base_proc.time_out, (void*)ue_id);
 
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
 }
@@ -1152,23 +1168,14 @@ void nas_stop_Ts10_ctx_res(const mme_ue_s1ap_id_t ue_id, struct nas_timer_s * co
 void nas_stop_T_retry_specific_procedure(const mme_ue_s1ap_id_t ue_id, struct nas_timer_s * const T_retry, void *timer_callback_args)
 {
   if ((T_retry) && (T_retry->id != NAS_TIMER_INACTIVE_ID)) {
-    ue_description_t * ue_ref = s1ap_is_ue_mme_id_in_list(ue_id);
-//    OAILOG_DEBUG(LOG_NAS_EMM, "EMM-PROC (NASx)  -  * * * * * (0) ueREF %p has mmeId " MME_UE_S1AP_ID_FMT ", enbId " ENB_UE_S1AP_ID_FMT " state %d and eNB_ref %p. \n",
-//        ue_ref, ue_ref->mme_ue_s1ap_id, ue_ref->enb_ue_s1ap_id, ue_ref->s1_ue_state, ue_ref->enb);
-//
-//    OAILOG_DEBUG (LOG_NAS_EMM, "T_retry timer before %p \n", T_retry);
-//    OAILOG_DEBUG (LOG_NAS_EMM, "T_retry timer id %d (before) \n", T_retry->id);
-
     T_retry->id = nas_timer_stop(T_retry->id, &timer_callback_args);
-
-//    OAILOG_DEBUG (LOG_NAS_EMM, "T_retry timer after %p \n", T_retry);
-//    OAILOG_DEBUG (LOG_NAS_EMM, "T_retry timer id %d (after) \n", T_retry->id);
-//    OAILOG_DEBUG(LOG_NAS_EMM, "EMM-PROC (NASx)  -  * * * * * (1) ueREF %p has mmeId " MME_UE_S1AP_ID_FMT ", enbId " ENB_UE_S1AP_ID_FMT " state %d and eNB_ref %p. \n",
-//           ue_ref, ue_ref->mme_ue_s1ap_id, ue_ref->enb_ue_s1ap_id, ue_ref->s1_ue_state, ue_ref->enb);
-
-    OAILOG_DEBUG (LOG_NAS_EMM, "T_retry (%p) stopped UE " MME_UE_S1AP_ID_FMT "\n", T_retry, ue_id);
     MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 T_retry stopped UE " MME_UE_S1AP_ID_FMT " ", ue_id);
     OAILOG_DEBUG (LOG_NAS_EMM, "T_retry stopped UE " MME_UE_S1AP_ID_FMT "\n", ue_id);
+  } else {
+	  if(T_retry)
+		  OAILOG_DEBUG (LOG_NAS_EMM, "T_retry NOT stopped UE " MME_UE_S1AP_ID_FMT ". retry->id %d. \n", ue_id, T_retry->id);
+	  else
+		  OAILOG_DEBUG (LOG_NAS_EMM, "T_retry NOT stopped UE " MME_UE_S1AP_ID_FMT ". No T-RETRY. \n", ue_id);
   }
 }
 
