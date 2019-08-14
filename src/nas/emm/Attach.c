@@ -1135,7 +1135,7 @@ static int _emm_attach_run_procedure(emm_data_context_t *emm_context)
       rc = _emm_start_attach_proc_authentication (emm_context, attach_proc);
     } else if (attach_proc->ies->guti) {
       /** Check if a valid imsi exists. */
-      OAILOG_WARNING(LOG_NAS_EMM, "EMM-PROC  - Received an GUTI "GUTI_FMT " in the attach request IE for ue_id=" MME_UE_S1AP_ID_FMT ". "
+      OAILOG_INFO(LOG_NAS_EMM, "EMM-PROC  - Received an GUTI "GUTI_FMT " in the attach request IE for ue_id=" MME_UE_S1AP_ID_FMT ". "
     		  "Continuing with identification procedure. \n", GUTI_ARG(attach_proc->ies->guti), emm_context->ue_id);
       rc = emm_proc_identification (emm_context, (nas_emm_proc_t *)attach_proc, IDENTITY_TYPE_2_IMSI, _emm_attach_success_identification_cb, _emm_attach_failure_identification_cb);
     } else if (attach_proc->ies->imei) {

@@ -664,22 +664,6 @@ emm_data_context_get (
   return emm_data_context_p;
 }
 
-////------------------------------------------------------------------------------
-//struct emm_procedures_s              *
-//emm_procedure_get (
-//  emm_data_t * emm_data,
-//  const mme_ue_s1ap_id_t ue_id)
-//{
-//  struct emm_procedures_s              *emm_procedure_p = NULL;
-//
-//  DevAssert (emm_data );
-//  if (INVALID_MME_UE_S1AP_ID != ue_id) {
-//    hashtable_ts_get (emm_data->proc_coll_ue_id, (const hash_key_t)(ue_id), (void **)&emm_procedure_p);
-//    OAILOG_INFO (LOG_NAS_EMM, "EMM-CTX - get UE id " MME_UE_S1AP_ID_FMT " procedure %p\n", ue_id, emm_procedure_p);
-//  }
-//  return emm_procedure_p;
-//}
-
 //------------------------------------------------------------------------------
 struct emm_data_context_s              *
 emm_data_context_get_by_imsi (
@@ -1171,11 +1155,6 @@ void nas_stop_T_retry_specific_procedure(const mme_ue_s1ap_id_t ue_id, struct na
     T_retry->id = nas_timer_stop(T_retry->id, &timer_callback_args);
     MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 T_retry stopped UE " MME_UE_S1AP_ID_FMT " ", ue_id);
     OAILOG_DEBUG (LOG_NAS_EMM, "T_retry stopped UE " MME_UE_S1AP_ID_FMT "\n", ue_id);
-  } else {
-	  if(T_retry)
-		  OAILOG_DEBUG (LOG_NAS_EMM, "T_retry NOT stopped UE " MME_UE_S1AP_ID_FMT ". retry->id %d. \n", ue_id, T_retry->id);
-	  else
-		  OAILOG_DEBUG (LOG_NAS_EMM, "T_retry NOT stopped UE " MME_UE_S1AP_ID_FMT ". No T-RETRY. \n", ue_id);
   }
 }
 
