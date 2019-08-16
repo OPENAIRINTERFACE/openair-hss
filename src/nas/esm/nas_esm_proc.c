@@ -487,7 +487,7 @@ int nas_esm_proc_bearer_resource_failure_indication(itti_s11_bearer_resource_fai
     OAILOG_FUNC_RETURN(LOG_MME_APP, RETURNerror);
   }
   esm_sap.primitive = ESM_EPS_BEARER_RESOURCE_FAILURE_IND;
-  esm_sap.ue_id     = ue_context->mme_ue_s1ap_id;
+  esm_sap.ue_id     = ue_context->privates.mme_ue_s1ap_id;
   esm_sap.pti       = s11_bearer_resource_failure_ind->pti;
   MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_ESM_MME, NULL, 0, "0 ESM_EPS_BEARER_RESOURCE_FAILURE_IND " MME_UE_S1AP_ID_FMT " ", esm_sap.ue_id);
   /** Get the bearer contexts to be updated. */

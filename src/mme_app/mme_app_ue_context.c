@@ -103,7 +103,7 @@ inline int32_t                    mme_app_compare_pdn_context(
 //  return bstricmp (a->apn_in_use, b->apn_in_use);
 //    OAILOG_DEBUG (LOG_MME_APP, "Selected APN %s for UE " IMSI_64_FMT "\n",
 //        ue_context->apn_config_profile.apn_configuration[index].service_selection,
-//        ue_context->imsi);
+//        ue_context->privates.fields.imsi);
 //         return &ue_context->apn_config_profile.apn_configuration[index];
 //       }
 //  return 1; // todo bstrcmp(apn_network_identifier(a->apn_in_use),

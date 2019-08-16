@@ -107,151 +107,151 @@ struct mme_app_timer_t {
  * according to 3GPP TS.23.401 #5.7.2
  */
 typedef struct ue_context_s {
-  pthread_mutex_t recmutex;  // mutex on the ue_context_t
-  /* Basic identifier for ue. IMSI is encoded on maximum of 15 digits of 4 bits,
-   * so usage of an unsigned integer on 64 bits is necessary.
-   */
-  imsi64_t         		 imsi;                      // set by nas_auth_param_req_t
-  bstring                msisdn;                    // The basic MSISDN of the UE. The presence is dictated by its storage in the HSS.
-                                                    // set by S6A UPDATE LOCATION ANSWER
-  ecm_state_t            ecm_state;                 // ECM state ECM-IDLE, ECM-CONNECTED.
-                                                    // not set/read
-  // todo: enum s1cause
-  enum s1cause           s1_ue_context_release_cause;
-  mm_state_t             mm_state;
-
-  /* Last known cell identity */
-  ecgi_t                  e_utran_cgi;                 // Last known E-UTRAN cell, set by nas_attach_req_t
-  // read for S11 CREATE_SESSION_REQUEST
-  /* Time when the cell identity was acquired */
-  time_t                 cell_age;                    // Time elapsed since the last E-UTRAN Cell Global Identity was acquired. set by nas_auth_param_req_t
-
-  /* TODO: add csg_id */
-  /* TODO: add csg_membership */
-  /* TODO Access mode: Access mode of last known ECGI when the UE was active */
-
-  /* Store the radio capabilities as received in S1AP UE capability indication message. */
-  // UE Radio Access Capability UE radio access capabilities.
-  //  bstring                 ue_radio_capabilities;       // not set/read
-
-
-  // UE Network Capability  // UE network capabilities including security algorithms and key derivation functions supported by the UE
-
-  // MS Network Capability  // For a GERAN and/or UTRAN capable UE, this contains information needed by the SGSN.
-
-  /* TODO: add DRX parameter */
-  // UE Specific DRX Parameters   // UE specific DRX parameters for A/Gb mode, Iu mode and S1-mode
-
-  // Selected NAS Algorithm       // Selected NAS security algorithm
-  // eKSI                         // Key Set Identifier for the main key K ASME . Also indicates whether the UE is using
-                                  // security keys derived from UTRAN or E-UTRAN security association.
-
-  // K ASME                       // Main key for E-UTRAN key hierarchy based on CK, IK and Serving network identity
-
-  // NAS Keys and COUNT           // K NASint , K_ NASenc , and NAS COUNT parameter.
-
-  // Selected CN operator id      // Selected core network operator identity (to support network sharing as defined in TS 23.251 [24]).
-
-  // Recovery                     // Indicates if the HSS is performing database recovery.
-
-  ard_t                  access_restriction_data;      // The access restriction subscription information. set by S6A UPDATE LOCATION ANSWER
-
-  // ODB for PS parameters        // Indicates that the status of the operator determined barring for packet oriented services.
-
-  // APN-OI Replacement           // Indicates the domain name to replace the APN-OI when constructing the PDN GW
-                                  // FQDN upon which to perform a DNS resolution. This replacement applies for all
-                                  // the APNs in the subscriber's profile. See TS 23.003 [9] clause 9.1.2 for more
-                                  // information on the format of domain names that are allowed in this field.
-  bstring      apn_oi_replacement; // example: "province1.mnc012.mcc345.gprs"
-
-  // MME IP address for S11       // MME IP address for the S11 interface (used by S-GW)
-  // LOCATED IN mme_config_t.ipv4.s11
-
-  // MME TEID for S11             // MME Tunnel Endpoint Identifier for S11 interface.
-  // LOCATED IN THIS.subscribed_apns[MAX_APN_PER_UE].mme_teid_s11
-
-  // S-GW IP address for S11/S4   // S-GW IP address for the S11 and S4 interfaces
-  // LOCATED IN THIS.subscribed_apns[MAX_APN_PER_UE].s_gw_address_s11_s4
-
-  // S-GW TEID for S11/S4         // S-GW Tunnel Endpoint Identifier for the S11 and S4 interfaces.
-  // LOCATED IN THIS.subscribed_apns[MAX_APN_PER_UE].s_gw_teid_s11_s4
-
-  // SGSN IP address for S3       // SGSN IP address for the S3 interface (used if ISR is activated for the GERAN and/or UTRAN capable UE)
-
-  // SGSN TEID for S3             // SGSN Tunnel Endpoint Identifier for S3 interface (used if ISR is activated for the E-UTRAN capable UE)
-
-  // eNodeB Address in Use for S1-MME // The IP address of the eNodeB currently used for S1-MME.
-  // implicit with use of SCTP through the use of sctp_assoc_id_key
-  sctp_assoc_id_t        sctp_assoc_id_key; // link with eNB id
-
-  // eNB UE S1AP ID,  Unique identity of the UE within eNodeB.
-  enb_ue_s1ap_id_t       enb_ue_s1ap_id:24;
-  enb_s1ap_id_key_t      enb_s1ap_id_key; // key uniq among all connected eNBs
-
-  // MME UE S1AP ID, Unique identity of the UE within MME.
-  mme_ue_s1ap_id_t       mme_ue_s1ap_id;
-
-  // MME TEID for S11             // MME Tunnel Endpoint Identifier for S11 interface.
-  // LOCATED IN THIS.subscribed_apns[MAX_APN_PER_UE].mme_teid_s11
-  teid_t                      local_mme_teid_s10;                // needed to get the UE context from S10 messages
-  teid_t                      mme_teid_s11;                	// set by mme_app_send_s11_create_session_req
-  teid_t                      saegw_teid_s11;                // set by mme_app_send_s11_create_session_req
-
-  // Subscribed UE-AMBR: The Maximum Aggregated uplink and downlink MBR values to be shared across all Non-GBR bearers according to the subscription of the user. The used UE-AMBR will be calculated.
-  ambr_t                 subscribed_ue_ambr;
-  // EPS Subscribed Charging Characteristics: The charging characteristics for the MS e.g. normal, prepaid, flat rate and/or hot billing.
-  // Subscribed RFSP Index: An index to specific RRM configuration in the E-UTRAN that is received from the HSS.
-  // RFSP Index in Use: An index to specific RRM configuration in the E-UTRAN that is currently in use.
-  // Trace reference: Identifies a record or a collection of records for a particular trace.
-  // Trace type: Indicates the type of trace
-  // Trigger id: Identifies the entity that initiated the trace
-  // OMC identity: Identifies the OMC that shall receive the trace record(s).
-  // URRP-MME: URRP-MME indicating that the HSS has requested the MME to notify the HSS regarding UE reachability at the MME.
-  // CSG Subscription Data: The CSG Subscription Data is a list of CSG IDs for the visiting PLMN and for each
-  //   CSG ID optionally an associated expiration date which indicates the point in time when the subscription to the CSG ID
-  //   expires; an absent expiration date indicates unlimited subscription. For a CSG ID that can be used to access specific PDNs via Local IP Access, the
-  //   CSG ID entry includes the corresponding APN(s).
-  // LIPA Allowed: Specifies whether the UE is allowed to use LIPA in this PLMN.
-
-  // Subscribed Periodic RAU/TAU Timer: Indicates a subscribed Periodic RAU/TAU Timer value.
-  rau_tau_timer_t        rau_tau_timer;               // set by S6A UPDATE LOCATION ANSWER
-
-  // MPS CS priority: Indicates that the UE is subscribed to the eMLPP or 1x RTT priority service in the CS domain.
-
-  // MPS EPS priority: Indicates that the UE is subscribed to MPS in the EPS domain.
-
-  network_access_mode_t  access_mode;                  // set by S6A UPDATE LOCATION ANSWER
-
-  // Subscribed UE-AMBR: The Maximum Aggregated uplink and downlink MBR values to be shared across all Non-GBR bearers according to the subscription of the user.
-  subscriber_status_t    sub_status;                   // set by S6A UPDATE LOCATION ANSWER
-
-  subscriber_status_t    subscriber_status;        // set by S6A UPDATE LOCATION ANSWER
-  network_access_mode_t  network_access_mode;       // set by S6A UPDATE LOCATION ANSWER
-
-  /* S10 and S11 procedures. */
+  /* S10 procedures. */
   LIST_HEAD(s10_procedures_s, mme_app_s10_proc_s) *s10_procedures;
+  struct {
+	  pthread_mutex_t recmutex;  // mutex on the ue_context_t
+	  /** UE Identifiers. */
+	  enb_s1ap_id_key_t      enb_s1ap_id_key; // key uniq among all connected eNBs
 
-  /* Time when the cell identity was acquired */
-  bstring                 ue_radio_capability;
+	  // MME UE S1AP ID, Unique identity of the UE within MME.
+	  mme_ue_s1ap_id_t       mme_ue_s1ap_id;
 
-  /* Globally Unique Temporary Identity */
-  bool                   is_guti_set;                 // is guti has been set
-  guti_t                 guti;                        // guti.gummei.plmn set by nas_auth_param_req_t
-  // read by S6A UPDATE LOCATION REQUEST
-  me_identity_t          me_identity;                 // not set/read except read by display utility
+	  // Mobile Reachability Timer-Start when UE moves to idle state. Stop when UE moves to connected state
+	  struct mme_app_timer_t       mobile_reachability_timer;
+	  // Implicit Detach Timer-Start at the expiry of Mobile Reachability timer. Stop when UE moves to connected state
+	  struct mme_app_timer_t       implicit_detach_timer;
+	  // Initial Context Setup Procedure Guard timer
+	  struct mme_app_timer_t       initial_context_setup_rsp_timer;
+	  /** Custom timer to remove UE at the source-MME side after a timeout. */
+	  //  struct mme_app_timer_t       mme_mobility_completion_timer; // todo: not TXXXX value found for this.
+	  // todo: (2) timers necessary for handover?
+	  struct mme_app_timer_t       s1ap_handover_req_timer;
+	  enum s1cause           	   s1_ue_context_release_cause;
+	  struct {
+		  /* Basic identifier for ue. IMSI is encoded on maximum of 15 digits of 4 bits,
+		   * so usage of an unsigned integer on 64 bits is necessary.
+		   */
+		  imsi64_t         		 imsi;                      // set by nas_auth_param_req_t
+		  bstring                msisdn;                    // The basic MSISDN of the UE. The presence is dictated by its storage in the HSS.
+		                                                    // set by S6A UPDATE LOCATION ANSWER
+		  ecm_state_t            ecm_state;                 // ECM state ECM-IDLE, ECM-CONNECTED.
+		                                                    // not set/read
+		  // todo: enum s1cause
+		  mm_state_t             mm_state;
 
-  // Mobile Reachability Timer-Start when UE moves to idle state. Stop when UE moves to connected state
-  struct mme_app_timer_t       mobile_reachability_timer;
-  // Implicit Detach Timer-Start at the expiry of Mobile Reachability timer. Stop when UE moves to connected state
-  struct mme_app_timer_t       implicit_detach_timer;
-  // Initial Context Setup Procedure Guard timer
-  struct mme_app_timer_t       initial_context_setup_rsp_timer;
-  /** Custom timer to remove UE at the source-MME side after a timeout. */
-//  struct mme_app_timer_t       mme_mobility_completion_timer; // todo: not TXXXX value found for this.
+		  /* Last known cell identity */
+		  ecgi_t                  e_utran_cgi;                 // Last known E-UTRAN cell, set by nas_attach_req_t
+		  // read for S11 CREATE_SESSION_REQUEST
+		  /* Time when the cell identity was acquired */
+		  time_t                 cell_age;                    // Time elapsed since the last E-UTRAN Cell Global Identity was acquired. set by nas_auth_param_req_t
 
-  // todo: (2) timers necessary for handover?
-  struct mme_app_timer_t       s1ap_handover_req_timer;
+		  /* TODO: add csg_id */
+		  /* TODO: add csg_membership */
+		  /* TODO Access mode: Access mode of last known ECGI when the UE was active */
 
+		  /* Store the radio capabilities as received in S1AP UE capability indication message. */
+		  // UE Radio Access Capability UE radio access capabilities.
+		  //  bstring                 ue_radio_capabilities;       // not set/read
+
+
+		  // UE Network Capability  // UE network capabilities including security algorithms and key derivation functions supported by the UE
+
+		  // MS Network Capability  // For a GERAN and/or UTRAN capable UE, this contains information needed by the SGSN.
+
+		  /* TODO: add DRX parameter */
+		  // UE Specific DRX Parameters   // UE specific DRX parameters for A/Gb mode, Iu mode and S1-mode
+
+		  // Selected NAS Algorithm       // Selected NAS security algorithm
+		  // eKSI                         // Key Set Identifier for the main key K ASME . Also indicates whether the UE is using
+		                                  // security keys derived from UTRAN or E-UTRAN security association.
+
+		  // K ASME                       // Main key for E-UTRAN key hierarchy based on CK, IK and Serving network identity
+
+		  // NAS Keys and COUNT           // K NASint , K_ NASenc , and NAS COUNT parameter.
+
+		  // Selected CN operator id      // Selected core network operator identity (to support network sharing as defined in TS 23.251 [24]).
+
+		  // Recovery                     // Indicates if the HSS is performing database recovery.
+
+		  ard_t                  access_restriction_data;      // The access restriction subscription information. set by S6A UPDATE LOCATION ANSWER
+
+		  // ODB for PS parameters        // Indicates that the status of the operator determined barring for packet oriented services.
+
+		  // APN-OI Replacement           // Indicates the domain name to replace the APN-OI when constructing the PDN GW
+		                                  // FQDN upon which to perform a DNS resolution. This replacement applies for all
+		                                  // the APNs in the subscriber's profile. See TS 23.003 [9] clause 9.1.2 for more
+		                                  // information on the format of domain names that are allowed in this field.
+		  bstring      apn_oi_replacement; // example: "province1.mnc012.mcc345.gprs"
+
+		  // MME IP address for S11       // MME IP address for the S11 interface (used by S-GW)
+		  // LOCATED IN mme_config_t.ipv4.s11
+
+		  // MME TEID for S11             // MME Tunnel Endpoint Identifier for S11 interface.
+		  // LOCATED IN THIS.subscribed_apns[MAX_APN_PER_UE].mme_teid_s11
+
+		  // S-GW IP address for S11/S4   // S-GW IP address for the S11 and S4 interfaces
+		  // LOCATED IN THIS.subscribed_apns[MAX_APN_PER_UE].s_gw_address_s11_s4
+
+		  // S-GW TEID for S11/S4         // S-GW Tunnel Endpoint Identifier for the S11 and S4 interfaces.
+		  // LOCATED IN THIS.subscribed_apns[MAX_APN_PER_UE].s_gw_teid_s11_s4
+
+		  // SGSN IP address for S3       // SGSN IP address for the S3 interface (used if ISR is activated for the GERAN and/or UTRAN capable UE)
+
+		  // SGSN TEID for S3             // SGSN Tunnel Endpoint Identifier for S3 interface (used if ISR is activated for the E-UTRAN capable UE)
+
+		  // eNodeB Address in Use for S1-MME // The IP address of the eNodeB currently used for S1-MME.
+		  // implicit with use of SCTP through the use of sctp_assoc_id_key
+		  sctp_assoc_id_t        sctp_assoc_id_key; // link with eNB id
+
+		  // eNB UE S1AP ID,  Unique identity of the UE within eNodeB.
+		  enb_ue_s1ap_id_t       enb_ue_s1ap_id:24;
+
+		  // MME TEID for S11             // MME Tunnel Endpoint Identifier for S11 interface.
+		  // LOCATED IN THIS.subscribed_apns[MAX_APN_PER_UE].mme_teid_s11
+		  teid_t                      local_mme_teid_s10;                // needed to get the UE context from S10 messages
+		  teid_t                      mme_teid_s11;                	// set by mme_app_send_s11_create_session_req
+		  teid_t                      saegw_teid_s11;                // set by mme_app_send_s11_create_session_req
+
+		  // Subscribed UE-AMBR: The Maximum Aggregated uplink and downlink MBR values to be shared across all Non-GBR bearers according to the subscription of the user. The used UE-AMBR will be calculated.
+		  ambr_t                 subscribed_ue_ambr;
+		  // EPS Subscribed Charging Characteristics: The charging characteristics for the MS e.g. normal, prepaid, flat rate and/or hot billing.
+		  // Subscribed RFSP Index: An index to specific RRM configuration in the E-UTRAN that is received from the HSS.
+		  // RFSP Index in Use: An index to specific RRM configuration in the E-UTRAN that is currently in use.
+		  // Trace reference: Identifies a record or a collection of records for a particular trace.
+		  // Trace type: Indicates the type of trace
+		  // Trigger id: Identifies the entity that initiated the trace
+		  // OMC identity: Identifies the OMC that shall receive the trace record(s).
+		  // URRP-MME: URRP-MME indicating that the HSS has requested the MME to notify the HSS regarding UE reachability at the MME.
+		  // CSG Subscription Data: The CSG Subscription Data is a list of CSG IDs for the visiting PLMN and for each
+		  //   CSG ID optionally an associated expiration date which indicates the point in time when the subscription to the CSG ID
+		  //   expires; an absent expiration date indicates unlimited subscription. For a CSG ID that can be used to access specific PDNs via Local IP Access, the
+		  //   CSG ID entry includes the corresponding APN(s).
+		  // LIPA Allowed: Specifies whether the UE is allowed to use LIPA in this PLMN.
+
+		  // Subscribed Periodic RAU/TAU Timer: Indicates a subscribed Periodic RAU/TAU Timer value.
+		  rau_tau_timer_t        rau_tau_timer;               // set by S6A UPDATE LOCATION ANSWER
+
+		  // MPS CS priority: Indicates that the UE is subscribed to the eMLPP or 1x RTT priority service in the CS domain.
+
+		  // MPS EPS priority: Indicates that the UE is subscribed to MPS in the EPS domain.
+
+		  network_access_mode_t  access_mode;                  // set by S6A UPDATE LOCATION ANSWER
+
+		  network_access_mode_t  network_access_mode;       // set by S6A UPDATE LOCATION ANSWER
+
+		  /* Time when the cell identity was acquired */
+		  bstring                 ue_radio_capability;
+
+		  /* Globally Unique Temporary Identity */
+		  bool                   is_guti_set;                 // is guti has been set
+		  guti_t                 guti;                        // guti.gummei.plmn set by nas_auth_param_req_t
+		  // read by S6A UPDATE LOCATION REQUEST
+		  me_identity_t          me_identity;                 // not set/read except read by display utility
+	  }fields;
+  }privates;
+  /** Entries for UE context pool. */
+  STAILQ_ENTRY (ue_context_s)		entries;
 } ue_context_t;
 
 typedef struct mme_ue_context_s {
@@ -348,13 +348,15 @@ void mme_ue_context_update_coll_keys(
 
 void mme_ue_context_dump_coll_keys(void);
 
-/** \brief Insert a new UE context in the tree of known UEs.
+/** \brief Allocate a new UE context in the tree of known UEs.
+ * Allocates a new MME_UE_S1AP_ID.
  * At least the IMSI should be known to insert the context in the tree.
  * \param ue_context_p The UE context to insert
- * @returns 0 in case of success, -1 otherwise
+ * @returns the ue_context in case of success, NULL otherwise
  **/
-int mme_insert_ue_context(mme_ue_context_t * const mme_ue_context,
-                         const struct ue_context_s * const ue_context_p);
+ue_context_t * get_new_ue_context();
+
+void test_ue_context_extablishment();
 
 /** \brief Remove a UE context of the tree of known UEs.
  * \param ue_context_p The UE context to remove
@@ -379,13 +381,6 @@ subscription_data_t * mme_remove_subscription_profile(mme_ue_context_t * const m
  * \param ue_id, subscription data
  **/
 int mme_app_update_ue_subscription(mme_ue_s1ap_id_t ue_id, subscription_data_t * subscription_data);
-
-/** \brief Allocate memory for a new UE context
- * @returns Pointer to the new structure, NULL if allocation failed
- **/
-ue_context_t *mme_create_new_ue_context(void);
-
-void mme_app_ue_context_free_content (ue_context_t * const mme_ue_context_p);
 
 /** \brief Dump the UE contexts present in the tree
  **/

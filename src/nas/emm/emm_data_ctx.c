@@ -877,12 +877,12 @@ int emm_data_context_update_security_parameters(const mme_ue_s1ap_id_t ue_id,
   ue_context_t                           *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, ue_id);
 
   if (!emm_ctx) {
-    OAILOG_ERROR(LOG_NAS_EMM, "EMM-CTX - no EMM context existing for UE id " MME_UE_S1AP_ID_FMT ". Cannot update the AS security. \n", ue_context->mme_ue_s1ap_id);
+    OAILOG_ERROR(LOG_NAS_EMM, "EMM-CTX - no EMM context existing for UE id " MME_UE_S1AP_ID_FMT ". Cannot update the AS security. \n", ue_context->privates.mme_ue_s1ap_id);
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
   }
   if (!IS_EMM_CTXT_VALID_SECURITY(emm_ctx)) {
     OAILOG_ERROR(LOG_NAS_EMM, "EMM-CTX - no valid security context exist EMM context for UE id " MME_UE_S1AP_ID_FMT " and IMSI " IMSI_64_FMT ". Cannot update the AS security. \n",
-        ue_context->mme_ue_s1ap_id, emm_ctx->_imsi64);
+        ue_context->privates.mme_ue_s1ap_id, emm_ctx->_imsi64);
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
   }
 
@@ -905,7 +905,7 @@ int emm_data_context_update_security_parameters(const mme_ue_s1ap_id_t ue_id,
 //  if(!emm_ctx->_security.ncc){
 //    /** Set the pending deactivation flag of the ncc. Will start from 0 then. */
 //    ue_context->pending_bearer_deactivation = true;
-//    OAILOG_ERROR(LOG_NAS_EMM, "EMM-CTX - NCC reached 7. Activating the pending bearer deactivation for UE context with ueId " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
+//    OAILOG_ERROR(LOG_NAS_EMM, "EMM-CTX - NCC reached 7. Activating the pending bearer deactivation for UE context with ueId " MME_UE_S1AP_ID_FMT ". \n", ue_context->privates.mme_ue_s1ap_id);
 //  }
 //  if(!emm_ctx->_security.ncc){
 //
@@ -929,7 +929,7 @@ int emm_data_context_update_security_parameters(const mme_ue_s1ap_id_t ue_id,
 //  UNLOCK_EMM_CONTEXT(emm_ctx);
 
   OAILOG_INFO(LOG_NAS_EMM, "EMM-CTX - Updated AS security parameters for EMM context with UE id " MME_UE_S1AP_ID_FMT " and IMSI " IMSI_64_FMT ". \n",
-      ue_context->mme_ue_s1ap_id, emm_ctx->_imsi64);
+      ue_context->privates.mme_ue_s1ap_id, emm_ctx->_imsi64);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
 }
 
@@ -961,7 +961,7 @@ void mm_ue_eps_context_update_security_parameters(mme_ue_s1ap_id_t ue_id,
 //  if(!mm_eps_ue_context->ncc){
 //    /** Set the pending deactivation flag of the ncc. Will start from 0 then. */
 //    ue_context->pending_bearer_deactivation = true;
-//    OAILOG_ERROR(LOG_NAS_EMM, "EMM-CTX - NCC reached 7. Activating the pending bearer deactivation for UE context with ueId " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
+//    OAILOG_ERROR(LOG_NAS_EMM, "EMM-CTX - NCC reached 7. Activating the pending bearer deactivation for UE context with ueId " MME_UE_S1AP_ID_FMT ". \n", ue_context->privates.mme_ue_s1ap_id);
 //  }
 //  if(!emm_ctx->_security.ncc){
 //
@@ -982,7 +982,7 @@ void mm_ue_eps_context_update_security_parameters(mme_ue_s1ap_id_t ue_id,
 //    derive_nh(emm_ctx->_vector[emm_ctx->_security.vector_index].kasme, emm_ctx->_vector[emm_ctx->_security.vector_index].nh_conj);
 //    OAILOG_STREAM_HEX(OAILOG_LEVEL_DEBUG, LOG_NAS_EMM, "New NH_CONJ for ncc1: ", emm_ctx->_vector[emm_ctx->_security.vector_index].nh_conj, 32);
 //  }
-  OAILOG_INFO(LOG_NAS_EMM, "EMM-CTX - Updated MM EPS UE context security context parameters for UE context with ueId " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
+  OAILOG_INFO(LOG_NAS_EMM, "EMM-CTX - Updated MM EPS UE context security context parameters for UE context with ueId " MME_UE_S1AP_ID_FMT ". \n", ue_context->privates.mme_ue_s1ap_id);
   OAILOG_FUNC_OUT(LOG_NAS_EMM);
 }
 

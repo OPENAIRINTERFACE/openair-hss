@@ -290,7 +290,7 @@ esm_recv_pdn_connectivity_request (
   // todo:
   ue_context_t        * ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, ue_id);
   DevAssert(ue_context);
-  *is_attach = ue_context->mm_state == UE_UNREGISTERED;
+  *is_attach = ue_context->privates.fields.mm_state == UE_UNREGISTERED;
 
   /** An APN Name must be present, if it is not attach. */
   if(!*is_attach && !(msg->presencemask & PDN_CONNECTIVITY_REQUEST_ACCESS_POINT_NAME_PRESENT)){

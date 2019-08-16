@@ -221,16 +221,17 @@ typedef struct pdn_context_s {
  */
 typedef struct ue_session_pool_s {
 	struct {
+		pthread_mutex_t recmutex;  // mutex on the ue_context_t
+		mme_ue_s1ap_id_t		mme_ue_s1ap_id;
+		/** Don't add them below, because they contain entries. */
+		bearer_context_new_t 	bcs_ue[MAX_NUM_BEARERS_UE];
+		pdn_context_t 			pdn_ue[MAX_APN_PER_UE];
 		struct {
 			/** Put field here only. */
-			mme_ue_s1ap_id_t		mme_ue_s1ap_id;
 			teid_t					mme_teid_s11;
 			teid_t					saegw_teid_s11;
 			int 					num_pdn_contexts;
-
-			pdn_context_t 			pdn_ue[MAX_APN_PER_UE];
-
-			/** ESM Procedures */
+			/** ESM Procedures : can be initialized together with the remaining fields. */
 			struct esm_procedures_s {
 				LIST_HEAD(esm_pdn_connectivity_procedures_s, nas_esm_proc_pdn_connectivity_s) *pdn_connectivity_procedures;
 				LIST_HEAD(esm_bearer_context_procedures_s, nas_esm_proc_bearer_context_s)   *bearer_context_procedures;
@@ -238,7 +239,6 @@ typedef struct ue_session_pool_s {
 			// todo: remove later
 			ebi_t                        next_def_ebi_offset;
 		}fields;
-		bearer_context_new_t 	bcs_ue[MAX_NUM_BEARERS_UE];
 	}privates;
 
 	/*
@@ -282,13 +282,6 @@ mme_ue_session_pool_update_coll_keys (
   const s11_teid_t         mme_teid_s11);
 
 void mme_ue_session_pool_dump_coll_keys(void);
-
-int mme_insert_ue_session_pool (
-  mme_ue_session_pool_t * const mme_ue_session_pool_p,
-  const struct ue_session_pool_s *const ue_session_pool);
-void mme_remove_ue_session_pool(
-  mme_ue_session_pool_t * const mme_ue_session_pool_p,
-  struct ue_session_pool_s *ue_session_pool);
 
 void mme_app_esm_detach (mme_ue_s1ap_id_t ue_id);
 int mme_app_pdn_process_session_creation(mme_ue_s1ap_id_t ue_id, imsi64_t imsi, mm_state_t mm_state, ambr_t subscribed_ue_ambr,

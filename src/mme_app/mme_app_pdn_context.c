@@ -125,6 +125,13 @@ mme_app_esm_create_pdn_context(mme_ue_s1ap_id_t ue_id, const ebi_t linked_ebi, c
   }
   STAILQ_REMOVE(&ue_session_pool->free_pdn_contexts, *pdn_context_pp, pdn_context_s, entries);
 
+  pdn_context_t *pdn_context_1_pp = STAILQ_FIRST(&ue_session_pool->free_pdn_contexts);
+  if(!pdn_context_1_pp) {
+	  OAILOG_ERROR(LOG_MME_APP, "No free PDN context left for UE: " MME_UE_S1AP_ID_FMT ". \n", ue_id);
+	  OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+  }
+  STAILQ_REMOVE(&ue_session_pool->free_pdn_contexts, pdn_context_1_pp, pdn_context_s, entries);
+
   bearer_context_new_t * free_bearer = NULL;
   if(linked_ebi != EPS_BEARER_IDENTITY_UNASSIGNED){
 	  mme_app_get_free_bearer_context(ue_session_pool, linked_ebi, &free_bearer); /**< Find the EBI which is matching (should be available). */
@@ -209,10 +216,7 @@ mme_app_esm_create_pdn_context(mme_ue_s1ap_id_t ue_id, const ebi_t linked_ebi, c
   DevAssert(!(*pdn_context_pp)->pco);
   /** Insert the PDN context into the map of PDN contexts. */
   pdn_context_t * pdn_context_test = RB_INSERT (PdnContexts, &ue_session_pool->pdn_contexts, (*pdn_context_pp));
-  if(pdn_context_test){
-    OAILOG_INFO(LOG_MME_APP, "ERROR ADDING PDN CONTEXT for UE " MME_UE_S1AP_ID_FMT ". Subscribed APN \"%s.\", pdn_cid=%d, ebi=%d (free_bearer = %p) \n", ue_id, bdata((*pdn_context_pp)->apn_subscribed),
-        (*pdn_context_pp)->context_identifier, (*pdn_context_pp)->default_ebi, free_bearer);
-  }
+  DevAssert(!pdn_context_test);
   // UNLOCK_UE_SESSION_POOL
   MSC_LOG_EVENT (MSC_NAS_ESM_MME, "0 Create PDN cid %u APN %s", (*pdn_context_pp)->context_identifier, bdata((*pdn_context_pp)->apn_subscribed));
   OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);

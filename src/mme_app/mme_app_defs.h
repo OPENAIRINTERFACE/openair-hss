@@ -48,14 +48,15 @@ typedef struct mme_app_desc_s {
   long statistic_timer_id;
   uint32_t statistic_timer_period;
 
-  /** Create an array of bearer pools. */
-  // todo: lock for the bearer pool?!
-  // todo: put into a separate place for allocation!
-  ue_session_pool_t ue_session_pool[CHANGEABLE_VALUE];
-  STAILQ_HEAD(ue_session_pools_s, ue_session_pool_s)  mme_ue_session_pool_lists;
+  /** Create an array of UE session pools. */
+  ue_context_t 			ue_contexts[CHANGEABLE_VALUE];
+  STAILQ_HEAD(ue_contexts_list_s, ue_context_s)  mme_ue_contexts_list;
+
+  /** Create an array of UE session pools. */
+  ue_session_pool_t ue_session_pools[CHANGEABLE_VALUE];
+  STAILQ_HEAD(ue_session_pools_list_s, ue_session_pool_s)  mme_ue_session_pools_list;
 
   uint32_t mme_mobility_management_timer_period;
-
   /* Reader/writer lock */
   pthread_rwlock_t rw_lock;
 

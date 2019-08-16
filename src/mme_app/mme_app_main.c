@@ -58,7 +58,7 @@ void     *mme_app_thread (void *args);
 //------------------------------------------------------------------------------
 void *mme_app_thread (void *args)
 {
-  struct ue_context_s                    *ue_context_p = NULL;
+  struct ue_context_s                    *ue_context = NULL;
   mme_app_s10_proc_mme_handover_t        *s10_handover_proc  = NULL;
 
   itti_mark_task_ready (TASK_MME_APP);
@@ -210,18 +210,18 @@ void *mme_app_thread (void *args)
       break;
 
     case S11_MODIFY_BEARER_RESPONSE:{
-        struct ue_context_s                    *ue_context_p = NULL;
-        ue_context_p = mme_ue_context_exists_s11_teid (&mme_app_desc.mme_ue_contexts, received_message_p->ittiMsg.s11_modify_bearer_response.teid);
-        if (ue_context_p == NULL) {
+        struct ue_context_s                    *ue_context = NULL;
+        ue_context = mme_ue_context_exists_s11_teid (&mme_app_desc.mme_ue_contexts, received_message_p->ittiMsg.s11_modify_bearer_response.teid);
+        if (ue_context == NULL) {
           MSC_LOG_RX_DISCARDED_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 MODIFY_BEARER_RESPONSE local S11 teid " TEID_FMT " ",
             received_message_p->ittiMsg.s11_modify_bearer_response.teid);
           OAILOG_WARNING (LOG_MME_APP, "We didn't find this teid in list of UE: %08x\n", received_message_p->ittiMsg.s11_modify_bearer_response.teid);
         } else {
           MSC_LOG_RX_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 MODIFY_BEARER_RESPONSE local S11 teid " TEID_FMT " IMSI " IMSI_64_FMT " ",
-            received_message_p->ittiMsg.s11_modify_bearer_response.teid, ue_context_p->emm_context._imsi64);
+            received_message_p->ittiMsg.s11_modify_bearer_response.teid, ue_context->emm_context._imsi64);
           mme_app_handle_modify_bearer_resp(&received_message_p->ittiMsg.s11_modify_bearer_response);
 
-          // todo unlock_ue_contexts(ue_context_p);
+          // todo unlock_ue_contexts(ue_context);
 
         }
          // TO DO
@@ -456,24 +456,24 @@ void *mme_app_thread (void *args)
           itti_print_DEBUG ();
         } else if (received_message_p->ittiMsg.timer_has_expired.arg != NULL) {
           mme_ue_s1ap_id_t mme_ue_s1ap_id = *((mme_ue_s1ap_id_t *)(received_message_p->ittiMsg.timer_has_expired.arg));
-          ue_context_p = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, mme_ue_s1ap_id);
-          if (ue_context_p == NULL) {
+          ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, mme_ue_s1ap_id);
+          if (ue_context == NULL) {
             OAILOG_WARNING (LOG_MME_APP, "Timer expired but no associated UE context for UE id " MME_UE_S1AP_ID_FMT "\n",mme_ue_s1ap_id);
             break;
           }
-          s10_handover_proc = mme_app_get_s10_procedure_mme_handover(ue_context_p);
+          s10_handover_proc = mme_app_get_s10_procedure_mme_handover(ue_context);
 
           OAILOG_WARNING (LOG_MME_APP, "TIMER_HAS_EXPIRED with ID %u and FOR UE id %d \n", received_message_p->ittiMsg.timer_has_expired.timer_id, mme_ue_s1ap_id);
 
-          if (received_message_p->ittiMsg.timer_has_expired.timer_id == ue_context_p->mobile_reachability_timer.id) {
+          if (received_message_p->ittiMsg.timer_has_expired.timer_id == ue_context->privates.mobile_reachability_timer.id) {
             // Mobile Reachability Timer expiry handler
-            mme_app_handle_mobile_reachability_timer_expiry (ue_context_p);
-          } else if (received_message_p->ittiMsg.timer_has_expired.timer_id == ue_context_p->implicit_detach_timer.id) {
+            mme_app_handle_mobile_reachability_timer_expiry (ue_context);
+          } else if (received_message_p->ittiMsg.timer_has_expired.timer_id == ue_context->privates.implicit_detach_timer.id) {
             // Implicit Detach Timer expiry handler
-            mme_app_handle_implicit_detach_timer_expiry (ue_context_p);
-          } else if (received_message_p->ittiMsg.timer_has_expired.timer_id == ue_context_p->initial_context_setup_rsp_timer.id) {
+            mme_app_handle_implicit_detach_timer_expiry (ue_context);
+          } else if (received_message_p->ittiMsg.timer_has_expired.timer_id == ue_context->privates.initial_context_setup_rsp_timer.id) {
             // Initial Context Setup Rsp Timer expiry handler
-            mme_app_handle_initial_context_setup_rsp_timer_expiry (ue_context_p);
+            mme_app_handle_initial_context_setup_rsp_timer_expiry (ue_context);
           }
           /** Check for S10 procedures. */
           else if(s10_handover_proc && received_message_p->ittiMsg.timer_has_expired.timer_id == s10_handover_proc->proc.timer.id){
@@ -524,7 +524,7 @@ int mme_app_init (const mme_config_t * mme_config_p)
   AssertFatal(sizeof(uintptr_t) >= sizeof(uint64_t), "Problem with mme_app_tun10_ue_context_htbl in MME_APP");
   btrunc(b, 0);
   bassigncstr(b, "mme_app_mme_ue_s1ap_id_ue_context_htbl");
-  mme_app_desc.mme_ue_contexts.mme_ue_s1ap_id_ue_context_htbl = hashtable_ts_create (mme_config.max_ues, NULL, NULL, b);
+  mme_app_desc.mme_ue_contexts.mme_ue_s1ap_id_ue_context_htbl = hashtable_ts_create (mme_config.max_ues, NULL, hash_free_int_func, b);
   btrunc(b, 0);
   bassigncstr(b, "mme_app_guti_ue_context_htbl");
   mme_app_desc.mme_ue_contexts.guti_ue_context_htbl = obj_hashtable_uint64_ts_create (mme_config.max_ues, NULL, hash_free_func, b);
@@ -548,14 +548,81 @@ int mme_app_init (const mme_config_t * mme_config_p)
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
 
-  /** Initialize the next free one as the first element in the list. */
-  STAILQ_INIT(&mme_app_desc.mme_ue_session_pool_lists);
-  /** Iterate through the list of ue session pools. */
-  ue_session_pool_t * ue_session_pool;
+  /**
+   * Initialize the UE contexts.
+   */
+  STAILQ_INIT(&mme_app_desc.mme_ue_contexts_list);
+  /** Iterate through the list of ue contexts. */
   for(int num_sp = 0; num_sp < CHANGEABLE_VALUE; num_sp++) {
-	  /** Put them into the list. */
-	  STAILQ_INSERT_TAIL(&mme_app_desc.mme_ue_session_pool_lists,
-			  &mme_app_desc.ue_session_pool[num_sp], entries);
+	  mme_app_desc.ue_contexts[num_sp].privates.mme_ue_s1ap_id = INVALID_MME_UE_S1AP_ID;
+	  mme_app_desc.ue_contexts[num_sp].privates.enb_s1ap_id_key = INVALID_ENB_UE_S1AP_ID_KEY;
+
+	  /** Create a new mutex for each and put them into the list. */
+	  ue_context_t * ue_context = &mme_app_desc.ue_contexts[num_sp];
+	  pthread_mutexattr_t mutexattr = {0};
+	  int rc = pthread_mutexattr_init(&mutexattr);
+	  if (rc) {
+		  OAILOG_ERROR (LOG_MME_APP, "Cannot create UE context, failed to init mutex attribute: %s\n", strerror(rc));
+		  OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+	  }
+	  rc = pthread_mutexattr_settype(&mutexattr, PTHREAD_MUTEX_RECURSIVE);
+	  if (rc) {
+		  OAILOG_ERROR (LOG_MME_APP, "Cannot create UE context, failed to set mutex attribute type: %s\n", strerror(rc));
+		  OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+	  }
+	  rc = pthread_mutex_init(&ue_context->privates.recmutex, &mutexattr);
+	  if (rc) {
+		  OAILOG_ERROR (LOG_MME_APP, "Cannot create UE context, failed to init mutex: %s\n", strerror(rc));
+		  OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+	  }
+	  //  rc = lock_ue_contexts(new_p);
+	  if (rc) {
+ 		  OAILOG_ERROR (LOG_MME_APP, "Cannot create UE context, failed to lock mutex: %s\n", strerror(rc));
+ 		  OAILOG_FUNC_RETURN (LOG_MME_APP, NULL);
+	  }
+	  STAILQ_INSERT_TAIL(&mme_app_desc.mme_ue_contexts_list,
+			  &mme_app_desc.ue_contexts[num_sp], entries);
+
+	  /** Reset the timers. */
+	  ue_context->privates.mobile_reachability_timer.id = MME_APP_TIMER_INACTIVE_ID;
+	  ue_context->privates.implicit_detach_timer.id = MME_APP_TIMER_INACTIVE_ID;
+	  ue_context->privates.initial_context_setup_rsp_timer.id = MME_APP_TIMER_INACTIVE_ID;
+
+	  // todo: unlocking the ue_context?!
+  }
+
+  /**
+   * Initialize the UE session pools.
+   */
+  STAILQ_INIT(&mme_app_desc.mme_ue_session_pools_list);
+  /** Iterate through the list of ue session pools. */
+  for(int num_sp = 0; num_sp < CHANGEABLE_VALUE; num_sp++) {
+	  mme_app_desc.ue_session_pools[num_sp].privates.mme_ue_s1ap_id = INVALID_MME_UE_S1AP_ID;
+	  /** Create a new mutex for each and put them into the list. */
+	  ue_session_pool_t * ue_session_pool = &mme_app_desc.ue_session_pools[num_sp];
+	  pthread_mutexattr_t mutexattr = {0};
+	  int rc = pthread_mutexattr_init(&mutexattr);
+	  if (rc) {
+		  OAILOG_ERROR (LOG_MME_APP, "Cannot create UE session pool, failed to init mutex attribute: %s\n", strerror(rc));
+		  OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+	  }
+	  rc = pthread_mutexattr_settype(&mutexattr, PTHREAD_MUTEX_RECURSIVE);
+	  if (rc) {
+		  OAILOG_ERROR (LOG_MME_APP, "Cannot create UE session pool, failed to set mutex attribute type: %s\n", strerror(rc));
+		  OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+	  }
+	  rc = pthread_mutex_init(&ue_session_pool->privates.recmutex, &mutexattr);
+	  if (rc) {
+		  OAILOG_ERROR (LOG_MME_APP, "Cannot create UE session pool, failed to init mutex: %s\n", strerror(rc));
+		  OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+	  }
+	  //  rc = lock_ue_contexts(new_p);
+	  if (rc) {
+		  OAILOG_ERROR (LOG_MME_APP, "Cannot create UE session pool, failed to lock mutex: %s\n", strerror(rc));
+		  OAILOG_FUNC_RETURN (LOG_MME_APP, NULL);
+	  }
+	  STAILQ_INSERT_TAIL(&mme_app_desc.mme_ue_session_pools_list,
+			  &mme_app_desc.ue_session_pools[num_sp], entries);
   }
 
   /*
@@ -577,6 +644,7 @@ int mme_app_init (const mme_config_t * mme_config_p)
     OAILOG_ERROR (LOG_MME_APP, "Failed to request new timer for statistics with %ds " "of periocidity\n", mme_config_p->mme_statistic_timer);
     mme_app_desc.statistic_timer_id = 0;
   }
+  // todo: unlock the mme_desc?!
 
   OAILOG_DEBUG (LOG_MME_APP, "Initializing MME applicative layer: DONE -- ASSERTING\n");
   OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);

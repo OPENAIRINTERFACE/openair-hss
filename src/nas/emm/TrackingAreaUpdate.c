@@ -1024,7 +1024,7 @@ static int _emm_send_tracking_area_update_accept(emm_data_context_t * const emm_
         	emm_sap.primitive = EMMAS_DATA_REQ;
         	emm_sap.u.emm_as.u.data.pending_deac = true; /**< Only set for emm_as.data. */
     	} else {
-    	  	  OAILOG_WARNING(LOG_NAS_EMM, "EMM-PROC  - TAU procedure for ue_id " MME_UE_S1AP_ID_FMT " has pending QoS. Overwriting the active flag.", ue_context->mme_ue_s1ap_id);
+    	  	  OAILOG_WARNING(LOG_NAS_EMM, "EMM-PROC  - TAU procedure for ue_id " MME_UE_S1AP_ID_FMT " has pending QoS. Overwriting the active flag.", ue_context->privates.mme_ue_s1ap_id);
     	  	  tau_proc->ies->eps_update_type.active_flag = true;
     	  	  emm_sap.primitive = EMMAS_ESTABLISH_CNF;
     	}
@@ -1106,7 +1106,7 @@ static int _emm_send_tracking_area_update_accept(emm_data_context_t * const emm_
 	  if(_emm_data.conf.force_tau){
 		  /** Only give the current TAC in the list. */
 		  OAILOG_INFO (LOG_NAS, "UE " MME_UE_S1AP_ID_FMT " has an intra-MME TAU. Only updating the TAI-List to new TAC " TAC_FMT ".\n",
-				  ue_context->mme_ue_s1ap_id, emm_context->originating_tai.tac);
+				  ue_context->privates.mme_ue_s1ap_id, emm_context->originating_tai.tac);
 		  emm_context->_tai_list.numberoflists = 1;
 		  emm_context->_tai_list.partial_tai_list[0].numberofelements = 0; /**< + 1. */
 		  emm_context->_tai_list.partial_tai_list[0].typeoflist = TRACKING_AREA_IDENTITY_LIST_ONE_PLMN_CONSECUTIVE_TACS;
@@ -1829,7 +1829,7 @@ static int _emm_tracking_area_update_run_procedure(emm_data_context_t *emm_conte
       // Note: this is safe from double-free errors because it sets to NULL
       // after freeing, which free treats as a no-op.
       // todo: ue_radio_capability from MME_APP to NAS.
-      bdestroy_wrapper(&ue_context->ue_radio_capability);
+      bdestroy_wrapper(&ue_context->privates.fields.ue_radio_capability);
     }
 
     /** A security context exist, checking if UE was correctly authenticated. */
@@ -1855,7 +1855,7 @@ static int _emm_tracking_area_update_run_procedure(emm_data_context_t *emm_conte
         	tau_proc->ies->subscription_data = NULL;
         	/** Send the S6a message. */
         	MessageDef * message_p = itti_alloc_new_message (TASK_MME_APP, NAS_PDN_CONFIG_RSP);
-        	message_p->ittiMsg.nas_pdn_config_rsp.ue_id  = ue_context->mme_ue_s1ap_id;
+        	message_p->ittiMsg.nas_pdn_config_rsp.ue_id  = ue_context->privates.mme_ue_s1ap_id;
         	message_p->ittiMsg.nas_pdn_config_rsp.imsi64 = emm_context->_imsi64;
         	imsi64_t imsi64_2 = imsi_to_imsi64(&emm_context->_imsi);
         	memcpy(&message_p->ittiMsg.nas_pdn_config_rsp.imsi, &emm_context->_imsi, sizeof(imsi_t));
@@ -2248,7 +2248,7 @@ static void _emm_tracking_area_update_registration_complete(emm_data_context_t *
 		   * Also no CBR is received and waiting in pending state.
 		   */
 		  OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - EMM Context for ueId " MME_UE_S1AP_ID_FMT " has done an IDLE-TAU without active flag. Triggering UE context release. \n", emm_context->ue_id);
-		  mme_app_itti_ue_context_release(ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, S1AP_NAS_NORMAL_RELEASE, ue_context->e_utran_cgi.cell_identity.enb_id);
+		  mme_app_itti_ue_context_release(ue_context->privates.mme_ue_s1ap_id, ue_context->privates.fields.enb_ue_s1ap_id, S1AP_NAS_NORMAL_RELEASE, ue_context->privates.fields.e_utran_cgi.cell_identity.enb_id);
 	  } else if (pending_qos) {
 		  /** Check if a pending QoS procedure exists. */
 		  OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - EMM Context for ueId " MME_UE_S1AP_ID_FMT " has done an IDLE-TAU without active flag but bearer QoS modification is pending. "

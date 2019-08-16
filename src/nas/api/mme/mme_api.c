@@ -276,7 +276,7 @@ mme_api_notify_imsi (
   ue_context_imsi_duplicate = mme_ue_context_exists_imsi(&mme_app_desc.mme_ue_contexts, imsi64);
   if(ue_context_imsi_duplicate){
     OAILOG_ERROR(LOG_MME_APP, "MME_APP context with ue_id=" MME_UE_S1AP_ID_FMT " already exists for IMSI " IMSI_64_FMT" (valid). Overwriting the IMSI value to new " MME_UE_S1AP_ID_FMT ".\n",
-        ue_context_imsi_duplicate->mme_ue_s1ap_id, imsi64, id);
+        ue_context_imsi_duplicate->privates.mme_ue_s1ap_id, imsi64, id);
     OAILOG_FUNC_RETURN (LOG_NAS, RETURNok);
   }
 
@@ -286,12 +286,12 @@ mme_api_notify_imsi (
   if ( ue_context) {
     mme_ue_context_update_coll_keys (&mme_app_desc.mme_ue_contexts,
         ue_context,
-        ue_context->enb_s1ap_id_key,
+        ue_context->privates.enb_s1ap_id_key,
         id,
         imsi64,
-        ue_context->mme_teid_s11,
-        ue_context->local_mme_teid_s10,
-        &ue_context->guti);
+        ue_context->privates.fields.mme_teid_s11,
+        ue_context->privates.fields.local_mme_teid_s10,
+        &ue_context->privates.fields.guti);
 //    unlock_ue_contexts(ue_context);
     OAILOG_DEBUG (LOG_MME_APP, "MME_APP context for ue_id=" MME_UE_S1AP_ID_FMT " has a registered valid IMSI " IMSI_64_FMT" (valid)\n", id, imsi64);
     OAILOG_FUNC_RETURN (LOG_NAS, RETURNok);
@@ -326,11 +326,11 @@ mme_api_notify_new_guti (
   if (ue_context) {
     mme_ue_context_update_coll_keys (&mme_app_desc.mme_ue_contexts,
         ue_context,
-        ue_context->enb_s1ap_id_key,
+        ue_context->privates.enb_s1ap_id_key,
         id,
-        ue_context->imsi,
-        ue_context->mme_teid_s11,
-        ue_context->local_mme_teid_s10,
+        ue_context->privates.fields.imsi,
+        ue_context->privates.fields.mme_teid_s11,
+        ue_context->privates.fields.local_mme_teid_s10,
         guti);
 //    unlock_ue_contexts(ue_context);
     OAILOG_FUNC_RETURN (LOG_NAS, RETURNok);
@@ -386,11 +386,11 @@ mme_api_new_guti (
 //      OAILOG_FUNC_RETURN (LOG_NAS, RETURNerror);
 //    }
     /** Definitely not using the UE structure as GUTI, since it should be unique even after reattaches. */
-    guti->m_tmsi = ue_context->mme_teid_s11;
+    guti->m_tmsi = ue_context->privates.fields.mme_teid_s11;
     if (guti->m_tmsi == INVALID_M_TMSI) {
       OAILOG_FUNC_RETURN (LOG_NAS, RETURNerror);
     }
-    mme_api_notify_new_guti(ue_context->mme_ue_s1ap_id, guti);
+    mme_api_notify_new_guti(ue_context->privates.mme_ue_s1ap_id, guti);
   } else {
     OAILOG_FUNC_RETURN (LOG_NAS, RETURNerror);
   }
@@ -398,7 +398,7 @@ mme_api_new_guti (
   if(_emm_data.conf.force_tau){
 	  /** Only give the current TAC in the list. */
 	  OAILOG_INFO (LOG_NAS, "UE " MME_UE_S1AP_ID_FMT "  with GUTI " GUTI_FMT " will only receive its TAC " TAC_FMT " in the TAI list to enforce "
-			  "TAU.\n", ue_context->mme_ue_s1ap_id, GUTI_ARG(guti), originating_tai->tac);
+			  "TAU.\n", ue_context->privates.mme_ue_s1ap_id, GUTI_ARG(guti), originating_tai->tac);
 	  tai_list->numberoflists = 1;
 	  tai_list->partial_tai_list[0].numberofelements = 0; /**< + 1. */
 	  tai_list->partial_tai_list[0].typeoflist = TRACKING_AREA_IDENTITY_LIST_ONE_PLMN_CONSECUTIVE_TACS;
@@ -491,7 +491,7 @@ mme_api_new_guti (
     }
   }
   tai_list->numberoflists = j;
-  OAILOG_INFO (LOG_NAS, "UE " MME_UE_S1AP_ID_FMT "  Got GUTI " GUTI_FMT "\n", ue_context->mme_ue_s1ap_id, GUTI_ARG(guti));
+  OAILOG_INFO (LOG_NAS, "UE " MME_UE_S1AP_ID_FMT "  Got GUTI " GUTI_FMT "\n", ue_context->privates.mme_ue_s1ap_id, GUTI_ARG(guti));
 //  unlock_ue_contexts(ue_context);
   OAILOG_FUNC_RETURN (LOG_NAS, RETURNok);
 }

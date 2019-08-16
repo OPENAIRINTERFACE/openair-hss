@@ -1596,8 +1596,8 @@ static int _emm_send_attach_accept (emm_data_context_t * emm_context)
     emm_sap.u.emm_as.u.establish.nas_info = EMM_AS_NAS_INFO_ATTACH;
 
     NO_REQUIREMENT_3GPP_24_301(R10_5_5_1_2_4__3);
-    if (ue_context->ue_radio_capability) {
-    	bdestroy_wrapper(&ue_context->ue_radio_capability);
+    if (ue_context->privates.fields.ue_radio_capability) {
+    	bdestroy_wrapper(&ue_context->privates.fields.ue_radio_capability);
     }
     //----------------------------------------
     REQUIREMENT_3GPP_24_301(R10_5_5_1_2_4__9);
@@ -1660,7 +1660,7 @@ static int _emm_send_attach_accept (emm_data_context_t * emm_context)
      */
     // Note: this is safe from double-free errors because it sets to NULL
     // after freeing, which free treats as a no-op.
-    bdestroy_wrapper(&ue_context->ue_radio_capability);
+    bdestroy_wrapper(&ue_context->privates.fields.ue_radio_capability);
 
     /*
      * Setup EPS NAS security data

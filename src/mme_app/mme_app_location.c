@@ -112,9 +112,9 @@ int mme_app_handle_s6a_update_location_ans (
   if (message_p == NULL) {
     goto err;
   }
-  mme_app_update_ue_subscription(ue_context->mme_ue_s1ap_id, subscription_data);
+  mme_app_update_ue_subscription(ue_context->privates.mme_ue_s1ap_id, subscription_data);
 
-  message_p->ittiMsg.nas_pdn_config_rsp.ue_id  = ue_context->mme_ue_s1ap_id;
+  message_p->ittiMsg.nas_pdn_config_rsp.ue_id  = ue_context->privates.mme_ue_s1ap_id;
   message_p->ittiMsg.nas_pdn_config_rsp.imsi64 = imsi64;
   imsi64_t imsi64_2 = imsi_to_imsi64(&emm_context->_imsi);
   memcpy(&message_p->ittiMsg.nas_pdn_config_rsp.imsi, &emm_context->_imsi, sizeof(imsi_t));
@@ -129,7 +129,7 @@ int mme_app_handle_s6a_update_location_ans (
 
 err:
   OAILOG_ERROR(LOG_MME_APP, "Error processing ULA for ueId " MME_UE_S1AP_ID_FMT ". Sending NAS_PDN_CONFIG_FAIL to NAS. (ULA.result.choice.base=%d)\n",
-      ue_context->mme_ue_s1ap_id, ula_pP->result.choice.base);
+      ue_context->privates.mme_ue_s1ap_id, ula_pP->result.choice.base);
   /** Send the S6a message. */
   message_p = itti_alloc_new_message (TASK_MME_APP, NAS_PDN_CONFIG_FAIL);
 
@@ -138,7 +138,7 @@ err:
   }
 
   itti_nas_pdn_config_fail_t *nas_pdn_config_fail = &message_p->ittiMsg.nas_pdn_config_fail;
-  nas_pdn_config_fail->ue_id  = ue_context->mme_ue_s1ap_id;
+  nas_pdn_config_fail->ue_id  = ue_context->privates.mme_ue_s1ap_id;
 
   /**
    * For error codes, use nas_pdn_cfg_fail.
@@ -205,12 +205,12 @@ mme_app_handle_s6a_cancel_location_req(
   }
 
   /** Perform an implicit detach via NAS layer.. We purge context ourself or purge the MME_APP context. NAS has to purge the EMM context and the MME_APP context. */
-  OAILOG_INFO (LOG_MME_APP, "Expired- Implicit Detach timer for UE id  %d \n", ue_context->mme_ue_s1ap_id);
-  ue_context->implicit_detach_timer.id = MME_APP_TIMER_INACTIVE_ID;
+  OAILOG_INFO (LOG_MME_APP, "Expired- Implicit Detach timer for UE id  %d \n", ue_context->privates.mme_ue_s1ap_id);
+  ue_context->privates.implicit_detach_timer.id = MME_APP_TIMER_INACTIVE_ID;
   // Initiate Implicit Detach for the UE
   message_p = itti_alloc_new_message (TASK_MME_APP, NAS_IMPLICIT_DETACH_UE_IND);
   DevAssert (message_p != NULL);
-  message_p->ittiMsg.nas_implicit_detach_ue_ind.ue_id = ue_context->mme_ue_s1ap_id;
+  message_p->ittiMsg.nas_implicit_detach_ue_ind.ue_id = ue_context->privates.mme_ue_s1ap_id;
   message_p->ittiMsg.nas_implicit_detach_ue_ind.clr   = true;
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_IMPLICIT_DETACH_UE_IND_MESSAGE");
   itti_send_msg_to_task (TASK_NAS_EMM, INSTANCE_DEFAULT, message_p);

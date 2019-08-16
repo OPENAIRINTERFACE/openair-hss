@@ -556,7 +556,7 @@ int emm_proc_authentication_failure (
        *  Ask for a new vector.
        */
       REQUIREMENT_3GPP_24_301(R10_5_4_2_4__3);
-      MSC_LOG_EVENT (MSC_NAS_EMM_MME, " SQN SYNCH_FAILURE ue id " MME_UE_S1AP_ID_FMT " ", ue_context->mme_ue_s1ap_id);
+      MSC_LOG_EVENT (MSC_NAS_EMM_MME, " SQN SYNCH_FAILURE ue id " MME_UE_S1AP_ID_FMT " ", ue_context->privates.mme_ue_s1ap_id);
 
       auth_proc->sync_fail_count += 1;
       if (EMM_AUTHENTICATION_SYNC_FAILURE_MAX > auth_proc->sync_fail_count) {

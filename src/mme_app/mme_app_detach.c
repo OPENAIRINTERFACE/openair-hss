@@ -88,44 +88,44 @@ mme_app_handle_detach_req (
    * todo: if it is an MME triggered implicit detach, the UE should be in EMM_DEREGISTER_INITIATED state --> from there determine if it is an implicit detach or not..
    * If it is concluded that it is an implicit detach --> perform paging, leave the state as it is in EMM_DEREGISTER_INITIATED
    */
-  if (ECM_IDLE == ue_context->ecm_state) {
+  if (ECM_IDLE == ue_context->privates.fields.ecm_state) {
     // todo: perform paging, if the UE is in EMM_DEREGISTER_INITIATED! state (MME triggered detach).
     // Notify S1AP to release S1AP UE context locally.
     OAILOG_DEBUG (LOG_MME_APP, "ECM context for UE with IMSI: " IMSI_64_FMT " and MME_UE_S1AP_ID : " MME_UE_S1AP_ID_FMT " (already idle). \n",
-         ue_context->imsi, ue_context->mme_ue_s1ap_id);
+         ue_context->privates.fields.imsi, ue_context->privates.mme_ue_s1ap_id);
     // Free MME UE Context
-    if(ue_context->s1_ue_context_release_cause != S1AP_INVALIDATE_NAS){
+    if(ue_context->privates.s1_ue_context_release_cause != S1AP_INVALIDATE_NAS){
       /** No context release complete is expected, so directly remove the UE context, too. */
-      mme_app_itti_ue_context_release (ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, S1AP_IMPLICIT_CONTEXT_RELEASE, ue_context->e_utran_cgi.cell_identity.enb_id); /**< Set the signaling connection to ECM_IDLE when the Context-Removal-Completion has arrived. */
+      mme_app_itti_ue_context_release (ue_context->privates.mme_ue_s1ap_id, ue_context->privates.fields.enb_ue_s1ap_id, S1AP_IMPLICIT_CONTEXT_RELEASE, ue_context->privates.fields.e_utran_cgi.cell_identity.enb_id); /**< Set the signaling connection to ECM_IDLE when the Context-Removal-Completion has arrived. */
       mme_remove_ue_context (&mme_app_desc.mme_ue_contexts, ue_context);
     }
     /** UE Context already released from source eNodeB. */
-    else if (ue_context->s1_ue_context_release_cause == S1AP_SUCCESSFUL_HANDOVER){ /**< Wait for a response. */
+    else if (ue_context->privates.s1_ue_context_release_cause == S1AP_SUCCESSFUL_HANDOVER){ /**< Wait for a response. */
       OAILOG_DEBUG (LOG_MME_APP, "UE context will be released and resources removed due HANDOVER for UE with IMSI: " IMSI_64_FMT " and MME_UE_S1AP_ID : %d. \n",
-          ue_context->imsi, ue_context->mme_ue_s1ap_id);
+          ue_context->privates.fields.imsi, ue_context->privates.mme_ue_s1ap_id);
       /** Remove the UE context. */
       mme_remove_ue_context (&mme_app_desc.mme_ue_contexts, ue_context);
     }
     else{
       OAILOG_DEBUG (LOG_MME_APP, "UE context will not be released for UE with IMSI: " IMSI_64_FMT " and MME_UE_S1AP_ID : %d (already idle). \n",
-           ue_context->imsi, ue_context->mme_ue_s1ap_id);
-      mme_app_itti_ue_context_release (ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, S1AP_IMPLICIT_CONTEXT_RELEASE, ue_context->e_utran_cgi.cell_identity.enb_id); /**< Set the signaling connection to ECM_IDLE when the Context-Removal-Completion has arrived. */
+           ue_context->privates.fields.imsi, ue_context->privates.mme_ue_s1ap_id);
+      mme_app_itti_ue_context_release (ue_context->privates.mme_ue_s1ap_id, ue_context->privates.fields.enb_ue_s1ap_id, S1AP_IMPLICIT_CONTEXT_RELEASE, ue_context->privates.fields.e_utran_cgi.cell_identity.enb_id); /**< Set the signaling connection to ECM_IDLE when the Context-Removal-Completion has arrived. */
       // todo: not released --> remove the handover procedure
-      ue_context->s1_ue_context_release_cause = S1AP_HANDOVER_CANCELLED;
+      ue_context->privates.s1_ue_context_release_cause = S1AP_HANDOVER_CANCELLED;
       mme_app_delete_s10_procedure_mme_handover(ue_context);
-      ue_context->s1_ue_context_release_cause = S1AP_INVALID_CAUSE;
+      ue_context->privates.s1_ue_context_release_cause = S1AP_INVALID_CAUSE;
 
     }
   } else {  /**< UE has an active context. Setting NAS_DETACH as S1AP cause and sending the context removal command! */
-    if (ue_context->s1_ue_context_release_cause == S1AP_INVALID_CAUSE) {
-      ue_context->s1_ue_context_release_cause = S1AP_NAS_DETACH;
+    if (ue_context->privates.s1_ue_context_release_cause == S1AP_INVALID_CAUSE) {
+      ue_context->privates.s1_ue_context_release_cause = S1AP_NAS_DETACH;
     }
     /**
      * Notify S1AP to send UE Context Release Command to eNB. Signaling connection will be set to idle after context completion complete.
      * This starts a timer to wait for the context removal completion. If timeout happens, the S1AP UE reference will be notified and the MMME_APP will be called.
      * If the S1AP context removal response does not arrive, the MME_APP UE context may already be removed. Not a problem for the MME_APP. The S1AP UE reference will be removed.
      */
-    mme_app_itti_ue_context_release (ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, ue_context->s1_ue_context_release_cause, ue_context->e_utran_cgi.cell_identity.enb_id);
+    mme_app_itti_ue_context_release (ue_context->privates.mme_ue_s1ap_id, ue_context->privates.fields.enb_ue_s1ap_id, ue_context->privates.s1_ue_context_release_cause, ue_context->privates.fields.e_utran_cgi.cell_identity.enb_id);
     /**
      * We may or may not expect a response from the eNodeB context removal depending on the set release cause, to remove the rest of the UE context and deregistrate the UE.
      * If the response does not arrive, the S1AP timeout will do the rest.
@@ -136,7 +136,7 @@ mme_app_handle_detach_req (
      *
      * Just continue without waiting for a response from the eNodeB for the S1AP context removal, if its a general shutdown.
      */
-    if (ue_context->s1_ue_context_release_cause == S1AP_SCTP_SHUTDOWN_OR_RESET) {
+    if (ue_context->privates.s1_ue_context_release_cause == S1AP_SCTP_SHUTDOWN_OR_RESET) {
       /**
        * Just cleanup the MME APP state associated with s1. Set the connection state to invalid.. Acting like the S1AP connection is already released.
        * This will also deregister the ENB_UE_S1AP_ID key from the registration of the MME_APP.
@@ -153,23 +153,23 @@ mme_app_handle_detach_req (
       // S1AP, nothing more to do. Free MME UE Context
       mme_remove_ue_context (&mme_app_desc.mme_ue_contexts, ue_context);
     }
-    else if (ue_context->s1_ue_context_release_cause == S1AP_SUCCESSFUL_HANDOVER){ /**< Wait for a response. */
+    else if (ue_context->privates.s1_ue_context_release_cause == S1AP_SUCCESSFUL_HANDOVER){ /**< Wait for a response. */
       OAILOG_DEBUG (LOG_MME_APP, "UE context will be released and resources removed due HANDOVER for UE with IMSI: " IMSI_64_FMT " and MME_UE_S1AP_ID : %d. \n",
-          ue_context->imsi, ue_context->mme_ue_s1ap_id);
+          ue_context->privates.fields.imsi, ue_context->privates.mme_ue_s1ap_id);
 
       mme_ue_context_update_ue_sig_connection_state (&mme_app_desc.mme_ue_contexts, ue_context, ECM_IDLE);
       /** Remove the UE context. */
       mme_remove_ue_context (&mme_app_desc.mme_ue_contexts, ue_context);
     }
-    else if (ue_context->s1_ue_context_release_cause == S1AP_INVALIDATE_NAS){ /**< Wait for a response. */
+    else if (ue_context->privates.s1_ue_context_release_cause == S1AP_INVALIDATE_NAS){ /**< Wait for a response. */
       OAILOG_DEBUG (LOG_MME_APP, "UE context will not be released since only NAS is invalidated for IMSI: " IMSI_64_FMT " and MME_UE_S1AP_ID : %d. \n",
-          ue_context->imsi, ue_context->mme_ue_s1ap_id);
+          ue_context->privates.fields.imsi, ue_context->privates.mme_ue_s1ap_id);
       mme_ue_context_update_ue_sig_connection_state (&mme_app_desc.mme_ue_contexts, ue_context, ECM_IDLE);
       // todo: manually release the mme_app_handover procedure // emm_cn_procedure?!
       // todo: not released --> remove the handover procedure
-      ue_context->s1_ue_context_release_cause = S1AP_HANDOVER_CANCELLED;
+      ue_context->privates.s1_ue_context_release_cause = S1AP_HANDOVER_CANCELLED;
       mme_app_delete_s10_procedure_mme_handover(ue_context);
-      ue_context->s1_ue_context_release_cause = S1AP_INVALID_CAUSE;
+      ue_context->privates.s1_ue_context_release_cause = S1AP_INVALID_CAUSE;
     }
   }
   OAILOG_FUNC_OUT (LOG_MME_APP);

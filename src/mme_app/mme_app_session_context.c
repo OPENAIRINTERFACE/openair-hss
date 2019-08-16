@@ -59,6 +59,7 @@
 /*******************  L O C A L    D E F I N I T I O N S  *******************/
 /****************************************************************************/
 static void clear_session_pool(ue_session_pool_t * ue_session_pool);
+static int mme_insert_ue_session_pool (mme_ue_session_pool_t * const mme_ue_session_pool_p, const struct ue_session_pool_s *const ue_session_pool);
 
 // todo: check the locks here
 //------------------------------------------------------------------------------
@@ -75,28 +76,28 @@ mme_ue_session_pool_update_coll_keys (
   OAILOG_FUNC_IN(LOG_MME_APP);
 
   OAILOG_TRACE (LOG_MME_APP, "Update ue_session_pool.mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " teid " TEID_FMT ". \n",
-      ue_session_pool->privates.fields.mme_ue_s1ap_id, ue_session_pool->privates.fields.mme_teid_s11);
+      ue_session_pool->privates.mme_ue_s1ap_id, ue_session_pool->privates.fields.mme_teid_s11);
 
-  AssertFatal((ue_session_pool->privates.fields.mme_ue_s1ap_id == mme_ue_s1ap_id)
+  AssertFatal((ue_session_pool->privates.mme_ue_s1ap_id == mme_ue_s1ap_id)
       && (INVALID_MME_UE_S1AP_ID != mme_ue_s1ap_id),
       "Mismatch in UE session pool mme_ue_s1ap_id "MME_UE_S1AP_ID_FMT"/"MME_UE_S1AP_ID_FMT"\n",
-      ue_session_pool->privates.fields.mme_ue_s1ap_id, mme_ue_s1ap_id);
+      ue_session_pool->privates.mme_ue_s1ap_id, mme_ue_s1ap_id);
 
-  if ((INVALID_MME_UE_S1AP_ID != mme_ue_s1ap_id) && (ue_session_pool->privates.fields.mme_ue_s1ap_id != mme_ue_s1ap_id)) {
+  if ((INVALID_MME_UE_S1AP_ID != mme_ue_s1ap_id) && (ue_session_pool->privates.mme_ue_s1ap_id != mme_ue_s1ap_id)) {
     // new insertion of mme_ue_s1ap_id, not a change in the id
-    h_rc = hashtable_ts_remove (mme_ue_session_pool_p->mme_ue_s1ap_id_ue_session_pool_htbl, (const hash_key_t)ue_session_pool->privates.fields.mme_ue_s1ap_id,  (void **)&ue_session_pool);
+    h_rc = hashtable_ts_remove (mme_ue_session_pool_p->mme_ue_s1ap_id_ue_session_pool_htbl, (const hash_key_t)ue_session_pool->privates.mme_ue_s1ap_id,  (void **)&ue_session_pool);
     h_rc = hashtable_ts_insert (mme_ue_session_pool_p->mme_ue_s1ap_id_ue_session_pool_htbl, (const hash_key_t)mme_ue_s1ap_id, (void *)ue_session_pool);
 
     if (HASH_TABLE_OK != h_rc) {
       OAILOG_ERROR (LOG_MME_APP,
           "Error could not update this ue session pool mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " %s\n",
-          ue_session_pool, ue_session_pool->privates.fields.mme_ue_s1ap_id, hashtable_rc_code2string(h_rc));
+          ue_session_pool, ue_session_pool->privates.mme_ue_s1ap_id, hashtable_rc_code2string(h_rc));
     }
-    ue_session_pool->privates.fields.mme_ue_s1ap_id = mme_ue_s1ap_id;
+    ue_session_pool->privates.mme_ue_s1ap_id = mme_ue_s1ap_id;
   }
   /** S11 Key. */
   if ((ue_session_pool->privates.fields.mme_teid_s11 != mme_teid_s11)
-		  || (ue_session_pool->privates.fields.mme_ue_s1ap_id != mme_ue_s1ap_id)) {
+		  || (ue_session_pool->privates.mme_ue_s1ap_id != mme_ue_s1ap_id)) {
 	  h_rc = hashtable_uint64_ts_remove (mme_ue_session_pool_p->tun11_ue_session_pool_htbl, (const hash_key_t)ue_session_pool->privates.fields.mme_teid_s11);
 	  if (INVALID_MME_UE_S1AP_ID != mme_ue_s1ap_id && INVALID_TEID != mme_teid_s11) {
 		  h_rc = hashtable_uint64_ts_insert (mme_ue_session_pool_p->tun11_ue_session_pool_htbl, (const hash_key_t)mme_teid_s11, (void *)(uintptr_t)mme_ue_s1ap_id);
@@ -107,7 +108,7 @@ mme_ue_session_pool_update_coll_keys (
     if (HASH_TABLE_OK != h_rc && INVALID_TEID != mme_teid_s11) {
       OAILOG_TRACE (LOG_MME_APP,
           "Error could not update this ue session pool %p mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " mme_s11_teid " TEID_FMT " : %s\n",
-          ue_session_pool, ue_session_pool->privates.fields.mme_ue_s1ap_id, mme_teid_s11, hashtable_rc_code2string(h_rc));
+          ue_session_pool, ue_session_pool->privates.mme_ue_s1ap_id, mme_teid_s11, hashtable_rc_code2string(h_rc));
     }
     ue_session_pool->privates.fields.mme_teid_s11 = mme_teid_s11;
   }
@@ -130,7 +131,7 @@ void mme_ue_session_pool_dump_coll_keys(void)
 }
 
 //------------------------------------------------------------------------------
-int
+static int
 mme_insert_ue_session_pool (
   mme_ue_session_pool_t * const mme_ue_session_pool_p,
   const struct ue_session_pool_s *const ue_session_pool)
@@ -141,22 +142,22 @@ mme_insert_ue_session_pool (
   DevAssert (mme_ue_session_pool_p );
   DevAssert (ue_session_pool );
 
-  if (INVALID_MME_UE_S1AP_ID != ue_session_pool->privates.fields.mme_ue_s1ap_id) {
-	  h_rc = hashtable_ts_is_key_exists (mme_ue_session_pool_p->mme_ue_s1ap_id_ue_session_pool_htbl, (const hash_key_t)ue_session_pool->privates.fields.mme_ue_s1ap_id);
+  if (INVALID_MME_UE_S1AP_ID != ue_session_pool->privates.mme_ue_s1ap_id) {
+	  h_rc = hashtable_ts_is_key_exists (mme_ue_session_pool_p->mme_ue_s1ap_id_ue_session_pool_htbl, (const hash_key_t)ue_session_pool->privates.mme_ue_s1ap_id);
 
 	  if (HASH_TABLE_OK == h_rc) {
         OAILOG_DEBUG (LOG_MME_APP, "This ue session pool %p already exists mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n",
-            ue_session_pool, ue_session_pool->privates.fields.mme_ue_s1ap_id);
+            ue_session_pool, ue_session_pool->privates.mme_ue_s1ap_id);
         OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
 	  }
 
       h_rc = hashtable_ts_insert (mme_ue_session_pool_p->mme_ue_s1ap_id_ue_session_pool_htbl,
-                                  (const hash_key_t)ue_session_pool->privates.fields.mme_ue_s1ap_id,
+                                  (const hash_key_t)ue_session_pool->privates.mme_ue_s1ap_id,
                                   (void *)ue_session_pool);
 
       if (HASH_TABLE_OK != h_rc) {
         OAILOG_DEBUG (LOG_MME_APP, "Error could not register this ue session pool %p mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n",
-            ue_session_pool, ue_session_pool->privates.fields.mme_ue_s1ap_id);
+            ue_session_pool, ue_session_pool->privates.mme_ue_s1ap_id);
         OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
       }
 
@@ -164,11 +165,11 @@ mme_insert_ue_session_pool (
       if (ue_session_pool->privates.fields.mme_teid_s11) {
         h_rc = hashtable_uint64_ts_insert (mme_ue_session_pool_p->tun11_ue_session_pool_htbl,
                                    (const hash_key_t)ue_session_pool->privates.fields.mme_teid_s11,
-                                   (void *)((uintptr_t)ue_session_pool->privates.fields.mme_ue_s1ap_id));
+                                   (void *)((uintptr_t)ue_session_pool->privates.mme_ue_s1ap_id));
 
         if (HASH_TABLE_OK != h_rc) {
           OAILOG_DEBUG (LOG_MME_APP, "Error could not register this ue session pool %p mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " mme_teid_s11 " TEID_FMT "\n",
-              ue_session_pool, ue_session_pool->privates.fields.mme_ue_s1ap_id, ue_session_pool->privates.fields.mme_teid_s11);
+              ue_session_pool, ue_session_pool->privates.mme_ue_s1ap_id, ue_session_pool->privates.fields.mme_teid_s11);
           OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
         }
       }
@@ -199,15 +200,15 @@ void mme_remove_ue_session_pool(
     hash_rc = hashtable_uint64_ts_remove (mme_ue_session_pool_p->tun11_ue_session_pool_htbl, (const hash_key_t)ue_session_pool->privates.fields.mme_teid_s11);
     if (HASH_TABLE_OK != hash_rc)
       OAILOG_DEBUG(LOG_MME_APP, "UE session_pool mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT ", MME TEID_S11 " TEID_FMT "  not in S11 collection. \n",
-          ue_session_pool->privates.fields.mme_ue_s1ap_id, ue_session_pool->privates.fields.mme_teid_s11);
+          ue_session_pool->privates.mme_ue_s1ap_id, ue_session_pool->privates.fields.mme_teid_s11);
   }
 
   // filled NAS UE ID/ MME UE S1AP ID
-  if (INVALID_MME_UE_S1AP_ID != ue_session_pool->privates.fields.mme_ue_s1ap_id) {
-    hash_rc = hashtable_ts_remove (mme_ue_session_pool_p->mme_ue_s1ap_id_ue_session_pool_htbl, (const hash_key_t)ue_session_pool->privates.fields.mme_ue_s1ap_id, (void **)&ue_session_pool);
+  if (INVALID_MME_UE_S1AP_ID != ue_session_pool->privates.mme_ue_s1ap_id) {
+    hash_rc = hashtable_ts_remove (mme_ue_session_pool_p->mme_ue_s1ap_id_ue_session_pool_htbl, (const hash_key_t)ue_session_pool->privates.mme_ue_s1ap_id, (void **)&ue_session_pool);
     if (HASH_TABLE_OK != hash_rc)
       OAILOG_DEBUG(LOG_MME_APP, "UE session_pool mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " not in MME UE S1AP ID collection",
-          ue_session_pool->privates.fields.mme_ue_s1ap_id);
+          ue_session_pool->privates.mme_ue_s1ap_id);
   }
   release_session_pool(&ue_session_pool);
   // todo: unlock?
@@ -228,25 +229,28 @@ ue_session_pool_t * get_new_session_pool(mme_ue_s1ap_id_t ue_id) {
 	// todo: lock the mme_desc
 
 	/** Check the first element in the list. If it is not empty, reject. */
-	ue_session_pool_t * free_sp = STAILQ_FIRST(&mme_app_desc.mme_ue_session_pool_lists);
-	DevAssert(free_sp); /**< todo: with locks, it should be guaranteed, that this should exist. */
-	if(free_sp->privates.fields.mme_ue_s1ap_id){
+	ue_session_pool_t * ue_session_pool = STAILQ_FIRST(&mme_app_desc.mme_ue_session_pools_list);
+	DevAssert(ue_session_pool); /**< todo: with locks, it should be guaranteed, that this should exist. */
+	if(ue_session_pool->privates.mme_ue_s1ap_id != INVALID_MME_UE_S1AP_ID){
 		OAILOG_ERROR(LOG_MME_APP, "No free ue session pool left. Cannot allocate a new one.\n");
 		OAILOG_FUNC_RETURN (LOG_MME_APP, NULL);
 	}
 	/** Found a free pool: Remove it from the head, add the ue_id and set it to the end. */
-	STAILQ_REMOVE_HEAD(&mme_app_desc.mme_ue_session_pool_lists, entries); /**< free_sp is removed. */
+	STAILQ_REMOVE_HEAD(&mme_app_desc.mme_ue_session_pools_list, entries); /**< free_sp is removed. */
 
 	/** Initialize the bearers in the pool. */
 	/** Remove the EMS-EBR context of the bearer-context. */
-	OAILOG_INFO(LOG_MME_APP, "EMMCN-SAP  - " "Clearing received current sp %p.\n", free_sp);
-	clear_session_pool(free_sp);
-	free_sp->privates.fields.mme_ue_s1ap_id = ue_id;
+	OAILOG_INFO(LOG_MME_APP, "EMMCN-SAP  - " "Clearing received current sp %p.\n", ue_session_pool);
+	clear_session_pool(ue_session_pool);
+	ue_session_pool->privates.mme_ue_s1ap_id = ue_id;
 	/** Add it to the back of the list. */
-	STAILQ_INSERT_TAIL(&mme_app_desc.mme_ue_session_pool_lists, free_sp, entries);
+	STAILQ_INSERT_TAIL(&mme_app_desc.mme_ue_session_pools_list, ue_session_pool, entries);
+
+	DevAssert (mme_insert_ue_session_pool(&mme_app_desc.mme_ue_session_pools, ue_session_pool) == 0);
+
 	// todo: unlock!
 
-	OAILOG_FUNC_RETURN (LOG_MME_APP, free_sp);
+	OAILOG_FUNC_RETURN (LOG_MME_APP, ue_session_pool);
 }
 
 //------------------------------------------------------------------------------
@@ -255,18 +259,14 @@ void release_session_pool(ue_session_pool_t ** ue_session_pool) {
 
 	/** Clear the UE session pool. */
 	OAILOG_INFO(LOG_MME_APP, "EMMCN-SAP  - " "Releasing session pool %p of UE " MME_UE_S1AP_ID_FMT".\n",
-			*ue_session_pool, (*ue_session_pool)->privates.fields.mme_ue_s1ap_id);
-
+			*ue_session_pool, (*ue_session_pool)->privates.mme_ue_s1ap_id);
 
 	// todo: lock the mme_desc (ue_context should already be locked)
 	/** Remove the ue_session pool from the list (probably at the back - must not be at the very end. */
-	STAILQ_REMOVE(&mme_app_desc.mme_ue_session_pool_lists, (*ue_session_pool), ue_session_pool_s, entries);
-
+	STAILQ_REMOVE(&mme_app_desc.mme_ue_session_pools_list, (*ue_session_pool), ue_session_pool_s, entries);
 	clear_session_pool(*ue_session_pool);
-	/** Set the current free one as the last received one. */
-
 	/** Put it into the head. */
-	STAILQ_INSERT_HEAD(&mme_app_desc.mme_ue_session_pool_lists, (*ue_session_pool), entries);
+	STAILQ_INSERT_HEAD(&mme_app_desc.mme_ue_session_pools_list, (*ue_session_pool), entries);
 	*ue_session_pool = NULL;
 	// todo: unlock the mme_desc
 }
@@ -599,8 +599,8 @@ mme_ue_session_pool_exists_mme_ue_s1ap_id (
   if (ue_session_pool) {
 //    lock_ue_contexts(ue_context);
 //    OAILOG_TRACE (LOG_MME_APP, "UE  " MME_UE_S1AP_ID_FMT " fetched MM state %s, ECM state %s\n ",mme_ue_s1ap_id,
-//        (ue_context->mm_state == UE_UNREGISTERED) ? "UE_UNREGISTERED":(ue_context->mm_state == UE_REGISTERED) ? "UE_REGISTERED":"UNKNOWN",
-//        (ue_context->ecm_state == ECM_IDLE) ? "ECM_IDLE":(ue_context->ecm_state == ECM_CONNECTED) ? "ECM_CONNECTED":"UNKNOWN");
+//        (ue_context->privates.fields.mm_state == UE_UNREGISTERED) ? "UE_UNREGISTERED":(ue_context->privates.fields.mm_state == UE_REGISTERED) ? "UE_REGISTERED":"UNKNOWN",
+//        (ue_context->privates.fields.ecm_state == ECM_IDLE) ? "ECM_IDLE":(ue_context->privates.fields.ecm_state == ECM_CONNECTED) ? "ECM_CONNECTED":"UNKNOWN");
   }
   return ue_session_pool;
 }
@@ -628,7 +628,9 @@ mme_ue_session_pool_exists_s11_teid (
 
 //------------------------------------------------------------------------------
 static void clear_session_pool(ue_session_pool_t * ue_session_pool) {
-	mme_ue_s1ap_id_t ue_id = ue_session_pool->privates.fields.mme_ue_s1ap_id;
+	mme_ue_s1ap_id_t ue_id = ue_session_pool->privates.mme_ue_s1ap_id;
+	ue_session_pool->privates.mme_ue_s1ap_id = INVALID_MME_UE_S1AP_ID;
+
 	OAILOG_INFO(LOG_MME_APP, "Clearing UE session pool of UE "MME_UE_S1AP_ID_FMT ". \n", ue_id);
 	/** Release the procedures. */
 	mme_app_delete_s11_procedures(ue_session_pool);
@@ -663,10 +665,11 @@ static void clear_session_pool(ue_session_pool_t * ue_session_pool) {
 
 	/** Initialize the PDN contexts. */
 	for(int num_pdn = 0; num_pdn < MAX_APN_PER_UE; num_pdn++) {
-		memset(&ue_session_pool->privates.fields.pdn_ue[num_pdn], 0, sizeof(pdn_context_t)); /**< Sets the SM status to ESM_STATUS_INVALID. */
+		memset(&ue_session_pool->privates.pdn_ue[num_pdn], 0, sizeof(pdn_context_t)); /**< Sets the SM status to ESM_STATUS_INVALID. */
 		/** Insert the list into the empty list. */
-		STAILQ_INSERT_TAIL(&ue_session_pool->free_pdn_contexts, &ue_session_pool->privates.fields.pdn_ue[num_pdn], entries);
+		STAILQ_INSERT_TAIL(&ue_session_pool->free_pdn_contexts, &ue_session_pool->privates.pdn_ue[num_pdn], entries);
 	}
+
 	/** Initialize the RB_MAP. */
 	RB_INIT(&ue_session_pool->pdn_contexts);
 	/** Re-initialize the empty list: it should not point to a next free variable: determined when it is put back into the list (like LIST_INIT). */

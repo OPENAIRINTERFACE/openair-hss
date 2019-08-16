@@ -66,10 +66,10 @@ void clear_bearer_context(ue_session_pool_t * ue_session_pool, bearer_context_ne
 	bc->esm_ebr_context.status   = ESM_EBR_INACTIVE;
 	if(bc->esm_ebr_context.tft){
 	    OAILOG_INFO(LOG_MME_APP, "FREEING TFT %p of bearer with ebi %d for UE: " MME_UE_S1AP_ID_FMT ".\n",
-	    		bc->esm_ebr_context.tft, bc->ebi, ue_session_pool->privates.fields.mme_ue_s1ap_id);
+	    		bc->esm_ebr_context.tft, bc->ebi, ue_session_pool->privates.mme_ue_s1ap_id);
 	    free_traffic_flow_template(&bc->esm_ebr_context.tft);
 	    OAILOG_INFO(LOG_MME_APP, "AFTER FREEING TFT %p of bearer with ebi %d for UE: " MME_UE_S1AP_ID_FMT ".\n",
-	   	    		bc->esm_ebr_context.tft, bc->ebi, ue_session_pool->privates.fields.mme_ue_s1ap_id);
+	   	    		bc->esm_ebr_context.tft, bc->ebi, ue_session_pool->privates.mme_ue_s1ap_id);
 	}
 	// todo: check pco
 	//  if(bearer_context->esm_ebr_context.pco){
@@ -255,7 +255,7 @@ mme_app_register_dedicated_bearer_context(const mme_ue_s1ap_id_t ue_id, const es
   bc_tbc->tft = NULL;
   memcpy((void*)&pBearerCtx->bearer_level_qos, &bc_tbc->bearer_level_qos, sizeof(bearer_qos_t));
   /* Insert the bearer context into the session list. */
-  STAILQ_INSERT_HEAD(&pdn_context->session_bearers, pBearerCtx, entries);
+  STAILQ_INSERT_TAIL(&pdn_context->session_bearers, pBearerCtx, entries);
   /** No dedicated bearer level PCO supported. */
   bc_tbc->eps_bearer_id = pBearerCtx->ebi;
 
@@ -407,8 +407,8 @@ mme_app_release_bearers(const mme_ue_s1ap_id_t mme_ue_s1ap_id, e_rab_list_t * e_
     /** Traverse all lists. */
 	pdn_context_t     	  * pdn_context = NULL, * pdn_context_safe = NULL;
     RB_FOREACH_SAFE(pdn_context, PdnContexts, &ue_session_pool->pdn_contexts, pdn_context_safe) { /**< Use the safe iterator. */
-    	bearer_context_new_t *bc_new = NULL, *bc_new_safe = NULL;
-		STAILQ_FOREACH(bc_new, &pdn_context->session_bearers, entries) {
+    	bearer_context_new_t *bearer_context = NULL;
+		STAILQ_FOREACH(bearer_context, &pdn_context->session_bearers, entries) {
 			// todo: better error handling
 			if( (bearer_context->bearer_state & BEARER_STATE_ACTIVE)
 					&& (bearer_context->bearer_state & BEARER_STATE_ENB_CREATED)) {
@@ -538,7 +538,7 @@ mme_app_esm_modify_bearer_context(mme_ue_s1ap_id_t ue_id, const ebi_t ebi, ebi_l
   if(bearer_level_qos){
     if(validateEpsQosParameter(bearer_level_qos->qci, bearer_level_qos->pvi, bearer_level_qos->pci, bearer_level_qos->pl,
         bearer_level_qos->gbr.br_dl, bearer_level_qos->gbr.br_ul, bearer_level_qos->mbr.br_dl, bearer_level_qos->mbr.br_ul) == RETURNerror){
-      OAILOG_ERROR(LOG_MME_APP, "EMMCN-SAP  - " "EPS bearer context of UBR received for UE " MME_UE_S1AP_ID_FMT" could not be verified due erroneous EPS QoS.\n", ue_session_pool->privates.fields.mme_ue_s1ap_id);
+      OAILOG_ERROR(LOG_MME_APP, "EMMCN-SAP  - " "EPS bearer context of UBR received for UE " MME_UE_S1AP_ID_FMT" could not be verified due erroneous EPS QoS.\n", ue_session_pool->privates.mme_ue_s1ap_id);
       OAILOG_FUNC_RETURN (LOG_MME_APP, ESM_CAUSE_EPS_QOS_NOT_ACCEPTED);
     }
   }
@@ -601,7 +601,7 @@ mme_app_finalize_bearer_context(mme_ue_s1ap_id_t ue_id, const pdn_cid_t pdn_cid,
   }
 
   if(pdn_cid != PDN_CONTEXT_IDENTIFIER_UNASSIGNED){
-    mme_app_get_pdn_context(ue_session_pool->privates.fields.mme_ue_s1ap_id, pdn_cid, linked_ebi, NULL, &pdn_context);
+    mme_app_get_pdn_context(ue_session_pool->privates.mme_ue_s1ap_id, pdn_cid, linked_ebi, NULL, &pdn_context);
     if(!pdn_context){
       OAILOG_ERROR (LOG_MME_APP, "No PDN context for UE: " MME_UE_S1AP_ID_FMT " could be found (cid=%d,ebi=%d) to create a new dedicated bearer context. \n", ue_id, pdn_cid, linked_ebi);
       OAILOG_FUNC_RETURN (LOG_MME_APP, ESM_CAUSE_UNKNOWN_ACCESS_POINT_NAME);
