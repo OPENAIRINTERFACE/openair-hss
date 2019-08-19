@@ -309,20 +309,23 @@ mme_app_pdn_process_session_creation(mme_ue_s1ap_id_t ue_id, imsi64_t imsi, mm_s
 
   OAILOG_FUNC_IN(LOG_MME_APP);
 
-  pdn_context_t    		 * pdn_context = NULL;
+  pdn_context_t    		 * pdn_context1 = NULL, * pdn_context = NULL;
   ue_session_pool_t      * ue_session_pool = mme_ue_session_pool_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_session_pools, ue_id);
   if(!ue_session_pool) {
     OAILOG_WARNING(LOG_MME_APP, "No MME_APP UE session pool could be found for UE: " MME_UE_S1AP_ID_FMT " to process CSResp. \n", ue_id);
     OAILOG_FUNC_RETURN(LOG_MME_APP, RETURNerror);
   }
   /** Get the first unestablished PDN context from the UE context. */
-  RB_FOREACH (pdn_context, PdnContexts, &ue_session_pool->pdn_contexts) {
+  RB_FOREACH (pdn_context1, PdnContexts, &ue_session_pool->pdn_contexts) {
 	for(int num_ebi = 0; num_ebi < bcs_created->num_bearer_context; num_ebi++){
-	    if(pdn_context->default_ebi == bcs_created->bearer_contexts[num_ebi].eps_bearer_id){
+	    if(pdn_context1->default_ebi == bcs_created->bearer_contexts[num_ebi].eps_bearer_id){
 	      /** Found. */
+	      pdn_context = pdn_context1;
 	      break;
 	    }
 	}
+	if(pdn_context)
+		break;
   }
   if(!pdn_context){
     OAILOG_WARNING(LOG_MME_APP, "No unestablished PDN context could be found for UE: " MME_UE_S1AP_ID_FMT ". \n", ue_id);
