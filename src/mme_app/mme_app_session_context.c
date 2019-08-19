@@ -317,10 +317,12 @@ mme_app_pdn_process_session_creation(mme_ue_s1ap_id_t ue_id, imsi64_t imsi, mm_s
   }
   /** Get the first unestablished PDN context from the UE context. */
   RB_FOREACH (pdn_context, PdnContexts, &ue_session_pool->pdn_contexts) {
-    if(pdn_context->default_ebi == default_ebi){
-      /** Found. */
-      break;
-    }
+	for(int num_ebi = 0; num_ebi < bcs_created->num_bearer_context; num_ebi++){
+	    if(pdn_context->default_ebi == bcs_created->bearer_contexts[num_ebi].eps_bearer_id){
+	      /** Found. */
+	      break;
+	    }
+	}
   }
   if(!pdn_context){
     OAILOG_WARNING(LOG_MME_APP, "No unestablished PDN context could be found for UE: " MME_UE_S1AP_ID_FMT ". \n", ue_id);
