@@ -3214,7 +3214,7 @@ mme_app_handle_s1ap_handover_required(
 
   /** Allocate and set the PDN_CONNECTIONS IE (for all bearers incl. all TFTs). */
   forward_relocation_request_p->pdn_connections = calloc(1, sizeof(struct mme_ue_eps_pdn_connections_s));
-  mme_app_set_pdn_connections(forward_relocation_request_p->pdn_connections, ue_context);
+  mme_app_set_pdn_connections(forward_relocation_request_p->pdn_connections, ue_session_pool);
 
   /** Set the MM_UE_EPS_CONTEXT. */
   forward_relocation_request_p->ue_eps_mm_context = calloc(1, sizeof(mm_context_eps_t));

@@ -2845,11 +2845,6 @@ static void clear_ue_context(ue_context_t * ue_context) {
 
 	DevAssert(ue_context != NULL);
 
-	mme_ue_s1ap_id_t ue_id = ue_context->privates.mme_ue_s1ap_id;
-	OAILOG_INFO(LOG_MME_APP, "Clearing UE context of UE "MME_UE_S1AP_ID_FMT ". \n", ue_id);
-	ue_context->privates.mme_ue_s1ap_id = INVALID_MME_UE_S1AP_ID;
-	ue_context->privates.enb_s1ap_id_key = INVALID_ENB_UE_S1AP_ID_KEY;
-
 	// todo: lock UE context
 	bdestroy_wrapper (&ue_context->privates.fields.msisdn);
 	bdestroy_wrapper (&ue_context->privates.fields.ue_radio_capability);
@@ -2897,6 +2892,12 @@ static void clear_ue_context(ue_context_t * ue_context) {
 	if (ue_context->s10_procedures) {
 		mme_app_delete_s10_procedure_mme_handover(ue_context); // todo: generic s10 function
 	}
+
+	mme_ue_s1ap_id_t ue_id = ue_context->privates.mme_ue_s1ap_id;
+	OAILOG_INFO(LOG_MME_APP, "Clearing UE context of UE "MME_UE_S1AP_ID_FMT ". \n", ue_id);
+	ue_context->privates.mme_ue_s1ap_id = INVALID_MME_UE_S1AP_ID;
+	ue_context->privates.enb_s1ap_id_key = INVALID_ENB_UE_S1AP_ID_KEY;
+
 	//  new_p->mme_s10_handover_completion_timer.id = MME_APP_TIMER_INACTIVE_ID;
 	//  new_p->mme_mobility_completion_timer.id = MME_APP_TIMER_INACTIVE_ID;
 	//  new_p->ue_radio_cap_length = 0;
