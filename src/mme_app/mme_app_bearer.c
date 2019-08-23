@@ -1576,17 +1576,6 @@ mme_app_handle_s11_create_bearer_req (
     }
   }
 
-  /** Check if a s10 handover procedure exists. If it already has pending qos, reject the request. */
-//  mme_app_s10_proc_mme_handover_t * s10_proc_handover = mme_app_get_s10_procedure_mme_handover(ue_context);
-//  if(s10_proc_handover){
-//	  if(s10_proc_handover->pending_qos){
-//		  // todo: multi apn
-//		  OAILOG_ERROR(LOG_MME_APP, "A pending QoS procedure for the handovered UE " MME_UE_S1AP_ID_FMT" already exists, rejecting a second one. \n", ue_session_pool->privates.mme_ue_s1ap_id);
-//		  mme_app_send_s11_create_bearer_rsp(ue_context->privates.fields.mme_teid_s11, ue_context->privates.fields.saegw_teid_s11, TEMP_REJECT_HO_IN_PROGRESS, (uintptr_t)create_bearer_request_pP->trxn, create_bearer_request_pP->bearer_contexts);
-//		  OAILOG_FUNC_OUT (LOG_MME_APP);
-//	  }
-//  }
-
   /** Create an S11 procedure. */
   mme_app_s11_proc_create_bearer_t* s11_proc_create_bearer = mme_app_create_s11_procedure_create_bearer(ue_session_pool);
   if(!s11_proc_create_bearer){
@@ -1605,22 +1594,6 @@ mme_app_handle_s11_create_bearer_req (
   s11_proc_create_bearer->bcs_tbc               = create_bearer_request_pP->bearer_contexts;
   create_bearer_request_pP->bearer_contexts	    = NULL;
 
-//  // todo: handle this after the esm processing
-//  if(s10_proc_handover){
-//	  OAILOG_WARNING(LOG_MME_APP, "A handover procedure exists for the UE " MME_UE_S1AP_ID_FMT". "
-//			  "Waiting for it to complete to continue with the s11 procedure. \n", ue_session_pool->privates.mme_ue_s1ap_id);
-//	  s10_proc_handover->pending_qos = true;
-//	  OAILOG_FUNC_OUT (LOG_MME_APP);
-//  } else if(emm_context->_emm_fsm_state != EMM_REGISTERED) {
-//	  /** Check for Idle Tau procedure. */
-//	  nas_emm_tau_proc_t * nas_proc_tau = get_nas_specific_procedure_tau(emm_context);
-//	  if(nas_proc_tau){
-//		  OAILOG_WARNING(LOG_MME_APP, "A TAU procedure still exists for the UE " MME_UE_S1AP_ID_FMT". "
-//		  			  "Waiting for it to complete to continue with the s11 procedure. \n",ue_session_pool->privates.mme_ue_s1ap_id);
-//		  nas_proc_tau->pending_qos = true; /**< No timer on the procedure is necessary. */ //
-//		  OAILOG_FUNC_OUT (LOG_MME_APP);
-//	  }
-//  }
   /**
    * Wait until the MBR of the default bearers has been accomplished.
    * The PDN contexts should exist already.
@@ -1628,7 +1601,6 @@ mme_app_handle_s11_create_bearer_req (
   pdn_context_t * registered_pdn_ctx = NULL;
   RB_FOREACH (registered_pdn_ctx, PdnContexts, &ue_session_pool->pdn_contexts) {
 	  DevAssert(registered_pdn_ctx);
-// 		  if(registered_pdn_ctx->session_bearers)
 	  /** The number of bearers will be incremented in the method. S10 should just pick the ebi. */
 	  bearer_context_new_t * bc_session = mme_app_get_session_bearer_context(registered_pdn_ctx, registered_pdn_ctx->default_ebi);
 	  if(!(bc_session->bearer_state & BEARER_STATE_ACTIVE)) {
@@ -1684,12 +1656,6 @@ mme_app_handle_s11_update_bearer_req (
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
 
-//  emm_context = emm_data_context_get(&_emm_data, ue_session_pool->privates.mme_ue_s1ap_id);
-//  if (emm_context == NULL) {
-//    OAILOG_ERROR (LOG_MME_APP, "No EMM context for UE " MME_UE_S1AP_ID_FMT " could be found. Disregarding UBReq. \n", ue_session_pool->privates.mme_ue_s1ap_id);
-//    OAILOG_FUNC_OUT (LOG_MME_APP);
-//  }
-
   ebi_t linked_ebi = 0;
   pdn_cid_t cid = 0;
   /** No default EBI will be sent. Need to check all dedicated EBIs. */
@@ -1726,16 +1692,6 @@ mme_app_handle_s11_update_bearer_req (
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
 
-//  /** Check if a s10 handover procedure exists. If it already has pending qos, reject the request. */
-//  mme_app_s10_proc_mme_handover_t * s10_proc_handover = mme_app_get_s10_procedure_mme_handover(ue_context);
-//  if(s10_proc_handover){
-//	  if(s10_proc_handover->pending_qos){
-//		  OAILOG_ERROR(LOG_MME_APP, "A pending QoS procedure for the handovered UE " MME_UE_S1AP_ID_FMT" already exists, rejecting a second one. \n", ue_context->privates.mme_ue_s1ap_id);
-//		  mme_app_send_s11_update_bearer_rsp(update_bearer_request_pP->teid, ue_context->privates.fields.saegw_teid_s11, TEMP_REJECT_HO_IN_PROGRESS, (uintptr_t)update_bearer_request_pP->trxn, update_bearer_request_pP->bearer_contexts);
-//		  OAILOG_FUNC_OUT (LOG_MME_APP);
-//	  }
-//  }
-
   /** Create an S11 procedure for the UBR. */
   mme_app_s11_proc_update_bearer_t* s11_proc_update_bearer = mme_app_create_s11_procedure_update_bearer(ue_session_pool);
   if(!s11_proc_update_bearer){
@@ -1755,30 +1711,7 @@ mme_app_handle_s11_update_bearer_req (
   s11_proc_update_bearer->linked_ebi            = linked_ebi;
   update_bearer_request_pP->bearer_contexts     = NULL;
 
-//  // todo: PCOs
-//  /*
-//   * Let the ESM layer validate the request and build the pending bearer contexts.
-//   * Also, send a single message to the eNB.
-//   * May received multiple back.
-//   *
-//   * Check if a handover procedure exists, if so delay the request.
-//   */
-//  if(s10_proc_handover){
-//	    OAILOG_WARNING(LOG_MME_APP, "A handover procedure exists for the UE " MME_UE_S1AP_ID_FMT". "
-//	    		"Waiting for it to complete to continue with the s11 procedure. \n", ue_session_pool->privates.mme_ue_s1ap_id);
-//	    s10_proc_handover->pending_qos = true;
-//	    OAILOG_FUNC_OUT (LOG_MME_APP);
-//  } else if(emm_context->_emm_fsm_state != EMM_REGISTERED) {
-//	  /** Check for Idle Tau procedure. */
-//	  nas_emm_tau_proc_t * nas_proc_tau = get_nas_specific_procedure_tau(emm_context);
-//	  if(nas_proc_tau){
-//		  OAILOG_WARNING(LOG_MME_APP, "A TAU procedure still exists for the UE " MME_UE_S1AP_ID_FMT". "
-//		  			  "Waiting for it to complete to continue with the s11 procedure. \n", ue_session_pool->privates.mme_ue_s1ap_id);
-//		  nas_proc_tau->pending_qos = true;
-//		  OAILOG_FUNC_OUT (LOG_MME_APP);
-//	  }
-//  }
-
+  // todo: PCOs
   /**
    * Wait until the MBR of the default bearers has been accomplished.
    * The PDN contexts should exist already.
@@ -1786,7 +1719,6 @@ mme_app_handle_s11_update_bearer_req (
   pdn_context_t * registered_pdn_ctx = NULL;
   RB_FOREACH (registered_pdn_ctx, PdnContexts, &ue_session_pool->pdn_contexts) {
 	  DevAssert(registered_pdn_ctx);
-// 		  if(registered_pdn_ctx->session_bearers)
 	  /** The number of bearers will be incremented in the method. S10 should just pick the ebi. */
 	  bearer_context_new_t * bc_session = mme_app_get_session_bearer_context(registered_pdn_ctx, registered_pdn_ctx->default_ebi);
 	  if(!(bc_session->bearer_state & BEARER_STATE_ACTIVE)) {
@@ -1843,16 +1775,6 @@ mme_app_handle_s11_delete_bearer_req (
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
 
-//  /** Check if a s10 handover procedure exists. If it already has pending qos, reject the request. */
-//  mme_app_s10_proc_mme_handover_t * s10_proc_handover = mme_app_get_s10_procedure_mme_handover(ue_context);
-//  if(s10_proc_handover){
-//	  if(s10_proc_handover->pending_qos){
-//		  OAILOG_ERROR(LOG_MME_APP, "A pending QoS procedure for the handovered UE " MME_UE_S1AP_ID_FMT" already exists, rejecting a second one. \n", ue_context->privates.mme_ue_s1ap_id);
-//		  mme_app_send_s11_delete_bearer_rsp(ue_context->privates.fields.mme_teid_s11, ue_context->privates.fields.saegw_teid_s11, REQUEST_REJECTED, (uintptr_t)delete_bearer_request_pP->trxn, &delete_bearer_request_pP->ebi_list);
-//		  OAILOG_FUNC_OUT (LOG_MME_APP);
-//	  }
-//  }
-
   /** Create an S11 procedure. */
   mme_app_s11_proc_delete_bearer_t* s11_proc_delete_bearer = mme_app_create_s11_procedure_delete_bearer(ue_context);
   if(!s11_proc_delete_bearer){
@@ -1875,23 +1797,6 @@ mme_app_handle_s11_delete_bearer_req (
 //  memcpy(&s11_proc_delete_bearer->bcs_failed, &delete_bearer_request_pP->to_be_removed_bearer_contexts, sizeof(delete_bearer_request_pP->to_be_removed_bearer_contexts));
 
   // todo: PCOs
-
-//  if(s10_proc_handover){
-//	  OAILOG_WARNING(LOG_MME_APP, "A handover procedure exists for the UE " MME_UE_S1AP_ID_FMT". "
-//			  "Waiting for it to complete to continue with the s11 procedure. \n",ue_context->privates.mme_ue_s1ap_id);
-//	  /** Set the procedure as a pending procedure. */
-//	  s10_proc_handover->pending_qos = true;
-//	  OAILOG_FUNC_OUT (LOG_MME_APP);
-//  } else if(ue_context->privates.fields.mm_state != UE_REGISTERED) {
-//	  /** Check for Idle Tau procedure. */
-//	  nas_emm_tau_proc_t * nas_proc_tau = get_nas_specific_procedure_tau(emm_context);
-//	  if(nas_proc_tau){
-//		  OAILOG_WARNING(LOG_MME_APP, "A TAU procedure still exists for the UE " MME_UE_S1AP_ID_FMT". "
-//		  			  "Waiting for it to complete to continue with the s11 procedure. \n",ue_context->privates.mme_ue_s1ap_id);
-//		  nas_proc_tau->pending_qos = true;
-//		  OAILOG_FUNC_OUT (LOG_MME_APP);
-//	  }
-//  }
   /**
    * Wait until the MBR of the default bearers has been accomplished.
    * The PDN contexts should exist already.
@@ -1899,7 +1804,6 @@ mme_app_handle_s11_delete_bearer_req (
   pdn_context_t * registered_pdn_ctx = NULL;
   RB_FOREACH (registered_pdn_ctx, PdnContexts, &ue_session_pool->pdn_contexts) {
 	  DevAssert(registered_pdn_ctx);
-// 		  if(registered_pdn_ctx->session_bearers)
 	  /** The number of bearers will be incremented in the method. S10 should just pick the ebi. */
 	  bearer_context_new_t * bc_session = mme_app_get_session_bearer_context(registered_pdn_ctx, registered_pdn_ctx->default_ebi);
 	  if(!(bc_session->bearer_state & BEARER_STATE_ACTIVE)) {
