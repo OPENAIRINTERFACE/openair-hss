@@ -213,8 +213,6 @@ typedef struct ue_context_s {
 		  teid_t                      mme_teid_s11;                	// set by mme_app_send_s11_create_session_req
 		  teid_t                      saegw_teid_s11;                // set by mme_app_send_s11_create_session_req
 
-		  // Subscribed UE-AMBR: The Maximum Aggregated uplink and downlink MBR values to be shared across all Non-GBR bearers according to the subscription of the user. The used UE-AMBR will be calculated.
-		  ambr_t                 subscribed_ue_ambr;
 		  // EPS Subscribed Charging Characteristics: The charging characteristics for the MS e.g. normal, prepaid, flat rate and/or hot billing.
 		  // Subscribed RFSP Index: An index to specific RRM configuration in the E-UTRAN that is received from the HSS.
 		  // RFSP Index in Use: An index to specific RRM configuration in the E-UTRAN that is currently in use.

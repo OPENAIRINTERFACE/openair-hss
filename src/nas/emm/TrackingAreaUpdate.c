@@ -210,6 +210,7 @@ int emm_proc_tracking_area_update_request (
     /** Check the validity of the existing EMM context It may or may not have another MME_APP UE context. */
     mme_ue_s1ap_id_t old_mme_ue_id = (*duplicate_emm_ue_ctx_pP)->ue_id;
     rc = emm_proc_tracking_area_update_request_validity((*duplicate_emm_ue_ctx_pP), ue_id, ies);
+    (*duplicate_emm_ue_ctx_pP) = emm_data_context_get(&_emm_data, old_mme_ue_id);
     /** Check if the old emm_ctx is still existing. */
     if(rc != RETURNok){
       /** Not continuing with the Attach-Request (it might be rejected, a previous attach accept might have been resent or just ignored). */
@@ -574,7 +575,7 @@ int emm_proc_tracking_area_update_request_validity(emm_data_context_t * emm_cont
       MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMREG_PROC_ABORT (AUTH) ue id " MME_UE_S1AP_ID_FMT " ", emm_context->mme_ue_s1ap_id);
       rc = emm_sap_send (&emm_sap);
       /** Keep all the states, context, bearers and other common and specific procedures, just stopping the timer and deallocating the common procedure. */
-      DevAssert(rc == RETURNok);
+      OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
     }
   }
   /*

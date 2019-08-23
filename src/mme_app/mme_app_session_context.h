@@ -231,6 +231,8 @@ typedef struct ue_session_pool_s {
 			teid_t					mme_teid_s11;
 			teid_t					saegw_teid_s11;
 			int 					num_pdn_contexts;
+			// Subscribed UE-AMBR: The Maximum Aggregated uplink and downlink MBR values to be shared across all Non-GBR bearers according to the subscription of the user. The used UE-AMBR will be calculated.
+			ambr_t                 subscribed_ue_ambr;
 			/** ESM Procedures : can be initialized together with the remaining fields. */
 			struct esm_procedures_s {
 				LIST_HEAD(esm_pdn_connectivity_procedures_s, nas_esm_proc_pdn_connectivity_s) *pdn_connectivity_procedures;

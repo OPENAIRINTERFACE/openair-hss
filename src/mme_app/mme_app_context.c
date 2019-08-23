@@ -775,25 +775,29 @@ subscription_data_t * mme_remove_subscription_profile(mme_ue_context_t * const m
 int mme_app_update_ue_subscription(mme_ue_s1ap_id_t ue_id, subscription_data_t * subscription_data){
   OAILOG_FUNC_IN (LOG_MME_APP);
 
-  struct ue_context_s                    *ue_context = NULL;
+  struct ue_session_pool_s                    *ue_session_pool = NULL;
+  struct ue_context_s	                      *ue_context 	   = NULL;
 
-  ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, ue_id);
-  if (!ue_context) {
-    /*
-     * Use enb_ue_s1ap_id_key to get the UE context - In case MME APP could not update S1AP with valid mme_ue_s1ap_id
-     * before context release is triggered from s1ap.
-     */
-    OAILOG_WARNING (LOG_MME_APP, "No UE context was found for ue_id " MME_UE_S1AP_ID_FMT ". Cannot update subscription profile. \n", ue_id);
+  ue_session_pool = mme_ue_session_pool_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_session_pools, ue_id);
+  if (!ue_session_pool) {
+    OAILOG_WARNING (LOG_MME_APP, "No UE session pool was found for ue_id " MME_UE_S1AP_ID_FMT ". Cannot update subscription profile. \n", ue_id);
     OAILOG_FUNC_RETURN(LOG_MME_APP, RETURNerror);
   }
 
-  // todo: LOCK UE_CONTEXT
-
-  ue_context->privates.fields.access_restriction_data = subscription_data->access_restriction;
+  ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, ue_id);
+  if (!ue_context) {
+    OAILOG_WARNING (LOG_MME_APP, "No UE context was found for ue_id " MME_UE_S1AP_ID_FMT ". Cannot update subscription profile. \n", ue_id);
+    OAILOG_FUNC_RETURN(LOG_MME_APP, RETURNerror);
+  }
   /*
    * This is the UE-AMBR and will always be enforced upon all established PDN contexts as total used bitrate (to the eNB).
    */
-  memcpy (&ue_context->privates.fields.subscribed_ue_ambr, &subscription_data->subscribed_ambr, sizeof (ambr_t));
+  // todo: LOCK UE_session_pool
+  memcpy (&ue_session_pool->privates.fields.subscribed_ue_ambr, &subscription_data->subscribed_ambr, sizeof (ambr_t));
+  // todo: UNLOCK UE_session_pool
+
+  // todo: LOCK UE_context
+  ue_context->privates.fields.access_restriction_data = subscription_data->access_restriction;
 
   if(ue_context->privates.fields.msisdn)
 	  bdestroy_wrapper(&ue_context->privates.fields.msisdn);
@@ -801,7 +805,6 @@ int mme_app_update_ue_subscription(mme_ue_s1ap_id_t ue_id, subscription_data_t *
   //  AssertFatal (ula_pP->subscription_data.msisdn_length != 0, "MSISDN LENGTH IS 0"); todo: msisdn
   AssertFatal (subscription_data->msisdn_length <= MSISDN_LENGTH, "MSISDN LENGTH is too high %u", MSISDN_LENGTH);
   ue_context->privates.fields.network_access_mode = subscription_data->access_mode;
-
   /*
    * Set the value of  Mobile Reachability timer based on value of T3412 (Periodic TAU timer) sent in Attach accept /TAU accept.
    * Set it to MME_APP_DELTA_T3412_REACHABILITY_TIMER minutes greater than T3412.
@@ -1891,7 +1894,7 @@ mme_app_handle_nas_context_req(itti_nas_context_req_t * const nas_context_req_pP
 }
 
 //----------------------------------------------------------------------------------------------------------
-void mme_app_set_ue_eps_mm_context(mm_context_eps_t * ue_eps_mme_context_p, struct ue_context_s *ue_context, emm_data_context_t *ue_nas_ctx) {
+void mme_app_set_ue_eps_mm_context(mm_context_eps_t * ue_eps_mme_context_p, const struct ue_context_s * const ue_context, const struct ue_session_pool_s * const ue_session_pool, emm_data_context_t *ue_nas_ctx) {
 
   int                           rc = RETURNok;
 
@@ -1923,9 +1926,9 @@ void mme_app_set_ue_eps_mm_context(mm_context_eps_t * ue_eps_mme_context_p, stru
    * Set the UE ambr (subscribed).
    * Not divide by 100 here.
    */
-  ue_eps_mme_context_p->subscribed_ue_ambr = ue_context->privates.fields.subscribed_ue_ambr;
+  ue_eps_mme_context_p->subscribed_ue_ambr = ue_session_pool->privates.fields.subscribed_ue_ambr;
   /** Calculate the total. */
-  ue_eps_mme_context_p->used_ue_ambr       = mme_app_total_p_gw_apn_ambr(ue_context);;
+  ue_eps_mme_context_p->used_ue_ambr       = mme_app_total_p_gw_apn_ambr(ue_session_pool);
 
   // Add the UE Network Capability.
   ue_eps_mme_context_p->ue_nc.eea = ue_nas_ctx->_ue_network_capability.eea;
@@ -2163,7 +2166,7 @@ mme_app_handle_s10_context_request(const itti_s10_context_request_t * const s10_
 
    /** Set the MM_UE_EPS_CONTEXT. */
    context_response_p->ue_eps_mm_context = calloc(1, sizeof(mm_context_eps_t));
-   mme_app_set_ue_eps_mm_context(context_response_p->ue_eps_mm_context, ue_context, ue_nas_ctx);
+   mme_app_set_ue_eps_mm_context(context_response_p->ue_eps_mm_context, ue_context, ue_session_pool, ue_nas_ctx);
 
    /*
     * Start timer to wait the handover/TAU procedure to complete.
@@ -2260,6 +2263,7 @@ mme_app_handle_s10_context_response(
     )
 {
   struct ue_context_s                    *ue_context = NULL;
+  struct ue_session_pool_s               *ue_session_pool = NULL;
   MessageDef                             *message_p = NULL;
   uint64_t                                imsi = 0;
   int                                     rc = RETURNok;
@@ -2275,6 +2279,12 @@ mme_app_handle_s10_context_response(
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
 
+  ue_session_pool = mme_ue_session_pool_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_session_pools, ue_context->privates.mme_ue_s1ap_id);
+  /** Check that the UE_CONTEXT exists for the S10_FTEID. */
+  if (ue_session_pool == NULL) { /**< If no UE_CONTEXT found, all tunnels are assumed to be cleared and not tunnels established when S10_CONTEXT_RESPONSE is received. */
+    OAILOG_DEBUG (LOG_MME_APP, "We didn't find this UE session pool: " MME_UE_S1AP_ID_FMT". \n", ue_context->privates.mme_ue_s1ap_id);
+    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+  }
   /** Get the NAS layer MME relocation procedure. */
   emm_data_context_t * emm_context = emm_data_context_get(&_emm_data, ue_context->privates.mme_ue_s1ap_id);
   /* Check if there is an MME relocation procedure running. */
@@ -2352,8 +2362,8 @@ mme_app_handle_s10_context_response(
 
   // todo: LOCK!!
   /** Set the subscribed AMBR values. */
-  ue_context->privates.fields.subscribed_ue_ambr.br_dl = s10_context_response_pP->ue_eps_mm_context->subscribed_ue_ambr.br_dl;
-  ue_context->privates.fields.subscribed_ue_ambr.br_ul = s10_context_response_pP->ue_eps_mm_context->subscribed_ue_ambr.br_ul;
+  ue_session_pool->privates.fields.subscribed_ue_ambr.br_dl = s10_context_response_pP->ue_eps_mm_context->subscribed_ue_ambr.br_dl;
+  ue_session_pool->privates.fields.subscribed_ue_ambr.br_ul = s10_context_response_pP->ue_eps_mm_context->subscribed_ue_ambr.br_ul;
 
   /*
    * Update the coll_keys with the IMSI and remove the S10 Tunnel Endpoint.

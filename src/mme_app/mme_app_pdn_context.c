@@ -125,13 +125,6 @@ mme_app_esm_create_pdn_context(mme_ue_s1ap_id_t ue_id, const ebi_t linked_ebi, c
   }
   STAILQ_REMOVE(&ue_session_pool->free_pdn_contexts, *pdn_context_pp, pdn_context_s, entries);
 
-  pdn_context_t *pdn_context_1_pp = STAILQ_FIRST(&ue_session_pool->free_pdn_contexts);
-  if(!pdn_context_1_pp) {
-	  OAILOG_ERROR(LOG_MME_APP, "No free PDN context left for UE: " MME_UE_S1AP_ID_FMT ". \n", ue_id);
-	  OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
-  }
-  STAILQ_REMOVE(&ue_session_pool->free_pdn_contexts, pdn_context_1_pp, pdn_context_s, entries);
-
   bearer_context_new_t * free_bearer = NULL;
   if(linked_ebi != EPS_BEARER_IDENTITY_UNASSIGNED){
 	  mme_app_get_free_bearer_context(ue_session_pool, linked_ebi, &free_bearer); /**< Find the EBI which is matching (should be available). */
