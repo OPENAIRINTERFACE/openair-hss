@@ -315,6 +315,7 @@ typedef struct itti_nas_activate_eps_bearer_ctx_req_s {
   pti_t                             pti;
   pdn_cid_t                         cid;
   ebi_t                             linked_ebi;
+  bool								retry;
   uintptr_t                         bcs_to_be_created_ptr;
 } itti_nas_activate_eps_bearer_ctx_req_t;
 
@@ -339,6 +340,7 @@ typedef struct itti_nas_modify_eps_bearer_ctx_req_s {
   pdn_cid_t                         cid;
   ebi_t                             linked_ebi;
   ambr_t                            apn_ambr; /**< New APN AMBR. */
+  bool								retry;
   uintptr_t                         bcs_to_be_updated_ptr;
 } itti_nas_modify_eps_bearer_ctx_req_t;
 
@@ -363,12 +365,14 @@ typedef struct itti_nas_deactivate_eps_bearer_ctx_req_s {
   pti_t                             pti;
   pdn_cid_t                         cid;
   ebi_list_t                        ebis;
+  bool								retry;
 } itti_nas_deactivate_eps_bearer_ctx_req_t;
 
 typedef struct itti_nas_deactivate_eps_bearer_ctx_cnf_s {
   /* UE identifier */
   mme_ue_s1ap_id_t                  ue_id;
   ebi_t                             ded_ebi;
+  gtpv2c_cause_value_t      	    cause_value;
 } itti_nas_deactivate_eps_bearer_ctx_cnf_t;
 
 

@@ -1485,12 +1485,12 @@ typedef struct itti_s11_bearer_resource_failure_indication_s {
  */
 typedef struct itti_s11_downlink_data_notification_s {
   teid_t           teid;                   ///< Tunnel Endpoint Identifier
-  gtpv2c_cause_t   cause;
   // Recovery           ///< optional This IE shall be included if contacting the peer for the first time
   // Private Extension  ///< optional
   /* GTPv2-C specific parameters */
   void       	   *trxn;
   struct sockaddr  *peer_ip;
+  bool              signaling;
 }itti_s11_downlink_data_notification_t;
 
 //-----------------------------------------------------------------------------

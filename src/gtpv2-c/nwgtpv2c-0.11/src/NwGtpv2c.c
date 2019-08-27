@@ -752,6 +752,12 @@ static nw_rc_t nwGtpv2cCreateLocalTunnel (
         NW_ASSERT (NW_OK == rc);
         OAILOG_FUNC_RETURN( LOG_GTPV2C, rc);
     } else {
+    	/** Check if there was a message, remove it first. */
+    	if(pReqTrxn->pMsg){
+        	OAILOG_WARNING(LOG_GTPV2C, "Transaction with seq '0x%x' contained a previous message. Discarding first. \n", pReqTrxn->seqNum);
+        	rc = nwGtpv2cMsgDelete ((nw_gtpv2c_stack_handle_t) thiz, (nw_gtpv2c_msg_handle_t) pReqTrxn->pMsg);
+            NW_ASSERT (NW_OK == rc);
+    	}
     	pReqTrxn->pMsg = (nw_gtpv2c_msg_t *) pUlpRsp->hMsg;
     }
     rc = nwGtpv2cTrxnStartDulpicateRequestWaitTimer (pReqTrxn);

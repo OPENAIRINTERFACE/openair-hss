@@ -151,6 +151,7 @@ esm_cause_t
 esm_proc_dedicated_eps_bearer_context (
   mme_ue_s1ap_id_t   ue_id,
   const proc_tid_t   pti,
+  const bool 		 retry,
   ebi_t              linked_ebi,
   const pdn_cid_t    pdn_cid,
   bearer_context_to_be_created_t *bc_tbc,
@@ -179,6 +180,7 @@ esm_cause_t
 esm_proc_modify_eps_bearer_context (
   mme_ue_s1ap_id_t   ue_id,
   const proc_tid_t   pti,
+  const bool 		 retry,
   const ebi_t        linked_ebi,
   const pdn_cid_t    pdn_cid,
   bearer_context_to_be_updated_t  * bc_tbu,
@@ -206,7 +208,8 @@ esm_proc_modify_eps_bearer_context_reject (
  */
 esm_cause_t esm_proc_eps_bearer_context_deactivate_request (mme_ue_s1ap_id_t ue_id,
     proc_tid_t   * pti,
-    ebi_t        * ebi,
+	const bool 	   retry,
+	ebi_t        * ebi,
     ebi_list_t *ded_ebis,
     ESM_msg * esm_rsp_msg);
 

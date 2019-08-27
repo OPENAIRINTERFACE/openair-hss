@@ -212,6 +212,7 @@ esm_cause_t
 esm_proc_modify_eps_bearer_context (
   mme_ue_s1ap_id_t   ue_id,
   const proc_tid_t   pti,
+  const bool 		 retry,
   const ebi_t        linked_ebi,
   const pdn_cid_t    pdn_cid,
   bearer_context_to_be_updated_t * bc_tbu,
@@ -258,6 +259,17 @@ esm_proc_modify_eps_bearer_context (
     nas_stop_esm_timer(esm_proc_bearer_context->esm_base_proc.ue_id, &esm_proc_bearer_context->esm_base_proc.esm_proc_timer);
     esm_proc_bearer_context->esm_base_proc.esm_proc_timer.id = nas_esm_timer_start(mme_config.nas_config.t3486_sec, 0 /*usec*/, (void*)&esm_proc_bearer_context->esm_base_proc);
     esm_proc_bearer_context->esm_base_proc.timeout_notif = _modify_eps_bearer_context_t3486_handler;
+  } else {
+	  /** Check if this a retry (initially triggered by core network: PTI needs to be 0), search for a bearer context modification procedure. */
+	  if(retry) {
+		  nas_esm_proc_bearer_context_t * esm_proc_bearer_context = _esm_proc_get_bearer_context_procedure(ue_id, pti, bc_tbu->eps_bearer_id);
+		  if(esm_proc_bearer_context) {
+		    /** Retry the procedure. */
+			esm_cause_t esm_cause = _modify_eps_bearer_context_t3486_handler(esm_proc_bearer_context, esm_rsp_msg);
+			OAILOG_INFO(LOG_NAS_EMM, "EMMCN-SAP  - " "A bearer context modification procedure for UE " MME_UE_S1AP_ID_FMT" (pti=%d) already exists. Result of resending the message %d. \n", ue_id, pti, esm_cause);
+			OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_SUCCESS);
+		  }
+	  }
   }
   if(!esm_proc_bearer_context){
     /** We found an ESM procedure. */
@@ -272,8 +284,15 @@ esm_proc_modify_eps_bearer_context (
   esm_cause = mme_app_esm_modify_bearer_context(ue_id, bc_tbu->eps_bearer_id, NULL, ESM_EBR_MODIFY_PENDING, bc_tbu->bearer_level_qos, bc_tbu->tft, apn_ambr);
   if(esm_cause != ESM_CAUSE_SUCCESS){
     OAILOG_ERROR(LOG_NAS_ESM, "ESM-PROC  - Error validating the bearer context modification procedure UE " MME_UE_S1AP_ID_FMT " (ebi=%d). \n", ue_id, bc_tbu->eps_bearer_id);
-    _esm_proc_free_bearer_context_procedure(&esm_proc_bearer_context);
-    OAILOG_FUNC_RETURN(LOG_NAS_ESM, esm_cause);
+    /** Send the error code depending on retry. */
+    if(retry){
+    	OAILOG_WARNING(LOG_NAS_ESM, "ESM-PROC  - Retry for UBR of UE " MME_UE_S1AP_ID_FMT " (ebi=%d). Rejecting UBR.  \n", ue_id, bc_tbu->eps_bearer_id);
+        _esm_proc_free_bearer_context_procedure(&esm_proc_bearer_context);
+        OAILOG_FUNC_RETURN(LOG_NAS_ESM, esm_cause);
+    }else {
+        OAILOG_WARNING(LOG_NAS_ESM, "ESM-PROC  - No retry for UBR of UE " MME_UE_S1AP_ID_FMT " (ebi=%d). Assuming handover, PGW will retry.  \n", ue_id, bc_tbu->eps_bearer_id);
+		OAILOG_FUNC_RETURN(LOG_NAS_ESM, ESM_CAUSE_SERVICE_OPTION_TEMPORARILY_OUT_OF_ORDER);
+    }
   }
 
   /* Verify and set the APN-AMBR in the procedure. */

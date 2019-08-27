@@ -835,13 +835,19 @@ mme_app_send_s11_update_bearer_rsp (
     if(bcs_tbu->bearer_contexts[num_bc].cause.cause_value == REQUEST_ACCEPTED){
       if(s11_update_bearer_response->cause.cause_value == REQUEST_REJECTED)
         s11_update_bearer_response->cause.cause_value = REQUEST_ACCEPTED_PARTIALLY;
-      if(!s11_update_bearer_response->cause.cause_value)
+      else if(!s11_update_bearer_response->cause.cause_value)
         s11_update_bearer_response->cause.cause_value = REQUEST_ACCEPTED;
+      else {
+    	  /** Leave the code. */
+      }
     }else{ /**< Reject or empty. */
       if(s11_update_bearer_response->cause.cause_value == REQUEST_ACCEPTED)
         s11_update_bearer_response->cause.cause_value = REQUEST_ACCEPTED_PARTIALLY;
-      if(!s11_update_bearer_response->cause.cause_value)
-        s11_update_bearer_response->cause.cause_value = REQUEST_REJECTED;
+      else if(!s11_update_bearer_response->cause.cause_value)
+        s11_update_bearer_response->cause.cause_value = (bcs_tbu->bearer_contexts[num_bc].cause.cause_value) ? bcs_tbu->bearer_contexts[num_bc].cause.cause_value : REQUEST_REJECTED;
+      else {
+    	  /** Leave the code. */
+      }
     }
     OAILOG_DEBUG (LOG_MME_APP, "Bearer with ebi %d updated with result code %d. New UBResp cause value %d. \n",
         bcs_tbu->bearer_contexts[num_bc].eps_bearer_id, bcs_tbu->bearer_contexts[num_bc].cause, s11_update_bearer_response->cause.cause_value);

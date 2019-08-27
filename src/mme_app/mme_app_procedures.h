@@ -106,7 +106,6 @@ typedef struct mme_app_s10_proc_mme_handover_s {
 
   tai_t                         target_tai;
   bool                          ho_command_sent;
-  bool                          pending_qos;
   ecgi_t                        source_ecgi;  /**< Source home/macro enb id. */
   ecgi_t                        target_ecgi;  /**< Target home/macro enb id. */
   bool                          pending_clear_location_request;
@@ -172,7 +171,7 @@ typedef struct mme_app_s11_proc_update_bearer_s {
 typedef struct mme_app_s11_proc_delete_bearer_s {
   mme_app_s11_proc_t           proc;
   int                          num_bearers_unhandled;
-  ebi_t                        def_ebi;
+  ebi_t                        linked_ebi;
   int                          num_status_received;
   ebi_list_t                   ebis;
 

@@ -97,7 +97,7 @@ static esm_cause_t _dedicated_eps_bearer_activate_t3485_handler (nas_esm_proc_t 
 
 /* Maximum value of the activate dedicated EPS bearer context request
    retransmission counter */
-#define DEDICATED_EPS_BEARER_ACTIVATE_COUNTER_MAX   1
+#define DEDICATED_EPS_BEARER_ACTIVATE_COUNTER_MAX   3
 
 /****************************************************************************/
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
@@ -207,6 +207,7 @@ esm_cause_t
 esm_proc_dedicated_eps_bearer_context (
   mme_ue_s1ap_id_t   ue_id,
   const proc_tid_t   pti,
+  const bool 		 retry,
   ebi_t              linked_ebi,
   const pdn_cid_t    pdn_cid,
   bearer_context_to_be_created_t *bc_tbc,
@@ -240,9 +241,22 @@ esm_proc_dedicated_eps_bearer_context (
     }
   }
 
+  /** Check if the dedicated bearer id has already been set, if so try to find a procedure and trigger the message again. */
+  if(bc_tbc->eps_bearer_id && retry) {
+	  nas_esm_proc_bearer_context_t * esm_proc_bearer_context = _esm_proc_get_bearer_context_procedure(ue_id, pti, bc_tbc->eps_bearer_id);
+	  /** Retry the procedure. */
+	  if(esm_proc_bearer_context){
+		  esm_cause_t esm_cause = _dedicated_eps_bearer_activate_t3485_handler (esm_proc_bearer_context, esm_rsp_msg);
+		  OAILOG_INFO(LOG_NAS_EMM, "EMMCN-SAP  - " "A bearer context activation procedure for UE " MME_UE_S1AP_ID_FMT" (pti=%d, ebi=%d) already exists. "
+				  "Result of resending the message: %d. \n", ue_id, pti, bc_tbc->eps_bearer_id, esm_cause);
+	      OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_SUCCESS);
+	  }
+  }
+
   /*
    * Register a new EPS bearer context into the MME.
    * This should only be for dedicated bearers (todo: handover with dedicated bearers).
+   * In case of handover, this should also work.
    */
   // todo: PCO handling
   traffic_flow_template_t * tft = bc_tbc->tft;

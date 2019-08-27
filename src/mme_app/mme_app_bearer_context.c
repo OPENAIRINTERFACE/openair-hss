@@ -520,16 +520,23 @@ mme_app_esm_modify_bearer_context(mme_ue_s1ap_id_t ue_id, const ebi_t ebi, ebi_l
     		bearer_context->pdn_cx_id, bearer_context->linked_ebi, ue_id);
     OAILOG_FUNC_RETURN (LOG_MME_APP, ESM_CAUSE_PDN_CONNECTION_DOES_NOT_EXIST);
   }
-  if(!(bearer_context->bearer_state & (BEARER_STATE_ACTIVE | BEARER_STATE_ENB_CREATED))){
-	  OAILOG_WARNING (LOG_MME_APP, "Bearer context for ebi=%d not in correct bearer state %d for UE: " MME_UE_S1AP_ID_FMT ". \n",
-			  ebi, bearer_context->bearer_state, ue_id);
-	  OAILOG_FUNC_RETURN (LOG_MME_APP, ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY);
-  }
+//  if(!(bearer_context->bearer_state & (BEARER_STATE_ACTIVE | BEARER_STATE_ENB_CREATED))){
+//	  OAILOG_WARNING (LOG_MME_APP, "Bearer context for ebi=%d not in correct bearer state %d for UE: " MME_UE_S1AP_ID_FMT ". \n",
+//			  ebi, bearer_context->bearer_state, ue_id);
+//	  OAILOG_FUNC_RETURN (LOG_MME_APP, ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY);
+//  }
   /** We can set the FTEIDs right before the CBResp is set. */
   if(bearer_context->esm_ebr_context.status != ESM_EBR_ACTIVE){
-    OAILOG_ERROR(LOG_MME_APP, "ESM-PROC  - ESM Bearer Context for ebi %d is not ACTIVE for ue " MME_UE_S1AP_ID_FMT ". \n",
-    		bearer_context->ebi, ue_id);
-    OAILOG_FUNC_RETURN (LOG_MME_APP, ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY);
+    OAILOG_ERROR(LOG_MME_APP, "ESM-PROC  - ESM Bearer Context for ebi %d is not ACTIVE (but %d) for ue " MME_UE_S1AP_ID_FMT ". \n",
+    		bearer_context->ebi, bearer_context->esm_ebr_context.status, ue_id);
+    /** If the bearer is already in the requested state, send OK back (assume actions below are done). */
+    if(bearer_context->esm_ebr_context.status != esm_ebr_state)
+    	OAILOG_FUNC_RETURN (LOG_MME_APP, ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY);
+    else {
+    	OAILOG_WARNING(LOG_MME_APP, "ESM-PROC  - ESM Bearer Context for ebi %d is already in state: %d for UE " MME_UE_S1AP_ID_FMT ". Returning success. \n",
+    		bearer_context->ebi, bearer_context->esm_ebr_context.status, ue_id);
+    	OAILOG_FUNC_RETURN (LOG_MME_APP, ESM_CAUSE_SUCCESS);
+    }
   }
 
   // todo: LOCK_UE_SESSION_POOL

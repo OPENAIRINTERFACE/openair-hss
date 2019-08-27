@@ -1216,7 +1216,7 @@ esm_recv_deactivate_eps_bearer_context_accept (
      */
     OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - We released  the dedicated EBI. Responding with delete bearer response back. (ebi=%d) for UE " MME_UE_S1AP_ID_FMT ". \n", ebi, ue_id);
     /** Respond per bearer. */
-    nas_itti_dedicated_eps_bearer_deactivation_complete(ue_id, ebi);
+    nas_itti_dedicated_eps_bearer_deactivation_complete(ue_id, ebi, ESM_CAUSE_SUCCESS);
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_SUCCESS);
   }
 }

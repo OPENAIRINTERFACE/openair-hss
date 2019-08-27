@@ -267,7 +267,7 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
      * Check if a procedure exists for PDN Connectivity. If so continue with it.
      */
     pti_t                                pti                         = PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED;
-    msg->esm_cause = esm_proc_eps_bearer_context_deactivate_request(msg->ue_id, &pti,
+    msg->esm_cause = esm_proc_eps_bearer_context_deactivate_request(msg->ue_id, &pti, false,
         &msg->data.pdn_disconnect_res->default_ebi, &msg->data.pdn_disconnect_res->ded_ebis, &esm_resp_msg);
     if(msg->esm_cause != ESM_CAUSE_SUCCESS){
       if(msg->esm_cause != ESM_CAUSE_PDN_CONNECTION_DOES_NOT_EXIST){
@@ -291,7 +291,8 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
      */
     msg->esm_cause = esm_proc_dedicated_eps_bearer_context (msg->ue_id,     /**< Create an ESM procedure and store the bearers in the procedure as pending. */
         PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED,                     /**< No UE triggered bearer context activation is supported. */
-        msg->data.eps_bearer_context_activate.linked_ebi,
+        msg->data.eps_bearer_context_activate.retry,
+		msg->data.eps_bearer_context_activate.linked_ebi,
         msg->data.eps_bearer_context_activate.pdn_cid,
         msg->data.eps_bearer_context_activate.bc_tbc,
 		&msg->data.eps_bearer_context_activate.pending_pdn_proc,
@@ -312,7 +313,8 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
   case ESM_EPS_BEARER_CONTEXT_MODIFY_REQ:{
     msg->esm_cause = esm_proc_modify_eps_bearer_context(msg->ue_id,     /**< Create an ESM procedure and store the bearers in the procedure as pending. */
            msg->data.eps_bearer_context_modify.pti,
-           msg->data.eps_bearer_context_modify.linked_ebi,
+		   msg->data.eps_bearer_context_modify.retry,
+		   msg->data.eps_bearer_context_modify.linked_ebi,
            msg->data.eps_bearer_context_modify.pdn_cid,
            msg->data.eps_bearer_context_modify.bc_tbu,
            &msg->data.eps_bearer_context_modify.apn_ambr,
@@ -322,6 +324,8 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
     if (msg->esm_cause != ESM_CAUSE_SUCCESS) {   /**< We assume that no ESM procedure exists. */
       /** No Procedure is expected for the error case, should be handled internally. */
       nas_itti_modify_eps_bearer_ctx_rej(msg->ue_id, msg->data.eps_bearer_context_modify.bc_tbu->eps_bearer_id, msg->esm_cause); /**< Assuming, no other CN bearer procedure will intervene. */
+    } else if (msg->esm_cause == ESM_CAUSE_SERVICE_OPTION_TEMPORARILY_OUT_OF_ORDER) {   /**< We assume that no ESM procedure exists. */
+  	  OAILOG_WARNING(LOG_NAS_EMM, "EMMCN-SAP  - " "Received temporary reject for bearer modification for UE " MME_UE_S1AP_ID_FMT".\n", msg->ue_id);
     }
   }
   break;
@@ -341,11 +345,13 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
 					  esm_proc_pdn_connectivity->default_ebi, msg->ue_id, esm_proc_pdn_connectivity->pdn_cid);
 		  }
 	  }
-	  msg->esm_cause = esm_proc_eps_bearer_context_deactivate_request(msg->ue_id, &msg->data.eps_bearer_context_deactivate.pti,
+	  msg->esm_cause = esm_proc_eps_bearer_context_deactivate_request(msg->ue_id, &msg->data.eps_bearer_context_deactivate.pti, msg->data.eps_bearer_context_deactivate.retry,
 			  &msg->data.eps_bearer_context_deactivate.ded_ebi, NULL, &esm_resp_msg);
 	  if (msg->esm_cause != ESM_CAUSE_SUCCESS) {   /**< We assume that no ESM procedure exists. */
 		  /* Only if no bearer context, or the bearer context is implicitly detached by the eNB (DBC). */
-		  nas_itti_dedicated_eps_bearer_deactivation_complete(msg->ue_id, msg->data.eps_bearer_context_deactivate.ded_ebi);
+		  nas_itti_dedicated_eps_bearer_deactivation_complete(msg->ue_id, msg->data.eps_bearer_context_deactivate.ded_ebi, msg->esm_cause);
+	  } else if (msg->esm_cause == ESM_CAUSE_SERVICE_OPTION_TEMPORARILY_OUT_OF_ORDER) {   /**< We assume that no ESM procedure exists. */
+	  	  OAILOG_WARNING(LOG_NAS_EMM, "EMMCN-SAP  - " "Received temporary reject for bearer deactivation for UE " MME_UE_S1AP_ID_FMT".\n", msg->ue_id);
 	  }
   }
   break;

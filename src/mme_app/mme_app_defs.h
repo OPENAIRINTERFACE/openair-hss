@@ -215,8 +215,7 @@ void mme_app_handle_s10_context_acknowledge( const itti_s10_context_acknowledge_
 
 
 /** Paging Functions. */
-
-void mme_app_handle_downlink_data_notification (const itti_s11_downlink_data_notification_t * const saegw_dl_data_ntf_pP);
+int mme_app_handle_downlink_data_notification (const itti_s11_downlink_data_notification_t * const saegw_dl_data_ntf_pP);
 
 #define mme_stats_read_lock(mMEsTATS)  pthread_rwlock_rdlock(&(mMEsTATS)->rw_lock)
 #define mme_stats_write_lock(mMEsTATS) pthread_rwlock_wrlock(&(mMEsTATS)->rw_lock)

@@ -2281,7 +2281,7 @@ mme_app_handle_s10_context_response(
 
   ue_session_pool = mme_ue_session_pool_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_session_pools, ue_context->privates.mme_ue_s1ap_id);
   /** Check that the UE_CONTEXT exists for the S10_FTEID. */
-  if (ue_session_pool == NULL) { /**< If no UE_CONTEXT found, all tunnels are assumed to be cleared and not tunnels established when S10_CONTEXT_RESPONSE is received. */
+  if (ue_session_pool == NULL) { /**< If no ue_session_pool found, all tunnels are assumed to be cleared and not tunnels established when S10_CONTEXT_RESPONSE is received. */
     OAILOG_DEBUG (LOG_MME_APP, "We didn't find this UE session pool: " MME_UE_S1AP_ID_FMT". \n", ue_context->privates.mme_ue_s1ap_id);
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
@@ -2371,7 +2371,7 @@ mme_app_handle_s10_context_response(
   mme_ue_context_update_coll_keys (&mme_app_desc.mme_ue_contexts, ue_context,
       ue_context->privates.enb_s1ap_id_key,
       ue_context->privates.mme_ue_s1ap_id,
-      ue_context->privates.fields.imsi,      /**< New IMSI. */
+	  imsi,      /**< New IMSI. */
       ue_context->privates.fields.mme_teid_s11,
       INVALID_TEID,
       &ue_context->privates.fields.guti);
@@ -2400,17 +2400,6 @@ mme_app_handle_s10_context_response(
   }
 //  sleep(100);
 
-  /*
-   * Update the coll_keys with the IMSI and remove the S10 Tunnel Endpoint.
-   */
-  mme_ue_context_update_coll_keys (&mme_app_desc.mme_ue_contexts, ue_context,
-      ue_context->privates.enb_s1ap_id_key,
-      ue_context->privates.mme_ue_s1ap_id,
-      imsi,      /**< New IMSI. */
-      ue_context->privates.fields.mme_teid_s11,
-      INVALID_TEID,
-      &ue_context->privates.fields.guti);
-
   memcpy((void*)&emm_cn_proc_ctx_req->nas_s10_context._imsi, &s10_context_response_pP->imsi, sizeof(imsi_t));
 
   emm_cn_proc_ctx_req->nas_s10_context.mm_eps_ctx = s10_context_response_pP->ue_eps_mm_context;
@@ -2428,19 +2417,20 @@ mme_app_handle_s10_context_response(
   OAILOG_INFO(LOG_MME_APP, "For ueId " MME_UE_S1AP_ID_FMT " processing the pdn_connections (continuing with CSR). \n", ue_context->privates.mme_ue_s1ap_id);
   /** Process PDN Connections IE. Will initiate a Create Session Request message for the pending pdn_connections. */
   pdn_connection_t * pdn_connection = &emm_cn_proc_ctx_req->pdn_connections->pdn_connection[emm_cn_proc_ctx_req->pdn_connections->num_processed_pdn_connections];
-  pdn_context_t * pdn_context = mme_app_handle_pdn_connectivity_from_s10(ue_context, pdn_connection);
-  DevAssert(pdn_context);
-  /*
-   * When Create Session Response is received, continue to process the next PDN connection, until all are processed.
-   * When all pdn_connections are completed, continue with handover request.
-   */
-  mme_app_send_s11_create_session_req (ue_context->privates.mme_ue_s1ap_id, &s10_context_response_pP->imsi, pdn_context, &emm_context->originating_tai, pdn_context->pco, true);
-  OAILOG_INFO(LOG_MME_APP, "Successfully sent CSR for UE " MME_UE_S1AP_ID_FMT ". Waiting for CSResp to continue to process s10 context response on target MME side. \n", ue_context->privates.mme_ue_s1ap_id);
-  /*
-   * Use the received PDN connectivity information to update the session/bearer information with the PDN connections IE, before informing the NAS layer about the context.
-   * Not performing state change. The MME_APP UE context will stay in the same state.
-   * State change will be handled by EMM layer.
-   */
+  pdn_context_t * pdn_context = mme_app_handle_pdn_connectivity_from_s10(ue_session_pool, pdn_connection);
+  if(pdn_context){
+	  /*
+	   * When Create Session Response is received, continue to process the next PDN connection, until all are processed.
+	   * When all pdn_connections are completed, continue with handover request.
+	   */
+	  mme_app_send_s11_create_session_req (ue_context->privates.mme_ue_s1ap_id, &s10_context_response_pP->imsi, pdn_context, &emm_context->originating_tai, pdn_context->pco, true);
+	  OAILOG_INFO(LOG_MME_APP, "Successfully sent CSR for UE " MME_UE_S1AP_ID_FMT ". Waiting for CSResp to continue to process s10 context response on target MME side. \n", ue_context->privates.mme_ue_s1ap_id);
+	  /*
+	   * Use the received PDN connectivity information to update the session/bearer information with the PDN connections IE, before informing the NAS layer about the context.
+	   * Not performing state change. The MME_APP UE context will stay in the same state.
+	   * State change will be handled by EMM layer.
+	   */
+  }
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 
@@ -2799,7 +2789,7 @@ int mme_app_mobility_complete(const mme_ue_s1ap_id_t mme_ue_s1ap_id, bool activa
 //  OAILOG_FUNC_IN (LOG_MME_APP);
 //
 //  /** Update the PDN session information directly in the new UE_Context. */
-//  pdn_context_t * pdn_context = mme_app_handle_pdn_connectivity_from_s10(ue_context, &forward_relocation_request_pP->pdn_connections.pdn_connection[num_pdn]);
+//  pdn_context_t * pdn_context = mme_app_handle_pdn_connectivity_from_s10(ue_session_pool, &forward_relocation_request_pP->pdn_connections.pdn_connection[num_pdn]);
 //    if(pdn_context){
 //      OAILOG_INFO (LOG_MME_APP, "Successfully updated the PDN connections for ueId " MME_UE_S1AP_ID_FMT " for pdn %s. \n",
 //          ue_context->privates.mme_ue_s1ap_id, forward_relocation_request_pP->pdn_connections.pdn_connection[num_pdn].apn);

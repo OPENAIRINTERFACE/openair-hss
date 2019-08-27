@@ -127,7 +127,7 @@ static int emm_proc_tracking_area_update_request_validity(emm_data_context_t * e
 
 static void _emm_tracking_area_update_registration_complete(emm_data_context_t *emm_context);
 
-static int _emm_tau_retry_procedure(emm_data_context_t *emm_context);
+static int _emm_tau_retry_procedure(mme_ue_s1ap_id_t ue_id);
 
 /****************************************************************************/
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
@@ -493,6 +493,7 @@ emm_proc_tracking_area_update_complete (
     emm_sap_send (&emm_sap);
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
   }
+
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
  }
 
@@ -1656,11 +1657,18 @@ static bool _emm_tracking_area_update_ies_have_changed (mme_ue_s1ap_id_t ue_id, 
  * --------------------------------------------------------------------------
  */
 //------------------------------------------------------------------------------
-static int _emm_tau_retry_procedure(emm_data_context_t *emm_context){
+static int _emm_tau_retry_procedure(mme_ue_s1ap_id_t ue_id){
   /** Validate that no old EMM context exists. */
   OAILOG_FUNC_IN (LOG_NAS_EMM);
 
   int                                      rc = RETURNerror;
+  emm_data_context_t                     * emm_context                 = emm_data_context_get(&_emm_data, ue_id);
+  if(!emm_context){
+	  OAILOG_ERROR(LOG_NAS_EMM, "EMM-PROC  - Attach retry: no EMM context for UE " MME_UE_S1AP_ID_FMT". Triggering implicit detach. \n", ue_id);
+	  rc = _emm_tracking_area_update_reject(ue_id, EMM_CAUSE_ILLEGAL_UE);
+	  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  }
+
   nas_emm_tau_proc_t                     * tau_proc = (nas_emm_tau_proc_t*)get_nas_specific_procedure(emm_context);
   emm_data_context_t                     * duplicate_emm_context       = emm_data_context_get(&_emm_data, tau_proc->emm_spec_proc.old_ue_id);
   ue_context_t                           * duplicate_ue_context        = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, tau_proc->emm_spec_proc.old_ue_id);
@@ -2239,6 +2247,7 @@ static void _emm_tracking_area_update_registration_complete(emm_data_context_t *
   bool active_flag = tau_proc->ies->eps_update_type.active_flag;
   bool pending_qos = tau_proc->pending_qos;
   nas_delete_tau_procedure(emm_context);
+  emm_context->is_has_been_attached = true;
 
   mme_app_s10_proc_mme_handover_t * s10_proc_handover = mme_app_get_s10_procedure_mme_handover(ue_context);
 
@@ -2253,14 +2262,15 @@ static void _emm_tracking_area_update_registration_complete(emm_data_context_t *
 	  } else if (pending_qos) {
 		  /** Check if a pending QoS procedure exists. */
 		  OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - EMM Context for ueId " MME_UE_S1AP_ID_FMT " has done an IDLE-TAU without active flag but bearer QoS modification is pending. "
-				  "Not releasing UE context. MBResp should retrigger qos operation. \n", emm_context->ue_id);
+				  "Not releasing UE context. MBResp should retrigger qos operation. \n", emm_context->ue_id); /**< MBR not happened yet for IDLE TAU. */
 	  }
   } else {
 	  mme_app_delete_s10_procedure_mme_handover(ue_context);
 	  /**
-	   * No S11 retry should be triggered here. Only by the modify bearer response.
-	   * If we sent a CBResp before the MBR procedure completes, we might trigger an initial detach in the PGW.
+	   * We try S11 retry here. (MBR may already be handled).
+	   * We should check in the MME_APP layer, if the default bearer has been already activated. Else, if we sent a CBResp before the MBR procedure completes, we might trigger an initial detach in the PGW.
 	   */
+	  nas_itti_s11_retry_ind(ue_context->privates.mme_ue_s1ap_id);
   }
   //  unlock_ue_contexts(ue_context);
 

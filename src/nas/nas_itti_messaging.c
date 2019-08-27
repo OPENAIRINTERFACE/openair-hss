@@ -51,6 +51,7 @@
 #include "nas_itti_messaging.h"
 
 #include "nas_emm_proc.h"
+#include "esm_cause.h"
 #include "esm_proc.h"
 #include "mme_app_defs.h"
 
@@ -227,6 +228,9 @@ void nas_itti_activate_eps_bearer_ctx_rej(
   case ESM_CAUSE_EPS_QOS_NOT_ACCEPTED:
     NAS_ACTIVATE_EPS_BEARER_CTX_REJ (message_p).cause_value = MANDATORY_IE_INCORRECT;
     break;
+  case ESM_CAUSE_SERVICE_OPTION_TEMPORARILY_OUT_OF_ORDER:
+	  NAS_ACTIVATE_EPS_BEARER_CTX_REJ (message_p).cause_value = TEMP_REJECT_HO_IN_PROGRESS;
+ 	break;
   default:
     NAS_ACTIVATE_EPS_BEARER_CTX_REJ (message_p).cause_value = REQUEST_REJECTED;
     break;
@@ -279,6 +283,9 @@ void nas_itti_modify_eps_bearer_ctx_rej(
   case ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY:
     NAS_MODIFY_EPS_BEARER_CTX_REJ (message_p).cause_value = NO_RESOURCES_AVAILABLE;
     break;
+  case ESM_CAUSE_SERVICE_OPTION_TEMPORARILY_OUT_OF_ORDER:
+	NAS_MODIFY_EPS_BEARER_CTX_REJ (message_p).cause_value = TEMP_REJECT_HO_IN_PROGRESS;
+	break;
   default:
     NAS_MODIFY_EPS_BEARER_CTX_REJ (message_p).cause_value = REQUEST_REJECTED;
     break;
@@ -291,12 +298,24 @@ void nas_itti_modify_eps_bearer_ctx_rej(
 //------------------------------------------------------------------------------
 void nas_itti_dedicated_eps_bearer_deactivation_complete(
     const mme_ue_s1ap_id_t ue_idP,
-    const ebi_t ded_ebi)
+    const ebi_t ded_ebi,
+	const esm_cause_t esm_cause)
 {
   OAILOG_FUNC_IN(LOG_NAS);
   MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_ESM, NAS_DEACTIVATE_EPS_BEARER_CTX_CNF);
   NAS_DEACTIVATE_EPS_BEARER_CTX_CNF (message_p).ue_id     = ue_idP;
   NAS_DEACTIVATE_EPS_BEARER_CTX_CNF (message_p).ded_ebi   = ded_ebi;
+  switch(esm_cause){
+  case ESM_CAUSE_SUCCESS:
+	NAS_DEACTIVATE_EPS_BEARER_CTX_CNF (message_p).cause_value = REQUEST_ACCEPTED;
+	break;
+  case ESM_CAUSE_SERVICE_OPTION_TEMPORARILY_OUT_OF_ORDER:
+	NAS_DEACTIVATE_EPS_BEARER_CTX_CNF (message_p).cause_value = TEMP_REJECT_HO_IN_PROGRESS;
+	break;
+  default:
+	NAS_DEACTIVATE_EPS_BEARER_CTX_CNF (message_p).cause_value = REQUEST_REJECTED;
+    break;
+  }
   MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_MMEAPP_MME, NULL, 0, "0 NAS_DEACTIVATE_EPS_BEARER_CTX_CNF ue id " MME_UE_S1AP_ID_FMT " ebi %u", ue_idP, ded_ebi);
   itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT(LOG_NAS);

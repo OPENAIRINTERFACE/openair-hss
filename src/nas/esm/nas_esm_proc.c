@@ -357,6 +357,7 @@ int nas_esm_proc_activate_eps_bearer_ctx(esm_eps_activate_eps_bearer_ctx_req_t *
   esm_sap.primitive                                   = ESM_EPS_BEARER_CONTEXT_ACTIVATE_REQ;
   esm_sap.ue_id                                       = esm_cn_activate->ue_id;
   esm_sap.data.eps_bearer_context_activate.pdn_cid    = esm_cn_activate->cid;
+  esm_sap.data.eps_bearer_context_activate.retry 	  = esm_cn_activate->retry;
   esm_sap.data.eps_bearer_context_activate.linked_ebi = esm_cn_activate->linked_ebi;
   /* Process each bearer context to be created separately. */
   bearer_contexts_to_be_created_t * bcs_tbc = (bearer_contexts_to_be_created_t*)esm_cn_activate->bcs_to_be_created_ptr;
@@ -398,6 +399,7 @@ int nas_esm_proc_modify_eps_bearer_ctx(esm_eps_modify_esm_bearer_ctxs_req_t * es
   esm_sap.data.eps_bearer_context_modify.pti = esm_cn_modify->pti;
   esm_sap.data.eps_bearer_context_modify.linked_ebi = esm_cn_modify->linked_ebi;
   esm_sap.data.eps_bearer_context_modify.pdn_cid    = esm_cn_modify->cid;
+  esm_sap.data.eps_bearer_context_modify.retry 		= esm_cn_modify->retry;
   esm_sap.data.eps_bearer_context_modify.apn_ambr.br_dl = esm_cn_modify->apn_ambr.br_dl;
   esm_sap.data.eps_bearer_context_modify.apn_ambr.br_ul = esm_cn_modify->apn_ambr.br_ul;
   /* Handle each bearer context separately. */
@@ -411,23 +413,22 @@ int nas_esm_proc_modify_eps_bearer_ctx(esm_eps_modify_esm_bearer_ctxs_req_t * es
     			"Aborting modify bearer request and waiting for ESM procedure to complete.\n", esm_sap.ue_id);
     	break;
     }
-    if(rsp){
-      if(esm_sap.data.eps_bearer_context_modify.bc_tbu->bearer_level_qos){
-    	  OAILOG_DEBUG (LOG_MME_APP, "Triggering bearer modification for changed qos (ebi=%d) for UE " MME_UE_S1AP_ID_FMT ".\n",
-    			  esm_sap.data.eps_bearer_context_modify.bc_tbu->eps_bearer_id, esm_sap.ue_id);
-    	  rc = lowerlayer_modify_bearer_req(esm_cn_modify->ue_id, esm_sap.data.eps_bearer_context_modify.bc_tbu->eps_bearer_id,
-              esm_sap.data.eps_bearer_context_modify.bc_tbu->bearer_level_qos->mbr.br_dl,
-              esm_sap.data.eps_bearer_context_modify.bc_tbu->bearer_level_qos->mbr.br_ul,
-              esm_sap.data.eps_bearer_context_modify.bc_tbu->bearer_level_qos->gbr.br_dl,
-              esm_sap.data.eps_bearer_context_modify.bc_tbu->bearer_level_qos->gbr.br_ul,
-              rsp);
-      } else {
-    	  OAILOG_INFO(LOG_MME_APP, "Not triggering bearer modification since qos is not changed (ebi=%d) for UE " MME_UE_S1AP_ID_FMT ".\n",
-    			  esm_sap.data.eps_bearer_context_modify.bc_tbu->eps_bearer_id, esm_sap.ue_id);
-    	  rc = lowerlayer_data_req(esm_cn_modify->ue_id, rsp);
-      }
-      bdestroy_wrapper(&rsp);
+    if(esm_sap.data.eps_bearer_context_modify.bc_tbu->bearer_level_qos){
+    	OAILOG_DEBUG (LOG_MME_APP, "Triggering bearer modification for changed qos (ebi=%d) for UE " MME_UE_S1AP_ID_FMT ".\n",
+    			esm_sap.data.eps_bearer_context_modify.bc_tbu->eps_bearer_id, esm_sap.ue_id);
+    	rc = lowerlayer_modify_bearer_req(esm_cn_modify->ue_id, esm_sap.data.eps_bearer_context_modify.bc_tbu->eps_bearer_id,
+    			esm_sap.data.eps_bearer_context_modify.bc_tbu->bearer_level_qos->mbr.br_dl,
+				esm_sap.data.eps_bearer_context_modify.bc_tbu->bearer_level_qos->mbr.br_ul,
+				esm_sap.data.eps_bearer_context_modify.bc_tbu->bearer_level_qos->gbr.br_dl,
+				esm_sap.data.eps_bearer_context_modify.bc_tbu->bearer_level_qos->gbr.br_ul,
+				rsp);
+    } else {
+    	OAILOG_INFO(LOG_MME_APP, "Not triggering bearer modification since qos is not changed (ebi=%d) for UE " MME_UE_S1AP_ID_FMT ".\n",
+    			esm_sap.data.eps_bearer_context_modify.bc_tbu->eps_bearer_id, esm_sap.ue_id);
+    	rc = lowerlayer_data_req(esm_cn_modify->ue_id, rsp);
     }
+    if(rsp)
+    	bdestroy_wrapper(&rsp);
     /* Remove the APN-AMBR after the first iteration. */
     memset(&esm_sap.data.eps_bearer_context_modify.apn_ambr, 0, sizeof(ambr_t));
     esm_sap.data.eps_bearer_context_modify.bc_tbu = NULL;
@@ -447,6 +448,7 @@ int nas_esm_proc_deactivate_eps_bearer_ctx(esm_eps_deactivate_eps_bearer_ctx_req
 
   esm_sap.primitive = ESM_EPS_BEARER_CONTEXT_DEACTIVATE_REQ;
   esm_sap.ue_id     = esm_cn_deactivate->ue_id;
+  esm_sap.data.eps_bearer_context_deactivate.retry 	= esm_cn_deactivate->retry;
   MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_ESM_MME, NULL, 0, "0 ESM_EPS_BEARER_CONTEXT_DEACTIVATE_REQ " MME_UE_S1AP_ID_FMT " ", esm_cn_deactivate->ue_id);
   /** Handle each bearer context separately. */
   /** Get the bearer contexts to be updated. */
@@ -459,8 +461,8 @@ int nas_esm_proc_deactivate_eps_bearer_ctx(esm_eps_deactivate_eps_bearer_ctx_req
     			"Aborting deactivate bearer request and waiting for ESM procedure to complete.\n", esm_sap.ue_id);
     	break;
     }
+    rc = lowerlayer_deactivate_bearer_req(esm_cn_deactivate->ue_id, esm_sap.data.eps_bearer_context_deactivate.ded_ebi,rsp);
     if(rsp){
-      rc = lowerlayer_deactivate_bearer_req(esm_cn_deactivate->ue_id, esm_sap.data.eps_bearer_context_deactivate.ded_ebi,rsp);
       bdestroy_wrapper(&rsp);
     }
   }

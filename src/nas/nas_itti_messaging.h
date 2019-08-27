@@ -152,7 +152,8 @@ void nas_itti_modify_eps_bearer_ctx_rej(
 
 void nas_itti_dedicated_eps_bearer_deactivation_complete(
     const mme_ue_s1ap_id_t ue_idP,
-    const ebi_t ded_ebi);
+    const ebi_t ded_ebi,
+	const esm_cause_t esm_cause);
 
 void  s6a_auth_info_rsp_timer_expiry_handler (void *args);
 
