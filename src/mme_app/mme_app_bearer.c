@@ -296,13 +296,13 @@ mme_app_handle_conn_est_cnf (
     		  }
     	  }
 //        if ((BEARER_STATE_SGW_CREATED  || BEARER_STATE_S1_RELEASED) & bc_session->bearer_state) {    /**< It could be in IDLE mode. */
-          establishment_cnf_p->e_rab_id[establishment_cnf_p->no_of_e_rabs]                                 = bc_session->ebi ;//+ EPS_BEARER_IDENTITY_FIRST;
-          establishment_cnf_p->e_rab_level_qos_qci[establishment_cnf_p->no_of_e_rabs]                      = bc_session->bearer_level_qos.qci;
-          establishment_cnf_p->e_rab_level_qos_priority_level[establishment_cnf_p->no_of_e_rabs]           = bc_session->bearer_level_qos.pl;
-          establishment_cnf_p->e_rab_level_qos_preemption_capability[establishment_cnf_p->no_of_e_rabs]    = bc_session->bearer_level_qos.pci == 0 ? 1 : 0;
-          establishment_cnf_p->e_rab_level_qos_preemption_vulnerability[establishment_cnf_p->no_of_e_rabs] = bc_session->bearer_level_qos.pvi == 0 ? 1 : 0;
-          establishment_cnf_p->transport_layer_address[establishment_cnf_p->no_of_e_rabs]                  = fteid_ip_address_to_bstring(&bc_session->s_gw_fteid_s1u);
-          establishment_cnf_p->gtp_teid[establishment_cnf_p->no_of_e_rabs]                                 = bc_session->s_gw_fteid_s1u.teid;
+          establishment_cnf_p->e_rab_id[establishment_cnf_p->no_of_e_rabs]                                 = bc_context->ebi ;//+ EPS_BEARER_IDENTITY_FIRST;
+          establishment_cnf_p->e_rab_level_qos_qci[establishment_cnf_p->no_of_e_rabs]                      = bc_context->bearer_level_qos.qci;
+          establishment_cnf_p->e_rab_level_qos_priority_level[establishment_cnf_p->no_of_e_rabs]           = bc_context->bearer_level_qos.pl;
+          establishment_cnf_p->e_rab_level_qos_preemption_capability[establishment_cnf_p->no_of_e_rabs]    = bc_context->bearer_level_qos.pci == 0 ? 1 : 0;
+          establishment_cnf_p->e_rab_level_qos_preemption_vulnerability[establishment_cnf_p->no_of_e_rabs] = bc_context->bearer_level_qos.pvi == 0 ? 1 : 0;
+          establishment_cnf_p->transport_layer_address[establishment_cnf_p->no_of_e_rabs]                  = fteid_ip_address_to_bstring(&bc_context->s_gw_fteid_s1u);
+          establishment_cnf_p->gtp_teid[establishment_cnf_p->no_of_e_rabs]                                 = bc_context->s_gw_fteid_s1u.teid;
           //      if (!j) { // todo: ESM message may exist --> should match each to the EBI!
           if(establishment_cnf_p->no_of_e_rabs == 0){
             establishment_cnf_p->nas_pdu[establishment_cnf_p->no_of_e_rabs]                                  = nas_conn_est_cnf_pP->nas_msg;
