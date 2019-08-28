@@ -213,6 +213,7 @@ void mme_app_handle_s10_context_response( itti_s10_context_response_t * const co
 
 void mme_app_handle_s10_context_acknowledge( const itti_s10_context_acknowledge_t * const context_acknowledge_pP );
 
+int mme_app_trigger_paging_due_signaling(const mme_ue_s1ap_id_t ue_id);
 
 /** Paging Functions. */
 int mme_app_handle_downlink_data_notification (const itti_s11_downlink_data_notification_t * const saegw_dl_data_ntf_pP);

@@ -142,7 +142,7 @@ extern                                  "C" {
     NW_ASSERT (thiz);
     pStack = thiz->pStack;
     NW_ASSERT (pStack);
-    OAILOG_DEBUG (LOG_GTPV2C,  "Duplicate request hold timer expired for transaction %p\n", thiz);
+    OAILOG_DEBUG (LOG_GTPV2C,  "Duplicate request hold timer expired for transaction %p with seqNum %d\n", thiz, thiz->seqNum);
     thiz->hRspTmr = 0;
     RB_REMOVE (NwGtpv2cOutstandingRxSeqNumTrxnMap, &(pStack->outstandingRxSeqNumMap), thiz);
     rc = nwGtpv2cTrxnDelete (&thiz);
@@ -221,6 +221,9 @@ extern                                  "C" {
     }
 
     if (pTrxn) {
+    	OAILOG_DEBUG (LOG_GTPV2C,  "Created not trx without seqNum as transaction %p. Head %p, Next %p\n", pTrxn,
+      	gpGtpv2cTrxnPool, (gpGtpv2cTrxnPool) ? gpGtpv2cTrxnPool->next : "null");
+
       pTrxn->pStack = thiz;
       pTrxn->pMsg = NULL;
       pTrxn->maxRetries = 2;
@@ -259,6 +262,9 @@ extern                                  "C" {
     }
 
     if (pTrxn) {
+      OAILOG_DEBUG (LOG_GTPV2C,  "Created new trx with seqNum %d as transaction %p. Head %p, Next %p\n", pTrxn, seqNum,
+    	gpGtpv2cTrxnPool, (gpGtpv2cTrxnPool) ? gpGtpv2cTrxnPool->next : "null");
+
       pTrxn->pStack = thiz;
       pTrxn->pMsg = NULL;
       pTrxn->maxRetries = 2;
@@ -266,8 +272,6 @@ extern                                  "C" {
       pTrxn->seqNum = seqNum;
       pTrxn->pMsg = NULL;
     }
-
-    OAILOG_DEBUG (LOG_GTPV2C,  "Created transaction %p\n", pTrxn);
     return pTrxn;
   }
 
@@ -303,6 +307,9 @@ extern                                  "C" {
     }
 
     if (pTrxn) {
+      OAILOG_DEBUG (LOG_GTPV2C,  "Received new Rx transaction %p, Head %p, Next %p\n", pTrxn,
+        	gpGtpv2cTrxnPool, (gpGtpv2cTrxnPool) ? gpGtpv2cTrxnPool->next : "null");
+
       pTrxn->pStack = thiz;
       pTrxn->maxRetries = 2;
       pTrxn->t3Timer = 2;
@@ -332,7 +339,7 @@ extern                                  "C" {
     }
 
     if (pTrxn)
-      OAILOG_DEBUG (LOG_GTPV2C,  "Created outstanding RX transaction %p\n", pTrxn);
+      OAILOG_DEBUG (LOG_GTPV2C,  "Created outstanding RX transaction %p with seqNum %d \n", pTrxn, seqNum);
 
     return (pTrxn);
   }
@@ -363,10 +370,15 @@ extern                                  "C" {
       NW_ASSERT (NW_OK == rc);
     }
 
-    OAILOG_DEBUG (LOG_GTPV2C,  "Purging  transaction %p\n", thiz);
+    OAILOG_DEBUG (LOG_GTPV2C,  "Purging  transaction %p with seqNum %d. (before) Head %p, Next %p. \n", thiz, thiz->seqNum,
+    		gpGtpv2cTrxnPool, (gpGtpv2cTrxnPool) ? gpGtpv2cTrxnPool->next: 0);
     thiz->next = gpGtpv2cTrxnPool;
     gpGtpv2cTrxnPool = thiz;
     *pthiz = NULL;
+
+    OAILOG_DEBUG (LOG_GTPV2C,  "After purging  transaction %p, Head %p, Next %p\n", thiz,
+    		gpGtpv2cTrxnPool, (gpGtpv2cTrxnPool) ? gpGtpv2cTrxnPool->next : "null");
+
     return rc;
   }
 

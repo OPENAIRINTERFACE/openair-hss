@@ -498,11 +498,16 @@ static esm_cause_t _modify_eps_bearer_context_t3486_handler (nas_esm_proc_t * es
      * Create a new ESM-Information request and restart the timer.
      * Keep the ESM transaction.
      */
-
     pdn_context_t * pdn_context = NULL;
     mme_app_get_pdn_context(esm_base_proc->ue_id, esm_proc_bearer_context->pdn_cid,
         esm_proc_bearer_context->linked_ebi, NULL , &pdn_context);
     if(pdn_context){
+      /** Check the default bearer status status--> Should be ACTIVE. */
+      bearer_context_new_t * default_bc = mme_app_get_session_bearer_context(pdn_context, pdn_context->default_ebi);
+      if(default_bc && !(default_bc->bearer_state & BEARER_STATE_ACTIVE)){
+    	  esm_base_proc->retx_count -= 1;
+    	  OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_REACTIVATION_REQUESTED);
+      }
       bearer_context_new_t * bearer_context = mme_app_get_session_bearer_context(pdn_context, esm_proc_bearer_context->bearer_ebi);
       if(bearer_context){
         /* Resend the message and restart the timer. */

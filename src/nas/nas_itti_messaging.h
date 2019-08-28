@@ -120,6 +120,9 @@ void nas_itti_s11_bearer_resource_cmd (
   const traffic_flow_template_t * const tad,
   const flow_qos_t              * const flow_qos);
 
+void nas_itti_paging_due_signaling (
+  const mme_ue_s1ap_id_t  ue_id);
+
 void nas_itti_establish_cnf(
   const mme_ue_s1ap_id_t ue_idP,
   const nas_error_code_t error_codeP,

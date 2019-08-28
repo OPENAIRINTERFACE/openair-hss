@@ -50,6 +50,7 @@ MESSAGE_DEF(NAS_PDN_CONNECTIVITY_RSP,           MESSAGE_PRIORITY_MED,   itti_nas
 MESSAGE_DEF(NAS_PDN_CONFIG_RSP,                 MESSAGE_PRIORITY_MED,   itti_nas_pdn_config_rsp_t,       nas_pdn_config_rsp)
 MESSAGE_DEF(NAS_PDN_CONFIG_FAIL,                MESSAGE_PRIORITY_MED,   itti_nas_pdn_config_fail_t,      nas_pdn_config_fail)
 MESSAGE_DEF(NAS_SIGNALLING_CONNECTION_REL_IND,  MESSAGE_PRIORITY_MED,   itti_nas_signalling_connection_rel_ind_t, nas_signalling_connection_rel_ind)
+MESSAGE_DEF(NAS_PAGING_DUE_SIGNALING_IND     ,  MESSAGE_PRIORITY_MED,   itti_nas_paging_due_signaling_ind_t 	,  nas_paging_due_signaling_ind)
 
 /** Dedicated Bearer Messaging. */
 MESSAGE_DEF(NAS_RETRY_BEARER_CTX_PROC_IND     , MESSAGE_PRIORITY_MED, itti_nas_retry_bearer_ctx_proc_ind_t     ,  nas_retry_bearer_ctx_proc_ind)

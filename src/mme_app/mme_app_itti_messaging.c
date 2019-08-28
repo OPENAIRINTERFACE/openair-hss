@@ -554,7 +554,7 @@ void mme_app_send_s1ap_mme_configuration_transfer(
 //    if(registered_pdn_ctx){
 //      bearer_context_t * bearer_context = NULL;
 //      RB_FOREACH (bearer_context, SessionBearers, &registered_pdn_ctx->session_bearers) {
-//        if(bearer_context->bearer_state == BEARER_STATE_ACTIVE){
+//        if(bearer_context->bearer_state & BEARER_STATE_ACTIVE){
 //          /** Continue to next pdn. */
 //          continue;
 //        }else{

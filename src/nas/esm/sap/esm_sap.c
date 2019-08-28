@@ -379,6 +379,13 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
       msg->ue_id = esm_base_proc->ue_id;
       msg->is_attach_tau = esm_base_proc->type == ESM_PROC_PDN_CONTEXT ? ((nas_esm_proc_pdn_connectivity_t*)esm_base_proc)->is_attach : false;
       msg->esm_cause = esm_base_proc->timeout_notif(esm_base_proc, &esm_resp_msg );
+      /** Check if the cause is due idle mode, if so trigger paging (counter should not be incremented). */
+      if(msg->esm_cause == ESM_CAUSE_REACTIVATION_REQUESTED){
+    	  OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Timer expired but received message incompatility error for transaction (type=%d, ue_id=" MME_UE_S1AP_ID_FMT "), " "retransmission counter = %d. "
+    			  "Triggering paging.\n", esm_base_proc->type, esm_base_proc->ue_id, esm_base_proc->retx_count);
+    	  nas_itti_paging_due_signaling(msg->ue_id);
+		  DevAssert(!esm_resp_msg.header.message_type);
+      }
     }
   }
   break;

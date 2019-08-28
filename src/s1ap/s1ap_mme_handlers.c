@@ -1034,7 +1034,10 @@ s1ap_mme_handle_ue_context_release_complete (
   S1AP_UE_CONTEXT_RELEASE_COMPLETE (message_p).enb_ue_s1ap_id = ueContextReleaseComplete_p->eNB_UE_S1AP_ID;
   S1AP_UE_CONTEXT_RELEASE_COMPLETE (message_p).enb_id         = ue_ref_p->enb->enb_id;
   S1AP_UE_CONTEXT_RELEASE_COMPLETE (message_p).sctp_assoc_id  = ue_ref_p->enb->sctp_assoc_id;
-  DevAssert(ue_ref_p->s1_ue_state == S1AP_UE_WAITING_CRR);
+  if(ue_ref_p->s1_ue_state != S1AP_UE_WAITING_CRR){
+	  OAILOG_ERROR(LOG_S1AP, " UE " MME_UE_S1AP_ID_FMT " with enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT" not in WAITING_CRR state, but %d.. continuing \n",
+			  ue_ref_p->mme_ue_s1ap_id, ue_ref_p->enb_ue_s1ap_id, ue_ref_p->s1_ue_state);
+  }
   s1ap_remove_ue (ue_ref_p);
 
   MSC_LOG_TX_MESSAGE (MSC_S1AP_MME, MSC_MMEAPP_MME, NULL, 0, "0 S1AP_UE_CONTEXT_RELEASE_COMPLETE mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ", S1AP_UE_CONTEXT_RELEASE_COMPLETE (message_p).mme_ue_s1ap_id);

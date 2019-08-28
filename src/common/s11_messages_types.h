@@ -1490,7 +1490,6 @@ typedef struct itti_s11_downlink_data_notification_s {
   /* GTPv2-C specific parameters */
   void       	   *trxn;
   struct sockaddr  *peer_ip;
-  bool              signaling;
 }itti_s11_downlink_data_notification_t;
 
 //-----------------------------------------------------------------------------

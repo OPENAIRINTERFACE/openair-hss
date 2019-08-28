@@ -309,44 +309,51 @@ mme_app_pdn_process_session_creation(mme_ue_s1ap_id_t ue_id, imsi64_t imsi, mm_s
 
   OAILOG_FUNC_IN(LOG_MME_APP);
 
-  pdn_context_t    		 * pdn_context1 = NULL, * pdn_context = NULL;
+  pdn_context_t    		 /* * pdn_context1 = NULL, */ * pdn_context = NULL;
   ue_session_pool_t      * ue_session_pool = mme_ue_session_pool_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_session_pools, ue_id);
   if(!ue_session_pool) {
     OAILOG_WARNING(LOG_MME_APP, "No MME_APP UE session pool could be found for UE: " MME_UE_S1AP_ID_FMT " to process CSResp. \n", ue_id);
     OAILOG_FUNC_RETURN(LOG_MME_APP, RETURNerror);
   }
+//  /** Get the first unestablished PDN context from the UE context. */
+//  RB_FOREACH (pdn_context1, PdnContexts, &ue_session_pool->pdn_contexts) {
+//	for(int num_ebi = 0; num_ebi < bcs_created->num_bearer_context; num_ebi++){
+//	    if(pdn_context1->default_ebi == bcs_created->bearer_contexts[num_ebi].eps_bearer_id){
+//	      /** Found. */
+//	      pdn_context = pdn_context1;
+//	      break;
+//	    }
+//	}
+//	if(pdn_context)
+//		break;
+//  }
+
   /** Get the first unestablished PDN context from the UE context. */
-  RB_FOREACH (pdn_context1, PdnContexts, &ue_session_pool->pdn_contexts) {
-	for(int num_ebi = 0; num_ebi < bcs_created->num_bearer_context; num_ebi++){
-	    if(pdn_context1->default_ebi == bcs_created->bearer_contexts[num_ebi].eps_bearer_id){
-	      /** Found. */
-	      pdn_context = pdn_context1;
-	      break;
-	    }
-	}
-	if(pdn_context)
-		break;
+  RB_FOREACH (pdn_context, PdnContexts, &ue_session_pool->pdn_contexts) {
+    if(!pdn_context->s_gw_teid_s11_s4){
+      /** Found. */
+      break;
+    }
   }
-  if(!pdn_context){
+  if(!pdn_context || pdn_context->s_gw_teid_s11_s4){
     OAILOG_WARNING(LOG_MME_APP, "No unestablished PDN context could be found for UE: " MME_UE_S1AP_ID_FMT ". \n", ue_id);
     OAILOG_FUNC_RETURN(LOG_MME_APP, RETURNerror);
   }
+
   // LOCK_UE_CONTEXT
   /** Set the S11 FTEID for each PDN connection. */
   if(saegw_s11_fteid->teid)
 	  pdn_context->s_gw_teid_s11_s4 = saegw_s11_fteid->teid;
   if(!ue_session_pool->privates.fields.saegw_teid_s11)
-    ue_session_pool->privates.fields.saegw_teid_s11 = pdn_context->s_gw_teid_s11_s4;
-
+	  ue_session_pool->privates.fields.saegw_teid_s11 = pdn_context->s_gw_teid_s11_s4;
   if(pco){
-    if (!pdn_context->pco) {
-      pdn_context->pco = calloc(1, sizeof(protocol_configuration_options_t));
-    } else {
-      clear_protocol_configuration_options(pdn_context->pco);
-    }
-    copy_protocol_configuration_options(pdn_context->pco, pco);
+	  if (!pdn_context->pco) {
+		  pdn_context->pco = calloc(1, sizeof(protocol_configuration_options_t));
+	  } else {
+		  clear_protocol_configuration_options(pdn_context->pco);
+	  }
+	  copy_protocol_configuration_options(pdn_context->pco, pco);
   }
-
   if(saegw_s11_fteid->ipv4){
 	  ((struct sockaddr_in*)&pdn_context->s_gw_addr_s11_s4)->sin_addr.s_addr = saegw_s11_fteid->ipv4_address.s_addr;
 	  ((struct sockaddr_in*)&pdn_context->s_gw_addr_s11_s4)->sin_family = AF_INET;
@@ -354,6 +361,7 @@ mme_app_pdn_process_session_creation(mme_ue_s1ap_id_t ue_id, imsi64_t imsi, mm_s
 	  ((struct sockaddr_in6*)&pdn_context->s_gw_addr_s11_s4)->sin6_family = AF_INET6;
 	  memcpy(&((struct sockaddr_in6*)&pdn_context->s_gw_addr_s11_s4)->sin6_addr, &saegw_s11_fteid->ipv6_address, sizeof(saegw_s11_fteid->ipv6_address));
   }
+
   /** Check the received cause. */
   if(cause->cause_value != REQUEST_ACCEPTED && cause->cause_value != REQUEST_ACCEPTED_PARTIALLY){
     OAILOG_ERROR (LOG_MME_APP, "Received S11_CREATE_SESSION_RESPONSE REJECTION with cause value %d for ue " MME_UE_S1AP_ID_FMT "from S+P-GW. \n", cause->cause_value, ue_id);

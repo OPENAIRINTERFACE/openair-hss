@@ -521,6 +521,18 @@ void nas_itti_s11_bearer_resource_cmd (
 }
 
 //------------------------------------------------------------------------------
+void nas_itti_paging_due_signaling (
+  const mme_ue_s1ap_id_t  ue_id)
+{
+  OAILOG_FUNC_IN(LOG_NAS);
+  MessageDef                             *message_p = NULL;
+  message_p = itti_alloc_new_message(TASK_NAS_ESM, NAS_PAGING_DUE_SIGNALING_IND);
+  NAS_PAGING_DUE_SIGNALING_IND(message_p).ue_id = ue_id;
+  itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
+  OAILOG_FUNC_OUT(LOG_NAS);
+}
+
+//------------------------------------------------------------------------------
 void nas_itti_establish_cnf(
   const mme_ue_s1ap_id_t ue_idP,
   const nas_error_code_t error_codeP,

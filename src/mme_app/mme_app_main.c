@@ -161,6 +161,11 @@ void *mme_app_thread (void *args)
     }
     break;
 
+    case NAS_PAGING_DUE_SIGNALING_IND: {
+        mme_app_trigger_paging_due_signaling(NAS_PAGING_DUE_SIGNALING_IND (received_message_p).ue_id);
+    }
+    break;
+
     case NAS_ERAB_SETUP_REQ:{
       mme_app_handle_nas_erab_setup_req (&NAS_ERAB_SETUP_REQ (received_message_p));
     }

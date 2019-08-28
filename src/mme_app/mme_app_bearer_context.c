@@ -229,6 +229,11 @@ mme_app_register_dedicated_bearer_context(const mme_ue_s1ap_id_t ue_id, const es
     OAILOG_FUNC_RETURN (LOG_MME_APP, ESM_CAUSE_EPS_QOS_NOT_ACCEPTED);
   }
   /** Validate the TFT and packet filters don't have semantical errors.. */
+  if(!bc_tbc->tft){
+	  OAILOG_ERROR(LOG_NAS_EMM, "EMMCN-SAP  - " "Bearer context of CBR received for UE " MME_UE_S1AP_ID_FMT" with ebi %d has no TFT.\n",
+	        ue_id, bc_tbc->eps_bearer_id);
+	  OAILOG_FUNC_RETURN (LOG_MME_APP, ESM_CAUSE_SEMANTIC_ERROR_IN_THE_TFT_OPERATION);
+  }
   if(bc_tbc->tft->tftoperationcode != TRAFFIC_FLOW_TEMPLATE_OPCODE_CREATE_NEW_TFT){
     OAILOG_ERROR(LOG_NAS_EMM, "EMMCN-SAP  - " "EPS bearer context of CBR received for UE " MME_UE_S1AP_ID_FMT" could not be verified due erroneous TFT code %d. \n",
         ue_id, pdn_cid, linked_ebi, bc_tbc->tft->tftoperationcode);
@@ -640,7 +645,7 @@ mme_app_finalize_bearer_context(mme_ue_s1ap_id_t ue_id, const pdn_cid_t pdn_cid,
     if(esm_cause != ESM_CAUSE_SUCCESS){
       OAILOG_FUNC_RETURN (LOG_MME_APP, esm_cause);
     }
-    OAILOG_DEBUG(LOG_MME_APP, "Finalized the TFT of bearer (ebi=%d) for UE: " MME_UE_S1AP_ID_FMT ". \n", ue_id, bearer_context->ebi);
+    OAILOG_DEBUG(LOG_MME_APP, "Finalized the TFT of bearer (ebi=%d) for UE: " MME_UE_S1AP_ID_FMT ". \n", bearer_context->ebi, ue_id);
   }
   if(bearer_level_qos){
     /** Update the QCI. */
@@ -656,7 +661,7 @@ mme_app_finalize_bearer_context(mme_ue_s1ap_id_t ue_id, const pdn_cid_t pdn_cid,
     bearer_context->bearer_level_qos.pci = bearer_level_qos->pci;
     bearer_context->bearer_level_qos.pvi = bearer_level_qos->pvi;
     bearer_context->bearer_level_qos.pl  = bearer_level_qos->pl;
-    OAILOG_DEBUG(LOG_MME_APP, "Finalized the bearer level QoS of bearer (ebi=%d) for UE: " MME_UE_S1AP_ID_FMT ". \n", ue_id, bearer_context->ebi);
+    OAILOG_DEBUG(LOG_MME_APP, "Finalized the bearer level QoS of bearer (ebi=%d) for UE: " MME_UE_S1AP_ID_FMT ". \n", bearer_context->ebi, ue_id);
   }
   if(ambr){
     if(ambr->br_dl && ambr->br_ul){

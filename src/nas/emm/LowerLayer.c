@@ -387,11 +387,16 @@ int lowerlayer_activate_bearer_req (
 	  nas_emm_tau_proc_t * nas_proc_tau = get_nas_specific_procedure_tau(emm_data_context);
 	  if(nas_proc_tau) {
 		  OAILOG_INFO(LOG_NAS_EMM, "A TAU procedure is running for UE " MME_UE_S1AP_ID_FMT ". Triggering pending qos. \n", ue_id);
-		  nas_proc_tau->pending_qos = true;
-		  /** This may be an idle-TAU, so set the active flag (todo: here check glitches). */
-		  if(!nas_proc_tau->ies->eps_update_type.active_flag) {
-			  OAILOG_INFO(LOG_NAS_EMM, "Setting the active flag for TAU procedure for UE " MME_UE_S1AP_ID_FMT ". \n", ue_id);
-			  nas_proc_tau->ies->eps_update_type.active_flag = true;
+		  /** Only do this for DEREGISTERED state. */
+		  if(emm_data_context->_emm_fsm_state != EMM_COMMON_PROCEDURE_INITIATED){
+			  nas_proc_tau->pending_qos = true;
+			  /** This may be an idle-TAU, so set the active flag (todo: here check glitches). */
+			  if(!nas_proc_tau->ies->eps_update_type.active_flag) {
+				  OAILOG_INFO(LOG_NAS_EMM, "Setting the active flag for TAU procedure for UE " MME_UE_S1AP_ID_FMT ". \n", ue_id);
+				  nas_proc_tau->ies->eps_update_type.active_flag = true;
+			  }
+		  } else {
+			  OAILOG_INFO(LOG_NAS_EMM, "UE " MME_UE_S1AP_ID_FMT " is not in DEREGISTERED state, to late to set qos/active flag.. will do via paging. \n", ue_id);
 		  }
 	  } else {
 		  OAILOG_INFO(LOG_NAS_EMM, "No S10-TAU procedure is running for UE " MME_UE_S1AP_ID_FMT ", which is not in registered state. "
@@ -445,14 +450,19 @@ int lowerlayer_modify_bearer_req (
 	  /** Check if a TAU procedure is ongoing. Set the pending flag for pending QoS. */
 	  OAILOG_ERROR(LOG_NAS_EMM, "EMM context not in EMM_REGISTERED state for UE " MME_UE_S1AP_ID_FMT ". "
 				"Cannot modify bearers. \n", ue_id);
+	  /** Only do this for DEREGISTERED state. */
 	  /** Check for an EMM (idle TAU) or S10 handover procedure. */
 	  nas_emm_tau_proc_t * nas_proc_tau = get_nas_specific_procedure_tau(emm_data_context);
 	  if(nas_proc_tau) {
-		  OAILOG_INFO(LOG_NAS_EMM, "A TAU procedure is running for UE " MME_UE_S1AP_ID_FMT ". Triggering pending qos. \n", ue_id);
-		  nas_proc_tau->pending_qos = true;
-		  if(!nas_proc_tau->ies->eps_update_type.active_flag) {
-			  OAILOG_INFO(LOG_NAS_EMM, "Setting the active flag for TAU procedure for UE " MME_UE_S1AP_ID_FMT ". \n", ue_id);
-			  nas_proc_tau->ies->eps_update_type.active_flag = true;
+		  if(emm_data_context->_emm_fsm_state != EMM_COMMON_PROCEDURE_INITIATED){
+			  nas_proc_tau->pending_qos = true;
+			  /** This may be an idle-TAU, so set the active flag (todo: here check glitches). */
+			  if(!nas_proc_tau->ies->eps_update_type.active_flag) {
+				  OAILOG_INFO(LOG_NAS_EMM, "Setting the active flag for TAU procedure for UE " MME_UE_S1AP_ID_FMT ". \n", ue_id);
+				  nas_proc_tau->ies->eps_update_type.active_flag = true;
+			  }
+		  } else {
+			  OAILOG_INFO(LOG_NAS_EMM, "UE " MME_UE_S1AP_ID_FMT " is not in DEREGISTERED state, to late to set qos/active flag.. will do via paging. \n", ue_id);
 		  }
 	  } else {
 		  OAILOG_INFO(LOG_NAS_EMM, "No S10-TAU procedure is running for UE " MME_UE_S1AP_ID_FMT ", which is not in registered state. "
@@ -511,11 +521,15 @@ int lowerlayer_deactivate_bearer_req (
 	  /** Check for an EMM (idle TAU) or S10 handover procedure. */
 	  nas_emm_tau_proc_t * nas_proc_tau = get_nas_specific_procedure_tau(emm_data_context);
 	  if(nas_proc_tau) {
-		  OAILOG_INFO(LOG_NAS_EMM, "A TAU procedure is running for UE " MME_UE_S1AP_ID_FMT ". Triggering pending qos. \n", ue_id);
-		  nas_proc_tau->pending_qos = true;
-		  if(!nas_proc_tau->ies->eps_update_type.active_flag) {
-			  OAILOG_INFO(LOG_NAS_EMM, "Setting the active flag for TAU procedure for UE " MME_UE_S1AP_ID_FMT ". \n", ue_id); /**< Triggers an MBR. */
-			  nas_proc_tau->ies->eps_update_type.active_flag = true;
+		  if(emm_data_context->_emm_fsm_state != EMM_COMMON_PROCEDURE_INITIATED){
+			  nas_proc_tau->pending_qos = true;
+			  /** This may be an idle-TAU, so set the active flag (todo: here check glitches). */
+			  if(!nas_proc_tau->ies->eps_update_type.active_flag) {
+				  OAILOG_INFO(LOG_NAS_EMM, "Setting the active flag for TAU procedure for UE " MME_UE_S1AP_ID_FMT ". \n", ue_id);
+				  nas_proc_tau->ies->eps_update_type.active_flag = true;
+			  }
+		  } else {
+			  OAILOG_INFO(LOG_NAS_EMM, "UE " MME_UE_S1AP_ID_FMT " is not in DEREGISTERED state, to late to set qos/active flag.. will do via paging. \n", ue_id);
 		  }
 	  } else {
 		  OAILOG_INFO(LOG_NAS_EMM, "No S10-TAU procedure is running for UE " MME_UE_S1AP_ID_FMT ", which is not in registered state. "

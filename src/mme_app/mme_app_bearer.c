@@ -196,7 +196,7 @@ mme_app_handle_nas_pdn_disconnect_req (
 //
 //  bearer_context_t * bearer_context_to_deactivate = NULL;
 //  RB_FOREACH (bearer_context_to_deactivate, BearerPool, &ue_context->bearer_pool) {
-//    DevAssert(bearer_context_to_deactivate->bearer_state == BEARER_STATE_ACTIVE); // Cannot be in IDLE mode?
+//    DevAssert(bearer_context_to_deactivate->bearer_state & BEARER_STATE_ACTIVE); // Cannot be in IDLE mode?
 //  }
 
 //  mme_app_get_pdn_context(ue_context, nas_pdn_disconnect_req_pP->pdn_cid, nas_pdn_disconnect_req_pP->default_ebi, nas_pdn_disconnect_req_pP->apn,  &pdn_context);
@@ -282,9 +282,19 @@ mme_app_handle_conn_est_cnf (
   pdn_context_t * established_pdn = NULL;
   RB_FOREACH (established_pdn, PdnContexts, &ue_session_pool->pdn_contexts) {
     DevAssert(established_pdn);
-    bearer_context_new_t * bc_session = NULL;
-    STAILQ_FOREACH(bc_session, &established_pdn->session_bearers, entries) { // todo: @ handover (idle mode tau) this should give us the default ebi!
-      if(bc_session){ // todo: check for error cases in handover.. if this can ever be null..
+    bearer_context_new_t * bc_context = NULL;
+    STAILQ_FOREACH(bc_context, &established_pdn->session_bearers, entries) { // todo: @ handover (idle mode tau) this should give us the default ebi!
+      if(bc_context){ // todo: check for error cases in handover.. if this can ever be null..
+    	  /** Only add ESM active bearers (CBR might be pending). */
+    	  if(ue_context->privates.fields.mm_state == UE_REGISTERED){
+    		  if(bc_context->ebi != established_pdn->default_ebi){
+    			  if(bc_context->esm_ebr_context.status != ESM_EBR_ACTIVE){
+    				  OAILOG_WARNING(LOG_MME_APP, "Skipping dedicated bearer with ebi %d from establishment for UE " MME_UE_S1AP_ID_FMT", since ESM is not in ACTIVE state, but %d.\n",
+    						  bc_context->ebi, ue_context->privates.mme_ue_s1ap_id, bc_context->esm_ebr_context.status);
+    				  continue;
+    			  }
+    		  }
+    	  }
 //        if ((BEARER_STATE_SGW_CREATED  || BEARER_STATE_S1_RELEASED) & bc_session->bearer_state) {    /**< It could be in IDLE mode. */
           establishment_cnf_p->e_rab_id[establishment_cnf_p->no_of_e_rabs]                                 = bc_session->ebi ;//+ EPS_BEARER_IDENTITY_FIRST;
           establishment_cnf_p->e_rab_level_qos_qci[establishment_cnf_p->no_of_e_rabs]                      = bc_session->bearer_level_qos.qci;
@@ -655,21 +665,38 @@ mme_app_handle_bearer_ctx_retry(mme_ue_s1ap_id_t ue_id){
   /** Before retrying, we check if the default bearer has been activated (MBR) procedure completed). */
 
   if(s11_proc){
+	  if(s11_proc->proc.in_progress){
+		  /** Check if the number of unhandled bearers is 0 (might not be sent due to waiting of MBR). */
+		  if(s11_proc->num_bearers_unhandled){
+			  OAILOG_INFO(LOG_MME_APP, "S11 procedure with type %d for UE " MME_UE_S1AP_ID_FMT " is already as in progress (and still some bearers left unhandled). Not retriggering S11 procedure.\n",
+					  s11_proc->proc.type, ue_id);
+			  OAILOG_FUNC_OUT (LOG_MME_APP);
+		  }
+	  }
 	  switch(s11_proc->type){
 	  case MME_APP_S11_PROC_TYPE_CREATE_BEARER:{
 		  /** Check if the default bearer is active, in any case. */
 		  mme_app_s11_proc_create_bearer_t * s11_proc_cbr = (mme_app_s11_proc_create_bearer_t *)s11_proc;
+		  /** Check if any cause value is set. */
 		  pdn_context_t * pdn_context = NULL;
 		  mme_app_get_pdn_context(ue_id, s11_proc_cbr->pci, s11_proc_cbr->linked_ebi, NULL, &pdn_context);
 		  if(pdn_context) {
 			  bearer_context_new_t * default_bc = mme_app_get_session_bearer_context(pdn_context, s11_proc_cbr->linked_ebi);
 			  if(default_bc) {
-			    if(default_bc->bearer_state == BEARER_STATE_ACTIVE) {
+			    if(default_bc->bearer_state & BEARER_STATE_ACTIVE) {
+			      if(!s11_proc->num_bearers_unhandled) {
+			    	  mme_app_send_s11_create_bearer_rsp(ue_session_pool->privates.fields.mme_teid_s11,
+			    			  ue_session_pool->privates.fields.saegw_teid_s11, 0,
+							  s11_proc_cbr->proc.s11_trxn, s11_proc_cbr->bcs_tbc);
+			    	  OAILOG_WARNING(LOG_MME_APP, "S11-CBR procedure for UE " MME_UE_S1AP_ID_FMT " had no unhandled bearers left. Retriggered response after MBResp & removing procedure.\n",ue_id);
+			    	  mme_app_delete_s11_procedure_create_bearer(ue_session_pool);
+			    	  OAILOG_FUNC_OUT (LOG_MME_APP);
+			      }
 			  	  message_p = itti_alloc_new_message (TASK_MME_APP, NAS_ACTIVATE_EPS_BEARER_CTX_REQ);
 			  	  AssertFatal (message_p , "itti_alloc_new_message Failed");
 
 			  	  /** Reset the procedure. */
-			  	  s11_proc_cbr->num_bearers_unhandled = s11_proc_cbr->bcs_tbc->num_bearer_context;
+			  	  s11_proc_cbr->proc.num_bearers_unhandled = s11_proc_cbr->bcs_tbc->num_bearer_context;
 
 			  	  itti_nas_activate_eps_bearer_ctx_req_t *nas_activate_eps_bearer_ctx_req = &message_p->ittiMsg.nas_activate_eps_bearer_ctx_req;
 			  	  nas_activate_eps_bearer_ctx_req->bcs_to_be_created_ptr = (uintptr_t)s11_proc_cbr->bcs_tbc;
@@ -698,11 +725,20 @@ mme_app_handle_bearer_ctx_retry(mme_ue_s1ap_id_t ue_id){
 		  if(pdn_context) {
 			  bearer_context_new_t * default_bc = mme_app_get_session_bearer_context(pdn_context, s11_proc_ubr->linked_ebi);
 			  if(default_bc) {
-				  if(default_bc->bearer_state == BEARER_STATE_ACTIVE) {
+				  if(default_bc->bearer_state & BEARER_STATE_ACTIVE) {
+				      if(!s11_proc->num_bearers_unhandled) {
+				    	  mme_app_send_s11_update_bearer_rsp(ue_session_pool->privates.fields.mme_teid_s11,
+				    			  ue_session_pool->privates.fields.saegw_teid_s11, 0,
+								  s11_proc_ubr->proc.s11_trxn, s11_proc_ubr->bcs_tbu);
+				    	  OAILOG_WARNING(LOG_MME_APP, "S11-UBR procedure for UE " MME_UE_S1AP_ID_FMT " had no unhandled bearers left. Retriggered response after MBResp & removing procedure.\n",ue_id);
+				    	  mme_app_delete_s11_procedure_update_bearer(ue_session_pool);
+				    	  OAILOG_FUNC_OUT (LOG_MME_APP);
+				      }
+
 					  message_p = itti_alloc_new_message (TASK_MME_APP, NAS_MODIFY_EPS_BEARER_CTX_REQ);
 					  AssertFatal (message_p , "itti_alloc_new_message Failed");
 					  /** Reset the procedure. */
-					  s11_proc_ubr->num_bearers_unhandled = s11_proc_ubr->bcs_tbu->num_bearer_context;
+					  s11_proc_ubr->proc.num_bearers_unhandled = s11_proc_ubr->bcs_tbu->num_bearer_context;
 
 					  itti_nas_modify_eps_bearer_ctx_req_t *nas_modify_eps_bearer_ctx_req = &message_p->ittiMsg.nas_modify_eps_bearer_ctx_req;
 					  nas_modify_eps_bearer_ctx_req->bcs_to_be_updated_ptr = (uintptr_t)s11_proc_ubr->bcs_tbu;
@@ -731,11 +767,20 @@ mme_app_handle_bearer_ctx_retry(mme_ue_s1ap_id_t ue_id){
 				  /** Check the default bearer of it. */
 				  bearer_context_new_t * default_bearer = NULL;
 				  mme_app_get_session_bearer_context_from_all(ue_session_pool, ded_bc->linked_ebi, &default_bearer);
-				  if(default_bearer->bearer_state == BEARER_STATE_ACTIVE) {
+				  if(default_bearer->bearer_state & BEARER_STATE_ACTIVE) {
+					  if(!s11_proc->num_bearers_unhandled) {
+						  mme_app_send_s11_delete_bearer_rsp(ue_session_pool->privates.fields.mme_teid_s11,
+								  ue_session_pool->privates.fields.saegw_teid_s11, REQUEST_ACCEPTED,
+								  s11_proc_dbr->proc.s11_trxn, &s11_proc_dbr->ebis);
+						  OAILOG_WARNING(LOG_MME_APP, "S11-DBR procedure for UE " MME_UE_S1AP_ID_FMT " had no unhandled bearers left. Retriggered response after MBResp & removing procedure.\n",ue_id);
+						  mme_app_delete_s11_procedure_delete_bearer(ue_session_pool);
+						  OAILOG_FUNC_OUT (LOG_MME_APP);
+					  }
+
 					  message_p = itti_alloc_new_message (TASK_MME_APP, NAS_DEACTIVATE_EPS_BEARER_CTX_REQ);
 					  AssertFatal (message_p , "itti_alloc_new_message Failed");
 					  /** Reset the procedure. */
-					  s11_proc_dbr->num_bearers_unhandled = s11_proc_dbr->ebis.num_ebi;
+					  s11_proc_dbr->proc.num_bearers_unhandled = s11_proc_dbr->ebis.num_ebi;
 
 					  itti_nas_deactivate_eps_bearer_ctx_req_t *nas_deactivate_eps_bearer_ctx_req = &message_p->ittiMsg.nas_deactivate_eps_bearer_ctx_req;
 					  nas_deactivate_eps_bearer_ctx_req->ue_id              = ue_session_pool->privates.mme_ue_s1ap_id;
@@ -811,7 +856,8 @@ mme_app_handle_nas_erab_setup_req (itti_nas_erab_setup_req_t * const itti_nas_er
      * Check if there is a dedicated bearer procedure ongoing.
      * If not this is multi apn. In that case check the new resulting UE-AMBR.
      */
-    if(!mme_app_get_s11_procedure_create_bearer(ue_session_pool)){
+    mme_app_s11_proc_create_bearer_t *s11_proc_cbr = NULL;
+    if(!(s11_proc_cbr = mme_app_get_s11_procedure_create_bearer(ue_session_pool))){
       /** No S11 procedure --> multi APN. */
       ambr_t total_apn_ambr = mme_app_total_p_gw_apn_ambr(ue_session_pool);
       /**
@@ -825,6 +871,19 @@ mme_app_handle_nas_erab_setup_req (itti_nas_erab_setup_req_t * const itti_nas_er
       /** Will recalculate these values and set them when the response arrives. */
     }else {
       /** Not setting the updated UE-AMBR value for dedicated bearers. */
+      /** Check the default bearer status. */
+      bearer_context_new_t * default_bc = NULL;
+      mme_app_get_session_bearer_context_from_all(ue_session_pool, bearer_context->linked_ebi, &default_bc);
+      if(!default_bc || !(default_bc->bearer_state & BEARER_STATE_ACTIVE)){
+    	  OAILOG_ERROR( LOG_MME_APP, "Not triggering dedicated bearer context with ebi %d for UE " MME_UE_S1AP_ID_FMT ", since default bearer is not yet active. \n",
+    			  bearer_context->ebi, ue_session_pool->privates.mme_ue_s1ap_id);
+    	  OAILOG_FUNC_OUT (LOG_MME_APP);
+      }
+      if(!s11_proc_cbr->proc.proc.in_progress){
+    	  /**< The first time, it will always be sent with an E-RAB message (not downlink NAS). */
+    	  OAILOG_INFO( LOG_MME_APP, "Setting S11 Create Bearer process for UE " MME_UE_S1AP_ID_FMT " as in progress. \n", ue_session_pool->privates.mme_ue_s1ap_id);
+    	  s11_proc_cbr->proc.proc.in_progress = true;
+      }
     }
     MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S1AP_MME, NULL, 0, "0 S1AP_E_RAB_SETUP_REQ ue id " MME_UE_S1AP_ID_FMT " ebi %u teid " TEID_FMT " ",
         ue_context->privates.mme_ue_s1ap_id,
@@ -858,42 +917,50 @@ mme_app_handle_nas_erab_modify_req (itti_nas_erab_modify_req_t * const itti_nas_
   mme_app_get_session_bearer_context_from_all(ue_session_pool, itti_nas_erab_modify_req->ebi, &bearer_context);
 
   if (bearer_context) {
-    MessageDef  *message_p = itti_alloc_new_message (TASK_MME_APP, S1AP_E_RAB_MODIFY_REQ);
-    itti_s1ap_e_rab_modify_req_t *s1ap_e_rab_modify_req = &message_p->ittiMsg.s1ap_e_rab_modify_req;
+    /** Check if the bearer is active. */
+	/**< The first time, it will always be sent with an E-RAB message (not downlink NAS). */
+	if(bearer_context->bearer_state & BEARER_STATE_ACTIVE){
+		if(!s11_proc_update_bearer->proc.proc.in_progress){
+			OAILOG_INFO( LOG_MME_APP, "Setting S11 Update Bearer process for UE " MME_UE_S1AP_ID_FMT " as in progress. \n", ue_session_pool->privates.mme_ue_s1ap_id);
+			s11_proc_update_bearer->proc.proc.in_progress = true;
+		}
+	    MessageDef  *message_p = itti_alloc_new_message (TASK_MME_APP, S1AP_E_RAB_MODIFY_REQ);
+	    itti_s1ap_e_rab_modify_req_t *s1ap_e_rab_modify_req = &message_p->ittiMsg.s1ap_e_rab_modify_req;
 
-    s1ap_e_rab_modify_req->mme_ue_s1ap_id = itti_nas_erab_modify_req->ue_id;
-    // E-RAB to Be Setup List
-    s1ap_e_rab_modify_req->e_rab_to_be_modified_list.no_of_items = 1;
-    s1ap_e_rab_modify_req->e_rab_to_be_modified_list.item[0].e_rab_id = bearer_context->ebi;
-    s1ap_e_rab_modify_req->e_rab_to_be_modified_list.item[0].e_rab_level_qos_parameters.allocation_and_retention_priority.pre_emption_capability =
-        bearer_context->bearer_level_qos.pci == 0 ? 1 : 0;
-    s1ap_e_rab_modify_req->e_rab_to_be_modified_list.item[0].e_rab_level_qos_parameters.allocation_and_retention_priority.pre_emption_vulnerability =
-        bearer_context->bearer_level_qos.pvi == 0 ? 1 : 0;
-    s1ap_e_rab_modify_req->e_rab_to_be_modified_list.item[0].e_rab_level_qos_parameters.allocation_and_retention_priority.priority_level =
-        bearer_context->bearer_level_qos.pl == 0 ? 1 : 0;
-    s1ap_e_rab_modify_req->e_rab_to_be_modified_list.item[0].e_rab_level_qos_parameters.gbr_qos_information.e_rab_maximum_bit_rate_downlink    = itti_nas_erab_modify_req->mbr_dl;
-    s1ap_e_rab_modify_req->e_rab_to_be_modified_list.item[0].e_rab_level_qos_parameters.gbr_qos_information.e_rab_maximum_bit_rate_uplink      = itti_nas_erab_modify_req->mbr_ul;
-    s1ap_e_rab_modify_req->e_rab_to_be_modified_list.item[0].e_rab_level_qos_parameters.gbr_qos_information.e_rab_guaranteed_bit_rate_downlink = itti_nas_erab_modify_req->gbr_dl;
-    s1ap_e_rab_modify_req->e_rab_to_be_modified_list.item[0].e_rab_level_qos_parameters.gbr_qos_information.e_rab_guaranteed_bit_rate_uplink   = itti_nas_erab_modify_req->gbr_ul;
-    s1ap_e_rab_modify_req->e_rab_to_be_modified_list.item[0].e_rab_level_qos_parameters.qci = bearer_context->bearer_level_qos.qci;
+	    s1ap_e_rab_modify_req->mme_ue_s1ap_id = itti_nas_erab_modify_req->ue_id;
+	    // E-RAB to Be Setup List
+	    s1ap_e_rab_modify_req->e_rab_to_be_modified_list.no_of_items = 1;
+	    s1ap_e_rab_modify_req->e_rab_to_be_modified_list.item[0].e_rab_id = bearer_context->ebi;
+	    s1ap_e_rab_modify_req->e_rab_to_be_modified_list.item[0].e_rab_level_qos_parameters.allocation_and_retention_priority.pre_emption_capability =
+	        bearer_context->bearer_level_qos.pci == 0 ? 1 : 0;
+	    s1ap_e_rab_modify_req->e_rab_to_be_modified_list.item[0].e_rab_level_qos_parameters.allocation_and_retention_priority.pre_emption_vulnerability =
+	        bearer_context->bearer_level_qos.pvi == 0 ? 1 : 0;
+	    s1ap_e_rab_modify_req->e_rab_to_be_modified_list.item[0].e_rab_level_qos_parameters.allocation_and_retention_priority.priority_level =
+	        bearer_context->bearer_level_qos.pl == 0 ? 1 : 0;
+	    s1ap_e_rab_modify_req->e_rab_to_be_modified_list.item[0].e_rab_level_qos_parameters.gbr_qos_information.e_rab_maximum_bit_rate_downlink    = itti_nas_erab_modify_req->mbr_dl;
+	    s1ap_e_rab_modify_req->e_rab_to_be_modified_list.item[0].e_rab_level_qos_parameters.gbr_qos_information.e_rab_maximum_bit_rate_uplink      = itti_nas_erab_modify_req->mbr_ul;
+	    s1ap_e_rab_modify_req->e_rab_to_be_modified_list.item[0].e_rab_level_qos_parameters.gbr_qos_information.e_rab_guaranteed_bit_rate_downlink = itti_nas_erab_modify_req->gbr_dl;
+	    s1ap_e_rab_modify_req->e_rab_to_be_modified_list.item[0].e_rab_level_qos_parameters.gbr_qos_information.e_rab_guaranteed_bit_rate_uplink   = itti_nas_erab_modify_req->gbr_ul;
+	    s1ap_e_rab_modify_req->e_rab_to_be_modified_list.item[0].e_rab_level_qos_parameters.qci = bearer_context->bearer_level_qos.qci;
 
-    /**
-     * UE AMBR: We may have new authorized values in the procedure. Setting them (may be lower or higher).
-     */
-    s1ap_e_rab_modify_req->ue_aggregate_maximum_bit_rate_present = true;
-    s1ap_e_rab_modify_req->ue_aggregate_maximum_bit_rate.dl = s11_proc_update_bearer->new_used_ue_ambr.br_dl;
-    s1ap_e_rab_modify_req->ue_aggregate_maximum_bit_rate.ul = s11_proc_update_bearer->new_used_ue_ambr.br_ul;
+	    /**
+	     * UE AMBR: We may have new authorized values in the procedure. Setting them (may be lower or higher).
+	     */
+	    s1ap_e_rab_modify_req->ue_aggregate_maximum_bit_rate_present = true;
+	    s1ap_e_rab_modify_req->ue_aggregate_maximum_bit_rate.dl = s11_proc_update_bearer->new_used_ue_ambr.br_dl;
+	    s1ap_e_rab_modify_req->ue_aggregate_maximum_bit_rate.ul = s11_proc_update_bearer->new_used_ue_ambr.br_ul;
 
-    /** This field is mandatory, always set it. */
-    s1ap_e_rab_modify_req->e_rab_to_be_modified_list.item[0].nas_pdu = itti_nas_erab_modify_req->nas_msg;
-    itti_nas_erab_modify_req->nas_msg = NULL;
+	    /** This field is mandatory, always set it. */
+	    s1ap_e_rab_modify_req->e_rab_to_be_modified_list.item[0].nas_pdu = itti_nas_erab_modify_req->nas_msg;
+	    itti_nas_erab_modify_req->nas_msg = NULL;
 
-    MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S1AP_MME, NULL, 0, "0 S1AP_E_RAB_MODIFY_REQ ue id " MME_UE_S1AP_ID_FMT " ebi %u teid " TEID_FMT " ",
-        itti_nas_erab_modify_req->ue_id,
-        s1ap_e_rab_modify_req->e_rab_to_be_modified_list.item[0].e_rab_id,
-        s1ap_e_rab_modify_req->e_rab_to_be_modified_list.item[0].gtp_teid);
-    int to_task = (RUN_MODE_SCENARIO_PLAYER == mme_config.run_mode) ? TASK_MME_SCENARIO_PLAYER:TASK_S1AP;
-    itti_send_msg_to_task (to_task, INSTANCE_DEFAULT, message_p);
+	    MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S1AP_MME, NULL, 0, "0 S1AP_E_RAB_MODIFY_REQ ue id " MME_UE_S1AP_ID_FMT " ebi %u teid " TEID_FMT " ",
+	        itti_nas_erab_modify_req->ue_id,
+	        s1ap_e_rab_modify_req->e_rab_to_be_modified_list.item[0].e_rab_id,
+	        s1ap_e_rab_modify_req->e_rab_to_be_modified_list.item[0].gtp_teid);
+	    int to_task = (RUN_MODE_SCENARIO_PLAYER == mme_config.run_mode) ? TASK_MME_SCENARIO_PLAYER:TASK_S1AP;
+	    itti_send_msg_to_task (to_task, INSTANCE_DEFAULT, message_p);
+	}
   } else {
     OAILOG_DEBUG (LOG_MME_APP, "No bearer context found ue " MME_UE_S1AP_ID_FMT  " ebi %u\n", itti_nas_erab_modify_req->ue_id, itti_nas_erab_modify_req->ebi);
   }
@@ -910,6 +977,25 @@ mme_app_handle_nas_erab_release_req (mme_ue_s1ap_id_t ue_id, ebi_t ebi, bstring 
   if (!ue_session_pool) {
     OAILOG_ERROR (LOG_MME_APP, "UE context doesn't exist for UE " MME_UE_S1AP_ID_FMT "\n", ue_id);
     OAILOG_FUNC_OUT (LOG_MME_APP);
+  }
+
+  mme_app_s11_proc_delete_bearer_t * s11_proc_delete_bearer = mme_app_get_s11_procedure_delete_bearer(ue_session_pool);
+  if(s11_proc_delete_bearer){
+	  /**
+	   * Check if it is a dedicated bearer procedure.
+	   * The first time, it will always be sent with an E-RAB message (not downlink NAS).
+	   */
+	  bearer_context_new_t * default_bc = NULL;
+	  mme_app_get_session_bearer_context_from_all(ue_session_pool, ebi, &default_bc);
+	  if(!default_bc || (default_bc->ebi == ebi) || !(default_bc->bearer_state & BEARER_STATE_ACTIVE)){
+		OAILOG_ERROR( LOG_MME_APP, "Not continuing to remove D11 Delete Bearer process for UE " MME_UE_S1AP_ID_FMT " for ebi %d, since default bearer is not active yet. \n",
+				ue_session_pool->privates.mme_ue_s1ap_id, ebi);
+		OAILOG_FUNC_OUT (LOG_MME_APP);
+	  }
+	  if(!s11_proc_delete_bearer->proc.proc.in_progress){
+		  OAILOG_INFO( LOG_MME_APP, "Setting S11 Delete Bearer process for UE " MME_UE_S1AP_ID_FMT " as in progress. \n", ue_session_pool->privates.mme_ue_s1ap_id);
+		  s11_proc_delete_bearer->proc.proc.in_progress = true;
+	  }
   }
 
   /** Send it anyway. */
@@ -1318,6 +1404,12 @@ mme_app_handle_modify_bearer_resp (
 					  current_bearer_p->ebi, ue_context->privates.mme_ue_s1ap_id);
     		  continue;
     	}
+    	/* If the ESM context is not active, assume an ESM/S11 dedicated bearer procedure is running, skip it, too. */
+    	if(current_bearer_p->esm_ebr_context.status != ESM_EBR_ACTIVE){
+    		  OAILOG_WARNING(LOG_MME_APP, "Not triggering a delete bearer request for non-established dedicated bearer %d for UE: " MME_UE_S1AP_ID_FMT ", since ESM status is not ACTIVE but %d.\n",
+    				  current_bearer_p->ebi, ue_context->privates.mme_ue_s1ap_id, current_bearer_p->esm_ebr_context.status);
+    		  continue;
+    	}
         /** Trigger a Delete Bearer Command. */
         ebi_list.ebis[ebi_list.num_ebi] = current_bearer_p->ebi;
         ebi_list.num_ebi++;
@@ -1403,21 +1495,17 @@ int
 mme_app_handle_downlink_data_notification(const itti_s11_downlink_data_notification_t * const saegw_dl_data_ntf_pP){
   struct ue_context_s                    *ue_context = NULL;
   MessageDef                             *message_p = NULL;
-  int16_t                                 bearer_id =5;
-  int                                     rc = RETURNok;
 
 
   OAILOG_FUNC_IN (LOG_MME_APP);
   DevAssert (saegw_dl_data_ntf_pP );
-  if(!saegw_dl_data_ntf_pP->signaling)
-	  DevAssert (saegw_dl_data_ntf_pP->trxn);
+  DevAssert (saegw_dl_data_ntf_pP->trxn);
 
   ue_context = mme_ue_context_exists_s11_teid (&mme_app_desc.mme_ue_contexts, saegw_dl_data_ntf_pP->teid);
   if (ue_context == NULL) {
     OAILOG_ERROR(LOG_MME_APP, "We didn't find this teid in list of UE: %08x\n", saegw_dl_data_ntf_pP->teid);
     /** Send a DOWNLINK_DATA_NOTIFICATION_ACKNOWLEDGE. */
-    if(!saegw_dl_data_ntf_pP->signaling)
-    	mme_app_send_downlink_data_notification_acknowledge(CONTEXT_NOT_FOUND, saegw_dl_data_ntf_pP->teid, INVALID_TEID, saegw_dl_data_ntf_pP->peer_ip, saegw_dl_data_ntf_pP->trxn);
+   	mme_app_send_downlink_data_notification_acknowledge(CONTEXT_NOT_FOUND, saegw_dl_data_ntf_pP->teid, INVALID_TEID, saegw_dl_data_ntf_pP->peer_ip, saegw_dl_data_ntf_pP->trxn);
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
 
@@ -1425,17 +1513,15 @@ mme_app_handle_downlink_data_notification(const itti_s11_downlink_data_notificat
   emm_data_context_t * emm_context = emm_data_context_get(&_emm_data, ue_context->privates.mme_ue_s1ap_id);
   if(!emm_context || emm_context->_tai_list.numberoflists == 0){
 	  OAILOG_ERROR (LOG_MME_APP, "No EMM data context exists for UE_ID " MME_UE_S1AP_ID_FMT " or no tai list. \n", ue_context->privates.mme_ue_s1ap_id);
-	  if(!saegw_dl_data_ntf_pP->signaling)
-		  mme_app_send_downlink_data_notification_acknowledge(CONTEXT_NOT_FOUND, saegw_dl_data_ntf_pP->teid, INVALID_TEID, saegw_dl_data_ntf_pP->peer_ip, saegw_dl_data_ntf_pP->trxn);
+	  mme_app_send_downlink_data_notification_acknowledge(CONTEXT_NOT_FOUND, saegw_dl_data_ntf_pP->teid, INVALID_TEID, saegw_dl_data_ntf_pP->peer_ip, saegw_dl_data_ntf_pP->trxn);
 	  OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
 
   /** Check if the UE context is registered. */
   if (ue_context->privates.fields.mm_state != UE_REGISTERED) {
-	OAILOG_ERROR(LOG_MME_APP, "UE " MME_UE_S1AP_ID_FMT" is not in registred state. Not initiating paging. \n", ue_context->privates.mme_ue_s1ap_id);
+	OAILOG_ERROR(LOG_MME_APP, "UE " MME_UE_S1AP_ID_FMT" is not in registered state. Not initiating paging. \n", ue_context->privates.mme_ue_s1ap_id);
 	/** Send a DOWNLINK_DATA_NOTIFICATION_ACKNOWLEDGE. */
-	if(!saegw_dl_data_ntf_pP->signaling)
-		mme_app_send_downlink_data_notification_acknowledge(CONTEXT_NOT_FOUND, saegw_dl_data_ntf_pP->teid, INVALID_TEID, saegw_dl_data_ntf_pP->peer_ip, saegw_dl_data_ntf_pP->trxn);
+	mme_app_send_downlink_data_notification_acknowledge(CONTEXT_NOT_FOUND, saegw_dl_data_ntf_pP->teid, INVALID_TEID, saegw_dl_data_ntf_pP->peer_ip, saegw_dl_data_ntf_pP->trxn);
 	OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
 
@@ -1444,16 +1530,77 @@ mme_app_handle_downlink_data_notification(const itti_s11_downlink_data_notificat
     OAILOG_ERROR (LOG_MME_APP, "UE_Context with IMSI " IMSI_64_FMT " and mmeUeS1apId: %d. \n is not in ECM_IDLE mode, instead %d. \n",
         ue_context->privates.fields.imsi, ue_context->privates.mme_ue_s1ap_id, ue_context->privates.fields.ecm_state);
     // todo: later.. check this more granularly
-    if(!saegw_dl_data_ntf_pP->signaling)
-    	mme_app_send_downlink_data_notification_acknowledge(UE_ALREADY_RE_ATTACHED, saegw_dl_data_ntf_pP->teid, ue_context->privates.fields.mme_teid_s11, saegw_dl_data_ntf_pP->peer_ip, saegw_dl_data_ntf_pP->trxn);
+    mme_app_send_downlink_data_notification_acknowledge(UE_ALREADY_RE_ATTACHED, saegw_dl_data_ntf_pP->teid, ue_context->privates.fields.mme_teid_s11, saegw_dl_data_ntf_pP->peer_ip, saegw_dl_data_ntf_pP->trxn);
     /** Ignore this case for signaling.. wait for the MBR to be completed. */
-    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
+   	OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
   }
 
   OAILOG_INFO(LOG_MME_APP, "MME_MOBILTY_COMPLETION timer is not running. Starting paging procedure for UE with imsi " IMSI_64_FMT ". \n", ue_context->privates.fields.imsi);
   // todo: timeout to wait to ignore further DL_DATA_NOTIF messages->
-  if(!saegw_dl_data_ntf_pP->signaling)
-	  mme_app_send_downlink_data_notification_acknowledge(REQUEST_ACCEPTED, saegw_dl_data_ntf_pP->teid, ue_context->privates.fields.mme_teid_s11, saegw_dl_data_ntf_pP->peer_ip, saegw_dl_data_ntf_pP->trxn);
+  mme_app_send_downlink_data_notification_acknowledge(REQUEST_ACCEPTED, saegw_dl_data_ntf_pP->teid, ue_context->privates.fields.mme_teid_s11, saegw_dl_data_ntf_pP->peer_ip, saegw_dl_data_ntf_pP->trxn);
+
+  /** No need to start paging timeout timer. It will be handled by the Periodic TAU update timer. */
+  // todo: no downlink data notification failure and just removing the UE?
+
+  /** Do paging on S1AP interface. */
+  message_p = itti_alloc_new_message (TASK_MME_APP, S1AP_PAGING);
+  DevAssert (message_p != NULL);
+  itti_s1ap_paging_t *s1ap_paging_p = &message_p->ittiMsg.s1ap_paging;
+
+  memset (s1ap_paging_p, 0, sizeof (itti_s1ap_paging_t));
+  s1ap_paging_p->mme_ue_s1ap_id = ue_context->privates.mme_ue_s1ap_id; /**< Just MME_UE_S1AP_ID. */
+  /** Send the latest SCTP. */
+//  s1ap_paging_p->sctp_assoc_id_key = ue_context->privates.fields.sctp_assoc_id_key;
+  s1ap_paging_p->tac = emm_context->originating_tai.tac;
+  s1ap_paging_p->ue_identity_index = (uint16_t)((ue_context->privates.fields.imsi %1024) & 0xFFFF); /**< Just MME_UE_S1AP_ID. */
+  s1ap_paging_p->tmsi = ue_context->privates.fields.guti.m_tmsi;
+  OAILOG_INFO(LOG_MME_APP, "Calculated ue_identity index value for UE with imsi " IMSI_64_FMT " and ueId " MME_UE_S1AP_ID_FMT" is %d. \n", ue_context->privates.fields.imsi, ue_context->privates.mme_ue_s1ap_id, s1ap_paging_p->ue_identity_index);
+
+  /** S1AP Paging. */
+  itti_send_msg_to_task (TASK_S1AP, INSTANCE_DEFAULT, message_p);
+
+  OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
+}
+
+//------------------------------------------------------------------------------
+int
+mme_app_trigger_paging_due_signaling(const mme_ue_s1ap_id_t ue_id){
+  struct ue_context_s                    *ue_context = NULL;
+  MessageDef                             *message_p = NULL;
+
+  OAILOG_FUNC_IN (LOG_MME_APP);
+
+  ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, ue_id);
+  if (ue_context == NULL) {
+    OAILOG_ERROR(LOG_MME_APP, "We didn't find this UE " MME_UE_S1AP_ID_FMT" in list. \n", ue_id);
+    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+  }
+
+  /** Get the last known tac. */
+  emm_data_context_t * emm_context = emm_data_context_get(&_emm_data, ue_id);
+  if(!emm_context || emm_context->_tai_list.numberoflists == 0){
+	  OAILOG_ERROR (LOG_MME_APP, "No EMM data context exists for UE_ID " MME_UE_S1AP_ID_FMT " or no tai list. \n", ue_context->privates.mme_ue_s1ap_id);
+	  OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+  }
+
+  /** Check if the UE context is registered. */
+  if (ue_context->privates.fields.mm_state != UE_REGISTERED) {
+	OAILOG_ERROR(LOG_MME_APP, "UE " MME_UE_S1AP_ID_FMT" is not in registered state. Not initiating paging. \n", ue_context->privates.mme_ue_s1ap_id);
+	/** Send a DOWNLINK_DATA_NOTIFICATION_ACKNOWLEDGE. */
+	OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+  }
+
+  /** Check that the UE is in idle mode!. */
+  if (ECM_IDLE != ue_context->privates.fields.ecm_state) {
+    OAILOG_ERROR (LOG_MME_APP, "UE_Context with IMSI " IMSI_64_FMT " and mmeUeS1apId: %d. \n is not in ECM_IDLE mode, instead %d. \n",
+        ue_context->privates.fields.imsi, ue_context->privates.mme_ue_s1ap_id, ue_context->privates.fields.ecm_state);
+    // todo: later.. check this more granularly
+    /** Ignore this case for signaling.. wait for the MBR to be completed. */
+    OAILOG_WARNING(LOG_MME_APP, "UE " MME_UE_S1AP_ID_FMT" is not in idle state, but due signaling will initiate a new paging. \n", ue_context->privates.mme_ue_s1ap_id);
+  }
+
+  OAILOG_INFO(LOG_MME_APP, "MME_MOBILTY_COMPLETION timer is not running. Starting paging procedure for UE with imsi " IMSI_64_FMT ". \n", ue_context->privates.fields.imsi);
+  // todo: timeout to wait to ignore further DL_DATA_NOTIF messages->
 
   /** No need to start paging timeout timer. It will be handled by the Periodic TAU update timer. */
   // todo: no downlink data notification failure and just removing the UE?
@@ -1632,13 +1779,13 @@ mme_app_handle_s11_create_bearer_req (
   if(!s11_proc_create_bearer){
     MSC_LOG_RX_DISCARDED_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 CREATE_BEARER_REQUEST local S11 teid " TEID_FMT " ",
         create_bearer_request_pP->teid);
-    OAILOG_ERROR(LOG_MME_APP, "No CBR procedure could be created for of UE with ueId " MME_UE_S1AP_ID_FMT ". \n", ue_session_pool->privates.mme_ue_s1ap_id);
-    mme_app_send_s11_create_bearer_rsp(ue_session_pool->privates.fields.mme_teid_s11, ue_session_pool->privates.fields.saegw_teid_s11, TEMP_REJECT_HO_IN_PROGRESS, (uintptr_t)create_bearer_request_pP->trxn, create_bearer_request_pP->bearer_contexts);
+    OAILOG_ERROR(LOG_MME_APP, "No CBR procedure could be created for of UE with ueId " MME_UE_S1AP_ID_FMT ". Ignoring request.. might be a duplicate. \n", ue_session_pool->privates.mme_ue_s1ap_id);
+    // mme_app_send_s11_create_bearer_rsp(ue_session_pool->privates.fields.mme_teid_s11, ue_session_pool->privates.fields.saegw_teid_s11, TEMP_REJECT_HO_IN_PROGRESS, (uintptr_t)create_bearer_request_pP->trxn, create_bearer_request_pP->bearer_contexts);
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
 
   s11_proc_create_bearer->proc.s11_trxn         = (uintptr_t)create_bearer_request_pP->trxn;
-  s11_proc_create_bearer->num_bearers_unhandled = create_bearer_request_pP->bearer_contexts->num_bearer_context;
+  s11_proc_create_bearer->proc.num_bearers_unhandled = create_bearer_request_pP->bearer_contexts->num_bearer_context;
   s11_proc_create_bearer->linked_ebi            = default_bc->linked_ebi;
   s11_proc_create_bearer->pci                   = default_bc->pdn_cx_id;
   s11_proc_create_bearer->proc.pti              = create_bearer_request_pP->pti;
@@ -1658,11 +1805,7 @@ mme_app_handle_s11_create_bearer_req (
 		  OAILOG_WARNING(LOG_MME_APP, "Bearer %d for UE " MME_UE_S1AP_ID_FMT" is in state %d. Not processing dedicated bearer requests until "
 				  "session establishment has been completed successfully. \n", bc_session->ebi, ue_session_pool->privates.mme_ue_s1ap_id, bc_session->bearer_state);
 		  /** Trigger paging, if the UE context is REGISTERED. */
-		  itti_s11_downlink_data_notification_t itti_s11_downlink_data_notif;
-		  memset(&itti_s11_downlink_data_notif, 0, sizeof(itti_s11_downlink_data_notif));
-		  itti_s11_downlink_data_notif.teid = create_bearer_request_pP->teid;
-		  itti_s11_downlink_data_notif.signaling = true;
-		  if(mme_app_handle_downlink_data_notification(&itti_s11_downlink_data_notif) == RETURNok){
+		  if(mme_app_trigger_paging_due_signaling(ue_session_pool->privates.mme_ue_s1ap_id) == RETURNok){
 			  OAILOG_INFO(LOG_MME_APP, "Successfully triggered paging for UE " MME_UE_S1AP_ID_FMT" due CBR. Not processing dedicated bearer requests until "
 					  "session establishment has been completed successfully. \n", ue_session_pool->privates.mme_ue_s1ap_id);
 			  OAILOG_FUNC_OUT (LOG_MME_APP);
@@ -1762,11 +1905,11 @@ mme_app_handle_s11_update_bearer_req (
     MSC_LOG_RX_DISCARDED_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 UPDATE_BEARER_REQUEST local S11 teid " TEID_FMT " ",
           delete_bearer_request_pP->teid);
     OAILOG_ERROR(LOG_MME_APP, "We could not create an UBR procedure for UE with ueId " MME_UE_S1AP_ID_FMT". \n",ue_session_pool->privates.mme_ue_s1ap_id);
-    mme_app_send_s11_update_bearer_rsp(update_bearer_request_pP->teid, ue_session_pool->privates.fields.saegw_teid_s11, TEMP_REJECT_HO_IN_PROGRESS, (uintptr_t)update_bearer_request_pP->trxn, update_bearer_request_pP->bearer_contexts);
+    // todo: ignore currently.. mme_app_send_s11_update_bearer_rsp(update_bearer_request_pP->teid, ue_session_pool->privates.fields.saegw_teid_s11, TEMP_REJECT_HO_IN_PROGRESS, (uintptr_t)update_bearer_request_pP->trxn, update_bearer_request_pP->bearer_contexts);
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
   s11_proc_update_bearer->proc.s11_trxn         = (uintptr_t)update_bearer_request_pP->trxn;
-  s11_proc_update_bearer->num_bearers_unhandled = update_bearer_request_pP->bearer_contexts->num_bearer_context;
+  s11_proc_update_bearer->proc.num_bearers_unhandled = update_bearer_request_pP->bearer_contexts->num_bearer_context;
   s11_proc_update_bearer->bcs_tbu               = update_bearer_request_pP->bearer_contexts;
   s11_proc_update_bearer->pci                   = cid;
   s11_proc_update_bearer->new_used_ue_ambr      = new_total_apn_ambr; /**< Use this (actualized) value in the E-RAB Modify Request. */
@@ -1789,11 +1932,7 @@ mme_app_handle_s11_update_bearer_req (
 		  OAILOG_WARNING(LOG_MME_APP, "Bearer %d for UE " MME_UE_S1AP_ID_FMT" is in state %d. Not processing dedicated bearer requests until "
 				  "session establishment has been completed successfully. \n", bc_session->ebi, ue_session_pool->privates.mme_ue_s1ap_id, bc_session->bearer_state);
 		  /** Trigger paging, if the UE context is REGISTERED. */
-		  itti_s11_downlink_data_notification_t itti_s11_downlink_data_notif;
-		  memset(&itti_s11_downlink_data_notif, 0, sizeof(itti_s11_downlink_data_notif));
-		  itti_s11_downlink_data_notif.teid = update_bearer_request_pP->teid;
-		  itti_s11_downlink_data_notif.signaling = true;
-		  if(mme_app_handle_downlink_data_notification(&itti_s11_downlink_data_notif) == RETURNok){
+		  if(mme_app_trigger_paging_due_signaling(ue_session_pool->privates.mme_ue_s1ap_id) == RETURNok){
 			  OAILOG_INFO(LOG_MME_APP, "Successfully triggered paging for UE " MME_UE_S1AP_ID_FMT" due UBR. Not processing dedicated bearer requests until "
 					  "session establishment has been completed successfully. \n", ue_session_pool->privates.mme_ue_s1ap_id);
 			  OAILOG_FUNC_OUT (LOG_MME_APP);
@@ -1857,13 +1996,13 @@ mme_app_handle_s11_delete_bearer_req (
     MSC_LOG_RX_DISCARDED_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 DELETE_BEARER_REQUEST local S11 teid " TEID_FMT " ",
           delete_bearer_request_pP->teid);
     OAILOG_ERROR(LOG_MME_APP, "We could not create a DBR procedure for UE with ueId " MME_UE_S1AP_ID_FMT". \n", ue_session_pool->privates.mme_ue_s1ap_id);
-    mme_app_send_s11_delete_bearer_rsp(ue_session_pool->privates.fields.mme_teid_s11, ue_session_pool->privates.fields.saegw_teid_s11, TEMP_REJECT_HO_IN_PROGRESS, (uintptr_t)delete_bearer_request_pP->trxn, &delete_bearer_request_pP->ebi_list);
+    // todo: mme_app_send_s11_delete_bearer_rsp(ue_session_pool->privates.fields.mme_teid_s11, ue_session_pool->privates.fields.saegw_teid_s11, TEMP_REJECT_HO_IN_PROGRESS, (uintptr_t)delete_bearer_request_pP->trxn, &delete_bearer_request_pP->ebi_list);
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
 
   /** Respond success if bearers are not existing. */
   s11_proc_delete_bearer->proc.s11_trxn         = (uintptr_t)delete_bearer_request_pP->trxn;
-  s11_proc_delete_bearer->num_bearers_unhandled = delete_bearer_request_pP->ebi_list.num_ebi;
+  s11_proc_delete_bearer->proc.num_bearers_unhandled = delete_bearer_request_pP->ebi_list.num_ebi;
   s11_proc_delete_bearer->linked_ebi            = delete_bearer_request_pP->linked_eps_bearer_id;
   s11_proc_delete_bearer->proc.pti 				= delete_bearer_request_pP->pti;
 
@@ -1885,12 +2024,7 @@ mme_app_handle_s11_delete_bearer_req (
 	  if(!(bc_session->bearer_state & BEARER_STATE_ACTIVE)) {
 		  OAILOG_WARNING(LOG_MME_APP, "Bearer %d for UE " MME_UE_S1AP_ID_FMT" is in state %d. Not processing dedicated bearer requests until "
 				  "session establishment has been completed successfully. \n", bc_session->ebi, ue_session_pool->privates.mme_ue_s1ap_id, bc_session->bearer_state);
-		  /** Trigger paging, if the UE context is REGISTERED. */
-		  itti_s11_downlink_data_notification_t itti_s11_downlink_data_notif;
-		  memset(&itti_s11_downlink_data_notif, 0, sizeof(itti_s11_downlink_data_notif));
-		  itti_s11_downlink_data_notif.teid = delete_bearer_request_pP->teid;
-		  itti_s11_downlink_data_notif.signaling = true;
-		  if(mme_app_handle_downlink_data_notification(&itti_s11_downlink_data_notif) == RETURNok){
+		  if(mme_app_trigger_paging_due_signaling(ue_session_pool->privates.mme_ue_s1ap_id) == RETURNok){
 			  OAILOG_INFO(LOG_MME_APP, "Successfully triggered paging for UE " MME_UE_S1AP_ID_FMT" due DBR. Not processing dedicated bearer requests until "
 					  "session establishment has been completed successfully. \n", ue_session_pool->privates.mme_ue_s1ap_id);
 			  OAILOG_FUNC_OUT (LOG_MME_APP);
@@ -2099,7 +2233,7 @@ static void mme_app_handle_e_rab_setup_rsp_dedicated_bearer(const itti_s1ap_e_ra
            * Reduce the number of unhandled bearers.
            * We keep the ESM procedure (no ESM procedure for this bearer is expected at this point).
            */
-          s11_proc_create_bearer->num_bearers_unhandled--;
+          s11_proc_create_bearer->proc.num_bearers_unhandled--;
           /** Set the state of the bearer context as active. */
 
         }
@@ -2153,22 +2287,25 @@ static void mme_app_handle_e_rab_setup_rsp_dedicated_bearer(const itti_s1ap_e_ra
     /** Set cause as rejected. */
     bc_tbc->cause.cause_value = REQUEST_REJECTED;
     /** The cause is either not set yet or positive. In either case we will reduce the number of unhandled bearers. */
-    s11_proc_create_bearer->num_bearers_unhandled--;
+    s11_proc_create_bearer->proc.num_bearers_unhandled--;
     /**
      * No need to check the result code, the bearer is not established in any case.
      * Also no need to wait for the ESM layer to continue with the CBResp (but sill informing the ESM layer to abort the session management procedure prematurely).
      */
   }
-
-  if(s11_proc_create_bearer->num_bearers_unhandled){
+  if(s11_proc_create_bearer->proc.num_bearers_unhandled){
     OAILOG_DEBUG (LOG_MME_APP, "For the S11 dedicated bearer procedure, still %d pending bearers exist for UE " MME_UE_S1AP_ID_FMT ". "
-        "Waiting with CBResp. \n", s11_proc_create_bearer->num_bearers_unhandled, ue_session_pool->privates.mme_ue_s1ap_id);
+        "Waiting with CBResp. \n", s11_proc_create_bearer->proc.num_bearers_unhandled, ue_session_pool->privates.mme_ue_s1ap_id);
   }else{
-    OAILOG_DEBUG (LOG_MME_APP, "For the S11 dedicated bearer procedure, no pending bearers left (either success or failure) for UE " MME_UE_S1AP_ID_FMT ". "
-        "Sending CBResp immediately. \n", ue_session_pool->privates.mme_ue_s1ap_id);
-    mme_app_send_s11_create_bearer_rsp(ue_session_pool->privates.fields.mme_teid_s11, ue_session_pool->privates.fields.saegw_teid_s11, 0, s11_proc_create_bearer->proc.s11_trxn, s11_proc_create_bearer->bcs_tbc);
-    /** Delete the procedure if it exists. */
-    mme_app_delete_s11_procedure_update_bearer(ue_session_pool);
+	/** Check if the MBR has been done. */
+	bearer_context_new_t * default_bc = mme_app_get_session_bearer_context(pdn_context, pdn_context->default_ebi);
+	if(default_bc && (default_bc->bearer_state & BEARER_STATE_ACTIVE)){
+	    OAILOG_DEBUG (LOG_MME_APP, "For the S11 dedicated bearer procedure, no pending bearers left (either success or failure) & default bearer activated for UE " MME_UE_S1AP_ID_FMT ". "
+	        "Sending CBResp immediately. \n", ue_session_pool->privates.mme_ue_s1ap_id);
+	    mme_app_send_s11_create_bearer_rsp(ue_session_pool->privates.fields.mme_teid_s11, ue_session_pool->privates.fields.saegw_teid_s11, 0, s11_proc_create_bearer->proc.s11_trxn, s11_proc_create_bearer->bcs_tbc);
+	    /** Delete the procedure if it exists. */
+	    mme_app_delete_s11_procedure_create_bearer(ue_session_pool);
+	}
   }
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
@@ -2338,7 +2475,7 @@ void mme_app_handle_e_rab_modify_rsp (itti_s1ap_e_rab_modify_rsp_t  * const e_ra
       } else{
         DevAssert(bc_tbu->cause.cause_value == REQUEST_ACCEPTED);
         /** Reduce the number of unhandled bearers. */
-        s11_proc_update_bearer->num_bearers_unhandled--;
+        s11_proc_update_bearer->proc.num_bearers_unhandled--;
       }
     }else{
       /**
@@ -2373,7 +2510,7 @@ void mme_app_handle_e_rab_modify_rsp (itti_s1ap_e_rab_modify_rsp_t  * const e_ra
       continue;
     }
     /** The cause is either not set yet or positive. In either case we will reduce the number of unhandled bearers. */
-    s11_proc_update_bearer->num_bearers_unhandled--;
+    s11_proc_update_bearer->proc.num_bearers_unhandled--;
     /** Check the result code, and inform the ESM layer of removal, if necessary.. */
     if((e_rab_modify_rsp->e_rab_failed_to_modify_list.item[i].cause.present == S1ap_Cause_PR_radioNetwork)
           && (e_rab_modify_rsp->e_rab_failed_to_modify_list.item[i].cause.choice.radioNetwork == S1ap_CauseRadioNetwork_unknown_E_RAB_ID)){
@@ -2397,18 +2534,24 @@ void mme_app_handle_e_rab_modify_rsp (itti_s1ap_e_rab_modify_rsp_t  * const e_ra
     }
   }
   // todo: MBReq/MBResp for E-RAB modify?
-  if(s11_proc_update_bearer->num_bearers_unhandled){
+  if(s11_proc_update_bearer->proc.num_bearers_unhandled){
     OAILOG_DEBUG (LOG_MME_APP, "For the S11 dedicated bearer procedure, still %d pending bearers exist for UE " MME_UE_S1AP_ID_FMT ". "
-        "Waiting with UBResp. \n", s11_proc_update_bearer->num_bearers_unhandled, ue_session_pool->privates.mme_ue_s1ap_id);
+        "Waiting with UBResp. \n", s11_proc_update_bearer->proc.num_bearers_unhandled, ue_session_pool->privates.mme_ue_s1ap_id);
   }else{
     OAILOG_DEBUG (LOG_MME_APP, "For the S11 dedicated bearer procedure, no pending bearers left (either success or failure) for UE " MME_UE_S1AP_ID_FMT ". "
         "Sending UBResp immediately. \n", ue_session_pool->privates.mme_ue_s1ap_id);
-    mme_app_send_s11_update_bearer_rsp(ue_session_pool->privates.fields.mme_teid_s11, ue_session_pool->privates.fields.saegw_teid_s11, 0, s11_proc_update_bearer->proc.s11_trxn, s11_proc_update_bearer->bcs_tbu);
-    /*
-     * We update the ESM bearer context when the NAS ESM confirmation arrives.
-     * We don't care for the E-RAB message.
-     */
-    mme_app_delete_s11_procedure_update_bearer(ue_session_pool);
+
+    bearer_context_new_t * default_bc = mme_app_get_session_bearer_context(pdn_context, pdn_context->default_ebi);
+    if(default_bc && (default_bc->bearer_state & BEARER_STATE_ACTIVE)){
+    	OAILOG_DEBUG (LOG_MME_APP, "For the S11 update bearer procedure, no pending bearers left (either success or failure) & default bearer activated for UE " MME_UE_S1AP_ID_FMT ". "
+    			"Sending UBResp immediately. \n", ue_session_pool->privates.mme_ue_s1ap_id);
+        mme_app_send_s11_update_bearer_rsp(ue_session_pool->privates.fields.mme_teid_s11, ue_session_pool->privates.fields.saegw_teid_s11, 0, s11_proc_update_bearer->proc.s11_trxn, s11_proc_update_bearer->bcs_tbu);
+        /*
+         * We update the ESM bearer context when the NAS ESM confirmation arrives.
+         * We don't care for the E-RAB message.
+         */
+        mme_app_delete_s11_procedure_update_bearer(ue_session_pool);
+    }
   }
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
@@ -2528,18 +2671,24 @@ void mme_app_handle_activate_eps_bearer_ctx_cnf (itti_nas_activate_eps_bearer_ct
   }
   OAILOG_INFO(LOG_MME_APP, "Received NAS response after E-RAB setup success for ebi %d for UE: " MME_UE_S1AP_ID_FMT ". "
       "Will reduce number of unhandled bearers and eventually triggering a CBResp. \n", activate_eps_bearer_ctx_cnf->ebi, ue_session_pool->privates.mme_ue_s1ap_id);
-  s11_proc_create_bearer->num_bearers_unhandled--;
+  s11_proc_create_bearer->proc.num_bearers_unhandled--;
   bc_tbc->eps_bearer_id = activate_eps_bearer_ctx_cnf->ebi;
-  if(s11_proc_create_bearer->num_bearers_unhandled){
+  if(s11_proc_create_bearer->proc.num_bearers_unhandled){
     OAILOG_INFO(LOG_MME_APP, "Still %d unhandled bearers exist for CBR for UE: " MME_UE_S1AP_ID_FMT ". Not sending CBResp back yet. \n",
-        s11_proc_create_bearer->num_bearers_unhandled, ue_session_pool->privates.mme_ue_s1ap_id);
+        s11_proc_create_bearer->proc.num_bearers_unhandled, ue_session_pool->privates.mme_ue_s1ap_id);
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
   OAILOG_INFO(LOG_MME_APP, "No unhandled bearers left for s11 CBR procedure for UE: " MME_UE_S1AP_ID_FMT ". "
       "Sending CBResp back immediately. \n", ue_session_pool->privates.mme_ue_s1ap_id);
-  mme_app_send_s11_create_bearer_rsp(ue_session_pool->privates.fields.mme_teid_s11, ue_session_pool->privates.fields.saegw_teid_s11, 0, s11_proc_create_bearer->proc.s11_trxn, s11_proc_create_bearer->bcs_tbc);
-  /** Delete the procedure if it exists. */
-  mme_app_delete_s11_procedure_create_bearer(ue_session_pool);
+
+  bearer_context_new_t * default_bc = mme_app_get_session_bearer_context(pdn_context, pdn_context->default_ebi);
+  if(default_bc && (default_bc->bearer_state & BEARER_STATE_ACTIVE)){
+	  OAILOG_DEBUG (LOG_MME_APP, "For the S11 dedicated bearer procedure, no pending bearers left (either success or failure) & default bearer activated for UE " MME_UE_S1AP_ID_FMT ". "
+			  "Sending CBResp immediately. \n", ue_session_pool->privates.mme_ue_s1ap_id);
+	  mme_app_send_s11_create_bearer_rsp(ue_session_pool->privates.fields.mme_teid_s11, ue_session_pool->privates.fields.saegw_teid_s11, 0, s11_proc_create_bearer->proc.s11_trxn, s11_proc_create_bearer->bcs_tbc);
+	  /** Delete the procedure if it exists. */
+	  mme_app_delete_s11_procedure_create_bearer(ue_session_pool);
+  }
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 
@@ -2610,15 +2759,20 @@ void mme_app_handle_activate_eps_bearer_ctx_rej (itti_nas_activate_eps_bearer_ct
   }
 
   bc_tbc->cause.cause_value = activate_eps_bearer_ctx_rej->cause_value ? activate_eps_bearer_ctx_rej->cause_value : REQUEST_REJECTED;
-  s11_proc_create_bearer->num_bearers_unhandled--;
-  if(s11_proc_create_bearer->num_bearers_unhandled){
-    OAILOG_INFO(LOG_MME_APP, "Still %d unhandled bearers exist for s11 create bearer procedure for UE: " MME_UE_S1AP_ID_FMT ". Not sending CBResp back yet. \n", s11_proc_create_bearer->num_bearers_unhandled, ue_session_pool->privates.mme_ue_s1ap_id);
+  s11_proc_create_bearer->proc.num_bearers_unhandled--;
+  if(s11_proc_create_bearer->proc.num_bearers_unhandled){
+    OAILOG_INFO(LOG_MME_APP, "Still %d unhandled bearers exist for s11 create bearer procedure for UE: " MME_UE_S1AP_ID_FMT ". Not sending CBResp back yet. \n", s11_proc_create_bearer->proc.num_bearers_unhandled, ue_session_pool->privates.mme_ue_s1ap_id);
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
   OAILOG_INFO(LOG_MME_APP, "No unhandled bearers left for s11 create bearer procedure for UE: " MME_UE_S1AP_ID_FMT ". Sending CBResp back immediately. \n", ue_session_pool->privates.mme_ue_s1ap_id);
-  mme_app_send_s11_create_bearer_rsp(ue_session_pool->privates.fields.mme_teid_s11, ue_session_pool->privates.fields.saegw_teid_s11, 0, s11_proc_create_bearer->proc.s11_trxn, s11_proc_create_bearer->bcs_tbc);
-  /** Delete the procedure if it exists. No ESM procedure expected to be removed (should not exist here). */
-  mme_app_delete_s11_procedure_create_bearer(ue_session_pool);
+  bearer_context_new_t * default_bc = mme_app_get_session_bearer_context(pdn_context, pdn_context->default_ebi);
+  if(default_bc && (default_bc->bearer_state & BEARER_STATE_ACTIVE)){
+	  OAILOG_DEBUG (LOG_MME_APP, "For the S11 dedicated bearer procedure, no pending bearers left (either success or failure) & default bearer activated for UE " MME_UE_S1AP_ID_FMT ". "
+			  "Sending CBResp immediately. \n", ue_session_pool->privates.mme_ue_s1ap_id);
+	  mme_app_send_s11_create_bearer_rsp(ue_session_pool->privates.fields.mme_teid_s11, ue_session_pool->privates.fields.saegw_teid_s11, 0, s11_proc_create_bearer->proc.s11_trxn, s11_proc_create_bearer->bcs_tbc);
+	  /** Delete the procedure if it exists. No ESM procedure expected to be removed (should not exist here). */
+	  mme_app_delete_s11_procedure_create_bearer(ue_session_pool);
+  }
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 
@@ -2701,20 +2855,25 @@ void mme_app_handle_modify_eps_bearer_ctx_cnf (itti_nas_modify_eps_bearer_ctx_cn
   }
   OAILOG_INFO(LOG_MME_APP, "Received NAS response after positive E-RAB modification response for ebi %d occurred for UE: " MME_UE_S1AP_ID_FMT ". Will reduce number of unhandled bearers and eventually triggering a UBResp. \n",
       bc_tbu->eps_bearer_id, ue_session_pool->privates.mme_ue_s1ap_id);
-  s11_proc_update_bearer->num_bearers_unhandled--;
+  s11_proc_update_bearer->proc.num_bearers_unhandled--;
 
-  if(s11_proc_update_bearer->num_bearers_unhandled){
+  if(s11_proc_update_bearer->proc.num_bearers_unhandled){
     OAILOG_INFO(LOG_MME_APP, "Still %d unhandled bearers exist for s11 update bearer procedure for UE: " MME_UE_S1AP_ID_FMT ". Not sending UBResp back yet. \n",
-        s11_proc_update_bearer->num_bearers_unhandled, ue_session_pool->privates.mme_ue_s1ap_id);
+        s11_proc_update_bearer->proc.num_bearers_unhandled, ue_session_pool->privates.mme_ue_s1ap_id);
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
   OAILOG_INFO(LOG_MME_APP, "No unhandled bearers left for s11 update bearer procedure for UE: " MME_UE_S1AP_ID_FMT ". Sending UBResp back immediately. \n", ue_session_pool->privates.mme_ue_s1ap_id);
-  mme_app_send_s11_update_bearer_rsp(ue_session_pool->privates.fields.mme_teid_s11, ue_session_pool->privates.fields.saegw_teid_s11, 0, s11_proc_update_bearer->proc.s11_trxn, s11_proc_update_bearer->bcs_tbu);
-  /*
-   * Delete the procedure if it exists.
-   * We don't need to inform the ESM layer.
-   */
-  mme_app_delete_s11_procedure_update_bearer(ue_session_pool);
+  bearer_context_new_t * default_bc = mme_app_get_session_bearer_context(pdn_context, pdn_context->default_ebi);
+  if(default_bc && (default_bc->bearer_state & BEARER_STATE_ACTIVE)){
+  	OAILOG_DEBUG (LOG_MME_APP, "For the S11 update bearer procedure, no pending bearers left (either success or failure) & default bearer activated for UE " MME_UE_S1AP_ID_FMT ". "
+  			"Sending UBResp immediately. \n", ue_session_pool->privates.mme_ue_s1ap_id);
+    mme_app_send_s11_update_bearer_rsp(ue_session_pool->privates.fields.mme_teid_s11, ue_session_pool->privates.fields.saegw_teid_s11, 0, s11_proc_update_bearer->proc.s11_trxn, s11_proc_update_bearer->bcs_tbu);
+    /*
+     * We update the ESM bearer context when the NAS ESM confirmation arrives.
+     * We don't care for the E-RAB message.
+     */
+    mme_app_delete_s11_procedure_update_bearer(ue_session_pool);
+  }
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 
@@ -2777,20 +2936,29 @@ void mme_app_handle_modify_eps_bearer_ctx_rej (itti_nas_modify_eps_bearer_ctx_re
       bc_tbu->eps_bearer_id, ue_session_pool->privates.mme_ue_s1ap_id);
   bc_tbu->cause.cause_value = modify_eps_bearer_ctx_rej->cause_value ? modify_eps_bearer_ctx_rej->cause_value : REQUEST_REJECTED;
 
-  s11_proc_update_bearer->num_bearers_unhandled--;
-  if(s11_proc_update_bearer->num_bearers_unhandled){
+  s11_proc_update_bearer->proc.num_bearers_unhandled--;
+  if(s11_proc_update_bearer->proc.num_bearers_unhandled){
 	OAILOG_INFO(LOG_MME_APP, "Still %d unhandled bearers exist for s11 update bearer procedure for UE: " MME_UE_S1AP_ID_FMT ". Not sending UBResp back yet. \n",
-        s11_proc_update_bearer->num_bearers_unhandled, ue_session_pool->privates.mme_ue_s1ap_id);
+        s11_proc_update_bearer->proc.num_bearers_unhandled, ue_session_pool->privates.mme_ue_s1ap_id);
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
   OAILOG_INFO(LOG_MME_APP, "No unhandled bearers left for s11 update bearer procedure for UE: " MME_UE_S1AP_ID_FMT ". Sending UBResp back immediately. \n", ue_session_pool->privates.mme_ue_s1ap_id);
-  mme_app_send_s11_update_bearer_rsp(ue_session_pool->privates.fields.mme_teid_s11, ue_session_pool->privates.fields.saegw_teid_s11, 0, s11_proc_update_bearer->proc.s11_trxn, s11_proc_update_bearer->bcs_tbu);
   /** Delete the procedure if it exists. */
   if(modify_eps_bearer_ctx_rej->cause_value != TEMP_REJECT_HO_IN_PROGRESS){
-	  mme_app_delete_s11_procedure_update_bearer(ue_session_pool);
+    bearer_context_new_t * default_bc = mme_app_get_session_bearer_context(pdn_context, pdn_context->default_ebi);
+    if(default_bc && (default_bc->bearer_state & BEARER_STATE_ACTIVE)){
+      OAILOG_DEBUG (LOG_MME_APP, "For the S11 update bearer procedure, no pending bearers left (either success or failure) & default bearer activated for UE " MME_UE_S1AP_ID_FMT ". "
+    		  "Sending UBResp immediately. \n", ue_session_pool->privates.mme_ue_s1ap_id);
+      mme_app_send_s11_update_bearer_rsp(ue_session_pool->privates.fields.mme_teid_s11, ue_session_pool->privates.fields.saegw_teid_s11, 0, s11_proc_update_bearer->proc.s11_trxn, s11_proc_update_bearer->bcs_tbu);      /*
+       * We update the ESM bearer context when the NAS ESM confirmation arrives.
+       * We don't care for the E-RAB message.
+       */
+      mme_app_delete_s11_procedure_update_bearer(ue_session_pool);
+    }
   } else {
-	  OAILOG_WARNING(LOG_MME_APP, "Not removing the s11 ubr procedure, since HO is in progress for UE: " MME_UE_S1AP_ID_FMT ". \n", ue_session_pool->privates.mme_ue_s1ap_id);
+	  OAILOG_WARNING(LOG_MME_APP, "Not removing/sending the s11 ubr procedure, since HO is in progress for UE: " MME_UE_S1AP_ID_FMT ". \n", ue_session_pool->privates.mme_ue_s1ap_id);
   }
+
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 
@@ -2827,10 +2995,10 @@ void mme_app_handle_deactivate_eps_bearer_ctx_cnf (itti_nas_deactivate_eps_beare
 	  DevAssert(!bc);
 
   /** Not checking S1U E-RAB Release Response. */
-  s11_proc_delete_bearer->num_bearers_unhandled--;
-  if(s11_proc_delete_bearer->num_bearers_unhandled){
+  s11_proc_delete_bearer->proc.num_bearers_unhandled--;
+  if(s11_proc_delete_bearer->proc.num_bearers_unhandled){
     OAILOG_INFO(LOG_MME_APP, "Still %d unhandled bearers exist for s11 delete dedicated bearer procedure for UE: " MME_UE_S1AP_ID_FMT ". Not sending DBResp back yet. \n",
-        s11_proc_delete_bearer->num_bearers_unhandled, ue_session_pool->privates.mme_ue_s1ap_id);
+        s11_proc_delete_bearer->proc.num_bearers_unhandled, ue_session_pool->privates.mme_ue_s1ap_id);
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
   OAILOG_INFO(LOG_MME_APP, "No unhandled bearers left for s11 delete dedicated bearer procedure for UE: " MME_UE_S1AP_ID_FMT ". Sending DBResp back immediately. \n", ue_session_pool->privates.mme_ue_s1ap_id);
@@ -2841,7 +3009,7 @@ void mme_app_handle_deactivate_eps_bearer_ctx_cnf (itti_nas_deactivate_eps_beare
 	  /** Delete the procedure if it exists. */
 	  mme_app_delete_s11_procedure_delete_bearer(ue_session_pool);
   } else {
-	  OAILOG_WARNING(LOG_MME_APP, "Not removing the s11 dbr procedure, since HO is in progress for UE: " MME_UE_S1AP_ID_FMT ". \n", ue_session_pool->privates.mme_ue_s1ap_id);
+	  OAILOG_WARNING(LOG_MME_APP, "Not removing/sending the s11 dbr procedure, since HO is in progress for UE: " MME_UE_S1AP_ID_FMT ". \n", ue_session_pool->privates.mme_ue_s1ap_id);
   }
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
@@ -3552,6 +3720,10 @@ mme_app_handle_forward_relocation_request(
  target_tai.plmn.mnc_digit3 = forward_relocation_request_pP->target_identification.mnc[2];
  target_tai.tac = forward_relocation_request_pP->target_identification.target_id.macro_enb_id.tac;
 
+// if(1){
+//	 mme_app_send_s10_forward_relocation_response_err(forward_relocation_request_pP->s10_source_mme_teid.teid, &forward_relocation_request_pP->peer_ip, forward_relocation_request_pP->trxn, REQUEST_REJECTED);
+//	 OAILOG_FUNC_OUT (LOG_MME_APP);
+// }
 
  /** Get the eNB Id. */
  target_type_t target_type = forward_relocation_request_pP->target_identification.target_type;

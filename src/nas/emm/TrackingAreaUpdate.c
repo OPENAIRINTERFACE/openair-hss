@@ -24,13 +24,13 @@
 
   Version     0.1
 
-  Date        2013/05/07
+  Date        2018/05/07
 
   Product     NAS stack
 
   Subsystem   EPS Mobility Management
 
-  Author      Frederic Maurel
+  Author      Dincer Beken
 
   Description Defines the tracking area update EMM procedure executed by the
         Non-Access Stratum.

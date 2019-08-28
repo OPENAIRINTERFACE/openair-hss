@@ -48,6 +48,7 @@ typedef struct mme_app_base_proc_s {
   //pdu_in_rej_t               fail_in;
   time_out_t                 time_out;
   mme_app_base_proc_type_t   type;
+  bool						 in_progress;
 } mme_app_base_proc_t;
 
 /* S10 */
@@ -129,6 +130,7 @@ typedef enum {
 
 typedef struct mme_app_s11_proc_s {
   mme_app_base_proc_t         proc;
+  int                         num_bearers_unhandled;
   mme_app_s11_proc_type_t     type;
   pti_t					      pti;
   uintptr_t                   s11_trxn;
@@ -144,7 +146,6 @@ typedef enum {
 
 typedef struct mme_app_s11_proc_create_bearer_s {
   mme_app_s11_proc_t           proc;
-  int                          num_bearers_unhandled;
   int                          num_status_received;
 
   ebi_t                        linked_ebi;
@@ -156,7 +157,6 @@ typedef struct mme_app_s11_proc_create_bearer_s {
 
 typedef struct mme_app_s11_proc_update_bearer_s {
   mme_app_s11_proc_t           proc;
-  int                          num_bearers_unhandled;
   int                          num_status_received;
 
   pdn_cid_t                    pci;
@@ -170,7 +170,6 @@ typedef struct mme_app_s11_proc_update_bearer_s {
 
 typedef struct mme_app_s11_proc_delete_bearer_s {
   mme_app_s11_proc_t           proc;
-  int                          num_bearers_unhandled;
   ebi_t                        linked_ebi;
   int                          num_status_received;
   ebi_list_t                   ebis;

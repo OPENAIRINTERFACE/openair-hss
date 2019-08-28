@@ -328,6 +328,18 @@ static esm_cause_t _eps_bearer_deactivate_t3495_handler (nas_esm_proc_t * esm_ba
 
   esm_base_proc->retx_count += 1;
   if (esm_base_proc->retx_count < EPS_BEARER_DEACTIVATE_COUNTER_MAX) {
+    /** Check the default bearer status status--> Should be ACTIVE. */
+	ue_session_pool_t * ue_session_pool = mme_ue_session_pool_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_session_pools, esm_base_proc->ue_id);
+	nas_esm_proc_bearer_context_t * esm_proc_bearer_context = (nas_esm_proc_bearer_context_t*)esm_base_proc;
+	if(ue_session_pool){
+		bearer_context_new_t * default_bc = NULL;
+		mme_app_get_session_bearer_context_from_all(ue_session_pool, esm_proc_bearer_context->linked_ebi, &default_bc);
+		if(default_bc && !(default_bc->bearer_state & BEARER_STATE_ACTIVE)){
+			esm_base_proc->retx_count -= 1;
+			OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_REACTIVATION_REQUESTED);
+		}
+	}
+
     /*
      * Create a new ESM-Information request and restart the timer.
      * Keep the ESM transaction.
