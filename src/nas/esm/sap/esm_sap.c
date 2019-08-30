@@ -366,7 +366,7 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
     /*
      * Get the procedure of the timer.
      */
-    nas_esm_proc_t * esm_base_proc = ((nas_esm_proc_t*)msg->data.esm_proc_timeout);
+    nas_esm_proc_t * esm_base_proc = ((nas_esm_proc_t*)msg->data.eps_bearer_context_ll_cb_arg.esm_proc_timeout);
     if(!esm_base_proc){
       OAILOG_ERROR(LOG_NAS_ESM, "ESM-SAP   - No procedure for timeout found.\n");
     }else {
@@ -378,7 +378,8 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
        */
       msg->ue_id = esm_base_proc->ue_id;
       msg->is_attach_tau = esm_base_proc->type == ESM_PROC_PDN_CONTEXT ? ((nas_esm_proc_pdn_connectivity_t*)esm_base_proc)->is_attach : false;
-      msg->esm_cause = esm_base_proc->timeout_notif(esm_base_proc, &esm_resp_msg );
+      msg->esm_cause = esm_base_proc->timeout_notif(esm_base_proc, &esm_resp_msg, &msg->data.eps_bearer_context_ll_cb_arg);
+      /** Set the lower layer handler. */
       /** Check if the cause is due idle mode, if so trigger paging (counter should not be incremented). */
       if(msg->esm_cause == ESM_CAUSE_REACTIVATION_REQUESTED){
     	  OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Timer expired but received message incompatility error for transaction (type=%d, ue_id=" MME_UE_S1AP_ID_FMT "), " "retransmission counter = %d. "

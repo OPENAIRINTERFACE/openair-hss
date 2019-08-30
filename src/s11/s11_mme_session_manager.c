@@ -149,7 +149,7 @@ s11_mme_create_session_request (
   }
 
   for (int i = 0; i < req_p->bearer_contexts_to_be_created->num_bearer_context; i++) {
-    gtpv2c_bearer_context_to_be_created_ie_set (&(ulp_req.hMsg), &req_p->bearer_contexts_to_be_created->bearer_contexts[i]);
+    gtpv2c_bearer_context_to_be_created_ie_set (&(ulp_req.hMsg), &req_p->bearer_contexts_to_be_created->bearer_context[i]);
   }
   rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
   DevAssert (NW_OK == rc);

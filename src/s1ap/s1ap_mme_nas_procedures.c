@@ -1366,19 +1366,19 @@ s1ap_handle_handover_request (
   for (int item = 0; item < handover_request_pP->bearer_ctx_to_be_setup_list->num_bearer_context; item++) {
 	  S1ap_E_RABToBeSetupItemHOReq_t     *e_RABToBeSetupHO = NULL; // [conn_est_cnf_pP->no_of_e_rabs]; // don't alloc on stack for automatic removal
 	  e_RABToBeSetupHO = calloc(1, sizeof(S1ap_E_RABToBeSetupItemHOReq_t));
-	  e_RABToBeSetupHO->e_RAB_ID = handover_request_pP->bearer_ctx_to_be_setup_list->bearer_contexts[item].eps_bearer_id;
-	  e_RABToBeSetupHO->e_RABlevelQosParameters.qCI = handover_request_pP->bearer_ctx_to_be_setup_list->bearer_contexts[item].bearer_level_qos.qci;
-	  e_RABToBeSetupHO->e_RABlevelQosParameters.allocationRetentionPriority.priorityLevel = handover_request_pP->bearer_ctx_to_be_setup_list->bearer_contexts[item].bearer_level_qos.pl;
-	  e_RABToBeSetupHO->e_RABlevelQosParameters.allocationRetentionPriority.pre_emptionCapability = handover_request_pP->bearer_ctx_to_be_setup_list->bearer_contexts[item].bearer_level_qos.pci;
-	  e_RABToBeSetupHO->e_RABlevelQosParameters.allocationRetentionPriority.pre_emptionVulnerability = handover_request_pP->bearer_ctx_to_be_setup_list->bearer_contexts[item].bearer_level_qos.pvi;
+	  e_RABToBeSetupHO->e_RAB_ID = handover_request_pP->bearer_ctx_to_be_setup_list->bearer_context[item].eps_bearer_id;
+	  e_RABToBeSetupHO->e_RABlevelQosParameters.qCI = handover_request_pP->bearer_ctx_to_be_setup_list->bearer_context[item].bearer_level_qos.qci;
+	  e_RABToBeSetupHO->e_RABlevelQosParameters.allocationRetentionPriority.priorityLevel = handover_request_pP->bearer_ctx_to_be_setup_list->bearer_context[item].bearer_level_qos.pl;
+	  e_RABToBeSetupHO->e_RABlevelQosParameters.allocationRetentionPriority.pre_emptionCapability = handover_request_pP->bearer_ctx_to_be_setup_list->bearer_context[item].bearer_level_qos.pci;
+	  e_RABToBeSetupHO->e_RABlevelQosParameters.allocationRetentionPriority.pre_emptionVulnerability = handover_request_pP->bearer_ctx_to_be_setup_list->bearer_context[item].bearer_level_qos.pvi;
 	  /** No NAS. */
 
-      bearer_qos_t * bearer_qos_information = &handover_request_pP->bearer_ctx_to_be_setup_list->bearer_contexts[item].bearer_level_qos;
-      if (handover_request_pP->bearer_ctx_to_be_setup_list->bearer_contexts[item].bearer_level_qos.qci <= 4) {
+      bearer_qos_t * bearer_qos_information = &handover_request_pP->bearer_ctx_to_be_setup_list->bearer_context[item].bearer_level_qos;
+      if (handover_request_pP->bearer_ctx_to_be_setup_list->bearer_context[item].bearer_level_qos.qci <= 4) {
 
         OAILOG_NOTICE (LOG_S1AP, "Encoding of GBR level qos information for bearer (ebi=%d,qci=%d).\n",
-        		handover_request_pP->bearer_ctx_to_be_setup_list->bearer_contexts[item].eps_bearer_id,
-				handover_request_pP->bearer_ctx_to_be_setup_list->bearer_contexts[item].bearer_level_qos.qci);
+        		handover_request_pP->bearer_ctx_to_be_setup_list->bearer_context[item].eps_bearer_id,
+				handover_request_pP->bearer_ctx_to_be_setup_list->bearer_context[item].bearer_level_qos.qci);
 
         e_RABToBeSetupHO->e_RABlevelQosParameters.gbrQosInformation = calloc(1, sizeof(struct S1ap_GBR_QosInformation));
         DevAssert(e_RABToBeSetupHO->e_RABlevelQosParameters.gbrQosInformation);
@@ -1417,9 +1417,9 @@ s1ap_handle_handover_request (
 	  /*
 	   * Set the GTP-TEID. This is the S1-U S-GW TEID
 	   */
-	  INT32_TO_OCTET_STRING (handover_request_pP->bearer_ctx_to_be_setup_list->bearer_contexts[item].s1u_sgw_fteid.teid, &e_RABToBeSetupHO->gTP_TEID);
+	  INT32_TO_OCTET_STRING (handover_request_pP->bearer_ctx_to_be_setup_list->bearer_context[item].s1u_sgw_fteid.teid, &e_RABToBeSetupHO->gTP_TEID);
 	  // S-GW IP address(es) for user-plane
-	  bstring transportLayerAddress = fteid_ip_address_to_bstring(&handover_request_pP->bearer_ctx_to_be_setup_list->bearer_contexts[item].s1u_sgw_fteid);
+	  bstring transportLayerAddress = fteid_ip_address_to_bstring(&handover_request_pP->bearer_ctx_to_be_setup_list->bearer_context[item].s1u_sgw_fteid);
 	  e_RABToBeSetupHO->transportLayerAddress.buf = calloc (blength(transportLayerAddress), sizeof (uint8_t));
 	  memcpy (e_RABToBeSetupHO->transportLayerAddress.buf,
 			  transportLayerAddress->data,
@@ -1431,7 +1431,7 @@ s1ap_handle_handover_request (
 	  /** Destroy the temporarily allocated bstring. */
 	  bdestroy_wrapper(&transportLayerAddress);
 //
-//	  e_RABToBeSetupHO->transportLayerAddress.buf = calloc (blength(handover_request_pP->bearer_ctx_to_be_setup_list->bearer_contexts[item].s1u_sgw_fteid.), sizeof (uint8_t));
+//	  e_RABToBeSetupHO->transportLayerAddress.buf = calloc (blength(handover_request_pP->	[item].s1u_sgw_fteid.), sizeof (uint8_t));
 //	  memcpy (e_RABToBeSetupHO->transportLayerAddress.buf, conn_est_cnf_pP->transport_layer_address[item]->data, blength(conn_est_cnf_pP->transport_layer_address[item]));
 //	  e_RABToBeSetupHO->transportLayerAddress.size = blength(conn_est_cnf_pP->transport_layer_address[item]);
 //	  e_RABToBeSetupHO->transportLayerAddress.bits_unused = 0;

@@ -478,7 +478,7 @@ s10_mme_forward_relocation_response (
 
      /** Setting the Bearer Context to Setup. Just EBI needed. */
      for (int i = 0; i < forward_relocation_response_p->handovered_bearers.num_bearer_context; i++) {
-       gtpv2c_bearer_context_created_ie_set(&(ulp_req.hMsg), &forward_relocation_response_p->handovered_bearers.bearer_contexts[i]);
+       gtpv2c_bearer_context_created_ie_set(&(ulp_req.hMsg), &forward_relocation_response_p->handovered_bearers.bearer_context[i]);
      }
    }
    /** No allocated context remains. */

@@ -318,7 +318,7 @@ mme_app_pdn_process_session_creation(mme_ue_s1ap_id_t ue_id, imsi64_t imsi, mm_s
 //  /** Get the first unestablished PDN context from the UE context. */
 //  RB_FOREACH (pdn_context1, PdnContexts, &ue_session_pool->pdn_contexts) {
 //	for(int num_ebi = 0; num_ebi < bcs_created->num_bearer_context; num_ebi++){
-//	    if(pdn_context1->default_ebi == bcs_created->bearer_contexts[num_ebi].eps_bearer_id){
+//	    if(pdn_context1->default_ebi == bcs_created->bearer_context[num_ebi].eps_bearer_id){
 //	      /** Found. */
 //	      pdn_context = pdn_context1;
 //	      break;
@@ -479,14 +479,14 @@ mme_app_pdn_process_session_creation(mme_ue_s1ap_id_t ue_id, imsi64_t imsi, mm_s
 
   /** Updated all PDN (bearer generic) information. Traverse all bearers, including the default bearer. */
   for (int i=0; i < bcs_created->num_bearer_context; i++) {
-    ebi_t bearer_id = bcs_created->bearer_contexts[i].eps_bearer_id;
-    bearer_context_created_t * bc_created = &bcs_created->bearer_contexts[i];
+    ebi_t bearer_id = bcs_created->bearer_context[i].eps_bearer_id;
+    bearer_context_created_t * bc_created = &bcs_created->bearer_context[i];
     bearer_context_new_t * bearer_context = mme_app_get_session_bearer_context(pdn_context, bearer_id);
     /*
      * Depending on s11 result we have to send reject or accept for bearers
      */
     DevCheck ((bearer_id < BEARERS_PER_UE + 5) && (bearer_id >= 5), bearer_id, BEARERS_PER_UE, 0);
-    DevAssert (bcs_created->bearer_contexts[i].s1u_sgw_fteid.interface_type == S1_U_SGW_GTP_U);
+    DevAssert (bcs_created->bearer_context[i].s1u_sgw_fteid.interface_type == S1_U_SGW_GTP_U);
     /** Check if the bearer could be created in the PGW. */
     if(bc_created->cause.cause_value != REQUEST_ACCEPTED){
       /** Check that it is a dedicated bearer. */
@@ -514,19 +514,19 @@ mme_app_pdn_process_session_creation(mme_ue_s1ap_id_t ue_id, imsi64_t imsi, mm_s
       mme_app_desc.mme_ue_session_pools.nb_bearers_managed++;
       mme_app_desc.mme_ue_session_pools.nb_bearers_since_last_stat++;
       /** Update the FTEIDs of the SAE-GW. */
-      memcpy(&bearer_context->s_gw_fteid_s1u, &bcs_created->bearer_contexts[i].s1u_sgw_fteid, sizeof(fteid_t)); /**< Also copying the IPv4/V6 address. */
-      memcpy(&bearer_context->p_gw_fteid_s5_s8_up, &bcs_created->bearer_contexts[i].s5_s8_u_pgw_fteid, sizeof(fteid_t));
+      memcpy(&bearer_context->s_gw_fteid_s1u, &bcs_created->bearer_context[i].s1u_sgw_fteid, sizeof(fteid_t)); /**< Also copying the IPv4/V6 address. */
+      memcpy(&bearer_context->p_gw_fteid_s5_s8_up, &bcs_created->bearer_context[i].s5_s8_u_pgw_fteid, sizeof(fteid_t));
       /** Check if the bearer level QoS parameters have been modified by the PGW. */
-      if (bcs_created->bearer_contexts[i].bearer_level_qos.qci &&
-          bcs_created->bearer_contexts[i].bearer_level_qos.pl) {
+      if (bcs_created->bearer_context[i].bearer_level_qos.qci &&
+          bcs_created->bearer_context[i].bearer_level_qos.pl) {
         /**
          * We set them here, since we may not have a NAS context in (S10) mobility.
          * We don't check the subscribed HSS values. The PGW may ask for more.
          */
-        bearer_context->bearer_level_qos.qci = bcs_created->bearer_contexts[i].bearer_level_qos.qci;
-        bearer_context->bearer_level_qos.pl  = bcs_created->bearer_contexts[i].bearer_level_qos.pl;
-        bearer_context->bearer_level_qos.pvi = bcs_created->bearer_contexts[i].bearer_level_qos.pvi;
-        bearer_context->bearer_level_qos.pci = bcs_created->bearer_contexts[i].bearer_level_qos.pci;
+        bearer_context->bearer_level_qos.qci = bcs_created->bearer_context[i].bearer_level_qos.qci;
+        bearer_context->bearer_level_qos.pl  = bcs_created->bearer_context[i].bearer_level_qos.pl;
+        bearer_context->bearer_level_qos.pvi = bcs_created->bearer_context[i].bearer_level_qos.pvi;
+        bearer_context->bearer_level_qos.pci = bcs_created->bearer_context[i].bearer_level_qos.pci;
         OAILOG_DEBUG (LOG_MME_APP, "Set qci %u in bearer %u\n", bearer_context->bearer_level_qos.qci, bearer_id);
       }
       /** Not touching TFT, ESM-EBR-State here. */

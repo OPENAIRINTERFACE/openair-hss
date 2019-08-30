@@ -85,7 +85,7 @@
    Timer handlers
 */
 static esm_cause_t
-_eps_bearer_deactivate_t3495_handler(nas_esm_proc_t * esm_proc, ESM_msg *esm_resp_msg);
+_eps_bearer_deactivate_t3495_handler(nas_esm_proc_t * esm_proc, ESM_msg *esm_resp_msg, esm_timeout_ll_cb_arg_t * ll_handler_arg);
 
 /*
    --------------------------------------------------------------------------
@@ -259,7 +259,7 @@ esm_proc_eps_bearer_context_deactivate_request (
         nas_esm_proc_bearer_context_t * esm_proc_bearer_context = _esm_proc_get_bearer_context_procedure(ue_id, *pti, *ebi);
         if(esm_proc_bearer_context) {
         	/** Retry the procedure. */
-        	esm_cause_t esm_cause = _eps_bearer_deactivate_t3495_handler(esm_proc_bearer_context, esm_rsp_msg);
+        	esm_cause_t esm_cause = _eps_bearer_deactivate_t3495_handler(esm_proc_bearer_context, esm_rsp_msg, NULL);
         	OAILOG_INFO(LOG_NAS_EMM, "EMMCN-SAP  - " "A bearer context removal procedure for UE " MME_UE_S1AP_ID_FMT" (pti=%d, ebi=%d) already exists. Result of resending the message %d. \n", ue_id, *pti, *ebi, esm_cause);
         	OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_SUCCESS);
         }
@@ -312,7 +312,7 @@ esm_proc_eps_bearer_context_deactivate_request (
  **      Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
-static esm_cause_t _eps_bearer_deactivate_t3495_handler (nas_esm_proc_t * esm_base_proc, ESM_msg * esm_rsp_msg)
+static esm_cause_t _eps_bearer_deactivate_t3495_handler (nas_esm_proc_t * esm_base_proc, ESM_msg * esm_rsp_msg, esm_timeout_ll_cb_arg_t * ll_handler_arg)
 {
   OAILOG_FUNC_IN(LOG_NAS_ESM);
 
@@ -337,6 +337,20 @@ static esm_cause_t _eps_bearer_deactivate_t3495_handler (nas_esm_proc_t * esm_ba
 		if(default_bc && !(default_bc->bearer_state & BEARER_STATE_ACTIVE)){
 			esm_base_proc->retx_count -= 1;
 			OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_REACTIVATION_REQUESTED);
+		}
+	}
+	/* Set the callback handler as E-RAB delete - do this only for dedicated bearers (we ignore the S1AP rejects). */
+	if(esm_base_proc->type == ESM_PROC_EPS_BEARER_CONTEXT){
+		bearer_context_new_t * ded_bc = NULL;
+		mme_app_get_session_bearer_context_from_all(ue_session_pool, esm_proc_bearer_context->bearer_ebi, &ded_bc);
+		if(ded_bc && (ded_bc->bearer_state & BEARER_STATE_ENB_CREATED)){
+			if(ll_handler_arg){
+				memset(&ll_handler_arg->bearer_level_qos, &ded_bc->bearer_level_qos, sizeof(ded_bc->bearer_level_qos));
+	        	ll_handler_arg->ue_id = esm_base_proc->ue_id;
+	        	ll_handler_arg->eps_bearer_id = ded_bc->ebi;
+				ll_handler_arg->ll_handler = lowerlayer_deactivate_bearer_req;
+				OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Resetting ERAB deletion values for RAB-Mod timeout (ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d). May be overwritten below.\n", esm_base_proc->ue_id, ded_bc->ebi);
+			}
 		}
 	}
 

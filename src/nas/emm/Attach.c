@@ -337,7 +337,7 @@ int emm_proc_attach_request (
     new_emm_ue_ctx->attach_type = ies->type;
     new_emm_ue_ctx->additional_update_type = ies->additional_update_type;
     new_emm_ue_ctx->emm_cause       = EMM_CAUSE_SUCCESS;
-    emm_init_context(new_emm_ue_ctx, true);  /**< Initialize the context, we might do it again if the security was not verified. */
+    emm_init_context(new_emm_ue_ctx);  /**< Initialize the context, we might do it again if the security was not verified. */
     /** Add the newly created EMM context. */
     if (RETURNok != emm_data_context_add (&_emm_data, new_emm_ue_ctx)) {
       OAILOG_CRITICAL(LOG_NAS_EMM, "EMM-PROC  - Attach EMM Context could not be inserted in hashtables for ueId " MME_UE_S1AP_ID_FMT ". \n", new_emm_ue_ctx->ue_id);

@@ -968,7 +968,7 @@ gtpv2c_bearer_context_created_ie_get (
   DevAssert (bearer_contexts);
   DevAssert (0 <= bearer_contexts->num_bearer_context);
   DevAssert (MSG_CREATE_SESSION_REQUEST_MAX_BEARER_CONTEXTS >= bearer_contexts->num_bearer_context);
-  bearer_context_created_t               *bearer_context = &bearer_contexts->bearer_contexts[bearer_contexts->num_bearer_context];
+  bearer_context_created_t               *bearer_context = &bearer_contexts->bearer_context[bearer_contexts->num_bearer_context];
   uint16_t                                 read = 0;
   nw_rc_t                                   rc;
 
@@ -1077,7 +1077,7 @@ gtpv2c_bearer_context_to_be_created_ie_get (
   DevAssert (bearer_contexts );
   DevAssert (0 <= bearer_contexts->num_bearer_context);
   DevAssert (MSG_CREATE_SESSION_REQUEST_MAX_BEARER_CONTEXTS >= bearer_contexts->num_bearer_context);
-  bearer_context_to_be_created_t          *bearer_context  = &bearer_contexts->bearer_contexts[bearer_contexts->num_bearer_context];
+  bearer_context_to_be_created_t          *bearer_context  = &bearer_contexts->bearer_context[bearer_contexts->num_bearer_context];
   uint16_t                                 read = 0;
   nw_rc_t                                   rc;
 

@@ -43,6 +43,8 @@ Description Defines the EPS Session Management procedures executed at
 #include "common_defs.h"
 #include "common_types.h"
 #include "mme_app_esm_procedures.h"
+// todo: temporarily until better solution
+#include "LowerLayer.h"
 
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/

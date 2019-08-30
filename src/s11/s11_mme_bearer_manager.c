@@ -326,12 +326,12 @@ s11_mme_modify_bearer_request (
                               req_p->sender_fteid_for_cp.ipv6 ? &req_p->sender_fteid_for_cp.ipv6_address : NULL);
 
   for (int i=0; i < req_p->bearer_contexts_to_be_modified.num_bearer_context; i++) {
-    rc = gtpv2c_bearer_context_to_be_modified_within_modify_bearer_request_ie_set (&(ulp_req.hMsg), & req_p->bearer_contexts_to_be_modified.bearer_contexts[i]);
+    rc = gtpv2c_bearer_context_to_be_modified_within_modify_bearer_request_ie_set (&(ulp_req.hMsg), & req_p->bearer_contexts_to_be_modified.bearer_context[i]);
     DevAssert (NW_OK == rc);
   }
 
   for (int i=0; i < req_p->bearer_contexts_to_be_removed.num_bearer_context; i++) {
-    rc = gtpv2c_bearer_context_to_be_removed_within_modify_bearer_request_ie_set (&(ulp_req.hMsg), & req_p->bearer_contexts_to_be_removed.bearer_contexts[i]);
+    rc = gtpv2c_bearer_context_to_be_removed_within_modify_bearer_request_ie_set (&(ulp_req.hMsg), & req_p->bearer_contexts_to_be_removed.bearer_context[i]);
     DevAssert (NW_OK == rc);
   }
 
@@ -744,10 +744,10 @@ s11_mme_create_bearer_response (
   cause = response_p->cause;
   gtpv2c_cause_ie_set (&(ulp_req.hMsg), &cause);
   if(cause.cause_value == TEMP_REJECT_HO_IN_PROGRESS)
-	  ulp_req.u_api_info.triggeredRspInfo.remove_trx = true; /**< Using boolean, such that not to add any dependencies in NwGtpv2c.h etc.. */
+    ulp_req.u_api_info.triggeredRspInfo.pt_trx = true; /**< Using boolean, such that not to add any dependencies in NwGtpv2c.h etc.. */
 
   for (int i=0; i < response_p->bearer_contexts.num_bearer_context; i++) {
-    rc = gtpv2c_bearer_context_within_create_bearer_response_ie_set (&(ulp_req.hMsg), & response_p->bearer_contexts.bearer_contexts[i]);
+    rc = gtpv2c_bearer_context_within_create_bearer_response_ie_set (&(ulp_req.hMsg), & response_p->bearer_contexts.bearer_context[i]);
     DevAssert (NW_OK == rc);
   }
 
@@ -879,10 +879,10 @@ s11_mme_update_bearer_response (
   cause = response_p->cause;
   gtpv2c_cause_ie_set (&(ulp_req.hMsg), &cause);
   if(cause.cause_value == TEMP_REJECT_HO_IN_PROGRESS)
-  	  ulp_req.u_api_info.triggeredRspInfo.remove_trx = true; /**< Using boolean, such that not to add any dependencies in NwGtpv2c.h etc.. */
+    ulp_req.u_api_info.triggeredRspInfo.pt_trx = true; /**< Using boolean, such that not to add any dependencies in NwGtpv2c.h etc.. */
 
   for (int i=0; i < response_p->bearer_contexts.num_bearer_context; i++) {
-    rc = gtpv2c_bearer_context_within_update_bearer_response_ie_set(&(ulp_req.hMsg), & response_p->bearer_contexts.bearer_contexts[i]);
+    rc = gtpv2c_bearer_context_within_update_bearer_response_ie_set(&(ulp_req.hMsg), & response_p->bearer_contexts.bearer_context[i]);
     DevAssert (NW_OK == rc);
   }
 
@@ -1018,14 +1018,14 @@ s11_mme_delete_bearer_response (
   // TODO relay cause
   cause = response_p->cause;
   gtpv2c_cause_ie_set (&(ulp_req.hMsg), &cause);
-//  if(cause.cause_value == TEMP_REJECT_HO_IN_PROGRESS)
-//  	  ulp_req.u_api_info.triggeredRspInfo.remove_trx = true; /**< Using boolean, such that not to add any dependencies in NwGtpv2c.h etc.. */
+  if(cause.cause_value == TEMP_REJECT_HO_IN_PROGRESS)
+    ulp_req.u_api_info.triggeredRspInfo.pt_trx = true; /**< Using boolean, such that not to add any dependencies in NwGtpv2c.h etc.. */
 
   if(response_p->linked_eps_bearer_id)
     gtpv2c_ebi_ie_set (&(ulp_req.hMsg), (unsigned)response_p->linked_eps_bearer_id, NW_GTPV2C_IE_INSTANCE_ZERO);
 
   for (int i=0; i < response_p->bearer_contexts.num_bearer_context; i++) {
-    rc = gtpv2c_bearer_context_within_delete_bearer_response_ie_set (&(ulp_req.hMsg), &response_p->bearer_contexts.bearer_contexts[i]);
+    rc = gtpv2c_bearer_context_within_delete_bearer_response_ie_set (&(ulp_req.hMsg), &response_p->bearer_contexts.bearer_context[i]);
     DevAssert (NW_OK == rc);
   }
 

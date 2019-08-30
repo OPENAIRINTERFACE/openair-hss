@@ -121,6 +121,7 @@ typedef struct esm_deactivate_eps_bearer_context_s {
   bool 							   pending_pdn_proc;
 } esm_deactivate_eps_bearer_context_t;
 
+esm_timeout_ll_cb_arg_t      				eps_bearer_context_ll_cb_arg;
 
 typedef struct esm_bearer_resource_allocate_rej_s{
   ebi_t             ebi;
@@ -176,12 +177,14 @@ typedef union {
   esm_cn_pdn_config_res_t        *pdn_config_res;
   esm_cn_pdn_connectivity_res_t  *pdn_connectivity_res;
   esm_cn_pdn_disconnect_res_t    *pdn_disconnect_res;
-  uintptr_t                       esm_proc_timeout;
 
   /** Non Pointer structures. */
   esm_activate_eps_bearer_context_t         eps_bearer_context_activate;
   esm_modify_eps_bearer_context_t           eps_bearer_context_modify;
   esm_deactivate_eps_bearer_context_t       eps_bearer_context_deactivate;
+
+  /** Timeout LL Callback. */
+  esm_timeout_ll_cb_arg_t      				eps_bearer_context_ll_cb_arg;
 } esm_sap_data_t;
 
 struct emm_data_context_s;

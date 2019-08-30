@@ -412,18 +412,24 @@ void mme_app_send_s11_modify_bearer_req(const ue_session_pool_t * const ue_sessi
   STAILQ_FOREACH (bearer_context_to_establish, &pdn_context->session_bearers, entries) {
     DevAssert(bearer_context_to_establish);
     /** Add them to the bearers list of the MBR. */
-    if(bearer_context_to_establish->bearer_state & BEARER_STATE_ENB_CREATED && bearer_context_to_establish->enb_fteid_s1u.teid){
+    if((bearer_context_to_establish->bearer_state & BEARER_STATE_ENB_CREATED) && bearer_context_to_establish->enb_fteid_s1u.teid){
       OAILOG_DEBUG(LOG_MME_APP, "Adding EBI %d as bearer context to be modified for UE " MME_UE_S1AP_ID_FMT". \n", bearer_context_to_establish->ebi, ue_session_pool->privates.mme_ue_s1ap_id);
-      s11_modify_bearer_request->bearer_contexts_to_be_modified.bearer_contexts[s11_modify_bearer_request->bearer_contexts_to_be_modified.num_bearer_context].eps_bearer_id =
+      s11_modify_bearer_request->bearer_contexts_to_be_modified.bearer_context[s11_modify_bearer_request->bearer_contexts_to_be_modified.num_bearer_context].eps_bearer_id =
           bearer_context_to_establish->ebi;
-      memcpy (&s11_modify_bearer_request->bearer_contexts_to_be_modified.bearer_contexts[s11_modify_bearer_request->bearer_contexts_to_be_modified.num_bearer_context].s1_eNB_fteid,
+      memcpy (&s11_modify_bearer_request->bearer_contexts_to_be_modified.bearer_context[s11_modify_bearer_request->bearer_contexts_to_be_modified.num_bearer_context].s1_eNB_fteid,
           &bearer_context_to_establish->enb_fteid_s1u, sizeof(bearer_context_to_establish->enb_fteid_s1u));
       s11_modify_bearer_request->bearer_contexts_to_be_modified.num_bearer_context++;
     } else {
-      OAILOG_WARNING(LOG_MME_APP, "Adding EBI %d as bearer context to be removed for UE " MME_UE_S1AP_ID_FMT". \n", bearer_context_to_establish->ebi, ue_session_pool->privates.mme_ue_s1ap_id);
-      s11_modify_bearer_request->bearer_contexts_to_be_removed.bearer_contexts[s11_modify_bearer_request->bearer_contexts_to_be_removed.num_bearer_context].eps_bearer_id = bearer_context_to_establish->ebi;
-      s11_modify_bearer_request->bearer_contexts_to_be_removed.bearer_contexts[s11_modify_bearer_request->bearer_contexts_to_be_removed.num_bearer_context].cause.cause_value = NO_RESOURCES_AVAILABLE;
-      s11_modify_bearer_request->bearer_contexts_to_be_removed.num_bearer_context++;
+      /** Check the ESM Bearer Context status, add if it is in ESM_ACTIVE state. */
+      if(bearer_context_to_establish->esm_ebr_context.status == ESM_EBR_ACTIVE){
+          OAILOG_WARNING(LOG_MME_APP, "Adding EBI %d as bearer context to be removed for UE " MME_UE_S1AP_ID_FMT". \n", bearer_context_to_establish->ebi, ue_session_pool->privates.mme_ue_s1ap_id);
+          s11_modify_bearer_request->bearer_contexts_to_be_removed.bearer_context[s11_modify_bearer_request->bearer_contexts_to_be_removed.num_bearer_context].eps_bearer_id = bearer_context_to_establish->ebi;
+          s11_modify_bearer_request->bearer_contexts_to_be_removed.bearer_context[s11_modify_bearer_request->bearer_contexts_to_be_removed.num_bearer_context].cause.cause_value = NO_RESOURCES_AVAILABLE;
+          s11_modify_bearer_request->bearer_contexts_to_be_removed.num_bearer_context++;
+      } else {
+    	  OAILOG_WARNING(LOG_MME_APP, "Not adding EBI %d as bearer context to be removed for UE " MME_UE_S1AP_ID_FMT", since ESM status is not ACTIVE yet %d. \n",
+    			  bearer_context_to_establish->ebi, ue_session_pool->privates.mme_ue_s1ap_id, bearer_context_to_establish->esm_ebr_context.status);
+      }
     }
   }
 
@@ -760,10 +766,12 @@ mme_app_send_s11_create_bearer_rsp (
   /** Iterate through the bearers to be created and check which ones where established. */
   for(int num_bc = 0; num_bc < bcs_tbc->num_bearer_context; num_bc++){
     if(cause_value && cause_value != REQUEST_ACCEPTED){
-      bcs_tbc->bearer_contexts[num_bc].cause.cause_value = cause_value;
+      bcs_tbc->bearer_context[num_bc].cause.cause_value = cause_value;
+      if(!s11_create_bearer_response->cause.cause_value)
+    	  s11_create_bearer_response->cause.cause_value = cause_value;
     }
     /** Check if the bearer is a session bearer. */
-    if(bcs_tbc->bearer_contexts[num_bc].cause.cause_value == REQUEST_ACCEPTED){
+    if(bcs_tbc->bearer_context[num_bc].cause.cause_value == REQUEST_ACCEPTED){
       if(s11_create_bearer_response->cause.cause_value == REQUEST_REJECTED)
         s11_create_bearer_response->cause.cause_value = REQUEST_ACCEPTED_PARTIALLY;
       if(!s11_create_bearer_response->cause.cause_value)
@@ -775,15 +783,15 @@ mme_app_send_s11_create_bearer_rsp (
         s11_create_bearer_response->cause.cause_value = REQUEST_REJECTED;
     }
     /** The error case is at least PARTIALLY ACCEPTED. */
-    s11_create_bearer_response->bearer_contexts.bearer_contexts[num_bc].cause.cause_value = bcs_tbc->bearer_contexts[num_bc].cause.cause_value;
+    s11_create_bearer_response->bearer_contexts.bearer_context[num_bc].cause.cause_value = bcs_tbc->bearer_context[num_bc].cause.cause_value;
     if(s11_create_bearer_response->cause.cause_value == REQUEST_ACCEPTED)
-      s11_create_bearer_response->bearer_contexts.bearer_contexts[num_bc].eps_bearer_id   = bcs_tbc->bearer_contexts[num_bc].eps_bearer_id;
+      s11_create_bearer_response->bearer_contexts.bearer_context[num_bc].eps_bearer_id   = bcs_tbc->bearer_context[num_bc].eps_bearer_id;
     //  FTEID eNB
-    memcpy(&s11_create_bearer_response->bearer_contexts.bearer_contexts[num_bc].s1u_enb_fteid,
-        &bcs_tbc->bearer_contexts[num_bc].s1u_enb_fteid, sizeof(bcs_tbc->bearer_contexts[num_bc].s1u_enb_fteid));
+    memcpy(&s11_create_bearer_response->bearer_contexts.bearer_context[num_bc].s1u_enb_fteid,
+        &bcs_tbc->bearer_context[num_bc].s1u_enb_fteid, sizeof(bcs_tbc->bearer_context[num_bc].s1u_enb_fteid));
     // FTEID SGW S1U
-    memcpy(&s11_create_bearer_response->bearer_contexts.bearer_contexts[num_bc].s1u_sgw_fteid,
-        &bcs_tbc->bearer_contexts[num_bc].s1u_sgw_fteid, sizeof(bcs_tbc->bearer_contexts[num_bc].s1u_sgw_fteid));       ///< This IE shall be sent on the S11 interface. It shall be used
+    memcpy(&s11_create_bearer_response->bearer_contexts.bearer_context[num_bc].s1u_sgw_fteid,
+        &bcs_tbc->bearer_context[num_bc].s1u_sgw_fteid, sizeof(bcs_tbc->bearer_context[num_bc].s1u_sgw_fteid));       ///< This IE shall be sent on the S11 interface. It shall be used
     s11_create_bearer_response->bearer_contexts.num_bearer_context++;
   }
   s11_create_bearer_response->teid = s_gw_teid_s11_s4;
@@ -832,7 +840,7 @@ mme_app_send_s11_update_bearer_rsp (
   // todo: pco, uli
   /** Iterate through the bearers to be created and check which ones where established. */
   for(int num_bc = 0; num_bc < bcs_tbu->num_bearer_context; num_bc++){
-    if(bcs_tbu->bearer_contexts[num_bc].cause.cause_value == REQUEST_ACCEPTED){
+    if(bcs_tbu->bearer_context[num_bc].cause.cause_value == REQUEST_ACCEPTED){
       if(s11_update_bearer_response->cause.cause_value == REQUEST_REJECTED)
         s11_update_bearer_response->cause.cause_value = REQUEST_ACCEPTED_PARTIALLY;
       else if(!s11_update_bearer_response->cause.cause_value)
@@ -844,17 +852,17 @@ mme_app_send_s11_update_bearer_rsp (
       if(s11_update_bearer_response->cause.cause_value == REQUEST_ACCEPTED)
         s11_update_bearer_response->cause.cause_value = REQUEST_ACCEPTED_PARTIALLY;
       else if(!s11_update_bearer_response->cause.cause_value)
-        s11_update_bearer_response->cause.cause_value = (bcs_tbu->bearer_contexts[num_bc].cause.cause_value) ? bcs_tbu->bearer_contexts[num_bc].cause.cause_value : REQUEST_REJECTED;
+        s11_update_bearer_response->cause.cause_value = (bcs_tbu->bearer_context[num_bc].cause.cause_value) ? bcs_tbu->bearer_context[num_bc].cause.cause_value : REQUEST_REJECTED;
       else {
     	  /** Leave the code. */
       }
     }
     OAILOG_DEBUG (LOG_MME_APP, "Bearer with ebi %d updated with result code %d. New UBResp cause value %d. \n",
-        bcs_tbu->bearer_contexts[num_bc].eps_bearer_id, bcs_tbu->bearer_contexts[num_bc].cause, s11_update_bearer_response->cause.cause_value);
+        bcs_tbu->bearer_context[num_bc].eps_bearer_id, bcs_tbu->bearer_context[num_bc].cause, s11_update_bearer_response->cause.cause_value);
 
     /** The error case is at least PARTIALLY ACCEPTED. */
-    s11_update_bearer_response->bearer_contexts.bearer_contexts[num_bc].eps_bearer_id     = bcs_tbu->bearer_contexts[num_bc].eps_bearer_id;
-    s11_update_bearer_response->bearer_contexts.bearer_contexts[num_bc].cause.cause_value = (bcs_tbu->bearer_contexts[num_bc].cause.cause_value) ? bcs_tbu->bearer_contexts[num_bc].cause.cause_value : REQUEST_REJECTED;
+    s11_update_bearer_response->bearer_contexts.bearer_context[num_bc].eps_bearer_id     = bcs_tbu->bearer_context[num_bc].eps_bearer_id;
+    s11_update_bearer_response->bearer_contexts.bearer_context[num_bc].cause.cause_value = (bcs_tbu->bearer_context[num_bc].cause.cause_value) ? bcs_tbu->bearer_context[num_bc].cause.cause_value : REQUEST_REJECTED;
     // todo: pco
     /** No FTEIDs to be set. */
     s11_update_bearer_response->bearer_contexts.num_bearer_context++;
@@ -909,9 +917,9 @@ mme_app_send_s11_delete_bearer_rsp (
   /** Iterate through the bearers to be created and check which ones where established. */
   for(int num_ebi = 0; num_ebi < ebi_list->num_ebi; num_ebi++){
     /** Check if the bearer is a session bearer. */
-    s11_delete_bearer_response->bearer_contexts.bearer_contexts[num_ebi].cause.cause_value          = cause_value;
-    s11_delete_bearer_response->bearer_contexts.bearer_contexts[num_ebi].eps_bearer_id  = ebi_list->ebis[num_ebi];
-    s11_delete_bearer_response->bearer_contexts.num_bearer_context++;
+	s11_delete_bearer_response->bearer_contexts.bearer_context[num_ebi].cause.cause_value          = cause_value;
+	s11_delete_bearer_response->bearer_contexts.bearer_context[num_ebi].eps_bearer_id  = ebi_list->ebis[num_ebi];
+	s11_delete_bearer_response->bearer_contexts.num_bearer_context++;
   }
   s11_delete_bearer_response->teid = s_gw_teid_s11_s4;
 ////  ////  mme_config_read_lock (&mme_config);
@@ -1029,8 +1037,8 @@ void mme_app_itti_forward_relocation_response(ue_context_t *ue_context, struct P
       if(!bearer_context_setup)
     	  continue;
       /** EBI. */
-      forward_relocation_response_p->handovered_bearers.bearer_contexts[forward_relocation_response_p->handovered_bearers.num_bearer_context].eps_bearer_id = bearer_context_setup->ebi;
-      forward_relocation_response_p->handovered_bearers.bearer_contexts[forward_relocation_response_p->handovered_bearers.num_bearer_context].cause.cause_value = REQUEST_ACCEPTED;
+      forward_relocation_response_p->handovered_bearers.bearer_context[forward_relocation_response_p->handovered_bearers.num_bearer_context].eps_bearer_id = bearer_context_setup->ebi;
+      forward_relocation_response_p->handovered_bearers.bearer_context[forward_relocation_response_p->handovered_bearers.num_bearer_context].cause.cause_value = REQUEST_ACCEPTED;
       forward_relocation_response_p->handovered_bearers.num_bearer_context++;
     }
   }

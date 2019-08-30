@@ -89,7 +89,7 @@
 /*
    Timer handlers
 */
-static esm_cause_t   _modify_eps_bearer_context_t3486_handler (nas_esm_proc_t * esm_base_proc, ESM_msg *esm_resp_msg);
+static esm_cause_t   _modify_eps_bearer_context_t3486_handler (nas_esm_proc_t * esm_base_proc, ESM_msg *esm_resp_msg, esm_timeout_ll_cb_arg_t * ll_handler_arg);
 
 /* Maximum value of the modify EPS bearer context request
    retransmission counter */
@@ -265,7 +265,7 @@ esm_proc_modify_eps_bearer_context (
 		  nas_esm_proc_bearer_context_t * esm_proc_bearer_context = _esm_proc_get_bearer_context_procedure(ue_id, pti, bc_tbu->eps_bearer_id);
 		  if(esm_proc_bearer_context) {
 		    /** Retry the procedure. */
-			esm_cause_t esm_cause = _modify_eps_bearer_context_t3486_handler(esm_proc_bearer_context, esm_rsp_msg);
+			esm_cause_t esm_cause = _modify_eps_bearer_context_t3486_handler(esm_proc_bearer_context, esm_rsp_msg, NULL); /**< The callback handler for ll cannot be changed. */
 			OAILOG_INFO(LOG_NAS_EMM, "EMMCN-SAP  - " "A bearer context modification procedure for UE " MME_UE_S1AP_ID_FMT" (pti=%d) already exists. Result of resending the message %d. \n", ue_id, pti, esm_cause);
 			OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_SUCCESS);
 		  }
@@ -486,7 +486,7 @@ esm_proc_modify_eps_bearer_context_reject (
  **      Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
-static esm_cause_t _modify_eps_bearer_context_t3486_handler (nas_esm_proc_t * esm_base_proc, ESM_msg *esm_resp_msg)
+static esm_cause_t _modify_eps_bearer_context_t3486_handler (nas_esm_proc_t * esm_base_proc, ESM_msg *esm_resp_msg, esm_timeout_ll_cb_arg_t * ll_handler_arg)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
 
@@ -510,7 +510,16 @@ static esm_cause_t _modify_eps_bearer_context_t3486_handler (nas_esm_proc_t * es
       }
       bearer_context_new_t * bearer_context = mme_app_get_session_bearer_context(pdn_context, esm_proc_bearer_context->bearer_ebi);
       if(bearer_context){
-        /* Resend the message and restart the timer. */
+    	/** Always set the ll-handler as E-RAB modify (overwrite it). */
+    	if(ll_handler_arg) {
+        	memset(&ll_handler_arg->bearer_level_qos, &bearer_context->bearer_level_qos, sizeof(bearer_context->bearer_level_qos));
+        	ll_handler_arg->ue_id = esm_base_proc->ue_id;
+        	ll_handler_arg->eps_bearer_id = bearer_context->ebi;
+        	ll_handler_arg->ll_handler = lowerlayer_modify_bearer_req;
+        	OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Resetting ERAB modification values for RAB-Mod timeout (ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d). May be overwritten below.\n", esm_base_proc->ue_id, bearer_context->ebi);
+    	}
+
+    	/* Resend the message and restart the timer. */
         EpsQualityOfService eps_qos = {0};
          /** Sending a EBR-Request per bearer context. */
         memset((void*)&eps_qos, 0, sizeof(eps_qos));

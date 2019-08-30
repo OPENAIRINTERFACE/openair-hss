@@ -90,6 +90,7 @@ static const char                      *_emm_fsm_event_str[] = {
   "TAU_REQ",
   "TAU_CNF",
   "TAU_REJ",
+  "TAU_ABORT",
   "SERVICE_REQ",
   "SERVICE_CNF",
   "SERVICE_REJ",

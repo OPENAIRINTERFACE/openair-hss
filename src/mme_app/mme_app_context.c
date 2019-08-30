@@ -2027,10 +2027,10 @@ mme_app_handle_s10_context_request(const itti_s10_context_request_t * const s10_
     OAILOG_FUNC_OUT (LOG_MME_APP);
  }
 
-// if(1){
-//	 _mme_app_send_s10_context_response_err(s10_context_request_pP->s10_target_mme_teid.teid, &s10_context_request_pP->peer_ip, s10_context_request_pP->trxn, CONTEXT_NOT_FOUND);
-//	 OAILOG_FUNC_OUT (LOG_MME_APP);
-// }
+ if(1){
+	 _mme_app_send_s10_context_response_err(s10_context_request_pP->s10_target_mme_teid.teid, &s10_context_request_pP->peer_ip, s10_context_request_pP->trxn, CONTEXT_NOT_FOUND);
+	 OAILOG_FUNC_OUT (LOG_MME_APP);
+ }
 
  /** Check that a valid security context exists for the MME_UE_CONTEXT. */
  if (!IS_EMM_CTXT_PRESENT_SECURITY(ue_nas_ctx)) {
@@ -2234,7 +2234,7 @@ pdn_context_t * mme_app_handle_pdn_connectivity_from_s10(ue_session_pool_t * ue_
   DevAssert(pdn_test);
   /** Create and finalize the remaining bearer contexts. */
   for (int num_bearer = 0; num_bearer < pdn_connection->bearer_context_list.num_bearer_context; num_bearer++){
-    bearer_context_to_be_created_t * bearer_context_to_be_created_s10 = &pdn_connection->bearer_context_list.bearer_contexts[num_bearer];
+    bearer_context_to_be_created_t * bearer_context_to_be_created_s10 = &pdn_connection->bearer_context_list.bearer_context[num_bearer];
     /*
      * Create bearer contexts in the PDN context, only for dedicated bearers.
      * Since no activation in the ESM is necessary, set them as active.

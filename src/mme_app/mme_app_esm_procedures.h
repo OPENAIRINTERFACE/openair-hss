@@ -39,7 +39,7 @@
  */
 
 /** Method called inside the timeout. */
-typedef esm_cause_t (*esm_timeout_cb_t)(struct nas_esm_proc_s *, ESM_msg *);
+typedef esm_cause_t (*esm_timeout_cb_t)(struct nas_esm_proc_s *, ESM_msg *, esm_timeout_ll_cb_arg_t * ll_handler_arg);
 
 
 typedef enum {

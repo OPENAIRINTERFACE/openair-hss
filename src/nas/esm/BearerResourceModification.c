@@ -76,7 +76,7 @@
    procedure in the MME
    --------------------------------------------------------------------------
 */
-static esm_cause_t _bearer_resource_modification_timeout_handler (nas_esm_proc_t * esm_base_proc, ESM_msg *esm_resp_msg);
+static esm_cause_t _bearer_resource_modification_timeout_handler (nas_esm_proc_t * esm_base_proc, ESM_msg *esm_resp_msg, esm_timeout_ll_cb_arg_t * ll_handler_arg);
 
 /****************************************************************************/
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
@@ -302,7 +302,7 @@ esm_proc_bearer_resource_failure(
  **      Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
-static esm_cause_t _bearer_resource_modification_timeout_handler (nas_esm_proc_t * esm_base_proc, ESM_msg *esm_resp_msg)
+static esm_cause_t _bearer_resource_modification_timeout_handler (nas_esm_proc_t * esm_base_proc, ESM_msg *esm_resp_msg, esm_timeout_ll_cb_arg_t * ll_handler_arg)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
 

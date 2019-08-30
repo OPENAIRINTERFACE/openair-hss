@@ -836,7 +836,7 @@ emm_data_context_remove_mobile_ids (
 //
 
 //------------------------------------------------------------------------------
-void emm_init_context(struct emm_data_context_s * const emm_ctx, const bool init_esm_ctxt)
+void emm_init_context(struct emm_data_context_s * const emm_ctx)
 {
   emm_ctx->_emm_fsm_state  = EMM_DEREGISTERED;
 
@@ -856,12 +856,6 @@ void emm_init_context(struct emm_data_context_s * const emm_ctx, const bool init
   emm_ctx_clear_ue_nw_cap(emm_ctx);
   emm_ctx_clear_drx_parameter(emm_ctx);
 //  emm_ctx_clear_pending_current_drx_parameter(&emm_ctx);
-//  emm_ctx_clear_eps_bearer_context_status(emm_ctx); todo
-
-  if (init_esm_ctxt) {
-    // todo: init
-//    esm_init_context(&emm_ctx->esm_ctx);
-  }
 }
 
 //------------------------------------------------------------------------------

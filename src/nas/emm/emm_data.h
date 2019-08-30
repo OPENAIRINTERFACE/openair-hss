@@ -396,7 +396,7 @@ int  emm_data_context_add_imsi (emm_data_t * emm_data, struct emm_data_context_s
 (nonnull)) ;
 int emm_data_context_upsert_imsi (emm_data_t * emm_data, struct emm_data_context_s *elm) __attribute__((nonnull));
 
-void emm_init_context(struct emm_data_context_s * const emm_ctx, const bool init_esm_ctxt)  __attribute__ ((nonnull)) ;
+void emm_init_context(struct emm_data_context_s * const emm_ctx)  __attribute__ ((nonnull)) ;
 void emm_context_free(struct emm_data_context_s * const emm_ctx) __attribute__ ((nonnull)) ;
 void emm_context_free_content(struct emm_data_context_s * const emm_ctx) __attribute__ ((nonnull)) ;
 void emm_context_free_content_except_key_fields(struct emm_data_context_s * const emm_ctx) __attribute__ ((nonnull)) ;

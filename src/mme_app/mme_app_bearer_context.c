@@ -139,25 +139,25 @@ void mme_app_get_bearer_contexts_to_be_created(pdn_context_t * pdn_context, bear
      * They are already set to zero if non-gbr in the registration of the bearer contexts.
      */
     /** EBI. */
-    bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].eps_bearer_id              = bearer_context_to_setup->ebi;
+    bc_tbc->bearer_context[bc_tbc->num_bearer_context].eps_bearer_id              = bearer_context_to_setup->ebi;
     /**
      * MBR/GBR values (setting indep. of QCI level).
      * Dividing by 1000 happens later in S11/S10 only.
      */
-    bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].bearer_level_qos.gbr.br_ul = bearer_context_to_setup->bearer_level_qos.gbr.br_ul;
-    bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].bearer_level_qos.gbr.br_dl = bearer_context_to_setup->bearer_level_qos.gbr.br_dl;
-    bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].bearer_level_qos.mbr.br_ul = bearer_context_to_setup->bearer_level_qos.mbr.br_ul;
-    bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].bearer_level_qos.mbr.br_dl = bearer_context_to_setup->bearer_level_qos.mbr.br_dl;
+    bc_tbc->bearer_context[bc_tbc->num_bearer_context].bearer_level_qos.gbr.br_ul = bearer_context_to_setup->bearer_level_qos.gbr.br_ul;
+    bc_tbc->bearer_context[bc_tbc->num_bearer_context].bearer_level_qos.gbr.br_dl = bearer_context_to_setup->bearer_level_qos.gbr.br_dl;
+    bc_tbc->bearer_context[bc_tbc->num_bearer_context].bearer_level_qos.mbr.br_ul = bearer_context_to_setup->bearer_level_qos.mbr.br_ul;
+    bc_tbc->bearer_context[bc_tbc->num_bearer_context].bearer_level_qos.mbr.br_dl = bearer_context_to_setup->bearer_level_qos.mbr.br_dl;
     /** QCI. */
-    bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].bearer_level_qos.qci       = bearer_context_to_setup->bearer_level_qos.qci;
-    bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].bearer_level_qos.pvi       = bearer_context_to_setup->bearer_level_qos.pvi;
-    bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].bearer_level_qos.pci       = bearer_context_to_setup->bearer_level_qos.pci;
-    bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].bearer_level_qos.pl        = bearer_context_to_setup->bearer_level_qos.pl;
+    bc_tbc->bearer_context[bc_tbc->num_bearer_context].bearer_level_qos.qci       = bearer_context_to_setup->bearer_level_qos.qci;
+    bc_tbc->bearer_context[bc_tbc->num_bearer_context].bearer_level_qos.pvi       = bearer_context_to_setup->bearer_level_qos.pvi;
+    bc_tbc->bearer_context[bc_tbc->num_bearer_context].bearer_level_qos.pci       = bearer_context_to_setup->bearer_level_qos.pci;
+    bc_tbc->bearer_context[bc_tbc->num_bearer_context].bearer_level_qos.pl        = bearer_context_to_setup->bearer_level_qos.pl;
     /** Set the S1U SAE-GW FTEID. */
-    bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].s1u_sgw_fteid.ipv4                = bearer_context_to_setup->s_gw_fteid_s1u.ipv4;
-    bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].s1u_sgw_fteid.interface_type      = bearer_context_to_setup->s_gw_fteid_s1u.interface_type;
-    bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].s1u_sgw_fteid.ipv4_address.s_addr = bearer_context_to_setup->s_gw_fteid_s1u.ipv4_address.s_addr;
-    bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].s1u_sgw_fteid.teid                = bearer_context_to_setup->s_gw_fteid_s1u.teid;
+    bc_tbc->bearer_context[bc_tbc->num_bearer_context].s1u_sgw_fteid.ipv4                = bearer_context_to_setup->s_gw_fteid_s1u.ipv4;
+    bc_tbc->bearer_context[bc_tbc->num_bearer_context].s1u_sgw_fteid.interface_type      = bearer_context_to_setup->s_gw_fteid_s1u.interface_type;
+    bc_tbc->bearer_context[bc_tbc->num_bearer_context].s1u_sgw_fteid.ipv4_address.s_addr = bearer_context_to_setup->s_gw_fteid_s1u.ipv4_address.s_addr;
+    bc_tbc->bearer_context[bc_tbc->num_bearer_context].s1u_sgw_fteid.teid                = bearer_context_to_setup->s_gw_fteid_s1u.teid;
     // todo: ipv6, other interfaces!
 
     /**
@@ -165,9 +165,9 @@ void mme_app_get_bearer_contexts_to_be_created(pdn_context_t * pdn_context, bear
      */
     /** Set the TFT. */
     if(bearer_context_to_setup->esm_ebr_context.tft){
-      DevAssert(!bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].tft);
-      bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].tft = (traffic_flow_template_t*)calloc(1, sizeof(traffic_flow_template_t));
-      copy_traffic_flow_template(bc_tbc->bearer_contexts[bc_tbc->num_bearer_context].tft, bearer_context_to_setup->esm_ebr_context.tft);
+      DevAssert(!bc_tbc->bearer_context[bc_tbc->num_bearer_context].tft);
+      bc_tbc->bearer_context[bc_tbc->num_bearer_context].tft = (traffic_flow_template_t*)calloc(1, sizeof(traffic_flow_template_t));
+      copy_traffic_flow_template(bc_tbc->bearer_context[bc_tbc->num_bearer_context].tft, bearer_context_to_setup->esm_ebr_context.tft);
     }
 
     bc_tbc->num_bearer_context++;
@@ -326,7 +326,7 @@ mme_app_modify_bearers(const mme_ue_s1ap_id_t mme_ue_s1ap_id, bearer_contexts_to
   // todo: checking on procedures of the function.. mme_app_is_ue_context_clean(ue_context)?!?
   /** Get the PDN Context. */
   for(int nb_bearer = 0; nb_bearer < bcs_to_be_modified->num_bearer_context; nb_bearer++) {
-    bearer_context_to_be_modified_t *bc_to_be_modified = &bcs_to_be_modified->bearer_contexts[nb_bearer];
+    bearer_context_to_be_modified_t *bc_to_be_modified = &bcs_to_be_modified->bearer_context[nb_bearer];
     /** Get the bearer context. */
     bearer_context_new_t * bearer_context = NULL;
     mme_app_get_session_bearer_context_from_all(ue_session_pool, bc_to_be_modified->eps_bearer_id, &bearer_context);

@@ -229,6 +229,7 @@ extern                                  "C" {
       pTrxn->maxRetries = 2;
       pTrxn->t3Timer = 2;
       pTrxn->seqNum = thiz->seqNum;
+      pTrxn->pt_trx = false;
       /*
        * Increment sequence number
        */
@@ -271,6 +272,7 @@ extern                                  "C" {
       pTrxn->t3Timer = 2;
       pTrxn->seqNum = seqNum;
       pTrxn->pMsg = NULL;
+      pTrxn->pt_trx = false;
     }
     return pTrxn;
   }
@@ -318,23 +320,29 @@ extern                                  "C" {
       pTrxn->peerPort = peerPort;
       pTrxn->pMsg = NULL;
       pTrxn->hRspTmr = 0;
+      pTrxn->pt_trx = false;
       pCollision = RB_INSERT (NwGtpv2cOutstandingRxSeqNumTrxnMap, &(thiz->outstandingRxSeqNumMap), pTrxn);
 
       if (pCollision) {
-        OAILOG_WARNING (LOG_GTPV2C,  "Duplicate request message received for seq num 0x%x!\n", (uint32_t) seqNum);
+        OAILOG_WARNING (LOG_GTPV2C,  "Duplicate request message received for seq num 0x%x for trx (%p)!\n", (uint32_t) seqNum, pCollision);
+
+        rc = nwGtpv2cTrxnDelete (&pTrxn);
+        NW_ASSERT (NW_OK == rc);
+        pTrxn = NULL;
 
         /*
          * Case of duplicate request message from peer. Retransmit response.
          */
         if (pCollision->pMsg) {
-          rc = pCollision->pStack->udp.udpDataReqCallback (pCollision->pStack->udp.hUdp,
-              pCollision->pMsg->msgBuf, pCollision->pMsg->msgLen,
+        	rc = pCollision->pStack->udp.udpDataReqCallback (pCollision->pStack->udp.hUdp,
+          	  pCollision->pMsg->msgBuf, pCollision->pMsg->msgLen,
               pCollision->localPort, &pCollision->peer_ip, pCollision->peerPort);
+        } else if(pCollision->pt_trx) {
+        	/** Transaction is PT, continue with processing. */
+        	OAILOG_DEBUG (LOG_GTPV2C,  "Outstanding RX transaction (%p) with seqNum %d is set as passthrough, continuing with processing it. \n", pCollision, seqNum);
+        	/** Remove the newly created transaction. */
+        	pTrxn = pCollision;
         }
-
-        rc = nwGtpv2cTrxnDelete (&pTrxn);
-        NW_ASSERT (NW_OK == rc);
-        pTrxn = NULL;
       }
     }
 

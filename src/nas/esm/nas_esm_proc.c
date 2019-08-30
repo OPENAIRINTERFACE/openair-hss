@@ -126,14 +126,20 @@ void _nas_proc_esm_timeout_handler (void *args)
    */
   memset(&esm_sap, 0, sizeof(esm_sap_t));
   esm_sap.primitive = ESM_TIMEOUT_IND;
-  esm_sap.data.esm_proc_timeout = (uintptr_t)args;
+  esm_sap.data.eps_bearer_context_ll_cb_arg.esm_proc_timeout = (uintptr_t)args;
   esm_sap_signal(&esm_sap, &rsp);
   if(rsp){
     /**
      * Will get and lock the EMM context to set the security header if there is a valid EMM context.
      * No changes in the state of the EMM context.
      */
-    lowerlayer_data_req(esm_sap.ue_id, rsp); // todo: esm_cause
+	if(esm_sap.data.eps_bearer_context_ll_cb_arg.ll_handler){
+	  OAILOG_INFO (LOG_NAS_EMM, "LL-Handler has been overwritten for timeout of UE " MME_UE_S1AP_ID_FMT "\n", esm_sap.data.eps_bearer_context_ll_cb_arg.ue_id);
+	  esm_sap.data.eps_bearer_context_ll_cb_arg.ll_handler(esm_sap.data.eps_bearer_context_ll_cb_arg.ue_id, esm_sap.data.eps_bearer_context_ll_cb_arg.eps_bearer_id,
+			  &esm_sap.data.eps_bearer_context_ll_cb_arg.bearer_level_qos, rsp);
+	} else {
+	  lowerlayer_data_req(esm_sap.ue_id, rsp); // todo: esm_cause
+	}
     bdestroy_wrapper(&rsp);
   }
   OAILOG_FUNC_OUT (LOG_NAS_ESM);
@@ -362,7 +368,7 @@ int nas_esm_proc_activate_eps_bearer_ctx(esm_eps_activate_eps_bearer_ctx_req_t *
   /* Process each bearer context to be created separately. */
   bearer_contexts_to_be_created_t * bcs_tbc = (bearer_contexts_to_be_created_t*)esm_cn_activate->bcs_to_be_created_ptr;
   for(int num_bc = 0; num_bc < bcs_tbc->num_bearer_context; num_bc++) {
-    esm_sap.data.eps_bearer_context_activate.bc_tbc   = &bcs_tbc->bearer_contexts[num_bc];
+    esm_sap.data.eps_bearer_context_activate.bc_tbc   = &bcs_tbc->bearer_context[num_bc];
     esm_sap_signal(&esm_sap, &rsp);
     if(esm_sap.data.eps_bearer_context_activate.pending_pdn_proc){
     	OAILOG_DEBUG (LOG_MME_APP, "For UE " MME_UE_S1AP_ID_FMT " an colliding ESM procedure exists. "
@@ -405,7 +411,7 @@ int nas_esm_proc_modify_eps_bearer_ctx(esm_eps_modify_esm_bearer_ctxs_req_t * es
   /* Handle each bearer context separately. */
   bearer_contexts_to_be_updated_t* bcs_tbu = (bearer_contexts_to_be_updated_t*)esm_cn_modify->bcs_to_be_updated_ptr;
   for(int num_bc = 0; num_bc < bcs_tbu->num_bearer_context; num_bc++){
-    esm_sap.data.eps_bearer_context_modify.bc_tbu       = &bcs_tbu->bearer_contexts[num_bc];
+    esm_sap.data.eps_bearer_context_modify.bc_tbu       = &bcs_tbu->bearer_context[num_bc];
     /* Set the APN-AMBR for the first bearer context. */
     esm_sap_signal(&esm_sap, &rsp);
     if(esm_sap.data.eps_bearer_context_modify.pending_pdn_proc){

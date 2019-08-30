@@ -220,10 +220,13 @@ int emm_proc_tracking_area_update_request (
   }
   /** After validation. Continuing with an existing or new to be created EMM context. */
   OAILOG_INFO(LOG_NAS_EMM, "EMM-PROC  - Continuing to handle the new Tracking-Area-Update-Request. \n");
+
+  /** Before creating a new EMM context (may be copied from an old one. */
+
   if(!(*duplicate_emm_ue_ctx_pP) || (*duplicate_emm_ue_ctx_pP)->emm_cause != EMM_CAUSE_SUCCESS) {
-    OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - No valid EMM context was found for UE_ID " MME_UE_S1AP_ID_FMT ". \n", ue_id);
+    OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - No valid old EMM context was found for UE_ID " MME_UE_S1AP_ID_FMT ". \n", ue_id);
     /*
-     * Create UE's EMM context
+     * Create UE's EMM context todo: THIS IS NOT OK --> WE MIGHT NOT BE ABLE TO CREATE NEW CONTEXT!
      */
     new_emm_ue_context= (emm_data_context_t *) calloc (1, sizeof (emm_data_context_t));
     if (!new_emm_ue_context) {
@@ -242,12 +245,16 @@ int emm_proc_tracking_area_update_request (
     OAILOG_NOTICE (LOG_NAS_EMM, "EMM-PROC  - Create EMM context ue_id = " MME_UE_S1AP_ID_FMT "\n", ue_id);
 //    emm_context->attach_type = ies->type;
 //    emm_context->additional_update_type = ies->additional_update_type;
+
+    /**
+     * BY NO MEANS WE CAN ADD HERE AN EMM CONTEXT WITH SAME UE_ID!!!!! OVERWRITING INEVITABLE AND CAUSES LEAKS!!!
+     */
     new_emm_ue_context->emm_cause       = EMM_CAUSE_SUCCESS;
-    emm_init_context(new_emm_ue_context, true);  /**< Initialize the context, we might do it again if the security was not verified. */
+    emm_init_context(new_emm_ue_context);  /**< Initialize the context, we might do it again if the security was not verified. */
     if (RETURNok != emm_data_context_add (&_emm_data, new_emm_ue_context)) {
       OAILOG_CRITICAL(LOG_NAS_EMM, "EMM-PROC  - TAU EMM Context could not be inserted in hashtables for ueId " MME_UE_S1AP_ID_FMT ". \n", ue_id);
       new_emm_ue_context->emm_cause = EMM_CAUSE_ILLEGAL_UE;
-      rc = _emm_tracking_area_update_reject(new_emm_ue_context->ue_id, new_emm_ue_context->emm_cause);
+      rc = _emm_tracking_area_update_reject(ue_id, new_emm_ue_context->emm_cause);
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
     }
   }else if ((*duplicate_emm_ue_ctx_pP) && (*duplicate_emm_ue_ctx_pP)->emm_cause == EMM_CAUSE_SUCCESS){
@@ -324,8 +331,13 @@ int emm_proc_tracking_area_update_request (
   /*
    * Continue with the new or existing EMM context.
    * Unlink the NAS message.
+   *
+   * todo: EMM CONTEXT MAY BE NULL!
    */
-  _emm_proc_create_procedure_tracking_area_update_request(new_emm_ue_context, ies, _emm_tau_retry_procedure);
+  if(new_emm_ue_context) {
+	  DevAssert(new_emm_ue_context->emm_cause == EMM_CAUSE_SUCCESS);
+	  _emm_proc_create_procedure_tracking_area_update_request(new_emm_ue_context, ies, _emm_tau_retry_procedure);
+  }
   if((*duplicate_emm_ue_ctx_pP) && (*duplicate_emm_ue_ctx_pP)->emm_cause != EMM_CAUSE_SUCCESS){
     /** Set the new attach procedure into pending mode and continue with it after the completion of the duplicate removal. */
     void *unused = NULL;
@@ -703,7 +715,7 @@ int emm_proc_tracking_area_update_request_validity(emm_data_context_t * emm_cont
         emm_sap.u.emm_reg.u.tau.proc   = tau_procedure;
         rc = emm_sap_send (&emm_sap);
         // trigger clean up
-        /** Set the EMM cause to invalid. */
+        /** Set the EMM cause to invalid. We process the new request with new parameters --> create a new EMM context. */
         emm_context->emm_cause = EMM_CAUSE_ILLEGAL_UE;
         /** Continue with a clean emm_ctx. */
         OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
@@ -1527,7 +1539,7 @@ static bool _emm_tracking_area_update_ies_have_changed (mme_ue_s1ap_id_t ue_id, 
 
 //  if ((ies1->old_guti) && (ies2->old_guti)) {
     if (memcmp(&ies1->old_guti, &ies2->old_guti, sizeof(ies1->old_guti))) {
-      OAILOG_INFO (LOG_NAS_EMM, "UE " MME_UE_S1AP_ID_FMT" TAU IEs changed:  guti/tmsi " GUTI_FMT " -> " GUTI_FMT "\n", ue_id,
+      OAILOG_INFO (LOG_NAS_EMM, "UE " MME_UE_S1AP_ID_FMT" GUTI IEs changed:  guti/tmsi " GUTI_FMT " -> " GUTI_FMT "\n", ue_id,
           GUTI_ARG(&ies1->old_guti), GUTI_ARG(&ies2->old_guti));
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, true);
 
