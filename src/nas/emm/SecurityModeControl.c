@@ -332,7 +332,6 @@ emm_proc_security_mode_control (
 
       emm_sap.primitive = EMMREG_COMMON_PROC_REQ;
       emm_sap.u.emm_reg.ue_id = emm_ctx->ue_id;
-      emm_sap.u.emm_reg.ctx = emm_ctx;
       emm_sap.u.emm_reg.u.common.common_proc = &smc_proc->emm_com_proc;
       emm_sap.u.emm_reg.u.common.previous_emm_fsm_state = smc_proc->emm_com_proc.emm_proc.previous_emm_fsm_state;
       rc = emm_sap_send (&emm_sap);
@@ -430,7 +429,6 @@ emm_proc_security_mode_complete (mme_ue_s1ap_id_t ue_id, const imeisv_mobile_ide
       emm_sap_t           emm_sap = {0};
       emm_sap.primitive           = EMMREG_COMMON_PROC_CNF;
       emm_sap.u.emm_reg.ue_id     = ue_id;
-      emm_sap.u.emm_reg.ctx       = emm_ctx;
       emm_sap.u.emm_reg.notify    = true;
       emm_sap.u.emm_reg.free_proc = true;
       emm_sap.u.emm_reg.u.common.common_proc = &smc_proc->emm_com_proc;
@@ -517,7 +515,6 @@ int emm_proc_security_mode_reject (mme_ue_s1ap_id_t ue_id)
     REQUIREMENT_3GPP_24_301(R10_5_4_3_5__2);
     emm_sap.primitive = EMMREG_COMMON_PROC_REJ;
     emm_sap.u.emm_reg.ue_id     = ue_id;
-    emm_sap.u.emm_reg.ctx       = emm_ctx;
     emm_sap.u.emm_reg.notify    = true;
     emm_sap.u.emm_reg.free_proc = true;
     emm_sap.u.emm_reg.u.common.common_proc = &smc_proc->emm_com_proc;
@@ -597,7 +594,6 @@ static void _security_t3460_handler  (void *args)
       emm_sap_t                               emm_sap = {0};
       emm_sap.primitive = EMMREG_COMMON_PROC_ABORT;
       emm_sap.u.emm_reg.ue_id     = smc_proc->ue_id;
-      emm_sap.u.emm_reg.ctx       = emm_ctx;
       emm_sap.u.emm_reg.notify    = true;
       emm_sap.u.emm_reg.free_proc = true;
       emm_sap.u.emm_reg.u.common.common_proc = &smc_proc->emm_com_proc;
@@ -712,7 +708,6 @@ static int _security_ll_failure (emm_data_context_t * emm_context, struct nas_em
 
     emm_sap.primitive = EMMREG_COMMON_PROC_ABORT;
     emm_sap.u.emm_reg.ue_id = ue_id;
-    emm_sap.u.emm_reg.ctx   = emm_context;
     emm_sap.u.emm_reg.notify    = true;
     emm_sap.u.emm_reg.free_proc = true;
     emm_sap.u.emm_reg.u.common.common_proc = &smc_proc->emm_com_proc;

@@ -1002,7 +1002,10 @@ static int _emm_as_send (emm_as_t * msg)
             && msg->u.base.emm_cause != EMM_CAUSE_ESM_FAILURE
 			&& msg->u.base.emm_cause != EMM_CAUSE_NETWORK_FAILURE
 			&& msg->u.base.emm_cause != EMM_CAUSE_IMSI_UNKNOWN_IN_HSS
-			&& msg->u.base.emm_cause != EMM_CAUSE_ILLEGAL_UE) {
+			&& msg->u.base.emm_cause != EMM_CAUSE_ILLEGAL_UE
+			&& msg->u.base.emm_cause != EMM_CAUSE_IMPLICITLY_DETACHED
+			&& msg->u.base.emm_cause != EMM_CAUSE_IMEI_NOT_ACCEPTED
+			&& msg->u.base.emm_cause != EMM_CAUSE_NOT_AUTHORIZED_IN_PLMN) {
       /*
        * Ignore received message that is too short to contain a complete
        * * * * message type information element
@@ -1665,7 +1668,6 @@ static int _emm_as_erab_setup_req (const emm_as_activate_bearer_context_req_t * 
     emm_security_context_t                 *emm_security_context = NULL;
     emm_data_context_t                     *emm_context = emm_data_context_get(&_emm_data, msg->ue_id);
 
-    emm_context = emm_data_context_get (&_emm_data, msg->ue_id);
     if (emm_context) {
       if (IS_EMM_CTXT_PRESENT_SECURITY(emm_context)) {
         emm_security_context = &emm_context->_security;

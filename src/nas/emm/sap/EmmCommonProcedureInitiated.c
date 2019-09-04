@@ -98,7 +98,7 @@ int EmmCommonProcedureInitiated (emm_reg_t * const evt)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
-  emm_data_context_t                     *emm_ctx = evt->ctx;
+  emm_data_context_t                     *emm_ctx = emm_data_context_get(&_emm_data, evt->ue_id);
 
   assert (emm_fsm_get_state (emm_ctx) == EMM_COMMON_PROCEDURE_INITIATED);
 
@@ -220,7 +220,7 @@ int EmmCommonProcedureInitiated (emm_reg_t * const evt)
      * context activated;
      * enter state EMM-REGISTERED.
      */
-    rc = emm_fsm_set_state (evt->ue_id, evt->ctx, EMM_REGISTERED);
+    rc = emm_fsm_set_state (evt->ue_id, emm_ctx, EMM_REGISTERED);
     assert(rc == RETURNok);
 
     /*
@@ -298,7 +298,7 @@ int EmmCommonProcedureInitiated (emm_reg_t * const evt)
      * Initial Context Setup Response might have been received meanwhile.
      * todo: add locks
      */
-    rc = emm_fsm_set_state (evt->ue_id, evt->ctx, EMM_REGISTERED);
+    rc = emm_fsm_set_state (evt->ue_id, emm_ctx, EMM_REGISTERED);
     assert(rc == RETURNok);
 
     /*

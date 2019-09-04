@@ -225,7 +225,6 @@ emm_proc_authentication_ksi (
 
         emm_sap.primitive = EMMREG_COMMON_PROC_REQ;
         emm_sap.u.emm_reg.ue_id = ue_id;
-        emm_sap.u.emm_reg.ctx   = emm_context;
         rc = emm_sap_send (&emm_sap);
       }
     }
@@ -430,7 +429,6 @@ static int _auth_info_proc_success_cb (struct emm_data_context_s *emm_ctx)
         emm_sap_t                               emm_sap = {0};
         emm_sap.primitive = EMMREG_COMMON_PROC_ABORT;
         emm_sap.u.emm_reg.ue_id     = ue_id;
-        emm_sap.u.emm_reg.ctx       = emm_ctx;
         emm_sap.u.emm_reg.notify    = false;
         emm_sap.u.emm_reg.free_proc = false;
         emm_sap.u.emm_reg.u.common.common_proc = &auth_proc->emm_com_proc;
@@ -463,7 +461,6 @@ static int _auth_info_proc_success_cb (struct emm_data_context_s *emm_ctx)
         emm_sap_t                               emm_sap = {0};
         emm_sap.primitive = EMMREG_COMMON_PROC_REJ;
         emm_sap.u.emm_reg.ue_id     = ue_id;
-        emm_sap.u.emm_reg.ctx       = emm_ctx;
         emm_sap.u.emm_reg.notify    = true;
         emm_sap.u.emm_reg.free_proc = true;
         emm_sap.u.emm_reg.u.common.common_proc = &auth_proc->emm_com_proc;
@@ -499,7 +496,6 @@ static int _auth_info_proc_failure_cb (struct emm_data_context_s *emm_ctx)
         emm_sap_t                               emm_sap = {0};
         emm_sap.primitive = EMMREG_COMMON_PROC_REJ;
         emm_sap.u.emm_reg.ue_id     = ue_id;
-        emm_sap.u.emm_reg.ctx       = emm_ctx;
         emm_sap.u.emm_reg.notify    = true;
         emm_sap.u.emm_reg.free_proc = true;
         emm_sap.u.emm_reg.u.common.common_proc = &auth_proc->emm_com_proc;
@@ -591,7 +587,6 @@ int emm_proc_authentication_failure (
         emm_sap_t           emm_sap = {0};
         emm_sap.primitive = EMMREG_COMMON_PROC_REJ;
         emm_sap.u.emm_reg.ue_id     = ue_id;
-        emm_sap.u.emm_reg.ctx       = emm_ctx;
 //        emm_sap.u.emm_reg.notify    = true;
 //        emm_sap.u.emm_reg.free_proc = true;
         emm_sap.u.emm_reg.u.common.common_proc = &auth_proc->emm_com_proc;
@@ -611,7 +606,6 @@ int emm_proc_authentication_failure (
             emm_sap_t                               emm_sap = {0};
             emm_sap.primitive = EMMREG_COMMON_PROC_ABORT;
             emm_sap.u.emm_reg.ue_id     = ue_id;
-            emm_sap.u.emm_reg.ctx       = emm_ctx;
             emm_sap.u.emm_reg.notify    = false;
             emm_sap.u.emm_reg.free_proc = false;
             emm_sap.u.emm_reg.u.common.common_proc = &auth_proc->emm_com_proc;
@@ -633,7 +627,6 @@ int emm_proc_authentication_failure (
           emm_sap_t           emm_sap = {0};
           emm_sap.primitive = EMMREG_COMMON_PROC_REJ;
           emm_sap.u.emm_reg.ue_id     = ue_id;
-          emm_sap.u.emm_reg.ctx       = emm_ctx;
 //          emm_sap.u.emm_reg.notify    = true;
 //          emm_sap.u.emm_reg.free_proc = true;
           emm_sap.u.emm_reg.u.common.common_proc = &auth_proc->emm_com_proc;
@@ -647,7 +640,6 @@ int emm_proc_authentication_failure (
         emm_sap_t           emm_sap = {0};
         emm_sap.primitive = EMMREG_COMMON_PROC_REJ;
         emm_sap.u.emm_reg.ue_id     = ue_id;
-        emm_sap.u.emm_reg.ctx       = emm_ctx;
 //        emm_sap.u.emm_reg.notify    = true;
 //        emm_sap.u.emm_reg.free_proc = true;
         emm_sap.u.emm_reg.u.common.common_proc = &auth_proc->emm_com_proc;
@@ -669,7 +661,6 @@ int emm_proc_authentication_failure (
           emm_sap_t                               emm_sap = {0};
           emm_sap.primitive = EMMREG_COMMON_PROC_ABORT;
           emm_sap.u.emm_reg.ue_id     = ue_id;
-          emm_sap.u.emm_reg.ctx       = emm_ctx;
           emm_sap.u.emm_reg.notify    = false;
           emm_sap.u.emm_reg.free_proc = false;
           emm_sap.u.emm_reg.u.common.common_proc = &auth_proc->emm_com_proc;
@@ -692,7 +683,6 @@ int emm_proc_authentication_failure (
         emm_sap_t                               emm_sap = {0};
         emm_sap.primitive = EMMREG_COMMON_PROC_REJ;
         emm_sap.u.emm_reg.ue_id     = ue_id;
-        emm_sap.u.emm_reg.ctx       = emm_ctx;
 //        emm_sap.u.emm_reg.notify    = true;
 //        emm_sap.u.emm_reg.free_proc = true;
         emm_sap.u.emm_reg.u.common.common_proc = &auth_proc->emm_com_proc;
@@ -775,7 +765,6 @@ emm_proc_authentication_complete (
     emm_sap_t                               emm_sap = {0};
     emm_sap.primitive = EMMREG_COMMON_PROC_CNF;
     emm_sap.u.emm_reg.ue_id = ue_id;
-    emm_sap.u.emm_reg.ctx = emm_ctx;
     emm_sap.u.emm_reg.notify    = true;
     emm_sap.u.emm_reg.free_proc = true;
     emm_sap.u.emm_reg.u.common.common_proc = &auth_proc->emm_com_proc;
@@ -853,7 +842,6 @@ static void  _authentication_t3460_handler (void *args)
       emm_sap_t                               emm_sap = {0};
       emm_sap.primitive = EMMREG_COMMON_PROC_ABORT;
       emm_sap.u.emm_reg.ue_id     = auth_proc->ue_id;
-      emm_sap.u.emm_reg.ctx       = emm_ctx;
       emm_sap.u.emm_reg.notify    = true;
       emm_sap.u.emm_reg.free_proc = true;
       emm_sap.u.emm_reg.u.common.common_proc = &auth_proc->emm_com_proc;
@@ -905,7 +893,6 @@ static int _authentication_check_imsi_5_4_2_5__1 (struct emm_data_context_s *emm
         emm_sap_t                               emm_sap = {0};
         emm_sap.primitive = EMMREG_COMMON_PROC_ABORT;
         emm_sap.u.emm_reg.ue_id     = auth_proc->ue_id;
-        emm_sap.u.emm_reg.ctx       = emm_context;
         emm_sap.u.emm_reg.notify    = true;
         emm_sap.u.emm_reg.free_proc = true;
         emm_sap.u.emm_reg.u.common.common_proc = &auth_proc->emm_com_proc;
@@ -920,7 +907,6 @@ static int _authentication_check_imsi_5_4_2_5__1 (struct emm_data_context_s *emm
     emm_sap_t                               emm_sap = {0};
     emm_sap.primitive = EMMREG_COMMON_PROC_REJ;
     emm_sap.u.emm_reg.ue_id     = auth_proc->ue_id;
-    emm_sap.u.emm_reg.ctx       = emm_context;
     emm_sap.u.emm_reg.notify    = true;
     emm_sap.u.emm_reg.free_proc = true;
     emm_sap.u.emm_reg.u.common.common_proc = &auth_proc->emm_com_proc;
@@ -945,7 +931,6 @@ static int _authentication_check_imsi_5_4_2_5__1_fail (struct emm_data_context_s
     emm_sap_t                               emm_sap = {0};
     emm_sap.primitive = EMMREG_COMMON_PROC_REJ;
     emm_sap.u.emm_reg.ue_id     = auth_proc->ue_id;
-    emm_sap.u.emm_reg.ctx       = emm_context;
     emm_sap.u.emm_reg.notify    = true;
     emm_sap.u.emm_reg.free_proc = true;
     emm_sap.u.emm_reg.u.common.common_proc = &auth_proc->emm_com_proc;
@@ -1091,7 +1076,6 @@ static int _authentication_ll_failure (struct emm_data_context_s *emm_context, s
     MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMREG_PROC_ABORT ue id " MME_UE_S1AP_ID_FMT " ", auth_proc->ue_id);
     emm_sap.primitive           = EMMREG_COMMON_PROC_ABORT;
     emm_sap.u.emm_reg.ue_id     = auth_proc->ue_id;
-    emm_sap.u.emm_reg.ctx       = emm_context;
     emm_sap.u.emm_reg.notify    = true;
     emm_sap.u.emm_reg.free_proc = true;
     emm_sap.u.emm_reg.u.common.common_proc = &auth_proc->emm_com_proc;

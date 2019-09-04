@@ -295,7 +295,6 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
 		msg->data.eps_bearer_context_activate.linked_ebi,
         msg->data.eps_bearer_context_activate.pdn_cid,
         msg->data.eps_bearer_context_activate.bc_tbc,
-		&msg->data.eps_bearer_context_activate.pending_pdn_proc,
         &esm_resp_msg);
     /** For each bearer separately process with the bearer establishment. */
     if (msg->esm_cause != ESM_CAUSE_SUCCESS) {   /**< We assume that no ESM procedure exists. */
@@ -318,7 +317,6 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
            msg->data.eps_bearer_context_modify.pdn_cid,
            msg->data.eps_bearer_context_modify.bc_tbu,
            &msg->data.eps_bearer_context_modify.apn_ambr,
-		   &msg->data.eps_bearer_context_modify.pending_pdn_proc,
            &esm_resp_msg);
     /** For each bearer separately process with the bearer establishment. */
     if (msg->esm_cause != ESM_CAUSE_SUCCESS) {   /**< We assume that no ESM procedure exists. */
@@ -337,7 +335,6 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
 		  if(esm_proc_pdn_connectivity->default_ebi == msg->data.eps_bearer_context_deactivate.linked_ebi){
 			  OAILOG_ERROR(LOG_NAS_EMM, "EMMCN-SAP  - " "A PDN procedure for default ebi %d exists for UE " MME_UE_S1AP_ID_FMT" (cid=%d). Rejecting removal of dedicated bearer.\n",
 					  esm_proc_pdn_connectivity->default_ebi, msg->ue_id, esm_proc_pdn_connectivity->pdn_cid);
-			  msg->data.eps_bearer_context_deactivate.pending_pdn_proc = true;
 			  esm_proc_pdn_connectivity->pending_qos = true;
 			  break;
 		  } else {

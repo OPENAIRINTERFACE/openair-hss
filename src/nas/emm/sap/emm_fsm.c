@@ -282,7 +282,7 @@ int emm_fsm_process (struct emm_reg_s * const evt)
 
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   primitive = evt->primitive;
-  emm_data_context_t                     *emm_ctx = (emm_data_context_t *) evt->ctx;
+  emm_data_context_t                     *emm_ctx 	= emm_data_context_get(&_emm_data, evt->ue_id);
 
   if (emm_ctx) {
     state = emm_fsm_get_state (emm_ctx);

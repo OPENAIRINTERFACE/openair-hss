@@ -325,6 +325,8 @@ s11_mme_delete_session_request (
 
   if (HASH_TABLE_OK != hash_rc) {
     OAILOG_WARNING (LOG_S11, "Could not get GTPv2-C hTunnel for local teid %X\n", ulp_req.u_api_info.initialReqInfo.teidLocal);
+    rc = nwGtpv2cMsgDelete (*stack_p, (ulp_req.hMsg));
+    DevAssert (NW_OK == rc);
     return RETURNerror;
   }
 

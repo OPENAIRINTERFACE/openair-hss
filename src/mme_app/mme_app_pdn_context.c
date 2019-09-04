@@ -161,8 +161,8 @@ mme_app_esm_create_pdn_context(mme_ue_s1ap_id_t ue_id, const ebi_t linked_ebi, c
   (*pdn_context_pp)->subscribed_apn_ambr.br_dl = apn_ambr->br_dl;
   (*pdn_context_pp)->subscribed_apn_ambr.br_ul = apn_ambr->br_ul;
   (*pdn_context_pp)->pdn_type                     = pdn_type;
-  /** Set the SAE-GW TEID. */
-  (*pdn_context_pp)->s_gw_teid_s11_s4 = ue_session_pool->privates.fields.saegw_teid_s11;
+  /**Don't set the SAE-GW TEID. */
+  // (*pdn_context_pp)->s_gw_teid_s11_s4 = ue_session_pool->privates.fields.saegw_teid_s11;
 
   if (apn_configuration) {
     (*pdn_context_pp)->context_identifier           = apn_configuration->context_identifier;
@@ -277,12 +277,12 @@ mme_app_update_pdn_context(mme_ue_s1ap_id_t ue_id, imsi64_t imsi, const subscrip
          * Remove the PDN context and trigger a DSR.
          * Set in the flags, that it should not be signaled back to the EMM layer. Might not need to traverse the list new.
          */
-        OAILOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - " "PDN context for APN \"%s\" could not be found in subscription profile for UE "
+        OAILOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - " "PDN configuration for APN \"%s\" could not be found in subscription profile for UE "
             "with ue_id " MME_UE_S1AP_ID_FMT ". Triggering deactivation of PDN context. \n", bdata(pdn_context->apn_subscribed), ue_id);
         /** Set the flag for the delete tunnel. */
         bool deleteTunnel = (RB_MIN(PdnContexts, &ue_session_pool->pdn_contexts)== pdn_context);
         nas_itti_pdn_disconnect_req(ue_id, pdn_context->default_ebi, PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED, deleteTunnel, false,
-            &pdn_context->s_gw_addr_s11_s4, pdn_context->s_gw_teid_s11_s4, pdn_context->context_identifier);
+            &pdn_context->s_gw_addr_s11_s4, ue_session_pool->privates.fields.saegw_teid_s11, pdn_context->context_identifier);
         /**
          * No response is expected.
          * Implicitly detach the PDN context bearer contexts from the UE.

@@ -183,7 +183,6 @@ emm_proc_identification (
 
       emm_sap.primitive = EMMREG_COMMON_PROC_REQ;
       emm_sap.u.emm_reg.ue_id = ue_id;
-      emm_sap.u.emm_reg.ctx   = emm_context;
       rc = emm_sap_send (&emm_sap);
       MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMREG_COMMON_PROC_REQ (IDENT) ue id " MME_UE_S1AP_ID_FMT " ",ue_id);
     }
@@ -283,7 +282,6 @@ emm_proc_identification_complete (
 			  MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMREG_COMMON_PROC_CNF (IDENT) ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
 			  emm_sap.primitive = EMMREG_COMMON_PROC_CNF;
 			  emm_sap.u.emm_reg.ue_id    = ue_id;
-			  emm_sap.u.emm_reg.ctx      = emm_ctx;
 			  emm_sap.u.emm_reg.notify   = false;
 			  emm_sap.u.emm_reg.free_proc = true;
 			  emm_sap.u.emm_reg.u.common.common_proc            = &ident_proc->emm_com_proc;
@@ -317,7 +315,6 @@ emm_proc_identification_complete (
           MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMREG_COMMON_PROC_CNF (IDENT) ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
           emm_sap.primitive = EMMREG_COMMON_PROC_CNF;
           emm_sap.u.emm_reg.ue_id    = ue_id;
-          emm_sap.u.emm_reg.ctx      = emm_ctx;
           emm_sap.u.emm_reg.notify   = false;
           emm_sap.u.emm_reg.free_proc = true;
           emm_sap.u.emm_reg.u.common.common_proc            = &ident_proc->emm_com_proc;
@@ -356,7 +353,6 @@ emm_proc_identification_complete (
       MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMREG_COMMON_PROC_CNF (IDENT) ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
       emm_sap.primitive = EMMREG_COMMON_PROC_CNF;
       emm_sap.u.emm_reg.ue_id    = ue_id;
-      emm_sap.u.emm_reg.ctx      = emm_ctx;
       emm_sap.u.emm_reg.notify   = true;
       emm_sap.u.emm_reg.free_proc = true;
       emm_sap.u.emm_reg.u.common.common_proc            = &ident_proc->emm_com_proc;
@@ -439,7 +435,6 @@ static void _identification_t3470_handler (void *args)
       emm_sap_t                               emm_sap = {0};
       emm_sap.primitive = EMMREG_COMMON_PROC_ABORT;
       emm_sap.u.emm_reg.ue_id = ident_proc->ue_id;
-      emm_sap.u.emm_reg.ctx   = emm_ctx;
       emm_sap.u.emm_reg.notify= false;
       emm_sap.u.emm_reg.free_proc = true;
       emm_sap.u.emm_reg.u.common.common_proc   = (nas_emm_common_proc_t*)(&ident_proc->emm_com_proc);

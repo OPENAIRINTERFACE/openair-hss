@@ -217,7 +217,6 @@ esm_proc_modify_eps_bearer_context (
   const pdn_cid_t    pdn_cid,
   bearer_context_to_be_updated_t * bc_tbu,
   ambr_t             *apn_ambr,
-  bool               * const pending_pdn_proc,
   ESM_msg            *esm_rsp_msg)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
@@ -232,7 +231,6 @@ esm_proc_modify_eps_bearer_context (
     if(esm_proc_pdn_connectivity->default_ebi == linked_ebi){
       OAILOG_ERROR(LOG_NAS_EMM, "EMMCN-SAP  - " "A PDN procedure for default ebi %d exists for UE " MME_UE_S1AP_ID_FMT" (cid=%d). Rejecting the establishment of the dedicated bearer.\n",
           linked_ebi, ue_id, esm_proc_pdn_connectivity->pdn_cid);
-      *pending_pdn_proc = true;
       esm_proc_pdn_connectivity->pending_qos = true;
       OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_REQUEST_REJECTED_BY_GW);
     } else {
@@ -512,7 +510,7 @@ static esm_cause_t _modify_eps_bearer_context_t3486_handler (nas_esm_proc_t * es
       if(bearer_context){
     	/** Always set the ll-handler as E-RAB modify (overwrite it). */
     	if(ll_handler_arg) {
-        	memset(&ll_handler_arg->bearer_level_qos, &bearer_context->bearer_level_qos, sizeof(bearer_context->bearer_level_qos));
+        	memcpy(&ll_handler_arg->bearer_level_qos, &bearer_context->bearer_level_qos, sizeof(bearer_context->bearer_level_qos));
         	ll_handler_arg->ue_id = esm_base_proc->ue_id;
         	ll_handler_arg->eps_bearer_id = bearer_context->ebi;
         	ll_handler_arg->ll_handler = lowerlayer_modify_bearer_req;

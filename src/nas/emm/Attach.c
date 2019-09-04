@@ -137,7 +137,7 @@ static int _emm_attach_failure_security_cb (emm_data_context_t *emm_context);
 static int _emm_attach_release (emm_data_context_t *emm_context);
 static int _emm_attach_abort (struct emm_data_context_s* emm_context, struct nas_emm_base_proc_s * emm_base_proc);
 static int _emm_attach_run_procedure(emm_data_context_t *emm_context);
-static int _emm_send_attach_accept (emm_data_context_t * emm_context);
+static int _emm_send_attach_accept (emm_data_context_t * const emm_context);
 
 static bool _emm_attach_ies_have_changed (mme_ue_s1ap_id_t ue_id, emm_attach_request_ies_t * const ies1, emm_attach_request_ies_t * const ies2);
 
@@ -193,7 +193,6 @@ int emm_proc_attach_request (
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
-  emm_data_context_t                      temp_emm_ue_ctx;
   emm_fsm_state_t                         fsm_state = EMM_DEREGISTERED;
   ue_context_t                           *ue_context = NULL;
 
@@ -202,7 +201,6 @@ int emm_proc_attach_request (
   imsi64_t                                imsi64  = INVALID_IMSI64;
   mme_ue_s1ap_id_t                        old_ue_id = INVALID_MME_UE_S1AP_ID;
   nas_emm_attach_proc_t                  *attach_procedure = NULL;
-  nas_emm_tau_proc_t                     *tau_procedure = NULL;
 
   if (ies->imsi) {
     imsi64 = imsi_to_imsi64(ies->imsi);
@@ -210,13 +208,7 @@ int emm_proc_attach_request (
 
   OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  ATTACH - EPS attach type = %s (%d) requested (ue_id=" MME_UE_S1AP_ID_FMT ")\n",
       _emm_attach_type_str[ies->type], ies->type, ue_id);
-  /*
-   * Initialize the temporary UE context
-   */
-  memset (&temp_emm_ue_ctx, 0, sizeof (emm_data_context_t));
-  temp_emm_ue_ctx.is_dynamic = false;
-  temp_emm_ue_ctx.ue_id = ue_id; /**< Set the new ue_id to send attach_reject over it. */
-  
+
   /**
    * First check if the MME_APP UE context is valid.
    */
@@ -243,17 +235,15 @@ int emm_proc_attach_request (
        (EMM_ATTACH_TYPE_EMERGENCY == ies->type)) {
      REQUIREMENT_3GPP_24_301(R10_5_5_1__1);
      // TODO: update this if/when emergency attach is supported
-     temp_emm_ue_ctx.emm_cause =
-        ies->imei ? EMM_CAUSE_IMEI_NOT_ACCEPTED : EMM_CAUSE_NOT_AUTHORIZED_IN_PLMN;
      /*
       * Do not accept the UE to attach for emergency services
      */
      struct nas_emm_attach_proc_s   no_attach_proc = {0};
      no_attach_proc.ue_id       = ue_id;
-     no_attach_proc.emm_cause   = temp_emm_ue_ctx.emm_cause;
-    no_attach_proc.esm_msg_out = NULL;
-    rc = _emm_attach_reject (&temp_emm_ue_ctx, (struct nas_base_proc_s *)&no_attach_proc, NULL);
-    OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+     no_attach_proc.emm_cause   = ies->imei ? EMM_CAUSE_IMEI_NOT_ACCEPTED : EMM_CAUSE_NOT_AUTHORIZED_IN_PLMN;
+     no_attach_proc.esm_msg_out = NULL;
+     rc = _emm_attach_reject ((struct nas_base_proc_s *)&no_attach_proc, NULL);
+     OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
   }
 
   /**
@@ -268,15 +258,15 @@ int emm_proc_attach_request (
    */
   *duplicate_emm_ue_ctx_pP = emm_data_context_get(&_emm_data, ue_id);
   if (!(*duplicate_emm_ue_ctx_pP)) {
-    if(ies->guti) {
-      // todo: handle this case.
-      (*duplicate_emm_ue_ctx_pP) = emm_data_context_get_by_guti(&_emm_data, ies->guti);
-      if ((*duplicate_emm_ue_ctx_pP)) {
-        /** We found an EMM context. Don't clean it up, continue to use it. */
-        OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - We found an EMM context from GUTI " GUTI_FMT " with old mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT". \n",
-            GUTI_ARG(&(*duplicate_emm_ue_ctx_pP)->_guti), (*duplicate_emm_ue_ctx_pP)->ue_id);
-        /** Continue to check for EMM context and their validity. */
-      }
+    /** It can only have IMSI or GUTI. */
+	if(ies->guti && !(INVALID_M_TMSI == ies->guti->m_tmsi)){
+        (*duplicate_emm_ue_ctx_pP) = emm_data_context_get_by_guti(&_emm_data, ies->guti);
+        if ((*duplicate_emm_ue_ctx_pP)) {
+          /** We found an EMM context. Don't clean it up, continue to use it. */
+          OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - We found an EMM context from GUTI " GUTI_FMT " with old mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT". \n",
+              GUTI_ARG(&(*duplicate_emm_ue_ctx_pP)->_guti), (*duplicate_emm_ue_ctx_pP)->ue_id);
+          /** Continue to check for EMM context and their validity. */
+        }
     }else if(ies->imsi) { /**< If we could not find one per IMSI. */
       (*duplicate_emm_ue_ctx_pP) = emm_data_context_get_by_imsi(&_emm_data, imsi64);
       if ((*duplicate_emm_ue_ctx_pP)) {
@@ -306,26 +296,64 @@ int emm_proc_attach_request (
   }
 
   OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Continuing for Attach Request for UE_ID " MME_UE_S1AP_ID_FMT " after validation of the attach request. \n", ue_id);
-  if(!(*duplicate_emm_ue_ctx_pP) || (*duplicate_emm_ue_ctx_pP)->emm_cause != EMM_CAUSE_SUCCESS) {
-    OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - No valid EMM context was found for UE_ID " MME_UE_S1AP_ID_FMT ". \n", ue_id);
+  if(!(*duplicate_emm_ue_ctx_pP)) {
+    OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - No old EMM context was found for UE_ID " MME_UE_S1AP_ID_FMT ". \n", ue_id);
     /*
      * Create UE's EMM context
      */
     new_emm_ue_ctx= (emm_data_context_t *) calloc (1, sizeof (emm_data_context_t));
     if (!new_emm_ue_ctx) {
-      OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Failed to create EMM context for ueId " MME_UE_S1AP_ID_FMT ". \n", temp_emm_ue_ctx.ue_id);
-      temp_emm_ue_ctx.emm_cause = EMM_CAUSE_ILLEGAL_UE; /**< Send a ATTACH_REJECT with the temporary context. */
+      OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Failed to create EMM context for ueId " MME_UE_S1AP_ID_FMT ". \n", ue_id);
       /*
        * Do not accept the UE to attach to the network
        */
+      struct nas_emm_attach_proc_s   no_attach_proc = {0};
+      no_attach_proc.ue_id       = ue_id;
+      no_attach_proc.emm_cause   = EMM_CAUSE_ILLEGAL_UE;
+      no_attach_proc.esm_msg_out = NULL;
+      rc = _emm_attach_reject ((struct nas_base_proc_s *)&no_attach_proc, NULL);
+      OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc); /**< Return with an error. */
+    }
+    /** Initialize the EMM context only in this case, else we have a DEREGISTERED but valid EMM context. */
+    /** Check if the EMM context has been initialized, if so set the values. */
+    new_emm_ue_ctx->ue_id = ue_id;
+    new_emm_ue_ctx->is_dynamic = true;
+    OAILOG_NOTICE (LOG_NAS_EMM, "EMM-PROC  - Create EMM context ue_id = " MME_UE_S1AP_ID_FMT "\n", ue_id);
+    new_emm_ue_ctx->attach_type = ies->type;
+    new_emm_ue_ctx->additional_update_type = ies->additional_update_type;
+    new_emm_ue_ctx->emm_cause       = EMM_CAUSE_SUCCESS;
+    emm_init_context(new_emm_ue_ctx);  /**< Initialize the context, we might do it again if the security was not verified. */
+    /** Add the newly created EMM context. */
+    DevAssert(RETURNok == emm_data_context_add (&_emm_data, new_emm_ue_ctx));
+  }
+  else if((*duplicate_emm_ue_ctx_pP)->emm_cause != EMM_CAUSE_SUCCESS) {
+    OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Old EMM context for UE_ID " MME_UE_S1AP_ID_FMT " was invalid. \n", ue_id);
+    /** If the UE-IDs match, we cannot continue with the current TAU. */
+    if(ue_id == (*duplicate_emm_ue_ctx_pP)->ue_id){
+      OAILOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - The old failed EMM context has same ueId " MME_UE_S1AP_ID_FMT ". Rejecting attach request (should also implicitly detach). \n", ue_id);
+      struct nas_emm_attach_proc_s   no_attach_proc = {0};
+      no_attach_proc.ue_id       = ue_id;
+      no_attach_proc.emm_cause   = (*duplicate_emm_ue_ctx_pP)->emm_cause;
+      no_attach_proc.esm_msg_out = NULL;
+      rc = _emm_attach_reject ((struct nas_base_proc_s *)&no_attach_proc, NULL);
+      (*duplicate_emm_ue_ctx_pP) = emm_data_context_get(&_emm_data, ue_id); /**< Refresh reference. */
+      OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+    }
+    /*
+     * Create UE's EMM context
+     */
+    OAILOG_WARNING(LOG_NAS_EMM, "EMM-PROC  - The old failed EMM context has a different ueId " MME_UE_S1AP_ID_FMT " than the new one " MME_UE_S1AP_ID_FMT ". Continuing with attach procedure. \n", (*duplicate_emm_ue_ctx_pP)->ue_id, ue_id);
+    new_emm_ue_ctx= (emm_data_context_t *) calloc (1, sizeof (emm_data_context_t));
+    if (!new_emm_ue_ctx) {
+      OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Failed to create EMM context for ueId " MME_UE_S1AP_ID_FMT ". \n", ue_id);
       /*
-       * Do not accept the UE to attach for emergency services
+       * Do not accept the UE to attach to the network
        */
       struct nas_emm_attach_proc_s   no_attach_proc = {0};
       no_attach_proc.ue_id       = ue_id;
-      no_attach_proc.emm_cause   = temp_emm_ue_ctx.emm_cause;
+      no_attach_proc.emm_cause   = EMM_CAUSE_ILLEGAL_UE;
       no_attach_proc.esm_msg_out = NULL;
-      rc = _emm_attach_reject (&temp_emm_ue_ctx, (struct nas_base_proc_s *)&no_attach_proc, NULL);
+      rc = _emm_attach_reject ((struct nas_base_proc_s *)&no_attach_proc, NULL);
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc); /**< Return with an error. */
     }
     /** Initialize the EMM context only in this case, else we have a DEREGISTERED but valid EMM context. */
@@ -338,44 +366,72 @@ int emm_proc_attach_request (
     new_emm_ue_ctx->additional_update_type = ies->additional_update_type;
     new_emm_ue_ctx->emm_cause       = EMM_CAUSE_SUCCESS;
     emm_init_context(new_emm_ue_ctx);  /**< Initialize the context, we might do it again if the security was not verified. */
-    /** Add the newly created EMM context. */
-    if (RETURNok != emm_data_context_add (&_emm_data, new_emm_ue_ctx)) {
-      OAILOG_CRITICAL(LOG_NAS_EMM, "EMM-PROC  - Attach EMM Context could not be inserted in hashtables for ueId " MME_UE_S1AP_ID_FMT ". \n", new_emm_ue_ctx->ue_id);
-      /*
-       * Do not accept the UE to attach for emergency services
-       */
-      new_emm_ue_ctx->emm_cause = EMM_CAUSE_ILLEGAL_UE; /**< Send a ATTACH_REJECT with the temporary context. */
-
-      struct nas_emm_attach_proc_s   no_attach_proc = {0};
-      no_attach_proc.ue_id       = ue_id;
-      no_attach_proc.emm_cause   = new_emm_ue_ctx->emm_cause;
-      no_attach_proc.esm_msg_out = NULL;
-      rc = _emm_attach_reject (new_emm_ue_ctx, (struct nas_base_proc_s *)&no_attach_proc, NULL); /**< todo: Not removing old duplicate. */
-      OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
-    }
-  }else if ((*duplicate_emm_ue_ctx_pP) && (*duplicate_emm_ue_ctx_pP)->emm_cause == EMM_CAUSE_SUCCESS){
+    /** Add the newly created EMM context: ue_id was checked, imsi&guti were cleared. */
+    DevAssert(RETURNok == emm_data_context_add (&_emm_data, new_emm_ue_ctx));
+  } else {
     OAILOG_WARNING (LOG_NAS_EMM, "We have a valid EMM context with IMSI " IMSI_64_FMT " from a previous registration with ueId " MME_UE_S1AP_ID_FMT ". \n",
-        (*duplicate_emm_ue_ctx_pP)->_imsi64, (*duplicate_emm_ue_ctx_pP)->ue_id);
+    	(*duplicate_emm_ue_ctx_pP)->_imsi64, (*duplicate_emm_ue_ctx_pP)->ue_id);
     /*
      * We have an EMM context with GUTI from a previous registration.
      * Validate it, if the message has been received with a security header and if the security header can be validated we can continue using it.
      */
-    new_emm_ue_ctx = (*duplicate_emm_ue_ctx_pP);
-    /*
-     * The old UE Id can not already be in REGISTERED state.
-     * If there are some differences of the current structure to the received message, the context will be
-     * implicitly detached (together with all its layers).
-     * Else, if we can use it, we can also continue with the newly created UE references and don't
-     * have to re-link any of them to the old UE context.
-     */
-  }else{
-    OAILOG_WARNING (LOG_NAS_EMM, "We have an invalid EMM context with IMSI " IMSI_64_FMT " from a previous registration with ueId " MME_UE_S1AP_ID_FMT " in an undefined state. Performing implicit detach first. \n",
-        (*duplicate_emm_ue_ctx_pP)->_imsi64, (*duplicate_emm_ue_ctx_pP)->ue_id);
-    (*duplicate_emm_ue_ctx_pP)->emm_cause = EMM_CAUSE_ILLEGAL_UE;
+    if((*duplicate_emm_ue_ctx_pP)->ue_id != ue_id) {
+      new_emm_ue_ctx = calloc(1, sizeof(emm_data_context_t));
+      memcpy(new_emm_ue_ctx, (*duplicate_emm_ue_ctx_pP), sizeof(**duplicate_emm_ue_ctx_pP));
+      new_emm_ue_ctx->_emm_fsm_state = EMM_DEREGISTERED;
+
+      mme_ue_s1ap_id_t old_ue_id = (*duplicate_emm_ue_ctx_pP)->ue_id;
+      /** Remove the (old) EMM context from the tables, update the EMM context ue_id. */
+      new_emm_ue_ctx->ue_id = ue_id;
+      /*
+       * The old UE Id can not already be in REGISTERED state.
+       * If there are some differences of the current structure to the received message, the context will be
+       * implicitly detached (together with all its layers).
+       * Else, if we can use it, we can also continue with the newly created UE references and don't
+       * have to re-link any of them to the old UE context.
+       */
+      OAILOG_WARNING(LOG_NAS_EMM, "EMM-PROC  - Updated the EMM Context with IMSI " IMSI_64_FMT" from old ueId " MME_UE_S1AP_ID_FMT " to new ueId " MME_UE_S1AP_ID_FMT ". \n",
+    		  new_emm_ue_ctx->_imsi64, old_ue_id, ue_id);
+      emm_sap_t                               emm_sap = {0};
+      emm_sap.primitive = EMMCN_IMPLICIT_DETACH_UE; /**< UE context will be purged. */
+      emm_sap.u.emm_cn.u.emm_cn_implicit_detach.emm_cause   = 0; /**< Not sending detach type. */
+      emm_sap.u.emm_cn.u.emm_cn_implicit_detach.detach_type = 0; /**< Not sending detach type. */
+      emm_sap.u.emm_cn.u.emm_cn_implicit_detach.ue_id = (*duplicate_emm_ue_ctx_pP)->ue_id;
+      /*
+       * Don't send the detach type, such that no NAS Detach Request is sent to the UE.
+       * Depending on the cause, the MME_APP will check and inform the NAS layer to continue with the procedure, before the timer expires.
+       */
+      emm_sap_send (&emm_sap);
+
+      /** Set the new attach procedure into pending mode and continue with it after the completion of the duplicate removal. */
+      void *unused = NULL;
+      _emm_proc_create_procedure_attach_request(new_emm_ue_ctx, ies, _emm_attach_retry_procedure);
+      nas_emm_attach_proc_t * attach_proc = get_nas_specific_procedure_attach(new_emm_ue_ctx);
+      nas_stop_T_retry_specific_procedure(new_emm_ue_ctx->ue_id, &attach_proc->emm_spec_proc.retry_timer, unused);
+      nas_start_T_retry_specific_procedure(new_emm_ue_ctx->ue_id, &attach_proc->emm_spec_proc.retry_timer, attach_proc->emm_spec_proc.retry_cb, (void*)new_emm_ue_ctx->ue_id);
+      /** Set the old mme_ue_s1ap id which will be checked. */
+      attach_proc->emm_spec_proc.old_ue_id = old_ue_id;
+      *duplicate_emm_ue_ctx_pP = NULL;
+      /*
+       * Perform implicit detach on the old UE with cause of duplicate detection.
+       * Not continuing with the new attach procedure until the old one has been successfully deallocated.
+       */
+      // todo: this probably will not work, we need to update the enb_ue_s1ap_id of the old UE context to continue to work with it!
+      //              unlock_ue_contexts(ue_context);
+      //             unlock_ue_contexts(imsi_ue_mm_ctx);
+      OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
+    } else{
+    	new_emm_ue_ctx = (*duplicate_emm_ue_ctx_pP);
+    	/** Unlink the new procedure. */
+    	(*duplicate_emm_ue_ctx_pP) = NULL;
+    }
   }
+
   /** Continue with the new or existing EMM context. */
+  DevAssert(new_emm_ue_ctx);
+  DevAssert(new_emm_ue_ctx->emm_cause == EMM_CAUSE_SUCCESS);
   _emm_proc_create_procedure_attach_request(new_emm_ue_ctx, ies, _emm_attach_retry_procedure);
-  if((*duplicate_emm_ue_ctx_pP) && (*duplicate_emm_ue_ctx_pP)->emm_cause != EMM_CAUSE_SUCCESS){
+  if((*duplicate_emm_ue_ctx_pP)){
     /** Set the new attach procedure into pending mode and continue with it after the completion of the duplicate removal. */
     void *unused = NULL;
     nas_emm_attach_proc_t * attach_proc = get_nas_specific_procedure_attach(new_emm_ue_ctx);
@@ -420,7 +476,7 @@ int emm_proc_attach_request (
       nas_emm_attach_proc_t                  *attach_proc = get_nas_specific_procedure_attach(new_emm_ue_ctx);
       attach_proc->emm_cause   = new_emm_ue_ctx->emm_cause;
       attach_proc->esm_msg_out = NULL;
-      rc = _emm_attach_reject (new_emm_ue_ctx, (struct nas_base_proc_s *)attach_proc, NULL);
+      rc = _emm_attach_reject ((struct nas_base_proc_s *)attach_proc, NULL);
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
     }
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
@@ -463,13 +519,12 @@ int emm_proc_attach_reject (mme_ue_s1ap_id_t ue_id, emm_cause_t emm_cause)
 //      emm_sap_t                               emm_sap = {0};
 //      emm_sap.primitive = EMMREG_ATTACH_REJ;
 //      emm_sap.u.emm_reg.ue_id = ue_id;
-//      emm_sap.u.emm_reg.ctx = emm_context;
 //      emm_sap.u.emm_reg.notify = false;
 //      emm_sap.u.emm_reg.free_proc = true;
 //      emm_sap.u.emm_reg.u.attach.proc = attach_proc;
 //      rc = emm_sap_send (&emm_sap);
       attach_proc->emm_cause = emm_cause;
-      rc = _emm_attach_reject (emm_context, &attach_proc->emm_spec_proc.emm_proc.base_proc, NULL);
+      rc = _emm_attach_reject (&attach_proc->emm_spec_proc.emm_proc.base_proc, NULL);
     }else{
       OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - No attach procedure for (ue_id=" MME_UE_S1AP_ID_FMT ")\n", ue_id);
 
@@ -555,7 +610,6 @@ int emm_proc_attach_complete (
   emm_sap.primitive = EMMREG_ATTACH_CNF; /**< No Common_REG_CNF since GUTI might not have been sent (EMM_DEREG-> EMM_REG) // todo: attach_complete arrives always? */
   // todo: for EMM_REG_COMMON_PROC_CNF, do we need common_proc (explicit) like SMC, AUTH, INFO? and not implicit guti reallocation where none exists?
   emm_sap.u.emm_reg.ue_id = ue_id;
-  emm_sap.u.emm_reg.ctx = emm_context;
 //    emm_sap.u.emm_reg.notify = true;
 //    emm_sap.u.emm_reg.free_proc = true;
   emm_sap.u.emm_reg.u.attach.proc = attach_proc;
@@ -591,24 +645,20 @@ int emm_proc_attach_complete (
  */
 static
 int emm_proc_attach_request_validity(emm_data_context_t * emm_context, mme_ue_s1ap_id_t new_ue_id, emm_attach_request_ies_t * const ies ){
-
   OAILOG_FUNC_IN(LOG_NAS_EMM);
   int                      rc = RETURNerror;
-//  emm_data_context_t      *emm_context = *emm_context_pP;
-
+  mme_ue_s1ap_id_t         old_ue_id = emm_context->ue_id;
   if(emm_context->ue_id != new_ue_id){
-    OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - The UE_ID EMM context from IMSI " IMSI_64_FMT " with old mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " it not equal to new ueId" MME_UE_S1AP_ID_FMT". \n",
+    OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - The UE_ID EMM context from IMSI " IMSI_64_FMT " with old mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " is not equal to new ueId" MME_UE_S1AP_ID_FMT". \n",
         emm_context->_imsi64, emm_context->ue_id, new_ue_id);
 //       new_emm_ue_ctx->ue_id = ue_id; /**< The old UE_ID may still refer to another MME_APP context, with which we may like to continue. */
   }
   emm_fsm_state_t fsm_state = emm_fsm_get_state (emm_context);
-
   nas_emm_attach_proc_t * attach_procedure = get_nas_specific_procedure_attach (emm_context);
   nas_emm_tau_proc_t * tau_procedure = get_nas_specific_procedure_tau(emm_context);
-
   // todo: may these parameters change?
-//     new_emm_ue_ctx->attach_type = type;
-//     new_emm_ue_ctx->additional_update_type = additional_update_type;
+  //     new_emm_ue_ctx->attach_type = type;
+  //     new_emm_ue_ctx->additional_update_type = additional_update_type;
   /*
    * Check if there is an ongoing SMC procedure.
    * In any case, we just abort the current SMC procedure, which will keep the context, state, other commons and bearers, etc..
@@ -622,7 +672,6 @@ int emm_proc_attach_request_validity(emm_data_context_t * emm_context, mme_ue_s1
     emm_sap_t                               emm_sap = {0};
     emm_sap.primitive = EMMREG_COMMON_PROC_ABORT;    /**< May cause an implicit detach, which may purge the EMM context. */
     emm_sap.u.emm_reg.ue_id     = emm_context->ue_id;
-    emm_sap.u.emm_reg.ctx       = emm_context;
     emm_sap.u.emm_reg.notify    = false;   /**< Because SMC itself did not fail, some other event (some external event like a collision) occurred. Aborting the common procedure. Not high severity of error. */
     emm_sap.u.emm_reg.free_proc = true;  /**< We will not restart the procedure again. */
     emm_sap.u.emm_reg.u.common.common_proc = &smc_proc->emm_com_proc;
@@ -654,7 +703,6 @@ int emm_proc_attach_request_validity(emm_data_context_t * emm_context, mme_ue_s1
       emm_sap_t                               emm_sap = {0};
       emm_sap.primitive = EMMREG_COMMON_PROC_ABORT;
       emm_sap.u.emm_reg.ue_id = emm_context->ue_id; /**< This should be enough to get the EMM context. */
-      emm_sap.u.emm_reg.ctx = emm_context; /**< This should be enough to get the EMM context. */
       emm_sap.u.emm_reg.notify    = false;  /**< Again, the authentification procedure itself not considered as failed but aborted from outside. */
       emm_sap.u.emm_reg.free_proc = true;
       emm_sap.u.emm_reg.u.common.common_proc = &auth_proc->emm_com_proc;
@@ -664,11 +712,19 @@ int emm_proc_attach_request_validity(emm_data_context_t * emm_context, mme_ue_s1
       rc = emm_sap_send (&emm_sap);
       /** Keep all the states, context, bearers and other common and specific procedures, just stopping the timer and deallocating the common procedure. */
       DevAssert(rc == RETURNok);
-      OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
+      OAILOG_FUNC_RETURN(LOG_NAS_EMM, RETURNok);
    }
   }
 
-  DevAssert(emm_context);
+  /**
+   * Get the emm_context again.
+   * Above abort procedures might have removed the emm_context, continue if one exists.
+   */
+  emm_context = emm_data_context_get(&_emm_data, old_ue_id);
+  if(!emm_context){
+    OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - No EMM context for UE " MME_UE_S1AP_ID_FMT " exists after first phase of verification. \n", old_ue_id);
+    OAILOG_FUNC_RETURN(LOG_NAS_EMM, RETURNok);
+  }
 
   /*
    * We don't need to check the identification procedure. If it is not part of an attach procedure (no specific attach procedure is running - assuming all common procedures
@@ -707,7 +763,7 @@ int emm_proc_attach_request_validity(emm_data_context_t * emm_context, mme_ue_s1
    */
   if ((EMM_REGISTERED == fsm_state) || emm_context->is_has_been_attached) {
     REQUIREMENT_3GPP_24_301(R10_5_5_1_2_7_f);
-    OAILOG_TRACE (LOG_NAS_EMM, "EMM-PROC  - the new ATTACH REQUEST is progressed and the current registered EMM context, "
+    OAILOG_WARNING(LOG_NAS_EMM, "EMM-PROC  - the new ATTACH REQUEST is progressed and the current registered EMM context, "
         "together with the states, common procedures and bearers will be destroyed. \n");
     DevAssert(!get_nas_specific_procedure_attach (emm_context));
     /*
@@ -725,7 +781,7 @@ int emm_proc_attach_request_validity(emm_data_context_t * emm_context, mme_ue_s1
    * Specific attach and tau procedures run until attach/tau_complete!
    * No attach completed yet.
    */
-  else if (attach_procedure && (is_nas_attach_accept_sent(attach_procedure))) {// && (!emm_ctx->is_attach_complete_received): implicit
+  if (attach_procedure && (is_nas_attach_accept_sent(attach_procedure))) {// && (!emm_ctx->is_attach_complete_received): implicit
     if (_emm_attach_ies_have_changed (emm_context->ue_id, attach_procedure->ies, ies)) {
       OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Attach parameters have changed\n");
       REQUIREMENT_3GPP_24_301(R10_5_5_1_2_7_d__1);
@@ -748,20 +804,16 @@ int emm_proc_attach_request_validity(emm_data_context_t * emm_context, mme_ue_s1
        * T3450 shall be restarted if an ATTACH COMPLETE message is expected. In that case, the retransmission
        * counter related to T3450 is not incremented.
        */
-
       _emm_attach_accept_retx(emm_context);
-
       // Clean up new UE context that was created to handle new attach request
       if(new_ue_id != emm_context->ue_id)
         nas_itti_esm_detach_ind(new_ue_id, false);
       free_emm_attach_request_ies(&ies);
-
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
     }
   } else if ((attach_procedure) &&
       (!is_nas_attach_accept_sent(attach_procedure)) &&
       (!is_nas_attach_reject_sent(attach_procedure))) {
-
     if (_emm_attach_ies_have_changed (emm_context->ue_id, attach_procedure->ies, ies)) {
       OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Attach parameters have changed\n");
       REQUIREMENT_3GPP_24_301(R10_5_5_1_2_7_e__1);
@@ -789,7 +841,7 @@ int emm_proc_attach_request_validity(emm_data_context_t * emm_context, mme_ue_s1
     }
   }
   /** Check for collisions with tracking area update. */
-  else if (tau_procedure && is_nas_tau_accept_sent(tau_procedure)) {// && (!emm_ctx->is_tau_complete_received): implicit
+  else if (tau_procedure && is_nas_tau_accept_sent(tau_procedure)) { // && (!emm_ctx->is_tau_complete_received): implicit
     /** Check for a retransmission first. */
     //      new_emm_ue_ctx->num_attach_request++;
     /** Implicitly detach the UE context, which will remove all common and specific procedures. */
@@ -842,6 +894,7 @@ int emm_proc_attach_request_validity(emm_data_context_t * emm_context, mme_ue_s1
      * todo: checking for UE/MS network capabilities and replaying them if changed? assuming not changed.
      */
     // todo: 5G has something like REGISTRATION UPDATE!
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
   } else { //else  ((ue_context) && ((EMM_DEREGISTERED < fsm_state ) && (EMM_REGISTERED != fsm_state)))
     /*
      * This should also consider a Service Request Procedure.
@@ -931,7 +984,6 @@ static void _emm_attach_t3450_handler (void *args)
       emm_sap_t                               emm_sap = {0};
       emm_sap.primitive = EMMREG_ATTACH_ABORT;
       emm_sap.u.emm_reg.ue_id = attach_proc->ue_id;
-      emm_sap.u.emm_reg.ctx   = emm_context;
 //      emm_sap.u.emm_reg.notify= true;
 //      emm_sap.u.emm_reg.free_proc = true;
       emm_sap.u.emm_reg.u.attach.proc   = attach_proc;
@@ -983,9 +1035,10 @@ static int _emm_attach_release (emm_data_context_t *emm_context)
  *      Others:    None
  *
  */
-int _emm_attach_reject(emm_data_context_t * emm_context, nas_emm_attach_proc_t * attach_proc, bstring rsp)
+int _emm_attach_reject(nas_emm_attach_proc_t * attach_proc, bstring rsp)
 {
-  emm_sap_t                               emm_sap = {0};
+  emm_sap_t                               emm_sap 		= {0};
+  emm_data_context_t                     *emm_context 	= NULL;
 
   OAILOG_FUNC_IN(LOG_NAS_EMM);
 
@@ -1176,12 +1229,11 @@ static int _emm_attach_retry_procedure(mme_ue_s1ap_id_t ue_id){
   if(duplicate_emm_context){
     /** Send an attach reject back. */
     OAILOG_WARNING(LOG_NAS_EMM, "EMM-PROC  - An old EMM context for ue_id=" MME_UE_S1AP_ID_FMT " still existing. Aborting the attach procedure. \n", attach_proc->emm_spec_proc.old_ue_id);
-    rc = _emm_attach_reject (emm_context, &attach_proc->emm_spec_proc.emm_proc.base_proc, NULL);
+    rc = _emm_attach_reject (&attach_proc->emm_spec_proc.emm_proc.base_proc, NULL);
 //
 //    emm_sap_t emm_sap                      = {0};
 //    emm_sap.primitive                      = EMMREG_ATTACH_REJ;
 //    emm_sap.u.emm_reg.ue_id                = attach_proc->ue_id;
-//    emm_sap.u.emm_reg.ctx                  = emm_context;
 //    emm_sap.u.emm_reg.notify               = true;
 //    emm_sap.u.emm_reg.free_proc            = true;
 //    emm_sap.u.emm_reg.u.attach.proc        = attach_proc;
@@ -1195,12 +1247,11 @@ static int _emm_attach_retry_procedure(mme_ue_s1ap_id_t ue_id){
   if(duplicate_ue_context){
     OAILOG_WARNING(LOG_NAS_EMM, "EMM-PROC  - An old UE context for ue_id=" MME_UE_S1AP_ID_FMT " still existing. Aborting the attach procedure. \n", attach_proc->emm_spec_proc.old_ue_id);
     /** Send an attach reject back. */
-    rc = _emm_attach_reject (emm_context, &attach_proc->emm_spec_proc.emm_proc.base_proc, NULL);
+    rc = _emm_attach_reject (&attach_proc->emm_spec_proc.emm_proc.base_proc, NULL);
 
 //    emm_sap_t emm_sap                      = {0};
 //    emm_sap.primitive                      = EMMREG_ATTACH_REJ;
 //    emm_sap.u.emm_reg.ue_id                = attach_proc->ue_id;
-//    emm_sap.u.emm_reg.ctx                  = emm_context;
 //    emm_sap.u.emm_reg.notify               = true;
 //    emm_sap.u.emm_reg.free_proc            = true;
 //    emm_sap.u.emm_reg.u.attach.proc        = attach_proc;
@@ -1285,12 +1336,11 @@ static int _emm_attach_failure_authentication_cb (emm_data_context_t *emm_contex
   if (attach_proc) {
     attach_proc->emm_cause = EMM_CAUSE_IMSI_UNKNOWN_IN_HSS;
     // TODO could be in callback of attach procedure triggered by EMMREG_ATTACH_REJ
-    rc = _emm_attach_reject (emm_context, &attach_proc->emm_spec_proc.emm_proc.base_proc, NULL);
+    rc = _emm_attach_reject (&attach_proc->emm_spec_proc.emm_proc.base_proc, NULL);
 
 //    emm_sap_t emm_sap                      = {0};
 //    emm_sap.primitive                      = EMMREG_ATTACH_REJ;
 //    emm_sap.u.emm_reg.ue_id                = attach_proc->ue_id;
-//    emm_sap.u.emm_reg.ctx                  = emm_context;
 //    emm_sap.u.emm_reg.notify               = true;
 //    emm_sap.u.emm_reg.free_proc            = true;
 //    emm_sap.u.emm_reg.u.attach.proc = attach_proc;
@@ -1326,7 +1376,6 @@ static int _emm_start_attach_proc_security (emm_data_context_t *emm_context, nas
       emm_sap_t emm_sap                      = {0};
       emm_sap.primitive                      = EMMREG_ATTACH_REJ;
       emm_sap.u.emm_reg.ue_id                = emm_context->ue_id;
-      emm_sap.u.emm_reg.ctx                  = emm_context;
       emm_sap.u.emm_reg.notify               = true;
       emm_sap.u.emm_reg.free_proc            = true;
       emm_sap.u.emm_reg.u.attach.proc = attach_proc;
@@ -1399,7 +1448,6 @@ static int _emm_attach_failure_security_cb (emm_data_context_t *emm_context)
 //      emm_sap_t emm_sap                      = {0};
 //      emm_sap.primitive                      = EMMREG_ATTACH_REJ;
 //      emm_sap.u.emm_reg.ue_id                = ue_id;
-//      emm_sap.u.emm_reg.ctx                  = emm_context;
 //      emm_sap.u.emm_reg.notify               = true;
 //      emm_sap.u.emm_reg.free_proc            = true;
 //      emm_sap.u.emm_reg.u.attach.attach_proc = attach_proc;
@@ -1464,7 +1512,6 @@ static int _emm_attach_security (emm_data_context_t *emm_context)
       emm_sap_t emm_sap                      = {0};
       emm_sap.primitive                      = EMMREG_ATTACH_REJ;
       emm_sap.u.emm_reg.ue_id                = emm_context->ue_id;
-      emm_sap.u.emm_reg.ctx                  = emm_context;
       emm_sap.u.emm_reg.notify               = true;
       emm_sap.u.emm_reg.free_proc            = true;
       emm_sap.u.emm_reg.u.attach.proc = attach_proc;
@@ -1517,10 +1564,7 @@ int _emm_wrapper_attach_accept (mme_ue_s1ap_id_t ue_id, bstring esm_msg)
 
       emm_sap.primitive = EMMREG_COMMON_PROC_REQ;
       emm_sap.u.emm_reg.ue_id = ue_id;
-      emm_sap.u.emm_reg.ctx  = emm_context;
-
       MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMREG_COMMON_PROC_REQ ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
-
       rc = emm_sap_send (&emm_sap);
     }
   }
@@ -1545,7 +1589,7 @@ int _emm_wrapper_attach_reject (mme_ue_s1ap_id_t ue_id, bstring esm_msg)
     OAILOG_FUNC_RETURN(LOG_NAS_ESM, RETURNerror);
   }
 
-  int rc =  _emm_attach_reject(emm_context, attach_proc, esm_msg);
+  int rc =  _emm_attach_reject(attach_proc, esm_msg);
   OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
 }
 
@@ -1567,11 +1611,11 @@ int _emm_wrapper_attach_reject (mme_ue_s1ap_id_t ue_id, bstring esm_msg)
 //        attach_proc->emm_cause = EMM_CAUSE_ESM_FAILURE;
 //        bdestroy_wrapper (&attach_proc->ies->esm_msg);
 //        attach_proc->esm_msg_out = esm_sap.send;
-//        rc = _emm_attach_reject (emm_context, &attach_proc->emm_spec_proc.emm_proc.base_proc);
+//        rc = _emm_attach_reject (&attach_proc->emm_spec_proc.emm_proc.base_proc);
 //        OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 
 //------------------------------------------------------------------------------
-static int _emm_send_attach_accept (emm_data_context_t * emm_context)
+static int _emm_send_attach_accept (emm_data_context_t * const emm_context)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
@@ -1693,31 +1737,41 @@ static int _emm_send_attach_accept (emm_data_context_t * emm_context)
     MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMAS_ESTABLISH_CNF ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
     rc = emm_sap_send (&emm_sap);
 
-    if (RETURNerror != rc) {
-      /*
-       * Start T3450 timer
-       */
-        void * unused = NULL;
-        nas_stop_T3450(attach_proc->ue_id, &attach_proc->T3450, unused);
-      nas_start_T3450(attach_proc->ue_id, &attach_proc->T3450, attach_proc->emm_spec_proc.emm_proc.base_proc.time_out, (void*)attach_proc->ue_id);
-    }
-
     /**
-     * Implicit GUTI reallocation;
-     * * * * Notify EMM that common procedure has been initiated
+     * todo: remove this after locking.
      */
-    memset(&emm_sap, 0, sizeof(emm_sap_t));
 
-    emm_sap.primitive = EMMREG_COMMON_PROC_REQ;
-    emm_sap.u.emm_reg.ue_id = emm_context->ue_id;
-    emm_sap.u.emm_reg.ctx  = emm_context;
-    MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMREG_COMMON_PROC_REQ ue id " MME_UE_S1AP_ID_FMT " ", msg_pP->ue_id);
-    rc = emm_sap_send (&emm_sap);
-
+    if (RETURNerror != rc) {
+     emm_data_context_t * emm_context1                 = emm_data_context_get(&_emm_data, ue_id);
+     attach_proc = NULL;
+     if(emm_context1) {
+       attach_proc 			    = get_nas_specific_procedure_attach(emm_context1);
+     }
+     if(attach_proc){
+       /*
+        * Start T3450 timer
+        */
+       void * unused = NULL;
+       nas_stop_T3450(ue_id, &attach_proc->T3450, unused);
+       nas_start_T3450(ue_id, &attach_proc->T3450, attach_proc->emm_spec_proc.emm_proc.base_proc.time_out, (void*)attach_proc->ue_id);
+       /**
+        * Implicit GUTI reallocation;
+        * * * * Notify EMM that common procedure has been initiated
+        */
+       memset(&emm_sap, 0, sizeof(emm_sap_t));
+       emm_sap.primitive = EMMREG_COMMON_PROC_REQ;
+       emm_sap.u.emm_reg.ue_id = ue_id;
+       MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMREG_COMMON_PROC_REQ ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
+       rc = emm_sap_send (&emm_sap);
+     } else {
+      OAILOG_ERROR (LOG_NAS_EMM, "TODO: THREADING ISSUES // NO EMM_CTX/PROCESS AFTER SENDING SAP!\n");
+     }
+    } else {
+      OAILOG_WARNING (LOG_NAS_EMM, "ERROR WHILE SENDING ATTACH_ACCEPT! \n");
+    }
   } else {
-    OAILOG_WARNING (LOG_NAS_EMM, "ue_context NULL\n");
+    OAILOG_WARNING (LOG_NAS_EMM, "Could not find an EMM context @ Attach Accept! \n");
   }
-
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 /*
@@ -1783,14 +1837,25 @@ static int _emm_attach_accept_retx (emm_data_context_t * emm_context)
 
     rc = emm_sap_send (&emm_sap);
 
+
     if (RETURNerror != rc) {
-      OAILOG_INFO (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " EMM-PROC  -Sent Retx Attach Accept message\n", ue_id);
-      /*
-       * Re-start T3450 timer
-       */
-      void * unused = NULL;
-      nas_stop_T3450(ue_id, &attach_proc->T3450, unused);
-      nas_start_T3450(ue_id, &attach_proc->T3450, attach_proc->emm_spec_proc.emm_proc.base_proc.time_out, (void*)ue_id);
+
+     OAILOG_INFO (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " EMM-PROC  -Sent Retx Attach Accept message\n", ue_id);
+
+     // todo: REMOVE AFTER LOCKING
+     emm_data_context_t * emm_context1               = emm_data_context_get(&_emm_data, ue_id);
+     if(emm_context1){
+       attach_proc = get_nas_specific_procedure_attach(emm_context1);
+       if(attach_proc){
+    	 /*
+    	  * Re-start T3450 timer
+    	  */
+    	 void * unused = NULL;
+    	 nas_stop_T3450(ue_id, &attach_proc->T3450, unused);
+    	 nas_start_T3450(ue_id, &attach_proc->T3450, attach_proc->emm_spec_proc.emm_proc.base_proc.time_out, (void*)ue_id);
+    	 OAILOG_INFO(LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " EMM-PROC  - SUCCESSFULLY RESTARTED T3450 AFTER SENDING ATTACH ACCEPT message\n", ue_id);
+       }
+     }
     } else {
       OAILOG_WARNING (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " EMM-PROC  - Send failed- Retx Attach Accept message\n", ue_id);
     }

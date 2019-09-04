@@ -746,7 +746,7 @@ static nw_rc_t nwGtpv2cCreateLocalTunnel (
     rc = nwGtpv2cCreateAndSendMsg (thiz, pReqTrxn->seqNum, pReqTrxn->localPort, &pReqTrxn->peer_ip, pReqTrxn->peerPort, (nw_gtpv2c_msg_t *) pUlpRsp->hMsg);
     /** Depending on the cause type, add it or not. */
     if(pUlpRsp->u_api_info.triggeredRspInfo.pt_trx) {
-    	OAILOG_DEBUG (LOG_GTPV2C, "Making transaction with seq '0x%x' (%p) passtrough due temprary reject. Not continuing with message. \n", pReqTrxn->seqNum, pReqTrxn);
+    	OAILOG_DEBUG (LOG_GTPV2C, "Making transaction with seq '0x%x' (%p) passtrough due temporary reject. Not continuing with message. \n", pReqTrxn->seqNum, pReqTrxn);
     	/** We wan't this message to be able to trigger something, so we remove the message, too. */
     	if(pReqTrxn->pMsg){
     	  OAILOG_WARNING(LOG_GTPV2C, "Transaction (%p) with seq '0x%x'contained a previous message. Discarding first. \n", pReqTrxn->seqNum, pReqTrxn);
@@ -755,6 +755,8 @@ static nw_rc_t nwGtpv2cCreateLocalTunnel (
     	}
     	/** Set the transaction as pt. */
     	pReqTrxn->pt_trx = true;
+    	OAILOG_DEBUG (LOG_GTPV2C, "Removing the message (%p) for passthrough trx with seqNo %d. \n", pUlpRsp->hMsg, pReqTrxn->seqNum);
+    	rc = nwGtpv2cMsgDelete ((nw_gtpv2c_stack_handle_t) thiz, pUlpRsp->hMsg);
     	OAILOG_FUNC_RETURN( LOG_GTPV2C, rc);
     } else {
     	/** Check if there was a message, remove it first. */

@@ -850,7 +850,7 @@ esm_recv_activate_dedicated_eps_bearer_context_accept (
    */
   nas_esm_proc_bearer_context_t * esm_bearer_procedure = _esm_proc_get_bearer_context_procedure(ue_id, pti, ebi);
   if(!esm_bearer_procedure){
-    OAILOG_ERROR(LOG_NAS_ESM, "ESM-PROC  - No ESM bearer procedure exists for successfully modified dedicated bearer (ebi=%d, pti=%d) for UE " MME_UE_S1AP_ID_FMT ". \n", ebi, pti, ue_id);
+    OAILOG_ERROR(LOG_NAS_ESM, "ESM-PROC  - No ESM bearer procedure exists for successfully activated dedicated bearer (ebi=%d, pti=%d) for UE " MME_UE_S1AP_ID_FMT ". \n", ebi, pti, ue_id);
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_REQUEST_REJECTED_UNSPECIFIED);
   }
 
@@ -906,7 +906,7 @@ esm_recv_activate_dedicated_eps_bearer_context_reject (
   if(!esm_proc_bearer_context){
     OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - No EPS bearer context modification procedure exists for pti=%d" "not accepted by the UE (ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d, cause=%d)\n",
         pti, ue_id, ebi, msg->esmcause);
-    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_PTI_VALUE);
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_REQUEST_REJECTED_UNSPECIFIED);
   }
 
   /*
@@ -963,7 +963,7 @@ esm_recv_modify_eps_bearer_context_accept (
    */
   nas_esm_proc_bearer_context_t * esm_bearer_procedure = _esm_proc_get_bearer_context_procedure(ue_id, pti, ebi);
   if(!esm_bearer_procedure){
-    OAILOG_ERROR(LOG_NAS_ESM, "ESM-PROC  - No ESM bearer procedure exists for accepted dedicated bearer (ebi=%d, pti=%d) for UE " MME_UE_S1AP_ID_FMT ". \n", ebi, pti, ue_id);
+    OAILOG_ERROR(LOG_NAS_ESM, "ESM-PROC  - No ESM bearer procedure exists for successfully modified dedicated bearer (ebi=%d, pti=%d) for UE " MME_UE_S1AP_ID_FMT ". \n", ebi, pti, ue_id);
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_REQUEST_REJECTED_UNSPECIFIED);
   }
   /*

@@ -99,7 +99,6 @@ typedef struct esm_activate_eps_bearer_context_s {
   ebi_t                            linked_ebi;
   bearer_context_to_be_created_t  *bc_tbc;
   bool                             retry;
-  bool 							   pending_pdn_proc;
 } esm_activate_eps_bearer_context_t;
 
 typedef struct esm_modify_eps_bearer_context_s {
@@ -109,7 +108,6 @@ typedef struct esm_modify_eps_bearer_context_s {
   ambr_t                           apn_ambr;
   pti_t                            pti;
   bool                             retry;
-  bool 							   pending_pdn_proc;
 } esm_modify_eps_bearer_context_t;
 
 typedef struct esm_deactivate_eps_bearer_context_s {
@@ -118,7 +116,6 @@ typedef struct esm_deactivate_eps_bearer_context_s {
   ebi_t                            ded_ebi;
   pti_t                            pti;
   bool                             retry;
-  bool 							   pending_pdn_proc;
 } esm_deactivate_eps_bearer_context_t;
 
 esm_timeout_ll_cb_arg_t      				eps_bearer_context_ll_cb_arg;

@@ -217,14 +217,21 @@ mme_app_send_s11_create_session_req (
   context_identifier_t                    context_identifier = 0;
   MessageDef                             *message_p = NULL;
   ue_context_t                           *ue_context = NULL;
+  ue_session_pool_t                      *ue_session_pool = NULL;
   itti_s11_create_session_request_t      *session_request_p = NULL;
   int                                     rc = RETURNok;
 
   // todo: handover flag in operation-identifier?!
-
+  // todo: further move parameters from ue_context to ue_sp
   ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, ue_id);
   if(!ue_context){
 	  OAILOG_ERROR (LOG_MME_APP, "No UE context for UE " MME_UE_S1AP_ID_FMT ". Cannot send CSR. \n", ue_id);
+	  OAILOG_FUNC_OUT(LOG_MME_APP);
+  }
+
+  ue_session_pool = mme_ue_session_pool_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_session_pools, ue_id);
+  if(!ue_session_pool){
+	  OAILOG_ERROR (LOG_MME_APP, "No UE session pool for UE " MME_UE_S1AP_ID_FMT ". Cannot send CSR. \n", ue_id);
 	  OAILOG_FUNC_OUT(LOG_MME_APP);
   }
   if(!pdn_context) {
@@ -257,7 +264,7 @@ mme_app_send_s11_create_session_req (
    * no tunnel had been previously setup, the distant teid is set to 0.
    * The remote teid will be provided in the response message.
    */
-  session_request_p->teid = pdn_context->s_gw_teid_s11_s4;
+  session_request_p->teid = ue_session_pool->privates.fields.saegw_teid_s11;
   /** IMSI. */
   memcpy((void*)&session_request_p->imsi, imsi_p, sizeof(imsi_t));
   // message content was set to 0

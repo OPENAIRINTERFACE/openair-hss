@@ -345,7 +345,7 @@ static esm_cause_t _eps_bearer_deactivate_t3495_handler (nas_esm_proc_t * esm_ba
 		mme_app_get_session_bearer_context_from_all(ue_session_pool, esm_proc_bearer_context->bearer_ebi, &ded_bc);
 		if(ded_bc && (ded_bc->bearer_state & BEARER_STATE_ENB_CREATED)){
 			if(ll_handler_arg){
-				memset(&ll_handler_arg->bearer_level_qos, &ded_bc->bearer_level_qos, sizeof(ded_bc->bearer_level_qos));
+				memcpy(&ll_handler_arg->bearer_level_qos, &ded_bc->bearer_level_qos, sizeof(ded_bc->bearer_level_qos));
 	        	ll_handler_arg->ue_id = esm_base_proc->ue_id;
 	        	ll_handler_arg->eps_bearer_id = ded_bc->ebi;
 				ll_handler_arg->ll_handler = lowerlayer_deactivate_bearer_req;

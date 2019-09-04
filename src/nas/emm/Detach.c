@@ -307,7 +307,6 @@ emm_proc_detach (
      OAILOG_INFO (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " EMM-PROC  - Sending EMMREG_DETACH_CNF. \n", emm_context->ue_id);
      emm_sap.primitive = EMMREG_DETACH_CNF;
      emm_sap.u.emm_reg.ue_id = emm_context->ue_id;
-     emm_sap.u.emm_reg.ctx = emm_context;
      rc = emm_sap_send (&emm_sap);
      // Notify MME APP to remove the remaining MME_APP and S1AP contexts..
      // todo: review unlock
@@ -429,7 +428,6 @@ emm_proc_detach_request (
         emm_sap_t                               emm_sap = {0};
         emm_sap.primitive = EMMREG_ATTACH_ABORT;
         emm_sap.u.emm_reg.ue_id = ue_id;
-        emm_sap.u.emm_reg.ctx = emm_context;
         emm_sap.u.emm_reg.u.attach.proc = specific_proc;
         rc = emm_sap_send (&emm_sap);
         //     unlock_ue_contexts(ue_context);
@@ -468,7 +466,6 @@ emm_proc_detach_request (
 
   emm_sap.primitive = EMMREG_DETACH_CNF;
   emm_sap.u.emm_reg.ue_id = ue_id;
-  emm_sap.u.emm_reg.ctx = emm_context;
   rc = emm_sap_send (&emm_sap);
 
   /** Signal detach Free all ESM procedure, don't care about the rest. */

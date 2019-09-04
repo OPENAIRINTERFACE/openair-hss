@@ -292,7 +292,9 @@ nas_esm_proc_pdn_connectivity_res (
       if(esm_sap.is_attach_tau)
         rc = _emm_wrapper_esm_accept(pdn_conn_res->ue_id, &rsp, esm_sap.active_ebrs);
       else {
-        rc = lowerlayer_activate_bearer_req(pdn_conn_res->ue_id, esm_sap.data.pdn_connectivity_res->linked_ebi, 0, 0, 0, 0, rsp);
+    	bearer_qos_t bearer_level_qos;
+    	memset(&bearer_level_qos, 0, sizeof(bearer_level_qos));
+        rc = lowerlayer_activate_bearer_req(pdn_conn_res->ue_id, esm_sap.data.pdn_connectivity_res->linked_ebi, &bearer_level_qos, rsp);
       }
     } else {
       /**
@@ -326,11 +328,11 @@ nas_esm_proc_pdn_disconnect_res(
   esm_sap_signal(&esm_sap, &rsp);
   if(rsp){
      if(esm_sap.esm_cause == ESM_CAUSE_SUCCESS) {
-       rc = lowerlayer_deactivate_bearer_req(pdn_disconn_res->ue_id, esm_sap.data.pdn_disconnect_res->default_ebi, rsp);
+       rc = lowerlayer_deactivate_bearer_req(pdn_disconn_res->ue_id, esm_sap.data.pdn_disconnect_res->default_ebi, NULL, rsp);
        bdestroy_wrapper(&rsp);
        int num_ded_ebi = 0;
        while(num_ded_ebi < esm_sap.data.pdn_disconnect_res->ded_ebis.num_ebi && rc == RETURNok){
-         rc = lowerlayer_deactivate_bearer_req(pdn_disconn_res->ue_id, esm_sap.data.pdn_disconnect_res->ded_ebis.ebis[num_ded_ebi], NULL);
+         rc = lowerlayer_deactivate_bearer_req(pdn_disconn_res->ue_id, esm_sap.data.pdn_disconnect_res->ded_ebis.ebis[num_ded_ebi], NULL, NULL);
          num_ded_ebi++;
        }
      } else {
@@ -370,18 +372,10 @@ int nas_esm_proc_activate_eps_bearer_ctx(esm_eps_activate_eps_bearer_ctx_req_t *
   for(int num_bc = 0; num_bc < bcs_tbc->num_bearer_context; num_bc++) {
     esm_sap.data.eps_bearer_context_activate.bc_tbc   = &bcs_tbc->bearer_context[num_bc];
     esm_sap_signal(&esm_sap, &rsp);
-    if(esm_sap.data.eps_bearer_context_activate.pending_pdn_proc){
-    	OAILOG_DEBUG (LOG_MME_APP, "For UE " MME_UE_S1AP_ID_FMT " an colliding ESM procedure exists. "
-    			"Aborting activate bearer request and waiting for ESM procedure to complete.\n", esm_sap.ue_id);
-		break;
-    }
     if(rsp){
       rc = lowerlayer_activate_bearer_req(esm_cn_activate->ue_id,
           esm_sap.data.eps_bearer_context_activate.bc_tbc->eps_bearer_id,
-          esm_sap.data.eps_bearer_context_activate.bc_tbc->bearer_level_qos.mbr.br_dl,
-          esm_sap.data.eps_bearer_context_activate.bc_tbc->bearer_level_qos.mbr.br_ul,
-          esm_sap.data.eps_bearer_context_activate.bc_tbc->bearer_level_qos.gbr.br_dl,
-          esm_sap.data.eps_bearer_context_activate.bc_tbc->bearer_level_qos.gbr.br_ul,
+          &esm_sap.data.eps_bearer_context_activate.bc_tbc->bearer_level_qos,
           rsp);
       bdestroy_wrapper(&rsp);
     }
@@ -414,19 +408,11 @@ int nas_esm_proc_modify_eps_bearer_ctx(esm_eps_modify_esm_bearer_ctxs_req_t * es
     esm_sap.data.eps_bearer_context_modify.bc_tbu       = &bcs_tbu->bearer_context[num_bc];
     /* Set the APN-AMBR for the first bearer context. */
     esm_sap_signal(&esm_sap, &rsp);
-    if(esm_sap.data.eps_bearer_context_modify.pending_pdn_proc){
-    	OAILOG_DEBUG (LOG_MME_APP, "For UE " MME_UE_S1AP_ID_FMT " an colliding ESM procedure exists. "
-    			"Aborting modify bearer request and waiting for ESM procedure to complete.\n", esm_sap.ue_id);
-    	break;
-    }
     if(esm_sap.data.eps_bearer_context_modify.bc_tbu->bearer_level_qos){
     	OAILOG_DEBUG (LOG_MME_APP, "Triggering bearer modification for changed qos (ebi=%d) for UE " MME_UE_S1AP_ID_FMT ".\n",
     			esm_sap.data.eps_bearer_context_modify.bc_tbu->eps_bearer_id, esm_sap.ue_id);
     	rc = lowerlayer_modify_bearer_req(esm_cn_modify->ue_id, esm_sap.data.eps_bearer_context_modify.bc_tbu->eps_bearer_id,
-    			esm_sap.data.eps_bearer_context_modify.bc_tbu->bearer_level_qos->mbr.br_dl,
-				esm_sap.data.eps_bearer_context_modify.bc_tbu->bearer_level_qos->mbr.br_ul,
-				esm_sap.data.eps_bearer_context_modify.bc_tbu->bearer_level_qos->gbr.br_dl,
-				esm_sap.data.eps_bearer_context_modify.bc_tbu->bearer_level_qos->gbr.br_ul,
+    			&esm_sap.data.eps_bearer_context_modify.bc_tbu->bearer_level_qos,
 				rsp);
     } else {
     	OAILOG_INFO(LOG_MME_APP, "Not triggering bearer modification since qos is not changed (ebi=%d) for UE " MME_UE_S1AP_ID_FMT ".\n",
@@ -462,12 +448,7 @@ int nas_esm_proc_deactivate_eps_bearer_ctx(esm_eps_deactivate_eps_bearer_ctx_req
     esm_sap.data.eps_bearer_context_deactivate.ded_ebi = esm_cn_deactivate->ebis.ebis[num_ebi];
     esm_sap.data.eps_bearer_context_deactivate.pti 	   = esm_cn_deactivate->pti;
     esm_sap_signal(&esm_sap, &rsp);
-    if(esm_sap.data.eps_bearer_context_deactivate.pending_pdn_proc){
-    	OAILOG_DEBUG (LOG_MME_APP, "For UE " MME_UE_S1AP_ID_FMT " an colliding ESM procedure exists. "
-    			"Aborting deactivate bearer request and waiting for ESM procedure to complete.\n", esm_sap.ue_id);
-    	break;
-    }
-    rc = lowerlayer_deactivate_bearer_req(esm_cn_deactivate->ue_id, esm_sap.data.eps_bearer_context_deactivate.ded_ebi,rsp);
+    rc = lowerlayer_deactivate_bearer_req(esm_cn_deactivate->ue_id, esm_sap.data.eps_bearer_context_deactivate.ded_ebi, NULL, rsp);
     if(rsp){
       bdestroy_wrapper(&rsp);
     }

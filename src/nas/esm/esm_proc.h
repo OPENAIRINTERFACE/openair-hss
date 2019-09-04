@@ -157,7 +157,6 @@ esm_proc_dedicated_eps_bearer_context (
   ebi_t              linked_ebi,
   const pdn_cid_t    pdn_cid,
   bearer_context_to_be_created_t *bc_tbc,
-  bool               * const pending_pdn_proc,
   ESM_msg           *esm_rsp_msg);
 
 esm_cause_t
@@ -187,7 +186,6 @@ esm_proc_modify_eps_bearer_context (
   const pdn_cid_t    pdn_cid,
   bearer_context_to_be_updated_t  * bc_tbu,
   ambr_t                          * apn_ambr,
-  bool               * const pending_pdn_proc,
   ESM_msg            *esm_rsp_msg);
 
 esm_cause_t

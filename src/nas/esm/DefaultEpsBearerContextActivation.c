@@ -352,7 +352,7 @@ _default_eps_bearer_activate_t3485_handler(nas_esm_proc_t * esm_base_proc, ESM_m
       if(bearer_context){
         /** Check if the default bearer has been created on the eNB side, if not set the ll-handler to something else. */
     	if(!(bearer_context->bearer_state & BEARER_STATE_ENB_CREATED)){
-    	  memset(&ll_handler_arg->bearer_level_qos, &bearer_context->bearer_level_qos, sizeof(bearer_context->bearer_level_qos));
+    	  memcpy(&ll_handler_arg->bearer_level_qos, &bearer_context->bearer_level_qos, sizeof(bearer_context->bearer_level_qos));
     	  ll_handler_arg->ue_id = esm_base_proc->ue_id;
     	  ll_handler_arg->eps_bearer_id = bearer_context->ebi;
     	  ll_handler_arg->ll_handler = lowerlayer_activate_bearer_req;

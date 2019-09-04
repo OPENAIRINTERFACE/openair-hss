@@ -522,7 +522,7 @@ int s1ap_generate_s1ap_e_rab_setup_req (itti_s1ap_e_rab_setup_req_t * const e_ra
           (gbr_qos_information->e_rab_guaranteed_bit_rate_downlink) ||
           (gbr_qos_information->e_rab_guaranteed_bit_rate_uplink)) {
 
-        OAILOG_NOTICE (LOG_S1AP, "Encoding of e_RABlevelQoSParameters.gbrQosInformation\n");
+        OAILOG_NOTICE (LOG_S1AP, "Encoding e_RABlevelQoSParameters.gbrQosInformation\n");
 
         //s1ap_E_RABToBeSetupItemBearerSUReq[i].e_RABlevelQoSParameters.gbrQosInformation = calloc(1, sizeof(struct S1ap_GBR_QosInformation));
         s1ap_E_RABToBeSetupItemBearerSUReq[i].e_RABlevelQoSParameters.gbrQosInformation = calloc(1, sizeof(struct S1ap_GBR_QosInformation));

@@ -80,6 +80,8 @@ s11_mme_release_access_bearers_request (
 
   if (HASH_TABLE_OK != hash_rc) {
     OAILOG_WARNING (LOG_S11, "Could not get GTPv2-C hTunnel for local teid %X\n", ulp_req.u_api_info.initialReqInfo.teidLocal);
+    rc = nwGtpv2cMsgDelete (*stack_p, (ulp_req.hMsg));
+    DevAssert (NW_OK == rc);
     return RETURNerror;
   }
 
@@ -128,6 +130,8 @@ s11_mme_downlink_data_notification_acknowledge(
 
   if (HASH_TABLE_OK != hash_rc) {
     OAILOG_WARNING (LOG_S11, "Could not get GTPv2-C hTunnel for local teid %X\n", ack_p->local_teid);
+    rc = nwGtpv2cMsgDelete (*stack_p, (ulp_ack.hMsg));
+    DevAssert (NW_OK == rc);
     return RETURNerror;
   }
 
@@ -313,6 +317,8 @@ s11_mme_modify_bearer_request (
 
   if (HASH_TABLE_OK != hash_rc) {
     OAILOG_WARNING (LOG_S11, "Could not get GTPv2-C hTunnel for local teid %X\n", ulp_req.u_api_info.initialReqInfo.teidLocal);
+    rc = nwGtpv2cMsgDelete (*stack_p, (ulp_req.hMsg));
+    DevAssert (NW_OK == rc);
     return RETURNerror;
   }
 
@@ -473,6 +479,8 @@ s11_mme_delete_bearer_command(
 
   if (HASH_TABLE_OK != hash_rc) {
     OAILOG_WARNING (LOG_S11, "Could not get GTPv2-C hTunnel for local teid %X\n", ulp_req.u_api_info.initialReqInfo.teidLocal);
+    rc = nwGtpv2cMsgDelete (*stack_p, (ulp_req.hMsg));
+    DevAssert (NW_OK == rc);
     return RETURNerror;
   }
   /*
@@ -519,6 +527,8 @@ s11_mme_bearer_resource_command(
 
   if (HASH_TABLE_OK != hash_rc) {
     OAILOG_WARNING (LOG_S11, "Could not get GTPv2-C hTunnel for local teid %X\n", ulp_req.u_api_info.initialReqInfo.teidLocal);
+    rc = nwGtpv2cMsgDelete (*stack_p, (ulp_req.hMsg));
+    DevAssert (NW_OK == rc);
     return RETURNerror;
   }
 
@@ -737,6 +747,8 @@ s11_mme_create_bearer_response (
 
   if (HASH_TABLE_OK != hash_rc) {
     OAILOG_WARNING (LOG_S11, "Could not get GTPv2-C hTunnel for local teid %X\n", response_p->local_teid);
+    rc = nwGtpv2cMsgDelete (*stack_p, (ulp_req.hMsg));
+    DevAssert (NW_OK == rc);
     return RETURNerror;
   }
 
@@ -872,6 +884,8 @@ s11_mme_update_bearer_response (
 
   if (HASH_TABLE_OK != hash_rc) {
     OAILOG_WARNING (LOG_S11, "Could not get GTPv2-C hTunnel for local teid %X\n", response_p->local_teid);
+    rc = nwGtpv2cMsgDelete (*stack_p, (ulp_req.hMsg));
+    DevAssert (NW_OK == rc);
     return RETURNerror;
   }
 
@@ -1012,6 +1026,8 @@ s11_mme_delete_bearer_response (
 
   if (HASH_TABLE_OK != hash_rc) {
     OAILOG_WARNING (LOG_S11, "Could not get GTPv2-C hTunnel for local teid %X\n", response_p->local_teid);
+    rc = nwGtpv2cMsgDelete (*stack_p, (ulp_req.hMsg));
+    DevAssert (NW_OK == rc);
     return RETURNerror;
   }
 

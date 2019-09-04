@@ -64,6 +64,8 @@
 #include "emm_cause.h"
 #include "emm_msgDef.h"
 #include "emm_sap.h"
+#include "assertions.h"
+
 extern mme_app_desc_t                          mme_app_desc;
 
 /****************************************************************************/
@@ -332,7 +334,8 @@ emm_recv_attach_request (
    */
   emm_data_context_t * duplicate_emm_context = NULL;
   rc = emm_proc_attach_request (ue_id, params, &duplicate_emm_context);
-  if(duplicate_emm_context && duplicate_emm_context->emm_cause != EMM_CAUSE_SUCCESS){
+  if(duplicate_emm_context){
+	DevAssert(duplicate_emm_context->emm_cause != EMM_CAUSE_SUCCESS);
     OAILOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - Found an invalid old duplicate UE context with ueId [%08x] - Implicitly detaching it. \n", duplicate_emm_context->ue_id);
     /** Clean up new UE context that was created to handle new attach request. */
     emm_sap_t                               emm_sap = {0};
@@ -736,7 +739,6 @@ emm_recv_tracking_area_update_request (
 
   /** Set the complete TAU Request. */
   ies->complete_tau_request = bstrcpy(nas_msg);
-
   ies->decode_status = *decode_status;
   /*
    * Execute the requested UE attach procedure
@@ -746,7 +748,8 @@ emm_recv_tracking_area_update_request (
       gea, (gea >= (MS_NETWORK_CAPABILITY_GEA1 >> 1)), /**< GPRS & GPRS present. */
       emm_cause, &duplicate_emm_context);
 
-  if(duplicate_emm_context && duplicate_emm_context->emm_cause != EMM_CAUSE_SUCCESS){
+  if(duplicate_emm_context){
+	DevAssert(duplicate_emm_context->emm_cause != EMM_CAUSE_SUCCESS);
     OAILOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - Found an invalid old duplicate UE context with ueId [%08x] - Implicitly detaching it. \n", duplicate_emm_context->ue_id);
     /** Clean up new UE context that was created to handle new attach request. */
     emm_sap_t                               emm_sap = {0};
@@ -761,8 +764,6 @@ emm_recv_tracking_area_update_request (
     emm_sap_send (&emm_sap);
     /** Send the SAP request. */
   }
-
-
 
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
