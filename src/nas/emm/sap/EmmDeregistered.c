@@ -105,6 +105,10 @@ int EmmDeregistered (emm_reg_t * const evt)
   int                                     rc 		= RETURNerror;
   emm_data_context_t                     *emm_ctx 	= emm_data_context_get(&_emm_data, evt->ue_id);
 
+  if(!emm_ctx){
+	  OAILOG_ERROR (LOG_NAS_EMM, "UE " MME_UE_S1AP_ID_FMT " has not emm context. \n", evt->ue_id);
+	  OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
+  }
   if (emm_fsm_get_state (emm_ctx) != EMM_DEREGISTERED){
     OAILOG_ERROR (LOG_NAS_EMM, "EMM-FSM state of UE " MME_UE_S1AP_ID_FMT " is not EMM_DEREGISTERED - instead (%d). \n", emm_ctx->ue_id, emm_fsm_get_state(emm_ctx));
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);

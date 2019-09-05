@@ -648,6 +648,51 @@ inline void emm_ctx_update_from_mm_eps_context(emm_data_context_t * const emm_ct
   OAILOG_FUNC_OUT (LOG_NAS_EMM);
 }
 
+/** Update the EMM context from the received MM Context during Handover/TAU procedure. */
+//   todo: _clear_emm_ctxt(emm_ctx_p->ue_id);
+inline void temp_sec_ctx_from_mm_eps_context(emm_security_context_t * const emm_sec_ctx_p, void* const _mm_eps_ctxt){
+  int                                     rc = RETURNerror;
+  int                                     mme_eea = NAS_SECURITY_ALGORITHMS_EEA0;
+  int                                     mme_eia = NAS_SECURITY_ALGORITHMS_EIA0;
+
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
+
+  DevAssert(emm_sec_ctx_p);
+  DevAssert(_mm_eps_ctxt);
+
+  /** Update the EMM context and the Security context from a received MM context. */
+  mm_context_eps_t *mm_eps_ctxt = (mm_context_eps_t*)_mm_eps_ctxt;
+
+  /** NAS counts. */
+  uint8_t                   k_asme_temp[32];
+
+  memcpy (k_asme_temp, mm_eps_ctxt->k_asme, AUTH_KASME_SIZE);
+  OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Received Vector %u from S10 Context Response from Source MME:\n", 0);
+  OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Received KASME .: " KASME_FORMAT " " KASME_FORMAT "\n",
+      KASME_DISPLAY_1 (k_asme_temp), KASME_DISPLAY_2 (mm_eps_ctxt->k_asme));
+  ksi_t eksi = 0;
+
+  /**
+   * Don't start the authentication procedure.
+   * Validate the rest of the parameters which were received with Authentication Response from UE in normal attach.
+   */
+  emm_sec_ctx_p->eksi = mm_eps_ctxt->ksi;
+  emm_sec_ctx_p->ul_count = mm_eps_ctxt->nas_ul_count;
+  emm_sec_ctx_p->ul_count.overflow = mm_eps_ctxt->nas_ul_count.overflow;
+  emm_sec_ctx_p->dl_count = mm_eps_ctxt->nas_dl_count;
+
+  /** Set the selected encryption and integrity algorithms from the S10 Context Request. */
+  emm_sec_ctx_p->selected_algorithms.encryption = mm_eps_ctxt->nas_cipher_alg;
+  emm_sec_ctx_p->selected_algorithms.integrity = mm_eps_ctxt->nas_int_alg;
+  emm_sec_ctx_p->sc_type = SECURITY_CTX_TYPE_FULL_NATIVE;
+  derive_key_nas (NAS_INT_ALG, emm_sec_ctx_p->selected_algorithms.integrity,  k_asme_temp, emm_sec_ctx_p->knas_int);
+  derive_key_nas (NAS_ENC_ALG, emm_sec_ctx_p->selected_algorithms.encryption, k_asme_temp, emm_sec_ctx_p->knas_enc);
+  emm_sec_ctx_p->ncc      = mm_eps_ctxt->ncc;
+  memcpy(emm_sec_ctx_p->nh_conj, mm_eps_ctxt->nh, 32);
+  /** All remaining capabilities should be set with the TAC/Attach Request. */
+  OAILOG_FUNC_OUT (LOG_NAS_EMM);
+}
+
 //------------------------------------------------------------------------------
 struct emm_data_context_s              *
 emm_data_context_get (

@@ -345,6 +345,7 @@ void emm_ctx_set_valid_drx_parameter(emm_data_context_t * const ctxt, drx_parame
 
 /** Update the EMM context from the received MM Context during Handover/TAU procedure. */
 void emm_ctx_update_from_mm_eps_context(emm_data_context_t * const ctxt, void * const _mm_eps_ctxt);
+void temp_sec_ctx_from_mm_eps_context(emm_security_context_t * const emm_sec_ctx_p, void* const _mm_eps_ctxt);
 
 struct emm_data_context_s * emm_data_context_create(const mme_ue_s1ap_id_t mme_ue_s1ap_id);
 

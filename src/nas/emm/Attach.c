@@ -1824,7 +1824,7 @@ static int _emm_attach_accept_retx (emm_data_context_t * emm_context)
     /*
      * Setup EPS NAS security data
      */
-    emm_as_set_security_data (&emm_sap.u.emm_as.u.data.sctx, &emm_context->_security, false, true);
+    emm_as_set_security_data (&emm_sap.u.emm_as.u.data.sctx_data, &emm_context->_security, false, true);
     emm_sap.u.emm_as.u.data.encryption = emm_context->_security.selected_algorithms.encryption;
     emm_sap.u.emm_as.u.data.integrity = emm_context->_security.selected_algorithms.integrity;
     /*

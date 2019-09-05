@@ -59,6 +59,7 @@
 #include "3gpp_29.274.h"
 #include "mme_app_ue_context.h"
 #include "mme_app_session_context.h"
+#include "mme_app_procedures.h"
 
 #include "emm_as.h"
 #include "LowerLayer.h"
@@ -514,7 +515,7 @@ static int _emm_as_data_ind (emm_as_data_t * msg, int *emm_cause)
 
       if (plain_msg) {
         nas_message_security_header_t           header = {0};
-        emm_security_context_t                 *security = NULL;        /* Current EPS NAS security context     */
+        emm_security_context_t                  security_temp = {0}, *security = NULL;        /* Current EPS NAS security context     */
         nas_message_decode_status_t             decode_status = {0};
 
         /*
@@ -526,6 +527,16 @@ static int _emm_as_data_ind (emm_as_data_t * msg, int *emm_cause)
           if (IS_EMM_CTXT_PRESENT_SECURITY(emm_ctx)) {
             security = &emm_ctx->_security;
           }
+        } else {
+        	/** Might TAU after HO. */
+        	ue_context_t *ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, msg->ue_id);
+        	if(ue_context){
+        		mme_app_s10_proc_mme_handover_t * s10_proc_ho = mme_app_get_s10_procedure_mme_handover(ue_context);
+        		if(s10_proc_ho){
+        			security = &security_temp;
+        			temp_sec_ctx_from_mm_eps_context(security, s10_proc_ho->nas_s10_context.mm_eps_ctx);
+        		}
+        	}
         }
 
         int  bytes = nas_message_decrypt (msg->nas_msg->data,
@@ -1217,7 +1228,7 @@ static int _emm_as_data_req (const emm_as_data_t * msg, dl_info_transfer_req_t *
   /*
    * Setup the NAS security header
    */
-  EMM_msg                                *emm_msg = _emm_as_set_header (&nas_msg, &msg->sctx);
+  EMM_msg                                *emm_msg = _emm_as_set_header (&nas_msg, &msg->sctx_data);
 
   /*
    * Setup the NAS information message

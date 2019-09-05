@@ -277,7 +277,7 @@ emm_proc_detach (
     /*
      * Setup EPS NAS security data
      */
-    emm_as_set_security_data (&emm_as->sctx, &emm_context->_security, false, true);
+    emm_as_set_security_data (&emm_as->sctx_data, &emm_context->_security, false, true);
     /*
      * Notify EMM-AS SAP that Detach Accept message has to
      * be sent to the network
@@ -399,7 +399,7 @@ emm_proc_detach_request (
      * Setup EPS NAS security data
      */
     if(emm_context){
-      emm_as_set_security_data (&emm_as->sctx, &emm_context->_security, false, true);
+      emm_as_set_security_data (&emm_as->sctx_data, &emm_context->_security, false, true);
     }else{
       OAILOG_INFO (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " EMM-PROC  - Not setting security context for detach accept. \n", ue_id);
     }

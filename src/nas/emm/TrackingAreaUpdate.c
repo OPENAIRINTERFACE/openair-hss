@@ -1186,7 +1186,7 @@ static int _emm_send_tracking_area_update_accept(emm_data_context_t * const emm_
   /*
    * Setup EPS NAS security data
    */
-  emm_as_set_security_data (&emm_sap.u.emm_as.u.data.sctx, &emm_context->_security, false, true);
+  emm_as_set_security_data (&emm_sap.u.emm_as.u.data.sctx_data, &emm_context->_security, false, true);
   OAILOG_TRACE (LOG_NAS_EMM, "EMM-PROC  - encryption = 0x%X \n ", emm_sap.u.emm_as.u.data.encryption);
   OAILOG_TRACE (LOG_NAS_EMM, "EMM-PROC  - integrity  = 0x%X \n ", emm_sap.u.emm_as.u.data.integrity);
   emm_sap.u.emm_as.u.data.encryption = emm_context->_security.selected_algorithms.encryption;
@@ -1491,7 +1491,7 @@ static int _emm_tracking_area_update_accept_retx (emm_data_context_t * emm_conte
     /*
      * Setup EPS NAS security data
      */
-    emm_as_set_security_data (&emm_sap.u.emm_as.u.data.sctx, &emm_context->_security, false, true);
+    emm_as_set_security_data (&emm_sap.u.emm_as.u.data.sctx_data, &emm_context->_security, false, true);
     OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - encryption = 0x%X ", emm_sap.u.emm_as.u.data.encryption);
     OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - integrity  = 0x%X ", emm_sap.u.emm_as.u.data.integrity);
     emm_sap.u.emm_as.u.data.encryption = emm_context->_security.selected_algorithms.encryption;
