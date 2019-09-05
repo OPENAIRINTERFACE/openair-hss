@@ -392,8 +392,9 @@ mme_app_release_bearers(const mme_ue_s1ap_id_t mme_ue_s1ap_id, e_rab_list_t * e_
       bearer_context = NULL;
       mme_app_get_session_bearer_context_from_all(ue_session_pool, e_rab_list->item[num_ebi].e_rab_id, &bearer_context);
       if(bearer_context){
-        if( (bearer_context->bearer_state & BEARER_STATE_ACTIVE)
-            && (bearer_context->bearer_state & BEARER_STATE_ENB_CREATED)) {
+    	  //        if( (bearer_context->bearer_state & BEARER_STATE_ACTIVE)
+    	  //            && (bearer_context->bearer_state & BEARER_STATE_ENB_CREATED)) {
+    	  if(bearer_context->esm_ebr_context.status == ESM_EBR_ACTIVE) { /**< It can be service req x2. */
           ebi_list->ebis[ebi_list->num_ebi] = bearer_context->ebi;
           bearer_context->bearer_state &= (~BEARER_STATE_ACTIVE);
           bearer_context->bearer_state &= (~BEARER_STATE_ENB_CREATED);
