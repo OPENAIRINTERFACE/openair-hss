@@ -2752,7 +2752,7 @@ void mme_app_handle_e_rab_release_ind (const itti_s1ap_e_rab_release_ind_t   * c
   ebi_list_t                          ebi_list;
   MessageDef                          *message_p 		= NULL;
 
-  ue_session_pool = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, e_rab_release_ind->mme_ue_s1ap_id);
+  ue_session_pool = mme_ue_session_pool_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_session_pools, e_rab_release_ind->mme_ue_s1ap_id);
   if (ue_session_pool == NULL) {
     OAILOG_DEBUG (LOG_MME_APP, "We didn't find this mme_ue_s1ap_id in list of UE: " MME_UE_S1AP_ID_FMT "\n", e_rab_release_ind->mme_ue_s1ap_id);
     OAILOG_FUNC_OUT (LOG_MME_APP);

@@ -511,7 +511,7 @@ static int _emm_as_data_ind (emm_as_data_t * msg, int *emm_cause)
       /*
        * Process the received NAS message
        */
-      bstring                                   plain_msg = bstrcpy(msg->nas_msg);
+    	bstring                                 plain_msg = bstrcpy(msg->nas_msg);
 
       if (plain_msg) {
         nas_message_security_header_t           header = {0};
@@ -584,7 +584,11 @@ static int _emm_as_data_ind (emm_as_data_t * msg, int *emm_cause)
                 bdestroy_wrapper(&plain_msg);
           }
 
+        } else {
+            if(plain_msg)
+              bdestroy_wrapper(&plain_msg);
         }
+
       }
     } else {
       /*
