@@ -59,6 +59,7 @@ int
 nas_itti_erab_setup_req (
     const mme_ue_s1ap_id_t ue_id,
     const ebi_t            ebi,
+	const bool 			   retry,
     const bitrate_t        mbr_dl,
     const bitrate_t        mbr_ul,
     const bitrate_t        gbr_dl,
@@ -69,6 +70,7 @@ int
 nas_itti_erab_modify_req (
     const mme_ue_s1ap_id_t ue_id,
     const ebi_t            ebi,
+	const bool 			   retry,
     const bitrate_t        mbr_dl,
     const bitrate_t        mbr_ul,
     const bitrate_t        gbr_dl,
@@ -78,6 +80,7 @@ nas_itti_erab_modify_req (
 int
 nas_itti_erab_release_req (const mme_ue_s1ap_id_t ue_id,
     const ebi_t ebi,
+	const bool 			   retry,
     bstring                nas_msg);
 
 void nas_itti_pdn_config_req(
@@ -137,7 +140,7 @@ void nas_itti_detach_req(
 void nas_itti_activate_eps_bearer_ctx_cnf(
     const mme_ue_s1ap_id_t ue_idP,
     const ebi_t            ebi,
-    const teid_t           saegw_s1u_teid);
+	const teid_t           saegw_s1u_teid);
 
 void nas_itti_activate_eps_bearer_ctx_rej(
     const mme_ue_s1ap_id_t ue_idP,

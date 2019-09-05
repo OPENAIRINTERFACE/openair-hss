@@ -1831,7 +1831,16 @@ s1ap_handle_paging( const itti_s1ap_paging_t * const s1ap_paging_pP){
 						  eNB_ref->tai_list.partial_tai_list[0].u.tai_one_plmn_non_consecutive_tacs.plmn.mnc_digit1, eNB_ref->tai_list.partial_tai_list[0].u.tai_one_plmn_non_consecutive_tacs.plmn.mnc_digit2, eNB_ref->tai_list.partial_tai_list[0].u.tai_one_plmn_non_consecutive_tacs.plmn.mnc_digit3)
 		  )
 		  ;
-		  OCTET_STRING_fromBuf(&tai_item->taiItem.tAI.pLMNidentity, plmn, 3);
+
+		  //S1ap_PLMNidentity_t                    *plmn1 = NULL;
+		  ///*
+		  // * FIXME: free object from list once encoded
+		  // */
+		  //plmn1 = calloc (1, sizeof (*plmn));
+	      MCC_MNC_TO_PLMNID (mme_config.served_tai.plmn_mcc[i], mme_config.served_tai.plmn_mnc[i], mme_config.served_tai.plmn_mnc_len[i], &tai_item->taiItem.tAI.pLMNidentity);
+	      //ASN_SEQUENCE_ADD (&servedGUMMEI->servedPLMNs.list, plmn);
+		  //OCTET_STRING_fromBuf(&tai_item->taiItem.tAI.pLMNidentity, plmn, 3);
+
 		  INT16_TO_OCTET_STRING(eNB_ref->tai_list.partial_tai_list[0].u.tai_one_plmn_non_consecutive_tacs.tac[0], &tai_item->taiItem.tAI.tAC);
 		  /** Set the TAI. */
 		  ASN_SEQUENCE_ADD (&paging_p->taiList, tai_item);

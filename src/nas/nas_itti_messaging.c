@@ -126,6 +126,7 @@ nas_itti_dl_data_req (
 int
 nas_itti_erab_setup_req (const mme_ue_s1ap_id_t ue_id,
     const ebi_t ebi,
+	const bool retry,
     const bitrate_t        mbr_dl,
     const bitrate_t        mbr_ul,
     const bitrate_t        gbr_dl,
@@ -135,6 +136,7 @@ nas_itti_erab_setup_req (const mme_ue_s1ap_id_t ue_id,
   MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_ESM, NAS_ERAB_SETUP_REQ);
   NAS_ERAB_SETUP_REQ (message_p).ue_id   = ue_id;
   NAS_ERAB_SETUP_REQ (message_p).ebi     = ebi;
+  // todo: retry
   NAS_ERAB_SETUP_REQ (message_p).mbr_dl  = mbr_dl;
   NAS_ERAB_SETUP_REQ (message_p).mbr_ul  = mbr_ul;
   NAS_ERAB_SETUP_REQ (message_p).gbr_dl  = gbr_dl;
@@ -150,7 +152,8 @@ nas_itti_erab_setup_req (const mme_ue_s1ap_id_t ue_id,
 int
 nas_itti_erab_modify_req (const mme_ue_s1ap_id_t ue_id,
     const ebi_t ebi,
-    const bitrate_t        mbr_dl,
+	const bool retry,
+	const bitrate_t        mbr_dl,
     const bitrate_t        mbr_ul,
     const bitrate_t        gbr_dl,
     const bitrate_t        gbr_ul,
@@ -174,7 +177,8 @@ nas_itti_erab_modify_req (const mme_ue_s1ap_id_t ue_id,
 int
 nas_itti_erab_release_req (const mme_ue_s1ap_id_t ue_id,
     const ebi_t ebi,
-    bstring                nas_msg)
+	const bool 			   retry,
+	bstring                nas_msg)
 {
   MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_ESM, NAS_ERAB_RELEASE_REQ);
   NAS_ERAB_RELEASE_REQ (message_p).ue_id   = ue_id;
@@ -190,7 +194,7 @@ nas_itti_erab_release_req (const mme_ue_s1ap_id_t ue_id,
 void nas_itti_activate_eps_bearer_ctx_cnf(
     const mme_ue_s1ap_id_t ue_idP,
     const ebi_t            ebi,
-    const teid_t           saegw_s1u_teid)
+	const teid_t           saegw_s1u_teid)
 {
   OAILOG_FUNC_IN(LOG_NAS);
   MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_ESM, NAS_ACTIVATE_EPS_BEARER_CTX_CNF);

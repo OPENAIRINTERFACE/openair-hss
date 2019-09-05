@@ -1101,6 +1101,7 @@ static int _emm_as_send (emm_as_t * msg)
     case AS_ACTIVATE_BEARER_CONTEXT_REQ:{
       nas_itti_erab_setup_req (as_msg.msg.activate_bearer_context_req.ue_id,
           as_msg.msg.activate_bearer_context_req.ebi,
+		  msg->u.activate_bearer_context_req.retry,
           as_msg.msg.activate_bearer_context_req.mbr_dl,
           as_msg.msg.activate_bearer_context_req.mbr_ul,
           as_msg.msg.activate_bearer_context_req.gbr_dl,
@@ -1113,7 +1114,8 @@ static int _emm_as_send (emm_as_t * msg)
     case AS_MODIFY_BEARER_CONTEXT_REQ:{
         nas_itti_erab_modify_req (as_msg.msg.modify_bearer_context_req.ue_id,
             as_msg.msg.modify_bearer_context_req.ebi,
-            as_msg.msg.modify_bearer_context_req.mbr_dl,
+			msg->u.modify_bearer_context_req.retry,
+			as_msg.msg.modify_bearer_context_req.mbr_dl,
             as_msg.msg.modify_bearer_context_req.mbr_ul,
             as_msg.msg.modify_bearer_context_req.gbr_dl,
             as_msg.msg.modify_bearer_context_req.gbr_ul,
@@ -1125,7 +1127,8 @@ static int _emm_as_send (emm_as_t * msg)
     case AS_RAB_RELEASE_REQ:{
       nas_itti_erab_release_req(as_msg.msg.rab_release_req.ue_id,
           as_msg.msg.rab_release_req.rab_id,
-          as_msg.msg.rab_release_req.nas_msg);
+		  msg->u.modify_bearer_context_req.retry,
+		  as_msg.msg.rab_release_req.nas_msg);
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
     }
     break;

@@ -72,16 +72,19 @@ int lowerlayer_release(mme_ue_s1ap_id_t ue_id, int cause);
 int lowerlayer_data_req(mme_ue_s1ap_id_t ueid, bstring data);
 
 int lowerlayer_activate_bearer_req(const mme_ue_s1ap_id_t ue_id, const ebi_t ebi,
+	const bool			   retry,
 	const bearer_qos_t    *bearer_qos,
     bstring data);
 
 int lowerlayer_modify_bearer_req(const mme_ue_s1ap_id_t ue_id, const ebi_t ebi,
+	const bool			   retry,
 	const bearer_qos_t    *bearer_qos,
     bstring data);
 
 int lowerlayer_deactivate_bearer_req (
     const mme_ue_s1ap_id_t ue_id,
     const ebi_t            ebi,
+	const bool			   retry,
 	const bearer_qos_t    *bearer_qos,
     bstring data);
 

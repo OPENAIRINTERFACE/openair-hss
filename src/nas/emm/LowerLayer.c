@@ -356,6 +356,7 @@ int lowerlayer_data_req (mme_ue_s1ap_id_t ue_id, bstring data)
 int lowerlayer_activate_bearer_req (
     const mme_ue_s1ap_id_t ue_id,
     const ebi_t            ebi,
+	const bool			   retry,
     const bearer_qos_t    *bearer_qos,
     bstring data)
 {
@@ -401,6 +402,7 @@ int lowerlayer_activate_bearer_req (
   sctx = &emm_data_context->_security;
   emm_sap.primitive = EMMAS_ERAB_SETUP_REQ;
   emm_sap.u.emm_as.u.activate_bearer_context_req.ebi    = ebi;
+  emm_sap.u.emm_as.u.activate_bearer_context_req.retry  = retry;
   emm_sap.u.emm_as.u.activate_bearer_context_req.ue_id  = ue_id;
   emm_sap.u.emm_as.u.activate_bearer_context_req.mbr_dl = bearer_qos->mbr.br_dl;
   emm_sap.u.emm_as.u.activate_bearer_context_req.mbr_ul = bearer_qos->mbr.br_ul;
@@ -423,6 +425,7 @@ int lowerlayer_activate_bearer_req (
 int lowerlayer_modify_bearer_req (
     const mme_ue_s1ap_id_t ue_id,
     const ebi_t            ebi,
+	const bool			   retry,
     const bearer_qos_t    *bearer_qos,
     bstring data)
 {
@@ -466,6 +469,7 @@ int lowerlayer_modify_bearer_req (
   if(data){
 	  emm_sap.primitive = EMMAS_ERAB_MODIFY_REQ;
 	  emm_sap.u.emm_as.u.modify_bearer_context_req.ebi    = ebi;
+	  emm_sap.u.emm_as.u.modify_bearer_context_req.retry  = retry;
 	  emm_sap.u.emm_as.u.modify_bearer_context_req.ue_id  = ue_id;
 	  emm_sap.u.emm_as.u.modify_bearer_context_req.mbr_dl = bearer_qos->mbr.br_dl;
 	  emm_sap.u.emm_as.u.modify_bearer_context_req.mbr_ul = bearer_qos->mbr.br_ul;
@@ -492,6 +496,7 @@ int lowerlayer_modify_bearer_req (
 int lowerlayer_deactivate_bearer_req (
     const mme_ue_s1ap_id_t ue_id,
     const ebi_t            ebi,
+	const bool			   retry,
     const bearer_qos_t    *bearer_qos,
     bstring data)
 {
@@ -534,6 +539,7 @@ int lowerlayer_deactivate_bearer_req (
   if(data){
 	emm_sap.primitive = EMMAS_ERAB_RELEASE_REQ;
 	emm_sap.u.emm_as.u.deactivate_bearer_context_req.ebi    = ebi;
+	emm_sap.u.emm_as.u.deactivate_bearer_context_req.retry  = retry;
 	emm_sap.u.emm_as.u.deactivate_bearer_context_req.ue_id  = ue_id;
 	sctx = &emm_data_context->_security;
 	emm_sap.u.emm_as.u.deactivate_bearer_context_req.nas_msg = data;
