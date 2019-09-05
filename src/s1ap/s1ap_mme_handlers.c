@@ -659,13 +659,17 @@ s1ap_mme_handle_initial_context_setup_response (
   /** Add here multiple bearers. */
   initial_context_setup_rsp->bcs_to_be_modified.num_bearer_context = initialContextSetupResponseIEs_p->e_RABSetupListCtxtSURes.s1ap_E_RABSetupItemCtxtSURes.count;
   for (int item = 0; item < initialContextSetupResponseIEs_p->e_RABSetupListCtxtSURes.s1ap_E_RABSetupItemCtxtSURes.count; item++) {
-    /*
+
+	/*
      * Bad, very bad cast...
      */
     eRABSetupItemCtxtSURes_p = (S1ap_E_RABSetupItemCtxtSURes_t *)
         initialContextSetupResponseIEs_p->e_RABSetupListCtxtSURes.s1ap_E_RABSetupItemCtxtSURes.array[item];
 
     initial_context_setup_rsp->bcs_to_be_modified.bearer_context[item].eps_bearer_id = eRABSetupItemCtxtSURes_p->e_RAB_ID;
+	  if(eRABSetupItemCtxtSURes_p->e_RAB_ID == 7){
+		  continue;
+	  }
     initial_context_setup_rsp->bcs_to_be_modified.bearer_context[item].s1_eNB_fteid.teid = htonl (*((uint32_t *) eRABSetupItemCtxtSURes_p->gTP_TEID.buf));
     bstring transport_address = blk2bstr(eRABSetupItemCtxtSURes_p->transportLayerAddress.buf, eRABSetupItemCtxtSURes_p->transportLayerAddress.size);
     /** Set the IP address from the FTEID. */
@@ -688,6 +692,12 @@ s1ap_mme_handle_initial_context_setup_response (
     initial_context_setup_rsp->e_rab_release_list.item[initial_context_setup_rsp->e_rab_release_list.no_of_items].cause     = erab_item->cause;
     initial_context_setup_rsp->e_rab_release_list.no_of_items++;
   }
+//
+//  /** Trigger failed bearer  (ebi==7). todo: comment out */
+//  initial_context_setup_rsp->e_rab_release_list.item[0].e_rab_id  = 7;
+//  initial_context_setup_rsp->e_rab_release_list.item[0].cause.present = S1ap_Cause_PR_radioNetwork;
+//  initial_context_setup_rsp->e_rab_release_list.item[0].cause.choice.radioNetwork = S1ap_CauseRadioNetwork_radio_resources_not_available;
+//  initial_context_setup_rsp->e_rab_release_list.no_of_items++;
 
 
   MSC_LOG_TX_MESSAGE (MSC_S1AP_MME,
