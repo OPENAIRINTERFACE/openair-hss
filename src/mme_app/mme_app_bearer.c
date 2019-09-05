@@ -3856,10 +3856,10 @@ mme_app_handle_forward_relocation_request(
  target_tai.plmn.mnc_digit3 = forward_relocation_request_pP->target_identification.mnc[2];
  target_tai.tac = forward_relocation_request_pP->target_identification.target_id.macro_enb_id.tac;
 
- if(1){
-	 mme_app_send_s10_forward_relocation_response_err(forward_relocation_request_pP->s10_source_mme_teid.teid, &forward_relocation_request_pP->peer_ip, forward_relocation_request_pP->trxn, REQUEST_REJECTED);
-	 OAILOG_FUNC_OUT (LOG_MME_APP);
- }
+// if(1){
+//	 mme_app_send_s10_forward_relocation_response_err(forward_relocation_request_pP->s10_source_mme_teid.teid, &forward_relocation_request_pP->peer_ip, forward_relocation_request_pP->trxn, REQUEST_REJECTED);
+//	 OAILOG_FUNC_OUT (LOG_MME_APP);
+// }
 
  /** Get the eNB Id. */
  target_type_t target_type = forward_relocation_request_pP->target_identification.target_type;

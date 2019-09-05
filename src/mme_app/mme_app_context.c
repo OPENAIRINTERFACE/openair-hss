@@ -2027,10 +2027,10 @@ mme_app_handle_s10_context_request(const itti_s10_context_request_t * const s10_
     OAILOG_FUNC_OUT (LOG_MME_APP);
  }
 
- if(1){
-	 _mme_app_send_s10_context_response_err(s10_context_request_pP->s10_target_mme_teid.teid, &s10_context_request_pP->peer_ip, s10_context_request_pP->trxn, CONTEXT_NOT_FOUND);
-	 OAILOG_FUNC_OUT (LOG_MME_APP);
- }
+ // if(1){
+//	 _mme_app_send_s10_context_response_err(s10_context_request_pP->s10_target_mme_teid.teid, &s10_context_request_pP->peer_ip, s10_context_request_pP->trxn, CONTEXT_NOT_FOUND);
+//	 OAILOG_FUNC_OUT (LOG_MME_APP);
+// }
 
  /** Check that a valid security context exists for the MME_UE_CONTEXT. */
  if (!IS_EMM_CTXT_PRESENT_SECURITY(ue_nas_ctx)) {
