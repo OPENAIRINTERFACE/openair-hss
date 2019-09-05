@@ -58,6 +58,8 @@
 #include "3gpp_24.008.h"
 #include "3gpp_29.274.h"
 #include "mme_app_ue_context.h"
+#include "mme_app_session_context.h"
+#include "mme_app_procedures.h"
 
 #include "emm_as.h"
 #include "LowerLayer.h"
@@ -509,11 +511,11 @@ static int _emm_as_data_ind (emm_as_data_t * msg, int *emm_cause)
       /*
        * Process the received NAS message
        */
-      bstring                                   plain_msg = bstrcpy(msg->nas_msg);
+    	bstring                                 plain_msg = bstrcpy(msg->nas_msg);
 
       if (plain_msg) {
         nas_message_security_header_t           header = {0};
-        emm_security_context_t                 *security = NULL;        /* Current EPS NAS security context     */
+        emm_security_context_t                  security_temp = {0}, *security = NULL;        /* Current EPS NAS security context     */
         nas_message_decode_status_t             decode_status = {0};
 
         /*
@@ -525,6 +527,16 @@ static int _emm_as_data_ind (emm_as_data_t * msg, int *emm_cause)
           if (IS_EMM_CTXT_PRESENT_SECURITY(emm_ctx)) {
             security = &emm_ctx->_security;
           }
+        } else {
+        	/** Might TAU after HO. */
+        	ue_context_t *ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, msg->ue_id);
+        	if(ue_context){
+        		mme_app_s10_proc_mme_handover_t * s10_proc_ho = mme_app_get_s10_procedure_mme_handover(ue_context);
+        		if(s10_proc_ho){
+        			security = &security_temp;
+        			temp_sec_ctx_from_mm_eps_context(security, s10_proc_ho->nas_s10_context.mm_eps_ctx);
+        		}
+        	}
         }
 
         int  bytes = nas_message_decrypt (msg->nas_msg->data,
@@ -561,10 +573,10 @@ static int _emm_as_data_ind (emm_as_data_t * msg, int *emm_cause)
            */
           if(emm_ctx){
             // shrink plain_msg
-                      btrunc(plain_msg, bytes);
-                      nas_itti_esm_data_ind(emm_ctx->ue_id, plain_msg,
-                          &emm_ctx->_imsi, &emm_ctx->originating_tai);
-                      /** Not removing the truncated message. */
+        	btrunc(plain_msg, bytes);
+        	nas_itti_esm_data_ind(emm_ctx->ue_id, plain_msg,
+        			&emm_ctx->_imsi, &emm_ctx->originating_tai);
+        	/** Not removing the truncated message. */
           } else {
             OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - No UE context exists for ue_id " MME_UE_S1AP_ID_FMT". "
                 "Cannot forward NAS_ESM message. \n", msg->ue_id);
@@ -572,7 +584,11 @@ static int _emm_as_data_ind (emm_as_data_t * msg, int *emm_cause)
                 bdestroy_wrapper(&plain_msg);
           }
 
+        } else {
+            if(plain_msg)
+              bdestroy_wrapper(&plain_msg);
         }
+
       }
     } else {
       /*
@@ -1000,7 +1016,11 @@ static int _emm_as_send (emm_as_t * msg)
         msg->u.base.emm_cause != EMM_CAUSE_UE_IDENTITY_CANT_BE_DERIVED_BY_NW
             && msg->u.base.emm_cause != EMM_CAUSE_ESM_FAILURE
 			&& msg->u.base.emm_cause != EMM_CAUSE_NETWORK_FAILURE
-			&& msg->u.base.emm_cause != EMM_CAUSE_IMSI_UNKNOWN_IN_HSS) {
+			&& msg->u.base.emm_cause != EMM_CAUSE_IMSI_UNKNOWN_IN_HSS
+			&& msg->u.base.emm_cause != EMM_CAUSE_ILLEGAL_UE
+			&& msg->u.base.emm_cause != EMM_CAUSE_IMPLICITLY_DETACHED
+			&& msg->u.base.emm_cause != EMM_CAUSE_IMEI_NOT_ACCEPTED
+			&& msg->u.base.emm_cause != EMM_CAUSE_NOT_AUTHORIZED_IN_PLMN) {
       /*
        * Ignore received message that is too short to contain a complete
        * * * * message type information element
@@ -1096,6 +1116,8 @@ static int _emm_as_send (emm_as_t * msg)
     case AS_ACTIVATE_BEARER_CONTEXT_REQ:{
       nas_itti_erab_setup_req (as_msg.msg.activate_bearer_context_req.ue_id,
           as_msg.msg.activate_bearer_context_req.ebi,
+		  msg->u.activate_bearer_context_req.retry,
+		  msg->u.activate_bearer_context_req.retx_count,
           as_msg.msg.activate_bearer_context_req.mbr_dl,
           as_msg.msg.activate_bearer_context_req.mbr_ul,
           as_msg.msg.activate_bearer_context_req.gbr_dl,
@@ -1108,7 +1130,9 @@ static int _emm_as_send (emm_as_t * msg)
     case AS_MODIFY_BEARER_CONTEXT_REQ:{
         nas_itti_erab_modify_req (as_msg.msg.modify_bearer_context_req.ue_id,
             as_msg.msg.modify_bearer_context_req.ebi,
-            as_msg.msg.modify_bearer_context_req.mbr_dl,
+			msg->u.modify_bearer_context_req.retry,
+			msg->u.modify_bearer_context_req.retx_count,
+			as_msg.msg.modify_bearer_context_req.mbr_dl,
             as_msg.msg.modify_bearer_context_req.mbr_ul,
             as_msg.msg.modify_bearer_context_req.gbr_dl,
             as_msg.msg.modify_bearer_context_req.gbr_ul,
@@ -1120,7 +1144,9 @@ static int _emm_as_send (emm_as_t * msg)
     case AS_RAB_RELEASE_REQ:{
       nas_itti_erab_release_req(as_msg.msg.rab_release_req.ue_id,
           as_msg.msg.rab_release_req.rab_id,
-          as_msg.msg.rab_release_req.nas_msg);
+		  msg->u.deactivate_bearer_context_req.retry,
+		  msg->u.deactivate_bearer_context_req.retx_count,
+		  as_msg.msg.rab_release_req.nas_msg);
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
     }
     break;
@@ -1152,7 +1178,7 @@ static int _emm_as_send (emm_as_t * msg)
       break;
 
     case AS_NAS_RELEASE_REQ:
-      nas_itti_detach_req(as_msg.msg.nas_release_req.ue_id); //, as_msg.msg.nas_release_req.cause);
+      nas_itti_esm_detach_ind(as_msg.msg.nas_release_req.ue_id, false); //, as_msg.msg.nas_release_req.cause);
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
       break;
 
@@ -1206,7 +1232,7 @@ static int _emm_as_data_req (const emm_as_data_t * msg, dl_info_transfer_req_t *
   /*
    * Setup the NAS security header
    */
-  EMM_msg                                *emm_msg = _emm_as_set_header (&nas_msg, &msg->sctx);
+  EMM_msg                                *emm_msg = _emm_as_set_header (&nas_msg, &msg->sctx_data);
 
   /*
    * Setup the NAS information message
@@ -1663,7 +1689,6 @@ static int _emm_as_erab_setup_req (const emm_as_activate_bearer_context_req_t * 
     emm_security_context_t                 *emm_security_context = NULL;
     emm_data_context_t                     *emm_context = emm_data_context_get(&_emm_data, msg->ue_id);
 
-    emm_context = emm_data_context_get (&_emm_data, msg->ue_id);
     if (emm_context) {
       if (IS_EMM_CTXT_PRESENT_SECURITY(emm_context)) {
         emm_security_context = &emm_context->_security;

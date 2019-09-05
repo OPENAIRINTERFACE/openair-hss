@@ -433,6 +433,7 @@ typedef struct itti_s11_create_session_response_s {
   ///< Gn/Gp SGSN to S4-SGSN/MME RAU/TAU procedure to
   ///< identify the default bearer the PGW selects for the PDN
   ///< Connection.
+  ebi_t				 linked_eps_bearer_id;
 
   protocol_configuration_options_t         pco;// PCO protocol_configuration_options
   ///< This IE is not applicable for TAU/RAU/Handover. If PGW
@@ -1484,7 +1485,6 @@ typedef struct itti_s11_bearer_resource_failure_indication_s {
  */
 typedef struct itti_s11_downlink_data_notification_s {
   teid_t           teid;                   ///< Tunnel Endpoint Identifier
-  gtpv2c_cause_t   cause;
   // Recovery           ///< optional This IE shall be included if contacting the peer for the first time
   // Private Extension  ///< optional
   /* GTPv2-C specific parameters */

@@ -32,8 +32,6 @@
 #include "nas_message.h"
 #include "as_message.h"
 #include "esm_proc.h"
-// todo: find a better place for this
-#include "mme_app_esm_procedures.h"
 #include "intertask_interface_types.h"
 
 int
@@ -61,7 +59,9 @@ int
 nas_itti_erab_setup_req (
     const mme_ue_s1ap_id_t ue_id,
     const ebi_t            ebi,
-    const bitrate_t        mbr_dl,
+	const bool 			   retry,
+	const int			   retx_count,
+	const bitrate_t        mbr_dl,
     const bitrate_t        mbr_ul,
     const bitrate_t        gbr_dl,
     const bitrate_t        gbr_ul,
@@ -71,7 +71,9 @@ int
 nas_itti_erab_modify_req (
     const mme_ue_s1ap_id_t ue_id,
     const ebi_t            ebi,
-    const bitrate_t        mbr_dl,
+	const bool 			   retry,
+	const int			   retx_count,
+	const bitrate_t        mbr_dl,
     const bitrate_t        mbr_ul,
     const bitrate_t        gbr_dl,
     const bitrate_t        gbr_ul,
@@ -80,7 +82,9 @@ nas_itti_erab_modify_req (
 int
 nas_itti_erab_release_req (const mme_ue_s1ap_id_t ue_id,
     const ebi_t ebi,
-    bstring                nas_msg);
+	const bool 			   retry,
+	const int			   retx_count,
+	bstring                nas_msg);
 
 void nas_itti_pdn_config_req(
   unsigned int            ue_idP,
@@ -122,6 +126,9 @@ void nas_itti_s11_bearer_resource_cmd (
   const traffic_flow_template_t * const tad,
   const flow_qos_t              * const flow_qos);
 
+void nas_itti_paging_due_signaling (
+  const mme_ue_s1ap_id_t  ue_id);
+
 void nas_itti_establish_cnf(
   const mme_ue_s1ap_id_t ue_idP,
   const nas_error_code_t error_codeP,
@@ -136,7 +143,7 @@ void nas_itti_detach_req(
 void nas_itti_activate_eps_bearer_ctx_cnf(
     const mme_ue_s1ap_id_t ue_idP,
     const ebi_t            ebi,
-    const teid_t           saegw_s1u_teid);
+	const teid_t           saegw_s1u_teid);
 
 void nas_itti_activate_eps_bearer_ctx_rej(
     const mme_ue_s1ap_id_t ue_idP,
@@ -154,7 +161,8 @@ void nas_itti_modify_eps_bearer_ctx_rej(
 
 void nas_itti_dedicated_eps_bearer_deactivation_complete(
     const mme_ue_s1ap_id_t ue_idP,
-    const ebi_t ded_ebi);
+    const ebi_t ded_ebi,
+	const esm_cause_t esm_cause);
 
 void  s6a_auth_info_rsp_timer_expiry_handler (void *args);
 

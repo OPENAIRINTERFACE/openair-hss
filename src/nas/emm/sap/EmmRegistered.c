@@ -100,7 +100,7 @@ EmmRegistered (
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
-  emm_data_context_t                          *emm_ctx = evt->ctx;
+  emm_data_context_t                     *emm_ctx 	= emm_data_context_get(&_emm_data, evt->ue_id);
 
   assert (emm_fsm_get_state (emm_ctx) == EMM_REGISTERED);
 
@@ -112,7 +112,7 @@ EmmRegistered (
      * An EMM common procedure has been initiated;
      * enter state EMM-COMMON-PROCEDURE-INITIATED.
      */
-    rc = emm_fsm_set_state (evt->ue_id, evt->ctx, EMM_COMMON_PROCEDURE_INITIATED);
+    rc = emm_fsm_set_state (evt->ue_id, emm_ctx, EMM_COMMON_PROCEDURE_INITIATED);
     break;
 
   case _EMMREG_COMMON_PROC_CNF:
@@ -128,7 +128,7 @@ EmmRegistered (
   case _EMMREG_COMMON_PROC_ABORT:
     OAILOG_ERROR (LOG_NAS_EMM, "EMM-FSM state EMM_REGISTERED - Primitive _EMMREG_COMMON_PROC_ABORT is not valid\n");
     MSC_LOG_RX_DISCARDED_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "_EMMREG_COMMON_PROC_ABORT ue id " MME_UE_S1AP_ID_FMT " ", evt->ue_id);
-    rc = emm_fsm_set_state (evt->ue_id, evt->ctx, EMM_DEREGISTERED);
+    rc = emm_fsm_set_state (evt->ue_id, emm_ctx, EMM_DEREGISTERED);
     break;
 
   case _EMMREG_ATTACH_CNF:
@@ -173,7 +173,7 @@ EmmRegistered (
 
   case _EMMREG_DETACH_CNF:
     MSC_LOG_RX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "_EMMREG_DETACH_CNF ue id " MME_UE_S1AP_ID_FMT " ", evt->ue_id);
-    rc = emm_fsm_set_state (evt->ue_id, evt->ctx, EMM_DEREGISTERED);
+    rc = emm_fsm_set_state (evt->ue_id, emm_ctx, EMM_DEREGISTERED);
 
     //if ((emm_ctx) && (evt->notify) && (evt->u.detach.proc) && (evt->u.detach.proc->emm_spec_proc.emm_proc.base_proc.success_notif)) {
     //  rc = (*evt->u.detach.proc->emm_spec_proc.emm_proc.base_proc.success_notif)(emm_ctx);
@@ -222,7 +222,7 @@ EmmRegistered (
   case _EMMREG_TAU_REJ:
     if (evt->u.tau.proc) {
       MSC_LOG_RX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "_EMMREG_TAU_REJ ue id " MME_UE_S1AP_ID_FMT " ", evt->ue_id);
-      rc = emm_fsm_set_state (evt->ue_id, evt->ctx, EMM_DEREGISTERED);
+      rc = emm_fsm_set_state (evt->ue_id, emm_ctx, EMM_DEREGISTERED);
 
       if ((emm_ctx) && (evt->u.tau.proc->emm_spec_proc.emm_proc.base_proc.fail_out)) {
         rc = (*evt->u.tau.proc->emm_spec_proc.emm_proc.base_proc.fail_out)(emm_ctx, &evt->u.tau.proc->emm_spec_proc.emm_proc.base_proc);

@@ -50,6 +50,7 @@
 #define NAS_ERAB_MODIFY_REQ(mSGpTR)                 (mSGpTR)->ittiMsg.nas_erab_modify_req
 #define NAS_ERAB_RELEASE_REQ(mSGpTR)                (mSGpTR)->ittiMsg.nas_erab_release_req
 #define NAS_SIGNALLING_CONNECTION_REL_IND(mSGpTR)   (mSGpTR)->ittiMsg.nas_signalling_connection_rel_ind
+#define NAS_PAGING_DUE_SIGNALING_IND(mSGpTR)		(mSGpTR)->ittiMsg.nas_paging_due_signaling_ind
 
 #define NAS_RETRY_BEARER_CTX_PROC_IND(mSGpTR)       (mSGpTR)->ittiMsg.nas_retry_bearer_ctx_proc_ind
 #define NAS_ACTIVATE_EPS_BEARER_CTX_REQ(mSGpTR)     (mSGpTR)->ittiMsg.nas_activate_eps_bearer_ctx_req
@@ -186,6 +187,8 @@ typedef struct itti_nas_dl_data_rej_s {
 typedef struct itti_nas_erab_setup_req_s {
   mme_ue_s1ap_id_t ue_id;            /* UE lower layer identifier   */
   ebi_t            ebi;              /* EPS bearer id        */
+  bool             retry;		     /* Retry field. */
+  int 			   retx_count;	     /* #Retry. */
   bstring          nas_msg;          /* NAS erab bearer context activation message           */
   bitrate_t        mbr_dl;
   bitrate_t        mbr_ul;
@@ -196,6 +199,8 @@ typedef struct itti_nas_erab_setup_req_s {
 typedef struct itti_nas_erab_modify_req_s {
   mme_ue_s1ap_id_t ue_id;            /* UE lower layer identifier   */
   ebi_t            ebi;              /* EPS bearer id        */
+  bool             retry;		     /* Retry field. */
+  int 			   retx_count;	     /* #Retry. */
   bstring          nas_msg;          /* NAS erab bearer context activation message           */
   bitrate_t        mbr_dl;
   bitrate_t        mbr_ul;
@@ -206,6 +211,8 @@ typedef struct itti_nas_erab_modify_req_s {
 typedef struct itti_nas_erab_release_req_s {
   mme_ue_s1ap_id_t ue_id;            /* UE lower layer identifier   */
   ebi_t            ebi;              /* EPS bearer id        */
+  bool             retry;		     /* Retry field. */
+  int 			   retx_count;	     /* #Retry. */
   bstring          nas_msg;          /* NAS erab bearer context deactivation message           */
 } itti_nas_erab_release_req_t;
 
@@ -244,6 +251,11 @@ typedef struct itti_nas_signalling_connection_rel_ind_s {
   /* UE identifier */
   mme_ue_s1ap_id_t                  ue_id;
 } itti_nas_signalling_connection_rel_ind_t;
+
+typedef struct itti_nas_paging_due_signaling_ind_s {
+  /* UE identifier */
+  mme_ue_s1ap_id_t                  ue_id;
+} itti_nas_paging_due_signaling_ind_t;
 
 typedef struct itti_nas_implicit_detach_ue_ind_s {
   /* UE identifier */
@@ -315,6 +327,7 @@ typedef struct itti_nas_activate_eps_bearer_ctx_req_s {
   pti_t                             pti;
   pdn_cid_t                         cid;
   ebi_t                             linked_ebi;
+  bool								retry;
   uintptr_t                         bcs_to_be_created_ptr;
 } itti_nas_activate_eps_bearer_ctx_req_t;
 
@@ -339,6 +352,7 @@ typedef struct itti_nas_modify_eps_bearer_ctx_req_s {
   pdn_cid_t                         cid;
   ebi_t                             linked_ebi;
   ambr_t                            apn_ambr; /**< New APN AMBR. */
+  bool								retry;
   uintptr_t                         bcs_to_be_updated_ptr;
 } itti_nas_modify_eps_bearer_ctx_req_t;
 
@@ -363,12 +377,14 @@ typedef struct itti_nas_deactivate_eps_bearer_ctx_req_s {
   pti_t                             pti;
   pdn_cid_t                         cid;
   ebi_list_t                        ebis;
+  bool								retry;
 } itti_nas_deactivate_eps_bearer_ctx_req_t;
 
 typedef struct itti_nas_deactivate_eps_bearer_ctx_cnf_s {
   /* UE identifier */
   mme_ue_s1ap_id_t                  ue_id;
   ebi_t                             ded_ebi;
+  gtpv2c_cause_value_t      	    cause_value;
 } itti_nas_deactivate_eps_bearer_ctx_cnf_t;
 
 

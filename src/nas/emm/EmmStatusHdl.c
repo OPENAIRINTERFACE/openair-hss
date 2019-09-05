@@ -125,7 +125,6 @@ emm_proc_status_ind (
 
   emm_sap_t                 emm_sap = {0};
   emm_sap.u.emm_reg.ue_id = ue_id;
-  emm_sap.u.emm_reg.ctx   = emm_context;
 
   /** Set the cause to the specific procedure. */
   if(is_nas_specific_procedure_attach_running(emm_context)){

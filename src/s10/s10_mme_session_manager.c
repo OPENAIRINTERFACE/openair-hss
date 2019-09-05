@@ -276,21 +276,23 @@ s10_mme_handle_forward_relocation_request(
   nw_gtpv2c_msg_parser_t                     *pMsgParser;
 
   DevAssert (stack_p );
+
+  teid_t teid = nwGtpv2cMsgGetTeid(pUlpApi->hMsg);
+  /** Check the destination TEID is 0. */
+  if(teid != (teid_t)0){
+    OAILOG_WARNING (LOG_S10, "Destination TEID of S10 Forward Relocation Request is not 0, instead " TEID_FMT ". Ignoring S10 Forward Relocation Request. \n", req_p->teid);
+    return RETURNerror;
+  }
+
   /** Allocating the Signal once at the sender (MME_APP --> S10) and once at the receiver (S10-->MME_APP). */
   message_p = itti_alloc_new_message (TASK_S10, S10_FORWARD_RELOCATION_REQUEST);
   req_p = &message_p->ittiMsg.s10_forward_relocation_request;
   memset(req_p, 0, sizeof(*req_p));
+  req_p->teid = teid;
 
-  req_p->teid = nwGtpv2cMsgGetTeid(pUlpApi->hMsg);
   req_p->trxn = (void *)pUlpApi->u_api_info.initialReqIndInfo.hTrxn;
   memcpy((void*)&req_p->peer_ip, pUlpApi->u_api_info.initialReqIndInfo.peerIp, pUlpApi->u_api_info.initialReqIndInfo.peerIp->sa_family == AF_INET ?
 		  sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
-
-  /** Check the destination TEID is 0. */
-  if(req_p->teid != (teid_t)0){
-    OAILOG_WARNING (LOG_S10, "Destination TEID of S10 Forward Relocation Request is not 0, instead " TEID_FMT ". Ignoring S10 Forward Relocation Request. \n", req_p->teid);
-    return RETURNerror;
-  }
 
   /*
    * Create a new message parser for the S10 FORWARD RELOCATION REQUEST.
@@ -478,7 +480,7 @@ s10_mme_forward_relocation_response (
 
      /** Setting the Bearer Context to Setup. Just EBI needed. */
      for (int i = 0; i < forward_relocation_response_p->handovered_bearers.num_bearer_context; i++) {
-       gtpv2c_bearer_context_created_ie_set(&(ulp_req.hMsg), &forward_relocation_response_p->handovered_bearers.bearer_contexts[i]);
+       gtpv2c_bearer_context_created_ie_set(&(ulp_req.hMsg), &forward_relocation_response_p->handovered_bearers.bearer_context[i]);
      }
    }
    /** No allocated context remains. */
@@ -1092,19 +1094,21 @@ s10_mme_handle_context_request(
 
   DevAssert (stack_p );
   /** Allocating the Signal once at the sender (MME_APP --> S10) and once at the receiver (S10-->MME_APP). */
-  message_p = itti_alloc_new_message (TASK_S10, S10_CONTEXT_REQUEST);
-  req_p = &message_p->ittiMsg.s10_context_request;
-
-  req_p->teid = nwGtpv2cMsgGetTeid(pUlpApi->hMsg);
-  req_p->trxn = (void *)pUlpApi->u_api_info.initialReqIndInfo.hTrxn;
-  memcpy((void*)&req_p->peer_ip, pUlpApi->u_api_info.initialReqIndInfo.peerIp, pUlpApi->u_api_info.initialReqIndInfo.peerIp->sa_family == AF_INET ?
- 		  sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
+  teid_t teid = nwGtpv2cMsgGetTeid(pUlpApi->hMsg);
 
   /** Check the destination TEID is 0. */
-  if(req_p->teid != (teid_t)0){
+  if(teid != (teid_t)0){
     OAILOG_WARNING (LOG_S10, "Destination TEID of S10 Context Request is not 0, instead " TEID_FMT ". Ignoring s10 context request. \n", req_p->teid);
     return RETURNerror;
   }
+
+  message_p = itti_alloc_new_message (TASK_S10, S10_CONTEXT_REQUEST);
+  req_p = &message_p->ittiMsg.s10_context_request;
+
+  req_p->teid = teid;
+  req_p->trxn = (void *)pUlpApi->u_api_info.initialReqIndInfo.hTrxn;
+  memcpy((void*)&req_p->peer_ip, pUlpApi->u_api_info.initialReqIndInfo.peerIp, pUlpApi->u_api_info.initialReqIndInfo.peerIp->sa_family == AF_INET ?
+ 		  sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
   /*
    * Create a new message parser for the S10 CONTEXT REQUEST.
    */

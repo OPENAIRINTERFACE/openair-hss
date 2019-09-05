@@ -90,6 +90,7 @@ static const char                      *_emm_fsm_event_str[] = {
   "TAU_REQ",
   "TAU_CNF",
   "TAU_REJ",
+  "TAU_ABORT",
   "SERVICE_REQ",
   "SERVICE_CNF",
   "SERVICE_REJ",
@@ -209,7 +210,8 @@ emm_fsm_set_state (
       // Update mme_ue_context's emm_state and overall stats
       mme_ue_context_update_ue_emm_state (ue_id, new_emm_state);
     }else {
-      OAILOG_WARNING (LOG_NAS_EMM, "UE " MME_UE_S1AP_ID_FMT" EMM-FSM   - Status not changed changed: %s \n", ue_id, _emm_fsm_status_str[emm_context->_emm_fsm_state]);
+      OAILOG_WARNING (LOG_NAS_EMM, "UE " MME_UE_S1AP_ID_FMT" EMM-FSM   - Status not changed changed: %s \n",
+    		  ue_id, _emm_fsm_status_str[emm_context->_emm_fsm_state]);
       /** Setting this as error to abort implicit detach procedures for ex.. */
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
     }
@@ -280,7 +282,7 @@ int emm_fsm_process (struct emm_reg_s * const evt)
 
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   primitive = evt->primitive;
-  emm_data_context_t                     *emm_ctx = (emm_data_context_t *) evt->ctx;
+  emm_data_context_t                     *emm_ctx 	= emm_data_context_get(&_emm_data, evt->ue_id);
 
   if (emm_ctx) {
     state = emm_fsm_get_state (emm_ctx);

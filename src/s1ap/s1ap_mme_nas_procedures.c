@@ -459,22 +459,8 @@ int s1ap_generate_s1ap_e_rab_setup_req (itti_s1ap_e_rab_setup_req_t * const e_ra
   uint8_t                                *buffer_p = NULL;
   uint32_t                                length = 0;
   MessagesIds                             message_id = MESSAGES_ID_MAX;
-  void                                   *id = NULL;
-  const enb_ue_s1ap_id_t                  enb_ue_s1ap_id = e_rab_setup_req->enb_ue_s1ap_id;
   const mme_ue_s1ap_id_t                  ue_id       = e_rab_setup_req->mme_ue_s1ap_id;
-
-  hashtable_ts_get (&g_s1ap_mme_id2assoc_id_coll, (const hash_key_t)ue_id, (void **)&id);
-  if (id) {
-    sctp_assoc_id_t sctp_assoc_id = (sctp_assoc_id_t)(uintptr_t)id;
-    enb_description_t  *enb_ref = s1ap_is_enb_assoc_id_in_list (sctp_assoc_id);
-    if (enb_ref) {
-      ue_ref = s1ap_is_ue_enb_id_in_list (enb_ref,enb_ue_s1ap_id);
-    }
-  }
-  // TODO remove soon:
-  if (!ue_ref) {
-    ue_ref = s1ap_is_ue_mme_id_in_list (ue_id);
-  }
+  ue_ref = s1ap_is_ue_mme_id_in_list (ue_id);
   // finally!
   if (!ue_ref) {
     /*
@@ -536,7 +522,7 @@ int s1ap_generate_s1ap_e_rab_setup_req (itti_s1ap_e_rab_setup_req_t * const e_ra
           (gbr_qos_information->e_rab_guaranteed_bit_rate_downlink) ||
           (gbr_qos_information->e_rab_guaranteed_bit_rate_uplink)) {
 
-        OAILOG_NOTICE (LOG_S1AP, "Encoding of e_RABlevelQoSParameters.gbrQosInformation\n");
+        OAILOG_NOTICE (LOG_S1AP, "Encoding e_RABlevelQoSParameters.gbrQosInformation\n");
 
         //s1ap_E_RABToBeSetupItemBearerSUReq[i].e_RABlevelQoSParameters.gbrQosInformation = calloc(1, sizeof(struct S1ap_GBR_QosInformation));
         s1ap_E_RABToBeSetupItemBearerSUReq[i].e_RABlevelQoSParameters.gbrQosInformation = calloc(1, sizeof(struct S1ap_GBR_QosInformation));
@@ -605,21 +591,10 @@ int s1ap_generate_s1ap_e_rab_modify_req (itti_s1ap_e_rab_modify_req_t * const e_
   MessagesIds                             message_id = MESSAGES_ID_MAX;
   uint32_t                                length = 0;
   void                                   *id = NULL;
-  const enb_ue_s1ap_id_t                  enb_ue_s1ap_id = e_rab_modify_req->enb_ue_s1ap_id;
-  const mme_ue_s1ap_id_t                  ue_id       = e_rab_modify_req->mme_ue_s1ap_id;
+  const mme_ue_s1ap_id_t                  ue_id       	 = e_rab_modify_req->mme_ue_s1ap_id;
 
   hashtable_ts_get (&g_s1ap_mme_id2assoc_id_coll, (const hash_key_t)ue_id, (void **)&id);
-  if (id) {
-    sctp_assoc_id_t sctp_assoc_id = (sctp_assoc_id_t)(uintptr_t)id;
-    enb_description_t  *enb_ref = s1ap_is_enb_assoc_id_in_list (sctp_assoc_id);
-    if (enb_ref) {
-      ue_ref = s1ap_is_ue_enb_id_in_list (enb_ref,enb_ue_s1ap_id);
-    }
-  }
-  // TODO remove soon:
-  if (!ue_ref) {
-    ue_ref = s1ap_is_ue_mme_id_in_list (ue_id);
-  }
+  ue_ref = s1ap_is_ue_mme_id_in_list (ue_id);
   // finally!
   if (!ue_ref) {
     /*
@@ -738,18 +713,8 @@ int s1ap_generate_s1ap_e_rab_release_req (itti_s1ap_e_rab_release_req_t * const 
   uint32_t                                length = 0;
   MessagesIds                             message_id = MESSAGES_ID_MAX;
   void                                   *id = NULL;
-  const enb_ue_s1ap_id_t                  enb_ue_s1ap_id = e_rab_release_req->enb_ue_s1ap_id;
   const mme_ue_s1ap_id_t                  ue_id       = e_rab_release_req->mme_ue_s1ap_id;
-
-  hashtable_ts_get (&g_s1ap_mme_id2assoc_id_coll, (const hash_key_t)ue_id, (void **)&id);
-  if (id) {
-    sctp_assoc_id_t sctp_assoc_id = (sctp_assoc_id_t)(uintptr_t)id;
-    enb_description_t  *enb_ref = s1ap_is_enb_assoc_id_in_list (sctp_assoc_id);
-    if (enb_ref) {
-      ue_ref = s1ap_is_ue_enb_id_in_list (enb_ref,enb_ue_s1ap_id);
-    }
-  }
-  // TODO remove soon:
+  ue_ref = s1ap_is_ue_mme_id_in_list (ue_id);
   if (!ue_ref) {
     ue_ref = s1ap_is_ue_mme_id_in_list (ue_id);
   }
@@ -830,9 +795,7 @@ int s1ap_generate_s1ap_e_rab_release_req (itti_s1ap_e_rab_release_req_t * const 
     s1ap_free_mme_encode_pdu(&message, message_id);
     s1ap_mme_itti_send_sctp_request (&b , ue_ref->enb->sctp_assoc_id, ue_ref->sctp_stream_send, ue_ref->mme_ue_s1ap_id);
   }
-
   OAILOG_FUNC_RETURN (LOG_S1AP, RETURNok);
-
 }
 
 //------------------------------------------------------------------------------
@@ -1403,19 +1366,19 @@ s1ap_handle_handover_request (
   for (int item = 0; item < handover_request_pP->bearer_ctx_to_be_setup_list->num_bearer_context; item++) {
 	  S1ap_E_RABToBeSetupItemHOReq_t     *e_RABToBeSetupHO = NULL; // [conn_est_cnf_pP->no_of_e_rabs]; // don't alloc on stack for automatic removal
 	  e_RABToBeSetupHO = calloc(1, sizeof(S1ap_E_RABToBeSetupItemHOReq_t));
-	  e_RABToBeSetupHO->e_RAB_ID = handover_request_pP->bearer_ctx_to_be_setup_list->bearer_contexts[item].eps_bearer_id;
-	  e_RABToBeSetupHO->e_RABlevelQosParameters.qCI = handover_request_pP->bearer_ctx_to_be_setup_list->bearer_contexts[item].bearer_level_qos.qci;
-	  e_RABToBeSetupHO->e_RABlevelQosParameters.allocationRetentionPriority.priorityLevel = handover_request_pP->bearer_ctx_to_be_setup_list->bearer_contexts[item].bearer_level_qos.pl;
-	  e_RABToBeSetupHO->e_RABlevelQosParameters.allocationRetentionPriority.pre_emptionCapability = handover_request_pP->bearer_ctx_to_be_setup_list->bearer_contexts[item].bearer_level_qos.pci;
-	  e_RABToBeSetupHO->e_RABlevelQosParameters.allocationRetentionPriority.pre_emptionVulnerability = handover_request_pP->bearer_ctx_to_be_setup_list->bearer_contexts[item].bearer_level_qos.pvi;
+	  e_RABToBeSetupHO->e_RAB_ID = handover_request_pP->bearer_ctx_to_be_setup_list->bearer_context[item].eps_bearer_id;
+	  e_RABToBeSetupHO->e_RABlevelQosParameters.qCI = handover_request_pP->bearer_ctx_to_be_setup_list->bearer_context[item].bearer_level_qos.qci;
+	  e_RABToBeSetupHO->e_RABlevelQosParameters.allocationRetentionPriority.priorityLevel = handover_request_pP->bearer_ctx_to_be_setup_list->bearer_context[item].bearer_level_qos.pl;
+	  e_RABToBeSetupHO->e_RABlevelQosParameters.allocationRetentionPriority.pre_emptionCapability = handover_request_pP->bearer_ctx_to_be_setup_list->bearer_context[item].bearer_level_qos.pci;
+	  e_RABToBeSetupHO->e_RABlevelQosParameters.allocationRetentionPriority.pre_emptionVulnerability = handover_request_pP->bearer_ctx_to_be_setup_list->bearer_context[item].bearer_level_qos.pvi;
 	  /** No NAS. */
 
-      bearer_qos_t * bearer_qos_information = &handover_request_pP->bearer_ctx_to_be_setup_list->bearer_contexts[item].bearer_level_qos;
-      if (handover_request_pP->bearer_ctx_to_be_setup_list->bearer_contexts[item].bearer_level_qos.qci <= 4) {
+      bearer_qos_t * bearer_qos_information = &handover_request_pP->bearer_ctx_to_be_setup_list->bearer_context[item].bearer_level_qos;
+      if (handover_request_pP->bearer_ctx_to_be_setup_list->bearer_context[item].bearer_level_qos.qci <= 4) {
 
         OAILOG_NOTICE (LOG_S1AP, "Encoding of GBR level qos information for bearer (ebi=%d,qci=%d).\n",
-        		handover_request_pP->bearer_ctx_to_be_setup_list->bearer_contexts[item].eps_bearer_id,
-				handover_request_pP->bearer_ctx_to_be_setup_list->bearer_contexts[item].bearer_level_qos.qci);
+        		handover_request_pP->bearer_ctx_to_be_setup_list->bearer_context[item].eps_bearer_id,
+				handover_request_pP->bearer_ctx_to_be_setup_list->bearer_context[item].bearer_level_qos.qci);
 
         e_RABToBeSetupHO->e_RABlevelQosParameters.gbrQosInformation = calloc(1, sizeof(struct S1ap_GBR_QosInformation));
         DevAssert(e_RABToBeSetupHO->e_RABlevelQosParameters.gbrQosInformation);
@@ -1454,9 +1417,9 @@ s1ap_handle_handover_request (
 	  /*
 	   * Set the GTP-TEID. This is the S1-U S-GW TEID
 	   */
-	  INT32_TO_OCTET_STRING (handover_request_pP->bearer_ctx_to_be_setup_list->bearer_contexts[item].s1u_sgw_fteid.teid, &e_RABToBeSetupHO->gTP_TEID);
+	  INT32_TO_OCTET_STRING (handover_request_pP->bearer_ctx_to_be_setup_list->bearer_context[item].s1u_sgw_fteid.teid, &e_RABToBeSetupHO->gTP_TEID);
 	  // S-GW IP address(es) for user-plane
-	  bstring transportLayerAddress = fteid_ip_address_to_bstring(&handover_request_pP->bearer_ctx_to_be_setup_list->bearer_contexts[item].s1u_sgw_fteid);
+	  bstring transportLayerAddress = fteid_ip_address_to_bstring(&handover_request_pP->bearer_ctx_to_be_setup_list->bearer_context[item].s1u_sgw_fteid);
 	  e_RABToBeSetupHO->transportLayerAddress.buf = calloc (blength(transportLayerAddress), sizeof (uint8_t));
 	  memcpy (e_RABToBeSetupHO->transportLayerAddress.buf,
 			  transportLayerAddress->data,
@@ -1468,7 +1431,7 @@ s1ap_handle_handover_request (
 	  /** Destroy the temporarily allocated bstring. */
 	  bdestroy_wrapper(&transportLayerAddress);
 //
-//	  e_RABToBeSetupHO->transportLayerAddress.buf = calloc (blength(handover_request_pP->bearer_ctx_to_be_setup_list->bearer_contexts[item].s1u_sgw_fteid.), sizeof (uint8_t));
+//	  e_RABToBeSetupHO->transportLayerAddress.buf = calloc (blength(handover_request_pP->	[item].s1u_sgw_fteid.), sizeof (uint8_t));
 //	  memcpy (e_RABToBeSetupHO->transportLayerAddress.buf, conn_est_cnf_pP->transport_layer_address[item]->data, blength(conn_est_cnf_pP->transport_layer_address[item]));
 //	  e_RABToBeSetupHO->transportLayerAddress.size = blength(conn_est_cnf_pP->transport_layer_address[item]);
 //	  e_RABToBeSetupHO->transportLayerAddress.bits_unused = 0;
@@ -1868,7 +1831,16 @@ s1ap_handle_paging( const itti_s1ap_paging_t * const s1ap_paging_pP){
 						  eNB_ref->tai_list.partial_tai_list[0].u.tai_one_plmn_non_consecutive_tacs.plmn.mnc_digit1, eNB_ref->tai_list.partial_tai_list[0].u.tai_one_plmn_non_consecutive_tacs.plmn.mnc_digit2, eNB_ref->tai_list.partial_tai_list[0].u.tai_one_plmn_non_consecutive_tacs.plmn.mnc_digit3)
 		  )
 		  ;
-		  OCTET_STRING_fromBuf(&tai_item->taiItem.tAI.pLMNidentity, plmn, 3);
+
+		  //S1ap_PLMNidentity_t                    *plmn1 = NULL;
+		  ///*
+		  // * FIXME: free object from list once encoded
+		  // */
+		  //plmn1 = calloc (1, sizeof (*plmn));
+	      MCC_MNC_TO_PLMNID (mme_config.served_tai.plmn_mcc[i], mme_config.served_tai.plmn_mnc[i], mme_config.served_tai.plmn_mnc_len[i], &tai_item->taiItem.tAI.pLMNidentity);
+	      //ASN_SEQUENCE_ADD (&servedGUMMEI->servedPLMNs.list, plmn);
+		  //OCTET_STRING_fromBuf(&tai_item->taiItem.tAI.pLMNidentity, plmn, 3);
+
 		  INT16_TO_OCTET_STRING(eNB_ref->tai_list.partial_tai_list[0].u.tai_one_plmn_non_consecutive_tacs.tac[0], &tai_item->taiItem.tAI.tAC);
 		  /** Set the TAI. */
 		  ASN_SEQUENCE_ADD (&paging_p->taiList, tai_item);

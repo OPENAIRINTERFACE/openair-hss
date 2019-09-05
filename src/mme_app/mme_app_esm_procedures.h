@@ -39,7 +39,7 @@
  */
 
 /** Method called inside the timeout. */
-typedef esm_cause_t (*esm_timeout_cb_t)(struct nas_esm_proc_s *, ESM_msg *);
+typedef esm_cause_t (*esm_timeout_cb_t)(struct nas_esm_proc_s *, ESM_msg *, esm_timeout_ll_cb_arg_t * ll_handler_arg);
 
 
 typedef enum {
@@ -122,7 +122,7 @@ typedef struct nas_esm_proc_bearer_context_s {
 /*
  * PDN Connectivity Procedures.
  */
-void mme_app_nas_esm_free_pdn_connectivity_procedures(ue_context_t * const ue_context_p);
+void mme_app_nas_esm_free_pdn_connectivity_procedures(ue_session_pool_t * const ue_session_pool_p);
 nas_esm_proc_pdn_connectivity_t* mme_app_nas_esm_create_pdn_connectivity_procedure(mme_ue_s1ap_id_t mme_ue_s1ap_id, pti_t pti);
 nas_esm_proc_pdn_connectivity_t* mme_app_nas_esm_get_pdn_connectivity_procedure(mme_ue_s1ap_id_t mme_ue_s1ap_id, pti_t pti);
 void mme_app_nas_esm_delete_pdn_connectivity_proc(nas_esm_proc_pdn_connectivity_t **esm_pdn_connectivity_proc);
@@ -131,7 +131,7 @@ void mme_app_nas_esm_delete_pdn_connectivity_proc(nas_esm_proc_pdn_connectivity_
 /*
  * ESM Bearer Context Procedures.
  */
-void mme_app_nas_esm_free_bearer_context_procedures(ue_context_t * const ue_context_p); // todo: static!
+void mme_app_nas_esm_free_bearer_context_procedures(ue_session_pool_t * const ue_session_pool_p); // todo: static!
 nas_esm_proc_bearer_context_t* mme_app_nas_esm_create_bearer_context_procedure(mme_ue_s1ap_id_t ue_id, pti_t pti, ebi_t ebi, int timeout_sec, int timeout_usec, esm_timeout_cb_t timeout_notif);
 nas_esm_proc_bearer_context_t* mme_app_nas_esm_get_bearer_context_procedure(mme_ue_s1ap_id_t mme_ue_s1ap_id, pti_t pti, ebi_t ebi);
 void mme_app_nas_esm_delete_bearer_context_proc(nas_esm_proc_bearer_context_t     **esm_bearer_context_proc);

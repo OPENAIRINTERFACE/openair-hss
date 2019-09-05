@@ -80,6 +80,8 @@ s11_mme_release_access_bearers_request (
 
   if (HASH_TABLE_OK != hash_rc) {
     OAILOG_WARNING (LOG_S11, "Could not get GTPv2-C hTunnel for local teid %X\n", ulp_req.u_api_info.initialReqInfo.teidLocal);
+    rc = nwGtpv2cMsgDelete (*stack_p, (ulp_req.hMsg));
+    DevAssert (NW_OK == rc);
     return RETURNerror;
   }
 
@@ -128,6 +130,8 @@ s11_mme_downlink_data_notification_acknowledge(
 
   if (HASH_TABLE_OK != hash_rc) {
     OAILOG_WARNING (LOG_S11, "Could not get GTPv2-C hTunnel for local teid %X\n", ack_p->local_teid);
+    rc = nwGtpv2cMsgDelete (*stack_p, (ulp_ack.hMsg));
+    DevAssert (NW_OK == rc);
     return RETURNerror;
   }
 
@@ -313,6 +317,8 @@ s11_mme_modify_bearer_request (
 
   if (HASH_TABLE_OK != hash_rc) {
     OAILOG_WARNING (LOG_S11, "Could not get GTPv2-C hTunnel for local teid %X\n", ulp_req.u_api_info.initialReqInfo.teidLocal);
+    rc = nwGtpv2cMsgDelete (*stack_p, (ulp_req.hMsg));
+    DevAssert (NW_OK == rc);
     return RETURNerror;
   }
 
@@ -326,12 +332,12 @@ s11_mme_modify_bearer_request (
                               req_p->sender_fteid_for_cp.ipv6 ? &req_p->sender_fteid_for_cp.ipv6_address : NULL);
 
   for (int i=0; i < req_p->bearer_contexts_to_be_modified.num_bearer_context; i++) {
-    rc = gtpv2c_bearer_context_to_be_modified_within_modify_bearer_request_ie_set (&(ulp_req.hMsg), & req_p->bearer_contexts_to_be_modified.bearer_contexts[i]);
+    rc = gtpv2c_bearer_context_to_be_modified_within_modify_bearer_request_ie_set (&(ulp_req.hMsg), & req_p->bearer_contexts_to_be_modified.bearer_context[i]);
     DevAssert (NW_OK == rc);
   }
 
   for (int i=0; i < req_p->bearer_contexts_to_be_removed.num_bearer_context; i++) {
-    rc = gtpv2c_bearer_context_to_be_removed_within_modify_bearer_request_ie_set (&(ulp_req.hMsg), & req_p->bearer_contexts_to_be_removed.bearer_contexts[i]);
+    rc = gtpv2c_bearer_context_to_be_removed_within_modify_bearer_request_ie_set (&(ulp_req.hMsg), & req_p->bearer_contexts_to_be_removed.bearer_context[i]);
     DevAssert (NW_OK == rc);
   }
 
@@ -473,6 +479,8 @@ s11_mme_delete_bearer_command(
 
   if (HASH_TABLE_OK != hash_rc) {
     OAILOG_WARNING (LOG_S11, "Could not get GTPv2-C hTunnel for local teid %X\n", ulp_req.u_api_info.initialReqInfo.teidLocal);
+    rc = nwGtpv2cMsgDelete (*stack_p, (ulp_req.hMsg));
+    DevAssert (NW_OK == rc);
     return RETURNerror;
   }
   /*
@@ -519,6 +527,8 @@ s11_mme_bearer_resource_command(
 
   if (HASH_TABLE_OK != hash_rc) {
     OAILOG_WARNING (LOG_S11, "Could not get GTPv2-C hTunnel for local teid %X\n", ulp_req.u_api_info.initialReqInfo.teidLocal);
+    rc = nwGtpv2cMsgDelete (*stack_p, (ulp_req.hMsg));
+    DevAssert (NW_OK == rc);
     return RETURNerror;
   }
 
@@ -737,6 +747,8 @@ s11_mme_create_bearer_response (
 
   if (HASH_TABLE_OK != hash_rc) {
     OAILOG_WARNING (LOG_S11, "Could not get GTPv2-C hTunnel for local teid %X\n", response_p->local_teid);
+    rc = nwGtpv2cMsgDelete (*stack_p, (ulp_req.hMsg));
+    DevAssert (NW_OK == rc);
     return RETURNerror;
   }
 
@@ -744,10 +756,10 @@ s11_mme_create_bearer_response (
   cause = response_p->cause;
   gtpv2c_cause_ie_set (&(ulp_req.hMsg), &cause);
   if(cause.cause_value == TEMP_REJECT_HO_IN_PROGRESS)
-	  ulp_req.u_api_info.triggeredRspInfo.remove_trx = true; /**< Using boolean, such that not to add any dependencies in NwGtpv2c.h etc.. */
+    ulp_req.u_api_info.triggeredRspInfo.pt_trx = true; /**< Using boolean, such that not to add any dependencies in NwGtpv2c.h etc.. */
 
   for (int i=0; i < response_p->bearer_contexts.num_bearer_context; i++) {
-    rc = gtpv2c_bearer_context_within_create_bearer_response_ie_set (&(ulp_req.hMsg), & response_p->bearer_contexts.bearer_contexts[i]);
+    rc = gtpv2c_bearer_context_within_create_bearer_response_ie_set (&(ulp_req.hMsg), & response_p->bearer_contexts.bearer_context[i]);
     DevAssert (NW_OK == rc);
   }
 
@@ -872,6 +884,8 @@ s11_mme_update_bearer_response (
 
   if (HASH_TABLE_OK != hash_rc) {
     OAILOG_WARNING (LOG_S11, "Could not get GTPv2-C hTunnel for local teid %X\n", response_p->local_teid);
+    rc = nwGtpv2cMsgDelete (*stack_p, (ulp_req.hMsg));
+    DevAssert (NW_OK == rc);
     return RETURNerror;
   }
 
@@ -879,10 +893,10 @@ s11_mme_update_bearer_response (
   cause = response_p->cause;
   gtpv2c_cause_ie_set (&(ulp_req.hMsg), &cause);
   if(cause.cause_value == TEMP_REJECT_HO_IN_PROGRESS)
-  	  ulp_req.u_api_info.triggeredRspInfo.remove_trx = true; /**< Using boolean, such that not to add any dependencies in NwGtpv2c.h etc.. */
+    ulp_req.u_api_info.triggeredRspInfo.pt_trx = true; /**< Using boolean, such that not to add any dependencies in NwGtpv2c.h etc.. */
 
   for (int i=0; i < response_p->bearer_contexts.num_bearer_context; i++) {
-    rc = gtpv2c_bearer_context_within_update_bearer_response_ie_set(&(ulp_req.hMsg), & response_p->bearer_contexts.bearer_contexts[i]);
+    rc = gtpv2c_bearer_context_within_update_bearer_response_ie_set(&(ulp_req.hMsg), & response_p->bearer_contexts.bearer_context[i]);
     DevAssert (NW_OK == rc);
   }
 
@@ -1012,6 +1026,8 @@ s11_mme_delete_bearer_response (
 
   if (HASH_TABLE_OK != hash_rc) {
     OAILOG_WARNING (LOG_S11, "Could not get GTPv2-C hTunnel for local teid %X\n", response_p->local_teid);
+    rc = nwGtpv2cMsgDelete (*stack_p, (ulp_req.hMsg));
+    DevAssert (NW_OK == rc);
     return RETURNerror;
   }
 
@@ -1019,13 +1035,13 @@ s11_mme_delete_bearer_response (
   cause = response_p->cause;
   gtpv2c_cause_ie_set (&(ulp_req.hMsg), &cause);
   if(cause.cause_value == TEMP_REJECT_HO_IN_PROGRESS)
-  	  ulp_req.u_api_info.triggeredRspInfo.remove_trx = true; /**< Using boolean, such that not to add any dependencies in NwGtpv2c.h etc.. */
+    ulp_req.u_api_info.triggeredRspInfo.pt_trx = true; /**< Using boolean, such that not to add any dependencies in NwGtpv2c.h etc.. */
 
   if(response_p->linked_eps_bearer_id)
     gtpv2c_ebi_ie_set (&(ulp_req.hMsg), (unsigned)response_p->linked_eps_bearer_id, NW_GTPV2C_IE_INSTANCE_ZERO);
 
   for (int i=0; i < response_p->bearer_contexts.num_bearer_context; i++) {
-    rc = gtpv2c_bearer_context_within_delete_bearer_response_ie_set (&(ulp_req.hMsg), &response_p->bearer_contexts.bearer_contexts[i]);
+    rc = gtpv2c_bearer_context_within_delete_bearer_response_ie_set (&(ulp_req.hMsg), &response_p->bearer_contexts.bearer_context[i]);
     DevAssert (NW_OK == rc);
   }
 

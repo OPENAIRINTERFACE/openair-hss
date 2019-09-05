@@ -29,17 +29,23 @@
 #ifndef FILE_MME_APP_BEARER_CONTEXT_SEEN
 #define FILE_MME_APP_BEARER_CONTEXT_SEEN
 
-bstring bearer_state2string(const mme_app_bearer_state_t bearer_state);
-/** Create & deallocate a bearer context. */
-bearer_context_t *mme_app_new_bearer();
-void mme_app_bearer_context_initialize(bearer_context_t *bearer_context);
-/** Find an allocated PDN session bearer context. */
-bearer_context_t* mme_app_get_session_bearer_context(pdn_context_t * const pdn_context, const ebi_t ebi);
 
-void mme_app_get_free_bearer_context(ue_context_t * const ue_context, const ebi_t ebi, bearer_context_t ** bc_pp);
+/** Create & deallocate a bearer context. Will also initialize the bearer contexts. */
+void clear_bearer_context(ue_session_pool_t * ue_session_pool, bearer_context_new_t * bc);
+
+/** Find an allocated PDN session bearer context. */
+bearer_context_new_t* mme_app_get_session_bearer_context(pdn_context_t * const pdn_context, const ebi_t ebi);
+
+void mme_app_get_free_bearer_context(ue_session_pool_t * const ue_sp, const ebi_t ebi, bearer_context_new_t** bc_pp);
+
+/*
+ * Receive Bearer Context VOs to send in CSR/Handover Request, etc..
+ * Will set bearer state, unless it is null.
+ */
+void mme_app_get_bearer_contexts_to_be_created(pdn_context_t * pdn_context, bearer_contexts_to_be_created_t *bc_tbc, mme_app_bearer_state_t bc_state);
 
 // todo_: combine these two methods
-void mme_app_get_session_bearer_context_from_all(ue_context_t * const ue_context, const ebi_t ebi, bearer_context_t ** bc_pp);
+void mme_app_get_session_bearer_context_from_all(ue_session_pool_t * const ue_session_pool, const ebi_t ebi, bearer_context_new_t ** bc_pp);
 
 /*
  * New method to get a bearer context from the bearer pool of the UE context and add it into the pdn session.
@@ -47,8 +53,7 @@ void mme_app_get_session_bearer_context_from_all(ue_context_t * const ue_context
  */
 esm_cause_t mme_app_register_dedicated_bearer_context(const mme_ue_s1ap_id_t ue_id, const esm_ebr_state esm_ebr_state, pdn_cid_t pdn_cid, ebi_t linked_ebi, bearer_context_to_be_created_t * const bc_tbu, const ebi_t ded_ebi);
 
-void mme_app_free_bearer_context (bearer_context_t ** const bearer_context);
-void mme_app_bearer_context_s1_release_enb_informations(bearer_context_t * const bc);
+void mme_app_bearer_context_s1_release_enb_informations(bearer_context_new_t * const bc);
 
 /*
  * Update the bearer context for initial context setup response and handover.

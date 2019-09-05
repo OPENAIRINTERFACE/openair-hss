@@ -423,7 +423,7 @@ gtpv2c_bearer_context_to_be_created_within_create_bearer_request_ie_get (
   DevAssert (bearer_contexts );
   DevAssert (0 <= bearer_contexts->num_bearer_context);
   DevAssert (MSG_CREATE_BEARER_REQUEST_MAX_BEARER_CONTEXTS >= bearer_contexts->num_bearer_context);
-  bearer_context_to_be_created_t         *bearer_context  = &bearer_contexts->bearer_contexts[bearer_contexts->num_bearer_context];
+  bearer_context_to_be_created_t         *bearer_context  = &bearer_contexts->bearer_context[bearer_contexts->num_bearer_context];
   uint16_t                                read = 0;
   nw_rc_t                                   rc;
 
@@ -602,7 +602,7 @@ gtpv2c_bearer_context_within_create_bearer_response_ie_get (
   DevAssert (bearer_contexts);
   DevAssert (0 <= bearer_contexts->num_bearer_context);
   DevAssert (MSG_MODIFY_BEARER_REQUEST_MAX_BEARER_CONTEXTS >= bearer_contexts->num_bearer_context);
-  bearer_context_within_create_bearer_response_t        *bearer_context = &bearer_contexts->bearer_contexts[bearer_contexts->num_bearer_context];
+  bearer_context_within_create_bearer_response_t        *bearer_context = &bearer_contexts->bearer_context[bearer_contexts->num_bearer_context];
   uint16_t                                 read = 0;
   nw_rc_t                                   rc;
 
@@ -690,7 +690,7 @@ gtpv2c_bearer_context_to_be_updated_within_update_bearer_request_ie_get (
   DevAssert (bearer_contexts );
   DevAssert (0 <= bearer_contexts->num_bearer_context);
   DevAssert (MSG_UPDATE_BEARER_REQUEST_MAX_BEARER_CONTEXTS >= bearer_contexts->num_bearer_context);
-  bearer_context_to_be_updated_t        *bearer_context  = &bearer_contexts->bearer_contexts[bearer_contexts->num_bearer_context];
+  bearer_context_to_be_updated_t        *bearer_context  = &bearer_contexts->bearer_context[bearer_contexts->num_bearer_context];
   uint16_t                                 read = 0;
   nw_rc_t                                   rc;
 
@@ -811,7 +811,7 @@ gtpv2c_bearer_context_within_update_bearer_response_ie_get (
   DevAssert (bearer_contexts);
   DevAssert (0 <= bearer_contexts->num_bearer_context);
   DevAssert (MSG_MODIFY_BEARER_REQUEST_MAX_BEARER_CONTEXTS >= bearer_contexts->num_bearer_context);
-  bearer_context_within_update_bearer_response_t        *bearer_context = &bearer_contexts->bearer_contexts[bearer_contexts->num_bearer_context];
+  bearer_context_within_update_bearer_response_t        *bearer_context = &bearer_contexts->bearer_context[bearer_contexts->num_bearer_context];
   uint16_t                                 read = 0;
   nw_rc_t                                   rc;
 
@@ -875,7 +875,7 @@ gtpv2c_failed_bearer_contexts_within_delete_bearer_request_ie_get (
   DevAssert (bearer_contexts );
   DevAssert (0 <= bearer_contexts->num_bearer_context);
   DevAssert (MSG_DELETE_BEARER_REQUEST_MAX_FAILED_BEARER_CONTEXTS >= bearer_contexts->num_bearer_context);
-  bearer_context_to_be_removed_t           *bearer_context  = &bearer_contexts->bearer_contexts[bearer_contexts->num_bearer_context];
+  bearer_context_to_be_removed_t           *bearer_context  = &bearer_contexts->bearer_context[bearer_contexts->num_bearer_context];
   uint16_t                                   read = 0;
   nw_rc_t                                   rc;
 
@@ -1010,7 +1010,7 @@ gtpv2c_bearer_context_within_delete_bearer_response_ie_get (
   DevAssert (bearer_contexts);
   DevAssert (0 <= bearer_contexts->num_bearer_context);
   DevAssert (MSG_MODIFY_BEARER_REQUEST_MAX_BEARER_CONTEXTS >= bearer_contexts->num_bearer_context);
-  bearer_context_within_delete_bearer_response_t        *bearer_context = &bearer_contexts->bearer_contexts[bearer_contexts->num_bearer_context];
+  bearer_context_within_delete_bearer_response_t        *bearer_context = &bearer_contexts->bearer_context[bearer_contexts->num_bearer_context];
   uint16_t                                 read = 0;
   nw_rc_t                                   rc;
 
@@ -1108,7 +1108,7 @@ gtpv2c_bearer_context_to_be_modified_within_modify_bearer_request_ie_get (
   DevAssert (bearer_contexts);
   DevAssert (0 <= bearer_contexts->num_bearer_context);
   DevAssert (MSG_MODIFY_BEARER_REQUEST_MAX_BEARER_CONTEXTS >= bearer_contexts->num_bearer_context);
-  bearer_context_to_be_modified_t        *bearer_context = &bearer_contexts->bearer_contexts[bearer_contexts->num_bearer_context];
+  bearer_context_to_be_modified_t        *bearer_context = &bearer_contexts->bearer_context[bearer_contexts->num_bearer_context];
   uint16_t                                 read = 0;
   nw_rc_t                                   rc;
 
@@ -1178,7 +1178,7 @@ gtpv2c_bearer_context_to_be_removed_within_modify_bearer_request_ie_get (
   DevAssert (bearer_contexts );
   DevAssert (0 <= bearer_contexts->num_bearer_context);
   DevAssert (MSG_MODIFY_BEARER_REQUEST_MAX_BEARER_CONTEXTS >= bearer_contexts->num_bearer_context);
-  bearer_context_to_be_removed_t           *bearer_context  = &bearer_contexts->bearer_contexts[bearer_contexts->num_bearer_context];
+  bearer_context_to_be_removed_t           *bearer_context  = &bearer_contexts->bearer_context[bearer_contexts->num_bearer_context];
   uint16_t                                   read = 0;
   nw_rc_t                                   rc;
 
@@ -1217,7 +1217,7 @@ gtpv2c_bearer_context_modified_ie_get (
   DevAssert (bearer_contexts);
   DevAssert (0 <= bearer_contexts->num_bearer_context);
   DevAssert (MSG_MODIFY_BEARER_REQUEST_MAX_BEARER_CONTEXTS >= bearer_contexts->num_bearer_context);
-  bearer_context_modified_t               *bearer_context = &bearer_contexts->bearer_contexts[bearer_contexts->num_bearer_context];
+  bearer_context_modified_t               *bearer_context = &bearer_contexts->bearer_context[bearer_contexts->num_bearer_context];
   uint16_t                                 read = 0;
   nw_rc_t                                   rc;
 
@@ -1276,7 +1276,7 @@ gtpv2c_bearer_context_marked_for_removal_ie_get (
   DevAssert (bearer_contexts);
   DevAssert (0 <= bearer_contexts->num_bearer_context);
   DevAssert (MSG_CREATE_SESSION_REQUEST_MAX_BEARER_CONTEXTS >= bearer_contexts->num_bearer_context);
-  bearer_context_marked_for_removal_t              *bearer_context = &bearer_contexts->bearer_contexts[bearer_contexts->num_bearer_context];
+  bearer_context_marked_for_removal_t              *bearer_context = &bearer_contexts->bearer_context[bearer_contexts->num_bearer_context];
   uint16_t                                 read = 0;
   nw_rc_t                                   rc;
 

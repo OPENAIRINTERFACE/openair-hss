@@ -96,7 +96,7 @@ EmmDeregisteredInitiated (
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
-  emm_data_context_t                          *emm_ctx = evt->ctx;
+  emm_data_context_t                     *emm_ctx 	= emm_data_context_get(&_emm_data, evt->ue_id);
 
   assert (emm_fsm_get_state (emm_ctx) == EMM_DEREGISTERED_INITIATED);
 
@@ -154,7 +154,7 @@ EmmDeregisteredInitiated (
 
   case _EMMREG_DETACH_CNF:
     MSC_LOG_RX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "_EMMREG_DETACH_CNF ue id " MME_UE_S1AP_ID_FMT " ", evt->ue_id);
-    rc = emm_fsm_set_state (evt->ue_id, evt->ctx, EMM_DEREGISTERED);
+    rc = emm_fsm_set_state (evt->ue_id, emm_ctx, EMM_DEREGISTERED);
 
     /** No specific procedure is initiated. */
 

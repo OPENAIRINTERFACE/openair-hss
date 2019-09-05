@@ -102,9 +102,13 @@
 int EmmDeregistered (emm_reg_t * const evt)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
-  int                                     rc = RETURNerror;
-  emm_data_context_t                          *emm_ctx = evt->ctx;
+  int                                     rc 		= RETURNerror;
+  emm_data_context_t                     *emm_ctx 	= emm_data_context_get(&_emm_data, evt->ue_id);
 
+  if(!emm_ctx){
+	  OAILOG_ERROR (LOG_NAS_EMM, "UE " MME_UE_S1AP_ID_FMT " has not emm context. \n", evt->ue_id);
+	  OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
+  }
   if (emm_fsm_get_state (emm_ctx) != EMM_DEREGISTERED){
     OAILOG_ERROR (LOG_NAS_EMM, "EMM-FSM state of UE " MME_UE_S1AP_ID_FMT " is not EMM_DEREGISTERED - instead (%d). \n", emm_ctx->ue_id, emm_fsm_get_state(emm_ctx));
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
@@ -117,7 +121,7 @@ int EmmDeregistered (emm_reg_t * const evt)
      * An EMM common procedure has been initiated;
      * enter state EMM-COMMON-PROCEDURE-INITIATED.
      */
-    rc = emm_fsm_set_state (evt->ue_id, evt->ctx, EMM_COMMON_PROCEDURE_INITIATED);
+    rc = emm_fsm_set_state (evt->ue_id, emm_ctx, EMM_COMMON_PROCEDURE_INITIATED);
     MSC_LOG_RX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMREG_COMMON_PROC_REQ ue id " MME_UE_S1AP_ID_FMT " ", evt->ue_id);
     break;
 
@@ -222,8 +226,8 @@ int EmmDeregistered (emm_reg_t * const evt)
        /*
         * Stop timer T3450 (if exists).
         */
-       void * timer_callback_args = NULL;
-       nas_stop_T3450(evt->u.tau.proc->ue_id, &evt->u.tau.proc->T3450, timer_callback_args);
+       void * unused = NULL;
+       nas_stop_T3450(evt->u.tau.proc->ue_id, &evt->u.tau.proc->T3450, unused);
 
        if ((emm_ctx) && (evt->u.tau.proc->emm_spec_proc.emm_proc.base_proc.abort)) { /**< Currently, will perform IMPLICIT detach. */
          (*evt->u.tau.proc->emm_spec_proc.emm_proc.base_proc.abort)((nas_emm_base_proc_t*) emm_ctx, evt->u.tau.proc); // &evt->u.tau.proc->emm_spec_proc.emm_proc.base_proc);

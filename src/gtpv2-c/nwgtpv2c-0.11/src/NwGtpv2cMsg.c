@@ -148,7 +148,7 @@ extern                                  "C" {
   NW_IN nw_gtpv2c_msg_handle_t hMsg) {
     // warning: unused variable ‘pStack’ [-Wunused-variable]: NwGtpv2cStackT                         *pStack = (NwGtpv2cStackT *) hGtpcStackHandle;
 
-    OAILOG_DEBUG (LOG_GTPV2C, "Purging message %" PRIxPTR "!\n", hMsg);
+    OAILOG_DEBUG (LOG_GTPV2C, "Purging message 0x%" PRIxPTR "!\n", hMsg);
     ((nw_gtpv2c_msg_t *) hMsg)->next = gpGtpv2cMsgPool;
     gpGtpv2cMsgPool = (nw_gtpv2c_msg_t *) hMsg;
     OAILOG_DEBUG (LOG_GTPV2C, "Message pool %" PRIxPTR "! Next element %" PRIxPTR "! \n",

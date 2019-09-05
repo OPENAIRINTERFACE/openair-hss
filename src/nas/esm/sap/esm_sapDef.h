@@ -98,7 +98,8 @@ typedef struct esm_activate_eps_bearer_context_s {
   pdn_cid_t                        pdn_cid;
   ebi_t                            linked_ebi;
   bearer_context_to_be_created_t  *bc_tbc;
-  bool 							   pending_pdn_proc;
+  bool                             retry;
+  int							   retx_count;
 } esm_activate_eps_bearer_context_t;
 
 typedef struct esm_modify_eps_bearer_context_s {
@@ -107,7 +108,8 @@ typedef struct esm_modify_eps_bearer_context_s {
   bearer_context_to_be_updated_t  *bc_tbu;
   ambr_t                           apn_ambr;
   pti_t                            pti;
-  bool 							   pending_pdn_proc;
+  bool                             retry;
+  int							   retx_count;
 } esm_modify_eps_bearer_context_t;
 
 typedef struct esm_deactivate_eps_bearer_context_s {
@@ -115,9 +117,11 @@ typedef struct esm_deactivate_eps_bearer_context_s {
   ebi_t                            linked_ebi;
   ebi_t                            ded_ebi;
   pti_t                            pti;
-  bool 							   pending_pdn_proc;
+  bool                             retry;
+  int							   retx_count;
 } esm_deactivate_eps_bearer_context_t;
 
+esm_timeout_ll_cb_arg_t      				eps_bearer_context_ll_cb_arg;
 
 typedef struct esm_bearer_resource_allocate_rej_s{
   ebi_t             ebi;
@@ -173,12 +177,14 @@ typedef union {
   esm_cn_pdn_config_res_t        *pdn_config_res;
   esm_cn_pdn_connectivity_res_t  *pdn_connectivity_res;
   esm_cn_pdn_disconnect_res_t    *pdn_disconnect_res;
-  uintptr_t                       esm_proc_timeout;
 
   /** Non Pointer structures. */
   esm_activate_eps_bearer_context_t         eps_bearer_context_activate;
   esm_modify_eps_bearer_context_t           eps_bearer_context_modify;
   esm_deactivate_eps_bearer_context_t       eps_bearer_context_deactivate;
+
+  /** Timeout LL Callback. */
+  esm_timeout_ll_cb_arg_t      				eps_bearer_context_ll_cb_arg;
 } esm_sap_data_t;
 
 struct emm_data_context_s;

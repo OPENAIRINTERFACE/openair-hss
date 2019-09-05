@@ -149,7 +149,7 @@ nas_esm_proc_bearer_context_t *_esm_proc_get_bearer_context_procedure(mme_ue_s1a
 esm_ebr_state _esm_ebr_get_status(mme_ue_s1ap_id_t ue_id, ebi_t ebi){
   ue_context_t * ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, ue_id);
   if(ue_context){
-    bearer_context_t * bearer_context = NULL;
+    bearer_context_new_t * bearer_context = NULL;
     mme_app_get_session_bearer_context_from_all(ue_context, ebi, &bearer_context);
     if(bearer_context){
       return bearer_context->esm_ebr_context.status;

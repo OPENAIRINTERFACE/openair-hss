@@ -334,7 +334,7 @@ s10_pdn_connection_ie_set ( nw_gtpv2c_msg_handle_t * msg, void * arg){
 
   /** Set the PDN connection (another concatenated grouped IE). */
   for(int num_bc = 0; num_bc < pdn_connection->bearer_context_list.num_bearer_context; num_bc++){
-    bearer_context_to_be_created_t * bc_tbc = &pdn_connection->bearer_context_list.bearer_contexts[num_bc];
+    bearer_context_to_be_created_t * bc_tbc = &pdn_connection->bearer_context_list.bearer_context[num_bc];
     s10_bearer_context_to_create_ie_set(msg, bc_tbc);
   }
 
@@ -978,7 +978,7 @@ s10_bearer_context_to_be_created_ie_get (
   DevAssert (bearer_contexts );
   DevAssert (0 <= bearer_contexts->num_bearer_context);
   DevAssert (MSG_FORWARD_RELOCATION_REQUEST_MAX_BEARER_CONTEXTS >= bearer_contexts->num_bearer_context);
-  bearer_context_to_be_created_t          *bearer_context  = &bearer_contexts->bearer_contexts[bearer_contexts->num_bearer_context];
+  bearer_context_to_be_created_t          *bearer_context  = &bearer_contexts->bearer_context[bearer_contexts->num_bearer_context];
   uint16_t                                 read = 0;
   nw_rc_t                                  rc;
 
@@ -1082,7 +1082,7 @@ s10_bearer_context_to_be_modified_ie_get (
   DevAssert (bearer_contexts);
   DevAssert (0 <= bearer_contexts->num_bearer_context);
   DevAssert (MSG_MODIFY_BEARER_REQUEST_MAX_BEARER_CONTEXTS >= bearer_contexts->num_bearer_context);
-  bearer_context_to_be_modified_t        *bearer_context = &bearer_contexts->bearer_contexts[bearer_contexts->num_bearer_context];
+  bearer_context_to_be_modified_t        *bearer_context = &bearer_contexts->bearer_context[bearer_contexts->num_bearer_context];
   uint16_t                                 read = 0;
   nw_rc_t                                   rc;
 

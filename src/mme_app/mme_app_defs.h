@@ -36,17 +36,27 @@
 #define FILE_MME_APP_DEFS_SEEN
 #include "intertask_interface.h"
 #include "mme_app_ue_context.h"
+#include "mme_app_session_context.h"
+#define CHANGEABLE_VALUE 4096
 
+#define MAX_UE_BEARER mme_config.max_ues
 typedef struct mme_app_desc_s {
   /* UE contexts + some statistics variables */
-  mme_ue_context_t mme_ue_contexts;
+  mme_ue_context_t		 mme_ue_contexts;
+  mme_ue_session_pool_t  mme_ue_session_pools;
 
   long statistic_timer_id;
   uint32_t statistic_timer_period;
 
+  /** Create an array of UE session pools. */
+  ue_context_t 			ue_contexts[CHANGEABLE_VALUE];
+  STAILQ_HEAD(ue_contexts_list_s, ue_context_s)  mme_ue_contexts_list;
+
+  /** Create an array of UE session pools. */
+  ue_session_pool_t ue_session_pools[CHANGEABLE_VALUE];
+  STAILQ_HEAD(ue_session_pools_list_s, ue_session_pool_s)  mme_ue_session_pools_list;
 
   uint32_t mme_mobility_management_timer_period;
-
   /* Reader/writer lock */
   pthread_rwlock_t rw_lock;
 
@@ -108,7 +118,7 @@ void mme_app_handle_nas_erab_setup_req (itti_nas_erab_setup_req_t * const itti_n
 
 void mme_app_handle_nas_erab_modify_req (itti_nas_erab_modify_req_t * const itti_nas_erab_modify_setup_req);
 
-void mme_app_handle_nas_erab_release_req (mme_ue_s1ap_id_t ue_id, ebi_t ebi, bstring nas_msg);
+void mme_app_handle_nas_erab_release_req (mme_ue_s1ap_id_t ue_id, ebi_t ebi, bool retry, int retx_count, bstring nas_msg);
 
 void mme_app_handle_delete_session_rsp	     (const itti_s11_delete_session_response_t * const delete_sess_respP);
 
@@ -203,10 +213,10 @@ void mme_app_handle_s10_context_response( itti_s10_context_response_t * const co
 
 void mme_app_handle_s10_context_acknowledge( const itti_s10_context_acknowledge_t * const context_acknowledge_pP );
 
+int mme_app_trigger_paging_due_signaling(const mme_ue_s1ap_id_t ue_id);
 
 /** Paging Functions. */
-
-void mme_app_handle_downlink_data_notification (const itti_s11_downlink_data_notification_t * const saegw_dl_data_ntf_pP);
+int mme_app_handle_downlink_data_notification (const itti_s11_downlink_data_notification_t * const saegw_dl_data_ntf_pP);
 
 #define mme_stats_read_lock(mMEsTATS)  pthread_rwlock_rdlock(&(mMEsTATS)->rw_lock)
 #define mme_stats_write_lock(mMEsTATS) pthread_rwlock_wrlock(&(mMEsTATS)->rw_lock)

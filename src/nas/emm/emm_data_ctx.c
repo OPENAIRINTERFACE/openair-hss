@@ -648,6 +648,51 @@ inline void emm_ctx_update_from_mm_eps_context(emm_data_context_t * const emm_ct
   OAILOG_FUNC_OUT (LOG_NAS_EMM);
 }
 
+/** Update the EMM context from the received MM Context during Handover/TAU procedure. */
+//   todo: _clear_emm_ctxt(emm_ctx_p->ue_id);
+inline void temp_sec_ctx_from_mm_eps_context(emm_security_context_t * const emm_sec_ctx_p, void* const _mm_eps_ctxt){
+  int                                     rc = RETURNerror;
+  int                                     mme_eea = NAS_SECURITY_ALGORITHMS_EEA0;
+  int                                     mme_eia = NAS_SECURITY_ALGORITHMS_EIA0;
+
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
+
+  DevAssert(emm_sec_ctx_p);
+  DevAssert(_mm_eps_ctxt);
+
+  /** Update the EMM context and the Security context from a received MM context. */
+  mm_context_eps_t *mm_eps_ctxt = (mm_context_eps_t*)_mm_eps_ctxt;
+
+  /** NAS counts. */
+  uint8_t                   k_asme_temp[32];
+
+  memcpy (k_asme_temp, mm_eps_ctxt->k_asme, AUTH_KASME_SIZE);
+  OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Received Vector %u from S10 Context Response from Source MME:\n", 0);
+  OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Received KASME .: " KASME_FORMAT " " KASME_FORMAT "\n",
+      KASME_DISPLAY_1 (k_asme_temp), KASME_DISPLAY_2 (mm_eps_ctxt->k_asme));
+  ksi_t eksi = 0;
+
+  /**
+   * Don't start the authentication procedure.
+   * Validate the rest of the parameters which were received with Authentication Response from UE in normal attach.
+   */
+  emm_sec_ctx_p->eksi = mm_eps_ctxt->ksi;
+  emm_sec_ctx_p->ul_count = mm_eps_ctxt->nas_ul_count;
+  emm_sec_ctx_p->ul_count.overflow = mm_eps_ctxt->nas_ul_count.overflow;
+  emm_sec_ctx_p->dl_count = mm_eps_ctxt->nas_dl_count;
+
+  /** Set the selected encryption and integrity algorithms from the S10 Context Request. */
+  emm_sec_ctx_p->selected_algorithms.encryption = mm_eps_ctxt->nas_cipher_alg;
+  emm_sec_ctx_p->selected_algorithms.integrity = mm_eps_ctxt->nas_int_alg;
+  emm_sec_ctx_p->sc_type = SECURITY_CTX_TYPE_FULL_NATIVE;
+  derive_key_nas (NAS_INT_ALG, emm_sec_ctx_p->selected_algorithms.integrity,  k_asme_temp, emm_sec_ctx_p->knas_int);
+  derive_key_nas (NAS_ENC_ALG, emm_sec_ctx_p->selected_algorithms.encryption, k_asme_temp, emm_sec_ctx_p->knas_enc);
+  emm_sec_ctx_p->ncc      = mm_eps_ctxt->ncc;
+  memcpy(emm_sec_ctx_p->nh_conj, mm_eps_ctxt->nh, 32);
+  /** All remaining capabilities should be set with the TAC/Attach Request. */
+  OAILOG_FUNC_OUT (LOG_NAS_EMM);
+}
+
 //------------------------------------------------------------------------------
 struct emm_data_context_s              *
 emm_data_context_get (
@@ -836,7 +881,7 @@ emm_data_context_remove_mobile_ids (
 //
 
 //------------------------------------------------------------------------------
-void emm_init_context(struct emm_data_context_s * const emm_ctx, const bool init_esm_ctxt)
+void emm_init_context(struct emm_data_context_s * const emm_ctx)
 {
   emm_ctx->_emm_fsm_state  = EMM_DEREGISTERED;
 
@@ -856,12 +901,6 @@ void emm_init_context(struct emm_data_context_s * const emm_ctx, const bool init
   emm_ctx_clear_ue_nw_cap(emm_ctx);
   emm_ctx_clear_drx_parameter(emm_ctx);
 //  emm_ctx_clear_pending_current_drx_parameter(&emm_ctx);
-//  emm_ctx_clear_eps_bearer_context_status(emm_ctx); todo
-
-  if (init_esm_ctxt) {
-    // todo: init
-//    esm_init_context(&emm_ctx->esm_ctx);
-  }
 }
 
 //------------------------------------------------------------------------------
@@ -877,12 +916,12 @@ int emm_data_context_update_security_parameters(const mme_ue_s1ap_id_t ue_id,
   ue_context_t                           *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, ue_id);
 
   if (!emm_ctx) {
-    OAILOG_ERROR(LOG_NAS_EMM, "EMM-CTX - no EMM context existing for UE id " MME_UE_S1AP_ID_FMT ". Cannot update the AS security. \n", ue_context->mme_ue_s1ap_id);
+    OAILOG_ERROR(LOG_NAS_EMM, "EMM-CTX - no EMM context existing for UE id " MME_UE_S1AP_ID_FMT ". Cannot update the AS security. \n", ue_context->privates.mme_ue_s1ap_id);
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
   }
   if (!IS_EMM_CTXT_VALID_SECURITY(emm_ctx)) {
     OAILOG_ERROR(LOG_NAS_EMM, "EMM-CTX - no valid security context exist EMM context for UE id " MME_UE_S1AP_ID_FMT " and IMSI " IMSI_64_FMT ". Cannot update the AS security. \n",
-        ue_context->mme_ue_s1ap_id, emm_ctx->_imsi64);
+        ue_context->privates.mme_ue_s1ap_id, emm_ctx->_imsi64);
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
   }
 
@@ -905,7 +944,7 @@ int emm_data_context_update_security_parameters(const mme_ue_s1ap_id_t ue_id,
 //  if(!emm_ctx->_security.ncc){
 //    /** Set the pending deactivation flag of the ncc. Will start from 0 then. */
 //    ue_context->pending_bearer_deactivation = true;
-//    OAILOG_ERROR(LOG_NAS_EMM, "EMM-CTX - NCC reached 7. Activating the pending bearer deactivation for UE context with ueId " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
+//    OAILOG_ERROR(LOG_NAS_EMM, "EMM-CTX - NCC reached 7. Activating the pending bearer deactivation for UE context with ueId " MME_UE_S1AP_ID_FMT ". \n", ue_context->privates.mme_ue_s1ap_id);
 //  }
 //  if(!emm_ctx->_security.ncc){
 //
@@ -929,7 +968,7 @@ int emm_data_context_update_security_parameters(const mme_ue_s1ap_id_t ue_id,
 //  UNLOCK_EMM_CONTEXT(emm_ctx);
 
   OAILOG_INFO(LOG_NAS_EMM, "EMM-CTX - Updated AS security parameters for EMM context with UE id " MME_UE_S1AP_ID_FMT " and IMSI " IMSI_64_FMT ". \n",
-      ue_context->mme_ue_s1ap_id, emm_ctx->_imsi64);
+      ue_context->privates.mme_ue_s1ap_id, emm_ctx->_imsi64);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
 }
 
@@ -961,7 +1000,7 @@ void mm_ue_eps_context_update_security_parameters(mme_ue_s1ap_id_t ue_id,
 //  if(!mm_eps_ue_context->ncc){
 //    /** Set the pending deactivation flag of the ncc. Will start from 0 then. */
 //    ue_context->pending_bearer_deactivation = true;
-//    OAILOG_ERROR(LOG_NAS_EMM, "EMM-CTX - NCC reached 7. Activating the pending bearer deactivation for UE context with ueId " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
+//    OAILOG_ERROR(LOG_NAS_EMM, "EMM-CTX - NCC reached 7. Activating the pending bearer deactivation for UE context with ueId " MME_UE_S1AP_ID_FMT ". \n", ue_context->privates.mme_ue_s1ap_id);
 //  }
 //  if(!emm_ctx->_security.ncc){
 //
@@ -982,7 +1021,7 @@ void mm_ue_eps_context_update_security_parameters(mme_ue_s1ap_id_t ue_id,
 //    derive_nh(emm_ctx->_vector[emm_ctx->_security.vector_index].kasme, emm_ctx->_vector[emm_ctx->_security.vector_index].nh_conj);
 //    OAILOG_STREAM_HEX(OAILOG_LEVEL_DEBUG, LOG_NAS_EMM, "New NH_CONJ for ncc1: ", emm_ctx->_vector[emm_ctx->_security.vector_index].nh_conj, 32);
 //  }
-  OAILOG_INFO(LOG_NAS_EMM, "EMM-CTX - Updated MM EPS UE context security context parameters for UE context with ueId " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
+  OAILOG_INFO(LOG_NAS_EMM, "EMM-CTX - Updated MM EPS UE context security context parameters for UE context with ueId " MME_UE_S1AP_ID_FMT ". \n", ue_context->privates.mme_ue_s1ap_id);
   OAILOG_FUNC_OUT(LOG_NAS_EMM);
 }
 
@@ -1010,7 +1049,7 @@ int _start_context_request_procedure(struct emm_data_context_s *emm_context, nas
   ctx_req_proc->cn_proc.base_proc.time_out = s10_context_req_timer_expiry_handler;
   ctx_req_proc->ue_id = ue_id;
 
-  nas_start_Ts10_ctx_req( ctx_req_proc->ue_id, &ctx_req_proc->timer_s10, ctx_req_proc->cn_proc.base_proc.time_out, emm_context);
+  nas_start_Ts10_ctx_req( ctx_req_proc->ue_id, &ctx_req_proc->timer_s10, ctx_req_proc->cn_proc.base_proc.time_out, (void*)ue_id);
 
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
 }
@@ -1152,21 +1191,7 @@ void nas_stop_Ts10_ctx_res(const mme_ue_s1ap_id_t ue_id, struct nas_timer_s * co
 void nas_stop_T_retry_specific_procedure(const mme_ue_s1ap_id_t ue_id, struct nas_timer_s * const T_retry, void *timer_callback_args)
 {
   if ((T_retry) && (T_retry->id != NAS_TIMER_INACTIVE_ID)) {
-    ue_description_t * ue_ref = s1ap_is_ue_mme_id_in_list(ue_id);
-//    OAILOG_DEBUG(LOG_NAS_EMM, "EMM-PROC (NASx)  -  * * * * * (0) ueREF %p has mmeId " MME_UE_S1AP_ID_FMT ", enbId " ENB_UE_S1AP_ID_FMT " state %d and eNB_ref %p. \n",
-//        ue_ref, ue_ref->mme_ue_s1ap_id, ue_ref->enb_ue_s1ap_id, ue_ref->s1_ue_state, ue_ref->enb);
-//
-//    OAILOG_DEBUG (LOG_NAS_EMM, "T_retry timer before %p \n", T_retry);
-//    OAILOG_DEBUG (LOG_NAS_EMM, "T_retry timer id %d (before) \n", T_retry->id);
-
     T_retry->id = nas_timer_stop(T_retry->id, &timer_callback_args);
-
-//    OAILOG_DEBUG (LOG_NAS_EMM, "T_retry timer after %p \n", T_retry);
-//    OAILOG_DEBUG (LOG_NAS_EMM, "T_retry timer id %d (after) \n", T_retry->id);
-//    OAILOG_DEBUG(LOG_NAS_EMM, "EMM-PROC (NASx)  -  * * * * * (1) ueREF %p has mmeId " MME_UE_S1AP_ID_FMT ", enbId " ENB_UE_S1AP_ID_FMT " state %d and eNB_ref %p. \n",
-//           ue_ref, ue_ref->mme_ue_s1ap_id, ue_ref->enb_ue_s1ap_id, ue_ref->s1_ue_state, ue_ref->enb);
-
-    OAILOG_DEBUG (LOG_NAS_EMM, "T_retry (%p) stopped UE " MME_UE_S1AP_ID_FMT "\n", T_retry, ue_id);
     MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 T_retry stopped UE " MME_UE_S1AP_ID_FMT " ", ue_id);
     OAILOG_DEBUG (LOG_NAS_EMM, "T_retry stopped UE " MME_UE_S1AP_ID_FMT "\n", ue_id);
   }

@@ -104,7 +104,7 @@ emm_main_initialize (
   _emm_data.ctx_coll_imsi  = hashtable_ts_create (mme_config.max_ues, NULL, hash_free_int_func, b);
   btrunc(b, 0);
   bassigncstr(b, "emm_data.ctx_coll_guti");
-  _emm_data.ctx_coll_guti  = obj_hashtable_ts_create (mme_config.max_ues, NULL, NULL, hash_free_func, b);
+  _emm_data.ctx_coll_guti  = obj_hashtable_ts_create (mme_config.max_ues, NULL, NULL, hash_free_int_func, b);
   bdestroy_wrapper(&b);
   OAILOG_FUNC_OUT(LOG_NAS_EMM);
 }
@@ -128,9 +128,9 @@ emm_main_cleanup (
   void)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
-  hashtable_ts_destroy(_emm_data.ctx_coll_ue_id);
   hashtable_ts_destroy(_emm_data.ctx_coll_imsi);
   obj_hashtable_ts_destroy(_emm_data.ctx_coll_guti);
+  hashtable_ts_destroy(_emm_data.ctx_coll_ue_id);
   /** todo: Remove all EMM procedures. */
   OAILOG_FUNC_OUT(LOG_NAS_EMM);
 }

@@ -98,7 +98,7 @@ int EmmCommonProcedureInitiated (emm_reg_t * const evt)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
-  emm_data_context_t                     *emm_ctx = evt->ctx;
+  emm_data_context_t                     *emm_ctx = emm_data_context_get(&_emm_data, evt->ue_id);
 
   assert (emm_fsm_get_state (emm_ctx) == EMM_COMMON_PROCEDURE_INITIATED);
 
@@ -153,12 +153,13 @@ int EmmCommonProcedureInitiated (emm_reg_t * const evt)
         rc = (*evt->u.common.common_proc->emm_proc.base_proc.fail_out)(emm_ctx, &evt->u.common.common_proc->emm_proc.base_proc);
       }
 
-      if ((rc != RETURNerror) && (emm_ctx) && (evt->u.common.common_proc->emm_proc.base_proc.failure_notif)) {
-        rc = (*evt->u.common.common_proc->emm_proc.base_proc.failure_notif)(emm_ctx);
+      if((emm_ctx = emm_data_context_get(&_emm_data, evt->ue_id))){
+    	  if ((rc != RETURNerror) && (evt->u.common.common_proc->emm_proc.base_proc.failure_notif)) {
+    		  rc = (*evt->u.common.common_proc->emm_proc.base_proc.failure_notif)(emm_ctx);
+    	  }
       }
-
       /** Check if the emm context still exists. */
-      if(emm_data_context_get(&_emm_data, evt->ue_id)){
+      if((emm_ctx = emm_data_context_get(&_emm_data, evt->ue_id))){
         if (evt->free_proc) {
           nas_delete_common_procedure(emm_ctx, &evt->u.common.common_proc);
         }
@@ -168,7 +169,6 @@ int EmmCommonProcedureInitiated (emm_reg_t * const evt)
     } else {
       MSC_LOG_RX_DISCARDED_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "_EMMREG_COMMON_PROC_REJ ue id " MME_UE_S1AP_ID_FMT " ", evt->ue_id);
     }
-
     break;
 
   case _EMMREG_COMMON_PROC_ABORT:
@@ -182,23 +182,29 @@ int EmmCommonProcedureInitiated (emm_reg_t * const evt)
         (*evt->u.common.common_proc->emm_proc.base_proc.abort)(emm_ctx, &evt->u.common.common_proc->emm_proc.base_proc);
       }
 
-      rc = emm_fsm_set_state (evt->ue_id, emm_ctx, ((nas_emm_proc_t*)evt->u.common.common_proc)->previous_emm_fsm_state);
-
-      /*
-       *
-       * We will always check the notification flag, depending on the severity of the error.
-       * May perform an implicit detach (and removing all procedures).
-       */
-      if ((rc != RETURNerror) && (emm_ctx) && (evt->notify) && (evt->u.common.common_proc->emm_proc.base_proc.failure_notif)) {
-        (*evt->u.common.common_proc->emm_proc.base_proc.failure_notif)(emm_ctx);
-      }
       /** Check if the emm context still exists. */
-      if(emm_data_context_get(&_emm_data, evt->ue_id)){
-        if (evt->free_proc) {
-          nas_delete_common_procedure(emm_ctx, &evt->u.common.common_proc);
-        }
+      if((emm_ctx = emm_data_context_get(&_emm_data, evt->ue_id))){
+          rc = emm_fsm_set_state (evt->ue_id, emm_ctx, ((nas_emm_proc_t*)evt->u.common.common_proc)->previous_emm_fsm_state);
+          /*
+           *
+           * We will always check the notification flag, depending on the severity of the error.
+           * May perform an implicit detach (and removing all procedures).
+           */
+          if ((rc != RETURNerror) && (emm_ctx) && (evt->notify) && (evt->u.common.common_proc->emm_proc.base_proc.failure_notif)) {
+            (*evt->u.common.common_proc->emm_proc.base_proc.failure_notif)(emm_ctx);
+          }
+          if((emm_ctx = emm_data_context_get(&_emm_data, evt->ue_id))){
+        	  if (evt->free_proc) {
+        		  nas_delete_common_procedure(emm_ctx, &evt->u.common.common_proc);
+        	  }
+          } else {
+        	  OAILOG_INFO(LOG_NAS_EMM, "No EMM context for UE " MME_UE_S1AP_ID_FMT " exists after fail handler for common procedure. "
+        			  "Not continuing further. \n", evt->ue_id);
+          }
       }else{
         /** No EMM context exist. Not freeing any procedures. */
+    	OAILOG_INFO(LOG_NAS_EMM, "No EMM context for UE " MME_UE_S1AP_ID_FMT " exists after aborting common procedure. "
+    			"Not continuing further. \n", evt->ue_id);
       }
     } else {
       MSC_LOG_RX_DISCARDED_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "_EMMREG_COMMON_PROC_ABORT ue id " MME_UE_S1AP_ID_FMT " ", evt->ue_id);
@@ -214,7 +220,7 @@ int EmmCommonProcedureInitiated (emm_reg_t * const evt)
      * context activated;
      * enter state EMM-REGISTERED.
      */
-    rc = emm_fsm_set_state (evt->ue_id, evt->ctx, EMM_REGISTERED);
+    rc = emm_fsm_set_state (evt->ue_id, emm_ctx, EMM_REGISTERED);
     assert(rc == RETURNok);
 
     /*
@@ -292,7 +298,7 @@ int EmmCommonProcedureInitiated (emm_reg_t * const evt)
      * Initial Context Setup Response might have been received meanwhile.
      * todo: add locks
      */
-    rc = emm_fsm_set_state (evt->ue_id, evt->ctx, EMM_REGISTERED);
+    rc = emm_fsm_set_state (evt->ue_id, emm_ctx, EMM_REGISTERED);
     assert(rc == RETURNok);
 
     /*
@@ -332,8 +338,8 @@ int EmmCommonProcedureInitiated (emm_reg_t * const evt)
       /*
        * Stop timer T3450 (if exists).
        */
-      void * timer_callback_args = NULL;
-      nas_stop_T3450(evt->u.tau.proc->ue_id, &evt->u.tau.proc->T3450, timer_callback_args);
+      void * unused = NULL;
+      nas_stop_T3450(evt->u.tau.proc->ue_id, &evt->u.tau.proc->T3450, unused);
 
       if ((emm_ctx) && (evt->u.tau.proc->emm_spec_proc.emm_proc.base_proc.abort)) { /**< Currently, will perform IMPLICIT detach. */
         (*evt->u.tau.proc->emm_spec_proc.emm_proc.base_proc.abort)((nas_emm_base_proc_t*) emm_ctx, evt->u.tau.proc); // &evt->u.tau.proc->emm_spec_proc.emm_proc.base_proc);

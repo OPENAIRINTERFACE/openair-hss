@@ -47,9 +47,11 @@
 #include "common_defs.h"
 #include "secu_defs.h"
 #include "mme_app_ue_context.h"
+#include "mme_app_session_context.h"
 #include "nas_itti_messaging.h"
 
 #include "nas_emm_proc.h"
+#include "esm_cause.h"
 #include "esm_proc.h"
 #include "mme_app_defs.h"
 
@@ -123,7 +125,9 @@ nas_itti_dl_data_req (
 //------------------------------------------------------------------------------
 int
 nas_itti_erab_setup_req (const mme_ue_s1ap_id_t ue_id,
-    const ebi_t ebi,
+    const ebi_t 		   ebi,
+	const bool			   retry,
+	const int			   retx_count,
     const bitrate_t        mbr_dl,
     const bitrate_t        mbr_ul,
     const bitrate_t        gbr_dl,
@@ -133,6 +137,8 @@ nas_itti_erab_setup_req (const mme_ue_s1ap_id_t ue_id,
   MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_ESM, NAS_ERAB_SETUP_REQ);
   NAS_ERAB_SETUP_REQ (message_p).ue_id   = ue_id;
   NAS_ERAB_SETUP_REQ (message_p).ebi     = ebi;
+  NAS_ERAB_SETUP_REQ (message_p).retry   = retry;
+  NAS_ERAB_SETUP_REQ (message_p).retx_count   = retx_count;
   NAS_ERAB_SETUP_REQ (message_p).mbr_dl  = mbr_dl;
   NAS_ERAB_SETUP_REQ (message_p).mbr_ul  = mbr_ul;
   NAS_ERAB_SETUP_REQ (message_p).gbr_dl  = gbr_dl;
@@ -147,8 +153,10 @@ nas_itti_erab_setup_req (const mme_ue_s1ap_id_t ue_id,
 //------------------------------------------------------------------------------
 int
 nas_itti_erab_modify_req (const mme_ue_s1ap_id_t ue_id,
-    const ebi_t ebi,
-    const bitrate_t        mbr_dl,
+    const ebi_t 		   ebi,
+	const bool 			   retry,
+	const int			   retx_count,
+	const bitrate_t        mbr_dl,
     const bitrate_t        mbr_ul,
     const bitrate_t        gbr_dl,
     const bitrate_t        gbr_ul,
@@ -157,6 +165,8 @@ nas_itti_erab_modify_req (const mme_ue_s1ap_id_t ue_id,
   MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_ESM, NAS_ERAB_MODIFY_REQ);
   NAS_ERAB_MODIFY_REQ (message_p).ue_id   = ue_id;
   NAS_ERAB_MODIFY_REQ (message_p).ebi     = ebi;
+  NAS_ERAB_MODIFY_REQ (message_p).retry   = retry;
+  NAS_ERAB_MODIFY_REQ (message_p).retx_count   = retx_count;
   NAS_ERAB_MODIFY_REQ (message_p).mbr_dl  = mbr_dl;
   NAS_ERAB_MODIFY_REQ (message_p).mbr_ul  = mbr_ul;
   NAS_ERAB_MODIFY_REQ (message_p).gbr_dl  = gbr_dl;
@@ -171,12 +181,16 @@ nas_itti_erab_modify_req (const mme_ue_s1ap_id_t ue_id,
 //------------------------------------------------------------------------------
 int
 nas_itti_erab_release_req (const mme_ue_s1ap_id_t ue_id,
-    const ebi_t ebi,
-    bstring                nas_msg)
+    const ebi_t			   ebi,
+	const bool 			   retry,
+	const int			   retx_count,
+	bstring                nas_msg)
 {
   MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_ESM, NAS_ERAB_RELEASE_REQ);
   NAS_ERAB_RELEASE_REQ (message_p).ue_id   = ue_id;
   NAS_ERAB_RELEASE_REQ (message_p).ebi     = ebi;
+  NAS_ERAB_RELEASE_REQ (message_p).retry   = retry;
+  NAS_ERAB_RELEASE_REQ (message_p).retx_count   = retx_count;
   NAS_ERAB_RELEASE_REQ (message_p).nas_msg = nas_msg;
   nas_msg = NULL;
   MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_MMEAPP_MME, NULL, 0, "0 NAS_ERAB_RELEASE_REQ ue id " MME_UE_S1AP_ID_FMT " ebi %u len %u", ue_id, ebi, blength(NAS_ERAB_SETUP_REQ (message_p).nas_msg));
@@ -188,7 +202,7 @@ nas_itti_erab_release_req (const mme_ue_s1ap_id_t ue_id,
 void nas_itti_activate_eps_bearer_ctx_cnf(
     const mme_ue_s1ap_id_t ue_idP,
     const ebi_t            ebi,
-    const teid_t           saegw_s1u_teid)
+	const teid_t           saegw_s1u_teid)
 {
   OAILOG_FUNC_IN(LOG_NAS);
   MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_ESM, NAS_ACTIVATE_EPS_BEARER_CTX_CNF);
@@ -226,6 +240,9 @@ void nas_itti_activate_eps_bearer_ctx_rej(
   case ESM_CAUSE_EPS_QOS_NOT_ACCEPTED:
     NAS_ACTIVATE_EPS_BEARER_CTX_REJ (message_p).cause_value = MANDATORY_IE_INCORRECT;
     break;
+  case ESM_CAUSE_SERVICE_OPTION_TEMPORARILY_OUT_OF_ORDER:
+	  NAS_ACTIVATE_EPS_BEARER_CTX_REJ (message_p).cause_value = TEMP_REJECT_HO_IN_PROGRESS;
+ 	break;
   default:
     NAS_ACTIVATE_EPS_BEARER_CTX_REJ (message_p).cause_value = REQUEST_REJECTED;
     break;
@@ -278,6 +295,9 @@ void nas_itti_modify_eps_bearer_ctx_rej(
   case ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY:
     NAS_MODIFY_EPS_BEARER_CTX_REJ (message_p).cause_value = NO_RESOURCES_AVAILABLE;
     break;
+  case ESM_CAUSE_SERVICE_OPTION_TEMPORARILY_OUT_OF_ORDER:
+	NAS_MODIFY_EPS_BEARER_CTX_REJ (message_p).cause_value = TEMP_REJECT_HO_IN_PROGRESS;
+	break;
   default:
     NAS_MODIFY_EPS_BEARER_CTX_REJ (message_p).cause_value = REQUEST_REJECTED;
     break;
@@ -290,12 +310,24 @@ void nas_itti_modify_eps_bearer_ctx_rej(
 //------------------------------------------------------------------------------
 void nas_itti_dedicated_eps_bearer_deactivation_complete(
     const mme_ue_s1ap_id_t ue_idP,
-    const ebi_t ded_ebi)
+    const ebi_t ded_ebi,
+	const esm_cause_t esm_cause)
 {
   OAILOG_FUNC_IN(LOG_NAS);
   MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_ESM, NAS_DEACTIVATE_EPS_BEARER_CTX_CNF);
   NAS_DEACTIVATE_EPS_BEARER_CTX_CNF (message_p).ue_id     = ue_idP;
   NAS_DEACTIVATE_EPS_BEARER_CTX_CNF (message_p).ded_ebi   = ded_ebi;
+  switch(esm_cause){
+  case ESM_CAUSE_SUCCESS:
+	NAS_DEACTIVATE_EPS_BEARER_CTX_CNF (message_p).cause_value = REQUEST_ACCEPTED;
+	break;
+  case ESM_CAUSE_SERVICE_OPTION_TEMPORARILY_OUT_OF_ORDER:
+	NAS_DEACTIVATE_EPS_BEARER_CTX_CNF (message_p).cause_value = TEMP_REJECT_HO_IN_PROGRESS;
+	break;
+  default:
+	NAS_DEACTIVATE_EPS_BEARER_CTX_CNF (message_p).cause_value = REQUEST_REJECTED;
+    break;
+  }
   MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_MMEAPP_MME, NULL, 0, "0 NAS_DEACTIVATE_EPS_BEARER_CTX_CNF ue id " MME_UE_S1AP_ID_FMT " ebi %u", ue_idP, ded_ebi);
   itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT(LOG_NAS);
@@ -501,6 +533,18 @@ void nas_itti_s11_bearer_resource_cmd (
 }
 
 //------------------------------------------------------------------------------
+void nas_itti_paging_due_signaling (
+  const mme_ue_s1ap_id_t  ue_id)
+{
+  OAILOG_FUNC_IN(LOG_NAS);
+  MessageDef                             *message_p = NULL;
+  message_p = itti_alloc_new_message(TASK_NAS_ESM, NAS_PAGING_DUE_SIGNALING_IND);
+  NAS_PAGING_DUE_SIGNALING_IND(message_p).ue_id = ue_id;
+  itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
+  OAILOG_FUNC_OUT(LOG_NAS);
+}
+
+//------------------------------------------------------------------------------
 void nas_itti_establish_cnf(
   const mme_ue_s1ap_id_t ue_idP,
   const nas_error_code_t error_codeP,
@@ -624,8 +668,8 @@ void  s6a_auth_info_rsp_timer_expiry_handler (void *args)
       OAILOG_FUNC_OUT (LOG_NAS_EMM);
     }
 
-    void * timer_callback_args = NULL;
-    nas_stop_Ts6a_auth_info(auth_info_proc->ue_id, &auth_info_proc->timer_s6a, timer_callback_args);
+    void * unused = NULL;
+    nas_stop_Ts6a_auth_info(auth_info_proc->ue_id, &auth_info_proc->timer_s6a, unused);
 
     auth_info_proc->timer_s6a.id = NAS_TIMER_INACTIVE_ID;
     if (auth_info_proc->resync) {
@@ -643,6 +687,7 @@ void  s6a_auth_info_rsp_timer_expiry_handler (void *args)
     nas_proc_auth_param_fail (auth_info_proc->ue_id, NAS_CAUSE_NETWORK_FAILURE);
   } else {
     OAILOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - Timer timer_s6_auth_info_rsp expired. Null EMM Context for UE " MME_UE_S1AP_ID_FMT". \n", ue_id);
+    nas_itti_esm_detach_ind(ue_id, false);
   }
 
   OAILOG_FUNC_OUT (LOG_NAS_EMM);
@@ -652,7 +697,9 @@ void  s6a_auth_info_rsp_timer_expiry_handler (void *args)
 void  s10_context_req_timer_expiry_handler (void *args)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
-  emm_data_context_t  *emm_ctx = (emm_data_context_t *) (args);
+  mme_ue_s1ap_id_t  ue_id = (mme_ue_s1ap_id_t) (args);
+  emm_data_context_t * emm_ctx = emm_data_context_get(&_emm_data, ue_id);
+
   if (emm_ctx) {
 
     nas_ctx_req_proc_t * ctx_req_proc = get_nas_cn_procedure_ctx_req(emm_ctx);
@@ -671,7 +718,8 @@ void  s10_context_req_timer_expiry_handler (void *args)
      */
     nas_proc_context_fail(emm_ctx->ue_id, NAS_CAUSE_NETWORK_FAILURE);
   } else { 
-    OAILOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - Timer timer_s10_context_req expired. Null EMM Context for UE \n");
+	  nas_itti_esm_detach_ind(ue_id, false);
+	  OAILOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - Timer timer_s10_context_req expired. Null EMM Context for UE " MME_UE_S1AP_ID_FMT". \n", ue_id);
   }
 
   OAILOG_FUNC_OUT (LOG_NAS_EMM);

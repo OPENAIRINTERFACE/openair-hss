@@ -170,7 +170,6 @@ typedef struct emm_reg_sdu_non_delivery_ho_s {
 typedef struct emm_reg_s {
   emm_reg_primitive_t    primitive;
   mme_ue_s1ap_id_t       ue_id;
-  struct emm_data_context_s  *ctx;
   bool                   notify; // notify through call-backs
   bool                   free_proc;
 

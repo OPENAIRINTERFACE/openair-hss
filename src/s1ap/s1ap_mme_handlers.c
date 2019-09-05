@@ -659,22 +659,26 @@ s1ap_mme_handle_initial_context_setup_response (
   /** Add here multiple bearers. */
   initial_context_setup_rsp->bcs_to_be_modified.num_bearer_context = initialContextSetupResponseIEs_p->e_RABSetupListCtxtSURes.s1ap_E_RABSetupItemCtxtSURes.count;
   for (int item = 0; item < initialContextSetupResponseIEs_p->e_RABSetupListCtxtSURes.s1ap_E_RABSetupItemCtxtSURes.count; item++) {
-    /*
+
+	/*
      * Bad, very bad cast...
      */
     eRABSetupItemCtxtSURes_p = (S1ap_E_RABSetupItemCtxtSURes_t *)
         initialContextSetupResponseIEs_p->e_RABSetupListCtxtSURes.s1ap_E_RABSetupItemCtxtSURes.array[item];
 
-    initial_context_setup_rsp->bcs_to_be_modified.bearer_contexts[item].eps_bearer_id = eRABSetupItemCtxtSURes_p->e_RAB_ID;
-    initial_context_setup_rsp->bcs_to_be_modified.bearer_contexts[item].s1_eNB_fteid.teid = htonl (*((uint32_t *) eRABSetupItemCtxtSURes_p->gTP_TEID.buf));
+    initial_context_setup_rsp->bcs_to_be_modified.bearer_context[item].eps_bearer_id = eRABSetupItemCtxtSURes_p->e_RAB_ID;
+	  if(eRABSetupItemCtxtSURes_p->e_RAB_ID == 7){
+		  continue;
+	  }
+    initial_context_setup_rsp->bcs_to_be_modified.bearer_context[item].s1_eNB_fteid.teid = htonl (*((uint32_t *) eRABSetupItemCtxtSURes_p->gTP_TEID.buf));
     bstring transport_address = blk2bstr(eRABSetupItemCtxtSURes_p->transportLayerAddress.buf, eRABSetupItemCtxtSURes_p->transportLayerAddress.size);
     /** Set the IP address from the FTEID. */
     if (4 == blength(transport_address)) {
-    	initial_context_setup_rsp->bcs_to_be_modified.bearer_contexts[item].s1_eNB_fteid.ipv4 = 1;
-    	memcpy(&initial_context_setup_rsp->bcs_to_be_modified.bearer_contexts[item].s1_eNB_fteid.ipv4_address, transport_address->data, blength(transport_address));
+    	initial_context_setup_rsp->bcs_to_be_modified.bearer_context[item].s1_eNB_fteid.ipv4 = 1;
+    	memcpy(&initial_context_setup_rsp->bcs_to_be_modified.bearer_context[item].s1_eNB_fteid.ipv4_address, transport_address->data, blength(transport_address));
     } else if (16 == blength(transport_address)) {
-    	initial_context_setup_rsp->bcs_to_be_modified.bearer_contexts[item].s1_eNB_fteid.ipv6 = 1;
-    	memcpy(&initial_context_setup_rsp->bcs_to_be_modified.bearer_contexts[item].s1_eNB_fteid.ipv6_address, transport_address->data, blength(transport_address));
+    	initial_context_setup_rsp->bcs_to_be_modified.bearer_context[item].s1_eNB_fteid.ipv6 = 1;
+    	memcpy(&initial_context_setup_rsp->bcs_to_be_modified.bearer_context[item].s1_eNB_fteid.ipv6_address, transport_address->data, blength(transport_address));
     } else {
     	AssertFatal(0, "TODO IP address %d bytes", blength(transport_address));
     }
@@ -688,6 +692,12 @@ s1ap_mme_handle_initial_context_setup_response (
     initial_context_setup_rsp->e_rab_release_list.item[initial_context_setup_rsp->e_rab_release_list.no_of_items].cause     = erab_item->cause;
     initial_context_setup_rsp->e_rab_release_list.no_of_items++;
   }
+//
+//  /** Trigger failed bearer  (ebi==7). todo: comment out */
+//  initial_context_setup_rsp->e_rab_release_list.item[0].e_rab_id  = 7;
+//  initial_context_setup_rsp->e_rab_release_list.item[0].cause.present = S1ap_Cause_PR_radioNetwork;
+//  initial_context_setup_rsp->e_rab_release_list.item[0].cause.choice.radioNetwork = S1ap_CauseRadioNetwork_radio_resources_not_available;
+//  initial_context_setup_rsp->e_rab_release_list.no_of_items++;
 
 
   MSC_LOG_TX_MESSAGE (MSC_S1AP_MME,
@@ -695,8 +705,8 @@ s1ap_mme_handle_initial_context_setup_response (
                       NULL, 0,
                       "0 MME_APP_INITIAL_CONTEXT_SETUP_RSP mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ebi %u s1u enb teid %u",
                       initial_context_setup_rsp->ue_id,
-                      initial_context_setup_rsp->bcs_to_be_modified.bearer_contexts[0].eps_bearer_id,
-                      initial_context_setup_rsp->bcs_to_be_modified.bearer_contexts[0].s1_eNB_fteid.teid);
+                      initial_context_setup_rsp->bcs_to_be_modified.bearer_context[0].eps_bearer_id,
+                      initial_context_setup_rsp->bcs_to_be_modified.bearer_context[0].s1_eNB_fteid.teid);
   rc =  itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_RETURN (LOG_S1AP, rc);
 }
@@ -1034,7 +1044,10 @@ s1ap_mme_handle_ue_context_release_complete (
   S1AP_UE_CONTEXT_RELEASE_COMPLETE (message_p).enb_ue_s1ap_id = ueContextReleaseComplete_p->eNB_UE_S1AP_ID;
   S1AP_UE_CONTEXT_RELEASE_COMPLETE (message_p).enb_id         = ue_ref_p->enb->enb_id;
   S1AP_UE_CONTEXT_RELEASE_COMPLETE (message_p).sctp_assoc_id  = ue_ref_p->enb->sctp_assoc_id;
-  DevAssert(ue_ref_p->s1_ue_state == S1AP_UE_WAITING_CRR);
+  if(ue_ref_p->s1_ue_state != S1AP_UE_WAITING_CRR){
+	  OAILOG_ERROR(LOG_S1AP, " UE " MME_UE_S1AP_ID_FMT " with enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT" not in WAITING_CRR state, but %d.. continuing \n",
+			  ue_ref_p->mme_ue_s1ap_id, ue_ref_p->enb_ue_s1ap_id, ue_ref_p->s1_ue_state);
+  }
   s1ap_remove_ue (ue_ref_p);
 
   MSC_LOG_TX_MESSAGE (MSC_S1AP_MME, MSC_MMEAPP_MME, NULL, 0, "0 S1AP_UE_CONTEXT_RELEASE_COMPLETE mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ", S1AP_UE_CONTEXT_RELEASE_COMPLETE (message_p).mme_ue_s1ap_id);
@@ -1253,17 +1266,17 @@ s1ap_mme_handle_path_switch_request (
        * Bad, very bad cast...
        */
       eRABToBeSwitchedDlItemIEs_p = (S1ap_E_RABToBeSwitchedDLItemIEs_t *)pathSwitchRequest_p->e_RABToBeSwitchedDLList.s1ap_E_RABToBeSwitchedDLItem.array[item];
-      path_switch_request->bcs_to_be_modified.bearer_contexts[item].eps_bearer_id = eRABToBeSwitchedDlItemIEs_p->e_RABToBeSwitchedDLItem.e_RAB_ID;
-      path_switch_request->bcs_to_be_modified.bearer_contexts[item].s1_eNB_fteid.teid = htonl (*((uint32_t *) eRABToBeSwitchedDlItemIEs_p->e_RABToBeSwitchedDLItem.gTP_TEID.buf));
+      path_switch_request->bcs_to_be_modified.bearer_context[item].eps_bearer_id = eRABToBeSwitchedDlItemIEs_p->e_RABToBeSwitchedDLItem.e_RAB_ID;
+      path_switch_request->bcs_to_be_modified.bearer_context[item].s1_eNB_fteid.teid = htonl (*((uint32_t *) eRABToBeSwitchedDlItemIEs_p->e_RABToBeSwitchedDLItem.gTP_TEID.buf));
       bstring transport_address = blk2bstr(eRABToBeSwitchedDlItemIEs_p->e_RABToBeSwitchedDLItem.transportLayerAddress.buf, eRABToBeSwitchedDlItemIEs_p->e_RABToBeSwitchedDLItem.transportLayerAddress.size);
       /** Set the IP address from the FTEID. */
       if (4 == blength(transport_address)) {
-        path_switch_request->bcs_to_be_modified.bearer_contexts[item].s1_eNB_fteid.ipv4 = 1;
-        memcpy(&path_switch_request->bcs_to_be_modified.bearer_contexts[item].s1_eNB_fteid.ipv4_address,
+        path_switch_request->bcs_to_be_modified.bearer_context[item].s1_eNB_fteid.ipv4 = 1;
+        memcpy(&path_switch_request->bcs_to_be_modified.bearer_context[item].s1_eNB_fteid.ipv4_address,
             transport_address->data, blength(transport_address));
       } else if (16 == blength(transport_address)) {
-        path_switch_request->bcs_to_be_modified.bearer_contexts[item].s1_eNB_fteid.ipv6 = 1;
-        memcpy(&path_switch_request->bcs_to_be_modified.bearer_contexts[item].s1_eNB_fteid.ipv6_address,
+        path_switch_request->bcs_to_be_modified.bearer_context[item].s1_eNB_fteid.ipv6 = 1;
+        memcpy(&path_switch_request->bcs_to_be_modified.bearer_context[item].s1_eNB_fteid.ipv6_address,
             transport_address->data, blength(transport_address));
       } else {
         AssertFatal(0, "TODO IP address %d bytes", blength(transport_address));
@@ -1282,8 +1295,8 @@ s1ap_mme_handle_path_switch_request (
         NULL, 0,
         "0 S1AP_PATH_SWITCH_REQUEST mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ebi %u s1u enb teid %u",
         path_switch_request->mme_ue_s1ap_id,
-        path_switch_request->bcs_to_be_modified.bearer_contexts[0].eps_bearer_id,
-        path_switch_request->bcs_to_be_modified.bearer_contexts[0].s1_eNB_fteid.teid);
+        path_switch_request->bcs_to_be_modified.bearer_context[0].eps_bearer_id,
+        path_switch_request->bcs_to_be_modified.bearer_context[0].s1_eNB_fteid.teid);
     rc =  itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
     OAILOG_FUNC_RETURN (LOG_S1AP, RETURNok);
   }
@@ -1810,18 +1823,18 @@ s1ap_mme_handle_handover_resource_allocation_response(const sctp_assoc_id_t asso
      * Bad, very bad cast...
      */
     eRABAdmittedItemIEs_p = (S1ap_E_RABAdmittedItemIEs_t *)handoverRequestAcknowledgeIEs_p->e_RABAdmittedList.s1ap_E_RABAdmittedItem.array[item];
-    s1ap_handover_request_acknowledge->bcs_to_be_modified.bearer_contexts[item].eps_bearer_id = eRABAdmittedItemIEs_p->e_RABAdmittedItem.e_RAB_ID;
-    s1ap_handover_request_acknowledge->bcs_to_be_modified.bearer_contexts[item].s1_eNB_fteid.teid = htonl (*((uint32_t *) eRABAdmittedItemIEs_p->e_RABAdmittedItem.gTP_TEID.buf));
+    s1ap_handover_request_acknowledge->bcs_to_be_modified.bearer_context[item].eps_bearer_id = eRABAdmittedItemIEs_p->e_RABAdmittedItem.e_RAB_ID;
+    s1ap_handover_request_acknowledge->bcs_to_be_modified.bearer_context[item].s1_eNB_fteid.teid = htonl (*((uint32_t *) eRABAdmittedItemIEs_p->e_RABAdmittedItem.gTP_TEID.buf));
     bstring transport_address  =
         blk2bstr(eRABAdmittedItemIEs_p->e_RABAdmittedItem.transportLayerAddress.buf, eRABAdmittedItemIEs_p->e_RABAdmittedItem.transportLayerAddress.size);
     /** Set the IP address from the FTEID. */
     if (4 == blength(transport_address)) {
-      s1ap_handover_request_acknowledge->bcs_to_be_modified.bearer_contexts[item].s1_eNB_fteid.ipv4 = 1;
-      memcpy(&s1ap_handover_request_acknowledge->bcs_to_be_modified.bearer_contexts[item].s1_eNB_fteid.ipv4_address,
+      s1ap_handover_request_acknowledge->bcs_to_be_modified.bearer_context[item].s1_eNB_fteid.ipv4 = 1;
+      memcpy(&s1ap_handover_request_acknowledge->bcs_to_be_modified.bearer_context[item].s1_eNB_fteid.ipv4_address,
           transport_address->data, blength(transport_address));
     } else if (16 == blength(transport_address)) {
-      s1ap_handover_request_acknowledge->bcs_to_be_modified.bearer_contexts[item].s1_eNB_fteid.ipv6 = 1;
-      memcpy(&s1ap_handover_request_acknowledge->bcs_to_be_modified.bearer_contexts[item].s1_eNB_fteid.ipv6_address,
+      s1ap_handover_request_acknowledge->bcs_to_be_modified.bearer_context[item].s1_eNB_fteid.ipv6 = 1;
+      memcpy(&s1ap_handover_request_acknowledge->bcs_to_be_modified.bearer_context[item].s1_eNB_fteid.ipv6_address,
           transport_address->data,
           blength(transport_address));
     } else {
@@ -2233,7 +2246,6 @@ s1ap_mme_handle_erab_setup_response (
   message_p = itti_alloc_new_message (TASK_S1AP, S1AP_E_RAB_SETUP_RSP);
   AssertFatal (message_p != NULL, "itti_alloc_new_message Failed");
   S1AP_E_RAB_SETUP_RSP (message_p).mme_ue_s1ap_id = ue_ref_p->mme_ue_s1ap_id;
-  S1AP_E_RAB_SETUP_RSP (message_p).enb_ue_s1ap_id = ue_ref_p->enb_ue_s1ap_id;
   S1AP_E_RAB_SETUP_RSP (message_p).e_rab_setup_list.no_of_items = 0;
   S1AP_E_RAB_SETUP_RSP (message_p).e_rab_failed_to_setup_list.no_of_items = 0;
 
@@ -2303,7 +2315,6 @@ s1ap_mme_handle_erab_modify_response (
   message_p = itti_alloc_new_message (TASK_S1AP, S1AP_E_RAB_MODIFY_RSP);
   AssertFatal (message_p != NULL, "itti_alloc_new_message Failed");
   S1AP_E_RAB_MODIFY_RSP (message_p).mme_ue_s1ap_id = ue_ref_p->mme_ue_s1ap_id;
-  S1AP_E_RAB_MODIFY_RSP (message_p).enb_ue_s1ap_id = ue_ref_p->enb_ue_s1ap_id;
   S1AP_E_RAB_MODIFY_RSP (message_p).e_rab_modify_list.no_of_items = 0;
   S1AP_E_RAB_MODIFY_RSP (message_p).e_rab_failed_to_modify_list.no_of_items = 0;
 

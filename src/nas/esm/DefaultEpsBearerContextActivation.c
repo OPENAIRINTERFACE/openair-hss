@@ -59,7 +59,7 @@
 #include "3gpp_24.008.h"
 #include "3gpp_29.274.h"
 #include "3gpp_requirements_24.301.h"
-#include "mme_app_ue_context.h"
+#include "mme_app_session_context.h"
 #include "common_defs.h"
 #include "mme_config.h"
 #include "mme_app_defs.h"
@@ -91,7 +91,7 @@
 #define DEFAULT_EPS_BEARER_ACTIVATE_COUNTER_MAX   3
 
 static esm_cause_t
-_default_eps_bearer_activate_t3485_handler(nas_esm_proc_t * esm_base_proc, ESM_msg *esm_resp_msg);
+_default_eps_bearer_activate_t3485_handler(nas_esm_proc_t * esm_base_proc, ESM_msg *esm_resp_msg, esm_timeout_ll_cb_arg_t * ll_handler_arg);
 
 /****************************************************************************/
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
@@ -219,8 +219,8 @@ esm_send_activate_default_eps_bearer_context_request (
 void
 esm_proc_default_eps_bearer_context (
   mme_ue_s1ap_id_t   ue_id,
-  nas_esm_proc_pdn_connectivity_t * const esm_proc_pdn_connectivity,
-  ESM_msg * const esm_rsp_msg)
+  ESM_msg * const esm_rsp_msg,
+  nas_esm_proc_pdn_connectivity_t * const esm_proc_pdn_connectivity)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
 
@@ -243,7 +243,7 @@ esm_proc_default_eps_bearer_context (
   mme_app_get_pdn_context(ue_id, esm_proc_pdn_connectivity->pdn_cid, esm_proc_pdn_connectivity->default_ebi, esm_proc_pdn_connectivity->subscribed_apn, &pdn_context);
   if(pdn_context){
     /** Get the default bearer. */
-    bearer_context_t *default_bc = RB_MIN(SessionBearers, &pdn_context->session_bearers);
+    bearer_context_new_t *default_bc = STAILQ_FIRST(&pdn_context->session_bearers);
     if(default_bc){
       /** Update the PDN type from the received PDN type. */
 	  esm_proc_pdn_connectivity->pdn_type = 1 + pdn_context->paa->pdn_type;
@@ -332,7 +332,7 @@ esm_proc_default_eps_bearer_context_accept (mme_ue_s1ap_id_t ue_id,
  **                                                                        **
  ***************************************************************************/
 static esm_cause_t
-_default_eps_bearer_activate_t3485_handler(nas_esm_proc_t * esm_base_proc, ESM_msg *esm_resp_msg) {
+_default_eps_bearer_activate_t3485_handler(nas_esm_proc_t * esm_base_proc, ESM_msg *esm_resp_msg, esm_timeout_ll_cb_arg_t * ll_handler_arg) {
   OAILOG_FUNC_IN(LOG_NAS_ESM);
 
   nas_esm_proc_pdn_connectivity_t * esm_proc_pdn_connectivity = (nas_esm_proc_pdn_connectivity_t*)esm_base_proc;
@@ -348,8 +348,16 @@ _default_eps_bearer_activate_t3485_handler(nas_esm_proc_t * esm_base_proc, ESM_m
     mme_app_get_pdn_context(esm_base_proc->ue_id, esm_proc_pdn_connectivity->pdn_cid,
         esm_proc_pdn_connectivity->default_ebi, esm_proc_pdn_connectivity->subscribed_apn, &pdn_context);
     if(pdn_context){
-      bearer_context_t * bearer_context = mme_app_get_session_bearer_context(pdn_context, esm_proc_pdn_connectivity->default_ebi);
+      bearer_context_new_t * bearer_context = mme_app_get_session_bearer_context(pdn_context, esm_proc_pdn_connectivity->default_ebi);
       if(bearer_context){
+        /** Check if the default bearer has been created on the eNB side, if not set the ll-handler to something else. */
+    	if(!(bearer_context->bearer_state & BEARER_STATE_ENB_CREATED)){
+    	  memcpy(&ll_handler_arg->bearer_level_qos, &bearer_context->bearer_level_qos, sizeof(bearer_context->bearer_level_qos));
+    	  ll_handler_arg->ue_id = esm_base_proc->ue_id;
+    	  ll_handler_arg->eps_bearer_id = bearer_context->ebi;
+    	  ll_handler_arg->ll_handler = lowerlayer_activate_bearer_req;
+    	  OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Default EPS bearer context not established on the eNB side yet (ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d).\n", esm_base_proc->ue_id, bearer_context->ebi);
+    	}
     	esm_proc_pdn_connectivity->pdn_type = 1 + pdn_context->paa->pdn_type;
         esm_send_activate_default_eps_bearer_context_request(esm_proc_pdn_connectivity,
             &pdn_context->subscribed_apn_ambr,

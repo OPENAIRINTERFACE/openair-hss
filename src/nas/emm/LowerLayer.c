@@ -63,7 +63,6 @@
 #include "emm_sap.h"
 #include "esm_sap.h"
 
-#include "mme_app_ue_context.h"
 #include "mme_app_defs.h"
 #include "LowerLayer.h"
 
@@ -109,11 +108,9 @@ int lowerlayer_success (mme_ue_s1ap_id_t ue_id, bstring *nas_msg)
 
   emm_sap.primitive = EMMREG_LOWERLAYER_SUCCESS;
   emm_sap.u.emm_reg.ue_id = ue_id;
-  emm_sap.u.emm_reg.ctx = NULL;
   emm_data_context_t                     *emm_data_context = emm_data_context_get(&_emm_data, ue_id);
 
   if (emm_data_context) {
-    emm_sap.u.emm_reg.ctx = emm_data_context;
     emm_sap.u.emm_reg.notify = true;
     emm_sap.u.emm_reg.free_proc = false;
 
@@ -159,7 +156,6 @@ int lowerlayer_failure (mme_ue_s1ap_id_t ue_id, STOLEN_REF bstring *nas_msg)
   emm_data_context_t                     *emm_data_context = emm_data_context_get(&_emm_data, ue_id);
 
   if (emm_data_context) {
-    emm_sap.u.emm_reg.ctx = emm_data_context;
     emm_sap.u.emm_reg.notify    = true;
     emm_sap.u.emm_reg.free_proc = false;
 
@@ -205,7 +201,6 @@ int lowerlayer_non_delivery_indication (mme_ue_s1ap_id_t ue_id, STOLEN_REF bstri
   emm_data_context_t                     *emm_data_context = emm_data_context_get(&_emm_data, ue_id);
 
   if (emm_data_context) {
-    emm_sap.u.emm_reg.ctx = emm_data_context;
     if (*nas_msg) {
       emm_sap.u.emm_reg.u.non_delivery_ho.msg_len = blength(*nas_msg);
       emm_sap.u.emm_reg.u.non_delivery_ho.digest_len = EMM_REG_MSG_DIGEST_SIZE;
@@ -266,15 +261,13 @@ int lowerlayer_release (mme_ue_s1ap_id_t ue_id, int cause)
   int                                     rc = RETURNok;
 
   emm_sap.primitive = EMMREG_LOWERLAYER_RELEASE;
-  emm_sap.u.emm_reg.ue_id = 0;
+  emm_sap.u.emm_reg.ue_id = ue_id;
   emm_data_context_t                     *emm_data_context = emm_data_context_get(&_emm_data, ue_id);
-  if (emm_data_context) {
-    emm_sap.u.emm_reg.ctx = emm_data_context;
-  } else {
+  if (!emm_data_context) {
     OAILOG_INFO (LOG_NAS_EMM, "Unknown ue id " MME_UE_S1AP_ID_FMT "\n",ue_id);
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
   }
-  MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_MME, NULL, 0, "EMMREG_LOWERLAYER_RELEASE ue id " MME_UE_S1AP_ID_FMT " ", emm_sap.u.emm_reg.ue_id);
+  MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_MME, NULL, 0, "EMMREG_LOWERLAYER_RELEASE ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
   rc = emm_sap_send (&emm_sap);
 //  unlock_ue_contexts(ue_context);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
@@ -353,7 +346,7 @@ int lowerlayer_data_req (mme_ue_s1ap_id_t ue_id, bstring data)
   /*
    * Setup EPS NAS security data
    */
-  emm_as_set_security_data (&emm_sap.u.emm_as.u.data.sctx, sctx, false, true);
+  emm_as_set_security_data (&emm_sap.u.emm_as.u.data.sctx_data, sctx, false, true);
   MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_MME, NULL, 0, "EMMAS_DATA_REQ  (STATUS) ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
   rc = emm_sap_send (&emm_sap);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
@@ -363,10 +356,9 @@ int lowerlayer_data_req (mme_ue_s1ap_id_t ue_id, bstring data)
 int lowerlayer_activate_bearer_req (
     const mme_ue_s1ap_id_t ue_id,
     const ebi_t            ebi,
-    const bitrate_t        mbr_dl,
-    const bitrate_t        mbr_ul,
-    const bitrate_t        gbr_dl,
-    const bitrate_t        gbr_ul,
+	const bool			   retry,
+	const int    		   retx_count,
+    const bearer_qos_t    *bearer_qos,
     bstring data)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
@@ -374,6 +366,8 @@ int lowerlayer_activate_bearer_req (
   emm_sap_t                               emm_sap = {0};
   emm_security_context_t                 *sctx = NULL;
   emm_data_context_t                     *emm_data_context = emm_data_context_get(&_emm_data, ue_id);
+
+  // todo: LOCK EMM CONTEXT
 
   if (!emm_data_context) {
     // todo: check no (implicit) detach procedure is ongoing
@@ -383,18 +377,39 @@ int lowerlayer_activate_bearer_req (
   } else if (emm_data_context->_emm_fsm_state != EMM_REGISTERED){
 	  /** Check if a TAU procedure is ongoing. Set the pending flag for pending QoS. */
 	  OAILOG_ERROR(LOG_NAS_EMM, "EMM context not in EMM_REGISTERED state for UE " MME_UE_S1AP_ID_FMT ". "
-				"Cannot activate bearers. \n", ue_id);
-	  OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
+			  "Cannot activate bearers. \n", ue_id);
+	  /** Check for an EMM (idle TAU) or S10 handover procedure. */
+	  nas_emm_tau_proc_t * nas_proc_tau = get_nas_specific_procedure_tau(emm_data_context);
+	  if(nas_proc_tau) {
+		  OAILOG_INFO(LOG_NAS_EMM, "A TAU procedure is running for UE " MME_UE_S1AP_ID_FMT ". Triggering pending qos. \n", ue_id);
+		  /** Only do this for DEREGISTERED state. */
+		  if(emm_data_context->_emm_fsm_state != EMM_COMMON_PROCEDURE_INITIATED){
+			  nas_proc_tau->pending_qos = true;
+			  /** This may be an idle-TAU, so set the active flag (todo: here check glitches). */
+			  if(!nas_proc_tau->ies->eps_update_type.active_flag) {
+				  OAILOG_INFO(LOG_NAS_EMM, "Setting the active flag for TAU procedure for UE " MME_UE_S1AP_ID_FMT ". \n", ue_id);
+				  nas_proc_tau->ies->eps_update_type.active_flag = true;
+			  }
+		  } else {
+			  OAILOG_INFO(LOG_NAS_EMM, "UE " MME_UE_S1AP_ID_FMT " is not in DEREGISTERED state, to late to set qos/active flag.. will do via paging. \n", ue_id);
+		  }
+	  } else {
+		  OAILOG_INFO(LOG_NAS_EMM, "No S10-TAU procedure is running for UE " MME_UE_S1AP_ID_FMT ", which is not in registered state. "
+				  "Not triggering any pending qos at this moment. \n", ue_id);
+	  }
+	  OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
   }
 
   sctx = &emm_data_context->_security;
   emm_sap.primitive = EMMAS_ERAB_SETUP_REQ;
   emm_sap.u.emm_as.u.activate_bearer_context_req.ebi    = ebi;
+  emm_sap.u.emm_as.u.activate_bearer_context_req.retry  = retry;
+  emm_sap.u.emm_as.u.activate_bearer_context_req.retx_count = retx_count;
   emm_sap.u.emm_as.u.activate_bearer_context_req.ue_id  = ue_id;
-  emm_sap.u.emm_as.u.activate_bearer_context_req.mbr_dl = mbr_dl;
-  emm_sap.u.emm_as.u.activate_bearer_context_req.mbr_ul = mbr_ul;
-  emm_sap.u.emm_as.u.activate_bearer_context_req.gbr_dl = gbr_dl;
-  emm_sap.u.emm_as.u.activate_bearer_context_req.gbr_ul = gbr_ul;
+  emm_sap.u.emm_as.u.activate_bearer_context_req.mbr_dl = bearer_qos->mbr.br_dl;
+  emm_sap.u.emm_as.u.activate_bearer_context_req.mbr_ul = bearer_qos->mbr.br_ul;
+  emm_sap.u.emm_as.u.activate_bearer_context_req.gbr_dl = bearer_qos->gbr.br_dl;
+  emm_sap.u.emm_as.u.activate_bearer_context_req.gbr_ul = bearer_qos->gbr.br_ul;
   emm_sap.u.emm_as.u.activate_bearer_context_req.nas_msg = data;
   /*
    * Setup EPS NAS security data
@@ -403,6 +418,8 @@ int lowerlayer_activate_bearer_req (
   MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_MME, NULL, 0, "EMMAS_ERAB_SETUP_REQ  (STATUS) ue id " MME_UE_S1AP_ID_FMT " ebi %u gbr_dl %" PRIu64 " gbr_ul %" PRIu64 " ",
       ue_id, ebi, emm_sap.u.emm_as.u.activate_bearer_context_req.gbr_dl, emm_sap.u.emm_as.u.activate_bearer_context_req.gbr_ul);
   rc = emm_sap_send (&emm_sap);
+
+  // TODO: UNLOCK EMM CTX
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
@@ -410,10 +427,9 @@ int lowerlayer_activate_bearer_req (
 int lowerlayer_modify_bearer_req (
     const mme_ue_s1ap_id_t ue_id,
     const ebi_t            ebi,
-    const bitrate_t        mbr_dl,
-    const bitrate_t        mbr_ul,
-    const bitrate_t        gbr_dl,
-    const bitrate_t        gbr_ul,
+	const bool			   retry,
+	const int    		   retx_count,
+    const bearer_qos_t    *bearer_qos,
     bstring data)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
@@ -432,34 +448,61 @@ int lowerlayer_modify_bearer_req (
 	  /** Check if a TAU procedure is ongoing. Set the pending flag for pending QoS. */
 	  OAILOG_ERROR(LOG_NAS_EMM, "EMM context not in EMM_REGISTERED state for UE " MME_UE_S1AP_ID_FMT ". "
 				"Cannot modify bearers. \n", ue_id);
+	  /** Only do this for DEREGISTERED state. */
+	  /** Check for an EMM (idle TAU) or S10 handover procedure. */
+	  nas_emm_tau_proc_t * nas_proc_tau = get_nas_specific_procedure_tau(emm_data_context);
+	  if(nas_proc_tau) {
+		  if(emm_data_context->_emm_fsm_state != EMM_COMMON_PROCEDURE_INITIATED){
+			  nas_proc_tau->pending_qos = true;
+			  /** This may be an idle-TAU, so set the active flag (todo: here check glitches). */
+			  if(!nas_proc_tau->ies->eps_update_type.active_flag) {
+				  OAILOG_INFO(LOG_NAS_EMM, "Setting the active flag for TAU procedure for UE " MME_UE_S1AP_ID_FMT ". \n", ue_id);
+				  nas_proc_tau->ies->eps_update_type.active_flag = true;
+			  }
+		  } else {
+			  OAILOG_INFO(LOG_NAS_EMM, "UE " MME_UE_S1AP_ID_FMT " is not in DEREGISTERED state, to late to set qos/active flag.. will do via paging. \n", ue_id);
+		  }
+	  } else {
+		  OAILOG_INFO(LOG_NAS_EMM, "No S10-TAU procedure is running for UE " MME_UE_S1AP_ID_FMT ", which is not in registered state. "
+				  "Not triggering any pending qos at this moment. \n", ue_id);
+	  }
 	  OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
   }
 
-  emm_sap.primitive = EMMAS_ERAB_MODIFY_REQ;
-  emm_sap.u.emm_as.u.modify_bearer_context_req.ebi    = ebi;
-  emm_sap.u.emm_as.u.modify_bearer_context_req.ue_id  = ue_id;
-  emm_sap.u.emm_as.u.modify_bearer_context_req.mbr_dl = mbr_dl;
-  emm_sap.u.emm_as.u.modify_bearer_context_req.mbr_ul = mbr_ul;
-  emm_sap.u.emm_as.u.modify_bearer_context_req.gbr_dl = gbr_dl;
-  emm_sap.u.emm_as.u.modify_bearer_context_req.gbr_ul = gbr_ul;
+  if(data){
+	  emm_sap.primitive = EMMAS_ERAB_MODIFY_REQ;
+	  emm_sap.u.emm_as.u.modify_bearer_context_req.ebi    = ebi;
+	  emm_sap.u.emm_as.u.modify_bearer_context_req.retry  = retry;
+	  emm_sap.u.emm_as.u.modify_bearer_context_req.retx_count = retx_count;
+	  emm_sap.u.emm_as.u.modify_bearer_context_req.ue_id  = ue_id;
+	  emm_sap.u.emm_as.u.modify_bearer_context_req.mbr_dl = bearer_qos->mbr.br_dl;
+	  emm_sap.u.emm_as.u.modify_bearer_context_req.mbr_ul = bearer_qos->mbr.br_ul;
+	  emm_sap.u.emm_as.u.modify_bearer_context_req.gbr_dl = bearer_qos->gbr.br_dl;
+	  emm_sap.u.emm_as.u.modify_bearer_context_req.gbr_ul = bearer_qos->gbr.br_ul;
 
-  sctx = &emm_data_context->_security;
-  emm_sap.u.emm_as.u.modify_bearer_context_req.nas_msg = data;
-  /*
-   * Setup EPS NAS security data
-   */
-  emm_as_set_security_data (&emm_sap.u.emm_as.u.modify_bearer_context_req.sctx, sctx, false, true);
-  MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_MME, NULL, 0, "EMMAS_ERAB_MODIFY_REQ  (STATUS) ue id " MME_UE_S1AP_ID_FMT " ebi %u gbr_dl %" PRIu64 " gbr_ul %" PRIu64 " ",
-      ue_id, ebi, emm_sap.u.emm_as.u.modify_bearer_context_req.gbr_dl, emm_sap.u.emm_as.u.modify_bearer_context_req.gbr_ul);
-  rc = emm_sap_send (&emm_sap);
-//  unlock_ue_contexts(ue_context);
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+	  sctx = &emm_data_context->_security;
+	  emm_sap.u.emm_as.u.modify_bearer_context_req.nas_msg = data;
+	  /*
+	   * Setup EPS NAS security data
+	   */
+	  emm_as_set_security_data (&emm_sap.u.emm_as.u.modify_bearer_context_req.sctx, sctx, false, true);
+	  MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_MME, NULL, 0, "EMMAS_ERAB_MODIFY_REQ  (STATUS) ue id " MME_UE_S1AP_ID_FMT " ebi %u gbr_dl %" PRIu64 " gbr_ul %" PRIu64 " ",
+	      ue_id, ebi, emm_sap.u.emm_as.u.modify_bearer_context_req.gbr_dl, emm_sap.u.emm_as.u.modify_bearer_context_req.gbr_ul);
+	  rc = emm_sap_send (&emm_sap);
+	  //  unlock_ue_contexts(ue_context);
+	  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  }
+  OAILOG_WARNING(LOG_NAS_EMM, "No data exists ERAB-Modify for UE " MME_UE_S1AP_ID_FMT ". Returning. \n", ue_id);
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
 }
 
 //------------------------------------------------------------------------------
 int lowerlayer_deactivate_bearer_req (
     const mme_ue_s1ap_id_t ue_id,
     const ebi_t            ebi,
+	const bool			   retry,
+	const int 			   retx_count,
+    const bearer_qos_t    *bearer_qos,
     bstring data)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
@@ -474,26 +517,47 @@ int lowerlayer_deactivate_bearer_req (
     OAILOG_ERROR(LOG_NAS_EMM, "EMM context not existing UE " MME_UE_S1AP_ID_FMT ". "
         "Aborting the dedicated bearer activation. \n", ue_id);
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
-  } else if (emm_data_context->_emm_fsm_state != EMM_REGISTERED){
+  } else if (!emm_data_context->is_has_been_attached){
 	  /** Check if a TAU procedure is ongoing. Set the pending flag for pending QoS. */
 	  OAILOG_ERROR(LOG_NAS_EMM, "EMM context not in EMM_REGISTERED state for UE " MME_UE_S1AP_ID_FMT ". "
 			  "Cannot delete bearers. \n", ue_id);
-	  OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
+	  /** Check for an EMM (idle TAU) or S10 handover procedure. */
+	  nas_emm_tau_proc_t * nas_proc_tau = get_nas_specific_procedure_tau(emm_data_context);
+	  if(nas_proc_tau) {
+		  if(emm_data_context->_emm_fsm_state != EMM_COMMON_PROCEDURE_INITIATED){
+			  nas_proc_tau->pending_qos = true;
+			  /** This may be an idle-TAU, so set the active flag (todo: here check glitches). */
+			  if(!nas_proc_tau->ies->eps_update_type.active_flag) {
+				  OAILOG_INFO(LOG_NAS_EMM, "Setting the active flag for TAU procedure for UE " MME_UE_S1AP_ID_FMT ". \n", ue_id);
+				  nas_proc_tau->ies->eps_update_type.active_flag = true;
+			  }
+		  } else {
+			  OAILOG_INFO(LOG_NAS_EMM, "UE " MME_UE_S1AP_ID_FMT " is not in DEREGISTERED state, to late to set qos/active flag.. will do via paging. \n", ue_id);
+		  }
+	  } else {
+		  OAILOG_INFO(LOG_NAS_EMM, "No S10-TAU procedure is running for UE " MME_UE_S1AP_ID_FMT ", which is not in registered state. "
+				  "Not triggering any pending qos at this moment. \n", ue_id);
+	  }
+	  OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
   }
 
-  emm_sap.primitive = EMMAS_ERAB_RELEASE_REQ;
-  emm_sap.u.emm_as.u.deactivate_bearer_context_req.ebi    = ebi;
-  emm_sap.u.emm_as.u.deactivate_bearer_context_req.ue_id  = ue_id;
-  sctx = &emm_data_context->_security;
-  emm_sap.u.emm_as.u.deactivate_bearer_context_req.nas_msg = data;
-  /*
-   * Setup EPS NAS security data
-   */
-  emm_as_set_security_data (&emm_sap.u.emm_as.u.deactivate_bearer_context_req.sctx, sctx, false, true);
-  MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_MME, NULL, 0, "EMMAS_ERAB_RELEASE_REQ  (STATUS) ue id " MME_UE_S1AP_ID_FMT " ebi %u ",
-      ue_id, ebi);
-  rc = emm_sap_send (&emm_sap);
-//  unlock_ue_contexts(ue_context);
+  if(data){
+	emm_sap.primitive = EMMAS_ERAB_RELEASE_REQ;
+	emm_sap.u.emm_as.u.deactivate_bearer_context_req.ebi    = ebi;
+	emm_sap.u.emm_as.u.deactivate_bearer_context_req.retry  = retry;
+	emm_sap.u.emm_as.u.deactivate_bearer_context_req.retx_count = retx_count;
+	emm_sap.u.emm_as.u.deactivate_bearer_context_req.ue_id  = ue_id;
+	sctx = &emm_data_context->_security;
+	emm_sap.u.emm_as.u.deactivate_bearer_context_req.nas_msg = data;
+	/*
+	 * Setup EPS NAS security data
+	 */
+	emm_as_set_security_data (&emm_sap.u.emm_as.u.deactivate_bearer_context_req.sctx, sctx, false, true);
+	MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_MME, NULL, 0, "EMMAS_ERAB_RELEASE_REQ  (STATUS) ue id " MME_UE_S1AP_ID_FMT " ebi %u ",
+			ue_id, ebi);
+	rc = emm_sap_send (&emm_sap);
+	//  unlock_ue_contexts(ue_context);
+  }
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 

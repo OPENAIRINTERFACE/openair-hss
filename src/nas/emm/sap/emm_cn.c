@@ -173,7 +173,7 @@ static int _emm_cn_implicit_detach_ue (const uint32_t ue_id, const emm_proc_deta
   int                                     rc = RETURNok;
 
   OAILOG_FUNC_IN (LOG_NAS_EMM);
-  OAILOG_DEBUG (LOG_NAS_EMM, "EMM-PROC Implicit Detach udId " MME_UE_S1AP_ID_FMT "\n", ue_id);
+  OAILOG_DEBUG (LOG_NAS_EMM, "EMM-PROC Implicit Detach ue_id " MME_UE_S1AP_ID_FMT "\n", ue_id);
   emm_detach_request_ies_t  params = {0};
 //  //params.decode_status
 //  //params.guti = NULL;

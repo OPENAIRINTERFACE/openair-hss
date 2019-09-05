@@ -631,7 +631,6 @@ add_library (SGW
 set(MME_DIR ${OPENAIRCN_DIR}/src/mme_app)
 add_library(MME_APP
   ${MME_DIR}/mme_app_apn_selection.c
-  ${MME_DIR}/mme_app_authentication.c
   ${MME_DIR}/mme_app_bearer.c
   ${MME_DIR}/mme_app_bearer_context.c
   ${MME_DIR}/mme_app_capabilities.c
@@ -648,8 +647,8 @@ add_library(MME_APP
   ${MME_DIR}/mme_app_statistics.c
   ${MME_DIR}/mme_app_transport.c
   ${MME_DIR}/mme_app_ue_context.c
+  ${MME_DIR}/mme_app_session_context.c
   ${MME_DIR}/mme_config.c
-  ${MME_DIR}/s6a_2_nas_cause.c
   )
 
 

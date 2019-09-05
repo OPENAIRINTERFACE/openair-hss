@@ -47,7 +47,7 @@
 #include "EsmInformationRequest.h"
 #include "EsmInformationResponse.h"
 #include "PdnConnectivityRequest.h"
-#include "mme_app_ue_context.h"
+#include "mme_app_session_context.h"
 #include "esm_proc.h"
 #include "mme_app_esm_procedures.h"
 #include "nas_esm_proc.h"

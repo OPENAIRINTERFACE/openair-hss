@@ -45,14 +45,14 @@ int
 mme_app_handle_s1ap_ue_capabilities_ind (
     const itti_s1ap_ue_cap_ind_t * const s1ap_ue_cap_ind_pP)
 {
-  ue_context_t *ue_context_p = NULL;
+  ue_context_t *ue_context = NULL;
 
   OAILOG_FUNC_IN (LOG_MME_APP);
   DevAssert (s1ap_ue_cap_ind_pP );
 
-  ue_context_p = mme_ue_context_exists_mme_ue_s1ap_id(
+  ue_context = mme_ue_context_exists_mme_ue_s1ap_id(
     &mme_app_desc.mme_ue_contexts, s1ap_ue_cap_ind_pP->mme_ue_s1ap_id);
-  if (!ue_context_p) {
+  if (!ue_context) {
     OAILOG_ERROR (
       LOG_MME_APP,
       "UE context doesn't exist for enb_ue_s1ap_ue_id " ENB_UE_S1AP_ID_FMT
@@ -61,19 +61,19 @@ mme_app_handle_s1ap_ue_capabilities_ind (
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
 
-  if (ue_context_p->ue_radio_capability) {
-    bdestroy_wrapper(&ue_context_p->ue_radio_capability);
+  if (ue_context->privates.fields.ue_radio_capability) {
+    bdestroy_wrapper(&ue_context->privates.fields.ue_radio_capability);
   }
 
   // Allocate the radio capabilities memory. Note that this takes care of the
   // length = 0 case for us quite nicely.
-  ue_context_p->ue_radio_capability = blk2bstr(s1ap_ue_cap_ind_pP->radio_capabilities, s1ap_ue_cap_ind_pP->radio_capabilities_length);
+  ue_context->privates.fields.ue_radio_capability = blk2bstr(s1ap_ue_cap_ind_pP->radio_capabilities, s1ap_ue_cap_ind_pP->radio_capabilities_length);
 
   OAILOG_DEBUG (LOG_MME_APP,
                "UE radio capabilities of length %d found and cached\n",
-               ue_context_p->ue_radio_capability->slen);
+               ue_context->privates.fields.ue_radio_capability->slen);
 
-//  unlock_ue_contexts(ue_context_p);
+//  unlock_ue_contexts(ue_context);
   OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
 }
 

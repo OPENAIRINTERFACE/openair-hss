@@ -1066,7 +1066,6 @@ static int _nas_message_decrypt (
   case SECURITY_HEADER_TYPE_INTEGRITY_PROTECTED:
   case SECURITY_HEADER_TYPE_INTEGRITY_PROTECTED_NEW:
     // todo: currently also in this case trying to get the security context from the source MME
-  case SECURITY_HEADER_TYPE_INTEGRITY_PROTECTED_CYPHERED:
     OAILOG_DEBUG (LOG_NAS, "No decryption of message length %lu according to security header type 0x%02x\n", length, security_header_type);
     memcpy (dest, src, length);
     DECODE_U8 (dest, *(uint8_t *) (&header), size);
@@ -1074,6 +1073,7 @@ static int _nas_message_decrypt (
     //LOG_FUNC_RETURN (LOG_NAS, length);
     break;
 
+  case SECURITY_HEADER_TYPE_INTEGRITY_PROTECTED_CYPHERED:
   case SECURITY_HEADER_TYPE_INTEGRITY_PROTECTED_CYPHERED_NEW:
     if ( emm_security_context) {
       direction = emm_security_context->direction_decode;

@@ -47,6 +47,7 @@
 #include "mme_config.h"
 #include "mme_app_extern.h"
 #include "mme_app_ue_context.h"
+#include "mme_app_session_context.h"
 #include "mme_app_defs.h"
 #include "mme_app_apn_selection.h"
 #include "mme_app_pdn_context.h"
@@ -166,7 +167,7 @@ void mme_app_send_s11_delete_bearer_cmd(teid_t local_teid, teid_t saegw_s11_teid
 }
 
 //------------------------------------------------------------------------------
-int mme_app_send_s11_release_access_bearers_req (struct ue_context_s *const ue_context)
+int mme_app_send_s11_release_access_bearers_req (mme_ue_s1ap_id_t ue_id)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
   /*
@@ -177,28 +178,27 @@ int mme_app_send_s11_release_access_bearers_req (struct ue_context_s *const ue_c
   pdn_context_t                                     *pdn_context = NULL;
   int                                                rc = RETURNok;
 
-  DevAssert (ue_context );
-
-  pdn_context = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
-  if(!pdn_context){
-    OAILOG_ERROR (LOG_MME_APP, "NO PDN Context for UE with Id " MME_UE_S1AP_ID_FMT " and imsi " IMSI_64_FMT "\n", ue_context->mme_ue_s1ap_id, ue_context->imsi);
+  ue_session_pool_t      * ue_session_pool = mme_ue_session_pool_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_session_pools, ue_id);
+  if(!ue_session_pool){
+    OAILOG_ERROR (LOG_MME_APP, "NO UE session pool for UE with Id " MME_UE_S1AP_ID_FMT ". \n", ue_id);
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
-
-//  DevAssert(pdn_context);
+  pdn_context = RB_MIN(PdnContexts, &ue_session_pool->pdn_contexts);
+  if(!pdn_context){
+    OAILOG_ERROR (LOG_MME_APP, "NO PDN Context for UE with Id " MME_UE_S1AP_ID_FMT ". \n", ue_id);
+    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+  }
 
   message_p = itti_alloc_new_message (TASK_MME_APP, S11_RELEASE_ACCESS_BEARERS_REQUEST);
   release_access_bearers_request_p = &message_p->ittiMsg.s11_release_access_bearers_request;
   memset ((void*)release_access_bearers_request_p, 0, sizeof (itti_s11_release_access_bearers_request_t));
 
   /** Sending one RAB for all PDNs also in the specification. */
-  release_access_bearers_request_p->local_teid = ue_context->mme_teid_s11;
+  release_access_bearers_request_p->local_teid = ue_session_pool->privates.fields.mme_teid_s11;
   release_access_bearers_request_p->teid = pdn_context->s_gw_teid_s11_s4;
   memcpy((void*)&release_access_bearers_request_p->edns_peer_ip, (struct sockaddr *)&pdn_context->s_gw_addr_s11_s4,
   ((struct sockaddr *)&pdn_context->s_gw_addr_s11_s4)->sa_family == AF_INET ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
-
   release_access_bearers_request_p->originating_node = NODE_TYPE_MME;
-
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 S11_RELEASE_ACCESS_BEARERS_REQUEST teid %u", release_access_bearers_request_p->teid);
   rc = itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
@@ -217,23 +217,29 @@ mme_app_send_s11_create_session_req (
   context_identifier_t                    context_identifier = 0;
   MessageDef                             *message_p = NULL;
   ue_context_t                           *ue_context = NULL;
+  ue_session_pool_t                      *ue_session_pool = NULL;
   itti_s11_create_session_request_t      *session_request_p = NULL;
   int                                     rc = RETURNok;
 
   // todo: handover flag in operation-identifier?!
-
+  // todo: further move parameters from ue_context to ue_sp
   ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, ue_id);
-  DevAssert (ue_context);
-  DevAssert (pdn_context);
-  OAILOG_DEBUG (LOG_MME_APP, "Sending CSR for imsi " IMSI_64_FMT "\n", ue_context->imsi);
-
-  if (ue_context->sub_status != SS_SERVICE_GRANTED) {
-    /*
-     * HSS rejected the bearer creation or roaming is not allowed for this
-     * UE. This result will trigger an ESM Failure message sent to UE.
-     */
-    DevMessage ("Not implemented: ACCESS NOT GRANTED, send ESM Failure to NAS\n");
+  if(!ue_context){
+	  OAILOG_ERROR (LOG_MME_APP, "No UE context for UE " MME_UE_S1AP_ID_FMT ". Cannot send CSR. \n", ue_id);
+	  OAILOG_FUNC_OUT(LOG_MME_APP);
   }
+
+  ue_session_pool = mme_ue_session_pool_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_session_pools, ue_id);
+  if(!ue_session_pool){
+	  OAILOG_ERROR (LOG_MME_APP, "No UE session pool for UE " MME_UE_S1AP_ID_FMT ". Cannot send CSR. \n", ue_id);
+	  OAILOG_FUNC_OUT(LOG_MME_APP);
+  }
+  if(!pdn_context) {
+	  OAILOG_ERROR (LOG_MME_APP, "No pdn context for UE " MME_UE_S1AP_ID_FMT ". Cannot send CSR. \n", ue_id);
+	  OAILOG_FUNC_OUT(LOG_MME_APP);
+  }
+
+  OAILOG_DEBUG (LOG_MME_APP, "Sending CSR for imsi " IMSI_64_FMT "\n", ue_context->privates.fields.imsi);
 
   message_p = itti_alloc_new_message (TASK_MME_APP, S11_CREATE_SESSION_REQUEST);
   /*
@@ -258,15 +264,15 @@ mme_app_send_s11_create_session_req (
    * no tunnel had been previously setup, the distant teid is set to 0.
    * The remote teid will be provided in the response message.
    */
-  session_request_p->teid = ue_context->s_gw_teid_s11_s4;
+  session_request_p->teid = ue_session_pool->privates.fields.saegw_teid_s11;
   /** IMSI. */
   memcpy((void*)&session_request_p->imsi, imsi_p, sizeof(imsi_t));
   // message content was set to 0
   /*
    * Copy the MSISDN
    */
-  memcpy (session_request_p->msisdn.digit, ue_context->msisdn, blength(ue_context->msisdn));
-  session_request_p->msisdn.length = blength(ue_context->msisdn);
+  memcpy (session_request_p->msisdn.digit, ue_context->privates.fields.msisdn, blength(ue_context->privates.fields.msisdn));
+  session_request_p->msisdn.length = blength(ue_context->privates.fields.msisdn);
   session_request_p->rat_type = RAT_EUTRAN;
   /**
    * Set the indication flag.
@@ -279,7 +285,7 @@ mme_app_send_s11_create_session_req (
   }
 
   session_request_p->uli.present |= ULI_ECGI;
-  session_request_p->uli.s.ecgi = ue_context->e_utran_cgi;
+  session_request_p->uli.s.ecgi = ue_context->privates.fields.e_utran_cgi;
   session_request_p->uli.present |= ULI_TAI;
   tai_to_Tai(serving_tai, &session_request_p->uli.s.tai);
   /*
@@ -312,7 +318,7 @@ mme_app_send_s11_create_session_req (
    * and will generate unique id only for 32 bits platforms.
    */
   OAI_GCC_DIAG_OFF(pointer-to-int-cast);
-  session_request_p->sender_fteid_for_cp.teid = ue_context->mme_teid_s11;
+  session_request_p->sender_fteid_for_cp.teid = ue_context->privates.fields.mme_teid_s11;
   OAI_GCC_DIAG_ON(pointer-to-int-cast);
   session_request_p->sender_fteid_for_cp.interface_type = S11_MME_GTP_C;
   mme_config_read_lock (&mme_config);
@@ -326,12 +332,9 @@ mme_app_send_s11_create_session_req (
   }
   mme_config_unlock (&mme_config);
 
-  //ue_context->mme_teid_s11 = session_request_p->sender_fteid_for_cp.teid;
-  DevAssert(!pdn_context->s_gw_teid_s11_s4);
-
   memcpy (session_request_p->apn, pdn_context->apn_subscribed->data, blength(pdn_context->apn_subscribed));
   // todo: set the full apn name
-  // memcpy (session_request_p->apn, ue_context_p->pending_pdn_connectivity_req_apn->data, ue_context_p->pending_pdn_connectivity_req_apn->slen);
+  // memcpy (session_request_p->apn, ue_context->pending_pdn_connectivity_req_apn->data, ue_context->pending_pdn_connectivity_req_apn->slen);
 
   /*
    * Set PDN type for pdn_type and PAA even if this IE is redundant
@@ -346,7 +349,7 @@ mme_app_send_s11_create_session_req (
     session_request_p->paa.ipv4_address.s_addr = INADDR_ANY;
     session_request_p->paa.ipv6_address = in6addr_any;
   } else {
-    //       memcpy (session_request_p->paa.ipv4_address, ue_context_p->pending_pdn_connectivity_req_pdn_addr->data, 4); /**< String to array. */
+    //       memcpy (session_request_p->paa.ipv4_address, ue_context->pending_pdn_connectivity_req_pdn_addr->data, 4); /**< String to array. */
     session_request_p->paa.ipv4_address.s_addr = pdn_context->paa->ipv4_address.s_addr;
     memcpy (&session_request_p->paa.ipv6_address, &pdn_context->paa->ipv6_address, sizeof(session_request_p->paa.ipv6_address));
     session_request_p->paa.ipv6_prefix_length = pdn_context->paa->ipv6_prefix_length;
@@ -366,14 +369,14 @@ mme_app_send_s11_create_session_req (
   session_request_p->serving_network.mnc[2] = serving_tai->plmn.mnc_digit3;
   session_request_p->selection_mode = MS_O_N_P_APN_S_V;
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0,
-      "0 S11_CREATE_SESSION_REQUEST imsi " IMSI_64_FMT, ue_context_pP->imsi);
-  OAILOG_DEBUG (LOG_MME_APP, "Sending CSR for imsi (2) " IMSI_64_FMT "\n", ue_context->imsi);
+      "0 S11_CREATE_SESSION_REQUEST imsi " IMSI_64_FMT, ue_contextP->imsi);
+  OAILOG_DEBUG (LOG_MME_APP, "Sending CSR for imsi (2) " IMSI_64_FMT "\n", ue_context->privates.fields.imsi);
   rc = itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT(LOG_MME_APP);
 }
 
 //------------------------------------------------------------------------------
-void mme_app_send_s11_modify_bearer_req(const ue_context_t * ue_context, pdn_context_t * pdn_context, uint8_t flags){
+void mme_app_send_s11_modify_bearer_req(const ue_session_pool_t * const ue_session_pool, pdn_context_t * pdn_context, uint8_t flags){
   OAILOG_FUNC_IN (LOG_MME_APP);
 
   MessageDef                             *message_p = NULL;
@@ -401,7 +404,7 @@ void mme_app_send_s11_modify_bearer_req(const ue_context_t * ue_context, pdn_con
    * The remote teid will be provided in the response message.
    */
 
-  s11_modify_bearer_request->local_teid = ue_context->mme_teid_s11;
+  s11_modify_bearer_request->local_teid = ue_session_pool->privates.fields.mme_teid_s11;
   /*
    * Delay Value in integer multiples of 50 millisecs, or zero
    */
@@ -412,27 +415,34 @@ void mme_app_send_s11_modify_bearer_req(const ue_context_t * ue_context, pdn_con
   // todo: IPv6 SAE-GW address
   s11_modify_bearer_request->teid           = pdn_context->s_gw_teid_s11_s4;
   /** Add the bearers to establish. */
-  bearer_context_t * bearer_context_to_establish = NULL;
-  RB_FOREACH (bearer_context_to_establish, SessionBearers, &pdn_context->session_bearers) {
+  bearer_context_new_t * bearer_context_to_establish = NULL;
+  STAILQ_FOREACH (bearer_context_to_establish, &pdn_context->session_bearers, entries) {
     DevAssert(bearer_context_to_establish);
     /** Add them to the bearers list of the MBR. */
-    if(bearer_context_to_establish->bearer_state & BEARER_STATE_ENB_CREATED && bearer_context_to_establish->enb_fteid_s1u.teid){
-      OAILOG_DEBUG(LOG_MME_APP, "Adding EBI %d as bearer context to be modified for UE " MME_UE_S1AP_ID_FMT". \n", bearer_context_to_establish->ebi, ue_context->mme_ue_s1ap_id);
-      s11_modify_bearer_request->bearer_contexts_to_be_modified.bearer_contexts[s11_modify_bearer_request->bearer_contexts_to_be_modified.num_bearer_context].eps_bearer_id =
+    if((bearer_context_to_establish->bearer_state & BEARER_STATE_ENB_CREATED) && bearer_context_to_establish->enb_fteid_s1u.teid){
+      /** Bearer which are currently pending modification or deletion, will still be continued to be modified, worst case, they will be modified twice. */
+      OAILOG_DEBUG(LOG_MME_APP, "Adding EBI %d as bearer context to be modified for UE " MME_UE_S1AP_ID_FMT". \n", bearer_context_to_establish->ebi, ue_session_pool->privates.mme_ue_s1ap_id);
+      s11_modify_bearer_request->bearer_contexts_to_be_modified.bearer_context[s11_modify_bearer_request->bearer_contexts_to_be_modified.num_bearer_context].eps_bearer_id =
           bearer_context_to_establish->ebi;
-      memcpy (&s11_modify_bearer_request->bearer_contexts_to_be_modified.bearer_contexts[s11_modify_bearer_request->bearer_contexts_to_be_modified.num_bearer_context].s1_eNB_fteid,
+      memcpy (&s11_modify_bearer_request->bearer_contexts_to_be_modified.bearer_context[s11_modify_bearer_request->bearer_contexts_to_be_modified.num_bearer_context].s1_eNB_fteid,
           &bearer_context_to_establish->enb_fteid_s1u, sizeof(bearer_context_to_establish->enb_fteid_s1u));
       s11_modify_bearer_request->bearer_contexts_to_be_modified.num_bearer_context++;
     } else {
-      OAILOG_WARNING(LOG_MME_APP, "Adding EBI %d as bearer context to be removed for UE " MME_UE_S1AP_ID_FMT". \n", bearer_context_to_establish->ebi, ue_context->mme_ue_s1ap_id);
-      s11_modify_bearer_request->bearer_contexts_to_be_removed.bearer_contexts[s11_modify_bearer_request->bearer_contexts_to_be_removed.num_bearer_context].eps_bearer_id = bearer_context_to_establish->ebi;
-      s11_modify_bearer_request->bearer_contexts_to_be_removed.bearer_contexts[s11_modify_bearer_request->bearer_contexts_to_be_removed.num_bearer_context].cause.cause_value = NO_RESOURCES_AVAILABLE;
-      s11_modify_bearer_request->bearer_contexts_to_be_removed.num_bearer_context++;
+      /** Check the ESM Bearer Context status, add if it is in ESM_ACTIVE state. */
+      if(bearer_context_to_establish->esm_ebr_context.status == ESM_EBR_ACTIVE){
+          OAILOG_WARNING(LOG_MME_APP, "Adding EBI %d as bearer context to be removed for UE " MME_UE_S1AP_ID_FMT". \n", bearer_context_to_establish->ebi, ue_session_pool->privates.mme_ue_s1ap_id);
+          s11_modify_bearer_request->bearer_contexts_to_be_removed.bearer_context[s11_modify_bearer_request->bearer_contexts_to_be_removed.num_bearer_context].eps_bearer_id = bearer_context_to_establish->ebi;
+          s11_modify_bearer_request->bearer_contexts_to_be_removed.bearer_context[s11_modify_bearer_request->bearer_contexts_to_be_removed.num_bearer_context].cause.cause_value = NO_RESOURCES_AVAILABLE;
+          s11_modify_bearer_request->bearer_contexts_to_be_removed.num_bearer_context++;
+      } else {
+    	  OAILOG_WARNING(LOG_MME_APP, "Not adding EBI %d as bearer context to be removed for UE " MME_UE_S1AP_ID_FMT", since ESM status is not ACTIVE yet %d. \n",
+    			  bearer_context_to_establish->ebi, ue_session_pool->privates.mme_ue_s1ap_id, bearer_context_to_establish->esm_ebr_context.status);
+      }
     }
   }
 
   OAI_GCC_DIAG_OFF(pointer-to-int-cast);
-  s11_modify_bearer_request->sender_fteid_for_cp.teid = ue_context->mme_teid_s11;
+  s11_modify_bearer_request->sender_fteid_for_cp.teid = ue_session_pool->privates.fields.mme_teid_s11;
   OAI_GCC_DIAG_ON(pointer-to-int-cast);
   s11_modify_bearer_request->sender_fteid_for_cp.interface_type = S11_MME_GTP_C;
 
@@ -459,8 +469,6 @@ void mme_app_send_s11_modify_bearer_req(const ue_context_t * ue_context, pdn_con
   s11_modify_bearer_request->trxn = NULL;
   /** Update the bearer state with Modify Bearer Response, not here. */
   // todo: apn restrictions!
-  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0,
-      "0 S11_MODIFY_BEARER_REQUEST imsi " IMSI_64_FMT, ue_context_pP->imsi);
   itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT(LOG_MME_APP);
 }
@@ -548,10 +556,10 @@ void mme_app_send_s1ap_mme_configuration_transfer(
 //  OAILOG_FUNC_IN (LOG_MME_APP);
 //  ue_context_t * ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, mme_ue_s1ap_id);
 //  if(!ue_context){
-//    OAILOG_INFO(LOG_MME_APP, "No UE context is found" MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
+//    OAILOG_INFO(LOG_MME_APP, "No UE context is found" MME_UE_S1AP_ID_FMT ". \n", ue_context->privates.mme_ue_s1ap_id);
 //    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
 //  }
-//  OAILOG_DEBUG (LOG_MME_APP, "Sending MBR for imsi " IMSI_64_FMT "\n", ue_context->imsi);
+//  OAILOG_DEBUG (LOG_MME_APP, "Sending MBR for imsi " IMSI_64_FMT "\n", ue_context->privates.fields.imsi);
 //  message_p = itti_alloc_new_message (TASK_MME_APP, S11_MODIFY_BEARER_REQUEST);
 //  AssertFatal (message_p , "itti_alloc_new_message Failed");
 //  /** Go through all PDN Contexts and for each PDN context, check for not activated bearers. */
@@ -560,14 +568,14 @@ void mme_app_send_s1ap_mme_configuration_transfer(
 //    if(registered_pdn_ctx){
 //      bearer_context_t * bearer_context = NULL;
 //      RB_FOREACH (bearer_context, SessionBearers, &registered_pdn_ctx->session_bearers) {
-//        if(bearer_context->bearer_state == BEARER_STATE_ACTIVE){
+//        if(bearer_context->bearer_state & BEARER_STATE_ACTIVE){
 //          /** Continue to next pdn. */
 //          continue;
 //        }else{
 //          if(bearer_context->bearer_state & BEARER_STATE_ENB_CREATED){
 //            /** Found a PDN. Establish the bearer contexts. */
-//            OAILOG_INFO(LOG_MME_APP, "Establishing the bearers for UE_CONTEXT for UE " MME_UE_S1AP_ID_FMT " triggered by handover notify (not active but ENB Created). \n", ue_context->mme_ue_s1ap_id);
-//            mme_app_send_s11_modify_bearer_req(ue_context, pdn_context);
+//            OAILOG_INFO(LOG_MME_APP, "Establishing the bearers for UE_CONTEXT for UE " MME_UE_S1AP_ID_FMT " triggered by handover notify (not active but ENB Created). \n", ue_context->privates.mme_ue_s1ap_id);
+//            mme_app_send_s11_modify_bearer_req(ue_session_pool, pdn_context);
 //            OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
 //          }
 //        }
@@ -602,7 +610,7 @@ int mme_app_remove_s10_tunnel_endpoint(teid_t local_teid, struct sockaddr *peer_
  * Cu
  */
 //------------------------------------------------------------------------------
-int mme_app_send_delete_session_request (struct ue_context_s * const ue_context_p, const ebi_t ebi, const struct sockaddr* saegw_s11_addr, const teid_t saegw_s11_teid, const bool noDelete, const bool handover, const uint8_t internal_flags)
+int mme_app_send_delete_session_request (struct ue_context_s * const ue_context, const ebi_t ebi, const struct sockaddr* saegw_s11_addr, const teid_t saegw_s11_teid, const bool noDelete, const bool handover, const uint8_t internal_flags)
 {
   MessageDef                             *message_p = NULL;
   int                                     rc = RETURNok;
@@ -610,7 +618,7 @@ int mme_app_send_delete_session_request (struct ue_context_s * const ue_context_
 
   message_p = itti_alloc_new_message (TASK_MME_APP, S11_DELETE_SESSION_REQUEST);
   AssertFatal (message_p , "itti_alloc_new_message Failed");
-  S11_DELETE_SESSION_REQUEST (message_p).local_teid = ue_context_p->mme_teid_s11;
+  S11_DELETE_SESSION_REQUEST (message_p).local_teid = ue_context->privates.fields.mme_teid_s11;
   S11_DELETE_SESSION_REQUEST (message_p).teid       = saegw_s11_teid;
   S11_DELETE_SESSION_REQUEST (message_p).lbi        = ebi; //default bearer
   S11_DELETE_SESSION_REQUEST (message_p).noDelete   = noDelete; //default bearer
@@ -618,7 +626,7 @@ int mme_app_send_delete_session_request (struct ue_context_s * const ue_context_
   S11_DELETE_SESSION_REQUEST (message_p).internal_flags = internal_flags;
 
   OAI_GCC_DIAG_OFF(pointer-to-int-cast);
-  S11_DELETE_SESSION_REQUEST (message_p).sender_fteid_for_cp.teid = ue_context_p->mme_teid_s11;
+  S11_DELETE_SESSION_REQUEST (message_p).sender_fteid_for_cp.teid = ue_context->privates.fields.mme_teid_s11;
   OAI_GCC_DIAG_ON(pointer-to-int-cast);
   S11_DELETE_SESSION_REQUEST (message_p).sender_fteid_for_cp.interface_type = S11_MME_GTP_C;
 
@@ -655,7 +663,7 @@ int mme_app_send_delete_session_request (struct ue_context_s * const ue_context_
                       S11_DELETE_SESSION_REQUEST  (message_p).lbi);
 
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0,
-      "0 S11_DELETE_SESSION_REQUEST imsi " IMSI_64_FMT, ue_context_pP->imsi);
+      "0 S11_DELETE_SESSION_REQUEST imsi " IMSI_64_FMT, ue_contextP->imsi);
   rc = itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
 }
@@ -737,9 +745,10 @@ void notify_s1ap_new_ue_mme_s1ap_id_association (const sctp_assoc_id_t   assoc_i
 //------------------------------------------------------------------------------
 int
 mme_app_send_s11_create_bearer_rsp (
-  struct ue_context_s *const ue_context,
-  void                *trxn,
-  gtpv2c_cause_value_t cause_value,
+  teid_t						   mme_teid_s11,
+  teid_t						   s_gw_teid_s11_s4,
+  gtpv2c_cause_value_t 			   cause_value,
+  void                		      *trxn,
   bearer_contexts_to_be_created_t *bcs_tbc)
 {
   /*
@@ -752,15 +761,12 @@ mme_app_send_s11_create_bearer_rsp (
   // todo: handover flag in operation-identifier?!
 
   OAILOG_FUNC_IN (LOG_MME_APP);
-  DevAssert (ue_context);
   DevAssert(bcs_tbc);
-
-  OAILOG_DEBUG (LOG_MME_APP, "Sending Create Bearer Response for imsi " IMSI_64_FMT "\n", ue_context->imsi);
 
   message_p = itti_alloc_new_message (TASK_MME_APP, S11_CREATE_BEARER_RESPONSE);
   AssertFatal (message_p , "itti_alloc_new_message Failed");
   itti_s11_create_bearer_response_t *s11_create_bearer_response = &message_p->ittiMsg.s11_create_bearer_response;
-  s11_create_bearer_response->local_teid = ue_context->mme_teid_s11;
+  s11_create_bearer_response->local_teid = mme_teid_s11;
   s11_create_bearer_response->trxn = trxn;
   s11_create_bearer_response->cause.cause_value = 0;
 
@@ -768,10 +774,12 @@ mme_app_send_s11_create_bearer_rsp (
   /** Iterate through the bearers to be created and check which ones where established. */
   for(int num_bc = 0; num_bc < bcs_tbc->num_bearer_context; num_bc++){
     if(cause_value && cause_value != REQUEST_ACCEPTED){
-      bcs_tbc->bearer_contexts[num_bc].cause.cause_value = cause_value;
+      bcs_tbc->bearer_context[num_bc].cause.cause_value = cause_value;
+      if(!s11_create_bearer_response->cause.cause_value)
+    	  s11_create_bearer_response->cause.cause_value = cause_value;
     }
     /** Check if the bearer is a session bearer. */
-    if(bcs_tbc->bearer_contexts[num_bc].cause.cause_value == REQUEST_ACCEPTED){
+    if(bcs_tbc->bearer_context[num_bc].cause.cause_value == REQUEST_ACCEPTED){
       if(s11_create_bearer_response->cause.cause_value == REQUEST_REJECTED)
         s11_create_bearer_response->cause.cause_value = REQUEST_ACCEPTED_PARTIALLY;
       if(!s11_create_bearer_response->cause.cause_value)
@@ -783,18 +791,18 @@ mme_app_send_s11_create_bearer_rsp (
         s11_create_bearer_response->cause.cause_value = REQUEST_REJECTED;
     }
     /** The error case is at least PARTIALLY ACCEPTED. */
-    s11_create_bearer_response->bearer_contexts.bearer_contexts[num_bc].cause.cause_value = bcs_tbc->bearer_contexts[num_bc].cause.cause_value;
+    s11_create_bearer_response->bearer_contexts.bearer_context[num_bc].cause.cause_value = bcs_tbc->bearer_context[num_bc].cause.cause_value;
     if(s11_create_bearer_response->cause.cause_value == REQUEST_ACCEPTED)
-      s11_create_bearer_response->bearer_contexts.bearer_contexts[num_bc].eps_bearer_id   = bcs_tbc->bearer_contexts[num_bc].eps_bearer_id;
+      s11_create_bearer_response->bearer_contexts.bearer_context[num_bc].eps_bearer_id   = bcs_tbc->bearer_context[num_bc].eps_bearer_id;
     //  FTEID eNB
-    memcpy(&s11_create_bearer_response->bearer_contexts.bearer_contexts[num_bc].s1u_enb_fteid,
-        &bcs_tbc->bearer_contexts[num_bc].s1u_enb_fteid, sizeof(bcs_tbc->bearer_contexts[num_bc].s1u_enb_fteid));
+    memcpy(&s11_create_bearer_response->bearer_contexts.bearer_context[num_bc].s1u_enb_fteid,
+        &bcs_tbc->bearer_context[num_bc].s1u_enb_fteid, sizeof(bcs_tbc->bearer_context[num_bc].s1u_enb_fteid));
     // FTEID SGW S1U
-    memcpy(&s11_create_bearer_response->bearer_contexts.bearer_contexts[num_bc].s1u_sgw_fteid,
-        &bcs_tbc->bearer_contexts[num_bc].s1u_sgw_fteid, sizeof(bcs_tbc->bearer_contexts[num_bc].s1u_sgw_fteid));       ///< This IE shall be sent on the S11 interface. It shall be used
+    memcpy(&s11_create_bearer_response->bearer_contexts.bearer_context[num_bc].s1u_sgw_fteid,
+        &bcs_tbc->bearer_context[num_bc].s1u_sgw_fteid, sizeof(bcs_tbc->bearer_context[num_bc].s1u_sgw_fteid));       ///< This IE shall be sent on the S11 interface. It shall be used
     s11_create_bearer_response->bearer_contexts.num_bearer_context++;
   }
-  s11_create_bearer_response->teid = ue_context->s_gw_teid_s11_s4;
+  s11_create_bearer_response->teid = s_gw_teid_s11_s4;
 ////  ////  mme_config_read_lock (&mme_config);
 ////////  session_request_p->peer_ip = mme_config.ipv4.sgw_s11;
 ////////  mme_config_unlock (&mme_config);
@@ -814,9 +822,10 @@ mme_app_send_s11_create_bearer_rsp (
 //------------------------------------------------------------------------------
 int
 mme_app_send_s11_update_bearer_rsp (
-  struct ue_context_s *const ue_context,
-  gtpv2c_cause_value_t extra_cause,
-  void                *trxn,
+  teid_t						   mme_teid_s11,
+  teid_t						   s_gw_teid_s11_s4,
+  gtpv2c_cause_value_t 			   extra_cause,
+  void                 			  *trxn,
   bearer_contexts_to_be_updated_t *bcs_tbu)
 {
   /*
@@ -828,42 +837,45 @@ mme_app_send_s11_update_bearer_rsp (
 
   // todo: handover flag in operation-identifier?!
   OAILOG_FUNC_IN (LOG_MME_APP);
-  DevAssert (ue_context);
   DevAssert(bcs_tbu);
-
-  OAILOG_DEBUG (LOG_MME_APP, "Sending Update Bearer Response for imsi " IMSI_64_FMT "\n", ue_context->imsi);
 
   message_p = itti_alloc_new_message (TASK_MME_APP, S11_UPDATE_BEARER_RESPONSE);
   AssertFatal (message_p , "itti_alloc_new_message Failed");
   itti_s11_update_bearer_response_t *s11_update_bearer_response = &message_p->ittiMsg.s11_update_bearer_response;
-  s11_update_bearer_response->local_teid = ue_context->mme_teid_s11;
+  s11_update_bearer_response->local_teid = mme_teid_s11;
   s11_update_bearer_response->trxn = trxn;
   s11_update_bearer_response->cause.cause_value = 0;
   // todo: pco, uli
   /** Iterate through the bearers to be created and check which ones where established. */
   for(int num_bc = 0; num_bc < bcs_tbu->num_bearer_context; num_bc++){
-    if(bcs_tbu->bearer_contexts[num_bc].cause.cause_value == REQUEST_ACCEPTED){
+    if(bcs_tbu->bearer_context[num_bc].cause.cause_value == REQUEST_ACCEPTED){
       if(s11_update_bearer_response->cause.cause_value == REQUEST_REJECTED)
         s11_update_bearer_response->cause.cause_value = REQUEST_ACCEPTED_PARTIALLY;
-      if(!s11_update_bearer_response->cause.cause_value)
+      else if(!s11_update_bearer_response->cause.cause_value)
         s11_update_bearer_response->cause.cause_value = REQUEST_ACCEPTED;
+      else {
+    	  /** Leave the code. */
+      }
     }else{ /**< Reject or empty. */
       if(s11_update_bearer_response->cause.cause_value == REQUEST_ACCEPTED)
         s11_update_bearer_response->cause.cause_value = REQUEST_ACCEPTED_PARTIALLY;
-      if(!s11_update_bearer_response->cause.cause_value)
-        s11_update_bearer_response->cause.cause_value = REQUEST_REJECTED;
+      else if(!s11_update_bearer_response->cause.cause_value)
+        s11_update_bearer_response->cause.cause_value = (bcs_tbu->bearer_context[num_bc].cause.cause_value) ? bcs_tbu->bearer_context[num_bc].cause.cause_value : REQUEST_REJECTED;
+      else {
+    	  /** Leave the code. */
+      }
     }
-    OAILOG_DEBUG (LOG_MME_APP, "Bearer with ebi %d updated with result code %d for ueId " MME_UE_S1AP_ID_FMT ". New UBResp cause value %d. \n",
-        bcs_tbu->bearer_contexts[num_bc].eps_bearer_id, bcs_tbu->bearer_contexts[num_bc].cause, ue_context->mme_ue_s1ap_id, s11_update_bearer_response->cause.cause_value);
+    OAILOG_DEBUG (LOG_MME_APP, "Bearer with ebi %d updated with result code %d. New UBResp cause value %d. \n",
+        bcs_tbu->bearer_context[num_bc].eps_bearer_id, bcs_tbu->bearer_context[num_bc].cause, s11_update_bearer_response->cause.cause_value);
 
     /** The error case is at least PARTIALLY ACCEPTED. */
-    s11_update_bearer_response->bearer_contexts.bearer_contexts[num_bc].eps_bearer_id     = bcs_tbu->bearer_contexts[num_bc].eps_bearer_id;
-    s11_update_bearer_response->bearer_contexts.bearer_contexts[num_bc].cause.cause_value = (bcs_tbu->bearer_contexts[num_bc].cause.cause_value) ? bcs_tbu->bearer_contexts[num_bc].cause.cause_value : REQUEST_REJECTED;
+    s11_update_bearer_response->bearer_contexts.bearer_context[num_bc].eps_bearer_id     = bcs_tbu->bearer_context[num_bc].eps_bearer_id;
+    s11_update_bearer_response->bearer_contexts.bearer_context[num_bc].cause.cause_value = (bcs_tbu->bearer_context[num_bc].cause.cause_value) ? bcs_tbu->bearer_context[num_bc].cause.cause_value : REQUEST_REJECTED;
     // todo: pco
     /** No FTEIDs to be set. */
     s11_update_bearer_response->bearer_contexts.num_bearer_context++;
   }
-  s11_update_bearer_response->teid = ue_context->s_gw_teid_s11_s4;
+  s11_update_bearer_response->teid = s_gw_teid_s11_s4;
   if(extra_cause)
 	  s11_update_bearer_response->cause.cause_value = extra_cause;
 ////  ////  mme_config_read_lock (&mme_config);
@@ -885,34 +897,27 @@ mme_app_send_s11_update_bearer_rsp (
 //------------------------------------------------------------------------------
 int
 mme_app_send_s11_delete_bearer_rsp (
-  struct ue_context_s *const ue_context,
-  gtpv2c_cause_value_t cause_value,
-  void                *trxn,
-  ebi_list_t          *ebi_list)
+  teid_t						   	mme_teid_s11,
+  teid_t						    s_gw_teid_s11_s4,
+  gtpv2c_cause_value_t 				cause_value,
+  void                			   *trxn,
+  ebi_list_t          			   *ebi_list)
 {
   /*
    * Keep the identifier to the default APN.
    */
   MessageDef                             *message_p = NULL;
   int                                     rc = RETURNok;
-
   // todo: handover flag in operation-identifier?!
-
   OAILOG_FUNC_IN (LOG_MME_APP);
-  DevAssert (ue_context);
   DevAssert(ebi_list);
-
-  if(cause_value == 0){
-    OAILOG_DEBUG (LOG_MME_APP, "No cause value is set for sending Bearer Response for imsi " IMSI_64_FMT ". Setting to REJECT. \n", ue_context->imsi);
+  if(cause_value == 0)
     cause_value = REQUEST_REJECTED;
-  }
-
-  OAILOG_DEBUG (LOG_MME_APP, "Sending Delete Bearer Response for imsi " IMSI_64_FMT "\n", ue_context->imsi);
 
   message_p = itti_alloc_new_message (TASK_MME_APP, S11_DELETE_BEARER_RESPONSE);
   AssertFatal (message_p , "itti_alloc_new_message Failed");
   itti_s11_delete_bearer_response_t *s11_delete_bearer_response = &message_p->ittiMsg.s11_delete_bearer_response;
-  s11_delete_bearer_response->local_teid = ue_context->mme_teid_s11;
+  s11_delete_bearer_response->local_teid = mme_teid_s11;
   s11_delete_bearer_response->trxn = trxn;
   s11_delete_bearer_response->cause.cause_value = cause_value;
   /** Not setting the default ebi. */
@@ -920,11 +925,11 @@ mme_app_send_s11_delete_bearer_rsp (
   /** Iterate through the bearers to be created and check which ones where established. */
   for(int num_ebi = 0; num_ebi < ebi_list->num_ebi; num_ebi++){
     /** Check if the bearer is a session bearer. */
-    s11_delete_bearer_response->bearer_contexts.bearer_contexts[num_ebi].cause.cause_value          = cause_value;
-    s11_delete_bearer_response->bearer_contexts.bearer_contexts[num_ebi].eps_bearer_id  = ebi_list->ebis[num_ebi];
-    s11_delete_bearer_response->bearer_contexts.num_bearer_context++;
+	s11_delete_bearer_response->bearer_contexts.bearer_context[num_ebi].cause.cause_value          = cause_value;
+	s11_delete_bearer_response->bearer_contexts.bearer_context[num_ebi].eps_bearer_id  = ebi_list->ebis[num_ebi];
+	s11_delete_bearer_response->bearer_contexts.num_bearer_context++;
   }
-  s11_delete_bearer_response->teid = ue_context->s_gw_teid_s11_s4;
+  s11_delete_bearer_response->teid = s_gw_teid_s11_s4;
 ////  ////  mme_config_read_lock (&mme_config);
 ////////  session_request_p->peer_ip = mme_config.ipv4.sgw_s11;
 ////////  mme_config_unlock (&mme_config);
@@ -961,14 +966,14 @@ void mme_app_itti_nas_context_response(ue_context_t * ue_context, nas_s10_contex
   itti_nas_context_res_t *nas_context_res = &message_p->ittiMsg.nas_context_res;
   /** Set the cause. */
   /** Set the UE identifiers. */
-  nas_context_res->ue_id = ue_context->mme_ue_s1ap_id;
+  nas_context_res->ue_id = ue_context->privates.mme_ue_s1ap_id;
   /** Fill the elements of the NAS message from S10 CONTEXT_RESPONSE. */
 
   /** todo: Convert the GTPv2c IMSI struct to the NAS IMSI struct. */
-  nas_context_res->imsi= ue_context->imsi;
-  //  memset (&(ue_context_p->pending_pdn_connectivity_req_imsi), 0, 16); /**< IMSI in create session request. */
-  //  memcpy (&(ue_context_p->pending_pdn_connectivity_req_imsi), &(s10_context_response_pP->imsi.digit), s10_context_response_pP->imsi.length);
-  //  ue_context_p->pending_pdn_connectivity_req_imsi_length = s10_context_response_pP->imsi.length;
+  nas_context_res->imsi= ue_context->privates.fields.imsi;
+  //  memset (&(ue_context->pending_pdn_connectivity_req_imsi), 0, 16); /**< IMSI in create session request. */
+  //  memcpy (&(ue_context->pending_pdn_connectivity_req_imsi), &(s10_context_response_pP->imsi.digit), s10_context_response_pP->imsi.length);
+  //  ue_context->pending_pdn_connectivity_req_imsi_length = s10_context_response_pP->imsi.length;
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_CONTEXT_RES sgw_s1u_teid %u ebi %u qci %u prio %u",
       current_bearer_p->s_gw_fteid_s1u.teid,
       bearer_id,
@@ -1001,14 +1006,14 @@ void mme_app_itti_nas_pdn_connectivity_response(mme_ue_s1ap_id_t ue_id, const eb
 }
 
 //------------------------------------------------------------------------------
-void mme_app_itti_forward_relocation_response(ue_context_t *ue_context, mme_app_s10_proc_mme_handover_t *s10_handover_proc, bstring target_to_source_container){
+void mme_app_itti_forward_relocation_response(ue_context_t *ue_context, struct PdnContexts * pdn_contexts, mme_app_s10_proc_mme_handover_t *s10_handover_proc, bstring target_to_source_container){
 
   MessageDef                             *message_p = NULL;
   int                                     rc = RETURNok;
 
   OAILOG_FUNC_IN (LOG_MME_APP);
   DevAssert (ue_context);
-  OAILOG_INFO (LOG_MME_APP, "Sending Forward Relocation Response to source MME for UE " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
+  OAILOG_INFO (LOG_MME_APP, "Sending Forward Relocation Response to source MME for UE " MME_UE_S1AP_ID_FMT ". \n", ue_context->privates.mme_ue_s1ap_id);
 
   message_p = itti_alloc_new_message (TASK_MME_APP, S10_FORWARD_RELOCATION_RESPONSE);
   DevAssert (message_p != NULL);
@@ -1032,23 +1037,23 @@ void mme_app_itti_forward_relocation_response(ue_context_t *ue_context, mme_app_
   forward_relocation_response_p->cause.cause_value = REQUEST_ACCEPTED;
   /** Set all bearers. */
   pdn_context_t * registered_pdn_ctx = NULL;
-  RB_FOREACH (registered_pdn_ctx, PdnContexts, &ue_context->pdn_contexts) {
+  RB_FOREACH (registered_pdn_ctx, PdnContexts, pdn_contexts) {
     if(!registered_pdn_ctx)
     	continue;
-    bearer_context_t *bearer_context_setup = NULL;
-    RB_FOREACH (bearer_context_setup, SessionBearers, &registered_pdn_ctx->session_bearers) {
+    bearer_context_new_t *bearer_context_setup = NULL;
+    STAILQ_FOREACH (bearer_context_setup, &registered_pdn_ctx->session_bearers, entries) {
       if(!bearer_context_setup)
     	  continue;
       /** EBI. */
-      forward_relocation_response_p->handovered_bearers.bearer_contexts[forward_relocation_response_p->handovered_bearers.num_bearer_context].eps_bearer_id = bearer_context_setup->ebi;
-      forward_relocation_response_p->handovered_bearers.bearer_contexts[forward_relocation_response_p->handovered_bearers.num_bearer_context].cause.cause_value = REQUEST_ACCEPTED;
+      forward_relocation_response_p->handovered_bearers.bearer_context[forward_relocation_response_p->handovered_bearers.num_bearer_context].eps_bearer_id = bearer_context_setup->ebi;
+      forward_relocation_response_p->handovered_bearers.bearer_context[forward_relocation_response_p->handovered_bearers.num_bearer_context].cause.cause_value = REQUEST_ACCEPTED;
       forward_relocation_response_p->handovered_bearers.num_bearer_context++;
     }
   }
 
   /** Set the Source MME_S10_FTEID the same as in S11. */
   OAI_GCC_DIAG_OFF(pointer-to-int-cast);
-  forward_relocation_response_p->s10_target_mme_teid.teid = ue_context->local_mme_teid_s10; /**< This one also sets the context pointer. */
+  forward_relocation_response_p->s10_target_mme_teid.teid = ue_context->privates.fields.local_mme_teid_s10; /**< This one also sets the context pointer. */
   OAI_GCC_DIAG_ON(pointer-to-int-cast);
   forward_relocation_response_p->s10_target_mme_teid.interface_type = S10_MME_GTP_C;
   /** Set the MME address. */
@@ -1074,7 +1079,7 @@ void mme_app_itti_forward_relocation_response(ue_context_t *ue_context, mme_app_
   forward_relocation_response_p->eutran_container.container_value = target_to_source_container;
 
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "MME_APP Sending S10 FORWARD_RELOCATION_RESPONSE");
-  OAILOG_INFO (LOG_MME_APP, "Successfully prepared Forward Relocation Response to source MME for UE " MME_UE_S1AP_ID_FMT " Sending to S10. \n", ue_context->mme_ue_s1ap_id);
+  OAILOG_INFO (LOG_MME_APP, "Successfully prepared Forward Relocation Response to source MME for UE " MME_UE_S1AP_ID_FMT " Sending to S10. \n", ue_context->privates.mme_ue_s1ap_id);
 
   /**
    * Sending a message to S10.
@@ -1083,7 +1088,6 @@ void mme_app_itti_forward_relocation_response(ue_context_t *ue_context, mme_app_
   itti_send_msg_to_task (TASK_S10, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
-
 
 //------------------------------------------------------------------------------
 /**
@@ -1108,15 +1112,10 @@ void mme_app_send_s10_forward_relocation_response_err(teid_t mme_source_s10_teid
   forward_relocation_response_p->teid = mme_source_s10_teid;
   /** Set the IPv4 address of the source MME. */
   memcpy((void*)&forward_relocation_response_p->peer_ip, mme_source_ip_address, mme_source_ip_address->sa_family == AF_INET ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
-
   forward_relocation_response_p->cause.cause_value = gtpv2cCause;
   forward_relocation_response_p->trxn  = trxn;
-
-  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S10_MME, NULL, 0, "MME_APP Sending S10 FORWARD_RELOCATION_RESPONSE_ERR to source TEID " TEID_FMT ". \n", mme_source_s10_teid);
-
   /** Sending a message to S10. */
   itti_send_msg_to_task (TASK_S10, INSTANCE_DEFAULT, message_p);
-
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 

@@ -46,39 +46,10 @@
 #include "3gpp_29.274.h"
 #include "3gpp_24.301.h"
 #include "mme_app_ue_context.h"
+#include "mme_app_session_context.h"
 #include "mme_app_bearer_context.h"
 
 static mme_ue_s1ap_id_t mme_app_ue_s1ap_id_generator = 1;
-
-/*---------------------------------------------------------------------------
-   Bearer Context RBTree Search Data Structure
-  --------------------------------------------------------------------------*/
-
-/**
-  Comparator funtion for comparing two ebis.
-
-  @param[in] a: Pointer to bearer context a.
-  @param[in] b: Pointer to bearer context b.
-  @return  An integer greater than, equal to or less than zero according to whether the
-  object pointed to by a is greater than, equal to or less than the object pointed to by b.
-*/
-
-static
-inline int32_t                    mme_app_compare_bearer_context(
-    struct bearer_context_s *a,
-    struct bearer_context_s *b) {
-    if (a->ebi > b->ebi )
-      return 1;
-
-    if (a->ebi < b->ebi)
-      return -1;
-
-    /* Not more field to compare. */
-    return 0;
-}
-
-//RB_GENERATE (BearerPool, bearer_context_s, bearer_ctx_rbt_Node, mme_app_compare_bearer_context)
-
 
 /*---------------------------------------------------------------------------
    PDN Context RBTree Search Data Structure
@@ -132,7 +103,7 @@ inline int32_t                    mme_app_compare_pdn_context(
 //  return bstricmp (a->apn_in_use, b->apn_in_use);
 //    OAILOG_DEBUG (LOG_MME_APP, "Selected APN %s for UE " IMSI_64_FMT "\n",
 //        ue_context->apn_config_profile.apn_configuration[index].service_selection,
-//        ue_context->imsi);
+//        ue_context->privates.fields.imsi);
 //         return &ue_context->apn_config_profile.apn_configuration[index];
 //       }
 //  return 1; // todo bstrcmp(apn_network_identifier(a->apn_in_use),
@@ -245,66 +216,9 @@ mme_app_imsi_to_u64 (mme_app_imsi_t imsi_src)
 }
 
 //------------------------------------------------------------------------------
-void mme_app_ue_context_s1_release_enb_informations(ue_context_t *ue_context)
-{
-  OAILOG_FUNC_IN (LOG_MME_APP);
-  pdn_context_t * registered_pdn_ctx = NULL;
-  /** Update all bearers and get the pdn context id. */
-  RB_FOREACH (registered_pdn_ctx, PdnContexts, &ue_context->pdn_contexts) {
-    DevAssert(registered_pdn_ctx);
-
-    /*
-     * Get the first PDN whose bearers are not established yet.
-     * Do the MBR just one PDN at a time.
-     */
-    bearer_context_t * bearer_context_to_set_idle = NULL;
-    RB_FOREACH (bearer_context_to_set_idle, SessionBearers, &registered_pdn_ctx->session_bearers) {
-      DevAssert(bearer_context_to_set_idle);
-      /** Add them to the bearears list of the MBR. */
-      mme_app_bearer_context_s1_release_enb_informations(bearer_context_to_set_idle);
-    }
-  }
-  OAILOG_FUNC_OUT(LOG_MME_APP);
-}
-
-//------------------------------------------------------------------------------
-ambr_t mme_app_total_p_gw_apn_ambr(ue_context_t *ue_context){
-  pdn_context_t * registered_pdn_ctx = NULL;
-  ambr_t apn_ambr_sum= {0, 0};
-  RB_FOREACH (registered_pdn_ctx, PdnContexts, &ue_context->pdn_contexts) {
-    DevAssert(registered_pdn_ctx);
-    apn_ambr_sum.br_dl += registered_pdn_ctx->subscribed_apn_ambr.br_dl;
-    apn_ambr_sum.br_ul += registered_pdn_ctx->subscribed_apn_ambr.br_ul;
-  }
-  return apn_ambr_sum;
-}
-
-//------------------------------------------------------------------------------
-ambr_t mme_app_total_p_gw_apn_ambr_rest(ue_context_t *ue_context, pdn_cid_t pci){
-  /** Get the total APN AMBR excluding the given PCI. */
-  pdn_context_t * registered_pdn_ctx = NULL;
-  ambr_t apn_ambr_sum= {0, 0};
-  RB_FOREACH (registered_pdn_ctx, PdnContexts, &ue_context->pdn_contexts) {
-    DevAssert(registered_pdn_ctx);
-    if(registered_pdn_ctx->context_identifier == pci)
-      continue;
-    apn_ambr_sum.br_dl += registered_pdn_ctx->subscribed_apn_ambr.br_dl;
-    apn_ambr_sum.br_ul += registered_pdn_ctx->subscribed_apn_ambr.br_ul;
-  }
-  return apn_ambr_sum;
-}
-
-//------------------------------------------------------------------------------
 mme_ue_s1ap_id_t mme_app_ctx_get_new_ue_id(void)
 {
   mme_ue_s1ap_id_t tmp = 0;
   tmp = __sync_fetch_and_add (&mme_app_ue_s1ap_id_generator, 1);
   return tmp;
 }
-
-/*
- * Generate the functions to operate inside the bearer pool.
- */
-RB_GENERATE (SessionBearers, bearer_context_s, bearerContextRbtNode, mme_app_compare_bearer_context)
-
-RB_GENERATE (BearerPool, bearer_context_s, bearerContextRbtNode, mme_app_compare_bearer_context)

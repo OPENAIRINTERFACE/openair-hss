@@ -1165,6 +1165,7 @@ void free_traffic_flow_template(traffic_flow_template_t ** tft)
 {
   traffic_flow_template_t * trafficflowtemplate = *tft;
   // nothing to do for packet filters
+  OAILOG_INFO(LOG_MME_APP, "FREING TFT %p (2).\n", trafficflowtemplate);
   for (int i = 0; i < trafficflowtemplate->parameterslist.num_parameters; i++) {
     free_traffic_flow_template_parameter (&trafficflowtemplate->parameterslist.parameter[i]);
   }

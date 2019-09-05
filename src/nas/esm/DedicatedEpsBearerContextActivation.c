@@ -64,7 +64,7 @@
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"
 #include "3gpp_29.274.h"
-#include "mme_app_ue_context.h"
+#include "mme_app_session_context.h"
 #include "common_defs.h"
 #include "mme_config.h"
 #include "nas_itti_messaging.h"
@@ -93,11 +93,11 @@
 /*
    Timer handlers
 */
-static esm_cause_t _dedicated_eps_bearer_activate_t3485_handler (nas_esm_proc_t * esm_base_proc, ESM_msg *esm_resp_msg);
+static esm_cause_t _dedicated_eps_bearer_activate_t3485_handler (nas_esm_proc_t * esm_base_proc, ESM_msg *esm_resp_msg, esm_timeout_ll_cb_arg_t * ll_handler_arg);
 
 /* Maximum value of the activate dedicated EPS bearer context request
    retransmission counter */
-#define DEDICATED_EPS_BEARER_ACTIVATE_COUNTER_MAX   1
+#define DEDICATED_EPS_BEARER_ACTIVATE_COUNTER_MAX   3
 
 /****************************************************************************/
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
@@ -207,10 +207,11 @@ esm_cause_t
 esm_proc_dedicated_eps_bearer_context (
   mme_ue_s1ap_id_t   ue_id,
   const proc_tid_t   pti,
+  const bool 		 retry,
+  int 				*retx_count,
   ebi_t              linked_ebi,
   const pdn_cid_t    pdn_cid,
   bearer_context_to_be_created_t *bc_tbc,
-  bool               * const pending_pdn_proc,
   ESM_msg           *esm_rsp_msg)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
@@ -231,7 +232,6 @@ esm_proc_dedicated_eps_bearer_context (
     if(esm_proc_pdn_connectivity->default_ebi == linked_ebi){
       OAILOG_ERROR(LOG_NAS_EMM, "EMMCN-SAP  - " "A PDN procedure for default ebi %d exists for UE " MME_UE_S1AP_ID_FMT" (cid=%d). Rejecting the establishment of the dedicated bearer.\n",
           linked_ebi, ue_id, esm_proc_pdn_connectivity->pdn_cid);
-      *pending_pdn_proc = true;
       esm_proc_pdn_connectivity->pending_qos = true;
       OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_REQUEST_REJECTED_BY_GW);
     } else {
@@ -240,9 +240,23 @@ esm_proc_dedicated_eps_bearer_context (
     }
   }
 
+  /** Check if the dedicated bearer id has already been set, if so try to find a procedure and trigger the message again. */
+  if(bc_tbc->eps_bearer_id && retry) {
+	  nas_esm_proc_bearer_context_t * esm_proc_bearer_context = _esm_proc_get_bearer_context_procedure(ue_id, pti, bc_tbc->eps_bearer_id);
+	  /** Retry the procedure. */
+	  if(esm_proc_bearer_context){
+		  esm_cause_t esm_cause = _dedicated_eps_bearer_activate_t3485_handler (esm_proc_bearer_context, esm_rsp_msg, NULL);
+		  OAILOG_INFO(LOG_NAS_EMM, "EMMCN-SAP  - " "A bearer context activation procedure for UE " MME_UE_S1AP_ID_FMT" (pti=%d, ebi=%d) already exists. "
+				  "Result of resending the message: %d. \n", ue_id, pti, bc_tbc->eps_bearer_id, esm_cause);
+		  *retx_count = esm_proc_bearer_context->esm_base_proc.retx_count;
+	      OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_SUCCESS);
+	  }
+  }
+
   /*
    * Register a new EPS bearer context into the MME.
    * This should only be for dedicated bearers (todo: handover with dedicated bearers).
+   * In case of handover, this should also work.
    */
   // todo: PCO handling
   traffic_flow_template_t * tft = bc_tbc->tft;
@@ -427,12 +441,12 @@ esm_proc_dedicated_eps_bearer_context_reject (
  **      Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
-static esm_cause_t _dedicated_eps_bearer_activate_t3485_handler (nas_esm_proc_t * esm_base_proc, ESM_msg *esm_resp_msg)
+static esm_cause_t _dedicated_eps_bearer_activate_t3485_handler (nas_esm_proc_t * esm_base_proc, ESM_msg *esm_resp_msg, esm_timeout_ll_cb_arg_t * ll_handler_arg)
 {
   OAILOG_FUNC_IN(LOG_NAS_ESM);
   nas_esm_proc_bearer_context_t * esm_proc_bearer_context = (nas_esm_proc_bearer_context_t*)esm_base_proc;
   pdn_context_t * pdn_context = NULL;
-  bearer_context_t * bearer_context = NULL;
+  bearer_context_new_t * bearer_context = NULL;
 
   esm_base_proc->retx_count += 1;
   if (esm_base_proc->retx_count < DEDICATED_EPS_BEARER_ACTIVATE_COUNTER_MAX) {
@@ -443,8 +457,29 @@ static esm_cause_t _dedicated_eps_bearer_activate_t3485_handler (nas_esm_proc_t 
     mme_app_get_pdn_context(esm_base_proc->ue_id, esm_proc_bearer_context->pdn_cid,
         esm_proc_bearer_context->linked_ebi, NULL , &pdn_context);
     if(pdn_context){
+      /** Check the default bearer status status--> Should be ACTIVE. */
+      bearer_context_new_t * default_bc = mme_app_get_session_bearer_context(pdn_context, pdn_context->default_ebi);
+      if(default_bc && !(default_bc->bearer_state & BEARER_STATE_ACTIVE)){
+    	esm_base_proc->retx_count -= 1;
+    	OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_REACTIVATION_REQUESTED);
+      }
+
       bearer_context = mme_app_get_session_bearer_context(pdn_context, esm_proc_bearer_context->bearer_ebi);
       if(bearer_context){
+    	/** Check if the default bearer has been created on the eNB side, if not set the ll-handler to something else. */
+    	if(!(bearer_context->bearer_state & BEARER_STATE_ENB_CREATED)){
+    		OAILOG_WARNING(LOG_NAS_ESM, "ESM-PROC  - Dedicated EPS bearer context not established on the eNB side yet (ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d).\n",
+    				esm_base_proc->ue_id, bearer_context->ebi);
+    		if(ll_handler_arg){
+    			memcpy(&ll_handler_arg->bearer_level_qos, &bearer_context->bearer_level_qos, sizeof(bearer_context->bearer_level_qos));
+            	ll_handler_arg->ue_id = esm_base_proc->ue_id;
+            	ll_handler_arg->eps_bearer_id = bearer_context->ebi;
+            	ll_handler_arg->ll_handler = lowerlayer_activate_bearer_req;
+            	OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Dedicated EPS bearer context not established on the eNB side yet (ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d), but altering ll callback handler.\n",
+            			esm_base_proc->ue_id, bearer_context->ebi);
+    		}
+    	}
+
         /* Resend the message and restart the timer. */
         EpsQualityOfService eps_qos = {0};
         /** Sending a EBR-Request per bearer context. */

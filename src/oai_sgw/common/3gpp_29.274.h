@@ -502,7 +502,7 @@ typedef struct {
 //-----------------
 typedef struct bearer_context_to_be_created_s {
   uint8_t                  eps_bearer_id;       ///< EBI,  Mandatory CSR
-  traffic_flow_template_t  tft;                 ///< Bearer TFT, Optional CSR, This IE may be included on the S4/S11 and S5/S8 interfaces.
+  traffic_flow_template_t  *tft;                 ///< Bearer TFT, Optional CSR, This IE may be included on the S4/S11 and S5/S8 interfaces.
   fteid_t                  s1u_enb_fteid;       ///< S1-U eNodeB F-TEID, Conditional CSR, This IE shall be included on the S11 interface for X2-based handover with SGW relocation.
   fteid_t                  s1u_sgw_fteid;       ///< S1-U SGW F-TEID, Conditional CSR, This IE shall be included on the S11 interface for X2-based handover with SGW relocation.
   fteid_t                  s4u_sgsn_fteid;      ///< S4-U SGSN F-TEID, Conditional CSR, This IE shall be included on the S4 interface if the S4-U interface is used.
@@ -525,7 +525,7 @@ typedef struct bearer_context_to_be_created_s {
 typedef struct bearer_contexts_to_be_created_s {
 #define MSG_CREATE_SESSION_REQUEST_MAX_BEARER_CONTEXTS   11
 uint8_t num_bearer_context;
-bearer_context_to_be_created_t bearer_contexts[MSG_CREATE_SESSION_REQUEST_MAX_BEARER_CONTEXTS];    ///< Bearer Contexts to be created
+bearer_context_to_be_created_t bearer_context[MSG_CREATE_SESSION_REQUEST_MAX_BEARER_CONTEXTS];    ///< Bearer Contexts to be created
 ///< Several IEs with the same type and instance value shall be
 ///< included on the S4/S11 and S5/S8 interfaces as necessary
 ///< to represent a list of Bearers. One single IE shall be
@@ -548,7 +548,7 @@ typedef struct bearer_context_to_be_removed_s {
 
 typedef struct bearer_contexts_to_be_removed_s {
   uint8_t num_bearer_context;
-  bearer_context_to_be_removed_t bearer_contexts[MSG_CREATE_SESSION_REQUEST_MAX_BEARER_CONTEXTS];
+  bearer_context_to_be_removed_t bearer_context[MSG_CREATE_SESSION_REQUEST_MAX_BEARER_CONTEXTS];
 } bearer_contexts_to_be_removed_t;
 
 //-------------------------------------
@@ -582,7 +582,7 @@ typedef struct bearer_context_created_s {
 
 typedef struct bearer_contexts_created_s {
   uint8_t num_bearer_context;
-  bearer_context_created_t bearer_contexts[MSG_CREATE_SESSION_REQUEST_MAX_BEARER_CONTEXTS];
+  bearer_context_created_t bearer_context[MSG_CREATE_SESSION_REQUEST_MAX_BEARER_CONTEXTS];
 } bearer_contexts_created_t;
 
 
@@ -597,7 +597,7 @@ typedef struct bearer_context_to_be_modified_s {
 typedef struct bearer_contexts_to_be_modified_s {
 #define MSG_MODIFY_BEARER_REQUEST_MAX_BEARER_CONTEXTS   11
   uint8_t num_bearer_context;
-  bearer_context_to_be_modified_t bearer_contexts[MSG_MODIFY_BEARER_REQUEST_MAX_BEARER_CONTEXTS];
+  bearer_context_to_be_modified_t bearer_context[MSG_MODIFY_BEARER_REQUEST_MAX_BEARER_CONTEXTS];
 } bearer_contexts_to_be_modified_t;
 
 typedef struct bearer_context_modified_s {
@@ -609,7 +609,7 @@ typedef struct bearer_context_modified_s {
 typedef struct bearer_contexts_modified_s {
 #define MSG_MODIFY_BEARER_RESPONSE_MAX_BEARER_CONTEXTS   11
   uint8_t num_bearer_context;
-  bearer_context_modified_t bearer_contexts[MSG_MODIFY_BEARER_RESPONSE_MAX_BEARER_CONTEXTS];
+  bearer_context_modified_t bearer_context[MSG_MODIFY_BEARER_RESPONSE_MAX_BEARER_CONTEXTS];
 } bearer_contexts_modified_t;
 
 typedef struct bearer_context_marked_for_removal_s {
@@ -619,7 +619,7 @@ typedef struct bearer_context_marked_for_removal_s {
 
 typedef struct bearer_contexts_marked_for_removal_s {
   uint8_t num_bearer_context;
-  bearer_context_marked_for_removal_t bearer_contexts[MSG_MODIFY_BEARER_RESPONSE_MAX_BEARER_CONTEXTS];
+  bearer_context_marked_for_removal_t bearer_context[MSG_MODIFY_BEARER_RESPONSE_MAX_BEARER_CONTEXTS];
 } bearer_contexts_marked_for_removal_t;
 
 //-------------------------------------
@@ -669,7 +669,7 @@ typedef struct bearer_context_within_create_bearer_response_s {
 typedef struct bearer_contexts_within_create_bearer_response_s {
 #define MSG_CREATE_BEARER_RESPONSE_MAX_BEARER_CONTEXTS   11
   uint8_t num_bearer_context;
-  bearer_context_within_create_bearer_response_t bearer_contexts[MSG_CREATE_BEARER_RESPONSE_MAX_BEARER_CONTEXTS];
+  bearer_context_within_create_bearer_response_t bearer_context[MSG_CREATE_BEARER_RESPONSE_MAX_BEARER_CONTEXTS];
 } bearer_contexts_within_create_bearer_response_t;
 
 #ifdef __cplusplus

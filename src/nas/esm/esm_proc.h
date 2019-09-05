@@ -43,6 +43,8 @@ Description Defines the EPS Session Management procedures executed at
 #include "common_defs.h"
 #include "common_types.h"
 #include "mme_app_esm_procedures.h"
+// todo: temporarily until better solution
+#include "LowerLayer.h"
 
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/
@@ -137,8 +139,8 @@ void esm_proc_esm_information_response (mme_ue_s1ap_id_t ue_id, pti_t pti, nas_e
 void
 esm_proc_default_eps_bearer_context (
   mme_ue_s1ap_id_t   ue_id,
-  nas_esm_proc_pdn_connectivity_t * const esm_proc_pdn_connectivity,
-  ESM_msg * const esm_rsp_msg);
+  ESM_msg * const esm_rsp_msg,
+  nas_esm_proc_pdn_connectivity_t * const esm_proc_pdn_connectivity);
 
 void esm_proc_default_eps_bearer_context_accept (mme_ue_s1ap_id_t ue_id, const nas_esm_proc_pdn_connectivity_t* const esm_pdn_connectivity_proc);
 
@@ -151,10 +153,11 @@ esm_cause_t
 esm_proc_dedicated_eps_bearer_context (
   mme_ue_s1ap_id_t   ue_id,
   const proc_tid_t   pti,
+  const bool 		 retry,
+  int 	    	    *retx_count,
   ebi_t              linked_ebi,
   const pdn_cid_t    pdn_cid,
   bearer_context_to_be_created_t *bc_tbc,
-  bool               * const pending_pdn_proc,
   ESM_msg           *esm_rsp_msg);
 
 esm_cause_t
@@ -179,11 +182,12 @@ esm_cause_t
 esm_proc_modify_eps_bearer_context (
   mme_ue_s1ap_id_t   ue_id,
   const proc_tid_t   pti,
+  const bool 		 retry,
+  int   			*retx_count,
   const ebi_t        linked_ebi,
   const pdn_cid_t    pdn_cid,
   bearer_context_to_be_updated_t  * bc_tbu,
   ambr_t                          * apn_ambr,
-  bool               * const pending_pdn_proc,
   ESM_msg            *esm_rsp_msg);
 
 esm_cause_t
@@ -205,8 +209,10 @@ esm_proc_modify_eps_bearer_context_reject (
  * --------------------------------------------------------------------------
  */
 esm_cause_t esm_proc_eps_bearer_context_deactivate_request (mme_ue_s1ap_id_t ue_id,
-    proc_tid_t   * pti,
-    ebi_t        * ebi,
+    proc_tid_t   *pti,
+	const bool 	  retry,
+	int   		 *retx_count,
+	ebi_t        *ebi,
     ebi_list_t *ded_ebis,
     ESM_msg * esm_rsp_msg);
 

@@ -236,7 +236,7 @@ typedef struct emm_as_data_s {
   emm_as_EPS_identity_t  eps_id;        /* UE's EPS mobile identity         */
   const guti_t          *guti;          /* GUTI temporary mobile identity   */
   const guti_t          *new_guti;      /* New GUTI, if re-allocated        */
-  emm_as_security_data_t sctx;          /* EPS NAS security context         */
+  emm_as_security_data_t sctx_data;          /* EPS NAS security context         */
   uint8_t                encryption:4;  /* Ciphering algorithm              */
   uint8_t                integrity:4;   /* Integrity protection algorithm   */
   const plmn_t          *plmn_id;       /* Identifier of the selected PLMN  */
@@ -257,7 +257,7 @@ typedef struct emm_as_data_s {
   uint8_t                delivered;   /* Data message delivery indicator  */
   emm_proc_detach_type_t detach_type; /**< Set to true if reattach is required. */
   bool					 pending_deac;
-#define EMM_AS_NAS_DATA_ATTACH          0x01  /* Attach complete      */
+  #define EMM_AS_NAS_DATA_ATTACH          0x01  /* Attach complete      */
 #define EMM_AS_NAS_DATA_DETACH_ACCEPT   0x02  /* Detach request       */
 #define EMM_AS_NAS_DATA_TAU             0x03  /* TAU    Accept        */
 #define EMM_AS_NAS_DATA_ATTACH_ACCEPT   0x04  /* Attach Accept        */
@@ -274,6 +274,8 @@ typedef struct emm_as_activate_bearer_context_req_s {
   int                    emm_cause;                   /* EMM failure cause code        */
   mme_ue_s1ap_id_t       ue_id;       /* UE lower layer identifier        */
   ebi_t                  ebi;         /* EPS rab id                       */
+  bool                   retry;
+  int					 retx_count;
   bitrate_t              mbr_dl;
   bitrate_t              mbr_ul;
   bitrate_t              gbr_dl;
@@ -286,6 +288,8 @@ typedef struct emm_as_modify_bearer_context_req_s {
   int                    emm_cause;                   /* EMM failure cause code        */
   mme_ue_s1ap_id_t       ue_id;       /* UE lower layer identifier        */
   ebi_t                  ebi;         /* EPS rab id                       */
+  bool                   retry;
+  int					 retx_count;
   bitrate_t              mbr_dl;
   bitrate_t              mbr_ul;
   bitrate_t              gbr_dl;
@@ -298,6 +302,8 @@ typedef struct emm_as_deactivate_bearer_context_req_s {
   int                    emm_cause;                   /* EMM failure cause code        */
   mme_ue_s1ap_id_t       ue_id;       /* UE lower layer identifier        */
   ebi_t                  ebi;         /* EPS erab ids. Some eNodeBs like Nokia for does not accept list of bearers for deactivation. */
+  bool                   retry;
+  int					 retx_count;
   emm_as_security_data_t sctx;        /* EPS NAS security context         */
   bstring                nas_msg;     /* NAS message to be transfered     */
 } emm_as_deactivate_bearer_context_req_t;

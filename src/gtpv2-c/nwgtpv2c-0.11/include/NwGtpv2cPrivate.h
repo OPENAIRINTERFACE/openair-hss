@@ -184,6 +184,8 @@ typedef struct nw_gtpv2c_trxn_s {
   uint8_t                       t3Timer;
   uint8_t                       maxRetries;
   nw_gtpv2c_msg_t*              pMsg;
+  bool	                        pt_trx;		    /**< Make the transaction passthrough, such that the message is forwarded, if no msg is appended to the trx. */
+
   nw_gtpv2c_stack_t*            pStack;
   nw_gtpv2c_timer_handle_t      hRspTmr;                                /**< Handle to reponse timer            */
   nw_gtpv2c_tunnel_handle_t     hTunnel;                                /**< Handle to local tunnel context     */

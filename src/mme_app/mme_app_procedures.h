@@ -48,6 +48,8 @@ typedef struct mme_app_base_proc_s {
   //pdu_in_rej_t               fail_in;
   time_out_t                 time_out;
   mme_app_base_proc_type_t   type;
+  bool						 in_progress;
+  int						 in_progress_count;
 } mme_app_base_proc_t;
 
 /* S10 */
@@ -106,7 +108,6 @@ typedef struct mme_app_s10_proc_mme_handover_s {
 
   tai_t                         target_tai;
   bool                          ho_command_sent;
-  bool                          pending_qos;
   ecgi_t                        source_ecgi;  /**< Source home/macro enb id. */
   ecgi_t                        target_ecgi;  /**< Target home/macro enb id. */
   bool                          pending_clear_location_request;
@@ -130,6 +131,7 @@ typedef enum {
 
 typedef struct mme_app_s11_proc_s {
   mme_app_base_proc_t         proc;
+  int                         num_bearers_unhandled;
   mme_app_s11_proc_type_t     type;
   pti_t					      pti;
   uintptr_t                   s11_trxn;
@@ -145,7 +147,6 @@ typedef enum {
 
 typedef struct mme_app_s11_proc_create_bearer_s {
   mme_app_s11_proc_t           proc;
-  int                          num_bearers_unhandled;
   int                          num_status_received;
 
   ebi_t                        linked_ebi;
@@ -157,7 +158,6 @@ typedef struct mme_app_s11_proc_create_bearer_s {
 
 typedef struct mme_app_s11_proc_update_bearer_s {
   mme_app_s11_proc_t           proc;
-  int                          num_bearers_unhandled;
   int                          num_status_received;
 
   pdn_cid_t                    pci;
@@ -171,8 +171,7 @@ typedef struct mme_app_s11_proc_update_bearer_s {
 
 typedef struct mme_app_s11_proc_delete_bearer_s {
   mme_app_s11_proc_t           proc;
-  int                          num_bearers_unhandled;
-  ebi_t                        def_ebi;
+  ebi_t                        linked_ebi;
   int                          num_status_received;
   ebi_list_t                   ebis;
 
@@ -188,34 +187,34 @@ typedef enum {
 ///* Declaration (prototype) of the function to store bearer contexts. */
 //RB_PROTOTYPE(BearerFteids, fteid_set_s, fteid_set_rbt_Node, fteid_set_compare_s1u_saegw)
 
-void mme_app_delete_s11_procedures(ue_context_t * const ue_context_p);
+void mme_app_delete_s11_procedures(ue_session_pool_t * const ue_session_pool);
 
-mme_app_s11_proc_t* mme_app_get_s11_procedure (ue_context_t * const ue_context);
+mme_app_s11_proc_t* mme_app_get_s11_procedure (ue_session_pool_t * const ue_session_pool);
 
-mme_app_s11_proc_create_bearer_t* mme_app_create_s11_procedure_create_bearer(ue_context_t * const ue_context_p);
-mme_app_s11_proc_create_bearer_t* mme_app_get_s11_procedure_create_bearer(ue_context_t * const ue_context_p);
-void mme_app_delete_s11_procedure_create_bearer(ue_context_t * const ue_context_p);
+mme_app_s11_proc_create_bearer_t* mme_app_create_s11_procedure_create_bearer(ue_session_pool_t * const ue_session_pool);
+mme_app_s11_proc_create_bearer_t* mme_app_get_s11_procedure_create_bearer(ue_session_pool_t * const ue_session_pool);
+void mme_app_delete_s11_procedure_create_bearer(ue_session_pool_t * const ue_context_p);
 
-mme_app_s11_proc_update_bearer_t* mme_app_create_s11_procedure_update_bearer(ue_context_t * const ue_context_p);
-mme_app_s11_proc_update_bearer_t* mme_app_get_s11_procedure_update_bearer(ue_context_t * const ue_context_p);
-void mme_app_delete_s11_procedure_update_bearer(ue_context_t * const ue_context_p);
+mme_app_s11_proc_update_bearer_t* mme_app_create_s11_procedure_update_bearer(ue_session_pool_t * const ue_session_pool);
+mme_app_s11_proc_update_bearer_t* mme_app_get_s11_procedure_update_bearer(ue_session_pool_t * const ue_session_pool);
+void mme_app_delete_s11_procedure_update_bearer(ue_session_pool_t * const ue_session_pool);
 
-mme_app_s11_proc_delete_bearer_t* mme_app_create_s11_procedure_delete_bearer(ue_context_t * const ue_context_p);
-mme_app_s11_proc_delete_bearer_t* mme_app_get_s11_procedure_delete_bearer(ue_context_t * const ue_context_p);
-void mme_app_delete_s11_procedure_delete_bearer(ue_context_t * const ue_context_p);
+mme_app_s11_proc_delete_bearer_t* mme_app_create_s11_procedure_delete_bearer(ue_session_pool_t * const ue_session_pool);
+mme_app_s11_proc_delete_bearer_t* mme_app_get_s11_procedure_delete_bearer(ue_session_pool_t * const ue_session_pool);
+void mme_app_delete_s11_procedure_delete_bearer(ue_session_pool_t * const ue_session_pool);
 
 /*
  * - Creating handover procedure in intra-MME and inter-MME handover
  * - Creating handover procedure in source & target MME todo: create same timer but different callback methods.
  * - Since we don't have a valid EMM UE context, we need to create an MME_APP context.
  */
-void mme_app_delete_s10_procedures(ue_context_t * const ue_context_p);
+void mme_app_delete_s10_procedures(ue_context_t * const ue_context);
 //------------------------------------------------------------------------------
-void mme_app_delete_s10_procedures(ue_context_t * const ue_context_p);
+void mme_app_delete_s10_procedures(ue_context_t * const ue_context);
 mme_app_s10_proc_mme_handover_t* mme_app_create_s10_procedure_mme_handover(ue_context_t * const ue_context, bool target_mme,
 		mme_app_s10_proc_type_t  s1ap_ho_type, struct sockaddr* sockaddr);
 
-mme_app_s10_proc_mme_handover_t* mme_app_get_s10_procedure_mme_handover(ue_context_t * const ue_context_p);
-void mme_app_delete_s10_procedure_mme_handover(ue_context_t * const ue_context_p);
+mme_app_s10_proc_mme_handover_t* mme_app_get_s10_procedure_mme_handover(ue_context_t * const ue_context);
+void mme_app_delete_s10_procedure_mme_handover(ue_context_t * const ue_context);
 
 #endif

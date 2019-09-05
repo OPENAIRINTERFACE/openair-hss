@@ -69,6 +69,7 @@
 #include "nas_timer.h"
 
 #include "mme_app_ue_context.h"
+#include "mme_app_session_context.h"
 #include "nas_itti_messaging.h" 
 #include "mme_app_defs.h"
 
@@ -276,7 +277,7 @@ emm_proc_detach (
     /*
      * Setup EPS NAS security data
      */
-    emm_as_set_security_data (&emm_as->sctx, &emm_context->_security, false, true);
+    emm_as_set_security_data (&emm_as->sctx_data, &emm_context->_security, false, true);
     /*
      * Notify EMM-AS SAP that Detach Accept message has to
      * be sent to the network
@@ -286,7 +287,7 @@ emm_proc_detach (
   }else{
     OAILOG_INFO (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " EMM-PROC  - No detach type is set for UE. We will not send detach request. \n", emm_context->ue_id);
     if(ue_context)
-    	ue_context->s1_ue_context_release_cause = S1AP_IMPLICIT_CONTEXT_RELEASE;
+    	ue_context->privates.s1_ue_context_release_cause = S1AP_IMPLICIT_CONTEXT_RELEASE;
     rc = RETURNok;
   }
   /*
@@ -306,7 +307,6 @@ emm_proc_detach (
      OAILOG_INFO (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " EMM-PROC  - Sending EMMREG_DETACH_CNF. \n", emm_context->ue_id);
      emm_sap.primitive = EMMREG_DETACH_CNF;
      emm_sap.u.emm_reg.ue_id = emm_context->ue_id;
-     emm_sap.u.emm_reg.ctx = emm_context;
      rc = emm_sap_send (&emm_sap);
      // Notify MME APP to remove the remaining MME_APP and S1AP contexts..
      // todo: review unlock
@@ -399,7 +399,7 @@ emm_proc_detach_request (
      * Setup EPS NAS security data
      */
     if(emm_context){
-      emm_as_set_security_data (&emm_as->sctx, &emm_context->_security, false, true);
+      emm_as_set_security_data (&emm_as->sctx_data, &emm_context->_security, false, true);
     }else{
       OAILOG_INFO (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " EMM-PROC  - Not setting security context for detach accept. \n", ue_id);
     }
@@ -428,7 +428,6 @@ emm_proc_detach_request (
         emm_sap_t                               emm_sap = {0};
         emm_sap.primitive = EMMREG_ATTACH_ABORT;
         emm_sap.u.emm_reg.ue_id = ue_id;
-        emm_sap.u.emm_reg.ctx = emm_context;
         emm_sap.u.emm_reg.u.attach.proc = specific_proc;
         rc = emm_sap_send (&emm_sap);
         //     unlock_ue_contexts(ue_context);
@@ -467,7 +466,6 @@ emm_proc_detach_request (
 
   emm_sap.primitive = EMMREG_DETACH_CNF;
   emm_sap.u.emm_reg.ue_id = ue_id;
-  emm_sap.u.emm_reg.ctx = emm_context;
   rc = emm_sap_send (&emm_sap);
 
   /** Signal detach Free all ESM procedure, don't care about the rest. */

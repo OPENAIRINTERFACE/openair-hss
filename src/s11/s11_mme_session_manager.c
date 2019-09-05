@@ -149,7 +149,7 @@ s11_mme_create_session_request (
   }
 
   for (int i = 0; i < req_p->bearer_contexts_to_be_created->num_bearer_context; i++) {
-    gtpv2c_bearer_context_to_be_created_ie_set (&(ulp_req.hMsg), &req_p->bearer_contexts_to_be_created->bearer_contexts[i]);
+    gtpv2c_bearer_context_to_be_created_ie_set (&(ulp_req.hMsg), &req_p->bearer_contexts_to_be_created->bearer_context[i]);
   }
   rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
   DevAssert (NW_OK == rc);
@@ -209,6 +209,14 @@ s11_mme_handle_create_session_response (
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_FTEID, NW_GTPV2C_IE_INSTANCE_ONE, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
       gtpv2c_fteid_ie_get, &resp_p->s5_s8_pgw_fteid);
   DevAssert (NW_OK == rc);
+  /*
+   * Linked EBI
+   */
+
+  rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_EBI, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL, gtpv2c_ebi_ie_get,
+      &resp_p->linked_eps_bearer_id);
+  DevAssert (NW_OK == rc);
+
   /*
    * PAA IE
    */
@@ -317,6 +325,8 @@ s11_mme_delete_session_request (
 
   if (HASH_TABLE_OK != hash_rc) {
     OAILOG_WARNING (LOG_S11, "Could not get GTPv2-C hTunnel for local teid %X\n", ulp_req.u_api_info.initialReqInfo.teidLocal);
+    rc = nwGtpv2cMsgDelete (*stack_p, (ulp_req.hMsg));
+    DevAssert (NW_OK == rc);
     return RETURNerror;
   }
 

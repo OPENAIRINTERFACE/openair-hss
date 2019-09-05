@@ -77,7 +77,15 @@ Description Defines internal private data handled by EPS Mobility
  * capabilities, and the uplink and downlink NAS COUNT values. In particular, separate pairs of NAS COUNT values are
  * used for each EPS NAS security contexts, respectively. The distinction between native and mapped EPS security
  * contexts also applies to EPS NAS security contexts. The EPS NAS security context is called 'full' if it additionally
- * contains the keys K NASint and K NASenc and the identifiers of the selected NAS integrity and encryption algorithms.*/
+ * contains the keys K NASint and K NASenc and the identifiers of the selected NAS integrity and encryption algorithms.
+ *
+  // Authentication Vector Temporary authentication and key agreement data that enables an MME to
+  // engage in AKA with a particular user. An EPS Authentication Vector consists of four elements:
+  // a) network challenge RAND,
+  // b) an expected response XRES,
+  // c) Key K ASME ,
+  // d) a network authentication token AUTN.
+ */
 typedef struct emm_security_context_s {
   emm_sc_type_t sc_type;     /* Type of security context        */
                       /* state of security context is implicit due to its storage location (current/non-current)*/
@@ -124,21 +132,20 @@ struct emm_common_data_s;
  * ---------------------------------------------------------------------------
  */
 typedef struct emm_data_context_s {
-  mme_ue_s1ap_id_t ue_id;        /* UE identifier                                  */
-  bool             is_dynamic;  /* Dynamically allocated context indicator         */
-  bool             is_emergency;/* Emergency bearer services indicator             */
-  bool             is_has_been_attached; /* Attachment indicator                   */
-  bool             is_initial_identity_imsi; // If the IMSI was used for identification in the initial NAS message
-  bool             is_guti_based_attach;
-  /*
+  mme_ue_s1ap_id_t 	ue_id;        /* UE identifier                                  */
+  bool             	is_dynamic;  /* Dynamically allocated context indicator         */
+  bool             	is_emergency;/* Emergency bearer services indicator             */
+  bool             	is_has_been_attached; /* Attachment indicator                   */
+  bool             	is_initial_identity_imsi; // If the IMSI was used for identification in the initial NAS message
+  bool             	is_guti_based_attach;
+  emm_procedures_t  *emm_procedures;
+ /*
    * attach_type has type emm_proc_attach_type_t.
    *
    * Here, it is un-typedef'ed as uint8_t to avoid circular dependency issues.
    */
   uint8_t                    attach_type;  /* EPS/Combined/etc. */
   additional_update_type_t   additional_update_type;
-
-  emm_procedures_t  *emm_procedures;
 
   uint32_t         member_present_mask; /* bitmask, see significance of bits below */
   uint32_t         member_valid_mask;   /* bitmask, see significance of bits below */
@@ -338,6 +345,7 @@ void emm_ctx_set_valid_drx_parameter(emm_data_context_t * const ctxt, drx_parame
 
 /** Update the EMM context from the received MM Context during Handover/TAU procedure. */
 void emm_ctx_update_from_mm_eps_context(emm_data_context_t * const ctxt, void * const _mm_eps_ctxt);
+void temp_sec_ctx_from_mm_eps_context(emm_security_context_t * const emm_sec_ctx_p, void* const _mm_eps_ctxt);
 
 struct emm_data_context_s * emm_data_context_create(const mme_ue_s1ap_id_t mme_ue_s1ap_id);
 
@@ -389,7 +397,7 @@ int  emm_data_context_add_imsi (emm_data_t * emm_data, struct emm_data_context_s
 (nonnull)) ;
 int emm_data_context_upsert_imsi (emm_data_t * emm_data, struct emm_data_context_s *elm) __attribute__((nonnull));
 
-void emm_init_context(struct emm_data_context_s * const emm_ctx, const bool init_esm_ctxt)  __attribute__ ((nonnull)) ;
+void emm_init_context(struct emm_data_context_s * const emm_ctx)  __attribute__ ((nonnull)) ;
 void emm_context_free(struct emm_data_context_s * const emm_ctx) __attribute__ ((nonnull)) ;
 void emm_context_free_content(struct emm_data_context_s * const emm_ctx) __attribute__ ((nonnull)) ;
 void emm_context_free_content_except_key_fields(struct emm_data_context_s * const emm_ctx) __attribute__ ((nonnull)) ;

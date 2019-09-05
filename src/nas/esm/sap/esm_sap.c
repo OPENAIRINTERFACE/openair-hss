@@ -208,7 +208,7 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
      * Check if a procedure exists for PDN Connectivity. If so continue with it.
      */
     pdn_context_t                       * pdn_context                 = NULL;
-    bearer_context_t                    * bearer_context              = NULL;
+    bearer_context_new_t                * bearer_context              = NULL;
     nas_esm_proc_pdn_connectivity_t     * esm_proc_pdn_connectivity   = _esm_proc_get_pdn_connectivity_procedure(msg->ue_id, PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED);
 
     if(!esm_proc_pdn_connectivity){
@@ -230,7 +230,7 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
          * Activate Default Bearer Req or PDN connectivity reject is expected.
          * The procedure exists until Activate Default Bearer Accept is received.
          */
-        esm_proc_default_eps_bearer_context(msg->ue_id, esm_proc_pdn_connectivity, &esm_resp_msg);
+        esm_proc_default_eps_bearer_context(msg->ue_id, &esm_resp_msg, esm_proc_pdn_connectivity);
       }
     }
   }
@@ -267,7 +267,8 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
      * Check if a procedure exists for PDN Connectivity. If so continue with it.
      */
     pti_t                                pti                         = PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED;
-    msg->esm_cause = esm_proc_eps_bearer_context_deactivate_request(msg->ue_id, &pti,
+    int 							     no_retx_count = 0;
+    msg->esm_cause = esm_proc_eps_bearer_context_deactivate_request(msg->ue_id, &pti, false, &no_retx_count,
         &msg->data.pdn_disconnect_res->default_ebi, &msg->data.pdn_disconnect_res->ded_ebis, &esm_resp_msg);
     if(msg->esm_cause != ESM_CAUSE_SUCCESS){
       if(msg->esm_cause != ESM_CAUSE_PDN_CONNECTION_DOES_NOT_EXIST){
@@ -291,10 +292,11 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
      */
     msg->esm_cause = esm_proc_dedicated_eps_bearer_context (msg->ue_id,     /**< Create an ESM procedure and store the bearers in the procedure as pending. */
         PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED,                     /**< No UE triggered bearer context activation is supported. */
-        msg->data.eps_bearer_context_activate.linked_ebi,
+        msg->data.eps_bearer_context_activate.retry,
+		&msg->data.eps_bearer_context_activate.retx_count,
+		msg->data.eps_bearer_context_activate.linked_ebi,
         msg->data.eps_bearer_context_activate.pdn_cid,
         msg->data.eps_bearer_context_activate.bc_tbc,
-		&msg->data.eps_bearer_context_activate.pending_pdn_proc,
         &esm_resp_msg);
     /** For each bearer separately process with the bearer establishment. */
     if (msg->esm_cause != ESM_CAUSE_SUCCESS) {   /**< We assume that no ESM procedure exists. */
@@ -312,16 +314,19 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
   case ESM_EPS_BEARER_CONTEXT_MODIFY_REQ:{
     msg->esm_cause = esm_proc_modify_eps_bearer_context(msg->ue_id,     /**< Create an ESM procedure and store the bearers in the procedure as pending. */
            msg->data.eps_bearer_context_modify.pti,
-           msg->data.eps_bearer_context_modify.linked_ebi,
+		   msg->data.eps_bearer_context_modify.retry,
+		   &msg->data.eps_bearer_context_modify.retx_count,
+		   msg->data.eps_bearer_context_modify.linked_ebi,
            msg->data.eps_bearer_context_modify.pdn_cid,
            msg->data.eps_bearer_context_modify.bc_tbu,
            &msg->data.eps_bearer_context_modify.apn_ambr,
-		   &msg->data.eps_bearer_context_modify.pending_pdn_proc,
            &esm_resp_msg);
     /** For each bearer separately process with the bearer establishment. */
     if (msg->esm_cause != ESM_CAUSE_SUCCESS) {   /**< We assume that no ESM procedure exists. */
       /** No Procedure is expected for the error case, should be handled internally. */
       nas_itti_modify_eps_bearer_ctx_rej(msg->ue_id, msg->data.eps_bearer_context_modify.bc_tbu->eps_bearer_id, msg->esm_cause); /**< Assuming, no other CN bearer procedure will intervene. */
+    } else if (msg->esm_cause == ESM_CAUSE_SERVICE_OPTION_TEMPORARILY_OUT_OF_ORDER) {   /**< We assume that no ESM procedure exists. */
+  	  OAILOG_WARNING(LOG_NAS_EMM, "EMMCN-SAP  - " "Received temporary reject for bearer modification for UE " MME_UE_S1AP_ID_FMT".\n", msg->ue_id);
     }
   }
   break;
@@ -333,7 +338,6 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
 		  if(esm_proc_pdn_connectivity->default_ebi == msg->data.eps_bearer_context_deactivate.linked_ebi){
 			  OAILOG_ERROR(LOG_NAS_EMM, "EMMCN-SAP  - " "A PDN procedure for default ebi %d exists for UE " MME_UE_S1AP_ID_FMT" (cid=%d). Rejecting removal of dedicated bearer.\n",
 					  esm_proc_pdn_connectivity->default_ebi, msg->ue_id, esm_proc_pdn_connectivity->pdn_cid);
-			  msg->data.eps_bearer_context_deactivate.pending_pdn_proc = true;
 			  esm_proc_pdn_connectivity->pending_qos = true;
 			  break;
 		  } else {
@@ -342,10 +346,14 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
 		  }
 	  }
 	  msg->esm_cause = esm_proc_eps_bearer_context_deactivate_request(msg->ue_id, &msg->data.eps_bearer_context_deactivate.pti,
+			  msg->data.eps_bearer_context_deactivate.retry,
+			  &msg->data.eps_bearer_context_deactivate.retx_count,
 			  &msg->data.eps_bearer_context_deactivate.ded_ebi, NULL, &esm_resp_msg);
 	  if (msg->esm_cause != ESM_CAUSE_SUCCESS) {   /**< We assume that no ESM procedure exists. */
 		  /* Only if no bearer context, or the bearer context is implicitly detached by the eNB (DBC). */
-		  nas_itti_dedicated_eps_bearer_deactivation_complete(msg->ue_id, msg->data.eps_bearer_context_deactivate.ded_ebi);
+		  nas_itti_dedicated_eps_bearer_deactivation_complete(msg->ue_id, msg->data.eps_bearer_context_deactivate.ded_ebi, msg->esm_cause);
+	  } else if (msg->esm_cause == ESM_CAUSE_SERVICE_OPTION_TEMPORARILY_OUT_OF_ORDER) {   /**< We assume that no ESM procedure exists. */
+	  	  OAILOG_WARNING(LOG_NAS_EMM, "EMMCN-SAP  - " "Received temporary reject for bearer deactivation for UE " MME_UE_S1AP_ID_FMT".\n", msg->ue_id);
 	  }
   }
   break;
@@ -360,7 +368,7 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
     /*
      * Get the procedure of the timer.
      */
-    nas_esm_proc_t * esm_base_proc = ((nas_esm_proc_t*)msg->data.esm_proc_timeout);
+    nas_esm_proc_t * esm_base_proc = ((nas_esm_proc_t*)msg->data.eps_bearer_context_ll_cb_arg.esm_proc_timeout);
     if(!esm_base_proc){
       OAILOG_ERROR(LOG_NAS_ESM, "ESM-SAP   - No procedure for timeout found.\n");
     }else {
@@ -372,7 +380,15 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
        */
       msg->ue_id = esm_base_proc->ue_id;
       msg->is_attach_tau = esm_base_proc->type == ESM_PROC_PDN_CONTEXT ? ((nas_esm_proc_pdn_connectivity_t*)esm_base_proc)->is_attach : false;
-      msg->esm_cause = esm_base_proc->timeout_notif(esm_base_proc, &esm_resp_msg );
+      msg->esm_cause = esm_base_proc->timeout_notif(esm_base_proc, &esm_resp_msg, &msg->data.eps_bearer_context_ll_cb_arg);
+      /** Set the lower layer handler. */
+      /** Check if the cause is due idle mode, if so trigger paging (counter should not be incremented). */
+      if(msg->esm_cause == ESM_CAUSE_REACTIVATION_REQUESTED){
+    	  OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Timer expired but received message incompatility error for transaction (type=%d, ue_id=" MME_UE_S1AP_ID_FMT "), " "retransmission counter = %d. "
+    			  "Triggering paging.\n", esm_base_proc->type, esm_base_proc->ue_id, esm_base_proc->retx_count);
+    	  nas_itti_paging_due_signaling(msg->ue_id);
+		  DevAssert(!esm_resp_msg.header.message_type);
+      }
     }
   }
   break;

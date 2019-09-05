@@ -43,7 +43,6 @@ include_directories("${SRC_TOP_DIR}/s10")
 add_library(MME_APP
     mme_app_capabilities.c
     mme_app_apn_selection.c
-    mme_app_authentication.c
     mme_app_bearer.c
     mme_app_bearer_context.c
     mme_app_capabilities.c
@@ -60,6 +59,7 @@ add_library(MME_APP
     mme_app_statistics.c
     mme_app_transport.c
     mme_app_ue_context.c
+    mme_app_session_context.c
     mme_app_wrr_selection.c
     mme_config.c
     )
