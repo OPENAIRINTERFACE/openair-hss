@@ -49,6 +49,7 @@ typedef struct mme_app_base_proc_s {
   time_out_t                 time_out;
   mme_app_base_proc_type_t   type;
   bool						 in_progress;
+  int						 in_progress_count;
 } mme_app_base_proc_t;
 
 /* S10 */

@@ -187,6 +187,8 @@ typedef struct itti_nas_dl_data_rej_s {
 typedef struct itti_nas_erab_setup_req_s {
   mme_ue_s1ap_id_t ue_id;            /* UE lower layer identifier   */
   ebi_t            ebi;              /* EPS bearer id        */
+  bool             retry;		     /* Retry field. */
+  int 			   retx_count;	     /* #Retry. */
   bstring          nas_msg;          /* NAS erab bearer context activation message           */
   bitrate_t        mbr_dl;
   bitrate_t        mbr_ul;
@@ -197,6 +199,8 @@ typedef struct itti_nas_erab_setup_req_s {
 typedef struct itti_nas_erab_modify_req_s {
   mme_ue_s1ap_id_t ue_id;            /* UE lower layer identifier   */
   ebi_t            ebi;              /* EPS bearer id        */
+  bool             retry;		     /* Retry field. */
+  int 			   retx_count;	     /* #Retry. */
   bstring          nas_msg;          /* NAS erab bearer context activation message           */
   bitrate_t        mbr_dl;
   bitrate_t        mbr_ul;
@@ -207,6 +211,8 @@ typedef struct itti_nas_erab_modify_req_s {
 typedef struct itti_nas_erab_release_req_s {
   mme_ue_s1ap_id_t ue_id;            /* UE lower layer identifier   */
   ebi_t            ebi;              /* EPS bearer id        */
+  bool             retry;		     /* Retry field. */
+  int 			   retx_count;	     /* #Retry. */
   bstring          nas_msg;          /* NAS erab bearer context deactivation message           */
 } itti_nas_erab_release_req_t;
 

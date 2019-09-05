@@ -562,10 +562,10 @@ static int _emm_as_data_ind (emm_as_data_t * msg, int *emm_cause)
            */
           if(emm_ctx){
             // shrink plain_msg
-                      btrunc(plain_msg, bytes);
-                      nas_itti_esm_data_ind(emm_ctx->ue_id, plain_msg,
-                          &emm_ctx->_imsi, &emm_ctx->originating_tai);
-                      /** Not removing the truncated message. */
+        	btrunc(plain_msg, bytes);
+        	nas_itti_esm_data_ind(emm_ctx->ue_id, plain_msg,
+        			&emm_ctx->_imsi, &emm_ctx->originating_tai);
+        	/** Not removing the truncated message. */
           } else {
             OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - No UE context exists for ue_id " MME_UE_S1AP_ID_FMT". "
                 "Cannot forward NAS_ESM message. \n", msg->ue_id);
@@ -1102,6 +1102,7 @@ static int _emm_as_send (emm_as_t * msg)
       nas_itti_erab_setup_req (as_msg.msg.activate_bearer_context_req.ue_id,
           as_msg.msg.activate_bearer_context_req.ebi,
 		  msg->u.activate_bearer_context_req.retry,
+		  msg->u.activate_bearer_context_req.retx_count,
           as_msg.msg.activate_bearer_context_req.mbr_dl,
           as_msg.msg.activate_bearer_context_req.mbr_ul,
           as_msg.msg.activate_bearer_context_req.gbr_dl,
@@ -1115,6 +1116,7 @@ static int _emm_as_send (emm_as_t * msg)
         nas_itti_erab_modify_req (as_msg.msg.modify_bearer_context_req.ue_id,
             as_msg.msg.modify_bearer_context_req.ebi,
 			msg->u.modify_bearer_context_req.retry,
+			msg->u.modify_bearer_context_req.retx_count,
 			as_msg.msg.modify_bearer_context_req.mbr_dl,
             as_msg.msg.modify_bearer_context_req.mbr_ul,
             as_msg.msg.modify_bearer_context_req.gbr_dl,
@@ -1127,7 +1129,8 @@ static int _emm_as_send (emm_as_t * msg)
     case AS_RAB_RELEASE_REQ:{
       nas_itti_erab_release_req(as_msg.msg.rab_release_req.ue_id,
           as_msg.msg.rab_release_req.rab_id,
-		  msg->u.modify_bearer_context_req.retry,
+		  msg->u.deactivate_bearer_context_req.retry,
+		  msg->u.deactivate_bearer_context_req.retx_count,
 		  as_msg.msg.rab_release_req.nas_msg);
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
     }

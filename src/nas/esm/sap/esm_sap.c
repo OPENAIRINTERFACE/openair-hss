@@ -267,7 +267,8 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
      * Check if a procedure exists for PDN Connectivity. If so continue with it.
      */
     pti_t                                pti                         = PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED;
-    msg->esm_cause = esm_proc_eps_bearer_context_deactivate_request(msg->ue_id, &pti, false,
+    int 							     no_retx_count = 0;
+    msg->esm_cause = esm_proc_eps_bearer_context_deactivate_request(msg->ue_id, &pti, false, &no_retx_count,
         &msg->data.pdn_disconnect_res->default_ebi, &msg->data.pdn_disconnect_res->ded_ebis, &esm_resp_msg);
     if(msg->esm_cause != ESM_CAUSE_SUCCESS){
       if(msg->esm_cause != ESM_CAUSE_PDN_CONNECTION_DOES_NOT_EXIST){
@@ -292,6 +293,7 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
     msg->esm_cause = esm_proc_dedicated_eps_bearer_context (msg->ue_id,     /**< Create an ESM procedure and store the bearers in the procedure as pending. */
         PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED,                     /**< No UE triggered bearer context activation is supported. */
         msg->data.eps_bearer_context_activate.retry,
+		&msg->data.eps_bearer_context_activate.retx_count,
 		msg->data.eps_bearer_context_activate.linked_ebi,
         msg->data.eps_bearer_context_activate.pdn_cid,
         msg->data.eps_bearer_context_activate.bc_tbc,
@@ -313,6 +315,7 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
     msg->esm_cause = esm_proc_modify_eps_bearer_context(msg->ue_id,     /**< Create an ESM procedure and store the bearers in the procedure as pending. */
            msg->data.eps_bearer_context_modify.pti,
 		   msg->data.eps_bearer_context_modify.retry,
+		   &msg->data.eps_bearer_context_modify.retx_count,
 		   msg->data.eps_bearer_context_modify.linked_ebi,
            msg->data.eps_bearer_context_modify.pdn_cid,
            msg->data.eps_bearer_context_modify.bc_tbu,
@@ -342,7 +345,9 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
 					  esm_proc_pdn_connectivity->default_ebi, msg->ue_id, esm_proc_pdn_connectivity->pdn_cid);
 		  }
 	  }
-	  msg->esm_cause = esm_proc_eps_bearer_context_deactivate_request(msg->ue_id, &msg->data.eps_bearer_context_deactivate.pti, msg->data.eps_bearer_context_deactivate.retry,
+	  msg->esm_cause = esm_proc_eps_bearer_context_deactivate_request(msg->ue_id, &msg->data.eps_bearer_context_deactivate.pti,
+			  msg->data.eps_bearer_context_deactivate.retry,
+			  &msg->data.eps_bearer_context_deactivate.retx_count,
 			  &msg->data.eps_bearer_context_deactivate.ded_ebi, NULL, &esm_resp_msg);
 	  if (msg->esm_cause != ESM_CAUSE_SUCCESS) {   /**< We assume that no ESM procedure exists. */
 		  /* Only if no bearer context, or the bearer context is implicitly detached by the eNB (DBC). */

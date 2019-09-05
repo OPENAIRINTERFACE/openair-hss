@@ -213,6 +213,7 @@ esm_proc_modify_eps_bearer_context (
   mme_ue_s1ap_id_t   ue_id,
   const proc_tid_t   pti,
   const bool 		 retry,
+  int			    *retx_count,
   const ebi_t        linked_ebi,
   const pdn_cid_t    pdn_cid,
   bearer_context_to_be_updated_t * bc_tbu,
@@ -264,6 +265,7 @@ esm_proc_modify_eps_bearer_context (
 		  if(esm_proc_bearer_context) {
 		    /** Retry the procedure. */
 			esm_cause_t esm_cause = _modify_eps_bearer_context_t3486_handler(esm_proc_bearer_context, esm_rsp_msg, NULL); /**< The callback handler for ll cannot be changed. */
+			*retx_count = esm_proc_bearer_context->esm_base_proc.retx_count;
 			OAILOG_INFO(LOG_NAS_EMM, "EMMCN-SAP  - " "A bearer context modification procedure for UE " MME_UE_S1AP_ID_FMT" (pti=%d) already exists. Result of resending the message %d. \n", ue_id, pti, esm_cause);
 			OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_SUCCESS);
 		  }

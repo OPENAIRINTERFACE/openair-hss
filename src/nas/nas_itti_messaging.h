@@ -60,7 +60,8 @@ nas_itti_erab_setup_req (
     const mme_ue_s1ap_id_t ue_id,
     const ebi_t            ebi,
 	const bool 			   retry,
-    const bitrate_t        mbr_dl,
+	const int			   retx_count,
+	const bitrate_t        mbr_dl,
     const bitrate_t        mbr_ul,
     const bitrate_t        gbr_dl,
     const bitrate_t        gbr_ul,
@@ -71,7 +72,8 @@ nas_itti_erab_modify_req (
     const mme_ue_s1ap_id_t ue_id,
     const ebi_t            ebi,
 	const bool 			   retry,
-    const bitrate_t        mbr_dl,
+	const int			   retx_count,
+	const bitrate_t        mbr_dl,
     const bitrate_t        mbr_ul,
     const bitrate_t        gbr_dl,
     const bitrate_t        gbr_ul,
@@ -81,7 +83,8 @@ int
 nas_itti_erab_release_req (const mme_ue_s1ap_id_t ue_id,
     const ebi_t ebi,
 	const bool 			   retry,
-    bstring                nas_msg);
+	const int			   retx_count,
+	bstring                nas_msg);
 
 void nas_itti_pdn_config_req(
   unsigned int            ue_idP,

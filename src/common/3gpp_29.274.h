@@ -529,7 +529,7 @@ typedef struct bearer_contexts_to_be_removed_s {
 } bearer_contexts_to_be_removed_t;
 
 /** Method called inside the timeout. */
-typedef esm_cause_t (*esm_ll_handler_cb_t)(const mme_ue_s1ap_id_t , const ebi_t , bearer_qos_t * , bstring data);
+typedef esm_cause_t (*esm_ll_handler_cb_t)(const mme_ue_s1ap_id_t , const ebi_t , const bool retry, const int retx_count, bearer_qos_t * , bstring data);
 
 //-----------------
 typedef struct esm_timeout_ll_cb_arg_s {

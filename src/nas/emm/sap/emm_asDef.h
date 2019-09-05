@@ -275,6 +275,7 @@ typedef struct emm_as_activate_bearer_context_req_s {
   mme_ue_s1ap_id_t       ue_id;       /* UE lower layer identifier        */
   ebi_t                  ebi;         /* EPS rab id                       */
   bool                   retry;
+  int					 retx_count;
   bitrate_t              mbr_dl;
   bitrate_t              mbr_ul;
   bitrate_t              gbr_dl;
@@ -288,6 +289,7 @@ typedef struct emm_as_modify_bearer_context_req_s {
   mme_ue_s1ap_id_t       ue_id;       /* UE lower layer identifier        */
   ebi_t                  ebi;         /* EPS rab id                       */
   bool                   retry;
+  int					 retx_count;
   bitrate_t              mbr_dl;
   bitrate_t              mbr_ul;
   bitrate_t              gbr_dl;
@@ -301,6 +303,7 @@ typedef struct emm_as_deactivate_bearer_context_req_s {
   mme_ue_s1ap_id_t       ue_id;       /* UE lower layer identifier        */
   ebi_t                  ebi;         /* EPS erab ids. Some eNodeBs like Nokia for does not accept list of bearers for deactivation. */
   bool                   retry;
+  int					 retx_count;
   emm_as_security_data_t sctx;        /* EPS NAS security context         */
   bstring                nas_msg;     /* NAS message to be transfered     */
 } emm_as_deactivate_bearer_context_req_t;

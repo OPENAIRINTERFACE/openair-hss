@@ -834,6 +834,7 @@ mme_app_handle_nas_erab_setup_req (itti_nas_erab_setup_req_t * const itti_nas_er
 
   bearer_context_new_t* bearer_context = NULL;
   mme_app_get_session_bearer_context_from_all(ue_session_pool, itti_nas_erab_setup_req->ebi, &bearer_context);
+  s11_proc_cbr = mme_app_get_s11_procedure_create_bearer(ue_session_pool);
 
   if (bearer_context) {
 	bearer_context_new_t* default_bc = NULL;
@@ -850,8 +851,6 @@ mme_app_handle_nas_erab_setup_req (itti_nas_erab_setup_req_t * const itti_nas_er
 		  ue_context_t   		*ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, ue_session_pool->privates.mme_ue_s1ap_id);
 	      if(ue_context){
 	    	/** Check for an S11 procedure --> check status. */
-	    	s11_proc_cbr = mme_app_get_s11_procedure_create_bearer(ue_session_pool);
-//	    	if(s11_proc_cbr->bcs_tbc){
 	    	if(s11_proc_cbr){
 //	    	  bearer_context_to_be_created_t * bc_tbc = NULL;
 //	    	  for(int num_ebi = 0; num_ebi < s11_proc_cbr->bcs_tbc->num_bearer_context; num_ebi++) {
@@ -862,17 +861,20 @@ mme_app_handle_nas_erab_setup_req (itti_nas_erab_setup_req_t * const itti_nas_er
 //	    	  }
 	    	  // if(bc_tbc && bc_tbc->cause.cause_value == REQUEST_ACCEPTED){
 	    	  if(s11_proc_cbr->proc.proc.in_progress){
-	    		message_p = itti_alloc_new_message (TASK_MME_APP, NAS_DOWNLINK_DATA_REQ);
-		        NAS_DOWNLINK_DATA_REQ (message_p).enb_ue_s1ap_id         = ue_context->privates.fields.enb_ue_s1ap_id;
-		        NAS_DOWNLINK_DATA_REQ (message_p).ue_id                  = ue_session_pool->privates.mme_ue_s1ap_id;
-		        //    NAS_DOWNLINK_DATA_REQ (message_p).enb_id                 = nas_dl_req_pP->enb_id;
-		        NAS_DOWNLINK_DATA_REQ (message_p).enb_id                 = ue_context->privates.fields.e_utran_cgi.cell_identity.enb_id;
-		        NAS_DOWNLINK_DATA_REQ (message_p).nas_msg                = itti_nas_erab_setup_req->nas_msg;
-		        itti_nas_erab_setup_req->nas_msg                   	   = NULL;
-		        itti_send_msg_to_task (TASK_S1AP, INSTANCE_DEFAULT, message_p);
-		        OAILOG_WARNING(LOG_MME_APP, "Bearer context for ebi %d has been established in the eNodeB already (state %d) for UE " MME_UE_S1AP_ID_FMT " and has a positive value. "
-		        		"Just delivering NAS message. \n", bearer_context->ebi, bearer_context->bearer_state, ue_session_pool->privates.mme_ue_s1ap_id);
-		        OAILOG_FUNC_OUT (LOG_MME_APP);
+	    		/** Only, if this is not a retry (ESM Timeout not treated as retry, only through MBR, TAU-Complete). */
+	    		if(!itti_nas_erab_setup_req->retry) {
+		    	  message_p = itti_alloc_new_message (TASK_MME_APP, NAS_DOWNLINK_DATA_REQ);
+		    	  NAS_DOWNLINK_DATA_REQ (message_p).enb_ue_s1ap_id         = ue_context->privates.fields.enb_ue_s1ap_id;
+		    	  NAS_DOWNLINK_DATA_REQ (message_p).ue_id                  = ue_session_pool->privates.mme_ue_s1ap_id;
+		    	  //    NAS_DOWNLINK_DATA_REQ (message_p).enb_id                 = nas_dl_req_pP->enb_id;
+		    	  NAS_DOWNLINK_DATA_REQ (message_p).enb_id                 = ue_context->privates.fields.e_utran_cgi.cell_identity.enb_id;
+		    	  NAS_DOWNLINK_DATA_REQ (message_p).nas_msg                = itti_nas_erab_setup_req->nas_msg;
+		    	  itti_nas_erab_setup_req->nas_msg                   	   = NULL;
+		    	  itti_send_msg_to_task (TASK_S1AP, INSTANCE_DEFAULT, message_p);
+		    	  OAILOG_WARNING(LOG_MME_APP, "Bearer context for ebi %d has been established in the eNodeB already (state %d) for UE " MME_UE_S1AP_ID_FMT " and has a positive value. "
+		    			  "Just delivering NAS message. \n", bearer_context->ebi, bearer_context->bearer_state, ue_session_pool->privates.mme_ue_s1ap_id);
+		    	  OAILOG_FUNC_OUT (LOG_MME_APP);
+	    		}
 	    	  }
 	    	}
 	      }
@@ -883,6 +885,28 @@ mme_app_handle_nas_erab_setup_req (itti_nas_erab_setup_req_t * const itti_nas_er
 	}
 	OAILOG_WARNING(LOG_MME_APP, "Bearer context for ebi %d has not yet been established in the eNodeB (state %d) for UE " MME_UE_S1AP_ID_FMT ". Continuing with bearer procedure. \n",
 			bearer_context->ebi, bearer_context->bearer_state, ue_session_pool->privates.mme_ue_s1ap_id);
+
+	if(s11_proc_cbr) {
+	  if(!s11_proc_cbr->proc.proc.in_progress){
+		/**< The first time, it will always be sent with an E-RAB message (not downlink NAS). */
+		OAILOG_INFO( LOG_MME_APP, "Setting S11 Create Bearer process for UE " MME_UE_S1AP_ID_FMT " as in progress. \n", ue_session_pool->privates.mme_ue_s1ap_id);
+		s11_proc_cbr->proc.proc.in_progress = true;
+		s11_proc_cbr->proc.proc.in_progress_count = itti_nas_erab_setup_req->retx_count;
+	  } else {
+	    /** Check if it is a retry, if so don't continue. */
+  		if(itti_nas_erab_setup_req->retry) {
+  		  /** Check if it is the same retx count. */
+  		  if(s11_proc_cbr->proc.proc.in_progress_count != itti_nas_erab_setup_req->retx_count){
+  		    OAILOG_ERROR( LOG_MME_APP, "S11 Create Bearer process for UE " MME_UE_S1AP_ID_FMT " is in progress and we received a retry. Not continuing with it (prog_count=%d, retx_count=%d).\n", ue_session_pool->privates.mme_ue_s1ap_id,
+  		    	s11_proc_cbr->proc.proc.in_progress_count, itti_nas_erab_setup_req->retx_count);
+  		    OAILOG_FUNC_OUT (LOG_MME_APP);
+  		  } else {
+  			OAILOG_INFO( LOG_MME_APP, "S11 Create Bearer process for UE " MME_UE_S1AP_ID_FMT " is in progress and we received a retry. Continuing with it (prog_count=%d == retx_count=%d).\n", ue_session_pool->privates.mme_ue_s1ap_id,
+  				s11_proc_cbr->proc.proc.in_progress_count, itti_nas_erab_setup_req->retx_count);
+  		  }
+  		}
+	  }
+	}
 
     message_p = itti_alloc_new_message (TASK_MME_APP, S1AP_E_RAB_SETUP_REQ);
     itti_s1ap_e_rab_setup_req_t *s1ap_e_rab_setup_req = &message_p->ittiMsg.s1ap_e_rab_setup_req;
@@ -918,7 +942,7 @@ mme_app_handle_nas_erab_setup_req (itti_nas_erab_setup_req_t * const itti_nas_er
      * Check if there is a dedicated bearer procedure ongoing.
      * If not this is multi apn. In that case check the new resulting UE-AMBR.
      */
-    if(!(s11_proc_cbr = mme_app_get_s11_procedure_create_bearer(ue_session_pool))) {
+    if(!s11_proc_cbr) {
       /** No S11 procedure --> multi APN. */
       ambr_t total_apn_ambr = mme_app_total_p_gw_apn_ambr(ue_session_pool);
       /**
@@ -932,18 +956,8 @@ mme_app_handle_nas_erab_setup_req (itti_nas_erab_setup_req_t * const itti_nas_er
       /** Will recalculate these values and set them when the response arrives. */
     } else {
       /** Not setting the updated UE-AMBR value for dedicated bearers. */
-      if(!s11_proc_cbr->proc.proc.in_progress){
-    	  /**< The first time, it will always be sent with an E-RAB message (not downlink NAS). */
-    	  OAILOG_INFO( LOG_MME_APP, "Setting S11 Create Bearer process for UE " MME_UE_S1AP_ID_FMT " as in progress. \n", ue_session_pool->privates.mme_ue_s1ap_id);
-    	  s11_proc_cbr->proc.proc.in_progress = true;
-      }
     }
-    MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S1AP_MME, NULL, 0, "0 S1AP_E_RAB_SETUP_REQ ue id " MME_UE_S1AP_ID_FMT " ebi %u teid " TEID_FMT " ",
-        ue_context->privates.mme_ue_s1ap_id,
-        s1ap_e_rab_setup_req->e_rab_to_be_setup_list.item[0].e_rab_id,
-        s1ap_e_rab_setup_req->e_rab_to_be_setup_list.item[0].gtp_teid);
-    int to_task = (RUN_MODE_SCENARIO_PLAYER == mme_config.run_mode) ? TASK_MME_SCENARIO_PLAYER:TASK_S1AP;
-    itti_send_msg_to_task (to_task, INSTANCE_DEFAULT, message_p);
+    itti_send_msg_to_task (TASK_S1AP, INSTANCE_DEFAULT, message_p);
   } else {
     OAILOG_DEBUG (LOG_MME_APP, "No bearer context found ue " MME_UE_S1AP_ID_FMT  " ebi %u\n", itti_nas_erab_setup_req->ue_id, itti_nas_erab_setup_req->ebi);
   }
@@ -987,19 +1001,21 @@ mme_app_handle_nas_erab_modify_req (itti_nas_erab_modify_req_t * const itti_nas_
 //				}
 		//if(bc_tbu && bc_tbu->cause.cause_value == REQUEST_ACCEPTED){
 		if(s11_proc_ubr->proc.proc.in_progress) {
-		  message_p = itti_alloc_new_message (TASK_MME_APP, NAS_DOWNLINK_DATA_REQ);
-		  NAS_DOWNLINK_DATA_REQ (message_p).enb_ue_s1ap_id         = ue_context->privates.fields.enb_ue_s1ap_id;
-		  NAS_DOWNLINK_DATA_REQ (message_p).ue_id                  = ue_session_pool->privates.mme_ue_s1ap_id;
-		  //    NAS_DOWNLINK_DATA_REQ (message_p).enb_id                 = nas_dl_req_pP->enb_id;
-		  NAS_DOWNLINK_DATA_REQ (message_p).enb_id                 = ue_context->privates.fields.e_utran_cgi.cell_identity.enb_id;
-		  NAS_DOWNLINK_DATA_REQ (message_p).nas_msg                = itti_nas_erab_modify_req->nas_msg;
-		  itti_nas_erab_modify_req->nas_msg                   	 = NULL;
-		  itti_send_msg_to_task (TASK_S1AP, INSTANCE_DEFAULT, message_p);
-//	  		        OAILOG_WARNING(LOG_MME_APP, "Bearer context for ebi %d has been modified in the eNodeB already (state %d) for UE " MME_UE_S1AP_ID_FMT "and has a positive value. "
-//	  		        		"Just delivering NAS message. \n", bearer_context->ebi, bearer_context->bearer_state, ue_session_pool->privates.mme_ue_s1ap_id);
-		  OAILOG_WARNING(LOG_MME_APP, "Bearer context for ebi %d has been modified in the eNodeB already (in-progress - state %d) for UE " MME_UE_S1AP_ID_FMT " and has a positive value. "
-				  "Just delivering NAS message. \n", bearer_context->ebi, bearer_context->bearer_state, ue_session_pool->privates.mme_ue_s1ap_id);
-		  OAILOG_FUNC_OUT (LOG_MME_APP);
+		  if(!itti_nas_erab_modify_req->retry) {
+		    message_p = itti_alloc_new_message (TASK_MME_APP, NAS_DOWNLINK_DATA_REQ);
+		    NAS_DOWNLINK_DATA_REQ (message_p).enb_ue_s1ap_id         = ue_context->privates.fields.enb_ue_s1ap_id;
+		    NAS_DOWNLINK_DATA_REQ (message_p).ue_id                  = ue_session_pool->privates.mme_ue_s1ap_id;
+		    //    NAS_DOWNLINK_DATA_REQ (message_p).enb_id                 = nas_dl_req_pP->enb_id;
+		    NAS_DOWNLINK_DATA_REQ (message_p).enb_id                 = ue_context->privates.fields.e_utran_cgi.cell_identity.enb_id;
+		    NAS_DOWNLINK_DATA_REQ (message_p).nas_msg                = itti_nas_erab_modify_req->nas_msg;
+		    itti_nas_erab_modify_req->nas_msg                   	 = NULL;
+		    itti_send_msg_to_task (TASK_S1AP, INSTANCE_DEFAULT, message_p);
+		//	  		        OAILOG_WARNING(LOG_MME_APP, "Bearer context for ebi %d has been modified in the eNodeB already (state %d) for UE " MME_UE_S1AP_ID_FMT "and has a positive value. "
+		//	  		        		"Just delivering NAS message. \n", bearer_context->ebi, bearer_context->bearer_state, ue_session_pool->privates.mme_ue_s1ap_id);
+		    OAILOG_WARNING(LOG_MME_APP, "Bearer context for ebi %d has been modified in the eNodeB already (in-progress - state %d) for UE " MME_UE_S1AP_ID_FMT " and has a positive value. "
+		    		"Just delivering NAS message. \n", bearer_context->ebi, bearer_context->bearer_state, ue_session_pool->privates.mme_ue_s1ap_id);
+		    OAILOG_FUNC_OUT (LOG_MME_APP);
+		  }
 		}
 	  }
 	} else {
@@ -1015,6 +1031,12 @@ mme_app_handle_nas_erab_modify_req (itti_nas_erab_modify_req_t * const itti_nas_
     if(!s11_proc_ubr->proc.proc.in_progress){
       OAILOG_INFO( LOG_MME_APP, "Setting S11 Update Bearer process for UE " MME_UE_S1AP_ID_FMT " as in progress. \n", ue_session_pool->privates.mme_ue_s1ap_id);
       s11_proc_ubr->proc.proc.in_progress = true;
+    } else {
+	  if(itti_nas_erab_modify_req->retry) {
+	    /** Check if it is a retry, if so don't continue. */
+		OAILOG_ERROR( LOG_MME_APP, "S11 Update Bearer process for UE " MME_UE_S1AP_ID_FMT " is in progress and we received a retry. Not continuing with it. \n", ue_session_pool->privates.mme_ue_s1ap_id);
+		OAILOG_FUNC_OUT (LOG_MME_APP);
+	  }
     }
     message_p = itti_alloc_new_message (TASK_MME_APP, S1AP_E_RAB_MODIFY_REQ);
     itti_s1ap_e_rab_modify_req_t *s1ap_e_rab_modify_req = &message_p->ittiMsg.s1ap_e_rab_modify_req;
@@ -1045,10 +1067,6 @@ mme_app_handle_nas_erab_modify_req (itti_nas_erab_modify_req_t * const itti_nas_
     s1ap_e_rab_modify_req->e_rab_to_be_modified_list.item[0].nas_pdu = itti_nas_erab_modify_req->nas_msg;
     itti_nas_erab_modify_req->nas_msg = NULL;
 
-    MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S1AP_MME, NULL, 0, "0 S1AP_E_RAB_MODIFY_REQ ue id " MME_UE_S1AP_ID_FMT " ebi %u teid " TEID_FMT " ",
-      itti_nas_erab_modify_req->ue_id,
-	  s1ap_e_rab_modify_req->e_rab_to_be_modified_list.item[0].e_rab_id,
-	  s1ap_e_rab_modify_req->e_rab_to_be_modified_list.item[0].gtp_teid);
     itti_send_msg_to_task (TASK_S1AP, INSTANCE_DEFAULT, message_p);
   } else {
 	  OAILOG_WARNING(LOG_MME_APP, "Bearer context for ebi %d has not yet been established in the eNodeB (state %d) for UE " MME_UE_S1AP_ID_FMT ". Not continuing with bearer modification procedure (expecting MBR). \n",
@@ -1059,7 +1077,7 @@ mme_app_handle_nas_erab_modify_req (itti_nas_erab_modify_req_t * const itti_nas_
 
 //------------------------------------------------------------------------------
 void
-mme_app_handle_nas_erab_release_req (mme_ue_s1ap_id_t ue_id, ebi_t ebi, bstring nas_msg)
+mme_app_handle_nas_erab_release_req (mme_ue_s1ap_id_t ue_id, ebi_t ebi, bool retry, bstring nas_msg)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
   struct ue_session_pool_s                    *ue_session_pool = mme_ue_session_pool_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_session_pools, ue_id);
@@ -1085,6 +1103,11 @@ mme_app_handle_nas_erab_release_req (mme_ue_s1ap_id_t ue_id, ebi_t ebi, bstring 
 	  if(!s11_proc_delete_bearer->proc.proc.in_progress){
 		  OAILOG_INFO( LOG_MME_APP, "Setting S11 Delete Bearer process for UE " MME_UE_S1AP_ID_FMT " as in progress. \n", ue_session_pool->privates.mme_ue_s1ap_id);
 		  s11_proc_delete_bearer->proc.proc.in_progress = true;
+	  } else {
+	    if(retry) {
+	      OAILOG_ERROR( LOG_MME_APP, "S11 Delete Bearer process for UE " MME_UE_S1AP_ID_FMT " is in progress and we received a retry. Not continuing with it. \n", ue_session_pool->privates.mme_ue_s1ap_id);
+	      OAILOG_FUNC_OUT (LOG_MME_APP);
+	    }
 	  }
   }
 
@@ -2891,7 +2914,7 @@ void mme_app_handle_activate_eps_bearer_ctx_rej (itti_nas_activate_eps_bearer_ct
   if(bc_tbc->cause.cause_value == REQUEST_ACCEPTED){
     OAILOG_INFO(LOG_MME_APP, "Received NAS reject after successful E-RAB activation responsefor UE: " MME_UE_S1AP_ID_FMT ". "
         "Removing the bearer in the RAT. \n", ue_session_pool->privates.mme_ue_s1ap_id);
-    mme_app_handle_nas_erab_release_req(activate_eps_bearer_ctx_rej->ue_id, bc_tbc->eps_bearer_id, NULL);
+    mme_app_handle_nas_erab_release_req(activate_eps_bearer_ctx_rej->ue_id, bc_tbc->eps_bearer_id, false, NULL);
   }
 
   bc_tbc->cause.cause_value = activate_eps_bearer_ctx_rej->cause_value ? activate_eps_bearer_ctx_rej->cause_value : REQUEST_REJECTED;
@@ -3855,11 +3878,6 @@ mme_app_handle_forward_relocation_request(
  target_tai.plmn.mnc_digit2 = forward_relocation_request_pP->target_identification.mnc[1];
  target_tai.plmn.mnc_digit3 = forward_relocation_request_pP->target_identification.mnc[2];
  target_tai.tac = forward_relocation_request_pP->target_identification.target_id.macro_enb_id.tac;
-
-// if(1){
-//	 mme_app_send_s10_forward_relocation_response_err(forward_relocation_request_pP->s10_source_mme_teid.teid, &forward_relocation_request_pP->peer_ip, forward_relocation_request_pP->trxn, REQUEST_REJECTED);
-//	 OAILOG_FUNC_OUT (LOG_MME_APP);
-// }
 
  /** Get the eNB Id. */
  target_type_t target_type = forward_relocation_request_pP->target_identification.target_type;

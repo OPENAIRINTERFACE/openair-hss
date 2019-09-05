@@ -208,6 +208,7 @@ esm_proc_dedicated_eps_bearer_context (
   mme_ue_s1ap_id_t   ue_id,
   const proc_tid_t   pti,
   const bool 		 retry,
+  int 				*retx_count,
   ebi_t              linked_ebi,
   const pdn_cid_t    pdn_cid,
   bearer_context_to_be_created_t *bc_tbc,
@@ -247,6 +248,7 @@ esm_proc_dedicated_eps_bearer_context (
 		  esm_cause_t esm_cause = _dedicated_eps_bearer_activate_t3485_handler (esm_proc_bearer_context, esm_rsp_msg, NULL);
 		  OAILOG_INFO(LOG_NAS_EMM, "EMMCN-SAP  - " "A bearer context activation procedure for UE " MME_UE_S1AP_ID_FMT" (pti=%d, ebi=%d) already exists. "
 				  "Result of resending the message: %d. \n", ue_id, pti, bc_tbc->eps_bearer_id, esm_cause);
+		  *retx_count = esm_proc_bearer_context->esm_base_proc.retx_count;
 	      OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_SUCCESS);
 	  }
   }

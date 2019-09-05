@@ -135,8 +135,11 @@ void _nas_proc_esm_timeout_handler (void *args)
      */
 	if(esm_sap.data.eps_bearer_context_ll_cb_arg.ll_handler){
 	  OAILOG_INFO (LOG_NAS_EMM, "LL-Handler has been overwritten for timeout of UE " MME_UE_S1AP_ID_FMT "\n", esm_sap.data.eps_bearer_context_ll_cb_arg.ue_id);
-	  esm_sap.data.eps_bearer_context_ll_cb_arg.ll_handler(esm_sap.data.eps_bearer_context_ll_cb_arg.ue_id, esm_sap.data.eps_bearer_context_ll_cb_arg.eps_bearer_id,
-			  &esm_sap.data.eps_bearer_context_ll_cb_arg.bearer_level_qos, rsp);
+	  esm_sap.data.eps_bearer_context_ll_cb_arg.ll_handler(esm_sap.data.eps_bearer_context_ll_cb_arg.ue_id,
+			  esm_sap.data.eps_bearer_context_ll_cb_arg.eps_bearer_id, false,
+			  0,
+			  &esm_sap.data.eps_bearer_context_ll_cb_arg.bearer_level_qos,
+			  rsp);
 	} else {
 	  lowerlayer_data_req(esm_sap.ue_id, rsp); // todo: esm_cause
 	}
@@ -295,7 +298,7 @@ nas_esm_proc_pdn_connectivity_res (
     	bearer_qos_t bearer_level_qos;
     	memset(&bearer_level_qos, 0, sizeof(bearer_level_qos));
         rc = lowerlayer_activate_bearer_req(pdn_conn_res->ue_id, esm_sap.data.pdn_connectivity_res->linked_ebi,
-        		false, &bearer_level_qos, rsp);
+        		false, 0, &bearer_level_qos, rsp);
       }
     } else {
       /**
@@ -329,11 +332,14 @@ nas_esm_proc_pdn_disconnect_res(
   esm_sap_signal(&esm_sap, &rsp);
   if(rsp){
      if(esm_sap.esm_cause == ESM_CAUSE_SUCCESS) {
-       rc = lowerlayer_deactivate_bearer_req(pdn_disconn_res->ue_id, esm_sap.data.pdn_disconnect_res->default_ebi, false, NULL, rsp);
+       rc = lowerlayer_deactivate_bearer_req(pdn_disconn_res->ue_id,
+    		   esm_sap.data.pdn_disconnect_res->default_ebi, false,
+			   0,
+			   NULL, rsp);
        bdestroy_wrapper(&rsp);
        int num_ded_ebi = 0;
        while(num_ded_ebi < esm_sap.data.pdn_disconnect_res->ded_ebis.num_ebi && rc == RETURNok){
-         rc = lowerlayer_deactivate_bearer_req(pdn_disconn_res->ue_id, esm_sap.data.pdn_disconnect_res->ded_ebis.ebis[num_ded_ebi], false, NULL, NULL);
+         rc = lowerlayer_deactivate_bearer_req(pdn_disconn_res->ue_id, esm_sap.data.pdn_disconnect_res->ded_ebis.ebis[num_ded_ebi], false, 0, NULL, NULL);
          num_ded_ebi++;
        }
      } else {
@@ -376,7 +382,7 @@ int nas_esm_proc_activate_eps_bearer_ctx(esm_eps_activate_eps_bearer_ctx_req_t *
     if(rsp){
       rc = lowerlayer_activate_bearer_req(esm_cn_activate->ue_id,
           esm_sap.data.eps_bearer_context_activate.bc_tbc->eps_bearer_id,
-		  esm_sap.data.eps_bearer_context_activate.retry,
+		  esm_sap.data.eps_bearer_context_activate.retry, esm_sap.data.eps_bearer_context_activate.retx_count,
 		  &esm_sap.data.eps_bearer_context_activate.bc_tbc->bearer_level_qos,
 		  rsp);
       bdestroy_wrapper(&rsp);
@@ -414,7 +420,8 @@ int nas_esm_proc_modify_eps_bearer_ctx(esm_eps_modify_esm_bearer_ctxs_req_t * es
     	OAILOG_DEBUG (LOG_MME_APP, "Triggering bearer modification for changed qos (ebi=%d) for UE " MME_UE_S1AP_ID_FMT ".\n",
     			esm_sap.data.eps_bearer_context_modify.bc_tbu->eps_bearer_id, esm_sap.ue_id);
     	rc = lowerlayer_modify_bearer_req(esm_cn_modify->ue_id, esm_sap.data.eps_bearer_context_modify.bc_tbu->eps_bearer_id,
-    			esm_sap.data.eps_bearer_context_modify.retry, &esm_sap.data.eps_bearer_context_modify.bc_tbu->bearer_level_qos,
+    			esm_sap.data.eps_bearer_context_modify.retry, esm_sap.data.eps_bearer_context_modify.retx_count,
+				&esm_sap.data.eps_bearer_context_modify.bc_tbu->bearer_level_qos,
 				rsp);
     } else {
     	OAILOG_INFO(LOG_MME_APP, "Not triggering bearer modification since qos is not changed (ebi=%d) for UE " MME_UE_S1AP_ID_FMT ".\n",
@@ -451,7 +458,7 @@ int nas_esm_proc_deactivate_eps_bearer_ctx(esm_eps_deactivate_eps_bearer_ctx_req
     esm_sap.data.eps_bearer_context_deactivate.pti 	   = esm_cn_deactivate->pti;
     esm_sap_signal(&esm_sap, &rsp);
     rc = lowerlayer_deactivate_bearer_req(esm_cn_deactivate->ue_id, esm_sap.data.eps_bearer_context_deactivate.ded_ebi,
-    	esm_sap.data.eps_bearer_context_deactivate.retry,
+    	esm_sap.data.eps_bearer_context_deactivate.retry, esm_sap.data.eps_bearer_context_deactivate.retx_count,
 		NULL, rsp);
     if(rsp){
       bdestroy_wrapper(&rsp);
