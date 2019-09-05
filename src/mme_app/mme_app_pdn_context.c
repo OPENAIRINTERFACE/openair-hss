@@ -116,6 +116,27 @@ mme_app_esm_create_pdn_context(mme_ue_s1ap_id_t ue_id, const ebi_t linked_ebi, c
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
 
+  /** Check the subscribed APN values. */
+  ambr_t new_total_apn_ambr = mme_app_total_p_gw_apn_ambr(ue_session_pool);
+  new_total_apn_ambr.br_dl += apn_ambr->br_dl;
+  new_total_apn_ambr.br_ul += apn_ambr->br_ul;
+  if(new_total_apn_ambr.br_dl > ue_session_pool->privates.fields.subscribed_ue_ambr.br_dl){
+    OAILOG_ERROR(LOG_MME_APP, "New total APN-AMBR (%d) exceeds the subscribed APN-AMBR (%d) (DL) for ueId " MME_UE_S1AP_ID_FMT". \n",
+    		ue_session_pool->privates.mme_ue_s1ap_id,
+			new_total_apn_ambr.br_dl,
+			ue_session_pool->privates.fields.subscribed_ue_ambr.br_dl,
+			ue_session_pool->privates.mme_ue_s1ap_id);
+    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+  }
+  if(new_total_apn_ambr.br_ul > ue_session_pool->privates.fields.subscribed_ue_ambr.br_ul){
+    OAILOG_ERROR(LOG_MME_APP, "New total APN-AMBR (%d) exceeds the subscribed APN-AMBR (%d) (UL) for ueId " MME_UE_S1AP_ID_FMT". \n",
+    		new_total_apn_ambr.br_ul,
+			ue_session_pool->privates.fields.subscribed_ue_ambr.br_ul,
+			ue_session_pool->privates.mme_ue_s1ap_id);
+    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+  }
+
+
   // todo: lock the session pool
   /** Get a PDN context. */
   *pdn_context_pp = STAILQ_FIRST(&ue_session_pool->free_pdn_contexts);
@@ -238,15 +259,25 @@ mme_app_update_pdn_context(mme_ue_s1ap_id_t ue_id, imsi64_t imsi, const subscrip
    */
   bool changed = false;
   do {
-    RB_FOREACH_SAFE(pdn_context, PdnContexts, &ue_session_pool->pdn_contexts, pdn_context_safe) { /**< Use the safe iterator. */
+      OAILOG_INFO(LOG_NAS_EMM, "EMMCN-SAP  - " "Updating the created PDN for UE " MME_UE_S1AP_ID_FMT" (START). \n", ue_id);
+      RB_FOREACH_SAFE(pdn_context, PdnContexts, &ue_session_pool->pdn_contexts, pdn_context_safe) { /**< Use the safe iterator. */
       /** Remove the pdn context. */
       changed = false;
+      if(pdn_context->default_ebi != 5){
+    	  OAILOG_INFO(LOG_NAS_EMM, "EMMCN-SAP  - " "INTERNET --> SEARCH for UE " MME_UE_S1AP_ID_FMT". \n", ue_id);
+      }
+      apn_configuration = NULL;
       mme_app_select_apn(imsi, pdn_context->apn_subscribed, &apn_configuration);
+      OAILOG_DEBUG(LOG_NAS_ESM, "ESM-PROC  - PDN connection for cid=%d and ebi=%d and APN \"%s\" checked for UE "MME_UE_S1AP_ID_FMT". \n",
+      		pdn_context->context_identifier, pdn_context->default_ebi, bdata(pdn_context->apn_subscribed), ue_id);
       if(apn_configuration){
         /**
          * We found an APN configuration. Updating it. Might traverse the list new.
          * We check if anything (ctxId) will be changed, that might alter the position of the element in the list.
          */
+    	if(pdn_context->default_ebi != 5){
+    		OAILOG_INFO(LOG_NAS_EMM, "EMMCN-SAP  - " "INTERNET --> CFG FOUND for UE " MME_UE_S1AP_ID_FMT". \n", ue_id);
+    	}
         OAILOG_INFO(LOG_NAS_EMM, "EMMCN-SAP  - " "Updating the created PDN context from the subscription profile for UE " MME_UE_S1AP_ID_FMT". \n", ue_id);
         changed = pdn_context->context_identifier >= PDN_CONTEXT_IDENTIFIER_UNASSIGNED;
         pdn_cid_t old_cid = pdn_context->context_identifier;
@@ -273,6 +304,9 @@ mme_app_update_pdn_context(mme_ue_s1ap_id_t ue_id, imsi64_t imsi, const subscrip
         /** Nothing changed, continue processing the elements. */
         continue;
       }else {
+      	if(pdn_context->default_ebi != 5){
+      		OAILOG_INFO(LOG_NAS_EMM, "EMMCN-SAP  - " "INTERNET --> CFG NOT FOUND for UE " MME_UE_S1AP_ID_FMT". \n", ue_id);
+      	}
         /**
          * Remove the PDN context and trigger a DSR.
          * Set in the flags, that it should not be signaled back to the EMM layer. Might not need to traverse the list new.

@@ -118,7 +118,7 @@ void mme_app_handle_nas_erab_setup_req (itti_nas_erab_setup_req_t * const itti_n
 
 void mme_app_handle_nas_erab_modify_req (itti_nas_erab_modify_req_t * const itti_nas_erab_modify_setup_req);
 
-void mme_app_handle_nas_erab_release_req (mme_ue_s1ap_id_t ue_id, ebi_t ebi, bool retry, bstring nas_msg);
+void mme_app_handle_nas_erab_release_req (mme_ue_s1ap_id_t ue_id, ebi_t ebi, bool retry, int retx_count, bstring nas_msg);
 
 void mme_app_handle_delete_session_rsp	     (const itti_s11_delete_session_response_t * const delete_sess_respP);
 

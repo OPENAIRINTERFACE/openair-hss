@@ -221,6 +221,10 @@ esm_proc_eps_bearer_context_deactivate_request (
   if((esm_cause = mme_app_esm_modify_bearer_context(ue_id, *ebi, ded_ebis, ESM_EBR_INACTIVE_PENDING, NULL, NULL, NULL)) != ESM_CAUSE_SUCCESS){
 	  OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - Error modifying bearer context (ebi=%d, pti=%d) (deactivation) for UE " MME_UE_S1AP_ID_FMT ". Error cause %d.\n",
 			  *ebi, *pti, ue_id, esm_cause);
+	  /** If the pdn is missing ignore it. */
+	  if(esm_cause == ESM_CAUSE_PDN_CONNECTION_DOES_NOT_EXIST){
+		  OAILOG_FUNC_RETURN(LOG_NAS_ESM, esm_cause);
+	  }
 	  /** Remove the bearer context directly and inform the MME_APP layer (congestion related implicit bearer removal). */
 	  if(retry){
 		  mme_app_release_bearer_context(ue_id, NULL, ESM_EBI_UNASSIGNED, *ebi);

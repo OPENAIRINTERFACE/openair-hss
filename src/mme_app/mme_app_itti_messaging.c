@@ -420,6 +420,7 @@ void mme_app_send_s11_modify_bearer_req(const ue_session_pool_t * const ue_sessi
     DevAssert(bearer_context_to_establish);
     /** Add them to the bearers list of the MBR. */
     if((bearer_context_to_establish->bearer_state & BEARER_STATE_ENB_CREATED) && bearer_context_to_establish->enb_fteid_s1u.teid){
+      /** Bearer which are currently pending modification or deletion, will still be continued to be modified, worst case, they will be modified twice. */
       OAILOG_DEBUG(LOG_MME_APP, "Adding EBI %d as bearer context to be modified for UE " MME_UE_S1AP_ID_FMT". \n", bearer_context_to_establish->ebi, ue_session_pool->privates.mme_ue_s1ap_id);
       s11_modify_bearer_request->bearer_contexts_to_be_modified.bearer_context[s11_modify_bearer_request->bearer_contexts_to_be_modified.num_bearer_context].eps_bearer_id =
           bearer_context_to_establish->ebi;

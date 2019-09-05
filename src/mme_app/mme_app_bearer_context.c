@@ -590,7 +590,7 @@ mme_app_esm_modify_bearer_context(mme_ue_s1ap_id_t ue_id, const ebi_t ebi, ebi_l
 	}
   }
   // todo: UNLOCK_UE_SESSION_POOL
-  OAILOG_INFO(LOG_NAS_EMM, "EMMCN-SAP  - " "ESM QoS and TFT could be verified of UBR received for UE " MME_UE_S1AP_ID_FMT".\n", ue_id);
+  OAILOG_INFO(LOG_NAS_EMM, "EMMCN-SAP  - " "ESM QoS and TFT could be verified for UE " MME_UE_S1AP_ID_FMT".\n", ue_id);
   /** Not updating the parameters yet. Updating later when a success is received. State will be updated later. */
   OAILOG_FUNC_RETURN (LOG_MME_APP, ESM_CAUSE_SUCCESS);
 }

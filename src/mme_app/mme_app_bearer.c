@@ -288,7 +288,9 @@ mme_app_handle_conn_est_cnf (
     	  /** Only add ESM active bearers (CBR might be pending). */
     	  // if(ue_context->privates.fields.mm_state == UE_REGISTERED){
     		  if(bc_context->ebi != established_pdn->default_ebi){
-    			  if(bc_context->esm_ebr_context.status != ESM_EBR_ACTIVE){ /**< Should be all active when returning from idle & @ S10 TAU. */
+    			  /** We permit RAB operations also in these cases. */
+    			  if(bc_context->esm_ebr_context.status != ESM_EBR_ACTIVE && bc_context->esm_ebr_context.status != ESM_EBR_MODIFY_PENDING
+    					  && bc_context->esm_ebr_context.status != ESM_EBR_INACTIVE_PENDING){
     				  OAILOG_WARNING(LOG_MME_APP, "Skipping dedicated bearer with ebi %d from establishment for UE " MME_UE_S1AP_ID_FMT", since ESM is not in ACTIVE state, but %d.\n",
     						  bc_context->ebi, ue_context->privates.mme_ue_s1ap_id, bc_context->esm_ebr_context.status);
     				  continue;
@@ -1029,15 +1031,25 @@ mme_app_handle_nas_erab_modify_req (itti_nas_erab_modify_req_t * const itti_nas_
   /**< The first time, it will always be sent with an E-RAB message (not downlink NAS). */
   if(bearer_context->bearer_state & BEARER_STATE_ACTIVE){
     if(!s11_proc_ubr->proc.proc.in_progress){
-      OAILOG_INFO( LOG_MME_APP, "Setting S11 Update Bearer process for UE " MME_UE_S1AP_ID_FMT " as in progress. \n", ue_session_pool->privates.mme_ue_s1ap_id);
-      s11_proc_ubr->proc.proc.in_progress = true;
+    	/**< The first time, it will always be sent with an E-RAB message (not downlink NAS). */
+    	OAILOG_INFO( LOG_MME_APP, "Setting S11 Update Bearer process for UE " MME_UE_S1AP_ID_FMT " as in progress. \n", ue_session_pool->privates.mme_ue_s1ap_id);
+    	s11_proc_ubr->proc.proc.in_progress = true;
+    	s11_proc_ubr->proc.proc.in_progress_count = itti_nas_erab_modify_req->retx_count;
     } else {
-	  if(itti_nas_erab_modify_req->retry) {
-	    /** Check if it is a retry, if so don't continue. */
-		OAILOG_ERROR( LOG_MME_APP, "S11 Update Bearer process for UE " MME_UE_S1AP_ID_FMT " is in progress and we received a retry. Not continuing with it. \n", ue_session_pool->privates.mme_ue_s1ap_id);
-		OAILOG_FUNC_OUT (LOG_MME_APP);
-	  }
+    	/** Check if it is a retry, if so don't continue. */
+    	if(itti_nas_erab_modify_req->retry) {
+    		/** Check if it is the same retx count. */
+    		if(s11_proc_ubr->proc.proc.in_progress_count != itti_nas_erab_modify_req->retx_count){
+    			OAILOG_ERROR( LOG_MME_APP, "S11 Update Bearer process for UE " MME_UE_S1AP_ID_FMT " is in progress and we received a retry. Not continuing with it (prog_count=%d, retx_count=%d).\n", ue_session_pool->privates.mme_ue_s1ap_id,
+    					s11_proc_ubr->proc.proc.in_progress_count, itti_nas_erab_modify_req->retx_count);
+    			OAILOG_FUNC_OUT (LOG_MME_APP);
+    		} else {
+    			OAILOG_INFO( LOG_MME_APP, "S11 Update Bearer process for UE " MME_UE_S1AP_ID_FMT " is in progress and we received a retry. Continuing with it (prog_count=%d == retx_count=%d).\n", ue_session_pool->privates.mme_ue_s1ap_id,
+    					s11_proc_ubr->proc.proc.in_progress_count, itti_nas_erab_modify_req->retx_count);
+    		}
+    	}
     }
+
     message_p = itti_alloc_new_message (TASK_MME_APP, S1AP_E_RAB_MODIFY_REQ);
     itti_s1ap_e_rab_modify_req_t *s1ap_e_rab_modify_req = &message_p->ittiMsg.s1ap_e_rab_modify_req;
     s1ap_e_rab_modify_req->mme_ue_s1ap_id = itti_nas_erab_modify_req->ue_id;
@@ -1077,7 +1089,7 @@ mme_app_handle_nas_erab_modify_req (itti_nas_erab_modify_req_t * const itti_nas_
 
 //------------------------------------------------------------------------------
 void
-mme_app_handle_nas_erab_release_req (mme_ue_s1ap_id_t ue_id, ebi_t ebi, bool retry, bstring nas_msg)
+mme_app_handle_nas_erab_release_req (mme_ue_s1ap_id_t ue_id, ebi_t ebi, bool retry, int retx_count, bstring nas_msg)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
   struct ue_session_pool_s                    *ue_session_pool = mme_ue_session_pool_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_session_pools, ue_id);
@@ -1093,8 +1105,10 @@ mme_app_handle_nas_erab_release_req (mme_ue_s1ap_id_t ue_id, ebi_t ebi, bool ret
 	   * Check if it is a dedicated bearer procedure.
 	   * The first time, it will always be sent with an E-RAB message (not downlink NAS).
 	   */
+	  bearer_context_new_t* bearer_context = NULL;
+	  mme_app_get_session_bearer_context_from_all(ue_session_pool, ebi, &bearer_context);
 	  bearer_context_new_t * default_bc = NULL;
-	  mme_app_get_session_bearer_context_from_all(ue_session_pool, ebi, &default_bc);
+	  mme_app_get_session_bearer_context_from_all(ue_session_pool, bearer_context->linked_ebi, &default_bc);
 	  if(!default_bc || (default_bc->ebi == ebi) || !(default_bc->bearer_state & BEARER_STATE_ACTIVE)){
 		OAILOG_ERROR( LOG_MME_APP, "Not continuing to remove D11 Delete Bearer process for UE " MME_UE_S1AP_ID_FMT " for ebi %d, since default bearer is not active yet. \n",
 				ue_session_pool->privates.mme_ue_s1ap_id, ebi);
@@ -1103,10 +1117,19 @@ mme_app_handle_nas_erab_release_req (mme_ue_s1ap_id_t ue_id, ebi_t ebi, bool ret
 	  if(!s11_proc_delete_bearer->proc.proc.in_progress){
 		  OAILOG_INFO( LOG_MME_APP, "Setting S11 Delete Bearer process for UE " MME_UE_S1AP_ID_FMT " as in progress. \n", ue_session_pool->privates.mme_ue_s1ap_id);
 		  s11_proc_delete_bearer->proc.proc.in_progress = true;
+		  s11_proc_delete_bearer->proc.proc.in_progress_count = retx_count;
 	  } else {
 	    if(retry) {
 	      OAILOG_ERROR( LOG_MME_APP, "S11 Delete Bearer process for UE " MME_UE_S1AP_ID_FMT " is in progress and we received a retry. Not continuing with it. \n", ue_session_pool->privates.mme_ue_s1ap_id);
-	      OAILOG_FUNC_OUT (LOG_MME_APP);
+	      // OAILOG_FUNC_OUT (LOG_MME_APP);
+	      if(s11_proc_delete_bearer->proc.proc.in_progress_count != retx_count){
+	    	  OAILOG_ERROR( LOG_MME_APP, "S11 Delete Bearer process for UE " MME_UE_S1AP_ID_FMT " is in progress and we received a retry. Not continuing with it (prog_count=%d, retx_count=%d).\n", ue_session_pool->privates.mme_ue_s1ap_id,
+	    			  s11_proc_delete_bearer->proc.proc.in_progress_count, retx_count);
+	    	  OAILOG_FUNC_OUT (LOG_MME_APP);
+	      } else {
+	    	  OAILOG_INFO( LOG_MME_APP, "S11 Delete Bearer process for UE " MME_UE_S1AP_ID_FMT " is in progress and we received a retry. Continuing with it (prog_count=%d == retx_count=%d).\n", ue_session_pool->privates.mme_ue_s1ap_id,
+	    			  s11_proc_delete_bearer->proc.proc.in_progress_count, retx_count);
+	      }
 	    }
 	  }
   }
@@ -2017,12 +2040,18 @@ mme_app_handle_s11_update_bearer_req (
    */
   ambr_t new_total_apn_ambr = mme_app_total_p_gw_apn_ambr_rest(ue_session_pool, cid);
   if((new_total_apn_ambr.br_dl += update_bearer_request_pP->apn_ambr.br_dl)  > ue_session_pool->privates.fields.subscribed_ue_ambr.br_dl){
-    OAILOG_ERROR(LOG_MME_APP, "New total APN-AMBR exceeds the subscribed APN-AMBR (DL) for ueId " MME_UE_S1AP_ID_FMT". \n", ue_session_pool->privates.mme_ue_s1ap_id);
+    OAILOG_ERROR(LOG_MME_APP, "New total APN-AMBR (%d) exceeds the subscribed APN-AMBR (%d) (DL) for ueId " MME_UE_S1AP_ID_FMT". \n",
+    		new_total_apn_ambr.br_dl,
+			ue_session_pool->privates.fields.subscribed_ue_ambr.br_dl,
+			ue_session_pool->privates.mme_ue_s1ap_id);
     mme_app_send_s11_update_bearer_rsp(update_bearer_request_pP->teid, ue_session_pool->privates.fields.saegw_teid_s11, 0, (uintptr_t)update_bearer_request_pP->trxn, update_bearer_request_pP->bearer_contexts);
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
   if((new_total_apn_ambr.br_ul += update_bearer_request_pP->apn_ambr.br_ul)  > ue_session_pool->privates.fields.subscribed_ue_ambr.br_ul){
-    OAILOG_ERROR(LOG_MME_APP, "New total APN-AMBR exceeds the subscribed APN-AMBR (UL) for ueId " MME_UE_S1AP_ID_FMT". \n", ue_session_pool->privates.mme_ue_s1ap_id);
+    OAILOG_ERROR(LOG_MME_APP, "New total APN-AMBR (%d) exceeds the subscribed APN-AMBR (%d) (UL) for ueId " MME_UE_S1AP_ID_FMT". \n",
+    		new_total_apn_ambr.br_ul,
+			ue_session_pool->privates.fields.subscribed_ue_ambr.br_ul,
+			ue_session_pool->privates.mme_ue_s1ap_id);
     mme_app_send_s11_update_bearer_rsp(update_bearer_request_pP->teid, ue_session_pool->privates.fields.saegw_teid_s11, 0, (uintptr_t)update_bearer_request_pP->trxn, update_bearer_request_pP->bearer_contexts);
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
@@ -2914,7 +2943,7 @@ void mme_app_handle_activate_eps_bearer_ctx_rej (itti_nas_activate_eps_bearer_ct
   if(bc_tbc->cause.cause_value == REQUEST_ACCEPTED){
     OAILOG_INFO(LOG_MME_APP, "Received NAS reject after successful E-RAB activation responsefor UE: " MME_UE_S1AP_ID_FMT ". "
         "Removing the bearer in the RAT. \n", ue_session_pool->privates.mme_ue_s1ap_id);
-    mme_app_handle_nas_erab_release_req(activate_eps_bearer_ctx_rej->ue_id, bc_tbc->eps_bearer_id, false, NULL);
+    mme_app_handle_nas_erab_release_req(activate_eps_bearer_ctx_rej->ue_id, bc_tbc->eps_bearer_id, false, 0, NULL);
   }
 
   bc_tbc->cause.cause_value = activate_eps_bearer_ctx_rej->cause_value ? activate_eps_bearer_ctx_rej->cause_value : REQUEST_REJECTED;
@@ -3878,6 +3907,11 @@ mme_app_handle_forward_relocation_request(
  target_tai.plmn.mnc_digit2 = forward_relocation_request_pP->target_identification.mnc[1];
  target_tai.plmn.mnc_digit3 = forward_relocation_request_pP->target_identification.mnc[2];
  target_tai.tac = forward_relocation_request_pP->target_identification.target_id.macro_enb_id.tac;
+
+// if(1){
+//   mme_app_send_s10_forward_relocation_response_err(forward_relocation_request_pP->s10_source_mme_teid.teid, &forward_relocation_request_pP->peer_ip, forward_relocation_request_pP->trxn, REQUEST_REJECTED);
+//   OAILOG_FUNC_OUT (LOG_MME_APP);
+// }
 
  /** Get the eNB Id. */
  target_type_t target_type = forward_relocation_request_pP->target_identification.target_type;
