@@ -403,7 +403,7 @@ void emm_context_free_content(struct emm_data_context_s * const emm_ctx) __attri
 void emm_context_free_content_except_key_fields(struct emm_data_context_s * const emm_ctx) __attribute__ ((nonnull)) ;
 void emm_context_dump (const struct emm_data_context_s * const elm_pP, const uint8_t indent_spaces, bstring bstr_dump) __attribute__ ((nonnull)) ;
 
-int _start_context_request_procedure(struct emm_data_context_s *emm_context, nas_emm_specific_proc_t * const spec_proc,
+int _start_context_request_procedure(struct emm_data_context_s *emm_context, nas_emm_specific_proc_t * const spec_proc, const tai_t * const last_tai,
     success_cb_t * _context_res_proc_success, failure_cb_t* _context_res_proc_fail);
 
 /****************************************************************************/

@@ -2312,6 +2312,19 @@ mme_app_handle_s10_context_response(
   if(s10_context_response_pP->cause.cause_value != REQUEST_ACCEPTED){
     OAILOG_ERROR(LOG_MME_APP, "Received an erroneous cause  value %d for S10 Context Request for UE with mmeS1apUeId " MME_UE_S1AP_ID_FMT ". "
         "Rejecting attach/tau & implicit detach. \n", s10_context_response_pP->cause.cause_value, ue_context->privates.mme_ue_s1ap_id, ue_context->privates.fields.mm_state);
+
+    /** Get the peer IP and remove the tunnel. */
+    if(emm_cn_proc_ctx_req->last_tai){
+      struct sockaddr *neigh_mme_ip_addr;
+      mme_app_select_service(emm_cn_proc_ctx_req->last_tai, &neigh_mme_ip_addr, S10_MME_GTP_C);
+      if(neigh_mme_ip_addr){
+        OAILOG_ERROR(LOG_MME_APP, "Removing S10 Tunnel endpoint " TEID_FMT" for UE " MME_UE_S1AP_ID_FMT" after unsuccessfully S10 context response. \n",
+        		ue_context->privates.fields.local_mme_teid_s10, ue_context->privates.mme_ue_s1ap_id);
+        /** Send a nas_context_reject back. */
+        mme_app_remove_s10_tunnel_endpoint(ue_context->privates.fields.local_mme_teid_s10, neigh_mme_ip_addr);
+      }
+    }
+
     _mme_app_send_nas_context_response_err(ue_context->privates.mme_ue_s1ap_id, s10_context_response_pP->cause.cause_value);
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }

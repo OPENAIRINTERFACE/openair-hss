@@ -308,6 +308,7 @@ typedef struct nas_ctx_req_proc_s {
 //  bool                        request_sent;
 
   /** From the ITTI message, we copy the stuff into here. */
+  const tai_t 			     *last_tai;
   nas_s10_context_t           nas_s10_context;
   /** Need to set it for multi-APN cases of Idle Mode TAU. */
   mme_ue_eps_pdn_connections_t  *pdn_connections;

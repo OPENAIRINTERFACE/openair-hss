@@ -1027,7 +1027,7 @@ void mm_ue_eps_context_update_security_parameters(mme_ue_s1ap_id_t ue_id,
 
 //------------------------------------------------------------------------------
 int _start_context_request_procedure(struct emm_data_context_s *emm_context, nas_emm_specific_proc_t * const spec_proc,
-    success_cb_t * _context_res_proc_success, failure_cb_t* _context_res_proc_fail)
+	const tai_t * const last_tai, success_cb_t * _context_res_proc_success, failure_cb_t* _context_res_proc_fail)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   mme_ue_s1ap_id_t                        ue_id = emm_context->ue_id;
@@ -1043,6 +1043,7 @@ int _start_context_request_procedure(struct emm_data_context_s *emm_context, nas
   /*
    * Not configuring an AS common procedure as parent procedure of the S10 procedure.
    */
+  ctx_req_proc->last_tai = last_tai;
   ctx_req_proc->cn_proc.base_proc.parent->child = &ctx_req_proc->cn_proc.base_proc;
   ctx_req_proc->success_notif = _context_res_proc_success; /**< Continue with a PDN Configuration (ULR, CSR). */
   ctx_req_proc->failure_notif = _context_res_proc_fail; /**< Continue with the identification procedure (IdReq, AuthReq, SMC). */

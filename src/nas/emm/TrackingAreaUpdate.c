@@ -2014,7 +2014,7 @@ static int _emm_tracking_area_update_run_procedure(emm_data_context_t *emm_conte
            *
            * A S10 Context Request process may already have been started.
            */
-          rc = _start_context_request_procedure(emm_context, tau_proc,
+          rc = _start_context_request_procedure(emm_context, tau_proc, tau_proc->ies->last_visited_registered_tai,
               _context_req_proc_success_cb, _context_req_proc_failure_cb);
           /** Do S10 Context Request. */
           nas_itti_ctx_req(emm_context->ue_id, &emm_context->_old_guti,

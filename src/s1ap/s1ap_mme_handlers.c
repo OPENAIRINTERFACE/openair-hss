@@ -657,8 +657,11 @@ s1ap_mme_handle_initial_context_setup_response (
 
   initial_context_setup_rsp->ue_id = ue_ref_p->mme_ue_s1ap_id;
   /** Add here multiple bearers. */
+
+  bool test = false;
   initial_context_setup_rsp->bcs_to_be_modified.num_bearer_context = initialContextSetupResponseIEs_p->e_RABSetupListCtxtSURes.s1ap_E_RABSetupItemCtxtSURes.count;
   for (int item = 0; item < initialContextSetupResponseIEs_p->e_RABSetupListCtxtSURes.s1ap_E_RABSetupItemCtxtSURes.count; item++) {
+    int item2 = item;
 
 	/*
      * Bad, very bad cast...
@@ -666,19 +669,26 @@ s1ap_mme_handle_initial_context_setup_response (
     eRABSetupItemCtxtSURes_p = (S1ap_E_RABSetupItemCtxtSURes_t *)
         initialContextSetupResponseIEs_p->e_RABSetupListCtxtSURes.s1ap_E_RABSetupItemCtxtSURes.array[item];
 
-    initial_context_setup_rsp->bcs_to_be_modified.bearer_context[item].eps_bearer_id = eRABSetupItemCtxtSURes_p->e_RAB_ID;
-	  if(eRABSetupItemCtxtSURes_p->e_RAB_ID == 7){
-		  continue;
-	  }
-    initial_context_setup_rsp->bcs_to_be_modified.bearer_context[item].s1_eNB_fteid.teid = htonl (*((uint32_t *) eRABSetupItemCtxtSURes_p->gTP_TEID.buf));
+//	  if(eRABSetupItemCtxtSURes_p->e_RAB_ID == 7){
+//		  test = true;
+//		  initial_context_setup_rsp->bcs_to_be_modified.num_bearer_context--;
+//		  continue;
+//	  }
+//	  if(test == true){
+//		  if(item2 > 0)
+//			  item2--;
+//	  }
+
+	  initial_context_setup_rsp->bcs_to_be_modified.bearer_context[item2].eps_bearer_id = eRABSetupItemCtxtSURes_p->e_RAB_ID;
+	  initial_context_setup_rsp->bcs_to_be_modified.bearer_context[item2].s1_eNB_fteid.teid = htonl (*((uint32_t *) eRABSetupItemCtxtSURes_p->gTP_TEID.buf));
     bstring transport_address = blk2bstr(eRABSetupItemCtxtSURes_p->transportLayerAddress.buf, eRABSetupItemCtxtSURes_p->transportLayerAddress.size);
     /** Set the IP address from the FTEID. */
     if (4 == blength(transport_address)) {
-    	initial_context_setup_rsp->bcs_to_be_modified.bearer_context[item].s1_eNB_fteid.ipv4 = 1;
-    	memcpy(&initial_context_setup_rsp->bcs_to_be_modified.bearer_context[item].s1_eNB_fteid.ipv4_address, transport_address->data, blength(transport_address));
+    	initial_context_setup_rsp->bcs_to_be_modified.bearer_context[item2].s1_eNB_fteid.ipv4 = 1;
+    	memcpy(&initial_context_setup_rsp->bcs_to_be_modified.bearer_context[item2].s1_eNB_fteid.ipv4_address, transport_address->data, blength(transport_address));
     } else if (16 == blength(transport_address)) {
-    	initial_context_setup_rsp->bcs_to_be_modified.bearer_context[item].s1_eNB_fteid.ipv6 = 1;
-    	memcpy(&initial_context_setup_rsp->bcs_to_be_modified.bearer_context[item].s1_eNB_fteid.ipv6_address, transport_address->data, blength(transport_address));
+    	initial_context_setup_rsp->bcs_to_be_modified.bearer_context[item2].s1_eNB_fteid.ipv6 = 1;
+    	memcpy(&initial_context_setup_rsp->bcs_to_be_modified.bearer_context[item2].s1_eNB_fteid.ipv6_address, transport_address->data, blength(transport_address));
     } else {
     	AssertFatal(0, "TODO IP address %d bytes", blength(transport_address));
     }
@@ -692,13 +702,14 @@ s1ap_mme_handle_initial_context_setup_response (
     initial_context_setup_rsp->e_rab_release_list.item[initial_context_setup_rsp->e_rab_release_list.no_of_items].cause     = erab_item->cause;
     initial_context_setup_rsp->e_rab_release_list.no_of_items++;
   }
-//
-//  /** Trigger failed bearer  (ebi==7). todo: comment out */
-//  initial_context_setup_rsp->e_rab_release_list.item[0].e_rab_id  = 7;
-//  initial_context_setup_rsp->e_rab_release_list.item[0].cause.present = S1ap_Cause_PR_radioNetwork;
-//  initial_context_setup_rsp->e_rab_release_list.item[0].cause.choice.radioNetwork = S1ap_CauseRadioNetwork_radio_resources_not_available;
-//  initial_context_setup_rsp->e_rab_release_list.no_of_items++;
 
+//  if(test){
+//	  /** Trigger failed bearer  (ebi==7). todo: comment out */
+//	  initial_context_setup_rsp->e_rab_release_list.item[0].e_rab_id  = 7;
+//	  initial_context_setup_rsp->e_rab_release_list.item[0].cause.present = S1ap_Cause_PR_radioNetwork;
+//	  initial_context_setup_rsp->e_rab_release_list.item[0].cause.choice.radioNetwork = S1ap_CauseRadioNetwork_radio_resources_not_available;
+//	  initial_context_setup_rsp->e_rab_release_list.no_of_items++;
+//  }
 
   MSC_LOG_TX_MESSAGE (MSC_S1AP_MME,
                       MSC_MMEAPP_MME,
