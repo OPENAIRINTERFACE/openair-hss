@@ -372,7 +372,6 @@ emm_proc_detach_request (
    * Get the UE context
    */
   emm_data_context_t *emm_context = emm_data_context_get( &_emm_data, ue_id);
-  ue_context_t       *ue_context  = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, ue_id);
 
   /** First, always send a Detach Accept back if not switch-off. */
   if (switch_off) {
@@ -412,7 +411,6 @@ emm_proc_detach_request (
   }
 
   if (emm_context) {
-    DevAssert(ue_context); /**< Might be implicitly detached. */
     /*
      * Validate, just check if a specific procedure exist, if so disregard the detach request.
      * Assuming that DSR failed, with the timeout, we should send one without a security header.
@@ -430,7 +428,6 @@ emm_proc_detach_request (
         emm_sap.u.emm_reg.ue_id = ue_id;
         emm_sap.u.emm_reg.u.attach.proc = specific_proc;
         rc = emm_sap_send (&emm_sap);
-        //     unlock_ue_contexts(ue_context);
         free_emm_detach_request_ies(&params);
         OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
 
@@ -471,7 +468,6 @@ emm_proc_detach_request (
   /** Signal detach Free all ESM procedure, don't care about the rest. */
   nas_itti_esm_detach_ind(ue_id, false);
 
-  //     unlock_ue_contexts(ue_context);
   OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
 }
 
