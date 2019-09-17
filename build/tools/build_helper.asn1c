@@ -32,7 +32,7 @@ source $THIS_SCRIPT_PATH/build_helper
 install_asn1c_from_source(){
   if [ $1 -eq 0 ]; then
     OPTION=""
-    read -p "Do you want to install asn1c rev 1516 patched? <y/N> " prompt
+    read -p "Do you want to install https://gitlab.eurecom.fr/oai/asn1c.git commit f12568d ? <y/N> " prompt
   else
     prompt='y'
     OPTION="-y"
@@ -68,11 +68,16 @@ install_asn1c_from_source(){
     GIT_SSL_NO_VERIFY=true git clone https://gitlab.eurecom.fr/oai/asn1c.git /tmp/asn1c
     ret=$?;[[ $ret -ne 0 ]] && return $ret
     cd /tmp/asn1c
+    git checkout f12568d617dbf48497588f8e227d70388fa217c9
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
+    autoreconf -iv
     ./configure
     ret=$?;[[ $ret -ne 0 ]] && return $ret
-    make > /tmp/log_compile_asn1c 2>&1
+    make  -j`nproc` > /tmp/log_compile_asn1c 2>&1
     ret=$?;[[ $ret -ne 0 ]] && return $ret
     $SUDO make install
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
+    $SUDO ldconfig
     return $?
   fi
   return 0
