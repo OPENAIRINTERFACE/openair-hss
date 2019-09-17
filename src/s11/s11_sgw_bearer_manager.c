@@ -178,6 +178,12 @@ s11_sgw_handle_modify_bearer_response (
   ulp_req.u_api_info.triggeredRspInfo.hTrxn = trxn;
   rc = nwGtpv2cMsgNew (*stack_p, true, NW_GTP_MODIFY_BEARER_RSP, 0, 0, &(ulp_req.hMsg));
   DevAssert (NW_OK == rc);
+
+  /*
+   * Set the only bearer context
+   */
+  gtpv2c_bearer_context_modified_ie_set (&(ulp_req.hMsg), &response_p->bearer_contexts_modified);
+
   /*
    * Set the remote TEID
    */

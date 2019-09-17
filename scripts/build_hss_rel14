@@ -40,6 +40,7 @@ function help()
   echo_error " "
   echo_error "Options:"
   echo_error "Mandatory arguments to long options are mandatory for short options too."
+  echo_error "  -b, --build-type                          Build type as defined in cmake, allowed values are: Debug Release RelWithDebInfo MinSizeRel"
   echo_error "  -c, --clean                               Clean the build generated files: config, object, executable files (build from scratch)"
   echo_error "  -d, --debug                               Compile with debug informations."
   echo_error "  -f, --force                               No interactive script for installation of software packages."
