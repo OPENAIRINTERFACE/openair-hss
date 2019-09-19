@@ -245,7 +245,7 @@ bool s1ap_enb_compare_by_tac_cb (const hash_key_t keyP,
                                     void * const elementP, void * parameterP, void __attribute__((unused)) **unused_resultP);
 
 void
-s1ap_set_tai (enb_description_t * enb_ref, S1ap_SupportedTAs_t * ta_list);
+s1ap_set_tai (enb_description_t * enb_ref, S1AP_SupportedTAs_t * ta_list);
 
 /** \brief Remove target UE from the list
  * \param ue_ref UE structure reference to remove

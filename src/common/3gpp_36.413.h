@@ -126,7 +126,7 @@ typedef struct e_rab_modify_list_s {
   e_rab_setup_item_t            item[MAX_NO_OF_E_RABS];
 } e_rab_modify_list_t;
 
-#include "S1ap-Cause.h"
+#include "S1AP_Cause.h"
 
 typedef struct status_transfer_bearer_list_s{
 #define MSG_STATUS_TRANSFER_MAX_BEARER_CONTEXTS   11
@@ -136,7 +136,7 @@ typedef struct status_transfer_bearer_list_s{
 
 typedef struct e_rab_item_s {
   e_rab_id_t                       e_rab_id;
-  S1ap_Cause_t                     cause;
+  S1AP_Cause_t                     cause;
 } e_rab_item_t;
 
 typedef struct e_rab_list_s {

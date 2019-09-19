@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -60,7 +60,6 @@ typedef int ( *mme_app_ue_callback_t) (void*);
 #define BEARER_STATE_ACTIVE      (1 << 3)
 #define BEARER_STATE_S1_RELEASED (1 << 4)
 
-#define MAX_APN_PER_UE        5 /**< Maximum number of bearers. */
 #define MAX_NUM_BEARERS_UE    11 /**< Maximum number of bearers. */
 
 typedef uint8_t mme_app_bearer_state_t;

@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -479,7 +479,7 @@ void mme_app_send_s11_modify_bearer_req(const ue_session_pool_t * const ue_sessi
  * Not triggering release of resources, everything will stay as it it.
  * The MME_APP ITTI message elements though need to be deallocated.
  */
-void mme_app_send_s1ap_path_switch_request_failure(mme_ue_s1ap_id_t mme_ue_s1ap_id, enb_ue_s1ap_id_t enb_ue_s1ap_id, sctp_assoc_id_t assoc_id, const S1ap_Cause_PR cause_type){
+void mme_app_send_s1ap_path_switch_request_failure(mme_ue_s1ap_id_t mme_ue_s1ap_id, enb_ue_s1ap_id_t enb_ue_s1ap_id, sctp_assoc_id_t assoc_id, const S1AP_Cause_PR cause_type){
   OAILOG_FUNC_IN (LOG_MME_APP);
   /** Send a S1AP Path Switch Request Failure TO THE TARGET ENB. */
   MessageDef * message_p = itti_alloc_new_message (TASK_MME_APP, S1AP_PATH_SWITCH_REQUEST_FAILURE);
@@ -989,7 +989,7 @@ void mme_app_itti_nas_pdn_connectivity_response(mme_ue_s1ap_id_t ue_id, const eb
 
   MessageDef                             *message_p = NULL;
   int                                     rc = RETURNok;
-  OAILOG_INFO (LOG_MME_APP, "Informing the NAS layer about the received CREATE_SESSION_REQUEST for UE " MME_UE_S1AP_ID_FMT ". \n", ue_id);
+  OAILOG_INFO (LOG_MME_APP, "Informing the NAS layer about the received CREATE_SESSION_RESPONSE for UE " MME_UE_S1AP_ID_FMT ". \n", ue_id);
   message_p = itti_alloc_new_message (TASK_MME_APP, NAS_PDN_CONNECTIVITY_RSP);
   itti_nas_pdn_connectivity_rsp_t *nas_pdn_connectivity_rsp = &message_p->ittiMsg.nas_pdn_connectivity_rsp;
   nas_pdn_connectivity_rsp->ue_id = ue_id;

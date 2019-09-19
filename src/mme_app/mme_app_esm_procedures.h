@@ -38,6 +38,8 @@
  * Also the EMM context will enter COMMON state and create a new GUTI after this callback.
  */
 
+ struct nas_esm_proc_s;
+
 /** Method called inside the timeout. */
 typedef esm_cause_t (*esm_timeout_cb_t)(struct nas_esm_proc_s *, ESM_msg *, esm_timeout_ll_cb_arg_t * ll_handler_arg);
 

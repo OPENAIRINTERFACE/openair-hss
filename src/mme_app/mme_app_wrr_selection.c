@@ -45,7 +45,7 @@
 #include "mme_app_wrr_selection.h"
 
 //------------------------------------------------------------------------------
-void mme_app_select_service(const tai_t * const tai, const struct sockaddr ** service_ip_addr, const interface_type_t interface_type)
+void mme_app_select_service(const tai_t * const tai, struct sockaddr ** const service_ip_addr, const interface_type_t interface_type)
 {
 
   // see in 3GPP TS 29.303 version 10.5.0 Release 10:
@@ -59,7 +59,7 @@ void mme_app_select_service(const tai_t * const tai, const struct sockaddr ** se
   if (0 < snprintf(tmp, 8, "%02x", tai->tac & 0x00FF)) {
     bcatcstr(application_unique_string, tmp);
   } else {
-	  memset(*service_ip_addr, 0, sizeof(struct sockaddr));
+	  memset((void*)*service_ip_addr, 0, sizeof(struct sockaddr));
     return;
   }
   bcatcstr(application_unique_string, ".tac-hb");

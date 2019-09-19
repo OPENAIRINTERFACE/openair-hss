@@ -123,7 +123,7 @@ extern "C" {
 #endif
 typedef struct e_rab_item_s {
   e_rab_id_t                       e_rab_id;
-  S1ap_Cause_t                     cause;
+  S1AP_Cause_t                     cause;
 } e_rab_item_t;
 
 typedef struct e_rab_list_s {

@@ -1494,7 +1494,7 @@ mme_app_handle_s1ap_ue_context_release_complete (
   // todo: deleting the create bearer procedures (this also seems wrong, we should delete the procedures in a more centralized way).
   //  mme_app_delete_s11_procedure_create_bearer(ue_context);
   // todo: should treat all dedicated bearers equally and not make any exceptions.
-//  if (((S1ap_Cause_PR_radioNetwork == ue_context->privates.s1_ue_context_release_cause.present) &&
+//  if (((S1AP_Cause_PR_radioNetwork == ue_context->privates.s1_ue_context_release_cause.present) &&
 //       (S1ap_CauseRadioNetwork_radio_connection_with_ue_lost == ue_context->privates.s1_ue_context_release_cause.choice.radioNetwork))) {
 ////    /*
 ////     * MME initiated dedicated bearer deactivation only be sent in case of congestion (Bearer Resource Command or Delete Bearer Command).

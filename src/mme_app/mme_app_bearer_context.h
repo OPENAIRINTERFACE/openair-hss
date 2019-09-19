@@ -64,6 +64,6 @@ int mme_app_modify_bearers(const mme_ue_s1ap_id_t mme_ue_s1ap_id, bearer_context
  * Set bearers as released (idle).
  * todo: review idle mode..
  */
-void mme_app_release_bearers(const mme_ue_s1ap_id_t mme_ue_s1ap_id, e_rab_list_t * e_rab_list, ebi_list_t * const ebi_list);
+void mme_app_release_bearers(const mme_ue_s1ap_id_t mme_ue_s1ap_id, const e_rab_list_t * const e_rab_list, ebi_list_t * const ebi_list);
 
 #endif

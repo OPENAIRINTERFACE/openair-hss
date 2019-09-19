@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -352,9 +352,9 @@ void mme_ue_context_dump_coll_keys(void);
  * \param ue_context_p The UE context to insert
  * @returns the ue_context in case of success, NULL otherwise
  **/
-ue_context_t * get_new_ue_context();
+ue_context_t * get_new_ue_context(void);
 
-void test_ue_context_extablishment();
+void test_ue_context_extablishment(void);
 
 /** \brief Remove a UE context of the tree of known UEs.
  * \param ue_context_p The UE context to remove

@@ -309,9 +309,9 @@ set(S1AP_C_DIR ${asn1_generated_dir}/S1AP_${S1AP_RELEASE})
 set(GENERATED_FULL_DIR ${S1AP_C_DIR})
 set(ASN1_SOURCE_DIR ${S1AP_ASN_DIR}/${S1AP_ASN_FILES})
 set(ENV{ASN1C_PREFIX} "S1AP_" )
-set(done_flag ${GENERATED_FULL_DIR}/done)
+set(s1ap_generate_code_done_flag ${GENERATED_FULL_DIR}/S1AP_GENERATE_CODE_DONE)
 
-if( ${ASN1_SOURCE_DIR} IS_NEWER_THAN ${done_flag})
+if( ${ASN1_SOURCE_DIR} IS_NEWER_THAN ${s1ap_generate_code_done_flag})
    file(REMOVE ${GENERATED_FULL_DIR}/${ASN1C_PREFIX}*.c ${GENERATED_FULL_DIR}/${ASN1C_PREFIX}*.h)
    file(MAKE_DIRECTORY ${GENERATED_FULL_DIR})
    execute_process(COMMAND  asn1c -pdu=all -fcompound-names -gen-PER -no-gen-OER -no-gen-example -fno-include-deps -D ${GENERATED_FULL_DIR} ${ASN1_SOURCE_DIR} RESULT_VARIABLE ret)
@@ -320,6 +320,8 @@ if( ${ASN1_SOURCE_DIR} IS_NEWER_THAN ${done_flag})
       message(FATAL_ERROR "${ret}")
    endif (NOT ${ret} STREQUAL 0)
 endif()
+# TOUCH not in cmake 3.10
+file(WRITE ${s1ap_generate_code_done_flag})
 
 # Warning: if you modify ASN.1 source file to generate new C files, cmake should be re-run instead of make
 #execute_process(COMMAND ${OPENAIR_CMAKE}/tools/make_asn1c_includes.sh "${S1AP_C_DIR}" "${S1AP_ASN_DIR}/${S1AP_ASN_FILES}" "S1AP_" -fno-include-deps
@@ -336,19 +338,19 @@ add_library(S1AP_LIB
 
 include_directories ("${S1AP_C_DIR}")
 include_directories ("${S1AP_DIR}")
+include_directories ("/usr/local/share/asn1c")
 
 
 add_library(S1AP_EPC
-  ${S1AP_C_DIR}/s1ap_ies_defs.h
+  ${S1AP_DIR}/s1ap_mme.c
   ${S1AP_DIR}/s1ap_mme_encoder.c
   ${S1AP_DIR}/s1ap_mme_decoder.c
+  ${S1AP_DIR}/s1ap_mme_gummei.c
   ${S1AP_DIR}/s1ap_mme_handlers.c
-  ${S1AP_DIR}/s1ap_mme_nas_procedures.c
-  ${S1AP_DIR}/s1ap_mme.c
   ${S1AP_DIR}/s1ap_mme_itti_messaging.c
+  ${S1AP_DIR}/s1ap_mme_nas_procedures.c
   ${S1AP_DIR}/s1ap_mme_retransmission.c
   ${S1AP_DIR}/s1ap_mme_ta.c
-  ${S1AP_DIR}/s1ap_mme_gummei.c
   )
 
 

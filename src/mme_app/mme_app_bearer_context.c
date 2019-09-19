@@ -364,7 +364,7 @@ mme_app_modify_bearers(const mme_ue_s1ap_id_t mme_ue_s1ap_id, bearer_contexts_to
 
 //------------------------------------------------------------------------------
 void
-mme_app_release_bearers(const mme_ue_s1ap_id_t mme_ue_s1ap_id, e_rab_list_t * e_rab_list, ebi_list_t * const ebi_list) {
+mme_app_release_bearers(const mme_ue_s1ap_id_t mme_ue_s1ap_id, const e_rab_list_t * const e_rab_list, ebi_list_t * const ebi_list) {
   OAILOG_FUNC_IN(LOG_MME_APP);
 
   ue_session_pool_t             * ue_session_pool = mme_ue_session_pool_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_session_pools, mme_ue_s1ap_id);
@@ -440,7 +440,7 @@ mme_app_release_bearers(const mme_ue_s1ap_id_t mme_ue_s1ap_id, e_rab_list_t * e_
 
 //------------------------------------------------------------------------------
 int
-mme_app_cn_update_bearer_context(mme_ue_s1ap_id_t ue_id, const ebi_t ebi, struct e_rab_setup_item_s * s1u_erab_setup_item, struct fteid_s * s1u_saegw_fteid){
+mme_app_cn_update_bearer_context(mme_ue_s1ap_id_t ue_id, const ebi_t ebi, const struct e_rab_setup_item_s * const s1u_erab_setup_item, struct fteid_s * s1u_saegw_fteid){
   bearer_context_new_t * bearer_context = NULL;
   int rc                            	= RETURNok;
 

@@ -99,6 +99,8 @@ typedef enum {
   EMM_SPEC_PROC_TYPE_TAU,
 } emm_specific_proc_type_t;
 
+struct nas_emm_specific_proc_s;
+
 typedef int (*retry_cb_t)(struct nas_emm_specific_proc_s *);
 
 // EMM Specific procedures

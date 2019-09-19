@@ -3,9 +3,9 @@
 # Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
 # contributor license agreements.  See the NOTICE file distributed with
 # this work for additional information regarding copyright ownership.
-# The OpenAirInterface Software Alliance licenses this file to You under 
+# The OpenAirInterface Software Alliance licenses this file to You under
 # the Apache License, Version 2.0  (the "License"); you may not use this file
-# except in compliance with the License.  
+# except in compliance with the License.
 # You may obtain a copy of the License at
 #
 #      http://www.apache.org/licenses/LICENSE-2.0
@@ -40,14 +40,12 @@ function help()
   echo_error "Options:"
   echo_error "Mandatory arguments to long options are mandatory for short options too."
   echo_error "  -b,  --build-type                          Build type as defined in cmake, allowed values are: Debug Release RelWithDebInfo MinSizeRel"
-  echo_error "  -c,  --clean                               Clean the build generated files: config, object, executable files (build from scratch)"
+  echo_error "  -c,  --clean                               Clean the build generated files: config, s1ap source from ASN1 specs, object, executable files (build from scratch)"
   echo_error "  -f,  --force                               No interactive script for installation of software packages."
   echo_error "  -F,  --free-diameter-unmod-ext-lib         Install freeDiameter with non modified extension library"
   echo_error "  -FF, --free-diameter-unmod-ext-lib-sc      Install freeDiameter with non modified extension library and external HSS compatibility (not working with OAI HSS)"
   echo_error "  -h,  --help                                Print this help."
   echo_error "  -i,  --check-installed-software            Check installed software packages necessary to build and run MME (support $SUPPORTED_DISTRO)."
-  echo_error "  -s,  --split-mob-git-repo  git_url         mobility git repository"
-  echo_error "  -S,  --split-mob-lfs-repo  directory       mobility repository accessible through a local directory path"
   echo_error "  -u,  --unit-tests                          Trigger unit tests."
   echo_error "  -v,  --verbose                             Make build process verbose."
   echo_error "  -V,  --Verbose                             CMake only build process verbose, display compilation warnings and errors."
@@ -124,21 +122,6 @@ function main()
         var_check_install_oai_software=1
         shift;
         ;;
-      -s | --split-mob-git-repo)
-        get_git_mobility_repo $2
-        [[ $? -ne 0 ]] && return $?
-        cmake_args="$cmake_args -DMOBILITY_REPO=True -DMOBILITY_REPO_SRC=$OPENAIR_CN_MOBILITY_DIR"
-        shift 2;
-        ;;
-      -S | --split-mob-lfs-repo)
-        if [ ! -d $2 ]; then
-          echo_error "\"$2\" is not a known directory on this local file system, abort"
-          return 1
-        fi
-        
-        cmake_args="$cmake_args -DMOBILITY_REPO=True -DMOBILITY_REPO_SRC=$2"
-        shift 2;
-        ;;
       -u | --unit-tests)
         echo "Unit tests triggered"
         unit_tests=1
@@ -156,19 +139,19 @@ function main()
         verbose=1
         shift;
         ;;
-      *)   
+      *)
         echo "Unknown option $1"
         help
         return 1
         ;;
     esac
   done
-  
-  set_openair_env 
+
+  set_openair_env
   if [[ $verbose -eq 1 ]]; then
     cecho "OPENAIRCN_DIR    = $OPENAIRCN_DIR" $green
   fi
-  
+
   if [ $var_check_install_oai_software -gt 0 ];then
     update_package_db
     check_install_mme_software  $force
@@ -181,20 +164,20 @@ function main()
         return 0
     fi
   fi
-  
+
 
   local dlog=$OPENAIRCN_DIR/build/log
-  
-  mkdir -m 777 -p $dlog
-  
+
+  mkdir -m 0777 -p $dlog
+
   ##############################################################################
   # Create mme
   ##############################################################################
   cd $OPENAIRCN_DIR/build
   if [ ! -d ./mme ]; then
-    mkdir -m 777 -p -v mme
+    mkdir -m 0777 -p -v mme
   fi
- 
+
   ##############################################################################
   # Clean
   ##############################################################################
@@ -204,16 +187,16 @@ function main()
       echo "Cleaning MME: generated configuration files, obj files, mme executable"
     fi
     rm -Rf $OPENAIRCN_DIR/build/mme/build  2>&1
-    mkdir -m 777 -p -v build
+    mkdir -m 0777 -p -v build
   fi
 
-  
+
   ##############################################################################
   # Compile MME
   ##############################################################################
   cd $OPENAIRCN_DIR/build/mme
   if [ ! -d ./build ]; then
-    mkdir -m 777 -p -v build
+    mkdir -m 0777 -p -v build
   fi
 
   cd ./build
@@ -226,10 +209,10 @@ function main()
   if [ $unit_tests -ne 0 ]; then
     make_test mme mme $OPENAIRCN_DIR/build/mme/build/mme $verbose
     ret=$?;[[ $ret -ne 0 ]] && return $ret
-  fi 
+  fi
 
   $SUDO killall -q mme
-  $SUDO cp -upv $OPENAIRCN_DIR/build/mme/build/mme /usr/local/bin && $SUDO chmod 755 /usr/local/bin/mme && echo_success "mme installed"  
+  $SUDO cp -upv $OPENAIRCN_DIR/build/mme/build/mme /usr/local/bin && $SUDO chmod 755 /usr/local/bin/mme && echo_success "mme installed"
   return 0
 }
 

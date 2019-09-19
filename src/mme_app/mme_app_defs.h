@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -94,6 +94,8 @@ void mme_app_handle_s1ap_enb_deregistered_ind (const itti_s1ap_eNB_deregistered_
 int mme_app_handle_s1ap_ue_capabilities_ind  (const itti_s1ap_ue_cap_ind_t * const s1ap_ue_cap_ind_pP);
 
 void mme_app_handle_s1ap_ue_context_release_complete (const itti_s1ap_ue_context_release_complete_t * const s1ap_ue_context_release_complete);
+
+void mme_ue_context_update_ue_sig_connection_state (mme_ue_context_t * const mme_ue_context_p, struct ue_context_s *ue_context, ecm_state_t new_ecm_state);
 
 void mme_app_itti_ue_context_release (    mme_ue_s1ap_id_t mme_ue_s1ap_id, enb_ue_s1ap_id_t enb_ue_s1ap_id, enum s1cause cause, uint32_t target_enb_id);
 
@@ -208,6 +210,8 @@ mme_app_handle_relocation_cancel_response(
 void mme_app_handle_nas_context_req(itti_nas_context_req_t * const nas_context_req_pP);
 
 void mme_app_handle_s10_context_request( const itti_s10_context_request_t * const context_request_pP );
+
+pdn_context_t * mme_app_handle_pdn_connectivity_from_s10(ue_session_pool_t * ue_session_pool, pdn_connection_t * pdn_connection);
 
 void mme_app_handle_s10_context_response( itti_s10_context_response_t * const context_response_pP );
 

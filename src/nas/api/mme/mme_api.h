@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -146,6 +146,6 @@ int mme_api_new_guti(const imsi_t * const imsi,
 
 void mme_ue_context_update_ue_emm_state (mme_ue_s1ap_id_t mme_ue_s1ap_id, mm_state_t new_emm_state);
 
-subscription_data_t * mme_api_remove_subscription_data (const imsi64_t const imsi64);
+subscription_data_t * mme_api_remove_subscription_data (const imsi64_t imsi64);
 
 #endif /* FILE_MME_API_SEEN*/
