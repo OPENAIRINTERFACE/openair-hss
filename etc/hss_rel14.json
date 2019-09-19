@@ -19,7 +19,7 @@
     "randv"  : true,
     "optkey" : "@OP_KEY@",
     "reloadkey"  : false,
-    "roamallow"  : @ROAMING_ALLOWED@
+    "roamallow"  : @ROAMING_ALLOWED@,
     "logsize": 20,
     "lognumber": 5,
     "logname": "logs/hss.log",
