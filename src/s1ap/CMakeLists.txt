@@ -1,5 +1,5 @@
 add_list1_option(S1AP_VERSION R10 "S1AP Asn.1 grammar version" R8 R9 R10)
-add_definitions(-DASN1_MINIMUM_VERSION=924)
+add_definitions(-DASN1_MINIMUM_VERSION=923)
 
 # Common headers
 include_directories("${SRC_TOP_DIR}/common")

@@ -361,13 +361,13 @@ s1ap_mme_init(void)
   OAILOG_DEBUG (LOG_S1AP, "Initializing S1AP interface\n");
 
   if (get_asn1c_environment_version () < ASN1_MINIMUM_VERSION) {
-    OAILOG_ERROR (LOG_S1AP, "ASN1C version %d fount, expecting at least %d\n", get_asn1c_environment_version (), ASN1_MINIMUM_VERSION);
+    OAILOG_ERROR (LOG_S1AP, "ASN1C version %d found, expecting at least %d\n", get_asn1c_environment_version (), ASN1_MINIMUM_VERSION);
     return RETURNerror;
   } else {
     OAILOG_DEBUG (LOG_S1AP, "ASN1C version %d\n", get_asn1c_environment_version ());
   }
 
-  OAILOG_DEBUG (LOG_S1AP, "S1AP Release v10.5\n");
+  OAILOG_DEBUG (LOG_S1AP, "S1AP Release v%s\n", S1AP_VERSION);
   // 16 entries for n eNB.
   bstring bs1 = bfromcstr("s1ap_eNB_coll");
   hash_table_ts_t* h = hashtable_ts_init (&g_s1ap_enb_coll, mme_config.max_enbs, NULL, s1ap_remove_enb, bs1); /**< Use a better removal handler. */

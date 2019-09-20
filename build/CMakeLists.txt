@@ -301,7 +301,7 @@ if (${S1AP_RELEASE} STREQUAL "r15")
   set(S1AP_VERSION 15.6.0)
   set(S1AP_ASN_FILES "s1ap-15.6.0.asn1")
 endif(${S1AP_RELEASE} STREQUAL "r15")
-add_definitions(-DS1AP_VERSION=${S1AP_VERSION})
+add_definitions("-DS1AP_VERSION=\"${S1AP_VERSION}\"")
 set(S1AP_ASN_DIR ${S1AP_DIR}/messages/asn1/${S1AP_RELEASE})
 set(S1AP_C_DIR ${asn1_generated_dir}/S1AP_${S1AP_RELEASE})
 
@@ -314,8 +314,8 @@ set(s1ap_generate_code_done_flag ${GENERATED_FULL_DIR}/S1AP_GENERATE_CODE_DONE)
 if( ${ASN1_SOURCE_DIR} IS_NEWER_THAN ${s1ap_generate_code_done_flag})
    file(REMOVE ${GENERATED_FULL_DIR}/${ASN1C_PREFIX}*.c ${GENERATED_FULL_DIR}/${ASN1C_PREFIX}*.h)
    file(MAKE_DIRECTORY ${GENERATED_FULL_DIR})
-   execute_process(COMMAND  asn1c -pdu=all -fcompound-names -gen-PER -no-gen-OER -no-gen-example -fno-include-deps -D ${GENERATED_FULL_DIR} ${ASN1_SOURCE_DIR} RESULT_VARIABLE ret)
-
+   #execute_process(COMMAND  asn1c -pdu=all -fcompound-names -gen-PER -no-gen-OER -no-gen-example -fno-include-deps -D ${GENERATED_FULL_DIR} ${ASN1_SOURCE_DIR} RESULT_VARIABLE ret)
+   execute_process(COMMAND  asn1c -pdu=all -fcompound-names -gen-PER -no-gen-example -fno-include-deps -D ${GENERATED_FULL_DIR} ${ASN1_SOURCE_DIR} RESULT_VARIABLE ret)
    if (NOT ${ret} STREQUAL 0)
       message(FATAL_ERROR "${ret}")
    endif (NOT ${ret} STREQUAL 0)
@@ -333,13 +333,9 @@ add_library(S1AP_LIB
   ${S1AP_DIR}/s1ap_common.c
   )
 
-#message(FATAL_ERROR "END S1AP Process")
-
 
 include_directories ("${S1AP_C_DIR}")
 include_directories ("${S1AP_DIR}")
-include_directories ("/usr/local/share/asn1c")
-
 
 add_library(S1AP_EPC
   ${S1AP_DIR}/s1ap_mme.c
@@ -353,6 +349,7 @@ add_library(S1AP_EPC
   ${S1AP_DIR}/s1ap_mme_ta.c
   )
 
+add_dependencies(S1AP_EPC S1AP_LIB)
 
 
 ###############################################################################
@@ -911,7 +908,7 @@ endif()
 
 
 # Hack on a test of asn1c version (already dirty)
-add_definitions(-DASN1_MINIMUM_VERSION=924)
+add_definitions(-DASN1_MINIMUM_VERSION=923)
 
 #################################
 # add executables for operation
