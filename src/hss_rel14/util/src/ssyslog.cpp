@@ -25,7 +25,7 @@ SSysLog::SSysLog()
    openSysLog();
 }
 
-SSysLog::SSysLog(std::string &identity)
+SSysLog::SSysLog(const std::string &identity)
    :m_ident(identity),
     m_isopen(false)
 {
@@ -33,7 +33,7 @@ SSysLog::SSysLog(std::string &identity)
    m_facility = LOG_USER;
    openSysLog();
 }
-SSysLog::SSysLog(std::string &identity, int option)
+SSysLog::SSysLog(const std::string &identity, int option)
    :m_ident(identity),
     m_option(option),
     m_isopen(false)
@@ -41,7 +41,7 @@ SSysLog::SSysLog(std::string &identity, int option)
    m_facility = LOG_USER;
    openSysLog();
 }
-SSysLog::SSysLog(std::string &identity, int option, int facility)
+SSysLog::SSysLog(const std::string &identity, int option, int facility)
    :m_ident(identity),
     m_option(option),
     m_facility(facility)
@@ -59,11 +59,14 @@ void SSysLog::openSysLog(){
    openlog(m_ident.c_str(), m_option, m_facility);
 }
 
-
 void SSysLog::syslog(int priority, const char* format, ...)
 {
    va_list args;
    va_start(args, format);
    vsyslog(priority, format, args);
    va_end(args);
+}
+
+void SSysLog::syslogs(const std::string& val){
+   ::syslog(0, "%s", val.c_str());
 }

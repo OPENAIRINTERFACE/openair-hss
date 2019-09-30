@@ -32,7 +32,7 @@
 #define KEY_LENGTH  (16)
 #define SQN_LENGTH  (6)
 #define RAND_LENGTH (16)
-
+#define OPC_LENGTH (16)
 
 class DAException : public std::runtime_error
 {
@@ -107,6 +107,15 @@ class DAEventIdList : public std::list<DAEventId*>
 public:
    DAEventIdList();
    ~DAEventIdList();
+
+   static bool compare(DAEventId* l, DAEventId* r)
+   {
+      if (l->scef_id < r->scef_id)
+         return true;
+      if (l->scef_id > r->scef_id)
+         return false;
+      return l->scef_ref_id < r->scef_ref_id;
+   }
 };
 
 struct DAImsiInfo {
@@ -128,7 +137,7 @@ struct DAImsiSec {
    uint8_t key[KEY_LENGTH];
    uint8_t sqn[SQN_LENGTH];
    uint8_t rand[RAND_LENGTH];
-   uint8_t opc[KEY_LENGTH];
+   uint8_t opc[OPC_LENGTH];
 };
 
 
@@ -160,6 +169,9 @@ public:
    bool getEvent( const char *scef_id, uint32_t scef_ref_id, DAEvent &event );
    bool getEvent( const std::string &scef_id, uint32_t scef_ref_id, DAEvent &event ) { return getEvent( scef_id.c_str(), scef_ref_id, event ); }
 
+   bool getEvents( const char *scef_id, std::list<uint32_t> scef_ref_ids, DAEventList &events, CassFutureCallback cb, void *data );
+   bool getEventsData( SCassFuture &future, DAEventList &events );
+
    void deleteEvent( const char *scef_id, uint32_t scef_ref_id );
    void deleteEvent( const std::string &scef_id, uint32_t scef_ref_id ) { deleteEvent( scef_id.c_str(), scef_ref_id ); }
 
@@ -174,8 +186,9 @@ public:
 	bool getImsiListFromExtId( const char *extid, DAImsiList &imsilst);
    bool getImsiListFromExtId( std::string &extid, DAImsiList &imsilst) { return getImsiListFromExtId( extid.c_str(), imsilst ); }
 
-   bool getExtIdsFromImsi( const char *imsi, DAExtIdList &extids );
-   bool getExtIdsFromImsi( const std::string &imsi, DAExtIdList &extids ) { return getExtIdsFromImsi( imsi.c_str(), extids ); }
+   bool getExtIdsFromImsiData( SCassFuture &future, DAExtIdList &extids );
+   bool getExtIdsFromImsi( const char *imsi, DAExtIdList &extids, CassFutureCallback cb, void *data );
+   bool getExtIdsFromImsi( const std::string &imsi, DAExtIdList &extids, CassFutureCallback cb, void *data ) { return getExtIdsFromImsi( imsi.c_str(), extids, cb, data ); }
 
 	bool getImsiFromMsisdn( int64_t msisdn, std::string &imsi );
    bool getImsiFromMsisdn( const char *msisdn, std::string &imsi );
@@ -185,16 +198,23 @@ public:
    bool getMsisdnFromImsi( const std::string &imsi, std::string &msisdn ) { return getMsisdnFromImsi( imsi.c_str(), msisdn ); }
    bool getMsisdnFromImsi( const char *imsi, int64_t &msisdn );
 
-   bool getImsiInfo ( const char *imsi, DAImsiInfo &info );
-   bool getImsiInfo ( const std::string &imsi, DAImsiInfo &info ) { return getImsiInfo( imsi.c_str(), info ); }
+   bool getImsiInfoData( SCassFuture &future, DAImsiInfo &info );
+   bool getImsiInfo ( const char *imsi, DAImsiInfo &info, CassFutureCallback cb, void *data );
+   bool getImsiInfo ( const std::string &imsi, DAImsiInfo &info, CassFutureCallback cb, void *data ) { return getImsiInfo( imsi.c_str(), info, cb, data ); }
 
-   void getEventIdsFromMsisdn( int64_t msisdn, DAEventIdList &el );
+   bool getEventIdsFromMsisdnData( SCassFuture &future, DAEventIdList &el );
+   bool getEventIdsFromMsisdn( int64_t msisdn, DAEventIdList &el, CassFutureCallback cb, void *data );
 
    void getEventIdsFromExtId( const char *extid, DAEventIdList &el );
    void getEventIdsFromExtId( const std::string &extid, DAEventIdList &el ) { getEventIdsFromExtId( extid.c_str(), el ); }
 
+   bool getEventIdsFromExtIds( const char *extid, DAEventIdList &el, CassFutureCallback cb, void *data );
+   bool getEventIdsFromExtIds( const std::string &extid, DAEventIdList &el, CassFutureCallback cb, void *data ) { return getEventIdsFromExtIds( extid.c_str(), el, cb, data ); }
+   bool getEventIdsFromExtIdsData( SCassFuture &future, DAEventIdList &el);
+
    void getEventsFromImsi( const char *imsi, DAEventList &mcel );
    void getEventsFromImsi( const std::string &imsi, DAEventList &mcel ) { getEventsFromImsi( imsi.c_str(), mcel ); }
+   void getEventsFromImsi( DAImsiInfo &info, DAEventList &el );
 
    bool checkOpcKeys( const uint8_t opP[16] );
    bool updateOpc ( std::string &imsi, std::string& opc );
@@ -206,19 +226,26 @@ public:
    bool getMmeIdentity ( std::string &mme_id, DAMmeIdentity& mmeid );
    bool getMmeIdentity ( int32_t mme_id, DAMmeIdentity& mmeid );
 
-   bool getLatestIdentity(std::string& table_name, int64_t &id);
+   bool getLatestIdentity(const char *table_name, int64_t &id, CassFutureCallback cb, void *data);
+   bool getLatestIdentityData(SCassFuture &future, int64_t &id);
 
-   bool updateLatestIdentity(std::string& table_name);
+   bool updateLatestIdentity(const char *table_name, CassFutureCallback cb, void *data);
 
-   bool getMmeIdFromHost ( std::string& host, int32_t &mmeid );
+   bool getMmeIdFromHostData( SCassFuture &future, int32_t &mmeid );
+   bool getMmeIdFromHost ( std::string& host, int32_t &mmeid, CassFutureCallback cb, void *data );
 
-   bool addMmeIdentity(std::string &host, std::string &realm, int32_t &mmeid );
+   bool addMmeIdentity(std::string &host, std::string &realm, int32_t mmeid );
+   bool addMmeIdentity1(std::string &host, std::string &realm, int32_t mmeid, CassFutureCallback cb, void *data );
+   bool addMmeIdentity2(std::string &host, std::string &realm, int32_t mmeid, CassFutureCallback cb, void *data );
 
-   bool updateLocation ( DAImsiInfo &location, uint32_t present_flags );
+   bool updateLocation( DAImsiInfo &location, uint32_t present_flags, int32_t idmmeidentity, CassFutureCallback cb, void *data );
+   bool updateLocation ( DAImsiInfo &location, uint32_t present_flags, CassFutureCallback cb, void *data );
 
-   bool getImsiSec ( const std::string &imsi, DAImsiSec &imsisec );
+   bool getImsiSec ( const std::string &imsi, DAImsiSec &imsisec, CassFutureCallback cb, void *data );
+   bool getImsiSecData(SCassFuture &future, DAImsiSec &imsisec);
 
-   bool updateRandSqn ( const std::string &imsi, uint8_t * rand_p, uint8_t * sqn );
+
+   bool updateRandSqn ( const std::string &imsi, uint8_t * rand_p, uint8_t * sqn, bool inc_sqn, CassFutureCallback cb, void *data );
 
    bool incSqn ( std::string &imsi, uint8_t * sqn );
 

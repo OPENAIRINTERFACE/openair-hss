@@ -25,6 +25,13 @@
 #include "sthread.h"
 #include "stimer.h"
 #include "stime.h"
+#include "statshss.h"
+#include "soss.h"
+#include "logger.h"
+
+#include "resthandler.h"
+
+#include "worker.h"
 
 const uint16_t GUARD_TIMEOUT        =    ETM_USER + 1;
 const uint16_t HANDLE_MME_RESPONSE  =    ETM_USER + 2;
@@ -65,12 +72,9 @@ private:
    HandleMmeResponseEvtMsg( );
 };
 
-
-
-class MonitoringConfEventStatus {
-
+class MonitoringConfEventStatus
+{
 public:
-
    MonitoringConfEventStatus(bool is_remove);
    MonitoringConfEventStatus();
 
@@ -88,14 +92,12 @@ public:
    bool           type_set;
 
 private:
-
    bool           is_long_term;
 };
 
-class ImsiStatus {
-
+class ImsiStatus
+{
 public:
-
    ImsiStatus(std::string& imsi, MonitoringConfEventStatus &status, int reachability, std::string &msisdn){
       m_imsi   = imsi;
       m_status = status;
@@ -120,6 +122,17 @@ public:
    std::string old_imei_sv;
    std::string new_imei;
    std::string new_imei_sv;
+};
+
+class HSSWorkerQueue : public QueueManager
+{
+public:
+   HSSWorkerQueue();
+   ~HSSWorkerQueue();
+
+   void addProcessor(QueueProcessor *processor);
+   void startProcessor();
+   void finishProcessor();
 };
 
 class FDHss {
@@ -148,6 +161,8 @@ public:
    s6as6d::Application  *gets6as6dApp()   { return m_s6aapp; }
    s6c::Application     *gets6cApp()      { return m_s6capp; }
    DataAccess           &getDb()          { return m_dbobj;  }
+   WorkerManager        &getWorkMgr()     { return m_wrkmgr; }
+   HSSWorkerQueue       &getWorkerQueue() { return m_workerqueue; }
 
    void buildCfgStatusAvp( FDAvp &mon_evt_cfg_status, MonitoringConfEventStatus& status );
 
@@ -161,14 +176,15 @@ private:
    FDPeerList m_mme_peers;
    DataAccess m_dbobj;
    Pistache::Http::Endpoint *m_endpoint;
+   OssEndpoint<Logger> *m_ossendpoint;
+   WorkerManager m_wrkmgr;
+   HSSWorkerQueue m_workerqueue;
 };
 
 extern FDHss fdHss;
 
-
 class RIRBuilder : public SEventThread
 {
-
 public :
 
    RIRBuilder(int nb_ida_proc, EvenStatusMap * hss_insert_status,
@@ -181,7 +197,6 @@ public :
    void dispatch( SEventThreadMessage &msg );
 
 private:
-
    void sendRIR();
 
    long m_interval;

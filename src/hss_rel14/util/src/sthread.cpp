@@ -190,7 +190,11 @@ void *SThread::_threadProc(void *arg)
    }
 
    if ( ths->mSelfDestruct )
+   {
+      pthread_t t = ths->mThread;
       delete ths;
+      pthread_detach(t);
+   }
 
    return (void *)ret;
 }
@@ -318,7 +322,7 @@ long SEventThread::Timer::m_nextid = 0;
 SEventThread::Timer::Timer()
 {
    // assign the id
-   m_id = atomic_inc(m_nextid);
+   m_id = atomic_inc_fetch(m_nextid);
    m_thread = NULL;
    m_interval = 0;
    m_oneshot = true;
@@ -329,7 +333,7 @@ SEventThread::Timer::Timer()
 SEventThread::Timer::Timer(long milliseconds, bool oneshot)
 {
    // assign the id
-   m_id = atomic_inc(m_nextid);
+   m_id = atomic_inc_fetch(m_nextid);
    m_thread = NULL;
    m_interval = milliseconds;
    m_oneshot = oneshot;

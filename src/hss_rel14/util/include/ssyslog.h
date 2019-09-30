@@ -27,9 +27,9 @@ class SSysLog
 {
 public:
 
-   SSysLog(std::string &identity);
-   SSysLog(std::string &identity, int option);
-   SSysLog(std::string &identity, int option, int facility);
+   SSysLog(const std::string &identity);
+   SSysLog(const std::string &identity, int option);
+   SSysLog(const std::string &identity, int option, int facility);
 
 
    ~SSysLog();
@@ -42,6 +42,7 @@ public:
    int setFacility(int v)                    { m_facility = v; return getFacility(); }
 
    void syslog(int priority, const char* format, ...);
+   void syslogs(const std::string& val);
 
 protected:
 private:

@@ -84,6 +84,9 @@ uint8_t *sqn_ms_derive(uint8_t const opc[16], uint8_t *key, uint8_t *auts, uint8
 
 static inline void print_buffer(const char *prefix, uint8_t *buffer, int length)
 {
+#ifdef NODEBUG
+  return;
+#else
   int i;
 
   fprintf(stdout, "%s", prefix);
@@ -93,6 +96,7 @@ static inline void print_buffer(const char *prefix, uint8_t *buffer, int length)
   }
 
   fprintf(stdout, "\n");
+#endif
 }
 
 #endif /* AUC_H_ */

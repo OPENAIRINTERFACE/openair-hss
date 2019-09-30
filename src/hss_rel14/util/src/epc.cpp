@@ -312,7 +312,7 @@ std::string Utility::nonemergency_epdg_visitedcountry_fqdn( const char *mcc )
 
 std::string Utility::nonemergency_epdg_visitedcountry_fqdn( const unsigned char *plmnid )
 {
-   PARSE_PLMNID( plmnid );
+   PARSE_PLMNID_MCC( plmnid );
    return nonemergency_epdg_visitedcountry_fqdn( mcc );
 }
 
@@ -397,7 +397,7 @@ std::string Utility::emergency_epdg_visitedcountry_fqdn( const char *mcc )
 
 std::string Utility::emergency_epdg_visitedcountry_fqdn( const unsigned char *plmnid )
 {
-   PARSE_PLMNID( plmnid );
+   PARSE_PLMNID_MCC( plmnid );
    return emergency_epdg_visitedcountry_fqdn( mcc );
 }
 
@@ -418,7 +418,7 @@ std::string Utility::global_enodeb_id_fqdn( const char *enb, const char *mcc )
 
 std::string Utility::global_enodeb_id_fqdn( const char *enb, const unsigned char *plmnid )
 {
-   PARSE_PLMNID( plmnid );
+   PARSE_PLMNID_MCC( plmnid );
    return global_enodeb_id_fqdn( enb, mcc );
 }
 
@@ -439,7 +439,7 @@ std::string Utility::local_homenetwork_fqdn( const char *lhn, const char *mcc )
 
 std::string Utility::local_homenetwork_fqdn( const char *lhn, const unsigned char *plmnid )
 {
-   PARSE_PLMNID( plmnid );
+   PARSE_PLMNID_MCC( plmnid );
    return local_homenetwork_fqdn( lhn, mcc );
 }
 
@@ -952,6 +952,10 @@ NodeSelectorResultList &NodeSelector::process()
                         nsr->addIPv6Host( ((CachedDNS::RRecordAAAA*)*it)->getAddressString() );
                         break;
                      }
+                     default:
+                     {
+                        break;
+                     }
                   }
                }
             }
@@ -1203,6 +1207,10 @@ DiameterNaptrList &DiameterSelector::process()
                         a->getHost().addIPv6Address( ((CachedDNS::RRecordAAAA*)*rr)->getAddressString() );
                         break;
                      }
+                     default:
+                     {
+                        break;
+                     }
                   }
                }
             }
@@ -1251,6 +1259,10 @@ DiameterNaptrList &DiameterSelector::process()
                               ds->getHost().addIPv6Address( ((CachedDNS::RRecordAAAA*)*rr2)->getAddressString() );
                               break;
                            }
+                           default:
+                           {
+                              break;
+                           }
                         }
                      }
                   }
@@ -1289,14 +1301,13 @@ void DiameterSrvVector::sort_vector()
    // sort the list ascending on priority and weight
    std::sort( this->begin(), this->end(), DiameterSrvVector::sort_compare );
 
-   int i = 0;
    int priority = -1;
    int first = -1;
    int last = -1;
 
    srand( time(NULL) );              /* initialize random seed: */
 
-   for ( int i = 0; i <= size(); i++ )
+   for ( uint32_t i = 0; i <= size(); i++ )
    {
       if ( ( i == size() || at(i)->getPriority() != priority ) && priority != -1)
       {
@@ -1328,7 +1339,7 @@ void DiameterSrvVector::sort_vector()
                int val = rand() & runningTotal;
 
                // identify the entry and place it in the sorted list
-               for ( int l = 0; l < runningTotals.size(); l++ )
+               for ( uint32_t l = 0; l < runningTotals.size(); l++ )
                {
                   if ( runningTotals[l] >= val )
                   {
@@ -1340,7 +1351,7 @@ void DiameterSrvVector::sort_vector()
 
             // save the pointers in sorted order
             DiameterSrvVector newsorted;
-            for ( int j = 0; j < sorted.size(); j++ )
+            for ( uint32_t j = 0; j < sorted.size(); j++ )
                newsorted.push_back( at( sorted[j] ) );
 
             // update the original array with the sorted values

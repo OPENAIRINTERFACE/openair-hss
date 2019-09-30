@@ -126,12 +126,10 @@ void SSemaphore::init(unsigned int lInitialCount, unsigned int lMaxCount, const 
     mCurrCount = lInitialCount;
     mMaxCount = lMaxCount;
 
-    int res;
-
     if (sem_init(&mSem, (pszName != NULL) ? 1 : 0, lMaxCount) != 0)
         SError::throwRuntimeExceptionWithErrno("Error initializing semaphore");
 
-    for (int i = lMaxCount; i > lInitialCount; i--)
+    for (unsigned int i = lMaxCount; i > lInitialCount; i--)
         sem_wait(&mSem);
 
     mInitialized = true;
@@ -156,8 +154,6 @@ void SSemaphore::destroy()
 
 bool SSemaphore::decrement(bool wait)
 {
-    int res;
-
     if (!wait)
     {
         int val = 0;
@@ -167,8 +163,16 @@ bool SSemaphore::decrement(bool wait)
             return false;
     }
 
-    if (sem_wait(&mSem) != 0)
-        SError::throwRuntimeExceptionWithErrno("Error waiting for semaphore");
+    while (true)
+    {
+       if (sem_wait(&mSem) != 0)
+       {
+          if (errno == 4)
+             continue;
+          SError::throwRuntimeExceptionWithErrno("Error waiting for semaphore");
+       }
+       break;
+    }
 
     return true;
 }
@@ -216,18 +220,24 @@ bool SEvent::wait( int ms )
 {
    bool rval = false;
    struct pollfd fds[] = { { .fd = m_pipefd[0], .events = POLLRDNORM } };
-   int result = poll( fds, 1, ms );
-   if ( result > 0 ) // event set
+
+   while (true)
    {
-      rval = true;
-   }
-   else if ( result == 0 )
-   {
-      // timeout
-   }
-   else
-   {
-      // error
+      int result = poll( fds, 1, ms );
+      if ( result > 0 ) // event set
+      {
+         rval = true;
+      }
+      else if ( result == 0 )
+      {
+         // timeout
+      }
+      else
+      {
+         if (errno == EINTR)
+            continue;
+      }
+      break;
    }
 
    return rval;
