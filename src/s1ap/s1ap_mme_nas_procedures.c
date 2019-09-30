@@ -1053,8 +1053,6 @@ s1ap_handle_conn_est_cnf (
 //      e_RABToBeSetup.transportLayerAddress.size = 16 + offset;
 //      e_RABToBeSetup.transportLayerAddress.bits_unused = 0;
 //    }
-
-    ASN_SEQUENCE_ADD(&e_rab_to_be_setup_list->list, e_rab_tobesetup_item);
   }
 
   {
