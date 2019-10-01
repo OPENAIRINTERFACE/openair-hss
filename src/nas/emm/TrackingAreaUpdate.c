@@ -352,6 +352,8 @@ int emm_proc_tracking_area_update_request (
         // todo: this probably will not work, we need to update the enb_ue_s1ap_id of the old UE context to continue to work with it!
         //              unlock_ue_contexts(ue_context);
         //             unlock_ue_contexts(imsi_ue_mm_ctx);
+        emm_init_context(new_emm_ue_context);
+        DevAssert(RETURNok == emm_data_context_add (&_emm_data, new_emm_ue_context));
         OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
     } else{
     	 new_emm_ue_context = (*duplicate_emm_ue_ctx_pP);
@@ -1714,7 +1716,7 @@ static int _emm_tau_retry_procedure(mme_ue_s1ap_id_t ue_id){
   int                                      rc = RETURNerror;
   emm_data_context_t                     * emm_context                 = emm_data_context_get(&_emm_data, ue_id);
   if(!emm_context){
-	  OAILOG_ERROR(LOG_NAS_EMM, "EMM-PROC  - Attach retry: no EMM context for UE " MME_UE_S1AP_ID_FMT". Triggering implicit detach. \n", ue_id);
+	  OAILOG_ERROR(LOG_NAS_EMM, "EMM-PROC  - TAU retry: no EMM context for UE " MME_UE_S1AP_ID_FMT". Triggering implicit detach. \n", ue_id);
 	  rc = _emm_tracking_area_update_reject(ue_id, EMM_CAUSE_ILLEGAL_UE);
 	  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
   }

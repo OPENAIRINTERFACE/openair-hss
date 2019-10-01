@@ -354,8 +354,6 @@ void mme_ue_context_dump_coll_keys(void);
  **/
 ue_context_t * get_new_ue_context(void);
 
-void test_ue_context_extablishment(void);
-
 /** \brief Remove a UE context of the tree of known UEs.
  * \param ue_context_p The UE context to remove
  **/
