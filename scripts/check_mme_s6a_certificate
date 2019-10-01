@@ -64,10 +64,10 @@ function _create_mme_certs()
 
   if [ ! -d $output_path ]; then
     echo "Creating non existing directory: $output_path/"
-    sudo mkdir -p $output_path/
+    $SUDO mkdir -p $output_path/
   fi
 
-  sudo mv mme.cakey.pem mme.cert.pem mme.cacert.pem mme.key.pem $output_path/
+  $SUDO mv mme.cakey.pem mme.cert.pem mme.cacert.pem mme.key.pem $output_path/
   cd -
 }
 
