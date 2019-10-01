@@ -4651,6 +4651,10 @@ mme_app_handle_handover_failure (
        ue_context->privates.fields.local_mme_teid_s10, ue_context->privates.mme_ue_s1ap_id, ue_context->privates.mme_ue_s1ap_id);
  }
 
+ // todo: lock UE context
+ ue_context->privates.s1_ue_context_release_cause == S1AP_HANDOVER_FAILED;
+ // todo: unlock ue context
+
  /**
   * UE is in UE_UNREGISTERED state. Assuming inter-MME S1AP Handover was triggered.
   * Sending FW_RELOCATION_RESPONSE with error code and implicit detach.

@@ -559,6 +559,11 @@ void nas_itti_establish_cnf(
 
   emm_ctx = emm_data_context_get(&_emm_data, ue_idP);
 
+  if(!emm_ctx){
+    OAILOG_ERROR( LOG_NAS_EMM, "EMM-PROC  - No EMM context could be established for UE " MME_UE_S1AP_ID_FMT". \n", ue_idP);
+    OAILOG_FUNC_OUT(LOG_NAS);
+  }
+
   message_p = itti_alloc_new_message(TASK_NAS_EMM, NAS_CONNECTION_ESTABLISHMENT_CNF);
 
   NAS_CONNECTION_ESTABLISHMENT_CNF(message_p).ue_id                           = ue_idP;

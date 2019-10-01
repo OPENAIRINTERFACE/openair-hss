@@ -419,6 +419,8 @@ int emm_proc_attach_request (
       // todo: this probably will not work, we need to update the enb_ue_s1ap_id of the old UE context to continue to work with it!
       //              unlock_ue_contexts(ue_context);
       //             unlock_ue_contexts(imsi_ue_mm_ctx);
+      emm_init_context(new_emm_ue_ctx);
+      DevAssert(RETURNok == emm_data_context_add (&_emm_data, new_emm_ue_ctx));
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
     } else{
     	new_emm_ue_ctx = (*duplicate_emm_ue_ctx_pP);

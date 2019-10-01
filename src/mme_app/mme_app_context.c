@@ -164,15 +164,6 @@ ue_context_t * get_new_ue_context() {
   OAILOG_FUNC_RETURN (LOG_MME_APP, ue_context);
 }
 
-void test_ue_context_extablishment(){
-	ue_context_t *ue_context_1 = get_new_ue_context();
-	ue_context_t *ue_context_2 = get_new_ue_context();
-	ue_context_t *ue_context_3 = get_new_ue_context();
-
-	mme_remove_ue_context(&mme_app_desc.mme_ue_contexts, ue_context_1);
-	mme_remove_ue_context(&mme_app_desc.mme_ue_contexts, ue_context_2);
-	mme_remove_ue_context(&mme_app_desc.mme_ue_contexts, ue_context_3);
-}
 //------------------------------------------------------------------------------
 ue_context_t                           *
 mme_ue_context_exists_enb_ue_s1ap_id (
@@ -2898,7 +2889,9 @@ static void clear_ue_context(ue_context_t * ue_context) {
 
 	/** Will remove the S10 procedures and tunnel endpoints. */
 	if (ue_context->s10_procedures) {
+		ue_context->privates.s1_ue_context_release_cause = S1AP_HANDOVER_CANCELLED;
 		mme_app_delete_s10_procedure_mme_handover(ue_context); // todo: generic s10 function
+		ue_context->privates.s1_ue_context_release_cause = S1AP_INVALID_CAUSE;
 	}
 
 	mme_ue_s1ap_id_t ue_id = ue_context->privates.mme_ue_s1ap_id;
