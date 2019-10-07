@@ -752,8 +752,16 @@ s10_f_container_ie_get_2 (
 	  p_ieValue++;
 	  // todo: check the minimum/maximum length!
 	  /** Allocating a new bstring. It will stay until it is manually deallocated. */
-	  status->bearerStatusTransferList_buffer[i] = blk2bstr((void*)p_ieValue, length);
-	  p_ieValue+=(length-1);
+	  status->bearerStatusTransferList[i].ebi = *((uint8_t*)p_ieValue);
+	  p_ieValue++;
+	  status->bearerStatusTransferList[i].bsc_ul.pdcp_count = *((uint16_t*)p_ieValue);
+	  p_ieValue+=2;
+	  status->bearerStatusTransferList[i].bsc_ul.hfn_count  = *((uint16_t*)p_ieValue);
+	  p_ieValue+=2;
+	  status->bearerStatusTransferList[i].bsc_dl.pdcp_count = *((uint16_t*)p_ieValue);
+	  p_ieValue+=2;
+	  status->bearerStatusTransferList[i].bsc_dl.hfn_count  = *((uint16_t*)p_ieValue);
+	  p_ieValue+=2;
   }
   return NW_OK;
 }

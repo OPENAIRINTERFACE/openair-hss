@@ -1285,7 +1285,7 @@ s1ap_mme_handle_path_switch_request (
   container = &pdu->choice.initiatingMessage.value.choice.PathSwitchRequest;
 
   S1AP_FIND_PROTOCOLIE_BY_ID(S1AP_PathSwitchRequestIEs_t, ie, container,
-                             S1AP_ProtocolIE_ID_id_SourceMME_UE_S1AP_ID, true);
+                             S1AP_ProtocolIE_ID_id_MME_UE_S1AP_ID, true);
   mme_ue_s1ap_id = ie->value.choice.MME_UE_S1AP_ID;
 
   S1AP_FIND_PROTOCOLIE_BY_ID(S1AP_PathSwitchRequestIEs_t, ie, container,
@@ -1520,7 +1520,7 @@ int s1ap_mme_handle_handover_preparation(const sctp_assoc_id_t assoc_id, const s
 
 
   S1AP_FIND_PROTOCOLIE_BY_ID(S1AP_HandoverRequiredIEs_t, ie, container,
-                             S1AP_ProtocolIE_ID_id_SourceMME_UE_S1AP_ID, true);
+                             S1AP_ProtocolIE_ID_id_MME_UE_S1AP_ID, true);
   mme_ue_s1ap_id = ie->value.choice.MME_UE_S1AP_ID;
 
   S1AP_FIND_PROTOCOLIE_BY_ID(S1AP_HandoverRequiredIEs_t, ie, container,
@@ -1682,7 +1682,7 @@ s1ap_mme_handle_handover_cancel(
   container = &pdu->choice.initiatingMessage.value.choice.HandoverCancel;
 
   S1AP_FIND_PROTOCOLIE_BY_ID(S1AP_HandoverCancelIEs_t, ie, container,
-                             S1AP_ProtocolIE_ID_id_SourceMME_UE_S1AP_ID, true);
+                             S1AP_ProtocolIE_ID_id_MME_UE_S1AP_ID, true);
   mme_ue_s1ap_id = ie->value.choice.MME_UE_S1AP_ID;
 
   S1AP_FIND_PROTOCOLIE_BY_ID(S1AP_HandoverCancelIEs_t, ie, container,
@@ -1700,15 +1700,7 @@ s1ap_mme_handle_handover_cancel(
     OAILOG_ERROR(LOG_S1AP, "MME UE S1AP ID provided by source eNB doesn't point to any valid UE: " MME_UE_S1AP_ID_FMT ". Continuing with the HO-Cancellation (impl. detach). \n", mme_ue_s1ap_id);
     OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
   }
-  /**
-   * No timers to be started. Also, the state does not need to be changed from UE_CONNECTED, since TS 36.413 8.4.1.2 specifies that MME may/can initiate some E-RAB Modification signaling towards the source
-   * eNB before the Handover Procedure is completed. Handover restart won't be triggered by eNB.
-   * Source eNB may restart the Handover. If the UE is still connected (Handover dismissed or still going on, it will send a HO-Preparation-Failure.
-   */
-  if(ue_ref_p->s1_ue_state  != S1AP_UE_CONNECTED){
-    OAILOG_ERROR(LOG_S1AP, "UE: " MME_UE_S1AP_ID_FMT " is not in connected mode, instead %d. Continuing with cancellation (impl. detach). \n", enb_ue_s1ap_id, ue_ref_p->s1_ue_state);
-    OAILOG_FUNC_RETURN (LOG_S1AP, rc);
-  }
+
   /** Not changing any ue_reference properties. */
   message_p = itti_alloc_new_message (TASK_S1AP, S1AP_HANDOVER_CANCEL);
   AssertFatal (message_p != NULL, "itti_alloc_new_message Failed");
@@ -1751,7 +1743,7 @@ s1ap_mme_handle_handover_notification(
   container = &pdu->choice.initiatingMessage.value.choice.HandoverNotify;
 
   S1AP_FIND_PROTOCOLIE_BY_ID(S1AP_HandoverNotifyIEs_t, ie, container,
-                             S1AP_ProtocolIE_ID_id_SourceMME_UE_S1AP_ID, true);
+                             S1AP_ProtocolIE_ID_id_MME_UE_S1AP_ID, true);
   mme_ue_s1ap_id = ie->value.choice.MME_UE_S1AP_ID;
 
   S1AP_FIND_PROTOCOLIE_BY_ID(S1AP_HandoverNotifyIEs_t, ie, container,
@@ -1849,7 +1841,7 @@ int s1ap_mme_handle_handover_resource_allocation_response(const sctp_assoc_id_t 
   container = &pdu->choice.successfulOutcome.value.choice.HandoverRequestAcknowledge;
 
   S1AP_FIND_PROTOCOLIE_BY_ID(S1AP_HandoverRequestAcknowledgeIEs_t, ie, container,
-                             S1AP_ProtocolIE_ID_id_SourceMME_UE_S1AP_ID, true);
+                             S1AP_ProtocolIE_ID_id_MME_UE_S1AP_ID, true);
   mme_ue_s1ap_id = ie->value.choice.MME_UE_S1AP_ID;
 
   S1AP_FIND_PROTOCOLIE_BY_ID(S1AP_HandoverRequestAcknowledgeIEs_t, ie, container,
@@ -1919,7 +1911,7 @@ int s1ap_mme_handle_handover_resource_allocation_response(const sctp_assoc_id_t 
    */
 
   S1AP_FIND_PROTOCOLIE_BY_ID(S1AP_HandoverRequestAcknowledgeIEs_t, ie, container, S1AP_ProtocolIE_ID_id_E_RABAdmittedList, false);
-	const S1AP_E_RABAdmittedList_t * e_rab_admitted_list = NULL; // List of s1ap_E_RABAdmittedItem
+  const S1AP_E_RABAdmittedList_t * e_rab_admitted_list = NULL; // List of s1ap_E_RABAdmittedItem
 	if (ie) {
 	  e_rab_admitted_list = &ie->value.choice.E_RABAdmittedList;
 	}
@@ -2006,7 +1998,8 @@ int s1ap_mme_handle_handover_resource_allocation_response(const sctp_assoc_id_t 
     /*
      * Bad, very bad cast...
      */
-    const S1AP_E_RABAdmittedItem_t * const s1ap_e_rabadmitteditem = &((S1AP_E_RABAdmittedItemIEs_t *)&e_rab_admitted_list->list.array[item])->value.choice.E_RABAdmittedItem;
+    const S1AP_E_RABAdmittedItem_t * const s1ap_e_rabadmitteditem =
+    		&(((S1AP_E_RABAdmittedItemIEs_t *)e_rab_admitted_list->list.array[item])->value.choice.E_RABAdmittedItem);
     s1ap_handover_request_acknowledge->bcs_to_be_modified.bearer_context[item].eps_bearer_id = s1ap_e_rabadmitteditem->e_RAB_ID;
     s1ap_handover_request_acknowledge->bcs_to_be_modified.bearer_context[item].s1_eNB_fteid.teid = htonl (*((uint32_t *) s1ap_e_rabadmitteditem->gTP_TEID.buf));
     bstring transport_address  =
@@ -2032,7 +2025,7 @@ int s1ap_mme_handle_handover_resource_allocation_response(const sctp_assoc_id_t 
 	  const S1AP_E_RABFailedtoSetupListHOReqAck_t * const e_rab_failed_to_setup_list = &ie->value.choice.E_RABFailedtoSetupListHOReqAck;
     /** Get the failed bearers. */
     for (int index = 0; index < e_rab_failed_to_setup_list->list.count; index++) {
-      const S1AP_E_RABFailedtoSetupItemHOReqAckIEs_t * const e_rab_failed_to_setup_item_ies = (const S1AP_E_RABFailedtoSetupItemHOReqAckIEs_t * const)&e_rab_failed_to_setup_list->list.array[index];
+      const S1AP_E_RABFailedtoSetupItemHOReqAckIEs_t * const e_rab_failed_to_setup_item_ies = (const S1AP_E_RABFailedtoSetupItemHOReqAckIEs_t * const)e_rab_failed_to_setup_list->list.array[index];
       const S1AP_E_RABFailedToSetupItemHOReqAck_t * const e_rab_failed_to_setup_item = &e_rab_failed_to_setup_item_ies->value.choice.E_RABFailedToSetupItemHOReqAck;
       s1ap_handover_request_acknowledge->e_rab_release_list.item[index].e_rab_id  = e_rab_failed_to_setup_item->e_RAB_ID;
       s1ap_handover_request_acknowledge->e_rab_release_list.item[index].cause     = e_rab_failed_to_setup_item->cause;
@@ -2045,7 +2038,7 @@ int s1ap_mme_handle_handover_resource_allocation_response(const sctp_assoc_id_t 
    * is assumed to remove the OCTET_STRING.
    * todo: ask Lionel if thats correct? what is context only?
    */
-  S1AP_FIND_PROTOCOLIE_BY_ID(S1AP_HandoverRequestAcknowledgeIEs_t, ie, container, S1AP_ProtocolIE_ID_id_E_RABFailedToSetupListHOReqAck, true);
+  S1AP_FIND_PROTOCOLIE_BY_ID(S1AP_HandoverRequestAcknowledgeIEs_t, ie, container, S1AP_ProtocolIE_ID_id_Target_ToSource_TransparentContainer, true);
 	const S1AP_Target_ToSource_TransparentContainer_t	 * const target_to_source_transparent_container = &ie->value.choice.Target_ToSource_TransparentContainer;
 
   S1AP_HANDOVER_REQUEST_ACKNOWLEDGE (message_p).target_to_source_eutran_container = blk2bstr((void*)target_to_source_transparent_container->buf,
@@ -2079,7 +2072,7 @@ s1ap_mme_handle_handover_resource_allocation_failure(
   container = &pdu->choice.unsuccessfulOutcome.value.choice.HandoverFailure;
 
   S1AP_FIND_PROTOCOLIE_BY_ID(S1AP_HandoverFailureIEs_t, ie, container,
-                             S1AP_ProtocolIE_ID_id_SourceMME_UE_S1AP_ID, true);
+                             S1AP_ProtocolIE_ID_id_MME_UE_S1AP_ID, true);
   mme_ue_s1ap_id = ie->value.choice.MME_UE_S1AP_ID;
 
 
@@ -2175,7 +2168,7 @@ s1ap_mme_handle_enb_status_transfer(
   container = &pdu->choice.initiatingMessage.value.choice.ENBStatusTransfer;
 
   S1AP_FIND_PROTOCOLIE_BY_ID(S1AP_ENBStatusTransferIEs_t, ie, container,
-                             S1AP_ProtocolIE_ID_id_SourceMME_UE_S1AP_ID, true);
+                             S1AP_ProtocolIE_ID_id_MME_UE_S1AP_ID, true);
   mme_ue_s1ap_id = ie->value.choice.MME_UE_S1AP_ID;
 
   S1AP_FIND_PROTOCOLIE_BY_ID(S1AP_ENBStatusTransferIEs_t, ie, container,
@@ -2205,27 +2198,28 @@ s1ap_mme_handle_enb_status_transfer(
   enb_status_transfer_p->enb_ue_s1ap_id = ue_ref_p->enb_ue_s1ap_id;
 
   /** Set the E-UTRAN container. The S1AP octet string should be purged in the outer method. */
+
+  enb_status_transfer_p->status_transfer_bearer_list = calloc(1, sizeof(status_transfer_bearer_list_t));
+  // Mandatory
   S1AP_FIND_PROTOCOLIE_BY_ID(S1AP_ENBStatusTransferIEs_t, ie, container, S1AP_ProtocolIE_ID_id_eNB_StatusTransfer_TransparentContainer, true);
-	//const S1AP_ENB_StatusTransfer_TransparentContainer_t	* const  enb_status_transfer_transparent_container = &ie->value.choice.ENB_StatusTransfer_TransparentContainer;
-  //const S1AP_Bearers_SubjectToStatusTransfer_ItemIEs_t  * const  bearers_subject_to_status_transfer_item_ies =
-  //                     (const S1AP_Bearers_SubjectToStatusTransfer_ItemIEs_t  * const)&enb_status_transfer_transparent_container->bearers_SubjectToStatusTransferList.list.array[0];
+  const S1AP_ENB_StatusTransfer_TransparentContainer_t	 * const enb_status_transfer_transparent_container = &ie->value.choice.ENB_StatusTransfer_TransparentContainer;
 
-#warning TODO S1AP_Bearers_SubjectToStatusTransfer_ItemIEs_t
-/*
-typedef struct S1AP_Bearers_SubjectToStatusTransfer_Item {
-	S1AP_E_RAB_ID_t	 e_RAB_ID;
-	S1AP_COUNTvalue_t	 uL_COUNTvalue;
-	S1AP_COUNTvalue_t	 dL_COUNTvalue;
-	S1AP_ReceiveStatusofULPDCPSDUs_t	*receiveStatusofULPDCPSDUs;	// OPTIONAL
-	struct S1AP_ProtocolExtensionContainer	*iE_Extensions;	// OPTIONAL
-} S1AP_Bearers_SubjectToStatusTransfer_Item_t;*/
+  enb_status_transfer_p->status_transfer_bearer_list->num_bearers = enb_status_transfer_transparent_container->bearers_SubjectToStatusTransferList.list.count;
 
-  //  enb_status_transfer_p->status_transfer_bearer_list = calloc(1, sizeof(status_transfer_bearer_list_t));
-  //for(int i = 0; i < enbStatusTransfer_p->eNB_StatusTransfer_TransparentContainer.bearers_SubjectToStatusTransferList.list.count; i++) {
-	//  enb_status_transfer_p->status_transfer_bearer_list->bearerStatusTransferList_buffer[i] = blk2bstr(enbStatusTransfer_p->eNB_StatusTransfer_TransparentContainer.bearers_SubjectToStatusTransferList.list.array[i]->value.buf,
-	//        enbStatusTransfer_p->eNB_StatusTransfer_TransparentContainer.bearers_SubjectToStatusTransferList.list.array[i]->value.size);
-	//  enb_status_transfer_p->status_transfer_bearer_list->num_bearers++;
-  //}
+  for(int i = 0; i < enb_status_transfer_transparent_container->bearers_SubjectToStatusTransferList.list.count; i++) {
+	  const S1AP_Bearers_SubjectToStatusTransfer_ItemIEs_t  * const  bearers_subject_to_status_transfer_item_ies =
+	                       (const S1AP_Bearers_SubjectToStatusTransfer_ItemIEs_t  * const)enb_status_transfer_transparent_container->bearers_SubjectToStatusTransferList.list.array[i];
+	  enb_status_transfer_p->status_transfer_bearer_list->bearerStatusTransferList[i].bsc_ul.hfn_count  = bearers_subject_to_status_transfer_item_ies->value.choice.Bearers_SubjectToStatusTransfer_Item.uL_COUNTvalue.hFN;
+	  enb_status_transfer_p->status_transfer_bearer_list->bearerStatusTransferList[i].bsc_ul.pdcp_count = bearers_subject_to_status_transfer_item_ies->value.choice.Bearers_SubjectToStatusTransfer_Item.uL_COUNTvalue.pDCP_SN;
+	  enb_status_transfer_p->status_transfer_bearer_list->bearerStatusTransferList[i].bsc_dl.hfn_count  = bearers_subject_to_status_transfer_item_ies->value.choice.Bearers_SubjectToStatusTransfer_Item.dL_COUNTvalue.hFN;
+	  enb_status_transfer_p->status_transfer_bearer_list->bearerStatusTransferList[i].bsc_dl.pdcp_count = bearers_subject_to_status_transfer_item_ies->value.choice.Bearers_SubjectToStatusTransfer_Item.dL_COUNTvalue.pDCP_SN;
+	  enb_status_transfer_p->status_transfer_bearer_list->bearerStatusTransferList[i].ebi = bearers_subject_to_status_transfer_item_ies->value.choice.Bearers_SubjectToStatusTransfer_Item.e_RAB_ID;
+	  if(bearers_subject_to_status_transfer_item_ies->value.choice.Bearers_SubjectToStatusTransfer_Item.receiveStatusofULPDCPSDUs){
+		  OAILOG_WARNING(LOG_S1AP, "ENB_STATUS Transfer Bearer Item optionals not decoded!\n");
+//		  enb_status_transfer_p->status_transfer_bearer_list->bearerStatusTransferList[i].receiveStatusofULPDCPSDU = blk2bstr(bearers_subject_to_status_transfer_item_ies->value.choice.Bearers_SubjectToStatusTransfer_Item.receiveStatusofULPDCPSDUs->buf,
+//				  bearers_subject_to_status_transfer_item_ies->value.choice.Bearers_SubjectToStatusTransfer_Item.receiveStatusofULPDCPSDUs->size);
+	  }
+  }
 
   /** Assuming that the OCTET-STRING will be freed automatically. */
   itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
@@ -2553,7 +2547,7 @@ s1ap_mme_handle_erab_modify_response (
 
     int num_erab = e_rab_modify_list_bearer_mod_res->list.count;
     for (int index = 0; index < num_erab; index++) {
-      const S1AP_E_RABModifyItemBearerModResIEs_t * const e_rab_setup_item_bearer_su_res_ies = (S1AP_E_RABModifyItemBearerModResIEs_t*)&e_rab_modify_list_bearer_mod_res->list.array[index];
+      const S1AP_E_RABModifyItemBearerModResIEs_t * const e_rab_setup_item_bearer_su_res_ies = (S1AP_E_RABModifyItemBearerModResIEs_t*)e_rab_modify_list_bearer_mod_res->list.array[index];
       const S1AP_E_RABModifyItemBearerModRes_t * const erab_item = &e_rab_setup_item_bearer_su_res_ies->value.choice.E_RABModifyItemBearerModRes;
       S1AP_E_RAB_MODIFY_RSP (message_p).e_rab_modify_list.item[index].e_rab_id = erab_item->e_RAB_ID;
       S1AP_E_RAB_MODIFY_RSP (message_p).e_rab_modify_list.no_of_items += 1;

@@ -80,7 +80,7 @@ s1ap_mme_encode_pdu (S1AP_S1AP_PDU_t *pdu, uint8_t **buffer, uint32_t *length)
     OAILOG_NOTICE (LOG_S1AP, "Unknown message outcome (%d) or not implemented", (int)pdu->present);
     break;
   }
-  ASN_STRUCT_FREE_CONTENTS_ONLY(asn_DEF_S1AP_S1AP_PDU, pdu);
+  //ASN_STRUCT_FREE_CONTENTS_ONLY(asn_DEF_S1AP_S1AP_PDU, pdu);
   return ret;
 }
 

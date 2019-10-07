@@ -127,11 +127,23 @@ typedef struct e_rab_modify_list_s {
 } e_rab_modify_list_t;
 
 #include "S1AP_Cause.h"
+typedef struct  bearer_status_count_s{
+  const char 			  empty;
+  long                    pdcp_count;
+  long                    hfn_count;
+}__attribute__((__packed__)) bearer_status_count_t;
+
+typedef struct status_transfer_bearer_item_s{
+#define MSG_STATUS_TRANSFER_MAX_BEARER_CONTEXTS   11
+	ebi_t		          ebi;
+	bearer_status_count_t bsc_ul;
+	bearer_status_count_t bsc_dl;
+}__attribute__((__packed__)) status_transfer_bearer_item_t;
 
 typedef struct status_transfer_bearer_list_s{
 #define MSG_STATUS_TRANSFER_MAX_BEARER_CONTEXTS   11
 	  int					  num_bearers;
-	  bstring                 bearerStatusTransferList_buffer[MSG_STATUS_TRANSFER_MAX_BEARER_CONTEXTS]; /**< Target-ToSource Transparent Container bearer items. */
+	  status_transfer_bearer_item_t    bearerStatusTransferList[MSG_STATUS_TRANSFER_MAX_BEARER_CONTEXTS]; /**< Target-ToSource Transparent Container bearer items. */
 }status_transfer_bearer_list_t;
 
 typedef struct e_rab_item_s {

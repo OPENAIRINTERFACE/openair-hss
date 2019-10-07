@@ -475,6 +475,38 @@ void mme_app_send_s11_modify_bearer_req(const ue_session_pool_t * const ue_sessi
 
 //------------------------------------------------------------------------------
 /**
+ * Method to send the S1AP MME Status Transfer to the target-eNB.
+ * Will not make any changes in the UE context.
+ * No F-Container will/needs to be stored temporarily.
+ */
+void mme_app_send_s1ap_mme_status_transfer(mme_ue_s1ap_id_t mme_ue_s1ap_id, enb_ue_s1ap_id_t enb_ue_s1ap_id, uint32_t enb_id, status_transfer_bearer_list_t * status_transfer){
+  MessageDef * message_p = NULL;
+
+  OAILOG_FUNC_IN (LOG_MME_APP);
+  /**
+   * Prepare a S1AP ITTI message without changing the UE context.
+   */
+  message_p = itti_alloc_new_message (TASK_MME_APP, S1AP_MME_STATUS_TRANSFER);
+  DevAssert (message_p != NULL);
+  itti_s1ap_status_transfer_t *status_transfer_p = &message_p->ittiMsg.s1ap_mme_status_transfer;
+  memset (status_transfer_p, 0, sizeof (itti_s1ap_status_transfer_t));
+  status_transfer_p->mme_ue_s1ap_id = mme_ue_s1ap_id;
+  status_transfer_p->enb_ue_s1ap_id = enb_ue_s1ap_id; /**< Just ENB_UE_S1AP_ID. */
+  /** Set the current enb_id. */
+  status_transfer_p->enb_id = enb_id;
+  /** Set the E-UTRAN Target-To-Source-Transparent-Container. */
+  status_transfer_p->status_transfer_bearer_list = status_transfer;
+  // todo: what will the enb_ue_s1ap_ids for single mme s1ap handover will be.. ?
+  OAILOG_INFO(LOG_MME_APP, "Sending S1AP MME_STATUS_TRANSFER command to the target eNodeB for enbUeS1apId " ENB_UE_S1AP_ID_FMT " and enbId %d. \n", enb_ue_s1ap_id, enb_id);
+  /** The ENB_ID/Stream information in the UE_Context are still the ones for the source-ENB and the SCTP-UE_ID association is not set yet for the new eNB. */
+  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S1AP_MME, NULL, 0, "MME_APP Sending S1AP MME_STATUS_TRANSFER.");
+  /** Sending a message to S1AP. */
+  itti_send_msg_to_task (TASK_S1AP, INSTANCE_DEFAULT, message_p);
+  OAILOG_FUNC_OUT (LOG_MME_APP);
+}
+
+//------------------------------------------------------------------------------
+/**
  * Send an S1AP Path Switch Request Failure to the S1AP layer.
  * Not triggering release of resources, everything will stay as it it.
  * The MME_APP ITTI message elements though need to be deallocated.
