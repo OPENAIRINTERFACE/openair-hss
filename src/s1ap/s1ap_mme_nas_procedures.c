@@ -2124,38 +2124,34 @@ s1ap_handle_paging( const itti_s1ap_paging_t * const s1ap_paging_pP){
 		  INT8_TO_OCTET_STRING(mme_config.gummei.gummei[0].mme_code, &ie->value.choice.UEPagingID.choice.s_TMSI.mMEC);
       ASN_SEQUENCE_ADD(&out->protocolIEs.list, ie);
 
-		  /** Set the TAI-List. */
-		  uint8_t                                 plmn[3] = { 0x00, 0x00, 0x00 };     //{ 0x02, 0xF8, 0x29 };
+      /** Set the TAI-List. */
+      uint8_t                                 plmn[3] = { 0x00, 0x00, 0x00 };     //{ 0x02, 0xF8, 0x29 };
       ie = (S1AP_PagingIEs_t *)calloc(1, sizeof(S1AP_PagingIEs_t));
       ie->id = S1AP_ProtocolIE_ID_id_TAIList;
       ie->criticality = S1AP_Criticality_ignore;
       ie->value.present = S1AP_PagingIEs__value_PR_TAIList;
       ASN_SEQUENCE_ADD (&out->protocolIEs.list, ie);
-
       S1AP_TAIList_t	* const tai_list = &ie->value.choice.TAIList;
+      PLMN_T_TO_TBCD (eNB_ref->tai_list.partial_tai_list[0].u.tai_one_plmn_non_consecutive_tacs.plmn,
+    		  plmn,
+			  mme_config_find_mnc_length(
+					  eNB_ref->tai_list.partial_tai_list[0].u.tai_one_plmn_non_consecutive_tacs.plmn.mcc_digit1, eNB_ref->tai_list.partial_tai_list[0].u.tai_one_plmn_non_consecutive_tacs.plmn.mcc_digit2, eNB_ref->tai_list.partial_tai_list[0].u.tai_one_plmn_non_consecutive_tacs.plmn.mcc_digit3,
+					  eNB_ref->tai_list.partial_tai_list[0].u.tai_one_plmn_non_consecutive_tacs.plmn.mnc_digit1, eNB_ref->tai_list.partial_tai_list[0].u.tai_one_plmn_non_consecutive_tacs.plmn.mnc_digit2, eNB_ref->tai_list.partial_tai_list[0].u.tai_one_plmn_non_consecutive_tacs.plmn.mnc_digit3)
+      );
 
-		  PLMN_T_TO_TBCD (eNB_ref->tai_list.partial_tai_list[0].u.tai_one_plmn_non_consecutive_tacs.plmn,
-				  plmn,
-				  mme_config_find_mnc_length(
-						  eNB_ref->tai_list.partial_tai_list[0].u.tai_one_plmn_non_consecutive_tacs.plmn.mcc_digit1, eNB_ref->tai_list.partial_tai_list[0].u.tai_one_plmn_non_consecutive_tacs.plmn.mcc_digit2, eNB_ref->tai_list.partial_tai_list[0].u.tai_one_plmn_non_consecutive_tacs.plmn.mcc_digit3,
-						  eNB_ref->tai_list.partial_tai_list[0].u.tai_one_plmn_non_consecutive_tacs.plmn.mnc_digit1, eNB_ref->tai_list.partial_tai_list[0].u.tai_one_plmn_non_consecutive_tacs.plmn.mnc_digit2, eNB_ref->tai_list.partial_tai_list[0].u.tai_one_plmn_non_consecutive_tacs.plmn.mnc_digit3)
-		  )
-		  ;
-
-		  S1AP_TAIItemIEs_t * tai_item_ies = calloc(1, sizeof(S1AP_TAIItemIEs_t));
-		  tai_item_ies->id = S1AP_ProtocolIE_ID_id_TAIItem;
+      S1AP_TAIItemIEs_t * tai_item_ies = calloc(1, sizeof(S1AP_TAIItemIEs_t));
+      tai_item_ies->id = S1AP_ProtocolIE_ID_id_TAIItem;
       tai_item_ies->criticality = S1AP_Criticality_ignore;
       tai_item_ies->value.present = S1AP_TAIItemIEs__value_PR_TAIItem;
-			S1AP_TAIItem_t	 * tai_item = &tai_item_ies->value.choice.TAIItem;
+      S1AP_TAIItem_t	 * tai_item = &tai_item_ies->value.choice.TAIItem;
 
+      OCTET_STRING_fromBuf(&tai_item->tAI.pLMNidentity, (const char*)plmn, 3);
+      INT16_TO_OCTET_STRING(eNB_ref->tai_list.partial_tai_list[0].u.tai_one_plmn_non_consecutive_tacs.tac[0], &tai_item->tAI.tAC);
+      /** Set the TAI. */
+      ASN_SEQUENCE_ADD (&tai_list->list, tai_item_ies);
 
-		  OCTET_STRING_fromBuf(&tai_item->tAI.pLMNidentity, (const char*)plmn, 3);
-		  INT16_TO_OCTET_STRING(eNB_ref->tai_list.partial_tai_list[0].u.tai_one_plmn_non_consecutive_tacs.tac[0], &tai_item->tAI.tAC);
-		  /** Set the TAI. */
-		  ASN_SEQUENCE_ADD (&tai_list->list, tai_item);
-
-		  for(int ntac = 1; ntac < eNB_ref->tai_list.partial_tai_list[0].numberofelements; ntac++){
-        tai_item_ies->id = S1AP_ProtocolIE_ID_id_TAIItem;
+      for(int ntac = 1; ntac < eNB_ref->tai_list.partial_tai_list[0].numberofelements; ntac++){
+    	tai_item_ies->id = S1AP_ProtocolIE_ID_id_TAIItem;
         ie->criticality = S1AP_Criticality_ignore;
         ie->value.present = S1AP_TAIItemIEs__value_PR_TAIItem;
         S1AP_TAIItem_t	 * tai_item = &tai_item_ies->value.choice.TAIItem;
@@ -2163,22 +2159,22 @@ s1ap_handle_paging( const itti_s1ap_paging_t * const s1ap_paging_pP){
         INT16_TO_OCTET_STRING(eNB_ref->tai_list.partial_tai_list[0].u.tai_one_plmn_non_consecutive_tacs.tac[ntac], &tai_item->tAI.tAC);
         /** Set the TAI. */
         ASN_SEQUENCE_ADD (&tai_list->list, tai_item);
-		  }
+      }
 
-		  /** Encoding without allocating? */
-		  if (s1ap_mme_encode_pdu (&pdu, &buffer_p, &length) < 0) {
-			  OAILOG_ERROR (LOG_S1AP, "Failed to encode S1AP paging for enb# %d with tac " TAC_FMT" for UE " MME_UE_S1AP_ID_FMT ".\n",
-					  i, s1ap_paging_pP->tac, s1ap_paging_pP->mme_ue_s1ap_id);
-			  // todo: in this case we will ignore this. no UE contex modification should occure
-			  OAILOG_FUNC_OUT (LOG_S1AP);
-		  }
+      /** Encoding without allocating? */
+      if (s1ap_mme_encode_pdu (&pdu, &buffer_p, &length) < 0) {
+    	  OAILOG_ERROR (LOG_S1AP, "Failed to encode S1AP paging for enb# %d with tac " TAC_FMT" for UE " MME_UE_S1AP_ID_FMT ".\n",
+    			  i, s1ap_paging_pP->tac, s1ap_paging_pP->mme_ue_s1ap_id);
+    	  // todo: in this case we will ignore this. no UE contex modification should occure
+    	  OAILOG_FUNC_OUT (LOG_S1AP);
+      }
 
-		  OAILOG_NOTICE (LOG_S1AP, "Send S1AP_PAGING message MME_UE_S1AP_ID = " MME_UE_S1AP_ID_FMT " \n",
-				  (mme_ue_s1ap_id_t)s1ap_paging_pP->mme_ue_s1ap_id);
+      OAILOG_NOTICE (LOG_S1AP, "Send S1AP_PAGING message MME_UE_S1AP_ID = " MME_UE_S1AP_ID_FMT " \n",
+    		  (mme_ue_s1ap_id_t)s1ap_paging_pP->mme_ue_s1ap_id);
 
-		  bstring b = blk2bstr(buffer_p, length);
-		  free(buffer_p);
-		  s1ap_mme_itti_send_sctp_request (&b, eNB_ref->sctp_assoc_id, eNB_ref->next_sctp_stream, s1ap_paging_pP->mme_ue_s1ap_id);
+      bstring b = blk2bstr(buffer_p, length);
+      free(buffer_p);
+      s1ap_mme_itti_send_sctp_request (&b, eNB_ref->sctp_assoc_id, eNB_ref->next_sctp_stream, s1ap_paging_pP->mme_ue_s1ap_id);
 	  }
   }
   OAILOG_FUNC_OUT (LOG_S1AP);

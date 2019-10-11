@@ -205,7 +205,7 @@ int mme_app_send_s11_release_access_bearers_req (mme_ue_s1ap_id_t ue_id)
 }
 
 //------------------------------------------------------------------------------
-void
+int
 mme_app_send_s11_create_session_req (
   const mme_ue_s1ap_id_t ue_id, const imsi_t * const imsi_p, pdn_context_t * pdn_context, tai_t * serving_tai, const protocol_configuration_options_t * const pco, const bool is_from_s10_tau)
 {
@@ -226,17 +226,17 @@ mme_app_send_s11_create_session_req (
   ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, ue_id);
   if(!ue_context){
 	  OAILOG_ERROR (LOG_MME_APP, "No UE context for UE " MME_UE_S1AP_ID_FMT ". Cannot send CSR. \n", ue_id);
-	  OAILOG_FUNC_OUT(LOG_MME_APP);
+	  OAILOG_FUNC_RETURN(LOG_MME_APP, RETURNerror);
   }
 
   ue_session_pool = mme_ue_session_pool_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_session_pools, ue_id);
   if(!ue_session_pool){
 	  OAILOG_ERROR (LOG_MME_APP, "No UE session pool for UE " MME_UE_S1AP_ID_FMT ". Cannot send CSR. \n", ue_id);
-	  OAILOG_FUNC_OUT(LOG_MME_APP);
+	  OAILOG_FUNC_RETURN(LOG_MME_APP, RETURNerror);
   }
   if(!pdn_context) {
 	  OAILOG_ERROR (LOG_MME_APP, "No pdn context for UE " MME_UE_S1AP_ID_FMT ". Cannot send CSR. \n", ue_id);
-	  OAILOG_FUNC_OUT(LOG_MME_APP);
+	  OAILOG_FUNC_RETURN(LOG_MME_APP, RETURNerror);
   }
 
   OAILOG_DEBUG (LOG_MME_APP, "Sending CSR for imsi " IMSI_64_FMT "\n", ue_context->privates.fields.imsi);
@@ -288,6 +288,22 @@ mme_app_send_s11_create_session_req (
   session_request_p->uli.s.ecgi = ue_context->privates.fields.e_utran_cgi;
   session_request_p->uli.present |= ULI_TAI;
   tai_to_Tai(serving_tai, &session_request_p->uli.s.tai);
+
+  // todo: apn restrictions!
+
+  // Actually, since S and P GW are bundled together, there is no PGW selection (based on PGW id in ULA, or DNS query based on FQDN)
+  struct sockaddr * edns_peer_ip = NULL;
+  if (1) {
+    // TODO prototype may change
+    mme_app_select_service(serving_tai, &edns_peer_ip, S11_SGW_GTP_C);
+    //    session_request_p->peer_ip.in_addr = mme_config.ipv4.
+  }
+  if(!edns_peer_ip){
+
+	OAILOG_ERROR (LOG_MME_APP, "No EDNS Peer IP for UE " MME_UE_S1AP_ID_FMT " could be found for TAI " TAI_FMT". Cannot send CSR. \n", ue_id, TAI_ARG(serving_tai));
+	OAILOG_FUNC_RETURN(LOG_MME_APP, RETURNerror);
+  }
+  memcpy((void*)&session_request_p->edns_peer_ip, edns_peer_ip, edns_peer_ip->sa_family == AF_INET ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
   /*
    * Copy the subscribed APN-AMBR to the sgw create session request message
    */
@@ -300,17 +316,6 @@ mme_app_send_s11_create_session_req (
   DevAssert(!session_request_p->bearer_contexts_to_be_created);
   session_request_p->bearer_contexts_to_be_created = calloc(1, sizeof(bearer_contexts_to_be_created_t));
   mme_app_get_bearer_contexts_to_be_created(pdn_context, session_request_p->bearer_contexts_to_be_created, BEARER_STATE_MME_CREATED);
-
-  // todo: apn restrictions!
-
-  // Actually, since S and P GW are bundled together, there is no PGW selection (based on PGW id in ULA, or DNS query based on FQDN)
-  struct sockaddr * edns_peer_ip = NULL;
-  if (1) {
-    // TODO prototype may change
-    mme_app_select_service(serving_tai, &edns_peer_ip, S11_SGW_GTP_C);
-    //    session_request_p->peer_ip.in_addr = mme_config.ipv4.
-  }
-  memcpy((void*)&session_request_p->edns_peer_ip, edns_peer_ip, edns_peer_ip->sa_family == AF_INET ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
 
   /*
    * Asking for default bearer in initial UE message.
@@ -372,7 +377,7 @@ mme_app_send_s11_create_session_req (
       "0 S11_CREATE_SESSION_REQUEST imsi " IMSI_64_FMT, ue_contextP->imsi);
   OAILOG_DEBUG (LOG_MME_APP, "Sending CSR for imsi (2) " IMSI_64_FMT "\n", ue_context->privates.fields.imsi);
   rc = itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
-  OAILOG_FUNC_OUT(LOG_MME_APP);
+  OAILOG_FUNC_RETURN(LOG_MME_APP, RETURNok);
 }
 
 //------------------------------------------------------------------------------

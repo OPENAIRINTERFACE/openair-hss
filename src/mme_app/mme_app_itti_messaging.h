@@ -36,7 +36,7 @@ int mme_app_notify_s1ap_ue_context_released(const mme_ue_s1ap_id_t   ue_idP);
 int mme_app_send_nas_signalling_connection_rel_ind(const mme_ue_s1ap_id_t ue_id);
 void mme_app_send_s11_delete_bearer_cmd(teid_t local_teid, teid_t saegw_s11_teid, struct sockaddr *saegw_s11_ip_address, ebi_list_t * ebi_list);
 int mme_app_send_s11_release_access_bearers_req (mme_ue_s1ap_id_t ue_id);
-void mme_app_send_s11_create_session_req (  const mme_ue_s1ap_id_t ue_id, const imsi_t * const imsi_p, pdn_context_t * pdn_context, tai_t * serving_tai,
+int mme_app_send_s11_create_session_req (  const mme_ue_s1ap_id_t ue_id, const imsi_t * const imsi_p, pdn_context_t * pdn_context, tai_t * serving_tai,
     const protocol_configuration_options_t * const pco, const bool is_from_s10_tau);
 void mme_app_send_s11_modify_bearer_req(const struct ue_session_pool_s * const ue_session_pool, pdn_context_t * pdn_context, uint8_t flags);
 int mme_app_remove_s10_tunnel_endpoint(teid_t local_teid, struct sockaddr *peer_ip);
