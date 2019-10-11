@@ -2448,7 +2448,6 @@ s1ap_mme_handle_erab_setup_response (
   // eNB UE S1AP ID is limited to 24 bits
   enb_ue_s1ap_id = (enb_ue_s1ap_id_t) (ie->value.choice.ENB_UE_S1AP_ID & ENB_UE_S1AP_ID_MASK);
 
-
   if ((ue_ref_p = s1ap_is_ue_mme_id_in_list (mme_ue_s1ap_id)) == NULL) {
     OAILOG_DEBUG (LOG_S1AP, "No UE is attached to this mme UE s1ap id: " MME_UE_S1AP_ID_FMT "\n", mme_ue_s1ap_id);
     OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
@@ -2468,15 +2467,17 @@ s1ap_mme_handle_erab_setup_response (
 
   S1AP_FIND_PROTOCOLIE_BY_ID(S1AP_E_RABSetupResponseIEs_t, ie, container,
       S1AP_ProtocolIE_ID_id_E_RABSetupListBearerSURes, false);
-  if (ie) {
+  if (ie && ie->value.choice.E_RABSetupListBearerSURes.list.size >= 1) {
     int num_erab = ie->value.choice.E_RABSetupListBearerSURes.list.count;
     for (int index = 0; index < num_erab; index++) {
-      S1AP_E_RABSetupItemBearerSURes_t * erab_setup_item =
-          (S1AP_E_RABSetupItemBearerSURes_t*)ie->value.choice.E_RABSetupListBearerSURes.list.array[index];
-      S1AP_E_RAB_SETUP_RSP (message_p).e_rab_setup_list.item[index].e_rab_id = erab_setup_item->e_RAB_ID;
+      S1AP_E_RABSetupItemBearerSUResIEs_t * erab_setup_item =
+          (S1AP_E_RABSetupItemBearerSUResIEs_t*)ie->value.choice.E_RABSetupListBearerSURes.list.array[index];
+      S1AP_E_RABSetupItemBearerSURes_t * e_rab_setup_item_bearer_su_res = &erab_setup_item->value.choice.E_RABSetupItemBearerSURes;
+
+      S1AP_E_RAB_SETUP_RSP (message_p).e_rab_setup_list.item[index].e_rab_id = e_rab_setup_item_bearer_su_res->e_RAB_ID;
       S1AP_E_RAB_SETUP_RSP (message_p).e_rab_setup_list.item[index].transport_layer_address =
-          blk2bstr(erab_setup_item->transportLayerAddress.buf, erab_setup_item->transportLayerAddress.size);
-      S1AP_E_RAB_SETUP_RSP (message_p).e_rab_setup_list.item[index].gtp_teid = htonl (*((uint32_t *) erab_setup_item->gTP_TEID.buf));
+          blk2bstr(e_rab_setup_item_bearer_su_res->transportLayerAddress.buf, e_rab_setup_item_bearer_su_res->transportLayerAddress.size);
+      S1AP_E_RAB_SETUP_RSP (message_p).e_rab_setup_list.item[index].gtp_teid = htonl (*((uint32_t *) e_rab_setup_item_bearer_su_res->gTP_TEID.buf));
       S1AP_E_RAB_SETUP_RSP (message_p).e_rab_setup_list.no_of_items += 1;
     }
   }

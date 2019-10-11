@@ -518,7 +518,7 @@ int s1ap_generate_s1ap_e_rab_setup_req (itti_s1ap_e_rab_setup_req_t * const e_ra
   memset(&pdu, 0, sizeof(pdu));
   pdu.present = S1AP_S1AP_PDU_PR_initiatingMessage;
   pdu.choice.initiatingMessage.procedureCode = S1AP_ProcedureCode_id_E_RABSetup;
-  pdu.choice.initiatingMessage.criticality = S1AP_Criticality_ignore;
+  pdu.choice.initiatingMessage.criticality = S1AP_Criticality_reject;
   pdu.choice.initiatingMessage.value.present = S1AP_InitiatingMessage__value_PR_E_RABSetupRequest;
   out = &pdu.choice.initiatingMessage.value.choice.E_RABSetupRequest;
 
@@ -532,7 +532,7 @@ int s1ap_generate_s1ap_e_rab_setup_req (itti_s1ap_e_rab_setup_req_t * const e_ra
   ie->id = S1AP_ProtocolIE_ID_id_MME_UE_S1AP_ID;
   ie->criticality = S1AP_Criticality_reject;
   ie->value.present = S1AP_E_RABSetupRequestIEs__value_PR_MME_UE_S1AP_ID;
-  ie->value.choice.ENB_UE_S1AP_ID = ue_ref->mme_ue_s1ap_id;
+  ie->value.choice.MME_UE_S1AP_ID = ue_ref->mme_ue_s1ap_id;
   ASN_SEQUENCE_ADD(&out->protocolIEs.list, ie);
 
   /* mandatory */
@@ -637,7 +637,7 @@ int s1ap_generate_s1ap_e_rab_setup_req (itti_s1ap_e_rab_setup_req_t * const e_ra
     OCTET_STRING_fromBuf (&e_rab_to_be_set_up_item->nAS_PDU, (char *)bdata(e_rab_setup_req->e_rab_to_be_setup_list.item[i].nas_pdu),
     		blength(e_rab_setup_req->e_rab_to_be_setup_list.item[i].nas_pdu));
 
-    ASN_SEQUENCE_ADD (&e_rabtobesetuplistbearersureq->list, e_rab_to_be_set_up_item);
+    ASN_SEQUENCE_ADD (&e_rabtobesetuplistbearersureq->list, s1ap_e_rab_to_be_setup_item_ies);
   }
 
   if (s1ap_mme_encode_pdu (&pdu, &buffer_p, &length) < 0) {
