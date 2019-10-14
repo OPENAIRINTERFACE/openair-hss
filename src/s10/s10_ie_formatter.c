@@ -746,18 +746,22 @@ s10_f_container_ie_get_2 (
   DevAssert (status);
   p_ieValue = ((uint16_t *)p_ieValue) + 1; /**< Move by 2 (assuming first byte is 0). */
   status->num_bearers = (*(p_ieValue)) + 1; /**< Skip to number of bearers. */
+  p_ieValue++;
   for(int i = 0; i < status->num_bearers; i++){
-	  p_ieValue = ((uint32_t *)p_ieValue) + 1; /**< Move by 4. */
+	  p_ieValue = ((uint16_t *)p_ieValue) + 1; /**< Skip Id. */
+	  p_ieValue++; /**< SKip criticality. */
 	  int length = *p_ieValue;
 	  p_ieValue++;
 	  // todo: check the minimum/maximum length!
 	  /** Allocating a new bstring. It will stay until it is manually deallocated. */
 	  status->bearerStatusTransferList[i].ebi = *((uint8_t*)p_ieValue);
 	  p_ieValue++;
+	  p_ieValue++; /**< Skip constant. */
 	  status->bearerStatusTransferList[i].bsc_ul.pdcp_count = *((uint16_t*)p_ieValue);
 	  p_ieValue+=2;
 	  status->bearerStatusTransferList[i].bsc_ul.hfn_count  = *((uint16_t*)p_ieValue);
 	  p_ieValue+=2;
+	  p_ieValue++; /**< Skip constant. */
 	  status->bearerStatusTransferList[i].bsc_dl.pdcp_count = *((uint16_t*)p_ieValue);
 	  p_ieValue+=2;
 	  status->bearerStatusTransferList[i].bsc_dl.hfn_count  = *((uint16_t*)p_ieValue);

@@ -129,8 +129,8 @@ typedef struct e_rab_modify_list_s {
 #include "S1AP_Cause.h"
 typedef struct  bearer_status_count_s{
   const char 			  empty;
-  long                    pdcp_count;
-  long                    hfn_count;
+  uint16_t                pdcp_count;
+  uint16_t				  hfn_count;
 }__attribute__((__packed__)) bearer_status_count_t;
 
 typedef struct status_transfer_bearer_item_s{
