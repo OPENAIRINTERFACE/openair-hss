@@ -1416,6 +1416,24 @@ mme_app_handle_modify_bearer_resp (
    * Updating statistics
    */
   if (modify_bearer_resp_pP->cause.cause_value != REQUEST_ACCEPTED) {
+	/**
+	 * Check if a non-zero default-EBI exists, if so check that the PDN is still there.
+	 * If not, ignore the error.
+	 */
+	if (modify_bearer_resp_pP->linked_eps_bearer_id){
+	  mme_app_get_pdn_context(ue_context->privates.mme_ue_s1ap_id, PDN_CONTEXT_IDENTIFIER_UNASSIGNED, modify_bearer_resp_pP->linked_eps_bearer_id, NULL, &pdn_context);
+	  bearer_context_new_t * bc_new = NULL;
+	  if(pdn_context){
+		  bc_new = mme_app_get_session_bearer_context(pdn_context, pdn_context->default_ebi);
+	  }
+	  if(!pdn_context || !bc_new || (bc_new->esm_ebr_context.status == ESM_EBR_INACTIVE_PENDING)){
+	    OAILOG_WARNING(LOG_MME_APP, "Received a non-zero default ebi %d for received MBResp for UE " MME_UE_S1AP_ID_FMT " with error cause. No PDN session found or BC in pendign status (%d).. Ignoring MBResp. \n",
+	    		modify_bearer_resp_pP->linked_eps_bearer_id, ue_context->privates.mme_ue_s1ap_id, (!bc_new) ? NULL: bc_new->esm_ebr_context.status);
+	    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
+	  }
+	  OAILOG_WARNING(LOG_MME_APP, "Received a non-zero default ebi %d for received MBResp for UE " MME_UE_S1AP_ID_FMT " with error cause. PDN still exists, continuing with implicit detach. BC-state %d. \n",
+			  modify_bearer_resp_pP->linked_eps_bearer_id, ue_context->privates.mme_ue_s1ap_id, (!bc_new) ? NULL: bc_new->esm_ebr_context.status);
+	}
     /**
      * Check if it is an X2 Handover procedure, in that case send an X2 Path Switch Request Failure to the target MME.
      * In addition, perform an implicit detach in any case.

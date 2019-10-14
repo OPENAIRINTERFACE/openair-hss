@@ -393,6 +393,13 @@ s11_mme_handle_modify_bearer_response (
   DevAssert (NW_OK == rc);
 
   /*
+   * Failed Bearer Contexts Created IE
+   */
+  rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_EBI, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
+      gtpv2c_ebi_ie_get, &resp_p->linked_eps_bearer_id);
+  DevAssert (NW_OK == rc);
+
+  /*
    * Recovery IE
    */
   /*rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_RECOVERY, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_OPTIONAL, s11_fteid_ie_get,
