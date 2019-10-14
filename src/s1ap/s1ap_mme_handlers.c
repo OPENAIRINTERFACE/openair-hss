@@ -64,12 +64,6 @@ static int                              s1ap_generate_s1_setup_response (
 static int                              s1ap_mme_generate_ue_context_release_command (
     ue_description_t * ue_ref_p, mme_ue_s1ap_id_t mme_ue_s1ap_id, enum s1cause, enb_description_t* enb_ref_p);
 
-static int                              s1ap_send_path_switch_request_failure (
-    const sctp_assoc_id_t assoc_id,
-    const sctp_stream_id_t stream,
-    const mme_ue_s1ap_id_t mme_ue_s1ap_id,
-    const enb_ue_s1ap_id_t enb_ue_s1ap_id);
-
 /* Handlers matrix. Only mme related procedures present here.
 */
 s1ap_message_decoded_callback           messages_callback[][3] = {
@@ -1256,7 +1250,6 @@ s1ap_mme_handle_path_switch_request (
 
   S1AP_PathSwitchRequest_t               *container = NULL;
   S1AP_PathSwitchRequestIEs_t            *ie = NULL;
-  S1AP_PathSwitchRequestIEs_t            *ie2 = NULL;
   S1AP_E_RABToBeSwitchedDLItemIEs_t      *eRABToBeSwitchedDlItemIEs_p = NULL;
 
   ue_description_t                       *ue_ref_p = NULL;
@@ -1285,7 +1278,7 @@ s1ap_mme_handle_path_switch_request (
   container = &pdu->choice.initiatingMessage.value.choice.PathSwitchRequest;
 
   S1AP_FIND_PROTOCOLIE_BY_ID(S1AP_PathSwitchRequestIEs_t, ie, container,
-                             S1AP_ProtocolIE_ID_id_MME_UE_S1AP_ID, true);
+                             S1AP_ProtocolIE_ID_id_SourceMME_UE_S1AP_ID, true);
   mme_ue_s1ap_id = ie->value.choice.MME_UE_S1AP_ID;
 
   S1AP_FIND_PROTOCOLIE_BY_ID(S1AP_PathSwitchRequestIEs_t, ie, container,
@@ -1304,7 +1297,7 @@ s1ap_mme_handle_path_switch_request (
      * * * * TODO
      */
     OAILOG_DEBUG (LOG_S1AP, "MME UE S1AP ID provided by eNB doesn't point to any valid UE: " MME_UE_S1AP_ID_FMT "\n", enb_ue_s1ap_id);
-    s1ap_send_path_switch_request_failure(assoc_id, stream, mme_ue_s1ap_id, enb_ue_s1ap_id);
+    s1ap_send_path_switch_request_failure(assoc_id, mme_ue_s1ap_id, enb_ue_s1ap_id, S1AP_Cause_PR_nas);
   } else {
     /** The enb_ue_s1ap_id will change! **/
     OAILOG_DEBUG (LOG_S1AP, "Removed old ue_reference before handover for MME UE S1AP ID " MME_UE_S1AP_ID_FMT "\n", (uint32_t) ue_ref_p->mme_ue_s1ap_id);
@@ -1377,10 +1370,10 @@ s1ap_mme_handle_path_switch_request (
     itti_s1ap_path_switch_request_t * path_switch_request = NULL;
     path_switch_request = &message_p->ittiMsg.s1ap_path_switch_request;
 
-    S1AP_FIND_PROTOCOLIE_BY_ID(S1AP_PathSwitchRequestIEs_t, ie2, container,
+    S1AP_FIND_PROTOCOLIE_BY_ID(S1AP_PathSwitchRequestIEs_t, ie, container,
                              S1AP_ProtocolIE_ID_id_E_RABToBeSwitchedDLList, true);
-    DevAssert(ie2);
-    S1AP_E_RABToBeSwitchedDLList_t	* e_rab_to_be_switched_dl_list = &ie2->value.choice.E_RABToBeSwitchedDLList;
+    DevAssert(ie);
+    S1AP_E_RABToBeSwitchedDLList_t	* e_rab_to_be_switched_dl_list = &ie->value.choice.E_RABToBeSwitchedDLList;
 
     path_switch_request->bcs_to_be_modified.num_bearer_context = e_rab_to_be_switched_dl_list->list.count;
     for (int item = 0; item < e_rab_to_be_switched_dl_list->list.count; item++) {
@@ -1420,78 +1413,6 @@ s1ap_mme_handle_path_switch_request (
     OAILOG_FUNC_RETURN (LOG_S1AP, RETURNok);
   }
   return RETURNerror;
-}
-
-//------------------------------------------------------------------------------
-static int s1ap_send_path_switch_request_failure (
-    const sctp_assoc_id_t assoc_id,
-    const sctp_stream_id_t stream,
-    const mme_ue_s1ap_id_t mme_ue_s1ap_id,
-    const enb_ue_s1ap_id_t enb_ue_s1ap_id)
-{
-  int                                     enc_rval = 0;
-  S1AP_PathSwitchRequestFailure_t        *out;
-  S1AP_PathSwitchRequestFailureIEs_t     *ie = NULL;
-  S1AP_S1AP_PDU_t                         pdu = { 0 };
-  uint8_t                                *buffer = NULL;
-  uint32_t                                length = 0;
-  int                                     rc = RETURNok;
-
-  /*
-   * Mandatory IEs:
-   * S1ap-MME-UE-S1AP-ID
-   * S1ap-ENB-UE-S1AP-ID
-   * S1ap-Cause
-   */
-
-
-  OAILOG_FUNC_IN (LOG_S1AP);
-  memset(&pdu, 0, sizeof(pdu));
-  pdu.present = S1AP_S1AP_PDU_PR_unsuccessfulOutcome;
-  pdu.choice.unsuccessfulOutcome.procedureCode = S1AP_ProcedureCode_id_PathSwitchRequest;
-  pdu.choice.unsuccessfulOutcome.criticality = S1AP_Criticality_reject;
-  pdu.choice.unsuccessfulOutcome.value.present = S1AP_UnsuccessfulOutcome__value_PR_PathSwitchRequestFailure;
-  out = &pdu.choice.unsuccessfulOutcome.value.choice.PathSwitchRequestFailure;
-
-  /* mandatory */
-  ie = (S1AP_PathSwitchRequestFailureIEs_t *)calloc(1, sizeof(S1AP_PathSwitchRequestFailureIEs_t));
-  ie->id = S1AP_ProtocolIE_ID_id_MME_UE_S1AP_ID;
-  ie->criticality = S1AP_Criticality_ignore;
-  ie->value.present = S1AP_PathSwitchRequestFailureIEs__value_PR_MME_UE_S1AP_ID;
-  ie->value.choice.MME_UE_S1AP_ID = mme_ue_s1ap_id;
-  ASN_SEQUENCE_ADD(&out->protocolIEs.list, ie);
-
-  /* mandatory */
-  ie = (S1AP_PathSwitchRequestFailureIEs_t *)calloc(1, sizeof(S1AP_PathSwitchRequestFailureIEs_t));
-  ie->id = S1AP_ProtocolIE_ID_id_eNB_UE_S1AP_ID;
-  ie->criticality = S1AP_Criticality_ignore;
-  ie->value.present = S1AP_PathSwitchRequestFailureIEs__value_PR_ENB_UE_S1AP_ID;
-  ie->value.choice.ENB_UE_S1AP_ID = enb_ue_s1ap_id;
-  ASN_SEQUENCE_ADD(&out->protocolIEs.list, ie);
-
-
-  ie = (S1AP_PathSwitchRequestFailureIEs_t *)calloc(1, sizeof(S1AP_PathSwitchRequestFailureIEs_t));
-  ie->id = S1AP_ProtocolIE_ID_id_Cause;
-  ie->criticality = S1AP_Criticality_ignore;
-  ie->value.present = S1AP_PathSwitchRequestFailureIEs__value_PR_Cause;
-  s1ap_mme_set_cause (&ie->value.choice.Cause, S1AP_Cause_PR_misc, 4);
-  ASN_SEQUENCE_ADD(&out->protocolIEs.list, ie);
-
-  enc_rval = s1ap_mme_encode_pdu (&pdu, &buffer, &length);
-
-  // Failed to encode
-  if (enc_rval < 0) {
-    OAILOG_ERROR (LOG_S1AP, "Error encoding path switch request failure.\n");
-//    free_s1ap_pathswitchrequestfailure(pathSwitchRequestFailure_p);
-  }
-
-  bstring b = blk2bstr(buffer, length);
-  free(buffer);
-  rc = s1ap_mme_itti_send_sctp_request (&b, assoc_id, 0, INVALID_MME_UE_S1AP_ID);
-
-//  free_s1ap_pathswitchrequestfailure(pathSwitchRequestFailure_p);
-
-  OAILOG_FUNC_RETURN (LOG_S1AP, rc);
 }
 
 //------------------------------------------------------------------------------

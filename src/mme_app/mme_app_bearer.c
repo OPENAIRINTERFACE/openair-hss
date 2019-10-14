@@ -64,7 +64,6 @@ static teid_t                           mme_app_teid_generator = 0x00000001;
 
 //----------------------------------------------------------------------------
 static void mme_app_send_s1ap_path_switch_request_acknowledge(mme_ue_s1ap_id_t mme_ue_s1ap_id,
-    uint16_t encryption_algorithm_capabilities, uint16_t integrity_algorithm_capabilities,
     bearer_contexts_to_be_created_t * bcs_tbc);
 
 /**
@@ -1442,7 +1441,9 @@ mme_app_handle_modify_bearer_resp (
       OAILOG_ERROR(LOG_MME_APP, "Error modifying SAE-GW bearers for UE with ueId: " MME_UE_S1AP_ID_FMT " (no implicit detach - waiting explicit detach.). \n", ue_context->privates.mme_ue_s1ap_id);
       /** Remove any idles bearers for all the PDNs. */
       /** Set all FTEIDs, also those not in the list to 0. */
-      mme_app_send_s1ap_path_switch_request_failure(ue_context->privates.mme_ue_s1ap_id, ue_context->privates.fields.enb_ue_s1ap_id, ue_context->privates.fields.sctp_assoc_id_key, S1AP_Cause_PR_misc);
+      mme_app_send_s1ap_path_switch_request_failure(ue_context->privates.mme_ue_s1ap_id, ue_context->privates.fields.enb_ue_s1ap_id,
+    		  ue_context->privates.fields.sctp_assoc_id_key,
+    		  S1AP_Cause_PR_misc);
       /** We continue with the implicit detach, since handover already happened. */
     }
     /** Implicitly detach the UE --> If EMM context is missing, still continue with the resource removal. */
@@ -1525,7 +1526,7 @@ mme_app_handle_modify_bearer_resp (
       mme_app_get_bearer_contexts_to_be_created(registered_pdn_ctx, &bcs_tbs, BEARER_STATE_NULL);
       /** The number of bearers will be incremented in the method. S10 should just pick the ebi. */
     }
-    mme_app_send_s1ap_path_switch_request_acknowledge(ue_context->privates.mme_ue_s1ap_id, encryption_algorithm_capabilities, integrity_algorithm_capabilities, &bcs_tbs);
+    mme_app_send_s1ap_path_switch_request_acknowledge(ue_context->privates.mme_ue_s1ap_id, &bcs_tbs);
   }
   /** If an S10 Handover procedure is ongoing, directly check for released bearers. */
   mme_app_s10_proc_mme_handover_t * s10_handover_procedure = mme_app_get_s10_procedure_mme_handover(ue_context);
@@ -3227,7 +3228,6 @@ void mme_app_trigger_mme_initiated_dedicated_bearer_deactivation_procedure (ue_c
  */
 static
 void mme_app_send_s1ap_path_switch_request_acknowledge(mme_ue_s1ap_id_t mme_ue_s1ap_id,
-    uint16_t encryption_algorithm_capabilities, uint16_t integrity_algorithm_capabilities,
     bearer_contexts_to_be_created_t * bcs_tbc){
   MessageDef * message_p = NULL;
   bearer_context_new_t                   *current_bearer_p = NULL;
@@ -3260,24 +3260,14 @@ void mme_app_send_s1ap_path_switch_request_acknowledge(mme_ue_s1ap_id_t mme_ue_s
   /** The ENB_ID/Stream information in the UE_Context are still the ones for the source-ENB and the SCTP-UE_ID association is not set yet for the new eNB. */
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S1AP_MME, NULL, 0, "MME_APP Sending S1AP PATH_SWITCH_REQUEST_ACKNOWLEDGE.");
 
-
   /** Set the bearer contexts to be created. Not changing any bearer state. */
   path_switch_req_ack_p->bearer_ctx_to_be_switched_list = calloc(1, sizeof(bearer_contexts_to_be_created_t));
   memcpy((void*)path_switch_req_ack_p->bearer_ctx_to_be_switched_list, bcs_tbc, sizeof(*bcs_tbc));
-
-  /** Set the new security parameters. */
-  path_switch_req_ack_p->security_capabilities_encryption_algorithms = encryption_algorithm_capabilities;
-  path_switch_req_ack_p->security_capabilities_integrity_algorithms  = integrity_algorithm_capabilities;
 
   /** Set the next hop value and the NCC value. */
   memcpy(path_switch_req_ack_p->nh, ue_nas_ctx->_vector[ue_nas_ctx->_security.vector_index].nh_conj, AUTH_NH_SIZE);
   path_switch_req_ack_p->ncc = ue_nas_ctx->_security.ncc;
 
-  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S1AP_MME, NULL, 0,
-      "0 S1AP_PATH_SWITCH_REQUEST_ACKNOWLEDGE ebi %u sea 0x%x sia 0x%x ncc %d",
-      path_switch_req_ack_p->eps_bearer_id,
-      path_switch_req_ack_p->security_capabilities_encryption_algorithms, path_switch_req_ack_p->security_capabilities_integrity_algorithms,
-      path_switch_req_ack_p->ncc);
   itti_send_msg_to_task (TASK_S1AP, INSTANCE_DEFAULT, message_p);
 
   /**
@@ -3338,7 +3328,6 @@ mme_app_handle_path_switch_req(
   // todo: set the enb and cell id
   ue_context->privates.fields.e_utran_cgi.cell_identity.enb_id  = s1ap_path_switch_req->e_utran_cgi.cell_identity.enb_id;
   ue_context->privates.fields.e_utran_cgi.cell_identity.cell_id = s1ap_path_switch_req->e_utran_cgi.cell_identity.cell_id;
-  //  sctp_stream_id_t        sctp_stream;
 
   /*
    * 36.413: 8.4.4.2

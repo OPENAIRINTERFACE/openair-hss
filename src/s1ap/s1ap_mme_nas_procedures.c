@@ -781,7 +781,7 @@ int s1ap_generate_s1ap_e_rab_modify_req (itti_s1ap_e_rab_modify_req_t * const e_
       OCTET_STRING_fromBuf (&e_rab_to_be_mod_item->nAS_PDU, (char *)bdata(e_rab_modify_req->e_rab_to_be_modified_list.item[i].nas_pdu),
           blength(e_rab_modify_req->e_rab_to_be_modified_list.item[i].nas_pdu));
 
-      ASN_SEQUENCE_ADD (&e_rabtobemodifiedlistbearermodreq->list, e_rab_to_be_mod_item);
+      ASN_SEQUENCE_ADD (&e_rabtobemodifiedlistbearermodreq->list, s1ap_e_rab_to_be_mod_item_ies);
     }
 
     if (s1ap_mme_encode_pdu (&pdu, &buffer_p, &length) < 0) {
@@ -1156,9 +1156,6 @@ void
 s1ap_handle_path_switch_req_ack(
   const itti_s1ap_path_switch_request_ack_t * const path_switch_req_ack_pP)
 {
-#if TODO_S1AP
-  return;
-#else
   /*
    * We received modify bearer response from S-GW on S11 interface abstraction.
    * It could be a handover case where we need to respond with the path switch reply to eNB.
@@ -1166,16 +1163,14 @@ s1ap_handle_path_switch_req_ack(
   uint8_t                                *buffer_p = NULL;
   uint32_t                                length = 0;
   ue_description_t                       *ue_ref = NULL;
-  S1ap_PathSwitchRequestAcknowledgeIEs_t *pathSwitchRequestAcknowledge_p = NULL;
-  MessagesIds                             message_id = MESSAGES_ID_MAX;
-
-  S1ap_NAS_PDU_t                          nas_pdu = {0}; // yes, alloc on stack
-  s1ap_message                            message = {0}; // yes, alloc on stack
+  S1AP_S1AP_PDU_t                         pdu = {0};
+  S1AP_PathSwitchRequestAcknowledge_t	 *out;
+  S1AP_PathSwitchRequestAcknowledgeIEs_t *ie = NULL;
 
   OAILOG_FUNC_IN (LOG_S1AP);
   DevAssert (path_switch_req_ack_pP != NULL);
 
-   ue_ref = s1ap_is_ue_mme_id_in_list (path_switch_req_ack_pP->ue_id);
+  ue_ref = s1ap_is_ue_mme_id_in_list (path_switch_req_ack_pP->ue_id);
   if (!ue_ref) {
     OAILOG_ERROR (LOG_S1AP, "This mme ue s1ap id (" MME_UE_S1AP_ID_FMT ") is not attached to any UE context\n", path_switch_req_ack_pP->ue_id);
     // There are some race conditions were NAS T3450 timer is stopped and removed at same time
@@ -1194,12 +1189,29 @@ s1ap_handle_path_switch_req_ack(
    * Insert the timer in the MAP of mme_ue_s1ap_id <-> timer_id
    */
   //     s1ap_timer_insert(ue_ref->mme_ue_s1ap_id, ue_ref->outcome_response_timer_id);
-  // todo: PSR if the state is handover, else just complete the message!
-  message.procedureCode = S1ap_ProcedureCode_id_PathSwitchRequest;
-  message.direction = S1AP_PDU_PR_successfulOutcome;
-  pathSwitchRequestAcknowledge_p = &message.msg.s1ap_PathSwitchRequestAcknowledgeIEs;
-  pathSwitchRequestAcknowledge_p->mme_ue_s1ap_id = (unsigned long)ue_ref->mme_ue_s1ap_id;
-  pathSwitchRequestAcknowledge_p->eNB_UE_S1AP_ID = (unsigned long)ue_ref->enb_ue_s1ap_id;
+
+  memset(&pdu, 0, sizeof(pdu));
+  pdu.present = S1AP_S1AP_PDU_PR_successfulOutcome;
+  pdu.choice.successfulOutcome.procedureCode = S1AP_ProcedureCode_id_PathSwitchRequest;
+  pdu.choice.successfulOutcome.criticality = S1AP_Criticality_ignore;
+  pdu.choice.successfulOutcome.value.present = S1AP_SuccessfulOutcome__value_PR_PathSwitchRequestAcknowledge;
+  out = &pdu.choice.successfulOutcome.value.choice.PathSwitchRequestAcknowledge;
+
+  /* mandatory */
+  ie = (S1AP_PathSwitchRequestAcknowledgeIEs_t *)calloc(1, sizeof(S1AP_PathSwitchRequestAcknowledgeIEs_t));
+  ie->id = S1AP_ProtocolIE_ID_id_MME_UE_S1AP_ID;
+  ie->criticality = S1AP_Criticality_reject;
+  ie->value.present = S1AP_PathSwitchRequestAcknowledgeIEs__value_PR_MME_UE_S1AP_ID;
+  ie->value.choice.MME_UE_S1AP_ID = ue_ref->mme_ue_s1ap_id;
+  ASN_SEQUENCE_ADD(&out->protocolIEs.list, ie);
+
+  /* mandatory */
+  ie = (S1AP_PathSwitchRequestAcknowledgeIEs_t *)calloc(1, sizeof(S1AP_PathSwitchRequestAcknowledgeIEs_t));
+  ie->id = S1AP_ProtocolIE_ID_id_eNB_UE_S1AP_ID;
+  ie->criticality = S1AP_Criticality_reject;
+  ie->value.present = S1AP_PathSwitchRequestAcknowledgeIEs__value_PR_ENB_UE_S1AP_ID;
+  ie->value.choice.ENB_UE_S1AP_ID = ue_ref->enb_ue_s1ap_id;
+  ASN_SEQUENCE_ADD(&out->protocolIEs.list, ie);
 
   // todo : fix the deallocation method (& handover command)
 //  /* Set the GTP-TEID. This is the S1-U S-GW TEID. */
@@ -1233,37 +1245,40 @@ s1ap_handle_path_switch_req_ack(
 //    }
 //  }
 
+  /** Add the security context. */
+  ie = (S1AP_PathSwitchRequestAcknowledgeIEs_t *)calloc(1, sizeof(S1AP_PathSwitchRequestAcknowledgeIEs_t));
+  ie->id = S1AP_ProtocolIE_ID_id_SecurityContext;
+  ie->criticality = S1AP_Criticality_reject;
+  ie->value.present = S1AP_PathSwitchRequestAcknowledgeIEs__value_PR_SecurityContext;
+  if (path_switch_req_ack_pP->nh) {
+	ie->value.choice.SecurityContext.nextHopParameter.buf = calloc (AUTH_NH_SIZE, sizeof(uint8_t));
+	memcpy (ie->value.choice.SecurityContext.nextHopParameter.buf, path_switch_req_ack_pP->nh, AUTH_NH_SIZE);
+	ie->value.choice.SecurityContext.nextHopParameter.size = AUTH_NH_SIZE;
+  } else {
+	  OAILOG_WARNING(LOG_S1AP, "No nh for PSReqAck.\n");
+	  ie->value.choice.SecurityContext.nextHopParameter.buf = NULL;
+	  ie->	value.choice.SecurityContext.nextHopParameter.size = 0;
+  }
+  ie->value.choice.SecurityContext.nextHopParameter.bits_unused = 0;
+  ie->value.choice.SecurityContext.nextHopChainingCount = path_switch_req_ack_pP->ncc;
+  ASN_SEQUENCE_ADD(&out->protocolIEs.list, ie);
 
-  // todo: check if key exists :)
-  pathSwitchRequestAcknowledge_p->securityContext.nextHopChainingCount = path_switch_req_ack_pP->ncc;
-  pathSwitchRequestAcknowledge_p->securityContext.nextHopParameter.buf  = calloc (32, sizeof(uint8_t));
-  memcpy (pathSwitchRequestAcknowledge_p->securityContext.nextHopParameter.buf, path_switch_req_ack_pP->nh, 32);
-  pathSwitchRequestAcknowledge_p->securityContext.nextHopParameter.size = 32;
-  pathSwitchRequestAcknowledge_p->securityContext.nextHopParameter.bits_unused = 0;
-
-  if (s1ap_mme_encode_pdu (&message, &message_id, &buffer_p, &length) < 0) {
-    // TODO: handle something
-    DevMessage ("Failed to encode path switch acknowledge message\n");
+  if (s1ap_mme_encode_pdu (&pdu, &buffer_p, &length) < 0) {
+    OAILOG_ERROR(LOG_S1AP, "Failed to encode path switch request.\n");
+    /** We rely on the handover_notify timeout to remove the UE context. */
+    OAILOG_FUNC_OUT (LOG_S1AP);
   }
 
-  OAILOG_NOTICE (LOG_S1AP, "Send S1AP_PATH_SWITCH_ACKNOWLEDGE message MME_UE_S1AP_ID = " MME_UE_S1AP_ID_FMT " eNB_UE_S1AP_ID = " ENB_UE_S1AP_ID_FMT "\n",
-              (mme_ue_s1ap_id_t)pathSwitchRequestAcknowledge_p->mme_ue_s1ap_id, (enb_ue_s1ap_id_t)pathSwitchRequestAcknowledge_p->eNB_UE_S1AP_ID);
-  MSC_LOG_TX_MESSAGE (MSC_S1AP_MME,
-                      MSC_S1AP_ENB,
-                      NULL, 0,
-                      "0 PathSwitchAcknowledge/successfullOutcome mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT " nas length %u",
-                      (mme_ue_s1ap_id_t)pathSwitchRequestAcknowledge_p->mme_ue_s1ap_id,
-                      (enb_ue_s1ap_id_t)pathSwitchRequestAcknowledge_p->eNB_UE_S1AP_ID, nas_pdu.size);
+  OAILOG_DEBUG (LOG_S1AP, "Sent S1AP_PATH_SWITCH_ACKNOWLEDGE message MME_UE_S1AP_ID = " MME_UE_S1AP_ID_FMT " eNB_UE_S1AP_ID = " ENB_UE_S1AP_ID_FMT "\n",
+              path_switch_req_ack_pP->ue_id, ue_ref->enb_ue_s1ap_id);
   bstring b = blk2bstr(buffer_p, length);
   free(buffer_p);
-  s1ap_free_mme_encode_pdu(&message, message_id);
   s1ap_mme_itti_send_sctp_request (&b, ue_ref->enb->sctp_assoc_id, ue_ref->sctp_stream_send, ue_ref->mme_ue_s1ap_id);
 
   /** Set the new state as connected. */
   ue_ref->s1_ue_state = S1AP_UE_CONNECTED;
 
   OAILOG_FUNC_OUT (LOG_S1AP);
-#endif
 }
 
 //------------------------------------------------------------------------------
@@ -1341,24 +1356,23 @@ int s1ap_handle_path_switch_request_failure (
     const itti_s1ap_path_switch_request_failure_t *path_switch_request_failure_pP)
 {
   DevAssert(path_switch_request_failure_pP);
-  return s1ap_path_switch_request_failure (path_switch_request_failure_pP->assoc_id, path_switch_request_failure_pP->mme_ue_s1ap_id, path_switch_request_failure_pP->enb_ue_s1ap_id, path_switch_request_failure_pP->cause_type);
+  return s1ap_send_path_switch_request_failure (path_switch_request_failure_pP->assoc_id,
+		  path_switch_request_failure_pP->mme_ue_s1ap_id, path_switch_request_failure_pP->enb_ue_s1ap_id,
+		  path_switch_request_failure_pP->cause_type);
 }
 
 //------------------------------------------------------------------------------
-int s1ap_path_switch_request_failure (
+int s1ap_send_path_switch_request_failure (
     const sctp_assoc_id_t assoc_id,
     const mme_ue_s1ap_id_t mme_ue_s1ap_id,
     const enb_ue_s1ap_id_t enb_ue_s1ap_id,
-    const S1AP_Cause_PR cause_type)
+	const S1AP_Cause_PR           cause_type)
 {
-#if TODO_S1AP
-  return RETURNerror;
-#else
   int                                     enc_rval = 0;
-  S1ap_PathSwitchRequestFailureIEs_t     *pathSwitchRequestFailure_p = NULL;
-  s1ap_message                            message = { 0 };
+  S1AP_PathSwitchRequestFailure_t        *out;
+  S1AP_PathSwitchRequestFailureIEs_t     *ie = NULL;
+  S1AP_S1AP_PDU_t                         pdu = { 0 };
   uint8_t                                *buffer = NULL;
-  MessagesIds                             message_id = MESSAGES_ID_MAX;
   uint32_t                                length = 0;
   int                                     rc = RETURNok;
 
@@ -1370,31 +1384,47 @@ int s1ap_path_switch_request_failure (
    */
 
   OAILOG_FUNC_IN (LOG_S1AP);
+  memset(&pdu, 0, sizeof(pdu));
+  pdu.present = S1AP_S1AP_PDU_PR_unsuccessfulOutcome;
+  pdu.choice.unsuccessfulOutcome.procedureCode = S1AP_ProcedureCode_id_PathSwitchRequest;
+  pdu.choice.unsuccessfulOutcome.criticality = S1AP_Criticality_reject;
+  pdu.choice.unsuccessfulOutcome.value.present = S1AP_UnsuccessfulOutcome__value_PR_PathSwitchRequestFailure;
+  out = &pdu.choice.unsuccessfulOutcome.value.choice.PathSwitchRequestFailure;
 
-  pathSwitchRequestFailure_p = &message.msg.s1ap_PathSwitchRequestFailureIEs;
-  s1ap_mme_set_cause(&pathSwitchRequestFailure_p->cause, cause_type, 4);
-  pathSwitchRequestFailure_p->eNB_UE_S1AP_ID = enb_ue_s1ap_id;
-  pathSwitchRequestFailure_p->mme_ue_s1ap_id = mme_ue_s1ap_id;
+  /* mandatory */
+  ie = (S1AP_PathSwitchRequestFailureIEs_t *)calloc(1, sizeof(S1AP_PathSwitchRequestFailureIEs_t));
+  ie->id = S1AP_ProtocolIE_ID_id_MME_UE_S1AP_ID;
+  ie->criticality = S1AP_Criticality_ignore;
+  ie->value.present = S1AP_PathSwitchRequestFailureIEs__value_PR_MME_UE_S1AP_ID;
+  ie->value.choice.MME_UE_S1AP_ID = mme_ue_s1ap_id;
+  ASN_SEQUENCE_ADD(&out->protocolIEs.list, ie);
 
-  message.procedureCode = S1ap_ProcedureCode_id_PathSwitchRequest;
-  message.direction = S1AP_PDU_PR_unsuccessfulOutcome;
-  enc_rval = s1ap_mme_encode_pdu (&message, &message_id, &buffer, &length);
+  /* mandatory */
+  ie = (S1AP_PathSwitchRequestFailureIEs_t *)calloc(1, sizeof(S1AP_PathSwitchRequestFailureIEs_t));
+  ie->id = S1AP_ProtocolIE_ID_id_eNB_UE_S1AP_ID;
+  ie->criticality = S1AP_Criticality_ignore;
+  ie->value.present = S1AP_PathSwitchRequestFailureIEs__value_PR_ENB_UE_S1AP_ID;
+  ie->value.choice.ENB_UE_S1AP_ID = enb_ue_s1ap_id;
+  ASN_SEQUENCE_ADD(&out->protocolIEs.list, ie);
+
+  ie = (S1AP_PathSwitchRequestFailureIEs_t *)calloc(1, sizeof(S1AP_PathSwitchRequestFailureIEs_t));
+  ie->id = S1AP_ProtocolIE_ID_id_Cause;
+  ie->criticality = S1AP_Criticality_ignore;
+  ie->value.present = S1AP_PathSwitchRequestFailureIEs__value_PR_Cause;
+  s1ap_mme_set_cause (&ie->value.choice.Cause, cause_type, 4);
+  ASN_SEQUENCE_ADD(&out->protocolIEs.list, ie);
 
   // Failed to encode
-  if (enc_rval < 0) {
-    DevMessage ("Failed to encode path switch request failure message\n");
-  }
+  if (s1ap_mme_encode_pdu (&pdu, &buffer, &length) < 0) {
+    OAILOG_ERROR (LOG_S1AP, "Error encoding path switch request failure.\n");
+    OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
+ }
 
   bstring b = blk2bstr(buffer, length);
   free(buffer);
-  s1ap_free_mme_encode_pdu(&message, message_id);
   rc = s1ap_mme_itti_send_sctp_request (&b, assoc_id, 0, INVALID_MME_UE_S1AP_ID);
-  /**
-   * No need to free it, since it is stacked and nothing is allocated.
-   * S1AP UE Reference will stay as it is. If removed, it needs to be removed with a separate NAS_IMPLICIT_DETACH.
-   */
+
   OAILOG_FUNC_RETURN (LOG_S1AP, rc);
-#endif
 }
 
 //------------------------------------------------------------------------------
@@ -1437,9 +1467,9 @@ s1ap_handle_handover_cancel_acknowledge (
 
   memset(&pdu, 0, sizeof(pdu));
   pdu.present = S1AP_S1AP_PDU_PR_successfulOutcome;
-  pdu.choice.initiatingMessage.procedureCode = S1AP_ProcedureCode_id_HandoverCancel;
-  pdu.choice.initiatingMessage.criticality = S1AP_Criticality_reject;
-  pdu.choice.initiatingMessage.value.present = S1AP_SuccessfulOutcome__value_PR_HandoverCancelAcknowledge;
+  pdu.choice.successfulOutcome.procedureCode = S1AP_ProcedureCode_id_HandoverCancel;
+  pdu.choice.successfulOutcome.criticality = S1AP_Criticality_reject;
+  pdu.choice.successfulOutcome.value.present = S1AP_SuccessfulOutcome__value_PR_HandoverCancelAcknowledge;
   out = &pdu.choice.successfulOutcome.value.choice.HandoverCancelAcknowledge;
 
   /**
@@ -1502,7 +1532,6 @@ s1ap_handle_handover_request (
   uint32_t                                length = 0;
   ue_description_t                       *ue_ref = NULL;
   enb_description_t                      *target_enb_ref = NULL;
-  MessagesIds                             message_id = MESSAGES_ID_MAX;
   S1AP_S1AP_PDU_t                         pdu = {0};
   S1AP_HandoverRequest_t		   		 *out;
   S1AP_HandoverRequestIEs_t  			 *ie = NULL;
@@ -1837,9 +1866,9 @@ s1ap_handle_handover_command (
 
   memset(&pdu, 0, sizeof(pdu));
   pdu.present = S1AP_S1AP_PDU_PR_successfulOutcome;
-  pdu.choice.initiatingMessage.procedureCode = S1AP_ProcedureCode_id_HandoverPreparation;
-  pdu.choice.initiatingMessage.criticality = S1AP_Criticality_reject;
-  pdu.choice.initiatingMessage.value.present = S1AP_SuccessfulOutcome__value_PR_HandoverCommand;
+  pdu.choice.successfulOutcome.procedureCode = S1AP_ProcedureCode_id_HandoverPreparation;
+  pdu.choice.successfulOutcome.criticality = S1AP_Criticality_reject;
+  pdu.choice.successfulOutcome.value.present = S1AP_SuccessfulOutcome__value_PR_HandoverCommand;
   out = &pdu.choice.successfulOutcome.value.choice.HandoverCommand;
 
   /* mandatory */
