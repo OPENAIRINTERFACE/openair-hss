@@ -89,7 +89,7 @@ int                              s1ap_handover_preparation_failure (
     const sctp_assoc_id_t assoc_id,
     const mme_ue_s1ap_id_t mme_ue_s1ap_id,
     const enb_ue_s1ap_id_t enb_ue_s1ap_id,
-    const S1AP_Cause_PR cause_type);
+    const enum s1cause s1cause_val);
 
 void
 s1ap_handle_handover_cancel_acknowledge (

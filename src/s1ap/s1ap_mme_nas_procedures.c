@@ -1286,7 +1286,9 @@ int s1ap_handle_handover_preparation_failure (
     const itti_s1ap_handover_preparation_failure_t *handover_prep_failure_pP)
 {
   DevAssert(handover_prep_failure_pP);
-  return s1ap_handover_preparation_failure (handover_prep_failure_pP->assoc_id, handover_prep_failure_pP->mme_ue_s1ap_id, handover_prep_failure_pP->enb_ue_s1ap_id, handover_prep_failure_pP->cause);
+  return s1ap_handover_preparation_failure (handover_prep_failure_pP->assoc_id, handover_prep_failure_pP->mme_ue_s1ap_id,
+		  handover_prep_failure_pP->enb_ue_s1ap_id,
+		  handover_prep_failure_pP->cause);
 }
 
 //------------------------------------------------------------------------------
@@ -1294,16 +1296,13 @@ int s1ap_handover_preparation_failure (
     const sctp_assoc_id_t assoc_id,
     const mme_ue_s1ap_id_t mme_ue_s1ap_id,
     const enb_ue_s1ap_id_t enb_ue_s1ap_id,
-    const S1AP_Cause_PR cause_type)
+    const enum s1cause s1cause_val)
 {
-#if TODO_S1AP
-  return RETURNerror;
-#else
-  int                                     enc_rval = 0;
-  S1ap_HandoverPreparationFailureIEs_t   *handoverPreparationFailure_p = NULL;
-  s1ap_message                            message = { 0 };
+    int                                     enc_rval = 0;
+  S1AP_HandoverPreparationFailure_t      *out;
+  S1AP_HandoverPreparationFailureIEs_t   *ie = NULL;
+  S1AP_S1AP_PDU_t                         pdu = { 0 };
   uint8_t                                *buffer = NULL;
-  MessagesIds                             message_id = MESSAGES_ID_MAX;
   uint32_t                                length = 0;
   int                                     rc = RETURNok;
 
@@ -1313,10 +1312,7 @@ int s1ap_handover_preparation_failure (
    * S1ap-ENB-UE-S1AP-ID
    * S1ap-Cause
    */
-
   OAILOG_FUNC_IN (LOG_S1AP);
-
-
   enb_description_t * source_enb_ref = s1ap_is_enb_assoc_id_in_list(assoc_id);
   if(!source_enb_ref){
     OAILOG_ERROR (LOG_S1AP, "No source-enb could be found for assoc-id %u. Handover Preparation Failure Failed. \n",
@@ -1325,30 +1321,101 @@ int s1ap_handover_preparation_failure (
     OAILOG_FUNC_OUT (LOG_S1AP);
   }
 
-  handoverPreparationFailure_p = &message.msg.s1ap_HandoverPreparationFailureIEs;
-  s1ap_mme_set_cause(&handoverPreparationFailure_p->cause, S1AP_Cause_PR_misc, 0);
-  handoverPreparationFailure_p->eNB_UE_S1AP_ID = enb_ue_s1ap_id;
-  handoverPreparationFailure_p->mme_ue_s1ap_id = mme_ue_s1ap_id;
+  /*
+   * Mandatory IEs:
+   * S1ap-MME-UE-S1AP-ID
+   * S1ap-ENB-UE-S1AP-ID
+   * S1ap-Cause
+   */
 
-  message.procedureCode = S1ap_ProcedureCode_id_HandoverPreparation;
-  message.direction = S1AP_PDU_PR_unsuccessfulOutcome;
-  enc_rval = s1ap_mme_encode_pdu (&message, &message_id, &buffer, &length);
+  memset(&pdu, 0, sizeof(pdu));
+  pdu.present = S1AP_S1AP_PDU_PR_unsuccessfulOutcome;
+  pdu.choice.unsuccessfulOutcome.procedureCode = S1AP_ProcedureCode_id_HandoverPreparation;
+  pdu.choice.unsuccessfulOutcome.criticality = S1AP_Criticality_reject;
+  pdu.choice.unsuccessfulOutcome.value.present = S1AP_UnsuccessfulOutcome__value_PR_HandoverPreparationFailure;
+  out = &pdu.choice.unsuccessfulOutcome.value.choice.HandoverPreparationFailure;
 
-  // Failed to encode
-  if (enc_rval < 0) {
-    DevMessage ("Failed to encode handover preparation failure message\n");
+  /* mandatory */
+  ie = (S1AP_HandoverPreparationFailureIEs_t *)calloc(1, sizeof(S1AP_HandoverPreparationFailureIEs_t));
+  ie->id = S1AP_ProtocolIE_ID_id_MME_UE_S1AP_ID;
+  ie->criticality = S1AP_Criticality_ignore;
+  ie->value.present = S1AP_HandoverPreparationFailureIEs__value_PR_MME_UE_S1AP_ID;
+  ie->value.choice.MME_UE_S1AP_ID = mme_ue_s1ap_id;
+  ASN_SEQUENCE_ADD(&out->protocolIEs.list, ie);
+
+  /* mandatory */
+  ie = (S1AP_HandoverPreparationFailureIEs_t *)calloc(1, sizeof(S1AP_HandoverPreparationFailureIEs_t));
+  ie->id = S1AP_ProtocolIE_ID_id_eNB_UE_S1AP_ID;
+  ie->criticality = S1AP_Criticality_ignore;
+  ie->value.present = S1AP_HandoverPreparationFailureIEs__value_PR_ENB_UE_S1AP_ID;
+  ie->value.choice.ENB_UE_S1AP_ID = enb_ue_s1ap_id;
+  ASN_SEQUENCE_ADD(&out->protocolIEs.list, ie);
+
+  /* mandatory */
+  S1AP_Cause_t cause_value;
+  switch (s1cause_val) {
+  case S1AP_NAS_DETACH:
+      cause_value.present = S1AP_Cause_PR_nas;
+      cause_value.choice.nas = S1AP_CauseNas_detach;
+      break;
+    case S1AP_INVALIDATE_NAS:
+    case S1AP_NAS_NORMAL_RELEASE:
+      cause_value.present = S1AP_Cause_PR_nas;
+      cause_value.choice.nas = S1AP_CauseNas_unspecified;
+      break;
+    case S1AP_RADIO_EUTRAN_GENERATED_REASON:
+      cause_value.present = S1AP_Cause_PR_radioNetwork;
+      cause_value.choice.radioNetwork = S1AP_CauseRadioNetwork_release_due_to_eutran_generated_reason;
+      break;
+    case S1AP_INITIAL_CONTEXT_SETUP_FAILED:
+      cause_value.present = S1AP_Cause_PR_radioNetwork;
+      cause_value.choice.radioNetwork = S1AP_CauseRadioNetwork_unspecified;
+      break;
+    case S1AP_HANDOVER_CANCELLED:
+      cause_value.present = S1AP_Cause_PR_radioNetwork;
+      cause_value.choice.radioNetwork = S1AP_CauseRadioNetwork_handover_cancelled;
+      break;
+    case S1AP_HANDOVER_FAILED:
+      cause_value.present = S1AP_Cause_PR_radioNetwork;
+      cause_value.choice.radioNetwork = S1AP_CauseRadioNetwork_ho_failure_in_target_EPC_eNB_or_target_system;
+      break;
+    case S1AP_SUCCESSFUL_HANDOVER:
+      cause_value.present = S1AP_Cause_PR_radioNetwork;
+      cause_value.choice.radioNetwork = S1AP_CauseRadioNetwork_successful_handover;
+      break;
+    /**
+     * If the cause is an S1AP_NETWORK_ERROR or an S1AP_SYSTEM_FAILURE, we send just a UE-Context-Release-Request (and dismiss the complete).
+     * No UE Reference will exist at that point.
+     */
+    case S1AP_NETWORK_ERROR:
+    case S1AP_SYSTEM_FAILURE:
+      cause_value.present = S1AP_Cause_PR_transport;
+      cause_value.choice.transport = S1AP_CauseTransport_unspecified;
+      break;
+    default:
+      OAILOG_ERROR (LOG_S1AP, "Unknown cause for context release\n");
+      cause_value.present = S1AP_Cause_PR_transport;
+      cause_value.choice.transport = S1AP_CauseTransport_unspecified;
+      break;
+    }
+
+  ie = (S1AP_HandoverPreparationFailureIEs_t *)calloc(1, sizeof(S1AP_HandoverPreparationFailureIEs_t));
+  ie->id = S1AP_ProtocolIE_ID_id_Cause;
+  ie->criticality = S1AP_Criticality_ignore;
+  ie->value.present = S1AP_HandoverPreparationFailureIEs__value_PR_Cause;
+  s1ap_mme_set_cause (&ie->value.choice.Cause, cause_value.present, cause_value.choice);
+  ASN_SEQUENCE_ADD(&out->protocolIEs.list, ie);
+
+  if (s1ap_mme_encode_pdu (&pdu, &buffer, &length) < 0) {
+    OAILOG_ERROR (LOG_S1AP, "Error encoding handover preparation failure.\n");
+    OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
   }
 
   bstring b = blk2bstr(buffer, length);
   free(buffer);
-  s1ap_free_mme_encode_pdu(&message, message_id);
   rc = s1ap_mme_itti_send_sctp_request (&b, assoc_id, 0, INVALID_MME_UE_S1AP_ID);
-  /**
-   * No need to free it, since it is stacked and nothing is allocated.
-   * S1AP UE Reference will stay as it is. If removed, it needs to be removed with a separate NAS_IMPLICIT_DETACH.
-   */
+
   OAILOG_FUNC_RETURN (LOG_S1AP, rc);
-#endif
 }
 
 //------------------------------------------------------------------------------
@@ -1368,7 +1435,6 @@ int s1ap_send_path_switch_request_failure (
     const enb_ue_s1ap_id_t enb_ue_s1ap_id,
 	const S1AP_Cause_PR           cause_type)
 {
-  int                                     enc_rval = 0;
   S1AP_PathSwitchRequestFailure_t        *out;
   S1AP_PathSwitchRequestFailureIEs_t     *ie = NULL;
   S1AP_S1AP_PDU_t                         pdu = { 0 };

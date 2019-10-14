@@ -2692,13 +2692,14 @@ s1ap_mme_handle_error_ind_message (
 
   container = &pdu->choice.initiatingMessage.value.choice.ErrorIndication;
 
-  S1AP_FIND_PROTOCOLIE_BY_ID(S1AP_ErrorIndicationIEs_t, ie, container, S1AP_ProtocolIE_ID_id_MME_UE_S1AP_ID, true);
-  mme_ue_s1ap_id = ie->value.choice.MME_UE_S1AP_ID;
+  S1AP_FIND_PROTOCOLIE_BY_ID(S1AP_ErrorIndicationIEs_t, ie, container, S1AP_ProtocolIE_ID_id_MME_UE_S1AP_ID, false);
+  if(ie)
+	mme_ue_s1ap_id = ie->value.choice.MME_UE_S1AP_ID;
 
-  S1AP_FIND_PROTOCOLIE_BY_ID(S1AP_ErrorIndicationIEs_t, ie, container, S1AP_ProtocolIE_ID_id_eNB_UE_S1AP_ID, true);
+  S1AP_FIND_PROTOCOLIE_BY_ID(S1AP_ErrorIndicationIEs_t, ie, container, S1AP_ProtocolIE_ID_id_eNB_UE_S1AP_ID, false);
   // eNB UE S1AP ID is limited to 24 bits
-  enb_ue_s1ap_id = (enb_ue_s1ap_id_t) (ie->value.choice.ENB_UE_S1AP_ID & ENB_UE_S1AP_ID_MASK);
-
+  if(ie)
+    enb_ue_s1ap_id = (enb_ue_s1ap_id_t) (ie->value.choice.ENB_UE_S1AP_ID & ENB_UE_S1AP_ID_MASK);
 
   enb_description_t * enb_ref = s1ap_is_enb_assoc_id_in_list (assoc_id);
   DevAssert(enb_ref);
@@ -2723,40 +2724,44 @@ s1ap_mme_handle_error_ind_message (
   S1AP_ERROR_INDICATION (message_p).enb_id = enb_ref->enb_id;
 
   /** Choice. */
-  S1AP_FIND_PROTOCOLIE_BY_ID(S1AP_ErrorIndicationIEs_t, ie, container, S1AP_ProtocolIE_ID_id_Cause, true);
+  S1AP_FIND_PROTOCOLIE_BY_ID(S1AP_ErrorIndicationIEs_t, ie, container, S1AP_ProtocolIE_ID_id_Cause, false);
 
-  S1AP_Cause_PR cause_type = ie->value.choice.Cause.present;
+  if(ie){
+	  // todo: unused yet..
+	  S1AP_Cause_PR cause_type = ie->value.choice.Cause.present;
 
-  switch (cause_type)
-  {
-  case S1AP_Cause_PR_radioNetwork:
-    cause_value = ie->value.choice.Cause.choice.radioNetwork;
-    OAILOG_DEBUG (LOG_S1AP, "S1AP_ERROR_INDICATION with Cause_Type = Radio Network and Cause_Value = %ld\n", cause_value);
-    break;
+	  switch (cause_type)
+	  {
+	  case S1AP_Cause_PR_radioNetwork:
+	    cause_value = ie->value.choice.Cause.choice.radioNetwork;
+	    OAILOG_DEBUG (LOG_S1AP, "S1AP_ERROR_INDICATION with Cause_Type = Radio Network and Cause_Value = %ld\n", cause_value);
+	    break;
 
-  case S1AP_Cause_PR_transport:
-    cause_value = ie->value.choice.Cause.choice.transport;
-    OAILOG_DEBUG (LOG_S1AP, "S1AP_ERROR_INDICATION with Cause_Type = Transport and Cause_Value = %ld\n", cause_value);
-    break;
+	  case S1AP_Cause_PR_transport:
+	    cause_value = ie->value.choice.Cause.choice.transport;
+	    OAILOG_DEBUG (LOG_S1AP, "S1AP_ERROR_INDICATION with Cause_Type = Transport and Cause_Value = %ld\n", cause_value);
+	    break;
 
-  case S1AP_Cause_PR_nas:
-    cause_value = ie->value.choice.Cause.choice.nas;
-    OAILOG_DEBUG (LOG_S1AP, "S1AP_ERROR_INDICATION with Cause_Type = NAS and Cause_Value = %ld\n", cause_value);
-    break;
+	  case S1AP_Cause_PR_nas:
+	    cause_value = ie->value.choice.Cause.choice.nas;
+	    OAILOG_DEBUG (LOG_S1AP, "S1AP_ERROR_INDICATION with Cause_Type = NAS and Cause_Value = %ld\n", cause_value);
+	    break;
 
-  case S1AP_Cause_PR_protocol:
-    cause_value = ie->value.choice.Cause.choice.protocol;
-    OAILOG_DEBUG (LOG_S1AP, "S1AP_ERROR_INDICATION with Cause_Type = Protocol and Cause_Value = %ld\n", cause_value);
-    break;
+	  case S1AP_Cause_PR_protocol:
+	    cause_value = ie->value.choice.Cause.choice.protocol;
+	    OAILOG_DEBUG (LOG_S1AP, "S1AP_ERROR_INDICATION with Cause_Type = Protocol and Cause_Value = %ld\n", cause_value);
+	    break;
 
-  case S1AP_Cause_PR_misc:
-    cause_value = ie->value.choice.Cause.choice.misc;
-    OAILOG_DEBUG (LOG_S1AP, "S1AP_ERROR_INDICATION with Cause_Type = MISC and Cause_Value = %ld\n", cause_value);
-    break;
+	  case S1AP_Cause_PR_misc:
+	    cause_value = ie->value.choice.Cause.choice.misc;
+	    OAILOG_DEBUG (LOG_S1AP, "S1AP_ERROR_INDICATION with Cause_Type = MISC and Cause_Value = %ld\n", cause_value);
+	    break;
 
-  default:
-    OAILOG_ERROR (LOG_S1AP, "S1AP_ERROR_INDICATION with Invalid Cause_Type = %d\n", cause_type);
-    OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
+	  default:
+	    OAILOG_ERROR (LOG_S1AP, "S1AP_ERROR_INDICATION with Invalid Cause_Type = %d\n", cause_type);
+	    OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
+	  }
+
   }
 
   /**
