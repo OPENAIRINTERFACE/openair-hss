@@ -701,7 +701,7 @@ int s1ap_generate_s1ap_e_rab_modify_req (itti_s1ap_e_rab_modify_req_t * const e_
     ie->id = S1AP_ProtocolIE_ID_id_MME_UE_S1AP_ID;
     ie->criticality = S1AP_Criticality_reject;
     ie->value.present = S1AP_E_RABModifyRequestIEs__value_PR_MME_UE_S1AP_ID;
-    ie->value.choice.ENB_UE_S1AP_ID = ue_ref->mme_ue_s1ap_id;
+    ie->value.choice.MME_UE_S1AP_ID = ue_ref->mme_ue_s1ap_id;
     ASN_SEQUENCE_ADD(&out->protocolIEs.list, ie);
     /* mandatory */
     ie = (S1AP_E_RABModifyRequestIEs_t *)calloc(1, sizeof(S1AP_E_RABModifyRequestIEs_t));
@@ -974,7 +974,7 @@ s1ap_handle_conn_est_cnf (
   ie->id = S1AP_ProtocolIE_ID_id_MME_UE_S1AP_ID;
   ie->criticality = S1AP_Criticality_reject;
   ie->value.present = S1AP_InitialContextSetupRequestIEs__value_PR_MME_UE_S1AP_ID;
-  ie->value.choice.ENB_UE_S1AP_ID = ue_ref->mme_ue_s1ap_id;
+  ie->value.choice.MME_UE_S1AP_ID = ue_ref->mme_ue_s1ap_id;
   ASN_SEQUENCE_ADD(&out->protocolIEs.list, ie);
 
   /* mandatory */
