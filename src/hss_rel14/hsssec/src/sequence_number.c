@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -51,8 +51,8 @@ sqn_ms_derive (
   uint8_t                                 amf[2] = { 0, 0 };
   int                                     i = 0;
 
-  conc_sqn_ms = auts;
-  mac_s = &auts[6];
+  conc_sqn_ms = &auts[16];
+  mac_s = &auts[6+16];
   sqn_ms = malloc (SQN_LENGTH_OCTEST);
   /*
    * if (hss_config.valid_opc == 0) {
@@ -70,7 +70,7 @@ sqn_ms_derive (
 
   print_buffer ("sqn_ms_derive() KEY    : ", key, 16);
   print_buffer ("sqn_ms_derive() RAND   : ", rand_p, 16);
-  print_buffer ("sqn_ms_derive() AUTS   : ", auts, 14);
+  print_buffer ("sqn_ms_derive() AUTS   : ", auts, 14+16);
   print_buffer ("sqn_ms_derive() AK     : ", ak, 6);
   print_buffer ("sqn_ms_derive() SQN_MS : ", sqn_ms, 6);
   print_buffer ("sqn_ms_derive() MAC_S  : ", mac_s, 8);
