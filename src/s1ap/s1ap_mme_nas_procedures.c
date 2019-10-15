@@ -1150,7 +1150,6 @@ s1ap_handle_conn_est_cnf (
   OAILOG_FUNC_OUT (LOG_S1AP);
 }
 
-#define TODO_S1AP 1
 //------------------------------------------------------------------------------
 void
 s1ap_handle_path_switch_req_ack(
