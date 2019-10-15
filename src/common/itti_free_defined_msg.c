@@ -446,18 +446,12 @@ void itti_free_msg_content (MessageDef * const message_p)
 
   case S1AP_ENB_STATUS_TRANSFER:
 	  if(message_p->ittiMsg.s1ap_mme_status_transfer.status_transfer_bearer_list) {
-		  for(int i = 0; i < message_p->ittiMsg.s1ap_enb_status_transfer.status_transfer_bearer_list->num_bearers; i++) {
-		  bdestroy_wrapper(&message_p->ittiMsg.s1ap_enb_status_transfer.status_transfer_bearer_list->bearerStatusTransferList_buffer[i]);
-		  }
-		  free_wrapper(&message_p->ittiMsg.s1ap_enb_status_transfer.status_transfer_bearer_list);
+		 free_wrapper(&message_p->ittiMsg.s1ap_enb_status_transfer.status_transfer_bearer_list);
 	  }
 	break;
   case S1AP_MME_STATUS_TRANSFER:
 	  if(message_p->ittiMsg.s1ap_mme_status_transfer.status_transfer_bearer_list) {
-		  for(int i = 0; i < message_p->ittiMsg.s1ap_mme_status_transfer.status_transfer_bearer_list->num_bearers; i++) {
-			  bdestroy_wrapper(&message_p->ittiMsg.s1ap_mme_status_transfer.status_transfer_bearer_list->bearerStatusTransferList_buffer[i]);
-		  }
-		  free_wrapper(&message_p->ittiMsg.s1ap_mme_status_transfer.status_transfer_bearer_list);
+		 free_wrapper(&message_p->ittiMsg.s1ap_mme_status_transfer.status_transfer_bearer_list);
 	  }
 	break;
 
@@ -489,9 +483,6 @@ void itti_free_msg_content (MessageDef * const message_p)
   case S10_FORWARD_ACCESS_CONTEXT_NOTIFICATION:
     /** EUTRAN Container. */
 	if(message_p->ittiMsg.s10_forward_access_context_notification.status_transfer_bearer_list) {
-		for(int i = 0; i < message_p->ittiMsg.s10_forward_access_context_notification.status_transfer_bearer_list->num_bearers; i++) {
-			bdestroy_wrapper(&message_p->ittiMsg.s10_forward_access_context_notification.status_transfer_bearer_list->bearerStatusTransferList_buffer[i]);
-		}
 		free_wrapper(&message_p->ittiMsg.s10_forward_access_context_notification.status_transfer_bearer_list);
 	}
     break;

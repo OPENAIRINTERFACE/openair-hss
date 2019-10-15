@@ -205,7 +205,7 @@ int mme_app_send_s11_release_access_bearers_req (mme_ue_s1ap_id_t ue_id)
 }
 
 //------------------------------------------------------------------------------
-void
+int
 mme_app_send_s11_create_session_req (
   const mme_ue_s1ap_id_t ue_id, const imsi_t * const imsi_p, pdn_context_t * pdn_context, tai_t * serving_tai, const protocol_configuration_options_t * const pco, const bool is_from_s10_tau)
 {
@@ -226,17 +226,17 @@ mme_app_send_s11_create_session_req (
   ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, ue_id);
   if(!ue_context){
 	  OAILOG_ERROR (LOG_MME_APP, "No UE context for UE " MME_UE_S1AP_ID_FMT ". Cannot send CSR. \n", ue_id);
-	  OAILOG_FUNC_OUT(LOG_MME_APP);
+	  OAILOG_FUNC_RETURN(LOG_MME_APP, RETURNerror);
   }
 
   ue_session_pool = mme_ue_session_pool_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_session_pools, ue_id);
   if(!ue_session_pool){
 	  OAILOG_ERROR (LOG_MME_APP, "No UE session pool for UE " MME_UE_S1AP_ID_FMT ". Cannot send CSR. \n", ue_id);
-	  OAILOG_FUNC_OUT(LOG_MME_APP);
+	  OAILOG_FUNC_RETURN(LOG_MME_APP, RETURNerror);
   }
   if(!pdn_context) {
 	  OAILOG_ERROR (LOG_MME_APP, "No pdn context for UE " MME_UE_S1AP_ID_FMT ". Cannot send CSR. \n", ue_id);
-	  OAILOG_FUNC_OUT(LOG_MME_APP);
+	  OAILOG_FUNC_RETURN(LOG_MME_APP, RETURNerror);
   }
 
   OAILOG_DEBUG (LOG_MME_APP, "Sending CSR for imsi " IMSI_64_FMT "\n", ue_context->privates.fields.imsi);
@@ -288,6 +288,22 @@ mme_app_send_s11_create_session_req (
   session_request_p->uli.s.ecgi = ue_context->privates.fields.e_utran_cgi;
   session_request_p->uli.present |= ULI_TAI;
   tai_to_Tai(serving_tai, &session_request_p->uli.s.tai);
+
+  // todo: apn restrictions!
+
+  // Actually, since S and P GW are bundled together, there is no PGW selection (based on PGW id in ULA, or DNS query based on FQDN)
+  struct sockaddr * edns_peer_ip = NULL;
+  if (1) {
+    // TODO prototype may change
+    mme_app_select_service(serving_tai, &edns_peer_ip, S11_SGW_GTP_C);
+    //    session_request_p->peer_ip.in_addr = mme_config.ipv4.
+  }
+  if(!edns_peer_ip){
+
+	OAILOG_ERROR (LOG_MME_APP, "No EDNS Peer IP for UE " MME_UE_S1AP_ID_FMT " could be found for TAI " TAI_FMT". Cannot send CSR. \n", ue_id, TAI_ARG(serving_tai));
+	OAILOG_FUNC_RETURN(LOG_MME_APP, RETURNerror);
+  }
+  memcpy((void*)&session_request_p->edns_peer_ip, edns_peer_ip, edns_peer_ip->sa_family == AF_INET ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
   /*
    * Copy the subscribed APN-AMBR to the sgw create session request message
    */
@@ -300,17 +316,6 @@ mme_app_send_s11_create_session_req (
   DevAssert(!session_request_p->bearer_contexts_to_be_created);
   session_request_p->bearer_contexts_to_be_created = calloc(1, sizeof(bearer_contexts_to_be_created_t));
   mme_app_get_bearer_contexts_to_be_created(pdn_context, session_request_p->bearer_contexts_to_be_created, BEARER_STATE_MME_CREATED);
-
-  // todo: apn restrictions!
-
-  // Actually, since S and P GW are bundled together, there is no PGW selection (based on PGW id in ULA, or DNS query based on FQDN)
-  struct sockaddr * edns_peer_ip = NULL;
-  if (1) {
-    // TODO prototype may change
-    mme_app_select_service(serving_tai, &edns_peer_ip, S11_SGW_GTP_C);
-    //    session_request_p->peer_ip.in_addr = mme_config.ipv4.
-  }
-  memcpy((void*)&session_request_p->edns_peer_ip, edns_peer_ip, edns_peer_ip->sa_family == AF_INET ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
 
   /*
    * Asking for default bearer in initial UE message.
@@ -372,7 +377,7 @@ mme_app_send_s11_create_session_req (
       "0 S11_CREATE_SESSION_REQUEST imsi " IMSI_64_FMT, ue_contextP->imsi);
   OAILOG_DEBUG (LOG_MME_APP, "Sending CSR for imsi (2) " IMSI_64_FMT "\n", ue_context->privates.fields.imsi);
   rc = itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
-  OAILOG_FUNC_OUT(LOG_MME_APP);
+  OAILOG_FUNC_RETURN(LOG_MME_APP, RETURNok);
 }
 
 //------------------------------------------------------------------------------
@@ -471,6 +476,38 @@ void mme_app_send_s11_modify_bearer_req(const ue_session_pool_t * const ue_sessi
   // todo: apn restrictions!
   itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT(LOG_MME_APP);
+}
+
+//------------------------------------------------------------------------------
+/**
+ * Method to send the S1AP MME Status Transfer to the target-eNB.
+ * Will not make any changes in the UE context.
+ * No F-Container will/needs to be stored temporarily.
+ */
+void mme_app_send_s1ap_mme_status_transfer(mme_ue_s1ap_id_t mme_ue_s1ap_id, enb_ue_s1ap_id_t enb_ue_s1ap_id, uint32_t enb_id, status_transfer_bearer_list_t * status_transfer){
+  MessageDef * message_p = NULL;
+
+  OAILOG_FUNC_IN (LOG_MME_APP);
+  /**
+   * Prepare a S1AP ITTI message without changing the UE context.
+   */
+  message_p = itti_alloc_new_message (TASK_MME_APP, S1AP_MME_STATUS_TRANSFER);
+  DevAssert (message_p != NULL);
+  itti_s1ap_status_transfer_t *status_transfer_p = &message_p->ittiMsg.s1ap_mme_status_transfer;
+  memset (status_transfer_p, 0, sizeof (itti_s1ap_status_transfer_t));
+  status_transfer_p->mme_ue_s1ap_id = mme_ue_s1ap_id;
+  status_transfer_p->enb_ue_s1ap_id = enb_ue_s1ap_id; /**< Just ENB_UE_S1AP_ID. */
+  /** Set the current enb_id. */
+  status_transfer_p->enb_id = enb_id;
+  /** Set the E-UTRAN Target-To-Source-Transparent-Container. */
+  status_transfer_p->status_transfer_bearer_list = status_transfer;
+  // todo: what will the enb_ue_s1ap_ids for single mme s1ap handover will be.. ?
+  OAILOG_INFO(LOG_MME_APP, "Sending S1AP MME_STATUS_TRANSFER command to the target eNodeB for enbUeS1apId " ENB_UE_S1AP_ID_FMT " and enbId %d. \n", enb_ue_s1ap_id, enb_id);
+  /** The ENB_ID/Stream information in the UE_Context are still the ones for the source-ENB and the SCTP-UE_ID association is not set yet for the new eNB. */
+  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S1AP_MME, NULL, 0, "MME_APP Sending S1AP MME_STATUS_TRANSFER.");
+  /** Sending a message to S1AP. */
+  itti_send_msg_to_task (TASK_S1AP, INSTANCE_DEFAULT, message_p);
+  OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 
 //------------------------------------------------------------------------------

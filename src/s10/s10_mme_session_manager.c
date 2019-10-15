@@ -613,9 +613,11 @@ s10_mme_forward_access_context_notification(nw_gtpv2c_stack_handle_t *stack_p,
 	  char enbStatusPrefix_length[] = {0x00, (forward_access_context_notif_p->status_transfer_bearer_list->num_bearers -1)};
 	  bstring enbStatusPrefixBstr_final = blk2bstr (enbStatusPrefix_length, 2);
 	  for(int num_bearer = 0; num_bearer < forward_access_context_notif_p->status_transfer_bearer_list->num_bearers; num_bearer ++) {
-		  char enbStatusPrefix[] = {0x00, 0x59, 0x40, forward_access_context_notif_p->status_transfer_bearer_list->bearerStatusTransferList_buffer[num_bearer]->slen};
-	  	  bstring enbStatusPrefixBstr = blk2bstr (enbStatusPrefix, 4);
-	  	  bconcat(enbStatusPrefixBstr, forward_access_context_notif_p->status_transfer_bearer_list->bearerStatusTransferList_buffer[num_bearer]);
+		  char enbStatusPrefix[15] = {0x00, 0x59, 0x40, 0x0b};
+		  memcpy(&enbStatusPrefix[4], &forward_access_context_notif_p->status_transfer_bearer_list->bearerStatusTransferList[num_bearer],
+				  sizeof(forward_access_context_notif_p->status_transfer_bearer_list->bearerStatusTransferList[num_bearer]));
+	  	  bstring enbStatusPrefixBstr = blk2bstr (enbStatusPrefix, 15);
+//	  	  bconcat(enbStatusPrefixBstr, forward_access_context_notif_p->status_transfer_bearer_list->bearerStatusTransferList_buffer[num_bearer]);
 	  	  bconcat(enbStatusPrefixBstr_final, enbStatusPrefixBstr);
 	  	  bdestroy_wrapper(&enbStatusPrefixBstr);
 	  }
@@ -678,6 +680,8 @@ s10_mme_handle_forward_access_context_notification( nw_gtpv2c_stack_handle_t * s
     /*
      * TODO: handle this case
      */
+    if(notif_p->status_transfer_bearer_list)
+    	free_wrapper((void**)&notif_p->status_transfer_bearer_list);
     itti_free (ITTI_MSG_ORIGIN_ID (message_p), message_p);
     message_p = NULL;
     rc = nwGtpv2cMsgParserDelete (*stack_p, pMsgParser);

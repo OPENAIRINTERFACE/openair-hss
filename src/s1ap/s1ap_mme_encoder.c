@@ -106,7 +106,8 @@ s1ap_mme_encode_initiating (
   case S1AP_ProcedureCode_id_HandoverResourceAllocation:
   case S1AP_ProcedureCode_id_MMEStatusTransfer:
   case S1AP_ProcedureCode_id_Paging:
-    break;
+  case S1AP_ProcedureCode_id_MMEConfigurationTransfer:
+	  break;
 
   default:
     OAILOG_NOTICE (LOG_S1AP, "Unknown procedure ID (%d) for initiating message_p\n", (int)pdu->choice.initiatingMessage.procedureCode);
@@ -137,7 +138,8 @@ s1ap_mme_encode_successfull_outcome (
   case S1AP_ProcedureCode_id_PathSwitchRequest:
   case S1AP_ProcedureCode_id_HandoverPreparation:
   case S1AP_ProcedureCode_id_HandoverCancel:
-      break;
+  case S1AP_ProcedureCode_id_Reset:
+     break;
 
   default:
     OAILOG_DEBUG (LOG_S1AP, "Unknown procedure ID (%d) for successfull outcome message\n", (int)pdu->choice.successfulOutcome.procedureCode);

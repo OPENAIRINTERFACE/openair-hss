@@ -376,7 +376,8 @@ int nas_esm_proc_activate_eps_bearer_ctx(esm_eps_activate_eps_bearer_ctx_req_t *
   esm_sap.data.eps_bearer_context_activate.linked_ebi = esm_cn_activate->linked_ebi;
   /* Process each bearer context to be created separately. */
   bearer_contexts_to_be_created_t * bcs_tbc = (bearer_contexts_to_be_created_t*)esm_cn_activate->bcs_to_be_created_ptr;
-  for(int num_bc = 0; num_bc < bcs_tbc->num_bearer_context; num_bc++) {
+  int num_bcs = bcs_tbc->num_bearer_context;
+  for(int num_bc = 0; num_bc < num_bcs; num_bc++) {
     esm_sap.data.eps_bearer_context_activate.bc_tbc   = &bcs_tbc->bearer_context[num_bc];
     esm_sap_signal(&esm_sap, &rsp);
     if(rsp){
@@ -412,7 +413,8 @@ int nas_esm_proc_modify_eps_bearer_ctx(esm_eps_modify_esm_bearer_ctxs_req_t * es
   esm_sap.data.eps_bearer_context_modify.apn_ambr.br_ul = esm_cn_modify->apn_ambr.br_ul;
   /* Handle each bearer context separately. */
   bearer_contexts_to_be_updated_t* bcs_tbu = (bearer_contexts_to_be_updated_t*)esm_cn_modify->bcs_to_be_updated_ptr;
-  for(int num_bc = 0; num_bc < bcs_tbu->num_bearer_context; num_bc++){
+  int num_bcs = bcs_tbu->num_bearer_context;
+  for(int num_bc = 0; num_bc < num_bcs; num_bc++){
     esm_sap.data.eps_bearer_context_modify.bc_tbu       = &bcs_tbu->bearer_context[num_bc];
     /* Set the APN-AMBR for the first bearer context. */
     esm_sap_signal(&esm_sap, &rsp);
@@ -446,14 +448,15 @@ int nas_esm_proc_deactivate_eps_bearer_ctx(esm_eps_deactivate_eps_bearer_ctx_req
   bstring                                 rsp = NULL;
   esm_cause_t                             esm_cause = ESM_CAUSE_SUCCESS;
   int                                     rc = RETURNok;
-
   esm_sap.primitive = ESM_EPS_BEARER_CONTEXT_DEACTIVATE_REQ;
   esm_sap.ue_id     = esm_cn_deactivate->ue_id;
   esm_sap.data.eps_bearer_context_deactivate.retry 	= esm_cn_deactivate->retry;
   MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_ESM_MME, NULL, 0, "0 ESM_EPS_BEARER_CONTEXT_DEACTIVATE_REQ " MME_UE_S1AP_ID_FMT " ", esm_cn_deactivate->ue_id);
   /** Handle each bearer context separately. */
   /** Get the bearer contexts to be updated. */
-  for(int num_ebi= 0; num_ebi < esm_cn_deactivate->ebis.num_ebi; num_ebi++){
+
+  int num_bcs = esm_cn_deactivate->ebis.num_ebi;
+  for(int num_ebi= 0; num_ebi < num_bcs; num_ebi++){
     esm_sap.data.eps_bearer_context_deactivate.ded_ebi = esm_cn_deactivate->ebis.ebis[num_ebi];
     esm_sap.data.eps_bearer_context_deactivate.pti 	   = esm_cn_deactivate->pti;
     esm_sap_signal(&esm_sap, &rsp);

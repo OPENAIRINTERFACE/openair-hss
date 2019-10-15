@@ -246,7 +246,10 @@ esm_proc_pdn_connectivity_request (
   /*
    * Inform the MME_APP procedure to establish a session in the SAE-GW.
    */
-  mme_app_send_s11_create_session_req(ue_id, imsi, pdn_context, visited_tai, &esm_proc_pdn_connectivity->pco, esm_proc_pdn_connectivity->bc_status); /**< BC Status marks it as a TAU. */
+  rc = mme_app_send_s11_create_session_req(ue_id, imsi, pdn_context, visited_tai, &esm_proc_pdn_connectivity->pco, esm_proc_pdn_connectivity->bc_status); /**< BC Status marks it as a TAU. */
+  if(rc == RETURNerror){
+	  OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_REQUEST_REJECTED_BY_GW);
+  }
   /** No message returned and no timeout set for the ESM procedure. */
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_SUCCESS);
 }
