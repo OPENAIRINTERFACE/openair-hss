@@ -139,6 +139,7 @@ set(libnas_ies_OBJS
     ${CMAKE_CURRENT_SOURCE_DIR}/ies/SsCode.c
     ${CMAKE_CURRENT_SOURCE_DIR}/ies/TrackingAreaIdentity.c
     ${CMAKE_CURRENT_SOURCE_DIR}/ies/TrackingAreaIdentityList.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/ies/UeAdditionalSecurityCapability.c
     ${CMAKE_CURRENT_SOURCE_DIR}/ies/UeNetworkCapability.c
     ${CMAKE_CURRENT_SOURCE_DIR}/ies/UeRadioCapabilityInformationUpdateNeeded.c
     ${CMAKE_CURRENT_SOURCE_DIR}/ies/UeSecurityCapability.c
@@ -173,16 +174,16 @@ set(libnas_mme_emm_OBJS
     )
 
 if(${MOBILITY_REPO})
-  include_directories ("${MOBILITY_REPO_SRC}/src/nas/emm") 
+  include_directories ("${MOBILITY_REPO_SRC}/src/nas/emm")
   set(libnas_mme_emm_OBJS
     ${libnas_mme_emm_OBJS}
     ${MOBILITY_REPO_SRC}/src/nas/emm/TrackingAreaUpdateMobility.c
-  ) 
+  )
 else (${MOBILITY_REPO})
   set(libnas_mme_emm_OBJS
     ${libnas_mme_emm_OBJS}
     ${CMAKE_CURRENT_SOURCE_DIR}/emm/TrackingAreaUpdateMobility.c
-  ) 
+  )
 endif ()
 
 

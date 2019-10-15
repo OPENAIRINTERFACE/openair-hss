@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -235,6 +235,18 @@ decode_attach_request (
       attach_request->presencemask |= ATTACH_REQUEST_OLD_GUTI_TYPE_PRESENT;
       break;
 
+    case ATTACH_REQUEST_UE_ADDITIONAL_SECURITY_CAPABILITY_IEI:
+      if ((decoded_result = decode_ue_additional_security_capability (&attach_request->ueadditionalsecuritycapability, ATTACH_REQUEST_UE_ADDITIONAL_SECURITY_CAPABILITY_IEI, buffer + decoded, len - decoded)) <= 0) {
+        OAILOG_FUNC_RETURN (LOG_NAS_EMM, decoded_result);
+      }
+
+      decoded += decoded_result;
+      /*
+       * Set corresponding mask to 1 in presencemask
+       */
+      attach_request->presencemask |= ATTACH_REQUEST_UE_ADDITIONAL_SECURITY_CAPABILITY_IEI;
+      break;
+
     case ATTACH_REQUEST_VOICE_DOMAIN_PREFERENCE_AND_UE_USAGE_SETTING_IEI:
       if ((decoded_result =
            decode_voice_domain_preference_and_ue_usage_setting (&attach_request->voicedomainpreferenceandueusagesetting, true, buffer + decoded, len - decoded)) <= 0) {
@@ -248,7 +260,7 @@ decode_attach_request (
       attach_request->presencemask |= ATTACH_REQUEST_VOICE_DOMAIN_PREFERENCE_AND_UE_USAGE_SETTING_PRESENT;
       break;
 
-    case ATTACH_REQUEST_MS_NETWORK_FEATURE_SUPPORT_IEI: 
+    case ATTACH_REQUEST_MS_NETWORK_FEATURE_SUPPORT_IEI:
       if ((decoded_result =
         decode_ms_network_feature_support_ie (&attach_request->msnetworkfeaturesupport,
             ATTACH_REQUEST_MS_NETWORK_FEATURE_SUPPORT_IEI,
@@ -256,13 +268,14 @@ decode_attach_request (
         //         return decoded_result;
         OAILOG_FUNC_RETURN (LOG_NAS_EMM, decoded_result);
       }
-      
+
       decoded += decoded_result;
       /* Set corresponding mask to 1 in presencemask */
       attach_request->presencemask |= ATTACH_REQUEST_MS_NETWORK_FEATURE_SUPPORT_PRESENT;
       break;
     default:
       errorCodeDecoder = TLV_UNEXPECTED_IEI;
+      OAILOG_WARNING(LOG_NAS_EMM, "Unexpected IEI %d(10)=0x%02X \n", ieiDecoded, ieiDecoded);
       {
         OAILOG_FUNC_RETURN (LOG_NAS_EMM, TLV_UNEXPECTED_IEI);
       }
@@ -425,14 +438,14 @@ encode_attach_request (
       == ATTACH_REQUEST_MS_NETWORK_FEATURE_SUPPORT_PRESENT) {
     if ((encode_result =
 	 encode_ms_network_feature_support_ie (&attach_request->msnetworkfeaturesupport,
-					   ATTACH_REQUEST_MS_NETWORK_FEATURE_SUPPORT_IEI, 
-					   buffer + encoded, 
+					   ATTACH_REQUEST_MS_NETWORK_FEATURE_SUPPORT_IEI,
+					   buffer + encoded,
 					   len -  encoded)) < 0)
       // Return in case of error
       return encode_result;
     else
       encoded += encode_result;
   }
-  
+
   return encoded;
 }
