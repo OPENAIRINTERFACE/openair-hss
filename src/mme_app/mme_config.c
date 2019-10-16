@@ -41,9 +41,9 @@
 #include <libconfig.h>
 
 #include <arpa/inet.h>          /* To provide inet_addr */
-  #include <sys/types.h>
-       #include <sys/socket.h>
-       #include <netdb.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
 
 #include "assertions.h"
 #include "dynamic_memory_check.h"
@@ -293,6 +293,7 @@ void mme_config_exit (void)
   free_wrapper((void**)&mme_config.served_tai.plmn_mnc);
   free_wrapper((void**)&mme_config.served_tai.plmn_mnc_len);
   free_wrapper((void**)&mme_config.served_tai.tac);
+  free_wrapper((void**)&mme_config.mbms_sa.sa_list);
 
   for (int i = 0; i < mme_config.e_dns_emulation.nb_service_entries; i++) {
     bdestroy_wrapper(&mme_config.e_dns_emulation.service_id[i]);
@@ -321,6 +322,7 @@ static int mme_config_parse_file (mme_config_t * config_pP)
   const char                             *tac = NULL;
   const char                             *mcc = NULL;
   const char                             *mnc = NULL;
+  const char                             *sa = NULL;
   char                                   *if_name_s1_mme = NULL;
   char                                   *s1_mme_v4 = NULL;
   char                                   *s1_mme_v6 = NULL;
@@ -724,6 +726,83 @@ static int mme_config_parse_file (mme_config_t * config_pP)
       }
     }
 
+    // MBMS Service Areas
+    setting = config_setting_get_member (setting_mme, MME_CONFIG_MBMS_SERVICE_AREAS);
+    if (setting != NULL) {
+      num = config_setting_length (setting);
+      AssertFatal(8 >= num , "Too many MBMS-Service-Areas configured %d", num);
+
+      if (config_pP->mbms_sa.sa_list != NULL)
+    	free_wrapper ((void**)&config_pP->mbms_sa.sa_list);
+
+      config_pP->mbms_sa.nb = 0;
+
+      uint8_t mbms_service_areas[MAX_MBMS_SA];
+      memset(mbms_service_areas, 0, MAX_MBMS_SA);
+
+      for (i = 0; i < num; i++) {
+        sub2setting = config_setting_get_elem (setting, i);
+        if (sub2setting != NULL) {
+          if ((config_setting_lookup_string (sub2setting, MME_CONFIG_STRING_SA, &sa))) {
+            mbms_service_areas[i] = (uint8_t) atoi (sa);
+          }
+        }
+      }
+
+      // sort SA
+      n = num;
+      do {
+        stop_index = 0;
+        for (i = 1; i < n; i++) {
+          swap = false;
+          if (mbms_service_areas[i-1] > mbms_service_areas[i]) {
+            uint8_t swap8;
+            swap8 = mbms_service_areas[i-1];
+            mbms_service_areas[i-1] = mbms_service_areas[i];
+            mbms_service_areas[i]   = swap8;
+            stop_index = i;
+          }
+        }
+        n = stop_index;
+      } while (0 != n);
+
+      // remove duplicated
+      uint8_t nonzero_count = 0;
+      uint8_t sa_nonzero[MAX_MBMS_SA];
+      memset(sa_nonzero, 0, MAX_MBMS_SA);
+
+      if(num == 1){
+    	  nonzero_count = num;
+      	  sa_nonzero[0] = mbms_service_areas[0];
+      }
+      else if (num == 2){
+    	  nonzero_count = num;
+    	  if(mbms_service_areas[0] == mbms_service_areas[1]){
+    	    nonzero_count = 1;
+    	    mbms_service_areas[1] = 0;
+    	  } else {
+    		sa_nonzero[0] = mbms_service_areas[0];
+    		sa_nonzero[1] = mbms_service_areas[1];
+    	  }
+      } else {
+          for(i = 1; i < num ; i++){
+        	if(mbms_service_areas[i-1] == mbms_service_areas[i]){
+        	  mbms_service_areas[i-1] = 0;
+        	}
+          }
+
+          for(i = 0; i < num ; i++){
+            if(mbms_service_areas[i] != 0){
+              sa_nonzero[nonzero_count] = mbms_service_areas[i];
+              nonzero_count++;
+            }
+          }
+      }
+
+      config_pP->mbms_sa.sa_list = calloc (nonzero_count, sizeof (uint8_t));
+      memcpy(config_pP->mbms_sa.sa_list, sa_nonzero, nonzero_count);
+      config_pP->mbms_sa.nb = nonzero_count;
+    }
 
     // GUMMEI SETTING
     setting = config_setting_get_member (setting_mme, MME_CONFIG_STRING_GUMMEI_LIST);

@@ -39,6 +39,7 @@
 #include "log.h"
 
 #define MAX_GUMMEI                2
+#define MAX_MBMS_SA				  8
 
 #define MME_CONFIG_STRING_MME_CONFIG                     "MME"
 #define MME_CONFIG_STRING_PID_DIRECTORY                  "PID_DIRECTORY"
@@ -87,9 +88,11 @@
 #define MME_CONFIG_STRING_MME_CODE                       "MME_CODE"
 #define MME_CONFIG_STRING_MME_GID                        "MME_GID"
 #define MME_CONFIG_STRING_TAI_LIST                       "TAI_LIST"
+#define MME_CONFIG_MBMS_SERVICE_AREAS					 "MBMS_SERVICE_AREAS"
 #define MME_CONFIG_STRING_MCC                            "MCC"
 #define MME_CONFIG_STRING_MNC                            "MNC"
 #define MME_CONFIG_STRING_TAC                            "TAC"
+#define MME_CONFIG_STRING_SA	                         "SA"
 #define MME_CONFIG_STRING_NGHB_MME_IPV4_ADDR             "NGHB_MME_IPV4_ADDR"
 
 #define MME_CONFIG_STRING_NETWORK_INTERFACES_CONFIG      "NETWORK_INTERFACES"
@@ -187,6 +190,10 @@ typedef struct mme_config_s {
     gummei_t gummei[MAX_GUMMEI];
   } gummei;
 
+  struct {
+    int      nb;
+    uint8_t *sa_list;
+  } mbms_sa;
 
 #define TRACKING_AREA_IDENTITY_LIST_TYPE_ONE_PLMN_NON_CONSECUTIVE_TACS 0x00
 #define TRACKING_AREA_IDENTITY_LIST_TYPE_ONE_PLMN_CONSECUTIVE_TACS     0x01
