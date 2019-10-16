@@ -26,8 +26,6 @@
 #include "../gtpv2-c/gtpv2c_ie_formatter/shared/gtpv2c_ie_formatter.h"
 #include "3gpp_29.274.h"
 
-int s10_guti_ie_set ( nw_gtpv2c_msg_handle_t * msg, const guti_t * guti);
-
 nw_rc_t s10_guti_ie_get ( uint8_t ieType, uint16_t ieLength, uint8_t ieInstance, uint8_t * ieValue, void *arg);
 
 nw_rc_t s10_msisdn_ie_get(

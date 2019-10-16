@@ -367,8 +367,14 @@ typedef struct imeisv_s {
 // 13  Numbering, addressing and identification within the IP multimedia core network subsystem
 // 14  Numbering, addressing and identification for 3GPP System to WLAN Interworking
 // 15 Identification of Multimedia Broadcast/Multicast Service
+
 // 15.2  Structure of TMGI
-// TODO NAS ?
+typedef struct tmgi_s {
+  uint32_t    serviceId;								   /*!< \brief MBMS Service ID. */
+  plmn_t      plmn;                                        /*!< \brief PLMN				*/
+} tmgi_t;
+#define MBMS_SERVICE_ID_DIGITS              3
+
 // 15.3  Structure of MBMS SAI
 // 15.4  Home Network Realm
 // 16  Numbering, addressing and identification within the GAA subsystem

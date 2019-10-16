@@ -394,7 +394,7 @@ int s11_mme_init (const mme_config_t * const mme_config_p)
   DevAssert (NW_OK == nwGtpv2cSetLogMgrEntity (s11_mme_stack_handle, &logMgr));
 
   if (itti_create_task (TASK_S11, &s11_mme_thread, NULL) < 0) {
-    OAILOG_ERROR (LOG_S11, "gtpv1u phtread_create: %s\n", strerror (errno));
+    OAILOG_ERROR (LOG_S11, "gtpv2c phtread_create: %s\n", strerror (errno));
     goto fail;
   }
 

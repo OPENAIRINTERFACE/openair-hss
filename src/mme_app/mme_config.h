@@ -108,6 +108,11 @@
 #define MME_CONFIG_STRING_IPV6_ADDRESS_FOR_S10           "MME_IPV6_ADDRESS_FOR_S10"
 #define MME_CONFIG_STRING_MME_PORT_FOR_S10               "MME_PORT_FOR_S10"
 
+#define MME_CONFIG_STRING_INTERFACE_NAME_FOR_SM          "MME_INTERFACE_NAME_FOR_SM"
+#define MME_CONFIG_STRING_IPV4_ADDRESS_FOR_SM            "MME_IPV4_ADDRESS_FOR_SM"
+#define MME_CONFIG_STRING_IPV6_ADDRESS_FOR_SM            "MME_IPV6_ADDRESS_FOR_SM"
+#define MME_CONFIG_STRING_MME_PORT_FOR_SM                "MME_PORT_FOR_SM"
+
 
 #define MME_CONFIG_STRING_NAS_CONFIG                     "NAS"
 #define MME_CONFIG_STRING_NAS_SUPPORTED_INTEGRITY_ALGORITHM_LIST  "ORDERED_SUPPORTED_INTEGRITY_ALGORITHM_LIST"
@@ -129,9 +134,6 @@
 #define MME_CONFIG_STRING_NAS_FORCE_PUSH_DEDICATED_BEARER "FORCE_PUSH_DEDICATED_BEARER"
 #define MME_CONFIG_STRING_NAS_FORCE_TAU					  "NAS_FORCE_TAU"
 
-//#define MME_CONFIG_STRING_NAS_FORCE_PUSH_DEDICATED_BEARER "FORCE_PUSH_DEDICATED_BEARER"
-#define MME_CONFIG_STRING_MME_IPV4_ADDRESS_FOR_S10        "MME_IPV4_ADDRESS_FOR_S10"
-
 #define MME_CONFIG_STRING_ASN1_VERBOSITY                 "ASN1_VERBOSITY"
 #define MME_CONFIG_STRING_ASN1_VERBOSITY_NONE            "none"
 #define MME_CONFIG_STRING_ASN1_VERBOSITY_ANNOYING        "annoying"
@@ -139,6 +141,7 @@
 
 #define MME_CONFIG_STRING_WRR_LIST_SELECTION             "WRR_LIST_SELECTION"
 #define MME_CONFIG_STRING_PEER_MME_IP_ADDRESS_FOR_S10  	 "MME_IP_ADDRESS_FOR_S10"
+
 ///** MME S10 List --> todo: later FULL WRR : Finding MME via eNB. */
 //#define MME_CONFIG_STRING_MME_LIST_SELECTION             "MME_LIST_SELECTION"
 
@@ -237,8 +240,15 @@ typedef struct mme_config_s {
     int        s10_mme_cidrv4;
     int        s10_mme_cidrv6;
     uint16_t   port_s10;
-    // todo: sgw_s11 removed, finding it dynamically?
-    //    ipv4_nbo_t sgw_s11;
+
+    /** Sm */
+    bstring    if_name_sm;
+    struct in_addr  sm_mme_v4;
+    struct in6_addr sm_mme_v6;
+    int        sm_mme_cidrv4;
+    int        sm_mme_cidrv6;
+    uint16_t   port_sm;
+
   } ip;
 
   struct {

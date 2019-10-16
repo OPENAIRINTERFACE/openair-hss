@@ -364,13 +364,13 @@ s10_send_init_udp (
 	  message_p->ittiMsg.udp_init.in_addr = address;
 	  char ipv4[INET_ADDRSTRLEN];
 	  inet_ntop (AF_INET, (void*)message_p->ittiMsg.udp_init.in_addr, ipv4, INET_ADDRSTRLEN);
-	  OAILOG_DEBUG (LOG_S11, "Tx UDP_INIT IP addr %s:%" PRIu16 "\n", ipv4, message_p->ittiMsg.udp_init.port);
+	  OAILOG_DEBUG (LOG_S10, "Tx UDP_INIT IP addr %s:%" PRIu16 "\n", ipv4, message_p->ittiMsg.udp_init.port);
   }
   if(address6 && memcmp(address6->s6_addr, (void*)&in6addr_any, 16) != 0){
 	  message_p->ittiMsg.udp_init.in6_addr = address6;
 	  char ipv6[INET6_ADDRSTRLEN];
 	  inet_ntop (AF_INET6, (void*)&message_p->ittiMsg.udp_init.in6_addr, ipv6, INET6_ADDRSTRLEN);
-	  OAILOG_DEBUG (LOG_S11, "Tx UDP_INIT IPv6 addr %s:%" PRIu16 "\n", ipv6, message_p->ittiMsg.udp_init.port);
+	  OAILOG_DEBUG (LOG_S10, "Tx UDP_INIT IPv6 addr %s:%" PRIu16 "\n", ipv6, message_p->ittiMsg.udp_init.port);
   }
   return itti_send_msg_to_task (TASK_UDP, INSTANCE_DEFAULT, message_p);
 }
@@ -423,7 +423,7 @@ s10_mme_init (
   DevAssert (NW_OK == nwGtpv2cSetLogMgrEntity (s10_mme_stack_handle, &logMgr));
 
   if (itti_create_task (TASK_S10, &s10_mme_thread, NULL) < 0) {
-    OAILOG_ERROR (LOG_S10, "gtpv1u phtread_create: %s\n", strerror (errno));
+    OAILOG_ERROR (LOG_S10, "gtpv2c phtread_create: %s\n", strerror (errno));
     goto fail;
   }
 

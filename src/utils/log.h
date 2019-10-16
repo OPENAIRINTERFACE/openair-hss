@@ -143,6 +143,7 @@ typedef enum {
   LOG_SPGW_APP,
   LOG_S10,
   LOG_S11,
+  LOG_SM,
   LOG_S6A,
   LOG_SECU,
   LOG_UTIL,

@@ -152,6 +152,17 @@ typedef struct {
   } choice;
 } Mei_t;
 
+typedef struct {
+  unsigned seconds;
+  unsigned days;
+} mbms_session_duration_t;
+
+typedef struct {
+  uint8_t  num_service_area;
+#define MAX_MBMS_SERVICE_AREA 256
+  uint16_t  serviceArea[MAX_MBMS_SERVICE_AREA];
+} mbms_service_area_t;
+
 typedef enum {
   SS_SERVICE_GRANTED = 0,
   SS_OPERATOR_DETERMINED_BARRING = 1,

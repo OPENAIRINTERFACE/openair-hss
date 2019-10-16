@@ -590,6 +590,15 @@ add_library(S10_MME
 )
 include_directories(${S10_DIR})
 
+set(Sm_DIR ${OPENAIRCN_DIR}/src/sm)
+add_library(Sm_MME
+  ${Sm_DIR}/sm_common.c
+  ${Sm_DIR}/sm_ie_formatter.c
+  ${Sm_DIR}/sm_mme_task.c
+  ${Sm_DIR}/sm_mme_session_manager.c
+)
+include_directories(${Sm_DIR})
+
 set(S6A_DIR ${OPENAIRCN_DIR}/src/s6a)
 add_library(S6A
   ${S6A_DIR}/s6a_auth_info.c
@@ -933,7 +942,7 @@ if( ITTI_ANALYZER )
 endif( ITTI_ANALYZER )
 target_link_libraries (mme
   -Wl,--start-group
-    S1AP_LIB S1AP_EPC S11_MME S10_MME GTPV2C SCTP_SERVER UDP_SERVER SECU_CN
+    S1AP_LIB S1AP_EPC S11_MME S10_MME Sm_MME GTPV2C SCTP_SERVER UDP_SERVER SECU_CN
    S6A MME_APP LIB_NAS_MME ${MSC_LIB} ${ITTI_LIB} ${XML_MSG_DUMP_LIB} ${3GPP_TYPES_LIB}
    ${3GPP_TYPES_XML_LIB} CN_UTILS ${SCENARIO_PLAYER_LIB} HASHTABLE BSTR
   -Wl,--end-group
