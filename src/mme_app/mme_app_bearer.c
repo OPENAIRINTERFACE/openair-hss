@@ -3407,12 +3407,6 @@ mme_app_handle_s1ap_handover_required(
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
 
-  if(1){
-	mme_app_send_s1ap_handover_preparation_failure(handover_required_pP->mme_ue_s1ap_id,
-			handover_required_pP->enb_ue_s1ap_id, handover_required_pP->sctp_assoc_id, S1AP_SYSTEM_FAILURE);
-	OAILOG_FUNC_OUT (LOG_MME_APP);
-  }
-
   /*
    * Check if there exists a handover process.
    * If so Set the target TAI and enb_id, to use them if a Handover-Cancel message comes.
