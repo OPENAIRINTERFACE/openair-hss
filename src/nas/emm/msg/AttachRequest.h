@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -32,6 +32,7 @@
 #include "NasKeySetIdentifier.h"
 #include "SecurityHeaderType.h"
 #include "TrackingAreaIdentity.h"
+#include "UeAdditionalSecurityCapability.h"
 #include "UeNetworkCapability.h"
 #include "3gpp_23.003.h"
 #include "3gpp_24.007.h"
@@ -64,7 +65,8 @@
     MOBILE_STATION_CLASSMARK_3_MAXIMUM_LENGTH + \
     SUPPORTED_CODEC_LIST_MAXIMUM_LENGTH + \
     ADDITIONAL_UPDATE_TYPE_MAXIMUM_LENGTH + \
-    GUTI_TYPE_MAXIMUM_LENGTH )
+    GUTI_TYPE_MAXIMUM_LENGTH + \
+    UE_ADDITIONAL_SECURITY_CAPABILITY_MAXIMUM_LENGTH )
 
 /* If an optional value is present and should be encoded, the corresponding
  * Bit mask should be set to 1.
@@ -83,6 +85,7 @@
 # define ATTACH_REQUEST_OLD_GUTI_TYPE_PRESENT                                 (1<<11)
 # define ATTACH_REQUEST_VOICE_DOMAIN_PREFERENCE_AND_UE_USAGE_SETTING_PRESENT  (1<<12)
 # define ATTACH_REQUEST_MS_NETWORK_FEATURE_SUPPORT_PRESENT                    (1<<13)
+# define ATTACH_REQUEST_UE_ADDITIONAL_SECURITY_CAPABILITY_PRESENT             (1<<14)
 
 typedef enum attach_request_iei_tag {
   ATTACH_REQUEST_OLD_PTMSI_SIGNATURE_IEI                          = GMM_PTMSI_SIGNATURE_IEI,
@@ -98,7 +101,8 @@ typedef enum attach_request_iei_tag {
   ATTACH_REQUEST_SUPPORTED_CODECS_IEI                             = CC_SUPPORTED_CODEC_LIST_IE,
   ATTACH_REQUEST_ADDITIONAL_UPDATE_TYPE_IEI                       = 0xF0, /* 0xF0 = 240 */
   ATTACH_REQUEST_OLD_GUTI_TYPE_IEI                                = 0xE0, /* 0xE0 = 224 */
-  ATTACH_REQUEST_VOICE_DOMAIN_PREFERENCE_AND_UE_USAGE_SETTING_IEI = GMM_VOICE_DOMAIN_PREFERENCE_AND_UE_USAGE_SETTING_IEI
+  ATTACH_REQUEST_VOICE_DOMAIN_PREFERENCE_AND_UE_USAGE_SETTING_IEI = GMM_VOICE_DOMAIN_PREFERENCE_AND_UE_USAGE_SETTING_IEI,
+  ATTACH_REQUEST_UE_ADDITIONAL_SECURITY_CAPABILITY_IEI            = 0x6F /* 0x6F = 111  */
 } attach_request_iei;
 
 /*
@@ -134,6 +138,7 @@ typedef struct attach_request_msg_tag {
   guti_type_t                             oldgutitype;
   voice_domain_preference_and_ue_usage_setting_t  voicedomainpreferenceandueusagesetting;
   ms_network_feature_support_t            msnetworkfeaturesupport;
+  ue_additional_security_capability_t     ueadditionalsecuritycapability;
 } attach_request_msg;
 
 int decode_attach_request(attach_request_msg *attachrequest, uint8_t *buffer, uint32_t len);

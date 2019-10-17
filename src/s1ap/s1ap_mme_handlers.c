@@ -64,12 +64,6 @@ static int                              s1ap_generate_s1_setup_response (
 static int                              s1ap_mme_generate_ue_context_release_command (
     ue_description_t * ue_ref_p, mme_ue_s1ap_id_t mme_ue_s1ap_id, enum s1cause, enb_description_t* enb_ref_p);
 
-static int                              s1ap_send_path_switch_request_failure (
-    const sctp_assoc_id_t assoc_id,
-    const sctp_stream_id_t stream,
-    const mme_ue_s1ap_id_t mme_ue_s1ap_id,
-    const enb_ue_s1ap_id_t enb_ue_s1ap_id);
-
 /* Handlers matrix. Only mme related procedures present here.
 */
 s1ap_message_decoded_callback           messages_callback[][3] = {
@@ -728,19 +722,20 @@ s1ap_mme_handle_initial_context_setup_response (
         ie->value.choice.E_RABSetupListCtxtSURes.list.array[item];
 
     e_rab_setup_item_ctxt_su_res = &eRABSetupItemCtxtSURes_p->value.choice.E_RABSetupItemCtxtSURes;
+//
+//    if(e_rab_setup_item_ctxt_su_res->e_RAB_ID == 7){
+//    	test = true;
+//    	initial_context_setup_rsp->bcs_to_be_modified.num_bearer_context--;
+//    	continue;
+//    }
+//    if(test == true){
+//    	if(item2 > 0)
+//    		item2--;
+//    }
 
-    initial_context_setup_rsp->bcs_to_be_modified.bearer_context[item].eps_bearer_id = e_rab_setup_item_ctxt_su_res->e_RAB_ID;
-    initial_context_setup_rsp->bcs_to_be_modified.bearer_context[item].s1_eNB_fteid.teid = htonl (*((uint32_t *) e_rab_setup_item_ctxt_su_res->gTP_TEID.buf));
+    initial_context_setup_rsp->bcs_to_be_modified.bearer_context[item2].eps_bearer_id = e_rab_setup_item_ctxt_su_res->e_RAB_ID;
+    initial_context_setup_rsp->bcs_to_be_modified.bearer_context[item2].s1_eNB_fteid.teid = htonl (*((uint32_t *) e_rab_setup_item_ctxt_su_res->gTP_TEID.buf));
     bstring transport_address = blk2bstr(e_rab_setup_item_ctxt_su_res->transportLayerAddress.buf, e_rab_setup_item_ctxt_su_res->transportLayerAddress.size);
-//	  if(eRABSetupItemCtxtSURes_p->e_RAB_ID == 7){
-//		  test = true;
-//		  initial_context_setup_rsp->bcs_to_be_modified.num_bearer_context--;
-//		  continue;
-//	  }
-//	  if(test == true){
-//		  if(item2 > 0)
-//			  item2--;
-//	  }
 
     /** Set the IP address from the FTEID. */
     if (4 == blength(transport_address)) {
@@ -767,22 +762,15 @@ s1ap_mme_handle_initial_context_setup_response (
       initial_context_setup_rsp->e_rab_release_list.no_of_items++;
     }
   }
-
+//
 //  if(test){
 //	  /** Trigger failed bearer  (ebi==7). todo: comment out */
 //	  initial_context_setup_rsp->e_rab_release_list.item[0].e_rab_id  = 7;
-//	  initial_context_setup_rsp->e_rab_release_list.item[0].cause.present = S1ap_Cause_PR_radioNetwork;
-//	  initial_context_setup_rsp->e_rab_release_list.item[0].cause.choice.radioNetwork = S1ap_CauseRadioNetwork_radio_resources_not_available;
+//	  initial_context_setup_rsp->e_rab_release_list.item[0].cause.present = S1AP_Cause_PR_radioNetwork;
+//	  initial_context_setup_rsp->e_rab_release_list.item[0].cause.choice.radioNetwork = S1AP_CauseRadioNetwork_radio_resources_not_available;
 //	  initial_context_setup_rsp->e_rab_release_list.no_of_items++;
 //  }
 
-  MSC_LOG_TX_MESSAGE (MSC_S1AP_MME,
-                      MSC_MMEAPP_MME,
-                      NULL, 0,
-                      "0 MME_APP_INITIAL_CONTEXT_SETUP_RSP mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ebi %u s1u enb teid %u",
-                      initial_context_setup_rsp->ue_id,
-                      initial_context_setup_rsp->bcs_to_be_modified.bearer_context[0].eps_bearer_id,
-                      initial_context_setup_rsp->bcs_to_be_modified.bearer_context[0].s1_eNB_fteid.teid);
   rc =  itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_RETURN (LOG_S1AP, rc);
 }
@@ -1256,7 +1244,6 @@ s1ap_mme_handle_path_switch_request (
 
   S1AP_PathSwitchRequest_t               *container = NULL;
   S1AP_PathSwitchRequestIEs_t            *ie = NULL;
-  S1AP_PathSwitchRequestIEs_t            *ie2 = NULL;
   S1AP_E_RABToBeSwitchedDLItemIEs_t      *eRABToBeSwitchedDlItemIEs_p = NULL;
 
   ue_description_t                       *ue_ref_p = NULL;
@@ -1304,7 +1291,7 @@ s1ap_mme_handle_path_switch_request (
      * * * * TODO
      */
     OAILOG_DEBUG (LOG_S1AP, "MME UE S1AP ID provided by eNB doesn't point to any valid UE: " MME_UE_S1AP_ID_FMT "\n", enb_ue_s1ap_id);
-    s1ap_send_path_switch_request_failure(assoc_id, stream, mme_ue_s1ap_id, enb_ue_s1ap_id);
+    s1ap_send_path_switch_request_failure(assoc_id, mme_ue_s1ap_id, enb_ue_s1ap_id, S1AP_Cause_PR_nas);
   } else {
     /** The enb_ue_s1ap_id will change! **/
     OAILOG_DEBUG (LOG_S1AP, "Removed old ue_reference before handover for MME UE S1AP ID " MME_UE_S1AP_ID_FMT "\n", (uint32_t) ue_ref_p->mme_ue_s1ap_id);
@@ -1377,10 +1364,10 @@ s1ap_mme_handle_path_switch_request (
     itti_s1ap_path_switch_request_t * path_switch_request = NULL;
     path_switch_request = &message_p->ittiMsg.s1ap_path_switch_request;
 
-    S1AP_FIND_PROTOCOLIE_BY_ID(S1AP_PathSwitchRequestIEs_t, ie2, container,
+    S1AP_FIND_PROTOCOLIE_BY_ID(S1AP_PathSwitchRequestIEs_t, ie, container,
                              S1AP_ProtocolIE_ID_id_E_RABToBeSwitchedDLList, true);
-    DevAssert(ie2);
-    S1AP_E_RABToBeSwitchedDLList_t	* e_rab_to_be_switched_dl_list = &ie2->value.choice.E_RABToBeSwitchedDLList;
+    DevAssert(ie);
+    S1AP_E_RABToBeSwitchedDLList_t	* e_rab_to_be_switched_dl_list = &ie->value.choice.E_RABToBeSwitchedDLList;
 
     path_switch_request->bcs_to_be_modified.num_bearer_context = e_rab_to_be_switched_dl_list->list.count;
     for (int item = 0; item < e_rab_to_be_switched_dl_list->list.count; item++) {
@@ -1423,78 +1410,6 @@ s1ap_mme_handle_path_switch_request (
 }
 
 //------------------------------------------------------------------------------
-static int s1ap_send_path_switch_request_failure (
-    const sctp_assoc_id_t assoc_id,
-    const sctp_stream_id_t stream,
-    const mme_ue_s1ap_id_t mme_ue_s1ap_id,
-    const enb_ue_s1ap_id_t enb_ue_s1ap_id)
-{
-  int                                     enc_rval = 0;
-  S1AP_PathSwitchRequestFailure_t        *out;
-  S1AP_PathSwitchRequestFailureIEs_t     *ie = NULL;
-  S1AP_S1AP_PDU_t                         pdu = { 0 };
-  uint8_t                                *buffer = NULL;
-  uint32_t                                length = 0;
-  int                                     rc = RETURNok;
-
-  /*
-   * Mandatory IEs:
-   * S1ap-MME-UE-S1AP-ID
-   * S1ap-ENB-UE-S1AP-ID
-   * S1ap-Cause
-   */
-
-
-  OAILOG_FUNC_IN (LOG_S1AP);
-  memset(&pdu, 0, sizeof(pdu));
-  pdu.present = S1AP_S1AP_PDU_PR_unsuccessfulOutcome;
-  pdu.choice.unsuccessfulOutcome.procedureCode = S1AP_ProcedureCode_id_PathSwitchRequest;
-  pdu.choice.unsuccessfulOutcome.criticality = S1AP_Criticality_reject;
-  pdu.choice.unsuccessfulOutcome.value.present = S1AP_UnsuccessfulOutcome__value_PR_PathSwitchRequestFailure;
-  out = &pdu.choice.unsuccessfulOutcome.value.choice.PathSwitchRequestFailure;
-
-  /* mandatory */
-  ie = (S1AP_PathSwitchRequestFailureIEs_t *)calloc(1, sizeof(S1AP_PathSwitchRequestFailureIEs_t));
-  ie->id = S1AP_ProtocolIE_ID_id_MME_UE_S1AP_ID;
-  ie->criticality = S1AP_Criticality_ignore;
-  ie->value.present = S1AP_PathSwitchRequestFailureIEs__value_PR_MME_UE_S1AP_ID;
-  ie->value.choice.MME_UE_S1AP_ID = mme_ue_s1ap_id;
-  ASN_SEQUENCE_ADD(&out->protocolIEs.list, ie);
-
-  /* mandatory */
-  ie = (S1AP_PathSwitchRequestFailureIEs_t *)calloc(1, sizeof(S1AP_PathSwitchRequestFailureIEs_t));
-  ie->id = S1AP_ProtocolIE_ID_id_eNB_UE_S1AP_ID;
-  ie->criticality = S1AP_Criticality_ignore;
-  ie->value.present = S1AP_PathSwitchRequestFailureIEs__value_PR_ENB_UE_S1AP_ID;
-  ie->value.choice.ENB_UE_S1AP_ID = enb_ue_s1ap_id;
-  ASN_SEQUENCE_ADD(&out->protocolIEs.list, ie);
-
-
-  ie = (S1AP_PathSwitchRequestFailureIEs_t *)calloc(1, sizeof(S1AP_PathSwitchRequestFailureIEs_t));
-  ie->id = S1AP_ProtocolIE_ID_id_Cause;
-  ie->criticality = S1AP_Criticality_ignore;
-  ie->value.present = S1AP_PathSwitchRequestFailureIEs__value_PR_Cause;
-  s1ap_mme_set_cause (&ie->value.choice.Cause, S1AP_Cause_PR_misc, 4);
-  ASN_SEQUENCE_ADD(&out->protocolIEs.list, ie);
-
-  enc_rval = s1ap_mme_encode_pdu (&pdu, &buffer, &length);
-
-  // Failed to encode
-  if (enc_rval < 0) {
-    OAILOG_ERROR (LOG_S1AP, "Error encoding path switch request failure.\n");
-//    free_s1ap_pathswitchrequestfailure(pathSwitchRequestFailure_p);
-  }
-
-  bstring b = blk2bstr(buffer, length);
-  free(buffer);
-  rc = s1ap_mme_itti_send_sctp_request (&b, assoc_id, 0, INVALID_MME_UE_S1AP_ID);
-
-//  free_s1ap_pathswitchrequestfailure(pathSwitchRequestFailure_p);
-
-  OAILOG_FUNC_RETURN (LOG_S1AP, rc);
-}
-
-//------------------------------------------------------------------------------
 int s1ap_mme_handle_handover_preparation(const sctp_assoc_id_t assoc_id, const sctp_stream_id_t stream, S1AP_S1AP_PDU_t *pdu)
 {
   S1AP_HandoverRequired_t               *container = NULL;
@@ -1520,7 +1435,7 @@ int s1ap_mme_handle_handover_preparation(const sctp_assoc_id_t assoc_id, const s
 
 
   S1AP_FIND_PROTOCOLIE_BY_ID(S1AP_HandoverRequiredIEs_t, ie, container,
-                             S1AP_ProtocolIE_ID_id_SourceMME_UE_S1AP_ID, true);
+                             S1AP_ProtocolIE_ID_id_MME_UE_S1AP_ID, true);
   mme_ue_s1ap_id = ie->value.choice.MME_UE_S1AP_ID;
 
   S1AP_FIND_PROTOCOLIE_BY_ID(S1AP_HandoverRequiredIEs_t, ie, container,
@@ -1682,7 +1597,7 @@ s1ap_mme_handle_handover_cancel(
   container = &pdu->choice.initiatingMessage.value.choice.HandoverCancel;
 
   S1AP_FIND_PROTOCOLIE_BY_ID(S1AP_HandoverCancelIEs_t, ie, container,
-                             S1AP_ProtocolIE_ID_id_SourceMME_UE_S1AP_ID, true);
+                             S1AP_ProtocolIE_ID_id_MME_UE_S1AP_ID, true);
   mme_ue_s1ap_id = ie->value.choice.MME_UE_S1AP_ID;
 
   S1AP_FIND_PROTOCOLIE_BY_ID(S1AP_HandoverCancelIEs_t, ie, container,
@@ -1700,15 +1615,7 @@ s1ap_mme_handle_handover_cancel(
     OAILOG_ERROR(LOG_S1AP, "MME UE S1AP ID provided by source eNB doesn't point to any valid UE: " MME_UE_S1AP_ID_FMT ". Continuing with the HO-Cancellation (impl. detach). \n", mme_ue_s1ap_id);
     OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
   }
-  /**
-   * No timers to be started. Also, the state does not need to be changed from UE_CONNECTED, since TS 36.413 8.4.1.2 specifies that MME may/can initiate some E-RAB Modification signaling towards the source
-   * eNB before the Handover Procedure is completed. Handover restart won't be triggered by eNB.
-   * Source eNB may restart the Handover. If the UE is still connected (Handover dismissed or still going on, it will send a HO-Preparation-Failure.
-   */
-  if(ue_ref_p->s1_ue_state  != S1AP_UE_CONNECTED){
-    OAILOG_ERROR(LOG_S1AP, "UE: " MME_UE_S1AP_ID_FMT " is not in connected mode, instead %d. Continuing with cancellation (impl. detach). \n", enb_ue_s1ap_id, ue_ref_p->s1_ue_state);
-    OAILOG_FUNC_RETURN (LOG_S1AP, rc);
-  }
+
   /** Not changing any ue_reference properties. */
   message_p = itti_alloc_new_message (TASK_S1AP, S1AP_HANDOVER_CANCEL);
   AssertFatal (message_p != NULL, "itti_alloc_new_message Failed");
@@ -1751,7 +1658,7 @@ s1ap_mme_handle_handover_notification(
   container = &pdu->choice.initiatingMessage.value.choice.HandoverNotify;
 
   S1AP_FIND_PROTOCOLIE_BY_ID(S1AP_HandoverNotifyIEs_t, ie, container,
-                             S1AP_ProtocolIE_ID_id_SourceMME_UE_S1AP_ID, true);
+                             S1AP_ProtocolIE_ID_id_MME_UE_S1AP_ID, true);
   mme_ue_s1ap_id = ie->value.choice.MME_UE_S1AP_ID;
 
   S1AP_FIND_PROTOCOLIE_BY_ID(S1AP_HandoverNotifyIEs_t, ie, container,
@@ -1849,7 +1756,7 @@ int s1ap_mme_handle_handover_resource_allocation_response(const sctp_assoc_id_t 
   container = &pdu->choice.successfulOutcome.value.choice.HandoverRequestAcknowledge;
 
   S1AP_FIND_PROTOCOLIE_BY_ID(S1AP_HandoverRequestAcknowledgeIEs_t, ie, container,
-                             S1AP_ProtocolIE_ID_id_SourceMME_UE_S1AP_ID, true);
+                             S1AP_ProtocolIE_ID_id_MME_UE_S1AP_ID, true);
   mme_ue_s1ap_id = ie->value.choice.MME_UE_S1AP_ID;
 
   S1AP_FIND_PROTOCOLIE_BY_ID(S1AP_HandoverRequestAcknowledgeIEs_t, ie, container,
@@ -1919,7 +1826,7 @@ int s1ap_mme_handle_handover_resource_allocation_response(const sctp_assoc_id_t 
    */
 
   S1AP_FIND_PROTOCOLIE_BY_ID(S1AP_HandoverRequestAcknowledgeIEs_t, ie, container, S1AP_ProtocolIE_ID_id_E_RABAdmittedList, false);
-	const S1AP_E_RABAdmittedList_t * e_rab_admitted_list = NULL; // List of s1ap_E_RABAdmittedItem
+  const S1AP_E_RABAdmittedList_t * e_rab_admitted_list = NULL; // List of s1ap_E_RABAdmittedItem
 	if (ie) {
 	  e_rab_admitted_list = &ie->value.choice.E_RABAdmittedList;
 	}
@@ -2006,7 +1913,8 @@ int s1ap_mme_handle_handover_resource_allocation_response(const sctp_assoc_id_t 
     /*
      * Bad, very bad cast...
      */
-    const S1AP_E_RABAdmittedItem_t * const s1ap_e_rabadmitteditem = &((S1AP_E_RABAdmittedItemIEs_t *)&e_rab_admitted_list->list.array[item])->value.choice.E_RABAdmittedItem;
+    const S1AP_E_RABAdmittedItem_t * const s1ap_e_rabadmitteditem =
+    		&(((S1AP_E_RABAdmittedItemIEs_t *)e_rab_admitted_list->list.array[item])->value.choice.E_RABAdmittedItem);
     s1ap_handover_request_acknowledge->bcs_to_be_modified.bearer_context[item].eps_bearer_id = s1ap_e_rabadmitteditem->e_RAB_ID;
     s1ap_handover_request_acknowledge->bcs_to_be_modified.bearer_context[item].s1_eNB_fteid.teid = htonl (*((uint32_t *) s1ap_e_rabadmitteditem->gTP_TEID.buf));
     bstring transport_address  =
@@ -2032,7 +1940,7 @@ int s1ap_mme_handle_handover_resource_allocation_response(const sctp_assoc_id_t 
 	  const S1AP_E_RABFailedtoSetupListHOReqAck_t * const e_rab_failed_to_setup_list = &ie->value.choice.E_RABFailedtoSetupListHOReqAck;
     /** Get the failed bearers. */
     for (int index = 0; index < e_rab_failed_to_setup_list->list.count; index++) {
-      const S1AP_E_RABFailedtoSetupItemHOReqAckIEs_t * const e_rab_failed_to_setup_item_ies = (const S1AP_E_RABFailedtoSetupItemHOReqAckIEs_t * const)&e_rab_failed_to_setup_list->list.array[index];
+      const S1AP_E_RABFailedtoSetupItemHOReqAckIEs_t * const e_rab_failed_to_setup_item_ies = (const S1AP_E_RABFailedtoSetupItemHOReqAckIEs_t * const)e_rab_failed_to_setup_list->list.array[index];
       const S1AP_E_RABFailedToSetupItemHOReqAck_t * const e_rab_failed_to_setup_item = &e_rab_failed_to_setup_item_ies->value.choice.E_RABFailedToSetupItemHOReqAck;
       s1ap_handover_request_acknowledge->e_rab_release_list.item[index].e_rab_id  = e_rab_failed_to_setup_item->e_RAB_ID;
       s1ap_handover_request_acknowledge->e_rab_release_list.item[index].cause     = e_rab_failed_to_setup_item->cause;
@@ -2045,7 +1953,7 @@ int s1ap_mme_handle_handover_resource_allocation_response(const sctp_assoc_id_t 
    * is assumed to remove the OCTET_STRING.
    * todo: ask Lionel if thats correct? what is context only?
    */
-  S1AP_FIND_PROTOCOLIE_BY_ID(S1AP_HandoverRequestAcknowledgeIEs_t, ie, container, S1AP_ProtocolIE_ID_id_E_RABFailedToSetupListHOReqAck, true);
+  S1AP_FIND_PROTOCOLIE_BY_ID(S1AP_HandoverRequestAcknowledgeIEs_t, ie, container, S1AP_ProtocolIE_ID_id_Target_ToSource_TransparentContainer, true);
 	const S1AP_Target_ToSource_TransparentContainer_t	 * const target_to_source_transparent_container = &ie->value.choice.Target_ToSource_TransparentContainer;
 
   S1AP_HANDOVER_REQUEST_ACKNOWLEDGE (message_p).target_to_source_eutran_container = blk2bstr((void*)target_to_source_transparent_container->buf,
@@ -2079,7 +1987,7 @@ s1ap_mme_handle_handover_resource_allocation_failure(
   container = &pdu->choice.unsuccessfulOutcome.value.choice.HandoverFailure;
 
   S1AP_FIND_PROTOCOLIE_BY_ID(S1AP_HandoverFailureIEs_t, ie, container,
-                             S1AP_ProtocolIE_ID_id_SourceMME_UE_S1AP_ID, true);
+                             S1AP_ProtocolIE_ID_id_MME_UE_S1AP_ID, true);
   mme_ue_s1ap_id = ie->value.choice.MME_UE_S1AP_ID;
 
 
@@ -2175,7 +2083,7 @@ s1ap_mme_handle_enb_status_transfer(
   container = &pdu->choice.initiatingMessage.value.choice.ENBStatusTransfer;
 
   S1AP_FIND_PROTOCOLIE_BY_ID(S1AP_ENBStatusTransferIEs_t, ie, container,
-                             S1AP_ProtocolIE_ID_id_SourceMME_UE_S1AP_ID, true);
+                             S1AP_ProtocolIE_ID_id_MME_UE_S1AP_ID, true);
   mme_ue_s1ap_id = ie->value.choice.MME_UE_S1AP_ID;
 
   S1AP_FIND_PROTOCOLIE_BY_ID(S1AP_ENBStatusTransferIEs_t, ie, container,
@@ -2205,27 +2113,28 @@ s1ap_mme_handle_enb_status_transfer(
   enb_status_transfer_p->enb_ue_s1ap_id = ue_ref_p->enb_ue_s1ap_id;
 
   /** Set the E-UTRAN container. The S1AP octet string should be purged in the outer method. */
+
+  enb_status_transfer_p->status_transfer_bearer_list = calloc(1, sizeof(status_transfer_bearer_list_t));
+  // Mandatory
   S1AP_FIND_PROTOCOLIE_BY_ID(S1AP_ENBStatusTransferIEs_t, ie, container, S1AP_ProtocolIE_ID_id_eNB_StatusTransfer_TransparentContainer, true);
-	//const S1AP_ENB_StatusTransfer_TransparentContainer_t	* const  enb_status_transfer_transparent_container = &ie->value.choice.ENB_StatusTransfer_TransparentContainer;
-  //const S1AP_Bearers_SubjectToStatusTransfer_ItemIEs_t  * const  bearers_subject_to_status_transfer_item_ies =
-  //                     (const S1AP_Bearers_SubjectToStatusTransfer_ItemIEs_t  * const)&enb_status_transfer_transparent_container->bearers_SubjectToStatusTransferList.list.array[0];
+  const S1AP_ENB_StatusTransfer_TransparentContainer_t	 * const enb_status_transfer_transparent_container = &ie->value.choice.ENB_StatusTransfer_TransparentContainer;
 
-#warning TODO S1AP_Bearers_SubjectToStatusTransfer_ItemIEs_t
-/*
-typedef struct S1AP_Bearers_SubjectToStatusTransfer_Item {
-	S1AP_E_RAB_ID_t	 e_RAB_ID;
-	S1AP_COUNTvalue_t	 uL_COUNTvalue;
-	S1AP_COUNTvalue_t	 dL_COUNTvalue;
-	S1AP_ReceiveStatusofULPDCPSDUs_t	*receiveStatusofULPDCPSDUs;	// OPTIONAL
-	struct S1AP_ProtocolExtensionContainer	*iE_Extensions;	// OPTIONAL
-} S1AP_Bearers_SubjectToStatusTransfer_Item_t;*/
+  enb_status_transfer_p->status_transfer_bearer_list->num_bearers = enb_status_transfer_transparent_container->bearers_SubjectToStatusTransferList.list.count;
 
-  //  enb_status_transfer_p->status_transfer_bearer_list = calloc(1, sizeof(status_transfer_bearer_list_t));
-  //for(int i = 0; i < enbStatusTransfer_p->eNB_StatusTransfer_TransparentContainer.bearers_SubjectToStatusTransferList.list.count; i++) {
-	//  enb_status_transfer_p->status_transfer_bearer_list->bearerStatusTransferList_buffer[i] = blk2bstr(enbStatusTransfer_p->eNB_StatusTransfer_TransparentContainer.bearers_SubjectToStatusTransferList.list.array[i]->value.buf,
-	//        enbStatusTransfer_p->eNB_StatusTransfer_TransparentContainer.bearers_SubjectToStatusTransferList.list.array[i]->value.size);
-	//  enb_status_transfer_p->status_transfer_bearer_list->num_bearers++;
-  //}
+  for(int i = 0; i < enb_status_transfer_transparent_container->bearers_SubjectToStatusTransferList.list.count; i++) {
+	  const S1AP_Bearers_SubjectToStatusTransfer_ItemIEs_t  * const  bearers_subject_to_status_transfer_item_ies =
+	                       (const S1AP_Bearers_SubjectToStatusTransfer_ItemIEs_t  * const)enb_status_transfer_transparent_container->bearers_SubjectToStatusTransferList.list.array[i];
+	  enb_status_transfer_p->status_transfer_bearer_list->bearerStatusTransferList[i].bsc_ul.hfn_count  = bearers_subject_to_status_transfer_item_ies->value.choice.Bearers_SubjectToStatusTransfer_Item.uL_COUNTvalue.hFN;
+	  enb_status_transfer_p->status_transfer_bearer_list->bearerStatusTransferList[i].bsc_ul.pdcp_count = bearers_subject_to_status_transfer_item_ies->value.choice.Bearers_SubjectToStatusTransfer_Item.uL_COUNTvalue.pDCP_SN;
+	  enb_status_transfer_p->status_transfer_bearer_list->bearerStatusTransferList[i].bsc_dl.hfn_count  = bearers_subject_to_status_transfer_item_ies->value.choice.Bearers_SubjectToStatusTransfer_Item.dL_COUNTvalue.hFN;
+	  enb_status_transfer_p->status_transfer_bearer_list->bearerStatusTransferList[i].bsc_dl.pdcp_count = bearers_subject_to_status_transfer_item_ies->value.choice.Bearers_SubjectToStatusTransfer_Item.dL_COUNTvalue.pDCP_SN;
+	  enb_status_transfer_p->status_transfer_bearer_list->bearerStatusTransferList[i].ebi = bearers_subject_to_status_transfer_item_ies->value.choice.Bearers_SubjectToStatusTransfer_Item.e_RAB_ID;
+	  if(bearers_subject_to_status_transfer_item_ies->value.choice.Bearers_SubjectToStatusTransfer_Item.receiveStatusofULPDCPSDUs){
+		  OAILOG_WARNING(LOG_S1AP, "ENB_STATUS Transfer Bearer Item optionals not decoded!\n");
+//		  enb_status_transfer_p->status_transfer_bearer_list->bearerStatusTransferList[i].receiveStatusofULPDCPSDU = blk2bstr(bearers_subject_to_status_transfer_item_ies->value.choice.Bearers_SubjectToStatusTransfer_Item.receiveStatusofULPDCPSDUs->buf,
+//				  bearers_subject_to_status_transfer_item_ies->value.choice.Bearers_SubjectToStatusTransfer_Item.receiveStatusofULPDCPSDUs->size);
+	  }
+  }
 
   /** Assuming that the OCTET-STRING will be freed automatically. */
   itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
@@ -2454,7 +2363,6 @@ s1ap_mme_handle_erab_setup_response (
   // eNB UE S1AP ID is limited to 24 bits
   enb_ue_s1ap_id = (enb_ue_s1ap_id_t) (ie->value.choice.ENB_UE_S1AP_ID & ENB_UE_S1AP_ID_MASK);
 
-
   if ((ue_ref_p = s1ap_is_ue_mme_id_in_list (mme_ue_s1ap_id)) == NULL) {
     OAILOG_DEBUG (LOG_S1AP, "No UE is attached to this mme UE s1ap id: " MME_UE_S1AP_ID_FMT "\n", mme_ue_s1ap_id);
     OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
@@ -2474,15 +2382,17 @@ s1ap_mme_handle_erab_setup_response (
 
   S1AP_FIND_PROTOCOLIE_BY_ID(S1AP_E_RABSetupResponseIEs_t, ie, container,
       S1AP_ProtocolIE_ID_id_E_RABSetupListBearerSURes, false);
-  if (ie) {
+  if (ie && ie->value.choice.E_RABSetupListBearerSURes.list.size >= 1) {
     int num_erab = ie->value.choice.E_RABSetupListBearerSURes.list.count;
     for (int index = 0; index < num_erab; index++) {
-      S1AP_E_RABSetupItemBearerSURes_t * erab_setup_item =
-          (S1AP_E_RABSetupItemBearerSURes_t*)ie->value.choice.E_RABSetupListBearerSURes.list.array[index];
-      S1AP_E_RAB_SETUP_RSP (message_p).e_rab_setup_list.item[index].e_rab_id = erab_setup_item->e_RAB_ID;
+      S1AP_E_RABSetupItemBearerSUResIEs_t * erab_setup_item =
+          (S1AP_E_RABSetupItemBearerSUResIEs_t*)ie->value.choice.E_RABSetupListBearerSURes.list.array[index];
+      S1AP_E_RABSetupItemBearerSURes_t * e_rab_setup_item_bearer_su_res = &erab_setup_item->value.choice.E_RABSetupItemBearerSURes;
+
+      S1AP_E_RAB_SETUP_RSP (message_p).e_rab_setup_list.item[index].e_rab_id = e_rab_setup_item_bearer_su_res->e_RAB_ID;
       S1AP_E_RAB_SETUP_RSP (message_p).e_rab_setup_list.item[index].transport_layer_address =
-          blk2bstr(erab_setup_item->transportLayerAddress.buf, erab_setup_item->transportLayerAddress.size);
-      S1AP_E_RAB_SETUP_RSP (message_p).e_rab_setup_list.item[index].gtp_teid = htonl (*((uint32_t *) erab_setup_item->gTP_TEID.buf));
+          blk2bstr(e_rab_setup_item_bearer_su_res->transportLayerAddress.buf, e_rab_setup_item_bearer_su_res->transportLayerAddress.size);
+      S1AP_E_RAB_SETUP_RSP (message_p).e_rab_setup_list.item[index].gtp_teid = htonl (*((uint32_t *) e_rab_setup_item_bearer_su_res->gTP_TEID.buf));
       S1AP_E_RAB_SETUP_RSP (message_p).e_rab_setup_list.no_of_items += 1;
     }
   }
@@ -2553,7 +2463,7 @@ s1ap_mme_handle_erab_modify_response (
 
     int num_erab = e_rab_modify_list_bearer_mod_res->list.count;
     for (int index = 0; index < num_erab; index++) {
-      const S1AP_E_RABModifyItemBearerModResIEs_t * const e_rab_setup_item_bearer_su_res_ies = (S1AP_E_RABModifyItemBearerModResIEs_t*)&e_rab_modify_list_bearer_mod_res->list.array[index];
+      const S1AP_E_RABModifyItemBearerModResIEs_t * const e_rab_setup_item_bearer_su_res_ies = (S1AP_E_RABModifyItemBearerModResIEs_t*)e_rab_modify_list_bearer_mod_res->list.array[index];
       const S1AP_E_RABModifyItemBearerModRes_t * const erab_item = &e_rab_setup_item_bearer_su_res_ies->value.choice.E_RABModifyItemBearerModRes;
       S1AP_E_RAB_MODIFY_RSP (message_p).e_rab_modify_list.item[index].e_rab_id = erab_item->e_RAB_ID;
       S1AP_E_RAB_MODIFY_RSP (message_p).e_rab_modify_list.no_of_items += 1;
@@ -2776,13 +2686,14 @@ s1ap_mme_handle_error_ind_message (
 
   container = &pdu->choice.initiatingMessage.value.choice.ErrorIndication;
 
-  S1AP_FIND_PROTOCOLIE_BY_ID(S1AP_ErrorIndicationIEs_t, ie, container, S1AP_ProtocolIE_ID_id_MME_UE_S1AP_ID, true);
-  mme_ue_s1ap_id = ie->value.choice.MME_UE_S1AP_ID;
+  S1AP_FIND_PROTOCOLIE_BY_ID(S1AP_ErrorIndicationIEs_t, ie, container, S1AP_ProtocolIE_ID_id_MME_UE_S1AP_ID, false);
+  if(ie)
+	mme_ue_s1ap_id = ie->value.choice.MME_UE_S1AP_ID;
 
-  S1AP_FIND_PROTOCOLIE_BY_ID(S1AP_ErrorIndicationIEs_t, ie, container, S1AP_ProtocolIE_ID_id_eNB_UE_S1AP_ID, true);
+  S1AP_FIND_PROTOCOLIE_BY_ID(S1AP_ErrorIndicationIEs_t, ie, container, S1AP_ProtocolIE_ID_id_eNB_UE_S1AP_ID, false);
   // eNB UE S1AP ID is limited to 24 bits
-  enb_ue_s1ap_id = (enb_ue_s1ap_id_t) (ie->value.choice.ENB_UE_S1AP_ID & ENB_UE_S1AP_ID_MASK);
-
+  if(ie)
+    enb_ue_s1ap_id = (enb_ue_s1ap_id_t) (ie->value.choice.ENB_UE_S1AP_ID & ENB_UE_S1AP_ID_MASK);
 
   enb_description_t * enb_ref = s1ap_is_enb_assoc_id_in_list (assoc_id);
   DevAssert(enb_ref);
@@ -2807,40 +2718,44 @@ s1ap_mme_handle_error_ind_message (
   S1AP_ERROR_INDICATION (message_p).enb_id = enb_ref->enb_id;
 
   /** Choice. */
-  S1AP_FIND_PROTOCOLIE_BY_ID(S1AP_ErrorIndicationIEs_t, ie, container, S1AP_ProtocolIE_ID_id_Cause, true);
+  S1AP_FIND_PROTOCOLIE_BY_ID(S1AP_ErrorIndicationIEs_t, ie, container, S1AP_ProtocolIE_ID_id_Cause, false);
 
-  S1AP_Cause_PR cause_type = ie->value.choice.Cause.present;
+  if(ie){
+	  // todo: unused yet..
+	  S1AP_Cause_PR cause_type = ie->value.choice.Cause.present;
 
-  switch (cause_type)
-  {
-  case S1AP_Cause_PR_radioNetwork:
-    cause_value = ie->value.choice.Cause.choice.radioNetwork;
-    OAILOG_DEBUG (LOG_S1AP, "S1AP_ERROR_INDICATION with Cause_Type = Radio Network and Cause_Value = %ld\n", cause_value);
-    break;
+	  switch (cause_type)
+	  {
+	  case S1AP_Cause_PR_radioNetwork:
+	    cause_value = ie->value.choice.Cause.choice.radioNetwork;
+	    OAILOG_DEBUG (LOG_S1AP, "S1AP_ERROR_INDICATION with Cause_Type = Radio Network and Cause_Value = %ld\n", cause_value);
+	    break;
 
-  case S1AP_Cause_PR_transport:
-    cause_value = ie->value.choice.Cause.choice.transport;
-    OAILOG_DEBUG (LOG_S1AP, "S1AP_ERROR_INDICATION with Cause_Type = Transport and Cause_Value = %ld\n", cause_value);
-    break;
+	  case S1AP_Cause_PR_transport:
+	    cause_value = ie->value.choice.Cause.choice.transport;
+	    OAILOG_DEBUG (LOG_S1AP, "S1AP_ERROR_INDICATION with Cause_Type = Transport and Cause_Value = %ld\n", cause_value);
+	    break;
 
-  case S1AP_Cause_PR_nas:
-    cause_value = ie->value.choice.Cause.choice.nas;
-    OAILOG_DEBUG (LOG_S1AP, "S1AP_ERROR_INDICATION with Cause_Type = NAS and Cause_Value = %ld\n", cause_value);
-    break;
+	  case S1AP_Cause_PR_nas:
+	    cause_value = ie->value.choice.Cause.choice.nas;
+	    OAILOG_DEBUG (LOG_S1AP, "S1AP_ERROR_INDICATION with Cause_Type = NAS and Cause_Value = %ld\n", cause_value);
+	    break;
 
-  case S1AP_Cause_PR_protocol:
-    cause_value = ie->value.choice.Cause.choice.protocol;
-    OAILOG_DEBUG (LOG_S1AP, "S1AP_ERROR_INDICATION with Cause_Type = Protocol and Cause_Value = %ld\n", cause_value);
-    break;
+	  case S1AP_Cause_PR_protocol:
+	    cause_value = ie->value.choice.Cause.choice.protocol;
+	    OAILOG_DEBUG (LOG_S1AP, "S1AP_ERROR_INDICATION with Cause_Type = Protocol and Cause_Value = %ld\n", cause_value);
+	    break;
 
-  case S1AP_Cause_PR_misc:
-    cause_value = ie->value.choice.Cause.choice.misc;
-    OAILOG_DEBUG (LOG_S1AP, "S1AP_ERROR_INDICATION with Cause_Type = MISC and Cause_Value = %ld\n", cause_value);
-    break;
+	  case S1AP_Cause_PR_misc:
+	    cause_value = ie->value.choice.Cause.choice.misc;
+	    OAILOG_DEBUG (LOG_S1AP, "S1AP_ERROR_INDICATION with Cause_Type = MISC and Cause_Value = %ld\n", cause_value);
+	    break;
 
-  default:
-    OAILOG_ERROR (LOG_S1AP, "S1AP_ERROR_INDICATION with Invalid Cause_Type = %d\n", cause_type);
-    OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
+	  default:
+	    OAILOG_ERROR (LOG_S1AP, "S1AP_ERROR_INDICATION with Invalid Cause_Type = %d\n", cause_type);
+	    OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
+	  }
+
   }
 
   /**
@@ -2856,72 +2771,74 @@ s1ap_mme_handle_error_ind_message (
 
 //------------------------------------------------------------------------------
 int s1ap_mme_handle_enb_configuration_transfer (const sctp_assoc_id_t assoc_id,
-        const sctp_stream_id_t stream, S1AP_S1AP_PDU_t *pdu){
-#define TODO_S1AP 1
-#if TODO_S1AP
-  return RETURNerror;
-#else
-	S1AP_ENBConfigurationTransferIEs_t         *enbConfigurationTransfer_p = NULL;
+		const sctp_stream_id_t stream, S1AP_S1AP_PDU_t *pdu){
 
-	MessageDef                               *message_p = NULL;
-	int                                       rc = RETURNok;
-    tai_t                                  	  target_tai;
-    tai_t                                  	  source_tai;
-    plmn_t 									  enb_id_plmn;
+  MessageDef                               *message_p = NULL;
+  int                                       rc = RETURNok;
+  tai_t                                  	target_tai;
+  tai_t                                  	source_tai;
+  plmn_t 									enb_id_plmn;
+  S1AP_ENBConfigurationTransfer_t		   *container = NULL;
+  S1AP_ENBConfigurationTransferIEs_t       *ie = NULL;
 
-	OAILOG_FUNC_IN (LOG_S1AP);
-	enbConfigurationTransfer_p= &message->msg.s1ap_ENBConfigurationTransferIEs;
+  OAILOG_FUNC_IN (LOG_S1AP);
+  // Check the reset type - partial_reset OR reset_all
+  container = &pdu->choice.initiatingMessage.value.choice.ENBConfigurationTransfer;
 
-	if(!(enbConfigurationTransfer_p->presenceMask & S1AP_ENBCONFIGURATIONTRANSFERIES_SONCONFIGURATIONTRANSFERECT_PRESENT)) {
-		OAILOG_ERROR(LOG_S1AP, "eNB configuration transfer currently only implementd for 4G. \n");
-		OAILOG_FUNC_RETURN (LOG_S1AP, rc);
-	}
+  S1AP_FIND_PROTOCOLIE_BY_ID(S1AP_ENBConfigurationTransferIEs_t, ie, container,
+		  S1AP_ProtocolIE_ID_id_SONConfigurationTransferECT, false);
+  if(!ie){
+	  // todo: LIONEL!!
+    OAILOG_ERROR(LOG_S1AP, "eNB configuration transfer currently only implementd for 4G. \n");
+    OAILOG_FUNC_RETURN (LOG_S1AP, rc);
+  }
+  S1AP_SONConfigurationTransfer_t * sonConfigurationTransfer = &ie->value.choice.SONConfigurationTransfer;
 
-	/** Get the target tai information. */
-	if(!enbConfigurationTransfer_p->sonConfigurationTransferECT.targeteNB_ID.global_ENB_ID.pLMNidentity.buf
-			|| !enbConfigurationTransfer_p->sonConfigurationTransferECT.targeteNB_ID.selected_TAI.tAC.buf
-			|| !enbConfigurationTransfer_p->sonConfigurationTransferECT.targeteNB_ID.global_ENB_ID.pLMNidentity.buf ){
-		OAILOG_ERROR(LOG_S1AP, "eNB configuration transfer message for has no target_tai or enb_id information. \n");
-	    OAILOG_FUNC_RETURN (LOG_S1AP, rc);
-	}
-	memset((void*)&target_tai, 0, sizeof(tai_t));
+  /** Get the target tai information. */
+  if(!sonConfigurationTransfer->targeteNB_ID.global_ENB_ID.pLMNidentity.buf
+		  || !sonConfigurationTransfer->targeteNB_ID.selected_TAI.tAC.buf
+		  || !sonConfigurationTransfer->targeteNB_ID.global_ENB_ID.pLMNidentity.buf ){
+	  OAILOG_ERROR(LOG_S1AP, "eNB configuration transfer message for has no target_tai or enb_id information. \n");
+	  OAILOG_FUNC_RETURN (LOG_S1AP, rc);
+  }
+  memset((void*)&target_tai, 0, sizeof(tai_t));
 
-	TBCD_TO_PLMN_T (&enbConfigurationTransfer_p->sonConfigurationTransferECT.targeteNB_ID.selected_TAI.pLMNidentity, &target_tai.plmn);
-	target_tai.tac = htons(*((uint16_t *) enbConfigurationTransfer_p->sonConfigurationTransferECT.targeteNB_ID.selected_TAI.tAC.buf));
+  TBCD_TO_PLMN_T (&sonConfigurationTransfer->targeteNB_ID.selected_TAI.pLMNidentity, &target_tai.plmn);
+  target_tai.tac = htons(*((uint16_t *) sonConfigurationTransfer->targeteNB_ID.selected_TAI.tAC.buf));
 
-	/** Get the source tai information. */
-	if(!enbConfigurationTransfer_p->sonConfigurationTransferECT.sourceeNB_ID.global_ENB_ID.pLMNidentity.buf
-			|| !enbConfigurationTransfer_p->sonConfigurationTransferECT.sourceeNB_ID.selected_TAI.tAC.buf
-			|| !enbConfigurationTransfer_p->sonConfigurationTransferECT.sourceeNB_ID.global_ENB_ID.pLMNidentity.buf ){
+  /** Get the source tai information. */
+  if(!sonConfigurationTransfer->sourceeNB_ID.global_ENB_ID.pLMNidentity.buf
+		  || !sonConfigurationTransfer->sourceeNB_ID.selected_TAI.tAC.buf
+			|| !sonConfigurationTransfer->sourceeNB_ID.global_ENB_ID.pLMNidentity.buf ){
 		OAILOG_ERROR(LOG_S1AP, "eNB configuration transfer message for has no source_tai or enb_id information. \n");
 	    OAILOG_FUNC_RETURN (LOG_S1AP, rc);
 	}
 	memset((void*)&source_tai, 0, sizeof(tai_t));
 
-	TBCD_TO_PLMN_T (&enbConfigurationTransfer_p->sonConfigurationTransferECT.sourceeNB_ID.selected_TAI.pLMNidentity, &source_tai.plmn);
-	source_tai.tac = htons(*((uint16_t *) enbConfigurationTransfer_p->sonConfigurationTransferECT.sourceeNB_ID.selected_TAI.tAC.buf));
+	TBCD_TO_PLMN_T (&sonConfigurationTransfer->sourceeNB_ID.selected_TAI.pLMNidentity, &source_tai.plmn);
+	source_tai.tac = htons(*((uint16_t *) sonConfigurationTransfer->sourceeNB_ID.selected_TAI.tAC.buf));
 
 	/** Target Global-ENB-ID. */
     ecgi_t target_global_enb_id = {0};
 	memset(&enb_id_plmn, 0, sizeof(plmn_t));
-	TBCD_TO_PLMN_T (&enbConfigurationTransfer_p->sonConfigurationTransferECT.targeteNB_ID.global_ENB_ID.pLMNidentity, &enb_id_plmn);
+	TBCD_TO_PLMN_T (&sonConfigurationTransfer->targeteNB_ID.global_ENB_ID.pLMNidentity, &enb_id_plmn);
 	target_global_enb_id.plmn = enb_id_plmn;
 
 	/** Source Global-ENB-ID. */
 	ecgi_t source_global_enb_id = {0};
 	memset(&enb_id_plmn, 0, sizeof(plmn_t));
-	TBCD_TO_PLMN_T (&enbConfigurationTransfer_p->sonConfigurationTransferECT.sourceeNB_ID.global_ENB_ID.pLMNidentity, &enb_id_plmn);
+	TBCD_TO_PLMN_T (&sonConfigurationTransfer->sourceeNB_ID.global_ENB_ID.pLMNidentity, &enb_id_plmn);
 	source_global_enb_id.plmn = enb_id_plmn;
 
 	// Macro eNB = 20 bits
 	/** Get the target enb id. */
 	uint32_t target_enb_id = 0;
 	target_type_t target_enb_type = 0;
-	if(enbConfigurationTransfer_p->sonConfigurationTransferECT.targeteNB_ID.global_ENB_ID.eNB_ID.present == S1AP_ENB_ID_PR_homeENB_ID){
+	if(sonConfigurationTransfer->targeteNB_ID.global_ENB_ID.eNB_ID.present == S1AP_ENB_ID_PR_homeENB_ID){
 		/** Target is a home eNB Id. */
 		// Home eNB ID = 28 bits
-		uint8_t *enb_id_buf = enbConfigurationTransfer_p->sonConfigurationTransferECT.targeteNB_ID.global_ENB_ID.eNB_ID.choice.homeENB_ID.buf;
-	    if (enbConfigurationTransfer_p->sonConfigurationTransferECT.targeteNB_ID.global_ENB_ID.eNB_ID.choice.homeENB_ID.size != 28) {
+		uint8_t *enb_id_buf = sonConfigurationTransfer->targeteNB_ID.global_ENB_ID.eNB_ID.choice.homeENB_ID.buf;
+	    if (sonConfigurationTransfer->targeteNB_ID.global_ENB_ID.eNB_ID.choice.homeENB_ID.size != 28) {
 	      //TODO: handle case were size != 28 -> notify ? reject ?
 	    }
 	    target_enb_id = (enb_id_buf[0] << 20) + (enb_id_buf[1] << 12) + (enb_id_buf[2] << 4) + ((enb_id_buf[3] & 0xf0) >> 4);
@@ -2929,8 +2846,8 @@ int s1ap_mme_handle_enb_configuration_transfer (const sctp_assoc_id_t assoc_id,
 	    //    OAILOG_MESSAGE_ADD (context, "home eNB id: %07x", target_enb_id);
 	}else{
 		/** Target is a macro eNB Id (Macro eNB = 20 bits). */
-	    uint8_t *enb_id_buf = enbConfigurationTransfer_p->sonConfigurationTransferECT.targeteNB_ID.global_ENB_ID.eNB_ID.choice.macroENB_ID.buf;
-	    if (enbConfigurationTransfer_p->sonConfigurationTransferECT.targeteNB_ID.global_ENB_ID.eNB_ID.choice.macroENB_ID.size != 20) {
+	    uint8_t *enb_id_buf = sonConfigurationTransfer->targeteNB_ID.global_ENB_ID.eNB_ID.choice.macroENB_ID.buf;
+	    if (sonConfigurationTransfer->targeteNB_ID.global_ENB_ID.eNB_ID.choice.macroENB_ID.size != 20) {
 	      //TODO: handle case were size != 28 -> notify ? reject ?
 	    }
 	    target_enb_id = (enb_id_buf[0] << 12) + (enb_id_buf[1] << 4) + ((enb_id_buf[2] & 0xf0) >> 4);
@@ -2942,11 +2859,11 @@ int s1ap_mme_handle_enb_configuration_transfer (const sctp_assoc_id_t assoc_id,
 	/** Get the source enb id. */
 	uint32_t source_enb_id = 0;
 	target_type_t source_enb_type = 0;
-	if(enbConfigurationTransfer_p->sonConfigurationTransferECT.sourceeNB_ID.global_ENB_ID.eNB_ID.present == S1AP_ENB_ID_PR_homeENB_ID){
+	if(sonConfigurationTransfer->sourceeNB_ID.global_ENB_ID.eNB_ID.present == S1AP_ENB_ID_PR_homeENB_ID){
 		/** Source is a home eNB Id. */
 		// Home eNB ID = 28 bits
-		uint8_t *enb_id_buf = enbConfigurationTransfer_p->sonConfigurationTransferECT.sourceeNB_ID.global_ENB_ID.eNB_ID.choice.homeENB_ID.buf;
-	    if (enbConfigurationTransfer_p->sonConfigurationTransferECT.sourceeNB_ID.global_ENB_ID.eNB_ID.choice.homeENB_ID.size != 28) {
+		uint8_t *enb_id_buf = sonConfigurationTransfer->sourceeNB_ID.global_ENB_ID.eNB_ID.choice.homeENB_ID.buf;
+	    if (sonConfigurationTransfer->sourceeNB_ID.global_ENB_ID.eNB_ID.choice.homeENB_ID.size != 28) {
 	      //TODO: handle case were size != 28 -> notify ? reject ?
 	    }
 	    source_enb_id = (enb_id_buf[0] << 20) + (enb_id_buf[1] << 12) + (enb_id_buf[2] << 4) + ((enb_id_buf[3] & 0xf0) >> 4);
@@ -2954,8 +2871,8 @@ int s1ap_mme_handle_enb_configuration_transfer (const sctp_assoc_id_t assoc_id,
 	    //    OAILOG_MESSAGE_ADD (context, "home eNB id: %07x", target_enb_id);
 	}else{
 		/** Source is a macro eNB Id (Macro eNB = 20 bits). */
-	    uint8_t *enb_id_buf = enbConfigurationTransfer_p->sonConfigurationTransferECT.sourceeNB_ID.global_ENB_ID.eNB_ID.choice.macroENB_ID.buf;
-	    if (enbConfigurationTransfer_p->sonConfigurationTransferECT.sourceeNB_ID.global_ENB_ID.eNB_ID.choice.macroENB_ID.size != 20) {
+	    uint8_t *enb_id_buf = sonConfigurationTransfer->sourceeNB_ID.global_ENB_ID.eNB_ID.choice.macroENB_ID.buf;
+	    if (sonConfigurationTransfer->sourceeNB_ID.global_ENB_ID.eNB_ID.choice.macroENB_ID.size != 20) {
 	      //TODO: handle case were size != 28 -> notify ? reject ?
 	    }
 	    source_enb_id = (enb_id_buf[0] << 12) + (enb_id_buf[1] << 4) + ((enb_id_buf[2] & 0xf0) >> 4);
@@ -2968,15 +2885,15 @@ int s1ap_mme_handle_enb_configuration_transfer (const sctp_assoc_id_t assoc_id,
 	OAILOG_DEBUG(LOG_S1AP, "Successfully decoded sourceID IE in ENB Configuration Transfer. \n");
 
 	enb_conf_reply_t *conf_reply = NULL;
-	if(enbConfigurationTransfer_p->sonConfigurationTransferECT.sONInformation.present == S1AP_SONInformation_PR_NOTHING) { // todo: check.. recompile..
-		OAILOG_WARNING(LOG_S1AP, "Received invalid S1AP SON information type %d. \n", enbConfigurationTransfer_p->sonConfigurationTransferECT.sONInformation.present);
+	if(sonConfigurationTransfer->sONInformation.present == S1AP_SONInformation_PR_NOTHING) { // todo: check.. recompile..
+		OAILOG_WARNING(LOG_S1AP, "Received invalid S1AP SON information type %d. \n", sonConfigurationTransfer->sONInformation.present);
 		OAILOG_FUNC_RETURN (LOG_S1AP, RETURNok);
-	} else if(enbConfigurationTransfer_p->sonConfigurationTransferECT.sONInformation.present == S1AP_SONInformation_PR_sONInformationRequest) {
+	} else if(sonConfigurationTransfer->sONInformation.present == S1AP_SONInformation_PR_sONInformationRequest) {
 		OAILOG_DEBUG(LOG_S1AP, "Received S1AP SON information request. \n");
-	} else if(enbConfigurationTransfer_p->sonConfigurationTransferECT.sONInformation.present == S1AP_SONInformation_PR_sONInformationReply) {
+	} else if(sonConfigurationTransfer->sONInformation.present == S1AP_SONInformation_PR_sONInformationReply) {
 		OAILOG_DEBUG(LOG_S1AP, "Received S1AP SON information reply. \n");
 		/** Create a bstring array for the iterated message. */
-		struct S1AP_X2TNLConfigurationInfo	*x2TNLConfigurationInfo = enbConfigurationTransfer_p->sonConfigurationTransferECT.sONInformation.choice.sONInformationReply.x2TNLConfigurationInfo;
+		struct S1AP_X2TNLConfigurationInfo	*x2TNLConfigurationInfo = sonConfigurationTransfer->sONInformation.choice.sONInformationReply.x2TNLConfigurationInfo;
 		if(x2TNLConfigurationInfo){
 			conf_reply = calloc(1, sizeof(enb_conf_reply_t));
 			conf_reply->reply_count = x2TNLConfigurationInfo->eNBX2TransportLayerAddresses.list.count;
@@ -2994,7 +2911,7 @@ int s1ap_mme_handle_enb_configuration_transfer (const sctp_assoc_id_t assoc_id,
 			OAILOG_WARNING(LOG_S1AP, "No X2 reply object is received in the eNB status reply.\n");
 		}
 	} else {
-		OAILOG_ERROR(LOG_S1AP, "Received invalid S1AP SON information type %d. \n", enbConfigurationTransfer_p->sonConfigurationTransferECT.sONInformation.choice);
+		OAILOG_ERROR(LOG_S1AP, "Received invalid S1AP SON information type %d. \n", sonConfigurationTransfer->sONInformation.choice);
 		OAILOG_FUNC_RETURN (LOG_S1AP, RETURNok);
 	}
 
@@ -3021,7 +2938,6 @@ int s1ap_mme_handle_enb_configuration_transfer (const sctp_assoc_id_t assoc_id,
 	 */
 	rc =  itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
 	OAILOG_FUNC_RETURN (LOG_S1AP, rc);
-#endif
 }
 
 //------------------------------------------------------------------------------
@@ -3029,19 +2945,18 @@ int
 s1ap_mme_handle_enb_reset (
      const sctp_assoc_id_t assoc_id,
      const sctp_stream_id_t stream,
-     S1AP_S1AP_PDU_t *message)
+     S1AP_S1AP_PDU_t *pdu)
 {
-#if TODO_S1AP
-  return RETURNerror;
-#else
   S1AP_ResetIEs_t                         *enb_reset_p = NULL;
   MessageDef                              *message_p  = NULL;
   ue_description_t                        *ue_ref_p = NULL;
   enb_description_t                       *enb_association = NULL;
-  s1ap_reset_type_t                       s1ap_reset_type;
-  S1AP_UE_associatedLogicalS1_ConnectionItem_t* s1_sig_conn_id_p = NULL;
+  s1ap_reset_type_t                        s1ap_reset_type;
+  S1AP_Reset_t		          		     *container = NULL;
+  S1AP_ResetIEs_t                 		 *ie = NULL;
+
   arg_s1ap_construct_enb_reset_req_t      arg = {0};
-  uint32_t                                i = 0;
+  uint32_t                                item = 0;
   int                                     rc = RETURNok;
 
   OAILOG_FUNC_IN (LOG_S1AP);
@@ -3063,19 +2978,23 @@ s1ap_mme_handle_enb_reset (
     OAILOG_FUNC_RETURN (LOG_S1AP, RETURNok);
   }
   // Check the reset type - partial_reset OR reset_all
-  enb_reset_p = &message->msg.s1ap_ResetIEs;
-  switch (enb_reset_p->resetType.present) {
+  container = &pdu->choice.initiatingMessage.value.choice.Reset;
 
-  case S1AP_ResetType_PR_s1_Interface:
-      s1ap_reset_type = RESET_ALL;
-    break;
-  case S1AP_ResetType_PR_partOfS1_Interface:
-      s1ap_reset_type = RESET_PARTIAL;
-    break;
-  default:
-      OAILOG_ERROR (LOG_S1AP, "Reset Request from eNB  with Invalid reset_type = %d\n", enb_reset_p->resetType.present);
-      // TBD - Here MME should send Error Indication as it is abnormal scenario.
-      OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
+  S1AP_FIND_PROTOCOLIE_BY_ID(S1AP_ResetIEs_t, ie, container,
+                           S1AP_ProtocolIE_ID_id_ResetType, true);
+  S1AP_ResetType_t * resetType = &ie->value.choice.ResetType;
+
+  switch (resetType->present){
+	case S1AP_ResetType_PR_s1_Interface:
+	  s1ap_reset_type = RESET_ALL;
+	break;
+	case S1AP_ResetType_PR_partOfS1_Interface:
+	  s1ap_reset_type = RESET_PARTIAL;
+	break;
+	default:
+	  OAILOG_ERROR (LOG_S1AP, "Reset Request from eNB  with Invalid reset_type = %d\n", resetType->present);
+	  // TBD - Here MME should send Error Indication as it is abnormal scenario.
+	  OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
   }
   /** Create a cleared array of identifiers. */
   int num_ue_assoc = 0;
@@ -3087,84 +3006,76 @@ s1ap_mme_handle_enb_reset (
 	    OAILOG_INFO (LOG_S1AP, "No UEs is connected.Ignoring ENB Initiated Reset.eNB Id = %d\n", enb_association->enb_id);
 	    OAILOG_FUNC_RETURN (LOG_S1AP, RETURNok);
 	  }
-	  num_ue_assoc = enb_reset_p->resetType.choice.partOfS1_Interface.list.count;
+	  num_ue_assoc = resetType->choice.partOfS1_Interface.list.count;
 	  s1_sig_conn_id_t ue_to_reset_list[num_ue_assoc]; /**< Create a stacked array. */
 	  memset(ue_to_reset_list, 0, sizeof(ue_to_reset_list));
-	  for (i = 0; i < num_ue_assoc; i++) {
+	  for (item = 0; item < num_ue_assoc; item++) {
 		  /** Decode Protocol IE here. */
-		  if (enb_reset_p->resetType.choice.partOfS1_Interface.list.array[i]->id != S1AP_ProtocolIE_ID_id_UE_associatedLogicalS1_ConnectionItem) {
-			  OAILOG_ERROR (LOG_S1AP, "Incorrect element in Bearers_SubjectToStatusTransferList: %d\n", enb_reset_p->resetType.choice.partOfS1_Interface.list.array[i]->id);
-			  OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
-		  }
-
-		  S1AP_UE_associatedLogicalS1_ConnectionItem_t * s1_sig_conn_id_p =  NULL;
-		  S1AP_IE_t *ie_p = enb_reset_p->resetType.choice.partOfS1_Interface.list.array[i];
-		  int tempDecoded = ANY_to_type_aper(&ie_p->value, &asn_DEF_S1AP_UE_associatedLogicalS1_ConnectionItem, (void**)&s1_sig_conn_id_p);
-		  if (tempDecoded < 0 || s1_sig_conn_id_p == NULL) {
-	        	OAILOG_ERROR (LOG_S1AP, "Decoding of IE associated logical s1 connection item failed.\n");
-	        	if (s1_sig_conn_id_p)
-	        		ASN_STRUCT_FREE(asn_DEF_S1AP_UE_associatedLogicalS1_ConnectionItem, s1_sig_conn_id_p);
-	            OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
-		  }
-
-		  if(!s1_sig_conn_id_p) {
+//		  if (resetType->choice.partOfS1_Interface.list.array[i]->id != S1AP_ProtocolIE_ID_id_UE_associatedLogicalS1_ConnectionItem) {
+//			  OAILOG_ERROR (LOG_S1AP, "Incorrect element in Bearers_SubjectToStatusTransferList: %d\n", resetType->choice.partOfS1_Interface.list.array[i]->id);
+//			  OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
+//		  }
+		  S1AP_UE_associatedLogicalS1_ConnectionItemResAck_t *s1_sig_conn_p = (S1AP_UE_associatedLogicalS1_ConnectionItemResAck_t*)
+		         ie->value.choice.ResetType.choice.partOfS1_Interface.list.array[item];
+		  if(!s1_sig_conn_p) {
 			  OAILOG_ERROR (LOG_S1AP, "No logical S1 connection item could be found for the partial connection. "
 					  "Ignoring the received partial reset request. \n");
 			  OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
 		  }
 
-		  if (s1_sig_conn_id_p->mME_UE_S1AP_ID != NULL) {
-			  mme_ue_s1ap_id_t mme_ue_s1ap_id = (mme_ue_s1ap_id_t) *(s1_sig_conn_id_p->mME_UE_S1AP_ID);
+		  S1AP_UE_associatedLogicalS1_ConnectionItem_t * s1_sig_conn_item = &s1_sig_conn_p->value.choice.UE_associatedLogicalS1_ConnectionItem;
+		  if (s1_sig_conn_item->mME_UE_S1AP_ID != NULL) {
+			  mme_ue_s1ap_id_t mme_ue_s1ap_id = (mme_ue_s1ap_id_t) *(s1_sig_conn_item->mME_UE_S1AP_ID);
 			  if ((ue_ref_p = s1ap_is_ue_mme_id_in_list (mme_ue_s1ap_id)) != NULL) {
-				  if (s1_sig_conn_id_p->eNB_UE_S1AP_ID != NULL) {
-					  enb_ue_s1ap_id_t enb_ue_s1ap_id = (enb_ue_s1ap_id_t) *(s1_sig_conn_id_p->eNB_UE_S1AP_ID);
+				  if (s1_sig_conn_item->eNB_UE_S1AP_ID != NULL) {
+					  enb_ue_s1ap_id_t enb_ue_s1ap_id = (enb_ue_s1ap_id_t) *(s1_sig_conn_item->eNB_UE_S1AP_ID);
 					  enb_ue_s1ap_id &= ENB_UE_S1AP_ID_MASK;
 					  if (ue_ref_p->enb_ue_s1ap_id == enb_ue_s1ap_id) {
-						  ue_to_reset_list[i].mme_ue_s1ap_id = &(ue_ref_p->mme_ue_s1ap_id);
-						  ue_to_reset_list[i].enb_ue_s1ap_id = (enb_ue_s1ap_id_t*)ue_ref_p;
+						  ue_to_reset_list[item].mme_ue_s1ap_id = &(ue_ref_p->mme_ue_s1ap_id);
+						  ue_to_reset_list[item].enb_ue_s1ap_id = (enb_ue_s1ap_id_t*)ue_ref_p;
 					  } else {
 						  // mismatch in enb_ue_s1ap_id sent by eNB and stored in S1AP ue context in EPC. Abnormal case.
-						  ue_to_reset_list[i].mme_ue_s1ap_id = NULL;
-						  ue_to_reset_list[i].enb_ue_s1ap_id = NULL;
+						  ue_to_reset_list[item].mme_ue_s1ap_id = NULL;
+						  ue_to_reset_list[item].enb_ue_s1ap_id = NULL;
 						  OAILOG_ERROR (LOG_S1AP, "Partial Reset Request:enb_ue_s1ap_id mismatch between id %d sent by eNB and id %d stored in epc for mme_ue_s1ap_id %d \n",
 								  enb_ue_s1ap_id, ue_ref_p->enb_ue_s1ap_id, mme_ue_s1ap_id);
 					  }
 				  } else {
-					  ue_to_reset_list[i].mme_ue_s1ap_id = &(ue_ref_p->mme_ue_s1ap_id);
-					  ue_to_reset_list[i].enb_ue_s1ap_id = NULL;
+					  ue_to_reset_list[item].mme_ue_s1ap_id = &(ue_ref_p->mme_ue_s1ap_id);
+					  ue_to_reset_list[item].enb_ue_s1ap_id = NULL;
 				  }
 			  } else {
 				  OAILOG_ERROR (LOG_S1AP, "Partial Reset Request - No UE context found for mme_ue_s1ap_id %d \n", mme_ue_s1ap_id);
 				  // TBD - Here MME should send Error Indication as it is abnormal scenario.
-				  ASN_STRUCT_FREE(asn_DEF_S1AP_UE_associatedLogicalS1_ConnectionItem, s1_sig_conn_id_p);
+				 // todo: test leak ASN_STRUCT_FREE(asn_DEF_S1AP_UE_associatedLogicalS1_ConnectionItem, s1_sig_conn_id_p);
 				  OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
 			  }
 		  } else {
-			  if (s1_sig_conn_id_p->eNB_UE_S1AP_ID != NULL) {
-				  enb_ue_s1ap_id_t enb_ue_s1ap_id = (enb_ue_s1ap_id_t) *(s1_sig_conn_id_p->eNB_UE_S1AP_ID);
+			  if (s1_sig_conn_item->eNB_UE_S1AP_ID != NULL) {
+				  enb_ue_s1ap_id_t enb_ue_s1ap_id = (enb_ue_s1ap_id_t) *(s1_sig_conn_item->eNB_UE_S1AP_ID);
 				  enb_ue_s1ap_id &= ENB_UE_S1AP_ID_MASK;
 				  if ((ue_ref_p = s1ap_is_ue_enb_id_in_list (enb_association, enb_ue_s1ap_id)) != NULL) {
-					  ue_to_reset_list[i].enb_ue_s1ap_id = (enb_ue_s1ap_id_t*)ue_ref_p;
+					  ue_to_reset_list[item].enb_ue_s1ap_id = (enb_ue_s1ap_id_t*)ue_ref_p;
 					  if (ue_ref_p->mme_ue_s1ap_id != INVALID_MME_UE_S1AP_ID) {
-						  ue_to_reset_list[i].mme_ue_s1ap_id = &(ue_ref_p->mme_ue_s1ap_id);
+						  ue_to_reset_list[item].mme_ue_s1ap_id = &(ue_ref_p->mme_ue_s1ap_id);
 					  } else {
-						  ue_to_reset_list[i].mme_ue_s1ap_id = NULL;
+						  ue_to_reset_list[item].mme_ue_s1ap_id = NULL;
 					  }
 				  } else {
 					  OAILOG_ERROR (LOG_S1AP, "Partial Reset Request without any valid S1 signaling connection.Ignoring it \n");
 					  // TBD - Here MME should send Error Indication as it is abnormal scenario.
-					  ASN_STRUCT_FREE(asn_DEF_S1AP_UE_associatedLogicalS1_ConnectionItem, s1_sig_conn_id_p);
+					  // todo: test leak  ASN_STRUCT_FREE(asn_DEF_S1AP_UE_associatedLogicalS1_ConnectionItem, s1_sig_conn_id_p);
 					  OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
 	          }
 	        } else {
 	          OAILOG_ERROR (LOG_S1AP, "Partial Reset Request without any valid S1 signaling connection.Ignoring it.\n");
 	          // TBD - Here MME should send Error Indication as it is abnormal scenario.
-	          ASN_STRUCT_FREE(asn_DEF_S1AP_UE_associatedLogicalS1_ConnectionItem, s1_sig_conn_id_p);
+	          // todo: test leak ASN_STRUCT_FREE(asn_DEF_S1AP_UE_associatedLogicalS1_ConnectionItem, s1_sig_conn_id_p);
 	          OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
 	        }
 	      }
-		  if(s1_sig_conn_id_p)
-			  ASN_STRUCT_FREE(asn_DEF_S1AP_UE_associatedLogicalS1_ConnectionItem, s1_sig_conn_id_p);
+//		  if(s1_sig_conn_id_p)
+			  // todo: test leak   ASN_STRUCT_FREE(asn_DEF_S1AP_UE_associatedLogicalS1_ConnectionItem, s1_sig_conn_id_p);
 	  }
       OAILOG_INFO (LOG_S1AP, "After iterating all %d partial UEs, informing the MME_APP layer for the received Partial Reset Request.\n", num_ue_assoc);
 	  message_p = itti_alloc_new_message (TASK_S1AP, S1AP_ENB_INITIATED_RESET_REQ);
@@ -3195,7 +3106,6 @@ s1ap_mme_handle_enb_reset (
   DevAssert(S1AP_ENB_INITIATED_RESET_REQ (message_p).ue_to_reset_list != NULL);
   rc =  itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_RETURN (LOG_S1AP, rc);
-#endif
 }
 
 //------------------------------------------------------------------------------
@@ -3203,82 +3113,66 @@ int
 s1ap_handle_enb_initiated_reset_ack (
   const itti_s1ap_enb_initiated_reset_ack_t * const enb_reset_ack_p)
 {
-#if TODO_S1AP
-  return RETURNerror;
-#else
   uint8_t                                *buffer = NULL;
   uint32_t                                length = 0;
-  s1ap_message                            message = {0};
-
+  S1AP_S1AP_PDU_t                         pdu;
   /** Reset Acknowledgment. */
-  S1AP_ResetAcknowledgeIEs_t * s1ap_ResetAcknowledgeIEs_p = NULL;
-  MessagesIds                             message_id = MESSAGES_ID_MAX;
+  S1AP_ResetAcknowledge_t				 *out;
+  S1AP_ResetAcknowledgeIEs_t             *ie = NULL;
   int                                     rc = RETURNok;
 
   OAILOG_FUNC_IN (LOG_S1AP);
 
-  message.procedureCode = S1AP_ProcedureCode_id_Reset;
-  message.direction = S1AP_PDU_PR_successfulOutcome;
-  s1ap_ResetAcknowledgeIEs_p = &message.msg.s1ap_ResetAcknowledgeIEs;
-  s1ap_ResetAcknowledgeIEs_p->presenceMask = 0;
-
-  S1AP_ResetAcknowledge_t                 s1ResetAck;
-  S1AP_ResetAcknowledge_t                 *s1ResetAck_p = &s1ResetAck;
-  memset (s1ResetAck_p, 0, sizeof (S1AP_ResetAcknowledge_t));
-  S1AP_IE_t                               *resetAckItem[enb_reset_ack_p->num_ue];
-  memset(resetAckItem, 0, enb_reset_ack_p->num_ue * sizeof(uintptr_t));
+  memset(&pdu, 0, sizeof(pdu));
+  pdu.present = S1AP_S1AP_PDU_PR_successfulOutcome;
+  pdu.choice.successfulOutcome.procedureCode = S1AP_ProcedureCode_id_Reset;
+  pdu.choice.successfulOutcome.criticality = S1AP_Criticality_ignore;
+  pdu.choice.successfulOutcome.value.present = S1AP_SuccessfulOutcome__value_PR_ResetAcknowledge;
+  out = &pdu.choice.successfulOutcome.value.choice.ResetAcknowledge;
 
   if (enb_reset_ack_p->s1ap_reset_type == RESET_PARTIAL) {
     DevAssert(enb_reset_ack_p->num_ue > 0);
-    s1ap_ResetAcknowledgeIEs_p->presenceMask |= S1AP_RESETACKNOWLEDGEIES_UE_ASSOCIATEDLOGICALS1_CONNECTIONLISTRESACK_PRESENT;
-
+    /** Conn Item .*/
+    ie = (S1AP_ResetAcknowledgeIEs_t *)calloc(1, sizeof(S1AP_ResetAcknowledgeIEs_t));
+    ie->id = S1AP_ProtocolIE_ID_id_UE_associatedLogicalS1_ConnectionListResAck;
+    ie->criticality = S1AP_Criticality_ignore;
+    ie->value.present = S1AP_ResetAcknowledgeIEs__value_PR_UE_associatedLogicalS1_ConnectionListResAck;
+    ASN_SEQUENCE_ADD(&out->protocolIEs.list, ie);
+	/** MME UE S1AP ID. */
+    S1AP_UE_associatedLogicalS1_ConnectionListResAck_t * ie_p = &ie->value.choice.UE_associatedLogicalS1_ConnectionListResAck;
+    /** Allocate an item for each. */
     for (uint32_t i = 0; i < enb_reset_ack_p->num_ue; i++) {
-    	  // Add a new element.
-    	resetAckItem[i] = calloc(1, sizeof(S1AP_IE_t)); /**< An entry for the ACK List. */
-    	resetAckItem[i]->id = S1AP_ProtocolIE_ID_id_UE_associatedLogicalS1_ConnectionItem; // todo: solve this with pointer arithmetic (resetAckItem_p++)
-    	resetAckItem[i]->criticality = S1AP_Criticality_ignore;
-
     	/** MME UE. */
     	S1AP_UE_associatedLogicalS1_ConnectionItemResAck_t * sig_conn_item = calloc (1, sizeof (S1AP_UE_associatedLogicalS1_ConnectionItemResAck_t));
-    	/** MME UE S1AP ID. */
-    	S1AP_MME_UE_S1AP_ID_t mme_ue_s1ap_id  = 0;
-    	S1AP_ENB_UE_S1AP_ID_t enb_ue_s1ap_id  = 0;
+    	sig_conn_item->id = S1AP_ProtocolIE_ID_id_UE_associatedLogicalS1_ConnectionItem;
+    	sig_conn_item->criticality = S1AP_Criticality_ignore;
+    	sig_conn_item->value.present = S1AP_UE_associatedLogicalS1_ConnectionItemResAck__value_PR_UE_associatedLogicalS1_ConnectionItem;
+    	S1AP_UE_associatedLogicalS1_ConnectionItem_t * item = &sig_conn_item->value.choice.UE_associatedLogicalS1_ConnectionItem;
+
     	if (enb_reset_ack_p->ue_to_reset_list[i].mme_ue_s1ap_id != NULL) {
-    		mme_ue_s1ap_id = *enb_reset_ack_p->ue_to_reset_list[i].mme_ue_s1ap_id;
-    		sig_conn_item->uE_associatedLogicalS1_ConnectionItem.mME_UE_S1AP_ID = &mme_ue_s1ap_id;
+    		item->mME_UE_S1AP_ID = calloc(1, sizeof(S1AP_MME_UE_S1AP_ID_t));
+    		*item->mME_UE_S1AP_ID = *enb_reset_ack_p->ue_to_reset_list[i].mme_ue_s1ap_id;
     	}
     	else {
-    		sig_conn_item->uE_associatedLogicalS1_ConnectionItem.mME_UE_S1AP_ID = NULL;
+    		item->mME_UE_S1AP_ID = NULL;
     	}
     	/** ENB UE S1AP ID. */
     	if (enb_reset_ack_p->ue_to_reset_list[i].enb_ue_s1ap_id != NULL) {
-    		enb_ue_s1ap_id = *enb_reset_ack_p->ue_to_reset_list[i].enb_ue_s1ap_id;
-    		sig_conn_item->uE_associatedLogicalS1_ConnectionItem.eNB_UE_S1AP_ID = &enb_ue_s1ap_id;
+    		item->eNB_UE_S1AP_ID = calloc(1, sizeof(S1AP_ENB_UE_S1AP_ID_t));
+    		*item->eNB_UE_S1AP_ID = *enb_reset_ack_p->ue_to_reset_list[i].enb_ue_s1ap_id;
     	}
     	else {
-    		sig_conn_item->uE_associatedLogicalS1_ConnectionItem.eNB_UE_S1AP_ID = NULL;
+    		item->eNB_UE_S1AP_ID = NULL;
     	}
-    	if (ANY_fromType_aper (&resetAckItem[i]->value, &asn_DEF_S1AP_UE_associatedLogicalS1_ConnectionItem, sig_conn_item) < 0) {
-    		OAILOG_ERROR (LOG_S1AP, "Decoding of IE associated logical s1 connection item failed.\n");
-    	} else {
-    		ASN_SEQUENCE_ADD (&s1ap_ResetAcknowledgeIEs_p->uE_associatedLogicalS1_ConnectionListResAck, resetAckItem[i]);
-    	}
-    	free_wrapper ((void**)&sig_conn_item);
+        ASN_SEQUENCE_ADD(&ie_p->list, sig_conn_item);
     }
   }
-  if (s1ap_mme_encode_pdu (&message, &message_id, &buffer, &length) < 0) {
-	  OAILOG_ERROR (LOG_S1AP, "Reset Ack encoding failed \n");
-	  DevAssert(!buffer);
-  }
 
-  if(s1ap_ResetAcknowledgeIEs_p->uE_associatedLogicalS1_ConnectionListResAck.s1ap_UE_associatedLogicalS1_ConnectionItemResAck.array)
-	  FREEMEM(s1ap_ResetAcknowledgeIEs_p->uE_associatedLogicalS1_ConnectionListResAck.s1ap_UE_associatedLogicalS1_ConnectionItemResAck.array);
-  for (uint32_t i = 0; i < enb_reset_ack_p->num_ue; i++) {
-	  if(resetAckItem[i]) {
-		  if(resetAckItem[i]->value.buf)
-			  FREEMEM(resetAckItem[i]->value.buf);
-		  free_wrapper(&resetAckItem[i]);
-	  }
+  if (s1ap_mme_encode_pdu (&pdu, &buffer, &length) < 0) {
+	OAILOG_ERROR (LOG_S1AP, "Failed to S1 Reset command \n");
+	/** We rely on the handover_notify timeout to remove the UE context. */
+	DevAssert(!buffer);
+	OAILOG_FUNC_OUT (LOG_S1AP);
   }
 
   if(buffer) {
@@ -3287,5 +3181,4 @@ s1ap_handle_enb_initiated_reset_ack (
 	  rc = s1ap_mme_itti_send_sctp_request (&b, enb_reset_ack_p->sctp_assoc_id, enb_reset_ack_p->sctp_stream_id, INVALID_MME_UE_S1AP_ID);
   }
   OAILOG_FUNC_RETURN (LOG_S1AP, rc);
-#endif
 }

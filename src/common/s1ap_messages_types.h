@@ -327,8 +327,6 @@ typedef struct itti_s1ap_path_switch_request_ack_s {
   uint8_t                 nh[AUTH_NH_SIZE];
   uint8_t                 ncc:3;
 
-  uint16_t                security_capabilities_encryption_algorithms;
-  uint16_t                security_capabilities_integrity_algorithms;
 } itti_s1ap_path_switch_request_ack_t;
 
 typedef struct itti_s1ap_handover_required_s {

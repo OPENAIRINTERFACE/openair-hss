@@ -748,6 +748,7 @@ set(libnas_ies_OBJS
   ${NAS_SRC}ies/SsCode.c
   ${NAS_SRC}ies/TrackingAreaIdentity.c
   ${NAS_SRC}ies/TrackingAreaIdentityList.c
+  ${NAS_SRC}ies/UeAdditionalSecurityCapability.c
   ${NAS_SRC}ies/UeNetworkCapability.c
   ${NAS_SRC}ies/UeRadioCapabilityInformationUpdateNeeded.c
   ${NAS_SRC}ies/UeSecurityCapability.c

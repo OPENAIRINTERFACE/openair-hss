@@ -557,7 +557,7 @@ int decode_imeisv_request_ie(imeisv_request_t *imeisvrequest, bool is_ie_present
 //------------------------------------------------------------------------------
 #define MS_NETWORK_CAPABILITY_IE_TYPE       4
 // TODO
-#define MS_NETWORK_CAPABILITY_IE_MIN_LENGTH 5
+#define MS_NETWORK_CAPABILITY_IE_MIN_LENGTH 4
 #define MS_NETWORK_CAPABILITY_IE_MAX_LENGTH 10
 
 typedef struct ms_network_capability_s {
