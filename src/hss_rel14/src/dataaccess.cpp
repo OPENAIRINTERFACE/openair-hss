@@ -1493,6 +1493,7 @@ bool DataAccess::updateRandSqn ( const std::string &imsi, uint8_t * rand_p, uint
    std::stringstream ss;
    ss << "UPDATE vhss.users_imsi SET rand='" << rand << "', sqn=" << eu.u64 << " WHERE imsi='" << imsi << "';";
    Logger::system().debug(ss.str());
+   std::cout << ss.str() << std::endl;
 
    SCassStatement stmt( ss.str().c_str() );
 
