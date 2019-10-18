@@ -149,7 +149,7 @@ ue_context_t * get_new_ue_context() {
   /** Found a free pool: Remove it from the head, add the ue_id and set it to the end. */
   STAILQ_REMOVE_HEAD(&mme_app_desc.mme_ue_contexts_list, entries); /**< free_sp is removed. */
 
-  OAILOG_INFO(LOG_MME_APP, "EMMCN-SAP  - " "Clearing received current ue_context %p.\n", ue_context);
+  OAILOG_INFO(LOG_MME_APP, "Clearing received current ue_context %p.\n", ue_context);
   clear_ue_context(ue_context);
   ue_context->privates.mme_ue_s1ap_id = ue_id;
   // todo: unlock the UE_context
@@ -158,7 +158,7 @@ ue_context_t * get_new_ue_context() {
 
   /** Add the UE context. */
   /** Since the NAS and MME_APP contexts are split again, we assign a new mme_ue_s1ap_id here. */
-  OAILOG_DEBUG (LOG_MME_APP, "MME_APP_INITIAL_UE_MESSAGE. Allocated new MME UE context and new mme_ue_s1ap_id. %d\n", ue_context->privates.mme_ue_s1ap_id);
+  OAILOG_DEBUG (LOG_MME_APP, "MME_APP_INITIAL_UE_MESSAGE. Allocated new MME UE context and new mme_ue_s1ap_id "MME_UE_S1AP_ID_FMT". \n", ue_context->privates.mme_ue_s1ap_id);
   DevAssert(mme_insert_ue_context (&mme_app_desc.mme_ue_contexts, ue_context) == 0);
   // todo: unlock mme_desc!
   OAILOG_FUNC_RETURN (LOG_MME_APP, ue_context);
@@ -1182,7 +1182,7 @@ mme_app_dump_ue_contexts (
   const mme_ue_context_t * const mme_ue_context_p)
 //------------------------------------------------------------------------------
 {
-  hashtable_uint64_ts_apply_callback_on_elements (mme_ue_context_p->enb_ue_s1ap_id_ue_context_htbl, mme_app_dump_ue_context, NULL, NULL);
+  hashtable_uint64_ts_apply_callback_on_elements (mme_ue_context_p->mme_ue_s1ap_id_ue_context_htbl, mme_app_dump_ue_context, NULL, NULL);
 }
 
 //------------------------------------------------------------------------------

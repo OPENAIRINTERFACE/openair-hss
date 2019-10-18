@@ -1,4 +1,4 @@
-/*
+	/*
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
@@ -41,7 +41,6 @@
 #include "assertions.h"
 #include "hashtable.h"
 #include "log.h"
-#include "msc.h"
 #include "mme_config.h"
 #include "intertask_interface.h"
 #include "itti_free_defined_msg.h"
@@ -110,7 +109,7 @@ sm_mme_ulp_process_stack_req_cb (
 
   /** Timeout Handler */
   case NW_GTPV2C_ULP_API_RSP_FAILURE_IND:
-    ret = sm_mme_handle_ulp_error_indicatior(&sm_mme_stack_handle, pUlpApi);
+	OAILOG_ERROR (LOG_SM, "No ULP FAILURE indication from GTPv2c stack! NOT PROCESSED. \n");
     break;
 
   default:
@@ -188,8 +187,6 @@ sm_mme_thread (
   void *args)
 {
   itti_mark_task_ready (TASK_SM);
-//  OAILOG_START_USE ();
-//  MSC_START_USE ();
 
   while (1) {
     MessageDef                             *received_message_p = NULL;
@@ -219,8 +216,8 @@ sm_mme_thread (
      * Use this message in case of an error to remove the SM Local Tunnel endpoints.
      * No response to MME_APP is sent/expected.
      */
-    case SM_REMOVE_UE_TUNNEL:{
-      sm_mme_remove_ue_tunnel(&sm_mme_stack_handle, &received_message_p->ittiMsg.sm_remove_ue_tunnel);
+    case SM_REMOVE_TUNNEL:{
+      sm_mme_remove_tunnel(&sm_mme_stack_handle, &received_message_p->ittiMsg.sm_remove_tunnel);
     }
     break;
 
@@ -290,7 +287,6 @@ sm_send_init_udp (
   return itti_send_msg_to_task (TASK_UDP, INSTANCE_DEFAULT, message_p);
 }
 
-
 //------------------------------------------------------------------------------
 int
 sm_mme_init (
@@ -322,7 +318,7 @@ sm_mme_init (
    */
   udp.hUdp = (nw_gtpv2c_udp_handle_t) NULL;
   mme_config_read_lock (&mme_config);
-  udp.gtpv2cStandardPort = mme_config.ip.port_sm;
+  udp.gtpv2cStandardPort = mme_config.ip.port_mc;
   mme_config_unlock (&mme_config);
   udp.udpDataReqCallback = sm_mme_send_udp_msg;
   DevAssert (NW_OK == nwGtpv2cSetUdpEntity (sm_mme_stack_handle, &udp));
@@ -344,8 +340,8 @@ sm_mme_init (
 
   DevAssert (NW_OK == nwGtpv2cSetLogLevel (sm_mme_stack_handle, NW_LOG_LEVEL_DEBG));
   /** Create 2 sockets, one for 2123 (received initial requests), another high port. */
-  sm_send_init_udp(&mme_config.ip.sm_mme_v4, &mme_config.ip.sm_mme_v6, udp.gtpv2cStandardPort);
-  sm_send_init_udp(&mme_config.ip.sm_mme_v4, &mme_config.ip.sm_mme_v6, 0);
+  sm_send_init_udp(&mme_config.ip.mc_mme_v4, &mme_config.ip.mc_mme_v6, udp.gtpv2cStandardPort);
+  sm_send_init_udp(&mme_config.ip.mc_mme_v4, &mme_config.ip.mc_mme_v6, 0);
 
   bstring b = bfromcstr("sm_mme_teid_2_gtv2c_teid_handle");
   sm_mme_teid_2_gtv2c_teid_handle = hashtable_ts_create(mme_config_p->max_ues, HASH_TABLE_DEFAULT_HASH_FUNC, hash_free_int_func, b);

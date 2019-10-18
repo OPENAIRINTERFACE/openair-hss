@@ -36,6 +36,7 @@ include_directories("${SRC_TOP_DIR}/nas/esm")
 include_directories("${SRC_TOP_DIR}/nas/esm/msg")
 include_directories("${SRC_TOP_DIR}/nas/api/network")
 include_directories("${SRC_TOP_DIR}/nas/api/mme")
+include_directories("${SRC_TOP_DIR}/mce_app")
 include_directories("${SRC_TOP_DIR}/mme_app")
 include_directories("${SRC_TOP_DIR}/s1ap/messages/asn1/${ASN1RELDIR}")
 include_directories("${SRC_TOP_DIR}/s1ap")
@@ -81,7 +82,7 @@ add_executable(mme
 
 target_link_libraries (mme
     -Wl,--start-group
-    LIB_NAS_MME S1AP_LIB S1AP_EPC S11_MME S10 GTPV2C SCTP_SERVER UDP_SERVER SECU_CN  S6A MME_APP
+    LIB_NAS_MME S1AP_LIB S1AP_EPC S11_MME S10 GTPV2C SCTP_SERVER UDP_SERVER SECU_CN  S6A MME_APP MCE_APP
             ${MSC_LIB} ITTI  3GPP_TYPES CN_UTILS
             HASHTABLE BSTR
     -Wl,--end-group

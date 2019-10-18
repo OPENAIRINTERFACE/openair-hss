@@ -370,7 +370,7 @@ typedef struct imeisv_s {
 
 // 15.2  Structure of TMGI
 typedef struct tmgi_s {
-  uint32_t    serviceId;								   /*!< \brief MBMS Service ID. */
+  uint32_t    mbms_service_id;	    					   /*!< \brief MBMS Service ID. */
   plmn_t      plmn;                                        /*!< \brief PLMN				*/
 } tmgi_t;
 #define MBMS_SERVICE_ID_DIGITS              3

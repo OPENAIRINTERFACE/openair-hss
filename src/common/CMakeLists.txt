@@ -18,6 +18,7 @@ include_directories("${SRC_TOP_DIR}/nas/esm/msg")
 include_directories("${SRC_TOP_DIR}/nas/api/network")
 include_directories("${SRC_TOP_DIR}/nas/api/mme")
 include_directories("${SRC_TOP_DIR}/mme_app")
+include_directories("${SRC_TOP_DIR}/mce_app")
 include_directories("${SRC_TOP_DIR}/s1ap")
 
 set(ITTI_FILES

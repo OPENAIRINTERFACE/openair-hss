@@ -396,6 +396,7 @@ include_directories("${OPENAIRCN_DIR}/src/utils/bstr")
 include_directories("${OPENAIRCN_DIR}/src/mme")
 include_directories("${OPENAIRCN_DIR}/src/sgw")
 include_directories("${OPENAIRCN_DIR}/src/mme_app")
+include_directories("${OPENAIRCN_DIR}/src/mce_app")
 include_directories("${OPENAIRCN_DIR}/src/s6a")
 include_directories("${OPENAIRCN_DIR}/src")
 
@@ -652,6 +653,14 @@ add_library(MME_APP
   ${MME_DIR}/mme_config.c
   )
 
+set(MME_DIR ${OPENAIRCN_DIR}/src/mce_app)
+add_library(MCE_APP
+  ${MME_DIR}/mce_app_mbms_service.c
+  ${MME_DIR}/mce_app_itti_messaging.c
+  ${MME_DIR}/mce_app_main.c
+  ${MME_DIR}/mce_app_statistics.c
+  ${MME_DIR}/mce_app_mbms_service_context.c
+  )
 
 set(NAS_SRC ${OPENAIRCN_DIR}/src/nas/)
 set(libnas_api_OBJS
@@ -943,7 +952,7 @@ endif( ITTI_ANALYZER )
 target_link_libraries (mme
   -Wl,--start-group
     S1AP_LIB S1AP_EPC S11_MME S10_MME Sm_MME GTPV2C SCTP_SERVER UDP_SERVER SECU_CN
-   S6A MME_APP LIB_NAS_MME ${MSC_LIB} ${ITTI_LIB} ${XML_MSG_DUMP_LIB} ${3GPP_TYPES_LIB}
+   S6A MME_APP MCE_APP LIB_NAS_MME ${MSC_LIB} ${ITTI_LIB} ${XML_MSG_DUMP_LIB} ${3GPP_TYPES_LIB}
    ${3GPP_TYPES_XML_LIB} CN_UTILS ${SCENARIO_PLAYER_LIB} HASHTABLE BSTR
   -Wl,--end-group
   pthread m sctp  rt crypt ${LFDS} ${CRYPTO_LIBRARIES} ${OPENSSL_LIBRARIES} ${NETTLE_LIBRARIES} ${CONFIG_LIBRARIES} ${LIBXML2_LIBRARIES} gnutls fdproto fdcore

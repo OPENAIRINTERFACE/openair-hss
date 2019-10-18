@@ -240,16 +240,13 @@ ue_session_pool_t * get_new_session_pool(mme_ue_s1ap_id_t ue_id) {
 
 	/** Initialize the bearers in the pool. */
 	/** Remove the EMS-EBR context of the bearer-context. */
-	OAILOG_INFO(LOG_MME_APP, "EMMCN-SAP  - " "Clearing received current sp %p.\n", ue_session_pool);
+	OAILOG_INFO(LOG_MME_APP, "Clearing received current sp %p.\n", ue_session_pool);
 	clear_session_pool(ue_session_pool);
 	ue_session_pool->privates.mme_ue_s1ap_id = ue_id;
 	/** Add it to the back of the list. */
 	STAILQ_INSERT_TAIL(&mme_app_desc.mme_ue_session_pools_list, ue_session_pool, entries);
-
 	DevAssert (mme_insert_ue_session_pool(&mme_app_desc.mme_ue_session_pools, ue_session_pool) == 0);
-
 	// todo: unlock!
-
 	OAILOG_FUNC_RETURN (LOG_MME_APP, ue_session_pool);
 }
 

@@ -484,10 +484,6 @@ mme_app_handle_initial_ue_message (
                     "Dropping the received initial context request message (attach should be possible after timeout of procedure has occurred). \n",
                     ue_context->privates.fields.imsi, ue_context->privates.mme_ue_s1ap_id);
                 DevAssert(s10_handover_proc->proc.timer.id != MME_APP_TIMER_INACTIVE_ID);
-                /*
-                 * Error during ue context malloc.
-                 * todo: removing the UE reference?!
-                 */
                 hashtable_rc_t result_deletion = hashtable_uint64_ts_remove (mme_app_desc.mme_ue_contexts.enb_ue_s1ap_id_ue_context_htbl,
                     (const hash_key_t)enb_s1ap_id_key);
                 OAILOG_ERROR (LOG_MME_APP, "MME_APP_INITAIL_UE_MESSAGE. ERROR***** enb_s1ap_id_key %ld has valid value " ENB_UE_S1AP_ID_FMT ". Result of deletion %d.\n" ,
@@ -575,14 +571,9 @@ mme_app_handle_initial_ue_message (
     OAILOG_DEBUG (LOG_MME_APP, "UE context doesn't exist -> create one \n");
 
     if (!(ue_context = get_new_ue_context ())) {
-      /*
-       * Error during UE context malloc.
-       * todo: removing the UE reference?!
-       */
-    	mme_app_itti_ue_context_release(0, initial_pP->enb_ue_s1ap_id, S1AP_SYSTEM_FAILURE, initial_pP->ecgi.cell_identity.enb_id);
-
-    	OAILOG_ERROR (LOG_MME_APP, "Failed to create new MME UE context enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT "\n", initial_pP->enb_ue_s1ap_id);
-    	OAILOG_FUNC_OUT (LOG_MME_APP);
+      mme_app_itti_ue_context_release(0, initial_pP->enb_ue_s1ap_id, S1AP_SYSTEM_FAILURE, initial_pP->ecgi.cell_identity.enb_id);
+      OAILOG_ERROR (LOG_MME_APP, "Failed to create new MME UE context enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT "\n", initial_pP->enb_ue_s1ap_id);
+      OAILOG_FUNC_OUT (LOG_MME_APP);
     }
     /** Initialize the fields of the MME_APP context. */
     ue_context->privates.fields.enb_ue_s1ap_id    = initial_pP->enb_ue_s1ap_id;
@@ -3925,9 +3916,6 @@ mme_app_handle_forward_relocation_request(
  if ((ue_context = get_new_ue_context()) == NULL) {
    /** Send a negative response before crashing. */
    mme_app_send_s10_forward_relocation_response_err(forward_relocation_request_pP->s10_source_mme_teid.teid, &forward_relocation_request_pP->peer_ip, forward_relocation_request_pP->trxn, SYSTEM_FAILURE);
-   /**
-    * Error during UE context malloc
-    */
    OAILOG_FUNC_OUT (LOG_MME_APP);
  }
  /** Try to get a new UE session pool, too (before starting with the registrations). */

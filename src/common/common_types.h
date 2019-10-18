@@ -68,6 +68,18 @@ typedef uint64_t                 enb_s1ap_id_key_t ;
                                                      // all values are allowed. try to find another way (boolean is_valid for example)
 
 //------------------------------------------------------------------------------
+// MBMS Service IDs
+#define MCE_MBMS_SERVICE_INDEX_FMT   "%"PRIx32           //*< Combination of TMGI and MBMS Service Area, such that it is unique!
+#define INVALID_MBMS_SERVICE_INDEX   0x00000000          // You can pick any value between 0..2^32-1,
+#define MBMS_SERVICE_AREA_FMT	     "0x%"PRIx16
+typedef uint64_t                 	 mbmsServiceIndex64_t;
+// TMGI
+#define TMGI_FMT PLMN_FMT"|%04x"
+#define TMGI_ARG(TmGi_PtR) \
+  PLMN_ARG(&(TmGi_PtR)->plmn), \
+  (TmGi_PtR)->mbms_service_id
+
+//------------------------------------------------------------------------------
 // TEIDs
 
 typedef uint32_t                 teid_t;
@@ -76,6 +88,7 @@ typedef uint32_t                 teid_t;
 typedef teid_t                   s11_teid_t;
 typedef teid_t                   s10_teid_t;
 typedef teid_t                   s1u_teid_t;
+typedef teid_t                   sm_teid_t;
 #define INVALID_TEID             0x00000000
 
 //------------------------------------------------------------------------------

@@ -43,7 +43,7 @@
 #define SM_MBMS_SESSION_STOP_RESPONSE(mSGpTR)                   (mSGpTR)->ittiMsg.sm_mbms_session_stop_response
 
 /** Internal Messages. */
-#define SM_REMOVE_UE_TUNNEL(mSGpTR)                            (mSGpTR)->ittiMsg.sm_remove_ue_tunnel
+#define SM_REMOVE_TUNNEL(mSGpTR)                             	(mSGpTR)->ittiMsg.sm_remove_tunnel
 
 //-----------------------------------------------------------------------------
 /** @struct itti_sm_mbms_session_start_request_t
@@ -53,47 +53,48 @@
  *                      LTE; 3GPP Evolved Packet System (EPS);
  *                      Evolved General Packet Radio Service (GPRS);
  *                      Tunnelling Protocol for Control plane (GTPv2-C); Stage 3
- * The Forward Relocation Request will be sent on Sm interface as
- * part of these procedures:
- * - Tracking Area Update procedure with MME change
- * - S1 based handover with MME change
- * - todo: also sent at attach with MME change with GUTI!! (without getting security context from HSS by new MME)
+ * The MBMS Session Start Request message shall be sent on the Sm/Sn interface by the MBMS GW to the MME/SGSN
+ * as specified in 3GPP TS 23.246 [37] and 3GPP TS 23.007 [13].
  */
 typedef struct itti_sm_mbms_session_start_request_s {
-  teid_t                          teid;                ///< SM-Target MME Tunnel Endpoint Identifier
+  teid_t                             teid;                  ///< SM-MME Tunnel Endpoint Identifier
+  fteid_t                            sm_mbms_teid;          ///< SM-MBMS-GW Tunnel Endpoint Identifier
 
-  fteid_t                         sm_mbms_teid;        ///< SM-Source MBMS-GW Tunnel Endpoint Identifier
+  /** MBMS specific parameters. */
+  tmgi_t						     tmgi;                  ///< TMGI Identifier
+  mbms_abs_time_data_transfer_t      abs_start_time;        ///< MBMS Absolute Time of Data Transfer. Anything else is not supported currently.
+  mbms_flags_t				         mbms_flags;            ///< MBMS Flags
+  mbms_ip_multicast_distribution_t  *mbms_ip_mc_address;    ///< MBMS IP Multicast Address.
+  mbms_service_area_t                mbms_service_area;     ///< Service Area of the MBMS Service (todo: multiple are allowed to be sent, but only 1 will be supported).
+  mbms_session_duration_t            mbms_session_duration; ///< The duration, where the TMGI of the MBMS session is still valid.
+  bearer_qos_t                       mbms_bearer_level_qos; ///< QoS profile of the MBMS bearers to be established.
+  uint16_t                           mbms_flow_id; 		    ///< MBMS Flow Id.
 
-  /* S11 stack specific parameter. Not used in standalone epc mode */
-  uintptr_t                       trxn;                 ///< Transaction identifier
-  struct sockaddr                 peer_ip;              ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME
-  uint16_t                        peer_port;            ///< MME port for S-GW or S-GW port for MME
+  /** Session Identifier is not supported, since it will only support GCS-AS. */
+
+  /* Sm stack specific parameter. Not used in standalone epc mode */
+  uintptr_t                       	 trxn;                 ///< Transaction identifier
+  struct sockaddr                 	 peer_ip;              ///< MBMS-GW IP address for Sm interface.
+  uint16_t                        	 peer_port;            ///< MBMS-GW port for Sm interface.
 } itti_sm_mbms_session_start_request_t;
 
 //-----------------------------------------------------------------------------
 /** @struct itti_sm_mbms_session_start_response_t
  *  @brief MBMS Session Start Response
  *
- * The Forward Relocation Response will be sent on Sm interface as
- * part of these procedures:
- * - Tracking Area Update procedure with MME change
- * - S1-based handover with MME change
- * - todo: also sent at attach with MME change with GUTI!! (without getting security context from HSS by new MME)
+ * The MBMS Session Start Response message shall be sent as a response to the MBMS Session Start Request message
+ * on the Sm/Sn interface by the MME/SGSN to the MBMS GW.
  */
 typedef struct itti_sm_mbms_session_start_response_s {
-  teid_t                   teid;                ///< Tunnel Endpoint Identifier
+  teid_t                             teid;                  ///< SM-MBMS-GW Tunnel Endpoint Identifier
+  fteid_t                            sm_mme_teid;          ///< SM-MME Tunnel Endpoint Identifier
 
   // here fields listed in 3GPP TS 29.274
-  gtpv2c_cause_t               cause;               ///< If the MME could successfully establish the UE context and the beaers.
+  gtpv2c_cause_t               		 cause;               	///< If the MME could successfully establish the MBMS service and the bearers.
 
-  fteid_t                  sm_mme_teid;        ///< Target MME SM control plane (sender fteid)
-  ///< This IE shall be sent on the Sm interfaces.
-
-  // todo: Indication : This IE shall be included if any of the flags are set to 1. SGW Change Indication:   - This flag shall be set to 1 if the target MME/SGSN   has selected a new SGW.
-
-  /* S11 stack specific parameter. Not used in standalone epc mode */
-  struct sockaddr                 peer_ip;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME
-  void                    	      *trxn;               ///< Transaction identifier
+  /* S11 stack specific parameter. */
+  void                    	       	*trxn;               	///< Transaction identifier
+  struct sockaddr                  	 peer_ip;             	///<  MBMS-GW IP address for Sm interface.
 } itti_sm_mbms_session_start_response_t;
 
 //-----------------------------------------------------------------------------
@@ -104,47 +105,46 @@ typedef struct itti_sm_mbms_session_start_response_s {
  *                      LTE; 3GPP Evolved Packet System (EPS);
  *                      Evolved General Packet Radio Service (GPRS);
  *                      Tunnelling Protocol for Control plane (GTPv2-C); Stage 3
- * The Forward Relocation Request will be sent on Sm interface as
- * part of these procedures:
- * - Tracking Area Update procedure with MME change
- * - S1 based handover with MME change
- * - todo: also sent at attach with MME change with GUTI!! (without getting security context from HSS by new MME)
+ * The MBMS Session Update Request message shall be sent on the Sm/Sn interface by the MBMS GW to the
+ * MME/SGSN as specified in 3GPP TS 23.246 [37] and 3GPP TS 23.007 [13].
  */
 typedef struct itti_sm_mbms_session_update_request_s {
-  teid_t                          teid;                ///< SM-Target MME Tunnel Endpoint Identifier
 
-  fteid_t                         sm_mbms_teid;        ///< SM-Source MBMS-GW Tunnel Endpoint Identifier
+  teid_t                             teid;                  ///< SM-MME Tunnel Endpoint Identifier
+  fteid_t                            sm_mbms_teid;          ///< SM-MBMS-GW Tunnel Endpoint Identifier
 
-  /* S11 stack specific parameter. Not used in standalone epc mode */
-  uintptr_t                       trxn;                 ///< Transaction identifier
-  struct sockaddr                 peer_ip;              ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME
-  uint16_t                        peer_port;            ///< MME port for S-GW or S-GW port for MME
+  /** MBMS specific parameters. */
+  tmgi_t						     tmgi;                  ///< TMGI Identifier
+  mbms_abs_time_data_transfer_t      abs_update_time;       ///< MBMS Absolute Time of Data Transfer. Anything else is not supported currently.
+  mbms_flags_t				         mbms_flags;            ///< MBMS Flags
+  mbms_service_area_t                mbms_service_area;     ///< Service Area of the MBMS Service (todo: multiple are allowed to be sent, but only 1 will be supported).
+  mbms_session_duration_t            mbms_session_duration; ///< The duration, where the TMGI of the MBMS session is still valid.
+  bearer_qos_t                       mbms_bearer_level_qos; ///< QoS profile of the MBMS bearers to be established.
+  uint16_t                           mbms_flow_id; 		    ///< MBMS Flow Id.
+
+  /* Sm stack specific parameter. */
+  uintptr_t                       	 trxn;                 ///< Transaction identifier
+  struct sockaddr                 	 peer_ip;              ///< MBMS-GW Sm IP address
+  uint16_t                        	 peer_port;            ///< MBMS-GW Sm port
 } itti_sm_mbms_session_update_request_t;
 
 //-----------------------------------------------------------------------------
 /** @struct itti_sm_mbms_session_update_response_t
  *  @brief MBMS Session Update Response
  *
- * The Forward Relocation Response will be sent on Sm interface as
- * part of these procedures:
- * - Tracking Area Update procedure with MME change
- * - S1-based handover with MME change
- * - todo: also sent at attach with MME change with GUTI!! (without getting security context from HSS by new MME)
+ * The MBMS Session Update Response message shall be sent as a response to the MBMS Session Update Request
+ * message on the Sm/Sn interface by the MME/SGSN to the MBMS GW.
  */
 typedef struct itti_sm_mbms_session_update_response_s {
-  teid_t                   teid;                ///< Tunnel Endpoint Identifier
+  teid_t                             teid;                ///< SM-MBMS-GW Tunnel Endpoint Identifier
+  teid_t                             mms_sm_teid;         ///< SM-MME Tunnel Endpoint Identifier
 
   // here fields listed in 3GPP TS 29.274
-  gtpv2c_cause_t               cause;               ///< If the MME could successfully establish the UE context and the beaers.
+  gtpv2c_cause_t               		 cause;               ///< If the MME could successfully establish the UE context and the beaers.
 
-  fteid_t                  sm_mme_teid;        ///< Target MME SM control plane (sender fteid)
-  ///< This IE shall be sent on the SM interfaces.
-
-  // todo: Indication : This IE shall be included if any of the flags are set to 1. SGW Change Indication:   - This flag shall be set to 1 if the target MME/SGSN   has selected a new SGW.
-
-  /* S11 stack specific parameter. Not used in standalone epc mode */
-  struct sockaddr                 peer_ip;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME
-  void                    	      *trxn;               ///< Transaction identifier
+  /* Sm stack specific parameter. */
+  struct sockaddr                 	 peer_ip;             ///< MBMS-GW Sm IP address
+  void                    	      	*trxn;                ///< Transaction identifier
 } itti_sm_mbms_session_update_response_t;
 
 //-----------------------------------------------------------------------------
@@ -155,57 +155,57 @@ typedef struct itti_sm_mbms_session_update_response_s {
  *                      LTE; 3GPP Evolved Packet System (EPS);
  *                      Evolved General Packet Radio Service (GPRS);
  *                      Tunnelling Protocol for Control plane (GTPv2-C); Stage 3
- * The Forward Relocation Request will be sent on SM interface as
- * part of these procedures:
- * - Tracking Area Update procedure with MME change
- * - S1 based handover with MME change
- * - todo: also sent at attach with MME change with GUTI!! (without getting security context from HSS by new MME)
+ * The MBMS Session Stop Request message shall be sent on the Sm/Sn interface by the MBMS GW to the MME/SGSN
+ * as specified in 3GPP TS 23.246 [37] and 3GPP TS 23.007 [13].
  */
 typedef struct itti_sm_mbms_session_stop_request_s {
-  teid_t                          teid;                ///< SM-Target MME Tunnel Endpoint Identifier
-  /* S11 stack specific parameter. Not used in standalone epc mode */
-  uintptr_t                       trxn;                 ///< Transaction identifier
-  struct sockaddr                 peer_ip;              ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME
-  uint16_t                        peer_port;            ///< MME port for S-GW or S-GW port for MME
+  teid_t                             teid;                  ///< SM-MME Tunnel Endpoint Identifier
+
+  /** MBMS specific parameters. */
+  mbms_abs_time_data_transfer_t      abs_stop_time;        ///< MBMS Absolute Time of Data Transfer. Anything else is not supported currently.
+  mbms_flags_t				         mbms_flags;           ///< MBMS Flags
+  uint16_t                           mbms_flow_id; 		   ///< MBMS Flow Id.
+
+  /* Sm stack specific parameter. Not used in standalone epc mode */
+  uintptr_t                       	 trxn;                 ///< Transaction identifier
+  struct sockaddr                 	 peer_ip;              ///< MBMS-GW Sm IP address
+  uint16_t                        	 peer_port;            ///< MBMS-GW Sm port
+
 } itti_sm_mbms_session_stop_request_t;
 
 //-----------------------------------------------------------------------------
 /** @struct itti_sm_mbms_session_stop_response_t
  *  @brief MBMS Session Stop Response
  *
- * The Forward Relocation Response will be sent on Sm interface as
- * part of these procedures:
- * - Tracking Area Update procedure with MME change
- * - S1-based handover with MME change
- * - todo: also sent at attach with MME change with GUTI!! (without getting security context from HSS by new MME)
+ * The MBMS Session Start Response message shall be sent as a response to the MBMS Session Start Request message on the Sm/Sn
+ * interface by the MME/SGSN to the MBMS GW.
  */
 typedef struct itti_sm_mbms_session_stop_response_s {
-  teid_t                   teid;                ///< Tunnel Endpoint Identifier
+  teid_t                   		 teid;                ///< MBMS-Gw Sm TEID
+  teid_t                         mms_sm_teid;         ///< SM-MME Tunnel Endpoint Identifier
 
   // here fields listed in 3GPP TS 29.274
-  gtpv2c_cause_t               cause;               ///< If the MME could successfully establish the UE context and the beaers.
+  gtpv2c_cause_t               	 cause;               ///< If the MME could successfully establish the UE context and the beaers.
 
   // todo: Indication : This IE shall be included if any of the flags are set to 1. SGW Change Indication:   - This flag shall be set to 1 if the target MME/SGSN   has selected a new SGW.
 
   /* S11 stack specific parameter. Not used in standalone epc mode */
-  struct sockaddr                 peer_ip;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME
-  void                    	      *trxn;               ///< Transaction identifier
+  struct sockaddr                peer_ip;             ///< MBMS-GW Sm IP address
+  void                    	    *trxn;                ///< Transaction identifier
 } itti_sm_mbms_session_stop_response_t;
 
 //-----------------------------------------------------------------------------
 /**
  * Internal Messages for error handling etc.
  */
-typedef struct itti_sm_remove_ue_tunnel_s {
+typedef struct itti_sm_remove_tunnel_s {
   /** Local Tunnel TEID. */
-  teid_t                  local_teid;                ///< Sm MME Tunnel Endpoint Identifier
+  teid_t                  local_teid;                ///< Sm MME local Tunnel Endpoint Identifier
 
-  struct sockaddr         peer_ip;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME
+  struct sockaddr         peer_ip;             		 ///< MBMS-GW Sm IP address
   // here fields listed in 3GPP TS 29.274
 
   /** Cause to set (like error cause in GTPV2c State Machine). */
-//  gtpv2c_cause_t               cause;
-
-} itti_sm_remove_ue_tunnel_t;
+} itti_sm_remove_tunnel_t;
 
 #endif /* FILE_SM_MESSAGES_TYPES_SEEN */

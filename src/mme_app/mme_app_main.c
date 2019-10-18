@@ -646,7 +646,7 @@ int mme_app_init (const mme_config_t * mme_config_p)
    * Request for periodic timer
    */
   if (timer_setup (mme_config_p->mme_statistic_timer, 0, TASK_MME_APP, INSTANCE_DEFAULT, TIMER_PERIODIC, NULL, &mme_app_desc.statistic_timer_id) < 0) {
-    OAILOG_ERROR (LOG_MME_APP, "Failed to request new timer for statistics with %ds " "of periocidity\n", mme_config_p->mme_statistic_timer);
+    OAILOG_ERROR (LOG_MME_APP, "Failed to request new timer for statistics with %ds " "of periodicity\n", mme_config_p->mme_statistic_timer);
     mme_app_desc.statistic_timer_id = 0;
   }
   // todo: unlock the mme_desc?!

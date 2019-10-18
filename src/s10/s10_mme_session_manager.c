@@ -378,9 +378,6 @@ s10_mme_handle_forward_relocation_request(
   rc = nwGtpv2cMsgDelete (*stack_p, (pUlpApi->hMsg));
   DevAssert (NW_OK == rc);
 
-  MSC_LOG_RX_MESSAGE (MSC_S10_MME, MSC_MMEAPP_MME, NULL, 0, "0 FORWARD_RELOCATION_REQUEST local S10 teid " TEID_FMT " num pdn connections %u", req_p->teid,
-      req_p->pdn_connections.num_pdn_connections);
-
   return itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
 }
 

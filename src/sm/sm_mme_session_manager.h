@@ -60,13 +60,7 @@ int sm_mme_handle_mbms_session_stop_request(nw_gtpv2c_stack_handle_t * stack_p, 
 /* @brief Create a new MBMS Session Stop Response and send it to provided MBMS-GW. */
 int sm_mme_mbms_session_stop_response(nw_gtpv2c_stack_handle_t *stack_p,     itti_sm_mbms_session_stop_response_t *mbms_session_stop_rsp_p);
 
-/** Handle (timeout) error indication. */
-int
-sm_mme_handle_ulp_error_indicatior(
-  nw_gtpv2c_stack_handle_t * stack_p,
-  nw_gtpv2c_ulp_api_t * pUlpApi);
-
-/** Remove UE Tunnel in unexpected situations. */
-int sm_mme_remove_ue_tunnel ( nw_gtpv2c_stack_handle_t *stack_p, itti_sm_remove_ue_tunnel_t * remove_ue_tunnel_p);
+/** Remove Tunnel in unexpected situations. */
+int sm_mme_remove_tunnel ( nw_gtpv2c_stack_handle_t *stack_p, itti_sm_remove_tunnel_t * remove_tunnel_p);
 
 #endif /* FILE_SM_MME_SESSION_MANAGER_SEEN */

@@ -73,6 +73,8 @@
 #include "nas_esm.h"
 #include "s10_mme.h"
 #include "s11_mme.h"
+#include "sm_mme.h"
+#include "mce_app_extern.h"
 
 /* FreeDiameter headers for support of S6A interface */
 #include <freeDiameter/freeDiameter-host.h>
@@ -163,12 +165,20 @@ main (
   CHECK_INIT_RETURN (nas_esm_init ());
   CHECK_INIT_RETURN (sctp_init (&mme_config));
   CHECK_INIT_RETURN (udp_init ());
-  CHECK_INIT_RETURN (s10_mme_init (&mme_config));
   CHECK_INIT_RETURN (s11_mme_init (&mme_config));
   CHECK_INIT_RETURN (s1ap_mme_init());
   CHECK_INIT_RETURN (mme_app_init (&mme_config));
   CHECK_INIT_RETURN (s6a_init (&mme_config));
-  OAILOG_DEBUG(LOG_MME_APP, "MME app initialization complete\n");
+  OAILOG_DEBUG(LOG_MME_APP, "MME app initialization of mandatory interfaces complete. Checking for optional layers. \n");
+
+  if(mme_config.ip.if_name_s10){
+    CHECK_INIT_RETURN (s10_mme_init (&mme_config));
+  }
+  if(mme_config.ip.if_name_mc){
+	  CHECK_INIT_RETURN (sm_mme_init (&mme_config));
+	  CHECK_INIT_RETURN (mce_app_init (&mme_config));
+  }
+  OAILOG_DEBUG(LOG_MME_APP, "MME app initialization of optional interfaces complete. \n");
 
   /*
    * Handle signals here

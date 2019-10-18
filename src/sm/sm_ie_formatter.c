@@ -40,21 +40,15 @@
 #include "3gpp_24.008.h"
 #include "3gpp_24.007.h"
 #include "3gpp_29.274.h"
-#include "3gpp_36.413.h"
 #include "NwGtpv2c.h"
 #include "NwGtpv2cIe.h"
 #include "NwGtpv2cMsg.h"
 #include "NwGtpv2cMsgParser.h"
-#include "security_types.h"
 #include "common_types.h"
 #include "mme_ie_defs.h"
 #include "mme_config.h"
-#include "PdnType.h"
 #include "sm_common.h"
 #include "sm_ie_formatter.h"
-
-#define MM_UE_CONTEXT_MAX_LENGTH 100
-#define MIN_MM_UE_EPS_CONTEXT_SIZE                  80 // todo: what is the minimum length?
 
 nw_rc_t
 sm_tmgi_ie_get (
@@ -70,23 +64,18 @@ sm_tmgi_ie_get (
   DevAssert (tmgi);
 
   /** Set the MBMS Service ID. */
-  DevAssert (ieLength <= MBMS_SERVICE_ID_DIGITS);
-  while (decoded < MBMS_SERVICE_ID_DIGITS) {
-    uint8_t tmp = ieValue[decoded];
-    tmgi->serviceId = tmp  + (tmgi->serviceId <<8);
-    ieValue++;
-  }
-  OAILOG_DEBUG (LOG_SM, "\t- MBMS Service ID %d\n", tmgi->serviceId);
-
+  DECODE_U24(ieValue, tmgi->mbms_service_id, decoded);
+  ieValue+=decoded;
+  OAILOG_DEBUG (LOG_SM, "\t- MBMS Service ID %d\n", tmgi->mbms_service_id);
   /** Convert to TBCD and add to TMGI. */
-  tmgi->plmn.mcc_digit2 = (*ieValue & 0xf0) >> 4;
-  tmgi->plmn.mcc_digit1 = (*ieValue & 0x0f);
+  tmgi->plmn.mcc_digit2 = (*ieValue >> 4) & 0xf;
+  tmgi->plmn.mcc_digit1 = *ieValue & 0xf;
   ieValue++;
-  tmgi->plmn.mnc_digit3 = (*ieValue  & 0xf0) >> 4;
-  tmgi->plmn.mcc_digit3 = (*ieValue  & 0x0f);
+  tmgi->plmn.mnc_digit3 = (*ieValue >> 4) & 0xf;
+  tmgi->plmn.mcc_digit3 = *ieValue & 0xf;
   ieValue++;
-  tmgi->plmn.mnc_digit2 = (*ieValue & 0xf0) >> 4;
-  tmgi->plmn.mnc_digit1 = (*ieValue  & 0x0f);
+  tmgi->plmn.mnc_digit2 = (*ieValue >> 4) & 0xf;
+  tmgi->plmn.mnc_digit2 = *ieValue & 0xf;
   ieValue++;
   return NW_OK;
 }

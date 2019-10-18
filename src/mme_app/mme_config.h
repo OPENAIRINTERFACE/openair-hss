@@ -108,10 +108,10 @@
 #define MME_CONFIG_STRING_IPV6_ADDRESS_FOR_S10           "MME_IPV6_ADDRESS_FOR_S10"
 #define MME_CONFIG_STRING_MME_PORT_FOR_S10               "MME_PORT_FOR_S10"
 
-#define MME_CONFIG_STRING_INTERFACE_NAME_FOR_SM          "MME_INTERFACE_NAME_FOR_SM"
-#define MME_CONFIG_STRING_IPV4_ADDRESS_FOR_SM            "MME_IPV4_ADDRESS_FOR_SM"
-#define MME_CONFIG_STRING_IPV6_ADDRESS_FOR_SM            "MME_IPV6_ADDRESS_FOR_SM"
-#define MME_CONFIG_STRING_MME_PORT_FOR_SM                "MME_PORT_FOR_SM"
+#define MME_CONFIG_STRING_INTERFACE_NAME_FOR_MC          "MME_INTERFACE_NAME_FOR_MC"
+#define MME_CONFIG_STRING_IPV4_ADDRESS_FOR_MC            "MME_IPV4_ADDRESS_FOR_MC"
+#define MME_CONFIG_STRING_IPV6_ADDRESS_FOR_MC            "MME_IPV6_ADDRESS_FOR_MC"
+#define MME_CONFIG_STRING_MME_PORT_FOR_MC                "MME_PORT_FOR_MC"
 
 
 #define MME_CONFIG_STRING_NAS_CONFIG                     "NAS"
@@ -193,10 +193,12 @@ typedef struct mme_config_s {
     gummei_t gummei[MAX_GUMMEI];
   } gummei;
 
+  /** Multicast Part. */
   struct {
-    int      nb;
-    uint8_t *sa_list;
-  } mbms_sa;
+    int      nb_mbms_sa;
+    uint16_t *mbms_sa_list;
+  } served_mbms_sa;
+  uint32_t max_mbms_services;
 
 #define TRACKING_AREA_IDENTITY_LIST_TYPE_ONE_PLMN_NON_CONSECUTIVE_TACS 0x00
 #define TRACKING_AREA_IDENTITY_LIST_TYPE_ONE_PLMN_CONSECUTIVE_TACS     0x01
@@ -241,14 +243,13 @@ typedef struct mme_config_s {
     int        s10_mme_cidrv6;
     uint16_t   port_s10;
 
-    /** Sm */
-    bstring    if_name_sm;
-    struct in_addr  sm_mme_v4;
-    struct in6_addr sm_mme_v6;
-    int        sm_mme_cidrv4;
-    int        sm_mme_cidrv6;
-    uint16_t   port_sm;
-
+    /** Sm/M2AP */
+    bstring    if_name_mc;
+    struct in_addr  mc_mme_v4;
+    struct in6_addr mc_mme_v6;
+    int        mc_mme_cidrv4;
+    int        mc_mme_cidrv6;
+    uint16_t   port_mc;
   } ip;
 
   struct {
@@ -309,6 +310,8 @@ typedef struct mme_config_s {
 extern mme_config_t mme_config;
 
 bool mme_app_check_ta_local(const plmn_t * target_plmn, const tac_t target_tac);
+
+bool mce_app_check_sa_local(const plmn_t * target_plmn, const mbms_service_area_t * mbms_service_area);
 
 int mme_config_find_mnc_length(const char mcc_digit1P,
                                const char mcc_digit2P,

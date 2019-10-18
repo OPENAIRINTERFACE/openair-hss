@@ -538,15 +538,6 @@ void mme_app_send_s1ap_path_switch_request_failure(mme_ue_s1ap_id_t mme_ue_s1ap_
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 
-
-target_type_t 	target_enb_type;
-    tai_t           target_tai;
-    uint32_t        sctp_assoc_id;
-    ecgi_t          global_enb_id;
-    int 			conf_type;
-    enb_conf_reply_t *conf_reply;
-
-
 //------------------------------------------------------------------------------
 /**
  * Send an S1AP MME Configuration Transfer to the S1AP layer.
@@ -637,7 +628,6 @@ int mme_app_remove_s10_tunnel_endpoint(teid_t local_teid, struct sockaddr *peer_
   } else if (!peer_ip->sa_family){
     OAILOG_DEBUG (LOG_MME_APP, "Sending remove tunnel request for with null peer ip! \n");
   }
-  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_IMPLICIT_DETACH_UE_IND_MESSAGE");
   itti_send_msg_to_task (TASK_S10, INSTANCE_DEFAULT, message_p);
 
   OAILOG_FUNC_RETURN(LOG_MME_APP, RETURNok);
@@ -1056,7 +1046,6 @@ void mme_app_itti_forward_relocation_response(ue_context_t *ue_context, struct P
   DevAssert (message_p != NULL);
 
   itti_s10_forward_relocation_response_t *forward_relocation_response_p = &message_p->ittiMsg.s10_forward_relocation_response;
-  memset ((void*)forward_relocation_response_p, 0, sizeof (itti_s10_forward_relocation_response_t));
 
   /** Get the Handov
   /** Set the target S10 TEID. */
@@ -1140,7 +1129,6 @@ void mme_app_send_s10_forward_relocation_response_err(teid_t mme_source_s10_teid
   DevAssert (message_p != NULL);
 
   itti_s10_forward_relocation_response_t *forward_relocation_response_p = &message_p->ittiMsg.s10_forward_relocation_response;
-  memset ((void*)forward_relocation_response_p, 0, sizeof (itti_s10_forward_relocation_response_t));
 
   /**
    * Set the TEID of the source MME.

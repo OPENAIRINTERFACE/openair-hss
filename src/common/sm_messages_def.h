@@ -30,5 +30,5 @@ MESSAGE_DEF(SM_MBMS_SESSION_STOP_REQUEST,  MESSAGE_PRIORITY_MED, itti_sm_mbms_se
 MESSAGE_DEF(SM_MBMS_SESSION_STOP_RESPONSE,  MESSAGE_PRIORITY_MED, itti_sm_mbms_session_stop_response_t,  sm_mbms_session_stop_response)
 
 /** Internal Messages. */
-MESSAGE_DEF(SM_REMOVE_UE_TUNNEL,   MESSAGE_PRIORITY_MED, itti_sm_remove_ue_tunnel_t,  sm_remove_ue_tunnel)
+MESSAGE_DEF(SM_REMOVE_TUNNEL,   MESSAGE_PRIORITY_MED, itti_sm_remove_tunnel_t,  sm_remove_tunnel)
 

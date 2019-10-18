@@ -19,8 +19,6 @@
  *      contact@openairinterface.org
  */
 
-
-
 /*! \file mme_app_session_context.h
  *  \brief MME applicative layer
  *  \author Dincer Beken, Lionel Gauthier
@@ -45,6 +43,7 @@
 #include "bstrlib.h"
 #include "common_types.h"
 #include "mme_app_messages_types.h"
+#include "mme_app_bearer_context.h"
 #include "esm_data.h"
 
 typedef int ( *mme_app_ue_callback_t) (void*);
@@ -61,59 +60,6 @@ typedef int ( *mme_app_ue_callback_t) (void*);
 #define BEARER_STATE_S1_RELEASED (1 << 4)
 
 #define MAX_NUM_BEARERS_UE    11 /**< Maximum number of bearers. */
-
-typedef uint8_t mme_app_bearer_state_t;
-
-/*
- * @struct bearer_context_new_t
- * @brief Parameters that should be kept for an eps bearer. Used for stacked memory
- *
- * Structure of an EPS bearer
- * --------------------------
- * An EPS bearer is a logical concept which applies to the connection
- * between two endpoints (UE and PDN Gateway) with specific QoS attri-
- * butes. An EPS bearer corresponds to one Quality of Service policy
- * applied within the EPC and E-UTRAN.
- */
-typedef struct bearer_context_new_s {
-  // EPS Bearer ID: An EPS bearer identity uniquely identifies an EP S bearer for one UE accessing via E-UTRAN
-  ebi_t                       ebi;
-  ebi_t                       linked_ebi;
-
-  // S-GW IP address for S1-u: IP address of the S-GW for the S1-u interfaces.
-  // S-GW TEID for S1u: Tunnel Endpoint Identifier of the S-GW for the S1-u interface.
-  fteid_t                      s_gw_fteid_s1u;            // set by S11 CREATE_SESSION_RESPONSE
-
-  // PDN GW TEID for S5/S8 (user plane): P-GW Tunnel Endpoint Identifier for the S5/S8 interface for the user plane. (Used for S-GW change only).
-  // NOTE:
-  // The PDN GW TEID is needed in MME context as S-GW relocation is triggered without interaction with the source S-GW, e.g. when a TAU
-  // occurs. The Target S-GW requires this Information Element, so it must be stored by the MME.
-  // PDN GW IP address for S5/S8 (user plane): P GW IP address for user plane for the S5/S8 interface for the user plane. (Used for S-GW change only).
-  // NOTE:
-  // The PDN GW IP address for user plane is needed in MME context as S-GW relocation is triggered without interaction with the source S-GW,
-  // e.g. when a TAU occurs. The Target S GW requires this Information Element, so it must be stored by the MME.
-  fteid_t                      		p_gw_fteid_s5_s8_up;
-
-  // EPS bearer QoS: QCI and ARP, optionally: GBR and MBR for GBR bearer
-
-  // extra 23.401 spec members
-  pdn_cid_t                         pdn_cx_id;
-
-  /*
-   * Two bearer states, one mme_app_bearer_state (towards SAE-GW) and one towards eNodeB (if activated in RAN).
-   * todo: setting one, based on the other is possible?
-   */
-  mme_app_bearer_state_t            bearer_state;     /**< Need bearer state to establish them. */
-  esm_ebr_context_t                 esm_ebr_context;  /**< Contains the bearer level QoS parameters. */
-  fteid_t                           enb_fteid_s1u;
-
-  /* QoS for this bearer */
-  bearer_qos_t                		bearer_level_qos;
-
-  /** Add an entry field to make it part of a list (session or UE, no need to save more lists). */
-  // LIST_ENTRY(bearer_context_new_s) 	entries;
-  STAILQ_ENTRY (bearer_context_new_s)	entries;
-}__attribute__((__packed__)) bearer_context_new_t;
 
 /** @struct subscribed_apn_t
  *  @brief Parameters that should be kept for a subscribed apn by the UE.
@@ -303,6 +249,23 @@ void mme_app_ue_session_pool_s1_release_enb_informations(mme_ue_s1ap_id_t ue_id)
 ambr_t mme_app_total_p_gw_apn_ambr(ue_session_pool_t *ue_session_pool);
 
 ambr_t mme_app_total_p_gw_apn_ambr_rest(ue_session_pool_t *ue_session_pool, pdn_cid_t pci);
+
+/** Create & deallocate a bearer context. Will also initialize the bearer contexts. */
+void clear_bearer_context(struct ue_session_pool_s * ue_session_pool, struct bearer_context_new_s * bc);
+
+/** Find an allocated PDN session bearer context. */
+struct bearer_context_new_s * mme_app_get_session_bearer_context(struct pdn_context_s * const pdn_context, const ebi_t ebi);
+
+void mme_app_get_free_bearer_context(struct ue_session_pool_s * const ue_sp, const ebi_t ebi, struct bearer_context_new_s** bc_pp);
+
+// todo_: combine these two methods
+void mme_app_get_session_bearer_context_from_all(struct ue_session_pool_s * const ue_session_pool, const ebi_t ebi, struct bearer_context_new_s ** bc_pp);
+
+/*
+ * Receive Bearer Context VOs to send in CSR/Handover Request, etc..
+ * Will set bearer state, unless it is null.
+ */
+void mme_app_get_bearer_contexts_to_be_created(struct pdn_context_s * pdn_context, bearer_contexts_to_be_created_t *bc_tbc, mme_app_bearer_state_t bc_state);
 
 #endif /* FILE_MME_APP_UE_CONTEXT_SEEN */
 
