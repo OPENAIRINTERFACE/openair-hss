@@ -177,7 +177,7 @@ pipeline {
             steps {
                 echo '\u2705 \u001B[32mStarting SPGWC VM\u001B[0m'
                 timeout(time: 5, unit: 'MINUTES') {
-                    sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci install-vm --clone-template True --snapshot yes --start-vm True --vm-display ${vm_display} --nf-type spgw --job-name ${JOB_NAME} --build-id ${BUILD_NUMBER} --template-domain ${spgwc_vm_template} --dns1 ${dns1} --dns2 ${dns2} > spgwc_vm_start.log 2>&1"
+                    sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci install-vm --clone-template False --snapshot none --start-vm True --vm-display ${vm_display} --nf-type spgw --job-name ${JOB_NAME} --build-id ${BUILD_NUMBER} --template-domain ${spgwc_vm_template} --dns1 ${dns1} --dns2 ${dns2} > spgwc_vm_start.log 2>&1"
                 }
             }
         }
@@ -185,7 +185,7 @@ pipeline {
             steps {
                 echo '\u2705 \u001B[32mStarting SPGWU VM\u001B[0m'
                 timeout(time: 5, unit: 'MINUTES') {
-                    sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci install-vm --clone-template True --snapshot yes --start-vm True --vm-display ${vm_display} --nf-type spgwu --job-name ${JOB_NAME} --build-id ${BUILD_NUMBER} --template-domain ${spgwu_vm_template} --dns1 ${dns1} --dns2 ${dns2} > spgwc_vm_start.log 2>&1"
+                    sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci install-vm --clone-template False --snapshot none --start-vm True --vm-display ${vm_display} --nf-type spgwu --job-name ${JOB_NAME} --build-id ${BUILD_NUMBER} --template-domain ${spgwu_vm_template} --dns1 ${dns1} --dns2 ${dns2} > spgwu_vm_start.log 2>&1"
                 }
             }
         }
