@@ -24,7 +24,6 @@
    \author Dincer BEKEN <dbeken@blackned.de>
    \date 2019
 */
-#include "m2ap_mce_encoder.h"
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -38,6 +37,7 @@
 #include "assertions.h"
 #include "log.h"
 #include "m2ap_common.h"
+#include "m2ap_mce_encoder.h"
 
 static inline int                       m2ap_mce_encode_initiating (
   M2AP_M2AP_PDU_t * pdu,

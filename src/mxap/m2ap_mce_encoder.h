@@ -25,9 +25,6 @@
 #ifndef FILE_M2AP_MCE_ENCODER_SEEN
 #define FILE_M2AP_MCE_ENCODER_SEEN
 
-//#include "M2AP_M2AP-PDU.h"
-#include "m2ap_common.h"
-
 int m2ap_mce_encode_pdu(M2AP_M2AP_PDU_t *pdu, uint8_t **buffer, uint32_t *len) __attribute__ ((warn_unused_result));
 
 #endif /* FILE_M2AP_MCE_ENCODER_SEEN */
