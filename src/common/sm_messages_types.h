@@ -58,7 +58,7 @@
  */
 typedef struct itti_sm_mbms_session_start_request_s {
   teid_t                             teid;                  ///< SM-MME Tunnel Endpoint Identifier
-  fteid_t                            sm_mbms_teid;          ///< SM-MBMS-GW Tunnel Endpoint Identifier
+  fteid_t                            sm_mbms_fteid;          ///< SM-MBMS-GW Tunnel Endpoint Identifier
 
   /** MBMS specific parameters. */
   tmgi_t						     tmgi;                  ///< TMGI Identifier

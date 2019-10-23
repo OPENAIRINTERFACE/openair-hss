@@ -172,3 +172,34 @@ void mce_app_itti_sm_mbms_session_stop_response(teid_t mme_sm_teid, teid_t mbms_
   itti_send_msg_to_task (TASK_SM, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT (LOG_MCE_APP);
 }
+
+//------------------------------------------------------------------------------
+/** M2AP Session Start Request. */
+void mce_app_itti_m2ap_sm_mbms_session_start_request(mbms_m3ap_id_t mbms_m3ap_id, tmgi_t * tmgi,
+		mbms_service_area_t * mbms_service_area, bearer_context_to_be_created_t * mbms_bc_tbc, mbms_session_duration_t * mbms_session_duration,
+		void* min_time_to_mbms_data_transfer, mbms_ip_multicast_distribution_t * mbms_ip_mc_dist, mbms_abs_time_data_transfer_t * abs_start_time){
+  MessageDef                             *message_p = NULL;
+  int                                     rc = RETURNok;
+
+  OAILOG_FUNC_IN (LOG_MCE_APP);
+
+  message_p = itti_alloc_new_message (TASK_MCE_APP, M3AP_MBMS_SESSION_START_REQUEST);
+//  DevAssert (message_p != NULL);
+
+//  itti_m3ap_mbms_session_start_req_t *m3ap_mbms_session_start_req_p = &message_p->ittiMsg.m3ap_mbms_session_start_req;
+//
+//  /** Set the target SM TEID. */
+//  mbms_session_stop_response_p->teid = mbms_sm_teid; /**< Only a single target-MME TEID can exist at a time. */
+//  mbms_session_stop_response_p->mms_sm_teid = mme_sm_teid; /**< Only a single target-MME TEID can exist at a time. */
+//  mbms_session_stop_response_p->trxn    = trxn;
+//  /** Set the cause. */
+//  mbms_session_stop_response_p->cause.cause_value = gtpv2cCause;
+//  /** Set the MBMS Sm address. */
+//  memcpy((void*)&mbms_session_stop_response_p->peer_ip, mbms_ip_address, mbms_ip_address->sa_family == AF_INET ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
+//  /**
+//   * Sending a message to SM.
+//   * No changes in the contexts, flags, timers, etc.. needed.
+//   */
+  itti_send_msg_to_task (TASK_MXAP, INSTANCE_DEFAULT, message_p);
+  OAILOG_FUNC_OUT (LOG_MCE_APP);
+}

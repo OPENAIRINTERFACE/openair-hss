@@ -223,7 +223,8 @@ static void mme_config_init (mme_config_t * config_pP)
 
   config_pP->log_config.asn1_verbosity_level = 0;
   config_pP->config_file = NULL;
-  config_pP->max_enbs    = 2;
+  config_pP->max_s1_enbs = 2;
+  config_pP->max_m2_enbs = 2;
   config_pP->max_ues     = 2;
   config_pP->unauthenticated_imsi_supported = 0;
   config_pP->dummy_handover_forwarding_enabled = 1;
@@ -530,8 +531,12 @@ static int mme_config_parse_file (mme_config_t * config_pP)
       config_pP->instance = (uint32_t) aint;
     }
 
-    if ((config_setting_lookup_int (setting_mme, MME_CONFIG_STRING_MAXENB, &aint))) {
-      config_pP->max_enbs = (uint32_t) aint;
+    if ((config_setting_lookup_int (setting_mme, MME_CONFIG_STRING_S1_MAXENB, &aint))) {
+      config_pP->max_s1_enbs = (uint32_t) aint;
+    }
+
+    if ((config_setting_lookup_int (setting_mme, MME_CONFIG_STRING_M2_MAXENB, &aint))) {
+      config_pP->max_m2_enbs = (uint32_t) aint;
     }
 
     if ((config_setting_lookup_int (setting_mme, MME_CONFIG_STRING_MAXUE, &aint))) {
@@ -1343,7 +1348,8 @@ static void mme_config_display (mme_config_t * config_pP)
   OAILOG_INFO (LOG_CONFIG, "- File .................................: %s\n", bdata(config_pP->config_file));
   OAILOG_INFO (LOG_CONFIG, "- Realm ................................: %s\n", bdata(config_pP->realm));
   OAILOG_INFO (LOG_CONFIG, "- Run mode .............................: %s\n", (RUN_MODE_BASIC == config_pP->run_mode) ? "BASIC":(RUN_MODE_SCENARIO_PLAYER == config_pP->run_mode) ? "SCENARIO_PLAYER":"UNKNOWN");
-  OAILOG_INFO (LOG_CONFIG, "- Max eNBs .............................: %u\n", config_pP->max_enbs);
+  OAILOG_INFO (LOG_CONFIG, "- Max S1 eNBs ..........................: %u\n", config_pP->max_s1_enbs);
+  OAILOG_INFO (LOG_CONFIG, "- Max M2 eNBs ..........................: %u\n", config_pP->max_m2_enbs);
   OAILOG_INFO (LOG_CONFIG, "- Max UEs ..............................: %u\n", config_pP->max_ues);
   OAILOG_INFO (LOG_CONFIG, "- Max MBMB-Services ....................: %u\n", config_pP->max_mbms_services);
   OAILOG_INFO (LOG_CONFIG, "- IMS voice over PS session in S1 ......: %s\n", config_pP->eps_network_feature_support.ims_voice_over_ps_session_in_s1 == 0 ? "false" : "true");

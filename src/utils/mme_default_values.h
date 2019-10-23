@@ -44,6 +44,15 @@
 #define S1AP_OUTCOME_TIMER_DEFAULT (5)     ///< S1AP Outcome drop timer (s)
 
 /*******************************************************************************
+ * M2AP Constants
+ ******************************************************************************/
+
+#define M2AP_PORT_NUMBER (36443) ///< S1AP SCTP IANA ASSIGNED Port Number
+#define M2AP_SCTP_PPID   (43)    ///< S1AP SCTP Payload Protocol Identifier (PPID)
+
+#define M2AP_OUTCOME_TIMER_DEFAULT (5)     ///< S1AP Outcome drop timer (s)
+
+/*******************************************************************************
  * NAS Constants
  ******************************************************************************/
 

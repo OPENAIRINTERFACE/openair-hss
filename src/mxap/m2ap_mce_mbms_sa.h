@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under
+ * The OpenAirInterface Software Alliance licenses this file to You under 
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.
+ * except in compliance with the License.  
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -19,29 +19,25 @@
  *      contact@openairinterface.org
  */
 
-#ifndef FILE_MESSAGES_TYPES_SEEN
-#define FILE_MESSAGES_TYPES_SEEN
+/*! \file m2ap_mbms_sa.h
+  \brief
+  \author Dincer Beken
+  \company Blackned GmbH
+  \email: dbeken@blackned.de
+*/
 
-#include "intertask_messages_types.h"
-#include "timer_messages_types.h"
+#ifndef FILE_M2AP_MBMS_SA_SEEN
+#define FILE_M2AP_MBMS_SA_SEEN
 
-#include "security_types.h"
+enum {
+  MBMS_SA_LIST_UNKNOWN_SA = -2,
+  MBMS_SA_LIST_UNKNOWN_PLMN = -1,
+  MBMS_SA_LIST_RET_OK = 0,
+  MBMS_SA_LIST_NO_MATCH = 0x1,
+  MBMS_SA_LIST_AT_LEAST_ONE_MATCH = 0x2,
+  MBMS_SA_LIST_COMPLETE_MATCH = 0x3,
+};
 
-#include "gtpv1_u_messages_types.h"
-#include "ip_forward_messages_types.h"
-#include "s10_messages_types.h"
-#include "s11_messages_types.h"
-#include "sm_messages_types.h"
-#include "s1ap_messages_types.h"
-#include "nas_messages_types.h"
-#include "s6a_messages_types.h"
-#include "sctp_messages_types.h"
-#include "sgw_messages_types.h"
-#include "udp_messages_types.h"
-#include "mme_app_messages_types.h"
-#include "mce_app_messages_types.h"
-#include "m3ap_messages_types.h"
-#include "scenario_player_messages_types.h"
-#include "async_system_messages_types.h"
+int m2ap_mce_compare_mbms_enb_configuration_item(M2AP_ENB_MBMS_Configuration_data_Item_t *enb_mbms_cfg_item);
 
-#endif /* FILE_MESSAGES_TYPES_SEEN */
+#endif /* FILE_M2AP_MBMS_SA_SEEN */

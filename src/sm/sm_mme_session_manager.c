@@ -92,7 +92,7 @@ sm_mme_handle_mbms_session_start_request(
    * Sender (MBMS-GW) FTEID for CP IE
    */
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_FTEID, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_MANDATORY,
-      gtpv2c_fteid_ie_get, &req_p->sm_mbms_teid);
+      gtpv2c_fteid_ie_get, &req_p->sm_mbms_fteid);
   DevAssert (NW_OK == rc);
 
   /*

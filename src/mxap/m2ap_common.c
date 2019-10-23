@@ -19,29 +19,25 @@
  *      contact@openairinterface.org
  */
 
-#ifndef FILE_MESSAGES_TYPES_SEEN
-#define FILE_MESSAGES_TYPES_SEEN
 
-#include "intertask_messages_types.h"
-#include "timer_messages_types.h"
+/*! \file m2ap_common.c
+   \brief m2ap procedures for both eNB and MCE
+   \author Dincer BEKEN <dbeken@blackned.de>
+   \date 2019
+   \version 0.1
+*/
 
-#include "security_types.h"
+#include <stdint.h>
 
-#include "gtpv1_u_messages_types.h"
-#include "ip_forward_messages_types.h"
-#include "s10_messages_types.h"
-#include "s11_messages_types.h"
-#include "sm_messages_types.h"
-#include "s1ap_messages_types.h"
-#include "nas_messages_types.h"
-#include "s6a_messages_types.h"
-#include "sctp_messages_types.h"
-#include "sgw_messages_types.h"
-#include "udp_messages_types.h"
-#include "mme_app_messages_types.h"
-#include "mce_app_messages_types.h"
-#include "m3ap_messages_types.h"
-#include "scenario_player_messages_types.h"
-#include "async_system_messages_types.h"
+#include "dynamic_memory_check.h"
+#include "log.h"
+#include "m2ap_common.h"
 
-#endif /* FILE_MESSAGES_TYPES_SEEN */
+int                                     asn_debug = 0;
+int                                     asn1_xer_print = 0;
+// TODO: (amar) Unused function check with OAI
+void
+m2ap_handle_criticality (
+  M2AP_Criticality_t criticality)
+{
+}

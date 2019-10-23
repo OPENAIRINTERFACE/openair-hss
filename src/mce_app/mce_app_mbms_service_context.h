@@ -46,8 +46,8 @@
 #include "common_types.h"
 #include "mce_app_messages_types.h"
 #include "mme_app_bearer_context.h"
-//#include "m2ap_messages_types.h"
 #include "sm_messages_types.h"
+#include "m3ap_messages_types.h"
 //#include "security_types.h"
 
 #define MBMS_SERVICE_ID_DIGITS 6
@@ -96,10 +96,18 @@ typedef struct mbms_service_s {
 		  /** TMGI and MBMS Service Area of the MBMS Service - Key Identifiers. */
 		  tmgi_t		         tmgi;
 		  mbms_service_area_t	 mbms_service_area;
-		  // MCE TEID for Sm
-		  teid_t                 	  	mme_teid_sm;                // needed to get the MBMS Service from Sm messages
-		  /** MBMS Bearer Context created for all eNBs of the MBMS Service Area for this MBMS Service. */
-//		  struct bearer_context_new_s  	bc_mbms;
+		  /** MCE TEID for Sm. */
+		  teid_t                 mme_teid_sm;                // needed to get the MBMS Service from Sm messages
+		  /** Flow-Id of the MBMS Bearer service. */
+		  uint16_t               mbms_flow_id;
+		  /**
+		   * MBMS Bearer Context created for all eNBs of the MBMS Service Area for this MBMS Service.
+		   * It is bound to the TMGI and flow ID combination.
+		   */
+		  struct mbms_bearer_context_s  	mbms_bc;
+
+		  /** MBMS Peer Information. */
+		  fteid_t				 mbms_sm_fteid;
 	  }fields;
   }privates;
   /** Entries for MBMS service pool. */
@@ -140,6 +148,20 @@ void mce_remove_mbms_service(mce_mbms_services_t * const mce_mbms_services,
 /** \brief Dump the MBMS Services present in the tree
  **/
 void mce_app_dump_mbms_services(const mce_mbms_services_t * const mce_mbms_services);
+
+/** \brief Update the MBMS Services with the given information.
+ **/
+void
+mce_app_update_mbms_service (mbms_service_t * const mbms_service, const mbms_abs_time_data_transfer_t * const mbms_abs_time, const bearer_qos_t * const mbms_bearer_level_qos,
+  const mbms_flags_t mbms_flags, const uint16_t mbms_flow_id, const mbms_ip_multicast_distribution_t * const mbms_ip_mc_dist, const mbms_session_duration_t * mbms_session_duration,
+  fteid_t * mbms_sm_fteid);
+
+/** \brief Check if an MBMS Service with the given CTEID exists.
+ * We don't use CTEID as a key.
+ */
+mbms_service_t                      *
+mbms_cteid_in_list (const mce_mbms_services_t * const mce_mbms_services_p,
+  const teid_t cteid);
 
 #endif /* FILE_MCE_APP_MBMS_SERVICE_CONTEXT_SEEN */
 

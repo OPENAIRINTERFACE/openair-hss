@@ -19,29 +19,25 @@
  *      contact@openairinterface.org
  */
 
-#ifndef FILE_MESSAGES_TYPES_SEEN
-#define FILE_MESSAGES_TYPES_SEEN
+/*! \file 3gpp_36.443.h
+  \brief
+  \author Dincer Beken
+  \company Blackned GmbH
+  \email: dbeken@blackned.de
+*/
 
-#include "intertask_messages_types.h"
-#include "timer_messages_types.h"
+#ifndef FILE_3GPP_36_443_SEEN
+#define FILE_3GPP_36_443_SEEN
 
-#include "security_types.h"
+//------------------------------------------------------------------------------
+// 3.1 E-UTRAN Identifiers
+//------------------------------------------------------------------------------
 
-#include "gtpv1_u_messages_types.h"
-#include "ip_forward_messages_types.h"
-#include "s10_messages_types.h"
-#include "s11_messages_types.h"
-#include "sm_messages_types.h"
-#include "s1ap_messages_types.h"
-#include "nas_messages_types.h"
-#include "s6a_messages_types.h"
-#include "sctp_messages_types.h"
-#include "sgw_messages_types.h"
-#include "udp_messages_types.h"
-#include "mme_app_messages_types.h"
-#include "mce_app_messages_types.h"
-#include "m3ap_messages_types.h"
-#include "scenario_player_messages_types.h"
-#include "async_system_messages_types.h"
 
-#endif /* FILE_MESSAGES_TYPES_SEEN */
+
+typedef uint32_t                 enb_mbms_m2ap_id_t;         /*!< \brief  Unique identity, referencing the MBMS-service-associated logical M2-connection within an eNB. */
+
+typedef uint32_t                 mce_mbms_m2ap_id_t;         /*!< \brief  Unique identity, referencing the MBMS-service-associated logical M2-connection within an MCE. */
+
+
+#endif /* FILE_3GPP_36_443_SEEN */

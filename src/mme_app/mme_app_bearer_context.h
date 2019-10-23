@@ -33,7 +33,6 @@
 
 typedef uint8_t mme_app_bearer_state_t;
 
-
 /*
  * @struct bearer_context_new_t
  * @brief Parameters that should be kept for an eps bearer. Used for stacked memory
@@ -85,6 +84,18 @@ typedef struct bearer_context_new_s {
   STAILQ_ENTRY (bearer_context_new_s)	entries;
 }__attribute__((__packed__)) bearer_context_new_t;
 
+/*
+ * @struct bearer_context_mbms_t
+ * @brief Parameters that should be kept for an eps bearer. Used for stacked memory
+ *
+ * Structure of an MBMS bearer for EPS
+ * --------------------------
+ * Has additional IP Multicast and CTEID fields. Using inheritance instead of union or creating a new field.
+ */
+typedef struct mbms_bearer_context_s {
+  bearer_context_new_t   			eps_bearer_context;
+  mbms_ip_multicast_distribution_t  mbms_ip_mc_distribution;
+}__attribute__((__packed__)) mbms_bearer_context_t;
 /*
  * New method to get a bearer context from the bearer pool of the UE context and add it into the pdn session.
  * If the file using this method does not include the header file, the returned pointer is garbage. We overcome this with giving the PP.

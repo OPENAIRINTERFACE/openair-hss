@@ -342,11 +342,6 @@ s1ap_mme_thread (
           }
           break;
 
-    //    case TIMER_HAS_EXPIRED:{
-    //        s1ap_handle_timer_expiry (&received_message_p->ittiMsg.timer_has_expired);
-    //      }
-    //      break;
-
         default:{
             OAILOG_ERROR (LOG_S1AP, "Unknown message ID %d:%s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p));
           }
@@ -377,7 +372,7 @@ s1ap_mme_init(void)
   OAILOG_DEBUG (LOG_S1AP, "S1AP Release v%s\n", S1AP_VERSION);
   // 16 entries for n eNB.
   bstring bs1 = bfromcstr("s1ap_eNB_coll");
-  hash_table_ts_t* h = hashtable_ts_init (&g_s1ap_enb_coll, mme_config.max_enbs, NULL, s1ap_remove_enb, bs1); /**< Use a better removal handler. */
+  hash_table_ts_t* h = hashtable_ts_init (&g_s1ap_enb_coll, mme_config.max_s1_enbs, NULL, s1ap_remove_enb, bs1); /**< Use a better removal handler. */
   bdestroy_wrapper (&bs1);
   if (!h) return RETURNerror;
 
@@ -539,9 +534,9 @@ void s1ap_is_tac_in_list (
 
   /** Collect all eNBs for the given TAC. */
   hashtable_element_array_t              ea;
-//  enb_description_t *			         enb_p_elements[mme_config.max_enbs];
+//  enb_description_t *			         enb_p_elements[mme_config.max_s1_enbs];
   memset(&ea, 0, sizeof(hashtable_element_array_t));
-//  memset(&enb_p_elements, 0, (sizeof(enb_description_t*) * mme_config.max_enbs));
+//  memset(&enb_p_elements, 0, (sizeof(enb_description_t*) * mme_config.max_s1_enbs));
   ea.elements = enbs;
 
   hashtable_ts_apply_list_callback_on_elements((hash_table_ts_t * const)&g_s1ap_enb_coll, s1ap_enb_compare_by_tac_cb, (void *)tac_p, &ea);

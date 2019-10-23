@@ -19,29 +19,34 @@
  *      contact@openairinterface.org
  */
 
-#ifndef FILE_MESSAGES_TYPES_SEEN
-#define FILE_MESSAGES_TYPES_SEEN
+/*! \file mxap_mce_procedures.h
+  \brief
+  \author Dincer BEKEN
+  \company Blackned GmbH
+  \email: dbeken@blackned.de
+*/
 
-#include "intertask_messages_types.h"
-#include "timer_messages_types.h"
+#ifndef FILE_MXAP_MCE_PROCEDURES_SEEN
+#define FILE_MXAP_MCE_PROCEDURES_SEEN
 
-#include "security_types.h"
+#include "common_defs.h"
 
-#include "gtpv1_u_messages_types.h"
-#include "ip_forward_messages_types.h"
-#include "s10_messages_types.h"
-#include "s11_messages_types.h"
-#include "sm_messages_types.h"
-#include "s1ap_messages_types.h"
-#include "nas_messages_types.h"
-#include "s6a_messages_types.h"
-#include "sctp_messages_types.h"
-#include "sgw_messages_types.h"
-#include "udp_messages_types.h"
-#include "mme_app_messages_types.h"
-#include "mce_app_messages_types.h"
-#include "m3ap_messages_types.h"
-#include "scenario_player_messages_types.h"
-#include "async_system_messages_types.h"
+/** \brief Handle MBMS Session Start Request from the MCE_APP.
+ **/
+void
+m3ap_handle_mbms_session_start_request (
+  const itti_m3ap_mbms_session_start_req_t * const mbms_session_start_req_pP);
 
-#endif /* FILE_MESSAGES_TYPES_SEEN */
+/** \brief Handle MBMS Session Stop Request from the MCE_APP.
+ **/
+void
+m3ap_handle_mbms_session_stop_request (
+  const itti_m3ap_mbms_session_stop_req_t * const mbms_session_stop_req_pP);
+
+/** \brief Handle MBMS Session Update Request from the MCE_APP.
+ **/
+void
+m3ap_handle_mbms_session_update_request (
+  const itti_m3ap_mbms_session_update_req_t * const mbms_session_update_req_pP);
+
+#endif /* FILE_MXAP_MCE_PROCEDURES_SEEN */

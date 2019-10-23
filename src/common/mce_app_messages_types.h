@@ -29,8 +29,7 @@
 #ifndef FILE_MCE_APP_MESSAGES_TYPES_SEEN
 #define FILE_MCE_APP_MESSAGES_TYPES_SEEN
 
-//#include "m2ap_common.h"
-#include "sm_messages_types.h"
+#include "m2ap_common.h"
 
 //#define MME_APP_CONNECTION_ESTABLISHMENT_CNF(mSGpTR)     (mSGpTR)->ittiMsg.mme_app_connection_establishment_cnf
 //#define MME_APP_INITIAL_CONTEXT_SETUP_RSP(mSGpTR)        (mSGpTR)->ittiMsg.mme_app_initial_context_setup_rsp

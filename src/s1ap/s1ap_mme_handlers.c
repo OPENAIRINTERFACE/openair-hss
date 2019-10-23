@@ -280,7 +280,7 @@ s1ap_mme_handle_s1_setup_request (
     uint32_t                                enb_id = 0;
     char                                   *enb_name = NULL;
     int                                     ta_ret = 0;
-    uint16_t                                max_enb_connected = 0;
+    uint16_t                                max_s1_enb_connected = 0;
 
     DevAssert (pdu != NULL);
     container = &pdu->choice.initiatingMessage.value.choice.S1SetupRequest;
@@ -338,12 +338,12 @@ s1ap_mme_handle_s1_setup_request (
     global_enb_id = &ie->value.choice.Global_ENB_ID;
 
     mme_config_read_lock (&mme_config);
-    max_enb_connected = mme_config.max_enbs;
+    max_s1_enb_connected = mme_config.max_s1_enbs;
     mme_config_unlock (&mme_config);
 
-    if (nb_enb_associated == max_enb_connected) {
+    if (nb_enb_associated == max_s1_enb_connected) {
       OAILOG_ERROR (LOG_S1AP, "There is too much eNB connected to MME, rejecting the association\n");
-      OAILOG_DEBUG (LOG_S1AP, "Connected = %d, maximum allowed = %d\n", nb_enb_associated, max_enb_connected);
+      OAILOG_DEBUG (LOG_S1AP, "Connected = %d, maximum allowed = %d\n", nb_enb_associated, max_s1_enb_connected);
       /*
        * Send an overload cause...
        */
@@ -454,7 +454,6 @@ s1ap_generate_s1_setup_response (
   enb_description_t * enb_association)
 {
   int                                     i,j;
-  int                                     enc_rval = 0;
   S1AP_S1AP_PDU_t                         pdu;
   S1AP_S1SetupResponse_t                 *out;
   S1AP_S1SetupResponseIEs_t              *ie = NULL;
@@ -543,14 +542,9 @@ s1ap_generate_s1_setup_response (
   mme_config_unlock (&mme_config);
   /*
    * The MME is only serving E-UTRAN RAT, so the list contains only one element
-   */
-
-  enc_rval = s1ap_mme_encode_pdu (&pdu, &buffer, &length);
-
-  /*
    * Failed to encode s1 setup response...
    */
-  if (enc_rval < 0) {
+  if (s1ap_mme_encode_pdu (&pdu, &buffer, &length) < 0) {
     OAILOG_DEBUG (LOG_S1AP, "Removed eNB %d\n", enb_association->sctp_assoc_id);
     hashtable_ts_free (&g_s1ap_enb_coll, enb_association->sctp_assoc_id);
   } else {
@@ -2253,11 +2247,10 @@ s1ap_handle_sctp_disconnection (
   }
 
   enb_association->s1_state = S1AP_SHUTDOWN;
-  MSC_LOG_EVENT (MSC_S1AP_MME, "0 Event SCTP_CLOSE_ASSOCIATION assoc_id: %d", assoc_id);
   hashtable_ts_apply_callback_on_elements(&enb_association->ue_coll, s1ap_send_enb_deregistered_ind, (void*)&arg, (void**)&message_p); /**< Just releasing the procedure. */
 
   /** Release the S1AP UE references implicitly. */
-  OAILOG_DEBUG (MSC_S1AP_MME, "Releasing all S1AP UE references related to the ENB with assocId %d. \n", assoc_id);
+  OAILOG_DEBUG (LOG_S1AP, "Releasing all S1AP UE references related to the ENB with assocId %d. \n", assoc_id);
 
 
 //  if ( (!(arg.handled_ues % S1AP_ITTI_UE_PER_DEREGISTER_MESSAGE)) && (arg.handled_ues) ){

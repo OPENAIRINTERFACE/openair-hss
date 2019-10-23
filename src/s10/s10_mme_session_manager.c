@@ -407,7 +407,7 @@ s10_mme_forward_relocation_response (
      memset (&ulp_req, 0, sizeof (nw_gtpv2c_ulp_api_t));
      ulp_req.apiType = NW_GTPV2C_ULP_CREATE_LOCAL_TUNNEL; /**< Create a Tunnel Endpoint for the S10. */
      ulp_req.u_api_info.createLocalTunnelInfo.teidLocal = forward_relocation_response_p->s10_target_mme_teid.teid;
-     ulp_req.u_api_info.createLocalTunnelInfo.peerIp = &forward_relocation_response_p->peer_ip;
+     ulp_req.u_api_info.createLocalTunnelInfo.peerIp = &forward_relocation_response_p->mme_peer_ip;
      ulp_req.u_api_info.createLocalTunnelInfo.hUlpTunnel = 0;
      ulp_req.u_api_info.createLocalTunnelInfo.hTunnel    = 0;
      rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
@@ -587,7 +587,7 @@ s10_mme_forward_access_context_notification(nw_gtpv2c_stack_handle_t *stack_p,
   memset (&ulp_req, 0, sizeof (nw_gtpv2c_ulp_api_t));
   ulp_req.u_api_info.initialReqInfo.teidLocal = forward_access_context_notif_p->local_teid;
   ulp_req.apiType = NW_GTPV2C_ULP_API_INITIAL_REQ; /**< Sending Side. */
-  ulp_req.u_api_info.initialReqInfo.edns_peer_ip = &forward_access_context_notif_p->peer_ip;
+  ulp_req.u_api_info.initialReqInfo.edns_peer_ip = &forward_access_context_notif_p->mme_peer_ip;
   hashtable_rc_t hash_rc = hashtable_ts_get(s10_mme_teid_2_gtv2c_teid_handle,
       (hash_key_t) ulp_req.u_api_info.initialReqInfo.teidLocal, (void **)(uintptr_t)&ulp_req.u_api_info.initialReqInfo.hTunnel);
   if (HASH_TABLE_OK != hash_rc) {
@@ -829,7 +829,7 @@ s10_mme_forward_relocation_complete_notification(
 
   /** Setting the destination TEID from MME_APP. */
   rc = nwGtpv2cMsgNew (*stack_p, true, NW_GTP_FORWARD_RELOCATION_COMPLETE_NTF, notif_p->teid, 0, &(ulp_req.hMsg));
-  ulp_req.u_api_info.initialReqInfo.edns_peer_ip = &notif_p->peer_ip;
+  ulp_req.u_api_info.initialReqInfo.edns_peer_ip = &notif_p->mme_peer_ip;
   /** Setting the local teid twice, once here once later. */
   ulp_req.u_api_info.initialReqInfo.teidLocal  = notif_p->local_teid;  /**< Used to get the local tunnel... */
   /** Get the already existing local tunnel info. */
@@ -1016,7 +1016,7 @@ s10_mme_context_request (
    * Prepare a new Context Request msg
    */
   rc = nwGtpv2cMsgNew (*stack_p, true, NW_GTP_CONTEXT_REQ, req_p->teid, 0, &(ulp_req.hMsg));
-  ulp_req.u_api_info.initialReqInfo.edns_peer_ip = &req_p->peer_ip;
+  ulp_req.u_api_info.initialReqInfo.edns_peer_ip = &req_p->mme_peer_ip;
   ulp_req.u_api_info.initialReqInfo.teidLocal  = req_p->s10_target_mme_teid.teid;
   ulp_req.u_api_info.initialReqInfo.hUlpTunnel = 0;
   ulp_req.u_api_info.initialReqInfo.hTunnel    = 0;
@@ -1108,7 +1108,7 @@ s10_mme_handle_context_request(
 
   req_p->teid = teid;
   req_p->trxn = (void *)pUlpApi->u_api_info.initialReqIndInfo.hTrxn;
-  memcpy((void*)&req_p->peer_ip, pUlpApi->u_api_info.initialReqIndInfo.peerIp, pUlpApi->u_api_info.initialReqIndInfo.peerIp->sa_family == AF_INET ?
+  memcpy((void*)&req_p->mme_peer_ip, pUlpApi->u_api_info.initialReqIndInfo.peerIp, pUlpApi->u_api_info.initialReqIndInfo.peerIp->sa_family == AF_INET ?
  		  sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
   /*
    * Create a new message parser for the S10 CONTEXT REQUEST.
@@ -1311,7 +1311,7 @@ s10_mme_handle_context_response(
   resp_p->trxnId = (void *)pUlpApi->u_api_info.triggeredRspIndInfo.hUlpTrxn;
   resp_p->local_port = pUlpApi->u_api_info.triggeredRspIndInfo.localPort;
   resp_p->peer_port  = pUlpApi->u_api_info.triggeredRspIndInfo.peerPort;
-  memcpy((void*)&resp_p->peer_ip, pUlpApi->u_api_info.triggeredRspIndInfo.peerIp,
+  memcpy((void*)&resp_p->mme_peer_ip, pUlpApi->u_api_info.triggeredRspIndInfo.peerIp,
 		  pUlpApi->u_api_info.triggeredRspIndInfo.peerIp->sa_family == AF_INET ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
 
   /** Create a new message parser.     */
@@ -1395,9 +1395,8 @@ s10_mme_handle_context_response(
 	  itti_s10_remove_ue_tunnel_t remove_s10_tunnel;
 	  memset(&remove_s10_tunnel, 0, sizeof(itti_s10_remove_ue_tunnel_t));
 	  remove_s10_tunnel.local_teid = resp_p->teid;
-	  remove_s10_tunnel.peer_ip = resp_p->peer_ip;
-      memcpy((void*)&remove_s10_tunnel.peer_ip, &resp_p->peer_ip,
-    		  (resp_p->peer_ip.sa_family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
+	  memcpy((void*)&remove_s10_tunnel.mme_peer_ip, &resp_p->mme_peer_ip,
+    		  (resp_p->mme_peer_ip.addr_v4.sin_family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
 
 	  s10_mme_remove_ue_tunnel(stack_p, &remove_s10_tunnel);
   }
@@ -1428,7 +1427,7 @@ s10_mme_context_acknowledge (
    * NOTE 2: The "Context Acknowledge" message is sent only if the "Context Response" message is received with the acceptance cause.
    */
   ulp_ack.apiType = NW_GTPV2C_ULP_API_TRIGGERED_ACK;
-  ulp_ack.u_api_info.triggeredAckInfo.peerIp 		= &ack_p->peer_ip;
+  ulp_ack.u_api_info.triggeredAckInfo.peerIp 		= (struct sockaddr*)&ack_p->mme_peer_ip;
   ulp_ack.u_api_info.triggeredAckInfo.peerPort 		= ack_p->peer_port;
   ulp_ack.u_api_info.triggeredAckInfo.localPort 	= ack_p->local_port;
 
@@ -1510,7 +1509,7 @@ s10_mme_remove_ue_tunnel (
 
     ulp_req.apiType = NW_GTPV2C_ULP_FIND_LOCAL_TUNNEL;
     ulp_req.u_api_info.findLocalTunnelInfo.teidLocal = remove_ue_tunnel_p->local_teid;
-    ulp_req.u_api_info.findLocalTunnelInfo.edns_peer_ip = &remove_ue_tunnel_p->peer_ip;
+    ulp_req.u_api_info.findLocalTunnelInfo.edns_peer_ip = (struct sockaddr*)&remove_ue_tunnel_p->mme_peer_ip;
     rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
     DevAssert (NW_OK == rc);
     if(ulp_req.u_api_info.findLocalTunnelInfo.hTunnel){
@@ -1532,7 +1531,7 @@ s10_mme_remove_ue_tunnel (
 
     ulp_req.apiType = NW_GTPV2C_ULP_FIND_LOCAL_TUNNEL;
     ulp_req.u_api_info.findLocalTunnelInfo.teidLocal = remove_ue_tunnel_p->local_teid;
-    ulp_req.u_api_info.findLocalTunnelInfo.edns_peer_ip = &remove_ue_tunnel_p->peer_ip;
+    ulp_req.u_api_info.findLocalTunnelInfo.edns_peer_ip = (struct sockaddr*)&remove_ue_tunnel_p->mme_peer_ip;
     rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
     DevAssert (NW_OK == rc);
     if(ulp_req.u_api_info.findLocalTunnelInfo.hTunnel){
@@ -1643,7 +1642,7 @@ s10_mme_relocation_cancel_request(
 
   /** Setting the destination TEID from MME_APP. */
   rc = nwGtpv2cMsgNew (*stack_p, true, NW_GTP_RELOCATION_CANCEL_REQ, req_p->teid, 0, &(ulp_req.hMsg));
-  ulp_req.u_api_info.initialReqInfo.edns_peer_ip = &req_p->peer_ip;
+  ulp_req.u_api_info.initialReqInfo.edns_peer_ip = (struct sockaddr*)&req_p->mme_peer_ip;
 
   /*
    * Set the destination TEID
@@ -1738,7 +1737,7 @@ s10_mme_handle_relocation_cancel_request(
   /*
    * Add the peer-IP just in case.
    */
-  memcpy((void*)&req_p->peer_ip, pUlpApi->u_api_info.initialReqIndInfo.peerIp,
+  memcpy((void*)&req_p->mme_peer_ip, pUlpApi->u_api_info.initialReqIndInfo.peerIp,
   		  (pUlpApi->u_api_info.initialReqIndInfo.peerIp->sa_family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
 
   if (rc != NW_OK) {

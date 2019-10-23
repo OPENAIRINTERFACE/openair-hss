@@ -68,7 +68,7 @@
 #define LOG_DISPLAYED_FILENAME_MAX_LENGTH       32
 #define LOG_DISPLAYED_LOG_LEVEL_NAME_MAX_LENGTH  5
 #define LOG_DISPLAYED_PROTO_NAME_MAX_LENGTH      6
-#define LOG_FUNC_INDENT_SPACES                   3
+#define LOG_FUNC_INDENT_SPACES                   0
 #define LOG_LEVEL_NAME_MAX_LENGTH               10
 #define LOG_ANSI_CODE_MAX_LENGTH                15
 #define LOG_MAX_SERVER_ADDRESS_LENGTH           96

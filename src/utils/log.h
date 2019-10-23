@@ -138,6 +138,7 @@ typedef enum {
   LOG_GTPV2C,
   LOG_SCTP,
   LOG_S1AP,
+  LOG_MXAP,
   LOG_MME_APP,
   LOG_MCE_APP,
   LOG_NAS,

@@ -33,6 +33,7 @@
 #include "bstrlib.h"
 #include "3gpp_33.401.h"
 #include "3gpp_36.401.h"
+#include "3gpp_36.443.h"
 #include "3gpp_24.008.h"
 #include "3gpp_24.007.h"
 
@@ -72,7 +73,16 @@ typedef uint64_t                 enb_s1ap_id_key_t ;
 #define MCE_MBMS_SERVICE_INDEX_FMT   "%"PRIx32           //*< Combination of TMGI and MBMS Service Area, such that it is unique!
 #define INVALID_MBMS_SERVICE_INDEX   0x00000000          // You can pick any value between 0..2^32-1,
 #define MBMS_SERVICE_AREA_FMT	     "0x%"PRIx16
+#define MBMS_M3AP_ID_FMT		     "0x%"PRIx16
 typedef uint64_t                 	 mbmsServiceIndex64_t;
+typedef uint64_t					 mbms_m3ap_id_t;
+
+#define INVALID_ENB_MBMS_M2AP_ID_KEY UINT32_MAX
+#define ENB_MBMS_M2AP_ID_MASK        0x00FFFFFF
+#define ENB_MBMS_M2AP_ID_FMT         "%06"PRIx3
+#define MCE_MBMS_M2AP_ID_FMT         "%"PRIx32
+#define INVALID_MCE_MBMS_M2AP_ID     0xFFFFFFFF          // You can pick any value between 0..2^32-1,
+
 // TMGI
 #define TMGI_FMT PLMN_FMT"|%04x"
 #define TMGI_ARG(TmGi_PtR) \

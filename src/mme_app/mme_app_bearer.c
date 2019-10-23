@@ -3795,7 +3795,7 @@ mme_app_handle_handover_cancel(
    relocation_cancel_request_p->teid = s10_handover_proc->remote_mme_teid.teid; /**< May or may not be 0. */
    relocation_cancel_request_p->local_teid = ue_context->privates.fields.local_mme_teid_s10; /**< May or may not be 0. */
    // todo: check the table!
-   memcpy((void*)&relocation_cancel_request_p->peer_ip, s10_handover_proc->proc.peer_ip,
+   memcpy((void*)&relocation_cancel_request_p->mme_peer_ip, s10_handover_proc->proc.peer_ip,
  		  (s10_handover_proc->proc.peer_ip->sa_family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
 
    /** IMSI. */
@@ -4282,7 +4282,7 @@ mme_app_handle_forward_access_context_notification(
       &message_p->ittiMsg.s10_forward_access_context_acknowledge;
   s10_mme_forward_access_context_acknowledge_p->teid        = s10_handover_process->remote_mme_teid.teid;  /**< Set the target TEID. */
   s10_mme_forward_access_context_acknowledge_p->local_teid  = ue_context->privates.fields.local_mme_teid_s10;   /**< Set the local TEID. */
-  memcpy((void*)&s10_mme_forward_access_context_acknowledge_p->peer_ip, s10_handover_process->proc.peer_ip, s10_handover_process->proc.peer_ip->sa_family == AF_INET ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
+  memcpy((void*)&s10_mme_forward_access_context_acknowledge_p->mme_peer_ip, s10_handover_process->proc.peer_ip, s10_handover_process->proc.peer_ip->sa_family == AF_INET ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
 
   s10_mme_forward_access_context_acknowledge_p->trxn        = forward_access_context_notification_pP->trxn; /**< Set the target TEID. */
   /** Check that there is a pending handover process. */
@@ -4319,11 +4319,11 @@ mme_app_handle_forward_access_context_notification(
 	  forward_relocation_complete_notification_p->teid = s10_handover_process->remote_mme_teid.teid;       /**< Target S10-MME TEID. todo: what if multiple? */
 	  /** Set the local TEID. */
 	  forward_relocation_complete_notification_p->local_teid = ue_context->privates.fields.local_mme_teid_s10;        /**< Local S10-MME TEID. */
-	  memcpy((void*)&forward_relocation_complete_notification_p->peer_ip, s10_handover_process->proc.peer_ip,
+	  memcpy((void*)&forward_relocation_complete_notification_p->mme_peer_ip, s10_handover_process->proc.peer_ip,
 			  s10_handover_process->proc.peer_ip->sa_family == AF_INET ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
 
 	  OAILOG_INFO(LOG_MME_APP, "Sending FW_RELOC_COMPLETE_NOTIF TO %X with remote S10-TEID " TEID_FMT ". \n.",
-			  forward_relocation_complete_notification_p->peer_ip, forward_relocation_complete_notification_p->teid);
+			  forward_relocation_complete_notification_p->mme_peer_ip, forward_relocation_complete_notification_p->teid);
 
 	  // todo: remove this and set at correct position!
 	  mme_ue_context_update_ue_sig_connection_state (&mme_app_desc.mme_ue_contexts, ue_context, ECM_CONNECTED);
@@ -4706,7 +4706,7 @@ mme_app_handle_enb_status_transfer(
    /** Set the target S10 TEID. */
    forward_access_context_notification_p->teid           = s10_handover_proc->remote_mme_teid.teid; /**< Only a single target-MME TEID can exist at a time. */
    forward_access_context_notification_p->local_teid     = ue_context->privates.fields.local_mme_teid_s10; /**< Only a single target-MME TEID can exist at a time. */
-   memcpy((void*)&forward_access_context_notification_p->peer_ip, s10_handover_proc->proc.peer_ip,
+   memcpy((void*)&forward_access_context_notification_p->mme_peer_ip, s10_handover_proc->proc.peer_ip,
     		  (s10_handover_proc->proc.peer_ip->sa_family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
 
    /** Set the E-UTRAN container. */
@@ -4830,7 +4830,7 @@ mme_app_handle_s1ap_handover_notify(
 	      forward_relocation_complete_notification_p->teid = s10_handover_proc->remote_mme_teid.teid;       /**< Target S10-MME TEID. todo: what if multiple? */
 	      /** Set the local TEID. */
 	      forward_relocation_complete_notification_p->local_teid = ue_context->privates.fields.local_mme_teid_s10;        /**< Local S10-MME TEID. */
-	      memcpy((void*)&forward_relocation_complete_notification_p->peer_ip, s10_handover_proc->proc.peer_ip,
+	      memcpy((void*)&forward_relocation_complete_notification_p->mme_peer_ip, s10_handover_proc->proc.peer_ip,
 	        		  (s10_handover_proc->proc.peer_ip->sa_family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
 
 	      // todo: remove this and set at correct position!

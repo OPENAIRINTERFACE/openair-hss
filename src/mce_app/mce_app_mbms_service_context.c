@@ -1,4 +1,4 @@
-  /*
+/*
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
@@ -367,6 +367,31 @@ mce_app_dump_mbms_services(
   hashtable_uint64_ts_apply_callback_on_elements (mce_mbms_services_p->mbms_service_index_mbms_service_htbl, mce_app_dump_mbms_service, NULL, NULL);
 }
 
+//------------------------------------------------------------------------------
+static bool mce_mbms_service_compare_by_cteid (__attribute__((unused)) const hash_key_t keyP,
+                                    void * const elementP,
+                                    void * parameterP, void **resultP)
+{
+  const uint32_t                  * const cteid_p = (const uint32_t*const)parameterP;
+  mbms_service_t                  * mbms_service_ref  = (mbms_service_t*)elementP;
+  if ( *cteid_p == mbms_service_ref->privates.fields.mbms_bc.mbms_ip_mc_distribution.cteid) {
+    *resultP = elementP;
+    return true;
+  }
+  return false;
+}
+
+//------------------------------------------------------------------------------
+mbms_service_t                      *
+mbms_cteid_in_list (const mce_mbms_services_t * const mce_mbms_services_p,
+  const teid_t cteid)
+{
+  mbms_service_t	                     *mbms_service_ref = NULL;
+  uint32_t                               *cteid_p  = (uint32_t*)&cteid;
+  hashtable_ts_apply_callback_on_elements(mce_mbms_services_p->mbms_service_index_mbms_service_htbl, mce_mbms_service_compare_by_cteid, (void *)cteid_p, (void**)&mbms_service_ref);
+  return mbms_service_ref;
+}
+
 ////------------------------------------------------------------------------------
 //void mce_app_handle_m2ap_enb_deregistered_ind (const itti_m2ap_eNB_deregistered_ind_t * const enb_dereg_ind)
 //{
@@ -425,6 +450,24 @@ mce_app_dump_mbms_services(
 //  OAILOG_FUNC_OUT (LOG_MCE_APP);
 //}
 
+
+/** Update the MBMS Service with the given parameters. */
+//------------------------------------------------------------------------------
+void
+mce_app_update_mbms_service (mbms_service_t * const mbms_service, const mbms_abs_time_data_transfer_t * const mbms_abs_time, const bearer_qos_t * const mbms_bearer_level_qos,
+  const mbms_flags_t mbms_flags, const uint16_t mbms_flow_id, const mbms_ip_multicast_distribution_t * const mbms_ip_mc_dist, const mbms_session_duration_t * mbms_session_duration,
+  fteid_t * mbms_sm_fteid)
+{
+  mbms_service_t	                     *mbms_service_ref = NULL;
+  OAILOG_FUNC_IN(LOG_MCE_APP);
+
+  mbms_service->privates.fields.mbms_flow_id = mbms_flow_id;
+  memcpy((void*)&mbms_service->privates.fields.mbms_bc.eps_bearer_context.bearer_level_qos,
+		  (void*)mbms_bearer_level_qos, sizeof(bearer_qos_t));
+  memcpy((void*)&mbms_service->privates.fields.mbms_sm_fteid, (void*)mbms_sm_fteid, sizeof(fteid_t));
+  OAILOG_FUNC_OUT (LOG_MCE_APP);
+}
+
 /****************************************************************************/
 /*********************  L O C A L    F U N C T I O N S  *********************/
 /****************************************************************************/
@@ -462,7 +505,7 @@ static void clear_mbms_service(mbms_service_t * mbms_service) {
 }
 
 //------------------------------------------------------------------------------
-static void release_mbms_service(mbms_service_t ** mbms_service) {
+void release_mbms_service(mbms_service_t ** mbms_service) {
 	OAILOG_FUNC_IN (LOG_MCE_APP);
 
 	/** Clear the UE context. */

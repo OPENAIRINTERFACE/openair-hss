@@ -35,6 +35,8 @@
 #include "sctp_messages_def.h"
 #include "sgw_messages_def.h"
 #include "udp_messages_def.h"
+#include "m3ap_messages_def.h"
+#include "mce_app_messages_def.h"
 #include "mme_app_messages_def.h"
 #include "scenario_player_messages_def.h"
 #include "async_system_messages_def.h"

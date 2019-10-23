@@ -50,7 +50,8 @@
 #define MME_CONFIG_STRING_RUN_MODE_TEST                  "TEST"
 
 #define MME_CONFIG_STRING_REALM                          "REALM"
-#define MME_CONFIG_STRING_MAXENB                         "MAXENB"
+#define MME_CONFIG_STRING_S1_MAXENB                      "MAXS1ENB"
+#define MME_CONFIG_STRING_M2_MAXENB                      "MAXM2ENB"
 #define MME_CONFIG_STRING_MAXUE                          "MAXUE"
 #define MME_CONFIG_STRING_RELATIVE_CAPACITY              "RELATIVE_CAPACITY"
 #define MME_CONFIG_STRING_STATISTIC_TIMER                "MME_STATISTIC_TIMER"
@@ -169,7 +170,8 @@ typedef struct mme_config_s {
 
   run_mode_t  run_mode;
 
-  uint32_t max_enbs;
+  uint32_t max_s1_enbs;
+  uint32_t max_m2_enbs;
   uint32_t max_ues;
 
   uint8_t relative_capacity;
@@ -195,9 +197,13 @@ typedef struct mme_config_s {
 
   /** Multicast Part. */
   struct {
-    int      nb_mbms_sa;
+    int       nb_mbms_sa;
+    uint16_t *plmn_mcc;
+    uint16_t *plmn_mnc;
+    uint16_t *plmn_mnc_len;
     uint16_t *mbms_sa_list;
   } served_mbms_sa;
+
   uint32_t max_mbms_services;
 
 #define TRACKING_AREA_IDENTITY_LIST_TYPE_ONE_PLMN_NON_CONSECUTIVE_TACS 0x00

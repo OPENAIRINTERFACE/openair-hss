@@ -467,7 +467,7 @@ mme_app_handle_mobility_completion_timer_expiry (mme_app_s10_proc_mme_handover_t
         		relocation_cancel_request_p->teid = s10_proc_mme_handover->proc.remote_teid; /**< May or may not be 0. */
         		relocation_cancel_request_p->local_teid = ue_context->privates.fields.local_mme_teid_s10; /**< May or may not be 0. */
         		// todo: check the table!
-        		memcpy((void*)&relocation_cancel_request_p->peer_ip, s10_proc_mme_handover->proc.peer_ip,
+        		memcpy((void*)&relocation_cancel_request_p->mme_peer_ip, s10_proc_mme_handover->proc.peer_ip,
         				(s10_proc_mme_handover->proc.peer_ip->sa_family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
         		/** IMSI. */
         		memcpy((void*)&relocation_cancel_request_p->imsi, &s10_proc_mme_handover->imsi, sizeof(imsi_t));
