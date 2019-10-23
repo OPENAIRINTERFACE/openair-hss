@@ -49,11 +49,10 @@ pipeline {
         dns1 = "192.168.106.10"
         dns2 = "192.168.106.12"
         vm_display = "False"
-        vm_template = "CN-CI-4G"
-        spgw_kernel_version = "kernel-4.9"
-        mme_vm_template = "template${vm_template}"
-        hss_vm_template = "template${vm_template}"
-        spgw_vm_template = "template${vm_template}-${spgw_kernel_version}"
+        mme_vm_template = "oai-ci-cn-mme"
+        hss_vm_template = "oai-ci-cn-hss"
+        spgwc_vm_template = "oai-ci-cn-spgwc"
+        spgwu_vm_template = "oai-ci-cn-spgwu"
         MYPYTHONPATH="${WORKSPACE}/ci-scripts/python/oaicnci/"
     }
 
@@ -95,6 +94,9 @@ pipeline {
                         sh "sudo git clean -x -d -f > /dev/null 2>&1"
                         if (fileExists("ci-scripts")) {
                             sh "sudo rm -Rf ci-scripts > /dev/null 2>&1"
+                        }
+                        if (fileExists("ci-cups")) {
+                            sh "sudo rm -Rf ci-cups > /dev/null 2>&1"
                         }
                         withCredentials([
                             [$class: 'UsernamePasswordMultiBinding', credentialsId: "${params.ToolGitLabRepository_Credentials}", usernameVariable: 'git_username', passwordVariable: 'git_password']
@@ -146,30 +148,44 @@ pipeline {
                     if (fileExists('cppcheck.xml')) {
                         archiveArtifacts artifacts: 'cppcheck.xml'
                     }
+                    sh "git clone https://github.com/OPENAIRINTERFACE/openair-cn-cups.git ci-cups > git_clone_cups.log 2>&1"
+                    dir ('ci-cups') {
+                        sh "git checkout develop > /dev/null 2>&1"
+                        sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ../ci-scripts/host/scripts/sak4ci scm --job-name ${JOB_NAME} --build-id ${BUILD_NUMBER} > ../scm-cups.log 2>&1"
+                        sh "sudo mv openair-cn-cups_b${BUILD_NUMBER}.tar.bz2 .. > /dev/null 2>&1"
+                    }
                 }
             }
         }
         stage ('Start MME VM') {
             steps {
                 echo '\u2705 \u001B[32mStarting MME VM\u001B[0m'
-                timeout(time: 2, unit: 'MINUTES') {
-                    sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci install-vm --clone-template True  --snapshot yes --start-vm True --vm-display ${vm_display} --nf-type mme --job-name ${JOB_NAME} --template-domain ${mme_vm_template} --build-id ${BUILD_NUMBER} --dns1 ${dns1} --dns2 ${dns2} > mme_vm_start.log 2>&1"
+                timeout(time: 5, unit: 'MINUTES') {
+                    sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci install-vm --clone-template False --snapshot none --start-vm True --vm-display ${vm_display} --nf-type mme --job-name ${JOB_NAME} --build-id ${BUILD_NUMBER} --template-domain ${mme_vm_template} --dns1 ${dns1} --dns2 ${dns2} > mme_vm_start.log 2>&1"
                 }
             }
         }
         stage ('Start HSS VM') {
             steps {
                 echo '\u2705 \u001B[32mStarting HSS VM\u001B[0m'
-                timeout(time: 2, unit: 'MINUTES') {
-                    sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci install-vm --clone-template True  --snapshot yes --start-vm True --vm-display ${vm_display} --nf-type hss --job-name ${JOB_NAME} --template-domain ${hss_vm_template} --build-id ${BUILD_NUMBER} --dns1 ${dns1} --dns2 ${dns2} > hss_vm_start.log 2>&1"
+                timeout(time: 5, unit: 'MINUTES') {
+                    sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci install-vm --clone-template False --snapshot none --start-vm True --vm-display ${vm_display} --nf-type hss --job-name ${JOB_NAME} --build-id ${BUILD_NUMBER} --template-domain ${hss_vm_template} --dns1 ${dns1} --dns2 ${dns2} > hss_vm_start.log 2>&1"
                 }
             }
         }
-        stage ('Start SPGW VM') {
+        stage ('Start SPGWC VM') {
             steps {
-                echo '\u2705 \u001B[32mStarting SPGW VM\u001B[0m'
-                timeout(time: 2, unit: 'MINUTES') {
-                    sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci install-vm --clone-template True  --snapshot yes --start-vm True --vm-display ${vm_display} --nf-type spgw --job-name ${JOB_NAME} --template-domain ${spgw_vm_template} --build-id ${BUILD_NUMBER} --dns1 ${dns1} --dns2 ${dns2} > spgw_vm_start.log 2>&1"
+                echo '\u2705 \u001B[32mStarting SPGWC VM\u001B[0m'
+                timeout(time: 5, unit: 'MINUTES') {
+                    sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci install-vm --clone-template True --snapshot yes --start-vm True --vm-display ${vm_display} --nf-type spgw --job-name ${JOB_NAME} --build-id ${BUILD_NUMBER} --template-domain ${spgw_vm_template} --dns1 ${dns1} --dns2 ${dns2} > spgwc_vm_start.log 2>&1"
+                }
+            }
+        }
+        stage ('Start SPGWU VM') {
+            steps {
+                echo '\u2705 \u001B[32mStarting SPGWU VM\u001B[0m'
+                timeout(time: 5, unit: 'MINUTES') {
+                    sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci install-vm --clone-template True --snapshot yes --start-vm True --vm-display ${vm_display} --nf-type spgwu --job-name ${JOB_NAME} --build-id ${BUILD_NUMBER} --template-domain ${spgw_vm_template} --dns1 ${dns1} --dns2 ${dns2} > spgwc_vm_start.log 2>&1"
                 }
             }
         }
@@ -179,7 +195,7 @@ pipeline {
                     steps {
                         echo '\u2705 \u001B[32mInstalling libs and packages for MME\u001B[0m'
                         timeout(time: 25, unit: 'MINUTES') {
-                            sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci install-libs-packs4nf --nf-type mme --job-name ${JOB_NAME} --build-id ${BUILD_NUMBER} --keep-vm-alive True > mme_install_libs.log 2>&1"
+                            sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci install-libs-packs4nf --nf-type mme --job-name ${JOB_NAME} --build-id ${BUILD_NUMBER} --keep-vm-alive True --incremental True > mme_install_libs.log 2>&1"
                         }
                     }
                 }
@@ -187,15 +203,23 @@ pipeline {
                     steps {
                         echo '\u2705 \u001B[32mInstalling libs and packages for HSS\u001B[0m'
                         timeout(time: 25, unit: 'MINUTES') {
-                            sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci install-libs-packs4nf --nf-type hss --job-name ${JOB_NAME} --build-id ${BUILD_NUMBER} --keep-vm-alive True --option Release14 > hss_install_libs.log 2>&1"
+                            sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci install-libs-packs4nf --nf-type hss --job-name ${JOB_NAME} --build-id ${BUILD_NUMBER} --keep-vm-alive True --option Release14 --incremental True > hss_install_libs.log 2>&1"
                         }
                     }
                 }
-                stage ('SPGW SW') {
+                stage ('SPGWC SW') {
                     steps {
-                        echo '\u2705 \u001B[32mInstalling libs and packages for SPGW\u001B[0m'
+                        echo '\u2705 \u001B[32mInstalling libs and packages for SPGW-C\u001B[0m'
                         timeout(time: 25, unit: 'MINUTES') {
-                            sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci install-libs-packs4nf --nf-type spgw --job-name ${JOB_NAME} --build-id ${BUILD_NUMBER} --keep-vm-alive True > spgw_install_libs.log 2>&1"
+                            sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci install-libs-packs4nf --nf-type spgw --job-name ${JOB_NAME} --build-id ${BUILD_NUMBER} --keep-vm-alive True --option CUPS --separate-cups True --incremental True > spgwc_install_libs.log 2>&1"
+                        }
+                    }
+                }
+                stage ('SPGWU SW') {
+                    steps {
+                        echo '\u2705 \u001B[32mInstalling libs and packages for SPGW-U\u001B[0m'
+                        timeout(time: 25, unit: 'MINUTES') {
+                            sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci install-libs-packs4nf --nf-type spgwu --job-name ${JOB_NAME} --build-id ${BUILD_NUMBER} --keep-vm-alive True --option CUPS --separate-cups True --incremental True > spgwu_install_libs.log 2>&1"
                         }
                     }
                 }
@@ -215,10 +239,16 @@ pipeline {
                         sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci build-nf --nf-type hss --job-name ${JOB_NAME} --build-id ${BUILD_NUMBER} --keep-vm-alive True --build-type Release --option Release14 > hss_build.log 2>&1"
                     }
                 }
-                stage ('Build SPGW') {
+                stage ('Build SPGWC') {
                     steps {
-                        echo '\u2705 \u001B[32mBuilding SPGW vNF\u001B[0m'
-                        sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci build-nf --nf-type spgw --job-name ${JOB_NAME} --build-id ${BUILD_NUMBER} --keep-vm-alive True --build-type Release > spgw_build.log 2>&1"
+                        echo '\u2705 \u001B[32mBuilding SPGW-C vNF\u001B[0m'
+                        sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci build-nf --nf-type spgw --job-name ${JOB_NAME} --build-id ${BUILD_NUMBER} --keep-vm-alive True --build-type Release --option CUPS --separate-cups True > spgwc_build.log 2>&1"
+                    }
+                }
+                stage ('Build SPGWU') {
+                    steps {
+                        echo '\u2705 \u001B[32mBuilding SPGW-U vNF\u001B[0m'
+                        sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci build-nf --nf-type spgwu --job-name ${JOB_NAME} --build-id ${BUILD_NUMBER} --keep-vm-alive True --build-type Release --option CUPS --separate-cups True > spgwu_build.log 2>&1"
                     }
                 }
             }
@@ -228,67 +258,60 @@ pipeline {
                 stage ('Config MME') {
                     steps {
                         echo '\u2705 \u001B[32mConfiguring MME vNF\u001B[0m'
-                        sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci configure-nf --nf-type mme --keep-vm-alive True --job-name ${JOB_NAME} --build-id ${BUILD_NUMBER} > mme_config.log 2>&1"
+                        sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci configure-nf --nf-type mme --keep-vm-alive True --job-name ${JOB_NAME} --build-id ${BUILD_NUMBER} --incremental True > mme_config.log 2>&1"
                     }
                 }
                 stage ('Config HSS') {
                     steps {
                         echo '\u2705 \u001B[32mConfiguring HSS vNF\u001B[0m'
-                        sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci configure-nf --nf-type hss --keep-vm-alive True --job-name ${JOB_NAME} --build-id ${BUILD_NUMBER} --option Release14 > hss_config.log 2>&1"
+                        sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci configure-nf --nf-type hss --keep-vm-alive True --job-name ${JOB_NAME} --build-id ${BUILD_NUMBER} --option Release14 --incremental True > hss_config.log 2>&1"
                     }
                 }
-                stage ('Config SPGW') {
+                stage ('Config SPGWC') {
                     steps {
-                        echo '\u2705 \u001B[32mConfiguring SPGW vNF\u001B[0m'
-                        sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci configure-nf --nf-type spgw --keep-vm-alive True --job-name ${JOB_NAME} --build-id ${BUILD_NUMBER} > spgw_config.log 2>&1"
+                        echo '\u2705 \u001B[32mConfiguring SPGW-C vNF\u001B[0m'
+                        sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci configure-nf --nf-type spgw --keep-vm-alive True --job-name ${JOB_NAME} --build-id ${BUILD_NUMBER} --option CUPS --separate-cups True --incremental True > spgwc_config.log 2>&1"
+                    }
+                }
+                stage ('Config SPGWU') {
+                    steps {
+                        echo '\u2705 \u001B[32mConfiguring SPGW-U vNF\u001B[0m'
+                        sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci configure-nf --nf-type spgwu --keep-vm-alive True --job-name ${JOB_NAME} --build-id ${BUILD_NUMBER} --option CUPS --separate-cups True --incremental True > spgwu_config.log 2>&1"
                     }
                 }
             }
         }
         stage('Start Core Network Functions') {
-            parallel {
-                stage ('Start MME') {
-                    steps {
-                        echo '\u2705 \u001B[32mStarting MME vNF\u001B[0m'
-                        sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci start-nf --nf-type mme --job-name ${JOB_NAME} --build-id ${BUILD_NUMBER} > mme_vnf_start.log 2>&1"
-                    }
-                }
-                stage ('Start HSS') {
-                    steps {
-                        echo '\u2705 \u001B[32mStarting HSS vNF\u001B[0m'
-                        sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci start-nf --nf-type hss --job-name ${JOB_NAME} --build-id ${BUILD_NUMBER} --option Release14 > hss_vnf_start.log 2>&1"
-                    }
-                }
-                stage ('Start SPGW') {
-                    steps {
-                        echo '\u2705 \u001B[32mStarting SPGW vNF\u001B[0m'
-                        // For the moment it crashes the SPGW VM and a zombie process remains
-                        //sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci start-nf --nf-type spgw --job-name ${JOB_NAME} --build-id ${BUILD_NUMBER} > spgw_vnf_start.log 2>&1"
-                    }
-                }
+            steps {
+                echo '\u2705 \u001B[32mStarting HSS vNF\u001B[0m'
+                sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci start-nf --nf-type hss --job-name ${JOB_NAME} --build-id ${BUILD_NUMBER} --option Release14 > hss_vnf_start.log 2>&1"
+                sh "sleep 5"
+
+                echo '\u2705 \u001B[32mStarting MME vNF\u001B[0m'
+                sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci start-nf --nf-type mme --job-name ${JOB_NAME} --build-id ${BUILD_NUMBER} > mme_vnf_start.log 2>&1"
+
+                echo '\u2705 \u001B[32mStarting SPGW-C vNF\u001B[0m'
+                sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci start-nf --nf-type spgw --job-name ${JOB_NAME} --build-id ${BUILD_NUMBER} --option CUPS --separate-cups True > spgwc_vnf_start.log 2>&1"
+                sh "sleep 5"
+
+                echo '\u2705 \u001B[32mStarting SPGW-U vNF\u001B[0m'
+                sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci start-nf --nf-type spgwu --job-name ${JOB_NAME} --build-id ${BUILD_NUMBER} --option CUPS --separate-cups True > spgwu_vnf_start.log 2>&1"
+
+                sh "sleep 30"
             }
         }
         stage('Stop Core Network Functions') {
-            parallel {
-                stage ('Stop MME') {
-                    steps {
-                        echo '\u2705 \u001B[32mStopping MME vNF\u001B[0m'
-                        sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci stop-nf --nf-type mme --job-name ${JOB_NAME} --build-id ${BUILD_NUMBER} > mme_vnf_stop.log 2>&1"
-                    }
-                }
-                stage ('Stop HSS') {
-                    steps {
-                        echo '\u2705 \u001B[32mStopping HSS vNF\u001B[0m'
-                        sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci stop-nf --nf-type hss --job-name ${JOB_NAME} --build-id ${BUILD_NUMBER} --option Release14 > hss_vnf_stop.log 2>&1"
-                    }
-                }
-                stage ('Stop SPGW') {
-                    steps {
-                        echo '\u2705 \u001B[32mStopping SPGW vNF\u001B[0m'
-                        // For the moment it crashes the SPGW VM and a zombie process remains
-                        //sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci stop-nf --nf-type spgw --job-name ${JOB_NAME} --build-id ${BUILD_NUMBER} > spgw_vnf_stop.log 2>&1"
-                    }
-                }
+            steps {
+                echo '\u2705 \u001B[32mStopping HSS vNF\u001B[0m'
+                sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci stop-nf --nf-type hss --job-name ${JOB_NAME} --build-id ${BUILD_NUMBER} --option Release14 > hss_vnf_stop.log 2>&1"
+                echo '\u2705 \u001B[32mStopping MME vNF\u001B[0m'
+                sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci stop-nf --nf-type mme --job-name ${JOB_NAME} --build-id ${BUILD_NUMBER} > mme_vnf_stop.log 2>&1"
+
+                echo '\u2705 \u001B[32mStopping SPGW-C vNF\u001B[0m'
+                sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci stop-nf --nf-type spgw --job-name ${JOB_NAME} --build-id ${BUILD_NUMBER} --option CUPS --separate-cups True > spgwc_vnf_stop.log 2>&1"
+
+                echo '\u2705 \u001B[32mStopping SPGW-U vNF\u001B[0m'
+                sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci stop-nf --nf-type spgwu --job-name ${JOB_NAME} --build-id ${BUILD_NUMBER} --option CUPS --separate-cups True > spgwu_vnf_stop.log 2>&1"
             }
         }
     }
@@ -331,7 +354,7 @@ pipeline {
                 sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci clean-build --job-name ${JOB_NAME} --build-id ${BUILD_NUMBER} > clean-build.log 2>&1"
 
                 echo '\u2705 \u001B[32mGenerating Report\u001B[0m'
-                sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci report-html-build --job-name ${JOB_NAME} --build-id ${BUILD_NUMBER} > report-build.log 2>&1"
+                sh "sudo -HE env MYPYTHONPATH=${MYPYTHONPATH} ./ci-scripts/host/scripts/sak4ci report-html-build --job-name ${JOB_NAME} --build-id ${BUILD_NUMBER} --separate-cups True --incremental True > report-build.log 2>&1"
                 if (fileExists('test_results_oai_cn.html')) {
                     sh "sudo sed -i -e 's#Build-ID: ${BUILD_ID}#Build-ID: <a href=\"${BUILD_URL}\">${BUILD_ID}</a>#' test_results_oai_cn.html"
                     if (env.ghprbPullId != null) {
@@ -359,6 +382,9 @@ pipeline {
                 // Full clean-up
                 if (fileExists("${WORKSPACE}/ci-scripts")) {
                     sh "sudo rm -Rf ${WORKSPACE}/ci-scripts > /dev/null 2>&1"
+                }
+                if (fileExists("${WORKSPACE}/ci-cups")) {
+                    sh "sudo rm -Rf ${WORKSPACE}/ci-cups > /dev/null 2>&1"
                 }
 
                 // Sending an email to the last committer. Maybe not the Pull Request's author.

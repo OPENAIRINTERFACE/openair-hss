@@ -381,8 +381,6 @@ install_opencoord.org_freediameter() {
 
   if [[ $prompt =~ [yY](es)* ]]
   then
-    echo "git config --global https.postBuffer 123289600"
-    git config --global https.postBuffer 123289600
     echo "git submodule init"
     git submodule init
     ret=$?;[[ $ret -ne 0 ]] && return $ret
