@@ -36,7 +36,7 @@
 #define FILE_MCE_APP_DEFS_SEEN
 #include "intertask_interface.h"
 #include "mce_app_mbms_service_context.h"
-#define CHANGEABLE_VALUE 4096
+#define CHANGEABLE_VALUE 256
 
 #define MAX_MBMS_BEARER mme_config.max_mbms_service
 typedef struct mce_app_desc_s {

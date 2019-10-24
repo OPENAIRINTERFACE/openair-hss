@@ -139,11 +139,9 @@ mce_app_handle_mbms_session_start_request(
    */
   mbms_service_t * mbms_service = mce_mbms_service_exists_mbms_service_id(&mce_app_desc.mce_mbms_service_contexts, &mbms_session_start_request_pP->tmgi, mbms_service_area_id);
   if(mbms_service) {
-    /**
-     * The MBMS Service Area and PLMN are served by this MME.
-     */
+    /** The MBMS Service Area and PLMN are served by this MME. */
     OAILOG_ERROR(LOG_MCE_APP, "An old MBMS Service context already existed for TMGI " TMGI_FMT " and MBMS Service Area " MBMS_SERVICE_AREA_ID_FMT ". Rejecting new one and implicitly removing old one. \n",
-    		TMGI_ARG(&mbms_session_start_request_pP->tmgi), mbms_service_area_id);
+    	TMGI_ARG(&mbms_session_start_request_pP->tmgi), mbms_service_area_id);
     mce_app_itti_sm_mbms_session_start_response(INVALID_TEID, mbms_session_start_request_pP->sm_mbms_fteid.teid, &mbms_session_start_request_pP->peer_ip, mbms_session_start_request_pP->trxn, SYSTEM_FAILURE);
     /** Removing old MBMS Service Context and informing the MCE APP. No response is expected from MCE. */
     mce_app_stop_mbms_service(&mbms_service->privates.fields.tmgi, mbms_service->privates.fields.mbms_service_area_id, mbms_service->privates.fields.mme_teid_sm);
@@ -421,16 +419,12 @@ static void mce_app_stop_mbms_service(tmgi_t * tmgi, mbms_service_area_id_t mbms
   DevAssert(tmgi);
   DevAssert(mbms_sa_id != INVALID_MBMS_SERVICE_AREA_ID);
 
-  // todo: lock MBMS Service
   OAILOG_INFO(LOG_MCE_APP, "Clearing MBMS Service with TMGI " TMGI_FMT " and MBMS-Service-Area ID " MBMS_SERVICE_AREA_ID_FMT". \n", TMGI_ARG(tmgi), mbms_sa_id);
-
   /**
    * Inform the MXAP Layer about the removed MBMS Service.
    * No negative response will arrive, so continue.
    */
   mce_app_itti_m3ap_mbms_session_stop_request(tmgi, mbms_sa_id);
-
   mce_app_remove_mbms_service(tmgi, mbms_sa_id, mme_sm_teid);
-
   OAILOG_FUNC_OUT(LOG_MCE_APP);
 }

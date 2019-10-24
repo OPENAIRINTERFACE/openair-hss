@@ -266,6 +266,7 @@ void release_session_pool(ue_session_pool_t ** ue_session_pool) {
 	STAILQ_INSERT_HEAD(&mme_app_desc.mme_ue_session_pools_list, (*ue_session_pool), entries);
 	*ue_session_pool = NULL;
 	// todo: unlock the mme_desc
+	OAILOG_FUNC_OUT(LOG_MME_APP);
 }
 
 //------------------------------------------------------------------------------

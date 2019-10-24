@@ -2903,6 +2903,7 @@ static void clear_ue_context(ue_context_t * ue_context) {
 	/** Initialize the fields. */
 	memset(&ue_context->privates.fields, 0, sizeof(ue_context->privates.fields));
 	OAILOG_INFO(LOG_MME_APP, "Successfully cleared UE context for UE "MME_UE_S1AP_ID_FMT ". \n", ue_id);
+	OAILOG_FUNC_OUT(LOG_MME_APP);
 }
 
 //------------------------------------------------------------------------------
@@ -2922,5 +2923,6 @@ static void release_ue_context(ue_context_t ** ue_context) {
 	STAILQ_INSERT_HEAD(&mme_app_desc.mme_ue_contexts_list, (*ue_context), entries);
 	*ue_context= NULL;
 	// todo: unlock the mme_desc
+	OAILOG_FUNC_OUT(LOG_MME_APP);
 }
 

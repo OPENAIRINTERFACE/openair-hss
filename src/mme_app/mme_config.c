@@ -227,9 +227,10 @@ static void mme_config_init (mme_config_t * config_pP)
 
   config_pP->log_config.asn1_verbosity_level = 0;
   config_pP->config_file = NULL;
-  config_pP->max_s1_enbs = 2;
-  config_pP->max_m2_enbs = 2;
-  config_pP->max_ues     = 2;
+  config_pP->max_s1_enbs 		= 2;
+  config_pP->max_m2_enbs 		= 2;
+  config_pP->max_ues     		= 2;
+  config_pP->max_mbms_services 	= 2;
   config_pP->unauthenticated_imsi_supported = 0;
   config_pP->dummy_handover_forwarding_enabled = 1;
   config_pP->run_mode    = RUN_MODE_BASIC;

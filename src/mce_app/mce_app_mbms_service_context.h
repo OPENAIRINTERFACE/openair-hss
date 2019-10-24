@@ -95,12 +95,12 @@ typedef struct mbms_service_s {
 		  /* TODO: add DRX parameter */
 		  // UE Specific DRX Parameters   // UE specific DRX parameters for A/Gb mode, Iu mode and S1-mode
 		  /** TMGI and MBMS Service Area of the MBMS Service - Key Identifiers. */
-		  tmgi_t		         tmgi;
-		  mbms_service_area_id_t mbms_service_area_id;
+		  tmgi_t		         			tmgi;
+		  mbms_service_area_id_t 			mbms_service_area_id;
 		  /** MCE TEID for Sm. */
-		  teid_t                 mme_teid_sm;                // needed to get the MBMS Service from Sm messages
+		  teid_t                 			mme_teid_sm;                // needed to get the MBMS Service from Sm messages
 		  /** Flow-Id of the MBMS Bearer service. */
-		  uint16_t               mbms_flow_id;
+		  uint16_t               			mbms_flow_id;
 		  /**
 		   * MBMS Bearer Context created for all eNBs of the MBMS Service Area for this MBMS Service.
 		   * It is bound to the TMGI and flow ID combination.
@@ -112,7 +112,7 @@ typedef struct mbms_service_s {
 	  }fields;
   }privates;
 
-  LIST_HEAD(sm_procedures_s, mme_app_sm_proc_s) sm_procedures;
+  LIST_HEAD(sm_procedures_s, mme_app_sm_proc_s)  sm_procedures;
 
   /** Entries for MBMS Service Pool . */
   STAILQ_ENTRY (mbms_service_s)		entries;

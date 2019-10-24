@@ -54,6 +54,7 @@
 #include "mce_app_mbms_service_context.h"
 #include "mce_app_defs.h"
 #include "mce_app_itti_messaging.h"
+#include "mme_app_procedures.h"
 #include "common_defs.h"
 
 // todo: think about locking the MCE_APP context or EMM context, which one to lock, why to lock at all? lock seperately?
@@ -101,7 +102,7 @@
 /****************************************************************************/
 /*******************  L O C A L    D E F I N I T I O N S  *******************/
 /****************************************************************************/
-static void clear_mbms_service(mbms_service_t * mbms_service);
+static void clear_mbms_service(struct mbms_service_s * mbms_service);
 static void release_mbms_service(mbms_service_t ** mbms_service);
 static int mce_insert_mbms_service(mce_mbms_services_t * const mce_mbms_services_p, const struct mbms_service_s *const mbms_service);
 static mbmsServiceIndex64_t get_mbms_service_index(const tmgi_t * tmgi, const mbms_service_area_id_t mbms_service_area_id);
@@ -471,34 +472,28 @@ mce_app_update_mbms_service (mbms_service_t * const mbms_service, const mbms_abs
 
 // todo: MBMS Service should already be locked : any way to check it?!?
 //------------------------------------------------------------------------------
-static void clear_mbms_service(mbms_service_t * mbms_service) {
-	OAILOG_FUNC_IN(LOG_MCE_APP);
+static
+void clear_mbms_service(struct mbms_service_s * mbms_service) {
+  OAILOG_FUNC_IN(LOG_MCE_APP);
 
-	DevAssert(mbms_service != NULL);
-	// todo: lock MBMS Service
-	OAILOG_INFO(LOG_MCE_APP, "Clearing MBMS Service with TMGI " TMGI_FMT ". \n", TMGI_ARG(&mbms_service->privates.fields.tmgi));
-	/**
-	 * Clear the bearer contexts.
-	 * Just one bearer for all eNBs should exist.
-	 * eNB dependencies should be handled in the M2AP layer.
-	 */
-//	mbms_service->privates.fields.bc_mbms.esm_ebr_context.status   = ESM_EBR_INACTIVE;
-//	if(mbms_service->privates.fields.bc_mbms.esm_ebr_context.tft){
-//	  OAILOG_INFO(LOG_MCE_APP, "FREEING TFT %p of MBMS Service with TMGI " TMGI_FMT".\n",
-//		mbms_service->privates.fields.bc_mbms.esm_ebr_context.tft, TMGI_ARG(&mbms_service->privates.fields.tmgi));
-//	  free_traffic_flow_template(&mbms_service->privates.fields.bc_mbms.esm_ebr_context.tft);
-//	}
-	// todo: check pco
-	//  if(bearer_context->esm_ebr_context.pco){
-	//    free_protocol_configuration_options(&bearer_context->esm_ebr_context.pco);
-	//  }
-//	/** Remove the remaining contexts of the bearer context. */
-//	memset(&mbms_service->privates.fields.bc_mbms.esm_ebr_context, 0, sizeof(esm_ebr_context_t)); /**< Sets the SM status to ESM_STATUS_INVALID. */
-//	memset(&mbms_service->privates.fields.bc_mbms, 0, sizeof(bearer_context_new_t));
-//	/** Single bearer expected // NO EBIs & no lists. */
-
-	memset(&mbms_service->privates.fields, 0, sizeof(mbms_service->privates.fields));
-	OAILOG_INFO(LOG_MCE_APP, "Successfully cleared MBMS Service for TMGI " TMGI_FMT". \n", TMGI_ARG(&mbms_service->privates.fields.tmgi));
+  DevAssert(mbms_service != NULL);
+  // todo: lock MBMS Service
+  OAILOG_INFO(LOG_MCE_APP, "Clearing MBMS Service with TMGI " TMGI_FMT ". \n", TMGI_ARG(&mbms_service->privates.fields.tmgi));
+  /**
+   * Clear the bearer contexts.
+   * Just one bearer for all eNBs should exist (MBMS Service Area Identity specific).
+   * eNB dependencies should be handled in the M2AP layer.
+   * No TFTs present (not forwarded to the MME).
+   * Single bearer expected // NO EBIs & no lists.
+   */
+  DevAssert(!mbms_service->privates.fields.mbms_bc.eps_bearer_context.esm_ebr_context.tft);
+  DevAssert(mbms_service->privates.fields.mbms_bc.eps_bearer_context.esm_ebr_context.status == ESM_EBR_INACTIVE);
+  /** Will remove the S10 procedures and tunnel endpoints. */
+  mme_app_delete_sm_procedures(mbms_service);
+  /** Remove the remaining contexts of the bearer context. */
+  memset(&mbms_service->privates.fields, 0, sizeof(mbms_service->privates.fields));
+  OAILOG_INFO(LOG_MCE_APP, "Successfully cleared MBMS Service for TMGI " TMGI_FMT". \n", TMGI_ARG(&mbms_service->privates.fields.tmgi));
+  OAILOG_FUNC_OUT(LOG_MME_APP);
 }
 
 //------------------------------------------------------------------------------
