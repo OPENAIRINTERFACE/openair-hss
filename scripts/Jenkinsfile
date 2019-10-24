@@ -33,6 +33,9 @@ def sendSocialMediaMessage(pipeChannel, pipeColor, pipeMessage) {
 // Location of the CN executor node 
 def cn_ci_host = params.Host_CN_CI_Server
 
+// Name of the VM resources
+def cn_ci_resource = params.VM_Resources
+
 //--------------------------------------------------------
 // Pipeline start
 pipeline {
@@ -43,6 +46,7 @@ pipeline {
         disableConcurrentBuilds()
         timestamps()
         ansiColor('xterm')
+        lock (cn_ci_resource)
     }
     environment {
         // Some of these parameters will move to GUI Job configuration
