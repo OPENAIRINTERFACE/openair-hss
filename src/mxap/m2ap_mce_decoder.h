@@ -24,7 +24,6 @@
 #ifndef FILE_M2AP_MCE_DECODER_SEEN
 #define FILE_M2AP_MCE_DECODER_SEEN
 #include "bstrlib.h"
-#include "m2ap_common.h"
 
 int m2ap_mce_decode_pdu(M2AP_M2AP_PDU_t *pdu, const_bstring const raw) __attribute__ ((warn_unused_result));
 #endif /* FILE_M2AP_MCE_DECODER_SEEN */

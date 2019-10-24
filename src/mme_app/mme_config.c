@@ -149,24 +149,27 @@ int mme_app_compare_tac (
 
 //------------------------------------------------------------------------------
 /* @brief compare a MBMS-SA
+ * @return the first matching MBMS Service Area value.
 */
 static
-int mme_app_compare_mbms_sa (
-  uint16_t mbms_sa_value)
+mbms_service_area_id_t mme_app_compare_mbms_sa (const mbms_service_area_t * mbms_service_area)
 {
-  int                                     i = 0;
-
+  int                                     i = 0, j = 0;
   mme_config_read_lock (&mme_config);
-
-  for (i = 0; i < mme_config.served_tai.nb_tai; i++) {
-    OAILOG_TRACE (LOG_MME_APP, "Comparing config mbms_sa %d, received mbms_sa = %d\n", mme_config.served_mbms_sa.mbms_sa_list[i], mbms_sa_value);
-
-    if (mme_config.served_mbms_sa.mbms_sa_list[i] == mbms_sa_value)
-      return TA_LIST_AT_LEAST_ONE_MATCH;
+  for (i = 0; i < mme_config.served_mbms_sa.nb_mbms_sa; i++) {
+    for (j = 0; j < mbms_service_area->num_service_area; j++) {
+      OAILOG_TRACE (LOG_MME_APP, "Comparing config mbms_sa %d, received mbms_sa = %d\n", mme_config.served_mbms_sa.mbms_sa_list[i], mbms_service_area->serviceArea[j]);
+      if(mbms_service_area->serviceArea[j] == INVALID_MBMS_SERVICE_AREA_ID){
+        OAILOG_WARNING(LOG_MME_APP, "Skipping invalid MBMS Service Area ID (0). \n");
+      }
+      if (mme_config.served_mbms_sa.mbms_sa_list[i] == mbms_service_area->serviceArea[j]) {
+        OAILOG_INFO(LOG_MME_APP, "Found a matching MBMS Service Area ID " MBMS_SERVICE_AREA_ID_FMT ". \n", mbms_service_area->serviceArea[j]);
+        return mbms_service_area->serviceArea[j];
+      }
+    }
   }
-
   mme_config_unlock (&mme_config);
-  return TA_LIST_NO_MATCH;
+  return INVALID_MBMS_SERVICE_AREA_ID;
 }
 
 //------------------------------------------------------------------------------
@@ -182,15 +185,16 @@ bool mme_app_check_ta_local(const plmn_t * target_plmn, const tac_t target_tac){
 }
 
 //------------------------------------------------------------------------------
-bool mce_app_check_sa_local(const plmn_t * target_plmn, const mbms_service_area_t * mbms_service_area){
+mbms_service_area_id_t mce_app_check_sa_local(const plmn_t * target_plmn, const mbms_service_area_t * mbms_service_area){
   if(TA_LIST_AT_LEAST_ONE_MATCH == mme_app_compare_plmn(target_plmn)){
-    if(TA_LIST_AT_LEAST_ONE_MATCH == mme_app_compare_mbms_sa(mbms_service_area)){
-      OAILOG_DEBUG (LOG_MME_APP, "MBMS-SA and PLMN are matching. \n");
-      return true;
+	mbms_service_area_id_t mbms_service_area_id;
+    if((mbms_service_area_id = mme_app_compare_mbms_sa(mbms_service_area)) == INVALID_MBMS_SERVICE_AREA_ID){
+      OAILOG_DEBUG (LOG_MME_APP, "MBMS-SA " MBMS_SERVICE_AREA_ID_FMT " and PLMN " PLMN_FMT " are matching. \n", mbms_service_area_id, PLMN_ARG(target_plmn));
+      return mbms_service_area_id;
     }
   }
-  OAILOG_DEBUG (LOG_MME_APP, "MBMS-SA or PLMN are not matching. \n");
-  return false;
+  OAILOG_DEBUG (LOG_MME_APP, "MBMS-SA or PLMN " PLMN_FMT " are not matching. \n", PLMN_ARG(target_plmn));
+  return INVALID_MBMS_SERVICE_AREA_ID;
 }
 
 //------------------------------------------------------------------------------

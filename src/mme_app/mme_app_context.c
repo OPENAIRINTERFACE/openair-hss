@@ -2179,8 +2179,6 @@ mme_app_handle_s10_context_request(const itti_s10_context_request_t * const s10_
  OAILOG_INFO(LOG_MME_APP, "Allocated S10_CONTEXT_RESPONSE MESSAGE for UE with IMSI " IMSI_64_FMT " and mmeUeS1apId " MME_UE_S1AP_ID_FMT " with error cause %d. \n",
      ue_context->privates.fields.imsi, ue_context->privates.mme_ue_s1ap_id, context_response_p->cause);
 
- MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME,  MSC_S11_MME ,
-     NULL, 0, "0 S10_CONTEXT_RESPONSE for UE %d is sent. \n", ue_context->privates.mme_ue_s1ap_id);
  itti_send_msg_to_task (TASK_S10, INSTANCE_DEFAULT, message_p);
  /** Send just S10_CONTEXT_RESPONSE. Currently not waiting for the S10_CONTEXT_ACKNOWLEDGE and nothing done if it does not arrive (no timer etc.). */
  OAILOG_FUNC_OUT (LOG_MME_APP);

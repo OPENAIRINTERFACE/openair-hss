@@ -70,18 +70,23 @@ typedef struct m2_sig_conn_id_s {
   enb_mbms_m2ap_id_t*  enb_mbms_m2ap_id;
 } m2_sig_conn_id_t;
 
+//------------------------------------------------------------------------------
 typedef struct itti_m3ap_mbms_session_start_req_s {
-  uint32_t  teid;                  ///< SM-MME Tunnel Endpoint Identifier
+  uint32_t   teid;                  ///< SM-MME Tunnel Endpoint Identifier
 } itti_m3ap_mbms_session_start_req_t;
 
+//------------------------------------------------------------------------------
 typedef struct itti_m3ap_mbms_session_update_req_s {
-  uint32_t  teid;                  ///< SM-MME Tunnel Endpoint Identifier
+  uint32_t   teid;                  ///< SM-MME Tunnel Endpoint Identifier
 } itti_m3ap_mbms_session_update_req_t;
 
+//------------------------------------------------------------------------------
 typedef struct itti_m3ap_mbms_session_stop_req_s {
-  uint32_t  teid;                  ///< SM-MME Tunnel Endpoint Identifier
+  tmgi_t 				    tmgi;           //< MBMS Service TMGI.
+  mbms_service_area_id_t 	mbms_sa_id; 	//< MBMS Service Area Id.
 } itti_m3ap_mbms_session_stop_req_t;
 
+//------------------------------------------------------------------------------
 typedef struct itti_m3ap_enb_initiated_reset_req_s {
   uint32_t          sctp_assoc_id;
   uint16_t          sctp_stream_id;
@@ -91,6 +96,7 @@ typedef struct itti_m3ap_enb_initiated_reset_req_s {
   s1_sig_conn_id_t  *ue_to_reset_list;
 } itti_m3ap_enb_initiated_reset_req_t;
 
+//------------------------------------------------------------------------------
 typedef struct itti_m3ap_enb_initiated_reset_ack_s {
   uint32_t          sctp_assoc_id;
   uint16_t          sctp_stream_id;

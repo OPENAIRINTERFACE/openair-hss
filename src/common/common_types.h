@@ -72,7 +72,13 @@ typedef uint64_t                 enb_s1ap_id_key_t ;
 // MBMS Service IDs
 #define MCE_MBMS_SERVICE_INDEX_FMT   "%"PRIx32           //*< Combination of TMGI and MBMS Service Area, such that it is unique!
 #define INVALID_MBMS_SERVICE_INDEX   0x00000000          // You can pick any value between 0..2^32-1,
-#define MBMS_SERVICE_AREA_FMT	     "0x%"PRIx16
+
+/**
+ * The value 0 has a special meaning; it shall denote the whole PLMN as the MBMS Service Area and it shall indicate to a receiving
+ * RNC/BSS/MCE that all cells reachable by that RNC/BSS/MCE shall be part of the MBMS Service Area.
+ */
+#define INVALID_MBMS_SERVICE_AREA_ID 0x0000 	         // You can pick any value between 0..2^16-1,
+#define MBMS_SERVICE_AREA_ID_FMT	 "0x%"PRIx16
 #define MBMS_M3AP_ID_FMT		     "0x%"PRIx16
 typedef uint64_t                 	 mbmsServiceIndex64_t;
 typedef uint64_t					 mbms_m3ap_id_t;
@@ -180,10 +186,12 @@ typedef struct {
   unsigned days;
 } mbms_session_duration_t;
 
+typedef uint16_t  mbms_service_area_id_t;
+
 typedef struct {
   uint8_t  num_service_area;
 #define MAX_MBMS_SERVICE_AREA 256
-  uint16_t  serviceArea[MAX_MBMS_SERVICE_AREA];
+  mbms_service_area_id_t  serviceArea[MAX_MBMS_SERVICE_AREA];
 } mbms_service_area_t;
 
 typedef enum {

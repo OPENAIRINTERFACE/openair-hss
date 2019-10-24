@@ -21,6 +21,13 @@
 #ifndef FILE_MME_APP_PROCEDURES_SEEN
 #define FILE_MME_APP_PROCEDURES_SEEN
 
+// todo: #define MME_APP_INITIAL_CONTEXT_SETUP_RSP_TIMER_VALUE 2 // In seconds
+/* Timer structure */
+struct mme_app_timer_t {
+  long id;         /* The timer identifier                 */
+  long sec;       /* The timer interval value in seconds  */
+};
+
 /*! \file mme_app_procedures.h
   \brief
   \author Lionel Gauthier
@@ -38,7 +45,8 @@ typedef enum {
   MME_APP_BASE_PROC_TYPE_NONE = 0,
   MME_APP_BASE_PROC_TYPE_S1AP,
   MME_APP_BASE_PROC_TYPE_S10,
-  MME_APP_BASE_PROC_TYPE_S11
+  MME_APP_BASE_PROC_TYPE_S11,
+  MME_APP_BASE_PROC_TYPE_SM
 } mme_app_base_proc_type_t;
 
 
@@ -138,13 +146,6 @@ typedef struct mme_app_s11_proc_s {
   LIST_ENTRY(mme_app_s11_proc_s) entries;      /* List. */
 } mme_app_s11_proc_t;
 
-typedef enum {
-  S11_PROC_BEARER_UNKNOWN  = 0,
-  S11_PROC_BEARER_PENDING  = 1,
-  S11_PROC_BEARER_FAILED   = 2,
-  S11_PROC_BEARER_SUCCESS  = 3
-} s11_proc_bearer_status_t;
-
 typedef struct mme_app_s11_proc_create_bearer_s {
   mme_app_s11_proc_t           proc;
   int                          num_status_received;
@@ -179,42 +180,44 @@ typedef struct mme_app_s11_proc_delete_bearer_s {
   bearer_contexts_to_be_removed_t bcs_failed; /**< Store the bearer contexts to be created here, and don't register them yet in the MME_APP context. */
 } mme_app_s11_proc_delete_bearer_t;
 
+/* Sm */
 typedef enum {
-  MME_APP_S1AP_PROC_TYPE_NONE = 0,
-  MME_APP_S1AP_PROC_TYPE_INITIAL
-} mme_app_s1ap_proc_type_t;
+  MME_APP_SM_PROC_TYPE_NONE = 0,
+  MME_APP_SM_PROC_TYPE_MBMS_START_SESSION,
+  MME_APP_SM_PROC_TYPE_MBMS_UPDATE_SESSION,
+  MME_APP_SM_PROC_TYPE_MBMS_STOP_SESSION
+} mme_app_sm_proc_type_t;
 
-///* Declaration (prototype) of the function to store bearer contexts. */
-//RB_PROTOTYPE(BearerFteids, fteid_set_s, fteid_set_rbt_Node, fteid_set_compare_s1u_saegw)
+typedef struct mme_app_sm_proc_s {
+  mme_app_base_proc_t         proc;
+  mme_app_sm_proc_type_t      type;
+  uintptr_t                   sm_trxn;
+  LIST_ENTRY(mme_app_sm_proc_s) entries;      /* List. */
+} mme_app_sm_proc_t;
 
-void mme_app_delete_s11_procedures(ue_session_pool_t * const ue_session_pool);
+typedef struct mme_app_sm_proc_mbms_session_start_s {
+  mme_app_sm_proc_t            proc;
+  int                          num_status_received;
+  pdn_cid_t                    pci;
+  // todo: fill it up..
+  // todo: we go on and create the MBMS Service Request directly, as it is described in 23.246. We don't need to store it here.
+  // bearer_contexts_to_be_created_t *bcs_tbc; /**< Store the bearer contexts to be created here, and don't register them yet in the MME_APP context. */
+} mme_app_sm_proc_mbms_session_start_t;
 
-mme_app_s11_proc_t* mme_app_get_s11_procedure (ue_session_pool_t * const ue_session_pool);
+typedef struct mme_app_sm_proc_mbms_session_update_s {
+  mme_app_s11_proc_t           proc;
+  int                          num_status_received;
+  pdn_cid_t                    pci;
+  // TODO here give a NAS/S1AP/.. reason -> GTPv2-C reason
+  // bearer_contexts_to_be_updated_t *bcs_tbu; /**< Store the bearer contexts to be created here, and don't register them yet in the MME_APP context. */
+} mme_app_sm_proc_mbms_session_update_t;
 
-mme_app_s11_proc_create_bearer_t* mme_app_create_s11_procedure_create_bearer(ue_session_pool_t * const ue_session_pool);
-mme_app_s11_proc_create_bearer_t* mme_app_get_s11_procedure_create_bearer(ue_session_pool_t * const ue_session_pool);
-void mme_app_delete_s11_procedure_create_bearer(ue_session_pool_t * const ue_context_p);
-
-mme_app_s11_proc_update_bearer_t* mme_app_create_s11_procedure_update_bearer(ue_session_pool_t * const ue_session_pool);
-mme_app_s11_proc_update_bearer_t* mme_app_get_s11_procedure_update_bearer(ue_session_pool_t * const ue_session_pool);
-void mme_app_delete_s11_procedure_update_bearer(ue_session_pool_t * const ue_session_pool);
-
-mme_app_s11_proc_delete_bearer_t* mme_app_create_s11_procedure_delete_bearer(ue_session_pool_t * const ue_session_pool);
-mme_app_s11_proc_delete_bearer_t* mme_app_get_s11_procedure_delete_bearer(ue_session_pool_t * const ue_session_pool);
-void mme_app_delete_s11_procedure_delete_bearer(ue_session_pool_t * const ue_session_pool);
-
-/*
- * - Creating handover procedure in intra-MME and inter-MME handover
- * - Creating handover procedure in source & target MME todo: create same timer but different callback methods.
- * - Since we don't have a valid EMM UE context, we need to create an MME_APP context.
- */
-void mme_app_delete_s10_procedures(ue_context_t * const ue_context);
-//------------------------------------------------------------------------------
-void mme_app_delete_s10_procedures(ue_context_t * const ue_context);
-mme_app_s10_proc_mme_handover_t* mme_app_create_s10_procedure_mme_handover(ue_context_t * const ue_context, bool target_mme,
-		mme_app_s10_proc_type_t  s1ap_ho_type, struct sockaddr* sockaddr);
-
-mme_app_s10_proc_mme_handover_t* mme_app_get_s10_procedure_mme_handover(ue_context_t * const ue_context);
-void mme_app_delete_s10_procedure_mme_handover(ue_context_t * const ue_context);
+typedef struct mme_app_sm_proc_mbms_session_stop_s {
+  mme_app_s11_proc_t           proc;
+  int                          num_status_received;
+  pdn_cid_t                    pci;
+  // TODO here give a NAS/S1AP/.. reason -> GTPv2-C reason
+  // bearer_contexts_to_be_updated_t *bcs_tbu; /**< Store the bearer contexts to be created here, and don't register them yet in the MME_APP context. */
+} mme_app_sm_proc_mbms_session_stop_t;
 
 #endif

@@ -317,7 +317,7 @@ extern mme_config_t mme_config;
 
 bool mme_app_check_ta_local(const plmn_t * target_plmn, const tac_t target_tac);
 
-bool mce_app_check_sa_local(const plmn_t * target_plmn, const mbms_service_area_t * mbms_service_area);
+mbms_service_area_id_t mce_app_check_sa_local(const plmn_t * target_plmn, const mbms_service_area_t * mbms_service_area);
 
 int mme_config_find_mnc_length(const char mcc_digit1P,
                                const char mcc_digit2P,

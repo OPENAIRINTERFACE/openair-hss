@@ -44,6 +44,7 @@
 #include "common_types.h"
 #include "mme_app_messages_types.h"
 #include "mme_app_bearer_context.h"
+#include "mme_app_procedures.h"
 #include "esm_data.h"
 
 typedef int ( *mme_app_ue_callback_t) (void*);
@@ -266,6 +267,25 @@ void mme_app_get_session_bearer_context_from_all(struct ue_session_pool_s * cons
  * Will set bearer state, unless it is null.
  */
 void mme_app_get_bearer_contexts_to_be_created(struct pdn_context_s * pdn_context, bearer_contexts_to_be_created_t *bc_tbc, mme_app_bearer_state_t bc_state);
+
+
+
+void mme_app_delete_s11_procedures(struct ue_session_pool_s * const ue_session_pool);
+
+mme_app_s11_proc_t* mme_app_get_s11_procedure (struct ue_session_pool_s * const ue_session_pool);
+
+mme_app_s11_proc_create_bearer_t* mme_app_create_s11_procedure_create_bearer(struct ue_session_pool_s * const ue_session_pool);
+mme_app_s11_proc_create_bearer_t* mme_app_get_s11_procedure_create_bearer(struct ue_session_pool_s * const ue_session_pool);
+void mme_app_delete_s11_procedure_create_bearer(struct ue_session_pool_s * const ue_context_p);
+
+mme_app_s11_proc_update_bearer_t* mme_app_create_s11_procedure_update_bearer(struct ue_session_pool_s * const ue_session_pool);
+mme_app_s11_proc_update_bearer_t* mme_app_get_s11_procedure_update_bearer(struct ue_session_pool_s * const ue_session_pool);
+void mme_app_delete_s11_procedure_update_bearer(struct ue_session_pool_s * const ue_session_pool);
+
+mme_app_s11_proc_delete_bearer_t* mme_app_create_s11_procedure_delete_bearer(struct ue_session_pool_s * const ue_session_pool);
+mme_app_s11_proc_delete_bearer_t* mme_app_get_s11_procedure_delete_bearer(struct ue_session_pool_s * const ue_session_pool);
+void mme_app_delete_s11_procedure_delete_bearer(struct ue_session_pool_s * const ue_session_pool);
+
 
 #endif /* FILE_MME_APP_UE_CONTEXT_SEEN */
 

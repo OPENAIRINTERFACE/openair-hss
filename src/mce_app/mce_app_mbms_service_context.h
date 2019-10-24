@@ -48,6 +48,7 @@
 #include "mme_app_bearer_context.h"
 #include "sm_messages_types.h"
 #include "m3ap_messages_types.h"
+#include "mme_app_procedures.h"
 //#include "security_types.h"
 
 #define MBMS_SERVICE_ID_DIGITS 6
@@ -95,7 +96,7 @@ typedef struct mbms_service_s {
 		  // UE Specific DRX Parameters   // UE specific DRX parameters for A/Gb mode, Iu mode and S1-mode
 		  /** TMGI and MBMS Service Area of the MBMS Service - Key Identifiers. */
 		  tmgi_t		         tmgi;
-		  mbms_service_area_t	 mbms_service_area;
+		  mbms_service_area_id_t mbms_service_area_id;
 		  /** MCE TEID for Sm. */
 		  teid_t                 mme_teid_sm;                // needed to get the MBMS Service from Sm messages
 		  /** Flow-Id of the MBMS Bearer service. */
@@ -110,7 +111,10 @@ typedef struct mbms_service_s {
 		  fteid_t				 mbms_sm_fteid;
 	  }fields;
   }privates;
-  /** Entries for MBMS service pool. */
+
+  LIST_HEAD(sm_procedures_s, mme_app_sm_proc_s) sm_procedures;
+
+  /** Entries for MBMS Service Pool . */
   STAILQ_ENTRY (mbms_service_s)		entries;
 } mbms_service_t;
 
@@ -125,7 +129,7 @@ typedef struct mce_mbms_services_s {
  * \param tmgi TMGI to find in MBMS Service map
  * @returns an MBMS Service context matching the TMGI and MBMS Service Area or NULL if the context doesn't exists
  **/
-struct mbms_service_s *mce_mbms_service_exists_mbms_service_id(mce_mbms_services_t * const mce_mbms_services, const tmgi_t * const tmgi, const mbms_service_area_t * const mbms_service_area);
+struct mbms_service_s *mce_mbms_service_exists_mbms_service_id(mce_mbms_services_t * const mce_mbms_services, const tmgi_t * const tmgi, const mbms_service_area_id_t mbms_service_area_id);
 
 /** \brief Retrieve an MBMS service by selecting the given SM TEID.
  * \param teid MME-SM TEID to find in MBMS Service map
@@ -134,16 +138,19 @@ struct mbms_service_s *mce_mbms_service_exists_mbms_service_id(mce_mbms_services
 struct mbms_service_s *mce_mbms_service_exists_sm_teid(mce_mbms_services_t * const mce_mbms_services, const sm_teid_t teid);
 
 /** \brief Allocate a new MBMS Service context in the tree of known MBMS Services.
- * Uses the given MBMS Service ID and MBMS Service Area, which cannot change.
+ * We restrict the MBMS Service struct to an MBMS Service of a single MBMS Service Area (single flow Id).
+ * Uses the given MBMS Service Area ID and MBMS Service Area, which cannot change.
  * @returns the MBMS Service in case of success, NULL otherwise
  **/
-struct mbms_service_s * register_mbms_service(const tmgi_t * const tmgi, const mbms_service_area_t * const mbms_service_area, const teid_t mme_sm_teid);
+struct mbms_service_s * mce_register_mbms_service(const tmgi_t * const tmgi, const mbms_service_area_id_t * const mbms_service_area_id, const teid_t mme_sm_teid);
 
 /** \brief Remove an MBMS Service context of the tree of known MBMS Services.
- * \param mbms_service_p The MBMS Service context to remove
+ * \param tmgi_p 		  The TMGI of the MBMS Service
+ * \param mbms_service_id The MBMS Service ID
+ * \param teid_t		  The TEID of the MBMS Service
  **/
-void mce_remove_mbms_service(mce_mbms_services_t * const mce_mbms_services,
-		                   struct mbms_service_s * const mbms_service_p);
+void mce_app_remove_mbms_service(
+  struct tmgi_s * const tmgi_p, const mbms_service_area_id_t mbms_service_area_id, const teid_t mme_teid_sm);
 
 /** \brief Dump the MBMS Services present in the tree
  **/
@@ -162,6 +169,28 @@ mce_app_update_mbms_service (mbms_service_t * const mbms_service, const mbms_abs
 mbms_service_t                      *
 mbms_cteid_in_list (const mce_mbms_services_t * const mce_mbms_services_p,
   const teid_t cteid);
+
+/*
+ * SM Procedures.
+ */
+void mme_app_delete_sm_procedures(struct mbms_service_s * const mbms_service);
+
+mme_app_sm_proc_t* mme_app_get_sm_procedure (struct mbms_service_s * const mbms_service);
+
+mme_app_sm_proc_mbms_session_start_t* mme_app_create_sm_procedure_mbms_session_start(struct mbms_service_s * const mbms_service);
+mme_app_sm_proc_mbms_session_start_t* mme_app_get_sm_procedure_mbms_session_start(struct mbms_service_s * const mbms_service);
+void mme_app_delete_sm_procedure_mbms_session_start(struct mbms_service_s * const mbms_service);
+
+mme_app_sm_proc_mbms_session_update_t* mme_app_create_sm_procedure_mbms_session_update(struct mbms_service_s * const mbms_service);
+mme_app_sm_proc_mbms_session_update_t* mme_app_get_sm_procedure_mbms_session_update(struct mbms_service_s * const mbms_service);
+void mme_app_delete_sm_procedure_mbms_session_update(struct mbms_service_s * const mbms_service);
+
+mme_app_sm_proc_mbms_session_stop_t* mme_app_create_sm_procedure_mbms_session_stop(struct mbms_service_s * const mbms_service);
+mme_app_sm_proc_mbms_session_stop_t* mme_app_get_sm_procedure_mbms_session_stop(struct mbms_service_s * const mbms_service);
+void mme_app_delete_sm_procedure_mbms_session_stop(struct mbms_service_s * const mbms_service);
+
+
+
 
 #endif /* FILE_MCE_APP_MBMS_SERVICE_CONTEXT_SEEN */
 

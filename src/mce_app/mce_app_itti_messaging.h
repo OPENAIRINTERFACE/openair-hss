@@ -42,9 +42,17 @@ void mce_app_itti_sm_mbms_session_update_response(teid_t mme_sm_teid, teid_t mbm
 /** MBMS Session Stop Request. */
 void mce_app_itti_sm_mbms_session_stop_response(teid_t mme_sm_teid, teid_t mbms_sm_teid, struct sockaddr *mbms_ip_address, void *trxn,  gtpv2c_cause_value_t gtpv2cCause);
 
-/** M2AP Session Start Request. */
-void mce_app_itti_m2ap_sm_mbms_session_start_request(mbms_m3ap_id_t mbms_m3ap_id, tmgi_t * tmgi,
-		mbms_service_area_t * mbms_service_area, bearer_context_to_be_created_t * mbms_bc_tbc, mbms_session_duration_t * mbms_session_duration,
-		void* min_time_to_mbms_data_transfer, mbms_ip_multicast_distribution_t * mbms_ip_mc_dist, mbms_abs_time_data_transfer_t * abs_start_time);
+/** M3AP Session Start Request. */
+void mce_app_itti_m2ap_mbms_session_start_request(mbms_m3ap_id_t mbms_m3ap_id, tmgi_t * tmgi,
+	mbms_service_area_t * mbms_service_area, bearer_context_to_be_created_t * mbms_bc_tbc, mbms_session_duration_t * mbms_session_duration,
+	void* min_time_to_mbms_data_transfer, mbms_ip_multicast_distribution_t * mbms_ip_mc_dist, mbms_abs_time_data_transfer_t * abs_start_time);
+
+/** M3AP Session Update Request. */
+void mce_app_itti_m3ap_mbms_session_update_request(mbms_m3ap_id_t mbms_m3ap_id, tmgi_t * tmgi,
+	mbms_service_area_t * mbms_service_area, bearer_context_to_be_updated_t * mbms_bc_tbu, mbms_session_duration_t * mbms_session_duration,
+	void* min_time_to_mbms_data_transfer, mbms_ip_multicast_distribution_t * mbms_ip_mc_dist, mbms_abs_time_data_transfer_t * abs_start_time);
+
+/** M3AP Session Stop Request. */
+void mce_app_itti_m3ap_mbms_session_stop_request(tmgi_t * tmgi, mbms_service_area_id_t mbms_sa_id);
 
 #endif /* FILE_MCE_APP_ITTI_MESSAGING_SEEN */

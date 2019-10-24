@@ -45,17 +45,21 @@
 #include "mme_config.h"
 #include "mme_app_extern.h"
 #include "mme_app_ue_context.h"
+#include "mce_app_mbms_service_context.h"
 #include "mme_app_defs.h"
 #include "common_defs.h"
-#include "mme_app_procedures.h"
+
 
 static void mme_app_free_s11_procedure_create_bearer(mme_app_s11_proc_t **s11_proc);
 static void mme_app_free_s11_procedure_update_bearer(mme_app_s11_proc_t **s11_proc);
 static void mme_app_free_s11_procedure_delete_bearer(mme_app_s11_proc_t **s11_proc);
 static void mme_app_free_s10_procedure_mme_handover(mme_app_s10_proc_t **s10_proc);
+static void mme_app_free_sm_procedure_mbms_session_start(mme_app_sm_proc_t **sm_proc);
+static void mme_app_free_sm_procedure_mbms_session_update(mme_app_sm_proc_t **sm_proc);
+static void mme_app_free_sm_procedure_mbms_session_stop(mme_app_sm_proc_t **sm_proc);
 
 //------------------------------------------------------------------------------
-void mme_app_delete_s11_procedures(ue_session_pool_t * const ue_session_pool)
+void mme_app_delete_s11_procedures(struct ue_session_pool_s * const ue_session_pool)
 {
   mme_app_s11_proc_t *s11_proc1 = NULL;
   mme_app_s11_proc_t *s11_proc2 = NULL;
@@ -76,7 +80,7 @@ void mme_app_delete_s11_procedures(ue_session_pool_t * const ue_session_pool)
 }
 
 //------------------------------------------------------------------------------
-mme_app_s11_proc_create_bearer_t* mme_app_create_s11_procedure_create_bearer(ue_session_pool_t * const ue_session_pool)
+mme_app_s11_proc_create_bearer_t* mme_app_create_s11_procedure_create_bearer(struct ue_session_pool_s * const ue_session_pool)
 {
   /** Check if the list of S11 procedures is empty. */
   if(!LIST_EMPTY(&ue_session_pool->s11_procedures)){
@@ -99,13 +103,13 @@ mme_app_s11_proc_create_bearer_t* mme_app_create_s11_procedure_create_bearer(ue_
 }
 
 //------------------------------------------------------------------------------
-mme_app_s11_proc_t* mme_app_get_s11_procedure (ue_session_pool_t * const ue_session_pool)
+mme_app_s11_proc_t* mme_app_get_s11_procedure (struct ue_session_pool_s * const ue_session_pool)
 {
   return LIST_FIRST(&ue_session_pool->s11_procedures);
 }
 
 //------------------------------------------------------------------------------
-mme_app_s11_proc_create_bearer_t* mme_app_get_s11_procedure_create_bearer(ue_session_pool_t * const ue_session_pool)
+mme_app_s11_proc_create_bearer_t* mme_app_get_s11_procedure_create_bearer(struct ue_session_pool_s * const ue_session_pool)
 {
   mme_app_s11_proc_t *s11_proc = NULL;
 
@@ -118,7 +122,7 @@ mme_app_s11_proc_create_bearer_t* mme_app_get_s11_procedure_create_bearer(ue_ses
 }
 
 //------------------------------------------------------------------------------
-void mme_app_delete_s11_procedure_create_bearer(ue_session_pool_t * const ue_session_pool)
+void mme_app_delete_s11_procedure_create_bearer(struct ue_session_pool_s * const ue_session_pool)
 {
   mme_app_s11_proc_t *s11_proc = NULL, *s11_proc_safe = NULL;
 
@@ -137,7 +141,7 @@ void mme_app_delete_s11_procedure_create_bearer(ue_session_pool_t * const ue_ses
 }
 
 //------------------------------------------------------------------------------
-mme_app_s11_proc_update_bearer_t* mme_app_create_s11_procedure_update_bearer(ue_session_pool_t * const ue_session_pool)
+mme_app_s11_proc_update_bearer_t* mme_app_create_s11_procedure_update_bearer(struct ue_session_pool_s * const ue_session_pool)
 {
   /** Check if the list of S11 procedures is empty. */
   if(!LIST_EMPTY(&ue_session_pool->s11_procedures)){
@@ -159,7 +163,7 @@ mme_app_s11_proc_update_bearer_t* mme_app_create_s11_procedure_update_bearer(ue_
 }
 
 //------------------------------------------------------------------------------
-mme_app_s11_proc_update_bearer_t* mme_app_get_s11_procedure_update_bearer(ue_session_pool_t * const ue_session_pool)
+mme_app_s11_proc_update_bearer_t* mme_app_get_s11_procedure_update_bearer(struct ue_session_pool_s * const ue_session_pool)
 {
   mme_app_s11_proc_t *s11_proc = NULL;
 
@@ -172,7 +176,7 @@ mme_app_s11_proc_update_bearer_t* mme_app_get_s11_procedure_update_bearer(ue_ses
 }
 
 //------------------------------------------------------------------------------
-void mme_app_delete_s11_procedure_update_bearer(ue_session_pool_t * const ue_session_pool)
+void mme_app_delete_s11_procedure_update_bearer(struct ue_session_pool_s * const ue_session_pool)
 {
   /** Check if the list of S11 procedures is empty. */
   mme_app_s11_proc_t *s11_proc = NULL, *s11_proc_safe = NULL;
@@ -192,7 +196,7 @@ void mme_app_delete_s11_procedure_update_bearer(ue_session_pool_t * const ue_ses
 }
 
 //------------------------------------------------------------------------------
-mme_app_s11_proc_delete_bearer_t* mme_app_create_s11_procedure_delete_bearer(ue_session_pool_t * const ue_session_pool)
+mme_app_s11_proc_delete_bearer_t* mme_app_create_s11_procedure_delete_bearer(struct ue_session_pool_s * const ue_session_pool)
 {
 	if(!LIST_EMPTY(&ue_session_pool->s11_procedures)){
 		OAILOG_ERROR (LOG_MME_APP, "UE with ueId " MME_UE_S1AP_ID_FMT " has already a S11 procedure ongoing. Cannot create DBR procedure. \n",
@@ -214,7 +218,7 @@ mme_app_s11_proc_delete_bearer_t* mme_app_create_s11_procedure_delete_bearer(ue_
 }
 
 //------------------------------------------------------------------------------
-mme_app_s11_proc_delete_bearer_t* mme_app_get_s11_procedure_delete_bearer(ue_session_pool_t * const ue_session_pool)
+mme_app_s11_proc_delete_bearer_t* mme_app_get_s11_procedure_delete_bearer(struct ue_session_pool_s * const ue_session_pool)
 {
 	mme_app_s11_proc_t *s11_proc = NULL;
 
@@ -227,7 +231,7 @@ mme_app_s11_proc_delete_bearer_t* mme_app_get_s11_procedure_delete_bearer(ue_ses
 }
 
 //------------------------------------------------------------------------------
-void mme_app_delete_s11_procedure_delete_bearer(ue_session_pool_t * const ue_session_pool)
+void mme_app_delete_s11_procedure_delete_bearer(struct ue_session_pool_s * const ue_session_pool)
 {
 
     mme_app_s11_proc_t *s11_proc = NULL, *s11_proc_safe = NULL;
@@ -259,29 +263,29 @@ static void mme_app_free_s11_procedure_create_bearer(mme_app_s11_proc_t **s11_pr
 }
 
 //------------------------------------------------------------------------------
-static void mme_app_free_s11_procedure_update_bearer(mme_app_s11_proc_t **s11_proc_cbr)
+static void mme_app_free_s11_procedure_update_bearer(mme_app_s11_proc_t **s11_proc_ubr)
 {
   // DO here specific releases (memory,etc)
   /** Remove the bearer contexts to be setup. */
-  mme_app_s11_proc_update_bearer_t ** s11_proc_update_bearer_pp = (mme_app_s11_proc_update_bearer_t**)s11_proc_cbr;
+  mme_app_s11_proc_update_bearer_t ** s11_proc_update_bearer_pp = (mme_app_s11_proc_update_bearer_t**)s11_proc_ubr;
   if((*s11_proc_update_bearer_pp)->bcs_tbu)
     free_bearer_contexts_to_be_updated(&(*s11_proc_update_bearer_pp)->bcs_tbu);
   free_wrapper((void**)s11_proc_update_bearer_pp);
 }
 
 //------------------------------------------------------------------------------
-static void mme_app_free_s11_procedure_delete_bearer(mme_app_s11_proc_t **s11_proc_cbr)
+static void mme_app_free_s11_procedure_delete_bearer(mme_app_s11_proc_t **s11_proc_dbr)
 {
   // DO here specific releases (memory,etc)
   /** Remove the bearer contexts to be setup. */
-//  mme_app_s11_proc_delete_bearer_t ** s11_proc_delete_bearer_pp = (mme_app_s11_proc_delete_bearer_t**)s11_proc_cbr;
-  free_wrapper((void**)s11_proc_cbr);
+//  mme_app_s11_proc_delete_bearer_t ** s11_proc_delete_bearer_pp = (mme_app_s11_proc_delete_bearer_t**)s11_proc_dbr;
+  free_wrapper((void**)s11_proc_dbr);
 }
 
 /**
  * S10 Procedures.
  */
-static int remove_s10_tunnel_endpoint(ue_context_t * ue_context, struct sockaddr *peer_ip){
+static int remove_s10_tunnel_endpoint(struct ue_context_s * ue_context, struct sockaddr *peer_ip){
   OAILOG_FUNC_IN(LOG_MME_APP);
   int             rc = RETURNerror;
 //  /** Removed S10 tunnel endpoint. */
@@ -301,8 +305,9 @@ static int remove_s10_tunnel_endpoint(ue_context_t * ue_context, struct sockaddr
       &ue_context->privates.fields.guti);
   OAILOG_FUNC_RETURN(LOG_MME_APP, rc);
 }
+
 //------------------------------------------------------------------------------
-void mme_app_delete_s10_procedures(ue_context_t * const ue_context)
+void mme_app_delete_s10_procedures(struct ue_context_s * const ue_context)
 {
   if (ue_context->s10_procedures) {
     mme_app_s10_proc_t *s10_proc1 = NULL;
@@ -349,7 +354,7 @@ mme_app_handle_mme_s10_handover_completion_timer_expiry (mme_app_s10_proc_mme_ha
   MessageDef                             *message_p = NULL;
   /** Get the IMSI. */
 //  imsi64_t imsi64 = imsi_to_imsi64(&s10_proc_mme_handover->imsi);
-  ue_context_t * ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, s10_proc_mme_handover->mme_ue_s1ap_id);
+  struct ue_context_s * ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, s10_proc_mme_handover->mme_ue_s1ap_id);
   DevAssert(ue_context);
   OAILOG_WARNING(LOG_MME_APP, "Expired- MME S10 Handover Completion timer for UE " MME_UE_S1AP_ID_FMT " run out. "
       "Performing S1AP UE Context Release Command and successive NAS implicit detach. \n", ue_context->privates.mme_ue_s1ap_id);
@@ -398,7 +403,7 @@ static void
 mme_app_handle_mobility_completion_timer_expiry (mme_app_s10_proc_mme_handover_t *s10_proc_mme_handover)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
-  ue_context_t * ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, s10_proc_mme_handover->mme_ue_s1ap_id);
+  struct ue_context_s * ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, s10_proc_mme_handover->mme_ue_s1ap_id);
   DevAssert (ue_context != NULL);
   MessageDef                             *message_p = NULL;
   OAILOG_INFO (LOG_MME_APP, "Expired- MME Handover Completion timer for UE " MME_UE_S1AP_ID_FMT " run out. \n", ue_context->privates.mme_ue_s1ap_id);
@@ -494,7 +499,7 @@ mme_app_handle_mobility_completion_timer_expiry (mme_app_s10_proc_mme_handover_t
 }
 
 //------------------------------------------------------------------------------
-mme_app_s10_proc_mme_handover_t* mme_app_create_s10_procedure_mme_handover(ue_context_t * const ue_context,
+mme_app_s10_proc_mme_handover_t* mme_app_create_s10_procedure_mme_handover(struct ue_context_s * const ue_context,
 		bool target_mme, mme_app_s10_proc_type_t  s1ap_ho_type, struct sockaddr* sockaddr){
   mme_app_s10_proc_mme_handover_t *s10_proc_mme_handover = calloc(1, sizeof(mme_app_s10_proc_mme_handover_t));
   // todo: checking hear for correct allocation
@@ -576,7 +581,7 @@ mme_app_s10_proc_mme_handover_t* mme_app_create_s10_procedure_mme_handover(ue_co
 }
 
 //------------------------------------------------------------------------------
-mme_app_s10_proc_mme_handover_t* mme_app_get_s10_procedure_mme_handover(ue_context_t * const ue_context)
+mme_app_s10_proc_mme_handover_t* mme_app_get_s10_procedure_mme_handover(struct ue_context_s * const ue_context)
 {
   if (ue_context->s10_procedures) {
     mme_app_s10_proc_t *s10_proc = NULL;
@@ -629,7 +634,7 @@ static void mme_app_free_s10_procedure_mme_handover(mme_app_s10_proc_t **s10_pro
  * Handover procedure used for inter and intra MME S1 handover.
  */
 //------------------------------------------------------------------------------
-void mme_app_delete_s10_procedure_mme_handover(ue_context_t * const ue_context)
+void mme_app_delete_s10_procedure_mme_handover(struct ue_context_s * const ue_context)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
   if (ue_context->s10_procedures) {
@@ -701,6 +706,222 @@ void mme_app_delete_s10_procedure_mme_handover(ue_context_t * const ue_context)
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 
-/*
- * Our procedure is not for a single message but currently for a whole inter_mme handover procedure.
+/**
+ * SM Procedures.
  */
+//------------------------------------------------------------------------------
+void mme_app_delete_sm_procedures(struct mbms_service_s * const mbms_service)
+{
+  mme_app_sm_proc_t *sm_proc1 = NULL;
+  mme_app_sm_proc_t *sm_proc2 = NULL;
+
+  sm_proc1 = LIST_FIRST(&mbms_service->sm_procedures);                 /* Faster List Deletion. */
+  while (sm_proc1) {
+    sm_proc2 = LIST_NEXT(sm_proc1, entries);
+    if (MME_APP_SM_PROC_TYPE_MBMS_START_SESSION == sm_proc1->type) {
+    	mme_app_free_sm_procedure_mbms_session_start(&sm_proc1);
+    } else if (MME_APP_SM_PROC_TYPE_MBMS_UPDATE_SESSION == sm_proc1->type) {
+    	mme_app_free_sm_procedure_mbms_session_update(&sm_proc1);
+    } else if (MME_APP_SM_PROC_TYPE_MBMS_STOP_SESSION == sm_proc1->type) {
+    	mme_app_free_sm_procedure_mbms_session_stop(&sm_proc1);
+    } // else ...
+    sm_proc1 = sm_proc2;
+  }
+  LIST_INIT(&mbms_service->sm_procedures);
+}
+
+//------------------------------------------------------------------------------
+mme_app_sm_proc_mbms_session_start_t* mme_app_create_sm_procedure_mbms_session_start(struct mbms_service_s * const mbms_service)
+{
+  /** Check if the list of Sm procedures is empty. */
+  if(!LIST_EMPTY(&mbms_service->sm_procedures)){
+	  OAILOG_ERROR (LOG_MME_APP, "MBMS Service with TMGI " TMGI_FMT " has already a Sm procedure ongoing. Cannot create new MBMS Start procedure. \n",
+	    TMGI_ARG(&mbms_service->privates.fields.tmgi));
+	  return NULL;
+  }
+
+  mme_app_sm_proc_mbms_session_start_t *sm_proc_mbms_session_start = calloc(1, sizeof(mme_app_sm_proc_mbms_session_start_t));
+  sm_proc_mbms_session_start->proc.proc.type = MME_APP_BASE_PROC_TYPE_SM;
+  sm_proc_mbms_session_start->proc.type      = MME_APP_SM_PROC_TYPE_MBMS_START_SESSION;
+  mme_app_sm_proc_t *sm_proc = (mme_app_sm_proc_t *)sm_proc_mbms_session_start;
+
+  /** Initialize the of the procedure. */
+  LIST_INIT(&mbms_service->sm_procedures);
+  LIST_INSERT_HEAD((&mbms_service->sm_procedures), sm_proc, entries);
+  return sm_proc_mbms_session_start;
+}
+
+//------------------------------------------------------------------------------
+mme_app_sm_proc_t* mme_app_get_sm_procedure (struct mbms_service_s * const mbms_service)
+{
+  return LIST_FIRST(&mbms_service->sm_procedures);
+}
+
+//------------------------------------------------------------------------------
+mme_app_sm_proc_mbms_session_start_t* mme_app_get_sm_procedure_mbms_session_start(struct mbms_service_s * const mbms_service)
+{
+  mme_app_sm_proc_t *sm_proc = NULL;
+  LIST_FOREACH(sm_proc, &mbms_service->sm_procedures, entries) {
+	if (MME_APP_SM_PROC_TYPE_MBMS_START_SESSION == sm_proc->type) {
+		return (mme_app_sm_proc_mbms_session_start_t*)sm_proc;
+	}
+  }
+  return NULL;
+}
+
+//------------------------------------------------------------------------------
+void mme_app_delete_sm_procedure_mbms_session_start(struct mbms_service_s * const mbms_service)
+{
+  mme_app_sm_proc_t *sm_proc = NULL, *sm_proc_safe = NULL;
+  LIST_FOREACH_SAFE(sm_proc, &mbms_service->sm_procedures, entries, sm_proc_safe) {
+    if (MME_APP_SM_PROC_TYPE_MBMS_START_SESSION == sm_proc->type) {
+      LIST_REMOVE(sm_proc, entries);
+      mme_app_free_sm_procedure_mbms_session_start(&sm_proc);
+      return;
+    }
+  }
+  if(LIST_EMPTY(&mbms_service->sm_procedures)){
+	  LIST_INIT(&mbms_service->sm_procedures);
+	  OAILOG_INFO (LOG_MME_APP, "MBMS Service with TMGI " TMGI_FMT " has no more Sm procedures left. Cleared the list. \n",
+		TMGI_ARG(&mbms_service->privates.fields.tmgi));
+  }
+}
+
+//------------------------------------------------------------------------------
+mme_app_sm_proc_mbms_session_update_t* mme_app_create_sm_procedure_mbms_session_update(struct mbms_service_s * const mbms_service)
+{
+  /** Check if the list of Sm procedures is empty. */
+  if(!LIST_EMPTY(&mbms_service->sm_procedures)){
+	OAILOG_ERROR (LOG_MME_APP, "MBMS Service with TMGI " TMGI_FMT " has already a Sm procedure ongoing. Cannot create new MBMS Update procedure. \n",
+		TMGI_ARG(&mbms_service->privates.fields.tmgi));
+	return NULL;
+  }
+  mme_app_sm_proc_mbms_session_update_t *sm_proc_mbms_session_update = calloc(1, sizeof(mme_app_sm_proc_mbms_session_update_t));
+  sm_proc_mbms_session_update->proc.proc.type = MME_APP_BASE_PROC_TYPE_SM;
+  sm_proc_mbms_session_update->proc.type      = MME_APP_SM_PROC_TYPE_MBMS_UPDATE_SESSION;
+  mme_app_sm_proc_t *sm_proc = (mme_app_sm_proc_t *)sm_proc_mbms_session_update;
+
+  /** Initialize the of the procedure. */
+
+  LIST_INIT(&mbms_service->sm_procedures);
+  LIST_INSERT_HEAD((&mbms_service->sm_procedures), sm_proc, entries);
+
+  return sm_proc_mbms_session_update;
+}
+
+//------------------------------------------------------------------------------
+mme_app_sm_proc_mbms_session_update_t* mme_app_get_sm_procedure_mbms_session_update(struct mbms_service_s * const mbms_service)
+{
+  mme_app_sm_proc_t *sm_proc = NULL;
+
+  LIST_FOREACH(sm_proc, &mbms_service->sm_procedures, entries) {
+	if (MME_APP_SM_PROC_TYPE_MBMS_UPDATE_SESSION == sm_proc->type) {
+		return (mme_app_sm_proc_mbms_session_start_t*)sm_proc;
+	}
+  }
+  return NULL;
+}
+
+//------------------------------------------------------------------------------
+void mme_app_delete_sm_procedure_mbms_session_update(struct mbms_service_s * const mbms_service)
+{
+  /** Check if the list of Sm procedures is empty. */
+  mme_app_sm_proc_t *sm_proc = NULL, *sm_proc_safe = NULL;
+
+  LIST_FOREACH_SAFE(sm_proc, &mbms_service->sm_procedures, entries, sm_proc_safe) {
+	  if (MME_APP_SM_PROC_TYPE_MBMS_UPDATE_SESSION == sm_proc->type) {
+		  LIST_REMOVE(sm_proc, entries);
+		  mme_app_free_sm_procedure_mbms_session_update(&sm_proc);
+		  return;
+	  }
+  }
+
+  if(LIST_EMPTY(&mbms_service->sm_procedures)){
+ 	  LIST_INIT(&mbms_service->sm_procedures);
+ 	  OAILOG_INFO (LOG_MME_APP, "MBMS with TMGI " TMGI_FMT " has no more Sm procedures left. Cleared the list. \n", TMGI_ARG(&mbms_service->privates.fields.tmgi));
+   }
+}
+
+//------------------------------------------------------------------------------
+mme_app_sm_proc_mbms_session_stop_t* mme_app_create_sm_procedure_mbms_session_stop(struct mbms_service_s * const mbms_service)
+{
+	if(!LIST_EMPTY(&mbms_service->sm_procedures)){
+		OAILOG_ERROR (LOG_MME_APP, "MBMS Service with TMGI " TMGI_FMT " has already a Sm procedure ongoing. Cannot create new MBMS Stop procedure. \n",
+				TMGI_ARG(&mbms_service->privates.fields.tmgi));
+		return NULL;
+	}
+
+  mme_app_sm_proc_mbms_session_stop_t *sm_proc_mbms_session_stop = calloc(1, sizeof(mme_app_sm_proc_mbms_session_stop_t));
+  sm_proc_mbms_session_stop->proc.proc.type = MME_APP_BASE_PROC_TYPE_SM;
+  sm_proc_mbms_session_stop->proc.type      = MME_APP_SM_PROC_TYPE_MBMS_STOP_SESSION;
+  mme_app_sm_proc_t *sm_proc = (mme_app_sm_proc_t *)sm_proc_mbms_session_stop;
+
+  /** Initialize the of the procedure. */
+
+  LIST_INIT(&mbms_service->sm_procedures);
+  LIST_INSERT_HEAD((&mbms_service->sm_procedures), sm_proc, entries);
+
+  return sm_proc_mbms_session_stop;
+}
+
+//------------------------------------------------------------------------------
+mme_app_sm_proc_mbms_session_stop_t* mme_app_get_sm_procedure_mbms_session_stop(struct mbms_service_s * const mbms_service)
+{
+	mme_app_sm_proc_t *sm_proc = NULL;
+
+    LIST_FOREACH(sm_proc, &mbms_service->sm_procedures, entries) {
+      if (MME_APP_SM_PROC_TYPE_MBMS_STOP_SESSION == sm_proc->type) {
+        return (mme_app_sm_proc_mbms_session_stop_t*)sm_proc;
+      }
+    }
+  return NULL;
+}
+
+//------------------------------------------------------------------------------
+void mme_app_delete_sm_procedure_mbms_session_stop(struct mbms_service_s * const mbms_service)
+{
+  mme_app_sm_proc_t *sm_proc = NULL, *sm_proc_safe = NULL;
+  LIST_FOREACH_SAFE(sm_proc, &mbms_service->sm_procedures, entries, sm_proc_safe) {
+	if (MME_APP_SM_PROC_TYPE_MBMS_STOP_SESSION == sm_proc->type) {
+	  LIST_REMOVE(sm_proc, entries);
+	  mme_app_free_sm_procedure_mbms_session_stop(&sm_proc);
+	  return;
+	}
+  }
+
+  if(LIST_EMPTY(&mbms_service->sm_procedures)){
+ 	  LIST_INIT(&mbms_service->sm_procedures);
+ 	  OAILOG_INFO (LOG_MME_APP, "MBMS with TMGI " TMGI_FMT " has no more Sm procedures left. Cleared the list. \n",
+ 		TMGI_ARG(&mbms_service->privates.fields.tmgi));
+   }
+}
+
+//------------------------------------------------------------------------------
+static void mme_app_free_sm_procedure_mbms_session_start(mme_app_sm_proc_t **sm_proc_mssr)
+{
+  // DO here specific releases (memory,etc)
+//  /** Remove the MBMS Service stuff, to be set . */
+  mme_app_sm_proc_mbms_session_start_t ** sm_proc_mbms_session_start_pp = (mme_app_sm_proc_mbms_session_start_t**)sm_proc_mssr;
+//  free_bearer_contexts_to_be_created(&(*sm_proc_mbms_session_start_pp)->bcs_tbc);
+  free_wrapper((void**)sm_proc_mbms_session_start_pp);
+}
+
+//------------------------------------------------------------------------------
+static void mme_app_free_sm_procedure_mbms_session_update(mme_app_sm_proc_t **sm_proc_msur)
+{
+  // DO here specific releases (memory,etc)
+	//  /** Remove the MBMS Service stuff, to be set . */
+  mme_app_sm_proc_mbms_session_update_t ** sm_proc_mbms_session_update_pp = (mme_app_sm_proc_mbms_session_update_t**)sm_proc_msur;
+//  if((*sm_proc_mbms_session_update_pp)->bcs_tbu)
+//    free_bearer_contexts_to_be_updated(&(*sm_proc_mbms_session_update_pp)->bcs_tbu);
+  free_wrapper((void**)sm_proc_mbms_session_update_pp);
+}
+
+//------------------------------------------------------------------------------
+static void mme_app_free_sm_procedure_mbms_session_stop(mme_app_sm_proc_t **sm_proc_msstr)
+{
+  // DO here specific releases (memory,etc)
+	//  /** Remove the MBMS Service stuff, to be set . */
+//  mme_app_sm_proc_mbms_session_stop_t ** sm_proc_mbms_session_stop_pp = (mme_app_sm_proc_mbms_session_stop_t**)sm_proc_msstr;
+  free_wrapper((void**)sm_proc_msstr);
+}

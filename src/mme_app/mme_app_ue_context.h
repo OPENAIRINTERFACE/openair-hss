@@ -45,6 +45,8 @@
 #include "bstrlib.h"
 #include "common_types.h"
 #include "mme_app_messages_types.h"
+#include "mme_app_procedures.h"
+
 #include "s1ap_messages_types.h"
 #include "nas_messages_types.h"
 #include "s6a_messages_types.h"
@@ -94,13 +96,6 @@ void mme_app_convert_imsi_to_imsi_mme (mme_app_imsi_t * imsi_dst, const imsi_t *
 #define MME_APP_DELTA_T3412_REACHABILITY_TIMER 4 // in minutes
 #define MME_APP_DELTA_REACHABILITY_IMPLICIT_DETACH_TIMER 0 // in minutes
 #define MME_APP_INITIAL_CONTEXT_SETUP_RSP_TIMER_VALUE 2 // In seconds
-
-// todo: #define MME_APP_INITIAL_CONTEXT_SETUP_RSP_TIMER_VALUE 2 // In seconds
-/* Timer structure */
-struct mme_app_timer_t {
-  long id;         /* The timer identifier                 */
-  long sec;       /* The timer interval value in seconds  */
-};
 
 /** @struct ue_context_t
  *  @brief Useful parameters to know in MME application layer. They are set
@@ -385,6 +380,19 @@ void mme_app_dump_ue_contexts(const mme_ue_context_t * const mme_ue_context);
 int mme_app_mobility_complete(const mme_ue_s1ap_id_t mme_ue_s1ap_id, const bool activate);
 
 void mme_app_handle_s1ap_ue_context_release_req(const itti_s1ap_ue_context_release_req_t * const s1ap_ue_context_release_req);
+
+/*
+ * - Creating handover procedure in intra-MME and inter-MME handover
+ * - Creating handover procedure in source & target MME todo: create same timer but different callback methods.
+ * - Since we don't have a valid EMM UE context, we need to create an MME_APP context.
+ */
+//------------------------------------------------------------------------------
+void mme_app_delete_s10_procedures(struct ue_context_s * const ue_context);
+mme_app_s10_proc_mme_handover_t* mme_app_create_s10_procedure_mme_handover(struct ue_context_s * const ue_context, bool target_mme,
+		mme_app_s10_proc_type_t  s1ap_ho_type, struct sockaddr* sockaddr);
+
+mme_app_s10_proc_mme_handover_t* mme_app_get_s10_procedure_mme_handover(struct ue_context_s * const ue_context);
+void mme_app_delete_s10_procedure_mme_handover(struct ue_context_s * const ue_context);
 
 #endif /* FILE_MME_APP_UE_CONTEXT_SEEN */
 
