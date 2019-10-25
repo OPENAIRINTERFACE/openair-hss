@@ -184,8 +184,7 @@ typedef struct mme_app_s11_proc_delete_bearer_s {
 typedef enum {
   MME_APP_SM_PROC_TYPE_NONE = 0,
   MME_APP_SM_PROC_TYPE_MBMS_START_SESSION,
-  MME_APP_SM_PROC_TYPE_MBMS_UPDATE_SESSION,
-  MME_APP_SM_PROC_TYPE_MBMS_STOP_SESSION
+  MME_APP_SM_PROC_TYPE_MBMS_UPDATE_SESSION
 } mme_app_sm_proc_type_t;
 
 typedef struct mme_app_sm_proc_s {
@@ -205,12 +204,6 @@ typedef struct mme_app_sm_proc_mbms_session_update_s {
   mme_app_sm_proc_t            		proc;
   bearer_context_to_be_updated_t 	bc_tbu; /**< Store the bearer context to be updated here, and don't register them yet in the MME_APP context. */
   mbms_service_area_id_t			mbms_service_area_id;
-  uint16_t                          mbms_flow_id; 		    ///< MBMS Flow Id.
 } mme_app_sm_proc_mbms_session_update_t;
 
-typedef struct mme_app_sm_proc_mbms_session_stop_s {
-  mme_app_sm_proc_t            proc;
-  // bearer_contexts_to_be_updated_t *bcs_tbu; /**< Store the bearer contexts to be created here, and don't register them yet in the MME_APP context. */
-} mme_app_sm_proc_mbms_session_stop_t;
-
-#endif
+#endif /** FILE_MME_APP_PROCEDURES_SEEN **/

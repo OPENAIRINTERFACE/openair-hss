@@ -724,8 +724,6 @@ void mme_app_delete_sm_procedures(mbms_service_t * const mbms_service)
     	mme_app_free_sm_procedure_mbms_session_start(&sm_proc1);
     } else if (MME_APP_SM_PROC_TYPE_MBMS_UPDATE_SESSION == sm_proc1->type) {
     	mme_app_free_sm_procedure_mbms_session_update(&sm_proc1);
-    } else if (MME_APP_SM_PROC_TYPE_MBMS_STOP_SESSION == sm_proc1->type) {
-    	mme_app_free_sm_procedure_mbms_session_stop(&sm_proc1);
     } // else ...
     sm_proc1 = sm_proc2;
   }
@@ -937,70 +935,6 @@ void mme_app_delete_sm_procedure_mbms_session_update(const tmgi_t * const tmgi, 
 }
 
 //------------------------------------------------------------------------------
-mme_app_sm_proc_mbms_session_stop_t * mme_app_create_sm_procedure_mbms_session_stop(const tmgi_t * const tmgi, const mbms_service_area_id_t mbms_service_area_id)
-{
-  mbms_service_t * mbms_service = mce_mbms_service_exists_tmgi(&mce_app_desc.mce_mbms_service_contexts, tmgi, mbms_service_area_id);
-  if(!mbms_service)
-    return NULL;
-
-  if(!LIST_EMPTY(&mbms_service->sm_procedures)){
-    OAILOG_ERROR (LOG_MME_APP, "MBMS Service with TMGI " TMGI_FMT " has already a Sm procedure ongoing. Cannot create new MBMS Stop procedure. \n",
-    	TMGI_ARG(&mbms_service->privates.fields.tmgi));
-	return NULL;
-  }
-
-  mme_app_sm_proc_mbms_session_stop_t *sm_proc_mbms_session_stop = calloc(1, sizeof(mme_app_sm_proc_mbms_session_stop_t));
-  sm_proc_mbms_session_stop->proc.proc.type = MME_APP_BASE_PROC_TYPE_SM;
-  sm_proc_mbms_session_stop->proc.type      = MME_APP_SM_PROC_TYPE_MBMS_STOP_SESSION;
-  mme_app_sm_proc_t *sm_proc = (mme_app_sm_proc_t *)sm_proc_mbms_session_stop;
-
-  /** Initialize the of the procedure. */
-  LIST_INIT(&mbms_service->sm_procedures);
-  LIST_INSERT_HEAD((&mbms_service->sm_procedures), sm_proc, entries);
-
-  return sm_proc_mbms_session_stop;
-}
-
-//------------------------------------------------------------------------------
-mme_app_sm_proc_mbms_session_stop_t* mme_app_get_sm_procedure_mbms_session_stop(const tmgi_t * const tmgi, const mbms_service_area_id_t mbms_service_area_id)
-{
-  mbms_service_t * mbms_service = mce_mbms_service_exists_tmgi(&mce_app_desc.mce_mbms_service_contexts, tmgi, mbms_service_area_id);
-  if(!mbms_service)
-	return NULL;
-
-  mme_app_sm_proc_t *sm_proc = NULL;
-  LIST_FOREACH(sm_proc, &mbms_service->sm_procedures, entries) {
-    if (MME_APP_SM_PROC_TYPE_MBMS_STOP_SESSION == sm_proc->type) {
-      return (mme_app_sm_proc_mbms_session_stop_t*)sm_proc;
-    }
-  }
-  return NULL;
-}
-
-//------------------------------------------------------------------------------
-void mme_app_delete_sm_procedure_mbms_session_stop(const tmgi_t * const tmgi, const mbms_service_area_id_t mbms_service_area_id)
-{
-  mbms_service_t * mbms_service = mce_mbms_service_exists_tmgi(&mce_app_desc.mce_mbms_service_contexts, tmgi, mbms_service_area_id);
-  if(!mbms_service)
-    return;
-
-  mme_app_sm_proc_t *sm_proc = NULL, *sm_proc_safe = NULL;
-  LIST_FOREACH_SAFE(sm_proc, &mbms_service->sm_procedures, entries, sm_proc_safe) {
-	if (MME_APP_SM_PROC_TYPE_MBMS_STOP_SESSION == sm_proc->type) {
-	  LIST_REMOVE(sm_proc, entries);
-	  mme_app_free_sm_procedure_mbms_session_stop(&sm_proc);
-	  return;
-	}
-  }
-
-  if(LIST_EMPTY(&mbms_service->sm_procedures)){
- 	  LIST_INIT(&mbms_service->sm_procedures);
- 	  OAILOG_INFO (LOG_MME_APP, "MBMS with TMGI " TMGI_FMT " has no more Sm procedures left. Cleared the list. \n",
- 		TMGI_ARG(&mbms_service->privates.fields.tmgi));
-   }
-}
-
-//------------------------------------------------------------------------------
 static void mme_app_free_sm_procedure_mbms_session_start(mme_app_sm_proc_t **sm_proc_mssr)
 {
   // DO here specific releases (memory,etc)
@@ -1016,16 +950,7 @@ static void mme_app_free_sm_procedure_mbms_session_update(mme_app_sm_proc_t **sm
   // DO here specific releases (memory,etc)
 	//  /** Remove the MBMS Service stuff, to be set . */
   mme_app_sm_proc_mbms_session_update_t ** sm_proc_mbms_session_update_pp = (mme_app_sm_proc_mbms_session_update_t**)sm_proc_msur;
-//  if((*sm_proc_mbms_session_update_pp)->bcs_tbu)
-//    free_bearer_contexts_to_be_updated(&(*sm_proc_mbms_session_update_pp)->bcs_tbu);
+  if((*sm_proc_mbms_session_update_pp)->bc_tbu.bearer_level_qos)
+    free_bearer_contexts_to_be_updated(&((*sm_proc_mbms_session_update_pp)->bc_tbu.bearer_level_qos));
   free_wrapper((void**)sm_proc_mbms_session_update_pp);
-}
-
-//------------------------------------------------------------------------------
-static void mme_app_free_sm_procedure_mbms_session_stop(mme_app_sm_proc_t **sm_proc_msstr)
-{
-  // DO here specific releases (memory,etc)
-	//  /** Remove the MBMS Service stuff, to be set . */
-//  mme_app_sm_proc_mbms_session_stop_t ** sm_proc_mbms_session_stop_pp = (mme_app_sm_proc_mbms_session_stop_t**)sm_proc_msstr;
-  free_wrapper((void**)sm_proc_msstr);
 }

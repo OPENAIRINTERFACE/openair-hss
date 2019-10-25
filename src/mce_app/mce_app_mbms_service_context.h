@@ -198,13 +198,6 @@ mme_app_sm_proc_mbms_session_update_t* mme_app_create_sm_procedure_mbms_session_
 mme_app_sm_proc_mbms_session_update_t* mme_app_get_sm_procedure_mbms_session_update(const tmgi_t * const tmgi, const mbms_service_area_id_t mbms_service_area_id);
 void mme_app_delete_sm_procedure_mbms_session_update(const tmgi_t * const tmgi, const mbms_service_area_id_t mbms_service_area_id);
 
-mme_app_sm_proc_mbms_session_stop_t* mme_app_create_sm_procedure_mbms_session_stop(const tmgi_t * const tmgi, const mbms_service_area_id_t mbms_service_area_id);
-mme_app_sm_proc_mbms_session_stop_t* mme_app_get_sm_procedure_mbms_session_stop(const tmgi_t * const tmgi, const mbms_service_area_id_t mbms_service_area_id);
-void mme_app_delete_sm_procedure_mbms_session_stop(const tmgi_t * const tmgi, const mbms_service_area_id_t mbms_service_area_id);
-
-
-
-
 #endif /* FILE_MCE_APP_MBMS_SERVICE_CONTEXT_SEEN */
 
 /* @} */
