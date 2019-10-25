@@ -502,6 +502,25 @@ void itti_free_msg_content (MessageDef * const message_p)
     bdestroy_wrapper(&message_p->ittiMsg.s10_context_response.source_sgw_fqdn);
     break;
 
+    /**
+     * Sm Messages
+     */
+  case SM_MBMS_SESSION_START_REQUEST:
+    if(message_p->ittiMsg.sm_mbms_session_start_request.mbms_ip_mc_address) {
+      free_wrapper(&message_p->ittiMsg.sm_mbms_session_start_request.mbms_ip_mc_address);
+    }
+    break;
+  case SM_MBMS_SESSION_UPDATE_REQUEST:
+	if(message_p->ittiMsg.sm_mbms_session_update_request.mbms_bearer_level_qos) {
+	  free_wrapper(&message_p->ittiMsg.sm_mbms_session_update_request.mbms_bearer_level_qos);
+	}
+	break;
+  case SM_MBMS_SESSION_STOP_REQUEST:
+	break;
+  case SM_MBMS_SESSION_START_RESPONSE:
+  case SM_MBMS_SESSION_UPDATE_RESPONSE:
+  case SM_MBMS_SESSION_STOP_RESPONSE:
+    break;
   default:
     ;
   }

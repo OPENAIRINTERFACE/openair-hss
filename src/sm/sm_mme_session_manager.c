@@ -313,7 +313,7 @@ sm_mme_handle_mbms_session_update_request(
    * Sender (MBMS-GW) FTEID for CP IE
    */
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_FTEID, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_OPTIONAL,
-      gtpv2c_fteid_ie_get, &req_p->sm_mbms_teid);
+      gtpv2c_fteid_ie_get, &req_p->sm_mbms_fteid);
   DevAssert (NW_OK == rc);
 
   /*
@@ -326,8 +326,9 @@ sm_mme_handle_mbms_session_update_request(
   /*
    * QoS Profile
    */
+  req_p->mbms_bearer_level_qos = calloc(1, sizeof(bearer_qos_t));
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_BEARER_LEVEL_QOS, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_MANDATORY,
-	  gtpv2c_bearer_qos_ie_get, &req_p->mbms_bearer_level_qos);
+	  gtpv2c_bearer_qos_ie_get, req_p->mbms_bearer_level_qos);
   DevAssert (NW_OK == rc);
 
   /** Skip Session Identifier. */

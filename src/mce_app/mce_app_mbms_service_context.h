@@ -99,6 +99,7 @@ typedef struct mbms_service_s {
 		  mbms_service_area_id_t 			mbms_service_area_id;
 		  /** MCE TEID for Sm. */
 		  teid_t                 			mme_teid_sm;                // needed to get the MBMS Service from Sm messages
+		  teid_t                 			mbms_teid_sm;
 		  /** Flow-Id of the MBMS Bearer service. */
 		  uint16_t               			mbms_flow_id;
 		  /**
@@ -187,19 +188,19 @@ mbms_service_index_t mce_get_mbms_service_index(const tmgi_t * tmgi, const mbms_
  */
 void mme_app_delete_sm_procedures(mbms_service_t * const mbms_service);
 
-mme_app_sm_proc_t* mme_app_get_sm_procedure (const tmgi_t * const tmgi, const mbms_service_area_id_t * mbms_service_area_id);
+mme_app_sm_proc_t* mme_app_get_sm_procedure (const tmgi_t * const tmgi, const mbms_service_area_id_t mbms_service_area_id);
 
-bool mme_app_create_sm_procedure_mbms_session_start(const tmgi_t * const tmgi, const mbms_service_area_id_t * mbms_service_area_id, const mbms_session_duration_t * const mbms_session_duration);
-mme_app_sm_proc_mbms_session_start_t* mme_app_get_sm_procedure_mbms_session_start(const tmgi_t * const tmgi, const mbms_service_area_id_t * mbms_service_area_id);
-void mme_app_delete_sm_procedure_mbms_session_start(const tmgi_t * const tmgi, const mbms_service_area_id_t * mbms_service_area_id);
+mme_app_sm_proc_mbms_session_start_t* mme_app_create_sm_procedure_mbms_session_start(const tmgi_t * const tmgi, const mbms_service_area_id_t mbms_service_area_id, const mbms_session_duration_t * const mbms_session_duration);
+mme_app_sm_proc_mbms_session_start_t* mme_app_get_sm_procedure_mbms_session_start(const tmgi_t * const tmgi, const mbms_service_area_id_t mbms_service_area_id);
+void mme_app_delete_sm_procedure_mbms_session_start(const tmgi_t * const tmgi, const mbms_service_area_id_t mbms_service_area_id);
 
-bool mme_app_create_sm_procedure_mbms_session_update(const tmgi_t * const tmgi, const mbms_service_area_id_t * mbms_service_area_id);
-mme_app_sm_proc_mbms_session_update_t* mme_app_get_sm_procedure_mbms_session_update(const tmgi_t * const tmgi, const mbms_service_area_id_t * mbms_service_area_id);
-void mme_app_delete_sm_procedure_mbms_session_update(const tmgi_t * const tmgi, const mbms_service_area_id_t * mbms_service_area_id);
+mme_app_sm_proc_mbms_session_update_t* mme_app_create_sm_procedure_mbms_session_update(const tmgi_t * const tmgi, const mbms_service_area_id_t mbms_service_area_id, const mbms_session_duration_t * const mbms_session_duration);
+mme_app_sm_proc_mbms_session_update_t* mme_app_get_sm_procedure_mbms_session_update(const tmgi_t * const tmgi, const mbms_service_area_id_t mbms_service_area_id);
+void mme_app_delete_sm_procedure_mbms_session_update(const tmgi_t * const tmgi, const mbms_service_area_id_t mbms_service_area_id);
 
-bool mme_app_create_sm_procedure_mbms_session_stop(const tmgi_t * const tmgi, const mbms_service_area_id_t * mbms_service_area_id);
-mme_app_sm_proc_mbms_session_stop_t* mme_app_get_sm_procedure_mbms_session_stop(const tmgi_t * const tmgi, const mbms_service_area_id_t * mbms_service_area_id);
-void mme_app_delete_sm_procedure_mbms_session_stop(const tmgi_t * const tmgi, const mbms_service_area_id_t * mbms_service_area_id);
+mme_app_sm_proc_mbms_session_stop_t* mme_app_create_sm_procedure_mbms_session_stop(const tmgi_t * const tmgi, const mbms_service_area_id_t mbms_service_area_id);
+mme_app_sm_proc_mbms_session_stop_t* mme_app_get_sm_procedure_mbms_session_stop(const tmgi_t * const tmgi, const mbms_service_area_id_t mbms_service_area_id);
+void mme_app_delete_sm_procedure_mbms_session_stop(const tmgi_t * const tmgi, const mbms_service_area_id_t mbms_service_area_id);
 
 
 

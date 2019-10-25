@@ -119,7 +119,7 @@ typedef struct itti_sm_mbms_session_start_response_s {
 typedef struct itti_sm_mbms_session_update_request_s {
 
   teid_t                             teid;                  ///< SM-MME Tunnel Endpoint Identifier
-  fteid_t                            sm_mbms_teid;          ///< SM-MBMS-GW Tunnel Endpoint Identifier
+  fteid_t                            sm_mbms_fteid;          ///< SM-MBMS-GW Tunnel Endpoint Identifier
 
   /** MBMS specific parameters. */
   tmgi_t						     tmgi;                  ///< TMGI Identifier
@@ -127,7 +127,7 @@ typedef struct itti_sm_mbms_session_update_request_s {
   mbms_flags_t				         mbms_flags;            ///< MBMS Flags
   mbms_service_area_t                mbms_service_area;     ///< Service Area of the MBMS Service (todo: multiple are allowed to be sent, but only 1 will be supported).
   mbms_session_duration_t            mbms_session_duration; ///< The duration, where the TMGI of the MBMS session is still valid.
-  bearer_qos_t                       mbms_bearer_level_qos; ///< QoS profile of the MBMS bearers to be established.
+  bearer_qos_t                      *mbms_bearer_level_qos; ///< QoS profile of the MBMS bearers to be established.
   uint16_t                           mbms_flow_id; 		    ///< MBMS Flow Id.
 
   /* Sm stack specific parameter. */

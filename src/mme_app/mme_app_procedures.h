@@ -198,27 +198,18 @@ typedef struct mme_app_sm_proc_s {
 } mme_app_sm_proc_t;
 
 typedef struct mme_app_sm_proc_mbms_session_start_s {
-  mme_app_sm_proc_t            proc;
-  int                          num_status_received;
-  pdn_cid_t                    pci;
-  // todo: fill it up..
-  // todo: we go on and create the MBMS Service Request directly, as it is described in 23.246. We don't need to store it here.
-  // bearer_contexts_to_be_created_t *bcs_tbc; /**< Store the bearer contexts to be created here, and don't register them yet in the MME_APP context. */
+  mme_app_sm_proc_t            		proc;
 } mme_app_sm_proc_mbms_session_start_t;
 
 typedef struct mme_app_sm_proc_mbms_session_update_s {
-  mme_app_s11_proc_t           proc;
-  int                          num_status_received;
-  pdn_cid_t                    pci;
-  // TODO here give a NAS/S1AP/.. reason -> GTPv2-C reason
-  // bearer_contexts_to_be_updated_t *bcs_tbu; /**< Store the bearer contexts to be created here, and don't register them yet in the MME_APP context. */
+  mme_app_sm_proc_t            		proc;
+  bearer_context_to_be_updated_t 	bc_tbu; /**< Store the bearer context to be updated here, and don't register them yet in the MME_APP context. */
+  mbms_service_area_id_t			mbms_service_area_id;
+  uint16_t                          mbms_flow_id; 		    ///< MBMS Flow Id.
 } mme_app_sm_proc_mbms_session_update_t;
 
 typedef struct mme_app_sm_proc_mbms_session_stop_s {
-  mme_app_s11_proc_t           proc;
-  int                          num_status_received;
-  pdn_cid_t                    pci;
-  // TODO here give a NAS/S1AP/.. reason -> GTPv2-C reason
+  mme_app_sm_proc_t            proc;
   // bearer_contexts_to_be_updated_t *bcs_tbu; /**< Store the bearer contexts to be created here, and don't register them yet in the MME_APP context. */
 } mme_app_sm_proc_mbms_session_stop_t;
 

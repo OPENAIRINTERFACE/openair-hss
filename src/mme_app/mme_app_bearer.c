@@ -2064,9 +2064,9 @@ mme_app_handle_s11_update_bearer_req (
   	    OAILOG_WARNING(LOG_MME_APP, "Already found an update bearer procedure with the matching eBI %d for UE with ueId " MME_UE_S1AP_ID_FMT" with trx %lx. Update the transaction as %p. \n",
   	    		s11_proc_update_bearer->bcs_tbu->bearer_context[0].eps_bearer_id, ue_session_pool->privates.mme_ue_s1ap_id, s11_proc_update_bearer->proc.s11_trxn, update_bearer_request_pP->trxn);
   	    /** Update the transaction. */
-  	  s11_proc_update_bearer->proc.s11_trxn = (uintptr_t)update_bearer_request_pP->trxn;
+  	    s11_proc_update_bearer->proc.s11_trxn = (uintptr_t)update_bearer_request_pP->trxn;
 	  } else {
-		  s11_proc_update_bearer = NULL;
+	    s11_proc_update_bearer = NULL;
 	  }
   }
 
