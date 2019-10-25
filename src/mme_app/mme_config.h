@@ -90,6 +90,7 @@
 #define MME_CONFIG_STRING_MME_GID                        "MME_GID"
 #define MME_CONFIG_STRING_TAI_LIST                       "TAI_LIST"
 #define MME_CONFIG_MBMS_SERVICE_AREAS					 "MBMS_SERVICE_AREAS"
+#define MME_CONFIG_MBMS_SHORT_IDLE_SESSION_DUR_IN_SEC    "MBMS_SHORT_IDLE_SESSION_DUR_IN_SEC"
 #define MME_CONFIG_MBMS_MIN_SESSION_DUR_IN_SEC           "MBMS_MIN_SESSION_DUR_IN_SEC"
 #define MME_CONFIG_STRING_MCC                            "MCC"
 #define MME_CONFIG_STRING_MNC                            "MNC"
@@ -206,6 +207,7 @@ typedef struct mme_config_s {
   } served_mbms_sa;
 
   uint32_t max_mbms_services;
+  uint32_t mbms_short_idle_session_duration_in_sec;
   uint32_t mbms_min_session_duration_in_sec;
 
 #define TRACKING_AREA_IDENTITY_LIST_TYPE_ONE_PLMN_NON_CONSECUTIVE_TACS 0x00

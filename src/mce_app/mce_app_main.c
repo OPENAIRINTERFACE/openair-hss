@@ -130,7 +130,7 @@ void *mce_app_thread (void *args)
             sm_mbms_proc = mme_app_get_sm_procedure(&mbms_service->privates.fields.tmgi, mbms_service->privates.fields.mbms_service_area_id);
             OAILOG_WARNING (LOG_MME_APP, "TIMER_HAS_EXPIRED with ID %u and FOR MBMS Service with TMGI " TMGI_FMT ". \n",
             		received_message_p->ittiMsg.timer_has_expired.timer_id, TMGI_ARG(&mbms_service->privates.fields.tmgi));
-            // Mobile Reachability Timer expiry handler
+            // MBMS Session timer expiry handler
             mce_app_handle_mbms_session_duration_timer_expiry(&mbms_service->privates.fields.tmgi, mbms_service->privates.fields.mbms_service_area_id);
         }
       }

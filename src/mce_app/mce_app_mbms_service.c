@@ -106,14 +106,32 @@ mce_app_handle_mbms_session_start_request(
     OAILOG_FUNC_OUT (LOG_MCE_APP);
   }
 
+  /** Days not allowed because fu. */
+  if (mbms_session_start_request_pP->mbms_session_duration.days) {
+    /** The MBMS Service Area and PLMN are served by this MME. */
+  	OAILOG_ERROR(LOG_MCE_APP, "No session duration for days are allowed. Rejecting MBMS Service Request for TMGI " TMGI_FMT ". \n", TMGI_ARG(&mbms_session_start_request_pP->tmgi));
+  	mce_app_itti_sm_mbms_session_start_response(INVALID_TEID, mbms_session_start_request_pP->sm_mbms_fteid.teid, &mbms_session_start_request_pP->mbms_peer_ip, mbms_session_start_request_pP->trxn, REQUEST_REJECTED);
+  	/** No MBMS service or tunnel endpoint is allocated yet. */
+  	OAILOG_FUNC_OUT (LOG_MCE_APP);
+  }
+
   /** Check that service duration is > 0. */
-  if (!(mbms_session_start_request_pP->mbms_session_duration.seconds || mbms_session_start_request_pP->mbms_session_duration.days)) {
+  if (!mbms_session_start_request_pP->mbms_session_duration.seconds) {
     /** The MBMS Service Area and PLMN are served by this MME. */
 	OAILOG_ERROR(LOG_MCE_APP, "No session duration given for requested MBMS Service Request for TMGI " TMGI_FMT ". \n", TMGI_ARG(&mbms_session_start_request_pP->tmgi));
 	mce_app_itti_sm_mbms_session_start_response(INVALID_TEID, mbms_session_start_request_pP->sm_mbms_fteid.teid, &mbms_session_start_request_pP->mbms_peer_ip, mbms_session_start_request_pP->trxn, REQUEST_REJECTED);
 	/** No MBMS service or tunnel endpoint is allocated yet. */
 	OAILOG_FUNC_OUT (LOG_MCE_APP);
   }
+
+  mme_config_read_lock (&mme_config);
+  /** Check for a minimum time. */
+  if(mbms_session_start_request_pP->mbms_session_duration.seconds < mme_config.mbms_min_session_duration_in_sec) {
+    OAILOG_WARNING(LOG_MCE_APP, "MBM Session duration (%ds) is shorter than the minimum (%ds) for MBMS Service Request for TMGI " TMGI_FMT ". Setting to minval. \n",
+    	mbms_session_start_request_pP->mbms_session_duration.seconds, mme_config.mbms_min_session_duration_in_sec, TMGI_ARG(&mbms_session_start_request_pP->tmgi));
+    mbms_session_start_request_pP->mbms_session_duration.seconds = mme_config.mbms_min_session_duration_in_sec;
+  }
+  mme_config_unlock (&mme_config);
 
   /** Check that the MBMS Bearer QoS is a valid GBR. */
   if((5 <= mbms_session_start_request_pP->mbms_bearer_level_qos.qci && mbms_session_start_request_pP->mbms_bearer_level_qos.qci <= 9) || (69 <= mbms_session_start_request_pP->mbms_bearer_level_qos.qci && mbms_session_start_request_pP->mbms_bearer_level_qos.qci <= 70) || (79 == mbms_session_start_request_pP->mbms_bearer_level_qos.qci)){
