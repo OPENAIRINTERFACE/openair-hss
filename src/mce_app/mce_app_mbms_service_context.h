@@ -159,7 +159,7 @@ struct mbms_service_s * mce_register_mbms_service(const tmgi_t * const tmgi, con
  * \param teid_t		  The TEID of the MBMS Service
  **/
 void mce_app_remove_mbms_service(
-  struct tmgi_s * const tmgi_p, const mbms_service_area_id_t mbms_service_area_id, const teid_t mme_teid_sm);
+  struct tmgi_s * const tmgi_p, const mbms_service_area_id_t mbms_service_area_id, teid_t mme_teid_sm);
 
 /** \brief Dump the MBMS Services present in the tree
  **/

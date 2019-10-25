@@ -409,9 +409,10 @@ mce_app_handle_mbms_session_stop_request(
 void
 mce_app_handle_mbms_session_duration_timer_expiry (const struct tmgi_s *tmgi, const mbms_service_area_id_t mbms_service_area_id)
 {
+  mbms_service_t							* mbms_service    = NULL;
   mme_app_sm_proc_t							* mme_app_sm_proc = NULL;
 
-  OAILOG_FUNC_IN (LOG_MME_APP);
+  OAILOG_FUNC_IN (LOG_MCE_APP);
   /**
    * Check that no MBMS Service with the given service ID and service area exists, if so reject
    * the request and implicitly remove the MBMS service & tunnel.
@@ -422,25 +423,50 @@ mce_app_handle_mbms_session_duration_timer_expiry (const struct tmgi_s *tmgi, co
     OAILOG_ERROR(LOG_MCE_APP, "No MBMS Sm Procedure could be found for expired for TMGI " TMGI_FMT " and MBMS Service Area " MBMS_SERVICE_AREA_ID_FMT ". \n", TMGI_ARG(tmgi), mbms_service_area_id);
     OAILOG_FUNC_OUT (LOG_MCE_APP);
   }
-  OAILOG_INFO (LOG_MME_APP, "Expired- Sm Procedure Timer for MBMS Service with TMGI " TMGI_FMT ". Check the procedure. \n", TMGI_ARG(tmgi));
+  OAILOG_INFO (LOG_MCE_APP, "Expired- Sm Procedure Timer for MBMS Service with TMGI " TMGI_FMT ". Check the procedure. \n", TMGI_ARG(tmgi));
 
-  /** Check the procedure and remove it. */
+  mbms_service = mce_mbms_service_exists_tmgi(&mce_app_desc.mce_mbms_service_contexts, tmgi, mbms_service_area_id);
+
+  /**
+   * Check if the MBMS Session has been successfully established (at least one eNB).
+   * After that, we check for MBMS session duration.
+   */
+  REQUIREMENT_3GPP_23_246(R8_3_2__6);
+  if(mbms_service->privates.fields.mbms_bc.eps_bearer_context.bearer_state != BEARER_STATE_ACTIVE){
+	/**
+	 * The MBMS Bearer context is not been activated yet.
+	 * Trigger the removal of the MBMS Bearer context.
+	 * Send a reject back. For the update case, we leave the Sm Tunnel, for the Start Case, the Sm tunnel will automatically be removed.
+	 * ToDo: should the MBMS Bearer be implicitly removed if update fails?
+	 */
+	if(mme_app_sm_proc->type == MME_APP_SM_PROC_TYPE_MBMS_START_SESSION) {
+//	  mce_app_itti_sm_mbms_session_start_response();
+	  OAILOG_ERROR (LOG_MCE_APP, "MBMS Session for TMGI " TMGI_FMT " could not be established successfully in time. Triggering a MBMS session reject and removing MBMS Service. \n", TMGI_ARG(tmgi));
+	  mce_app_stop_mbms_service(tmgi, mbms_service_area_id, mbms_service->privates.fields.mme_teid_sm, NULL);
+	  OAILOG_FUNC_OUT(LOG_MCE_APP);
+	} else {
+//	  mce_app_itti_sm_mbms_session_update_response();
+	  OAILOG_ERROR (LOG_MCE_APP, "MBMS Session for TMGI " TMGI_FMT " could not be updated successfully in time. Triggering a MBMS session reject. Keeping the MBMS Service. \n", TMGI_ARG(tmgi));
+	  OAILOG_FUNC_OUT(LOG_MCE_APP);
+	}
+  }
+  /**
+   * If the MBMS Service was successfully established, at at least 1 eNB.
+   * Check the procedure and remove it if it was a "short idle period" (reducing signaling overhead).
+   */
   REQUIREMENT_3GPP_23_246(R4_4_2__6);
   if(mme_app_sm_proc->trigger_mbms_session_stop) {
-    OAILOG_INFO (LOG_MME_APP, "Triggering MBMS Session stop for expired MBMS Session duration for Service with TMGI " TMGI_FMT ". \n", TMGI_ARG(tmgi));
+    OAILOG_INFO (LOG_MCE_APP, "Triggering MBMS Session stop for expired MBMS Session duration for MBMS service with TMGI " TMGI_FMT ". \n", TMGI_ARG(tmgi));
     /*
-     *  todo: Need to get a better architecture here, kind of don't know what I am doing considering the locks (where to use the object, where to use identifiers).
-     *  Reason for that mainly is, what the final lock/structure architecture will look like..
+     * todo: Need to get a better architecture here, kind of don't know what I am doing considering the locks (where to use the object, where to use identifiers).
+     * Reason for that mainly is, what the final lock/structure architecture will look like..
+     *
+     * Remove the Sm tunnel endpoint implicitly and all MBMS Service References in the M2 layer.
+     * No need to inform the MBMS Gateway. Will inform the M2 layer and all the eNBs.
      */
-    mbms_service_t * mbms_service = mce_mbms_service_exists_tmgi(&mce_app_desc.mce_mbms_service_contexts, tmgi, mbms_service_area_id);
-    /**
-     * Remove the tunnel endpoint and all MBMS Service References in the M2 layer.
-     * No need to inform the MBMS Gateway.
-     */
-	mce_app_stop_mbms_service(tmgi, mbms_service_area_id, mbms_service->privates.fields.mme_teid_sm, (struct sockaddr*)&mbms_service->privates.fields.mbms_peer_ip);
+    mce_app_stop_mbms_service(tmgi, mbms_service_area_id, mbms_service->privates.fields.mme_teid_sm, (struct sockaddr*)&mbms_service->privates.fields.mbms_peer_ip);
   }
-
-  OAILOG_FUNC_OUT (LOG_MME_APP);
+  OAILOG_FUNC_OUT (LOG_MCE_APP);
 }
 
 /****************************************************************************/

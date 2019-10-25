@@ -289,7 +289,7 @@ mce_insert_mbms_service (
 
 //------------------------------------------------------------------------------
 void mce_app_remove_mbms_service(
-  struct tmgi_s * const tmgi_p, const mbms_service_area_id_t mbms_service_area_id, const teid_t mme_teid_sm)
+  struct tmgi_s * const tmgi_p, const mbms_service_area_id_t mbms_service_area_id, teid_t mme_teid_sm)
 {
   unsigned int                           *id = NULL;
   hashtable_rc_t                          hash_rc = HASH_TABLE_OK;
@@ -314,7 +314,19 @@ void mce_app_remove_mbms_service(
     if (HASH_TABLE_OK != hash_rc)
       OAILOG_DEBUG(LOG_MCE_APP, "MBMS Service MBMS Service Index " MCE_MBMS_SERVICE_INDEX_FMT " not in MCE MBMS Service Index collection", mbms_service_idx);
     mce_app_release_mbms_service(&mbms_service);
+    if(mme_teid_sm == INVALID_TEID)
+      mme_teid_sm = mbms_service->privates.fields.mme_teid_sm;
+    else
+      mme_teid_sm = INVALID_TEID;
   }
+  // todo: is it enough to remove it here, after the MBMS Service context has been removed (first one unnecessary)?
+  if(mme_teid_sm != INVALID_TEID) {
+	/** Try to remove it again. */
+  	hash_rc = hashtable_uint64_ts_remove (&mce_app_desc.mce_mbms_service_contexts.tunsm_mbms_service_htbl, (const hash_key_t)mme_teid_sm);
+  	if (HASH_TABLE_OK != hash_rc)
+  		OAILOG_DEBUG(LOG_MCE_APP, "Service MBMS Service for TMGI "TMGI_FMT" and MME SM_TEID " TEID_FMT "  not in sm collection. \n", TMGI_ARG(&mbms_service->privates.fields.tmgi), mme_teid_sm);
+  }
+
   // todo: UNLOCK HERE!!
   /*
    * Updating statistics
