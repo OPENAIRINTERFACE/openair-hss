@@ -86,6 +86,8 @@ void mce_app_handle_mbms_session_update_request( itti_sm_mbms_session_update_req
 
 void mce_app_handle_mbms_session_stop_request( itti_sm_mbms_session_stop_request_t * const mbms_session_stop_pP );
 
+void mce_app_handle_mbms_session_duration_timer_expiry (const struct tmgi_s *tmgi, const mbms_service_area_id_t mbms_service_area_id);
+
 #define mce_stats_read_lock(mCEsTATS)  pthread_rwlock_rdlock(&(mCEsTATS)->rw_lock)
 #define mce_stats_write_lock(mCEsTATS) pthread_rwlock_wrlock(&(mCEsTATS)->rw_lock)
 #define mce_stats_unlock(mCEsTATS)     pthread_rwlock_unlock(&(mCEsTATS)->rw_lock)

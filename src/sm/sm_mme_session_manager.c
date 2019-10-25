@@ -79,7 +79,7 @@ sm_mme_handle_mbms_session_start_request(
   req_p = &message_p->ittiMsg.sm_mbms_session_start_request;
   req_p->teid = teid;
   req_p->trxn = (void *)pUlpApi->u_api_info.initialReqIndInfo.hTrxn;
-  memcpy((void*)&req_p->peer_ip, pUlpApi->u_api_info.initialReqIndInfo.peerIp, pUlpApi->u_api_info.initialReqIndInfo.peerIp->sa_family == AF_INET ?
+  memcpy((void*)&req_p->mbms_peer_ip, pUlpApi->u_api_info.initialReqIndInfo.peerIp, pUlpApi->u_api_info.initialReqIndInfo.peerIp->sa_family == AF_INET ?
 		  sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
 
   /*
@@ -205,7 +205,7 @@ sm_mme_mbms_session_start_response (
      memset (&ulp_req, 0, sizeof (nw_gtpv2c_ulp_api_t));
      ulp_req.apiType = NW_GTPV2C_ULP_CREATE_LOCAL_TUNNEL; /**< Create a Tunnel Endpoint for the SM. */
      ulp_req.u_api_info.createLocalTunnelInfo.teidLocal = mbms_session_start_response_p->sm_mme_teid.teid;
-     ulp_req.u_api_info.createLocalTunnelInfo.peerIp = &mbms_session_start_response_p->peer_ip;
+     ulp_req.u_api_info.createLocalTunnelInfo.peerIp = &mbms_session_start_response_p->mbms_peer_ip;
      ulp_req.u_api_info.createLocalTunnelInfo.hUlpTunnel = 0;
      ulp_req.u_api_info.createLocalTunnelInfo.hTunnel    = 0;
      rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
@@ -286,7 +286,7 @@ sm_mme_handle_mbms_session_update_request(
   req_p = &message_p->ittiMsg.sm_mbms_session_update_request;
   req_p->teid = teid;
   req_p->trxn = (void *)pUlpApi->u_api_info.initialReqIndInfo.hTrxn;
-  memcpy((void*)&req_p->peer_ip, pUlpApi->u_api_info.initialReqIndInfo.peerIp, pUlpApi->u_api_info.initialReqIndInfo.peerIp->sa_family == AF_INET ?
+  memcpy((void*)&req_p->mbms_peer_ip, pUlpApi->u_api_info.initialReqIndInfo.peerIp, pUlpApi->u_api_info.initialReqIndInfo.peerIp->sa_family == AF_INET ?
 		  sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
 
   /*
@@ -447,7 +447,7 @@ sm_mme_handle_mbms_session_stop_request(
   req_p = &message_p->ittiMsg.sm_mbms_session_stop_request;
   req_p->teid = teid;
   req_p->trxn = (void *)pUlpApi->u_api_info.initialReqIndInfo.hTrxn;
-  memcpy((void*)&req_p->peer_ip, pUlpApi->u_api_info.initialReqIndInfo.peerIp, pUlpApi->u_api_info.initialReqIndInfo.peerIp->sa_family == AF_INET ?
+  memcpy((void*)&req_p->mbms_peer_ip, pUlpApi->u_api_info.initialReqIndInfo.peerIp, pUlpApi->u_api_info.initialReqIndInfo.peerIp->sa_family == AF_INET ?
 		  sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
 
   /*
@@ -614,7 +614,7 @@ sm_mme_remove_tunnel (
 
     ulp_req.apiType = NW_GTPV2C_ULP_FIND_LOCAL_TUNNEL;
     ulp_req.u_api_info.findLocalTunnelInfo.teidLocal = remove_tunnel_p->local_teid;
-    ulp_req.u_api_info.findLocalTunnelInfo.edns_peer_ip = &remove_tunnel_p->peer_ip;
+    ulp_req.u_api_info.findLocalTunnelInfo.edns_peer_ip = &remove_tunnel_p->mbms_peer_ip;
     rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
     DevAssert (NW_OK == rc);
     if(ulp_req.u_api_info.findLocalTunnelInfo.hTunnel){
@@ -636,7 +636,7 @@ sm_mme_remove_tunnel (
 
     ulp_req.apiType = NW_GTPV2C_ULP_FIND_LOCAL_TUNNEL;
     ulp_req.u_api_info.findLocalTunnelInfo.teidLocal = remove_tunnel_p->local_teid;
-    ulp_req.u_api_info.findLocalTunnelInfo.edns_peer_ip = &remove_tunnel_p->peer_ip;
+    ulp_req.u_api_info.findLocalTunnelInfo.edns_peer_ip = &remove_tunnel_p->mbms_peer_ip;
     rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
     DevAssert (NW_OK == rc);
     if(ulp_req.u_api_info.findLocalTunnelInfo.hTunnel){

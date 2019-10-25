@@ -59,7 +59,7 @@ int mce_app_remove_sm_tunnel_endpoint(teid_t local_teid, struct sockaddr *peer_i
   DevAssert (message_p != NULL);
   message_p->ittiMsg.sm_remove_tunnel.local_teid   = local_teid;
 
-  memcpy((void*)&message_p->ittiMsg.sm_remove_tunnel.peer_ip, peer_ip,
+  memcpy((void*)&message_p->ittiMsg.sm_remove_tunnel.mbms_peer_ip, peer_ip,
    		  (peer_ip->sa_family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
 
 //  message_p->ittiMsg.sm_remove_tunnel.cause = LOCAL_DETACH;
@@ -108,7 +108,7 @@ void mce_app_itti_sm_mbms_session_start_response(teid_t mme_sm_teid, teid_t mbms
   }
 
   /** Set the MME Sm address. */
-  memcpy((void*)&mbms_session_start_response_p->peer_ip, mbms_ip_address, mbms_ip_address->sa_family == AF_INET ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
+  memcpy((void*)&mbms_session_start_response_p->mbms_peer_ip, mbms_ip_address, mbms_ip_address->sa_family == AF_INET ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
   /**
    * Sending a message to SM.
    * No changes in the contexts, flags, timers, etc.. needed.
@@ -136,7 +136,7 @@ void mce_app_itti_sm_mbms_session_update_response(teid_t mme_sm_teid, teid_t mbm
   /** Set the cause. */
   mbms_session_update_response_p->cause.cause_value = gtpv2cCause;
   /** Set the MBMS Sm address. */
-  memcpy((void*)&mbms_session_update_response_p->peer_ip, mbms_ip_address, mbms_ip_address->sa_family == AF_INET ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
+  memcpy((void*)&mbms_session_update_response_p->mbms_peer_ip, mbms_ip_address, mbms_ip_address->sa_family == AF_INET ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
   /**
    * Sending a message to SM.
    * No changes in the contexts, flags, timers, etc.. needed.
@@ -164,7 +164,7 @@ void mce_app_itti_sm_mbms_session_stop_response(teid_t mme_sm_teid, teid_t mbms_
   /** Set the cause. */
   mbms_session_stop_response_p->cause.cause_value = gtpv2cCause;
   /** Set the MBMS Sm address. */
-  memcpy((void*)&mbms_session_stop_response_p->peer_ip, mbms_ip_address, mbms_ip_address->sa_family == AF_INET ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
+  memcpy((void*)&mbms_session_stop_response_p->mbms_peer_ip, mbms_ip_address, mbms_ip_address->sa_family == AF_INET ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
   /**
    * Sending a message to SM.
    * No changes in the contexts, flags, timers, etc.. needed.
@@ -175,9 +175,8 @@ void mce_app_itti_sm_mbms_session_stop_response(teid_t mme_sm_teid, teid_t mbms_
 
 
 //------------------------------------------------------------------------------
-/** M2AP Session Start Request. */
-void mce_app_itti_m3ap_mbms_session_start_request(mbms_m3ap_id_t mbms_m3ap_id, tmgi_t * tmgi,
-		mbms_service_area_t * mbms_service_area, bearer_context_to_be_created_t * mbms_bc_tbc, mbms_session_duration_t * mbms_session_duration,
+/** M3AP Session Start Request. */
+void mce_app_itti_m3ap_mbms_session_start_request(tmgi_t * tmgi, mbms_service_area_id_t * mbms_service_area_id, bearer_context_to_be_created_t * mbms_bc_tbc, mbms_session_duration_t * mbms_session_duration,
 		void* min_time_to_mbms_data_transfer, mbms_ip_multicast_distribution_t * mbms_ip_mc_dist, mbms_abs_time_data_transfer_t * abs_start_time){
   MessageDef                             *message_p = NULL;
   int                                     rc = RETURNok;
@@ -207,9 +206,8 @@ void mce_app_itti_m3ap_mbms_session_start_request(mbms_m3ap_id_t mbms_m3ap_id, t
 
 
 //------------------------------------------------------------------------------
-/** M2AP Session Update Request. */
-void mce_app_itti_m3ap_mbms_session_update_request(mbms_m3ap_id_t mbms_m3ap_id, tmgi_t * tmgi,
-		mbms_service_area_t * mbms_service_area, bearer_context_to_be_updated_t * mbms_bc_tbu, mbms_session_duration_t * mbms_session_duration,
+/** M3AP Session Update Request. */
+void mce_app_itti_m3ap_mbms_session_update_request(tmgi_t * tmgi, mbms_service_area_id_t * mbms_service_area_id, bearer_context_to_be_updated_t * mbms_bc_tbu, mbms_session_duration_t * mbms_session_duration,
 		void* min_time_to_mbms_data_transfer, mbms_ip_multicast_distribution_t * mbms_ip_mc_dist, mbms_abs_time_data_transfer_t * abs_start_time){
   MessageDef                             *message_p = NULL;
   int                                     rc = RETURNok;
@@ -239,7 +237,7 @@ void mce_app_itti_m3ap_mbms_session_update_request(mbms_m3ap_id_t mbms_m3ap_id, 
 
 
 //------------------------------------------------------------------------------
-/** M2AP Session Stop Request. */
+/** M3AP Session Stop Request. */
 void mce_app_itti_m3ap_mbms_session_stop_request(tmgi_t *tmgi, mbms_service_area_id_t mbms_sa_id){
   MessageDef                             *message_p = NULL;
   int                                     rc = RETURNok;

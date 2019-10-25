@@ -638,52 +638,55 @@ mme_ue_session_pool_exists_s11_teid (
 /****************************************************************************/
 
 //------------------------------------------------------------------------------
-static void clear_session_pool(ue_session_pool_t * ue_session_pool) {
-	mme_ue_s1ap_id_t ue_id = ue_session_pool->privates.mme_ue_s1ap_id;
-	ue_session_pool->privates.mme_ue_s1ap_id = INVALID_MME_UE_S1AP_ID;
+static
+void clear_session_pool(ue_session_pool_t * ue_session_pool) {
+  OAILOG_FUNC_IN (LOG_MME_APP);
+  mme_ue_s1ap_id_t ue_id = ue_session_pool->privates.mme_ue_s1ap_id;
+  ue_session_pool->privates.mme_ue_s1ap_id = INVALID_MME_UE_S1AP_ID;
 
-	OAILOG_INFO(LOG_MME_APP, "Clearing UE session pool of UE "MME_UE_S1AP_ID_FMT ". \n", ue_id);
-	/** Release the procedures. */
-	mme_app_delete_s11_procedures(ue_session_pool);
+  OAILOG_INFO(LOG_MME_APP, "Clearing UE session pool of UE "MME_UE_S1AP_ID_FMT ". \n", ue_id);
+  /** Release the procedures. */
+  mme_app_delete_s11_procedures(ue_session_pool);
 
-	/** Free the ESM procedures. */
-	if(ue_session_pool->privates.fields.esm_procedures.pdn_connectivity_procedures){
-		OAILOG_WARNING(LOG_MME_APP, "ESM PDN Connectivity procedures still exist for UE "MME_UE_S1AP_ID_FMT ". \n", ue_id);
-	    mme_app_nas_esm_free_pdn_connectivity_procedures(ue_session_pool);
-	}
+  /** Free the ESM procedures. */
+  if(ue_session_pool->privates.fields.esm_procedures.pdn_connectivity_procedures){
+    OAILOG_WARNING(LOG_MME_APP, "ESM PDN Connectivity procedures still exist for UE "MME_UE_S1AP_ID_FMT ". \n", ue_id);
+    mme_app_nas_esm_free_pdn_connectivity_procedures(ue_session_pool);
+  }
 
-	if(ue_session_pool->privates.fields.esm_procedures.bearer_context_procedures){
-		OAILOG_WARNING(LOG_MME_APP, "ESM Bearer Context procedures still exist for UE "MME_UE_S1AP_ID_FMT ". \n", ue_id);
-	    mme_app_nas_esm_free_bearer_context_procedures(ue_session_pool);
-	}
+  if(ue_session_pool->privates.fields.esm_procedures.bearer_context_procedures){
+	OAILOG_WARNING(LOG_MME_APP, "ESM Bearer Context procedures still exist for UE "MME_UE_S1AP_ID_FMT ". \n", ue_id);
+	mme_app_nas_esm_free_bearer_context_procedures(ue_session_pool);
+  }
 
-	DevAssert(RB_EMPTY(&ue_session_pool->pdn_contexts));
+  DevAssert(RB_EMPTY(&ue_session_pool->pdn_contexts));
 
-	/** No need to check if list is full, since it is stacked. Just clear the allocations in each session context. */
-	//LIST_INIT(&ue_session_pool->free_bearers);
-	STAILQ_INIT (&ue_session_pool->free_bearers);
-	STAILQ_INIT (&ue_session_pool->free_pdn_contexts);
+  /** No need to check if list is full, since it is stacked. Just clear the allocations in each session context. */
+  //LIST_INIT(&ue_session_pool->free_bearers);
+  STAILQ_INIT (&ue_session_pool->free_bearers);
+  STAILQ_INIT (&ue_session_pool->free_pdn_contexts);
 
-	/** Initialize the bearer contexts. */
-	for(int num_bearer = 0; num_bearer < MAX_NUM_BEARERS_UE; num_bearer++) {
-		/** Set the EBI, if nothing set. */
-		if(!ue_session_pool->privates.bcs_ue[num_bearer].ebi)
-			ue_session_pool->privates.bcs_ue[num_bearer].ebi = num_bearer + 5;
-		OAILOG_TRACE(LOG_MME_APP, "Clearing bearer context with ebi %d (%p) for UE "MME_UE_S1AP_ID_FMT ". \n",
-				ue_session_pool->privates.bcs_ue[num_bearer].ebi, &ue_session_pool->privates.bcs_ue[num_bearer], ue_id);
-		clear_bearer_context(ue_session_pool, &ue_session_pool->privates.bcs_ue[num_bearer]);
-	}
+  /** Initialize the bearer contexts. */
+  for(int num_bearer = 0; num_bearer < MAX_NUM_BEARERS_UE; num_bearer++) {
+    /** Set the EBI, if nothing set. */
+	if(!ue_session_pool->privates.bcs_ue[num_bearer].ebi)
+	  ue_session_pool->privates.bcs_ue[num_bearer].ebi = num_bearer + 5;
+	OAILOG_TRACE(LOG_MME_APP, "Clearing bearer context with ebi %d (%p) for UE "MME_UE_S1AP_ID_FMT ". \n",
+		ue_session_pool->privates.bcs_ue[num_bearer].ebi, &ue_session_pool->privates.bcs_ue[num_bearer], ue_id);
+	clear_bearer_context(ue_session_pool, &ue_session_pool->privates.bcs_ue[num_bearer]);
+  }
 
-	/** Initialize the PDN contexts. */
-	for(int num_pdn = 0; num_pdn < MAX_APN_PER_UE; num_pdn++) {
-		memset(&ue_session_pool->privates.pdn_ue[num_pdn], 0, sizeof(pdn_context_t)); /**< Sets the SM status to ESM_STATUS_INVALID. */
-		/** Insert the list into the empty list. */
-		STAILQ_INSERT_TAIL(&ue_session_pool->free_pdn_contexts, &ue_session_pool->privates.pdn_ue[num_pdn], entries);
-	}
+  /** Initialize the PDN contexts. */
+  for(int num_pdn = 0; num_pdn < MAX_APN_PER_UE; num_pdn++) {
+	memset(&ue_session_pool->privates.pdn_ue[num_pdn], 0, sizeof(pdn_context_t)); /**< Sets the SM status to ESM_STATUS_INVALID. */
+	/** Insert the list into the empty list. */
+	STAILQ_INSERT_TAIL(&ue_session_pool->free_pdn_contexts, &ue_session_pool->privates.pdn_ue[num_pdn], entries);
+  }
 
-	/** Initialize the RB_MAP. */
-	RB_INIT(&ue_session_pool->pdn_contexts);
-	/** Re-initialize the empty list: it should not point to a next free variable: determined when it is put back into the list (like LIST_INIT). */
-	memset(&ue_session_pool->privates.fields, 0, sizeof(ue_session_pool->privates.fields));
-	OAILOG_INFO(LOG_MME_APP, "Successfully cleared UE session pool of UE "MME_UE_S1AP_ID_FMT ". \n", ue_id);
+  /** Initialize the RB_MAP. */
+  RB_INIT(&ue_session_pool->pdn_contexts);
+  /** Re-initialize the empty list: it should not point to a next free variable: determined when it is put back into the list (like LIST_INIT). */
+  memset(&ue_session_pool->privates.fields, 0, sizeof(ue_session_pool->privates.fields));
+  OAILOG_INFO(LOG_MME_APP, "Successfully cleared UE session pool of UE "MME_UE_S1AP_ID_FMT ". \n", ue_id);
+  OAILOG_FUNC_OUT(LOG_MME_APP);
 }

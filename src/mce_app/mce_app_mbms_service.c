@@ -61,7 +61,7 @@ static teid_t                           mce_app_mme_sm_teid_generator = 0x000000
 /*******************  L O C A L    D E F I N I T I O N S  *******************/
 /****************************************************************************/
 
-static void mce_app_stop_mbms_service(tmgi_t * tmgi, mbms_service_area_id_t mbms_sa_id, teid_t mme_sm_teid);
+static void mce_app_stop_mbms_service(tmgi_t * tmgi, mbms_service_area_id_t mbms_sa_id, teid_t mme_sm_teid, struct sockaddr * mbms_peer_ip);
 
 //------------------------------------------------------------------------------
 void
@@ -81,7 +81,7 @@ mce_app_handle_mbms_session_start_request(
     		mbms_session_start_request_pP->teid, TMGI_ARG(&mbms_session_start_request_pP->tmgi));
     /** Send a negative response before crashing. */
     mce_app_itti_sm_mbms_session_start_response(INVALID_TEID, mbms_session_start_request_pP->sm_mbms_fteid.teid,
-	 	   &mbms_session_start_request_pP->peer_ip, mbms_session_start_request_pP->trxn, REQUEST_REJECTED);
+	 	   &mbms_session_start_request_pP->mbms_peer_ip, mbms_session_start_request_pP->trxn, REQUEST_REJECTED);
     OAILOG_FUNC_OUT (LOG_MCE_APP);
   }
 
@@ -89,6 +89,10 @@ mce_app_handle_mbms_session_start_request(
    * Check if the MBMS Service Area and PLMN is served. No TA/CELL List will be checked.
    * The MME/MCE supports per Sm message only one MBMS Service Area.
    * If multiple MBMS Service Areas are received, we will just consider the first one, we don't check which eNBs from which MBMS Service Areas are attached, due to split of layers.
+   *
+   * MME may have received consecutive multiple MBMS Service Areas, but we will require MBMS Flow Identifier.
+   * Since the MBMS Flow Identifier is set as location (MBMS Service Area) of an MBMS Service, we will only consider one MBMS Service Area for the MBMS Service.
+   * We will register the given MBMS Service (TMGI) with the MBMS Service Area uniquely.
    */
   mbms_service_area_id_t mbms_service_area_id;
   if ((mbms_service_area_id = mce_app_check_sa_local(&mbms_session_start_request_pP->tmgi.plmn, &mbms_session_start_request_pP->mbms_service_area) == INVALID_MBMS_SERVICE_AREA_ID)) {
@@ -97,7 +101,7 @@ mce_app_handle_mbms_session_start_request(
      */
     OAILOG_ERROR(LOG_MCE_APP, "PLMN " PLMN_FMT " or none of the Target SAs are served by current MME. Rejecting MBMS Session Start Request for TMGI "TMGI_FMT".\n",
     	PLMN_ARG(&mbms_session_start_request_pP->tmgi.plmn), TMGI_ARG(&mbms_session_start_request_pP->tmgi));
-    mce_app_itti_sm_mbms_session_start_response(INVALID_TEID, mbms_session_start_request_pP->sm_mbms_fteid.teid, &mbms_session_start_request_pP->peer_ip, mbms_session_start_request_pP->trxn, REQUEST_REJECTED);
+    mce_app_itti_sm_mbms_session_start_response(INVALID_TEID, mbms_session_start_request_pP->sm_mbms_fteid.teid, &mbms_session_start_request_pP->mbms_peer_ip, mbms_session_start_request_pP->trxn, REQUEST_REJECTED);
     /** No MBMS service or tunnel endpoint is allocated yet. */
     OAILOG_FUNC_OUT (LOG_MCE_APP);
   }
@@ -106,7 +110,7 @@ mce_app_handle_mbms_session_start_request(
   if (!(mbms_session_start_request_pP->mbms_session_duration.seconds || mbms_session_start_request_pP->mbms_session_duration.days)) {
     /** The MBMS Service Area and PLMN are served by this MME. */
 	OAILOG_ERROR(LOG_MCE_APP, "No session duration given for requested MBMS Service Request for TMGI " TMGI_FMT ". \n", TMGI_ARG(&mbms_session_start_request_pP->tmgi));
-	mce_app_itti_sm_mbms_session_start_response(INVALID_TEID, mbms_session_start_request_pP->sm_mbms_fteid.teid, &mbms_session_start_request_pP->peer_ip, mbms_session_start_request_pP->trxn, REQUEST_REJECTED);
+	mce_app_itti_sm_mbms_session_start_response(INVALID_TEID, mbms_session_start_request_pP->sm_mbms_fteid.teid, &mbms_session_start_request_pP->mbms_peer_ip, mbms_session_start_request_pP->trxn, REQUEST_REJECTED);
 	/** No MBMS service or tunnel endpoint is allocated yet. */
 	OAILOG_FUNC_OUT (LOG_MCE_APP);
   }
@@ -116,7 +120,7 @@ mce_app_handle_mbms_session_start_request(
     /** Return error, no modification on non-GBR is allowed. */
 	OAILOG_ERROR(LOG_MCE_APP, "Non-GBR MBMS Bearer Level QoS (qci=%d) not supported. Rejecting MBMS Service Request for TMGI " TMGI_FMT ". \n",
 			mbms_session_start_request_pP->mbms_bearer_level_qos.pci, TMGI_ARG(&mbms_session_start_request_pP->tmgi));
-	mce_app_itti_sm_mbms_session_start_response(INVALID_TEID, mbms_session_start_request_pP->sm_mbms_fteid.teid, &mbms_session_start_request_pP->peer_ip, mbms_session_start_request_pP->trxn, REQUEST_REJECTED);
+	mce_app_itti_sm_mbms_session_start_response(INVALID_TEID, mbms_session_start_request_pP->sm_mbms_fteid.teid, &mbms_session_start_request_pP->mbms_peer_ip, mbms_session_start_request_pP->trxn, REQUEST_REJECTED);
 	/** No MBMS service or tunnel endpoint is allocated yet. */
 	OAILOG_FUNC_OUT (LOG_MCE_APP);
   }
@@ -128,7 +132,7 @@ mce_app_handle_mbms_session_start_request(
 		  mbms_session_start_request_pP->mbms_bearer_level_qos.mbr.br_dl, mbms_session_start_request_pP->mbms_bearer_level_qos.mbr.br_ul) == RETURNerror){
     OAILOG_ERROR(LOG_MCE_APP, "MBMS Bearer Level QoS (qci=%d) could not be validated.Rejecting MBMS Service Request for TMGI " TMGI_FMT ". \n",
     		mbms_session_start_request_pP->mbms_bearer_level_qos.pci, TMGI_ARG(&mbms_session_start_request_pP->tmgi));
-    mce_app_itti_sm_mbms_session_start_response(INVALID_TEID, mbms_session_start_request_pP->sm_mbms_fteid.teid, &mbms_session_start_request_pP->peer_ip, mbms_session_start_request_pP->trxn, REQUEST_REJECTED);
+    mce_app_itti_sm_mbms_session_start_response(INVALID_TEID, mbms_session_start_request_pP->sm_mbms_fteid.teid, &mbms_session_start_request_pP->mbms_peer_ip, mbms_session_start_request_pP->trxn, REQUEST_REJECTED);
     /** No MBMS service or tunnel endpoint is allocated yet. */
     OAILOG_FUNC_OUT (LOG_MCE_APP);
   }
@@ -137,14 +141,15 @@ mce_app_handle_mbms_session_start_request(
    * Check that no MBMS Service with the given service ID and service area exists, if so reject
    * the request and implicitly remove the MBMS service & tunnel.
    */
-  mbms_service_t * mbms_service = mce_mbms_service_exists_mbms_service_id(&mce_app_desc.mce_mbms_service_contexts, &mbms_session_start_request_pP->tmgi, mbms_service_area_id);
+  mbms_service_t * mbms_service = mce_mbms_service_exists_tmgi(&mce_app_desc.mce_mbms_service_contexts, &mbms_session_start_request_pP->tmgi, mbms_service_area_id);
   if(mbms_service) {
     /** The MBMS Service Area and PLMN are served by this MME. */
     OAILOG_ERROR(LOG_MCE_APP, "An old MBMS Service context already existed for TMGI " TMGI_FMT " and MBMS Service Area " MBMS_SERVICE_AREA_ID_FMT ". Rejecting new one and implicitly removing old one. \n",
     	TMGI_ARG(&mbms_session_start_request_pP->tmgi), mbms_service_area_id);
-    mce_app_itti_sm_mbms_session_start_response(INVALID_TEID, mbms_session_start_request_pP->sm_mbms_fteid.teid, &mbms_session_start_request_pP->peer_ip, mbms_session_start_request_pP->trxn, SYSTEM_FAILURE);
+    mce_app_itti_sm_mbms_session_start_response(INVALID_TEID, mbms_session_start_request_pP->sm_mbms_fteid.teid, &mbms_session_start_request_pP->mbms_peer_ip, mbms_session_start_request_pP->trxn, SYSTEM_FAILURE);
     /** Removing old MBMS Service Context and informing the MCE APP. No response is expected from MCE. */
-    mce_app_stop_mbms_service(&mbms_service->privates.fields.tmgi, mbms_service->privates.fields.mbms_service_area_id, mbms_service->privates.fields.mme_teid_sm);
+    mce_app_stop_mbms_service(&mbms_service->privates.fields.tmgi, mbms_service->privates.fields.mbms_service_area_id, mbms_service->privates.fields.mme_teid_sm,
+    	(struct sockaddr*)&mbms_service->privates.fields.mbms_peer_ip);
     OAILOG_FUNC_OUT (LOG_MCE_APP);
   }
 
@@ -155,52 +160,44 @@ mce_app_handle_mbms_session_start_request(
    */
   if((mbms_service = mbms_cteid_in_list(&mce_app_desc.mce_mbms_service_contexts, mbms_session_start_request_pP->mbms_ip_mc_address->cteid)) != NULL){
     OAILOG_ERROR(LOG_MCE_APP, "An old MBMS Service context already existed for TMGI " TMGI_FMT " and MBMS Service Area " MBMS_SERVICE_AREA_ID_FMT " already exist with given CTEID "TEID_FMT". "
-    	"Rejecting new one for TMGI "TMGI_FMT". Leaving old one. \n",
-		TMGI_ARG(&mbms_service->privates.fields.tmgi), mbms_service_area_id, TMGI_ARG(&mbms_session_start_request_pP->tmgi));
-    mce_app_itti_sm_mbms_session_start_response(INVALID_TEID, mbms_session_start_request_pP->sm_mbms_fteid.teid, &mbms_session_start_request_pP->peer_ip, mbms_session_start_request_pP->trxn, REQUEST_REJECTED);
+    	"Rejecting new one for TMGI "TMGI_FMT". Leaving old one. \n", TMGI_ARG(&mbms_service->privates.fields.tmgi), mbms_service->privates.fields.mbms_service_area_id, TMGI_ARG(&mbms_session_start_request_pP->tmgi));
+    mce_app_itti_sm_mbms_session_start_response(INVALID_TEID, mbms_session_start_request_pP->sm_mbms_fteid.teid, &mbms_session_start_request_pP->mbms_peer_ip, mbms_session_start_request_pP->trxn, REQUEST_REJECTED);
     OAILOG_FUNC_OUT (LOG_MCE_APP);
   }
+
   OAILOG_INFO(LOG_MCE_APP, "Successfully processed the request for a new MBMS Service for TMGI " TMGI_FMT " and MBMS Service Area " MBMS_SERVICE_AREA_ID_FMT". Continuing with the establishment. \n",
 	TMGI_ARG(&mbms_session_start_request_pP->tmgi), mbms_service_area_id);
 
   mme_sm_teid = __sync_fetch_and_add (&mce_app_mme_sm_teid_generator, 0x00000001);
   /** We should only send the handover request and not deal with anything else. */
   // todo: locks!?
-  if ((mbms_service = mce_register_mbms_service(&mbms_session_start_request_pP->tmgi, &mbms_session_start_request_pP->mbms_service_area, mme_sm_teid)) == NULL) {
+  if (!mce_register_mbms_service(&mbms_session_start_request_pP->tmgi, &mbms_session_start_request_pP->mbms_service_area, mme_sm_teid)) {
     OAILOG_ERROR(LOG_MCE_APP, "No MBMS Service context could be generated from TMGI " TMGI_FMT " and MBMS Service Area " MBMS_SERVICE_AREA_ID_FMT ". \n",
     		TMGI_ARG(&mbms_session_start_request_pP->tmgi), mbms_service_area_id);
-    mce_app_itti_sm_mbms_session_start_response(INVALID_TEID, mbms_session_start_request_pP->sm_mbms_fteid.teid, &mbms_session_start_request_pP->peer_ip, mbms_session_start_request_pP->trxn, SYSTEM_FAILURE);
+    mce_app_itti_sm_mbms_session_start_response(INVALID_TEID, mbms_session_start_request_pP->sm_mbms_fteid.teid, &mbms_session_start_request_pP->mbms_peer_ip, mbms_session_start_request_pP->trxn, SYSTEM_FAILURE);
     OAILOG_FUNC_OUT (LOG_MCE_APP);
   }
   /** Update the MBMS Service with the given parameters. */
-  mce_app_update_mbms_service(mbms_service, &mbms_session_start_request_pP->abs_start_time, &mbms_session_start_request_pP->mbms_bearer_level_qos,
-	mbms_session_start_request_pP->mbms_flags, mbms_session_start_request_pP->mbms_flow_id, mbms_session_start_request_pP->mbms_ip_mc_address,
-	&mbms_session_start_request_pP->mbms_session_duration, &mbms_session_start_request_pP->sm_mbms_fteid);
-
-  /**
-   * MME may have received consecutive multiple MBMS Service Areas, but we will require MBMS Flow Identifier.
-   * Since the MBMS Flow Identifier is set as location (MBMS Service Area) of an MBMS Service, we will only consider one MBMS Service Area for the MBMS Service.
-   * We will register the given MBMS Service (TMGI) with the MBMS Service Area uniquely.
-   */
-
-  // todo: We don't check if any eNBs are currently connected to the MCE over the MBMS Service area, but even in case of a Mesh System the eNBs need to be locally connected.
-  // todo: Inform the M2AP Layer (all eNBS of the MBMS SA in question) -->
-
-  /**
-   * The MME may return an MBMS Session Start Response to the MBMS-GW as soon as the session request is accepted by one E-UTRAN node.
-   * That's why, we start an Sm procedure for the received Sm message. At timeout (no eNB response, we automatically purge the MBMS Service Context and respond to the MBMS-GW).
-   */
-  REQUIREMENT_3GPP_23_246(R8_3_2__6);
+  mce_app_update_mbms_service(&mbms_session_start_request_pP->tmgi, mbms_service_area_id, &mbms_session_start_request_pP->mbms_bearer_level_qos,
+	mbms_session_start_request_pP->mbms_flow_id, mbms_session_start_request_pP->mbms_ip_mc_address, &mbms_session_start_request_pP->mbms_peer_ip);
 
   /**
    * Create an MME APP procedure (not MCE).
    * Since the procedure is new, we don't need to check if another procedure exists.
    */
-  mme_app_sm_proc_mbms_session_start_t* mme_app_sm_proc = mme_app_create_sm_procedure_mbms_session_start(mbms_service);
-  DevAssert(mme_app_sm_proc);
+  DevAssert(mme_app_create_sm_procedure_mbms_session_start(&mbms_session_start_request_pP->tmgi, mbms_service_area_id, &mbms_session_start_request_pP->mbms_session_duration));
 
+  /**
+   * The MME may return an MBMS Session Start Response to the MBMS-GW as soon as the session request is accepted by one E-UTRAN node.
+   * That's why, we start an Sm procedure for the received Sm message. At timeout (no eNB response, we automatically purge the MBMS Service Context and respond to the MBMS-GW).
+   * We send an eNB general MBMS Session Start trigger over M3.
+   */
+  REQUIREMENT_3GPP_23_246(R8_3_2__6);
   OAILOG_INFO(LOG_MCE_APP, "Created a MBMS procedure for new MBMS Session with TMGI " TMGI_FMT " and MBMS Service Area " MBMS_SERVICE_AREA_ID_FMT ". Informing the MCE over M3. \n",
     TMGI_ARG(&mbms_session_start_request_pP->tmgi), mbms_service_area_id);
+//  tmgi_t * tmgi, mbms_service_area_id_t * mbms_service_area_id, bearer_context_to_be_created_t * mbms_bc_tbc, mbms_session_duration_t * mbms_session_duration,
+//	void* min_time_to_mbms_data_transfer, mbms_ip_multicast_distribution_t * mbms_ip_mc_dist, mbms_abs_time_data_transfer_t * abs_start_time
+//  mce_app_itti_m3ap_mbms_session_start_request(&mbms_session_start_request_pP->tmgi, mbms_service_area_id, NULL);
 
   OAILOG_FUNC_OUT (LOG_MCE_APP);
 }
@@ -405,17 +402,53 @@ mce_app_handle_mbms_session_stop_request(
 //		 &mbms_session_stop_request_pP->peer_ip, mbms_session_stop_request_pP->trxn, cause_value);
 //
 // // todo: inform the M2AP Layer (all eNBS) --> NOT WAITING FOR RESPONSE!?! --> NO PROCEDURE?!
- OAILOG_FUNC_OUT (LOG_MCE_APP);
+  OAILOG_FUNC_OUT (LOG_MCE_APP);
 }
 
+//------------------------------------------------------------------------------
+void
+mce_app_handle_mbms_session_duration_timer_expiry (const struct tmgi_s *tmgi, const mbms_service_area_id_t mbms_service_area_id)
+{
+  mme_app_sm_proc_t							* mme_app_sm_proc = NULL;
+
+  OAILOG_FUNC_IN (LOG_MME_APP);
+  /**
+   * Check that no MBMS Service with the given service ID and service area exists, if so reject
+   * the request and implicitly remove the MBMS service & tunnel.
+   */
+  mme_app_sm_proc = mme_app_get_sm_procedure (tmgi, mbms_service_area_id);
+  if(!mme_app_sm_proc) {
+    /** The MBMS Service Area and PLMN are served by this MME. */
+    OAILOG_ERROR(LOG_MCE_APP, "No MBMS Sm Procedure could be found for expired for TMGI " TMGI_FMT " and MBMS Service Area " MBMS_SERVICE_AREA_ID_FMT ". \n", TMGI_ARG(tmgi), mbms_service_area_id);
+    OAILOG_FUNC_OUT (LOG_MCE_APP);
+  }
+  OAILOG_INFO (LOG_MME_APP, "Expired- Sm Procedure Timer for MBMS Service with TMGI " TMGI_FMT ". Check the procedure. \n", TMGI_ARG(tmgi));
+
+  /** Check the procedure and remove it. */
+  REQUIREMENT_3GPP_23_246(R4_4_2__6);
+  if(mme_app_sm_proc->trigger_mbms_session_stop) {
+    OAILOG_INFO (LOG_MME_APP, "Triggering MBMS Session stop for expired MBMS Session duration for Service with TMGI " TMGI_FMT ". \n", TMGI_ARG(tmgi));
+    /*
+     *  todo: Need to get a better architecture here, kind of don't know what I am doing considering the locks (where to use the object, where to use identifiers).
+     *  Reason for that mainly is, what the final lock/structure architecture will look like..
+     */
+    mbms_service_t * mbms_service = mce_mbms_service_exists_tmgi(&mce_app_desc.mce_mbms_service_contexts, tmgi, mbms_service_area_id);
+    /**
+     * Remove the tunnel endpoint and all MBMS Service References in the M2 layer.
+     * No need to inform the MBMS Gateway.
+     */
+	mce_app_stop_mbms_service(tmgi, mbms_service_area_id, mbms_service->privates.fields.mme_teid_sm, (struct sockaddr*)&mbms_service->privates.fields.mbms_peer_ip);
+  }
+
+  OAILOG_FUNC_OUT (LOG_MME_APP);
+}
 
 /****************************************************************************/
 /*********************  L O C A L    F U N C T I O N S  *********************/
 /****************************************************************************/
 //------------------------------------------------------------------------------
-static void mce_app_stop_mbms_service(tmgi_t * tmgi, mbms_service_area_id_t mbms_sa_id, teid_t mme_sm_teid) {
+static void mce_app_stop_mbms_service(tmgi_t * tmgi, mbms_service_area_id_t mbms_sa_id, teid_t mme_sm_teid, struct sockaddr * mbms_peer_ip) {
   OAILOG_FUNC_IN(LOG_MCE_APP);
-
   DevAssert(tmgi);
   DevAssert(mbms_sa_id != INVALID_MBMS_SERVICE_AREA_ID);
 
@@ -425,6 +458,10 @@ static void mce_app_stop_mbms_service(tmgi_t * tmgi, mbms_service_area_id_t mbms
    * No negative response will arrive, so continue.
    */
   mce_app_itti_m3ap_mbms_session_stop_request(tmgi, mbms_sa_id);
+  if(mbms_peer_ip){
+    /** Remove the Sm Tunnel Endpoint implicitly. */
+	mce_app_remove_sm_tunnel_endpoint(mme_sm_teid, mbms_peer_ip);
+  }
   mce_app_remove_mbms_service(tmgi, mbms_sa_id, mme_sm_teid);
   OAILOG_FUNC_OUT(LOG_MCE_APP);
 }

@@ -46,13 +46,21 @@
 //-----------------------------------------------------------------------------------------------------------------------
 // MBMS Session Start Request
 //-----------------------------------------------------------------------------------------------------------------------
-#define R8_3_2__6 "MME23.246R10_8.3.2_6: MBMS Session Start procedure\
+#define R8_3_2__6 "MME23.246R15_8.3.2_6: MBMS Session Start procedure\
                                                                                                                         \
     The MME may return an MBMS Session Start Response to the MBMS-GW as soon as the session request is             \
     accepted by one E-UTRAN node."                                                                                \
 
 #define R8_3_2__6_BRIEF "MME Response to MBMS Start Request after first successful eNB"
 
+
 //-----------------------------------------------------------------------------------------------------------------------
+#define R4_4_2__6 "MME23.246R15_4.4.2_6: MBMS Session Start procedure\
+                                                                                                                        \
+	When the BM-SC knows that there is no more data to be sent for a "long idle period", it should indicate Session Stop to the network,             \
+    causing the release of bearer resources. However, if this idle period with no data is short, this may not be appropriate as it brings more signalling and processing."      \
+
+#define R4_4_2__6_BRIEF "Long idle period"
+
 
 #endif /* FILE_3GPP_REQUIREMENTS_23_246_SEEN */

@@ -231,6 +231,7 @@ static void mme_config_init (mme_config_t * config_pP)
   config_pP->max_m2_enbs 		= 2;
   config_pP->max_ues     		= 2;
   config_pP->max_mbms_services 	= 2;
+  config_pP->mbms_min_session_duration_in_sec = 5;
   config_pP->unauthenticated_imsi_supported = 0;
   config_pP->dummy_handover_forwarding_enabled = 1;
   config_pP->run_mode    = RUN_MODE_BASIC;
@@ -562,6 +563,10 @@ static int mme_config_parse_file (mme_config_t * config_pP)
 
     if ((config_setting_lookup_int (setting_mme, MME_CONFIG_STRING_MME_S10_HANDOVER_COMPLETION_TIMER, &aint))) {
       config_pP->mme_s10_handover_completion_timer = (uint32_t) aint;
+    }
+
+    if ((config_setting_lookup_int (setting_mme, MME_CONFIG_MBMS_MIN_SESSION_DUR_IN_SEC, &aint))) {
+      config_pP->mbms_min_session_duration_in_sec = (uint32_t) aint;
     }
 
     if ((config_setting_lookup_string (setting_mme, EPS_NETWORK_FEATURE_SUPPORT_EMERGENCY_BEARER_SERVICES_IN_S1_MODE, (const char **)&astring))) {

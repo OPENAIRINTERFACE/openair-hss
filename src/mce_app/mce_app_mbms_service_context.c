@@ -102,11 +102,9 @@
 /****************************************************************************/
 /*******************  L O C A L    D E F I N I T I O N S  *******************/
 /****************************************************************************/
-static void clear_mbms_service(struct mbms_service_s * mbms_service);
-static void release_mbms_service(mbms_service_t ** mbms_service);
+static void mce_app_clear_mbms_service(struct mbms_service_s * mbms_service);
+static void mce_app_release_mbms_service(mbms_service_t ** mbms_service);
 static int mce_insert_mbms_service(mce_mbms_services_t * const mce_mbms_services_p, const struct mbms_service_s *const mbms_service);
-static mbmsServiceIndex64_t get_mbms_service_index(const tmgi_t * tmgi, const mbms_service_area_id_t mbms_service_area_id);
-static struct mbms_service_s *mce_mbms_service_exists_mbms_service_index(mce_mbms_services_t * const mce_mbms_services_p, const mbmsServiceIndex64_t mbms_service_index);
 
 ////------------------------------------------------------------------------------
 //static bstring bearer_state2string(const mce_app_bearer_state_t bearer_state)
@@ -125,7 +123,7 @@ static struct mbms_service_s *mce_mbms_service_exists_mbms_service_index(mce_mbm
 //}
 
 //------------------------------------------------------------------------------
-static mbmsServiceIndex64_t get_mbms_service_index(const tmgi_t * tmgi, const mbms_service_area_id_t mbms_service_area_id)
+mbms_service_index_t mce_get_mbms_service_index(const tmgi_t * tmgi, const mbms_service_area_id_t mbms_service_area_id)
 {
   if(!tmgi || !tmgi->mbms_service_id)
 	return INVALID_MBMS_SERVICE_INDEX;
@@ -142,7 +140,7 @@ mce_register_mbms_service(const tmgi_t * const tmgi, const mbms_service_area_id_
   OAILOG_FUNC_IN (LOG_MCE_APP);
 
   // todo: lock the mce_desc
-  mbmsServiceIndex64_t mbms_service_index = get_mbms_service_index(tmgi, mbms_service_area_id);
+  mbms_service_index_t mbms_service_index = mce_get_mbms_service_index(tmgi, mbms_service_area_id);
   if (mbms_service_index == INVALID_MBMS_SERVICE_INDEX) {
     OAILOG_CRITICAL (LOG_MCE_APP, "MBMS Service Index generation failed for TMGI " TMGI_FMT".\n", TMGI_ARG(tmgi));
     OAILOG_FUNC_RETURN(LOG_MCE_APP, NULL);
@@ -151,7 +149,7 @@ mce_register_mbms_service(const tmgi_t * const tmgi, const mbms_service_area_id_
   mbms_service_t * mbms_service = STAILQ_FIRST(&mce_app_desc.mce_mbms_services_list);
   DevAssert(mbms_service); /**< todo: with locks, it should be guaranteed, that this should exist. */
 
-  mbmsServiceIndex64_t mbms_service_index_first_free = get_mbms_service_index(&mbms_service->privates.fields.tmgi, mbms_service->privates.fields.mbms_service_area_id);
+  mbms_service_index_t mbms_service_index_first_free = mce_get_mbms_service_index(&mbms_service->privates.fields.tmgi, mbms_service->privates.fields.mbms_service_area_id);
   if (mbms_service_index_first_free == INVALID_MBMS_SERVICE_INDEX) {
 	OAILOG_ERROR(LOG_MCE_APP, "No free MBMS Bearer Services. Cannot allocate a new one.\n");
     OAILOG_FUNC_RETURN (LOG_MCE_APP, NULL);
@@ -161,7 +159,7 @@ mce_register_mbms_service(const tmgi_t * const tmgi, const mbms_service_area_id_
   STAILQ_REMOVE_HEAD(&mce_app_desc.mce_mbms_services_list, entries); /**< free_ms is removed. */
 
   OAILOG_INFO(LOG_MCE_APP, "Clearing received current mbms_service %p.\n", mbms_service);
-  clear_mbms_service(mbms_service);
+  mce_app_clear_mbms_service(mbms_service);
   /** Set the TMGI, MBMS Service ID and the Sm MME TEID. */
   memcpy((void*)&mbms_service->privates.fields.tmgi, tmgi, sizeof(tmgi_t));
   mbms_service->privates.fields.mbms_service_area_id = mbms_service_area_id;
@@ -179,9 +177,9 @@ mce_register_mbms_service(const tmgi_t * const tmgi, const mbms_service_area_id_
 }
 
 //------------------------------------------------------------------------------
-static struct mbms_service_s                           *
+struct mbms_service_s                           *
 mce_mbms_service_exists_mbms_service_index(
-  mce_mbms_services_t * const mce_mbms_services_p, const mbmsServiceIndex64_t mbms_service_index)
+  mce_mbms_services_t * const mce_mbms_services_p, const mbms_service_index_t mbms_service_index)
 {
   struct mbms_service_t                    *mbms_service = NULL;
   hashtable_ts_get (mce_mbms_services_p->mbms_service_index_mbms_service_htbl, (const hash_key_t)mbms_service_index, (void **)&mbms_service);
@@ -190,13 +188,13 @@ mce_mbms_service_exists_mbms_service_index(
 
 //------------------------------------------------------------------------------
 struct mbms_service_s                           *
-mce_mbms_service_exists_mbms_service_id(
+mce_mbms_service_exists_tmgi(
   mce_mbms_services_t * const mce_mbms_services_p,
   const tmgi_t * const tmgi, const mbms_service_area_id_t mbms_service_area_id)
 {
   struct mbms_service_t                    *mbms_service = NULL;
 
-  mbmsServiceIndex64_t					    mbms_service_index = get_mbms_service_index(tmgi, mbms_service_area_id);
+  mbms_service_index_t					    mbms_service_index = mce_get_mbms_service_index(tmgi, mbms_service_area_id);
 
   hashtable_ts_get (mce_mbms_services_p->mbms_service_index_mbms_service_htbl, (const hash_key_t)mbms_service_index, (void **)&mbms_service);
   return mbms_service;
@@ -212,7 +210,7 @@ mce_mbms_service_exists_sm_teid(mce_mbms_services_t * const mce_mbms_services, c
   h_rc = hashtable_uint64_ts_get (mce_mbms_services->tunsm_mbms_service_htbl, (const hash_key_t)teid, &mce_mbms_service_idx64);
 
   if (HASH_TABLE_OK == h_rc) {
-    return mce_mbms_service_exists_mbms_service_index(mce_mbms_services, (mbmsServiceIndex64_t) mce_mbms_service_idx64);
+    return mce_mbms_service_exists_mbms_service_index(mce_mbms_services, (mbms_service_index_t) mce_mbms_service_idx64);
   }
   return NULL;
 }
@@ -247,7 +245,7 @@ mce_insert_mbms_service (
   DevAssert (mce_mbms_services_p );
   DevAssert (mbms_service );
 
-  mbmsServiceIndex64_t mbms_service_index = get_mbms_service_index(&mbms_service->privates.fields.tmgi, mbms_service->privates.fields.mbms_service_area_id);
+  mbms_service_index_t mbms_service_index = mce_get_mbms_service_index(&mbms_service->privates.fields.tmgi, mbms_service->privates.fields.mbms_service_area_id);
   DevAssert (mbms_service_index != INVALID_MBMS_SERVICE_INDEX);
   DevAssert (mbms_service->privates.fields.mme_teid_sm != INVALID_TEID);
 
@@ -296,7 +294,7 @@ void mce_app_remove_mbms_service(
   unsigned int                           *id = NULL;
   hashtable_rc_t                          hash_rc = HASH_TABLE_OK;
   mbms_service_t						 *mbms_service = NULL;
-  mbmsServiceIndex64_t 					  mbms_service_idx = INVALID_MBMS_SERVICE_INDEX;
+  mbms_service_index_t 					  mbms_service_idx = INVALID_MBMS_SERVICE_INDEX;
 
   OAILOG_FUNC_IN (LOG_MCE_APP);
   DevAssert (tmgi_p); /**< In case of an explicit MBMS Service removal, we need to trigger M3 MBMS Service Stop, before we get here, so the TMGI needs to be already clear. */
@@ -308,15 +306,14 @@ void mce_app_remove_mbms_service(
       OAILOG_DEBUG(LOG_MCE_APP, "Service MBMS Service for TMGI "TMGI_FMT" and MME SM_TEID " TEID_FMT "  not in sm collection. \n",
           TMGI_ARG(&mbms_service->privates.fields.tmgi), mme_teid_sm);
   }
-
-  mbms_service_idx = get_mbms_service_index(&tmgi_p, mbms_service_area_id);
+  mbms_service_idx = mce_get_mbms_service_index(&tmgi_p, mbms_service_area_id);
   // filled MBMS Service Index
   // todo: LOCK HERE!!
   if (INVALID_MBMS_SERVICE_INDEX != mbms_service_idx) {
     hash_rc = hashtable_ts_remove (mce_app_desc.mce_mbms_service_contexts.mbms_service_index_mbms_service_htbl, (const hash_key_t)mbms_service_idx, (void **)&mbms_service);
     if (HASH_TABLE_OK != hash_rc)
       OAILOG_DEBUG(LOG_MCE_APP, "MBMS Service MBMS Service Index " MCE_MBMS_SERVICE_INDEX_FMT " not in MCE MBMS Service Index collection", mbms_service_idx);
-    release_mbms_service(&mbms_service);
+    mce_app_release_mbms_service(&mbms_service);
   }
   // todo: UNLOCK HERE!!
   /*
@@ -340,7 +337,7 @@ mce_app_dump_mbms_service (
   struct mbms_service_s           *const mbms_service = (struct mbms_service_s *)mbms_service_pP;
   uint8_t                                 j = 0;
   if (mbms_service) {
-	mbmsServiceIndex64_t mbms_service_idx = get_mbms_service_index(&mbms_service->privates.fields.tmgi, mbms_service->privates.fields.mbms_service_area_id);
+	mbms_service_index_t mbms_service_idx = mce_get_mbms_service_index(&mbms_service->privates.fields.tmgi, mbms_service->privates.fields.mbms_service_area_id);
     bstring                                 bstr_dump = bfromcstralloc(4096, "\n-----------------------MBMS Service context ");
     bformata (bstr_dump, "%p --------------------\n", mbms_service);
     bformata (bstr_dump, "    - MBMS Service Index.: " MCE_MBMS_SERVICE_INDEX_FMT "\n", mbms_service_idx);
@@ -452,19 +449,23 @@ mbms_cteid_in_list (const mce_mbms_services_t * const mce_mbms_services_p,
 /** Update the MBMS Service with the given parameters. */
 //------------------------------------------------------------------------------
 void
-mce_app_update_mbms_service (mbms_service_t * const mbms_service, const mbms_abs_time_data_transfer_t * const mbms_abs_time, const bearer_qos_t * const mbms_bearer_level_qos,
-  const mbms_flags_t mbms_flags, const uint16_t mbms_flow_id, const mbms_ip_multicast_distribution_t * const mbms_ip_mc_dist, const mbms_session_duration_t * mbms_session_duration,
-  fteid_t * mbms_sm_fteid)
+mce_app_update_mbms_service (const tmgi_t * const tmgi, const mbms_service_area_id_t * mbms_service_area_id, const bearer_qos_t * const mbms_bearer_level_qos,
+  const uint16_t mbms_flow_id, const mbms_ip_multicast_distribution_t * const mbms_ip_mc_dist, struct sockaddr * mbms_peer)
 {
-  mbms_service_t	                     *mbms_service_ref = NULL;
+  mbms_service_t	                     *mbms_service = NULL;
   OAILOG_FUNC_IN(LOG_MCE_APP);
 
+  mbms_service = mce_mbms_service_exists_tmgi(&mce_app_desc.mce_mbms_service_contexts, tmgi, mbms_service_area_id);
+  DevAssert(mbms_service);
+
   mbms_service->privates.fields.mbms_flow_id = mbms_flow_id;
-  memcpy((void*)&mbms_service->privates.fields.mbms_bc.eps_bearer_context.bearer_level_qos,
-		  (void*)mbms_bearer_level_qos, sizeof(bearer_qos_t));
-  memcpy((void*)&mbms_service->privates.fields.mbms_sm_fteid, (void*)mbms_sm_fteid, sizeof(fteid_t));
+  memcpy((void*)&mbms_service->privates.fields.mbms_bc.eps_bearer_context.bearer_level_qos, (void*)mbms_bearer_level_qos, sizeof(bearer_qos_t));
+  memcpy((void*)&mbms_service->privates.fields.mbms_peer_ip, (void*)mbms_peer, mbms_peer->sa_family == AF_INET ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
+  /** Set the MBMS Multicast IP address. */
+  memcpy((void*)&mbms_service->privates.fields.mbms_bc.mbms_ip_mc_distribution, (void*)mbms_ip_mc_dist, sizeof(mbms_ip_multicast_distribution_t));
   OAILOG_FUNC_OUT (LOG_MCE_APP);
 }
+
 
 /****************************************************************************/
 /*********************  L O C A L    F U N C T I O N S  *********************/
@@ -473,7 +474,7 @@ mce_app_update_mbms_service (mbms_service_t * const mbms_service, const mbms_abs
 // todo: MBMS Service should already be locked : any way to check it?!?
 //------------------------------------------------------------------------------
 static
-void clear_mbms_service(struct mbms_service_s * mbms_service) {
+void mce_app_clear_mbms_service(struct mbms_service_s * mbms_service) {
   OAILOG_FUNC_IN(LOG_MCE_APP);
 
   DevAssert(mbms_service != NULL);
@@ -493,25 +494,24 @@ void clear_mbms_service(struct mbms_service_s * mbms_service) {
   /** Remove the remaining contexts of the bearer context. */
   memset(&mbms_service->privates.fields, 0, sizeof(mbms_service->privates.fields));
   OAILOG_INFO(LOG_MCE_APP, "Successfully cleared MBMS Service for TMGI " TMGI_FMT". \n", TMGI_ARG(&mbms_service->privates.fields.tmgi));
-  OAILOG_FUNC_OUT(LOG_MME_APP);
+  OAILOG_FUNC_OUT(LOG_MCE_APP);
 }
+
 
 //------------------------------------------------------------------------------
-void release_mbms_service(mbms_service_t ** mbms_service) {
-	OAILOG_FUNC_IN (LOG_MCE_APP);
+static
+void mce_app_release_mbms_service(mbms_service_t ** mbms_service) {
+  OAILOG_FUNC_IN (LOG_MCE_APP);
 
-	/** Clear the UE context. */
-	OAILOG_INFO(LOG_MCE_APP, "Releasing the MBMS Service %p for TMGI " TMGI_FMT".\n",
-			*mbms_service, TMGI_ARG(&(*mbms_service)->privates.fields.tmgi));
-
-	mbmsServiceIndex64_t mbms_service_idx = get_mbms_service_index(&(*mbms_service)->privates.fields.tmgi, (*mbms_service)->privates.fields.mbms_service_area_id);
-	// todo: lock the mce_desc (mbms_service should already be locked)
-	/** Remove the mbms_service from the list (probably at the back - must not be at the very end. */
-	STAILQ_REMOVE(&mce_app_desc.mce_mbms_services_list, (*mbms_service), mbms_service_s, entries);
-	clear_mbms_service(*mbms_service);
-	/** Put it into the head. */
-	STAILQ_INSERT_HEAD(&mce_app_desc.mce_mbms_services_list, (*mbms_service), entries);
-	*mbms_service= NULL;
+  /** Clear the UE context. */
+  OAILOG_INFO(LOG_MCE_APP, "Releasing the MBMS Service %p for TMGI " TMGI_FMT".\n",	*mbms_service, TMGI_ARG(&(*mbms_service)->privates.fields.tmgi));
+  // todo: lock the mce_desc (mbms_service should already be locked)
+  /** Remove the mbms_service from the list (probably at the back - must not be at the very end. */
+  STAILQ_REMOVE(&mce_app_desc.mce_mbms_services_list, (*mbms_service), mbms_service_s, entries);
+  mce_app_clear_mbms_service(*mbms_service);
+  /** Put it into the head. */
+  STAILQ_INSERT_HEAD(&mce_app_desc.mce_mbms_services_list, (*mbms_service), entries);
+  *mbms_service= NULL;
 	// todo: unlock the mce_desc
+  OAILOG_FUNC_OUT(LOG_MCE_APP);
 }
-

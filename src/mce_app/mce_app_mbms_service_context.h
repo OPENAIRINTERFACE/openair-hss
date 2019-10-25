@@ -108,7 +108,10 @@ typedef struct mbms_service_s {
 		  struct mbms_bearer_context_s  	mbms_bc;
 
 		  /** MBMS Peer Information. */
-		  fteid_t				 mbms_sm_fteid;
+		  union {
+		    struct sockaddr_in            mbms_peer_ipv4;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME.
+		    struct sockaddr_in6           mbms_peer_ipv6;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME.
+		  }mbms_peer_ip;
 	  }fields;
   }privates;
 
@@ -129,7 +132,13 @@ typedef struct mce_mbms_services_s {
  * \param tmgi TMGI to find in MBMS Service map
  * @returns an MBMS Service context matching the TMGI and MBMS Service Area or NULL if the context doesn't exists
  **/
-struct mbms_service_s *mce_mbms_service_exists_mbms_service_id(mce_mbms_services_t * const mce_mbms_services, const tmgi_t * const tmgi, const mbms_service_area_id_t mbms_service_area_id);
+struct mbms_service_s *mce_mbms_service_exists_tmgi(mce_mbms_services_t * const mce_mbms_services, const tmgi_t * const tmgi, const mbms_service_area_id_t mbms_service_area_id);
+
+/** \brief Retrieve an MBMS service by selecting the given MBMS Service Index. Used mainly for expired Sm procedures.
+ * \param mbms service index
+ * @returns an MBMS Service context matching the MBMS Service Index or NULL if the context doesn't exists
+ **/
+struct mbms_service_s *mce_mbms_service_exists_mbms_service_index(mce_mbms_services_t * const mce_mbms_services_p, const mbms_service_index_t mbms_service_index);
 
 /** \brief Retrieve an MBMS service by selecting the given SM TEID.
  * \param teid MME-SM TEID to find in MBMS Service map
@@ -158,10 +167,8 @@ void mce_app_dump_mbms_services(const mce_mbms_services_t * const mce_mbms_servi
 
 /** \brief Update the MBMS Services with the given information.
  **/
-void
-mce_app_update_mbms_service (mbms_service_t * const mbms_service, const mbms_abs_time_data_transfer_t * const mbms_abs_time, const bearer_qos_t * const mbms_bearer_level_qos,
-  const mbms_flags_t mbms_flags, const uint16_t mbms_flow_id, const mbms_ip_multicast_distribution_t * const mbms_ip_mc_dist, const mbms_session_duration_t * mbms_session_duration,
-  fteid_t * mbms_sm_fteid);
+void mce_app_update_mbms_service (const tmgi_t * const tmgi, const mbms_service_area_id_t * mbms_service_area_id, const bearer_qos_t * const mbms_bearer_level_qos,
+  const uint16_t mbms_flow_id, const mbms_ip_multicast_distribution_t * const mbms_ip_mc_dist, struct sockaddr * mbms_peer);
 
 /** \brief Check if an MBMS Service with the given CTEID exists.
  * We don't use CTEID as a key.
@@ -170,24 +177,29 @@ mbms_service_t                      *
 mbms_cteid_in_list (const mce_mbms_services_t * const mce_mbms_services_p,
   const teid_t cteid);
 
+/**
+ * Get the MCE APP internal identifier for the MBMS Service context, uniquely based on the TMGI and per MBMS Service Area Id.
+ */
+mbms_service_index_t mce_get_mbms_service_index(const tmgi_t * tmgi, const mbms_service_area_id_t mbms_service_area_id);
+
 /*
  * SM Procedures.
  */
-void mme_app_delete_sm_procedures(struct mbms_service_s * const mbms_service);
+void mme_app_delete_sm_procedures(mbms_service_t * const mbms_service);
 
-mme_app_sm_proc_t* mme_app_get_sm_procedure (struct mbms_service_s * const mbms_service);
+mme_app_sm_proc_t* mme_app_get_sm_procedure (const tmgi_t * const tmgi, const mbms_service_area_id_t * mbms_service_area_id);
 
-mme_app_sm_proc_mbms_session_start_t* mme_app_create_sm_procedure_mbms_session_start(struct mbms_service_s * const mbms_service);
-mme_app_sm_proc_mbms_session_start_t* mme_app_get_sm_procedure_mbms_session_start(struct mbms_service_s * const mbms_service);
-void mme_app_delete_sm_procedure_mbms_session_start(struct mbms_service_s * const mbms_service);
+bool mme_app_create_sm_procedure_mbms_session_start(const tmgi_t * const tmgi, const mbms_service_area_id_t * mbms_service_area_id, const mbms_session_duration_t * const mbms_session_duration);
+mme_app_sm_proc_mbms_session_start_t* mme_app_get_sm_procedure_mbms_session_start(const tmgi_t * const tmgi, const mbms_service_area_id_t * mbms_service_area_id);
+void mme_app_delete_sm_procedure_mbms_session_start(const tmgi_t * const tmgi, const mbms_service_area_id_t * mbms_service_area_id);
 
-mme_app_sm_proc_mbms_session_update_t* mme_app_create_sm_procedure_mbms_session_update(struct mbms_service_s * const mbms_service);
-mme_app_sm_proc_mbms_session_update_t* mme_app_get_sm_procedure_mbms_session_update(struct mbms_service_s * const mbms_service);
-void mme_app_delete_sm_procedure_mbms_session_update(struct mbms_service_s * const mbms_service);
+bool mme_app_create_sm_procedure_mbms_session_update(const tmgi_t * const tmgi, const mbms_service_area_id_t * mbms_service_area_id);
+mme_app_sm_proc_mbms_session_update_t* mme_app_get_sm_procedure_mbms_session_update(const tmgi_t * const tmgi, const mbms_service_area_id_t * mbms_service_area_id);
+void mme_app_delete_sm_procedure_mbms_session_update(const tmgi_t * const tmgi, const mbms_service_area_id_t * mbms_service_area_id);
 
-mme_app_sm_proc_mbms_session_stop_t* mme_app_create_sm_procedure_mbms_session_stop(struct mbms_service_s * const mbms_service);
-mme_app_sm_proc_mbms_session_stop_t* mme_app_get_sm_procedure_mbms_session_stop(struct mbms_service_s * const mbms_service);
-void mme_app_delete_sm_procedure_mbms_session_stop(struct mbms_service_s * const mbms_service);
+bool mme_app_create_sm_procedure_mbms_session_stop(const tmgi_t * const tmgi, const mbms_service_area_id_t * mbms_service_area_id);
+mme_app_sm_proc_mbms_session_stop_t* mme_app_get_sm_procedure_mbms_session_stop(const tmgi_t * const tmgi, const mbms_service_area_id_t * mbms_service_area_id);
+void mme_app_delete_sm_procedure_mbms_session_stop(const tmgi_t * const tmgi, const mbms_service_area_id_t * mbms_service_area_id);
 
 
 

@@ -74,7 +74,11 @@ typedef struct itti_sm_mbms_session_start_request_s {
 
   /* Sm stack specific parameter. Not used in standalone epc mode */
   uintptr_t                       	 trxn;                 ///< Transaction identifier
-  struct sockaddr                 	 peer_ip;              ///< MBMS-GW IP address for Sm interface.
+  /* Sm stack specific parameter. Not used in standalone epc mode */
+  union {
+    struct sockaddr_in                peer_ipv4;             ///< MBMS-GW Sm IPv4 address
+    struct sockaddr_in6               peer_ipv6;             ///< MBMS-GW Sm IPv6 address
+  }mbms_peer_ip;
   uint16_t                        	 peer_port;            ///< MBMS-GW port for Sm interface.
 } itti_sm_mbms_session_start_request_t;
 
@@ -94,7 +98,11 @@ typedef struct itti_sm_mbms_session_start_response_s {
 
   /* S11 stack specific parameter. */
   void                    	       	*trxn;               	///< Transaction identifier
-  struct sockaddr                  	 peer_ip;             	///<  MBMS-GW IP address for Sm interface.
+  /* Sm stack specific parameter. Not used in standalone epc mode */
+  union {
+    struct sockaddr_in                peer_ipv4;             ///< MBMS-GW Sm IPv4 address
+    struct sockaddr_in6               peer_ipv6;             ///< MBMS-GW Sm IPv6 address
+  }mbms_peer_ip;
 } itti_sm_mbms_session_start_response_t;
 
 //-----------------------------------------------------------------------------
@@ -124,7 +132,11 @@ typedef struct itti_sm_mbms_session_update_request_s {
 
   /* Sm stack specific parameter. */
   uintptr_t                       	 trxn;                 ///< Transaction identifier
-  struct sockaddr                 	 peer_ip;              ///< MBMS-GW Sm IP address
+  /* Sm stack specific parameter. Not used in standalone epc mode */
+  union {
+    struct sockaddr_in                peer_ipv4;             ///< MBMS-GW Sm IPv4 address
+    struct sockaddr_in6               peer_ipv6;             ///< MBMS-GW Sm IPv6 address
+  }mbms_peer_ip;
   uint16_t                        	 peer_port;            ///< MBMS-GW Sm port
 } itti_sm_mbms_session_update_request_t;
 
@@ -143,7 +155,11 @@ typedef struct itti_sm_mbms_session_update_response_s {
   gtpv2c_cause_t               		 cause;               ///< If the MME could successfully establish the UE context and the beaers.
 
   /* Sm stack specific parameter. */
-  struct sockaddr                 	 peer_ip;             ///< MBMS-GW Sm IP address
+  /* Sm stack specific parameter. Not used in standalone epc mode */
+  union {
+    struct sockaddr_in                peer_ipv4;             ///< MBMS-GW Sm IPv4 address
+    struct sockaddr_in6               peer_ipv6;             ///< MBMS-GW Sm IPv6 address
+  }mbms_peer_ip;
   void                    	      	*trxn;                ///< Transaction identifier
 } itti_sm_mbms_session_update_response_t;
 
@@ -168,7 +184,11 @@ typedef struct itti_sm_mbms_session_stop_request_s {
 
   /* Sm stack specific parameter. Not used in standalone epc mode */
   uintptr_t                       	 trxn;                 ///< Transaction identifier
-  struct sockaddr                 	 peer_ip;              ///< MBMS-GW Sm IP address
+  /* Sm stack specific parameter. Not used in standalone epc mode */
+  union {
+    struct sockaddr_in                peer_ipv4;             ///< MBMS-GW Sm IPv4 address
+    struct sockaddr_in6               peer_ipv6;             ///< MBMS-GW Sm IPv6 address
+  }mbms_peer_ip;
   uint16_t                        	 peer_port;            ///< MBMS-GW Sm port
 
 } itti_sm_mbms_session_stop_request_t;
@@ -189,8 +209,12 @@ typedef struct itti_sm_mbms_session_stop_response_s {
 
   // todo: Indication : This IE shall be included if any of the flags are set to 1. SGW Change Indication:   - This flag shall be set to 1 if the target MME/SGSN   has selected a new SGW.
 
-  /* S11 stack specific parameter. Not used in standalone epc mode */
-  struct sockaddr                peer_ip;             ///< MBMS-GW Sm IP address
+  /* Sm stack specific parameter. Not used in standalone epc mode */
+  union {
+    struct sockaddr_in                peer_ipv4;             ///< MBMS-GW Sm IPv4 address
+    struct sockaddr_in6               peer_ipv6;             ///< MBMS-GW Sm IPv6 address
+  }mbms_peer_ip;
+
   void                    	    *trxn;                ///< Transaction identifier
 } itti_sm_mbms_session_stop_response_t;
 
@@ -202,7 +226,11 @@ typedef struct itti_sm_remove_tunnel_s {
   /** Local Tunnel TEID. */
   teid_t                  local_teid;                ///< Sm MME local Tunnel Endpoint Identifier
 
-  struct sockaddr         peer_ip;             		 ///< MBMS-GW Sm IP address
+  /* Sm stack specific parameter. Not used in standalone epc mode */
+  union {
+    struct sockaddr_in                peer_ipv4;             ///< MBMS-GW Sm IPv4 address
+    struct sockaddr_in6               peer_ipv6;             ///< MBMS-GW Sm IPv6 address
+  }mbms_peer_ip;
   // here fields listed in 3GPP TS 29.274
 
   /** Cause to set (like error cause in GTPV2c State Machine). */
