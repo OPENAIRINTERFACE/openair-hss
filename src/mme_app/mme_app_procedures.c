@@ -771,14 +771,14 @@ mme_app_sm_proc_mbms_session_start_t * mme_app_create_sm_procedure_mbms_session_
   if(mme_config.mbms_short_idle_session_duration_in_sec > mbms_session_duration->seconds){
 	  OAILOG_INFO(LOG_MME_APP, "MBMS Session Start procedure for MBMS Service-Index " MCE_MBMS_SERVICE_INDEX_FMT " has session duration (%ds) is shorter/equal than the minimum (%ds). \n",
 			 mbms_service_idx, mbms_session_duration, mme_config.mbms_short_idle_session_duration_in_sec);
-	  sm_proc_mbms_session_start->proc.trigger_mbms_session_stop = true;
+//	  sm_proc_mbms_session_start->proc.trigger_mbms_session_stop = true;
   }
   if (timer_setup (mbms_session_duration->seconds, 0,
     TASK_MCE_APP, INSTANCE_DEFAULT, TIMER_ONE_SHOT,  (void *) (mbms_service_idx), &(sm_proc_mbms_session_start->proc.timer.id)) < 0) {
 	  OAILOG_ERROR (LOG_MME_APP, "Failed to start the MME MBMS Session Start timer for MBMS Service Idx " MCE_MBMS_SERVICE_INDEX_FMT " for duration %ds \n",
 		mbms_service_idx, mbms_session_duration);
 	  sm_proc_mbms_session_start->proc.timer.id = MME_APP_TIMER_INACTIVE_ID;
-	  sm_proc_mbms_session_start->proc.trigger_mbms_session_stop = false;
+//	  sm_proc_mbms_session_start->proc.trigger_mbms_session_stop = false;
   }
   mme_config_unlock (&mme_config);
   mme_app_sm_proc_t *sm_proc = (mme_app_sm_proc_t *)sm_proc_mbms_session_start;
@@ -825,7 +825,7 @@ void mme_app_delete_sm_procedure_mbms_session_start(const tmgi_t * const tmgi, c
           OAILOG_DEBUG(LOG_MME_APP, "Successfully removed timer for -MMME MBMS Service Start for TMGI " TMGI_FMT ". \n", TMGI_ARG(tmgi));
         }
       }
-      sm_proc->trigger_mbms_session_stop = false;
+//      sm_proc->trigger_mbms_session_stop = false;
       mme_app_free_sm_procedure_mbms_session_start(&sm_proc);
       return;
     }
@@ -868,14 +868,14 @@ mme_app_sm_proc_mbms_session_update_t * mme_app_create_sm_procedure_mbms_session
   if(mme_config.mbms_short_idle_session_duration_in_sec > mbms_session_duration->seconds){
 	  OAILOG_INFO(LOG_MME_APP, "MBMS Session Update procedure for MBMS Service-Index " MCE_MBMS_SERVICE_INDEX_FMT " has session duration (%ds) is shorter/equal than the minimum (%ds). \n",
 			 mbms_service_idx, mbms_session_duration, mme_config.mbms_short_idle_session_duration_in_sec);
-	  sm_proc_mbms_session_update->proc.trigger_mbms_session_stop = true;
+//	  sm_proc_mbms_session_update->proc.trigger_mbms_session_stop = true;
   }
   if (timer_setup (mbms_session_duration->seconds, 0,
     TASK_MCE_APP, INSTANCE_DEFAULT, TIMER_ONE_SHOT,  (void *) (mbms_service_idx), &(sm_proc_mbms_session_update->proc.timer.id)) < 0) {
 	  OAILOG_ERROR (LOG_MME_APP, "Failed to start the MME MBMS Session update timer for MBMS Service Idx " MCE_MBMS_SERVICE_INDEX_FMT " for duration %ds \n",
 		mbms_service_idx, mbms_session_duration);
 	  sm_proc_mbms_session_update->proc.timer.id = MME_APP_TIMER_INACTIVE_ID;
-	  sm_proc_mbms_session_update->proc.trigger_mbms_session_stop = false;
+//	  sm_proc_mbms_session_update->proc.trigger_mbms_session_stop = false;
   }
   mme_config_unlock (&mme_config);
   mme_app_sm_proc_t *sm_proc = (mme_app_sm_proc_t *)sm_proc_mbms_session_update;
@@ -922,7 +922,7 @@ void mme_app_delete_sm_procedure_mbms_session_update(const tmgi_t * const tmgi, 
 	          OAILOG_DEBUG(LOG_MME_APP, "Successfully removed timer for -MMME MBMS Service Update for TMGI " TMGI_FMT ". \n", TMGI_ARG(tmgi));
 	        }
 	      }
-	      sm_proc->trigger_mbms_session_stop = false;
+//	      sm_proc->trigger_mbms_session_stop = false;
 	      mme_app_free_sm_procedure_mbms_session_update(&sm_proc);
 		  return;
 	  }

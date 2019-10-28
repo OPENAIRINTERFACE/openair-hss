@@ -31,7 +31,11 @@
 #define FILE_M3AP_MESSAGES_TYPES_SEEN
 
 #define M3AP_MBMS_SESSION_START_REQUEST(mSGpTR)                  (mSGpTR)->ittiMsg.m3ap_mbms_session_start_req
+#define M3AP_MBMS_SESSION_START_RESPONSE(mSGpTR)                 (mSGpTR)->ittiMsg.m3ap_mbms_session_start_res
+
 #define M3AP_MBMS_SESSION_UPDATE_REQUEST(mSGpTR)                 (mSGpTR)->ittiMsg.m3ap_mbms_session_update_req
+#define M3AP_MBMS_SESSION_UDPATE_RESPONSE(mSGpTR)                (mSGpTR)->ittiMsg.m3ap_mbms_session_update_res
+
 #define M3AP_MBMS_SESSION_STOP_REQUEST(mSGpTR)                   (mSGpTR)->ittiMsg.m3ap_mbms_session_stop_req
 
 #define M3AP_ERROR_INDICATION(mSGpTR)                			 (mSGpTR)->ittiMsg.m3ap_error_ind
@@ -56,8 +60,7 @@ enum m2cause {
 
   M2AP_INVALIDATE_NAS,  /**< Removing the NAS layer only. */
 
-  // todo: not sure if this is the correct
-  M2AP_SUCCESSFUL_HANDOVER
+  M2AP_SUCCESS
 };
 
 typedef enum m2ap_reset_type_e {
@@ -70,15 +73,43 @@ typedef struct m2_sig_conn_id_s {
   enb_mbms_m2ap_id_t*  enb_mbms_m2ap_id;
 } m2_sig_conn_id_t;
 
+//-----------------
+typedef struct mbms_bearer_context_to_be_created_s {
+  struct bearer_context_to_be_created_s 		bc_tbc;
+  struct mbms_ip_multicast_distribution_s 		mbms_ip_mc_dist;
+} mbms_bearer_context_to_be_created_t;
+
 //------------------------------------------------------------------------------
 typedef struct itti_m3ap_mbms_session_start_req_s {
-  uint32_t   teid;                  ///< SM-MME Tunnel Endpoint Identifier
+  mbms_service_index_t						mme_mbms_service_idx;  /**< Used as MME MBMS M3AP Id. Same one should be used in the MCE layer. */
+  tmgi_t									tmgi;
+  mbms_bearer_context_to_be_created_t	    mbms_bearer_tbc;
+  // mbms_session_duration_t					mbms_session_dur;	   /**< Will be handled in the MCE_APP layer. */
+  mbms_service_area_id_t					mbms_service_area_id;
+  // mbms_abs_time_data_transfer_t				mbms_abs_time_data_transfer;  /**< Will be handled in the MCE_APP layer. */
 } itti_m3ap_mbms_session_start_req_t;
 
 //------------------------------------------------------------------------------
+typedef struct itti_m3ap_mbms_session_start_res_s {
+  mbms_service_index_t						mme_mbms_service_idx;  /**< Used as MME MBMS M3AP Id. Same one should be used in the MCE layer. */
+  enum m2cause								cause;
+} itti_m3ap_mbms_session_start_res_t;
+
+//------------------------------------------------------------------------------
 typedef struct itti_m3ap_mbms_session_update_req_s {
-  uint32_t   teid;                  ///< SM-MME Tunnel Endpoint Identifier
+  mbms_service_index_t						mme_mbms_service_idx;  /**< Used as MME MBMS M3AP Id. Same one should be used in the MCE layer. */
+  tmgi_t									tmgi;
+  bearer_qos_t								mbms_bearer_qos;
+  // mbms_session_duration_t					mbms_session_dur;	   /**< Will be handled in the MCE_APP layer. */
+  mbms_service_area_id_t					mbms_service_area_id;
+  // mbms_abs_time_data_transfer_t				mbms_abs_time_data_transfer;  /**< Will be handled in the MCE_APP layer. */
 } itti_m3ap_mbms_session_update_req_t;
+
+//------------------------------------------------------------------------------
+typedef struct itti_m3ap_mbms_session_update_res_s {
+  mbms_service_index_t						mme_mbms_service_idx;  /**< Used as MME MBMS M3AP Id. Same one should be used in the MCE layer. */
+  enum m2cause								cause;
+} itti_m3ap_mbms_session_update_res_t;
 
 //------------------------------------------------------------------------------
 typedef struct itti_m3ap_mbms_session_stop_req_s {

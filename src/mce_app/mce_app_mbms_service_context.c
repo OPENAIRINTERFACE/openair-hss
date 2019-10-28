@@ -462,7 +462,7 @@ mbms_cteid_in_list (const mce_mbms_services_t * const mce_mbms_services_p,
 //------------------------------------------------------------------------------
 void
 mce_app_update_mbms_service (const tmgi_t * const tmgi, const mbms_service_area_id_t * mbms_service_area_id, const bearer_qos_t * const mbms_bearer_level_qos,
-  const uint16_t mbms_flow_id, const mbms_ip_multicast_distribution_t * const mbms_ip_mc_dist, struct sockaddr * mbms_peer)
+  const uint16_t mbms_flow_id, const mbms_ip_multicast_distribution_t * const mbms_ip_mc_dist, struct sockaddr * mbms_peer, mme_app_bearer_state_t bearer_state)
 {
   mbms_service_t	                     *mbms_service = NULL;
   OAILOG_FUNC_IN(LOG_MCE_APP);
@@ -475,6 +475,7 @@ mce_app_update_mbms_service (const tmgi_t * const tmgi, const mbms_service_area_
   memcpy((void*)&mbms_service->privates.fields.mbms_peer_ip, (void*)mbms_peer, mbms_peer->sa_family == AF_INET ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
   /** Set the MBMS Multicast IP address. */
   memcpy((void*)&mbms_service->privates.fields.mbms_bc.mbms_ip_mc_distribution, (void*)mbms_ip_mc_dist, sizeof(mbms_ip_multicast_distribution_t));
+  mbms_service->privates.fields.mbms_bc.eps_bearer_context.bearer_state |= bearer_state;
   OAILOG_FUNC_OUT (LOG_MCE_APP);
 }
 

@@ -257,7 +257,7 @@ m3ap_handle_mbms_session_start_request (
   bstring b = blk2bstr(buffer_p, length);
   free(buffer_p);
   // todo: the next_sctp_stream is the one without incrementation?
-  m2ap_mce_itti_send_sctp_request (&b, target_enb_ref->sctp_assoc_id, target_enb_ref->next_sctp_stream, mbms_session_start_req_pP->teid);
+  m2ap_mce_itti_send_sctp_request (&b, target_enb_ref->sctp_assoc_id, target_enb_ref->next_sctp_stream, INVALID_MBMS_SERVICE_INDEX);
 
   /*
    * Leave the state in as it is.
@@ -644,12 +644,12 @@ m3ap_handle_mbms_session_update_request (
 
   // todo: s1ap_generate_initiating_message will remove the things?
   OAILOG_NOTICE (LOG_MXAP, "Send M2AP_MBMS_SESSION_UPDATE_REQUEST message MCE_MBMS_M2AP_ID = " MCE_MBMS_M2AP_ID_FMT "\n",
-              mbms_session_update_req_pP->teid);
+              INVALID_MBMS_SERVICE_INDEX);
 
   bstring b = blk2bstr(buffer_p, length);
   free(buffer_p);
   // todo: the next_sctp_stream is the one without incrementation?
-  m2ap_mce_itti_send_sctp_request (&b, target_enb_ref->sctp_assoc_id, target_enb_ref->next_sctp_stream, mbms_session_update_req_pP->teid);
+  m2ap_mce_itti_send_sctp_request (&b, target_enb_ref->sctp_assoc_id, target_enb_ref->next_sctp_stream, INVALID_MBMS_SERVICE_INDEX);
 
   /*
    * Leave the state in as it is.

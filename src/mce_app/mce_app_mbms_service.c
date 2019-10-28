@@ -205,7 +205,8 @@ mce_app_handle_mbms_session_start_request(
   }
   /** Update the MBMS Service with the given parameters. */
   mce_app_update_mbms_service(&mbms_session_start_request_pP->tmgi, mbms_service_area_id, &mbms_session_start_request_pP->mbms_bearer_level_qos,
-	mbms_session_start_request_pP->mbms_flow_id, mbms_session_start_request_pP->mbms_ip_mc_address, &mbms_session_start_request_pP->mbms_peer_ip);
+	mbms_session_start_request_pP->mbms_flow_id, mbms_session_start_request_pP->mbms_ip_mc_address, &mbms_session_start_request_pP->mbms_peer_ip,
+	BEARER_STATE_MME_CREATED | BEARER_STATE_SGW_CREATED);
 
   /**
    * Create an MME APP procedure (not MCE).
@@ -395,10 +396,8 @@ mce_app_handle_mbms_session_update_request(
    * The MME may return an MBMS Session Update Response to the MBMS-GW as soon as the session update request is accepted by one E-UTRAN node.
    */
   OAILOG_INFO(LOG_MCE_APP, "Created a MBMS procedure for updated MBMS Session with TMGI " TMGI_FMT ". Informing the MCE over M3. \n", TMGI_ARG(&mbms_session_update_request_pP->tmgi));
-//   tmgi_t * tmgi, mbms_service_area_id_t * mbms_service_area_id, bearer_context_to_be_created_t * mbms_bc_tbc, mbms_session_duration_t * mbms_session_duration,
-////	void* min_time_to_mbms_data_transfer, mbms_ip_multicast_distribution_t * mbms_ip_mc_dist, mbms_abs_time_data_transfer_t * abs_start_time
-////  mce_app_itti_m3ap_mbms_session_update_request(&mbms_session_start_request_pP->tmgi, mbms_service_area_id, NULL);
-
+  mce_app_itti_m3ap_mbms_session_update_request(&mbms_session_update_request_pP->tmgi, mbms_service_area_id, NULL, &mbms_session_update_request_pP->mbms_session_duration,
+	&mbms_service->privates.fields.mbms_bc.mbms_ip_mc_distribution, &mbms_session_update_request_pP->abs_update_time);
   OAILOG_FUNC_OUT (LOG_MCE_APP);
 }
 
@@ -408,12 +407,158 @@ mce_app_handle_mbms_session_stop_request(
      itti_sm_mbms_session_stop_request_t * const mbms_session_stop_request_pP
     )
 {
- MessageDef                             *message_p  = NULL;
- struct mbms_service_s                  *mbms_service = NULL;
- int                                     rc = RETURNok;
+  MessageDef                             *message_p  = NULL;
+  struct mbms_service_s                  *mbms_service = NULL;
+  int                                     rc = RETURNok;
 
- OAILOG_FUNC_IN (LOG_MCE_APP);
+  OAILOG_FUNC_IN (LOG_MCE_APP);
 
+  /**
+   * Check if an MBMS Service exists.
+   */
+  mbms_service = mce_mbms_service_exists_sm_teid(&mce_app_desc.mce_mbms_service_contexts, &mbms_session_stop_request_pP->teid);
+  if(!mbms_service) {
+    /** The MBMS Service Area and PLMN are served by this MME. */
+    OAILOG_ERROR(LOG_MCE_APP, "No MBMS Service context exists for TEID " TEID_FMT ". Ignoring MBMS Session Stop (MBMS Sm TEID unknowns). \n", mbms_session_stop_request_pP->teid);
+    OAILOG_FUNC_OUT (LOG_MCE_APP);
+  }
+
+  if(mbms_service->privates.fields.mbms_flow_id != mbms_session_stop_request_pP->mbms_flow_id){
+    OAILOG_ERROR(LOG_MCE_APP, "MBMS Service with TMGI " TMGI_FMT " has MBMS Flow ID %d, but received MBMS Stop Request for MBMS Flow ID (%d). "
+    		"Ignoring this error and continuing with the MBMS Session stop procedure. \n", TMGI_ARG(&mbms_service->privates.fields.tmgi),
+			mbms_service->privates.fields.mbms_flow_id, mbms_session_stop_request_pP->mbms_flow_id);
+  }
+  /**
+   * No need to check for an MBMS Service procedure or MBMS Bearer States. We will stop any existing procedures.
+   *
+   * The MBMS Flag will be sent to the MBMS Gw.
+   *  if the MBMS GW has already moved the control of the MBMS session to an alternative MME(s), the MBMS
+   *  GW shall send an MBMS Session Stop Request message to the MME previously controlling the MBMS session
+   *  with a "Local MBMS bearer context release" indication to instruct that MME to release its MBMS bearer
+   *  context locally, without sending any message to the MCE(s).
+   */
+  OAILOG_INFO(LOG_MCE_APP, "Stopping the MBMS Service for TMGI " TMGI_FMT " immediately. Informing the MCE over M3. \n", TMGI_ARG(&mbms_service->privates.fields.tmgi));
+  mce_app_itti_sm_mbms_session_stop_response(mbms_session_stop_request_pP->teid, mbms_service->privates.fields.mbms_teid_sm,
+		  (struct sockaddr*)&mbms_service->privates.fields.mbms_peer_ip, mbms_session_stop_request_pP->trxn, REQUEST_ACCEPTED);
+  mce_app_stop_mbms_service(&mbms_service->privates.fields.tmgi, mbms_service->privates.fields.mbms_service_area_id, mbms_session_stop_request_pP->teid, NULL);
+  OAILOG_FUNC_OUT (LOG_MCE_APP);
+}
+
+//------------------------------------------------------------------------------
+void
+mce_app_handle_m3ap_session_start_response(
+     const itti_m3ap_mbms_session_start_res_t* const mbms_session_start_res_pP
+    )
+{
+  MessageDef                             			*message_p  				= NULL;
+  struct mbms_service_s                  		    *mbms_service 				= NULL;
+  mme_app_sm_proc_mbms_session_start_t 				*mbms_session_start_proc 	= NULL;
+  int                                     			 rc 						= RETURNok;
+
+  OAILOG_FUNC_IN (LOG_MCE_APP);
+
+  /** Check if an MBMS Service exists. */
+  mbms_service = mce_mbms_service_exists_mbms_service_index(&mce_app_desc.mce_mbms_service_contexts, &mbms_session_start_res_pP->mme_mbms_service_idx);
+  if(!mbms_service) {
+    /** The M3AP MBMS Service Id not found. */
+    OAILOG_ERROR(LOG_MCE_APP, "No MBMS Service context exists for MBMS Service Idx " MCE_MBMS_SERVICE_INDEX_FMT ". Ignoring MBMS Session Start response from MxAP. \n",
+    		mbms_session_start_res_pP->mme_mbms_service_idx);
+    OAILOG_FUNC_OUT (LOG_MCE_APP);
+  }
+
+  /** Check if a procedure for MBMS Session Start Response exists, if so forward it to the MBMS-GW. */
+  mbms_session_start_proc = mme_app_get_sm_procedure_mbms_session_start(&mbms_service->privates.fields.tmgi, mbms_service->privates.fields.mbms_service_area_id);
+  if(!mbms_session_start_proc){
+    /** The MBMS Session Start Procedure not found. */
+	OAILOG_ERROR(LOG_MCE_APP, "No MBMS Session Start procedure exists for MBMS Service with TMGI " TMGI_FMT". Ignoring MBMS Session Start response from MxAP. \n",
+		TMGI_ARG(&mbms_service->privates.fields.tmgi));
+	OAILOG_FUNC_OUT (LOG_MCE_APP);
+  }
+
+  /**
+   * We receive an answer for all eNBs, so the answer is assumed to be final.
+   * Check the M2 Cause.
+   */
+  if(mbms_session_start_res_pP->cause != M2AP_SUCCESS) {
+    OAILOG_ERROR(LOG_MCE_APP, "Received error code %d from MxAP layer regarding MBMS Session Start procedure for TMGI " TMGI_FMT". "
+    		"Rejecting the MBMS Session Start towards MBMS gateway. \n", mbms_session_start_res_pP->cause, TMGI_ARG(&mbms_service->privates.fields.tmgi));
+    mce_app_itti_sm_mbms_session_start_response(mbms_service->privates.fields.mme_teid_sm, mbms_service->privates.fields.mbms_teid_sm,
+    		(struct sockaddr*)&mbms_service->privates.fields.mbms_peer_ip, (void*)mbms_session_start_proc->proc.sm_trxn, REQUEST_REJECTED);
+    mce_app_stop_mbms_service(&mbms_service->privates.fields.tmgi, mbms_service->privates.fields.mbms_service_area_id, mbms_service->privates.fields.mme_teid_sm, NULL);
+    OAILOG_FUNC_OUT (LOG_MCE_APP);
+  }
+  OAILOG_INFO(LOG_MCE_APP, "Successfully established MBMS Session Start procedure for TMGI " TMGI_FMT" in the MxAP layer. Informing the MBMS-Gw. \n ",
+	TMGI_ARG(&mbms_service->privates.fields.tmgi));
+
+  mce_app_itti_sm_mbms_session_start_response(mbms_service->privates.fields.mme_teid_sm, mbms_service->privates.fields.mbms_teid_sm,
+     		(struct sockaddr*)&mbms_service->privates.fields.mbms_peer_ip, (void*)mbms_session_start_proc->proc.sm_trxn, REQUEST_ACCEPTED);
+  /**
+   * Stop the procedure. We will have a distinct timer in the M2AP layer for the session stop, if necessary.
+   * We don't wan't to have multiple Sm procedures (Start, Update..).
+   * Set the bearers to active.
+   */
+  mbms_service->privates.fields.mbms_bc.eps_bearer_context.bearer_state |= BEARER_STATE_ACTIVE;
+  mbms_service->privates.fields.mbms_bc.eps_bearer_context.bearer_state |= BEARER_STATE_ENB_CREATED;
+  mme_app_delete_sm_procedure_mbms_session_start(&mbms_service->privates.fields.tmgi, mbms_service->privates.fields.mbms_service_area_id);
+  OAILOG_FUNC_OUT (LOG_MCE_APP);
+}
+
+//------------------------------------------------------------------------------
+void
+mce_app_handle_m3ap_session_update_response(
+     const itti_m3ap_mbms_session_update_res_t* const mbms_session_update_res_pP
+    )
+{
+  MessageDef                             			*message_p  				= NULL;
+  struct mbms_service_s                  		    *mbms_service 				= NULL;
+  mme_app_sm_proc_mbms_session_update_t				*mbms_session_update_proc 	= NULL;
+  int                                     			 rc 						= RETURNok;
+
+  OAILOG_FUNC_IN (LOG_MCE_APP);
+
+//  /** Check if an MBMS Service exists. */
+//  mbms_service = mce_mbms_service_exists_mbms_service_index(&mce_app_desc.mce_mbms_service_contexts, &mbms_session_start_res_pP->mme_mbms_service_idx);
+//  if(!mbms_service) {
+//    /** The M3AP MBMS Service Id not found. */
+//    OAILOG_ERROR(LOG_MCE_APP, "No MBMS Service context exists for MBMS Service Idx " MCE_MBMS_SERVICE_INDEX_FMT ". Ignoring MBMS Session Start response from MxAP. \n",
+//    		mbms_session_start_res_pP->mme_mbms_service_idx);
+//    OAILOG_FUNC_OUT (LOG_MCE_APP);
+//  }
+//
+//  /** Check if a procedure for MBMS Session Start Response exists, if so forward it to the MBMS-GW. */
+//  mbms_session_start_proc = mme_app_get_sm_procedure_mbms_session_start(&mbms_service->privates.fields.tmgi, mbms_service->privates.fields.mbms_service_area_id);
+//  if(!mbms_session_start_proc){
+//    /** The MBMS Session Start Procedure not found. */
+//	OAILOG_ERROR(LOG_MCE_APP, "No MBMS Session Start procedure exists for MBMS Service with TMGI " TMGI_FMT". Ignoring MBMS Session Start response from MxAP. \n",
+//		TMGI_ARG(&mbms_service->privates.fields.tmgi));
+//	OAILOG_FUNC_OUT (LOG_MCE_APP);
+//  }
+//
+//  /**
+//   * We receive an answer for all eNBs, so the answer is assumed to be final.
+//   * Check the M2 Cause.
+//   */
+//  if(mbms_session_start_res_pP->cause != M2AP_SUCCESS) {
+//    OAILOG_ERROR(LOG_MCE_APP, "Received error code %d from MxAP layer regarding MBMS Session Start procedure for TMGI " TMGI_FMT". "
+//    		"Rejecting the MBMS Session Start towards MBMS gateway. \n", mbms_session_start_res_pP->cause, TMGI_ARG(&mbms_service->privates.fields.tmgi));
+//    mce_app_itti_sm_mbms_session_start_response(mbms_service->privates.fields.mme_teid_sm, mbms_service->privates.fields.mbms_teid_sm,
+//    		(struct sockaddr*)&mbms_service->privates.fields.mbms_peer_ip, (void*)mbms_session_start_proc->proc.sm_trxn, REQUEST_REJECTED);
+//    mce_app_stop_mbms_service(&mbms_service->privates.fields.tmgi, mbms_service->privates.fields.mbms_service_area_id, mbms_service->privates.fields.mme_teid_sm, NULL);
+//    OAILOG_FUNC_OUT (LOG_MCE_APP);
+//  }
+//  OAILOG_INFO(LOG_MCE_APP, "Successfully established MBMS Session Start procedure for TMGI " TMGI_FMT" in the MxAP layer. Informing the MBMS-Gw. \n "
+//	TMGI_ARG(&mbms_service->privates.fields.tmgi));
+//
+//  mce_app_itti_sm_mbms_session_start_response(mbms_service->privates.fields.mme_teid_sm, mbms_service->privates.fields.mbms_teid_sm,
+//     		(struct sockaddr*)&mbms_service->privates.fields.mbms_peer_ip, (void*)mbms_session_start_proc->proc.sm_trxn, REQUEST_ACCEPTED);
+  /**
+   * Stop the procedure. We will have a distinct timer in the M2AP layer for the session stop, if necessary.
+   * We don't wan't to have multiple Sm procedures (Start, Update..).
+   * Set the bearers to active.
+   */
+  mbms_service->privates.fields.mbms_bc.eps_bearer_context.bearer_state |= BEARER_STATE_ACTIVE;
+  mbms_service->privates.fields.mbms_bc.eps_bearer_context.bearer_state |= BEARER_STATE_ENB_CREATED;
+  mme_app_delete_sm_procedure_mbms_session_update(&mbms_service->privates.fields.tmgi, mbms_service->privates.fields.mbms_service_area_id);
   OAILOG_FUNC_OUT (LOG_MCE_APP);
 }
 
@@ -467,22 +612,13 @@ mce_app_handle_mbms_session_duration_timer_expiry (const struct tmgi_s *tmgi, co
 	  OAILOG_FUNC_OUT(LOG_MCE_APP);
 	}
   }
-  /**
-   * If the MBMS Service was successfully established, at at least 1 eNB.
-   * Check the procedure and remove it if it was a "short idle period" (reducing signaling overhead).
-   */
-  REQUIREMENT_3GPP_23_246(R4_4_2__6);
-  if(mme_app_sm_proc->trigger_mbms_session_stop) {
-    OAILOG_INFO (LOG_MCE_APP, "Triggering MBMS Session stop for expired MBMS Session duration for MBMS service with TMGI " TMGI_FMT ". \n", TMGI_ARG(tmgi));
-    /*
-     * todo: Need to get a better architecture here, kind of don't know what I am doing considering the locks (where to use the object, where to use identifiers).
-     * Reason for that mainly is, what the final lock/structure architecture will look like..
-     *
-     * Remove the Sm tunnel endpoint implicitly and all MBMS Service References in the M2 layer.
-     * No need to inform the MBMS Gateway. Will inform the M2 layer and all the eNBs.
-     */
-    mce_app_stop_mbms_service(tmgi, mbms_service_area_id, mbms_service->privates.fields.mme_teid_sm, (struct sockaddr*)&mbms_service->privates.fields.mbms_peer_ip);
-  }
+
+//  /**
+//   * If the MBMS Service was successfully established, at at least 1 eNB.
+//   * Check the procedure and remove it if it was a "short idle period" (reducing signaling overhead).
+//   */
+//  todo: Put this into the MxAP layer REQUIREMENT_3GPP_23_246(R4_4_2__6);
+
   OAILOG_FUNC_OUT (LOG_MCE_APP);
 }
 
@@ -500,7 +636,6 @@ static void mce_app_stop_mbms_service(tmgi_t * tmgi, mbms_service_area_id_t mbms
    * Inform the MXAP Layer about the removed MBMS Service.
    * No negative response will arrive, so continue.
    */
-  mce_app_itti_m3ap_mbms_session_stop_request(tmgi, mbms_sa_id);
   if(mbms_peer_ip){
     /** Remove the Sm Tunnel Endpoint implicitly. */
 	mce_app_remove_sm_tunnel_endpoint(mme_sm_teid, mbms_peer_ip);

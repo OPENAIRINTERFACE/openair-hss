@@ -175,21 +175,22 @@ void mce_app_itti_sm_mbms_session_stop_response(teid_t mme_sm_teid, teid_t mbms_
 
 
 //------------------------------------------------------------------------------
-/** M3AP Session Start Request. */
-void mce_app_itti_m3ap_mbms_session_start_request(tmgi_t * tmgi, mbms_service_area_id_t * mbms_service_area_id, bearer_context_to_be_created_t * mbms_bc_tbc, mbms_session_duration_t * mbms_session_duration,
-		void* min_time_to_mbms_data_transfer, mbms_ip_multicast_distribution_t * mbms_ip_mc_dist, mbms_abs_time_data_transfer_t * abs_start_time){
+/**
+ * M3AP Session Start Request.
+ * Forward the bearer qos and absolute start time to the MxAP layer, which will decide on the scheduling.
+ */
+void mce_app_itti_m3ap_mbms_session_start_request(tmgi_t * tmgi, mbms_service_area_id_t * mbms_service_area_id, bearer_context_to_be_created_t * mbms_bc_tbc,
+mbms_ip_multicast_distribution_t * mbms_ip_mc_dist, mbms_abs_time_data_transfer_t * abs_start_time, mbms_session_duration_t * mbms_session_duration){
   MessageDef                             *message_p = NULL;
   int                                     rc = RETURNok;
 
   OAILOG_FUNC_IN (LOG_MCE_APP);
-
-  message_p = itti_alloc_new_message (TASK_MCE_APP, M3AP_MBMS_SESSION_START_REQUEST);
-//  DevAssert (message_p != NULL);
-
-//  itti_m3ap_mbms_session_start_req_t *m3ap_mbms_session_start_req_p = &message_p->ittiMsg.m3ap_mbms_session_start_req;
 //
+//  message_p = itti_alloc_new_message (TASK_MCE_APP, M3AP_MBMS_SESSION_START_REQUEST);
+//  DevAssert (message_p != NULL);
+//  itti_m3ap_mbms_session_start_req_t *m3ap_mbms_session_start_req_p = &message_p->ittiMsg.m3ap_mbms_session_start_req;
 //  /** Set the target SM TEID. */
-//  mbms_session_stop_response_p->teid = mbms_sm_teid; /**< Only a single target-MME TEID can exist at a time. */
+//  m3ap_mbms_session_start_req_p->tei= mbms_sm_teid; /**< Only a single target-MME TEID can exist at a time. */
 //  mbms_session_stop_response_p->mms_sm_teid = mme_sm_teid; /**< Only a single target-MME TEID can exist at a time. */
 //  mbms_session_stop_response_p->trxn    = trxn;
 //  /** Set the cause. */
@@ -200,7 +201,7 @@ void mce_app_itti_m3ap_mbms_session_start_request(tmgi_t * tmgi, mbms_service_ar
 //   * Sending a message to SM.
 //   * No changes in the contexts, flags, timers, etc.. needed.
 //   */
-  itti_send_msg_to_task (TASK_MXAP, INSTANCE_DEFAULT, message_p);
+//  itti_send_msg_to_task (TASK_MXAP, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT (LOG_MCE_APP);
 }
 
@@ -208,7 +209,7 @@ void mce_app_itti_m3ap_mbms_session_start_request(tmgi_t * tmgi, mbms_service_ar
 //------------------------------------------------------------------------------
 /** M3AP Session Update Request. */
 void mce_app_itti_m3ap_mbms_session_update_request(tmgi_t * tmgi, mbms_service_area_id_t * mbms_service_area_id, bearer_context_to_be_updated_t * mbms_bc_tbu, mbms_session_duration_t * mbms_session_duration,
-		void* min_time_to_mbms_data_transfer, mbms_ip_multicast_distribution_t * mbms_ip_mc_dist, mbms_abs_time_data_transfer_t * abs_start_time){
+		mbms_ip_multicast_distribution_t * mbms_ip_mc_dist, mbms_abs_time_data_transfer_t * abs_start_time){
   MessageDef                             *message_p = NULL;
   int                                     rc = RETURNok;
 
@@ -238,7 +239,7 @@ void mce_app_itti_m3ap_mbms_session_update_request(tmgi_t * tmgi, mbms_service_a
 
 //------------------------------------------------------------------------------
 /** M3AP Session Stop Request. */
-void mce_app_itti_m3ap_mbms_session_stop_request(tmgi_t *tmgi, mbms_service_area_id_t mbms_sa_id){
+void mce_app_itti_m3ap_mbms_session_stop_request(tmgi_t *tmgi, mbms_service_area_id_t mbms_sa_id, const mbms_abs_time_data_transfer_t * const abs_stop_time, const mbms_flags_t mbms_flags){
   MessageDef                             *message_p = NULL;
   int                                     rc = RETURNok;
 

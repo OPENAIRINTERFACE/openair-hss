@@ -39,5 +39,4 @@ typedef uint32_t                 enb_mbms_m2ap_id_t;         /*!< \brief  Unique
 
 typedef uint32_t                 mce_mbms_m2ap_id_t;         /*!< \brief  Unique identity, referencing the MBMS-service-associated logical M2-connection within an MCE. */
 
-
 #endif /* FILE_3GPP_36_443_SEEN */

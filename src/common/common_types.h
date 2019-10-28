@@ -79,7 +79,6 @@ typedef uint64_t                 enb_s1ap_id_key_t ;
  */
 #define INVALID_MBMS_SERVICE_AREA_ID 0x0000 	         // You can pick any value between 0..2^16-1,
 #define MBMS_SERVICE_AREA_ID_FMT	 "0x%"PRIx16
-#define MBMS_M3AP_ID_FMT		     "0x%"PRIx16
 typedef uint64_t                 	 mbms_service_index_t;
 
 #define INVALID_ENB_MBMS_M2AP_ID_KEY UINT32_MAX

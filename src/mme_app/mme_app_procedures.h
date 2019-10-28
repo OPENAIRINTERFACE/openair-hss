@@ -188,11 +188,10 @@ typedef enum {
 } mme_app_sm_proc_type_t;
 
 typedef struct mme_app_sm_proc_s {
-  mme_app_base_proc_t         proc;
-  mme_app_sm_proc_type_t      type;
-  uintptr_t                   sm_trxn;
-  struct mme_app_timer_t      timer;
-  bool 						  trigger_mbms_session_stop;  	/**< Valid for MBMS Session Start & Update. */
+  mme_app_base_proc_t           proc;
+  mme_app_sm_proc_type_t        type;
+  uintptr_t                     sm_trxn;
+  struct mme_app_timer_t        timer;
   LIST_ENTRY(mme_app_sm_proc_s) entries;      /* List. */
 } mme_app_sm_proc_t;
 

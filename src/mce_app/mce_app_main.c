@@ -99,6 +99,22 @@ void *mce_app_thread (void *args)
     }
     break;
 
+
+    /** M3AP MBMS Session Response Messages. */
+    case M3AP_MBMS_SESSION_START_RESPONSE:{
+    	mce_app_handle_m3ap_session_start_response(
+    			&SM_MBMS_SESSION_START_RESPONSE(received_message_p)
+    	);
+    }
+    break;
+
+    case M3AP_MBMS_SESSION_UPDATE_RESPONSE:{
+    	mce_app_handle_m3ap_session_update_response(
+    			&SM_MBMS_SESSION_UPDATE_RESPONSE(received_message_p)
+    	);
+    }
+    break;
+
     case TERMINATE_MESSAGE:{
         /*
          * Termination message received TODO -> release any data allocated

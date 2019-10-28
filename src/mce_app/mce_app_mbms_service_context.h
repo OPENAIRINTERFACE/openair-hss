@@ -79,6 +79,7 @@ void mce_app_copy_mbms_service_id(mce_app_mbms_service_id_t * mbms_service_id_ds
 
 // todo: #define MCE_APP_INITIAL_CONTEXT_SETUP_RSP_TIMER_VALUE 2 // In seconds
 /* Timer structure */
+//-----------------
 struct mce_app_timer_t {
   long id;         /* The timer identifier                 */
   long sec;       /* The timer interval value in seconds  */
@@ -88,6 +89,7 @@ struct mce_app_timer_t {
  *  @brief Useful parameters to know in MCE application layer. They are set
  * according to 3GPP TS.29.486
  */
+//-----------------
 typedef struct mbms_service_s {
   struct {
 	  pthread_mutex_t recmutex;  // mutex on the ue_context_t
@@ -122,6 +124,7 @@ typedef struct mbms_service_s {
   STAILQ_ENTRY (mbms_service_s)		entries;
 } mbms_service_t;
 
+//-----------------
 typedef struct mce_mbms_services_s {
   uint32_t                 nb_mbms_service_managed;
   uint32_t                 nb_mbms_service_since_last_stat;
@@ -169,7 +172,7 @@ void mce_app_dump_mbms_services(const mce_mbms_services_t * const mce_mbms_servi
 /** \brief Update the MBMS Services with the given information.
  **/
 void mce_app_update_mbms_service (const tmgi_t * const tmgi, const mbms_service_area_id_t * mbms_service_area_id, const bearer_qos_t * const mbms_bearer_level_qos,
-  const uint16_t mbms_flow_id, const mbms_ip_multicast_distribution_t * const mbms_ip_mc_dist, struct sockaddr * mbms_peer);
+  const uint16_t mbms_flow_id, const mbms_ip_multicast_distribution_t * const mbms_ip_mc_dist, struct sockaddr * mbms_peer, mme_app_bearer_state_t bearer_state);
 
 /** \brief Check if an MBMS Service with the given CTEID exists.
  * We don't use CTEID as a key.
