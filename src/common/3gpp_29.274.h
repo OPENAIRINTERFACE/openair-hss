@@ -889,7 +889,8 @@ typedef struct mbms_ip_multicast_distribution_s {
 //-------------------------------------------------
 // 8.73: MBMS IP Multicast Distribution
 typedef struct mbms_abs_time_data_transfer_s {
-  uint8_t   abs_time[8];
+  uint32_t  	sec_since_epoch;		/**< Seconds since 1970 (2208988800L removed from value). */
+  long double 	usec;					/**< Microseconds. */
 }mbms_abs_time_data_transfer_t;
 
 //-------------------------------------

@@ -55,7 +55,7 @@ void *mce_app_thread (void *args);
 void *mce_app_thread (void *args)
 {
   const struct mbms_service_s 							* mbms_service  = NULL;
-  const mme_app_sm_proc_t  					            * sm_mbms_proc  = NULL;
+  const mme_app_mbms_proc_t  					        * mbms_proc  = NULL;
   itti_mark_task_ready (TASK_MCE_APP);
   MSC_START_USE ();
 
@@ -99,22 +99,6 @@ void *mce_app_thread (void *args)
     }
     break;
 
-
-    /** M3AP MBMS Session Response Messages. */
-    case M3AP_MBMS_SESSION_START_RESPONSE:{
-    	mce_app_handle_m3ap_session_start_response(
-    			&SM_MBMS_SESSION_START_RESPONSE(received_message_p)
-    	);
-    }
-    break;
-
-    case M3AP_MBMS_SESSION_UPDATE_RESPONSE:{
-    	mce_app_handle_m3ap_session_update_response(
-    			&SM_MBMS_SESSION_UPDATE_RESPONSE(received_message_p)
-    	);
-    }
-    break;
-
     case TERMINATE_MESSAGE:{
         /*
          * Termination message received TODO -> release any data allocated
@@ -143,11 +127,12 @@ void *mce_app_thread (void *args)
               OAILOG_WARNING (LOG_MME_APP, "Timer expired but no associated MBMS Service for MBMS Service idx " MCE_MBMS_SERVICE_INDEX_FMT "\n", mbms_service_idx);
               break;
             }
-            sm_mbms_proc = mme_app_get_sm_procedure(&mbms_service->privates.fields.tmgi, mbms_service->privates.fields.mbms_service_area_id);
-            OAILOG_WARNING (LOG_MME_APP, "TIMER_HAS_EXPIRED with ID %u and FOR MBMS Service with TMGI " TMGI_FMT ". \n",
-            		received_message_p->ittiMsg.timer_has_expired.timer_id, TMGI_ARG(&mbms_service->privates.fields.tmgi));
-            // MBMS Session timer expiry handler
-            mce_app_handle_mbms_session_duration_timer_expiry(&mbms_service->privates.fields.tmgi, mbms_service->privates.fields.mbms_service_area_id);
+            if(mbms_service->mbms_procedure) {
+              OAILOG_WARNING (LOG_MME_APP, "TIMER_HAS_EXPIRED with ID %u and FOR MBMS Service with TMGI " TMGI_FMT ". \n",
+            	received_message_p->ittiMsg.timer_has_expired.timer_id, TMGI_ARG(&mbms_service->privates.fields.tmgi));
+              // MBMS Session timer expiry handler
+              mce_app_handle_mbms_session_duration_timer_expiry(&mbms_service->privates.fields.tmgi, mbms_service->privates.fields.mbms_service_area_id);
+            }
         }
       }
       break;

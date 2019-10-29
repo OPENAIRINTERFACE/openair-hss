@@ -244,12 +244,30 @@ nw_rc_t sm_mbms_data_transfer_start_ie_get (
   void *arg)
 {
   mbms_abs_time_data_transfer_t                       *abs_time = (mbms_abs_time_data_transfer_t *) arg;
-
+  uint8_t		b_seconds[4];
+  uint8_t		b_useconds[4];
   DevAssert (abs_time);
 
-  memcpy((void*)abs_time->abs_time, ieValue, 8);
-  ieValue+=8;
+  memcpy((void*)b_seconds, ieValue, 4);
+  memcpy((void*)b_useconds, ieValue+4, 4);
 
+  /** Get the number of seconds since EPOCH. */
+  uint32_t seconds  = (((uint32_t)b_seconds[0]) << 24) |
+  			(((uint32_t)b_seconds[1]) << 16) |
+  			(((uint32_t)b_seconds[2]) << 8) |
+  			(uint32_t)b_seconds[3];
+
+  abs_time->sec_since_epoch = seconds - JAN_1970;
+  /** Calculate microseconds. */
+  long double rest;
+  for(int i = 0; i < 4; i ++){
+	  for(int j = 0; j < 8; j ++){
+		  rest = (b_useconds[i] & (0x01 << j)) * ((1/(2^32)) << (i*8 + j));
+	  }
+  }
+  /** Divide it to a million to get useconds. */
+  abs_time->usec = rest / 1000000;
+  ieValue+=8;
   return NW_OK;
 }
 

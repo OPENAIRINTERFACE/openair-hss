@@ -81,13 +81,8 @@ bool mce_app_dump_mbms_service(const hash_key_t keyP, void *const mbms_service, 
 
 /** Handling Sm Messages. */
 void mce_app_handle_mbms_session_start_request( itti_sm_mbms_session_start_request_t * const mbms_session_start_pP );
-
 void mce_app_handle_mbms_session_update_request( itti_sm_mbms_session_update_request_t * const mbms_session_update_pP );
-
 void mce_app_handle_mbms_session_stop_request( itti_sm_mbms_session_stop_request_t * const mbms_session_stop_pP );
-//------------------------------------------------------------------------------
-void mce_app_handle_m3ap_session_start_response(const itti_m3ap_mbms_session_start_res_t* const mbms_session_start_res_pP);
-void mce_app_handle_m3ap_session_update_response(const itti_m3ap_mbms_session_update_res_t* const mbms_session_update_res_pP);
 
 void mce_app_handle_mbms_session_duration_timer_expiry (const struct tmgi_s *tmgi, const mbms_service_area_id_t mbms_service_area_id);
 

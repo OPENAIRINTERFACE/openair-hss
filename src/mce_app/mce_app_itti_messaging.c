@@ -179,69 +179,56 @@ void mce_app_itti_sm_mbms_session_stop_response(teid_t mme_sm_teid, teid_t mbms_
  * M3AP Session Start Request.
  * Forward the bearer qos and absolute start time to the MxAP layer, which will decide on the scheduling.
  */
-void mce_app_itti_m3ap_mbms_session_start_request(tmgi_t * tmgi, mbms_service_area_id_t * mbms_service_area_id, bearer_context_to_be_created_t * mbms_bc_tbc,
-mbms_ip_multicast_distribution_t * mbms_ip_mc_dist, mbms_abs_time_data_transfer_t * abs_start_time, mbms_session_duration_t * mbms_session_duration){
+void mce_app_itti_m3ap_mbms_session_start_request(tmgi_t * tmgi, mbms_service_area_id_t mbms_service_area_id, mbms_service_index_t mbms_service_idx,
+  bearer_qos_t * mbms_bearer_qos, mbms_ip_multicast_distribution_t * mbms_ip_mc_dist, mbms_session_duration_t * mbms_session_duration, const uint32_t time_to_start_in_sec)
+{
   MessageDef                             *message_p = NULL;
-  int                                     rc = RETURNok;
+  int                                     rc 		= RETURNok;
 
   OAILOG_FUNC_IN (LOG_MCE_APP);
-//
-//  message_p = itti_alloc_new_message (TASK_MCE_APP, M3AP_MBMS_SESSION_START_REQUEST);
-//  DevAssert (message_p != NULL);
-//  itti_m3ap_mbms_session_start_req_t *m3ap_mbms_session_start_req_p = &message_p->ittiMsg.m3ap_mbms_session_start_req;
-//  /** Set the target SM TEID. */
-//  m3ap_mbms_session_start_req_p->tei= mbms_sm_teid; /**< Only a single target-MME TEID can exist at a time. */
-//  mbms_session_stop_response_p->mms_sm_teid = mme_sm_teid; /**< Only a single target-MME TEID can exist at a time. */
-//  mbms_session_stop_response_p->trxn    = trxn;
-//  /** Set the cause. */
-//  mbms_session_stop_response_p->cause.cause_value = gtpv2cCause;
-//  /** Set the MBMS Sm address. */
-//  memcpy((void*)&mbms_session_stop_response_p->peer_ip, mbms_ip_address, mbms_ip_address->sa_family == AF_INET ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
-//  /**
-//   * Sending a message to SM.
-//   * No changes in the contexts, flags, timers, etc.. needed.
-//   */
-//  itti_send_msg_to_task (TASK_MXAP, INSTANCE_DEFAULT, message_p);
-  OAILOG_FUNC_OUT (LOG_MCE_APP);
-}
-
-
-//------------------------------------------------------------------------------
-/** M3AP Session Update Request. */
-void mce_app_itti_m3ap_mbms_session_update_request(tmgi_t * tmgi, mbms_service_area_id_t * mbms_service_area_id, bearer_context_to_be_updated_t * mbms_bc_tbu, mbms_session_duration_t * mbms_session_duration,
-		mbms_ip_multicast_distribution_t * mbms_ip_mc_dist, mbms_abs_time_data_transfer_t * abs_start_time){
-  MessageDef                             *message_p = NULL;
-  int                                     rc = RETURNok;
-
-  OAILOG_FUNC_IN (LOG_MCE_APP);
-
-  message_p = itti_alloc_new_message (TASK_MCE_APP, M3AP_MBMS_SESSION_UPDATE_REQUEST);
-//  DevAssert (message_p != NULL);
-
-//  itti_m3ap_mbms_session_start_req_t *m3ap_mbms_session_start_req_p = &message_p->ittiMsg.m3ap_mbms_session_start_req;
-//
-//  /** Set the target SM TEID. */
-//  mbms_session_stop_response_p->teid = mbms_sm_teid; /**< Only a single target-MME TEID can exist at a time. */
-//  mbms_session_stop_response_p->mms_sm_teid = mme_sm_teid; /**< Only a single target-MME TEID can exist at a time. */
-//  mbms_session_stop_response_p->trxn    = trxn;
-//  /** Set the cause. */
-//  mbms_session_stop_response_p->cause.cause_value = gtpv2cCause;
-//  /** Set the MBMS Sm address. */
-//  memcpy((void*)&mbms_session_stop_response_p->peer_ip, mbms_ip_address, mbms_ip_address->sa_family == AF_INET ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
-//  /**
-//   * Sending a message to SM.
-//   * No changes in the contexts, flags, timers, etc.. needed.
-//   */
+  message_p = itti_alloc_new_message (TASK_MCE_APP, M3AP_MBMS_SESSION_START_REQUEST);
+  DevAssert (message_p != NULL);
+  itti_m3ap_mbms_session_start_req_t *m3ap_mbms_session_start_req_p = &message_p->ittiMsg.m3ap_mbms_session_start_req;
+  memcpy((void*)&m3ap_mbms_session_start_req_p->tmgi, tmgi, sizeof(tmgi_t));
+  m3ap_mbms_session_start_req_p->mbms_service_area_id = mbms_service_area_id;
+  m3ap_mbms_session_start_req_p->mbms_service_idx = mbms_service_idx;
+  memcpy((void*)&m3ap_mbms_session_start_req_p->mbms_bearer_tbc.bc_tbc.bearer_level_qos, mbms_bearer_qos, sizeof(bearer_qos_t));
+  memcpy((void*)&m3ap_mbms_session_start_req_p->mbms_bearer_tbc.mbms_ip_mc_dist, mbms_ip_mc_dist, sizeof(mbms_ip_multicast_distribution_t));
+  m3ap_mbms_session_start_req_p->mbms_session_dur = *mbms_session_duration;
+  m3ap_mbms_session_start_req_p->time_to_start_in_sec = time_to_start_in_sec;
   itti_send_msg_to_task (TASK_MXAP, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT (LOG_MCE_APP);
 }
 
 
 //------------------------------------------------------------------------------
-/** M3AP Session Stop Request. */
-void mce_app_itti_m3ap_mbms_session_stop_request(tmgi_t *tmgi, mbms_service_area_id_t mbms_sa_id, const mbms_abs_time_data_transfer_t * const abs_stop_time, const mbms_flags_t mbms_flags){
+/** M3AP Session Update Request. */
+void mce_app_itti_m3ap_mbms_session_update_request(tmgi_t * tmgi, mbms_service_area_id_t mbms_service_area_id, mbms_service_index_t mbms_service_idx,
+  bearer_qos_t * mbms_bearer_qos, mbms_ip_multicast_distribution_t * mbms_ip_mc_dist,mbms_session_duration_t * mbms_session_duration, const uint32_t time_to_update_in_sec)
+{
   MessageDef                             *message_p = NULL;
-  int                                     rc = RETURNok;
+  int                                     rc 		= RETURNok;
+
+  OAILOG_FUNC_IN (LOG_MCE_APP);
+  message_p = itti_alloc_new_message (TASK_MCE_APP, M3AP_MBMS_SESSION_UPDATE_REQUEST);
+  DevAssert (message_p != NULL);
+  itti_m3ap_mbms_session_update_req_t *m3ap_mbms_session_update_req_p = &message_p->ittiMsg.m3ap_mbms_session_update_req;
+  memcpy((void*)&m3ap_mbms_session_update_req_p->tmgi, tmgi, sizeof(tmgi_t));
+  m3ap_mbms_session_update_req_p->mbms_service_area_id = mbms_service_area_id;
+  m3ap_mbms_session_update_req_p->mbms_service_idx = mbms_service_idx;
+  memcpy((void*)&m3ap_mbms_session_update_req_p->mbms_bearer_tbc.bc_tbc.bearer_level_qos, mbms_bearer_qos, sizeof(bearer_qos_t));
+  memcpy((void*)&m3ap_mbms_session_update_req_p->mbms_bearer_tbc.mbms_ip_mc_dist, mbms_ip_mc_dist, sizeof(mbms_ip_multicast_distribution_t));
+  m3ap_mbms_session_update_req_p->mbms_session_dur = *mbms_session_duration;
+  m3ap_mbms_session_update_req_p->time_to_update_in_sec = time_to_update_in_sec;
+  itti_send_msg_to_task (TASK_MXAP, INSTANCE_DEFAULT, message_p);
+  OAILOG_FUNC_OUT (LOG_MCE_APP);
+}
+
+//------------------------------------------------------------------------------
+/** M3AP Session Stop Request. */
+void mce_app_itti_m3ap_mbms_session_stop_request(tmgi_t *tmgi, mbms_service_area_id_t mbms_sa_id, mbms_service_index_t mbms_service_idx, const bool inform_enbs){
+  MessageDef                             *message_p = NULL;
+  int                                     rc 		= RETURNok;
 
   OAILOG_FUNC_IN (LOG_MCE_APP);
 
@@ -250,7 +237,10 @@ void mce_app_itti_m3ap_mbms_session_stop_request(tmgi_t *tmgi, mbms_service_area
 
   itti_m3ap_mbms_session_stop_req_t *m3ap_mbms_session_stop_req_p = &message_p->ittiMsg.m3ap_mbms_session_stop_req;
   memcpy((void*)&m3ap_mbms_session_stop_req_p->tmgi, (void*)tmgi, sizeof(tmgi_t));
-  m3ap_mbms_session_stop_req_p->mbms_sa_id = mbms_sa_id;
+  m3ap_mbms_session_stop_req_p->mbms_service_area_id = mbms_sa_id;
+  m3ap_mbms_session_stop_req_p->mbms_service_idx = mbms_service_idx;
+  m3ap_mbms_session_stop_req_p->inform_enbs = inform_enbs;
+  /** No absolute stop time will be sent. That will be done immediately. */
   itti_send_msg_to_task (TASK_MXAP, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT (LOG_MCE_APP);
 }

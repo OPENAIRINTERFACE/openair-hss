@@ -252,7 +252,7 @@ mce_insert_mbms_service (
   h_rc = hashtable_ts_is_key_exists (mce_mbms_services_p->mbms_service_index_mbms_service_htbl, (const hash_key_t)mbms_service_index);
 
   if (HASH_TABLE_OK == h_rc) {
-	  OAILOG_DEBUG (LOG_MCE_APP, "The MBMS Service with TMGI " TMGI_FMT" and MBMS Service Index " MCE_MBMS_SERVICE_INDEX_FMT " is already existing. \n",
+	  OAILOG_ERROR(LOG_MCE_APP, "The MBMS Service with TMGI " TMGI_FMT" and MBMS Service Index " MCE_MBMS_SERVICE_INDEX_FMT " is already existing. \n",
 			  TMGI_ARG(&mbms_service->privates.fields.tmgi), mbms_service_index);
 	  OAILOG_FUNC_RETURN (LOG_MCE_APP, RETURNerror);
   }
@@ -261,7 +261,7 @@ mce_insert_mbms_service (
 		  (const hash_key_t)mbms_service_index, (void *)mbms_service);
 
   if (HASH_TABLE_OK != h_rc) {
-	  OAILOG_DEBUG (LOG_MCE_APP, "Error could not register the MBMS Service %p with TMGI " TMGI_FMT" and MBMS Service Index " MCE_MBMS_SERVICE_INDEX_FMT ". \n",
+	  OAILOG_ERROR(LOG_MCE_APP, "Error could not register the MBMS Service %p with TMGI " TMGI_FMT" and MBMS Service Index " MCE_MBMS_SERVICE_INDEX_FMT ". \n",
 			  mbms_service, TMGI_ARG(&mbms_service->privates.fields.tmgi), mbms_service_index);
 	  OAILOG_FUNC_RETURN (LOG_MCE_APP, RETURNerror);
   }
@@ -273,7 +273,7 @@ mce_insert_mbms_service (
 			  (void *)((uintptr_t)mbms_service_index));
 
 	  if (HASH_TABLE_OK != h_rc) {
-		  OAILOG_DEBUG (LOG_MCE_APP, "Error could not register the MBMS Service %p with TMGI "TMGI_FMT " and MBMS Service Index " MCE_MBMS_SERVICE_INDEX_FMT " and SM-MME TEID " TEID_FMT". \n",
+		  OAILOG_ERROR(LOG_MCE_APP, "Error could not register the MBMS Service %p with TMGI "TMGI_FMT " and MBMS Service Index " MCE_MBMS_SERVICE_INDEX_FMT " and SM-MME TEID " TEID_FMT". \n",
 				  mbms_service, TMGI_ARG(&mbms_service->privates.fields.tmgi), mbms_service_index, mbms_service->privates.fields.mme_teid_sm);
 		  OAILOG_FUNC_RETURN (LOG_MCE_APP, RETURNerror);
 	  }
@@ -461,21 +461,49 @@ mbms_cteid_in_list (const mce_mbms_services_t * const mce_mbms_services_p,
 /** Update the MBMS Service with the given parameters. */
 //------------------------------------------------------------------------------
 void
-mce_app_update_mbms_service (const tmgi_t * const tmgi, const mbms_service_area_id_t * mbms_service_area_id, const bearer_qos_t * const mbms_bearer_level_qos,
-  const uint16_t mbms_flow_id, const mbms_ip_multicast_distribution_t * const mbms_ip_mc_dist, struct sockaddr * mbms_peer, mme_app_bearer_state_t bearer_state)
+mce_app_update_mbms_service (const tmgi_t * const tmgi, const mbms_service_area_id_t old_mbms_service_area_id, const mbms_service_area_id_t new_mbms_service_area_id,
+	const bearer_qos_t * const mbms_bearer_level_qos, const uint16_t mbms_flow_id, const mbms_ip_multicast_distribution_t * const mbms_ip_mc_dist, struct sockaddr * mbms_peer)
 {
   mbms_service_t	                     *mbms_service = NULL;
   OAILOG_FUNC_IN(LOG_MCE_APP);
 
-  mbms_service = mce_mbms_service_exists_tmgi(&mce_app_desc.mce_mbms_service_contexts, tmgi, mbms_service_area_id);
+  mbms_service = mce_mbms_service_exists_tmgi(&mce_app_desc.mce_mbms_service_contexts, tmgi, old_mbms_service_area_id);
   DevAssert(mbms_service);
+
+  /** Update the MBMS Service Area Id. */
+  if(old_mbms_service_area_id != new_mbms_service_area_id) {
+	hashtable_rc_t hash_rc = HASH_TABLE_OK;
+    OAILOG_INFO(LOG_MCE_APP, "MBMS Service Area Id of MBMS Service for TMGI " TMGI_FMT " changed from " MBMS_SERVICE_AREA_ID_FMT " to " MBMS_SERVICE_AREA_ID_FMT ". \n",
+    	TMGI_ARG(&mbms_service->privates.fields.tmgi), old_mbms_service_area_id,  new_mbms_service_area_id);
+    /** Remove it from list. */
+    mbms_service_index_t mbms_service_idx = mce_get_mbms_service_index(&tmgi, old_mbms_service_area_id);
+    // todo: LOCK HERE!!
+    if (INVALID_MBMS_SERVICE_INDEX != mbms_service_idx) {
+      hash_rc = hashtable_ts_remove (mce_app_desc.mce_mbms_service_contexts.mbms_service_index_mbms_service_htbl, (const hash_key_t)mbms_service_idx, (void **)&mbms_service);
+      if (HASH_TABLE_OK != hash_rc){
+        OAILOG_DEBUG(LOG_MCE_APP, "MBMS Service MBMS Service Index " MCE_MBMS_SERVICE_INDEX_FMT " not in MCE MBMS Service Index collection", mbms_service_idx);
+        // todo: handle this case
+        DevAssert(0);
+      } else {
+        mbms_service->privates.fields.mbms_service_area_id = new_mbms_service_area_id;
+        mbms_service_idx = mce_get_mbms_service_index(&tmgi, new_mbms_service_area_id);
+        hash_rc = hashtable_ts_insert (mce_app_desc.mce_mbms_service_contexts.mbms_service_index_mbms_service_htbl, (const hash_key_t)mbms_service_idx, (void *)mbms_service);
+        if (HASH_TABLE_OK != hash_rc) {
+        	OAILOG_ERROR (LOG_MCE_APP, "Error could not register the MBMS Service %p with TMGI " TMGI_FMT" and MBMS Service Index " MCE_MBMS_SERVICE_INDEX_FMT ". \n",
+        		mbms_service, TMGI_ARG(&mbms_service->privates.fields.tmgi), mbms_service_idx);
+        	OAILOG_FUNC_RETURN (LOG_MCE_APP, RETURNerror);
+        }
+      }
+    }
+  }
 
   mbms_service->privates.fields.mbms_flow_id = mbms_flow_id;
   memcpy((void*)&mbms_service->privates.fields.mbms_bc.eps_bearer_context.bearer_level_qos, (void*)mbms_bearer_level_qos, sizeof(bearer_qos_t));
-  memcpy((void*)&mbms_service->privates.fields.mbms_peer_ip, (void*)mbms_peer, mbms_peer->sa_family == AF_INET ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
+  if(mbms_peer)
+    memcpy((void*)&mbms_service->privates.fields.mbms_peer_ip, (void*)mbms_peer, mbms_peer->sa_family == AF_INET ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
   /** Set the MBMS Multicast IP address. */
-  memcpy((void*)&mbms_service->privates.fields.mbms_bc.mbms_ip_mc_distribution, (void*)mbms_ip_mc_dist, sizeof(mbms_ip_multicast_distribution_t));
-  mbms_service->privates.fields.mbms_bc.eps_bearer_context.bearer_state |= bearer_state;
+  if(mbms_ip_mc_dist)
+	memcpy((void*)&mbms_service->privates.fields.mbms_bc.mbms_ip_mc_distribution, (void*)mbms_ip_mc_dist, sizeof(mbms_ip_multicast_distribution_t));
   OAILOG_FUNC_OUT (LOG_MCE_APP);
 }
 
@@ -503,7 +531,7 @@ void mce_app_clear_mbms_service(struct mbms_service_s * mbms_service) {
   DevAssert(!mbms_service->privates.fields.mbms_bc.eps_bearer_context.esm_ebr_context.tft);
   DevAssert(mbms_service->privates.fields.mbms_bc.eps_bearer_context.esm_ebr_context.status == ESM_EBR_INACTIVE);
   /** Will remove the S10 procedures and tunnel endpoints. */
-  mme_app_delete_sm_procedures(mbms_service);
+  mme_app_delete_mbms_procedure(mbms_service);
   /** Remove the remaining contexts of the bearer context. */
   memset(&mbms_service->privates.fields, 0, sizeof(mbms_service->privates.fields));
   OAILOG_INFO(LOG_MCE_APP, "Successfully cleared MBMS Service for TMGI " TMGI_FMT". \n", TMGI_ARG(&mbms_service->privates.fields.tmgi));

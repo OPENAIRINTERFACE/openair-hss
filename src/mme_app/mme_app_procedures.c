@@ -55,9 +55,6 @@ static void mme_app_free_s11_procedure_create_bearer(mme_app_s11_proc_t **s11_pr
 static void mme_app_free_s11_procedure_update_bearer(mme_app_s11_proc_t **s11_proc);
 static void mme_app_free_s11_procedure_delete_bearer(mme_app_s11_proc_t **s11_proc);
 static void mme_app_free_s10_procedure_mme_handover(mme_app_s10_proc_t **s10_proc);
-static void mme_app_free_sm_procedure_mbms_session_start(mme_app_sm_proc_t **sm_proc);
-static void mme_app_free_sm_procedure_mbms_session_update(mme_app_sm_proc_t **sm_proc);
-static void mme_app_free_sm_procedure_mbms_session_stop(mme_app_sm_proc_t **sm_proc);
 
 //------------------------------------------------------------------------------
 void mme_app_delete_s11_procedures(struct ue_session_pool_s * const ue_session_pool)
@@ -708,249 +705,112 @@ void mme_app_delete_s10_procedure_mme_handover(struct ue_context_s * const ue_co
 }
 
 /**
- * SM Procedures.
+ * MBMS Procedures.
  */
 //------------------------------------------------------------------------------
-void mme_app_delete_sm_procedures(mbms_service_t * const mbms_service)
+mme_app_mbms_proc_t * mme_app_create_mbms_procedure(mbms_service_t * const mbms_service,
+  uint32_t delta_to_start_in_sec, uint32_t delta_to_start_in_usec, const mbms_session_duration_t * const mbms_session_duration)
 {
-  mme_app_sm_proc_t *sm_proc1 = NULL;
-  mme_app_sm_proc_t *sm_proc2 = NULL;
-
-  /** The MBMS Service should already be locked. */
-  sm_proc1 = LIST_FIRST(&mbms_service->sm_procedures);                 /* Faster List Deletion. */
-  while (sm_proc1) {
-    sm_proc2 = LIST_NEXT(sm_proc1, entries);
-    if (MME_APP_SM_PROC_TYPE_MBMS_START_SESSION == sm_proc1->type) {
-    	mme_app_free_sm_procedure_mbms_session_start(&sm_proc1);
-    } else if (MME_APP_SM_PROC_TYPE_MBMS_UPDATE_SESSION == sm_proc1->type) {
-    	mme_app_free_sm_procedure_mbms_session_update(&sm_proc1);
-    } // else ...
-    sm_proc1 = sm_proc2;
-  }
-  LIST_INIT(&mbms_service->sm_procedures);
-}
-
-//------------------------------------------------------------------------------
-mme_app_sm_proc_t* mme_app_get_sm_procedure (const tmgi_t * const tmgi, const mbms_service_area_id_t mbms_service_area_id)
-{
-  mbms_service_t * mbms_service = mce_mbms_service_exists_tmgi(&mce_app_desc.mce_mbms_service_contexts, tmgi, mbms_service_area_id);
-  if(!mbms_service)
-	return NULL;
-
-  return LIST_FIRST(&mbms_service->sm_procedures);
-}
-
-//------------------------------------------------------------------------------
-mme_app_sm_proc_mbms_session_start_t * mme_app_create_sm_procedure_mbms_session_start(const tmgi_t * const tmgi, const mbms_service_area_id_t mbms_service_area_id, const mbms_session_duration_t * const mbms_session_duration)
-{
-  mbms_service_t * mbms_service = mce_mbms_service_exists_tmgi(&mce_app_desc.mce_mbms_service_contexts, tmgi, mbms_service_area_id);
-  if(!mbms_service)
-    return NULL;
-
+  mme_app_mbms_proc_t 				*mbms_proc    = NULL;
+  OAILOG_FUNC_IN (LOG_MME_APP);
   /** Check if the list of Sm procedures is empty. */
-  if(!LIST_EMPTY(&mbms_service->sm_procedures)){
-	OAILOG_ERROR (LOG_MME_APP, "MBMS Service with TMGI " TMGI_FMT " has already a Sm procedure ongoing. Cannot create new MBMS Start procedure. \n",
+  if(mbms_service->mbms_procedure){
+	OAILOG_ERROR (LOG_MME_APP, "MBMS Service with TMGI " TMGI_FMT " has already a MBMS procedure ongoing. Cannot create new MBMS procedure. \n",
 	  TMGI_ARG(&mbms_service->privates.fields.tmgi));
-	return NULL;
+	OAILOG_FUNC_RETURN(LOG_MME_APP, NULL);
   }
-
-  mme_app_sm_proc_mbms_session_start_t *sm_proc_mbms_session_start = calloc(1, sizeof(mme_app_sm_proc_mbms_session_start_t));
-  sm_proc_mbms_session_start->proc.proc.type = MME_APP_BASE_PROC_TYPE_SM;
-  sm_proc_mbms_session_start->proc.type      = MME_APP_SM_PROC_TYPE_MBMS_START_SESSION;
-
+  mbms_proc = calloc(1, sizeof(mme_app_mbms_proc_t));
+  mbms_proc->proc.type = MME_APP_BASE_PROC_TYPE_MBMS;
   /** Get the MBMS Service Index. */
-  mbms_service_index_t mbms_service_idx = mce_get_mbms_service_index(tmgi, mbms_service_area_id);
+  mbms_service_index_t mbms_service_idx = mce_get_mbms_service_index(&mbms_service->privates.fields.tmgi, mbms_service->privates.fields.mbms_service_area_id);
   DevAssert(mbms_service_idx != INVALID_MBMS_SERVICE_INDEX);
-
   mme_config_read_lock (&mme_config);
+  // TODO: Only if we should wait for the first successful eNB. But since we don't wait, because we don't know the ABS Start time, we don't need this part!
+//  int sm_check_timeout = 3;
+//  /** If the absolute start time is not twice as much, start immediately, no matter what the duration is. Add it to the duration. */
+//  if(sm_check_timeout >= (1 + delta_to_start)){
+//	// todo log --> We start the session immediately, append the 2*timeout to the session duration.
+//	/** Set the absolute time to 0. */
+//	*mbms_abs_start_time = NULL;
+//	sm_check_timeout += delta_to_start;
+//  }
   /**
-   * Set the timer, depending on the duration of the MBMS Session Duration and the configuration, the MBMS Session may be terminated, or just checked for existence (clear-up).
+   * Set the timer, depending on the duration of the MBMS Session Duration and the configuration,
+   * the MBMS Session may be terminated, or just checked for existence (clear-up).
    * Mark the MME procedure, depending on the timeout (we won't know after wakeup).
-   * We also use the same timer, to check if the session has been successfully established and if not to remove it.
+   * We don't include the absolute start time here.
    */
-  if(mme_config.mbms_short_idle_session_duration_in_sec > mbms_session_duration->seconds){
-	  OAILOG_INFO(LOG_MME_APP, "MBMS Session Start procedure for MBMS Service-Index " MCE_MBMS_SERVICE_INDEX_FMT " has session duration (%ds) is shorter/equal than the minimum (%ds). \n",
-			 mbms_service_idx, mbms_session_duration, mme_config.mbms_short_idle_session_duration_in_sec);
-//	  sm_proc_mbms_session_start->proc.trigger_mbms_session_stop = true;
+  if(!mbms_session_duration) {	/**< If this is a stop procedure. */
+	mbms_proc->trigger_mbms_session_stop = true;
+	DevAssert(delta_to_start_in_sec);
   }
-  if (timer_setup (mbms_session_duration->seconds, 0,
-    TASK_MCE_APP, INSTANCE_DEFAULT, TIMER_ONE_SHOT,  (void *) (mbms_service_idx), &(sm_proc_mbms_session_start->proc.timer.id)) < 0) {
-	  OAILOG_ERROR (LOG_MME_APP, "Failed to start the MME MBMS Session Start timer for MBMS Service Idx " MCE_MBMS_SERVICE_INDEX_FMT " for duration %ds \n",
-		mbms_service_idx, mbms_session_duration);
-	  sm_proc_mbms_session_start->proc.timer.id = MME_APP_TIMER_INACTIVE_ID;
-//	  sm_proc_mbms_session_start->proc.trigger_mbms_session_stop = false;
+  else if(mme_config.mbms_short_idle_session_duration_in_sec > mbms_session_duration->seconds){
+	OAILOG_INFO(LOG_MME_APP, "MBMS Session procedure for MBMS Service-Index " MCE_MBMS_SERVICE_INDEX_FMT " has session duration (%ds) is shorter/equal than the minimum (%ds). \n",
+	  mbms_service_idx, mbms_session_duration, mme_config.mbms_short_idle_session_duration_in_sec);
+	mbms_proc->trigger_mbms_session_stop = true;
   }
   mme_config_unlock (&mme_config);
-  mme_app_sm_proc_t *sm_proc = (mme_app_sm_proc_t *)sm_proc_mbms_session_start;
 
-  /** Initialize the of the procedure. */
-  LIST_INIT(&mbms_service->sm_procedures);
-  LIST_INSERT_HEAD((&mbms_service->sm_procedures), sm_proc, entries);
-  return sm_proc_mbms_session_start;
-}
+//  /**
+//   * If the ABS time is not to be considered, too short, we can also check, if we can have a single session duration.
+//   */
+//  if(!*mbms_abs_start_time) {
+//    /**
+//	 * If the MBMS Session Duration is not 1 second longer than the current new Sm process timeout,
+//	 * and the absolute start time is not to be considered, set the duration as null and also set the stop_trigger.
+//	 */
+//	if(sm_check_timeout > mbms_session_duration->seconds) {
+//	  /** Set the MBMS Stop Trigger and no additional timer for the MBMS Session Duration. */
+//	  sm_proc_mbms_session_start->proc.trigger_mbms_session_stop = true;
+//	} else {
+//	  /** We will trigger another timer for the duration afterwards. It may also have an implicit stop trigger. */
+//	  sm_proc_mbms_session_start->proc.mbms_session_duration.seconds = mbms_session_duration->seconds;
+//	}
+//  } else {
+//	/**
+//	 * Set the duration as the combination of both.
+//	 * Immediately stop the the MBMS session afterwards.
+//	 * The MxAP layer, does not need to get notified about the MBMS Session duration or the absolute start time.
+//	 * eNB does not need to know.
+//	 */
+//	sm_proc_mbms_session_start->proc.mbms_session_duration.seconds = mbms_session_duration->seconds + delta_to_start;
+//  }
 
-
-//------------------------------------------------------------------------------
-mme_app_sm_proc_mbms_session_start_t* mme_app_get_sm_procedure_mbms_session_start(const tmgi_t * const tmgi, const mbms_service_area_id_t mbms_service_area_id)
-{
-  mbms_service_t * mbms_service = mce_mbms_service_exists_tmgi(&mce_app_desc.mce_mbms_service_contexts, tmgi, mbms_service_area_id);
-  if(!mbms_service)
-	return NULL;
-
-  mme_app_sm_proc_t *sm_proc = NULL;
-  LIST_FOREACH(sm_proc, &mbms_service->sm_procedures, entries) {
-	if (MME_APP_SM_PROC_TYPE_MBMS_START_SESSION == sm_proc->type) {
-		return (mme_app_sm_proc_mbms_session_start_t*)sm_proc;
-	}
+  /**
+   * Set the implicit removal later after the first timeout.
+   * The first timeout should always check bearers.
+   * If the
+   */
+  if (timer_setup (mbms_session_duration->seconds + delta_to_start_in_sec, delta_to_start_in_usec,
+    TASK_MCE_APP, INSTANCE_DEFAULT, TIMER_ONE_SHOT,  (void *) (mbms_service_idx), &(mbms_proc->timer.id)) < 0) {
+	  OAILOG_ERROR (LOG_MME_APP, "Failed to start the MME MBMS Session timer for MBMS Service Idx " MCE_MBMS_SERVICE_INDEX_FMT " for duration %ds \n",
+		mbms_service_idx, mbms_session_duration->seconds + delta_to_start_in_sec);
+	  mbms_proc->timer.id = MME_APP_TIMER_INACTIVE_ID;
+	  mbms_proc->trigger_mbms_session_stop = false;
+	  free_wrapper(&mbms_proc);
+	  OAILOG_FUNC_RETURN(LOG_MME_APP, NULL);
   }
-  return NULL;
+  mbms_service->mbms_procedure = mbms_proc;
+  /** Initialize the of the procedure. */
+  OAILOG_FUNC_RETURN(LOG_MME_APP, mbms_proc);
 }
 
 //------------------------------------------------------------------------------
-void mme_app_delete_sm_procedure_mbms_session_start(const tmgi_t * const tmgi, const mbms_service_area_id_t mbms_service_area_id)
+void mme_app_delete_mbms_procedure(const mbms_service_t * mbms_service)
 {
-  mbms_service_t * mbms_service = mce_mbms_service_exists_tmgi(&mce_app_desc.mce_mbms_service_contexts, tmgi, mbms_service_area_id);
   if(!mbms_service)
     return;
+  if(!mbms_service->mbms_procedure)
+	return;
 
-  mme_app_sm_proc_t *sm_proc = NULL, *sm_proc_safe = NULL;
-  LIST_FOREACH_SAFE(sm_proc, &mbms_service->sm_procedures, entries, sm_proc_safe) {
-    if (MME_APP_SM_PROC_TYPE_MBMS_START_SESSION == sm_proc->type) {
-      LIST_REMOVE(sm_proc, entries);
-      if(sm_proc->timer.id != MME_APP_TIMER_INACTIVE_ID){
-        if (timer_remove(sm_proc->timer.id, NULL)) {
-          OAILOG_ERROR (LOG_MME_APP, "Failed to stop the procedure timer for -MMME MBMS Service Start with TMGI " TMGI_FMT ". \n", TMGI_ARG(tmgi));
-          sm_proc->timer.id = MME_APP_TIMER_INACTIVE_ID;
-        }else{
-          OAILOG_DEBUG(LOG_MME_APP, "Successfully removed timer for -MMME MBMS Service Start for TMGI " TMGI_FMT ". \n", TMGI_ARG(tmgi));
-        }
-      }
-//      sm_proc->trigger_mbms_session_stop = false;
-      mme_app_free_sm_procedure_mbms_session_start(&sm_proc);
-      return;
+  if(mbms_service->mbms_procedure->timer.id != MME_APP_TIMER_INACTIVE_ID){
+    if (timer_remove(mbms_service->mbms_procedure->timer.id, NULL)) {
+      OAILOG_ERROR (LOG_MME_APP, "Failed to stop the procedure timer for -MMME MBMS Service Start with TMGI " TMGI_FMT ". \n", TMGI_ARG(&mbms_service->privates.fields.tmgi));
+      mbms_service->mbms_procedure->timer.id = MME_APP_TIMER_INACTIVE_ID;
+    }else{
+      OAILOG_DEBUG(LOG_MME_APP, "Successfully removed timer for -MMME MBMS Service Start for TMGI " TMGI_FMT ". \n", TMGI_ARG(&mbms_service->privates.fields.tmgi));
     }
   }
-  if(LIST_EMPTY(&mbms_service->sm_procedures)){
-	  LIST_INIT(&mbms_service->sm_procedures);
-	  OAILOG_INFO (LOG_MME_APP, "MBMS Service with TMGI " TMGI_FMT " has no more Sm procedures left. Cleared the list. \n",
-		TMGI_ARG(&mbms_service->privates.fields.tmgi));
-  }
-}
-
-//------------------------------------------------------------------------------
-mme_app_sm_proc_mbms_session_update_t * mme_app_create_sm_procedure_mbms_session_update(const tmgi_t * const tmgi, const mbms_service_area_id_t mbms_service_area_id, const mbms_session_duration_t * const mbms_session_duration)
-{
-  mbms_service_t * mbms_service = mce_mbms_service_exists_tmgi(&mce_app_desc.mce_mbms_service_contexts, tmgi, mbms_service_area_id);
-  if(!mbms_service)
-    return NULL;
-
-  /** Check if the list of Sm procedures is empty. */
-  if(!LIST_EMPTY(&mbms_service->sm_procedures)){
-	OAILOG_ERROR (LOG_MME_APP, "MBMS Service with TMGI " TMGI_FMT " has already a Sm procedure ongoing. Cannot create new MBMS Update procedure. \n",
-		TMGI_ARG(&mbms_service->privates.fields.tmgi));
-	return NULL;
-  }
-
-  mme_app_sm_proc_mbms_session_update_t *sm_proc_mbms_session_update = calloc(1, sizeof(mme_app_sm_proc_mbms_session_update_t));
-  sm_proc_mbms_session_update->proc.proc.type = MME_APP_BASE_PROC_TYPE_SM;
-  sm_proc_mbms_session_update->proc.type      = MME_APP_SM_PROC_TYPE_MBMS_UPDATE_SESSION;
-
-  /** Get the MBMS Service Index. */
-  mbms_service_index_t mbms_service_idx = mce_get_mbms_service_index(tmgi, mbms_service_area_id);
-  DevAssert(mbms_service_idx != INVALID_MBMS_SERVICE_INDEX);
-
-  mme_config_read_lock (&mme_config);
-  /**
-   * Set the timer, depending on the duration of the MBMS Session Duration and the configuration, the MBMS Session may be terminated, or just checked for existence (clear-up).
-   * Mark the MME procedure, depending on the timeout (we won't know after wakeup).
-   * We also use the same timer, to check if the session has been successfully established and if not to remove it.
-   */
-  if(mme_config.mbms_short_idle_session_duration_in_sec > mbms_session_duration->seconds){
-	  OAILOG_INFO(LOG_MME_APP, "MBMS Session Update procedure for MBMS Service-Index " MCE_MBMS_SERVICE_INDEX_FMT " has session duration (%ds) is shorter/equal than the minimum (%ds). \n",
-			 mbms_service_idx, mbms_session_duration, mme_config.mbms_short_idle_session_duration_in_sec);
-//	  sm_proc_mbms_session_update->proc.trigger_mbms_session_stop = true;
-  }
-  if (timer_setup (mbms_session_duration->seconds, 0,
-    TASK_MCE_APP, INSTANCE_DEFAULT, TIMER_ONE_SHOT,  (void *) (mbms_service_idx), &(sm_proc_mbms_session_update->proc.timer.id)) < 0) {
-	  OAILOG_ERROR (LOG_MME_APP, "Failed to start the MME MBMS Session update timer for MBMS Service Idx " MCE_MBMS_SERVICE_INDEX_FMT " for duration %ds \n",
-		mbms_service_idx, mbms_session_duration);
-	  sm_proc_mbms_session_update->proc.timer.id = MME_APP_TIMER_INACTIVE_ID;
-//	  sm_proc_mbms_session_update->proc.trigger_mbms_session_stop = false;
-  }
-  mme_config_unlock (&mme_config);
-  mme_app_sm_proc_t *sm_proc = (mme_app_sm_proc_t *)sm_proc_mbms_session_update;
-
-  /** Initialize the of the procedure. */
-  LIST_INIT(&mbms_service->sm_procedures);
-  LIST_INSERT_HEAD((&mbms_service->sm_procedures), sm_proc, entries);
-  return sm_proc_mbms_session_update;
-}
-
-//------------------------------------------------------------------------------
-mme_app_sm_proc_mbms_session_update_t* mme_app_get_sm_procedure_mbms_session_update(const tmgi_t * const tmgi, const mbms_service_area_id_t mbms_service_area_id)
-{
-  mme_app_sm_proc_t *sm_proc = NULL;
-  mbms_service_t * mbms_service = mce_mbms_service_exists_tmgi(&mce_app_desc.mce_mbms_service_contexts, tmgi, mbms_service_area_id);
-  if(!mbms_service)
-    return NULL;
-
-  LIST_FOREACH(sm_proc, &mbms_service->sm_procedures, entries) {
-	if (MME_APP_SM_PROC_TYPE_MBMS_UPDATE_SESSION == sm_proc->type) {
-		return (mme_app_sm_proc_mbms_session_start_t*)sm_proc;
-	}
-  }
-  return NULL;
-}
-
-//------------------------------------------------------------------------------
-void mme_app_delete_sm_procedure_mbms_session_update(const tmgi_t * const tmgi, const mbms_service_area_id_t mbms_service_area_id)
-{
-  /** Check if the list of Sm procedures is empty. */
-  mme_app_sm_proc_t *sm_proc = NULL, *sm_proc_safe = NULL;
-  mbms_service_t * mbms_service = mce_mbms_service_exists_tmgi(&mce_app_desc.mce_mbms_service_contexts, tmgi, mbms_service_area_id);
-  if(!mbms_service)
-    return;
-
-  LIST_FOREACH_SAFE(sm_proc, &mbms_service->sm_procedures, entries, sm_proc_safe) {
-	  if (MME_APP_SM_PROC_TYPE_MBMS_UPDATE_SESSION == sm_proc->type) {
-		  LIST_REMOVE(sm_proc, entries);
-	      if(sm_proc->timer.id != MME_APP_TIMER_INACTIVE_ID){
-	        if (timer_remove(sm_proc->timer.id, NULL)) {
-	          OAILOG_ERROR (LOG_MME_APP, "Failed to stop the procedure timer for -MMME MBMS Service Update with TMGI " TMGI_FMT ". \n", TMGI_ARG(tmgi));
-	          sm_proc->timer.id = MME_APP_TIMER_INACTIVE_ID;
-	        }else{
-	          OAILOG_DEBUG(LOG_MME_APP, "Successfully removed timer for -MMME MBMS Service Update for TMGI " TMGI_FMT ". \n", TMGI_ARG(tmgi));
-	        }
-	      }
-//	      sm_proc->trigger_mbms_session_stop = false;
-	      mme_app_free_sm_procedure_mbms_session_update(&sm_proc);
-		  return;
-	  }
-  }
-
-  if(LIST_EMPTY(&mbms_service->sm_procedures)){
- 	  LIST_INIT(&mbms_service->sm_procedures);
- 	  OAILOG_INFO (LOG_MME_APP, "MBMS with TMGI " TMGI_FMT " has no more Sm procedures left. Cleared the list. \n", TMGI_ARG(&mbms_service->privates.fields.tmgi));
-   }
-}
-
-//------------------------------------------------------------------------------
-static void mme_app_free_sm_procedure_mbms_session_start(mme_app_sm_proc_t **sm_proc_mssr)
-{
-  // DO here specific releases (memory,etc)
-//  /** Remove the MBMS Service stuff, to be set . */
-  mme_app_sm_proc_mbms_session_start_t ** sm_proc_mbms_session_start_pp = (mme_app_sm_proc_mbms_session_start_t**)sm_proc_mssr;
-//  free_bearer_contexts_to_be_created(&(*sm_proc_mbms_session_start_pp)->bcs_tbc);
-  free_wrapper((void**)sm_proc_mbms_session_start_pp);
-}
-
-//------------------------------------------------------------------------------
-static void mme_app_free_sm_procedure_mbms_session_update(mme_app_sm_proc_t **sm_proc_msur)
-{
-  // DO here specific releases (memory,etc)
-	//  /** Remove the MBMS Service stuff, to be set . */
-  mme_app_sm_proc_mbms_session_update_t ** sm_proc_mbms_session_update_pp = (mme_app_sm_proc_mbms_session_update_t**)sm_proc_msur;
-  if((*sm_proc_mbms_session_update_pp)->bc_tbu.bearer_level_qos)
-    free_bearer_contexts_to_be_updated(&((*sm_proc_mbms_session_update_pp)->bc_tbu.bearer_level_qos));
-  free_wrapper((void**)sm_proc_mbms_session_update_pp);
+  free_wrapper(&mbms_service->mbms_procedure);
+  return;
 }

@@ -56,6 +56,8 @@ typedef uint64_t                 enb_s1ap_id_key_t ;
 
 #define M_TMSI_BIT_MASK          UINT32_MAX
 
+#define JAN_1970        		 0x83aa7e80      /* 2208988800L 1970 - 1900 in seconds */
+
 
 //------------------------------------------------------------------------------
 // UE S1AP IDs
