@@ -175,7 +175,7 @@ mce_app_handle_mbms_session_start_request(
     mce_app_itti_sm_mbms_session_start_response(INVALID_TEID, mbms_session_start_request_pP->sm_mbms_fteid.teid, &mbms_session_start_request_pP->mbms_peer_ip, mbms_session_start_request_pP->trxn, SYSTEM_FAILURE);
     /** Removing old MBMS Service Context and informing the MCE APP. No response is expected from MCE. */
     mbms_service_index_t mbms_service_idx_old = mce_get_mbms_service_index(&mbms_service->privates.fields.tmgi, mbms_service->privates.fields.mbms_service_area_id);
-    mce_app_itti_m3ap_mbms_session_stop_request(&mbms_service->privates.fields.tmgi, mbms_service->privates.fields.mbms_service_area_id, mbms_service_idx_old, true);
+    mce_app_itti_m3ap_mbms_session_stop_request(&mbms_service->privates.fields.tmgi, mbms_service->privates.fields.mbms_service_area_id, true);
     mce_app_stop_mbms_service(&mbms_service->privates.fields.tmgi, mbms_service->privates.fields.mbms_service_area_id, mbms_service->privates.fields.mme_teid_sm,
     	(struct sockaddr*)&mbms_service->privates.fields.mbms_peer_ip);
     /** Check the flags,if the MBMS Re-Establishment indication is set, continue. */
@@ -224,7 +224,7 @@ mce_app_handle_mbms_session_start_request(
     TMGI_ARG(&mbms_session_start_request_pP->tmgi), mbms_service_area_id);
   /** Trigger M3AP MBMS Session Start Request. */
   mbms_service_idx      = mce_get_mbms_service_index(&mbms_service->privates.fields.tmgi, mbms_service_area_id);
-  mce_app_itti_m3ap_mbms_session_start_request(&mbms_session_start_request_pP->tmgi, mbms_service_area_id, mbms_service_idx, &mbms_session_start_request_pP->mbms_bearer_level_qos,
+  mce_app_itti_m3ap_mbms_session_start_request(&mbms_session_start_request_pP->tmgi, mbms_service_area_id, &mbms_session_start_request_pP->mbms_bearer_level_qos,
 	&mbms_service->privates.fields.mbms_bc.mbms_ip_mc_distribution, abs_start_time_sec);
   /**
    * Directly respond to the MBMS-GW.
@@ -405,7 +405,7 @@ mce_app_handle_mbms_session_update_request(
    * Also transmit the MBMS IP, since new eNB may be added (changed of MBMS Service Area).
    */
   mbms_service_idx = mce_get_mbms_service_index(&mbms_service->privates.fields.tmgi, mbms_service_area_id);
-  mce_app_itti_m3ap_mbms_session_update_request(&mbms_session_update_request_pP->tmgi, mbms_service_area_id, mbms_service_idx,
+  mce_app_itti_m3ap_mbms_session_update_request(&mbms_session_update_request_pP->tmgi, mbms_service_area_id,
 	mbms_session_update_request_pP->mbms_bearer_level_qos, &mbms_service->privates.fields.mbms_bc.mbms_ip_mc_distribution,
 	abs_update_time_sec);
 
@@ -476,7 +476,7 @@ mce_app_handle_mbms_session_stop_request(
   if(!abs_stop_time_sec || mbms_session_stop_request_pP->mbms_flags.lmri) {
 	OAILOG_INFO(LOG_MCE_APP, "No MBMS session stop time is given for TMGI " TMGI_FMT ". Stopping immediately and informing the MCE over M3. \n", TMGI_ARG(&mbms_service->privates.fields.tmgi));
 	mbms_service_idx = mce_get_mbms_service_index(&mbms_service->privates.fields.tmgi, mbms_service->privates.fields.mbms_service_area_id);
-	mce_app_itti_m3ap_mbms_session_stop_request(&mbms_service->privates.fields.tmgi, mbms_service->privates.fields.mbms_service_area_id, mbms_service_idx, (mbms_session_stop_request_pP->mbms_flags.lmri));
+	mce_app_itti_m3ap_mbms_session_stop_request(&mbms_service->privates.fields.tmgi, mbms_service->privates.fields.mbms_service_area_id, (mbms_session_stop_request_pP->mbms_flags.lmri));
     mce_app_stop_mbms_service(&mbms_service->privates.fields.tmgi, mbms_service->privates.fields.mbms_service_area_id, mbms_session_stop_request_pP->teid, NULL);
   }
   OAILOG_FUNC_OUT (LOG_MCE_APP);
@@ -528,7 +528,7 @@ mce_app_handle_mbms_session_duration_timer_expiry (const struct tmgi_s *tmgi, co
     mbms_service_idx = mce_get_mbms_service_index(&mbms_service->privates.fields.tmgi, mbms_service->privates.fields.mbms_service_area_id);
     OAILOG_INFO(LOG_MCE_APP, "MBMS Service stopped after timeout. This only applies if the Stopping the MBMS Service for TMGI " TMGI_FMT " immediately. Informing the MCE over M3. \n", TMGI_ARG(&mbms_service->privates.fields.tmgi));
     /** M3AP Session Stop Request --> No Response is expected. Immediately terminate the MBMS Service afterwards. */
-    mce_app_itti_m3ap_mbms_session_stop_request(&mbms_service->privates.fields.tmgi, mbms_service->privates.fields.mbms_service_area_id, mbms_service_idx, true);
+    mce_app_itti_m3ap_mbms_session_stop_request(&mbms_service->privates.fields.tmgi, mbms_service->privates.fields.mbms_service_area_id, true);
     mce_app_stop_mbms_service(tmgi, mbms_service_area_id, mbms_service->privates.fields.mme_teid_sm, (struct sockaddr*)&mbms_service->privates.fields.mbms_peer_ip);
   } else {
     /**

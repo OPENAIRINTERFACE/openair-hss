@@ -79,16 +79,16 @@ typedef struct mbms_bearer_context_to_be_created_s {
 typedef struct itti_m3ap_mbms_session_start_req_s {
   tmgi_t									tmgi;
   mbms_service_area_id_t					mbms_service_area_id;
-  mbms_service_index_t						mbms_service_idx;  /**< Used as MME MBMS M3AP Id. Same one should be used in the MCE layer. */
   mbms_bearer_context_to_be_created_t	    mbms_bearer_tbc;
+  // todo: handle timer better --> Removal of current time should be done in M2AP layer
   uint32_t									time_to_start_in_sec;  /**< Will be handled in the MCE_APP layer. */
+  uint32_t									time_to_start_in_usec;  /**< Will be handled in the MCE_APP layer. */
 } itti_m3ap_mbms_session_start_req_t;
 
 //------------------------------------------------------------------------------
 typedef struct itti_m3ap_mbms_session_update_req_s {
   tmgi_t									tmgi;
   mbms_service_area_id_t					mbms_service_area_id;
-  mbms_service_index_t						mbms_service_idx;  /**< Used as MME MBMS M3AP Id. Same one should be used in the MCE layer. */
   mbms_bearer_context_to_be_created_t	    mbms_bearer_tbc;
   uint32_t									time_to_update_in_sec;  /**< Will be handled in the MCE_APP layer. */
 } itti_m3ap_mbms_session_update_req_t;
@@ -97,7 +97,6 @@ typedef struct itti_m3ap_mbms_session_update_req_s {
 typedef struct itti_m3ap_mbms_session_stop_req_s {
   tmgi_t 				    		tmgi;           //< MBMS Service TMGI.
   mbms_service_area_id_t			mbms_service_area_id;
-  mbms_service_index_t				mbms_service_idx;  /**< Used as MME MBMS M3AP Id. Same one should be used in the MCE layer. */
   bool								inform_enbs;
 } itti_m3ap_mbms_session_stop_req_t;
 

@@ -565,6 +565,7 @@ bool s1ap_ue_compare_by_enb_ue_s1ap_id_cb (__attribute__((unused)) const hash_ke
   }
   return false;
 }
+
 //------------------------------------------------------------------------------
 ue_description_t                       *
 s1ap_is_ue_enb_id_in_list (

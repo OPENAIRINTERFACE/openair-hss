@@ -69,7 +69,8 @@
 #endif
 
 
-uint32_t                                nb_m2ap_enb_associated = 0;
+uint32_t                nb_m2ap_enb_associated 			= 0;
+static mme_ue_s1ap_id_t mce_mbms_m2ap_id_generator 	= 1;
 
 hash_table_ts_t g_m2ap_enb_coll = {.mutex = PTHREAD_MUTEX_INITIALIZER, 0}; // contains eNB_description_s, key is eNB_description_s.enb_id (uint32_t);
 hash_table_ts_t g_m2ap_mbms_coll = {.mutex = PTHREAD_MUTEX_INITIALIZER, 0}; // contains MBMS_description_s, key is MBMS_description_s.mbms_m2ap_id (uint24_t);
@@ -391,6 +392,7 @@ m2ap_mce_init(void)
   }
   return RETURNok;
 }
+
 //------------------------------------------------------------------------------
 void m2ap_mce_exit (void)
 {
@@ -538,24 +540,24 @@ m2ap_is_enb_assoc_id_in_list (
   hashtable_ts_get(&g_m2ap_enb_coll, (const hash_key_t)sctp_assoc_id, (void**)&enb_ref);
   return enb_ref;
 }
-
-//------------------------------------------------------------------------------
-// TODO: (amar) unused function check with OAI.
-bool m2ap_mbms_compare_by_enb_mbms_m2ap_id_cb (__attribute__((unused)) const hash_key_t keyP, void * elementP, void * parameterP,
-                                           void **resultP)
-{
-  enb_mbms_m2ap_id_t                       *enb_mbms_m2ap_id = (enb_mbms_m2ap_id_t*)parameterP;
-  mbms_description_t                       *mbms_ref           = (mbms_description_t*)elementP;
-  if ( *enb_mbms_m2ap_id == mbms_ref->enb_mbms_m2ap_id ) {
-    *resultP = elementP;
-    return true;
-  }
-  return false;
-}
+//
+////------------------------------------------------------------------------------
+//// TODO: (amar) unused function check with OAI.
+//bool m2ap_mbms_compare_by_enb_mbms_m2ap_id_cb (__attribute__((unused)) const hash_key_t keyP, void * elementP, void * parameterP,
+//                                           void **resultP)
+//{
+//  enb_mbms_m2ap_id_t                       *enb_mbms_m2ap_id = (enb_mbms_m2ap_id_t*)parameterP;
+//  mbms_description_t                       *mbms_ref           = (mbms_description_t*)elementP;
+//  if ( *enb_mbms_m2ap_id == mbms_ref->enb_mbms_m2ap_id ) {
+//    *resultP = elementP;
+//    return true;
+//  }
+//  return false;
+//}
 
 //------------------------------------------------------------------------------
 mbms_description_t                       *
-m2ap_is_mbms_mce_id_in_list (
+m2ap_is_mbms_mce_m2ap_id_in_list (
   const mce_mbms_m2ap_id_t mce_mbms_m2ap_id)
 {
   mbms_description_t                       *mbms_ref = NULL;
@@ -601,6 +603,14 @@ m2ap_enb_description_t *m2ap_new_enb (void)
 }
 
 //------------------------------------------------------------------------------
+static mce_mbms_m2ap_id_t generate_new_mce_mbms_m2ap_id(void)
+{
+  mce_mbms_m2ap_id_t tmp = INVALID_MCE_MBMS_M2AP_ID;
+  tmp = __sync_fetch_and_add (&mce_mbms_m2ap_id_generator, 1);
+  return tmp;
+}
+
+//------------------------------------------------------------------------------
 mbms_description_t                       *
 m2ap_new_mbms (
   const tmgi_t * const tmgi, const mbms_service_area_id_t mbms_sai)
@@ -611,12 +621,12 @@ m2ap_new_mbms (
   mce_mbms_m2ap_id_t						mce_mbms_m2ap_id = INVALID_MCE_MBMS_M2AP_ID;
 
   /** Try to generate a new MBMS M2AP Id. */
-  mce_mbms_m2ap_id = generate_new_m22ce_mbms_m2ap_id();
+  mce_mbms_m2ap_id = generate_new_mce_mbms_m2ap_id();
   if(mce_mbms_m2ap_id == INVALID_MCE_MBMS_M2AP_ID){
 	return NULL;
   }
   /** Assert that it is not reused. */
-  DevAssert(!m2ap_is_mbms_mce_id_in_list(mce_mbms_m2ap_id));
+  DevAssert(!m2ap_is_mbms_mce_m2ap_id_in_list(mce_mbms_m2ap_id));
 
   /** No eNB reference needed at this stage. */
   mbms_ref = calloc (1, sizeof (mbms_description_t));

@@ -43,14 +43,14 @@ void mce_app_itti_sm_mbms_session_update_response(teid_t mme_sm_teid, teid_t mbm
 void mce_app_itti_sm_mbms_session_stop_response(teid_t mme_sm_teid, teid_t mbms_sm_teid, struct sockaddr *mbms_ip_address, void *trxn,  gtpv2c_cause_value_t gtpv2cCause);
 
 /** M3AP Session Start Request. */
-void mce_app_itti_m3ap_mbms_session_start_request(tmgi_t * tmgi, mbms_service_area_id_t mbms_service_area_id, mbms_service_index_t mbms_service_idx,
+void mce_app_itti_m3ap_mbms_session_start_request(tmgi_t * tmgi, mbms_service_area_id_t mbms_service_area_id,
   bearer_qos_t * mbms_bearer_qos, mbms_ip_multicast_distribution_t * mbms_ip_mc_dist, const uint32_t time_to_start_in_sec);
 
 /** M3AP Session Update Request. */
-void mce_app_itti_m3ap_mbms_session_update_request(tmgi_t * tmgi, mbms_service_area_id_t mbms_service_area_id, mbms_service_index_t mbms_service_idx,
+void mce_app_itti_m3ap_mbms_session_update_request(tmgi_t * tmgi, mbms_service_area_id_t mbms_service_area_id,
   bearer_qos_t * mbms_bearer_qos, mbms_ip_multicast_distribution_t * mbms_ip_mc_dist, const uint32_t time_to_update_in_sec);
 
 /** M3AP Session Stop Request. */
-void mce_app_itti_m3ap_mbms_session_stop_request(tmgi_t * tmgi, mbms_service_area_id_t mbms_sa_id, mbms_service_index_t mbms_service_idx, const bool inform_enbs);
+void mce_app_itti_m3ap_mbms_session_stop_request(tmgi_t * tmgi, mbms_service_area_id_t mbms_sa_id, const bool inform_enbs);
 
 #endif /* FILE_MCE_APP_ITTI_MESSAGING_SEEN */

@@ -68,7 +68,6 @@ enum mce_m2_enb_state_s {
  **/
 typedef struct mbms_description_s {
   mce_mbms_m2ap_id_t 			mce_mbms_m2ap_id:24;    ///< Unique MBMS id over MCE (24 bits wide)
-  enb_mbms_m2ap_id_t 			enb_mbms_m2ap_id;	    ///< Unique MBMS id over eNB (16 bits wide)
   /** List of SCTP associations pointing to the eNBs. */
   hash_table_ts_t 				g_m2ap_assoc_id2mce_enb_id_coll; // key is enb_mbms_m2ap_id, key is sctp association id;
 
@@ -169,7 +168,7 @@ m2ap_enb_description_t* m2ap_is_enb_assoc_id_in_list(const sctp_assoc_id_t sctp_
  * \param mbms_mce_id The unique mbms_mce_id to search in list
  * @returns NULL if no MBMS matchs the mbms_mce_id, or reference to the mbms element in list if matches
  **/
-mbms_description_t* m2ap_is_mbms_mce_id_in_list(const mce_mbms_m2ap_id_t mbms_mce_id);
+mbms_description_t* m2ap_is_mbms_mce_m2ap_id_in_list(const mce_mbms_m2ap_id_t mbms_mce_id);
 
 /** \brief Look for given mbms via TMGI is in the list
  * \param tmgi
