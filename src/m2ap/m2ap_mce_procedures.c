@@ -181,6 +181,20 @@ int m2ap_generate_mbms_session_start_request(mce_mbms_m2ap_id_t mbms_m2ap_id)
 	OAILOG_ERROR (LOG_M2AP, "No MBMS MCE M2AP ID " MCE_MBMS_M2AP_ID_FMT". Cannot generate MBMS Session Start Request. \n", mbms_m2ap_id);
     OAILOG_FUNC_RETURN (LOG_M2AP, RETURNerror);
   }
+
+  /* Get all M2AP eNBs which match the MBMS Service Area ID and transmit to all of them. */
+  m2ap_enb_description_t *			         m2ap_enb_p_elements[mme_config.max_m2_enbs];
+  memset(&m2ap_enb_p_elements, 0, (sizeof(m2ap_enb_description_t*) * mme_config.max_m2_enbs));
+
+  int num_m2ap_enbs = 0;
+  m2ap_is_mbms_sai_in_list(mbms_ref->mbms_service_area_id, &num_m2ap_enbs, (m2ap_enb_description_t **)&m2ap_enb_p_elements);
+
+  if(!num_m2ap_enbs){
+	OAILOG_ERROR (LOG_S1AP, " No M2AP eNBs could be found for the received MBMS Service Area ID " MBMS_SERVICE_AREA_ID_FMT " for MBMS Service " MCE_MBMS_M2AP_ID_FMT". \n",
+	  mbms_ref->mbms_service_area_id, mbms_m2ap_id);
+    OAILOG_FUNC_RETURN (LOG_M2AP, RETURNerror);
+  }
+
   /*
    * We have found the UE in the list.
    * Create new IE list message and encode it.
@@ -210,66 +224,44 @@ int m2ap_generate_mbms_session_start_request(mce_mbms_m2ap_id_t mbms_m2ap_id)
   ie->value.present = M2AP_SessionStartRequest_Ies__value_PR_TMGI;
 //  ie->value.choice.TMGI.= mbms_m2ap_id;
   ASN_SEQUENCE_ADD(&out->protocolIEs.list, ie);
-//
-//    /*eNB
-//     * Fill in the NAS pdu
-//     */
-//			//S1AP_UEAggregateMaximumBitrate_t	 UEAggregateMaximumBitrate;
-//
-////    if (e_rab_release_req->ue_aggregate_maximum_bit_rate_present) {
-////      e_rabreleasecommandies->presenceMask |= S1AP_E_RABRELEASECOMMANDIES_UEAGGREGATEMAXIMUMBITRATE_PRESENT;
-////      TO DO e_rabreleasecommandies->uEaggregateMaximumBitrate.uEaggregateMaximumBitRateDL.buf
-////    }
-//    ie = (S1AP_E_RABReleaseCommandIEs_t *)calloc(1, sizeof(S1AP_E_RABReleaseCommandIEs_t));
-//    ie->id = S1AP_ProtocolIE_ID_id_E_RABToBeReleasedList;
-//    ie->criticality = S1AP_Criticality_ignore;
-//    ie->value.present = S1AP_E_RABReleaseCommandIEs__value_PR_E_RABList;
-//
-//    ASN_SEQUENCE_ADD (&out->protocolIEs.list, ie);
-//    S1AP_E_RABList_t	* const e_rab_list= &ie->value.choice.E_RABList;
-//
-//    for  (int i= 0; i < e_rab_release_req->e_rab_to_be_release_list.no_of_items; i++) {
-//      S1AP_E_RABItemIEs_t * s1ap_e_rab_item_ies = calloc(1, sizeof(S1AP_E_RABItemIEs_t));
-//      s1ap_e_rab_item_ies->id = S1AP_ProtocolIE_ID_id_E_RABReleaseItem;
-//      s1ap_e_rab_item_ies->criticality = S1AP_Criticality_ignore;
-//      s1ap_e_rab_item_ies->value.present = S1AP_E_RABItemIEs__value_PR_E_RABItem;
-//
-//      S1AP_E_RABItem_t  *s1ap_e_rab_item = &s1ap_e_rab_item_ies->value.choice.E_RABItem;
-//
-//      s1ap_e_rab_item->e_RAB_ID = e_rab_release_req->e_rab_to_be_release_list.item[i].e_rab_id;
-//      /** Set Id-Cause. */
-//      s1ap_e_rab_item->cause.present = S1AP_Cause_PR_nas;
-//      s1ap_e_rab_item->cause.choice.nas = 0;
-//
-//      ASN_SEQUENCE_ADD (&e_rab_list->list, s1ap_e_rab_item_ies);
-//    }
-//
-//    /** Set the NAS message outside of the EBI list. */
-//    if(e_rab_release_req->nas_pdu){
-//      ie = (S1AP_E_RABReleaseCommandIEs_t *)calloc(1, sizeof(S1AP_E_RABReleaseCommandIEs_t));
-//      ie->id = S1AP_ProtocolIE_ID_id_NAS_PDU;
-//      ie->criticality = S1AP_Criticality_ignore;
-//      ie->value.present = S1AP_E_RABReleaseCommandIEs__value_PR_NAS_PDU;
-//
-//  	  S1AP_NAS_PDU_t	 * nas_pdu = &ie->value.choice.NAS_PDU;
-//      OCTET_STRING_fromBuf (nas_pdu, (char *)bdata(e_rab_release_req->nas_pdu), blength(e_rab_release_req->nas_pdu));
-//      ASN_SEQUENCE_ADD (&out->protocolIEs.list, ie);
-//    }else{
-//      OAILOG_INFO(LOG_S1AP, "No NAS message received for S1AP E-RAB release command for ueId " MME_UE_S1AP_ID_FMT" .\n", e_rab_release_req->mme_ue_s1ap_id);
-//    }
 
-  if (m2ap_mme_encode_pdu (&pdu, &buffer_p, &length) < 0) {
-	// TODO: handle something
-	OAILOG_ERROR (LOG_M2AP, "Failed to encode MBMS Session Start Request. \n");
-	OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
+  /** No MBMS Session Id since we only support GCS-AS (public safety). */
+
+  /* mandatory
+   * Only a single MBMS Service Area Id per MBMS Service is supported right now.
+   */
+  ie = (M2AP_SessionStartRequest_Ies_t *)calloc(1, sizeof(M2AP_SessionStartRequest_Ies_t));
+  ie->id = M2AP_ProtocolIE_ID_id_TMGI;
+  ie->criticality = M2AP_Criticality_reject;
+  ie->value.present = M2AP_SessionStartRequest_Ies__value_PR_MBMS_Service_Area;
+//  ie->value.choice.MBMS_Service_Area..= mbms_m2ap_id;
+  ASN_SEQUENCE_ADD(&out->protocolIEs.list, ie);
+
+  /* mandatory
+   */
+  ie = (M2AP_SessionStartRequest_Ies_t *)calloc(1, sizeof(M2AP_SessionStartRequest_Ies_t));
+  ie->id = M2AP_ProtocolIE_ID_id_TNL_Information;
+  ie->criticality = M2AP_Criticality_reject;
+  ie->value.present = M2AP_SessionStartRequest_Ies__value_PR_TNL_Information;
+//  ie->value.choice.TNL_Information.MBMS_Service_Area..= mbms_m2ap_id;
+  ASN_SEQUENCE_ADD(&out->protocolIEs.list, ie);
+  // todo: qos, sctpm, scheduling..
+
+  for(int i = 0; i < num_m2ap_enbs; i++){
+	  if (m2ap_mme_encode_pdu (&pdu, &buffer_p, &length) < 0) {
+		// TODO: handle something
+		OAILOG_ERROR (LOG_M2AP, "Failed to encode MBMS Session Start Request. \n");
+		OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
+	  }
+
+	  OAILOG_NOTICE (LOG_M2AP, "Send M2AP_MBMS_SESSION_START_REQUEST message MCE_MBMS_M2AP_ID = " MCE_MBMS_M2AP_ID_FMT "\n", mbms_m2ap_id);
+	  // todo: the next_sctp_stream is the one without incrementation?
+	  bstring b = blk2bstr(buffer_p, length);
+	  free(buffer_p);
+	//  m2ap_mce_itti_send_sctp_request(&b, target_enb_ref->sctp_assoc_id, target_enb_ref->next_sctp_stream, mbms_m2ap_id);
+	//  s1ap_mme_itti_send_sctp_request (&b , ue_ref->enb->sctp_assoc_id, ue_ref->sctp_stream_send, ue_ref->mme_ue_s1ap_id);
   }
 
-  OAILOG_NOTICE (LOG_M2AP, "Send M2AP_MBMS_SESSION_START_REQUEST message MCE_MBMS_M2AP_ID = " MCE_MBMS_M2AP_ID_FMT "\n", mbms_m2ap_id);
-  // todo: the next_sctp_stream is the one without incrementation?
-  bstring b = blk2bstr(buffer_p, length);
-  free(buffer_p);
-//  m2ap_mce_itti_send_sctp_request(&b, target_enb_ref->sctp_assoc_id, target_enb_ref->next_sctp_stream, INVALID_MBMS_SERVICE_INDEX);
-//  s1ap_mme_itti_send_sctp_request (&b , ue_ref->enb->sctp_assoc_id, ue_ref->sctp_stream_send, ue_ref->mme_ue_s1ap_id);
   OAILOG_FUNC_RETURN (LOG_S1AP, RETURNok);
 }
 
