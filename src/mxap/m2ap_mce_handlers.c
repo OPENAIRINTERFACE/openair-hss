@@ -52,6 +52,7 @@
 #include "m2ap_mce_encoder.h"
 #include "mxap_mce_itti_messaging.h"
 #include "mxap_mce_procedures.h"
+#include "mxap_mce.h"
 #include "m2ap_mce_mbms_sa.h"
 #include "m2ap_mce_handlers.h"
 
@@ -60,7 +61,7 @@ extern hash_table_ts_t g_m2ap_enb_coll; // contains eNB_description_s, key is eN
 static const char * const m2_enb_state_str [] = {"M2AP_INIT", "M2AP_RESETTING", "M2AP_READY", "M2AP_SHUTDOWN"};
 
 static int                              m2ap_generate_m2_setup_response (
-    m2ap_enb_description_t * enb_association);
+    m2ap_enb_description_t * m2ap_enb_association);
 
 //static int                              m2ap_mme_generate_ue_context_release_command (
 //    mbms_description_t * mbms_ref_p, mce_mbms_m2ap_id_t mce_mbms_m2ap_id, enum s1cause, m2ap_enb_description_t* enb_ref_p);
@@ -239,9 +240,9 @@ m2ap_mce_handle_m2_setup_request (
   M2AP_GlobalENB_ID_t	                 *global_enb_id = NULL;;
   ecgi_t                                  ecgi = {.plmn = {0}, .cell_identity = {0}};
 
-  m2ap_enb_description_t                 *enb_association = NULL;
-  uint32_t                                enb_id = 0;
-  char                                   *enb_name = NULL;
+  m2ap_enb_description_t                 *m2ap_enb_association = NULL;
+  uint32_t                                m2ap_enb_id = 0;
+  char                                   *m2ap_enb_name = NULL;
   int                                     mbms_sa_ret = 0;
   uint16_t                                max_m2_enb_connected = 0;
 
@@ -267,7 +268,7 @@ m2ap_mce_handle_m2_setup_request (
 		  M2AP_ProtocolIE_ID_id_ENBname, false);
   if (ie) {
     OAILOG_MESSAGE_ADD (context, "%*s ", (int)ie_enb_name->value.choice.ENBname.size, ie_enb_name->value.choice.ENBname.buf);
-    enb_name = (char *) ie_enb_name->value.choice.ENBname.buf;
+    m2ap_enb_name = (char *) ie_enb_name->value.choice.ENBname.buf;
   }
 
   M2AP_FIND_PROTOCOLIE_BY_ID(M2AP_M2SetupRequest_IEs_t, ie, container, M2AP_ProtocolIE_ID_id_GlobalENB_ID, true);
@@ -290,8 +291,8 @@ m2ap_mce_handle_m2_setup_request (
 	  //TODO: handle case were size != 20 -> notify ? reject ?
 	  OAILOG_DEBUG (LOG_MXAP, "M2-Setup-Request macroENB_ID.size %lu (should be 20)\n", ie->value.choice.GlobalENB_ID.eNB_ID.choice.macro_eNB_ID.size);
 	}
-	enb_id = (enb_id_buf[0] << 12) + (enb_id_buf[1] << 4) + ((enb_id_buf[2] & 0xf0) >> 4);
-	OAILOG_MESSAGE_ADD (context, "macro eNB id: %05x", enb_id);
+	m2ap_enb_id = (enb_id_buf[0] << 12) + (enb_id_buf[1] << 4) + ((enb_id_buf[2] & 0xf0) >> 4);
+	OAILOG_MESSAGE_ADD (context, "macro eNB id: %05x", m2ap_enb_id);
   }
   OAILOG_MESSAGE_FINISH(context);
   global_enb_id = &ie->value.choice.GlobalENB_ID;
@@ -345,59 +346,59 @@ m2ap_mce_handle_m2_setup_request (
     OAILOG_FUNC_RETURN (LOG_MXAP, rc);
   }
 
-  OAILOG_DEBUG (LOG_MXAP, "Adding eNB with eNB-ID %d to the list of served MBMS eNBs. \n", enb_id);
-  if ((enb_association = m2ap_is_enb_id_in_list (enb_id)) == NULL) {
+  OAILOG_DEBUG (LOG_MXAP, "Adding eNB with eNB-ID %d to the list of served MBMS eNBs. \n", m2ap_enb_id);
+  if ((m2ap_enb_association = m2ap_is_enb_id_in_list (m2ap_enb_id)) == NULL) {
     /*
      * eNB has not been fount in list of associated eNB,
      * * * * Add it to the tail of list and initialize data
      */
-    if ((enb_association = m2ap_is_enb_assoc_id_in_list (assoc_id)) == NULL) {
-      OAILOG_ERROR(LOG_MXAP, "Ignoring m2 setup from unknown assoc %u and enbId %u", assoc_id, enb_id);
+    if ((m2ap_enb_association = m2ap_is_enb_assoc_id_in_list (assoc_id)) == NULL) {
+      OAILOG_ERROR(LOG_MXAP, "Ignoring m2 setup from unknown assoc %u and enbId %u", assoc_id, m2ap_enb_id);
       OAILOG_FUNC_RETURN (LOG_MXAP, RETURNerror);
     } else {
-      enb_association->m2_state = M2AP_RESETING;
-      OAILOG_DEBUG (LOG_MXAP, "Adding eNB id %u to the list of served eNBs\n", enb_id);
-      enb_association->enb_id = enb_id;
+      m2ap_enb_association->m2_state = M2AP_RESETING;
+      OAILOG_DEBUG (LOG_MXAP, "Adding eNB id %u to the list of served eNBs\n", m2ap_enb_id);
+      m2ap_enb_association->m2ap_enb_id = m2ap_enb_id;
       /*
        * Bad, very bad cast...
        */
       // todo: handle eCGI, synchronisation, service area
       M2AP_MBSFN_SynchronisationArea_ID_t * mbsfn_synchronisation_area = &enb_mbms_cfg_item->mbsfnSynchronisationArea;
       /** Set it into the MBMS eNB Description. */
-      m2ap_set_mbms_sa_list(enb_association, &enb_mbms_cfg_item->eCGI, &enb_mbms_cfg_item->mbmsServiceAreaList);
-      if (enb_name != NULL) {
-    	  memcpy (enb_association->enb_name, ie_enb_name->value.choice.ENBname.buf, ie_enb_name->value.choice.ENBname.size);
-    	  enb_association->enb_name[ie_enb_name->value.choice.ENBname.size] = '\0';
+      m2ap_set_mbms_sa_list(m2ap_enb_association, &enb_mbms_cfg_item->eCGI, &enb_mbms_cfg_item->mbmsServiceAreaList);
+      if (m2ap_enb_name != NULL) {
+    	  memcpy (m2ap_enb_association->m2ap_enb_name, ie_enb_name->value.choice.ENBname.buf, ie_enb_name->value.choice.ENBname.size);
+    	  m2ap_enb_association->m2ap_enb_name[ie_enb_name->value.choice.ENBname.size] = '\0';
       }
     }
   }	else {
-	enb_association->m2_state = M2AP_RESETING;
+	m2ap_enb_association->m2_state = M2AP_RESETING;
 
 	/*
 	 * eNB has been fount in list, consider the m2 setup request as a reset connection,
 	 * * * * reseting any previous MBMS state if sctp association is != than the previous one
 	 */
-	if (enb_association->sctp_assoc_id != assoc_id) {
+	if (m2ap_enb_association->sctp_assoc_id != assoc_id) {
 	  OAILOG_ERROR (LOG_MXAP, "Rejecting m2 setup request as eNB id %d is already associated to an active sctp association" "Previous known: %d, new one: %d\n",
-		enb_id, enb_association->sctp_assoc_id, assoc_id);
+		m2ap_enb_id, m2ap_enb_association->sctp_assoc_id, assoc_id);
 	  rc = m2ap_mce_generate_m2_setup_failure (assoc_id, M2AP_Cause_PR_misc, M2AP_CauseMisc_unspecified, -1); /**< eNB should attach again. */
 	  /** Also remove the old eNB. */
-	  OAILOG_INFO(LOG_MXAP, "Rejecting the old eNB connection for eNB id %d and old assoc_id: %d\n", enb_id, assoc_id);
+	  OAILOG_INFO(LOG_MXAP, "Rejecting the old eNB connection for eNB id %d and old assoc_id: %d\n", m2ap_enb_id, assoc_id);
 	  m2ap_dump_enb_list();
-	  m2ap_handle_sctp_disconnection(enb_association->sctp_assoc_id, false);
+	  m2ap_handle_sctp_disconnection(m2ap_enb_association->sctp_assoc_id, false);
 	  OAILOG_FUNC_RETURN (LOG_MXAP, RETURNerror);
 	}
 
-	OAILOG_INFO(LOG_MXAP, "We found the eNB id %d in the current list of enbs with matching sctp associations:" "assoc: %d\n", enb_id, enb_association->sctp_assoc_id);
+	OAILOG_INFO(LOG_MXAP, "We found the eNB id %d in the current list of enbs with matching sctp associations:" "assoc: %d\n", m2ap_enb_id, m2ap_enb_association->sctp_assoc_id);
 	/*
 	 * TODO: call the reset procedure
 	 */
-	m2ap_dump_enb (enb_association);
-	rc =  m2ap_generate_m2_setup_response (enb_association);
+	m2ap_dump_enb (m2ap_enb_association);
+	rc =  m2ap_generate_m2_setup_response (m2ap_enb_association);
 	OAILOG_FUNC_RETURN (LOG_MXAP, rc);
   }
-  m2ap_dump_enb (enb_association);
-  rc =  m2ap_generate_m2_setup_response (enb_association);
+  m2ap_dump_enb (m2ap_enb_association);
+  rc =  m2ap_generate_m2_setup_response (m2ap_enb_association);
   if (rc == RETURNok) {
     update_mme_app_stats_connected_enb_add();
   }
@@ -408,7 +409,7 @@ m2ap_mce_handle_m2_setup_request (
 static
   int
 m2ap_generate_m2_setup_response (
-  m2ap_enb_description_t * enb_association)
+  m2ap_enb_description_t * m2ap_enb_association)
 {
   int                                     			  i,j;
   M2AP_M2AP_PDU_t                         			  pdu;
@@ -420,7 +421,7 @@ m2ap_generate_m2_setup_response (
   int                                     			  rc = RETURNok;
 
   OAILOG_FUNC_IN (LOG_MXAP);
-  DevAssert (enb_association != NULL);
+  DevAssert (m2ap_enb_association != NULL);
   memset(&pdu, 0, sizeof(pdu));
   pdu.present = M2AP_M2AP_PDU_PR_successfulOutcome;
   pdu.choice.successfulOutcome.procedureCode = M2AP_ProcedureCode_id_m2Setup;
@@ -465,13 +466,13 @@ m2ap_generate_m2_setup_response (
   mme_config_unlock (&mme_config);
 
   if (m2ap_mce_encode_pdu (&pdu, &buffer, &length) < 0) {
-    OAILOG_DEBUG (LOG_S1AP, "Removed eNB %d\n", enb_association->sctp_assoc_id);
-    hashtable_ts_free (&g_m2ap_enb_coll, enb_association->sctp_assoc_id);
+    OAILOG_DEBUG (LOG_S1AP, "Removed eNB %d\n", m2ap_enb_association->sctp_assoc_id);
+    hashtable_ts_free (&g_m2ap_enb_coll, m2ap_enb_association->sctp_assoc_id);
   } else {
 	/*
 	 * Consider the response as sent. S1AP is ready to accept UE contexts
 	 */
-	enb_association->m2_state = M2AP_READY;
+	m2ap_enb_association->m2_state = M2AP_READY;
   }
 
   /*
@@ -479,7 +480,7 @@ m2ap_generate_m2_setup_response (
    */
   bstring b = blk2bstr(buffer, length);
   free(buffer);
-  rc = m2ap_mce_itti_send_sctp_request (&b, enb_association->sctp_assoc_id, 0, INVALID_MCE_MBMS_M2AP_ID);
+  rc = m2ap_mce_itti_send_sctp_request (&b, m2ap_enb_association->sctp_assoc_id, 0, INVALID_MCE_MBMS_M2AP_ID);
   OAILOG_FUNC_RETURN (LOG_MXAP, rc);
 }
 
@@ -932,7 +933,7 @@ m2ap_mce_handle_reset_request (
   mbms_description_t                *mbms_ref_p = NULL;
   MessageDef                        *message_p = NULL;
   int                                rc = RETURNok;
-  m2ap_enb_description_t			*enb_association = NULL;
+  m2ap_enb_description_t			*m2ap_enb_association = NULL;
   mce_mbms_m2ap_id_t                 mce_mbms_m2ap_id = 0;
   enb_mbms_m2ap_id_t                 enb_mbms_m2ap_id = 0;
   OAILOG_FUNC_IN (LOG_MXAP);
@@ -945,17 +946,17 @@ m2ap_mce_handle_reset_request (
   /*
    * Checking that the assoc id has a valid eNB attached to.
    */
-  enb_association = m2ap_is_enb_assoc_id_in_list (assoc_id);
+  m2ap_enb_association = m2ap_is_enb_assoc_id_in_list (assoc_id);
 
-  if (enb_association == NULL) {
+  if (m2ap_enb_association == NULL) {
     OAILOG_ERROR (LOG_MXAP, "No eNB attached to this assoc_id: %d\n", assoc_id);
     OAILOG_FUNC_RETURN (LOG_MXAP, RETURNerror);
   }
 
   // Check the state of M2AP
-  if (enb_association->m2_state != M2AP_READY) {
+  if (m2ap_enb_association->m2_state != M2AP_READY) {
     // Ignore the message
-    OAILOG_INFO (LOG_MXAP, "M2 setup is not done.Invalid state.Ignoring ENB Initiated Reset.eNB Id = %d , M2AP state = %d \n", enb_association->enb_id, enb_association->m2_state);
+    OAILOG_INFO (LOG_MXAP, "M2 setup is not done.Invalid state.Ignoring ENB Initiated Reset.eNB Id = %d , M2AP state = %d \n", m2ap_enb_association->m2ap_enb_id, m2ap_enb_association->m2_state);
     OAILOG_FUNC_RETURN (LOG_MXAP, RETURNok);
   }
   // Check the reset type - partial_reset OR M2AP_RESET_ALL
@@ -982,9 +983,9 @@ m2ap_mce_handle_reset_request (
   // Partial Reset
   if (m2ap_reset_type != M2AP_RESET_ALL) {
 	  // Check if there are no MBMSs connected
-	  if (!enb_association->nb_mbms_associated) {
+	  if (!m2ap_enb_association->nb_mbms_associated) {
 	    // Ignore the message
-	    OAILOG_INFO (LOG_MXAP, "No MBMSs is connected.Ignoring ENB Initiated Reset.eNB Id = %d\n", enb_association->enb_id);
+	    OAILOG_INFO (LOG_MXAP, "No MBMSs is connected.Ignoring ENB Initiated Reset.eNB Id = %d\n", m2ap_enb_association->m2ap_enb_id);
 	    OAILOG_FUNC_RETURN (LOG_MXAP, RETURNok);
 	  }
 	  num_mbms_assoc = m2ap_reset_type->choice.partOfM2_Interface.list.count;
@@ -1035,7 +1036,7 @@ m2ap_mce_handle_reset_request (
 //			  if (m2_sig_conn_item->eNB_MBMS_M2AP_ID != NULL) {
 //				  enb_mbms_m2ap_id_t enb_mbms_m2ap_id = (enb_mbms_m2ap_id_t) *(m2_sig_conn_item->eNB_MBMS_M2AP_ID);
 //				  enb_mbms_m2ap_id &= ENB_MBMS_M2AP_ID_MASK;
-//				  if ((mbms_ref_p = m2ap_is_ue_enb_id_in_list (enb_association, enb_mbms_m2ap_id)) != NULL) {
+//				  if ((mbms_ref_p = m2ap_is_ue_enb_id_in_list (m2ap_enb_association, enb_mbms_m2ap_id)) != NULL) {
 //					  mbms_to_reset_list[item].enb_mbms_m2ap_id = (enb_mbms_m2ap_id_t*)mbms_ref_p;
 //					  if (mbms_ref_p->mce_mbms_m2ap_id != INVALID_MCE_MBMS_M2AP_ID) {
 //						  mbms_to_reset_list[item].mce_mbms_m2ap_id = &(mbms_ref_p->mce_mbms_m2ap_id);
@@ -1068,7 +1069,7 @@ m2ap_mce_handle_reset_request (
   } else {
 	  /** Generating full reset request. */
 //	  OAILOG_INFO (LOG_MXAP, "Received a full reset request. Informing the MCE_APP layer.\n");
-//	  num_mbms_assoc = enb_association->nb_mbms_associated;
+//	  num_mbms_assoc = m2ap_enb_association->nb_mbms_associated;
 //	  message_p = itti_alloc_new_message (TASK_S1AP, M3AP_ENB_INITIATED_RESET_REQ);
 //	  arg.message_p = message_p;
 //	  AssertFatal (message_p != NULL, "itti_alloc_new_message Failed");
@@ -1077,11 +1078,11 @@ m2ap_mce_handle_reset_request (
 //	   * Allocate a new list and let the callback function fill it.
 //	   * Generating full reset request.
 //	   */
-//	  M3AP_ENB_INITIATED_RESET_REQ (message_p).mbms_to_reset_list = (m2_sig_conn_id_t*) calloc (enb_association->nb_mbms_associated, sizeof (m2_sig_conn_id_t));
-//	  hashtable_ts_apply_callback_on_elements(&enb_association->ue_coll, construct_m2ap_mme_full_reset_req, (void*)&arg, (void**) &message_p);
+//	  M3AP_ENB_INITIATED_RESET_REQ (message_p).mbms_to_reset_list = (m2_sig_conn_id_t*) calloc (m2ap_enb_association->nb_mbms_associated, sizeof (m2_sig_conn_id_t));
+//	  hashtable_ts_apply_callback_on_elements(&m2ap_enb_association->ue_coll, construct_m2ap_mme_full_reset_req, (void*)&arg, (void**) &message_p);
   }
 //  M3AP_ENB_INITIATED_RESET_REQ (message_p).m2ap_reset_type = m2ap_reset_type;
-//  M3AP_ENB_INITIATED_RESET_REQ (message_p).enb_id = enb_association->enb_id;
+//  M3AP_ENB_INITIATED_RESET_REQ (message_p).m2ap_enb_id = m2ap_enb_association->m2ap_enb_id;
 //  M3AP_ENB_INITIATED_RESET_REQ (message_p).sctp_assoc_id = assoc_id;
 //  M3AP_ENB_INITIATED_RESET_REQ (message_p).sctp_stream_id = stream;
 //  DevAssert(M3AP_ENB_INITIATED_RESET_REQ (message_p).mbms_to_reset_list != NULL);
@@ -1161,7 +1162,7 @@ m2ap_mce_handle_error_ind_message (
 //  /** If no MBMS reference exists, drop the message. */
 //  if(!mbms_ref){
 //    /** Check that the MBMS reference exists. */
-//    OAILOG_WARNING(LOG_MXAP, "No MBMS reference exists for enbId %d and enb_mbms_m2ap_id " ENB_MBMS_M2AP_ID_FMT ". Dropping error indication. \n", enb_ref->enb_id, enb_mbms_m2ap_id);
+//    OAILOG_WARNING(LOG_MXAP, "No MBMS reference exists for enbId %d and enb_mbms_m2ap_id " ENB_MBMS_M2AP_ID_FMT ". Dropping error indication. \n", enb_ref->m2ap_enb_id, enb_mbms_m2ap_id);
 //    OAILOG_FUNC_RETURN (LOG_MXAP, RETURNerror);
 //  }
 //
@@ -1174,7 +1175,7 @@ m2ap_mce_handle_error_ind_message (
 //  memset ((void *)&message_p->ittiMsg.m2ap_error_indication, 0, sizeof (itti_m2ap_error_indication_t));
 //  M2AP_ERROR_INDICATION (message_p).mce_mbms_m2ap_id = mce_mbms_m2ap_id;
 //  M2AP_ERROR_INDICATION (message_p).enb_mbms_m2ap_id = enb_mbms_m2ap_id;
-//  M2AP_ERROR_INDICATION (message_p).enb_id = enb_ref->enb_id;
+//  M2AP_ERROR_INDICATION (message_p).m2ap_enb_id = enb_ref->m2ap_enb_id;
 //
 //  /** Choice. */
 //  M2AP_FIND_PROTOCOLIE_BY_ID(M2AP_ErrorIndicationIEs_t, ie, container, M2AP_ProtocolIE_ID_id_Cause, false);
@@ -1338,35 +1339,35 @@ m2ap_handle_sctp_disconnection (
   arg_m2ap_send_enb_dereg_ind_t           arg = {0};
   int                                     i = 0;
   MessageDef                             *message_p = NULL;
-  m2ap_enb_description_t                 *enb_association = NULL;
+  m2ap_enb_description_t                 *m2ap_enb_association = NULL;
 
   OAILOG_FUNC_IN (LOG_MXAP);
   /*
    * Checking that the assoc id has a valid eNB attached to.
    */
-  enb_association = m2ap_is_enb_assoc_id_in_list (assoc_id);
+  m2ap_enb_association = m2ap_is_enb_assoc_id_in_list (assoc_id);
 
-//  if (enb_association == NULL) {
+//  if (m2ap_enb_association == NULL) {
 //    OAILOG_ERROR (LOG_MXAP, "No eNB attached to this assoc_id: %d\n", assoc_id);
 //    OAILOG_FUNC_RETURN (LOG_MXAP, RETURNerror);
 //  }
 //
 //  // First check if we can just reset the eNB state if there are no MBMSs.
-//  if (!enb_association->nb_mbms_service_associated) {
+//  if (!m2ap_enb_association->nb_mbms_service_associated) {
 //    if (reset) {
-//      enb_association->m2_state = M2AP_INIT;
+//      m2ap_enb_association->m2_state = M2AP_INIT;
 //      OAILOG_INFO(LOG_MXAP, "Moving eNB with association id %u to INIT state\n", assoc_id);
 //      update_mce_app_stats_connected_enb_sub();
 //    } else {
-//      hashtable_ts_free (&g_m2ap_enb_coll, enb_association->sctp_assoc_id);
+//      hashtable_ts_free (&g_m2ap_enb_coll, m2ap_enb_association->sctp_assoc_id);
 //      update_mce_app_stats_connected_enb_sub();
 //      OAILOG_INFO(LOG_MXAP, "Removing eNB with association id %u \n", assoc_id);
 //    }
 //    OAILOG_FUNC_RETURN(LOG_MXAP, RETURNok);
 //  }
 //
-//  enb_association->m2_state = M2AP_SHUTDOWN;
-//  hashtable_ts_apply_callback_on_elements(&enb_association->mbms_coll, m2ap_send_enb_deregistered_ind, (void*)&arg, (void**)&message_p); /**< Just releasing the procedure. */
+//  m2ap_enb_association->m2_state = M2AP_SHUTDOWN;
+//  hashtable_ts_apply_callback_on_elements(&m2ap_enb_association->mbms_coll, m2ap_send_enb_deregistered_ind, (void*)&arg, (void**)&message_p); /**< Just releasing the procedure. */
 //
 //  /** Release the M2AP MBMS references implicitly. */
 //  OAILOG_DEBUG (LOG_MXAP, "Releasing all M2AP MBMS references related to the ENB with assocId %d. \n", assoc_id);
@@ -1394,7 +1395,7 @@ int
 m2ap_handle_new_association (
   sctp_new_peer_t * sctp_new_peer_p)
 {
-  m2ap_enb_description_t                      *enb_association = NULL;
+  m2ap_enb_description_t                      *m2ap_enb_association = NULL;
 
   OAILOG_FUNC_IN (LOG_MXAP);
   DevAssert (sctp_new_peer_p != NULL);
@@ -1402,14 +1403,14 @@ m2ap_handle_new_association (
   /*
    * Checking that the assoc id has a valid eNB attached to.
    */
-  if ((enb_association = m2ap_is_enb_assoc_id_in_list (sctp_new_peer_p->assoc_id)) == NULL) {
+  if ((m2ap_enb_association = m2ap_is_enb_assoc_id_in_list (sctp_new_peer_p->assoc_id)) == NULL) {
     OAILOG_DEBUG (LOG_MXAP, "Create eNB context for assoc_id: %d\n", sctp_new_peer_p->assoc_id);
     /*
      * Create new context
      */
-    enb_association = m2ap_new_enb ();
+    m2ap_enb_association = m2ap_new_enb ();
 
-    if (enb_association == NULL) {
+    if (m2ap_enb_association == NULL) {
       /*
        * We failed to allocate memory
        */
@@ -1418,31 +1419,31 @@ m2ap_handle_new_association (
        */
       OAILOG_ERROR (LOG_MXAP, "Failed to allocate eNB context for assoc_id: %d\n", sctp_new_peer_p->assoc_id);
     }
-    enb_association->sctp_assoc_id = sctp_new_peer_p->assoc_id;
-    hashtable_rc_t  hash_rc = hashtable_ts_insert (&g_m2ap_enb_coll, (const hash_key_t)enb_association->sctp_assoc_id, (void *)enb_association);
+    m2ap_enb_association->sctp_assoc_id = sctp_new_peer_p->assoc_id;
+    hashtable_rc_t  hash_rc = hashtable_ts_insert (&g_m2ap_enb_coll, (const hash_key_t)m2ap_enb_association->sctp_assoc_id, (void *)m2ap_enb_association);
     if (HASH_TABLE_OK != hash_rc) {
       OAILOG_FUNC_RETURN (LOG_MXAP, RETURNerror);
     }
-  } else if ((enb_association->m2_state == M2AP_SHUTDOWN) || (enb_association->m2_state == M2AP_RESETING)) {
+  } else if ((m2ap_enb_association->m2_state == M2AP_SHUTDOWN) || (m2ap_enb_association->m2_state == M2AP_RESETING)) {
     OAILOG_WARNING(LOG_MXAP, "Received new association request on an association that is being %s, ignoring",
-                   m2_enb_state_str[enb_association->m2_state]);
+                   m2_enb_state_str[m2ap_enb_association->m2_state]);
     OAILOG_FUNC_RETURN(LOG_MXAP, RETURNerror);
   } else {
     OAILOG_DEBUG (LOG_MXAP, "eNB context already exists for assoc_id: %d, update it\n", sctp_new_peer_p->assoc_id);
   }
 
-  enb_association->sctp_assoc_id = sctp_new_peer_p->assoc_id;
+  m2ap_enb_association->sctp_assoc_id = sctp_new_peer_p->assoc_id;
   /*
    * Fill in in and out number of streams available on SCTP connection.
    */
-  enb_association->instreams = sctp_new_peer_p->instreams;
-  enb_association->outstreams = sctp_new_peer_p->outstreams;
+  m2ap_enb_association->instreams = sctp_new_peer_p->instreams;
+  m2ap_enb_association->outstreams = sctp_new_peer_p->outstreams;
   /*
    * initialize the next sctp stream to 1 as 0 is reserved for non
    * * * * ue associated signalling.
    */
-  enb_association->next_sctp_stream = 1;
-  enb_association->m2_state = M2AP_INIT;
+  m2ap_enb_association->next_sctp_stream = 1;
+  m2ap_enb_association->m2_state = M2AP_INIT;
   OAILOG_FUNC_RETURN (LOG_MXAP, RETURNok);
 }
 

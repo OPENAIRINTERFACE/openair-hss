@@ -42,6 +42,8 @@
 #include "itti_free_defined_msg.h"
 #include "mme_config.h"
 #include "timer.h"
+#include "mme_app_bearer_context.h"
+#include "mxap_mce.h"
 #include "mce_app_extern.h"
 #include "mce_app_defs.h"
 #include "mce_app_statistics.h"

@@ -34,6 +34,7 @@
 #endif
 
 #include "hashtable.h"
+#include "mme_app_bearer_context.h"
 
 // Forward declarations
 struct m2ap_enb_description_s;
@@ -66,13 +67,14 @@ enum mce_m2_enb_state_s {
  * Created upon a successful
  **/
 typedef struct mbms_description_s {
-  enb_mbms_m2ap_id_t enb_mbms_m2ap_id:24;    ///< Unique MBMS id over eNB (24 bits wide)
-  struct mbms_enb_description_s *enb;         	 ///< Which eNB this MBMS is attached to
+  mce_mbms_m2ap_id_t 			mce_mbms_m2ap_id:24;    ///< Unique MBMS id over MCE (24 bits wide)
+  enb_mbms_m2ap_id_t 			enb_mbms_m2ap_id;	    ///< Unique MBMS id over eNB (16 bits wide)
+  /** List of SCTP associations pointing to the eNBs. */
+  hash_table_ts_t 				g_m2ap_assoc_id2mce_enb_id_coll; // key is enb_mbms_m2ap_id, key is sctp association id;
 
-  /** Set the release cause, since we must now differentiate between them. */
-  enum m2cause              m2_release_cause;  ///< M2AP Release Cause
-
-  mce_mbms_m2ap_id_t 		mce_mbms_m2ap_id;       	///< Unique MBMS id over MCE (32 bits wide)
+  /** MBMS Parameters. */
+  tmgi_t					   *tmgi;
+  mbms_service_area_id_t		mbms_service_area_id;
 
   /** SCTP stream on which M2 message will be sent/received.
    *  During an MBMS M2 connection, a pair of streams is
@@ -80,17 +82,27 @@ typedef struct mbms_description_s {
    *  Stream 0 is reserved for non MBMS signalling.
    *  @name sctp stream identifier
    **/
+
   /*@{*/
-  sctp_stream_id_t sctp_stream_recv; ///< eNB -> MCE stream
-  sctp_stream_id_t sctp_stream_send; ///< MCE -> eNB stream
-  /*@}*/
+//  sctp_stream_id_t sctp_stream_recv; ///< eNB -> MCE stream
+//  sctp_stream_id_t sctp_stream_send; ///< MCE -> eNB stream
+//  /*@}*/
+//
 
-  /* Timer for procedure outcome issued by MCE that should be answered */
-  long outcome_response_timer_id;
+  /** MBMS Bearer. */
+  struct mbms_bearer_context_s		mbms_bc;
 
-  // MBMS Context Release procedure guard timer
-  struct mxap_timer_t       mxap_mbms_context_rel_timer;
+  // MBMS Action timer
+  struct mxap_timer_t       m2ap_action_timer;
 } mbms_description_t;
+
+/*
+ * Used to search by TMGI and MBMS SAI.
+ */
+typedef struct m2ap_tmgi_s{
+  tmgi_t					tmgi;
+  mbms_service_area_id_t 	mbms_service_area_id_t;
+}m2ap_tmgi_t;
 
 /* Main structure representing eNB association over m2ap
  * Generated (or updated) every time a new M2SetupRequest is received.
@@ -101,15 +113,14 @@ typedef struct m2ap_enb_description_s {
 
   /** eNB related parameters **/
   /*@{*/
-  char     				enb_name[150];      ///< Printable eNB Name
-  uint32_t 				enb_id;             ///< Unique eNB ID
+  char     				m2ap_enb_name[150];      ///< Printable eNB Name
+  uint32_t 				m2ap_enb_id;             ///< Unique eNB ID
   mbms_service_area_t   mbms_sa_list;      ///< Tracking Area Identifiers signaled by the eNB (for each cell - used for paging.).
   /*@}*/
 
-  /** MBMS list for this eNB **/
+  /** MBMS Services for this eNB **/
   /*@{*/
-  uint32_t nb_mbms_associated; ///< Number of associated MBMS on this eNB
-  hash_table_ts_t  mbms_coll; // contains mbms_description_s, key is mbms_description_s.?;
+  uint32_t nb_mbms_associated; ///< Number of NAS associated UE on this eNB
   /*@}*/
 
   /** SCTP stuff **/
@@ -138,15 +149,15 @@ void mxap_mce_exit (void);
  * @returns NULL if no eNB matchs the eNB id, or reference to the eNB element in list if matches
  **/
 m2ap_enb_description_t* mxap_is_enb_id_in_list(const uint32_t enb_id);
-//
-///** \brief Look for given TAC in the list.
-// * \param tac TAC is not uniqueue and used for the search in the list.
-// * @returns All matched eNBs in the enb_list.
-// **/
-//void m2ap_is_tac_in_list (
-//  const tac_t tac,
-//  int *num_enbs,
-//  m2ap_enb_description_t ** enbs);
+
+/** \brief Look for given MBMS Service Area Id in the list.
+ * \param tac MBMS Service Area Id is not unique and used for the search in the list.
+ * @returns All matched M2AP eNBs in the m2ap_enb_list.
+ **/
+void m2ap_is_mbms_sai_in_list (
+  const mbms_service_area_id_t mbms_sai,
+  int *num_m2ap_enbs,
+  m2ap_enb_description_t ** m2ap_enbs);
 
 /** \brief Look for given eNB SCTP assoc id in the list
  * \param enb_id The unique sctp assoc id to search in list
@@ -154,24 +165,11 @@ m2ap_enb_description_t* mxap_is_enb_id_in_list(const uint32_t enb_id);
  **/
 m2ap_enb_description_t* m2ap_is_enb_assoc_id_in_list(const sctp_assoc_id_t sctp_assoc_id);
 
-/** \brief Look for given mbms eNB id in the list
- * \param enb_id The unique mbms_eNB id to search in list
- * @returns NULL if no MBMS matchs the mbms_enb_id, or reference to the mbms element in list if matches
- **/
-mbms_description_t* m2ap_is_mbms_enb_id_in_list(m2ap_enb_description_t *enb_ref,
-    const enb_mbms_m2ap_id_t enb_mbms_m2ap_id);
-
 /** \brief Look for given mbms mce id in the list
  * \param enb_id The unique mbms_mce_id to search in list
  * @returns NULL if no MBMS matchs the mbms_mce_id, or reference to the mbms element in list if matches
  **/
 mbms_description_t* m2ap_is_mbms_mce_id_in_list(const mce_mbms_m2ap_id_t mbms_mce_id);
-
-/** \brief Look for given mbms enb m2ap id in the list of UEs for a particular enb.
- * \param enb_id The unique mbms_enb_id to search in list
- * @returns NULL if no MBMS matchs the mbms_enb_id, or reference to the mbms element in list if matches
- **/
-mbms_description_t* m2ap_is_enb_mbms_m2ap_id_in_list_per_enb ( const enb_mbms_m2ap_id_t enb_mbms_m2ap_id, const uint32_t  enb_id);
 
 ///** \brief associate mainly 2(3) identifiers in M2AP layer: {mme_mbms_m2ap_id_t, sctp_assoc_id (,enb_mbms_m2ap_id)}
 // **/
@@ -184,6 +182,13 @@ mbms_description_t* m2ap_is_enb_mbms_m2ap_id_in_list_per_enb ( const enb_mbms_m2
  * @returns Reference to the new eNB element in list
  **/
 m2ap_enb_description_t* m2ap_new_enb(void);
+
+/** \brief Allocate a new MBMS Service Description. Will allocate a new MCE MBMS M2AP Id (24).
+ * \param tmgi_t
+ * \param mbms_service_are_id
+ * @returns Reference to the new MBMS Service element in list
+ **/
+mbms_description_t* m2ap_new_mbms(const tmgi_t * const tmgi, const mbms_service_area_id_t mbms_sai);
 
 /** \brief Dump the eNB related information.
  * hashtable callback. It is called by hashtable_ts_apply_funct_on_elements()
@@ -203,7 +208,7 @@ void m2ap_dump_enb_list(void);
  * Calls dump_ue for each MBMS in list
  * \param enb_ref eNB structure reference to dump
  **/
-void m2ap_dump_enb(const m2ap_enb_description_t * const enb_ref);
+void m2ap_dump_enb(const m2ap_enb_description_t * const m2ap_enb_ref);
 
 /** \brief Dump the MBMS related information.
  * hashtable callback. It is called by hashtable_ts_apply_funct_on_elements()
@@ -219,8 +224,11 @@ bool m2ap_dump_mbms_hash_cb (const hash_key_t keyP,
  **/
 void m2ap_dump_mbms(const mbms_description_t * const mbms_ref);
 
-bool m2ap_enb_compare_by_enb_id_cb (const hash_key_t keyP,
-                                    void * const elementP, void * parameterP, void __attribute__((unused)) **unused_resultP);
+bool m2ap_enb_compare_by_m2ap_enb_id_cb (const hash_key_t keyP,
+      void * const elementP, void * parameterP, void __attribute__((unused)) **unused_resultP);
+
+m2ap_enb_description_t                      *
+m2ap_is_enb_id_in_list ( const uint32_t m2ap_enb_id);
 
 /** \brief Remove target MBMS from the list
  * \param mbms_ref MBMS structure reference to remove

@@ -35,7 +35,7 @@
 
 
 
-typedef uint32_t                 enb_mbms_m2ap_id_t;         /*!< \brief  Unique identity, referencing the MBMS-service-associated logical M2-connection within an eNB. */
+typedef uint16_t                 enb_mbms_m2ap_id_t;         /*!< \brief  Unique identity, referencing the MBMS-service-associated logical M2-connection within an eNB. */
 
 typedef uint32_t                 mce_mbms_m2ap_id_t;         /*!< \brief  Unique identity, referencing the MBMS-service-associated logical M2-connection within an MCE. */
 

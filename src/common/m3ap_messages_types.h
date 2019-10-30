@@ -81,7 +81,6 @@ typedef struct itti_m3ap_mbms_session_start_req_s {
   mbms_service_area_id_t					mbms_service_area_id;
   mbms_service_index_t						mbms_service_idx;  /**< Used as MME MBMS M3AP Id. Same one should be used in the MCE layer. */
   mbms_bearer_context_to_be_created_t	    mbms_bearer_tbc;
-  mbms_session_duration_t					mbms_session_dur;	   /**< Will be handled in the MCE_APP layer. */
   uint32_t									time_to_start_in_sec;  /**< Will be handled in the MCE_APP layer. */
 } itti_m3ap_mbms_session_start_req_t;
 
@@ -91,7 +90,6 @@ typedef struct itti_m3ap_mbms_session_update_req_s {
   mbms_service_area_id_t					mbms_service_area_id;
   mbms_service_index_t						mbms_service_idx;  /**< Used as MME MBMS M3AP Id. Same one should be used in the MCE layer. */
   mbms_bearer_context_to_be_created_t	    mbms_bearer_tbc;
-  mbms_session_duration_t					mbms_session_dur;	   /**< Will be handled in the MCE_APP layer. */
   uint32_t									time_to_update_in_sec;  /**< Will be handled in the MCE_APP layer. */
 } itti_m3ap_mbms_session_update_req_t;
 
@@ -124,8 +122,8 @@ typedef struct itti_m3ap_enb_initiated_reset_ack_s {
 
 /** M3AP Error Indication. */
 typedef struct itti_m3ap_error_ind_s {
-  mce_mbms_m2ap_id_t      mce_mbms_m2ap_id;
-  enb_mbms_m2ap_id_t      enb_mbms_m2ap_id:24;
+  mce_mbms_m2ap_id_t      mce_mbms_m2ap_id:24;
+  enb_mbms_m2ap_id_t      enb_mbms_m2ap_id;
   sctp_assoc_id_t         assoc_id;
   uint32_t                enb_id;
   enum m2cause            cause;
@@ -133,8 +131,8 @@ typedef struct itti_m3ap_error_ind_s {
 
 /** M3AP MBMS Service Counting Request. */
 typedef struct itti_m3ap_mbms_service_counting_req_s {
-  mce_mbms_m2ap_id_t      mce_mbms_m2ap_id;
-  enb_mbms_m2ap_id_t      enb_mbms_m2ap_id:24;
+  mce_mbms_m2ap_id_t      mce_mbms_m2ap_id:24;
+  enb_mbms_m2ap_id_t      enb_mbms_m2ap_id;
   sctp_assoc_id_t         assoc_id;
   uint32_t                enb_id;
   enum m2cause            cause;

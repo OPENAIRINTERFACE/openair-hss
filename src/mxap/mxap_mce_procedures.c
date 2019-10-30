@@ -57,8 +57,6 @@
 //static bool                             mme_ue_s1ap_id_has_wrapped = false;
 
 extern const char                      *m2ap_direction2String[];
-extern hash_table_ts_t g_m2ap_mce_id2assoc_id_coll; // contains sctp association id, key is mme_ue_s1ap_id;
-//
 //static bool
 //s1ap_add_bearer_context_to_setup_list (S1AP_E_RABToBeSetupListHOReqIEs_t * const e_RABToBeSetupListHOReq_p,
 //    S1AP_E_RABToBeSetupItemHOReq_t        * e_RABToBeSetupHO_p, bearer_contexts_to_be_created_t * bc_tbc);
@@ -83,36 +81,65 @@ m3ap_handle_mbms_session_start_request (
   mbms_description_t               		 *mbms_ref = NULL;
   m2ap_enb_description_t                 *target_enb_ref = NULL;
   M2AP_M2AP_PDU_t                         pdu = {0};
-//  S1AP_HandoverRequest_t		   		 *out;
-//  S1AP_HandoverRequestIEs_t  			 *ie = NULL;
+  M2AP_SessionStartRequest_t			 *out;
+  M2AP_SessionStartRequest_Ies_t		 *ie = NULL;
 
   OAILOG_FUNC_IN (LOG_MXAP);
   DevAssert (mbms_session_start_req_pP != NULL);
 
-//  /*
-//   * Based on the MCE_MBMS_M2AP_ID, you may or may not have a UE reference, we don't care. Just send HO_Request to the new eNB.
-//   * Check that there exists an enb reference to the target-enb.
+  /*
+   * We need to check the MBMS Service via TMGI and MBMS Service Index.
+   * Currently, only their combination must be unique and only 1 SA can be activated at a time.
+   *
+   * MCE MBMS M2AP ID is 24 bits long, so we cannot use MBMS Service Index.
+   */
+  mbms_ref = m2ap_is_mbms_mce_id_in_list(mbms_session_start_req_pP->mbms_service_idx); /**< Nothing eNB specific. */
+  if (mbms_ref) {
+    /**
+     * Just remove this implicitly without notifying the eNB.
+     * There should be complications with the response, eNB should be able to handle this.
+     */
+    OAILOG_ERROR (LOG_MXAP, " An MBMS Service Description with MBMS Service Index " MCE_MBMS_SERVICE_INDEX_FMT " already exists. Removing implicitly. \n",
+        mbms_session_start_req_pP->mbms_service_idx);
+    m2ap_remove_mbms(mbms_ref); // todo: recheck this.
+  }
+
+  /** Check that there exists at least a single eNB with the MBMS Service Area (we don't start MBMS sessions for eNBs which later on connected). */
+  mme_config_read_lock (&mme_config);
+  m2ap_enb_description_t *			         m2ap_enb_p_elements[mme_config.max_m2_enbs];
+  memset(&m2ap_enb_p_elements, 0, (sizeof(m2ap_enb_description_t*) * mme_config.max_m2_enbs));
+  mme_config_unlock (&mme_config);
+  int num_m2ap_enbs = 0;
+  m2ap_is_mbms_sai_in_list(mbms_session_start_req_pP->mbms_service_area_id, &num_m2ap_enbs, (m2ap_enb_description_t **)&m2ap_enb_p_elements);
+  if(!num_m2ap_enbs){
+    OAILOG_ERROR (LOG_MXAP, "No M2AP eNBs could be found for the MBMS SA " MBMS_SERVICE_AREA_ID_FMT" for the MBMS Service with TMGI " TMGI_FMT" and MBMS Service Index " MCE_MBMS_SERVICE_INDEX_FMT". \n",
+    	mbms_session_start_req_pP->mbms_service_area_id, TMGI_ARG(&mbms_session_start_req_pP->tmgi), mbms_session_start_req_pP->mbms_service_idx);
+    OAILOG_FUNC_OUT (LOG_MXAP);
+  }
+
+  /**
+   * We don't care to inform the MCE_APP layer.
+   * Create a new MBMS Service Description.
+   * Allocate an MCE M2AP MBMS ID (24) inside it. Will be used for all eNB associations.
+   */
+  if((mbms_ref = m2ap_new_mbms (&mbms_session_start_req_pP->tmgi, mbms_session_start_req_pP->mbms_service_area_id)) == NULL) {
+    // If we failed to allocate a new MBMS Service Description return -1
+    OAILOG_ERROR (LOG_MXAP, "M2AP:MBMS Session Start Request- Failed to allocate M2AP Service Description for TMGI " TMGI_FMT " and MBMS Service Indext "MCE_MBMS_SERVICE_INDEX_FMT ". \n",
+    	TMGI_ARG(&mbms_session_start_req_pP->tmgi), mbms_session_start_req_pP->mbms_service_idx);
+    OAILOG_FUNC_OUT (LOG_MXAP);
+  }
+
+//  /**
+//   * Update the created MBMS Service Description.
+//   * Directly set the values and don't wait for a response, we will set these values into the eNB, once the timer runs out.
+//   * We don't need the MBMS Session Duration. It will be handled in the MCE_APP layer.
 //   */
-//  target_enb_ref = s1ap_is_enb_id_in_list(handover_req_pP->macro_enb_id);
-//  if(!target_enb_ref){
-//    OAILOG_ERROR (LOG_MXAP, "No target-enb could be found for enb-id %u. Handover Failed. \n",
-//            handover_req_pP->macro_enb_id);
-//    /**
-//     * Send Handover Failure back (manually) to the MME.
-//     * This will trigger an implicit detach if the UE is not REGISTERED yet (single MME S1AP HO), or will just send a HO-PREP-FAILURE to the MME (if the cause is not S1AP-SYSTEM-FAILURE).
-//     */
-//    MessageDef                             *message_p = NULL;
-//    message_p = itti_alloc_new_message (TASK_S1AP, S1AP_HANDOVER_FAILURE);
-//    AssertFatal (message_p != NULL, "itti_alloc_new_message Failed");
-//    itti_s1ap_handover_failure_t *handover_failure_p = &message_p->ittiMsg.s1ap_handover_failure;
-//    memset ((void *)&message_p->ittiMsg.s1ap_handover_failure, 0, sizeof (itti_s1ap_handover_failure_t));
-//    /** Fill the S1AP Handover Failure elements per hand. */
-//    handover_failure_p->mme_ue_s1ap_id = handover_req_pP->ue_id;
-//    /** No need to remove any UE_Reference to the target_enb, not existing. */
-//    itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
-//    OAILOG_FUNC_OUT (LOG_MXAP);
-//  }
-//
+//  memcpy((void*)&mbms_ref->mbms_ip_mc_dist,  (void*)&mbms_session_start_req_pP->mbms_bearer_tbc.mbms_ip_mc_dist, sizeof(mbms_ip_multicast_distribution_t));
+//  memcpy((void*)&mbms_ref->bearer_level_qos, (void*)&mbms_session_start_req_pP->mbms_bearer_tbc.bc_tbc.bearer_level_qos, sizeof(bearer_qos_t));
+
+  // todo: no state! --> Check if Start & Update work without state!
+
+//  mbms_session_start_req_pP->mbms_session_dur
 //  /**
 //   * UE Reference will only be created with a valid ENB_UE_S1AP_ID!
 //   * We don't wan't to save 2 the UE reference twice in the hashmap, but only with a valid ENB_ID key.

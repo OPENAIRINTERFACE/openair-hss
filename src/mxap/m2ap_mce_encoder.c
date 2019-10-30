@@ -33,6 +33,7 @@
 #include "bstrlib.h"
 
 #include "intertask_interface.h"
+#include "mme_app_bearer_context.h"
 #include "mme_api.h"
 #include "assertions.h"
 #include "log.h"

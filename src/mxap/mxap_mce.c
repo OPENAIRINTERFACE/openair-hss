@@ -69,10 +69,11 @@
 #endif
 
 
-uint32_t                                nb_enb_associated = 0;
+uint32_t                                nb_m2ap_enb_associated = 0;
 
 hash_table_ts_t g_m2ap_enb_coll = {.mutex = PTHREAD_MUTEX_INITIALIZER, 0}; // contains eNB_description_s, key is eNB_description_s.enb_id (uint32_t);
-hash_table_ts_t g_m2ap_mce_id2assoc_id_coll = {.mutex = PTHREAD_MUTEX_INITIALIZER, 0}; // contains sctp association id, key is mce_mbms_m2ap_id;
+hash_table_ts_t g_m2ap_mbms_coll = {.mutex = PTHREAD_MUTEX_INITIALIZER, 0}; // contains MBMS_description_s, key is MBMS_description_s.mbms_m2ap_id (uint24_t);
+/** An MBMS Service can be associated to multiple SCTP IDs. */
 
 static int                              indent = 0;
 extern struct mme_config_s              mme_config;
@@ -113,19 +114,81 @@ static int m2ap_send_init_sctp (void)
 }
 
 //------------------------------------------------------------------------------
+static bool m2ap_mbms_remove_sctp_assoc_id_cb (__attribute__((unused)) const hash_key_t keyP,
+                                      void * const elementP, void * parameterP, void **resultP)
+{
+  mbms_description_t                       *mbms_ref           = (mbms_description_t*)elementP;
+  hashtable_ts_free(&mbms_ref->g_m2ap_assoc_id2mce_enb_id_coll, keyP);
+  m2ap_enb_description_t * m2ap_enb_ref = m2ap_is_enb_assoc_id_in_list((sctp_assoc_id_t)keyP);
+  m2ap_enb_ref->nb_mbms_associated--;
+  return false;
+}
+
+//------------------------------------------------------------------------------
 static void
 m2ap_remove_enb (
   void ** enb_ref)
 {
-	m2ap_enb_description_t                      *m2ap_enb_description = NULL;
-
+  m2ap_enb_description_t                      *m2ap_enb_description = NULL;
   if (*enb_ref ) {
 	  m2ap_enb_description = (m2ap_enb_description_t*)(*enb_ref);
-	  hashtable_ts_destroy(&m2ap_enb_description->mbms_coll);
+	  /** Go through the MBMS Services, and remove the SCTP association. */
+	  if(m2ap_enb_description->nb_mbms_associated) {
+	    mbms_description_t                   *mbms_ref = NULL;
+	    sctp_assoc_id_t			 	 		 *sctp_assoc_id_p = &m2ap_enb_description->sctp_assoc_id;
+	    hashtable_ts_apply_callback_on_elements((hash_table_ts_t * const)&g_m2ap_mbms_coll,
+	    		m2ap_mbms_remove_sctp_assoc_id_cb, (void*)sctp_assoc_id_p, (void**)&mbms_ref);
+	  }
+	  DevAssert(!m2ap_enb_description->nb_mbms_associated);
 	  free_wrapper(enb_ref);
-	  nb_enb_associated--;
+	  nb_m2ap_enb_associated--;
   }
   return;
+}
+
+//------------------------------------------------------------------------------
+static
+bool m2ap_enb_compare_by_mbms_sai_cb (__attribute__((unused)) const hash_key_t keyP,
+                                    void * const elementP,
+                                    void * parameterP, void **resultP)
+{
+  const mbms_service_area_id_t * const mbms_sai_p  = (const mbms_service_area_id_t *const)parameterP;
+  m2ap_enb_description_t       * m2ap_enb_ref  	    = (m2ap_enb_description_t*)elementP;
+  for(int i = 0; i < m2ap_enb_ref->mbms_sa_list.num_service_area; i++) {
+    if (*mbms_sai_p == m2ap_enb_ref->mbms_sa_list.serviceArea[i]) {
+      *resultP = elementP;
+      return true;
+    }
+  }
+  return false;
+}
+
+//------------------------------------------------------------------------------
+static bool m2ap_mbms_compare_by_tmgi_cb (__attribute__((unused)) const hash_key_t keyP,
+                                      void * const elementP, void * parameterP, void **resultP)
+{
+  mce_mbms_m2ap_id_t                      * mce_mbms_m2ap_id_p = (mce_mbms_m2ap_id_t*)parameterP;
+  mbms_description_t                       *mbms_ref           = (mbms_description_t*)elementP;
+  if ( *mce_mbms_m2ap_id_p == mbms_ref->mce_mbms_m2ap_id ) {
+    *resultP = elementP;
+    OAILOG_TRACE(LOG_MXAP, "Found mbms_ref %p mce_mbms_m2ap_id " MCE_MBMS_M2AP_ID_FMT "\n", mbms_ref, mbms_ref->mce_mbms_m2ap_id);
+    return true;
+  }
+  return false;
+}
+
+//------------------------------------------------------------------------------
+static bool m2ap_mbms_compare_by_mce_mbms_id_cb (__attribute__((unused)) const hash_key_t keyP,
+                                      void * const elementP, void * parameterP, void **resultP)
+{
+  mce_mbms_m2ap_id_t                      * mce_mbms_m2ap_id_p = (mce_mbms_m2ap_id_t*)parameterP;
+  mbms_description_t                       *mbms_ref           = (mbms_description_t*)elementP;
+  if ( *mce_mbms_m2ap_id_p == mbms_ref->mce_mbms_m2ap_id ) {
+    *resultP = elementP;
+    OAILOG_TRACE(LOG_MXAP, "Found mbms_ref %p mce_mbms_m2ap_id " MCE_MBMS_M2AP_ID_FMT "\n", mbms_ref, mbms_ref->mce_mbms_m2ap_id);
+    return true;
+  }
+  return false;
 }
 
 //------------------------------------------------------------------------------
@@ -307,15 +370,19 @@ mxap_mce_init(void)
   }
 
   OAILOG_DEBUG (LOG_MXAP, "M2AP Release v%s\n", M2AP_VERSION);
+
+  /** Free the M2AP eNB list. */
   // 16 entries for n eNB.
   bstring bs1 = bfromcstr("m2ap_eNB_coll");
   hash_table_ts_t* h = hashtable_ts_init (&g_m2ap_enb_coll, mme_config.max_m2_enbs, NULL, m2ap_remove_enb, bs1); /**< Use a better removal handler. */
   bdestroy_wrapper (&bs1);
   if (!h) return RETURNerror;
 
-  bstring bs2 = bfromcstr("m2ap_mce_id2assoc_id_coll");
-  h = hashtable_ts_init (&g_m2ap_mce_id2assoc_id_coll, mme_config.max_mbms_services, NULL, hash_free_int_func, bs2);
-  bdestroy_wrapper (&bs2);
+  /** Free all MBMS Services and clear the association list. */
+  // 16 entries for n eNB.
+  bs1 = bfromcstr("m2ap_MBMS_coll");
+  h = hashtable_ts_init (&g_m2ap_mbms_coll, mme_config.max_mbms_services, NULL, m2ap_remove_mbms, bs1); /**< Use a better removal handler. */
+  bdestroy_wrapper (&bs1);
   if (!h) return RETURNerror;
 
   if (itti_create_task (TASK_MXAP, &m2ap_mce_thread, NULL) < 0) {
@@ -328,12 +395,12 @@ mxap_mce_init(void)
 void mxap_mce_exit (void)
 {
   OAILOG_DEBUG (LOG_MXAP, "Cleaning MXAP\n");
+  if (hashtable_ts_destroy(&g_m2ap_mbms_coll) != HASH_TABLE_OK) {
+    OAILOG_ERROR(LOG_MXAP, "An error occurred while destroying MBMS Service hash table. \n");
+  }
 
   if (hashtable_ts_destroy(&g_m2ap_enb_coll) != HASH_TABLE_OK) {
-    OAILOG_ERROR(LOG_MXAP, "An error occured while destroying s1 eNB hash table. \n");
-  }
-  if (hashtable_ts_destroy(&g_m2ap_mce_id2assoc_id_coll) != HASH_TABLE_OK) {
-    OAILOG_ERROR(LOG_MXAP, "An error occured while destroying assoc_id hash table. \n");
+    OAILOG_ERROR(LOG_MXAP, "An error occurred while destroying M2 eNB hash table. \n");
   }
   OAILOG_DEBUG (LOG_MXAP, "Cleaning MXAP: DONE\n");
 }
@@ -363,7 +430,7 @@ bool m2ap_dump_enb_hash_cb (__attribute__((unused))const hash_key_t keyP,
 //------------------------------------------------------------------------------
 void
 m2ap_dump_enb (
-  const m2ap_enb_description_t * const enb_ref)
+  const m2ap_enb_description_t * const m2ap_enb_ref)
 {
 #  ifdef M2AP_DEBUG_LIST
   //Reset indentation
@@ -374,12 +441,12 @@ m2ap_dump_enb (
   }
 
   eNB_LIST_OUT ("");
-  eNB_LIST_OUT ("eNB name:           %s", enb_ref->enb_name == NULL ? "not present" : enb_ref->enb_name);
-  eNB_LIST_OUT ("eNB ID:             %07x", enb_ref->enb_id);
-  eNB_LIST_OUT ("SCTP assoc id:      %d", enb_ref->sctp_assoc_id);
-  eNB_LIST_OUT ("SCTP instreams:     %d", enb_ref->instreams);
-  eNB_LIST_OUT ("SCTP outstreams:    %d", enb_ref->outstreams);
-  eNB_LIST_OUT ("MBMS active on eNB: %d", enb_ref->nb_mbms_associated);
+  eNB_LIST_OUT ("eNB name:           %s", m2ap_enb_ref->m2ap_enb_name == NULL ? "not present" : m2ap_enb_ref->m2ap_enb_name);
+  eNB_LIST_OUT ("eNB ID:             %07x", m2ap_enb_ref->m2ap_enb_id);
+  eNB_LIST_OUT ("SCTP assoc id:      %d", m2ap_enb_ref->sctp_assoc_id);
+  eNB_LIST_OUT ("SCTP instreams:     %d", m2ap_enb_ref->instreams);
+  eNB_LIST_OUT ("SCTP outstreams:    %d", m2ap_enb_ref->outstreams);
+  eNB_LIST_OUT ("MBMS active on eNB: %d", m2ap_enb_ref->nb_mbms_associated);
   indent++;
   hashtable_ts_apply_callback_on_elements((hash_table_ts_t * const)&enb_ref->mbms_coll, m2ap_dump_mbms_hash_cb, NULL, NULL);
   indent--;
@@ -420,13 +487,13 @@ m2ap_dump_mbms (const mbms_description_t * const mbms_ref)
 }
 
 //------------------------------------------------------------------------------
-bool m2ap_enb_compare_by_enb_id_cb (__attribute__((unused)) const hash_key_t keyP,
+bool m2ap_enb_compare_by_m2ap_enb_id_cb (__attribute__((unused)) const hash_key_t keyP,
                                     void * const elementP,
                                     void * parameterP, void **resultP)
 {
-  const uint32_t                  * const enb_id_p = (const uint32_t*const)parameterP;
-  m2ap_enb_description_t                      *enb_ref  = (m2ap_enb_description_t*)elementP;
-  if ( *enb_id_p == enb_ref->enb_id ) {
+  const uint32_t                  * const m2ap_enb_id_p = (const uint32_t*const)parameterP;
+  m2ap_enb_description_t          * m2ap_enb_ref  = (m2ap_enb_description_t*)elementP;
+  if (*m2ap_enb_id_p == m2ap_enb_ref->m2ap_enb_id ) {
     *resultP = elementP;
     return true;
   }
@@ -436,35 +503,31 @@ bool m2ap_enb_compare_by_enb_id_cb (__attribute__((unused)) const hash_key_t key
 //------------------------------------------------------------------------------
 m2ap_enb_description_t                      *
 m2ap_is_enb_id_in_list (
-  const uint32_t enb_id)
+  const uint32_t m2ap_enb_id)
 {
-  m2ap_enb_description_t                      *enb_ref = NULL;
-  uint32_t                               *enb_id_p  = (uint32_t*)&enb_id;
-  hashtable_ts_apply_callback_on_elements((hash_table_ts_t * const)&g_m2ap_enb_coll, m2ap_enb_compare_by_enb_id_cb, (void *)enb_id_p, (void**)&enb_ref);
-  return enb_ref;
+  m2ap_enb_description_t                 *m2ap_enb_ref = NULL;
+  uint32_t                               *m2ap_enb_id_p  = (uint32_t*)&m2ap_enb_id;
+  hashtable_ts_apply_callback_on_elements((hash_table_ts_t * const)&g_m2ap_enb_coll, m2ap_enb_compare_by_m2ap_enb_id_cb, (void *)m2ap_enb_id_p, (void**)&m2ap_enb_ref);
+  return m2ap_enb_ref;
 }
-//
-////------------------------------------------------------------------------------
-//void m2ap_is_tac_in_list (
-//  const tac_t tac,
-//  int *num_enbs,
-//  m2ap_enb_description_t ** enbs)
-//{
-//  m2ap_enb_description_t                      *enb_ref = NULL;
-//  tac_t                                  *tac_p   = (tac_t*)&tac;
-//
-//  /** Collect all eNBs for the given TAC. */
-//  hashtable_element_array_t              ea;
-////  m2ap_enb_description_t *			         enb_p_elements[mme_config.max_m2_enbs];
-//  memset(&ea, 0, sizeof(hashtable_element_array_t));
-////  memset(&enb_p_elements, 0, (sizeof(m2ap_enb_description_t*) * mme_config.max_m2_enbs));
-//  ea.elements = enbs;
-//
-//  hashtable_ts_apply_list_callback_on_elements((hash_table_ts_t * const)&g_m2ap_enb_coll, m2ap_enb_compare_by_tac_cb, (void *)tac_p, &ea);
-//  OAILOG_DEBUG(LOG_MXAP, "Found %d matching enb references based on the received tac " TAC_FMT ". \n", ea.num_elements, tac);
-//  *num_enbs = ea.num_elements;
-////  *enbs = enb_p_elements;
-//}
+
+//------------------------------------------------------------------------------
+void m2ap_is_mbms_sai_in_list (
+  const mbms_service_area_id_t mbms_sai,
+  int *num_m2ap_enbs,
+  m2ap_enb_description_t ** m2ap_enbs)
+{
+  m2ap_enb_description_t                 *m2ap_enb_ref 	= NULL;
+  mbms_service_area_id_t                 *mbms_sai_p  	= (mbms_service_area_id_t*)&mbms_sai;
+
+  /** Collect all M2AP eNBs for the given MBMS Service Area Id. */
+  hashtable_element_array_t              ea;
+  memset(&ea, 0, sizeof(hashtable_element_array_t));
+  ea.elements = m2ap_enbs;
+  hashtable_ts_apply_list_callback_on_elements((hash_table_ts_t * const)&g_m2ap_enb_coll, m2ap_enb_compare_by_mbms_sai_cb, (void *)mbms_sai_p, &ea);
+  OAILOG_DEBUG(LOG_MXAP, "Found %d matching m2ap_enb references based on the received MBMS SAI" MBMS_SERVICE_AREA_ID_FMT". \n", ea.num_elements, mbms_sai);
+  *num_m2ap_enbs = ea.num_elements;
+}
 
 //------------------------------------------------------------------------------
 m2ap_enb_description_t                      *
@@ -489,60 +552,6 @@ bool m2ap_mbms_compare_by_enb_mbms_m2ap_id_cb (__attribute__((unused)) const has
   }
   return false;
 }
-//------------------------------------------------------------------------------
-mbms_description_t                       *
-m2ap_is_mbms_enb_id_in_list (
-  m2ap_enb_description_t * enb_ref,
-  const enb_mbms_m2ap_id_t enb_mbms_m2ap_id)
-{
-  mbms_description_t                       *mbms_ref = NULL;
-  hashtable_ts_get ((hash_table_ts_t * const)&enb_ref->mbms_coll, (const hash_key_t)enb_mbms_m2ap_id, (void **)&mbms_ref);
-  return mbms_ref;
-}
-
-//------------------------------------------------------------------------------
-mbms_description_t                       *
-m2ap_is_enb_mbms_m2ap_id_in_list_per_enb (
-  const enb_mbms_m2ap_id_t enb_mbms_m2ap_id,
-  const uint32_t  enb_id)
-{
-  mbms_description_t                       *mbms_ref = NULL;
-  m2ap_enb_description_t                      *enb_ref = NULL;
-  enb_ref = m2ap_is_enb_id_in_list(enb_id);
-  if(enb_ref == NULL){
-    return NULL;
-  }
-  /** Continue to search. */
-  return m2ap_is_mbms_enb_id_in_list(enb_ref, enb_mbms_m2ap_id);
-}
-
-//------------------------------------------------------------------------------
-bool m2ap_mbms_compare_by_mce_mbms_id_cb (__attribute__((unused)) const hash_key_t keyP,
-                                      void * const elementP, void * parameterP, void **resultP)
-{
-  mce_mbms_m2ap_id_t                      * mce_mbms_m2ap_id_p = (mce_mbms_m2ap_id_t*)parameterP;
-  mbms_description_t                       *mbms_ref           = (mbms_description_t*)elementP;
-  if ( *mce_mbms_m2ap_id_p == mbms_ref->mce_mbms_m2ap_id ) {
-    *resultP = elementP;
-    OAILOG_TRACE(LOG_MXAP, "Found mbms_ref %p mce_mbms_m2ap_id " MCE_MBMS_M2AP_ID_FMT "\n", mbms_ref, mbms_ref->mce_mbms_m2ap_id);
-    return true;
-  }
-  return false;
-}
-
-//------------------------------------------------------------------------------
-bool m2ap_enb_find_mbms_by_mce_mbms_id_cb (__attribute__((unused))const hash_key_t keyP,
-                                       void * const elementP, void * parameterP, void **resultP)
-{
-  m2ap_enb_description_t                      *enb_ref = (m2ap_enb_description_t*)elementP;
-
-  hashtable_ts_apply_callback_on_elements((hash_table_ts_t * const)&enb_ref->mbms_coll, m2ap_mbms_compare_by_mce_mbms_id_cb, parameterP, resultP);
-  if (*resultP) {
-    OAILOG_TRACE(LOG_MXAP, "Found mbms_ref %p mce_mbms_m2ap_id " MCE_MBMS_M2AP_ID_FMT "\n", *resultP, ((mbms_description_t*)(*resultP))->mce_mbms_m2ap_id);
-    return true;
-  }
-  return false;
-}
 
 //------------------------------------------------------------------------------
 mbms_description_t                       *
@@ -552,71 +561,64 @@ m2ap_is_mbms_mce_id_in_list (
   mbms_description_t                       *mbms_ref = NULL;
   mce_mbms_m2ap_id_t                       *mce_mbms_m2ap_id_p = (mce_mbms_m2ap_id_t*)&mce_mbms_m2ap_id;
 
-  hashtable_ts_apply_callback_on_elements(&g_m2ap_enb_coll, m2ap_enb_find_mbms_by_mce_mbms_id_cb, (void*)mce_mbms_m2ap_id_p, (void**)&mbms_ref);
-//  OAILOG_TRACE(LOG_MXAP, "Return mbms_ref %p \n", mbms_ref);
+  hashtable_ts_apply_callback_on_elements((hash_table_ts_t * const)&g_m2ap_mbms_coll, m2ap_mbms_compare_by_mce_mbms_id_cb, (void*)mce_mbms_m2ap_id_p, (void**)&mbms_ref);
+  if (mbms_ref) {
+    OAILOG_TRACE(LOG_MXAP, "Found mbms_ref %p mce_mbms_m2ap_id " MCE_MBMS_M2AP_ID_FMT "\n", mbms_ref, mbms_ref->mce_mbms_m2ap_id);
+  }
   return mbms_ref;
 }
-//
-////------------------------------------------------------------------------------
-//void m2ap_notified_new_mbms_mce_m2ap_id_association (
-//    const sctp_assoc_id_t  sctp_assoc_id,
-//    const enb_mbms_m2ap_id_t enb_mbms_m2ap_id,
-//    const mce_mbms_m2ap_id_t mce_mbms_m2ap_id)
-//{
-//  m2ap_enb_description_t   *enb_ref =  m2ap_is_enb_assoc_id_in_list (sctp_assoc_id);
-//
-//  mbms_description_t * ue_ref_test = NULL;
-//
-//  if (enb_ref) {
-//    mbms_description_t   *mbms_ref = m2ap_is_mbms_enb_id_in_list (enb_ref,enb_mbms_m2ap_id);
-//    if (mbms_ref) {
-//      mbms_ref->mce_mbms_m2ap_id = mce_mbms_m2ap_id;
-//      hashtable_rc_t  h_rc = hashtable_ts_insert (&g_m2ap_mce_id2assoc_id_coll, (const hash_key_t) mce_mbms_m2ap_id, (void *)(uintptr_t)sctp_assoc_id);
-////      OAILOG_DEBUG(LOG_MXAP, "Associated  sctp_assoc_id %d, enb_mbms_m2ap_id " ENB_MBMS_M2AP_ID_FMT ", mce_mbms_m2ap_id " MCE_MBMS_M2AP_ID_FMT ":%s \n",
-////          sctp_assoc_id, enb_mbms_m2ap_id, mce_mbms_m2ap_id, hashtable_rc_code2string(h_rc));
-//
-//      ue_ref_test = m2ap_is_mbms_mce_id_in_list (mce_mbms_m2ap_id);
-//      DevAssert(ue_ref_test);
-//      return;
-//    }
-//    OAILOG_DEBUG(LOG_MXAP, "Could not find  ue  with enb_mbms_m2ap_id " ENB_MBMS_M2AP_ID_FMT "\n", enb_mbms_m2ap_id);
-//    ue_ref_test = m2ap_is_mbms_mce_id_in_list (mce_mbms_m2ap_id);
-//    return;
-//  }
-//  OAILOG_DEBUG(LOG_MXAP, "Could not find  eNB with sctp_assoc_id %d \n", sctp_assoc_id);
-//}
+
+//------------------------------------------------------------------------------
+mbms_description_t                       *
+m2ap_is_tmgi_in_list (
+  const tmgi_t * const tmgi, const mbms_service_area_id_t mbms_sai)
+{
+  mbms_description_t                     *mbms_ref = NULL;
+  m2ap_tmgi_t						   	  m2ap_tmgi = {.tmgi = *tmgi, .mbms_service_area_id_t = mbms_sai};
+  m2ap_tmgi_t				 	 		 *m2ap_tmgi_p = &m2ap_tmgi;
+
+  hashtable_ts_apply_callback_on_elements((hash_table_ts_t * const)&g_m2ap_mbms_coll, m2ap_mbms_compare_by_tmgi_cb, (void*)m2ap_tmgi_p, (void**)&mbms_ref);
+  if (mbms_ref) {
+    OAILOG_TRACE(LOG_MXAP, "Found mbms_ref %p for TMGI " TMGI_FMT " and MBMS-SAI " MBMS_SERVICE_AREA_ID_FMT ". \n", mbms_ref, TMGI_ARG(tmgi), mbms_sai);
+  }
+  return mbms_ref;
+}
 
 //------------------------------------------------------------------------------
 m2ap_enb_description_t *m2ap_new_enb (void)
 {
-  m2ap_enb_description_t                      *enb_ref = NULL;
+  m2ap_enb_description_t                      *m2ap_enb_ref = NULL;
 
-  enb_ref = calloc (1, sizeof (m2ap_enb_description_t));
+  m2ap_enb_ref = calloc (1, sizeof (m2ap_enb_description_t));
   /*
    * Something bad happened during malloc...
    * * * * May be we are running out of memory.
    * * * * TODO: Notify eNB with a cause like Hardware Failure.
    */
-  DevAssert (enb_ref != NULL);
-  // Update number of eNB associated
-  nb_enb_associated++;
-  bstring bs = bfromcstr("m2ap_mbms_coll");
-  hashtable_ts_init(&enb_ref->mbms_coll, mme_config.max_mbms_services, NULL, free_wrapper, bs);
-  bdestroy_wrapper (&bs);
-  enb_ref->nb_mbms_associated = 0;
-  return enb_ref;
+  DevAssert (m2ap_enb_ref != NULL);
+  /** No table for MBMS. */
+  return m2ap_enb_ref;
 }
 
 //------------------------------------------------------------------------------
 mbms_description_t                       *
 m2ap_new_mbms (
-  const sctp_assoc_id_t sctp_assoc_id, enb_mbms_m2ap_id_t enb_mbms_m2ap_id)
+  const tmgi_t * const tmgi, const mbms_service_area_id_t mbms_sai)
 {
-  m2ap_enb_description_t                      *enb_ref = NULL;
+  m2ap_enb_description_t                   *m2ap_enb_ref = NULL;
   mbms_description_t                       *mbms_ref = NULL;
 
-  enb_ref = m2ap_is_enb_assoc_id_in_list (sctp_assoc_id);
-  DevAssert (enb_ref != NULL);
+  mce_mbms_m2ap_id_t						mce_mbms_m2ap_id = INVALID_MCE_MBMS_M2AP_ID;
+
+  /** Try to generate a new MBMS M2AP Id. */
+  mce_mbms_m2ap_id = generate_new_mce_mbms_m2ap_id();
+  if(mce_mbms_m2ap_id == INVALID_MCE_MBMS_M2AP_ID){
+	return NULL;
+  }
+  /** Assert that it is not reused. */
+  DevAssert(!m2ap_is_mbms_mce_id_in_list(mce_mbms_m2ap_id));
+
+  /** No eNB reference needed at this stage. */
   mbms_ref = calloc (1, sizeof (mbms_description_t));
   /*
    * Something bad happened during malloc...
@@ -624,18 +626,18 @@ m2ap_new_mbms (
    * * * * TODO: Notify eNB with a cause like Hardware Failure.
    */
   DevAssert (mbms_ref != NULL);
-  mbms_ref->enb = enb_ref;
-  mbms_ref->enb_mbms_m2ap_id = enb_mbms_m2ap_id;
-  // Increment number of UE
-  enb_ref->nb_mbms_associated++;
-
-  hashtable_rc_t  hashrc = hashtable_ts_insert (&enb_ref->mbms_coll, (const hash_key_t) enb_mbms_m2ap_id, (void *)mbms_ref);
-  if (HASH_TABLE_OK != hashrc) {
-    OAILOG_ERROR(LOG_MXAP, "Could not insert MBMS descr in mbms_coll: %s\n", hashtable_rc_code2string(hashrc));
-    free_wrapper((void**)&mbms_ref);
-    return NULL;
-  }
-  MSC_LOG_EVENT (MSC_M2AP_MME, " Associating ue  (enb_mbms_m2ap_id: " ENB_MBMS_M2AP_ID_FMT ") to eNB %s", mbms_ref->mce_mbms_m2ap_id, enb_ref->enb_name);
+  mbms_ref->mce_mbms_m2ap_id = mce_mbms_m2ap_id;
+  memcpy((void*)&mbms_ref->tmgi, (void*)tmgi, sizeof(tmgi_t));
+  mbms_ref->mbms_service_area_id = mbms_sai;  /**< Only supporting a single MBMS Service Area ID. */
+  /**
+   * Create and initialize the SCTP eNB MBMS M2aP Id map.
+   */
+//  mbms_ref->g_m2ap_assoc_id2mce_enb_id_coll.mutex = PTHREAD_MUTEX_INITIALIZER; // contains enb MBMS M2AP Id, key is sctp_assoc;
+  bstring bs2 = bfromcstr("m2ap_assoc_id2enb_mbms_id_coll");
+  hash_table_ts_t* h = hashtable_ts_init (&mbms_ref->g_m2ap_assoc_id2mce_enb_id_coll, mme_config.max_mbms_services, NULL, hash_free_int_func, bs2);
+  bdestroy_wrapper (&bs2);
+  if (!h) return RETURNerror;
+  /** MBMS is not inserted into any M2AP eNB or and vice versa at this stage. */
   return mbms_ref;
 }
 
@@ -644,51 +646,51 @@ void
 m2ap_remove_mbms (
   mbms_description_t * mbms_ref)
 {
-  m2ap_enb_description_t                      *enb_ref = NULL;
-
+  m2ap_enb_description_t                      *m2ap_enb_ref = NULL;
   /*
    * NULL reference...
    */
   if (mbms_ref == NULL)
     return;
-
   mce_mbms_m2ap_id_t mce_mbms_m2ap_id = mbms_ref->mce_mbms_m2ap_id;
-  enb_ref = mbms_ref->enb;
-  /*
-   * Updating number of UE
-   */
-  DevAssert(enb_ref->nb_mbms_associated > 0);
-  enb_ref->nb_mbms_associated--;
-
-  /*
-   * Remove any attached timer
-   */
-  /** Stop MBMS Context Release Complete timer,if running. */
-//  if (mbms_ref->m2ap_mbms_context_rel_timer.id != M2AP_TIMER_INACTIVE_ID) {
-//    if (timer_remove (mbms_ref->m2ap_mbms_context_rel_timer.id, NULL)) {
-//      OAILOG_ERROR (LOG_MXAP, "Failed to stop m2ap mbms context release complete timer for MBMS id  %d \n", mbms_ref->mce_mbms_m2ap_id);
-//    }
-//    mbms_ref->m2ap_mbms_context_rel_timer.id = M2AP_TIMER_INACTIVE_ID;
-//  }
-//
-//  //     m2ap_timer_remove_mbms(mbms_ref->mce_mbms_m2ap_id);
-//  OAILOG_TRACE(LOG_MXAP, "Removing MBMS enb_mbms_m2ap_id: " ENB_MBMS_M2AP_ID_FMT " mce_mbms_m2ap_id:" MCE_MBMS_M2AP_ID_FMT " in eNB id : %d\n",
-//      mbms_ref->enb_mbms_m2ap_id, mbms_ref->mce_mbms_m2ap_id, enb_ref->enb_id);
-//
-//  mbms_ref->m2_mbms_state = M2AP_MBMS_INVALID_STATE;
-//  hashtable_ts_free (&enb_ref->mbms_coll, mbms_ref->enb_mbms_m2ap_id);
-
-  /** We will try to remove the SCTP association too, but it will anyways be set after the handover is completed. */
-  hashtable_ts_free (&g_m2ap_mce_id2assoc_id_coll, mce_mbms_m2ap_id);
-
-  if (!enb_ref->nb_mbms_associated) {
-    if (enb_ref->m2_state == M2AP_RESETING) {
-      OAILOG_INFO(LOG_MXAP, "Moving eNB state to M2AP_INIT");
-      enb_ref->m2_state = M2AP_INIT;
-      update_mce_app_stats_connected_enb_sub();
-    } else if (enb_ref->m2_state == M2AP_SHUTDOWN) {
-      OAILOG_INFO(LOG_MXAP, "Deleting eNB");
-      hashtable_ts_free (&g_m2ap_enb_coll, enb_ref->sctp_assoc_id);
+  /** Stop MBMS Action timer,if running. */
+  if (mbms_ref->m2ap_action_timer.id != M2AP_TIMER_INACTIVE_ID) {
+    if (timer_remove (mbms_ref->m2ap_action_timer.id, NULL)) {
+      OAILOG_ERROR (LOG_MXAP, "Failed to stop m2ap mbms context action timer for MBMS id  " MCE_MBMS_M2AP_ID_FMT " \n",
+    	mbms_ref->mce_mbms_m2ap_id);
     }
+    mbms_ref->m2ap_action_timer.id = M2AP_TIMER_INACTIVE_ID;
+  }
+  /** Remove the MBMS Bearer and IP MC information. */
+  DevAssert(!mbms_ref->mbms_bc.eps_bearer_context.esm_ebr_context.tft);
+  /** We will try to remove the SCTP association too, but it will anyways be set after the handover is completed. */
+  hashtable_key_array_t * enb_sctp_ids = hashtable_ts_get_keys (&mbms_ref->g_m2ap_assoc_id2mce_enb_id_coll);
+  if(enb_sctp_ids){
+	for(int i = 0; i < enb_sctp_ids->num_keys; i++) {
+	  /** Get the eNB from the SCTP association. */
+	  m2ap_enb_ref = m2ap_is_enb_assoc_id_in_list(enb_sctp_ids->keys[i]);
+	  if(m2ap_enb_ref) {
+	    /** Updating number of MBMS Services of the MBMS eNB. */
+	    DevAssert(m2ap_enb_ref->nb_mbms_associated > 0);
+	    m2ap_enb_ref->nb_mbms_associated--;
+	    if (!m2ap_enb_ref->nb_mbms_associated) {
+	      if (m2ap_enb_ref->m2_state == M2AP_RESETING) {
+	        OAILOG_INFO(LOG_MXAP, "Moving M2AP eNB state to M2AP_INIT");
+	        m2ap_enb_ref->m2_state = M2AP_INIT;
+	        update_mce_app_stats_connected_enb_sub();
+	      } else if (m2ap_enb_ref->m2_state == M2AP_SHUTDOWN) {
+	    	OAILOG_INFO(LOG_MXAP, "Deleting eNB");
+	    	hashtable_ts_free (&g_m2ap_enb_coll, m2ap_enb_ref->sctp_assoc_id);
+	      }
+	    }
+	  }
+	  /** Remove it from list. */
+	  hashtable_ts_free(&mbms_ref->g_m2ap_assoc_id2mce_enb_id_coll, enb_sctp_ids->keys[i]);
+	}
+    free_wrapper(&enb_sctp_ids);
+  }
+  /** Destroy the Map. */
+  if (hashtable_ts_destroy(&mbms_ref->g_m2ap_assoc_id2mce_enb_id_coll) != HASH_TABLE_OK) {
+    OAILOG_ERROR(LOG_MXAP, "An error occurred while destroying enb_mbms_id hash table. \n");
   }
 }

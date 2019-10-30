@@ -476,13 +476,6 @@ s1ap_generate_s1_setup_response (
   mme_config_read_lock (&mme_config);
 
   ie = (S1AP_S1SetupResponseIEs_t *)calloc(1, sizeof(S1AP_S1SetupResponseIEs_t));
-  ie->id = S1AP_ProtocolIE_ID_id_RelativeMMECapacity;
-  ie->criticality = S1AP_Criticality_ignore;
-  ie->value.present = S1AP_S1SetupResponseIEs__value_PR_RelativeMMECapacity;
-  ie->value.choice.RelativeMMECapacity = mme_config.relative_capacity;
-  ASN_SEQUENCE_ADD(&out->protocolIEs.list, ie);
-
-  ie = (S1AP_S1SetupResponseIEs_t *)calloc(1, sizeof(S1AP_S1SetupResponseIEs_t));
   ie->id = S1AP_ProtocolIE_ID_id_ServedGUMMEIs;
   ie->criticality = S1AP_Criticality_reject;
   ie->value.present = S1AP_S1SetupResponseIEs__value_PR_ServedGUMMEIs;
@@ -538,6 +531,15 @@ s1ap_generate_s1_setup_response (
   ASN_SEQUENCE_ADD(&ie->value.choice.ServedGUMMEIs.list, servedGUMMEI);
 
   ASN_SEQUENCE_ADD(&out->protocolIEs.list, ie);
+
+
+  ie = (S1AP_S1SetupResponseIEs_t *)calloc(1, sizeof(S1AP_S1SetupResponseIEs_t));
+  ie->id = S1AP_ProtocolIE_ID_id_RelativeMMECapacity;
+  ie->criticality = S1AP_Criticality_ignore;
+  ie->value.present = S1AP_S1SetupResponseIEs__value_PR_RelativeMMECapacity;
+  ie->value.choice.RelativeMMECapacity = mme_config.relative_capacity;
+  ASN_SEQUENCE_ADD(&out->protocolIEs.list, ie);
+
 
   mme_config_unlock (&mme_config);
   /*

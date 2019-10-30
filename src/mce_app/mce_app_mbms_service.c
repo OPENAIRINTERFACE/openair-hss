@@ -225,7 +225,7 @@ mce_app_handle_mbms_session_start_request(
   /** Trigger M3AP MBMS Session Start Request. */
   mbms_service_idx      = mce_get_mbms_service_index(&mbms_service->privates.fields.tmgi, mbms_service_area_id);
   mce_app_itti_m3ap_mbms_session_start_request(&mbms_session_start_request_pP->tmgi, mbms_service_area_id, mbms_service_idx, &mbms_session_start_request_pP->mbms_bearer_level_qos,
-	&mbms_service->privates.fields.mbms_bc.mbms_ip_mc_distribution, abs_start_time_sec, &mbms_session_start_request_pP->mbms_session_duration);
+	&mbms_service->privates.fields.mbms_bc.mbms_ip_mc_distribution, abs_start_time_sec);
   /**
    * Directly respond to the MBMS-GW.
    * Don't wait to check, if the E-UTRAN has been established, not worth it.
@@ -407,7 +407,7 @@ mce_app_handle_mbms_session_update_request(
   mbms_service_idx = mce_get_mbms_service_index(&mbms_service->privates.fields.tmgi, mbms_service_area_id);
   mce_app_itti_m3ap_mbms_session_update_request(&mbms_session_update_request_pP->tmgi, mbms_service_area_id, mbms_service_idx,
 	mbms_session_update_request_pP->mbms_bearer_level_qos, &mbms_service->privates.fields.mbms_bc.mbms_ip_mc_distribution,
-	&mbms_session_update_request_pP->mbms_session_duration, abs_update_time_sec);
+	abs_update_time_sec);
 
   /**
    * Directly respond to the MBMS-GW.

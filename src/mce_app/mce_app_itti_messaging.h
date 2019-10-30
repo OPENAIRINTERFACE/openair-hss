@@ -44,11 +44,11 @@ void mce_app_itti_sm_mbms_session_stop_response(teid_t mme_sm_teid, teid_t mbms_
 
 /** M3AP Session Start Request. */
 void mce_app_itti_m3ap_mbms_session_start_request(tmgi_t * tmgi, mbms_service_area_id_t mbms_service_area_id, mbms_service_index_t mbms_service_idx,
-  bearer_qos_t * mbms_bearer_qos, mbms_ip_multicast_distribution_t * mbms_ip_mc_dist, mbms_session_duration_t * mbms_session_duration, const uint32_t time_to_start_in_sec);
+  bearer_qos_t * mbms_bearer_qos, mbms_ip_multicast_distribution_t * mbms_ip_mc_dist, const uint32_t time_to_start_in_sec);
 
 /** M3AP Session Update Request. */
 void mce_app_itti_m3ap_mbms_session_update_request(tmgi_t * tmgi, mbms_service_area_id_t mbms_service_area_id, mbms_service_index_t mbms_service_idx,
-  bearer_qos_t * mbms_bearer_qos, mbms_ip_multicast_distribution_t * mbms_ip_mc_dist, mbms_session_duration_t * mbms_session_duration, const uint32_t time_to_update_in_sec);
+  bearer_qos_t * mbms_bearer_qos, mbms_ip_multicast_distribution_t * mbms_ip_mc_dist, const uint32_t time_to_update_in_sec);
 
 /** M3AP Session Stop Request. */
 void mce_app_itti_m3ap_mbms_session_stop_request(tmgi_t * tmgi, mbms_service_area_id_t mbms_sa_id, mbms_service_index_t mbms_service_idx, const bool inform_enbs);
