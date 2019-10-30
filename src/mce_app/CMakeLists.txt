@@ -8,6 +8,7 @@ include_directories(${SRC_TOP_DIR}/utils/hashtable)
 include_directories(${SRC_TOP_DIR}/utils/msc)
 include_directories(${SRC_TOP_DIR}/gtpv2-c/gtpv2c_ie_formatter/shared)
 include_directories(${SRC_TOP_DIR}/mme)
+include_directories(${SRC_TOP_DIR}/m2ap)
 
 # TODO (amar) fix include leak
 include_directories("${SRC_TOP_DIR}/mme_app")

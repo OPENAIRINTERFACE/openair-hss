@@ -23,8 +23,8 @@ include_directories("${SRC_TOP_DIR}/mce_app")
 # New C code source file, cmake must be re-run (instead of re-running make only)
 ###############################################################################
 
-set(MXAP_DIR ${CMAKE_CURRENT_SOURCE_DIR})
-include_directories("${MXAP_DIR}")
+set(M2AP_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+include_directories("${M2AP_DIR}")
 
 execute_process(COMMAND ${asn1c_call} ${M2AP_C_DIR} ${M2AP_ASN_FILES})
 file(GLOB M2AP_source ${M2AP_C_DIR}/*.c)
@@ -36,14 +36,14 @@ set(M2AP_OAI_generated
     ${M2AP_C_DIR}/m2ap_ies_defs.h
     )
 
-file(GLOB mxap_h ${M2AP_C_DIR}/*.h)
-set(mxap_h ${mxap_h})
+file(GLOB m2ap_h ${M2AP_C_DIR}/*.h)
+set(m2ap_h ${m2ap_h})
 
 add_custom_command(
     OUTPUT ${M2AP_OAI_generated}
-    COMMAND ${asn1c_call} ${M2AP_C_DIR} ${MXAP_ASN_FILES}
-    COMMAND python ${MXAP_DIR}/messages/asn1/asn1tostruct.py -f${MXAP_ASN_DIR}/MXAP-PDU-Contents.asn -o${M2AP_C_DIR}
-    DEPENDS ${MXAP_ASN_FILES}
+    COMMAND ${asn1c_call} ${M2AP_C_DIR} ${M2AP_ASN_FILES}
+    COMMAND python ${M2AP_DIR}/messages/asn1/asn1tostruct.py -f${M2AP_ASN_DIR}/M2AP-PDU-Contents.asn -o${M2AP_C_DIR}
+    DEPENDS ${M2AP_ASN_FILES}
 )
 
 add_library(M2AP_LIB
@@ -53,13 +53,13 @@ add_library(M2AP_LIB
     )
 
 
-add_library(MXAP_EPC
-    ${MXAP_DIR}/m2ap_mce_encoder.c
-    ${MXAP_DIR}/m2ap_mce_decoder.c
-    ${MXAP_DIR}/m2ap_mce_handlers.c
-    ${MXAP_DIR}/m3ap_mce_procedures.c
-    ${MXAP_DIR}/mxap_mce.c
-    ${MXAP_DIR}/mxap_mce_itti_messaging.c
-    ${MXAP_DIR}/m2ap_mce_retransmission.c
-    ${MXAP_DIR}/m2ap_mce_mbms_sa.c
+add_library(M2AP_EPC
+    ${M2AP_DIR}/m2ap_mce_encoder.c
+    ${M2AP_DIR}/m2ap_mce_decoder.c
+    ${M2AP_DIR}/m2ap_mce_handlers.c
+    ${M2AP_DIR}/m2ap_mce_procedures.c
+    ${M2AP_DIR}/m2ap_mce.c
+    ${M2AP_DIR}/m2ap_mce_itti_messaging.c
+    ${M2AP_DIR}/m2ap_mce_retransmission.c
+    ${M2AP_DIR}/m2ap_mce_mbms_sa.c
     )

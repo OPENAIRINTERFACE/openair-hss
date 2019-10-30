@@ -770,7 +770,7 @@ mme_app_mbms_proc_t * mme_app_create_mbms_procedure(mbms_service_t * const mbms_
 //	/**
 //	 * Set the duration as the combination of both.
 //	 * Immediately stop the the MBMS session afterwards.
-//	 * The MxAP layer, does not need to get notified about the MBMS Session duration or the absolute start time.
+//	 * The M2AP layer, does not need to get notified about the MBMS Session duration or the absolute start time.
 //	 * eNB does not need to know.
 //	 */
 //	sm_proc_mbms_session_start->proc.mbms_session_duration.seconds = mbms_session_duration->seconds + delta_to_start;

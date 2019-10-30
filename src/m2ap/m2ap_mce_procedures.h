@@ -19,46 +19,34 @@
  *      contact@openairinterface.org
  */
 
-
-/*! \file m2ap_mce_decoder.c
-   \brief m2ap decode procedures for MME
-   \author Dincer BEKEN <dbeken@blackned.de>
-   \date 2019
-   \version 0.1
+/*! \file m2ap_mce_procedures.h
+  \brief
+  \author Dincer BEKEN
+  \company Blackned GmbH
+  \email: dbeken@blackned.de
 */
-#include <stdbool.h>
-#include <stdint.h>
-#include <inttypes.h>
-#include <pthread.h>
 
-#include "bstrlib.h"
+#ifndef FILE_M2AP_MCE_PROCEDURES_SEEN
+#define FILE_M2AP_MCE_PROCEDURES_SEEN
 
-#include "log.h"
-#include "assertions.h"
 #include "common_defs.h"
-#include "intertask_interface.h"
-#include "dynamic_memory_check.h"
-#include "m2ap_common.h"
-#include "m2ap_mce_handlers.h"
 
-//-----------------------------------------------------------------------------
-int m2ap_mce_decode_pdu(M2AP_M2AP_PDU_t *pdu, const_bstring const raw)
-{
-  asn_dec_rval_t dec_ret;
-  DevAssert(pdu != NULL);
-  DevAssert(blength(raw) != 0);
-  dec_ret = aper_decode(NULL,
-                        &asn_DEF_M2AP_M2AP_PDU,
-                        (void **)&pdu,
-                        bdata(raw),
-                        blength(raw),
-                        0,
-                        0);
+/** \brief Handle MBMS Session Start Request from the MCE_APP.
+ **/
+void
+m3ap_handle_mbms_session_start_request (
+  const itti_m3ap_mbms_session_start_req_t * const mbms_session_start_req_pP);
 
-  if (dec_ret.code != RC_OK) {
-    OAILOG_ERROR (LOG_S1AP, "Failed to decode PDU\n");
-    return -1;
-  }
-  return 0;
-}
+/** \brief Handle MBMS Session Stop Request from the MCE_APP.
+ **/
+void
+m3ap_handle_mbms_session_stop_request (
+  const itti_m3ap_mbms_session_stop_req_t * const mbms_session_stop_req_pP);
 
+/** \brief Handle MBMS Session Update Request from the MCE_APP.
+ **/
+void
+m3ap_handle_mbms_session_update_request (
+  const itti_m3ap_mbms_session_update_req_t * const mbms_session_update_req_pP);
+
+#endif /* FILE_M2AP_MCE_PROCEDURES_SEEN */

@@ -49,20 +49,20 @@
 #include "intertask_interface.h"
 #include "timer.h"
 #include "itti_free_defined_msg.h"
-#include "mxap_mce.h"
+#include "m2ap_mce.h"
 #include "m2ap_mce_decoder.h"
 #include "m2ap_mce_handlers.h"
-#include "mxap_mce_procedures.h"
+#include "m2ap_mce_procedures.h"
 #include "m2ap_mce_retransmission.h"
-#include "mxap_mce_itti_messaging.h"
+#include "m2ap_mce_itti_messaging.h"
 #include "dynamic_memory_check.h"
 #include "3gpp_23.003.h"
 #include "mme_config.h"
 
 
 #if M2AP_DEBUG_LIST
-#  define eNB_LIST_OUT(x, args...) OAILOG_DEBUG (LOG_MXAP, "[eNB]%*s"x"\n", 4*indent, "", ##args)
-#  define MBMS_LIST_OUT(x, args...)  OAILOG_DEBUG (LOG_MXAP, "[MBMS] %*s"x"\n", 4*indent, "", ##args)
+#  define eNB_LIST_OUT(x, args...) OAILOG_DEBUG (LOG_M2AP, "[eNB]%*s"x"\n", 4*indent, "", ##args)
+#  define MBMS_LIST_OUT(x, args...)  OAILOG_DEBUG (LOG_M2AP, "[MBMS] %*s"x"\n", 4*indent, "", ##args)
 #else
 #  define eNB_LIST_OUT(x, args...)
 #  define MBMS_LIST_OUT(x, args...)
@@ -85,7 +85,7 @@ static int m2ap_send_init_sctp (void)
   // Create and alloc new message
   MessageDef                             *message_p = NULL;
 
-  message_p = itti_alloc_new_message (TASK_MXAP, SCTP_INIT_MSG);
+  message_p = itti_alloc_new_message (TASK_M2AP, SCTP_INIT_MSG);
   if (message_p) {
     message_p->ittiMsg.sctpInit.port = M2AP_PORT_NUMBER;
     message_p->ittiMsg.sctpInit.ppid = M2AP_SCTP_PPID;
@@ -171,7 +171,7 @@ static bool m2ap_mbms_compare_by_tmgi_cb (__attribute__((unused)) const hash_key
   mbms_description_t                       *mbms_ref           = (mbms_description_t*)elementP;
   if ( *mce_mbms_m2ap_id_p == mbms_ref->mce_mbms_m2ap_id ) {
     *resultP = elementP;
-    OAILOG_TRACE(LOG_MXAP, "Found mbms_ref %p mce_mbms_m2ap_id " MCE_MBMS_M2AP_ID_FMT "\n", mbms_ref, mbms_ref->mce_mbms_m2ap_id);
+    OAILOG_TRACE(LOG_M2AP, "Found mbms_ref %p mce_mbms_m2ap_id " MCE_MBMS_M2AP_ID_FMT "\n", mbms_ref, mbms_ref->mce_mbms_m2ap_id);
     return true;
   }
   return false;
@@ -185,7 +185,7 @@ static bool m2ap_mbms_compare_by_mce_mbms_id_cb (__attribute__((unused)) const h
   mbms_description_t                       *mbms_ref           = (mbms_description_t*)elementP;
   if ( *mce_mbms_m2ap_id_p == mbms_ref->mce_mbms_m2ap_id ) {
     *resultP = elementP;
-    OAILOG_TRACE(LOG_MXAP, "Found mbms_ref %p mce_mbms_m2ap_id " MCE_MBMS_M2AP_ID_FMT "\n", mbms_ref, mbms_ref->mce_mbms_m2ap_id);
+    OAILOG_TRACE(LOG_M2AP, "Found mbms_ref %p mce_mbms_m2ap_id " MCE_MBMS_M2AP_ID_FMT "\n", mbms_ref, mbms_ref->mce_mbms_m2ap_id);
     return true;
   }
   return false;
@@ -196,7 +196,7 @@ void                                   *
 m2ap_mce_thread (
   __attribute__((unused)) void *args)
 {
-  itti_mark_task_ready (TASK_MXAP);
+  itti_mark_task_ready (TASK_M2AP);
 //  OAILOG_START_USE ();
 //  MSC_START_USE ();
 
@@ -208,13 +208,13 @@ m2ap_mce_thread (
      * * * * If the queue is empty, this function will block till a
      * * * * message is sent to the task.
      */
-    itti_receive_msg (TASK_MXAP, &received_message_p);
+    itti_receive_msg (TASK_M2AP, &received_message_p);
     DevAssert(received_message_p != NULL);
 
     switch (ITTI_MSG_ID (received_message_p)) {
     case ACTIVATE_MESSAGE:{
     	if (m2ap_send_init_sctp () < 0) {
-    		OAILOG_CRITICAL (LOG_MXAP, "Error while sending SCTP_INIT_MSG to SCTP\n");
+    		OAILOG_CRITICAL (LOG_M2AP, "Error while sending SCTP_INIT_MSG to SCTP\n");
     	}
     }
     break;
@@ -240,7 +240,7 @@ m2ap_mce_thread (
     }
     break;
 
-    // ToDo: Leave the stats collection in the MXAP layer for now.
+    // ToDo: Leave the stats collection in the M2AP layer for now.
     case MCE_APP_M3_MBMS_SERVICE_COUNTING_REQ:{
     	/*
     	 * New message received from MCE_APP task.
@@ -274,7 +274,7 @@ m2ap_mce_thread (
     	 */
     	if (m2ap_mce_decode_pdu (&pdu, SCTP_DATA_IND (received_message_p).payload) < 0) {
     		// TODO: Notify eNB of failure with right cause
-    		OAILOG_ERROR (LOG_MXAP, "Failed to decode new buffer\n");
+    		OAILOG_ERROR (LOG_M2AP, "Failed to decode new buffer\n");
     	} else {
     		m2ap_mce_handle_message (SCTP_DATA_IND (received_message_p).assoc_id, SCTP_DATA_IND (received_message_p).stream, &pdu);
     	}
@@ -306,10 +306,10 @@ m2ap_mce_thread (
 //              /** Check if the MBMS still exists. */
 //              ue_ref_p = m2ap_is_enb_mbms_m2ap_id_in_list_per_enb(enb_mbms_m2ap_id, enb_id);
 //              if (!ue_ref_p) {
-//                OAILOG_WARNING (LOG_MXAP, "Timer with id 0x%lx expired but no associated MBMS context!\n", received_message_p->ittiMsg.timer_has_expired.timer_id);
+//                OAILOG_WARNING (LOG_M2AP, "Timer with id 0x%lx expired but no associated MBMS context!\n", received_message_p->ittiMsg.timer_has_expired.timer_id);
 //                break;
 //              }
-//              OAILOG_WARNING (LOG_MXAP, "Processing expired timer with id 0x%lx for ueId "MCE_MBMS_M2AP_ID_FMT " with m2ap_mbms_context_rel_timer_id 0x%lx !\n",
+//              OAILOG_WARNING (LOG_M2AP, "Processing expired timer with id 0x%lx for ueId "MCE_MBMS_M2AP_ID_FMT " with m2ap_mbms_context_rel_timer_id 0x%lx !\n",
 //            		  received_message_p->ittiMsg.timer_has_expired.timer_id,
 //                  ue_ref_p->mce_mbms_m2ap_id, ue_ref_p->m2ap_mbms_context_rel_timer.id);
 //              if (received_message_p->ittiMsg.timer_has_expired.timer_id == ue_ref_p->m2ap_mbms_context_rel_timer.id) {
@@ -337,13 +337,13 @@ m2ap_mce_thread (
     	m2ap_mce_exit();
     	itti_free_msg_content(received_message_p);
     	itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
-    	OAI_FPRINTF_INFO("TASK_MXAP terminated\n");
+    	OAI_FPRINTF_INFO("TASK_M2AP terminated\n");
     	itti_exit_task ();
     }
     break;
 
     default:{
-    	OAILOG_ERROR (LOG_MXAP, "Unknown message ID %d:%s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p));
+    	OAILOG_ERROR (LOG_M2AP, "Unknown message ID %d:%s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p));
     }
           break;
     }
@@ -358,18 +358,18 @@ m2ap_mce_thread (
 
 //------------------------------------------------------------------------------
 int
-mxap_mce_init(void)
+m2ap_mce_init(void)
 {
-  OAILOG_DEBUG (LOG_MXAP, "Initializing M2AP interface\n");
+  OAILOG_DEBUG (LOG_M2AP, "Initializing M2AP interface\n");
 
   if (get_asn1c_environment_version () < ASN1_MINIMUM_VERSION) {
-    OAILOG_ERROR (LOG_MXAP, "ASN1C version %d found, expecting at least %d\n", get_asn1c_environment_version (), ASN1_MINIMUM_VERSION);
+    OAILOG_ERROR (LOG_M2AP, "ASN1C version %d found, expecting at least %d\n", get_asn1c_environment_version (), ASN1_MINIMUM_VERSION);
     return RETURNerror;
   } else {
-    OAILOG_DEBUG (LOG_MXAP, "ASN1C version %d\n", get_asn1c_environment_version ());
+    OAILOG_DEBUG (LOG_M2AP, "ASN1C version %d\n", get_asn1c_environment_version ());
   }
 
-  OAILOG_DEBUG (LOG_MXAP, "M2AP Release v%s\n", M2AP_VERSION);
+  OAILOG_DEBUG (LOG_M2AP, "M2AP Release v%s\n", M2AP_VERSION);
 
   /** Free the M2AP eNB list. */
   // 16 entries for n eNB.
@@ -385,24 +385,24 @@ mxap_mce_init(void)
   bdestroy_wrapper (&bs1);
   if (!h) return RETURNerror;
 
-  if (itti_create_task (TASK_MXAP, &m2ap_mce_thread, NULL) < 0) {
-    OAILOG_ERROR (LOG_MXAP, "Error while creating M2AP task\n");
+  if (itti_create_task (TASK_M2AP, &m2ap_mce_thread, NULL) < 0) {
+    OAILOG_ERROR (LOG_M2AP, "Error while creating M2AP task\n");
     return RETURNerror;
   }
   return RETURNok;
 }
 //------------------------------------------------------------------------------
-void mxap_mce_exit (void)
+void m2ap_mce_exit (void)
 {
-  OAILOG_DEBUG (LOG_MXAP, "Cleaning MXAP\n");
+  OAILOG_DEBUG (LOG_M2AP, "Cleaning M2AP\n");
   if (hashtable_ts_destroy(&g_m2ap_mbms_coll) != HASH_TABLE_OK) {
-    OAILOG_ERROR(LOG_MXAP, "An error occurred while destroying MBMS Service hash table. \n");
+    OAILOG_ERROR(LOG_M2AP, "An error occurred while destroying MBMS Service hash table. \n");
   }
 
   if (hashtable_ts_destroy(&g_m2ap_enb_coll) != HASH_TABLE_OK) {
-    OAILOG_ERROR(LOG_MXAP, "An error occurred while destroying M2 eNB hash table. \n");
+    OAILOG_ERROR(LOG_M2AP, "An error occurred while destroying M2 eNB hash table. \n");
   }
-  OAILOG_DEBUG (LOG_MXAP, "Cleaning MXAP: DONE\n");
+  OAILOG_DEBUG (LOG_M2AP, "Cleaning M2AP: DONE\n");
 }
 
 //------------------------------------------------------------------------------
@@ -525,7 +525,7 @@ void m2ap_is_mbms_sai_in_list (
   memset(&ea, 0, sizeof(hashtable_element_array_t));
   ea.elements = m2ap_enbs;
   hashtable_ts_apply_list_callback_on_elements((hash_table_ts_t * const)&g_m2ap_enb_coll, m2ap_enb_compare_by_mbms_sai_cb, (void *)mbms_sai_p, &ea);
-  OAILOG_DEBUG(LOG_MXAP, "Found %d matching m2ap_enb references based on the received MBMS SAI" MBMS_SERVICE_AREA_ID_FMT". \n", ea.num_elements, mbms_sai);
+  OAILOG_DEBUG(LOG_M2AP, "Found %d matching m2ap_enb references based on the received MBMS SAI" MBMS_SERVICE_AREA_ID_FMT". \n", ea.num_elements, mbms_sai);
   *num_m2ap_enbs = ea.num_elements;
 }
 
@@ -563,14 +563,14 @@ m2ap_is_mbms_mce_id_in_list (
 
   hashtable_ts_apply_callback_on_elements((hash_table_ts_t * const)&g_m2ap_mbms_coll, m2ap_mbms_compare_by_mce_mbms_id_cb, (void*)mce_mbms_m2ap_id_p, (void**)&mbms_ref);
   if (mbms_ref) {
-    OAILOG_TRACE(LOG_MXAP, "Found mbms_ref %p mce_mbms_m2ap_id " MCE_MBMS_M2AP_ID_FMT "\n", mbms_ref, mbms_ref->mce_mbms_m2ap_id);
+    OAILOG_TRACE(LOG_M2AP, "Found mbms_ref %p mce_mbms_m2ap_id " MCE_MBMS_M2AP_ID_FMT "\n", mbms_ref, mbms_ref->mce_mbms_m2ap_id);
   }
   return mbms_ref;
 }
 
 //------------------------------------------------------------------------------
 mbms_description_t                       *
-m2ap_is_tmgi_in_list (
+m2ap_is_mbms_tmgi_in_list (
   const tmgi_t * const tmgi, const mbms_service_area_id_t mbms_sai)
 {
   mbms_description_t                     *mbms_ref = NULL;
@@ -579,7 +579,7 @@ m2ap_is_tmgi_in_list (
 
   hashtable_ts_apply_callback_on_elements((hash_table_ts_t * const)&g_m2ap_mbms_coll, m2ap_mbms_compare_by_tmgi_cb, (void*)m2ap_tmgi_p, (void**)&mbms_ref);
   if (mbms_ref) {
-    OAILOG_TRACE(LOG_MXAP, "Found mbms_ref %p for TMGI " TMGI_FMT " and MBMS-SAI " MBMS_SERVICE_AREA_ID_FMT ". \n", mbms_ref, TMGI_ARG(tmgi), mbms_sai);
+    OAILOG_TRACE(LOG_M2AP, "Found mbms_ref %p for TMGI " TMGI_FMT " and MBMS-SAI " MBMS_SERVICE_AREA_ID_FMT ". \n", mbms_ref, TMGI_ARG(tmgi), mbms_sai);
   }
   return mbms_ref;
 }
@@ -611,7 +611,7 @@ m2ap_new_mbms (
   mce_mbms_m2ap_id_t						mce_mbms_m2ap_id = INVALID_MCE_MBMS_M2AP_ID;
 
   /** Try to generate a new MBMS M2AP Id. */
-  mce_mbms_m2ap_id = generate_new_mce_mbms_m2ap_id();
+  mce_mbms_m2ap_id = generate_new_m22ce_mbms_m2ap_id();
   if(mce_mbms_m2ap_id == INVALID_MCE_MBMS_M2AP_ID){
 	return NULL;
   }
@@ -656,7 +656,7 @@ m2ap_remove_mbms (
   /** Stop MBMS Action timer,if running. */
   if (mbms_ref->m2ap_action_timer.id != M2AP_TIMER_INACTIVE_ID) {
     if (timer_remove (mbms_ref->m2ap_action_timer.id, NULL)) {
-      OAILOG_ERROR (LOG_MXAP, "Failed to stop m2ap mbms context action timer for MBMS id  " MCE_MBMS_M2AP_ID_FMT " \n",
+      OAILOG_ERROR (LOG_M2AP, "Failed to stop m2ap mbms context action timer for MBMS id  " MCE_MBMS_M2AP_ID_FMT " \n",
     	mbms_ref->mce_mbms_m2ap_id);
     }
     mbms_ref->m2ap_action_timer.id = M2AP_TIMER_INACTIVE_ID;
@@ -675,11 +675,11 @@ m2ap_remove_mbms (
 	    m2ap_enb_ref->nb_mbms_associated--;
 	    if (!m2ap_enb_ref->nb_mbms_associated) {
 	      if (m2ap_enb_ref->m2_state == M2AP_RESETING) {
-	        OAILOG_INFO(LOG_MXAP, "Moving M2AP eNB state to M2AP_INIT");
+	        OAILOG_INFO(LOG_M2AP, "Moving M2AP eNB state to M2AP_INIT");
 	        m2ap_enb_ref->m2_state = M2AP_INIT;
 	        update_mce_app_stats_connected_enb_sub();
 	      } else if (m2ap_enb_ref->m2_state == M2AP_SHUTDOWN) {
-	    	OAILOG_INFO(LOG_MXAP, "Deleting eNB");
+	    	OAILOG_INFO(LOG_M2AP, "Deleting eNB");
 	    	hashtable_ts_free (&g_m2ap_enb_coll, m2ap_enb_ref->sctp_assoc_id);
 	      }
 	    }
@@ -691,6 +691,6 @@ m2ap_remove_mbms (
   }
   /** Destroy the Map. */
   if (hashtable_ts_destroy(&mbms_ref->g_m2ap_assoc_id2mce_enb_id_coll) != HASH_TABLE_OK) {
-    OAILOG_ERROR(LOG_MXAP, "An error occurred while destroying enb_mbms_id hash table. \n");
+    OAILOG_ERROR(LOG_M2AP, "An error occurred while destroying enb_mbms_id hash table. \n");
   }
 }

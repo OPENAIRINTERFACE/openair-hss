@@ -26,11 +26,17 @@
   \email: dbeken@blackned.de
 */
 
+
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
 
+#include "m2ap_common.h"
+#include "m2ap_mce_encoder.h"
+#include "m2ap_mce.h"
+#include "m2ap_mce_itti_messaging.h"
+#include "m2ap_mce_procedures.h"
 #include "bstrlib.h"
 
 
@@ -42,12 +48,7 @@
 #include "conversions.h"
 #include "intertask_interface.h"
 #include "asn1_conversions.h"
-#include "m2ap_common.h"
-#include "m2ap_mce_encoder.h"
-#include "mxap_mce_itti_messaging.h"
-#include "mxap_mce_procedures.h"
 #include "mme_config.h"
-#include "mxap_mce.h"
 
 /* Every time a new MBMS service is associated, increment this variable.
    But care if it wraps to increment also the mme_ue_s1ap_id_has_wrapped
@@ -72,7 +73,7 @@ m3ap_handle_mbms_session_start_request (
 {
   /*
    * MBMS-GW triggers a new MBMS Service. No eNBs are specified but only the MBMS service area.
-   * MCE_APP will not be eNB specific. eNB specific messages will be handled in the MXAP_APP.
+   * MCE_APP will not be eNB specific. eNB specific messages will be handled in the M2AP_APP.
    * That a single eNB fails to broadcast, is not of importance to the MCE_APP.
    * This message initiates for all eNBs in the given MBMS Service are a new MBMS Bearer Service.
    */
@@ -84,7 +85,7 @@ m3ap_handle_mbms_session_start_request (
   M2AP_SessionStartRequest_t			 *out;
   M2AP_SessionStartRequest_Ies_t		 *ie = NULL;
 
-  OAILOG_FUNC_IN (LOG_MXAP);
+  OAILOG_FUNC_IN (LOG_M2AP);
   DevAssert (mbms_session_start_req_pP != NULL);
 
   /*
@@ -93,15 +94,15 @@ m3ap_handle_mbms_session_start_request (
    *
    * MCE MBMS M2AP ID is 24 bits long, so we cannot use MBMS Service Index.
    */
-  mbms_ref = m2ap_is_mbms_mce_id_in_list(mbms_session_start_req_pP->mbms_service_idx); /**< Nothing eNB specific. */
+  mbms_ref = m2ap_is_mbms_tmgi_in_list(&mbms_session_start_req_pP->tmgi, mbms_session_start_req_pP->mbms_service_area_id); /**< Nothing eNB specific. */
   if (mbms_ref) {
     /**
      * Just remove this implicitly without notifying the eNB.
      * There should be complications with the response, eNB should be able to handle this.
      */
-    OAILOG_ERROR (LOG_MXAP, " An MBMS Service Description with MBMS Service Index " MCE_MBMS_SERVICE_INDEX_FMT " already exists. Removing implicitly. \n",
+    OAILOG_ERROR (LOG_M2AP, " An MBMS Service Description with MBMS Service Index " MCE_MBMS_SERVICE_INDEX_FMT " already exists. Removing implicitly. \n",
         mbms_session_start_req_pP->mbms_service_idx);
-    m2ap_remove_mbms(mbms_ref); // todo: recheck this.
+    m2ap_remove_mbms(mbms_ref);
   }
 
   /** Check that there exists at least a single eNB with the MBMS Service Area (we don't start MBMS sessions for eNBs which later on connected). */
@@ -112,9 +113,9 @@ m3ap_handle_mbms_session_start_request (
   int num_m2ap_enbs = 0;
   m2ap_is_mbms_sai_in_list(mbms_session_start_req_pP->mbms_service_area_id, &num_m2ap_enbs, (m2ap_enb_description_t **)&m2ap_enb_p_elements);
   if(!num_m2ap_enbs){
-    OAILOG_ERROR (LOG_MXAP, "No M2AP eNBs could be found for the MBMS SA " MBMS_SERVICE_AREA_ID_FMT" for the MBMS Service with TMGI " TMGI_FMT" and MBMS Service Index " MCE_MBMS_SERVICE_INDEX_FMT". \n",
+    OAILOG_ERROR (LOG_M2AP, "No M2AP eNBs could be found for the MBMS SA " MBMS_SERVICE_AREA_ID_FMT" for the MBMS Service with TMGI " TMGI_FMT" and MBMS Service Index " MCE_MBMS_SERVICE_INDEX_FMT". \n",
     	mbms_session_start_req_pP->mbms_service_area_id, TMGI_ARG(&mbms_session_start_req_pP->tmgi), mbms_session_start_req_pP->mbms_service_idx);
-    OAILOG_FUNC_OUT (LOG_MXAP);
+    OAILOG_FUNC_OUT (LOG_M2AP);
   }
 
   /**
@@ -124,9 +125,9 @@ m3ap_handle_mbms_session_start_request (
    */
   if((mbms_ref = m2ap_new_mbms (&mbms_session_start_req_pP->tmgi, mbms_session_start_req_pP->mbms_service_area_id)) == NULL) {
     // If we failed to allocate a new MBMS Service Description return -1
-    OAILOG_ERROR (LOG_MXAP, "M2AP:MBMS Session Start Request- Failed to allocate M2AP Service Description for TMGI " TMGI_FMT " and MBMS Service Indext "MCE_MBMS_SERVICE_INDEX_FMT ". \n",
+    OAILOG_ERROR (LOG_M2AP, "M2AP:MBMS Session Start Request- Failed to allocate M2AP Service Description for TMGI " TMGI_FMT " and MBMS Service Indext "MCE_MBMS_SERVICE_INDEX_FMT ". \n",
     	TMGI_ARG(&mbms_session_start_req_pP->tmgi), mbms_session_start_req_pP->mbms_service_idx);
-    OAILOG_FUNC_OUT (LOG_MXAP);
+    OAILOG_FUNC_OUT (LOG_M2AP);
   }
 
 //  /**
@@ -221,13 +222,13 @@ m3ap_handle_mbms_session_start_request (
 //  memcpy(ue_security_capabilities->encryptionAlgorithms.buf, &handover_req_pP->security_capabilities_encryption_algorithms, sizeof(uint16_t));
 //  ue_security_capabilities->encryptionAlgorithms.size = 2;
 //  ue_security_capabilities->encryptionAlgorithms.bits_unused = 0;
-//  OAILOG_DEBUG (LOG_MXAP, "security_capabilities_encryption_algorithms 0x%04X\n", handover_req_pP->security_capabilities_encryption_algorithms);
+//  OAILOG_DEBUG (LOG_M2AP, "security_capabilities_encryption_algorithms 0x%04X\n", handover_req_pP->security_capabilities_encryption_algorithms);
 //
 //  ue_security_capabilities->integrityProtectionAlgorithms.buf = calloc(1, sizeof(uint16_t));
 //  memcpy(ue_security_capabilities->integrityProtectionAlgorithms.buf, &handover_req_pP->security_capabilities_integrity_algorithms, sizeof(uint16_t));
 //  ue_security_capabilities->integrityProtectionAlgorithms.size = 2;
 //  ue_security_capabilities->integrityProtectionAlgorithms.bits_unused = 0;
-//  OAILOG_DEBUG (LOG_MXAP, "security_capabilities_integrity_algorithms 0x%04X\n", handover_req_pP->security_capabilities_integrity_algorithms);
+//  OAILOG_DEBUG (LOG_M2AP, "security_capabilities_integrity_algorithms 0x%04X\n", handover_req_pP->security_capabilities_integrity_algorithms);
 //  ASN_SEQUENCE_ADD(&out->protocolIEs.list, ie);
 //
 //  /** Add the security context. */
@@ -240,7 +241,7 @@ m3ap_handle_mbms_session_start_request (
 //	memcpy (ie->value.choice.SecurityContext.nextHopParameter.buf, handover_req_pP->nh, AUTH_NH_SIZE);
 //	ie->value.choice.SecurityContext.nextHopParameter.size = AUTH_NH_SIZE;
 //  } else {
-//	  OAILOG_DEBUG (LOG_MXAP, "No nh \n");
+//	  OAILOG_DEBUG (LOG_M2AP, "No nh \n");
 //	  ie->value.choice.SecurityContext.nextHopParameter.buf = NULL;
 //	  ie->	value.choice.SecurityContext.nextHopParameter.size = 0;
 //  }
@@ -272,13 +273,13 @@ m3ap_handle_mbms_session_start_request (
 
   if (m2ap_mce_encode_pdu (&pdu, &buffer_p, &length) < 0) {
     // TODO: handle something
-	OAILOG_ERROR (LOG_MXAP, "Failed to encode MBMS Session Start Request. \n");
+	OAILOG_ERROR (LOG_M2AP, "Failed to encode MBMS Session Start Request. \n");
 	/** We rely on the handover_notify timeout to remove the UE context. */
-    OAILOG_FUNC_OUT (LOG_MXAP);
+    OAILOG_FUNC_OUT (LOG_M2AP);
   }
 
   // todo: s1ap_generate_initiating_message will remove the things?
-//  OAILOG_NOTICE (LOG_MXAP, "Send M2AP_MBMS_SESSION_START_REQUEST message MCE_MBMS_M2AP_ID = " MCE_MBMS_M2AP_ID_FMT "\n",
+//  OAILOG_NOTICE (LOG_M2AP, "Send M2AP_MBMS_SESSION_START_REQUEST message MCE_MBMS_M2AP_ID = " MCE_MBMS_M2AP_ID_FMT "\n",
 //              mbms_session_start_req_pP->teid);
 
   bstring b = blk2bstr(buffer_p, length);
@@ -290,7 +291,7 @@ m3ap_handle_mbms_session_start_request (
    * Leave the state in as it is.
    * Not creating a UE-Reference towards the target-ENB.
    */
-  OAILOG_FUNC_OUT (LOG_MXAP);
+  OAILOG_FUNC_OUT (LOG_M2AP);
 }
 
 //------------------------------------------------------------------------------
@@ -309,7 +310,7 @@ m3ap_handle_mbms_session_stop_request (
 //  S1AP_HandoverRequest_t		   		 *out;
 //  S1AP_HandoverRequestIEs_t  			 *ie = NULL;
 
-  OAILOG_FUNC_IN (LOG_MXAP);
+  OAILOG_FUNC_IN (LOG_M2AP);
   DevAssert (mbms_session_stop_req_pP != NULL);
 
 //  /*
@@ -318,7 +319,7 @@ m3ap_handle_mbms_session_stop_request (
 //   */
 //  target_enb_ref = s1ap_is_enb_id_in_list(handover_req_pP->macro_enb_id);
 //  if(!target_enb_ref){
-//    OAILOG_ERROR (LOG_MXAP, "No target-enb could be found for enb-id %u. Handover Failed. \n",
+//    OAILOG_ERROR (LOG_M2AP, "No target-enb could be found for enb-id %u. Handover Failed. \n",
 //            handover_req_pP->macro_enb_id);
 //    /**
 //     * Send Handover Failure back (manually) to the MME.
@@ -333,7 +334,7 @@ m3ap_handle_mbms_session_stop_request (
 //    handover_failure_p->mme_ue_s1ap_id = handover_req_pP->ue_id;
 //    /** No need to remove any UE_Reference to the target_enb, not existing. */
 //    itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
-//    OAILOG_FUNC_OUT (LOG_MXAP);
+//    OAILOG_FUNC_OUT (LOG_M2AP);
 //  }
 //
 //  /**
@@ -417,13 +418,13 @@ m3ap_handle_mbms_session_stop_request (
 //  memcpy(ue_security_capabilities->encryptionAlgorithms.buf, &handover_req_pP->security_capabilities_encryption_algorithms, sizeof(uint16_t));
 //  ue_security_capabilities->encryptionAlgorithms.size = 2;
 //  ue_security_capabilities->encryptionAlgorithms.bits_unused = 0;
-//  OAILOG_DEBUG (LOG_MXAP, "security_capabilities_encryption_algorithms 0x%04X\n", handover_req_pP->security_capabilities_encryption_algorithms);
+//  OAILOG_DEBUG (LOG_M2AP, "security_capabilities_encryption_algorithms 0x%04X\n", handover_req_pP->security_capabilities_encryption_algorithms);
 //
 //  ue_security_capabilities->integrityProtectionAlgorithms.buf = calloc(1, sizeof(uint16_t));
 //  memcpy(ue_security_capabilities->integrityProtectionAlgorithms.buf, &handover_req_pP->security_capabilities_integrity_algorithms, sizeof(uint16_t));
 //  ue_security_capabilities->integrityProtectionAlgorithms.size = 2;
 //  ue_security_capabilities->integrityProtectionAlgorithms.bits_unused = 0;
-//  OAILOG_DEBUG (LOG_MXAP, "security_capabilities_integrity_algorithms 0x%04X\n", handover_req_pP->security_capabilities_integrity_algorithms);
+//  OAILOG_DEBUG (LOG_M2AP, "security_capabilities_integrity_algorithms 0x%04X\n", handover_req_pP->security_capabilities_integrity_algorithms);
 //  ASN_SEQUENCE_ADD(&out->protocolIEs.list, ie);
 //
 //  /** Add the security context. */
@@ -436,7 +437,7 @@ m3ap_handle_mbms_session_stop_request (
 //	memcpy (ie->value.choice.SecurityContext.nextHopParameter.buf, handover_req_pP->nh, AUTH_NH_SIZE);
 //	ie->value.choice.SecurityContext.nextHopParameter.size = AUTH_NH_SIZE;
 //  } else {
-//	  OAILOG_DEBUG (LOG_MXAP, "No nh \n");
+//	  OAILOG_DEBUG (LOG_M2AP, "No nh \n");
 //	  ie->value.choice.SecurityContext.nextHopParameter.buf = NULL;
 //	  ie->	value.choice.SecurityContext.nextHopParameter.size = 0;
 //  }
@@ -468,13 +469,13 @@ m3ap_handle_mbms_session_stop_request (
 
   if (m2ap_mce_encode_pdu (&pdu, &buffer_p, &length) < 0) {
     // TODO: handle something
-	OAILOG_ERROR (LOG_MXAP, "Failed to encode MBMS Session Stop Request. \n");
+	OAILOG_ERROR (LOG_M2AP, "Failed to encode MBMS Session Stop Request. \n");
 	/** We rely on the handover_notify timeout to remove the UE context. */
-    OAILOG_FUNC_OUT (LOG_MXAP);
+    OAILOG_FUNC_OUT (LOG_M2AP);
   }
 
   // todo: s1ap_generate_initiating_message will remove the things?
-  OAILOG_NOTICE (LOG_MXAP, "Send M2AP_MBMS_SESSION_STOP_REQUEST message MCE_MBMS_M2AP_ID = " MCE_MBMS_M2AP_ID_FMT "\n",
+  OAILOG_NOTICE (LOG_M2AP, "Send M2AP_MBMS_SESSION_STOP_REQUEST message MCE_MBMS_M2AP_ID = " MCE_MBMS_M2AP_ID_FMT "\n",
 		  INVALID_MBMS_SERVICE_INDEX);
 
   bstring b = blk2bstr(buffer_p, length);
@@ -486,7 +487,7 @@ m3ap_handle_mbms_session_stop_request (
    * Leave the state in as it is.
    * Not creating a UE-Reference towards the target-ENB.
    */
-  OAILOG_FUNC_OUT (LOG_MXAP);
+  OAILOG_FUNC_OUT (LOG_M2AP);
 }
 
 //------------------------------------------------------------------------------
@@ -505,7 +506,7 @@ m3ap_handle_mbms_session_update_request (
 //  S1AP_HandoverRequest_t		   		 *out;
 //  S1AP_HandoverRequestIEs_t  			 *ie = NULL;
 
-  OAILOG_FUNC_IN (LOG_MXAP);
+  OAILOG_FUNC_IN (LOG_M2AP);
   DevAssert (mbms_session_update_req_pP != NULL);
 
 //  /*
@@ -514,7 +515,7 @@ m3ap_handle_mbms_session_update_request (
 //   */
 //  target_enb_ref = s1ap_is_enb_id_in_list(handover_req_pP->macro_enb_id);
 //  if(!target_enb_ref){
-//    OAILOG_ERROR (LOG_MXAP, "No target-enb could be found for enb-id %u. Handover Failed. \n",
+//    OAILOG_ERROR (LOG_M2AP, "No target-enb could be found for enb-id %u. Handover Failed. \n",
 //            handover_req_pP->macro_enb_id);
 //    /**
 //     * Send Handover Failure back (manually) to the MME.
@@ -529,7 +530,7 @@ m3ap_handle_mbms_session_update_request (
 //    handover_failure_p->mme_ue_s1ap_id = handover_req_pP->ue_id;
 //    /** No need to remove any UE_Reference to the target_enb, not existing. */
 //    itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
-//    OAILOG_FUNC_OUT (LOG_MXAP);
+//    OAILOG_FUNC_OUT (LOG_M2AP);
 //  }
 //
 //  /**
@@ -613,13 +614,13 @@ m3ap_handle_mbms_session_update_request (
 //  memcpy(ue_security_capabilities->encryptionAlgorithms.buf, &handover_req_pP->security_capabilities_encryption_algorithms, sizeof(uint16_t));
 //  ue_security_capabilities->encryptionAlgorithms.size = 2;
 //  ue_security_capabilities->encryptionAlgorithms.bits_unused = 0;
-//  OAILOG_DEBUG (LOG_MXAP, "security_capabilities_encryption_algorithms 0x%04X\n", handover_req_pP->security_capabilities_encryption_algorithms);
+//  OAILOG_DEBUG (LOG_M2AP, "security_capabilities_encryption_algorithms 0x%04X\n", handover_req_pP->security_capabilities_encryption_algorithms);
 //
 //  ue_security_capabilities->integrityProtectionAlgorithms.buf = calloc(1, sizeof(uint16_t));
 //  memcpy(ue_security_capabilities->integrityProtectionAlgorithms.buf, &handover_req_pP->security_capabilities_integrity_algorithms, sizeof(uint16_t));
 //  ue_security_capabilities->integrityProtectionAlgorithms.size = 2;
 //  ue_security_capabilities->integrityProtectionAlgorithms.bits_unused = 0;
-//  OAILOG_DEBUG (LOG_MXAP, "security_capabilities_integrity_algorithms 0x%04X\n", handover_req_pP->security_capabilities_integrity_algorithms);
+//  OAILOG_DEBUG (LOG_M2AP, "security_capabilities_integrity_algorithms 0x%04X\n", handover_req_pP->security_capabilities_integrity_algorithms);
 //  ASN_SEQUENCE_ADD(&out->protocolIEs.list, ie);
 //
 //  /** Add the security context. */
@@ -632,7 +633,7 @@ m3ap_handle_mbms_session_update_request (
 //	memcpy (ie->value.choice.SecurityContext.nextHopParameter.buf, handover_req_pP->nh, AUTH_NH_SIZE);
 //	ie->value.choice.SecurityContext.nextHopParameter.size = AUTH_NH_SIZE;
 //  } else {
-//	  OAILOG_DEBUG (LOG_MXAP, "No nh \n");
+//	  OAILOG_DEBUG (LOG_M2AP, "No nh \n");
 //	  ie->value.choice.SecurityContext.nextHopParameter.buf = NULL;
 //	  ie->	value.choice.SecurityContext.nextHopParameter.size = 0;
 //  }
@@ -664,13 +665,13 @@ m3ap_handle_mbms_session_update_request (
 
   if (m2ap_mce_encode_pdu (&pdu, &buffer_p, &length) < 0) {
     // TODO: handle something
-	OAILOG_ERROR (LOG_MXAP, "Failed to encode MBMS Session Update Request. \n");
+	OAILOG_ERROR (LOG_M2AP, "Failed to encode MBMS Session Update Request. \n");
 	/** We rely on the handover_notify timeout to remove the UE context. */
-    OAILOG_FUNC_OUT (LOG_MXAP);
+    OAILOG_FUNC_OUT (LOG_M2AP);
   }
 
   // todo: s1ap_generate_initiating_message will remove the things?
-  OAILOG_NOTICE (LOG_MXAP, "Send M2AP_MBMS_SESSION_UPDATE_REQUEST message MCE_MBMS_M2AP_ID = " MCE_MBMS_M2AP_ID_FMT "\n",
+  OAILOG_NOTICE (LOG_M2AP, "Send M2AP_MBMS_SESSION_UPDATE_REQUEST message MCE_MBMS_M2AP_ID = " MCE_MBMS_M2AP_ID_FMT "\n",
               INVALID_MBMS_SERVICE_INDEX);
 
   bstring b = blk2bstr(buffer_p, length);
@@ -682,7 +683,7 @@ m3ap_handle_mbms_session_update_request (
    * Leave the state in as it is.
    * Not creating a UE-Reference towards the target-ENB.
    */
-  OAILOG_FUNC_OUT (LOG_MXAP);
+  OAILOG_FUNC_OUT (LOG_M2AP);
 }
 //
 ////------------------------------------------------------------------------------
@@ -691,9 +692,9 @@ m3ap_handle_mbms_session_update_request (
 //  const itti_mce_app_m2ap_mme_mbms_id_notification_t * const notification_p)
 //{
 //
-//  OAILOG_FUNC_IN (LOG_MXAP);
+//  OAILOG_FUNC_IN (LOG_M2AP);
 //  DevAssert (notification_p != NULL);
 //  m2ap_notified_new_mbms_mme_m2ap_id_association (
 //                          notification_p->sctp_assoc_id, notification_p->enb_mbms_m2ap_id, notification_p->mce_mbms_m2ap_id);
-//  OAILOG_FUNC_OUT (LOG_MXAP);
+//  OAILOG_FUNC_OUT (LOG_M2AP);
 //}

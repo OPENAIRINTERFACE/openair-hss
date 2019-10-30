@@ -32,14 +32,14 @@
 #include <stdint.h>
 #include <pthread.h>
 
+#include "m2ap_common.h"
+#include "m2ap_mce_mbms_sa.h"
 #include "bstrlib.h"
 
 #include "log.h"
 #include "assertions.h"
 #include "conversions.h"
 #include "mme_config.h"
-#include "m2ap_common.h"
-#include "m2ap_mce_mbms_sa.h"
 
 
 static
@@ -82,23 +82,23 @@ m2ap_mce_compare_mbms_sa_list(
 {
   int                                     i = 0, j = 0;
   uint16_t                                mbms_sa_value = 0;
-  DevAssert (mbms_sa != NULL);
-  mme_config_read_lock (&mme_config);
-  for (i = 0; i < mme_config.served_mbms_sa.nb_mbms_sa; i++) {
-    for (j = 0; j < mbms_sa_list->list.count; j++) {
-    	M2AP_MBMS_Service_Area_t * mbms_sa = mbms_sa_list->list[j];
-    	OCTET_STRING_TO_MBMS_SA (mbms_sa, mbms_sa_value);
-        OAILOG_TRACE (LOG_MXAP, "Comparing config MBMS SA %d, received MBMS SA = %d\n", mme_config.served_mbms_sa.mbms_sa_list[i], mbms_sa_value);
-    	if (mme_config.served_mbms_sa.mbms_sa_list[i] == mbms_sa_value){
-    	  /**
-    	   * At least one of the eNBs offered SA's is supported by the MME.
-    	   * We will accept this eNB, and refer to it in the set of the MBMS Service Area.
-    	   * We only will regard MBMS Service Areas, which match.
-    	   */
-    	  return MBMS_SA_LIST_AT_LEAST_ONE_MATCH;
-    	}
-    }
-  }
+  DevAssert (mbms_sa_list != NULL);
+//  mme_config_read_lock (&mme_config);
+//  for (i = 0; i < mme_config.served_mbms_sa.nb_mbms_sa; i++) {
+//    for (j = 0; j < mbms_sa_list->list.count; j++) {
+//    	M2AP_MBMS_Service_Area_t * mbms_sa = &mbms_sa_list->list[j];
+//    	OCTET_STRING_TO_MBMS_SA (mbms_sa, mbms_sa_value);
+//        OAILOG_TRACE (LOG_M2AP, "Comparing config MBMS SA %d, received MBMS SA = %d\n", mme_config.served_mbms_sa.mbms_sa_list[i], mbms_sa_value);
+//    	if (mme_config.served_mbms_sa.mbms_sa_list[i] == mbms_sa_value){
+//    	  /**
+//    	   * At least one of the eNBs offered SA's is supported by the MME.
+//    	   * We will accept this eNB, and refer to it in the set of the MBMS Service Area.
+//    	   * We only will regard MBMS Service Areas, which match.
+//    	   */
+//    	  return MBMS_SA_LIST_AT_LEAST_ONE_MATCH;
+//    	}
+//    }
+//  }
   mme_config_unlock (&mme_config);
   return MBMS_SA_LIST_NO_MATCH;
 }

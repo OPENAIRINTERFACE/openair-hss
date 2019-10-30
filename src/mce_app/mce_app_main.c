@@ -33,6 +33,7 @@
 #include <stdint.h>
 #include <pthread.h>
 
+#include "m2ap_mce.h"
 #include "bstrlib.h"
 
 #include "dynamic_memory_check.h"
@@ -43,7 +44,6 @@
 #include "mme_config.h"
 #include "timer.h"
 #include "mme_app_bearer_context.h"
-#include "mxap_mce.h"
 #include "mce_app_extern.h"
 #include "mce_app_defs.h"
 #include "mce_app_statistics.h"

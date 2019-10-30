@@ -19,15 +19,15 @@
  *      contact@openairinterface.org
  */
 
-/*! \file mxap_mme_itti_messaging.h
+/*! \file m2ap_mme_itti_messaging.h
   \brief
   \author Dincer BEKEN
   \company Blackned GmbH
   \email: dbeken@blackned.de
 */
 
-#ifndef FILE_MXAP_MCE_ITTI_MESSAGING_SEEN
-#define FILE_MXAP_MCE_ITTI_MESSAGING_SEEN
+#ifndef FILE_M2AP_MCE_ITTI_MESSAGING_SEEN
+#define FILE_M2AP_MCE_ITTI_MESSAGING_SEEN
 
 #include "common_defs.h"
 
@@ -36,4 +36,4 @@ int m2ap_mce_itti_send_sctp_request(STOLEN_REF bstring *payload,
                                     const sctp_stream_id_t stream,
                                     const mce_mbms_m2ap_id_t mbms_id);
 
-#endif /* FILE_MXAP_MCE_ITTI_MESSAGING_SEEN */
+#endif /* FILE_M2AP_MCE_ITTI_MESSAGING_SEEN */

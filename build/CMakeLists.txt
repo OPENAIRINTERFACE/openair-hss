@@ -354,14 +354,14 @@ add_dependencies(S1AP_EPC S1AP_LIB)
 
 #### M2AP PART ####
 add_list1_option(M2AP_RELEASE r15 "M2AP ASN.1 grammar version" r15)
-set(MXAP_DIR ${OPENAIRCN_DIR}/src/mxap)
+set(M2AP_DIR ${OPENAIRCN_DIR}/src/m2ap)
 set(asn1_generated_dir ${OPENAIRCN_BIN_DIR})
 if (${M2AP_RELEASE} STREQUAL "r15")
   set(M2AP_VERSION 15.0.0)
   set(M2AP_ASN_FILES "m2ap-15.0.0.asn1")
 endif(${M2AP_RELEASE} STREQUAL "r15")
 add_definitions("-DM2AP_VERSION=\"${M2AP_VERSION}\"")
-set(M2AP_ASN_DIR ${MXAP_DIR}/messages/asn1/${M2AP_RELEASE})
+set(M2AP_ASN_DIR ${M2AP_DIR}/messages/asn1/${M2AP_RELEASE})
 set(M2AP_C_DIR ${asn1_generated_dir}/M2AP_${M2AP_RELEASE})
 
 set(GENERATED_FULL_DIR ${M2AP_C_DIR})
@@ -388,24 +388,25 @@ file(GLOB M2AP_source ${M2AP_C_DIR}/*.c)
 
 add_library(M2AP_LIB
   ${M2AP_source}
-  ${MXAP_DIR}/m2ap_common.c
+  ${M2AP_DIR}/m2ap_common.c
   )
 ################################
 
 include_directories ("${M2AP_C_DIR}")
-include_directories ("${MXAP_DIR}")
+include_directories ("${M2AP_DIR}")
 
-add_library(MXAP_EPC
-  ${MXAP_DIR}/mxap_mce.c
-  ${MXAP_DIR}/m2ap_mce_encoder.c
-  ${MXAP_DIR}/m2ap_mce_decoder.c
-  ${MXAP_DIR}/m2ap_mce_handlers.c
-  ${MXAP_DIR}/mxap_mce_itti_messaging.c
-  ${MXAP_DIR}/mxap_mce_procedures.c
-  ${MXAP_DIR}/m2ap_mce_retransmission.c
+add_library(M2AP_EPC
+  ${M2AP_DIR}/m2ap_mce.c
+  ${M2AP_DIR}/m2ap_mce_encoder.c
+  ${M2AP_DIR}/m2ap_mce_decoder.c
+  ${M2AP_DIR}/m2ap_mce_handlers.c
+  ${M2AP_DIR}/m2ap_mce_itti_messaging.c
+  ${M2AP_DIR}/m2ap_mce_procedures.c
+  ${M2AP_DIR}/m2ap_mce_retransmission.c
+  ${M2AP_DIR}/m2ap_mce_mbms_sa.c
   )
 
-add_dependencies(MXAP_EPC M2AP_LIB)
+add_dependencies(M2AP_EPC M2AP_LIB)
 
 
 ###############################################################################
@@ -444,7 +445,7 @@ include_directories("${OPENAIRCN_DIR}/src/nas/util")
 include_directories("${OPENAIRCN_DIR}/src/secu")
 include_directories("${OPENAIRCN_DIR}/src/sctp")
 include_directories("${OPENAIRCN_DIR}/src/s1ap")
-include_directories("${OPENAIRCN_DIR}/src/mxap")
+include_directories("${OPENAIRCN_DIR}/src/m2ap")
 include_directories("${OPENAIRCN_DIR}/src/udp")
 include_directories("${OPENAIRCN_DIR}/src/gtpv1-u")
 include_directories("${OPENAIRCN_DIR}/src/utils/hashtable")
@@ -1008,7 +1009,7 @@ if( ITTI_ANALYZER )
 endif( ITTI_ANALYZER )
 target_link_libraries (mme
   -Wl,--start-group
-    S1AP_LIB M2AP_LIB S1AP_EPC MXAP_EPC S11_MME S10_MME Sm_MME GTPV2C SCTP_SERVER UDP_SERVER SECU_CN
+    S1AP_LIB M2AP_LIB S1AP_EPC M2AP_EPC S11_MME S10_MME Sm_MME GTPV2C SCTP_SERVER UDP_SERVER SECU_CN
    S6A MME_APP MCE_APP LIB_NAS_MME ${MSC_LIB} ${ITTI_LIB} ${XML_MSG_DUMP_LIB} ${3GPP_TYPES_LIB}
    ${3GPP_TYPES_XML_LIB} CN_UTILS ${SCENARIO_PLAYER_LIB} HASHTABLE BSTR
   -Wl,--end-group

@@ -19,42 +19,46 @@
  *      contact@openairinterface.org
  */
 
-/*! \file m2ap_mce_itti_messaging.c
-  \brief
-  \author Dincer BEKEN
-  \company Blackned GmbH
-  \email: dbeken@blackned.de
-*/
 
-#include <stdlib.h>
-#include <stdio.h>
+/*! \file m2ap_mce_decoder.c
+   \brief m2ap decode procedures for MME
+   \author Dincer BEKEN <dbeken@blackned.de>
+   \date 2019
+   \version 0.1
+*/
 #include <stdbool.h>
 #include <stdint.h>
+#include <inttypes.h>
+#include <pthread.h>
+
+#include "m2ap_common.h"
+#include "m2ap_mce_handlers.h"
 #include "bstrlib.h"
 
 #include "log.h"
 #include "assertions.h"
+#include "common_defs.h"
 #include "intertask_interface.h"
-#include "m2ap_common.h"
-#include "mxap_mce_itti_messaging.h"
+#include "dynamic_memory_check.h"
 
-
-//------------------------------------------------------------------------------
-int
-m2ap_mce_itti_send_sctp_request (
-  STOLEN_REF bstring *payload,
-  const sctp_assoc_id_t assoc_id,
-  const sctp_stream_id_t stream,
-  const mce_mbms_m2ap_id_t mbms_id)
+//-----------------------------------------------------------------------------
+int m2ap_mce_decode_pdu(M2AP_M2AP_PDU_t *pdu, const_bstring const raw)
 {
-  MessageDef                             *message_p = NULL;
+  asn_dec_rval_t dec_ret;
+  DevAssert(pdu != NULL);
+  DevAssert(blength(raw) != 0);
+  dec_ret = aper_decode(NULL,
+                        &asn_DEF_M2AP_M2AP_PDU,
+                        (void **)&pdu,
+                        bdata(raw),
+                        blength(raw),
+                        0,
+                        0);
 
-  message_p = itti_alloc_new_message (TASK_MXAP, SCTP_DATA_REQ);
-
-  SCTP_DATA_REQ (message_p).payload = *payload;
-  *payload = NULL;
-  SCTP_DATA_REQ (message_p).assoc_id = assoc_id;
-  SCTP_DATA_REQ (message_p).stream = stream;
-// todo  SCTP_DATA_REQ (message_p).mce_mbms_m2ap_id = mbms_id;
-  return itti_send_msg_to_task (TASK_SCTP, INSTANCE_DEFAULT, message_p);
+  if (dec_ret.code != RC_OK) {
+    OAILOG_ERROR (LOG_S1AP, "Failed to decode PDU\n");
+    return -1;
+  }
+  return 0;
 }
+

@@ -85,7 +85,6 @@ int mme_config_find_mnc_length (
         return 3;
       }
     }
-
     plmn_index += 1;
   }
 

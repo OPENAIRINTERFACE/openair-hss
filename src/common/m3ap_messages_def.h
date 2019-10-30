@@ -30,4 +30,4 @@ MESSAGE_DEF(MCE_APP_M3_MBMS_SERVICE_COUNTING_REQ          , MESSAGE_PRIORITY_MED
 MESSAGE_DEF(M3AP_ENB_INITIATED_RESET_REQ   ,  MESSAGE_PRIORITY_MED, itti_m3ap_enb_initiated_reset_req_t   ,  m3ap_initiated_reset_req)
 MESSAGE_DEF(M3AP_ENB_INITIATED_RESET_ACK   ,  MESSAGE_PRIORITY_MED, itti_m3ap_enb_initiated_reset_ack_t   ,  m3ap_enb_initiated_reset_ack)
 
-/** No MCE Configuration Update in the MXAP wihout MCE_APP.*/
+/** No MCE Configuration Update in the M2AP wihout MCE_APP.*/

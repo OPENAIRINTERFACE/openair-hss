@@ -30,6 +30,8 @@
 #include <inttypes.h>
 #include <pthread.h>
 
+#include "m2ap_common.h"
+#include "m2ap_mce_encoder.h"
 #include "bstrlib.h"
 
 #include "intertask_interface.h"
@@ -37,8 +39,6 @@
 #include "mme_api.h"
 #include "assertions.h"
 #include "log.h"
-#include "m2ap_common.h"
-#include "m2ap_mce_encoder.h"
 
 static inline int                       m2ap_mce_encode_initiating (
   M2AP_M2AP_PDU_t * pdu,
@@ -77,7 +77,7 @@ m2ap_mce_encode_pdu (M2AP_M2AP_PDU_t *pdu, uint8_t **buffer, uint32_t *length)
     break;
 
   default:
-    OAILOG_NOTICE (LOG_MXAP, "Unknown message outcome (%d) or not implemented", (int)pdu->present);
+    OAILOG_NOTICE (LOG_M2AP, "Unknown message outcome (%d) or not implemented", (int)pdu->present);
     break;
   }
   ASN_STRUCT_FREE_CONTENTS_ONLY(asn_DEF_M2AP_M2AP_PDU, pdu);
@@ -106,7 +106,7 @@ m2ap_mce_encode_initiating (
 	  break;
 
   default:
-    OAILOG_NOTICE (LOG_MXAP, "Unknown procedure ID (%d) for initiating message_p\n", (int)pdu->choice.initiatingMessage.procedureCode);
+    OAILOG_NOTICE (LOG_M2AP, "Unknown procedure ID (%d) for initiating message_p\n", (int)pdu->choice.initiatingMessage.procedureCode);
     *buffer = NULL;
     *length = 0;
     return -1;
@@ -135,7 +135,7 @@ m2ap_mce_encode_successfull_outcome (
      break;
 
   default:
-    OAILOG_DEBUG (LOG_MXAP, "Unknown procedure ID (%d) for successfull outcome message\n", (int)pdu->choice.successfulOutcome.procedureCode);
+    OAILOG_DEBUG (LOG_M2AP, "Unknown procedure ID (%d) for successfull outcome message\n", (int)pdu->choice.successfulOutcome.procedureCode);
     *buffer = NULL;
     *length = 0;
     return -1;
@@ -164,7 +164,7 @@ m2ap_mce_encode_unsuccessfull_outcome (
     break;
 
   default:
-    OAILOG_DEBUG (LOG_MXAP, "Unknown procedure ID (%d) for unsuccessfull outcome message\n", (int)pdu->choice.unsuccessfulOutcome.procedureCode);
+    OAILOG_DEBUG (LOG_M2AP, "Unknown procedure ID (%d) for unsuccessfull outcome message\n", (int)pdu->choice.unsuccessfulOutcome.procedureCode);
     *buffer = NULL;
     *length = 0;
     return -1;

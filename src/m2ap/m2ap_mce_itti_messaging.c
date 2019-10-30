@@ -19,34 +19,42 @@
  *      contact@openairinterface.org
  */
 
-/*! \file mxap_mce_procedures.h
+/*! \file m2ap_mce_itti_messaging.c
   \brief
   \author Dincer BEKEN
   \company Blackned GmbH
   \email: dbeken@blackned.de
 */
 
-#ifndef FILE_MXAP_MCE_PROCEDURES_SEEN
-#define FILE_MXAP_MCE_PROCEDURES_SEEN
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include "m2ap_common.h"
+#include "bstrlib.h"
+#include "m2ap_mce_itti_messaging.h"
 
-#include "common_defs.h"
+#include "log.h"
+#include "assertions.h"
+#include "intertask_interface.h"
 
-/** \brief Handle MBMS Session Start Request from the MCE_APP.
- **/
-void
-m3ap_handle_mbms_session_start_request (
-  const itti_m3ap_mbms_session_start_req_t * const mbms_session_start_req_pP);
 
-/** \brief Handle MBMS Session Stop Request from the MCE_APP.
- **/
-void
-m3ap_handle_mbms_session_stop_request (
-  const itti_m3ap_mbms_session_stop_req_t * const mbms_session_stop_req_pP);
+//------------------------------------------------------------------------------
+int
+m2ap_mce_itti_send_sctp_request (
+  STOLEN_REF bstring *payload,
+  const sctp_assoc_id_t assoc_id,
+  const sctp_stream_id_t stream,
+  const mce_mbms_m2ap_id_t mbms_id)
+{
+  MessageDef                             *message_p = NULL;
 
-/** \brief Handle MBMS Session Update Request from the MCE_APP.
- **/
-void
-m3ap_handle_mbms_session_update_request (
-  const itti_m3ap_mbms_session_update_req_t * const mbms_session_update_req_pP);
+  message_p = itti_alloc_new_message (TASK_M2AP, SCTP_DATA_REQ);
 
-#endif /* FILE_MXAP_MCE_PROCEDURES_SEEN */
+  SCTP_DATA_REQ (message_p).payload = *payload;
+  *payload = NULL;
+  SCTP_DATA_REQ (message_p).assoc_id = assoc_id;
+  SCTP_DATA_REQ (message_p).stream = stream;
+// todo  SCTP_DATA_REQ (message_p).mce_mbms_m2ap_id = mbms_id;
+  return itti_send_msg_to_task (TASK_SCTP, INSTANCE_DEFAULT, message_p);
+}

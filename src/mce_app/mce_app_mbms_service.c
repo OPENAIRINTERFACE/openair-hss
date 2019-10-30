@@ -552,7 +552,7 @@ static void mce_app_stop_mbms_service(tmgi_t * tmgi, mbms_service_area_id_t mbms
 
   OAILOG_INFO(LOG_MCE_APP, "Clearing MBMS Service with TMGI " TMGI_FMT " and MBMS-Service-Area ID " MBMS_SERVICE_AREA_ID_FMT". \n", TMGI_ARG(tmgi), mbms_sa_id);
   /**
-   * Inform the MXAP Layer about the removed MBMS Service.
+   * Inform the M2AP Layer about the removed MBMS Service.
    * No negative response will arrive, so continue.
    */
   if(mbms_peer_ip){

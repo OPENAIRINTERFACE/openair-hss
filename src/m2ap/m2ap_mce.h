@@ -26,8 +26,8 @@
   \email: dbeken@blackned.de
 */
 
-#ifndef FILE_MXAP_MCE_SEEN
-#define FILE_MXAP_MCE_SEEN
+#ifndef FILE_M2AP_MCE_SEEN
+#define FILE_M2AP_MCE_SEEN
 
 #if MME_CLIENT_TEST == 0
 # include "intertask_interface.h"
@@ -43,7 +43,7 @@ struct m2ap_enb_description_s;
 #define M2AP_MBMS_CONTEXT_REL_COMP_TIMER 1 // in seconds
 
 /* Timer structure */
-struct mxap_timer_t {
+struct m2ap_timer_t {
   long id;           /* The timer identifier                 */
   long sec;          /* The timer interval value in seconds  */
 };
@@ -93,7 +93,7 @@ typedef struct mbms_description_s {
   struct mbms_bearer_context_s		mbms_bc;
 
   // MBMS Action timer
-  struct mxap_timer_t       m2ap_action_timer;
+  struct m2ap_timer_t       m2ap_action_timer;
 } mbms_description_t;
 
 /*
@@ -135,20 +135,20 @@ typedef struct m2ap_enb_description_s {
 extern uint32_t         nb_enb_associated;
 extern struct mme_config_s    *global_mme_config_p;
 
-/** \brief MXAP layer top init
+/** \brief M2AP layer top init
  * @returns -1 in case of failure
  **/
-int mxap_mce_init(void);
+int m2ap_mce_init(void);
 
-/** \brief MXAP layer top exit
+/** \brief M2AP layer top exit
  **/
-void mxap_mce_exit (void);
+void m2ap_mce_exit (void);
 
 /** \brief Look for given eNB id in the list. Another method is necessary, since another map will be looked at.
  * \param enb_id The unique eNB id to search in list
  * @returns NULL if no eNB matchs the eNB id, or reference to the eNB element in list if matches
  **/
-m2ap_enb_description_t* mxap_is_enb_id_in_list(const uint32_t enb_id);
+m2ap_enb_description_t* m2ap_is_enb_id_in_list(const uint32_t enb_id);
 
 /** \brief Look for given MBMS Service Area Id in the list.
  * \param tac MBMS Service Area Id is not unique and used for the search in the list.
@@ -166,14 +166,22 @@ void m2ap_is_mbms_sai_in_list (
 m2ap_enb_description_t* m2ap_is_enb_assoc_id_in_list(const sctp_assoc_id_t sctp_assoc_id);
 
 /** \brief Look for given mbms mce id in the list
- * \param enb_id The unique mbms_mce_id to search in list
+ * \param mbms_mce_id The unique mbms_mce_id to search in list
  * @returns NULL if no MBMS matchs the mbms_mce_id, or reference to the mbms element in list if matches
  **/
 mbms_description_t* m2ap_is_mbms_mce_id_in_list(const mce_mbms_m2ap_id_t mbms_mce_id);
 
+/** \brief Look for given mbms via TMGI is in the list
+ * \param tmgi
+ * \param mbms_sai
+ * @returns NULL if no MBMS matchs the mbms_mce_id, or reference to the mbms element in list if matches
+ **/
+mbms_description_t* m2ap_is_mbms_tmgi_in_list (
+  const tmgi_t * const tmgi, const mbms_service_area_id_t mbms_sai);
+
 ///** \brief associate mainly 2(3) identifiers in M2AP layer: {mme_mbms_m2ap_id_t, sctp_assoc_id (,enb_mbms_m2ap_id)}
 // **/
-//void mxap_notified_new_mbms_mce_m2ap_id_association (
+//void m2ap_notified_new_mbms_mce_m2ap_id_association (
 //    const sctp_assoc_id_t  sctp_assoc_id,
 //    const enb_mbms_m2ap_id_t enb_mbms_m2ap_id,
 //    const mce_mbms_m2ap_id_t mme_mbms_m2ap_id);

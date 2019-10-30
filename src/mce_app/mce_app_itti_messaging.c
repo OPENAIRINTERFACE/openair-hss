@@ -177,7 +177,7 @@ void mce_app_itti_sm_mbms_session_stop_response(teid_t mme_sm_teid, teid_t mbms_
 //------------------------------------------------------------------------------
 /**
  * M3AP Session Start Request.
- * Forward the bearer qos and absolute start time to the MxAP layer, which will decide on the scheduling.
+ * Forward the bearer qos and absolute start time to the M2AP layer, which will decide on the scheduling.
  */
 void mce_app_itti_m3ap_mbms_session_start_request(tmgi_t * tmgi, mbms_service_area_id_t mbms_service_area_id, mbms_service_index_t mbms_service_idx,
   bearer_qos_t * mbms_bearer_qos, mbms_ip_multicast_distribution_t * mbms_ip_mc_dist, const uint32_t time_to_start_in_sec)
@@ -195,7 +195,7 @@ void mce_app_itti_m3ap_mbms_session_start_request(tmgi_t * tmgi, mbms_service_ar
   memcpy((void*)&m3ap_mbms_session_start_req_p->mbms_bearer_tbc.bc_tbc.bearer_level_qos, mbms_bearer_qos, sizeof(bearer_qos_t));
   memcpy((void*)&m3ap_mbms_session_start_req_p->mbms_bearer_tbc.mbms_ip_mc_dist, mbms_ip_mc_dist, sizeof(mbms_ip_multicast_distribution_t));
   m3ap_mbms_session_start_req_p->time_to_start_in_sec = time_to_start_in_sec;
-  itti_send_msg_to_task (TASK_MXAP, INSTANCE_DEFAULT, message_p);
+  itti_send_msg_to_task (TASK_M2AP, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT (LOG_MCE_APP);
 }
 
@@ -218,7 +218,7 @@ void mce_app_itti_m3ap_mbms_session_update_request(tmgi_t * tmgi, mbms_service_a
   memcpy((void*)&m3ap_mbms_session_update_req_p->mbms_bearer_tbc.bc_tbc.bearer_level_qos, mbms_bearer_qos, sizeof(bearer_qos_t));
   memcpy((void*)&m3ap_mbms_session_update_req_p->mbms_bearer_tbc.mbms_ip_mc_dist, mbms_ip_mc_dist, sizeof(mbms_ip_multicast_distribution_t));
   m3ap_mbms_session_update_req_p->time_to_update_in_sec = time_to_update_in_sec;
-  itti_send_msg_to_task (TASK_MXAP, INSTANCE_DEFAULT, message_p);
+  itti_send_msg_to_task (TASK_M2AP, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT (LOG_MCE_APP);
 }
 
@@ -239,6 +239,6 @@ void mce_app_itti_m3ap_mbms_session_stop_request(tmgi_t *tmgi, mbms_service_area
   m3ap_mbms_session_stop_req_p->mbms_service_idx = mbms_service_idx;
   m3ap_mbms_session_stop_req_p->inform_enbs = inform_enbs;
   /** No absolute stop time will be sent. That will be done immediately. */
-  itti_send_msg_to_task (TASK_MXAP, INSTANCE_DEFAULT, message_p);
+  itti_send_msg_to_task (TASK_M2AP, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT (LOG_MCE_APP);
 }

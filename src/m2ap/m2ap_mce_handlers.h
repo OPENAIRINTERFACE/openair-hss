@@ -28,8 +28,8 @@
 
 #ifndef FILE_M2AP_MCE_HANDLERS_SEEN
 #define FILE_M2AP_MCE_HANDLERS_SEEN
+#include "m2ap_mce.h"
 #include "intertask_interface.h"
-#include "mxap_mce.h"
 #define MAX_NUM_PARTIAL_M2_CONN_RESET 256
 
 /** \brief Handle decoded incoming messages from SCTP
