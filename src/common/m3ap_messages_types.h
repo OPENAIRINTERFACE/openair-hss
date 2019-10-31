@@ -81,8 +81,8 @@ typedef struct itti_m3ap_mbms_session_start_req_s {
   mbms_service_area_id_t					mbms_service_area_id;
   mbms_bearer_context_to_be_created_t	    mbms_bearer_tbc;
   // todo: handle timer better --> Removal of current time should be done in M2AP layer
-  uint32_t									time_to_start_in_sec;  /**< Will be handled in the MCE_APP layer. */
-  uint32_t									time_to_start_in_usec;  /**< Will be handled in the MCE_APP layer. */
+  uint32_t									abs_start_time_sec;  /**< Will be handled in the MCE_APP layer. */
+  uint32_t									abs_start_time_usec;  /**< Will be handled in the MCE_APP layer. */
 } itti_m3ap_mbms_session_start_req_t;
 
 //------------------------------------------------------------------------------
@@ -91,7 +91,8 @@ typedef struct itti_m3ap_mbms_session_update_req_s {
   mbms_service_area_id_t					new_mbms_service_area_id;
   mbms_service_area_id_t					old_mbms_service_area_id;
   mbms_bearer_context_to_be_created_t	    mbms_bearer_tbc;
-  uint32_t									time_to_update_in_sec;  /**< Will be handled in the MCE_APP layer. */
+  uint32_t									abs_update_time_sec;  /**< Will be handled in the MCE_APP layer. */
+  uint32_t									abs_update_time_usec;  /**< Will be handled in the MCE_APP layer. */
 } itti_m3ap_mbms_session_update_req_t;
 
 //------------------------------------------------------------------------------

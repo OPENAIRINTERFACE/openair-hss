@@ -64,7 +64,7 @@ extern hash_table_ts_t 					g_m2ap_enb_coll; // SCTP Association ID association 
 /****************************************************************************/
 /*******************  L O C A L    D E F I N I T I O N S  *******************/
 /****************************************************************************/
-static int m2ap_generate_mbms_session_start_request(mce_mbms_m2ap_id_t mbms_m2ap_id);
+static int m2ap_generate_mbms_session_start_request(mce_mbms_m2ap_id_t mbms_m2ap_id, const uint8_t num_m2ap_enbs, m2ap_enb_description_t ** m2ap_enb_descriptions);
 static int m2ap_generate_mbms_session_update_request(mce_mbms_m2ap_id_t mce_mbms_m2ap_id, sctp_assoc_id_t sctp_assoc_id);
 static int m2ap_generate_mbms_session_stop_request(mce_mbms_m2ap_id_t mce_mbms_m2ap_id, sctp_assoc_id_t sctp_assoc_id);
 static int m2ap_update_mbms_service_context(const mce_mbms_m2ap_id_t mce_mbms_m2ap_id);
@@ -104,7 +104,7 @@ m3ap_handle_mbms_session_start_request (
         TMGI_ARG(&mbms_session_start_req_pP->tmgi), mbms_session_start_req_pP->mbms_service_area_id);
     /**
      * Remove the MBMS Reference from the HashTable.
-     * MBMS Remove Funtion expected to be called.
+     * MBMS Remove Function expected to be called.
      */
     hashtable_ts_free (&g_m2ap_mbms_coll, mbms_ref->mce_mbms_m2ap_id);
   }
@@ -152,10 +152,11 @@ m3ap_handle_mbms_session_start_request (
    * Check if a timer has been given, if so start the timer.
    * If not send immediately.
    */
-  if(mbms_session_start_req_pP->time_to_start_in_sec){
-    OAILOG_INFO (LOG_M2AP, "M2AP:MBMS Session Start Request- Received a timer of (%d)s for start of TMGI " TMGI_FMT " and MBMS Service Area ID "MBMS_SERVICE_AREA_ID_FMT". \n",
-    	mbms_session_start_req_pP->time_to_start_in_sec, TMGI_ARG(&mbms_session_start_req_pP->tmgi), mbms_session_start_req_pP->mbms_service_area_id);
-    if (timer_setup (mbms_session_start_req_pP->time_to_start_in_sec, mbms_session_start_req_pP->time_to_start_in_usec,
+  if(mbms_session_start_req_pP->abs_start_time_sec){
+	uint32_t delta_to_start_sec = mbms_session_start_req_pP->abs_start_time_sec - time(NULL);
+	OAILOG_INFO (LOG_M2AP, "M2AP:MBMS Session Start Request- Received a timer of (%d)s for start of TMGI " TMGI_FMT " and MBMS Service Area ID "MBMS_SERVICE_AREA_ID_FMT". \n",
+		delta_to_start_sec, TMGI_ARG(&mbms_session_start_req_pP->tmgi), mbms_session_start_req_pP->mbms_service_area_id);
+    if (timer_setup (delta_to_start_sec, mbms_session_start_req_pP->abs_start_time_usec,
            TASK_M2AP, INSTANCE_DEFAULT, TIMER_ONE_SHOT, (void*)mbms_ref->mce_mbms_m2ap_id, &(mbms_ref->m2ap_action_timer.id)) < 0) {
          OAILOG_ERROR (LOG_M2AP, "Failed to start MBMS Sesssion Start timer for MBMS with MBMS M2AP MCE ID " MCE_MBMS_M2AP_ID_FMT". \n", mce_mbms_m2ap_id);
          mbms_ref->m2ap_action_timer.id = M2AP_TIMER_INACTIVE_ID;
@@ -167,7 +168,7 @@ m3ap_handle_mbms_session_start_request (
          OAILOG_FUNC_OUT(LOG_M2AP);
        }
   }
-  m2ap_generate_mbms_session_start_request(mce_mbms_m2ap_id);
+  m2ap_generate_mbms_session_start_request(mce_mbms_m2ap_id, num_m2ap_enbs, m2ap_enb_p_elements);
   OAILOG_FUNC_OUT(LOG_M2AP);
 }
 
@@ -210,10 +211,11 @@ m3ap_handle_mbms_session_update_request (
    * Check if there is a timer set.
    * If so postpone the update.
    */
-  if(mbms_session_update_req_pP->time_to_update_in_sec){
+  if(mbms_session_update_req_pP->abs_update_time_sec){
+    uint32_t delta_to_update_sec = mbms_session_update_req_pP->abs_update_time_sec- time(NULL);
     OAILOG_INFO (LOG_M2AP, "M2AP:MBMS Session Update Request- Received a timer of (%d)s for start of TMGI " TMGI_FMT " and MBMS Service Area ID "MBMS_SERVICE_AREA_ID_FMT". \n",
-    	mbms_session_update_req_pP->time_to_update_in_sec, TMGI_ARG(&mbms_session_update_req_pP->tmgi), mbms_session_update_req_pP->new_mbms_service_area_id);
-    if (timer_setup (mbms_session_update_req_pP->time_to_update_in_sec, mbms_session_update_req_pP->time_to_update_in_sec,
+    	delta_to_update_sec, TMGI_ARG(&mbms_session_update_req_pP->tmgi), mbms_session_update_req_pP->new_mbms_service_area_id);
+    if (timer_setup (delta_to_update_sec, mbms_session_update_req_pP->abs_update_time_usec,
            TASK_M2AP, INSTANCE_DEFAULT, TIMER_ONE_SHOT, (void*)mbms_ref->mce_mbms_m2ap_id, &(mbms_ref->m2ap_action_timer.id)) < 0) {
          OAILOG_ERROR (LOG_M2AP, "Failed to start MBMS Session Update timer for MBMS with MBMS M2AP MCE ID " MCE_MBMS_M2AP_ID_FMT". \n", mbms_ref->mce_mbms_m2ap_id);
          mbms_ref->m2ap_action_timer.id = M2AP_TIMER_INACTIVE_ID;
@@ -401,7 +403,7 @@ int m2ap_update_mbms_service_context(const mce_mbms_m2ap_id_t mce_mbms_m2ap_id) 
 	   * Trigger a new MBMS Session Start Request towards the new eNB.
 	   * It will be added to the list and the eNB MBMS associations will be updated with the MBMS Session Start Response.
 	   */
-	  m2ap_generate_mbms_session_start_request(mbms_ref->mce_mbms_m2ap_id);
+	  m2ap_generate_mbms_session_start_request(mbms_ref->mce_mbms_m2ap_id, num_m2ap_enbs_new_mbms_sai, new_mbms_sai_m2ap_enb_p_elements);
 	}
   }
   OAILOG_FUNC_OUT(LOG_M2AP);
@@ -409,7 +411,7 @@ int m2ap_update_mbms_service_context(const mce_mbms_m2ap_id_t mce_mbms_m2ap_id) 
 
 //------------------------------------------------------------------------------
 static
-int m2ap_generate_mbms_session_start_request(mce_mbms_m2ap_id_t mbms_m2ap_id)
+int m2ap_generate_mbms_session_start_request(mce_mbms_m2ap_id_t mbms_m2ap_id, const uint8_t num_m2ap_enbs, m2ap_enb_description_t ** m2ap_enb_descriptions)
 {
   OAILOG_FUNC_IN (LOG_M2AP);
   mbms_description_t                     *mbms_ref = NULL;
@@ -427,14 +429,11 @@ int m2ap_generate_mbms_session_start_request(mce_mbms_m2ap_id_t mbms_m2ap_id)
     OAILOG_FUNC_RETURN (LOG_M2AP, RETURNerror);
   }
 
-  /* Get all M2AP eNBs which match the MBMS Service Area ID and transmit to all of them. */
-  m2ap_enb_description_t *			         m2ap_enb_p_elements[mme_config.max_m2_enbs];
-  memset(&m2ap_enb_p_elements, 0, (sizeof(m2ap_enb_description_t*) * mme_config.max_m2_enbs));
-
-  int num_m2ap_enbs = 0;
-  m2ap_is_mbms_sai_in_list(mbms_ref->mbms_service_area_id, &num_m2ap_enbs, (m2ap_enb_description_t **)&m2ap_enb_p_elements);
-
-  if(!num_m2ap_enbs){
+  /**
+   * Get all M2AP eNBs which match the MBMS Service Area ID and transmit to all of them.
+   * We don't encode ENB MBMS M2AP ID, so we can reuse the encoded message.
+   */
+  if(!num_m2ap_enbs || !*m2ap_enb_descriptions){
 	OAILOG_ERROR (LOG_M2AP, "No M2AP eNBs could be found for the received MBMS Service Area ID " MBMS_SERVICE_AREA_ID_FMT " for MBMS Service " MCE_MBMS_M2AP_ID_FMT". \n",
 	  mbms_ref->mbms_service_area_id, mbms_m2ap_id);
     OAILOG_FUNC_RETURN (LOG_M2AP, RETURNerror);
@@ -528,10 +527,10 @@ int m2ap_generate_mbms_session_start_request(mce_mbms_m2ap_id_t mbms_m2ap_id)
 
   // todo: the next_sctp_stream is the one without incrementation?
   for(int i = 0; i < num_m2ap_enbs; i++){
-	  m2ap_enb_description_t * target_enb_ref = m2ap_enb_p_elements[i];
-	  bstring b;
+	  m2ap_enb_description_t * target_enb_ref = m2ap_enb_descriptions[i];
 	  if(target_enb_ref){
-		b = blk2bstr(buffer_p, length);
+		/** Check if it is in the list of the MBMS Service. */
+		bstring b = blk2bstr(buffer_p, length);
 		free(buffer_p);
 		OAILOG_NOTICE (LOG_M2AP, "Send M2AP_MBMS_SESSION_START_REQUEST message MCE_MBMS_M2AP_ID = " MCE_MBMS_M2AP_ID_FMT "\n", mbms_m2ap_id);
 		m2ap_mce_itti_send_sctp_request(&b, target_enb_ref->sctp_assoc_id, target_enb_ref->next_sctp_stream, mbms_m2ap_id);

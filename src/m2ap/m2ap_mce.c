@@ -72,8 +72,8 @@
 uint32_t                nb_m2ap_enb_associated 			= 0;
 static mme_ue_s1ap_id_t mce_mbms_m2ap_id_generator 	= 1;
 
-hash_table_ts_t g_m2ap_enb_coll = {.mutex = PTHREAD_MUTEX_INITIALIZER, 0}; // contains eNB_description_s, key is eNB_description_s.enb_id (uint32_t);
-hash_table_ts_t g_m2ap_mbms_coll = {.mutex = PTHREAD_MUTEX_INITIALIZER, 0}; // contains MBMS_description_s, key is MBMS_description_s.mbms_m2ap_id (uint24_t);
+hash_table_ts_t g_m2ap_enb_coll 	= {.mutex = PTHREAD_MUTEX_INITIALIZER, 0}; // contains eNB_description_s, key is eNB_description_s.enb_id (uint32_t);
+hash_table_ts_t g_m2ap_mbms_coll 	= {.mutex = PTHREAD_MUTEX_INITIALIZER, 0}; // contains MBMS_description_s, key is MBMS_description_s.mbms_m2ap_id (uint24_t);
 /** An MBMS Service can be associated to multiple SCTP IDs. */
 
 static int                              indent = 0;

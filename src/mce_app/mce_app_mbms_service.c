@@ -213,8 +213,8 @@ mce_app_handle_mbms_session_start_request(
    * Create an MME APP procedure (not MCE).
    * Since the procedure is new, we don't need to check if another procedure exists.
    */
-  uint32_t abs_start_time_sec = mbms_session_start_request_pP->abs_start_time.sec_since_epoch - time(NULL);
-  DevAssert(mme_app_create_mbms_procedure(&mbms_service, abs_start_time_sec, mbms_session_start_request_pP->abs_start_time.usec, &mbms_session_start_request_pP->mbms_session_duration));
+  DevAssert(mme_app_create_mbms_procedure(&mbms_service, mbms_session_start_request_pP->abs_start_time.sec_since_epoch,
+		  mbms_session_start_request_pP->abs_start_time.usec, &mbms_session_start_request_pP->mbms_session_duration));
   /**
    * The MME may return an MBMS Session Start Response to the MBMS-GW as soon as the session request is accepted by one E-UTRAN node.
    * That's why, we start an Sm procedure for the received Sm message. At timeout (no eNB response, we automatically purge the MBMS Service Context and respond to the MBMS-GW).
@@ -225,7 +225,8 @@ mce_app_handle_mbms_session_start_request(
   /** Trigger M3AP MBMS Session Start Request. */
   mbms_service_idx      = mce_get_mbms_service_index(&mbms_service->privates.fields.tmgi, mbms_service_area_id);
   mce_app_itti_m3ap_mbms_session_start_request(&mbms_session_start_request_pP->tmgi, mbms_service_area_id, &mbms_session_start_request_pP->mbms_bearer_level_qos,
-	&mbms_service->privates.fields.mbms_bc.mbms_ip_mc_distribution, abs_start_time_sec);
+	&mbms_service->privates.fields.mbms_bc.mbms_ip_mc_distribution, mbms_session_start_request_pP->abs_start_time.sec_since_epoch,
+	mbms_session_start_request_pP->abs_start_time.usec);
   /**
    * Directly respond to the MBMS-GW.
    * Don't wait to check, if the E-UTRAN has been established, not worth it.
@@ -390,8 +391,8 @@ mce_app_handle_mbms_session_update_request(
    * Create an MBMS Service Update Procedure and store the values there.
    * Use the current MBMS TMGI and the current MBMS Service Id.
    * If at least one eNB replies positively, update the values of the MBMS service with the procedures values. */
-  uint32_t abs_update_time_sec = mbms_session_update_request_pP->abs_update_time.sec_since_epoch - time(NULL);
-  mbms_sm_proc = mme_app_create_mbms_procedure(mbms_service, abs_update_time_sec, mbms_session_update_request_pP->abs_update_time.usec, &mbms_session_update_request_pP->mbms_session_duration);
+  mbms_sm_proc = mme_app_create_mbms_procedure(mbms_service, mbms_session_update_request_pP->abs_update_time.sec_since_epoch,
+		  mbms_session_update_request_pP->abs_update_time.usec, &mbms_session_update_request_pP->mbms_session_duration);
   /**
    * Set the new MBMS Bearer Context to be updated & new MBMS Service Area into the procedure!
    * Set it into the MBMS Service with the first response.
@@ -408,7 +409,7 @@ mce_app_handle_mbms_session_update_request(
   mbms_service_idx = mce_get_mbms_service_index(&mbms_service->privates.fields.tmgi, new_mbms_service_area_id);
   mce_app_itti_m3ap_mbms_session_update_request(&mbms_session_update_request_pP->tmgi, new_mbms_service_area_id, old_mbms_service_area_id,
 	mbms_session_update_request_pP->mbms_bearer_level_qos, &mbms_service->privates.fields.mbms_bc.mbms_ip_mc_distribution,
-	abs_update_time_sec);
+	mbms_session_update_request_pP->abs_update_time.sec_since_epoch, mbms_session_update_request_pP->abs_update_time.usec);
 
   /**
    * Directly respond to the MBMS-GW.
@@ -459,9 +460,10 @@ mce_app_handle_mbms_session_stop_request(
     mme_app_delete_mbms_procedure(mbms_service);
   }
   /** Create a new MBMS procedure and set the  into the procedure. */
-  uint32_t abs_stop_time_sec = mbms_session_stop_request_pP->abs_stop_time.sec_since_epoch - time(NULL);
-  if(abs_stop_time_sec && !mbms_session_stop_request_pP->mbms_flags.lmri){
-	mme_app_create_mbms_procedure(mbms_service, abs_stop_time_sec, mbms_session_stop_request_pP->abs_stop_time.usec, NULL);
+//  uint32_t abs_stop_time_sec =  - time(NULL);
+  if(mbms_session_stop_request_pP->abs_stop_time.sec_since_epoch && !mbms_session_stop_request_pP->mbms_flags.lmri){
+	mme_app_create_mbms_procedure(mbms_service, mbms_session_stop_request_pP->abs_stop_time.sec_since_epoch,
+			mbms_session_stop_request_pP->abs_stop_time.usec, NULL);
   }
 
   /**
@@ -474,7 +476,7 @@ mce_app_handle_mbms_session_stop_request(
   mce_app_itti_sm_mbms_session_stop_response(mbms_session_stop_request_pP->teid, mbms_service->privates.fields.mbms_teid_sm,
 		  (struct sockaddr*)&mbms_service->privates.fields.mbms_peer_ip, mbms_session_stop_request_pP->trxn, REQUEST_ACCEPTED);
   /** M3AP Session Stop Request --> No Response is expected. Immediately terminate the MBMS Service afterwards. */
-  if(!abs_stop_time_sec || mbms_session_stop_request_pP->mbms_flags.lmri) {
+  if(!mbms_session_stop_request_pP->abs_stop_time.sec_since_epoch || mbms_session_stop_request_pP->mbms_flags.lmri) {
 	OAILOG_INFO(LOG_MCE_APP, "No MBMS session stop time is given for TMGI " TMGI_FMT ". Stopping immediately and informing the MCE over M3. \n", TMGI_ARG(&mbms_service->privates.fields.tmgi));
 	mbms_service_idx = mce_get_mbms_service_index(&mbms_service->privates.fields.tmgi, mbms_service->privates.fields.mbms_service_area_id);
 	mce_app_itti_m3ap_mbms_session_stop_request(&mbms_service->privates.fields.tmgi, mbms_service->privates.fields.mbms_service_area_id, (mbms_session_stop_request_pP->mbms_flags.lmri));

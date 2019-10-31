@@ -709,7 +709,7 @@ void mme_app_delete_s10_procedure_mme_handover(struct ue_context_s * const ue_co
  */
 //------------------------------------------------------------------------------
 mme_app_mbms_proc_t * mme_app_create_mbms_procedure(mbms_service_t * const mbms_service,
-  uint32_t delta_to_start_in_sec, uint32_t delta_to_start_in_usec, const mbms_session_duration_t * const mbms_session_duration)
+  uint32_t abs_start_time_in_sec, uint32_t abs_start_time_usec, const mbms_session_duration_t * const mbms_session_duration)
 {
   mme_app_mbms_proc_t 				*mbms_proc    = NULL;
   OAILOG_FUNC_IN (LOG_MME_APP);
@@ -742,7 +742,7 @@ mme_app_mbms_proc_t * mme_app_create_mbms_procedure(mbms_service_t * const mbms_
    */
   if(!mbms_session_duration) {	/**< If this is a stop procedure. */
 	mbms_proc->trigger_mbms_session_stop = true;
-	DevAssert(delta_to_start_in_sec);
+	DevAssert(abs_start_time_in_sec);
   }
   else if(mme_config.mbms_short_idle_session_duration_in_sec > mbms_session_duration->seconds){
 	OAILOG_INFO(LOG_MME_APP, "MBMS Session procedure for MBMS Service-Index " MCE_MBMS_SERVICE_INDEX_FMT " has session duration (%ds) is shorter/equal than the minimum (%ds). \n",
@@ -781,7 +781,8 @@ mme_app_mbms_proc_t * mme_app_create_mbms_procedure(mbms_service_t * const mbms_
    * The first timeout should always check bearers.
    * If the
    */
-  if (timer_setup (mbms_session_duration->seconds + delta_to_start_in_sec, delta_to_start_in_usec,
+  uint32_t delta_to_start_in_sec = abs_start_time_in_sec - time(NULL); /**< Time since EPOCH. */
+  if (timer_setup (mbms_session_duration->seconds + delta_to_start_in_sec, abs_start_time_usec,
     TASK_MCE_APP, INSTANCE_DEFAULT, TIMER_ONE_SHOT,  (void *) (mbms_service_idx), &(mbms_proc->timer.id)) < 0) {
 	  OAILOG_ERROR (LOG_MME_APP, "Failed to start the MME MBMS Session timer for MBMS Service Idx " MCE_MBMS_SERVICE_INDEX_FMT " for duration %ds \n",
 		mbms_service_idx, mbms_session_duration->seconds + delta_to_start_in_sec);
