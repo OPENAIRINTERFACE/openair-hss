@@ -87,7 +87,8 @@ typedef uint64_t                 	 mbms_service_index_t;
 #define ENB_MBMS_M2AP_ID_MASK        0x00FFFFFF
 #define ENB_MBMS_M2AP_ID_FMT         "%06"PRIx3
 #define MCE_MBMS_M2AP_ID_FMT         "%"PRIx32
-#define INVALID_MCE_MBMS_M2AP_ID     0xFFFFFFFF          // You can pick any value between 0..2^32-1,
+#define INVALID_MCE_MBMS_M2AP_ID     0xFFFFFF            // You can pick any value between 0..2^24-1,
+#define INVALID_ENB_MBMS_M2AP_ID     0xFFFF		         // You can pick any value between 0..2^16-1,
 
 // TMGI
 #define TMGI_FMT PLMN_FMT"|%04x"

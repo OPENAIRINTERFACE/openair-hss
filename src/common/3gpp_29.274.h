@@ -872,17 +872,20 @@ typedef struct mme_ue_eps_pdn_connections_s {
 // 8.73: MBMS IP Multicast Distribution
 
 typedef struct mbms_ip_multicast_distribution_s {
-  unsigned        sa_type:2;
-  unsigned        da_type:2;
+//  unsigned        sa_type:2;
+//  unsigned        da_type:2;
   teid_t          cteid; ///< Common TEID
-  union {
-    struct in_addr  ipv4_address;
-    struct in6_addr ipv6_address;
-  }source_address;
-  union {
-      struct in_addr  ipv4_address;
-      struct in6_addr ipv6_address;
-  }distribution_address;
+  ip_address_t    source_address;
+  ip_address_t    distribution_address;
+//
+//  union {
+//    struct in_addr  ipv4_address;
+//    struct in6_addr ipv6_address;
+//  }source_address;
+//  union {
+//      struct in_addr  ipv4_address;
+//      struct in6_addr ipv6_address;
+//  }distribution_address;
   uint8_t         hc_indication;
 } mbms_ip_multicast_distribution_t;
 

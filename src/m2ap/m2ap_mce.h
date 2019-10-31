@@ -72,7 +72,7 @@ typedef struct mbms_description_s {
   hash_table_ts_t 				g_m2ap_assoc_id2mce_enb_id_coll; // key is enb_mbms_m2ap_id, key is sctp association id;
 
   /** MBMS Parameters. */
-  tmgi_t					   *tmgi;
+  tmgi_t					    tmgi;
   mbms_service_area_id_t		mbms_service_area_id;
 
   /** SCTP stream on which M2 message will be sent/received.
@@ -142,12 +142,6 @@ int m2ap_mce_init(void);
 /** \brief M2AP layer top exit
  **/
 void m2ap_mce_exit (void);
-
-/** \brief Look for given eNB id in the list. Another method is necessary, since another map will be looked at.
- * \param enb_id The unique eNB id to search in list
- * @returns NULL if no eNB matchs the eNB id, or reference to the eNB element in list if matches
- **/
-m2ap_enb_description_t* m2ap_is_enb_id_in_list(const uint32_t enb_id);
 
 /** \brief Look for given MBMS Service Area Id in the list.
  * \param tac MBMS Service Area Id is not unique and used for the search in the list.
@@ -236,10 +230,5 @@ bool m2ap_enb_compare_by_m2ap_enb_id_cb (const hash_key_t keyP,
 
 m2ap_enb_description_t                      *
 m2ap_is_enb_id_in_list ( const uint32_t m2ap_enb_id);
-
-/** \brief Remove target MBMS from the list
- * \param mbms_ref MBMS structure reference to remove
- **/
-void m2ap_remove_mbms(mbms_description_t *mbms_ref);
 
 #endif /* FILE_M2AP_MCE_SEEN */

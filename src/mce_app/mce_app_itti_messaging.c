@@ -201,7 +201,7 @@ void mce_app_itti_m3ap_mbms_session_start_request(tmgi_t * tmgi, mbms_service_ar
 
 //------------------------------------------------------------------------------
 /** M3AP Session Update Request. */
-void mce_app_itti_m3ap_mbms_session_update_request(tmgi_t * tmgi, mbms_service_area_id_t mbms_service_area_id,
+void mce_app_itti_m3ap_mbms_session_update_request(tmgi_t * tmgi, const mbms_service_area_id_t new_mbms_service_area_id, const mbms_service_area_id_t old_mbms_service_area_id,
   bearer_qos_t * mbms_bearer_qos, mbms_ip_multicast_distribution_t * mbms_ip_mc_dist, const uint32_t time_to_update_in_sec)
 {
   MessageDef                             *message_p = NULL;
@@ -212,7 +212,8 @@ void mce_app_itti_m3ap_mbms_session_update_request(tmgi_t * tmgi, mbms_service_a
   DevAssert (message_p != NULL);
   itti_m3ap_mbms_session_update_req_t *m3ap_mbms_session_update_req_p = &message_p->ittiMsg.m3ap_mbms_session_update_req;
   memcpy((void*)&m3ap_mbms_session_update_req_p->tmgi, tmgi, sizeof(tmgi_t));
-  m3ap_mbms_session_update_req_p->mbms_service_area_id = mbms_service_area_id;
+  m3ap_mbms_session_update_req_p->new_mbms_service_area_id = new_mbms_service_area_id;
+  m3ap_mbms_session_update_req_p->old_mbms_service_area_id = old_mbms_service_area_id;
   memcpy((void*)&m3ap_mbms_session_update_req_p->mbms_bearer_tbc.bc_tbc.bearer_level_qos, mbms_bearer_qos, sizeof(bearer_qos_t));
   memcpy((void*)&m3ap_mbms_session_update_req_p->mbms_bearer_tbc.mbms_ip_mc_dist, mbms_ip_mc_dist, sizeof(mbms_ip_multicast_distribution_t));
   m3ap_mbms_session_update_req_p->time_to_update_in_sec = time_to_update_in_sec;

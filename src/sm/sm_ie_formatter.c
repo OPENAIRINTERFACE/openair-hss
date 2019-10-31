@@ -157,11 +157,11 @@ sm_mbms_ip_multicast_distribution_ie_get (
   /*
    * Distibution Address
    */
-  mbms_ip_mc_addr->da_type = (*ieValue & 0xC0) >> 6;
+  int da_type = (*ieValue & 0xC0) >> 6;
   int da_length = (*ieValue & 0x3F);
   ieValue++;
 
-  if (mbms_ip_mc_addr->da_type == 0) {
+  if (da_type == 0) {
     /*
      * IPv4 present: copy the 4 bytes
      */
@@ -169,11 +169,12 @@ sm_mbms_ip_multicast_distribution_ie_get (
 			(((uint32_t)ieValue[1]) << 16) |
 			(((uint32_t)ieValue[2]) << 8) |
 			(uint32_t)ieValue[3];
-	mbms_ip_mc_addr->distribution_address.ipv4_address.s_addr = htonl(hbo);
-	OAILOG_DEBUG (LOG_SM, "\t- MC Distribution IPv4 addr   " IN_ADDR_FMT "\n", PRI_IN_ADDR (mbms_ip_mc_addr->distribution_address.ipv4_address));
+    mbms_ip_mc_addr->distribution_address.pdn_type = IPv4;
+	mbms_ip_mc_addr->distribution_address.address.ipv4_address.s_addr = htonl(hbo);
+	OAILOG_DEBUG (LOG_SM, "\t- MC Distribution IPv4 addr   " IN_ADDR_FMT "\n", PRI_IN_ADDR (mbms_ip_mc_addr->distribution_address.address.ipv4_address));
 	ieValue+=4;
   }
-  else if (mbms_ip_mc_addr->da_type == 1) {
+  else if (da_type == 1) {
 	if(da_length != 16){
 		OAILOG_ERROR (LOG_SM, "\t- Received invalid IPv6 length for IP Multicast addr  %d\n", da_length);
 		return NW_FAILURE;
@@ -183,23 +184,24 @@ sm_mbms_ip_multicast_distribution_ie_get (
      * IPv6 present: copy the 16 bytes
      * * * * WARNING: if Ipv4 is present, 4 bytes of offset should be applied
      */
-    memcpy (mbms_ip_mc_addr->distribution_address.ipv6_address.__in6_u.__u6_addr8, ieValue, da_length);
-    inet_ntop (AF_INET6, (void*)&mbms_ip_mc_addr->distribution_address.ipv6_address, ipv6_ascii, INET6_ADDRSTRLEN);
+    mbms_ip_mc_addr->distribution_address.pdn_type = IPv6;
+    memcpy (mbms_ip_mc_addr->distribution_address.address.ipv6_address.__in6_u.__u6_addr8, ieValue, da_length);
+    inet_ntop (AF_INET6, (void*)&mbms_ip_mc_addr->distribution_address.address.ipv6_address, ipv6_ascii, INET6_ADDRSTRLEN);
     OAILOG_DEBUG (LOG_SM, "\t- IPv6 MC distribution addr   %s\n", ipv6_ascii);
     ieValue+=16;
   } else {
-	  OAILOG_ERROR (LOG_SM, "\t- Received invalid IP type for IP Multicast distribution addr  %d\n", mbms_ip_mc_addr->da_type);
+	  OAILOG_ERROR (LOG_SM, "\t- Received invalid IP type %d for IP Multicast distribution addr. \n", mbms_ip_mc_addr->distribution_address.pdn_type);
 	  return NW_FAILURE;
   }
 
   /*
    * Source Address
    */
-  mbms_ip_mc_addr->sa_type = (*ieValue & 0xC0) >> 6;
+  int sa_type = (*ieValue & 0xC0) >> 6;
   int sa_length = (*ieValue & 0x3F);
   ieValue++;
 
-  if (mbms_ip_mc_addr->sa_type == 0) {
+  if (sa_type == 0) {
     /*
      * IPv4 present: copy the 4 bytes
      */
@@ -207,11 +209,12 @@ sm_mbms_ip_multicast_distribution_ie_get (
 			(((uint32_t)ieValue[1]) << 16) |
 			(((uint32_t)ieValue[2]) << 8) |
 			(uint32_t)ieValue[3];
-	mbms_ip_mc_addr->source_address.ipv4_address.s_addr = htonl(hbo);
-	OAILOG_DEBUG (LOG_SM, "\t- MC Source IPv4 addr   " IN_ADDR_FMT "\n", PRI_IN_ADDR (mbms_ip_mc_addr->source_address.ipv4_address));
+	mbms_ip_mc_addr->source_address.pdn_type = IPv4;
+	mbms_ip_mc_addr->source_address.address.ipv4_address.s_addr = htonl(hbo);
+	OAILOG_DEBUG (LOG_SM, "\t- MC Source IPv4 addr   " IN_ADDR_FMT "\n", PRI_IN_ADDR (mbms_ip_mc_addr->source_address.address.ipv4_address));
 	ieValue+=4;
   }
-  else if (mbms_ip_mc_addr->sa_type == 1) {
+  else if (sa_type == 1) {
 	if(sa_length != 16){
 	  OAILOG_ERROR (LOG_SM, "\t- Received invalid IPv6 length for IP Multicast source addr  %d\n", sa_length);
 	  return NW_FAILURE;
@@ -221,12 +224,13 @@ sm_mbms_ip_multicast_distribution_ie_get (
      * IPv6 present: copy the 16 bytes
      * * * * WARNING: if Ipv4 is present, 4 bytes of offset should be applied
      */
-    memcpy (mbms_ip_mc_addr->source_address.ipv6_address.__in6_u.__u6_addr8, ieValue, sa_length);
-    inet_ntop (AF_INET6, (void*)&mbms_ip_mc_addr->source_address.ipv6_address, ipv6_ascii, INET6_ADDRSTRLEN);
+	mbms_ip_mc_addr->source_address.pdn_type = IPv6;
+	memcpy (mbms_ip_mc_addr->source_address.address.ipv6_address.__in6_u.__u6_addr8, ieValue, sa_length);
+    inet_ntop (AF_INET6, (void*)&mbms_ip_mc_addr->source_address.address.ipv6_address, ipv6_ascii, INET6_ADDRSTRLEN);
     OAILOG_DEBUG (LOG_SM, "\t- IPv6 MC source addr   %s\n", ipv6_ascii);
     ieValue+=16;
   } else {
-	  OAILOG_ERROR (LOG_SM, "\t- Received invalid IP type for IP Multicast source addr   %d\n", mbms_ip_mc_addr->sa_type);
+	  OAILOG_ERROR (LOG_SM, "\t- Received invalid IP type %d for IP Multicast source addr.\n", mbms_ip_mc_addr->source_address.pdn_type);
 	  return NW_FAILURE;
   }
 

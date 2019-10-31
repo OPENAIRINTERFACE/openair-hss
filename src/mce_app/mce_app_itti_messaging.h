@@ -47,7 +47,7 @@ void mce_app_itti_m3ap_mbms_session_start_request(tmgi_t * tmgi, mbms_service_ar
   bearer_qos_t * mbms_bearer_qos, mbms_ip_multicast_distribution_t * mbms_ip_mc_dist, const uint32_t time_to_start_in_sec);
 
 /** M3AP Session Update Request. */
-void mce_app_itti_m3ap_mbms_session_update_request(tmgi_t * tmgi, mbms_service_area_id_t mbms_service_area_id,
+void mce_app_itti_m3ap_mbms_session_update_request(tmgi_t * tmgi, const mbms_service_area_id_t new_mbms_service_area_id, const mbms_service_area_id_t old_mbms_service_area_id,
   bearer_qos_t * mbms_bearer_qos, mbms_ip_multicast_distribution_t * mbms_ip_mc_dist, const uint32_t time_to_update_in_sec);
 
 /** M3AP Session Stop Request. */

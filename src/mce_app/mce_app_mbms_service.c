@@ -249,7 +249,7 @@ mce_app_handle_mbms_session_update_request(
   mme_app_mbms_proc_t					 *mbms_sm_proc 			= NULL;
   mbms_service_index_t 					  mbms_service_idx      = INVALID_MBMS_SERVICE_INDEX;
   teid_t 								  mme_sm_teid			= INVALID_TEID;
-  mbms_service_area_id_t 			      mbms_service_area_id 	= INVALID_MBMS_SERVICE_AREA_ID;
+  mbms_service_area_id_t 			      new_mbms_service_area_id 	= INVALID_MBMS_SERVICE_AREA_ID, old_mbms_service_area_id 	= INVALID_MBMS_SERVICE_AREA_ID;
   int                                     rc 					= RETURNok;
 
   OAILOG_FUNC_IN (LOG_MCE_APP);
@@ -290,7 +290,7 @@ mce_app_handle_mbms_session_update_request(
   /**
    * We allow only one MBMS Service Area to change.
    */
-  if ((mbms_service_area_id = mce_app_check_sa_local(&mbms_session_update_request_pP->tmgi.plmn, &mbms_session_update_request_pP->mbms_service_area) == INVALID_MBMS_SERVICE_AREA_ID)) {
+  if ((new_mbms_service_area_id = mce_app_check_sa_local(&mbms_session_update_request_pP->tmgi.plmn, &mbms_session_update_request_pP->mbms_service_area) == INVALID_MBMS_SERVICE_AREA_ID)) {
     /**
      * The MBMS Service Area and PLMN are served by this MME.
      */
@@ -382,7 +382,7 @@ mce_app_handle_mbms_session_update_request(
    * CTEID or MBMS Multicast IPs don't change.
    */
   OAILOG_INFO(LOG_MCE_APP, "Successfully processed the update of MBMS Service for TMGI " TMGI_FMT " and MBMS Service Area " MBMS_SERVICE_AREA_ID_FMT". Continuing with the update. \n",
- 	TMGI_ARG(&mbms_session_update_request_pP->tmgi), mbms_service_area_id);
+ 	TMGI_ARG(&mbms_session_update_request_pP->tmgi), new_mbms_service_area_id);
   // todo: locks!?
 
   /**
@@ -397,15 +397,16 @@ mce_app_handle_mbms_session_update_request(
    * Set it into the MBMS Service with the first response.
    * This will also update the MBMS Service Area and cause a new MBMS Service Index.
    */
-  mce_app_update_mbms_service(&mbms_service->privates.fields.tmgi, mbms_service->privates.fields.mbms_service_area_id, mbms_service_area_id,
+  old_mbms_service_area_id = mbms_service->privates.fields.mbms_service_area_id;
+  mce_app_update_mbms_service(&mbms_service->privates.fields.tmgi, mbms_service->privates.fields.mbms_service_area_id, new_mbms_service_area_id,
 	mbms_session_update_request_pP->mbms_bearer_level_qos, mbms_service->privates.fields.mbms_flow_id, NULL, NULL);
 
   OAILOG_INFO(LOG_MCE_APP, "Created a MBMS procedure for updated MBMS Session with TMGI " TMGI_FMT ". Informing the MCE over M3. \n", TMGI_ARG(&mbms_session_update_request_pP->tmgi));
   /**
    * Also transmit the MBMS IP, since new eNB may be added (changed of MBMS Service Area).
    */
-  mbms_service_idx = mce_get_mbms_service_index(&mbms_service->privates.fields.tmgi, mbms_service_area_id);
-  mce_app_itti_m3ap_mbms_session_update_request(&mbms_session_update_request_pP->tmgi, mbms_service_area_id,
+  mbms_service_idx = mce_get_mbms_service_index(&mbms_service->privates.fields.tmgi, new_mbms_service_area_id);
+  mce_app_itti_m3ap_mbms_session_update_request(&mbms_session_update_request_pP->tmgi, new_mbms_service_area_id, old_mbms_service_area_id,
 	mbms_session_update_request_pP->mbms_bearer_level_qos, &mbms_service->privates.fields.mbms_bc.mbms_ip_mc_distribution,
 	abs_update_time_sec);
 

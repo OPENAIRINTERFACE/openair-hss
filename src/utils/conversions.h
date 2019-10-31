@@ -81,8 +81,9 @@
 /* Convert an integer on 16 bits to the given bUFFER */
 #define INT16_TO_BUFFER(x, buf) \
 do {                            \
-    (buf)[0] = (x) >> 8;        \
-    (buf)[1] = (x);             \
+    (buf)[0] = (x) >> 16;        \
+    (buf)[1] = (x) >> 8;        \
+    (buf)[2] = (x);             \
 } while(0)
 
 /* Convert an array of char containing vALUE to x */
@@ -149,6 +150,13 @@ do {                                            \
 do {                                \
     INT32_TO_OCTET_STRING(x, aSN);  \
     (aSN)->bits_unused = 0;         \
+} while(0)
+
+#define INT24_TO_OCTET_STRING(x, aSN)           \
+do {                                            \
+    (aSN)->buf = calloc(3, sizeof(uint8_t));    \
+    INT24_TO_BUFFER(x, (aSN)->buf);             \
+    (aSN)->size = 3;              				\
 } while(0)
 
 #define INT16_TO_OCTET_STRING(x, aSN)           \

@@ -88,7 +88,8 @@ typedef struct itti_m3ap_mbms_session_start_req_s {
 //------------------------------------------------------------------------------
 typedef struct itti_m3ap_mbms_session_update_req_s {
   tmgi_t									tmgi;
-  mbms_service_area_id_t					mbms_service_area_id;
+  mbms_service_area_id_t					new_mbms_service_area_id;
+  mbms_service_area_id_t					old_mbms_service_area_id;
   mbms_bearer_context_to_be_created_t	    mbms_bearer_tbc;
   uint32_t									time_to_update_in_sec;  /**< Will be handled in the MCE_APP layer. */
 } itti_m3ap_mbms_session_update_req_t;
