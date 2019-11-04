@@ -84,8 +84,8 @@ typedef uint64_t                 enb_s1ap_id_key_t ;
 typedef uint64_t                 	 mbms_service_index_t;
 
 #define INVALID_ENB_MBMS_M2AP_ID_KEY UINT32_MAX
-#define ENB_MBMS_M2AP_ID_MASK        0x00FFFFFF
-#define ENB_MBMS_M2AP_ID_FMT         "%06"PRIx3
+#define ENB_MBMS_M2AP_ID_MASK        0x00FFFF
+#define ENB_MBMS_M2AP_ID_FMT         "%06"PRIx16
 #define MCE_MBMS_M2AP_ID_FMT         "%"PRIx32
 #define INVALID_MCE_MBMS_M2AP_ID     0xFFFFFF            // You can pick any value between 0..2^24-1,
 #define INVALID_ENB_MBMS_M2AP_ID     0xFFFF		         // You can pick any value between 0..2^16-1,

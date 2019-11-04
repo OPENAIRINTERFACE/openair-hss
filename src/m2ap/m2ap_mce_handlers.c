@@ -55,7 +55,8 @@
 #include "m2ap_mce_itti_messaging.h"
 #include "m2ap_mce_procedures.h"
 
-extern hash_table_ts_t g_m2ap_enb_coll; // contains eNB_description_s, key is eNB_description_s.assoc_id
+extern hash_table_ts_t 					g_m2ap_enb_coll; 	// SCTP Association ID association to M2AP eNB Reference;
+extern hash_table_ts_t 					g_m2ap_mbms_coll; 	// MCE MBMS M2AP ID association to MBMS Reference;
 
 static const char * const m2_enb_state_str [] = {"M2AP_INIT", "M2AP_RESETTING", "M2AP_READY", "M2AP_SHUTDOWN"};
 
@@ -72,16 +73,19 @@ m2ap_message_decoded_callback           messages_callback[][3] = {
 		  m2ap_mce_handle_mbms_session_start_failure},
   {0, m2ap_mce_handle_mbms_session_stop_response,      	/* sessionStop */
 		  m2ap_mce_handle_mbms_session_stop_failure},
-  {0, m2ap_mce_handle_mbms_session_update_response,		/* sessionUpdate */
-		  m2ap_mce_handle_mbms_session_update_failure},
-  {m2ap_mce_handle_m2_setup_request, 0, 0},     				   /* m2Setup */
+
   {0, m2ap_mce_handle_mbms_scheduling_information_response, 0},    /* mbmsSchedulingInformation */
+  {m2ap_mce_handle_error_indication, 0, 0},     				   /* errorIndication */
   {m2ap_mce_handle_reset_request, 0, 0},                    	   /* reset */
+  {m2ap_mce_handle_m2_setup_request, 0, 0},     				   /* m2Setup */
   {0, 0, 0},                    								   /* enbConfigurationUpdate */
   {0, 0, 0},                   									   /* mceConfigurationUpdate */
+  {0, 0, 0},                    /* PrivateMessage */
+  {0, m2ap_mce_handle_mbms_session_update_response,		/* sessionUpdate */
+		  m2ap_mce_handle_mbms_session_update_failure},
+
   {0, m2ap_mce_handle_mbms_service_counting_response, 			   /* mbmsServiceCounting */
 		  m2ap_mce_handle_mbms_service_counting_failure},
-  {m2ap_mce_handle_error_indication, 0, 0},     				   /* errorIndication */
   {m2ap_mce_handle_mbms_service_counting_result_report, 0, 0},     /* mbmsServiceCountingResultReport */
   {m2ap_mce_handle_mbms_overload_notification, 0, 0},                   								       /* mbmsOverloadNotifiction */
 };
@@ -253,9 +257,9 @@ m2ap_mce_handle_m2_setup_request (
      */
   if (stream != 0) {
     OAILOG_ERROR (LOG_M2AP, "Received new m2 setup request on stream != 0\n");
-      /*
-       * Send a m2 setup failure with protocol cause unspecified
-       */
+    /*
+     * Send a m2 setup failure with protocol cause unspecified
+     */
     rc = m2ap_mce_generate_m2_setup_failure (assoc_id, M2AP_Cause_PR_protocol, M2AP_CauseProtocol_unspecified, -1);
     OAILOG_FUNC_RETURN (LOG_M2AP, rc);
   }
@@ -494,119 +498,45 @@ m2ap_mce_handle_mbms_session_start_response (
     __attribute__((unused)) const sctp_stream_id_t stream,
     M2AP_M2AP_PDU_t *pdu)
 {
-//  M2AP_InitialContextSetupResponse_t     *container;
-//  M2AP_InitialContextSetupResponseIEs_t  *ie = NULL;
-//  M2AP_E_RABSetupItemCtxtSUResIEs_t      *eRABSetupItemCtxtSURes_p = NULL;
-//  M2AP_E_RABSetupItemCtxtSURes_t	     *e_rab_setup_item_ctxt_su_res = NULL;
-//  mbms_description_t                       *mbms_ref_p = NULL;
+  M2AP_SessionStartResponse_t     		 *container;
+  M2AP_SessionStartResponse_Ies_t  		 *ie = NULL;
+  mbms_description_t                     *mbms_ref_p = NULL;
   MessageDef                             *message_p = NULL;
-  int                                     rc = RETURNok;
   mce_mbms_m2ap_id_t                      mce_mbms_m2ap_id = 0;
   enb_mbms_m2ap_id_t                      enb_mbms_m2ap_id = 0;
 
   OAILOG_FUNC_IN (LOG_M2AP);
 
-//  container = &pdu->choice.successfulOutcome.value.choice.InitialContextSetupResponse;
-//
-//  M2AP_FIND_PROTOCOLIE_BY_ID(M2AP_InitialContextSetupResponseIEs_t, ie, container,
-//                             M2AP_ProtocolIE_ID_id_MCE_MBMS_M2AP_ID, true);
-//  mce_mbms_m2ap_id = ie->value.choice.MCE_MBMS_M2AP_ID;
-//
-//  M2AP_FIND_PROTOCOLIE_BY_ID(M2AP_InitialContextSetupResponseIEs_t, ie, container,
-//                             M2AP_ProtocolIE_ID_id_eNB_MBMS_M2AP_ID, true);
-//  enb_mbms_m2ap_id = (enb_mbms_m2ap_id_t) (ie->value.choice.ENB_MBMS_M2AP_ID & ENB_MBMS_M2AP_ID_MASK);
-//
-//  if ((mbms_ref_p = m2ap_is_ue_mme_id_in_list ((uint32_t) mce_mbms_m2ap_id)) == NULL) {
-//    OAILOG_DEBUG (LOG_M2AP, "No MBMS is attached to this mme MBMS s1ap id: " MCE_MBMS_M2AP_ID_FMT " %u(10)\n",
-//                      (uint32_t) mce_mbms_m2ap_id, (uint32_t) mce_mbms_m2ap_id);
-//    OAILOG_FUNC_RETURN (LOG_M2AP, RETURNerror);
-//  }
-//
-//  if (mbms_ref_p->enb_mbms_m2ap_id != enb_mbms_m2ap_id) {
-//    OAILOG_DEBUG (LOG_M2AP, "Mismatch in eNB MBMS M2AP ID, known: " ENB_MBMS_M2AP_ID_FMT " %u(10), received: 0x%06x %u(10)\n",
-//                mbms_ref_p->enb_mbms_m2ap_id, mbms_ref_p->enb_mbms_m2ap_id, (uint32_t) enb_mbms_m2ap_id, (uint32_t) enb_mbms_m2ap_id);
-//    OAILOG_FUNC_RETURN (LOG_M2AP, RETURNerror);
-//  }
-//
-//  M2AP_FIND_PROTOCOLIE_BY_ID(M2AP_InitialContextSetupResponseIEs_t, ie, container,
-//                             M2AP_ProtocolIE_ID_id_E_RABSetupListCtxtSURes, true);
-//  if (ie->value.choice.E_RABSetupListCtxtSURes.list.count < 1) {
-//
-//    OAILOG_DEBUG (LOG_M2AP, "E-RAB creation has failed\n");
-//    OAILOG_FUNC_RETURN (LOG_M2AP, RETURNerror);
-//  }
-//
-//  /** Check if a context removal is ongoing. */
-//  if(mbms_ref_p->s1_ue_state == M2AP_MBMS_WAITING_CRR && mbms_ref_p->m2ap_ue_context_rel_timer.id != M2AP_TIMER_INACTIVE_ID){
-//    OAILOG_ERROR(LOG_M2AP, "A context release procedure is goingoing for ueRerefernce with ueId " MCE_MBMS_M2AP_ID_FMT" and enbUeId " ENB_MBMS_M2AP_ID_FMT ". Ignoring received Setup Response. \n", mbms_ref_p->mce_mbms_m2ap_id, mbms_ref_p->enb_mbms_m2ap_id);
-//    OAILOG_FUNC_RETURN (LOG_M2AP, RETURNerror);
-//  }
-//
-//  mbms_ref_p->s1_ue_state = M2AP_MBMS_CONNECTED;
-//  message_p = itti_alloc_new_message (TASK_S1AP, MCE_APP_INITIAL_CONTEXT_SETUP_RSP);
-//  AssertFatal (message_p != NULL, "itti_alloc_new_message Failed");
-//  memset ((void *)&message_p->ittiMsg.mme_app_initial_context_setup_rsp, 0, sizeof (itti_mme_app_initial_context_setup_rsp_t));
-//
-//
-//  itti_mme_app_initial_context_setup_rsp_t * initial_context_setup_rsp = NULL;
-//  initial_context_setup_rsp = &message_p->ittiMsg.mme_app_initial_context_setup_rsp;
-//
-//  initial_context_setup_rsp->ue_id = mbms_ref_p->mce_mbms_m2ap_id;
-//  /** Add here multiple bearers. */
-//  bool test = false;
-//  initial_context_setup_rsp->bcs_to_be_modified.num_bearer_context = ie->value.choice.E_RABSetupListCtxtSURes.list.count;
-//  for (int item = 0; item < ie->value.choice.E_RABSetupListCtxtSURes.list.count; item++) {
-//    int item2 = item;
-//    /*
-//     * Bad, very bad cast...
-//     */
-//    eRABSetupItemCtxtSURes_p = (M2AP_E_RABSetupItemCtxtSUResIEs_t *)
-//        ie->value.choice.E_RABSetupListCtxtSURes.list.array[item];
-//
-//    e_rab_setup_item_ctxt_su_res = &eRABSetupItemCtxtSURes_p->value.choice.E_RABSetupItemCtxtSURes;
-////
-////    if(e_rab_setup_item_ctxt_su_res->e_RAB_ID == 7){
-////    	test = true;
-////    	initial_context_setup_rsp->bcs_to_be_modified.num_bearer_context--;
-////    	continue;
-////    }
-////    if(test == true){
-////    	if(item2 > 0)
-////    		item2--;
-////    }
-//
-//    initial_context_setup_rsp->bcs_to_be_modified.bearer_context[item2].eps_bearer_id = e_rab_setup_item_ctxt_su_res->e_RAB_ID;
-//    initial_context_setup_rsp->bcs_to_be_modified.bearer_context[item2].s1_eNB_fteid.teid = htonl (*((uint32_t *) e_rab_setup_item_ctxt_su_res->gTP_TEID.buf));
-//    bstring transport_address = blk2bstr(e_rab_setup_item_ctxt_su_res->transportLayerAddress.buf, e_rab_setup_item_ctxt_su_res->transportLayerAddress.size);
-//
-//    /** Set the IP address from the FTEID. */
-//    if (4 == blength(transport_address)) {
-//    	initial_context_setup_rsp->bcs_to_be_modified.bearer_context[item2].s1_eNB_fteid.ipv4 = 1;
-//    	memcpy(&initial_context_setup_rsp->bcs_to_be_modified.bearer_context[item2].s1_eNB_fteid.ipv4_address, transport_address->data, blength(transport_address));
-//    } else if (16 == blength(transport_address)) {
-//    	initial_context_setup_rsp->bcs_to_be_modified.bearer_context[item2].s1_eNB_fteid.ipv6 = 1;
-//    	memcpy(&initial_context_setup_rsp->bcs_to_be_modified.bearer_context[item2].s1_eNB_fteid.ipv6_address, transport_address->data, blength(transport_address));
-//    } else {
-//    	AssertFatal(0, "TODO IP address %d bytes", blength(transport_address));
-//    }
-//    bdestroy_wrapper(&transport_address);
-//  }
-//
-//  /** Get the failed bearers. */
-//  M2AP_FIND_PROTOCOLIE_BY_ID(M2AP_InitialContextSetupResponseIEs_t, ie, container,
-//                             M2AP_ProtocolIE_ID_id_E_RABFailedToSetupListBearerSURes, false);
-//  if (ie) {
-//    M2AP_E_RABList_t *m2ap_e_rab_list = &ie->value.choice.E_RABList;
-//    for (int index = 0; index < m2ap_e_rab_list->list.count; index++) {
-//      M2AP_E_RABItem_t * erab_item = (M2AP_E_RABItem_t *)m2ap_e_rab_list->list.array[index];
-//      initial_context_setup_rsp->e_rab_release_list.item[initial_context_setup_rsp->e_rab_release_list.no_of_items].e_rab_id  = erab_item->e_RAB_ID;
-//      initial_context_setup_rsp->e_rab_release_list.item[initial_context_setup_rsp->e_rab_release_list.no_of_items].cause     = erab_item->cause;
-//      initial_context_setup_rsp->e_rab_release_list.no_of_items++;
-//    }
-//  }
+  /**
+   * Check that the eNB is not in the SCTP Association Hashmap.
+   * Add it into the list. No need to inform the MCE_APP layer.
+   */
+  container = &pdu->choice.successfulOutcome.value.choice.SessionStartResponse;
+  M2AP_FIND_PROTOCOLIE_BY_ID(M2AP_SessionStartResponse_Ies_t, ie, container,
+		  M2AP_ProtocolIE_ID_id_MCE_MBMS_M2AP_ID, true);
+  mce_mbms_m2ap_id = ie->value.choice.MCE_MBMS_M2AP_ID;
 
-  rc =  itti_send_msg_to_task (TASK_MCE_APP, INSTANCE_DEFAULT, message_p);
-  OAILOG_FUNC_RETURN (LOG_M2AP, rc);
+  M2AP_FIND_PROTOCOLIE_BY_ID(M2AP_SessionStartResponse_Ies_t, ie, container,
+                             M2AP_ProtocolIE_ID_id_ENB_MBMS_M2AP_ID, true);
+  enb_mbms_m2ap_id = (enb_mbms_m2ap_id_t) (ie->value.choice.ENB_MBMS_M2AP_ID & ENB_MBMS_M2AP_ID_MASK);
+
+  if ((mbms_ref_p = m2ap_is_ue_mme_id_in_list ((uint32_t) mce_mbms_m2ap_id)) == NULL) {
+    OAILOG_ERROR(LOG_M2AP, "No MBMS is attached to this MCE MBMS M2AP id: " MCE_MBMS_M2AP_ID_FMT "\n", mce_mbms_m2ap_id);
+    OAILOG_FUNC_RETURN (LOG_M2AP, RETURNerror);
+  }
+
+  /**
+   * Try to insert the received eNB MBMS M2AP ID into the MBMS service.
+   */
+  hashtable_rc_t  h_rc = hashtable_ts_insert (&mbms_ref_p->g_m2ap_assoc_id2mce_enb_id_coll, (const hash_key_t) assoc_id, (void *)(uintptr_t)enb_mbms_m2ap_id); /**< Add the value as pointer. No need to free. */
+  if (h_rc != HASH_TABLE_OK) {
+    OAILOG_DEBUG (LOG_M2AP, "Error inserting MBMS description with MCE MBMS M2AP ID " MCE_MBMS_M2AP_ID_FMT" eNB MBMS M2AP ID " ENB_MBMS_M2AP_ID_FMT". Hash-Rc (%d). Leaving the MBMS reference. \n",
+    	mce_mbms_m2ap_id, enb_mbms_m2ap_id, h_rc);
+    OAILOG_FUNC_RETURN (LOG_M2AP, RETURNerror);
+  }
+  OAILOG_INFO(LOG_M2AP, "Successfully started MBMS Service on eNB with sctp assoc id (%d) MBMS description with MCE MBMS M2AP ID " MCE_MBMS_M2AP_ID_FMT " eNB MBMS M2AP ID " ENB_MBMS_M2AP_ID_FMT ". \n",
+    	assoc_id, mce_mbms_m2ap_id, enb_mbms_m2ap_id);
+  OAILOG_FUNC_RETURN (LOG_M2AP, RETURNok);
 }
 
 //------------------------------------------------------------------------------
@@ -616,20 +546,37 @@ m2ap_mce_handle_mbms_session_start_failure (
     __attribute__((unused)) const sctp_stream_id_t stream,
     M2AP_M2AP_PDU_t *pdu)
 {
-//  M2AP_InitialContextSetupResponse_t     *container;
-//  M2AP_InitialContextSetupResponseIEs_t  *ie = NULL;
-//  M2AP_E_RABSetupItemCtxtSUResIEs_t      *eRABSetupItemCtxtSURes_p = NULL;
-//  M2AP_E_RABSetupItemCtxtSURes_t	     *e_rab_setup_item_ctxt_su_res = NULL;
-//  mbms_description_t                       *mbms_ref_p = NULL;
+  M2AP_SessionStartFailure_t     		 *container;
+  M2AP_SessionStartFailure_Ies_t  		 *ie = NULL;
+  mbms_description_t                     *mbms_ref_p = NULL;
   MessageDef                             *message_p = NULL;
   int                                     rc = RETURNok;
   mce_mbms_m2ap_id_t                      mce_mbms_m2ap_id = 0;
-  enb_mbms_m2ap_id_t                      enb_mbms_m2ap_id = 0;
 
   OAILOG_FUNC_IN (LOG_M2AP);
 
+  /**
+   * Check that the eNB is not in the SCTP Association Hashmap.
+   * Add it into the list. No need to inform the MCE_APP layer.
+   */
+  container = &pdu->choice.unsuccessfulOutcome.value.choice.SessionStartFailure;
+  M2AP_FIND_PROTOCOLIE_BY_ID(M2AP_SessionStartFailure_Ies_t, ie, container,
+		  M2AP_ProtocolIE_ID_id_MCE_MBMS_M2AP_ID, true);
+  mce_mbms_m2ap_id = ie->value.choice.MCE_MBMS_M2AP_ID;
 
-  rc =  itti_send_msg_to_task (TASK_MCE_APP, INSTANCE_DEFAULT, message_p);
+  if ((mbms_ref_p = m2ap_is_ue_mme_id_in_list ((uint32_t) mce_mbms_m2ap_id)) == NULL) {
+    OAILOG_ERROR(LOG_M2AP, "No MBMS is attached to this MCE MBMS M2AP id: " MCE_MBMS_M2AP_ID_FMT "\n", mce_mbms_m2ap_id);
+    OAILOG_FUNC_RETURN (LOG_M2AP, RETURNerror);
+  }
+
+  /**
+   * Nothing needs to be done for MBMS start failure.
+   * We don't know if there will be more responses from more eNBs.
+   * Check that there is SCTP association.
+   */
+  OAILOG_ERROR(LOG_M2AP, "Error starting MBMS Service on eNB with sctp assoc id (%d) MBMS description with MCE MBMS M2AP ID " MCE_MBMS_M2AP_ID_FMT ". \n",
+		  assoc_id, mce_mbms_m2ap_id);
+  hashtable_ts_free (&mbms_ref_p->g_m2ap_assoc_id2mce_enb_id_coll, assoc_id);
   OAILOG_FUNC_RETURN (LOG_M2AP, rc);
 }
 
@@ -641,119 +588,40 @@ m2ap_mce_handle_mbms_session_stop_response (
     __attribute__((unused)) const sctp_stream_id_t stream,
     M2AP_M2AP_PDU_t *pdu)
 {
-//  M2AP_InitialContextSetupResponse_t     *container;
-//  M2AP_InitialContextSetupResponseIEs_t  *ie = NULL;
-//  M2AP_E_RABSetupItemCtxtSUResIEs_t      *eRABSetupItemCtxtSURes_p = NULL;
-//  M2AP_E_RABSetupItemCtxtSURes_t	     *e_rab_setup_item_ctxt_su_res = NULL;
-//  mbms_description_t                       *mbms_ref_p = NULL;
+  M2AP_SessionStopResponse_t     		 *container;
+  M2AP_SessionStopResponse_Ies_t  		 *ie = NULL;
+  mbms_description_t                     *mbms_ref_p = NULL;
   MessageDef                             *message_p = NULL;
-  int                                     rc = RETURNok;
   mce_mbms_m2ap_id_t                      mce_mbms_m2ap_id = 0;
   enb_mbms_m2ap_id_t                      enb_mbms_m2ap_id = 0;
 
   OAILOG_FUNC_IN (LOG_M2AP);
 
-//  container = &pdu->choice.successfulOutcome.value.choice.InitialContextSetupResponse;
-//
-//  M2AP_FIND_PROTOCOLIE_BY_ID(M2AP_InitialContextSetupResponseIEs_t, ie, container,
-//                             M2AP_ProtocolIE_ID_id_MCE_MBMS_M2AP_ID, true);
-//  mce_mbms_m2ap_id = ie->value.choice.MCE_MBMS_M2AP_ID;
-//
-//  M2AP_FIND_PROTOCOLIE_BY_ID(M2AP_InitialContextSetupResponseIEs_t, ie, container,
-//                             M2AP_ProtocolIE_ID_id_eNB_MBMS_M2AP_ID, true);
-//  enb_mbms_m2ap_id = (enb_mbms_m2ap_id_t) (ie->value.choice.ENB_MBMS_M2AP_ID & ENB_MBMS_M2AP_ID_MASK);
-//
-//  if ((mbms_ref_p = m2ap_is_ue_mme_id_in_list ((uint32_t) mce_mbms_m2ap_id)) == NULL) {
-//    OAILOG_DEBUG (LOG_M2AP, "No MBMS is attached to this mme MBMS s1ap id: " MCE_MBMS_M2AP_ID_FMT " %u(10)\n",
-//                      (uint32_t) mce_mbms_m2ap_id, (uint32_t) mce_mbms_m2ap_id);
-//    OAILOG_FUNC_RETURN (LOG_M2AP, RETURNerror);
-//  }
-//
-//  if (mbms_ref_p->enb_mbms_m2ap_id != enb_mbms_m2ap_id) {
-//    OAILOG_DEBUG (LOG_M2AP, "Mismatch in eNB MBMS M2AP ID, known: " ENB_MBMS_M2AP_ID_FMT " %u(10), received: 0x%06x %u(10)\n",
-//                mbms_ref_p->enb_mbms_m2ap_id, mbms_ref_p->enb_mbms_m2ap_id, (uint32_t) enb_mbms_m2ap_id, (uint32_t) enb_mbms_m2ap_id);
-//    OAILOG_FUNC_RETURN (LOG_M2AP, RETURNerror);
-//  }
-//
-//  M2AP_FIND_PROTOCOLIE_BY_ID(M2AP_InitialContextSetupResponseIEs_t, ie, container,
-//                             M2AP_ProtocolIE_ID_id_E_RABSetupListCtxtSURes, true);
-//  if (ie->value.choice.E_RABSetupListCtxtSURes.list.count < 1) {
-//
-//    OAILOG_DEBUG (LOG_M2AP, "E-RAB creation has failed\n");
-//    OAILOG_FUNC_RETURN (LOG_M2AP, RETURNerror);
-//  }
-//
-//  /** Check if a context removal is ongoing. */
-//  if(mbms_ref_p->s1_ue_state == M2AP_MBMS_WAITING_CRR && mbms_ref_p->m2ap_ue_context_rel_timer.id != M2AP_TIMER_INACTIVE_ID){
-//    OAILOG_ERROR(LOG_M2AP, "A context release procedure is goingoing for ueRerefernce with ueId " MCE_MBMS_M2AP_ID_FMT" and enbUeId " ENB_MBMS_M2AP_ID_FMT ". Ignoring received Setup Response. \n", mbms_ref_p->mce_mbms_m2ap_id, mbms_ref_p->enb_mbms_m2ap_id);
-//    OAILOG_FUNC_RETURN (LOG_M2AP, RETURNerror);
-//  }
-//
-//  mbms_ref_p->s1_ue_state = M2AP_MBMS_CONNECTED;
-//  message_p = itti_alloc_new_message (TASK_S1AP, MCE_APP_INITIAL_CONTEXT_SETUP_RSP);
-//  AssertFatal (message_p != NULL, "itti_alloc_new_message Failed");
-//  memset ((void *)&message_p->ittiMsg.mme_app_initial_context_setup_rsp, 0, sizeof (itti_mme_app_initial_context_setup_rsp_t));
-//
-//
-//  itti_mme_app_initial_context_setup_rsp_t * initial_context_setup_rsp = NULL;
-//  initial_context_setup_rsp = &message_p->ittiMsg.mme_app_initial_context_setup_rsp;
-//
-//  initial_context_setup_rsp->ue_id = mbms_ref_p->mce_mbms_m2ap_id;
-//  /** Add here multiple bearers. */
-//  bool test = false;
-//  initial_context_setup_rsp->bcs_to_be_modified.num_bearer_context = ie->value.choice.E_RABSetupListCtxtSURes.list.count;
-//  for (int item = 0; item < ie->value.choice.E_RABSetupListCtxtSURes.list.count; item++) {
-//    int item2 = item;
-//    /*
-//     * Bad, very bad cast...
-//     */
-//    eRABSetupItemCtxtSURes_p = (M2AP_E_RABSetupItemCtxtSUResIEs_t *)
-//        ie->value.choice.E_RABSetupListCtxtSURes.list.array[item];
-//
-//    e_rab_setup_item_ctxt_su_res = &eRABSetupItemCtxtSURes_p->value.choice.E_RABSetupItemCtxtSURes;
-////
-////    if(e_rab_setup_item_ctxt_su_res->e_RAB_ID == 7){
-////    	test = true;
-////    	initial_context_setup_rsp->bcs_to_be_modified.num_bearer_context--;
-////    	continue;
-////    }
-////    if(test == true){
-////    	if(item2 > 0)
-////    		item2--;
-////    }
-//
-//    initial_context_setup_rsp->bcs_to_be_modified.bearer_context[item2].eps_bearer_id = e_rab_setup_item_ctxt_su_res->e_RAB_ID;
-//    initial_context_setup_rsp->bcs_to_be_modified.bearer_context[item2].s1_eNB_fteid.teid = htonl (*((uint32_t *) e_rab_setup_item_ctxt_su_res->gTP_TEID.buf));
-//    bstring transport_address = blk2bstr(e_rab_setup_item_ctxt_su_res->transportLayerAddress.buf, e_rab_setup_item_ctxt_su_res->transportLayerAddress.size);
-//
-//    /** Set the IP address from the FTEID. */
-//    if (4 == blength(transport_address)) {
-//    	initial_context_setup_rsp->bcs_to_be_modified.bearer_context[item2].s1_eNB_fteid.ipv4 = 1;
-//    	memcpy(&initial_context_setup_rsp->bcs_to_be_modified.bearer_context[item2].s1_eNB_fteid.ipv4_address, transport_address->data, blength(transport_address));
-//    } else if (16 == blength(transport_address)) {
-//    	initial_context_setup_rsp->bcs_to_be_modified.bearer_context[item2].s1_eNB_fteid.ipv6 = 1;
-//    	memcpy(&initial_context_setup_rsp->bcs_to_be_modified.bearer_context[item2].s1_eNB_fteid.ipv6_address, transport_address->data, blength(transport_address));
-//    } else {
-//    	AssertFatal(0, "TODO IP address %d bytes", blength(transport_address));
-//    }
-//    bdestroy_wrapper(&transport_address);
-//  }
-//
-//  /** Get the failed bearers. */
-//  M2AP_FIND_PROTOCOLIE_BY_ID(M2AP_InitialContextSetupResponseIEs_t, ie, container,
-//                             M2AP_ProtocolIE_ID_id_E_RABFailedToSetupListBearerSURes, false);
-//  if (ie) {
-//    M2AP_E_RABList_t *m2ap_e_rab_list = &ie->value.choice.E_RABList;
-//    for (int index = 0; index < m2ap_e_rab_list->list.count; index++) {
-//      M2AP_E_RABItem_t * erab_item = (M2AP_E_RABItem_t *)m2ap_e_rab_list->list.array[index];
-//      initial_context_setup_rsp->e_rab_release_list.item[initial_context_setup_rsp->e_rab_release_list.no_of_items].e_rab_id  = erab_item->e_RAB_ID;
-//      initial_context_setup_rsp->e_rab_release_list.item[initial_context_setup_rsp->e_rab_release_list.no_of_items].cause     = erab_item->cause;
-//      initial_context_setup_rsp->e_rab_release_list.no_of_items++;
-//    }
-//  }
+  /**
+   * Check that the eNB is not in the SCTP Association Hashmap.
+   * Add it into the list. No need to inform the MCE_APP layer.
+   */
+  container = &pdu->choice.successfulOutcome.value.choice.SessionStopResponse;
+  M2AP_FIND_PROTOCOLIE_BY_ID(M2AP_SessionStopResponse_Ies_t, ie, container,
+	M2AP_ProtocolIE_ID_id_MCE_MBMS_M2AP_ID, true);
+  mce_mbms_m2ap_id = ie->value.choice.MCE_MBMS_M2AP_ID;
 
-  rc =  itti_send_msg_to_task (TASK_MCE_APP, INSTANCE_DEFAULT, message_p);
-  OAILOG_FUNC_RETURN (LOG_M2AP, rc);
+  M2AP_FIND_PROTOCOLIE_BY_ID(M2AP_SessionStopResponse_Ies_t, ie, container,
+	M2AP_ProtocolIE_ID_id_ENB_MBMS_M2AP_ID, true);
+  enb_mbms_m2ap_id = (enb_mbms_m2ap_id_t) (ie->value.choice.ENB_MBMS_M2AP_ID & ENB_MBMS_M2AP_ID_MASK);
+
+  if ((mbms_ref_p = m2ap_is_ue_mme_id_in_list ((uint32_t) mce_mbms_m2ap_id)) == NULL) {
+    OAILOG_ERROR(LOG_M2AP, "No MBMS is attached to this MCE MBMS M2AP id: " MCE_MBMS_M2AP_ID_FMT "\n", mce_mbms_m2ap_id);
+    OAILOG_FUNC_RETURN (LOG_M2AP, RETURNerror);
+  }
+
+  /**
+   * For any case, just remove the SCTP association.
+   */
+  hashtable_ts_free (&mbms_ref_p->g_m2ap_assoc_id2mce_enb_id_coll, assoc_id);
+  OAILOG_INFO(LOG_M2AP, "Successfully stopped MBMS Service on eNB with sctp assoc id (%d) MBMS description with MCE MBMS M2AP ID " MCE_MBMS_M2AP_ID_FMT " eNB MBMS M2AP ID " ENB_MBMS_M2AP_ID_FMT ". \n",
+	  assoc_id, mce_mbms_m2ap_id, enb_mbms_m2ap_id);
+  OAILOG_FUNC_RETURN (LOG_M2AP, RETURNok);
 }
 
 //------------------------------------------------------------------------------
@@ -763,9 +631,9 @@ m2ap_mce_handle_mbms_session_update_response (
     __attribute__((unused)) const sctp_stream_id_t stream,
     M2AP_M2AP_PDU_t *pdu)
 {
-//  M2AP_InitialContextSetupResponse_t     *container;
-//  M2AP_InitialContextSetupResponseIEs_t  *ie = NULL;
-  mbms_description_t                *mbms_ref_p = NULL;
+  M2AP_SessionUpdateResponse_t     		 *container;
+  M2AP_SessionUpdateResponse_Ies_t  	 *ie = NULL;
+  mbms_description_t                	 *mbms_ref_p = NULL;
   MessageDef                             *message_p = NULL;
   int                                     rc = RETURNok;
   mce_mbms_m2ap_id_t                      mce_mbms_m2ap_id = 0;
@@ -773,107 +641,30 @@ m2ap_mce_handle_mbms_session_update_response (
 
   OAILOG_FUNC_IN (LOG_M2AP);
 
-//  container = &pdu->choice.successfulOutcome.value.choice.InitialContextSetupResponse;
-//
-//  M2AP_FIND_PROTOCOLIE_BY_ID(M2AP_InitialContextSetupResponseIEs_t, ie, container,
-//                             M2AP_ProtocolIE_ID_id_MCE_MBMS_M2AP_ID, true);
-//  mce_mbms_m2ap_id = ie->value.choice.MCE_MBMS_M2AP_ID;
-//
-//  M2AP_FIND_PROTOCOLIE_BY_ID(M2AP_InitialContextSetupResponseIEs_t, ie, container,
-//                             M2AP_ProtocolIE_ID_id_eNB_MBMS_M2AP_ID, true);
-//  enb_mbms_m2ap_id = (enb_mbms_m2ap_id_t) (ie->value.choice.ENB_MBMS_M2AP_ID & ENB_MBMS_M2AP_ID_MASK);
-//
-//  if ((mbms_ref_p = m2ap_is_ue_mme_id_in_list ((uint32_t) mce_mbms_m2ap_id)) == NULL) {
-//    OAILOG_DEBUG (LOG_M2AP, "No MBMS is attached to this mme MBMS s1ap id: " MCE_MBMS_M2AP_ID_FMT " %u(10)\n",
-//                      (uint32_t) mce_mbms_m2ap_id, (uint32_t) mce_mbms_m2ap_id);
-//    OAILOG_FUNC_RETURN (LOG_M2AP, RETURNerror);
-//  }
-//
-//  if (mbms_ref_p->enb_mbms_m2ap_id != enb_mbms_m2ap_id) {
-//    OAILOG_DEBUG (LOG_M2AP, "Mismatch in eNB MBMS M2AP ID, known: " ENB_MBMS_M2AP_ID_FMT " %u(10), received: 0x%06x %u(10)\n",
-//                mbms_ref_p->enb_mbms_m2ap_id, mbms_ref_p->enb_mbms_m2ap_id, (uint32_t) enb_mbms_m2ap_id, (uint32_t) enb_mbms_m2ap_id);
-//    OAILOG_FUNC_RETURN (LOG_M2AP, RETURNerror);
-//  }
-//
-//  M2AP_FIND_PROTOCOLIE_BY_ID(M2AP_InitialContextSetupResponseIEs_t, ie, container,
-//                             M2AP_ProtocolIE_ID_id_E_RABSetupListCtxtSURes, true);
-//  if (ie->value.choice.E_RABSetupListCtxtSURes.list.count < 1) {
-//
-//    OAILOG_DEBUG (LOG_M2AP, "E-RAB creation has failed\n");
-//    OAILOG_FUNC_RETURN (LOG_M2AP, RETURNerror);
-//  }
-//
-//  /** Check if a context removal is ongoing. */
-//  if(mbms_ref_p->s1_ue_state == M2AP_MBMS_WAITING_CRR && mbms_ref_p->m2ap_ue_context_rel_timer.id != M2AP_TIMER_INACTIVE_ID){
-//    OAILOG_ERROR(LOG_M2AP, "A context release procedure is goingoing for ueRerefernce with ueId " MCE_MBMS_M2AP_ID_FMT" and enbUeId " ENB_MBMS_M2AP_ID_FMT ". Ignoring received Setup Response. \n", mbms_ref_p->mce_mbms_m2ap_id, mbms_ref_p->enb_mbms_m2ap_id);
-//    OAILOG_FUNC_RETURN (LOG_M2AP, RETURNerror);
-//  }
-//
-//  mbms_ref_p->s1_ue_state = M2AP_MBMS_CONNECTED;
-//  message_p = itti_alloc_new_message (TASK_S1AP, MCE_APP_INITIAL_CONTEXT_SETUP_RSP);
-//  AssertFatal (message_p != NULL, "itti_alloc_new_message Failed");
-//  memset ((void *)&message_p->ittiMsg.mme_app_initial_context_setup_rsp, 0, sizeof (itti_mme_app_initial_context_setup_rsp_t));
-//
-//
-//  itti_mme_app_initial_context_setup_rsp_t * initial_context_setup_rsp = NULL;
-//  initial_context_setup_rsp = &message_p->ittiMsg.mme_app_initial_context_setup_rsp;
-//
-//  initial_context_setup_rsp->ue_id = mbms_ref_p->mce_mbms_m2ap_id;
-//  /** Add here multiple bearers. */
-//  bool test = false;
-//  initial_context_setup_rsp->bcs_to_be_modified.num_bearer_context = ie->value.choice.E_RABSetupListCtxtSURes.list.count;
-//  for (int item = 0; item < ie->value.choice.E_RABSetupListCtxtSURes.list.count; item++) {
-//    int item2 = item;
-//    /*
-//     * Bad, very bad cast...
-//     */
-//    eRABSetupItemCtxtSURes_p = (M2AP_E_RABSetupItemCtxtSUResIEs_t *)
-//        ie->value.choice.E_RABSetupListCtxtSURes.list.array[item];
-//
-//    e_rab_setup_item_ctxt_su_res = &eRABSetupItemCtxtSURes_p->value.choice.E_RABSetupItemCtxtSURes;
-////
-////    if(e_rab_setup_item_ctxt_su_res->e_RAB_ID == 7){
-////    	test = true;
-////    	initial_context_setup_rsp->bcs_to_be_modified.num_bearer_context--;
-////    	continue;
-////    }
-////    if(test == true){
-////    	if(item2 > 0)
-////    		item2--;
-////    }
-//
-//    initial_context_setup_rsp->bcs_to_be_modified.bearer_context[item2].eps_bearer_id = e_rab_setup_item_ctxt_su_res->e_RAB_ID;
-//    initial_context_setup_rsp->bcs_to_be_modified.bearer_context[item2].s1_eNB_fteid.teid = htonl (*((uint32_t *) e_rab_setup_item_ctxt_su_res->gTP_TEID.buf));
-//    bstring transport_address = blk2bstr(e_rab_setup_item_ctxt_su_res->transportLayerAddress.buf, e_rab_setup_item_ctxt_su_res->transportLayerAddress.size);
-//
-//    /** Set the IP address from the FTEID. */
-//    if (4 == blength(transport_address)) {
-//    	initial_context_setup_rsp->bcs_to_be_modified.bearer_context[item2].s1_eNB_fteid.ipv4 = 1;
-//    	memcpy(&initial_context_setup_rsp->bcs_to_be_modified.bearer_context[item2].s1_eNB_fteid.ipv4_address, transport_address->data, blength(transport_address));
-//    } else if (16 == blength(transport_address)) {
-//    	initial_context_setup_rsp->bcs_to_be_modified.bearer_context[item2].s1_eNB_fteid.ipv6 = 1;
-//    	memcpy(&initial_context_setup_rsp->bcs_to_be_modified.bearer_context[item2].s1_eNB_fteid.ipv6_address, transport_address->data, blength(transport_address));
-//    } else {
-//    	AssertFatal(0, "TODO IP address %d bytes", blength(transport_address));
-//    }
-//    bdestroy_wrapper(&transport_address);
-//  }
-//
-//  /** Get the failed bearers. */
-//  M2AP_FIND_PROTOCOLIE_BY_ID(M2AP_InitialContextSetupResponseIEs_t, ie, container,
-//                             M2AP_ProtocolIE_ID_id_E_RABFailedToSetupListBearerSURes, false);
-//  if (ie) {
-//    M2AP_E_RABList_t *m2ap_e_rab_list = &ie->value.choice.E_RABList;
-//    for (int index = 0; index < m2ap_e_rab_list->list.count; index++) {
-//      M2AP_E_RABItem_t * erab_item = (M2AP_E_RABItem_t *)m2ap_e_rab_list->list.array[index];
-//      initial_context_setup_rsp->e_rab_release_list.item[initial_context_setup_rsp->e_rab_release_list.no_of_items].e_rab_id  = erab_item->e_RAB_ID;
-//      initial_context_setup_rsp->e_rab_release_list.item[initial_context_setup_rsp->e_rab_release_list.no_of_items].cause     = erab_item->cause;
-//      initial_context_setup_rsp->e_rab_release_list.no_of_items++;
-//    }
-//  }
+  /**
+   * Check that the eNB is not in the SCTP Association Hashmap.
+   * Add it into the list. No need to inform the MCE_APP layer.
+   */
+  container = &pdu->choice.successfulOutcome.value.choice.SessionUpdateResponse;
+  M2AP_FIND_PROTOCOLIE_BY_ID(M2AP_SessionUpdateResponse_Ies_t, ie, container,
+	M2AP_ProtocolIE_ID_id_MCE_MBMS_M2AP_ID, true);
+  mce_mbms_m2ap_id = ie->value.choice.MCE_MBMS_M2AP_ID;
 
-  rc =  itti_send_msg_to_task (TASK_MCE_APP, INSTANCE_DEFAULT, message_p);
-  OAILOG_FUNC_RETURN (LOG_M2AP, rc);
+  M2AP_FIND_PROTOCOLIE_BY_ID(M2AP_SessionUpdateResponse_Ies_t, ie, container,
+	M2AP_ProtocolIE_ID_id_ENB_MBMS_M2AP_ID, true);
+  enb_mbms_m2ap_id = (enb_mbms_m2ap_id_t) (ie->value.choice.ENB_MBMS_M2AP_ID & ENB_MBMS_M2AP_ID_MASK);
+
+  if ((mbms_ref_p = m2ap_is_ue_mme_id_in_list ((uint32_t) mce_mbms_m2ap_id)) == NULL) {
+    OAILOG_ERROR(LOG_M2AP, "No MBMS is attached to this MCE MBMS M2AP id: " MCE_MBMS_M2AP_ID_FMT "\n", mce_mbms_m2ap_id);
+    OAILOG_FUNC_RETURN (LOG_M2AP, RETURNerror);
+  }
+
+  /**
+   * For any case, just remove the SCTP association.
+   */
+  OAILOG_INFO(LOG_M2AP, "Successfully updated MBMS Service on eNB with sctp assoc id (%d) MBMS description with MCE MBMS M2AP ID " MCE_MBMS_M2AP_ID_FMT " eNB MBMS M2AP ID " ENB_MBMS_M2AP_ID_FMT ". \n",
+	  assoc_id, mce_mbms_m2ap_id, enb_mbms_m2ap_id);
+  OAILOG_FUNC_RETURN (LOG_M2AP, RETURNok);
 }
 
 //------------------------------------------------------------------------------
@@ -893,6 +684,33 @@ m2ap_mce_handle_mbms_session_update_failure (
 
   OAILOG_FUNC_IN (LOG_M2AP);
 
+  /**
+   * Check that the eNB is not in the SCTP Association Hashmap.
+   * Add it into the list. No need to inform the MCE_APP layer.
+   */
+  container = &pdu->choice.unsuccessfulOutcome.value.choice.SessionUpdateFailure;
+  M2AP_FIND_PROTOCOLIE_BY_ID(M2AP_SessionUpdateFailure_Ies_t, ie, container,
+		  M2AP_ProtocolIE_ID_id_MCE_MBMS_M2AP_ID, true);
+  mce_mbms_m2ap_id = ie->value.choice.MCE_MBMS_M2AP_ID;
+
+  M2AP_FIND_PROTOCOLIE_BY_ID(M2AP_SessionUpdateResponse_Ies_t, ie, container,
+	M2AP_ProtocolIE_ID_id_ENB_MBMS_M2AP_ID, true);
+  enb_mbms_m2ap_id = (enb_mbms_m2ap_id_t) (ie->value.choice.ENB_MBMS_M2AP_ID & ENB_MBMS_M2AP_ID_MASK);
+
+  if ((mbms_ref_p = m2ap_is_ue_mme_id_in_list ((uint32_t) mce_mbms_m2ap_id)) == NULL) {
+    OAILOG_ERROR(LOG_M2AP, "No MBMS is attached to this MCE MBMS M2AP id: " MCE_MBMS_M2AP_ID_FMT "\n", mce_mbms_m2ap_id);
+    OAILOG_FUNC_RETURN (LOG_M2AP, RETURNerror);
+  }
+
+  /**
+   * Nothing needs to be done for MBMS start failure.
+   * We don't know if there will be more responses from more eNBs.
+   * Remove the SCTP association, if any exists.
+   */
+  OAILOG_ERROR(LOG_M2AP, "Error starting MBMS Service on eNB with sctp assoc id (%d) MBMS description with MCE MBMS M2AP ID " MCE_MBMS_M2AP_ID_FMT ". \n",
+		  assoc_id, mce_mbms_m2ap_id);
+  hashtable_ts_free (&mbms_ref_p->g_m2ap_assoc_id2mce_enb_id_coll, assoc_id);
+  OAILOG_FUNC_RETURN (LOG_M2AP, rc);
   OAILOG_FUNC_RETURN (LOG_M2AP, rc);
 }
 
@@ -1441,37 +1259,52 @@ m2ap_handle_new_association (
    * initialize the next sctp stream to 1 as 0 is reserved for non
    * * * * ue associated signalling.
    */
-  m2ap_enb_association->next_sctp_stream = 1;
+//  m2ap_enb_association->next_sctp_stream = 1;
   m2ap_enb_association->m2_state = M2AP_INIT;
   OAILOG_FUNC_RETURN (LOG_M2AP, RETURNok);
 }
 
-////------------------------------------------------------------------------------
-//void
-//m2ap_mme_handle_ue_context_rel_comp_timer_expiry (void *arg)
-//{
-//  MessageDef                             *message_p = NULL;
-//  OAILOG_FUNC_IN (LOG_M2AP);
-//  DevAssert (arg != NULL);
-//
-//  mbms_description_t *mbms_ref_p  =        (mbms_description_t *)arg;
-//
-//  mbms_ref_p->m2ap_ue_context_rel_timer.id = M2AP_TIMER_INACTIVE_ID;
-//  OAILOG_DEBUG (LOG_M2AP, "Expired- MBMS Context Release Timer for MBMS id  %d \n", mbms_ref_p->mce_mbms_m2ap_id);
-//  /*
-//   * Remove MBMS context and inform MCE_APP.
-//   */
-//  message_p = itti_alloc_new_message (TASK_S1AP, M2AP_MBMS_CONTEXT_RELEASE_COMPLETE);
-//  AssertFatal (message_p != NULL, "itti_alloc_new_message Failed");
-//  memset ((void *)&message_p->ittiMsg.m2ap_ue_context_release_complete, 0, sizeof (itti_m2ap_ue_context_release_complete_t));
-//  M2AP_MBMS_CONTEXT_RELEASE_COMPLETE (message_p).mce_mbms_m2ap_id = mbms_ref_p->mce_mbms_m2ap_id;
-//  MSC_LOG_TX_MESSAGE (MSC_M2AP_MME, MSC_MMEAPP_MME, NULL, 0, "0 M2AP_MBMS_CONTEXT_RELEASE_COMPLETE mce_mbms_m2ap_id " MCE_MBMS_M2AP_ID_FMT " ", M2AP_MBMS_CONTEXT_RELEASE_COMPLETE (message_p).mce_mbms_m2ap_id);
-//  itti_send_msg_to_task (TASK_MCE_APP, INSTANCE_DEFAULT, message_p);
-//  DevAssert(mbms_ref_p->s1_ue_state == M2AP_MBMS_WAITING_CRR);
-//  OAILOG_DEBUG (LOG_M2AP, "Removed M2AP MBMS " MCE_MBMS_M2AP_ID_FMT "\n", (uint32_t) mbms_ref_p->mce_mbms_m2ap_id);
-//  m2ap_remove_ue (mbms_ref_p);
-//  OAILOG_FUNC_OUT (LOG_M2AP);
-//}
+//------------------------------------------------------------------------------
+void
+m2ap_mme_handle_mbms_action_timer_expiry (void *arg)
+{
+  MessageDef                             *message_p = NULL;
+  OAILOG_FUNC_IN (LOG_M2AP);
+  DevAssert (arg != NULL);
+
+  mbms_description_t *mbms_ref_p  =        (mbms_description_t *)arg;
+
+  mbms_ref_p->m2ap_action_timer.id = M2AP_TIMER_INACTIVE_ID;
+  OAILOG_DEBUG (LOG_M2AP, "Expired- MBMS Action timer MCE MBMS M2AP " MCE_MBMS_M2AP_ID_FMT" . \n", mbms_ref_p->mce_mbms_m2ap_id);
+
+  /**
+   * If there are no associated eNBs, we need to start the MBMS service.
+   * If there are some associated eNBs, we need to update the MBMS service.
+   * No timer for MBMS Service stop.
+   */
+  if(!mbms_ref_p->g_m2ap_assoc_id2mce_enb_id_coll.num_elements) {
+    OAILOG_DEBUG (LOG_M2AP, "Starting MBMS service with MCE MBMS M2AP " MCE_MBMS_M2AP_ID_FMT" . \n", mbms_ref_p->mce_mbms_m2ap_id);
+    uint8_t								  num_m2ap_enbs = 0;
+    /** Get the list of eNBs of the matching service area. */
+    mme_config_read_lock (&mme_config);
+    m2ap_enb_description_t *			         m2ap_enb_p_elements[mme_config.max_m2_enbs];
+    memset(&m2ap_enb_p_elements, 0, (sizeof(m2ap_enb_description_t*) * mme_config.max_m2_enbs));
+    mme_config_unlock (&mme_config);
+
+    m2ap_is_mbms_sai_in_list(mbms_ref_p->mbms_service_area_id, &num_m2ap_enbs, (m2ap_enb_description_t **)&m2ap_enb_p_elements);
+    if(!num_m2ap_enbs){
+      OAILOG_ERROR (LOG_M2AP, "No M2AP eNBs could be found for the MBMS SA " MBMS_SERVICE_AREA_ID_FMT" for the MBMS Service with TMGI " TMGI_FMT" after timeout. Removing implicitly. \n",
+    		  mbms_ref_p->mbms_service_area_id, TMGI_ARG(&mbms_ref_p->tmgi));
+      hashtable_ts_free (&g_m2ap_mbms_coll, mbms_ref_p->mce_mbms_m2ap_id);
+      OAILOG_FUNC_OUT (LOG_M2AP);
+    }
+    m2ap_generate_mbms_session_start_request(mbms_ref_p->mce_mbms_m2ap_id, num_m2ap_enbs, m2ap_enb_p_elements);
+  } else {
+    OAILOG_DEBUG (LOG_M2AP, "MBMS service with MCE MBMS M2AP " MCE_MBMS_M2AP_ID_FMT" has already some eNBs, updating it. \n", mbms_ref_p->mce_mbms_m2ap_id);
+    m2ap_update_mbms_service_context(mbms_ref_p->mce_mbms_m2ap_id);
+  }
+  OAILOG_FUNC_OUT (LOG_M2AP);
+}
 
 //------------------------------------------------------------------------------
 int

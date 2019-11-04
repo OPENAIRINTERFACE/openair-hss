@@ -42,6 +42,9 @@ struct m2ap_enb_description_s;
 #define M2AP_TIMER_INACTIVE_ID   (-1)
 #define M2AP_MBMS_CONTEXT_REL_COMP_TIMER 1 // in seconds
 
+#define M2AP_ENB_SERVICE_SCTP_STREAM_ID         0
+#define MBMS_SERVICE_SCTP_STREAM_ID          	1
+
 /* Timer structure */
 struct m2ap_timer_t {
   long id;           /* The timer identifier                 */
@@ -55,13 +58,6 @@ enum mce_m2_enb_state_s {
   M2AP_READY,         ///< MCE and eNB are M2 associated, MBMS contexts can be added
   M2AP_SHUTDOWN       /// The M2 state is being torn down due to sctp shutdown.
 };
-
-//enum s1_mbms_state_s {
-//  S1AP_UE_INVALID_STATE,
-//  S1AP_UE_WAITING_CSR,    ///< Waiting for Initial Context Setup Response
-//  S1AP_UE_CONNECTED,      ///< MBMS context ready
-//  S1AP_UE_WAITING_CRR,   /// MBMS Context release Procedure initiated , waiting for MBMS context Release Complete
-//};
 
 /** Main structure representing MBMS Bearer service association over m2ap per eNB.
  * Created upon a successful
@@ -125,7 +121,6 @@ typedef struct m2ap_enb_description_s {
   /** SCTP stuff **/
   /*@{*/
   sctp_assoc_id_t  sctp_assoc_id;    ///< SCTP association id on this machine
-  sctp_stream_id_t next_sctp_stream; ///< Next SCTP stream
   sctp_stream_id_t instreams;        ///< Number of streams avalaible on eNB -> MCE
   sctp_stream_id_t outstreams;       ///< Number of streams avalaible on MCE -> eNB
   /*@}*/

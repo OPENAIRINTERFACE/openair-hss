@@ -158,9 +158,9 @@ int m2ap_mce_generate_m2_setup_failure(
     const sctp_assoc_id_t assoc_id, const M2AP_Cause_PR cause_type, const long cause_value,
     const long time_to_wait);
 
-///*** HANDLING EXPIRED TIMERS. */
-//void s1ap_mme_handle_ue_context_rel_comp_timer_expiry (void *ue_ref_p);
-//
+/*** HANDLING EXPIRED TIMERS. */
+//------------------------------------------------------------------------------
+void m2ap_mme_handle_mbms_action_timer_expiry (void *arg);
 
 int m3ap_handle_enb_initiated_reset_ack (const itti_m3ap_enb_initiated_reset_ack_t * const enb_reset_ack_p);
 
