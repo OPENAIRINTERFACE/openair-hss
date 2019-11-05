@@ -116,6 +116,7 @@ typedef struct m2ap_enb_description_s {
   /** MBMS Services for this eNB **/
   /*@{*/
   uint32_t nb_mbms_associated; ///< Number of NAS associated UE on this eNB
+  long 	   mbsfn_synch_area_id;
   /*@}*/
 
   /** SCTP stuff **/
@@ -147,6 +148,15 @@ void m2ap_is_mbms_sai_in_list (
   int *num_m2ap_enbs,
   m2ap_enb_description_t ** m2ap_enbs);
 
+/** \brief Look for given MBMS Service Area Id in the list.
+ * \param tac MBMS Service Area Id is not unique and used for the search in the list.
+ * @returns All M2AP eNBs in the m2ap_enb_list, which don't support the given MBMS SAI.
+ **/
+void m2ap_is_mbms_sai_not_in_list (
+  const mbms_service_area_id_t mbms_sai,
+  int *num_m2ap_enbs,
+  m2ap_enb_description_t ** m2ap_enbs);
+
 /** \brief Look for given eNB SCTP assoc id in the list
  * \param enb_id The unique sctp assoc id to search in list
  * @returns NULL if no eNB matchs the sctp assoc id, or reference to the eNB element in list if matches
@@ -158,6 +168,11 @@ m2ap_enb_description_t* m2ap_is_enb_assoc_id_in_list(const sctp_assoc_id_t sctp_
  * @returns NULL if no MBMS matchs the mbms_mce_id, or reference to the mbms element in list if matches
  **/
 mbms_description_t* m2ap_is_mbms_mce_m2ap_id_in_list(const mce_mbms_m2ap_id_t mbms_mce_id);
+
+/** \brief Perform an eNB reset (cleaning SCTP associations in the MBMS Service References) without removing the M2AP eNB.
+ * \param m2ap_enb_ref : eNB to reset fully
+ **/
+void m2ap_enb_full_reset (const void *m2ap_enb_ref_p);
 
 /** \brief Look for given mbms via TMGI is in the list
  * \param tmgi
@@ -185,6 +200,11 @@ m2ap_enb_description_t* m2ap_new_enb(void);
  * @returns Reference to the new MBMS Service element in list
  **/
 mbms_description_t* m2ap_new_mbms(const tmgi_t * const tmgi, const mbms_service_area_id_t mbms_sai);
+
+//------------------------------------------------------------------------------
+void
+m2ap_set_embms_cfg_item (m2ap_enb_description_t * const m2ap_enb_ref,
+	M2AP_MBMS_Service_Area_ID_List_t * mbms_service_areas);
 
 /** \brief Dump the eNB related information.
  * hashtable callback. It is called by hashtable_ts_apply_funct_on_elements()

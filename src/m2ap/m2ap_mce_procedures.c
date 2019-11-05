@@ -64,14 +64,15 @@ extern hash_table_ts_t 					g_m2ap_enb_coll; 	// SCTP Association ID association
 /****************************************************************************/
 /*******************  L O C A L    D E F I N I T I O N S  *******************/
 /****************************************************************************/
+
+static void m2ap_update_mbms_service_context(const mce_mbms_m2ap_id_t mce_mbms_m2ap_id);
 static int m2ap_generate_mbms_session_start_request(mce_mbms_m2ap_id_t mbms_m2ap_id, const uint8_t num_m2ap_enbs, m2ap_enb_description_t ** m2ap_enb_descriptions);
 static int m2ap_generate_mbms_session_update_request(mce_mbms_m2ap_id_t mce_mbms_m2ap_id, sctp_assoc_id_t sctp_assoc_id);
 static int m2ap_generate_mbms_session_stop_request(mce_mbms_m2ap_id_t mce_mbms_m2ap_id, sctp_assoc_id_t sctp_assoc_id);
-static int m2ap_update_mbms_service_context(const mce_mbms_m2ap_id_t mce_mbms_m2ap_id);
 
 //------------------------------------------------------------------------------
 void
-m3ap_handle_mbms_session_start_request (
+m2ap_handle_mbms_session_start_request (
   const itti_m3ap_mbms_session_start_req_t * const mbms_session_start_req_pP)
 {
   /*
@@ -96,25 +97,20 @@ m3ap_handle_mbms_session_start_request (
    */
   mbms_ref = m2ap_is_mbms_tmgi_in_list(&mbms_session_start_req_pP->tmgi, mbms_session_start_req_pP->mbms_service_area_id); /**< Nothing eNB specific. */
   if (mbms_ref) {
-    /**
-     * Just remove this implicitly without notifying the eNB.
-     * There should be complications with the response, eNB should be able to handle this.
-     */
     OAILOG_ERROR (LOG_M2AP, "An MBMS Service Description with for TMGI " TMGI_FMT " and MBMS_Service_Area ID " MBMS_SERVICE_AREA_ID_FMT "already exists. Removing implicitly. \n",
         TMGI_ARG(&mbms_session_start_req_pP->tmgi), mbms_session_start_req_pP->mbms_service_area_id);
     /**
-     * Remove the MBMS Reference from the HashTable.
-     * MBMS Remove Function expected to be called. Should decrement also the MBMS count in the eNBs.
+     * Trigger a session stop and inform the eNBs.
+     * MBMS Services should only be removed over this function.
+     * We will update the eNB statistics also.
      */
-    hashtable_ts_free (&g_m2ap_mbms_coll, mbms_ref->mce_mbms_m2ap_id);
+    m2ap_handle_mbms_session_stop_request(&mbms_ref->tmgi, mbms_ref->mbms_service_area_id, true);
   }
-
   /** Check that there exists at least a single eNB with the MBMS Service Area (we don't start MBMS sessions for eNBs which later on connected). */
   mme_config_read_lock (&mme_config);
   m2ap_enb_description_t *			         m2ap_enb_p_elements[mme_config.max_m2_enbs];
   memset(&m2ap_enb_p_elements, 0, (sizeof(m2ap_enb_description_t*) * mme_config.max_m2_enbs));
   mme_config_unlock (&mme_config);
-
   m2ap_is_mbms_sai_in_list(mbms_session_start_req_pP->mbms_service_area_id, &num_m2ap_enbs, (m2ap_enb_description_t **)&m2ap_enb_p_elements);
   if(!num_m2ap_enbs){
     OAILOG_ERROR (LOG_M2AP, "No M2AP eNBs could be found for the MBMS SA " MBMS_SERVICE_AREA_ID_FMT" for the MBMS Service with TMGI " TMGI_FMT". \n",
@@ -133,14 +129,6 @@ m3ap_handle_mbms_session_start_request (
     	TMGI_ARG(&mbms_session_start_req_pP->tmgi), mbms_session_start_req_pP->mbms_service_area_id);
     OAILOG_FUNC_OUT (LOG_M2AP);
   }
-
-  mce_mbms_m2ap_id = mbms_ref->mce_mbms_m2ap_id;
-  hashtable_rc_t  hash_rc = hashtable_ts_insert (&g_m2ap_enb_coll, (const hash_key_t)mce_mbms_m2ap_id, (void *)mbms_ref);
-  if (HASH_TABLE_OK != hash_rc) {
-	OAILOG_ERROR (LOG_M2AP, "M2AP:MBMS Service Reference for MCE MBMS M2AP Id "MCE_MBMS_M2AP_ID_FMT". \n", mce_mbms_m2ap_id);
-    OAILOG_FUNC_OUT(LOG_M2AP);
-  }
-
   /**
    * Update the created MBMS Service Description.
    * Directly set the values and don't wait for a response, we will set these values into the eNB, once the timer runs out.
@@ -169,22 +157,28 @@ m3ap_handle_mbms_session_start_request (
       OAILOG_FUNC_OUT(LOG_M2AP);
     }
   }
-  m2ap_generate_mbms_session_start_request(mce_mbms_m2ap_id, num_m2ap_enbs, m2ap_enb_p_elements);
+  /**
+   * Try to send the MBMS Session Start requests.
+   * If it cannot be sent, we still keep the MBMS Service Description in the map.
+   * The SCTP associations will only be removed with a successful response.
+   */
+  m2ap_generate_mbms_session_start_request(mce_mbms_m2ap_id, num_m2ap_enbs, &m2ap_enb_p_elements);
   OAILOG_FUNC_OUT(LOG_M2AP);
 }
 
 //------------------------------------------------------------------------------
 void
-m3ap_handle_mbms_session_update_request (
+m2ap_handle_mbms_session_update_request (
   const itti_m3ap_mbms_session_update_req_t * const mbms_session_update_req_pP)
 {
   /*
    * MBMS-GW triggers the stop of an MBMS Service on all the eNBs which are receiving it.
    */
-  uint8_t                                *buffer_p = NULL;
-  uint32_t                                length = 0;
+  uint8_t                                *buffer_p 					 = NULL;
+  uint32_t                                length 					 = 0;
   mbms_description_t               		 *mbms_ref 					 = NULL;
-  M2AP_M2AP_PDU_t                         pdu = {0};
+  M2AP_M2AP_PDU_t                         pdu 						 = {0};
+  int 									  num_m2ap_enbs_new_mbms_sai = 0;
 
   OAILOG_FUNC_IN (LOG_M2AP);
   DevAssert (mbms_session_update_req_pP != NULL);
@@ -200,12 +194,51 @@ m3ap_handle_mbms_session_update_request (
   }
 
   /**
-   * Update the MBMB Service Description rightaway. No need to check eNBs.
-   * We at most destroy the sctp-> enb_mbms_m2ap id associations.
+   * Cleared the MBMS service from eNBs with unmatching MBMS Service Area Id.
+   * We can continue with the update of the MBMS service.
    */
-  mbms_ref->mbms_service_area_id = mbms_session_update_req_pP->new_mbms_service_area_id;
   memcpy((void*)&mbms_ref->mbms_bc.mbms_ip_mc_distribution,  (void*)&mbms_session_update_req_pP->mbms_bearer_tbc.mbms_ip_mc_dist, sizeof(mbms_ip_multicast_distribution_t));
   memcpy((void*)&mbms_ref->mbms_bc.eps_bearer_context.bearer_level_qos, (void*)&mbms_session_update_req_pP->mbms_bearer_tbc.bc_tbc.bearer_level_qos, sizeof(bearer_qos_t));
+
+  /**
+   * Before the timer, check if the new MBMS Service Area Id is served by any eNB.
+   * If not, directly remove the MBMS description.
+   */
+  mme_config_read_lock (&mme_config);
+  m2ap_enb_description_t *			         m2ap_enb_p_elements[mme_config.max_m2_enbs];
+  memset(&m2ap_enb_p_elements, 0, (sizeof(m2ap_enb_description_t*) * mme_config.max_m2_enbs));
+  mme_config_unlock (&mme_config);
+  m2ap_is_mbms_sai_in_list(mbms_session_update_req_pP->new_mbms_service_area_id, &num_m2ap_enbs_new_mbms_sai,
+		  (m2ap_enb_description_t **)&m2ap_enb_p_elements);
+  if(!num_m2ap_enbs_new_mbms_sai){
+    OAILOG_ERROR (LOG_M2AP, "No M2AP eNBs could be found for the MBMS SAI " MBMS_SERVICE_AREA_ID_FMT" for the MBMS Service with TMGI " TMGI_FMT". "
+    		"Stopping the MBMS service. \n", mbms_session_update_req_pP->new_mbms_service_area_id, TMGI_ARG(&mbms_session_update_req_pP->tmgi));
+    m2ap_handle_mbms_session_stop_request(&mbms_ref->tmgi, mbms_ref->mbms_service_area_id, true); /**< Should also remove the MBMS service. */
+    OAILOG_FUNC_OUT (LOG_M2AP);
+  }
+  /**
+   * Iterate through the current MBMS services. Check an current eNBs, where the new MBMS service area id is not supported.
+   * Send a session stop to all of them without removing the MBMS service.
+   */
+  memset(&m2ap_enb_p_elements, 0, (sizeof(m2ap_enb_description_t*) * mme_config.max_m2_enbs));
+  int num_m2ap_enbs_missing_new_mbms_sai = 0;
+  m2ap_is_mbms_sai_not_in_list(mbms_session_update_req_pP->new_mbms_service_area_id, &num_m2ap_enbs_missing_new_mbms_sai, (m2ap_enb_description_t **)&m2ap_enb_p_elements);
+  if(num_m2ap_enbs_missing_new_mbms_sai){
+	  OAILOG_ERROR (LOG_M2AP, "(%d) M2AP eNBs not supporting new MBMS SAI " MBMS_SERVICE_AREA_ID_FMT" for the MBMS Service with TMGI " TMGI_FMT". "
+		"Stopping the MBMS session in the M2AP eNBs. \n", mbms_session_update_req_pP->new_mbms_service_area_id, TMGI_ARG(&mbms_session_update_req_pP->tmgi));
+     /** Send an MBMS session stop and remove the association. */
+     for(int i = 0; i < num_m2ap_enbs_missing_new_mbms_sai; i++){
+       m2ap_generate_mbms_session_stop_request(mbms_ref->mce_mbms_m2ap_id, m2ap_enb_p_elements[i]->sctp_assoc_id);
+       /** Remove the association and decrement the count. */
+       m2ap_enb_p_elements[i]->nb_mbms_associated--; /**< We don't check for restart, since it is trigger due update. */
+       hashtable_ts_free(&mbms_ref->g_m2ap_assoc_id2mce_enb_id_coll, m2ap_enb_p_elements[i]->sctp_assoc_id);
+     }
+  } else {
+	  OAILOG_INFO(LOG_M2AP, "All existing eNBs of the MBMS Service " MCE_MBMS_M2AP_ID_FMT " support the new MBMS SA " MBMS_SERVICE_AREA_ID_FMT". \n",
+    	mbms_session_update_req_pP->new_mbms_service_area_id, mbms_ref->mce_mbms_m2ap_id);
+  }
+  /** Done cleaning up old MBMS Service Area Id artifacts. Continue with the new MBMS Service Area Id. */
+  mbms_ref->mbms_service_area_id = mbms_session_update_req_pP->new_mbms_service_area_id;
 
   /**
    * Check if there is a timer set.
@@ -234,8 +267,8 @@ m3ap_handle_mbms_session_update_request (
 
 //------------------------------------------------------------------------------
 void
-m3ap_handle_mbms_session_stop_request (
-  const itti_m3ap_mbms_session_stop_req_t * const mbms_session_stop_req_pP)
+m2ap_handle_mbms_session_stop_request (
+  const tmgi_t * const tmgi, const mbms_service_area_id_t mbms_service_area_id, const bool inform_enbs)
 {
   /*
    * MBMS-GW triggers the stop of an MBMS Service on all the eNBs which are receiving it.
@@ -247,42 +280,41 @@ m3ap_handle_mbms_session_stop_request (
   M2AP_M2AP_PDU_t                         pdu = {0};
 
   OAILOG_FUNC_IN (LOG_M2AP);
-  DevAssert (mbms_session_stop_req_pP != NULL);
 
   /*
    * We need to check the MBMS Service via TMGI and MBMS Service Index.
    */
-  mbms_ref = m2ap_is_mbms_tmgi_in_list(&mbms_session_stop_req_pP->tmgi, mbms_session_stop_req_pP->mbms_service_area_id); /**< Nothing eNB specific. */
+  mbms_ref = m2ap_is_mbms_tmgi_in_list(tmgi, mbms_service_area_id); /**< Nothing eNB specific. */
   if (!mbms_ref) {
     /**
      * No MBMS Reference found, just ignore the message and return.
      */
 	OAILOG_ERROR (LOG_M2AP, "No MBMS Service Description with for TMGI " TMGI_FMT " and MBMS_Service_Area ID " MBMS_SERVICE_AREA_ID_FMT "already exists. \n",
-		TMGI_ARG(&mbms_session_stop_req_pP->tmgi), mbms_session_stop_req_pP->mbms_service_area_id);
+		TMGI_ARG(tmgi), mbms_service_area_id);
 	OAILOG_FUNC_OUT(LOG_M2AP);
   }
 
-  /** Check that there exists at least a single eNB with the MBMS Service Area (we don't start MBMS sessions for eNBs which later on connected). */
-  mme_config_read_lock (&mme_config);
-  m2ap_enb_description_t *			         m2ap_enb_p_elements[mme_config.max_m2_enbs];
-  memset(&m2ap_enb_p_elements, 0, (sizeof(m2ap_enb_description_t*) * mme_config.max_m2_enbs));
-  mme_config_unlock (&mme_config);
-
-  int num_m2ap_enbs = 0;
-  m2ap_is_mbms_sai_in_list(mbms_session_stop_req_pP->mbms_service_area_id, &num_m2ap_enbs, (m2ap_enb_description_t **)&m2ap_enb_p_elements);
-  if(num_m2ap_enbs){
-    // todo: the next_sctp_stream is the one without incrementation?
-	for(int i = 0; i < num_m2ap_enbs; i++){
-	  m2ap_enb_description_t * target_enb_ref = m2ap_enb_p_elements[i];
-	  m2ap_generate_mbms_session_stop_request(mbms_ref->mce_mbms_m2ap_id, target_enb_ref->sctp_assoc_id);
+  if(inform_enbs) {
+    /** Check that there exists at least a single eNB with the MBMS Service Area (we don't start MBMS sessions for eNBs which later on connected). */
+	mme_config_read_lock (&mme_config);
+	m2ap_enb_description_t *			         m2ap_enb_p_elements[mme_config.max_m2_enbs];
+	memset(&m2ap_enb_p_elements, 0, (sizeof(m2ap_enb_description_t*) * mme_config.max_m2_enbs));
+	mme_config_unlock (&mme_config);
+	int num_m2ap_enbs = 0;
+	m2ap_is_mbms_sai_in_list(mbms_service_area_id, &num_m2ap_enbs, (m2ap_enb_description_t **)&m2ap_enb_p_elements);
+	if(num_m2ap_enbs){
+	  for(int i = 0; i < num_m2ap_enbs; i++){
+		m2ap_generate_mbms_session_stop_request(mbms_ref->mce_mbms_m2ap_id, m2ap_enb_p_elements[i]->sctp_assoc_id);
+	  }
+	} else {
+	  OAILOG_ERROR(LOG_M2AP, "No M2AP eNBs could be found for the MBMS SA " MBMS_SERVICE_AREA_ID_FMT" for the MBMS Service with TMGI " TMGI_FMT" to be removed. Removing implicitly. \n",
+		mbms_service_area_id, TMGI_ARG(tmgi));
 	}
-  } else {
-    OAILOG_ERROR(LOG_M2AP, "No M2AP eNBs could be found for the MBMS SA " MBMS_SERVICE_AREA_ID_FMT" for the MBMS Service with TMGI " TMGI_FMT" to be removed. Removing implicitly. \n",
-    	mbms_session_stop_req_pP->mbms_service_area_id, TMGI_ARG(&mbms_session_stop_req_pP->tmgi));
   }
+
   /**
    * Remove the MBMS Service.
-   * Should also remove all the sctp associations.
+   * Should also remove all the sctp associations from the eNBs and decrement the eNB MBMS numbers.
    */
   hashtable_ts_free (&g_m2ap_mbms_coll, mbms_ref->mce_mbms_m2ap_id);
   OAILOG_FUNC_OUT(LOG_M2AP);
@@ -294,10 +326,9 @@ m3ap_handle_mbms_session_stop_request (
 
 //------------------------------------------------------------------------------
 static
-int m2ap_update_mbms_service_context(const mce_mbms_m2ap_id_t mce_mbms_m2ap_id) {
+void m2ap_update_mbms_service_context(const mce_mbms_m2ap_id_t mce_mbms_m2ap_id) {
   mbms_description_t               		 *mbms_ref 					 = NULL;
   int 									  num_m2ap_enbs_new_mbms_sai = 0;
-  m2ap_enb_description_t           		 *m2ap_enb_description 		 = NULL;
 
   OAILOG_FUNC_IN (LOG_M2AP);
 
@@ -315,107 +346,55 @@ int m2ap_update_mbms_service_context(const mce_mbms_m2ap_id_t mce_mbms_m2ap_id) 
   }
 
   /**
-   * Check if the MBMS Service Area has been changed.
-   * If eNB in list, which don't support new MBMS Service Area ID --> STOP!
-   * If so, check if the current eNBs in this list also support the new service area --> UPDATE!
-   * If eNB in list, which support new MBMS Service Area ID --> UPDATE!
-   * If new eNBs outside list, which Support new MBMS Service Area ID --> START --> Will be added into the list later --> LOCK THE LIST!!!
+   * Get the list of all eNBs.
+   * If the eNB is not in the current list, send an update, else send a session start.
+   * We should have removed (stopped the MBMS Session) in the eNBs, which don't support the MBMS Service Area ID before.
    */
-  int num_m2ap_enbs_to_be_updated = 0;
-  /** Get a List of eNBs, which support the new MBMS Service Area ID. */
-  m2ap_is_mbms_sai_in_list(mbms_ref->mbms_service_area_id, &num_m2ap_enbs_new_mbms_sai, (m2ap_enb_description_t **)&new_mbms_sai_m2ap_enb_p_elements);
+  mme_config_read_lock (&mme_config);
+  m2ap_enb_description_t *			         m2ap_enb_p_elements[mme_config.max_m2_enbs];
+  memset(&m2ap_enb_p_elements, 0, (sizeof(m2ap_enb_description_t*) * mme_config.max_m2_enbs));
+  mme_config_unlock (&mme_config);
+  m2ap_is_mbms_sai_in_list(mbms_ref->mbms_service_area_id, &num_m2ap_enbs_new_mbms_sai, (m2ap_enb_description_t **)&m2ap_enb_p_elements);
   if(!num_m2ap_enbs_new_mbms_sai){
-	  OAILOG_ERROR (LOG_M2AP, "No M2AP eNBs could be found for the new MBMS SA " MBMS_SERVICE_AREA_ID_FMT" for the MBMS Service with TMGI " TMGI_FMT". Removing the MBMS Description Reference. \n",
-			  mbms_ref->mbms_service_area_id, TMGI_ARG(&mbms_ref->tmgi));
-	  /**
-	   * Destroy the MBMS Service SCTP hashmap, which should also remove all associations (hashtable_free).
-	   */
-	  hashtable_ts_destroy(&mbms_ref->g_m2ap_assoc_id2mce_enb_id_coll);
-	  // todo: when inserting a new eNB, check if it exists, if not re-create!
-	  OAILOG_FUNC_OUT (LOG_M2AP);
+	OAILOG_ERROR (LOG_M2AP, "No M2AP eNBs could be found for the MBMS SAI " MBMS_SERVICE_AREA_ID_FMT" for the MBMS Service with TMGI " TMGI_FMT". "
+		"Stopping the MBMS service. \n", mbms_ref->mbms_service_area_id, TMGI_ARG(&mbms_ref->tmgi));
+	/** Change of the MBMS SAI before, does not affect this. */
+	m2ap_handle_mbms_session_stop_request(&mbms_ref->tmgi, mbms_ref->mbms_service_area_id, true); /**< Should also remove the MBMS service. */
+	OAILOG_FUNC_OUT (LOG_M2AP);
   }
 
-  hashtable_key_array_t * current_mbms_sai_m2ap_enb_sctp_ids = hashtable_ts_get_keys (&mbms_ref->g_m2ap_assoc_id2mce_enb_id_coll);
-  // todo: dealloc
-  sctp_assoc_id_t 		* m2ap_enb_assoc_to_be_updated[current_mbms_sai_m2ap_enb_sctp_ids->num_keys];
-  memset(&m2ap_enb_assoc_to_be_updated, 0, (sizeof(sctp_assoc_id_t*) * current_mbms_sai_m2ap_enb_sctp_ids->num_keys));
-
-  /** We have some eNBs. Iterate through the current eNBs and remove all M2AP eNB associations, not in this list. */
-  if(current_mbms_sai_m2ap_enb_sctp_ids){
-    for(int i = 0; i < current_mbms_sai_m2ap_enb_sctp_ids->num_keys; i++) {
-	  /** Get the eNB from the SCTP association. */
-	  m2ap_enb_description_t * m2ap_enb_ref = m2ap_is_enb_assoc_id_in_list(current_mbms_sai_m2ap_enb_sctp_ids->keys[i]);
-	  if(m2ap_enb_ref) {
-	    /** Updating number of MBMS Services of the MBMS eNB. */
-		for(int mbms_num_sai = 0; mbms_num_sai < m2ap_enb_ref->mbms_sa_list.num_service_area; mbms_num_sai++){
-		  if(m2ap_enb_ref->mbms_sa_list.serviceArea[mbms_num_sai] == mbms_ref->mbms_service_area_id){
-			/** Leave the eNB association, continue to check other eNBS. */
-			m2ap_enb_assoc_to_be_updated[num_m2ap_enbs_to_be_updated] = m2ap_enb_ref->sctp_assoc_id;
-			num_m2ap_enbs_to_be_updated++;
-			m2ap_enb_ref = NULL;
-			break;
-		  }
-		}
-		if(m2ap_enb_ref){
-		//            /** New MBMS Service Area Index is found in the M2AP eNB. */
-		  /** eNB is removed, send an MBMS Session Stop request to the eNB rightaway. */
-		  m2ap_generate_mbms_session_stop_request(mbms_ref->mce_mbms_m2ap_id, m2ap_enb_description->sctp_assoc_id);
-		  /** Remove the SCTP association here, since we need the eNB MBMS M2AP ID above */
-		  hashtable_ts_free(&mbms_ref->g_m2ap_assoc_id2mce_enb_id_coll, current_mbms_sai_m2ap_enb_sctp_ids->keys[i]);
-		}
-	  } else {
-	    /** Remove the SCTP association here, since we need the eNB MBMS M2AP ID above */
-		hashtable_ts_free(&mbms_ref->g_m2ap_assoc_id2mce_enb_id_coll, current_mbms_sai_m2ap_enb_sctp_ids->keys[i]);
+  /** Update all eNBs, which are already in the MBMS Service. */
+  for(int i = 0; i < num_m2ap_enbs_new_mbms_sai; i++) {
+    /** Get the eNB from the SCTP association. */
+	m2ap_enb_description_t * m2ap_enb_ref = m2ap_enb_p_elements[i];
+	hashtable_rc_t h_rc = hashtable_is_key_exists(&mbms_ref->g_m2ap_assoc_id2mce_enb_id_coll, m2ap_enb_ref->sctp_assoc_id);
+	if(HASH_TABLE_OK == h_rc) {
+	  /** eNB is already in the list, update it. */
+	  int rc = m2ap_generate_mbms_session_update_request(mbms_ref->mce_mbms_m2ap_id, m2ap_enb_ref->sctp_assoc_id);
+	  if(rc != RETURNok) {
+	    OAILOG_ERROR(LOG_M2AP, "Error updating M2AP eNB with SCTP Assoc ID (%d) for the updated MBMS Service with TMGI " TMGI_FMT". "
+	    "Removing the association.\n", m2ap_enb_ref->sctp_assoc_id, TMGI_ARG(&mbms_ref->tmgi));
+	    m2ap_generate_mbms_session_stop_request(mbms_ref->mce_mbms_m2ap_id, m2ap_enb_ref->sctp_assoc_id);
+	    /** Remove the hash key, which should also update the eNB. */
+	    hashtable_ts_free(&mbms_ref->g_m2ap_assoc_id2mce_enb_id_coll, (const hash_key_t)m2ap_enb_ref->sctp_assoc_id);
+	    if(m2ap_enb_ref->nb_mbms_associated)
+	      m2ap_enb_ref->nb_mbms_associated--;
+	    OAILOG_ERROR(LOG_M2AP, "Removed association after erroneous update.\n");
 	  }
-    }
-  }
-
-  /**
-   * Update and Start the Remaining eNBs.
-   * Check if there is a timer for update, if so, re-enter this method again, when the timer runs out.
-   * We already removed the unnecessary associations. The MBMS Service ID will be updated. Timer will have MBMS M2AP ID argument.
-   * It should check from the eNB MBMS M2AP Id, that it is an update.
-   */
-
-  /**
-   * All remaining eNBs in the list need to be updated with the updated MBMS Service values, including the new MBMS Service Area Id.
-   * We don't touch the SCTP associations.
-   */
-  for(int i = 0; i < num_m2ap_enbs_to_be_updated; i++) {
-    m2ap_enb_description_t * m2ap_enb_ref = m2ap_is_enb_assoc_id_in_list(*(m2ap_enb_assoc_to_be_updated[i]));
-    DevAssert(m2ap_enb_ref); /**< Should be checked above!. */
-    /**
-     * Send an MBMS Session Update Request to the eNB.
-     * MBMS Service Description is already updated.
-     */
-    int rc = m2ap_generate_mbms_session_update_request(mbms_ref->mce_mbms_m2ap_id, *(m2ap_enb_assoc_to_be_updated[i]));
-    if(rc != RETURNok) {
-	  OAILOG_ERROR(LOG_M2AP, "Error updating M2AP eNB with SCTP Assoc ID (%d) for the updated MBMS Service with TMGI " TMGI_FMT". "
-		"Removing the association.\n", *(m2ap_enb_assoc_to_be_updated[i]), TMGI_ARG(&mbms_ref->tmgi));
-	  /** Remove the hash key, which should also update the eNB. */
-	  hashtable_ts_free(&mbms_ref->g_m2ap_assoc_id2mce_enb_id_coll, (const hash_key_t)*(m2ap_enb_assoc_to_be_updated[i]));
-	  OAILOG_ERROR(LOG_M2AP, "Removed association after erroneous update.\n");
-    }
-    /** Successfully updated MBMS Service. SCTP association stays in the MBMS service. */
-  }
-  /** Finally, check for new eNB, not in the list of MBMS. */
-  for(int i = 0; i < num_m2ap_enbs_new_mbms_sai; i++){
-	m2ap_enb_description_t * target_enb_ref = new_mbms_sai_m2ap_enb_p_elements[i];
-	/** Check if the new eNB has an eNB association in the MBMS Service, if not, send an MBMS Session Start Request. */
-	enb_mbms_m2ap_id_t *enb_mbms_m2ap_id = NULL;
-	hashtable_ts_get (&mbms_ref->g_m2ap_assoc_id2mce_enb_id_coll, (const hash_key_t)target_enb_ref->sctp_assoc_id, (void **)&enb_mbms_m2ap_id);
-	if(!enb_mbms_m2ap_id) {
-	  /**
-	   * Trigger a new MBMS Session Start Request towards the new eNB.
-	   * It will be added to the list and the eNB MBMS associations will be updated with the MBMS Session Start Response.
-	   */
-	  m2ap_generate_mbms_session_start_request(mbms_ref->mce_mbms_m2ap_id, num_m2ap_enbs_new_mbms_sai, new_mbms_sai_m2ap_enb_p_elements);
+	  OAILOG_INFO(LOG_M2AP, "Successfully updated eNB with SCTP-Assoc (%d) for MBMS Service " MCE_MBMS_M2AP_ID_FMT " with updated MBMS SAI (%d).\n",
+			  m2ap_enb_ref->sctp_assoc_id, mbms_ref->mce_mbms_m2ap_id, mbms_ref->mbms_service_area_id);
+	  /** continue. */
+	} else {
+		int rc = m2ap_generate_mbms_session_start_request(mbms_ref->mce_mbms_m2ap_id, 1, &m2ap_enb_ref); // todo: test if this works..
+		/** continue. */
+		if(rc == RETURNok) {
+		  OAILOG_INFO(LOG_M2AP, "Successfully adding new eNB with SCTP-Assoc (%d) for MBMS Service " MCE_MBMS_M2AP_ID_FMT " with updated MBMS SAI (%d).\n",
+				  m2ap_enb_ref->sctp_assoc_id, mbms_ref->mce_mbms_m2ap_id, mbms_ref->mbms_service_area_id);
+		} else {
+		  OAILOG_ERROR(LOG_M2AP, "Error adding new NB with SCTP-Assoc (%d) for MBMS Service " MCE_MBMS_M2AP_ID_FMT " with updated MBMS SAI (%d).\n",
+				  m2ap_enb_ref->sctp_assoc_id, mbms_ref->mce_mbms_m2ap_id, mbms_ref->mbms_service_area_id);
+		}
 	}
-  }
-  /** Free the keys. */
-  if(current_mbms_sai_m2ap_enb_sctp_ids) {
-    free_wrapper(&current_mbms_sai_m2ap_enb_sctp_ids->keys);
-    free_wrapper(&current_mbms_sai_m2ap_enb_sctp_ids);
   }
   OAILOG_FUNC_OUT(LOG_M2AP);
 }

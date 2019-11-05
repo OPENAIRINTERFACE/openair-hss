@@ -34,19 +34,19 @@
 /** \brief Handle MBMS Session Start Request from the MCE_APP.
  **/
 void
-m3ap_handle_mbms_session_start_request (
+m2ap_handle_mbms_session_start_request (
   const itti_m3ap_mbms_session_start_req_t * const mbms_session_start_req_pP);
 
 /** \brief Handle MBMS Session Stop Request from the MCE_APP.
  **/
 void
-m3ap_handle_mbms_session_stop_request (
-  const itti_m3ap_mbms_session_stop_req_t * const mbms_session_stop_req_pP);
+m2ap_handle_mbms_session_stop_request (
+  const tmgi_t * const tmgi, const mbms_service_area_id_t mbms_service_area_id, const bool inform_enbs);
 
 /** \brief Handle MBMS Session Update Request from the MCE_APP.
  **/
 void
-m3ap_handle_mbms_session_update_request (
+m2ap_handle_mbms_session_update_request (
   const itti_m3ap_mbms_session_update_req_t * const mbms_session_update_req_pP);
 
 #endif /* FILE_M2AP_MCE_PROCEDURES_SEEN */

@@ -115,18 +115,57 @@ static int m2ap_send_init_sctp (void)
 }
 
 //------------------------------------------------------------------------------
-static bool m2ap_mbms_remove_sctp_assoc_id_cb (__attribute__((unused)) const hash_key_t keyP,
+static bool m2ap_enb_mbms_remove_sctp_assoc_id_cb (__attribute__((unused)) const hash_key_t key,
                                       void * const elementP, void * parameterP, void **resultP)
 {
   mbms_description_t                       *mbms_ref           = (mbms_description_t*)elementP;
   /**
-   * Just remove the SCTP association from each MBMS.
-   * Will also decrement the MBMS Service count, served by the M2AP eNB -> will not trigger an MBMS restart.
+   * Just remove the SCTP association from each MBMS service.
+   * This method will be triggered by the eNodeB only, does not trigger any additional eNB removals or other methods.
+   * Returns false, to iterate through all MBMS services for the given SCTP key.
    */
-  hashtable_ts_free(&mbms_ref->g_m2ap_assoc_id2mce_enb_id_coll, keyP);
-//  m2ap_enb_description_t * m2ap_enb_ref = m2ap_is_enb_assoc_id_in_list((sctp_assoc_id_t)keyP);
-//  if(m2ap_enb_ref && m2ap_enb_ref->nb_mbms_associated)
-//	m2ap_enb_ref->nb_mbms_associated--;
+  hashtable_ts_free(&mbms_ref->g_m2ap_assoc_id2mce_enb_id_coll, *((sctp_assoc_id_t*)parameterP));
+  return false;
+}
+
+//------------------------------------------------------------------------------
+static bool m2ap_clear_enb_mbms_stats_cb (__attribute__((unused)) const hash_key_t key,
+                                      void * const elementP, void * parameterP, void **resultP)
+{
+  enb_mbms_m2ap_id_t			*enb_mbms_m2ap_id_p   = (enb_mbms_m2ap_id_t*)elementP;
+  sctp_assoc_id_t				 sctp_assoc_id 		  = (sctp_assoc_id_t)key;
+  m2ap_enb_description_t		*m2ap_enb_ref 		  = NULL;
+
+  /**
+   * Get the eNodeB with the given SCTP_ASSOC ID.
+   * Clear the stats of the eNodeB.
+   */
+  hashtable_ts_get(&g_m2ap_enb_coll, (const hash_key_t)sctp_assoc_id, (void**)&m2ap_enb_ref);
+  if(m2ap_enb_ref) {
+    /**
+     * Found an M2AP eNodeB description element.
+     * Updating number of MBMS Services of the MBMS eNB.
+     */
+	if(m2ap_enb_ref->nb_mbms_associated > 0)
+	  m2ap_enb_ref->nb_mbms_associated--;
+	/**
+	 * No conflicts should occur, since it checks above the existence of MBMS service count.
+	 */
+	if (!m2ap_enb_ref->nb_mbms_associated) {
+	  if (m2ap_enb_ref->m2_state == M2AP_RESETING) {
+	    OAILOG_INFO(LOG_M2AP, "Moving M2AP eNB state to M2AP_INIT");
+	    m2ap_enb_ref->m2_state = M2AP_INIT;
+	    update_mce_app_stats_connected_enb_sub();
+	  } else if (m2ap_enb_ref->m2_state == M2AP_SHUTDOWN) {
+		  OAILOG_INFO(LOG_M2AP, "Deleting eNB");
+		  hashtable_ts_free (&g_m2ap_enb_coll, m2ap_enb_ref->sctp_assoc_id);
+	  }
+	}
+  }
+  /**
+   * Don't remove anything from the hash set here.
+   * Always return false, such that all SCTP keys of the MBMS service are iterated.
+   */
   return false;
 }
 
@@ -137,23 +176,17 @@ m2ap_remove_enb (
 {
   m2ap_enb_description_t               *m2ap_enb_description = NULL;
   mbms_description_t                   *mbms_ref 			 = NULL;
-  sctp_assoc_id_t			 	 	   *sctp_assoc_id_p		 = NULL;
   if (*enb_ref ) {
     m2ap_enb_description = (m2ap_enb_description_t*)(*enb_ref);
-    /** Go through the MBMS Services, and remove the SCTP association. */
-    if(m2ap_enb_description->nb_mbms_associated) {
-      sctp_assoc_id_p = &m2ap_enb_description->sctp_assoc_id;
-      /**
-       * Remove the SCTP association from all MBMS services.
-       * Iterates through all SCTP keys and removes them.
-       */
-      hashtable_ts_apply_callback_on_elements((hash_table_ts_t * const)&g_m2ap_mbms_coll,
-    	m2ap_mbms_remove_sctp_assoc_id_cb, (void*)sctp_assoc_id_p, (void**)&mbms_ref);
-    }
     /**
-     * It should have iterated through all MBMS services.
+     * Go through the MBMS Services, and remove the SCTP association.
+     * This should not trigger anything, only key removal.
+     * No need to check the # of MBMS services of the eNB. If the number of MBMS services,
+     * which we receive from the counter is not equal to the current one, use it as a response.
+     * Also use that value for anything received from the MCE_APP layer.
      */
-    DevAssert(!m2ap_enb_description->nb_mbms_associated);
+    hashtable_ts_apply_callback_on_elements((hash_table_ts_t * const)&g_m2ap_mbms_coll,
+    	m2ap_enb_mbms_remove_sctp_assoc_id_cb, (void*)&m2ap_enb_description->sctp_assoc_id, (void**)&mbms_ref);
     free_wrapper(enb_ref);
     nb_m2ap_enb_associated--;
   }
@@ -186,46 +219,18 @@ m2ap_remove_mbms (
   /** Remove the MBMS Bearer and IP MC information. */
   DevAssert(!mbms_ref->mbms_bc.eps_bearer_context.esm_ebr_context.tft);
   /**
-   * Destroy the Map.
-   * For the elements, the free function should be called, which should remove the MBMS associations in the M2AP eNBs.
-   * We do the removal from the eNBs separately, to prevent any loops.
+   * Decrement from the eNBs the number of the MBMS services. Eventually trigger an M2AP eNB removal, depending on the eNB state.
+   * The map of the MBMS Service itself will not be altered. Destroyed afterwards.
    */
+  void * no_return = NULL;
+  hashtable_ts_apply_callback_on_elements((hash_table_ts_t * const)&mbms_ref->g_m2ap_assoc_id2mce_enb_id_coll,
+		  m2ap_clear_enb_mbms_stats_cb, (void*)NULL, (void**)&no_return);
   if (hashtable_ts_destroy(&mbms_ref->g_m2ap_assoc_id2mce_enb_id_coll) != HASH_TABLE_OK) {
-    OAILOG_ERROR(LOG_M2AP, "An error occurred while destroying enb_mbms_id hash table. \n");
+    OAILOG_ERROR(LOG_M2AP, "An error occurred while destroying sctp_assoc/enb_mbms_id hash table. \n");
+    DevAssert(0);
   }
-}
-
-//------------------------------------------------------------------------------
-static
-void m2ap_remove_enb_sctp_assoc(void ** sctp_assoc_id_pp){
-  m2ap_enb_description_t                      *m2ap_enb_ref 	= NULL;
-  sctp_assoc_id_t							  *sctp_assoc_id    = NULL;
-
-  DevAssert(*sctp_assoc_id_pp);
-
-  sctp_assoc_id = (sctp_assoc_id_t*)(*sctp_assoc_id_pp);
-  /**
-   * We will try to remove the SCTP association too, but it will anyways be set after the handover is completed.
-   */
-  m2ap_enb_ref = m2ap_is_enb_assoc_id_in_list(*sctp_assoc_id);
-  if(m2ap_enb_ref) {
-	/** Updating number of MBMS Services of the MBMS eNB. */
-	DevAssert(m2ap_enb_ref->nb_mbms_associated > 0);
-	m2ap_enb_ref->nb_mbms_associated--;
-	/**
-	 * No conflicts should occur, since it checks above the existence of MBMS service count.
-	 */
-	if (!m2ap_enb_ref->nb_mbms_associated) {
-      if (m2ap_enb_ref->m2_state == M2AP_RESETING) {
-        OAILOG_INFO(LOG_M2AP, "Moving M2AP eNB state to M2AP_INIT");
-        m2ap_enb_ref->m2_state = M2AP_INIT;
-        update_mce_app_stats_connected_enb_sub();
-      } else if (m2ap_enb_ref->m2_state == M2AP_SHUTDOWN) {
-        OAILOG_INFO(LOG_M2AP, "Deleting eNB");
-        hashtable_ts_free (&g_m2ap_enb_coll, m2ap_enb_ref->sctp_assoc_id);
-      }
-	}
-  }
+  /** Remove the MBMS service. */
+  free_wrapper(mbms_ref_pp);
 }
 
 //------------------------------------------------------------------------------
@@ -243,6 +248,24 @@ bool m2ap_enb_compare_by_mbms_sai_cb (__attribute__((unused)) const hash_key_t k
     }
   }
   return false;
+}
+
+//------------------------------------------------------------------------------
+static
+bool m2ap_enb_compare_by_mbms_sai_NACK_cb (__attribute__((unused)) const hash_key_t keyP,
+                                    void * const elementP,
+                                    void * parameterP, void **resultP)
+{
+  const mbms_service_area_id_t * const mbms_sai_p  = (const mbms_service_area_id_t *const)parameterP;
+  m2ap_enb_description_t       * m2ap_enb_ref  	    = (m2ap_enb_description_t*)elementP;
+  for(int i = 0; i < m2ap_enb_ref->mbms_sa_list.num_service_area; i++) {
+    if (*mbms_sai_p == m2ap_enb_ref->mbms_sa_list.serviceArea[i]) {
+      return false;
+    }
+  }
+  /** Found an M2AP eNB, where none of the MBMS Service Area Ids match the given key. */
+  *resultP = elementP;
+  return true;
 }
 
 //------------------------------------------------------------------------------
@@ -313,7 +336,9 @@ m2ap_mce_thread (
     break;
 
     case M3AP_MBMS_SESSION_STOP_REQUEST:{
-    	m3ap_handle_mbms_session_stop_request (&M3AP_MBMS_SESSION_STOP_REQUEST (received_message_p));
+    	m3ap_handle_mbms_session_stop_request (&M3AP_MBMS_SESSION_STOP_REQUEST (received_message_p).tmgi,
+    			&M3AP_MBMS_SESSION_STOP_REQUEST (received_message_p).mbms_service_area_id,
+				&M3AP_MBMS_SESSION_STOP_REQUEST (received_message_p).inform_enbs);
     }
     break;
 
@@ -333,8 +358,7 @@ m2ap_mce_thread (
 
     // From SCTP layer, notifies M2AP of disconnection of a peer (eNB).
     case SCTP_CLOSE_ASSOCIATION:{
-    	m2ap_handle_sctp_disconnection(SCTP_CLOSE_ASSOCIATION (received_message_p).assoc_id,
-    		SCTP_CLOSE_ASSOCIATION (received_message_p).reset);
+    	m2ap_handle_sctp_disconnection(SCTP_CLOSE_ASSOCIATION (received_message_p).assoc_id);
     }
     break;
 
@@ -592,6 +616,24 @@ void m2ap_is_mbms_sai_in_list (
 }
 
 //------------------------------------------------------------------------------
+void m2ap_is_mbms_sai_not_in_list (
+  const mbms_service_area_id_t mbms_sai,
+  int *num_m2ap_enbs,
+  m2ap_enb_description_t ** m2ap_enbs)
+{
+  m2ap_enb_description_t                 *m2ap_enb_ref 	= NULL;
+  mbms_service_area_id_t                 *mbms_sai_p  	= (mbms_service_area_id_t*)&mbms_sai;
+
+  /** Collect all M2AP eNBs for the given MBMS Service Area Id. */
+  hashtable_element_array_t              ea;
+  memset(&ea, 0, sizeof(hashtable_element_array_t));
+  ea.elements = m2ap_enbs;
+  hashtable_ts_apply_list_callback_on_elements((hash_table_ts_t * const)&g_m2ap_enb_coll, m2ap_enb_compare_by_mbms_sai_NACK_cb, (void *)mbms_sai_p, &ea);
+  OAILOG_DEBUG(LOG_M2AP, "Found %d unmatching m2ap_enb references based on the received MBMS SAI" MBMS_SERVICE_AREA_ID_FMT". \n", ea.num_elements, mbms_sai);
+  *num_m2ap_enbs = ea.num_elements;
+}
+
+//------------------------------------------------------------------------------
 m2ap_enb_description_t                      *
 m2ap_is_enb_assoc_id_in_list (
   const sctp_assoc_id_t sctp_assoc_id)
@@ -614,6 +656,21 @@ m2ap_is_mbms_mce_m2ap_id_in_list (
     OAILOG_TRACE(LOG_M2AP, "Found mbms_ref %p mce_mbms_m2ap_id " MCE_MBMS_M2AP_ID_FMT "\n", mbms_ref, mbms_ref->mce_mbms_m2ap_id);
   }
   return mbms_ref;
+}
+
+//------------------------------------------------------------------------------
+void
+m2ap_enb_full_reset (
+  const void *m2ap_enb_ref_p)
+{
+  DevAssert(m2ap_enb_ref_p);
+
+  m2ap_enb_description_t                   *m2ap_enb_ref = (m2ap_enb_description_t*)m2ap_enb_ref_p;
+  void * mbms_ref							= NULL;
+
+  hashtable_ts_apply_callback_on_elements((hash_table_ts_t * const)&g_m2ap_mbms_coll,
+	m2ap_enb_mbms_remove_sctp_assoc_id_cb, (void*)&m2ap_enb_ref->sctp_assoc_id, (void**)&mbms_ref);
+  m2ap_enb_ref->nb_mbms_associated = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -690,7 +747,7 @@ m2ap_new_mbms (
    * Create and initialize the SCTP eNB MBMS M2aP Id map.
    */
   bstring bs2 = bfromcstr("m2ap_assoc_id2enb_mbms_id_coll");
-  hash_table_ts_t* h = hashtable_ts_init (&mbms_ref->g_m2ap_assoc_id2mce_enb_id_coll, mme_config.max_mbms_services, NULL, m2ap_remove_enb_sctp_assoc, bs2);
+  hash_table_ts_t* h = hashtable_ts_init (&mbms_ref->g_m2ap_assoc_id2mce_enb_id_coll, mme_config.max_mbms_services, NULL, hash_free_int_func, bs2);
   bdestroy_wrapper (&bs2);
   if(!h){
 	free_wrapper(&mbms_ref);
@@ -698,8 +755,34 @@ m2ap_new_mbms (
   }
   /** No Deadlocks should occur, since we check the nb_mbms services in the eNBs above,
    * when removing keys from the list. */
-  int rc = pthread_mutex_init(&mbms_ref->g_m2ap_assoc_id2mce_enb_id_coll.mutex, NULL);
-  DevAssert(rc == 0);
-  /** MBMS is not inserted into any M2AP eNB or and vice versa at this stage. */
+  DevAssert(pthread_mutex_init(&mbms_ref->g_m2ap_assoc_id2mce_enb_id_coll.mutex, NULL) == 0);
+  hashtable_rc_t  hash_rc = hashtable_ts_insert (&g_m2ap_enb_coll, (const hash_key_t)mce_mbms_m2ap_id, (void *)mbms_ref);
+  DevAssert (HASH_TABLE_OK == hash_rc); /**< Else we need an extra method to avoid a leak. This should not happens, since we check above. */
   return mbms_ref;
+}
+
+//------------------------------------------------------------------------------
+void
+m2ap_set_embms_cfg_item (m2ap_enb_description_t * const m2ap_enb_ref,
+	M2AP_MBMS_Service_Area_ID_List_t * mbms_service_areas)
+{
+  uint16_t                                mbms_sa_value = 0;
+  /**
+   * Create a new MBMS Service Area item with the MBMS Service Areas matching the MME configuration.
+   */
+  mme_config_read_lock (&mme_config);
+  for (int i = 0; i < mme_config.served_mbms_sa.nb_mbms_sa; i++) {
+    for (int j = 0; j < mbms_service_areas->list.count; j++) {
+	  M2AP_MBMS_Service_Area_t * mbms_sa = &mbms_service_areas->list.array[j];
+	  OCTET_STRING_TO_MBMS_SA (mbms_sa, mbms_sa_value);
+	  OAILOG_TRACE (LOG_M2AP, "Comparing config MBMS SA %d, received MBMS SA = %d\n", mme_config.served_mbms_sa.mbms_sa_list[i], mbms_sa_value);
+	  if (mme_config.served_mbms_sa.mbms_sa_list[i] == mbms_sa_value){
+	    m2ap_enb_ref->mbms_sa_list.serviceArea[m2ap_enb_ref->mbms_sa_list.num_service_area] = mbms_sa_value;
+	    m2ap_enb_ref->mbms_sa_list.num_service_area++;
+	    /** No need to check other values, directly check new config value. */
+	    continue;
+	  }
+    }
+  }
+  mme_config_unlock (&mme_config);
 }

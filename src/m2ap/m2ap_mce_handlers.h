@@ -148,24 +148,22 @@ m2ap_mce_handle_mbms_overload_notification (
     M2AP_M2AP_PDU_t *pdu);
 
 //------------------------------------------------------------------------------
-int m2ap_handle_sctp_disconnection(const sctp_assoc_id_t assoc_id, bool reset);
+int m2ap_handle_sctp_disconnection(const sctp_assoc_id_t assoc_id);
 
 int m2ap_handle_new_association(sctp_new_peer_t *sctp_new_peer_p);
 
 int m2ap_mce_set_cause(M2AP_Cause_t *cause_p, const M2AP_Cause_PR cause_type, const long cause_value);
 
 int m2ap_mce_generate_m2_setup_failure(
-    const sctp_assoc_id_t assoc_id, const M2AP_Cause_PR cause_type, const long cause_value,
+    const sctp_assoc_id_t assoc_id, const sctp_stream_id_t stream,
+	const M2AP_Cause_PR cause_type, const long cause_value,
     const long time_to_wait);
 
 /*** HANDLING EXPIRED TIMERS. */
 //------------------------------------------------------------------------------
 void m2ap_mme_handle_mbms_action_timer_expiry (void *arg);
 
-int m3ap_handle_enb_initiated_reset_ack (const itti_m3ap_enb_initiated_reset_ack_t * const enb_reset_ack_p);
-
-int m2ap_mce_handle_error_ind_message (const sctp_assoc_id_t assoc_id,
-                                       const sctp_stream_id_t stream, M2AP_M2AP_PDU_t *message);
+int m3ap_handle_enb_initiated_reset_ack (const itti_m3ap_enb_initiated_reset_ack_t * const m2ap_enb_reset_ack_p);
 
 int m2ap_mce_handle_enb_reset (const sctp_assoc_id_t assoc_id,
                                const sctp_stream_id_t stream, M2AP_M2AP_PDU_t *message);

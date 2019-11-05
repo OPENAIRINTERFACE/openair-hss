@@ -2239,7 +2239,6 @@ s1ap_handle_sctp_disconnection (
     if (reset) {
       enb_association->s1_state = S1AP_INIT;
       OAILOG_INFO(LOG_S1AP, "Moving eNB with association id %u to INIT state\n", assoc_id);
-      update_mme_app_stats_connected_enb_sub();
     } else {
     	hashtable_ts_free (&g_s1ap_enb_coll, enb_association->sctp_assoc_id);
       update_mme_app_stats_connected_enb_sub();

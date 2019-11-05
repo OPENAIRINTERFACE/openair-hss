@@ -34,7 +34,6 @@
 #define M3AP_MBMS_SESSION_UPDATE_REQUEST(mSGpTR)                 (mSGpTR)->ittiMsg.m3ap_mbms_session_update_req
 #define M3AP_MBMS_SESSION_STOP_REQUEST(mSGpTR)                   (mSGpTR)->ittiMsg.m3ap_mbms_session_stop_req
 
-#define M3AP_ERROR_INDICATION(mSGpTR)                			 (mSGpTR)->ittiMsg.m3ap_error_ind
 #define MCE_APP_M3_MBMS_SERVICE_COUNTING_REQ(mSGpTR)			 (mSGpTR)->ittiMsg.m3ap_mbms_service_counting_req
 #define M3AP_ENB_INITIATED_RESET_REQ(mSGpTR)                	 (mSGpTR)->ittiMsg.m3ap_initiated_reset_req
 #define M3AP_ENB_INITIATED_RESET_ACK(mSGpTR)                	 (mSGpTR)->ittiMsg.m3ap_enb_initiated_reset_ack
@@ -65,8 +64,8 @@ typedef enum m2ap_reset_type_e {
 } m2ap_reset_type_t;
 
 typedef struct m2_sig_conn_id_s {
-  mce_mbms_m2ap_id_t*  mme_mbms_m2ap_id;
-  enb_mbms_m2ap_id_t*  enb_mbms_m2ap_id;
+  mce_mbms_m2ap_id_t   mce_mbms_m2ap_id;
+  enb_mbms_m2ap_id_t   enb_mbms_m2ap_id;
 } m2_sig_conn_id_t;
 
 //-----------------
@@ -120,15 +119,6 @@ typedef struct itti_m3ap_enb_initiated_reset_ack_s {
   uint32_t          num_mbms;
   m2_sig_conn_id_t  *mbsm_to_reset_list;
 } itti_m3ap_enb_initiated_reset_ack_t;
-
-/** M3AP Error Indication. */
-typedef struct itti_m3ap_error_ind_s {
-  mce_mbms_m2ap_id_t      mce_mbms_m2ap_id:24;
-  enb_mbms_m2ap_id_t      enb_mbms_m2ap_id;
-  sctp_assoc_id_t         assoc_id;
-  uint32_t                enb_id;
-  enum m2cause            cause;
-}itti_m3ap_error_ind_t;
 
 /** M3AP MBMS Service Counting Request. */
 typedef struct itti_m3ap_mbms_service_counting_req_s {
