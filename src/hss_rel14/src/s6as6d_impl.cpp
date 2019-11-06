@@ -28,6 +28,7 @@
 #include "fdhss.h"
 #include "rapidjson/document.h"
 #include "statshss.h"
+#include "util.h"
 
 #include <iomanip>
 extern "C" {
@@ -300,7 +301,7 @@ int CALRcmd::process( FDMessageRequest *req )
 // receives the CALR command.
    return -1;
 }
- 
+
 // AUIR Request (req) Command member functions
 
 
@@ -673,7 +674,7 @@ int INSDRcmd::process( FDMessageRequest *req )
 // receives the INSDR command.
    return -1;
 }
- 
+
 // DESDR Request (req) Command member functions
 
 
@@ -734,7 +735,7 @@ int DESDRcmd::process( FDMessageRequest *req )
 // receives the DESDR command.
    return -1;
 }
- 
+
 // PUUR Request (req) Command member functions
 
 
@@ -865,7 +866,7 @@ int PUURcmd::process( FDMessageRequest *req )
    ans.send();
    return 0;
 }
- 
+
 // RER Request (req) Command member functions
 
 
@@ -926,7 +927,7 @@ int RERcmd::process( FDMessageRequest *req )
 // receives the RER command.
    return -1;
 }
- 
+
 
 }
 
@@ -2155,7 +2156,7 @@ void AIRProcessor::phase1()
    {
       if(m_plmn_len == 3 )
       {
-         if (! Options::getroamallow()) 
+         if (! Options::getroamallow())
          {
             if (apply_access_restriction ((char*)m_imsi.c_str(), m_plmn_id) != 0)
             {
@@ -2228,14 +2229,24 @@ void AIRProcessor::phase2()
       {
         //We succeeded to verify SQN_MS...
         //Pick a new RAND and store SQN_MS + RAND in the HSS
-        generate_random_cpp (m_vector[0].rand, RAND_LENGTH);
+        //generate_random_cpp (m_vector[0].rand, RAND_LENGTH);
 
         // save the new rand and sqn locally
-        memcpy(m_sec.rand, m_vector[0].rand, sizeof(m_sec.rand));
-        memcpy(m_sec.sqn, sqn, sizeof(m_sec.sqn));
+        // LG: useless ?
+        //memcpy(m_sec.rand, m_vector[0].rand, sizeof(m_sec.rand));
+        //memcpy(m_sec.sqn, sqn, sizeof(m_sec.sqn));
 
+        SqnU64Union eu;
+        SQN_TO_U64(sqn, eu);
+        eu.u64 += 32;
+        U64_TO_SQN(eu, m_sec.sqn);
         free (sqn);
+      } else {
+        SqnU64Union eu;
+        SQN_TO_U64(sqn, eu);
+        std::cerr << "Could not resync " << m_uimsi << " HSS SQN " << eu.u64 << std::endl;
       }
+
    }
 
    for (uint32_t i = 0; i < m_num_vectors; i++)
@@ -2243,6 +2254,8 @@ void AIRProcessor::phase2()
       generate_random_cpp (m_vector[i].rand, RAND_LENGTH);
       generate_vector_cpp (m_sec.opc, m_uimsi, m_sec.key, m_plmn_id, m_sec.sqn, &m_vector[i]);
    }
+
+   memcpy(m_sec.rand, m_vector[0].rand, sizeof(m_sec.rand));
 
    for (uint32_t i = 0; i < m_num_vectors; i++)
    {
