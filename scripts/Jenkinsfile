@@ -20,6 +20,7 @@
  *      contact@openairinterface.org
  */
 
+//-------------------------------------------------------------------------------
 // Abstraction function to send social media messages:
 // like on Slack or Mattermost
 def sendSocialMediaMessage(pipeChannel, pipeColor, pipeMessage) {
@@ -36,7 +37,7 @@ def cn_ci_host = params.Host_CN_CI_Server
 // Name of the VM resources
 def cn_ci_resource = params.VM_Resources
 
-//--------------------------------------------------------
+//-------------------------------------------------------------------------------
 // Pipeline start
 pipeline {
     agent {
