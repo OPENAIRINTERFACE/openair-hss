@@ -50,7 +50,7 @@
 
 static void mme_app_nas_esm_free_bearer_context_proc(nas_esm_proc_bearer_context_t **esm_proc_bearer_context);
 static void mme_app_nas_esm_free_pdn_connectivity_proc(nas_esm_proc_pdn_connectivity_t **esm_proc_pdn_connectivity);
-
+static void mme_app_nas_esm_free_remote_ue_report_proc(nas_esm_proc_remote_ue_report_t **esm_proc_remote_ue_report);
 //------------------------------------------------------------------------------
 void mme_app_nas_esm_free_pdn_connectivity_procedures(ue_session_pool_t * const ue_session_pool)
 {
@@ -59,7 +59,7 @@ void mme_app_nas_esm_free_pdn_connectivity_procedures(ue_session_pool_t * const 
     nas_esm_proc_pdn_connectivity_t *esm_pdn_connectivity_proc1 = NULL;
     nas_esm_proc_pdn_connectivity_t *esm_pdn_connectivity_proc2 = NULL;
 
-    esm_pdn_connectivity_proc1 = LIST_FIRST(ue_session_pool->privates.fields.esm_procedures.pdn_connectivity_procedures);                 /* Faster List Deletion. */
+    esm_pdn_connectivity_proc1 = LIST_FIRST(ue_session_pool->privates.fields.esm_procedures.pdn_connectivity_procedures); /* Faster List Deletion. */
     while (esm_pdn_connectivity_proc1) {
       esm_pdn_connectivity_proc2 = LIST_NEXT(esm_pdn_connectivity_proc1, entries);
       mme_app_nas_esm_free_pdn_connectivity_proc(&esm_pdn_connectivity_proc1);
@@ -91,7 +91,6 @@ nas_esm_proc_pdn_connectivity_t* mme_app_nas_esm_create_pdn_connectivity_procedu
       }
     }
   }
-
   // TODO: LOCK_UE_CONTEXT
   esm_proc_pdn_connectivity = calloc(1, sizeof(nas_esm_proc_pdn_connectivity_t));
   esm_proc_pdn_connectivity->esm_base_proc.pti  = pti;
@@ -292,3 +291,102 @@ static void mme_app_nas_esm_free_bearer_context_proc(nas_esm_proc_bearer_context
   free_wrapper((void**)esm_proc_bearer_context);
   // todo: UNLOCK_UE_CONTEXT
 }
+
+/*
+ * Remote UE Report.
+ */
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+void mme_app_nas_esm_free_remote_ue_report_procedures(ue_session_pool_t * const ue_session_pool)
+{
+  // todo: LOCK UE SESSION POOL
+  if (ue_session_pool->privates.fields.esm_procedures.remote_ue_report_procedures) {
+    nas_esm_proc_remote_ue_report_t *esm_remote_ue_report_proc1 = NULL;
+    nas_esm_proc_remote_ue_report_t *esm_remote_ue_report_proc2 = NULL;
+
+    esm_remote_ue_report_proc1 = LIST_FIRST(ue_session_pool->privates.fields.esm_procedures.remote_ue_report_procedures); /* Faster List Deletion. */
+    while (esm_remote_ue_report_proc1) {
+      esm_remote_ue_report_proc2 = LIST_NEXT(esm_remote_ue_report_proc1, entries);
+      mme_app_nas_esm_free_remote_ue_report_proc(&esm_remote_ue_report_proc1);
+      esm_remote_ue_report_proc1 = esm_remote_ue_report_proc2;
+    }
+    LIST_INIT(ue_session_pool->privates.fields.esm_procedures.remote_ue_report_procedures);
+    free_wrapper((void**)&ue_session_pool->privates.fields.esm_procedures.remote_ue_report_procedures);
+  }
+}
+
+//------------------------------------------------------------------------------
+
+nas_esm_proc_remote_ue_report_t* mme_app_nas_esm_create_remote_ue_report_procedure(mme_ue_s1ap_id_t ue_id, ebi_t ebi, pti_t pti)
+{
+  OAILOG_FUNC_IN(LOG_MME_APP);
+  ue_session_pool_t * ue_session_pool = mme_ue_session_pool_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_session_pools, ue_id);
+  if(!ue_session_pool ){
+    OAILOG_FUNC_RETURN(LOG_MME_APP, NULL);
+  }
+  /* Check the first remote ue report procedure, if it has another PTI, reject the request. */
+  nas_esm_proc_remote_ue_report_t *esm_proc_remote_ue_report = NULL;
+  if (ue_session_pool->privates.fields.esm_procedures.remote_ue_report_procedures) {
+    LIST_FOREACH(esm_proc_remote_ue_report, ue_session_pool->privates.fields.esm_procedures.remote_ue_report_procedures, entries) {
+      if(esm_proc_remote_ue_report){
+        if(esm_proc_remote_ue_report->esm_base_proc.pti != pti){ /**< PTI may be invalid for idle TAU. */
+          OAILOG_FUNC_RETURN(LOG_MME_APP, NULL);
+        } else if (esm_proc_remote_ue_report->bearer_ebi == ebi ) {
+          OAILOG_FUNC_RETURN(LOG_MME_APP, NULL);
+        }else {
+          /** We may have other remote ue report procedure with the same PTI and other EBI. Continuing. */
+        }
+      }
+    }
+  }
+
+  // TODO: LOCK_UE_CONTEXT
+  esm_proc_remote_ue_report = calloc(1, sizeof(nas_esm_proc_remote_ue_report_t));
+  esm_proc_remote_ue_report->esm_base_proc.pti  = pti;
+  //esm_proc_remote_ue_report->esm_base_proc.type = ESM_PROC_PDN_CONTEXT;
+  esm_proc_remote_ue_report->esm_base_proc.ue_id = ue_id;
+  /* Set the timeout directly. Set the callback argument as the ue_id. */
+
+  /** Initialize the of the procedure. */
+  if (!ue_session_pool->privates.fields.esm_procedures.remote_ue_report_procedures) {
+	ue_session_pool->privates.fields.esm_procedures.remote_ue_report_procedures = calloc(1, sizeof(struct nas_esm_proc_remote_ue_report_s));
+    LIST_INIT(ue_session_pool->privates.fields.esm_procedures.remote_ue_report_procedures);
+  }
+  LIST_INSERT_HEAD((ue_session_pool->privates.fields.esm_procedures.remote_ue_report_procedures), esm_proc_remote_ue_report, entries);
+
+  //LIST_INSERT_HEAD((ue_session_pool->privates.fields.esm_procedures.bearer_context_procedures), esm_proc_bearer_context, entries);
+
+  OAILOG_FUNC_RETURN(LOG_MME_APP, esm_proc_remote_ue_report);
+}
+
+//------------------------------------------------------------------------------
+nas_esm_proc_remote_ue_report_t* mme_app_nas_esm_get_remote_ue_report_procedure(mme_ue_s1ap_id_t ue_id, pti_t pti)
+{
+  OAILOG_FUNC_IN(LOG_MME_APP);
+  ue_session_pool_t * ue_session_pool = mme_ue_session_pool_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_session_pools, ue_id);
+  if(!ue_session_pool ){
+    OAILOG_FUNC_RETURN(LOG_MME_APP, NULL);
+  }
+
+  if (ue_session_pool->privates.fields.esm_procedures.remote_ue_report_procedures) {
+    nas_esm_proc_remote_ue_report_t *esm_remote_ue_report_proc = NULL;
+    LIST_FOREACH(esm_remote_ue_report_proc, ue_session_pool->privates.fields.esm_procedures.remote_ue_report_procedures, entries) {
+      /** Search by PTI only. */
+      if (pti == PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED || pti == esm_remote_ue_report_proc->esm_base_proc.pti) {
+        OAILOG_FUNC_RETURN(LOG_MME_APP, esm_remote_ue_report_proc);
+      }
+    }
+  }
+  OAILOG_FUNC_RETURN(LOG_MME_APP, NULL);
+}
+
+//------------------------------------------------------------------------------
+static void mme_app_nas_esm_free_remote_ue_report_proc(nas_esm_proc_remote_ue_report_t **esm_proc_remote_ue_report)
+{
+  // DO here specific releases (memory,etc)
+  /** Remove the bearer contexts to be setup. */
+  nas_stop_esm_timer((*esm_proc_remote_ue_report)->esm_base_proc.pti);
+      free_wrapper((void**)esm_proc_remote_ue_report);
+}
+//------------------------------------------------------------------------------

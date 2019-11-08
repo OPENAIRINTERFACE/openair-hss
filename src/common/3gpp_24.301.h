@@ -110,7 +110,8 @@
 # define ESM_INFORMATION_REQUEST                              0b11011001 /* 217 = 0xd9 */
 # define ESM_INFORMATION_RESPONSE                             0b11011010 /* 218 = 0xda */
 # define ESM_STATUS                                           0b11101000 /* 232 = 0xe8 */
-
+# define REMOTE_UE_REPORT                                     0b11101001 /* 233 = 0xe9 */
+# define REMOTE_UE_REPORT_RESPONSE                            0b11101010 /* 234 = 0xea */
 //------------------------------------------------------------------------------
 // 9.9 OTHER INFORMATION ELEMENTS
 //------------------------------------------------------------------------------

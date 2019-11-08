@@ -80,6 +80,7 @@
 #include "PdnConnectivityRequest.h"
 #include "PdnDisconnectReject.h"
 #include "PdnDisconnectRequest.h"
+#include "RemoteUEReport.h"
 
 
 /****************************************************************************/
@@ -232,6 +233,10 @@ esm_msg_decode (
     decode_result = decode_esm_status (&msg->esm_status, buffer, len);
     break;
 
+case REMOTE_UE_REPORT:
+    decode_result = decode_remote_ue_report (&msg->remote_ue_report, buffer, len);
+    break;
+
   default:
     OAILOG_ERROR (LOG_NAS_ESM, "ESM-MSG   - Unexpected message type: 0x%x\n", msg->header.message_type);
     decode_result = TLV_WRONG_MESSAGE_TYPE;
@@ -375,6 +380,10 @@ esm_msg_encode (
     encode_result = encode_esm_status (&msg->esm_status, buffer, len);
     break;
 
+    case REMOTE_UE_REPORT:
+    encode_result = encode_remote_ue_report (&msg->remote_ue_report, buffer, len);
+    break;
+
   default:
     OAILOG_ERROR (LOG_NAS_ESM, "ESM-MSG   - Unexpected message type: 0x%x\n", msg->header.message_type);
     encode_result = TLV_WRONG_MESSAGE_TYPE;
@@ -493,7 +502,7 @@ esm_msg_free (
   case ESM_INFORMATION_RESPONSE:
     bdestroy_wrapper(&msg->esm_information_response.accesspointname);
     clear_protocol_configuration_options(&msg->esm_information_response.protocolconfigurationoptions);
-    break;
+    break;  
 
   case BEARER_RESOURCE_MODIFICATION_REQUEST:
     clear_traffic_flow_template(&msg->bearer_resource_modification_request.trafficflowaggregate);
@@ -504,6 +513,12 @@ esm_msg_free (
     break;
 
   case ESM_STATUS:
+    break;
+
+case REMOTE_UE_REPORT:
+    //bdestroy_wrapper(&msg->remote_ue_report.remoteuecontext);
+    //bdestroy_wrapper(&msg->remote_ue_report.pkmfaddress);
+    //clear_protocol_configuration_options(&msg->activate_default_eps_bearer_context_request.protocolconfigurationoptions);
     break;
 
   default:

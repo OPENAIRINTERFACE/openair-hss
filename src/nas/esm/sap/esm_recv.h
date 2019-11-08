@@ -53,7 +53,7 @@ Description Defines functions executed at the ESM Service Access
 #include "ModifyEpsBearerContextReject.h"
 #include "PdnConnectivityRequest.h"
 #include "PdnDisconnectRequest.h"
-
+#include "RemoteUEReport.h"
 
 
 /****************************************************************************/
@@ -104,6 +104,11 @@ esm_cause_t esm_recv_activate_default_eps_bearer_context_accept(mme_ue_s1ap_id_t
 esm_cause_t esm_recv_activate_default_eps_bearer_context_reject (mme_ue_s1ap_id_t ue_id,
     proc_tid_t pti, ebi_t ebi, const activate_default_eps_bearer_context_reject_msg * msg);
 
+/*
+ * Remote UE Report message
+ * ---------------------------------------
+ */
+esm_cause_t esm_recv_remote_ue_report_msg(mme_ue_s1ap_id_t ue_id, proc_tid_t pti, ebi_t ebi, const remote_ue_report_msg *msg);
 /*
  * Messages related to EPS bearer contexts
  * ---------------------------------------

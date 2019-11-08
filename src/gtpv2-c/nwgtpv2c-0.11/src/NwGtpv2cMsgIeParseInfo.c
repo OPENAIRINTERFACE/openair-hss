@@ -72,7 +72,7 @@ extern                                  "C" {
     {NW_GTPV2C_IE_FTEID, 9, NW_GTPV2C_IE_INSTANCE_THREE, NW_GTPV2C_IE_PRESENCE_CONDITIONAL, NULL},
     {NW_GTPV2C_IE_FTEID, 9, NW_GTPV2C_IE_INSTANCE_FOUR, NW_GTPV2C_IE_PRESENCE_CONDITIONAL, NULL},
     {NW_GTPV2C_IE_BEARER_LEVEL_QOS, 18, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_MANDATORY, NULL},
-    //   { NW_GTPV2C_IE_IMSI           ,       0,      NW_GTPV2C_IE_INSTANCE_ZERO  , NW_GTPV2C_IE_PRESENCE_CONDITIONAL , NULL},
+    //{ NW_GTPV2C_IE_IMSI           ,       0,      NW_GTPV2C_IE_INSTANCE_ZERO  , NW_GTPV2C_IE_PRESENCE_CONDITIONAL , NULL},
 
     /*
      * Do not add below this
@@ -506,6 +506,27 @@ extern                                  "C" {
     {0, 0, 0}
   };
 
+static
+  NwGtpv2cMsgIeInfoT                      remoteUeReportNotificationIeInfoTbl[] = {
+    {NW_GTPV2C_IE_REMOTE_UE_CONTEXT, 0, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL, NULL},
+    {NW_GTPV2C_IE_REMOTE_UE_CONTEXT, 0, NW_GTPV2C_IE_INSTANCE_ONE, NW_GTPV2C_IE_PRESENCE_CONDITIONAL, NULL},
+        /*
+     * Do not add below this
+     */
+    {0, 0, 0}
+  };
+
+static
+  NwGtpv2cMsgIeInfoT                      remoteUeReportAckIeInfoTbl[] = {
+      {NW_GTPV2C_IE_CAUSE, 0, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_MANDATORY, NULL},
+
+    /*
+     * Do not add below this
+     */
+    {0, 0, 0}
+  };
+
+
 /* Message sent over s10 interface */
   static
   NwGtpv2cMsgIeInfoT                      identificationReqIeInfoTbl[] = {
@@ -856,6 +877,18 @@ extern                                  "C" {
 
       case NW_GTP_DELETE_SESSION_RSP:{
           rc = nwGtpv2cMsgIeParseInfoUpdate (thiz, deleteSessionRspIeInfoTbl);
+          NW_ASSERT (NW_OK == rc);
+        }
+        break;
+
+        case NW_GTP_REMOTE_UE_REPORT_NOTIFICATION:{
+          rc = nwGtpv2cMsgIeParseInfoUpdate (thiz, remoteUeReportNotificationIeInfoTbl);
+          NW_ASSERT (NW_OK == rc);
+        }
+        break;
+
+        case NW_GTP_GTP_REMOTE_UE_REPORT_ACK:{
+          rc = nwGtpv2cMsgIeParseInfoUpdate (thiz, remoteUeReportAckIeInfoTbl);
           NW_ASSERT (NW_OK == rc);
         }
         break;

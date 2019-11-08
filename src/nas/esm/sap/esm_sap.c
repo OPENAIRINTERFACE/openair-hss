@@ -235,6 +235,19 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
     }
   }
   break;
+  
+  case ESM_REMOTE_UE_REPORT_RSP:{
+    pti_t  pti;
+    nas_esm_proc_remote_ue_report_t * esm_proc_remote_ue_report = _esm_proc_get_remote_ue_report_procedure( msg->ue_id, pti);
+    if(!esm_proc_remote_ue_report){
+     OAILOG_ERROR (LOG_NAS_ESM, "ESM-SAP   - No ESM transaction for UE ueId " MME_UE_S1AP_ID_FMT " exists. Ignoring the received Remote UE Report. \n",
+          msg->ue_id); 
+    }else{
+      esm_send_remote_ue_report_response (pti, ebi, &esm_resp_msg );
+    }
+
+  }
+
 
   case ESM_PDN_CONNECTIVITY_REJ:{
     /*
@@ -551,6 +564,21 @@ _esm_sap_recv (
        * Process PDN connectivity request message received from the UE.
        */
       esm_cause = esm_recv_pdn_connectivity_request (&is_attach, mme_ue_s1ap_id, imsi, pti, ebi, visited_tai, &esm_msg.pdn_connectivity_request, &esm_resp_msg);
+      if (esm_cause != ESM_CAUSE_SUCCESS) {
+        /*
+         * No transaction expected (not touching network triggered transactions.
+         */
+        esm_send_pdn_connectivity_reject(pti, &esm_resp_msg, esm_cause);
+      }
+    }
+    break;
+    
+    case REMOTE_UE_REPORT: {
+      OAILOG_DEBUG (LOG_NAS_ESM, "ESM-SAP   - REMOTE_UE_REPORT pti %u ebi %u\n", pti, ebi);
+      /*
+       * Process Remote UE Report message received from the UE.
+       */
+      esm_cause = esm_recv_remote_ue_report_msg( mme_ue_s1ap_id , pti,  ebi,  &esm_msg.remote_ue_report);
       if (esm_cause != ESM_CAUSE_SUCCESS) {
         /*
          * No transaction expected (not touching network triggered transactions.

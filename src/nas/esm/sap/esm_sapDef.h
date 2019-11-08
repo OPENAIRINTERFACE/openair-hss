@@ -71,6 +71,8 @@ typedef enum esm_primitive_s {
 
   ESM_DETACH_IND,
 
+  ESM_REMOTE_UE_REPORT_RSP,
+
   /* Internal signal. */
   ESM_TIMEOUT_IND,
 

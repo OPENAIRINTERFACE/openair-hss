@@ -91,11 +91,25 @@ typedef struct nas_esm_proc_pdn_connectivity_s {
   pdn_cid_t                    pdn_cid;
   ebi_t                        default_ebi;
   protocol_configuration_options_t  pco;
-  bool						   saegw_qos_modification;
+  bool						             saegw_qos_modification;
   eps_bearer_context_status_t  bc_status;
-  bool 						   pending_qos;  /**< If an S11 request has been received while handling the ESM PDN procedure. */
+  bool 						             pending_qos;  /**< If an S11 request has been received while handling the ESM PDN procedure. */
   LIST_ENTRY(nas_esm_proc_pdn_connectivity_s) entries;      /* List. */
-} nas_esm_proc_pdn_connectivity_t;
+}nas_esm_proc_pdn_connectivity_t;
+
+/*
+ * Structure for ESM Remote UE Report procedure.
+ */
+typedef struct nas_esm_proc_remote_ue_report_s{
+/** Initial mandatory elements. */
+  nas_esm_proc_t               esm_base_proc;
+/** Additional elements requested from the UE and set with time.. */
+  proc_tid_t                   proc_tid;      
+  ebi_t                        bearer_ebi;
+  //bool 						   pending_qos;  /**< If an S11 request has been received while handling the ESM PDN procedure. */
+  LIST_ENTRY(nas_esm_proc_remote_ue_report_s) entries;      /* List. */
+}nas_esm_proc_remote_ue_report_t;
+
 
 /*
  * Structure for ESM bearer context procedure.
@@ -136,6 +150,17 @@ void mme_app_nas_esm_delete_pdn_connectivity_proc(nas_esm_proc_pdn_connectivity_
 void mme_app_nas_esm_free_bearer_context_procedures(ue_session_pool_t * const ue_session_pool_p); // todo: static!
 nas_esm_proc_bearer_context_t* mme_app_nas_esm_create_bearer_context_procedure(mme_ue_s1ap_id_t ue_id, pti_t pti, ebi_t ebi, int timeout_sec, int timeout_usec, esm_timeout_cb_t timeout_notif);
 nas_esm_proc_bearer_context_t* mme_app_nas_esm_get_bearer_context_procedure(mme_ue_s1ap_id_t mme_ue_s1ap_id, pti_t pti, ebi_t ebi);
-void mme_app_nas_esm_delete_bearer_context_proc(nas_esm_proc_bearer_context_t     **esm_bearer_context_proc);
+void mme_app_nas_esm_delete_bearer_context_proc(nas_esm_proc_bearer_context_t   **esm_bearer_context_proc);
+
+//------------------------------------------------------------------------------
+/*
+ * Remote UE Report Procedure.
+ */
+void mme_app_nas_esm_free_remote_ue_report_procedures(ue_session_pool_t * const ue_session_pool_p);
+nas_esm_proc_remote_ue_report_t* mme_app_nas_esm_create_remote_ue_report_procedure(mme_ue_s1ap_id_t ue_id, ebi_t ebi, pti_t pti);
+nas_esm_proc_remote_ue_report_t* mme_app_nas_esm_get_remote_ue_report_procedure(mme_ue_s1ap_id_t ue_id, pti_t pti);
+void mme_app_nas_esm_delete_remote_ue_report_proc(nas_esm_proc_remote_ue_report_t     **esm_remote_ue_report_proc);
+
+//------------------------------------------------------------------------------
 
 #endif

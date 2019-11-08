@@ -739,12 +739,118 @@ esm_recv_activate_default_eps_bearer_context_accept (
 
 /****************************************************************************
  **                                                                        **
- ** Name:    esm_recv_activate_default_eps_bearer_context_reject()     **
+ ** Name:    esm_recv_remote_ue_report_msg()                        **
  **                                                                        **
- ** Description: Processes Activate Default EPS Bearer Context Reject      **
- **      message                                                   **
+ ** Description: Processes Remote UE Report message              **
+ **                                                         **
  **                                                                        **
  ** Inputs:  ue_id:      UE local identifier                        **
+ **          pti:       Procedure transaction identity             **
+ **      ebi:       EPS bearer identity                        **
+ **      msg:       The received ESM message                   **
+ **      Others:    None                                       **
+ **                                                                        **
+ ** Outputs:     None                                                      **
+ **      Return:    ESM cause code whenever the processing of  **
+ **             the ESM message fail                       **
+ **      Others:    None                                       **
+ **                                                                        **
+ ***************************************************************************/
+
+esm_cause_t
+esm_recv_remote_ue_report_msg ( 
+   mme_ue_s1ap_id_t ue_id, 
+   proc_tid_t pti,
+   ebi_t ebi, 
+   const remote_ue_report_msg *msg)
+{
+    OAILOG_FUNC_IN (LOG_NAS_ESM);
+  //esm_cause_t                             esm_cause = ESM_CAUSE_SUCCESS;
+
+  OAILOG_INFO(LOG_NAS_ESM, "ESM-SAP   - Received Remote UE Report message (ue_id=%d, pti=%d, ebi=%d)\n",
+          ue_id, pti, ebi);
+
+  /*
+   * Procedure transaction identity checking
+   */
+  if (esm_pt_is_reserved (pti)) {
+    /*
+     * 3GPP TS 24.301, section 7.3.1, case f
+     * * * * Reserved PTI value
+     */
+    OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Invalid PTI value (pti=%d)\n", pti);
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_PTI_VALUE);
+}
+
+/*
+   * EPS bearer identity checking
+   */
+  else if (ebi == ESM_EBI_UNASSIGNED) {
+    /*
+     * 3GPP TS 24.301, section 7.3.2, case a
+     * * * * Reserved or assigned EPS bearer identity value
+     */
+    OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Invalid EPS bearer identity (ebi=%d)\n", ebi);
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY);
+  }
+/*
+   * Check if a procedure exists.
+   * No procedure should exist at all (also no network triggered procedure without PTI.
+   * Not checking any bearer context procedure at this step.
+   */
+  nas_esm_proc_remote_ue_report_t * esm_proc_remote_ue_report_req = _esm_proc_get_remote_ue_report_procedure(ue_id, pti);
+  if(esm_proc_remote_ue_report_req){
+    OAILOG_INFO(LOG_NAS_ESM, "ESM-SAP   - Found a Remote UE Report procedure (pti=%d) for UE " MME_UE_S1AP_ID_FMT ".\n",
+        esm_proc_remote_ue_report_req->esm_base_proc.pti, ue_id);
+
+    /** We have another transactional procedure. If the PTIs don't match, reject the message. */
+    //if(esm_proc_remote_ue_report_req->esm_base_proc.pti == pti){
+
+      /* We have a duplicate Remote UE Report request. */
+      //DevAssert(!*is_attach);
+      //OAILOG_INFO(LOG_NAS_ESM, "ESM-SAP   - A Remote UE Report procedure (pti=%d) for UE " MME_UE_S1AP_ID_FMT " is already received. \n"
+          //" Continuing to check the new procedure (pti=%d).\n", esm_proc_remote_ue_report->esm_base_proc.pti, ue_id, pti);
+     
+     // esm_cause_t esm_cause = esm_proc_pdn_connectivity_retx(ue_id, esm_proc_pdn_connectivity, esm_rsp_msg);
+      //if(esm_cause == ESM_CAUSE_SUCCESS && esm_rsp_msg->header.message_type){
+        /** Restart the T3485 timer and resend the ACTIVATE_DEFAULT_EPS_BEARER_CONTEXT message. */
+       // esm_proc_default_eps_bearer_context(ue_id, esm_rsp_msg, esm_proc_pdn_connectivity);
+    //}
+      //OAILOG_FUNC_RETURN(LOG_NAS_ESM, esm_cause);
+  }
+
+/*
+* Check that an EPS procedure exists.
+*/
+  nas_esm_proc_bearer_context_t * esm_bearer_procedure = _esm_proc_get_bearer_context_procedure(ue_id, pti, ebi);
+  if(!esm_bearer_procedure){
+   OAILOG_ERROR(LOG_NAS_ESM, "ESM-PROC  - No ESM bearer procedure exists for remote UE Report (ebi=%d, pti=%d) for UE " MME_UE_S1AP_ID_FMT ". \n", ebi, pti, ue_id);
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_REQUEST_REJECTED_UNSPECIFIED);
+  }
+
+  /*
+   * Execute the dedicated Remote UE Report procedure
+   * * * * by the UE
+   */
+
+    esm_proc_remote_ue_report ( ue_id, pti, ebi, esm_proc_remote_ue_report_req );
+    
+  /*
+   * Return the ESM cause value
+   */
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_SUCCESS);
+    //OAILOG_FUNC_RETURN (LOG_NAS_ESM, esm_cause);
+}
+
+
+/****************************************************************************
+ **                                                                        **
+ ** Name:    esm_recv_activate_default_eps_bearer_context_reject()         **
+ **                                                                        **
+ ** Description: Processes Activate Default EPS Bearer Context Reject      **
+ **      message                                                           **
+ **                                                                        **
+ ** Inputs:  ue_id:      UE local identifier                               **
  **          pti:       Procedure transaction identity             **
  **      ebi:       EPS bearer identity                        **
  **      msg:       The received ESM message                   **

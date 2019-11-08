@@ -236,6 +236,7 @@ typedef struct ue_session_pool_s {
 			struct esm_procedures_s {
 				LIST_HEAD(esm_pdn_connectivity_procedures_s, nas_esm_proc_pdn_connectivity_s) *pdn_connectivity_procedures;
 				LIST_HEAD(esm_bearer_context_procedures_s, nas_esm_proc_bearer_context_s)   *bearer_context_procedures;
+        LIST_HEAD(esm_remote_ue_report_procedures_s, nas_esm_proc_remote_ue_report_s)  *remote_ue_report_procedures;
 			}esm_procedures;
 			// todo: remove later
 			ebi_t                        next_def_ebi_offset;

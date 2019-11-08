@@ -96,6 +96,8 @@ set(libnas_esm_msg_OBJS
     ${CMAKE_CURRENT_SOURCE_DIR}/esm/msg/PdnConnectivityRequest.c
     ${CMAKE_CURRENT_SOURCE_DIR}/esm/msg/PdnDisconnectReject.c
     ${CMAKE_CURRENT_SOURCE_DIR}/esm/msg/PdnDisconnectRequest.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/esm/msg/RemoteUEReport.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/esm/msg/RemoteUEReportResponse.c
     )
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/ies)
@@ -132,7 +134,10 @@ set(libnas_ies_OBJS
     ${CMAKE_CURRENT_SOURCE_DIR}/ies/PagingIdentity.c
     ${CMAKE_CURRENT_SOURCE_DIR}/ies/PdnAddress.c
     ${CMAKE_CURRENT_SOURCE_DIR}/ies/PdnType.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/ies/PKMFAddress.c
     ${CMAKE_CURRENT_SOURCE_DIR}/ies/RadioPriority.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/ies/RemoteUEContext.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/ies/RemoteUserID.c
     ${CMAKE_CURRENT_SOURCE_DIR}/ies/SecurityHeaderType.c
     ${CMAKE_CURRENT_SOURCE_DIR}/ies/ServiceType.c
     ${CMAKE_CURRENT_SOURCE_DIR}/ies/ShortMac.c
@@ -223,6 +228,7 @@ set (libnas_mme_esm_OBJS
     ${CMAKE_CURRENT_SOURCE_DIR}/emm/nas_esm_task.c
     ${CMAKE_CURRENT_SOURCE_DIR}/esm/PdnConnectivity.c
     ${CMAKE_CURRENT_SOURCE_DIR}/esm/PdnDisconnect.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/esm/RemoteUEReport.c
     )
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/esm/sap)

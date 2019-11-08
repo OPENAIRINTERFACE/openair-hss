@@ -203,6 +203,31 @@ esm_proc_modify_eps_bearer_context_reject (
   nas_esm_proc_bearer_context_t *esm_bearer_procedure,
   esm_cause_t esm_cause);
 
+  /*
+ * --------------------------------------------------------------------------
+ *      Remote UE Report procedure
+ * --------------------------------------------------------------------------
+ */
+nas_esm_proc_remote_ue_report_t *_esm_proc_get_remote_ue_report_procedure(mme_ue_s1ap_id_t ue_id, pti_t pti);
+
+
+esm_cause_t
+esm_proc_remote_ue_report (
+  mme_ue_s1ap_id_t             ue_id,
+  const proc_tid_t             pti,
+  ebi_t                        ebi,
+  //imsi_t                      *imsi,
+  //tai_t                       *visited_tai,
+  nas_esm_proc_remote_ue_report_t * const esm_proc_remote_ue_report_req
+  );
+
+esm_cause_t
+esm_proc_remote_ue_report_response ( 
+     pti_t pti, 
+     ebi_t ebi, 
+     ESM_msg * esm_msg
+);
+
 /*
  * --------------------------------------------------------------------------
  *      EPS bearer context deactivation procedure

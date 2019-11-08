@@ -65,6 +65,8 @@ extern "C" {
 #define NW_GTP_MODIFY_BEARER_RSP                                (35)
 #define NW_GTP_DELETE_SESSION_REQ                               (36)
 #define NW_GTP_DELETE_SESSION_RSP                               (37)
+#define NW_GTP_REMOTE_UE_REPORT_NOTIFICATION                    (40) 
+#define NW_GTP_GTP_REMOTE_UE_REPORT_ACK                         (41)
 #define NW_GTP_MODIFY_BEARER_CMD                                (64)
 #define NW_GTP_MODIFY_BEARER_FAILURE_IND                        (65)
 #define NW_GTP_DELETE_BEARER_CMD                                (66)

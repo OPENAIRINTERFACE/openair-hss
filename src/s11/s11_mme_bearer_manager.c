@@ -60,7 +60,7 @@ s11_mme_release_access_bearers_request (
   nw_gtpv2c_stack_handle_t * stack_p,
   itti_s11_release_access_bearers_request_t * req_p)
 {
-  nw_gtpv2c_ulp_api_t                         ulp_req;
+  nw_gtpv2c_ulp_api_t                       ulp_req;
   nw_rc_t                                   rc;
   //uint8_t                                 restart_counter = 0;
 

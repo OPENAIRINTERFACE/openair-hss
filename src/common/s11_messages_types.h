@@ -30,6 +30,7 @@
 #define FILE_S11_MESSAGES_TYPES_SEEN
 
 #include "3gpp_29.274.h"
+#include "RemoteUEContext.h"
 
 #define S11_CREATE_SESSION_REQUEST(mSGpTR)              (mSGpTR)->ittiMsg.s11_create_session_request
 #define S11_CREATE_SESSION_RESPONSE(mSGpTR)             (mSGpTR)->ittiMsg.s11_create_session_response
@@ -55,8 +56,12 @@
 #define S11_BEARER_RESOURCE_FAILURE_INDICATION(mSGpTR)  (mSGpTR)->ittiMsg.s11_bearer_resource_failure_indication
 
 /** Paging related signaling.  */
-#define S11_DOWNLINK_DATAN_NOTIFICATION(mSGpTR) (mSGpTR)->ittiMsg.s11_downlink_data_notification
+#define S11_DOWNLINK_DATAN_NOTIFICATION(mSGpTR)             (mSGpTR)->ittiMsg.s11_downlink_data_notification
 #define S11_DOWNLINK_DATAN_NOTIFICATION_ACKNOWLEDGE(mSGpTR) (mSGpTR)->ittiMsg.s11_downlink_data_notification_acknowledge
+
+/**Remote UE Report procedure.  */
+#define S11_REMOTE_UE_REPORT_NOTIFICATION(mSGpTR)                  (mSGpTR)->ittiMsg.s11_remote_ue_report_notification
+#define S11_REMOTE_UE_REPORT_ACKNOWLEDGE(mSGpTR)                   (mSGpTR)->ittiMsg.s11_remote_ue_report_acknowledge
 
 //-----------------------------------------------------------------------------
 /** @struct itti_s11_create_session_request_t
@@ -1508,4 +1513,35 @@ typedef struct itti_s11_downlink_data_notification_acknowledge_s {
   void       	  *trxn;
   struct sockaddr *peer_ip;
 }itti_s11_downlink_data_notification_acknowledge_t;
+
+//-----------------------------------------------------------------------------
+/** @struct itti_s11_remote_ue_report_notification_t
+ *  @brief Remote UE Report notification
+ *
+ * The direction of this message shall be from MME to SGW and from SGW to the PGW .
+This message is used by an MME to notify that at least one remote UE is newly connected to or disconnected from a
+ProSe UE-to-Network Relay when the MME receives such notification from the ProSe UE-to-Network Relay via the
+PDN connection established by the ProSe UE-to-Network Relay as specified in 3GPP TS 23.303.
+ */
+typedef struct itti_s11_remote_ue_report_notification_s {
+  teid_t          teid;                   ///< Tunnel Endpoint Identifier
+  teid_t     local_teid;               ///< not in specs for inner MME use
+
+  remote_ue_context_t remoteuecontext_connected; // From ProSe UE-to-Network Relay to Core Network, details about a newly connected Remote UE
+  remote_ue_context_t remoteuecontext_disconnected; // From ProSe UE-to-Network Relay to Core Network, details about a newly disconnected Remote UE
+  }itti_s11_remote_ue_report_notification_t;
+
+
+//-----------------------------------------------------------------------------
+/** @struct itti_s11_remote_ue_report_acknowledge_t
+ *  @brief Remote UE Report notification acknowledge
+ *
+ * The Remote UE Report Acknowledge message shall be sent as the response to a Remote UE Report Notification, to
+acknowledge the information related to the remote UE(s) is received.
+ */
+typedef struct itti_s11_remote_ue_report_acknowledge_s {
+  teid_t          teid;                   ///< Tunnel Endpoint Identifier
+  gtpv2c_cause_t  cause;   
+}itti_s11_remote_ue_report_acknowledge_t;
+
 #endif /* FILE_S11_MESSAGES_TYPES_SEEN */

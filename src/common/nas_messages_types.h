@@ -50,7 +50,7 @@
 #define NAS_ERAB_MODIFY_REQ(mSGpTR)                 (mSGpTR)->ittiMsg.nas_erab_modify_req
 #define NAS_ERAB_RELEASE_REQ(mSGpTR)                (mSGpTR)->ittiMsg.nas_erab_release_req
 #define NAS_SIGNALLING_CONNECTION_REL_IND(mSGpTR)   (mSGpTR)->ittiMsg.nas_signalling_connection_rel_ind
-#define NAS_PAGING_DUE_SIGNALING_IND(mSGpTR)		(mSGpTR)->ittiMsg.nas_paging_due_signaling_ind
+#define NAS_PAGING_DUE_SIGNALING_IND(mSGpTR)		    (mSGpTR)->ittiMsg.nas_paging_due_signaling_ind
 
 #define NAS_RETRY_BEARER_CTX_PROC_IND(mSGpTR)       (mSGpTR)->ittiMsg.nas_retry_bearer_ctx_proc_ind
 #define NAS_ACTIVATE_EPS_BEARER_CTX_REQ(mSGpTR)     (mSGpTR)->ittiMsg.nas_activate_eps_bearer_ctx_req

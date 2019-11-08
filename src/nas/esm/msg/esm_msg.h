@@ -66,7 +66,8 @@ Description Defines EPS Session Management messages and functions used
 #include "NasRequestType.h"
 #include "PdnType.h"
 #include "TrafficFlowAggregateDescription.h"
-
+#include "RemoteUEReport.h"
+#include "RemoteUEReportResponse.h"
 
 
 /****************************************************************************/
@@ -105,6 +106,8 @@ typedef union {
   esm_information_request_msg esm_information_request;
   esm_information_response_msg esm_information_response;
   esm_status_msg esm_status;
+  remote_ue_report_msg remote_ue_report;
+  remote_ue_report_response_msg remote_ue_report_response;
 } ESM_msg;
 
 

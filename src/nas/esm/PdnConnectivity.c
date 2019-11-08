@@ -259,7 +259,7 @@ esm_proc_pdn_connectivity_request (
  **
  **
  **
- **         TODO: FILL DESCRIPTION                                                               **
+ **         TODO: FILL DESCRIPTION                                         **
  **              3GPP TS 24.301, section 6.5.1.3                           **
  **      Upon receipt of the PDN CONNECTIVITY REQUEST message, the **
  **      MME checks if connectivity with the requested PDN can be  **
@@ -324,15 +324,15 @@ esm_proc_pdn_connectivity_retx(const mme_ue_s1ap_id_t ue_id, nas_esm_proc_pdn_co
 
 /****************************************************************************
  **                                                                        **
- ** Name:        esm_proc_pdn_connectivity_response()                       **
+ ** Name:        esm_proc_pdn_connectivity_response()                      **
  **                                                                        **
- ** Description: Performs PDN connectivity responseupon receiving noti-  **
+ ** Description: Performs PDN connectivity responseupon receiving noti-    **
  **              fication from the EPS Mobility Management sublayer that   **
  **              EMM procedure that initiated PDN connectivity activation  **
  **              succeeded.                                                **
  **                                                                        **
- **         Inputs:  ue_id:      UE local identifier                        **
- **                  pdn_cid:       Identifier of the PDN connection to be     **
+ **         Inputs:  ue_id:      UE local identifier                       **
+ **                  pdn_cid:       Identifier of the PDN connection to be **
  **                             released                                   **
  **                  Others:    None                                       **
  **                                                                        **
@@ -377,8 +377,8 @@ esm_cause_t esm_proc_pdn_connectivity_res (mme_ue_s1ap_id_t ue_id, nas_esm_proc_
  **              The MME releases the PDN connection entry allocated when  **
  **              the PDN connectivity procedure was requested by the UE.   **
  **                                                                        **
- **         Inputs:  ue_id:      UE local identifier                        **
- **                  pdn_cid:       Identifier of the PDN connection to be     **
+ **         Inputs:  ue_id:     UE local identifier                        **
+ **                  pdn_cid:   Identifier of the PDN connection to be     **
  **                             released                                   **
  **                  Others:    None                                       **
  **                                                                        **
