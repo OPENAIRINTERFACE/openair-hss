@@ -50,9 +50,8 @@
 #define MME_CONFIG_STRING_RUN_MODE_TEST                  "TEST"
 
 #define MME_CONFIG_STRING_REALM                          "REALM"
-#define MME_CONFIG_STRING_S1_MAXENB                      "MAXS1ENB"
-#define MME_CONFIG_STRING_M2_MAXENB                      "MAXM2ENB"
-#define MME_CONFIG_STRING_MAXUE                          "MAXUE"
+#define MME_CONFIG_STRING_S1_MAXENB                      "MAX_S1_ENB"
+#define MME_CONFIG_STRING_MAXUE                          "MAX_UE"
 #define MME_CONFIG_STRING_RELATIVE_CAPACITY              "RELATIVE_CAPACITY"
 #define MME_CONFIG_STRING_STATISTIC_TIMER                "MME_STATISTIC_TIMER"
 #define MME_CONFIG_STRING_MME_MOBILITY_COMPLETION_TIMER  "MME_MOBILITY_COMPLETION_TIMER"
@@ -89,14 +88,38 @@
 #define MME_CONFIG_STRING_MME_CODE                       "MME_CODE"
 #define MME_CONFIG_STRING_MME_GID                        "MME_GID"
 #define MME_CONFIG_STRING_TAI_LIST                       "TAI_LIST"
-#define MME_CONFIG_MBMS_SERVICE_AREAS					 "MBMS_SERVICE_AREAS"
-#define MME_CONFIG_MBMS_SHORT_IDLE_SESSION_DUR_IN_SEC    "MBMS_SHORT_IDLE_SESSION_DUR_IN_SEC"
-#define MME_CONFIG_MBMS_MIN_SESSION_DUR_IN_SEC           "MBMS_MIN_SESSION_DUR_IN_SEC"
 #define MME_CONFIG_STRING_MCC                            "MCC"
 #define MME_CONFIG_STRING_MNC                            "MNC"
 #define MME_CONFIG_STRING_TAC                            "TAC"
 #define MME_CONFIG_STRING_SA	                         "SA"
 #define MME_CONFIG_STRING_NGHB_MME_IPV4_ADDR             "NGHB_MME_IPV4_ADDR"
+/**
+ * MBMS Configuration definitions
+ */
+#define MME_CONFIG_STRING_MBMS							 "MBMS"
+#define MME_CONFIG_MAX_MBMS_SERVICES              	 	 "MAX_MBMS_SERVICES"
+#define MME_CONFIG_MCE_ID						 		 "MCE_ID"
+#define MME_CONFIG_MBMS_MIN_SESSION_DUR_IN_SEC           "MBMS_MIN_SESSION_DUR_IN_SEC"
+#define MME_CONFIG_MBMS_SHORT_IDLE_SESSION_DUR_IN_SEC    "MBMS_SHORT_IDLE_SESSION_DUR_IN_SEC"
+
+#define MME_CONFIG_MBMS_MCCH_MSI_MCS					 "MME_CONFIG_MBMS_MCCH_MSI_MCS"
+#define MME_CONFIG_MBMS_MCCH_MODIFICATION_PERIOD_RF		 "MME_CONFIG_MBMS_MCCH_MODIFICATION_PERIOD_RF"
+#define MME_CONFIG_MBMS_MCCH_REPETITION_PERIOD_RF		 "MME_CONFIG_MBMS_MCCH_REPETITION_PERIOD_RF"
+
+#define MME_CONFIG_MBMS_GLOBAL_SERVICE_AREA_TYPES		 "MBMS_GLOBAL_SERVICE_AREAS"
+#define MME_CONFIG_MBMS_LOCAL_SERVICE_AREAS			 	 "MBMS_LOCAL_SERVICE_AREAS"
+#define MME_CONFIG_MBMS_LOCAL_SERVICE_AREA_TYPES	 	 "MBMS_LOCAL_SERVICE_AREA_TYPES"
+#define MME_CONFIG_MBMS_LOCAL_SERVICE_AREA_SFD_DISTANCES_IN_M "MBMS_LOCAL_SERVICE_AREA_SFD_DISTANCES_IN_M"
+#define MME_CONFIG_MBMS_MAX_MBSFN_AREA_PER_ENB			 "MBMS_MAX_MBSFN_AREA_PER_ENB"
+
+#define MME_CONFIG_STRING_M2_MAX_ENB                     "MAX_M2_ENB"
+#define MME_CONFIG_MBMS_ENB_BAND						 "MBMS_ENB_BAND"
+#define MME_CONFIG_MBMS_ENB_TDD_DL_UL_CONF				 "MBMS_ENB_TDD_DL_UL_CONF"
+
+#define MME_CONFIG_MBMS_ENB_SCPTM						 "MBMS_ENB_SCPTM"
+#define MME_CONFIG_MBMS_RESOURCE_ALLOCATION_FULL		 "MBMS_RESOURCE_ALLOCATION_FULL"
+#define MME_CONFIG_MBMS_GLOBAL_MBSFN_AREA_PER_LOCAL_GROUP"MBMS_GLOBAL_MBSFN_AREA_PER_LOCAL_GROUP"
+#define MME_CONFIG_MBMS_SUBFRAME_SLOT_FULL				 "MME_CONFIG_MBMS_SUBFRAME_SLOT_FULL"
 
 #define MME_CONFIG_STRING_NETWORK_INTERFACES_CONFIG      "NETWORK_INTERFACES"
 #define MME_CONFIG_STRING_INTERFACE_NAME_FOR_S1_MME      "MME_INTERFACE_NAME_FOR_S1_MME"
@@ -173,7 +196,6 @@ typedef struct mme_config_s {
   run_mode_t  run_mode;
 
   uint32_t max_s1_enbs;
-  uint32_t max_m2_enbs;
   uint32_t max_ues;
 
   uint8_t relative_capacity;
@@ -197,18 +219,34 @@ typedef struct mme_config_s {
     gummei_t gummei[MAX_GUMMEI];
   } gummei;
 
-  /** Multicast Part. */
+  /** MBMS Parameters. */
   struct {
-    int       nb_mbms_sa;
-    uint16_t *plmn_mcc;
-    uint16_t *plmn_mnc;
-    uint16_t *plmn_mnc_len;
-    uint16_t *mbms_sa_list;
-  } served_mbms_sa;
+	plmn_t   mce_plmn;                                        /*!< \brief  GUMMEI               */
+	uint16_t mce_id;
+	uint32_t max_mbms_services;
+	uint32_t mbms_min_session_duration_in_sec;
+	uint32_t mbms_short_idle_session_duration_in_sec;
+	/** MCCH values. */
+	uint32_t mbms_mcch_msi_mcs;
+	uint32_t mbms_mcch_modification_period_rf;
+	uint32_t mbms_mcch_repetition_period_rf;
+	/** MBMS Service Area configurations. */
+	uint8_t  mbms_global_service_area_types; 	/**< Offset 0. */
+	uint8_t  mbms_local_service_areas; 	/**< Mod. */
+	uint8_t  mbms_local_service_area_types; 	/**< Offset 1. */
+	uint16_t mbms_local_service_area_sfd_distance_in_m;
+	uint8_t  mbms_max_mbsfn_area_per_enb;
 
-  uint32_t max_mbms_services;
-  uint32_t mbms_short_idle_session_duration_in_sec;
-  uint32_t mbms_min_session_duration_in_sec;
+	/** Possible eNB configurations. */
+	uint32_t max_m2_enbs;
+	uint8_t  mbms_enb_band;
+	uint8_t  mbms_enb_tdd_dl_ul_conf;
+	/** Flags. */
+	uint8_t  mbms_enb_scptm:1;
+	uint8_t  mbms_resource_allocation_full:1;
+	uint8_t  mbms_global_mbsfn_area_per_local_group:1;
+	uint8_t  mbms_subframe_slot_full:1;
+  } mbms;
 
 #define TRACKING_AREA_IDENTITY_LIST_TYPE_ONE_PLMN_NON_CONSECUTIVE_TACS 0x00
 #define TRACKING_AREA_IDENTITY_LIST_TYPE_ONE_PLMN_CONSECUTIVE_TACS     0x01

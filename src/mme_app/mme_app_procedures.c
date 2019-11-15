@@ -744,9 +744,9 @@ mme_app_mbms_proc_t * mme_app_create_mbms_procedure(mbms_service_t * const mbms_
 	mbms_proc->trigger_mbms_session_stop = true;
 	DevAssert(abs_start_time_in_sec);
   }
-  else if(mme_config.mbms_short_idle_session_duration_in_sec > mbms_session_duration->seconds){
+  else if(mme_config.mbms.mbms_short_idle_session_duration_in_sec > mbms_session_duration->seconds){
 	OAILOG_INFO(LOG_MME_APP, "MBMS Session procedure for MBMS Service-Index " MCE_MBMS_SERVICE_INDEX_FMT " has session duration (%ds) is shorter/equal than the minimum (%ds). \n",
-	  mbms_service_idx, mbms_session_duration, mme_config.mbms_short_idle_session_duration_in_sec);
+	  mbms_service_idx, mbms_session_duration, mme_config.mbms.mbms_short_idle_session_duration_in_sec);
 	mbms_proc->trigger_mbms_session_stop = true;
   }
   mme_config_unlock (&mme_config);

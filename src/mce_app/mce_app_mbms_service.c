@@ -130,10 +130,10 @@ mce_app_handle_mbms_session_start_request(
 
   mme_config_read_lock (&mme_config);
   /** Check for a minimum time. */
-  if(mbms_session_start_request_pP->mbms_session_duration.seconds < mme_config.mbms_min_session_duration_in_sec) {
+  if(mbms_session_start_request_pP->mbms_session_duration.seconds < mme_config.mbms.mbms_min_session_duration_in_sec) {
     OAILOG_WARNING(LOG_MCE_APP, "MBM Session duration (%ds) is shorter than the minimum (%ds) for MBMS Service Request for TMGI " TMGI_FMT ". Setting to minval. \n",
-    	mbms_session_start_request_pP->mbms_session_duration.seconds, mme_config.mbms_min_session_duration_in_sec, TMGI_ARG(&mbms_session_start_request_pP->tmgi));
-    mbms_session_start_request_pP->mbms_session_duration.seconds = mme_config.mbms_min_session_duration_in_sec;
+    	mbms_session_start_request_pP->mbms_session_duration.seconds, mme_config.mbms.mbms_min_session_duration_in_sec, TMGI_ARG(&mbms_session_start_request_pP->tmgi));
+    mbms_session_start_request_pP->mbms_session_duration.seconds = mme_config.mbms.mbms_min_session_duration_in_sec;
   }
   mme_config_unlock (&mme_config);
 
@@ -199,6 +199,7 @@ mce_app_handle_mbms_session_start_request(
   OAILOG_INFO(LOG_MCE_APP, "Successfully processed the request for a new MBMS Service for TMGI " TMGI_FMT " and MBMS Service Area " MBMS_SERVICE_AREA_ID_FMT". Continuing with the establishment. \n",
 	TMGI_ARG(&mbms_session_start_request_pP->tmgi), mbms_service_area_id);
   mme_sm_teid = __sync_fetch_and_add (&mce_app_mme_sm_teid_generator, 0x00000001);
+
   // todo: locks!?
   if (!mce_register_mbms_service(&mbms_session_start_request_pP->tmgi, &mbms_session_start_request_pP->mbms_service_area, mme_sm_teid)) {
     OAILOG_ERROR(LOG_MCE_APP, "No MBMS Service context could be generated from TMGI " TMGI_FMT " and MBMS Service Area " MBMS_SERVICE_AREA_ID_FMT ". \n",
@@ -324,10 +325,10 @@ mce_app_handle_mbms_session_update_request(
 
   mme_config_read_lock (&mme_config);
   /** Check for a minimum time. */
-  if(mbms_session_update_request_pP->mbms_session_duration.seconds < mme_config.mbms_min_session_duration_in_sec) {
+  if(mbms_session_update_request_pP->mbms_session_duration.seconds < mme_config.mbms.mbms_min_session_duration_in_sec) {
     OAILOG_WARNING(LOG_MCE_APP, "MBM Session duration (%ds) is shorter than the minimum (%ds) for MBMS Service Request for TMGI " TMGI_FMT ". Setting to minval. \n",
-    	mbms_session_update_request_pP->mbms_session_duration.seconds, mme_config.mbms_min_session_duration_in_sec, TMGI_ARG(&mbms_session_update_request_pP->tmgi));
-    mbms_session_update_request_pP->mbms_session_duration.seconds = mme_config.mbms_min_session_duration_in_sec;
+    	mbms_session_update_request_pP->mbms_session_duration.seconds, mme_config.mbms.mbms_min_session_duration_in_sec, TMGI_ARG(&mbms_session_update_request_pP->tmgi));
+    mbms_session_update_request_pP->mbms_session_duration.seconds = mme_config.mbms.mbms_min_session_duration_in_sec;
   }
   mme_config_unlock (&mme_config);
 

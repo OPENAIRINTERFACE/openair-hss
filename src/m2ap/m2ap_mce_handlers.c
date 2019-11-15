@@ -265,7 +265,7 @@ m2ap_mce_handle_m2_setup_request (
   }
 
   mme_config_read_lock (&mme_config);
-  max_m2_enb_connected = mme_config.max_m2_enbs;
+  max_m2_enb_connected = mme_config.mbms.max_m2_enbs;
   mme_config_unlock (&mme_config);
 
   if (nb_enb_associated == max_m2_enb_connected) {
@@ -321,10 +321,10 @@ m2ap_mce_handle_m2_setup_request (
   global_enb_id = &ie->value.choice.GlobalENB_ID;
 
   /**
-   * Use the GUMMEI of the S1AP.
+   * Check the MCE PLMN.
    */
-  if(s1ap_mme_compare_gummei(&global_enb_id->pLMN_Identity) != RETURNok){
-	OAILOG_ERROR (LOG_M2AP, "No Common GUMMEI with M2AP eNB, generate_m2_setup_failure\n");
+  if(m2ap_mce_combare_mbms_plmn(&global_enb_id->pLMN_Identity) != MBMS_SA_LIST_RET_OK){
+	OAILOG_ERROR (LOG_M2AP, "No Common PLMN with M2AP eNB, generate_m2_setup_failure\n");
 	rc =  m2ap_mce_generate_m2_setup_failure (assoc_id, stream, M2AP_Cause_PR_misc, M2AP_CauseMisc_unspecified, M2AP_TimeToWait_v20s);
 	OAILOG_FUNC_RETURN (LOG_M2AP, rc);
   }
@@ -452,12 +452,19 @@ m2ap_generate_m2_setup_response (
   ie->value.present = M2AP_M2SetupResponse_IEs__value_PR_GlobalMCE_ID;
   ASN_SEQUENCE_ADD(&out->protocolIEs.list, ie);
 
-  M2AP_PLMN_Identity_t                    *plmn = NULL;
-  plmn = calloc (1, sizeof (*plmn));
-  MCC_MNC_TO_PLMNID (mme_config.served_mbms_sa.plmn_mcc[i], mme_config.served_mbms_sa.plmn_mnc[i], mme_config.served_mbms_sa.plmn_mnc_len[i],
-		  &ie->value.choice.GlobalMCE_ID.pLMN_Identity);
+//  M2AP_PLMN_Identity_t                    *plmn = NULL;
+//  plmn = calloc (1, sizeof (*plmn));
+  ie->value.choice.GlobalMCE_ID.pLMN_Identity.buf = calloc(1, 3);
+  uint16_t                                mcc = 0;
+  uint16_t                                mnc = 0;
+  uint16_t                                mnc_len = 0;
+  /** Get the integer values from the PLMN. */
+  PLMN_T_TO_MCC_MNC ((mme_config.mbms.mce_plmn), mcc, mnc, mnc_len);
+  MCC_MNC_TO_PLMNID (mcc, mnc, mnc_len,	&ie->value.choice.GlobalMCE_ID.pLMN_Identity);
+
   /** Use same MME code for MCE ID for all eNBs. */
-  INT16_TO_OCTET_STRING (mme_config.gummei.gummei[0].mme_code, &ie->value.choice.GlobalMCE_ID.mCE_ID);
+  INT16_TO_OCTET_STRING (mme_config.mbms.mce_id, &ie->value.choice.GlobalMCE_ID.mCE_ID);
+  INT16_TO_OCTET_STRING (mme_config.mbms.mce_id, &ie->value.choice.GlobalMCE_ID.pLMN_Identity);
 
   /** Skip the MCC name. */
 
@@ -1110,8 +1117,8 @@ m2ap_mme_handle_mbms_action_timer_expiry (void *arg)
     uint8_t								  num_m2ap_enbs = 0;
     /** Get the list of eNBs of the matching service area. */
     mme_config_read_lock (&mme_config);
-    m2ap_enb_description_t *			         m2ap_enb_p_elements[mme_config.max_m2_enbs];
-    memset(&m2ap_enb_p_elements, 0, (sizeof(m2ap_enb_description_t*) * mme_config.max_m2_enbs));
+    m2ap_enb_description_t *			         m2ap_enb_p_elements[mme_config.mbms.max_m2_enbs];
+    memset(&m2ap_enb_p_elements, 0, (sizeof(m2ap_enb_description_t*) * mme_config.mbms.max_m2_enbs));
     mme_config_unlock (&mme_config);
 
     m2ap_is_mbms_sai_in_list(mbms_ref_p->mbms_service_area_id, &num_m2ap_enbs, (m2ap_enb_description_t **)&m2ap_enb_p_elements);

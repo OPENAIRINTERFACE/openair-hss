@@ -108,8 +108,8 @@ m2ap_handle_mbms_session_start_request (
   }
   /** Check that there exists at least a single eNB with the MBMS Service Area (we don't start MBMS sessions for eNBs which later on connected). */
   mme_config_read_lock (&mme_config);
-  m2ap_enb_description_t *			         m2ap_enb_p_elements[mme_config.max_m2_enbs];
-  memset(&m2ap_enb_p_elements, 0, (sizeof(m2ap_enb_description_t*) * mme_config.max_m2_enbs));
+  m2ap_enb_description_t *			         m2ap_enb_p_elements[mme_config.mbms.max_m2_enbs];
+  memset(&m2ap_enb_p_elements, 0, (sizeof(m2ap_enb_description_t*) * mme_config.mbms.max_m2_enbs));
   mme_config_unlock (&mme_config);
   m2ap_is_mbms_sai_in_list(mbms_session_start_req_pP->mbms_service_area_id, &num_m2ap_enbs, (m2ap_enb_description_t **)&m2ap_enb_p_elements);
   if(!num_m2ap_enbs){
@@ -205,8 +205,8 @@ m2ap_handle_mbms_session_update_request (
    * If not, directly remove the MBMS description.
    */
   mme_config_read_lock (&mme_config);
-  m2ap_enb_description_t *			         m2ap_enb_p_elements[mme_config.max_m2_enbs];
-  memset(&m2ap_enb_p_elements, 0, (sizeof(m2ap_enb_description_t*) * mme_config.max_m2_enbs));
+  m2ap_enb_description_t *			         m2ap_enb_p_elements[mme_config.mbms.max_m2_enbs];
+  memset(&m2ap_enb_p_elements, 0, (sizeof(m2ap_enb_description_t*) * mme_config.mbms.max_m2_enbs));
   mme_config_unlock (&mme_config);
   m2ap_is_mbms_sai_in_list(mbms_session_update_req_pP->new_mbms_service_area_id, &num_m2ap_enbs_new_mbms_sai,
 		  (m2ap_enb_description_t **)&m2ap_enb_p_elements);
@@ -220,7 +220,7 @@ m2ap_handle_mbms_session_update_request (
    * Iterate through the current MBMS services. Check an current eNBs, where the new MBMS service area id is not supported.
    * Send a session stop to all of them without removing the MBMS service.
    */
-  memset(&m2ap_enb_p_elements, 0, (sizeof(m2ap_enb_description_t*) * mme_config.max_m2_enbs));
+  memset(&m2ap_enb_p_elements, 0, (sizeof(m2ap_enb_description_t*) * mme_config.mbms.max_m2_enbs));
   int num_m2ap_enbs_missing_new_mbms_sai = 0;
   m2ap_is_mbms_sai_not_in_list(mbms_session_update_req_pP->new_mbms_service_area_id, &num_m2ap_enbs_missing_new_mbms_sai, (m2ap_enb_description_t **)&m2ap_enb_p_elements);
   if(num_m2ap_enbs_missing_new_mbms_sai){
@@ -297,8 +297,8 @@ m2ap_handle_mbms_session_stop_request (
   if(inform_enbs) {
     /** Check that there exists at least a single eNB with the MBMS Service Area (we don't start MBMS sessions for eNBs which later on connected). */
 	mme_config_read_lock (&mme_config);
-	m2ap_enb_description_t *			         m2ap_enb_p_elements[mme_config.max_m2_enbs];
-	memset(&m2ap_enb_p_elements, 0, (sizeof(m2ap_enb_description_t*) * mme_config.max_m2_enbs));
+	m2ap_enb_description_t *			         m2ap_enb_p_elements[mme_config.mbms.max_m2_enbs];
+	memset(&m2ap_enb_p_elements, 0, (sizeof(m2ap_enb_description_t*) * mme_config.mbms.max_m2_enbs));
 	mme_config_unlock (&mme_config);
 	int num_m2ap_enbs = 0;
 	m2ap_is_mbms_sai_in_list(mbms_service_area_id, &num_m2ap_enbs, (m2ap_enb_description_t **)&m2ap_enb_p_elements);
@@ -334,8 +334,8 @@ void m2ap_update_mbms_service_context(const mce_mbms_m2ap_id_t mce_mbms_m2ap_id)
 
   /** Check that there exists at least a single eNB with the MBMS Service Area (we don't start MBMS sessions for eNBs which later on connected). */
   mme_config_read_lock (&mme_config);
-  m2ap_enb_description_t *			         new_mbms_sai_m2ap_enb_p_elements[mme_config.max_m2_enbs];
-  memset(&new_mbms_sai_m2ap_enb_p_elements, 0, (sizeof(m2ap_enb_description_t*) * mme_config.max_m2_enbs));
+  m2ap_enb_description_t *			         new_mbms_sai_m2ap_enb_p_elements[mme_config.mbms.max_m2_enbs];
+  memset(&new_mbms_sai_m2ap_enb_p_elements, 0, (sizeof(m2ap_enb_description_t*) * mme_config.mbms.max_m2_enbs));
   mme_config_unlock (&mme_config);
 
   mbms_ref = m2ap_is_mbms_mce_m2ap_id_in_list(mce_mbms_m2ap_id); /**< Nothing eNB specific. */
@@ -351,8 +351,8 @@ void m2ap_update_mbms_service_context(const mce_mbms_m2ap_id_t mce_mbms_m2ap_id)
    * We should have removed (stopped the MBMS Session) in the eNBs, which don't support the MBMS Service Area ID before.
    */
   mme_config_read_lock (&mme_config);
-  m2ap_enb_description_t *			         m2ap_enb_p_elements[mme_config.max_m2_enbs];
-  memset(&m2ap_enb_p_elements, 0, (sizeof(m2ap_enb_description_t*) * mme_config.max_m2_enbs));
+  m2ap_enb_description_t *			         m2ap_enb_p_elements[mme_config.mbms.max_m2_enbs];
+  memset(&m2ap_enb_p_elements, 0, (sizeof(m2ap_enb_description_t*) * mme_config.mbms.max_m2_enbs));
   mme_config_unlock (&mme_config);
   m2ap_is_mbms_sai_in_list(mbms_ref->mbms_service_area_id, &num_m2ap_enbs_new_mbms_sai, (m2ap_enb_description_t **)&m2ap_enb_p_elements);
   if(!num_m2ap_enbs_new_mbms_sai){

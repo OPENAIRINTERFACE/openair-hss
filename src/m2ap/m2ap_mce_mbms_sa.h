@@ -38,6 +38,10 @@ enum {
   MBMS_SA_LIST_COMPLETE_MATCH = 0x3,
 };
 
+int
+m2ap_mce_combare_mbms_plmn(
+  const M2AP_PLMN_Identity_t* const tbcd_plmn);
+
 int m2ap_mce_compare_mbms_enb_configuration_item(M2AP_ENB_MBMS_Configuration_data_Item_t *enb_mbms_cfg_item);
 
 #endif /* FILE_M2AP_MBMS_SA_SEEN */

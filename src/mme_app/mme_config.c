@@ -155,16 +155,24 @@ mbms_service_area_id_t mme_app_compare_mbms_sa (const mbms_service_area_t * mbms
 {
   int                                     i = 0, j = 0;
   mme_config_read_lock (&mme_config);
-  for (i = 0; i < mme_config.served_mbms_sa.nb_mbms_sa; i++) {
-    for (j = 0; j < mbms_service_area->num_service_area; j++) {
-      OAILOG_TRACE (LOG_MME_APP, "Comparing config mbms_sa %d, received mbms_sa = %d\n", mme_config.served_mbms_sa.mbms_sa_list[i], mbms_service_area->serviceArea[j]);
-      if(mbms_service_area->serviceArea[j] == INVALID_MBMS_SERVICE_AREA_ID){
-        OAILOG_WARNING(LOG_MME_APP, "Skipping invalid MBMS Service Area ID (0). \n");
-      }
-      if (mme_config.served_mbms_sa.mbms_sa_list[i] == mbms_service_area->serviceArea[j]) {
-        OAILOG_INFO(LOG_MME_APP, "Found a matching MBMS Service Area ID " MBMS_SERVICE_AREA_ID_FMT ". \n", mbms_service_area->serviceArea[j]);
-        return mbms_service_area->serviceArea[j];
-      }
+  for (j = 0; j < mbms_service_area->num_service_area; j++) {
+    if(mbms_service_area->serviceArea[j] == INVALID_MBMS_SERVICE_AREA_ID){
+      OAILOG_WARNING(LOG_MME_APP, "Skipping invalid MBMS Service Area ID (0). \n");
+      continue;
+    }
+    /** Check if it is a global MBMS SAI. */
+    if(mbms_service_area->serviceArea[j] <= mme_config.mbms.mbms_global_service_area_types) {
+      /** Global MBMS Service Area Id received. */
+      OAILOG_INFO(LOG_MME_APP, "Found a matching global MBMS Service Area ID " MBMS_SERVICE_AREA_ID_FMT ". \n", mbms_service_area->serviceArea[j]);
+      return mbms_service_area->serviceArea[j];
+    }
+    /** Check if it is in bounds for the local service areas. */
+    int val = mbms_service_area->serviceArea[j] - mme_config.mbms.mbms_global_service_area_types;
+    int local_area = val / mme_config.mbms.mbms_local_service_areas;
+    int local_area_type = val % mme_config.mbms.mbms_local_service_area_types;
+    if(local_area > 0 && local_area < mme_config.mbms.mbms_local_service_area_types){
+      OAILOG_INFO(LOG_MME_APP, "Found a valid MBMS Service Area ID " MBMS_SERVICE_AREA_ID_FMT ". \n", mbms_service_area->serviceArea[j]);
+      return mbms_service_area->serviceArea[j];
     }
   }
   mme_config_unlock (&mme_config);
@@ -227,11 +235,7 @@ static void mme_config_init (mme_config_t * config_pP)
   config_pP->log_config.asn1_verbosity_level = 0;
   config_pP->config_file = NULL;
   config_pP->max_s1_enbs 		= 2;
-  config_pP->max_m2_enbs 		= 2;
   config_pP->max_ues     		= 2;
-  config_pP->max_mbms_services 	= 2;
-  config_pP->mbms_short_idle_session_duration_in_sec = 5;
-  config_pP->mbms_min_session_duration_in_sec = 2;
   config_pP->unauthenticated_imsi_supported = 0;
   config_pP->dummy_handover_forwarding_enabled = 1;
   config_pP->run_mode    = RUN_MODE_BASIC;
@@ -346,7 +350,6 @@ void mme_config_exit (void)
   free_wrapper((void**)&mme_config.served_tai.plmn_mnc);
   free_wrapper((void**)&mme_config.served_tai.plmn_mnc_len);
   free_wrapper((void**)&mme_config.served_tai.tac);
-  free_wrapper((void**)&mme_config.served_mbms_sa.mbms_sa_list);
 
   for (int i = 0; i < mme_config.e_dns_emulation.nb_service_entries; i++) {
     bdestroy_wrapper(&mme_config.e_dns_emulation.service_id[i]);
@@ -541,10 +544,6 @@ static int mme_config_parse_file (mme_config_t * config_pP)
       config_pP->max_s1_enbs = (uint32_t) aint;
     }
 
-    if ((config_setting_lookup_int (setting_mme, MME_CONFIG_STRING_M2_MAXENB, &aint))) {
-      config_pP->max_m2_enbs = (uint32_t) aint;
-    }
-
     if ((config_setting_lookup_int (setting_mme, MME_CONFIG_STRING_MAXUE, &aint))) {
       config_pP->max_ues = (uint32_t) aint;
     }
@@ -565,13 +564,9 @@ static int mme_config_parse_file (mme_config_t * config_pP)
       config_pP->mme_s10_handover_completion_timer = (uint32_t) aint;
     }
 
-    if ((config_setting_lookup_int (setting_mme, MME_CONFIG_MBMS_SHORT_IDLE_SESSION_DUR_IN_SEC, &aint))) {
-      config_pP->mbms_short_idle_session_duration_in_sec = (uint32_t) aint;
-    }
-
-    if ((config_setting_lookup_int (setting_mme, MME_CONFIG_MBMS_MIN_SESSION_DUR_IN_SEC, &aint))) {
-      config_pP->mbms_min_session_duration_in_sec = (uint32_t) aint;
-    }
+    /**
+     * Other configurations..
+     */
 
     if ((config_setting_lookup_string (setting_mme, EPS_NETWORK_FEATURE_SUPPORT_EMERGENCY_BEARER_SERVICES_IN_S1_MODE, (const char **)&astring))) {
       if (strcasecmp (astring, "yes") == 0)
@@ -801,83 +796,6 @@ static int mme_config_parse_file (mme_config_t * config_pP)
       }
     }
 
-    // MBMS Service Areas
-    setting = config_setting_get_member (setting_mme, MME_CONFIG_MBMS_SERVICE_AREAS);
-    if (setting != NULL) {
-      num = config_setting_length (setting);
-      AssertFatal(8 >= num , "Too many MBMS-Service-Areas configured %d", num);
-
-      if (config_pP->served_mbms_sa.mbms_sa_list!= NULL)
-    	free_wrapper ((void**)&config_pP->served_mbms_sa.mbms_sa_list);
-
-      config_pP->served_mbms_sa.nb_mbms_sa = 0;
-
-      uint16_t mbms_service_areas[MAX_MBMS_SA];
-      memset(mbms_service_areas, 0, MAX_MBMS_SA);
-
-      for (i = 0; i < num; i++) {
-        sub2setting = config_setting_get_elem (setting, i);
-        if (sub2setting != NULL) {
-          if ((config_setting_lookup_string (sub2setting, MME_CONFIG_STRING_SA, &mbms_sa))) {
-            mbms_service_areas[i] = (uint16_t) atoi (mbms_sa);
-          }
-        }
-      }
-
-      // sort SA
-      n = num;
-      do {
-        stop_index = 0;
-        for (i = 1; i < n; i++) {
-          swap = false;
-          if (mbms_service_areas[i-1] > mbms_service_areas[i]) {
-        	uint16_t swap8 = mbms_service_areas[i-1];
-            mbms_service_areas[i-1] = mbms_service_areas[i];
-            mbms_service_areas[i]   = swap8;
-            stop_index = i;
-          }
-        }
-        n = stop_index;
-      } while (0 != n);
-
-      // remove duplicated
-      uint8_t nonzero_count = 0;
-      uint16_t sa_nonzero[MAX_MBMS_SA];
-      memset(sa_nonzero, 0, MAX_MBMS_SA);
-
-      if(num == 1){
-    	  nonzero_count = num;
-      	  sa_nonzero[0] = mbms_service_areas[0];
-      }
-      else if (num == 2){
-    	  nonzero_count = num;
-    	  if(mbms_service_areas[0] == mbms_service_areas[1]){
-    	    nonzero_count = 1;
-    	    mbms_service_areas[1] = 0;
-    	  } else {
-    		sa_nonzero[0] = mbms_service_areas[0];
-    		sa_nonzero[1] = mbms_service_areas[1];
-    	  }
-      } else {
-          for(i = 1; i < num ; i++){
-        	if(mbms_service_areas[i-1] == mbms_service_areas[i]){
-        	  mbms_service_areas[i-1] = 0;
-        	}
-          }
-
-          for(i = 0; i < num ; i++){
-            if(mbms_service_areas[i] != 0){
-              sa_nonzero[nonzero_count] = mbms_service_areas[i];
-              nonzero_count++;
-            }
-          }
-      }
-
-      config_pP->served_mbms_sa.mbms_sa_list = calloc (nonzero_count, sizeof (uint16_t));
-      memcpy(config_pP->served_mbms_sa.mbms_sa_list, sa_nonzero, nonzero_count);
-      config_pP->served_mbms_sa.nb_mbms_sa = nonzero_count;
-    }
-
     // GUMMEI SETTING
     setting = config_setting_get_member (setting_mme, MME_CONFIG_STRING_GUMMEI_LIST);
     config_pP->gummei.nb = 0;
@@ -899,7 +817,7 @@ static int mme_config_parse_file (mme_config_t * config_pP)
           }
 
           if ((config_setting_lookup_string (sub2setting, MME_CONFIG_STRING_MNC, &mnc))) {
-            AssertFatal( (3 == strlen(mnc)) || (2 == strlen(mnc)) , "Bad MCC length, it must be 3 digit ex: 001");
+            AssertFatal( (3 == strlen(mnc)) || (2 == strlen(mnc)) , "Bad MNC length, it must be 3 digit ex: 001");
             char c[2] = { mnc[0], 0};
             config_pP->gummei.gummei[i].plmn.mnc_digit1 = (uint8_t) atoi (c);
             c[0] = mnc[1];
@@ -1331,6 +1249,122 @@ static int mme_config_parse_file (mme_config_t * config_pP)
     }
   }
 
+  /** Optional MBMS Features. */
+  setting = config_setting_get_member (setting_mme, MME_CONFIG_STRING_MBMS);
+  if (setting != NULL) {
+
+    if ((config_setting_lookup_string (sub2setting, MME_CONFIG_STRING_MCC, &mcc))) {
+      AssertFatal( 3 == strlen(mcc), "Bad MCE MCC length, it must be 3 digit ex: 001");
+      char c[2] = { mcc[0], 0};
+      config_pP->mbms.mce_plmn.mcc_digit1 = (uint8_t) atoi (c);
+      c[0] = mcc[1];
+      config_pP->mbms.mce_plmn.mcc_digit2 = (uint8_t) atoi (c);
+      c[0] = mcc[2];
+      config_pP->mbms.mce_plmn.mcc_digit3 = (uint8_t) atoi (c);
+    }
+
+    if ((config_setting_lookup_string (sub2setting, MME_CONFIG_STRING_MNC, &mnc))) {
+      AssertFatal( (3 == strlen(mnc)) || (2 == strlen(mnc)) , "Bad MCE MNC length, it must be 3 digit ex: 001");
+      char c[2] = { mnc[0], 0};
+      config_pP->mbms.mce_plmn.mnc_digit1 = (uint8_t) atoi (c);
+      c[0] = mnc[1];
+      config_pP->mbms.mce_plmn.mnc_digit2 = (uint8_t) atoi (c);
+      if (3 == strlen(mnc)) {
+    	c[0] = mnc[2];
+    	config_pP->mbms.mce_plmn.mnc_digit3 = (uint8_t) atoi (c);
+      } else {
+        config_pP->mbms.mce_plmn.mnc_digit3 = 0x0F;
+      }
+    }
+
+    if ((config_setting_lookup_int (setting_mme, MME_CONFIG_MAX_MBMS_SERVICES, &aint))) {
+      config_pP->mbms.max_mbms_services = (uint32_t) aint;
+    }
+
+    if ((config_setting_lookup_string (sub2setting, MME_CONFIG_MCE_ID, &mnc))) {
+      config_pP->mbms.mce_id = (uint16_t) atoi (mnc);
+    }
+
+	if ((config_setting_lookup_int (setting_mme, MME_CONFIG_MBMS_MIN_SESSION_DUR_IN_SEC, &aint))) {
+	  config_pP->mbms.mbms_min_session_duration_in_sec = (uint32_t) aint;
+	}
+
+	if ((config_setting_lookup_int (setting_mme, MME_CONFIG_MBMS_SHORT_IDLE_SESSION_DUR_IN_SEC, &aint))) {
+      config_pP->mbms.mbms_short_idle_session_duration_in_sec = (uint32_t) aint;
+	}
+
+    if ((config_setting_lookup_int (setting_mme, MME_CONFIG_MBMS_MIN_SESSION_DUR_IN_SEC, &aint))) {
+      config_pP->mbms.mbms_min_session_duration_in_sec = (uint32_t) aint;
+    }
+
+    if ((config_setting_lookup_int (setting_mme, MME_CONFIG_MBMS_SHORT_IDLE_SESSION_DUR_IN_SEC, &aint))) {
+      config_pP->mbms.mbms_short_idle_session_duration_in_sec = (uint32_t) aint;
+    }
+
+    if ((config_setting_lookup_int (setting_mme, MME_CONFIG_MBMS_MCCH_MSI_MCS, &aint))) {
+      config_pP->mbms.mbms_mcch_msi_mcs = (uint32_t) aint;
+    }
+
+    if ((config_setting_lookup_int (setting_mme, MME_CONFIG_MBMS_MCCH_MODIFICATION_PERIOD_RF, &aint))) {
+      config_pP->mbms.mbms_mcch_modification_period_rf = (uint32_t) aint;
+    }
+
+    if ((config_setting_lookup_int (setting_mme, MME_CONFIG_MBMS_MCCH_REPETITION_PERIOD_RF, &aint))) {
+      config_pP->mbms.mbms_mcch_repetition_period_rf = (uint32_t) aint;
+    }
+
+    /** MBMS SA configurations. */
+    if ((config_setting_lookup_int (setting_mme, MME_CONFIG_MBMS_GLOBAL_SERVICE_AREA_TYPES, &aint))) {
+     config_pP->mbms.mbms_global_service_area_types = (uint8_t) aint;
+    }
+
+    if ((config_setting_lookup_int (setting_mme, MME_CONFIG_MBMS_LOCAL_SERVICE_AREAS, &aint))) {
+      config_pP->mbms.mbms_local_service_areas = (uint8_t) aint;
+    }
+
+    if ((config_setting_lookup_int (setting_mme, MME_CONFIG_MBMS_LOCAL_SERVICE_AREA_TYPES, &aint))) {
+	  config_pP->mbms.mbms_local_service_area_types = (uint8_t) aint;
+    }
+
+    if ((config_setting_lookup_int (setting_mme, MME_CONFIG_MBMS_LOCAL_SERVICE_AREA_SFD_DISTANCES_IN_M, &aint))) {
+      config_pP->mbms.mbms_local_service_area_sfd_distance_in_m = (uint16_t) aint;
+    }
+
+    if ((config_setting_lookup_int (setting_mme, MME_CONFIG_MBMS_MAX_MBSFN_AREA_PER_ENB, &aint))) {
+      config_pP->mbms.mbms_max_mbsfn_area_per_enb = (uint8_t) aint;
+    }
+
+    /** MBMS eNB configurations. */
+    if ((config_setting_lookup_int (setting_mme, MME_CONFIG_STRING_M2_MAX_ENB, &aint))) {
+      config_pP->mbms.max_m2_enbs = (uint32_t) aint;
+    }
+
+    if ((config_setting_lookup_int (setting_mme, MME_CONFIG_MBMS_ENB_BAND, &aint))) {
+      config_pP->mbms.mbms_enb_band = (uint8_t) aint;
+    }
+
+    if ((config_setting_lookup_int (setting_mme, MME_CONFIG_MBMS_ENB_TDD_DL_UL_CONF, &aint))) {
+      config_pP->mbms.mbms_enb_tdd_dl_ul_conf = (uint8_t) aint;
+    }
+
+    /** MBMS Flags. */
+    if ((config_setting_lookup_int (setting_mme, MME_CONFIG_MBMS_ENB_SCPTM, &aint))) {
+      config_pP->mbms.mbms_enb_scptm = ((uint8_t) aint & 0x01);
+    }
+
+    if ((config_setting_lookup_int (setting_mme, MME_CONFIG_MBMS_RESOURCE_ALLOCATION_FULL, &aint))) {
+      config_pP->mbms.mbms_resource_allocation_full = ((uint8_t) aint & 0x01);
+    }
+
+    if ((config_setting_lookup_int (setting_mme, MME_CONFIG_MBMS_GLOBAL_MBSFN_AREA_PER_LOCAL_GROUP, &aint))) {
+      config_pP->mbms.mbms_global_mbsfn_area_per_local_group = ((uint8_t) aint & 0x01);
+    }
+
+    if ((config_setting_lookup_int (setting_mme, MME_CONFIG_MBMS_SUBFRAME_SLOT_FULL, &aint))) {
+      config_pP->mbms.mbms_subframe_slot_full = ((uint8_t) aint & 0x01);
+    }
+
+  }
   OAILOG_SET_CONFIG(&config_pP->log_config);
   config_destroy (&cfg);
   return 0;
@@ -1363,9 +1397,12 @@ static void mme_config_display (mme_config_t * config_pP)
   OAILOG_INFO (LOG_CONFIG, "- Realm ................................: %s\n", bdata(config_pP->realm));
   OAILOG_INFO (LOG_CONFIG, "- Run mode .............................: %s\n", (RUN_MODE_BASIC == config_pP->run_mode) ? "BASIC":(RUN_MODE_SCENARIO_PLAYER == config_pP->run_mode) ? "SCENARIO_PLAYER":"UNKNOWN");
   OAILOG_INFO (LOG_CONFIG, "- Max S1 eNBs ..........................: %u\n", config_pP->max_s1_enbs);
-  OAILOG_INFO (LOG_CONFIG, "- Max M2 eNBs ..........................: %u\n", config_pP->max_m2_enbs);
+  OAILOG_INFO (LOG_CONFIG, "- Max M2 eNBs ..........................: %u\n", config_pP->mbms.max_m2_enbs);
   OAILOG_INFO (LOG_CONFIG, "- Max UEs ..............................: %u\n", config_pP->max_ues);
-  OAILOG_INFO (LOG_CONFIG, "- Max MBMB-Services ....................: %u\n", config_pP->max_mbms_services);
+  OAILOG_INFO (LOG_CONFIG, "- Max MBMS-Services ....................: %u\n", config_pP->mbms.max_mbms_services);
+  OAILOG_INFO (LOG_CONFIG, "- Max MBMS-Global-Areas.................: %u\n", config_pP->mbms.mbms_global_service_area_types);
+  OAILOG_INFO (LOG_CONFIG, "- Max MBMS-Local-Areas..................: %u\n", config_pP->mbms.mbms_local_service_areas);
+  OAILOG_INFO (LOG_CONFIG, "- Max MBMS-Local-Area-Types.............: %u\n", config_pP->mbms.mbms_local_service_area_types);
   OAILOG_INFO (LOG_CONFIG, "- IMS voice over PS session in S1 ......: %s\n", config_pP->eps_network_feature_support.ims_voice_over_ps_session_in_s1 == 0 ? "false" : "true");
   OAILOG_INFO (LOG_CONFIG, "- Emergency bearer services in S1 mode .: %s\n", config_pP->eps_network_feature_support.emergency_bearer_services_in_s1_mode == 0 ? "false" : "true");
   OAILOG_INFO (LOG_CONFIG, "- Location services via epc ............: %s\n", config_pP->eps_network_feature_support.location_services_via_epc == 0 ? "false" : "true");
@@ -1422,16 +1459,6 @@ static void mme_config_display (mme_config_t * config_pP)
     }
   }
 
-  OAILOG_INFO (LOG_CONFIG, "- MBMS-Service-Areas : (mcc.mnc:mbms_sa)\n");
-  for (j = 0; j < config_pP->served_mbms_sa.nb_mbms_sa; j++) {
-    if (config_pP->served_tai.plmn_mnc_len[j] == 2) {
-      OAILOG_INFO (LOG_CONFIG, "            %3u.%3u:%u\n",
-          config_pP->served_tai.plmn_mcc[j], config_pP->served_tai.plmn_mnc[j], config_pP->served_mbms_sa.mbms_sa_list[j]);
-    } else {
-      OAILOG_INFO (LOG_CONFIG, "            %3u.%03u:%u\n",
-          config_pP->served_tai.plmn_mcc[j], config_pP->served_tai.plmn_mnc[j], config_pP->served_mbms_sa.mbms_sa_list[j]);
-    }
-  }
   OAILOG_INFO (LOG_CONFIG, "- NAS:\n");
   OAILOG_INFO (LOG_CONFIG, "    Prefered Integrity Algorithms .: EIA%d EIA%d EIA%d EIA%d (decreasing priority)\n",
       config_pP->nas_config.prefered_integrity_algorithm[0],

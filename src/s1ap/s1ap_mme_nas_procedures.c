@@ -2175,14 +2175,6 @@ s1ap_handle_paging( const itti_s1ap_paging_t * const s1ap_paging_pP){
 		  ie->value.choice.UEIdentityIndexValue.bits_unused = 6;
       ASN_SEQUENCE_ADD(&out->protocolIEs.list, ie);
 
-		  /** Encode the CN Domain. */
-      ie = (S1AP_PagingIEs_t *)calloc(1, sizeof(S1AP_PagingIEs_t));
-      ie->id = S1AP_ProtocolIE_ID_id_CNDomain;
-      ie->criticality = S1AP_Criticality_ignore;
-      ie->value.present = S1AP_PagingIEs__value_PR_CNDomain;
-      ie->value.choice.CNDomain = S1AP_CNDomain_ps;
-      ASN_SEQUENCE_ADD(&out->protocolIEs.list, ie);
-
 		  /** Set the UE Paging Identity . */
       ie = (S1AP_PagingIEs_t *)calloc(1, sizeof(S1AP_PagingIEs_t));
       ie->id = S1AP_ProtocolIE_ID_id_UEPagingID;
@@ -2192,6 +2184,14 @@ s1ap_handle_paging( const itti_s1ap_paging_t * const s1ap_paging_pP){
 		  INT32_TO_OCTET_STRING(s1ap_paging_pP->tmsi, &ie->value.choice.UEPagingID.choice.s_TMSI.m_TMSI);
 		  // todo: chose the right gummei or get it from the request!
 		  INT8_TO_OCTET_STRING(mme_config.gummei.gummei[0].mme_code, &ie->value.choice.UEPagingID.choice.s_TMSI.mMEC);
+      ASN_SEQUENCE_ADD(&out->protocolIEs.list, ie);
+
+	  /** Encode the CN Domain. */
+      ie = (S1AP_PagingIEs_t *)calloc(1, sizeof(S1AP_PagingIEs_t));
+      ie->id = S1AP_ProtocolIE_ID_id_CNDomain;
+      ie->criticality = S1AP_Criticality_ignore;
+      ie->value.present = S1AP_PagingIEs__value_PR_CNDomain;
+      ie->value.choice.CNDomain = S1AP_CNDomain_ps;
       ASN_SEQUENCE_ADD(&out->protocolIEs.list, ie);
 
       /** Set the TAI-List. */
