@@ -94,14 +94,14 @@ static int m2ap_send_init_sctp (void)
     message_p->ittiMsg.sctpInit.ipv6 = 1;
     message_p->ittiMsg.sctpInit.nb_ipv4_addr = 0;
     message_p->ittiMsg.sctpInit.nb_ipv6_addr = 0;
-    message_p->ittiMsg.sctpInit.ipv4_address[0].s_addr = mme_config.ip.mc_mme_v4.s_addr;
+    message_p->ittiMsg.sctpInit.ipv4_address[0].s_addr = mme_config.mbms.ip.mc_mme_v4.s_addr;
 
-    if (mme_config.ip.mc_mme_v4.s_addr != INADDR_ANY) {
+    if (mme_config.mbms.ip.mc_mme_v4.s_addr != INADDR_ANY) {
       message_p->ittiMsg.sctpInit.nb_ipv4_addr = 1;
     }
-    if(memcmp(&mme_config.ip.mc_mme_v6.s6_addr, (void*)&in6addr_any, sizeof(mme_config.ip.mc_mme_v6.s6_addr)) != 0) {
+    if(memcmp(&mme_config.mbms.ip.mc_mme_v6.s6_addr, (void*)&in6addr_any, sizeof(mme_config.mbms.ip.mc_mme_v6.s6_addr)) != 0) {
       message_p->ittiMsg.sctpInit.nb_ipv6_addr = 1;
-      memcpy(message_p->ittiMsg.sctpInit.ipv6_address[0].s6_addr, mme_config.ip.mc_mme_v6.s6_addr, 16);
+      memcpy(message_p->ittiMsg.sctpInit.ipv6_address[0].s6_addr, mme_config.mbms.ip.mc_mme_v6.s6_addr, 16);
     }
     /*
      * SR WARNING: ipv6 multi-homing fails sometimes for localhost.

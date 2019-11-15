@@ -318,7 +318,7 @@ sm_mme_init (
    */
   udp.hUdp = (nw_gtpv2c_udp_handle_t) NULL;
   mme_config_read_lock (&mme_config);
-  udp.gtpv2cStandardPort = mme_config.ip.port_mc;
+  udp.gtpv2cStandardPort = mme_config.mbms.ip.port_mc;
   mme_config_unlock (&mme_config);
   udp.udpDataReqCallback = sm_mme_send_udp_msg;
   DevAssert (NW_OK == nwGtpv2cSetUdpEntity (sm_mme_stack_handle, &udp));
@@ -340,8 +340,8 @@ sm_mme_init (
 
   DevAssert (NW_OK == nwGtpv2cSetLogLevel (sm_mme_stack_handle, NW_LOG_LEVEL_DEBG));
   /** Create 2 sockets, one for 2123 (received initial requests), another high port. */
-  sm_send_init_udp(&mme_config.ip.mc_mme_v4, &mme_config.ip.mc_mme_v6, udp.gtpv2cStandardPort);
-  sm_send_init_udp(&mme_config.ip.mc_mme_v4, &mme_config.ip.mc_mme_v6, 0);
+  sm_send_init_udp(&mme_config.mbms.ip.mc_mme_v4, &mme_config.mbms.ip.mc_mme_v6, udp.gtpv2cStandardPort);
+  sm_send_init_udp(&mme_config.mbms.ip.mc_mme_v4, &mme_config.mbms.ip.mc_mme_v6, 0);
 
   bstring b = bfromcstr("sm_mme_teid_2_gtv2c_teid_handle");
   sm_mme_teid_2_gtv2c_teid_handle = hashtable_ts_create(mme_config_p->max_ues, HASH_TABLE_DEFAULT_HASH_FUNC, hash_free_int_func, b);

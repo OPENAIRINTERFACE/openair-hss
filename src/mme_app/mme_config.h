@@ -224,12 +224,12 @@ typedef struct mme_config_s {
 	plmn_t   mce_plmn;                                        /*!< \brief  GUMMEI               */
 	uint16_t mce_id;
 	uint32_t max_mbms_services;
-	uint32_t mbms_min_session_duration_in_sec;
-	uint32_t mbms_short_idle_session_duration_in_sec;
+	uint16_t mbms_min_session_duration_in_sec;
+	uint8_t mbms_short_idle_session_duration_in_sec;
 	/** MCCH values. */
-	uint32_t mbms_mcch_msi_mcs;
-	uint32_t mbms_mcch_modification_period_rf;
-	uint32_t mbms_mcch_repetition_period_rf;
+	uint8_t mbms_mcch_msi_mcs;
+	uint16_t mbms_mcch_modification_period_rf;
+	uint16_t mbms_mcch_repetition_period_rf;
 	/** MBMS Service Area configurations. */
 	uint8_t  mbms_global_service_area_types; 	/**< Offset 0. */
 	uint8_t  mbms_local_service_areas; 	/**< Mod. */
@@ -246,6 +246,17 @@ typedef struct mme_config_s {
 	uint8_t  mbms_resource_allocation_full:1;
 	uint8_t  mbms_global_mbsfn_area_per_local_group:1;
 	uint8_t  mbms_subframe_slot_full:1;
+
+	/** Interface Configuration. */
+    /** Sm/M2AP */
+	struct {
+	    bstring    if_name_mc;
+	    struct in_addr  mc_mme_v4;
+	    struct in6_addr mc_mme_v6;
+	    int        mc_mme_cidrv4;
+	    int        mc_mme_cidrv6;
+	    uint16_t   port_mc;
+	}ip;
   } mbms;
 
 #define TRACKING_AREA_IDENTITY_LIST_TYPE_ONE_PLMN_NON_CONSECUTIVE_TACS 0x00
@@ -291,13 +302,6 @@ typedef struct mme_config_s {
     int        s10_mme_cidrv6;
     uint16_t   port_s10;
 
-    /** Sm/M2AP */
-    bstring    if_name_mc;
-    struct in_addr  mc_mme_v4;
-    struct in6_addr mc_mme_v6;
-    int        mc_mme_cidrv4;
-    int        mc_mme_cidrv6;
-    uint16_t   port_mc;
   } ip;
 
   struct {

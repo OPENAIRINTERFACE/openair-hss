@@ -96,12 +96,12 @@ void mce_app_itti_sm_mbms_session_start_response(teid_t mme_sm_teid, teid_t mbms
   mbms_session_start_response_p->sm_mme_teid.interface_type = SM_MME_GTP_C;
   if(mme_sm_teid != INVALID_TEID){
     mme_config_read_lock (&mme_config);
-    if(mme_config.ip.mc_mme_v4.s_addr){
-    	mbms_session_start_response_p->sm_mme_teid.ipv4_address= mme_config.ip.mc_mme_v4;
+    if(mme_config.mbms.ip.mc_mme_v4.s_addr){
+    	mbms_session_start_response_p->sm_mme_teid.ipv4_address= mme_config.mbms.ip.mc_mme_v4;
     	mbms_session_start_response_p->sm_mme_teid.ipv4 = 1;
     }
-    if(memcmp(&mme_config.ip.mc_mme_v6.s6_addr, (void*)&in6addr_any, sizeof(mme_config.ip.mc_mme_v6.s6_addr)) != 0) {
-    	memcpy(mbms_session_start_response_p->sm_mme_teid.ipv6_address.s6_addr, mme_config.ip.mc_mme_v6.s6_addr,  sizeof(mme_config.ip.mc_mme_v6.s6_addr));
+    if(memcmp(&mme_config.mbms.ip.mc_mme_v6.s6_addr, (void*)&in6addr_any, sizeof(mme_config.mbms.ip.mc_mme_v6.s6_addr)) != 0) {
+    	memcpy(mbms_session_start_response_p->sm_mme_teid.ipv6_address.s6_addr, mme_config.mbms.ip.mc_mme_v6.s6_addr,  sizeof(mme_config.mbms.ip.mc_mme_v6.s6_addr));
     	mbms_session_start_response_p->sm_mme_teid.ipv6 = 1;
     }
     mme_config_unlock (&mme_config);

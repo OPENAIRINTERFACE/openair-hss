@@ -265,12 +265,6 @@ static void mme_config_init (mme_config_t * config_pP)
   config_pP->ip.s10_mme_v4.s_addr = INADDR_ANY;
   config_pP->ip.s10_mme_v6 = in6addr_any;
   config_pP->ip.port_s10 = 2123;
-  config_pP->ip.mc_mme_v4.s_addr = INADDR_ANY;
-  config_pP->ip.mc_mme_v6 = in6addr_any;
-  config_pP->ip.port_mc = 2123;
-  config_pP->ip.mc_mme_v4.s_addr = INADDR_ANY;
-  config_pP->ip.mc_mme_v6 = in6addr_any;
-  config_pP->ip.port_mc = 2123;
 
   config_pP->s6a_config.conf_file = bfromcstr(S6A_CONF_FILE);
   config_pP->itti_config.queue_size = ITTI_QUEUE_MAX_ELEMENTS;
@@ -341,7 +335,7 @@ void mme_config_exit (void)
   bdestroy_wrapper(&mme_config.ip.if_name_s1_mme);
   bdestroy_wrapper(&mme_config.ip.if_name_s11);
   bdestroy_wrapper(&mme_config.ip.if_name_s10);
-  bdestroy_wrapper(&mme_config.ip.if_name_mc);
+  bdestroy_wrapper(&mme_config.mbms.ip.if_name_mc);
   bdestroy_wrapper(&mme_config.s6a_config.conf_file);
   bdestroy_wrapper(&mme_config.s6a_config.hss_host_name);
   bdestroy_wrapper(&mme_config.itti_config.log_file);
@@ -937,50 +931,6 @@ static int mme_config_parse_file (mme_config_t * config_pP)
       }
 
       /** Process Optional Interfaces. */
-      if (
-    	  (
-    	    /** MC. */
-    		config_setting_lookup_string (setting, MME_CONFIG_STRING_INTERFACE_NAME_FOR_MC, (const char **)&if_name_mc) && (mc_mme_v4 || mc_mme_v6)
-			&& config_setting_lookup_int (setting, MME_CONFIG_STRING_MME_PORT_FOR_MC, &aint_mc)
-    	  )
-      ) {
-    	  config_pP->ip.port_mc = (uint16_t)aint_mc;
-    	  struct bstrList *list = NULL;
-
-    	  /** MC: IPv4. */
-    	  config_pP->ip.if_name_mc = bfromcstr(if_name_mc);
-    	  if(mc_mme_v4) {
-    		  cidr = bfromcstr (mc_mme_v4);
-    		  list = bsplit (cidr, '/');
-    		  AssertFatal(2 == list->qty, "Bad CIDR address %s", bdata(cidr));
-    		  address = list->entry[0];
-    		  mask    = list->entry[1];
-    		  IPV4_STR_ADDR_TO_INADDR (bdata(address), config_pP->ip.mc_mme_v4, "BAD IP ADDRESS FORMAT FOR MC-MME !\n");
-    		  config_pP->ip.mc_mme_cidrv4 = atoi ((const char*)mask->data);
-    		  bstrListDestroy(list);
-    		  in_addr_var.s_addr = config_pP->ip.mc_mme_v4.s_addr;
-    		  OAILOG_INFO (LOG_MME_APP, "Parsing configuration file found MC-MME: %s/%d on %s\n",
-    				  inet_ntoa (in_addr_var), config_pP->ip.mc_mme_cidrv4, bdata(config_pP->ip.if_name_mc));
-    		  bdestroy_wrapper(&cidr);
-    	  }
-    	  /** MC: IPv6. */
-    	  if(mc_mme_v6) {
-    		  cidr = bfromcstr (mc_mme_v6);
-    		  list = bsplit (cidr, '/');
-    		  AssertFatal(2 == list->qty, "Bad CIDR address %s", bdata(cidr));
-    		  address = list->entry[0];
-    		  mask    = list->entry[1];
-    		  IPV6_STR_ADDR_TO_INADDR (bdata(address), config_pP->ip.mc_mme_v6, "BAD IPV6 ADDRESS FORMAT FOR MC-MME !\n");
-    		  //    	config_pP->ipv6.netmask_s1_mme = atoi ((const char*)mask->data);
-    		  bstrListDestroy(list);
-    		  //    	memcpy(in6_addr_var.s6_addr, config_pP->ipv6.s1_mme.s6_addr, 16);
-
-    		  char strv6[16];
-    		  OAILOG_INFO (LOG_MME_APP, "Parsing configuration file found MC-MME: %s/%d on %s\n",
-    				  inet_ntop(AF_INET6, &in6_addr_var, strv6, 16), config_pP->ip.mc_mme_cidrv6, bdata(config_pP->ip.if_name_mc));
-    		  bdestroy_wrapper(&cidr);
-    	  }
-      }
       /** S10. */
       if (
           (
@@ -1253,6 +1203,61 @@ static int mme_config_parse_file (mme_config_t * config_pP)
   setting = config_setting_get_member (setting_mme, MME_CONFIG_STRING_MBMS);
   if (setting != NULL) {
 
+    /**
+     * First initialize IP
+     */
+	config_pP->mbms.ip.mc_mme_v4.s_addr = INADDR_ANY;
+	config_pP->mbms.ip.mc_mme_v6 = in6addr_any;
+	config_pP->mbms.ip.port_mc = 2123;
+	config_pP->mbms.ip.mc_mme_v4.s_addr = INADDR_ANY;
+	config_pP->mbms.ip.mc_mme_v6 = in6addr_any;
+	config_pP->mbms.ip.port_mc = 2123;
+
+	if (
+		(
+		/** MC. */
+		config_setting_lookup_string (setting, MME_CONFIG_STRING_INTERFACE_NAME_FOR_MC, (const char **)&if_name_mc) && (mc_mme_v4 || mc_mme_v6)
+		&& config_setting_lookup_int (setting, MME_CONFIG_STRING_MME_PORT_FOR_MC, &aint_mc)
+		)
+	) {
+		config_pP->mbms.ip.port_mc = (uint16_t)aint_mc;
+		struct bstrList *list = NULL;
+
+		/** MC: IPv4. */
+		config_pP->mbms.ip.if_name_mc = bfromcstr(if_name_mc);
+		if(mc_mme_v4) {
+			cidr = bfromcstr (mc_mme_v4);
+			list = bsplit (cidr, '/');
+			AssertFatal(2 == list->qty, "Bad CIDR address %s", bdata(cidr));
+			address = list->entry[0];
+			mask    = list->entry[1];
+			IPV4_STR_ADDR_TO_INADDR (bdata(address), config_pP->mbms.ip.mc_mme_v4, "BAD IP ADDRESS FORMAT FOR MC-MME !\n");
+			config_pP->mbms.ip.mc_mme_cidrv4 = atoi ((const char*)mask->data);
+			bstrListDestroy(list);
+			in_addr_var.s_addr = config_pP->mbms.ip.mc_mme_v4.s_addr;
+			OAILOG_INFO (LOG_MME_APP, "Parsing configuration file found MC-MME: %s/%d on %s\n",
+					inet_ntoa (in_addr_var), config_pP->mbms.ip.mc_mme_cidrv4, bdata(config_pP->mbms.ip.if_name_mc));
+			bdestroy_wrapper(&cidr);
+		}
+		/** MC: IPv6. */
+		if(mc_mme_v6) {
+			cidr = bfromcstr (mc_mme_v6);
+			list = bsplit (cidr, '/');
+			AssertFatal(2 == list->qty, "Bad CIDR address %s", bdata(cidr));
+			address = list->entry[0];
+			mask    = list->entry[1];
+			IPV6_STR_ADDR_TO_INADDR (bdata(address), config_pP->mbms.ip.mc_mme_v6, "BAD IPV6 ADDRESS FORMAT FOR MC-MME !\n");
+			//    	config_pP->ipv6.netmask_s1_mme = atoi ((const char*)mask->data);
+			bstrListDestroy(list);
+			//    	memcpy(in6_addr_var.s6_addr, config_pP->ipv6.s1_mme.s6_addr, 16);
+
+			char strv6[16];
+			OAILOG_INFO (LOG_MME_APP, "Parsing configuration file found MC-MME: %s/%d on %s\n",
+					inet_ntop(AF_INET6, &in6_addr_var, strv6, 16), config_pP->mbms.ip.mc_mme_cidrv6, bdata(config_pP->mbms.ip.if_name_mc));
+			bdestroy_wrapper(&cidr);
+		}
+	}
+
     if ((config_setting_lookup_string (sub2setting, MME_CONFIG_STRING_MCC, &mcc))) {
       AssertFatal( 3 == strlen(mcc), "Bad MCE MCC length, it must be 3 digit ex: 001");
       char c[2] = { mcc[0], 0};
@@ -1286,31 +1291,23 @@ static int mme_config_parse_file (mme_config_t * config_pP)
     }
 
 	if ((config_setting_lookup_int (setting_mme, MME_CONFIG_MBMS_MIN_SESSION_DUR_IN_SEC, &aint))) {
-	  config_pP->mbms.mbms_min_session_duration_in_sec = (uint32_t) aint;
+	  config_pP->mbms.mbms_min_session_duration_in_sec = (uint16_t) aint;
 	}
 
 	if ((config_setting_lookup_int (setting_mme, MME_CONFIG_MBMS_SHORT_IDLE_SESSION_DUR_IN_SEC, &aint))) {
-      config_pP->mbms.mbms_short_idle_session_duration_in_sec = (uint32_t) aint;
+      config_pP->mbms.mbms_short_idle_session_duration_in_sec = (uint8_t) aint;
 	}
 
-    if ((config_setting_lookup_int (setting_mme, MME_CONFIG_MBMS_MIN_SESSION_DUR_IN_SEC, &aint))) {
-      config_pP->mbms.mbms_min_session_duration_in_sec = (uint32_t) aint;
-    }
-
-    if ((config_setting_lookup_int (setting_mme, MME_CONFIG_MBMS_SHORT_IDLE_SESSION_DUR_IN_SEC, &aint))) {
-      config_pP->mbms.mbms_short_idle_session_duration_in_sec = (uint32_t) aint;
-    }
-
     if ((config_setting_lookup_int (setting_mme, MME_CONFIG_MBMS_MCCH_MSI_MCS, &aint))) {
-      config_pP->mbms.mbms_mcch_msi_mcs = (uint32_t) aint;
+      config_pP->mbms.mbms_mcch_msi_mcs = (uint8_t) aint;
     }
 
     if ((config_setting_lookup_int (setting_mme, MME_CONFIG_MBMS_MCCH_MODIFICATION_PERIOD_RF, &aint))) {
-      config_pP->mbms.mbms_mcch_modification_period_rf = (uint32_t) aint;
+      config_pP->mbms.mbms_mcch_modification_period_rf = (uint16_t) aint;
     }
 
     if ((config_setting_lookup_int (setting_mme, MME_CONFIG_MBMS_MCCH_REPETITION_PERIOD_RF, &aint))) {
-      config_pP->mbms.mbms_mcch_repetition_period_rf = (uint32_t) aint;
+      config_pP->mbms.mbms_mcch_repetition_period_rf = (uint16_t) aint;
     }
 
     /** MBMS SA configurations. */
@@ -1422,9 +1419,9 @@ static void mme_config_display (mme_config_t * config_pP)
   OAILOG_INFO (LOG_CONFIG, "    s10 MME iface ....: %s\n", bdata(config_pP->ip.if_name_s10));
   OAILOG_INFO (LOG_CONFIG, "    s10 MME port .....: %d\n", config_pP->ip.port_s10);
   OAILOG_INFO (LOG_CONFIG, "    s10 MME ip .......: %s\n", inet_ntoa (*((struct in_addr *)&config_pP->ip.s10_mme_v4)));
-  OAILOG_INFO (LOG_CONFIG, "    MC MME iface .....: %s\n", bdata(config_pP->ip.if_name_mc));
-  OAILOG_INFO (LOG_CONFIG, "    MC MME port ......: %d\n", config_pP->ip.port_mc);
-  OAILOG_INFO (LOG_CONFIG, "    MC MME ip ........: %s\n", inet_ntoa (*((struct in_addr *)&config_pP->ip.mc_mme_v4)));
+  OAILOG_INFO (LOG_CONFIG, "    MC MME iface .....: %s\n", bdata(config_pP->mbms.ip.if_name_mc));
+  OAILOG_INFO (LOG_CONFIG, "    MC MME port ......: %d\n", config_pP->mbms.ip.port_mc);
+  OAILOG_INFO (LOG_CONFIG, "    MC MME ip ........: %s\n", inet_ntoa (*((struct in_addr *)&config_pP->mbms.ip.mc_mme_v4)));
   OAILOG_INFO (LOG_CONFIG, "- ITTI:\n");
   OAILOG_INFO (LOG_CONFIG, "    queue size .......: %u (bytes)\n", config_pP->itti_config.queue_size);
   OAILOG_INFO (LOG_CONFIG, "    log file .........: %s\n", bdata(config_pP->itti_config.log_file));

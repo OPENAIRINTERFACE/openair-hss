@@ -174,7 +174,7 @@ main (
   if(mme_config.ip.if_name_s10){
     CHECK_INIT_RETURN (s10_mme_init (&mme_config));
   }
-  if(mme_config.ip.if_name_mc){
+  if(mme_config.mbms.ip.if_name_mc){
 	  CHECK_INIT_RETURN (sm_mme_init (&mme_config));
 	  CHECK_INIT_RETURN (mce_app_init (&mme_config));
   }
