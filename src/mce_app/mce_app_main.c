@@ -183,36 +183,67 @@ int mce_app_init (const mme_config_t * mme_config_p)
   bdestroy_wrapper (&b);
 
   /**
-   * Initialize the UE contexts.
+   * Initialize the MBMS service contexts.
    */
   STAILQ_INIT(&mce_app_desc.mce_mbms_services_list);
   /** Iterate through the list of mbms services (each a context). */
   for(int num_ms = 0; num_ms < CHANGEABLE_VALUE; num_ms++) {
-	/** Create a new mutex for each and put them into the list. */
-	mbms_service_t * mbms_service = &mce_app_desc.mbms_services[num_ms];
-	pthread_mutexattr_t mutexattr = {0};
-	int rc = pthread_mutexattr_init(&mutexattr);
-	if (rc) {
-		OAILOG_ERROR (LOG_MCE_APP, "Cannot create MBMS service, failed to init mutex attribute: %s\n", strerror(rc));
-		OAILOG_FUNC_RETURN (LOG_MCE_APP, RETURNerror);
-	}
-	rc = pthread_mutexattr_settype(&mutexattr, PTHREAD_MUTEX_RECURSIVE);
-	if (rc) {
-		OAILOG_ERROR (LOG_MCE_APP, "Cannot create MBMS service, failed to set mutex attribute type: %s\n", strerror(rc));
-		OAILOG_FUNC_RETURN (LOG_MCE_APP, RETURNerror);
-	}
-	rc = pthread_mutex_init(&mbms_service->privates.recmutex, &mutexattr);
-	if (rc) {
-		OAILOG_ERROR (LOG_MCE_APP, "Cannot create MBMS service, failed to init mutex: %s\n", strerror(rc));
-		OAILOG_FUNC_RETURN (LOG_MCE_APP, RETURNerror);
-	}
-	//  rc = lock_ue_contexts(new_p);
-	if (rc) {
-		OAILOG_ERROR (LOG_MCE_APP, "Cannot create MBMS service, failed to lock mutex: %s\n", strerror(rc));
-		OAILOG_FUNC_RETURN (LOG_MCE_APP, NULL);
-	}
-	STAILQ_INSERT_TAIL(&mce_app_desc.mce_mbms_services_list, &mce_app_desc.mbms_services[num_ms], entries);
+		/** Create a new mutex for each and put them into the list. */
+		mbms_service_t * mbms_service = &mce_app_desc.mbms_services[num_ms];
+		pthread_mutexattr_t mutexattr = {0};
+		int rc = pthread_mutexattr_init(&mutexattr);
+		if (rc) {
+			OAILOG_ERROR (LOG_MCE_APP, "Cannot create MBMS service, failed to init mutex attribute: %s\n", strerror(rc));
+			OAILOG_FUNC_RETURN (LOG_MCE_APP, RETURNerror);
+		}
+		rc = pthread_mutexattr_settype(&mutexattr, PTHREAD_MUTEX_RECURSIVE);
+		if (rc) {
+			OAILOG_ERROR (LOG_MCE_APP, "Cannot create MBMS service, failed to set mutex attribute type: %s\n", strerror(rc));
+			OAILOG_FUNC_RETURN (LOG_MCE_APP, RETURNerror);
+		}
+		rc = pthread_mutex_init(&mbms_service->privates.recmutex, &mutexattr);
+		if (rc) {
+			OAILOG_ERROR (LOG_MCE_APP, "Cannot create MBMS service, failed to init mutex: %s\n", strerror(rc));
+			OAILOG_FUNC_RETURN (LOG_MCE_APP, RETURNerror);
+		}
+		//  rc = lock_ue_contexts(new_p);
+		if (rc) {
+			OAILOG_ERROR (LOG_MCE_APP, "Cannot create MBMS service, failed to lock mutex: %s\n", strerror(rc));
+			OAILOG_FUNC_RETURN (LOG_MCE_APP, NULL);
+		}
+		STAILQ_INSERT_TAIL(&mce_app_desc.mce_mbms_services_list, &mce_app_desc.mbms_services[num_ms], entries);
+  }
 
+  /**
+   * Initialize MBSFN area contexts.
+   */
+  STAILQ_INIT(&mce_app_desc.mce_mbsfn_area_contexts_list);
+  /** Iterate through the list of mbsfn areas (each a context). */
+  for(int num_ma = 0; num_ma < CHANGEABLE_VALUE; num_ma++) {
+		/** Create a new mutex for each and put them into the list. */
+		mbsfn_area_context_t * mbsfn_area_context = &mce_app_desc.mbsfn_services[num_ma];
+		pthread_mutexattr_t mutexattr = {0};
+		int rc = pthread_mutexattr_init(&mutexattr);
+		if (rc) {
+			OAILOG_ERROR (LOG_MCE_APP, "Cannot create MBSFN area, failed to init mutex attribute: %s\n", strerror(rc));
+			OAILOG_FUNC_RETURN (LOG_MCE_APP, RETURNerror);
+		}
+		rc = pthread_mutexattr_settype(&mutexattr, PTHREAD_MUTEX_RECURSIVE);
+		if (rc) {
+			OAILOG_ERROR (LOG_MCE_APP, "Cannot create MBSFN area, failed to set mutex attribute type: %s\n", strerror(rc));
+			OAILOG_FUNC_RETURN (LOG_MCE_APP, RETURNerror);
+		}
+		rc = pthread_mutex_init(&mbsfn_area_context->privates.recmutex, &mutexattr);
+		if (rc) {
+			OAILOG_ERROR (LOG_MCE_APP, "Cannot create MBSFN area, failed to init mutex: %s\n", strerror(rc));
+			OAILOG_FUNC_RETURN (LOG_MCE_APP, RETURNerror);
+		}
+		//  rc = lock_ue_contexts(new_p);
+		if (rc) {
+			OAILOG_ERROR (LOG_MCE_APP, "Cannot create MBSFN area, failed to lock mutex: %s\n", strerror(rc));
+			OAILOG_FUNC_RETURN (LOG_MCE_APP, NULL);
+		}
+		STAILQ_INSERT_TAIL(&mce_app_desc.mce_mbsfn_area_contexts_list, &mce_app_desc.mbsfn_services[num_ma], entries);
   }
 
   /*
@@ -246,6 +277,8 @@ void mce_app_exit (void)
   // todo: hashtable_uint64_ts_destroy (mce_app_desc.mce_mbms_service_contexts.mbms_service_id_mbms_service_htbl);
   // todo: hashtable_uint64_ts_destroy (mce_app_desc.mme_ue_contexts.enb_ue_s1ap_id_ue_context_htbl);
   hashtable_uint64_ts_destroy (mce_app_desc.mce_mbms_service_contexts.tunsm_mbms_service_htbl);
+  hashtable_ts_destroy (mce_app_desc.mce_mbms_service_contexts.mbms_service_index_mbms_service_htbl);
+
   hashtable_ts_destroy (mce_app_desc.mce_mbms_service_contexts.mbms_service_index_mbms_service_htbl);
 
   mme_config_exit(); // todo: could it stay?

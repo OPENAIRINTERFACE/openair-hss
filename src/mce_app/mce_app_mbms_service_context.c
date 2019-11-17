@@ -181,7 +181,7 @@ struct mbms_service_s                           *
 mce_mbms_service_exists_mbms_service_index(
   mce_mbms_services_t * const mce_mbms_services_p, const mbms_service_index_t mbms_service_index)
 {
-  struct mbms_service_t                    *mbms_service = NULL;
+  struct mbms_service_s                    *mbms_service = NULL;
   hashtable_ts_get (mce_mbms_services_p->mbms_service_index_mbms_service_htbl, (const hash_key_t)mbms_service_index, (void **)&mbms_service);
   return mbms_service;
 }
@@ -192,7 +192,7 @@ mce_mbms_service_exists_tmgi(
   mce_mbms_services_t * const mce_mbms_services_p,
   const tmgi_t * const tmgi, const mbms_service_area_id_t mbms_service_area_id)
 {
-  struct mbms_service_t                    *mbms_service = NULL;
+  struct mbms_service_s                    *mbms_service = NULL;
 
   mbms_service_index_t					    mbms_service_index = mce_get_mbms_service_index(tmgi, mbms_service_area_id);
 

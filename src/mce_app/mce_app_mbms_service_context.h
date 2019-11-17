@@ -85,7 +85,7 @@ struct mce_app_timer_t {
   long sec;       /* The timer interval value in seconds  */
 };
 
-/** @struct mbms_service_t
+/** @struct mbms_service_s
  *  @brief Useful parameters to know in MCE application layer. They are set
  * according to 3GPP TS.29.486
  */
@@ -124,13 +124,38 @@ typedef struct mbms_service_s {
   STAILQ_ENTRY (mbms_service_s)		entries;
 } mbms_service_t;
 
+/** @struct mbsfn_area_context_s
+ *  @brief Useful parameters to know in MCE application layer. They are set
+ * according to 3GPP TS.36.443
+ */
+//-----------------
+typedef struct mbsfn_area_context_s {
+  struct {
+	  pthread_mutex_t recmutex;  // mutex on the ue_context_t
+	  struct {
+		  mbsfn_area_t 	mbsfn_area;
+	  }fields;
+  }privates;
+  // todo: no procedure but a timer!
+  // mme_app_mbms_proc_t					 *mbms_procedure;			  ///< Allowing a single MBMS procedure in the MBMS-Service.
+  /** Entries for MBSFN Area Pool . */
+  STAILQ_ENTRY (mbsfn_area_context_s)		entries;
+} mbsfn_area_context_t;
+
 //-----------------
 typedef struct mce_mbms_services_s {
   uint32_t                 nb_mbms_service_managed;
   uint32_t                 nb_mbms_service_since_last_stat;
-  hash_table_ts_t 		  *mbms_service_index_mbms_service_htbl;    // data is mbms_service_t
+  hash_table_ts_t 		  	*mbms_service_index_mbms_service_htbl;    // data is mbms_service_t
   hash_table_uint64_ts_t  *tunsm_mbms_service_htbl;					// data is mbms_service_index_t
 } mce_mbms_services_t;
+
+//-----------------
+typedef struct mce_mbsfn_areas_s {
+  uint32_t                 nb_mbsfn_area_managed;
+  uint32_t                 nb_mbsfn_are_since_last_stat;
+  hash_table_ts_t 		  	*mbsfn_area_id_mbsfn_area_htbl;    	// data is mbsfn_area_t
+} mce_mbsfn_areas_t;
 
 /** \brief Retrieve an MBMS service by selecting the given MBMS Service Area And TMGI.
  * \param tmgi TMGI to find in MBMS Service map

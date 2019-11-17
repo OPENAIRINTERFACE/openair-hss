@@ -42,13 +42,18 @@
 typedef struct mce_app_desc_s {
   /* MBMS Service contexts + some statistics variables */
   mce_mbms_services_t		 mce_mbms_service_contexts;
+  mce_mbsfn_areas_t			 mce_mbsfn_area_contexts;
 
   long statistic_timer_id;
   uint32_t statistic_timer_period;
 
   /** Create an array of MBMS service pools. */
-  mbms_service_t 			mbms_services[CHANGEABLE_VALUE];
+  mbms_service_t 					mbms_services[CHANGEABLE_VALUE];
   STAILQ_HEAD(mbms_services_list_s, mbms_service_s)  mce_mbms_services_list;
+
+  /** Create an array of MBSFN areas. */
+  mbsfn_area_context_t 		mbsfn_services[CHANGEABLE_VALUE];
+  STAILQ_HEAD(mbsfn_areas_list_s, mbsfn_area_context_s)  mce_mbsfn_area_contexts_list;
 
   /* Reader/writer lock */
   pthread_rwlock_t rw_lock;
