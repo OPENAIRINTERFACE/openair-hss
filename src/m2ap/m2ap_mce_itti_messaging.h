@@ -31,9 +31,16 @@
 
 #include "common_defs.h"
 
+//------------------------------------------------------------------------------
 int m2ap_mce_itti_send_sctp_request(STOLEN_REF bstring *payload,
                                     const  uint32_t sctp_assoc_id_t,
                                     const sctp_stream_id_t stream,
                                     const mce_mbms_m2ap_id_t mbms_id);
+
+//------------------------------------------------------------------------------
+void m2ap_mce_itti_m3ap_enb_setup_request(
+  const sctp_assoc_id_t   assoc_id,
+  const uint32_t          m2ap_enb_id,
+  const mbms_service_area_t * const mbms_service_areas);
 
 #endif /* FILE_M2AP_MCE_ITTI_MESSAGING_SEEN */

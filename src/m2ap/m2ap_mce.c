@@ -346,13 +346,13 @@ m2ap_mce_thread (
     	m3ap_handle_mbms_session_update_request (&M3AP_MBMS_SESSION_UPDATE_REQUEST (received_message_p));
     }
     break;
-
     // ToDo: Leave the stats collection in the M2AP layer for now.
-    case MCE_APP_M3_MBMS_SERVICE_COUNTING_REQ:{
+
+    case M3AP_ENB_SETUP_RESPONSE:{
     	/*
     	 * New message received from MCE_APP task.
     	 */
-    	m3ap_handle_mbms_service_counting_req(MCE_APP_M3_MBMS_SERVICE_COUNTING_REQ (received_message_p));
+    	m3ap_handle_m3ap_enb_setup_res(&M3AP_ENB_SETUP_RESPONSE(received_message_p));
     }
     break;
 

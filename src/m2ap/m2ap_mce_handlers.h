@@ -56,6 +56,8 @@ int m2ap_mce_handle_message(const sctp_assoc_id_t assoc_id, const sctp_stream_id
 int m2ap_mce_handle_m2_setup_request(const sctp_assoc_id_t assoc_id, const sctp_stream_id_t stream,
                                      M2AP_M2AP_PDU_t *pdu);
 
+int m3ap_handle_m3ap_enb_setup_res(itti_m3ap_enb_setup_res_t * m3ap_enb_setup_res);
+
 //------------------------------------------------------------------------------
 int
 m2ap_mce_handle_mbms_session_start_response (

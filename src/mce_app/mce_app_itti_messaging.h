@@ -53,4 +53,7 @@ void mce_app_itti_m3ap_mbms_session_update_request(tmgi_t * tmgi, const mbms_ser
 /** M3AP Session Stop Request. */
 void mce_app_itti_m3ap_mbms_session_stop_request(tmgi_t * tmgi, mbms_service_area_id_t mbms_sa_id, const bool inform_enbs);
 
+/** M2AP eNB Response. */
+void mce_app_itti_m3ap_enb_setup_response(mbsfn_areas_t * mbsfn_areas_p, sctp_assoc_id_t assoc_id, uint32_t m2ap_enb_id);
+
 #endif /* FILE_MCE_APP_ITTI_MESSAGING_SEEN */

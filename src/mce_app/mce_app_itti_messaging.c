@@ -242,3 +242,24 @@ void mce_app_itti_m3ap_mbms_session_stop_request(tmgi_t *tmgi, mbms_service_area
   itti_send_msg_to_task (TASK_M2AP, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT (LOG_MCE_APP);
 }
+
+
+//------------------------------------------------------------------------------
+/**
+ * M3AP eNB Setup Response.
+ * After handling MBSFN area creation/update, respond to an M2AP eNB setup request.
+ */
+void mce_app_itti_m3ap_enb_setup_response(mbsfn_areas_t * mbsfn_areas_p, sctp_assoc_id_t assoc_id, uint32_t m2ap_enb_id)
+{
+  MessageDef                             *message_p = NULL;
+  int                                     rc 		= RETURNok;
+
+  OAILOG_FUNC_IN (LOG_MCE_APP);
+  message_p = itti_alloc_new_message (TASK_MCE_APP, M3AP_ENB_SETUP_RESPONSE);
+  DevAssert (message_p != NULL);
+  itti_m3ap_enb_setup_res_t *m3ap_enb_setup_res_p = &message_p->ittiMsg.m3ap_enb_setup_res;
+  memcpy((void*)&m3ap_enb_setup_res_p->mbsfn_areas, mbsfn_areas_p, sizeof(mbsfn_areas_t));
+  m3ap_enb_setup_res_p->sctp_assoc = assoc_id;
+  itti_send_msg_to_task (TASK_M2AP, INSTANCE_DEFAULT, message_p);
+  OAILOG_FUNC_OUT (LOG_MCE_APP);
+}

@@ -488,11 +488,27 @@ mce_app_handle_mbms_session_stop_request(
 
 //------------------------------------------------------------------------------
 void
+ mce_app_handle_m3ap_enb_setup_request(
+     itti_m3ap_enb_setup_req_t * const m3ap_enb_setup_req_p)
+{
+  mbsfn_areas_t									mbsfn_areas = {0};
+  OAILOG_FUNC_IN (LOG_MCE_APP);
+
+  /**
+   * Check if an MBSFN area for the eNB exists, if so give it back.
+   */
+  mce_app_update_mbsfn_areas(&m3ap_enb_setup_req_p->mbms_service_areas, m3ap_enb_setup_req_p->sctp_assoc, m3ap_enb_setup_req_p->m2ap_enb_id, &mbsfn_areas);
+  mce_app_itti_m3ap_enb_setup_response(&mbsfn_areas, m3ap_enb_setup_req_p->sctp_assoc, m3ap_enb_setup_req_p->m2ap_enb_id);
+  OAILOG_FUNC_OUT (LOG_MCE_APP);
+}
+
+//------------------------------------------------------------------------------
+void
 mce_app_handle_mbms_session_duration_timer_expiry (const struct tmgi_s *tmgi, const mbms_service_area_id_t mbms_service_area_id)
 {
-  mbms_service_t							*mbms_service    	= NULL;
+  mbms_service_t								*mbms_service    		= NULL;
   mme_app_mbms_proc_t						*mme_app_mbms_proc 	= NULL;
-  mbms_service_index_t						 mbms_service_idx   = INVALID_MBMS_SERVICE_INDEX;
+  mbms_service_index_t					 mbms_service_idx   = INVALID_MBMS_SERVICE_INDEX;
 
   OAILOG_FUNC_IN (LOG_MCE_APP);
   /**

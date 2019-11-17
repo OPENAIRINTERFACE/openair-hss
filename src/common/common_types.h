@@ -80,6 +80,8 @@ typedef uint64_t                 enb_s1ap_id_key_t ;
  * RNC/BSS/MCE that all cells reachable by that RNC/BSS/MCE shall be part of the MBMS Service Area.
  */
 #define INVALID_MBMS_SERVICE_AREA_ID 0x0000 	         // You can pick any value between 0..2^16-1,
+#define INVALID_MBSFN_AREA_ID 			 0x0000 	         // You can pick any value between 0..2^8-1,
+#define MBSFN_AREA_ID_FMT					 "0x%"PRIx8
 #define MBMS_SERVICE_AREA_ID_FMT	 "0x%"PRIx16
 typedef uint64_t                 	 mbms_service_index_t;
 
@@ -189,12 +191,28 @@ typedef struct {
 } mbms_session_duration_t;
 
 typedef uint16_t  mbms_service_area_id_t;
+typedef uint8_t   mbsfn_area_id_t;
 
 typedef struct {
   uint8_t  num_service_area;
 #define MAX_MBMS_SERVICE_AREA 256
   mbms_service_area_id_t  serviceArea[MAX_MBMS_SERVICE_AREA];
 } mbms_service_area_t;
+
+typedef struct mbsfn_area_s{
+	mbsfn_area_id_t					mbsfn_area_id;
+  mbms_service_area_id_t	mbms_service_area_id;
+  uint32_t								m2_enb_id_bitmap;
+  uint8_t									mcs;
+} mbsfn_area_t;
+
+typedef struct mbsfn_areas_s{
+  uint8_t  num_mbsfn_areas;
+  uint8_t  mbsfn_bitmap;
+#define MAX_MBMSFN_AREAS 256
+  mbsfn_area_t  mbsfnArea[MAX_MBMSFN_AREAS];
+
+} mbsfn_areas_t;
 
 typedef enum {
   SS_SERVICE_GRANTED = 0,

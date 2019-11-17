@@ -101,6 +101,13 @@ void *mce_app_thread (void *args)
     }
     break;
 
+    case M3AP_ENB_SETUP_REQUEST:{
+    	mce_app_handle_m3ap_enb_setup_request(
+			&M3AP_ENB_SETUP_REQUEST(received_message_p)
+    	);
+    }
+    break;
+
     case TERMINATE_MESSAGE:{
         /*
          * Termination message received TODO -> release any data allocated

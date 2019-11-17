@@ -60,8 +60,7 @@ extern hash_table_ts_t 					g_m2ap_mbms_coll; 	// MCE MBMS M2AP ID association t
 
 static const char * const m2_enb_state_str [] = {"M2AP_INIT", "M2AP_RESETTING", "M2AP_READY", "M2AP_SHUTDOWN"};
 
-static int                              m2ap_generate_m2_setup_response (
-    m2ap_enb_description_t * m2ap_enb_association);
+static int m2ap_generate_m2_setup_response (m2ap_enb_description_t * m2ap_enb_association, mbsfn_areas_t * mbsfn_areas);
 
 //static int                              m2ap_mme_generate_ue_context_release_command (
 //    mbms_description_t * mbms_ref_p, mce_mbms_m2ap_id_t mce_mbms_m2ap_id, enum s1cause, m2ap_enb_description_t* enb_ref_p);
@@ -385,36 +384,35 @@ m2ap_mce_handle_m2_setup_request (
       }
     }
   }	else {
-	m2ap_enb_association->m2_state = M2AP_RESETING;
+		m2ap_enb_association->m2_state = M2AP_RESETING;
 
-	/*
-	 * eNB has been fount in list, consider the m2 setup request as a reset connection,
-	 * * * * reseting any previous MBMS state if sctp association is != than the previous one
-	 */
-	if (m2ap_enb_association->sctp_assoc_id != assoc_id) {
-	  OAILOG_ERROR (LOG_M2AP, "Rejecting m2 setup request as eNB id %d is already associated to an active sctp association" "Previous known: %d, new one: %d\n",
-		m2ap_enb_id, m2ap_enb_association->sctp_assoc_id, assoc_id);
-	  rc = m2ap_mce_generate_m2_setup_failure (assoc_id, stream, M2AP_Cause_PR_misc, M2AP_CauseMisc_unspecified, -1); /**< eNB should attach again. */
-	  /** Also remove the old eNB. */
-	  OAILOG_INFO(LOG_M2AP, "Rejecting the old M2AP eNB connection for eNB id %d and old assoc_id: %d\n", m2ap_enb_id, assoc_id);
-	  m2ap_dump_enb_list();
-	  m2ap_handle_sctp_disconnection(m2ap_enb_association->sctp_assoc_id);
-	  OAILOG_FUNC_RETURN (LOG_M2AP, RETURNerror);
-	}
+		/*
+		 * eNB has been fount in list, consider the m2 setup request as a reset connection,
+		 * * * * reseting any previous MBMS state if sctp association is != than the previous one
+		 */
+		if (m2ap_enb_association->sctp_assoc_id != assoc_id) {
+			OAILOG_ERROR (LOG_M2AP, "Rejecting m2 setup request as eNB id %d is already associated to an active sctp association" "Previous known: %d, new one: %d\n",
+			m2ap_enb_id, m2ap_enb_association->sctp_assoc_id, assoc_id);
+			rc = m2ap_mce_generate_m2_setup_failure (assoc_id, stream, M2AP_Cause_PR_misc, M2AP_CauseMisc_unspecified, -1); /**< eNB should attach again. */
+			/** Also remove the old eNB. */
+			OAILOG_INFO(LOG_M2AP, "Rejecting the old M2AP eNB connection for eNB id %d and old assoc_id: %d\n", m2ap_enb_id, assoc_id);
+			m2ap_dump_enb_list();
+			m2ap_handle_sctp_disconnection(m2ap_enb_association->sctp_assoc_id);
+			OAILOG_FUNC_RETURN (LOG_M2AP, RETURNerror);
+		}
 
-	OAILOG_INFO(LOG_M2AP, "We found the M2AP eNB id %d in the current list of enbs with matching sctp associations:" "assoc: %d\n", m2ap_enb_id, m2ap_enb_association->sctp_assoc_id);
-	/*
-	 * TODO: call the reset procedure
-	 */
-	m2ap_dump_enb (m2ap_enb_association);
-	rc =  m2ap_generate_m2_setup_response (m2ap_enb_association);
-	OAILOG_FUNC_RETURN (LOG_M2AP, rc);
+		OAILOG_INFO(LOG_M2AP, "We found the M2AP eNB id %d in the current list of enbs with matching sctp associations:" "assoc: %d\n", m2ap_enb_id, m2ap_enb_association->sctp_assoc_id);
+		/*
+		 * TODO: call the reset procedure
+		 * todo: recheck how it affects the MBSFN areas..
+		 */
+		/** Forward this to the MCE_APP layer, too. MBSFN info..). */
   }
-  m2ap_dump_enb (m2ap_enb_association);
-  rc =  m2ap_generate_m2_setup_response (m2ap_enb_association);
-  if (rc == RETURNok) {
-    update_mme_app_stats_connected_enb_add();
-  }
+  /**
+   * For the case of a new eNB, forward the M2 Setup Request to MCE_APP.
+   * It needs the information to create and manage MBSFN areas.
+   */
+  m2ap_mce_itti_m3ap_enb_setup_request(assoc_id, m2ap_enb_id, &m2ap_enb_association->mbms_sa_list);
   OAILOG_FUNC_RETURN (LOG_M2AP, rc);
 }
 
@@ -422,7 +420,7 @@ m2ap_mce_handle_m2_setup_request (
 static
   int
 m2ap_generate_m2_setup_response (
-  m2ap_enb_description_t * m2ap_enb_association)
+  m2ap_enb_description_t * m2ap_enb_association, mbsfn_areas_t * mbsfn_areas)
 {
   int                                     			  i,j;
   M2AP_M2AP_PDU_t                         			  pdu;
@@ -502,6 +500,35 @@ m2ap_generate_m2_setup_response (
   free(buffer);
   rc = m2ap_mce_itti_send_sctp_request (&b, m2ap_enb_association->sctp_assoc_id, 0, INVALID_MCE_MBMS_M2AP_ID);
   OAILOG_FUNC_RETURN (LOG_M2AP, rc);
+}
+
+//------------------------------------------------------------------------------
+int m3ap_handle_m3ap_enb_setup_res(itti_m3ap_enb_setup_res_t * m3ap_enb_setup_res){
+	int														rc = RETURNerror;
+	m2ap_enb_description_t 			*m2ap_enb_association = NULL;
+
+	OAILOG_FUNC_IN(LOG_M2AP);
+
+	m2ap_enb_association = m2ap_is_enb_assoc_id_in_list(m3ap_enb_setup_res->sctp_assoc);
+  if(!m2ap_enb_association) {
+    OAILOG_ERROR (LOG_M2AP, "No eNB association found for %d. Cannot trigger M2 setup response. \n", m3ap_enb_setup_res->sctp_assoc);
+    OAILOG_FUNC_RETURN(LOG_M2AP, rc);
+  }
+
+  /** Nothing extra is to be done for the MBSFNs. MCE_APP takes care of it. */
+  if(!m3ap_enb_setup_res->mbsfn_areas.num_mbsfn_areas){
+  	OAILOG_ERROR (LOG_M2AP, "No MBSFN area could be associated for eNB %d. M2 Setup failed. \n", m3ap_enb_setup_res->sctp_assoc);
+		rc = m2ap_mce_generate_m2_setup_failure (m2ap_enb_association->sctp_assoc_id, M2AP_ENB_SERVICE_SCTP_STREAM_ID,
+				M2AP_Cause_PR_misc, M2AP_CauseMisc_unspecified, -1); /**< eNB should attach again. */
+		OAILOG_FUNC_RETURN(LOG_M2AP, rc);
+  }
+	m2ap_dump_enb (m2ap_enb_association);
+  OAILOG_INFO(LOG_M2AP, "MBSFN area could be associated for eNB %d. M2 Setup succeeded. \n", m3ap_enb_setup_res->sctp_assoc);
+  rc =  m2ap_generate_m2_setup_response (m2ap_enb_association, &m3ap_enb_setup_res->mbsfn_areas);
+  if (rc == RETURNok) {
+  	update_mme_app_stats_connected_enb_add();
+  }
+	OAILOG_FUNC_RETURN(LOG_M2AP, rc);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1135,6 +1162,7 @@ m2ap_mme_handle_mbms_action_timer_expiry (void *arg)
   }
   OAILOG_FUNC_OUT (LOG_M2AP);
 }
+
 
 //------------------------------------------------------------------------------
 int

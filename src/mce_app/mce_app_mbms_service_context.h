@@ -187,6 +187,12 @@ mbms_cteid_in_list (const mce_mbms_services_t * const mce_mbms_services_p,
 mbms_service_index_t mce_get_mbms_service_index(const tmgi_t * tmgi, const mbms_service_area_id_t mbms_service_area_id);
 
 /*
+ * Update MBSFN Areas
+ * todo: removal
+ */
+void mce_app_update_mbsfn_areas(const mbms_service_area_t * mbms_service_areas, const sctp_assoc_id_t assoc_id, const uint32_t m2_enb_id, mbsfn_areas_t * const mbsfn_areas);
+
+/*
  * SM Procedures.
  */
 mme_app_mbms_proc_t* mme_app_create_mbms_procedure(mbms_service_t * mbms_service, uint32_t delta_to_start_in_sec, uint32_t delta_to_start_in_usec, const mbms_session_duration_t * const mbms_session_duration);
