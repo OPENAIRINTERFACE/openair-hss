@@ -168,7 +168,7 @@ int mce_app_init (const mme_config_t * mme_config_p)
   memset (&mce_app_desc, 0, sizeof (mce_app_desc));
   // todo: (from develop)   pthread_rwlock_init (&mce_app_desc.rw_lock, NULL); && where to unlock it?
   bstring b = bfromcstr("mce_app_mbms_service_id_mbms_service_htbl");
-  mce_app_desc.mce_mbms_service_contexts.mbms_service_index_mbms_service_htbl = hashtable_uint64_ts_create (mme_config.mbms.max_mbms_services, NULL, b);
+  mce_app_desc.mce_mbms_service_contexts.mbms_service_index_mbms_service_htbl = hashtable_ts_create (mme_config.mbms.max_mbms_services, NULL, hash_free_func, b);
   btrunc(b, 0);
 //  bassigncstr(b, "mce_app_enb_ue_s1ap_id_ue_context_htbl");
 //  mce_app_desc.mme_ue_contexts.enb_ue_s1ap_id_ue_context_htbl = hashtable_uint64_ts_create (mme_config.max_ues, NULL, b);
@@ -177,8 +177,8 @@ int mce_app_init (const mme_config_t * mme_config_p)
   mce_app_desc.mce_mbms_service_contexts.tunsm_mbms_service_htbl = hashtable_uint64_ts_create (mme_config.mbms.max_mbms_services, NULL, b);
   AssertFatal(sizeof(uintptr_t) >= sizeof(uint64_t), "Problem with tunsm_mbms_service_htbl in MCE_APP");
   btrunc(b, 0);
-  bassigncstr(b, "mce_app_mbms_service_id_mbms_service_htbl");
-  mce_app_desc.mce_mbms_service_contexts.mbms_service_index_mbms_service_htbl = hashtable_ts_create (mme_config.mbms.max_mbms_services, NULL, hash_free_int_func, b);
+  bassigncstr(b, "mce_app_mbsfn_area_id_mbsfn_area_htbl");
+  mce_app_desc.mce_mbsfn_area_contexts.mbsfn_area_id_mbsfn_area_htbl = hashtable_ts_create (MAX_MBMSFN_AREAS, NULL, hash_free_func, b);
   btrunc(b, 0);
   bdestroy_wrapper (&b);
 
@@ -278,8 +278,5 @@ void mce_app_exit (void)
   // todo: hashtable_uint64_ts_destroy (mce_app_desc.mme_ue_contexts.enb_ue_s1ap_id_ue_context_htbl);
   hashtable_uint64_ts_destroy (mce_app_desc.mce_mbms_service_contexts.tunsm_mbms_service_htbl);
   hashtable_ts_destroy (mce_app_desc.mce_mbms_service_contexts.mbms_service_index_mbms_service_htbl);
-
-  hashtable_ts_destroy (mce_app_desc.mce_mbms_service_contexts.mbms_service_index_mbms_service_htbl);
-
-  mme_config_exit(); // todo: could it stay?
+  hashtable_ts_destroy (mce_app_desc.mce_mbsfn_area_contexts.mbsfn_area_id_mbsfn_area_htbl);
 }

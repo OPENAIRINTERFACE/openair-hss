@@ -361,6 +361,7 @@ static int mme_config_parse_file (mme_config_t * config_pP)
   config_setting_t                       *setting = NULL;
   config_setting_t                       *subsetting = NULL;
   config_setting_t                       *sub2setting = NULL;
+  config_setting_t                       *setting_mce = NULL;
   int                                     aint = 0;
   int                                     aint_s10 = 0;
   int                                     aint_s11 = 0;
@@ -844,8 +845,6 @@ static int mme_config_parse_file (mme_config_t * config_pP)
 	config_setting_lookup_string (setting, MME_CONFIG_STRING_IPV6_ADDRESS_FOR_S11, (const char **)&s11_mme_v6);
 	config_setting_lookup_string (setting, MME_CONFIG_STRING_IPV4_ADDRESS_FOR_S10, (const char **)&s10_mme_v4);
 	config_setting_lookup_string (setting, MME_CONFIG_STRING_IPV6_ADDRESS_FOR_S10, (const char **)&s10_mme_v6);
-	config_setting_lookup_string (setting, MME_CONFIG_STRING_IPV4_ADDRESS_FOR_MC, (const char **)&mc_mme_v4);
-	config_setting_lookup_string (setting, MME_CONFIG_STRING_IPV6_ADDRESS_FOR_MC, (const char **)&mc_mme_v6);
 
     if (setting != NULL) {
     	/** Process Mandatory Interfaces. */
@@ -1107,10 +1106,7 @@ static int mme_config_parse_file (mme_config_t * config_pP)
             )
           )
         {
-          cidr = bfromcstr (sgw_ip_address_for_s11);
-          struct bstrList *list = bsplit (cidr, '/');
-          AssertFatal(2 == list->qty, "Bad CIDR address %s", bdata(cidr));
-          address = list->entry[0];
+        	address = bfromcstr (sgw_ip_address_for_s11);
           struct addrinfo hints, *result, *rp;
           int s;
           memset(&hints, 0, sizeof(struct addrinfo));
@@ -1144,20 +1140,16 @@ static int mme_config_parse_file (mme_config_t * config_pP)
         	  ((struct sockaddr*)&config_pP->e_dns_emulation.sockaddr[i])->sa_family = rp->ai_family;
           }
           freeaddrinfo(result);
-          bstrListDestroy(list);
-          bdestroy_wrapper(&cidr);
+          bdestroy_wrapper(&address);
 
         }
 
-        /** Check S11 Endpoint (service="x-3gpp-mme:x-s10"). */
+        /** Check S10 Endpoint (service="x-3gpp-mme:x-s10"). */
         if ((config_setting_lookup_string (sub2setting, MME_CONFIG_STRING_PEER_MME_IP_ADDRESS_FOR_S10, (const char **)&mme_ip_address_for_s10)
           )
         )
         {
-        	cidr = bfromcstr (mme_ip_address_for_s10);
-        	struct bstrList *list = bsplit (cidr, '/');
-        	AssertFatal(2 == list->qty, "Bad CIDR address %s", bdata(cidr));
-        	address = list->entry[0];
+        	address = bfromcstr (mme_ip_address_for_s10);
         	struct addrinfo hints, *result, *rp;
         	int s;
         	memset(&hints, 0, sizeof(struct addrinfo));
@@ -1191,8 +1183,7 @@ static int mme_config_parse_file (mme_config_t * config_pP)
         		((struct sockaddr*)&config_pP->e_dns_emulation.sockaddr[i])->sa_family = rp->ai_family;
         	}
         	freeaddrinfo(result);
-        	bstrListDestroy(list);
-        	bdestroy_wrapper(&cidr);
+        	bdestroy_wrapper(&address);
         }
         config_pP->e_dns_emulation.nb_service_entries++;
       }
@@ -1200,27 +1191,29 @@ static int mme_config_parse_file (mme_config_t * config_pP)
   }
 
   /** Optional MBMS Features. */
-  setting = config_setting_get_member (setting_mme, MME_CONFIG_STRING_MBMS);
-  if (setting != NULL) {
+  setting_mce = config_setting_get_member (setting_mme, MME_CONFIG_STRING_MBMS);
+  if (setting_mce != NULL) {
 
     /**
      * First initialize IP
      */
 	config_pP->mbms.ip.mc_mme_v4.s_addr = INADDR_ANY;
 	config_pP->mbms.ip.mc_mme_v6 = in6addr_any;
-	config_pP->mbms.ip.port_mc = 2123;
+	config_pP->mbms.ip.port_sm = 2123;
 	config_pP->mbms.ip.mc_mme_v4.s_addr = INADDR_ANY;
 	config_pP->mbms.ip.mc_mme_v6 = in6addr_any;
-	config_pP->mbms.ip.port_mc = 2123;
+
+	config_setting_lookup_string (setting_mce, MME_CONFIG_STRING_IPV4_ADDRESS_FOR_MC, (const char **)&mc_mme_v4);
+	config_setting_lookup_string (setting_mce, MME_CONFIG_STRING_IPV6_ADDRESS_FOR_MC, (const char **)&mc_mme_v6);
 
 	if (
 		(
 		/** MC. */
-		config_setting_lookup_string (setting, MME_CONFIG_STRING_INTERFACE_NAME_FOR_MC, (const char **)&if_name_mc) && (mc_mme_v4 || mc_mme_v6)
-		&& config_setting_lookup_int (setting, MME_CONFIG_STRING_MME_PORT_FOR_MC, &aint_mc)
+		config_setting_lookup_string (setting_mce, MME_CONFIG_STRING_INTERFACE_NAME_FOR_MC, (const char **)&if_name_mc) && (mc_mme_v4 || mc_mme_v6)
+		&& config_setting_lookup_int (setting_mce, MME_CONFIG_STRING_MME_PORT_FOR_SM, &aint_mc)
 		)
 	) {
-		config_pP->mbms.ip.port_mc = (uint16_t)aint_mc;
+		config_pP->mbms.ip.port_sm = (uint16_t)aint_mc;
 		struct bstrList *list = NULL;
 
 		/** MC: IPv4. */
@@ -1258,7 +1251,7 @@ static int mme_config_parse_file (mme_config_t * config_pP)
 		}
 	}
 
-    if ((config_setting_lookup_string (sub2setting, MME_CONFIG_STRING_MCC, &mcc))) {
+    if ((config_setting_lookup_string (setting_mce, MME_CONFIG_STRING_MCC, &mcc))) {
       AssertFatal( 3 == strlen(mcc), "Bad MCE MCC length, it must be 3 digit ex: 001");
       char c[2] = { mcc[0], 0};
       config_pP->mbms.mce_plmn.mcc_digit1 = (uint8_t) atoi (c);
@@ -1268,7 +1261,7 @@ static int mme_config_parse_file (mme_config_t * config_pP)
       config_pP->mbms.mce_plmn.mcc_digit3 = (uint8_t) atoi (c);
     }
 
-    if ((config_setting_lookup_string (sub2setting, MME_CONFIG_STRING_MNC, &mnc))) {
+    if ((config_setting_lookup_string (setting_mce, MME_CONFIG_STRING_MNC, &mnc))) {
       AssertFatal( (3 == strlen(mnc)) || (2 == strlen(mnc)) , "Bad MCE MNC length, it must be 3 digit ex: 001");
       char c[2] = { mnc[0], 0};
       config_pP->mbms.mce_plmn.mnc_digit1 = (uint8_t) atoi (c);
@@ -1282,82 +1275,82 @@ static int mme_config_parse_file (mme_config_t * config_pP)
       }
     }
 
-    if ((config_setting_lookup_int (setting_mme, MME_CONFIG_MAX_MBMS_SERVICES, &aint))) {
+    if ((config_setting_lookup_int (setting_mce, MME_CONFIG_MAX_MBMS_SERVICES, &aint))) {
       config_pP->mbms.max_mbms_services = (uint32_t) aint;
     }
 
-    if ((config_setting_lookup_string (sub2setting, MME_CONFIG_MCE_ID, &mnc))) {
-      config_pP->mbms.mce_id = (uint16_t) atoi (mnc);
+    if ((config_setting_lookup_int (setting_mce, MME_CONFIG_MCE_ID, &aint))) {
+      config_pP->mbms.mce_id = (uint16_t) aint;
     }
 
-	if ((config_setting_lookup_int (setting_mme, MME_CONFIG_MBMS_MIN_SESSION_DUR_IN_SEC, &aint))) {
+	if ((config_setting_lookup_int (setting_mce, MME_CONFIG_MBMS_MIN_SESSION_DUR_IN_SEC, &aint))) {
 	  config_pP->mbms.mbms_min_session_duration_in_sec = (uint16_t) aint;
 	}
 
-	if ((config_setting_lookup_int (setting_mme, MME_CONFIG_MBMS_SHORT_IDLE_SESSION_DUR_IN_SEC, &aint))) {
+	if ((config_setting_lookup_int (setting_mce, MME_CONFIG_MBMS_SHORT_IDLE_SESSION_DUR_IN_SEC, &aint))) {
       config_pP->mbms.mbms_short_idle_session_duration_in_sec = (uint8_t) aint;
 	}
 
-    if ((config_setting_lookup_int (setting_mme, MME_CONFIG_MBMS_MCCH_MSI_MCS, &aint))) {
+    if ((config_setting_lookup_int (setting_mce, MME_CONFIG_MBMS_MCCH_MSI_MCS, &aint))) {
       config_pP->mbms.mbms_mcch_msi_mcs = (uint8_t) aint;
     }
 
-    if ((config_setting_lookup_int (setting_mme, MME_CONFIG_MBMS_MCCH_MODIFICATION_PERIOD_RF, &aint))) {
+    if ((config_setting_lookup_int (setting_mce, MME_CONFIG_MBMS_MCCH_MODIFICATION_PERIOD_RF, &aint))) {
       config_pP->mbms.mbms_mcch_modification_period_rf = (uint16_t) aint;
     }
 
-    if ((config_setting_lookup_int (setting_mme, MME_CONFIG_MBMS_MCCH_REPETITION_PERIOD_RF, &aint))) {
+    if ((config_setting_lookup_int (setting_mce, MME_CONFIG_MBMS_MCCH_REPETITION_PERIOD_RF, &aint))) {
       config_pP->mbms.mbms_mcch_repetition_period_rf = (uint16_t) aint;
     }
 
     /** MBMS SA configurations. */
-    if ((config_setting_lookup_int (setting_mme, MME_CONFIG_MBMS_GLOBAL_SERVICE_AREA_TYPES, &aint))) {
+    if ((config_setting_lookup_int (setting_mce, MME_CONFIG_MBMS_GLOBAL_SERVICE_AREA_TYPES, &aint))) {
      config_pP->mbms.mbms_global_service_area_types = (uint8_t) aint;
     }
 
-    if ((config_setting_lookup_int (setting_mme, MME_CONFIG_MBMS_LOCAL_SERVICE_AREAS, &aint))) {
+    if ((config_setting_lookup_int (setting_mce, MME_CONFIG_MBMS_LOCAL_SERVICE_AREAS, &aint))) {
       config_pP->mbms.mbms_local_service_areas = (uint8_t) aint;
     }
 
-    if ((config_setting_lookup_int (setting_mme, MME_CONFIG_MBMS_LOCAL_SERVICE_AREA_TYPES, &aint))) {
+    if ((config_setting_lookup_int (setting_mce, MME_CONFIG_MBMS_LOCAL_SERVICE_AREA_TYPES, &aint))) {
 	  config_pP->mbms.mbms_local_service_area_types = (uint8_t) aint;
     }
 
-    if ((config_setting_lookup_int (setting_mme, MME_CONFIG_MBMS_LOCAL_SERVICE_AREA_SFD_DISTANCES_IN_M, &aint))) {
+    if ((config_setting_lookup_int (setting_mce, MME_CONFIG_MBMS_LOCAL_SERVICE_AREA_SFD_DISTANCES_IN_M, &aint))) {
       config_pP->mbms.mbms_local_service_area_sfd_distance_in_m = (uint16_t) aint;
     }
 
-    if ((config_setting_lookup_int (setting_mme, MME_CONFIG_MBMS_MAX_MBSFN_AREA_PER_ENB, &aint))) {
+    if ((config_setting_lookup_int (setting_mce, MME_CONFIG_MBMS_MAX_MBSFN_AREA_PER_ENB, &aint))) {
       config_pP->mbms.mbms_max_mbsfn_area_per_enb = (uint8_t) aint;
     }
 
     /** MBMS eNB configurations. */
-    if ((config_setting_lookup_int (setting_mme, MME_CONFIG_STRING_M2_MAX_ENB, &aint))) {
+    if ((config_setting_lookup_int (setting_mce, MME_CONFIG_STRING_M2_MAX_ENB, &aint))) {
       config_pP->mbms.max_m2_enbs = (uint32_t) aint;
     }
 
-    if ((config_setting_lookup_int (setting_mme, MME_CONFIG_MBMS_ENB_BAND, &aint))) {
+    if ((config_setting_lookup_int (setting_mce, MME_CONFIG_MBMS_ENB_BAND, &aint))) {
       config_pP->mbms.mbms_enb_band = (uint8_t) aint;
     }
 
-    if ((config_setting_lookup_int (setting_mme, MME_CONFIG_MBMS_ENB_TDD_DL_UL_CONF, &aint))) {
+    if ((config_setting_lookup_int (setting_mce, MME_CONFIG_MBMS_ENB_TDD_DL_UL_CONF, &aint))) {
       config_pP->mbms.mbms_enb_tdd_dl_ul_conf = (uint8_t) aint;
     }
 
     /** MBMS Flags. */
-    if ((config_setting_lookup_int (setting_mme, MME_CONFIG_MBMS_ENB_SCPTM, &aint))) {
+    if ((config_setting_lookup_int (setting_mce, MME_CONFIG_MBMS_ENB_SCPTM, &aint))) {
       config_pP->mbms.mbms_enb_scptm = ((uint8_t) aint & 0x01);
     }
 
-    if ((config_setting_lookup_int (setting_mme, MME_CONFIG_MBMS_RESOURCE_ALLOCATION_FULL, &aint))) {
+    if ((config_setting_lookup_int (setting_mce, MME_CONFIG_MBMS_RESOURCE_ALLOCATION_FULL, &aint))) {
       config_pP->mbms.mbms_resource_allocation_full = ((uint8_t) aint & 0x01);
     }
 
-    if ((config_setting_lookup_int (setting_mme, MME_CONFIG_MBMS_GLOBAL_MBSFN_AREA_PER_LOCAL_GROUP, &aint))) {
+    if ((config_setting_lookup_int (setting_mce, MME_CONFIG_MBMS_GLOBAL_MBSFN_AREA_PER_LOCAL_GROUP, &aint))) {
       config_pP->mbms.mbms_global_mbsfn_area_per_local_group = ((uint8_t) aint & 0x01);
     }
 
-    if ((config_setting_lookup_int (setting_mme, MME_CONFIG_MBMS_SUBFRAME_SLOT_FULL, &aint))) {
+    if ((config_setting_lookup_int (setting_mce, MME_CONFIG_MBMS_SUBFRAME_SLOT_FULL, &aint))) {
       config_pP->mbms.mbms_subframe_slot_full = ((uint8_t) aint & 0x01);
     }
 
@@ -1420,7 +1413,7 @@ static void mme_config_display (mme_config_t * config_pP)
   OAILOG_INFO (LOG_CONFIG, "    s10 MME port .....: %d\n", config_pP->ip.port_s10);
   OAILOG_INFO (LOG_CONFIG, "    s10 MME ip .......: %s\n", inet_ntoa (*((struct in_addr *)&config_pP->ip.s10_mme_v4)));
   OAILOG_INFO (LOG_CONFIG, "    MC MME iface .....: %s\n", bdata(config_pP->mbms.ip.if_name_mc));
-  OAILOG_INFO (LOG_CONFIG, "    MC MME port ......: %d\n", config_pP->mbms.ip.port_mc);
+  OAILOG_INFO (LOG_CONFIG, "    MC MME Sm port ...: %d\n", config_pP->mbms.ip.port_sm);
   OAILOG_INFO (LOG_CONFIG, "    MC MME ip ........: %s\n", inet_ntoa (*((struct in_addr *)&config_pP->mbms.ip.mc_mme_v4)));
   OAILOG_INFO (LOG_CONFIG, "- ITTI:\n");
   OAILOG_INFO (LOG_CONFIG, "    queue size .......: %u (bytes)\n", config_pP->itti_config.queue_size);

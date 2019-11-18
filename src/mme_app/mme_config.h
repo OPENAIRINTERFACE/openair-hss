@@ -137,7 +137,7 @@
 #define MME_CONFIG_STRING_INTERFACE_NAME_FOR_MC          "MME_INTERFACE_NAME_FOR_MC"
 #define MME_CONFIG_STRING_IPV4_ADDRESS_FOR_MC            "MME_IPV4_ADDRESS_FOR_MC"
 #define MME_CONFIG_STRING_IPV6_ADDRESS_FOR_MC            "MME_IPV6_ADDRESS_FOR_MC"
-#define MME_CONFIG_STRING_MME_PORT_FOR_MC                "MME_PORT_FOR_MC"
+#define MME_CONFIG_STRING_MME_PORT_FOR_SM                "MME_PORT_FOR_SM"
 
 
 #define MME_CONFIG_STRING_NAS_CONFIG                     "NAS"
@@ -255,7 +255,7 @@ typedef struct mme_config_s {
 	    struct in6_addr mc_mme_v6;
 	    int        mc_mme_cidrv4;
 	    int        mc_mme_cidrv6;
-	    uint16_t   port_mc;
+	    uint16_t   port_sm;
 	}ip;
   } mbms;
 
