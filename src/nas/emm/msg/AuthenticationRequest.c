@@ -80,7 +80,8 @@ encode_authentication_request (
    * Checking IEI and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, AUTHENTICATION_REQUEST_MINIMUM_LENGTH, len);
-  *(buffer + encoded) = ((encode_u8_nas_key_set_identifier (&authentication_request->naskeysetidentifierasme) & 0x0f) << 4) | 0x00;
+  uint8_t test_ksi = (encode_u8_nas_key_set_identifier (&authentication_request->naskeysetidentifierasme) & 0x0f);
+  *(buffer + encoded) = test_ksi;
   encoded++;
 
   if ((encode_result = encode_authentication_parameter_rand_ie (authentication_request->authenticationparameterrand, 0, buffer + encoded, len - encoded)) < 0)    //Return in case of error

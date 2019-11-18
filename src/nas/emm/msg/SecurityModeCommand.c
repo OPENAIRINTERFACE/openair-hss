@@ -138,8 +138,8 @@ encode_security_mode_command (
     return encode_result;
   else
     encoded += encode_result;
-
-  *(buffer + encoded) = (encode_u8_nas_key_set_identifier (&security_mode_command->naskeysetidentifier) & 0x0f);
+  uint8_t test_ksi = (encode_u8_nas_key_set_identifier (&security_mode_command->naskeysetidentifier) & 0x0f);
+  *(buffer + encoded) = test_ksi;
   encoded++;
 
   if ((encode_result = encode_ue_security_capability (&security_mode_command->replayeduesecuritycapabilities, 0, buffer + encoded, len - encoded)) < 0) //Return in case of error

@@ -246,6 +246,7 @@ int emm_proc_tracking_area_update_request (
 //    emm_context->additional_update_type = ies->additional_update_type;
     new_emm_ue_context->emm_cause       = EMM_CAUSE_SUCCESS;
     emm_init_context(new_emm_ue_context);  /**< Initialize the context, we might do it again if the security was not verified. No IMSI, GUTI set so adding should work. */
+    emm_ctx_set_security_eksi(new_emm_ue_context, ies->ksi);
     DevAssert(RETURNok == emm_data_context_add (&_emm_data, new_emm_ue_context));
   } else if((*duplicate_emm_ue_ctx_pP)->emm_cause != EMM_CAUSE_SUCCESS) {
 	  OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - No valid old EMM context was found for UE_ID " MME_UE_S1AP_ID_FMT ". \n", ue_id);

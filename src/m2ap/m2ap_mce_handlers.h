@@ -56,7 +56,8 @@ int m2ap_mce_handle_message(const sctp_assoc_id_t assoc_id, const sctp_stream_id
 int m2ap_mce_handle_m2_setup_request(const sctp_assoc_id_t assoc_id, const sctp_stream_id_t stream,
                                      M2AP_M2AP_PDU_t *pdu);
 
-int m3ap_handle_m3ap_enb_setup_res(itti_m3ap_enb_setup_res_t * m3ap_enb_setup_res);
+//------------------------------------------------------------------------------
+int m2ap_handle_m3ap_enb_setup_res(itti_m3ap_enb_setup_res_t * m3ap_enb_setup_res);
 
 //------------------------------------------------------------------------------
 int
@@ -75,13 +76,6 @@ m2ap_mce_handle_mbms_session_start_failure (
 //------------------------------------------------------------------------------
 int
 m2ap_mce_handle_mbms_session_stop_response (
-    __attribute__((unused)) const sctp_assoc_id_t assoc_id,
-    __attribute__((unused)) const sctp_stream_id_t stream,
-    M2AP_M2AP_PDU_t *pdu);
-
-//------------------------------------------------------------------------------
-int
-m2ap_mce_handle_mbms_session_stop_failure (
     __attribute__((unused)) const sctp_assoc_id_t assoc_id,
     __attribute__((unused)) const sctp_stream_id_t stream,
     M2AP_M2AP_PDU_t *pdu);
@@ -163,7 +157,6 @@ int m2ap_mce_generate_m2_setup_failure(
 
 /*** HANDLING EXPIRED TIMERS. */
 //------------------------------------------------------------------------------
-void m2ap_mme_handle_mbms_action_timer_expiry (void *arg);
 
 int m3ap_handle_enb_initiated_reset_ack (const itti_m3ap_enb_initiated_reset_ack_t * const m2ap_enb_reset_ack_p);
 

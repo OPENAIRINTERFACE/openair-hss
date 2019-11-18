@@ -49,4 +49,12 @@ void
 m2ap_handle_mbms_session_update_request (
   const itti_m3ap_mbms_session_update_req_t * const mbms_session_update_req_pP);
 
+/** \brief Trigger an MBMS Session Stop Request from the MCE_APP.
+ **/
+int m2ap_generate_mbms_session_stop_request(mce_mbms_m2ap_id_t mce_mbms_m2ap_id, sctp_assoc_id_t sctp_assoc_id);
+
+/** \brief Handles M2AP Timeouts.
+ **/
+void m2ap_mce_handle_mbms_action_timer_expiry (void *arg);
+
 #endif /* FILE_M2AP_MCE_PROCEDURES_SEEN */

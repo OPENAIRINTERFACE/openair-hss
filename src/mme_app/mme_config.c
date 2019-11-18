@@ -1412,7 +1412,7 @@ static void mme_config_display (mme_config_t * config_pP)
   OAILOG_INFO (LOG_CONFIG, "- IP:\n");
   // todo: print ipv6 addresses
   OAILOG_INFO (LOG_CONFIG, "    s1-MME iface .....: %s\n", bdata(config_pP->ip.if_name_s1_mme));
-  OAILOG_INFO (LOG_CONFIG, "    s1-MME ip ........: %s\n", inet_ntoa (*((struct in_addr *)&config_pP->ip.s1_mme_cidrv4)));
+  OAILOG_INFO (LOG_CONFIG, "    s1-MME ip ........: %s\n", inet_ntoa (*((struct in_addr *)&config_pP->ip.s1_mme_v4)));
   OAILOG_INFO (LOG_CONFIG, "    s11 MME iface ....: %s\n", bdata(config_pP->ip.if_name_s11));
   OAILOG_INFO (LOG_CONFIG, "    s11 MME port .....: %d\n", config_pP->ip.port_s11);
   OAILOG_INFO (LOG_CONFIG, "    s11 MME ip .......: %s\n", inet_ntoa (*((struct in_addr *)&config_pP->ip.s11_mme_v4)));

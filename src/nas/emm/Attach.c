@@ -323,6 +323,8 @@ int emm_proc_attach_request (
     new_emm_ue_ctx->additional_update_type = ies->additional_update_type;
     new_emm_ue_ctx->emm_cause       = EMM_CAUSE_SUCCESS;
     emm_init_context(new_emm_ue_ctx);  /**< Initialize the context, we might do it again if the security was not verified. */
+    /** Set the received eksi. */
+    emm_ctx_set_security_eksi(new_emm_ue_ctx, ies->ksi);
     /** Add the newly created EMM context. */
     DevAssert(RETURNok == emm_data_context_add (&_emm_data, new_emm_ue_ctx));
   }
@@ -1364,8 +1366,11 @@ static int _emm_start_attach_proc_security (emm_data_context_t *emm_context, nas
    /*
     * Create new NAS security context
     */
+    ksi_t old_ksi = emm_context->_security.eksi;
     emm_ctx_clear_security(emm_context);
-    rc = emm_proc_security_mode_control (emm_context, &attach_proc->emm_spec_proc, attach_proc->ksi, _emm_attach_success_security_cb, _emm_attach_failure_security_cb);
+    emm_ctx_set_security_eksi(emm_context, old_ksi);
+
+    rc = emm_proc_security_mode_control (emm_context, &attach_proc->emm_spec_proc, emm_context->_security.eksi, _emm_attach_success_security_cb, _emm_attach_failure_security_cb);
     if (rc != RETURNok) {
       /*
        * Failed to initiate the security mode control procedure

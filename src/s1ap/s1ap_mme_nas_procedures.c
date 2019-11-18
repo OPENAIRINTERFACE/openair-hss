@@ -2186,7 +2186,7 @@ s1ap_handle_paging( const itti_s1ap_paging_t * const s1ap_paging_pP){
 		  INT8_TO_OCTET_STRING(mme_config.gummei.gummei[0].mme_code, &ie->value.choice.UEPagingID.choice.s_TMSI.mMEC);
       ASN_SEQUENCE_ADD(&out->protocolIEs.list, ie);
 
-	  /** Encode the CN Domain. */
+      /** Encode the CN Domain. */
       ie = (S1AP_PagingIEs_t *)calloc(1, sizeof(S1AP_PagingIEs_t));
       ie->id = S1AP_ProtocolIE_ID_id_CNDomain;
       ie->criticality = S1AP_Criticality_ignore;
