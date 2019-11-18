@@ -718,6 +718,7 @@ add_library(MCE_APP
   ${MME_DIR}/mce_app_main.c
   ${MME_DIR}/mce_app_statistics.c
   ${MME_DIR}/mce_app_mbms_service_context.c
+  ${MME_DIR}/mce_app_mbsfn_context.c 
   )
 
 set(NAS_SRC ${OPENAIRCN_DIR}/src/nas/)

@@ -18,7 +18,8 @@ add_library(MCE_APP
     mce_app_itti_messaging.c
     mce_app_main.c
     mce_app_statistics.c
-	mce_app_mbms_service_context.c
+		mce_app_mbms_service_context.c
+  	mce_app_mbsfn_context.c
     )
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
