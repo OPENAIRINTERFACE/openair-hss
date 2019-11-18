@@ -66,7 +66,7 @@ static int                              s1ap_mme_generate_ue_context_release_com
 
 /* Handlers matrix. Only mme related procedures present here.
 */
-s1ap_message_decoded_callback           messages_callback[][3] = {
+s1ap_message_decoded_callback           s1ap_messages_callback[][3] = {
   {s1ap_mme_handle_handover_preparation, 0, 0},                    /* HandoverPreparation */
   {0, s1ap_mme_handle_handover_resource_allocation_response,              /* HandoverResourceAllocation */
       s1ap_mme_handle_handover_resource_allocation_failure},
@@ -139,7 +139,7 @@ s1ap_mme_handle_message (
 {
 
   /* Checking procedure Code and direction of message */
-  if (pdu->choice.initiatingMessage.procedureCode >= sizeof(messages_callback) / (3 * sizeof(s1ap_message_decoded_callback))
+  if (pdu->choice.initiatingMessage.procedureCode >= sizeof(s1ap_messages_callback) / (3 * sizeof(s1ap_message_decoded_callback))
       || (pdu->present > S1AP_S1AP_PDU_PR_unsuccessfulOutcome)) {
     OAILOG_DEBUG (LOG_S1AP, "[SCTP %d] Either procedureCode %ld or direction %d exceed expected\n",
                assoc_id, pdu->choice.initiatingMessage.procedureCode, pdu->present);
@@ -150,7 +150,7 @@ s1ap_mme_handle_message (
   /* No handler present.
    * This can mean not implemented or no procedure for eNB (wrong direction).
    */
-  if (messages_callback[pdu->choice.initiatingMessage.procedureCode][pdu->present - 1] == NULL) {
+  if (s1ap_messages_callback[pdu->choice.initiatingMessage.procedureCode][pdu->present - 1] == NULL) {
     OAILOG_DEBUG (LOG_S1AP, "[SCTP %d] No handler for procedureCode %ld in %s\n",
                assoc_id, pdu->choice.initiatingMessage.procedureCode,
                s1ap_direction2String[pdu->present]);
@@ -159,7 +159,7 @@ s1ap_mme_handle_message (
   }
 
   /* Calling the right handler */
-  int ret = (*messages_callback[pdu->choice.initiatingMessage.procedureCode][pdu->present - 1])(assoc_id, stream, pdu);
+  int ret = (*s1ap_messages_callback[pdu->choice.initiatingMessage.procedureCode][pdu->present - 1])(assoc_id, stream, pdu);
   ASN_STRUCT_FREE_CONTENTS_ONLY(asn_DEF_S1AP_S1AP_PDU, pdu);
   return ret;
 }

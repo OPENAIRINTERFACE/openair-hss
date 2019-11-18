@@ -68,7 +68,6 @@ extern hash_table_ts_t 					g_m2ap_enb_coll; 	// SCTP Association ID association
 static void m2ap_update_mbms_service_context(const mce_mbms_m2ap_id_t mce_mbms_m2ap_id);
 static int m2ap_generate_mbms_session_start_request(mce_mbms_m2ap_id_t mbms_m2ap_id, const uint8_t num_m2ap_enbs, m2ap_enb_description_t ** m2ap_enb_descriptions);
 static int m2ap_generate_mbms_session_update_request(mce_mbms_m2ap_id_t mce_mbms_m2ap_id, sctp_assoc_id_t sctp_assoc_id);
-static int m2ap_generate_mbms_session_stop_request(mce_mbms_m2ap_id_t mce_mbms_m2ap_id, sctp_assoc_id_t sctp_assoc_id);
 
 //------------------------------------------------------------------------------
 void
@@ -320,6 +319,127 @@ m2ap_handle_mbms_session_stop_request (
   OAILOG_FUNC_OUT(LOG_M2AP);
 }
 
+//------------------------------------------------------------------------------
+int m2ap_generate_mbms_session_stop_request(mce_mbms_m2ap_id_t mce_mbms_m2ap_id, sctp_assoc_id_t sctp_assoc_id)
+{
+  OAILOG_FUNC_IN (LOG_M2AP);
+  mbms_description_t                     *mbms_ref = NULL;
+  m2ap_enb_description_t				 *m2ap_enb_description = NULL;
+  uint8_t                                *buffer_p = NULL;
+  uint32_t                                length = 0;
+  enb_mbms_m2ap_id_t					  enb_mbms_m2ap_id = INVALID_ENB_MBMS_M2AP_ID;
+  MessagesIds                             message_id = MESSAGES_ID_MAX;
+  void                                   *id = NULL;
+  M2AP_M2AP_PDU_t                         pdu = {0};
+  M2AP_SessionStopRequest_t			 	 *out;
+  M2AP_SessionStopRequest_Ies_t		 	 *ie = NULL;
+
+  mbms_ref = m2ap_is_mbms_mce_m2ap_id_in_list(mce_mbms_m2ap_id);
+  if (!mbms_ref) {
+	OAILOG_ERROR (LOG_M2AP, "No MCE MBMS M2AP ID " MCE_MBMS_M2AP_ID_FMT". Cannot generate MBMS Session Stop Request. \n", mce_mbms_m2ap_id);
+    OAILOG_FUNC_RETURN (LOG_M2AP, RETURNerror);
+  }
+
+  m2ap_enb_description = m2ap_is_enb_assoc_id_in_list(sctp_assoc_id);
+  if (!m2ap_enb_description) {
+	OAILOG_ERROR (LOG_M2AP, "No M2AP eNB description for SCTP Assoc Id (%d). Cannot trigger MBMS Session Stop Request for MBMS Service with MCE MBMS M2AP ID " MCE_MBMS_M2AP_ID_FMT". \n",
+			sctp_assoc_id, mce_mbms_m2ap_id);
+    OAILOG_FUNC_RETURN (LOG_M2AP, RETURNerror);
+  }
+
+  /** Check that an eNB-MBMS-ID exists. */
+  hashtable_ts_get (&mbms_ref->g_m2ap_assoc_id2mce_enb_id_coll, (const hash_key_t)sctp_assoc_id, (void **)&enb_mbms_m2ap_id);
+  if(enb_mbms_m2ap_id == INVALID_ENB_MBMS_M2AP_ID){
+	OAILOG_ERROR (LOG_M2AP, "No ENB MBMS M2AP ID could be retrieved. Cannot generate MBMS Session Stop Request. \n", enb_mbms_m2ap_id);
+	OAILOG_FUNC_RETURN (LOG_M2AP, RETURNerror);
+  }
+
+  /*
+   * We have found the UE in the list.
+   * Create new IE list message and encode it.
+   */
+  memset(&pdu, 0, sizeof(pdu));
+  pdu.present = M2AP_M2AP_PDU_PR_initiatingMessage;
+  pdu.choice.initiatingMessage.procedureCode = M2AP_ProcedureCode_id_sessionStop;
+  pdu.choice.initiatingMessage.criticality = M2AP_Criticality_ignore;
+  pdu.choice.initiatingMessage.value.present = M2AP_InitiatingMessage__value_PR_SessionStopRequest;
+  out = &pdu.choice.initiatingMessage.value.choice.SessionStopRequest;
+
+  /*
+   * Setting MBMS informations with the ones found in ue_ref
+   */
+  /* mandatory */
+  ie = (M2AP_SessionStopRequest_Ies_t *)calloc(1, sizeof(M2AP_SessionStopRequest_Ies_t));
+  ie->id = M2AP_ProtocolIE_ID_id_MCE_MBMS_M2AP_ID;
+  ie->criticality = M2AP_Criticality_reject;
+  ie->value.present = M2AP_SessionStopRequest_Ies__value_PR_MCE_MBMS_M2AP_ID;
+  ie->value.choice.MCE_MBMS_M2AP_ID = mce_mbms_m2ap_id;
+  ASN_SEQUENCE_ADD(&out->protocolIEs.list, ie);
+
+  /* mandatory */
+  ie = (M2AP_SessionStopRequest_Ies_t *)calloc(1, sizeof(M2AP_SessionStopRequest_Ies_t));
+  ie->id = M2AP_ProtocolIE_ID_id_ENB_MBMS_M2AP_ID;
+  ie->criticality = M2AP_Criticality_reject;
+  ie->value.present = M2AP_SessionStopRequest_Ies__value_PR_ENB_MBMS_M2AP_ID;
+  ie->value.choice.ENB_MBMS_M2AP_ID = enb_mbms_m2ap_id;
+  ASN_SEQUENCE_ADD(&out->protocolIEs.list, ie);
+
+  // todo: qos, sctpm, scheduling..
+  if (m2ap_mce_encode_pdu (&pdu, &buffer_p, &length) < 0) {
+	// TODO: handle something
+	OAILOG_ERROR (LOG_M2AP, "Failed to encode MBMS Session Stop Request. \n");
+	OAILOG_FUNC_RETURN (LOG_M2AP, RETURNerror);
+  }
+
+  bstring b = blk2bstr(buffer_p, length);
+  free(buffer_p);
+  OAILOG_NOTICE (LOG_M2AP, "Send M2AP_MBMS_SESSION_STOP_REQUEST message MCE_MBMS_M2AP_ID = " MCE_MBMS_M2AP_ID_FMT "\n", mce_mbms_m2ap_id);
+  m2ap_mce_itti_send_sctp_request(&b, m2ap_enb_description->sctp_assoc_id, MBMS_SERVICE_SCTP_STREAM_ID, mce_mbms_m2ap_id);
+  OAILOG_FUNC_RETURN (LOG_M2AP, RETURNok);
+}
+
+//------------------------------------------------------------------------------
+void
+m2ap_mce_handle_mbms_action_timer_expiry (void *arg)
+{
+  MessageDef                             *message_p = NULL;
+  OAILOG_FUNC_IN (LOG_M2AP);
+  DevAssert (arg != NULL);
+
+  mbms_description_t *mbms_ref_p  =        (mbms_description_t *)arg;
+
+  mbms_ref_p->m2ap_action_timer.id = M2AP_TIMER_INACTIVE_ID;
+  OAILOG_DEBUG (LOG_M2AP, "Expired- MBMS Action timer MCE MBMS M2AP " MCE_MBMS_M2AP_ID_FMT" . \n", mbms_ref_p->mce_mbms_m2ap_id);
+
+  /**
+   * If there are no associated eNBs, we need to start the MBMS service.
+   * If there are some associated eNBs, we need to update the MBMS service.
+   * No timer for MBMS Service stop.
+   */
+  if(!mbms_ref_p->g_m2ap_assoc_id2mce_enb_id_coll.num_elements) {
+    OAILOG_DEBUG (LOG_M2AP, "Starting MBMS service with MCE MBMS M2AP " MCE_MBMS_M2AP_ID_FMT" . \n", mbms_ref_p->mce_mbms_m2ap_id);
+    uint8_t								  num_m2ap_enbs = 0;
+    /** Get the list of eNBs of the matching service area. */
+    mme_config_read_lock (&mme_config);
+    m2ap_enb_description_t *			         m2ap_enb_p_elements[mme_config.mbms.max_m2_enbs];
+    memset(&m2ap_enb_p_elements, 0, (sizeof(m2ap_enb_description_t*) * mme_config.mbms.max_m2_enbs));
+    mme_config_unlock (&mme_config);
+
+    m2ap_is_mbms_sai_in_list(mbms_ref_p->mbms_service_area_id, &num_m2ap_enbs, (m2ap_enb_description_t **)&m2ap_enb_p_elements);
+    if(!num_m2ap_enbs){
+      OAILOG_ERROR (LOG_M2AP, "No M2AP eNBs could be found for the MBMS SA " MBMS_SERVICE_AREA_ID_FMT" for the MBMS Service with TMGI " TMGI_FMT" after timeout. Removing implicitly. \n",
+    		  mbms_ref_p->mbms_service_area_id, TMGI_ARG(&mbms_ref_p->tmgi));
+      hashtable_ts_free (&g_m2ap_mbms_coll, mbms_ref_p->mce_mbms_m2ap_id);
+      OAILOG_FUNC_OUT (LOG_M2AP);
+    }
+    m2ap_generate_mbms_session_start_request(mbms_ref_p->mce_mbms_m2ap_id, num_m2ap_enbs, m2ap_enb_p_elements);
+  } else {
+    OAILOG_DEBUG (LOG_M2AP, "MBMS service with MCE MBMS M2AP " MCE_MBMS_M2AP_ID_FMT" has already some eNBs, updating it. \n", mbms_ref_p->mce_mbms_m2ap_id);
+    m2ap_update_mbms_service_context(mbms_ref_p->mce_mbms_m2ap_id);
+  }
+  OAILOG_FUNC_OUT (LOG_M2AP);
+}
+
 /****************************************************************************/
 /*********************  L O C A L    F U N C T I O N S  *********************/
 /****************************************************************************/
@@ -508,7 +628,7 @@ int m2ap_generate_mbms_session_start_request(mce_mbms_m2ap_id_t mce_mbms_m2ap_id
   ASN_SEQUENCE_ADD(&out->protocolIEs.list, ie);
 
   // todo: qos, sctpm, scheduling..
-  if (m2ap_mme_encode_pdu (&pdu, &buffer_p, &length) < 0) {
+  if (m2ap_mce_encode_pdu (&pdu, &buffer_p, &length) < 0) {
 	OAILOG_ERROR (LOG_M2AP, "Failed to encode MBMS Session Start Request. \n");
 	OAILOG_FUNC_RETURN (LOG_M2AP, RETURNerror);
   }
@@ -650,7 +770,7 @@ int m2ap_generate_mbms_session_update_request(mce_mbms_m2ap_id_t mce_mbms_m2ap_i
   ASN_SEQUENCE_ADD(&out->protocolIEs.list, ie);
 
   // todo: qos, sctpm, scheduling..
-  if (m2ap_mme_encode_pdu (&pdu, &buffer_p, &length) < 0) {
+  if (m2ap_mce_encode_pdu (&pdu, &buffer_p, &length) < 0) {
 	// TODO: handle something
 	OAILOG_ERROR (LOG_M2AP, "Failed to encode MBMS Session Update Request. \n");
 	OAILOG_FUNC_RETURN (LOG_M2AP, RETURNerror);
@@ -662,84 +782,3 @@ int m2ap_generate_mbms_session_update_request(mce_mbms_m2ap_id_t mce_mbms_m2ap_i
   m2ap_mce_itti_send_sctp_request(&b, m2ap_enb_description->sctp_assoc_id, MBMS_SERVICE_SCTP_STREAM_ID, mce_mbms_m2ap_id);
   OAILOG_FUNC_RETURN (LOG_M2AP, RETURNok);
 }
-
-//------------------------------------------------------------------------------
-static
-int m2ap_generate_mbms_session_stop_request(mce_mbms_m2ap_id_t mce_mbms_m2ap_id, sctp_assoc_id_t sctp_assoc_id)
-{
-  OAILOG_FUNC_IN (LOG_M2AP);
-  mbms_description_t                     *mbms_ref = NULL;
-  m2ap_enb_description_t				 *m2ap_enb_description = NULL;
-  uint8_t                                *buffer_p = NULL;
-  uint32_t                                length = 0;
-  enb_mbms_m2ap_id_t					  enb_mbms_m2ap_id = INVALID_ENB_MBMS_M2AP_ID;
-  MessagesIds                             message_id = MESSAGES_ID_MAX;
-  void                                   *id = NULL;
-  M2AP_M2AP_PDU_t                         pdu = {0};
-  M2AP_SessionStopRequest_t			 	 *out;
-  M2AP_SessionStopRequest_Ies_t		 	 *ie = NULL;
-
-  mbms_ref = m2ap_is_mbms_mce_m2ap_id_in_list(mce_mbms_m2ap_id);
-  if (!mbms_ref) {
-	OAILOG_ERROR (LOG_M2AP, "No MCE MBMS M2AP ID " MCE_MBMS_M2AP_ID_FMT". Cannot generate MBMS Session Stop Request. \n", mce_mbms_m2ap_id);
-    OAILOG_FUNC_RETURN (LOG_M2AP, RETURNerror);
-  }
-
-  m2ap_enb_description = m2ap_is_enb_assoc_id_in_list(sctp_assoc_id);
-  if (!m2ap_enb_description) {
-	OAILOG_ERROR (LOG_M2AP, "No M2AP eNB description for SCTP Assoc Id (%d). Cannot trigger MBMS Session Stop Request for MBMS Service with MCE MBMS M2AP ID " MCE_MBMS_M2AP_ID_FMT". \n",
-			sctp_assoc_id, mce_mbms_m2ap_id);
-    OAILOG_FUNC_RETURN (LOG_M2AP, RETURNerror);
-  }
-
-  /** Check that an eNB-MBMS-ID exists. */
-  hashtable_ts_get (&mbms_ref->g_m2ap_assoc_id2mce_enb_id_coll, (const hash_key_t)sctp_assoc_id, (void **)&enb_mbms_m2ap_id);
-  if(enb_mbms_m2ap_id == INVALID_ENB_MBMS_M2AP_ID){
-	OAILOG_ERROR (LOG_M2AP, "No ENB MBMS M2AP ID could be retrieved. Cannot generate MBMS Session Stop Request. \n", enb_mbms_m2ap_id);
-	OAILOG_FUNC_RETURN (LOG_M2AP, RETURNerror);
-  }
-
-  /*
-   * We have found the UE in the list.
-   * Create new IE list message and encode it.
-   */
-  memset(&pdu, 0, sizeof(pdu));
-  pdu.present = M2AP_M2AP_PDU_PR_initiatingMessage;
-  pdu.choice.initiatingMessage.procedureCode = M2AP_ProcedureCode_id_sessionStop;
-  pdu.choice.initiatingMessage.criticality = M2AP_Criticality_ignore;
-  pdu.choice.initiatingMessage.value.present = M2AP_InitiatingMessage__value_PR_SessionStopRequest;
-  out = &pdu.choice.initiatingMessage.value.choice.SessionStopRequest;
-
-  /*
-   * Setting MBMS informations with the ones found in ue_ref
-   */
-  /* mandatory */
-  ie = (M2AP_SessionStopRequest_Ies_t *)calloc(1, sizeof(M2AP_SessionStopRequest_Ies_t));
-  ie->id = M2AP_ProtocolIE_ID_id_MCE_MBMS_M2AP_ID;
-  ie->criticality = M2AP_Criticality_reject;
-  ie->value.present = M2AP_SessionStopRequest_Ies__value_PR_MCE_MBMS_M2AP_ID;
-  ie->value.choice.MCE_MBMS_M2AP_ID = mce_mbms_m2ap_id;
-  ASN_SEQUENCE_ADD(&out->protocolIEs.list, ie);
-
-  /* mandatory */
-  ie = (M2AP_SessionStopRequest_Ies_t *)calloc(1, sizeof(M2AP_SessionStopRequest_Ies_t));
-  ie->id = M2AP_ProtocolIE_ID_id_ENB_MBMS_M2AP_ID;
-  ie->criticality = M2AP_Criticality_reject;
-  ie->value.present = M2AP_SessionStopRequest_Ies__value_PR_ENB_MBMS_M2AP_ID;
-  ie->value.choice.ENB_MBMS_M2AP_ID = enb_mbms_m2ap_id;
-  ASN_SEQUENCE_ADD(&out->protocolIEs.list, ie);
-
-  // todo: qos, sctpm, scheduling..
-  if (m2ap_mme_encode_pdu (&pdu, &buffer_p, &length) < 0) {
-	// TODO: handle something
-	OAILOG_ERROR (LOG_M2AP, "Failed to encode MBMS Session Stop Request. \n");
-	OAILOG_FUNC_RETURN (LOG_M2AP, RETURNerror);
-  }
-
-  bstring b = blk2bstr(buffer_p, length);
-  free(buffer_p);
-  OAILOG_NOTICE (LOG_M2AP, "Send M2AP_MBMS_SESSION_STOP_REQUEST message MCE_MBMS_M2AP_ID = " MCE_MBMS_M2AP_ID_FMT "\n", mce_mbms_m2ap_id);
-  m2ap_mce_itti_send_sctp_request(&b, m2ap_enb_description->sctp_assoc_id, MBMS_SERVICE_SCTP_STREAM_ID, mce_mbms_m2ap_id);
-  OAILOG_FUNC_RETURN (LOG_M2AP, RETURNok);
-}
-

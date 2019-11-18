@@ -331,19 +331,19 @@ m2ap_mce_thread (
 
     // MBMS session messages from MCE_APP task (M3 --> should trigger MBMS service for all eNB in the service area - not eNB specific).
     case M3AP_MBMS_SESSION_START_REQUEST:{
-    	m3ap_handle_mbms_session_start_request (&M3AP_MBMS_SESSION_START_REQUEST (received_message_p));
+    	m2ap_handle_mbms_session_start_request (&M3AP_MBMS_SESSION_START_REQUEST (received_message_p));
     }
     break;
 
     case M3AP_MBMS_SESSION_STOP_REQUEST:{
-    	m3ap_handle_mbms_session_stop_request (&M3AP_MBMS_SESSION_STOP_REQUEST (received_message_p).tmgi,
+    	m2ap_handle_mbms_session_stop_request (&M3AP_MBMS_SESSION_STOP_REQUEST (received_message_p).tmgi,
     			&M3AP_MBMS_SESSION_STOP_REQUEST (received_message_p).mbms_service_area_id,
 				&M3AP_MBMS_SESSION_STOP_REQUEST (received_message_p).inform_enbs);
     }
     break;
 
     case M3AP_MBMS_SESSION_UPDATE_REQUEST:{
-    	m3ap_handle_mbms_session_update_request (&M3AP_MBMS_SESSION_UPDATE_REQUEST (received_message_p));
+    	m2ap_handle_mbms_session_update_request (&M3AP_MBMS_SESSION_UPDATE_REQUEST (received_message_p));
     }
     break;
     // ToDo: Leave the stats collection in the M2AP layer for now.
@@ -352,7 +352,7 @@ m2ap_mce_thread (
     	/*
     	 * New message received from MCE_APP task.
     	 */
-    	m3ap_handle_m3ap_enb_setup_res(&M3AP_ENB_SETUP_RESPONSE(received_message_p));
+    	m2ap_handle_m3ap_enb_setup_res(&M3AP_ENB_SETUP_RESPONSE(received_message_p));
     }
     break;
 
