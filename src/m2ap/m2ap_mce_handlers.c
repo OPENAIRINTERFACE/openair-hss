@@ -267,10 +267,10 @@ m2ap_mce_handle_m2_setup_request (
 
   if (nb_enb_associated == max_m2_enb_connected) {
     OAILOG_ERROR (LOG_M2AP, "There is too much M2 eNB connected to MME, rejecting the association\n");
-    OAILOG_DEBUG (LOG_M2AP, "Connected = %d, maximum allowed = %d\n", nb_enb_associated, max_m2_enb_connected);
-      /*
-       * Send an overload cause...
-       */
+    OAILOG_ERROR (LOG_M2AP, "Connected = %d, maximum allowed = %d\n", nb_enb_associated, max_m2_enb_connected);
+    /*
+     * Send an overload cause...
+     */
     rc = m2ap_mce_generate_m2_setup_failure (assoc_id, stream, M2AP_Cause_PR_misc, M2AP_CauseMisc_control_processing_overload, M2AP_TimeToWait_v20s);
     OAILOG_FUNC_RETURN (LOG_M2AP, rc);
   }
@@ -321,9 +321,9 @@ m2ap_mce_handle_m2_setup_request (
    * Check the MCE PLMN.
    */
   if(m2ap_mce_combare_mbms_plmn(&global_enb_id->pLMN_Identity) != MBMS_SA_LIST_RET_OK){
-	OAILOG_ERROR (LOG_M2AP, "No Common PLMN with M2AP eNB, generate_m2_setup_failure\n");
-	rc =  m2ap_mce_generate_m2_setup_failure (assoc_id, stream, M2AP_Cause_PR_misc, M2AP_CauseMisc_unspecified, M2AP_TimeToWait_v20s);
-	OAILOG_FUNC_RETURN (LOG_M2AP, rc);
+  	OAILOG_ERROR (LOG_M2AP, "No Common PLMN with M2AP eNB, generate_m2_setup_failure\n");
+  	rc =  m2ap_mce_generate_m2_setup_failure (assoc_id, stream, M2AP_Cause_PR_misc, M2AP_CauseMisc_unspecified, M2AP_TimeToWait_v20s);
+  	OAILOG_FUNC_RETURN (LOG_M2AP, rc);
   }
 
   /* Requirement MME36.413R10_8.7.3.4 Abnormal Conditions
@@ -338,8 +338,8 @@ m2ap_mce_handle_m2_setup_request (
   /** Take the first cell. */
   if(enb_mbms_cfg_data_list->list.count > 1){
     OAILOG_ERROR(LOG_M2AP, "More than 1 cell is not supported for the eNB MBMS. \n");
-	rc =  m2ap_mce_generate_m2_setup_failure (assoc_id, stream, M2AP_Cause_PR_misc, M2AP_CauseMisc_unspecified, M2AP_TimeToWait_v20s);
-	OAILOG_FUNC_RETURN (LOG_M2AP, rc);
+    rc =  m2ap_mce_generate_m2_setup_failure (assoc_id, stream, M2AP_Cause_PR_misc, M2AP_CauseMisc_unspecified, M2AP_TimeToWait_v20s);
+    OAILOG_FUNC_RETURN (LOG_M2AP, rc);
   }
   M2AP_ENB_MBMS_Configuration_data_Item_t 	* m2ap_enb_mbms_cfg_item = enb_mbms_cfg_data_list->list.array[0];
   DevAssert(m2ap_enb_mbms_cfg_item);

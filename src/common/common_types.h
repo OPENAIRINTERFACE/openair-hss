@@ -203,7 +203,6 @@ typedef struct mbsfn_area_s{
 	mbsfn_area_id_t					mbsfn_area_id;
   mbms_service_area_id_t	mbms_service_area_id;
   uint32_t								m2_enb_id_bitmap;
-  uint8_t									mcs;
 } mbsfn_area_t;
 
 typedef struct mbsfn_areas_s{
@@ -211,6 +210,7 @@ typedef struct mbsfn_areas_s{
   uint8_t  mbsfn_bitmap;
 #define MAX_MBMSFN_AREAS 256
   mbsfn_area_t  mbsfnArea[MAX_MBMSFN_AREAS];
+  uint8_t	 local_mbms_service_area;
 
 } mbsfn_areas_t;
 

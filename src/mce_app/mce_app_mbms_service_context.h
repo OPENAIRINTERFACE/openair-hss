@@ -131,7 +131,8 @@ typedef struct mbms_service_s {
 //-----------------
 typedef struct mbsfn_area_context_s {
   struct {
-	  pthread_mutex_t recmutex;  // mutex on the ue_context_t
+	  pthread_mutex_t 						recmutex;  // mutex on the ue_context_t
+	  struct mce_app_timer_t      mcch_timer;
 	  struct {
 		  mbsfn_area_t 	mbsfn_area;
 	  }fields;
@@ -151,11 +152,12 @@ typedef struct mce_mbms_services_s {
 } mce_mbms_services_t;
 
 //-----------------
-typedef struct mce_mbsfn_areas_s {
+typedef struct mce_mbsfn_area_contexts_s {
   uint32_t                 nb_mbsfn_area_managed;
   uint32_t                 nb_mbsfn_are_since_last_stat;
   hash_table_ts_t 		  	*mbsfn_area_id_mbsfn_area_htbl;    	// data is mbsfn_area_t
-} mce_mbsfn_areas_t;
+  hash_table_uint64_ts_t  *mbms_sai_mbsfn_area_ctx_htbl;
+} mce_mbsfn_area_contexts_t;
 
 /** \brief Retrieve an MBMS service by selecting the given MBMS Service Area And TMGI.
  * \param tmgi TMGI to find in MBMS Service map
@@ -222,6 +224,18 @@ void mce_app_update_mbsfn_areas(const mbms_service_area_t * mbms_service_areas, 
  */
 mme_app_mbms_proc_t* mme_app_create_mbms_procedure(mbms_service_t * mbms_service, uint32_t delta_to_start_in_sec, uint32_t delta_to_start_in_usec, const mbms_session_duration_t * const mbms_session_duration);
 void mme_app_delete_mbms_procedure(const mbms_service_t * mbms_service);
+
+/**
+ * Get the local MBSFN areas.
+ */
+void mce_app_get_local_mbsfn_areas(const mbms_service_area_t *mbms_service_areas, const uint32_t m2_enb_id, const sctp_assoc_id_t assoc_id, mbsfn_areas_t * const mbsfn_areas);
+//------------------------------------------------------------------------------
+
+/**
+ * Get the global MBSFN areas.
+ */
+//------------------------------------------------------------------------------
+void mce_app_get_global_mbsfn_areas(const mbms_service_area_t *mbms_service_areas, const uint32_t m2_enb_id, const sctp_assoc_id_t assoc_id, mbsfn_areas_t * const mbsfn_areas);
 
 #endif /* FILE_MCE_APP_MBMS_SERVICE_CONTEXT_SEEN */
 

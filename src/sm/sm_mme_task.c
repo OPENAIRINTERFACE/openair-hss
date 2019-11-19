@@ -327,7 +327,7 @@ sm_mme_init (
    */
   tmrMgr.tmrMgrHandle = (nw_gtpv2c_timer_mgr_handle_t) NULL;
   tmrMgr.tmrStartCallback = sm_mme_start_timer_wrapper;
-  tmrMgr.tmrStopCallback = sm_mme_stop_timer_wrapper;
+  tmrMgr.tmrStopCallback 	= sm_mme_stop_timer_wrapper;
   DevAssert (NW_OK == nwGtpv2cSetTimerMgrEntity (sm_mme_stack_handle, &tmrMgr));
   logMgr.logMgrHandle = 0;
   logMgr.logReqCallback = sm_mme_log_wrapper;
@@ -340,7 +340,7 @@ sm_mme_init (
 
   DevAssert (NW_OK == nwGtpv2cSetLogLevel (sm_mme_stack_handle, NW_LOG_LEVEL_DEBG));
   /** Create 2 sockets, one for 2123 (received initial requests), another high port. */
-  sm_send_init_udp(&mme_config.mbms.ip.mc_mme_v4, &mme_config.mbms.ip.mc_mme_v6, udp.gtpv2cStandardPort); /**< Only low port is enough. */
+  sm_send_init_udp(&mme_config.mbms.ip.mc_mme_v4, &mme_config.mbms.ip.mc_mme_v6, udp.gtpv2cStandardPort); /**< Only low port (2123) is enough. */
 
   bstring b = bfromcstr("sm_mme_teid_2_gtv2c_teid_handle");
   sm_mme_teid_2_gtv2c_teid_handle = hashtable_ts_create(mme_config_p->max_ues, HASH_TABLE_DEFAULT_HASH_FUNC, hash_free_int_func, b);

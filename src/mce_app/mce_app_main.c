@@ -168,25 +168,28 @@ int mce_app_init (const mme_config_t * mme_config_p)
   memset (&mce_app_desc, 0, sizeof (mce_app_desc));
   // todo: (from develop)   pthread_rwlock_init (&mce_app_desc.rw_lock, NULL); && where to unlock it?
   bstring b = bfromcstr("mce_app_mbms_service_id_mbms_service_htbl");
-  mce_app_desc.mce_mbms_service_contexts.mbms_service_index_mbms_service_htbl = hashtable_ts_create (mme_config.mbms.max_mbms_services, NULL, hash_free_func, b);
+  mce_app_desc.mce_mbms_service_contexts.mbms_service_index_mbms_service_htbl = hashtable_ts_create (mme_config.mbms.max_mbms_services, NULL, hash_free_int_func, b);
   btrunc(b, 0);
-//  bassigncstr(b, "mce_app_enb_ue_s1ap_id_ue_context_htbl");
-//  mce_app_desc.mme_ue_contexts.enb_ue_s1ap_id_ue_context_htbl = hashtable_uint64_ts_create (mme_config.max_ues, NULL, b);
-//  btrunc(b, 0);
+
   bassigncstr(b, "mce_app_tunsm_mbms_service_htbl");
   mce_app_desc.mce_mbms_service_contexts.tunsm_mbms_service_htbl = hashtable_uint64_ts_create (mme_config.mbms.max_mbms_services, NULL, b);
   AssertFatal(sizeof(uintptr_t) >= sizeof(uint64_t), "Problem with tunsm_mbms_service_htbl in MCE_APP");
   btrunc(b, 0);
+
   bassigncstr(b, "mce_app_mbsfn_area_id_mbsfn_area_htbl");
-  mce_app_desc.mce_mbsfn_area_contexts.mbsfn_area_id_mbsfn_area_htbl = hashtable_ts_create (MAX_MBMSFN_AREAS, NULL, hash_free_func, b);
+  mce_app_desc.mce_mbsfn_area_contexts.mbsfn_area_id_mbsfn_area_htbl = hashtable_ts_create (MAX_MBMSFN_AREAS, NULL, hash_free_int_func, b);
   btrunc(b, 0);
+
+  bassigncstr(b, "mce_app_mbms_sai_mbsfn_area_ctx_htbl");
+  mce_app_desc.mce_mbsfn_area_contexts.mbms_sai_mbsfn_area_ctx_htbl = hashtable_uint64_ts_create (MAX_MBMSFN_AREAS, NULL, b);
+  AssertFatal(sizeof(uintptr_t) >= sizeof(uint64_t), "Problem with mce_app_mbms_sai_mbsfn_area_ctx_htbl in MCE_APP");
   bdestroy_wrapper (&b);
 
   /**
    * Initialize the MBMS service contexts.
    */
   STAILQ_INIT(&mce_app_desc.mce_mbms_services_list);
-  /** Iterate through the list of mbms services (each a context). */
+  /** Iterate through the list of MBMS services (each a context). */
   for(int num_ms = 0; num_ms < CHANGEABLE_VALUE; num_ms++) {
 		/** Create a new mutex for each and put them into the list. */
 		mbms_service_t * mbms_service = &mce_app_desc.mbms_services[num_ms];
@@ -278,5 +281,6 @@ void mce_app_exit (void)
   // todo: hashtable_uint64_ts_destroy (mce_app_desc.mme_ue_contexts.enb_ue_s1ap_id_ue_context_htbl);
   hashtable_uint64_ts_destroy (mce_app_desc.mce_mbms_service_contexts.tunsm_mbms_service_htbl);
   hashtable_ts_destroy (mce_app_desc.mce_mbms_service_contexts.mbms_service_index_mbms_service_htbl);
+  hashtable_uint64_ts_destroy (mce_app_desc.mce_mbsfn_area_contexts.mbms_sai_mbsfn_area_ctx_htbl);
   hashtable_ts_destroy (mce_app_desc.mce_mbsfn_area_contexts.mbsfn_area_id_mbsfn_area_htbl);
 }

@@ -63,9 +63,9 @@ m2ap_mce_compare_mbms_sa_list(
     }
     /** Check if it is in bounds for the local service areas. */
     int val = mbms_sa_value - mme_config.mbms.mbms_global_service_area_types;
-    int local_area = val / mme_config.mbms.mbms_local_service_areas;
+    int local_area = val / mme_config.mbms.mbms_local_service_area_types;
     int local_area_type = val % mme_config.mbms.mbms_local_service_area_types;
-    if(local_area > 0 && local_area < mme_config.mbms.mbms_local_service_area_types){
+    if(local_area > 0 && local_area < mme_config.mbms.mbms_local_service_areas){
     	OAILOG_INFO(LOG_MME_APP, "Found a valid MBMS Service Area ID " MBMS_SERVICE_AREA_ID_FMT ". \n", mbms_sa_value);
     	return MBMS_SA_LIST_AT_LEAST_ONE_MATCH;
     }

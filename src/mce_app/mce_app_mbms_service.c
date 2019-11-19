@@ -478,9 +478,9 @@ mce_app_handle_mbms_session_stop_request(
 		  (struct sockaddr*)&mbms_service->privates.fields.mbms_peer_ip, mbms_session_stop_request_pP->trxn, REQUEST_ACCEPTED);
   /** M3AP Session Stop Request --> No Response is expected. Immediately terminate the MBMS Service afterwards. */
   if(!mbms_session_stop_request_pP->abs_stop_time.sec_since_epoch || mbms_session_stop_request_pP->mbms_flags.lmri) {
-	OAILOG_INFO(LOG_MCE_APP, "No MBMS session stop time is given for TMGI " TMGI_FMT ". Stopping immediately and informing the MCE over M3. \n", TMGI_ARG(&mbms_service->privates.fields.tmgi));
-	mbms_service_idx = mce_get_mbms_service_index(&mbms_service->privates.fields.tmgi, mbms_service->privates.fields.mbms_service_area_id);
-	mce_app_itti_m3ap_mbms_session_stop_request(&mbms_service->privates.fields.tmgi, mbms_service->privates.fields.mbms_service_area_id, (mbms_session_stop_request_pP->mbms_flags.lmri));
+  	OAILOG_INFO(LOG_MCE_APP, "No MBMS session stop time is given for TMGI " TMGI_FMT ". Stopping immediately and informing the MCE over M3. \n", TMGI_ARG(&mbms_service->privates.fields.tmgi));
+  	mbms_service_idx = mce_get_mbms_service_index(&mbms_service->privates.fields.tmgi, mbms_service->privates.fields.mbms_service_area_id);
+  	mce_app_itti_m3ap_mbms_session_stop_request(&mbms_service->privates.fields.tmgi, mbms_service->privates.fields.mbms_service_area_id, (mbms_session_stop_request_pP->mbms_flags.lmri));
     mce_app_stop_mbms_service(&mbms_service->privates.fields.tmgi, mbms_service->privates.fields.mbms_service_area_id, mbms_session_stop_request_pP->teid, NULL);
   }
   OAILOG_FUNC_OUT (LOG_MCE_APP);
@@ -491,13 +491,15 @@ void
  mce_app_handle_m3ap_enb_setup_request(
      itti_m3ap_enb_setup_req_t * const m3ap_enb_setup_req_p)
 {
-  mbsfn_areas_t									mbsfn_areas = {0};
   OAILOG_FUNC_IN (LOG_MCE_APP);
+  mbsfn_areas_t									mbsfn_areas = {0};
 
   /**
    * Check if an MBSFN area for the eNB exists, if so give it back.
    */
-  mce_app_update_mbsfn_areas(&m3ap_enb_setup_req_p->mbms_service_areas, m3ap_enb_setup_req_p->sctp_assoc, m3ap_enb_setup_req_p->m2ap_enb_id, &mbsfn_areas);
+  mce_app_get_local_mbsfn_areas(&m3ap_enb_setup_req_p->mbms_service_areas,  m3ap_enb_setup_req_p->m2ap_enb_id, m3ap_enb_setup_req_p->sctp_assoc, &mbsfn_areas);
+  mce_app_get_global_mbsfn_areas(&m3ap_enb_setup_req_p->mbms_service_areas, m3ap_enb_setup_req_p->m2ap_enb_id, m3ap_enb_setup_req_p->sctp_assoc, &mbsfn_areas);
+
   mce_app_itti_m3ap_enb_setup_response(&mbsfn_areas, m3ap_enb_setup_req_p->sctp_assoc, m3ap_enb_setup_req_p->m2ap_enb_id);
   OAILOG_FUNC_OUT (LOG_MCE_APP);
 }
