@@ -185,6 +185,15 @@ typedef struct {
   } choice;
 } Mei_t;
 
+/**
+ * MBMS related functionalities.
+ */
+typedef enum {
+	 ENB_TYPE_NULL,
+	 ENB_TYPE_TDD,
+	 ENB_TYPE_FDD
+} enb_type_t;
+
 typedef struct {
   unsigned seconds;
   unsigned days;
@@ -203,6 +212,13 @@ typedef struct mbsfn_area_s{
 	mbsfn_area_id_t					mbsfn_area_id;
   mbms_service_area_id_t	mbms_service_area_id;
   uint32_t								m2_enb_id_bitmap;
+  /** Modification and Repetition Periods. */
+  uint16_t								mcch_modif_period_rf;
+  uint16_t								mcch_repetition_period_rf;
+  uint8_t 								mbms_mcch_msi_mcs;
+  uint8_t								  mbms_mcch_subframes;
+  enb_type_t							m2_enb_type;
+  uint8_t									mcch_offset_rf;
 } mbsfn_area_t;
 
 typedef struct mbsfn_areas_s{

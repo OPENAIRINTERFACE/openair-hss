@@ -414,6 +414,7 @@ m2ap_mce_handle_m2_setup_request (
   OAILOG_FUNC_RETURN (LOG_M2AP, rc);
 }
 
+extern int enb_bands[];
 //------------------------------------------------------------------------------
 static
   int
@@ -440,13 +441,13 @@ m2ap_generate_m2_setup_response (
 
   // Generating response
   mme_config_read_lock (&mme_config);
-
   /** mandatory. */
   ie = (M2AP_M2SetupResponse_IEs_t *)calloc(1, sizeof(M2AP_M2SetupResponse_IEs_t));
   ie->id = M2AP_ProtocolIE_ID_id_GlobalMCE_ID;
   ie->criticality = M2AP_Criticality_ignore;
   ie->value.present = M2AP_M2SetupResponse_IEs__value_PR_GlobalMCE_ID;
-  ASN_SEQUENCE_ADD(&out->protocolIEs.list, ie);
+  INT16_TO_OCTET_STRING (mme_config.mbms.mce_id, &ie->value.choice.GlobalMCE_ID.mCE_ID);
+  mme_config_unlock (&mme_config);
 
 //  M2AP_PLMN_Identity_t                    *plmn = NULL;
 //  plmn = calloc (1, sizeof (*plmn));
@@ -457,29 +458,44 @@ m2ap_generate_m2_setup_response (
   /** Get the integer values from the PLMN. */
   PLMN_T_TO_MCC_MNC ((mme_config.mbms.mce_plmn), mcc, mnc, mnc_len);
   MCC_MNC_TO_PLMNID (mcc, mnc, mnc_len,	&ie->value.choice.GlobalMCE_ID.pLMN_Identity);
-
   /** Use same MME code for MCE ID for all eNBs. */
-  INT16_TO_OCTET_STRING (mme_config.mbms.mce_id, &ie->value.choice.GlobalMCE_ID.mCE_ID);
-  INT16_TO_OCTET_STRING (mme_config.mbms.mce_id, &ie->value.choice.GlobalMCE_ID.pLMN_Identity);
+  ASN_SEQUENCE_ADD(&out->protocolIEs.list, ie);
 
   /** Skip the MCC name. */
 
   /** mandatory. **/
-  //  MCCH related BCCH Configuration data per MBSFN area
-
   ie = (M2AP_M2SetupResponse_IEs_t *)calloc(1, sizeof(M2AP_M2SetupResponse_IEs_t));
   ie->id = M2AP_ProtocolIE_ID_id_MCCHrelatedBCCH_ConfigPerMBSFNArea;
   ie->criticality = M2AP_Criticality_reject;
   ie->value.present = M2AP_M2SetupResponse_IEs__value_PR_MCCHrelatedBCCH_ConfigPerMBSFNArea;
   ASN_SEQUENCE_ADD(&out->protocolIEs.list, ie);
 
-  /** Only supporting a single MBSFN Area currently. */
-  // memset for gcc 4.8.4 instead of {0}, servedGUMMEI.servedPLMNs
-  mbsfnCfgItem = calloc(1, sizeof *mbsfnCfgItem);
-  ASN_SEQUENCE_ADD(&ie->value.choice.MCCHrelatedBCCH_ConfigPerMBSFNArea.list, mbsfnCfgItem);
-  // todo: fill the MBSFN item
-
-  mme_config_unlock (&mme_config);
+  //  MCCH related BCCH Configuration data per MBSFN area
+  for(int num_mbsfn = 0; num_mbsfn < mbsfn_areas->num_mbsfn_areas; num_mbsfn++) {
+  	/** Only supporting a single MBSFN Area currently. */
+  	// memset for gcc 4.8.4 instead of {0}, servedGUMMEI.servedPLMNs
+	  mbsfnCfgItem = calloc(1, sizeof (M2AP_MCCHrelatedBCCH_ConfigPerMBSFNArea_Item_t));
+  	ASN_SEQUENCE_ADD(&ie->value.choice.MCCHrelatedBCCH_ConfigPerMBSFNArea.list, mbsfnCfgItem);
+  	/** MBSFN Area Id. */
+  	mbsfnCfgItem->mbsfnArea = mbsfn_areas->mbsfnArea[num_mbsfn].mbsfn_area_id;
+  	mbsfnCfgItem->pdcchLength = 2;
+  	mbsfnCfgItem->repetitionPeriod   = mbsfn_areas->mbsfnArea[num_mbsfn].mcch_repetition_period_rf;
+  	mbsfnCfgItem->offset   					 = mbsfn_areas->mbsfnArea[num_mbsfn].mbms_mcch_subframes;
+  	mbsfnCfgItem->modificationPeriod = mbsfn_areas->mbsfnArea[num_mbsfn].mcch_modif_period_rf;
+  	/**
+  	 * Subframes, where MCCH could exist for this MBSFN areas.
+  	 * Set the 6 leftmost bits.
+  	 */
+  	uint8_t subframe_alloc = mbsfn_areas->mbsfnArea[num_mbsfn].mbms_mcch_subframes <<2;
+//  	uint32_t target_enb_id = s1ap_mme_configuration_transfer_pP->target_global_enb_id.cell_identity.enb_id;
+//  	target_enb_id = target_enb_id <<4;
+//  	uint32_t target_enb_id1 = htonl(target_enb_id << 8);
+  	mbsfnCfgItem->subframeAllocationInfo.buf = calloc (1, sizeof(uint8_t));
+  	memcpy(mbsfnCfgItem->subframeAllocationInfo.buf, (uint8_t*)&subframe_alloc, 1);
+  	mbsfnCfgItem->subframeAllocationInfo.size = 1;
+  	mbsfnCfgItem->subframeAllocationInfo.bits_unused = 2;
+  	mbsfnCfgItem->modulationAndCodingScheme = mbsfn_areas->mbsfnArea[num_mbsfn].mbms_mcch_msi_mcs;
+  }
 
   if (m2ap_mce_encode_pdu (&pdu, &buffer, &length) < 0) {
     OAILOG_DEBUG (LOG_M2AP, "Removed eNB %d\n", m2ap_enb_association->sctp_assoc_id);

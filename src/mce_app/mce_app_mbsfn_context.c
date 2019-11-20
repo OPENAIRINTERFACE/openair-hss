@@ -477,6 +477,8 @@ bool mce_app_set_mcch_timer(struct mbsfn_area_context_s * const mbsfn_area_conte
 	return true;
 }
 
+extern int enb_bands[];
+
 //------------------------------------------------------------------------------
 static
 bool mce_app_create_mbsfn_area(const mbsfn_area_id_t mbsfn_area_id, const mbms_service_area_id_t mbms_service_area_id, const sctp_assoc_id_t assoc_id, const uint32_t m2_enb_id) {
@@ -505,8 +507,32 @@ bool mce_app_create_mbsfn_area(const mbsfn_area_id_t mbsfn_area_id, const mbms_s
 			pthread_rwlock_unlock(&mce_app_desc.rw_lock);
 			OAILOG_FUNC_RETURN (LOG_MME_APP, false);
 		}
-		mbsfn_area_context->privates.fields.mbsfn_area.mbms_service_area_id = mbms_service_area_id;
 		mbsfn_area_context->privates.fields.mbsfn_area.mbsfn_area_id			  = mbsfn_area_id;
+		mbsfn_area_context->privates.fields.mbsfn_area.mbms_service_area_id = mbms_service_area_id;
+
+		/**
+		 * Set the MCCH configurations from the MmeCfg file.
+		 * MME Config is already locked.
+		 */
+		mbsfn_area_context->privates.fields.mbsfn_area.mcch_modif_period_rf 			= mme_config.mbms.mbms_mcch_modification_period_rf;
+		mbsfn_area_context->privates.fields.mbsfn_area.mcch_repetition_period_rf  = mme_config.mbms.mbms_mcch_repetition_period_rf;
+		mbsfn_area_context->privates.fields.mbsfn_area.mbms_mcch_msi_mcs 					= mme_config.mbms.mbms_mcch_msi_mcs;
+		// todo: a function which checks multiple MBSFN areas for MCCH offset
+		// todo: MCCH offset is calculated in the MCH resources?
+		mbsfn_area_context->privates.fields.mbsfn_area.mcch_offset_rf			 				= 0;
+		/** Indicate the MCCH subframes. */
+		// todo: a function, depending on the number of total MBSFN areas, repetition/modification periods..
+		// todo: calculate at least for 1 MCH of 1 MCCH the MCCH allocation, eNB can allocate dynamically for the correct subframe?
+		mbsfn_area_context->privates.fields.mbsfn_area.m2_enb_type = enb_bands[mme_config.mbms.mbms_enb_band];
+		if(mbsfn_area_context->privates.fields.mbsfn_area.m2_enb_type == ENB_TYPE_FDD){
+			mbsfn_area_context->privates.fields.mbsfn_area.mbms_mcch_subframes				= 0b00100000;
+		} else if(mbsfn_area_context->privates.fields.mbsfn_area.m2_enb_type == ENB_TYPE_TDD) {
+			mbsfn_area_context->privates.fields.mbsfn_area.mbms_mcch_subframes				= 0b00001000;
+		} else {
+			DevMessage("MBSFN band is invalid!");
+		}
+
+
 		/** Set the M2 eNB Id. Nothing else needs to be done for the MCS part. */
 		mbsfn_area_context->privates.fields.mbsfn_area.m2_enb_id_bitmap |= (0x01 << m2_enb_id);
 		/** Add the MBSFN area to the back of the list. */
@@ -523,6 +549,7 @@ bool mce_app_create_mbsfn_area(const mbsfn_area_id_t mbsfn_area_id, const mbms_s
 static
 void mce_update_mbsfn_area(struct mbsfn_areas_s * const mbsfn_areas, const mbsfn_area_id_t mbsfn_area_id, const mbms_service_area_id_t mbms_service_area_id, uint32_t m2_enb_id, const sctp_assoc_id_t assoc_id) {
 	OAILOG_FUNC_IN(LOG_MCE_APP);
+	mbsfn_area_context_t * mbsfn_area_context = NULL;
 	/**
 	 * Updated the response (MBSFN areas). Check if the MBSFN areas are existing or not.
 	 */
@@ -532,16 +559,16 @@ void mce_update_mbsfn_area(struct mbsfn_areas_s * const mbsfn_areas, const mbsfn
 		 * Set it in the MBSFN response!
 		 */
 		mbsfn_areas->num_mbsfn_areas++;
-		mbsfn_areas->mbsfnArea[mbsfn_areas->num_mbsfn_areas].mbms_service_area_id = mbms_service_area_id;
-		mbsfn_areas->mbsfnArea[mbsfn_areas->num_mbsfn_areas].mbsfn_area_id = mbsfn_area_id;
+		mbsfn_area_context = mce_mbsfn_area_exists_mbsfn_area_index(&mce_app_desc.mce_mbsfn_area_contexts, mbsfn_area_id);
+		memcpy((void*)&mbsfn_areas->mbsfnArea[mbsfn_areas->num_mbsfn_areas], (void*)&mbsfn_area_context->privates.fields.mbsfn_area, sizeof(mbsfn_area_t));
 		OAILOG_INFO(LOG_MCE_APP, "MBSFN Area " MBSFN_AREA_ID_FMT " is already active. Successfully updated for MBMS_SAI " MBMS_SERVICE_AREA_ID_FMT " with eNB information (m2_enb_id=%d, sctp_assoc=%d).\n",
 				mbsfn_area_id, mbms_service_area_id, m2_enb_id, assoc_id);
 	} else {
 		/** Could not update. Check if it needs to be created. */
 		if(mce_app_create_mbsfn_area(mbsfn_area_id, mbms_service_area_id, assoc_id, m2_enb_id)){
 			mbsfn_areas->num_mbsfn_areas++;
-			mbsfn_areas->mbsfnArea[mbsfn_areas->num_mbsfn_areas].mbms_service_area_id = mbms_service_area_id;
-			mbsfn_areas->mbsfnArea[mbsfn_areas->num_mbsfn_areas].mbsfn_area_id = mbsfn_area_id;
+			mbsfn_area_context = mce_mbsfn_area_exists_mbsfn_area_index(&mce_app_desc.mce_mbsfn_area_contexts, mbsfn_area_id);
+			memcpy((void*)&mbsfn_areas->mbsfnArea[mbsfn_areas->num_mbsfn_areas], (void*)&mbsfn_area_context->privates.fields.mbsfn_area, sizeof(mbsfn_area_t));
 			OAILOG_INFO(LOG_MCE_APP, "Created new MBSFN Area " MBSFN_AREA_ID_FMT " for MBMS_SAI " MBMS_SERVICE_AREA_ID_FMT " with eNB information (m2_enb_id=%d, sctp_assoc=%d).\n",
 					mbsfn_area_id, mbms_service_area_id, m2_enb_id, assoc_id);
 		}
