@@ -149,7 +149,7 @@ pipeline {
         stage ('Static Code Analysis') {
             steps {
                 echo '\u2705 \u001B[32mStatic Code Analysis with cppcheck\u001B[0m'
-                sh "cppcheck --enable=warning --force --xml --xml-version=2 . 2> cppcheck.xml 1> cppcheck_build.log"
+                sh "cppcheck --enable=warning --force --xml --xml-version=2 -i src/oai_sgw -i src/sgw -i src/fluid/fluidmsg/test -i src/gtpv2-c/nwgtpv2c-0.11/test-app -i src/nas/test -i src/test -i src/oai_hss/tests -i src/utils/bstr/bstest.c -i src/utils/bstr/test.cpp -i src/utils/bstr/testaux.c --suppressions-list=scripts/cppcheck_suppressions.list src 2> cppcheck.xml 1> cppcheck_build.log"
                 script {
                     if (fileExists('cppcheck.xml')) {
                         archiveArtifacts artifacts: 'cppcheck.xml'
