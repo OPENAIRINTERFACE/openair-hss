@@ -7,7 +7,7 @@
       </a>
     </td>
     <td style="border-collapse: collapse; border: none; vertical-align: center;">
-      <b><font size = "5">OpenAirInterface Core Home Subscriber Server Entity Feature Set</font></b>
+      <b><font size = "5">OpenAirInterface Core Home Subscriber Server Feature Set</font></b>
     </td>
   </tr>
 </table>
@@ -50,3 +50,5 @@ SCEF = Service Capability Exposure Function
 Contributed fork of freeDiameter allowing duplicate AVPs among several dictionaries
 
 Persistence of data done by Cassandra
+
+
