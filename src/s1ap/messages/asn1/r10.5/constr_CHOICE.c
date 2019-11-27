@@ -1084,7 +1084,9 @@ CHOICE_encode_aper(asn_TYPE_descriptor_t *td,
 
 	if(constraints) ct = &constraints->value;
 	else if(td->per_constraints) ct = &td->per_constraints->value;
-	else ct = 0;
+	else ct = NULL;
+    if (ct == NULL)
+      _ASN_ENCODE_FAILED;
 	
 	present = _fetch_present_idx(sptr,
 								 specs->pres_offset, specs->pres_size);

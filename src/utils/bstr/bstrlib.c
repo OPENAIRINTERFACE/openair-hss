@@ -2414,8 +2414,14 @@ int i, c, v;
 	} else {
 		v = (bl->qty - 1) * len;
 		if ((bl->qty > 512 || len > 127) &&
-		    v / len != bl->qty - 1) return NULL; /* Overflow */
-		if (v > INT_MAX - c) return NULL;	/* Overflow */
+		    v / len != bl->qty - 1) {
+          bstr__free (b);
+          return NULL; /* Overflow */
+        }
+		if (v > INT_MAX - c) {
+          bstr__free (b);
+          return NULL;	/* Overflow */
+        }
 		c += v;
 		p = b->data = (unsigned char *) bstr__alloc (c);
 		if (p == NULL) {

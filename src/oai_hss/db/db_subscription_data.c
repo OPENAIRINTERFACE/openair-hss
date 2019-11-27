@@ -83,16 +83,25 @@ hss_mysql_query_pdns (
        * First row, must malloc
        */
       pdn_array = malloc (sizeof (mysql_pdn_t));
+      if (pdn_array == NULL) {
+        /*
+         * Error on malloc
+         */
+        ret = ENOMEM;
+        goto err;
+      }
     } else {
+      mysql_pdn_t *old_pdn_array = pdn_array;
       pdn_array = realloc (pdn_array, *nb_pdns * sizeof (mysql_pdn_t));
-    }
-
-    if (pdn_array == NULL) {
-      /*
-       * Error on malloc
-       */
-      ret = ENOMEM;
-      goto err;
+      if (pdn_array == NULL) {
+        /*
+         * Error on realloc
+         */
+        if (old_pdn_array != NULL)
+          free (pdn_array);
+        ret = ENOMEM;
+        goto err;
+      }
     }
 
     pdn_elm = &pdn_array[*nb_pdns - 1];
