@@ -182,7 +182,8 @@ typedef struct mme_app_s11_proc_delete_bearer_s {
 
 typedef struct mme_app_mbms_proc_s {
   mme_app_base_proc_t           	proc;
-  bool							 	trigger_mbms_session_stop;
+  bool							 							trigger_mbms_session_stop;
+
   uintptr_t                      	sm_trxn;
   struct mme_app_timer_t         	timer;
   LIST_ENTRY(mme_app_mbms_proc_s)  	entries;      /* List. */

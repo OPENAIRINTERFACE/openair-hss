@@ -34,6 +34,7 @@
 #endif
 
 #include "hashtable.h"
+#include "m2ap_common.h"
 #include "mme_app_bearer_context.h"
 
 // Forward declarations
@@ -65,7 +66,7 @@ enum mce_m2_enb_state_s {
 typedef struct mbms_description_s {
   mce_mbms_m2ap_id_t 			mce_mbms_m2ap_id:24;    ///< Unique MBMS id over MCE (24 bits wide)
   /** List of SCTP associations pointing to the eNBs. */
-  hash_table_ts_t 				g_m2ap_assoc_id2mce_enb_id_coll; // key is enb_mbms_m2ap_id, key is sctp association id;
+  hash_table_uint64_ts_t	g_m2ap_assoc_id2mce_enb_id_coll; // key is enb_mbms_m2ap_id, key is sctp association id;
 
   /** MBMS Parameters. */
   tmgi_t					    tmgi;
@@ -110,13 +111,15 @@ typedef struct m2ap_enb_description_s {
   /*@{*/
   char     				m2ap_enb_name[150];      ///< Printable eNB Name
   uint32_t 				m2ap_enb_id;             ///< Unique eNB ID
+  /** Received MBMS SA list. */
   mbms_service_area_t   mbms_sa_list;      ///< Tracking Area Identifiers signaled by the eNB (for each cell - used for paging.).
+  /** Configured MBSFN Area Id . */
+  mbsfn_area_ids_t		  mbsfn_area_ids;
   /*@}*/
 
   /** MBMS Services for this eNB **/
   /*@{*/
   uint32_t nb_mbms_associated; ///< Number of NAS associated UE on this eNB
-  long 	   mbsfn_synch_area_id;
   /*@}*/
 
   /** SCTP stuff **/
@@ -139,14 +142,23 @@ int m2ap_mce_init(void);
  **/
 void m2ap_mce_exit (void);
 
+/** \brief Look for given MBSFN Area Id in the list.
+ * \param MBSFN Area Id is not unique and used for the search in the list.
+ * @returns All matched M2AP eNBs in the m2ap_enb_list.
+ **/
+void m2ap_is_mbsfn_area_id_list (
+  const mbsfn_area_id_t mbsfn_area_id,
+  int *num_m2ap_enbs,
+  m2ap_enb_description_t ** m2ap_enbs);
+
 /** \brief Look for given MBMS Service Area Id in the list.
- * \param tac MBMS Service Area Id is not unique and used for the search in the list.
+ * \param MBMS Service Area Id is not unique and used for the search in the list.
  * @returns All matched M2AP eNBs in the m2ap_enb_list.
  **/
 void m2ap_is_mbms_sai_in_list (
   const mbms_service_area_id_t mbms_sai,
   int *num_m2ap_enbs,
-  m2ap_enb_description_t ** m2ap_enbs);
+	const m2ap_enb_description_t ** m2ap_enbs);
 
 /** \brief Look for given MBMS Service Area Id in the list.
  * \param tac MBMS Service Area Id is not unique and used for the search in the list.

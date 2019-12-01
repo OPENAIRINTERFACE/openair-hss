@@ -1318,63 +1318,6 @@ gtpv2c_uli_ie_get (
 }
 
 //------------------------------------------------------------------------------
-nw_rc_t
-gtpv2c_bearer_qos_ie_get (
-  uint8_t ieType,
-  uint16_t ieLength,
-  uint8_t ieInstance,
-  uint8_t * ieValue,
-  void *arg)
-{
-  bearer_qos_t                       *bearer_qos = (bearer_qos_t *) arg;
-
-  DevAssert (bearer_qos );
-
-  if (22 <= ieLength) {
-    int index = 0;
-    bearer_qos->pci = (ieValue[index] >> 6) & 0x01;
-    bearer_qos->pci = (ieValue[index] >> 6) & 0x01;
-    bearer_qos->pl  = (ieValue[index] >> 2) & 0x0F;
-    bearer_qos->pvi = ieValue[index++] & 0x01;
-    bearer_qos->qci = ieValue[index++];
-
-    bearer_qos->mbr.br_ul = ((bit_rate_t)ieValue[index++]) << 32;
-    bearer_qos->mbr.br_ul |= (((bit_rate_t)ieValue[index++]) << 24);
-    bearer_qos->mbr.br_ul |= (((bit_rate_t)ieValue[index++]) << 16);
-    bearer_qos->mbr.br_ul |= (((bit_rate_t)ieValue[index++]) << 8);
-    bearer_qos->mbr.br_ul |= (bit_rate_t)ieValue[index++];
-
-    bearer_qos->mbr.br_dl = ((bit_rate_t)ieValue[index++]) << 32;
-    bearer_qos->mbr.br_dl |= (((bit_rate_t)ieValue[index++]) << 24);
-    bearer_qos->mbr.br_dl |= (((bit_rate_t)ieValue[index++]) << 16);
-    bearer_qos->mbr.br_dl |= (((bit_rate_t)ieValue[index++]) << 8);
-    bearer_qos->mbr.br_dl |= (bit_rate_t)ieValue[index++];
-
-    bearer_qos->gbr.br_ul = ((bit_rate_t)ieValue[index++]) << 32;
-    bearer_qos->gbr.br_ul |= (((bit_rate_t)ieValue[index++]) << 24);
-    bearer_qos->gbr.br_ul |= (((bit_rate_t)ieValue[index++]) << 16);
-    bearer_qos->gbr.br_ul |= (((bit_rate_t)ieValue[index++]) << 8);
-    bearer_qos->gbr.br_ul |= (bit_rate_t)ieValue[index++];
-
-    bearer_qos->gbr.br_dl = ((bit_rate_t)ieValue[index++]) << 32;
-    bearer_qos->gbr.br_dl |= (((bit_rate_t)ieValue[index++]) << 24);
-    bearer_qos->gbr.br_dl |= (((bit_rate_t)ieValue[index++]) << 16);
-    bearer_qos->gbr.br_dl |= (((bit_rate_t)ieValue[index++]) << 8);
-    bearer_qos->gbr.br_dl |= (bit_rate_t)ieValue[index++];
-
-    if (22 < ieLength) {
-      OAILOG_ERROR (LOG_S11, "TODO gtpv2c_bearer_qos_ie_get() BearerQOS_t\n");
-      return NW_GTPV2C_IE_INCORRECT;
-    }
-    return NW_OK;
-  } else {
-    OAILOG_ERROR (LOG_S11, "Bad IE length %"PRIu8"\n", ieLength);
-    return NW_GTPV2C_IE_INCORRECT;
-  }
-}
-
-
-//------------------------------------------------------------------------------
 int
 gtpv2c_bearer_qos_ie_set (
   nw_gtpv2c_msg_handle_t * msg,

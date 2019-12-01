@@ -62,10 +62,10 @@ m2ap_mce_compare_mbms_sa_list(
       return MBMS_SA_LIST_AT_LEAST_ONE_MATCH;
     }
     /** Check if it is in bounds for the local service areas. */
-    int val = mbms_sa_value - mme_config.mbms.mbms_global_service_area_types;
+    int val = mbms_sa_value - mme_config.mbms.mbms_global_service_area_types + 1;
     int local_area = val / mme_config.mbms.mbms_local_service_area_types;
     int local_area_type = val % mme_config.mbms.mbms_local_service_area_types;
-    if(local_area > 0 && local_area < mme_config.mbms.mbms_local_service_areas){
+    if(local_area < mme_config.mbms.mbms_local_service_areas){
     	OAILOG_INFO(LOG_MME_APP, "Found a valid MBMS Service Area ID " MBMS_SERVICE_AREA_ID_FMT ". \n", mbms_sa_value);
     	return MBMS_SA_LIST_AT_LEAST_ONE_MATCH;
     }
@@ -85,11 +85,11 @@ m2ap_mce_combare_mbms_plmn(
   mme_config_read_lock (&mme_config);
   /*Verify that the MME code within S-TMSI is same as what is configured in MME conf*/
   if ((plmn.mcc_digit2 == mme_config.mbms.mce_plmn.mcc_digit2) &&
-	(plmn.mcc_digit1 == mme_config.mbms.mce_plmn.mcc_digit1) &&
-	(plmn.mnc_digit3 == mme_config.mbms.mce_plmn.mnc_digit3) &&
-	(plmn.mcc_digit3 == mme_config.mbms.mce_plmn.mcc_digit3) &&
-	(plmn.mnc_digit2 == mme_config.mbms.mce_plmn.mnc_digit2) &&
-	(plmn.mnc_digit1 == mme_config.mbms.mce_plmn.mnc_digit1))
+  		(plmn.mcc_digit1 == mme_config.mbms.mce_plmn.mcc_digit1) &&
+			(plmn.mnc_digit3 == mme_config.mbms.mce_plmn.mnc_digit3) &&
+			(plmn.mcc_digit3 == mme_config.mbms.mce_plmn.mcc_digit3) &&
+			(plmn.mnc_digit2 == mme_config.mbms.mce_plmn.mnc_digit2) &&
+			(plmn.mnc_digit1 == mme_config.mbms.mce_plmn.mnc_digit1))
   {
 	  rc = MBMS_SA_LIST_RET_OK;
   }

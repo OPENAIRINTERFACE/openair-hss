@@ -620,6 +620,7 @@ bool s1ap_enb_find_ue_by_mme_ue_id_cb (__attribute__((unused))const hash_key_t k
   }
   return false;
 }
+
 //------------------------------------------------------------------------------
 bool s1ap_ue_compare_by_s11_sgw_teid_cb (__attribute__((unused))const hash_key_t keyP,
                                          void * const elementP,

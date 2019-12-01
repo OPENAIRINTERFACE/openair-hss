@@ -33,7 +33,6 @@
 #include "bstrlib.h"
 #include "3gpp_33.401.h"
 #include "3gpp_36.401.h"
-#include "3gpp_36.443.h"
 #include "3gpp_24.008.h"
 #include "3gpp_24.007.h"
 
@@ -69,35 +68,6 @@ typedef uint64_t                 enb_s1ap_id_key_t ;
 #define MME_UE_S1AP_ID_FMT           "%"PRIx32
 #define INVALID_MME_UE_S1AP_ID       0xFFFFFFFF          // You can pick any value between 0..2^32-1,
                                                      // all values are allowed. try to find another way (boolean is_valid for example)
-
-//------------------------------------------------------------------------------
-// MBMS Service IDs
-#define MCE_MBMS_SERVICE_INDEX_FMT   "%"PRIx32           //*< Combination of TMGI and MBMS Service Area, such that it is unique!
-#define INVALID_MBMS_SERVICE_INDEX   0x00000000          // You can pick any value between 0..2^32-1,
-
-/**
- * The value 0 has a special meaning; it shall denote the whole PLMN as the MBMS Service Area and it shall indicate to a receiving
- * RNC/BSS/MCE that all cells reachable by that RNC/BSS/MCE shall be part of the MBMS Service Area.
- */
-#define INVALID_MBMS_SERVICE_AREA_ID 0x0000 	         // You can pick any value between 0..2^16-1,
-#define INVALID_MBSFN_AREA_ID 			 0x0000 	         // You can pick any value between 0..2^8-1,
-#define MBSFN_AREA_ID_FMT					 "0x%"PRIx8
-#define MBMS_SERVICE_AREA_ID_FMT	 "0x%"PRIx16
-typedef uint64_t                 	 mbms_service_index_t;
-
-#define INVALID_ENB_MBMS_M2AP_ID_KEY UINT32_MAX
-#define MCE_MBMS_M2AP_ID_MASK        0xFFFFFF
-#define ENB_MBMS_M2AP_ID_MASK        0x00FFFF
-#define ENB_MBMS_M2AP_ID_FMT         "%06"PRIx16
-#define MCE_MBMS_M2AP_ID_FMT         "%"PRIx32
-#define INVALID_MCE_MBMS_M2AP_ID     0xFFFFFF            // You can pick any value between 0..2^24-1,
-#define INVALID_ENB_MBMS_M2AP_ID     0xFFFF		         // You can pick any value between 0..2^16-1,
-
-// TMGI
-#define TMGI_FMT PLMN_FMT"|%04x"
-#define TMGI_ARG(TmGi_PtR) \
-  PLMN_ARG(&(TmGi_PtR)->plmn), \
-  (TmGi_PtR)->mbms_service_id
 
 //------------------------------------------------------------------------------
 // TEIDs
@@ -185,51 +155,6 @@ typedef struct {
   } choice;
 } Mei_t;
 
-/**
- * MBMS related functionalities.
- */
-typedef enum {
-	 ENB_TYPE_NULL,
-	 ENB_TYPE_TDD,
-	 ENB_TYPE_FDD
-} enb_type_t;
-
-typedef struct {
-  unsigned seconds;
-  unsigned days;
-} mbms_session_duration_t;
-
-typedef uint16_t  mbms_service_area_id_t;
-typedef uint8_t   mbsfn_area_id_t;
-
-typedef struct {
-  uint8_t  num_service_area;
-#define MAX_MBMS_SERVICE_AREA 256
-  mbms_service_area_id_t  serviceArea[MAX_MBMS_SERVICE_AREA];
-} mbms_service_area_t;
-
-typedef struct mbsfn_area_s{
-	mbsfn_area_id_t					mbsfn_area_id;
-  mbms_service_area_id_t	mbms_service_area_id;
-  uint32_t								m2_enb_id_bitmap;
-  /** Modification and Repetition Periods. */
-  uint16_t								mcch_modif_period_rf;
-  uint16_t								mcch_repetition_period_rf;
-  uint8_t 								mbms_mcch_msi_mcs;
-  uint8_t								  mbms_mcch_subframes;
-  enb_type_t							m2_enb_type;
-  uint8_t									mcch_offset_rf;
-} mbsfn_area_t;
-
-typedef struct mbsfn_areas_s{
-  uint8_t  num_mbsfn_areas;
-  uint8_t  mbsfn_bitmap;
-#define MAX_MBMSFN_AREAS 256
-  mbsfn_area_t  mbsfnArea[MAX_MBMSFN_AREAS];
-  uint8_t	 local_mbms_service_area;
-
-} mbsfn_areas_t;
-
 typedef enum {
   SS_SERVICE_GRANTED = 0,
   SS_OPERATOR_DETERMINED_BARRING = 1,
@@ -297,7 +222,6 @@ typedef struct {
   bitrate_t br_dl;
 } ambr_t;
 
-
 typedef uint8_t pdn_type_t;
 
 typedef enum {
@@ -319,7 +243,6 @@ typedef struct paa_s{
 void copy_paa(paa_t *paa_dst, paa_t *paa_src);
 bstring paa_to_bstring(paa_t *paa);
 
-
 //-----------------
 typedef struct {
   pdn_type_value_t pdn_type;
@@ -334,26 +257,59 @@ bstring fteid_ip_address_to_bstring(const struct fteid_s * const fteid);
 bstring ip_address_to_bstring(ip_address_t *ip_address);
 void    bstring_to_ip_address(bstring const bstr, ip_address_t * const ip_address);
 
-//-----------------
-typedef enum {
-  QCI_1 = 1,
-  QCI_2 = 2,
-  QCI_3 = 3,
-  QCI_4 = 4,
-  QCI_5 = 5,
-  QCI_6 = 6,
-  QCI_7 = 7,
-  QCI_8 = 8,
-  QCI_9 = 9,
-  /* Values from 128 to 254 are operator specific.
-   * Other are reserved.
-   */
-  QCI_MAX,
-} qci_e;
-
-typedef uint8_t qci_t;
 #define QCI_FMT                "0x%"PRIu8
 #define QCI_SCAN_FMT            SCNu8
+
+
+#define QCI_TABLE \
+X(QCI_1, 1, 		1, true) \
+X(QCI_2, 2, 		2, true) \
+X(QCI_3, 3, 		3, true) \
+X(QCI_4, 4, 		4, true) \
+X(QCI_5, 5, 		5, false) \
+X(QCI_6, 6, 		6, false) \
+X(QCI_7, 7, 		7, false) \
+X(QCI_8, 8, 		8, false) \
+X(QCI_9, 9, 		9, false) \
+X(QCI_65, 65, 	10, true) \
+X(QCI_66, 66, 	11, true) \
+X(QCI_69, 69, 	12, false) \
+X(QCI_70, 70, 	13, false) \
+X(QCI_75, 75, 	14, true) \
+X(QCI_79, 79, 	15, false)
+
+//-----------------
+#define X(a, b, c, d) a=b,
+typedef enum {
+	QCI_TABLE
+	QCI_MAX,
+} qci_e;
+#undef X
+
+//-----------------
+#define X(a, b, c, d) a##ord=c,
+typedef enum {
+	QCI_TABLE
+} qci_ordinal_e;
+#undef X
+
+#define X(a, b, c, d) case b: return c;
+static inline qci_ordinal_e get_qci_ord(qci_e qci){
+	switch(qci) {
+	QCI_TABLE
+	default: return 1;
+	}
+}
+#undef X
+
+#define X(a, b, c, d) case b: return d;
+static inline bool is_qci_gbr(qci_e qci){
+	switch(qci) {
+	QCI_TABLE
+	default: return false;
+	}
+}
+#undef X
 
 typedef enum {
   PRE_EMPTION_CAPABILITY_ENABLED  = 0,
@@ -380,7 +336,7 @@ typedef struct {
 } allocation_retention_priority_t;
 
 typedef struct eps_subscribed_qos_profile_s {
-  qci_t qci;
+  qci_e qci;
   allocation_retention_priority_t allocation_retention_priority;
 } eps_subscribed_qos_profile_t;
 

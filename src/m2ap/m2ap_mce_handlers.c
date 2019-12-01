@@ -237,7 +237,6 @@ m2ap_mce_handle_m2_setup_request (
   M2AP_M2SetupRequest_IEs_t              *ie = NULL;
   M2AP_M2SetupRequest_IEs_t              *ie_enb_name = NULL;
   M2AP_M2SetupRequest_IEs_t              *ie_enb_mbms_configuration_per_cell = NULL;
-  M2AP_GlobalENB_ID_t	                 *global_enb_id = NULL;;
   ecgi_t                                  ecgi = {.plmn = {0}, .cell_identity = {0}};
 
   m2ap_enb_description_t                 *m2ap_enb_association = NULL;
@@ -265,8 +264,8 @@ m2ap_mce_handle_m2_setup_request (
   max_m2_enb_connected = mme_config.mbms.max_m2_enbs;
   mme_config_unlock (&mme_config);
 
-  if (nb_enb_associated == max_m2_enb_connected) {
-    OAILOG_ERROR (LOG_M2AP, "There is too much M2 eNB connected to MME, rejecting the association\n");
+  if (nb_enb_associated >= max_m2_enb_connected) {
+    OAILOG_ERROR (LOG_M2AP, "There is too much M2 eNBs connected to MME, rejecting the association\n");
     OAILOG_ERROR (LOG_M2AP, "Connected = %d, maximum allowed = %d\n", nb_enb_associated, max_m2_enb_connected);
     /*
      * Send an overload cause...
@@ -297,30 +296,29 @@ m2ap_mce_handle_m2_setup_request (
     m2ap_enb_id = (enb_id_buf[0] << 10) + (enb_id_buf[1] << 2) + ((enb_id_buf[2] & 0xc0) >> 6);
     OAILOG_MESSAGE_ADD (context, "short eNB id: %07x", m2ap_enb_id);
   } else if (ie->value.choice.GlobalENB_ID.eNB_ID.present == M2AP_ENB_ID_PR_long_Macro_eNB_ID) {
-	uint8_t *enb_id_buf = ie->value.choice.GlobalENB_ID.eNB_ID.choice.long_Macro_eNB_ID.buf;
-	if (ie->value.choice.GlobalENB_ID.eNB_ID.choice.long_Macro_eNB_ID.size != 22) {
-	  //TODO: handle case were size != 21 -> notify ? reject ?
-	  OAILOG_DEBUG (LOG_S1AP, "M2-Setup-Request longENB_ID.size %lu (should be 21)\n", ie->value.choice.GlobalENB_ID.eNB_ID.choice.long_Macro_eNB_ID.size);
-	}
-	m2ap_enb_id = (enb_id_buf[0] << 13) + (enb_id_buf[1] << 5) + ((enb_id_buf[2] & 0xf8) >> 3);
-	OAILOG_MESSAGE_ADD (context, "long eNB id: %07x", m2ap_enb_id);
+  	uint8_t *enb_id_buf = ie->value.choice.GlobalENB_ID.eNB_ID.choice.long_Macro_eNB_ID.buf;
+  	if (ie->value.choice.GlobalENB_ID.eNB_ID.choice.long_Macro_eNB_ID.size != 22) {
+  		//TODO: handle case were size != 21 -> notify ? reject ?
+  		OAILOG_DEBUG (LOG_S1AP, "M2-Setup-Request longENB_ID.size %lu (should be 21)\n", ie->value.choice.GlobalENB_ID.eNB_ID.choice.long_Macro_eNB_ID.size);
+  	}
+  	m2ap_enb_id = (enb_id_buf[0] << 13) + (enb_id_buf[1] << 5) + ((enb_id_buf[2] & 0xf8) >> 3);
+  	OAILOG_MESSAGE_ADD (context, "long eNB id: %07x", m2ap_enb_id);
   } else {
-	// Macro eNB = 20 bits
-	uint8_t                                *enb_id_buf = ie->value.choice.GlobalENB_ID.eNB_ID.choice.macro_eNB_ID.buf;
-	if (ie->value.choice.GlobalENB_ID.eNB_ID.choice.macro_eNB_ID.size != 20) {
-	  //TODO: handle case were size != 20 -> notify ? reject ?
-	  OAILOG_DEBUG (LOG_M2AP, "M2-Setup-Request macroENB_ID.size %lu (should be 20)\n", ie->value.choice.GlobalENB_ID.eNB_ID.choice.macro_eNB_ID.size);
-	}
-	m2ap_enb_id = (enb_id_buf[0] << 12) + (enb_id_buf[1] << 4) + ((enb_id_buf[2] & 0xf0) >> 4);
-	OAILOG_MESSAGE_ADD (context, "macro eNB id: %05x", m2ap_enb_id);
+  	// Macro eNB = 20 bits
+  	uint8_t                                *enb_id_buf = ie->value.choice.GlobalENB_ID.eNB_ID.choice.macro_eNB_ID.buf;
+  	if (ie->value.choice.GlobalENB_ID.eNB_ID.choice.macro_eNB_ID.size != 20) {
+  		//TODO: handle case were size != 20 -> notify ? reject ?
+  		OAILOG_DEBUG (LOG_M2AP, "M2-Setup-Request macroENB_ID.size %lu (should be 20)\n", ie->value.choice.GlobalENB_ID.eNB_ID.choice.macro_eNB_ID.size);
+  	}
+  	m2ap_enb_id = (enb_id_buf[0] << 12) + (enb_id_buf[1] << 4) + ((enb_id_buf[2] & 0xf0) >> 4);
+  	OAILOG_MESSAGE_ADD (context, "macro eNB id: %05x", m2ap_enb_id);
   }
   OAILOG_MESSAGE_FINISH(context);
-  global_enb_id = &ie->value.choice.GlobalENB_ID;
 
   /**
    * Check the MCE PLMN.
    */
-  if(m2ap_mce_combare_mbms_plmn(&global_enb_id->pLMN_Identity) != MBMS_SA_LIST_RET_OK){
+  if(m2ap_mce_combare_mbms_plmn(&ie->value.choice.GlobalENB_ID.pLMN_Identity) != MBMS_SA_LIST_RET_OK){
   	OAILOG_ERROR (LOG_M2AP, "No Common PLMN with M2AP eNB, generate_m2_setup_failure\n");
   	rc =  m2ap_mce_generate_m2_setup_failure (assoc_id, stream, M2AP_Cause_PR_misc, M2AP_CauseMisc_unspecified, M2AP_TimeToWait_v20s);
   	OAILOG_FUNC_RETURN (LOG_M2AP, rc);
@@ -358,6 +356,21 @@ m2ap_mce_handle_m2_setup_request (
     OAILOG_FUNC_RETURN (LOG_M2AP, rc);
   }
 
+  mme_config_read_lock (&mme_config);
+  int mbsfn_synch_area_id = mme_config.mbms.mbsfn_synch_area_id;
+  mme_config_unlock (&mme_config);
+
+  if(m2ap_enb_mbms_cfg_item->mbsfnSynchronisationArea != mbsfn_synch_area_id){
+  	OAILOG_ERROR (LOG_M2AP, "MBSFN Synch Area Id (%d) not equals to one received from M2 eNB (%d).\n",
+  			mbsfn_synch_area_id, m2ap_enb_mbms_cfg_item->mbsfnSynchronisationArea);
+  	rc = m2ap_mce_generate_m2_setup_failure(assoc_id, stream,
+  			M2AP_Cause_PR_misc,
+				M2AP_CauseMisc_unspecified,
+				M2AP_TimeToWait_v20s);
+  	// todo: test leaks..
+  	OAILOG_FUNC_RETURN (LOG_M2AP, rc);
+  }
+
   OAILOG_DEBUG (LOG_M2AP, "Adding M2AP eNB with eNB-ID %d to the list of served MBMS eNBs. \n", m2ap_enb_id);
   if ((m2ap_enb_association = m2ap_is_enb_id_in_list (m2ap_enb_id)) == NULL) {
     /*
@@ -373,8 +386,7 @@ m2ap_mce_handle_m2_setup_request (
       m2ap_enb_association->m2ap_enb_id = m2ap_enb_id;
       /**
        * Set the configuration item of the first cell, which is a single MBSFN area.
-       * Set all MBMS Service Area Ids. */
-      m2ap_enb_association->mbsfn_synch_area_id = m2ap_enb_mbms_cfg_item->mbsfnSynchronisationArea;
+       * Set all MBMS Service Area ids. */
       m2ap_set_embms_cfg_item(m2ap_enb_association, &m2ap_enb_mbms_cfg_item->mbmsServiceAreaList);
       if (m2ap_enb_name != NULL) {
     	  memcpy (m2ap_enb_association->m2ap_enb_name, ie_enb_name->value.choice.ENBname.buf, ie_enb_name->value.choice.ENBname.size);
@@ -414,7 +426,6 @@ m2ap_mce_handle_m2_setup_request (
   OAILOG_FUNC_RETURN (LOG_M2AP, rc);
 }
 
-extern int enb_bands[];
 //------------------------------------------------------------------------------
 static
   int
@@ -475,36 +486,40 @@ m2ap_generate_m2_setup_response (
   	/** Only supporting a single MBSFN Area currently. */
   	// memset for gcc 4.8.4 instead of {0}, servedGUMMEI.servedPLMNs
 	  mbsfnCfgItem = calloc(1, sizeof (M2AP_MCCHrelatedBCCH_ConfigPerMBSFNArea_Item_t));
-  	ASN_SEQUENCE_ADD(&ie->value.choice.MCCHrelatedBCCH_ConfigPerMBSFNArea.list, mbsfnCfgItem);
   	/** MBSFN Area Id. */
-  	mbsfnCfgItem->mbsfnArea = mbsfn_areas->mbsfnArea[num_mbsfn].mbsfn_area_id;
+  	mbsfnCfgItem->mbsfnArea = mbsfn_areas->mbsfn_area_cfg[num_mbsfn].mbsfnArea.mbsfn_area_id;
   	mbsfnCfgItem->pdcchLength = 2;
-  	mbsfnCfgItem->repetitionPeriod   = mbsfn_areas->mbsfnArea[num_mbsfn].mcch_repetition_period_rf;
-  	mbsfnCfgItem->offset   					 = mbsfn_areas->mbsfnArea[num_mbsfn].mbms_mcch_subframes;
-  	mbsfnCfgItem->modificationPeriod = mbsfn_areas->mbsfnArea[num_mbsfn].mcch_modif_period_rf;
+  	mbsfnCfgItem->repetitionPeriod   = mbsfn_areas->mbsfn_area_cfg[num_mbsfn].mbsfnArea.mcch_repetition_period_rf;
+  	mbsfnCfgItem->offset   					 = mbsfn_areas->mbsfn_area_cfg[num_mbsfn].mbsfnArea.mbms_mcch_subframes;
+  	mbsfnCfgItem->modificationPeriod = mbsfn_areas->mbsfn_area_cfg[num_mbsfn].mbsfnArea.mcch_modif_period_rf;
+  	/** Set it in the M2 ENB Description element. */
+  	m2ap_enb_association->mbsfn_area_ids.mbsfn_area_id[m2ap_enb_association->mbsfn_area_ids.num_mbsfn_area_ids]
+  				= mbsfn_areas->mbsfn_area_cfg[num_mbsfn].mbsfnArea.mbsfn_area_id;
+  	m2ap_enb_association->mbsfn_area_ids.mbms_service_area_id[m2ap_enb_association->mbsfn_area_ids.num_mbsfn_area_ids]
+					= mbsfn_areas->mbsfn_area_cfg[num_mbsfn].mbsfnArea.mbms_service_area_id;
+  	m2ap_enb_association->mbsfn_area_ids.num_mbsfn_area_ids++;
+
   	/**
   	 * Subframes, where MCCH could exist for this MBSFN areas.
   	 * Set the 6 leftmost bits.
   	 */
-  	uint8_t subframe_alloc = mbsfn_areas->mbsfnArea[num_mbsfn].mbms_mcch_subframes <<2;
 //  	uint32_t target_enb_id = s1ap_mme_configuration_transfer_pP->target_global_enb_id.cell_identity.enb_id;
 //  	target_enb_id = target_enb_id <<4;
 //  	uint32_t target_enb_id1 = htonl(target_enb_id << 8);
-  	mbsfnCfgItem->subframeAllocationInfo.buf = calloc (1, sizeof(uint8_t));
-  	memcpy(mbsfnCfgItem->subframeAllocationInfo.buf, (uint8_t*)&subframe_alloc, 1);
-  	mbsfnCfgItem->subframeAllocationInfo.size = 1;
-  	mbsfnCfgItem->subframeAllocationInfo.bits_unused = 2;
-  	mbsfnCfgItem->modulationAndCodingScheme = mbsfn_areas->mbsfnArea[num_mbsfn].mbms_mcch_msi_mcs;
+  	ONE_FRAME_ITEM_SF_TO_BIT_STRING(mbsfn_areas->mbsfn_area_cfg[num_mbsfn].mbsfnArea.mbms_mcch_subframes,
+  			&mbsfnCfgItem->subframeAllocationInfo);
+  	  	mbsfnCfgItem->modulationAndCodingScheme = mbsfn_areas->mbsfn_area_cfg[num_mbsfn].mbsfnArea.mbms_mcch_msi_mcs;
+  	ASN_SEQUENCE_ADD(&ie->value.choice.MCCHrelatedBCCH_ConfigPerMBSFNArea.list, mbsfnCfgItem);
   }
 
   if (m2ap_mce_encode_pdu (&pdu, &buffer, &length) < 0) {
-    OAILOG_DEBUG (LOG_M2AP, "Removed eNB %d\n", m2ap_enb_association->sctp_assoc_id);
+    OAILOG_DEBUG (LOG_M2AP, "Removed M2 eNB %d\n", m2ap_enb_association->sctp_assoc_id);
     hashtable_ts_free (&g_m2ap_enb_coll, m2ap_enb_association->sctp_assoc_id);
   } else {
-	/*
-	 * Consider the response as sent. M2AP is ready to accept UE contexts
-	 */
-	m2ap_enb_association->m2_state = M2AP_READY;
+  	/*
+  	 * Consider the response as sent. M2AP is ready to accept UE contexts
+  	 */
+  	m2ap_enb_association->m2_state = M2AP_READY;
   }
 
   /*
@@ -512,7 +527,7 @@ m2ap_generate_m2_setup_response (
    */
   bstring b = blk2bstr(buffer, length);
   free(buffer);
-  rc = m2ap_mce_itti_send_sctp_request (&b, m2ap_enb_association->sctp_assoc_id, 0, INVALID_MCE_MBMS_M2AP_ID);
+  rc = m2ap_mce_itti_send_sctp_request (&b, m2ap_enb_association->sctp_assoc_id, M2AP_ENB_SERVICE_SCTP_STREAM_ID, INVALID_MCE_MBMS_M2AP_ID);
   OAILOG_FUNC_RETURN (LOG_M2AP, rc);
 }
 
@@ -590,7 +605,7 @@ m2ap_mce_handle_mbms_session_start_response (
   /**
    * Try to insert the received eNB MBMS M2AP ID into the MBMS service.
    */
-  hashtable_rc_t  h_rc = hashtable_ts_insert (&mbms_ref_p->g_m2ap_assoc_id2mce_enb_id_coll, (const hash_key_t) assoc_id, (void *)(uintptr_t)enb_mbms_m2ap_id); /**< Add the value as pointer. No need to free. */
+  hashtable_rc_t  h_rc = hashtable_uint64_ts_insert (&mbms_ref_p->g_m2ap_assoc_id2mce_enb_id_coll, (const hash_key_t) assoc_id, (uint64_t)enb_mbms_m2ap_id); /**< Add the value as pointer. No need to free. */
   if (h_rc != HASH_TABLE_OK) {
     OAILOG_ERROR(LOG_M2AP, "Error inserting MBMS description with MCE MBMS M2AP ID " MCE_MBMS_M2AP_ID_FMT" eNB MBMS M2AP ID " ENB_MBMS_M2AP_ID_FMT". Hash-Rc (%d). Leaving the MBMS reference. \n",
     	mce_mbms_m2ap_id, enb_mbms_m2ap_id, h_rc);
@@ -636,7 +651,7 @@ m2ap_mce_handle_mbms_session_start_failure (
   /**
    * Check that there is no SCTP association.
    */
-  hashtable_rc_t h_rc = hashtable_ts_is_key_exists(&mbms_ref_p->g_m2ap_assoc_id2mce_enb_id_coll, assoc_id);
+  hashtable_rc_t h_rc = hashtable_uint64_ts_is_key_exists(&mbms_ref_p->g_m2ap_assoc_id2mce_enb_id_coll, assoc_id);
   DevAssert(h_rc == HASH_TABLE_KEY_NOT_EXISTS);
   OAILOG_FUNC_RETURN (LOG_M2AP, rc);
 }
@@ -764,7 +779,7 @@ m2ap_mce_handle_mbms_session_update_failure (
     	assoc_id, mce_mbms_m2ap_id);
     m2ap_generate_mbms_session_stop_request(mce_mbms_m2ap_id, assoc_id);
     /** Remove the hash key, which should also update the eNB. */
-    hashtable_ts_free(&mbms_ref_p->g_m2ap_assoc_id2mce_enb_id_coll, (const hash_key_t)assoc_id);
+    hashtable_uint64_ts_free(&mbms_ref_p->g_m2ap_assoc_id2mce_enb_id_coll, (const hash_key_t)assoc_id);
     if(m2ap_enb_desc->nb_mbms_associated)
     	m2ap_enb_desc->nb_mbms_associated--;
     OAILOG_ERROR(LOG_M2AP, "Removed association after failed update.\n");
@@ -891,21 +906,21 @@ m2ap_mce_handle_reset_request (
 		continue;
 	  }
 	  /** Check the received eNB MBMS Id, if it is valid, check it.*/
-	  enb_mbms_m2ap_id_t *current_enb_mbms_m2ap_id_p = NULL;
-	  hashtable_ts_get(&mbms_ref_p->g_m2ap_assoc_id2mce_enb_id_coll, assoc_id, (void**)&current_enb_mbms_m2ap_id_p);
-	  if(*current_enb_mbms_m2ap_id_p && *current_enb_mbms_m2ap_id_p != INVALID_ENB_MBMS_M2AP_ID){
-	    if(*current_enb_mbms_m2ap_id_p != mbms_to_reset_list[item].enb_mbms_m2ap_id) {
-	      OAILOG_ERROR (LOG_M2AP, "MBMS Service for MCE MBMS M2AP ID "MCE_MBMS_M2AP_ID_FMT" has ENB MBMS M2AP ID " ENB_MBMS_M2AP_ID_FMT ", "
-				"whereas partial reset received for ENB MBMS M2AP ID " ENB_MBMS_M2AP_ID_FMT ". Skipping. \n",
-			mbms_to_reset_list[item].mce_mbms_m2ap_id, *current_enb_mbms_m2ap_id_p, mbms_to_reset_list[item].enb_mbms_m2ap_id);
-	      continue;
+	  enb_mbms_m2ap_id_t current_enb_mbms_m2ap_id = INVALID_ENB_MBMS_M2AP_ID;
+	  hashtable_uint64_ts_get(&mbms_ref_p->g_m2ap_assoc_id2mce_enb_id_coll, assoc_id, (void*)&current_enb_mbms_m2ap_id);
+	  if(current_enb_mbms_m2ap_id != INVALID_ENB_MBMS_M2AP_ID){
+	    if(current_enb_mbms_m2ap_id != mbms_to_reset_list[item].enb_mbms_m2ap_id) {
+	    	OAILOG_ERROR (LOG_M2AP, "MBMS Service for MCE MBMS M2AP ID "MCE_MBMS_M2AP_ID_FMT" has ENB MBMS M2AP ID " ENB_MBMS_M2AP_ID_FMT ", "
+	      		"whereas partial reset received for ENB MBMS M2AP ID " ENB_MBMS_M2AP_ID_FMT ". Skipping. \n",
+						mbms_to_reset_list[item].mce_mbms_m2ap_id, current_enb_mbms_m2ap_id, mbms_to_reset_list[item].enb_mbms_m2ap_id);
+	    	continue;
 	    }
 	  }
 	  OAILOG_WARNING(LOG_M2AP, "Removing SCTP association of MBMS Service for MCE MBMS M2AP ID "MCE_MBMS_M2AP_ID_FMT" with ENB MBMS M2AP ID " ENB_MBMS_M2AP_ID_FMT " due"
 		"partial reset from eNB with sctp-assoc-id (%d). \n", mbms_to_reset_list[item].mce_mbms_m2ap_id,
 		mbms_to_reset_list[item].enb_mbms_m2ap_id, assoc_id);
 	  /** Remove the hash key, which should also update the eNB. */
-	  hashtable_ts_free(&mbms_ref_p->g_m2ap_assoc_id2mce_enb_id_coll, (const hash_key_t)assoc_id);
+	  hashtable_uint64_ts_free(&mbms_ref_p->g_m2ap_assoc_id2mce_enb_id_coll, (const hash_key_t)assoc_id);
 	  if(m2ap_enb_association->nb_mbms_associated)
 		m2ap_enb_association->nb_mbms_associated--;
 	}
@@ -1011,7 +1026,7 @@ m2ap_mce_handle_error_indication (
 		  mce_mbms_m2ap_id, enb_mbms_m2ap_id, assoc_id);
   m2ap_generate_mbms_session_stop_request(mce_mbms_m2ap_id, assoc_id);
   /** Remove the hash key, which should also update the eNB. */
-  hashtable_ts_free(&mbms_ref->g_m2ap_assoc_id2mce_enb_id_coll, (const hash_key_t)assoc_id);
+  hashtable_uint64_ts_free(&mbms_ref->g_m2ap_assoc_id2mce_enb_id_coll, (const hash_key_t)assoc_id);
   if(m2ap_enb_ref->nb_mbms_associated)
 	m2ap_enb_ref->nb_mbms_associated--;
   OAILOG_ERROR(LOG_M2AP, "Removed association after error indication.\n");

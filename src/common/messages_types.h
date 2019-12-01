@@ -39,7 +39,6 @@
 #include "sgw_messages_types.h"
 #include "udp_messages_types.h"
 #include "mme_app_messages_types.h"
-#include "mce_app_messages_types.h"
 #include "m3ap_messages_types.h"
 #include "scenario_player_messages_types.h"
 #include "async_system_messages_types.h"

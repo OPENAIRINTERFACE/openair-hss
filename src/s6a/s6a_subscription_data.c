@@ -160,7 +160,7 @@ s6a_parse_service_selection (
 static inline int
 s6a_parse_qci (
   struct avp_hdr *hdr,
-  qci_t * qci)
+  qci_e * qci)
 {
   DevCheck (hdr->avp_value->u32 < QCI_MAX, hdr->avp_value->u32, QCI_MAX, 0);
   *qci = hdr->avp_value->u32;

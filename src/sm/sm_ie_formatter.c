@@ -175,10 +175,10 @@ sm_mbms_ip_multicast_distribution_ie_get (
 	ieValue+=4;
   }
   else if (da_type == 1) {
-	if(da_length != 16){
-		OAILOG_ERROR (LOG_SM, "\t- Received invalid IPv6 length for IP Multicast addr  %d\n", da_length);
-		return NW_FAILURE;
-	}
+  	if(da_length != 16){
+  		OAILOG_ERROR (LOG_SM, "\t- Received invalid IPv6 length for IP Multicast addr  %d\n", da_length);
+  		return NW_FAILURE;
+  	}
     char                                    ipv6_ascii[INET6_ADDRSTRLEN];
     /*
      * IPv6 present: copy the 16 bytes

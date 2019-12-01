@@ -1006,7 +1006,7 @@ typedef struct traffic_flow_template_s {
                                        // transferred. If the parameters list is included, the E bit is set to 1; otherwise, the E bit
                                        // is set to 0.
   /** Own field to set. */
-  long                 packet_filter_identifier_bitmap;  /**<< Map of allocated identifiers. */
+  unsigned long long	 packet_filter_identifier_bitmap;  /**<< Map of allocated identifiers. */
   uint8_t              precedence_set[256];              /**<< Map precedences to identifier. */
 } traffic_flow_template_t;
 

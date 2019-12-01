@@ -848,7 +848,7 @@ mme_app_validate_bearer_resource_modification(mme_ue_s1ap_id_t ue_id, ebi_t ebi,
   }
   esm_cause_t flow_esm_cause = ESM_CAUSE_SUCCESS;
   if(flow_qos && flow_qos->qci){
-    if((5 <= flow_qos->qci && flow_qos->qci <= 9) || (69 <= flow_qos->qci && flow_qos->qci <= 70) || (79 == flow_qos->qci)){
+    if(!is_qci_gbr(flow_qos->qci)){
       /** Return error, no modification on non-GBR is allowed. */
       flow_esm_cause = ESM_CAUSE_EPS_QOS_NOT_ACCEPTED;
     }
@@ -979,7 +979,7 @@ static mme_app_esm_bearer_context_finalize_tft(mme_ue_s1ap_id_t ue_id, bearer_co
        /** Removed the precedences, set them again, should be all zero. */
        for(int num_pf = 0 ; num_pf < tft->numberofpacketfilters; num_pf++){
          DevAssert(!bearer_context->esm_ebr_context.tft->precedence_set[tft->packetfilterlist.replacepacketfilter[num_pf].eval_precedence]);
-         OAILOG_INFO (LOG_MME_APP, "ESM-PROC  - Successfully set the new precedence of packet filter id (%d +1) to %d of EPS bearer context (ebi=%d) for UE with ueId " MME_UE_S1AP_ID_FMT "\n. ",
+         OAILOG_INFO (LOG_MME_APP, "ESM-PROC  - Successfully set the new precedence of packet filter id (%d +1) to %d of EPS bearer context (ebi=%d) for UE with ueId " MME_UE_S1AP_ID_FMT ".\n ",
                    tft->packetfilterlist.replacepacketfilter[num_pf].identifier, tft->packetfilterlist.replacepacketfilter[num_pf].eval_precedence, bearer_context->ebi, ue_id);
          bearer_context->esm_ebr_context.tft->precedence_set[tft->packetfilterlist.replacepacketfilter[num_pf].eval_precedence] = tft->packetfilterlist.replacepacketfilter[num_pf].identifier + 1;
        }

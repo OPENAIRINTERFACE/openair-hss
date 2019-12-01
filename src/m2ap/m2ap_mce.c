@@ -124,17 +124,17 @@ static bool m2ap_enb_mbms_remove_sctp_assoc_id_cb (__attribute__((unused)) const
    * This method will be triggered by the eNodeB only, does not trigger any additional eNB removals or other methods.
    * Returns false, to iterate through all MBMS services for the given SCTP key.
    */
-  hashtable_ts_free(&mbms_ref->g_m2ap_assoc_id2mce_enb_id_coll, *((sctp_assoc_id_t*)parameterP));
+  hashtable_uint64_ts_free(&mbms_ref->g_m2ap_assoc_id2mce_enb_id_coll, *((sctp_assoc_id_t*)parameterP));
   return false;
 }
 
 //------------------------------------------------------------------------------
 static bool m2ap_clear_enb_mbms_stats_cb (__attribute__((unused)) const hash_key_t key,
-                                      void * const elementP, void * parameterP, void **resultP)
+                                      void * const elementP, void * parameterP, void __attribute__((unused)) **resultP)
 {
-  enb_mbms_m2ap_id_t			*enb_mbms_m2ap_id_p   = (enb_mbms_m2ap_id_t*)elementP;
-  sctp_assoc_id_t				 sctp_assoc_id 		  = (sctp_assoc_id_t)key;
-  m2ap_enb_description_t		*m2ap_enb_ref 		  = NULL;
+  enb_mbms_m2ap_id_t			*enb_mbms_m2ap_id_p = (enb_mbms_m2ap_id_t*)elementP;
+  sctp_assoc_id_t				 	 sctp_assoc_id 		  = (sctp_assoc_id_t)key;
+  m2ap_enb_description_t	*m2ap_enb_ref 		  = NULL;
 
   /**
    * Get the eNodeB with the given SCTP_ASSOC ID.
@@ -146,21 +146,21 @@ static bool m2ap_clear_enb_mbms_stats_cb (__attribute__((unused)) const hash_key
      * Found an M2AP eNodeB description element.
      * Updating number of MBMS Services of the MBMS eNB.
      */
-	if(m2ap_enb_ref->nb_mbms_associated > 0)
-	  m2ap_enb_ref->nb_mbms_associated--;
-	/**
-	 * No conflicts should occur, since it checks above the existence of MBMS service count.
-	 */
-	if (!m2ap_enb_ref->nb_mbms_associated) {
-	  if (m2ap_enb_ref->m2_state == M2AP_RESETING) {
-	    OAILOG_INFO(LOG_M2AP, "Moving M2AP eNB state to M2AP_INIT");
-	    m2ap_enb_ref->m2_state = M2AP_INIT;
-	    update_mce_app_stats_connected_enb_sub();
-	  } else if (m2ap_enb_ref->m2_state == M2AP_SHUTDOWN) {
-		  OAILOG_INFO(LOG_M2AP, "Deleting eNB");
-		  hashtable_ts_free (&g_m2ap_enb_coll, m2ap_enb_ref->sctp_assoc_id);
-	  }
-	}
+  	if(m2ap_enb_ref->nb_mbms_associated > 0)
+  		m2ap_enb_ref->nb_mbms_associated--;
+  	/**
+  	 * No conflicts should occur, since it checks above the existence of MBMS service count.
+  	 */
+  	if (!m2ap_enb_ref->nb_mbms_associated) {
+  		if (m2ap_enb_ref->m2_state == M2AP_RESETING) {
+  			OAILOG_INFO(LOG_M2AP, "Moving M2AP eNB state to M2AP_INIT");
+  			m2ap_enb_ref->m2_state = M2AP_INIT;
+  			update_mce_app_stats_connected_enb_sub();
+  		} else if (m2ap_enb_ref->m2_state == M2AP_SHUTDOWN) {
+  			OAILOG_INFO(LOG_M2AP, "Deleting eNB");
+  			hashtable_ts_free (&g_m2ap_enb_coll, m2ap_enb_ref->sctp_assoc_id);
+  		}
+  	}
   }
   /**
    * Don't remove anything from the hash set here.
@@ -198,9 +198,9 @@ static void
 m2ap_remove_mbms (
   void ** mbms_ref_pp)
 {
-  m2ap_enb_description_t                      *m2ap_enb_ref 	= NULL;
-  mbms_description_t						  *mbms_ref     	= NULL;
-  mce_mbms_m2ap_id_t 						   mce_mbms_m2ap_id = INVALID_MCE_MBMS_M2AP_ID;
+  m2ap_enb_description_t          *m2ap_enb_ref 			= NULL;
+  mbms_description_t						  *mbms_ref     			= NULL;
+  mce_mbms_m2ap_id_t 						   mce_mbms_m2ap_id 	= INVALID_MCE_MBMS_M2AP_ID;
   /*
    * NULL reference...
    */
@@ -212,7 +212,7 @@ m2ap_remove_mbms (
   if (mbms_ref->m2ap_action_timer.id != M2AP_TIMER_INACTIVE_ID) {
     if (timer_remove (mbms_ref->m2ap_action_timer.id, NULL)) {
       OAILOG_ERROR (LOG_M2AP, "Failed to stop m2ap mbms context action timer for MBMS id  " MCE_MBMS_M2AP_ID_FMT " \n",
-    	mbms_ref->mce_mbms_m2ap_id);
+      		mbms_ref->mce_mbms_m2ap_id);
     }
     mbms_ref->m2ap_action_timer.id = M2AP_TIMER_INACTIVE_ID;
   }
@@ -223,9 +223,9 @@ m2ap_remove_mbms (
    * The map of the MBMS Service itself will not be altered. Destroyed afterwards.
    */
   void * no_return = NULL;
-  hashtable_ts_apply_callback_on_elements((hash_table_ts_t * const)&mbms_ref->g_m2ap_assoc_id2mce_enb_id_coll,
+  hashtable_uint64_ts_apply_callback_on_elements((hash_table_uint64_ts_t * const)&mbms_ref->g_m2ap_assoc_id2mce_enb_id_coll,
 		  m2ap_clear_enb_mbms_stats_cb, (void*)NULL, (void**)&no_return);
-  if (hashtable_ts_destroy(&mbms_ref->g_m2ap_assoc_id2mce_enb_id_coll) != HASH_TABLE_OK) {
+  if (hashtable_uint64_ts_destroy(&mbms_ref->g_m2ap_assoc_id2mce_enb_id_coll) != HASH_TABLE_OK) {
     OAILOG_ERROR(LOG_M2AP, "An error occurred while destroying sctp_assoc/enb_mbms_id hash table. \n");
     DevAssert(0);
   }
@@ -239,12 +239,32 @@ bool m2ap_enb_compare_by_mbms_sai_cb (__attribute__((unused)) const hash_key_t k
                                     void * const elementP,
                                     void * parameterP, void **resultP)
 {
-  const mbms_service_area_id_t * const mbms_sai_p  = (const mbms_service_area_id_t *const)parameterP;
+  const mbms_service_area_id_t * const mbms_sai_p  	= (const mbms_service_area_id_t *const)parameterP;
   m2ap_enb_description_t       * m2ap_enb_ref  	    = (m2ap_enb_description_t*)elementP;
+  hashtable_element_array_t    * ea_p								= (hashtable_element_array_t*)*resultP;
   for(int i = 0; i < m2ap_enb_ref->mbms_sa_list.num_service_area; i++) {
     if (*mbms_sai_p == m2ap_enb_ref->mbms_sa_list.serviceArea[i]) {
-      *resultP = elementP;
-      return true;
+    	ea_p->elements[ea_p->num_elements++] = (void*)m2ap_enb_ref;
+      return false;
+    }
+  }
+  return false;
+}
+
+//------------------------------------------------------------------------------
+static
+bool m2ap_enb_compare_by_mbsfn_area_id_cb (__attribute__((unused)) const hash_key_t keyP,
+                                    void * const elementP,
+                                    void * parameterP, void **resultP)
+{
+  const mbsfn_area_id_t * const mbsfn_area_id_p  		= (const mbsfn_area_id_t *const)parameterP;
+  m2ap_enb_description_t       * m2ap_enb_ref  	    = (m2ap_enb_description_t*)elementP;
+  hashtable_element_array_t    * ea_p								= (hashtable_element_array_t*)*resultP;
+  for(int i = 0; i < m2ap_enb_ref->mbsfn_area_ids.num_mbsfn_area_ids; i++) {
+  	if (*mbsfn_area_id_p == m2ap_enb_ref->mbsfn_area_ids.mbsfn_area_id[i]) {
+  		/** Just return true. */
+    	ea_p->elements[ea_p->num_elements++] = (void*)m2ap_enb_ref;
+    	return false;
     }
   }
   return false;
@@ -258,14 +278,15 @@ bool m2ap_enb_compare_by_mbms_sai_NACK_cb (__attribute__((unused)) const hash_ke
 {
   const mbms_service_area_id_t * const mbms_sai_p  = (const mbms_service_area_id_t *const)parameterP;
   m2ap_enb_description_t       * m2ap_enb_ref  	    = (m2ap_enb_description_t*)elementP;
+  hashtable_element_array_t    * ea_p								= (hashtable_element_array_t*)*resultP;
   for(int i = 0; i < m2ap_enb_ref->mbms_sa_list.num_service_area; i++) {
     if (*mbms_sai_p == m2ap_enb_ref->mbms_sa_list.serviceArea[i]) {
       return false;
     }
   }
   /** Found an M2AP eNB, where none of the MBMS Service Area Ids match the given key. */
-  *resultP = elementP;
-  return true;
+	ea_p->elements[ea_p->num_elements++] = (void*)m2ap_enb_ref;
+  return false;
 }
 
 //------------------------------------------------------------------------------
@@ -353,6 +374,14 @@ m2ap_mce_thread (
     	 * New message received from MCE_APP task.
     	 */
     	m2ap_handle_m3ap_enb_setup_res(&M3AP_ENB_SETUP_RESPONSE(received_message_p));
+    }
+    break;
+
+    case M3AP_MBMS_SCHEDULING_INFORMATION:{
+    	/*
+    	 * Handle new MBMS Scheduling Information
+    	 */
+    	m2ap_handle_m3ap_mbms_scheduling_info(&M3AP_MBMS_SCHEDULING_INFORMATION(received_message_p));
     }
     break;
 
@@ -457,14 +486,12 @@ m2ap_mce_init(void)
   OAILOG_DEBUG (LOG_M2AP, "M2AP Release v%s\n", M2AP_VERSION);
 
   /** Free the M2AP eNB list. */
-  // 16 entries for n eNB.
   bstring bs1 = bfromcstr("m2ap_eNB_coll");
   hash_table_ts_t* h = hashtable_ts_init (&g_m2ap_enb_coll, mme_config.mbms.max_m2_enbs, NULL, m2ap_remove_enb, bs1); /**< Use a better removal handler. */
   bdestroy_wrapper (&bs1);
   if (!h) return RETURNerror;
 
   /** Free all MBMS Services and clear the association list. */
-  // 16 entries for n eNB.
   bs1 = bfromcstr("m2ap_MBMS_coll");
   h = hashtable_ts_init (&g_m2ap_mbms_coll, mme_config.mbms.max_mbms_services, NULL, m2ap_remove_mbms, bs1); /**< Use a better removal handler. */
   bdestroy_wrapper (&bs1);
@@ -598,19 +625,39 @@ m2ap_is_enb_id_in_list (
 }
 
 //------------------------------------------------------------------------------
+void m2ap_is_mbsfn_area_id_list (
+  const mbsfn_area_id_t mbsfn_area_id,
+  int *num_m2ap_enbs,
+  m2ap_enb_description_t ** m2ap_enbs)
+{
+  m2ap_enb_description_t          *m2ap_enb_ref 		= NULL;
+  mbsfn_area_id_t                 *mbsfn_area_id_p  = (mbsfn_area_id_t*)&mbsfn_area_id;
+
+  /** Collect all M2AP eNBs for the given MBSFN Area Id. */
+  hashtable_element_array_t              ea, *ea_p = NULL;
+  memset(&ea, 0, sizeof(hashtable_element_array_t));
+  ea.elements = m2ap_enbs;
+  ea_p = &ea;
+  hashtable_ts_apply_list_callback_on_elements((hash_table_ts_t * const)&g_m2ap_enb_coll, m2ap_enb_compare_by_mbsfn_area_id_cb, (void *)mbsfn_area_id_p, &ea_p);
+  OAILOG_DEBUG(LOG_M2AP, "Found %d matching m2ap_enb references based on the received MBSFN Area ID " MBSFN_AREA_ID_FMT". \n", ea.num_elements, mbsfn_area_id);
+  *num_m2ap_enbs = ea.num_elements;
+}
+
+//------------------------------------------------------------------------------
 void m2ap_is_mbms_sai_in_list (
   const mbms_service_area_id_t mbms_sai,
   int *num_m2ap_enbs,
-  m2ap_enb_description_t ** m2ap_enbs)
+	const m2ap_enb_description_t ** m2ap_enbs)
 {
   m2ap_enb_description_t                 *m2ap_enb_ref 	= NULL;
   mbms_service_area_id_t                 *mbms_sai_p  	= (mbms_service_area_id_t*)&mbms_sai;
 
   /** Collect all M2AP eNBs for the given MBMS Service Area Id. */
-  hashtable_element_array_t              ea;
+  hashtable_element_array_t              ea, *ea_p = NULL;
   memset(&ea, 0, sizeof(hashtable_element_array_t));
   ea.elements = m2ap_enbs;
-  hashtable_ts_apply_list_callback_on_elements((hash_table_ts_t * const)&g_m2ap_enb_coll, m2ap_enb_compare_by_mbms_sai_cb, (void *)mbms_sai_p, &ea);
+  ea_p = &ea;
+  hashtable_ts_apply_list_callback_on_elements((hash_table_ts_t * const)&g_m2ap_enb_coll, m2ap_enb_compare_by_mbms_sai_cb, (void *)mbms_sai_p, &ea_p);
   OAILOG_DEBUG(LOG_M2AP, "Found %d matching m2ap_enb references based on the received MBMS SAI" MBMS_SERVICE_AREA_ID_FMT". \n", ea.num_elements, mbms_sai);
   *num_m2ap_enbs = ea.num_elements;
 }
@@ -625,10 +672,11 @@ void m2ap_is_mbms_sai_not_in_list (
   mbms_service_area_id_t                 *mbms_sai_p  	= (mbms_service_area_id_t*)&mbms_sai;
 
   /** Collect all M2AP eNBs for the given MBMS Service Area Id. */
-  hashtable_element_array_t              ea;
+  hashtable_element_array_t              ea, *ea_p = NULL;
   memset(&ea, 0, sizeof(hashtable_element_array_t));
   ea.elements = m2ap_enbs;
-  hashtable_ts_apply_list_callback_on_elements((hash_table_ts_t * const)&g_m2ap_enb_coll, m2ap_enb_compare_by_mbms_sai_NACK_cb, (void *)mbms_sai_p, &ea);
+  ea_p = &ea;
+  hashtable_ts_apply_list_callback_on_elements((hash_table_ts_t * const)&g_m2ap_enb_coll, m2ap_enb_compare_by_mbms_sai_NACK_cb, (void *)mbms_sai_p, &ea_p);
   OAILOG_DEBUG(LOG_M2AP, "Found %d unmatching m2ap_enb references based on the received MBMS SAI" MBMS_SERVICE_AREA_ID_FMT". \n", ea.num_elements, mbms_sai);
   *num_m2ap_enbs = ea.num_elements;
 }
@@ -721,14 +769,13 @@ m2ap_new_mbms (
 {
   m2ap_enb_description_t                   *m2ap_enb_ref = NULL;
   mbms_description_t                       *mbms_ref = NULL;
-
-  mce_mbms_m2ap_id_t						mce_mbms_m2ap_id = INVALID_MCE_MBMS_M2AP_ID;
+  mce_mbms_m2ap_id_t												mce_mbms_m2ap_id = INVALID_MCE_MBMS_M2AP_ID;
 
   /** Try to generate a new MBMS M2AP Id. */
   mce_mbms_m2ap_id = generate_new_mce_mbms_m2ap_id();
-  if(mce_mbms_m2ap_id == INVALID_MCE_MBMS_M2AP_ID){
-	return NULL;
-  }
+  if(mce_mbms_m2ap_id == INVALID_MCE_MBMS_M2AP_ID)
+  	return NULL;
+
   /** Assert that it is not reused. */
   DevAssert(!m2ap_is_mbms_mce_m2ap_id_in_list(mce_mbms_m2ap_id));
 
@@ -747,11 +794,11 @@ m2ap_new_mbms (
    * Create and initialize the SCTP eNB MBMS M2aP Id map.
    */
   bstring bs2 = bfromcstr("m2ap_assoc_id2enb_mbms_id_coll");
-  hash_table_ts_t* h = hashtable_ts_init (&mbms_ref->g_m2ap_assoc_id2mce_enb_id_coll, mme_config.mbms.max_mbms_services, NULL, hash_free_int_func, bs2);
+  hash_table_uint64_ts_t* h = hashtable_uint64_ts_init (&mbms_ref->g_m2ap_assoc_id2mce_enb_id_coll, mme_config.mbms.max_m2_enbs, NULL, bs2);
   bdestroy_wrapper (&bs2);
   if(!h){
-	free_wrapper(&mbms_ref);
-	return NULL;
+  	free_wrapper(&mbms_ref);
+  	return NULL;
   }
   /** No Deadlocks should occur, since we check the nb_mbms services in the eNBs above,
    * when removing keys from the list. */
@@ -772,27 +819,27 @@ m2ap_set_embms_cfg_item (m2ap_enb_description_t * const m2ap_enb_ref,
    */
   mme_config_read_lock (&mme_config);
   for (int j = 0; j < mbms_service_areas->list.count; j++) {
-	M2AP_MBMS_Service_Area_t * mbms_sa = &mbms_service_areas->list.array[j];
-	OCTET_STRING_TO_MBMS_SA (mbms_sa, mbms_sa_value);
-	 /** Check if it is a global MBMS SAI. */
-	if(mbms_sa_value <= mme_config.mbms.mbms_global_service_area_types) {
-	  /** Global MBMS Service Area Id received. */
-	  OAILOG_INFO(LOG_MME_APP, "Found a matching global MBMS Service Area ID " MBMS_SERVICE_AREA_ID_FMT ". \n", mbms_sa_value);
-	  m2ap_enb_ref->mbms_sa_list.serviceArea[m2ap_enb_ref->mbms_sa_list.num_service_area] = mbms_sa_value;
-	  m2ap_enb_ref->mbms_sa_list.num_service_area++;
-	  /** No need to check other values, directly check new config value. */
-	  break;
-	}
-	/** Check if it is in bounds for the local service areas. */
-	int val = mbms_sa_value - mme_config.mbms.mbms_global_service_area_types;
-	int local_area = val / mme_config.mbms.mbms_local_service_areas;
-	int local_area_type = val % mme_config.mbms.mbms_local_service_area_types;
-	if(local_area > 0 && local_area < mme_config.mbms.mbms_local_service_areas){
-	  OAILOG_INFO(LOG_MME_APP, "Found a valid MBMS Service Area ID " MBMS_SERVICE_AREA_ID_FMT ". \n", mbms_sa_value);
-	  m2ap_enb_ref->mbms_sa_list.serviceArea[m2ap_enb_ref->mbms_sa_list.num_service_area] = mbms_sa_value;
-	  m2ap_enb_ref->mbms_sa_list.num_service_area++;
-	  break;
-	}
+		M2AP_MBMS_Service_Area_t * mbms_sa = &mbms_service_areas->list.array[j];
+		OCTET_STRING_TO_MBMS_SA (mbms_sa, mbms_sa_value);
+		 /** Check if it is a global MBMS SAI. */
+		if(mbms_sa_value <= mme_config.mbms.mbms_global_service_area_types) {
+			/** Global MBMS Service Area Id received. */
+			OAILOG_INFO(LOG_MME_APP, "Found a matching global MBMS Service Area ID " MBMS_SERVICE_AREA_ID_FMT ". \n", mbms_sa_value);
+			m2ap_enb_ref->mbms_sa_list.serviceArea[m2ap_enb_ref->mbms_sa_list.num_service_area] = mbms_sa_value;
+			m2ap_enb_ref->mbms_sa_list.num_service_area++;
+			/** No need to check other values, directly check new config value. */
+			break;
+		}
+		/** Check if it is in bounds for the local service areas. */
+		int val = mbms_sa_value - mme_config.mbms.mbms_global_service_area_types + 1;
+		int local_area = val / mme_config.mbms.mbms_local_service_area_types;
+		int local_area_type = val % mme_config.mbms.mbms_local_service_area_types;
+		if(local_area < mme_config.mbms.mbms_local_service_areas){
+			OAILOG_INFO(LOG_MME_APP, "Found a valid MBMS Service Area ID " MBMS_SERVICE_AREA_ID_FMT ". \n", mbms_sa_value);
+			m2ap_enb_ref->mbms_sa_list.serviceArea[m2ap_enb_ref->mbms_sa_list.num_service_area] = mbms_sa_value;
+			m2ap_enb_ref->mbms_sa_list.num_service_area++;
+			break;
+		}
   }
   mme_config_unlock (&mme_config);
 }

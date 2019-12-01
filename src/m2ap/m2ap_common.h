@@ -200,7 +200,7 @@ extern int asn1_xer_print;
 # include "3gpp_33.401.h"
 # include "3gpp_36.443.h"
 # include "security_types.h"
-# include "common_types.h"
+# include "common_types_mbms.h"
 
 #define M2AP_FIND_PROTOCOLIE_BY_ID(IE_TYPE, ie, container, IE_ID, mandatory) \
   do {\

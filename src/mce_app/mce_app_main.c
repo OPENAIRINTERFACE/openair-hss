@@ -129,11 +129,23 @@ void *mce_app_thread (void *args)
           mce_app_statistics_display ();
           /** Display the ITTI buffer. */
           itti_print_DEBUG ();
-        } else if (received_message_p->ittiMsg.timer_has_expired.arg != NULL) {
+          /**
+           * Timer just for the MCCH repetition.
+           * This should be equal in all eNBs//MBSFN areas. Repetition timer should be an MBSFN-Area dependent multiple of this.
+           */
+        } else if (received_message_p->ittiMsg.timer_has_expired.timer_id == mce_app_desc.mcch_repetition_timer_id) {
+          /**
+           * Periodic MCCH timer that will not get removed.
+           * The RF of the timer should continuously increase.
+           * All MBSFN areas will be iterated and all MBSFN areas with expired MCCH modification timeout will be updated, if the CSA pattern etc. has been changed.
+           */
+          mce_app_handle_mbsfn_mcch_repetition_timeout_timer_expiry();
+        }
+        else if (received_message_p->ittiMsg.timer_has_expired.arg != NULL) {
             mbms_service_index_t mbms_service_idx = ((mbms_service_index_t)(received_message_p->ittiMsg.timer_has_expired.arg));
             mbms_service_t * mbms_service = mce_mbms_service_exists_mbms_service_index(&mce_app_desc.mce_mbms_service_contexts, mbms_service_idx);
             if (mbms_service == NULL) {
-              OAILOG_WARNING (LOG_MME_APP, "Timer expired but no associated MBMS Service for MBMS Service idx " MCE_MBMS_SERVICE_INDEX_FMT "\n", mbms_service_idx);
+              OAILOG_WARNING (LOG_MME_APP, "Timer expired but no associated MBMS Service for MBMS Service idx " MBMS_SERVICE_INDEX_FMT "\n", mbms_service_idx);
               break;
             }
             if(mbms_service->mbms_procedure) {
@@ -160,6 +172,28 @@ void *mce_app_thread (void *args)
   return NULL;
 }
 
+/**
+ * todo: make this synchronous! Start a timer for the MCCH period (or start a timer that starts this at the correct time)
+ */
+//------------------------------------------------------------------------------
+static bool
+mce_initialize_mcch_repetition_timer() {
+	// todo: calculate the MCCH repetition timer!
+	/** Start the MCCH timer for the MBSFN MCCH. */
+	int mcch_timer_us = mme_config.mbms.mbms_mcch_repetition_period_rf * 10000;
+	int mcch_timer_s  = floor(mcch_timer_us / 1000000);
+	mcch_timer_us = mcch_timer_us % 1000000;
+	// todo: set the OFFset && clear the synchronized with the eNBs.. (set another timer to set the timer?!)
+	if (timer_setup (mcch_timer_s, mcch_timer_us,
+			TASK_MCE_APP, INSTANCE_DEFAULT, TIMER_PERIODIC,  NULL, &mce_app_desc.mcch_repetition_timer_id) < 0) {
+			OAILOG_ERROR (LOG_MME_APP, "Failed to start the generic MCCH repetition timer for duration of %d RFs. \n", mme_config.mbms.mbms_mcch_repetition_period_rf);
+			return false;
+	}
+	OAILOG_ERROR (LOG_MME_APP, "Started the MCCH repetition timer for duration of %d RFs. \n", mme_config.mbms.mbms_mcch_repetition_period_rf);
+	/** Upon expiration, invalidate the timer.. no flag needed. */
+	return true;
+}
+
 //------------------------------------------------------------------------------
 int mce_app_init (const mme_config_t * mme_config_p)
 {
@@ -183,7 +217,7 @@ int mce_app_init (const mme_config_t * mme_config_p)
   bassigncstr(b, "mce_app_mbms_sai_mbsfn_area_ctx_htbl");
   mce_app_desc.mce_mbsfn_area_contexts.mbms_sai_mbsfn_area_ctx_htbl = hashtable_uint64_ts_create (MAX_MBMSFN_AREAS, NULL, b);
   AssertFatal(sizeof(uintptr_t) >= sizeof(uint64_t), "Problem with mce_app_mbms_sai_mbsfn_area_ctx_htbl in MCE_APP");
-  bdestroy_wrapper (&b);
+  btrunc(b, 0);
 
   /**
    * Initialize the MBMS service contexts.
@@ -266,8 +300,15 @@ int mce_app_init (const mme_config_t * mme_config_p)
     OAILOG_ERROR (LOG_MCE_APP, "Failed to request new timer for statistics with %ds " "of periodicity\n", mme_config_p->mme_statistic_timer);
     mce_app_desc.statistic_timer_id = 0;
   }
-  // todo: unlock the mme_desc?!
 
+  /**
+   * Start the MCCH timer at a certain time, synchronous to all the eNBs in the field.
+   */
+  if(!mce_initialize_mcch_repetition_timer()){
+  	DevMessage("Could not start the MBSFN MCCH repetition timer.");
+  }
+
+  // todo: unlock the mme_desc?!
   OAILOG_DEBUG (LOG_MCE_APP, "Initializing MCE applicative layer: DONE -- ASSERTING\n");
   OAILOG_FUNC_RETURN (LOG_MCE_APP, RETURNok);
 }
@@ -277,6 +318,7 @@ void mce_app_exit (void)
 {
   // todo: also check other timers!
   timer_remove(mce_app_desc.statistic_timer_id, NULL);
+  timer_remove(mce_app_desc.mcch_repetition_timer_id, NULL);
   // todo: hashtable_uint64_ts_destroy (mce_app_desc.mce_mbms_service_contexts.mbms_service_id_mbms_service_htbl);
   // todo: hashtable_uint64_ts_destroy (mce_app_desc.mme_ue_contexts.enb_ue_s1ap_id_ue_context_htbl);
   hashtable_uint64_ts_destroy (mce_app_desc.mce_mbms_service_contexts.tunsm_mbms_service_htbl);

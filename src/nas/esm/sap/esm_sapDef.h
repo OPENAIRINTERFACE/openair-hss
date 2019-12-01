@@ -143,7 +143,7 @@ typedef struct esm_pdn_disconnect_s {
 // */
 //typedef struct esm_eps_dedicated_bearer_context_s {
 //  ebi_t                    linked_ebi;
-//  qci_t                    qci;
+//  qci_e                    qci;
 //  bitrate_t                gbr_ul;
 //  bitrate_t                gbr_dl;
 //  bitrate_t                mbr_ul;

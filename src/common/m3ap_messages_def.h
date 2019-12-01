@@ -27,7 +27,8 @@ MESSAGE_DEF(M3AP_MBMS_SESSION_STOP_REQUEST,    MESSAGE_PRIORITY_MED, itti_m3ap_m
 MESSAGE_DEF(M3AP_ENB_SETUP_REQUEST,    MESSAGE_PRIORITY_MED, itti_m3ap_enb_setup_req_t,   m3ap_enb_setup_req)
 MESSAGE_DEF(M3AP_ENB_SETUP_RESPONSE,   MESSAGE_PRIORITY_MED, itti_m3ap_enb_setup_res_t,   m3ap_enb_setup_res)
 
-MESSAGE_DEF(MCE_APP_M3_MBMS_SERVICE_COUNTING_REQ          , MESSAGE_PRIORITY_MED, itti_m3ap_mbms_service_counting_req_t           ,  m3ap_mbms_service_counting_req)
+MESSAGE_DEF(MCE_APP_M3_MBMS_SERVICE_COUNTING_REQ          , MESSAGE_PRIORITY_MED, itti_m3ap_mbms_service_counting_req_t      ,  m3ap_mbms_service_counting_req)
+MESSAGE_DEF(M3AP_MBMS_SCHEDULING_INFORMATION        , MESSAGE_PRIORITY_MED, itti_m3ap_mbms_scheduling_info_t           ,  m3ap_mbms_scheduling_info)
 
 MESSAGE_DEF(M3AP_ENB_INITIATED_RESET_REQ   ,  MESSAGE_PRIORITY_MED, itti_m3ap_enb_initiated_reset_req_t   ,  m3ap_initiated_reset_req)
 MESSAGE_DEF(M3AP_ENB_INITIATED_RESET_ACK   ,  MESSAGE_PRIORITY_MED, itti_m3ap_enb_initiated_reset_ack_t   ,  m3ap_enb_initiated_reset_ack)

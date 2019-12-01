@@ -43,8 +43,7 @@
 #include "hashtable.h"
 #include "obj_hashtable.h"
 #include "bstrlib.h"
-#include "common_types.h"
-#include "mce_app_messages_types.h"
+#include "common_types_mbms.h"
 #include "mme_app_bearer_context.h"
 #include "sm_messages_types.h"
 #include "m3ap_messages_types.h"
@@ -97,8 +96,9 @@ typedef struct mbms_service_s {
 		  /* TODO: add DRX parameter */
 		  // UE Specific DRX Parameters   // UE specific DRX parameters for A/Gb mode, Iu mode and S1-mode
 		  /** TMGI and MBMS Service Area of the MBMS Service - Key Identifiers. */
-		  tmgi_t		         			tmgi;
+		  tmgi_t		         					tmgi;
 		  mbms_service_area_id_t 			mbms_service_area_id;
+		  mbsfn_area_id_t						  mbsfn_area_id;
 		  /** MCE TEID for Sm. */
 		  teid_t                 			mme_teid_sm;                // needed to get the MBMS Service from Sm messages
 		  teid_t                 			mbms_teid_sm;
@@ -109,6 +109,14 @@ typedef struct mbms_service_s {
 		   * It is bound to the TMGI and flow ID combination.
 		   */
 		  struct mbms_bearer_context_s  	mbms_bc;
+
+		  /**
+		   * Start and end MCCH modification periods.
+		   * Both could be in the same MCCH modification period.
+		   * MBMS service is also counted as active in the MCCH stop period.
+		   */
+		  long												mbms_service_mcch_start_period;
+		  long 												mbms_service_mcch_stop_period;
 
 		  /** MBMS Peer Information. */
 		  union {
@@ -124,6 +132,11 @@ typedef struct mbms_service_s {
   STAILQ_ENTRY (mbms_service_s)		entries;
 } mbms_service_t;
 
+typedef struct mbms_services_s {
+	int num_mbms_service;
+	mbms_service_t ** mbms_service_array;
+}mbms_services_t;
+
 /** @struct mbsfn_area_context_s
  *  @brief Useful parameters to know in MCE application layer. They are set
  * according to 3GPP TS.36.443
@@ -132,10 +145,15 @@ typedef struct mbms_service_s {
 typedef struct mbsfn_area_context_s {
   struct {
 	  pthread_mutex_t 						recmutex;  // mutex on the ue_context_t
-	  struct mce_app_timer_t      mcch_timer;
+//	  struct mce_app_timer_t      mcch_timer;
 	  struct {
 		  mbsfn_area_t 	mbsfn_area;
 	  }fields;
+	  /**
+	   * Need a hashmap for the M2 eNB Id.
+	   * No other way, since we need to count the #eNB per MBSFN area, too.
+	   */
+	  hash_table_uint64_ts_t  * m2_enb_id_hashmap;
   }privates;
   // todo: no procedure but a timer!
   // mme_app_mbms_proc_t					 *mbms_procedure;			  ///< Allowing a single MBMS procedure in the MBMS-Service.
@@ -199,7 +217,12 @@ void mce_app_dump_mbms_services(const mce_mbms_services_t * const mce_mbms_servi
 /** \brief Update the MBMS Services with the given information.
  **/
 void mce_app_update_mbms_service (const tmgi_t * const tmgi, const mbms_service_area_id_t old_mbms_service_area_id, const mbms_service_area_id_t new_mbms_service_area_id, const bearer_qos_t * const mbms_bearer_level_qos,
-  const uint16_t mbms_flow_id, const mbms_ip_multicast_distribution_t * const mbms_ip_mc_dist, struct sockaddr * mbms_peer);
+  const uint16_t mbms_flow_id, const mbms_ip_multicast_distribution_t * const mbms_ip_mc_dist, struct sockaddr * mbms_peer, long * mcch_modif_periods);
+
+/** \brief Verify the MBMS Service start and end times with respect to the MCCH modification/repetition periods.
+ **/
+void mce_app_calculate_mbms_service_mcch_periods(const long abs_start_time_in_sec, const long abs_start_time_usec,
+		mbms_session_duration_t * mbms_session_duration, const long mbsfn_area_modif_period_rf, long* mbms_service_mcch_period);
 
 /** \brief Check if an MBMS Service with the given CTEID exists.
  * We don't use CTEID as a key.
@@ -222,21 +245,73 @@ void mce_app_update_mbsfn_areas(const mbms_service_area_t * mbms_service_areas, 
 /*
  * SM Procedures.
  */
-mme_app_mbms_proc_t* mme_app_create_mbms_procedure(mbms_service_t * mbms_service, uint32_t delta_to_start_in_sec, uint32_t delta_to_start_in_usec, const mbms_session_duration_t * const mbms_session_duration);
+mme_app_mbms_proc_t* mme_app_create_mbms_procedure(mbms_service_t * mbms_service, long delta_to_start_in_sec, long delta_to_start_in_usec, const mbms_session_duration_t * const mbms_session_duration);
 void mme_app_delete_mbms_procedure(const mbms_service_t * mbms_service);
 
 /**
- * Get the local MBSFN areas.
+ * Check if an MBSFN area has reached the MCCH modification boundary.
  */
-void mce_app_get_local_mbsfn_areas(const mbms_service_area_t *mbms_service_areas, const uint32_t m2_enb_id, const sctp_assoc_id_t assoc_id, mbsfn_areas_t * const mbsfn_areas);
 //------------------------------------------------------------------------------
+bool mce_app_check_mbsfn_mcch_modif (const hash_key_t keyP,
+               void * const mbsfn_area_context_ref,
+               void * parameterP,
+               void **resultP);
+
+//------------------------------------------------------------------------------
+bool mce_app_check_mbsfn_resources (const hash_key_t keyP,
+               void * const mbsfn_area_context_ref,
+               void * parameterP,
+               void **resultP);
+
+/**
+ * Reset the M2 eNB id map.
+ */
+//------------------------------------------------------------------------------
+void mce_app_reset_m2_enb_registration(const uint32_t m2_enb_id, const sctp_assoc_id_t assoc_id);
+
+/**
+ * Get the local MBSFN areas.
+ * Returns the local service area group, which is allocated.
+ */
+//------------------------------------------------------------------------------
+int mce_app_get_local_mbsfn_areas(const mbms_service_area_t *mbms_service_areas, const uint32_t m2_enb_id, const sctp_assoc_id_t assoc_id, mbsfn_areas_t * const mbsfn_areas);
 
 /**
  * Get the global MBSFN areas.
  */
 //------------------------------------------------------------------------------
-void mce_app_get_global_mbsfn_areas(const mbms_service_area_t *mbms_service_areas, const uint32_t m2_enb_id, const sctp_assoc_id_t assoc_id, mbsfn_areas_t * const mbsfn_areas);
+void mce_app_get_global_mbsfn_areas(const mbms_service_area_t *mbms_service_areas, const uint32_t m2_enb_id, const sctp_assoc_id_t assoc_id, mbsfn_areas_t * const mbsfn_areas, int local_mbms_service_area);
+
+/**
+ * Callback function to receive all active MBMS services.
+ */
+//------------------------------------------------------------------------------
+bool mce_app_get_active_mbms_services (const hash_key_t keyP,
+               void * const mbms_service_ref,
+               void * parameterP,
+               void **resultP);
+
+//------------------------------------------------------------------------------
+int mce_app_mbms_arp_preempt(const mbms_services_t * mbms_services_active);
+
+/**
+ * Get MBSFN Area.
+ */
+//------------------------------------------------------------------------------
+struct mbsfn_area_context_s                           *
+mce_mbsfn_area_exists_mbsfn_area_id(
+  mce_mbsfn_area_contexts_t * const mce_mbsfn_areas_p, const mbsfn_area_id_t mbsfn_area_id);
+
+//------------------------------------------------------------------------------
+struct mbsfn_area_context_s                           *
+mce_mbsfn_area_exists_mbms_service_area_id(
+		mce_mbsfn_area_contexts_t * const mce_mbsfn_areas_p, const mbms_service_area_id_t mbms_service_area_id);
+
+//------------------------------------------------------------------------------
+struct mbsfn_area_context_s                      *
+mbsfn_area_mbms_service_id_in_list (const mce_mbsfn_area_contexts_t * const mce_mbsfn_area_contexts_p, const mbms_service_area_id_t mbms_sai);
 
 #endif /* FILE_MCE_APP_MBMS_SERVICE_CONTEXT_SEEN */
 
 /* @} */
+

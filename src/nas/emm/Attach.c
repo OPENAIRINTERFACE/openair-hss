@@ -925,7 +925,7 @@ static void _emm_proc_create_procedure_attach_request(emm_data_context_t * const
     ((nas_emm_base_proc_t*)attach_proc)->success_notif = NULL;
     attach_proc->emm_spec_proc.retry_cb = retry_cb;
   }
-  OAILOG_DEBUG(LOG_NAS_EMM, " CREATED NEW ATTACH PROC %p \n. ", attach_proc);
+  OAILOG_DEBUG(LOG_NAS_EMM, " CREATED NEW ATTACH PROC %p. \n ", attach_proc);
 }
 /*
  * --------------------------------------------------------------------------

@@ -1244,10 +1244,10 @@ _mme_app_handle_s1ap_ue_context_release (const mme_ue_s1ap_id_t mme_ue_s1ap_id,
     ue_context->privates.s1_ue_context_release_cause = S1AP_INITIAL_CONTEXT_SETUP_FAILED;
   }
   if (ue_context->privates.fields.mm_state == UE_UNREGISTERED) {
-    OAILOG_INFO(LOG_MME_APP, "UE is in UNREGISTERED state. Releasing the UE context in the eNB and triggering an MME context removal for "MME_UE_S1AP_ID_FMT ". \n.", ue_context->privates.mme_ue_s1ap_id);
+    OAILOG_INFO(LOG_MME_APP, "UE is in UNREGISTERED state. Releasing the UE context in the eNB and triggering an MME context removal for "MME_UE_S1AP_ID_FMT ". \n", ue_context->privates.mme_ue_s1ap_id);
     emm_data_context_t * emm_context = emm_data_context_get(&_emm_data, ue_context->privates.mme_ue_s1ap_id);
     if(emm_context && is_nas_specific_procedure_attach_running(emm_context)) {
-      OAILOG_INFO(LOG_MME_APP, "Attach procedure is running for UE "MME_UE_S1AP_ID_FMT ". Triggering implicit detach (aborting attach procedure). \n.", ue_context->privates.mme_ue_s1ap_id);
+      OAILOG_INFO(LOG_MME_APP, "Attach procedure is running for UE "MME_UE_S1AP_ID_FMT ". Triggering implicit detach (aborting attach procedure). \n", ue_context->privates.mme_ue_s1ap_id);
       message_p = itti_alloc_new_message (TASK_MME_APP, NAS_IMPLICIT_DETACH_UE_IND);
       DevAssert (message_p != NULL);
       message_p->ittiMsg.nas_implicit_detach_ue_ind.ue_id = ue_context->privates.mme_ue_s1ap_id; /**< Rest won't be sent, so no NAS Detach Request will be sent. */
@@ -1293,7 +1293,7 @@ _mme_app_handle_s1ap_ue_context_release (const mme_ue_s1ap_id_t mme_ue_s1ap_id,
     // release S1-U tunnel mapping in S_GW for all the active bearers for the UE
     // /** Check if this is the main S1AP UE reference, if o
     // todo:   Assert(at_least_1_BEARER_IS_ESTABLISHED_TO_SAEGW)!?!?
-	OAILOG_INFO(LOG_MME_APP, "UE is REGISTERED. Sending Release Access Bearer Request for ueId "MME_UE_S1AP_ID_FMT". \n.", mme_ue_s1ap_id);
+	OAILOG_INFO(LOG_MME_APP, "UE is REGISTERED. Sending Release Access Bearer Request for ueId "MME_UE_S1AP_ID_FMT". \n", mme_ue_s1ap_id);
     mme_app_send_s11_release_access_bearers_req(ue_context->privates.mme_ue_s1ap_id); /**< Release Access bearers and then send context release request.  */
     // todo: not sending all together, send one by one when release access bearer response is received.
   }
@@ -2286,7 +2286,7 @@ mme_app_handle_s10_context_response(
 
   if(!emm_cn_proc_ctx_req){
     OAILOG_WARNING(LOG_MME_APP, "A NAS CN context request procedure is not active for UE " MME_UE_S1AP_ID_FMT " in state %d. "
-        "Dropping newly received S10 Context Response. \n.",
+        "Dropping newly received S10 Context Response. \n",
         ue_context->privates.mme_ue_s1ap_id, ue_context->privates.fields.mm_state);
     /*
      * The received message should be removed automatically.

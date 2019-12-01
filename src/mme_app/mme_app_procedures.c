@@ -709,31 +709,27 @@ void mme_app_delete_s10_procedure_mme_handover(struct ue_context_s * const ue_co
  */
 //------------------------------------------------------------------------------
 mme_app_mbms_proc_t * mme_app_create_mbms_procedure(mbms_service_t * const mbms_service,
-  uint32_t abs_start_time_in_sec, uint32_t abs_start_time_usec, const mbms_session_duration_t * const mbms_session_duration)
+  long abs_start_time_in_sec, long abs_start_time_usec, const mbms_session_duration_t * const mbms_session_duration)
 {
-  mme_app_mbms_proc_t 				*mbms_proc    = NULL;
   OAILOG_FUNC_IN (LOG_MME_APP);
+
+  mme_app_mbms_proc_t 				*mbms_proc    = NULL;
   /** Check if the list of Sm procedures is empty. */
   if(mbms_service->mbms_procedure){
-	OAILOG_ERROR (LOG_MME_APP, "MBMS Service with TMGI " TMGI_FMT " has already a MBMS procedure ongoing. Cannot create new MBMS procedure. \n",
-	  TMGI_ARG(&mbms_service->privates.fields.tmgi));
-	OAILOG_FUNC_RETURN(LOG_MME_APP, NULL);
+  	OAILOG_ERROR (LOG_MME_APP, "MBMS Service with TMGI " TMGI_FMT " has already a MBMS procedure ongoing. Cannot create new MBMS procedure. \n",
+  			TMGI_ARG(&mbms_service->privates.fields.tmgi));
+  	OAILOG_FUNC_RETURN(LOG_MME_APP, NULL);
   }
+
+  /**
+   * Times of MBMS session start and stop.
+   */
   mbms_proc = calloc(1, sizeof(mme_app_mbms_proc_t));
   mbms_proc->proc.type = MME_APP_BASE_PROC_TYPE_MBMS;
   /** Get the MBMS Service Index. */
   mbms_service_index_t mbms_service_idx = mce_get_mbms_service_index(&mbms_service->privates.fields.tmgi, mbms_service->privates.fields.mbms_service_area_id);
   DevAssert(mbms_service_idx != INVALID_MBMS_SERVICE_INDEX);
   mme_config_read_lock (&mme_config);
-  // TODO: Only if we should wait for the first successful eNB. But since we don't wait, because we don't know the ABS Start time, we don't need this part!
-//  int sm_check_timeout = 3;
-//  /** If the absolute start time is not twice as much, start immediately, no matter what the duration is. Add it to the duration. */
-//  if(sm_check_timeout >= (1 + delta_to_start)){
-//	// todo log --> We start the session immediately, append the 2*timeout to the session duration.
-//	/** Set the absolute time to 0. */
-//	*mbms_abs_start_time = NULL;
-//	sm_check_timeout += delta_to_start;
-//  }
   /**
    * Set the timer, depending on the duration of the MBMS Session Duration and the configuration,
    * the MBMS Session may be terminated, or just checked for existence (clear-up).
@@ -741,13 +737,13 @@ mme_app_mbms_proc_t * mme_app_create_mbms_procedure(mbms_service_t * const mbms_
    * We don't include the absolute start time here.
    */
   if(!mbms_session_duration) {	/**< If this is a stop procedure. */
-	mbms_proc->trigger_mbms_session_stop = true;
-	DevAssert(abs_start_time_in_sec);
+  	mbms_proc->trigger_mbms_session_stop = true;
+  	DevAssert(abs_start_time_in_sec);
   }
-  else if(mme_config.mbms.mbms_short_idle_session_duration_in_sec > mbms_session_duration->seconds){
-	OAILOG_INFO(LOG_MME_APP, "MBMS Session procedure for MBMS Service-Index " MCE_MBMS_SERVICE_INDEX_FMT " has session duration (%ds) is shorter/equal than the minimum (%ds). \n",
-	  mbms_service_idx, mbms_session_duration, mme_config.mbms.mbms_short_idle_session_duration_in_sec);
-	mbms_proc->trigger_mbms_session_stop = true;
+  else if(mme_config.mbms.mbms_short_idle_session_duration_in_sec >= mbms_session_duration->seconds){
+  	OAILOG_INFO(LOG_MME_APP, "MBMS Session procedure for MBMS Service-Index " MBMS_SERVICE_INDEX_FMT " has session duration (%ds) is shorter/equal than the minimum (%ds). \n",
+  			mbms_service_idx, mbms_session_duration->seconds, mme_config.mbms.mbms_short_idle_session_duration_in_sec);
+  	mbms_proc->trigger_mbms_session_stop = true;
   }
   mme_config_unlock (&mme_config);
 
@@ -781,11 +777,12 @@ mme_app_mbms_proc_t * mme_app_create_mbms_procedure(mbms_service_t * const mbms_
    * The first timeout should always check bearers.
    * If the
    */
-  uint32_t delta_to_start_in_sec = abs_start_time_in_sec - time(NULL); /**< Time since EPOCH. */
+  long delta_to_start_in_sec = abs_start_time_in_sec - time(NULL); /**< Time since EPOCH. */
   if (timer_setup (mbms_session_duration->seconds + delta_to_start_in_sec, abs_start_time_usec,
-    TASK_MCE_APP, INSTANCE_DEFAULT, TIMER_ONE_SHOT,  (void *) (mbms_service_idx), &(mbms_proc->timer.id)) < 0) {
-	  OAILOG_ERROR (LOG_MME_APP, "Failed to start the MME MBMS Session timer for MBMS Service Idx " MCE_MBMS_SERVICE_INDEX_FMT " for duration %ds \n",
-		mbms_service_idx, mbms_session_duration->seconds + delta_to_start_in_sec);
+    TASK_MCE_APP, INSTANCE_DEFAULT, TIMER_ONE_SHOT,  (void *) (mbms_service_idx), &(mbms_proc->timer.id)) < 0)
+  {
+	  OAILOG_ERROR (LOG_MME_APP, "Failed to start the MME MBMS Session timer for MBMS Service Idx " MBMS_SERVICE_INDEX_FMT " for duration %ds \n",
+	  		mbms_service_idx, mbms_session_duration->seconds);
 	  mbms_proc->timer.id = MME_APP_TIMER_INACTIVE_ID;
 	  mbms_proc->trigger_mbms_session_stop = false;
 	  free_wrapper(&mbms_proc);

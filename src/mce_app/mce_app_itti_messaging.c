@@ -243,13 +243,12 @@ void mce_app_itti_m3ap_mbms_session_stop_request(tmgi_t *tmgi, mbms_service_area
   OAILOG_FUNC_OUT (LOG_MCE_APP);
 }
 
-
 //------------------------------------------------------------------------------
 /**
  * M3AP eNB Setup Response.
  * After handling MBSFN area creation/update, respond to an M2AP eNB setup request.
  */
-void mce_app_itti_m3ap_enb_setup_response(mbsfn_areas_t * mbsfn_areas_p, sctp_assoc_id_t assoc_id, uint32_t m2ap_enb_id)
+void mce_app_itti_m3ap_enb_setup_response(mbsfn_areas_t * mbsfn_areas_p, uint32_t m2_enb_id, sctp_assoc_id_t assoc_id)
 {
   MessageDef                             *message_p = NULL;
   int                                     rc 		= RETURNok;
@@ -260,6 +259,27 @@ void mce_app_itti_m3ap_enb_setup_response(mbsfn_areas_t * mbsfn_areas_p, sctp_as
   itti_m3ap_enb_setup_res_t *m3ap_enb_setup_res_p = &message_p->ittiMsg.m3ap_enb_setup_res;
   memcpy((void*)&m3ap_enb_setup_res_p->mbsfn_areas, mbsfn_areas_p, sizeof(mbsfn_areas_t));
   m3ap_enb_setup_res_p->sctp_assoc = assoc_id;
+  m3ap_enb_setup_res_p->m2_enb_id  = m2_enb_id;
+  itti_send_msg_to_task (TASK_M2AP, INSTANCE_DEFAULT, message_p);
+  OAILOG_FUNC_OUT (LOG_MCE_APP);
+}
+
+//------------------------------------------------------------------------------
+/**
+ * M3AP MBMS Scheduling Information
+ * Send for expired MBSFN areas, before the beginning of their MCCH modification periods the, updated, CSA pattern.
+ */
+void mce_app_itti_m3ap_send_mbms_scheduling_info(mbsfn_areas_t * mbsfn_areas_p, long mcch_rep_rf)
+{
+  MessageDef                             *message_p = NULL;
+  int                                     rc 		= RETURNok;
+
+  OAILOG_FUNC_IN (LOG_MCE_APP);
+  message_p = itti_alloc_new_message (TASK_MCE_APP, M3AP_MBMS_SCHEDULING_INFORMATION);
+  DevAssert (message_p != NULL);
+  itti_m3ap_mbms_scheduling_info_t *m3ap_mbms_scheduling_info_p = &message_p->ittiMsg.m3ap_mbms_scheduling_info;
+  memcpy((void*)&m3ap_mbms_scheduling_info_p->mbsfn_areas, mbsfn_areas_p, sizeof(mbsfn_areas_t));
+  m3ap_mbms_scheduling_info_p->mcch_rep_rf = mcch_rep_rf;
   itti_send_msg_to_task (TASK_M2AP, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT (LOG_MCE_APP);
 }

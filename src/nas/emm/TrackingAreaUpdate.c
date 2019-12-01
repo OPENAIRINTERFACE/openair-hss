@@ -803,7 +803,7 @@ int emm_proc_tracking_area_update_request_validity(emm_data_context_t * emm_cont
   }
   /** If the TAU request was received in EMM_DEREGISTERED or EMM_COMMON_PROCEDURE_INITIATED state, we should remove the context implicitly. */
   if (!(EMM_REGISTERED == fsm_state || EMM_COMMON_PROCEDURE_INITIATED == fsm_state)){
-    OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Received TAU Request while state is not in EMM_REGISTERED/EMM_COMMON_PROCEDURE_INITIATED, instead %d. \n.", fsm_state);
+    OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Received TAU Request while state is not in EMM_REGISTERED/EMM_COMMON_PROCEDURE_INITIATED, instead %d. \n", fsm_state);
     /** Set the EMM cause to invalid. */
     emm_context->emm_cause = EMM_CAUSE_ILLEGAL_UE;
     /** Continue to handle the TAU Request inside a new EMM context. */

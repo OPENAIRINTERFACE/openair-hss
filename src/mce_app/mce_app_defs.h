@@ -55,6 +55,11 @@ typedef struct mce_app_desc_s {
   mbsfn_area_context_t 		mbsfn_services[CHANGEABLE_VALUE];
   STAILQ_HEAD(mbsfn_areas_list_s, mbsfn_area_context_s)  mce_mbsfn_area_contexts_list;
 
+  /** MCCH Repetition Timer Id. */
+  long mcch_repetition_timer_id;
+  long mcch_repetition_period;
+  struct timeval mcch_repetition_period_tv;
+
   /* Reader/writer lock */
   pthread_rwlock_t rw_lock;
 
@@ -90,6 +95,8 @@ void mce_app_handle_mbms_session_update_request( itti_sm_mbms_session_update_req
 void mce_app_handle_mbms_session_stop_request( itti_sm_mbms_session_stop_request_t * const mbms_session_stop_pP );
 void mce_app_handle_m3ap_enb_setup_request(itti_m3ap_enb_setup_req_t * const m3ap_enb_setup_req_p);
 
+//------------------------------------------------------------------------------
+void mce_app_handle_mbsfn_mcch_repetition_timeout_timer_expiry ();
 void mce_app_handle_mbms_session_duration_timer_expiry (const struct tmgi_s *tmgi, const mbms_service_area_id_t mbms_service_area_id);
 
 #define mce_stats_read_lock(mCEsTATS)  pthread_rwlock_rdlock(&(mCEsTATS)->rw_lock)

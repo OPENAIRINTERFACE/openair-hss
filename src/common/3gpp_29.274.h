@@ -236,7 +236,7 @@ typedef struct bearer_qos_s {
    * Default value: EMPTION_VULNERABILITY_ENABLED
    */
   unsigned pvi:1;
-  uint8_t  qci;
+  qci_e    qci;
   ambr_t   gbr;           ///< Guaranteed bit rate
   ambr_t   mbr;           ///< Maximum bit rate
 } bearer_qos_t;

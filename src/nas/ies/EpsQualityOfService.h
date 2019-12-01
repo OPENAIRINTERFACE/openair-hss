@@ -45,11 +45,10 @@ int encode_eps_quality_of_service(EpsQualityOfService *epsqualityofservice, uint
 
 int decode_eps_quality_of_service(EpsQualityOfService *epsqualityofservice, uint8_t iei, uint8_t *buffer, uint32_t len);
 
-
 int eps_qos_bit_rate_value(uint8_t br);
 int eps_qos_bit_rate_ext_value(uint8_t br);
-void qos_params_to_eps_qos(const qci_t qci, const bitrate_t mbr_dl, const bitrate_t mbr_ul, const bitrate_t gbr_dl, const bitrate_t gbr_ul, EpsQualityOfService * const eps_qos, bool is_default_bearer);
-int validateEpsQosParameter(qci_t qci, int pvi, int pci, int pl, bitrate_t gbr_ul, bitrate_t gbr_dl, bitrate_t mbr_ul, bitrate_t mbr_dl);
+void qos_params_to_eps_qos(const qci_e qci, const bitrate_t mbr_dl, const bitrate_t mbr_ul, const bitrate_t gbr_dl, const bitrate_t gbr_ul, EpsQualityOfService * const eps_qos, bool is_default_bearer);
+int validateEpsQosParameter(qci_e qci, int pvi, int pci, int pl, bitrate_t gbr_ul, bitrate_t gbr_dl, bitrate_t mbr_ul, bitrate_t mbr_dl);
 
 #endif /* EPS_QUALITY_OF_SERVICE_SEEN */
 

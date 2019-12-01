@@ -31,6 +31,7 @@
 #define FILE_SM_MESSAGES_TYPES_SEEN
 
 #include "mme_ie_defs.h"
+#include "common_types_mbms.h"
 #include "3gpp_29.274.h"
 #include "3gpp_36.413.h"
 
@@ -61,10 +62,10 @@ typedef struct itti_sm_mbms_session_start_request_s {
   fteid_t                            sm_mbms_fteid;          ///< SM-MBMS-GW Tunnel Endpoint Identifier
 
   /** MBMS specific parameters. */
-  tmgi_t						     tmgi;                  ///< TMGI Identifier
+  tmgi_t						     						 tmgi;                  ///< TMGI Identifier
   mbms_abs_time_data_transfer_t      abs_start_time;        ///< MBMS Absolute Time of Data Transfer. Anything else is not supported currently.
-  mbms_flags_t				         mbms_flags;            ///< MBMS Flags
-  mbms_ip_multicast_distribution_t  *mbms_ip_mc_address;    ///< MBMS IP Multicast Address.
+  mbms_flags_t				         			 mbms_flags;            ///< MBMS Flags
+  mbms_ip_multicast_distribution_t   mbms_ip_mc_address;    ///< MBMS IP Multicast Address.
   mbms_service_area_t                mbms_service_area;     ///< Service Area of the MBMS Service (todo: multiple are allowed to be sent, but only 1 will be supported).
   mbms_session_duration_t            mbms_session_duration; ///< The duration, where the TMGI of the MBMS session is still valid.
   bearer_qos_t                       mbms_bearer_level_qos; ///< QoS profile of the MBMS bearers to be established.
@@ -122,20 +123,20 @@ typedef struct itti_sm_mbms_session_update_request_s {
   fteid_t                            sm_mbms_fteid;          ///< SM-MBMS-GW Tunnel Endpoint Identifier
 
   /** MBMS specific parameters. */
-  tmgi_t						     tmgi;                  ///< TMGI Identifier
+  tmgi_t						     						 tmgi;                  ///< TMGI Identifier
   mbms_abs_time_data_transfer_t      abs_update_time;       ///< MBMS Absolute Time of Data Transfer. Anything else is not supported currently.
-  mbms_flags_t				         mbms_flags;            ///< MBMS Flags
+  mbms_flags_t				         		   mbms_flags;            ///< MBMS Flags
   mbms_service_area_t                mbms_service_area;     ///< Service Area of the MBMS Service (todo: multiple are allowed to be sent, but only 1 will be supported).
   mbms_session_duration_t            mbms_session_duration; ///< The duration, where the TMGI of the MBMS session is still valid.
-  bearer_qos_t                      *mbms_bearer_level_qos; ///< QoS profile of the MBMS bearers to be established.
-  uint16_t                           mbms_flow_id; 		    ///< MBMS Flow Id.
+  bearer_qos_t                       mbms_bearer_level_qos; ///< QoS profile of the MBMS bearers to be established.
+  uint16_t                           mbms_flow_id; 		    	///< MBMS Flow Id.
 
   /* Sm stack specific parameter. */
   uintptr_t                       	 trxn;                 ///< Transaction identifier
   /* Sm stack specific parameter. Not used in standalone epc mode */
   union {
-    struct sockaddr_in                peer_ipv4;             ///< MBMS-GW Sm IPv4 address
-    struct sockaddr_in6               peer_ipv6;             ///< MBMS-GW Sm IPv6 address
+    struct sockaddr_in               peer_ipv4;             ///< MBMS-GW Sm IPv4 address
+    struct sockaddr_in6              peer_ipv6;             ///< MBMS-GW Sm IPv6 address
   }mbms_peer_ip;
   uint16_t                        	 peer_port;            ///< MBMS-GW Sm port
 } itti_sm_mbms_session_update_request_t;

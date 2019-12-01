@@ -36,6 +36,7 @@
 
 #define M3AP_ENB_SETUP_REQUEST(mSGpTR)		                   		 (mSGpTR)->ittiMsg.m3ap_enb_setup_req
 #define M3AP_ENB_SETUP_RESPONSE(mSGpTR)   	                		 (mSGpTR)->ittiMsg.m3ap_enb_setup_res
+#define M3AP_MBMS_SCHEDULING_INFORMATION(mSGpTR)             		 (mSGpTR)->ittiMsg.m3ap_mbms_scheduling_info
 
 #define MCE_APP_M3_MBMS_SERVICE_COUNTING_REQ(mSGpTR)						 (mSGpTR)->ittiMsg.m3ap_mbms_service_counting_req
 #define M3AP_ENB_INITIATED_RESET_REQ(mSGpTR)                		 (mSGpTR)->ittiMsg.m3ap_initiated_reset_req
@@ -113,9 +114,15 @@ typedef struct itti_m3ap_enb_setup_req_s {
 
 //------------------------------------------------------------------------------
 typedef struct itti_m3ap_enb_setup_res_s {
+	uint32_t								  m2_enb_id;
   sctp_assoc_id_t		    		sctp_assoc;
   mbsfn_areas_t		  				mbsfn_areas;
 } itti_m3ap_enb_setup_res_t;
+
+typedef struct itti_m3ap_mbms_scheduling_info_s {
+  mbsfn_areas_t		  				mbsfn_areas;
+  long 											mcch_rep_rf;
+}itti_m3ap_mbms_scheduling_info_t;
 
 //------------------------------------------------------------------------------
 typedef struct itti_m3ap_enb_initiated_reset_req_s {

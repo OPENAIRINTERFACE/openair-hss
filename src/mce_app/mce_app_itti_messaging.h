@@ -54,6 +54,9 @@ void mce_app_itti_m3ap_mbms_session_update_request(tmgi_t * tmgi, const mbms_ser
 void mce_app_itti_m3ap_mbms_session_stop_request(tmgi_t * tmgi, mbms_service_area_id_t mbms_sa_id, const bool inform_enbs);
 
 /** M2AP eNB Response. */
-void mce_app_itti_m3ap_enb_setup_response(mbsfn_areas_t * mbsfn_areas_p, sctp_assoc_id_t assoc_id, uint32_t m2ap_enb_id);
+void mce_app_itti_m3ap_enb_setup_response(mbsfn_areas_t * mbsfn_areas_p, uint32_t m2ap_enb_id, sctp_assoc_id_t assoc_id);
+
+/** M3AP MBMS Scheduling Information */
+void mce_app_itti_m3ap_send_mbms_scheduling_info(mbsfn_areas_t * mbsfn_areas_p, long mcch_rep_rf);
 
 #endif /* FILE_MCE_APP_ITTI_MESSAGING_SEEN */

@@ -42,6 +42,7 @@
 #include "intertask_interface.h"
 #include "hashtable.h"
 #include "msc.h"
+#include "common_types_mbms.h"
 
 #include "NwGtpv2c.h"
 #include "NwGtpv2cIe.h"
@@ -135,9 +136,8 @@ sm_mme_handle_mbms_session_start_request(
   /*
    * MBMS IP Multicast Distribution Address
    */
-  req_p->mbms_ip_mc_address = calloc(1, sizeof(mbms_ip_multicast_distribution_t));
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_MBMS_IP_MULTICAST_DISTRIBUTION, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_MANDATORY,
-	  sm_mbms_ip_multicast_distribution_ie_get, req_p->mbms_ip_mc_address);
+	  sm_mbms_ip_multicast_distribution_ie_get, &req_p->mbms_ip_mc_address);
   DevAssert (NW_OK == rc);
 
   /*
@@ -159,9 +159,6 @@ sm_mme_handle_mbms_session_start_request(
    */
   rc = nwGtpv2cMsgParserRun (pMsgParser, (pUlpApi->hMsg), &offendingIeType, &offendingIeInstance, &offendingIeLength);
   if (rc != NW_OK) {
-	if(req_p->mbms_ip_mc_address)
-	  free_wrapper(&req_p->mbms_ip_mc_address);
-
     itti_free (ITTI_MSG_ORIGIN_ID (message_p), message_p);
     message_p = NULL;
     rc = nwGtpv2cMsgParserDelete (*stack_p, pMsgParser);
@@ -326,9 +323,8 @@ sm_mme_handle_mbms_session_update_request(
   /*
    * QoS Profile
    */
-  req_p->mbms_bearer_level_qos = calloc(1, sizeof(bearer_qos_t));
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_BEARER_LEVEL_QOS, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_MANDATORY,
-	  gtpv2c_bearer_qos_ie_get, req_p->mbms_bearer_level_qos);
+	  gtpv2c_bearer_qos_ie_get, &req_p->mbms_bearer_level_qos);
   DevAssert (NW_OK == rc);
 
   /** Skip Session Identifier. */
@@ -562,12 +558,12 @@ sm_mme_mbms_session_stop_response (
 		  (hash_key_t) mbms_session_stop_response_p->teid,
 		  (void **)(uintptr_t)&ulp_req.u_api_info.deleteLocalTunnelInfo.hTunnel);
   if (HASH_TABLE_OK != hash_rc) {
-	OAILOG_ERROR (LOG_SM, "Could not get GTPv2-C hTunnel for local teid %X (skipping deletion of tunnel)\n", mbms_session_stop_response_p->teid);
+  	OAILOG_ERROR (LOG_SM, "Could not get GTPv2-C hTunnel for local teid %X (skipping deletion of tunnel)\n", mbms_session_stop_response_p->teid);
   } else {
-	rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
-	DevAssert (NW_OK == rc);
-	hash_rc = hashtable_ts_free(sm_mme_teid_2_gtv2c_teid_handle, (hash_key_t) mbms_session_stop_response_p->teid);
-	DevAssert (HASH_TABLE_OK == hash_rc);
+  	rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
+  	DevAssert (NW_OK == rc);
+  	hash_rc = hashtable_ts_free(sm_mme_teid_2_gtv2c_teid_handle, (hash_key_t) mbms_session_stop_response_p->teid);
+  	DevAssert (HASH_TABLE_OK == hash_rc);
   }
 
   return RETURNok;

@@ -309,7 +309,7 @@ typedef struct itti_s1ap_path_switch_request_s {
 //  unsigned                ebi:4;
 //
 //  /* QoS */
-//  qci_t                   qci;
+//  qci_e                   qci;
 //  priority_level_t        prio_level;
 //  pre_emp_vulnerability_t pre_emp_vulnerability;
 //  pre_emp_capability_t    pre_emp_capability;

@@ -54,7 +54,7 @@ typedef struct itti_mme_app_connection_establishment_cnf_s {
   //     >>E-RAB ID
   ebi_t                   e_rab_id[BEARERS_PER_UE];
   //     >>E-RAB Level QoS Parameters
-  qci_t                   e_rab_level_qos_qci[BEARERS_PER_UE];
+  qci_e                   e_rab_level_qos_qci[BEARERS_PER_UE];
   //       >>>Allocation and Retention Priority
   priority_level_t        e_rab_level_qos_priority_level[BEARERS_PER_UE];
   //       >>>Pre-emption Capability

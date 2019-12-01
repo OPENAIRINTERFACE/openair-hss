@@ -69,7 +69,7 @@ typedef struct gbr_qos_information_s  {
 // 9.2.1.15 E-RAB Level QoS Parameters
 // This IE defines the QoS to be applied to an E-RAB.
 typedef struct e_rab_level_qos_parameters_s  {
-  qci_t                               qci;
+  qci_e                               qci;
   allocation_and_retention_priority_t allocation_and_retention_priority;
   gbr_qos_information_t gbr_qos_information;
 } e_rab_level_qos_parameters_t;

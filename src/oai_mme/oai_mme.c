@@ -175,17 +175,14 @@ main (
     CHECK_INIT_RETURN (s10_mme_init (&mme_config));
   }
   if(mme_config.mbms.ip.if_name_mc){
-    CHECK_INIT_RETURN (m2ap_mce_init (&mme_config));
+    CHECK_INIT_RETURN (m2ap_mce_init ());
     CHECK_INIT_RETURN (sm_mme_init (&mme_config));
 	  CHECK_INIT_RETURN (mce_app_init (&mme_config));
 	  /** Activate it right away. */
-	   MessageDef                             *message_p;
-	   OAILOG_NOTICE(LOG_MME_APP, "Activating MBMS layer..\n");
-	   /*
-	    * Inform S1AP that connection to HSS is established
-	    */
-	   message_p = itti_alloc_new_message (TASK_MME_APP, ACTIVATE_MESSAGE);
-	   itti_send_msg_to_task (TASK_M2AP, INSTANCE_DEFAULT, message_p);
+	  MessageDef                             *message_p;
+	  OAILOG_NOTICE(LOG_MME_APP, "Activating MBMS layer..\n");
+	  message_p = itti_alloc_new_message (TASK_MME_APP, ACTIVATE_MESSAGE);
+	  itti_send_msg_to_task (TASK_M2AP, INSTANCE_DEFAULT, message_p);
   }
   OAILOG_DEBUG(LOG_MME_APP, "MME app initialization of optional interfaces complete. \n");
 

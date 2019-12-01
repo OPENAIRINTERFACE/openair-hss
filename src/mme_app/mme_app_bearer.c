@@ -547,7 +547,7 @@ mme_app_handle_initial_ue_message (
         /** Check that also no MME_APP UE context exists for the given GUTI. */
         // todo: check
         if(mme_ue_context_exists_guti(&mme_app_desc.mme_ue_contexts, &guti) != NULL){
-          OAILOG_ERROR (LOG_MME_APP, "UE EXIST WITH GUTI!\n.");
+          OAILOG_ERROR (LOG_MME_APP, "UE EXIST WITH GUTI!\n");
           OAILOG_FUNC_OUT (LOG_MME_APP);
         }
       }
@@ -3738,7 +3738,7 @@ mme_app_handle_handover_cancel(
       ue_description_t * ue_reference = s1ap_is_enb_ue_s1ap_id_in_list_per_enb(s10_handover_proc->target_enb_ue_s1ap_id, s10_handover_proc->target_ecgi.cell_identity.enb_id);
       if(ue_reference != NULL){
         /** UE Reference to the target eNB found. Sending a UE Context Release to the target MME BEFORE a HANDOVER_REQUEST_ACK arrives. */
-        OAILOG_INFO(LOG_MME_APP, "Sending UE-Context-Release-Cmd to the target eNB %d for the UE-ID " MME_UE_S1AP_ID_FMT " and pending_enbUeS1apId " ENB_UE_S1AP_ID_FMT " (current enbUeS1apId) " ENB_UE_S1AP_ID_FMT ". \n.",
+        OAILOG_INFO(LOG_MME_APP, "Sending UE-Context-Release-Cmd to the target eNB %d for the UE-ID " MME_UE_S1AP_ID_FMT " and pending_enbUeS1apId " ENB_UE_S1AP_ID_FMT " (current enbUeS1apId) " ENB_UE_S1AP_ID_FMT ". \n",
             s10_handover_proc->target_ecgi.cell_identity.enb_id, ue_context->privates.mme_ue_s1ap_id, s10_handover_proc->target_enb_ue_s1ap_id, ue_context->privates.fields.enb_ue_s1ap_id);
         ue_context->privates.s1_ue_context_release_cause = S1AP_HANDOVER_CANCELLED;
         mme_app_itti_ue_context_release (ue_context->privates.mme_ue_s1ap_id, s10_handover_proc->target_enb_ue_s1ap_id, S1AP_HANDOVER_CANCELLED, s10_handover_proc->target_ecgi.cell_identity.enb_id);
@@ -3749,7 +3749,7 @@ mme_app_handle_handover_cancel(
          */
         OAILOG_FUNC_OUT (LOG_MME_APP);
       }else{
-        OAILOG_INFO(LOG_MME_APP, "No target UE reference is established yet. No S1AP UE context removal needed for UE-ID " MME_UE_S1AP_ID_FMT ". Responding with HO_CANCEL_ACK back to enbUeS1apId " ENB_UE_S1AP_ID_FMT ". \n.",
+        OAILOG_INFO(LOG_MME_APP, "No target UE reference is established yet. No S1AP UE context removal needed for UE-ID " MME_UE_S1AP_ID_FMT ". Responding with HO_CANCEL_ACK back to enbUeS1apId " ENB_UE_S1AP_ID_FMT ". \n",
             ue_context->privates.mme_ue_s1ap_id, ue_context->privates.fields.enb_ue_s1ap_id);
       }
     }
@@ -4065,7 +4065,7 @@ void mme_app_send_s1ap_handover_request(mme_ue_s1ap_id_t mme_ue_s1ap_id,
   /** Set the Source-to-Target Transparent container from the pending information, which will be removed from the UE_Context. */
   handover_request_p->source_to_target_eutran_container = eutran_source_to_target_container;
   itti_send_msg_to_task (TASK_S1AP, INSTANCE_DEFAULT, message_p);
-  OAILOG_DEBUG (LOG_MME_APP, "Sending S1AP Handover Request message for UE "MME_UE_S1AP_ID_FMT ". \n.", mme_ue_s1ap_id);
+  OAILOG_DEBUG (LOG_MME_APP, "Sending S1AP Handover Request message for UE "MME_UE_S1AP_ID_FMT ". \n", mme_ue_s1ap_id);
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 
@@ -4322,7 +4322,7 @@ mme_app_handle_forward_access_context_notification(
 	  memcpy((void*)&forward_relocation_complete_notification_p->mme_peer_ip, s10_handover_process->proc.peer_ip,
 			  s10_handover_process->proc.peer_ip->sa_family == AF_INET ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
 
-	  OAILOG_INFO(LOG_MME_APP, "Sending FW_RELOC_COMPLETE_NOTIF TO %X with remote S10-TEID " TEID_FMT ". \n.",
+	  OAILOG_INFO(LOG_MME_APP, "Sending FW_RELOC_COMPLETE_NOTIF TO %X with remote S10-TEID " TEID_FMT ". \n",
 			  forward_relocation_complete_notification_p->mme_peer_ip, forward_relocation_complete_notification_p->teid);
 
 	  // todo: remove this and set at correct position!

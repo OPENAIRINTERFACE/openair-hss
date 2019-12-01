@@ -326,6 +326,32 @@ do {                                                                      \
 } while(0)
 
 /*
+ * TS 36.443 v15.0.0 section 9.2.1.17:
+ * One Frame Item:
+ */
+#define ONE_FRAME_ITEM_SF_TO_BIT_STRING(mACRO, bITsTRING)    \
+do {                                                    \
+    (bITsTRING)->buf = calloc(1, sizeof(uint8_t));      \
+    (bITsTRING)->buf[0] = (((mACRO) & 0x3F) << 2);				\
+    (bITsTRING)->size = 1;                              \
+    (bITsTRING)->bits_unused = 2;                       \
+} while(0)
+
+/*
+ * TS 36.443 v15.0.0 section 9.2.1.17:
+ * Four Frame Item:
+ */
+#define FOUR_FRAME_ITEM_SF_TO_BIT_STRING(mACRO, bITsTRING)    \
+do {                                                    \
+    (bITsTRING)->buf = calloc(3, sizeof(uint8_t));      \
+    (bITsTRING)->buf[0] = (((mACRO) >> 16) & 0xFF);			\
+    (bITsTRING)->buf[1] = (((mACRO) >> 8) & 0xFF);			\
+    (bITsTRING)->buf[1] = ((mACRO) & 0xFF);							\
+    (bITsTRING)->size = 3;                              \
+    (bITsTRING)->bits_unused = 0;                       \
+} while(0)
+
+/*
  * TS 36.413 v10.9.0 section 9.2.1.37:
  * Macro eNB ID:
  * Equal to the 20 leftmost bits of the Cell

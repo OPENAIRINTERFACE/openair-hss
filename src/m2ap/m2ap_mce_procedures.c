@@ -80,11 +80,11 @@ m2ap_handle_mbms_session_start_request (
    * That a single eNB fails to broadcast, is not of importance to the MCE_APP.
    * This message initiates for all eNBs in the given MBMS Service are a new MBMS Bearer Service.
    */
-  uint8_t                                *buffer_p = NULL;
-  uint32_t                                length = 0;
-  uint8_t								  num_m2ap_enbs = 0;
+  uint8_t                              *buffer_p = NULL;
+  uint32_t                              length = 0;
+  uint8_t								  							num_m2ap_enbs = 0;
   mbms_description_t               		 *mbms_ref = NULL;
-  mce_mbms_m2ap_id_t 					  mce_mbms_m2ap_id 	= INVALID_MCE_MBMS_M2AP_ID;
+  mce_mbms_m2ap_id_t 					  				mce_mbms_m2ap_id 	= INVALID_MCE_MBMS_M2AP_ID;
   OAILOG_FUNC_IN (LOG_M2AP);
   DevAssert (mbms_session_start_req_pP != NULL);
 
@@ -137,16 +137,17 @@ m2ap_handle_mbms_session_start_request (
   memcpy((void*)&mbms_ref->mbms_bc.eps_bearer_context.bearer_level_qos, (void*)&mbms_session_start_req_pP->mbms_bearer_tbc.bc_tbc.bearer_level_qos, sizeof(bearer_qos_t));
   /**
    * Check if a timer has been given, if so start the timer.
-   * If not send immediately.
+   * If not send immediately. MBMS Session start will be based on the absolute time and not on the MCCH modification/repetition periods.
+   * They will be handled separately/independently.
    */
   if(mbms_session_start_req_pP->abs_start_time_sec){
-	uint32_t delta_to_start_sec = mbms_session_start_req_pP->abs_start_time_sec - time(NULL);
-	OAILOG_INFO (LOG_M2AP, "M2AP:MBMS Session Start Request- Received a timer of (%d)s for start of TMGI " TMGI_FMT " and MBMS Service Area ID "MBMS_SERVICE_AREA_ID_FMT". \n",
-		delta_to_start_sec, TMGI_ARG(&mbms_session_start_req_pP->tmgi), mbms_session_start_req_pP->mbms_service_area_id);
-	// todo: calculate delta for usec
-    if (timer_setup (delta_to_start_sec, mbms_session_start_req_pP->abs_start_time_usec,
+  	uint32_t delta_to_start_sec = mbms_session_start_req_pP->abs_start_time_sec - time(NULL);
+  	OAILOG_INFO (LOG_M2AP, "M2AP:MBMS Session Start Request- Received a timer of (%d)s for start of TMGI " TMGI_FMT " and MBMS Service Area ID "MBMS_SERVICE_AREA_ID_FMT". \n",
+  			delta_to_start_sec, TMGI_ARG(&mbms_session_start_req_pP->tmgi), mbms_session_start_req_pP->mbms_service_area_id);
+  	// todo: calculate delta for usec
+  	if (timer_setup (delta_to_start_sec, mbms_session_start_req_pP->abs_start_time_usec,
            TASK_M2AP, INSTANCE_DEFAULT, TIMER_ONE_SHOT, (void*)mce_mbms_m2ap_id, &(mbms_ref->m2ap_action_timer.id)) < 0) {
-      OAILOG_ERROR (LOG_M2AP, "Failed to start MBMS Sesssion Start timer for MBMS with MBMS M2AP MCE ID " MCE_MBMS_M2AP_ID_FMT". \n", mce_mbms_m2ap_id);
+      OAILOG_ERROR (LOG_M2AP, "Failed to start MBMS Session Start timer for MBMS with MBMS M2AP MCE ID " MCE_MBMS_M2AP_ID_FMT". \n", mce_mbms_m2ap_id);
       mbms_ref->m2ap_action_timer.id = M2AP_TIMER_INACTIVE_ID;
       /** Send immediately. */
     } else {
@@ -173,10 +174,10 @@ m2ap_handle_mbms_session_update_request (
   /*
    * MBMS-GW triggers the stop of an MBMS Service on all the eNBs which are receiving it.
    */
-  uint8_t                                *buffer_p 					 = NULL;
-  uint32_t                                length 					 = 0;
-  mbms_description_t               		 *mbms_ref 					 = NULL;
-  M2AP_M2AP_PDU_t                         pdu 						 = {0};
+  uint8_t                *buffer_p 					 = NULL;
+  uint32_t                length 					 = 0;
+  mbms_description_t     *mbms_ref 					 = NULL;
+  M2AP_M2AP_PDU_t         pdu 						 = {0};
   int 									  num_m2ap_enbs_new_mbms_sai = 0;
 
   OAILOG_FUNC_IN (LOG_M2AP);
@@ -187,9 +188,9 @@ m2ap_handle_mbms_session_update_request (
   mbms_ref = m2ap_is_mbms_tmgi_in_list(&mbms_session_update_req_pP->tmgi, mbms_session_update_req_pP->old_mbms_service_area_id); /**< Nothing eNB specific. */
   if (!mbms_ref) {
     /** No MBMS Reference found, just ignore the message and return. */
-	OAILOG_ERROR (LOG_M2AP, "No MBMS Service Description with for TMGI " TMGI_FMT " and MBMS_Service_Area ID " MBMS_SERVICE_AREA_ID_FMT "already exists. \n",
-		TMGI_ARG(&mbms_session_update_req_pP->tmgi), mbms_session_update_req_pP->old_mbms_service_area_id);
-	OAILOG_FUNC_OUT(LOG_M2AP);
+  	OAILOG_ERROR (LOG_M2AP, "No MBMS Service Description with for TMGI " TMGI_FMT " and MBMS_Service_Area ID " MBMS_SERVICE_AREA_ID_FMT " already exists. \n",
+  			TMGI_ARG(&mbms_session_update_req_pP->tmgi), mbms_session_update_req_pP->old_mbms_service_area_id);
+  	OAILOG_FUNC_OUT(LOG_M2AP);
   }
 
   /**
@@ -216,10 +217,13 @@ m2ap_handle_mbms_session_update_request (
     OAILOG_FUNC_OUT (LOG_M2AP);
   }
   /**
-   * Iterate through the current MBMS services. Check an current eNBs, where the new MBMS service area id is not supported.
+   * Iterate through the current MBMS services. Check an current M2 eNBs, where the new MBMS service area id is NOT supported.
    * Send a session stop to all of them without removing the MBMS service.
    */
+
+  mme_config_read_lock (&mme_config);
   memset(&m2ap_enb_p_elements, 0, (sizeof(m2ap_enb_description_t*) * mme_config.mbms.max_m2_enbs));
+  mme_config_unlock (&mme_config);
   int num_m2ap_enbs_missing_new_mbms_sai = 0;
   m2ap_is_mbms_sai_not_in_list(mbms_session_update_req_pP->new_mbms_service_area_id, &num_m2ap_enbs_missing_new_mbms_sai, (m2ap_enb_description_t **)&m2ap_enb_p_elements);
   if(num_m2ap_enbs_missing_new_mbms_sai){
@@ -230,11 +234,11 @@ m2ap_handle_mbms_session_update_request (
        m2ap_generate_mbms_session_stop_request(mbms_ref->mce_mbms_m2ap_id, m2ap_enb_p_elements[i]->sctp_assoc_id);
        /** Remove the association and decrement the count. */
        m2ap_enb_p_elements[i]->nb_mbms_associated--; /**< We don't check for restart, since it is trigger due update. */
-       hashtable_ts_free(&mbms_ref->g_m2ap_assoc_id2mce_enb_id_coll, m2ap_enb_p_elements[i]->sctp_assoc_id);
+       hashtable_uint64_ts_free(&mbms_ref->g_m2ap_assoc_id2mce_enb_id_coll, m2ap_enb_p_elements[i]->sctp_assoc_id);
      }
   } else {
 	  OAILOG_INFO(LOG_M2AP, "All existing eNBs of the MBMS Service " MCE_MBMS_M2AP_ID_FMT " support the new MBMS SA " MBMS_SERVICE_AREA_ID_FMT". \n",
-    	mbms_session_update_req_pP->new_mbms_service_area_id, mbms_ref->mce_mbms_m2ap_id);
+    	mbms_ref->mce_mbms_m2ap_id, mbms_session_update_req_pP->new_mbms_service_area_id);
   }
   /** Done cleaning up old MBMS Service Area Id artifacts. Continue with the new MBMS Service Area Id. */
   mbms_ref->mbms_service_area_id = mbms_session_update_req_pP->new_mbms_service_area_id;
@@ -269,16 +273,16 @@ void
 m2ap_handle_mbms_session_stop_request (
   const tmgi_t * const tmgi, const mbms_service_area_id_t mbms_service_area_id, const bool inform_enbs)
 {
+  OAILOG_FUNC_IN (LOG_M2AP);
+
   /*
    * MBMS-GW triggers the stop of an MBMS Service on all the eNBs which are receiving it.
    */
   uint8_t                                *buffer_p = NULL;
   uint32_t                                length = 0;
-  mbms_description_t               		 *mbms_ref = NULL;
+  mbms_description_t               		 	 *mbms_ref = NULL;
   m2ap_enb_description_t                 *target_enb_ref = NULL;
   M2AP_M2AP_PDU_t                         pdu = {0};
-
-  OAILOG_FUNC_IN (LOG_M2AP);
 
   /*
    * We need to check the MBMS Service via TMGI and MBMS Service Index.
@@ -288,27 +292,27 @@ m2ap_handle_mbms_session_stop_request (
     /**
      * No MBMS Reference found, just ignore the message and return.
      */
-	OAILOG_ERROR (LOG_M2AP, "No MBMS Service Description with for TMGI " TMGI_FMT " and MBMS_Service_Area ID " MBMS_SERVICE_AREA_ID_FMT "already exists. \n",
-		TMGI_ARG(tmgi), mbms_service_area_id);
-	OAILOG_FUNC_OUT(LOG_M2AP);
+  	OAILOG_ERROR (LOG_M2AP, "No MBMS Service Description with for TMGI " TMGI_FMT " and MBMS_Service_Area ID " MBMS_SERVICE_AREA_ID_FMT "already exists. \n",
+  			TMGI_ARG(tmgi), mbms_service_area_id);
+  	OAILOG_FUNC_OUT(LOG_M2AP);
   }
 
   if(inform_enbs) {
     /** Check that there exists at least a single eNB with the MBMS Service Area (we don't start MBMS sessions for eNBs which later on connected). */
-	mme_config_read_lock (&mme_config);
-	m2ap_enb_description_t *			         m2ap_enb_p_elements[mme_config.mbms.max_m2_enbs];
-	memset(&m2ap_enb_p_elements, 0, (sizeof(m2ap_enb_description_t*) * mme_config.mbms.max_m2_enbs));
-	mme_config_unlock (&mme_config);
-	int num_m2ap_enbs = 0;
-	m2ap_is_mbms_sai_in_list(mbms_service_area_id, &num_m2ap_enbs, (m2ap_enb_description_t **)&m2ap_enb_p_elements);
-	if(num_m2ap_enbs){
-	  for(int i = 0; i < num_m2ap_enbs; i++){
-		m2ap_generate_mbms_session_stop_request(mbms_ref->mce_mbms_m2ap_id, m2ap_enb_p_elements[i]->sctp_assoc_id);
-	  }
-	} else {
-	  OAILOG_ERROR(LOG_M2AP, "No M2AP eNBs could be found for the MBMS SA " MBMS_SERVICE_AREA_ID_FMT" for the MBMS Service with TMGI " TMGI_FMT" to be removed. Removing implicitly. \n",
-		mbms_service_area_id, TMGI_ARG(tmgi));
-	}
+  	mme_config_read_lock (&mme_config);
+  	m2ap_enb_description_t *			         m2ap_enb_p_elements[mme_config.mbms.max_m2_enbs];
+  	memset(&m2ap_enb_p_elements, 0, (sizeof(m2ap_enb_description_t*) * mme_config.mbms.max_m2_enbs));
+  	mme_config_unlock (&mme_config);
+  	int num_m2ap_enbs = 0;
+  	m2ap_is_mbms_sai_in_list(mbms_service_area_id, &num_m2ap_enbs, (m2ap_enb_description_t **)&m2ap_enb_p_elements);
+  	if(num_m2ap_enbs){
+  		for(int i = 0; i < num_m2ap_enbs; i++){
+  			m2ap_generate_mbms_session_stop_request(mbms_ref->mce_mbms_m2ap_id, m2ap_enb_p_elements[i]->sctp_assoc_id);
+  		}
+  	} else {
+  		OAILOG_ERROR(LOG_M2AP, "No M2AP eNBs could be found for the MBMS SA " MBMS_SERVICE_AREA_ID_FMT" for the MBMS Service with TMGI " TMGI_FMT" to be removed. Removing implicitly. \n",
+  				mbms_service_area_id, TMGI_ARG(tmgi));
+  	}
   }
 
   /**
@@ -323,35 +327,35 @@ m2ap_handle_mbms_session_stop_request (
 int m2ap_generate_mbms_session_stop_request(mce_mbms_m2ap_id_t mce_mbms_m2ap_id, sctp_assoc_id_t sctp_assoc_id)
 {
   OAILOG_FUNC_IN (LOG_M2AP);
-  mbms_description_t                     *mbms_ref = NULL;
+  mbms_description_t             *mbms_ref = NULL;
   m2ap_enb_description_t				 *m2ap_enb_description = NULL;
-  uint8_t                                *buffer_p = NULL;
-  uint32_t                                length = 0;
-  enb_mbms_m2ap_id_t					  enb_mbms_m2ap_id = INVALID_ENB_MBMS_M2AP_ID;
-  MessagesIds                             message_id = MESSAGES_ID_MAX;
-  void                                   *id = NULL;
-  M2AP_M2AP_PDU_t                         pdu = {0};
-  M2AP_SessionStopRequest_t			 	 *out;
-  M2AP_SessionStopRequest_Ies_t		 	 *ie = NULL;
+  uint8_t                        *buffer_p = NULL;
+  uint32_t                        length = 0;
+  enb_mbms_m2ap_id_t					  	enb_mbms_m2ap_id = INVALID_ENB_MBMS_M2AP_ID;
+  MessagesIds                     message_id = MESSAGES_ID_MAX;
+  void                           *id = NULL;
+  M2AP_M2AP_PDU_t                 pdu = {0};
+  M2AP_SessionStopRequest_t			 *out;
+  M2AP_SessionStopRequest_Ies_t	 *ie = NULL;
 
   mbms_ref = m2ap_is_mbms_mce_m2ap_id_in_list(mce_mbms_m2ap_id);
   if (!mbms_ref) {
-	OAILOG_ERROR (LOG_M2AP, "No MCE MBMS M2AP ID " MCE_MBMS_M2AP_ID_FMT". Cannot generate MBMS Session Stop Request. \n", mce_mbms_m2ap_id);
+  	OAILOG_ERROR (LOG_M2AP, "No MCE MBMS M2AP ID " MCE_MBMS_M2AP_ID_FMT". Cannot generate MBMS Session Stop Request. \n", mce_mbms_m2ap_id);
     OAILOG_FUNC_RETURN (LOG_M2AP, RETURNerror);
   }
 
   m2ap_enb_description = m2ap_is_enb_assoc_id_in_list(sctp_assoc_id);
   if (!m2ap_enb_description) {
-	OAILOG_ERROR (LOG_M2AP, "No M2AP eNB description for SCTP Assoc Id (%d). Cannot trigger MBMS Session Stop Request for MBMS Service with MCE MBMS M2AP ID " MCE_MBMS_M2AP_ID_FMT". \n",
+  	OAILOG_ERROR (LOG_M2AP, "No M2AP eNB description for SCTP Assoc Id (%d). Cannot trigger MBMS Session Stop Request for MBMS Service with MCE MBMS M2AP ID " MCE_MBMS_M2AP_ID_FMT". \n",
 			sctp_assoc_id, mce_mbms_m2ap_id);
     OAILOG_FUNC_RETURN (LOG_M2AP, RETURNerror);
   }
 
   /** Check that an eNB-MBMS-ID exists. */
-  hashtable_ts_get (&mbms_ref->g_m2ap_assoc_id2mce_enb_id_coll, (const hash_key_t)sctp_assoc_id, (void **)&enb_mbms_m2ap_id);
+  hashtable_uint64_ts_get (&mbms_ref->g_m2ap_assoc_id2mce_enb_id_coll, (const hash_key_t)sctp_assoc_id, (void *)&enb_mbms_m2ap_id);
   if(enb_mbms_m2ap_id == INVALID_ENB_MBMS_M2AP_ID){
-	OAILOG_ERROR (LOG_M2AP, "No ENB MBMS M2AP ID could be retrieved. Cannot generate MBMS Session Stop Request. \n", enb_mbms_m2ap_id);
-	OAILOG_FUNC_RETURN (LOG_M2AP, RETURNerror);
+  	OAILOG_ERROR (LOG_M2AP, "No ENB MBMS M2AP ID could be retrieved. Cannot generate MBMS Session Stop Request. \n", enb_mbms_m2ap_id);
+  	OAILOG_FUNC_RETURN (LOG_M2AP, RETURNerror);
   }
 
   /*
@@ -386,9 +390,9 @@ int m2ap_generate_mbms_session_stop_request(mce_mbms_m2ap_id_t mce_mbms_m2ap_id,
 
   // todo: qos, sctpm, scheduling..
   if (m2ap_mce_encode_pdu (&pdu, &buffer_p, &length) < 0) {
-	// TODO: handle something
-	OAILOG_ERROR (LOG_M2AP, "Failed to encode MBMS Session Stop Request. \n");
-	OAILOG_FUNC_RETURN (LOG_M2AP, RETURNerror);
+  	// TODO: handle something
+  	OAILOG_ERROR (LOG_M2AP, "Failed to encode MBMS Session Stop Request. \n");
+  	OAILOG_FUNC_RETURN (LOG_M2AP, RETURNerror);
   }
 
   bstring b = blk2bstr(buffer_p, length);
@@ -440,6 +444,200 @@ m2ap_mce_handle_mbms_action_timer_expiry (void *arg)
   OAILOG_FUNC_OUT (LOG_M2AP);
 }
 
+//------------------------------------------------------------------------------
+int m2ap_handle_m3ap_mbms_scheduling_info(itti_m3ap_mbms_scheduling_info_t * m3ap_mbms_scheduling_info){
+	int																			rc = RETURNerror;
+  uint8_t                                *buffer_p = NULL;
+  uint32_t                                length = 0;
+  uint8_t															 		num_m2ap_enbs = 0;
+	mbsfn_area_cfg_t					  					 *mbsfn_area_cfg				= NULL;
+	void                                   *id = NULL;
+	M2AP_M2AP_PDU_t                         pdu = {0};
+	M2AP_MbmsSchedulingInformation_t			 *out;
+	M2AP_MbmsSchedulingInformation_Ies_t	 *ie = NULL;
+  M2AP_MBSFN_Area_Configuration_Item_t	 *mbsfnAreaCfgItem = NULL;
+
+
+	OAILOG_FUNC_IN(LOG_M2AP);
+	// todo: check MBSFN areas size > 1
+	// todo: check at least 1 MBSFN Area with eNB exists..
+
+  /**
+	 * Iterate through the MBSFN services.
+	 * The M2AP eNB associations here should have an MBSFN Id.
+	 */
+  M2AP_MBSFN_Area_Configuration_List_t	*mbsfn_area_configuration_list = &ie->value.choice.MBSFN_Area_Configuration_List;
+
+  mme_config_read_lock (&mme_config);
+  m2ap_enb_description_t *			         m2ap_enb_p_elements[mme_config.mbms.max_m2_enbs];
+  memset(&m2ap_enb_p_elements, 0, (sizeof(m2ap_enb_description_t*) * mme_config.mbms.max_m2_enbs));
+  mme_config_unlock (&mme_config);
+
+  // todo: the MBSFNs should be with differnt offset!
+	for(int num_mbsfn=0; num_mbsfn < m3ap_mbms_scheduling_info->mbsfn_areas.num_mbsfn_areas; num_mbsfn++) {
+		/** Set the MBSFN Area Configuration Item. */
+		mbsfn_area_cfg = &m3ap_mbms_scheduling_info->mbsfn_areas.mbsfn_area_cfg[num_mbsfn];
+		// memset for gcc 4.8.4 instead of {0}, servedGUMMEI.servedPLMNs
+		/** Check if and eNBs existing. */
+		if(num_m2ap_enbs){
+			memset(&m2ap_enb_p_elements, 0, (sizeof(m2ap_enb_description_t*) * num_m2ap_enbs));
+			num_m2ap_enbs = 0;
+		}
+
+		m2ap_is_mbsfn_area_id_list(mbsfn_area_cfg->mbsfnArea.mbms_service_area_id, &num_m2ap_enbs, (m2ap_enb_description_t **)&m2ap_enb_p_elements);
+		if(!num_m2ap_enbs) {
+			/** Skip the MBSFN config.. No eNB with MBSFN area exists. */
+			OAILOG_ERROR(LOG_M2AP, "No M2AP eNB for MBSFN Area " MBSFN_AREA_ID_FMT " exists, skipping it. \n", mbsfn_area_cfg->mbsfnArea.mbms_service_area_id);
+			continue;
+		}
+		/**
+		 * At least one eNB exists,
+		 * Create and encode the message for all eNBs.
+		 */
+	  /*
+	   * We have found the UE in the list.
+	   * Create new IE list message and encode it.
+	   */
+	  memset(&pdu, 0, sizeof(pdu));
+	  pdu.present = M2AP_M2AP_PDU_PR_initiatingMessage;
+	  pdu.choice.initiatingMessage.procedureCode = M2AP_ProcedureCode_id_mbmsSchedulingInformation;
+	  pdu.choice.initiatingMessage.criticality = M2AP_Criticality_ignore;
+	  pdu.choice.initiatingMessage.value.present = M2AP_InitiatingMessage__value_PR_MbmsSchedulingInformation;
+	  out = &pdu.choice.initiatingMessage.value.choice.MbmsSchedulingInformation;
+
+	  /*
+	   * mandatory
+	   */
+	  ie = (M2AP_MbmsSchedulingInformation_Ies_t *)calloc(1, sizeof(M2AP_MbmsSchedulingInformation_Ies_t));
+	  ie->id = M2AP_ProtocolIE_ID_id_MCCH_Update_Time;
+	  ie->criticality = M2AP_Criticality_reject;
+	  ie->value.present = M2AP_MbmsSchedulingInformation_Ies__value_PR_MCCH_Update_Time;
+	  // todo: Calculte the MCCH update time..
+	  uint8_t mcch_update_time = (m3ap_mbms_scheduling_info->mcch_rep_rf / mbsfn_area_cfg->mbsfnArea.mcch_modif_period_rf) % 256;
+	  ie->value.choice.MCCH_Update_Time = mcch_update_time; /**< Absolute counter of the MCCH update period for the MBSFN area. */
+	  ASN_SEQUENCE_ADD(&out->protocolIEs.list, ie);
+
+	  /*
+	   * mandatory
+	   */
+	  ie = (M2AP_MbmsSchedulingInformation_Ies_t *)calloc(1, sizeof(M2AP_MbmsSchedulingInformation_Ies_t));
+	  ie->id = M2AP_ProtocolIE_ID_id_MBSFN_Area_Configuration_List;
+	  ie->criticality = M2AP_Criticality_reject;
+	  ie->value.present = M2AP_MbmsSchedulingInformation_Ies__value_PR_MBSFN_Area_Configuration_List;
+	  ASN_SEQUENCE_ADD(&out->protocolIEs.list, ie);
+
+		/**
+		 * Mandatory: PMCH Configuration List for MBSFN Area.
+		 */
+		mbsfnAreaCfgItem = calloc(1, sizeof (M2AP_MBSFN_Area_Configuration_Item_t));
+		mbsfnAreaCfgItem->id = M2AP_ProtocolIE_ID_id_PMCH_Configuration_List;
+		mbsfnAreaCfgItem->criticality = M2AP_Criticality_reject;
+		mbsfnAreaCfgItem->value.present = M2AP_MBSFN_Area_Configuration_Item__value_PR_PMCH_Configuration_List;
+	  ASN_SEQUENCE_ADD(&ie->value.choice.MBSFN_Area_Configuration_List.list, mbsfnAreaCfgItem);
+
+	  /** Set the PMCH (MCH) configuration list, for every MCH. */
+	  for(int num_mch = 0; num_mch < mbsfn_area_cfg->mchs.num_mch; num_mch++){
+	  	mch_t * mch = &mbsfn_area_cfg->mchs.mch_array[num_mch];
+	  	M2AP_PMCH_Configuration_ItemIEs_t * pmch_configuration_item_ie = calloc(1, sizeof (M2AP_PMCH_Configuration_ItemIEs_t));
+	  	pmch_configuration_item_ie->id = M2AP_ProtocolIE_ID_id_PMCH_Configuration_Item;
+	  	pmch_configuration_item_ie->criticality = M2AP_Criticality_reject;
+	  	pmch_configuration_item_ie->value.present = M2AP_PMCH_Configuration_ItemIEs__value_PR_PMCH_Configuration_Item;
+	  	M2AP_PMCH_Configuration_Item_t * pmch_configuration_item = &pmch_configuration_item_ie->value.choice.PMCH_Configuration_Item.pmch_Configuration;
+	  	// todo: set from MCH
+//	  	pmch_configuration_item->pmch_Configuration.allocatedSubframesEnd = 5;
+//	  	pmch_configuration_item->pmch_Configuration.dataMCS								= mch;
+//	  	pmch_configuration_item->pmch_Configuration.mchSchedulingPeriod   = mch->;
+	  	ASN_SEQUENCE_ADD(&mbsfnAreaCfgItem->value.choice.PMCH_Configuration_List.list, pmch_configuration_item_ie);
+	  }
+	  /** Configure an MBSFN Subframe configuration list. */
+	  mbsfnAreaCfgItem = calloc(1, sizeof (M2AP_MBSFN_Area_Configuration_Item_t));
+	  mbsfnAreaCfgItem->id = M2AP_ProtocolIE_ID_id_MBSFN_Subframe_Configuration_List;
+	  mbsfnAreaCfgItem->criticality = M2AP_Criticality_reject;
+	  mbsfnAreaCfgItem->value.present = M2AP_MBSFN_Area_Configuration_Item__value_PR_MBSFN_Subframe_ConfigurationList;
+	  ASN_SEQUENCE_ADD(&ie->value.choice.MBSFN_Area_Configuration_List.list, mbsfnAreaCfgItem);
+
+	  /**
+	   * Mandatory
+	   * Subframe Configuration List for MBSFN Area.
+	   * 8 CSA Patterns with different subframe bitmap is possible per MBSFN area.
+	   * Currently just one is considered, allowed.
+	   */
+	  for(int mbsfn_csa_pattern = 0; mbsfn_area_cfg->mbsfnArea.csa_patterns.csa_pattern[mbsfn_csa_pattern].mbms_csa_pattern_rfs; mbsfn_csa_pattern++) {
+	  	M2AP_MBSFN_Subframe_Configuration_t * mbsfn_sf_confg = calloc(1, sizeof(M2AP_MBSFN_Subframe_Configuration_t));
+	  	/** Check the RF-Allocation Period as log2. */
+	  	//	  mbsfn_sf_confg->radioframeAllocationPeriod = floor(log2(mbsfn_area_cfg->mbsfnArea.csa_patterns.csa_pattern.csa_pattern_repetition_period_rf));
+	  	DevAssert(mbsfn_sf_confg->radioframeAllocationPeriod >=0);
+	  	DevAssert(mbsfn_sf_confg->radioframeAllocationPeriod <= 5);
+	  	// todo: no CSA offset implemented yet..
+	  	mbsfn_sf_confg->radioframeAllocationOffset = 0;
+	  	if(mbsfn_area_cfg->mbsfnArea.csa_patterns.csa_pattern[mbsfn_csa_pattern].mbms_csa_pattern_rfs == CSA_FOUR_FRAME) {
+	  		/** 24 bit bitmap. */
+	  		mbsfn_sf_confg->subframeAllocation.present = M2AP_MBSFN_Subframe_Configuration__subframeAllocation_PR_oneFrame;
+	  		FOUR_FRAME_ITEM_SF_TO_BIT_STRING(mbsfn_area_cfg->mbsfnArea.csa_patterns.csa_pattern[mbsfn_csa_pattern].csa_pattern_sf.mbms_mch_csa_pattern_4rf,
+	  				&mbsfn_sf_confg->subframeAllocation.choice.fourFrames);
+	  	} else {
+	  		/** 6 bit bitmap. */
+	  		mbsfn_sf_confg->subframeAllocation.present = M2AP_MBSFN_Subframe_Configuration__subframeAllocation_PR_oneFrame;
+	  		ONE_FRAME_ITEM_SF_TO_BIT_STRING(mbsfn_area_cfg->mbsfnArea.csa_patterns.csa_pattern[mbsfn_csa_pattern].csa_pattern_sf.mbms_mch_csa_pattern_1rf,
+	  				&mbsfn_sf_confg->subframeAllocation.choice.oneFrame);
+	  	}
+	  	mbsfn_sf_confg->radioframeAllocationOffset = mbsfn_area_cfg->mbsfnArea.csa_patterns.csa_pattern[mbsfn_csa_pattern].csa_pattern_offset_rf;
+	  	/** Add it to the MBSFN configuration items. */
+		  ASN_SEQUENCE_ADD(&mbsfnAreaCfgItem->value.choice.MBSFN_Subframe_ConfigurationList.list, mbsfn_sf_confg);
+	  }
+	  /**
+	   * Mandatory
+	   * Set the CSA Period
+	   */
+		mbsfnAreaCfgItem = calloc(1, sizeof (M2AP_MBSFN_Area_Configuration_Item_t));
+		mbsfnAreaCfgItem->id = M2AP_ProtocolIE_ID_id_Common_Subframe_Allocation_Period;
+		mbsfnAreaCfgItem->criticality = M2AP_Criticality_reject;
+		mbsfnAreaCfgItem->value.present = M2AP_MBSFN_Area_Configuration_Item__value_PR_Common_Subframe_Allocation_Period;
+	  ASN_SEQUENCE_ADD(&ie->value.choice.MBSFN_Area_Configuration_List.list, mbsfnAreaCfgItem);
+	  // todo recheck and make unsigned..
+	  mbsfnAreaCfgItem->value.choice.Common_Subframe_Allocation_Period = floor(log2(mbsfn_area_cfg->mbsfnArea.mbsfn_csa_period_rf/4));
+	  DevAssert(mbsfnAreaCfgItem->value.choice.Common_Subframe_Allocation_Period >=0);
+	  DevAssert(mbsfnAreaCfgItem->value.choice.Common_Subframe_Allocation_Period <= 5);
+
+	  /**
+	   * Mandatory
+	   * MBSFN Area Id
+	   */
+		mbsfnAreaCfgItem = calloc(1, sizeof (M2AP_MBSFN_Area_Configuration_Item_t));
+		mbsfnAreaCfgItem->id = M2AP_ProtocolIE_ID_id_MBSFN_Area_ID;
+		mbsfnAreaCfgItem->criticality = M2AP_Criticality_reject;
+		mbsfnAreaCfgItem->value.present = M2AP_MBSFN_Area_Configuration_Item__value_PR_MBSFN_Area_ID;
+	  ASN_SEQUENCE_ADD(&ie->value.choice.MBSFN_Area_Configuration_List.list, mbsfnAreaCfgItem);
+	  mbsfnAreaCfgItem->value.choice.MBSFN_Area_ID = mbsfn_area_cfg->mbsfnArea.mbsfn_area_id;
+
+	  /**
+	   * Encode and send it to all eNBs.
+	   */
+	  if (m2ap_mce_encode_pdu (&pdu, &buffer_p, &length) < 0) {
+	  	OAILOG_ERROR (LOG_M2AP, "Error encoding MBMS Scheduling Information.\n");
+  	  OAILOG_FUNC_OUT (LOG_M2AP);
+	  }
+	  bstring b = blk2bstr(buffer_p, length);
+	  free(buffer_p);
+
+	  /**
+	   * Todo: Encode and send it to all M2AP eNBs.. hash_callback.
+	   * Non-MBMS signalling -> stream 0
+	   */
+	  for(int num_m2_enb = 0; num_m2_enb < num_m2ap_enbs; num_m2_enb++) {
+	  	m2ap_enb_description_t * m2_enb_desc = m2ap_enb_p_elements[num_m2_enb];
+	  	DevAssert(m2_enb_desc);
+		  rc = m2ap_mce_itti_send_sctp_request (&b, m2_enb_desc->sctp_assoc_id, M2AP_ENB_SERVICE_SCTP_STREAM_ID, INVALID_MCE_MBMS_M2AP_ID);
+		  if(rc == RETURNerror){
+		  	OAILOG_ERROR (LOG_M2AP, "Error sending MBMS Scheduling Information to eNB with sctp_assoc=%d.\n", m2_enb_desc->sctp_assoc_id);
+		  	/** Continue. */
+		  }
+	  }
+	}
+	OAILOG_FUNC_RETURN(LOG_M2AP, rc);
+}
+
+
 /****************************************************************************/
 /*********************  L O C A L    F U N C T I O N S  *********************/
 /****************************************************************************/
@@ -487,7 +685,7 @@ void m2ap_update_mbms_service_context(const mce_mbms_m2ap_id_t mce_mbms_m2ap_id)
   for(int i = 0; i < num_m2ap_enbs_new_mbms_sai; i++) {
     /** Get the eNB from the SCTP association. */
 	m2ap_enb_description_t * m2ap_enb_ref = m2ap_enb_p_elements[i];
-	hashtable_rc_t h_rc = hashtable_is_key_exists(&mbms_ref->g_m2ap_assoc_id2mce_enb_id_coll, m2ap_enb_ref->sctp_assoc_id);
+	hashtable_rc_t h_rc = hashtable_uint64_ts_is_key_exists(&mbms_ref->g_m2ap_assoc_id2mce_enb_id_coll, m2ap_enb_ref->sctp_assoc_id);
 	if(HASH_TABLE_OK == h_rc) {
 	  /** eNB is already in the list, update it. */
 	  int rc = m2ap_generate_mbms_session_update_request(mbms_ref->mce_mbms_m2ap_id, m2ap_enb_ref->sctp_assoc_id);
@@ -496,7 +694,7 @@ void m2ap_update_mbms_service_context(const mce_mbms_m2ap_id_t mce_mbms_m2ap_id)
 	    "Removing the association.\n", m2ap_enb_ref->sctp_assoc_id, TMGI_ARG(&mbms_ref->tmgi));
 	    m2ap_generate_mbms_session_stop_request(mbms_ref->mce_mbms_m2ap_id, m2ap_enb_ref->sctp_assoc_id);
 	    /** Remove the hash key, which should also update the eNB. */
-	    hashtable_ts_free(&mbms_ref->g_m2ap_assoc_id2mce_enb_id_coll, (const hash_key_t)m2ap_enb_ref->sctp_assoc_id);
+	    hashtable_uint64_ts_free(&mbms_ref->g_m2ap_assoc_id2mce_enb_id_coll, (const hash_key_t)m2ap_enb_ref->sctp_assoc_id);
 	    if(m2ap_enb_ref->nb_mbms_associated)
 	      m2ap_enb_ref->nb_mbms_associated--;
 	    OAILOG_ERROR(LOG_M2AP, "Removed association after erroneous update.\n");
@@ -530,12 +728,12 @@ int m2ap_generate_mbms_session_start_request(mce_mbms_m2ap_id_t mce_mbms_m2ap_id
   MessagesIds                             message_id = MESSAGES_ID_MAX;
   void                                   *id = NULL;
   M2AP_M2AP_PDU_t                         pdu = {0};
-  M2AP_SessionStartRequest_t			 *out;
-  M2AP_SessionStartRequest_Ies_t		 *ie = NULL;
+  M2AP_SessionStartRequest_t			 			 *out;
+  M2AP_SessionStartRequest_Ies_t		  	 *ie = NULL;
 
   mbms_ref = m2ap_is_mbms_mce_m2ap_id_in_list(mce_mbms_m2ap_id);
   if (!mbms_ref) {
-	OAILOG_ERROR (LOG_M2AP, "No MBMS MCE M2AP ID " MCE_MBMS_M2AP_ID_FMT". Cannot generate MBMS Session Start Request. \n", mce_mbms_m2ap_id);
+  	OAILOG_ERROR (LOG_M2AP, "No MBMS MCE M2AP ID " MCE_MBMS_M2AP_ID_FMT". Cannot generate MBMS Session Start Request. \n", mce_mbms_m2ap_id);
     OAILOG_FUNC_RETURN (LOG_M2AP, RETURNerror);
   }
 
@@ -544,9 +742,9 @@ int m2ap_generate_mbms_session_start_request(mce_mbms_m2ap_id_t mce_mbms_m2ap_id
    * We don't encode ENB MBMS M2AP ID, so we can reuse the encoded message.
    */
   if(!num_m2ap_enbs || !*m2ap_enb_descriptions){
-	OAILOG_ERROR (LOG_M2AP, "No M2AP eNBs given for the received MBMS Service Area ID " MBMS_SERVICE_AREA_ID_FMT " for MBMS Service " MCE_MBMS_M2AP_ID_FMT". \n",
-	  mbms_ref->mbms_service_area_id, mce_mbms_m2ap_id);
-    OAILOG_FUNC_RETURN (LOG_M2AP, RETURNerror);
+  	OAILOG_ERROR (LOG_M2AP, "No M2AP eNBs given for the received MBMS Service Area ID " MBMS_SERVICE_AREA_ID_FMT " for MBMS Service " MCE_MBMS_M2AP_ID_FMT". \n",
+  			mbms_ref->mbms_service_area_id, mce_mbms_m2ap_id);
+  	OAILOG_FUNC_RETURN (LOG_M2AP, RETURNerror);
   }
 
   /*
@@ -589,7 +787,7 @@ int m2ap_generate_mbms_session_start_request(mce_mbms_m2ap_id_t mce_mbms_m2ap_id
   ie->id = M2AP_ProtocolIE_ID_id_TMGI;
   ie->criticality = M2AP_Criticality_reject;
   ie->value.present = M2AP_SessionStartRequest_Ies__value_PR_MBMS_Service_Area;
-  uint32_t mbms_sai = mbms_ref->mbms_service_area_id | (1 << 16); /**< Add the length into the encoded value. */
+  uint32_t mbms_sai = mbms_ref->mbms_service_area_id | (0x01 << 16); /**< Add the length into the encoded value. */
   INT24_TO_OCTET_STRING(mbms_sai, &ie->value.choice.MBMS_Service_Area);
   ASN_SEQUENCE_ADD(&out->protocolIEs.list, ie);
 
@@ -604,45 +802,44 @@ int m2ap_generate_mbms_session_start_request(mce_mbms_m2ap_id_t mce_mbms_m2ap_id
   /** Distribution Address. */
   if(mbms_ref->mbms_bc.mbms_ip_mc_distribution.distribution_address.pdn_type == IPv4 ) {
     ie->value.choice.TNL_Information.iPMCAddress.buf = calloc(4, sizeof(uint8_t));
-	IN_ADDR_TO_BUFFER(mbms_ref->mbms_bc.mbms_ip_mc_distribution.distribution_address.address.ipv4_address, ie->value.choice.TNL_Information.iPMCAddress.buf);
-	ie->value.choice.TNL_Information.iPMCAddress.size = 4;
+    IN_ADDR_TO_BUFFER(mbms_ref->mbms_bc.mbms_ip_mc_distribution.distribution_address.address.ipv4_address, ie->value.choice.TNL_Information.iPMCAddress.buf);
+    ie->value.choice.TNL_Information.iPMCAddress.size = 4;
   } else  if(mbms_ref->mbms_bc.mbms_ip_mc_distribution.distribution_address.pdn_type == IPv6 )  {
-    ie->value.choice.TNL_Information.iPMCAddress.buf = calloc(16, sizeof(uint8_t));
+  	ie->value.choice.TNL_Information.iPMCAddress.buf = calloc(16, sizeof(uint8_t));
     IN6_ADDR_TO_BUFFER(mbms_ref->mbms_bc.mbms_ip_mc_distribution.distribution_address.address.ipv6_address, ie->value.choice.TNL_Information.iPMCAddress.buf);
     ie->value.choice.TNL_Information.iPMCAddress.size = 16;
   } else {
-	DevMessage("INVALID PDN TYPE FOR IP MC DISTRIBUTION " + mbms_ref->mbms_bc.mbms_ip_mc_distribution.distribution_address.pdn_type);
+  	DevMessage("INVALID PDN TYPE FOR IP MC DISTRIBUTION " + mbms_ref->mbms_bc.mbms_ip_mc_distribution.distribution_address.pdn_type);
   }
   /** Source Address. */
   if(mbms_ref->mbms_bc.mbms_ip_mc_distribution.source_address.pdn_type == IPv4 ) {
     ie->value.choice.TNL_Information.iPSourceAddress.buf = calloc(4, sizeof(uint8_t));
-	IN_ADDR_TO_BUFFER(mbms_ref->mbms_bc.mbms_ip_mc_distribution.source_address.address.ipv4_address, ie->value.choice.TNL_Information.iPSourceAddress.buf);
-	ie->value.choice.TNL_Information.iPSourceAddress.size = 4;
+    IN_ADDR_TO_BUFFER(mbms_ref->mbms_bc.mbms_ip_mc_distribution.source_address.address.ipv4_address, ie->value.choice.TNL_Information.iPSourceAddress.buf);
+    ie->value.choice.TNL_Information.iPSourceAddress.size = 4;
   } else  if(mbms_ref->mbms_bc.mbms_ip_mc_distribution.source_address.pdn_type == IPv6 )  {
     ie->value.choice.TNL_Information.iPSourceAddress.buf = calloc(16, sizeof(uint8_t));
     IN6_ADDR_TO_BUFFER(mbms_ref->mbms_bc.mbms_ip_mc_distribution.source_address.address.ipv6_address, ie->value.choice.TNL_Information.iPSourceAddress.buf);
     ie->value.choice.TNL_Information.iPSourceAddress.size = 16;
   } else {
-	DevMessage("INVALID PDN TYPE FOR IP MC SOURCE " + mbms_ref->mbms_bc.mbms_ip_mc_distribution.source_address.pdn_type);
+  	DevMessage("INVALID PDN TYPE FOR IP MC SOURCE " + mbms_ref->mbms_bc.mbms_ip_mc_distribution.source_address.pdn_type);
   }
   ASN_SEQUENCE_ADD(&out->protocolIEs.list, ie);
 
-  // todo: qos, sctpm, scheduling..
   if (m2ap_mce_encode_pdu (&pdu, &buffer_p, &length) < 0) {
-	OAILOG_ERROR (LOG_M2AP, "Failed to encode MBMS Session Start Request. \n");
-	OAILOG_FUNC_RETURN (LOG_M2AP, RETURNerror);
+  	OAILOG_ERROR (LOG_M2AP, "Failed to encode MBMS Session Start Request. \n");
+  	OAILOG_FUNC_RETURN (LOG_M2AP, RETURNerror);
   }
 
   // todo: the next_sctp_stream is the one without incrementation?
   for(int i = 0; i < num_m2ap_enbs; i++){
 	  m2ap_enb_description_t * target_enb_ref = m2ap_enb_descriptions[i];
 	  if(target_enb_ref){
-		/** Check if it is in the list of the MBMS Service. */
-		bstring b = blk2bstr(buffer_p, length);
-		free(buffer_p);
-		OAILOG_NOTICE (LOG_M2AP, "Send M2AP_MBMS_SESSION_START_REQUEST message MCE_MBMS_M2AP_ID = " MCE_MBMS_M2AP_ID_FMT "\n", mce_mbms_m2ap_id);
-		/** For the sake of complexity (we wan't to keep it simple, and the same ), we are using the same SCTP Stream Id for all MBMS Service Index. */
-		m2ap_mce_itti_send_sctp_request(&b, target_enb_ref->sctp_assoc_id, MBMS_SERVICE_SCTP_STREAM_ID, mce_mbms_m2ap_id);
+	  	/** Check if it is in the list of the MBMS Service. */
+	  	bstring b = blk2bstr(buffer_p, length);
+	  	free(buffer_p);
+	  	OAILOG_NOTICE (LOG_M2AP, "Send M2AP_MBMS_SESSION_START_REQUEST message MCE_MBMS_M2AP_ID = " MCE_MBMS_M2AP_ID_FMT "\n", mce_mbms_m2ap_id);
+	  	/** For the sake of complexity (we wan't to keep it simple, and the same ), we are using the same SCTP Stream Id for all MBMS Service Index. */
+	  	m2ap_mce_itti_send_sctp_request(&b, target_enb_ref->sctp_assoc_id, MBMS_SERVICE_SCTP_STREAM_ID, mce_mbms_m2ap_id);
 	  }
   }
 
@@ -678,7 +875,7 @@ int m2ap_generate_mbms_session_update_request(mce_mbms_m2ap_id_t mce_mbms_m2ap_i
   }
 
   /** Check that an eNB-MBMS-ID exists. */
-  hashtable_ts_get (&mbms_ref->g_m2ap_assoc_id2mce_enb_id_coll, (const hash_key_t)sctp_assoc_id, (void **)&enb_mbms_m2ap_id);
+  hashtable_uint64_ts_get (&mbms_ref->g_m2ap_assoc_id2mce_enb_id_coll, (const hash_key_t)sctp_assoc_id, (void *)&enb_mbms_m2ap_id);
   if(enb_mbms_m2ap_id == INVALID_ENB_MBMS_M2AP_ID){
 	OAILOG_ERROR (LOG_M2AP, "No ENB MBMS M2AP ID could be retrieved. Cannot generate MBMS Session Update Request. \n");
 	OAILOG_FUNC_RETURN (LOG_M2AP, RETURNerror);
