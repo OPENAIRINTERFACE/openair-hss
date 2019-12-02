@@ -570,6 +570,7 @@ add_library(S11_MME
   ${S11_DIR}/s11_mme_task.c
   ${S11_DIR}/s11_mme_bearer_manager.c
   ${S11_DIR}/s11_mme_session_manager.c
+  ${S11_DIR}/s11_mme_remoteuereport_manager.c
 )
 
 add_library(S11_SGW
@@ -578,6 +579,7 @@ add_library(S11_SGW
   ${S11_DIR}/s11_sgw.c
   ${S11_DIR}/s11_sgw_session_manager.c
   ${S11_DIR}/s11_sgw_bearer_manager.c
+  ${S11_DIR}/s11_sgw_remoteuereport_manager.c
 )
 include_directories(${S11_DIR})
 
@@ -706,6 +708,7 @@ set(libnas_esm_msg_OBJS
   ${NAS_SRC}esm/msg/PdnConnectivityRequest.c
   ${NAS_SRC}esm/msg/PdnDisconnectReject.c
   ${NAS_SRC}esm/msg/PdnDisconnectRequest.c
+  ${NAS_SRC}esm/msg/RemoteUEReport.c
 )
 
 set(libnas_ies_OBJS
@@ -741,7 +744,10 @@ set(libnas_ies_OBJS
   ${NAS_SRC}ies/PagingIdentity.c
   ${NAS_SRC}ies/PdnAddress.c
   ${NAS_SRC}ies/PdnType.c
+  ${NAS_SRC}ies/PKMFAddress.c
   ${NAS_SRC}ies/RadioPriority.c
+  ${NAS_SRC}ies/RemoteUserID.c
+  ${NAS_SRC}ies/RemoteUEContext.c
   ${NAS_SRC}ies/SecurityHeaderType.c
   ${NAS_SRC}ies/ServiceType.c
   ${NAS_SRC}ies/ShortMac.c
@@ -813,7 +819,8 @@ set (libnas_mme_esm_OBJS
   ${NAS_SRC}esm/nas_esm_task.c
   ${NAS_SRC}esm/PdnConnectivity.c
   ${NAS_SRC}esm/PdnDisconnect.c
-  )
+  ${NAS_SRC}esm/RemoteUEReport.c
+   )
 
 set(libnas_mme_esm_sap_OBJS
   ${NAS_SRC}esm/sap/esm_recv.c
