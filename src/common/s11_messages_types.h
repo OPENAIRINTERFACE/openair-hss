@@ -1510,7 +1510,7 @@ typedef struct itti_s11_downlink_data_notification_acknowledge_s {
   // Recovery           ///< optional This IE shall be included if contacting the peer for the first time
   // Private Extension  ///< optional
   /* GTPv2-C specific parameters */
-  void       	  *trxn;
+  void         	  *trxn;
   struct sockaddr *peer_ip;
 }itti_s11_downlink_data_notification_acknowledge_t;
 
@@ -1527,6 +1527,15 @@ typedef struct itti_s11_remote_ue_report_notification_s {
   teid_t          teid;                   ///< Tunnel Endpoint Identifier
   teid_t     local_teid;               ///< not in specs for inner MME use
 
+  /* S11 stack specific parameter. Not used in standalone epc mode */
+  void              	   *trxn;                ///< Transaction identifier
+  union {
+	  struct sockaddr_in			addr_v4;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME
+ 	  struct sockaddr_in6			addr_v6;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME
+  }edns_peer_ip;
+
+  uint16_t           	   peer_port;           ///< MME port for S-GW or S-GW port for MME
+
   remote_ue_context_t remoteuecontext_connected; // From ProSe UE-to-Network Relay to Core Network, details about a newly connected Remote UE
   remote_ue_context_t remoteuecontext_disconnected; // From ProSe UE-to-Network Relay to Core Network, details about a newly disconnected Remote UE
   }itti_s11_remote_ue_report_notification_t;
@@ -1542,6 +1551,14 @@ acknowledge the information related to the remote UE(s) is received.
 typedef struct itti_s11_remote_ue_report_acknowledge_s {
   teid_t          teid;                   ///< Tunnel Endpoint Identifier
   gtpv2c_cause_t  cause;   
+  /* S11 stack specific parameter. Not used in standalone epc mode */
+  void              	   *trxn;                ///< Transaction identifier
+  union {
+	  struct sockaddr_in			addr_v4;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME
+ 	  struct sockaddr_in6			addr_v6;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME
+  }edns_peer_ip;
+
+  uint16_t           	   peer_port;           ///< MME port for S-GW or S-GW port for MME
 }itti_s11_remote_ue_report_acknowledge_t;
 
 #endif /* FILE_S11_MESSAGES_TYPES_SEEN */

@@ -71,7 +71,7 @@ typedef enum esm_primitive_s {
 
   ESM_DETACH_IND,
 
-  ESM_REMOTE_UE_REPORT_RSP,
+  ESM_REMOTE_UE_REPORT_RESPONSE_RSP,
 
   /* Internal signal. */
   ESM_TIMEOUT_IND,
@@ -91,6 +91,8 @@ typedef struct itti_nas_pdn_disconnect_rsp_s                esm_cn_pdn_disconnec
 typedef struct itti_nas_activate_eps_bearer_ctx_req_s       esm_eps_activate_eps_bearer_ctx_req_t;
 typedef struct itti_nas_modify_eps_bearer_ctx_req_s         esm_eps_modify_esm_bearer_ctxs_req_t;
 typedef struct itti_nas_deactivate_eps_bearer_ctx_req_s     esm_eps_deactivate_eps_bearer_ctx_req_t;
+
+typedef struct itti_nas_remote_ue_report_response_rsp_s     esm_cn_remote_ue_report_response_res_t;
 
 /*
  * ESM primitive for EPS bearer context procedure
@@ -179,6 +181,8 @@ typedef union {
   esm_cn_pdn_config_res_t        *pdn_config_res;
   esm_cn_pdn_connectivity_res_t  *pdn_connectivity_res;
   esm_cn_pdn_disconnect_res_t    *pdn_disconnect_res;
+  esm_cn_remote_ue_report_response_res_t    *remote_ue_report_response_res; 
+
 
   /** Non Pointer structures. */
   esm_activate_eps_bearer_context_t         eps_bearer_context_activate;
@@ -200,7 +204,7 @@ typedef struct esm_sap_s {
   esm_sap_data_t      data;       /* ESM message data parameters                                        */
   esm_cause_t         esm_cause;
   bool                clr;
-  uint16_t			  active_ebrs;
+  uint16_t			      active_ebrs;
 } esm_sap_t;
 
 /****************************************************************************/

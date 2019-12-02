@@ -60,42 +60,39 @@ itti_s11_remote_ue_report_notification_t *ntf_p)
 {
   nw_gtpv2c_ulp_api_t                       ulp_req;
   nw_rc_t                                   rc;
-
+  uint8_t                                 restart_counter = 0;
+  OAILOG_FUNC_IN (LOG_S11);
+  
   DevAssert (stack_p );
   DevAssert (ntf_p );
   memset (&ulp_req, 0, sizeof (nw_gtpv2c_ulp_api_t));
   ulp_req.apiType = NW_GTPV2C_ULP_API_INITIAL_REQ;
+
   /*
    * Prepare a new Remote UE Report notification msg
    */
-  ulp_req.u_api_info.initialReqInfo.teidLocal  = ntf_p->teid;
-  ulp_req.u_api_info.initialReqInfo.teidLocal = ntf_p->local_teid;
   rc = nwGtpv2cMsgNew (*stack_p, true, NW_GTP_REMOTE_UE_REPORT_NOTIFICATION, ntf_p->teid, 0, &(ulp_req.hMsg));
- 
-  //ulp_req.u_api_info.initialReqInfo.edns_peer_ip = &ntf_p->edns_peer_ip;
-  DevAssert (NW_OK == rc);
+  ulp_req.u_api_info.initialReqInfo.edns_peer_ip = &ntf_p->edns_peer_ip;
+  ulp_req.u_api_info.initialReqInfo.teidLocal  = ntf_p->local_teid;
+  ulp_req.u_api_info.initialReqInfo.hUlpTunnel = 0;
+  ulp_req.u_api_info.initialReqInfo.hTunnel    = 0;
 
-   /*
-   * Set the remote TEID
-   */
-  ulp_req.u_api_info.triggeredRspInfo.teidLocal  = ntf_p->local_teid;
-
-  hashtable_rc_t hash_rc = hashtable_ts_get(s11_mme_teid_2_gtv2c_teid_handle,
-  (hash_key_t) ntf_p->local_teid, (void **)(uintptr_t)&ulp_req.u_api_info.triggeredRspInfo.hTunnel);
-
-  if (HASH_TABLE_OK != hash_rc) {
-    OAILOG_WARNING (LOG_S11, "Could not get GTPv2-C hTunnel for local teid %X\n", ntf_p->local_teid);
+hashtable_rc_t hash_rc = hashtable_ts_get(s11_mme_teid_2_gtv2c_teid_handle,
+      (hash_key_t) ulp_req.u_api_info.initialReqInfo.teidLocal, (void **)(uintptr_t)&ulp_req.u_api_info.initialReqInfo.hTunnel);
+    if (HASH_TABLE_OK != hash_rc) {
+    OAILOG_WARNING (LOG_S11, "Could not get GTPv2-C hTunnel for local teid %X\n", ulp_req.u_api_info.initialReqInfo.teidLocal);
     rc = nwGtpv2cMsgDelete (*stack_p, (ulp_req.hMsg));
     DevAssert (NW_OK == rc);
     return RETURNerror;
-  }
-
-MSC_LOG_TX_MESSAGE (MSC_S11_MME, MSC_SGW, NULL, 0, "0 REMOTE UE REPORT NOTIFICATION S11 teid " TEID_FMT " num bearers ctx %u",
-      ntf_p->teid);
-
+  }  
+  
+   MSC_LOG_TX_MESSAGE (MSC_S11_MME, MSC_SGW, NULL, 0, "0 REMOTE UE REPORT NOTIFICATION S11 teid " TEID_FMT " num bearers ctx %u",
+   ntf_p->local_teid);
+      
   rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
   DevAssert (NW_OK == rc);
   return RETURNok;
+   OAILOG_FUNC_RETURN (LOG_S11, RETURNok);
 }
 
 //------------------------------------------------------------------------------

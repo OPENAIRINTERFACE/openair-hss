@@ -34,6 +34,7 @@ add_library(S11_MME
     s11_mme_task.c
     s11_mme_bearer_manager.c
     s11_mme_session_manager.c
+    s11_mme_remoteuereport_manager.c
     )
 
 add_library(S11_SGW
@@ -42,5 +43,6 @@ add_library(S11_SGW
     s11_sgw.c
     s11_sgw_session_manager.c
     s11_sgw_bearer_manager.c
+    s11_sgw_remoteuereport_manager.c
     )
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})

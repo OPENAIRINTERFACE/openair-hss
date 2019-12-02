@@ -93,6 +93,11 @@ static void *nas_esm_intertask_interface (void *args_p)
     }
     break;
 
+    case NAS_REMOTE_UE_REPORT_RSP:{
+      nas_esm_proc_remote_ue_report_response_res (&NAS_REMOTE_UE_REPORT_RESPONSE_RSP (received_message_p));
+    }
+    break;
+
     case NAS_PDN_DISCONNECT_RSP:{
       nas_esm_proc_pdn_disconnect_res (&NAS_PDN_DISCONNECT_RSP (received_message_p));
     }

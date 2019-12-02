@@ -25,8 +25,8 @@
   \company Eurecom
   \email: lionel.gauthier@eurecom.fr
 */
-#ifndef FILE_S11_REMOTEUEREPORT_BEARER_MANAGER_SEEN
-#define FILE_S11_REMOTEUEREPORT_BEARER_MANAGER_SEEN
+#ifndef FILE_S11_MME_REMOTEUEREPORT_BEARER_MANAGER_SEEN
+#define FILE_S11_MME_REMOTEUEREPORT_BEARER_MANAGER_SEEN
 
 #include <NwGtpv2c.h>
 #include <s11_messages_types.h>
@@ -39,4 +39,4 @@ int s11_mme_remote_ue_report_notification(nw_gtpv2c_stack_handle_t *stack_p, itt
 int s11_mme_remote_ue_report_acknowledge (nw_gtpv2c_stack_handle_t * stack_p, nw_gtpv2c_ulp_api_t * pUlpApi);
 
 
-#endif /* FILE_S11_REMOTEUEREPORT_BEARER_MANAGER_SEEN */
+#endif /* FILE_S11_MME_REMOTEUEREPORT_BEARER_MANAGER_SEEN */

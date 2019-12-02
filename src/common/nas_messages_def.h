@@ -52,6 +52,9 @@ MESSAGE_DEF(NAS_PDN_CONFIG_FAIL,                MESSAGE_PRIORITY_MED,   itti_nas
 MESSAGE_DEF(NAS_SIGNALLING_CONNECTION_REL_IND,  MESSAGE_PRIORITY_MED,   itti_nas_signalling_connection_rel_ind_t, nas_signalling_connection_rel_ind)
 MESSAGE_DEF(NAS_PAGING_DUE_SIGNALING_IND     ,  MESSAGE_PRIORITY_MED,   itti_nas_paging_due_signaling_ind_t 	,  nas_paging_due_signaling_ind)
 
+/** Remote UE Report Response. */
+MESSAGE_DEF(NAS_REMOTE_UE_REPORT_RSP,           MESSAGE_PRIORITY_MED,   itti_nas_remote_ue_report_response_rsp_t,   nas_remote_ue_report_response_rsp)
+
 /** Dedicated Bearer Messaging. */
 MESSAGE_DEF(NAS_RETRY_BEARER_CTX_PROC_IND     , MESSAGE_PRIORITY_MED, itti_nas_retry_bearer_ctx_proc_ind_t     ,  nas_retry_bearer_ctx_proc_ind)
 MESSAGE_DEF(NAS_ACTIVATE_EPS_BEARER_CTX_REQ   , MESSAGE_PRIORITY_MED, itti_nas_activate_eps_bearer_ctx_req_t   ,  nas_activate_eps_bearer_ctx_req)

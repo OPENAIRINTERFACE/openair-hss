@@ -798,7 +798,7 @@ esm_recv_remote_ue_report_msg (
    * No procedure should exist at all (also no network triggered procedure without PTI.
    * Not checking any bearer context procedure at this step.
    */
-  nas_esm_proc_remote_ue_report_t * esm_proc_remote_ue_report_req = _esm_proc_get_remote_ue_report_procedure(ue_id, pti);
+  nas_esm_proc_remote_ue_report_t *  esm_proc_remote_ue_report_req = _esm_proc_get_remote_ue_report_procedure(ue_id, pti);
   if(esm_proc_remote_ue_report_req){
     OAILOG_INFO(LOG_NAS_ESM, "ESM-SAP   - Found a Remote UE Report procedure (pti=%d) for UE " MME_UE_S1AP_ID_FMT ".\n",
         esm_proc_remote_ue_report_req->esm_base_proc.pti, ue_id);
@@ -822,25 +822,39 @@ esm_recv_remote_ue_report_msg (
 /*
 * Check that an EPS procedure exists.
 */
-  nas_esm_proc_bearer_context_t * esm_bearer_procedure = _esm_proc_get_bearer_context_procedure(ue_id, pti, ebi);
-  if(!esm_bearer_procedure){
-   OAILOG_ERROR(LOG_NAS_ESM, "ESM-PROC  - No ESM bearer procedure exists for remote UE Report (ebi=%d, pti=%d) for UE " MME_UE_S1AP_ID_FMT ". \n", ebi, pti, ue_id);
-    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_REQUEST_REJECTED_UNSPECIFIED);
-  }
+  //nas_esm_proc_bearer_context_t * esm_bearer_procedure = _esm_proc_get_bearer_context_procedure(ue_id, pti, ebi);
+  //if(!esm_bearer_procedure){
+   //OAILOG_ERROR(LOG_NAS_ESM, "ESM-PROC  - No ESM bearer procedure exists for remote UE Report (ebi=%d, pti=%d) for UE " MME_UE_S1AP_ID_FMT ". \n", ebi, pti, ue_id);
+    //OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_REQUEST_REJECTED_UNSPECIFIED);
+  //}
 
+
+/**
+   * Create a new ESM procedure for Remote UE Report. Not important if we continue with ESM information or PDN connectivity, since this function will handle
+   * the received messages (no specific callback needed).
+   */
+  DevAssert(!esm_proc_remote_ue_report_req);
+  OAILOG_DEBUG(LOG_NAS_ESM, "ESM-SAP   - No ESM procedure for UE " MME_UE_S1AP_ID_FMT " exists. Proceeding with handling the new ESM request (pti=%d) for PDN connectivity.\n", ue_id, pti);
+  esm_proc_remote_ue_report_req = _esm_proc_create_remote_ue_report_procedure(ue_id,ebi, pti);
+
+  //esm_proc_remote_ue_report_req->request_type = pdn_request_type;
+  //esm_proc_remote_ue_report_req->pdn_type = pdn_type;
+  //esm_proc_remote_ue_report_req->is_attach = *is_attach;
+  //memcpy(&esm_proc_remote_ue_report_req->visited_tai, visited_tai, sizeof(tai_t));
+  //if(msg->presencemask & PDN_CONNECTIVITY_REQUEST_ACCESS_POINT_NAME_PRESENT)
+  //  esm_proc_remote_ue_report_req->subscribed_apn = bstrcpy(msg->accesspointname);
   /*
    * Execute the dedicated Remote UE Report procedure
    * * * * by the UE
    */
 
-    esm_proc_remote_ue_report ( ue_id, pti, ebi, esm_proc_remote_ue_report_req );
-    
+esm_cause_t esm_cause = esm_proc_remote_ue_report ( ue_id, pti, ebi, esm_proc_remote_ue_report_req );
+
   /*
    * Return the ESM cause value
    */
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_SUCCESS);
-    //OAILOG_FUNC_RETURN (LOG_NAS_ESM, esm_cause);
-}
+    }
 
 
 /****************************************************************************

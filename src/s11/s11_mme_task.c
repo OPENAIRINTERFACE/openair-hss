@@ -51,6 +51,8 @@
 #include "s11_mme.h"
 #include "s11_mme_session_manager.h"
 #include "s11_mme_bearer_manager.h"
+#include "s11_mme_remoteuereport_manager.h"
+
 
 static nw_gtpv2c_stack_handle_t             s11_mme_stack_handle = 0;
 // Store the GTPv2-C teid handle
@@ -257,7 +259,12 @@ s11_mme_thread (
             s11_mme_delete_session_request (&s11_mme_stack_handle, &received_message_p->ittiMsg.s11_delete_session_request);
           }
           break;
-
+        
+        case S11_REMOTE_UE_REPORT_NOTIFICATION:{
+            s11_mme_remote_ue_report_notification (&s11_mme_stack_handle, &received_message_p->ittiMsg.s11_remote_ue_report_notification);
+          }
+          break;
+        
         case S11_DELETE_BEARER_COMMAND:{
             s11_mme_delete_bearer_command (&s11_mme_stack_handle, &received_message_p->ittiMsg.s11_delete_bearer_command);
           }

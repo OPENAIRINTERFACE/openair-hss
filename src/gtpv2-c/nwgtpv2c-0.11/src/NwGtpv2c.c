@@ -1644,6 +1644,7 @@ static nw_rc_t                            nwGtpv2cHandleUlpFindLocalTunnel (
     case NW_GTP_RELEASE_ACCESS_BEARERS_REQ:
     case NW_GTP_CREATE_INDIRECT_DATA_FORWARDING_TUNNEL_REQ:
     case NW_GTP_DELETE_INDIRECT_DATA_FORWARDING_TUNNEL_REQ:
+    case NW_GTP_REMOTE_UE_REPORT_NOTIFICATION:
       /** Handover Related Messages. */
     case NW_GTP_FORWARD_RELOCATION_REQ:
     case NW_GTP_FORWARD_RELOCATION_COMPLETE_NTF:
@@ -1684,6 +1685,7 @@ static nw_rc_t                            nwGtpv2cHandleUlpFindLocalTunnel (
     case NW_GTP_UPDATE_BEARER_RSP:
     case NW_GTP_DELETE_BEARER_RSP:
     case NW_GTP_DELETE_BEARER_FAILURE_IND:
+    case NW_GTP_GTP_REMOTE_UE_REPORT_ACK:
 //    case NW_GTP_BEARER_RESOURCE_FAILURE_IND:
     case NW_GTP_RELEASE_ACCESS_BEARERS_RSP:
     case NW_GTP_CREATE_INDIRECT_DATA_FORWARDING_TUNNEL_RSP:

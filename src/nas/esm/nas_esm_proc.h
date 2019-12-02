@@ -96,4 +96,7 @@ int nas_esm_proc_activate_eps_bearer_ctx(esm_eps_activate_eps_bearer_ctx_req_t *
 int nas_esm_proc_modify_eps_bearer_ctx(esm_eps_modify_esm_bearer_ctxs_req_t * esm_cn_modify);
 int nas_esm_proc_deactivate_eps_bearer_ctx(esm_eps_deactivate_eps_bearer_ctx_req_t * esm_cn_deactivate);
 
+
+int nas_esm_proc_remote_ue_report_response_res (esm_cn_remote_ue_report_response_res_t * remote_ue_report_rsp_res);
+
 #endif /* FILE_NAS_PROC_SEEN*/

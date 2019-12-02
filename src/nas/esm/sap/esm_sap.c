@@ -236,13 +236,14 @@ esm_sap_signal(esm_sap_t * msg, bstring *rsp)
   }
   break;
   
-  case ESM_REMOTE_UE_REPORT_RSP:{
+  case ESM_REMOTE_UE_REPORT_RESPONSE_RSP:{
     pti_t  pti;
     nas_esm_proc_remote_ue_report_t * esm_proc_remote_ue_report = _esm_proc_get_remote_ue_report_procedure( msg->ue_id, pti);
     if(!esm_proc_remote_ue_report){
      OAILOG_ERROR (LOG_NAS_ESM, "ESM-SAP   - No ESM transaction for UE ueId " MME_UE_S1AP_ID_FMT " exists. Ignoring the received Remote UE Report. \n",
           msg->ue_id); 
     }else{
+      msg->esm_cause = esm_proc_remote_ue_report_res(msg->ue_id, esm_proc_remote_ue_report);
       esm_send_remote_ue_report_response (pti, ebi, &esm_resp_msg );
     }
 

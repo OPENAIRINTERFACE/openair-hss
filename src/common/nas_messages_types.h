@@ -66,13 +66,16 @@
 // todo:
 #define NAS_IMPLICIT_DETACH_UE_IND(mSGpTR)          (mSGpTR)->ittiMsg.nas_implicit_detach_ue_ind
 
+/** Add Remote UE Report Response. */
+#define NAS_REMOTE_UE_REPORT_RESPONSE_RSP(mSGpTR)   (mSGpTR)->ittiMsg.nas_remote_ue_report_response_rsp
+
 /** Add PDN Disconnect request. */
 #define NAS_PDN_DISCONNECT_REQ(mSGpTR)              (mSGpTR)->ittiMsg.nas_pdn_disconnect_req
 #define NAS_PDN_DISCONNECT_RSP(mSGpTR)              (mSGpTR)->ittiMsg.nas_pdn_disconnect_rsp
 
-#define NAS_CONTEXT_REQ(mSGpTR)                  (mSGpTR)->ittiMsg.nas_context_req
-#define NAS_CONTEXT_RES(mSGpTR)                  (mSGpTR)->ittiMsg.nas_context_res
-#define NAS_CONTEXT_FAIL(mSGpTR)                 (mSGpTR)->ittiMsg.nas_context_fail
+#define NAS_CONTEXT_REQ(mSGpTR)                     (mSGpTR)->ittiMsg.nas_context_req
+#define NAS_CONTEXT_RES(mSGpTR)                     (mSGpTR)->ittiMsg.nas_context_res
+#define NAS_CONTEXT_FAIL(mSGpTR)                    (mSGpTR)->ittiMsg.nas_context_fail
 
 typedef enum pdn_conn_rsp_cause_e {
   CAUSE_OK = 16,
@@ -89,6 +92,15 @@ typedef struct itti_nas_pdn_connectivity_rsp_s {
   ebi_t                   linked_ebi;
   esm_cause_t             esm_cause;
 } itti_nas_pdn_connectivity_rsp_t;
+
+
+typedef struct itti_nas_remote_ue_report_response_rsp_s {
+  pti_t                   pti;
+  mme_ue_s1ap_id_t        ue_id;
+  ebi_t                   linked_ebi;
+  esm_cause_t             esm_cause;
+} itti_nas_remote_ue_report_response_rsp_t;
+
 
 typedef struct itti_nas_pdn_config_rsp_s {
   mme_ue_s1ap_id_t        ue_id; // nas ref

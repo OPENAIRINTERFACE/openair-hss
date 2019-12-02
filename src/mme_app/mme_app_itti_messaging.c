@@ -376,6 +376,70 @@ mme_app_send_s11_create_session_req (
 }
 
 //------------------------------------------------------------------------------
+void
+mme_app_send_s11_remote_ue_report_notif ( const mme_ue_s1ap_id_t ue_id, const struct ue_session_pool_s *  ue_session_pool,pdn_context_t * pdn_context)
+{
+  OAILOG_FUNC_IN (LOG_MME_APP);
+  uint8_t                                 i = 0;
+  /*
+   * Keep the identifier to the default APN
+   */
+//context_identifier_t                           context_identifier = 0;
+  //mme_ue_s1ap_id_t                               mme_ue_s1ap_id;
+  MessageDef                                    *message_p = NULL;
+  struct ue_context_s                           *ue_context = NULL;
+  //struct ue_session_pool_s                      *ue_session_pool = NULL;
+//itti_s11_remote_ue_report_notification_t      *ue_report_notification_p = NULL;
+  int                                            rc = RETURNok;
+
+  message_p = itti_alloc_new_message (TASK_MME_APP, S11_REMOTE_UE_REPORT_NOTIFICATION);
+  
+  itti_s11_remote_ue_report_notification_t *s11_remote_ue_report_notification = &message_p->ittiMsg.s11_remote_ue_report_notification;
+  
+   /*
+   * As the create session request is the first exchanged message and as
+   * no tunnel had been previously setup, the distant teid is set to 0.
+   * The remote teid will be provided in the response message.
+   */
+
+//OAILOG_DEBUG (LOG_MME_APP, "Received Remote UE Report Notification \n");
+ 
+ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, ue_id);
+
+ if (ue_context == NULL) {
+ OAILOG_ERROR (LOG_MME_APP, "We didn't find this mme_ue_s1ap_id in list of UE: %08x %d(dec)\n", ue_id, ue_id);
+ MSC_LOG_EVENT (MSC_MMEAPP_MME, "Remote UE Report Unknown ue %u", ue_id);
+ OAILOG_FUNC_OUT (LOG_MME_APP); 
+ }
+ // mme_ue_s1ap_id = ue_context->privates.mme_ue_s1ap_id;
+
+  ue_session_pool = mme_ue_session_pool_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_session_pools, ue_id);
+  if (ue_session_pool == NULL) {
+	  OAILOG_ERROR (LOG_MME_APP, "We didn't find an UE session pool for UE "MME_UE_S1AP_ID_FMT". \n", ue_id);
+    OAILOG_FUNC_OUT (LOG_MME_APP);
+  }
+  
+  
+  s11_remote_ue_report_notification->local_teid = ue_session_pool->privates.fields.mme_teid_s11;
+
+  //if (ue_session_pool == NULL) {
+	  //OAILOG_ERROR (LOG_MME_APP, "We didn't find an UE session pool for UE "MME_UE_S1AP_ID_FMT". \n", mme_ue_s1ap_id);
+    //OAILOG_FUNC_OUT (LOG_MME_APP);
+  //}
+
+   /*
+   * Delay Value in integer multiples of 50 millisecs, or zero
+   */
+  //s11_modify_bearer_request->delay_dl_packet_notif_req = 0;  // TO DO
+  
+   memcpy((void*)&s11_remote_ue_report_notification->edns_peer_ip, (struct sockaddr *)&pdn_context->s_gw_addr_s11_s4,
+		  ((struct sockaddr *)&pdn_context->s_gw_addr_s11_s4)->sa_family == AF_INET ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
+
+  itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
+  OAILOG_FUNC_OUT(LOG_MME_APP);
+}    
+//------------------------------------------------------------------------------
+
 void mme_app_send_s11_modify_bearer_req(const ue_session_pool_t * const ue_session_pool, pdn_context_t * pdn_context, uint8_t flags){
   OAILOG_FUNC_IN (LOG_MME_APP);
 
@@ -1004,6 +1068,29 @@ void mme_app_itti_nas_pdn_connectivity_response(mme_ue_s1ap_id_t ue_id, const eb
   itti_send_msg_to_task (TASK_NAS_ESM, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT(LOG_MME_APP);
 }
+
+//------------------------------------------------------------------------------
+void mme_app_itti_nas_remote_ue_report_response(mme_ue_s1ap_id_t ue_id, const ebi_t default_ebi, const gtpv2c_cause_value_t gtpv2c_cause_value){
+ OAILOG_FUNC_IN (LOG_MME_APP);
+
+  MessageDef                             *message_p = NULL;
+  int                                     rc = RETURNok;
+  OAILOG_INFO (LOG_MME_APP, "Informing the NAS layer about the received REMOTE_UE_REPORT_RESPONSE for UE " MME_UE_S1AP_ID_FMT ". \n", ue_id);
+  message_p = itti_alloc_new_message (TASK_MME_APP, NAS_REMOTE_UE_REPORT_RSP);
+  itti_nas_remote_ue_report_response_rsp_t *nas_remote_ue_report_response_rsp = &message_p->ittiMsg.nas_remote_ue_report_response_rsp;
+  nas_remote_ue_report_response_rsp->ue_id = ue_id;
+  nas_remote_ue_report_response_rsp->linked_ebi = default_ebi;
+  nas_remote_ue_report_response_rsp->esm_cause = (gtpv2c_cause_value == REQUEST_ACCEPTED || gtpv2c_cause_value == REQUEST_ACCEPTED_PARTIALLY) ?
+  ESM_CAUSE_SUCCESS : ESM_CAUSE_NETWORK_FAILURE;
+  if(nas_remote_ue_report_response_rsp->esm_cause == ESM_CAUSE_NETWORK_FAILURE){
+	  if(gtpv2c_cause_value == NO_RESOURCES_AVAILABLE)
+		  nas_remote_ue_report_response_rsp->esm_cause = ESM_CAUSE_INSUFFICIENT_RESOURCES;
+  }
+  itti_send_msg_to_task (TASK_NAS_ESM, INSTANCE_DEFAULT, message_p);
+  OAILOG_FUNC_OUT(LOG_MME_APP);
+
+}
+
 
 //------------------------------------------------------------------------------
 void mme_app_itti_forward_relocation_response(ue_context_t *ue_context, struct PdnContexts * pdn_contexts, mme_app_s10_proc_mme_handover_t *s10_handover_proc, bstring target_to_source_container){

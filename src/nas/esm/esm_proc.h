@@ -209,6 +209,7 @@ esm_proc_modify_eps_bearer_context_reject (
  * --------------------------------------------------------------------------
  */
 nas_esm_proc_remote_ue_report_t *_esm_proc_get_remote_ue_report_procedure(mme_ue_s1ap_id_t ue_id, pti_t pti);
+esm_cause_t esm_proc_remote_ue_report_res (mme_ue_s1ap_id_t ue_id, nas_esm_proc_remote_ue_report_t * esm_proc_remote_ue_report);
 
 
 esm_cause_t

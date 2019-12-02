@@ -510,7 +510,7 @@ static
   NwGtpv2cMsgIeInfoT                      remoteUeReportNotificationIeInfoTbl[] = {
     {NW_GTPV2C_IE_REMOTE_UE_CONTEXT, 0, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL, NULL},
     {NW_GTPV2C_IE_REMOTE_UE_CONTEXT, 0, NW_GTPV2C_IE_INSTANCE_ONE, NW_GTPV2C_IE_PRESENCE_CONDITIONAL, NULL},
-        /*
+    /*
      * Do not add below this
      */
     {0, 0, 0}

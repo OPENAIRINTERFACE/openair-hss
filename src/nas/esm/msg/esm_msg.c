@@ -516,9 +516,6 @@ esm_msg_free (
     break;
 
 case REMOTE_UE_REPORT:
-    //bdestroy_wrapper(&msg->remote_ue_report.remoteuecontext);
-    //bdestroy_wrapper(&msg->remote_ue_report.pkmfaddress);
-    //clear_protocol_configuration_options(&msg->activate_default_eps_bearer_context_request.protocolconfigurationoptions);
     break;
 
   default:

@@ -314,6 +314,46 @@ nas_esm_proc_pdn_connectivity_res (
 
 //------------------------------------------------------------------------------
 int
+nas_esm_proc_remote_ue_report_response_res (
+  esm_cn_remote_ue_report_response_res_t * remote_ue_report_rsp_res)
+  {
+OAILOG_FUNC_IN (LOG_NAS_ESM);
+
+  esm_sap_t                               esm_sap = {0};
+  bstring                                 rsp = NULL;
+  esm_cause_t                             esm_cause = ESM_CAUSE_SUCCESS;
+  int                                     rc = RETURNok;
+
+   esm_sap.primitive = (remote_ue_report_rsp_res->esm_cause == ESM_CAUSE_SUCCESS) ? ESM_REMOTE_UE_REPORT_RESPONSE_RSP : ESM_PDN_CONNECTIVITY_REJ;
+   esm_sap.ue_id = remote_ue_report_rsp_res->ue_id;
+   esm_sap.data.remote_ue_report_response_res = remote_ue_report_rsp_res;
+   MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_ESM_MME, NULL, 0, "0 ESM_REMOTE_UE_REPORT_RES ue_id " MME_UE_S1AP_ID_FMT " ", remote_ue_report_rsp_res->ue_id);
+   esm_sap_signal(&esm_sap, &rsp); // todo: esm_cause
+  if(rsp){
+    if(remote_ue_report_rsp_res->esm_cause == ESM_CAUSE_SUCCESS && esm_sap.esm_cause == ESM_CAUSE_SUCCESS) {
+      if(esm_sap.is_attach_tau)
+        rc = _emm_wrapper_esm_accept(remote_ue_report_rsp_res->ue_id, &rsp, esm_sap.active_ebrs);
+      else {
+    	bearer_qos_t bearer_level_qos;
+    	memset(&bearer_level_qos, 0, sizeof(bearer_level_qos));
+        rc = lowerlayer_activate_bearer_req(remote_ue_report_rsp_res->ue_id, esm_sap.data.pdn_connectivity_res->linked_ebi,
+        		false, 0, &bearer_level_qos, rsp);
+      }
+    } else {
+      /**
+       * Will get and lock the EMM context to set the security header if there is a valid EMM context.
+       * No changes in the state of the EMM context.
+       */
+      rc = lowerlayer_data_req(esm_sap.ue_id, rsp);
+    }
+    bdestroy_wrapper(&rsp);
+  }
+  OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
+
+  }
+
+//------------------------------------------------------------------------------
+int
 nas_esm_proc_pdn_disconnect_res(
     esm_cn_pdn_disconnect_res_t * pdn_disconn_res)
 {
