@@ -1287,10 +1287,6 @@ static int mme_config_parse_file (mme_config_t * config_pP)
       config_pP->mbms.mce_id = (uint16_t) aint;
     }
 
-    if ((config_setting_lookup_int (setting_mce, MME_CONFIG_MBMS_MIN_SESSION_DUR_IN_SEC, &aint))) {
-    	config_pP->mbms.mbms_min_session_duration_in_sec = (uint16_t) aint;
-    }
-
     if ((config_setting_lookup_int (setting_mce, MME_CONFIG_MBMS_SHORT_IDLE_SESSION_DUR_IN_SEC, &aint))) {
     	config_pP->mbms.mbms_short_idle_session_duration_in_sec = (uint8_t) aint;
     }

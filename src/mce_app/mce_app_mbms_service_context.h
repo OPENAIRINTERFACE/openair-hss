@@ -98,7 +98,6 @@ typedef struct mbms_service_s {
 		  /** TMGI and MBMS Service Area of the MBMS Service - Key Identifiers. */
 		  tmgi_t		         					tmgi;
 		  mbms_service_area_id_t 			mbms_service_area_id;
-		  mbsfn_area_id_t						  mbsfn_area_id;
 		  /** MCE TEID for Sm. */
 		  teid_t                 			mme_teid_sm;                // needed to get the MBMS Service from Sm messages
 		  teid_t                 			mbms_teid_sm;
@@ -148,12 +147,34 @@ typedef struct mbsfn_area_context_s {
 //	  struct mce_app_timer_t      mcch_timer;
 	  struct {
 		  mbsfn_area_t 	mbsfn_area;
+		  /**
+		   * For global MBSFN areas, which not part of any local area (flag not set or really no local area), this will be set to 0.
+		   *
+		   * If the local-global-MBMS-Area is not set, we just have non-local MBMS areas, and we need to consider their resources always.
+		   *
+		   * If the local-global-MBMS-Area flag is set, we will consider only global MBMS areas, which have a local_mbms_area given (non 0).
+		   * In that case, global MBMS areas which have no local MBMS area information, are considered geographically outside the local MBMS area.
+		   *
+		   * For Local MBMS areas (MBSFN areas) we will not consider other local MBSFN areas (MBMS areas), which are in another local_mbms_areas.
+		   *
+		   * If the local-global flag is set, we will consider global MBMS areas resources in the calculation, too.
+		   * ElsTheir resources will always be considered when calculating local MBSFN areas.
+		   * Else,
+		   */
+		  uint8_t				local_mbms_area;
 	  }fields;
 	  /**
 	   * Need a hashmap for the M2 eNB Id.
 	   * No other way, since we need to count the #eNB per MBSFN area, too.
 	   */
 	  hash_table_uint64_ts_t  * m2_enb_id_hashmap;
+
+	  /**
+	   * Need another hashmap for the MBMS services in the given MBSFN area context.
+	   * Value mcch_modification_periods_t.
+	   */
+	  hash_table_ts_t  				* mbms_service_idx_mcch_modification_times_hashmap;
+
   }privates;
   // todo: no procedure but a timer!
   // mme_app_mbms_proc_t					 *mbms_procedure;			  ///< Allowing a single MBMS procedure in the MBMS-Service.
@@ -174,7 +195,6 @@ typedef struct mce_mbsfn_area_contexts_s {
   uint32_t                 nb_mbsfn_area_managed;
   uint32_t                 nb_mbsfn_are_since_last_stat;
   hash_table_ts_t 		  	*mbsfn_area_id_mbsfn_area_htbl;    	// data is mbsfn_area_t
-  hash_table_uint64_ts_t  *mbms_sai_mbsfn_area_ctx_htbl;
 } mce_mbsfn_area_contexts_t;
 
 /** \brief Retrieve an MBMS service by selecting the given MBMS Service Area And TMGI.
@@ -200,7 +220,7 @@ struct mbms_service_s *mce_mbms_service_exists_sm_teid(mce_mbms_services_t * con
  * Uses the given MBMS Service Area ID and MBMS Service Area, which cannot change.
  * @returns the MBMS Service in case of success, NULL otherwise
  **/
-struct mbms_service_s * mce_register_mbms_service(const tmgi_t * const tmgi, const mbms_service_area_id_t * const mbms_service_area_id, const teid_t mme_sm_teid);
+struct mbms_service_s * mce_register_mbms_service(const tmgi_t * const tmgi, const mbms_service_area_id_t const mbms_service_area_id, const teid_t mme_sm_teid);
 
 /** \brief Remove an MBMS Service context of the tree of known MBMS Services.
  * \param tmgi_p 		  The TMGI of the MBMS Service
@@ -217,12 +237,12 @@ void mce_app_dump_mbms_services(const mce_mbms_services_t * const mce_mbms_servi
 /** \brief Update the MBMS Services with the given information.
  **/
 void mce_app_update_mbms_service (const tmgi_t * const tmgi, const mbms_service_area_id_t old_mbms_service_area_id, const mbms_service_area_id_t new_mbms_service_area_id, const bearer_qos_t * const mbms_bearer_level_qos,
-  const uint16_t mbms_flow_id, const mbms_ip_multicast_distribution_t * const mbms_ip_mc_dist, struct sockaddr * mbms_peer, long * mcch_modif_periods);
+  const uint16_t mbms_flow_id, const mbms_ip_multicast_distribution_t * const mbms_ip_mc_dist, struct sockaddr * mbms_peer);
 
 /** \brief Verify the MBMS Service start and end times with respect to the MCCH modification/repetition periods.
  **/
 void mce_app_calculate_mbms_service_mcch_periods(const long abs_start_time_in_sec, const long abs_start_time_usec,
-		mbms_session_duration_t * mbms_session_duration, const long mbsfn_area_modif_period_rf, long* mbms_service_mcch_period);
+		mbms_session_duration_t * mbms_session_duration, const long mbsfn_area_mcch_modif_period_rf, mcch_modification_periods_t* mbms_service_mcch_period);
 
 /** \brief Check if an MBMS Service with the given CTEID exists.
  * We don't use CTEID as a key.
@@ -258,10 +278,14 @@ bool mce_app_check_mbsfn_mcch_modif (const hash_key_t keyP,
                void **resultP);
 
 //------------------------------------------------------------------------------
-bool mce_app_check_mbsfn_resources (const hash_key_t keyP,
+bool mce_app_check_mbsfn_neighbors (const hash_key_t keyP,
                void * const mbsfn_area_context_ref,
                void * parameterP,
                void **resultP);
+
+//------------------------------------------------------------------------------
+int mce_app_check_mbsfn_resources (const mbsfn_area_ids_t * const mbsfn_area_ids,
+		const mcch_modification_periods_t * const mcch_modification_periods);
 
 /**
  * Reset the M2 eNB id map.
@@ -303,13 +327,13 @@ mce_mbsfn_area_exists_mbsfn_area_id(
   mce_mbsfn_area_contexts_t * const mce_mbsfn_areas_p, const mbsfn_area_id_t mbsfn_area_id);
 
 //------------------------------------------------------------------------------
-struct mbsfn_area_context_s                           *
-mce_mbsfn_area_exists_mbms_service_area_id(
-		mce_mbsfn_area_contexts_t * const mce_mbsfn_areas_p, const mbms_service_area_id_t mbms_service_area_id);
+void
+mce_mbsfn_areas_exists_mbms_service_area_id(
+		mce_mbsfn_area_contexts_t * const mce_mbsfn_areas_p, const mbms_service_area_id_t mbms_service_area_id, struct mbsfn_area_ids_s * mbsfn_area_ids);
 
 //------------------------------------------------------------------------------
-struct mbsfn_area_context_s                      *
-mbsfn_area_mbms_service_id_in_list (const mce_mbsfn_area_contexts_t * const mce_mbsfn_area_contexts_p, const mbms_service_area_id_t mbms_sai);
+int mce_app_mbsfn_area_register_mbms_service(mbsfn_area_context_t * mbsfn_area_context, mbms_service_index_t mbms_service_index,
+		const uint32_t sec_since_epoch, const long double usec_since_epoch, const mbms_session_duration_t * mbms_session_duration);
 
 #endif /* FILE_MCE_APP_MBMS_SERVICE_CONTEXT_SEEN */
 

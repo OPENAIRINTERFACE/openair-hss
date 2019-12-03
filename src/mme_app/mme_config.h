@@ -98,7 +98,6 @@
 #define MME_CONFIG_STRING_MBMS							 						 "MBMS"
 #define MME_CONFIG_MAX_MBMS_SERVICES               	 	   "MAX_MBMS_SERVICES"
 #define MME_CONFIG_MCE_ID						 		 								 "MCE_ID"
-#define MME_CONFIG_MBMS_MIN_SESSION_DUR_IN_SEC           "MBMS_MIN_SESSION_DUR_IN_SEC"
 #define MME_CONFIG_MBMS_SHORT_IDLE_SESSION_DUR_IN_SEC    "MBMS_SHORT_IDLE_SESSION_DUR_IN_SEC"
 
 #define MME_CONFIG_MBMS_MCCH_MSI_MCS														"MME_CONFIG_MBMS_MCCH_MSI_MCS"
@@ -225,7 +224,6 @@ typedef struct mme_config_s {
 		plmn_t   mce_plmn;                                        /*!< \brief  GUMMEI               */
 		uint16_t mce_id;
 		uint32_t max_mbms_services;
-		uint16_t mbms_min_session_duration_in_sec;
 		uint8_t mbms_short_idle_session_duration_in_sec;
 		/** MCCH values. */
 		uint8_t mbms_mcch_msi_mcs;

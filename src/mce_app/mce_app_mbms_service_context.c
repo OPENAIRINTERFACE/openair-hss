@@ -120,7 +120,7 @@ mbms_service_index_t mce_get_mbms_service_index(const tmgi_t * tmgi, const mbms_
 
 //------------------------------------------------------------------------------
 struct mbms_service_s *
-mce_register_mbms_service(const tmgi_t * const tmgi, const mbms_service_area_id_t * const mbms_service_area_id, const teid_t mme_sm_teid){
+mce_register_mbms_service(const tmgi_t * const tmgi, const mbms_service_area_id_t const mbms_service_area_id, const teid_t mme_sm_teid){
   OAILOG_FUNC_IN (LOG_MCE_APP);
 
   // todo: lock the mce_desc
@@ -156,6 +156,11 @@ mce_register_mbms_service(const tmgi_t * const tmgi, const mbms_service_area_id_
   OAILOG_DEBUG (LOG_MCE_APP, "Allocated new MBMS service with MBMS Service Index " MBMS_SERVICE_INDEX_FMT " for MBMS Service with TMGI " TMGI_FMT". \n",
 		  mbms_service_index, TMGI_ARG(tmgi));
   DevAssert(mce_insert_mbms_service(&mce_app_desc.mbms_services, mbms_service) == 0);
+
+  /**
+   * Set the MBMS areas into the MBSFN areas, too.
+   * Value should be the relative MCCH start and stop periods.
+   */
   // todo: unlock mce_desc!
   OAILOG_FUNC_RETURN (LOG_MCE_APP, mbms_service);
 }
@@ -441,13 +446,11 @@ mbms_cteid_in_list (const mce_mbms_services_t * const mce_mbms_services_p,
 //  OAILOG_FUNC_OUT (LOG_MCE_APP);
 //}
 
-
 /** Update the MBMS Service with the given parameters. */
 //------------------------------------------------------------------------------
 void
 mce_app_update_mbms_service (const tmgi_t * const tmgi, const mbms_service_area_id_t old_mbms_service_area_id, const mbms_service_area_id_t new_mbms_service_area_id,
-	const bearer_qos_t * const mbms_bearer_level_qos, const uint16_t mbms_flow_id, const mbms_ip_multicast_distribution_t * const mbms_ip_mc_dist, struct sockaddr * mbms_peer,
-	long * mcch_modif_periods)
+	const bearer_qos_t * const mbms_bearer_level_qos, const uint16_t mbms_flow_id, const mbms_ip_multicast_distribution_t * const mbms_ip_mc_dist, struct sockaddr * mbms_peer)
 {
   mbms_service_t	                     *mbms_service = NULL;
   OAILOG_FUNC_IN(LOG_MCE_APP);
@@ -461,38 +464,27 @@ mce_app_update_mbms_service (const tmgi_t * const tmgi, const mbms_service_area_
     OAILOG_INFO(LOG_MCE_APP, "MBMS Service Area Id of MBMS Service for TMGI " TMGI_FMT " changed from " MBMS_SERVICE_AREA_ID_FMT " to " MBMS_SERVICE_AREA_ID_FMT ". \n",
     	TMGI_ARG(&mbms_service->privates.fields.tmgi), old_mbms_service_area_id,  new_mbms_service_area_id);
     /** Remove it from list. */
-    mbms_service_index_t mbms_service_idx = mce_get_mbms_service_index(&tmgi, old_mbms_service_area_id);
+    mbms_service_index_t old_mbms_service_idx = mce_get_mbms_service_index(&tmgi, old_mbms_service_area_id);
     // todo: LOCK HERE!!
-    if (INVALID_MBMS_SERVICE_INDEX != mbms_service_idx) {
-      hash_rc = hashtable_ts_remove (mce_app_desc.mce_mbms_service_contexts.mbms_service_index_mbms_service_htbl, (const hash_key_t)mbms_service_idx, (void **)&mbms_service);
+    if (INVALID_MBMS_SERVICE_INDEX != old_mbms_service_idx) {
+    	/** Remove the MBMS service from all MBSFN areas. */
+    	mce_app_reset_mbsfn_service_registration(old_mbms_service_idx);
+      hash_rc = hashtable_ts_remove (mce_app_desc.mce_mbms_service_contexts.mbms_service_index_mbms_service_htbl, (const hash_key_t)old_mbms_service_idx, (void **)&mbms_service);
       if (HASH_TABLE_OK != hash_rc){
-        OAILOG_DEBUG(LOG_MCE_APP, "MBMS Service MBMS Service Index " MBMS_SERVICE_INDEX_FMT " not in MCE MBMS Service Index collection", mbms_service_idx);
+        OAILOG_DEBUG(LOG_MCE_APP, "MBMS Service OLD MBMS Service Index " MBMS_SERVICE_INDEX_FMT " not in MCE MBMS Service Index collection", old_mbms_service_idx);
         // todo: handle this case
         DevAssert(0);
       } else {
         mbms_service->privates.fields.mbms_service_area_id = new_mbms_service_area_id;
-        mbms_service_idx = mce_get_mbms_service_index(&tmgi, new_mbms_service_area_id);
-        hash_rc = hashtable_ts_insert (mce_app_desc.mce_mbms_service_contexts.mbms_service_index_mbms_service_htbl, (const hash_key_t)mbms_service_idx, (void *)mbms_service);
+        old_mbms_service_idx = mce_get_mbms_service_index(&tmgi, new_mbms_service_area_id);
+        hash_rc = hashtable_ts_insert (mce_app_desc.mce_mbms_service_contexts.mbms_service_index_mbms_service_htbl, (const hash_key_t)old_mbms_service_idx, (void *)mbms_service);
         if (HASH_TABLE_OK != hash_rc) {
         	OAILOG_ERROR (LOG_MCE_APP, "Error could not register the MBMS Service %p with TMGI " TMGI_FMT" and MBMS Service Index " MBMS_SERVICE_INDEX_FMT ". \n",
-        		mbms_service, TMGI_ARG(&mbms_service->privates.fields.tmgi), mbms_service_idx);
+        		mbms_service, TMGI_ARG(&mbms_service->privates.fields.tmgi), old_mbms_service_idx);
         	OAILOG_FUNC_RETURN (LOG_MCE_APP, RETURNerror);
         }
       }
     }
-  }
-  /**
-   * Start end end MCCH modification periods (absolute) (in the context of the MBSFN area.
-   * The service is running, and meanwhile we wan't to be able to calculate the resources for it, till the MCCH modification period occurs.
-   */
-  if(mcch_modif_periods) {
-  	if(!mbms_service->privates.fields.mbms_service_mcch_start_period)
-  		mbms_service->privates.fields.mbms_service_mcch_start_period = mcch_modif_periods[0];
-  	else{
-  		OAILOG_WARNING(LOG_MCE_APP, "Not modifying the MCCH start period for MBMS Service TMGI " TMGI_FMT "!\n", TMGI_ARG(&mbms_service->privates.fields.tmgi));
-  	}
-  	/** Change the MCCH stop Modification period, also if it is lower.. */
-    mbms_service->privates.fields.mbms_service_mcch_stop_period = mcch_modif_periods[1];
   }
   /** QoS. */
   mbms_service->privates.fields.mbms_flow_id = mbms_flow_id;
@@ -506,16 +498,12 @@ mce_app_update_mbms_service (const tmgi_t * const tmgi, const mbms_service_area_
 }
 
 //------------------------------------------------------------------------------
-void mce_app_calculate_mbms_service_mcch_periods(const long abs_start_time_in_sec, const long abs_start_time_usec,
-		mbms_session_duration_t * mbms_session_duration, const long mbsfn_area_modif_period_rf, long* mbms_service_mcch_period)
+void mce_app_calculate_mbms_service_mcch_periods(const long abs_start_time_in_sec, const long abs_start_time_usec, mbms_session_duration_t * mbms_session_duration,
+		const long mbsfn_area_mcch_modif_period_rf, mcch_modification_periods_t * mbms_service_mcch_period)
 {
 	OAILOG_FUNC_IN(LOG_MCE_APP);
-  /**
-   * Check the start!
-   */
   long start_delta_from_last_mcch_rep_msec  = (abs_start_time_in_sec 	- mce_app_desc.mcch_repetition_period_tv.tv_sec) * 1000;
   long start_delta_from_last_mcch_rep_usec 	= abs_start_time_usec 		- mce_app_desc.mcch_repetition_period_tv.tv_usec;
-
   /** Divide to length of MCCH repetition period. */
   long mcch_rep_time_msec = mme_config.mbms.mbms_mcch_repetition_period_rf * 10; /**< Calculate in terms of milliseconds. */
   /** Divide and ceil to get the delta of MCCH repetition periods. */
@@ -528,7 +516,7 @@ void mce_app_calculate_mbms_service_mcch_periods(const long abs_start_time_in_se
   int stop_delta_mcch_rep = (stop_delta_from_last_mcch_rep_msec / mcch_rep_time_msec) +1 ;
 
   /** Check the next MBSFN Modification MCCH repetition number. */
-  int mbsfn_mod_factor = mbsfn_area_modif_period_rf / mme_config.mbms.mbms_mcch_repetition_period_rf;
+  int mbsfn_mod_factor = mbsfn_area_mcch_modif_period_rf / mme_config.mbms.mbms_mcch_repetition_period_rf;
   int mcch_modif_period_current = mce_app_desc.mcch_repetition_period / mbsfn_mod_factor;
   /**
    * MBMS Service Start and Stop MCCH modification periods.
@@ -536,29 +524,29 @@ void mce_app_calculate_mbms_service_mcch_periods(const long abs_start_time_in_se
    * Will then be counted in the next MCCH modification timeout into the CSA pattern!
    * We don't need to add a +1 here, since we wan't to see the MCCH modification period just before the calculated MCCH repetition period.
    */
-  mbms_service_mcch_period[0] 	= (start_delta_mcch_rep + mce_app_desc.mcch_repetition_period) / mbsfn_mod_factor;
+  mbms_service_mcch_period->mcch_modif_start_abs_period 	= (start_delta_mcch_rep + mce_app_desc.mcch_repetition_period) / mbsfn_mod_factor;
   /**
    * If the MCCH modification period is the current period, set it as the next one.
    * We cannot start it in the current MCCH modification period and need to calculate resources for the next MCCH modification period!
    */
-  if(mbms_service_mcch_period[0] == mcch_modif_period_current){
+  if(mbms_service_mcch_period->mcch_modif_start_abs_period == mcch_modif_period_current){
   	OAILOG_WARNING(LOG_MCE_APP, "MBMS Service cannot start in current MCCH modification period (%d), start in the next one (%d).\n",
   			mcch_modif_period_current, mcch_modif_period_current+1);
-		mbms_service_mcch_period[0] = mcch_modif_period_current+1;
+		mbms_service_mcch_period->mcch_modif_start_abs_period = mcch_modif_period_current+1;
   }
-  mbms_service_mcch_period[1]		= (stop_delta_mcch_rep + mce_app_desc.mcch_repetition_period) / mbsfn_mod_factor;
+  mbms_service_mcch_period->mcch_modif_stop_abs_period	= (stop_delta_mcch_rep + mce_app_desc.mcch_repetition_period) / mbsfn_mod_factor;
   /** Currently, don't allow start and end as the same MCCH modification period. */
-  if(mbms_service_mcch_period[0] == mbms_service_mcch_period[1]){
-  	OAILOG_ERROR(LOG_MCE_APP,"MCE App: MBMS service to be established, has same start and end MCCH modification period (%d). Reject..\n", mbms_service_mcch_period[0]);
-  	mbms_service_mcch_period[0] = 0;
-  	mbms_service_mcch_period[1] = 0;
+  if(mbms_service_mcch_period->mcch_modif_start_abs_period == mbms_service_mcch_period->mcch_modif_stop_abs_period) {
+  	OAILOG_ERROR(LOG_MCE_APP,"MBMS service to be established, has same start and end MCCH modification period (%d). Reject..\n", mbms_service_mcch_period->mcch_modif_start_abs_period);
+  	mbms_service_mcch_period->mcch_modif_start_abs_period = 0;
+  	mbms_service_mcch_period->mcch_modif_stop_abs_period = 0;
   	OAILOG_FUNC_OUT(LOG_MCE_APP);
   }
-  if(mbms_service_mcch_period[1] <= mcch_modif_period_current) {
-  	OAILOG_ERROR(LOG_MCE_APP,"MCE App: MBMS service to be established, also stop in the current MCCH modification period (%d). We cannot start it. Reject..\n",
-  			mbms_service_mcch_period[1]);
-  	mbms_service_mcch_period[0] = 0;
-  	mbms_service_mcch_period[1] = 0;
+  if(mbms_service_mcch_period->mcch_modif_stop_abs_period <= mcch_modif_period_current) {
+  	OAILOG_ERROR(LOG_MCE_APP,"MBMS service to be established, also stop in the current MCCH modification period (%d). We cannot start it. Reject..\n",
+  			mbms_service_mcch_period->mcch_modif_stop_abs_period);
+  	mbms_service_mcch_period->mcch_modif_start_abs_period = 0;
+  	mbms_service_mcch_period->mcch_modif_stop_abs_period = 0;
   	OAILOG_FUNC_OUT(LOG_MCE_APP);
   }
   OAILOG_FUNC_OUT(LOG_MCE_APP);

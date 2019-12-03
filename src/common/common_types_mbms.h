@@ -71,9 +71,9 @@ typedef uint64_t                 	 mbms_service_index_t;
  * MBMS related functionalities.
  */
 typedef enum {
-	 ENB_TYPE_NULL,
-	 ENB_TYPE_TDD,
-	 ENB_TYPE_FDD
+	ENB_TYPE_NULL,
+	 TDD,
+	 FDD
 } enb_type_e;
 
 typedef enum {
@@ -167,50 +167,50 @@ typedef enum {
 //};
 
 #define ENB_BANDS \
-X(ENB_TYPE_NULL, 0) \
-X(ENB_TYPE_FDD, 1) \
-X(ENB_TYPE_FDD, 2) \
-X(ENB_TYPE_FDD, 3) \
-X(ENB_TYPE_FDD, 4) \
-X(ENB_TYPE_FDD, 5) \
-X(ENB_TYPE_NULL, 6) \
-X(ENB_TYPE_FDD, 7) \
-X(ENB_TYPE_FDD, 8) \
-X(ENB_TYPE_NULL, 9) \
-X(ENB_TYPE_NULL, 10) \
-X(ENB_TYPE_FDD, 11) \
-X(ENB_TYPE_FDD, 12) \
-X(ENB_TYPE_FDD, 13) \
-X(ENB_TYPE_FDD, 14) \
-X(ENB_TYPE_NULL, 15) \
-X(ENB_TYPE_NULL, 16) \
-X(ENB_TYPE_FDD, 17) \
-X(ENB_TYPE_FDD, 18) \
-X(ENB_TYPE_FDD, 19) \
-X(ENB_TYPE_FDD, 20) \
-X(ENB_TYPE_FDD, 21) \
-X(ENB_TYPE_NULL, 22) \
-X(ENB_TYPE_NULL, 23) \
-X(ENB_TYPE_FDD, 24) \
-X(ENB_TYPE_FDD, 25) \
-X(ENB_TYPE_FDD, 26) \
-X(ENB_TYPE_NULL, 27) \
-X(ENB_TYPE_FDD, 28) \
-X(ENB_TYPE_NULL, 29) \
-X(ENB_TYPE_FDD, 30) \
-X(ENB_TYPE_FDD, 31) \
-X(ENB_TYPE_NULL, 32) \
-X(ENB_TYPE_NULL, 33) \
-X(ENB_TYPE_TDD, 34) \
-X(ENB_TYPE_NULL, 35) \
-X(ENB_TYPE_NULL, 36) \
-X(ENB_TYPE_TDD, 37) \
-X(ENB_TYPE_TDD, 38) \
-X(ENB_TYPE_TDD, 39) \
-X(ENB_TYPE_TDD, 40) \
-X(ENB_TYPE_TDD, 41) \
-X(ENB_TYPE_TDD, 42) \
-X(ENB_TYPE_TDD, 43)
+X(0,  ENB_TYPE_NULL) \
+X(1,  FDD)  \
+X(2,  FDD) 	\
+X(3,  FDD) 	\
+X(4,  FDD) 	\
+X(5,  FDD)		 \
+X(6,  ENB_TYPE_NULL) 	\
+X(7,  FDD) 	\
+X(8,  FDD ) 	\
+X(9,  ENB_TYPE_NULL) 	\
+X(10, ENB_TYPE_NULL) \
+X(11, FDD ) \
+X(12, FDD ) \
+X(13, FDD ) \
+X(14, FDD ) \
+X(15, ENB_TYPE_NULL) \
+X(16, ENB_TYPE_NULL) \
+X(17, FDD ) \
+X(18, FDD ) \
+X(19, FDD ) \
+X(20, FDD ) \
+X(21, FDD ) \
+X(22, ENB_TYPE_NULL) \
+X(23, ENB_TYPE_NULL) \
+X(24, FDD ) \
+X(25, FDD ) \
+X(26, FDD ) \
+X(27, ENB_TYPE_NULL) \
+X(28, FDD ) \
+X(29, ENB_TYPE_NULL) \
+X(30, FDD ) \
+X(31, FDD ) \
+X(32, ENB_TYPE_NULL) \
+X(33, ENB_TYPE_NULL) \
+X(34, TDD ) \
+X(35, ENB_TYPE_NULL) \
+X(36, ENB_TYPE_NULL) \
+X(37, TDD ) \
+X(38, TDD ) \
+X(39, TDD ) \
+X(40, TDD ) \
+X(41, TDD ) \
+X(42, TDD ) \
+X(43, TDD )
 //X(ENB_TYPE_TDD) \
 //X(ENB_TYPE_TDD) \
 //X(ENB_TYPE_TDD) \
@@ -244,11 +244,57 @@ X(ENB_TYPE_TDD, 43)
 //-----------------
 // todo: the name from an incremented counter?
 typedef enum {
-#define X(a, b) a##_##b,
+#define X(a, b) BAND_##a,
 	ENB_BANDS
-#undef X
+ #undef X
 } enb_band_e;
 
+static inline enb_type_e get_enb_type(enb_band_e enb_band){
+	switch(enb_band) {
+
+#define X(a, b) case a: return b;
+	ENB_BANDS
+#undef X
+	default: return ENB_TYPE_NULL;
+	}
+}
+
+#define FDD_SUBFRAMES  0b0111001110
+
+#define TDD_DL_UL_TYPES \
+X(0, 0b0000000000, 0) \
+X(1, 0b0000100001, 2) \
+X(2, 0b0001100011, 4) \
+X(3, 0b0000000111, 3) \
+X(4, 0b0000100111, 4) \
+X(5, 0b0001100111, 5) \
+X(6, 0b0000000001, 1)
+
+//-----------------
+// todo: the name from an incremented counter?
+typedef enum {
+#define X(a, b, c) TDD_DL_UL_##a,
+	TDD_DL_UL_TYPES
+ #undef X
+} enb_tdd_dl_ul_e;
+
+static inline int get_enb_tdd_subframes(enb_tdd_dl_ul_e tdd_dl_ul){
+	switch(tdd_dl_ul) {
+#define X(a, b, c) case TDD_DL_UL_##a: return b;
+	TDD_DL_UL_TYPES
+#undef X
+	default: return -1;
+	}
+}
+
+static inline int get_enb_tdd_subframe_size(enb_tdd_dl_ul_e tdd_dl_ul){
+	switch(tdd_dl_ul) {
+#define X(a, b, c) case TDD_DL_UL_##a: return c;
+	TDD_DL_UL_TYPES
+#undef X
+	default: return -1;
+	}
+}
 static inline enb_type_e get_enb_type(enb_band_e enb_band){
 	switch(enb_band) {
 #define X(a, b) case a##_##b: return a;
@@ -330,6 +376,13 @@ typedef uint16_t  mbms_service_area_id_t;
 typedef uint8_t   mbsfn_area_id_t;
 
 typedef struct {
+  /** Value will be used later in search of MBSFN areas, where the capacity will be calculated. */
+//  uint8_t local_mbms_area;
+  long 		mcch_modif_start_abs_period;
+  long 		mcch_modif_stop_abs_period;
+}mcch_modification_periods_t;
+
+typedef struct {
   uint8_t  num_service_area;
 #define MAX_MBMS_SERVICE_AREA 256
   mbms_service_area_id_t  serviceArea[MAX_MBMS_SERVICE_AREA];
@@ -375,6 +428,8 @@ typedef struct mbsfn_area_s{
   /** MBSFN CSA PATTERNS. */
   struct csa_patterns_s {
   	uint8_t total_csa_pattern_offset;
+  	/** Just the index of the CSA patterns, without any indication of the offset of CSA patterns. */
+  	uint8_t num_csa_pattern;
   	struct csa_pattern_s{
   		union{
   			uint8_t								  mbms_mch_csa_pattern_1rf:6;
@@ -391,6 +446,7 @@ typedef struct mbsfn_area_s{
   uint8_t								  mbms_mcch_subframes;
   enb_band_e							m2_enb_band;
   enb_bw_e								m2_enb_bw; 				/**< May differ in band. */
+  enb_tdd_dl_ul_e				  enb_tdd_dl_ul_perc;
   bool 										mbms_sf_slots_half;
   uint8_t									mcch_offset_rf;
 } mbsfn_area_t;
