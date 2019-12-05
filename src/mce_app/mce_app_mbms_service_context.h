@@ -109,13 +109,13 @@ typedef struct mbms_service_s {
 		   */
 		  struct mbms_bearer_context_s  	mbms_bc;
 
-		  /**
-		   * Start and end MCCH modification periods.
-		   * Both could be in the same MCCH modification period.
-		   * MBMS service is also counted as active in the MCCH stop period.
-		   */
-		  long												mbms_service_mcch_start_period;
-		  long 												mbms_service_mcch_stop_period;
+//		  /**
+//		   * Start and end MCCH modification periods.
+//		   * Both could be in the same MCCH modification period.
+//		   * MBMS service is also counted as active in the MCCH stop period.
+//		   */
+//		  long												mbms_service_mcch_start_period;
+//		  long 												mbms_service_mcch_stop_period;
 
 		  /** MBMS Peer Information. */
 		  union {
@@ -130,11 +130,11 @@ typedef struct mbms_service_s {
   /** Entries for MBMS Service Pool . */
   STAILQ_ENTRY (mbms_service_s)		entries;
 } mbms_service_t;
-
-typedef struct mbms_services_s {
-	int num_mbms_service;
-	mbms_service_t ** mbms_service_array;
-}mbms_services_t;
+//
+//typedef struct mbms_services_s {
+//	int num_mbms_service;
+//	mbms_service_t ** mbms_service_array;
+//}mbms_services_t;
 
 /** @struct mbsfn_area_context_s
  *  @brief Useful parameters to know in MCE application layer. They are set
@@ -282,16 +282,28 @@ bool mce_app_check_mbsfn_neighbors (const hash_key_t keyP,
                void * const mbsfn_area_context_ref,
                void * parameterP,
                void **resultP);
+//------------------------------------------------------------------------------
+bool mce_app_get_active_mbms_services_per_mbsfn_area (const hash_key_t keyP,
+               void * const mcch_modif_periods_Ref,
+               void * parameterP,
+               void **resultP);
 
 //------------------------------------------------------------------------------
-int mce_app_check_mbsfn_resources (const mbsfn_area_ids_t * const mbsfn_area_ids,
-		const mcch_modification_periods_t * const mcch_modification_periods);
+int mce_app_check_mbsfn_resources (const mbsfn_area_context_t * const mbsfn_area_context,
+		const mbms_service_indexes_t				* const mbms_service_indexes_active_nlg_p,
+		const mbms_service_indexes_t				* const mbms_service_indexes_active_local_p);
 
 /**
  * Reset the M2 eNB id map.
  */
 //------------------------------------------------------------------------------
 void mce_app_reset_m2_enb_registration(const uint32_t m2_enb_id, const sctp_assoc_id_t assoc_id);
+
+/**
+ * Reset the MBMS service associations from the MBSFN areas.
+ */
+//------------------------------------------------------------------------------
+void mce_app_reset_mbsfn_service_registration(const mbms_service_index_t mbms_service_idx);
 
 /**
  * Get the local MBSFN areas.
@@ -306,17 +318,8 @@ int mce_app_get_local_mbsfn_areas(const mbms_service_area_t *mbms_service_areas,
 //------------------------------------------------------------------------------
 void mce_app_get_global_mbsfn_areas(const mbms_service_area_t *mbms_service_areas, const uint32_t m2_enb_id, const sctp_assoc_id_t assoc_id, mbsfn_areas_t * const mbsfn_areas, int local_mbms_service_area);
 
-/**
- * Callback function to receive all active MBMS services.
- */
 //------------------------------------------------------------------------------
-bool mce_app_get_active_mbms_services (const hash_key_t keyP,
-               void * const mbms_service_ref,
-               void * parameterP,
-               void **resultP);
-
-//------------------------------------------------------------------------------
-int mce_app_mbms_arp_preempt(const mbms_services_t * mbms_services_active);
+int mce_app_mbms_arp_preempt(mbms_service_indexes_t				* const mbms_service_indexes_to_preemtp, const mbsfn_area_id_t mbsfn_area_id);
 
 /**
  * Get MBSFN Area.
@@ -329,7 +332,7 @@ mce_mbsfn_area_exists_mbsfn_area_id(
 //------------------------------------------------------------------------------
 void
 mce_mbsfn_areas_exists_mbms_service_area_id(
-		mce_mbsfn_area_contexts_t * const mce_mbsfn_areas_p, const mbms_service_area_id_t mbms_service_area_id, struct mbsfn_area_ids_s * mbsfn_area_ids);
+		const mce_mbsfn_area_contexts_t * const mce_mbsfn_areas_p, const mbms_service_area_id_t mbms_service_area_id, struct mbsfn_area_ids_s * mbsfn_area_ids);
 
 //------------------------------------------------------------------------------
 int mce_app_mbsfn_area_register_mbms_service(mbsfn_area_context_t * mbsfn_area_context, mbms_service_index_t mbms_service_index,

@@ -212,12 +212,7 @@ int mce_app_init (const mme_config_t * mme_config_p)
 
   bassigncstr(b, "mce_app_mbsfn_area_id_mbsfn_area_htbl");
   mce_app_desc.mce_mbsfn_area_contexts.mbsfn_area_id_mbsfn_area_htbl = hashtable_ts_create (MAX_MBMSFN_AREAS, NULL, hash_free_int_func, b);
-  btrunc(b, 0);
-
-  bassigncstr(b, "mce_app_mbms_sai_mbsfn_area_ctx_htbl");
-  mce_app_desc.mce_mbsfn_area_contexts.mbms_sai_mbsfn_area_ctx_htbl = hashtable_uint64_ts_create (MAX_MBMSFN_AREAS, NULL, b);
-  AssertFatal(sizeof(uintptr_t) >= sizeof(uint64_t), "Problem with mce_app_mbms_sai_mbsfn_area_ctx_htbl in MCE_APP");
-  btrunc(b, 0);
+  bdestroy_wrapper (&b);
 
   /**
    * Initialize the MBMS service contexts.
@@ -323,6 +318,5 @@ void mce_app_exit (void)
   // todo: hashtable_uint64_ts_destroy (mce_app_desc.mme_ue_contexts.enb_ue_s1ap_id_ue_context_htbl);
   hashtable_uint64_ts_destroy (mce_app_desc.mce_mbms_service_contexts.tunsm_mbms_service_htbl);
   hashtable_ts_destroy (mce_app_desc.mce_mbms_service_contexts.mbms_service_index_mbms_service_htbl);
-  hashtable_uint64_ts_destroy (mce_app_desc.mce_mbsfn_area_contexts.mbms_sai_mbsfn_area_ctx_htbl);
   hashtable_ts_destroy (mce_app_desc.mce_mbsfn_area_contexts.mbsfn_area_id_mbsfn_area_htbl);
 }

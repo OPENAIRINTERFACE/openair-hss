@@ -467,22 +467,19 @@ mce_app_update_mbms_service (const tmgi_t * const tmgi, const mbms_service_area_
     mbms_service_index_t old_mbms_service_idx = mce_get_mbms_service_index(&tmgi, old_mbms_service_area_id);
     // todo: LOCK HERE!!
     if (INVALID_MBMS_SERVICE_INDEX != old_mbms_service_idx) {
-    	/** Remove the MBMS service from all MBSFN areas. */
-    	mce_app_reset_mbsfn_service_registration(old_mbms_service_idx);
       hash_rc = hashtable_ts_remove (mce_app_desc.mce_mbms_service_contexts.mbms_service_index_mbms_service_htbl, (const hash_key_t)old_mbms_service_idx, (void **)&mbms_service);
       if (HASH_TABLE_OK != hash_rc){
         OAILOG_DEBUG(LOG_MCE_APP, "MBMS Service OLD MBMS Service Index " MBMS_SERVICE_INDEX_FMT " not in MCE MBMS Service Index collection", old_mbms_service_idx);
         // todo: handle this case
         DevAssert(0);
-      } else {
-        mbms_service->privates.fields.mbms_service_area_id = new_mbms_service_area_id;
-        old_mbms_service_idx = mce_get_mbms_service_index(&tmgi, new_mbms_service_area_id);
-        hash_rc = hashtable_ts_insert (mce_app_desc.mce_mbms_service_contexts.mbms_service_index_mbms_service_htbl, (const hash_key_t)old_mbms_service_idx, (void *)mbms_service);
-        if (HASH_TABLE_OK != hash_rc) {
-        	OAILOG_ERROR (LOG_MCE_APP, "Error could not register the MBMS Service %p with TMGI " TMGI_FMT" and MBMS Service Index " MBMS_SERVICE_INDEX_FMT ". \n",
-        		mbms_service, TMGI_ARG(&mbms_service->privates.fields.tmgi), old_mbms_service_idx);
-        	OAILOG_FUNC_RETURN (LOG_MCE_APP, RETURNerror);
-        }
+      }
+      mbms_service->privates.fields.mbms_service_area_id = new_mbms_service_area_id;
+      old_mbms_service_idx = mce_get_mbms_service_index(&tmgi, new_mbms_service_area_id);
+      hash_rc = hashtable_ts_insert (mce_app_desc.mce_mbms_service_contexts.mbms_service_index_mbms_service_htbl, (const hash_key_t)old_mbms_service_idx, (void *)mbms_service);
+      if (HASH_TABLE_OK != hash_rc) {
+      	OAILOG_ERROR (LOG_MCE_APP, "Error could not register the MBMS Service %p with TMGI " TMGI_FMT" and MBMS Service Index " MBMS_SERVICE_INDEX_FMT ". \n",
+      			mbms_service, TMGI_ARG(&mbms_service->privates.fields.tmgi), old_mbms_service_idx);
+      	OAILOG_FUNC_RETURN (LOG_MCE_APP, RETURNerror);
       }
     }
   }

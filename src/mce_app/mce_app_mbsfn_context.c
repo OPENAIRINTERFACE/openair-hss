@@ -134,6 +134,11 @@ bool mce_mbsfn_area_compare_by_mbms_sai (__attribute__((unused)) const hash_key_
 
 //------------------------------------------------------------------------------
 static
+bool mce_mbsfn_area_remove_mbms_service (__attribute__((unused)) const hash_key_t keyP,
+                                    void * const elementP,
+                                    void * parameterP, void __attribute__((unused)) **resultP);
+//------------------------------------------------------------------------------
+static
 void mce_app_log_method_single_rf_csa_pattern(struct csa_patterns_s * new_csa_patterns, int num_radio_frames,
 		struct mchs_s * mchs,
 		struct csa_patterns_s * csa_patterns_allocated);
@@ -167,6 +172,18 @@ void mce_update_mbsfn_area(struct mbsfn_areas_s * const mbsfn_areas, const mbsfn
 static void mce_app_allocate_4frame(struct csa_patterns_s * new_csa_patterns, int num_radio_frames, struct mchs_s * mchs, struct csa_patterns_s * csa_patterns_allocated);
 
 //------------------------------------------------------------------------------
+static bool mce_mbsfn_area_reset_m2_enb_id (__attribute__((unused))const hash_key_t keyP,
+               void * const mbsfn_area_ctx_ref,
+               void * m2_enb_id_P,
+               void __attribute__((unused)) **unused_resultP);
+
+//------------------------------------------------------------------------------
+static bool mce_mbsfn_area_reset_mbms_service (__attribute__((unused))const hash_key_t keyP,
+               void * const mbsfn_area_ctx_ref,
+               void * mbms_service_idx_P,
+               void __attribute__((unused)) **unused_resultP);
+
+//------------------------------------------------------------------------------
 static
 void mce_app_set_fresh_radio_frames(struct csa_pattern_s * csa_pattern_mbsfn, struct mchs_s * mchs);
 
@@ -179,11 +196,84 @@ mce_mbsfn_area_exists_mbsfn_area_id(
   hashtable_ts_get (mce_mbsfn_areas_p->mbsfn_area_id_mbsfn_area_htbl, (const hash_key_t)mbsfn_area_id, (void **)&mbsfn_area_context);
   return mbsfn_area_context;
 }
+//
+////------------------------------------------------------------------------------
+//void mce_app_get_active_mbms_services (const mbsfn_area_ids_t * const mbsfn_area_ids,
+//		const mcch_modification_periods_t * const mcch_modif_periods,
+//		mbms_service_indexes_t * const mbms_service_indexes_active,
+//		const mbms_service_indexes_t * const mbms_service_indexes_tbr)
+//{
+//	OAILOG_FUNC_IN(LOG_MCE_APP);
+//	mbsfn_area_context_t			  *mbsfn_area_context 					= NULL;
+//	/** Make a callback for all MBSFN areas. */
+//	for(int num_mbsfn_area = 0; num_mbsfn_area < mbsfn_area_ids->num_mbsfn_area_ids; num_mbsfn_area){
+//		mbsfn_area_context = mce_mbsfn_area_exists_mbsfn_area_id(&mce_app_desc.mce_mbsfn_area_contexts, mbsfn_area_ids->mbsfn_area_id[num_mbsfn_area]);
+//		DevAssert(mbsfn_area_context);
+//		/** Collect all active MBMS services of the MBSFN area. */
+//		mbms_service_indexes_t mbms_service_indexes_per_mbsfn = {0}, *mbms_service_indexes_per_mbsfn_p = &mbms_service_indexes_per_mbsfn;
+//		hashtable_apply_callback_on_elements(mbsfn_area_context->privates.mbms_service_idx_mcch_modification_times_hashmap,
+//				mce_app_get_active_mbms_services_per_mbsfn_area, (void*)mcch_modif_periods, (void**)&mbms_service_indexes_per_mbsfn_p);
+//		for(int num_mbms_service_mbsfn = 0; num_mbms_service_mbsfn < mbms_service_indexes_per_mbsfn.num_mbms_service; num_mbms_service_mbsfn++ ){
+//			for(int num_mbms_service_tbr = 0; num_mbms_service_tbr < mbms_service_indexes_tbr->num_mbms_service; num_mbms_service_tbr++ ){
+//				if(mbms_service_indexes_tbr->mbms_service_index_array[num_mbms_service_tbr] == mbms_service_indexes_per_mbsfn->mbms_service_index_array[num_mbms_service_mbsfn]){
+//					OAILOG_ERROR(LOG_MCE_APP, "MBMS service idx "MBMS_SERVICE_INDEX_FMT " is already set to be preempted. Not adding to active list.\n",
+//							mbms_service_indexes_per_mbsfn->mbms_service_index_array[num_mbms_service_mbsfn]);
+//					break;
+//				}
+//				OAILOG_DEBUG(LOG_MCE_APP, "MBMS service idx "MBMS_SERVICE_INDEX_FMT " is not as preempted. Adding to active list.\n",
+//						mbms_service_indexes_per_mbsfn->mbms_service_index_array[num_mbms_service_mbsfn]);
+//				mbms_service_indexes_active->mbms_service_index_array[mbms_service_indexes_active->num_mbms_service++] =
+//						mbms_service_indexes_per_mbsfn->mbms_service_index_array[num_mbms_service_mbsfn];
+//			}
+//		}
+//		OAILOG_INFO(LOG_MCE_APP, "(%d) active MBMS services to check after checking MBSFN area " MBSFN_AREA_ID_FMT".\n",
+//				mbms_service_indexes_active->num_mbms_service, mbsfn_area_context->privates.fields.mbsfn_area.mbsfn_area_id);
+//	}
+//	OAILOG_INFO(LOG_MCE_APP, "Total (%d) active MBMS services after checking all (%d) MBSFN areas.\n",
+//			mbms_service_indexes_active->num_mbms_service, mbsfn_area_ids->num_mbsfn_area_ids);
+//	OAILOG_FUNC_OUT(LOG_MCE_APP);
+//}
+
+
+////------------------------------------------------------------------------------
+//void mce_app_get_active_mbms_services (const mbsfn_area_id_t const mbsfn_area_id,
+//		const mcch_modification_periods_t * const mcch_modif_periods,
+//		mbms_service_indexes_t * const mbms_service_indexes_active)
+//{
+//	OAILOG_FUNC_IN(LOG_MCE_APP);
+//	mbsfn_area_context_t			  *mbsfn_area_context 					= NULL;
+//	/** Make a callback for all MBSFN areas. */
+//	for(int num_mbsfn_area = 0; num_mbsfn_area < mbsfn_area_ids->num_mbsfn_area_ids; num_mbsfn_area){
+//		mbsfn_area_context = mce_mbsfn_area_exists_mbsfn_area_id(&mce_app_desc.mce_mbsfn_area_contexts, mbsfn_area_ids->mbsfn_area_id[num_mbsfn_area]);
+//		DevAssert(mbsfn_area_context);
+//		/** Collect all active MBMS services of the MBSFN area. */
+//		hashtable_apply_callback_on_elements(mbsfn_area_context->privates.mbms_service_idx_mcch_modification_times_hashmap,
+//				mce_app_get_active_mbms_services_per_mbsfn_area, (void*)mcch_modif_periods, (void**)&mbms_service_indexes_active);
+////		for(int num_mbms_service_mbsfn = 0; num_mbms_service_mbsfn < mbms_service_indexes_per_mbsfn.num_mbms_service; num_mbms_service_mbsfn++ ){
+////			for(int num_mbms_service_tbr = 0; num_mbms_service_tbr < mbms_service_indexes_tbr->num_mbms_service; num_mbms_service_tbr++ ){
+////				if(mbms_service_indexes_tbr->mbms_service_index_array[num_mbms_service_tbr] == mbms_service_indexes_per_mbsfn->mbms_service_index_array[num_mbms_service_mbsfn]){
+////					OAILOG_ERROR(LOG_MCE_APP, "MBMS service idx "MBMS_SERVICE_INDEX_FMT " is already set to be preempted. Not adding to active list.\n",
+////							mbms_service_indexes_per_mbsfn->mbms_service_index_array[num_mbms_service_mbsfn]);
+////					break;
+////				}
+////				OAILOG_DEBUG(LOG_MCE_APP, "MBMS service idx "MBMS_SERVICE_INDEX_FMT " is not as preempted. Adding to active list.\n",
+////						mbms_service_indexes_per_mbsfn->mbms_service_index_array[num_mbms_service_mbsfn]);
+////				mbms_service_indexes_active->mbms_service_index_array[mbms_service_indexes_active->num_mbms_service++] =
+////						mbms_service_indexes_per_mbsfn->mbms_service_index_array[num_mbms_service_mbsfn];
+////			}
+////		}
+//		OAILOG_INFO(LOG_MCE_APP, "(%d) active MBMS services to check after checking MBSFN area " MBSFN_AREA_ID_FMT".\n",
+//				mbms_service_indexes_active->num_mbms_service, mbsfn_area_context->privates.fields.mbsfn_area.mbsfn_area_id);
+//	}
+//	OAILOG_INFO(LOG_MCE_APP, "Total (%d) active MBMS services after checking all (%d) MBSFN areas.\n",
+//			mbms_service_indexes_active->num_mbms_service, mbsfn_area_ids->num_mbsfn_area_ids);
+//	OAILOG_FUNC_OUT(LOG_MCE_APP);
+//}
 
 //------------------------------------------------------------------------------
 void
 mce_mbsfn_areas_exists_mbms_service_area_id(
-		mce_mbsfn_area_contexts_t * const mce_mbsfn_areas_p, const mbms_service_area_id_t mbms_service_area_id, struct mbsfn_area_ids_s * mbsfn_area_ids)
+		const mce_mbsfn_area_contexts_t * const mce_mbsfn_areas_p, const mbms_service_area_id_t mbms_service_area_id, struct mbsfn_area_ids_s * mbsfn_area_ids)
 {
   hashtable_rc_t              h_rc 					= HASH_TABLE_OK;
 	mbsfn_area_id_t							mbsfn_area_id = INVALID_MBSFN_AREA_ID;
@@ -199,7 +289,6 @@ int mce_app_mbsfn_area_register_mbms_service(mbsfn_area_context_t * mbsfn_area_c
 
 	/** For the MBSFN area, calculate the MCCH modification start and stop timers first. */
 	mcch_modification_periods_t * mcch_modif_periods = calloc(1, sizeof(mcch_modification_periods_t));
-	mcch_modif_periods->local_mbms_area = mbsfn_area_context->privates.fields.local_mbms_area;
   mce_app_calculate_mbms_service_mcch_periods(sec_since_epoch, usec_since_epoch, mbms_session_duration,
   		mbsfn_area_context->privates.fields.mbsfn_area.mcch_modif_period_rf, mcch_modif_periods);
   if(!(mcch_modif_periods->mcch_modif_start_abs_period && mcch_modif_periods->mcch_modif_stop_abs_period)){
@@ -209,7 +298,8 @@ int mce_app_mbsfn_area_register_mbms_service(mbsfn_area_context_t * mbsfn_area_c
   }
 
   /** Check if the MBMS service is already registered in the MBSFN area, if so, just modify the ending. */
-	mcch_modification_periods_t * old_mcch_modification_periods = hashtable_ts_get(mbsfn_area_context->privates.mbms_service_idx_mcch_modification_times_hashmap, mbms_service_index);
+	mcch_modification_periods_t * old_mcch_modification_periods NULL;
+	hashtable_ts_get(mbsfn_area_context->privates.mbms_service_idx_mcch_modification_times_hashmap, (hash_key_t)mbms_service_index, (void**)&old_mcch_modification_periods);
 	if(old_mcch_modification_periods)
 	{
 		OAILOG_WARNING(LOG_MCE_APP, "MBMS Service Idx " MBMS_SERVICE_INDEX_FMT " was already registered in MBSFN area " MBSFN_AREA_ID_FMT". "
@@ -297,11 +387,11 @@ bool mce_app_check_mbsfn_neighbors (const hash_key_t keyP,
                void * const mbsfn_area_context_ref,
                void * parameterP,
                void **resultP) {
-	mbsfn_area_context_t       *mbsfn_area_context      = (mbsfn_area_context_t*)mbsfn_area_context_ref;
-	mbsfn_area_id_t			 	      mbsfn_area_id 					= (mbsfn_area_id_t)keyP;
-	mbsfn_area_ids_t					 *mbsfn_area_ids_p				= *(mbsfn_area_ids_t**)resultP;
-	uint8_t										  local_mbms_area					= *((uint8_t*)parameterP);
-	uint8_t										  non_local_global_areas_allowed = 0;
+	mbsfn_area_context_t       *mbsfn_area_context      				= (mbsfn_area_context_t*)mbsfn_area_context_ref;
+	mbsfn_area_id_t			 	      mbsfn_area_id 									= (mbsfn_area_id_t)keyP;
+	mbsfn_area_ids_t					 *mbsfn_area_ids_p								= *(mbsfn_area_ids_t**)resultP;
+	uint8_t										  local_mbms_area									= *((uint8_t*)parameterP);
+	uint8_t										  non_local_global_areas_allowed 	= 0;
 
 	mme_config_read_lock(&mme_config);
 	non_local_global_areas_allowed = mme_config.mbms.mbms_global_mbsfn_area_per_local_group;
@@ -321,7 +411,7 @@ bool mce_app_check_mbsfn_neighbors (const hash_key_t keyP,
 						mbsfn_area_context->privates.fields.mbsfn_area.mbsfn_area_id,
 						mbsfn_area_context->privates.fields.mbsfn_area.mbms_service_area_id,
 						mbsfn_area_context->privates.fields.local_mbms_area);
-				mbsfn_area_ids_p[mbsfn_area_context->privates.fields.local_mbms_area].mbsfn_area_id 				= mbsfn_area_id;
+				mbsfn_area_ids_p[mbsfn_area_context->privates.fields.local_mbms_area].mbsfn_area_id 				= mbsfn_area_context->privates.fields.mbsfn_area.mbsfn_area_id;
 				mbsfn_area_ids_p[mbsfn_area_context->privates.fields.local_mbms_area].mbms_service_area_id	= mbsfn_area_context->privates.fields.mbsfn_area.mbms_service_area_id;
 				mbsfn_area_ids_p[mbsfn_area_context->privates.fields.local_mbms_area].num_mbsfn_area_ids++;
 			} else {
@@ -339,7 +429,7 @@ bool mce_app_check_mbsfn_neighbors (const hash_key_t keyP,
 		OAILOG_INFO(LOG_MCE_APP, "Adding non-local global MBSFN area "MBSFN_AREA_ID_FMT " with MBMS Service Area ID " MBMS_SERVICE_AREA_ID_FMT " into the results.\n",
 				mbsfn_area_context->privates.fields.mbsfn_area.mbsfn_area_id,
 				mbsfn_area_context->privates.fields.mbsfn_area.mbms_service_area_id);
-		mbsfn_area_ids_p[0].mbsfn_area_id 				= mbsfn_area_id;
+		mbsfn_area_ids_p[0].mbsfn_area_id 				= mbsfn_area_context->privates.fields.mbsfn_area.mbsfn_area_id;
 		mbsfn_area_ids_p[0].mbms_service_area_id	= mbsfn_area_context->privates.fields.mbsfn_area.mbms_service_area_id;
 		mbsfn_area_ids_p[0].num_mbsfn_area_ids++;
 		return false;
@@ -351,14 +441,14 @@ bool mce_app_check_mbsfn_neighbors (const hash_key_t keyP,
 				mbsfn_area_context->privates.fields.mbsfn_area.mbsfn_area_id,
 				mbsfn_area_context->privates.fields.mbsfn_area.mbms_service_area_id,
 				mbsfn_area_context->privates.fields.local_mbms_area);
-		mbsfn_area_ids_p[mbsfn_area_context->privates.fields.local_mbms_area].mbsfn_area_id 				= mbsfn_area_id;
+		mbsfn_area_ids_p[mbsfn_area_context->privates.fields.local_mbms_area].mbsfn_area_id 				= mbsfn_area_context->privates.fields.mbsfn_area.mbsfn_area_id;
 		mbsfn_area_ids_p[mbsfn_area_context->privates.fields.local_mbms_area].mbms_service_area_id	= mbsfn_area_context->privates.fields.mbsfn_area.mbms_service_area_id;
 		mbsfn_area_ids_p[mbsfn_area_context->privates.fields.local_mbms_area].num_mbsfn_area_ids++;
 		return false;
 	} else if(!mbsfn_area_context->privates.fields.local_mbms_area){
 		/** Check the configuration, only add it, if local-global MBMS service areas are not allowed. */
 		if(!non_local_global_areas_allowed){
-			mbsfn_area_ids_p[0].mbsfn_area_id 				= mbsfn_area_id;
+			mbsfn_area_ids_p[0].mbsfn_area_id 				= mbsfn_area_context->privates.fields.mbsfn_area.mbsfn_area_id;
 			mbsfn_area_ids_p[0].mbms_service_area_id	= mbsfn_area_context->privates.fields.mbsfn_area.mbms_service_area_id;
 			mbsfn_area_ids_p[0].num_mbsfn_area_ids++;
 			OAILOG_INFO(LOG_MCE_APP, "Added non-LOCAL-global MBSFN area "MBSFN_AREA_ID_FMT " with MBMS Service Area ID " MBMS_SERVICE_AREA_ID_FMT "  into the results.\n",
@@ -371,6 +461,32 @@ bool mce_app_check_mbsfn_neighbors (const hash_key_t keyP,
 			mbsfn_area_context->privates.fields.mbsfn_area.mbsfn_area_id,
 			mbsfn_area_context->privates.fields.mbsfn_area.mbms_service_area_id,
 			mbsfn_area_context->privates.fields.local_mbms_area);
+	return false;
+}
+
+//------------------------------------------------------------------------------
+bool mce_app_get_active_mbms_services_per_mbsfn_area (const hash_key_t keyP,
+               void * const mcch_modif_periods_Ref,
+               void * parameterP,
+               void **resultP)
+{
+	mbms_service_index_t 	       mbms_service_idx 		 						= (mbms_service_index_t)keyP;
+	mcch_modification_periods_t *mcch_modification_periods_in 		= (mcch_modification_periods_t*)parameterP;
+	mcch_modification_periods_t *mcch_modification_periods_mbsfn	= (mcch_modification_periods_t*)mcch_modif_periods_Ref;
+	mbms_service_indexes_t   		*mbms_service_indexes							= (mbms_service_indexes_t*)*resultP;
+	/**
+	 * Check active services, for start and end MCCH modification periods.
+	 * MBMS service may have started before. And should prevail in the given MCCH modification period.
+	 */
+	if(mcch_modification_periods_mbsfn->mcch_modif_start_abs_period <= mcch_modification_periods_in->mcch_modif_stop_abs_period
+			&& mcch_modification_periods_in->mcch_modif_start_abs_period <= mcch_modification_periods_mbsfn->mcch_modif_stop_abs_period){
+		/**
+		 * Received an active MBMS service, whos start/stop intervals overlap with the given intervals.
+		 * Add it to the service of active MBMS.
+		 */
+		mbms_service_indexes->mbms_service_index_array[mbms_service_indexes->num_mbms_service++] = mbms_service_idx;
+	}
+	/** Iterate through the whole list. */
 	return false;
 }
 
@@ -513,100 +629,32 @@ bool mce_app_check_mbsfn_neighbors (const hash_key_t keyP,
 //	OAILOG_FUNC_RETURN(LOG_MCE_APP, false);
 //}
 
-//------------------------------------------------------------------------------
-static
-void mce_app_update_csa_pattern_union(struct csa_patterns_s * resulting_csa_patterns, const struct csa_patterns_s * const new_csa_patterns)
-{
-	OAILOG_FUNC_IN(LOG_MCE_APP);
-	/**
-	 * We update the union of CSA patterns allocated.
-	 * We iterate over the newly received CSA patterns and update the existing patterns with the same RF Pattern, periodicity and offset.
-	 *
-	 * CSA patterns, with existing offsets, should have the same periodicity and the same RF pattern (1/4).
-	 * So just check the offsets.
-	 * todo: array indexes in the union!
-	 * todo: the offsets might be the same, for reused ones, check that!
-	 */
-
-
-	//	/**
-	//	 * Update the MBSFN Areas with a new configuration.
-	//	 * We wan't to make sure, not to modify the MBSFN areas object in the method mce_app_calculate_overall_csa_pattern,
-	//	 * that's why we copy it.
-	//	 */
-	//	memcpy((void*)&mbsfn_areas->mbsfn_area_cfg[mbsfn_areas->num_mbsfn_areas].mbsfnArea.csa_patterns,
-	//			(void*)&new_csa_patterns, sizeof(struct csa_patterns_s));
-	//	mbsfn_areas->num_mbsfn_areas++;
-
-
-	resulting_csa_patterns->total_csa_pattern_offset |= new_csa_patterns->total_csa_pattern_offset;
-	/** Add the CSA patterns in total. */
-	// todo: update by offset --> CSA offset is the real identifier!
-	// todo: COMMON should not be updated, once set at the beginning
-	/** Update the reused CSA patterns with the same offset, with the new subframes. */
-	for(int num_csa_pattern = 0; num_csa_pattern < new_csa_patterns->num_csa_pattern; num_csa_pattern++){
-		uint8_t csa_pattern_offset_rf = new_csa_patterns->csa_pattern[num_csa_pattern].csa_pattern_offset_rf;
-		/** Check the already existing ones. */
-		for(int num_csa_pattern_old = 0; num_csa_pattern_old < resulting_csa_patterns->num_csa_pattern; num_csa_pattern++){
-			/** If the offset is the same, assert that the pattern and periodicity are also the same. */
-			if(resulting_csa_patterns->csa_pattern[num_csa_pattern_old].csa_pattern_offset_rf == csa_pattern_offset_rf){
-				/** Same Pattern. */
-				DevAssert(resulting_csa_patterns->csa_pattern[num_csa_pattern_old].mbms_csa_pattern_rfs ==
-						new_csa_patterns->csa_pattern[num_csa_pattern].mbms_csa_pattern_rfs);
-				/** Same Periodicity. */
-				DevAssert(resulting_csa_patterns->csa_pattern[num_csa_pattern_old].csa_pattern_repetition_period_rf ==
-						new_csa_patterns->csa_pattern[num_csa_pattern].csa_pattern_repetition_period_rf);
-				/** Update the set subframes. */
-				*((uint32_t*)&resulting_csa_patterns->csa_pattern[num_csa_pattern_old].csa_pattern_sf) =
-						*((uint32_t*)&resulting_csa_patterns->csa_pattern[num_csa_pattern_old].csa_pattern_sf)
-						| *((uint32_t*)&new_csa_patterns->csa_pattern[num_csa_pattern].csa_pattern_sf);
-				OAILOG_INFO(LOG_MCE_APP, "Updated the existing CSA pattern with offset (%d) and repetition period(%d). Resulting new CSA subframes (%d).\n",
-						resulting_csa_patterns->csa_pattern[num_csa_pattern_old].csa_pattern_offset_rf,
-						resulting_csa_patterns->csa_pattern[num_csa_pattern_old].csa_pattern_repetition_period_rf,
-						*((uint32_t*)&resulting_csa_patterns->csa_pattern[num_csa_pattern_old].csa_pattern_sf));
-				break; /**< Continue with the next used one. */
-			}
-		}
-		/**
-		 * No matching CSA subframe was found in the already allocated CSA patterns.
-		 * Allocate a new one in the resulting CSA patterns.
-		 */
-		resulting_csa_patterns->csa_pattern[resulting_csa_patterns->num_csa_pattern].csa_pattern_offset_rf = csa_pattern_offset_rf;
-		resulting_csa_patterns->csa_pattern[resulting_csa_patterns->num_csa_pattern].csa_pattern_repetition_period_rf =
-				new_csa_patterns->csa_pattern[num_csa_pattern].csa_pattern_repetition_period_rf;
-		resulting_csa_patterns->csa_pattern[resulting_csa_patterns->num_csa_pattern].mbms_csa_pattern_rfs =
-				new_csa_patterns->csa_pattern[num_csa_pattern].mbms_csa_pattern_rfs;
-		memcpy((void*)&resulting_csa_patterns->csa_pattern[resulting_csa_patterns->num_csa_pattern].csa_pattern_sf,
-				(void*)&new_csa_patterns->csa_pattern[num_csa_pattern].csa_pattern_sf, sizeof(uint32_t));
-		resulting_csa_patterns->num_csa_pattern++;
-		OAILOG_INFO(LOG_MCE_APP, "Added new CSA pattern with offset (%d) and repetition period(%d) to existing one. Resulting new CSA subframes (%d). Number of resulting CSA Subframes(%d). \n",
-				new_csa_patterns->csa_pattern[num_csa_pattern].csa_pattern_offset_rf, new_csa_patterns->csa_pattern[num_csa_pattern].csa_pattern_repetition_period_rf,
-				*((uint32_t*)&new_csa_patterns->csa_pattern[num_csa_pattern].csa_pattern_sf), resulting_csa_patterns->num_csa_pattern
-		);
-	}
-}
-
 /**
- * Check the resources for the given MCCH modification periods among the specified MBSFN areas.
- * We assume that the M2 eNBs share the band for multiple MBSFN areas, thus also the resources.
+ * In the strict order, calculate the global CSA pattern, if exists.
+ * Then calculate the local CSA pattern. Regard the global CSA pattern and don't mix them!
  */
 //------------------------------------------------------------------------------
-int mce_app_check_mbsfn_resources (const mbsfn_area_ids_t * const mbsfn_area_ids,
-		const mcch_modification_periods_t * const mcch_modification_periods)
+int mce_app_check_mbsfn_resources (const mbsfn_area_context_t * const mbsfn_area_context,
+		const mbms_service_indexes_t				* const mbms_service_indexes_active_nlg_p,
+		const mbms_service_indexes_t				* const mbms_service_indexes_active_local_p)
 {
+	/**
+	 * We don't recalculate resources, when they are removed. That's why use the CSA pattern calculation in each MCCH modification period.
+	 * We check the resulting MBSFN areas, where the capacity should be split among and calculate the resources needed.
+	 * Finally, we fill an CSA pattern offset bitmap.
+	 * MBSFN Areas might share CSA Patterns (Radio Frames), but once a subframe is set for a given periodicity,
+	 * the subframe will be allocated for a SINGLE MBSFN area only. The different CSA patterns will have a different offset.
+	 * In total 8 CSA patterns can exist for all MBSFN areas.
+	 *
+	 * Subframe indicating the MCCH will be set at M2 Setup (initialization).
+	 * ToDo: It also must be unique against different MBSFN area combinations!
+	 */
+
 	OAILOG_FUNC_IN(LOG_MCE_APP);
 	mchs_t										  mchs										= {0};
-	mbms_services_t 			 			mbms_services_active 		= {0};
-	mbsfn_area_context_t			 *mbsfn_area_context      = NULL;
 	/** CSA pattern allocation for the actual MBSFN area. May contain new patterns and reuse old patterns. */
-	struct csa_patterns_s 		  new_csa_patterns 			  = {0};
-
-	/** Check the total MBMS Resources across MBSFN areas for the MCCH modification period in question. */
-	mme_config_read_lock(&mme_config);
-	mbms_service_t * mbms_services_active_array[mme_config.mbms.max_mbms_services];
-	memset(&mbms_services_active_array, 0, (sizeof(mbms_service_t*) * mme_config.mbms.max_mbms_services));
-	mbms_services_active.mbms_service_array = mbms_services_active_array;
-	mme_config_unlock(&mme_config);
+	struct csa_patterns_s 		  csa_patterns_local		  = {0};
+	struct csa_patterns_s 		  csa_patterns_global			= {0};
 
 	/**
 	 * Get all MBMS services which are active in the given absolute MCCH period of the MBMS Service START!!
@@ -615,18 +663,8 @@ int mce_app_check_mbsfn_resources (const mbsfn_area_ids_t * const mbsfn_area_ids
 	 * The mbsfn_areas object, which contains the allocated resources for the other MBSFN areas, should be updated automatically.
 	 */
 
-	/** Get the active MBMS services for the MBSFN area. */
-	mce_app_get_active_mbms_services(mbsfn_area_ids, mcch_modification_periods, &mbms_services_active);
-	if(!mbms_services_active){
-		OAILOG_INFO(LOG_MCE_APP, "No MBMS services area active for MBSFN group.\n");
-		OAILOG_FUNC_RETURN(LOG_MCE_APP, RETURNok);
-	}
 	/** Take the first MBSFN area context, to get the phy layer properties. */
-	mbsfn_area_context = mce_mbsfn_area_exists_mbsfn_area_id(&mce_app_desc.mce_mbsfn_area_contexts, mbsfn_area_ids->mbsfn_area_id[0]);
 	mce_app_calculate_mbsfn_mchs(mbsfn_area_context, &mbms_services_active, &mchs);
-
-	/** The resulting CSA pattern is only to be checked for each MBSFN group. */
-	struct csa_patterns_s resulting_csa_patterns = {0};
 
 	/**
 	 * In consideration of the total number of MBSFN with which we calculate CSA[7], where we reserve subframes for the MCCH,
@@ -657,43 +695,16 @@ int mce_app_check_mbsfn_resources (const mbsfn_area_ids_t * const mbsfn_area_ids
 	 * todo: later optimize this..
 	 */
 
+	if(mbsfn_areas_p->num_mbsfn_areas == mbsfn_areas.num_mbsfn_areas_to_be_scheduled){
+		/** We could schedule all MBSFN areas, including the latest received MBMS service. */
+		OAILOG_INFO(LOG_MCE_APP, "MBSFN resources are enough to activate new MBMS Service Id " MBMS_SERVICE_INDEX_FMT " and MBMS Service Area " MBMS_SERVICE_AREA_ID_FMT " together with (%d) MBSFN areas. \n",
+				mbms_service_index, mbsfn_area_context->privates.fields.mbsfn_area.mbsfn_area_id, mbsfn_areas_p->num_mbsfn_areas);
+		OAILOG_FUNC_RETURN(LOG_MCE_APP, RETURNok);
+	}
+
 	//	mbsfn_areas->total_csa_pattern_offset = new_csa_patterns.total_csa_pattern_offset;
 	OAILOG_INFO(LOG_MCE_APP, "Completed checking the MBSFN area resources.\n");
 	OAILOG_FUNC_RETURN(LOG_MCE_APP, RETURNok);
-}
-
-//------------------------------------------------------------------------------
-static bool mce_mbsfn_area_reset_m2_enb_id (__attribute__((unused))const hash_key_t keyP,
-               void * const mbsfn_area_ctx_ref,
-               void * m2_enb_id_P,
-               void __attribute__((unused)) **unused_resultP)
-{
-  const mbsfn_area_context_t * const mbsfn_area_ctx = (const mbsfn_area_context_t *)mbsfn_area_ctx_ref;
-  if (mbsfn_area_ctx == NULL) {
-    return false;
-  }
-  /**
-   * Remove the key from the MBSFN Area context.
-   * No separate counter is necessarry.*/
-  hashtable_uint64_ts_remove(mbsfn_area_ctx->privates.m2_enb_id_hashmap, *((const hash_key_t*)m2_enb_id_P));
-  return false;
-}
-
-//------------------------------------------------------------------------------
-static bool mce_mbsfn_area_reset_mbms_service (__attribute__((unused))const hash_key_t keyP,
-               void * const mbsfn_area_ctx_ref,
-               void * mbms_service_idx_P,
-               void __attribute__((unused)) **unused_resultP)
-{
-  const mbsfn_area_context_t * const mbsfn_area_ctx = (const mbsfn_area_context_t *)mbsfn_area_ctx_ref;
-  /**
-   * Remove the key from the MBSFN Area context.
-   * No separate counter is necessary.
-   */
-  if (mbsfn_area_ctx) {
-    hashtable_ts_remove(mbsfn_area_ctx->privates.mbms_service_idx_mcch_modification_times_hashmap, *((const hash_key_t*)mbms_service_idx_P));
-  }
-  return false;
 }
 
 ////------------------------------------------------------------------------------
@@ -893,89 +904,6 @@ void mce_app_get_global_mbsfn_areas(const mbms_service_area_t *mbms_service_area
 	OAILOG_FUNC_OUT(LOG_MCE_APP);
 }
 
-////------------------------------------------------------------------------------
-//bool mce_app_get_active_mbms_services (const hash_key_t keyP,
-//               void * const mbms_service_ref,
-//               void * parameterP,
-//               void **resultP)
-//{
-//	/** Check active services, for start and end MCCH modification periods. */
-//	long 												 mcch_modif_period_abs_start 	= (((long*)parameterP)[0]);
-//	long 												 mcch_modif_period_abs_stop		= (((long*)parameterP)[1]);
-//
-//	mbsfn_area_id_t							 mbsfn_area_id 				 				= (mbsfn_area_id_t)(((long*)parameterP)[1]);
-//	mbms_service_index_t 	       mbms_service_idx 		 				= (mbms_service_index_t)keyP;
-//	mbms_services_t	 	      		*mbms_services			 	 				= (mbms_services_t*)*resultP;
-//	mbms_service_t 					    *mbms_service 				 				= (mbms_service_t*)mbms_service_ref;
-//
-//	if(mbsfn_area_id == INVALID_MBSFN_AREA_ID || mbms_service->privates.fields.mbsfn_area_id == mbsfn_area_id){
-//		/** MBMS service may have started before. And should prevail in the given MCCH modification period. */
-//		if(mbms_service->privates.fields.mbms_service_mcch_start_period <= mcch_modif_period_abs_stop
-//				&& mcch_modif_period_abs_start <= mbms_service->privates.fields.mbms_service_mcch_stop_period){
-//			/**
-//			 * Received an active MBMS service, whos start/stop intervals overlap with the given intervals.
-//			 * Add it to the service of active MBMS.
-//			 */
-//			mbms_services->mbms_service_array[mbms_services->num_mbms_service++] = mbms_service;
-//		}
-//	}
-//	/** Iterate through the whole list. */
-//	return false;
-//}
-
-//------------------------------------------------------------------------------
-static
-bool mce_app_get_active_mbms_services_per_mbsfn_area (const hash_key_t keyP,
-               void * const mbms_service_ref,
-               void * parameterP,
-               void **resultP)
-{
-	mbms_service_t 							*mbms_service 								= NULL;
-	mbms_service_index_t 	       mbms_service_idx 		 				= (mbms_service_index_t)keyP;
-	mcch_modification_periods_t *mcch_modification_periods 		= (mcch_modification_periods_t*)parameterP;
-	mbms_services_t	 	      		*mbms_services			 	 				= (mbms_services_t*)*resultP;
-
-	/** Check active services, for start and end MCCH modification periods. */
-	mbms_service = mce_mbms_service_exists_mbms_service_index(&mce_app_desc.mce_mbms_service_contexts, mbms_service_idx);
-	DevAssert(mbms_service); // todo: handle error..
-	/** MBMS service may have started before. And should prevail in the given MCCH modification period. */
-	if(mbms_service->privates.fields.mbms_service_mcch_start_period <= mcch_modification_periods->mcch_modif_stop_abs_period
-			&& mcch_modification_periods->mcch_modif_start_abs_period <= mbms_service->privates.fields.mbms_service_mcch_stop_period){
-		/**
-		 * Received an active MBMS service, whos start/stop intervals overlap with the given intervals.
-		 * Add it to the service of active MBMS.
-		 */
-		OAILOG_INFO(LOG_MCE_APP, "Adding MBMS service with TMGI " TMGI_FMT " and MBMS Service Area "MBMS_SERVICE_AREA_ID_FMT" into list of active MBMS services of MBSN area. \n",
-				TMGI_ARG(&mbms_service->privates.fields.tmgi), mbms_service->privates.fields.mbms_service_area_id);
-		mbms_services->mbms_service_array[mbms_services->num_mbms_service++] = mbms_service;
-	}
-	/** Iterate through the whole list. */
-	return false;
-}
-
-//------------------------------------------------------------------------------
-static
-void mce_app_get_active_mbms_services (const mbsfn_area_ids_t * const mbsfn_area_ids,
-		const mcch_modification_periods_t * const mcch_modif_periods,
-		mbms_services_t * mbms_services)
-{
-	OAILOG_FUNC_IN(LOG_MCE_APP);
-	mbsfn_area_context_t			  *mbsfn_area_context 					= NULL;
-	/** Make a callback for all MBSFN areas. */
-	for(int num_mbsfn_area = 0; num_mbsfn_area < mbsfn_area_ids->num_mbsfn_area_ids; num_mbsfn_area){
-		mbsfn_area_context = mce_mbsfn_area_exists_mbsfn_area_id(&mce_app_desc.mce_mbsfn_area_contexts, mbsfn_area_ids->mbsfn_area_id[num_mbsfn_area]);
-		DevAssert(mbsfn_area_context);
-		/** Collect all active MBMS services of the MBSFN area. */
-		hashtable_apply_callback_on_elements(mbsfn_area_context->privates.mbms_service_idx_mcch_modification_times_hashmap,
-				mce_app_get_active_mbms_services_per_mbsfn_area, (void*)mcch_modif_periods, (void**)&mbms_services);
-		OAILOG_INFO(LOG_MCE_APP, "(%d) active MBMS services to check after checking MBSFN area " MBSFN_AREA_ID_FMT".\n",
-				mbms_services->num_mbms_service, mbsfn_area_context->privates.fields.mbsfn_area.mbsfn_area_id);
-	}
-	OAILOG_INFO(LOG_MCE_APP, "Total (%d) active MBMS services after checking all (%d) MBSFN areas.\n",
-			mbms_services->num_mbms_service, mbsfn_area_ids->num_mbsfn_area_ids);
-	OAILOG_FUNC_OUT(LOG_MCE_APP);
-}
-
 //mce_app_get_active_mbms_services(mbsfn_area_ids, mcch_modification_periods, &mbms_services_active);
 ////------------------------------------------------------------------------------
 //bool mce_app_get_active_mbms_services_2 (const mbsfn_area_ids_t * mbsfn_area_ids,
@@ -1005,33 +933,73 @@ void mce_app_get_active_mbms_services (const mbsfn_area_ids_t * const mbsfn_area
 //}
 
 //------------------------------------------------------------------------------
-int mce_app_mbms_arp_preempt(const mbms_services_t * mbms_services_active){
+int mce_app_mbms_arp_preempt(mbms_service_indexes_t				* const mbms_service_indexes_to_preemtp, const mbsfn_area_id_t mbsfn_area_id){
 	OAILOG_FUNC_IN(LOG_MCE_APP);
 
-	uint8_t 	low_arp_prio_level   		 = 0;
-	int mbms_service_active_list_index = -1;
+	mbms_service_t 	 			*mbms_service_tp							  = NULL;
+	mbsfn_area_context_t 	*mbsfn_area_context_tp			   	= NULL;
+	int 								   mbms_service_in_list						= 0;
+	uint8_t 							 low_arp_prio_level   		 			= 0;
+	mbms_service_index_t   final_mbms_service_idx_tp		 	= INVALID_MBMS_SERVICE_INDEX;
+	int 									 mbms_service_active_list_index = -1;
 
 	/** Get all MBMS services, which area active in the given MCCH modification period. */
-	if(!mbms_services_active->num_mbms_service){
+	if(!mbms_service_indexes_to_preemtp->num_mbms_service){
+		OAILOG_ERROR("No active MBMS services received to preempt.\n");
   	OAILOG_FUNC_RETURN(LOG_MCE_APP, INVALID_MBMS_SERVICE_INDEX);
   }
+	if(mbsfn_area_id != INVALID_MBSFN_AREA_ID){
+		mbsfn_area_context_tp = mce_mbsfn_area_exists_mbsfn_area_id(&mce_app_desc.mce_mbms_service_contexts, mbsfn_area_id);
+		DevAssert(mbsfn_area_context_tp);
+	}
+
 	/** Remove the MBMS session with the lowest ARP prio level. */
-	for(int num_ms = 0; num_ms < mbms_services_active->num_mbms_service; num_ms++){
-		if(mbms_services_active->mbms_service_array[num_ms]) {
-			// todo: check the once which are vulnerable
-			if(mbms_services_active->mbms_service_array[num_ms]->privates.fields.mbms_bc.eps_bearer_context.bearer_level_qos.pvi) {
-				if(low_arp_prio_level < mbms_services_active->mbms_service_array[num_ms]->privates.fields.mbms_bc.eps_bearer_context.bearer_level_qos.pl) {
+	for(int num_ms = 0; num_ms < mbms_service_indexes_to_preemtp->num_mbms_service; num_ms++){
+		/** Go through all MBMS services and check if they can be considered for preemption. */
+		mbms_service_index_t mbms_service_idx_tp = mbms_service_indexes_to_preemtp->mbms_service_index_array[num_ms];
+		if(mbms_service_idx_tp && mbms_service_idx_tp != INVALID_MBMS_SERVICE_INDEX) {
+			/** Get the service, compare with the MBSFN area ID and check the PVI flag. */
+			mbms_service_tp = mce_mbms_service_exists_mbms_service_index(&mce_app_desc.mce_mbms_service_contexts, mbms_service_idx_tp);
+			DevAssert(mbms_service_tp);
+			if(mbsfn_area_context_tp){
+				/** Check if the service is registered in the MBSFN area context. */
+				if(HASH_TABLE_OK != hashtable_ts_is_key_exists(mbsfn_area_context_tp->privates.mbms_service_idx_mcch_modification_times_hashmap, (hash_key_t)mbms_service_idx_tp)){
+					/** Not considering MBMS service, since not part of the given MBSFN area. */
+					OAILOG_WARNING(LOG_MCE_APP, "Not considering MBMS service Index " MBMS_SERVICE_INDEX_FMT " for preemption, since not part of the MBSFN area id " MBSFN_AREA_ID_FMT ".\n",
+							mbms_service_idx_tp, mbsfn_area_id);
+					continue;
+				}
+			}
+			/** Check if it can be preempted. */
+			if(mbms_service_tp->privates.fields.mbms_bc.eps_bearer_context.bearer_level_qos.pvi) {
+				if(low_arp_prio_level < mbms_service_tp->privates.fields.mbms_bc.eps_bearer_context.bearer_level_qos.pl) {
 					/**
 					 * Found a new MBMS Service with preemption vulnerability & lowest ARP priority level.
 					 */
-					low_arp_prio_level = mbms_services_active->mbms_service_array[num_ms]->privates.fields.mbms_bc.eps_bearer_context.bearer_level_qos.pl;
-					mbms_service_active_list_index = num_ms;
+					low_arp_prio_level = mbms_service_tp->privates.fields.mbms_bc.eps_bearer_context.bearer_level_qos.pl;
+					final_mbms_service_idx_tp = mbms_service_idx_tp;
+					mbms_service_in_list = num_ms;
 				}
 			}
 		}
 	}
-	OAILOG_WARNING(LOG_MCE_APP, "Found MBMS Service idx (%d) with lowest ARP Prio (%d). \n", mbms_service_active_list_index, low_arp_prio_level);
-	OAILOG_FUNC_RETURN(LOG_MCE_APP, mbms_service_active_list_index);
+
+	/** Check if we found an MBMS service to preemp, if so remove it from the list of active MBMS services and signal it back. */
+	if(final_mbms_service_idx_tp != INVALID_MBMS_SERVICE_INDEX){
+		OAILOG_WARNING(LOG_MCE_APP, "Found final MBMS Service Index "MBMS_SERVICE_INDEX_FMT " with ARP prio (%d) to preempt. Removing it from active list, too. \n",
+				final_mbms_service_idx_tp, low_arp_prio_level);
+		/** Don't reduce the size of active list. */
+		mbms_service_indexes_to_preemtp[mbms_service_in_list] = INVALID_MBMS_SERVICE_INDEX;
+	}
+	OAILOG_FUNC_RETURN(LOG_MCE_APP, final_mbms_service_idx_tp);
+}
+
+//------------------------------------------------------------------------------
+void
+mce_app_mbsfn_remove_mbms_service(const tmgi_t * const tmgi, const mbms_service_area_id_t mbms_sa_id) {
+	void 									 *unusedP					 = NULL;
+	mbms_service_index_t		mbms_service_idx = mce_get_mbms_service_index(tmgi, mbms_sa_id);
+	hashtable_ts_apply_callback_on_elements(&mce_app_desc.mce_mbsfn_area_contexts, mce_mbsfn_area_reset_mbms_service, (void *)&mbms_service_idx, (void**)&unusedP);
 }
 
 /****************************************************************************/
@@ -1077,10 +1045,130 @@ bool mce_mbsfn_area_compare_by_mbms_sai (__attribute__((unused)) const hash_key_
   if ( *mbms_sai_p == mbsfn_area_context->privates.fields.mbsfn_area.mbms_service_area_id) {
   	/** Set the MBSFN area id. */
     mbsfn_area_ids_p->mbsfn_area_id[mbsfn_area_ids_p->num_mbsfn_area_ids] = mbsfn_area_context->privates.fields.mbsfn_area.mbsfn_area_id;
-    mbsfn_area_ids_p->mbms_service_area_id[mbsfn_area_ids_p->num_mbsfn_area_ids] = *mbms_sai_p;
+    mbsfn_area_ids_p->mbms_service_area_id[mbsfn_area_ids_p->num_mbsfn_area_ids] = mbsfn_area_context->privates.fields.mbsfn_area.mbms_service_area_id;
     mbsfn_area_ids_p->num_mbsfn_area_ids++;
   }
   return false;
+}
+
+//------------------------------------------------------------------------------
+static bool mce_mbsfn_area_reset_m2_enb_id (__attribute__((unused))const hash_key_t keyP,
+               void * const mbsfn_area_ctx_ref,
+               void * m2_enb_id_P,
+               void __attribute__((unused)) **unused_resultP)
+{
+  const mbsfn_area_context_t * const mbsfn_area_ctx = (const mbsfn_area_context_t *)mbsfn_area_ctx_ref;
+  if (mbsfn_area_ctx == NULL) {
+    return false;
+  }
+  /**
+   * Remove the key from the MBSFN Area context.
+   * No separate counter is necessarry.*/
+  hashtable_uint64_ts_remove(mbsfn_area_ctx->privates.m2_enb_id_hashmap, *((const hash_key_t*)m2_enb_id_P));
+  return false;
+}
+
+//------------------------------------------------------------------------------
+static bool mce_mbsfn_area_reset_mbms_service (__attribute__((unused))const hash_key_t keyP,
+               void * const mbsfn_area_ctx_ref,
+               void * mbms_service_idx_P,
+               void __attribute__((unused)) **unused_resultP)
+{
+  const mbsfn_area_context_t * const mbsfn_area_ctx = (const mbsfn_area_context_t *)mbsfn_area_ctx_ref;
+  /**
+   * Remove the key from the MBSFN Area context.
+   * No separate counter is necessary.
+   */
+  if (mbsfn_area_ctx) {
+    hashtable_ts_remove(mbsfn_area_ctx->privates.mbms_service_idx_mcch_modification_times_hashmap, *((const hash_key_t*)mbms_service_idx_P));
+  }
+  return false;
+}
+
+//------------------------------------------------------------------------------
+static
+bool mce_mbsfn_area_remove_mbms_service (__attribute__((unused)) const hash_key_t keyP,
+                                    void * const elementP,
+                                    void * parameterP, void __attribute__((unused)) **resultP)
+{
+  const mbms_service_index_t      * const mbms_service_idx_p	= (const mbms_service_index_t *const)parameterP;
+  mbsfn_area_context_t            * mbsfn_area_context  			= (mbsfn_area_context_t*)elementP;
+  /** Set the matched MBSFN area into the list. */
+  hashtable_ts_remove(mbsfn_area_context->privates.mbms_service_idx_mcch_modification_times_hashmap, (hash_key_t)*mbms_service_idx_p);
+  return false;
+}
+
+//------------------------------------------------------------------------------
+static
+void mce_app_update_csa_pattern_union(struct csa_patterns_s * resulting_csa_patterns, const struct csa_patterns_s * const new_csa_patterns)
+{
+	OAILOG_FUNC_IN(LOG_MCE_APP);
+	/**
+	 * We update the union of CSA patterns allocated.
+	 * We iterate over the newly received CSA patterns and update the existing patterns with the same RF Pattern, periodicity and offset.
+	 *
+	 * CSA patterns, with existing offsets, should have the same periodicity and the same RF pattern (1/4).
+	 * So just check the offsets.
+	 * todo: array indexes in the union!
+	 * todo: the offsets might be the same, for reused ones, check that!
+	 */
+
+
+	//	/**
+	//	 * Update the MBSFN Areas with a new configuration.
+	//	 * We wan't to make sure, not to modify the MBSFN areas object in the method mce_app_calculate_overall_csa_pattern,
+	//	 * that's why we copy it.
+	//	 */
+	//	memcpy((void*)&mbsfn_areas->mbsfn_area_cfg[mbsfn_areas->num_mbsfn_areas].mbsfnArea.csa_patterns,
+	//			(void*)&new_csa_patterns, sizeof(struct csa_patterns_s));
+	//	mbsfn_areas->num_mbsfn_areas++;
+
+
+	resulting_csa_patterns->total_csa_pattern_offset |= new_csa_patterns->total_csa_pattern_offset;
+	/** Add the CSA patterns in total. */
+	// todo: update by offset --> CSA offset is the real identifier!
+	// todo: COMMON should not be updated, once set at the beginning
+	/** Update the reused CSA patterns with the same offset, with the new subframes. */
+	for(int num_csa_pattern = 0; num_csa_pattern < new_csa_patterns->num_csa_pattern; num_csa_pattern++){
+		uint8_t csa_pattern_offset_rf = new_csa_patterns->csa_pattern[num_csa_pattern].csa_pattern_offset_rf;
+		/** Check the already existing ones. */
+		for(int num_csa_pattern_old = 0; num_csa_pattern_old < resulting_csa_patterns->num_csa_pattern; num_csa_pattern++){
+			/** If the offset is the same, assert that the pattern and periodicity are also the same. */
+			if(resulting_csa_patterns->csa_pattern[num_csa_pattern_old].csa_pattern_offset_rf == csa_pattern_offset_rf){
+				/** Same Pattern. */
+				DevAssert(resulting_csa_patterns->csa_pattern[num_csa_pattern_old].mbms_csa_pattern_rfs ==
+						new_csa_patterns->csa_pattern[num_csa_pattern].mbms_csa_pattern_rfs);
+				/** Same Periodicity. */
+				DevAssert(resulting_csa_patterns->csa_pattern[num_csa_pattern_old].csa_pattern_repetition_period_rf ==
+						new_csa_patterns->csa_pattern[num_csa_pattern].csa_pattern_repetition_period_rf);
+				/** Update the set subframes. */
+				*((uint32_t*)&resulting_csa_patterns->csa_pattern[num_csa_pattern_old].csa_pattern_sf) =
+						*((uint32_t*)&resulting_csa_patterns->csa_pattern[num_csa_pattern_old].csa_pattern_sf)
+						| *((uint32_t*)&new_csa_patterns->csa_pattern[num_csa_pattern].csa_pattern_sf);
+				OAILOG_INFO(LOG_MCE_APP, "Updated the existing CSA pattern with offset (%d) and repetition period(%d). Resulting new CSA subframes (%d).\n",
+						resulting_csa_patterns->csa_pattern[num_csa_pattern_old].csa_pattern_offset_rf,
+						resulting_csa_patterns->csa_pattern[num_csa_pattern_old].csa_pattern_repetition_period_rf,
+						*((uint32_t*)&resulting_csa_patterns->csa_pattern[num_csa_pattern_old].csa_pattern_sf));
+				break; /**< Continue with the next used one. */
+			}
+		}
+		/**
+		 * No matching CSA subframe was found in the already allocated CSA patterns.
+		 * Allocate a new one in the resulting CSA patterns.
+		 */
+		resulting_csa_patterns->csa_pattern[resulting_csa_patterns->num_csa_pattern].csa_pattern_offset_rf = csa_pattern_offset_rf;
+		resulting_csa_patterns->csa_pattern[resulting_csa_patterns->num_csa_pattern].csa_pattern_repetition_period_rf =
+				new_csa_patterns->csa_pattern[num_csa_pattern].csa_pattern_repetition_period_rf;
+		resulting_csa_patterns->csa_pattern[resulting_csa_patterns->num_csa_pattern].mbms_csa_pattern_rfs =
+				new_csa_patterns->csa_pattern[num_csa_pattern].mbms_csa_pattern_rfs;
+		memcpy((void*)&resulting_csa_patterns->csa_pattern[resulting_csa_patterns->num_csa_pattern].csa_pattern_sf,
+				(void*)&new_csa_patterns->csa_pattern[num_csa_pattern].csa_pattern_sf, sizeof(uint32_t));
+		resulting_csa_patterns->num_csa_pattern++;
+		OAILOG_INFO(LOG_MCE_APP, "Added new CSA pattern with offset (%d) and repetition period(%d) to existing one. Resulting new CSA subframes (%d). Number of resulting CSA Subframes(%d). \n",
+				new_csa_patterns->csa_pattern[num_csa_pattern].csa_pattern_offset_rf, new_csa_patterns->csa_pattern[num_csa_pattern].csa_pattern_repetition_period_rf,
+				*((uint32_t*)&new_csa_patterns->csa_pattern[num_csa_pattern].csa_pattern_sf), resulting_csa_patterns->num_csa_pattern
+		);
+	}
 }
 
 //------------------------------------------------------------------------------
@@ -1166,7 +1254,7 @@ void clear_mbsfn_area(mbsfn_area_context_t * const mbsfn_area_context) {
 	/** Clear the M2 eNB hashmap. */
 	hashtable_uint64_ts_destroy(mbsfn_area_context->privates.m2_enb_id_hashmap);
 	/** Clear the MBMS Service Area Id hashmap. */
-	hashtable_uint64_ts_destroy(mbsfn_area_context->privates.mbms_service_id_hashmap);
+	hashtable_ts_destroy(mbsfn_area_context->privates.mbms_service_idx_mcch_modification_times_hashmap);
 	OAILOG_INFO(LOG_MME_APP, "Successfully cleared MBSFN area "MME_UE_S1AP_ID_FMT ". \n", mbsfn_area_id);
 	OAILOG_FUNC_OUT(LOG_MME_APP);
 }
@@ -1204,8 +1292,7 @@ bool mce_app_create_mbsfn_area(const mbsfn_area_id_t mbsfn_area_id, const mbms_s
 		 * Initialize the MBMS services hashmap.
 		 * We need a list of MBMS Service Id, each one may have a different MCCH modification period.
 		 */
-		mbsfn_area_context->privates.mbms_service_id_hashmap = hashtable_uint64_ts_create((hash_size_t)mme_config.mbms.max_mbms_services, NULL, NULL);
-
+		mbsfn_area_context->privates.mbms_service_idx_mcch_modification_times_hashmap = hashtable_ts_create((hash_size_t)mme_config.mbms.max_mbms_services, NULL, hash_free_func, NULL);
 		mbsfn_area_context->privates.fields.mbsfn_area.mbsfn_area_id			  = mbsfn_area_id;
 		/** A single MBMS area per MBSFN area. */
 		mbsfn_area_context->privates.fields.mbsfn_area.mbms_service_area_id = mbms_service_area_id;

@@ -466,6 +466,11 @@ typedef struct mbsfn_areas_s{
   mbsfn_area_cfg_t mbsfn_area_cfg[MAX_MBMSFN_AREAS];
 } mbsfn_areas_t;
 
+typedef struct mbms_service_indexes_s {
+	int num_mbms_service;
+	mbms_service_index_t * mbms_service_index_array;
+}mbms_service_indexes_t;
+
 typedef struct mbsfn_area_ids_s{
   uint8_t  num_mbsfn_area_ids;
   mbsfn_area_id_t mbsfn_area_id[MAX_MBMSFN_AREAS];
