@@ -251,24 +251,31 @@ typedef enum {
 
 static inline enb_type_e get_enb_type(enb_band_e enb_band){
 	switch(enb_band) {
-
-#define X(a, b) case a: return b;
+#define X(a, b) case BAND_##a: return b;
 	ENB_BANDS
 #undef X
 	default: return ENB_TYPE_NULL;
 	}
 }
 
-#define FDD_SUBFRAMES  0b0111001110
-
+/**
+ * FDD: The first/ leftmost bit defines the allocation for subframe #1 of the radio frame indicated by mcch-
+ * RepetitionPeriod and mcch-Offset, the second bit for #2, the third bit for #3, the fourth bit for #6, the fifth bit for #7 anthe sixth bit for #8.
+ */
+#define FDD_SUBFRAMES  0b111111
+/**
+ * TDD: The first/leftmost bit defines the allocation for subframe #3 of the radio frame indicated by mcch-
+ * RepetitionPeriod and mcch-Offset, the second bit for #4, third bit for #7, fourth bit for #8, fifth bit for #9. Uplink
+ * subframes are not allocated. The last bit is not used.
+ */
 #define TDD_DL_UL_TYPES \
-X(0, 0b0000000000, 0) \
-X(1, 0b0000100001, 2) \
-X(2, 0b0001100011, 4) \
-X(3, 0b0000000111, 3) \
-X(4, 0b0000100111, 4) \
-X(5, 0b0001100111, 5) \
-X(6, 0b0000000001, 1)
+X(0, 0b000000, 0) \
+X(1, 0b010010, 2) \
+X(2, 0b110110, 4) \
+X(3, 0b001110, 3) \
+X(4, 0b011110, 4) \
+X(5, 0b111110, 5) \
+X(6, 0b000010, 1)
 
 //-----------------
 // todo: the name from an incremented counter?
@@ -278,6 +285,18 @@ typedef enum {
  #undef X
 } enb_tdd_dl_ul_e;
 
+static inline int get_enb_mbsfn_subframes(enb_type_e enb_type, enb_tdd_dl_ul_e tdd_dl_ul){
+	if(enb_type == ENB_TYPE_NULL)
+		return 0;
+	else if(enb_type == FDD)
+		return FDD_SUBFRAMES;
+	switch(tdd_dl_ul) {
+#define X(a, b, c) case TDD_DL_UL_##a: return b;
+	TDD_DL_UL_TYPES
+#undef X
+	default: return -1;
+	}
+}
 static inline int get_enb_tdd_subframes(enb_tdd_dl_ul_e tdd_dl_ul){
 	switch(tdd_dl_ul) {
 #define X(a, b, c) case TDD_DL_UL_##a: return b;
@@ -287,20 +306,16 @@ static inline int get_enb_tdd_subframes(enb_tdd_dl_ul_e tdd_dl_ul){
 	}
 }
 
-static inline int get_enb_tdd_subframe_size(enb_tdd_dl_ul_e tdd_dl_ul){
+static inline int get_enb_subframe_size(enb_type_e enb_type, enb_tdd_dl_ul_e tdd_dl_ul){
+	if(enb_type == ENB_TYPE_NULL)
+		return 0;
+	else if(enb_type == FDD)
+		return 6;
 	switch(tdd_dl_ul) {
 #define X(a, b, c) case TDD_DL_UL_##a: return c;
 	TDD_DL_UL_TYPES
 #undef X
 	default: return -1;
-	}
-}
-static inline enb_type_e get_enb_type(enb_band_e enb_band){
-	switch(enb_band) {
-#define X(a, b) case a##_##b: return a;
-	ENB_BANDS
-#undef X
-	default: return ENB_TYPE_NULL;
 	}
 }
 
@@ -312,7 +327,7 @@ typedef struct {
 /**
  * For FDD and TDD 6 SF can be allocated per RF
  */
-#define CSA_SF_SINGLE_FRAME 					6
+//#define CSA_SF_SINGLE_FRAME 					6
 #define CSA_RF_ALLOC_FRAME_THRESHOLD	0.75
 
 typedef enum{
@@ -402,7 +417,7 @@ typedef struct mch_s {
 }mch_t;
 
 typedef struct mchs_s {
-	int 		num_mch;
+	/** No NUM_MCH since the order in the array is defined by the QCI. */
 #define MAX_MCH_PER_MBSFN 15
 	mch_t   mch_array[MAX_MCH_PER_MBSFN];
   int 		total_subframes_per_csa_period_necessary;
@@ -467,7 +482,7 @@ typedef struct mbsfn_areas_s{
 } mbsfn_areas_t;
 
 typedef struct mbms_service_indexes_s {
-	int num_mbms_service;
+	int num_mbms_service_indexes;
 	mbms_service_index_t * mbms_service_index_array;
 }mbms_service_indexes_t;
 

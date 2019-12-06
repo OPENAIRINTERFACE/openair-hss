@@ -490,7 +490,8 @@ m2ap_generate_m2_setup_response (
   	mbsfnCfgItem->mbsfnArea = mbsfn_areas->mbsfn_area_cfg[num_mbsfn].mbsfnArea.mbsfn_area_id;
   	mbsfnCfgItem->pdcchLength = 2;
   	mbsfnCfgItem->repetitionPeriod   = mbsfn_areas->mbsfn_area_cfg[num_mbsfn].mbsfnArea.mcch_repetition_period_rf;
-  	mbsfnCfgItem->offset   					 = mbsfn_areas->mbsfn_area_cfg[num_mbsfn].mbsfnArea.mbms_mcch_subframes;
+//  	mbsfnCfgItem->subframeAllocationInfo = mbsfn_areas->mbsfn_area_cfg[num_mbsfn].mbsfnArea.mbms_mcch_subframes;
+  	// todo: offset..
   	mbsfnCfgItem->modificationPeriod = mbsfn_areas->mbsfn_area_cfg[num_mbsfn].mbsfnArea.mcch_modif_period_rf;
   	/** Set it in the M2 ENB Description element. */
   	m2ap_enb_association->mbsfn_area_ids.mbsfn_area_id[m2ap_enb_association->mbsfn_area_ids.num_mbsfn_area_ids]

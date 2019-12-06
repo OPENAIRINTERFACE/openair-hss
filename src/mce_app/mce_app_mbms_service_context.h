@@ -289,7 +289,7 @@ bool mce_app_get_active_mbms_services_per_mbsfn_area (const hash_key_t keyP,
                void **resultP);
 
 //------------------------------------------------------------------------------
-int mce_app_check_mbsfn_resources (const mbsfn_area_context_t * const mbsfn_area_context,
+int mce_app_check_mbsfn_cluster_resources (const mbsfn_area_context_t * const mbsfn_area_context,
 		const mbms_service_indexes_t				* const mbms_service_indexes_active_nlg_p,
 		const mbms_service_indexes_t				* const mbms_service_indexes_active_local_p);
 

@@ -659,6 +659,7 @@ mce_app_handle_mbsfn_mcch_repetition_timeout_timer_expiry ()
 
 	/**
 	 * We don't know in each MCCH modification period, if services where removed.
+	 * We don't recalculate resources, when they are removed. That's why use the CSA pattern calculation in each MCCH modification period.
 	 * That's why we need currently to calculate the CSA subframes in each MCCH modification period.
 	 */
 
@@ -839,7 +840,7 @@ int mce_app_update_mbsfn_area_registration(const mbms_service_index_t new_mbms_s
  * Check if the resources fit, if not perform ARP preemption on the MBSFN area of the given MBMS service index to check (ONLY!), not in the other ones.
  * Do this as long as the resources fit, or the service which has to be preempted is the newly received MBMS service, if so return RETURNerror.
  * Remove the preempted MBMS services from the respective lists of active MBMS services, and add them into the TBR list.
- * No common CSA pattern will be returned, so the MCCH modification timeout cannot use this method (uses mce_app_check_mbsfn_resources, though).
+ * No common CSA pattern will be returned, so the MCCH modification timeout cannot use this method (uses mce_app_check_mbsfn_cluster_resources, though).
  */
 //------------------------------------------------------------------------------
 static
@@ -863,7 +864,7 @@ int mce_app_check_mbsfn_cluster_capacity(const mbms_service_index_t mbms_service
 	DevAssert(mbsfn_area_context);
 
 	/** Check the capacity in the merged MBMS services. */
-	while (mce_app_check_mbsfn_resources(mbsfn_area_context, mbms_service_indexes_active_nlg_p, mbms_service_indexes_active_local_p) == RETURNerror) {
+	while (mce_app_check_mbsfn_cluster_resources(mbsfn_area_context, mbms_service_indexes_active_nlg_p, mbms_service_indexes_active_local_p) == RETURNerror) {
 		OAILOG_ERROR(LOG_MCE_APP,"Could not fit all (%d) MBMS services. Performing ARP preemption.\n",
 				mbms_service_indexes_active_total.num_mbms_service);
 		mbms_service_indexes_t * mbms_service_indexes_to_preemtp = mbsfn_area_context->privates.fields.local_mbms_area ? mbms_service_indexes_active_local_p : mbms_service_indexes_active_nlg_p;
