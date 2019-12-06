@@ -104,6 +104,7 @@
 #define MME_CONFIG_MBMS_MCCH_MODIFICATION_PERIOD_RF					  	"MME_CONFIG_MBMS_MCCH_MODIFICATION_PERIOD_RF"
 #define MME_CONFIG_MBMS_MCCH_REPETITION_PERIOD_RF		 						"MME_CONFIG_MBMS_MCCH_REPETITION_PERIOD_RF"
 #define MME_CONFIG_MCH_MCS_ENB_FACTOR													  "MME_CONFIG_MCH_MCS_ENB_FACTOR"
+#define MME_CONFIG_MBSFN_CSA_4_RF_THRESHOLD											"MME_CONFIG_MBSFN_CSA_4_RF_THRESHOLD"
 
 #define MME_CONFIG_MBMS_GLOBAL_SERVICE_AREA_TYPES		 						"MBMS_GLOBAL_SERVICE_AREAS"
 #define MME_CONFIG_MBMS_LOCAL_SERVICE_AREAS			 	 							"MBMS_LOCAL_SERVICE_AREAS"
@@ -236,6 +237,7 @@ typedef struct mme_config_s {
 		uint16_t mbms_local_service_area_sfd_distance_in_m;
 		double	 mch_mcs_enb_factor;
 		uint8_t  mbsfn_synch_area_id;
+		double   mbsfn_csa_4_rf_threshold;
 
 		/** Possible eNB configurations. */
 		uint32_t 		max_m2_enbs;

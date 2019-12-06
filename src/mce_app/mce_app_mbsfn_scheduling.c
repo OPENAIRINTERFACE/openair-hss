@@ -147,7 +147,7 @@ static void mce_app_allocate_4frame(struct csa_patterns_s * new_csa_patterns, in
 
 //------------------------------------------------------------------------------
 static
-void mce_app_set_fresh_radio_frames(struct csa_pattern_s * csa_pattern_mbsfn, struct mchs_s * mchs);
+void mce_app_set_fresh_radio_frames(struct csa_pattern_s * csa_pattern, struct mchs_s * mchs, const uint8_t csa_sf_available, const uint8_t csa_sf_total_size);
 
 //------------------------------------------------------------------------------
 static
@@ -646,24 +646,47 @@ void mce_app_update_csa_pattern_union(struct csa_patterns_s * resulting_csa_patt
 /**
  * Set the subframes in an empty single frame RF pattern, with the given CSA repetition period.
  */
+#define NUM_SF_CSA_PATTERN_TOTAL (6 * csa_pattern->mbms_csa_pattern_rfs)
 //------------------------------------------------------------------------------
 static
-void mce_app_set_fresh_radio_frames(struct csa_pattern_s * csa_pattern_mbsfn, struct mchs_s * mchs)
+void mce_app_set_fresh_radio_frames(struct csa_pattern_s * csa_pattern, struct mchs_s * mchs, const uint8_t csa_sf_available, const uint8_t csa_sf_total_size)
 {
-	/** No matter if FDD or TDD, we will try to fit 6 subframes into 1RF. */
-	for(int num_sf = 1; num_sf <= (CSA_SF_SINGLE_FRAME * csa_pattern_mbsfn->mbms_csa_pattern_rfs); num_sf++ ){ /**< 6 or 24. */
-		/** Set the subframe in the CSA allocation pattern. */
-		csa_pattern_mbsfn->csa_pattern_sf.mbms_mch_csa_pattern_1rf |= (0x01 << ((CSA_SF_SINGLE_FRAME* csa_pattern_mbsfn->mbms_csa_pattern_rfs)-num_sf)); /**< 5 to 0. */
-		/** Reduced the number of SFs, multiplied by the CSA pattern repetition period. */
-		if((MBMS_CSA_PERIOD_GCS_AS_RF / csa_pattern_mbsfn->csa_pattern_repetition_period_rf) > mchs->total_subframes_per_csa_period_necessary)
-			mchs->total_subframes_per_csa_period_necessary -= (MBMS_CSA_PERIOD_GCS_AS_RF / csa_pattern_mbsfn->csa_pattern_repetition_period_rf);
-		else
-			mchs->total_subframes_per_csa_period_necessary = 0;
-		if(!mchs->total_subframes_per_csa_period_necessary){
-			OAILOG_DEBUG(LOG_MCE_APP,"No more subframes to schedule in (%d)RF CSA pattern.", csa_pattern_mbsfn->mbms_csa_pattern_rfs);
-			break;
+	OAILOG_FUNC_IN(LOG_MCE_APP);
+	uint8_t sf_full 							= 0;
+	uint8_t sfAlloc_RF_free 			= csa_sf_available;
+	uint32_t sfAlloc							= 0;
+
+//	const uint32_t sfAlloc = csa_pattern->mbms_csa_pattern_rfs == CSA_FOUR_FRAME ? csa_pattern->csa_pattern_sf.mbms_mch_csa_pattern_4rf : csa_pattern->csa_pattern_sf.mbms_mch_csa_pattern_1rf;
+	/** Check if it is a 4 or 1 Frame pattern. */
+	for(int num_rf = 0; num_rf < csa_pattern->mbms_csa_pattern_rfs; num_rf){
+		uint8_t csa_sf = 0;
+		uint8_t csa_avalable_sf = csa_sf_total_size;
+//		for(int num_sf = 0; num_sf <= csa_sf_total_size; num_sf++ ){
+		while (csa_avalable_sf){
+			if(!(sfAlloc_RF_free & 0x20)) {
+				csa_sf++;
+				sfAlloc_RF_free <<=csa_sf;
+				continue;
+			}
+			sfAlloc |= ((0x20 >> csa_sf) << (num_rf * 6));
+			mchs->total_subframes_per_csa_period_necessary -= (MBMS_CSA_PERIOD_GCS_AS_RF / csa_pattern->csa_pattern_repetition_period_rf);
+			/** Reduce it from the total SFs necessary. */
+			if(mchs->total_subframes_per_csa_period_necessary <= 0) {
+				break;
+			}
 		}
 	}
+	*((uint32_t*)&csa_pattern->csa_pattern_sf) = sfAlloc;
+	if(mchs->total_subframes_per_csa_period_necessary <= 0) {
+		mchs->total_subframes_per_csa_period_necessary = 0;
+		OAILOG_INFO(LOG_MCE_APP, "All MCH subframes for MBSFN area " MBSFN_AREA_ID_FMT " fitted into new (%d)RF-CSA pattern with offset (%p) and (%d)RF repetition factor. \n",
+				mbsfn_area_ctx->privates.fields.mbsfn_area.mbsfn_area_id, csa_pattern->mbms_csa_pattern_rfs, csa_pattern->csa_pattern_offset_rf, csa_pattern->csa_pattern_repetition_period_rf);
+	} else {
+		OAILOG_WARNING(LOG_MCE_APP, "(%d) MCH subframes for MBSFN area " MBSFN_AREA_ID_FMT " remain after filling  (%d)RF-CSA pattern with offset (%p) and (%d)RF repetition factor. \n",
+				mchs->total_subframes_per_csa_period_necessary, mbsfn_area_ctx->privates.fields.mbsfn_area.mbsfn_area_id, csa_pattern->mbms_csa_pattern_rfs, csa_pattern->csa_pattern_offset_rf, csa_pattern->csa_pattern_repetition_period_rf);
+	}
+	/** No total RF offset needs to be take. */
+	OAILOG_FUNC_RETURN(LOG_MCE_APP, RETURNok);
 }
 
 //------------------------------------------------------------------------------
@@ -837,7 +860,6 @@ void mce_app_calculate_mbsfn_mchs(const struct mbsfn_area_context_s * const mbsf
 	OAILOG_FUNC_OUT(LOG_MCE_APP);
 }
 
-#define NUM_SF_CSA_PATTERN_TOTAL (6 * csa_pattern->mbms_csa_pattern_rfs)
 //------------------------------------------------------------------------------
 static
 void mce_app_reuse_csa_pattern_set_subframes(struct csa_pattern_s * csa_pattern_mbsfn, struct csa_pattern_s * csa_pattern, struct mchs_s * const mchs, int *mch_subframes_to_be_scheduled_p,
@@ -998,20 +1020,22 @@ void mce_app_reuse_csa_pattern(struct csa_patterns_s * csa_patterns_mbsfn_p, mch
 //------------------------------------------------------------------------------
 static void mce_app_allocate_4frame(struct csa_patterns_s * new_csa_patterns, int num_radio_frames, struct mchs_s * mchs, struct csa_patterns_s * csa_patterns_allocated){
 	OAILOG_FUNC_IN(LOG_MCE_APP);
-	// todo: 0.75 is variable, just a threshold where we consider allocating a 4RF pattern. What could be any other reason?
+	// todo: 0.80 is variable, just a threshold where we consider allocating a 4RF pattern. What could be any other reason?
 	/** 16 Radio Frames are the minimum radio frames allocated with a /32 periodicity. */
-	int csa_4_frame_rfs_repetition = num_radio_frames/(((MBMS_CSA_PERIOD_GCS_AS_RF/get_csa_period_rf(CSA_PERIOD_RF32)) * 16) * 0.75);
+	mme_config_read_lock(&mme_config);
+	int csa_4_frame_rfs_repetition = floor((double)(num_radio_frames * mme_config.mbms.mbsfn_csa_4_rf_threshold) / ((MBMS_CSA_PERIOD_GCS_AS_RF/get_csa_period_rf(CSA_PERIOD_RF32)) * CSA_FOUR_FRAME));
+	mme_config_unlock(&mme_config);
 	if(!csa_4_frame_rfs_repetition) {
-		OAILOG_INFO(LOG_MCE_APP, "Skipping 4RF pattern for MBSFN Area Id " MBSFN_AREA_ID_FMT ". \n.", mbsfn_area_ctx->privates.fields.mbsfn_area.mbsfn_area_id);
+		OAILOG_INFO(LOG_MCE_APP, "Skipping 4RF pattern for MBSFN Area Id " MBSFN_AREA_ID_FMT". Not enough RFs (%d). \n.", mbsfn_area_ctx->privates.fields.mbsfn_area.mbsfn_area_id, num_radio_frames);
 		OAILOG_FUNC_OUT(LOG_MCE_APP);
 	}
 	/** 4RF pattern will be allocated. */
-	uint8_t total_csa_pattern_offset = 0b11110000; /**< 8 Radio Frames. */
+	uint8_t total_csa_pattern_offset = 0xF0; /**< 8 Radio Frames. */
 	while (total_csa_pattern_offset & csa_patterns_allocated->total_csa_pattern_offset){
 		/** Overlap between the already allocated and the newly allocated CSA pattern. */
-		total_csa_pattern_offset = (total_csa_pattern_offset >> 0x01);
+		total_csa_pattern_offset >>=  0x01;
 		if(total_csa_pattern_offset == 0x0F) {
-			OAILOG_ERROR(LOG_MCE_APP, "No more free radio frame offsets available to schedule the MCHs of MBSFN Area Id " MBSFN_AREA_ID_FMT " in a 4RF pattern. We cannot use CSA_COMMON. \n.",
+			OAILOG_ERROR(LOG_MCE_APP, "No more free radio frame offsets available to schedule the MCHs of MBSFN Area Id " MBSFN_AREA_ID_FMT " in a 4RF pattern. Collision with CSA_COMMON. \n.",
 					mbsfn_area_ctx->privates.fields.mbsfn_area.mbsfn_area_id);
 			OAILOG_FUNC_OUT(LOG_MCE_APP);
 		}
@@ -1020,15 +1044,17 @@ static void mce_app_allocate_4frame(struct csa_patterns_s * new_csa_patterns, in
 	 * No matter what the 4RF repetition is, it will be allocated in the first common 8 radio frames. So checking it is enough.
 	 * Allocate a 4RF radio frame, and then remove it from the necessary subframes to be scheduled.
 	 */
-	OAILOG_DEBUG(LOG_MCE_APP, "Allocating 4RF CSA Pattern with alloced RFs (%d) and repetition (%d).\n", new_csa_patterns->total_csa_pattern_offset, csa_4_frame_rfs_repetition);
+	OAILOG_INFO(LOG_MCE_APP, "Allocating 4RF CSA Pattern with allocated RFs (offset) (%p) and repetition (%d).\n", total_csa_pattern_offset, csa_4_frame_rfs_repetition);
 	/**
 	 * No looping is necessary. We know the #RFs to be allocated by 4 * csa_pattern_repetition_period.
 	 * The CSA pattern will always be the first CSA pattern of the MBSFN area.
 	 */
 	new_csa_patterns->total_csa_pattern_offset												= total_csa_pattern_offset;
-	new_csa_patterns->csa_pattern[0].mbms_csa_pattern_rfs 						= CSA_FOUR_FRAME;
-	new_csa_patterns->csa_pattern[0].csa_pattern_repetition_period_rf	= csa_4_frame_rfs_repetition;
-	mce_app_set_fresh_radio_frames(&new_csa_patterns->csa_pattern[0], mchs);
+	new_csa_patterns->csa_pattern[new_csa_patterns->num_csa_pattern-1].csa_pattern_offset_rf						= total_csa_pattern_offset;
+	new_csa_patterns->csa_pattern[new_csa_patterns->num_csa_pattern-1].mbms_csa_pattern_rfs 						= CSA_FOUR_FRAME;
+	new_csa_patterns->csa_pattern[new_csa_patterns->num_csa_pattern-1].csa_pattern_repetition_period_rf	= get_csa_period_rf(CSA_PERIOD_RF32)/csa_4_frame_rfs_repetition;
+	mce_app_set_fresh_radio_frames(&new_csa_patterns->csa_pattern[new_csa_patterns->num_csa_pattern-1], mchs);
+	new_csa_patterns->num_csa_pattern++;
 	OAILOG_FUNC_OUT(LOG_MCE_APP);
 }
 
@@ -1041,39 +1067,36 @@ int mce_app_alloc_csa_pattern(struct csa_patterns_s * new_csa_patterns,
 	OAILOG_FUNC_IN(LOG_MCE_APP);
 	/** Check if any the union has allocated all CSA pattern offsets. If so, reject. */
 	if(total_csa_pattern_offset == 0xFF){
-		OAILOG_ERROR(LOG_MCE_APP, "All CSA pattern offsets area allocated already. Cannot allocate a new CSA pattern. \n");
+		OAILOG_ERROR(LOG_MCE_APP, "All CSA pattern offsets area allocated already. Cannot allocate a new CSA pattern for MBSFN Area " MBSFN_AREA_ID_FMT". \n",
+				mbsfn_area_ctx->privates.fields.mbsfn_area.mbsfn_area_id);
 		OAILOG_FUNC_RETURN(LOG_MCE_APP, RETURNerror);
 	}
 	/** Check with full allocation how many subframes are needed. */
-	int subframe_count = 6;
-	if(TDD == get_enb_type(mbsfn_area_ctx->privates.fields.mbsfn_area.m2_enb_band)){
-	  /** check the subframe count. */
-		subframe_count = get_enb_tdd_subframe_size(mbsfn_area_ctx->privates.fields.mbsfn_area.m2_enb_band);
-	}
-	/** Check that subframes exist. */
-	DevAssert(subframe_count);
+	int csa_pattern_subframe_size = get_enb_subframe_size(get_enb_type(mbsfn_area_ctx->privates.fields.mbsfn_area.m2_enb_band), mbsfn_area_ctx->privates.fields.mbsfn_area.enb_tdd_dl_ul_perc);
+	DevAssert(csa_pattern_subframe_size);
 
 	/**< Received number of fresh radio frames, for which a new pattern fill be fully filled. Make it the next multiple of 4. */
-	int num_radio_frames = ceil(mchs->total_subframes_per_csa_period_necessary/subframe_count);
+	int num_radio_frames = ceil(mchs->total_subframes_per_csa_period_necessary/csa_pattern_subframe_size);
 	num_radio_frames += (num_radio_frames %4);
 	/**
 	 * Allocate a 4RF CSA pattern with the given period.
 	 * For the remaining RFs calculate a single frame CSA pattern.
 	 */
-	mce_app_allocate_4frame(new_csa_patterns, num_radio_frames, mchs, mbsfn_area_ctx, csa_patterns_allocated);
-	if(!mchs->total_subframes_per_csa_period_necessary){
+	mce_app_allocate_4frame(new_csa_patterns, num_radio_frames, mchs, mbsfn_area_ctx, total_csa_pattern_offset);
+	if(mchs->total_subframes_per_csa_period_necessary <=0){
+		mchs->total_subframes_per_csa_period_necessary = 0;
 		OAILOG_INFO(LOG_MCE_APP, "MCHs of MBSFN Area Id "MBSFN_AREA_ID_FMT " are allocated in a 4RF pattern completely.\n", mbsfn_area_ctx->privates.fields.mbsfn_area.mbsfn_area_id);
 		OAILOG_FUNC_RETURN(LOG_MCE_APP, RETURNok);
 	}
 	/** Check if there are any offsets left for the 1RF CSA pattern. */
-	OAILOG_INFO(LOG_MCE_APP, "Checking for a new 1RF pattern for MCHs of MBSFN Area Id "MBSFN_AREA_ID_FMT ".\n",
-			mbsfn_area_ctx->privates.fields.mbsfn_area.mbsfn_area_id);
+	OAILOG_INFO(LOG_MCE_APP, "Checking for a new 1RF pattern for MCHs of MBSFN Area Id "MBSFN_AREA_ID_FMT ". (%d) MBSFN subframes left to allocate. \n",
+			mbsfn_area_ctx->privates.fields.mbsfn_area.mbsfn_area_id, mchs->total_subframes_per_csa_period_necessary);
 
 	/**
 	 * Check the number of 1RF CSA patterns you need (periodic).
 	 * New CSA pattern should be already allocated, inside, compare it with the csa_patterns_allocated.
 	 */
-	if(mce_app_log_method_single_rf_csa_pattern(new_csa_patterns, num_radio_frames, mchs, csa_patterns_allocated) == RETURNerror){
+	if(mce_app_log_method_single_rf_csa_pattern(new_csa_patterns, num_radio_frames, mchs, mbsfn_area_ctx, total_csa_pattern_offset) == RETURNerror){
 		OAILOG_ERROR(LOG_MCE_APP, "Error while scheduling the CSA pattern.\n");
 		OAILOG_FUNC_RETURN(LOG_MCE_APP, RETURNerror);
 	}
@@ -1112,6 +1135,8 @@ int mce_app_calculate_mbsfn_csa_patterns(struct csa_patterns_s * const csa_patte
 	csa_patterns_mbsfn_p->csa_pattern[COMMON_CSA_PATTERN].csa_pattern_offset_rf = COMMON_CSA_PATTERN;
 	/** Allocate the COMMON CSA in each subframe. */
 	csa_patterns_mbsfn_p->csa_pattern[COMMON_CSA_PATTERN].csa_pattern_repetition_period_rf = get_csa_rf_alloc_period_rf(CSA_RF_ALLOC_PERIOD_RF8);
+	csa_patterns_mbsfn_p->num_csa_pattern++;
+	csa_patterns_mbsfn_p->total_csa_pattern_offset |= 0x80; /**< Set the last CSA pattern as allocated. */
 
 	if(mchs->total_subframes_per_csa_period_necessary <= 0){
 		mchs->total_subframes_per_csa_period_necessary = 0;
@@ -1157,6 +1182,7 @@ int mce_app_calculate_mbsfn_csa_patterns(struct csa_patterns_s * const csa_patte
 				mbsfn_area_ctx->privates.fields.mbsfn_area.mbsfn_area_id);
 		mce_app_reuse_csa_pattern(csa_patterns_mbsfn_p, mchs, csa_patterns_included, mbsfn_area_ctx);
 		if(mchs->total_subframes_per_csa_period_necessary <= 0){
+			mchs->total_subframes_per_csa_period_necessary = 0;
 			/**
 			 * Total CSA pattern offset is not incremented. We check it always against COMMON_CSA_PATTERN (reserved).
 			 */
@@ -1166,6 +1192,9 @@ int mce_app_calculate_mbsfn_csa_patterns(struct csa_patterns_s * const csa_patte
 		}
 	}
 
+	OAILOG_INFO(LOG_MCE_APP, "After checking reused CSA patterns, trying to allocate new CSA patterns for the remaining (%d) MCH subframes of MBSFN Area Id " MBSFN_AREA_ID_FMT " .\n",
+			mchs->total_subframes_per_csa_period_necessary, mbsfn_area_ctx->privates.fields.mbsfn_area.mbsfn_area_id);
+
 	/**
 	 * Check if a new pattern needs to be allocated.
 	 * Check for the repetition period and CSA pattern form that is necessary.
@@ -1173,9 +1202,8 @@ int mce_app_calculate_mbsfn_csa_patterns(struct csa_patterns_s * const csa_patte
 	 * Allocate the subframes according to FDD/TDD.
 	 * Start from 1 RF and longest period (32/16/8) -> then move to 4RF.
 	 */
-	if(!mce_app_alloc_csa_pattern(csa_patterns_mbsfn_p, mchs, (csa_patterns_included->total_csa_pattern_offset | excluded_csa_pattern_offset), mbsfn_area_ctx)) {
-		OAILOG_ERROR(LOG_MCE_APP, "Error generating new necessary CSA patterns for MBSFN Area Id " MBSFN_AREA_ID_FMT". Cannot allocate re sources.\n",
-				mbsfn_area_ctx->privates.fields.mbsfn_area.mbsfn_area_id);
+	if(mce_app_alloc_csa_pattern(csa_patterns_mbsfn_p, mchs, (csa_patterns_included->total_csa_pattern_offset | excluded_csa_pattern_offset), mbsfn_area_ctx) == RETURNerror) {
+		OAILOG_ERROR(LOG_MCE_APP, "Error allocating new CSA patterns for MBSFN Area Id " MBSFN_AREA_ID_FMT".\n", mbsfn_area_ctx->privates.fields.mbsfn_area.mbsfn_area_id);
 		OAILOG_FUNC_RETURN(LOG_MCE_APP, RETURNerror);
 	}
 	OAILOG_INFO(LOG_MCE_APP, "Successfully allocated (%d) CSA resources for MBSFN Area Id " MBSFN_AREA_ID_FMT ".\n",

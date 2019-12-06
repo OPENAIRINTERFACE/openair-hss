@@ -461,7 +461,7 @@ typedef struct mbsfn_area_s{
   uint8_t								  mbms_mcch_subframes;
   enb_band_e							m2_enb_band;
   enb_bw_e								m2_enb_bw; 				/**< May differ in band. */
-  enb_tdd_dl_ul_e				  enb_tdd_dl_ul_perc;
+  enb_tdd_dl_ul_e				  m2_enb_tdd_dl_ul_perc;
   bool 										mbms_sf_slots_half;
   uint8_t									mcch_offset_rf;
 } mbsfn_area_t;

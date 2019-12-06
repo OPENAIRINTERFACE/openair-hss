@@ -1330,6 +1330,11 @@ static int mme_config_parse_file (mme_config_t * config_pP)
     }
     AssertFatal(config_pP->mbms.mch_mcs_enb_factor > 1, "MCH MCS eNB factor (%d) should >1.", config_pP->mbms.mch_mcs_enb_factor);
 
+    if ((config_setting_lookup_float(setting_mce, MME_CONFIG_MBSFN_CSA_4_RF_THRESHOLD, &adouble))) {
+    	config_pP->mbms.mbsfn_csa_4_rf_threshold = (double) adouble;
+    }
+    AssertFatal(config_pP->mbms.mbsfn_csa_4_rf_threshold_factor > 1, "MBSFN 4RF Allocation Threshold (%d) should >1.", config_pP->mbms.mbsfn_csa_4_rf_threshold);
+
     /** MBMS SA configurations. */
     if ((config_setting_lookup_int (setting_mce, MME_CONFIG_MBMS_GLOBAL_SERVICE_AREA_TYPES, &aint))) {
      config_pP->mbms.mbms_global_service_area_types = (uint8_t) aint;
