@@ -115,6 +115,8 @@ typedef struct m2ap_enb_description_s {
   mbms_service_area_t   mbms_sa_list;      ///< Tracking Area Identifiers signaled by the eNB (for each cell - used for paging.).
   /** Configured MBSFN Area Id . */
   mbsfn_area_ids_t		  mbsfn_area_ids;
+
+  uint8_t								local_mbms_area;
   /*@}*/
 
   /** MBMS Services for this eNB **/
@@ -142,12 +144,12 @@ int m2ap_mce_init(void);
  **/
 void m2ap_mce_exit (void);
 
-/** \brief Look for given MBSFN Area Id in the list.
- * \param MBSFN Area Id is not unique and used for the search in the list.
+/** \brief Look for given local MBMS area in the list.
+ * \param local MBMS area is not unique and used for the search in the list.
  * @returns All matched M2AP eNBs in the m2ap_enb_list.
  **/
-void m2ap_is_mbsfn_area_id_list (
-  const mbsfn_area_id_t mbsfn_area_id,
+void m2ap_is_mbms_area_list (
+  const uint8_t local_mbms_area,
   int *num_m2ap_enbs,
   m2ap_enb_description_t ** m2ap_enbs);
 

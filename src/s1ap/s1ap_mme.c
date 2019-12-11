@@ -186,20 +186,20 @@ s1ap_mme_thread (
     // Forwarded from MME_APP layer (origin NAS).
     case NAS_DOWNLINK_DATA_REQ:{
     	/*
-             * New message received from NAS task.
-             * * * * This corresponds to a S1AP downlink nas transport message.
-             */
-            s1ap_generate_downlink_nas_transport (NAS_DOWNLINK_DATA_REQ (received_message_p).enb_ue_s1ap_id,
-                NAS_DOWNLINK_DATA_REQ (received_message_p).ue_id,
-                NAS_DOWNLINK_DATA_REQ (received_message_p).enb_id,
-                &NAS_DOWNLINK_DATA_REQ (received_message_p).nas_msg);
-          }
-          break;
+    	 * New message received from NAS task.
+    	 * * * * This corresponds to a S1AP downlink nas transport message.
+    	 */
+    	s1ap_generate_downlink_nas_transport (NAS_DOWNLINK_DATA_REQ (received_message_p).enb_ue_s1ap_id,
+    			NAS_DOWNLINK_DATA_REQ (received_message_p).ue_id,
+					NAS_DOWNLINK_DATA_REQ (received_message_p).enb_id,
+					&NAS_DOWNLINK_DATA_REQ (received_message_p).nas_msg);
+    }
+    break;
 
-        case S1AP_E_RAB_SETUP_REQ:{
-            s1ap_generate_s1ap_e_rab_setup_req (&S1AP_E_RAB_SETUP_REQ (received_message_p));
-          }
-          break;
+    case S1AP_E_RAB_SETUP_REQ:{
+    	s1ap_generate_s1ap_e_rab_setup_req (&S1AP_E_RAB_SETUP_REQ (received_message_p));
+    }
+    break;
 
         case S1AP_E_RAB_MODIFY_REQ:{
             s1ap_generate_s1ap_e_rab_modify_req (&S1AP_E_RAB_MODIFY_REQ (received_message_p));

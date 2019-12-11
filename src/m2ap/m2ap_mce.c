@@ -272,6 +272,23 @@ bool m2ap_enb_compare_by_mbsfn_area_id_cb (__attribute__((unused)) const hash_ke
 
 //------------------------------------------------------------------------------
 static
+bool m2ap_enb_compare_by_local_mbms_area_cb (__attribute__((unused)) const hash_key_t keyP,
+                                    void * const elementP,
+                                    void * parameterP, void **resultP)
+{
+  const uint8_t 							 * const local_mbms_area_p  = (const uint8_t *const)parameterP;
+  m2ap_enb_description_t       * m2ap_enb_ref  	    			= (m2ap_enb_description_t*)elementP;
+  hashtable_element_array_t    * ea_p											= (hashtable_element_array_t*)*resultP;
+  if (*local_mbms_area_p == m2ap_enb_ref->local_mbms_area) {
+  		/** Just return true. */
+    	ea_p->elements[ea_p->num_elements++] = (void*)m2ap_enb_ref;
+    	return false;
+  }
+  return false;
+}
+
+//------------------------------------------------------------------------------
+static
 bool m2ap_enb_compare_by_mbms_sai_NACK_cb (__attribute__((unused)) const hash_key_t keyP,
                                     void * const elementP,
                                     void * parameterP, void **resultP)
@@ -625,21 +642,19 @@ m2ap_is_enb_id_in_list (
 }
 
 //------------------------------------------------------------------------------
-void m2ap_is_mbsfn_area_id_list (
-  const mbsfn_area_id_t mbsfn_area_id,
+void m2ap_is_mbms_area_list (
+  const uint8_t local_mbms_area,
   int *num_m2ap_enbs,
   m2ap_enb_description_t ** m2ap_enbs)
 {
-  m2ap_enb_description_t          *m2ap_enb_ref 		= NULL;
-  mbsfn_area_id_t                 *mbsfn_area_id_p  = (mbsfn_area_id_t*)&mbsfn_area_id;
-
+  m2ap_enb_description_t    *m2ap_enb_ref 			 = NULL;
   /** Collect all M2AP eNBs for the given MBSFN Area Id. */
-  hashtable_element_array_t              ea, *ea_p = NULL;
+  hashtable_element_array_t  ea, *ea_p = &ea;
   memset(&ea, 0, sizeof(hashtable_element_array_t));
   ea.elements = m2ap_enbs;
-  ea_p = &ea;
-  hashtable_ts_apply_list_callback_on_elements((hash_table_ts_t * const)&g_m2ap_enb_coll, m2ap_enb_compare_by_mbsfn_area_id_cb, (void *)mbsfn_area_id_p, &ea_p);
-  OAILOG_DEBUG(LOG_M2AP, "Found %d matching m2ap_enb references based on the received MBSFN Area ID " MBSFN_AREA_ID_FMT". \n", ea.num_elements, mbsfn_area_id);
+  hashtable_ts_apply_list_callback_on_elements((hash_table_ts_t * const)&g_m2ap_enb_coll,
+  		m2ap_enb_compare_by_local_mbms_area_cb, (void *)&local_mbms_area, &ea_p);
+  OAILOG_DEBUG(LOG_M2AP, "Found (%d) matching m2ap_enb references based on the received local MBMS area (%d). \n", ea.num_elements, local_mbms_area);
   *num_m2ap_enbs = ea.num_elements;
 }
 

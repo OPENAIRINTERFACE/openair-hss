@@ -139,7 +139,8 @@ void *mce_app_thread (void *args)
            * The RF of the timer should continuously increase.
            * All MBSFN areas will be iterated and all MBSFN areas with expired MCCH modification timeout will be updated, if the CSA pattern etc. has been changed.
            */
-          mce_app_handle_mbsfn_mcch_repetition_timeout_timer_expiry();
+        	hash_table_ts_t * mcch_mbsfn_htbl = (hash_table_ts_t*)received_message_p->ittiMsg.timer_has_expired.arg;
+          mce_app_handle_mbsfn_mcch_repetition_timeout_timer_expiry(mcch_mbsfn_htbl);
         }
         else if (received_message_p->ittiMsg.timer_has_expired.arg != NULL) {
             mbms_service_index_t mbms_service_idx = ((mbms_service_index_t)(received_message_p->ittiMsg.timer_has_expired.arg));
@@ -183,10 +184,15 @@ mce_initialize_mcch_repetition_timer() {
 	int mcch_timer_us = mme_config.mbms.mbms_mcch_repetition_period_rf * 10000;
 	int mcch_timer_s  = floor(mcch_timer_us / 1000000);
 	mcch_timer_us = mcch_timer_us % 1000000;
-	// todo: set the OFFset && clear the synchronized with the eNBs.. (set another timer to set the timer?!)
+	// todo: set the offset && clear the synchronized with the eNBs.. (set another timer to set the timer?!)
+	/** Create a hashmap for the MBSFN area configurations, which will be checked against deltas. */
+  bstring b = bfromcstr("mcch_mbsfn_cfg_htbl");
+  hash_table_ts_t * mcch_mbsfn_cfg_htbl = hashtable_ts_create (MAX_MBMSFN_AREAS, NULL, hash_free_func, b); /**< Objects currently allocated in malloc. */
+  bdestroy_wrapper(&b);
 	if (timer_setup (mcch_timer_s, mcch_timer_us,
-			TASK_MCE_APP, INSTANCE_DEFAULT, TIMER_PERIODIC,  NULL, &mce_app_desc.mcch_repetition_timer_id) < 0) {
-			OAILOG_ERROR (LOG_MME_APP, "Failed to start the generic MCCH repetition timer for duration of %d RFs. \n", mme_config.mbms.mbms_mcch_repetition_period_rf);
+			TASK_MCE_APP, INSTANCE_DEFAULT, TIMER_PERIODIC, (void*)mcch_mbsfn_cfg_htbl, &mce_app_desc.mcch_repetition_timer_id) < 0) {
+			OAILOG_ERROR (LOG_MME_APP, "Failed to create the generic MCCH repetition timer for duration of (%d) RFs. \n",
+					mme_config.mbms.mbms_mcch_repetition_period_rf);
 			return false;
 	}
 	OAILOG_ERROR (LOG_MME_APP, "Started the MCCH repetition timer for duration of %d RFs. \n", mme_config.mbms.mbms_mcch_repetition_period_rf);
@@ -298,6 +304,8 @@ int mce_app_init (const mme_config_t * mme_config_p)
 
   /**
    * Start the MCCH timer at a certain time, synchronous to all the eNBs in the field.
+   * Will create a hashmap and set it in the timer. No procedure is required.
+   * Hashtable will be terminated with the timer.
    */
   if(!mce_initialize_mcch_repetition_timer()){
   	DevMessage("Could not start the MBSFN MCCH repetition timer.");
@@ -313,9 +321,17 @@ void mce_app_exit (void)
 {
   // todo: also check other timers!
   timer_remove(mce_app_desc.statistic_timer_id, NULL);
+  /** Remove the hashmap of last stored MBSFN configurations, too. */
   timer_remove(mce_app_desc.mcch_repetition_timer_id, NULL);
-  // todo: hashtable_uint64_ts_destroy (mce_app_desc.mce_mbms_service_contexts.mbms_service_id_mbms_service_htbl);
-  // todo: hashtable_uint64_ts_destroy (mce_app_desc.mme_ue_contexts.enb_ue_s1ap_id_ue_context_htbl);
+  hash_table_ts_t * mcch_mbsfn_cfg_table = NULL;
+  timer_remove (mce_app_desc.mcch_repetition_timer_id, (void**)&mcch_mbsfn_cfg_table);
+  if (mcch_mbsfn_cfg_table) {
+  	OAILOG_INFO(LOG_MCE_APP, "Received an MCCH modification MBSFN area configuration hashmap from removed MCCH modification timer. Destroying.. \n");
+  	/** Destroy the hashtable. */
+  	hashtable_rc_t hash_rc = hashtable_ts_destroy(mcch_mbsfn_cfg_table);
+  	DevAssert(hash_rc == HASH_TABLE_OK);
+  	DevAssert(!mcch_mbsfn_cfg_table);
+  }
   hashtable_uint64_ts_destroy (mce_app_desc.mce_mbms_service_contexts.tunsm_mbms_service_htbl);
   hashtable_ts_destroy (mce_app_desc.mce_mbms_service_contexts.mbms_service_index_mbms_service_htbl);
   hashtable_ts_destroy (mce_app_desc.mce_mbsfn_area_contexts.mbsfn_area_id_mbsfn_area_htbl);

@@ -222,22 +222,23 @@ typedef struct mme_config_s {
 
   /** MBMS Parameters. */
   struct {
-		plmn_t   mce_plmn;                                        /*!< \brief  GUMMEI               */
-		uint16_t mce_id;
-		uint32_t max_mbms_services;
-		uint8_t mbms_short_idle_session_duration_in_sec;
+		plmn_t   		mce_plmn;                                        /*!< \brief  GUMMEI               */
+		uint16_t 		mce_id;
+		uint32_t 		max_mbms_services;
+		uint8_t 		mbms_short_idle_session_duration_in_sec;
 		/** MCCH values. */
-		uint8_t mbms_mcch_msi_mcs;
-		uint16_t mbms_mcch_modification_period_rf;
-		uint16_t mbms_mcch_repetition_period_rf;
+		uint8_t 		mbms_mcch_msi_mcs;
+		uint16_t 		mbms_mcch_modification_period_rf;
+		uint16_t 		mbms_mcch_repetition_period_rf;
 		/** MBMS Service Area configurations. */
-		uint8_t  mbms_global_service_area_types; 	/**< Offset 0. */
-		uint8_t  mbms_local_service_areas; 	/**< Mod. */
-		uint8_t  mbms_local_service_area_types; 	/**< Offset 1. */
-		uint16_t mbms_local_service_area_sfd_distance_in_m;
-		double	 mch_mcs_enb_factor;
-		uint8_t  mbsfn_synch_area_id;
-		double   mbsfn_csa_4_rf_threshold;
+		uint8_t  		mbms_global_service_area_types; 	/**< Offset 0. */
+#define MME_CONFIG_MAX_LOCAL_MBMS_SERVICE_AREAS 3
+		uint8_t  		mbms_local_service_areas; 	/**< Mod. */
+		uint8_t  		mbms_local_service_area_types; 	/**< Offset 1. */
+		uint16_t 		mbms_local_service_area_sfd_distance_in_m;
+		double	 		mch_mcs_enb_factor;
+		uint8_t  		mbsfn_synch_area_id;
+		double   		mbsfn_csa_4_rf_threshold;
 
 		/** Possible eNB configurations. */
 		uint32_t 		max_m2_enbs;
@@ -245,10 +246,10 @@ typedef struct mme_config_s {
 		enb_bw_e	  mbms_m2_enb_bw;
 		uint8_t  		mbms_m2_enb_tdd_ul_dl_sf_conf;
 		/** Flags. */
-		uint8_t  mbms_enb_scptm:1;
-		uint8_t  mbms_resource_allocation_full:1;
-		uint8_t  mbms_global_mbsfn_area_per_local_group:1;
-		uint8_t  mbms_subframe_slot_half:1;
+		uint8_t  	mbms_enb_scptm:1;
+		uint8_t  	mbms_resource_allocation_full:1;
+		uint8_t  	mbms_global_mbsfn_area_per_local_group:1;
+		uint8_t  	mbms_subframe_slot_half:1;
 
 		/** Interface Configuration. */
 			/** Sm/M2AP */

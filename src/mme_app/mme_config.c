@@ -1343,6 +1343,7 @@ static int mme_config_parse_file (mme_config_t * config_pP)
     if ((config_setting_lookup_int (setting_mce, MME_CONFIG_MBMS_LOCAL_SERVICE_AREAS, &aint))) {
       config_pP->mbms.mbms_local_service_areas = (uint8_t) aint;
     }
+    DevAssert(config_pP->mbms.mbms_local_service_areas < MME_CONFIG_MAX_LOCAL_MBMS_SERVICE_AREAS);
 
     if ((config_setting_lookup_int (setting_mce, MME_CONFIG_MBMS_LOCAL_SERVICE_AREA_TYPES, &aint))) {
 	  config_pP->mbms.mbms_local_service_area_types = (uint8_t) aint;
@@ -1406,6 +1407,30 @@ static int mme_config_parse_file (mme_config_t * config_pP)
       config_pP->mbms.mbms_subframe_slot_half = ((uint8_t) aint & 0x01);
     }
 
+    /**
+     * Check for the case of local-global flag inactive, if, given the eNB configuration, any local/global MBMS areas are allowed.
+     */
+    uint8_t mbsfn_mcch_size = get_enb_subframe_size(get_enb_type(config_pP->mbms.mbms_m2_enb_band), config_pP->mbms.mbms_m2_enb_tdd_ul_dl_sf_conf);
+    /**
+     * If the local-global flag is set, we can configure arbitrarily local MBMS areas,
+     * The MCCH subframes will be assigned sequentially.
+     * If not, we need to check that we can reserve the given number of global MBMS areas.
+     * We don't check for local.
+     */
+    if(!config_pP->mbms.mbms_global_mbsfn_area_per_local_group){
+    	if(mbsfn_mcch_size < config_pP->mbms.mbms_global_service_area_types){
+    		OAILOG_ERROR(LOG_MCE_APP, "Total (%d) MCCH MBSFN subframes cannot be lower than #global_mbms_areas (%d).\n",
+    				mbsfn_mcch_size, config_pP->mbms.mbms_global_service_area_types);
+    		DevAssert(0);
+    	}
+    	if(mbsfn_mcch_size == config_pP->mbms.mbms_global_service_area_types){
+    		/** No local MBMS areas may exist. */
+    		if(config_pP->mbms.mbms_local_service_areas){
+    			OAILOG_ERROR(LOG_MCE_APP, "Total of (%d) MCCH MBSFN subframes are available. We cannot assign any local MBMS areas.\n", mbsfn_mcch_size);
+    			DevAssert(0);
+    		}
+    	}
+    }
   }
   OAILOG_SET_CONFIG(&config_pP->log_config);
   config_destroy (&cfg);

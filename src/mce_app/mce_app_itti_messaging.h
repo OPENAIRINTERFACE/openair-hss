@@ -57,6 +57,6 @@ void mce_app_itti_m3ap_mbms_session_stop_request(tmgi_t * tmgi, mbms_service_are
 void mce_app_itti_m3ap_enb_setup_response(mbsfn_areas_t * mbsfn_areas_p, uint32_t m2ap_enb_id, sctp_assoc_id_t assoc_id);
 
 /** M3AP MBMS Scheduling Information */
-void mce_app_itti_m3ap_send_mbms_scheduling_info(mbsfn_areas_t * mbsfn_areas_p, long mcch_rep_rf);
+void mce_app_itti_m3ap_send_mbms_scheduling_info(mbsfn_areas_t* mbsfn_areas_p, uint8_t mbms_service_areas, long mcch_rep_period_abs);
 
 #endif /* FILE_MCE_APP_ITTI_MESSAGING_SEEN */

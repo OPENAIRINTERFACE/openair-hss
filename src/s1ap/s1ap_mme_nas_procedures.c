@@ -2136,10 +2136,10 @@ s1ap_handle_paging( const itti_s1ap_paging_t * const s1ap_paging_pP){
 
   /** Collect all eNBs for the given TAC. */
   enb_description_t *			         enb_p_elements[mme_config.max_s1_enbs];
-  memset(&enb_p_elements, 0, (sizeof(enb_description_t*) * mme_config.max_s1_enbs));
+  memset(enb_p_elements, 0, (sizeof(enb_description_t*) * mme_config.max_s1_enbs));
 
   int num_enbs = 0;
-  s1ap_is_tac_in_list (s1ap_paging_pP->tac, &num_enbs, (enb_description_t **)&enb_p_elements);
+  s1ap_is_tac_in_list (s1ap_paging_pP->tac, &num_enbs, (enb_description_t **)enb_p_elements);
 
   if(!num_enbs){
 	  OAILOG_ERROR (LOG_S1AP, " No eNBs could be found for the received TAC " TAC_FMT " for the UE " MME_UE_S1AP_ID_FMT". \n",

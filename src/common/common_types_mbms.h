@@ -414,6 +414,11 @@ typedef struct mch_s {
   }mbms_session_list;
   int 			tb_size;
   int 			mch_subframes_per_csa_period;
+  /** First and last subframes of the MCH. */
+  long      mch_subframe_start;
+  long      mch_subframe_stop;
+  uint8_t   mcs;
+  long      msp_rf;
 }mch_t;
 
 typedef struct mchs_s {
@@ -440,42 +445,46 @@ typedef struct mbsfn_area_s{
 #define MBSFN_AREA_MAX_CSA_PATTERN 8
 #define COMMON_CSA_PATTERN				 7
   uint16_t								mbsfn_csa_period_rf;
-  /** MBSFN CSA PATTERNS. */
-  struct csa_patterns_s {
-  	uint8_t total_csa_pattern_offset;
-  	/** Just the index of the CSA patterns, without any indication of the offset of CSA patterns. */
-  	uint8_t num_csa_pattern;
-  	struct csa_pattern_s{
-  		union{
-  			uint8_t								  mbms_mch_csa_pattern_1rf:6;
-  			uint32_t								mbms_mch_csa_pattern_4rf:24;
-  		}csa_pattern_sf;
-  		csa_frame_num_e				mbms_csa_pattern_rfs;
-  		uint8_t								csa_pattern_repetition_period_rf;
-  		uint8_t								csa_pattern_offset_rf;
-  	}csa_pattern[MBSFN_AREA_MAX_CSA_PATTERN];
-  }csa_patterns;
-
   uint8_t 								mbms_mcch_msi_mcs;
   double								  mch_mcs_enb_factor;
-  uint8_t								  mbms_mcch_subframes;
   enb_band_e							m2_enb_band;
   enb_bw_e								m2_enb_bw; 				/**< May differ in band. */
   enb_tdd_dl_ul_e				  m2_enb_tdd_dl_ul_perc;
   bool 										mbms_sf_slots_half;
   uint8_t									mcch_offset_rf;
+  /** Set the subframe for the MCCH either reserved (non-local global & flag is false) or incremented (local/local-global MBSFN service). */
+	uint8_t								  mbms_mcch_csa_pattern_1rf:6;
 } mbsfn_area_t;
 
+/**
+ * MBSFN CSA PATTERNS.
+ * Not storing in the MBSFN area context, since it is changed at each MCCH modification period.
+ */
+struct csa_patterns_s {
+	uint8_t total_csa_pattern_offset;
+	/** Just the index of the CSA patterns, without any indication of the offset of CSA patterns. */
+	uint8_t num_csa_pattern;
+	struct csa_pattern_s{
+		union{
+			uint8_t								  mbms_mch_csa_pattern_1rf:6;
+			uint32_t								mbms_mch_csa_pattern_4rf:24;
+		}csa_pattern_sf;
+		csa_frame_num_e				mbms_csa_pattern_rfs;
+		uint8_t								csa_pattern_repetition_period_rf;
+		uint8_t								csa_pattern_offset_rf;
+	}csa_pattern[MBSFN_AREA_MAX_CSA_PATTERN];
+}csa_patterns;
+
 typedef struct mbsfn_area_cfg_s {
-  mbsfn_area_t  mbsfnArea;
-  mchs_t				mchs;
+  mbsfn_area_t  				mbsfnArea;
+  struct csa_patterns_s	csa_patterns;
+  mchs_t								mchs;
 }mbsfn_area_cfg_t;
 
 /**
  * This structure is used to calculate the scheduling amongst multiple MBSFN areas.
  */
 typedef struct mbsfn_areas_s{
-  uint8_t	 				 num_mbsfn_areas_to_be_scheduled;
 #define MAX_MBMSFN_AREAS 256
   uint8_t  				 num_mbsfn_areas;
   mbsfn_area_cfg_t mbsfn_area_cfg[MAX_MBMSFN_AREAS];
@@ -487,8 +496,8 @@ typedef struct mbms_service_indexes_s {
 }mbms_service_indexes_t;
 
 typedef struct mbsfn_area_ids_s{
-  uint8_t  num_mbsfn_area_ids;
-  mbsfn_area_id_t mbsfn_area_id[MAX_MBMSFN_AREAS];
+  uint8_t  							 num_mbsfn_area_ids;
+  mbsfn_area_id_t 			 mbsfn_area_id[MAX_MBMSFN_AREAS];
   mbms_service_area_id_t mbms_service_area_id[MAX_MBMSFN_AREAS];
 } mbsfn_area_ids_t;
 

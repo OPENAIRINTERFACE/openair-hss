@@ -112,6 +112,12 @@ bool mce_mbsfn_area_compare_by_mbms_sai (__attribute__((unused)) const hash_key_
 
 //------------------------------------------------------------------------------
 static
+bool mce_mbsfn_area_compare_by_local_mbms_area (__attribute__((unused)) const hash_key_t keyP,
+		void * const elementP,
+		void * parameterP, void **resultP);
+
+//------------------------------------------------------------------------------
+static
 bool mce_app_update_mbsfn_area(const mbsfn_area_id_t mbsfn_area_id, const mbms_service_area_id_t mbms_service_area_id, const uint32_t m2_enb_id, const sctp_assoc_id_t assoc_id);
 
 //------------------------------------------------------------------------------
@@ -125,11 +131,15 @@ void clear_mbsfn_area(mbsfn_area_context_t * const mbsfn_area_context);
 
 //------------------------------------------------------------------------------
 static
-bool mce_app_create_mbsfn_area(const mbsfn_area_id_t mbsfn_area_id, const mbms_service_area_id_t mbms_service_area_id, const uint32_t m2_enb_id, const sctp_assoc_id_t assoc_id);
+int get_mbsfn_mcch_sf(const uint8_t local_mbms_area, const mbsfn_area_id_t mbsfn_area_id);
 
 //------------------------------------------------------------------------------
 static
-void mce_update_mbsfn_area(struct mbsfn_areas_s * const mbsfn_areas, const mbsfn_area_id_t mbsfn_area_id, const mbms_service_area_id_t mbms_service_area_id, uint32_t m2_enb_id, const sctp_assoc_id_t assoc_id);
+bool mce_app_create_mbsfn_area(const mbsfn_area_id_t mbsfn_area_id, const uint8_t local_mbms_area, const mbms_service_area_id_t mbms_service_area_id, const uint32_t m2_enb_id, const sctp_assoc_id_t assoc_id);
+
+//------------------------------------------------------------------------------
+static
+void mce_update_mbsfn_area(struct mbsfn_areas_s * const mbsfn_areas, uint8_t local_mbms_area, const mbsfn_area_id_t mbsfn_area_id, const mbms_service_area_id_t mbms_service_area_id, uint32_t m2_enb_id, const sctp_assoc_id_t assoc_id);
 
 //------------------------------------------------------------------------------
 static bool mce_mbsfn_area_reset_m2_enb_id (__attribute__((unused))const hash_key_t keyP,
@@ -159,9 +169,20 @@ mce_mbsfn_areas_exists_mbms_service_area_id(
 		const mce_mbsfn_area_contexts_t * const mce_mbsfn_areas_p, const mbms_service_area_id_t mbms_service_area_id, struct mbsfn_area_ids_s * mbsfn_area_ids)
 {
   hashtable_rc_t              h_rc 					= HASH_TABLE_OK;
-	mbsfn_area_id_t							mbsfn_area_id = INVALID_MBSFN_AREA_ID;
 	mbms_service_area_id_t     *mbms_sai_p 		= (mbms_service_area_id_t*)&mbms_service_area_id;
-	hashtable_ts_apply_callback_on_elements(mce_mbsfn_areas_p->mbsfn_area_id_mbsfn_area_htbl, mce_mbsfn_area_compare_by_mbms_sai, (void *)mbms_sai_p, (void**)&mbsfn_area_ids);
+	hashtable_ts_apply_callback_on_elements(mce_mbsfn_areas_p->mbsfn_area_id_mbsfn_area_htbl,
+			mce_mbsfn_area_compare_by_mbms_sai, (void *)mbms_sai_p, (void**)&mbsfn_area_ids);
+}
+
+//------------------------------------------------------------------------------
+void
+mce_mbsfn_areas_exists_local_mbms_area(
+		const mce_mbsfn_area_contexts_t * const mce_mbsfn_areas_p, const uint8_t local_mbms_area,
+		struct mbsfn_area_ids_s * mbsfn_area_ids)
+{
+  hashtable_rc_t              h_rc 					= HASH_TABLE_OK;
+	hashtable_ts_apply_callback_on_elements(mce_mbsfn_areas_p->mbsfn_area_id_mbsfn_area_htbl,
+			mce_mbsfn_area_compare_by_local_mbms_area, (void *)&local_mbms_area, (void**)&mbsfn_area_ids);
 }
 
 //------------------------------------------------------------------------------
@@ -196,69 +217,6 @@ int mce_app_mbsfn_area_register_mbms_service(mbsfn_area_context_t * mbsfn_area_c
 	/** Insert the new values. */
 	hashtable_rc_t hash_rc = hashtable_ts_insert(mbsfn_area_context->privates.mbms_service_idx_mcch_modification_times_hashmap, mbms_service_index, mcch_modif_periods);
   OAILOG_FUNC_RETURN(LOG_MCE_APP, (HASH_TABLE_OK == hash_rc) ? RETURNok: RETURNerror);
-}
-
-//------------------------------------------------------------------------------
-bool mce_app_check_mbsfn_mcch_modif (const hash_key_t keyP,
-               void * const mbsfn_area_context_ref,
-               void * parameterP,
-               void **resultP)
-{
-	long 											  mcch_repeat_rf_abs  		= *((long*)parameterP);
-	mbsfn_area_id_t			 	      mbsfn_area_id 					= (mbsfn_area_id_t)keyP;
-	mbsfn_areas_t	 	      		 *mbsfn_areas							= (mbsfn_areas_t*)*resultP;
-
-	/*** Get the MBSFN areas to be modified. */
-	mbsfn_area_context_t * mbsfn_area_context = (mbsfn_area_context_t*)mbsfn_area_context_ref;
-	/** Assert that the bitmap is not full. Capacity should have been checked before. */
-//	DevAssert(mbsfn_areas->mbsfn_csa_offsets != 0xFF);
-
-	/** MBMS service may have started before. And should prevail in the given MCCH modification period. */
-	if(mcch_repeat_rf_abs % mbsfn_area_context->privates.fields.mbsfn_area.mcch_modif_period_rf){
-		OAILOG_DEBUG(LOG_MCE_APP, "MBSFN Area " MBSFN_AREA_ID_FMT " MCCH modification period not reached yet for "
-				"MCCH repetition RF (%d).\n", mbsfn_area_id, mcch_repeat_rf_abs);
-		return false;
-	}
-	OAILOG_INFO(LOG_MCE_APP, "MBSFN Area " MBSFN_AREA_ID_FMT " MCCH modification period REACHED for "
-					"MCCH repetition RF (%d).\n", mbsfn_area_id, mcch_repeat_rf_abs);
-	// 8 CSA patterns per MBSFN area are allowed, currently just once considered!!
-	/**
-	 * To calculate the CSA[7], need too MBSFN areas and # of the current MBSFN area.
-	 */
-	long mcch_modif_period_abs[2] = {
-			mcch_repeat_rf_abs / mbsfn_area_context->privates.fields.mbsfn_area.mcch_modif_period_rf,
-			mcch_repeat_rf_abs / mbsfn_area_context->privates.fields.mbsfn_area.mcch_modif_period_rf
-	};
-
-	/**
-	 * MBSFN Areas overall object will be returned in the method below.
-	 */
-	if(!mce_app_check_mbsfn_cluster_resources(keyP, mbsfn_area_context_ref, mcch_modif_period_abs,
-			&mbsfn_areas)){
-		OAILOG_DEBUG(LOG_MCE_APP, "MBSFN Area " MBSFN_AREA_ID_FMT " MCCH modification period REACHED for "
-				"MCCH repetition RF (%d). No CSA modification detected. \n", mbsfn_area_id, mcch_repeat_rf_abs);
-		return false;
-	}
-
-// todo: check for changes in the cSA pattern of the MBSFN context here.
-//	/** Check for changes in the CSA pattern. */
-//	bool change = memcmp((void*)&mbsfn_area_context->privates.fields.mbsfn_area.csa_patterns, (void*)&new_csa_patterns, sizeof(struct csa_patterns_s)) != 0;
-//
-//	pthread_rwlock_trywrlock(&mce_app_desc.rw_lock);	// todo: lock mce_desc
-//	memcpy((void*)&mbsfn_area_context->privates.fields.mbsfn_area.csa_patterns, (void*)&new_csa_patterns, sizeof(struct csa_patterns_s));
-//	// todo: update other fields..
-//	pthread_rwlock_unlock(&mce_app_desc.rw_lock);
-
-	// todo: assume that MCCH modification timer increments even when no update occurs.
-	OAILOG_DEBUG(LOG_MCE_APP, "MBSFN Area " MBSFN_AREA_ID_FMT " MCCH modification period REACHED for "
-			"MCCH repetition RF (%d). CSA modification detected. Updating the scheduling. \n", mbsfn_area_id, mcch_repeat_rf_abs);
-	memcpy((void*)&mbsfn_areas->mbsfn_area_cfg[mbsfn_areas->num_mbsfn_areas++].mbsfnArea, (void*)&mbsfn_area_context->privates.fields.mbsfn_area, sizeof(mbsfn_area_t));
-	/**
-	 * MBSFN area is to be modified (MBMS service was added, removed or modified).
-	 * Iterate through the whole list.
-	 */
-	// todo: if the bitmap is full, we might return true..
-	return false;
 }
 
 /**
@@ -367,10 +325,24 @@ bool mce_app_get_active_mbms_services_per_mbsfn_area (const hash_key_t keyP,
 		 * Received an active MBMS service, whos start/stop intervals overlap with the given intervals.
 		 * Add it to the service of active MBMS.
 		 */
-		mbms_service_indexes->mbms_service_index_array[mbms_service_indexes->num_mbms_service++] = mbms_service_idx;
+		mbms_service_indexes->mbms_service_index_array[mbms_service_indexes->num_mbms_service_indexes++] = mbms_service_idx;
 	}
 	/** Iterate through the whole list. */
 	return false;
+}
+
+//------------------------------------------------------------------------------
+bool mce_app_get_mbsfn_groups (const hash_key_t keyP,
+               void * const mbsfn_context_Ref,
+               void __attribute__((unused)) * parameterP,
+               void **resultP)
+{
+	mbsfn_area_id_t			 	       mbsfn_area_id										= (mbsfn_area_id_t)keyP;
+	mbsfn_area_context_t				*mbsfn_area_context 							= (mbsfn_area_context_t*)mbsfn_context_Ref;
+	mbsfn_area_ids_t					  *mbsfn_area_ids_p									= (mbsfn_area_ids_t*)*resultP;
+
+	/** Without checking the local-global flag, set the MBSFN area into the correct group. */
+	mbsfn_area_ids_p[mbsfn_area_context->privates.fields.local_mbms_area].mbsfn_area_id[mbsfn_area_ids_p->num_mbsfn_area_ids++] = mbsfn_area_context->privates.fields.mbsfn_area.mbsfn_area_id;
 }
 
 //------------------------------------------------------------------------------
@@ -471,7 +443,7 @@ int mce_app_get_local_mbsfn_areas(const mbms_service_area_t *mbms_service_areas,
 	  	 * In both cases, we should have unique MBSFN areas for the MBMS service areas.
 	  	 */
 			mme_config_unlock(&mme_config);
-			mce_update_mbsfn_area(mbsfn_areas, mbsfn_area_id, mbms_service_areas->serviceArea[num_mbms_area], m2_enb_id, assoc_id);
+			mce_update_mbsfn_area(mbsfn_areas, local_mbms_service_area, mbsfn_area_id, mbms_service_areas->serviceArea[num_mbms_area], m2_enb_id, assoc_id);
 	  } else {
 	  	OAILOG_ERROR(LOG_MCE_APP, "MBMS Service Area ID " MBMS_SERVICE_AREA_ID_FMT " is not a valid local MBMS service area. Skipping. \n", mbms_service_areas->serviceArea[num_mbms_area]);
 	  }
@@ -534,7 +506,7 @@ void mce_app_get_global_mbsfn_areas(const mbms_service_area_t *mbms_service_area
 				 * Check if there exists an MBSFN group for that.
 				 */
   		  mme_config_unlock(&mme_config);
-  			mce_update_mbsfn_area(mbsfn_areas, mbsfn_area_id, mbms_service_areas->serviceArea[num_mbms_area], m2_enb_id, assoc_id);
+  			mce_update_mbsfn_area(mbsfn_areas, local_mbms_service_area, mbsfn_area_id, mbms_service_areas->serviceArea[num_mbms_area], m2_enb_id, assoc_id);
   		  continue;
 			}
 		}
@@ -548,7 +520,7 @@ void mce_app_get_global_mbsfn_areas(const mbms_service_area_t *mbms_service_area
 		 * Found a new local specific valid global MBMS group.
 		 * Check if there exists an MBSFN group for that.
 		 */
-		mce_update_mbsfn_area(mbsfn_areas, mbsfn_area_id, mbms_service_areas->serviceArea[num_mbms_area], m2_enb_id, assoc_id);
+		mce_update_mbsfn_area(mbsfn_areas, 0, mbsfn_area_id, mbms_service_areas->serviceArea[num_mbms_area], m2_enb_id, assoc_id);
 		mme_config_unlock(&mme_config);
 	}
 	/** Done checking all global MBMS service areas. */
@@ -578,6 +550,25 @@ bool mce_mbsfn_area_compare_by_mbms_sai (__attribute__((unused)) const hash_key_
   mbsfn_area_ids_t								* mbsfn_area_ids_p		= (mbsfn_area_ids_t*)*resultP;
   /** Set the matched MBSFN area into the list. */
   if ( *mbms_sai_p == mbsfn_area_context->privates.fields.mbsfn_area.mbms_service_area_id) {
+  	/** Set the MBSFN area id. */
+    mbsfn_area_ids_p->mbsfn_area_id[mbsfn_area_ids_p->num_mbsfn_area_ids] = mbsfn_area_context->privates.fields.mbsfn_area.mbsfn_area_id;
+    mbsfn_area_ids_p->mbms_service_area_id[mbsfn_area_ids_p->num_mbsfn_area_ids] = mbsfn_area_context->privates.fields.mbsfn_area.mbms_service_area_id;
+    mbsfn_area_ids_p->num_mbsfn_area_ids++;
+  }
+  return false;
+}
+
+//------------------------------------------------------------------------------
+static
+bool mce_mbsfn_area_compare_by_local_mbms_area (__attribute__((unused)) const hash_key_t keyP,
+                                    void * const elementP,
+                                    void * parameterP, void **resultP)
+{
+  uint8_t 												* local_mbms_area  		= ((uint8_t*)*parameterP);
+  mbsfn_area_context_t            * mbsfn_area_context  = (mbsfn_area_context_t*)elementP;
+  mbsfn_area_ids_t								* mbsfn_area_ids_p		= (mbsfn_area_ids_t*)*resultP;
+  /** Set the matched MBSFN area into the list. */
+  if (*local_mbms_area == mbsfn_area_context->privates.fields.local_mbms_area) {
   	/** Set the MBSFN area id. */
     mbsfn_area_ids_p->mbsfn_area_id[mbsfn_area_ids_p->num_mbsfn_area_ids] = mbsfn_area_context->privates.fields.mbsfn_area.mbsfn_area_id;
     mbsfn_area_ids_p->mbms_service_area_id[mbsfn_area_ids_p->num_mbsfn_area_ids] = mbsfn_area_context->privates.fields.mbsfn_area.mbms_service_area_id;
@@ -625,7 +616,7 @@ static
 bool mce_app_update_mbsfn_area(const mbsfn_area_id_t mbsfn_area_id, const mbms_service_area_id_t mbms_service_area_id, const uint32_t m2_enb_id, const sctp_assoc_id_t assoc_id) {
 	OAILOG_FUNC_IN(LOG_MCE_APP);
 	mbsfn_area_context_t 									* mbsfn_area_context = NULL;
-	if(!pthread_rwlock_trywrlock(&mce_app_desc.rw_lock)) {
+	if(pthread_rwlock_trywrlock(&mce_app_desc.rw_lock)) {
 		mbsfn_area_context = mce_mbsfn_area_exists_mbsfn_area_id(&mce_app_desc.mce_mbsfn_area_contexts, mbsfn_area_id);
 		if(mbsfn_area_context) {
 			/** Found an MBSFN area, check if the eNB is registered. */
@@ -709,28 +700,143 @@ void clear_mbsfn_area(mbsfn_area_context_t * const mbsfn_area_context) {
 }
 
 //------------------------------------------------------------------------------
+static
+int get_mbsfn_mcch_sf(const uint8_t local_mbms_area, const const mbms_service_area_id_t mbms_sai_global)
+{
+	OAILOG_FUNC_IN(LOG_MCE_APP);
+
+	uint8_t 					mbsfn_mcch_sf 						= 0;
+	mbsfn_area_ids_t 	mbsfn_area_ids_local 			= {0};
+	mbsfn_area_ids_t 	mbsfn_area_ids_nl_global 	= {0};
+
+	mme_config_read_lock(&mme_config);
+	uint8_t local_global_mbms_areas = mme_config.mbms.mbms_global_mbsfn_area_per_local_group;
+	uint8_t					  mcch_sf_total = get_enb_mbsfn_subframes(get_enb_type(mme_config.mbms.mbms_m2_enb_band), mme_config.mbms.mbms_m2_enb_tdd_ul_dl_sf_conf);
+	uint8_t					  mcch_sf_total_size = get_enb_subframe_size(get_enb_type(mme_config.mbms.mbms_m2_enb_band), mme_config.mbms.mbms_m2_enb_tdd_ul_dl_sf_conf);
+	uint8_t 					global_mbms_areas_cfg = mme_config.mbms.mbms_global_service_area_types;
+	mme_config_unlock(&mme_config);
+
+	mce_mbsfn_areas_exists_local_mbms_area(0, &mbsfn_area_ids_nl_global);
+	mce_mbsfn_areas_exists_local_mbms_area(local_mbms_area, &mbsfn_area_ids_local);
+
+	if(local_global_mbms_areas){
+		/**
+		 * All MBMS areas are are independent from each other.
+		 * Assign the MCCH subframe incrementally, depending on the local MBMS area.
+		 * Get all MBSFN areas already configured for the local MBMS area.
+		 * Take the next available subframe.
+		 *
+		 * Iterate over the MBSFN areas and check if any free subframes for the MCCH remain. Take it.
+		 */
+		if(mcch_sf_total_size == mbsfn_area_ids_local.num_mbsfn_area_ids){
+			OAILOG_ERROR(LOG_MCE_APP, "Already (%d) local MBSFN areas are configured. All available CSA Common subframes allocated. "
+					"Cannot add new MBSFN Area " MBSFN_AREA_ID_FMT " in local MBMS area (%d).\n",
+					mcch_sf_total, mbsfn_area_id, local_mbms_area);
+		}
+		uint8_t mcch_sf_available = mcch_sf_total;
+		for(int num_mbsfn_area = 0; num_mbsfn_area < mbsfn_area_ids_local.num_mbsfn_area_ids; num_mbsfn_area++) {
+			mbsfn_area_context_t * mbsfn_area_context = mce_mbsfn_area_exists_mbsfn_area_id(&mce_app_desc.mce_mbsfn_area_contexts, mbsfn_area_ids.mbsfn_area_id[num_mbsfn_area]);
+			DevAssert(mbsfn_area_context);
+			mcch_sf_available ^= mbsfn_area_context->privates.fields.mbsfn_area.mbms_mcch_csa_pattern_1rf;
+		}
+		/** Iterate through the available subframes. */
+		uint8_t csa_sf = 0;
+		while (mcch_sf_available){
+			if(!(mcch_sf_available & 0x20)) {
+				csa_sf++;
+				mcch_sf_available <<=csa_sf;
+				continue;
+			}
+			/** Found a free one! Can directly assign to the MBSFN area. */
+			mbsfn_area_id = (0x20 >> csa_sf);
+			break;
+		}
+	}
+	else {
+		/**
+		 * Global MBSFN areas should also be valid in local MBMS areas, this limits the number of MBSFN areas possible.
+		 * Global MBSFN areas should also have the same MCCH subframe configuration in the MBSFN synchronization area.
+		 * Thus, they need to be reserved.
+		 */
+		if(mcch_sf_total_size <= global_mbms_areas_cfg){
+			if(local_mbms_area){
+				OAILOG_ERROR(LOG_MCE_APP, "Total available subframes for M2-TDD-ENB with given DL/UL cfg is (%x). Allocating all to global MBMS areas. No local MBMS area is allowed. "
+						"Cannot add new MBSFN Area " MBSFN_AREA_ID_FMT " in local MBMS area (%d).\n",
+						mcch_sf_total, mbsfn_area_id, local_mbms_area);
+				OAILOG_FUNC_RETURN(LOG_MCE_APP, 0x00);
+			}
+		}
+		/**
+		 * Iterate through the available subframes.
+		 * Check the already allocated local MBSFN ares.
+		 */
+		uint8_t mcch_sf_available = mcch_sf_total;
+		for(int num_mbsfn_area = 0; num_mbsfn_area < mbsfn_area_ids_local.num_mbsfn_area_ids; num_mbsfn_area++) {
+			mbsfn_area_context_t * mbsfn_area_context = mce_mbsfn_area_exists_mbsfn_area_id(&mce_app_desc.mce_mbsfn_area_contexts, mbsfn_area_ids.mbsfn_area_id[num_mbsfn_area]);
+			DevAssert(mbsfn_area_context);
+			mcch_sf_available ^= mbsfn_area_context->privates.fields.mbsfn_area.mbms_mcch_csa_pattern_1rf;
+		}
+		/** Check with the reserved MCCH MBSFN subframes. */
+		uint8_t csa_sf = 0, csa_sf_matched = 0;
+		while (mcch_sf_available) {
+			if(!(mcch_sf_available & 0x20)) {
+				csa_sf++;
+				mcch_sf_available <<=csa_sf;
+				continue;
+			}
+			/** Found a free one! Can directly assign to the MBSFN area. */
+			csa_sf_matched++;
+			if(!local_mbms_area){
+				if(csa_sf_matched == mbms_sai_global){
+					mbsfn_mcch_sf = (0x20 >> csa_sf);
+					break;
+				}else
+					continue; /**< Continue, till the reserved one is found. */
+			} else {
+				/** Check the the match count is higher than the reserved sf. */
+				if(csa_sf_matched > global_mbms_areas_cfg){
+					mbsfn_mcch_sf = (0x20 >> csa_sf);
+					break;
+				}else
+					continue; /**< Continue, till the free one is found. */
+			}
+		}
+	}
+	OAILOG_FUNC_RETURN(LOG_MCE_APP, mbsfn_mcch_sf);
+}
+
+//------------------------------------------------------------------------------
 // Allocation/reservation of mbsfn_area_context->privates.fields.mbsfn_area.mbms_mcch_subframes
 static
-bool mce_app_create_mbsfn_area(const mbsfn_area_id_t mbsfn_area_id, const mbms_service_area_id_t mbms_service_area_id, const uint32_t m2_enb_id, const sctp_assoc_id_t assoc_id) {
+int mce_app_create_mbsfn_area(const mbsfn_area_id_t mbsfn_area_id, const uint8_t local_mbms_area, const mbms_service_area_id_t mbms_service_area_id, const uint32_t m2_enb_id, const sctp_assoc_id_t assoc_id) {
 	OAILOG_FUNC_IN(LOG_MCE_APP);
 
 	mbsfn_area_context_t 									* mbsfn_area_context = NULL;
 	// todo: check the lock mechanism
-	if(!pthread_rwlock_trywrlock(&mce_app_desc.rw_lock)) {
+	if(pthread_rwlock_trywrlock(&mce_app_desc.rw_lock)) {
 		/** Try to get a free MBMS Service context. */
 		mbsfn_area_context = STAILQ_FIRST(&mce_app_desc.mce_mbsfn_area_contexts_list);
 		DevAssert(mbsfn_area_context); /**< todo: with locks, it should be guaranteed, that this should exist. */
 		if(mbsfn_area_context->privates.fields.mbsfn_area.mbsfn_area_id != INVALID_MBSFN_AREA_ID){
 			OAILOG_ERROR(LOG_MCE_APP, "No free MBSFN area left. Cannot allocate a new one.\n");
 			pthread_rwlock_unlock(&mce_app_desc.rw_lock);
-			OAILOG_FUNC_RETURN (LOG_MCE_APP, false);
+			OAILOG_FUNC_RETURN (LOG_MCE_APP, RETURNerror);
 		}
+		/** Check if a free MCCH subframe can be allocated, given the MCE and eNB configuration. */
+		uint8_t mcch_mbsfn_sf = get_mbsfn_mcch_sf(local_mbms_area, mbsfn_area_id);
+		if(!mcch_mbsfn_sf){
+			OAILOG_ERROR(LOG_MCE_APP, "For local MBMS area (%d) and newly received MBSFN area id " MBSFN_AREA_ID_FMT " no MCCH subframes could be scheduled.\n",
+					local_mbms_area, mbsfn_area_id);
+			pthread_rwlock_unlock(&mce_app_desc.rw_lock);
+			OAILOG_FUNC_RETURN(LOG_MCE_APP, RETURNerror);
+		}
+		OAILOG_INFO(LOG_MCE_APP, "For local MBMS area (%d) and newly received MBSFN area id " MBSFN_AREA_ID_FMT " could allocate MCCH subframe (%x).",
+				local_mbms_area, mbsfn_area_id, mcch_mbsfn_sf);
 		/** Found a free MBSFN Area: Remove it from the head, add the MBSFN area id and set it to the end. */
 		STAILQ_REMOVE_HEAD(&mce_app_desc.mce_mbsfn_area_contexts_list, entries); /**< free_mbsfn is removed. */
 		/** Remove the EMS-EBR context of the bearer-context. */
 		OAILOG_INFO(LOG_MCE_APP, "Clearing received current MBSFN area %p.\n", mbsfn_area_context);
 		clear_mbsfn_area(mbsfn_area_context); /**< Stop all timers and clear all fields. */
-
 		mme_config_read_lock(&mme_config);
 		/**
 		 * Initialize the M2 eNB Id bitmap.
@@ -759,13 +865,25 @@ bool mce_app_create_mbsfn_area(const mbsfn_area_id_t mbsfn_area_id, const mbms_s
 		mbsfn_area_context->privates.fields.mbsfn_area.mbms_mcch_msi_mcs 					= mme_config.mbms.mbms_mcch_msi_mcs;
 		mbsfn_area_context->privates.fields.mbsfn_area.mch_mcs_enb_factor			 	  = mme_config.mbms.mch_mcs_enb_factor;
 		mbsfn_area_context->privates.fields.mbsfn_area.mbms_sf_slots_half					= mme_config.mbms.mbms_subframe_slot_half;
+		mbsfn_area_context->privates.fields.mbsfn_area.mcch_offset_rf			 				= COMMON_CSA_PATTERN; /**< The 8. RF is the one with the CSA. */
+		mbsfn_area_context->privates.fields.mbsfn_area.mbms_mcch_csa_pattern_1rf |= mcch_mbsfn_sf;
+		/**
+		 * Intelligently, amongst your MBSFN areas set the MCCH subframes.
+		 * If the MBSFN area is a non-local global and your local-global flag is set to false: The nl-global
+		 * MBSFN areas can exist outside loca MBMS areas and inside multiple different local MBMS areas.
+		 * In each area and outside, the exact same number of nl-global MBSFN areas must exist.
+		 * They need to have the same CSA pattern for data and the same MCCH subframes!
+		 * Thus, they cannot be set incrementedly. Assigned reserved subframes.
+		 *
+		 * For FDD/TDD, this limits the number of MBSFN areas you can have!
+		 * Worst case: 2 MBSFN areas (local+global) in case of TDD: Even if no local MBSFN areas are established yet, if you have 2 nl-global MBSFN areas,
+		 * you cannot allow any more local MBSFN areas.
+		 */
+		//		if(get_enb_type(mbsfn_area_context->privates.fields.mbsfn_area.m2_enb_band) == ENB_TYPE_NULL){
+		//		} else if(get_enb_type(mbsfn_area_context->privates.fields.mbsfn_area.m2_enb_band) == ENB_TYPE_TDD) {
+		//			mbsfn_area_context->privates.fields.mbsfn_area.mbms_mcch_subframes				= 0b000001;
+		//		}
 
-		// todo: a function which checks multiple MBSFN areas for MCCH offset
-		// todo: MCCH offset is calculated in the MCH resources?
-		mbsfn_area_context->privates.fields.mbsfn_area.mcch_offset_rf			 				= 0;
-		/** Indicate the MCCH subframes. */
-		// todo: a function, depending on the number of total MBSFN areas, repetition/modification periods..
-		// todo: calculate at least for 1 MCH of 1 MCCH the MCCH allocation, eNB can allocate dynamically for the correct subframe?
 		mbsfn_area_context->privates.fields.mbsfn_area.m2_enb_band = mme_config.mbms.mbms_m2_enb_band;
 		mbsfn_area_context->privates.fields.mbsfn_area.m2_enb_bw	 = mme_config.mbms.mbms_m2_enb_bw;
 		/** Set the M2 eNB Id. Nothing else needs to be done for the MCS part. */
@@ -776,16 +894,17 @@ bool mce_app_create_mbsfn_area(const mbsfn_area_id_t mbsfn_area_id, const mbms_s
 		DevAssert (mce_insert_mbsfn_area_context(&mce_app_desc.mce_mbsfn_area_contexts, mbsfn_area_context) == 0);
 		pthread_rwlock_unlock(&mce_app_desc.rw_lock);
 		mme_config_unlock(&mme_config);
-		OAILOG_FUNC_RETURN (LOG_MME_APP, true);
+		OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
 	}
-	OAILOG_FUNC_RETURN (LOG_MME_APP, false);
+	OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
 }
 
 //------------------------------------------------------------------------------
 static
-void mce_update_mbsfn_area(struct mbsfn_areas_s * const mbsfn_areas, const mbsfn_area_id_t mbsfn_area_id, const mbms_service_area_id_t mbms_service_area_id, uint32_t m2_enb_id, const sctp_assoc_id_t assoc_id) {
+void mce_update_mbsfn_area(struct mbsfn_areas_s * const mbsfn_areas, uint8_t local_mbms_area, const mbsfn_area_id_t mbsfn_area_id, const mbms_service_area_id_t mbms_service_area_id, uint32_t m2_enb_id, const sctp_assoc_id_t assoc_id) {
 	OAILOG_FUNC_IN(LOG_MCE_APP);
 	mbsfn_area_context_t * mbsfn_area_context = NULL;
+
 	/**
 	 * Updated the response (MBSFN areas). Check if the MBSFN areas are existing or not.
 	 */
@@ -800,18 +919,9 @@ void mce_update_mbsfn_area(struct mbsfn_areas_s * const mbsfn_areas, const mbsfn
 				mbsfn_area_id, mbms_service_area_id, m2_enb_id, assoc_id);
 		OAILOG_FUNC_OUT(LOG_MCE_APP);
 	} else {
-		/** Could not update. Check if it needs to be created. */
-		if(mce_app_create_mbsfn_area(mbsfn_area_id, mbms_service_area_id, m2_enb_id, assoc_id)){
+		if(mce_app_create_mbsfn_area(mbsfn_area_id, local_mbms_area, mbms_service_area_id, m2_enb_id, assoc_id)){
 			mbsfn_area_context = mce_mbsfn_area_exists_mbsfn_area_id(&mce_app_desc.mce_mbsfn_area_contexts, mbsfn_area_id);
 			memcpy((void*)&mbsfn_areas->mbsfn_area_cfg[mbsfn_areas->num_mbsfn_areas++].mbsfnArea, (void*)&mbsfn_area_context->privates.fields.mbsfn_area, sizeof(mbsfn_area_t));
-			/**
-			 * Intelligently, amongst your MBSFN areas set the MCCH subframes.
-			 */
-			//		if(get_enb_type(mbsfn_area_context->privates.fields.mbsfn_area.m2_enb_band) == ENB_TYPE_NULL){
-						mbsfn_area_context->privates.fields.mbsfn_area.mbms_mcch_subframes				= 0b10001; // todo: just temporary..
-			//		} else if(get_enb_type(mbsfn_area_context->privates.fields.mbsfn_area.m2_enb_band) == ENB_TYPE_TDD) {
-			//			mbsfn_area_context->privates.fields.mbsfn_area.mbms_mcch_subframes				= 0b000001;
-			//		}
 			OAILOG_INFO(LOG_MCE_APP, "Created new MBSFN Area " MBSFN_AREA_ID_FMT " for MBMS_SAI " MBMS_SERVICE_AREA_ID_FMT " with eNB information (m2_enb_id=%d, sctp_assoc=%d).\n",
 					mbsfn_area_id, mbms_service_area_id, m2_enb_id, assoc_id);
 			OAILOG_FUNC_OUT(LOG_MCE_APP);

@@ -44,12 +44,12 @@ typedef struct mce_app_desc_s {
   mce_mbms_services_t		 			mce_mbms_service_contexts;
   mce_mbsfn_area_contexts_t		mce_mbsfn_area_contexts;
 
-  long statistic_timer_id;
-  uint32_t statistic_timer_period;
+  long 			statistic_timer_id;
+  uint32_t 	statistic_timer_period;
 
   /** Create an array of MBMS service pools. */
   mbms_service_t 					mbms_services[CHANGEABLE_VALUE];
-  STAILQ_HEAD(mbms_services_list_s, mbms_service_s)  mce_mbms_services_list;
+  STAILQ_HEAD(mbms_services_list_s, mbms_service_s)  	 	 mce_mbms_services_list;
 
   /** Create an array of MBSFN areas. */
   mbsfn_area_context_t 		mbsfn_services[CHANGEABLE_VALUE];
@@ -96,7 +96,7 @@ void mce_app_handle_mbms_session_stop_request( itti_sm_mbms_session_stop_request
 void mce_app_handle_m3ap_enb_setup_request(itti_m3ap_enb_setup_req_t * const m3ap_enb_setup_req_p);
 
 //------------------------------------------------------------------------------
-void mce_app_handle_mbsfn_mcch_repetition_timeout_timer_expiry ();
+void mce_app_handle_mbsfn_mcch_repetition_timeout_timer_expiry (hash_table_ts_t * const mcch_mbsfn_cfg_htbl);
 void mce_app_handle_mbms_session_duration_timer_expiry (const struct tmgi_s *tmgi, const mbms_service_area_id_t mbms_service_area_id);
 
 #define mce_stats_read_lock(mCEsTATS)  pthread_rwlock_rdlock(&(mCEsTATS)->rw_lock)

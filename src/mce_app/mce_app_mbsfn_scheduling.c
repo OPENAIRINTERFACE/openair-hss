@@ -110,12 +110,6 @@ int mce_app_get_mch_mcs(mbsfn_area_context_t * const mbsfn_area_context, const q
 
 //------------------------------------------------------------------------------
 static
-int mce_app_calculate_csa_common_pattern(	const mbsfn_area_ids_t							* nlglobal_mbsfn_area_ids,
-	const mbsfn_area_ids_t							* local_mbsfn_area_ids,
-	struct csa_pattern_s 								* const common_csa_pattern);
-
-//------------------------------------------------------------------------------
-static
 void mce_app_reuse_csa_pattern(struct csa_patterns_s * csa_patterns_mbsfn_p, mchs_t * mchs, const struct csa_patterns_s * const csa_patterns_alloced, const struct mbsfn_area_context_s * const mbsfn_area_ctx);
 
 //------------------------------------------------------------------------------
@@ -132,9 +126,10 @@ int mce_app_calculate_mbsfn_csa_patterns(struct csa_patterns_s * const csa_patte
 
 //------------------------------------------------------------------------------
 static
-void mce_app_log_method_single_rf_csa_pattern(struct csa_patterns_s * new_csa_patterns, int num_radio_frames,
-		struct mchs_s * mchs,
-		struct csa_patterns_s * csa_patterns_allocated);
+int mce_app_log_method_single_rf_csa_pattern(struct csa_patterns_s * new_csa_patterns,
+		int *num_radio_frames_p,
+		struct mchs_s * mchs, const struct mbsfn_area_context_s * const mbsfn_area_context,
+		uint8_t total_offset_allocated);
 
 //------------------------------------------------------------------------------
 static
@@ -143,11 +138,11 @@ void mce_app_calculate_mbsfn_mchs(const struct mbsfn_area_context_s * const mbsf
 		mchs_t *const mchs);
 
 //------------------------------------------------------------------------------
-static void mce_app_allocate_4frame(struct csa_patterns_s * new_csa_patterns, int num_radio_frames, struct mchs_s * mchs, struct csa_patterns_s * csa_patterns_allocated);
+static void mce_app_allocate_4frame(struct csa_patterns_s * new_csa_patterns, int * num_radio_frames_p, struct mchs_s * mchs, const struct mbsfn_area_context_s * const mbsfn_area_context, struct csa_patterns_s * csa_patterns_allocated);
 
 //------------------------------------------------------------------------------
 static
-void mce_app_set_fresh_radio_frames(struct csa_pattern_s * csa_pattern, struct mchs_s * mchs, const uint8_t csa_sf_available, const uint8_t csa_sf_total_size);
+void mce_app_set_fresh_radio_frames(struct csa_pattern_s * csa_pattern, struct mchs_s * mchs, const uint8_t csa_sf_available);
 
 //------------------------------------------------------------------------------
 static
@@ -155,93 +150,12 @@ void mce_app_reuse_csa_pattern_set_subframes(struct csa_pattern_s * csa_pattern_
 		const struct mbsfn_area_context_s * const mbsfn_area_ctx);
 
 //------------------------------------------------------------------------------
-bool mce_app_check_mbsfn_mcch_modif (const hash_key_t keyP,
-               void * const mbsfn_area_context_ref,
-               void * parameterP,
-               void **resultP)
-{
-	long 											  mcch_repeat_rf_abs  		= *((long*)parameterP);
-	mbsfn_area_id_t			 	      mbsfn_area_id 					= (mbsfn_area_id_t)keyP;
-	mbsfn_areas_t	 	      		 *mbsfn_areas							= (mbsfn_areas_t*)*resultP;
-
-	/*** Get the MBSFN areas to be modified. */
-	mbsfn_area_context_t * mbsfn_area_context = (mbsfn_area_context_t*)mbsfn_area_context_ref;
-	/** Assert that the bitmap is not full. Capacity should have been checked before. */
-//	DevAssert(mbsfn_areas->mbsfn_csa_offsets != 0xFF);
-
-	/** MBMS service may have started before. And should prevail in the given MCCH modification period. */
-	if(mcch_repeat_rf_abs % mbsfn_area_context->privates.fields.mbsfn_area.mcch_modif_period_rf){
-		OAILOG_DEBUG(LOG_MCE_APP, "MBSFN Area " MBSFN_AREA_ID_FMT " MCCH modification period not reached yet for "
-				"MCCH repetition RF (%d).\n", mbsfn_area_id, mcch_repeat_rf_abs);
-		return false;
-	}
-	OAILOG_INFO(LOG_MCE_APP, "MBSFN Area " MBSFN_AREA_ID_FMT " MCCH modification period REACHED for "
-					"MCCH repetition RF (%d).\n", mbsfn_area_id, mcch_repeat_rf_abs);
-	// 8 CSA patterns per MBSFN area are allowed, currently just once considered!!
-	/**
-	 * To calculate the CSA[COMMON_CSA_PATTERN], need too MBSFN areas and # of the current MBSFN area.
-	 */
-	long mcch_modif_period_abs[2] = {
-			mcch_repeat_rf_abs / mbsfn_area_context->privates.fields.mbsfn_area.mcch_modif_period_rf,
-			mcch_repeat_rf_abs / mbsfn_area_context->privates.fields.mbsfn_area.mcch_modif_period_rf
-	};
-
-	/**
-	 * MBSFN Areas overall object will be returned in the method below.
-	 */
-	if(!mce_app_check_mbsfn_cluster_resources(keyP, mbsfn_area_context_ref, mcch_modif_period_abs,
-			&mbsfn_areas)){
-		OAILOG_DEBUG(LOG_MCE_APP, "MBSFN Area " MBSFN_AREA_ID_FMT " MCCH modification period REACHED for "
-				"MCCH repetition RF (%d). No CSA modification detected. \n", mbsfn_area_id, mcch_repeat_rf_abs);
-		return false;
-	}
-
-// todo: check for changes in the cSA pattern of the MBSFN context here.
-//	/** Check for changes in the CSA pattern. */
-//	bool change = memcmp((void*)&mbsfn_area_context->privates.fields.mbsfn_area.csa_patterns, (void*)&new_csa_patterns, sizeof(struct csa_patterns_s)) != 0;
-//
-//	pthread_rwlock_trywrlock(&mce_app_desc.rw_lock);	// todo: lock mce_desc
-//	memcpy((void*)&mbsfn_area_context->privates.fields.mbsfn_area.csa_patterns, (void*)&new_csa_patterns, sizeof(struct csa_patterns_s));
-//	// todo: update other fields..
-//	pthread_rwlock_unlock(&mce_app_desc.rw_lock);
-
-	// todo: assume that MCCH modification timer increments even when no update occurs.
-	OAILOG_DEBUG(LOG_MCE_APP, "MBSFN Area " MBSFN_AREA_ID_FMT " MCCH modification period REACHED for "
-			"MCCH repetition RF (%d). CSA modification detected. Updating the scheduling. \n", mbsfn_area_id, mcch_repeat_rf_abs);
-	memcpy((void*)&mbsfn_areas->mbsfn_area_cfg[mbsfn_areas->num_mbsfn_areas++].mbsfnArea, (void*)&mbsfn_area_context->privates.fields.mbsfn_area, sizeof(mbsfn_area_t));
-	/**
-	 * MBSFN area is to be modified (MBMS service was added, removed or modified).
-	 * Iterate through the whole list.
-	 */
-	// todo: if the bitmap is full, we might return true..
-	return false;
-}
-
-//------------------------------------------------------------------------------
-bool mce_app_get_active_mbms_services_per_mbsfn_area (const hash_key_t keyP,
-               void * const mcch_modif_periods_Ref,
-               void * parameterP,
-               void **resultP)
-{
-	mbms_service_index_t 	       mbms_service_idx 		 						= (mbms_service_index_t)keyP;
-	mcch_modification_periods_t *mcch_modification_periods_in 		= (mcch_modification_periods_t*)parameterP;
-	mcch_modification_periods_t *mcch_modification_periods_mbsfn	= (mcch_modification_periods_t*)mcch_modif_periods_Ref;
-	mbms_service_indexes_t   		*mbms_service_indexes							= (mbms_service_indexes_t*)*resultP;
-	/**
-	 * Check active services, for start and end MCCH modification periods.
-	 * MBMS service may have started before. And should prevail in the given MCCH modification period.
-	 */
-	if(mcch_modification_periods_mbsfn->mcch_modif_start_abs_period <= mcch_modification_periods_in->mcch_modif_stop_abs_period
-			&& mcch_modification_periods_in->mcch_modif_start_abs_period <= mcch_modification_periods_mbsfn->mcch_modif_stop_abs_period){
-		/**
-		 * Received an active MBMS service, whos start/stop intervals overlap with the given intervals.
-		 * Add it to the service of active MBMS.
-		 */
-		mbms_service_indexes->mbms_service_index_array[mbms_service_indexes->num_mbms_service++] = mbms_service_idx;
-	}
-	/** Iterate through the whole list. */
-	return false;
-}
+static int
+mce_app_assign_mch_subframes(const struct csa_patterns_s * const csa_patterns_mbsfn,
+		const struct mchs_s 				 * mchs,
+		const mbsfn_area_context_t 	 * const mbsfn_area_context,
+		const mbsfn_area_cfg_t 			 * const mbsfn_area_cfg,
+		const mbms_service_indexes_t * const mbms_service_indexes_active_p);
 
 /**
  * Method that calculate the CSA pattern considering MBSFN clusters with NLG MBSFN areas & local MBSFN areas.
@@ -254,7 +168,6 @@ bool mce_app_get_active_mbms_services_per_mbsfn_area (const hash_key_t keyP,
  * can exist, no local MBMS areas.
  */
 //------------------------------------------------------------------------------
-static
 int mce_app_calculate_csa_common_pattern(	const mbsfn_area_ids_t							* nlglobal_mbsfn_area_ids,
 	const mbsfn_area_ids_t							* local_mbsfn_area_ids,
 	struct csa_pattern_s 								* const common_csa_pattern)
@@ -331,6 +244,115 @@ int mce_app_calculate_csa_common_pattern(	const mbsfn_area_ids_t							* nlgloba
 	OAILOG_FUNC_RETURN(LOG_MCE_APP, RETURNok);
 }
 
+//------------------------------------------------------------------------------
+int
+mce_app_schedule_mbsfn_resources(const mbsfn_area_ids_t			* mbsfn_area_ids,
+		const struct csa_pattern_s														  * csa_pattern_common,
+		const struct csa_patterns_s 														* csa_patterns_union_p,
+		const uint8_t 																					 	excluded_csa_pattern_offset,
+		long		 												 													mcch_rep_abs_rf,
+		/**< MBSFN areas to be set with MCH/CSA scheduling information (@MCCH modify timeout). */
+		struct mbsfn_areas_s							  										* const mbsfn_areas_to_schedule)
+{
+	OAILOG_FUNC_IN(LOG_MCE_APP);
+	mbsfn_area_context_t 						*mbsfn_area_context = NULL;
+	mcch_modification_periods_t		   mcch_modification_periods		= {0};
+
+	/**
+	 * Calculate the MCHs of the given non-local global MBMS services.
+	 * Take the first MBSFN area context, to get the phy layer properties, for all global MBMS services..
+	 */
+	if(!mbsfn_area_ids && !mbsfn_area_ids->num_mbsfn_area_ids){
+		OAILOG_WARNING(LOG_MCE_APP, "Cannot schedule MBSFN resources. No MBSFN Area Id list has been received.\n");
+		OAILOG_FUNC_RETURN(LOG_MCE_APP, RETURNok);
+	}
+
+	/**
+	 * Iterate over all MBSFN areas of the given group.
+	 * Calculate the resources for the MBSFN areas.
+	 */
+	for(int num_mbsfn_area = 0; num_mbsfn_area < mbsfn_area_ids->num_mbsfn_area_ids; num_mbsfn_area++)
+	{
+		struct csa_patterns_s 			csa_patterns_mbsfn 							= {0};
+		/** Continue with the last assigned MBSFN area configuration. */
+		mchs_t 										 *mchs_p 													= &mbsfn_areas_to_schedule->mbsfn_area_cfg[mbsfn_areas_to_schedule->num_mbsfn_areas].mchs;
+		mbms_service_indexes_t			mbms_service_indexes_active 		= {0},
+																mbms_service_indexes_active_p 	= &mbms_service_indexes_active;
+		/** Calculate the MCHs independently of the MBMS services. */
+		mbsfn_area_context = mce_mbms_service_exists_mbms_service_index(&mce_app_desc.mce_mbms_service_contexts, mbsfn_area_ids->mbsfn_area_id[num_mbsfn_area]);
+		DevAssert(mbsfn_area_context);
+		/**
+		 * Get the CSA pattern for each group.
+		 * If local-global flag is not set, consider the global MBSFN areas also in the local groups for the CSA pattern calculation.
+		 * Calculate the CSA pattern for the non-local global MBSFN areas (lg-flag independent).
+		 * Check if we have non-local global MBSFN areas to check, then make a list of active MBMS services, including the newest one, if its a nl-global.
+		 *
+		 * todo: do a cluster structure and put this element into the cluster!
+		 * todo: in the cluster, the global/local resources should ALL have the same MCCH modification period!
+		 */
+		mcch_modification_periods->mcch_modif_start_abs_period 				= mcch_rep_abs_rf / mbsfn_area_context->privates.fields.mbsfn_area.mcch_modif_period_rf;
+		mcch_modification_periods->mcch_modif_stop_abs_period 				= mcch_rep_abs_rf / mbsfn_area_context->privates.fields.mbsfn_area.mcch_modif_period_rf;
+		/** Get active MBMS services for the given MCCH modification period of the MBSFN area. */
+		hashtable_apply_callback_on_elements(mbsfn_area_context->privates.mbms_service_idx_mcch_modification_times_hashmap,
+				mce_app_get_active_mbms_services_per_mbsfn_area, (void*)mcch_modification_periods, (void**)&mbms_service_indexes_active_p);
+		if(!mbms_service_indexes_active_p->num_mbms_service_indexes){
+			OAILOG_WARNING(LOG_MCE_APP, "No MBMS services could be active in MCCH repetition/modification period (abs) (%d)/(%d) for MBSFN Area Id " MBSFN_AREA_ID_FMT" for local MBMS area (%d). "  +
+					"Assigning only MCCH subframes from COMMON_CSA into resulting CSA patterns. \n",
+					mcch_rep_abs_rf, mcch_modification_periods->mcch_modif_start_abs_period, mbsfn_area_context->privates.fields.mbsfn_area.mbsfn_area_id,
+					mbsfn_area_context->privates.fields.local_mbms_area);
+			continue;
+		}
+		/**
+		 * Calculate the MCHs for this MBSFN area from the given list of active MBMS services.
+		 * Filter from the list the MBMS services, which belong to the MBSFN area.
+		 */
+		mce_app_calculate_mbsfn_mchs(mbsfn_area_context, mbms_service_indexes_active_p, mchs_p);
+		if(!mchs_p->total_subframes_per_csa_period_necessary) {
+			OAILOG_ERROR(LOG_MCE_APP, "No MCH subframes calculated for MBSFN Area " MBSFN_AREA_ID_FMT " in local-mbms-area (%d). \n",
+					mbsfn_area_context->privates.fields.mbsfn_area.mbsfn_area_id, mbsfn_area_context->privates.fields.local_mbms_area);
+			DevAssert(0);
+		}
+
+		/**
+		 * Method below also sets the unused subframes in the COMMON_CSA pattern, depending on the MBSFNs of the first pattern.
+		 * The resulting values are taken as absolute, and it is not important if local-global flag is set or not.
+		 */
+		if(mce_app_calculate_mbsfn_csa_patterns(&csa_patterns_mbsfn, csa_patterns_union_p, excluded_csa_pattern_offset, csa_pattern_common, mchs_p, mbsfn_area_context) == RETURNerror)
+		{
+			OAILOG_ERROR(LOG_MCE_APP, "CSA patterns for MBSFN Area " MBSFN_AREA_ID_FMT " for local MBMS area (%d) could not be fitted into resources.\n",
+					mbsfn_area_context->privates.fields.mbsfn_area.mbsfn_area_id, mbsfn_area_context->privates.fields.local_mbms_area);
+			/** Could not fit the MBSFN area, we return false and let the upper method perform ARP preemption, if possible. */
+			OAILOG_FUNC_RETURN(LOG_MCE_APP, RETURNerror);
+		}
+
+		/**
+		 * Update the overall CSA pattern.
+		 * We don't have to explicitly insert the common-CSA pattern, it is included in the csa_patterns_mbsfn.
+		 */
+		mce_app_update_csa_pattern_union(csa_patterns_union_p, &csa_patterns_mbsfn);
+		/** Assign the MCH subframes, for MBSFN services, whose MCCH modification period has been reached. */
+		if(mcch_rep_abs_rf % mbsfn_area_context->privates.fields.mbsfn_area.mcch_modif_period_rf){
+			OAILOG_DEBUG(LOG_MCE_APP, "MBSFN Area " MBSFN_AREA_ID_FMT " in local MBMS area (%d) has not reached MCCH modification for MCCH repetition RF (%d).\n",
+					mbsfn_area_context->privates.fields.mbsfn_area.mbsfn_area_id, mbsfn_area_context->privates.fields.local_mbms_area, mcch_rep_abs_rf);
+				/** Consider the MBSFN area for resource check but no need to schedule any MCHs. */
+			continue;
+		}
+		/** Assign the MCH subframes. */
+		if(!mce_app_assign_mch_subframes(&csa_patterns_mbsfn, mchs_p, mbsfn_area_context, &mbsfn_areas_to_schedule->mbsfn_area_cfg[num_mbsfn_area],
+				mbms_service_indexes_active_p) == RETURNerror)
+		{
+			OAILOG_ERROR(LOG_MCE_APP, "Error while assigning resources in CSA patterns of MBSFN Area " MBSFN_AREA_ID_FMT " in local MBMS area (%d) to the MCHs.\n",
+					mbsfn_area_context->privates.fields.mbsfn_area.mbsfn_area_id, mbsfn_area_context->privates.fields.local_mbms_area);
+			/** Could not fit the MBSFN area, we return false and let the upper method perform ARP preemption, if possible. */
+			DevAssert(0);
+		}
+		mbsfn_areas_to_schedule->num_mbsfn_areas++;
+		OAILOG_INFO(LOG_MCE_APP, "Successfully scheduled the resources of the MBSFN area " MBSFN_AREA_ID_FMT" and local MBMS area (%d).\n",
+				mbsfn_area_context->privates.fields.mbsfn_area.mbsfn_area_id, mbsfn_area_context->privates.fields.local_mbms_area);
+	}
+	OAILOG_FUNC_RETURN(LOG_MCE_APP, RETURNok);
+}
+
 /**
  * We check the resulting MBSFN areas, where the capacity should be split among and calculate the resources needed.
  * Finally, we fill an CSA pattern offset bitmap.
@@ -351,18 +373,17 @@ int mce_app_calculate_csa_common_pattern(	const mbsfn_area_ids_t							* nlgloba
  * If we have multiple clusters, that share resources, global MBSFN areas have always the same CSA pattern, independent of the locals!
  */
 //------------------------------------------------------------------------------
-int mce_app_check_mbsfn_cluster_resources (const mbsfn_area_context_t * const mbsfn_area_context,
-		const mbsfn_area_ids_t							* nlglobal_mbsfn_area_ids,
+int mce_app_check_mbsfn_cluster_resources (const mbsfn_area_ids_t							* nlglobal_mbsfn_area_ids,
 		const mbsfn_area_ids_t							* local_mbsfn_area_ids, /**< Contains also local global. */
 		const mbms_service_indexes_t				* const mbms_service_indexes_active_nlg_p,
 		const mbms_service_indexes_t				* const mbms_service_indexes_active_local_p)
 {
 	OAILOG_FUNC_IN(LOG_MCE_APP);
 
-	struct csa_pattern_s									csa_pattern_common 			= {0};
-	struct csa_patterns_s 		  					csa_patterns_global			= {0};
-	struct csa_patterns_s 		  					csa_patterns_local			= {0};
-
+	struct csa_pattern_s												  csa_pattern_common 			= {0};
+	struct csa_patterns_s 		  	 								csa_patterns_global			= {0};
+	struct csa_patterns_s 		  	 								csa_patterns_local			= {0};
+	const mbsfn_area_context_t 									 *mbsfn_area_context      = NULL;
 	/**
 	 * We first create the pattern for all received local and nl-global mbms areas the first COMMON_CSA[7] subpattern.
 	 * Later, below, we first try to fill the nl-global, afterwards the local areas.
@@ -372,64 +393,15 @@ int mce_app_check_mbsfn_cluster_resources (const mbsfn_area_context_t * const mb
 	}
 
 	/**
-	 * Calculate the MCHs of the given non-local global MBMS services.
-	 * Take the first MBSFN area context, to get the phy layer properties, for all global MBMS services..
+	 * Calculate the resources in the non-local global MBMS areas.
 	 */
 	if(nlglobal_mbsfn_area_ids && nlglobal_mbsfn_area_ids->num_mbsfn_area_ids){
-		OAILOG_DEBUG(LOG_MCE_APP, "We have (%d) non-local global MBSFN areas. Assigning the resources in the CSA pattern first.\n",  nlglobal_mbsfn_area_ids->num_mbsfn_area_ids);
-		for(int num_nlglobal_mbsfn_area = 0; num_nlglobal_mbsfn_area < nlglobal_mbsfn_area_ids->num_mbsfn_area_ids; num_nlglobal_mbsfn_area++)
-		{
-			/** Calculate the MCHs independently of the non-local global MBMS services. */
-			mchs_t mchs = {0}; /**< All MCHs of the MBSFN are with possibly different qos. */
-			mbsfn_area_context = mce_mbms_service_exists_mbms_service_index(&mce_app_desc.mce_mbms_service_contexts, nlglobal_mbsfn_area_ids->mbsfn_area_id[num_nlglobal_mbsfn_area]);
-			DevAssert(mbsfn_area_context);
-			/**
-			 * Calculate the MCHs for this MBSFN area from the given list of active MBMS services.
-			 * Filter from the list the MBMS services, which belong to the MBSFN area.
-			 */
-			mce_app_calculate_mbsfn_mchs(mbsfn_area_context, mbms_service_indexes_active_nlg_p, &mchs);
-			if(!mchs.total_subframes_per_csa_period_necessary) {
-				/**
-				 * No subframes were calculated for the MBSFN area MCHs.
-				 * Only common csa pattern will be affected, but resources are reserved anyway.. continuing with other non-local global MBSFN areas.
-				 */
-				OAILOG_WARNING(LOG_MCE_APP, "No subframes calculated for non-local global MBSFN Area " MBSFN_AREA_ID_FMT ". "
-						"Assigning only MCCH subframes from COMMON_CSA into resulting non-local global CSA patterns. \n",
-						mbsfn_area_context->privates.fields.mbsfn_area.mbsfn_area_id);
-				continue;
-			}
-			/**
-			 * Allocate the MCHs in the global CSA patterns, taking into account the common CSA pattern.
-			 * Since we always calculate the non-local global CSA pattern first, the local CSA pattern is set to NULL and does not concern us at the moment.
-			 */
-			struct csa_patterns_s csa_patterns_mbsfn = {0};
-			/**
-			 * Method below also sets the unused subframes in the COMMON_CSA pattern, depending on the MBSFNs of the first pattern.
-			 * The resulting values are taken as absolute, and it is not important if local-global flag is set or not.
-			 */
-			if(mce_app_calculate_mbsfn_csa_patterns(csa_patterns_mbsfn, &csa_patterns_global, 0, &csa_pattern_common, &mchs, mbsfn_area_context) == RETURNerror) {
-				OAILOG_ERROR(LOG_MCE_APP, "CSA patterns for non-local global MBSFN Area " MBSFN_AREA_ID_FMT " could not be fitted into resources.\n",
-						mbsfn_area_context->privates.fields.mbsfn_area.mbsfn_area_id);
-				/** Could not fit the MBSFN area, we return false and let the upper method perform ARP preemption, if possible. */
-				OAILOG_FUNC_RETURN(LOG_MCE_APP, RETURNerror);
-			}
-			OAILOG_INFO(LOG_MCE_APP, "Successfully checked resources of non-local global MBSFN Area " MBSFN_AREA_ID_FMT " and calculated CSA pattern. "
-					"Updating the non-local global CSA pattern union. \n", mbsfn_area_context->privates.fields.mbsfn_area.mbsfn_area_id);
-			/**
-			 * Update the overall CSA pattern.
-			 * We don't have to explicitly insert the common-csa pattern, it is included in the csa_patterns_mbsfn. */
-			mce_app_update_csa_pattern_union(&csa_patterns_global, &csa_patterns_mbsfn);
-			/** Updated the union of CSA patterns, continue with checking the remaining non-local global MBSFN area MBMS services. */
+		if(mce_app_schedule_mbsfn_resources(nlglobal_mbsfn_area_ids, mbms_service_indexes_active_nlg_p
+				&csa_patterns_global, 0, NULL) == RETURNerror){
+			OAILOG_ERROR(LOG_MCE_APP,"Could not schedule the given (%d) non-local global MBSFN areas.\n", nlglobal_mbsfn_area_ids->num_mbsfn_area_ids);
+			OAILOG_FUNC_RETURN(LOG_MCE_APP, RETURNerror);
 		}
-		OAILOG_INFO(LOG_MCE_APP, "Handled all (%d) non-local global MBSFN areas.\n", nlglobal_mbsfn_area_ids->num_mbsfn_area_ids);
-
-		/**
-		 * Update the common CSA pattern for the local MBSFN areas.
-		 * If there are free subframes left in the common CSA pattern, we might allocate it.
-		 */
-		memset((void*)&csa_patterns_local.csa_pattern[7], (void*)&csa_patterns_global.csa_pattern[7], sizeof(csa_patterns_global.csa_pattern[7]));
-	} else {
-		OAILOG_INFO(LOG_MCE_APP, "No non-local global MBMS services assigned. Not assigning them in CSA pattern.\n");
+		OAILOG_INFO(LOG_MCE_APP,"Successfully scheduled given (%d) non-local global MBSFN areas. Checking the local MBSFN areas.\n", nlglobal_mbsfn_area_ids->num_mbsfn_area_ids);
 	}
 
 	/**
@@ -439,51 +411,13 @@ int mce_app_check_mbsfn_cluster_resources (const mbsfn_area_context_t * const mb
 	 * Take the first MBSFN area context, to get the phy layer properties, for all global MBMS services..
 	 */
 	if(local_mbsfn_area_ids && local_mbsfn_area_ids->num_mbsfn_area_ids){
-		OAILOG_DEBUG(LOG_MCE_APP, "We have (%d) local MBSFN areas. Assigning the resources in the CSA pattern first.\n",  local_mbsfn_area_ids->num_mbsfn_area_ids);
-		for(int num_local_mbsfn_area = 0; num_local_mbsfn_area < local_mbsfn_area_ids->num_mbsfn_area_ids; num_local_mbsfn_area++)
-		{
-			/** Calculate the MCHs independently of the local MBMS services. */
-			mchs_t mchs = {0}; /**< All MCHs of the MBSFN are with possibly different qos. */
-			mbsfn_area_context = mce_mbms_service_exists_mbms_service_index(&mce_app_desc.mce_mbms_service_contexts, nlglobal_mbsfn_area_ids->mbsfn_area_id[num_local_mbsfn_area]);
-			DevAssert(mbsfn_area_context);
-			/**
-			 * Calculate the MCHs for this MBSFN area from the given list of active MBMS services.
-			 * Filter from the list the MBMS services, which belong to the MBSFN area.
-			 */
-			mce_app_calculate_mbsfn_mchs(mbsfn_area_context, mbms_service_indexes_active_nlg_p, &mchs);
-			if(!mchs.total_subframes_per_csa_period_necessary) {
-				/**
-				 * No subframes were calculated for the MBSFN area MCHs.
-				 * Only common csa pattern will be affected, but resources are reserved anyway.. continuing with other non-local global MBSFN areas.
-				 */
-				OAILOG_WARNING(LOG_MCE_APP, "No subframes calculated for local MBSFN Area " MBSFN_AREA_ID_FMT ". "
-						"Assigning only MCCH subframes from COMMON_CSA into resulting local CSA patterns. \n",
-						mbsfn_area_context->privates.fields.mbsfn_area.mbsfn_area_id);
-				continue;
-			}
-			/**
-			 * Allocate the MCHs in the local CSA patterns, taking into account the common CSA pattern.
-			 * We will give the calculated non-local global MBSFN area and force it to be taken into consideration.
-			 * In all cluster, which share resources, this forces that the non-local global MBSFN scheduling stays the same.
-			 */
-			struct csa_patterns_s csa_patterns_mbsfn = {0};
-			if(mce_app_calculate_mbsfn_csa_patterns(csa_patterns_mbsfn, &csa_patterns_local, csa_patterns_global.total_csa_pattern_offset, &csa_pattern_common, &mchs, mbsfn_area_context) == RETURNerror) {
-				OAILOG_ERROR(LOG_MCE_APP, "CSA patterns for local global MBSFN Area " MBSFN_AREA_ID_FMT " could not be fitted into resources.\n",
-						mbsfn_area_context->privates.fields.mbsfn_area.mbsfn_area_id);
-				/** Could not fit the MBSFN area, we return false and let the upper method perform ARP preemption, if possible. */
-				OAILOG_FUNC_RETURN(LOG_MCE_APP, RETURNerror);
-			}
-			OAILOG_INFO(LOG_MCE_APP, "Successfully checked resources of -local MBSFN Area " MBSFN_AREA_ID_FMT " and calculated CSA pattern. "
-					"Updating the local CSA pattern union. \n", mbsfn_area_context->privates.fields.mbsfn_area.mbsfn_area_id);
-			/**
-			 * Update the overall CSA pattern.
-			 * We don't have to explicitly insert the data allocated in common-csa pattern, it is included in the csa_patterns_mbsfn. */
-			mce_app_update_csa_pattern_union(&csa_patterns_local, &csa_patterns_mbsfn);
-			/** Updated the union of CSA patterns, continue with checking the remaining local MBSFN area MBMS services. */
+		if(mce_app_schedule_mbsfn_resources(local_mbsfn_area_ids, mbms_service_indexes_active_local_p
+				&csa_patterns_local, csa_patterns_global.total_csa_pattern_offset, NULL) == RETURNerror){
+			OAILOG_ERROR(LOG_MCE_APP,"Could not schedule the given (%d) local MBSFN areas.\n", local_mbsfn_area_ids->num_mbsfn_area_ids);
+			OAILOG_FUNC_RETURN(LOG_MCE_APP, RETURNerror);
 		}
-		OAILOG_INFO(LOG_MCE_APP, "Handled all (%d) local MBSFN areas.\n", nlglobal_mbsfn_area_ids->num_mbsfn_area_ids);
+		OAILOG_INFO(LOG_MCE_APP,"Successfully scheduled given (%d) local MBSFN areas. Done with the MBSFN cluster.\n", local_mbsfn_area_ids->num_mbsfn_area_ids);
 	}
-	OAILOG_INFO(LOG_MCE_APP, "Handled all non-local global and local MBSFN areas of the MBSFN cluster.\n");
 	OAILOG_FUNC_RETURN(LOG_MCE_APP, RETURNok);
 }
 
@@ -499,7 +433,7 @@ int mce_app_mbms_arp_preempt(mbms_service_indexes_t				* const mbms_service_inde
 	int 									 mbms_service_active_list_index = -1;
 
 	/** Get all MBMS services, which area active in the given MCCH modification period. */
-	if(!mbms_service_indexes_to_preemtp->num_mbms_service){
+	if(!mbms_service_indexes_to_preemtp->num_mbms_service_indexes){
 		OAILOG_ERROR("No active MBMS services received to preempt.\n");
   	OAILOG_FUNC_RETURN(LOG_MCE_APP, INVALID_MBMS_SERVICE_INDEX);
   }
@@ -509,7 +443,7 @@ int mce_app_mbms_arp_preempt(mbms_service_indexes_t				* const mbms_service_inde
 	}
 
 	/** Remove the MBMS session with the lowest ARP prio level. */
-	for(int num_ms = 0; num_ms < mbms_service_indexes_to_preemtp->num_mbms_service; num_ms++){
+	for(int num_ms = 0; num_ms < mbms_service_indexes_to_preemtp->num_mbms_service_indexes; num_ms++){
 		/** Go through all MBMS services and check if they can be considered for preemption. */
 		mbms_service_index_t mbms_service_idx_tp = mbms_service_indexes_to_preemtp->mbms_service_index_array[num_ms];
 		if(mbms_service_idx_tp && mbms_service_idx_tp != INVALID_MBMS_SERVICE_INDEX) {
@@ -649,26 +583,28 @@ void mce_app_update_csa_pattern_union(struct csa_patterns_s * resulting_csa_patt
 #define NUM_SF_CSA_PATTERN_TOTAL (6 * csa_pattern->mbms_csa_pattern_rfs)
 //------------------------------------------------------------------------------
 static
-void mce_app_set_fresh_radio_frames(struct csa_pattern_s * csa_pattern, struct mchs_s * mchs, const uint8_t csa_sf_available, const uint8_t csa_sf_total_size)
+void mce_app_set_fresh_radio_frames(struct csa_pattern_s * csa_pattern, struct mchs_s * mchs, const uint8_t csa_sf_available)
 {
 	OAILOG_FUNC_IN(LOG_MCE_APP);
 	uint8_t sf_full 							= 0;
-	uint8_t sfAlloc_RF_free 			= csa_sf_available;
 	uint32_t sfAlloc							= 0;
 
 //	const uint32_t sfAlloc = csa_pattern->mbms_csa_pattern_rfs == CSA_FOUR_FRAME ? csa_pattern->csa_pattern_sf.mbms_mch_csa_pattern_4rf : csa_pattern->csa_pattern_sf.mbms_mch_csa_pattern_1rf;
 	/** Check if it is a 4 or 1 Frame pattern. */
 	for(int num_rf = 0; num_rf < csa_pattern->mbms_csa_pattern_rfs; num_rf){
+		uint8_t sfAlloc_RF_free 			= csa_sf_available;
 		uint8_t csa_sf = 0;
-		uint8_t csa_avalable_sf = csa_sf_total_size;
-//		for(int num_sf = 0; num_sf <= csa_sf_total_size; num_sf++ ){
-		while (csa_avalable_sf){
+		while (sfAlloc_RF_free){
 			if(!(sfAlloc_RF_free & 0x20)) {
 				csa_sf++;
 				sfAlloc_RF_free <<=csa_sf;
 				continue;
 			}
 			sfAlloc |= ((0x20 >> csa_sf) << (num_rf * 6));
+			sfAlloc_RF_free &= ~(0x20 >> csa_sf);
+			/** Shift it, also when a match occurs. */
+			csa_sf++;
+			sfAlloc_RF_free <<=csa_sf;
 			mchs->total_subframes_per_csa_period_necessary -= (MBMS_CSA_PERIOD_GCS_AS_RF / csa_pattern->csa_pattern_repetition_period_rf);
 			/** Reduce it from the total SFs necessary. */
 			if(mchs->total_subframes_per_csa_period_necessary <= 0) {
@@ -686,85 +622,173 @@ void mce_app_set_fresh_radio_frames(struct csa_pattern_s * csa_pattern, struct m
 				mchs->total_subframes_per_csa_period_necessary, mbsfn_area_ctx->privates.fields.mbsfn_area.mbsfn_area_id, csa_pattern->mbms_csa_pattern_rfs, csa_pattern->csa_pattern_offset_rf, csa_pattern->csa_pattern_repetition_period_rf);
 	}
 	/** No total RF offset needs to be take. */
+	OAILOG_FUNC_OUT(LOG_MCE_APP);
+}
+
+/**
+ * Schedule the subframes given in the CSA pattern into the MCHs, within one CSA period.
+ */
+//------------------------------------------------------------------------------
+static int
+mce_app_assign_mch_subframes(const struct csa_patterns_s * const csa_patterns_mbsfn,
+		const struct mchs_s 				 * mchs,
+		const mbsfn_area_context_t 	 * const mbsfn_area_context,
+		const mbsfn_area_cfg_t 			 * const mbsfn_area_cfg,
+		const mbms_service_indexes_t * const mbms_service_indexes_active_p)
+{
+	OAILOG_FUNC_IN(LOG_MCE_APP);
+	/**
+	 * Calculate the total number of subframes in the total CSA period.
+	 * Subframes only are for the given MBSFN area. The CSA patterns are sequential.
+	 */
+	uint32_t sfAlloc							= 0;
+	uint8_t	 mch_checked 					= 0;
+	while(!mchs->mch_array[mch_checked].mch_qci || mch_checked == MAX_MCH_PER_MBSFN)
+		mch_checked++;
+	if(mch_checked == MAX_MCH_PER_MBSFN){
+		DevAssert(0);
+	}
+	OAILOG_INFO(LOG_MCE_APP, "Checking MCH with QCI (%d) and order (%d) for MBSFN Area " MBSFN_AREA_ID_FMT".\n",
+			mchs->mch_array[mch_checked].mch_qci, mch_checked, mbsfn_area_context->privates.fields.mbsfn_area.mbsfn_area_id)
+	/** Check if it is a 4 or 1 Frame pattern. */
+	for(int num_csa_pattern = 0; num_csa_pattern < csa_patterns_mbsfn->num_csa_pattern; num_csa_pattern++){
+		struct csa_pattern_s * csa_pattern = csa_patterns_mbsfn->csa_pattern[num_csa_pattern];
+		/** Repeat this for all offsets. */
+		uint8_t csa_pattern_repetition = MBMS_CSA_PERIOD_GCS_AS_RF/get_csa_period_rf(csa_pattern->csa_pattern_repetition_period_rf);
+		/** Iterate through each repeated CSA pattern. */
+		for(int num_csa_offset = 0; num_csa_offset < csa_pattern_repetition; num_csa_offset++) {
+			/** Iterate through each CSA pattern. */
+			for(int num_rf = 0; num_rf < csa_pattern->mbms_csa_pattern_rfs; num_rf++){
+				uint8_t sfAlloc_RF_available = ((uint32_t*)(&csa_pattern->csa_pattern_sf)) >> (8 * num_rf);
+				uint8_t csa_sf = 0;
+
+				// TODO: CHECK THE MCCH subframe from the configuration!
+
+
+				while (sfAlloc_RF_available){
+					if(!(sfAlloc_RF_available & 0x20)) {
+						csa_sf++;
+						sfAlloc_RF_available <<=csa_sf;
+						continue;
+					}
+					sfAlloc |= ((0x20 >> csa_sf) << (num_rf * 6));
+					sfAlloc_RF_available &= ~(0x20 >> csa_sf);
+					/** Shift it, also when a match occurs. */
+					csa_sf++;
+					sfAlloc_RF_available <<=csa_sf;
+
+					/**
+					 * Check if the MCH has a subframe start, if not assign the #SF within the CSA period to it.
+					 * The MCH will be scheduled fixed on the same subframe, and the subframe always belongs to the MBSFN.
+					 * But the MCCH may be in different MCHs.
+					 */
+					mchs->mch_array[mch_checked].mch_subframes_per_csa_period--;
+					if(!mchs->mch_array[mch_checked].mch_subframe_start){
+						mchs->mch_array[mch_checked].mch_subframe_start = (csa_pattern->csa_pattern_repetition_period_rf * csa_pattern_repetition)
+								+ (csa_pattern->csa_pattern_offset_rf * 10) + get_absolute_subframe(mbsfn_area_context, csa_sf);
+					}
+					if(!mchs->mch_array[mch_checked].mch_subframes_per_csa_period) {
+						DevAssert(!mchs->mch_array[mch_checked].mch_subframe_stop);
+						mchs->mch_array[mch_checked].mch_subframe_stop = (csa_pattern->csa_pattern_repetition_period_rf * csa_pattern_repetition)
+								+ (csa_pattern->csa_pattern_offset_rf * 10) + get_absolute_subframe(mbsfn_area_context, csa_sf);
+						/** Go to the next MCH. */
+						OAILOG_INFO(LOG_MCE_APP, "Scheduled all subframes of the MCH (%d) for MBSFN area " MBSFN_AREA_ID_FMT". Checking remaining MCHs.",
+								mch_checked, mbsfn_area_context->privates.fields.mbsfn_area.mbsfn_area_id);
+						mch_checked++;
+						while(!mchs->mch_array[mch_checked].mch_qci && mch_checked < MAX_MCH_PER_MBSFN)
+							mch_checked++;
+						if(mch_checked == MAX_MCH_PER_MBSFN){
+							OAILOG_INFO(LOG_MCE_APP, "No more MCHs to schedule for MBSFN Area " MBSFN_AREA_ID_FMT ". \n",
+									mbsfn_area_context->privates.fields.mbsfn_area.mbsfn_area_id);
+							/** Directly return, we handled all MCHs and done with the given CSA pattern. */
+							OAILOG_FUNC_RETURN(LOG_MCE_APP, RETURNok);
+						}
+						OAILOG_INFO(LOG_MCE_APP, "Checking MCH with QCI (%d) and order (%d) for MBSFN Area " MBSFN_AREA_ID_FMT" with the remaining CSA patterns.\n",
+								mchs->mch_array[mch_checked].mch_qci, mch_checked, mbsfn_area_context->privates.fields.mbsfn_area.mbsfn_area_id)
+					}
+				}
+			}
+		}
+	}
+	/** Set them to the MCHs. */
 	OAILOG_FUNC_RETURN(LOG_MCE_APP, RETURNok);
 }
 
 //------------------------------------------------------------------------------
 static
-void mce_app_log_method_single_rf_csa_pattern(struct csa_patterns_s * new_csa_patterns,
-		int num_radio_frames,
-		struct mchs_s * mchs,
-		struct csa_patterns_s * csa_patterns_allocated)
+int mce_app_log_method_single_rf_csa_pattern(struct csa_patterns_s * new_csa_patterns,
+		int *num_radio_frames_p,
+		struct mchs_s * mchs, const struct mbsfn_area_context_s * const mbsfn_area_context,
+		uint8_t total_offset_allocated)
 {
 	OAILOG_FUNC_IN(LOG_MCE_APP);
-	int power2 											 = 0;
-	int radio_frames_alloced 				 = 0;
-	int num_csa_patterns_allocated 	 = 0;
-
-	/**
-	 * Calculate the CSA pattern offset from other MBSFN areas and the current MBSFN area.
-	 */
-	int csa_pattern_offset         	 = 0;
+	int power2 											 							= 0;
+	int radio_frames_alloced_per_csa_pattern 			= 0;
+	int num_csa_patterns_set											= 0; /**< Calculate the CSA pattern offset from other MBSFN areas and the current MBSFN area. */
 
 	/**
 	 * Check if a 4RF pattern has been allocated (max 1 possible).
 	 */
-	if(new_csa_patterns->total_csa_pattern_offset){
-		num_csa_patterns_allocated++;
-		csa_pattern_offset = 4;
+	if(total_offset_allocated == 0xFF){
+		OAILOG_ERROR(LOG_MCE_APP,"No more single RF CSA pattern can be allocated. All offsets are full. \n");
+		OAILOG_FUNC_RETURN(LOG_MCE_APP, RETURNerror);
 	}
 
 	/** Check the other MBSFN areas. Increase the radio frame offset. */
-	for (; csa_patterns_allocated->total_csa_pattern_offset; csa_pattern_offset++)
+	for (; total_offset_allocated; num_csa_patterns_set++)
 	{
-		csa_patterns_allocated->total_csa_pattern_offset &= (csa_patterns_allocated->total_csa_pattern_offset-1);
+		total_offset_allocated &= (total_offset_allocated-1);
 	}
-	OAILOG_DEBUG(LOG_MCE_APP, "Calculating 1RF CSA pattern with already set offset (%d). \n", csa_pattern_offset);
 
 	/**
 	 * Check each power of 2. Calculate a CSA pattern for each with a different offset and a period (start with the most frequest period).
 	 * We may not use the last CSA pattern.
 	 */
-	while(num_radio_frames){
+	while(*num_radio_frames_p){
 		/**
 		 * Determines the periodicity of CSA patterns..
 		 * We start with the highest possible periodicity.
 		 * For each single frame, we increase the used CSA pattern offset by once, no matter what the periodicity is.
 		 */
-		DevAssert((power2 = floor(log2(num_radio_frames))));
-		radio_frames_alloced = pow(2, power2);
-		/**
-		 * Next we will calculate a single pattern for each modulus. We then will increase the new_csa_patterns total_csa_offset bitmap,
-		 * make union, with the already allocated one and check if free offsets are left.
-		 */
-		if(new_csa_patterns->total_csa_pattern_offset | csa_patterns_allocated->total_csa_pattern_offset == 0xFF){
-			OAILOG_ERROR(LOG_MCE_APP, "No more CSA patterns left to allocate resources for MBSFN Area.\n");
-			OAILOG_FUNC_OUT(LOG_MCE_APP);
+		DevAssert((power2 = floor(log2(*num_radio_frames_p))));
+		radio_frames_alloced_per_csa_pattern = pow(2, power2);
+//		/**
+//		 * Next we will calculate a single pattern for each modulus. We then will increase the new_csa_patterns total_csa_offset bitmap,
+//		 * make union, with the already allocated one and check if free offsets are left.
+//		 */
+		if(new_csa_patterns->total_csa_pattern_offset | total_offset_allocated == 0xFF){
+			OAILOG_ERROR(LOG_MCE_APP, "No more CSA patterns left to allocate a single RF CSA pattern for MBSFN Area "MBSFN_AREA_ID_FMT".\n",
+					mbsfn_area_context->privates.fields.mbsfn_area.mbsfn_area_id);
+			OAILOG_FUNC_RETURN(LOG_MCE_APP, RETURNerror);
 		}
 		/**
 		 * Calculate the number of radio frames, that can scheduled in a single RF CSA pattern in this periodicity.
 		 * Consider the CSA pattern with the given CSA offset.
 		 */
-	  new_csa_patterns->csa_pattern[num_csa_patterns_allocated].mbms_csa_pattern_rfs 							= CSA_ONE_FRAME;
-	  new_csa_patterns->csa_pattern[num_csa_patterns_allocated].csa_pattern_repetition_period_rf	= get_csa_rf_alloc_period_rf(CSA_RF_ALLOC_PERIOD_RF32) / (radio_frames_alloced / 4);
-	  mce_app_set_fresh_radio_frames(&new_csa_patterns->csa_pattern[num_csa_patterns_allocated], mchs);
+	  new_csa_patterns->csa_pattern[new_csa_patterns->num_csa_pattern].csa_pattern_offset_rf							= (0x01 << (num_csa_patterns_set- 1));
+	  new_csa_patterns->csa_pattern[new_csa_patterns->num_csa_pattern].mbms_csa_pattern_rfs 							= CSA_ONE_FRAME;
+	  new_csa_patterns->csa_pattern[new_csa_patterns->num_csa_pattern].csa_pattern_repetition_period_rf		= get_csa_rf_alloc_period_rf(CSA_RF_ALLOC_PERIOD_RF32) / (radio_frames_alloced_per_csa_pattern / 4);
+	  new_csa_patterns->total_csa_pattern_offset |= (0x01 << (num_csa_patterns_set- 1));
+	  mce_app_set_fresh_radio_frames(&new_csa_patterns->csa_pattern[new_csa_patterns->num_csa_pattern], mchs,
+	  		get_enb_mbsfn_subframes(get_enb_type(mbsfn_area_context->privates.fields.mbsfn_area.m2_enb_band), mbsfn_area_context->privates.fields.mbsfn_area.m2_enb_tdd_dl_ul_perc));
 	  /** Increase the CSA pattern offset. Check if the last radio frame (CSA_COMMON) is reached. */
-	  csa_pattern_offset++;
-	  /**
-	   * Set the total_csa_pattern offset with the newly set CSA pattern.
-	   * We will allocate radio frames continuously, except the last radio frame.
-	   * So the sum of the bitmap of totally set radio frames will also indicate, which radio frame we are at (CONSIDER CSA_COMMON!).
-	   */
-	  new_csa_patterns->total_csa_pattern_offset |= (0x01 << (8 - (csa_pattern_offset)));
+	  num_csa_patterns_set++;
+	  new_csa_patterns->num_csa_pattern++;
 	  /**
 	   * We set the allocated subframes 1RF CSA pattern and reduced the number of remaining subframes left for scheduling.
 	   * We allocated some MBSFN radio frames starting with the highest priority. Reduce the number of remaining MBSFN radio frames.
 	   */
-	  num_radio_frames -= radio_frames_alloced;
+	  *num_radio_frames_p -= radio_frames_alloced_per_csa_pattern;
+	  if(mchs->total_subframes_per_csa_period_necessary == 0){
+	  	DevAssert(*num_radio_frames_p);
+	  	break;
+	  }
 	}
+	DevAssert(mchs->total_subframes_per_csa_period_necessary == 0);
 	/** Successfully scheduled all radio frames! */
-	OAILOG_INFO(LOG_MCE_APP, "Successfully scheduled all radio subframes for the MCHs into the CSA patterns. Current number of CSA offset is (%d). \n", num_total_csa_pattern_offset);
-	OAILOG_FUNC_OUT(LOG_MCE_APP);
+	OAILOG_INFO(LOG_MCE_APP, "Successfully scheduled all radio subframes for the MCHs of the MBSFN Area Id "MBSFN_AREA_ID_FMT " into the CSA patterns. "
+			"Total CSA pattern offset of new CSA is (%d). \n", new_csa_patterns->total_csa_pattern_offset);
+	OAILOG_FUNC_RETURN(LOG_MCE_APP, RETURNok);
 }
 
 //------------------------------------------------------------------------------
@@ -811,7 +835,7 @@ void mce_app_calculate_mbsfn_mchs(const struct mbsfn_area_context_s * const mbsf
 
 	/**
 	 * The CSA period is set as 1 second (RF128). The minimum time of a service duration is set to the MCCH modification period!
-	 * MSP will be set to the half length of the CSA period for now. Should be enough!
+	 * MSP will be set to the length of the CSA period for now. Should be enough!
 	 * Calculate the actual MCS of the MCH and how many bit you can transmit with an SF.
 	 */
 	for(int num_mch = 0; num_mch < MAX_MCH_PER_MBSFN; num_mch++){
@@ -822,21 +846,22 @@ void mce_app_calculate_mbsfn_mchs(const struct mbsfn_area_context_s * const mbsf
 			 * Calculate per MCH, the necessary subframes needed in the CSA period.
 			 * Calculate the MCS of the MCH.
 			 */
-			int mcs = mce_app_get_mch_mcs(mbsfn_area_context, mch.mch_qci);
-			if(mcs == -1){
+			mch.mcs = mce_app_get_mch_mcs(mbsfn_area_context, mch.mch_qci);
+			if(mch.mcs == -1){
 				DevMessage("Error while calculating MCS for MBSFN Area " + mbsfn_area_context->privates.fields.mbsfn_area.mbsfn_area_id + " and QCI " + qci);
 			}
 			/** Calculate the necessary transport blocks. */
-			int itbs = get_itbs(mcs);
+			int itbs = get_itbs(mch.mcs);
 			if(itbs == -1){
-				DevMessage("Error while calculating TBS index for MBSFN Area " + mbsfn_area_context->privates.fields.mbsfn_area.mbsfn_area_id + " for MCS " + mcs);
+				DevMessage("Error while calculating TBS index for MBSFN Area " + mbsfn_area_context->privates.fields.mbsfn_area.mbsfn_area_id + " for MCS " + mch.mcs);
 			}
+			mch.msp_rf = mbsfn_area_context->privates.fields.mbsfn_area.mbsfn_csa_period_rf;
 			/**
 			 * We assume a single antenna port and just one Transport Block per subframe.
 			 * No MIMO is expected.
 			 * Number of bits transmitted per 1ms (1028)ms.
 			 * Subframes, allocated for this MCH gives us the following capacity.
-			 * No MCH subframe-interleaving is forseen. So each MCH will have own subframes. Calculate the capacity of the subframes.
+			 * No MCH subframe-interleaving is foreseen. So each MCH will have own subframes. Calculate the capacity of the subframes.
 			 * The duration is the CSA period, we calculate the MCHs on.
 			 * ITBS starts from zero, so use actual values.
 			 */
@@ -872,8 +897,8 @@ void mce_app_reuse_csa_pattern_set_subframes(struct csa_pattern_s * csa_pattern_
 	uint8_t num_available_subframes_first_csa_pattern = 0;
 
 	/** The CSA pattern of subframes which can be allocated and the total number of subframes available per single RF CSA pattern. */
-	uint8_t csa_pattern_sf_size    = get_enb_subframe_size(get_enb_type(mbsfn_area_ctx->privates.fields.mbsfn_area.m2_enb_band), mbsfn_area_ctx->privates.fields.mbsfn_area.enb_tdd_dl_ul_perc);
-	uint8_t m2_enb_mbsfn_subframes = get_enb_mbsfn_subframes(get_enb_type(mbsfn_area_ctx->privates.fields.mbsfn_area.m2_enb_band), mbsfn_area_ctx->privates.fields.mbsfn_area.enb_tdd_dl_ul_perc);
+	uint8_t csa_pattern_sf_size    = get_enb_subframe_size(get_enb_type(mbsfn_area_ctx->privates.fields.mbsfn_area.m2_enb_band), mbsfn_area_ctx->privates.fields.mbsfn_area.m2_enb_tdd_dl_ul_perc);
+	uint8_t m2_enb_mbsfn_subframes = get_enb_mbsfn_subframes(get_enb_type(mbsfn_area_ctx->privates.fields.mbsfn_area.m2_enb_band), mbsfn_area_ctx->privates.fields.mbsfn_area.m2_enb_tdd_dl_ul_perc);
 
 	const uint32_t sfAlloc = csa_pattern->mbms_csa_pattern_rfs == CSA_FOUR_FRAME ? csa_pattern->csa_pattern_sf.mbms_mch_csa_pattern_4rf : csa_pattern->csa_pattern_sf.mbms_mch_csa_pattern_1rf;
 	while(sf_full < NUM_SF_CSA_PATTERN_TOTAL){
@@ -953,6 +978,8 @@ void mce_app_reuse_csa_pattern_set_subframes(struct csa_pattern_s * csa_pattern_
 				continue;
 			}
 			csa_pattern_free |= (0x20 >> csa_sf);
+			csa_sf++;
+			sfAlloc_RF_free <<=csa_sf;
 			mchs->total_subframes_per_csa_period_necessary -= (MBMS_CSA_PERIOD_GCS_AS_RF / csa_pattern->csa_pattern_repetition_period_rf);
 			/** Reduce it from the total SFs necessary. */
 			if(mchs->total_subframes_per_csa_period_necessary <= 0) {
@@ -1018,12 +1045,12 @@ void mce_app_reuse_csa_pattern(struct csa_patterns_s * csa_patterns_mbsfn_p, mch
 }
 
 //------------------------------------------------------------------------------
-static void mce_app_allocate_4frame(struct csa_patterns_s * new_csa_patterns, int num_radio_frames, struct mchs_s * mchs, struct csa_patterns_s * csa_patterns_allocated){
+static void mce_app_allocate_4frame(struct csa_patterns_s * new_csa_patterns, int * num_radio_frames_p, struct mchs_s * mchs, const struct mbsfn_area_context_s * const mbsfn_area_context, struct csa_patterns_s * csa_patterns_allocated){
 	OAILOG_FUNC_IN(LOG_MCE_APP);
 	// todo: 0.80 is variable, just a threshold where we consider allocating a 4RF pattern. What could be any other reason?
 	/** 16 Radio Frames are the minimum radio frames allocated with a /32 periodicity. */
 	mme_config_read_lock(&mme_config);
-	int csa_4_frame_rfs_repetition = floor((double)(num_radio_frames * mme_config.mbms.mbsfn_csa_4_rf_threshold) / ((MBMS_CSA_PERIOD_GCS_AS_RF/get_csa_period_rf(CSA_PERIOD_RF32)) * CSA_FOUR_FRAME));
+	int csa_4_frame_rfs_repetition = floor((double)(*num_radio_frames_p * mme_config.mbms.mbsfn_csa_4_rf_threshold) / ((MBMS_CSA_PERIOD_GCS_AS_RF/get_csa_period_rf(CSA_PERIOD_RF32)) * CSA_FOUR_FRAME));
 	mme_config_unlock(&mme_config);
 	if(!csa_4_frame_rfs_repetition) {
 		OAILOG_INFO(LOG_MCE_APP, "Skipping 4RF pattern for MBSFN Area Id " MBSFN_AREA_ID_FMT". Not enough RFs (%d). \n.", mbsfn_area_ctx->privates.fields.mbsfn_area.mbsfn_area_id, num_radio_frames);
@@ -1053,8 +1080,12 @@ static void mce_app_allocate_4frame(struct csa_patterns_s * new_csa_patterns, in
 	new_csa_patterns->csa_pattern[new_csa_patterns->num_csa_pattern-1].csa_pattern_offset_rf						= total_csa_pattern_offset;
 	new_csa_patterns->csa_pattern[new_csa_patterns->num_csa_pattern-1].mbms_csa_pattern_rfs 						= CSA_FOUR_FRAME;
 	new_csa_patterns->csa_pattern[new_csa_patterns->num_csa_pattern-1].csa_pattern_repetition_period_rf	= get_csa_period_rf(CSA_PERIOD_RF32)/csa_4_frame_rfs_repetition;
-	mce_app_set_fresh_radio_frames(&new_csa_patterns->csa_pattern[new_csa_patterns->num_csa_pattern-1], mchs);
+	mce_app_set_fresh_radio_frames(&new_csa_patterns->csa_pattern[new_csa_patterns->num_csa_pattern-1], mchs,
+			get_enb_mbsfn_subframes(get_enb_type(mbsfn_area_context->privates.fields.mbsfn_area.m2_enb_band), mbsfn_area_context->privates.fields.mbsfn_area.m2_enb_tdd_dl_ul_perc));
 	new_csa_patterns->num_csa_pattern++;
+
+	*num_radio_frames_p  = *num_radio_frames_p - ((MBMS_CSA_PERIOD_GCS_AS_RF/get_csa_period_rf(CSA_PERIOD_RF32)) * csa_4_frame_rfs_repetition * 4);
+
 	OAILOG_FUNC_OUT(LOG_MCE_APP);
 }
 
@@ -1082,7 +1113,7 @@ int mce_app_alloc_csa_pattern(struct csa_patterns_s * new_csa_patterns,
 	 * Allocate a 4RF CSA pattern with the given period.
 	 * For the remaining RFs calculate a single frame CSA pattern.
 	 */
-	mce_app_allocate_4frame(new_csa_patterns, num_radio_frames, mchs, mbsfn_area_ctx, total_csa_pattern_offset);
+	mce_app_allocate_4frame(new_csa_patterns, &num_radio_frames, mchs, mbsfn_area_ctx, total_csa_pattern_offset);
 	if(mchs->total_subframes_per_csa_period_necessary <=0){
 		mchs->total_subframes_per_csa_period_necessary = 0;
 		OAILOG_INFO(LOG_MCE_APP, "MCHs of MBSFN Area Id "MBSFN_AREA_ID_FMT " are allocated in a 4RF pattern completely.\n", mbsfn_area_ctx->privates.fields.mbsfn_area.mbsfn_area_id);
@@ -1096,10 +1127,12 @@ int mce_app_alloc_csa_pattern(struct csa_patterns_s * new_csa_patterns,
 	 * Check the number of 1RF CSA patterns you need (periodic).
 	 * New CSA pattern should be already allocated, inside, compare it with the csa_patterns_allocated.
 	 */
-	if(mce_app_log_method_single_rf_csa_pattern(new_csa_patterns, num_radio_frames, mchs, mbsfn_area_ctx, total_csa_pattern_offset) == RETURNerror){
-		OAILOG_ERROR(LOG_MCE_APP, "Error while scheduling the CSA pattern.\n");
+	if(mce_app_log_method_single_rf_csa_pattern(new_csa_patterns, &num_radio_frames, mchs, mbsfn_area_ctx, total_csa_pattern_offset) == RETURNerror){
+		OAILOG_ERROR(LOG_MCE_APP, "Error while allocating new CSA CSA patterns for MBSFN Area Id " MBSFN_AREA_ID_FMT". (%d) subframes remain in MCH. \n",
+				mbsfn_area_ctx->privates.fields.mbsfn_area.mbsfn_area_id, mchs->total_subframes_per_csa_period_necessary);
 		OAILOG_FUNC_RETURN(LOG_MCE_APP, RETURNerror);
 	}
+	DevAssert(mchs->total_subframes_per_csa_period_necessary == 0);
 	OAILOG_INFO(LOG_MCE_APP, "Completed the allocation of 1RF pattern for MBSFN Area Id " MBSFN_AREA_ID_FMT ".\n", mbsfn_area_ctx->privates.fields.mbsfn_area.mbsfn_area_id);
 	OAILOG_FUNC_RETURN(LOG_MCE_APP, RETURNok);
 }

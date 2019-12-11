@@ -268,15 +268,6 @@ void mce_app_update_mbsfn_areas(const mbms_service_area_t * mbms_service_areas, 
 mme_app_mbms_proc_t* mme_app_create_mbms_procedure(mbms_service_t * mbms_service, long delta_to_start_in_sec, long delta_to_start_in_usec, const mbms_session_duration_t * const mbms_session_duration);
 void mme_app_delete_mbms_procedure(const mbms_service_t * mbms_service);
 
-/**
- * Check if an MBSFN area has reached the MCCH modification boundary.
- */
-//------------------------------------------------------------------------------
-bool mce_app_check_mbsfn_mcch_modif (const hash_key_t keyP,
-               void * const mbsfn_area_context_ref,
-               void * parameterP,
-               void **resultP);
-
 //------------------------------------------------------------------------------
 bool mce_app_check_mbsfn_neighbors (const hash_key_t keyP,
                void * const mbsfn_area_context_ref,
@@ -289,9 +280,31 @@ bool mce_app_get_active_mbms_services_per_mbsfn_area (const hash_key_t keyP,
                void **resultP);
 
 //------------------------------------------------------------------------------
-int mce_app_check_mbsfn_cluster_resources (const mbsfn_area_context_t * const mbsfn_area_context,
+bool mce_app_get_mbsfn_groups (const hash_key_t keyP,
+               void * const mbsfn_context_Ref,
+               void __attribute__((unused)) * parameterP,
+               void **resultP);
+
+//------------------------------------------------------------------------------
+int mce_app_check_mbsfn_cluster_resources (const mbsfn_area_ids_t							* nlglobal_mbsfn_area_ids,
+		const mbsfn_area_ids_t							* local_mbsfn_area_ids, /**< Contains also local global. */
 		const mbms_service_indexes_t				* const mbms_service_indexes_active_nlg_p,
 		const mbms_service_indexes_t				* const mbms_service_indexes_active_local_p);
+
+//------------------------------------------------------------------------------
+int mce_app_calculate_csa_common_pattern(	const mbsfn_area_ids_t							* nlglobal_mbsfn_area_ids,
+	const mbsfn_area_ids_t							* local_mbsfn_area_ids,
+	struct csa_pattern_s 								* const common_csa_pattern);
+
+//------------------------------------------------------------------------------
+int
+mce_app_schedule_mbsfn_resources(const mbsfn_area_ids_t			* mbsfn_area_ids,
+		const struct csa_pattern_s														  * csa_pattern_common,
+		const struct csa_patterns_s 														* csa_patterns_union_p,
+		const uint8_t 																					 	excluded_csa_pattern_offset,
+		long		 												 													mcch_rep_abs_rf,
+		/**< MBSFN areas to be set with MCH/CSA scheduling information (@MCCH modify timeout). */
+		struct mbsfn_areas_s							  										* const mbsfn_areas_to_schedule);
 
 /**
  * Reset the M2 eNB id map.
@@ -333,6 +346,12 @@ mce_mbsfn_area_exists_mbsfn_area_id(
 void
 mce_mbsfn_areas_exists_mbms_service_area_id(
 		const mce_mbsfn_area_contexts_t * const mce_mbsfn_areas_p, const mbms_service_area_id_t mbms_service_area_id, struct mbsfn_area_ids_s * mbsfn_area_ids);
+
+//------------------------------------------------------------------------------
+void
+mce_mbsfn_areas_exists_local_mbms_area(
+		const mce_mbsfn_area_contexts_t * const mce_mbsfn_areas_p, const uint8_t local_mbms_area,
+		struct mbsfn_area_ids_s * mbsfn_area_ids);
 
 //------------------------------------------------------------------------------
 int mce_app_mbsfn_area_register_mbms_service(mbsfn_area_context_t * mbsfn_area_context, mbms_service_index_t mbms_service_index,

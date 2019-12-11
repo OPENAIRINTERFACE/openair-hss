@@ -120,8 +120,9 @@ typedef struct itti_m3ap_enb_setup_res_s {
 } itti_m3ap_enb_setup_res_t;
 
 typedef struct itti_m3ap_mbms_scheduling_info_s {
-  mbsfn_areas_t		  				mbsfn_areas;
-  long 											mcch_rep_rf;
+	/** First one is the global MBMS service area, remaining ones are the local MBMS service areas. */
+  mbsfn_areas_t		  				mbsfn_cluster[MME_CONFIG_MAX_LOCAL_MBMS_SERVICE_AREAS + 1];
+  long 											mcch_rep_abs_rf;
 }itti_m3ap_mbms_scheduling_info_t;
 
 //------------------------------------------------------------------------------
