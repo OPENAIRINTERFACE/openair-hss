@@ -165,6 +165,7 @@
 #define MME_CONFIG_STRING_ASN1_VERBOSITY_NONE            "none"
 #define MME_CONFIG_STRING_ASN1_VERBOSITY_ANNOYING        "annoying"
 #define MME_CONFIG_STRING_ASN1_VERBOSITY_INFO            "info"
+#define SGW_CONFIG_STRING_SGW_IP_ADDRESS_FOR_S11    	   "SGW_IP_ADDRESS_FOR_S11"
 
 #define MME_CONFIG_STRING_WRR_LIST_SELECTION             "WRR_LIST_SELECTION"
 #define MME_CONFIG_STRING_PEER_MME_IP_ADDRESS_FOR_S10  	 "MME_IP_ADDRESS_FOR_S10"
@@ -232,7 +233,6 @@ typedef struct mme_config_s {
 		uint16_t 		mbms_mcch_repetition_period_rf;
 		/** MBMS Service Area configurations. */
 		uint8_t  		mbms_global_service_area_types; 	/**< Offset 0. */
-#define MME_CONFIG_MAX_LOCAL_MBMS_SERVICE_AREAS 3
 		uint8_t  		mbms_local_service_areas; 	/**< Mod. */
 		uint8_t  		mbms_local_service_area_types; 	/**< Offset 1. */
 		uint16_t 		mbms_local_service_area_sfd_distance_in_m;

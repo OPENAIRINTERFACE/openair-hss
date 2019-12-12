@@ -96,13 +96,13 @@ typedef struct mbms_service_s {
 		  /* TODO: add DRX parameter */
 		  // UE Specific DRX Parameters   // UE specific DRX parameters for A/Gb mode, Iu mode and S1-mode
 		  /** TMGI and MBMS Service Area of the MBMS Service - Key Identifiers. */
-		  tmgi_t		         					tmgi;
-		  mbms_service_area_id_t 			mbms_service_area_id;
+		  tmgi_t		         							tmgi;
+		  mbms_service_area_id_t 					mbms_service_area_id;
 		  /** MCE TEID for Sm. */
-		  teid_t                 			mme_teid_sm;                // needed to get the MBMS Service from Sm messages
-		  teid_t                 			mbms_teid_sm;
+		  teid_t                 					mme_teid_sm;                // needed to get the MBMS Service from Sm messages
+		  teid_t                 					mbms_teid_sm;
 		  /** Flow-Id of the MBMS Bearer service. */
-		  uint16_t               			mbms_flow_id;
+		  uint16_t               					mbms_flow_id;
 		  /**
 		   * MBMS Bearer Context created for all eNBs of the MBMS Service Area for this MBMS Service.
 		   * It is bound to the TMGI and flow ID combination.
@@ -286,25 +286,11 @@ bool mce_app_get_mbsfn_groups (const hash_key_t keyP,
                void **resultP);
 
 //------------------------------------------------------------------------------
-int mce_app_check_mbsfn_cluster_resources (const mbsfn_area_ids_t							* nlglobal_mbsfn_area_ids,
-		const mbsfn_area_ids_t							* local_mbsfn_area_ids, /**< Contains also local global. */
+int mce_app_check_mbsfn_cluster_resources (const mbsfn_area_ids_t							* mbsfn_area_ids_nlg_p,
+		const mbsfn_area_ids_t							* mbsfn_area_ids_local_p, /**< Contains also local global. */
 		const mbms_service_indexes_t				* const mbms_service_indexes_active_nlg_p,
-		const mbms_service_indexes_t				* const mbms_service_indexes_active_local_p);
-
-//------------------------------------------------------------------------------
-int mce_app_calculate_csa_common_pattern(	const mbsfn_area_ids_t							* nlglobal_mbsfn_area_ids,
-	const mbsfn_area_ids_t							* local_mbsfn_area_ids,
-	struct csa_pattern_s 								* const common_csa_pattern);
-
-//------------------------------------------------------------------------------
-int
-mce_app_schedule_mbsfn_resources(const mbsfn_area_ids_t			* mbsfn_area_ids,
-		const struct csa_pattern_s														  * csa_pattern_common,
-		const struct csa_patterns_s 														* csa_patterns_union_p,
-		const uint8_t 																					 	excluded_csa_pattern_offset,
-		long		 												 													mcch_rep_abs_rf,
-		/**< MBSFN areas to be set with MCH/CSA scheduling information (@MCCH modify timeout). */
-		struct mbsfn_areas_s							  										* const mbsfn_areas_to_schedule);
+		const mbms_service_indexes_t				* const mbms_service_indexes_active_local_p,
+		mbsfn_areas_t 											* const	mbsfn_areas);
 
 /**
  * Reset the M2 eNB id map.
@@ -332,7 +318,7 @@ int mce_app_get_local_mbsfn_areas(const mbms_service_area_t *mbms_service_areas,
 void mce_app_get_global_mbsfn_areas(const mbms_service_area_t *mbms_service_areas, const uint32_t m2_enb_id, const sctp_assoc_id_t assoc_id, mbsfn_areas_t * const mbsfn_areas, int local_mbms_service_area);
 
 //------------------------------------------------------------------------------
-int mce_app_mbms_arp_preempt(mbms_service_indexes_t				* const mbms_service_indexes_to_preemtp, const mbsfn_area_id_t mbsfn_area_id);
+mbms_service_index_t mce_app_mbms_arp_preempt(mbms_service_indexes_t * const mbms_service_indexes_to_preemtp, const mbsfn_area_id_t mbsfn_area_id);
 
 /**
  * Get MBSFN Area.
@@ -349,8 +335,8 @@ mce_mbsfn_areas_exists_mbms_service_area_id(
 
 //------------------------------------------------------------------------------
 void
-mce_mbsfn_areas_exists_local_mbms_area(
-		const mce_mbsfn_area_contexts_t * const mce_mbsfn_areas_p, const uint8_t local_mbms_area,
+mce_mbsfn_areas_exists_mbms_area(
+		const mce_mbsfn_area_contexts_t * const mce_mbsfn_areas_p, const uint8_t mbms_area,
 		struct mbsfn_area_ids_s * mbsfn_area_ids);
 
 //------------------------------------------------------------------------------

@@ -263,6 +263,49 @@ static inline enb_type_e get_enb_type(enb_band_e enb_band){
  * RepetitionPeriod and mcch-Offset, the second bit for #2, the third bit for #3, the fourth bit for #6, the fifth bit for #7 anthe sixth bit for #8.
  */
 #define FDD_SUBFRAMES  0b111111
+
+/**
+ * CSA_SF is the #MBSFN_SF(0-5) --> Depending on the configuration --> corresponds to an #ABSOLUTE_SF(0-9).
+ * FDD: #1, #2, #3, #6, #7, #8
+ * TDD: #3, #4, #7, #8, #9, #X
+ */
+#define FDD_ABSOLUTE_SUBFRAMES \
+X(0, 1) \
+X(1, 2) \
+X(2, 3) \
+X(3, 6) \
+X(4, 7) \
+X(5, 8)
+
+#define TDD_ABSOLUTE_SUBFRAMES \
+X(0, 3) \
+X(1, 4) \
+X(2, 7) \
+X(3, 8) \
+X(4, 9) \
+X(5, -1)
+
+//-----------------
+static inline int get_enb_absolute_subframes(enb_type_e enb_type, uint8_t mbsfn_subframe){
+	if(enb_type == ENB_TYPE_NULL)
+		return -1;
+	else if(enb_type == FDD){
+		switch(mbsfn_subframe) {
+#define X(a, b) case a: return b;
+		FDD_ABSOLUTE_SUBFRAMES
+#undef X
+		default: return -1;
+		}
+	} else{
+		switch(mbsfn_subframe) {
+#define X(a, b) case a: return b;
+		TDD_ABSOLUTE_SUBFRAMES
+#undef X
+		default: return -1;
+		}
+	}
+}
+
 /**
  * TDD: The first/leftmost bit defines the allocation for subframe #3 of the radio frame indicated by mcch-
  * RepetitionPeriod and mcch-Offset, the second bit for #4, third bit for #7, fourth bit for #8, fifth bit for #9. Uplink
@@ -442,8 +485,9 @@ typedef struct mbsfn_area_s{
    * Other bits in the last repetition will not be used.
    */
 #define CSA_PATTERN_REPETITION_MIN 32
-#define MBSFN_AREA_MAX_CSA_PATTERN 8
 #define COMMON_CSA_PATTERN				 7
+#define MBSFN_AREA_MAX_CSA_PATTERN (COMMON_CSA_PATTERN+1)
+#define MME_CONFIG_MAX_LOCAL_MBMS_SERVICE_AREAS 3
   uint16_t								mbsfn_csa_period_rf;
   uint8_t 								mbms_mcch_msi_mcs;
   double								  mch_mcs_enb_factor;
@@ -463,7 +507,6 @@ typedef struct mbsfn_area_s{
 struct csa_patterns_s {
 	uint8_t total_csa_pattern_offset;
 	/** Just the index of the CSA patterns, without any indication of the offset of CSA patterns. */
-	uint8_t num_csa_pattern;
 	struct csa_pattern_s{
 		union{
 			uint8_t								  mbms_mch_csa_pattern_1rf:6;

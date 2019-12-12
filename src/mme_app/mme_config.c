@@ -52,7 +52,6 @@
 #include "intertask_interface.h"
 #include "common_defs.h"
 #include "mme_config.h"
-#include "spgw_config.h"
 #include "s1ap_mme_ta.h"
 
 struct mme_config_s                       mme_config = {.rw_lock = PTHREAD_RWLOCK_INITIALIZER, 0};
@@ -1333,7 +1332,7 @@ static int mme_config_parse_file (mme_config_t * config_pP)
     if ((config_setting_lookup_float(setting_mce, MME_CONFIG_MBSFN_CSA_4_RF_THRESHOLD, &adouble))) {
     	config_pP->mbms.mbsfn_csa_4_rf_threshold = (double) adouble;
     }
-    AssertFatal(config_pP->mbms.mbsfn_csa_4_rf_threshold_factor > 1, "MBSFN 4RF Allocation Threshold (%d) should >1.", config_pP->mbms.mbsfn_csa_4_rf_threshold);
+    AssertFatal(config_pP->mbms.mbsfn_csa_4_rf_threshold > 1, "MBSFN 4RF Allocation Threshold (%d) should >1.", config_pP->mbms.mbsfn_csa_4_rf_threshold);
 
     /** MBMS SA configurations. */
     if ((config_setting_lookup_int (setting_mce, MME_CONFIG_MBMS_GLOBAL_SERVICE_AREA_TYPES, &aint))) {

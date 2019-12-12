@@ -122,11 +122,9 @@ mbms_service_index_t mce_get_mbms_service_index(const tmgi_t * tmgi, const mbms_
 struct mbms_service_s *
 mce_register_mbms_service(const tmgi_t * const tmgi, const mbms_service_area_id_t const mbms_service_area_id, const teid_t mme_sm_teid){
   OAILOG_FUNC_IN (LOG_MCE_APP);
-
-  // todo: lock the mce_desc
   mbms_service_index_t mbms_service_index = mce_get_mbms_service_index(tmgi, mbms_service_area_id);
   if (mbms_service_index == INVALID_MBMS_SERVICE_INDEX) {
-    OAILOG_CRITICAL (LOG_MCE_APP, "MBMS Service Index generation failed for TMGI " TMGI_FMT".\n", TMGI_ARG(tmgi));
+    OAILOG_CRITICAL (LOG_MCE_APP, "MBMS Service Index generation failed for TMGI " TMGI_FMT" and MBMS SAI " MBMS_SERVICE_AREA_ID_FMT".\n", TMGI_ARG(tmgi), mbms_service_area_id);
     OAILOG_FUNC_RETURN(LOG_MCE_APP, NULL);
   }
   /** Check the first element in the list. If it is not empty, reject. */
@@ -134,34 +132,32 @@ mce_register_mbms_service(const tmgi_t * const tmgi, const mbms_service_area_id_
   DevAssert(mbms_service); /**< todo: with locks, it should be guaranteed, that this should exist. */
 
   mbms_service_index_t mbms_service_index_first_free = mce_get_mbms_service_index(&mbms_service->privates.fields.tmgi, mbms_service->privates.fields.mbms_service_area_id);
-  if (mbms_service_index_first_free == INVALID_MBMS_SERVICE_INDEX) {
+  if (mbms_service_index_first_free != INVALID_MBMS_SERVICE_INDEX) {
   	OAILOG_ERROR(LOG_MCE_APP, "No free MBMS Bearer Services. Cannot allocate a new one.\n");
     OAILOG_FUNC_RETURN (LOG_MCE_APP, NULL);
   }
-  // todo: lock the MBMS_SERVICE !!
-  /** Found a free pool: Remove it from the head, add the mbms_service_index and set it to the end. */
-  STAILQ_REMOVE_HEAD(&mce_app_desc.mce_mbms_services_list, entries); /**< free_ms is removed. */
+  if(pthread_rwlock_trywrlock(&mce_app_desc.rw_lock)){
+    /** Found a free pool: Remove it from the head, add the mbms_service_index and set it to the end. */
+    STAILQ_REMOVE_HEAD(&mce_app_desc.mce_mbms_services_list, entries); /**< free_ms is removed. */
+    OAILOG_INFO(LOG_MCE_APP, "Clearing received current mbms_service (0x%p).\n", mbms_service);
+    mce_app_clear_mbms_service(mbms_service);
+    /** Set the TMGI, MBMS Service ID and the Sm MME TEID. */
+    memcpy((void*)&mbms_service->privates.fields.tmgi, tmgi, sizeof(tmgi_t));
+    mbms_service->privates.fields.mbms_service_area_id = mbms_service_area_id;
+    mbms_service->privates.fields.mme_teid_sm = mme_sm_teid;
+    /** Add it to the back of the list. */
+    STAILQ_INSERT_TAIL(&mce_app_desc.mce_mbms_services_list, mbms_service, entries);
 
-  OAILOG_INFO(LOG_MCE_APP, "Clearing received current mbms_service %p.\n", mbms_service);
-  mce_app_clear_mbms_service(mbms_service);
-  /** Set the TMGI, MBMS Service ID and the Sm MME TEID. */
-  memcpy((void*)&mbms_service->privates.fields.tmgi, tmgi, sizeof(tmgi_t));
-  mbms_service->privates.fields.mbms_service_area_id = mbms_service_area_id;
-  mbms_service->privates.fields.mme_teid_sm = mme_sm_teid;
-  // todo: unlock the MBMS service
-  /** Add it to the back of the list. */
-  STAILQ_INSERT_TAIL(&mce_app_desc.mce_mbms_services_list, mbms_service, entries);
-
-  /** Add the MBMS Service. */
-  OAILOG_DEBUG (LOG_MCE_APP, "Allocated new MBMS service with MBMS Service Index " MBMS_SERVICE_INDEX_FMT " for MBMS Service with TMGI " TMGI_FMT". \n",
-		  mbms_service_index, TMGI_ARG(tmgi));
-  DevAssert(mce_insert_mbms_service(&mce_app_desc.mbms_services, mbms_service) == 0);
-
+    /** Add the MBMS Service. */
+    OAILOG_DEBUG (LOG_MCE_APP, "Allocated new MBMS service with MBMS Service Index " MBMS_SERVICE_INDEX_FMT " for MBMS Service with TMGI " TMGI_FMT" in MBMS SAI " MBMS_SERVICE_AREA_ID_FMT". \n",
+  		  mbms_service_index, TMGI_ARG(tmgi), mbms_service_area_id);
+    DevAssert(mce_insert_mbms_service(&mce_app_desc.mbms_services, mbms_service) == 0);
+		pthread_rwlock_unlock(&mce_app_desc.rw_lock);
+  }
   /**
    * Set the MBMS areas into the MBSFN areas, too.
    * Value should be the relative MCCH start and stop periods.
    */
-  // todo: unlock mce_desc!
   OAILOG_FUNC_RETURN (LOG_MCE_APP, mbms_service);
 }
 
@@ -250,7 +246,7 @@ mce_insert_mbms_service (
 		  (const hash_key_t)mbms_service_index, (void *)mbms_service);
 
   if (HASH_TABLE_OK != h_rc) {
-	  OAILOG_ERROR(LOG_MCE_APP, "Error could not register the MBMS Service %p with TMGI " TMGI_FMT" and MBMS Service Index " MBMS_SERVICE_INDEX_FMT ". \n",
+	  OAILOG_ERROR(LOG_MCE_APP, "Error could not register the MBMS Service (0x%p) with TMGI " TMGI_FMT" and MBMS Service Index " MBMS_SERVICE_INDEX_FMT ". \n",
 			  mbms_service, TMGI_ARG(&mbms_service->privates.fields.tmgi), mbms_service_index);
 	  OAILOG_FUNC_RETURN (LOG_MCE_APP, RETURNerror);
   }
@@ -262,7 +258,7 @@ mce_insert_mbms_service (
 			  (void *)((uintptr_t)mbms_service_index));
 
 	  if (HASH_TABLE_OK != h_rc) {
-		  OAILOG_ERROR(LOG_MCE_APP, "Error could not register the MBMS Service %p with TMGI "TMGI_FMT " and MBMS Service Index " MBMS_SERVICE_INDEX_FMT " and SM-MME TEID " TEID_FMT". \n",
+		  OAILOG_ERROR(LOG_MCE_APP, "Error could not register the MBMS Service (0x%p) with TMGI "TMGI_FMT " and MBMS Service Index " MBMS_SERVICE_INDEX_FMT " and SM-MME TEID " TEID_FMT". \n",
 				  mbms_service, TMGI_ARG(&mbms_service->privates.fields.tmgi), mbms_service_index, mbms_service->privates.fields.mme_teid_sm);
 		  OAILOG_FUNC_RETURN (LOG_MCE_APP, RETURNerror);
 	  }
@@ -340,9 +336,9 @@ mce_app_dump_mbms_service (
   if (mbms_service) {
 	mbms_service_index_t mbms_service_idx = mce_get_mbms_service_index(&mbms_service->privates.fields.tmgi, mbms_service->privates.fields.mbms_service_area_id);
     bstring                                 bstr_dump = bfromcstralloc(4096, "\n-----------------------MBMS Service context ");
-    bformata (bstr_dump, "%p --------------------\n", mbms_service);
-    bformata (bstr_dump, "    - MBMS Service Index.: " MBMS_SERVICE_INDEX_FMT "\n", mbms_service_idx);
-    bformata (bstr_dump, "    - MME Sm TEID .......: " TEID_FMT "\n", mbms_service->privates.fields.mme_teid_sm);
+    bformata (bstr_dump, "0x%p --------------------\n", mbms_service);
+    bformata (bstr_dump, "     - MBMS Service Index.: " MBMS_SERVICE_INDEX_FMT "\n", mbms_service_idx);
+    bformata (bstr_dump, "     - MME Sm TEID .......: " TEID_FMT "\n", mbms_service->privates.fields.mme_teid_sm);
     /*
      * Display MBMS Service info only if we know them
      */
@@ -460,27 +456,29 @@ mce_app_update_mbms_service (const tmgi_t * const tmgi, const mbms_service_area_
 
   /** Update the MBMS Service Area Id. */
   if(old_mbms_service_area_id != new_mbms_service_area_id) {
-	hashtable_rc_t hash_rc = HASH_TABLE_OK;
+  	hashtable_rc_t hash_rc = HASH_TABLE_OK;
     OAILOG_INFO(LOG_MCE_APP, "MBMS Service Area Id of MBMS Service for TMGI " TMGI_FMT " changed from " MBMS_SERVICE_AREA_ID_FMT " to " MBMS_SERVICE_AREA_ID_FMT ". \n",
     	TMGI_ARG(&mbms_service->privates.fields.tmgi), old_mbms_service_area_id,  new_mbms_service_area_id);
     /** Remove it from list. */
     mbms_service_index_t old_mbms_service_idx = mce_get_mbms_service_index(&tmgi, old_mbms_service_area_id);
-    // todo: LOCK HERE!!
-    if (INVALID_MBMS_SERVICE_INDEX != old_mbms_service_idx) {
-      hash_rc = hashtable_ts_remove (mce_app_desc.mce_mbms_service_contexts.mbms_service_index_mbms_service_htbl, (const hash_key_t)old_mbms_service_idx, (void **)&mbms_service);
-      if (HASH_TABLE_OK != hash_rc){
-        OAILOG_DEBUG(LOG_MCE_APP, "MBMS Service OLD MBMS Service Index " MBMS_SERVICE_INDEX_FMT " not in MCE MBMS Service Index collection", old_mbms_service_idx);
-        // todo: handle this case
-        DevAssert(0);
-      }
-      mbms_service->privates.fields.mbms_service_area_id = new_mbms_service_area_id;
-      old_mbms_service_idx = mce_get_mbms_service_index(&tmgi, new_mbms_service_area_id);
-      hash_rc = hashtable_ts_insert (mce_app_desc.mce_mbms_service_contexts.mbms_service_index_mbms_service_htbl, (const hash_key_t)old_mbms_service_idx, (void *)mbms_service);
-      if (HASH_TABLE_OK != hash_rc) {
-      	OAILOG_ERROR (LOG_MCE_APP, "Error could not register the MBMS Service %p with TMGI " TMGI_FMT" and MBMS Service Index " MBMS_SERVICE_INDEX_FMT ". \n",
-      			mbms_service, TMGI_ARG(&mbms_service->privates.fields.tmgi), old_mbms_service_idx);
-      	OAILOG_FUNC_RETURN (LOG_MCE_APP, RETURNerror);
-      }
+    if(pthread_rwlock_trywrlock(&mce_app_desc.rw_lock)){
+    	if (INVALID_MBMS_SERVICE_INDEX != old_mbms_service_idx) {
+    		hash_rc = hashtable_ts_remove (mce_app_desc.mce_mbms_service_contexts.mbms_service_index_mbms_service_htbl, (const hash_key_t)old_mbms_service_idx, (void **)&mbms_service);
+    		if (HASH_TABLE_OK != hash_rc){
+    			OAILOG_ERROR(LOG_MCE_APP, "MBMS Service OLD MBMS Service Index " MBMS_SERVICE_INDEX_FMT " not in MCE MBMS Service Index collection", old_mbms_service_idx);
+    			// todo: handle this case
+    			DevAssert(0);
+    		}
+    		mbms_service->privates.fields.mbms_service_area_id = new_mbms_service_area_id;
+    		mbms_service_index_t new_mbms_service_idx = mce_get_mbms_service_index(&tmgi, new_mbms_service_area_id);
+    		hash_rc = hashtable_ts_insert (mce_app_desc.mce_mbms_service_contexts.mbms_service_index_mbms_service_htbl, (const hash_key_t)new_mbms_service_idx, (void *)mbms_service);
+    		pthread_rwlock_unlock(&mce_app_desc.rw_lock);
+    		if (HASH_TABLE_OK != hash_rc) {
+    			OAILOG_ERROR (LOG_MCE_APP, "Error could not register the MBMS Service (0x%p) with TMGI " TMGI_FMT", MBMS SAI " MBMS_SERVICE_AREA_ID_FMT " and MBMS Service Index " MBMS_SERVICE_INDEX_FMT ". \n",
+    					mbms_service, TMGI_ARG(&mbms_service->privates.fields.tmgi), new_mbms_service_area_id, new_mbms_service_idx);
+    			OAILOG_FUNC_RETURN (LOG_MCE_APP, RETURNerror);
+    		}
+    	}
     }
   }
   /** QoS. */
@@ -502,19 +500,20 @@ void mce_app_calculate_mbms_service_mcch_periods(const long abs_start_time_in_se
   long start_delta_from_last_mcch_rep_msec  = (abs_start_time_in_sec 	- mce_app_desc.mcch_repetition_period_tv.tv_sec) * 1000;
   long start_delta_from_last_mcch_rep_usec 	= abs_start_time_usec 		- mce_app_desc.mcch_repetition_period_tv.tv_usec;
   /** Divide to length of MCCH repetition period. */
-  long mcch_rep_time_msec = mme_config.mbms.mbms_mcch_repetition_period_rf * 10; /**< Calculate in terms of milliseconds. */
+  long mcch_rep_time_msec 	= mme_config.mbms.mbms_mcch_repetition_period_rf * 10; /**< Calculate in terms of milliseconds. */
   /** Divide and ceil to get the delta of MCCH repetition periods. */
-  int start_delta_mcch_rep = (start_delta_from_last_mcch_rep_msec / mcch_rep_time_msec) +1 ;
+  int start_delta_mcch_rep 	= min((start_delta_from_last_mcch_rep_msec / mcch_rep_time_msec), 1);
+
   /**
    * Check the end!
    * It should not be before the next MCCH modification period, if so reject. */
   long stop_delta_from_last_mcch_rep_msec = ((abs_start_time_in_sec + mbms_session_duration->seconds) - mce_app_desc.mcch_repetition_period_tv.tv_sec) * 1000;
   /** Divide and ceil to get the delta of MCCH repetition periods. */
-  int stop_delta_mcch_rep = (stop_delta_from_last_mcch_rep_msec / mcch_rep_time_msec) +1 ;
+  int stop_delta_mcch_rep = min((stop_delta_from_last_mcch_rep_msec / mcch_rep_time_msec), 1) ;
 
   /** Check the next MBSFN Modification MCCH repetition number. */
   int mbsfn_mod_factor = mbsfn_area_mcch_modif_period_rf / mme_config.mbms.mbms_mcch_repetition_period_rf;
-  int mcch_modif_period_current = mce_app_desc.mcch_repetition_period / mbsfn_mod_factor;
+  int mcch_modif_period_current = mce_app_desc.mcch_repetition_period / mbsfn_mod_factor; /**< Take lower value. */
   /**
    * MBMS Service Start and Stop MCCH modification periods.
    * Start MCCH period may be the current MCCH modification period.
@@ -529,6 +528,7 @@ void mce_app_calculate_mbms_service_mcch_periods(const long abs_start_time_in_se
   if(mbms_service_mcch_period->mcch_modif_start_abs_period == mcch_modif_period_current){
   	OAILOG_WARNING(LOG_MCE_APP, "MBMS Service cannot start in current MCCH modification period (%d), start in the next one (%d).\n",
   			mcch_modif_period_current, mcch_modif_period_current+1);
+  	/** We don't alter the absolute start time in seconds. Assuming M2 eNB can handle this. */
 		mbms_service_mcch_period->mcch_modif_start_abs_period = mcch_modif_period_current+1;
   }
   mbms_service_mcch_period->mcch_modif_stop_abs_period	= (stop_delta_mcch_rep + mce_app_desc.mcch_repetition_period) / mbsfn_mod_factor;
@@ -554,14 +554,15 @@ void mce_app_calculate_mbms_service_mcch_periods(const long abs_start_time_in_se
 /*********************  L O C A L    F U N C T I O N S  *********************/
 /****************************************************************************/
 
-// todo: MBMS Service should already be locked : any way to check it?!?
+/**
+ * MCE APP Desc should already be locked.
+ */
 //------------------------------------------------------------------------------
 static
 void mce_app_clear_mbms_service(struct mbms_service_s * mbms_service) {
   OAILOG_FUNC_IN(LOG_MCE_APP);
 
   DevAssert(mbms_service != NULL);
-  // todo: lock MBMS Service
   OAILOG_INFO(LOG_MCE_APP, "Clearing MBMS Service with TMGI " TMGI_FMT ". \n", TMGI_ARG(&mbms_service->privates.fields.tmgi));
   /**
    * Clear the bearer contexts.
@@ -587,7 +588,7 @@ void mce_app_release_mbms_service(mbms_service_t ** mbms_service) {
   OAILOG_FUNC_IN (LOG_MCE_APP);
 
   /** Clear the UE context. */
-  OAILOG_INFO(LOG_MCE_APP, "Releasing the MBMS Service %p for TMGI " TMGI_FMT".\n",	*mbms_service, TMGI_ARG(&(*mbms_service)->privates.fields.tmgi));
+  OAILOG_INFO(LOG_MCE_APP, "Releasing the MBMS Service (0x%p) for TMGI " TMGI_FMT".\n",	*mbms_service, TMGI_ARG(&(*mbms_service)->privates.fields.tmgi));
   // todo: lock the mce_desc (mbms_service should already be locked)
   /** Remove the mbms_service from the list (probably at the back - must not be at the very end. */
   STAILQ_REMOVE(&mce_app_desc.mce_mbms_services_list, (*mbms_service), mbms_service_s, entries);

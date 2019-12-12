@@ -248,7 +248,7 @@ void mce_app_itti_m3ap_mbms_session_stop_request(tmgi_t *tmgi, mbms_service_area
  * M3AP eNB Setup Response.
  * After handling MBSFN area creation/update, respond to an M2AP eNB setup request.
  */
-void mce_app_itti_m3ap_enb_setup_response(mbsfn_areas_t * mbsfn_areas_p, uint32_t m2_enb_id, sctp_assoc_id_t assoc_id)
+void mce_app_itti_m3ap_enb_setup_response(mbsfn_areas_t * mbsfn_areas_p, uint8_t local_mbms_area, uint32_t m2_enb_id, sctp_assoc_id_t assoc_id)
 {
   MessageDef                             *message_p = NULL;
   int                                     rc 		= RETURNok;
@@ -260,6 +260,7 @@ void mce_app_itti_m3ap_enb_setup_response(mbsfn_areas_t * mbsfn_areas_p, uint32_
   memcpy((void*)&m3ap_enb_setup_res_p->mbsfn_areas, mbsfn_areas_p, sizeof(mbsfn_areas_t));
   m3ap_enb_setup_res_p->sctp_assoc = assoc_id;
   m3ap_enb_setup_res_p->m2_enb_id  = m2_enb_id;
+  m3ap_enb_setup_res_p->local_mbms_area = local_mbms_area;
   itti_send_msg_to_task (TASK_M2AP, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT (LOG_MCE_APP);
 }
@@ -268,10 +269,8 @@ void mce_app_itti_m3ap_enb_setup_response(mbsfn_areas_t * mbsfn_areas_p, uint32_
 /**
  * M3AP MBMS Scheduling Information
  * Send for expired MBSFN areas, before the beginning of their MCCH modification periods the, updated, CSA pattern.
- *
- * todo: cluster specific MCCH modification absolute value..
  */
-void mce_app_itti_m3ap_send_mbms_scheduling_info(mbsfn_areas_t* mbsfn_areas_p, uint8_t mbms_service_areas, long mcch_rep_period_abs)
+void mce_app_itti_m3ap_send_mbms_scheduling_info(const mbsfn_areas_t* const mbsfn_areas_p, const uint8_t max_mbms_areas, const long mcch_rep_abs_rf)
 {
   MessageDef                             *message_p = NULL;
   int                                     rc 		= RETURNok;
@@ -281,22 +280,20 @@ void mce_app_itti_m3ap_send_mbms_scheduling_info(mbsfn_areas_t* mbsfn_areas_p, u
   DevAssert (message_p != NULL);
   itti_m3ap_mbms_scheduling_info_t *m3ap_mbms_scheduling_info = &message_p->ittiMsg.m3ap_mbms_scheduling_info;
   /** Fill the MBMS Scheduling Information. */
-  m3ap_mbms_scheduling_info->mcch_rep_rf = mcch_rep_period_abs; // todo: make this MCCH modif!!
-  for(uint8_t num_mbms_service_area = 0; num_mbms_service_area < mbms_service_areas; num_mbms_service_area++) {
+  m3ap_mbms_scheduling_info->mcch_rep_abs_rf = mcch_rep_abs_rf;
+  for(uint8_t num_mbms_service_area = 0; num_mbms_service_area < max_mbms_areas; num_mbms_service_area++) {
   	/** Fill the message. */
   	if(mbsfn_areas_p[num_mbms_service_area].num_mbsfn_areas){
   		/** Copy all MBSFN Area configuration, no matter if it is set or not. */
   		for(int num_mbsfn_area = 0; num_mbsfn_area < mbsfn_areas_p[num_mbms_service_area].num_mbsfn_areas; num_mbsfn_area++) {
   			/** Check if the MBSFN area id is set. */
-  			if(mbsfn_areas_p[num_mbms_service_area].mbsfn_area_cfg[num_mbms_service_area].mbsfnArea.mbsfn_area_id != INVALID_MBSFN_AREA_ID){
-  				mbsfn_area_cfg_t * mbsfn_area_cfg = &m3ap_mbms_scheduling_info->mbsfn_cluster[m3ap_mbms_scheduling_info->num_mbsfn_clusters].mbsfn_area_cfg[m3ap_mbms_scheduling_info->mbsfn_cluster[m3ap_mbms_scheduling_info->num_mbsfn_clusters].num_mbsfn_areas];
-  				memcpy((void*)mbsfn_area_cfg, (void*)&mbsfn_areas_p[num_mbms_service_area].mbsfn_area_cfg[num_mbms_service_area], sizeof(mbsfn_area_cfg_t));
+  			if(mbsfn_areas_p[num_mbms_service_area].mbsfn_area_cfg[num_mbsfn_area].mbsfnArea.mbsfn_area_id != INVALID_MBSFN_AREA_ID){
+  				mbsfn_area_cfg_t * mbsfn_area_cfg = &m3ap_mbms_scheduling_info->mbsfn_cluster[num_mbms_service_area].mbsfn_area_cfg[m3ap_mbms_scheduling_info->mbsfn_cluster[num_mbms_service_area].num_mbsfn_areas];
+  				memcpy((void*)mbsfn_area_cfg, (void*)&mbsfn_areas_p[num_mbms_service_area].mbsfn_area_cfg[num_mbsfn_area], sizeof(mbsfn_area_cfg_t));
   				/** Increase the number of MBSFN areas in the cluster. */
-  				m3ap_mbms_scheduling_info->mbsfn_cluster[m3ap_mbms_scheduling_info->num_mbsfn_clusters].num_mbsfn_areas++;
+  				m3ap_mbms_scheduling_info->mbsfn_cluster[num_mbms_service_area].num_mbsfn_areas++;
   			}
   		}
-  		/** Increase the counter for the MBSFN clusters. */
-  		m3ap_mbms_scheduling_info->num_mbsfn_clusters++;
   	}
   }
   itti_send_msg_to_task (TASK_M2AP, INSTANCE_DEFAULT, message_p);

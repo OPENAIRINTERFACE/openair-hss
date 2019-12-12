@@ -489,27 +489,15 @@ m2ap_generate_m2_setup_response (
   	/** MBSFN Area Id. */
   	mbsfnCfgItem->mbsfnArea = mbsfn_areas->mbsfn_area_cfg[num_mbsfn].mbsfnArea.mbsfn_area_id;
   	mbsfnCfgItem->pdcchLength = 2;
-  	mbsfnCfgItem->repetitionPeriod   = mbsfn_areas->mbsfn_area_cfg[num_mbsfn].mbsfnArea.mcch_repetition_period_rf;
-//  	mbsfnCfgItem->subframeAllocationInfo = mbsfn_areas->mbsfn_area_cfg[num_mbsfn].mbsfnArea.mbms_mcch_subframes;
-  	// todo: offset..
-  	mbsfnCfgItem->modificationPeriod = mbsfn_areas->mbsfn_area_cfg[num_mbsfn].mbsfnArea.mcch_modif_period_rf;
-  	/** Set it in the M2 ENB Description element. */
-  	m2ap_enb_association->mbsfn_area_ids.mbsfn_area_id[m2ap_enb_association->mbsfn_area_ids.num_mbsfn_area_ids]
-  				= mbsfn_areas->mbsfn_area_cfg[num_mbsfn].mbsfnArea.mbsfn_area_id;
-  	m2ap_enb_association->mbsfn_area_ids.mbms_service_area_id[m2ap_enb_association->mbsfn_area_ids.num_mbsfn_area_ids]
-					= mbsfn_areas->mbsfn_area_cfg[num_mbsfn].mbsfnArea.mbms_service_area_id;
-  	m2ap_enb_association->mbsfn_area_ids.num_mbsfn_area_ids++;
-
+  	mbsfnCfgItem->repetitionPeriod = log2(mbsfn_areas->mbsfn_area_cfg[num_mbsfn].mbsfnArea.mcch_repetition_period_rf / get_csa_period_rf(CSA_PERIOD_RF32));
+  	mbsfnCfgItem->modificationPeriod = log2(mbsfn_areas->mbsfn_area_cfg[num_mbsfn].mbsfnArea.mcch_modif_period_rf / 512);
+  	mbsfnCfgItem->modulationAndCodingScheme = mbsfn_areas->mbsfn_area_cfg[num_mbsfn].mbsfnArea.mbms_mcch_msi_mcs;
+  	ONE_FRAME_ITEM_SF_TO_BIT_STRING(mbsfn_areas->mbsfn_area_cfg[num_mbsfn].mbsfnArea.mbms_mcch_csa_pattern_1rf, &mbsfnCfgItem->subframeAllocationInfo);
+  	mbsfnCfgItem->offset = COMMON_CSA_PATTERN;
   	/**
   	 * Subframes, where MCCH could exist for this MBSFN areas.
   	 * Set the 6 leftmost bits.
   	 */
-//  	uint32_t target_enb_id = s1ap_mme_configuration_transfer_pP->target_global_enb_id.cell_identity.enb_id;
-//  	target_enb_id = target_enb_id <<4;
-//  	uint32_t target_enb_id1 = htonl(target_enb_id << 8);
-  	ONE_FRAME_ITEM_SF_TO_BIT_STRING(mbsfn_areas->mbsfn_area_cfg[num_mbsfn].mbsfnArea.mbms_mcch_subframes,
-  			&mbsfnCfgItem->subframeAllocationInfo);
-  	  	mbsfnCfgItem->modulationAndCodingScheme = mbsfn_areas->mbsfn_area_cfg[num_mbsfn].mbsfnArea.mbms_mcch_msi_mcs;
   	ASN_SEQUENCE_ADD(&ie->value.choice.MCCHrelatedBCCH_ConfigPerMBSFNArea.list, mbsfnCfgItem);
   }
 
@@ -554,6 +542,19 @@ int m2ap_handle_m3ap_enb_setup_res(itti_m3ap_enb_setup_res_t * m3ap_enb_setup_re
   }
 	m2ap_dump_enb (m2ap_enb_association);
   OAILOG_INFO(LOG_M2AP, "MBSFN area could be associated for eNB %d. M2 Setup succeeded. \n", m3ap_enb_setup_res->sctp_assoc);
+  /**
+   * Update the MBSFN and MBMS areas.
+   */
+  m2ap_enb_association->local_mbms_area = m3ap_enb_setup_res->local_mbms_area;
+  for(int num_mbsfn = 0; num_mbsfn < m3ap_enb_setup_res->mbsfn_areas.num_mbsfn_areas; num_mbsfn++) {
+  	/** Set it in the M2 ENB Description element. */
+  	m2ap_enb_association->mbsfn_area_ids.mbsfn_area_id[m2ap_enb_association->mbsfn_area_ids.num_mbsfn_area_ids] =
+  			m3ap_enb_setup_res->mbsfn_areas.mbsfn_area_cfg[num_mbsfn].mbsfnArea.mbsfn_area_id;
+  	m2ap_enb_association->mbsfn_area_ids.mbms_service_area_id[m2ap_enb_association->mbsfn_area_ids.num_mbsfn_area_ids] =
+  			m3ap_enb_setup_res->mbsfn_areas.mbsfn_area_cfg[num_mbsfn].mbsfnArea.mbms_service_area_id;
+  	m2ap_enb_association->mbsfn_area_ids.num_mbsfn_area_ids++;
+  }
+
   rc =  m2ap_generate_m2_setup_response (m2ap_enb_association, &m3ap_enb_setup_res->mbsfn_areas);
   if (rc == RETURNok) {
   	update_mme_app_stats_connected_enb_add();

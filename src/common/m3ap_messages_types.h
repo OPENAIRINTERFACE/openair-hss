@@ -115,6 +115,7 @@ typedef struct itti_m3ap_enb_setup_req_s {
 //------------------------------------------------------------------------------
 typedef struct itti_m3ap_enb_setup_res_s {
 	uint32_t								  m2_enb_id;
+	uint8_t										local_mbms_area;
   sctp_assoc_id_t		    		sctp_assoc;
   mbsfn_areas_t		  				mbsfn_areas;
 } itti_m3ap_enb_setup_res_t;

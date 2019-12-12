@@ -70,13 +70,15 @@ int mce_app_check_mbms_service_resources(const mbms_service_index_t mbms_service
 
 //------------------------------------------------------------------------------
 static
-int mce_app_check_shared_resources(mbms_service_index_t mbms_service_index, const mbsfn_area_id_t mbsfn_area_id, mbms_service_indexes_t * const mbms_service_indexes_tbr);
+int mce_app_check_shared_resources(const mbms_service_index_t mbms_service_index, const mbsfn_area_id_t mbsfn_area_id, mbms_service_indexes_t * const mbms_service_indexes_tbr);
 
 //------------------------------------------------------------------------------
 static
 int mce_app_check_mbsfn_cluster_capacity(const mbms_service_index_t mbms_service_index, const mbsfn_area_id_t mbsfn_area_id,
-		mbms_service_indexes_t				*mbms_service_indexes_active_nlg_p,
-		mbms_service_indexes_t				*mbms_service_indexes_active_local_p,
+		const mbsfn_area_ids_t	  		*const mbsfn_area_ids_nlg_p,
+		const mbsfn_area_ids_t				*const mbsfn_area_ids_local_p,
+		mbms_service_indexes_t				*const mbms_service_indexes_active_nlg_p,
+		mbms_service_indexes_t				*const mbms_service_indexes_active_local_p,
 		mbms_service_indexes_t 				*const mbms_services_tbr);
 
 //------------------------------------------------------------------------------
@@ -96,7 +98,7 @@ mce_app_handle_mbms_session_start_request(
   MessageDef                             *message_p  									= NULL;
   teid_t 								 									mme_sm_teid									= INVALID_TEID;
   mbms_service_t 						 						 *mbms_service 								= NULL;
-  mbms_service_index_t 					  				mbms_service_idx      			= INVALID_MBMS_SERVICE_INDEX;
+  mbms_service_index_t 					  				new_mbms_service_idx      	= INVALID_MBMS_SERVICE_INDEX;
   mme_app_mbms_proc_t				 	 					 *mbms_sm_proc 								= NULL;
   mbms_service_area_id_t 			      			mbms_service_area_id 				= INVALID_MBMS_SERVICE_AREA_ID;
   mbsfn_area_ids_t												mbsfn_area_ids							= {0};
@@ -111,7 +113,6 @@ mce_app_handle_mbms_session_start_request(
 	 	   &mbms_session_start_request_pP->mbms_peer_ip, mbms_session_start_request_pP->trxn, REQUEST_REJECTED);
     OAILOG_FUNC_OUT (LOG_MCE_APP);
   }
-
   /**
    * Check if the MBMS Service Area and PLMN is served. No TA/CELL List will be checked.
    * The MME/MCE supports per Sm message only one MBMS Service Area.
@@ -134,7 +135,8 @@ mce_app_handle_mbms_session_start_request(
 
   /**
    * Check that MBSFN area for the MBMS service area is existing.
-   * Multiple MBSFN Areas might be active for one MBMS Service Area Id
+   * Multiple MBSFN Areas might be active for one MBMS Service Area Id, if the local-global flag is active
+   * (Depending on eNBs which have a location information, and others which don't.
    */
   mce_mbsfn_areas_exists_mbms_service_area_id(&mce_app_desc.mce_mbsfn_area_contexts, mbms_service_area_id, &mbsfn_area_ids);
   if(!mbsfn_area_ids.num_mbsfn_area_ids){
@@ -175,7 +177,7 @@ mce_app_handle_mbms_session_start_request(
   /** Check that the MBMS Bearer QoS is a valid GBR. */
   if(!is_qci_gbr(mbms_session_start_request_pP->mbms_bearer_level_qos.qci)){
     /** Return error, no modification on non-GBR is allowed. */
-  	OAILOG_ERROR(LOG_MCE_APP, "Non-GBR MBMS Bearer Level QoS (qci=%d) not supported. Rejecting MBMS Service Request for TMGI " TMGI_FMT ". \n",
+  	OAILOG_ERROR(LOG_MCE_APP, "Non-GBR MBMS Bearer Level QoS (QCI=%d) not supported. Rejecting MBMS Service Request for TMGI " TMGI_FMT ". \n",
 			mbms_session_start_request_pP->mbms_bearer_level_qos.qci, TMGI_ARG(&mbms_session_start_request_pP->tmgi));
   	mce_app_itti_sm_mbms_session_start_response(INVALID_TEID, mbms_session_start_request_pP->sm_mbms_fteid.teid, &mbms_session_start_request_pP->mbms_peer_ip, mbms_session_start_request_pP->trxn, REQUEST_REJECTED);
   	/** No MBMS service or tunnel endpoint is allocated yet. */
@@ -252,17 +254,17 @@ mce_app_handle_mbms_session_start_request(
    * Update the MBMS service in the MBSFN areas.
    * MBMS services, where the MBMS area id has changed, will be removed from the MBSFN areas and deactivated in the eNBs immediately.
    */
-  mbms_service_index_t mbms_service_index = mce_get_mbms_service_index(&mbms_session_start_request_pP->tmgi, mbms_service_area_id);
-  if(mce_app_update_mbsfn_area_registration(mbms_service_idx, INVALID_MBMS_SERVICE_INDEX,
+  new_mbms_service_idx = mce_get_mbms_service_index(&mbms_session_start_request_pP->tmgi, mbms_service_area_id);
+  if(mce_app_update_mbsfn_area_registration(new_mbms_service_idx, INVALID_MBMS_SERVICE_INDEX,
   		mbms_session_start_request_pP->abs_start_time.sec_since_epoch,
 			mbms_session_start_request_pP->abs_start_time.usec,
-			&mbms_session_start_request_pP->mbms_session_duration) == RETURNerror)
+			&mbms_session_start_request_pP->mbms_session_duration,
+			&mbsfn_area_ids) == RETURNerror)
   {
   	/** Error updating the MBMS service in the MBSFN areas. */
   	OAILOG_ERROR(LOG_MCE_APP, "Resource check for updated MBMS Service context with TMGI " TMGI_FMT " and MBMS Service Area " MBMS_SERVICE_AREA_ID_FMT " failed. "
-  			"Rejecting Sm MBMS Session Start Request. \n", TMGI_ARG(&mbms_session_start_request_pP->tmgi), new_mbms_service_area_id);
-  	mce_app_stop_mbms_service(&mbms_service->privates.fields.tmgi,
-  			mbms_service->privates.fields.mbms_service_area_id, mme_sm_teid, NULL);
+  			"Rejecting Sm MBMS Session Start Request. \n", TMGI_ARG(&mbms_session_start_request_pP->tmgi), mbms_service_area_id);
+  	mce_app_stop_mbms_service(&mbms_service->privates.fields.tmgi, mbms_service->privates.fields.mbms_service_area_id, mme_sm_teid, NULL);
     mce_app_itti_sm_mbms_session_stop_response(mbms_session_start_request_pP->teid, mbms_session_start_request_pP->sm_mbms_fteid.teid, &mbms_session_start_request_pP->mbms_peer_ip, mbms_session_start_request_pP->trxn, REQUEST_REJECTED);
     OAILOG_FUNC_OUT (LOG_MCE_APP);
   }
@@ -270,11 +272,10 @@ mce_app_handle_mbms_session_start_request(
   /**
    * If we have multiple MBSFN areas, check for their resources separately.
    */
-  if(!mce_app_check_mbms_service_resources(mbms_service_index, mbms_service_area_id, &mbsfn_area_ids)){
+  if(!mce_app_check_mbms_service_resources(new_mbms_service_idx, mbms_service_area_id, &mbsfn_area_ids)){
   	OAILOG_ERROR(LOG_MCE_APP, "Resource check for new MBMS Service context with TMGI " TMGI_FMT " and MBMS Service Area " MBMS_SERVICE_AREA_ID_FMT " failed. "
   			"Rejecting Sm MBMS Session Start Request. \n", TMGI_ARG(&mbms_session_start_request_pP->tmgi), mbms_service_area_id);
-  	mce_app_stop_mbms_service(&mbms_service->privates.fields.tmgi,
-  			mbms_service->privates.fields.mbms_service_area_id, mme_sm_teid, NULL);
+  	mce_app_stop_mbms_service(&mbms_service->privates.fields.tmgi, mbms_service->privates.fields.mbms_service_area_id, mme_sm_teid, NULL);
     mce_app_itti_sm_mbms_session_start_response(INVALID_TEID, mbms_session_start_request_pP->sm_mbms_fteid.teid, &mbms_session_start_request_pP->mbms_peer_ip, mbms_session_start_request_pP->trxn, SYSTEM_FAILURE);
     OAILOG_FUNC_OUT (LOG_MCE_APP);
   }
@@ -323,7 +324,7 @@ mce_app_handle_mbms_session_update_request(
   MessageDef                             *message_p  								= NULL;
   mbms_service_t 												 *mbms_service 							= NULL;
   mme_app_mbms_proc_t					 					 *mbms_sm_proc 							= NULL;
-  mbms_service_index_t 									  mbms_service_idx  				= INVALID_MBMS_SERVICE_INDEX;
+  mbms_service_index_t 									  old_mbms_service_idx	   	= INVALID_MBMS_SERVICE_INDEX;
   teid_t 								  								mme_sm_teid								= INVALID_TEID;
   mbms_service_area_id_t 			      			new_mbms_service_area_id 	= INVALID_MBMS_SERVICE_AREA_ID,
   																				old_mbms_service_area_id 	= INVALID_MBMS_SERVICE_AREA_ID;
@@ -473,17 +474,21 @@ mce_app_handle_mbms_session_update_request(
    * TODO: REMOVE ANY MBMS service, immediately, if the MBMS service area id has changed.
    */
   old_mbms_service_area_id = mbms_service->privates.fields.mbms_service_area_id;
+  old_mbms_service_idx = mce_get_mbms_service_index(&mbms_service->privates.fields.tmgi, mbms_service->privates.fields.mbms_service_area_id);
+  mbms_service_index_t new_mbms_service_index = mce_get_mbms_service_index(&mbms_session_update_request_pP->tmgi, new_mbms_service_area_id);
   mce_app_update_mbms_service(&mbms_service->privates.fields.tmgi, mbms_service->privates.fields.mbms_service_area_id, new_mbms_service_area_id,
-  		&mbms_session_update_request_pP->mbms_bearer_level_qos, mbms_service->privates.fields.mbms_flow_id, NULL, NULL, NULL);
+  		&mbms_session_update_request_pP->mbms_bearer_level_qos, mbms_service->privates.fields.mbms_flow_id, NULL, NULL);
 
   /**
    * Update the MBMS service in the MBSFN areas.
    * MBMS services, where the MBMS area id has changed, will be removed from the MBSFN areas and deactivated in the eNBs immediately.
    */
-  if(mce_app_update_mbsfn_area_registration(mbms_service_idx,
+
+  if(mce_app_update_mbsfn_area_registration(old_mbms_service_idx, new_mbms_service_index,
   		mbms_session_update_request_pP->abs_update_time.sec_since_epoch,
 			mbms_session_update_request_pP->abs_update_time.usec,
-			&mbms_session_update_request_pP->mbms_session_duration) == RETURNerror)
+			&mbms_session_update_request_pP->mbms_session_duration,
+			&mbsfn_area_ids) == RETURNerror)
   {
   	/** Error updating the MBMS service in the MBSFN areas. */
   	OAILOG_ERROR(LOG_MCE_APP, "Resource check for updated MBMS Service context with TMGI " TMGI_FMT " and MBMS Service Area " MBMS_SERVICE_AREA_ID_FMT " failed. "
@@ -497,8 +502,7 @@ mce_app_handle_mbms_session_update_request(
   /**
    * Check the resources also in the MBMS Session Update case.
    */
-  mbms_service_index_t mbms_service_index = mce_get_mbms_service_index(&mbms_session_update_request_pP->tmgi, new_mbms_service_area_id);
-  if(mce_app_check_mbms_service_resources(mbms_service_index, new_mbms_service_area_id, mcch_modif_periods) == RETURNerror){
+  if(mce_app_check_mbms_service_resources(new_mbms_service_index, new_mbms_service_area_id, &mbsfn_area_ids) == RETURNerror){
   	OAILOG_ERROR(LOG_MCE_APP, "Resource check for updated MBMS Service context with TMGI " TMGI_FMT " and MBMS Service Area " MBMS_SERVICE_AREA_ID_FMT " failed. "
   			"Rejecting Sm MBMS Session Update Request. \n", TMGI_ARG(&mbms_session_update_request_pP->tmgi), new_mbms_service_area_id);
   	mce_app_stop_mbms_service(&mbms_service->privates.fields.tmgi,
@@ -611,7 +615,7 @@ void
   int local_mbms_service_area = mce_app_get_local_mbsfn_areas(&m3ap_enb_setup_req_p->mbms_service_areas,  m3ap_enb_setup_req_p->m2ap_enb_id, m3ap_enb_setup_req_p->sctp_assoc, &mbsfn_areas);
   mce_app_get_global_mbsfn_areas(&m3ap_enb_setup_req_p->mbms_service_areas, m3ap_enb_setup_req_p->m2ap_enb_id, m3ap_enb_setup_req_p->sctp_assoc, &mbsfn_areas, local_mbms_service_area);
   /** Send the resulting MBSFN areas for the eNB back. */
-  mce_app_itti_m3ap_enb_setup_response(&mbsfn_areas, m3ap_enb_setup_req_p->m2ap_enb_id, m3ap_enb_setup_req_p->sctp_assoc);
+  mce_app_itti_m3ap_enb_setup_response(&mbsfn_areas,local_mbms_service_area, m3ap_enb_setup_req_p->m2ap_enb_id, m3ap_enb_setup_req_p->sctp_assoc);
   OAILOG_FUNC_OUT (LOG_MCE_APP);
 }
 
@@ -621,10 +625,10 @@ mce_app_handle_mbsfn_mcch_repetition_timeout_timer_expiry (hash_table_ts_t * con
 {
   OAILOG_FUNC_OUT (LOG_MCE_APP);
 
-  mbsfn_area_context_t						*mbsfn_area_context 											= NULL;
 	struct csa_patterns_s 					 csa_patterns_global 											= {0};
 	long		 												 mcch_rep_abs_rf													= 0;
-	uint8_t													 mbms_global_mbsfn_area_per_local_group		= 0;
+	mbms_service_indexes_t				 	 mbms_service_indexes_active_nlg 					= {0},
+																	*mbms_service_indexes_active_nlg_p 				= &mbms_service_indexes_active_nlg;
 
 	if(!pthread_rwlock_trywrlock(&mce_app_desc.rw_lock)) {
 		OAILOG_ERROR(LOG_MCE_APP, "MCE APP: Could not retrieve the MCE desc lock. \n");
@@ -637,7 +641,7 @@ mce_app_handle_mbsfn_mcch_repetition_timeout_timer_expiry (hash_table_ts_t * con
 	 * Below is an absolute value of the MBSFN Sycn Area common MCCH repetition timer.
 	 */
 	mme_config_read_lock (&mme_config);
-	mbms_global_mbsfn_area_per_local_group = mme_config.mbms.mbms_global_mbsfn_area_per_local_group;
+	uint8_t mbms_global_mbsfn_area_per_local_group = mme_config.mbms.mbms_global_mbsfn_area_per_local_group;
 	uint8_t max_mbms_local_areas = mme_config.mbms.mbms_local_service_areas;
 	mbsfn_area_ids_t 	mbsfn_area_id_clusters[mme_config.mbms.mbms_local_service_areas +1]; /**< O: non-local global MBMS areas. */
 	memset((void*)mbsfn_area_id_clusters, 0, sizeof(mbsfn_area_id_clusters));
@@ -658,73 +662,80 @@ mce_app_handle_mbsfn_mcch_repetition_timeout_timer_expiry (hash_table_ts_t * con
 	hashtable_ts_apply_callback_on_elements((hash_table_ts_t * const)mce_app_desc.mce_mbsfn_area_contexts.mbsfn_area_id_mbsfn_area_htbl,
 			mce_app_get_mbsfn_groups, (void*)NULL, (void**)&mbsfn_area_id_clusters);
 
-	if(mbsfn_area_id_clusters[0].num_mbsfn_area_ids)
-	{
-		/** CSA pattern common will be calculated. */
-		struct csa_pattern_s 		csa_pattern_common = {0};
-		if(mce_app_calculate_csa_common_pattern(&mbsfn_area_id_clusters[0], NULL, &csa_pattern_common) == RETURNerror){
-			DevMessage("Error during common CSA calculation should not exist!");
-		}
-		/**
-		 * Calculate the resources in the non-local global MBMS areas.
-		 */
-		if(mce_app_schedule_mbsfn_resources(&mbsfn_area_id_clusters[0], &csa_pattern_common,
-				&csa_patterns_global, mcch_rep_abs_rf, &mbsfn_clusters_to_schedule[0]) == RETURNerror)
-		{
-			OAILOG_ERROR(LOG_MCE_APP,"Could not schedule the given (%d) non-local global MBSFN areas.\n", mbsfn_area_id_clusters[0].num_mbsfn_area_ids);
-			OAILOG_FUNC_RETURN(LOG_MCE_APP, RETURNerror);
-		}
-		OAILOG_INFO(LOG_MCE_APP,"Successfully scheduled given (%d) non-local global MBSFN areas. Checking the local MBSFN areas.\n", nlglobal_mbsfn_area_ids->num_mbsfn_area_ids);
-	}
-
 	/**
-	 * Handle the local MBMS areas.
-	 * Take the above handled non-local global MBSFN areas into account.
-	 * Calculate the MCHs of the given local MBMS services.
-	 * Take the first MBSFN area context, to get the phy layer properties, for all global MBMS services..
+	 * For each group, we assume same PHY properties and MCCH modification timeouts.
+	 * Furthermore, if we have no local global flag active, the properties are also shared with the non-local global MBSFN areas.
+	 * Thus: all physical properties are same (or no global MBSFN areas exist).
+	 * First do the non-local global MBSFN areas.
 	 */
-	for(int num_local_mbms_areas = 1; num_local_mbms_areas <= max_mbms_local_areas; num_local_mbms_areas++)
-	{
+
+	mcch_modification_periods_t mcch_modification_periods_nlg 	= {0};
+	mcch_modification_periods_t mcch_modification_periods_local = {0};
+	/** Collect the non-local global active MBMS services. */
+	for( int num_mbsfn_nlg = 0; num_mbsfn_nlg < mbsfn_area_id_clusters[0].num_mbsfn_area_ids; num_mbsfn_nlg++){
+		mbsfn_area_context_t * mbsfn_area_context_nlg_p = mce_mbsfn_area_exists_mbsfn_area_id(&mce_app_desc.mce_mbsfn_area_contexts, mbsfn_area_id_clusters[0].mbsfn_area_id[num_mbsfn_nlg]);
+		DevAssert(mbsfn_area_context_nlg_p);
+		/** Get the MCCH modification start ABS period. */
+		mcch_modification_periods_nlg.mcch_modif_start_abs_period = mcch_rep_abs_rf / mbsfn_area_context_nlg_p->privates.fields.mbsfn_area.mcch_modif_period_rf;
+		mcch_modification_periods_nlg.mcch_modif_stop_abs_period 	= mcch_rep_abs_rf / mbsfn_area_context_nlg_p->privates.fields.mbsfn_area.mcch_modif_period_rf;
 		/**
-		 * Check if MBSFN areas with resources exist for given local MBMS area.
+		 * No matter if the MCCH modification boundary has been reached or not. Calculate the resources assigned for the services of the MBSFN areas.
+		 * At the end, send the message for MCCH modification boundary MBSFN areas.
 		 */
-		if(!mbsfn_area_id_clusters[num_local_mbms_areas].num_mbsfn_area_ids){
+		hashtable_apply_callback_on_elements(mbsfn_area_context_nlg_p->privates.mbms_service_idx_mcch_modification_times_hashmap,
+				mce_app_get_active_mbms_services_per_mbsfn_area, (void*)&mcch_modification_periods_nlg, (void**)&mbms_service_indexes_active_nlg_p);
+	}
+	if(mbsfn_area_id_clusters[0].num_mbsfn_area_ids){
+		/**
+		 * No matter if services scheduled or not, schedule resources for the MBSNF area.
+		 * We should have checked beforehand, if the capacity overall is enough. So no capacity errors are expected.
+		 */
+		if(mce_app_check_mbsfn_cluster_resources(&mbsfn_area_id_clusters[0], NULL, &mbms_service_indexes_active_nlg, NULL, &mbsfn_clusters_to_schedule[0]) == RETURNerror){
+			OAILOG_ERROR(LOG_MCE_APP,"Error assigning the resources for the (%d) non-local global MBSFN areas. Resources should be validated for the MBMS service at service request time!\n", mbsfn_area_id_clusters[0].num_mbsfn_area_ids);
+			DevAssert(0);
+		}
+	}
+	OAILOG_INFO(LOG_MCE_APP,"Successfully scheduled given (%d) non-local global MBSFN areas. Checking the local MBSFN areas.\n",  mbsfn_area_id_clusters[0].num_mbsfn_area_ids);
+	/**
+	 * If the non-local global flag is active, the above calculated resources will be taken into account for each local MBMS area, too.
+	 */
+	for(int num_local_mbms_area = 1; num_local_mbms_area < max_mbms_local_areas + 1; num_local_mbms_area++)
+	{
+		mbms_service_indexes_t				 	 mbms_service_indexes_active_local				= {0},
+																		*mbms_service_indexes_active_local_p			= &mbms_service_indexes_active_local;
+		/** Check if MBSFN areas with resources exist for given local MBMS area. */
+		if(!mbsfn_area_id_clusters[num_local_mbms_area].num_mbsfn_area_ids){
+			OAILOG_DEBUG(LOG_MCE_APP, "No MBSFN areas for scheduling in local MBMS area (%d).\n", num_local_mbms_area);
 			continue;
 		}
-		struct csa_pattern_s 		csa_pattern_common 					= {0};
-		mbsfn_area_ids_t       *nlglobal_mbsfn_area_ids_p		= mbms_global_mbsfn_area_per_local_group ? &mbsfn_area_id_clusters[0] : NULL;
-		/** Initialize the local CSA patterns union of the local cluster, depending on the configuration. */
-		struct csa_patterns_s 	csa_patterns_local					= {0};
-		if(mce_app_calculate_csa_common_pattern(nlglobal_mbsfn_area_ids_p, &mbsfn_area_id_clusters[num_local_mbms_areas], &csa_pattern_common) == RETURNerror)
-		{
-			DevMessage("Error during common CSA calculation for local MBMS area " + num_local_mbms_areas + " should not exist!");
+		for(int num_mbsfn_local = 0; num_mbsfn_local < mbsfn_area_id_clusters[0].num_mbsfn_area_ids; num_mbsfn_local++){
+			mbsfn_area_context_t * mbsfn_area_context_local_p = mce_mbsfn_area_exists_mbsfn_area_id(&mce_app_desc.mce_mbsfn_area_contexts, mbsfn_area_id_clusters[num_local_mbms_area].mbsfn_area_id[num_mbsfn_local]);
+			DevAssert(mbsfn_area_context_local_p);
+			/** Get the MCCH modification start ABS period. */
+			mcch_modification_periods_local.mcch_modif_start_abs_period = mcch_rep_abs_rf / mbsfn_area_context_local_p->privates.fields.mbsfn_area.mcch_modif_period_rf;
+			mcch_modification_periods_local.mcch_modif_stop_abs_period 	= mcch_rep_abs_rf / mbsfn_area_context_local_p->privates.fields.mbsfn_area.mcch_modif_period_rf;
+			/**
+			 * No matter if the MCCH modification boundary has been reached or not. Calculate the resources assigned for the services of the MBSFN areas.
+			 * At the end, send the message for MCCH modification boundary MBSFN areas.
+			 */
+			hashtable_apply_callback_on_elements(mbsfn_area_context_local_p->privates.mbms_service_idx_mcch_modification_times_hashmap,
+					mce_app_get_active_mbms_services_per_mbsfn_area, (void*)&mcch_modification_periods_local, (void**)&mbms_service_indexes_active_local_p);
 		}
 		/**
-		 * Calculate the resources in the non-local global MBMS areas.
+		 * Calculate for the summed area the capacity and set the MCH subframes.
+		 * Take into account the local/global flag.
 		 */
-		if(mce_app_schedule_mbsfn_resources(&mbsfn_area_id_clusters[num_local_mbms_areas],
-				&csa_pattern_common,
-				&csa_patterns_global,
-				0,
-				mcch_rep_abs_rf,
-				&mbsfn_clusters_to_schedule[num_local_mbms_areas]) == RETURNerror)
-		{
-			OAILOG_ERROR(LOG_MCE_APP,"Could not schedule the given (%d) non-local global MBSFN areas.\n", mbsfn_area_id_clusters[num_local_mbms_areas].num_mbsfn_area_ids);
-			OAILOG_FUNC_RETURN(LOG_MCE_APP, RETURNerror);
+		if(mce_app_check_mbsfn_cluster_resources(
+				(mbms_global_mbsfn_area_per_local_group ? NULL : &mbsfn_area_id_clusters[0]),
+				&mbsfn_area_id_clusters[num_local_mbms_area],
+				(mbms_global_mbsfn_area_per_local_group ? NULL : &mbms_service_indexes_active_nlg),
+				mbms_service_indexes_active_local_p,
+				/** Assign the resources to the MBMS local area index. */
+				&mbsfn_clusters_to_schedule[num_local_mbms_area]) == RETURNerror){
+			OAILOG_ERROR(LOG_MCE_APP,"Error assigning the resources for the (%d) local MBSFN areas in local MBMS area (%d). Resources should be validated for the MBMS service at service request time!\n", mbsfn_area_id_clusters[num_local_mbms_area].num_mbsfn_area_ids, num_local_mbms_area);
+			DevAssert(0);
 		}
-		OAILOG_INFO(LOG_MCE_APP,"Successfully scheduled given (%d) non-local global MBSFN areas. Checking the local MBSFN areas.\n", nlglobal_mbsfn_area_ids->num_mbsfn_area_ids);
-		/** Schedule the local MBSFN areas. */
-		if(mce_app_schedule_mbsfn_resources(&mbsfn_area_id_clusters[num_local_mbms_areas],
-				&csa_pattern_common,
-				&csa_patterns_local,
-				mbms_global_mbsfn_area_per_local_group ? csa_patterns_global.total_csa_pattern_offset : 0,
-				mcch_rep_abs_rf,
-				&mbsfn_clusters_to_schedule[num_local_mbms_areas]) == RETURNerror)
-		{
-			OAILOG_ERROR(LOG_MCE_APP,"Could not schedule given local MBSFN area (%d).\n", local_mbsfn_area_ids->num_mbsfn_area_ids);
-			OAILOG_FUNC_RETURN(LOG_MCE_APP, RETURNerror);
-		}
-		OAILOG_INFO(LOG_MCE_APP,"Successfully scheduled given local MBSFN area (%d). Done with the MBSFN cluster.\n", local_mbsfn_area_ids->num_mbsfn_area_ids);
+		OAILOG_INFO(LOG_MCE_APP,"Successfully scheduled (%d) local MBSFN areas. Done with the MBSFN cluster for local MBMS area (%d).\n", mbsfn_area_id_clusters[num_local_mbms_area].num_mbsfn_area_ids, num_local_mbms_area);
 	}
 
 	/**
@@ -733,16 +744,37 @@ mce_app_handle_mbsfn_mcch_repetition_timeout_timer_expiry (hash_table_ts_t * con
 	 * Check from the received MBSFN area clusters, which are changed in comparison to its last MCCH modification period.
 	 * Get the timer argument.
 	 */
-
 	uint8_t mbsfn_areas_to_be_scheduled = 0;
-	for(int mbms_local_area = 0; mbms_local_area <= max_mbms_local_areas; mbms_local_area++) {
-		mbsfn_areas_t * mbsfn_areas_ts = mbsfn_clusters_to_schedule[mbms_local_area];
+	for(int mbms_local_area = 0; mbms_local_area < max_mbms_local_areas + 1; mbms_local_area++) {
+		mbsfn_areas_t * mbsfn_areas_ts = &mbsfn_clusters_to_schedule[mbms_local_area];
 		for(int num_mbsfn_area = 0; num_mbsfn_area < mbsfn_areas_ts->num_mbsfn_areas; num_mbsfn_area++) {
 			mbsfn_area_id_t 	mbsfn_area_id = mbsfn_clusters_to_schedule[mbms_local_area].mbsfn_area_cfg[num_mbsfn_area].mbsfnArea.mbsfn_area_id;
-			mbsfn_area_cfg_t *mbsfn_area_cfg_last = hashtable_ts_get(mcch_mbsfn_cfg_htbl, mbsfn_area_id);
+			/** Check if the MCCH modification boundary has been reached. */
+			mbsfn_area_context_t * mbsfn_area_context = mce_mbsfn_area_exists_mbsfn_area_id(&mce_app_desc.mce_mbsfn_area_contexts, mbsfn_area_id);
+			if(mcch_rep_abs_rf % mbsfn_area_context->privates.fields.mbsfn_area.mcch_modif_period_rf){
+				OAILOG_DEBUG(LOG_MCE_APP, "MBSFN Area Id " MBSFN_AREA_ID_FMT " in local MBMS area (%d) has not reached MCCH modification boundary for MCCH repetition RF (%d). Not considering for MBMS scheduling. \n",
+						mbsfn_area_id, mbms_local_area, mcch_rep_abs_rf);
+				/** Set the MBSFN area id to invalid. */
+				mbsfn_clusters_to_schedule[mbms_local_area].mbsfn_area_cfg[num_mbsfn_area].mbsfnArea.mbsfn_area_id = INVALID_MBSFN_AREA_ID;
+				continue;
+			}
+			/**
+			 * Although resources are reserved, don't transmit MBMS Scheduling information for MBSFN Areas which don't have any active MBMS services,
+			 * since M2AP required MBMS session list as mandatory field.
+			 */
+			if(!mbsfn_clusters_to_schedule[mbms_local_area].mbsfn_area_cfg[num_mbsfn_area].mchs.total_subframes_per_csa_period_necessary){
+				OAILOG_DEBUG(LOG_MCE_APP, "MBSFN Area Id " MBSFN_AREA_ID_FMT " in local MBMS area (%d) has reached MCCH modification boundary for MCCH repetition RF (%d), but no active MBSFN services. Not considering for MBMS scheduling. \n",
+						mbsfn_area_id, mbms_local_area, mcch_rep_abs_rf);
+				/** Set the MBSFN area id to invalid. */
+				mbsfn_clusters_to_schedule[mbms_local_area].mbsfn_area_cfg[num_mbsfn_area].mbsfnArea.mbsfn_area_id = INVALID_MBSFN_AREA_ID;
+				continue;
+			}
+			/** Check if it has been changed since last MCCH modification period. */
+			mbsfn_area_cfg_t *mbsfn_area_cfg_last = NULL;
+			hashtable_ts_get(mcch_mbsfn_cfg_htbl, mbsfn_area_id, (void**)&mbsfn_area_cfg_last);
 			if(mbsfn_area_cfg_last){
 				// todo: a more efficient way?
-				if(memcmp(mbsfn_area_cfg_last, &mbsfn_clusters_to_schedule[mbms_local_area].mbsfn_area_cfg[num_mbsfn_area], sizeof(mbsfn_area_cfg_t)) == 0){
+				if(memcmp((void*)mbsfn_area_cfg_last, (void*)&mbsfn_clusters_to_schedule[mbms_local_area].mbsfn_area_cfg[num_mbsfn_area], sizeof(mbsfn_area_cfg_t)) == 0){
 					// todo: new eNBs should be informed with the MCCH scheduling..
 					OAILOG_INFO(LOG_MCE_APP, "For MBSFN area " MBSFN_AREA_ID_FMT " in local MBMS area (%d) the MBSFN scheduling HAS NOT changed. Not retriggering an MBMS Scheduling update due MBSFN area. \n", mbsfn_area_id, mbms_local_area);
 					/** Leave the size but set it to 0. */
@@ -750,8 +782,8 @@ mce_app_handle_mbsfn_mcch_repetition_timeout_timer_expiry (hash_table_ts_t * con
 					continue;
 				}
 			}
-			OAILOG_INFO(LOG_MCE_APP, "For MBSFN area " MBSFN_AREA_ID_FMT " in local MBMS area (%d) the MBSFN scheduling HAS changed (or no cached MBSFN config). "
-					"Retriggering an MBMS Scheduling update due MBSFN area. \n", mbsfn_area_id, mbms_local_area)
+			OAILOG_INFO(LOG_MCE_APP, "For MBSFN area " MBSFN_AREA_ID_FMT " in local MBMS area (%d) the MBSFN scheduling HAS changed (or no cached MBSFN config) & MCCH modification boundary reached."
+					"Retriggering an MBMS Scheduling update due MBSFN area. \n", mbsfn_area_id, mbms_local_area);
 			mbsfn_areas_to_be_scheduled++;
 			continue;
 		}
@@ -761,7 +793,7 @@ mce_app_handle_mbsfn_mcch_repetition_timeout_timer_expiry (hash_table_ts_t * con
 		OAILOG_INFO(LOG_MCE_APP, "Found (%d) MBSFN areas for MCCH absolute modification period (%d) for scheduling!\n",
   			mbsfn_areas_to_be_scheduled, mcch_rep_abs_rf);
   	/** Transmit all of them to the M2AP layer. */
-  	mce_app_itti_m3ap_send_mbms_scheduling_info(mbsfn_clusters_to_schedule, mcch_rep_abs_rf);
+  	mce_app_itti_m3ap_send_mbms_scheduling_info(mbsfn_clusters_to_schedule, max_mbms_local_areas + 1, mcch_rep_abs_rf);
   	// todo: guarantee, that we area bit before the MBSFN
   } else {
   	OAILOG_INFO(LOG_MCE_APP, "No MBSFN areas to be scheduled for MCCH modification absolute period (%d).\n", mcch_rep_abs_rf);
@@ -916,13 +948,17 @@ int mce_app_update_mbsfn_area_registration(const mbms_service_index_t new_mbms_s
 //------------------------------------------------------------------------------
 static
 int mce_app_check_mbsfn_cluster_capacity(const mbms_service_index_t mbms_service_index, const mbsfn_area_id_t mbsfn_area_id,
-		mbms_service_indexes_t				*mbms_service_indexes_active_nlg_p,
-		mbms_service_indexes_t				*mbms_service_indexes_active_local_p,
+		const mbsfn_area_ids_t	  		*const mbsfn_area_ids_nlg_p,
+		const mbsfn_area_ids_t				*const mbsfn_area_ids_local_p,
+		mbms_service_indexes_t				*const mbms_service_indexes_active_nlg_p,
+		mbms_service_indexes_t				*const mbms_service_indexes_active_local_p,
 		mbms_service_indexes_t 				*const mbms_services_tbr)
 {
 	OAILOG_FUNC_IN(LOG_MCE_APP);
-	int										 		 rc														= RETURNok;
-	mbsfn_area_context_t  		*mbsfn_area_context				 		= NULL;
+	int										 		 						rc												= RETURNok;
+	mbsfn_areas_t __attribute__((unused)) mbsfn_areas 							= {0};
+	mbsfn_area_context_t  							 *mbsfn_area_context				= mce_mbsfn_area_exists_mbsfn_area_id(&mce_app_desc.mce_mbsfn_area_contexts, mbsfn_area_id);
+	DevAssert(mbsfn_area_context);
 
 	/** Initialize the list of local MBMS services. */
 	mme_config_read_lock (&mme_config);
@@ -930,19 +966,15 @@ int mce_app_check_mbsfn_cluster_capacity(const mbms_service_index_t mbms_service
 	memset(mbms_service_indexes_total_array, 0, sizeof(mbms_service_index_t) * mme_config.mbms.max_mbms_services);
 	mme_config_unlock(&mme_config);
 
-	/** Get the MBSFN area. */
-	mbsfn_area_context = mce_mbsfn_area_exists_mbsfn_area_id(&mce_app_desc.mce_mbsfn_area_contexts, mbsfn_area_id);
-	DevAssert(mbsfn_area_context);
-
 	/** Check the capacity in the merged MBMS services. */
-	while (mce_app_check_mbsfn_cluster_resources(mbms_service_indexes_active_nlg_p, mbms_service_indexes_active_local_p,
-			mbms_service_indexes_active_nlg_p, mbms_service_indexes_active_local_p) == RETURNerror) {
-		OAILOG_ERROR(LOG_MCE_APP,"Could not fit all (%d) MBMS services. Performing ARP preemption.\n",
-				mbms_service_indexes_active_total.num_mbms_service);
+	while (mce_app_check_mbsfn_cluster_resources(mbsfn_area_ids_nlg_p, mbsfn_area_ids_local_p,
+			mbms_service_indexes_active_nlg_p, mbms_service_indexes_active_local_p, &mbsfn_areas) == RETURNerror)
+	{
+		OAILOG_ERROR(LOG_MCE_APP,"Could not fit all active MBMS services. Performing ARP preemption for MBSFN Area Id " MBSFN_AREA_ID_FMT".\n", mbsfn_area_id);
 		mbms_service_indexes_t * mbms_service_indexes_to_preemtp = mbsfn_area_context->privates.fields.local_mbms_area ? mbms_service_indexes_active_local_p : mbms_service_indexes_active_nlg_p;
 		/**
 		 * If an MBSFN area is given, will preempt only from that MBSFN area, if not, may preempt from any MBSFN area of the list of MBMS services.
-		 * Active MBMS list size will not change, but elemtns (MBMS service indexes) may be invalidated.
+		 * Active MBMS list size will not change, but elements (MBMS service indexes) may be invalidated.
 		 */
 		mbms_service_index_t mbms_service_idx_to_preempt = mce_app_mbms_arp_preempt(mbms_service_indexes_to_preemtp, mbsfn_area_id);
     if(mbms_service_idx_to_preempt == INVALID_MBMS_SERVICE_INDEX) {
@@ -956,13 +988,14 @@ int mce_app_check_mbsfn_cluster_capacity(const mbms_service_index_t mbms_service
     	OAILOG_FUNC_RETURN(LOG_MCE_APP, RETURNerror);
     }
     /** Add the MBMS service into the list of MBMS services TBR. */
-    OAILOG_WARNING(LOG_MCE_APP, "Adding MBMS Service Index "MBMS_SERVICE_INDEX_FMT" into list of MBMS services to be removed and re-checking capacity.\n",
+    OAILOG_WARNING(LOG_MCE_APP, "Adding MBMS Service Index "MBMS_SERVICE_INDEX_FMT" into list of MBMS services to preempt and re-checking capacity.\n",
     		mbms_service_idx_to_preempt);
     mbms_services_tbr->mbms_service_index_array[mbms_services_tbr->num_mbms_service_indexes++] = mbms_service_idx_to_preempt;
+    memset((void*)&mbsfn_areas, 0, sizeof(mbsfn_areas_t));
 	}
 	/** We could schedule all MBSFN areas, including the latest received MBMS service. */
- 	OAILOG_INFO(LOG_MCE_APP, "After preempting (%d) service, finally MBSFN resources are enough to activate new MBMS Service Id " MBMS_SERVICE_INDEX_FMT " and MBMS Service Area " MBMS_SERVICE_AREA_ID_FMT ". \n",
- 			mbms_services_tbr->num_mbms_service, mbms_service_index, mbsfn_area_id);
+ 	OAILOG_INFO(LOG_MCE_APP, "After preempting (%d) services, finally MBSFN resources are enough to activate new MBMS Service Id " MBMS_SERVICE_INDEX_FMT " in MBSFN Area Id " MBSFN_AREA_ID_FMT". \n",
+ 			mbms_services_tbr->num_mbms_service_indexes, mbms_service_index, mbsfn_area_id);
 	OAILOG_FUNC_RETURN(LOG_MCE_APP, RETURNok);
 }
 
@@ -975,7 +1008,7 @@ int mce_app_check_mbsfn_cluster_capacity(const mbms_service_index_t mbms_service
  */
 //------------------------------------------------------------------------------
 static
-int mce_app_check_shared_resources(mbms_service_index_t mbms_service_index, const mbsfn_area_id_t mbsfn_area_id, mbms_service_indexes_t * const mbms_service_indexes_tbr)
+int mce_app_check_shared_resources(const mbms_service_index_t mbms_service_index, const mbsfn_area_id_t mbsfn_area_id, mbms_service_indexes_t * const mbms_service_indexes_tbr)
 {
 	OAILOG_FUNC_IN(LOG_MCE_APP);
 	int										 				 rc																= RETURNok;
@@ -983,13 +1016,13 @@ int mce_app_check_shared_resources(mbms_service_index_t mbms_service_index, cons
 	mcch_modification_periods_t		*mcch_modification_periods				= NULL;
 	mbsfn_areas_t					 				 mbsfn_areas 											= {0},
 									 	 	  				*mbsfn_areas_p 										= &mbsfn_areas;
-	uint8_t 							 				non_local_global_areas_allowed 		= 0;
-	uint8_t								 				max_mbms_local_areas			    		= 0;
-	uint8_t								 				mbms_service_in_areas							= 0;
+	uint8_t 							 				 local_global_areas_allowed 			= 0;
+	uint8_t								 				 max_mbms_local_areas			    		= 0;
+	uint8_t								 				 mbms_service_in_areas						= 0;
 
 	/** MBMS service indexes for non-local global MBSFN areas. */
 	mbms_service_indexes_t				mbms_service_indexes_active_nlg 	= {0},
-																mbms_service_indexes_active_nlg_p = &mbms_service_indexes_active_nlg;
+															 *mbms_service_indexes_active_nlg_p = &mbms_service_indexes_active_nlg;
 
 	/**
 	 * The MBMS service in question might be returned due ARP, if so reject it to the MBMS-GW.
@@ -999,10 +1032,10 @@ int mce_app_check_shared_resources(mbms_service_index_t mbms_service_index, cons
 	max_mbms_local_areas = mme_config.mbms.mbms_local_service_areas;
 	mbsfn_area_ids_t mbsfn_areas_to_be_checked[max_mbms_local_areas +1]; /**< O: non-local global MBMS areas. */
 	/** Set the MBSFN areas to 0. */
-	memset((void*)mbsfn_areas_to_be_checked, 0, sizeof(mbsfn_areas_to_be_checked));
-	non_local_global_areas_allowed = mme_config.mbms.mbms_global_mbsfn_area_per_local_group;
+	memset((void*)mbsfn_areas_to_be_checked, 0, (max_mbms_local_areas +1) * sizeof(mbsfn_area_ids_t));
+	local_global_areas_allowed = mme_config.mbms.mbms_global_mbsfn_area_per_local_group;
 	/** Initialize the list of global MBMS service indexes, too. */
-	mbms_service_index_t * mbms_service_indexes_active_array[mme_config.mbms.max_mbms_services];
+	mbms_service_index_t mbms_service_indexes_active_array[mme_config.mbms.max_mbms_services];
 	memset(mbms_service_indexes_active_array, 0, sizeof(mbms_service_index_t) * mme_config.mbms.max_mbms_services);
 	/** Set the MBSFN areas to 0. */
 	mbms_service_indexes_active_nlg.mbms_service_index_array = mbms_service_indexes_active_array;
@@ -1012,90 +1045,76 @@ int mce_app_check_shared_resources(mbms_service_index_t mbms_service_index, cons
 	DevAssert(mbsfn_area_context);
 
 	/** Get the MCCH modification period, from the MBSFN area. */
-	hashtable_ts_get(mbsfn_area_context->privates.mbms_service_idx_mcch_modification_times_hashmap,
-			(hash_key_t)mbms_service_index, (void**)&mcch_modification_periods);
+	hashtable_ts_get(mbsfn_area_context->privates.mbms_service_idx_mcch_modification_times_hashmap, (hash_key_t)mbms_service_index, (void**)&mcch_modification_periods);
 	DevAssert(mcch_modification_periods);
 
 	/**
 	 * Collect the MBSFN Areas which will be considered in the capacity calculation.
-	 * We use the local_mbms_area as an identifier.
+	 * We use the local_mbms_area as index.
 	 * If the MBMS service area is global ->  check the configuration!
 	 */
 	hashtable_ts_apply_callback_on_elements((hash_table_ts_t * const)mce_app_desc.mce_mbsfn_area_contexts.mbsfn_area_id_mbsfn_area_htbl,
 			mce_app_check_mbsfn_neighbors, (void*)&mbsfn_area_context->privates.fields.local_mbms_area, (void**)&mbsfn_areas_to_be_checked);
 
-	/** Check if we have non-local global MBSFN areas to check, then make a list of active MBMS services, including the newest one, if its a nl-global. */
+	/**
+	 * Check if we have non-local global MBSFN areas to check, then make a list of active MBMS services, including the newest one, if its a nl-global.
+	 * Do this, no matter the changed local-mbms-area is local or global.
+	 */
 	if(mbsfn_areas_to_be_checked[0].num_mbsfn_area_ids){
 		for( int num_mbsfn_nlg = 0; num_mbsfn_nlg < mbsfn_areas_to_be_checked[0].num_mbsfn_area_ids; num_mbsfn_nlg++){
-			mbsfn_area_context_t * mbsfn_area_context_nlg = mce_mbsfn_area_exists_mbsfn_area_id(&mce_app_desc.mce_mbsfn_area_contexts,
-					mbsfn_areas_to_be_checked[0].mbsfn_area_id[num_mbsfn_nlg]);
+			mbsfn_area_context_t * mbsfn_area_context_nlg = mce_mbsfn_area_exists_mbsfn_area_id(&mce_app_desc.mce_mbsfn_area_contexts, mbsfn_areas_to_be_checked[0].mbsfn_area_id[num_mbsfn_nlg]);
 			DevAssert(mbsfn_area_context_nlg);
 			hashtable_apply_callback_on_elements(mbsfn_area_context_nlg->privates.mbms_service_idx_mcch_modification_times_hashmap,
 					mce_app_get_active_mbms_services_per_mbsfn_area, (void*)mcch_modification_periods, (void**)&mbms_service_indexes_active_nlg_p);
 		}
 	}
-	if(mbms_service_indexes_active_nlg.num_mbms_service_indexes){
-		OAILOG_INFO(LOG_MCE_APP, "We have (%d) non-local global MBMS services to check.\n", mbms_service_indexes_active_nlg.num_mbms_service)
-	} else {
-		OAILOG_INFO(LOG_MCE_APP, "No non-local global MBMS services to check.\n")
-	}
 
 	/** Verify the resources of the global MBMS first, if the MBSFN area is a nlg.. */
 	if(!mbsfn_area_context->privates.fields.local_mbms_area) {
-		/** Method will eliminate active global MBMS services from list. */
+		/**
+		 * Method will eliminate active global MBMS services from list.
+		 * So we may continue with the local MBMS service area checks below, since the active list will be updated.
+		 * The size of the active list will not be changed, it will just contain invalid MBMS service indexes.
+		 */
 		if(mce_app_check_mbsfn_cluster_capacity(mbms_service_index, mbsfn_area_id,
-				&mbsfn_areas_to_be_checked[0], NULL, mbms_service_indexes_active_nlg_p,
-				NULL, mbms_service_indexes_tbr) == RETURNerror){
-			OAILOG_ERROR(LOG_MCE_APP, "Error verifying resources for new global MBMS service "MBMS_SERVICE_INDEX_FMT " in MBSFN area " MBSFN_AREA_ID_FMT " (amongst global only).\n",
-					mbms_service_index, mbsfn_area_id);
-			/** Directly return false. */
+				&mbsfn_areas_to_be_checked[0], NULL,
+				mbms_service_indexes_active_nlg_p, NULL,
+				mbms_service_indexes_tbr) == RETURNerror){
+			OAILOG_ERROR(LOG_MCE_APP, "Error verifying resources for new global MBMS service "MBMS_SERVICE_INDEX_FMT " in MBSFN area " MBSFN_AREA_ID_FMT " (amongst global only).\n", mbms_service_index, mbsfn_area_id);
 			OAILOG_FUNC_RETURN(LOG_MCE_APP, RETURNerror);
 		}
 		/** Fits in first cluster. */
-		OAILOG_INFO(LOG_MCE_APP, "Successfully checked resources for global MBMS service " MBMS_SERVICE_INDEX_FMT" in MBSFN area " MBSFN_AREA_ID_FMT " (amongs global). (%d) global services to be removed already. Continuing with locals..\n",
-				mbms_service_index, mbsfn_area_id, mbms_service_indexes_tbr->num_mbms_service);
+		OAILOG_INFO(LOG_MCE_APP, "Successfully checked resources for global MBMS service " MBMS_SERVICE_INDEX_FMT" in MBSFN area " MBSFN_AREA_ID_FMT " (amongst global). (%d) global services to be removed already. Continuing with locals..\n",
+				mbms_service_index, mbsfn_area_id, mbms_service_indexes_tbr->num_mbms_service_indexes);
 	} else {
 		OAILOG_INFO(LOG_MCE_APP, "Newly received MBMS service " MBMS_SERVICE_INDEX_FMT" in MBSFN area " MBSFN_AREA_ID_FMT " is local. Not checking global capacity (all global services remain active)..\n",
-					mbms_service_index, mbsfn_area_id);
+				mbms_service_index, mbsfn_area_id);
 	}
-	memset((void*)mbsfn_areas_to_be_checked, 0, sizeof(mbsfn_areas_to_be_checked));
-
   /** Check the local MBSFN areas. */
   for(int local_mbms_area_to_check = 1; local_mbms_area_to_check < max_mbms_local_areas + 1; local_mbms_area_to_check++){
-  	mbsfn_area_ids_t 			 				local_mbsfn_areas_to_be_checked 		= {0};
   	mbms_service_indexes_t				mbms_service_indexes_active_local		= {0},
-  																mbms_service_indexes_active_local_p = &mbms_service_indexes_active_local;
+  															 *mbms_service_indexes_active_local_p = &mbms_service_indexes_active_local;
   	/** Initialize the list of local MBMS services. */
 		mme_config_read_lock (&mme_config);
-		mbms_service_index_t * mbms_service_indexes_active_array[mme_config.mbms.max_mbms_services];
+		mbms_service_index_t mbms_service_indexes_active_array[mme_config.mbms.max_mbms_services];
 		memset(mbms_service_indexes_active_array, 0, sizeof(mbms_service_index_t) * mme_config.mbms.max_mbms_services);
 		/** Set the MBSFN areas to 0. */
 		mbms_service_indexes_active_local.mbms_service_index_array = mbms_service_indexes_active_array;
 		mme_config_unlock(&mme_config);
-  	if(mbsfn_areas_to_be_checked[local_mbms_area_to_check].num_mbsfn_area_ids){
-  		memcpy((void*)&local_mbsfn_areas_to_be_checked, (void*)&mbsfn_areas_to_be_checked[local_mbms_area_to_check], sizeof(mbsfn_area_ids_t));
-  	} else {
+
+  	if(!mbsfn_areas_to_be_checked[local_mbms_area_to_check].num_mbsfn_area_ids){
   		/** Skip.. Nothing else to do. Pass all active MBMS services so far. */
-  		OAILOG_INFO(LOG_MCE_APP, "No local MBSFN areas to check for local MBMS area (%d). Skipping.\n",
-  				local_mbms_area_to_check);
+  		OAILOG_INFO(LOG_MCE_APP, "No local MBSFN areas to check for local MBMS area (%d). Skipping..\n", local_mbms_area_to_check);
   		continue;
   	}
   	/** Get an initial list of the active MBMS services for the local MBSFN areas. */
-  	for(int num_local_mbsfn_area = 0; num_local_mbsfn_area < local_mbsfn_areas_to_be_checked.num_mbsfn_area_ids; num_local_mbsfn_area++){
-  		/** Get a list of the local MBMS services. */
+  	for(int num_local_mbsfn_area = 0; num_local_mbsfn_area < mbsfn_areas_to_be_checked[local_mbms_area_to_check].num_mbsfn_area_ids; num_local_mbsfn_area++){
+  		/** Set the list of active MBMS services checking all local MBSFN areas. */
   		mbsfn_area_context_t * mbsfn_area_context_local = mce_mbsfn_area_exists_mbsfn_area_id(&mce_app_desc.mce_mbsfn_area_contexts,
-  				local_mbsfn_areas_to_be_checked.mbsfn_area_id[num_local_mbsfn_area]);
+  				mbsfn_areas_to_be_checked[local_mbms_area_to_check].mbsfn_area_id[num_local_mbsfn_area]);
   		DevAssert(mbsfn_area_context_local);
   		hashtable_apply_callback_on_elements(mbsfn_area_context_local->privates.mbms_service_idx_mcch_modification_times_hashmap,
   				mce_app_get_active_mbms_services_per_mbsfn_area, (void*)mcch_modification_periods, (void**)&mbms_service_indexes_active_local_p);
-  	}
-  	if(mbms_service_indexes_active_local.num_mbms_service_indexes){
-  		OAILOG_INFO(LOG_MCE_APP, "We have (%d) local MBMS services to check for local MBMS area (%d).\n",
-  				mbms_service_indexes_active_local.num_mbms_service, local_mbms_area_to_check);
-  	} else {
-  		OAILOG_INFO(LOG_MCE_APP, "No local MBMS services to check for local MBMS area (%d). Skipping.\n",
-  				local_mbms_area_to_check);
-  		continue;
   	}
   	/**
   	 * We have one cluster local and global services.
@@ -1107,11 +1126,13 @@ int mce_app_check_shared_resources(mbms_service_index_t mbms_service_index, cons
   	 * If an MBMS service, is removed in the second MBSFN area group, the scheduler of the first MBSFN area will also be affected, but will continue.
   	 */
 		/** Method will eliminate active local or global MBMS services from list, depending on the type of the MBMS service to check. */
-  	rc = mce_app_check_mbsfn_cluster_capacity(mbms_service_index, mbsfn_area_id, mbms_service_indexes_active_nlg_p,
-  			mbms_service_indexes_active_local_p, mbms_service_indexes_tbr);
+  	rc = mce_app_check_mbsfn_cluster_capacity(mbms_service_index, mbsfn_area_id,
+  			(local_global_areas_allowed) ? NULL : &mbsfn_areas_to_be_checked[0],
+				&mbsfn_areas_to_be_checked[local_mbms_area_to_check],
+  			mbms_service_indexes_active_nlg_p, mbms_service_indexes_active_local_p, mbms_service_indexes_tbr);
   	if(rc == RETURNok){
   		OAILOG_ERROR(LOG_MCE_APP, "Error verifying resources for new MBMS service "MBMS_SERVICE_INDEX_FMT " in MBSFN area " MBSFN_AREA_ID_FMT " after checking local MBMS service of local mbms area (%d).\n",
-  				mbms_service_index, mbsfn_area_id, local_mbsfn_areas_to_be_checked);
+  				mbms_service_index, mbsfn_area_id, local_mbms_area_to_check);
   		/** Directly return false. */
   		OAILOG_FUNC_RETURN(LOG_MCE_APP, RETURNerror);
   	}
@@ -1119,7 +1140,8 @@ int mce_app_check_shared_resources(mbms_service_index_t mbms_service_index, cons
   	OAILOG_INFO(LOG_MCE_APP, "Successfully checked resources for local MBMS area (%d) with globals. Continuing.. \n", local_mbms_area_to_check);
   }
 	OAILOG_INFO(LOG_MCE_APP, "Successfully checked resources for all local & global MBSFN areas for the shared resource area. (%d) MBMS services removed implicitly."
-			"MBMS service " MBMS_SERVICE_INDEX_FMT " for MBSFN area " MBSFN_AREA_ID_FMT " will be allowed.. \n", mbms_service_indexes_tbr->num_mbms_service, mbms_service_index, mbsfn_area_id);
+			"MBMS service " MBMS_SERVICE_INDEX_FMT " for MBSFN area " MBSFN_AREA_ID_FMT " will be allowed.. \n",
+			mbms_service_indexes_tbr->num_mbms_service_indexes, mbms_service_index, mbsfn_area_id);
   OAILOG_FUNC_RETURN(LOG_MCE_APP, RETURNok);
 }
 
@@ -1131,11 +1153,10 @@ int mce_app_check_shared_resources(mbms_service_index_t mbms_service_index, cons
  */
 //------------------------------------------------------------------------------
 static
-int mce_app_check_mbms_service_resources(const mbms_service_index_t mbms_service_index, const mbms_service_area_id_t mbms_service_area_id,
-		const mbsfn_area_ids_t * const mbsfn_area_ids)
+int mce_app_check_mbms_service_resources(const mbms_service_index_t mbms_service_index, const mbms_service_area_id_t mbms_service_area_id, const mbsfn_area_ids_t * const mbsfn_area_ids)
 {
 	OAILOG_FUNC_IN(LOG_MCE_APP);
-	int										 rc															= RETURNerror;
+	int										 rc																= RETURNerror;
 
 	/** We need to make check for the capacity in all local_mbms_areas affected. */
 	for(int num_mbsfn_area = 0; num_mbsfn_area < mbsfn_area_ids->num_mbsfn_area_ids; num_mbsfn_area++){
@@ -1150,9 +1171,10 @@ int mce_app_check_mbms_service_resources(const mbms_service_index_t mbms_service
 
 		/** Checking capacity for MBSFN Area Id, in all MBSFN clusters, where it is involved. */
 		if(mce_app_check_shared_resources(mbms_service_index, mbsfn_area_ids->mbsfn_area_id[num_mbsfn_area], &mbms_service_indexes_tbr) == RETURNok){
-			rc = RETURNok;
-			OAILOG_INFO(LOG_MCE_APP, "We checked all MBSFN clusters which are of relevance to the MBSFN area " MBSFN_AREA_ID_FMT" for MBMS service index " MBMS_SERVICE_INDEX_FMT" successfully. MBMS service will be active. (%d) MBMS services will be preempted. \n",
-					mbsfn_area_ids->mbsfn_area_id[num_mbsfn_area], mbms_service_index, mbms_service_indexes_tbr.num_mbms_service);
+			rc = RETURNok; /**< At least one is set, we will send back Sm-Success to MBMS-GW. */
+			OAILOG_INFO(LOG_MCE_APP, "We checked all MBSFN clusters which are of relevance to the MBSFN area " MBSFN_AREA_ID_FMT" for MBMS service index " MBMS_SERVICE_INDEX_FMT" for MBMS Service Area " MBMS_SERVICE_AREA_ID_FMT " successfully. "
+					"MBMS service will be active. (%d) MBMS services will be preempted. \n",
+					mbsfn_area_ids->mbsfn_area_id[num_mbsfn_area], mbms_service_index, mbms_service_area_id, mbms_service_indexes_tbr.num_mbms_service_indexes);
 			/** Remove the given MBMS services in the TBR array. */
 			for(int num_mbms_tbr = 0; num_mbms_tbr < mbms_service_indexes_tbr.num_mbms_service_indexes; num_mbms_tbr) {
 				DevAssert(mbms_service_indexes_tbr.mbms_service_index_array[num_mbms_tbr] != mbms_service_index);
@@ -1163,14 +1185,15 @@ int mce_app_check_mbms_service_resources(const mbms_service_index_t mbms_service
 		 			/** Remove the MBMS session. */
 		 			mce_app_itti_m3ap_mbms_session_stop_request(&mbms_service_tbr->privates.fields.tmgi, mbms_service_tbr->privates.fields.mbms_service_area_id, 0);
 		 			mce_app_stop_mbms_service(&mbms_service_tbr->privates.fields.tmgi,
-		 					mbms_service_tbr->privates.fields.mbms_service_area_id, mbms_service_tbr->privates.fields.mme_teid_sm, NULL);
+		 					mbms_service_tbr->privates.fields.mbms_service_area_id, mbms_service_tbr->privates.fields.mme_teid_sm,
+							(struct sockaddr*)&mbms_service_tbr->privates.fields.mbms_peer_ip); /**< Remove the Sm tunnel, too, since no Sm message will be send. */
 		 		} else {
-		 			DevMessage("MBMS service for index " + mbms_service_indexes_tbr.mbms_service_index_array[num_mbms_tbr] + " could not be found to preempt!");
+		 			DevMessage("MBMS service for index " + mbms_service_indexes_tbr.mbms_service_index_array[num_mbms_tbr] + " could not be found to be preempted!");
 		 		}
 			}
 		} else {
-			OAILOG_ERROR(LOG_MCE_APP, "Capacity check of all MBSFN clusters which are of relevance to the MBSFN area " MBSFN_AREA_ID_FMT" for MBMS service index " MBMS_SERVICE_INDEX_FMT" failed. \n",
-					mbsfn_area_ids->mbsfn_area_id[num_mbsfn_area], mbms_service_index);
+			OAILOG_ERROR(LOG_MCE_APP, "Capacity check of all MBSFN clusters which are of relevance to the MBSFN area " MBSFN_AREA_ID_FMT" for MBMS service index " MBMS_SERVICE_INDEX_FMT" in MBMS Service Area " MBMS_SERVICE_AREA_ID_FMT " failed. \n",
+					mbsfn_area_ids->mbsfn_area_id[num_mbsfn_area], mbms_service_index, mbms_service_area_id);
 			/** Continue. */
 		}
 	}

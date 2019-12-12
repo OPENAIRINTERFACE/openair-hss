@@ -455,7 +455,7 @@ int m2ap_handle_m3ap_mbms_scheduling_info(itti_m3ap_mbms_scheduling_info_t * m3a
   	/** Take a cluster: Check if eNBs exist for the MBMS area. */
     /** Check if anything is scheduled for the MBMS area. */
     if(!m3ap_mbms_scheduling_info->mbsfn_cluster[num_mbms_area].num_mbsfn_areas){
-    	OAILOG_DEBUG(LOG_MCE_APP, "No MBSFN areas scheduled for for MBMS area (%d). Skipping.. \n", num_mbms_areas);
+    	OAILOG_DEBUG(LOG_M2AP, "No MBSFN areas scheduled for for MBMS area (%d). Skipping.. \n", num_mbms_area);
     	continue;
     }
   	uint8_t num_m2_enb_mbms_area = 0;
@@ -466,7 +466,7 @@ int m2ap_handle_m3ap_mbms_scheduling_info(itti_m3ap_mbms_scheduling_info_t * m3a
     mme_config_unlock (&mme_config);
     m2ap_is_mbms_area_list(num_mbms_area, &num_m2_enb_mbms_area, (m2ap_enb_description_t**)m2ap_enb_p_elements);
     if(!num_m2_enb_mbms_area){
-    	OAILOG_WARNING(LOG_MCE_APP, "No M2 eNBs could be found for MBMS area (%d).\n", num_mbms_areas);
+    	OAILOG_WARNING(LOG_M2AP, "No M2 eNBs could be found for MBMS area (%d).\n", num_mbms_area);
     	continue;
     }
     /**
@@ -481,10 +481,9 @@ int m2ap_handle_m3ap_mbms_scheduling_info(itti_m3ap_mbms_scheduling_info_t * m3a
     {
     	DevMessage("Could not generate MBMS scheduling information for MBMS area " + num_mbms_area);
     }
-    OAILOG_INFO(LOG_MCE_APP, "Successfully handled MBMS Scheduling for MBMS area (%d) for (%d) M2 eNBs.\n",
-    		num_mbms_area, num_m2ap_enbs);
+    OAILOG_INFO(LOG_M2AP, "Successfully handled MBMS Scheduling for MBMS area (%d) for M2 eNBs.\n", num_mbms_area);
   }
-  OAILOG_INFO(LOG_MCE_APP, "Successfully handled MBMS scheduling for all MBMS areas. \n");
+  OAILOG_INFO(LOG_M2AP, "Successfully handled MBMS scheduling for all MBMS areas. \n");
   OAILOG_FUNC_RETURN(LOG_M2AP, RETURNok);
 }
 
@@ -573,7 +572,7 @@ static
 int m2ap_mbms_scheduling_cluster(const uint8_t num_m2_enb_mbms_area, const m2ap_enb_description_t** const m2ap_enb_p_elements,
 		const uint8_t num_mbms_area, const mbsfn_areas_t * const mbsfn_cluster_global, const mbsfn_areas_t * const mbsfn_cluster_local, const long mcch_rep_abs_rf){
 
-	OAILOG_FUNC_IN(LOG_MCE_APP);
+	OAILOG_FUNC_IN(LOG_M2AP);
  	/**
 	 * Each eNB in the cluster may have different MBSFN areas.
 	 * Thus we need to encode for each M2 eNB separately, based on its MBSFN areas.
@@ -606,19 +605,19 @@ int m2ap_mbms_scheduling_cluster(const uint8_t num_m2_enb_mbms_area, const m2ap_
 				}
 			}
 		}
-		OAILOG_INFO(LOG_MCE_APP, "Collected (%d) MBSFN areas for M2AP eNB with eNB Id (%d) in local_mbms_area (%d).\n",
+		OAILOG_INFO(LOG_M2AP, "Collected (%d) MBSFN areas for M2AP eNB with eNB Id (%d) in local_mbms_area (%d).\n",
 				num_scheduled_mbsfn_areas_cfgs_m2_enb, m2_enb_description->m2ap_enb_id, m2_enb_description->local_mbms_area);
 		if(num_scheduled_mbsfn_areas_cfgs_m2_enb){
 			if(m2ap_generate_mbms_scheduling_information(m2_enb_description, (mbsfn_area_cfg_t **)mbsfn_area_cfgs_pP, num_scheduled_mbsfn_areas_cfgs_m2_enb, mcch_rep_abs_rf) == RETURNerror){
-				OAILOG_ERROR(LOG_MCE_APP, "Error encoding MBMS scheduling information for M2AP eNB with eNB Id (%d) in local_mbms_area (%d).\n",
+				OAILOG_ERROR(LOG_M2AP, "Error encoding MBMS scheduling information for M2AP eNB with eNB Id (%d) in local_mbms_area (%d).\n",
 						m2_enb_description->m2ap_enb_id, m2_enb_description->local_mbms_area);
-				OAILOG_FUNC_RETURN(LOG_MCE_APP, RETURNerror);
+				OAILOG_FUNC_RETURN(LOG_M2AP, RETURNerror);
 			}
 		}
 		/** Done scheduling the eNB, continue clear with the next eNB. */
 	}
-	OAILOG_INFO(LOG_MCE_APP, "Successfully scheduled all (%d) M2 eNBs in MBMS area (%d). \n", num_m2_enb_mbms_area, num_mbms_area);
-	OAILOG_FUNC_RETURN(LOG_MCE_APP, RETURNok);
+	OAILOG_INFO(LOG_M2AP, "Successfully scheduled all (%d) M2 eNBs in MBMS area (%d). \n", num_m2_enb_mbms_area, num_mbms_area);
+	OAILOG_FUNC_RETURN(LOG_M2AP, RETURNok);
 }
 
 //------------------------------------------------------------------------------
@@ -886,14 +885,13 @@ int m2ap_generate_mbms_session_update_request(mce_mbms_m2ap_id_t mce_mbms_m2ap_i
 
 //-----------------------------------------------------------------------------
 static
-int m2ap_generate_mbms_scheduling_information(const m2ap_enb_description_t * m2_enb_description, mbsfn_area_cfg_t **mbsfn_area_cfg, const uint8_t num_mbsfn_area_per_enb, long mcch_rep_abs_rf)
+int m2ap_generate_mbms_scheduling_information(const m2ap_enb_description_t * m2_enb_description, mbsfn_area_cfg_t **mbsfn_area_cfgs, const uint8_t num_mbsfn_area_per_enb, long mcch_rep_abs_rf)
 {
-	OAILOG_FUNC_IN(LOG_MCE_APP);
+	OAILOG_FUNC_IN(LOG_M2AP);
 
 	uint8_t                                *buffer_p = NULL;
 	uint32_t                                length = 0;
 	uint8_t															 		num_m2ap_enbs = 0;
-	mbsfn_area_cfg_t					  					 *mbsfn_area_cfg				= NULL;
 	void                                   *id = NULL;
 
 	M2AP_M2AP_PDU_t                         pdu = {0};
@@ -921,8 +919,8 @@ int m2ap_generate_mbms_scheduling_information(const m2ap_enb_description_t * m2_
 	ie->id = M2AP_ProtocolIE_ID_id_MCCH_Update_Time;
 	ie->criticality = M2AP_Criticality_reject;
 	ie->value.present = M2AP_MbmsSchedulingInformation_Ies__value_PR_MCCH_Update_Time;
-	DevAssert(mcch_rep_abs_rf % mbsfn_area_cfg->mbsfnArea.mcch_modif_period_rf == 0); /**< Assert that it is a multiple. */
-	uint8_t mcch_update_time = (mcch_rep_abs_rf / mbsfn_area_cfg->mbsfnArea.mcch_modif_period_rf) % 256;
+	DevAssert(mcch_rep_abs_rf % mbsfn_area_cfgs[0]->mbsfnArea.mcch_modif_period_rf == 0); /**< Assert that it is a multiple. */
+	uint8_t mcch_update_time = (mcch_rep_abs_rf / mbsfn_area_cfgs[0]->mbsfnArea.mcch_modif_period_rf) % 256;
 	ie->value.choice.MCCH_Update_Time = mcch_update_time; /**< Absolute counter of the MCCH update period for the MBSFN area. */
 	ASN_SEQUENCE_ADD(&out->protocolIEs.list, ie);
 
@@ -949,7 +947,7 @@ int m2ap_generate_mbms_scheduling_information(const m2ap_enb_description_t * m2_
 		mbsfnAreaCfgItem->criticality 	= M2AP_Criticality_reject;
 		mbsfnAreaCfgItem->value.present = M2AP_MBSFN_Area_Configuration_Item__value_PR_MBSFN_Area_ID;
 		ASN_SEQUENCE_ADD(m2ap_mbsfn_config_item, mbsfnAreaCfgItem);
-		mbsfnAreaCfgItem->value.choice.MBSFN_Area_ID = mbsfn_area_cfg->mbsfnArea.mbsfn_area_id;
+		mbsfnAreaCfgItem->value.choice.MBSFN_Area_ID = mbsfn_area_cfgs[num_mbsfn]->mbsfnArea.mbsfn_area_id;
 
 		/**
 		 * Mandatory: PMCH Configuration List for MBSFN Area.
@@ -962,18 +960,18 @@ int m2ap_generate_mbms_scheduling_information(const m2ap_enb_description_t * m2_
 
 		/** Set the PMCH (MCH) configuration list, for every MCH. */
 		for(int n_mch = 0; n_mch < MAX_MCH_PER_MBSFN; n_mch++){
-			if(mbsfn_area_cfg->mchs.mch_array[n_mch].mch_qci){
+			if(mbsfn_area_cfgs[num_mbsfn]->mchs.mch_array[n_mch].mch_qci){
 				M2AP_PMCH_Configuration_ItemIEs_t * pmch_configuration_item_ie = (M2AP_PMCH_Configuration_ItemIEs_t*)calloc(1, sizeof (M2AP_PMCH_Configuration_ItemIEs_t));
 				pmch_configuration_item_ie->id = M2AP_ProtocolIE_ID_id_PMCH_Configuration_Item;
 				pmch_configuration_item_ie->criticality 	= M2AP_Criticality_reject;
 				pmch_configuration_item_ie->value.present = M2AP_PMCH_Configuration_ItemIEs__value_PR_PMCH_Configuration_Item;
 				M2AP_PMCH_Configuration_Item_t * pmch_configuration_item = &pmch_configuration_item_ie->value.choice.PMCH_Configuration_Item.pmch_Configuration;
 				/** Absolute subframe number in a CSA period. */
-				pmch_configuration_item->pmch_Configuration.allocatedSubframesEnd = mbsfn_area_cfg->mchs.mch_array[n_mch].mch_subframe_stop;
-				pmch_configuration_item->pmch_Configuration.dataMCS								= mbsfn_area_cfg->mchs.mch_array[n_mch].mcs;
-				pmch_configuration_item->pmch_Configuration.mchSchedulingPeriod   = mbsfn_area_cfg->mchs.mch_array[n_mch].msp_rf;
+				pmch_configuration_item->pmch_Configuration.allocatedSubframesEnd = mbsfn_area_cfgs[num_mbsfn]->mchs.mch_array[n_mch].mch_subframe_stop;
+				pmch_configuration_item->pmch_Configuration.dataMCS								= mbsfn_area_cfgs[num_mbsfn]->mchs.mch_array[n_mch].mcs;
+				pmch_configuration_item->pmch_Configuration.mchSchedulingPeriod   = mbsfn_area_cfgs[num_mbsfn]->mchs.mch_array[n_mch].msp_rf;
 				/** Set the MBMS sessions to schedule. */
-				for(int num_mbms_session = 0; num_mbms_session < mbsfn_area_cfg->mchs.mch_array[n_mch].mbms_session_list.num_mbms_sessions; num_mbms_session++){
+				for(int num_mbms_session = 0; num_mbms_session < mbsfn_area_cfgs[num_mbsfn]->mchs.mch_array[n_mch].mbms_session_list.num_mbms_sessions; num_mbms_session++){
 					/**
 					 * The MCH Set the MBMS session into the PMCH list.
 					 * MCCH subframe handling will be done in the MCH layer.
@@ -981,7 +979,7 @@ int m2ap_generate_mbms_scheduling_information(const m2ap_enb_description_t * m2_
 					 */
 					MBMSsessionListPerPMCH_Item__Member * mbms_session_list_item = (MBMSsessionListPerPMCH_Item__Member*)calloc(1, sizeof(MBMSsessionListPerPMCH_Item__Member));
 					mbms_session_list_item->lcid = (num_mbms_session +1);
-					tmgi_t * tmgi_p = &mbsfn_area_cfg->mchs.mch_array[n_mch].mbms_session_list.tmgis[num_mbms_session];
+					tmgi_t * tmgi_p = &mbsfn_area_cfgs[num_mbsfn]->mchs.mch_array[n_mch].mbms_session_list.tmgis[num_mbms_session];
 				  INT24_TO_OCTET_STRING(tmgi_p->mbms_service_id, &mbms_session_list_item->tmgi.serviceID);
 				  TBCD_TO_PLMN_T(&mbms_session_list_item->tmgi.pLMNidentity, &tmgi_p->plmn);
 				  ASN_SEQUENCE_ADD(&out->protocolIEs.list, ie);
@@ -1002,24 +1000,26 @@ int m2ap_generate_mbms_scheduling_information(const m2ap_enb_description_t * m2_
 		 * Subframe Configuration List for MBSFN Area.
 		 * Set all (up to 8) CSA patterns, that the MBSFN area uses (with other MBSFN areas).
 		 */
-		for(int mbsfn_csa_pattern = 0; mbsfn_area_cfg->csa_patterns.num_csa_pattern; mbsfn_csa_pattern++) {
+		for(int mbsfn_csa_pattern = 0; mbsfn_csa_pattern < MBSFN_AREA_MAX_CSA_PATTERN; mbsfn_csa_pattern++) {
+			if(!mbsfn_area_cfgs[num_mbsfn]->csa_patterns.csa_pattern[mbsfn_csa_pattern].mbms_csa_pattern_rfs)
+				continue;
 			M2AP_MBSFN_Subframe_Configuration_t * mbsfn_sf_confg = calloc(1, sizeof(M2AP_MBSFN_Subframe_Configuration_t));
 			/** Check the RF-Allocation Period as log2. */
-			mbsfn_sf_confg->radioframeAllocationPeriod = log2(mbsfn_area_cfg->csa_patterns.csa_pattern[mbsfn_csa_pattern].csa_pattern_repetition_period_rf);
+			mbsfn_sf_confg->radioframeAllocationPeriod = log2(mbsfn_area_cfgs[num_mbsfn]->csa_patterns.csa_pattern[mbsfn_csa_pattern].csa_pattern_repetition_period_rf);
 			DevAssert(mbsfn_sf_confg->radioframeAllocationPeriod >=0);
 			DevAssert(mbsfn_sf_confg->radioframeAllocationPeriod <= 5);
-			mbsfn_sf_confg->radioframeAllocationOffset = log2(mbsfn_area_cfg->csa_patterns.csa_pattern[mbsfn_csa_pattern].csa_pattern_offset_rf);
+			mbsfn_sf_confg->radioframeAllocationOffset = log2(mbsfn_area_cfgs[num_mbsfn]->csa_patterns.csa_pattern[mbsfn_csa_pattern].csa_pattern_offset_rf);
 			DevAssert(mbsfn_sf_confg->radioframeAllocationOffset >=0);
 			DevAssert(mbsfn_sf_confg->radioframeAllocationOffset <= 7);
-			if(mbsfn_area_cfg->csa_patterns.csa_pattern[mbsfn_csa_pattern].mbms_csa_pattern_rfs == CSA_FOUR_FRAME) {
+			if(mbsfn_area_cfgs[num_mbsfn]->csa_patterns.csa_pattern[mbsfn_csa_pattern].mbms_csa_pattern_rfs == CSA_FOUR_FRAME) {
 				/** 24 bit bitmap. */
 				mbsfn_sf_confg->subframeAllocation.present = M2AP_MBSFN_Subframe_Configuration__subframeAllocation_PR_fourFrames;
-				FOUR_FRAME_ITEM_SF_TO_BIT_STRING(mbsfn_area_cfg->csa_patterns.csa_pattern[mbsfn_csa_pattern].csa_pattern_sf.mbms_mch_csa_pattern_4rf,
+				FOUR_FRAME_ITEM_SF_TO_BIT_STRING(mbsfn_area_cfgs[num_mbsfn]->csa_patterns.csa_pattern[mbsfn_csa_pattern].csa_pattern_sf.mbms_mch_csa_pattern_4rf,
 						&mbsfn_sf_confg->subframeAllocation.choice.fourFrames);
 			} else {
 				/** 6 bit bitmap. */
 				mbsfn_sf_confg->subframeAllocation.present = M2AP_MBSFN_Subframe_Configuration__subframeAllocation_PR_oneFrame;
-				ONE_FRAME_ITEM_SF_TO_BIT_STRING(mbsfn_area_cfg->csa_patterns.csa_pattern[mbsfn_csa_pattern].csa_pattern_sf.mbms_mch_csa_pattern_1rf,
+				ONE_FRAME_ITEM_SF_TO_BIT_STRING(mbsfn_area_cfgs[num_mbsfn]->csa_patterns.csa_pattern[mbsfn_csa_pattern].csa_pattern_sf.mbms_mch_csa_pattern_1rf,
 						&mbsfn_sf_confg->subframeAllocation.choice.oneFrame);
 			}
 			/** Add it to the MBSFN configuration items. */
@@ -1035,7 +1035,7 @@ int m2ap_generate_mbms_scheduling_information(const m2ap_enb_description_t * m2_
 		mbsfnAreaCfgItem->criticality = M2AP_Criticality_reject;
 		mbsfnAreaCfgItem->value.present = M2AP_MBSFN_Area_Configuration_Item__value_PR_Common_Subframe_Allocation_Period;
 		ASN_SEQUENCE_ADD(m2ap_mbsfn_config_item, mbsfnAreaCfgItem);
-		mbsfnAreaCfgItem->value.choice.Common_Subframe_Allocation_Period = log2(mbsfn_area_cfg->mbsfnArea.mbsfn_csa_period_rf/4);
+		mbsfnAreaCfgItem->value.choice.Common_Subframe_Allocation_Period = log2(mbsfn_area_cfgs[num_mbsfn]->mbsfnArea.mbsfn_csa_period_rf/4);
 		DevAssert(mbsfnAreaCfgItem->value.choice.Common_Subframe_Allocation_Period >=0);
 		DevAssert(mbsfnAreaCfgItem->value.choice.Common_Subframe_Allocation_Period <= 6);
 
@@ -1048,7 +1048,7 @@ int m2ap_generate_mbms_scheduling_information(const m2ap_enb_description_t * m2_
 	 */
 	if (m2ap_mce_encode_pdu (&pdu, &buffer_p, &length) < 0) {
 		OAILOG_ERROR (LOG_M2AP, "Error encoding MBMS Scheduling Information.\n");
-		OAILOG_FUNC_RETURN(LOG_MCE_APP, RETURNerror);
+		OAILOG_FUNC_RETURN(LOG_M2AP, RETURNerror);
 	}
 	bstring b = blk2bstr(buffer_p, length);
 	free(buffer_p);
@@ -1059,9 +1059,9 @@ int m2ap_generate_mbms_scheduling_information(const m2ap_enb_description_t * m2_
 	 */
 	int rc = m2ap_mce_itti_send_sctp_request (&b, m2_enb_description->sctp_assoc_id, M2AP_ENB_SERVICE_SCTP_STREAM_ID, INVALID_MCE_MBMS_M2AP_ID);
 	if(rc == RETURNerror){
-		OAILOG_ERROR (LOG_M2AP, "Error sending MBMS Scheduling Information to eNB with sctp_assoc=%d.\n", m2_enb_desc->sctp_assoc_id);
+		OAILOG_ERROR (LOG_M2AP, "Error sending MBMS Scheduling Information to eNB with sctp_assoc=%d.\n", m2_enb_description->sctp_assoc_id);
 		/** Continue. */
-		OAILOG_FUNC_RETURN(LOG_MCE_APP, RETURNerror);
+		OAILOG_FUNC_RETURN(LOG_M2AP, RETURNerror);
 	}
-	OAILOG_FUNC_RETURN(LOG_MCE_APP, RETURNok);
+	OAILOG_FUNC_RETURN(LOG_M2AP, RETURNok);
 }

@@ -297,7 +297,7 @@ typedef enum {
 static inline qci_ordinal_e get_qci_ord(qci_e qci){
 	switch(qci) {
 	QCI_TABLE
-	default: return 1;
+	default: return -1;
 	}
 }
 #undef X

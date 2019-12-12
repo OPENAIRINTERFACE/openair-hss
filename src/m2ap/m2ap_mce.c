@@ -253,25 +253,6 @@ bool m2ap_enb_compare_by_mbms_sai_cb (__attribute__((unused)) const hash_key_t k
 
 //------------------------------------------------------------------------------
 static
-bool m2ap_enb_compare_by_mbsfn_area_id_cb (__attribute__((unused)) const hash_key_t keyP,
-                                    void * const elementP,
-                                    void * parameterP, void **resultP)
-{
-  const mbsfn_area_id_t * const mbsfn_area_id_p  		= (const mbsfn_area_id_t *const)parameterP;
-  m2ap_enb_description_t       * m2ap_enb_ref  	    = (m2ap_enb_description_t*)elementP;
-  hashtable_element_array_t    * ea_p								= (hashtable_element_array_t*)*resultP;
-  for(int i = 0; i < m2ap_enb_ref->mbsfn_area_ids.num_mbsfn_area_ids; i++) {
-  	if (*mbsfn_area_id_p == m2ap_enb_ref->mbsfn_area_ids.mbsfn_area_id[i]) {
-  		/** Just return true. */
-    	ea_p->elements[ea_p->num_elements++] = (void*)m2ap_enb_ref;
-    	return false;
-    }
-  }
-  return false;
-}
-
-//------------------------------------------------------------------------------
-static
 bool m2ap_enb_compare_by_local_mbms_area_cb (__attribute__((unused)) const hash_key_t keyP,
                                     void * const elementP,
                                     void * parameterP, void **resultP)

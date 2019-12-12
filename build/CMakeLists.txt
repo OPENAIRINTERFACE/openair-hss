@@ -452,7 +452,6 @@ include_directories("${OPENAIRCN_DIR}/src/utils/hashtable")
 include_directories("${OPENAIRCN_DIR}/src/utils/msc")
 include_directories("${OPENAIRCN_DIR}/src/utils/bstr")
 include_directories("${OPENAIRCN_DIR}/src/mme")
-include_directories("${OPENAIRCN_DIR}/src/sgw")
 include_directories("${OPENAIRCN_DIR}/src/mme_app")
 include_directories("${OPENAIRCN_DIR}/src/mce_app")
 include_directories("${OPENAIRCN_DIR}/src/s6a")
@@ -630,14 +629,6 @@ add_library(S11_MME
   ${S11_DIR}/s11_mme_bearer_manager.c
   ${S11_DIR}/s11_mme_session_manager.c
 )
-
-add_library(S11_SGW
-  ${S11_DIR}/s11_common.c
-  ${S11_DIR}/s11_ie_formatter.c
-  ${S11_DIR}/s11_sgw.c
-  ${S11_DIR}/s11_sgw_session_manager.c
-  ${S11_DIR}/s11_sgw_bearer_manager.c
-)
 include_directories(${S11_DIR})
 
 set(S10_DIR ${OPENAIRCN_DIR}/src/s10)
@@ -672,21 +663,6 @@ add_library(S6A
   ${S6A_DIR}/s6a_cancel_loc.c
   ${S6A_DIR}/s6a_notify.c
  )
-
-set(SGW_DIR ${OPENAIRCN_DIR}/src/sgw)
-add_library (SGW
-  ${SGW_DIR}/pgw_config.c
-  ${SGW_DIR}/pgw_lite_paa.c
-  ${SGW_DIR}/pgw_pcef_emulation.c
-  ${SGW_DIR}/pgw_pco.c
-  ${SGW_DIR}/pgw_procedures.c
-  ${SGW_DIR}/s11_causes.c
-  ${SGW_DIR}/sgw_config.c
-  ${SGW_DIR}/sgw_context_manager.c
-  ${SGW_DIR}/sgw_handlers.c
-  ${SGW_DIR}/sgw_task.c
-  ${SGW_DIR}/spgw_config.c
-  )
 
 set(MME_DIR ${OPENAIRCN_DIR}/src/mme_app)
 add_library(MME_APP
@@ -1017,26 +993,6 @@ target_link_libraries (mme
   -Wl,--end-group
   pthread m sctp  rt crypt ${LFDS} ${CRYPTO_LIBRARIES} ${OPENSSL_LIBRARIES} ${NETTLE_LIBRARIES} ${CONFIG_LIBRARIES} ${LIBXML2_LIBRARIES} gnutls fdproto fdcore
   )
-
-
-# spgw is S-GW +P-GW  nodes all in one implementation
-################################
-add_executable(spgw
-  ${OPENAIRCN_DIR}/src/oai_sgw/oai_sgw.c
-  ${OPENAIRCN_DIR}/src/common/common_types.c
-  ${OPENAIRCN_DIR}/src/common/itti_free_defined_msg.c
-  )
-if( ITTI_ANALYZER )
-  add_executable(spgw ${OPENAIRCN_BIN_DIR}/messages_xml.h )
-endif( ITTI_ANALYZER )
-target_link_libraries (spgw
-  -Wl,--start-group
-  GTPV1U SGW S11_SGW GTPV2C UDP_SERVER ${MSC_LIB} ${ITTI_LIB} ${XML_MSG_DUMP_LIB} ${3GPP_TYPES_LIB}
-   ${3GPP_TYPES_XML_LIB} CN_UTILS HASHTABLE BSTR
-  -Wl,--end-group
-  pthread m rt gtpnl ${LFDS} ${CONFIG_LIBRARIES}  ${LIBXML2_LIBRARIES}
-  )
-
 
 IF( EPC_BUILD OR MME_BUILD )
   INCLUDE(FindFreeDiameter)

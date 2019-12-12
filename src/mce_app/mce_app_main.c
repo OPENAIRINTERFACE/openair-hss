@@ -109,55 +109,55 @@ void *mce_app_thread (void *args)
     break;
 
     case TERMINATE_MESSAGE:{
-        /*
-         * Termination message received TODO -> release any data allocated
-         */
-        mce_app_exit();
-        itti_free_msg_content(received_message_p);
-        itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
+    	/*
+    	 * Termination message received TODO -> release any data allocated
+    	 */
+    	mce_app_exit();
+    	itti_free_msg_content(received_message_p);
+    	itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
 
-        OAI_FPRINTF_INFO("TASK_MCE_APP terminated\n");
-        itti_exit_task ();
-      }
-      break;
+    	OAI_FPRINTF_INFO("TASK_MCE_APP terminated\n");
+    	itti_exit_task ();
+    }
+    break;
 
     case TIMER_HAS_EXPIRED:{
-        /*
-         * Check statistic timer
-         */
-        if (received_message_p->ittiMsg.timer_has_expired.timer_id == mce_app_desc.statistic_timer_id) {
-          mce_app_statistics_display ();
-          /** Display the ITTI buffer. */
-          itti_print_DEBUG ();
-          /**
-           * Timer just for the MCCH repetition.
-           * This should be equal in all eNBs//MBSFN areas. Repetition timer should be an MBSFN-Area dependent multiple of this.
-           */
-        } else if (received_message_p->ittiMsg.timer_has_expired.timer_id == mce_app_desc.mcch_repetition_timer_id) {
-          /**
-           * Periodic MCCH timer that will not get removed.
-           * The RF of the timer should continuously increase.
-           * All MBSFN areas will be iterated and all MBSFN areas with expired MCCH modification timeout will be updated, if the CSA pattern etc. has been changed.
-           */
-        	hash_table_ts_t * mcch_mbsfn_htbl = (hash_table_ts_t*)received_message_p->ittiMsg.timer_has_expired.arg;
-          mce_app_handle_mbsfn_mcch_repetition_timeout_timer_expiry(mcch_mbsfn_htbl);
-        }
-        else if (received_message_p->ittiMsg.timer_has_expired.arg != NULL) {
-            mbms_service_index_t mbms_service_idx = ((mbms_service_index_t)(received_message_p->ittiMsg.timer_has_expired.arg));
-            mbms_service_t * mbms_service = mce_mbms_service_exists_mbms_service_index(&mce_app_desc.mce_mbms_service_contexts, mbms_service_idx);
-            if (mbms_service == NULL) {
-              OAILOG_WARNING (LOG_MME_APP, "Timer expired but no associated MBMS Service for MBMS Service idx " MBMS_SERVICE_INDEX_FMT "\n", mbms_service_idx);
-              break;
-            }
-            if(mbms_service->mbms_procedure) {
-              OAILOG_WARNING (LOG_MME_APP, "TIMER_HAS_EXPIRED with ID %u and FOR MBMS Service with TMGI " TMGI_FMT ". \n",
-            	received_message_p->ittiMsg.timer_has_expired.timer_id, TMGI_ARG(&mbms_service->privates.fields.tmgi));
-              // MBMS Session timer expiry handler
-              mce_app_handle_mbms_session_duration_timer_expiry(&mbms_service->privates.fields.tmgi, mbms_service->privates.fields.mbms_service_area_id);
-            }
-        }
-      }
-      break;
+    	/*
+    	 * Check statistic timer
+    	 */
+    	if (received_message_p->ittiMsg.timer_has_expired.timer_id == mce_app_desc.statistic_timer_id) {
+    		mce_app_statistics_display ();
+    		/** Display the ITTI buffer. */
+    		itti_print_DEBUG ();
+    		/**
+    		 * Timer just for the MCCH repetition.
+    		 * This should be equal in all eNBs//MBSFN areas. Repetition timer should be an MBSFN-Area dependent multiple of this.
+    		 */
+    	} else if (received_message_p->ittiMsg.timer_has_expired.timer_id == mce_app_desc.mcch_repetition_timer_id) {
+    		/**
+    		 * Periodic MCCH timer that will not get removed.
+    		 * The RF of the timer should continuously increase.
+    		 * All MBSFN areas will be iterated and all MBSFN areas with expired MCCH modification timeout will be updated, if the CSA pattern etc. has been changed.
+    		 */
+    		hash_table_ts_t * mcch_mbsfn_htbl = (hash_table_ts_t*)received_message_p->ittiMsg.timer_has_expired.arg;
+    		mce_app_handle_mbsfn_mcch_repetition_timeout_timer_expiry(mcch_mbsfn_htbl);
+    	}
+    	else if (received_message_p->ittiMsg.timer_has_expired.arg != NULL) {
+    		mbms_service_index_t mbms_service_idx = ((mbms_service_index_t)(received_message_p->ittiMsg.timer_has_expired.arg));
+    		mbms_service_t * mbms_service = mce_mbms_service_exists_mbms_service_index(&mce_app_desc.mce_mbms_service_contexts, mbms_service_idx);
+    		if (mbms_service == NULL) {
+    			OAILOG_WARNING (LOG_MME_APP, "Timer expired but no associated MBMS Service for MBMS Service idx " MBMS_SERVICE_INDEX_FMT "\n", mbms_service_idx);
+    			break;
+    		}
+    		if(mbms_service->mbms_procedure) {
+    			OAILOG_WARNING (LOG_MME_APP, "TIMER_HAS_EXPIRED with ID %u and FOR MBMS Service with TMGI " TMGI_FMT ". \n",
+    					received_message_p->ittiMsg.timer_has_expired.timer_id, TMGI_ARG(&mbms_service->privates.fields.tmgi));
+    			// MBMS Session timer expiry handler
+    			mce_app_handle_mbms_session_duration_timer_expiry(&mbms_service->privates.fields.tmgi, mbms_service->privates.fields.mbms_service_area_id);
+    		}
+    	}
+    }
+    break;
 
     default:{
       OAILOG_WARNING(LOG_MCE_APP, "Unknown message ID %d:%s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p));

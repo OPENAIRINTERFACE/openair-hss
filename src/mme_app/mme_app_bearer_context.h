@@ -46,12 +46,12 @@ typedef uint8_t mme_app_bearer_state_t;
  */
 typedef struct bearer_context_new_s {
   // EPS Bearer ID: An EPS bearer identity uniquely identifies an EP S bearer for one UE accessing via E-UTRAN
-  ebi_t                       ebi;
-  ebi_t                       linked_ebi;
+  ebi_t                       				ebi;
+  ebi_t                       				linked_ebi;
 
   // S-GW IP address for S1-u: IP address of the S-GW for the S1-u interfaces.
   // S-GW TEID for S1u: Tunnel Endpoint Identifier of the S-GW for the S1-u interface.
-  fteid_t                      s_gw_fteid_s1u;            // set by S11 CREATE_SESSION_RESPONSE
+  fteid_t                      				s_gw_fteid_s1u;            // set by S11 CREATE_SESSION_RESPONSE
 
   // PDN GW TEID for S5/S8 (user plane): P-GW Tunnel Endpoint Identifier for the S5/S8 interface for the user plane. (Used for S-GW change only).
   // NOTE:
@@ -61,23 +61,23 @@ typedef struct bearer_context_new_s {
   // NOTE:
   // The PDN GW IP address for user plane is needed in MME context as S-GW relocation is triggered without interaction with the source S-GW,
   // e.g. when a TAU occurs. The Target S GW requires this Information Element, so it must be stored by the MME.
-  fteid_t                      		p_gw_fteid_s5_s8_up;
+  fteid_t                      				p_gw_fteid_s5_s8_up;
 
   // EPS bearer QoS: QCI and ARP, optionally: GBR and MBR for GBR bearer
 
   // extra 23.401 spec members
-  pdn_cid_t                         pdn_cx_id;
+  pdn_cid_t                         	pdn_cx_id;
 
   /*
    * Two bearer states, one mme_app_bearer_state (towards SAE-GW) and one towards eNodeB (if activated in RAN).
    * todo: setting one, based on the other is possible?
    */
-  mme_app_bearer_state_t            bearer_state;     /**< Need bearer state to establish them. */
-  esm_ebr_context_t                 esm_ebr_context;  /**< Contains the bearer level QoS parameters. */
-  fteid_t                           enb_fteid_s1u;
+  mme_app_bearer_state_t            	bearer_state;     /**< Need bearer state to establish them. */
+  esm_ebr_context_t                 	esm_ebr_context;  /**< Contains the bearer level QoS parameters. */
+  fteid_t                           	enb_fteid_s1u;
 
   /* QoS for this bearer */
-  bearer_qos_t                		bearer_level_qos;
+  bearer_qos_t                				bearer_level_qos;
 
   /** Add an entry field to make it part of a list (session or UE, no need to save more lists). */
   // LIST_ENTRY(bearer_context_new_s) 	entries;
@@ -93,7 +93,7 @@ typedef struct bearer_context_new_s {
  * Has additional IP Multicast and CTEID fields. Using inheritance instead of union or creating a new field.
  */
 typedef struct mbms_bearer_context_s {
-  bearer_context_new_t   			eps_bearer_context;
+  bearer_context_new_t   						eps_bearer_context;
   mbms_ip_multicast_distribution_t  mbms_ip_mc_distribution;
 }__attribute__((__packed__)) mbms_bearer_context_t;
 /*
