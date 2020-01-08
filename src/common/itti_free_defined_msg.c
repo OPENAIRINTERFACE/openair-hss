@@ -501,19 +501,5 @@ void itti_free_msg_content (MessageDef * const message_p)
     /** Source SGW FQDN. */
     bdestroy_wrapper(&message_p->ittiMsg.s10_context_response.source_sgw_fqdn);
     break;
-
-    /**
-     * Sm Messages
-     */
-  case SM_MBMS_SESSION_START_REQUEST:
-  case SM_MBMS_SESSION_STOP_REQUEST:
-  case SM_MBMS_SESSION_UPDATE_REQUEST:
-  	break;
-  case SM_MBMS_SESSION_START_RESPONSE:
-  case SM_MBMS_SESSION_UPDATE_RESPONSE:
-  case SM_MBMS_SESSION_STOP_RESPONSE:
-    break;
-  default:
-    ;
   }
 }

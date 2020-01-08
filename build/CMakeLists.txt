@@ -352,63 +352,6 @@ add_library(S1AP_EPC
 
 add_dependencies(S1AP_EPC S1AP_LIB)
 
-#### M2AP PART ####
-add_list1_option(M2AP_RELEASE r15 "M2AP ASN.1 grammar version" r15)
-set(M2AP_DIR ${OPENAIRCN_DIR}/src/m2ap)
-set(asn1_generated_dir ${OPENAIRCN_BIN_DIR})
-if (${M2AP_RELEASE} STREQUAL "r15")
-  set(M2AP_VERSION 15.0.0)
-  set(M2AP_ASN_FILES "m2ap-15.0.0.asn1")
-endif(${M2AP_RELEASE} STREQUAL "r15")
-add_definitions("-DM2AP_VERSION=\"${M2AP_VERSION}\"")
-set(M2AP_ASN_DIR ${M2AP_DIR}/messages/asn1/${M2AP_RELEASE})
-set(M2AP_C_DIR ${asn1_generated_dir}/M2AP_${M2AP_RELEASE})
-
-set(GENERATED_FULL_DIR ${M2AP_C_DIR})
-set(ASN1_SOURCE_DIR ${M2AP_ASN_DIR}/${M2AP_ASN_FILES})
-set(ENV{ASN1C_PREFIX} "M2AP_" )
-set(m2ap_generate_code_done_flag ${GENERATED_FULL_DIR}/M2AP_GENERATE_CODE_DONE)
-
-if( ${ASN1_SOURCE_DIR} IS_NEWER_THAN ${m2ap_generate_code_done_flag})
-   file(REMOVE ${GENERATED_FULL_DIR}/${ASN1C_PREFIX}*.c ${GENERATED_FULL_DIR}/${ASN1C_PREFIX}*.h)
-   file(MAKE_DIRECTORY ${GENERATED_FULL_DIR})
-   #execute_process(COMMAND  asn1c -pdu=all -fcompound-names -gen-PER -no-gen-OER -no-gen-example -fno-include-deps -D ${GENERATED_FULL_DIR} ${ASN1_SOURCE_DIR} RESULT_VARIABLE ret)
-   execute_process(COMMAND  asn1c -pdu=all -fcompound-names -gen-PER -no-gen-example -fno-include-deps -D ${GENERATED_FULL_DIR} ${ASN1_SOURCE_DIR} RESULT_VARIABLE ret)
-   if (NOT ${ret} STREQUAL 0)
-      message(FATAL_ERROR "${ret}")
-   endif (NOT ${ret} STREQUAL 0)
-endif()
-# TOUCH not in cmake 3.10
-file(WRITE ${m2ap_generate_code_done_flag})
-
-# Warning: if you modify ASN.1 source file to generate new C files, cmake should be re-run instead of make
-#execute_process(COMMAND ${OPENAIR_CMAKE}/tools/make_asn1c_includes.sh "${M2AP_C_DIR}" "${M2AP_ASN_DIR}/${M2AP_ASN_FILES}" "M2AP_" -fno-include-deps
-#                RESULT_VARIABLE ret)
-file(GLOB M2AP_source ${M2AP_C_DIR}/*.c)
-
-add_library(M2AP_LIB
-  ${M2AP_source}
-  ${M2AP_DIR}/m2ap_common.c
-  )
-################################
-
-include_directories ("${M2AP_C_DIR}")
-include_directories ("${M2AP_DIR}")
-
-add_library(M2AP_EPC
-  ${M2AP_DIR}/m2ap_mce.c
-  ${M2AP_DIR}/m2ap_mce_encoder.c
-  ${M2AP_DIR}/m2ap_mce_decoder.c
-  ${M2AP_DIR}/m2ap_mce_handlers.c
-  ${M2AP_DIR}/m2ap_mce_itti_messaging.c
-  ${M2AP_DIR}/m2ap_mce_procedures.c
-  ${M2AP_DIR}/m2ap_mce_retransmission.c
-  ${M2AP_DIR}/m2ap_mce_mbms_sa.c
-  )
-
-add_dependencies(M2AP_EPC M2AP_LIB)
-
-
 ###############################################################################
 # add the binary tree to the search path for include files
 ###############################################################################
@@ -445,7 +388,6 @@ include_directories("${OPENAIRCN_DIR}/src/nas/util")
 include_directories("${OPENAIRCN_DIR}/src/secu")
 include_directories("${OPENAIRCN_DIR}/src/sctp")
 include_directories("${OPENAIRCN_DIR}/src/s1ap")
-include_directories("${OPENAIRCN_DIR}/src/m2ap")
 include_directories("${OPENAIRCN_DIR}/src/udp")
 include_directories("${OPENAIRCN_DIR}/src/gtpv1-u")
 include_directories("${OPENAIRCN_DIR}/src/utils/hashtable")
@@ -453,7 +395,6 @@ include_directories("${OPENAIRCN_DIR}/src/utils/msc")
 include_directories("${OPENAIRCN_DIR}/src/utils/bstr")
 include_directories("${OPENAIRCN_DIR}/src/mme")
 include_directories("${OPENAIRCN_DIR}/src/mme_app")
-include_directories("${OPENAIRCN_DIR}/src/mce_app")
 include_directories("${OPENAIRCN_DIR}/src/s6a")
 include_directories("${OPENAIRCN_DIR}/src")
 
@@ -640,15 +581,6 @@ add_library(S10_MME
 )
 include_directories(${S10_DIR})
 
-set(Sm_DIR ${OPENAIRCN_DIR}/src/sm)
-add_library(Sm_MME
-  ${Sm_DIR}/sm_common.c
-  ${Sm_DIR}/sm_ie_formatter.c
-  ${Sm_DIR}/sm_mme_task.c
-  ${Sm_DIR}/sm_mme_session_manager.c
-)
-include_directories(${Sm_DIR})
-
 set(S6A_DIR ${OPENAIRCN_DIR}/src/s6a)
 add_library(S6A
   ${S6A_DIR}/s6a_auth_info.c
@@ -685,17 +617,6 @@ add_library(MME_APP
   ${MME_DIR}/mme_app_ue_context.c
   ${MME_DIR}/mme_app_session_context.c
   ${MME_DIR}/mme_config.c
-  )
-
-set(MME_DIR ${OPENAIRCN_DIR}/src/mce_app)
-add_library(MCE_APP
-  ${MME_DIR}/mce_app_mbms_service.c
-  ${MME_DIR}/mce_app_itti_messaging.c
-  ${MME_DIR}/mce_app_main.c
-  ${MME_DIR}/mce_app_statistics.c
-  ${MME_DIR}/mce_app_mbms_service_context.c
-  ${MME_DIR}/mce_app_mbsfn_context.c 
-  ${MME_DIR}/mce_app_mbsfn_scheduling.c 
   )
 
 set(NAS_SRC ${OPENAIRCN_DIR}/src/nas/)
@@ -987,8 +908,8 @@ if( ITTI_ANALYZER )
 endif( ITTI_ANALYZER )
 target_link_libraries (mme
   -Wl,--start-group
-    S1AP_LIB M2AP_LIB S1AP_EPC M2AP_EPC S11_MME S10_MME Sm_MME GTPV2C SCTP_SERVER UDP_SERVER SECU_CN
-   S6A MME_APP MCE_APP LIB_NAS_MME ${MSC_LIB} ${ITTI_LIB} ${XML_MSG_DUMP_LIB} ${3GPP_TYPES_LIB}
+    S1AP_LIB S1AP_EPC S11_MME S10_MME GTPV2C SCTP_SERVER UDP_SERVER SECU_CN
+   S6A MME_APP LIB_NAS_MME ${MSC_LIB} ${ITTI_LIB} ${XML_MSG_DUMP_LIB} ${3GPP_TYPES_LIB}
    ${3GPP_TYPES_XML_LIB} CN_UTILS ${SCENARIO_PLAYER_LIB} HASHTABLE BSTR
   -Wl,--end-group
   pthread m sctp  rt crypt ${LFDS} ${CRYPTO_LIBRARIES} ${OPENSSL_LIBRARIES} ${NETTLE_LIBRARIES} ${CONFIG_LIBRARIES} ${LIBXML2_LIBRARIES} gnutls fdproto fdcore

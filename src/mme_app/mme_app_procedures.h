@@ -45,8 +45,7 @@ typedef enum {
   MME_APP_BASE_PROC_TYPE_NONE = 0,
   MME_APP_BASE_PROC_TYPE_S1AP,
   MME_APP_BASE_PROC_TYPE_S10,
-  MME_APP_BASE_PROC_TYPE_S11,
-  MME_APP_BASE_PROC_TYPE_MBMS
+  MME_APP_BASE_PROC_TYPE_S11
 } mme_app_base_proc_type_t;
 
 
@@ -179,14 +178,5 @@ typedef struct mme_app_s11_proc_delete_bearer_s {
   // TODO here give a NAS/S1AP/.. reason -> GTPv2-C reason
   bearer_contexts_to_be_removed_t bcs_failed; /**< Store the bearer contexts to be created here, and don't register them yet in the MME_APP context. */
 } mme_app_s11_proc_delete_bearer_t;
-
-typedef struct mme_app_mbms_proc_s {
-  mme_app_base_proc_t           		proc;
-  bool							 								trigger_mbms_session_stop;
-
-  uintptr_t                      		sm_trxn;
-  struct mme_app_timer_t         		timer;
-  LIST_ENTRY(mme_app_mbms_proc_s)  	entries;      /* List. */
-} mme_app_mbms_proc_t;
 
 #endif /** FILE_MME_APP_PROCEDURES_SEEN **/

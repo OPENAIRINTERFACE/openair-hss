@@ -73,8 +73,6 @@
 #include "nas_esm.h"
 #include "s10_mme.h"
 #include "s11_mme.h"
-#include "sm_mme.h"
-#include "mce_app_extern.h"
 
 /* FreeDiameter headers for support of S6A interface */
 #include <freeDiameter/freeDiameter-host.h>
@@ -173,16 +171,6 @@ main (
 
   if(mme_config.ip.if_name_s10){
     CHECK_INIT_RETURN (s10_mme_init (&mme_config));
-  }
-  if(mme_config.mbms.ip.if_name_mc){
-    CHECK_INIT_RETURN (m2ap_mce_init ());
-    CHECK_INIT_RETURN (sm_mme_init (&mme_config));
-	  CHECK_INIT_RETURN (mce_app_init (&mme_config));
-	  /** Activate it right away. */
-	  MessageDef                             *message_p;
-	  OAILOG_NOTICE(LOG_MME_APP, "Activating MBMS layer..\n");
-	  message_p = itti_alloc_new_message (TASK_MME_APP, ACTIVATE_MESSAGE);
-	  itti_send_msg_to_task (TASK_M2AP, INSTANCE_DEFAULT, message_p);
   }
   OAILOG_DEBUG(LOG_MME_APP, "MME app initialization of optional interfaces complete. \n");
 

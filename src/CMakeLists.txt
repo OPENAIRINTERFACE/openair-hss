@@ -232,9 +232,6 @@ add_boolean_option( ENABLE_SDF_MARKING              False    "Should be set to t
 # S1AP LAYER OPTIONS
 ##########################
 add_boolean_option(S1AP_DEBUG_LIST                  False    "Traces, option to be removed soon")
-# M2AP LAYER OPTIONS
-##########################
-add_boolean_option(M2AP_DEBUG_LIST                  False    "Traces, option to be removed soon")
 # SCTP LAYER OPTIONS
 ##########################
 add_boolean_option(SCTP_DUMP_LIST                   False    "Traces, option to be removed soon")
@@ -281,11 +278,8 @@ ADD_SUBDIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/../../src/common ${CMAKE_CURRENT_BI
 ADD_SUBDIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/../../src/gtpv2-c ${CMAKE_CURRENT_BINARY_DIR}/gtpv2-c)
 ADD_SUBDIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/../../src/s11 ${CMAKE_CURRENT_BINARY_DIR}/s11)
 ADD_SUBDIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/../../src/s10 ${CMAKE_CURRENT_BINARY_DIR}/s10)
-ADD_SUBDIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/../../src/sm ${CMAKE_CURRENT_BINARY_DIR}/sm)
 ADD_SUBDIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/../../src/nas ${CMAKE_CURRENT_BINARY_DIR}/nas)
 ADD_SUBDIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/../../src/udp ${CMAKE_CURRENT_BINARY_DIR}/udp)
-ADD_SUBDIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/../../src/mce_app ${CMAKE_CURRENT_BINARY_DIR}/mce_app)
-ADD_SUBDIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/../../src/m2ap ${CMAKE_CURRENT_BINARY_DIR}/m2ap)
 ADD_SUBDIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/../../src/utils ${CMAKE_CURRENT_BINARY_DIR}/utils)
 
 ENABLE_TESTING()

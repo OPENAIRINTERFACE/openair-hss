@@ -31,7 +31,6 @@
 #include "ip_forward_messages_types.h"
 #include "s10_messages_types.h"
 #include "s11_messages_types.h"
-#include "sm_messages_types.h"
 #include "s1ap_messages_types.h"
 #include "nas_messages_types.h"
 #include "s6a_messages_types.h"
@@ -39,7 +38,6 @@
 #include "sgw_messages_types.h"
 #include "udp_messages_types.h"
 #include "mme_app_messages_types.h"
-#include "m3ap_messages_types.h"
 #include "scenario_player_messages_types.h"
 #include "async_system_messages_types.h"
 

@@ -369,12 +369,6 @@ typedef struct imeisv_s {
 // 15 Identification of Multimedia Broadcast/Multicast Service
 
 // 15.2  Structure of TMGI
-typedef struct tmgi_s {
-  uint32_t    mbms_service_id:24;	    				   /*!< \brief MBMS Service ID. */
-  plmn_t      plmn;                                        /*!< \brief PLMN				*/
-} tmgi_t;
-#define MBMS_SERVICE_ID_DIGITS              3
-
 // 15.3  Structure of MBMS SAI
 // 15.4  Home Network Realm
 // 16  Numbering, addressing and identification within the GAA subsystem
