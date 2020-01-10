@@ -31,6 +31,7 @@
 #include "TLVEncoder.h"
 #include "TLVDecoder.h"
 #include "EpsMobileIdentity.h"
+#include "mme_config.h"
 
 static int decode_guti_eps_mobile_identity (guti_eps_mobile_identity_t * guti, uint8_t * buffer);
 static int decode_imsi_eps_mobile_identity (imsi_eps_mobile_identity_t * imsi, uint8_t * buffer, uint8_t ie_len);
@@ -127,7 +128,9 @@ static int decode_guti_eps_mobile_identity (guti_eps_mobile_identity_t * guti, u
    * For the GUTI, bits 5 to 8 of octet 3 are coded as "1111"
    */
   if (guti->spare != 0xf) {
-    OAILOG_FUNC_RETURN (LOG_NAS_EMM, TLV_VALUE_DOESNT_MATCH);
+    if (mme_config.nas_config.strict_filler_bits_check) {
+      OAILOG_FUNC_RETURN (LOG_NAS_EMM, TLV_VALUE_DOESNT_MATCH);
+    }
   }
 
   guti->oddeven = (*(buffer + decoded) >> 3) & 0x1;
@@ -166,7 +169,7 @@ static int decode_imsi_eps_mobile_identity (imsi_eps_mobile_identity_t * imsi, u
   imsi->typeofidentity = *(buffer + decoded) & 0x7;
 
   if (imsi->typeofidentity != EPS_MOBILE_IDENTITY_IMSI) {
-    return (TLV_VALUE_DOESNT_MATCH);
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, TLV_VALUE_DOESNT_MATCH);
   }
 
   imsi->oddeven = (*(buffer + decoded) >> 3) & 0x1;
@@ -182,58 +185,60 @@ static int decode_imsi_eps_mobile_identity (imsi_eps_mobile_identity_t * imsi, u
       imsi->identity_digit4 = *(buffer + decoded) & 0xf;
       imsi->num_digits++;
       imsi->identity_digit5 = (*(buffer + decoded) >> 4) & 0xf;
-      if ((EPS_MOBILE_IDENTITY_EVEN == imsi->oddeven)  && (imsi->identity_digit5 != 0x0f)) {
-        return (TLV_VALUE_DOESNT_MATCH);
+      decoded++;
+      if ((decoded == ie_len) && (EPS_MOBILE_IDENTITY_EVEN == imsi->oddeven)  && (imsi->identity_digit5 != 0x0f)) {
+        OAILOG_FUNC_RETURN (LOG_NAS_EMM, TLV_VALUE_DOESNT_MATCH);
       } else {
         imsi->num_digits++;
       }
-      decoded++;
       if (decoded < ie_len) {
         imsi->identity_digit6 = *(buffer + decoded) & 0xf;
         imsi->num_digits++;
         imsi->identity_digit7 = (*(buffer + decoded) >> 4) & 0xf;
-        if ((EPS_MOBILE_IDENTITY_EVEN == imsi->oddeven)  && (imsi->identity_digit7 != 0x0f)) {
-          return (TLV_VALUE_DOESNT_MATCH);
+        decoded++;
+        if ((decoded == ie_len) && (EPS_MOBILE_IDENTITY_EVEN == imsi->oddeven)  && (imsi->identity_digit7 != 0x0f)) {
+          OAILOG_FUNC_RETURN (LOG_NAS_EMM,TLV_VALUE_DOESNT_MATCH);
         } else {
           imsi->num_digits++;
         }
-        decoded++;
         if (decoded < ie_len) {
           imsi->identity_digit8 = *(buffer + decoded) & 0xf;
           imsi->num_digits++;
           imsi->identity_digit9 = (*(buffer + decoded) >> 4) & 0xf;
-          if ((EPS_MOBILE_IDENTITY_EVEN == imsi->oddeven)  && (imsi->identity_digit9 != 0x0f)) {
-            return (TLV_VALUE_DOESNT_MATCH);
+          decoded++;
+          if ((decoded == ie_len) && (EPS_MOBILE_IDENTITY_EVEN == imsi->oddeven)  && (imsi->identity_digit9 != 0x0f)) {
+            OAILOG_FUNC_RETURN (LOG_NAS_EMM,TLV_VALUE_DOESNT_MATCH);
           } else {
             imsi->num_digits++;
           }
-          decoded++;
           if (decoded < ie_len) {
             imsi->identity_digit10 = *(buffer + decoded) & 0xf;
             imsi->num_digits++;
             imsi->identity_digit11 = (*(buffer + decoded) >> 4) & 0xf;
-            if ((EPS_MOBILE_IDENTITY_EVEN == imsi->oddeven)  && (imsi->identity_digit11 != 0x0f)) {
-              return (TLV_VALUE_DOESNT_MATCH);
+            decoded++;
+            if ((decoded == ie_len) && (EPS_MOBILE_IDENTITY_EVEN == imsi->oddeven)  && (imsi->identity_digit11 != 0x0f)) {
+              OAILOG_FUNC_RETURN (LOG_NAS_EMM,TLV_VALUE_DOESNT_MATCH);
             } else {
               imsi->num_digits++;
             }
-            decoded++;
             if (decoded < ie_len) {
               imsi->identity_digit12 = *(buffer + decoded) & 0xf;
               imsi->num_digits++;
               imsi->identity_digit13 = (*(buffer + decoded) >> 4) & 0xf;
-              if ((EPS_MOBILE_IDENTITY_EVEN == imsi->oddeven)  && (imsi->identity_digit13 != 0x0f)) {
-                return (TLV_VALUE_DOESNT_MATCH);
+              decoded++;
+              if ((decoded == ie_len) && (EPS_MOBILE_IDENTITY_EVEN == imsi->oddeven)  && (imsi->identity_digit13 != 0x0f)) {
+                OAILOG_FUNC_RETURN (LOG_NAS_EMM,TLV_VALUE_DOESNT_MATCH);
               } else {
                 imsi->num_digits++;
               }
-              decoded++;
               if (decoded < ie_len) {
                 imsi->identity_digit14 = *(buffer + decoded) & 0xf;
                 imsi->num_digits++;
                 imsi->identity_digit15 = (*(buffer + decoded) >> 4) & 0xf;
-                if ((EPS_MOBILE_IDENTITY_EVEN == imsi->oddeven)  && (imsi->identity_digit15 != 0x0f)) {
-                  return (TLV_VALUE_DOESNT_MATCH);
+                if ((EPS_MOBILE_IDENTITY_EVEN == imsi->oddeven) && (imsi->identity_digit15 != 0x0f)) {
+                  if (mme_config.nas_config.strict_filler_bits_check) {
+                    OAILOG_FUNC_RETURN (LOG_NAS_EMM,TLV_VALUE_DOESNT_MATCH);
+                  }
                 } else {
                   imsi->num_digits++;
                 }
@@ -258,7 +263,7 @@ static int decode_imei_eps_mobile_identity (imei_eps_mobile_identity_t * imei, u
   imei->typeofidentity = *(buffer + decoded) & 0x7;
 
   if (imei->typeofidentity != EPS_MOBILE_IDENTITY_IMEI) {
-    return (TLV_VALUE_DOESNT_MATCH);
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, TLV_VALUE_DOESNT_MATCH);
   }
 
   imei->oddeven = (*(buffer + decoded) >> 3) & 0x1;
