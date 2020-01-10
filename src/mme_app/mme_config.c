@@ -254,6 +254,7 @@ static void mme_config_init (mme_config_t * config_pP)
   config_pP->nas_config.t3489_sec = T3489_DEFAULT_VALUE;
   config_pP->nas_config.t3495_sec = T3495_DEFAULT_VALUE;
   config_pP->nas_config.force_tau = MME_FORCE_TAU_S;
+  config_pP->nas_config.strict_filler_bits_check = true;
   config_pP->nas_config.force_reject_sr  = true;
   config_pP->nas_config.disable_esm_information = false;
 
@@ -991,6 +992,12 @@ static int mme_config_parse_file (mme_config_t * config_pP)
       if ((config_setting_lookup_int (setting, MME_CONFIG_STRING_NAS_FORCE_TAU, &aint))) {
     	  config_pP->nas_config.force_tau = ((uint32_t) aint);
       }
+      if ((config_setting_lookup_string (setting, MME_CONFIG_STRING_NAS_STRICT_FILLER_BITS_CHECK, (const char **)&astring))) {
+        if (strcasecmp (astring, "yes") == 0)
+          config_pP->nas_config.strict_filler_bits_check = true;
+        else
+          config_pP->nas_config.strict_filler_bits_check = false;
+      }
 //      if ((config_setting_lookup_string (setting, MME_CONFIG_STRING_NAS_FORCE_REJECT_SR, (const char **)&astring))) {
 //        if (strcasecmp (astring, "yes") == 0)
 //          config_pP->nas_config.force_reject_sr = true;
@@ -1231,6 +1238,7 @@ static void mme_config_display (mme_config_t * config_pP)
   OAILOG_INFO (LOG_CONFIG, "    T3470 ....: %d sec\n", config_pP->nas_config.t3470_sec);
   OAILOG_INFO (LOG_CONFIG, "    T3495 ....: %d sec\n", config_pP->nas_config.t3495_sec);
   OAILOG_INFO (LOG_CONFIG, "    NAS non standart features .:\n");
+  OAILOG_INFO (LOG_CONFIG, "      Strict filler bits check ....: %s\n", (config_pP->nas_config.strict_filler_bits_check) ? "true":"false");
   OAILOG_INFO (LOG_CONFIG, "      Force TAU ...................: %s\n", (config_pP->nas_config.force_tau) ? "true":"false");
   OAILOG_INFO (LOG_CONFIG, "      Force reject SR .............: %s\n", (config_pP->nas_config.force_reject_sr) ? "true":"false");
   OAILOG_INFO (LOG_CONFIG, "      Disable Esm information .....: %s\n", (config_pP->nas_config.disable_esm_information) ? "true":"false");

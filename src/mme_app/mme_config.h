@@ -121,6 +121,7 @@
 #define MME_CONFIG_STRING_NAS_T3486_TIMER                "T3486"
 #define MME_CONFIG_STRING_NAS_T3489_TIMER                "T3489"
 #define MME_CONFIG_STRING_NAS_T3495_TIMER                "T3495"
+#define MME_CONFIG_STRING_NAS_STRICT_FILLER_BITS_CHECK   "STRICT_FILLER_BITS_CHECK"
 
 #define MME_CONFIG_STRING_NAS_DISABLE_ESM_INFORMATION_PROCEDURE    "DISABLE_ESM_INFORMATION_PROCEDURE"
 #define MME_CONFIG_STRING_NAS_FORCE_PUSH_DEDICATED_BEARER "FORCE_PUSH_DEDICATED_BEARER"
@@ -261,6 +262,7 @@ typedef struct mme_config_s {
     uint32_t t3495_sec;
 
     // non standart features
+    bool     strict_filler_bits_check;
     bool     force_tau;
     bool     force_reject_sr;
     bool     disable_esm_information;

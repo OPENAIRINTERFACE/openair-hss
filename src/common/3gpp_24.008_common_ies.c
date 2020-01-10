@@ -44,6 +44,7 @@
 #include "TLVDecoder.h"
 #include "TLVEncoder.h"
 #include "log.h"
+#include "mme_config.h"
 
 //******************************************************************************
 // 10.5.1 Common information elements
@@ -445,7 +446,9 @@ static int decode_imeisv_mobile_identity (
    * mark coded as "1111".
    */
   if ((imeisv->oddeven == MOBILE_IDENTITY_EVEN) && (imeisv->last != 0x0f)) {
-    OAILOG_FUNC_RETURN (LOG_NAS_EMM, TLV_VALUE_DOESNT_MATCH);
+    if (mme_config.nas_config.strict_filler_bits_check) {
+      OAILOG_FUNC_RETURN (LOG_NAS_EMM, TLV_VALUE_DOESNT_MATCH);
+    }
   }
 
   decoded++;
