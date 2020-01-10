@@ -52,8 +52,8 @@ def main():
     logger.setLevel(logging.DEBUG)
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-a', '--apn',          default='oai.ipv4',            help="default APN allowed for all IMSI of this HSS db")
-    parser.add_argument('-A', '--apn2',         default='internet',            help="Non default APN allowed for all IMSI of this HSS db")
+    parser.add_argument('-a', '--apn',          default='eNB.openair4G.eur',   help="default APN allowed for all IMSI of this HSS db")
+    parser.add_argument('-A', '--apn2',         default='gNB.openair4G.eur',   help="Non default APN allowed for all IMSI of this HSS db")
     parser.add_argument('-C', '--cassandra-cluster', default='127.0.0.1',      help="Cassandra list of nodes")
     parser.add_argument('-k', '--key',          default='8baf473f2f8fd09487cccbd7097c6862', help="LTE K (common for all IMSI)=8baf473f2f8fd09487cccbd7097c6862 for OP=11111111111111111111111111111111\n\
                                                                                                 LTE K (common for all IMSI)=fec86ba6eb707ed08905757b1bb44b8f for OP=1006020f0a478bf6b699f15c062e42b3")
