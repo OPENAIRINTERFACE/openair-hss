@@ -257,6 +257,10 @@ static void mme_config_init (mme_config_t * config_pP)
   config_pP->nas_config.strict_filler_bits_check = true;
   config_pP->nas_config.force_reject_sr  = true;
   config_pP->nas_config.disable_esm_information = false;
+  // LTE cannot work without integrity (bug if missing NAS section)
+  config_pP->nas_config.prefered_integrity_algorithm[0] = EIA2_128_ALG_ID;
+  // LTE can work without encryption
+  config_pP->nas_config.prefered_ciphering_algorithm[0] = EEA0_ALG_ID;
 
   /*
    * Set the TAI
