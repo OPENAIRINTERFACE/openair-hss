@@ -187,7 +187,7 @@ mme_ue_subscription_data_exists_imsi (
   mme_ue_context_t * const mme_ue_context_p,
   const imsi64_t imsi)
 {
-  struct subscription_data_t                    *subscription_data = NULL;
+  subscription_data_t                    *subscription_data = NULL;
 
   hashtable_ts_get (mme_ue_context_p->imsi_subscription_profile_htbl, (const hash_key_t)imsi, (void **)&subscription_data);
   if (subscription_data) {
@@ -331,7 +331,7 @@ mme_ue_context_update_coll_keys (
   if ((INVALID_ENB_UE_S1AP_ID_KEY != enb_s1ap_id_key) && (ue_context->privates.enb_s1ap_id_key != enb_s1ap_id_key)) {
     // new insertion of enb_ue_s1ap_id_key,
     h_rc = hashtable_uint64_ts_remove (mme_ue_context_p->enb_ue_s1ap_id_ue_context_htbl, (const hash_key_t)ue_context->privates.enb_s1ap_id_key);
-    h_rc = hashtable_uint64_ts_insert (mme_ue_context_p->enb_ue_s1ap_id_ue_context_htbl, (const hash_key_t)enb_s1ap_id_key, (void *)(uintptr_t)mme_ue_s1ap_id);
+    h_rc = hashtable_uint64_ts_insert (mme_ue_context_p->enb_ue_s1ap_id_ue_context_htbl, (const hash_key_t)enb_s1ap_id_key, (uintptr_t)mme_ue_s1ap_id);
 
     if (HASH_TABLE_OK != h_rc) {
       OAILOG_ERROR (LOG_MME_APP,

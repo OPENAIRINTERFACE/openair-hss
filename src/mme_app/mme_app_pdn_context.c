@@ -60,7 +60,13 @@
 static void mme_app_free_pdn_context (pdn_context_t ** const pdn_context);
 
 //------------------------------------------------------------------------------
-void mme_app_get_pdn_context (mme_ue_s1ap_id_t ue_id, pdn_cid_t const context_id, ebi_t const default_ebi, bstring const apn_subscribed, pdn_context_t **pdn_ctx)
+void
+mme_app_get_pdn_context (
+    mme_ue_s1ap_id_t ue_id,
+    pdn_cid_t const context_id,
+    ebi_t const default_ebi,
+    bstring const apn_subscribed,
+    pdn_context_t **pdn_ctx)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
   ue_session_pool_t * ue_session_pool =  mme_ue_session_pool_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_session_pools, ue_id);
