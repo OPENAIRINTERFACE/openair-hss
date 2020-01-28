@@ -1500,8 +1500,38 @@ mme_app_handle_modify_bearer_resp (
       }
     }
   }
-  /** If it is an X2 Handover, send a path switch response back. */
-  if(modify_bearer_resp_pP->internal_flags & INTERNAL_FLAG_X2_HANDOVER) {
+  /** If it is an dual connectivity HO, can send send a response back. */
+  if(modify_bearer_resp_pP->internal_flags & INTERNAL_FLAG_E_RAB_MOD_IND) {
+    OAILOG_INFO(LOG_MME_APP, "Sending an S1AP E-RAB MODIFICATION CONFIRM for UE with ueId: " MME_UE_S1AP_ID_FMT ". \n", ue_context->privates.mme_ue_s1ap_id);
+    uint16_t encryption_algorithm_capabilities = 0;
+    uint16_t integrity_algorithm_capabilities = 0;
+    if(emm_data_context_update_security_parameters(ue_context->privates.mme_ue_s1ap_id, &encryption_algorithm_capabilities, &integrity_algorithm_capabilities) != RETURNok){
+      OAILOG_ERROR(LOG_MME_APP, "Error updating AS security parameters for UE with ueId: " MME_UE_S1AP_ID_FMT ". \n", ue_context->privates.mme_ue_s1ap_id);
+      mme_app_send_s1ap_path_switch_request_failure(ue_context->privates.mme_ue_s1ap_id, ue_context->privates.fields.enb_ue_s1ap_id,
+          ue_context->privates.fields.sctp_assoc_id_key, S1AP_Cause_PR_nas);
+      /** Implicitly detach the UE --> If EMM context is missing, still continue with the resource removal. */
+      message_p = itti_alloc_new_message (TASK_MME_APP, NAS_IMPLICIT_DETACH_UE_IND);
+      DevAssert (message_p != NULL);
+      message_p->ittiMsg.nas_implicit_detach_ue_ind.ue_id = ue_context->privates.mme_ue_s1ap_id;
+      MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_IMPLICIT_DETACH_UE_IND_MESSAGE");
+      itti_send_msg_to_task (TASK_NAS_EMM, INSTANCE_DEFAULT, message_p);
+      OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
+    }
+    OAILOG_INFO(LOG_MME_APP, "Successfully updated AS security parameters for UE with ueId: " MME_UE_S1AP_ID_FMT " for X2 handover. \n", ue_context->privates.mme_ue_s1ap_id);
+
+    mme_app_s1ap_proc_modify_bearer_ind_t* proc = mme_app_get_s1ap_procedure_modify_bearer_ind(ue_session_pool);
+
+    if (proc) {
+      if (mme_app_s1ap_procedure_modify_bearer_ind_handle_modify_bearer_response(
+                ue_context,
+                proc,
+                modify_bearer_resp_pP,
+                ue_session_pool)) {
+        mme_app_delete_s1ap_procedure_modify_bearer_ind(ue_session_pool);
+      }
+    }
+    /** If it is an X2 Handover, send a path switch response back. */
+  } else if(modify_bearer_resp_pP->internal_flags & INTERNAL_FLAG_X2_HANDOVER) {
     OAILOG_INFO(LOG_MME_APP, "Sending an S1AP Path Switch Request Acknowledge for UE with ueId: " MME_UE_S1AP_ID_FMT ". \n", ue_context->privates.mme_ue_s1ap_id);
     uint16_t encryption_algorithm_capabilities = 0;
     uint16_t integrity_algorithm_capabilities = 0;
@@ -2755,10 +2785,10 @@ void mme_app_handle_e_rab_modify_rsp (itti_s1ap_e_rab_modify_rsp_t  * const e_ra
 //------------------------------------------------------------------------------
 void mme_app_handle_e_rab_release_ind (const itti_s1ap_e_rab_release_ind_t   * const e_rab_release_ind) {
   OAILOG_FUNC_IN (LOG_MME_APP);
-  struct ue_session_pool_s			  *ue_session_pool 	= NULL;
-  struct pdn_context_s                *pdn_context 		= NULL;
+  struct ue_session_pool_s        *ue_session_pool  = NULL;
+  struct pdn_context_s                *pdn_context    = NULL;
   ebi_list_t                          ebi_list;
-  MessageDef                          *message_p 		= NULL;
+  MessageDef                          *message_p    = NULL;
 
   ue_session_pool = mme_ue_session_pool_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_session_pools, e_rab_release_ind->mme_ue_s1ap_id);
   if (ue_session_pool == NULL) {
@@ -2797,6 +2827,94 @@ void mme_app_handle_e_rab_release_ind (const itti_s1ap_e_rab_release_ind_t   * c
     }
   }
   OAILOG_WARNING (LOG_MME_APP, "Nothing triggered from released e_rab indication for UE: " MME_UE_S1AP_ID_FMT "\n", e_rab_release_ind->mme_ue_s1ap_id);
+  OAILOG_FUNC_OUT (LOG_MME_APP);
+}
+
+//------------------------------------------------------------------------------
+void mme_app_handle_e_rab_modification_ind (const itti_s1ap_e_rab_modification_ind_t   * const e_rab_modification_ind) {
+  OAILOG_FUNC_IN (LOG_MME_APP);
+  struct ue_session_pool_s        *ue_session_pool  = NULL;
+  struct pdn_context_s                *pdn_context    = NULL;
+  ebi_list_t                          ebi_list;
+  MessageDef                          *message_p    = NULL;
+
+  if (!e_rab_modification_ind->e_rab_to_be_modified_list.no_of_items) {
+    OAILOG_NOTICE (LOG_MME_APP, "S1AP E-RAB_MODIFICATION_IND no e-rab to be modified for mme_ue_s1ap_id: " MME_UE_S1AP_ID_FMT "\n", e_rab_modification_ind->mme_ue_s1ap_id);
+    OAILOG_FUNC_OUT (LOG_MME_APP);
+  }
+
+  ue_session_pool = mme_ue_session_pool_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_session_pools, e_rab_modification_ind->mme_ue_s1ap_id);
+  if (ue_session_pool == NULL) {
+    OAILOG_DEBUG (LOG_MME_APP, "We didn't find this mme_ue_s1ap_id in list of UE: " MME_UE_S1AP_ID_FMT "\n", e_rab_modification_ind->mme_ue_s1ap_id);
+    OAILOG_FUNC_OUT (LOG_MME_APP);
+  }
+  /* check ETSI TS 136 413 V15.5.0 8.2.4.4 Abnormal Conditions
+   * If the E-RAB MODIFICATION INDICATION message does not contain all the E-RABs previously included in the UE
+   * Context, the MME shall trigger the UE Context Release procedure.
+   */
+
+  for (int i = 0; i < e_rab_modification_ind->e_rab_to_be_modified_list.no_of_items; i++) {
+    bearer_context_new_t * bearer_context = NULL;
+    mme_app_get_session_bearer_context_from_all(ue_session_pool,
+        e_rab_modification_ind->e_rab_to_be_modified_list.item[i].e_rab_id,
+        &bearer_context);
+
+    if(!bearer_context){
+      OAILOG_NOTICE (LOG_MME_APP, "S1AP E-RAB_MODIFICATION_IND no e-rab %d to be modified for mme_ue_s1ap_id: " MME_UE_S1AP_ID_FMT " -> Releasing context...\n",
+          e_rab_modification_ind->e_rab_to_be_modified_list.item[i].e_rab_id,
+          e_rab_modification_ind->mme_ue_s1ap_id);
+
+      ue_context_t  *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, e_rab_modification_ind->mme_ue_s1ap_id);
+      ue_context->privates.s1_ue_context_release_cause = S1AP_RADIO_UNKNOWN_E_RAB_ID;
+      mme_app_itti_ue_context_release(e_rab_modification_ind->mme_ue_s1ap_id,
+                                      e_rab_modification_ind->enb_ue_s1ap_id,
+                                      ue_context->privates.s1_ue_context_release_cause,
+                                      ue_context->privates.fields.e_utran_cgi.cell_identity.enb_id);
+    }
+  }
+
+  for (int i = 0; i < e_rab_modification_ind->e_rab_not_to_be_modified_list.no_of_items; i++) {
+    bearer_context_new_t * bearer_context = NULL;
+    mme_app_get_session_bearer_context_from_all(ue_session_pool, e_rab_modification_ind->e_rab_not_to_be_modified_list.item[i].e_rab_id, &bearer_context);
+    if(!bearer_context){
+      OAILOG_NOTICE (LOG_MME_APP, "S1AP E-RAB_MODIFICATION_IND no e-rab %d not to be modified for mme_ue_s1ap_id: " MME_UE_S1AP_ID_FMT " -> Releasing context...\n",
+          e_rab_modification_ind->e_rab_not_to_be_modified_list.item[i].e_rab_id,
+          e_rab_modification_ind->mme_ue_s1ap_id);
+
+      ue_context_t  *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, e_rab_modification_ind->mme_ue_s1ap_id);
+      ue_context->privates.s1_ue_context_release_cause = S1AP_RADIO_UNKNOWN_E_RAB_ID;
+      mme_app_itti_ue_context_release(e_rab_modification_ind->mme_ue_s1ap_id,
+                                      e_rab_modification_ind->enb_ue_s1ap_id,
+                                      ue_context->privates.s1_ue_context_release_cause,
+                                      ue_context->privates.fields.e_utran_cgi.cell_identity.enb_id);
+      OAILOG_FUNC_OUT (LOG_MME_APP);
+    }
+  }
+
+  /*
+   * If the E-RAB MODIFICATION INDICATION message contains several E-RAB ID IEs set to the same value, the
+   * MME shall trigger the UE Context Release procedure.
+   */
+  // TODO Cause = S1AP_RADIO_MULTIPLE_E_RAB_ID
+
+  mme_app_s1ap_proc_modify_bearer_ind_t* proc = mme_app_create_s1ap_procedure_modify_bearer_ind(ue_session_pool);
+  if (proc) {
+    memcpy((void*)&proc->e_rab_to_be_modified_list,
+        (void*)&e_rab_modification_ind->e_rab_to_be_modified_list,
+        sizeof(proc->e_rab_to_be_modified_list));
+
+    int ret = mme_app_run_s1ap_procedure_modify_bearer_ind(proc, e_rab_modification_ind);
+    OAILOG_FUNC_OUT (LOG_MME_APP);
+  } else {
+    OAILOG_ERROR (LOG_MME_APP, "S1AP E-RAB_MODIFICATION_IND could not allocate S1AP procedure for mme_ue_s1ap_id: " MME_UE_S1AP_ID_FMT "\n", e_rab_modification_ind->mme_ue_s1ap_id);
+    ue_context_t  *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, e_rab_modification_ind->mme_ue_s1ap_id);
+    ue_context->privates.s1_ue_context_release_cause = S1AP_SYSTEM_FAILURE;
+    mme_app_itti_ue_context_release(e_rab_modification_ind->mme_ue_s1ap_id,
+                                    e_rab_modification_ind->enb_ue_s1ap_id,
+                                    ue_context->privates.s1_ue_context_release_cause,
+                                    ue_context->privates.fields.e_utran_cgi.cell_identity.enb_id);
+    OAILOG_FUNC_OUT (LOG_MME_APP);
+  }
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 

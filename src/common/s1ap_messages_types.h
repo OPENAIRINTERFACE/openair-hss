@@ -46,6 +46,8 @@
 #define S1AP_E_RAB_SETUP_RSP(mSGpTR)             (mSGpTR)->ittiMsg.s1ap_e_rab_setup_rsp
 #define S1AP_E_RAB_MODIFY_REQ(mSGpTR)            (mSGpTR)->ittiMsg.s1ap_e_rab_modify_req
 #define S1AP_E_RAB_MODIFY_RSP(mSGpTR)            (mSGpTR)->ittiMsg.s1ap_e_rab_modify_rsp
+#define S1AP_E_RAB_MODIFICATION_IND(mSGpTR)      (mSGpTR)->ittiMsg.s1ap_e_rab_modification_ind
+#define S1AP_E_RAB_MODIFICATION_CNF(mSGpTR)      (mSGpTR)->ittiMsg.s1ap_e_rab_modification_cnf
 #define S1AP_E_RAB_RELEASE_REQ(mSGpTR)           (mSGpTR)->ittiMsg.s1ap_e_rab_release_req
 #define S1AP_E_RAB_RELEASE_RSP(mSGpTR)           (mSGpTR)->ittiMsg.s1ap_e_rab_release_rsp
 #define S1AP_E_RAB_RELEASE_IND(mSGpTR)           (mSGpTR)->ittiMsg.s1ap_e_rab_release_ind
@@ -93,6 +95,8 @@ enum s1cause {
   S1AP_NAS_NORMAL_RELEASE,
   S1AP_NAS_DETACH,
   S1AP_RADIO_EUTRAN_GENERATED_REASON,
+  S1AP_RADIO_UNKNOWN_E_RAB_ID,
+  S1AP_RADIO_MULTIPLE_E_RAB_ID,
   S1AP_IMPLICIT_CONTEXT_RELEASE,
   S1AP_INITIAL_CONTEXT_SETUP_FAILED,
   S1AP_SCTP_SHUTDOWN_OR_RESET,
@@ -266,6 +270,24 @@ typedef struct itti_s1ap_e_rab_modify_rsp_s {
   // Optional
   e_rab_list_t        e_rab_failed_to_modify_list;
 } itti_s1ap_e_rab_modify_rsp_t;
+
+typedef struct itti_s1ap_e_rab_modification_ind_s {
+  mme_ue_s1ap_id_t    mme_ue_s1ap_id;
+  enb_ue_s1ap_id_t    enb_ue_s1ap_id;
+  // E-RAB to be Modified List
+  e_rab_to_be_modified_bearer_mod_ind_list_t  e_rab_to_be_modified_list;
+  e_rab_not_to_be_modified_bearer_mod_ind_list_t  e_rab_not_to_be_modified_list;
+  // Optional
+} itti_s1ap_e_rab_modification_ind_t;
+
+typedef struct itti_s1ap_e_rab_modification_cnf_s {
+  mme_ue_s1ap_id_t     mme_ue_s1ap_id;
+  enb_ue_s1ap_id_t     enb_ue_s1ap_id;
+  // E-RAB Modify List
+  e_rab_modify_bearer_mod_conf_list_t  e_rab_modify_list;
+  // Optional
+  e_rab_list_t         e_rab_failed_to_modify_list;
+} itti_s1ap_e_rab_modification_cnf_t;
 
 typedef struct itti_s1ap_e_rab_release_rsp_s {
   mme_ue_s1ap_id_t    mme_ue_s1ap_id;

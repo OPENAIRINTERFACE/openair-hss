@@ -254,6 +254,11 @@ void *mme_app_thread (void *args)
       }
       break;
 
+    case S1AP_E_RAB_MODIFICATION_IND:{
+        mme_app_handle_e_rab_modification_ind (&S1AP_E_RAB_MODIFICATION_IND (received_message_p));
+      }
+      break;
+
     case S1AP_ENB_DEREGISTERED_IND: {
         mme_app_handle_s1ap_enb_deregistered_ind (&received_message_p->ittiMsg.s1ap_eNB_deregistered_ind);
       }

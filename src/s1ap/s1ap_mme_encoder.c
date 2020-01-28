@@ -139,6 +139,7 @@ s1ap_mme_encode_successfull_outcome (
   case S1AP_ProcedureCode_id_HandoverPreparation:
   case S1AP_ProcedureCode_id_HandoverCancel:
   case S1AP_ProcedureCode_id_Reset:
+  case S1AP_ProcedureCode_id_E_RABModificationIndication:
      break;
 
   default:

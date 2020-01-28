@@ -197,6 +197,11 @@ s1ap_mme_thread (
           }
           break;
 
+        case S1AP_E_RAB_MODIFICATION_CNF:{
+            s1ap_mme_generate_erab_modification_confirm (&S1AP_E_RAB_MODIFICATION_CNF (received_message_p));
+          }
+          break;
+
         // From MME_APP task
         case S1AP_UE_CONTEXT_RELEASE_COMMAND:{
           s1ap_handle_ue_context_release_command (&received_message_p->ittiMsg.s1ap_ue_context_release_command);

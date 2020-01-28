@@ -154,6 +154,8 @@ void mme_app_handle_e_rab_modify_rsp (itti_s1ap_e_rab_modify_rsp_t  * const e_ra
 
 void mme_app_handle_e_rab_release_ind (const itti_s1ap_e_rab_release_ind_t   * const e_rab_release_ind);
 
+void mme_app_handle_e_rab_modification_ind (const itti_s1ap_e_rab_modification_ind_t   * const e_rab_modification_ind);
+
 void mme_app_handle_activate_eps_bearer_ctx_cnf (itti_nas_activate_eps_bearer_ctx_cnf_t   * const activate_eps_bearer_ctx_cnf);
 
 void mme_app_handle_activate_eps_bearer_ctx_rej (itti_nas_activate_eps_bearer_ctx_rej_t   * const activate_eps_bearer_ctx_rej);

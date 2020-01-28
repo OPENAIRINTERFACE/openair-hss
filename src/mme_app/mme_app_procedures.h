@@ -181,8 +181,25 @@ typedef struct mme_app_s11_proc_delete_bearer_s {
 
 typedef enum {
   MME_APP_S1AP_PROC_TYPE_NONE = 0,
-  MME_APP_S1AP_PROC_TYPE_INITIAL
+  MME_APP_S1AP_PROC_TYPE_E_RAB_MODIFY_BEARER_IND
 } mme_app_s1ap_proc_type_t;
+
+typedef struct mme_app_s1ap_proc_s {
+  mme_app_base_proc_t         proc;
+  mme_app_s1ap_proc_type_t     type;
+  LIST_ENTRY(mme_app_s1ap_proc_s) entries;      /* List. */
+} mme_app_s1ap_proc_t;
+
+typedef struct mme_app_s1ap_proc_e_rab_modify_bearer_ind_s {
+  mme_app_s1ap_proc_t                             proc;
+  mme_ue_s1ap_id_t                                mme_ue_s1ap_id;
+  int                                             num_status_received;
+  e_rab_to_be_modified_bearer_mod_ind_list_t      e_rab_to_be_modified_list;
+  e_rab_not_to_be_modified_bearer_mod_ind_list_t  e_rab_not_to_be_modified_list;
+
+  e_rab_modify_bearer_mod_conf_list_t             e_rab_modified_list;
+  e_rab_list_t                                    e_rab_failed_to_be_modified_list;
+} mme_app_s1ap_proc_modify_bearer_ind_t;
 
 ///* Declaration (prototype) of the function to store bearer contexts. */
 //RB_PROTOTYPE(BearerFteids, fteid_set_s, fteid_set_rbt_Node, fteid_set_compare_s1u_saegw)
@@ -216,5 +233,12 @@ mme_app_s10_proc_mme_handover_t* mme_app_create_s10_procedure_mme_handover(ue_co
 
 mme_app_s10_proc_mme_handover_t* mme_app_get_s10_procedure_mme_handover(ue_context_t * const ue_context);
 void mme_app_delete_s10_procedure_mme_handover(ue_context_t * const ue_context);
+
+
+void mme_app_delete_s1ap_procedures(ue_session_pool_t * const ue_session_pool);
+mme_app_s1ap_proc_modify_bearer_ind_t* mme_app_create_s1ap_procedure_modify_bearer_ind(ue_session_pool_t * const ue_session_pool);
+mme_app_s1ap_proc_modify_bearer_ind_t* mme_app_get_s1ap_procedure_modify_bearer_ind(ue_session_pool_t * const ue_session_pool);
+void mme_app_delete_s1ap_procedure_modify_bearer_ind(ue_session_pool_t * const ue_session_pool);
+int mme_app_remove_s10_tunnel_endpoint(teid_t local_teid, struct sockaddr *peer_ip);
 
 #endif

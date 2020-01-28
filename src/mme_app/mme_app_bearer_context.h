@@ -61,6 +61,13 @@ void mme_app_bearer_context_s1_release_enb_informations(bearer_context_new_t * c
 int mme_app_modify_bearers(const mme_ue_s1ap_id_t mme_ue_s1ap_id, bearer_contexts_to_be_modified_t *bcs_to_be_modified);
 
 /*
+ * Update the bearer context in the context of e-rab modification indication.
+ */
+int
+mme_app_modify_bearers_indication(
+    const mme_ue_s1ap_id_t mme_ue_s1ap_id,
+    const e_rab_to_be_modified_bearer_mod_ind_list_t  * const e_rab_to_be_modified_list);
+/*
  * Set bearers as released (idle).
  * todo: review idle mode..
  */

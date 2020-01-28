@@ -363,6 +363,53 @@ mme_app_modify_bearers(const mme_ue_s1ap_id_t mme_ue_s1ap_id, bearer_contexts_to
 }
 
 //------------------------------------------------------------------------------
+int
+mme_app_modify_bearers_indication(
+    const mme_ue_s1ap_id_t mme_ue_s1ap_id,
+    const e_rab_to_be_modified_bearer_mod_ind_list_t  * const e_rab_to_be_modified_list)
+{
+  OAILOG_FUNC_IN(LOG_MME_APP);
+  pdn_context_t       * pdn_context = NULL;
+  ue_session_pool_t     * ue_session_pool = mme_ue_session_pool_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_session_pools, mme_ue_s1ap_id);
+
+  if(!ue_session_pool){
+    OAILOG_INFO(LOG_MME_APP, "No UE session pool is found" MME_UE_S1AP_ID_FMT ". \n", mme_ue_s1ap_id);
+    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+  }
+  // todo: LOCK_UE_SESSION_POOL
+  // todo: checking on procedures of the function.. mme_app_is_ue_context_clean(ue_context)?!?
+  /** Get the PDN Context. */
+  for(int nb_bearer = 0; nb_bearer < e_rab_to_be_modified_list->no_of_items; nb_bearer++) {
+    e_rab_to_be_modified_bearer_mod_ind_t *item = &e_rab_to_be_modified_list->item[nb_bearer];
+    /** Get the bearer context. */
+    bearer_context_new_t * bearer_context = NULL;
+    mme_app_get_session_bearer_context_from_all(ue_session_pool, item->e_rab_id, &bearer_context);
+    if(!bearer_context){
+      OAILOG_ERROR(LOG_MME_APP, "No bearer context (ebi=%d) could be found for " MME_UE_S1AP_ID_FMT ". Skipping.. \n", item->e_rab_id, mme_ue_s1ap_id);
+      continue;
+    }
+    /** Set all bearers, not in the failed list, to inactive. */
+    bearer_context->bearer_state &= (~BEARER_STATE_ACTIVE);
+    /** Update the FTEID of the bearer context and uncheck the established state. */
+    bearer_context->enb_fteid_s1u.teid = item->s1_xNB_fteid.teid;
+    bearer_context->enb_fteid_s1u.interface_type      = S1_U_ENODEB_GTP_U;
+    /** Set the IP address from the FTEID. */
+    if (item->s1_xNB_fteid.ipv4) {
+      bearer_context->enb_fteid_s1u.ipv4 = 1;
+      bearer_context->enb_fteid_s1u.ipv4_address.s_addr = item->s1_xNB_fteid.ipv4_address.s_addr;
+    }
+    if (item->s1_xNB_fteid.ipv6) {
+      bearer_context->enb_fteid_s1u.ipv6 = 1;
+      memcpy(&bearer_context->enb_fteid_s1u.ipv6_address, &item->s1_xNB_fteid.ipv6_address, sizeof(item->s1_xNB_fteid));
+    }
+    bearer_context->bearer_state |= BEARER_STATE_ENB_CREATED;
+    bearer_context->bearer_state |= BEARER_STATE_MME_CREATED; // todo: remove this flag.. unnecessary
+  }
+//  todo: UNLOCK_UE_SESSION_POOL;
+  OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
+}
+
+//------------------------------------------------------------------------------
 void
 mme_app_release_bearers(const mme_ue_s1ap_id_t mme_ue_s1ap_id, const e_rab_list_t * const e_rab_list, ebi_list_t * const ebi_list) {
   OAILOG_FUNC_IN(LOG_MME_APP);

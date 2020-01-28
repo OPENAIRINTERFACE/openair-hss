@@ -126,6 +126,32 @@ typedef struct e_rab_modify_list_s {
   e_rab_setup_item_t            item[MAX_NO_OF_E_RABS];
 } e_rab_modify_list_t;
 
+// E-RAB TO BE MODIFIED ITEM BEARER MOD IND
+typedef struct e_rab_to_be_modified_bearer_mod_ind_s {
+  e_rab_id_t                       e_rab_id;
+  fteid_t                          s1_xNB_fteid;       ///< S1 xNodeB F-TEID
+} e_rab_to_be_modified_bearer_mod_ind_t;
+
+typedef struct e_rab_not_to_be_modified_bearer_mod_ind_s {
+  e_rab_id_t                       e_rab_id;
+  fteid_t                          s1_xNB_fteid;       ///< S1 xNodeB F-TEID
+} e_rab_not_to_be_modified_bearer_mod_ind_t;
+
+typedef struct e_rab_to_be_modified_bearer_mod_ind_list_s {
+  uint16_t                      no_of_items;
+  e_rab_to_be_modified_bearer_mod_ind_t            item[MAX_NO_OF_E_RABS];
+} e_rab_to_be_modified_bearer_mod_ind_list_t;
+
+typedef struct e_rab_not_to_be_modified_bearer_mod_ind_list_s {
+  uint16_t                      no_of_items;
+  e_rab_not_to_be_modified_bearer_mod_ind_t            item[MAX_NO_OF_E_RABS];
+} e_rab_not_to_be_modified_bearer_mod_ind_list_t;
+
+typedef struct e_rab_modify_bearer_mod_conf_list_s {
+  uint16_t                      no_of_items;
+  e_rab_id_t                    e_rab_id[MAX_NO_OF_E_RABS];
+} e_rab_modify_bearer_mod_conf_list_t;
+
 #include "S1AP_Cause.h"
 typedef struct  bearer_status_count_s{
   const char 			  empty;

@@ -48,6 +48,8 @@
 #include "mme_app_defs.h"
 #include "common_defs.h"
 #include "mme_app_procedures.h"
+#include "mme_app_itti_messaging.h"
+#include "mme_app_bearer_context.h"
 
 static void mme_app_free_s11_procedure_create_bearer(mme_app_s11_proc_t **s11_proc);
 static void mme_app_free_s11_procedure_update_bearer(mme_app_s11_proc_t **s11_proc);
@@ -704,3 +706,209 @@ void mme_app_delete_s10_procedure_mme_handover(ue_context_t * const ue_context)
 /*
  * Our procedure is not for a single message but currently for a whole inter_mme handover procedure.
  */
+
+//------------------------------------------------------------------------------
+static void mme_app_free_s1ap_procedure_modify_bearer_ind(mme_app_s1ap_proc_t **s1ap_proc)
+{
+  // DO here specific releases (memory,etc)
+  //mme_app_s1ap_proc_modify_bearer_ind_t ** s1ap_proc_mbi = (mme_app_s1ap_proc_modify_bearer_ind_t**)s1ap_proc;
+  // ...
+  free_wrapper((void**)s1ap_proc);
+}
+
+//------------------------------------------------------------------------------
+void mme_app_delete_s1ap_procedures(ue_session_pool_t * const ue_session_pool)
+{
+  if (ue_session_pool) {
+    mme_app_s1ap_proc_t *s1ap_proc1 = NULL;
+    mme_app_s1ap_proc_t *s1ap_proc2 = NULL;
+
+    // todo: intra
+    s1ap_proc1 = LIST_FIRST(&ue_session_pool->s1ap_procedures);                 /* Faster List Deletion. */
+    while (s1ap_proc1) {
+      s1ap_proc2 = LIST_NEXT(s1ap_proc1, entries);
+      // Clean procedures upon their types
+      if (MME_APP_S1AP_PROC_TYPE_E_RAB_MODIFY_BEARER_IND == s1ap_proc1->type) {
+        mme_app_free_s1ap_procedure_modify_bearer_ind(&s1ap_proc1);
+      } else {
+        free_wrapper((void**)s1ap_proc1);
+      }
+      s1ap_proc1 = s1ap_proc2;
+    }
+    LIST_INIT(&ue_session_pool->s1ap_procedures);
+    free_wrapper((void**)&ue_session_pool->s1ap_procedures);
+  }
+}
+
+//------------------------------------------------------------------------------
+mme_app_s1ap_proc_modify_bearer_ind_t* mme_app_create_s1ap_procedure_modify_bearer_ind(ue_session_pool_t * const ue_session_pool)
+{
+  /** Check if the list of S11 procedures is empty. */
+  if(!LIST_EMPTY(&ue_session_pool->s1ap_procedures)) {
+    OAILOG_ERROR (LOG_MME_APP, "UE with ueId " MME_UE_S1AP_ID_FMT " has already a S1AP procedure ongoing. Cannot create MBI procedure. \n",
+      ue_session_pool->privates.mme_ue_s1ap_id);
+    return NULL;
+  }
+  mme_app_s1ap_proc_modify_bearer_ind_t *proc = calloc(1, sizeof(mme_app_s1ap_proc_modify_bearer_ind_t));
+  proc->proc.proc.type = MME_APP_BASE_PROC_TYPE_S1AP;
+  proc->proc.type      = MME_APP_S1AP_PROC_TYPE_E_RAB_MODIFY_BEARER_IND;
+  mme_app_s1ap_proc_t *s1ap_proc = (mme_app_s1ap_proc_t *)proc;
+  proc->mme_ue_s1ap_id = ue_session_pool->privates.mme_ue_s1ap_id;
+
+  /** Initialize the of the procedure. */
+
+  LIST_INIT(&ue_session_pool->s1ap_procedures);
+  LIST_INSERT_HEAD((&ue_session_pool->s1ap_procedures), s1ap_proc, entries);
+
+  return proc;
+}
+//------------------------------------------------------------------------------
+int
+mme_app_run_s1ap_procedure_modify_bearer_ind(mme_app_s1ap_proc_modify_bearer_ind_t* proc,
+    const itti_s1ap_e_rab_modification_ind_t  * const e_rab_modification_ind)
+{
+  OAILOG_FUNC_IN(LOG_MME_APP);
+  memcpy((void*)&proc->e_rab_to_be_modified_list,
+      (void*)&e_rab_modification_ind->e_rab_to_be_modified_list,
+      sizeof(proc->e_rab_to_be_modified_list));
+
+  memcpy((void*)&proc->e_rab_not_to_be_modified_list,
+      (void*)&e_rab_modification_ind->e_rab_not_to_be_modified_list,
+      sizeof(proc->e_rab_not_to_be_modified_list));
+
+  ue_session_pool_t * ue_session_pool = mme_ue_session_pool_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_session_pools, proc->mme_ue_s1ap_id);
+
+
+  if(!ue_session_pool){
+    OAILOG_INFO(LOG_MME_APP, "No UE session pool is found" MME_UE_S1AP_ID_FMT ". \n", proc->mme_ue_s1ap_id);
+    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+  }
+  // todo: LOCK_UE_SESSION_POOL
+  // todo: checking on procedures of the function.. mme_app_is_ue_context_clean(ue_context)?!?
+  /** Get the PDN Context. */
+  // TODO sort by pdn_context if different SGWs (not the case now)
+  pdn_context_t *registered_pdn_ctx = RB_MIN(PdnContexts, &ue_session_pool->pdn_contexts);
+
+  for(int nb_bearer = 0; nb_bearer < proc->e_rab_to_be_modified_list.no_of_items; nb_bearer++) {
+    e_rab_to_be_modified_bearer_mod_ind_t *item = &proc->e_rab_to_be_modified_list.item[nb_bearer];
+    /** Get the bearer context. */
+    bearer_context_new_t * bearer_context = NULL;
+    mme_app_get_session_bearer_context_from_all(ue_session_pool, item->e_rab_id, &bearer_context);
+    if(!bearer_context){
+      OAILOG_ERROR(LOG_MME_APP, "No bearer context (ebi=%d) could be found for " MME_UE_S1AP_ID_FMT ". Skipping.. \n",
+          item->e_rab_id, proc->mme_ue_s1ap_id);
+      continue;
+    }
+    /** Set all bearers, not in the failed list, to inactive. */
+    bearer_context->bearer_state &= (~BEARER_STATE_ACTIVE);
+    /** Update the FTEID of the bearer context and uncheck the established state. */
+    bearer_context->enb_fteid_s1u.teid = item->s1_xNB_fteid.teid;
+    bearer_context->enb_fteid_s1u.interface_type      = S1_U_ENODEB_GTP_U;
+    /** Set the IP address from the FTEID. */
+    if (item->s1_xNB_fteid.ipv4) {
+      bearer_context->enb_fteid_s1u.ipv4 = 1;
+      bearer_context->enb_fteid_s1u.ipv4_address.s_addr = item->s1_xNB_fteid.ipv4_address.s_addr;
+    }
+    if (item->s1_xNB_fteid.ipv6) {
+      bearer_context->enb_fteid_s1u.ipv6 = 1;
+      memcpy(&bearer_context->enb_fteid_s1u.ipv6_address, &item->s1_xNB_fteid.ipv6_address, sizeof(item->s1_xNB_fteid));
+    }
+    bearer_context->bearer_state |= BEARER_STATE_ENB_CREATED;
+    bearer_context->bearer_state |= BEARER_STATE_MME_CREATED; // todo: remove this flag.. unnecessary
+  }
+
+  uint8_t flags = INTERNAL_FLAG_E_RAB_MOD_IND;
+  mme_app_send_s11_modify_bearer_req(ue_session_pool, registered_pdn_ctx, flags);
+//  todo: UNLOCK_UE_SESSION_POOL;
+  OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
+}
+//------------------------------------------------------------------------------
+mme_app_s1ap_proc_modify_bearer_ind_t* mme_app_get_s1ap_procedure_modify_bearer_ind(ue_session_pool_t * const ue_session_pool)
+{
+  mme_app_s1ap_proc_t *s1ap_proc = NULL;
+
+  LIST_FOREACH(s1ap_proc, &ue_session_pool->s1ap_procedures, entries) {
+    if (MME_APP_S1AP_PROC_TYPE_E_RAB_MODIFY_BEARER_IND == s1ap_proc->type) {
+      return (mme_app_s1ap_proc_modify_bearer_ind_t*)s1ap_proc;
+    }
+  }
+  return NULL;
+}
+
+//------------------------------------------------------------------------------
+// return true if proc to be deleted
+bool
+mme_app_s1ap_procedure_modify_bearer_ind_handle_modify_bearer_response(
+    ue_context_t * const ue_context,
+    mme_app_s1ap_proc_modify_bearer_ind_t* proc,
+    const itti_s11_modify_bearer_response_t * const mbr,
+    ue_session_pool_t * const ue_session_pool)
+{
+  OAILOG_INFO(LOG_MME_APP, "modify_bearer_response for UE " MME_UE_S1AP_ID_FMT ". %d bearers modified\n",
+      ue_context->privates.mme_ue_s1ap_id, mbr->bearer_contexts_modified.num_bearer_context);
+
+  for (int i = 0; i < mbr->bearer_contexts_modified.num_bearer_context; ++i) {
+    const bearer_context_modified_t * const mbr_bearer_context = &mbr->bearer_contexts_modified.bearer_context[i];
+
+    // TODO check bearer id in
+    bearer_context_new_t  *current_bearer_p = NULL;
+    mme_app_get_session_bearer_context_from_all(
+        ue_session_pool,
+        mbr_bearer_context->eps_bearer_id,
+        &current_bearer_p);
+
+    if (current_bearer_p) {
+      // TODO check bearer state...
+      if (mbr_bearer_context->cause.cause_value == REQUEST_ACCEPTED) {
+        proc->e_rab_modified_list.e_rab_id[proc->e_rab_modified_list.no_of_items++] = mbr_bearer_context->eps_bearer_id;
+        OAILOG_INFO(LOG_MME_APP, "modify_bearer_response for UE " MME_UE_S1AP_ID_FMT ". EBI %d modified OK\n",
+            ue_context->privates.mme_ue_s1ap_id, mbr_bearer_context->eps_bearer_id);
+      } else {
+        proc->e_rab_failed_to_be_modified_list.item[proc->e_rab_failed_to_be_modified_list.no_of_items].e_rab_id = mbr_bearer_context->eps_bearer_id;
+
+        // TODO better gtpv2c to s1ap cause conversion ?
+        proc->e_rab_failed_to_be_modified_list.item[proc->e_rab_failed_to_be_modified_list.no_of_items].cause.present = S1AP_Cause_PR_misc;
+        proc->e_rab_failed_to_be_modified_list.item[proc->e_rab_failed_to_be_modified_list.no_of_items].cause.choice.misc = S1AP_CauseMisc_unspecified;
+        proc->e_rab_failed_to_be_modified_list.no_of_items++;
+        OAILOG_INFO(LOG_MME_APP, "modify_bearer_response for UE " MME_UE_S1AP_ID_FMT ". EBI %d modified ERROR\n",
+            ue_context->privates.mme_ue_s1ap_id, mbr_bearer_context->eps_bearer_id);
+      }
+    } else {
+      OAILOG_ERROR(LOG_MME_APP, "No bearer context (ebi=%d) could be found for " MME_UE_S1AP_ID_FMT ". Skipping.. \n",
+          mbr_bearer_context->eps_bearer_id, proc->mme_ue_s1ap_id);
+    }
+
+    proc->num_status_received++;
+  }
+
+
+  if (proc->num_status_received == proc->e_rab_to_be_modified_list.no_of_items) {
+    mme_app_send_s1ap_e_rab_mofification_confirm(
+        ue_context->privates.mme_ue_s1ap_id,
+        ue_context->privates.fields.enb_ue_s1ap_id,
+        proc);
+    return true;
+  }
+  return false;
+}
+
+//------------------------------------------------------------------------------
+void mme_app_delete_s1ap_procedure_modify_bearer_ind(ue_session_pool_t * const ue_session_pool)
+{
+  /** Check if the list of S11 procedures is empty. */
+  mme_app_s1ap_proc_t *s1ap_proc = NULL, *s1ap_proc_safe = NULL;
+
+  LIST_FOREACH_SAFE(s1ap_proc, &ue_session_pool->s1ap_procedures, entries, s1ap_proc_safe) {
+    if (MME_APP_S1AP_PROC_TYPE_E_RAB_MODIFY_BEARER_IND == s1ap_proc->type) {
+      LIST_REMOVE(s1ap_proc, entries);
+      mme_app_free_s1ap_procedure_modify_bearer_ind(&s1ap_proc);
+      return;
+    }
+  }
+
+  if(LIST_EMPTY(&ue_session_pool->s1ap_procedures)){
+    LIST_INIT(&ue_session_pool->s1ap_procedures);
+    OAILOG_INFO (LOG_MME_APP, "UE with ueId " MME_UE_S1AP_ID_FMT " has no more S1AP procedures left. Cleared the list. \n",
+        ue_session_pool->privates.mme_ue_s1ap_id);
+   }
+}

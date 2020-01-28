@@ -128,3 +128,6 @@ MESSAGE_DEF(S1AP_HANDOVER_NOTIFY           , MESSAGE_PRIORITY_MED, itti_s1ap_han
 
 /** Paging. */
 MESSAGE_DEF(S1AP_PAGING                    , MESSAGE_PRIORITY_MED, itti_s1ap_paging_t               ,    s1ap_paging)
+
+MESSAGE_DEF(S1AP_E_RAB_MODIFICATION_IND           , MESSAGE_PRIORITY_MED, itti_s1ap_e_rab_modification_ind_t  ,    s1ap_e_rab_modification_ind)
+MESSAGE_DEF(S1AP_E_RAB_MODIFICATION_CNF           , MESSAGE_PRIORITY_MED, itti_s1ap_e_rab_modification_cnf_t  ,    s1ap_e_rab_modification_cnf)

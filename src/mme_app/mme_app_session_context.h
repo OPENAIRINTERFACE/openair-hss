@@ -253,7 +253,8 @@ typedef struct ue_session_pool_s {
 	 */
 	RB_HEAD(PdnContexts, pdn_context_s) 	pdn_contexts;
 	STAILQ_HEAD(free_pdn_s, pdn_context_s) 	free_pdn_contexts;
-	LIST_HEAD(s11_procedures_s, mme_app_s11_proc_s) s11_procedures;
+  LIST_HEAD(s11_procedures_s, mme_app_s11_proc_s) s11_procedures;
+  LIST_HEAD(s1ap_procedures_s, mme_app_s1ap_proc_s) s1ap_procedures;
 
 	/** Point to the next free session pool. */
 	STAILQ_ENTRY (ue_session_pool_s)		entries;

@@ -109,6 +109,15 @@ int s1ap_mme_handle_erab_release_indication (
     const sctp_stream_id_t stream,
     S1AP_S1AP_PDU_t *message);
 
+int s1ap_mme_handle_erab_modification_indication (
+    const sctp_assoc_id_t assoc_id,
+    const sctp_stream_id_t stream,
+    S1AP_S1AP_PDU_t *pdu);
+
+void s1ap_mme_generate_erab_modification_confirm(
+    const itti_s1ap_e_rab_modification_cnf_t * const conf);
+
+
 int s1ap_handle_enb_initiated_reset_ack (const itti_s1ap_enb_initiated_reset_ack_t * const enb_reset_ack_p);
 
 int s1ap_mme_handle_error_ind_message (const sctp_assoc_id_t assoc_id,
