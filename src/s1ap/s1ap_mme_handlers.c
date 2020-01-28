@@ -730,7 +730,7 @@ s1ap_mme_handle_initial_context_setup_response (
 
   initial_context_setup_rsp->ue_id = ue_ref_p->mme_ue_s1ap_id;
   /** Add here multiple bearers. */
-  bool test = false;
+  //bool test = false;
   initial_context_setup_rsp->bcs_to_be_modified.num_bearer_context = ie->value.choice.E_RABSetupListCtxtSURes.list.count;
   for (int item = 0; item < ie->value.choice.E_RABSetupListCtxtSURes.list.count; item++) {
     int item2 = item;
@@ -1609,7 +1609,6 @@ s1ap_mme_handle_handover_cancel(
   enb_ue_s1ap_id_t                      enb_ue_s1ap_id = 0;
   mme_ue_s1ap_id_t                      mme_ue_s1ap_id = 0;
   MessageDef                           *message_p = NULL;
-  int                                   rc = RETURNok;
 
   //Request IEs:
   //S1ap-ENB-UE-S1AP-ID
@@ -1647,7 +1646,7 @@ s1ap_mme_handle_handover_cancel(
   S1AP_HANDOVER_CANCEL (message_p).enb_ue_s1ap_id = ue_ref_p->enb_ue_s1ap_id;
   S1AP_HANDOVER_CANCEL (message_p).assoc_id = ue_ref_p->enb->sctp_assoc_id;
   /** Ignore the cause. */
-  rc =  itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
+  itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_RETURN (LOG_S1AP, RETURNok);
 }
 
@@ -2934,7 +2933,7 @@ int s1ap_mme_handle_enb_configuration_transfer (const sctp_assoc_id_t assoc_id,
 			OAILOG_WARNING(LOG_S1AP, "No X2 reply object is received in the eNB status reply.\n");
 		}
 	} else {
-		OAILOG_ERROR(LOG_S1AP, "Received invalid S1AP SON information type %d. \n", sonConfigurationTransfer->sONInformation.choice);
+		OAILOG_ERROR(LOG_S1AP, "Received invalid S1AP SON information type %d. \n", sonConfigurationTransfer->sONInformation.present);
 		OAILOG_FUNC_RETURN (LOG_S1AP, RETURNok);
 	}
 
@@ -2970,7 +2969,6 @@ s1ap_mme_handle_enb_reset (
      const sctp_stream_id_t stream,
      S1AP_S1AP_PDU_t *pdu)
 {
-  S1AP_ResetIEs_t                         *enb_reset_p = NULL;
   MessageDef                              *message_p  = NULL;
   ue_description_t                        *ue_ref_p = NULL;
   enb_description_t                       *enb_association = NULL;
@@ -3192,10 +3190,10 @@ s1ap_handle_enb_initiated_reset_ack (
   }
 
   if (s1ap_mme_encode_pdu (&pdu, &buffer, &length) < 0) {
-	OAILOG_ERROR (LOG_S1AP, "Failed to S1 Reset command \n");
-	/** We rely on the handover_notify timeout to remove the UE context. */
-	DevAssert(!buffer);
-	OAILOG_FUNC_OUT (LOG_S1AP);
+    OAILOG_ERROR (LOG_S1AP, "Failed to S1 Reset command \n");
+    /** We rely on the handover_notify timeout to remove the UE context. */
+    DevAssert(!buffer);
+    OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
   }
 
   if(buffer) {

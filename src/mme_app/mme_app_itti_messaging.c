@@ -81,14 +81,13 @@ void mme_app_itti_notify_request(const imsi64_t imsi,
     const plmn_t * handovered_plmn, const bool mobility_completion){
   OAILOG_FUNC_IN(LOG_MME_APP);
   MessageDef                             *message_p   = NULL;
-  int                                     rc = RETURNok;
   emm_data_context_t                     *emm_context = NULL;
   s6a_notify_req_t                       *s6a_nr_req  = NULL;
 
   message_p = itti_alloc_new_message(TASK_MME_APP, S6A_NOTIFY_REQ);
 
   if (message_p == NULL) {
-    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+    OAILOG_FUNC_OUT (LOG_MME_APP);
   }
 
   s6a_nr_req = &message_p->ittiMsg.s6a_notify_req;
@@ -96,7 +95,7 @@ void mme_app_itti_notify_request(const imsi64_t imsi,
   /** Recheck that the UE context is found by the IMSI. */
   if ((emm_context = emm_data_context_get_by_imsi(&_emm_data, imsi)) == NULL) {
     OAILOG_ERROR (LOG_MME_APP, "That's embarrassing as we don't know this IMSI " IMSI_64_FMT ". \n", imsi);
-    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+    OAILOG_FUNC_OUT (LOG_MME_APP);
   }
 
   IMSI_TO_STRING(&emm_context->_imsi, s6a_nr_req->imsi, IMSI_BCD_DIGITS_MAX+1);
@@ -115,8 +114,8 @@ void mme_app_itti_notify_request(const imsi64_t imsi,
       NULL,0,
       "0 S6A_NOTIFY_REQ ue id "MME_UE_S1AP_ID_FMT" ", ue_id);
 
-  rc = itti_send_msg_to_task(TASK_S6A, INSTANCE_DEFAULT, message_p);
-  OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
+  itti_send_msg_to_task(TASK_S6A, INSTANCE_DEFAULT, message_p);
+  OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 
 //------------------------------------------------------------------------------
@@ -148,7 +147,6 @@ void mme_app_send_s11_delete_bearer_cmd(teid_t local_teid, teid_t saegw_s11_teid
    * Keep the identifier to the default APN.
    */
   MessageDef                                        *message_p = NULL;
-  int                                                rc = RETURNok;
 
   /** Trigger a Delete Bearer Command. */
   message_p = itti_alloc_new_message (TASK_MME_APP, S11_DELETE_BEARER_COMMAND);
@@ -210,11 +208,6 @@ mme_app_send_s11_create_session_req (
   const mme_ue_s1ap_id_t ue_id, const imsi_t * const imsi_p, pdn_context_t * pdn_context, tai_t * serving_tai, const protocol_configuration_options_t * const pco, const bool is_from_s10_tau)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
-  uint8_t                                 i = 0;
-  /*
-   * Keep the identifier to the default APN
-   */
-  context_identifier_t                    context_identifier = 0;
   MessageDef                             *message_p = NULL;
   ue_context_t                           *ue_context = NULL;
   ue_session_pool_t                      *ue_session_pool = NULL;
@@ -377,7 +370,7 @@ mme_app_send_s11_create_session_req (
       "0 S11_CREATE_SESSION_REQUEST imsi " IMSI_64_FMT, ue_contextP->imsi);
   OAILOG_DEBUG (LOG_MME_APP, "Sending CSR for imsi (2) " IMSI_64_FMT "\n", ue_context->privates.fields.imsi);
   rc = itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
-  OAILOG_FUNC_RETURN(LOG_MME_APP, RETURNok);
+  OAILOG_FUNC_RETURN(LOG_MME_APP, rc);
 }
 
 //------------------------------------------------------------------------------

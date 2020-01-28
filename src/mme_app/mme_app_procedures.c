@@ -167,7 +167,7 @@ mme_app_s11_proc_update_bearer_t* mme_app_get_s11_procedure_update_bearer(ue_ses
 
   LIST_FOREACH(s11_proc, &ue_session_pool->s11_procedures, entries) {
 	if (MME_APP_S11_PROC_TYPE_UPDATE_BEARER == s11_proc->type) {
-		return (mme_app_s11_proc_create_bearer_t*)s11_proc;
+		return (mme_app_s11_proc_update_bearer_t*)s11_proc;
 	}
   }
   return NULL;
@@ -379,7 +379,7 @@ mme_app_handle_mme_s10_handover_completion_timer_expiry (mme_app_s10_proc_mme_ha
 	  if(!ue_context->privates.fields.local_mme_teid_s10){
 	    mme_app_send_s10_forward_relocation_response_err(s10_proc_mme_handover->remote_mme_teid.teid,
 	        s10_proc_mme_handover->proc.peer_ip,
-	        s10_proc_mme_handover->forward_relocation_trxn, REQUEST_REJECTED);
+	        (void*)s10_proc_mme_handover->forward_relocation_trxn, REQUEST_REJECTED);
 	  }
 	  /** Delete the procedure. */
 	  mme_app_delete_s10_procedure_mme_handover(ue_context);
@@ -516,7 +516,7 @@ mme_app_s10_proc_mme_handover_t* mme_app_create_s10_procedure_mme_handover(ue_co
    * Give the procedure as the argument.
    */
   if(s1ap_ho_type == MME_APP_S10_PROC_TYPE_INTER_MME_HANDOVER && target_mme){
-    s10_proc_mme_handover->proc.proc.time_out = mme_app_handle_mme_s10_handover_completion_timer_expiry;
+    s10_proc_mme_handover->proc.proc.time_out = (time_out_t)mme_app_handle_mme_s10_handover_completion_timer_expiry;
     mme_config_read_lock (&mme_config);
     if (timer_setup (mme_config.mme_s10_handover_completion_timer * 1, 0,
         TASK_MME_APP, INSTANCE_DEFAULT, TIMER_ONE_SHOT,  (void *) &(ue_context->privates.mme_ue_s1ap_id), &(s10_proc_mme_handover->proc.timer.id)) < 0) {
@@ -529,7 +529,7 @@ mme_app_s10_proc_mme_handover_t* mme_app_create_s10_procedure_mme_handover(ue_co
        */
     } else {
       OAILOG_DEBUG (LOG_MME_APP, "MME APP : Activated the MME Handover Completion timer UE id  " MME_UE_S1AP_ID_FMT ". "
-          "Waiting for UE to go back from IDLE mode to ACTIVE mode.. Timer Id %u. Timer duration %d \n",
+          "Waiting for UE to go back from IDLE mode to ACTIVE mode.. Timer Id %lu. Timer duration %d \n",
           ue_context->privates.mme_ue_s1ap_id, s10_proc_mme_handover->proc.timer.id, mme_config.mme_s10_handover_completion_timer * 1);
       /** Upon expiration, invalidate the timer.. no flag needed. */
     }
@@ -540,7 +540,7 @@ mme_app_s10_proc_mme_handover_t* mme_app_create_s10_procedure_mme_handover(ue_co
      * It is run until the Forward_Relocation_Complete message arrives.
      * It is used, if no Handover Notify message arrives at the target MME, that the source MME can eventually exit the handover procedure.
      */
-    s10_proc_mme_handover->proc.proc.time_out = mme_app_handle_mobility_completion_timer_expiry;
+    s10_proc_mme_handover->proc.proc.time_out = (time_out_t)mme_app_handle_mobility_completion_timer_expiry;
     mme_config_read_lock (&mme_config);
     if (timer_setup (mme_config.mme_mobility_completion_timer * 1, 0,
         TASK_MME_APP, INSTANCE_DEFAULT, TIMER_ONE_SHOT, (void *) &(ue_context->privates.mme_ue_s1ap_id), &(s10_proc_mme_handover->proc.timer.id)) < 0) {
@@ -553,7 +553,7 @@ mme_app_s10_proc_mme_handover_t* mme_app_create_s10_procedure_mme_handover(ue_co
        */
     } else {
       OAILOG_DEBUG (LOG_MME_APP, "MME APP : Activated the MME Mobility Completion timer for the source MME for UE id  " MME_UE_S1AP_ID_FMT ". "
-          "Waiting for UE to go back from IDLE mode to ACTIVE mode.. Timer Id %u. Timer duration %d \n",
+          "Waiting for UE to go back from IDLE mode to ACTIVE mode.. Timer Id %lu. Timer duration %d \n",
           ue_context->privates.mme_ue_s1ap_id, s10_proc_mme_handover->proc.timer.id, (mme_config.mme_mobility_completion_timer * 1));
       /** Upon expiration, invalidate the timer.. no flag needed. */
     }
@@ -600,7 +600,7 @@ static void mme_app_free_s10_procedure_mme_handover(mme_app_s10_proc_t **s10_pro
   /** Remove the pending IEs. */
   mme_app_s10_proc_mme_handover_t ** s10_proc_mme_handover_pp = (mme_app_s10_proc_mme_handover_t**) s10_proc;
   if((*s10_proc_mme_handover_pp)->nas_s10_context.mm_eps_ctx){
-    free_wrapper(&((*s10_proc_mme_handover_pp)->nas_s10_context.mm_eps_ctx)); /**< Setting the reference inside the procedure also to null. */
+    free_wrapper((void*)&((*s10_proc_mme_handover_pp)->nas_s10_context.mm_eps_ctx)); /**< Setting the reference inside the procedure also to null. */
   }
   if((*s10_proc_mme_handover_pp)->source_to_target_eutran_f_container.container_value){
     bdestroy_wrapper(&(*s10_proc_mme_handover_pp)->source_to_target_eutran_f_container.container_value);
@@ -614,7 +614,7 @@ static void mme_app_free_s10_procedure_mme_handover(mme_app_s10_proc_t **s10_pro
   }
 
   if((*s10_proc_mme_handover_pp)->proc.peer_ip){
-    free_wrapper(&(*s10_proc_mme_handover_pp)->proc.peer_ip);
+    free_wrapper((void*)&(*s10_proc_mme_handover_pp)->proc.peer_ip);
   }
 
   (*s10_proc_mme_handover_pp)->s10_mme_handover_timeout = NULL; // todo: deallocate too

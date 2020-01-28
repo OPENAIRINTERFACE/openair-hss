@@ -116,7 +116,8 @@ int mme_app_handle_s6a_update_location_ans (
 
   message_p->ittiMsg.nas_pdn_config_rsp.ue_id  = ue_context->privates.mme_ue_s1ap_id;
   message_p->ittiMsg.nas_pdn_config_rsp.imsi64 = imsi64;
-  imsi64_t imsi64_2 = imsi_to_imsi64(&emm_context->_imsi);
+  // LG : Wanted to test something ?
+  // imsi64_t imsi64_2 = imsi_to_imsi64(&emm_context->_imsi);
   memcpy(&message_p->ittiMsg.nas_pdn_config_rsp.imsi, &emm_context->_imsi, sizeof(imsi_t));
   memcpy(&message_p->ittiMsg.nas_pdn_config_rsp.target_tai, &emm_context->originating_tai, sizeof(tai_t));
 
@@ -186,7 +187,7 @@ mme_app_handle_s6a_cancel_location_req(
     s10_handover_proc = mme_app_get_s10_procedure_mme_handover(ue_context);
     if(s10_handover_proc){
       if(s10_handover_proc->proc.timer.id != MME_APP_TIMER_INACTIVE_ID){
-        OAILOG_INFO(LOG_MME_APP, "S10 Handover Proc timer %u, is still running. Marking CLR but not removing the UE yet with imsi " IMSI_64_FMT ". \n",
+        OAILOG_INFO(LOG_MME_APP, "S10 Handover Proc timer %ul, is still running. Marking CLR but not removing the UE yet with imsi " IMSI_64_FMT ". \n",
             s10_handover_proc->proc.timer.id, imsi);
         s10_handover_proc->pending_clear_location_request = true; // todo: not checking the pending flag..
         OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
@@ -221,10 +222,7 @@ int
 mme_app_handle_s6a_reset_req(
   const s6a_reset_req_t * const rr_pP)
 {
-  uint64_t                                imsi = 0;
-  struct ue_context_s                    *ue_context = NULL;
   int                                     rc = RETURNok;
-  MessageDef                             *message_p = NULL;
 
   OAILOG_FUNC_IN (LOG_MME_APP);
   DevAssert (rr_pP );
