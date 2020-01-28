@@ -114,13 +114,32 @@ s1ap_message_decoded_callback           messages_callback[][3] = {
   {0, 0, 0},                    /* PrivateMessage */
   {s1ap_mme_handle_enb_configuration_transfer, 0, 0},                    /* eNBConfigurationTransfer */
   {0, 0, 0},                    /* MMEConfigurationTransfer */
+  // HERE END UPDATES REL 9, 10, 11
+  // UPDATE RELEASE 12 :
   {0, 0, 0},                    /* CellTrafficTrace */
-// UPDATE RELEASE 9
-  {0, 0, 0},                    /* Kill */
-  {0, 0, 0},                    /* DownlinkUEAssociatedLPPaTransport  */
-  {0, 0, 0},                    /* UplinkUEAssociatedLPPaTransport */
-  {0, 0, 0},                    /* DownlinkNonUEAssociatedLPPaTransport */
-  {0, 0, 0},                    /* UplinkNonUEAssociatedLPPaTransport */
+  {0, 0, 0},                    /* 43 Kill */
+  {0, 0, 0},                    /* 44 DownlinkUEAssociatedLPPaTransport  */
+  {0, 0, 0},                    /* 45 UplinkUEAssociatedLPPaTransport */
+  {0, 0, 0},                    /* 46 DownlinkNonUEAssociatedLPPaTransport */
+  {0, 0, 0},                    /* 47 UplinkNonUEAssociatedLPPaTransport */
+  {0, 0, 0},                    /* 48 UERadioCapabilityMatch */
+  {0, 0, 0},                    /* 49 PWSRestartIndication */
+  // UPDATE RELEASE 13 :
+  {s1ap_mme_handle_erab_modification_indication, 0, 0}, /* 50 E-RABModificationIndication */
+  {0, 0, 0},                    /* 51 PWSFailureIndication */
+  {0, 0, 0},                    /* 52 RerouteNASRequest */
+  {0, 0, 0},                    /* 53 UEContextModificationIndication */
+  {0, 0, 0},                    /* 54 ConnectionEstablishmentIndication */
+  // UPDATE RELEASE 14 :
+  {0, 0, 0},                    /* 55 UEContextSuspend */
+  {0, 0, 0},                    /* 56 UEContextResume */
+  {0, 0, 0},                    /* 57 NASDeliveryIndication */
+  {0, 0, 0},                    /* 58 RetrieveUEInformation */
+  {0, 0, 0},                    /* 59 UEInformationTransfer */
+  // UPDATE RELEASE 15 :
+  {0, 0, 0},                    /* 60 eNBCPRelocationIndication */
+  {0, 0, 0},                    /* 61 MMECPRelocationIndication */
+  {0, 0, 0},                    /* 62 SecondaryRATDataUsageReport */
 };
 
 const char                             *s1ap_direction2String[] = {
