@@ -92,6 +92,22 @@ do {                            \
         ((buf)[1]);             \
 } while(0)
 
+/* Convert an array of char containing vALUE to x */
+#define BUFFER_TO_INT24(buf, x) \
+do {                            \
+    x = ((buf)[0] << 16)  |     \
+        ((buf)[1] << 8)   |     \
+				((buf)[2]);   		      \
+} while(0)
+
+/* Convert an integer on 32 bits to the given bUFFER */
+#define INT24_TO_BUFFER(x, buf) \
+do {                            \
+    (buf)[0] = (x) >> 16;       \
+    (buf)[1] = (x) >> 8;        \
+    (buf)[2] = (x);             \
+} while(0)
+
 /* Convert an integer on 32 bits to the given bUFFER */
 #define INT32_TO_BUFFER(x, buf) \
 do {                            \
@@ -149,6 +165,13 @@ do {                                            \
 do {                                \
     INT32_TO_OCTET_STRING(x, aSN);  \
     (aSN)->bits_unused = 0;         \
+} while(0)
+
+#define INT24_TO_OCTET_STRING(x, aSN)           \
+do {                                            \
+    (aSN)->buf = calloc(3, sizeof(uint8_t));    \
+    INT24_TO_BUFFER(x, (aSN)->buf);             \
+    (aSN)->size = 3;              				\
 } while(0)
 
 #define INT16_TO_OCTET_STRING(x, aSN)           \
@@ -303,6 +326,32 @@ do {                                                                      \
 } while(0)
 
 /*
+ * TS 36.443 v15.0.0 section 9.2.1.17:
+ * One Frame Item:
+ */
+#define ONE_FRAME_ITEM_SF_TO_BIT_STRING(mACRO, bITsTRING)    \
+do {                                                    \
+    (bITsTRING)->buf = calloc(1, sizeof(uint8_t));      \
+    (bITsTRING)->buf[0] = (((mACRO) & 0x3F) << 2);				\
+    (bITsTRING)->size = 1;                              \
+    (bITsTRING)->bits_unused = 2;                       \
+} while(0)
+
+/*
+ * TS 36.443 v15.0.0 section 9.2.1.17:
+ * Four Frame Item:
+ */
+#define FOUR_FRAME_ITEM_SF_TO_BIT_STRING(mACRO, bITsTRING)    \
+do {                                                    \
+    (bITsTRING)->buf = calloc(3, sizeof(uint8_t));      \
+    (bITsTRING)->buf[0] = (((mACRO) >> 16) & 0xFF);			\
+    (bITsTRING)->buf[1] = (((mACRO) >> 8) & 0xFF);			\
+    (bITsTRING)->buf[1] = ((mACRO) & 0xFF);							\
+    (bITsTRING)->size = 3;                              \
+    (bITsTRING)->bits_unused = 0;                       \
+} while(0)
+
+/*
  * TS 36.413 v10.9.0 section 9.2.1.37:
  * Macro eNB ID:
  * Equal to the 20 leftmost bits of the Cell
@@ -351,6 +400,7 @@ do {                                                    \
 #define TAC_TO_ASN1 INT16_TO_OCTET_STRING
 #define GTP_TEID_TO_ASN1 INT32_TO_OCTET_STRING
 #define OCTET_STRING_TO_TAC OCTET_STRING_TO_INT16
+#define OCTET_STRING_TO_MBMS_SA  OCTET_STRING_TO_INT16
 #define OCTET_STRING_TO_MME_CODE OCTET_STRING_TO_INT8
 #define OCTET_STRING_TO_M_TMSI   OCTET_STRING_TO_INT32
 #define OCTET_STRING_TO_MME_GID  OCTET_STRING_TO_INT16

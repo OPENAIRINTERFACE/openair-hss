@@ -95,8 +95,8 @@ uint8_t encode_u8_nas_key_set_identifier (NasKeySetIdentifier * naskeysetidentif
   uint8_t                                 encoded = 0;
   uint8_t                                 iei = 0;
 
-  *(buffer + encoded) = 0x00 | (iei & 0xf0) | ((naskeysetidentifier->tsc & 0x1) << 3) | (naskeysetidentifier->naskeysetidentifier & 0x7);
-  encoded++;
-  return bufferReturn;
+  return 0x00 | (iei & 0xf0) | ((naskeysetidentifier->tsc & 0x1) << 3) | (naskeysetidentifier->naskeysetidentifier & 0x7);
+//  encoded++;
+//  return bufferReturn;
 }
 

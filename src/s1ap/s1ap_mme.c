@@ -130,6 +130,20 @@ s1ap_remove_enb (
 }
 
 //------------------------------------------------------------------------------
+static bool s1ap_enb_compare_by_tac_cb (__attribute__((unused)) const hash_key_t keyP,
+                                    void * const elementP,
+                                    void * parameterP, void **resultP)
+{
+  const tac_t                  * const tac_p = (const tac_t*const)parameterP;
+  enb_description_t                      *enb_ref  = (enb_description_t*)elementP;
+  if ( *tac_p == enb_ref->tai_list.partial_tai_list[0].u.tai_one_plmn_consecutive_tacs.tac) {
+    *resultP = elementP;
+    return true;
+  }
+  return false;
+}
+
+//------------------------------------------------------------------------------
 void                                   *
 s1ap_mme_thread (
   __attribute__((unused)) void *args)
@@ -172,20 +186,20 @@ s1ap_mme_thread (
     // Forwarded from MME_APP layer (origin NAS).
     case NAS_DOWNLINK_DATA_REQ:{
     	/*
-             * New message received from NAS task.
-             * * * * This corresponds to a S1AP downlink nas transport message.
-             */
-            s1ap_generate_downlink_nas_transport (NAS_DOWNLINK_DATA_REQ (received_message_p).enb_ue_s1ap_id,
-                NAS_DOWNLINK_DATA_REQ (received_message_p).ue_id,
-                NAS_DOWNLINK_DATA_REQ (received_message_p).enb_id,
-                &NAS_DOWNLINK_DATA_REQ (received_message_p).nas_msg);
-          }
-          break;
+    	 * New message received from NAS task.
+    	 * * * * This corresponds to a S1AP downlink nas transport message.
+    	 */
+    	s1ap_generate_downlink_nas_transport (NAS_DOWNLINK_DATA_REQ (received_message_p).enb_ue_s1ap_id,
+    			NAS_DOWNLINK_DATA_REQ (received_message_p).ue_id,
+					NAS_DOWNLINK_DATA_REQ (received_message_p).enb_id,
+					&NAS_DOWNLINK_DATA_REQ (received_message_p).nas_msg);
+    }
+    break;
 
-        case S1AP_E_RAB_SETUP_REQ:{
-            s1ap_generate_s1ap_e_rab_setup_req (&S1AP_E_RAB_SETUP_REQ (received_message_p));
-          }
-          break;
+    case S1AP_E_RAB_SETUP_REQ:{
+    	s1ap_generate_s1ap_e_rab_setup_req (&S1AP_E_RAB_SETUP_REQ (received_message_p));
+    }
+    break;
 
         case S1AP_E_RAB_MODIFY_REQ:{
             s1ap_generate_s1ap_e_rab_modify_req (&S1AP_E_RAB_MODIFY_REQ (received_message_p));
@@ -347,11 +361,6 @@ s1ap_mme_thread (
           }
           break;
 
-    //    case TIMER_HAS_EXPIRED:{
-    //        s1ap_handle_timer_expiry (&received_message_p->ittiMsg.timer_has_expired);
-    //      }
-    //      break;
-
         default:{
             OAILOG_ERROR (LOG_S1AP, "Unknown message ID %d:%s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p));
           }
@@ -382,7 +391,7 @@ s1ap_mme_init(void)
   OAILOG_DEBUG (LOG_S1AP, "S1AP Release v%s\n", S1AP_VERSION);
   // 16 entries for n eNB.
   bstring bs1 = bfromcstr("s1ap_eNB_coll");
-  hash_table_ts_t* h = hashtable_ts_init (&g_s1ap_enb_coll, mme_config.max_enbs, NULL, s1ap_remove_enb, bs1); /**< Use a better removal handler. */
+  hash_table_ts_t* h = hashtable_ts_init (&g_s1ap_enb_coll, mme_config.max_s1_enbs, NULL, s1ap_remove_enb, bs1); /**< Use a better removal handler. */
   bdestroy_wrapper (&bs1);
   if (!h) return RETURNerror;
 
@@ -509,20 +518,6 @@ bool s1ap_enb_compare_by_enb_id_cb (__attribute__((unused)) const hash_key_t key
 }
 
 //------------------------------------------------------------------------------
-bool s1ap_enb_compare_by_tac_cb (__attribute__((unused)) const hash_key_t keyP,
-                                    void * const elementP,
-                                    void * parameterP, void **resultP)
-{
-  const tac_t                  * const tac_p = (const tac_t*const)parameterP;
-  enb_description_t                      *enb_ref  = (enb_description_t*)elementP;
-  if ( *tac_p == enb_ref->tai_list.partial_tai_list[0].u.tai_one_plmn_consecutive_tacs.tac) {
-    *resultP = elementP;
-    return true;
-  }
-  return false;
-}
-
-//------------------------------------------------------------------------------
 enb_description_t                      *
 s1ap_is_enb_id_in_list (
   const uint32_t enb_id)
@@ -544,15 +539,12 @@ void s1ap_is_tac_in_list (
 
   /** Collect all eNBs for the given TAC. */
   hashtable_element_array_t              ea;
-//  enb_description_t *			         enb_p_elements[mme_config.max_enbs];
   memset(&ea, 0, sizeof(hashtable_element_array_t));
-//  memset(&enb_p_elements, 0, (sizeof(enb_description_t*) * mme_config.max_enbs));
   ea.elements = enbs;
 
   hashtable_ts_apply_list_callback_on_elements((hash_table_ts_t * const)&g_s1ap_enb_coll, s1ap_enb_compare_by_tac_cb, (void *)tac_p, &ea);
   OAILOG_DEBUG(LOG_S1AP, "Found %d matching enb references based on the received tac " TAC_FMT ". \n", ea.num_elements, tac);
   *num_enbs = ea.num_elements;
-//  *enbs = enb_p_elements;
 }
 
 //------------------------------------------------------------------------------
@@ -578,6 +570,7 @@ bool s1ap_ue_compare_by_enb_ue_s1ap_id_cb (__attribute__((unused)) const hash_ke
   }
   return false;
 }
+
 //------------------------------------------------------------------------------
 ue_description_t                       *
 s1ap_is_ue_enb_id_in_list (
@@ -632,6 +625,7 @@ bool s1ap_enb_find_ue_by_mme_ue_id_cb (__attribute__((unused))const hash_key_t k
   }
   return false;
 }
+
 //------------------------------------------------------------------------------
 bool s1ap_ue_compare_by_s11_sgw_teid_cb (__attribute__((unused))const hash_key_t keyP,
                                          void * const elementP,

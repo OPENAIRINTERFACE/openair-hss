@@ -501,8 +501,5 @@ void itti_free_msg_content (MessageDef * const message_p)
     /** Source SGW FQDN. */
     bdestroy_wrapper(&message_p->ittiMsg.s10_context_response.source_sgw_fqdn);
     break;
-
-  default:
-    ;
   }
 }

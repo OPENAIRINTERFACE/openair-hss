@@ -424,6 +424,7 @@ static int _auth_info_proc_success_cb (struct emm_data_context_s *emm_ctx)
 
 
         auth_proc->ksi = eksi;
+        emm_ctx->_security.eksi = eksi;
 
         // re-enter previous EMM state, before re-initiating the procedure
         emm_sap_t                               emm_sap = {0};
@@ -971,7 +972,6 @@ static int _authentication_request (nas_emm_auth_proc_t * auth_proc)
     emm_sap.u.emm_as.u.security.guti = NULL;
     emm_sap.u.emm_as.u.security.ue_id = auth_proc->ue_id;
     emm_sap.u.emm_as.u.security.msg_type = EMM_AS_MSG_TYPE_AUTH;
-    emm_sap.u.emm_as.u.security.ksi = auth_proc->ksi;
     memcpy(emm_sap.u.emm_as.u.security.rand, auth_proc->rand, AUTH_RAND_SIZE);
     memcpy(emm_sap.u.emm_as.u.security.autn, auth_proc->autn, AUTH_AUTN_SIZE);
     /*
@@ -983,6 +983,8 @@ static int _authentication_request (nas_emm_auth_proc_t * auth_proc)
           "Cannot proceed with identification procedure. \n", auth_proc->ue_id);
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
     }
+    emm_sap.u.emm_as.u.security.ksi = auth_proc->ksi;
+
     /*
      * Setup EPS NAS security data
      */

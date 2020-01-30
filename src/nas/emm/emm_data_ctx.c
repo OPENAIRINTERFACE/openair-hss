@@ -538,10 +538,10 @@ inline void emm_ctx_update_from_mm_eps_context(emm_data_context_t * const emm_ct
   emm_ctx_set_attribute_present(emm_ctx_p, EMM_CTXT_MEMBER_AUTH_VECTORS);
 
   ksi_t eksi = 0;
-  if (emm_ctx_p->_security.eksi !=  KSI_NO_KEY_AVAILABLE) {
-    AssertFatal(0 !=  0, "emm_ctx->_security.eksi %d", emm_ctx_p->_security.eksi);
-    eksi = (emm_ctx_p->_security.eksi + 1) % (EKSI_MAX_VALUE + 1);
-  }
+//  if (emm_ctx_p->_security.eksi !=  KSI_NO_KEY_AVAILABLE) {
+//    AssertFatal(0 !=  0, "emm_ctx->_security.eksi %d", emm_ctx_p->_security.eksi);
+//    eksi = (emm_ctx_p->_security.eksi + 1) % (EKSI_MAX_VALUE + 1);
+//  }
   emm_ctx_set_security_vector_index(emm_ctx_p, 0);
 
   /**

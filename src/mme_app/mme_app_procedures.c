@@ -57,7 +57,7 @@ static void mme_app_free_s11_procedure_delete_bearer(mme_app_s11_proc_t **s11_pr
 static void mme_app_free_s10_procedure_mme_handover(mme_app_s10_proc_t **s10_proc);
 
 //------------------------------------------------------------------------------
-void mme_app_delete_s11_procedures(ue_session_pool_t * const ue_session_pool)
+void mme_app_delete_s11_procedures(struct ue_session_pool_s * const ue_session_pool)
 {
   mme_app_s11_proc_t *s11_proc1 = NULL;
   mme_app_s11_proc_t *s11_proc2 = NULL;
@@ -78,7 +78,7 @@ void mme_app_delete_s11_procedures(ue_session_pool_t * const ue_session_pool)
 }
 
 //------------------------------------------------------------------------------
-mme_app_s11_proc_create_bearer_t* mme_app_create_s11_procedure_create_bearer(ue_session_pool_t * const ue_session_pool)
+mme_app_s11_proc_create_bearer_t* mme_app_create_s11_procedure_create_bearer(struct ue_session_pool_s * const ue_session_pool)
 {
   /** Check if the list of S11 procedures is empty. */
   if(!LIST_EMPTY(&ue_session_pool->s11_procedures)){
@@ -101,13 +101,13 @@ mme_app_s11_proc_create_bearer_t* mme_app_create_s11_procedure_create_bearer(ue_
 }
 
 //------------------------------------------------------------------------------
-mme_app_s11_proc_t* mme_app_get_s11_procedure (ue_session_pool_t * const ue_session_pool)
+mme_app_s11_proc_t* mme_app_get_s11_procedure (struct ue_session_pool_s * const ue_session_pool)
 {
   return LIST_FIRST(&ue_session_pool->s11_procedures);
 }
 
 //------------------------------------------------------------------------------
-mme_app_s11_proc_create_bearer_t* mme_app_get_s11_procedure_create_bearer(ue_session_pool_t * const ue_session_pool)
+mme_app_s11_proc_create_bearer_t* mme_app_get_s11_procedure_create_bearer(struct ue_session_pool_s * const ue_session_pool)
 {
   mme_app_s11_proc_t *s11_proc = NULL;
 
@@ -120,7 +120,7 @@ mme_app_s11_proc_create_bearer_t* mme_app_get_s11_procedure_create_bearer(ue_ses
 }
 
 //------------------------------------------------------------------------------
-void mme_app_delete_s11_procedure_create_bearer(ue_session_pool_t * const ue_session_pool)
+void mme_app_delete_s11_procedure_create_bearer(struct ue_session_pool_s * const ue_session_pool)
 {
   mme_app_s11_proc_t *s11_proc = NULL, *s11_proc_safe = NULL;
 
@@ -139,7 +139,7 @@ void mme_app_delete_s11_procedure_create_bearer(ue_session_pool_t * const ue_ses
 }
 
 //------------------------------------------------------------------------------
-mme_app_s11_proc_update_bearer_t* mme_app_create_s11_procedure_update_bearer(ue_session_pool_t * const ue_session_pool)
+mme_app_s11_proc_update_bearer_t* mme_app_create_s11_procedure_update_bearer(struct ue_session_pool_s * const ue_session_pool)
 {
   /** Check if the list of S11 procedures is empty. */
   if(!LIST_EMPTY(&ue_session_pool->s11_procedures)){
@@ -161,7 +161,7 @@ mme_app_s11_proc_update_bearer_t* mme_app_create_s11_procedure_update_bearer(ue_
 }
 
 //------------------------------------------------------------------------------
-mme_app_s11_proc_update_bearer_t* mme_app_get_s11_procedure_update_bearer(ue_session_pool_t * const ue_session_pool)
+mme_app_s11_proc_update_bearer_t* mme_app_get_s11_procedure_update_bearer(struct ue_session_pool_s * const ue_session_pool)
 {
   mme_app_s11_proc_t *s11_proc = NULL;
 
@@ -174,7 +174,7 @@ mme_app_s11_proc_update_bearer_t* mme_app_get_s11_procedure_update_bearer(ue_ses
 }
 
 //------------------------------------------------------------------------------
-void mme_app_delete_s11_procedure_update_bearer(ue_session_pool_t * const ue_session_pool)
+void mme_app_delete_s11_procedure_update_bearer(struct ue_session_pool_s * const ue_session_pool)
 {
   /** Check if the list of S11 procedures is empty. */
   mme_app_s11_proc_t *s11_proc = NULL, *s11_proc_safe = NULL;
@@ -194,7 +194,7 @@ void mme_app_delete_s11_procedure_update_bearer(ue_session_pool_t * const ue_ses
 }
 
 //------------------------------------------------------------------------------
-mme_app_s11_proc_delete_bearer_t* mme_app_create_s11_procedure_delete_bearer(ue_session_pool_t * const ue_session_pool)
+mme_app_s11_proc_delete_bearer_t* mme_app_create_s11_procedure_delete_bearer(struct ue_session_pool_s * const ue_session_pool)
 {
 	if(!LIST_EMPTY(&ue_session_pool->s11_procedures)){
 		OAILOG_ERROR (LOG_MME_APP, "UE with ueId " MME_UE_S1AP_ID_FMT " has already a S11 procedure ongoing. Cannot create DBR procedure. \n",
@@ -216,7 +216,7 @@ mme_app_s11_proc_delete_bearer_t* mme_app_create_s11_procedure_delete_bearer(ue_
 }
 
 //------------------------------------------------------------------------------
-mme_app_s11_proc_delete_bearer_t* mme_app_get_s11_procedure_delete_bearer(ue_session_pool_t * const ue_session_pool)
+mme_app_s11_proc_delete_bearer_t* mme_app_get_s11_procedure_delete_bearer(struct ue_session_pool_s * const ue_session_pool)
 {
 	mme_app_s11_proc_t *s11_proc = NULL;
 
@@ -229,7 +229,7 @@ mme_app_s11_proc_delete_bearer_t* mme_app_get_s11_procedure_delete_bearer(ue_ses
 }
 
 //------------------------------------------------------------------------------
-void mme_app_delete_s11_procedure_delete_bearer(ue_session_pool_t * const ue_session_pool)
+void mme_app_delete_s11_procedure_delete_bearer(struct ue_session_pool_s * const ue_session_pool)
 {
 
     mme_app_s11_proc_t *s11_proc = NULL, *s11_proc_safe = NULL;
@@ -261,29 +261,29 @@ static void mme_app_free_s11_procedure_create_bearer(mme_app_s11_proc_t **s11_pr
 }
 
 //------------------------------------------------------------------------------
-static void mme_app_free_s11_procedure_update_bearer(mme_app_s11_proc_t **s11_proc_cbr)
+static void mme_app_free_s11_procedure_update_bearer(mme_app_s11_proc_t **s11_proc_ubr)
 {
   // DO here specific releases (memory,etc)
   /** Remove the bearer contexts to be setup. */
-  mme_app_s11_proc_update_bearer_t ** s11_proc_update_bearer_pp = (mme_app_s11_proc_update_bearer_t**)s11_proc_cbr;
+  mme_app_s11_proc_update_bearer_t ** s11_proc_update_bearer_pp = (mme_app_s11_proc_update_bearer_t**)s11_proc_ubr;
   if((*s11_proc_update_bearer_pp)->bcs_tbu)
     free_bearer_contexts_to_be_updated(&(*s11_proc_update_bearer_pp)->bcs_tbu);
   free_wrapper((void**)s11_proc_update_bearer_pp);
 }
 
 //------------------------------------------------------------------------------
-static void mme_app_free_s11_procedure_delete_bearer(mme_app_s11_proc_t **s11_proc_cbr)
+static void mme_app_free_s11_procedure_delete_bearer(mme_app_s11_proc_t **s11_proc_dbr)
 {
   // DO here specific releases (memory,etc)
   /** Remove the bearer contexts to be setup. */
-//  mme_app_s11_proc_delete_bearer_t ** s11_proc_delete_bearer_pp = (mme_app_s11_proc_delete_bearer_t**)s11_proc_cbr;
-  free_wrapper((void**)s11_proc_cbr);
+//  mme_app_s11_proc_delete_bearer_t ** s11_proc_delete_bearer_pp = (mme_app_s11_proc_delete_bearer_t**)s11_proc_dbr;
+  free_wrapper((void**)s11_proc_dbr);
 }
 
 /**
  * S10 Procedures.
  */
-static int remove_s10_tunnel_endpoint(ue_context_t * ue_context, struct sockaddr *peer_ip){
+static int remove_s10_tunnel_endpoint(struct ue_context_s * ue_context, struct sockaddr *peer_ip){
   OAILOG_FUNC_IN(LOG_MME_APP);
   int             rc = RETURNerror;
 //  /** Removed S10 tunnel endpoint. */
@@ -303,8 +303,9 @@ static int remove_s10_tunnel_endpoint(ue_context_t * ue_context, struct sockaddr
       &ue_context->privates.fields.guti);
   OAILOG_FUNC_RETURN(LOG_MME_APP, rc);
 }
+
 //------------------------------------------------------------------------------
-void mme_app_delete_s10_procedures(ue_context_t * const ue_context)
+void mme_app_delete_s10_procedures(struct ue_context_s * const ue_context)
 {
   if (ue_context->s10_procedures) {
     mme_app_s10_proc_t *s10_proc1 = NULL;
@@ -351,7 +352,7 @@ mme_app_handle_mme_s10_handover_completion_timer_expiry (mme_app_s10_proc_mme_ha
   MessageDef                             *message_p = NULL;
   /** Get the IMSI. */
 //  imsi64_t imsi64 = imsi_to_imsi64(&s10_proc_mme_handover->imsi);
-  ue_context_t * ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, s10_proc_mme_handover->mme_ue_s1ap_id);
+  struct ue_context_s * ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, s10_proc_mme_handover->mme_ue_s1ap_id);
   DevAssert(ue_context);
   OAILOG_WARNING(LOG_MME_APP, "Expired- MME S10 Handover Completion timer for UE " MME_UE_S1AP_ID_FMT " run out. "
       "Performing S1AP UE Context Release Command and successive NAS implicit detach. \n", ue_context->privates.mme_ue_s1ap_id);
@@ -400,7 +401,7 @@ static void
 mme_app_handle_mobility_completion_timer_expiry (mme_app_s10_proc_mme_handover_t *s10_proc_mme_handover)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
-  ue_context_t * ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, s10_proc_mme_handover->mme_ue_s1ap_id);
+  struct ue_context_s * ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, s10_proc_mme_handover->mme_ue_s1ap_id);
   DevAssert (ue_context != NULL);
   MessageDef                             *message_p = NULL;
   OAILOG_INFO (LOG_MME_APP, "Expired- MME Handover Completion timer for UE " MME_UE_S1AP_ID_FMT " run out. \n", ue_context->privates.mme_ue_s1ap_id);
@@ -469,7 +470,7 @@ mme_app_handle_mobility_completion_timer_expiry (mme_app_s10_proc_mme_handover_t
         		relocation_cancel_request_p->teid = s10_proc_mme_handover->proc.remote_teid; /**< May or may not be 0. */
         		relocation_cancel_request_p->local_teid = ue_context->privates.fields.local_mme_teid_s10; /**< May or may not be 0. */
         		// todo: check the table!
-        		memcpy((void*)&relocation_cancel_request_p->peer_ip, s10_proc_mme_handover->proc.peer_ip,
+        		memcpy((void*)&relocation_cancel_request_p->mme_peer_ip, s10_proc_mme_handover->proc.peer_ip,
         				(s10_proc_mme_handover->proc.peer_ip->sa_family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
         		/** IMSI. */
         		memcpy((void*)&relocation_cancel_request_p->imsi, &s10_proc_mme_handover->imsi, sizeof(imsi_t));
@@ -496,7 +497,7 @@ mme_app_handle_mobility_completion_timer_expiry (mme_app_s10_proc_mme_handover_t
 }
 
 //------------------------------------------------------------------------------
-mme_app_s10_proc_mme_handover_t* mme_app_create_s10_procedure_mme_handover(ue_context_t * const ue_context,
+mme_app_s10_proc_mme_handover_t* mme_app_create_s10_procedure_mme_handover(struct ue_context_s * const ue_context,
 		bool target_mme, mme_app_s10_proc_type_t  s1ap_ho_type, struct sockaddr* sockaddr){
   mme_app_s10_proc_mme_handover_t *s10_proc_mme_handover = calloc(1, sizeof(mme_app_s10_proc_mme_handover_t));
   // todo: checking hear for correct allocation
@@ -519,7 +520,7 @@ mme_app_s10_proc_mme_handover_t* mme_app_create_s10_procedure_mme_handover(ue_co
     s10_proc_mme_handover->proc.proc.time_out = (time_out_t)mme_app_handle_mme_s10_handover_completion_timer_expiry;
     mme_config_read_lock (&mme_config);
     if (timer_setup (mme_config.mme_s10_handover_completion_timer * 1, 0,
-        TASK_MME_APP, INSTANCE_DEFAULT, TIMER_ONE_SHOT,  (void *) &(ue_context->privates.mme_ue_s1ap_id), &(s10_proc_mme_handover->proc.timer.id)) < 0) {
+        TASK_MME_APP, INSTANCE_DEFAULT, TIMER_ONE_SHOT,  (void *)(ue_context->privates.mme_ue_s1ap_id), &(s10_proc_mme_handover->proc.timer.id)) < 0) {
       OAILOG_ERROR (LOG_MME_APP, "Failed to start the MME Handover Completion timer for UE id " MME_UE_S1AP_ID_FMT " for duration %d \n", ue_context->privates.mme_ue_s1ap_id,
           mme_config.mme_s10_handover_completion_timer * 1);
       s10_proc_mme_handover->proc.timer.id = MME_APP_TIMER_INACTIVE_ID;
@@ -543,7 +544,7 @@ mme_app_s10_proc_mme_handover_t* mme_app_create_s10_procedure_mme_handover(ue_co
     s10_proc_mme_handover->proc.proc.time_out = (time_out_t)mme_app_handle_mobility_completion_timer_expiry;
     mme_config_read_lock (&mme_config);
     if (timer_setup (mme_config.mme_mobility_completion_timer * 1, 0,
-        TASK_MME_APP, INSTANCE_DEFAULT, TIMER_ONE_SHOT, (void *) &(ue_context->privates.mme_ue_s1ap_id), &(s10_proc_mme_handover->proc.timer.id)) < 0) {
+        TASK_MME_APP, INSTANCE_DEFAULT, TIMER_ONE_SHOT, (void *)(ue_context->privates.mme_ue_s1ap_id), &(s10_proc_mme_handover->proc.timer.id)) < 0) {
       OAILOG_ERROR (LOG_MME_APP, "Failed to start the MME Mobility Completion timer for UE id " MME_UE_S1AP_ID_FMT " for duration %d \n", ue_context->privates.mme_ue_s1ap_id,
           (mme_config.mme_mobility_completion_timer * 1));
       s10_proc_mme_handover->proc.timer.id = MME_APP_TIMER_INACTIVE_ID;
@@ -578,7 +579,7 @@ mme_app_s10_proc_mme_handover_t* mme_app_create_s10_procedure_mme_handover(ue_co
 }
 
 //------------------------------------------------------------------------------
-mme_app_s10_proc_mme_handover_t* mme_app_get_s10_procedure_mme_handover(ue_context_t * const ue_context)
+mme_app_s10_proc_mme_handover_t* mme_app_get_s10_procedure_mme_handover(struct ue_context_s * const ue_context)
 {
   if (ue_context->s10_procedures) {
     mme_app_s10_proc_t *s10_proc = NULL;
@@ -631,7 +632,7 @@ static void mme_app_free_s10_procedure_mme_handover(mme_app_s10_proc_t **s10_pro
  * Handover procedure used for inter and intra MME S1 handover.
  */
 //------------------------------------------------------------------------------
-void mme_app_delete_s10_procedure_mme_handover(ue_context_t * const ue_context)
+void mme_app_delete_s10_procedure_mme_handover(struct ue_context_s * const ue_context)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
   if (ue_context->s10_procedures) {
@@ -912,3 +913,4 @@ void mme_app_delete_s1ap_procedure_modify_bearer_ind(ue_session_pool_t * const u
         ue_session_pool->privates.mme_ue_s1ap_id);
    }
 }
+

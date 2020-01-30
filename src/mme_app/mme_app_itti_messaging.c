@@ -654,7 +654,7 @@ int mme_app_remove_s10_tunnel_endpoint(teid_t local_teid, struct sockaddr *peer_
   DevAssert (message_p != NULL);
   message_p->ittiMsg.s10_remove_ue_tunnel.local_teid   = local_teid;
 
-  memcpy((void*)&message_p->ittiMsg.s10_remove_ue_tunnel.peer_ip, peer_ip,
+  memcpy((void*)&message_p->ittiMsg.s10_remove_ue_tunnel.mme_peer_ip, peer_ip,
    		  (peer_ip->sa_family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
 
 //  message_p->ittiMsg.s10_remove_ue_tunnel.cause = LOCAL_DETACH;
@@ -663,7 +663,6 @@ int mme_app_remove_s10_tunnel_endpoint(teid_t local_teid, struct sockaddr *peer_
   } else if (!peer_ip->sa_family){
     OAILOG_DEBUG (LOG_MME_APP, "Sending remove tunnel request for with null peer ip! \n");
   }
-  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_IMPLICIT_DETACH_UE_IND_MESSAGE");
   itti_send_msg_to_task (TASK_S10, INSTANCE_DEFAULT, message_p);
 
   OAILOG_FUNC_RETURN(LOG_MME_APP, RETURNok);
@@ -1082,7 +1081,6 @@ void mme_app_itti_forward_relocation_response(ue_context_t *ue_context, struct P
   DevAssert (message_p != NULL);
 
   itti_s10_forward_relocation_response_t *forward_relocation_response_p = &message_p->ittiMsg.s10_forward_relocation_response;
-  memset ((void*)forward_relocation_response_p, 0, sizeof (itti_s10_forward_relocation_response_t));
 
   /** Get the Handov
   /** Set the target S10 TEID. */
@@ -1092,7 +1090,7 @@ void mme_app_itti_forward_relocation_response(ue_context_t *ue_context, struct P
    * todo: Get the MME from the origin TAI.
    * Currently only one MME is supported.
    */
-  memcpy((void*)&forward_relocation_response_p->peer_ip, s10_handover_proc->proc.peer_ip,
+  memcpy((void*)&forward_relocation_response_p->mme_peer_ip, s10_handover_proc->proc.peer_ip,
   (s10_handover_proc->proc.peer_ip->sa_family == AF_INET ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6)));
 
   forward_relocation_response_p->trxn    = s10_handover_proc->forward_relocation_trxn;
@@ -1166,7 +1164,6 @@ void mme_app_send_s10_forward_relocation_response_err(teid_t mme_source_s10_teid
   DevAssert (message_p != NULL);
 
   itti_s10_forward_relocation_response_t *forward_relocation_response_p = &message_p->ittiMsg.s10_forward_relocation_response;
-  memset ((void*)forward_relocation_response_p, 0, sizeof (itti_s10_forward_relocation_response_t));
 
   /**
    * Set the TEID of the source MME.
@@ -1174,7 +1171,7 @@ void mme_app_send_s10_forward_relocation_response_err(teid_t mme_source_s10_teid
    */
   forward_relocation_response_p->teid = mme_source_s10_teid;
   /** Set the IPv4 address of the source MME. */
-  memcpy((void*)&forward_relocation_response_p->peer_ip, mme_source_ip_address, mme_source_ip_address->sa_family == AF_INET ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
+  memcpy((void*)&forward_relocation_response_p->mme_peer_ip, mme_source_ip_address, mme_source_ip_address->sa_family == AF_INET ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
   forward_relocation_response_p->cause.cause_value = gtpv2cCause;
   forward_relocation_response_p->trxn  = trxn;
   /** Sending a message to S10. */

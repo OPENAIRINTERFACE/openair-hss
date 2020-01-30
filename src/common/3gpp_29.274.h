@@ -236,7 +236,7 @@ typedef struct bearer_qos_s {
    * Default value: EMPTION_VULNERABILITY_ENABLED
    */
   unsigned pvi:1;
-  uint8_t  qci;
+  qci_e    qci;
   ambr_t   gbr;           ///< Guaranteed bit rate
   ambr_t   mbr;           ///< Maximum bit rate
 } bearer_qos_t;
@@ -861,12 +861,56 @@ typedef enum node_type_e {
 #define MSG_FORWARD_RELOCATION_REQUEST_MAX_PDN_CONNECTIONS   3
 #define MSG_FORWARD_RELOCATION_REQUEST_MAX_BEARER_CONTEXTS   11
 
+//----------------------------
 typedef struct mme_ue_eps_pdn_connections_s {
   uint8_t num_pdn_connections;
   uint8_t num_processed_pdn_connections;
   pdn_connection_t pdn_connection[MSG_FORWARD_RELOCATION_REQUEST_MAX_PDN_CONNECTIONS];
 } mme_ue_eps_pdn_connections_t;
-//----------------------------
+
+//-------------------------------------------------
+// 8.73: MBMS IP Multicast Distribution
+
+typedef struct mbms_ip_multicast_distribution_s {
+//  unsigned        sa_type:2;
+//  unsigned        da_type:2;
+  teid_t          cteid; ///< Common TEID
+  ip_address_t    source_address;
+  ip_address_t    distribution_address;
+//
+//  union {
+//    struct in_addr  ipv4_address;
+//    struct in6_addr ipv6_address;
+//  }source_address;
+//  union {
+//      struct in_addr  ipv4_address;
+//      struct in6_addr ipv6_address;
+//  }distribution_address;
+  uint8_t         hc_indication;
+} mbms_ip_multicast_distribution_t;
+
+//-------------------------------------------------
+// 8.73: MBMS IP Multicast Distribution
+typedef struct mbms_abs_time_data_transfer_s {
+  uint32_t  	sec_since_epoch;		/**< Seconds since 1970 (2208988800L removed from value). */
+  long double 	usec;					/**< Microseconds. */
+}mbms_abs_time_data_transfer_t;
+
+//-------------------------------------
+// 8.102 MBMS Flags
+typedef struct mbms_flags_s {
+  /* MSRI (MBMS Session Re-establishment Indication):
+   * This flag indicates that the MBMS Session Start Request message is used
+   * to re-establish an MBMS session (see 3GPP TS 23.007 [13]).
+   */
+  unsigned msri:1;
+
+  /* LMRI ((Local MBMS Bearer Context Release Indication):):
+   * This flag indicates that the MBMS Session Stop Request message is used
+   * to release the MBMS Bearer Context locally in the MME/SGSN (see 3GPP TS 23.007 [13]).
+   */
+  unsigned lmri:1;
+} mbms_flags_t;
 
 void free_bearer_contexts_to_be_created(bearer_contexts_to_be_created_t **bcs_tbc);
 void free_bearer_contexts_to_be_updated(bearer_contexts_to_be_updated_t **bcs_tbu);

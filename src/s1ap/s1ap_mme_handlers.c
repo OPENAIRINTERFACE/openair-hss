@@ -66,7 +66,7 @@ static int                              s1ap_mme_generate_ue_context_release_com
 
 /* Handlers matrix. Only mme related procedures present here.
 */
-s1ap_message_decoded_callback           messages_callback[][3] = {
+s1ap_message_decoded_callback           s1ap_messages_callback[][3] = {
   {s1ap_mme_handle_handover_preparation, 0, 0},                    /* HandoverPreparation */
   {0, s1ap_mme_handle_handover_resource_allocation_response,              /* HandoverResourceAllocation */
       s1ap_mme_handle_handover_resource_allocation_failure},
@@ -158,7 +158,7 @@ s1ap_mme_handle_message (
 {
 
   /* Checking procedure Code and direction of message */
-  if (pdu->choice.initiatingMessage.procedureCode >= sizeof(messages_callback) / (3 * sizeof(s1ap_message_decoded_callback))
+  if (pdu->choice.initiatingMessage.procedureCode >= sizeof(s1ap_messages_callback) / (3 * sizeof(s1ap_message_decoded_callback))
       || (pdu->present > S1AP_S1AP_PDU_PR_unsuccessfulOutcome)) {
     OAILOG_DEBUG (LOG_S1AP, "[SCTP %d] Either procedureCode %ld or direction %d exceed expected\n",
                assoc_id, pdu->choice.initiatingMessage.procedureCode, pdu->present);
@@ -169,7 +169,7 @@ s1ap_mme_handle_message (
   /* No handler present.
    * This can mean not implemented or no procedure for eNB (wrong direction).
    */
-  if (messages_callback[pdu->choice.initiatingMessage.procedureCode][pdu->present - 1] == NULL) {
+  if (s1ap_messages_callback[pdu->choice.initiatingMessage.procedureCode][pdu->present - 1] == NULL) {
     OAILOG_DEBUG (LOG_S1AP, "[SCTP %d] No handler for procedureCode %ld in %s\n",
                assoc_id, pdu->choice.initiatingMessage.procedureCode,
                s1ap_direction2String[pdu->present]);
@@ -178,7 +178,7 @@ s1ap_mme_handle_message (
   }
 
   /* Calling the right handler */
-  int ret = (*messages_callback[pdu->choice.initiatingMessage.procedureCode][pdu->present - 1])(assoc_id, stream, pdu);
+  int ret = (*s1ap_messages_callback[pdu->choice.initiatingMessage.procedureCode][pdu->present - 1])(assoc_id, stream, pdu);
   ASN_STRUCT_FREE_CONTENTS_ONLY(asn_DEF_S1AP_S1AP_PDU, pdu);
   return ret;
 }
@@ -299,7 +299,7 @@ s1ap_mme_handle_s1_setup_request (
     uint32_t                                enb_id = 0;
     char                                   *enb_name = NULL;
     int                                     ta_ret = 0;
-    uint16_t                                max_enb_connected = 0;
+    uint16_t                                max_s1_enb_connected = 0;
 
     DevAssert (pdu != NULL);
     container = &pdu->choice.initiatingMessage.value.choice.S1SetupRequest;
@@ -357,12 +357,12 @@ s1ap_mme_handle_s1_setup_request (
     global_enb_id = &ie->value.choice.Global_ENB_ID;
 
     mme_config_read_lock (&mme_config);
-    max_enb_connected = mme_config.max_enbs;
+    max_s1_enb_connected = mme_config.max_s1_enbs;
     mme_config_unlock (&mme_config);
 
-    if (nb_enb_associated == max_enb_connected) {
+    if (nb_enb_associated >= max_s1_enb_connected) {
       OAILOG_ERROR (LOG_S1AP, "There is too much eNB connected to MME, rejecting the association\n");
-      OAILOG_DEBUG (LOG_S1AP, "Connected = %d, maximum allowed = %d\n", nb_enb_associated, max_enb_connected);
+      OAILOG_DEBUG (LOG_S1AP, "Connected = %d, maximum allowed = %d\n", nb_enb_associated, max_s1_enb_connected);
       /*
        * Send an overload cause...
        */
@@ -473,7 +473,6 @@ s1ap_generate_s1_setup_response (
   enb_description_t * enb_association)
 {
   int                                     i,j;
-  int                                     enc_rval = 0;
   S1AP_S1AP_PDU_t                         pdu;
   S1AP_S1SetupResponse_t                 *out;
   S1AP_S1SetupResponseIEs_t              *ie = NULL;
@@ -494,13 +493,6 @@ s1ap_generate_s1_setup_response (
 
   // Generating response
   mme_config_read_lock (&mme_config);
-
-  ie = (S1AP_S1SetupResponseIEs_t *)calloc(1, sizeof(S1AP_S1SetupResponseIEs_t));
-  ie->id = S1AP_ProtocolIE_ID_id_RelativeMMECapacity;
-  ie->criticality = S1AP_Criticality_ignore;
-  ie->value.present = S1AP_S1SetupResponseIEs__value_PR_RelativeMMECapacity;
-  ie->value.choice.RelativeMMECapacity = mme_config.relative_capacity;
-  ASN_SEQUENCE_ADD(&out->protocolIEs.list, ie);
 
   ie = (S1AP_S1SetupResponseIEs_t *)calloc(1, sizeof(S1AP_S1SetupResponseIEs_t));
   ie->id = S1AP_ProtocolIE_ID_id_ServedGUMMEIs;
@@ -559,17 +551,21 @@ s1ap_generate_s1_setup_response (
 
   ASN_SEQUENCE_ADD(&out->protocolIEs.list, ie);
 
+
+  ie = (S1AP_S1SetupResponseIEs_t *)calloc(1, sizeof(S1AP_S1SetupResponseIEs_t));
+  ie->id = S1AP_ProtocolIE_ID_id_RelativeMMECapacity;
+  ie->criticality = S1AP_Criticality_ignore;
+  ie->value.present = S1AP_S1SetupResponseIEs__value_PR_RelativeMMECapacity;
+  ie->value.choice.RelativeMMECapacity = mme_config.relative_capacity;
+  ASN_SEQUENCE_ADD(&out->protocolIEs.list, ie);
+
+
   mme_config_unlock (&mme_config);
   /*
    * The MME is only serving E-UTRAN RAT, so the list contains only one element
-   */
-
-  enc_rval = s1ap_mme_encode_pdu (&pdu, &buffer, &length);
-
-  /*
    * Failed to encode s1 setup response...
    */
-  if (enc_rval < 0) {
+  if (s1ap_mme_encode_pdu (&pdu, &buffer, &length) < 0) {
     OAILOG_DEBUG (LOG_S1AP, "Removed eNB %d\n", enb_association->sctp_assoc_id);
     hashtable_ts_free (&g_s1ap_enb_coll, enb_association->sctp_assoc_id);
   } else {
@@ -2265,7 +2261,6 @@ s1ap_handle_sctp_disconnection (
     if (reset) {
       enb_association->s1_state = S1AP_INIT;
       OAILOG_INFO(LOG_S1AP, "Moving eNB with association id %u to INIT state\n", assoc_id);
-      update_mme_app_stats_connected_enb_sub();
     } else {
     	hashtable_ts_free (&g_s1ap_enb_coll, enb_association->sctp_assoc_id);
       update_mme_app_stats_connected_enb_sub();
@@ -2275,11 +2270,10 @@ s1ap_handle_sctp_disconnection (
   }
 
   enb_association->s1_state = S1AP_SHUTDOWN;
-  MSC_LOG_EVENT (MSC_S1AP_MME, "0 Event SCTP_CLOSE_ASSOCIATION assoc_id: %d", assoc_id);
   hashtable_ts_apply_callback_on_elements(&enb_association->ue_coll, s1ap_send_enb_deregistered_ind, (void*)&arg, (void**)&message_p); /**< Just releasing the procedure. */
 
   /** Release the S1AP UE references implicitly. */
-  OAILOG_DEBUG (MSC_S1AP_MME, "Releasing all S1AP UE references related to the ENB with assocId %d. \n", assoc_id);
+  OAILOG_DEBUG (LOG_S1AP, "Releasing all S1AP UE references related to the ENB with assocId %d. \n", assoc_id);
 
 
 //  if ( (!(arg.handled_ues % S1AP_ITTI_UE_PER_DEREGISTER_MESSAGE)) && (arg.handled_ues) ){

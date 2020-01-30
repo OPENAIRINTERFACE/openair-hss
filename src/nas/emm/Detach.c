@@ -195,7 +195,7 @@ emm_proc_detach (
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
 
-  OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Initiate detach type = %s (%d) for ueId " MME_UE_S1AP_ID_FMT " \n.", _emm_detach_type_str[detach_type], detach_type, ue_id);
+  OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Initiate detach type = %s (%d) for ueId " MME_UE_S1AP_ID_FMT ". \n", _emm_detach_type_str[detach_type], detach_type, ue_id);
 
   emm_data_context_t                     *emm_context = emm_data_context_get (&_emm_data, ue_id);
   ue_context_t                           *ue_context  = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, ue_id);

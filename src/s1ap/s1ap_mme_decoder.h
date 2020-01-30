@@ -24,7 +24,6 @@
 #ifndef FILE_S1AP_MME_DECODER_SEEN
 #define FILE_S1AP_MME_DECODER_SEEN
 #include "bstrlib.h"
-#include "s1ap_common.h"
 
 int s1ap_mme_decode_pdu(S1AP_S1AP_PDU_t *pdu, const_bstring const raw) __attribute__ ((warn_unused_result));
 #endif /* FILE_S1AP_MME_DECODER_SEEN */

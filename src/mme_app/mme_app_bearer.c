@@ -484,10 +484,6 @@ mme_app_handle_initial_ue_message (
                     "Dropping the received initial context request message (attach should be possible after timeout of procedure has occurred). \n",
                     ue_context->privates.fields.imsi, ue_context->privates.mme_ue_s1ap_id);
                 DevAssert(s10_handover_proc->proc.timer.id != MME_APP_TIMER_INACTIVE_ID);
-                /*
-                 * Error during ue context malloc.
-                 * todo: removing the UE reference?!
-                 */
                 hashtable_rc_t result_deletion = hashtable_uint64_ts_remove (mme_app_desc.mme_ue_contexts.enb_ue_s1ap_id_ue_context_htbl,
                     (const hash_key_t)enb_s1ap_id_key);
                 OAILOG_ERROR (LOG_MME_APP, "MME_APP_INITAIL_UE_MESSAGE. ERROR***** enb_s1ap_id_key %ld has valid value " ENB_UE_S1AP_ID_FMT ". Result of deletion %d.\n" ,
@@ -551,7 +547,7 @@ mme_app_handle_initial_ue_message (
         /** Check that also no MME_APP UE context exists for the given GUTI. */
         // todo: check
         if(mme_ue_context_exists_guti(&mme_app_desc.mme_ue_contexts, &guti) != NULL){
-          OAILOG_ERROR (LOG_MME_APP, "UE EXIST WITH GUTI!\n.");
+          OAILOG_ERROR (LOG_MME_APP, "UE EXIST WITH GUTI!\n");
           OAILOG_FUNC_OUT (LOG_MME_APP);
         }
       }
@@ -575,14 +571,9 @@ mme_app_handle_initial_ue_message (
     OAILOG_DEBUG (LOG_MME_APP, "UE context doesn't exist -> create one \n");
 
     if (!(ue_context = get_new_ue_context ())) {
-      /*
-       * Error during UE context malloc.
-       * todo: removing the UE reference?!
-       */
-    	mme_app_itti_ue_context_release(0, initial_pP->enb_ue_s1ap_id, S1AP_SYSTEM_FAILURE, initial_pP->ecgi.cell_identity.enb_id);
-
-    	OAILOG_ERROR (LOG_MME_APP, "Failed to create new MME UE context enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT "\n", initial_pP->enb_ue_s1ap_id);
-    	OAILOG_FUNC_OUT (LOG_MME_APP);
+      mme_app_itti_ue_context_release(0, initial_pP->enb_ue_s1ap_id, S1AP_SYSTEM_FAILURE, initial_pP->ecgi.cell_identity.enb_id);
+      OAILOG_ERROR (LOG_MME_APP, "Failed to create new MME UE context enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT "\n", initial_pP->enb_ue_s1ap_id);
+      OAILOG_FUNC_OUT (LOG_MME_APP);
     }
     /** Initialize the fields of the MME_APP context. */
     ue_context->privates.fields.enb_ue_s1ap_id    = initial_pP->enb_ue_s1ap_id;
@@ -3866,7 +3857,7 @@ mme_app_handle_handover_cancel(
       ue_description_t * ue_reference = s1ap_is_enb_ue_s1ap_id_in_list_per_enb(s10_handover_proc->target_enb_ue_s1ap_id, s10_handover_proc->target_ecgi.cell_identity.enb_id);
       if(ue_reference != NULL){
         /** UE Reference to the target eNB found. Sending a UE Context Release to the target MME BEFORE a HANDOVER_REQUEST_ACK arrives. */
-        OAILOG_INFO(LOG_MME_APP, "Sending UE-Context-Release-Cmd to the target eNB %d for the UE-ID " MME_UE_S1AP_ID_FMT " and pending_enbUeS1apId " ENB_UE_S1AP_ID_FMT " (current enbUeS1apId) " ENB_UE_S1AP_ID_FMT ". \n.",
+        OAILOG_INFO(LOG_MME_APP, "Sending UE-Context-Release-Cmd to the target eNB %d for the UE-ID " MME_UE_S1AP_ID_FMT " and pending_enbUeS1apId " ENB_UE_S1AP_ID_FMT " (current enbUeS1apId) " ENB_UE_S1AP_ID_FMT ". \n",
             s10_handover_proc->target_ecgi.cell_identity.enb_id, ue_context->privates.mme_ue_s1ap_id, s10_handover_proc->target_enb_ue_s1ap_id, ue_context->privates.fields.enb_ue_s1ap_id);
         ue_context->privates.s1_ue_context_release_cause = S1AP_HANDOVER_CANCELLED;
         mme_app_itti_ue_context_release (ue_context->privates.mme_ue_s1ap_id, s10_handover_proc->target_enb_ue_s1ap_id, S1AP_HANDOVER_CANCELLED, s10_handover_proc->target_ecgi.cell_identity.enb_id);
@@ -3877,7 +3868,7 @@ mme_app_handle_handover_cancel(
          */
         OAILOG_FUNC_OUT (LOG_MME_APP);
       }else{
-        OAILOG_INFO(LOG_MME_APP, "No target UE reference is established yet. No S1AP UE context removal needed for UE-ID " MME_UE_S1AP_ID_FMT ". Responding with HO_CANCEL_ACK back to enbUeS1apId " ENB_UE_S1AP_ID_FMT ". \n.",
+        OAILOG_INFO(LOG_MME_APP, "No target UE reference is established yet. No S1AP UE context removal needed for UE-ID " MME_UE_S1AP_ID_FMT ". Responding with HO_CANCEL_ACK back to enbUeS1apId " ENB_UE_S1AP_ID_FMT ". \n",
             ue_context->privates.mme_ue_s1ap_id, ue_context->privates.fields.enb_ue_s1ap_id);
       }
     }
@@ -3923,7 +3914,7 @@ mme_app_handle_handover_cancel(
    relocation_cancel_request_p->teid = s10_handover_proc->remote_mme_teid.teid; /**< May or may not be 0. */
    relocation_cancel_request_p->local_teid = ue_context->privates.fields.local_mme_teid_s10; /**< May or may not be 0. */
    // todo: check the table!
-   memcpy((void*)&relocation_cancel_request_p->peer_ip, s10_handover_proc->proc.peer_ip,
+   memcpy((void*)&relocation_cancel_request_p->mme_peer_ip, s10_handover_proc->proc.peer_ip,
  		  (s10_handover_proc->proc.peer_ip->sa_family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
 
    /** IMSI. */
@@ -4044,9 +4035,6 @@ mme_app_handle_forward_relocation_request(
  if ((ue_context = get_new_ue_context()) == NULL) {
    /** Send a negative response before crashing. */
    mme_app_send_s10_forward_relocation_response_err(forward_relocation_request_pP->s10_source_mme_teid.teid, &forward_relocation_request_pP->peer_ip, forward_relocation_request_pP->trxn, SYSTEM_FAILURE);
-   /**
-    * Error during UE context malloc
-    */
    OAILOG_FUNC_OUT (LOG_MME_APP);
  }
  /** Try to get a new UE session pool, too (before starting with the registrations). */
@@ -4196,7 +4184,7 @@ void mme_app_send_s1ap_handover_request(mme_ue_s1ap_id_t mme_ue_s1ap_id,
   /** Set the Source-to-Target Transparent container from the pending information, which will be removed from the UE_Context. */
   handover_request_p->source_to_target_eutran_container = eutran_source_to_target_container;
   itti_send_msg_to_task (TASK_S1AP, INSTANCE_DEFAULT, message_p);
-  OAILOG_DEBUG (LOG_MME_APP, "Sending S1AP Handover Request message for UE "MME_UE_S1AP_ID_FMT ". \n.", mme_ue_s1ap_id);
+  OAILOG_DEBUG (LOG_MME_APP, "Sending S1AP Handover Request message for UE "MME_UE_S1AP_ID_FMT ". \n", mme_ue_s1ap_id);
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 
@@ -4413,7 +4401,7 @@ mme_app_handle_forward_access_context_notification(
       &message_p->ittiMsg.s10_forward_access_context_acknowledge;
   s10_mme_forward_access_context_acknowledge_p->teid        = s10_handover_process->remote_mme_teid.teid;  /**< Set the target TEID. */
   s10_mme_forward_access_context_acknowledge_p->local_teid  = ue_context->privates.fields.local_mme_teid_s10;   /**< Set the local TEID. */
-  memcpy((void*)&s10_mme_forward_access_context_acknowledge_p->peer_ip, s10_handover_process->proc.peer_ip, s10_handover_process->proc.peer_ip->sa_family == AF_INET ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
+  memcpy((void*)&s10_mme_forward_access_context_acknowledge_p->mme_peer_ip, s10_handover_process->proc.peer_ip, s10_handover_process->proc.peer_ip->sa_family == AF_INET ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
 
   s10_mme_forward_access_context_acknowledge_p->trxn        = forward_access_context_notification_pP->trxn; /**< Set the target TEID. */
   /** Check that there is a pending handover process. */
@@ -4450,11 +4438,11 @@ mme_app_handle_forward_access_context_notification(
 	  forward_relocation_complete_notification_p->teid = s10_handover_process->remote_mme_teid.teid;       /**< Target S10-MME TEID. todo: what if multiple? */
 	  /** Set the local TEID. */
 	  forward_relocation_complete_notification_p->local_teid = ue_context->privates.fields.local_mme_teid_s10;        /**< Local S10-MME TEID. */
-	  memcpy((void*)&forward_relocation_complete_notification_p->peer_ip, s10_handover_process->proc.peer_ip,
+	  memcpy((void*)&forward_relocation_complete_notification_p->mme_peer_ip, s10_handover_process->proc.peer_ip,
 			  s10_handover_process->proc.peer_ip->sa_family == AF_INET ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
 
-	  OAILOG_INFO(LOG_MME_APP, "Sending FW_RELOC_COMPLETE_NOTIF TO %X with remote S10-TEID " TEID_FMT ". \n.",
-			  forward_relocation_complete_notification_p->peer_ip, forward_relocation_complete_notification_p->teid);
+	  OAILOG_INFO(LOG_MME_APP, "Sending FW_RELOC_COMPLETE_NOTIF TO %X with remote S10-TEID " TEID_FMT ". \n",
+			  forward_relocation_complete_notification_p->mme_peer_ip, forward_relocation_complete_notification_p->teid);
 
 	  // todo: remove this and set at correct position!
 	  mme_ue_context_update_ue_sig_connection_state (&mme_app_desc.mme_ue_contexts, ue_context, ECM_CONNECTED);
@@ -4837,7 +4825,7 @@ mme_app_handle_enb_status_transfer(
    /** Set the target S10 TEID. */
    forward_access_context_notification_p->teid           = s10_handover_proc->remote_mme_teid.teid; /**< Only a single target-MME TEID can exist at a time. */
    forward_access_context_notification_p->local_teid     = ue_context->privates.fields.local_mme_teid_s10; /**< Only a single target-MME TEID can exist at a time. */
-   memcpy((void*)&forward_access_context_notification_p->peer_ip, s10_handover_proc->proc.peer_ip,
+   memcpy((void*)&forward_access_context_notification_p->mme_peer_ip, s10_handover_proc->proc.peer_ip,
     		  (s10_handover_proc->proc.peer_ip->sa_family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
 
    /** Set the E-UTRAN container. */
@@ -4961,7 +4949,7 @@ mme_app_handle_s1ap_handover_notify(
 	      forward_relocation_complete_notification_p->teid = s10_handover_proc->remote_mme_teid.teid;       /**< Target S10-MME TEID. todo: what if multiple? */
 	      /** Set the local TEID. */
 	      forward_relocation_complete_notification_p->local_teid = ue_context->privates.fields.local_mme_teid_s10;        /**< Local S10-MME TEID. */
-	      memcpy((void*)&forward_relocation_complete_notification_p->peer_ip, s10_handover_proc->proc.peer_ip,
+	      memcpy((void*)&forward_relocation_complete_notification_p->mme_peer_ip, s10_handover_proc->proc.peer_ip,
 	        		  (s10_handover_proc->proc.peer_ip->sa_family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
 
 	      // todo: remove this and set at correct position!

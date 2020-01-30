@@ -138,10 +138,6 @@ void mme_app_handle_s11_delete_bearer_req (    itti_s11_delete_bearer_request_t 
 
 void mme_app_delete_bearer_failure_indication (itti_s11_delete_bearer_failure_indication_t  * const delete_bearer_failure_ind);
 
-void mme_app_bearer_create_workflow (ue_context_t * const ue_context, const pdn_cid_t cid);
-
-//nas_cause_t s6a_error_2_nas_cause            (const uint32_t s6a_errorP, const int experimentalP);
-
 void mme_app_handle_initial_context_setup_rsp(itti_mme_app_initial_context_setup_rsp_t * const initial_ctxt_setup_rsp_pP);
 
 bool mme_app_dump_ue_context (const hash_key_t keyP, void *const ue_context, void *unused_param_pP, void **unused_result_pP);

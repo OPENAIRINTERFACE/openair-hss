@@ -34,7 +34,6 @@
 #include "3gpp_23.003.h"
 #include "3gpp_29.274.h"
 #include "common_dim.h"
-#include "common_types.h"
 #include "bstrlib.h"
 #include "log.h"
 
@@ -49,8 +48,8 @@
 #define MME_CONFIG_STRING_RUN_MODE_TEST                  "TEST"
 
 #define MME_CONFIG_STRING_REALM                          "REALM"
-#define MME_CONFIG_STRING_MAXENB                         "MAXENB"
-#define MME_CONFIG_STRING_MAXUE                          "MAXUE"
+#define MME_CONFIG_STRING_S1_MAXENB                      "MAX_S1_ENB"
+#define MME_CONFIG_STRING_MAXUE                          "MAX_UE"
 #define MME_CONFIG_STRING_RELATIVE_CAPACITY              "RELATIVE_CAPACITY"
 #define MME_CONFIG_STRING_STATISTIC_TIMER                "MME_STATISTIC_TIMER"
 #define MME_CONFIG_STRING_MME_MOBILITY_COMPLETION_TIMER  "MME_MOBILITY_COMPLETION_TIMER"
@@ -105,7 +104,6 @@
 #define MME_CONFIG_STRING_IPV6_ADDRESS_FOR_S10           "MME_IPV6_ADDRESS_FOR_S10"
 #define MME_CONFIG_STRING_MME_PORT_FOR_S10               "MME_PORT_FOR_S10"
 
-
 #define MME_CONFIG_STRING_NAS_CONFIG                     "NAS"
 #define MME_CONFIG_STRING_NAS_SUPPORTED_INTEGRITY_ALGORITHM_LIST  "ORDERED_SUPPORTED_INTEGRITY_ALGORITHM_LIST"
 #define MME_CONFIG_STRING_NAS_SUPPORTED_CIPHERING_ALGORITHM_LIST  "ORDERED_SUPPORTED_CIPHERING_ALGORITHM_LIST"
@@ -127,16 +125,15 @@
 #define MME_CONFIG_STRING_NAS_FORCE_PUSH_DEDICATED_BEARER "FORCE_PUSH_DEDICATED_BEARER"
 #define MME_CONFIG_STRING_NAS_FORCE_TAU					  "NAS_FORCE_TAU"
 
-//#define MME_CONFIG_STRING_NAS_FORCE_PUSH_DEDICATED_BEARER "FORCE_PUSH_DEDICATED_BEARER"
-#define MME_CONFIG_STRING_MME_IPV4_ADDRESS_FOR_S10        "MME_IPV4_ADDRESS_FOR_S10"
-
 #define MME_CONFIG_STRING_ASN1_VERBOSITY                 "ASN1_VERBOSITY"
 #define MME_CONFIG_STRING_ASN1_VERBOSITY_NONE            "none"
 #define MME_CONFIG_STRING_ASN1_VERBOSITY_ANNOYING        "annoying"
 #define MME_CONFIG_STRING_ASN1_VERBOSITY_INFO            "info"
+#define SGW_CONFIG_STRING_SGW_IP_ADDRESS_FOR_S11    	   "SGW_IP_ADDRESS_FOR_S11"
 
 #define MME_CONFIG_STRING_WRR_LIST_SELECTION             "WRR_LIST_SELECTION"
 #define MME_CONFIG_STRING_PEER_MME_IP_ADDRESS_FOR_S10  	 "MME_IP_ADDRESS_FOR_S10"
+
 ///** MME S10 List --> todo: later FULL WRR : Finding MME via eNB. */
 //#define MME_CONFIG_STRING_MME_LIST_SELECTION             "MME_LIST_SELECTION"
 
@@ -164,7 +161,7 @@ typedef struct mme_config_s {
 
   run_mode_t  run_mode;
 
-  uint32_t max_enbs;
+  uint32_t max_s1_enbs;
   uint32_t max_ues;
 
   uint8_t relative_capacity;
@@ -187,7 +184,6 @@ typedef struct mme_config_s {
     int      nb;
     gummei_t gummei[MAX_GUMMEI];
   } gummei;
-
 
 #define TRACKING_AREA_IDENTITY_LIST_TYPE_ONE_PLMN_NON_CONSECUTIVE_TACS 0x00
 #define TRACKING_AREA_IDENTITY_LIST_TYPE_ONE_PLMN_CONSECUTIVE_TACS     0x01
@@ -231,8 +227,7 @@ typedef struct mme_config_s {
     int        s10_mme_cidrv4;
     int        s10_mme_cidrv6;
     uint16_t   port_s10;
-    // todo: sgw_s11 removed, finding it dynamically?
-    //    ipv4_nbo_t sgw_s11;
+
   } ip;
 
   struct {

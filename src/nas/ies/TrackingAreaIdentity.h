@@ -82,8 +82,6 @@ typedef uint16_t    tac_t;                                 /*!< \brief  Tracking
 #define TAI_IS_VALID(tai)   (PLMN_IS_VALID((tai).plmn) &&   \
                              TAC_IS_VALID((tai).tac))
 
-
-
 // defined in 24.008_xml.h
 #if !defined(MOBILE_COUNTRY_CODE_ATTR_XML_STR)
 #  define MOBILE_COUNTRY_CODE_ATTR_XML_STR              "mcc"

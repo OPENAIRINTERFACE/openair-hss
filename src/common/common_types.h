@@ -55,6 +55,8 @@ typedef uint64_t                 enb_s1ap_id_key_t ;
 
 #define M_TMSI_BIT_MASK          UINT32_MAX
 
+#define JAN_1970        		 0x83aa7e80      /* 2208988800L 1970 - 1900 in seconds */
+
 
 //------------------------------------------------------------------------------
 // UE S1AP IDs
@@ -76,6 +78,7 @@ typedef uint32_t                 teid_t;
 typedef teid_t                   s11_teid_t;
 typedef teid_t                   s10_teid_t;
 typedef teid_t                   s1u_teid_t;
+typedef teid_t                   sm_teid_t;
 #define INVALID_TEID             0x00000000
 
 //------------------------------------------------------------------------------
@@ -219,7 +222,6 @@ typedef struct {
   bitrate_t br_dl;
 } ambr_t;
 
-
 typedef uint8_t pdn_type_t;
 
 typedef enum {
@@ -241,7 +243,6 @@ typedef struct paa_s{
 void copy_paa(paa_t *paa_dst, paa_t *paa_src);
 bstring paa_to_bstring(paa_t *paa);
 
-
 //-----------------
 typedef struct {
   pdn_type_value_t pdn_type;
@@ -256,26 +257,59 @@ bstring fteid_ip_address_to_bstring(const struct fteid_s * const fteid);
 bstring ip_address_to_bstring(ip_address_t *ip_address);
 void    bstring_to_ip_address(bstring const bstr, ip_address_t * const ip_address);
 
-//-----------------
-typedef enum {
-  QCI_1 = 1,
-  QCI_2 = 2,
-  QCI_3 = 3,
-  QCI_4 = 4,
-  QCI_5 = 5,
-  QCI_6 = 6,
-  QCI_7 = 7,
-  QCI_8 = 8,
-  QCI_9 = 9,
-  /* Values from 128 to 254 are operator specific.
-   * Other are reserved.
-   */
-  QCI_MAX,
-} qci_e;
-
-typedef uint8_t qci_t;
 #define QCI_FMT                "0x%"PRIu8
 #define QCI_SCAN_FMT            SCNu8
+
+
+#define QCI_TABLE \
+X(QCI_1, 1, 		1, true) \
+X(QCI_2, 2, 		2, true) \
+X(QCI_3, 3, 		3, true) \
+X(QCI_4, 4, 		4, true) \
+X(QCI_5, 5, 		5, false) \
+X(QCI_6, 6, 		6, false) \
+X(QCI_7, 7, 		7, false) \
+X(QCI_8, 8, 		8, false) \
+X(QCI_9, 9, 		9, false) \
+X(QCI_65, 65, 	10, true) \
+X(QCI_66, 66, 	11, true) \
+X(QCI_69, 69, 	12, false) \
+X(QCI_70, 70, 	13, false) \
+X(QCI_75, 75, 	14, true) \
+X(QCI_79, 79, 	15, false)
+
+//-----------------
+#define X(a, b, c, d) a=b,
+typedef enum {
+	QCI_TABLE
+	QCI_MAX,
+} qci_e;
+#undef X
+
+//-----------------
+#define X(a, b, c, d) a##ord=c,
+typedef enum {
+	QCI_TABLE
+} qci_ordinal_e;
+#undef X
+
+#define X(a, b, c, d) case b: return c;
+static inline qci_ordinal_e get_qci_ord(qci_e qci){
+	switch(qci) {
+	QCI_TABLE
+	default: return -1;
+	}
+}
+#undef X
+
+#define X(a, b, c, d) case b: return d;
+static inline bool is_qci_gbr(qci_e qci){
+	switch(qci) {
+	QCI_TABLE
+	default: return false;
+	}
+}
+#undef X
 
 typedef enum {
   PRE_EMPTION_CAPABILITY_ENABLED  = 0,
@@ -302,7 +336,7 @@ typedef struct {
 } allocation_retention_priority_t;
 
 typedef struct eps_subscribed_qos_profile_s {
-  qci_t qci;
+  qci_e qci;
   allocation_retention_priority_t allocation_retention_priority;
 } eps_subscribed_qos_profile_t;
 

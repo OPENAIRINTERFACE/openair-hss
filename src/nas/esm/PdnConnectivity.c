@@ -359,7 +359,7 @@ esm_cause_t esm_proc_pdn_connectivity_res (mme_ue_s1ap_id_t ue_id, nas_esm_proc_
 	  esm_proc_pdn_connectivity->bc_status = ntohs((0x01 << esm_proc_pdn_connectivity->default_ebi));
 
   if (rc == RETURNerror) {
-    OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Could not update the default EPS bearer context activation (ue_id=" MME_UE_S1AP_ID_FMT ", context_identifier=%d). \n. ",
+    OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Could not update the default EPS bearer context activation (ue_id=" MME_UE_S1AP_ID_FMT ", context_identifier=%d). \n ",
         ue_id, esm_proc_pdn_connectivity->pdn_cid);
     /** Remove the ESM procedure. */
     _esm_proc_free_pdn_connectivity_procedure(&esm_proc_pdn_connectivity);

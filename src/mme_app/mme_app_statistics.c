@@ -178,4 +178,3 @@ void update_mme_app_stats_attached_ue_sub(void)
   return;
 }
 /*****************************************************/
-

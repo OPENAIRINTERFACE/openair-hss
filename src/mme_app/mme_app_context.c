@@ -149,7 +149,7 @@ ue_context_t * get_new_ue_context() {
   /** Found a free pool: Remove it from the head, add the ue_id and set it to the end. */
   STAILQ_REMOVE_HEAD(&mme_app_desc.mme_ue_contexts_list, entries); /**< free_sp is removed. */
 
-  OAILOG_INFO(LOG_MME_APP, "EMMCN-SAP  - " "Clearing received current ue_context %p.\n", ue_context);
+  OAILOG_INFO(LOG_MME_APP, "Clearing received current ue_context %p.\n", ue_context);
   clear_ue_context(ue_context);
   ue_context->privates.mme_ue_s1ap_id = ue_id;
   // todo: unlock the UE_context
@@ -158,7 +158,7 @@ ue_context_t * get_new_ue_context() {
 
   /** Add the UE context. */
   /** Since the NAS and MME_APP contexts are split again, we assign a new mme_ue_s1ap_id here. */
-  OAILOG_DEBUG (LOG_MME_APP, "MME_APP_INITIAL_UE_MESSAGE. Allocated new MME UE context and new mme_ue_s1ap_id. %d\n", ue_context->privates.mme_ue_s1ap_id);
+  OAILOG_DEBUG (LOG_MME_APP, "MME_APP_INITIAL_UE_MESSAGE. Allocated new MME UE context and new mme_ue_s1ap_id "MME_UE_S1AP_ID_FMT". \n", ue_context->privates.mme_ue_s1ap_id);
   DevAssert(mme_insert_ue_context (&mme_app_desc.mme_ue_contexts, ue_context) == 0);
   // todo: unlock mme_desc!
   OAILOG_FUNC_RETURN (LOG_MME_APP, ue_context);
@@ -1182,7 +1182,7 @@ mme_app_dump_ue_contexts (
   const mme_ue_context_t * const mme_ue_context_p)
 //------------------------------------------------------------------------------
 {
-  hashtable_uint64_ts_apply_callback_on_elements (mme_ue_context_p->enb_ue_s1ap_id_ue_context_htbl, mme_app_dump_ue_context, NULL, NULL);
+  hashtable_uint64_ts_apply_callback_on_elements (mme_ue_context_p->mme_ue_s1ap_id_ue_context_htbl, mme_app_dump_ue_context, NULL, NULL);
 }
 
 //------------------------------------------------------------------------------
@@ -1244,10 +1244,10 @@ _mme_app_handle_s1ap_ue_context_release (const mme_ue_s1ap_id_t mme_ue_s1ap_id,
     ue_context->privates.s1_ue_context_release_cause = S1AP_INITIAL_CONTEXT_SETUP_FAILED;
   }
   if (ue_context->privates.fields.mm_state == UE_UNREGISTERED) {
-    OAILOG_INFO(LOG_MME_APP, "UE is in UNREGISTERED state. Releasing the UE context in the eNB and triggering an MME context removal for "MME_UE_S1AP_ID_FMT ". \n.", ue_context->privates.mme_ue_s1ap_id);
+    OAILOG_INFO(LOG_MME_APP, "UE is in UNREGISTERED state. Releasing the UE context in the eNB and triggering an MME context removal for "MME_UE_S1AP_ID_FMT ". \n", ue_context->privates.mme_ue_s1ap_id);
     emm_data_context_t * emm_context = emm_data_context_get(&_emm_data, ue_context->privates.mme_ue_s1ap_id);
     if(emm_context && is_nas_specific_procedure_attach_running(emm_context)) {
-      OAILOG_INFO(LOG_MME_APP, "Attach procedure is running for UE "MME_UE_S1AP_ID_FMT ". Triggering implicit detach (aborting attach procedure). \n.", ue_context->privates.mme_ue_s1ap_id);
+      OAILOG_INFO(LOG_MME_APP, "Attach procedure is running for UE "MME_UE_S1AP_ID_FMT ". Triggering implicit detach (aborting attach procedure). \n", ue_context->privates.mme_ue_s1ap_id);
       message_p = itti_alloc_new_message (TASK_MME_APP, NAS_IMPLICIT_DETACH_UE_IND);
       DevAssert (message_p != NULL);
       message_p->ittiMsg.nas_implicit_detach_ue_ind.ue_id = ue_context->privates.mme_ue_s1ap_id; /**< Rest won't be sent, so no NAS Detach Request will be sent. */
@@ -1293,7 +1293,7 @@ _mme_app_handle_s1ap_ue_context_release (const mme_ue_s1ap_id_t mme_ue_s1ap_id,
     // release S1-U tunnel mapping in S_GW for all the active bearers for the UE
     // /** Check if this is the main S1AP UE reference, if o
     // todo:   Assert(at_least_1_BEARER_IS_ESTABLISHED_TO_SAEGW)!?!?
-	OAILOG_INFO(LOG_MME_APP, "UE is REGISTERED. Sending Release Access Bearer Request for ueId "MME_UE_S1AP_ID_FMT". \n.", mme_ue_s1ap_id);
+	OAILOG_INFO(LOG_MME_APP, "UE is REGISTERED. Sending Release Access Bearer Request for ueId "MME_UE_S1AP_ID_FMT". \n", mme_ue_s1ap_id);
     mme_app_send_s11_release_access_bearers_req(ue_context->privates.mme_ue_s1ap_id); /**< Release Access bearers and then send context release request.  */
     // todo: not sending all together, send one by one when release access bearer response is received.
   }
@@ -1814,7 +1814,7 @@ mme_app_handle_nas_context_req(itti_nas_context_req_t * const nas_context_req_pP
   s10_context_request_p->teid = 0;
   /** Prepare the S10 message and initialize the S10 GTPv2c tunnel endpoints. */
   // todo: search the list of neighboring MMEs for the correct origin TAI
-  memcpy((void*)&s10_context_request_p->peer_ip, neigh_mme_ip_addr,
+  memcpy((void*)&s10_context_request_p->mme_peer_ip, neigh_mme_ip_addr,
     		  (neigh_mme_ip_addr->sa_family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
 
   /** Set the Target MME_S10_FTEID (this MME's S10 Tunnel endpoint). */
@@ -1961,7 +1961,7 @@ void _mme_app_send_s10_context_response_err(teid_t mme_source_s10_teid, struct s
   /** Set the TEID of the source MME. */
   s10_context_response_p->teid = mme_source_s10_teid; /**< Not set into the UE context yet. */
   /** Set the IPv4 address of the source MME. */
-  memcpy((void*)&s10_context_response_p->peer_ip, mme_source_ip_address,
+  memcpy((void*)&s10_context_response_p->mme_peer_ip, mme_source_ip_address,
 		  (mme_source_ip_address->sa_family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
 
   s10_context_response_p->cause.cause_value = cause_val;
@@ -1996,7 +1996,7 @@ mme_app_handle_s10_context_request(const itti_s10_context_request_t * const s10_
  if (ue_context == NULL) {
    /** No UE was found. */
    OAILOG_ERROR (LOG_MME_APP, "No UE for GUTI " GUTI_FMT " was found. Cannot proceed with context request. \n", GUTI_ARG(&s10_context_request_pP->old_guti));
-   _mme_app_send_s10_context_response_err(s10_context_request_pP->s10_target_mme_teid.teid, &s10_context_request_pP->peer_ip, s10_context_request_pP->trxn, CONTEXT_NOT_FOUND);
+   _mme_app_send_s10_context_response_err(s10_context_request_pP->s10_target_mme_teid.teid, &s10_context_request_pP->mme_peer_ip, s10_context_request_pP->trxn, CONTEXT_NOT_FOUND);
    OAILOG_FUNC_OUT (LOG_MME_APP);
  }
  OAILOG_INFO(LOG_MME_APP, "Received a CONTEXT_REQUEST for new UE with GUTI" GUTI_FMT ". \n", GUTI_ARG(&s10_context_request_pP->old_guti));
@@ -2005,7 +2005,7 @@ mme_app_handle_s10_context_request(const itti_s10_context_request_t * const s10_
  emm_data_context_t *ue_nas_ctx = emm_data_context_get_by_guti(&_emm_data, &s10_context_request_pP->old_guti);
  if (!ue_nas_ctx) {
    OAILOG_ERROR(LOG_MME_APP, "A NAS EMM context is not existing for this GUTI "GUTI_FMT " already exists. \n", GUTI_ARG(&s10_context_request_pP->old_guti));
-   _mme_app_send_s10_context_response_err(s10_context_request_pP->s10_target_mme_teid.teid, &s10_context_request_pP->peer_ip, s10_context_request_pP->trxn, CONTEXT_NOT_FOUND);
+   _mme_app_send_s10_context_response_err(s10_context_request_pP->s10_target_mme_teid.teid, &s10_context_request_pP->mme_peer_ip, s10_context_request_pP->trxn, CONTEXT_NOT_FOUND);
    OAILOG_FUNC_OUT (LOG_MME_APP);
  }
 
@@ -2014,7 +2014,7 @@ mme_app_handle_s10_context_request(const itti_s10_context_request_t * const s10_
  if (ue_context == NULL) {
     /** No UE session was found. */
     OAILOG_ERROR (LOG_MME_APP, "No UE session was found for UE " MME_UE_S1AP_ID_FMT". Rejecting context request.\n", ue_context->privates.mme_ue_s1ap_id);
-    _mme_app_send_s10_context_response_err(s10_context_request_pP->s10_target_mme_teid.teid, &s10_context_request_pP->peer_ip, s10_context_request_pP->trxn, CONTEXT_NOT_FOUND);
+    _mme_app_send_s10_context_response_err(s10_context_request_pP->s10_target_mme_teid.teid, &s10_context_request_pP->mme_peer_ip, s10_context_request_pP->trxn, CONTEXT_NOT_FOUND);
     OAILOG_FUNC_OUT (LOG_MME_APP);
  }
 
@@ -2026,14 +2026,14 @@ mme_app_handle_s10_context_request(const itti_s10_context_request_t * const s10_
  /** Check that a valid security context exists for the MME_UE_CONTEXT. */
  if (!IS_EMM_CTXT_PRESENT_SECURITY(ue_nas_ctx)) {
    OAILOG_ERROR(LOG_MME_APP, "A NAS EMM context is present but no security context is existing for this GUTI "GUTI_FMT ". \n", GUTI_ARG(&s10_context_request_pP->old_guti));
-   _mme_app_send_s10_context_response_err(s10_context_request_pP->s10_target_mme_teid.teid, &s10_context_request_pP->peer_ip, s10_context_request_pP->trxn, CONTEXT_NOT_FOUND);
+   _mme_app_send_s10_context_response_err(s10_context_request_pP->s10_target_mme_teid.teid, &s10_context_request_pP->mme_peer_ip, s10_context_request_pP->trxn, CONTEXT_NOT_FOUND);
    OAILOG_FUNC_OUT (LOG_MME_APP);
  }
  /** Check that the UE is registered. Due to some errors in the RRC, it may be idle or connected. Don't know. */
  if (UE_REGISTERED != ue_context->privates.fields.mm_state) { /**< Should also mean EMM_REGISTERED. */
    /** UE may be in idle mode or it may be detached. */
    OAILOG_ERROR(LOG_MME_APP, "UE NAS EMM context is not in UE_REGISTERED state for GUTI "GUTI_FMT ". \n", GUTI_ARG(&s10_context_request_pP->old_guti));
-   _mme_app_send_s10_context_response_err(s10_context_request_pP->s10_target_mme_teid.teid, &s10_context_request_pP->peer_ip, s10_context_request_pP->trxn, REQUEST_REJECTED);
+   _mme_app_send_s10_context_response_err(s10_context_request_pP->s10_target_mme_teid.teid, &s10_context_request_pP->mme_peer_ip, s10_context_request_pP->trxn, REQUEST_REJECTED);
    OAILOG_FUNC_OUT (LOG_MME_APP);
  }
 
@@ -2045,7 +2045,7 @@ mme_app_handle_s10_context_request(const itti_s10_context_request_t * const s10_
  if(s10_proc_mme_tau){
    OAILOG_WARNING (LOG_MME_APP, "EMM context for UE with ue_id " MME_UE_S1AP_ID_FMT " IMSI " IMSI_64_FMT " in EMM_REGISTERED state has a running S10 procedure. "
          "Rejecting further procedures. \n", ue_context->privates.mme_ue_s1ap_id, ue_context->privates.fields.imsi);
-   _mme_app_send_s10_context_response_err(s10_context_request_pP->s10_target_mme_teid.teid, &s10_context_request_pP->peer_ip, s10_context_request_pP->trxn, REQUEST_REJECTED);
+   _mme_app_send_s10_context_response_err(s10_context_request_pP->s10_target_mme_teid.teid, &s10_context_request_pP->mme_peer_ip, s10_context_request_pP->trxn, REQUEST_REJECTED);
    // todo: here abort the procedure! and continue with the handover
    // todo: mme_app_delete_s10_procedure_mme_handover(ue_context); /**< Should remove all pending data. */
    // todo: aborting should just clear all pending information
@@ -2061,7 +2061,7 @@ mme_app_handle_s10_context_request(const itti_s10_context_request_t * const s10_
   * Remove the UE context when the timer runs out for any case (also if context request is rejected).
   * We won't stop the timer and restart it. The timer for idle TAU will run out.
   */
- s10_proc_mme_tau = mme_app_create_s10_procedure_mme_handover(ue_context, false, MME_APP_S10_PROC_TYPE_INTER_MME_HANDOVER, &s10_context_request_pP->peer_ip);
+ s10_proc_mme_tau = mme_app_create_s10_procedure_mme_handover(ue_context, false, MME_APP_S10_PROC_TYPE_INTER_MME_HANDOVER, &s10_context_request_pP->mme_peer_ip);
  DevAssert(s10_proc_mme_tau);
  s10_proc_mme_tau->due_tau = true;
 
@@ -2096,8 +2096,8 @@ mme_app_handle_s10_context_request(const itti_s10_context_request_t * const s10_
 
  /** Set the target S10 TEID. */
  context_response_p->teid    = s10_context_request_pP->s10_target_mme_teid.teid; /**< Only a single target-MME TEID can exist at a time. */
- memcpy((void*)&context_response_p->peer_ip, &s10_context_request_pP->peer_ip,
-		  (s10_context_request_pP->peer_ip.sa_family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
+ memcpy((void*)&context_response_p->mme_peer_ip, &s10_context_request_pP->mme_peer_ip,
+		  (s10_context_request_pP->mme_peer_ip.addr_v4.sin_family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
 
  context_response_p->trxnId    = s10_context_request_pP->trxn;
  /** Set the cause. Since the UE context state has not been changed yet, nothing to do in the context if success or failure.*/
@@ -2179,8 +2179,6 @@ mme_app_handle_s10_context_request(const itti_s10_context_request_t * const s10_
  OAILOG_INFO(LOG_MME_APP, "Allocated S10_CONTEXT_RESPONSE MESSAGE for UE with IMSI " IMSI_64_FMT " and mmeUeS1apId " MME_UE_S1AP_ID_FMT " with error cause %d. \n",
      ue_context->privates.fields.imsi, ue_context->privates.mme_ue_s1ap_id, context_response_p->cause);
 
- MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME,  MSC_S11_MME ,
-     NULL, 0, "0 S10_CONTEXT_RESPONSE for UE %d is sent. \n", ue_context->privates.mme_ue_s1ap_id);
  itti_send_msg_to_task (TASK_S10, INSTANCE_DEFAULT, message_p);
  /** Send just S10_CONTEXT_RESPONSE. Currently not waiting for the S10_CONTEXT_ACKNOWLEDGE and nothing done if it does not arrive (no timer etc.). */
  OAILOG_FUNC_OUT (LOG_MME_APP);
@@ -2288,7 +2286,7 @@ mme_app_handle_s10_context_response(
 
   if(!emm_cn_proc_ctx_req){
     OAILOG_WARNING(LOG_MME_APP, "A NAS CN context request procedure is not active for UE " MME_UE_S1AP_ID_FMT " in state %d. "
-        "Dropping newly received S10 Context Response. \n.",
+        "Dropping newly received S10 Context Response. \n",
         ue_context->privates.mme_ue_s1ap_id, ue_context->privates.fields.mm_state);
     /*
      * The received message should be removed automatically.
@@ -2356,8 +2354,8 @@ mme_app_handle_s10_context_response(
   /** Set the transaction: Peer IP, Peer Port, Peer TEID should be deduced from this. */
   s10_context_ack_p->trxnId       = s10_context_response_pP->trxnId;
 //  s10_context_ack_p->peer_ip    = s10_context_response_pP->peer_ip;
-  memcpy((void*)&s10_context_ack_p->peer_ip, &s10_context_response_pP->peer_ip,
-		  (s10_context_response_pP->peer_ip.sa_family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
+  memcpy((void*)&s10_context_ack_p->mme_peer_ip, &s10_context_response_pP->mme_peer_ip,
+		  (s10_context_response_pP->mme_peer_ip.addr_v4.sin_family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
 
   s10_context_ack_p->peer_port  = s10_context_response_pP->peer_port;
   s10_context_ack_p->teid       = s10_context_response_pP->s10_source_mme_teid.teid;
@@ -2905,6 +2903,7 @@ static void clear_ue_context(ue_context_t * ue_context) {
 	/** Initialize the fields. */
 	memset(&ue_context->privates.fields, 0, sizeof(ue_context->privates.fields));
 	OAILOG_INFO(LOG_MME_APP, "Successfully cleared UE context for UE "MME_UE_S1AP_ID_FMT ". \n", ue_id);
+	OAILOG_FUNC_OUT(LOG_MME_APP);
 }
 
 //------------------------------------------------------------------------------
@@ -2924,5 +2923,6 @@ static void release_ue_context(ue_context_t ** ue_context) {
 	STAILQ_INSERT_HEAD(&mme_app_desc.mme_ue_contexts_list, (*ue_context), entries);
 	*ue_context= NULL;
 	// todo: unlock the mme_desc
+	OAILOG_FUNC_OUT(LOG_MME_APP);
 }
 

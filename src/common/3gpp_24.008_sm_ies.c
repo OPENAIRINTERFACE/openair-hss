@@ -1311,6 +1311,7 @@ verify_traffic_flow_template(traffic_flow_template_t * tft, traffic_flow_templat
         return ESM_CAUSE_SYNTACTICAL_ERROR_IN_PACKET_FILTER;
       }
       /** Set the precedence value in the new TFT. */
+      // todo: max size for packet filter bitmap..
       tft->precedence_set[tft->packetfilterlist.replacepacketfilter[num_pf].eval_precedence] = tft->packetfilterlist.replacepacketfilter[num_pf].identifier + 1;
       tft->packet_filter_identifier_bitmap |= (0x01 << tft->packetfilterlist.replacepacketfilter[num_pf].identifier + 1);
     }

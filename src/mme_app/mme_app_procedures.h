@@ -21,6 +21,13 @@
 #ifndef FILE_MME_APP_PROCEDURES_SEEN
 #define FILE_MME_APP_PROCEDURES_SEEN
 
+// todo: #define MME_APP_INITIAL_CONTEXT_SETUP_RSP_TIMER_VALUE 2 // In seconds
+/* Timer structure */
+struct mme_app_timer_t {
+  long id;         /* The timer identifier                 */
+  long sec;       /* The timer interval value in seconds  */
+};
+
 /*! \file mme_app_procedures.h
   \brief
   \author Lionel Gauthier
@@ -138,13 +145,6 @@ typedef struct mme_app_s11_proc_s {
   LIST_ENTRY(mme_app_s11_proc_s) entries;      /* List. */
 } mme_app_s11_proc_t;
 
-typedef enum {
-  S11_PROC_BEARER_UNKNOWN  = 0,
-  S11_PROC_BEARER_PENDING  = 1,
-  S11_PROC_BEARER_FAILED   = 2,
-  S11_PROC_BEARER_SUCCESS  = 3
-} s11_proc_bearer_status_t;
-
 typedef struct mme_app_s11_proc_create_bearer_s {
   mme_app_s11_proc_t           proc;
   int                          num_status_received;
@@ -157,14 +157,14 @@ typedef struct mme_app_s11_proc_create_bearer_s {
 } mme_app_s11_proc_create_bearer_t;
 
 typedef struct mme_app_s11_proc_update_bearer_s {
-  mme_app_s11_proc_t           proc;
-  int                          num_status_received;
+  mme_app_s11_proc_t           		 proc;
+  int                          		 num_status_received;
 
-  pdn_cid_t                    pci;
-  pti_t                        pti;
-  ambr_t                       new_used_ue_ambr;
-  ambr_t					   apn_ambr;
-  ebi_t                        linked_ebi;
+  pdn_cid_t                    		 pci;
+  pti_t                        		 pti;
+  ambr_t                       		 new_used_ue_ambr;
+  ambr_t					   					 		 apn_ambr;
+  ebi_t                        		 linked_ebi;
   // TODO here give a NAS/S1AP/.. reason -> GTPv2-C reason
   bearer_contexts_to_be_updated_t *bcs_tbu; /**< Store the bearer contexts to be created here, and don't register them yet in the MME_APP context. */
 } mme_app_s11_proc_update_bearer_t;
@@ -201,44 +201,5 @@ typedef struct mme_app_s1ap_proc_e_rab_modify_bearer_ind_s {
   e_rab_list_t                                    e_rab_failed_to_be_modified_list;
 } mme_app_s1ap_proc_modify_bearer_ind_t;
 
-///* Declaration (prototype) of the function to store bearer contexts. */
-//RB_PROTOTYPE(BearerFteids, fteid_set_s, fteid_set_rbt_Node, fteid_set_compare_s1u_saegw)
+#endif /** FILE_MME_APP_PROCEDURES_SEEN **/
 
-void mme_app_delete_s11_procedures(ue_session_pool_t * const ue_session_pool);
-
-mme_app_s11_proc_t* mme_app_get_s11_procedure (ue_session_pool_t * const ue_session_pool);
-
-mme_app_s11_proc_create_bearer_t* mme_app_create_s11_procedure_create_bearer(ue_session_pool_t * const ue_session_pool);
-mme_app_s11_proc_create_bearer_t* mme_app_get_s11_procedure_create_bearer(ue_session_pool_t * const ue_session_pool);
-void mme_app_delete_s11_procedure_create_bearer(ue_session_pool_t * const ue_context_p);
-
-mme_app_s11_proc_update_bearer_t* mme_app_create_s11_procedure_update_bearer(ue_session_pool_t * const ue_session_pool);
-mme_app_s11_proc_update_bearer_t* mme_app_get_s11_procedure_update_bearer(ue_session_pool_t * const ue_session_pool);
-void mme_app_delete_s11_procedure_update_bearer(ue_session_pool_t * const ue_session_pool);
-
-mme_app_s11_proc_delete_bearer_t* mme_app_create_s11_procedure_delete_bearer(ue_session_pool_t * const ue_session_pool);
-mme_app_s11_proc_delete_bearer_t* mme_app_get_s11_procedure_delete_bearer(ue_session_pool_t * const ue_session_pool);
-void mme_app_delete_s11_procedure_delete_bearer(ue_session_pool_t * const ue_session_pool);
-
-/*
- * - Creating handover procedure in intra-MME and inter-MME handover
- * - Creating handover procedure in source & target MME todo: create same timer but different callback methods.
- * - Since we don't have a valid EMM UE context, we need to create an MME_APP context.
- */
-void mme_app_delete_s10_procedures(ue_context_t * const ue_context);
-//------------------------------------------------------------------------------
-void mme_app_delete_s10_procedures(ue_context_t * const ue_context);
-mme_app_s10_proc_mme_handover_t* mme_app_create_s10_procedure_mme_handover(ue_context_t * const ue_context, bool target_mme,
-		mme_app_s10_proc_type_t  s1ap_ho_type, struct sockaddr* sockaddr);
-
-mme_app_s10_proc_mme_handover_t* mme_app_get_s10_procedure_mme_handover(ue_context_t * const ue_context);
-void mme_app_delete_s10_procedure_mme_handover(ue_context_t * const ue_context);
-
-
-void mme_app_delete_s1ap_procedures(ue_session_pool_t * const ue_session_pool);
-mme_app_s1ap_proc_modify_bearer_ind_t* mme_app_create_s1ap_procedure_modify_bearer_ind(ue_session_pool_t * const ue_session_pool);
-mme_app_s1ap_proc_modify_bearer_ind_t* mme_app_get_s1ap_procedure_modify_bearer_ind(ue_session_pool_t * const ue_session_pool);
-void mme_app_delete_s1ap_procedure_modify_bearer_ind(ue_session_pool_t * const ue_session_pool);
-int mme_app_remove_s10_tunnel_endpoint(teid_t local_teid, struct sockaddr *peer_ip);
-
-#endif

@@ -149,7 +149,7 @@ void s1ap_mme_exit (void);
 enb_description_t* s1ap_is_enb_id_in_list(const uint32_t enb_id);
 
 /** \brief Look for given TAC in the list.
- * \param tac TAC is not uniqueue and used for the search in the list.
+ * \param tac TAC is not unique and used for the search in the list.
  * @returns All matched eNBs in the enb_list.
  **/
 void s1ap_is_tac_in_list (
@@ -239,9 +239,6 @@ bool s1ap_dump_ue_hash_cb (const hash_key_t keyP,
 void s1ap_dump_ue(const ue_description_t * const ue_ref);
 
 bool s1ap_enb_compare_by_enb_id_cb (const hash_key_t keyP,
-                                    void * const elementP, void * parameterP, void __attribute__((unused)) **unused_resultP);
-
-bool s1ap_enb_compare_by_tac_cb (const hash_key_t keyP,
                                     void * const elementP, void * parameterP, void __attribute__((unused)) **unused_resultP);
 
 void

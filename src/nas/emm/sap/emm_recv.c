@@ -307,6 +307,7 @@ emm_recv_attach_request (
 
   params->is_native_sc   = (msg->naskeysetidentifier.tsc != NAS_KEY_SET_IDENTIFIER_MAPPED);
   params->ksi            = msg->naskeysetidentifier.naskeysetidentifier;
+  // params->ksi = 0;
   params->is_native_guti = (msg->oldgutitype != GUTI_MAPPED);
   if (originating_tai) {
     params->originating_tai = calloc(1, sizeof(tai_t));
