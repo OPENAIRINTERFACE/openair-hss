@@ -682,6 +682,84 @@ typedef struct bearer_contexts_within_create_bearer_response_s {
 extern "C" {
 #endif
 
+//-------------------------------------
+// 7.2.26 Remote UE Report Notification
+//-------------------------------------
+typedef struct remote_ue_context_connected_s {
+remote_user_id_t            remoteuserid;
+remote_ue_ip_information_t  remoteueipinformation;
+}remote_ue_context_connected_t;
+
+typedef struct remote_ue_context_disconnected_s {
+remote_user_id_t            remoteuserid;
+}remote_ue_context_disconnected_t;
+
+//typedef struct remote_ue_contexts_connected_within_remote_ue_report_notification_s {
+//#define MSG_REMOTE_UE_REPORT_MAX_REMOTE_UE_CONTEXTS   11
+ // uint8_t num_remote_ue_context;
+  //remote_ue_context_connected_within_remote_ue_report_notification_t remote_ue_context[MSG_REMOTE_UE_REPORT_MAX_REMOTE_UE_CONTEXTS];
+//} remote_ue_contexts_connected_within_remote_ue_report_notification_t;
+
+//typedef struct remote_ue_contexts_disconnected_within_remote_ue_report_notification_s {
+ // uint8_t num_remote_ue_context;
+  //remote_ue_context_connected_within_remote_ue_report_notification_t remote_ue_context[MSG_REMOTE_UE_REPORT_MAX_REMOTE_UE_CONTEXTS];
+//} remote_ue_contexts_disconnected_within_remote_ue_report_notification_t;
+
+
+//-------------------------------------
+// 8.123  Remote User ID
+/*! \struct  imsi_t
+* \brief Structure containing an IMSI, BCD structure.
+*/
+typedef struct imsi_s {
+  union {
+    struct {
+      uint8_t digit2:4;
+      uint8_t digit1:4;
+      uint8_t digit4:4;
+      uint8_t digit3:4;
+      uint8_t digit6:4;
+      uint8_t digit5:4;
+      uint8_t digit8:4;
+      uint8_t digit7:4;
+      uint8_t digit10:4;
+      uint8_t digit9:4;
+      uint8_t digit12:4;
+      uint8_t digit11:4;
+      uint8_t digit14:4;
+      uint8_t digit13:4;
+#define EVEN_PARITY 0
+#define ODD_PARITY  1
+      uint8_t parity:4;
+      uint8_t digit15:4;
+    } num;                                                 /*!< \brief  IMSI shall consist of decimal digits (0 through 9) only.*/
+#define IMSI_BCD8_SIZE                    8                /*!< \brief  The number of digits in IMSI shall not exceed 15.       */
+    uint8_t value[IMSI_BCD8_SIZE];
+  } u;
+  uint8_t length;
+} imsi_t;
+#define IMSI_BCD_DIGITS_MAX              15
+
+typedef struct remote_user_id_s
+{
+ uint8_t msisdnf:1;
+ uint8_t imeif:1;
+ uint8_t spare[6];
+ uint8_t value[IMSI_BCD8_SIZE];
+ imsi_t  imsi;
+}remote_user_id_t;
+
+//-------------------------------------
+// 8.124 Remote UE IP Address
+typedef struct {
+  bool ipv4;
+  bool ipv6;
+  union {
+    struct in_addr  ipv4_address;
+    struct in6_addr ipv6_address;
+  } address;
+} remote_ue_ip_information_t;
+
 //-------------------------------------------------
 // 8.58: Selection Mode
 
@@ -695,10 +773,10 @@ typedef enum SelectionMode_e {
 // 8.38 MM EPS Context
 
 typedef struct mm_context_eps_s {
-  // todo: better structure for flags
+// todo: better structure for flags
 //  uint32_t                  mm_context_flags:24;
   uint8_t                   sec_mode:3;
-  // todo: uint8_t                   drxi:1;
+  //todo: uint8_t                   drxi:1;
   uint8_t                   ksi:3;
   uint8_t                   num_quit:3;
   uint8_t                   num_quad:3;

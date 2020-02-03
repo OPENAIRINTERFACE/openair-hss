@@ -595,10 +595,10 @@ static nw_rc_t nwGtpv2cCreateLocalTunnel (
   static nw_rc_t                            nwGtpv2cHandleUlpInitialReq (
   NW_IN nw_gtpv2c_stack_t * thiz,
   NW_IN nw_gtpv2c_ulp_api_t * pUlpReq) {
-    nw_rc_t                                   rc = NW_FAILURE;
+    nw_rc_t                                    rc = NW_FAILURE;
     nw_gtpv2c_trxn_t                          *pTrxn = NULL;
     nw_gtpv2c_tunnel_t                        *pLocalTunnel = NULL,
-                                            keyTunnel = {0};
+                                               keyTunnel = {0};
 
     OAILOG_FUNC_IN (LOG_GTPV2C);
     /*

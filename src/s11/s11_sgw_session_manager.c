@@ -289,7 +289,7 @@ s11_sgw_handle_create_session_response (
   DevAssert (NW_OK == rc);
   /*
    * Set the remote TEID
-   */
+  */
   rc = nwGtpv2cMsgSetTeid (ulp_req.hMsg, create_session_response_p->teid);
   DevAssert (NW_OK == rc);
   cause = create_session_response_p->cause;
@@ -329,13 +329,13 @@ s11_sgw_handle_delete_session_request (
   nw_gtpv2c_stack_handle_t * stack_p,
   nw_gtpv2c_ulp_api_t * pUlpApi)
 {
-  nw_rc_t                                   rc = NW_OK;
-  uint8_t                                 offendingIeType,
-                                          offendingIeInstance;
-  uint16_t                                offendingIeLength;
+  nw_rc_t                                rc = NW_OK;
+  uint8_t                                offendingIeType,
+                                         offendingIeInstance;
+  uint16_t                               offendingIeLength;
   itti_s11_delete_session_request_t      *delete_session_request_p;
   MessageDef                             *message_p;
-  nw_gtpv2c_msg_parser_t                     *pMsgParser;
+  nw_gtpv2c_msg_parser_t                 *pMsgParser;
 
   DevAssert (stack_p );
   message_p = itti_alloc_new_message (TASK_S11, S11_DELETE_SESSION_REQUEST);

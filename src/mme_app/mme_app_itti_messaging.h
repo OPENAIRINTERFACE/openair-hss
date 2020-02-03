@@ -49,8 +49,8 @@ int mme_app_send_delete_session_request (struct ue_context_s * const ue_context_
  */
 int
 mme_app_send_s11_create_bearer_rsp (
-  teid_t						   mme_teid_s11,
-  teid_t						   s_gw_teid_s11_s4,
+  teid_t						           mme_teid_s11,
+  teid_t						           s_gw_teid_s11_s4,
   gtpv2c_cause_value_t			   cause_value,
   void                			  *trxn,
   bearer_contexts_to_be_created_t *bcs_tbc);

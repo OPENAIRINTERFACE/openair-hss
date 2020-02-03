@@ -125,6 +125,7 @@
 #define NW_GTPV2C_IE_ADDITIONAL_FLAGS_FOR_SRVCC                         (160)
 #define NW_GTPV2C_IE_REMOTE_UE_CONTEXT                                  (191)
 #define NW_GTPV2C_IE_REMOTE_USER_ID                                     (192)
+#define NW_GTPV2C_IE_REMOTE_UE_IP_INFORMATION                           (193)
 #define NW_GTPV2C_IE_PRIVATE_EXTENSION                                  (255)
 #define NW_GTPV2C_IE_TYPE_MAXIMUM                                       (256)
 

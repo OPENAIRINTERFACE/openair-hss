@@ -41,6 +41,8 @@ extern "C" {
 #define S11_CREATE_BEARER_RESPONSE(mSGpTR)         ((itti_s11_create_bearer_response_t*)(mSGpTR)->itti_msg)
 #define S11_MODIFY_BEARER_REQUEST(mSGpTR)          ((itti_s11_modify_bearer_request_t*)(mSGpTR)->itti_msg)
 #define S11_MODIFY_BEARER_RESPONSE(mSGpTR)         ((itti_s11_modify_bearer_response_t*)(mSGpTR)->itti_msg)
+#define S11_REMOTE_UE_REPORT_NOTIFICATION(mSGpTR)  ((itti_s11_remote_ue_remote_notification_t*)(mSGpTR)->itti_msg)
+#define S11_REMOTE_UE_REPORT_ACKNOWLEDGE(mSGpTR)   ((itti_s11_remote_ue_remote_acknowledge_t*)(mSGpTR)->itti_msg)
 #define S11_DELETE_SESSION_REQUEST(mSGpTR)         ((itti_s11_delete_session_request_t*)(mSGpTR)->itti_msg)
 #define S11_DELETE_BEARER_COMMAND(mSGpTR)          ((itti_s11_delete_bearer_command_t*)(mSGpTR)->itti_msg)
 #define S11_DELETE_SESSION_RESPONSE(mSGpTR)        ((itti_s11_delete_session_response_t*)(mSGpTR)->itti_msg)
@@ -1104,6 +1106,40 @@ typedef struct itti_s11_modify_bearer_response_s {
   /* S11 stack specific parameter. Not used in standalone epc mode */
   void                         *trxn;                      ///< Transaction identifier
 } itti_s11_modify_bearer_response_t;
+
+//-----------------------------------------------------------------------------
+/** @struct itti_s11_remote_ue_remote_notification_t
+ *  @brief Remote UE Report notification
+ *
+ * The Remote UE Report will be sent on S11 interface as
+ * part of these Remote UE connection/disconnection procedure
+ */
+typedef struct itti_s11_remote_ue_remote_notification_s {
+uint64_t           ie_presence_mask;
+#define S11_REMOTE_UE_REPORT_NOTIFICATION_PR_IE_REMOTE_UE_CONTEXT_CONNECTED                              ((uint64_t)1)
+#define S11_REMOTE_UE_REPORT_NOTIFICATION_PR_IE_REMOTE_UE_CONTEXT_DISCONNECTED                           ((uint64_t)1 << 1)
+
+remote_ue_context_connected_t                remoteuecontext_connected;
+remote_ue_context_disconnected_t             remoteuecontext_disconnected; 
+ 
+ } itti_s11_remote_ue_remote_notification_t;
+
+
+//-----------------------------------------------------------------------------
+
+typedef struct itti_s11_remote_ue_remote_acknowledge_s {
+  teid_t      local_teid;             ///< not in specs for inner MME use
+  teid_t      teid;                   ///< Tunnel Endpoint Identifier
+  //ebi_t       lbi;                    ///< Linked EPS Bearer ID
+  //fteid_t     sender_fteid_for_cp;    ///< Sender F-TEID for control plane
+  //bool        noDelete;
+
+  gtpv2c_cause_t  cause;
+
+  /* GTPv2-C specific parameters */
+  void          *trxn;
+  struct in_addr peer_ip;
+} itti_s11_remote_ue_remote_acknowledge_t;
 
 //-----------------------------------------------------------------------------
 typedef struct itti_s11_delete_session_request_s {

@@ -179,6 +179,17 @@ typedef struct {
   } address;
 } gtp_ip_address_t;
 
+typedef struct {
+#define GTP_REMOTE_UE_IP_ADDR_v4  0x0
+#define GTP_REMOTE_UE_IP_ADDR_v4  0x1
+  unsigned present:1;
+  union {
+    uint8_t v4[4];
+    uint8_t v6[16];
+  } address;
+} gtp_remote_ue_ip_address_t;
+
+
 typedef uint64_t bitrate_t;
 
 typedef char*    APN_t;

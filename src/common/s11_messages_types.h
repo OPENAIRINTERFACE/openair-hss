@@ -1381,7 +1381,7 @@ typedef struct itti_s11_release_access_bearers_request_s {
  * - "Context not found
  */
 typedef struct itti_s11_release_access_bearers_response_s {
-  teid_t          teid;                   ///< Tunnel Endpoint Identifier
+  teid_t           teid;                   ///< Tunnel Endpoint Identifier
   gtpv2c_cause_t   cause;
   // Recovery           ///< optional This IE shall be included if contacting the peer for the first time
   // Private Extension  ///< optional
@@ -1536,8 +1536,8 @@ typedef struct itti_s11_remote_ue_report_notification_s {
 
   uint16_t           	   peer_port;           ///< MME port for S-GW or S-GW port for MME
 
-  remote_ue_context_t remoteuecontext_connected; // From ProSe UE-to-Network Relay to Core Network, details about a newly connected Remote UE
-  remote_ue_context_t remoteuecontext_disconnected; // From ProSe UE-to-Network Relay to Core Network, details about a newly disconnected Remote UE
+  remote_ue_context_connected_t     remoteuecontext_connected; // From ProSe UE-to-Network Relay to Core Network, details about a newly connected Remote UE
+  remote_ue_context_disconnected_t  remoteuecontext_disconnected; // From ProSe UE-to-Network Relay to Core Network, details about a newly disconnected Remote UE
   }itti_s11_remote_ue_report_notification_t;
 
 

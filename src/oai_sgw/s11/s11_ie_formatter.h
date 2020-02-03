@@ -143,6 +143,28 @@ int gtpv2c_bearer_qos_ie_set(nw_gtpv2c_msg_handle_t *msg, const bearer_qos_t *be
 nw_rc_t gtpv2c_ip_address_ie_get(uint8_t ieType, uint16_t ieLength, uint8_t ieInstance, uint8_t *ieValue, void *arg);
 int gtpv2c_ip_address_ie_set(nw_gtpv2c_msg_handle_t *msg, const gtp_ip_address_t *ip_address);
 
+/* Remote UE Context Information Element
+ * 3GPP TS 29.274 #8.122
+ */
+int gtpv2c_remote_ue_context_connected_within_remote_ue_report_notification_ie_set (nw_gtpv2c_msg_handle_t * msg, const remote_ue_context_connected_t * remote_ue_context);
+nw_rc_t gtpv2c_remote_ue_context_connected_within_remote_ue_report_notification_ie_get(uint8_t ieType, uint16_t ieLength, uint8_t ieInstance, uint8_t *ieValue, void *arg);
+
+int gtpv2c_remote_ue_context_disconnected_within_remote_ue_report_notification_ie_set (nw_gtpv2c_msg_handle_t * msg, const remote_ue_context_disconnected_t * remote_ue_context);
+nw_rc_t gtpv2c_remote_ue_context_disconnected_within_remote_ue_report_notification_ie_get(uint8_t ieType, uint16_t ieLength, uint8_t ieInstance, uint8_t *ieValue, void *arg);
+
+/* Remote User ID Information Element
+ * 3GPP TS 29.274 #8.123
+ */
+nw_rc_t gtpv2c_remote_user_id_ie_get(uint8_t ieType, uint16_t ieLength, uint8_t ieInstance, uint8_t *ieValue, void *arg);
+int gtpv2c_remote_user_id_ie_set(nw_gtpv2c_msg_handle_t *msg, const remote_user_id_t *remote_user_id);
+
+/* Remote UE IP address Information Element
+ * 3GPP TS 29.274 #8.124
+ */
+nw_rc_t gtpv2c_remote_ue_ip_address_ie_get(uint8_t ieType, uint16_t ieLength, uint8_t ieInstance, uint8_t *ieValue, void *arg);
+int gtpv2c_remote_ue_ip_address_ie_set(nw_gtpv2c_msg_handle_t *msg, const gtp_remote_ue_ip_address_t *remote_ue_ip_address);
+
+
 /* Delay Value Information Element
  * 3GPP TS 29.274 #8.27
  */

@@ -62,7 +62,7 @@ REMOTE_UE_REPORT_PKMF_ADDRESS_IEI = 0x6f,
   message_type_t                                         messagetype;
   /* Optional fields */
   uint32_t                                               presencemask;
-  remote_ue_context_t                                    remoteuecontext;       
+  //remote_ue_context_t                                    remoteuecontext;       
   pkmf_address_t                                         pkmfaddress;
   }remote_ue_report_msg;
 

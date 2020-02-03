@@ -54,6 +54,7 @@
 #include "s11_sgw.h"
 #include "s11_sgw_bearer_manager.h"
 #include "s11_sgw_session_manager.h"
+#include "s11_sgw_remoteuereport_manager.h"
 
 
 static nw_gtpv2c_stack_handle_t             s11_sgw_stack_handle = 0;
@@ -89,6 +90,10 @@ static nw_rc_t s11_sgw_ulp_process_stack_req_cb (nw_gtpv2c_ulp_handle_t hUlp, nw
 
         case NW_GTP_RELEASE_ACCESS_BEARERS_REQ:
           ret = s11_sgw_handle_release_access_bearers_request (&s11_sgw_stack_handle, pUlpApi);
+          break;
+        
+        case NW_GTP_REMOTE_UE_REPORT_NOTIFICATION:
+          ret = s11_sgw_handle_remote_ue_report_notification(&s11_sgw_stack_handle, pUlpApi);
           break;
 
         default:
@@ -245,6 +250,18 @@ static void *s11_sgw_thread (void *args)
         s11_sgw_handle_release_access_bearers_response (&s11_sgw_stack_handle, &received_message_p->ittiMsg.s11_release_access_bearers_response);
       }
       break;
+    
+    case S11_REMOTE_UE_REPORT_NOTIFICATION:{
+        OAILOG_DEBUG (LOG_S11, "Received S11_REMOTE_UE_REPORT_NOTIFICATION from S-PGW APP\n");
+        s11_sgw_handle_remote_ue_report_notification (&s11_sgw_stack_handle, &received_message_p->ittiMsg.s11_remote_ue_report_notification);
+      }
+      break;
+
+    case S11_REMOTE_UE_REPORT_ACKNOWLEDGE:{
+        OAILOG_DEBUG (LOG_S11, "Received S11_REMOTE_UE_REPORT_ACKNOWLEDGE from S-PGW APP\n");
+        s11_sgw_handle_remote_ue_report_acknowledge (&s11_sgw_stack_handle, &received_message_p->ittiMsg.s11_remote_ue_report_acknowledge);
+      }
+      break;
 
     case TIMER_HAS_EXPIRED:{
         OAILOG_DEBUG (LOG_S11, "Received event TIMER_HAS_EXPIRED for timer_id 0x%lx and arg %p\n",
@@ -253,7 +270,7 @@ static void *s11_sgw_thread (void *args)
       }
       break;
 
-    case TERMINATE_MESSAGE:{
+       case TERMINATE_MESSAGE:{
         s11_sgw_exit();
         OAI_FPRINTF_INFO("TASK_S11 terminated\n");
         itti_exit_task ();

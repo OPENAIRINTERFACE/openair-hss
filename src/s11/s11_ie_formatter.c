@@ -412,6 +412,119 @@ gtpv2c_bearer_context_to_create_ie_set (
 
 //------------------------------------------------------------------------------
 nw_rc_t
+gtpv2c_remote_ue_context_connected_within_remote_ue_report_notification_ie_get (
+  uint8_t ieType,
+  uint16_t ieLength,
+  uint8_t ieInstance,
+  uint8_t * ieValue,
+  void *arg)
+{
+  remote_ue_context_connected_t         *remote_ue_context_connected = (remote_ue_context_connected_t *) arg;
+  DevAssert (remote_ue_context_connected );
+  uint8_t                                 read = 0;
+  nw_rc_t                                   rc;
+
+  while (ieLength > read) {
+    nw_gtpv2c_ie_tlv_t                         *ie_p;
+    ie_p = (nw_gtpv2c_ie_tlv_t *) & ieValue[read];
+
+    switch (ie_p->t) {
+
+    case NW_GTPV2C_IE_REMOTE_USER_ID:
+      rc = gtpv2c_remote_user_id_ie_get (ie_p->t, ntohs (ie_p->l), ie_p->i, &ieValue[read + sizeof (nw_gtpv2c_ie_tlv_t)], &remote_ue_context_connected->remoteuserid);
+      DevAssert (NW_OK == rc);
+      break;
+    
+    case NW_GTPV2C_IE_REMOTE_UE_IP_INFORMATION:
+      rc = gtpv2c_remote_ue_ip_address_ie_get (ie_p->t, ntohs (ie_p->l), ie_p->i, &ieValue[read + sizeof (nw_gtpv2c_ie_tlv_t)], &remote_ue_context_connected->remoteueipinformation);
+      DevAssert (NW_OK == rc);
+      break;
+    
+    default:
+      OAILOG_ERROR (LOG_S11, "Received unexpected IE %u\n", ie_p->t);
+      return NW_GTPV2C_IE_INCORRECT;
+    }
+   read += (ntohs (ie_p->l) + sizeof (nw_gtpv2c_ie_tlv_t));
+   }
+   return NW_OK;
+  }
+
+//------------------------------------------------------------------------------
+int gtpv2c_remote_ue_context_connected_within_remote_ue_report_notification_ie_set (
+  nw_gtpv2c_msg_handle_t * msg, 
+  const remote_ue_context_connected_t * remote_ue_context)
+{
+  nw_rc_t                                   rc;
+
+  DevAssert (msg );
+  DevAssert (remote_ue_context );
+  /*
+   * Start section for grouped IE: Remote user ID
+   */
+  DevAssert (NW_OK == rc);
+  gtpv2c_remote_user_id_ie_set (msg, &remote_ue_context->remoteuserid);
+  gtpv2c_remote_ue_ip_address_ie_set (msg, &remote_ue_context->remoteueipinformation);
+
+DevAssert (NW_OK == rc);
+  return RETURNok;
+}
+
+//------------------------------------------------------------------------------
+nw_rc_t
+gtpv2c_remote_ue_context_disconnected_within_remote_ue_report_notification_ie_get (
+  uint8_t ieType,
+  uint16_t ieLength,
+  uint8_t ieInstance,
+  uint8_t * ieValue,
+  void *arg)
+  {
+  remote_ue_context_disconnected_t         *remote_ue_context_disconnected = (remote_ue_context_disconnected_t *) arg;
+  DevAssert (remote_ue_context_disconnected );
+  uint8_t                                 read = 0;
+  nw_rc_t                                   rc;
+
+   while (ieLength > read){
+    nw_gtpv2c_ie_tlv_t                         *ie_p;
+    ie_p = (nw_gtpv2c_ie_tlv_t *) & ieValue[read];
+
+     switch (ie_p->t) {
+
+    case NW_GTPV2C_IE_REMOTE_USER_ID:
+      rc = gtpv2c_remote_user_id_ie_get (ie_p->t, ntohs (ie_p->l), ie_p->i, &ieValue[read + sizeof (nw_gtpv2c_ie_tlv_t)], &remote_ue_context_disconnected->remoteuserid);
+      DevAssert (NW_OK == rc);
+      break;
+
+    default:
+      OAILOG_ERROR (LOG_S11, "Received unexpected IE %u\n", ie_p->t);
+      return NW_GTPV2C_IE_INCORRECT;
+     }
+     read += (ntohs (ie_p->l) + sizeof (nw_gtpv2c_ie_tlv_t));
+   }
+    return NW_OK;
+  }
+
+//------------------------------------------------------------------------------
+int gtpv2c_remote_ue_context_disconnected_within_remote_ue_report_notification_ie_set (
+  nw_gtpv2c_msg_handle_t * msg, 
+  const remote_ue_context_disconnected_t * remote_ue_context)
+  {
+    nw_rc_t                                   rc;
+
+DevAssert (msg );
+  DevAssert (remote_ue_context );
+  /*
+   * Start section for grouped IE: Remote user ID
+   */
+  DevAssert (NW_OK == rc);
+  gtpv2c_remote_user_id_ie_set (msg, &remote_ue_context->remoteuserid);
+
+DevAssert (NW_OK == rc);
+  return RETURNok;
+  }
+
+
+//------------------------------------------------------------------------------
+nw_rc_t
 gtpv2c_bearer_context_to_be_created_within_create_bearer_request_ie_get (
   uint8_t ieType,
   uint16_t ieLength,
@@ -1721,6 +1834,85 @@ gtpv2c_ip_address_ie_set (
 {
   return RETURNok;
 }
+
+//------------------------------------------------------------------------------
+nw_rc_t
+gtpv2c_remote_ue_ip_address_ie_get (
+  uint8_t ieType,
+  uint16_t ieLength,
+  uint8_t ieInstance,
+  uint8_t * ieValue,
+  void *arg)
+{
+  gtp_remote_ue_ip_address_t                       *remote_ue_ip_address = (gtp_remote_ue_ip_address_t *) arg;
+
+  DevAssert (remote_ue_ip_address );
+
+  if (ieLength == 4) {
+    /*
+     * This is an IPv4 Address
+     */
+    remote_ue_ip_address->present = GTP_IP_ADDR_v4;
+    memcpy (remote_ue_ip_address->address.v4, ieValue, 4);
+  } else if (ieLength == 16) {
+    /*
+     * This is an IPv6 Address
+     */
+    remote_ue_ip_address->present = GTP_IP_ADDR_v6;
+    memcpy (remote_ue_ip_address->address.v6, ieValue, 16);
+  } else {
+    /*
+     * Length doesn't lie in possible values
+     */
+    return NW_GTPV2C_IE_INCORRECT;
+  }
+
+  return NW_OK;
+}
+
+//------------------------------------------------------------------------------
+int
+gtpv2c_remote_ue_ip_address_ie_set (
+  nw_gtpv2c_msg_handle_t * msg,
+  const gtp_ip_address_t * remote_ue_ip_address)
+{
+  return RETURNok;
+}
+
+//------------------------------------------------------------------------------
+nw_rc_t gtpv2c_remote_user_id_ie_get(
+  uint8_t ieType, 
+  uint16_t ieLength, 
+  uint8_t ieInstance, 
+  uint8_t *ieValue, void *arg)
+{
+  remote_user_id_t                             *remote_user_id = (remote_user_id_t *) arg;
+  DevAssert (remote_user_id );
+  remote_user_id->msisdnf = ieValue[0] & 0x01;
+  remote_user_id->imeif = ieValue[0] & 0x02;
+  remote_user_id->value[IMSI_BCD8_SIZE] = ieValue[1] ;
+  //remote_user_id->imsi = ieValue[2];
+  return NW_OK;
+}
+
+//------------------------------------------------------------------------------
+int
+gtpv2c_remote_user_id_ie_set(
+  nw_gtpv2c_msg_handle_t *msg, 
+  const remote_user_id_t *remote_user_id)
+{
+  nw_rc_t                                   rc;
+  uint8_t                                value[2];
+
+  DevAssert (msg );
+  DevAssert (remote_user_id );
+  value[0]= (remote_user_id->imeif << 1) | remote_user_id->msisdnf;
+  value[1]= remote_user_id->value[IMSI_BCD8_SIZE];
+  //value[2]= remote_user_id->imsi;
+  rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_REMOTE_USER_ID, 1, 0, (uint8_t *) & value);
+  DevAssert (NW_OK == rc);
+  return RETURNok;
+  }
 
 //------------------------------------------------------------------------------
 nw_rc_t

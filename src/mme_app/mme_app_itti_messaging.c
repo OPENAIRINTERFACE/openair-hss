@@ -385,10 +385,10 @@ mme_app_send_s11_remote_ue_report_notif ( const mme_ue_s1ap_id_t ue_id, const st
    * Keep the identifier to the default APN
    */
 //context_identifier_t                           context_identifier = 0;
-  //mme_ue_s1ap_id_t                               mme_ue_s1ap_id;
+//mme_ue_s1ap_id_t                               mme_ue_s1ap_id;
   MessageDef                                    *message_p = NULL;
   struct ue_context_s                           *ue_context = NULL;
-  //struct ue_session_pool_s                      *ue_session_pool = NULL;
+//struct ue_session_pool_s                      *ue_session_pool = NULL;
 //itti_s11_remote_ue_report_notification_t      *ue_report_notification_p = NULL;
   int                                            rc = RETURNok;
 
@@ -421,7 +421,7 @@ ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts
   
   
   s11_remote_ue_report_notification->local_teid = ue_session_pool->privates.fields.mme_teid_s11;
-
+  s11_remote_ue_report_notification->teid       = pdn_context->s_gw_teid_s11_s4;
   //if (ue_session_pool == NULL) {
 	  //OAILOG_ERROR (LOG_MME_APP, "We didn't find an UE session pool for UE "MME_UE_S1AP_ID_FMT". \n", mme_ue_s1ap_id);
     //OAILOG_FUNC_OUT (LOG_MME_APP);
@@ -438,6 +438,7 @@ ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts
   itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT(LOG_MME_APP);
 }    
+
 //------------------------------------------------------------------------------
 
 void mme_app_send_s11_modify_bearer_req(const ue_session_pool_t * const ue_session_pool, pdn_context_t * pdn_context, uint8_t flags){

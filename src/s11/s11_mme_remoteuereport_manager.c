@@ -60,7 +60,7 @@ itti_s11_remote_ue_report_notification_t *ntf_p)
 {
   nw_gtpv2c_ulp_api_t                       ulp_req;
   nw_rc_t                                   rc;
-  uint8_t                                 restart_counter = 0;
+  uint8_t                                   restart_counter = 0;
   OAILOG_FUNC_IN (LOG_S11);
   
   DevAssert (stack_p );
@@ -77,19 +77,21 @@ itti_s11_remote_ue_report_notification_t *ntf_p)
   ulp_req.u_api_info.initialReqInfo.hUlpTunnel = 0;
   ulp_req.u_api_info.initialReqInfo.hTunnel    = 0;
 
-hashtable_rc_t hash_rc = hashtable_ts_get(s11_mme_teid_2_gtv2c_teid_handle,
-      (hash_key_t) ulp_req.u_api_info.initialReqInfo.teidLocal, (void **)(uintptr_t)&ulp_req.u_api_info.initialReqInfo.hTunnel);
-    if (HASH_TABLE_OK != hash_rc) {
+     
+   MSC_LOG_TX_MESSAGE (MSC_S11_MME, MSC_SGW, NULL, 0, "0 REMOTE UE REPORT NOTIFICATION S11 teid " TEID_FMT " num bearers ctx %u",
+   ntf_p->local_teid);
+      
+  rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
+
+  hashtable_rc_t hash_rc = hashtable_ts_get(s11_mme_teid_2_gtv2c_teid_handle,
+  (hash_key_t) ulp_req.u_api_info.initialReqInfo.teidLocal, (void **)(uintptr_t)&ulp_req.u_api_info.initialReqInfo.hTunnel);
+
+  if (HASH_TABLE_OK != hash_rc) {
     OAILOG_WARNING (LOG_S11, "Could not get GTPv2-C hTunnel for local teid %X\n", ulp_req.u_api_info.initialReqInfo.teidLocal);
     rc = nwGtpv2cMsgDelete (*stack_p, (ulp_req.hMsg));
     DevAssert (NW_OK == rc);
     return RETURNerror;
   }  
-  
-   MSC_LOG_TX_MESSAGE (MSC_S11_MME, MSC_SGW, NULL, 0, "0 REMOTE UE REPORT NOTIFICATION S11 teid " TEID_FMT " num bearers ctx %u",
-   ntf_p->local_teid);
-      
-  rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
   DevAssert (NW_OK == rc);
   return RETURNok;
    OAILOG_FUNC_RETURN (LOG_S11, RETURNok);
@@ -113,7 +115,6 @@ DevAssert (stack_p );
   ack_p = &message_p->ittiMsg.s11_remote_ue_report_acknowledge;
   memset(ack_p, 0, sizeof(*ack_p));
   ack_p->teid = nwGtpv2cMsgGetTeid(pUlpApi->hMsg); /**< When the message is sent, this is the field, where the MME_APP sets the destination TEID.
-
 
   /*
    * Create a new message parser

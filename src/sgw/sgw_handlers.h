@@ -48,6 +48,7 @@ int sgw_handle_delete_session_request(const itti_s11_delete_session_request_t * 
 int sgw_handle_release_access_bearers_request(const itti_s11_release_access_bearers_request_t * const release_access_bearers_req_pP);
 int sgw_no_pcef_create_dedicated_bearer(s11_teid_t teid);
 int sgw_handle_create_bearer_response (const itti_s11_create_bearer_response_t * const create_bearer_response_pP);
+int sgw_handle_remote_ue_report_notification (const itti_s11_remote_ue_report_notification_t  * const remote_ue_report_p);
 
 #ifdef __cplusplus
 }

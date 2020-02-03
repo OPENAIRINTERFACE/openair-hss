@@ -19,6 +19,7 @@
  *      contact@openairinterface.org
  */
 
+/*
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -70,8 +71,9 @@ int decode_remote_ue_ip_information(
   /*
    * Checking IEI and pointer
    */
-  CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, REMOTE_UE_IP_INFORMATION_MINIMUM_LENGTH, len);
+  //CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, REMOTE_UE_IP_INFORMATION_MINIMUM_LENGTH, len);
   
+  /*
   if (iei > 0)
 {
     *buffer = iei;
@@ -91,4 +93,4 @@ int decode_remote_ue_ip_information(
   *lenPtr = encoded - 1 - ((iei > 0) ? 1 : 0);
   
 return encoded;
-   }
+   }remote

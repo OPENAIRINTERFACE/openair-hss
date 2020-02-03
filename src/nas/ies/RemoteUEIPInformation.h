@@ -17,7 +17,7 @@
  *-------------------------------------------------------------------------------
  * For more information about the OpenAirInterface (OAI) Software Alliance:
  *      contact@openairinterface.org
- */
+ 
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -44,4 +44,4 @@ typedef struct remote_ue_ip_information_s{
 int encode_remote_ue_ip_information(remote_ue_ip_information_t *remoteueipinformation, uint8_t *buffer, uint8_t iei, uint32_t len);
 int decode_remote_ue_ip_information(remote_ue_ip_information_t *remoteueipinformation, uint8_t *buffer, uint8_t iei, uint32_t len);
 
-#endif 
+#endif */

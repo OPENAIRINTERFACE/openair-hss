@@ -41,6 +41,7 @@ typedef struct SGWCauseMapping_e {
   unsigned create_bearer_response:1;
   unsigned modify_bearer_response:1;
   unsigned delete_session_response:1;
+  unsigned remote_ue_report_acknowledge:1;
 } SGWCauseMapping_t;
 
 char *sgw_cause_2_string(uint8_t cause_value);

@@ -1069,6 +1069,40 @@ sgw_handle_delete_session_request (
 }
 
 //------------------------------------------------------------------------------
+int sgw_handle_remote_ue_report_notification(const itti_s11_remote_ue_report_notification_t  * const remote_ue_report_p){
+
+OAILOG_FUNC_IN(LOG_SPGW_APP);
+itti_s11_remote_ue_report_acknowledge_t            *remote_ue_report_acknowledge_p = NULL;
+MessageDef                                         *message_p = NULL;
+s_plus_p_gw_eps_bearer_context_information_t       *new_bearer_ctxt_info_p = NULL;
+hashtable_rc_t                                      hash_rc = HASH_TABLE_OK;
+int                                                 rv = RETURNok;
+
+OAILOG_DEBUG (LOG_SPGW_APP, "Rx REMOTE_UE_REPORT_NOTIFICATION, teid "TEID_FMT"\n", modify_bearer_pP->teid);
+
+ hash_rc = hashtable_ts_get (sgw_app.s11_bearer_context_information_hashtable, remote_ue_report_acknowledge_p->teid, (void **)&new_bearer_ctxt_info_p);
+ message_p = itti_alloc_new_message_sized (TASK_SPGW_APP, S11_REMOTE_UE_REPORT_ACKNOWLEDGE, sizeof(itti_s11_remote_ue_report_acknowledge_t));
+  
+  if (message_p == NULL) {
+    OAILOG_FUNC_RETURN(LOG_SPGW_APP,  RETURNerror);
+  }
+
+  remote_ue_report_acknowledge_p = S11_REMOTE_UE_REPORT_ACKNOWLEDGE(message_p);
+  if (HASH_TABLE_OK == hash_rc) {
+    remote_ue_report_acknowledge_p->cause.cause_value = REQUEST_ACCEPTED;
+    remote_ue_report_acknowledge_p->teid = new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.mme_teid_S11;
+    remote_ue_report_acknowledge_p->trxn = remote_ue_report_acknowledge_p->trxn;
+  }
+ else {
+    remote_ue_report_acknowledge_p->cause.cause_value = CONTEXT_NOT_FOUND;
+    remote_ue_report_acknowledge_p->teid = 0;
+    MSC_LOG_TX_MESSAGE (MSC_SP_GWAPP_MME, MSC_S11_MME, NULL, 0, "0 S11_REMOTE_UE_REPORT_ACKNOWLEDGE cause CONTEXT_NOT_FOUND");
+    rv = itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
+    OAILOG_FUNC_RETURN(LOG_SPGW_APP, rv);
+  }
+ }
+
+//------------------------------------------------------------------------------
 static void sgw_release_all_enb_related_information (sgw_eps_bearer_ctxt_t * const eps_bearer_ctxt)
 {
 

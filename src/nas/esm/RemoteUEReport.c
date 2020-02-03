@@ -130,7 +130,7 @@ esm_proc_remote_ue_report (
     pdn_context_t      *pdn_context = NULL;
     ue_session_pool_t  *ue_session_pool = NULL;
     pdn_cid_t           pdn_cid;
-    uint32_t           mme_ue_s1ap_id; 
+    uint32_t            mme_ue_s1ap_id; 
   mme_app_get_pdn_context(ue_id, pdn_cid, ebi, NULL, &pdn_context);
 
 //ue_session_pool = mme_ue_session_pool_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_session_pools, mme_ue_s1ap_id);

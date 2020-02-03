@@ -93,7 +93,7 @@ nw_gtpv2c_ulp_api_t   *pUlpApi)
       gtpv2c_delay_value_ie_get, &ntif_p->remoteuecontext_disconnected);
   DevAssert (NW_OK == rc);
 
-rc = nwGtpv2cMsgParserRun (pMsgParser, pUlpApi->hMsg, &offendingIeType, &offendingIeInstance, &offendingIeLength);
+  rc = nwGtpv2cMsgParserRun (pMsgParser, pUlpApi->hMsg, &offendingIeType, &offendingIeInstance, &offendingIeLength);
 
   
   rc = nwGtpv2cMsgParserDelete (*stack_p, pMsgParser);
@@ -131,7 +131,8 @@ itti_s11_remote_ue_report_acknowledge_t *remote_ue_report_acknowledge_p)
 
   /*
    * Set the remote TEID
-   */
+  */
+ 
   rc = nwGtpv2cMsgSetTeid (ulp_req.hMsg, remote_ue_report_acknowledge_p->teid);
   DevAssert (NW_OK == rc);
   //TODO relay cause

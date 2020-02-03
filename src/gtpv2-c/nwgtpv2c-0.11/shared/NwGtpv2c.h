@@ -246,7 +246,7 @@ typedef struct nw_gtpv2c_triggered_ack_info_s {
 
   NW_OUT   nw_gtpv2c_tunnel_handle_t        hTunnel;        /**< Returned only in case flags is set to
                                                              NW_GTPV2C_ULP_API_FLAG_CREATE_LOCAL_TUNNEL */
-  NW_IN    struct sockaddr 		     		*peerIp;
+  NW_IN    struct sockaddr 		     	      	*peerIp;
   NW_IN    uint32_t                         peerPort;
   NW_IN    uint32_t                         localPort;
 } nw_gtpv2c_triggered_ack_info_t;

@@ -717,6 +717,73 @@ typedef struct bearer_contexts_within_delete_bearer_response_s {
 } bearer_contexts_within_delete_bearer_response_t;
 
 //-------------------------------------
+// 7.2.26 Remote UE Report Notification
+
+/*
+// 8.123  Remote User ID
+/*! \struct  imsi_t
+* \brief Structure containing an IMSI, BCD structure.
+*/
+typedef struct imsi_remote_ue_s {
+  union {
+    struct {
+     uint8_t digit2:4;
+     uint8_t digit1:4;
+     uint8_t digit4:4;
+     uint8_t digit3:4;
+     uint8_t digit6:4;
+     uint8_t digit5:4;
+     uint8_t digit8:4;
+     uint8_t digit7:4;
+     uint8_t digit10:4;
+     uint8_t digit9:4;
+     uint8_t digit12:4;
+     uint8_t digit11:4;
+     uint8_t digit14:4;
+     uint8_t digit13:4;
+#define EVEN_PARITY 0
+#define ODD_PARITY  1
+    uint8_t parity:4;
+    uint8_t digit15:4;
+    } num;                                                 /*!< \brief  IMSI shall consist of decimal digits (0 through 9) only.*/
+#define IMSI_BCD8_SIZE                    8                /*!< \brief  The number of digits in IMSI shall not exceed 15.       */
+  uint8_t value[IMSI_BCD8_SIZE];
+} u;
+uint8_t length;
+} imsi_remote_ue_t;
+#define IMSI_BCD_DIGITS_MAX              15
+
+typedef struct {
+ uint8_t msisdnf:1;
+ uint8_t imeif:1;
+ uint8_t spare[6];
+ uint8_t value[IMSI_BCD8_SIZE];
+ imsi_remote_ue_t  imsi;
+}remote_user_id_t;
+
+//-------------------------------------
+// 8.124 Remote UE IP Address
+typedef struct {
+  bool ipv4;
+  bool ipv6;
+  union {
+    struct in_addr  ipv4_address;
+    struct in6_addr ipv6_address;
+  } address;
+} remote_ue_ip_information_t;
+
+//-------------------------------------
+
+typedef struct remote_ue_context_connected_s{
+  remote_user_id_t remoteuserid ;
+  remote_ue_ip_information_t remoteueipinformation ;
+}remote_ue_context_connected_t;
+
+typedef struct remote_ue_context_disconnected_s{
+  remote_user_id_t remoteuserid ;
+  }remote_ue_context_disconnected_t;
+
+
 // 8.38 MM EPS Context
 
 typedef struct mm_context_eps_s {
@@ -752,8 +819,6 @@ typedef struct mm_context_eps_s {
   uint8_t                   vdp; // todo: ??
   uint8_t                   access_restriction_flags;
 } mm_context_eps_t;
-//----------------------------
-
 
 //-------------------------------------------------
 // 8.39: PDN Connection

@@ -19,6 +19,7 @@
  *      contact@openairinterface.org
  */
 
+/*
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -79,9 +80,10 @@ uint32_t len)
        if ((ielen + 2) != decoded) {
        decoded = ielen + 1 + (iei > 0 ? 1 : 0) /* Size of header for this IE */ ;
           //OAILOG_TRACE (LOG_NAS_EMM, "remoteuserid then decoded=%u\n", decoded);
-       }
+      /* }
        return decoded;
       }
+
 //----------------------------------------------------------------
 
 int encode_remote_user_id(
@@ -325,5 +327,5 @@ lenPtr = (buffer + encoded);
    return encoded;
 
     }
-
+*/
 

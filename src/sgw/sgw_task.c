@@ -156,6 +156,17 @@ static void *sgw_intertask_interface (void *args_p)
       }
       break;
 
+case S11_REMOTE_UE_REPORT_NOTIFICATION:{
+#if TRACE_IS_ON
+        system ("ovs-ofctl dump-flows spgwu");
+#endif
+        sgw_handle_remote_ue_report_notification (S11_REMOTE_UE_REPORT_NOTIFICATION(received_message_p));
+#if TRACE_IS_ON
+        system ("ovs-ofctl dump-flows spgwu");
+#endif
+      }
+      break;
+
     case S11_RELEASE_ACCESS_BEARERS_REQUEST:{
 #if TRACE_IS_ON
         system ("ovs-ofctl dump-flows spgwu");
