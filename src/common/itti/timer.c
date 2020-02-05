@@ -205,7 +205,7 @@ int timer_setup(uint32_t interval_sec, uint32_t interval_us, task_id_t task_id,
    * Simply set the timer_id argument. so it can be used by caller
    */
   *timer_id = (long)timer;
-  OAILOG_DEBUG(LOG_ITTI,
+  OAILOG_TRACE(LOG_ITTI,
                "Requesting new %s timer with id 0x%lx that expires within "
                "%d sec and %d usec\n",
                type == TIMER_PERIODIC ? "periodic" : "single shot", *timer_id,
@@ -224,7 +224,7 @@ int timer_remove(long timer_id, void **arg) {
   int rc = 0;
   struct timer_elm_s *timer_p;
 
-  OAILOG_DEBUG(LOG_ITTI, "Removing timer 0x%lx\n", timer_id);
+  OAILOG_TRACE(LOG_ITTI, "Removing timer 0x%lx\n", timer_id);
   pthread_mutex_lock(&timer_desc.timer_list_mutex);
   TIMER_SEARCH(timer_p, timer, ((timer_t)timer_id), &timer_desc.timer_queue);
 
@@ -250,7 +250,7 @@ int timer_remove(long timer_id, void **arg) {
     rc = -1;
   }
 
-  OAILOG_DEBUG(LOG_ITTI,
+  OAILOG_TRACE(LOG_ITTI,
                "REMOVED TIMER OBJECT %x (inner timer %x) with task_id %d. \n",
                timer_p, timer_p->timer, timer_p->task_id);
 
