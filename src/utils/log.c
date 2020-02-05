@@ -1023,8 +1023,12 @@ void log_message(log_thread_ctxt_t *thread_ctxtP, const log_level_t log_levelP,
       if (g_oai_log.is_output_is_fd) {
         fprintf(g_oai_log.log_fd, "%s", bdata(new_item_p->bstr));
       } else {
+#if DAEMONIZE
         syslog(new_item_p->u_app_log.log.log_level, "%s",
-               bdata(new_item_p->bstr));
+	                 bdata(new_item_p->bstr));
+#else
+        fprintf(stdout, "%s", bdata(new_item_p->bstr));
+#endif
       }
       shared_log_reuse_item(new_item_p);
     }
