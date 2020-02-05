@@ -26,106 +26,111 @@
   \email: lionel.gauthier@eurecom.fr
 */
 
+#include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
-#include <stdbool.h>
 
 #include "bstrlib.h"
 
-#include "log.h"
-#include "obj_hashtable.h"
-#include "mme_config.h"
 #include "common_defs.h"
 #include "dynamic_memory_check.h"
+#include "log.h"
 #include "mme_app_edns_emulation.h"
+#include "mme_config.h"
+#include "obj_hashtable.h"
 
-
-
-static obj_hash_table_t * sgw_e_dns_entries = NULL;
-static obj_hash_table_t * mme_e_dns_entries = NULL;
+static obj_hash_table_t *sgw_e_dns_entries = NULL;
+static obj_hash_table_t *mme_e_dns_entries = NULL;
 
 //------------------------------------------------------------------------------
-void mme_app_edns_get_wrr_entry(bstring id, const interface_type_t interface_type, struct sockaddr** sockaddr)
-{
-  switch(interface_type){
-  case S10_MME_GTP_C:
-	  obj_hashtable_get (mme_e_dns_entries, bdata(id), blength(id),
-	      (void **)sockaddr);
-	  return;
-  case S11_SGW_GTP_C:
-  	  obj_hashtable_get (sgw_e_dns_entries, bdata(id), blength(id),
-  	      (void **)sockaddr);
-  	  return;
-  default :
-	  return;
+void mme_app_edns_get_wrr_entry(bstring id,
+                                const interface_type_t interface_type,
+                                struct sockaddr **sockaddr) {
+  switch (interface_type) {
+    case S10_MME_GTP_C:
+      obj_hashtable_get(mme_e_dns_entries, bdata(id), blength(id),
+                        (void **)sockaddr);
+      return;
+    case S11_SGW_GTP_C:
+      obj_hashtable_get(sgw_e_dns_entries, bdata(id), blength(id),
+                        (void **)sockaddr);
+      return;
+    default:
+      return;
   }
-
 }
 
 //------------------------------------------------------------------------------
-int mme_app_edns_add_wrr_entry(bstring id, struct sockaddr *edns_ip_addr, const interface_type_t interface_type)
-{
-  char * cid = calloc(1, blength(id)+1);
+int mme_app_edns_add_wrr_entry(bstring id, struct sockaddr *edns_ip_addr,
+                               const interface_type_t interface_type) {
+  char *cid = calloc(1, blength(id) + 1);
   if (cid) {
     strncpy(cid, (const char *)id->data, blength(id));
 
     struct sockaddr_in *data;
-    if(edns_ip_addr->sa_family == AF_INET) {
-    	data = malloc(sizeof(struct sockaddr_in));
-    	memcpy((struct sockaddr_in*)data, (struct sockaddr_in*)edns_ip_addr, sizeof(struct sockaddr_in));
+    if (edns_ip_addr->sa_family == AF_INET) {
+      data = malloc(sizeof(struct sockaddr_in));
+      memcpy((struct sockaddr_in *)data, (struct sockaddr_in *)edns_ip_addr,
+             sizeof(struct sockaddr_in));
     } else if (edns_ip_addr->sa_family == AF_INET6) {
-    	data = malloc(sizeof(struct sockaddr_in6));
-    	memcpy((struct sockaddr_in6*)data, (struct sockaddr_in6*)edns_ip_addr, sizeof(struct sockaddr_in6));
+      data = malloc(sizeof(struct sockaddr_in6));
+      memcpy((struct sockaddr_in6 *)data, (struct sockaddr_in6 *)edns_ip_addr,
+             sizeof(struct sockaddr_in6));
     } else {
-        free_wrapper(&cid);
-        return RETURNerror;
+      free_wrapper(&cid);
+      return RETURNerror;
     }
     if (data) {
       hashtable_rc_t rc;
-      switch(interface_type){
-      case S10_MME_GTP_C:
-    	  rc = obj_hashtable_insert (mme_e_dns_entries, cid, strlen(cid), data);
-    	  break;
-      case S11_SGW_GTP_C:
-          rc = obj_hashtable_insert (sgw_e_dns_entries, cid, strlen(cid), data);
-      	  break;
-      default :
-    	  return RETURNerror;
+      switch (interface_type) {
+        case S10_MME_GTP_C:
+          rc = obj_hashtable_insert(mme_e_dns_entries, cid, strlen(cid), data);
+          break;
+        case S11_SGW_GTP_C:
+          rc = obj_hashtable_insert(sgw_e_dns_entries, cid, strlen(cid), data);
+          break;
+        default:
+          return RETURNerror;
       }
       /** Key is copied inside. */
       free_wrapper(&cid);
       if (HASH_TABLE_OK == rc) return RETURNok;
     }
-    if(cid)
-    	free_wrapper(&cid);
+    if (cid) free_wrapper(&cid);
   }
   return RETURNerror;
 }
 
 //------------------------------------------------------------------------------
-int  mme_app_edns_init (const mme_config_t * mme_config_p)
-{
+int mme_app_edns_init(const mme_config_t *mme_config_p) {
   int rc = RETURNok;
-  sgw_e_dns_entries = obj_hashtable_create (min(64, MME_CONFIG_MAX_SERVICE), NULL, free_wrapper, free_wrapper, NULL);
-  mme_e_dns_entries = obj_hashtable_create (min(64, MME_CONFIG_MAX_SERVICE), NULL, free_wrapper, free_wrapper, NULL);
+  sgw_e_dns_entries = obj_hashtable_create(
+      min(64, MME_CONFIG_MAX_SERVICE), NULL, free_wrapper, free_wrapper, NULL);
+  mme_e_dns_entries = obj_hashtable_create(
+      min(64, MME_CONFIG_MAX_SERVICE), NULL, free_wrapper, free_wrapper, NULL);
   if (sgw_e_dns_entries && mme_e_dns_entries) {
     /** Add the service (s10 or s11). */
     for (int i = 0; i < mme_config_p->e_dns_emulation.nb_service_entries; i++) {
-    	rc |= mme_app_edns_add_wrr_entry(mme_config_p->e_dns_emulation.service_id[i], &mme_config_p->e_dns_emulation.sockaddr[i], mme_config_p->e_dns_emulation.interface_type[i]);
+      rc |= mme_app_edns_add_wrr_entry(
+          mme_config_p->e_dns_emulation.service_id[i],
+          &mme_config_p->e_dns_emulation.sockaddr[i],
+          mme_config_p->e_dns_emulation.interface_type[i]);
     }
-//    /** Add the neighboring MMEs. */
-//    for (int i = 0; i < mme_config_p->e_dns_emulation.nb_mme_entries; i++) {
-//      rc |= mme_app_edns_add_mme_entry(mme_config_p->e_dns_emulation.mme_id[i], mme_config_p->e_dns_emulation.mme_ip_addr[i]);
-//    }
+    //    /** Add the neighboring MMEs. */
+    //    for (int i = 0; i < mme_config_p->e_dns_emulation.nb_mme_entries; i++)
+    //    {
+    //      rc |=
+    //      mme_app_edns_add_mme_entry(mme_config_p->e_dns_emulation.mme_id[i],
+    //      mme_config_p->e_dns_emulation.mme_ip_addr[i]);
+    //    }
     return rc;
   }
   return RETURNerror;
 }
 
 //------------------------------------------------------------------------------
-void  mme_app_edns_exit (void)
-{
-  obj_hashtable_destroy (sgw_e_dns_entries);
-  obj_hashtable_destroy (mme_e_dns_entries);
+void mme_app_edns_exit(void) {
+  obj_hashtable_destroy(sgw_e_dns_entries);
+  obj_hashtable_destroy(mme_e_dns_entries);
 }

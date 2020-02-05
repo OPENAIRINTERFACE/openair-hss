@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -19,34 +19,25 @@
  *      contact@openairinterface.org
  */
 
-
+#include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
-#include <stdbool.h>
 
 #include "bstrlib.h"
 
-#include "TLVEncoder.h"
-#include "TLVDecoder.h"
 #include "SecurityHeaderType.h"
+#include "TLVDecoder.h"
+#include "TLVEncoder.h"
 
 //------------------------------------------------------------------------------
-int decode_security_header_type (
-    security_header_type_t * securityheadertype,
-    uint8_t iei,
-    uint8_t * buffer,
-    uint32_t len)
-{
+int decode_security_header_type(security_header_type_t* securityheadertype,
+                                uint8_t iei, uint8_t* buffer, uint32_t len) {
   return 0;
 }
 
 //------------------------------------------------------------------------------
-int encode_security_header_type (
-    security_header_type_t * securityheadertype,
-    uint8_t iei,
-    uint8_t * buffer,
-    uint32_t len)
-{
+int encode_security_header_type(security_header_type_t* securityheadertype,
+                                uint8_t iei, uint8_t* buffer, uint32_t len) {
   return 0;
 }

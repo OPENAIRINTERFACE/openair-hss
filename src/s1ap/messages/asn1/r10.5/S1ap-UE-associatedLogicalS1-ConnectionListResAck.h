@@ -4,9 +4,8 @@
  * 	found in "S1AP-IEs.asn"
  */
 
-#ifndef	_S1ap_UE_associatedLogicalS1_ConnectionListResAck_H_
-#define	_S1ap_UE_associatedLogicalS1_ConnectionListResAck_H_
-
+#ifndef _S1ap_UE_associatedLogicalS1_ConnectionListResAck_H_
+#define _S1ap_UE_associatedLogicalS1_ConnectionListResAck_H_
 
 #include <asn_application.h>
 
@@ -23,14 +22,15 @@ struct S1ap_IE;
 
 /* S1ap-UE-associatedLogicalS1-ConnectionListResAck */
 typedef struct S1ap_UE_associatedLogicalS1_ConnectionListResAck {
-	A_SEQUENCE_OF(struct S1ap_IE) list;
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+  A_SEQUENCE_OF(struct S1ap_IE) list;
+
+  /* Context for parsing across buffer boundaries */
+  asn_struct_ctx_t _asn_ctx;
 } S1ap_UE_associatedLogicalS1_ConnectionListResAck_t;
 
 /* Implementation */
-extern asn_TYPE_descriptor_t asn_DEF_S1ap_UE_associatedLogicalS1_ConnectionListResAck;
+extern asn_TYPE_descriptor_t
+    asn_DEF_S1ap_UE_associatedLogicalS1_ConnectionListResAck;
 
 #ifdef __cplusplus
 }
@@ -39,5 +39,5 @@ extern asn_TYPE_descriptor_t asn_DEF_S1ap_UE_associatedLogicalS1_ConnectionListR
 /* Referred external types */
 #include "S1ap-IE.h"
 
-#endif	/* _S1ap_UE_associatedLogicalS1_ConnectionListResAck_H_ */
+#endif /* _S1ap_UE_associatedLogicalS1_ConnectionListResAck_H_ */
 #include <asn_internal.h>

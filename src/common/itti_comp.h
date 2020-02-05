@@ -29,11 +29,19 @@
 #ifndef FILE_ITTI_COMP_SEEN
 #define FILE_ITTI_COMP_SEEN
 
-int itti_msg_comp_sctp_new_association(const sctp_new_peer_t * const itti_msg1, const sctp_new_peer_t * const itti_msg2);
-int itti_msg_comp_sctp_close_association(const sctp_close_association_t * const itti_msg1, const sctp_close_association_t * const itti_msg2);
-int itti_msg_comp_s1ap_ue_context_release_req(const itti_s1ap_ue_context_release_req_t * const itti_msg1, const itti_s1ap_ue_context_release_req_t * const itti_msg2);
-int itti_msg_comp_mme_app_connection_establishment_cnf(const itti_mme_app_connection_establishment_cnf_t * const itti_msg1, const itti_mme_app_connection_establishment_cnf_t * const itti_msg2);
-int itti_msg_comp_nas_downlink_data_req(const itti_nas_dl_data_req_t * const itti_msg1, const itti_nas_dl_data_req_t * const itti_msg2);
+int itti_msg_comp_sctp_new_association(const sctp_new_peer_t* const itti_msg1,
+                                       const sctp_new_peer_t* const itti_msg2);
+int itti_msg_comp_sctp_close_association(
+    const sctp_close_association_t* const itti_msg1,
+    const sctp_close_association_t* const itti_msg2);
+int itti_msg_comp_s1ap_ue_context_release_req(
+    const itti_s1ap_ue_context_release_req_t* const itti_msg1,
+    const itti_s1ap_ue_context_release_req_t* const itti_msg2);
+int itti_msg_comp_mme_app_connection_establishment_cnf(
+    const itti_mme_app_connection_establishment_cnf_t* const itti_msg1,
+    const itti_mme_app_connection_establishment_cnf_t* const itti_msg2);
+int itti_msg_comp_nas_downlink_data_req(
+    const itti_nas_dl_data_req_t* const itti_msg1,
+    const itti_nas_dl_data_req_t* const itti_msg2);
 
 #endif
-

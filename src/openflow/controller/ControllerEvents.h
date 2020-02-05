@@ -48,10 +48,9 @@ enum ControllerEventType {
  * application
  */
 class ControllerEvent {
-public:
-  ControllerEvent(
-    fluid_base::OFConnection* ofconn,
-    const ControllerEventType type);
+ public:
+  ControllerEvent(fluid_base::OFConnection* ofconn,
+                  const ControllerEventType type);
 
   virtual ~ControllerEvent() {}
 
@@ -59,9 +58,10 @@ public:
 
   const ControllerEventType get_type() const;
 
-private:
+ private:
   const ControllerEventType type_;
-protected:
+
+ protected:
   fluid_base::OFConnection* ofconn_;
 };
 
@@ -69,20 +69,16 @@ protected:
  * Superclass for any event that gets data passed in through the event
  */
 class DataEvent : public ControllerEvent {
-public:
-  DataEvent(
-    fluid_base::OFConnection* ofconn,
-    fluid_base::OFHandler& ofhandler,
-    const void* data,
-    const size_t len,
-    const ControllerEventType type);
+ public:
+  DataEvent(fluid_base::OFConnection* ofconn, fluid_base::OFHandler& ofhandler,
+            const void* data, const size_t len, const ControllerEventType type);
 
   ~DataEvent();
 
   const uint8_t* get_data() const;
   const size_t get_length() const;
 
-private:
+ private:
   fluid_base::OFHandler& ofhandler_;
   const uint8_t* data_;
   const size_t len_;
@@ -92,31 +88,27 @@ private:
  * Event triggered when a packet gets pushed to user space
  */
 class PacketInEvent : public DataEvent {
-public:
-  PacketInEvent(
-    fluid_base::OFConnection* ofconn,
-    fluid_base::OFHandler& ofhandler,
-    const void* data,
-    const size_t len);
+ public:
+  PacketInEvent(fluid_base::OFConnection* ofconn,
+                fluid_base::OFHandler& ofhandler, const void* data,
+                const size_t len);
 };
 
 /**
  * Event triggered when the controller connects with the switch
  */
 class SwitchUpEvent : public DataEvent {
-public:
-  SwitchUpEvent(
-    fluid_base::OFConnection* ofconn,
-    fluid_base::OFHandler& ofhandler,
-    const void* data,
-    const size_t len);
+ public:
+  SwitchUpEvent(fluid_base::OFConnection* ofconn,
+                fluid_base::OFHandler& ofhandler, const void* data,
+                const size_t len);
 };
 
 /**
  * Event triggered when the controller loses connection with the switch
  */
 class SwitchDownEvent : public ControllerEvent {
-public:
+ public:
   SwitchDownEvent(fluid_base::OFConnection* ofconn);
 };
 
@@ -124,15 +116,14 @@ public:
  * Event triggered when there is an openflow error reported from the switch
  */
 class ErrorEvent : public ControllerEvent {
-public:
-  ErrorEvent(
-    fluid_base::OFConnection* ofconn,
-    const struct ofp_error_msg* error_msg);
+ public:
+  ErrorEvent(fluid_base::OFConnection* ofconn,
+             const struct ofp_error_msg* error_msg);
 
   const uint16_t get_error_type() const;
   const uint16_t get_error_code() const;
 
-private:
+ private:
   const uint16_t error_type_;
   const uint16_t error_code_;
 };
@@ -143,7 +134,7 @@ private:
  * connection, instead of an external file
  */
 class ExternalEvent : public ControllerEvent {
-public:
+ public:
   ExternalEvent(const ControllerEventType type);
 
   void set_of_connection(fluid_base::OFConnection* ofconn);
@@ -153,68 +144,60 @@ public:
  * Event triggered by SPGW to add a GTP tunnel for a UE
  */
 class AddGTPTunnelEvent : public ExternalEvent {
-public:
-  AddGTPTunnelEvent(
-    const struct in_addr ue_ip,
-    const struct in_addr enb_ip,
-    const uint32_t in_tei,
-    const uint32_t out_tei,
-    const char* imsi,
-    const pcc_rule_t *const rule);
+ public:
+  AddGTPTunnelEvent(const struct in_addr ue_ip, const struct in_addr enb_ip,
+                    const uint32_t in_tei, const uint32_t out_tei,
+                    const char* imsi, const pcc_rule_t* const rule);
 
-    const struct in_addr& get_ue_ip() const;
-    const struct in_addr& get_enb_ip() const;
-    const uint32_t get_in_tei() const;
-    const uint32_t get_out_tei() const;
-    const std::string& get_imsi() const;
-    const pcc_rule_t *const  get_rule() const;
+  const struct in_addr& get_ue_ip() const;
+  const struct in_addr& get_enb_ip() const;
+  const uint32_t get_in_tei() const;
+  const uint32_t get_out_tei() const;
+  const std::string& get_imsi() const;
+  const pcc_rule_t* const get_rule() const;
 
-private:
+ private:
   const struct in_addr ue_ip_;
   const struct in_addr enb_ip_;
   const uint32_t in_tei_;
   const uint32_t out_tei_;
   const std::string imsi_;
-  const pcc_rule_t *const rule_;
+  const pcc_rule_t* const rule_;
 };
 
 /*
  * Event triggered by SPGW to remove a GTP tunnel for a UE on detach
  */
 class DeleteGTPTunnelEvent : public ExternalEvent {
-public:
-  DeleteGTPTunnelEvent(
-    const struct in_addr ue_ip,
-    const uint32_t in_tei,
-    const uint32_t out_tei,
-    const pcc_rule_t *const rule);
+ public:
+  DeleteGTPTunnelEvent(const struct in_addr ue_ip, const uint32_t in_tei,
+                       const uint32_t out_tei, const pcc_rule_t* const rule);
 
-    const struct in_addr& get_ue_ip() const;
-    const uint32_t get_in_tei() const;
-    const uint32_t get_out_tei() const;
-    const pcc_rule_t *const  get_rule() const;
+  const struct in_addr& get_ue_ip() const;
+  const uint32_t get_in_tei() const;
+  const uint32_t get_out_tei() const;
+  const pcc_rule_t* const get_rule() const;
 
-private:
+ private:
   const struct in_addr ue_ip_;
   const uint32_t in_tei_;
   const uint32_t out_tei_;
-  const pcc_rule_t *const rule_;
+  const pcc_rule_t* const rule_;
 };
 
 /*
  * Event triggered by MME to ack a paging for a UE
  */
 class StopDLDataNotificationEvent : public ExternalEvent {
-public:
-  StopDLDataNotificationEvent(
-    const struct in_addr ue_ip, uint16_t time_out);
+ public:
+  StopDLDataNotificationEvent(const struct in_addr ue_ip, uint16_t time_out);
 
   const struct in_addr& get_ue_ip() const;
   const uint16_t get_time_out() const;
 
-private:
+ private:
   const struct in_addr ue_ip_;
   const uint16_t time_out_;
 };
 
-}
+}  // namespace openflow

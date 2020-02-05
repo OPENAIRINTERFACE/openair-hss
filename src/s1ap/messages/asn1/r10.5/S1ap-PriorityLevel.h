@@ -4,9 +4,8 @@
  * 	found in "S1AP-IEs.asn"
  */
 
-#ifndef	_S1ap_PriorityLevel_H_
-#define	_S1ap_PriorityLevel_H_
-
+#ifndef _S1ap_PriorityLevel_H_
+#define _S1ap_PriorityLevel_H_
 
 #include <asn_application.h>
 
@@ -19,14 +18,14 @@ extern "C" {
 
 /* Dependencies */
 typedef enum S1ap_PriorityLevel {
-	S1ap_PriorityLevel_spare	= 0,
-	S1ap_PriorityLevel_highest	= 1,
-	S1ap_PriorityLevel_lowest	= 14,
-	S1ap_PriorityLevel_no_priority	= 15
+  S1ap_PriorityLevel_spare = 0,
+  S1ap_PriorityLevel_highest = 1,
+  S1ap_PriorityLevel_lowest = 14,
+  S1ap_PriorityLevel_no_priority = 15
 } e_S1ap_PriorityLevel;
 
 /* S1ap-PriorityLevel */
-typedef long	 S1ap_PriorityLevel_t;
+typedef long S1ap_PriorityLevel_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_S1ap_PriorityLevel;
@@ -42,5 +41,5 @@ xer_type_encoder_f S1ap_PriorityLevel_encode_xer;
 }
 #endif
 
-#endif	/* _S1ap_PriorityLevel_H_ */
+#endif /* _S1ap_PriorityLevel_H_ */
 #include <asn_internal.h>

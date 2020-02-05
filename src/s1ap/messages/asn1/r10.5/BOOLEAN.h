@@ -2,8 +2,8 @@
  * Copyright (c) 2003 Lev Walkin <vlm@lionet.info>. All rights reserved.
  * Redistribution and modifications are permitted subject to BSD license.
  */
-#ifndef	_BOOLEAN_H_
-#define	_BOOLEAN_H_
+#ifndef _BOOLEAN_H_
+#define _BOOLEAN_H_
 
 #include <asn_application.h>
 
@@ -30,10 +30,10 @@ per_type_decoder_f BOOLEAN_decode_uper;
 per_type_encoder_f BOOLEAN_encode_uper;
 per_type_decoder_f BOOLEAN_decode_aper;
 per_type_encoder_f BOOLEAN_encode_aper;
-type_compare_f     BOOLEAN_compare;
+type_compare_f BOOLEAN_compare;
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif	/* _BOOLEAN_H_ */
+#endif /* _BOOLEAN_H_ */

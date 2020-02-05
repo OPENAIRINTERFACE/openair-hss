@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -39,23 +39,21 @@
 
 *****************************************************************************/
 
-#include <pthread.h>
-#include <inttypes.h>
-#include <stdint.h>
-#include <stdbool.h>
-#include <string.h>
-#include <stdlib.h>
 #include <assert.h>
+#include <inttypes.h>
+#include <pthread.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "bstrlib.h"
 #include "log.h"
 
 #include "common_defs.h"
-#include "common_defs.h"
 #include "common_types.h"
 #include "emm_fsm.h"
 #include "emm_reg.h"
-
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -83,14 +81,13 @@
  **      Others:    NONE                                       **
  **                                                                        **
  ***************************************************************************/
-void emm_reg_initialize (void)
-{
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
+void emm_reg_initialize(void) {
+  OAILOG_FUNC_IN(LOG_NAS_EMM);
   /*
    * Initialize the EMM state machine
    */
-  emm_fsm_initialize ();
-  OAILOG_FUNC_OUT (LOG_NAS_EMM);
+  emm_fsm_initialize();
+  OAILOG_FUNC_OUT(LOG_NAS_EMM);
 }
 
 /****************************************************************************
@@ -107,22 +104,21 @@ void emm_reg_initialize (void)
  **      Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
-int emm_reg_send (emm_reg_t * const msg)
-{
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
-  int                                     rc = RETURNok;
+int emm_reg_send(emm_reg_t* const msg) {
+  OAILOG_FUNC_IN(LOG_NAS_EMM);
+  int rc = RETURNok;
 
   /*
    * Check the EMM-SAP primitive
    */
-  emm_reg_primitive_t                     primitive = msg->primitive;
+  emm_reg_primitive_t primitive = msg->primitive;
 
-  assert ((primitive > _EMMREG_START) && (primitive < _EMMREG_END));
+  assert((primitive > _EMMREG_START) && (primitive < _EMMREG_END));
   /*
    * Execute the EMM procedure
    */
-  rc = emm_fsm_process (msg);
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  rc = emm_fsm_process(msg);
+  OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
 }
 
 /****************************************************************************/

@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -55,10 +55,10 @@
    Identifiers of the User Simulator command line options
 */
 enum {
-  USER_PARSER_HOST,             /* Remote hostname    */
-  USER_PARSER_PORT,             /* Remote port number   */
-  USER_PARSER_DEVPATH,          /* Device pathname    */
-  USER_PARSER_DEVATTR,          /* Device attribute parameters  */
+  USER_PARSER_HOST,    /* Remote hostname    */
+  USER_PARSER_PORT,    /* Remote port number   */
+  USER_PARSER_DEVPATH, /* Device pathname    */
+  USER_PARSER_DEVATTR, /* Device attribute parameters  */
   USER_PARSER_NB_OPTIONS
 };
 
@@ -71,19 +71,20 @@ enum {
     An option is defined with a name, an argument following the name,
     the usage displayed by the usage function and a default value.
 */
-static parser_command_line_t            userParserCommandLine = {
-  "UserProcess",                /* Command name     */
-  USER_PARSER_NB_OPTIONS,       /* Number of options    */
-  {
-   /*
-    * Command line options
-    */
-   {"-host", "<host>", "\tRemote hostname\t\t", USER_PARSER_DEFAULT_REMOTE_HOSTNAME},
-   {"-port", "<port>", "\tRemote port number\t", USER_PARSER_DEFAULT_REMOTE_PORT_NUMBER},
-   {"-dev", "<devpath>", "Device pathname\t\t", "NULL"},
-   {"-params", "<params>", "Device attribute parameters", "NULL"},
-   }
-};
+static parser_command_line_t userParserCommandLine = {
+    "UserProcess",          /* Command name     */
+    USER_PARSER_NB_OPTIONS, /* Number of options    */
+    {
+        /*
+         * Command line options
+         */
+        {"-host", "<host>", "\tRemote hostname\t\t",
+         USER_PARSER_DEFAULT_REMOTE_HOSTNAME},
+        {"-port", "<port>", "\tRemote port number\t",
+         USER_PARSER_DEFAULT_REMOTE_PORT_NUMBER},
+        {"-dev", "<devpath>", "Device pathname\t\t", "NULL"},
+        {"-params", "<params>", "Device attribute parameters", "NULL"},
+    }};
 
 /****************************************************************************/
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
@@ -103,11 +104,8 @@ static parser_command_line_t            userParserCommandLine = {
  **      Others:  None                                       **
  **                                                                        **
  ***************************************************************************/
-void
-user_parser_print_usage (
-  void)
-{
-  parser_print_usage (&userParserCommandLine);
+void user_parser_print_usage(void) {
+  parser_print_usage(&userParserCommandLine);
 }
 
 /****************************************************************************
@@ -125,12 +123,8 @@ user_parser_print_usage (
  **      Others:  None                                       **
  **                                                                        **
  ***************************************************************************/
-int
-user_parser_get_options (
-  int argc,
-  const char **argv)
-{
-  return parser_get_options (argc, argv, &userParserCommandLine);
+int user_parser_get_options(int argc, const char **argv) {
+  return parser_get_options(argc, argv, &userParserCommandLine);
 }
 
 /****************************************************************************
@@ -147,10 +141,7 @@ user_parser_get_options (
  **      Others:  None                                       **
  **                                                                        **
  ***************************************************************************/
-int
-user_parser_get_nb_options (
-  void)
-{
+int user_parser_get_nb_options(void) {
   return userParserCommandLine.nb_options;
 }
 
@@ -167,10 +158,7 @@ user_parser_get_nb_options (
  **      Others:  None                                       **
  **                                                                        **
  ***************************************************************************/
-const char                             *
-user_parser_get_host (
-  void)
-{
+const char *user_parser_get_host(void) {
   return userParserCommandLine.options[USER_PARSER_HOST].pvalue;
 }
 
@@ -187,10 +175,7 @@ user_parser_get_host (
  **      Others:  None                                       **
  **                                                                        **
  ***************************************************************************/
-const char                             *
-user_parser_get_port (
-  void)
-{
+const char *user_parser_get_port(void) {
   return userParserCommandLine.options[USER_PARSER_PORT].pvalue;
 }
 
@@ -207,10 +192,7 @@ user_parser_get_port (
  **      Others:  None                                       **
  **                                                                        **
  ***************************************************************************/
-const char                             *
-user_parser_get_devpath (
-  void)
-{
+const char *user_parser_get_devpath(void) {
   return userParserCommandLine.options[USER_PARSER_DEVPATH].pvalue;
 }
 
@@ -227,10 +209,7 @@ user_parser_get_devpath (
  **      Others:  None                                       **
  **                                                                        **
  ***************************************************************************/
-const char                             *
-user_parser_get_devattr (
-  void)
-{
+const char *user_parser_get_devattr(void) {
   return userParserCommandLine.options[USER_PARSER_DEVATTR].pvalue;
 }
 

@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -19,7 +19,6 @@
  *      contact@openairinterface.org
  */
 
-
 /*! \file sctp_primitives_server.c
     \brief Main server primitives
     \author Sebastien ROUX, Lionel GAUTHIER
@@ -28,93 +27,95 @@
     @ingroup _sctp
 */
 
-#include <pthread.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdbool.h>
-#include <unistd.h>
-#include <string.h>
+#include <arpa/inet.h>
 #include <errno.h>
-#include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/sctp.h>
-#include <arpa/inet.h>
+#include <pthread.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <unistd.h>
 
 #include "bstrlib.h"
 
-#include "dynamic_memory_check.h"
-#include "common_defs.h"
 #include "assertions.h"
-#include "log.h"
-#include "msc.h"
+#include "common_defs.h"
+#include "conversions.h"
+#include "dynamic_memory_check.h"
 #include "intertask_interface.h"
 #include "itti_free_defined_msg.h"
-#include "sctp_primitives_server.h"
-#include "conversions.h"
+#include "log.h"
+#include "msc.h"
 #include "sctp_common.h"
 #include "sctp_itti_messaging.h"
+#include "sctp_primitives_server.h"
 
-
-#define SCTP_RC_ERROR       -1
-#define SCTP_RC_NORMAL_READ  0
-#define SCTP_RC_DISCONNECT   1
+#define SCTP_RC_ERROR -1
+#define SCTP_RC_NORMAL_READ 0
+#define SCTP_RC_DISCONNECT 1
 
 typedef struct sctp_association_s {
-  struct sctp_association_s              *next_assoc;   ///< Next association in the list
-  struct sctp_association_s              *previous_assoc;       ///< Previous association in the list
-  int                                     sd;   ///< Socket descriptor
-  uint32_t                                ppid; ///< Payload protocol Identifier
-  uint16_t                                instreams;    ///< Number of input streams negociated for this connection
-  uint16_t                                outstreams;   ///< Number of output strams negotiated for this connection
-  sctp_assoc_id_t                         assoc_id;     ///< SCTP association id for the connection
-  uint32_t                                messages_recv;        ///< Number of messages received on this connection
-  uint32_t                                messages_sent;        ///< Number of messages sent on this connection
+  struct sctp_association_s *next_assoc;  ///< Next association in the list
+  struct sctp_association_s
+      *previous_assoc;  ///< Previous association in the list
+  int sd;               ///< Socket descriptor
+  uint32_t ppid;        ///< Payload protocol Identifier
+  uint16_t
+      instreams;  ///< Number of input streams negociated for this connection
+  uint16_t
+      outstreams;  ///< Number of output strams negotiated for this connection
+  sctp_assoc_id_t assoc_id;  ///< SCTP association id for the connection
+  uint32_t messages_recv;    ///< Number of messages received on this connection
+  uint32_t messages_sent;    ///< Number of messages sent on this connection
 
-  struct sockaddr                        *peer_addresses;       ///< A list of peer addresses
-  int                                     nb_peer_addresses;
+  struct sockaddr *peer_addresses;  ///< A list of peer addresses
+  int nb_peer_addresses;
 } sctp_association_t;
 
 typedef struct sctp_descriptor_s {
   // List of connected peers
-  struct sctp_association_s              *available_connections_head;
-  struct sctp_association_s              *available_connections_tail;
+  struct sctp_association_s *available_connections_head;
+  struct sctp_association_s *available_connections_tail;
 
-  uint32_t                                number_of_connections;
-  uint16_t                                nb_instreams;
-  uint16_t                                nb_outstreams;
+  uint32_t number_of_connections;
+  uint16_t nb_instreams;
+  uint16_t nb_outstreams;
 } sctp_descriptor_t;
 
 typedef struct sctp_arg_s {
-  int                                     sd;
-  uint32_t                                ppid;
+  int sd;
+  uint32_t ppid;
 } sctp_arg_t;
 
-static struct sctp_descriptor_s         sctp_desc;
+static struct sctp_descriptor_s sctp_desc;
 
 // Thread used to handle sctp messages
-static pthread_t                        assoc_thread;
+static pthread_t assoc_thread;
 
 // LOCAL FUNCTIONS prototypes
-void                                   *sctp_receiver_thread (void *args_p);
-static int sctp_send_msg (
-    sctp_assoc_id_t sctp_assoc_id,
-    uint16_t stream,
-    STOLEN_REF bstring *payload);
+void *sctp_receiver_thread(void *args_p);
+static int sctp_send_msg(sctp_assoc_id_t sctp_assoc_id, uint16_t stream,
+                         STOLEN_REF bstring *payload);
 
 // Association list related local functions prototypes
-static struct sctp_association_s       *sctp_is_assoc_in_list (sctp_assoc_id_t assoc_id);
-static struct sctp_association_s       *sctp_add_new_peer (void);
-static int                              sctp_handle_com_down (sctp_assoc_id_t assoc_id);
-static void                             sctp_dump_list (void);
-static void sctp_exit (void);
+static struct sctp_association_s *sctp_is_assoc_in_list(
+    sctp_assoc_id_t assoc_id);
+static struct sctp_association_s *sctp_add_new_peer(void);
+static int sctp_handle_com_down(sctp_assoc_id_t assoc_id);
+static void sctp_dump_list(void);
+static void sctp_exit(void);
 
 //------------------------------------------------------------------------------
-static struct sctp_association_s *sctp_add_new_peer (void)
-{
-  struct sctp_association_s              *new_sctp_descriptor = calloc (1, sizeof (struct sctp_association_s));
+static struct sctp_association_s *sctp_add_new_peer(void) {
+  struct sctp_association_s *new_sctp_descriptor =
+      calloc(1, sizeof(struct sctp_association_s));
 
   if (new_sctp_descriptor == NULL) {
-    OAILOG_ERROR (LOG_SCTP, "Failed to allocate memory for new peer (%s:%d)\n", __FILE__, __LINE__);
+    OAILOG_ERROR(LOG_SCTP, "Failed to allocate memory for new peer (%s:%d)\n",
+                 __FILE__, __LINE__);
     return NULL;
   }
 
@@ -131,20 +132,21 @@ static struct sctp_association_s *sctp_add_new_peer (void)
   }
 
   sctp_desc.number_of_connections++;
-  sctp_dump_list ();
+  sctp_dump_list();
   return new_sctp_descriptor;
 }
 
 //------------------------------------------------------------------------------
-static struct sctp_association_s *sctp_is_assoc_in_list (sctp_assoc_id_t assoc_id)
-{
-  struct sctp_association_s              *assoc_desc = NULL;
+static struct sctp_association_s *sctp_is_assoc_in_list(
+    sctp_assoc_id_t assoc_id) {
+  struct sctp_association_s *assoc_desc = NULL;
 
   if (assoc_id < 0) {
     return NULL;
   }
 
-  for (assoc_desc = sctp_desc.available_connections_head; assoc_desc; assoc_desc = assoc_desc->next_assoc) {
+  for (assoc_desc = sctp_desc.available_connections_head; assoc_desc;
+       assoc_desc = assoc_desc->next_assoc) {
     if (assoc_desc->assoc_id == assoc_id) {
       break;
     }
@@ -154,14 +156,13 @@ static struct sctp_association_s *sctp_is_assoc_in_list (sctp_assoc_id_t assoc_i
 }
 
 //------------------------------------------------------------------------------
-static int sctp_remove_assoc_from_list (sctp_assoc_id_t assoc_id)
-{
-  struct sctp_association_s              *assoc_desc = NULL;
+static int sctp_remove_assoc_from_list(sctp_assoc_id_t assoc_id) {
+  struct sctp_association_s *assoc_desc = NULL;
 
   /*
    * Association not in the list
    */
-  if ((assoc_desc = sctp_is_assoc_in_list (assoc_id)) == NULL) {
+  if ((assoc_desc = sctp_is_assoc_in_list(assoc_id)) == NULL) {
     return -1;
   }
 
@@ -170,7 +171,8 @@ static int sctp_remove_assoc_from_list (sctp_assoc_id_t assoc_id)
       /*
        * Head and tail
        */
-      sctp_desc.available_connections_head = sctp_desc.available_connections_tail = NULL;
+      sctp_desc.available_connections_head =
+          sctp_desc.available_connections_tail = NULL;
     } else {
       /*
        * Not head but tail
@@ -196,36 +198,39 @@ static int sctp_remove_assoc_from_list (sctp_assoc_id_t assoc_id)
 
   if (assoc_desc->peer_addresses) {
     int rv = sctp_freepaddrs(assoc_desc->peer_addresses);
-    if (rv) OAILOG_DEBUG (LOG_SCTP, "sctp_freepaddrs(%p) failed\n", assoc_desc->peer_addresses);
+    if (rv)
+      OAILOG_DEBUG(LOG_SCTP, "sctp_freepaddrs(%p) failed\n",
+                   assoc_desc->peer_addresses);
   }
-  free_wrapper ((void**)&assoc_desc);
+  free_wrapper((void **)&assoc_desc);
   sctp_desc.number_of_connections--;
   return 0;
 }
 
 //------------------------------------------------------------------------------
-static void sctp_dump_assoc (struct sctp_association_s *sctp_assoc_p)
-{
+static void sctp_dump_assoc(struct sctp_association_s *sctp_assoc_p) {
 #if SCTP_DUMP_LIST
-  int                                     i;
+  int i;
 
   if (sctp_assoc_p == NULL) {
     return;
   }
 
-  OAILOG_DEBUG (LOG_SCTP, "sd           : %d\n", sctp_assoc_p->sd);
-  OAILOG_DEBUG (LOG_SCTP, "input streams: %d\n", sctp_assoc_p->instreams);
-  OAILOG_DEBUG (LOG_SCTP, "out streams  : %d\n", sctp_assoc_p->outstreams);
-  OAILOG_DEBUG (LOG_SCTP, "assoc_id     : %d\n", sctp_assoc_p->assoc_id);
-  OAILOG_DEBUG (LOG_SCTP, "peer address :\n");
+  OAILOG_DEBUG(LOG_SCTP, "sd           : %d\n", sctp_assoc_p->sd);
+  OAILOG_DEBUG(LOG_SCTP, "input streams: %d\n", sctp_assoc_p->instreams);
+  OAILOG_DEBUG(LOG_SCTP, "out streams  : %d\n", sctp_assoc_p->outstreams);
+  OAILOG_DEBUG(LOG_SCTP, "assoc_id     : %d\n", sctp_assoc_p->assoc_id);
+  OAILOG_DEBUG(LOG_SCTP, "peer address :\n");
 
   for (i = 0; i < sctp_assoc_p->nb_peer_addresses; i++) {
-    char                                    address[40];
+    char address[40];
 
-    memset (address, 0, sizeof (address));
+    memset(address, 0, sizeof(address));
 
-    if (inet_ntop (sctp_assoc_p->peer_addresses[i].sa_family, sctp_assoc_p->peer_addresses[i].sa_data, address, sizeof (address)) != NULL) {
-      OAILOG_DEBUG (LOG_SCTP, "    - [%s]\n", address);
+    if (inet_ntop(sctp_assoc_p->peer_addresses[i].sa_family,
+                  sctp_assoc_p->peer_addresses[i].sa_data, address,
+                  sizeof(address)) != NULL) {
+      OAILOG_DEBUG(LOG_SCTP, "    - [%s]\n", address);
     }
   }
 
@@ -235,34 +240,33 @@ static void sctp_dump_assoc (struct sctp_association_s *sctp_assoc_p)
 }
 
 //------------------------------------------------------------------------------
-static void sctp_dump_list (void)
-{
+static void sctp_dump_list(void) {
 #if SCTP_DUMP_LIST
-  struct sctp_association_s              *sctp_assoc_p = sctp_desc.available_connections_head;
-  OAILOG_DEBUG (LOG_SCTP, "SCTP list contains %d associations\n", sctp_desc.number_of_connections);
+  struct sctp_association_s *sctp_assoc_p =
+      sctp_desc.available_connections_head;
+  OAILOG_DEBUG(LOG_SCTP, "SCTP list contains %d associations\n",
+               sctp_desc.number_of_connections);
 
   while (sctp_assoc_p != NULL) {
-    sctp_dump_assoc (sctp_assoc_p);
+    sctp_dump_assoc(sctp_assoc_p);
     sctp_assoc_p = sctp_assoc_p->next_assoc;
   }
 
 #else
-  sctp_dump_assoc (NULL);
+  sctp_dump_assoc(NULL);
 #endif
 }
 
 //------------------------------------------------------------------------------
-static int sctp_send_msg (
-    sctp_assoc_id_t sctp_assoc_id,
-    uint16_t stream,
-    STOLEN_REF bstring *payload)
-{
-  struct sctp_association_s              *assoc_desc = NULL;
+static int sctp_send_msg(sctp_assoc_id_t sctp_assoc_id, uint16_t stream,
+                         STOLEN_REF bstring *payload) {
+  struct sctp_association_s *assoc_desc = NULL;
 
-  DevAssert (*payload);
+  DevAssert(*payload);
 
-  if ((assoc_desc = sctp_is_assoc_in_list (sctp_assoc_id)) == NULL) {
-    OAILOG_DEBUG (LOG_SCTP, "This assoc id has not been fount in list (%d)\n", sctp_assoc_id);
+  if ((assoc_desc = sctp_is_assoc_in_list(sctp_assoc_id)) == NULL) {
+    OAILOG_DEBUG(LOG_SCTP, "This assoc id has not been fount in list (%d)\n",
+                 sctp_assoc_id);
     return -1;
   }
 
@@ -270,22 +274,30 @@ static int sctp_send_msg (
     /*
      * The socket is invalid may be closed.
      */
-    OAILOG_DEBUG (LOG_SCTP, "The socket is invalid may be closed (assoc id %d)\n", sctp_assoc_id);
+    OAILOG_DEBUG(LOG_SCTP,
+                 "The socket is invalid may be closed (assoc id %d)\n",
+                 sctp_assoc_id);
     return -1;
   }
 
-  OAILOG_DEBUG (LOG_SCTP, "[%d][%d] Sending buffer %p of %d bytes on stream %d with ppid %d\n",
-      assoc_desc->sd, sctp_assoc_id, bdata(*payload), blength(*payload), stream, assoc_desc->ppid);
+  OAILOG_DEBUG(
+      LOG_SCTP,
+      "[%d][%d] Sending buffer %p of %d bytes on stream %d with ppid %d\n",
+      assoc_desc->sd, sctp_assoc_id, bdata(*payload), blength(*payload), stream,
+      assoc_desc->ppid);
 
   /*
    * Send message_p on specified stream of the sd association
    */
-  if (sctp_sendmsg (assoc_desc->sd, (const void *)bdata(*payload), blength(*payload), NULL, 0, htonl(assoc_desc->ppid), 0, stream, 0, 0) < 0) {
+  if (sctp_sendmsg(assoc_desc->sd, (const void *)bdata(*payload),
+                   blength(*payload), NULL, 0, htonl(assoc_desc->ppid), 0,
+                   stream, 0, 0) < 0) {
     bdestroy_wrapper(payload);
-    OAILOG_ERROR (LOG_SCTP, "send: %s:%d", strerror (errno), errno);
+    OAILOG_ERROR(LOG_SCTP, "send: %s:%d", strerror(errno), errno);
     return -1;
   }
-  OAILOG_DEBUG (LOG_SCTP, "Successfully sent %d bytes on stream %d\n", blength(*payload), stream);
+  OAILOG_DEBUG(LOG_SCTP, "Successfully sent %d bytes on stream %d\n",
+               blength(*payload), stream);
   bdestroy_wrapper(payload);
 
   assoc_desc->messages_sent++;
@@ -293,108 +305,116 @@ static int sctp_send_msg (
 }
 
 //------------------------------------------------------------------------------
-static int sctp_create_new_listener (SctpInit * init_p)
-{
-  struct sctp_event_subscribe             event = {0};
-//  struct sockaddr                        *addr = NULL;
-  struct sctp_arg_s                      *sctp_arg_p = NULL;
-  uint16_t                                i = 0,
-                                          j = 0;
-  int                                     sd = 0;
-  int                                     used_addresses = 0;
+static int sctp_create_new_listener(SctpInit *init_p) {
+  struct sctp_event_subscribe event = {0};
+  //  struct sockaddr                        *addr = NULL;
+  struct sctp_arg_s *sctp_arg_p = NULL;
+  uint16_t i = 0, j = 0;
+  int sd = 0;
+  int used_addresses = 0;
 
-  DevAssert (init_p != NULL);
+  DevAssert(init_p != NULL);
 
   if (init_p->ipv4 == 0 && init_p->ipv6 == 0) {
-    OAILOG_ERROR (LOG_SCTP, "Illegal IP configuration upper layer should request at" "least ipv4 and/or ipv6 config\n");
+    OAILOG_ERROR(LOG_SCTP,
+                 "Illegal IP configuration upper layer should request at"
+                 "least ipv4 and/or ipv6 config\n");
     return -1;
   }
 
   if ((used_addresses = init_p->nb_ipv4_addr + init_p->nb_ipv6_addr) == 0) {
-    OAILOG_WARNING (LOG_SCTP,"No address provided...\n");
+    OAILOG_WARNING(LOG_SCTP, "No address provided...\n");
     return -1;
   }
 
-  union{
-	  struct sockaddr_in  addr_v4;
-	  struct sockaddr_in6 addr_v6;
-  }addr[used_addresses];
-  memset((void*)addr, 0, sizeof(addr));
+  union {
+    struct sockaddr_in addr_v4;
+    struct sockaddr_in6 addr_v6;
+  } addr[used_addresses];
+  memset((void *)addr, 0, sizeof(addr));
 
- OAILOG_DEBUG (LOG_SCTP, "Creating new listen socket on port %u with\n", init_p->port);
+  OAILOG_DEBUG(LOG_SCTP, "Creating new listen socket on port %u with\n",
+               init_p->port);
 
   if (init_p->ipv4 == 1) {
-	  OAILOG_DEBUG (LOG_SCTP, "ipv4 addresses:\n");
-	  for (i = 0; i < init_p->nb_ipv4_addr; i++) {
-		  addr[i].addr_v4.sin_family = AF_INET;
-		  addr[i].addr_v4.sin_port = htons (init_p->port);
-		  addr[i].addr_v4.sin_addr.s_addr = init_p->ipv4_address[i].s_addr;
+    OAILOG_DEBUG(LOG_SCTP, "ipv4 addresses:\n");
+    for (i = 0; i < init_p->nb_ipv4_addr; i++) {
+      addr[i].addr_v4.sin_family = AF_INET;
+      addr[i].addr_v4.sin_port = htons(init_p->port);
+      addr[i].addr_v4.sin_addr.s_addr = init_p->ipv4_address[i].s_addr;
       char ipv4[INET_ADDRSTRLEN];
-      inet_ntop (AF_INET, (void*)&addr[i].addr_v4.sin_addr.s_addr, ipv4, INET_ADDRSTRLEN);
-      OAILOG_DEBUG (LOG_SCTP, "\t- %s\n", ipv4);
+      inet_ntop(AF_INET, (void *)&addr[i].addr_v4.sin_addr.s_addr, ipv4,
+                INET_ADDRSTRLEN);
+      OAILOG_DEBUG(LOG_SCTP, "\t- %s\n", ipv4);
     }
   }
 
   if (init_p->ipv6 == 1) {
-    OAILOG_DEBUG (LOG_SCTP, "ipv6 addresses:\n");
+    OAILOG_DEBUG(LOG_SCTP, "ipv6 addresses:\n");
     for (j = 0; j < init_p->nb_ipv6_addr; j++) {
-      addr[i+j].addr_v6.sin6_family = AF_INET6;
-      addr[i+j].addr_v6.sin6_port = htons (init_p->port);
-      addr[i+j].addr_v6.sin6_addr = init_p->ipv6_address[j];
+      addr[i + j].addr_v6.sin6_family = AF_INET6;
+      addr[i + j].addr_v6.sin6_port = htons(init_p->port);
+      addr[i + j].addr_v6.sin6_addr = init_p->ipv6_address[j];
       char ipv6[INET6_ADDRSTRLEN];
-      inet_ntop (AF_INET6, (void*)&init_p->ipv6_address[j], ipv6, INET6_ADDRSTRLEN);
-      OAILOG_DEBUG (LOG_SCTP, "\t- %s\n", ipv6);
+      inet_ntop(AF_INET6, (void *)&init_p->ipv6_address[j], ipv6,
+                INET6_ADDRSTRLEN);
+      OAILOG_DEBUG(LOG_SCTP, "\t- %s\n", ipv6);
     }
   }
 
   /** Create for each received address a socket. */
-  for(int i = 0; i < used_addresses; i++){
-	  if ((sd = socket (((struct sockaddr*)&addr[i])->sa_family, SOCK_STREAM, IPPROTO_SCTP)) < 0) {
-		  OAILOG_ERROR (LOG_SCTP, "socket: %s:%d\n", strerror (errno), errno);
-		  return -1;
-	  }
+  for (int i = 0; i < used_addresses; i++) {
+    if ((sd = socket(((struct sockaddr *)&addr[i])->sa_family, SOCK_STREAM,
+                     IPPROTO_SCTP)) < 0) {
+      OAILOG_ERROR(LOG_SCTP, "socket: %s:%d\n", strerror(errno), errno);
+      return -1;
+    }
 
-	  memset ((void *)&event, 1, sizeof (struct sctp_event_subscribe));
-	  if (setsockopt (sd, IPPROTO_SCTP, SCTP_EVENTS, &event, sizeof (struct sctp_event_subscribe)) < 0) {
-		  OAILOG_ERROR (LOG_SCTP, "setsockopt: %s:%d\n", strerror (errno), errno);
-		  return -1;
-	  }
+    memset((void *)&event, 1, sizeof(struct sctp_event_subscribe));
+    if (setsockopt(sd, IPPROTO_SCTP, SCTP_EVENTS, &event,
+                   sizeof(struct sctp_event_subscribe)) < 0) {
+      OAILOG_ERROR(LOG_SCTP, "setsockopt: %s:%d\n", strerror(errno), errno);
+      return -1;
+    }
 
-	  /*
-	   * Some pre-bind socket configuration
-	   */
-	  if (sctp_set_init_opt (sd, sctp_desc.nb_instreams, sctp_desc.nb_outstreams, 0, 0) < 0) {
-		  goto err;
-	  }
+    /*
+     * Some pre-bind socket configuration
+     */
+    if (sctp_set_init_opt(sd, sctp_desc.nb_instreams, sctp_desc.nb_outstreams,
+                          0, 0) < 0) {
+      goto err;
+    }
 
-	  if (sctp_bindx (sd, (struct sockaddr*)&addr[i], 1, SCTP_BINDX_ADD_ADDR) != 0) {
-		  OAILOG_ERROR (LOG_SCTP, "sctp_bindx: %s:%d\n", strerror (errno), errno);
-		  return -1;
-	  }
+    if (sctp_bindx(sd, (struct sockaddr *)&addr[i], 1, SCTP_BINDX_ADD_ADDR) !=
+        0) {
+      OAILOG_ERROR(LOG_SCTP, "sctp_bindx: %s:%d\n", strerror(errno), errno);
+      return -1;
+    }
 
-	  if (listen (sd, 5) < 0) {
-		  OAILOG_ERROR (LOG_SCTP, "listen: %s:%d\n", strerror (errno), errno);
-		  return -1;
-	  }
+    if (listen(sd, 5) < 0) {
+      OAILOG_ERROR(LOG_SCTP, "listen: %s:%d\n", strerror(errno), errno);
+      return -1;
+    }
 
-	  if ((sctp_arg_p = malloc (sizeof (struct sctp_arg_s))) == NULL) {
-		  return -1;
-	  }
+    if ((sctp_arg_p = malloc(sizeof(struct sctp_arg_s))) == NULL) {
+      return -1;
+    }
 
-	  sctp_arg_p->sd = sd;
-	  sctp_arg_p->ppid = init_p->ppid;
+    sctp_arg_p->sd = sd;
+    sctp_arg_p->ppid = init_p->ppid;
 
-	  if (pthread_create (&assoc_thread, NULL, &sctp_receiver_thread, (void *)sctp_arg_p) < 0) {
-		  OAILOG_ERROR (LOG_SCTP, "pthread_create: %s:%d\n", strerror (errno), errno);
-		  return -1;
-	  }
+    if (pthread_create(&assoc_thread, NULL, &sctp_receiver_thread,
+                       (void *)sctp_arg_p) < 0) {
+      OAILOG_ERROR(LOG_SCTP, "pthread_create: %s:%d\n", strerror(errno), errno);
+      return -1;
+    }
   }
 
   return sd;
 err:
 
   if (sd != -1) {
-    close (sd);
+    close(sd);
     sd = -1;
   }
 
@@ -402,195 +422,209 @@ err:
 }
 
 //------------------------------------------------------------------------------
-static inline int sctp_read_from_socket (int sd, int ppid)
-{
-  int                                     flags = 0,
-    n;
-  socklen_t                               from_len = 0;
-  struct sctp_sndrcvinfo                  sinfo = {0};
-  struct sockaddr_in6                     addr = {0};
-  uint8_t                                 buffer[SCTP_RECV_BUFFER_SIZE];
+static inline int sctp_read_from_socket(int sd, int ppid) {
+  int flags = 0, n;
+  socklen_t from_len = 0;
+  struct sctp_sndrcvinfo sinfo = {0};
+  struct sockaddr_in6 addr = {0};
+  uint8_t buffer[SCTP_RECV_BUFFER_SIZE];
 
   if (sd < 0) {
     return -1;
   }
 
-  memset ((void *)&addr, 0, sizeof (struct sockaddr_in6));
-  from_len = (socklen_t) sizeof (struct sockaddr_in6);
-  memset ((void *)&sinfo, 0, sizeof (struct sctp_sndrcvinfo));
-  n = sctp_recvmsg (sd, (void *)buffer, SCTP_RECV_BUFFER_SIZE, (struct sockaddr *)&addr, &from_len, &sinfo, &flags);
+  memset((void *)&addr, 0, sizeof(struct sockaddr_in6));
+  from_len = (socklen_t)sizeof(struct sockaddr_in6);
+  memset((void *)&sinfo, 0, sizeof(struct sctp_sndrcvinfo));
+  n = sctp_recvmsg(sd, (void *)buffer, SCTP_RECV_BUFFER_SIZE,
+                   (struct sockaddr *)&addr, &from_len, &sinfo, &flags);
 
   if (n < 0) {
-    OAILOG_DEBUG (LOG_SCTP, "An error occured during read\n");
-    OAILOG_ERROR (LOG_SCTP, "sctp_recvmsg: %s:%d\n", strerror (errno), errno);
+    OAILOG_DEBUG(LOG_SCTP, "An error occured during read\n");
+    OAILOG_ERROR(LOG_SCTP, "sctp_recvmsg: %s:%d\n", strerror(errno), errno);
     return SCTP_RC_ERROR;
   }
 
   if (flags & MSG_NOTIFICATION) {
-    union sctp_notification                *snp = (union sctp_notification *)buffer;
+    union sctp_notification *snp = (union sctp_notification *)buffer;
 
     /*
      * Client deconnection
      */
     if (SCTP_SHUTDOWN_EVENT == snp->sn_header.sn_type) {
-      OAILOG_DEBUG (LOG_SCTP, "SCTP_SHUTDOWN_EVENT received\n");
-      return sctp_handle_com_down (snp->sn_shutdown_event.sse_assoc_id);
+      OAILOG_DEBUG(LOG_SCTP, "SCTP_SHUTDOWN_EVENT received\n");
+      return sctp_handle_com_down(snp->sn_shutdown_event.sse_assoc_id);
     }
     /*
      * Association has changed.
      */
     else if (SCTP_ASSOC_CHANGE == snp->sn_header.sn_type) {
-      struct sctp_assoc_change               *sctp_assoc_changed;
+      struct sctp_assoc_change *sctp_assoc_changed;
 
       sctp_assoc_changed = &snp->sn_assoc_change;
-      OAILOG_DEBUG (LOG_SCTP, "Client association changed: %d\n", sctp_assoc_changed->sac_state);
+      OAILOG_DEBUG(LOG_SCTP, "Client association changed: %d\n",
+                   sctp_assoc_changed->sac_state);
 
       /*
        * New physical association requested by a peer
        */
       switch (sctp_assoc_changed->sac_state) {
-      case SCTP_COMM_UP:{
-          struct sctp_association_s              *new_association = NULL;
+        case SCTP_COMM_UP: {
+          struct sctp_association_s *new_association = NULL;
 
-          sctp_get_sockinfo (sd, NULL, NULL, NULL);
-          OAILOG_DEBUG (LOG_SCTP, "New connection\n");
+          sctp_get_sockinfo(sd, NULL, NULL, NULL);
+          OAILOG_DEBUG(LOG_SCTP, "New connection\n");
 
-          if ((new_association = sctp_add_new_peer ()) == NULL) {
+          if ((new_association = sctp_add_new_peer()) == NULL) {
             // TODO: handle this case
-            DevMessage ("Unexpected error...\n");
+            DevMessage("Unexpected error...\n");
             return SCTP_RC_ERROR;
           } else {
             new_association->sd = sd;
             new_association->ppid = ppid;
-            new_association->instreams = sctp_assoc_changed->sac_inbound_streams;
-            new_association->outstreams = sctp_assoc_changed->sac_outbound_streams;
+            new_association->instreams =
+                sctp_assoc_changed->sac_inbound_streams;
+            new_association->outstreams =
+                sctp_assoc_changed->sac_outbound_streams;
             new_association->assoc_id = sctp_assoc_changed->sac_assoc_id;
-            sctp_get_localaddresses (sd, NULL, NULL);
-            sctp_get_peeraddresses (sd, &new_association->peer_addresses, &new_association->nb_peer_addresses);
+            sctp_get_localaddresses(sd, NULL, NULL);
+            sctp_get_peeraddresses(sd, &new_association->peer_addresses,
+                                   &new_association->nb_peer_addresses);
 
-            if (sctp_itti_send_new_association (new_association->assoc_id, new_association->instreams, new_association->outstreams) < 0) {
-              OAILOG_ERROR (LOG_SCTP, "Failed to send message to S1AP\n");
+            if (sctp_itti_send_new_association(
+                    new_association->assoc_id, new_association->instreams,
+                    new_association->outstreams) < 0) {
+              OAILOG_ERROR(LOG_SCTP, "Failed to send message to S1AP\n");
               return SCTP_RC_ERROR;
             }
           }
-        }
-        break;
+        } break;
 
-      case SCTP_RESTART:{
-        OAILOG_DEBUG (LOG_SCTP, "Received SCTP restart for the new connection.\n");
-        /** No separate SCTP INIT will be expected.. */
-        return SCTP_RC_ERROR;
-      }
-      break;
+        case SCTP_RESTART: {
+          OAILOG_DEBUG(LOG_SCTP,
+                       "Received SCTP restart for the new connection.\n");
+          /** No separate SCTP INIT will be expected.. */
+          return SCTP_RC_ERROR;
+        } break;
 
-      default:
-        break;
+        default:
+          break;
       }
     }
   } else {
     /*
      * Data payload received
      */
-    struct sctp_association_s              *association;
+    struct sctp_association_s *association;
 
-    if ((association = sctp_is_assoc_in_list (sinfo.sinfo_assoc_id)) == NULL) {
+    if ((association = sctp_is_assoc_in_list(sinfo.sinfo_assoc_id)) == NULL) {
       // TODO: handle this case
       return SCTP_RC_ERROR;
     }
 
     association->messages_recv++;
 
-    if (ntohl (sinfo.sinfo_ppid) != association->ppid) {
+    if (ntohl(sinfo.sinfo_ppid) != association->ppid) {
       /*
        * Mismatch in Payload Protocol Identifier,
-       * * * * may be we received unsollicited traffic from stack other than S1AP.
+       * * * * may be we received unsollicited traffic from stack other than
+       * S1AP.
        */
-      OAILOG_ERROR (LOG_SCTP, "Received data from peer with unsollicited PPID %d, expecting %d\n", ntohl (sinfo.sinfo_ppid), association->ppid);
+      OAILOG_ERROR(
+          LOG_SCTP,
+          "Received data from peer with unsollicited PPID %d, expecting %d\n",
+          ntohl(sinfo.sinfo_ppid), association->ppid);
       return SCTP_RC_ERROR;
     }
 
-    OAILOG_DEBUG (LOG_SCTP, "[%d][%d] Msg of length %d received from port %u, on stream %d, PPID %d\n", sinfo.sinfo_assoc_id, sd, n, ntohs (addr.sin6_port), sinfo.sinfo_stream, ntohl (sinfo.sinfo_ppid));
+    OAILOG_DEBUG(LOG_SCTP,
+                 "[%d][%d] Msg of length %d received from port %u, on stream "
+                 "%d, PPID %d\n",
+                 sinfo.sinfo_assoc_id, sd, n, ntohs(addr.sin6_port),
+                 sinfo.sinfo_stream, ntohl(sinfo.sinfo_ppid));
     bstring payload = blk2bstr(buffer, n);
-    sctp_itti_send_new_message_ind (&payload, sinfo.sinfo_assoc_id, sinfo.sinfo_stream, association->instreams, association->outstreams);
+    sctp_itti_send_new_message_ind(&payload, sinfo.sinfo_assoc_id,
+                                   sinfo.sinfo_stream, association->instreams,
+                                   association->outstreams);
   }
 
-  OAILOG_DEBUG (LOG_SCTP, "SCTP RETURNING!!\n");
+  OAILOG_DEBUG(LOG_SCTP, "SCTP RETURNING!!\n");
 
   return SCTP_RC_NORMAL_READ;
 }
 
 //------------------------------------------------------------------------------
-static int sctp_handle_com_down (sctp_assoc_id_t assoc_id)
-{
-  OAILOG_DEBUG (LOG_SCTP, "Sending close connection for assoc_id %u\n", assoc_id);
+static int sctp_handle_com_down(sctp_assoc_id_t assoc_id) {
+  OAILOG_DEBUG(LOG_SCTP, "Sending close connection for assoc_id %u\n",
+               assoc_id);
 
-  if (sctp_itti_send_com_down_ind (assoc_id) < 0) {
-    OAILOG_ERROR (LOG_SCTP, "Failed to send message to TASK_S1AP\n");
+  if (sctp_itti_send_com_down_ind(assoc_id) < 0) {
+    OAILOG_ERROR(LOG_SCTP, "Failed to send message to TASK_S1AP\n");
   }
 
-  if (sctp_remove_assoc_from_list (assoc_id) < 0) {
-    OAILOG_ERROR (LOG_SCTP, "Failed to find client in list\n");
+  if (sctp_remove_assoc_from_list(assoc_id) < 0) {
+    OAILOG_ERROR(LOG_SCTP, "Failed to find client in list\n");
   }
 
   return SCTP_RC_DISCONNECT;
 }
 
 //------------------------------------------------------------------------------
-void *sctp_receiver_thread (void *args_p)
-{
-  struct sctp_arg_s                      *sctp_arg_p = NULL;
+void *sctp_receiver_thread(void *args_p) {
+  struct sctp_arg_s *sctp_arg_p = NULL;
 
   /*
    * maximum file descriptor number
    */
-  int                                     fdmax,
-                                          clientsock,
-                                          i;
+  int fdmax, clientsock, i;
 
   /*
    * master file descriptor list
    */
-  fd_set                                  master;
+  fd_set master;
 
   /*
    * temp file descriptor list for select()
    */
-  fd_set                                  read_fds;
+  fd_set read_fds;
 
   if ((sctp_arg_p = (struct sctp_arg_s *)args_p) == NULL) {
-    pthread_exit (NULL);
+    pthread_exit(NULL);
   }
 
   /*
    * clear the master and temp sets
    */
-  FD_ZERO (&master);
-  FD_ZERO (&read_fds);
-  FD_SET (sctp_arg_p->sd, &master);
-  fdmax = sctp_arg_p->sd;       /* so far, it's this one */
+  FD_ZERO(&master);
+  FD_ZERO(&read_fds);
+  FD_SET(sctp_arg_p->sd, &master);
+  fdmax = sctp_arg_p->sd; /* so far, it's this one */
 
   while (1) {
-    memcpy (&read_fds, &master, sizeof (master));
+    memcpy(&read_fds, &master, sizeof(master));
 
-    if (select (fdmax + 1, &read_fds, NULL, NULL, NULL) == -1) {
-      OAILOG_ERROR (LOG_SCTP, "[%d] Select() error: %s", sctp_arg_p->sd, strerror (errno));
-      free_wrapper ((void**)&args_p);
-      pthread_exit (NULL);
+    if (select(fdmax + 1, &read_fds, NULL, NULL, NULL) == -1) {
+      OAILOG_ERROR(LOG_SCTP, "[%d] Select() error: %s", sctp_arg_p->sd,
+                   strerror(errno));
+      free_wrapper((void **)&args_p);
+      pthread_exit(NULL);
     }
 
     for (i = 0; i <= fdmax; i++) {
-      if (FD_ISSET (i, &read_fds)) {
+      if (FD_ISSET(i, &read_fds)) {
         if (i == sctp_arg_p->sd) {
           /*
-           * There is data to read on listener socket. This means we have to accept
+           * There is data to read on listener socket. This means we have to
+           * accept
            * * * * the connection.
            */
-          if ((clientsock = accept (sctp_arg_p->sd, NULL, NULL)) < 0) {
-            OAILOG_ERROR (LOG_SCTP, "[%d] accept: %s:%d\n", sctp_arg_p->sd, strerror (errno), errno);
-            free_wrapper ((void**)&args_p);
-            pthread_exit (NULL);
+          if ((clientsock = accept(sctp_arg_p->sd, NULL, NULL)) < 0) {
+            OAILOG_ERROR(LOG_SCTP, "[%d] accept: %s:%d\n", sctp_arg_p->sd,
+                         strerror(errno), errno);
+            free_wrapper((void **)&args_p);
+            pthread_exit(NULL);
           } else {
-            FD_SET (clientsock, &master);       /* add to master set */
+            FD_SET(clientsock, &master); /* add to master set */
 
             if (clientsock > fdmax) {
               /*
@@ -600,12 +634,12 @@ void *sctp_receiver_thread (void *args_p)
             }
           }
         } else {
-          int                                     ret;
+          int ret;
 
           /*
            * Read from socket
            */
-          ret = sctp_read_from_socket (i, sctp_arg_p->ppid);
+          ret = sctp_read_from_socket(i, sctp_arg_p->ppid);
 
           /*
            * When the socket is disconnected we have to update
@@ -615,11 +649,10 @@ void *sctp_receiver_thread (void *args_p)
             /*
              * Remove the socket from the FD set and update the max sd
              */
-            FD_CLR (i, &master);
+            FD_CLR(i, &master);
 
             if (i == fdmax) {
-              while (FD_ISSET (fdmax, &master) == false)
-                fdmax -= 1;
+              while (FD_ISSET(fdmax, &master) == false) fdmax -= 1;
             }
           }
         }
@@ -627,37 +660,35 @@ void *sctp_receiver_thread (void *args_p)
     }
   }
 
-  free_wrapper ((void**)&args_p);
+  free_wrapper((void **)&args_p);
   return NULL;
 }
 
 //------------------------------------------------------------------------------
-static void * sctp_intertask_interface (void *args_p)
-{
-  itti_mark_task_ready (TASK_SCTP);
+static void *sctp_intertask_interface(void *args_p) {
+  itti_mark_task_ready(TASK_SCTP);
 
   while (1) {
-    MessageDef                             *received_message_p = NULL;
+    MessageDef *received_message_p = NULL;
 
-    itti_receive_msg (TASK_SCTP, &received_message_p);
+    itti_receive_msg(TASK_SCTP, &received_message_p);
 
-    switch (ITTI_MSG_ID (received_message_p)) {
-    case SCTP_CLOSE_ASSOCIATION:{
-      }
-      break;
+    switch (ITTI_MSG_ID(received_message_p)) {
+      case SCTP_CLOSE_ASSOCIATION: {
+      } break;
 
-    case SCTP_DATA_REQ:{
-        if (sctp_send_msg (SCTP_DATA_REQ (received_message_p).assoc_id,
-            SCTP_DATA_REQ (received_message_p).stream,
-            &SCTP_DATA_REQ (received_message_p).payload) < 0) {
-
-          sctp_itti_send_lower_layer_conf(received_message_p->ittiMsgHeader.originTaskId,
-              SCTP_DATA_REQ (received_message_p).assoc_id,
-              SCTP_DATA_REQ (received_message_p).stream,
-              SCTP_DATA_REQ (received_message_p).mme_ue_s1ap_id,
-              false);
+      case SCTP_DATA_REQ: {
+        if (sctp_send_msg(SCTP_DATA_REQ(received_message_p).assoc_id,
+                          SCTP_DATA_REQ(received_message_p).stream,
+                          &SCTP_DATA_REQ(received_message_p).payload) < 0) {
+          sctp_itti_send_lower_layer_conf(
+              received_message_p->ittiMsgHeader.originTaskId,
+              SCTP_DATA_REQ(received_message_p).assoc_id,
+              SCTP_DATA_REQ(received_message_p).stream,
+              SCTP_DATA_REQ(received_message_p).mme_ue_s1ap_id, false);
         } /* NO NEED FOR CONFIRM success yet else {
-          if (INVALID_MME_UE_S1AP_ID != SCTP_DATA_REQ (received_message_p).mme_ue_s1ap_id) {
+          if (INVALID_MME_UE_S1AP_ID != SCTP_DATA_REQ
+        (received_message_p).mme_ue_s1ap_id) {
             sctp_itti_send_lower_layer_conf(received_message_p->ittiMsgHeader.originTaskId,
                 SCTP_DATA_REQ (received_message_p).assoc_id,
                 SCTP_DATA_REQ (received_message_p).stream,
@@ -665,45 +696,43 @@ static void * sctp_intertask_interface (void *args_p)
                 true);
           }
         }*/
-      }
-      break;
+      } break;
 
-    case SCTP_INIT_MSG:{
-        OAILOG_DEBUG (LOG_SCTP, "Received SCTP_INIT_MSG\n");
+      case SCTP_INIT_MSG: {
+        OAILOG_DEBUG(LOG_SCTP, "Received SCTP_INIT_MSG\n");
 
         /*
          * We received a new connection request
          */
-        if (sctp_create_new_listener (&received_message_p->ittiMsg.sctpInit) < 0) {
+        if (sctp_create_new_listener(&received_message_p->ittiMsg.sctpInit) <
+            0) {
           /*
            * SCTP socket creation or bind failed...
            */
-          OAILOG_ERROR (LOG_SCTP, "Failed to create new SCTP listener\n");
+          OAILOG_ERROR(LOG_SCTP, "Failed to create new SCTP listener\n");
         }
-      }
-      break;
+      } break;
 
-    case MESSAGE_TEST:{
+      case MESSAGE_TEST: {
         OAI_FPRINTF_INFO("TASK_SCTP received MESSAGE_TEST\n");
-      }
-      break;
+      } break;
 
-    case TERMINATE_MESSAGE:{
+      case TERMINATE_MESSAGE: {
         sctp_exit();
         itti_free_msg_content(received_message_p);
-        itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
-        itti_exit_task ();
-      }
-      break;
+        itti_free(ITTI_MSG_ORIGIN_ID(received_message_p), received_message_p);
+        itti_exit_task();
+      } break;
 
-    default:{
-        OAILOG_DEBUG (LOG_SCTP, "Unkwnon message ID %d:%s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p));
-      }
-      break;
+      default: {
+        OAILOG_DEBUG(LOG_SCTP, "Unkwnon message ID %d:%s\n",
+                     ITTI_MSG_ID(received_message_p),
+                     ITTI_MSG_NAME(received_message_p));
+      } break;
     }
 
     itti_free_msg_content(received_message_p);
-    itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
+    itti_free(ITTI_MSG_ORIGIN_ID(received_message_p), received_message_p);
     received_message_p = NULL;
   }
 
@@ -711,43 +740,46 @@ static void * sctp_intertask_interface (void *args_p)
 }
 
 //------------------------------------------------------------------------------
-int sctp_init (const mme_config_t * mme_config_p)
-{
-  OAILOG_DEBUG (LOG_SCTP, "Initializing SCTP task interface\n");
-  memset (&sctp_desc, 0, sizeof (struct sctp_descriptor_s));
+int sctp_init(const mme_config_t *mme_config_p) {
+  OAILOG_DEBUG(LOG_SCTP, "Initializing SCTP task interface\n");
+  memset(&sctp_desc, 0, sizeof(struct sctp_descriptor_s));
   /*
    * Number of streams from configuration
    */
   sctp_desc.nb_instreams = mme_config_p->sctp_config.in_streams;
   sctp_desc.nb_outstreams = mme_config_p->sctp_config.out_streams;
 
-  if (itti_create_task (TASK_SCTP, &sctp_intertask_interface, NULL) < 0) {
-    OAILOG_ERROR (LOG_SCTP, "create task failed");
-    OAILOG_DEBUG (LOG_SCTP, "Initializing SCTP task interface: FAILED\n");
+  if (itti_create_task(TASK_SCTP, &sctp_intertask_interface, NULL) < 0) {
+    OAILOG_ERROR(LOG_SCTP, "create task failed");
+    OAILOG_DEBUG(LOG_SCTP, "Initializing SCTP task interface: FAILED\n");
     return -1;
   }
 
-  OAILOG_DEBUG (LOG_SCTP, "Initializing SCTP task interface: DONE\n");
+  OAILOG_DEBUG(LOG_SCTP, "Initializing SCTP task interface: DONE\n");
   return 0;
 }
 
 //------------------------------------------------------------------------------
-static void sctp_exit (void)
-{
-
+static void sctp_exit(void) {
   int rv = pthread_cancel(assoc_thread);
-  if (rv) OAILOG_DEBUG (LOG_SCTP, "pthread_cancel(%08lX) failed: %d:%s\n", assoc_thread, rv, strerror(rv));
+  if (rv)
+    OAILOG_DEBUG(LOG_SCTP, "pthread_cancel(%08lX) failed: %d:%s\n",
+                 assoc_thread, rv, strerror(rv));
 
-  struct sctp_association_s              *sctp_assoc_p = sctp_desc.available_connections_head;
-  struct sctp_association_s              *next_sctp_assoc_p = sctp_desc.available_connections_head;
+  struct sctp_association_s *sctp_assoc_p =
+      sctp_desc.available_connections_head;
+  struct sctp_association_s *next_sctp_assoc_p =
+      sctp_desc.available_connections_head;
 
   while (next_sctp_assoc_p) {
     next_sctp_assoc_p = sctp_assoc_p->next_assoc;
     if (sctp_assoc_p->peer_addresses) {
       rv = sctp_freepaddrs(sctp_assoc_p->peer_addresses);
-      if (rv) OAILOG_DEBUG (LOG_SCTP, "sctp_freepaddrs(%p) failed\n", sctp_assoc_p->peer_addresses);
+      if (rv)
+        OAILOG_DEBUG(LOG_SCTP, "sctp_freepaddrs(%p) failed\n",
+                     sctp_assoc_p->peer_addresses);
     }
-    free_wrapper ((void**)&sctp_assoc_p);
+    free_wrapper((void **)&sctp_assoc_p);
     sctp_desc.number_of_connections--;
     sctp_assoc_p = next_sctp_assoc_p;
   }

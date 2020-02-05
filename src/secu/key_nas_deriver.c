@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -19,22 +19,21 @@
  *      contact@openairinterface.org
  */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "bstrlib.h"
 
-#include "security_types.h"
-#include "secu_defs.h"
-#include "secu_defs.h"
 #include "log.h"
+#include "secu_defs.h"
+#include "security_types.h"
 
 /*!
-   @brief Derive the kNASenc from kasme and perform truncate on the generated key to
-   reduce his size to 128 bits. Definition of the derivation function can
+   @brief Derive the kNASenc from kasme and perform truncate on the generated
+   key to reduce his size to 128 bits. Definition of the derivation function can
    be found in 3GPP TS.33401 #A.7
    @param[in] nas_alg_type NAS algorithm distinguisher
    @param[in] nas_enc_alg_id NAS encryption/integrity algorithm identifier.
@@ -46,15 +45,10 @@
    @param[out] knas Pointer to reference where output of KDF will be stored.
    NOTE: knas is dynamically allocated by the KDF function
 */
-int
-derive_key_nas (
-  algorithm_type_dist_t nas_alg_type,
-  uint8_t nas_enc_alg_id,
-  const uint8_t *kasme_32,
-  uint8_t * knas)
-{
-  uint8_t                                 s[7] = {0};
-  uint8_t                                 out[32] = {0};
+int derive_key_nas(algorithm_type_dist_t nas_alg_type, uint8_t nas_enc_alg_id,
+                   const uint8_t *kasme_32, uint8_t *knas) {
+  uint8_t s[7] = {0};
+  uint8_t out[32] = {0};
 
   /*
    * FC
@@ -63,7 +57,7 @@ derive_key_nas (
   /*
    * P0 = algorithm type distinguisher
    */
-  s[1] = (uint8_t) (nas_alg_type & 0xFF);
+  s[1] = (uint8_t)(nas_alg_type & 0xFF);
   /*
    * L0 = length(P0) = 1
    */
@@ -78,10 +72,11 @@ derive_key_nas (
    */
   s[5] = 0x00;
   s[6] = 0x01;
-  //OAILOG_TRACE (LOG_NAS, "FC %d nas_alg_type distinguisher %d nas_enc_alg_identity %d\n", FC_ALG_KEY_DER, nas_alg_type, nas_enc_alg_id);
-  //OAILOG_STREAM_HEX(OAILOG_LEVEL_TRACE, LOG_NAS, "s:", s, 7);
-  //OAILOG_STREAM_HEX(OAILOG_LEVEL_TRACE, LOG_NAS, "kasme_32:", kasme_32, 32);
-  kdf (kasme_32, 32, &s[0], 7, &out[0], 32);
-  memcpy (knas, &out[31 - 16 + 1], 16);
+  // OAILOG_TRACE (LOG_NAS, "FC %d nas_alg_type distinguisher %d
+  // nas_enc_alg_identity %d\n", FC_ALG_KEY_DER, nas_alg_type, nas_enc_alg_id);
+  // OAILOG_STREAM_HEX(OAILOG_LEVEL_TRACE, LOG_NAS, "s:", s, 7);
+  // OAILOG_STREAM_HEX(OAILOG_LEVEL_TRACE, LOG_NAS, "kasme_32:", kasme_32, 32);
+  kdf(kasme_32, 32, &s[0], 7, &out[0], 32);
+  memcpy(knas, &out[31 - 16 + 1], 16);
   return 0;
 }

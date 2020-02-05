@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -19,7 +19,6 @@
  *      contact@openairinterface.org
  */
 
-
 /*! \file s6a_peers.c
    \brief Add a new entity to the list of peers to connect
    \author Sebastien ROUX <sebastien.roux@eurecom.fr>
@@ -30,36 +29,32 @@
 #include <stdint.h>
 #include <unistd.h>
 
+#include "assertions.h"
 #include "common_defs.h"
 #include "common_types.h"
+#include "dynamic_memory_check.h"
 #include "intertask_interface.h"
+#include "log.h"
 #include "s6a_defs.h"
 #include "s6a_messages.h"
-#include "assertions.h"
-#include "dynamic_memory_check.h"
-#include "log.h"
 
-#define NB_MAX_TRIES  (8)
+#define NB_MAX_TRIES (8)
 
 extern __pid_t g_pid;
 
-
-void
-s6a_peer_connected_cb (
-  struct peer_info *info,
-  void *arg)
-{
+void s6a_peer_connected_cb(struct peer_info *info, void *arg) {
   if (info == NULL) {
-    OAILOG_ERROR (LOG_S6A, "Failed to connect to HSS entity\n");
+    OAILOG_ERROR(LOG_S6A, "Failed to connect to HSS entity\n");
   } else {
-    MessageDef                             *message_p;
+    MessageDef *message_p;
 
-    OAILOG_DEBUG (LOG_S6A, "Peer %*s is now connected...\n", (int)info->pi_diamidlen, info->pi_diamid);
+    OAILOG_DEBUG(LOG_S6A, "Peer %*s is now connected...\n",
+                 (int)info->pi_diamidlen, info->pi_diamid);
     /*
      * Inform S1AP that connection to HSS is established
      */
-    message_p = itti_alloc_new_message (TASK_S6A, ACTIVATE_MESSAGE);
-    itti_send_msg_to_task (TASK_S1AP, INSTANCE_DEFAULT, message_p);
+    message_p = itti_alloc_new_message(TASK_S6A, ACTIVATE_MESSAGE);
+    itti_send_msg_to_task(TASK_S1AP, INSTANCE_DEFAULT, message_p);
   }
 
   /*
@@ -85,92 +80,92 @@ s6a_peer_connected_cb (
 #endif
 }
 
-int
-s6a_fd_new_peer (
-  void)
-{
-  char                                    host_name[100];
-  size_t                                  host_name_len = 0;
-  int                                     ret = 0;
+int s6a_fd_new_peer(void) {
+  char host_name[100];
+  size_t host_name_len = 0;
+  int ret = 0;
 #if FD_CONF_FILE_NO_CONNECT_PEERS_CONFIGURED
-  struct peer_info                        info = {0};
+  struct peer_info info = {0};
 #endif
 
-  if (mme_config_read_lock (&mme_config) ) {
-    OAILOG_ERROR (LOG_S6A, "Failed to lock configuration for reading\n");
+  if (mme_config_read_lock(&mme_config)) {
+    OAILOG_ERROR(LOG_S6A, "Failed to lock configuration for reading\n");
     return RETURNerror;
   }
 
-//  if (fd_g_config->cnf_diamid ) {
-//    free (fd_g_config->cnf_diamid);
-//    fd_g_config->cnf_diamid_len = 0;
-//  }
+  //  if (fd_g_config->cnf_diamid ) {
+  //    free (fd_g_config->cnf_diamid);
+  //    fd_g_config->cnf_diamid_len = 0;
+  //  }
 
-//  DevAssert (gethostname (host_name, 100) == 0);
-//  host_name_len = strlen (host_name);
-//  host_name[host_name_len] = '.';
-//  host_name[host_name_len + 1] = '\0';
-//  strcat (host_name, (const char *)mme_config.realm->data);
-//  fd_g_config->cnf_diamid = strdup (host_name);
-//  fd_g_config->cnf_diamid_len = strlen (fd_g_config->cnf_diamid);
-  OAILOG_DEBUG (LOG_S6A, "Diameter identity of MME: %s with length: %zd\n", fd_g_config->cnf_diamid, fd_g_config->cnf_diamid_len);
-  bstring                                 hss_name = bstrcpy(mme_config.s6a_config.hss_host_name);
+  //  DevAssert (gethostname (host_name, 100) == 0);
+  //  host_name_len = strlen (host_name);
+  //  host_name[host_name_len] = '.';
+  //  host_name[host_name_len + 1] = '\0';
+  //  strcat (host_name, (const char *)mme_config.realm->data);
+  //  fd_g_config->cnf_diamid = strdup (host_name);
+  //  fd_g_config->cnf_diamid_len = strlen (fd_g_config->cnf_diamid);
+  OAILOG_DEBUG(LOG_S6A, "Diameter identity of MME: %s with length: %zd\n",
+               fd_g_config->cnf_diamid, fd_g_config->cnf_diamid_len);
+  bstring hss_name = bstrcpy(mme_config.s6a_config.hss_host_name);
   bconchar(hss_name, '.');
-  bconcat (hss_name, mme_config.realm);
+  bconcat(hss_name, mme_config.realm);
 
-  if (mme_config_unlock (&mme_config) ) {
-    OAILOG_ERROR (LOG_S6A, "Failed to unlock configuration\n");
+  if (mme_config_unlock(&mme_config)) {
+    OAILOG_ERROR(LOG_S6A, "Failed to unlock configuration\n");
     return RETURNerror;
   }
 #if FD_CONF_FILE_NO_CONNECT_PEERS_CONFIGURED
-  info.pi_diamid    = bdata(hss_name);
-  info.pi_diamidlen = blength (hss_name);
-  OAILOG_DEBUG (LOG_S6A, "Diameter identity of HSS: %s with length: %zd\n", info.pi_diamid, info.pi_diamidlen);
-  info.config.pic_flags.sec     = PI_SEC_NONE;
-  info.config.pic_flags.pro3    = PI_P3_DEFAULT;
-  info.config.pic_flags.pro4    = PI_P4_TCP;
-  info.config.pic_flags.alg     = PI_ALGPREF_TCP;
-  info.config.pic_flags.exp     = PI_EXP_INACTIVE;
+  info.pi_diamid = bdata(hss_name);
+  info.pi_diamidlen = blength(hss_name);
+  OAILOG_DEBUG(LOG_S6A, "Diameter identity of HSS: %s with length: %zd\n",
+               info.pi_diamid, info.pi_diamidlen);
+  info.config.pic_flags.sec = PI_SEC_NONE;
+  info.config.pic_flags.pro3 = PI_P3_DEFAULT;
+  info.config.pic_flags.pro4 = PI_P4_TCP;
+  info.config.pic_flags.alg = PI_ALGPREF_TCP;
+  info.config.pic_flags.exp = PI_EXP_INACTIVE;
   info.config.pic_flags.persist = PI_PRST_NONE;
-  info.config.pic_port          = 3868;
-  info.config.pic_lft           = 3600;
-  info.config.pic_tctimer       = 7; // retry time-out connection
-  info.config.pic_twtimer       = 60; // watchdog
-  CHECK_FCT (fd_peer_add (&info, "", s6a_peer_connected_cb, NULL));
+  info.config.pic_port = 3868;
+  info.config.pic_lft = 3600;
+  info.config.pic_tctimer = 7;   // retry time-out connection
+  info.config.pic_twtimer = 60;  // watchdog
+  CHECK_FCT(fd_peer_add(&info, "", s6a_peer_connected_cb, NULL));
 
   return ret;
 #else
-  DiamId_t          diamid    = bdata(hss_name);
-  size_t            diamidlen = blength (hss_name);
-  struct peer_hdr  *peer      = NULL;
-  int               nb_tries  = 0;
-  int               timeout   = fd_g_config->cnf_timer_tc;
+  DiamId_t diamid = bdata(hss_name);
+  size_t diamidlen = blength(hss_name);
+  struct peer_hdr *peer = NULL;
+  int nb_tries = 0;
+  int timeout = fd_g_config->cnf_timer_tc;
 
   for (nb_tries = 0; nb_tries < NB_MAX_TRIES; nb_tries++) {
-    OAILOG_DEBUG (LOG_S6A, "S6a peer connection attempt %d / %d\n",
-                  1 + nb_tries, NB_MAX_TRIES);
-    ret = fd_peer_getbyid( diamid, diamidlen, 0, &peer );
+    OAILOG_DEBUG(LOG_S6A, "S6a peer connection attempt %d / %d\n", 1 + nb_tries,
+                 NB_MAX_TRIES);
+    ret = fd_peer_getbyid(diamid, diamidlen, 0, &peer);
 
     if (peer && peer->info.config.pic_tctimer != 0) {
-        timeout = peer->info.config.pic_tctimer;
+      timeout = peer->info.config.pic_tctimer;
     }
 
     if (!ret) {
       if (peer) {
         ret = fd_peer_get_state(peer);
         if (STATE_OPEN == ret) {
-          MessageDef                             *message_p;
+          MessageDef *message_p;
 
-          OAILOG_DEBUG (LOG_S6A, "Peer %*s is now connected...\n", (int)diamidlen, diamid);
+          OAILOG_DEBUG(LOG_S6A, "Peer %*s is now connected...\n",
+                       (int)diamidlen, diamid);
           /*
            * Inform S1AP that connection to HSS is established
            */
-          message_p = itti_alloc_new_message (TASK_S6A, ACTIVATE_MESSAGE);
-          itti_send_msg_to_task (TASK_S1AP, INSTANCE_DEFAULT, message_p);
+          message_p = itti_alloc_new_message(TASK_S6A, ACTIVATE_MESSAGE);
+          itti_send_msg_to_task(TASK_S1AP, INSTANCE_DEFAULT, message_p);
 
           {
             FILE *fp = NULL;
-            bstring  filename = bformat("/tmp/mme_%d.status", g_pid);
+            bstring filename = bformat("/tmp/mme_%d.status", g_pid);
             fp = fopen(bdata(filename), "w+");
             bdestroy_wrapper(&filename);
             fflush(fp);
@@ -179,19 +174,20 @@ s6a_fd_new_peer (
           bdestroy_wrapper(&hss_name);
           return RETURNok;
         } else {
-          OAILOG_DEBUG (LOG_S6A, "S6a peer state is %d\n", ret);
+          OAILOG_DEBUG(LOG_S6A, "S6a peer state is %d\n", ret);
         }
-      }  else {
-        OAILOG_DEBUG (LOG_S6A, "Could not get S6a peer informations %s\n", diamid);
+      } else {
+        OAILOG_DEBUG(LOG_S6A, "Could not get S6a peer informations %s\n",
+                     diamid);
       }
     } else {
-      OAILOG_DEBUG (LOG_S6A, "Could not get S6a peer by id: %s\n", diamid);
+      OAILOG_DEBUG(LOG_S6A, "Could not get S6a peer by id: %s\n", diamid);
     }
     sleep(timeout);
   }
   bdestroy_wrapper(&hss_name);
-  if(fd_g_config->cnf_diamid){
-    free_wrapper((void **) &fd_g_config->cnf_diamid);
+  if (fd_g_config->cnf_diamid) {
+    free_wrapper((void **)&fd_g_config->cnf_diamid);
   }
   fd_g_config->cnf_diamid_len = 0;
   return RETURNerror;

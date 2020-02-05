@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -18,7 +18,6 @@
  * For more information about the OpenAirInterface (OAI) Software Alliance:
  *      contact@openairinterface.org
  */
-
 
 /*! \file mme_app_capabilities.c
   \brief
@@ -34,31 +33,29 @@
 
 #include "bstrlib.h"
 
-#include "log.h"
-#include "intertask_interface.h"
-#include "mme_config.h"
-#include "mme_app_defs.h"
 #include "assertions.h"
 #include "common_defs.h"
+#include "intertask_interface.h"
+#include "log.h"
+#include "mme_app_defs.h"
+#include "mme_config.h"
 
-int
-mme_app_handle_s1ap_ue_capabilities_ind (
-    const itti_s1ap_ue_cap_ind_t * const s1ap_ue_cap_ind_pP)
-{
+int mme_app_handle_s1ap_ue_capabilities_ind(
+    const itti_s1ap_ue_cap_ind_t *const s1ap_ue_cap_ind_pP) {
   ue_context_t *ue_context = NULL;
 
-  OAILOG_FUNC_IN (LOG_MME_APP);
-  DevAssert (s1ap_ue_cap_ind_pP );
+  OAILOG_FUNC_IN(LOG_MME_APP);
+  DevAssert(s1ap_ue_cap_ind_pP);
 
   ue_context = mme_ue_context_exists_mme_ue_s1ap_id(
-    &mme_app_desc.mme_ue_contexts, s1ap_ue_cap_ind_pP->mme_ue_s1ap_id);
+      &mme_app_desc.mme_ue_contexts, s1ap_ue_cap_ind_pP->mme_ue_s1ap_id);
   if (!ue_context) {
-    OAILOG_ERROR (
-      LOG_MME_APP,
-      "UE context doesn't exist for enb_ue_s1ap_ue_id " ENB_UE_S1AP_ID_FMT
-      " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n",
-      s1ap_ue_cap_ind_pP->enb_ue_s1ap_id, s1ap_ue_cap_ind_pP->mme_ue_s1ap_id);
-    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+    OAILOG_ERROR(
+        LOG_MME_APP,
+        "UE context doesn't exist for enb_ue_s1ap_ue_id " ENB_UE_S1AP_ID_FMT
+        " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n",
+        s1ap_ue_cap_ind_pP->enb_ue_s1ap_id, s1ap_ue_cap_ind_pP->mme_ue_s1ap_id);
+    OAILOG_FUNC_RETURN(LOG_MME_APP, RETURNerror);
   }
 
   if (ue_context->privates.fields.ue_radio_capability) {
@@ -67,13 +64,14 @@ mme_app_handle_s1ap_ue_capabilities_ind (
 
   // Allocate the radio capabilities memory. Note that this takes care of the
   // length = 0 case for us quite nicely.
-  ue_context->privates.fields.ue_radio_capability = blk2bstr(s1ap_ue_cap_ind_pP->radio_capabilities, s1ap_ue_cap_ind_pP->radio_capabilities_length);
+  ue_context->privates.fields.ue_radio_capability =
+      blk2bstr(s1ap_ue_cap_ind_pP->radio_capabilities,
+               s1ap_ue_cap_ind_pP->radio_capabilities_length);
 
-  OAILOG_DEBUG (LOG_MME_APP,
+  OAILOG_DEBUG(LOG_MME_APP,
                "UE radio capabilities of length %d found and cached\n",
                ue_context->privates.fields.ue_radio_capability->slen);
 
-//  unlock_ue_contexts(ue_context);
-  OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
+  //  unlock_ue_contexts(ue_context);
+  OAILOG_FUNC_RETURN(LOG_MME_APP, RETURNok);
 }
-

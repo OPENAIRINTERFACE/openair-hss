@@ -19,7 +19,8 @@
  *      contact@openairinterface.org
  */
 
-//WARNING: Do not include this header directly. Use intertask_interface.h instead.
+// WARNING: Do not include this header directly. Use intertask_interface.h
+// instead.
 
 /*! \file async_system_messages_def.h
   \brief
@@ -28,4 +29,5 @@
   \email: lionel.gauthier@eurecom.fr
 */
 
-MESSAGE_DEF(ASYNC_SYSTEM_COMMAND,           MESSAGE_PRIORITY_MED,   itti_async_system_command_t, async_system_command)
+MESSAGE_DEF(ASYNC_SYSTEM_COMMAND, MESSAGE_PRIORITY_MED,
+            itti_async_system_command_t, async_system_command)

@@ -24,40 +24,40 @@
   \company Eurecom
   \email: lionel.gauthier@eurecom.fr
 */
-#include <stdio.h>
-#include <stdint.h>
+#include <errno.h>
 #include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include <errno.h>
 
 #include "bstrlib.h"
 #include "queue.h"
 
+#include "3gpp_23.003.h"
+#include "3gpp_24.007.h"
+#include "3gpp_24.008.h"
+#include "3gpp_24.301.h"
+#include "3gpp_33.401.h"
+#include "3gpp_36.331.h"
+#include "3gpp_36.401.h"
+#include "ControllerMain.h"
+#include "assertions.h"
+#include "async_system.h"
+#include "common_defs.h"
+#include "common_types.h"
+#include "conversions.h"
 #include "dynamic_memory_check.h"
+#include "gtpv1u.h"
+#include "gtpv1u_sgw_defs.h"
+#include "intertask_interface.h"
 #include "log.h"
 #include "obj_hashtable.h"
-#include "assertions.h"
-#include "conversions.h"
-#include "3gpp_23.003.h"
-#include "3gpp_24.008.h"
-#include "3gpp_33.401.h"
-#include "3gpp_24.007.h"
-#include "3gpp_36.401.h"
-#include "3gpp_36.331.h"
-#include "3gpp_24.301.h"
-#include "security_types.h"
-#include "common_types.h"
-#include "common_defs.h"
-#include "intertask_interface.h"
-#include "gtpv1u.h"
-#include "sgw_config.h"
 #include "pgw_config.h"
-#include "spgw_config.h"
-#include "gtpv1u_sgw_defs.h"
-#include "ControllerMain.h"
-#include "async_system.h"
+#include "security_types.h"
 #include "sgw.h"
+#include "sgw_config.h"
+#include "spgw_config.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -67,11 +67,10 @@ extern sgw_app_t sgw_app;
 
 const struct gtp_tunnel_ops *gtp_tunnel_ops;
 
-static void  *gtpv1u_thread (void *args)
-{
-  itti_mark_task_ready (TASK_GTPV1_U);
+static void *gtpv1u_thread(void *args) {
+  itti_mark_task_ready(TASK_GTPV1_U);
 
-  gtpv1u_data_t * gtpv1u_data = (gtpv1u_data_t*)args;
+  gtpv1u_data_t *gtpv1u_data = (gtpv1u_data_t *)args;
 
   while (1) {
     /*
@@ -79,24 +78,24 @@ static void  *gtpv1u_thread (void *args)
      * * * * If the queue is empty, this function will block till a
      * * * * message is sent to the task.
      */
-    MessageDef                             *received_message_p = NULL;
+    MessageDef *received_message_p = NULL;
 
-    itti_receive_msg (TASK_GTPV1_U, &received_message_p);
-    DevAssert (received_message_p != NULL);
+    itti_receive_msg(TASK_GTPV1_U, &received_message_p);
+    DevAssert(received_message_p != NULL);
 
-    switch (ITTI_MSG_ID (received_message_p)) {
+    switch (ITTI_MSG_ID(received_message_p)) {
+      case TERMINATE_MESSAGE:
+        gtpv1u_exit(gtpv1u_data);
+        break;
 
-    case TERMINATE_MESSAGE:
-      gtpv1u_exit (gtpv1u_data);
-      break;
-
-    default:{
-        OAILOG_ERROR (LOG_GTPV1U , "Unkwnon message ID %d:%s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p));
-      }
-      break;
+      default: {
+        OAILOG_ERROR(LOG_GTPV1U, "Unkwnon message ID %d:%s\n",
+                     ITTI_MSG_ID(received_message_p),
+                     ITTI_MSG_NAME(received_message_p));
+      } break;
     }
 
-    itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
+    itti_free(ITTI_MSG_ORIGIN_ID(received_message_p), received_message_p);
     received_message_p = NULL;
   }
 
@@ -104,13 +103,13 @@ static void  *gtpv1u_thread (void *args)
 }
 
 //------------------------------------------------------------------------------
-int gtpv1u_init (spgw_config_t *spgw_config)
-{
+int gtpv1u_init(spgw_config_t *spgw_config) {
   int rv = 0;
 
-  OAILOG_DEBUG (LOG_GTPV1U , "Initializing GTPV1U interface\n");
-  memset (&sgw_app.gtpv1u_data, 0, sizeof (sgw_app.gtpv1u_data));
-  sgw_app.gtpv1u_data.sgw_ip_address_for_S1u_S12_S4_up = sgw_app.sgw_ip_address_S1u_S12_S4_up;
+  OAILOG_DEBUG(LOG_GTPV1U, "Initializing GTPV1U interface\n");
+  memset(&sgw_app.gtpv1u_data, 0, sizeof(sgw_app.gtpv1u_data));
+  sgw_app.gtpv1u_data.sgw_ip_address_for_S1u_S12_S4_up =
+      sgw_app.sgw_ip_address_S1u_S12_S4_up;
 
   // START-GTP quick integration only for evaluation purpose
 
@@ -118,64 +117,69 @@ int gtpv1u_init (spgw_config_t *spgw_config)
   gtp_tunnel_ops = gtp_tunnel_ops_init();
 
   if (gtp_tunnel_ops == NULL) {
-    OAILOG_CRITICAL (LOG_GTPV1U, "ERROR in initializing gtp_tunnel_ops\n");
+    OAILOG_CRITICAL(LOG_GTPV1U, "ERROR in initializing gtp_tunnel_ops\n");
     return -1;
   }
 
   // Clean hard previous mappings.
   rv = gtp_tunnel_ops->reset();
   if (rv != 0) {
-    OAILOG_CRITICAL (LOG_GTPV1U, "ERROR clean existing gtp states.\n");
+    OAILOG_CRITICAL(LOG_GTPV1U, "ERROR clean existing gtp states.\n");
     return -1;
   }
-  //AssertFatal(spgw_config->pgw_config.num_ue_pool == 1, "No more than 1 UE pool allowed actually");
-  //for (int i = 0; i < spgw_config->pgw_config.num_ue_pool; i++) {
-    // GTP device uses the same MTU as SGi.
-    gtp_tunnel_ops->init(&spgw_config->pgw_config.ue_pool_network[0],
-                         &spgw_config->pgw_config.ue_pool_netmask[0], spgw_config->pgw_config.ipv4.mtu_SGI,
-                         &sgw_app.gtpv1u_data.fd0, &sgw_app.gtpv1u_data.fd1u);
+  // AssertFatal(spgw_config->pgw_config.num_ue_pool == 1, "No more than 1 UE
+  // pool allowed actually"); for (int i = 0; i <
+  // spgw_config->pgw_config.num_ue_pool; i++) {
+  // GTP device uses the same MTU as SGi.
+  gtp_tunnel_ops->init(&spgw_config->pgw_config.ue_pool_network[0],
+                       &spgw_config->pgw_config.ue_pool_netmask[0],
+                       spgw_config->pgw_config.ipv4.mtu_SGI,
+                       &sgw_app.gtpv1u_data.fd0, &sgw_app.gtpv1u_data.fd1u);
   //}
 
   // END-GTP quick integration only for evaluation purpose
 
-  if (itti_create_task (TASK_GTPV1_U, &gtpv1u_thread, &sgw_app.gtpv1u_data) < 0) {
-    OAILOG_ERROR (LOG_GTPV1U , "gtpv1u phtread_create: %s", strerror (errno));
+  if (itti_create_task(TASK_GTPV1_U, &gtpv1u_thread, &sgw_app.gtpv1u_data) <
+      0) {
+    OAILOG_ERROR(LOG_GTPV1U, "gtpv1u phtread_create: %s", strerror(errno));
     gtp_tunnel_ops->uninit();
     return -1;
   }
 
 #if ENABLE_OPENFLOW
-  bstring command = bformat("ovs-vsctl set-controller %s tcp:%s:%u",  bdata(spgw_config->pgw_config.ovs_config.bridge_name), CONTROLLER_ADDR, CONTROLLER_PORT);
-  async_system_command (TASK_ASYNC_SYSTEM, false, bdata(command));
+  bstring command =
+      bformat("ovs-vsctl set-controller %s tcp:%s:%u",
+              bdata(spgw_config->pgw_config.ovs_config.bridge_name),
+              CONTROLLER_ADDR, CONTROLLER_PORT);
+  async_system_command(TASK_ASYNC_SYSTEM, false, bdata(command));
   bdestroy_wrapper(&command);
 #endif
 
-  OAILOG_DEBUG (LOG_GTPV1U , "Initializing GTPV1U interface: DONE\n");
+  OAILOG_DEBUG(LOG_GTPV1U, "Initializing GTPV1U interface: DONE\n");
   return 0;
 }
 
 //------------------------------------------------------------------------------
-void gtpv1u_exit (gtpv1u_data_t * const gtpv1u_data)
-{
+void gtpv1u_exit(gtpv1u_data_t *const gtpv1u_data) {
   // START-GTP quick integration only for evaluation purpose
-//  void * res = 0;
-//  int rv  = pthread_cancel(gtpv1u_data->reader_thread);
-//  if (rv != 0) {
-//    OAILOG_ERROR (LOG_GTPV1U , "gtp_decaps1u pthread_cancel");
-//  }
-//  rv = pthread_join(gtpv1u_data->reader_thread, &res);
-//  if (rv != 0)
-//    OAILOG_ERROR (LOG_GTPV1U , "gtp_decaps1u pthread_join");
-//
-//  if (res == PTHREAD_CANCELED) {
-//    OAILOG_DEBUG (LOG_GTPV1U , "gtp_decaps1u thread was canceled\n");
-//  } else {
-//    OAILOG_ERROR (LOG_GTPV1U , "gtp_decaps1u thread wasn't canceled\n");
-//  }
+  //  void * res = 0;
+  //  int rv  = pthread_cancel(gtpv1u_data->reader_thread);
+  //  if (rv != 0) {
+  //    OAILOG_ERROR (LOG_GTPV1U , "gtp_decaps1u pthread_cancel");
+  //  }
+  //  rv = pthread_join(gtpv1u_data->reader_thread, &res);
+  //  if (rv != 0)
+  //    OAILOG_ERROR (LOG_GTPV1U , "gtp_decaps1u pthread_join");
+  //
+  //  if (res == PTHREAD_CANCELED) {
+  //    OAILOG_DEBUG (LOG_GTPV1U , "gtp_decaps1u thread was canceled\n");
+  //  } else {
+  //    OAILOG_ERROR (LOG_GTPV1U , "gtp_decaps1u thread wasn't canceled\n");
+  //  }
 
   gtp_tunnel_ops->uninit();
   // END-GTP quick integration only for evaluation purpose
-  itti_exit_task ();
+  itti_exit_task();
 }
 
 #ifdef __cplusplus

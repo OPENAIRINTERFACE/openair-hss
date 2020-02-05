@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -48,6 +48,6 @@ Description Defines error cause code returned upon receiving unknown,
  * Cause code used to notify that the EPS session management procedure
  * has been successfully processed
  */
-#define ESM_CAUSE_SUCCESS     (esm_cause_t)(-1)
+#define ESM_CAUSE_SUCCESS (esm_cause_t)(-1)
 
 #endif /* FILE_ESM_CAUSE_SEEN*/

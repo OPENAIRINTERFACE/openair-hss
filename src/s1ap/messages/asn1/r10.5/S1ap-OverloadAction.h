@@ -4,9 +4,8 @@
  * 	found in "S1AP-IEs.asn"
  */
 
-#ifndef	_S1ap_OverloadAction_H_
-#define	_S1ap_OverloadAction_H_
-
+#ifndef _S1ap_OverloadAction_H_
+#define _S1ap_OverloadAction_H_
 
 #include <asn_application.h>
 
@@ -19,18 +18,20 @@ extern "C" {
 
 /* Dependencies */
 typedef enum S1ap_OverloadAction {
-	S1ap_OverloadAction_reject_non_emergency_mo_dt	= 0,
-	S1ap_OverloadAction_reject_rrc_cr_signalling	= 1,
-	S1ap_OverloadAction_permit_emergency_sessions_and_mobile_terminated_services_only	= 2,
-	/*
-	 * Enumeration is extensible
-	 */
-	S1ap_OverloadAction_permit_high_priority_sessions_and_mobile_terminated_services_only	= 3,
-	S1ap_OverloadAction_reject_delay_tolerant_access	= 4
+  S1ap_OverloadAction_reject_non_emergency_mo_dt = 0,
+  S1ap_OverloadAction_reject_rrc_cr_signalling = 1,
+  S1ap_OverloadAction_permit_emergency_sessions_and_mobile_terminated_services_only =
+      2,
+  /*
+   * Enumeration is extensible
+   */
+  S1ap_OverloadAction_permit_high_priority_sessions_and_mobile_terminated_services_only =
+      3,
+  S1ap_OverloadAction_reject_delay_tolerant_access = 4
 } e_S1ap_OverloadAction;
 
 /* S1ap-OverloadAction */
-typedef long	 S1ap_OverloadAction_t;
+typedef long S1ap_OverloadAction_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_S1ap_OverloadAction;
@@ -46,5 +47,5 @@ xer_type_encoder_f S1ap_OverloadAction_encode_xer;
 }
 #endif
 
-#endif	/* _S1ap_OverloadAction_H_ */
+#endif /* _S1ap_OverloadAction_H_ */
 #include <asn_internal.h>

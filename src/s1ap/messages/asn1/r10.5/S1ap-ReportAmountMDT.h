@@ -4,9 +4,8 @@
  * 	found in "S1AP-IEs.asn"
  */
 
-#ifndef	_S1ap_ReportAmountMDT_H_
-#define	_S1ap_ReportAmountMDT_H_
-
+#ifndef _S1ap_ReportAmountMDT_H_
+#define _S1ap_ReportAmountMDT_H_
 
 #include <asn_application.h>
 
@@ -19,18 +18,18 @@ extern "C" {
 
 /* Dependencies */
 typedef enum S1ap_ReportAmountMDT {
-	S1ap_ReportAmountMDT_r1	= 0,
-	S1ap_ReportAmountMDT_r2	= 1,
-	S1ap_ReportAmountMDT_r4	= 2,
-	S1ap_ReportAmountMDT_r8	= 3,
-	S1ap_ReportAmountMDT_r16	= 4,
-	S1ap_ReportAmountMDT_r32	= 5,
-	S1ap_ReportAmountMDT_r64	= 6,
-	S1ap_ReportAmountMDT_rinfinity	= 7
+  S1ap_ReportAmountMDT_r1 = 0,
+  S1ap_ReportAmountMDT_r2 = 1,
+  S1ap_ReportAmountMDT_r4 = 2,
+  S1ap_ReportAmountMDT_r8 = 3,
+  S1ap_ReportAmountMDT_r16 = 4,
+  S1ap_ReportAmountMDT_r32 = 5,
+  S1ap_ReportAmountMDT_r64 = 6,
+  S1ap_ReportAmountMDT_rinfinity = 7
 } e_S1ap_ReportAmountMDT;
 
 /* S1ap-ReportAmountMDT */
-typedef long	 S1ap_ReportAmountMDT_t;
+typedef long S1ap_ReportAmountMDT_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_S1ap_ReportAmountMDT;
@@ -46,5 +45,5 @@ xer_type_encoder_f S1ap_ReportAmountMDT_encode_xer;
 }
 #endif
 
-#endif	/* _S1ap_ReportAmountMDT_H_ */
+#endif /* _S1ap_ReportAmountMDT_H_ */
 #include <asn_internal.h>

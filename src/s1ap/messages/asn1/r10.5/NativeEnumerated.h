@@ -10,8 +10,8 @@
  * will do).
  * This type may be used when integer range is limited by subtype constraints.
  */
-#ifndef	_NativeEnumerated_H_
-#define	_NativeEnumerated_H_
+#ifndef _NativeEnumerated_H_
+#define _NativeEnumerated_H_
 
 #include <NativeInteger.h>
 
@@ -26,10 +26,10 @@ per_type_decoder_f NativeEnumerated_decode_uper;
 per_type_encoder_f NativeEnumerated_encode_uper;
 per_type_decoder_f NativeEnumerated_decode_aper;
 per_type_encoder_f NativeEnumerated_encode_aper;
-type_compare_f     NativeEnumerated_compare;
+type_compare_f NativeEnumerated_compare;
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif	/* _NativeEnumerated_H_ */
+#endif /* _NativeEnumerated_H_ */

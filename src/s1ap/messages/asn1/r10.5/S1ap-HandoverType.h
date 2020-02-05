@@ -4,9 +4,8 @@
  * 	found in "S1AP-IEs.asn"
  */
 
-#ifndef	_S1ap_HandoverType_H_
-#define	_S1ap_HandoverType_H_
-
+#ifndef _S1ap_HandoverType_H_
+#define _S1ap_HandoverType_H_
 
 #include <asn_application.h>
 
@@ -19,18 +18,18 @@ extern "C" {
 
 /* Dependencies */
 typedef enum S1ap_HandoverType {
-	S1ap_HandoverType_intralte	= 0,
-	S1ap_HandoverType_ltetoutran	= 1,
-	S1ap_HandoverType_ltetogeran	= 2,
-	S1ap_HandoverType_utrantolte	= 3,
-	S1ap_HandoverType_gerantolte	= 4
-	/*
-	 * Enumeration is extensible
-	 */
+  S1ap_HandoverType_intralte = 0,
+  S1ap_HandoverType_ltetoutran = 1,
+  S1ap_HandoverType_ltetogeran = 2,
+  S1ap_HandoverType_utrantolte = 3,
+  S1ap_HandoverType_gerantolte = 4
+  /*
+   * Enumeration is extensible
+   */
 } e_S1ap_HandoverType;
 
 /* S1ap-HandoverType */
-typedef long	 S1ap_HandoverType_t;
+typedef long S1ap_HandoverType_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_S1ap_HandoverType;
@@ -46,5 +45,5 @@ xer_type_encoder_f S1ap_HandoverType_encode_xer;
 }
 #endif
 
-#endif	/* _S1ap_HandoverType_H_ */
+#endif /* _S1ap_HandoverType_H_ */
 #include <asn_internal.h>

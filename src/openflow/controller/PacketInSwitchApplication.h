@@ -20,8 +20,8 @@
  */
 
 #pragma once
-#include <unordered_map>
 #include <mutex>
+#include <unordered_map>
 
 #include "OpenflowController.h"
 
@@ -29,26 +29,22 @@ namespace openflow {
 #define ETH_HEADER_LENGTH 14
 
 class PacketInApplication : public Application {
-public:
+ public:
   virtual void packet_in_callback(const PacketInEvent& pin_ev,
-      of13::PacketIn& ofpi,
-      const OpenflowMessenger& messenger) = 0;
-  virtual ~PacketInApplication() {};
+                                  of13::PacketIn& ofpi,
+                                  const OpenflowMessenger& messenger) = 0;
+  virtual ~PacketInApplication(){};
 };
 
-class PacketInSwitchApplication: public Application {
-
-public:
+class PacketInSwitchApplication : public Application {
+ public:
   PacketInSwitchApplication(void);
 
-  void register_for_cookie(
-      PacketInApplication* app,
-      uint64_t cookie);
+  void register_for_cookie(PacketInApplication* app, uint64_t cookie);
 
   uint64_t generate_cookie(void);
 
-private:
-
+ private:
   /**
    * Main callback event required by inherited Application class. Whenever
    * the controller gets an event like packet in or switch up, it will pass
@@ -59,11 +55,10 @@ private:
   virtual void event_callback(const ControllerEvent& ev,
                               const OpenflowMessenger& messenger);
 
-
-private:
+ private:
   std::unordered_map<uint64_t, PacketInApplication*> packet_in_event_listeners;
   uint64_t uid_cookie;
-  std::mutex    muid;
+  std::mutex muid;
 };
 
-}
+}  // namespace openflow

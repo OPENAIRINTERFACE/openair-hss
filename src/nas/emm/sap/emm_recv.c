@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -39,34 +39,33 @@
 
 *****************************************************************************/
 
-#include <pthread.h>
-#include <inttypes.h>
-#include <stdint.h>
-#include <stdbool.h>
-#include <string.h>
-#include <stdlib.h>
 #include <arpa/inet.h>
+#include <inttypes.h>
+#include <pthread.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "bstrlib.h"
 
-#include "common_types.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"
 #include "3gpp_29.274.h"
-#include "common_defs.h"
-#include "common_defs.h"
-#include "log.h"
-#include "mme_config.h"
 #include "3gpp_requirements_24.301.h"
-#include "mme_app_defs.h"
-#include "emm_recv.h"
-#include "emm_proc.h"
+#include "assertions.h"
+#include "common_defs.h"
+#include "common_types.h"
 #include "emm_cause.h"
 #include "emm_msgDef.h"
+#include "emm_proc.h"
+#include "emm_recv.h"
 #include "emm_sap.h"
-#include "assertions.h"
+#include "log.h"
+#include "mme_app_defs.h"
+#include "mme_config.h"
 
-extern mme_app_desc_t                          mme_app_desc;
+extern mme_app_desc_t mme_app_desc;
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -83,9 +82,8 @@ extern mme_app_desc_t                          mme_app_desc;
 /****************************************************************************/
 /*********************  L O C A L    F U N C T I O N S  *********************/
 /****************************************************************************/
-static int
-_emm_initiate_default_bearer_re_establishment (
-  emm_data_context_t * emm_ctx);
+static int _emm_initiate_default_bearer_re_establishment(
+    emm_data_context_t *emm_ctx);
 /*
    --------------------------------------------------------------------------
    Functions executed by both the UE and the MME upon receiving EMM messages
@@ -106,17 +104,14 @@ _emm_initiate_default_bearer_re_establishment (
  **      Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
-int
-emm_recv_status (
-  mme_ue_s1ap_id_t ue_id,
-  emm_status_msg * msg,
-  int *emm_cause,
-  const nas_message_decode_status_t * status)
-{
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
-  int                                     rc = RETURNok;
+int emm_recv_status(mme_ue_s1ap_id_t ue_id, emm_status_msg *msg, int *emm_cause,
+                    const nas_message_decode_status_t *status) {
+  OAILOG_FUNC_IN(LOG_NAS_EMM);
+  int rc = RETURNok;
 
-  OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received EMM Status message (cause=%d)\n", msg->emmcause);
+  OAILOG_INFO(LOG_NAS_EMM,
+              "EMMAS-SAP - Received EMM Status message (cause=%d)\n",
+              msg->emmcause);
   /*
    * Message checking
    */
@@ -124,8 +119,8 @@ emm_recv_status (
   /*
    * Message processing
    */
-  rc = emm_proc_status_ind (ue_id, msg->emmcause);
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  rc = emm_proc_status_ind(ue_id, msg->emmcause);
+  OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
 }
 
 /*
@@ -148,20 +143,16 @@ emm_recv_status (
  **      Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
-int
-emm_recv_attach_request (
-  const mme_ue_s1ap_id_t           ue_id,
-  const tai_t              * const originating_tai,
-  const ecgi_t             * const originating_ecgi,
-  attach_request_msg       * const msg,
-  const bool                       is_initial,
-  int * const emm_cause,
-  const nas_message_decode_status_t  * decode_status)
-{
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
-  int                                     rc = RETURNok;
+int emm_recv_attach_request(const mme_ue_s1ap_id_t ue_id,
+                            const tai_t *const originating_tai,
+                            const ecgi_t *const originating_ecgi,
+                            attach_request_msg *const msg,
+                            const bool is_initial, int *const emm_cause,
+                            const nas_message_decode_status_t *decode_status) {
+  OAILOG_FUNC_IN(LOG_NAS_EMM);
+  int rc = RETURNok;
 
-  OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received Attach Request message\n");
+  OAILOG_INFO(LOG_NAS_EMM, "EMMAS-SAP - Received Attach Request message\n");
   /*
    * Message checking
    */
@@ -171,7 +162,9 @@ emm_recv_attach_request (
      */
     *emm_cause = EMM_CAUSE_PROTOCOL_ERROR;
     REQUIREMENT_3GPP_24_301(R10_5_5_1_2_7_b__4);
-    OAILOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - [%08x] - Non zero spare bits is suspicious\n", ue_id);
+    OAILOG_WARNING(LOG_NAS_EMM,
+                   "EMMAS-SAP - [%08x] - Non zero spare bits is suspicious\n",
+                   ue_id);
   }
 
   /*
@@ -181,23 +174,23 @@ emm_recv_attach_request (
     /*
      * Requirement MME24.301R10_5.5.1.2.7_b Protocol error
      */
-	emm_data_context_t temp_emm_ue_ctx;
-	memset(&temp_emm_ue_ctx, 0, sizeof(emm_data_context_t));
-	temp_emm_ue_ctx.ue_id = ue_id;
-	temp_emm_ue_ctx.emm_cause = *emm_cause;
-	/*
-	 * Do not accept the UE to attach for emergency services
-	 */
-	struct nas_emm_attach_proc_s   no_attach_proc = {0};
-	no_attach_proc.ue_id       = ue_id;
-	no_attach_proc.emm_cause   = temp_emm_ue_ctx.emm_cause;
-	no_attach_proc.esm_msg_out = NULL;
-    rc = emm_proc_attach_reject (ue_id, *emm_cause);
+    emm_data_context_t temp_emm_ue_ctx;
+    memset(&temp_emm_ue_ctx, 0, sizeof(emm_data_context_t));
+    temp_emm_ue_ctx.ue_id = ue_id;
+    temp_emm_ue_ctx.emm_cause = *emm_cause;
+    /*
+     * Do not accept the UE to attach for emergency services
+     */
+    struct nas_emm_attach_proc_s no_attach_proc = {0};
+    no_attach_proc.ue_id = ue_id;
+    no_attach_proc.emm_cause = temp_emm_ue_ctx.emm_cause;
+    no_attach_proc.esm_msg_out = NULL;
+    rc = emm_proc_attach_reject(ue_id, *emm_cause);
     *emm_cause = EMM_CAUSE_SUCCESS;
-    OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+    OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
   }
 
-  emm_attach_request_ies_t * params = calloc(1, sizeof(*params));
+  emm_attach_request_ies_t *params = calloc(1, sizeof(*params));
   /*
    * Message processing
    */
@@ -236,7 +229,8 @@ emm_recv_attach_request (
     params->guti->gummei.mme_gid = msg->oldgutiorimsi.guti.mme_group_id;
     params->guti->gummei.mme_code = msg->oldgutiorimsi.guti.mme_code;
     params->guti->m_tmsi = msg->oldgutiorimsi.guti.m_tmsi;
-  } else if (msg->oldgutiorimsi.imsi.typeofidentity == EPS_MOBILE_IDENTITY_IMSI) {
+  } else if (msg->oldgutiorimsi.imsi.typeofidentity ==
+             EPS_MOBILE_IDENTITY_IMSI) {
     /*
      * Get the IMSI
      */
@@ -256,17 +250,18 @@ emm_recv_attach_request (
     params->imsi->u.num.digit13 = msg->oldgutiorimsi.imsi.identity_digit13;
     params->imsi->u.num.digit14 = msg->oldgutiorimsi.imsi.identity_digit14;
     params->imsi->u.num.digit15 = msg->oldgutiorimsi.imsi.identity_digit15;
-    params->imsi->u.num.parity  = 0x0f;
-    for (int index=0; index < IMSI_BCD8_SIZE; index++) {
+    params->imsi->u.num.parity = 0x0f;
+    for (int index = 0; index < IMSI_BCD8_SIZE; index++) {
       if (params->imsi->u.value[index] == 0xff) {
         params->imsi->length = index;
         break;
-      } else  if ((params->imsi->u.value[index] & 0x0f) == 0x0f) {
+      } else if ((params->imsi->u.value[index] & 0x0f) == 0x0f) {
         params->imsi->length = index + 1;
         break;
       }
     }
-  } else if (msg->oldgutiorimsi.imei.typeofidentity == EPS_MOBILE_IDENTITY_IMEI) {
+  } else if (msg->oldgutiorimsi.imei.typeofidentity ==
+             EPS_MOBILE_IDENTITY_IMEI) {
     /*
      * Get the IMEI
      */
@@ -298,15 +293,17 @@ emm_recv_attach_request (
 
   if (msg->presencemask & ATTACH_REQUEST_LAST_VISITED_REGISTERED_TAI_PRESENT) {
     params->last_visited_registered_tai = calloc(1, sizeof(tai_t));
-    memcpy(params->last_visited_registered_tai, &msg->lastvisitedregisteredtai, sizeof(tai_t));
+    memcpy(params->last_visited_registered_tai, &msg->lastvisitedregisteredtai,
+           sizeof(tai_t));
   }
   if (msg->presencemask & ATTACH_REQUEST_DRX_PARAMETER_PRESENT) {
     params->drx_parameter = calloc(1, sizeof(drx_parameter_t));
     memcpy(params->drx_parameter, &msg->drxparameter, sizeof(drx_parameter_t));
   }
 
-  params->is_native_sc   = (msg->naskeysetidentifier.tsc != NAS_KEY_SET_IDENTIFIER_MAPPED);
-  params->ksi            = msg->naskeysetidentifier.naskeysetidentifier;
+  params->is_native_sc =
+      (msg->naskeysetidentifier.tsc != NAS_KEY_SET_IDENTIFIER_MAPPED);
+  params->ksi = msg->naskeysetidentifier.naskeysetidentifier;
   // params->ksi = 0;
   params->is_native_guti = (msg->oldgutitype != GUTI_MAPPED);
   if (originating_tai) {
@@ -319,11 +316,13 @@ emm_recv_attach_request (
   }
 
   params->ue_network_capability = calloc(1, sizeof(ue_network_capability_t));
-  memcpy(params->ue_network_capability, &msg->uenetworkcapability, sizeof(ue_network_capability_t));
+  memcpy(params->ue_network_capability, &msg->uenetworkcapability,
+         sizeof(ue_network_capability_t));
 
   if (msg->presencemask & ATTACH_REQUEST_MS_NETWORK_CAPABILITY_PRESENT) {
     params->ms_network_capability = calloc(1, sizeof(ms_network_capability_t));
-    memcpy(params->ms_network_capability, &msg->msnetworkcapability, sizeof(ms_network_capability_t));
+    memcpy(params->ms_network_capability, &msg->msnetworkcapability,
+           sizeof(ms_network_capability_t));
   }
   params->esm_msg_attach_proc = msg->esmmessagecontainer;
   msg->esmmessagecontainer = NULL;
@@ -333,35 +332,47 @@ emm_recv_attach_request (
   /*
    * Execute the requested UE attach procedure
    */
-  emm_data_context_t * duplicate_emm_context = NULL;
-  rc = emm_proc_attach_request (ue_id, params, &duplicate_emm_context);
-  if(duplicate_emm_context){
-	if(duplicate_emm_context->emm_cause != EMM_CAUSE_SUCCESS) {
-	    OAILOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - Found an invalid old duplicate UE context with ueId [%08x] - Implicitly detaching it. \n", duplicate_emm_context->ue_id);
-	    /** Clean up new UE context that was created to handle new attach request. */
-	    emm_sap_t                               emm_sap = {0};
-	    emm_sap.primitive = EMMCN_IMPLICIT_DETACH_UE; /**< UE context will be purged. */
-	    emm_sap.u.emm_cn.u.emm_cn_implicit_detach.emm_cause   = duplicate_emm_context->emm_cause; /**< Not sending detach type. */
-	    emm_sap.u.emm_cn.u.emm_cn_implicit_detach.detach_type = 0; /**< Not sending detach type. */
-	    emm_sap.u.emm_cn.u.emm_cn_implicit_detach.ue_id = duplicate_emm_context->ue_id;
-	    /*
-	     * Don't send the detach type, such that no NAS Detach Request is sent to the UE.
-	     * Depending on the cause, the MME_APP will check and inform the NAS layer to continue with the procedure, before the timer expires.
-	     */
-	    emm_sap_send (&emm_sap);
-	    /** Send the SAP request. */
-	} else {
-		OAILOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - Found a valid old duplicate UE context with ueId [%08x] - Not implicitly detaching. \n", duplicate_emm_context->ue_id);
-	}
+  emm_data_context_t *duplicate_emm_context = NULL;
+  rc = emm_proc_attach_request(ue_id, params, &duplicate_emm_context);
+  if (duplicate_emm_context) {
+    if (duplicate_emm_context->emm_cause != EMM_CAUSE_SUCCESS) {
+      OAILOG_WARNING(LOG_NAS_EMM,
+                     "EMMAS-SAP - Found an invalid old duplicate UE context "
+                     "with ueId [%08x] - Implicitly detaching it. \n",
+                     duplicate_emm_context->ue_id);
+      /** Clean up new UE context that was created to handle new attach request.
+       */
+      emm_sap_t emm_sap = {0};
+      emm_sap.primitive =
+          EMMCN_IMPLICIT_DETACH_UE; /**< UE context will be purged. */
+      emm_sap.u.emm_cn.u.emm_cn_implicit_detach.emm_cause =
+          duplicate_emm_context->emm_cause; /**< Not sending detach type. */
+      emm_sap.u.emm_cn.u.emm_cn_implicit_detach.detach_type =
+          0; /**< Not sending detach type. */
+      emm_sap.u.emm_cn.u.emm_cn_implicit_detach.ue_id =
+          duplicate_emm_context->ue_id;
+      /*
+       * Don't send the detach type, such that no NAS Detach Request is sent to
+       * the UE. Depending on the cause, the MME_APP will check and inform the
+       * NAS layer to continue with the procedure, before the timer expires.
+       */
+      emm_sap_send(&emm_sap);
+      /** Send the SAP request. */
+    } else {
+      OAILOG_WARNING(LOG_NAS_EMM,
+                     "EMMAS-SAP - Found a valid old duplicate UE context with "
+                     "ueId [%08x] - Not implicitly detaching. \n",
+                     duplicate_emm_context->ue_id);
+    }
   }
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
 }
 
 /****************************************************************************
  **                                                                        **
- ** Name:    emm_recv_tracking_area_update_complete()                                **
+ ** Name:    emm_recv_tracking_area_update_complete() **
  **                                                                        **
- ** Description: Processes Tracking Area Update Complete message                     **
+ ** Description: Processes Tracking Area Update Complete message **
  **                                                                        **
  ** Inputs:  ue_id:      UE lower layer identifier                  **
  **      msg:       The received EMM message                   **
@@ -372,22 +383,19 @@ emm_recv_attach_request (
  **      Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
-int
-emm_recv_tracking_area_update_complete (
-  mme_ue_s1ap_id_t ue_id,
-  const tracking_area_update_complete_msg * msg,
-  int *emm_cause,
-  const nas_message_decode_status_t * status)
-{
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
-  int                                     rc;
+int emm_recv_tracking_area_update_complete(
+    mme_ue_s1ap_id_t ue_id, const tracking_area_update_complete_msg *msg,
+    int *emm_cause, const nas_message_decode_status_t *status) {
+  OAILOG_FUNC_IN(LOG_NAS_EMM);
+  int rc;
 
-  OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received Tracking Area Update Complete message\n");
+  OAILOG_INFO(LOG_NAS_EMM,
+              "EMMAS-SAP - Received Tracking Area Update Complete message\n");
   /*
    * Execute the TAU completion
    */
   rc = emm_proc_tracking_area_update_complete(ue_id);
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
 }
 
 /****************************************************************************
@@ -405,29 +413,26 @@ emm_recv_tracking_area_update_complete (
  **      Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
-int
-emm_recv_attach_complete (
-  mme_ue_s1ap_id_t ue_id,
-  attach_complete_msg * const msg,
-  int *emm_cause,
-  const nas_message_decode_status_t * status)
-{
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
-  int                                     rc;
+int emm_recv_attach_complete(mme_ue_s1ap_id_t ue_id,
+                             attach_complete_msg *const msg, int *emm_cause,
+                             const nas_message_decode_status_t *status) {
+  OAILOG_FUNC_IN(LOG_NAS_EMM);
+  int rc;
 
-  OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received Attach Complete message\n");
+  OAILOG_INFO(LOG_NAS_EMM, "EMMAS-SAP - Received Attach Complete message\n");
   /*
    * Execute the attach procedure completion
    */
-  rc = emm_proc_attach_complete (ue_id, *emm_cause, *status);
-  if(rc != RETURNerror){
-
+  rc = emm_proc_attach_complete(ue_id, *emm_cause, *status);
+  if (rc != RETURNerror) {
     rc = nas_itti_esm_data_ind(ue_id, msg->esmmessagecontainer, NULL, NULL);
     msg->esmmessagecontainer = NULL;
-    OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+    OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
   }
-  OAILOG_ERROR (LOG_NAS_EMM, "EMMAS-SAP - Failed handling Attach Complete message.. (ESM message won't be handled).\n");
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  OAILOG_ERROR(LOG_NAS_EMM,
+               "EMMAS-SAP - Failed handling Attach Complete message.. (ESM "
+               "message won't be handled).\n");
+  OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
 }
 
 /****************************************************************************
@@ -445,22 +450,18 @@ emm_recv_attach_complete (
  **      Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
-int
-emm_recv_detach_request (
-  mme_ue_s1ap_id_t                   ue_id,
-  const detach_request_msg          *msg,
-  const bool                         is_initial,
-  int                               *emm_cause,
-  const nas_message_decode_status_t *status)
-{
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
-  int                                     rc  = RETURNok;
+int emm_recv_detach_request(mme_ue_s1ap_id_t ue_id,
+                            const detach_request_msg *msg,
+                            const bool is_initial, int *emm_cause,
+                            const nas_message_decode_status_t *status) {
+  OAILOG_FUNC_IN(LOG_NAS_EMM);
+  int rc = RETURNok;
 
-  OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received Detach Request message\n");
+  OAILOG_INFO(LOG_NAS_EMM, "EMMAS-SAP - Received Detach Request message\n");
   /*
    * Message processing
    */
-  emm_detach_request_ies_t * params = calloc(1, sizeof(*params));
+  emm_detach_request_ies_t *params = calloc(1, sizeof(*params));
   /*
    * Get the detach type
    */
@@ -523,12 +524,12 @@ emm_recv_detach_request (
     params->imsi->u.num.digit13 = msg->gutiorimsi.imsi.identity_digit13;
     params->imsi->u.num.digit14 = msg->gutiorimsi.imsi.identity_digit14;
     params->imsi->u.num.digit15 = msg->gutiorimsi.imsi.identity_digit15;
-    params->imsi->u.num.parity  = 0x0f;
-    for (int index=0; index < IMSI_BCD8_SIZE; index++) {
+    params->imsi->u.num.parity = 0x0f;
+    for (int index = 0; index < IMSI_BCD8_SIZE; index++) {
       if (params->imsi->u.value[index] == 0xff) {
         params->imsi->length = index;
         break;
-      } else  if ((params->imsi->u.value[index] & 0x0f) == 0x0f) {
+      } else if ((params->imsi->u.value[index] & 0x0f) == 0x0f) {
         params->imsi->length = index + 1;
         break;
       }
@@ -556,16 +557,17 @@ emm_recv_detach_request (
     params->imei->u.num.parity = msg->gutiorimsi.imei.oddeven;
   }
 
-  params->switch_off   = (msg->detachtype.switchoff != DETACH_TYPE_NORMAL_DETACH);
-  params->is_native_sc = (msg->naskeysetidentifier.tsc != NAS_KEY_SET_IDENTIFIER_MAPPED);
-  params->ksi          = msg->naskeysetidentifier.naskeysetidentifier;
-  params->decode_status= *status;
+  params->switch_off = (msg->detachtype.switchoff != DETACH_TYPE_NORMAL_DETACH);
+  params->is_native_sc =
+      (msg->naskeysetidentifier.tsc != NAS_KEY_SET_IDENTIFIER_MAPPED);
+  params->ksi = msg->naskeysetidentifier.naskeysetidentifier;
+  params->decode_status = *status;
   /*
    * Execute the UE initiated detach procedure completion by the network
    */
-  rc = emm_proc_detach_request (ue_id, params);
+  rc = emm_proc_detach_request(ue_id, params);
   *emm_cause = RETURNok == rc ? EMM_CAUSE_SUCCESS : EMM_CAUSE_PROTOCOL_ERROR;
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
 }
 
 /****************************************************************************
@@ -583,28 +585,25 @@ emm_recv_detach_request (
  **              Others:        None                                       **
  **                                                                        **
  ***************************************************************************/
-int
-emm_recv_tracking_area_update_request (
-  const mme_ue_s1ap_id_t ue_id,
-  tracking_area_update_request_msg * const msg,
-  int * const emm_cause,
-  const bool is_initial,
-  const tai_t              * const originating_tai,
-  const ecgi_t             * const originating_ecgi,
-  const nas_message_decode_status_t  * const decode_status,
-  uint8_t                     nas_ul_count,
-  bstring nas_msg)
-{
-  int                                     rc = RETURNok;
-  uint8_t                                 gea = 0;
+int emm_recv_tracking_area_update_request(
+    const mme_ue_s1ap_id_t ue_id, tracking_area_update_request_msg *const msg,
+    int *const emm_cause, const bool is_initial,
+    const tai_t *const originating_tai, const ecgi_t *const originating_ecgi,
+    const nas_message_decode_status_t *const decode_status,
+    uint8_t nas_ul_count, bstring nas_msg) {
+  int rc = RETURNok;
+  uint8_t gea = 0;
 
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
-  OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received Tracking Area Update Request message, Security context %s Integrity protected %s MAC matched %s Ciphered %s NAS message %s\n",
-      (decode_status->security_context_available)?"yes":"no",
-      (decode_status->integrity_protected_message)?"yes":"no",
-      (decode_status->mac_matched)?"yes":"no",
-      (decode_status->ciphered_message)?"yes":"no",
-      (nas_msg)?"yes":"no");
+  OAILOG_FUNC_IN(LOG_NAS_EMM);
+  OAILOG_INFO(LOG_NAS_EMM,
+              "EMMAS-SAP - Received Tracking Area Update Request message, "
+              "Security context %s Integrity protected %s MAC matched %s "
+              "Ciphered %s NAS message %s\n",
+              (decode_status->security_context_available) ? "yes" : "no",
+              (decode_status->integrity_protected_message) ? "yes" : "no",
+              (decode_status->mac_matched) ? "yes" : "no",
+              (decode_status->ciphered_message) ? "yes" : "no",
+              (nas_msg) ? "yes" : "no");
   /*
    * Message checking
    */
@@ -613,7 +612,9 @@ emm_recv_tracking_area_update_request (
      * Spare bits shall be coded as zero
      */
     *emm_cause = EMM_CAUSE_PROTOCOL_ERROR;
-    OAILOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - [%08x] - Non zero spare bits is suspicious\n", ue_id);
+    OAILOG_WARNING(LOG_NAS_EMM,
+                   "EMMAS-SAP - [%08x] - Non zero spare bits is suspicious\n",
+                   ue_id);
   }
 
   /*
@@ -624,7 +625,7 @@ emm_recv_tracking_area_update_request (
      * Requirement MME24.301R10_5.5.1.2.7_b Protocol error
      */
     rc = emm_wrapper_tracking_area_update_reject(ue_id, *emm_cause);
-    OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+    OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
   }
 
   /*
@@ -634,7 +635,7 @@ emm_recv_tracking_area_update_request (
 
   /** Get the mandatory old GUTI. No presence flag for that necessary. */
   if (msg->oldguti.guti.typeofidentity == EPS_MOBILE_IDENTITY_GUTI) {
-    OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - GUTI received. \n");
+    OAILOG_INFO(LOG_NAS_EMM, "EMMAS-SAP - GUTI received. \n");
     /*
      * Get the GUTI
      */
@@ -647,61 +648,89 @@ emm_recv_tracking_area_update_request (
     ies->old_guti.gummei.mme_gid = msg->oldguti.guti.mme_group_id;
     ies->old_guti.gummei.mme_code = msg->oldguti.guti.mme_code;
     ies->old_guti.m_tmsi = msg->oldguti.guti.m_tmsi;
-  } else{
-    OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received TAU-Request with unknown identity type %d for mmeS1apUeId " MME_UE_S1AP_ID_FMT ". \n", msg->oldguti.guti.typeofidentity, ue_id);
+  } else {
+    OAILOG_INFO(LOG_NAS_EMM,
+                "EMMAS-SAP - Received TAU-Request with unknown identity type "
+                "%d for mmeS1apUeId " MME_UE_S1AP_ID_FMT ". \n",
+                msg->oldguti.guti.typeofidentity, ue_id);
     *emm_cause = EMM_CAUSE_PROTOCOL_ERROR;
     rc = emm_wrapper_tracking_area_update_reject(ue_id, *emm_cause);
-    OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+    OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
   }
 
   /** Not checking if it is initial or not. For NAS layer, it is the same. */
   // Mandatory fields
   ies->eps_update_type = msg->epsupdatetype;
 
-  ies->is_native_sc    = (msg->naskeysetidentifier.tsc != NAS_KEY_SET_IDENTIFIER_MAPPED);
-  ies->ksi             = msg->naskeysetidentifier.naskeysetidentifier;
-  ies->is_initial      = is_initial;
+  ies->is_native_sc =
+      (msg->naskeysetidentifier.tsc != NAS_KEY_SET_IDENTIFIER_MAPPED);
+  ies->ksi = msg->naskeysetidentifier.naskeysetidentifier;
+  ies->is_initial = is_initial;
 
-  OAILOG_INFO (LOG_NAS_EMM, " * * * * Parsing Tracking Area Update Request with update_type %d. \n", ies->eps_update_type.eps_update_type_value);
+  OAILOG_INFO(
+      LOG_NAS_EMM,
+      " * * * * Parsing Tracking Area Update Request with update_type %d. \n",
+      ies->eps_update_type.eps_update_type_value);
 
   ies->nas_ul_count = nas_ul_count;
   // Optional fields
-  if (msg->presencemask & TRACKING_AREA_UPDATE_REQUEST_NONCURRENT_NATIVE_NAS_KEY_SET_IDENTIFIER_PRESENT) {
-    ies->is_native_non_current_sc   = (msg->noncurrentnativenaskeysetidentifier.tsc != NAS_KEY_SET_IDENTIFIER_MAPPED);
-    ies->non_current_ksi            = msg->noncurrentnativenaskeysetidentifier.naskeysetidentifier;
+  if (msg->presencemask &
+      TRACKING_AREA_UPDATE_REQUEST_NONCURRENT_NATIVE_NAS_KEY_SET_IDENTIFIER_PRESENT) {
+    ies->is_native_non_current_sc =
+        (msg->noncurrentnativenaskeysetidentifier.tsc !=
+         NAS_KEY_SET_IDENTIFIER_MAPPED);
+    ies->non_current_ksi =
+        msg->noncurrentnativenaskeysetidentifier.naskeysetidentifier;
   }
 
   // NOT TODO additional_guti, useless
-  if (msg->presencemask & TRACKING_AREA_UPDATE_REQUEST_UE_NETWORK_CAPABILITY_PRESENT) {
+  if (msg->presencemask &
+      TRACKING_AREA_UPDATE_REQUEST_UE_NETWORK_CAPABILITY_PRESENT) {
     ies->ue_network_capability = calloc(1, sizeof(*ies->ue_network_capability));
-    memcpy(ies->ue_network_capability, &msg->uenetworkcapability, sizeof(*ies->ue_network_capability));
+    memcpy(ies->ue_network_capability, &msg->uenetworkcapability,
+           sizeof(*ies->ue_network_capability));
   }
-  if (msg->presencemask & TRACKING_AREA_UPDATE_REQUEST_LAST_VISITED_REGISTERED_TAI_PRESENT) {
-    ies->last_visited_registered_tai = calloc(1, sizeof(*ies->last_visited_registered_tai));
-    memcpy(ies->last_visited_registered_tai, &msg->lastvisitedregisteredtai, sizeof(*ies->last_visited_registered_tai));
-  }else{
-    /** Since later in the tau_request function, also tau_reject is called, we may  call it here, too. */
-    OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received Tracking Area Update Request does not contain last visited TAI. "
-        "Cannot retrieve UE context from source MME for mmeS1apUeId " MME_UE_S1AP_ID_FMT ". \n", ue_id);
+  if (msg->presencemask &
+      TRACKING_AREA_UPDATE_REQUEST_LAST_VISITED_REGISTERED_TAI_PRESENT) {
+    ies->last_visited_registered_tai =
+        calloc(1, sizeof(*ies->last_visited_registered_tai));
+    memcpy(ies->last_visited_registered_tai, &msg->lastvisitedregisteredtai,
+           sizeof(*ies->last_visited_registered_tai));
+  } else {
+    /** Since later in the tau_request function, also tau_reject is called, we
+     * may  call it here, too. */
+    OAILOG_INFO(LOG_NAS_EMM,
+                "EMMAS-SAP - Received Tracking Area Update Request does not "
+                "contain last visited TAI. "
+                "Cannot retrieve UE context from source MME for "
+                "mmeS1apUeId " MME_UE_S1AP_ID_FMT ". \n",
+                ue_id);
     *emm_cause = EMM_CAUSE_PROTOCOL_ERROR;
     rc = emm_wrapper_tracking_area_update_reject(ue_id, *emm_cause);
-    OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+    OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
   }
 
   if (msg->presencemask & TRACKING_AREA_UPDATE_REQUEST_DRX_PARAMETER_PRESENT) {
     ies->drx_parameter = calloc(1, sizeof(*ies->drx_parameter));
     memcpy(ies->drx_parameter, &msg->drxparameter, sizeof(*ies->drx_parameter));
   }
-  if (msg->presencemask & TRACKING_AREA_UPDATE_REQUEST_UE_RADIO_CAPABILITY_INFORMATION_UPDATE_NEEDED_PRESENT) {
-    ies->is_ue_radio_capability_information_update_needed = (msg->ueradiocapabilityinformationupdateneeded) ? true:false;
+  if (msg->presencemask &
+      TRACKING_AREA_UPDATE_REQUEST_UE_RADIO_CAPABILITY_INFORMATION_UPDATE_NEEDED_PRESENT) {
+    ies->is_ue_radio_capability_information_update_needed =
+        (msg->ueradiocapabilityinformationupdateneeded) ? true : false;
   }
-  if (msg->presencemask & TRACKING_AREA_UPDATE_REQUEST_EPS_BEARER_CONTEXT_STATUS_PRESENT) {
-    ies->eps_bearer_context_status = calloc(1, sizeof(*ies->eps_bearer_context_status));
-    memcpy(ies->eps_bearer_context_status, &msg->epsbearercontextstatus, sizeof(*ies->eps_bearer_context_status));
+  if (msg->presencemask &
+      TRACKING_AREA_UPDATE_REQUEST_EPS_BEARER_CONTEXT_STATUS_PRESENT) {
+    ies->eps_bearer_context_status =
+        calloc(1, sizeof(*ies->eps_bearer_context_status));
+    memcpy(ies->eps_bearer_context_status, &msg->epsbearercontextstatus,
+           sizeof(*ies->eps_bearer_context_status));
   }
-  if (msg->presencemask & TRACKING_AREA_UPDATE_REQUEST_MS_NETWORK_CAPABILITY_PRESENT) {
+  if (msg->presencemask &
+      TRACKING_AREA_UPDATE_REQUEST_MS_NETWORK_CAPABILITY_PRESENT) {
     ies->ms_network_capability = calloc(1, sizeof(*ies->ms_network_capability));
-    memcpy(ies->ms_network_capability, &msg->msnetworkcapability, sizeof(*ies->ms_network_capability));
+    memcpy(ies->ms_network_capability, &msg->msnetworkcapability,
+           sizeof(*ies->ms_network_capability));
     gea = msg->msnetworkcapability.gea1;
     if (gea) {
       gea = (gea << 6) | msg->msnetworkcapability.egea;
@@ -711,30 +740,40 @@ emm_recv_tracking_area_update_request (
     ies->tmsi_status = calloc(1, sizeof(*ies->tmsi_status));
     memcpy(ies->tmsi_status, &msg->tmsistatus, sizeof(*ies->tmsi_status));
   }
-  if (msg->presencemask & TRACKING_AREA_UPDATE_REQUEST_MOBILE_STATION_CLASSMARK_2_PRESENT) {
-    ies->mobile_station_classmark2 = calloc(1, sizeof(*ies->mobile_station_classmark2));
-    memcpy(ies->mobile_station_classmark2, &msg->mobilestationclassmark2, sizeof(*ies->mobile_station_classmark2));
+  if (msg->presencemask &
+      TRACKING_AREA_UPDATE_REQUEST_MOBILE_STATION_CLASSMARK_2_PRESENT) {
+    ies->mobile_station_classmark2 =
+        calloc(1, sizeof(*ies->mobile_station_classmark2));
+    memcpy(ies->mobile_station_classmark2, &msg->mobilestationclassmark2,
+           sizeof(*ies->mobile_station_classmark2));
   }
-  if (msg->presencemask & TRACKING_AREA_UPDATE_REQUEST_MOBILE_STATION_CLASSMARK_3_PRESENT) {
-    ies->mobile_station_classmark3 = calloc(1, sizeof(*ies->mobile_station_classmark3));
-    memcpy(ies->mobile_station_classmark3, &msg->mobilestationclassmark3, sizeof(*ies->mobile_station_classmark3));
+  if (msg->presencemask &
+      TRACKING_AREA_UPDATE_REQUEST_MOBILE_STATION_CLASSMARK_3_PRESENT) {
+    ies->mobile_station_classmark3 =
+        calloc(1, sizeof(*ies->mobile_station_classmark3));
+    memcpy(ies->mobile_station_classmark3, &msg->mobilestationclassmark3,
+           sizeof(*ies->mobile_station_classmark3));
   }
-  if (msg->presencemask & TRACKING_AREA_UPDATE_REQUEST_SUPPORTED_CODECS_PRESENT) {
+  if (msg->presencemask &
+      TRACKING_AREA_UPDATE_REQUEST_SUPPORTED_CODECS_PRESENT) {
     ies->supported_codecs = calloc(1, sizeof(*ies->supported_codecs));
-    memcpy(ies->supported_codecs, &msg->supportedcodecs, sizeof(*ies->supported_codecs));
+    memcpy(ies->supported_codecs, &msg->supportedcodecs,
+           sizeof(*ies->supported_codecs));
   }
-  if (msg->presencemask & TRACKING_AREA_UPDATE_REQUEST_ADDITIONAL_UPDATE_TYPE_PRESENT) {
+  if (msg->presencemask &
+      TRACKING_AREA_UPDATE_REQUEST_ADDITIONAL_UPDATE_TYPE_PRESENT) {
     ies->additional_updatetype = calloc(1, sizeof(*ies->additional_updatetype));
-    memcpy(ies->additional_updatetype, &msg->additionalupdatetype, sizeof(*ies->additional_updatetype));
+    memcpy(ies->additional_updatetype, &msg->additionalupdatetype,
+           sizeof(*ies->additional_updatetype));
   }
   if (msg->presencemask & TRACKING_AREA_UPDATE_REQUEST_OLD_GUTI_TYPE_PRESENT) {
     ies->old_guti_type = calloc(1, sizeof(*ies->old_guti_type));
     memcpy(ies->old_guti_type, &msg->oldgutitype, sizeof(*ies->old_guti_type));
   }
   if (originating_tai) {
-     ies->originating_tai = calloc(1, sizeof(tai_t));
-     memcpy(ies->originating_tai, originating_tai, sizeof(tai_t));
-   }
+    ies->originating_tai = calloc(1, sizeof(tai_t));
+    memcpy(ies->originating_tai, originating_tai, sizeof(tai_t));
+  }
 
   if (originating_ecgi) {
     ies->originating_ecgi = calloc(1, sizeof(ecgi_t));
@@ -747,33 +786,45 @@ emm_recv_tracking_area_update_request (
   /*
    * Execute the requested UE attach procedure
    */
-  emm_data_context_t * duplicate_emm_context = NULL;
-  rc = emm_proc_tracking_area_update_request(ue_id, ies,
-      gea, (gea >= (MS_NETWORK_CAPABILITY_GEA1 >> 1)), /**< GPRS & GPRS present. */
+  emm_data_context_t *duplicate_emm_context = NULL;
+  rc = emm_proc_tracking_area_update_request(
+      ue_id, ies, gea,
+      (gea >= (MS_NETWORK_CAPABILITY_GEA1 >> 1)), /**< GPRS & GPRS present. */
       emm_cause, &duplicate_emm_context);
 
-  if(duplicate_emm_context){
-	if(!duplicate_emm_context->emm_cause != EMM_CAUSE_SUCCESS){
-	  OAILOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - Found an invalid old duplicate UE context with ueId [%08x] - Implicitly detaching it. \n", duplicate_emm_context->ue_id);
-	  /** Clean up new UE context that was created to handle new attach request. */
-	  emm_sap_t                               emm_sap = {0};
-	  emm_sap.primitive = EMMCN_IMPLICIT_DETACH_UE; /**< UE context will be purged. */
-	  emm_sap.u.emm_cn.u.emm_cn_implicit_detach.emm_cause   = duplicate_emm_context->emm_cause; /**< Not sending detach type. */
-	  emm_sap.u.emm_cn.u.emm_cn_implicit_detach.detach_type = 0; /**< Not sending detach type. */
-	  emm_sap.u.emm_cn.u.emm_cn_implicit_detach.ue_id = duplicate_emm_context->ue_id;
-	  /*
-	   * Don't send the detach type, such that no NAS Detach Request is sent to the UE.
-	   * Depending on the cause, the MME_APP will check and inform the NAS layer to continue with the procedure, before the timer expires.
-	   */
-	  emm_sap_send (&emm_sap);
-	  /** Send the SAP request. */
-	} else {
-	  OAILOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - Found a valid old duplicate UE context with ueId [%08x] - Not implicitly detaching. \n", duplicate_emm_context->ue_id);
-	}
-
+  if (duplicate_emm_context) {
+    if (!duplicate_emm_context->emm_cause != EMM_CAUSE_SUCCESS) {
+      OAILOG_WARNING(LOG_NAS_EMM,
+                     "EMMAS-SAP - Found an invalid old duplicate UE context "
+                     "with ueId [%08x] - Implicitly detaching it. \n",
+                     duplicate_emm_context->ue_id);
+      /** Clean up new UE context that was created to handle new attach request.
+       */
+      emm_sap_t emm_sap = {0};
+      emm_sap.primitive =
+          EMMCN_IMPLICIT_DETACH_UE; /**< UE context will be purged. */
+      emm_sap.u.emm_cn.u.emm_cn_implicit_detach.emm_cause =
+          duplicate_emm_context->emm_cause; /**< Not sending detach type. */
+      emm_sap.u.emm_cn.u.emm_cn_implicit_detach.detach_type =
+          0; /**< Not sending detach type. */
+      emm_sap.u.emm_cn.u.emm_cn_implicit_detach.ue_id =
+          duplicate_emm_context->ue_id;
+      /*
+       * Don't send the detach type, such that no NAS Detach Request is sent to
+       * the UE. Depending on the cause, the MME_APP will check and inform the
+       * NAS layer to continue with the procedure, before the timer expires.
+       */
+      emm_sap_send(&emm_sap);
+      /** Send the SAP request. */
+    } else {
+      OAILOG_WARNING(LOG_NAS_EMM,
+                     "EMMAS-SAP - Found a valid old duplicate UE context with "
+                     "ueId [%08x] - Not implicitly detaching. \n",
+                     duplicate_emm_context->ue_id);
+    }
   }
 
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
 }
 
 /****************************************************************************
@@ -791,40 +842,38 @@ emm_recv_tracking_area_update_request (
  **              Others:        None                                       **
  **                                                                        **
  ***************************************************************************/
-int
-emm_recv_service_request (
-  mme_ue_s1ap_id_t ue_id,
-  const service_request_msg * msg,
-  const bool is_initial,
-  int *emm_cause,
-  const nas_message_decode_status_t  * decode_status)
-{
-  OAILOG_FUNC_IN (LOG_NAS_EMM); 
-  int                                     rc = RETURNok;
-  emm_data_context_t * emm_ctx = NULL;
-  *emm_cause = EMM_CAUSE_PROTOCOL_ERROR; 
+int emm_recv_service_request(mme_ue_s1ap_id_t ue_id,
+                             const service_request_msg *msg,
+                             const bool is_initial, int *emm_cause,
+                             const nas_message_decode_status_t *decode_status) {
+  OAILOG_FUNC_IN(LOG_NAS_EMM);
+  int rc = RETURNok;
+  emm_data_context_t *emm_ctx = NULL;
+  *emm_cause = EMM_CAUSE_PROTOCOL_ERROR;
 
-  OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received Service Request message, Security context %s Integrity protected %s MAC matched %s Ciphered %s\n",
-      (decode_status->security_context_available)?"yes":"no",
-      (decode_status->integrity_protected_message)?"yes":"no",
-      (decode_status->mac_matched)?"yes":"no",
-      (decode_status->ciphered_message)?"yes":"no");
-  
-  // Get emm_ctx 
-  emm_ctx = emm_data_context_get (&_emm_data,ue_id);
+  OAILOG_INFO(LOG_NAS_EMM,
+              "EMMAS-SAP - Received Service Request message, Security context "
+              "%s Integrity protected %s MAC matched %s Ciphered %s\n",
+              (decode_status->security_context_available) ? "yes" : "no",
+              (decode_status->integrity_protected_message) ? "yes" : "no",
+              (decode_status->mac_matched) ? "yes" : "no",
+              (decode_status->ciphered_message) ? "yes" : "no");
+
+  // Get emm_ctx
+  emm_ctx = emm_data_context_get(&_emm_data, ue_id);
   /*
-   * Do following: 
-   * 1. Re-establish UE specfic S1 signaling connection and S1-U tunnel for default bearer.
-   * note - At present, only default bearer is supported 
-   * 2. Move UE ECM state to Connected 
+   * Do following:
+   * 1. Re-establish UE specfic S1 signaling connection and S1-U tunnel for
+   * default bearer. note - At present, only default bearer is supported
+   * 2. Move UE ECM state to Connected
    * 3. Stop Mobile reachability time and Implicit Deatch timer ( if running)
    */
   rc = _emm_initiate_default_bearer_re_establishment(emm_ctx);
-  if (rc == RETURNok) { 
+  if (rc == RETURNok) {
     *emm_cause = EMM_CAUSE_SUCCESS;
   }
   emm_context_unlock(emm_ctx);
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
 }
 
 /****************************************************************************
@@ -842,31 +891,23 @@ emm_recv_service_request (
  **      Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
-int
-emm_recv_identity_response (
-  mme_ue_s1ap_id_t ue_id,
-  identity_response_msg * msg,
-  int *emm_cause,
-  const nas_message_decode_status_t * status)
-{
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
-  int                                     rc = RETURNok;
+int emm_recv_identity_response(mme_ue_s1ap_id_t ue_id,
+                               identity_response_msg *msg, int *emm_cause,
+                               const nas_message_decode_status_t *status) {
+  OAILOG_FUNC_IN(LOG_NAS_EMM);
+  int rc = RETURNok;
 
-  OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received Identity Response message\n");
+  OAILOG_INFO(LOG_NAS_EMM, "EMMAS-SAP - Received Identity Response message\n");
   /*
    * Message processing
    */
   /*
    * Get the mobile identity
    */
-  imsi_t                                  imsi = {0},
-                                         *p_imsi = NULL;
-  imei_t                                  imei = {0},
-                                         *p_imei = NULL;
-  imeisv_t                                imeisv = {0},
-                                         *p_imeisv = NULL;
-  tmsi_t                                  tmsi = 0,
-                                         *p_tmsi = NULL;
+  imsi_t imsi = {0}, *p_imsi = NULL;
+  imei_t imei = {0}, *p_imei = NULL;
+  imeisv_t imeisv = {0}, *p_imeisv = NULL;
+  tmsi_t tmsi = 0, *p_tmsi = NULL;
 
   if (msg->mobileidentity.imsi.typeofidentity == MOBILE_IDENTITY_IMSI) {
     /*
@@ -888,13 +929,13 @@ emm_recv_identity_response (
     imsi.u.num.digit13 = msg->mobileidentity.imsi.digit13;
     imsi.u.num.digit14 = msg->mobileidentity.imsi.digit14;
     imsi.u.num.digit15 = msg->mobileidentity.imsi.digit15;
-    imsi.u.num.parity  = 0x0f;
+    imsi.u.num.parity = 0x0f;
 
-    for (int index=0; index < IMSI_BCD8_SIZE; index++) {
+    for (int index = 0; index < IMSI_BCD8_SIZE; index++) {
       if (imsi.u.value[index] == 0xff) {
         imsi.length = index;
         break;
-      } else  if ((imsi.u.value[index] & 0x0f) == 0x0f) {
+      } else if ((imsi.u.value[index] & 0x0f) == 0x0f) {
         imsi.length = index + 1;
         break;
       }
@@ -920,7 +961,8 @@ emm_recv_identity_response (
     imei.u.num.snr6 = msg->mobileidentity.imei.snr6;
     imei.u.num.cdsd = msg->mobileidentity.imei.cdsd;
     imei.u.num.parity = msg->mobileidentity.imei.oddeven;
-  } else if (msg->mobileidentity.imeisv.typeofidentity == MOBILE_IDENTITY_IMEISV) {
+  } else if (msg->mobileidentity.imeisv.typeofidentity ==
+             MOBILE_IDENTITY_IMEISV) {
     /*
      * Get the IMEISV
      */
@@ -947,7 +989,7 @@ emm_recv_identity_response (
      * Get the TMSI
      */
     p_tmsi = &tmsi;
-    tmsi  = ((tmsi_t)msg->mobileidentity.tmsi.tmsi[0]) << 24;
+    tmsi = ((tmsi_t)msg->mobileidentity.tmsi.tmsi[0]) << 24;
     tmsi |= (((tmsi_t)msg->mobileidentity.tmsi.tmsi[1]) << 16);
     tmsi |= (((tmsi_t)msg->mobileidentity.tmsi.tmsi[2]) << 8);
     tmsi |= ((tmsi_t)msg->mobileidentity.tmsi.tmsi[3]);
@@ -956,8 +998,9 @@ emm_recv_identity_response (
   /*
    * Execute the identification completion procedure
    */
-  rc = emm_proc_identification_complete (ue_id, p_imsi, p_imei, p_imeisv, (uint32_t *) (p_tmsi));
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  rc = emm_proc_identification_complete(ue_id, p_imsi, p_imei, p_imeisv,
+                                        (uint32_t *)(p_tmsi));
+  OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
 }
 
 /****************************************************************************
@@ -975,22 +1018,20 @@ emm_recv_identity_response (
  **      Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
-int
-emm_recv_authentication_response (
-  mme_ue_s1ap_id_t ue_id,
-  authentication_response_msg * msg,
-  int *emm_cause,
-  const nas_message_decode_status_t * status)
-{
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
-  int                                     rc = RETURNok;
+int emm_recv_authentication_response(
+    mme_ue_s1ap_id_t ue_id, authentication_response_msg *msg, int *emm_cause,
+    const nas_message_decode_status_t *status) {
+  OAILOG_FUNC_IN(LOG_NAS_EMM);
+  int rc = RETURNok;
 
-  OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received Authentication Response message\n");
+  OAILOG_INFO(LOG_NAS_EMM,
+              "EMMAS-SAP - Received Authentication Response message\n");
 
   /*
    * Message checking
    */
-  if ((NULL == msg->authenticationresponseparameter) || (!blength(msg->authenticationresponseparameter))) {
+  if ((NULL == msg->authenticationresponseparameter) ||
+      (!blength(msg->authenticationresponseparameter))) {
     /*
      * RES parameter shall not be null
      */
@@ -1001,7 +1042,7 @@ emm_recv_authentication_response (
    * Handle message checking error
    */
   if (*emm_cause != EMM_CAUSE_SUCCESS) {
-    OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
+    OAILOG_FUNC_RETURN(LOG_NAS_EMM, RETURNerror);
   }
 
   // todo: RES parameter is not checked?
@@ -1012,8 +1053,9 @@ emm_recv_authentication_response (
   /*
    * Execute the authentication completion procedure
    */
-  rc = emm_proc_authentication_complete (ue_id, EMM_CAUSE_SUCCESS, msg->authenticationresponseparameter);
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  rc = emm_proc_authentication_complete(ue_id, EMM_CAUSE_SUCCESS,
+                                        msg->authenticationresponseparameter);
+  OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
 }
 
 /****************************************************************************
@@ -1031,24 +1073,25 @@ emm_recv_authentication_response (
  **      Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
-int
-emm_recv_authentication_failure (
-  mme_ue_s1ap_id_t ue_id,
-  authentication_failure_msg * msg,
-  int *emm_cause,
-  const nas_message_decode_status_t * status)
-{
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
-  int                                     rc = RETURNok;
+int emm_recv_authentication_failure(mme_ue_s1ap_id_t ue_id,
+                                    authentication_failure_msg *msg,
+                                    int *emm_cause,
+                                    const nas_message_decode_status_t *status) {
+  OAILOG_FUNC_IN(LOG_NAS_EMM);
+  int rc = RETURNok;
 
-  OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received Authentication Failure message\n");
+  OAILOG_INFO(LOG_NAS_EMM,
+              "EMMAS-SAP - Received Authentication Failure message\n");
 
   /*
    * Message checking
    */
   if (msg->emmcause == EMM_CAUSE_SUCCESS) {
     *emm_cause = EMM_CAUSE_INVALID_MANDATORY_INFO;
-  } else if ((msg->emmcause == EMM_CAUSE_SYNCH_FAILURE) && !(msg->presencemask & AUTHENTICATION_FAILURE_AUTHENTICATION_FAILURE_PARAMETER_PRESENT)) {
+  } else if (
+      (msg->emmcause == EMM_CAUSE_SYNCH_FAILURE) &&
+      !(msg->presencemask &
+        AUTHENTICATION_FAILURE_AUTHENTICATION_FAILURE_PARAMETER_PRESENT)) {
     /*
      * AUTS parameter shall be present in case of "synch failure"
      */
@@ -1059,7 +1102,7 @@ emm_recv_authentication_failure (
    * Handle message checking error
    */
   if (*emm_cause != EMM_CAUSE_SUCCESS) {
-    OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
+    OAILOG_FUNC_RETURN(LOG_NAS_EMM, RETURNerror);
   }
 
   /*
@@ -1068,8 +1111,9 @@ emm_recv_authentication_failure (
   /*
    * Execute the authentication completion procedure
    */
-  rc = emm_proc_authentication_failure (ue_id, msg->emmcause, msg->authenticationfailureparameter);
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  rc = emm_proc_authentication_failure(ue_id, msg->emmcause,
+                                       msg->authenticationfailureparameter);
+  OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
 }
 
 /****************************************************************************
@@ -1087,17 +1131,15 @@ emm_recv_authentication_failure (
  **      Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
-int
-emm_recv_security_mode_complete (
-  mme_ue_s1ap_id_t ue_id,
-  security_mode_complete_msg * msg,
-  int *emm_cause,
-  const nas_message_decode_status_t * status)
-{
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
-  int                                     rc = RETURNok;
+int emm_recv_security_mode_complete(mme_ue_s1ap_id_t ue_id,
+                                    security_mode_complete_msg *msg,
+                                    int *emm_cause,
+                                    const nas_message_decode_status_t *status) {
+  OAILOG_FUNC_IN(LOG_NAS_EMM);
+  int rc = RETURNok;
 
-  OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received Security Mode Complete message\n");
+  OAILOG_INFO(LOG_NAS_EMM,
+              "EMMAS-SAP - Received Security Mode Complete message\n");
   /*
    * Message processing
    */
@@ -1105,11 +1147,11 @@ emm_recv_security_mode_complete (
    * Execute the NAS security mode control completion procedure
    */
   if (msg->presencemask & SECURITY_MODE_COMMAND_IMEISV_REQUEST_PRESENT) {
-    rc = emm_proc_security_mode_complete (ue_id, &msg->imeisv.imeisv);
+    rc = emm_proc_security_mode_complete(ue_id, &msg->imeisv.imeisv);
   } else {
-    rc = emm_proc_security_mode_complete (ue_id, NULL);
+    rc = emm_proc_security_mode_complete(ue_id, NULL);
   }
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
 }
 
 /****************************************************************************
@@ -1127,17 +1169,16 @@ emm_recv_security_mode_complete (
  **      Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
-int
-emm_recv_security_mode_reject (
-  mme_ue_s1ap_id_t ue_id,
-  security_mode_reject_msg * msg,
-  int *emm_cause,
-  const nas_message_decode_status_t * status)
-{
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
-  int                                     rc = RETURNok;
+int emm_recv_security_mode_reject(mme_ue_s1ap_id_t ue_id,
+                                  security_mode_reject_msg *msg, int *emm_cause,
+                                  const nas_message_decode_status_t *status) {
+  OAILOG_FUNC_IN(LOG_NAS_EMM);
+  int rc = RETURNok;
 
-  OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received Security Mode Reject message " "(cause=%d)\n", msg->emmcause);
+  OAILOG_INFO(LOG_NAS_EMM,
+              "EMMAS-SAP - Received Security Mode Reject message "
+              "(cause=%d)\n",
+              msg->emmcause);
 
   /*
    * Message checking
@@ -1150,7 +1191,7 @@ emm_recv_security_mode_reject (
    * Handle message checking error
    */
   if (*emm_cause != EMM_CAUSE_SUCCESS) {
-    OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
+    OAILOG_FUNC_RETURN(LOG_NAS_EMM, RETURNerror);
   }
 
   /*
@@ -1159,33 +1200,34 @@ emm_recv_security_mode_reject (
   /*
    * Execute the NAS security mode commend not accepted by the UE
    */
-  rc = emm_proc_security_mode_reject (ue_id);
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  rc = emm_proc_security_mode_reject(ue_id);
+  OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
 }
 
 //-------------------------------------------------------------------------------------
-static int
-_emm_initiate_default_bearer_re_establishment (
-  emm_data_context_t * emm_ctx)
-{
+static int _emm_initiate_default_bearer_re_establishment(
+    emm_data_context_t *emm_ctx) {
   /*
-   * This function is used to trigger initial context setup request towards eNB via S1AP module as part of serivce request handling.
-   * This inturn triggers re-establishment of "data radio bearer" and "S1-U bearer" between UE & eNB and eNB & EPC respectively.
+   * This function is used to trigger initial context setup request towards eNB
+   * via S1AP module as part of serivce request handling. This inturn triggers
+   * re-establishment of "data radio bearer" and "S1-U bearer" between UE & eNB
+   * and eNB & EPC respectively.
    */
 
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
-  emm_sap_t                               emm_sap = {0};
-  int                                     rc = RETURNerror;
+  OAILOG_FUNC_IN(LOG_NAS_EMM);
+  emm_sap_t emm_sap = {0};
+  int rc = RETURNerror;
   if (emm_ctx) {
     emm_sap.primitive = EMMAS_ESTABLISH_CNF;
     emm_sap.u.emm_as.u.establish.ue_id = emm_ctx->ue_id;
     emm_sap.u.emm_as.u.establish.nas_info = EMM_AS_NAS_INFO_NONE;
-    emm_sap.u.emm_as.u.establish.encryption = emm_ctx->_security.selected_algorithms.encryption;
-    emm_sap.u.emm_as.u.establish.integrity = emm_ctx->_security.selected_algorithms.integrity;
+    emm_sap.u.emm_as.u.establish.encryption =
+        emm_ctx->_security.selected_algorithms.encryption;
+    emm_sap.u.emm_as.u.establish.integrity =
+        emm_ctx->_security.selected_algorithms.integrity;
     emm_sap.u.emm_as.u.establish.nas_msg = NULL;
     emm_sap.u.emm_as.u.establish.eps_id.guti = &emm_ctx->_guti;
-    rc = emm_sap_send (&emm_sap);
+    rc = emm_sap_send(&emm_sap);
   }
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
 }
-

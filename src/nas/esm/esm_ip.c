@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -18,49 +18,43 @@
  * For more information about the OpenAirInterface (OAI) Software Alliance:
  *      contact@openairinterface.org
  */
-#include <string.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "bstrlib.h"
 
-char                                    ip_addr_str[100];
+char ip_addr_str[100];
 
-char                            *
-esm_data_get_ipv4_addr (
-    const_bstring ip_addr)
-{
-  if ((ip_addr) && (ip_addr->slen == 4)){
-    sprintf (ip_addr_str, "%u.%u.%u.%u", ip_addr->data[0], ip_addr->data[1], ip_addr->data[2], ip_addr->data[3]);
+char* esm_data_get_ipv4_addr(const_bstring ip_addr) {
+  if ((ip_addr) && (ip_addr->slen == 4)) {
+    sprintf(ip_addr_str, "%u.%u.%u.%u", ip_addr->data[0], ip_addr->data[1],
+            ip_addr->data[2], ip_addr->data[3]);
     return ip_addr_str;
   }
 
   return (NULL);
 }
 
-char                            *
-esm_data_get_ipv6_addr (
-    const_bstring ip_addr)
-{
-  if ((ip_addr) && (ip_addr->slen == 8)){
-    sprintf (ip_addr_str, "%x%.2x:%x%.2x:%x%.2x:%x%.2x",
-        ip_addr->data[0], ip_addr->data[1], ip_addr->data[2], ip_addr->data[3],
-        ip_addr->data[4], ip_addr->data[5], ip_addr->data[6], ip_addr->data[7]);
+char* esm_data_get_ipv6_addr(const_bstring ip_addr) {
+  if ((ip_addr) && (ip_addr->slen == 8)) {
+    sprintf(ip_addr_str, "%x%.2x:%x%.2x:%x%.2x:%x%.2x", ip_addr->data[0],
+            ip_addr->data[1], ip_addr->data[2], ip_addr->data[3],
+            ip_addr->data[4], ip_addr->data[5], ip_addr->data[6],
+            ip_addr->data[7]);
     return ip_addr_str;
   }
 
   return (NULL);
 }
 
-char                            *
-esm_data_get_ipv4v6_addr (
-    const_bstring ip_addr)
-{
-  if ((ip_addr) && (ip_addr->slen == 12)){
-    sprintf (ip_addr_str, "%u.%u.%u.%u / %x%.2x:%x%.2x:%x%.2x:%x%.2x",
-             ip_addr->data[0], ip_addr->data[1], ip_addr->data[2], ip_addr->data[3],
-             ip_addr->data[4], ip_addr->data[5], ip_addr->data[6], ip_addr->data[7],
-             ip_addr->data[8], ip_addr->data[9], ip_addr->data[10], ip_addr->data[11]);
+char* esm_data_get_ipv4v6_addr(const_bstring ip_addr) {
+  if ((ip_addr) && (ip_addr->slen == 12)) {
+    sprintf(ip_addr_str, "%u.%u.%u.%u / %x%.2x:%x%.2x:%x%.2x:%x%.2x",
+            ip_addr->data[0], ip_addr->data[1], ip_addr->data[2],
+            ip_addr->data[3], ip_addr->data[4], ip_addr->data[5],
+            ip_addr->data[6], ip_addr->data[7], ip_addr->data[8],
+            ip_addr->data[9], ip_addr->data[10], ip_addr->data[11]);
     return ip_addr_str;
   }
 

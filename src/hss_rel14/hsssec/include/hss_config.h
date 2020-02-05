@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -23,26 +23,25 @@
 #define HSS_CONFIG_H_
 
 typedef struct hss_config_s {
-  char *cassandra_server;
-  char *cassandra_user;
-  char *cassandra_password;
-  char *cassandra_database;
+  char* cassandra_server;
+  char* cassandra_user;
+  char* cassandra_password;
+  char* cassandra_database;
 
-
-  char *operator_key;
+  char* operator_key;
   unsigned char operator_key_bin[16];
-  int   valid_op;
+  int valid_op;
 
   /* The freediameter configuration file */
-  char *freediameter_config;
+  char* freediameter_config;
 
   /* THe HSS global configuration file */
-  char *config;
+  char* config;
 
-  char *random;
-  char  random_bool;
+  char* random;
+  char random_bool;
 } hss_config_t;
 
-//int hss_config_init(int argc, char *argv[], hss_config_t *hss_config_p);
+// int hss_config_init(int argc, char *argv[], hss_config_t *hss_config_p);
 
 #endif /* HSS_CONFIG_H_ */

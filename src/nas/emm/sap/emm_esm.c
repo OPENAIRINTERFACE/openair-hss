@@ -69,7 +69,7 @@
 ///*
 //   String representation of EMMESM-SAP primitives
 //*/
-//static const char                      *_emm_esm_primitive_str[] = {
+// static const char                      *_emm_esm_primitive_str[] = {
 //  "EMMESM_RELEASE_IND",
 //  "EMMESM_UNITDATA_REQ",
 //  "EMMESM_ACTIVATE_BEARER_REQ",
@@ -98,8 +98,10 @@
 // ***************************************************************************/
 
 //  case _EMMESM_ACTIVATE_BEARER_REQ:
-//    MSC_LOG_RX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_ESM_MME, NULL, 0, "_EMMESM_ACTIVATE_BEARER_REQ ue id " MME_UE_S1AP_ID_FMT " ", msg->ue_id);
-//    rc = lowerlayer_activate_bearer_req (msg->ue_id, msg->u.activate_bearer.ebi,
+//    MSC_LOG_RX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_ESM_MME, NULL, 0,
+//    "_EMMESM_ACTIVATE_BEARER_REQ ue id " MME_UE_S1AP_ID_FMT " ", msg->ue_id);
+//    rc = lowerlayer_activate_bearer_req (msg->ue_id,
+//    msg->u.activate_bearer.ebi,
 //        msg->u.activate_bearer.mbr_dl,
 //        msg->u.activate_bearer.mbr_ul,
 //        msg->u.activate_bearer.gbr_dl,
@@ -108,8 +110,9 @@
 //    break;
 //
 //  case _EMMESM_MODIFY_BEARER_REQ:
-//    MSC_LOG_RX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_ESM_MME, NULL, 0, "_EMMESM_MODIFY_BEARER_REQ ue id " MME_UE_S1AP_ID_FMT " ", msg->ue_id);
-//    rc = lowerlayer_modify_bearer_req (msg->ue_id, msg->u.modify_bearer.ebi,
+//    MSC_LOG_RX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_ESM_MME, NULL, 0,
+//    "_EMMESM_MODIFY_BEARER_REQ ue id " MME_UE_S1AP_ID_FMT " ", msg->ue_id); rc
+//    = lowerlayer_modify_bearer_req (msg->ue_id, msg->u.modify_bearer.ebi,
 //        msg->u.modify_bearer.mbr_dl,
 //        msg->u.modify_bearer.mbr_ul,
 //        msg->u.modify_bearer.gbr_dl,
@@ -118,8 +121,10 @@
 //    break;
 //
 //  case _EMMESM_DEACTIVATE_BEARER_REQ:
-//    MSC_LOG_RX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_ESM_MME, NULL, 0, "_EMMESM_DEACTIVATE_BEARER_REQ ue id " MME_UE_S1AP_ID_FMT " ", msg->ue_id);
-//    rc = lowerlayer_deactivate_bearer_req (msg->ue_id, msg->u.deactivate_bearer.ebi,
+//    MSC_LOG_RX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_ESM_MME, NULL, 0,
+//    "_EMMESM_DEACTIVATE_BEARER_REQ ue id " MME_UE_S1AP_ID_FMT " ",
+//    msg->ue_id); rc = lowerlayer_deactivate_bearer_req (msg->ue_id,
+//    msg->u.deactivate_bearer.ebi,
 //        msg->u.deactivate_bearer.msg);
 //    break;
 //
@@ -128,8 +133,11 @@
 //  }
 //
 //  if (rc != RETURNok) {
-//    MSC_LOG_RX_DISCARDED_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "_EMMESM_UNKNOWN(primitive id %d) ue id " MME_UE_S1AP_ID_FMT " ", primitive, msg->ue_id);
-//    OAILOG_WARNING (LOG_NAS_EMM, "EMMESM-SAP - Failed to process primitive %s (%d)\n", _emm_esm_primitive_str[primitive - _EMMESM_START - 1], primitive);
+//    MSC_LOG_RX_DISCARDED_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0,
+//    "_EMMESM_UNKNOWN(primitive id %d) ue id " MME_UE_S1AP_ID_FMT " ",
+//    primitive, msg->ue_id); OAILOG_WARNING (LOG_NAS_EMM, "EMMESM-SAP - Failed
+//    to process primitive %s (%d)\n", _emm_esm_primitive_str[primitive -
+//    _EMMESM_START - 1], primitive);
 //  }
 //
 //  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);

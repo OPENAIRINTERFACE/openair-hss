@@ -4,9 +4,8 @@
  * 	found in "S1AP-IEs.asn"
  */
 
-#ifndef	_S1ap_CauseNas_H_
-#define	_S1ap_CauseNas_H_
-
+#ifndef _S1ap_CauseNas_H_
+#define _S1ap_CauseNas_H_
 
 #include <asn_application.h>
 
@@ -19,18 +18,18 @@ extern "C" {
 
 /* Dependencies */
 typedef enum S1ap_CauseNas {
-	S1ap_CauseNas_normal_release	= 0,
-	S1ap_CauseNas_authentication_failure	= 1,
-	S1ap_CauseNas_detach	= 2,
-	S1ap_CauseNas_unspecified	= 3,
-	/*
-	 * Enumeration is extensible
-	 */
-	S1ap_CauseNas_csg_subscription_expiry	= 4
+  S1ap_CauseNas_normal_release = 0,
+  S1ap_CauseNas_authentication_failure = 1,
+  S1ap_CauseNas_detach = 2,
+  S1ap_CauseNas_unspecified = 3,
+  /*
+   * Enumeration is extensible
+   */
+  S1ap_CauseNas_csg_subscription_expiry = 4
 } e_S1ap_CauseNas;
 
 /* S1ap-CauseNas */
-typedef long	 S1ap_CauseNas_t;
+typedef long S1ap_CauseNas_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_S1ap_CauseNas;
@@ -46,5 +45,5 @@ xer_type_encoder_f S1ap_CauseNas_encode_xer;
 }
 #endif
 
-#endif	/* _S1ap_CauseNas_H_ */
+#endif /* _S1ap_CauseNas_H_ */
 #include <asn_internal.h>

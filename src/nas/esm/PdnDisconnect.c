@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -42,33 +42,32 @@
         ding the default EPS bearer context, are released.
 
 *****************************************************************************/
-#include <pthread.h>
 #include <inttypes.h>
-#include <stdint.h>
+#include <pthread.h>
 #include <stdbool.h>
-#include <string.h>
+#include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "bstrlib.h"
 
-#include "common_types.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"
 #include "3gpp_29.274.h"
 #include "3gpp_36.401.h"
-#include "common_defs.h"
-#include "mme_app_session_context.h"
-#include "mme_app_defs.h"
-#include "common_defs.h"
-#include "log.h"
 #include "assertions.h"
+#include "common_defs.h"
+#include "common_types.h"
+#include "log.h"
+#include "mme_app_defs.h"
+#include "mme_app_session_context.h"
 
-#include "mme_app_pdn_context.h"
 #include "emm_sap.h"
+#include "esm_cause.h"
 #include "esm_data.h"
 #include "esm_proc.h"
 #include "esm_pt.h"
-#include "esm_cause.h"
+#include "mme_app_pdn_context.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -110,20 +109,18 @@
  **      Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
-void
-esm_send_pdn_disconnect_reject (
-  pti_t pti,
-  ESM_msg * esm_rsp_msg,
-  int esm_cause)
-{
-  OAILOG_FUNC_IN (LOG_NAS_ESM);
+void esm_send_pdn_disconnect_reject(pti_t pti, ESM_msg *esm_rsp_msg,
+                                    int esm_cause) {
+  OAILOG_FUNC_IN(LOG_NAS_ESM);
 
   memset(esm_rsp_msg, 0, sizeof(ESM_msg));
   /*
    * Mandatory - ESM message header
    */
-  esm_rsp_msg->pdn_disconnect_reject.protocoldiscriminator = EPS_SESSION_MANAGEMENT_MESSAGE;
-  esm_rsp_msg->pdn_disconnect_reject.epsbeareridentity = EPS_BEARER_IDENTITY_UNASSIGNED;
+  esm_rsp_msg->pdn_disconnect_reject.protocoldiscriminator =
+      EPS_SESSION_MANAGEMENT_MESSAGE;
+  esm_rsp_msg->pdn_disconnect_reject.epsbeareridentity =
+      EPS_BEARER_IDENTITY_UNASSIGNED;
   esm_rsp_msg->pdn_disconnect_reject.messagetype = PDN_DISCONNECT_REJECT;
   esm_rsp_msg->pdn_disconnect_reject.proceduretransactionidentity = pti;
   /*
@@ -134,7 +131,11 @@ esm_send_pdn_disconnect_reject (
    * Optional IEs
    */
   esm_rsp_msg->pdn_disconnect_reject.presencemask = 0;
-  OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Send PDN Disconnect Reject message " "(pti=%d, ebi=%d)\n", esm_rsp_msg->pdn_disconnect_reject.proceduretransactionidentity, esm_rsp_msg->pdn_disconnect_reject.epsbeareridentity);
+  OAILOG_INFO(LOG_NAS_ESM,
+              "ESM-SAP   - Send PDN Disconnect Reject message "
+              "(pti=%d, ebi=%d)\n",
+              esm_rsp_msg->pdn_disconnect_reject.proceduretransactionidentity,
+              esm_rsp_msg->pdn_disconnect_reject.epsbeareridentity);
   OAILOG_FUNC_OUT(LOG_NAS_ESM);
 }
 
@@ -167,47 +168,59 @@ esm_send_pdn_disconnect_reject (
  **      Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
-esm_cause_t
-esm_proc_pdn_disconnect_request (
-  mme_ue_s1ap_id_t ue_id,
-  proc_tid_t pti,
-  pdn_cid_t  pdn_cid,
-  ebi_t linked_ebi)
-{
-  OAILOG_FUNC_IN (LOG_NAS_ESM);
+esm_cause_t esm_proc_pdn_disconnect_request(mme_ue_s1ap_id_t ue_id,
+                                            proc_tid_t pti, pdn_cid_t pdn_cid,
+                                            ebi_t linked_ebi) {
+  OAILOG_FUNC_IN(LOG_NAS_ESM);
 
-  nas_esm_proc_pdn_connectivity_t * esm_proc_pdn_disconnect = NULL;
-  pdn_context_t * pdn_context = NULL;
+  nas_esm_proc_pdn_connectivity_t *esm_proc_pdn_disconnect = NULL;
+  pdn_context_t *pdn_context = NULL;
 
-  OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - PDN disconnect requested by the UE " "(ue_id=" MME_UE_S1AP_ID_FMT ", default_ebi %d, pti=%d)\n", ue_id, linked_ebi, pti);
+  OAILOG_INFO(LOG_NAS_ESM,
+              "ESM-PROC  - PDN disconnect requested by the UE "
+              "(ue_id=" MME_UE_S1AP_ID_FMT ", default_ebi %d, pti=%d)\n",
+              ue_id, linked_ebi, pti);
   mme_app_get_pdn_context(ue_id, pdn_cid, linked_ebi, NULL, &pdn_context);
-  if(!pdn_context){
-    OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - No PDN context found (after update) (ebi=%d, pti=%d) for UE " MME_UE_S1AP_ID_FMT ".\n", linked_ebi, pti, ue_id);
-    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_PDN_CONNECTION_DOES_NOT_EXIST);
+  if (!pdn_context) {
+    OAILOG_ERROR(LOG_NAS_ESM,
+                 "ESM-PROC  - No PDN context found (after update) (ebi=%d, "
+                 "pti=%d) for UE " MME_UE_S1AP_ID_FMT ".\n",
+                 linked_ebi, pti, ue_id);
+    OAILOG_FUNC_RETURN(LOG_NAS_ESM, ESM_CAUSE_PDN_CONNECTION_DOES_NOT_EXIST);
   }
 
-  OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Creating an ESM procedure and starting T3495 for Deactivate Default EPS bearer context deactivation (ue_id=" MME_UE_S1AP_ID_FMT ", context_identifier=%d)\n",
+  OAILOG_INFO(
+      LOG_NAS_ESM,
+      "ESM-PROC  - Creating an ESM procedure and starting T3495 for Deactivate "
+      "Default EPS bearer context deactivation (ue_id=" MME_UE_S1AP_ID_FMT
+      ", context_identifier=%d)\n",
       ue_id, pdn_context->context_identifier);
   /** Create a procedure, but don't start the timer yet. */
-  esm_proc_pdn_disconnect = _esm_proc_create_pdn_connectivity_procedure(ue_id, NULL, pti);
+  esm_proc_pdn_disconnect =
+      _esm_proc_create_pdn_connectivity_procedure(ue_id, NULL, pti);
   esm_proc_pdn_disconnect->default_ebi = pdn_context->default_ebi;
   /** Update the PDN connectivity procedure with the PDN context information. */
   esm_proc_pdn_disconnect->pdn_cid = pdn_context->context_identifier;
-  if(esm_proc_pdn_disconnect->subscribed_apn)
+  if (esm_proc_pdn_disconnect->subscribed_apn)
     bdestroy_wrapper(&esm_proc_pdn_disconnect->subscribed_apn);
-  esm_proc_pdn_disconnect->subscribed_apn = bstrcpy(pdn_context->apn_subscribed);
+  esm_proc_pdn_disconnect->subscribed_apn =
+      bstrcpy(pdn_context->apn_subscribed);
   /*
    * Trigger an S11 Delete Session Request to the SAE-GW.
    * No need to process the response.
    */
 
-  struct sockaddr *saegw_peer_ip = (struct sockaddr *)&pdn_context->s_gw_addr_s11_s4;
-  if(saegw_peer_ip->sa_family == 0){
-    mme_app_select_service(&esm_proc_pdn_disconnect->visited_tai, &saegw_peer_ip, S11_SGW_GTP_C);
+  struct sockaddr *saegw_peer_ip =
+      (struct sockaddr *)&pdn_context->s_gw_addr_s11_s4;
+  if (saegw_peer_ip->sa_family == 0) {
+    mme_app_select_service(&esm_proc_pdn_disconnect->visited_tai,
+                           &saegw_peer_ip, S11_SGW_GTP_C);
   }
 
-  nas_itti_pdn_disconnect_req(ue_id, pdn_context->default_ebi, pti, false, false, saegw_peer_ip, pdn_context->s_gw_teid_s11_s4, pdn_cid);
-  OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_SUCCESS);
+  nas_itti_pdn_disconnect_req(ue_id, pdn_context->default_ebi, pti, false,
+                              false, saegw_peer_ip,
+                              pdn_context->s_gw_teid_s11_s4, pdn_cid);
+  OAILOG_FUNC_RETURN(LOG_NAS_ESM, ESM_CAUSE_SUCCESS);
 }
 
 /****************************************************************************
@@ -225,50 +238,67 @@ esm_proc_pdn_disconnect_request (
  ** Outputs:     None                                               **
  **                                                                        **
  ***************************************************************************/
-void
-esm_proc_detach_request (
-  mme_ue_s1ap_id_t ue_id, bool clr)
-{
-  OAILOG_FUNC_IN (LOG_NAS_ESM);
+void esm_proc_detach_request(mme_ue_s1ap_id_t ue_id, bool clr) {
+  OAILOG_FUNC_IN(LOG_NAS_ESM);
 
-  OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Detach requested by the UE " "(ue_id=" MME_UE_S1AP_ID_FMT ")\n", ue_id);
+  OAILOG_INFO(LOG_NAS_ESM,
+              "ESM-PROC  - Detach requested by the UE "
+              "(ue_id=" MME_UE_S1AP_ID_FMT ")\n",
+              ue_id);
 
-  ue_session_pool_t   * ue_session_pool = mme_ue_session_pool_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_session_pools, ue_id);
-  pdn_context_t       * pdn_context = NULL;
+  ue_session_pool_t *ue_session_pool =
+      mme_ue_session_pool_exists_mme_ue_s1ap_id(
+          &mme_app_desc.mme_ue_session_pools, ue_id);
+  pdn_context_t *pdn_context = NULL;
 
-  if(!ue_session_pool){
-    OAILOG_WARNING(LOG_MME_APP, "No UE session pool could be found for UE: " MME_UE_S1AP_ID_FMT " to release ESM contexts. \n", ue_id);
+  if (!ue_session_pool) {
+    OAILOG_WARNING(
+        LOG_MME_APP,
+        "No UE session pool could be found for UE: " MME_UE_S1AP_ID_FMT
+        " to release ESM contexts. \n",
+        ue_id);
   } else {
-	  OAILOG_WARNING(LOG_MME_APP, "Found a session pool for UE: " MME_UE_S1AP_ID_FMT ". Releasing session pool. \n", ue_id);
-	  /**
-	   * Trigger all S11 messages, wihtouth removing the context.
-	   * Todo: check what happens, if the transactions stay but s11 tunnel is removed.
-	   */
-	  RB_FOREACH (pdn_context, PdnContexts, &ue_session_pool->pdn_contexts) {
-		  DevAssert(pdn_context);
-		  // todo: check this!
-		  bool deleteTunnel = (RB_MIN(PdnContexts, &ue_session_pool->pdn_contexts)== pdn_context);
+    OAILOG_WARNING(LOG_MME_APP,
+                   "Found a session pool for UE: " MME_UE_S1AP_ID_FMT
+                   ". Releasing session pool. \n",
+                   ue_id);
+    /**
+     * Trigger all S11 messages, wihtouth removing the context.
+     * Todo: check what happens, if the transactions stay but s11 tunnel is
+     * removed.
+     */
+    RB_FOREACH(pdn_context, PdnContexts, &ue_session_pool->pdn_contexts) {
+      DevAssert(pdn_context);
+      // todo: check this!
+      bool deleteTunnel =
+          (RB_MIN(PdnContexts, &ue_session_pool->pdn_contexts) == pdn_context);
 
-		  /*
-		   * Trigger an S11 Delete Session Request to the SAE-GW.
-		   * No need to process the response.
-		   */
-		  if(((struct sockaddr *)&pdn_context->s_gw_addr_s11_s4)->sa_family != 0){
-			  nas_itti_pdn_disconnect_req(ue_id, pdn_context->default_ebi, PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED, deleteTunnel, clr,
-					  &pdn_context->s_gw_addr_s11_s4, pdn_context->s_gw_teid_s11_s4, pdn_context->context_identifier);
-		  }
-	  }
-	  OAILOG_INFO(LOG_MME_APP, "Triggered session deletion for all session. Removing ESM context of UE: " MME_UE_S1AP_ID_FMT " . \n", ue_id);
-	  mme_app_esm_detach(ue_id);
+      /*
+       * Trigger an S11 Delete Session Request to the SAE-GW.
+       * No need to process the response.
+       */
+      if (((struct sockaddr *)&pdn_context->s_gw_addr_s11_s4)->sa_family != 0) {
+        nas_itti_pdn_disconnect_req(
+            ue_id, pdn_context->default_ebi,
+            PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED, deleteTunnel, clr,
+            &pdn_context->s_gw_addr_s11_s4, pdn_context->s_gw_teid_s11_s4,
+            pdn_context->context_identifier);
+      }
+    }
+    OAILOG_INFO(LOG_MME_APP,
+                "Triggered session deletion for all session. Removing ESM "
+                "context of UE: " MME_UE_S1AP_ID_FMT " . \n",
+                ue_id);
+    mme_app_esm_detach(ue_id);
   }
-  // Notify MME APP to remove the remaining MME_APP and S1AP contexts.. The tunnel endpoints might or might not be deleted at this time.
+  // Notify MME APP to remove the remaining MME_APP and S1AP contexts.. The
+  // tunnel endpoints might or might not be deleted at this time.
   nas_itti_detach_req(ue_id);
   OAILOG_FUNC_OUT(LOG_NAS_ESM);
 }
 /****************************************************************************/
 /*********************  L O C A L    F U N C T I O N S  *********************/
 /****************************************************************************/
-
 
 /*
   ---------------------------------------------------------------------------

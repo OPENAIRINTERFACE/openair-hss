@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -39,10 +39,9 @@ Description NAS EMM procedure call manager
 #define FILE_NAS_EMM_PROC_SEEN
 
 #include "common_defs.h"
-#include "mme_config.h"
-#include "common_defs.h"
-#include "networkDef.h"
 #include "emm_cnDef.h"
+#include "mme_config.h"
+#include "networkDef.h"
 
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/
@@ -73,32 +72,35 @@ Description NAS EMM procedure call manager
  */
 
 int nas_proc_establish_ind(const mme_ue_s1ap_id_t ue_id,
-                            const tai_t originating_tai,
-                            const ecgi_t ecgi,
-                            const as_cause_t as_cause,
-                            STOLEN_REF bstring *msg);
+                           const tai_t originating_tai, const ecgi_t ecgi,
+                           const as_cause_t as_cause, STOLEN_REF bstring* msg);
 
-int nas_proc_dl_transfer_cnf(const mme_ue_s1ap_id_t ueid, const nas_error_code_t status, STOLEN_REF bstring *  nas_msg);
-int nas_proc_dl_transfer_rej(const mme_ue_s1ap_id_t ueid, const nas_error_code_t status, STOLEN_REF bstring *  nas_msg);
+int nas_proc_dl_transfer_cnf(const mme_ue_s1ap_id_t ueid,
+                             const nas_error_code_t status,
+                             STOLEN_REF bstring* nas_msg);
+int nas_proc_dl_transfer_rej(const mme_ue_s1ap_id_t ueid,
+                             const nas_error_code_t status,
+                             STOLEN_REF bstring* nas_msg);
 int nas_proc_ul_transfer_ind(const mme_ue_s1ap_id_t ueid,
-                             const tai_t originating_tai,
-                             const ecgi_t cgi,
-                             STOLEN_REF bstring *msg);
+                             const tai_t originating_tai, const ecgi_t cgi,
+                             STOLEN_REF bstring* msg);
 
 /*
  * --------------------------------------------------------------------------
  *      NAS EMM procedures triggered by the mme applicative layer
  * --------------------------------------------------------------------------
  */
-int nas_proc_authentication_info_answer (s6a_auth_info_ans_t * ans);
-int nas_proc_auth_param_res (mme_ue_s1ap_id_t ue_id, uint8_t nb_vectors, eutran_vector_t *vectors);
+int nas_proc_authentication_info_answer(s6a_auth_info_ans_t* ans);
+int nas_proc_auth_param_res(mme_ue_s1ap_id_t ue_id, uint8_t nb_vectors,
+                            eutran_vector_t* vectors);
 int nas_proc_auth_param_fail(mme_ue_s1ap_id_t ue_id, nas_cause_t cause);
 int nas_proc_deregister_ue(uint32_t ue_id);
 
-int nas_proc_signalling_connection_rel_ind (mme_ue_s1ap_id_t ue_id);
-int nas_proc_implicit_detach_ue_ind (mme_ue_s1ap_id_t ue_id, uint8_t emm_cause, uint8_t detach_type, bool clr);
+int nas_proc_signalling_connection_rel_ind(mme_ue_s1ap_id_t ue_id);
+int nas_proc_implicit_detach_ue_ind(mme_ue_s1ap_id_t ue_id, uint8_t emm_cause,
+                                    uint8_t detach_type, bool clr);
 /** NAS context response. */
-int nas_proc_context_res (itti_nas_context_res_t *nas_context_res);
-int nas_proc_context_fail (mme_ue_s1ap_id_t ue_id, gtpv2c_cause_value_t cause);
+int nas_proc_context_res(itti_nas_context_res_t* nas_context_res);
+int nas_proc_context_fail(mme_ue_s1ap_id_t ue_id, gtpv2c_cause_value_t cause);
 
 #endif /* FILE_NAS_PROC_SEEN*/

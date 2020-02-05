@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -45,32 +45,32 @@
         network has user data pending and the UE is in EMM-IDLE mode.
 
 *****************************************************************************/
-#include <pthread.h>
 #include <inttypes.h>
-#include <stdint.h>
+#include <pthread.h>
 #include <stdbool.h>
-#include <string.h>
+#include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "bstrlib.h"
 
-#include "log.h"
-#include "msc.h"
-#include "dynamic_memory_check.h"
-#include "common_types.h"
-#include "common_defs.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"
 #include "3gpp_29.274.h"
+#include "common_defs.h"
+#include "common_types.h"
+#include "dynamic_memory_check.h"
+#include "log.h"
+#include "msc.h"
 
+#include "emm_cause.h"
 #include "emm_data.h"
 #include "emm_proc.h"
-#include "emm_cause.h"
 #include "emm_sap.h"
 #include "nas_timer.h"
 
-#include "mme_app_ue_context.h"
 #include "mme_app_defs.h"
+#include "mme_app_ue_context.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -79,7 +79,7 @@
 /****************************************************************************/
 /*******************  L O C A L    D E F I N I T I O N S  *******************/
 /****************************************************************************/
-static int _emm_service_reject (mme_ue_s1ap_id_t ue_id, int emm_cause);
+static int _emm_service_reject(mme_ue_s1ap_id_t ue_id, int emm_cause);
 /*
    --------------------------------------------------------------------------
     Internal data handled by the service request procedure in the UE
@@ -92,19 +92,14 @@ static int _emm_service_reject (mme_ue_s1ap_id_t ue_id, int emm_cause);
    --------------------------------------------------------------------------
 */
 
-
 /****************************************************************************/
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
 /****************************************************************************/
-int
-emm_proc_service_reject (
- const mme_ue_s1ap_id_t ue_id,
-  const int emm_cause)
-{
+int emm_proc_service_reject(const mme_ue_s1ap_id_t ue_id, const int emm_cause) {
   int rc = RETURNok;
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
-  rc = _emm_service_reject (ue_id, emm_cause);
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  OAILOG_FUNC_IN(LOG_NAS_EMM);
+  rc = _emm_service_reject(ue_id, emm_cause);
+  OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
 }
 /****************************************************************************/
 /*********************  L O C A L    F U N C T I O N S  *********************/
@@ -114,18 +109,19 @@ emm_proc_service_reject (
      @param [in]args UE EMM context data
      @returns status of operation
 */
-static int
-_emm_service_reject (mme_ue_s1ap_id_t ue_id, int emm_cause) 
-  
+static int _emm_service_reject(mme_ue_s1ap_id_t ue_id, int emm_cause)
+
 {
   int rc = RETURNerror;
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  OAILOG_FUNC_IN(LOG_NAS_EMM);
 
-  emm_data_context_t                          *emm_ctx = emm_data_context_get (&_emm_data, ue_id);
-  emm_sap_t                                    emm_sap = {0};
+  emm_data_context_t *emm_ctx = emm_data_context_get(&_emm_data, ue_id);
+  emm_sap_t emm_sap = {0};
 
-  OAILOG_DEBUG (LOG_NAS_EMM, "EMM-PROC- Sending Service Reject. ue_id=" MME_UE_S1AP_ID_FMT ", cause=%d)\n",
-        ue_id, emm_cause);
+  OAILOG_DEBUG(LOG_NAS_EMM,
+               "EMM-PROC- Sending Service Reject. ue_id=" MME_UE_S1AP_ID_FMT
+               ", cause=%d)\n",
+               ue_id, emm_cause);
   /*
    * Notify EMM-AS SAP that Service Reject message has to be sent
    * onto the network
@@ -141,20 +137,22 @@ _emm_service_reject (mme_ue_s1ap_id_t ue_id, int emm_cause)
    * Setup EPS NAS security data
    */
   if (emm_ctx) {
-     emm_as_set_security_data (&emm_sap.u.emm_as.u.establish.sctx, &emm_ctx->_security, false, false);
+    emm_as_set_security_data(&emm_sap.u.emm_as.u.establish.sctx,
+                             &emm_ctx->_security, false, false);
   } else {
-      emm_as_set_security_data (&emm_sap.u.emm_as.u.establish.sctx, NULL, false, false);
+    emm_as_set_security_data(&emm_sap.u.emm_as.u.establish.sctx, NULL, false,
+                             false);
   }
-  rc = emm_sap_send (&emm_sap);
-  
-  // Release EMM context 
+  rc = emm_sap_send(&emm_sap);
+
+  // Release EMM context
   if (emm_ctx) {
     /** Not releasing the EMM context. */
-//    if (emm_ctx->is_dynamic) {
-//      _clear_emm_ctxt(emm_ctx->ue_id);
-//    }
+    //    if (emm_ctx->is_dynamic) {
+    //      _clear_emm_ctxt(emm_ctx->ue_id);
+    //    }
   }
 
   emm_context_unlock(emm_ctx);
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
 }

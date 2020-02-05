@@ -29,11 +29,15 @@
 #ifndef FILE_ASYNC_SYSTEM_MESSAGES_TYPES_SEEN
 #define FILE_ASYNC_SYSTEM_MESSAGES_TYPES_SEEN
 
-#define ASYNC_SYSTEM_COMMAND(mSGpTR)                     (mSGpTR)->ittiMsg.async_system_command
+#include <stdbool.h>
+
+#include "bstrlib.h"
+
+#define ASYNC_SYSTEM_COMMAND(mSGpTR) (mSGpTR)->ittiMsg.async_system_command
 
 typedef struct itti_async_system_command_s {
-  bstring                  system_command;
-  bool                     is_abort_on_error;
+  bstring system_command;
+  bool is_abort_on_error;
 } itti_async_system_command_t;
 
 #endif /* FILE_ASYNC_SYSTEM_MESSAGES_TYPES_SEEN */

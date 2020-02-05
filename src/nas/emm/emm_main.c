@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -38,24 +38,22 @@
 *****************************************************************************/
 #include "../emm/emm_main.h"
 
-#include <pthread.h>
 #include <inttypes.h>
-#include <stdint.h>
+#include <pthread.h>
 #include <stdbool.h>
-#include <string.h>
+#include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "../emm/emm_data.h"
 #include "bstrlib.h"
 
-#include "log.h"
-#include "obj_hashtable.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"
 #include "common_defs.h"
+#include "log.h"
 #include "mme_config.h"
-
-
+#include "obj_hashtable.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -65,11 +63,9 @@
 /*******************  L O C A L    D E F I N I T I O N S  *******************/
 /****************************************************************************/
 
-
 /****************************************************************************/
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
 /****************************************************************************/
-
 
 /****************************************************************************
  **                                                                        **
@@ -85,26 +81,27 @@
  **      Others:    _emm_data                                  **
  **                                                                        **
  ***************************************************************************/
-void
-emm_main_initialize (
-  mme_config_t * mme_config_p)
-{
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
+void emm_main_initialize(mme_config_t* mme_config_p) {
+  OAILOG_FUNC_IN(LOG_NAS_EMM);
   /*
    * Retreive MME supported configuration data
    */
   memset(&_emm_data.conf, 0, sizeof(_emm_data.conf));
-  if (mme_api_get_emm_config (&_emm_data.conf, mme_config_p) != RETURNok) {
-    OAILOG_ERROR (LOG_NAS_EMM, "EMM-MAIN  - Failed to get MME configuration data");
+  if (mme_api_get_emm_config(&_emm_data.conf, mme_config_p) != RETURNok) {
+    OAILOG_ERROR(LOG_NAS_EMM,
+                 "EMM-MAIN  - Failed to get MME configuration data");
   }
   bstring b = bfromcstr("emm_data.ctx_coll_ue_id");
-  _emm_data.ctx_coll_ue_id = hashtable_ts_create (mme_config.max_ues, NULL, NULL, b);
+  _emm_data.ctx_coll_ue_id =
+      hashtable_ts_create(mme_config.max_ues, NULL, NULL, b);
   btrunc(b, 0);
   bassigncstr(b, "emm_data.ctx_coll_imsi");
-  _emm_data.ctx_coll_imsi  = hashtable_ts_create (mme_config.max_ues, NULL, hash_free_int_func, b);
+  _emm_data.ctx_coll_imsi =
+      hashtable_ts_create(mme_config.max_ues, NULL, hash_free_int_func, b);
   btrunc(b, 0);
   bassigncstr(b, "emm_data.ctx_coll_guti");
-  _emm_data.ctx_coll_guti  = obj_hashtable_ts_create (mme_config.max_ues, NULL, NULL, hash_free_int_func, b);
+  _emm_data.ctx_coll_guti = obj_hashtable_ts_create(
+      mme_config.max_ues, NULL, NULL, hash_free_int_func, b);
   bdestroy_wrapper(&b);
   OAILOG_FUNC_OUT(LOG_NAS_EMM);
 }
@@ -123,19 +120,14 @@ emm_main_initialize (
  **          Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
-void
-emm_main_cleanup (
-  void)
-{
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
+void emm_main_cleanup(void) {
+  OAILOG_FUNC_IN(LOG_NAS_EMM);
   hashtable_ts_destroy(_emm_data.ctx_coll_imsi);
   obj_hashtable_ts_destroy(_emm_data.ctx_coll_guti);
   hashtable_ts_destroy(_emm_data.ctx_coll_ue_id);
   /** todo: Remove all EMM procedures. */
   OAILOG_FUNC_OUT(LOG_NAS_EMM);
 }
-
-
 
 /****************************************************************************/
 /*********************  L O C A L    F U N C T I O N S  *********************/

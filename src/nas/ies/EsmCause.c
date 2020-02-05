@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -19,49 +19,41 @@
  *      contact@openairinterface.org
  */
 
+#include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
-#include <stdbool.h>
 
 #include "bstrlib.h"
 
-#include "TLVEncoder.h"
-#include "TLVDecoder.h"
 #include "EsmCause.h"
+#include "TLVDecoder.h"
+#include "TLVEncoder.h"
 
 //------------------------------------------------------------------------------
-int decode_esm_cause (
-  esm_cause_t * esmcause,
-  uint8_t iei,
-  uint8_t * buffer,
-  uint32_t len)
-{
-  int                                     decoded = 0;
+int decode_esm_cause(esm_cause_t* esmcause, uint8_t iei, uint8_t* buffer,
+                     uint32_t len) {
+  int decoded = 0;
 
   if (iei > 0) {
-    CHECK_IEI_DECODER (iei, *buffer);
+    CHECK_IEI_DECODER(iei, *buffer);
     decoded++;
   }
 
-  *esmcause = (esm_cause_t)*(buffer + decoded);
+  *esmcause = (esm_cause_t) * (buffer + decoded);
   decoded++;
   return decoded;
 }
 
 //------------------------------------------------------------------------------
-int encode_esm_cause (
-  esm_cause_t * esmcause,
-  uint8_t iei,
-  uint8_t * buffer,
-  uint32_t len)
-{
-  uint32_t                                encoded = 0;
+int encode_esm_cause(esm_cause_t* esmcause, uint8_t iei, uint8_t* buffer,
+                     uint32_t len) {
+  uint32_t encoded = 0;
 
   /*
    * Checking IEI and pointer
    */
-  CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, ESM_CAUSE_MINIMUM_LENGTH, len);
+  CHECK_PDU_POINTER_AND_LENGTH_ENCODER(buffer, ESM_CAUSE_MINIMUM_LENGTH, len);
 
   if (iei > 0) {
     *buffer = iei;
@@ -72,4 +64,3 @@ int encode_esm_cause (
   encoded++;
   return encoded;
 }
-

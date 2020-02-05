@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -29,32 +29,32 @@
 #include "SecurityHeaderType.h"
 
 /* Minimum length macro. Formed by minimum length of each mandatory field */
-#define UPLINK_NAS_TRANSPORT_MINIMUM_LENGTH ( \
-    NAS_MESSAGE_CONTAINER_MINIMUM_LENGTH )
+#define UPLINK_NAS_TRANSPORT_MINIMUM_LENGTH \
+  (NAS_MESSAGE_CONTAINER_MINIMUM_LENGTH)
 
 /* Maximum length macro. Formed by maximum length of each field */
-#define UPLINK_NAS_TRANSPORT_MAXIMUM_LENGTH ( \
-    NAS_MESSAGE_CONTAINER_MAXIMUM_LENGTH )
-
+#define UPLINK_NAS_TRANSPORT_MAXIMUM_LENGTH \
+  (NAS_MESSAGE_CONTAINER_MAXIMUM_LENGTH)
 
 /*
  * Message name: Uplink NAS Transport
- * Description: This message is sent by the UE to the network in order to carry an SMS message in encapsulated format. See table 8.2.30.1.
- * Significance: dual
+ * Description: This message is sent by the UE to the network in order to carry
+ * an SMS message in encapsulated format. See table 8.2.30.1. Significance: dual
  * Direction: UE to network
  */
 
 typedef struct uplink_nas_transport_msg_tag {
   /* Mandatory fields */
-  eps_protocol_discriminator_t      protocoldiscriminator:4;
-  security_header_type_t            securityheadertype:4;
-  message_type_t                    messagetype;
-  NasMessageContainer               nasmessagecontainer;
+  eps_protocol_discriminator_t protocoldiscriminator : 4;
+  security_header_type_t securityheadertype : 4;
+  message_type_t messagetype;
+  NasMessageContainer nasmessagecontainer;
 } uplink_nas_transport_msg;
 
-int decode_uplink_nas_transport(uplink_nas_transport_msg *uplinknastransport, uint8_t *buffer, uint32_t len);
+int decode_uplink_nas_transport(uplink_nas_transport_msg* uplinknastransport,
+                                uint8_t* buffer, uint32_t len);
 
-int encode_uplink_nas_transport(uplink_nas_transport_msg *uplinknastransport, uint8_t *buffer, uint32_t len);
+int encode_uplink_nas_transport(uplink_nas_transport_msg* uplinknastransport,
+                                uint8_t* buffer, uint32_t len);
 
 #endif /* ! defined(FILE_UPLINK_NAS_TRANSPORT_SEEN) */
-

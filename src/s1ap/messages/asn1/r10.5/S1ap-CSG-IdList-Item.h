@@ -4,15 +4,14 @@
  * 	found in "S1AP-IEs.asn"
  */
 
-#ifndef	_S1ap_CSG_IdList_Item_H_
-#define	_S1ap_CSG_IdList_Item_H_
-
+#ifndef _S1ap_CSG_IdList_Item_H_
+#define _S1ap_CSG_IdList_Item_H_
 
 #include <asn_application.h>
 
 /* Including external dependencies */
-#include "S1ap-CSG-Id.h"
 #include <constr_SEQUENCE.h>
+#include "S1ap-CSG-Id.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -23,15 +22,15 @@ struct S1ap_IE_Extensions;
 
 /* S1ap-CSG-IdList-Item */
 typedef struct S1ap_CSG_IdList_Item {
-	S1ap_CSG_Id_t	 cSG_Id;
-	struct S1ap_IE_Extensions	*iE_Extensions	/* OPTIONAL */;
-	/*
-	 * This type is extensible,
-	 * possible extensions are below.
-	 */
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+  S1ap_CSG_Id_t cSG_Id;
+  struct S1ap_IE_Extensions* iE_Extensions /* OPTIONAL */;
+  /*
+   * This type is extensible,
+   * possible extensions are below.
+   */
+
+  /* Context for parsing across buffer boundaries */
+  asn_struct_ctx_t _asn_ctx;
 } S1ap_CSG_IdList_Item_t;
 
 /* Implementation */
@@ -44,5 +43,5 @@ extern asn_TYPE_descriptor_t asn_DEF_S1ap_CSG_IdList_Item;
 /* Referred external types */
 #include "S1ap-IE-Extensions.h"
 
-#endif	/* _S1ap_CSG_IdList_Item_H_ */
+#endif /* _S1ap_CSG_IdList_Item_H_ */
 #include <asn_internal.h>

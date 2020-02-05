@@ -33,17 +33,24 @@
 // 6.2 E-UTRAN Identifiers
 //------------------------------------------------------------------------------
 
+typedef uint32_t
+    enb_ue_s1ap_id_t; /*!< \brief  An eNB UE S1AP ID shall be allocated so as to
+                         uniquely identify the UE over the S1 interface within
+                         an eNB. When an MME receives an eNB UE S1AP ID it shall
+                         store it for the duration of the UE-associated logical
+                         S1-connection for this UE. Once known to an MME this IE
+                         is included in all UE associated S1-AP signalling.
+                                   The eNB UE S1AP ID shall be unique within the
+                         eNB logical node. */
 
-
-typedef uint32_t                 enb_ue_s1ap_id_t;         /*!< \brief  An eNB UE S1AP ID shall be allocated so as to uniquely identify the UE over the S1 interface within an eNB.
-                                                                        When an MME receives an eNB UE S1AP ID it shall store it for the duration of the UE-associated logical S1-connection for this UE.
-                                                                        Once known to an MME this IE is included in all UE associated S1-AP signalling.
-                                                                        The eNB UE S1AP ID shall be unique within the eNB logical node. */
-
-typedef uint32_t                 mme_ue_s1ap_id_t;         /*!< \brief  A MME UE S1AP ID shall be allocated so as to uniquely identify the UE over the S1 interface within the MME.
-                                                                        When an eNB receives MME UE S1AP ID it shall store it for the duration of the UE-associated logical S1-connection for this UE.
-                                                                        Once known to an eNB this IE is included in all UE associated S1-AP signalling.
-                                                                        The MME UE S1AP ID shall be unique within the MME logical node.*/
-
+typedef uint32_t
+    mme_ue_s1ap_id_t; /*!< \brief  A MME UE S1AP ID shall be allocated so as to
+                         uniquely identify the UE over the S1 interface within
+                         the MME. When an eNB receives MME UE S1AP ID it shall
+                         store it for the duration of the UE-associated logical
+                         S1-connection for this UE. Once known to an eNB this IE
+                         is included in all UE associated S1-AP signalling.
+                                   The MME UE S1AP ID shall be unique within the
+                         MME logical node.*/
 
 #endif /* FILE_3GPP_36_401_SEEN */

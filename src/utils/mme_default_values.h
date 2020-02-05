@@ -25,23 +25,23 @@
 /*******************************************************************************
  * Timer Constants
  ******************************************************************************/
-#define MME_STATISTIC_TIMER_S  (60)
-#define MME_MOBILITY_COMPLETION_TIMER_S      (1)
-#define MME_S10_HANDOVER_COMPLETION_TIMER_S  (1)
+#define MME_STATISTIC_TIMER_S (60)
+#define MME_MOBILITY_COMPLETION_TIMER_S (1)
+#define MME_S10_HANDOVER_COMPLETION_TIMER_S (1)
 
 /*******************************************************************************
  * GTPV1 User Plane Constants
  ******************************************************************************/
-#define GTPV1_U_PORT_NUMBER    (2152)
+#define GTPV1_U_PORT_NUMBER (2152)
 
 /*******************************************************************************
  * S1AP Constants
  ******************************************************************************/
 
-#define S1AP_PORT_NUMBER (36412) ///< S1AP SCTP IANA ASSIGNED Port Number
-#define S1AP_SCTP_PPID   (18)    ///< S1AP SCTP Payload Protocol Identifier (PPID)
+#define S1AP_PORT_NUMBER (36412)  ///< S1AP SCTP IANA ASSIGNED Port Number
+#define S1AP_SCTP_PPID (18)  ///< S1AP SCTP Payload Protocol Identifier (PPID)
 
-#define S1AP_OUTCOME_TIMER_DEFAULT (5)     ///< S1AP Outcome drop timer (s)
+#define S1AP_OUTCOME_TIMER_DEFAULT (5)  ///< S1AP Outcome drop timer (s)
 
 /*******************************************************************************
  * NAS Constants
@@ -60,22 +60,21 @@
  ******************************************************************************/
 
 #define SCTP_RECV_BUFFER_SIZE (1 << 16)
-#define SCTP_OUT_STREAMS      (32)
-#define SCTP_IN_STREAMS       (32)
-#define SCTP_MAX_ATTEMPTS     (5)
+#define SCTP_OUT_STREAMS (32)
+#define SCTP_IN_STREAMS (32)
+#define SCTP_MAX_ATTEMPTS (5)
 
 /*******************************************************************************
  * MME global definitions
  ******************************************************************************/
 
-#define MMEC                    (0)
-#define MMEGID                  (0)
-#define PLMN_MCC                (208)
-#define PLMN_MNC                (34)
-#define PLMN_MNC_LEN            (2)
-#define PLMN_TAC                (1)
+#define MMEC (0)
+#define MMEGID (0)
+#define PLMN_MCC (208)
+#define PLMN_MNC (34)
+#define PLMN_MNC_LEN (2)
+#define PLMN_TAC (1)
 
-#define RELATIVE_CAPACITY       (15)
-
+#define RELATIVE_CAPACITY (15)
 
 #endif /* FILE_MME_DEFAULT_VALUES_SEEN */

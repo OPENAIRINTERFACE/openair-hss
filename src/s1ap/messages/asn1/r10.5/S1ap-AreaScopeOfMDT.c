@@ -7,70 +7,61 @@
 #include "S1ap-AreaScopeOfMDT.h"
 
 static asn_TYPE_member_t asn_MBR_S1ap_AreaScopeOfMDT_1[] = {
-	{ ATF_NOFLAGS, 0, offsetof(struct S1ap_AreaScopeOfMDT, choice.cellBased),
-		(ASN_TAG_CLASS_CONTEXT | (0 << 2)),
-		-1,	/* IMPLICIT tag at current level */
-		&asn_DEF_S1ap_CellBasedMDT,
-		0,	/* Defer constraints checking to the member type */
-		0,	/* PER is not compiled, use -gen-PER */
-		0,
-		"cellBased"
-		},
-	{ ATF_NOFLAGS, 0, offsetof(struct S1ap_AreaScopeOfMDT, choice.tABased),
-		(ASN_TAG_CLASS_CONTEXT | (1 << 2)),
-		-1,	/* IMPLICIT tag at current level */
-		&asn_DEF_S1ap_TABasedMDT,
-		0,	/* Defer constraints checking to the member type */
-		0,	/* PER is not compiled, use -gen-PER */
-		0,
-		"tABased"
-		},
-	{ ATF_NOFLAGS, 0, offsetof(struct S1ap_AreaScopeOfMDT, choice.pLMNWide),
-		(ASN_TAG_CLASS_CONTEXT | (2 << 2)),
-		-1,	/* IMPLICIT tag at current level */
-		&asn_DEF_NULL,
-		0,	/* Defer constraints checking to the member type */
-		0,	/* PER is not compiled, use -gen-PER */
-		0,
-		"pLMNWide"
-		},
+    {ATF_NOFLAGS, 0, offsetof(struct S1ap_AreaScopeOfMDT, choice.cellBased),
+     (ASN_TAG_CLASS_CONTEXT | (0 << 2)), -1, /* IMPLICIT tag at current level */
+     &asn_DEF_S1ap_CellBasedMDT,
+     0, /* Defer constraints checking to the member type */
+     0, /* PER is not compiled, use -gen-PER */
+     0, "cellBased"},
+    {ATF_NOFLAGS, 0, offsetof(struct S1ap_AreaScopeOfMDT, choice.tABased),
+     (ASN_TAG_CLASS_CONTEXT | (1 << 2)), -1, /* IMPLICIT tag at current level */
+     &asn_DEF_S1ap_TABasedMDT,
+     0, /* Defer constraints checking to the member type */
+     0, /* PER is not compiled, use -gen-PER */
+     0, "tABased"},
+    {ATF_NOFLAGS, 0, offsetof(struct S1ap_AreaScopeOfMDT, choice.pLMNWide),
+     (ASN_TAG_CLASS_CONTEXT | (2 << 2)), -1, /* IMPLICIT tag at current level */
+     &asn_DEF_NULL, 0, /* Defer constraints checking to the member type */
+     0,                /* PER is not compiled, use -gen-PER */
+     0, "pLMNWide"},
 };
 static asn_TYPE_tag2member_t asn_MAP_S1ap_AreaScopeOfMDT_tag2el_1[] = {
-    { (ASN_TAG_CLASS_CONTEXT | (0 << 2)), 0, 0, 0 }, /* cellBased at 67 */
-    { (ASN_TAG_CLASS_CONTEXT | (1 << 2)), 1, 0, 0 }, /* tABased at 68 */
-    { (ASN_TAG_CLASS_CONTEXT | (2 << 2)), 2, 0, 0 } /* pLMNWide at 69 */
+    {(ASN_TAG_CLASS_CONTEXT | (0 << 2)), 0, 0, 0}, /* cellBased at 67 */
+    {(ASN_TAG_CLASS_CONTEXT | (1 << 2)), 1, 0, 0}, /* tABased at 68 */
+    {(ASN_TAG_CLASS_CONTEXT | (2 << 2)), 2, 0, 0}  /* pLMNWide at 69 */
 };
 static asn_CHOICE_specifics_t asn_SPC_S1ap_AreaScopeOfMDT_specs_1 = {
-	sizeof(struct S1ap_AreaScopeOfMDT),
-	offsetof(struct S1ap_AreaScopeOfMDT, _asn_ctx),
-	offsetof(struct S1ap_AreaScopeOfMDT, present),
-	sizeof(((struct S1ap_AreaScopeOfMDT *)0)->present),
-	asn_MAP_S1ap_AreaScopeOfMDT_tag2el_1,
-	3,	/* Count of tags in the map */
-	0,
-	3	/* Extensions start */
+    sizeof(struct S1ap_AreaScopeOfMDT),
+    offsetof(struct S1ap_AreaScopeOfMDT, _asn_ctx),
+    offsetof(struct S1ap_AreaScopeOfMDT, present),
+    sizeof(((struct S1ap_AreaScopeOfMDT *)0)->present),
+    asn_MAP_S1ap_AreaScopeOfMDT_tag2el_1,
+    3, /* Count of tags in the map */
+    0,
+    3 /* Extensions start */
 };
 asn_TYPE_descriptor_t asn_DEF_S1ap_AreaScopeOfMDT = {
-	"S1ap-AreaScopeOfMDT",
-	"S1ap-AreaScopeOfMDT",
-	CHOICE_free,
-	CHOICE_print,
-	CHOICE_constraint,
-	CHOICE_decode_ber,
-	CHOICE_encode_der,
-	CHOICE_decode_xer,
-	CHOICE_encode_xer,
-	0, 0,	/* No UPER support, use "-gen-PER" to enable */
-	0, 0,	/* No APER support, use "-gen-PER" to enable */
-	CHOICE_compare,
-	CHOICE_outmost_tag,
-	0,	/* No effective tags (pointer) */
-	0,	/* No effective tags (count) */
-	0,	/* No tags (pointer) */
-	0,	/* No tags (count) */
-	0,	/* No PER visible constraints */
-	asn_MBR_S1ap_AreaScopeOfMDT_1,
-	3,	/* Elements count */
-	&asn_SPC_S1ap_AreaScopeOfMDT_specs_1	/* Additional specs */
+    "S1ap-AreaScopeOfMDT",
+    "S1ap-AreaScopeOfMDT",
+    CHOICE_free,
+    CHOICE_print,
+    CHOICE_constraint,
+    CHOICE_decode_ber,
+    CHOICE_encode_der,
+    CHOICE_decode_xer,
+    CHOICE_encode_xer,
+    0,
+    0, /* No UPER support, use "-gen-PER" to enable */
+    0,
+    0, /* No APER support, use "-gen-PER" to enable */
+    CHOICE_compare,
+    CHOICE_outmost_tag,
+    0, /* No effective tags (pointer) */
+    0, /* No effective tags (count) */
+    0, /* No tags (pointer) */
+    0, /* No tags (count) */
+    0, /* No PER visible constraints */
+    asn_MBR_S1ap_AreaScopeOfMDT_1,
+    3,                                   /* Elements count */
+    &asn_SPC_S1ap_AreaScopeOfMDT_specs_1 /* Additional specs */
 };
-

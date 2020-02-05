@@ -4,9 +4,8 @@
  * 	found in "S1AP-IEs.asn"
  */
 
-#ifndef	_S1ap_ReportIntervalMDT_H_
-#define	_S1ap_ReportIntervalMDT_H_
-
+#ifndef _S1ap_ReportIntervalMDT_H_
+#define _S1ap_ReportIntervalMDT_H_
 
 #include <asn_application.h>
 
@@ -19,23 +18,23 @@ extern "C" {
 
 /* Dependencies */
 typedef enum S1ap_ReportIntervalMDT {
-	S1ap_ReportIntervalMDT_ms120	= 0,
-	S1ap_ReportIntervalMDT_ms240	= 1,
-	S1ap_ReportIntervalMDT_ms480	= 2,
-	S1ap_ReportIntervalMDT_ms640	= 3,
-	S1ap_ReportIntervalMDT_ms1024	= 4,
-	S1ap_ReportIntervalMDT_ms2048	= 5,
-	S1ap_ReportIntervalMDT_ms5120	= 6,
-	S1ap_ReportIntervalMDT_ms10240	= 7,
-	S1ap_ReportIntervalMDT_min1	= 8,
-	S1ap_ReportIntervalMDT_min6	= 9,
-	S1ap_ReportIntervalMDT_min12	= 10,
-	S1ap_ReportIntervalMDT_min30	= 11,
-	S1ap_ReportIntervalMDT_min60	= 12
+  S1ap_ReportIntervalMDT_ms120 = 0,
+  S1ap_ReportIntervalMDT_ms240 = 1,
+  S1ap_ReportIntervalMDT_ms480 = 2,
+  S1ap_ReportIntervalMDT_ms640 = 3,
+  S1ap_ReportIntervalMDT_ms1024 = 4,
+  S1ap_ReportIntervalMDT_ms2048 = 5,
+  S1ap_ReportIntervalMDT_ms5120 = 6,
+  S1ap_ReportIntervalMDT_ms10240 = 7,
+  S1ap_ReportIntervalMDT_min1 = 8,
+  S1ap_ReportIntervalMDT_min6 = 9,
+  S1ap_ReportIntervalMDT_min12 = 10,
+  S1ap_ReportIntervalMDT_min30 = 11,
+  S1ap_ReportIntervalMDT_min60 = 12
 } e_S1ap_ReportIntervalMDT;
 
 /* S1ap-ReportIntervalMDT */
-typedef long	 S1ap_ReportIntervalMDT_t;
+typedef long S1ap_ReportIntervalMDT_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_S1ap_ReportIntervalMDT;
@@ -51,5 +50,5 @@ xer_type_encoder_f S1ap_ReportIntervalMDT_encode_xer;
 }
 #endif
 
-#endif	/* _S1ap_ReportIntervalMDT_H_ */
+#endif /* _S1ap_ReportIntervalMDT_H_ */
 #include <asn_internal.h>

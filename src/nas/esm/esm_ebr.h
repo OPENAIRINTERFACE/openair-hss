@@ -46,7 +46,7 @@ Description Defines functions used to handle state of EPS bearer contexts
 /****************************************************************************/
 
 /* Unassigned EPS bearer identity value */
-#define ESM_EBI_UNASSIGNED  (EPS_BEARER_IDENTITY_UNASSIGNED)
+#define ESM_EBI_UNASSIGNED (EPS_BEARER_IDENTITY_UNASSIGNED)
 
 /****************************************************************************/
 /************************  G L O B A L    T Y P E S  ************************/
@@ -60,20 +60,24 @@ Description Defines functions used to handle state of EPS bearer contexts
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
 /****************************************************************************/
 
-const char * esm_ebr_state2string(esm_ebr_state esm_ebr_state);
+const char* esm_ebr_state2string(esm_ebr_state esm_ebr_state);
 
 /*
  * Bearer Context Procedures
  */
 //-----------------------------------------------------------------------------
-nas_esm_proc_bearer_context_t *_esm_proc_create_bearer_context_procedure(mme_ue_s1ap_id_t ue_id, pti_t pti, ebi_t linked_ebi, pdn_cid_t pdn_cid, ebi_t ebi, teid_t s1u_sgw_teid,
-    int timeout_sec, int timeout_usec, esm_timeout_cb_t timeout_notif);
+nas_esm_proc_bearer_context_t* _esm_proc_create_bearer_context_procedure(
+    mme_ue_s1ap_id_t ue_id, pti_t pti, ebi_t linked_ebi, pdn_cid_t pdn_cid,
+    ebi_t ebi, teid_t s1u_sgw_teid, int timeout_sec, int timeout_usec,
+    esm_timeout_cb_t timeout_notif);
 
 //-----------------------------------------------------------------------------
-void _esm_proc_free_bearer_context_procedure(nas_esm_proc_bearer_context_t ** esm_proc_bearer_context);
+void _esm_proc_free_bearer_context_procedure(
+    nas_esm_proc_bearer_context_t** esm_proc_bearer_context);
 
 //-----------------------------------------------------------------------------
-nas_esm_proc_bearer_context_t *_esm_proc_get_bearer_context_procedure(mme_ue_s1ap_id_t ue_id, pti_t pti, ebi_t ebi);
+nas_esm_proc_bearer_context_t* _esm_proc_get_bearer_context_procedure(
+    mme_ue_s1ap_id_t ue_id, pti_t pti, ebi_t ebi);
 
 esm_ebr_state _esm_ebr_get_status(mme_ue_s1ap_id_t ue_id, ebi_t ebi);
 

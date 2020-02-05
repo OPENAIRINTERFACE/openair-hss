@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -33,30 +33,33 @@ typedef struct partial_tai_list_s {
   /* XXX - The only supported type of list is a list of TACs
    * belonging to one PLMN, with consecutive TAC values */
 #define TRACKING_AREA_IDENTITY_LIST_ONE_PLMN_NON_CONSECUTIVE_TACS 0b00
-#define TRACKING_AREA_IDENTITY_LIST_ONE_PLMN_CONSECUTIVE_TACS     0b01
-#define TRACKING_AREA_IDENTITY_LIST_MANY_PLMNS                    0b10
-  uint8_t  typeoflist;
-  uint8_t  numberofelements;
+#define TRACKING_AREA_IDENTITY_LIST_ONE_PLMN_CONSECUTIVE_TACS 0b01
+#define TRACKING_AREA_IDENTITY_LIST_MANY_PLMNS 0b10
+  uint8_t typeoflist;
+  uint8_t numberofelements;
   // TODO not optimized
   union {
-    tai_t    tai_many_plmn[TRACKING_AREA_IDENTITY_LIST_MAXIMUM_NUM_TAI];
-    tai_t    tai_one_plmn_consecutive_tacs;
+    tai_t tai_many_plmn[TRACKING_AREA_IDENTITY_LIST_MAXIMUM_NUM_TAI];
+    tai_t tai_one_plmn_consecutive_tacs;
     struct {
-      plmn_t   plmn;
-      tac_t    tac[TRACKING_AREA_IDENTITY_LIST_MAXIMUM_NUM_TAI];
+      plmn_t plmn;
+      tac_t tac[TRACKING_AREA_IDENTITY_LIST_MAXIMUM_NUM_TAI];
     } tai_one_plmn_non_consecutive_tacs;
   } u;
 } partial_tai_list_t;
 
 typedef struct tai_list_s {
-  uint8_t               numberoflists;
-  partial_tai_list_t    partial_tai_list[TRACKING_AREA_IDENTITY_LIST_MAXIMUM_NUM_TAI];
+  uint8_t numberoflists;
+  partial_tai_list_t
+      partial_tai_list[TRACKING_AREA_IDENTITY_LIST_MAXIMUM_NUM_TAI];
 } tai_list_t;
 
+int encode_tracking_area_identity_list(tai_list_t* trackingareaidentitylist,
+                                       uint8_t iei, uint8_t* buffer,
+                                       uint32_t len);
 
-int encode_tracking_area_identity_list(tai_list_t *trackingareaidentitylist, uint8_t iei, uint8_t *buffer, uint32_t len);
-
-int decode_tracking_area_identity_list(tai_list_t *trackingareaidentitylist, uint8_t iei, uint8_t *buffer, uint32_t len);
+int decode_tracking_area_identity_list(tai_list_t* trackingareaidentitylist,
+                                       uint8_t iei, uint8_t* buffer,
+                                       uint32_t len);
 
 #endif /* TRACKING AREA IDENTITY LIST_SEEN */
-

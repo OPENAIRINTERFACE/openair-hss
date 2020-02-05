@@ -4,9 +4,8 @@
  * 	found in "S1AP-IEs.asn"
  */
 
-#ifndef	_S1ap_Cdma2000HOStatus_H_
-#define	_S1ap_Cdma2000HOStatus_H_
-
+#ifndef _S1ap_Cdma2000HOStatus_H_
+#define _S1ap_Cdma2000HOStatus_H_
 
 #include <asn_application.h>
 
@@ -19,15 +18,15 @@ extern "C" {
 
 /* Dependencies */
 typedef enum S1ap_Cdma2000HOStatus {
-	S1ap_Cdma2000HOStatus_hOSuccess	= 0,
-	S1ap_Cdma2000HOStatus_hOFailure	= 1
-	/*
-	 * Enumeration is extensible
-	 */
+  S1ap_Cdma2000HOStatus_hOSuccess = 0,
+  S1ap_Cdma2000HOStatus_hOFailure = 1
+  /*
+   * Enumeration is extensible
+   */
 } e_S1ap_Cdma2000HOStatus;
 
 /* S1ap-Cdma2000HOStatus */
-typedef long	 S1ap_Cdma2000HOStatus_t;
+typedef long S1ap_Cdma2000HOStatus_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_S1ap_Cdma2000HOStatus;
@@ -43,5 +42,5 @@ xer_type_encoder_f S1ap_Cdma2000HOStatus_encode_xer;
 }
 #endif
 
-#endif	/* _S1ap_Cdma2000HOStatus_H_ */
+#endif /* _S1ap_Cdma2000HOStatus_H_ */
 #include <asn_internal.h>

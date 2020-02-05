@@ -27,13 +27,16 @@
 #define UE_ADDITIONAL_SECURITY_CAPABILITY_MAXIMUM_LENGTH 6
 
 typedef struct ue_additional_security_capability_s {
-  uint16_t  _5g_ea;
-  uint16_t  _5g_ia;
+  uint16_t _5g_ea;
+  uint16_t _5g_ia;
 } ue_additional_security_capability_t;
 
-int encode_ue_additional_security_capability(ue_additional_security_capability_t *uasc, uint8_t iei, uint8_t *buffer, uint32_t len);
+int encode_ue_additional_security_capability(
+    ue_additional_security_capability_t* uasc, uint8_t iei, uint8_t* buffer,
+    uint32_t len);
 
-int decode_ue_additional_security_capability(ue_additional_security_capability_t *uasc, uint8_t iei, uint8_t *buffer, uint32_t len);
+int decode_ue_additional_security_capability(
+    ue_additional_security_capability_t* uasc, uint8_t iei, uint8_t* buffer,
+    uint32_t len);
 
 #endif /* UE_ADDITIONAL_SECURITY_CAPABILITY_SEEN */
-

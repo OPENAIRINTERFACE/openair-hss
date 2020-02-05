@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -38,8 +38,8 @@
 
 #include "common_defs.h"
 
-#include <stdio.h>              // fprintf
-#include <string.h>             // strcmp, strncpy
+#include <stdio.h>   // fprintf
+#include <string.h>  // strcmp, strncpy
 #include "parser.h"
 
 /****************************************************************************/
@@ -67,20 +67,19 @@
  **      Others:  None                                       **
  **                                                                        **
  ***************************************************************************/
-void
-parser_print_usage (
-  const parser_command_line_t * command_line)
-{
-  fprintf (stderr, "Usage: %s", command_line->name);
+void parser_print_usage(const parser_command_line_t *command_line) {
+  fprintf(stderr, "Usage: %s", command_line->name);
 
   for (int i = 0; i < command_line->nb_options; i++) {
-    fprintf (stderr, " [%s %s]", command_line->options[i].name, command_line->options[i].argument);
+    fprintf(stderr, " [%s %s]", command_line->options[i].name,
+            command_line->options[i].argument);
   }
 
-  fprintf (stderr, "\n");
+  fprintf(stderr, "\n");
 
   for (int i = 0; i < command_line->nb_options; i++) {
-    fprintf (stderr, "\t%s\t%s\t(%s)\n", command_line->options[i].argument, command_line->options[i].usage, command_line->options[i].value);
+    fprintf(stderr, "\t%s\t%s\t(%s)\n", command_line->options[i].argument,
+            command_line->options[i].usage, command_line->options[i].value);
   }
 }
 
@@ -100,23 +99,18 @@ parser_print_usage (
  **      Others:  None                                       **
  **                                                                        **
  ***************************************************************************/
-int
-parser_get_options (
-  int argc,
-  const char **argv,
-  parser_command_line_t * command_line)
-{
-  int                                     argument_not_found,
-                                          option_not_found = 1;
-  int                                     option_length;
+int parser_get_options(int argc, const char **argv,
+                       parser_command_line_t *command_line) {
+  int argument_not_found, option_not_found = 1;
+  int option_length;
 
   /*
    * Initialize command line structure
    */
-  strncpy (command_line->name, argv[0], PARSER_COMMAND_NAME_SIZE);
+  strncpy(command_line->name, argv[0], PARSER_COMMAND_NAME_SIZE);
 
   for (int i = 0; i < command_line->nb_options; i++) {
-    if (strcmp (command_line->options[i].value, "NULL")) {
+    if (strcmp(command_line->options[i].value, "NULL")) {
       command_line->options[i].pvalue = command_line->options[i].value;
     }
   }
@@ -136,19 +130,22 @@ parser_get_options (
     option_not_found = 1;
 
     for (int i = 0; i < command_line->nb_options; i++) {
-      if (!strcmp (command_line->options[i].name, *argv)) {
+      if (!strcmp(command_line->options[i].name, *argv)) {
         option_not_found = 0;
 
         if (argv[1] && *argv[1] != '-') {
           argument_not_found = 0;
-          option_length = (int)strlen (*++argv);
+          option_length = (int)strlen(*++argv);
 
           if (option_length >= PARSER_OPTION_VALUE_SIZE) {
-            fprintf (stderr, "%s: option name too long (%d), should be less than %d characters\n", *argv, option_length, PARSER_OPTION_VALUE_SIZE);
+            fprintf(stderr,
+                    "%s: option name too long (%d), should be less than %d "
+                    "characters\n",
+                    *argv, option_length, PARSER_OPTION_VALUE_SIZE);
             return RETURNerror;
           }
 
-          strcpy (command_line->options[i].value, *argv);
+          strcpy(command_line->options[i].value, *argv);
 
           if (command_line->options[i].pvalue == NULL) {
             command_line->options[i].pvalue = command_line->options[i].value;
@@ -160,12 +157,14 @@ parser_get_options (
     }
 
     if (option_not_found) {
-      if (strcmp (*argv, "-?") && strcmp (*argv, "-h") && strcmp (*argv, "-help") && strcmp (*argv, "--help")) {
-        fprintf (stderr, "%s: illegal option %s\n", command_line->name, *argv);
+      if (strcmp(*argv, "-?") && strcmp(*argv, "-h") &&
+          strcmp(*argv, "-help") && strcmp(*argv, "--help")) {
+        fprintf(stderr, "%s: illegal option %s\n", command_line->name, *argv);
         return RETURNerror;
       }
     } else if (argument_not_found) {
-      fprintf (stderr, "%s: option %s requires an argument\n", command_line->name, *argv);
+      fprintf(stderr, "%s: option %s requires an argument\n",
+              command_line->name, *argv);
       return RETURNerror;
     }
   }

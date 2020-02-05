@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -54,9 +54,9 @@ Description Defines constants and functions used by the AS simulator
 #include "../../ies/PdnAddress.h"
 #include "../../ies/PdnType.h"
 #include "../../ies/TrackingAreaIdentityList.h"
-#include "MobileIdentity.h"
-#include "IdentityType2.h"
 #include "GprsTimer.h"
+#include "IdentityType2.h"
+#include "MobileIdentity.h"
 
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/
@@ -91,12 +91,14 @@ const char* requestType(const request_type_t* type);
 const char* pdnType(const PdnType* type);
 ssize_t pdnAddress(char* buffer, size_t len, const PdnAddress* addr);
 
-ssize_t nasKeySetIdentifier(char* buffer, size_t len, const NasKeySetIdentifier* ksi);
-ssize_t authenticationParameter(char* buffer, size_t len, const OctetString* param);
+ssize_t nasKeySetIdentifier(char* buffer, size_t len,
+                            const NasKeySetIdentifier* ksi);
+ssize_t authenticationParameter(char* buffer, size_t len,
+                                const OctetString* param);
 const char* nasCipheringAlgorithm(const NasSecurityAlgorithms* algo);
 const char* nasIntegrityAlgorithm(const NasSecurityAlgorithms* algo);
 
 ssize_t gprsTimer(char* buffer, size_t len, const GprsTimer* timer);
 ssize_t taiList(char* buffer, size_t len, const TrackingAreaIdentityList* tai);
 
-#endif // __NAS_DATA_H__
+#endif  // __NAS_DATA_H__

@@ -4,9 +4,8 @@
  * 	found in "S1AP-IEs.asn"
  */
 
-#ifndef	_S1ap_SONInformationReply_H_
-#define	_S1ap_SONInformationReply_H_
-
+#ifndef _S1ap_SONInformationReply_H_
+#define _S1ap_SONInformationReply_H_
 
 #include <asn_application.h>
 
@@ -23,15 +22,15 @@ struct S1ap_IE_Extensions;
 
 /* S1ap-SONInformationReply */
 typedef struct S1ap_SONInformationReply {
-	struct S1ap_X2TNLConfigurationInfo	*x2TNLConfigurationInfo	/* OPTIONAL */;
-	struct S1ap_IE_Extensions	*iE_Extensions	/* OPTIONAL */;
-	/*
-	 * This type is extensible,
-	 * possible extensions are below.
-	 */
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+  struct S1ap_X2TNLConfigurationInfo* x2TNLConfigurationInfo /* OPTIONAL */;
+  struct S1ap_IE_Extensions* iE_Extensions /* OPTIONAL */;
+  /*
+   * This type is extensible,
+   * possible extensions are below.
+   */
+
+  /* Context for parsing across buffer boundaries */
+  asn_struct_ctx_t _asn_ctx;
 } S1ap_SONInformationReply_t;
 
 /* Implementation */
@@ -42,8 +41,8 @@ extern asn_TYPE_descriptor_t asn_DEF_S1ap_SONInformationReply;
 #endif
 
 /* Referred external types */
-#include "S1ap-X2TNLConfigurationInfo.h"
 #include "S1ap-IE-Extensions.h"
+#include "S1ap-X2TNLConfigurationInfo.h"
 
-#endif	/* _S1ap_SONInformationReply_H_ */
+#endif /* _S1ap_SONInformationReply_H_ */
 #include <asn_internal.h>

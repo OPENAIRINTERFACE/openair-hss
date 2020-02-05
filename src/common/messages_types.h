@@ -27,18 +27,18 @@
 
 #include "security_types.h"
 
+#include "async_system_messages_types.h"
 #include "gtpv1_u_messages_types.h"
 #include "ip_forward_messages_types.h"
+#include "mme_app_messages_types.h"
+#include "nas_messages_types.h"
 #include "s10_messages_types.h"
 #include "s11_messages_types.h"
 #include "s1ap_messages_types.h"
-#include "nas_messages_types.h"
 #include "s6a_messages_types.h"
+#include "scenario_player_messages_types.h"
 #include "sctp_messages_types.h"
 #include "sgw_messages_types.h"
 #include "udp_messages_types.h"
-#include "mme_app_messages_types.h"
-#include "scenario_player_messages_types.h"
-#include "async_system_messages_types.h"
 
 #endif /* FILE_MESSAGES_TYPES_SEEN */

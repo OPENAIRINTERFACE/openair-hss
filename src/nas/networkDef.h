@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -18,7 +18,6 @@
  * For more information about the OpenAirInterface (OAI) Software Alliance:
  *      contact@openairinterface.org
  */
-
 
 /*****************************************************************************
 
@@ -49,8 +48,8 @@ Description Contains network's global definitions
  * Network selection mode
  * ----------------------
  */
-#define NET_PLMN_AUTO           0
-#define NET_PLMN_MANUAL         1
+#define NET_PLMN_AUTO 0
+#define NET_PLMN_MANUAL 1
 
 /*
  * ---------------------------
@@ -58,48 +57,48 @@ Description Contains network's global definitions
  * ---------------------------
  */
 /* not registered, not currently searching an operator to register to */
-#define NET_REG_STATE_OFF       0
+#define NET_REG_STATE_OFF 0
 /* registered, home network                       */
-#define NET_REG_STATE_HN        1
+#define NET_REG_STATE_HN 1
 /* not registered, currently trying to attach or searching an operator
  * to register to                         */
-#define NET_REG_STATE_ON        2
+#define NET_REG_STATE_ON 2
 /* registration denied                        */
-#define NET_REG_STATE_DENIED        3
+#define NET_REG_STATE_DENIED 3
 /* unknown (e.g. out of GERAN/UTRAN/E-UTRAN coverage)         */
-#define NET_REG_STATE_UNKNOWN       4
+#define NET_REG_STATE_UNKNOWN 4
 /* registered, roaming                        */
-#define NET_REG_STATE_ROAMING       5
+#define NET_REG_STATE_ROAMING 5
 /* registered for "SMS only", home network                */
-#define NET_REG_STATE_SMS_HN        6
+#define NET_REG_STATE_SMS_HN 6
 /* registered, for "SMS only", roaming                */
-#define NET_REG_STATE_SMS_ROAMING   7
+#define NET_REG_STATE_SMS_ROAMING 7
 /* attached for emergency bearer services only (applicable to UTRAN)  */
-#define NET_REG_STATE_EMERGENCY     8
+#define NET_REG_STATE_EMERGENCY 8
 
 /*
  * ------------------------------------
  * Network access technology indicators
  * ------------------------------------
  */
-#define NET_ACCESS_UNAVAILABLE  (-1)    /* Not available        */
-#define NET_ACCESS_GSM      0   /* GSM              */
-#define NET_ACCESS_COMPACT  1   /* GSM Compact          */
-#define NET_ACCESS_UTRAN    2   /* UTRAN            */
-#define NET_ACCESS_EGPRS    3   /* GSM w/EGPRS          */
-#define NET_ACCESS_HSDPA    4   /* UTRAN w/HSDPA        */
-#define NET_ACCESS_HSUPA    5   /* UTRAN w/HSUPA        */
-#define NET_ACCESS_HSDUPA   6   /* UTRAN w/HSDPA and HSUPA  */
-#define NET_ACCESS_EUTRAN   7   /* E-UTRAN          */
+#define NET_ACCESS_UNAVAILABLE (-1) /* Not available        */
+#define NET_ACCESS_GSM 0            /* GSM              */
+#define NET_ACCESS_COMPACT 1        /* GSM Compact          */
+#define NET_ACCESS_UTRAN 2          /* UTRAN            */
+#define NET_ACCESS_EGPRS 3          /* GSM w/EGPRS          */
+#define NET_ACCESS_HSDPA 4          /* UTRAN w/HSDPA        */
+#define NET_ACCESS_HSUPA 5          /* UTRAN w/HSUPA        */
+#define NET_ACCESS_HSDUPA 6         /* UTRAN w/HSDPA and HSUPA  */
+#define NET_ACCESS_EUTRAN 7         /* E-UTRAN          */
 
 /*
  * ---------------------------------------
  * Network operator representation formats
  * ---------------------------------------
  */
-#define NET_FORMAT_LONG     0   /* long format alphanumeric */
-#define NET_FORMAT_SHORT    1   /* short format alphanumeric    */
-#define NET_FORMAT_NUM      2   /* numeric format       */
+#define NET_FORMAT_LONG 0  /* long format alphanumeric */
+#define NET_FORMAT_SHORT 1 /* short format alphanumeric    */
+#define NET_FORMAT_NUM 2   /* numeric format       */
 
 #define NET_FORMAT_MAX_SIZE NET_FORMAT_LONG_SIZE
 
@@ -108,41 +107,41 @@ Description Contains network's global definitions
  * Network operator availability
  * -----------------------------
  */
-#define NET_OPER_UNKNOWN    0   /* unknown operator     */
-#define NET_OPER_AVAILABLE  1   /* available operator       */
-#define NET_OPER_CURRENT    2   /* currently selected operator  */
-#define NET_OPER_FORBIDDEN  3   /* forbidden operator       */
+#define NET_OPER_UNKNOWN 0   /* unknown operator     */
+#define NET_OPER_AVAILABLE 1 /* available operator       */
+#define NET_OPER_CURRENT 2   /* currently selected operator  */
+#define NET_OPER_FORBIDDEN 3 /* forbidden operator       */
 
 /*
  * --------------------------------------
  * Network connection establishment cause
  * --------------------------------------
  */
-#define NET_ESTABLISH_CAUSE_EMERGENCY       0x01
-#define NET_ESTABLISH_CAUSE_HIGH_PRIO       0x02
-#define NET_ESTABLISH_CAUSE_MT_ACCESS       0x03
-#define NET_ESTABLISH_CAUSE_MO_SIGNAL       0x04
-#define NET_ESTABLISH_CAUSE_MO_DATA     0x05
-#define NET_ESTABLISH_CAUSE_V1020       0x06
+#define NET_ESTABLISH_CAUSE_EMERGENCY 0x01
+#define NET_ESTABLISH_CAUSE_HIGH_PRIO 0x02
+#define NET_ESTABLISH_CAUSE_MT_ACCESS 0x03
+#define NET_ESTABLISH_CAUSE_MO_SIGNAL 0x04
+#define NET_ESTABLISH_CAUSE_MO_DATA 0x05
+#define NET_ESTABLISH_CAUSE_V1020 0x06
 
 /*
  * --------------------------------------
  * Network connection establishment type
  * --------------------------------------
  */
-#define NET_ESTABLISH_TYPE_ORIGINATING_SIGNAL   0x10
-#define NET_ESTABLISH_TYPE_EMERGENCY_CALLS  0x20
-#define NET_ESTABLISH_TYPE_ORIGINATING_CALLS    0x30
-#define NET_ESTABLISH_TYPE_TERMINATING_CALLS    0x40
-#define NET_ESTABLISH_TYPE_MO_CS_FALLBACK   0x50
+#define NET_ESTABLISH_TYPE_ORIGINATING_SIGNAL 0x10
+#define NET_ESTABLISH_TYPE_EMERGENCY_CALLS 0x20
+#define NET_ESTABLISH_TYPE_ORIGINATING_CALLS 0x30
+#define NET_ESTABLISH_TYPE_TERMINATING_CALLS 0x40
+#define NET_ESTABLISH_TYPE_MO_CS_FALLBACK 0x50
 
 /*
  * -------------------
  * PDN connection type
  * -------------------
  */
-#define NET_PDN_TYPE_IPV4   (0 + 1)
-#define NET_PDN_TYPE_IPV6   (1 + 1)
+#define NET_PDN_TYPE_IPV4 (0 + 1)
+#define NET_PDN_TYPE_IPV6 (1 + 1)
 #define NET_PDN_TYPE_IPV4V6 (2 + 1)
 
 /****************************************************************************/
@@ -171,13 +170,13 @@ typedef enum {
  * ---------------------------
  */
 typedef struct {
-#define NET_FORMAT_LONG_SIZE    16  /* Long alphanumeric format     */
-#define NET_FORMAT_SHORT_SIZE   8   /* Short alphanumeric format        */
+#define NET_FORMAT_LONG_SIZE 16 /* Long alphanumeric format     */
+#define NET_FORMAT_SHORT_SIZE 8 /* Short alphanumeric format        */
 #define NET_FORMAT_NUM_SIZE 6   /* Numeric format (PLMN identifier  */
   union {
-    unsigned char alpha_long[NET_FORMAT_LONG_SIZE+1];
-    unsigned char alpha_short[NET_FORMAT_SHORT_SIZE+1];
-    unsigned char num[NET_FORMAT_NUM_SIZE+1];
+    unsigned char alpha_long[NET_FORMAT_LONG_SIZE + 1];
+    unsigned char alpha_short[NET_FORMAT_SHORT_SIZE + 1];
+    unsigned char num[NET_FORMAT_NUM_SIZE + 1];
   } id;
 } network_plmn_t;
 
@@ -187,11 +186,11 @@ typedef struct {
  * -------------------------------
  */
 typedef struct {
-  int gbrUL;      /* Guaranteed Bit Rate for uplink   */
-  int gbrDL;      /* Guaranteed Bit Rate for downlink */
-  int mbrUL;      /* Maximum Bit Rate for uplink      */
-  int mbrDL;      /* Maximum Bit Rate for downlink    */
-  int qci;        /* QoS Class Identifier         */
+  int gbrUL; /* Guaranteed Bit Rate for uplink   */
+  int gbrDL; /* Guaranteed Bit Rate for downlink */
+  int mbrUL; /* Maximum Bit Rate for uplink      */
+  int mbrDL; /* Maximum Bit Rate for downlink    */
+  int qci;   /* QoS Class Identifier         */
 } network_qos_t;
 
 /*
@@ -202,7 +201,7 @@ typedef struct {
 typedef struct {
   unsigned char protocol; /* Protocol identifier      */
   unsigned char tos;      /* Type of service      */
-#define NET_PACKET_FILTER_IPV4_ADDR_SIZE    4
+#define NET_PACKET_FILTER_IPV4_ADDR_SIZE 4
   unsigned char addr[NET_PACKET_FILTER_IPV4_ADDR_SIZE];
   unsigned char mask[NET_PACKET_FILTER_IPV4_ADDR_SIZE];
 } network_ipv4_data_t;
@@ -213,13 +212,13 @@ typedef struct {
  * -----------------------------
  */
 typedef struct {
-  unsigned char nh;       /* Next header type     */
-  unsigned char tf;       /* Traffic class        */
-#define NET_PACKET_FILTER_IPV6_ADDR_SIZE    16
+  unsigned char nh; /* Next header type     */
+  unsigned char tf; /* Traffic class        */
+#define NET_PACKET_FILTER_IPV6_ADDR_SIZE 16
   unsigned char addr[NET_PACKET_FILTER_IPV6_ADDR_SIZE];
   unsigned char mask[NET_PACKET_FILTER_IPV6_ADDR_SIZE];
-  unsigned int ipsec;     /* IPSec security parameter index */
-  unsigned int fl;        /* Flow label             */
+  unsigned int ipsec; /* IPSec security parameter index */
+  unsigned int fl;    /* Flow label             */
 } network_ipv6_data_t;
 
 /*
@@ -228,18 +227,18 @@ typedef struct {
  * -------------
  */
 typedef struct {
-  unsigned char id;       /* Packet filter identifier */
-#define NET_PACKET_FILTER_DOWNLINK  0x01
-#define NET_PACKET_FILTER_UPLINK    0x02
-#define NET_PACKET_FILTER_BIDIR     0x03
-  unsigned char dir;      /* Packet filter direction  */
-  unsigned char precedence;   /* Evaluation precedence    */
+  unsigned char id; /* Packet filter identifier */
+#define NET_PACKET_FILTER_DOWNLINK 0x01
+#define NET_PACKET_FILTER_UPLINK 0x02
+#define NET_PACKET_FILTER_BIDIR 0x03
+  unsigned char dir;        /* Packet filter direction  */
+  unsigned char precedence; /* Evaluation precedence    */
   union {
     network_ipv4_data_t ipv4;
     network_ipv6_data_t ipv6;
   } data;
-  unsigned short lport;   /* Local (UE) port number   */
-  unsigned short rport;   /* Remote (network) port number */
+  unsigned short lport; /* Local (UE) port number   */
+  unsigned short rport; /* Remote (network) port number */
 } network_pkf_t;
 
 /*
@@ -249,7 +248,7 @@ typedef struct {
  */
 typedef struct {
   int n_pkfs;
-#define NET_PACKET_FILTER_MAX   16
+#define NET_PACKET_FILTER_MAX 16
   network_pkf_t* pkf[NET_PACKET_FILTER_MAX];
 } network_tft_t;
 
@@ -258,7 +257,7 @@ typedef struct {
  * respect of PDN connection or EPS bearer context is notified by the EPS
  * Session Management sublayer
  */
-typedef int (*esm_indication_callback_t) (int, network_pdn_state_t);
+typedef int (*esm_indication_callback_t)(int, network_pdn_state_t);
 
 /****************************************************************************/
 /********************  G L O B A L    V A R I A B L E S  ********************/

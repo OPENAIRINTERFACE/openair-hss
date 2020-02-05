@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -19,7 +19,6 @@
  *      contact@openairinterface.org
  */
 
-
 /*! \file sctp_primitives_server.c
  *  \brief Main server primitives
  *  \author Sebastien ROUX, Lionel GAUTHIER
@@ -29,16 +28,14 @@
  *  @{
  */
 
-
 #if !defined(HAVE_LIBSCTP)
-# error "You must install libsctp-dev"
+#error "You must install libsctp-dev"
 #endif
-
 
 #ifndef FILE_SCTP_PRIMITIVES_SERVER_SEEN
 #define FILE_SCTP_PRIMITIVES_SERVER_SEEN
 #if HAVE_CONFIG_H
-# include "config.h"
+#include "config.h"
 #endif
 
 #include "mme_config.h"
@@ -47,14 +44,14 @@
  \param buffer pointer to buffer received
  \param length pointer to the length of buffer
  **/
-typedef void (*sctp_recv_callback)(uint8_t *buffer, uint32_t length);
+typedef void (*sctp_recv_callback)(uint8_t* buffer, uint32_t length);
 
 /** \brief SCTP Init function. Initialize SCTP layer
  \param mme_config The global MME configuration structure
  @returns -1 on error, 0 otherwise.
  **/
 struct mme_config_s;
-int sctp_init(const struct mme_config_s *mme_config_p);
+int sctp_init(const struct mme_config_s* mme_config_p);
 
 #endif /* FILE_SCTP_PRIMITIVES_SERVER_SEEN */
 

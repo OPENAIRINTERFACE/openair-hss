@@ -4,17 +4,16 @@
  * 	found in "S1AP-PDU.asn"
  */
 
-#ifndef	_S1ap_UnsuccessfulOutcome_H_
-#define	_S1ap_UnsuccessfulOutcome_H_
-
+#ifndef _S1ap_UnsuccessfulOutcome_H_
+#define _S1ap_UnsuccessfulOutcome_H_
 
 #include <asn_application.h>
 
 /* Including external dependencies */
-#include "S1ap-ProcedureCode.h"
-#include "S1ap-Criticality.h"
 #include <ANY.h>
 #include <constr_SEQUENCE.h>
+#include "S1ap-Criticality.h"
+#include "S1ap-ProcedureCode.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -22,12 +21,12 @@ extern "C" {
 
 /* S1ap-UnsuccessfulOutcome */
 typedef struct S1ap_UnsuccessfulOutcome {
-	S1ap_ProcedureCode_t	 procedureCode;
-	S1ap_Criticality_t	 criticality;
-	ANY_t	 value;
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+  S1ap_ProcedureCode_t procedureCode;
+  S1ap_Criticality_t criticality;
+  ANY_t value;
+
+  /* Context for parsing across buffer boundaries */
+  asn_struct_ctx_t _asn_ctx;
 } S1ap_UnsuccessfulOutcome_t;
 
 /* Implementation */
@@ -37,5 +36,5 @@ extern asn_TYPE_descriptor_t asn_DEF_S1ap_UnsuccessfulOutcome;
 }
 #endif
 
-#endif	/* _S1ap_UnsuccessfulOutcome_H_ */
+#endif /* _S1ap_UnsuccessfulOutcome_H_ */
 #include <asn_internal.h>

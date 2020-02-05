@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -37,36 +37,34 @@
         the EMMREG Service Access Point.
 
 *****************************************************************************/
-#include <pthread.h>
-#include <inttypes.h>
-#include <stdint.h>
-#include <stdbool.h>
-#include <string.h>
-#include <stdlib.h>
 #include <arpa/inet.h>
+#include <inttypes.h>
+#include <pthread.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
 
-#include "common_defs.h"
-#include "log.h"
-#include "common_defs.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"
 #include "3gpp_29.274.h"
 #include "assertions.h"
-#include "msc.h"
+#include "common_defs.h"
+#include "log.h"
 #include "mme_app_defs.h"
+#include "msc.h"
 
-#include "mme_app_ue_context.h"
 #include "emm_data.h"
-#include "mme_api.h"
 #include "emm_fsm.h"
 #include "emm_regDef.h"
+#include "mme_api.h"
+#include "mme_app_ue_context.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
 /****************************************************************************/
 
-
-#define EMM_FSM_NB_UE_MAX   (MME_API_NB_UE_MAX + 1)
+#define EMM_FSM_NB_UE_MAX (MME_API_NB_UE_MAX + 1)
 
 /*
    -----------------------------------------------------------------------------
@@ -75,38 +73,38 @@
 */
 
 /* String representation of EMM events */
-static const char                      *_emm_fsm_event_str[] = {
-  "COMMON_PROC_REQ",
-  "COMMON_PROC_CNF",
-  "COMMON_PROC_REJ",
-  "COMMON_PROC_ABORT",
-  "ATTACH_CNF",
-  "ATTACH_REJ",
-  "ATTACH_ABORT",
-  "DETACH_INIT",
-  "DETACH_REQ",
-  "DETACH_FAILED",
-  "DETACH_CNF",
-  "TAU_REQ",
-  "TAU_CNF",
-  "TAU_REJ",
-  "TAU_ABORT",
-  "SERVICE_REQ",
-  "SERVICE_CNF",
-  "SERVICE_REJ",
-  "LOWERLAYER_SUCCESS",
-  "LOWERLAYER_FAILURE",
-  "LOWERLAYER_RELEASE",
-  "LOWERLAYER_NON_DELIVERY",
+static const char *_emm_fsm_event_str[] = {
+    "COMMON_PROC_REQ",
+    "COMMON_PROC_CNF",
+    "COMMON_PROC_REJ",
+    "COMMON_PROC_ABORT",
+    "ATTACH_CNF",
+    "ATTACH_REJ",
+    "ATTACH_ABORT",
+    "DETACH_INIT",
+    "DETACH_REQ",
+    "DETACH_FAILED",
+    "DETACH_CNF",
+    "TAU_REQ",
+    "TAU_CNF",
+    "TAU_REJ",
+    "TAU_ABORT",
+    "SERVICE_REQ",
+    "SERVICE_CNF",
+    "SERVICE_REJ",
+    "LOWERLAYER_SUCCESS",
+    "LOWERLAYER_FAILURE",
+    "LOWERLAYER_RELEASE",
+    "LOWERLAYER_NON_DELIVERY",
 };
 
 /* String representation of EMM state */
-static const char                      * const _emm_fsm_status_str[EMM_STATE_MAX] = {
-  "INVALID",
-  "EMM-DEREGISTERED",
-  "EMM-REGISTERED",
-  "EMM-DEREGISTERED-INITIATED",
-  "EMM-COMMON-PROCEDURE-INITIATED",
+static const char *const _emm_fsm_status_str[EMM_STATE_MAX] = {
+    "INVALID",
+    "EMM-DEREGISTERED",
+    "EMM-REGISTERED",
+    "EMM-DEREGISTERED-INITIATED",
+    "EMM-COMMON-PROCEDURE-INITIATED",
 };
 
 /*
@@ -118,18 +116,18 @@ static const char                      * const _emm_fsm_status_str[EMM_STATE_MAX
 /* Type of the EPS Mobility Management state machine handler */
 typedef int (*emm_fsm_handler_t)(emm_reg_t *const);
 
-int EmmDeregistered (emm_reg_t * const);
-int EmmRegistered (emm_reg_t * const);
-int EmmDeregisteredInitiated (emm_reg_t * const);
-int EmmCommonProcedureInitiated (emm_reg_t * const);
+int EmmDeregistered(emm_reg_t *const);
+int EmmRegistered(emm_reg_t *const);
+int EmmDeregisteredInitiated(emm_reg_t *const);
+int EmmCommonProcedureInitiated(emm_reg_t *const);
 
 /* EMM state machine handlers */
-static const emm_fsm_handler_t          _emm_fsm_handlers[EMM_STATE_MAX] = {
-  NULL,
-  EmmDeregistered,
-  EmmRegistered,
-  EmmDeregisteredInitiated,
-  EmmCommonProcedureInitiated,
+static const emm_fsm_handler_t _emm_fsm_handlers[EMM_STATE_MAX] = {
+    NULL,
+    EmmDeregistered,
+    EmmRegistered,
+    EmmDeregisteredInitiated,
+    EmmCommonProcedureInitiated,
 };
 
 /*
@@ -156,12 +154,9 @@ static const emm_fsm_handler_t          _emm_fsm_handlers[EMM_STATE_MAX] = {
  **      Others:    _emm_fsm_status                            **
  **                                                                        **
  ***************************************************************************/
-void
-emm_fsm_initialize (
-  void)
-{
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
-  OAILOG_FUNC_OUT (LOG_NAS_EMM);
+void emm_fsm_initialize(void) {
+  OAILOG_FUNC_IN(LOG_NAS_EMM);
+  OAILOG_FUNC_OUT(LOG_NAS_EMM);
 }
 
 /****************************************************************************
@@ -179,20 +174,21 @@ emm_fsm_initialize (
  **      Others:    _emm_fsm_status                            **
  **                                                                        **
  ***************************************************************************/
-int
-emm_fsm_set_state (
-  const mme_ue_s1ap_id_t ue_id,
-  struct emm_data_context_s * const emm_context,
-  const emm_fsm_state_t state)
-{
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
+int emm_fsm_set_state(const mme_ue_s1ap_id_t ue_id,
+                      struct emm_data_context_s *const emm_context,
+                      const emm_fsm_state_t state) {
+  OAILOG_FUNC_IN(LOG_NAS_EMM);
 
-
-  DevAssert (emm_context);
+  DevAssert(emm_context);
   if (state < EMM_STATE_MAX) {
     if (state != emm_context->_emm_fsm_state) {
-      OAILOG_INFO (LOG_NAS_EMM, "UE " MME_UE_S1AP_ID_FMT" EMM-FSM   - Status changed: %s ===> %s\n", ue_id, _emm_fsm_status_str[emm_context->_emm_fsm_state], _emm_fsm_status_str[state]);
-      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "EMM state %s UE " MME_UE_S1AP_ID_FMT" ", _emm_fsm_status_str[state], ue_id);
+      OAILOG_INFO(LOG_NAS_EMM,
+                  "UE " MME_UE_S1AP_ID_FMT
+                  " EMM-FSM   - Status changed: %s ===> %s\n",
+                  ue_id, _emm_fsm_status_str[emm_context->_emm_fsm_state],
+                  _emm_fsm_status_str[state]);
+      MSC_LOG_EVENT(MSC_NAS_EMM_MME, "EMM state %s UE " MME_UE_S1AP_ID_FMT " ",
+                    _emm_fsm_status_str[state], ue_id);
       emm_fsm_state_t new_emm_state = UE_UNREGISTERED;
       if (EMM_REGISTERED == emm_context->_emm_fsm_state) {
         new_emm_state = UE_REGISTERED;
@@ -208,17 +204,19 @@ emm_fsm_set_state (
         new_emm_state = UE_UNREGISTERED;
       }
       // Update mme_ue_context's emm_state and overall stats
-      mme_ue_context_update_ue_emm_state (ue_id, new_emm_state);
-    }else {
-      OAILOG_WARNING (LOG_NAS_EMM, "UE " MME_UE_S1AP_ID_FMT" EMM-FSM   - Status not changed changed: %s \n",
-    		  ue_id, _emm_fsm_status_str[emm_context->_emm_fsm_state]);
+      mme_ue_context_update_ue_emm_state(ue_id, new_emm_state);
+    } else {
+      OAILOG_WARNING(LOG_NAS_EMM,
+                     "UE " MME_UE_S1AP_ID_FMT
+                     " EMM-FSM   - Status not changed changed: %s \n",
+                     ue_id, _emm_fsm_status_str[emm_context->_emm_fsm_state]);
       /** Setting this as error to abort implicit detach procedures for ex.. */
-      OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
+      OAILOG_FUNC_RETURN(LOG_NAS_EMM, RETURNerror);
     }
 
-    OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
+    OAILOG_FUNC_RETURN(LOG_NAS_EMM, RETURNok);
   }
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
+  OAILOG_FUNC_RETURN(LOG_NAS_EMM, RETURNerror);
 }
 
 /****************************************************************************
@@ -236,28 +234,26 @@ emm_fsm_set_state (
  **      Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
-emm_fsm_state_t
-emm_fsm_get_state (const struct emm_data_context_s * const emm_context)
-{
-  if (emm_context ) {
-    AssertFatal((emm_context->_emm_fsm_state < EMM_STATE_MAX) && (emm_context->_emm_fsm_state > EMM_STATE_MIN),
-        "ue_id " MME_UE_S1AP_ID_FMT " BAD EMM state %d",
-        emm_context->ue_id,
-        emm_context->_emm_fsm_state);
+emm_fsm_state_t emm_fsm_get_state(
+    const struct emm_data_context_s *const emm_context) {
+  if (emm_context) {
+    AssertFatal((emm_context->_emm_fsm_state < EMM_STATE_MAX) &&
+                    (emm_context->_emm_fsm_state > EMM_STATE_MIN),
+                "ue_id " MME_UE_S1AP_ID_FMT " BAD EMM state %d",
+                emm_context->ue_id, emm_context->_emm_fsm_state);
     return emm_context->_emm_fsm_state;
   }
   return EMM_INVALID;
 }
 
 //------------------------------------------------------------------------------
-const char *
-emm_fsm_get_state_str (const struct emm_data_context_s * const emm_context)
-{
-  if (emm_context ) {
-    emm_fsm_state_t state  = emm_fsm_get_state (emm_context);
+const char *emm_fsm_get_state_str(
+    const struct emm_data_context_s *const emm_context) {
+  if (emm_context) {
+    emm_fsm_state_t state = emm_fsm_get_state(emm_context);
     return _emm_fsm_status_str[state];
   }
-  return  _emm_fsm_status_str[EMM_INVALID];
+  return _emm_fsm_status_str[EMM_INVALID];
 }
 
 /****************************************************************************
@@ -274,27 +270,31 @@ emm_fsm_get_state_str (const struct emm_data_context_s * const emm_context)
  **      Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
-int emm_fsm_process (struct emm_reg_s * const evt)
-{
-  int                                     rc = RETURNerror;
-  emm_fsm_state_t                         state;
-  emm_reg_primitive_t                     primitive;
+int emm_fsm_process(struct emm_reg_s *const evt) {
+  int rc = RETURNerror;
+  emm_fsm_state_t state;
+  emm_reg_primitive_t primitive;
 
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  OAILOG_FUNC_IN(LOG_NAS_EMM);
   primitive = evt->primitive;
-  emm_data_context_t                     *emm_ctx 	= emm_data_context_get(&_emm_data, evt->ue_id);
+  emm_data_context_t *emm_ctx = emm_data_context_get(&_emm_data, evt->ue_id);
 
   if (emm_ctx) {
-    state = emm_fsm_get_state (emm_ctx);
-    OAILOG_INFO (LOG_NAS_EMM, "EMM-FSM   - Received event %s (%d) in state %s\n", _emm_fsm_event_str[primitive - _EMMREG_START - 1], primitive, _emm_fsm_status_str[state]);
+    state = emm_fsm_get_state(emm_ctx);
+    OAILOG_INFO(LOG_NAS_EMM, "EMM-FSM   - Received event %s (%d) in state %s\n",
+                _emm_fsm_event_str[primitive - _EMMREG_START - 1], primitive,
+                _emm_fsm_status_str[state]);
     /*
      * Execute the EMM state machine
      */
-    rc = (_emm_fsm_handlers[state]) (evt);
+    rc = (_emm_fsm_handlers[state])(evt);
   } else {
-    OAILOG_WARNING (LOG_NAS_EMM, "EMM-FSM   - Received event %s (%d) but no EMM data context provided\n", _emm_fsm_event_str[primitive - _EMMREG_START - 1], primitive);
+    OAILOG_WARNING(
+        LOG_NAS_EMM,
+        "EMM-FSM   - Received event %s (%d) but no EMM data context provided\n",
+        _emm_fsm_event_str[primitive - _EMMREG_START - 1], primitive);
   }
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
 }
 
 /****************************************************************************/

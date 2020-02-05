@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include <gmp.h> // gross but necessary to link spgw_config.h
+#include <gmp.h>  // gross but necessary to link spgw_config.h
 
 #include "OpenflowController.h"
 
@@ -30,11 +30,11 @@ namespace openflow {
 /**
  * SdfFilterApplication handles external callbacks to add/delete SDF filters
  **/
-class SdfFilterApplication: public Application {
-public:
+class SdfFilterApplication : public Application {
+ public:
   SdfFilterApplication(uint32_t sgi_port_num);
-private:
 
+ private:
   /**
    * Main callback event required by inherited Application class. Whenever
    * the controller gets an event like packet in or switch up, it will pass
@@ -50,17 +50,16 @@ private:
    * @param ev - AddGTPTunnelEvent containing ue ip, enb ip, and tunnel id's
    */
   void add_sdf_filter(const AddSdfFilterEvent& ev,
-                              const OpenflowMessenger& messenger);
-
+                      const OpenflowMessenger& messenger);
 
   /*
    * Remove downlink tunnel flow on disconnect
    * @param ev - DeleteGTPTunnelEvent containing ue ip, and inbound tei
    */
   void delete_sdf_filter(const DeleteSdfFilterEvent& ev,
-                                   const OpenflowMessenger& messenger);
+                         const OpenflowMessenger& messenger);
 
-private:
+ private:
   static const uint32_t DEFAULT_PRIORITY = 100;
   static const uint16_t TABLE = 0;
   static const uint16_t NEXT_TABLE = 1;
@@ -68,4 +67,4 @@ private:
   const uint32_t sgi_port_num_;
 };
 
-}
+}  // namespace openflow

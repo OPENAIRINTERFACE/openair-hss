@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -44,28 +44,26 @@
         sent by both the MME and the UE.
 
 *****************************************************************************/
-#include <pthread.h>
 #include <inttypes.h>
-#include <stdint.h>
+#include <pthread.h>
 #include <stdbool.h>
-#include <string.h>
+#include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "bstrlib.h"
 #include "log.h"
 
-#include "common_types.h"
-#include "dynamic_memory_check.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"
 #include "3gpp_29.274.h"
-#include "mme_app_session_context.h"
+#include "common_defs.h"
+#include "common_types.h"
+#include "dynamic_memory_check.h"
 #include "emm_sap.h"
-#include "esm_proc.h"
 #include "esm_cause.h"
-#include "common_defs.h"
-#include "common_defs.h"
-
+#include "esm_proc.h"
+#include "mme_app_session_context.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -99,16 +97,10 @@
  **      Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
-int
-esm_send_status (
-  pti_t pti,
-  ebi_t ebi,
-  ESM_msg * msg,
-  int esm_cause)
-{
-  OAILOG_FUNC_IN (LOG_NAS_ESM);
+int esm_send_status(pti_t pti, ebi_t ebi, ESM_msg *msg, int esm_cause) {
+  OAILOG_FUNC_IN(LOG_NAS_ESM);
 
-  memset((void*)msg, 0, sizeof(ESM_msg));
+  memset((void *)msg, 0, sizeof(ESM_msg));
 
   /*
    * Mandatory - ESM message header
@@ -121,8 +113,11 @@ esm_send_status (
    * Mandatory - ESM cause code
    */
   msg->esm_status.esmcause = esm_cause;
-  OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Send ESM Status message (pti=%d, ebi=%d)\n", msg->esm_status.proceduretransactionidentity, msg->esm_status.epsbeareridentity);
-  OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);
+  OAILOG_WARNING(LOG_NAS_ESM,
+                 "ESM-SAP   - Send ESM Status message (pti=%d, ebi=%d)\n",
+                 msg->esm_status.proceduretransactionidentity,
+                 msg->esm_status.epsbeareridentity);
+  OAILOG_FUNC_RETURN(LOG_NAS_ESM, RETURNok);
 }
 
 /****************************************************************************
@@ -149,69 +144,65 @@ esm_send_status (
  **      Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
-int
-esm_proc_status_ind (
-  mme_ue_s1ap_id_t ue_id,
-  proc_tid_t pti,
-  ebi_t ebi,
-  esm_cause_t *esm_cause)
-{
-  OAILOG_FUNC_IN (LOG_NAS_ESM);
-  int                                     rc = RETURNerror;
+int esm_proc_status_ind(mme_ue_s1ap_id_t ue_id, proc_tid_t pti, ebi_t ebi,
+                        esm_cause_t *esm_cause) {
+  OAILOG_FUNC_IN(LOG_NAS_ESM);
+  int rc = RETURNerror;
 
-  OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - ESM status procedure requested (cause=%d)\n", *esm_cause);
-  OAILOG_DEBUG (LOG_NAS_ESM, "ESM-PROC  - To be implemented\n");
+  OAILOG_INFO(LOG_NAS_ESM,
+              "ESM-PROC  - ESM status procedure requested (cause=%d)\n",
+              *esm_cause);
+  OAILOG_DEBUG(LOG_NAS_ESM, "ESM-PROC  - To be implemented\n");
 
   switch (*esm_cause) {
-  case ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY:
-    /*
-     * Abort any ongoing ESM procedure related to the received EPS
-     * bearer identity, stop any related timer, and deactivate the
-     * corresponding EPS bearer context locally
-     */
-    /*
-     * TODO
-     */
-    rc = RETURNok;
-    break;
+    case ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY:
+      /*
+       * Abort any ongoing ESM procedure related to the received EPS
+       * bearer identity, stop any related timer, and deactivate the
+       * corresponding EPS bearer context locally
+       */
+      /*
+       * TODO
+       */
+      rc = RETURNok;
+      break;
 
-  case ESM_CAUSE_INVALID_PTI_VALUE:
-    /*
-     * Abort any ongoing ESM procedure related to the received PTI
-     * value and stop any related timer
-     */
-    /*
-     * TODO
-     */
-    rc = RETURNok;
-    break;
+    case ESM_CAUSE_INVALID_PTI_VALUE:
+      /*
+       * Abort any ongoing ESM procedure related to the received PTI
+       * value and stop any related timer
+       */
+      /*
+       * TODO
+       */
+      rc = RETURNok;
+      break;
 
-  case ESM_CAUSE_MESSAGE_TYPE_NOT_IMPLEMENTED:
-    /*
-     * Abort any ongoing ESM procedure related to the PTI or
-     * EPS bearer identity and stop any related timer
-     */
-    /*
-     * TODO
-     */
-    rc = RETURNok;
-    break;
+    case ESM_CAUSE_MESSAGE_TYPE_NOT_IMPLEMENTED:
+      /*
+       * Abort any ongoing ESM procedure related to the PTI or
+       * EPS bearer identity and stop any related timer
+       */
+      /*
+       * TODO
+       */
+      rc = RETURNok;
+      break;
 
-  default:
-    /*
-     * No state transition and no specific action shall be taken;
-     * local actions are possible
-     */
-    /*
-     * TODO
-     */
-    rc = RETURNok;
-    break;
+    default:
+      /*
+       * No state transition and no specific action shall be taken;
+       * local actions are possible
+       */
+      /*
+       * TODO
+       */
+      rc = RETURNok;
+      break;
   }
 
-  OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
+  OAILOG_FUNC_RETURN(LOG_NAS_ESM, rc);
 }
-
 
 /****************************************************************************/
 /*********************  L O C A L    F U N C T I O N S  *********************/

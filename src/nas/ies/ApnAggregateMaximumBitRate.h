@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -25,24 +25,28 @@
 #define APN_AGGREGATE_MAXIMUM_BIT_RATE_MINIMUM_LENGTH 4
 #define APN_AGGREGATE_MAXIMUM_BIT_RATE_MAXIMUM_LENGTH 8
 
-#define APN_AGGREGATE_MAXIMUM_BIT_RATE_MAXIMUM_EXTENSION_PRESENT  (1<<0)
-#define APN_AGGREGATE_MAXIMUM_BIT_RATE_MAXIMUM_EXTENSION2_PRESENT (1<<1)
+#define APN_AGGREGATE_MAXIMUM_BIT_RATE_MAXIMUM_EXTENSION_PRESENT (1 << 0)
+#define APN_AGGREGATE_MAXIMUM_BIT_RATE_MAXIMUM_EXTENSION2_PRESENT (1 << 1)
 
 typedef struct ApnAggregateMaximumBitRate_tag {
-  uint8_t  apnambrfordownlink;
-  uint8_t  apnambrforuplink;
-  uint8_t  apnambrfordownlink_extended;
-  uint8_t  apnambrforuplink_extended;
-  uint8_t  apnambrfordownlink_extended2;
-  uint8_t  apnambrforuplink_extended2;
-  uint8_t  extensions;
+  uint8_t apnambrfordownlink;
+  uint8_t apnambrforuplink;
+  uint8_t apnambrfordownlink_extended;
+  uint8_t apnambrforuplink_extended;
+  uint8_t apnambrfordownlink_extended2;
+  uint8_t apnambrforuplink_extended2;
+  uint8_t extensions;
 } ApnAggregateMaximumBitRate;
 
-int encode_apn_aggregate_maximum_bit_rate(ApnAggregateMaximumBitRate *apnaggregatemaximumbitrate, uint8_t iei, uint8_t *buffer, uint32_t len);
+int encode_apn_aggregate_maximum_bit_rate(
+    ApnAggregateMaximumBitRate* apnaggregatemaximumbitrate, uint8_t iei,
+    uint8_t* buffer, uint32_t len);
 
-int decode_apn_aggregate_maximum_bit_rate(ApnAggregateMaximumBitRate *apnaggregatemaximumbitrate, uint8_t iei, uint8_t *buffer, uint32_t len);
+int decode_apn_aggregate_maximum_bit_rate(
+    ApnAggregateMaximumBitRate* apnaggregatemaximumbitrate, uint8_t iei,
+    uint8_t* buffer, uint32_t len);
 
-int ambr_kbps_calc(ApnAggregateMaximumBitRate *apnambr, uint64_t kbr_dl, uint64_t kbr_ul);
+int ambr_kbps_calc(ApnAggregateMaximumBitRate* apnambr, uint64_t kbr_dl,
+                   uint64_t kbr_ul);
 
 #endif /* APN_AGGREGATE_MAXIMUM_BIT_RATE_SEEN */
-

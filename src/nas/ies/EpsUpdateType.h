@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -25,24 +25,25 @@
 #define EPS_UPDATE_TYPE_MINIMUM_LENGTH 1
 #define EPS_UPDATE_TYPE_MAXIMUM_LENGTH 1
 
-#define EPS_UPDATE_TYPE_TA_UPDATING                              0
-#define EPS_UPDATE_TYPE_COMBINED_TA_LA_UPDATING                  1
+#define EPS_UPDATE_TYPE_TA_UPDATING 0
+#define EPS_UPDATE_TYPE_COMBINED_TA_LA_UPDATING 1
 #define EPS_UPDATE_TYPE_COMBINED_TA_LA_UPDATING_WITH_IMSI_ATTACH 2
-#define EPS_UPDATE_TYPE_PERIODIC_UPDATING                        3
-
+#define EPS_UPDATE_TYPE_PERIODIC_UPDATING 3
 
 typedef struct EpsUpdateType_tag {
-  uint8_t  active_flag:1;
-  uint8_t  eps_update_type_value:3;
+  uint8_t active_flag : 1;
+  uint8_t eps_update_type_value : 3;
 } EpsUpdateType;
 
-int encode_eps_update_type(EpsUpdateType *epsupdatetype, uint8_t iei, uint8_t *buffer, uint32_t len);
+int encode_eps_update_type(EpsUpdateType* epsupdatetype, uint8_t iei,
+                           uint8_t* buffer, uint32_t len);
 
-uint8_t encode_u8_eps_update_type(EpsUpdateType *epsupdatetype);
+uint8_t encode_u8_eps_update_type(EpsUpdateType* epsupdatetype);
 
-int decode_eps_update_type(EpsUpdateType *epsupdatetype, uint8_t iei, uint8_t *buffer, uint32_t len);
+int decode_eps_update_type(EpsUpdateType* epsupdatetype, uint8_t iei,
+                           uint8_t* buffer, uint32_t len);
 
-int decode_u8_eps_update_type(EpsUpdateType *epsupdatetype, uint8_t iei, uint8_t value, uint32_t len);
+int decode_u8_eps_update_type(EpsUpdateType* epsupdatetype, uint8_t iei,
+                              uint8_t value, uint32_t len);
 
 #endif /* EPS UPDATE TYPE_SEEN */
-

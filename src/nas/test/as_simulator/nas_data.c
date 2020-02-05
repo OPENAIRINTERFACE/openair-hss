@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -42,7 +42,7 @@
 
 #include "../../test/as_simulator/nas_data.h"
 
-#include <stdio.h>              // snprintf
+#include <stdio.h>  // snprintf
 
 #include "../../emm/msg/emm_cause.h"
 #include "../../emm/msg/emm_msgDef.h"
@@ -57,38 +57,20 @@
 /*******************  L O C A L    D E F I N I T I O N S  *******************/
 /****************************************************************************/
 
-static ssize_t                          imsiIdentity (
-  char *buffer,
-  size_t len,
-  const ImsiMobileIdentity_t * ident);
-static ssize_t                          imeiIdentity (
-  char *buffer,
-  size_t len,
-  const ImeiMobileIdentity_t * ident);
-static ssize_t                          tmsiIdentity (
-  char *buffer,
-  size_t len,
-  const TmsiMobileIdentity_t * ident);
-static ssize_t                          tmgiIdentity (
-  char *buffer,
-  size_t len,
-  const TmgiMobileIdentity_t * ident);
+static ssize_t imsiIdentity(char *buffer, size_t len,
+                            const ImsiMobileIdentity_t *ident);
+static ssize_t imeiIdentity(char *buffer, size_t len,
+                            const ImeiMobileIdentity_t *ident);
+static ssize_t tmsiIdentity(char *buffer, size_t len,
+                            const TmsiMobileIdentity_t *ident);
+static ssize_t tmgiIdentity(char *buffer, size_t len,
+                            const TmgiMobileIdentity_t *ident);
 
-static const char                      *timerUnit (
-  int unit);
+static const char *timerUnit(int unit);
 
-static ssize_t                          ipv4Addr (
-  char *buffer,
-  size_t len,
-  const OctetString * addr);
-static ssize_t                          ipv6Addr (
-  char *buffer,
-  size_t len,
-  const OctetString * addr);
-static ssize_t                          ipv4v6Addr (
-  char *buffer,
-  size_t len,
-  const OctetString * addr);
+static ssize_t ipv4Addr(char *buffer, size_t len, const OctetString *addr);
+static ssize_t ipv6Addr(char *buffer, size_t len, const OctetString *addr);
+static ssize_t ipv4v6Addr(char *buffer, size_t len, const OctetString *addr);
 
 /****************************************************************************/
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
@@ -99,10 +81,7 @@ static ssize_t                          ipv4v6Addr (
           Return EMM message type
    -----------------------------------------------------------------------------
 */
-const char                             *
-emmMsgType (
-  int type)
-{
+const char *emmMsgType(int type) {
   if (type == ATTACH_REQUEST) {
     return "ATTACH_REQUEST";
   } else if (type == ATTACH_ACCEPT) {
@@ -171,10 +150,7 @@ emmMsgType (
           Return ESM message type
    -----------------------------------------------------------------------------
 */
-const char                             *
-esmMsgType (
-  int type)
-{
+const char *esmMsgType(int type) {
   if (type == ACTIVATE_DEFAULT_EPS_BEARER_CONTEXT_REQUEST) {
     return "ACTIVATE_DEFAULT_EPS_BEARER_CONTEXT_REQUEST";
   } else if (type == ACTIVATE_DEFAULT_EPS_BEARER_CONTEXT_ACCEPT) {
@@ -229,10 +205,7 @@ esmMsgType (
           Return EMM cause code
    -----------------------------------------------------------------------------
 */
-const char                             *
-emmCauseCode (
-  emm_cause_t code)
-{
+const char *emmCauseCode(emm_cause_t code) {
   if (code == EMM_CAUSE_SUCCESS) {
     return "SUCCESS";
   } else if (code == EMM_CAUSE_IMSI_UNKNOWN_IN_HSS) {
@@ -315,10 +288,7 @@ emmCauseCode (
           Return EMM cause code
    -----------------------------------------------------------------------------
 */
-const char                             *
-esmCauseCode (
-  esm_cause_t code)
-{
+const char *esmCauseCode(esm_cause_t code) {
   if (code == ESM_CAUSE_SUCCESS) {
     return "SUCCESS";
   } else if (code == ESM_CAUSE_OPERATOR_DETERMINED_BARRING) {
@@ -413,10 +383,7 @@ esmCauseCode (
           Return attach type
    -----------------------------------------------------------------------------
 */
-const char                             *
-attachType (
-  const eps_attach_type_t * type)
-{
+const char *attachType(const eps_attach_type_t *type) {
   if (*type == EPS_ATTACH_TYPE_EPS) {
     return "EPS";
   } else if (*type == EPS_ATTACH_TYPE_COMBINED_EPS_IMSI) {
@@ -435,10 +402,7 @@ attachType (
           Return detach type
    -----------------------------------------------------------------------------
 */
-const char                             *
-detachType (
-  const detach_type_t * type)
-{
+const char *detachType(const detach_type_t *type) {
   if (type->switchoff == DETACH_TYPE_NORMAL_DETACH) {
     if (type->typeofdetach == DETACH_TYPE_EPS) {
       return "Normal EPS";
@@ -477,27 +441,31 @@ detachType (
           Display EPS mobile identity
    -----------------------------------------------------------------------------
 */
-ssize_t
-epsIdentity (
-  char *buffer,
-  size_t len,
-  const EpsMobileIdentity * ident)
-{
-  int                                     index = 0;
+ssize_t epsIdentity(char *buffer, size_t len, const EpsMobileIdentity *ident) {
+  int index = 0;
 
   if (ident->imsi.typeofidentity == EPS_MOBILE_IDENTITY_IMSI) {
-    index += imsiIdentity (buffer + index, len - index, (ImsiMobileIdentity_t *) (&ident->imsi));
+    index += imsiIdentity(buffer + index, len - index,
+                          (ImsiMobileIdentity_t *)(&ident->imsi));
   } else if (ident->imei.typeofidentity == EPS_MOBILE_IDENTITY_IMEI) {
-    index += imeiIdentity (buffer + index, len - index, (ImeiMobileIdentity_t *) (&ident->imei));
+    index += imeiIdentity(buffer + index, len - index,
+                          (ImeiMobileIdentity_t *)(&ident->imei));
   } else if (ident->guti.typeofidentity == EPS_MOBILE_IDENTITY_GUTI) {
-    index += snprintf (buffer + index, len - index, "GUTI = {");
-    index += snprintf (buffer + index, len - index, "plmn = %u%u%u%u%u", ident->guti.mccdigit1, ident->guti.mccdigit2, ident->guti.mccdigit3, ident->guti.mncdigit1, ident->guti.mncdigit2);
+    index += snprintf(buffer + index, len - index, "GUTI = {");
+    index += snprintf(buffer + index, len - index, "plmn = %u%u%u%u%u",
+                      ident->guti.mccdigit1, ident->guti.mccdigit2,
+                      ident->guti.mccdigit3, ident->guti.mncdigit1,
+                      ident->guti.mncdigit2);
 
     if (ident->guti.mncdigit3 != 0xf) {
-      index += snprintf (buffer + index, len - index, "%u", ident->guti.mncdigit3);
+      index +=
+          snprintf(buffer + index, len - index, "%u", ident->guti.mncdigit3);
     }
 
-    index += snprintf (buffer + index, len - index, ", MMEgid = %u, MMEcode = %u, m_tmsi = %u}", ident->guti.mmegroupid, ident->guti.mmecode, ident->guti.mtmsi);
+    index += snprintf(buffer + index, len - index,
+                      ", MMEgid = %u, MMEcode = %u, m_tmsi = %u}",
+                      ident->guti.mmegroupid, ident->guti.mmecode,
+                      ident->guti.mtmsi);
   }
 
   return (index);
@@ -508,24 +476,19 @@ epsIdentity (
           Display mobile identity
    -----------------------------------------------------------------------------
 */
-ssize_t
-mobileIdentity (
-  char *buffer,
-  size_t len,
-  const MobileIdentity * ident)
-{
-  int                                     index = 0;
+ssize_t mobileIdentity(char *buffer, size_t len, const MobileIdentity *ident) {
+  int index = 0;
 
   if (ident->imsi.typeofidentity == MOBILE_IDENTITY_IMSI) {
-    index += imsiIdentity (buffer + index, len - index, &ident->imsi);
+    index += imsiIdentity(buffer + index, len - index, &ident->imsi);
   } else if (ident->imei.typeofidentity == MOBILE_IDENTITY_IMEI) {
-    index += imeiIdentity (buffer + index, len - index, &ident->imei);
+    index += imeiIdentity(buffer + index, len - index, &ident->imei);
   } else if (ident->tmsi.typeofidentity == MOBILE_IDENTITY_TMSI) {
-    index += tmsiIdentity (buffer + index, len - index, &ident->tmsi);
+    index += tmsiIdentity(buffer + index, len - index, &ident->tmsi);
   } else if (ident->tmgi.typeofidentity == MOBILE_IDENTITY_TMGI) {
-    index += tmgiIdentity (buffer + index, len - index, &ident->tmgi);
+    index += tmgiIdentity(buffer + index, len - index, &ident->tmgi);
   } else if (ident->no_id.typeofidentity == MOBILE_IDENTITY_NOT_AVAILABLE) {
-    index += snprintf (buffer + index, len - index, "NOT AVAILABLE");
+    index += snprintf(buffer + index, len - index, "NOT AVAILABLE");
   }
 
   return (index);
@@ -536,10 +499,7 @@ mobileIdentity (
           Return mobile identity type
    -----------------------------------------------------------------------------
 */
-const char                             *
-identityType (
-  const IdentityType2 * type)
-{
+const char *identityType(const IdentityType2 *type) {
   if (*type == IDENTITY_TYPE_2_IMSI) {
     return "IMSI";
   } else if (*type == IDENTITY_TYPE_2_IMEI) {
@@ -558,10 +518,7 @@ identityType (
           Return PDN request type
    -----------------------------------------------------------------------------
 */
-const char                             *
-requestType (
-  const request_type_t * type)
-{
+const char *requestType(const request_type_t *type) {
   if (*type == REQUEST_TYPE_INITIAL_REQUEST) {
     return "INITIAL";
   } else if (*type == REQUEST_TYPE_HANDOVER) {
@@ -580,10 +537,7 @@ requestType (
           Return PDN type
    -----------------------------------------------------------------------------
 */
-const char                             *
-pdnType (
-  const PdnType * type)
-{
+const char *pdnType(const PdnType *type) {
   if (*type == PDN_TYPE_IPV4) {
     return "IPV4";
   } else if (*type == PDN_TYPE_IPV6) {
@@ -602,39 +556,37 @@ pdnType (
           Display PDN address
    -----------------------------------------------------------------------------
 */
-ssize_t
-pdnAddress (
-  char *buffer,
-  size_t len,
-  const PdnAddress * addr)
-{
-  int                                     index = 0;
+ssize_t pdnAddress(char *buffer, size_t len, const PdnAddress *addr) {
+  int index = 0;
 
   switch (addr->pdntypevalue) {
-  case PDN_VALUE_TYPE_IPV4:
-    /*
-     * Display IPv4 PDN address
-     */
-    index += ipv4Addr (buffer + index, len - index, &addr->pdnaddressinformation);
-    break;
+    case PDN_VALUE_TYPE_IPV4:
+      /*
+       * Display IPv4 PDN address
+       */
+      index +=
+          ipv4Addr(buffer + index, len - index, &addr->pdnaddressinformation);
+      break;
 
-  case PDN_VALUE_TYPE_IPV6:
-    /*
-     * Display IPv6 suffix
-     */
-    index += ipv6Addr (buffer + index, len - index, &addr->pdnaddressinformation);
-    break;
+    case PDN_VALUE_TYPE_IPV6:
+      /*
+       * Display IPv6 suffix
+       */
+      index +=
+          ipv6Addr(buffer + index, len - index, &addr->pdnaddressinformation);
+      break;
 
-  case PDN_VALUE_TYPE_IPV4V6:
-    /*
-     * Display IPv4 PDN address and IPv6 suffix
-     */
-    index += ipv4v6Addr (buffer + index, len - index, &addr->pdnaddressinformation);
-    break;
+    case PDN_VALUE_TYPE_IPV4V6:
+      /*
+       * Display IPv4 PDN address and IPv6 suffix
+       */
+      index +=
+          ipv4v6Addr(buffer + index, len - index, &addr->pdnaddressinformation);
+      break;
 
-  default:
-    index += snprintf (buffer + index, len - index, "Unknown");
-    break;
+    default:
+      index += snprintf(buffer + index, len - index, "Unknown");
+      break;
   }
 
   return (index);
@@ -645,15 +597,16 @@ pdnAddress (
         Dispay the NAS key set identifier
    -----------------------------------------------------------------------------
 */
-ssize_t
-nasKeySetIdentifier (
-  char *buffer,
-  size_t len,
-  const NasKeySetIdentifier * ksi)
-{
-  int                                     index = 0;
+ssize_t nasKeySetIdentifier(char *buffer, size_t len,
+                            const NasKeySetIdentifier *ksi) {
+  int index = 0;
 
-  index += snprintf (buffer + index, len - index, "{%s: %d}", (ksi->tsc == NAS_KEY_SET_IDENTIFIER_NATIVE) ? "NATIVE" : (ksi->tsc == NAS_KEY_SET_IDENTIFIER_MAPPED) ? "MAPPED" : "Unknown", ksi->naskeysetidentifier);
+  index += snprintf(
+      buffer + index, len - index, "{%s: %d}",
+      (ksi->tsc == NAS_KEY_SET_IDENTIFIER_NATIVE)
+          ? "NATIVE"
+          : (ksi->tsc == NAS_KEY_SET_IDENTIFIER_MAPPED) ? "MAPPED" : "Unknown",
+      ksi->naskeysetidentifier);
   return (index);
 }
 
@@ -662,16 +615,13 @@ nasKeySetIdentifier (
       Dispay the authentication parameter (RAND, AUTN, RES)
    -----------------------------------------------------------------------------
 */
-ssize_t
-authenticationParameter (
-  char *buffer,
-  size_t len,
-  const OctetString * param)
-{
-  int                                     index = 0;
+ssize_t authenticationParameter(char *buffer, size_t len,
+                                const OctetString *param) {
+  int index = 0;
 
   for (int i = 0; i < param->length; i++) {
-    index += snprintf (buffer + index, len - index, "%.2hx", (unsigned char)(param->value[i]));
+    index += snprintf(buffer + index, len - index, "%.2hx",
+                      (unsigned char)(param->value[i]));
   }
 
   return (index);
@@ -682,10 +632,7 @@ authenticationParameter (
           Return the NAS ciphering algorithm identifier
    -----------------------------------------------------------------------------
 */
-const char                             *
-nasCipheringAlgorithm (
-  const NasSecurityAlgorithms * algo)
-{
+const char *nasCipheringAlgorithm(const NasSecurityAlgorithms *algo) {
   if (algo->typeofcipheringalgorithm == NAS_SECURITY_ALGORITHMS_EEA0) {
     return "EEA0";
   } else if (algo->typeofcipheringalgorithm == NAS_SECURITY_ALGORITHMS_EEA1) {
@@ -712,10 +659,7 @@ nasCipheringAlgorithm (
           Return the NAS integrity algorithm identifier
    -----------------------------------------------------------------------------
 */
-const char                             *
-nasIntegrityAlgorithm (
-  const NasSecurityAlgorithms * algo)
-{
+const char *nasIntegrityAlgorithm(const NasSecurityAlgorithms *algo) {
   if (algo->typeofintegrityalgorithm == NAS_SECURITY_ALGORITHMS_EIA0) {
     return "EIA0";
   } else if (algo->typeofintegrityalgorithm == NAS_SECURITY_ALGORITHMS_EIA1) {
@@ -742,18 +686,14 @@ nasIntegrityAlgorithm (
           Display GPRS timer
    -----------------------------------------------------------------------------
 */
-ssize_t
-gprsTimer (
-  char *buffer,
-  size_t len,
-  const GprsTimer * timer)
-{
-  int                                     index = 0;
+ssize_t gprsTimer(char *buffer, size_t len, const GprsTimer *timer) {
+  int index = 0;
 
   if (timer->unit != GPRS_TIMER_UNIT_0S) {
-    index += snprintf (buffer + index, len - index, "{Unit = %s, Value = %u}", timerUnit (timer->unit), timer->timervalue);
+    index += snprintf(buffer + index, len - index, "{Unit = %s, Value = %u}",
+                      timerUnit(timer->unit), timer->timervalue);
   } else {
-    index += snprintf (buffer + index, len - index, "{Deactivated}");
+    index += snprintf(buffer + index, len - index, "{Deactivated}");
   }
 
   return (index);
@@ -764,28 +704,30 @@ gprsTimer (
         Display the content of TAI list
    -----------------------------------------------------------------------------
 */
-ssize_t
-taiList (
-  char *buffer,
-  size_t len,
-  const TrackingAreaIdentityList * tai)
-{
-  int                                     index = 0;
+ssize_t taiList(char *buffer, size_t len, const TrackingAreaIdentityList *tai) {
+  int index = 0;
 
-  index += snprintf (buffer + index, len - index, "TAI = {%s", (tai->typeoflist == TRACKING_AREA_IDENTITY_LIST_ONE_PLMN_CONSECUTIVE_TACS) ? "One PLMN consecutive TACs" : "Unknown");
-  index += snprintf (buffer + index, len - index, ", plmn = %u%u%u%u%u", tai->mccdigit1, tai->mccdigit2, tai->mccdigit3, tai->mncdigit1, tai->mncdigit2);
+  index += snprintf(
+      buffer + index, len - index, "TAI = {%s",
+      (tai->typeoflist == TRACKING_AREA_IDENTITY_LIST_ONE_PLMN_CONSECUTIVE_TACS)
+          ? "One PLMN consecutive TACs"
+          : "Unknown");
+  index += snprintf(buffer + index, len - index, ", plmn = %u%u%u%u%u",
+                    tai->mccdigit1, tai->mccdigit2, tai->mccdigit3,
+                    tai->mncdigit1, tai->mncdigit2);
 
   if (tai->mncdigit3 != 0xf) {
-    index += snprintf (buffer + index, len - index, "%u", tai->mncdigit3);
+    index += snprintf(buffer + index, len - index, "%u", tai->mncdigit3);
   }
 
-  index += snprintf (buffer + index, len - index, ", n_tacs = %u, tac = 0x%.4x",
-                     /*
-                      * LW: number of elements is coded as N-1 (0 -> 1 element, 1 -> 2 elements...),
-                      * * * *  see 3GPP TS 24.301, section 9.9.3.33.1
-                      */
-                     tai->numberofelements + 1, tai->tac);
-  index += snprintf (buffer + index, len - index, "}");
+  index += snprintf(buffer + index, len - index, ", n_tacs = %u, tac = 0x%.4x",
+                    /*
+                     * LW: number of elements is coded as N-1 (0 -> 1 element, 1
+                     * -> 2 elements...),
+                     * * * *  see 3GPP TS 24.301, section 9.9.3.33.1
+                     */
+                    tai->numberofelements + 1, tai->tac);
+  index += snprintf(buffer + index, len - index, "}");
   return (index);
 }
 
@@ -798,26 +740,26 @@ taiList (
       Display the International Mobile Subscriber Identity
    -----------------------------------------------------------------------------
 */
-ssize_t
-imsiIdentity (
-  char *buffer,
-  size_t len,
-  const ImsiMobileIdentity_t * imsi)
-{
-  int                                     index = 0;
+ssize_t imsiIdentity(char *buffer, size_t len,
+                     const ImsiMobileIdentity_t *imsi) {
+  int index = 0;
 
   if (imsi->oddeven != MOBILE_IDENTITY_EVEN) {
-    index += snprintf (buffer + index, len - index,
-                       "IMSI = %u%u%u%u%u%u%u%u%u%u%u%u%u%u",
-                       imsi->digit1, imsi->digit2, imsi->digit3, imsi->digit4, imsi->digit5, imsi->digit6, imsi->digit7, imsi->digit8, imsi->digit9, imsi->digit10, imsi->digit11, imsi->digit12, imsi->digit13, imsi->digit14);
+    index += snprintf(
+        buffer + index, len - index, "IMSI = %u%u%u%u%u%u%u%u%u%u%u%u%u%u",
+        imsi->digit1, imsi->digit2, imsi->digit3, imsi->digit4, imsi->digit5,
+        imsi->digit6, imsi->digit7, imsi->digit8, imsi->digit9, imsi->digit10,
+        imsi->digit11, imsi->digit12, imsi->digit13, imsi->digit14);
   } else {
-    index += snprintf (buffer + index, len - index,
-                       "IMSI = %u%u%u%u%u%u%u%u%u%u%u%u%u",
-                       imsi->digit1, imsi->digit2, imsi->digit3, imsi->digit4, imsi->digit5, imsi->digit7, imsi->digit8, imsi->digit9, imsi->digit10, imsi->digit11, imsi->digit12, imsi->digit13, imsi->digit14);
+    index += snprintf(
+        buffer + index, len - index, "IMSI = %u%u%u%u%u%u%u%u%u%u%u%u%u",
+        imsi->digit1, imsi->digit2, imsi->digit3, imsi->digit4, imsi->digit5,
+        imsi->digit7, imsi->digit8, imsi->digit9, imsi->digit10, imsi->digit11,
+        imsi->digit12, imsi->digit13, imsi->digit14);
   }
 
   if (imsi->digit15 != 0xf) {
-    index += snprintf (buffer + index, len - index, "%u", imsi->digit15);
+    index += snprintf(buffer + index, len - index, "%u", imsi->digit15);
   }
 
   return (index);
@@ -828,22 +770,23 @@ imsiIdentity (
       Display the International Mobile Equipment Identity
    -----------------------------------------------------------------------------
 */
-ssize_t
-imeiIdentity (
-  char *buffer,
-  size_t len,
-  const ImeiMobileIdentity_t * imei)
-{
-  int                                     index = 0;
+ssize_t imeiIdentity(char *buffer, size_t len,
+                     const ImeiMobileIdentity_t *imei) {
+  int index = 0;
 
   if (imei->oddeven != MOBILE_IDENTITY_EVEN) {
-    index += snprintf (buffer + index, len - index,
-                       "IMEI = %u%u%u%u%u%u%u%u%u%u%u%u%u%u%u",
-                       imei->digit1, imei->digit2, imei->digit3, imei->digit4, imei->digit5, imei->digit6, imei->digit7, imei->digit8, imei->digit9, imei->digit10, imei->digit11, imei->digit12, imei->digit13, imei->digit14, imei->digit15);
+    index += snprintf(buffer + index, len - index,
+                      "IMEI = %u%u%u%u%u%u%u%u%u%u%u%u%u%u%u", imei->digit1,
+                      imei->digit2, imei->digit3, imei->digit4, imei->digit5,
+                      imei->digit6, imei->digit7, imei->digit8, imei->digit9,
+                      imei->digit10, imei->digit11, imei->digit12,
+                      imei->digit13, imei->digit14, imei->digit15);
   } else {
-    index += snprintf (buffer + index, len - index,
-                       "IMEI = %u%u%u%u%u%u%u%u%u%u%u%u%u%u",
-                       imei->digit1, imei->digit2, imei->digit3, imei->digit4, imei->digit5, imei->digit6, imei->digit7, imei->digit8, imei->digit9, imei->digit10, imei->digit11, imei->digit12, imei->digit13, imei->digit14);
+    index += snprintf(
+        buffer + index, len - index, "IMEI = %u%u%u%u%u%u%u%u%u%u%u%u%u%u",
+        imei->digit1, imei->digit2, imei->digit3, imei->digit4, imei->digit5,
+        imei->digit6, imei->digit7, imei->digit8, imei->digit9, imei->digit10,
+        imei->digit11, imei->digit12, imei->digit13, imei->digit14);
   }
 
   return (index);
@@ -854,17 +797,15 @@ imeiIdentity (
       Display the Temporary Mobile Subscriber Identity
    -----------------------------------------------------------------------------
 */
-ssize_t
-tmsiIdentity (
-  char *buffer,
-  size_t len,
-  const TmsiMobileIdentity_t * tmsi)
-{
-  int                                     index = 0;
+ssize_t tmsiIdentity(char *buffer, size_t len,
+                     const TmsiMobileIdentity_t *tmsi) {
+  int index = 0;
 
-  index += snprintf (buffer + index, len - index,
-                     "TMSI = %u%u%u%u%u%u%u%u%u%u%u%u%u%u",
-                     tmsi->digit2, tmsi->digit3, tmsi->digit4, tmsi->digit5, tmsi->digit6, tmsi->digit7, tmsi->digit8, tmsi->digit9, tmsi->digit10, tmsi->digit11, tmsi->digit12, tmsi->digit13, tmsi->digit14, tmsi->digit15);
+  index += snprintf(
+      buffer + index, len - index, "TMSI = %u%u%u%u%u%u%u%u%u%u%u%u%u%u",
+      tmsi->digit2, tmsi->digit3, tmsi->digit4, tmsi->digit5, tmsi->digit6,
+      tmsi->digit7, tmsi->digit8, tmsi->digit9, tmsi->digit10, tmsi->digit11,
+      tmsi->digit12, tmsi->digit13, tmsi->digit14, tmsi->digit15);
   return (index);
 }
 
@@ -873,31 +814,31 @@ tmsiIdentity (
       Display the Temporary Mobile Group Identity
    -----------------------------------------------------------------------------
 */
-ssize_t
-tmgiIdentity (
-  char *buffer,
-  size_t len,
-  const TmgiMobileIdentity_t * tmgi)
-{
-  int                                     index = 0;
+ssize_t tmgiIdentity(char *buffer, size_t len,
+                     const TmgiMobileIdentity_t *tmgi) {
+  int index = 0;
 
-  index += snprintf (buffer + index, len - index, "TMGI = {");
-  index += snprintf (buffer + index, len - index, "MBMS service ID = %u", tmgi->mbmsserviceid);
+  index += snprintf(buffer + index, len - index, "TMGI = {");
+  index += snprintf(buffer + index, len - index, "MBMS service ID = %u",
+                    tmgi->mbmsserviceid);
 
   if (tmgi->mccmncindication) {
-    index += snprintf (buffer + index, len - index, ", MCC = %u%u%u", tmgi->mccdigit1, tmgi->mccdigit2, tmgi->mccdigit3);
-    index += snprintf (buffer + index, len - index, ", MNC = %u%u", tmgi->mncdigit1, tmgi->mncdigit2);
+    index += snprintf(buffer + index, len - index, ", MCC = %u%u%u",
+                      tmgi->mccdigit1, tmgi->mccdigit2, tmgi->mccdigit3);
+    index += snprintf(buffer + index, len - index, ", MNC = %u%u",
+                      tmgi->mncdigit1, tmgi->mncdigit2);
 
     if (tmgi->mncdigit3 != 0xf) {
-      index += snprintf (buffer + index, len - index, "%u", tmgi->mncdigit3);
+      index += snprintf(buffer + index, len - index, "%u", tmgi->mncdigit3);
     }
   }
 
   if (tmgi->mbmssessionidindication) {
-    index += snprintf (buffer + index, len - index, ", MBMS session ID = %u", tmgi->mbmssessionid);
+    index += snprintf(buffer + index, len - index, ", MBMS session ID = %u",
+                      tmgi->mbmssessionid);
   }
 
-  index += snprintf (buffer + index, len - index, "}");
+  index += snprintf(buffer + index, len - index, "}");
   return (index);
 }
 
@@ -906,10 +847,7 @@ tmgiIdentity (
           Return GPRS timer unit
    -----------------------------------------------------------------------------
 */
-const char                             *
-timerUnit (
-  int unit)
-{
+const char *timerUnit(int unit) {
   if (unit == GPRS_TIMER_UNIT_2S) {
     return "2 seconds";
   } else if (unit == GPRS_TIMER_UNIT_60S) {
@@ -928,13 +866,9 @@ timerUnit (
           Display IPv4 address
    -----------------------------------------------------------------------------
 */
-ssize_t
-ipv4Addr (
-  char *buffer,
-  size_t len,
-  const OctetString * addr)
-{
-  return snprintf (buffer, len, "%u.%u.%u.%u", addr->value[0], addr->value[1], addr->value[2], addr->value[3]);
+ssize_t ipv4Addr(char *buffer, size_t len, const OctetString *addr) {
+  return snprintf(buffer, len, "%u.%u.%u.%u", addr->value[0], addr->value[1],
+                  addr->value[2], addr->value[3]);
 }
 
 /*
@@ -942,13 +876,11 @@ ipv4Addr (
           Display IPv6 address
    -----------------------------------------------------------------------------
 */
-ssize_t
-ipv6Addr (
-  char *buffer,
-  size_t len,
-  const OctetString * addr)
-{
-  return snprintf (buffer, len, "%x%.2x:%x%.2x:%x%.2x:%x%.2x", addr->value[0], addr->value[1], addr->value[2], addr->value[3], addr->value[4], addr->value[5], addr->value[6], addr->value[7]);
+ssize_t ipv6Addr(char *buffer, size_t len, const OctetString *addr) {
+  return snprintf(buffer, len, "%x%.2x:%x%.2x:%x%.2x:%x%.2x", addr->value[0],
+                  addr->value[1], addr->value[2], addr->value[3],
+                  addr->value[4], addr->value[5], addr->value[6],
+                  addr->value[7]);
 }
 
 /*
@@ -956,12 +888,10 @@ ipv6Addr (
           Display IPv4v6 address
    -----------------------------------------------------------------------------
 */
-ssize_t
-ipv4v6Addr (
-  char *buffer,
-  size_t len,
-  const OctetString * addr)
-{
-  return snprintf (buffer, len, "%u.%u.%u.%u / %x%.2x:%x%.2x:%x%.2x:%x%.2x",
-                   addr->value[0], addr->value[1], addr->value[2], addr->value[3], addr->value[4], addr->value[5], addr->value[6], addr->value[7], addr->value[8], addr->value[9], addr->value[10], addr->value[11]);
+ssize_t ipv4v6Addr(char *buffer, size_t len, const OctetString *addr) {
+  return snprintf(buffer, len, "%u.%u.%u.%u / %x%.2x:%x%.2x:%x%.2x:%x%.2x",
+                  addr->value[0], addr->value[1], addr->value[2],
+                  addr->value[3], addr->value[4], addr->value[5],
+                  addr->value[6], addr->value[7], addr->value[8],
+                  addr->value[9], addr->value[10], addr->value[11]);
 }

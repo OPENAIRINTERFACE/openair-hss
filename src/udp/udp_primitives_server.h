@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -20,11 +20,11 @@
  */
 
 /*! \file udp_primitives_server.c
-* \brief
-* \author Sebastien ROUX
-* \company Eurecom
-* \email:
-*/
+ * \brief
+ * \author Sebastien ROUX
+ * \company Eurecom
+ * \email:
+ */
 #include "mme_config.h"
 
 #ifndef UDP_PRIMITIVES_SERVER_H_
@@ -34,7 +34,6 @@
  @returns -1 on error, 0 otherwise.
  **/
 int udp_init(void);
-void udp_exit (void);
-
+void udp_exit(void);
 
 #endif /* UDP_PRIMITIVES_SERVER_H_ */

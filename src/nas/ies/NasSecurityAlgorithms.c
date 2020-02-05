@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -19,59 +19,53 @@
  *      contact@openairinterface.org
  */
 
-
+#include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
-#include <stdbool.h>
 
 #include "bstrlib.h"
 
-#include "TLVEncoder.h"
-#include "TLVDecoder.h"
 #include "NasSecurityAlgorithms.h"
+#include "TLVDecoder.h"
+#include "TLVEncoder.h"
 
 //------------------------------------------------------------------------------
-int decode_nas_security_algorithms (
-  NasSecurityAlgorithms * nassecurityalgorithms,
-  uint8_t iei,
-  uint8_t * buffer,
-  uint32_t len)
-{
-  int                                     decoded = 0;
+int decode_nas_security_algorithms(NasSecurityAlgorithms* nassecurityalgorithms,
+                                   uint8_t iei, uint8_t* buffer, uint32_t len) {
+  int decoded = 0;
 
   if (iei > 0) {
-    CHECK_IEI_DECODER (iei, *buffer);
+    CHECK_IEI_DECODER(iei, *buffer);
     decoded++;
   }
 
-  nassecurityalgorithms->typeofcipheringalgorithm = (*(buffer + decoded) >> 4) & 0x7;
+  nassecurityalgorithms->typeofcipheringalgorithm =
+      (*(buffer + decoded) >> 4) & 0x7;
   nassecurityalgorithms->typeofintegrityalgorithm = *(buffer + decoded) & 0x7;
   decoded++;
   return decoded;
 }
 
 //------------------------------------------------------------------------------
-int encode_nas_security_algorithms (
-  NasSecurityAlgorithms * nassecurityalgorithms,
-  uint8_t iei,
-  uint8_t * buffer,
-  uint32_t len)
-{
-  uint32_t                                encoded = 0;
+int encode_nas_security_algorithms(NasSecurityAlgorithms* nassecurityalgorithms,
+                                   uint8_t iei, uint8_t* buffer, uint32_t len) {
+  uint32_t encoded = 0;
 
   /*
    * Checking IEI and pointer
    */
-  CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, NAS_SECURITY_ALGORITHMS_MINIMUM_LENGTH, len);
+  CHECK_PDU_POINTER_AND_LENGTH_ENCODER(
+      buffer, NAS_SECURITY_ALGORITHMS_MINIMUM_LENGTH, len);
 
   if (iei > 0) {
     *buffer = iei;
     encoded++;
   }
 
-  *(buffer + encoded) = 0x00 | ((nassecurityalgorithms->typeofcipheringalgorithm & 0x7) << 4) | (nassecurityalgorithms->typeofintegrityalgorithm & 0x7);
+  *(buffer + encoded) =
+      0x00 | ((nassecurityalgorithms->typeofcipheringalgorithm & 0x7) << 4) |
+      (nassecurityalgorithms->typeofintegrityalgorithm & 0x7);
   encoded++;
   return encoded;
 }
-

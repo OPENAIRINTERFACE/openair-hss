@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -19,7 +19,6 @@
  *      contact@openairinterface.org
  */
 
-
 /*! \file s1ap_mme_retransmission.h
   \brief
   \author Sebastien ROUX
@@ -32,19 +31,20 @@
 #include "tree.h"
 
 typedef struct s1ap_timer_map_s {
-  long             timer_id;
+  long timer_id;
   mme_ue_s1ap_id_t mme_ue_s1ap_id;
 
   RB_ENTRY(s1ap_timer_map_s) entries;
 } s1ap_timer_map_t;
 
-int s1ap_mme_timer_map_compare_id(
-  const struct s1ap_timer_map_s * const p1, const struct s1ap_timer_map_s * const p2);
+int s1ap_mme_timer_map_compare_id(const struct s1ap_timer_map_s* const p1,
+                                  const struct s1ap_timer_map_s* const p2);
 
-int s1ap_handle_timer_expiry(timer_has_expired_t *timer_has_expired);
+int s1ap_handle_timer_expiry(timer_has_expired_t* timer_has_expired);
 
 // TODO: (amar) unused functions check with OAI.
-int s1ap_timer_insert(const mme_ue_s1ap_id_t mme_ue_s1ap_id, const long timer_id);
+int s1ap_timer_insert(const mme_ue_s1ap_id_t mme_ue_s1ap_id,
+                      const long timer_id);
 
 int s1ap_timer_remove_ue(const mme_ue_s1ap_id_t mme_ue_s1ap_id);
 

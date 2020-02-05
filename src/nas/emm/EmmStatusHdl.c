@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -41,28 +41,27 @@
         sent by both the MME and the UE.
 
 *****************************************************************************/
-#include <pthread.h>
 #include <inttypes.h>
-#include <stdint.h>
+#include <pthread.h>
 #include <stdbool.h>
-#include <string.h>
+#include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 
-#include "log.h"
-#include "common_types.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"
 #include "3gpp_29.274.h"
+#include "common_types.h"
+#include "log.h"
 
+#include "bstrlib.h"
+#include "emm_cause.h"
 #include "emm_data.h"
 #include "emm_proc.h"
-#include "emm_cause.h"
 #include "emm_sap.h"
-#include "bstrlib.h"
 
+#include "common_defs.h"
 #include "mme_app_ue_context.h"
-#include "common_defs.h"
-#include "common_defs.h"
 
 #include "mme_app_defs.h"
 
@@ -98,54 +97,77 @@
  **      Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
-int
-emm_proc_status_ind (
-  mme_ue_s1ap_id_t ue_id,
-  emm_cause_t emm_cause)
-{
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
-  int                                     rc = RETURNok;
+int emm_proc_status_ind(mme_ue_s1ap_id_t ue_id, emm_cause_t emm_cause) {
+  OAILOG_FUNC_IN(LOG_NAS_EMM);
+  int rc = RETURNok;
 
-  OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - EMM status procedure requested (cause=%d)", emm_cause);
+  OAILOG_INFO(LOG_NAS_EMM,
+              "EMM-PROC  - EMM status procedure requested (cause=%d)",
+              emm_cause);
 
   /*
    * Add the cause value to the specific procedure, if exists.
    * When the procedure wakes up, will detach itself.
    */
-  emm_data_context_t * emm_context = emm_data_context_get(&_emm_data, ue_id);
-  if(!emm_context){
-    OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - No EMM context was found for ueId " MME_UE_S1AP_ID_FMT ". \n", ue_id);
-    OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  emm_data_context_t *emm_context = emm_data_context_get(&_emm_data, ue_id);
+  if (!emm_context) {
+    OAILOG_INFO(
+        LOG_NAS_EMM,
+        "EMM-PROC  - No EMM context was found for ueId " MME_UE_S1AP_ID_FMT
+        ". \n",
+        ue_id);
+    OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
   }
   /** Check the cause. */
-  if(emm_cause == EMM_CAUSE_SUCCESS){
-    OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - EMM Cause is success. Nothing else to do for ueId " MME_UE_S1AP_ID_FMT ". \n", ue_id);
-    OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  if (emm_cause == EMM_CAUSE_SUCCESS) {
+    OAILOG_INFO(LOG_NAS_EMM,
+                "EMM-PROC  - EMM Cause is success. Nothing else to do for "
+                "ueId " MME_UE_S1AP_ID_FMT ". \n",
+                ue_id);
+    OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
   }
 
-  emm_sap_t                 emm_sap = {0};
+  emm_sap_t emm_sap = {0};
   emm_sap.u.emm_reg.ue_id = ue_id;
 
   /** Set the cause to the specific procedure. */
-  if(is_nas_specific_procedure_attach_running(emm_context)){
-    OAILOG_WARNING(LOG_NAS_EMM, "EMM-PROC  - An attach procedure exists for ueId " MME_UE_S1AP_ID_FMT ". Aborting. \n", ue_id);
+  if (is_nas_specific_procedure_attach_running(emm_context)) {
+    OAILOG_WARNING(
+        LOG_NAS_EMM,
+        "EMM-PROC  - An attach procedure exists for ueId " MME_UE_S1AP_ID_FMT
+        ". Aborting. \n",
+        ue_id);
     emm_sap.primitive = EMMREG_ATTACH_ABORT;
-    emm_sap.u.emm_reg.u.attach.proc   = get_nas_specific_procedure_attach(emm_context);
-    rc = emm_sap_send (&emm_sap);
-  }else if (is_nas_specific_procedure_tau_running(emm_context)){
-    OAILOG_WARNING(LOG_NAS_EMM, "EMM-PROC  - A TAU procedure exists for ueId " MME_UE_S1AP_ID_FMT ". Aborting. \n", ue_id);
+    emm_sap.u.emm_reg.u.attach.proc =
+        get_nas_specific_procedure_attach(emm_context);
+    rc = emm_sap_send(&emm_sap);
+  } else if (is_nas_specific_procedure_tau_running(emm_context)) {
+    OAILOG_WARNING(
+        LOG_NAS_EMM,
+        "EMM-PROC  - A TAU procedure exists for ueId " MME_UE_S1AP_ID_FMT
+        ". Aborting. \n",
+        ue_id);
     emm_sap.primitive = EMMREG_TAU_ABORT;
-    emm_sap.u.emm_reg.u.tau.proc      = get_nas_specific_procedure_tau(emm_context);
-    rc = emm_sap_send (&emm_sap);
-  }else{
-    nas_emm_specific_proc_t * specific_proc = get_nas_specific_procedure(emm_context);
-    if(specific_proc){
-      OAILOG_WARNING(LOG_NAS_EMM, "EMM-PROC  - A specific procedure of exists of type %d for ueId " MME_UE_S1AP_ID_FMT ". Not aborting it. Ignoring the status message. \n", specific_proc->type, ue_id);
-    }else{
-      OAILOG_WARNING(LOG_NAS_EMM, "EMM-PROC  - NO specific procedure of exists for ueId " MME_UE_S1AP_ID_FMT ". Not aborting it. Ignoring the status message. \n", ue_id);
+    emm_sap.u.emm_reg.u.tau.proc = get_nas_specific_procedure_tau(emm_context);
+    rc = emm_sap_send(&emm_sap);
+  } else {
+    nas_emm_specific_proc_t *specific_proc =
+        get_nas_specific_procedure(emm_context);
+    if (specific_proc) {
+      OAILOG_WARNING(LOG_NAS_EMM,
+                     "EMM-PROC  - A specific procedure of exists of type %d "
+                     "for ueId " MME_UE_S1AP_ID_FMT
+                     ". Not aborting it. Ignoring the status message. \n",
+                     specific_proc->type, ue_id);
+    } else {
+      OAILOG_WARNING(LOG_NAS_EMM,
+                     "EMM-PROC  - NO specific procedure of exists for "
+                     "ueId " MME_UE_S1AP_ID_FMT
+                     ". Not aborting it. Ignoring the status message. \n",
+                     ue_id);
     }
   }
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
 }
 
 /****************************************************************************
@@ -163,18 +185,14 @@ emm_proc_status_ind (
  **      Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
-int
-emm_proc_status (
-  mme_ue_s1ap_id_t ue_id,
-  emm_cause_t emm_cause)
-{
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
-  int                                     rc;
-  emm_sap_t                               emm_sap = {0};
-  emm_security_context_t                 *sctx = NULL;
-  struct emm_data_context_s              *ctx = NULL;
+int emm_proc_status(mme_ue_s1ap_id_t ue_id, emm_cause_t emm_cause) {
+  OAILOG_FUNC_IN(LOG_NAS_EMM);
+  int rc;
+  emm_sap_t emm_sap = {0};
+  emm_security_context_t *sctx = NULL;
+  struct emm_data_context_s *ctx = NULL;
 
-  OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - EMM status procedure requested\n");
+  OAILOG_INFO(LOG_NAS_EMM, "EMM-PROC  - EMM status procedure requested\n");
   /*
    * Notity EMM that EMM status indication has to be sent to lower layers
    */
@@ -191,11 +209,12 @@ emm_proc_status (
   /*
    * Setup EPS NAS security data
    */
-  emm_as_set_security_data (&emm_sap.u.emm_as.u.status.sctx, sctx, false, true);
-  MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMAS_STATUS_IND  ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
-  rc = emm_sap_send (&emm_sap);
-//  unlock_ue_contexts(ue_context);
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  emm_as_set_security_data(&emm_sap.u.emm_as.u.status.sctx, sctx, false, true);
+  MSC_LOG_TX_MESSAGE(MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0,
+                     "EMMAS_STATUS_IND  ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
+  rc = emm_sap_send(&emm_sap);
+  //  unlock_ue_contexts(ue_context);
+  OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
 }
 
 /****************************************************************************/

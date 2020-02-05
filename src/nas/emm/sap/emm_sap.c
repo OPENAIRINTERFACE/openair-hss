@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -38,27 +38,26 @@
         is using the Evolved UTRA Network.
 
 *****************************************************************************/
-#include <pthread.h>
-#include <inttypes.h>
-#include <stdint.h>
-#include <stdbool.h>
-#include <string.h>
-#include <stdlib.h>
 #include <assert.h>
+#include <inttypes.h>
+#include <pthread.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "bstrlib.h"
 
-#include "log.h"
-#include "common_defs.h"
-#include "common_types.h"
-#include "common_defs.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"
 #include "3gpp_29.274.h"
+#include "common_defs.h"
+#include "common_types.h"
 #include "emm_as.h"
 #include "emm_cn.h"
 #include "emm_reg.h"
 #include "emm_sap.h"
+#include "log.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -86,14 +85,11 @@
  **      Others:    NONE                                       **
  **                                                                        **
  ***************************************************************************/
-void
-emm_sap_initialize (
-  void)
-{
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
-  emm_reg_initialize ();
-  emm_as_initialize ();
-  OAILOG_FUNC_OUT (LOG_NAS_EMM);
+void emm_sap_initialize(void) {
+  OAILOG_FUNC_IN(LOG_NAS_EMM);
+  emm_reg_initialize();
+  emm_as_initialize();
+  OAILOG_FUNC_OUT(LOG_NAS_EMM);
 }
 
 /****************************************************************************
@@ -110,42 +106,42 @@ emm_sap_initialize (
  **      Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
-int
-emm_sap_send (
-  emm_sap_t * msg)
-{
-  int                                     rc = RETURNerror;
-  emm_primitive_t                         primitive = msg->primitive;
+int emm_sap_send(emm_sap_t* msg) {
+  int rc = RETURNerror;
+  emm_primitive_t primitive = msg->primitive;
 
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  OAILOG_FUNC_IN(LOG_NAS_EMM);
 
   /*
    * Check the EMM-SAP primitive
    */
-  if ((primitive > (emm_primitive_t) EMMREG_PRIMITIVE_MIN) && (primitive < (emm_primitive_t) EMMREG_PRIMITIVE_MAX)) {
+  if ((primitive > (emm_primitive_t)EMMREG_PRIMITIVE_MIN) &&
+      (primitive < (emm_primitive_t)EMMREG_PRIMITIVE_MAX)) {
     /*
      * Forward to the EMMREG-SAP
      */
     msg->u.emm_reg.primitive = primitive;
-    rc = emm_reg_send (&msg->u.emm_reg);
-  }
-  else if ((primitive > (emm_primitive_t) EMMAS_PRIMITIVE_MIN) && (primitive < (emm_primitive_t) EMMAS_PRIMITIVE_MAX)) {
+    rc = emm_reg_send(&msg->u.emm_reg);
+  } else if ((primitive > (emm_primitive_t)EMMAS_PRIMITIVE_MIN) &&
+             (primitive < (emm_primitive_t)EMMAS_PRIMITIVE_MAX)) {
     /*
      * Forward to the EMMAS-SAP
      */
     msg->u.emm_as.primitive = primitive;
-    rc = emm_as_send (&msg->u.emm_as);
-  } else if ((primitive > (emm_primitive_t) EMMCN_PRIMITIVE_MIN) && (primitive < (emm_primitive_t) EMMCN_PRIMITIVE_MAX)) {
+    rc = emm_as_send(&msg->u.emm_as);
+  } else if ((primitive > (emm_primitive_t)EMMCN_PRIMITIVE_MIN) &&
+             (primitive < (emm_primitive_t)EMMCN_PRIMITIVE_MAX)) {
     /*
      * Forward to the EMMCN-SAP
      */
     msg->u.emm_cn.primitive = primitive;
-    rc = emm_cn_send (&msg->u.emm_cn);
+    rc = emm_cn_send(&msg->u.emm_cn);
   } else {
-    OAILOG_WARNING (LOG_NAS_EMM, "EMM-SAP -   Out of range primitive (%d)\n", primitive);
+    OAILOG_WARNING(LOG_NAS_EMM, "EMM-SAP -   Out of range primitive (%d)\n",
+                   primitive);
   }
   return rc;
-//  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  //  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
 /****************************************************************************/

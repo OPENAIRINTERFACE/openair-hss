@@ -29,50 +29,44 @@
 #ifndef FILE_XML_LOAD_SEEN
 #define FILE_XML_LOAD_SEEN
 
-xmlXPathObjectPtr xml_find_nodes(xmlDocPtr const xml_doc, xmlXPathContextPtr  *xpath_ctx, bstring xpath_expr);
+xmlXPathObjectPtr xml_find_nodes(xmlDocPtr const xml_doc,
+                                 xmlXPathContextPtr* xpath_ctx,
+                                 bstring xpath_expr);
 
-typedef bool (*msp_msg_load_callback_fn_t)(xmlDocPtr const xml_doc, void * const container, xmlNodeSetPtr const nodes);
+typedef bool (*msp_msg_load_callback_fn_t)(xmlDocPtr const xml_doc,
+                                           void* const container,
+                                           xmlNodeSetPtr const nodes);
 
-bool xml_load_tag(
-    xmlDocPtr                     xml_doc,
-    xmlXPathContextPtr            xpath_ctx,
-    bstring                       xpath_expr,
-    msp_msg_load_callback_fn_t    loader_callback,
-    void *                        container);
+bool xml_load_tag(xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx,
+                  bstring xpath_expr,
+                  msp_msg_load_callback_fn_t loader_callback, void* container);
 
 bool xml_load_leaf_tag(
-    xmlDocPtr                     xml_doc,
-    xmlXPathContextPtr            xpath_ctx,
-    bstring                       xpath_expr,
-    const char            * const scanf_format,
-    void                  * const container,
-    bstring               * failed_value); // if container could not be scanned, the put the scanned string into failed_value, else NULL (useful for XML vars custom syntax)
+    xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, bstring xpath_expr,
+    const char* const scanf_format, void* const container,
+    bstring* failed_value);  // if container could not be scanned, the put the
+                             // scanned string into failed_value, else NULL
+                             // (useful for XML vars custom syntax)
 
-bool xml_load_hex_stream_leaf_tag(
-    xmlDocPtr                     xml_doc,
-    xmlXPathContextPtr            xpath_ctx,
-    bstring                       xpath_expr,
-    bstring               * const container);
+bool xml_load_hex_stream_leaf_tag(xmlDocPtr xml_doc,
+                                  xmlXPathContextPtr xpath_ctx,
+                                  bstring xpath_expr, bstring* const container);
 
-#define NUM_FROM_XML_PROTOTYPE(name_lower) \
-bool name_lower##_from_xml (\
-    xmlDocPtr                     xml_doc,\
-    xmlXPathContextPtr            xpath_ctx,\
-    name_lower##_t        * const name_lower,\
-    bstring                       failed_result)
+#define NUM_FROM_XML_PROTOTYPE(name_lower)                                    \
+  bool name_lower##_from_xml(xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, \
+                             name_lower##_t* const name_lower,                \
+                             bstring failed_result)
 
-#define NUM_FROM_XML_GENERATE(name_lower, name_upper) \
-bool name_lower##_from_xml (\
-    xmlDocPtr                     xml_doc,\
-    xmlXPathContextPtr            xpath_ctx,\
-    name_lower##_t        * const name_lower,\
-    bstring                       failed_result)\
-{\
-  bstring xpath_expr = bformat("./%s",name_upper##_XML_STR);\
-  bool res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, name_upper##_XML_SCAN_FMT, (void*)name_lower, &failed_result);\
-  bdestroy_wrapper (&xpath_expr);\
-  return res;\
-}\
+#define NUM_FROM_XML_GENERATE(name_lower, name_upper)                          \
+  bool name_lower##_from_xml(xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx,  \
+                             name_lower##_t* const name_lower,                 \
+                             bstring failed_result) {                          \
+    bstring xpath_expr = bformat("./%s", name_upper##_XML_STR);                \
+    bool res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr,               \
+                                 name_upper##_XML_SCAN_FMT, (void*)name_lower, \
+                                 &failed_result);                              \
+    bdestroy_wrapper(&xpath_expr);                                             \
+    return res;                                                                \
+  }
 
 #endif
-

@@ -8,6 +8,6 @@
 #ifndef SRC_NAS_EMM_NAS_EMM_H_
 #define SRC_NAS_EMM_NAS_EMM_H_
 
-int nas_emm_init (mme_config_t * mme_config_p);
+int nas_emm_init(mme_config_t* mme_config_p);
 
 #endif /* SRC_NAS_EMM_NAS_EMM_H_ */

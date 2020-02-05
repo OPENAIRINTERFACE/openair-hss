@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -22,10 +22,10 @@
 #ifndef ESM_INFORMATION_REQUEST_H_
 #define ESM_INFORMATION_REQUEST_H_
 
-#include "MessageType.h"
 #include "3gpp_23.003.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"
+#include "MessageType.h"
 /* Minimum length macro. Formed by minimum length of each mandatory field */
 #define ESM_INFORMATION_REQUEST_MINIMUM_LENGTH (0)
 
@@ -34,22 +34,25 @@
 
 /*
  * Message name: ESM information request
- * Description: This message is sent by the network to the UE to request the UE to provide ESM information, i.e. protocol configuration options or APN or both. See table 8.3.13.1.
- * Significance: dual
- * Direction: network to UE
+ * Description: This message is sent by the network to the UE to request the UE
+ * to provide ESM information, i.e. protocol configuration options or APN or
+ * both. See table 8.3.13.1. Significance: dual Direction: network to UE
  */
 
 typedef struct esm_information_request_msg_tag {
   /* Mandatory fields */
-  eps_protocol_discriminator_t                           protocoldiscriminator:4;
-  ebi_t                                                  epsbeareridentity:4;
-  pti_t                                                  proceduretransactionidentity;
-  message_type_t                                         messagetype;
+  eps_protocol_discriminator_t protocoldiscriminator : 4;
+  ebi_t epsbeareridentity : 4;
+  pti_t proceduretransactionidentity;
+  message_type_t messagetype;
 } esm_information_request_msg;
 
-int decode_esm_information_request(esm_information_request_msg *esminformationrequest, uint8_t *buffer, uint32_t len);
+int decode_esm_information_request(
+    esm_information_request_msg* esminformationrequest, uint8_t* buffer,
+    uint32_t len);
 
-int encode_esm_information_request(esm_information_request_msg *esminformationrequest, uint8_t *buffer, uint32_t len);
+int encode_esm_information_request(
+    esm_information_request_msg* esminformationrequest, uint8_t* buffer,
+    uint32_t len);
 
 #endif /* ! defined(ESM_INFORMATION_REQUEST_H_) */
-

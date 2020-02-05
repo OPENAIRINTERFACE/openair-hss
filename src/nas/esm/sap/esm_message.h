@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -40,7 +40,6 @@ Description Defines functions executed at the ESM Service Access
 #ifndef __ESM_MESSAGES_H__
 #define __ESM_MESSAGES_H__
 
-#include "common_defs.h"
 #include "ActivateDedicatedEpsBearerContextRequest.h"
 #include "ActivateDefaultEpsBearerContextRequest.h"
 #include "BearerResourceAllocationReject.h"
@@ -50,8 +49,9 @@ Description Defines functions executed at the ESM Service Access
 #include "EsmStatus.h"
 #include "ModifyEpsBearerContextRequest.h"
 #include "PdnConnectivityReject.h"
-#include "PdnConnectivityReject.h"
 #include "PdnDisconnectReject.h"
+#include "common_defs.h"
+#include "mme_app_esm_procedures.h"
 
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/
@@ -74,60 +74,51 @@ Description Defines functions executed at the ESM Service Access
  * Functions executed by the MME to send ESM message to the UE
  * --------------------------------------------------------------------------
  */
-int esm_send_status(pti_t pti, ebi_t ebi, ESM_msg *msg, int esm_cause);
+int esm_send_status(pti_t pti, ebi_t ebi, ESM_msg* msg, int esm_cause);
 
 /*
  * Transaction related messages
  * ----------------------------
  */
 
-int esm_send_pdn_connectivity_reject (
-  pti_t pti,
-  ESM_msg * esm_msg,
-  esm_cause_t esm_cause);
+int esm_send_pdn_connectivity_reject(pti_t pti, ESM_msg* esm_msg,
+                                     esm_cause_t esm_cause);
 
-void esm_send_pdn_disconnect_reject(pti_t pti, ESM_msg *esm_rsp_msg, int esm_cause);
+void esm_send_pdn_disconnect_reject(pti_t pti, ESM_msg* esm_rsp_msg,
+                                    int esm_cause);
 
 /*
  * Messages related to EPS bearer contexts
  * ---------------------------------------
  */
 
-void _default_eps_bearer_activate_t3485_handler (nas_esm_proc_pdn_connectivity_t * esm_pdn_conn_procedure, ESM_msg * esm_resp_msg);
+void _default_eps_bearer_activate_t3485_handler(
+    nas_esm_proc_pdn_connectivity_t* esm_pdn_conn_procedure,
+    ESM_msg* esm_resp_msg);
 
-void
-esm_send_activate_default_eps_bearer_context_request (
-  nas_esm_proc_pdn_connectivity_t * esm_proc_pdn_connectivity,
-  ambr_t * apn_ambr,
-  bearer_qos_t * bearer_level_qos,
-  paa_t   * paa,
-  ESM_msg * esm_resp_msg);
+void esm_send_activate_default_eps_bearer_context_request(
+    nas_esm_proc_pdn_connectivity_t* esm_proc_pdn_connectivity,
+    ambr_t* apn_ambr, bearer_qos_t* bearer_level_qos, paa_t* paa,
+    ESM_msg* esm_resp_msg);
 
-void esm_send_activate_dedicated_eps_bearer_context_request(pti_t pti, ebi_t ebi,
-    ESM_msg *esm_msg,
-    ebi_t linked_ebi,
-    const EpsQualityOfService *qos,
-    traffic_flow_template_t *tft,
-    protocol_configuration_options_t *pco);
+void esm_send_activate_dedicated_eps_bearer_context_request(
+    pti_t pti, ebi_t ebi, ESM_msg* esm_msg, ebi_t linked_ebi,
+    const EpsQualityOfService* qos, traffic_flow_template_t* tft,
+    protocol_configuration_options_t* pco);
 
-void esm_send_modify_eps_bearer_context_request(pti_t pti, ebi_t ebi,
-    ESM_msg *esm_msg,
-    const EpsQualityOfService *qos,
-    traffic_flow_template_t *tft,
-    ambr_t *ambr,
-    protocol_configuration_options_t *pco);
+void esm_send_modify_eps_bearer_context_request(
+    pti_t pti, ebi_t ebi, ESM_msg* esm_msg, const EpsQualityOfService* qos,
+    traffic_flow_template_t* tft, ambr_t* ambr,
+    protocol_configuration_options_t* pco);
 
 void esm_send_deactivate_eps_bearer_context_request(pti_t pti, ebi_t ebi,
-    ESM_msg * esm_rsp_msg, esm_cause_t esm_cause);
+                                                    ESM_msg* esm_rsp_msg,
+                                                    esm_cause_t esm_cause);
 
-int esm_send_bearer_resource_allocation_reject (
-  pti_t pti,
-  ESM_msg * esm_msg,
-  esm_cause_t esm_cause);
+int esm_send_bearer_resource_allocation_reject(pti_t pti, ESM_msg* esm_msg,
+                                               esm_cause_t esm_cause);
 
-int esm_send_bearer_resource_modification_reject (
-  pti_t pti,
-  ESM_msg * esm_msg,
-  esm_cause_t esm_cause);
+int esm_send_bearer_resource_modification_reject(pti_t pti, ESM_msg* esm_msg,
+                                                 esm_cause_t esm_cause);
 
 #endif /* __ESM_MESSAGES_H__*/

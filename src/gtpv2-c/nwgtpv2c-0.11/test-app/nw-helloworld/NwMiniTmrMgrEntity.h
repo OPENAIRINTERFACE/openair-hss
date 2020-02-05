@@ -6,14 +6,13 @@
  *                                                                            *
  *----------------------------------------------------------------------------*/
 
-
 /**
  * @file NwMiniTmrMgrEntity.c
  * @brief This file ontains example of a minimalistic timer manager entity.
-*/
+ */
 
-#include <stdio.h>
 #include <assert.h>
+#include <stdio.h>
 #include "NwEvt.h"
 #include "NwLog.h"
 
@@ -29,26 +28,21 @@ typedef struct {
 } NwGtpv2cNodeTmrMgrT;
 
 typedef struct {
-  NwEventT      ev;
-  void*         timeoutArg;
+  NwEventT ev;
+  void* timeoutArg;
 } NwGtpv2cNodeTmrT;
-
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-nw_rc_t nwTimerStart( nw_gtpv2c_TimerMgrHandleT tmrMgrHandle,
-                    uint32_t timeoutSec,
-                    uint32_t timeoutUsec,
-                    uint32_t tmrType,
-                    void*  timeoutArg,
-                    nw_gtpv2c_TimerHandleT* hTmr);
+nw_rc_t nwTimerStart(nw_gtpv2c_TimerMgrHandleT tmrMgrHandle,
+                     uint32_t timeoutSec, uint32_t timeoutUsec,
+                     uint32_t tmrType, void* timeoutArg,
+                     nw_gtpv2c_TimerHandleT* hTmr);
 
-
-nw_rc_t nwTimerStop( nw_gtpv2c_TimerMgrHandleT tmrMgrHandle,
-                   nw_gtpv2c_TimerHandleT hTmr);
-
+nw_rc_t nwTimerStop(nw_gtpv2c_TimerMgrHandleT tmrMgrHandle,
+                    nw_gtpv2c_TimerHandleT hTmr);
 
 #ifdef __cplusplus
 }

@@ -24,8 +24,8 @@
   \company Eurecom
   \email: lionel.gauthier@eurecom.fr
 */
-#include <stdlib.h>
 #include <stdint.h>
+#include <stdlib.h>
 
 #include "gtpv1u.h"
 
@@ -36,22 +36,18 @@ extern "C" {
 //#define GTPV1U_LINEAR_TEID_ALLOCATION 1
 
 #if GTPV1U_LINEAR_TEID_ALLOCATION
-static uint32_t                         g_gtpv1u_teid = 0;
+static uint32_t g_gtpv1u_teid = 0;
 #endif
 
-uint32_t
-gtpv1u_new_teid (
-  void)
-{
+uint32_t gtpv1u_new_teid(void) {
 #if GTPV1U_LINEAR_TEID_ALLOCATION
   g_gtpv1u_teid = g_gtpv1u_teid + 1;
   return g_gtpv1u_teid;
 #else
-  return random () + random () % (RAND_MAX - 1) + 1;
+  return random() + random() % (RAND_MAX - 1) + 1;
 #endif
 }
 
 #ifdef __cplusplus
 }
 #endif
-

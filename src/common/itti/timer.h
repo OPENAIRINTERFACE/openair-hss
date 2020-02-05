@@ -32,7 +32,7 @@ typedef enum timer_type_s {
   TIMER_TYPE_MAX,
 } timer_type_t;
 
-int timer_handle_signal(siginfo_t *info);
+int timer_handle_signal(siginfo_t* info);
 
 /** \brief Request a new timer
  *  \param interval_sec timer interval in seconds
@@ -43,21 +43,16 @@ int timer_handle_signal(siginfo_t *info);
  *  \param timer_id     unique timer identifier
  *  @returns -1 on failure, 0 otherwise
  **/
-int timer_setup(
-  uint32_t      interval_sec,
-  uint32_t      interval_us,
-  task_id_t     task_id,
-  int32_t       instance,
-  timer_type_t  type,
-  void         *timer_arg,
-  long         *timer_id);
+int timer_setup(uint32_t interval_sec, uint32_t interval_us, task_id_t task_id,
+                int32_t instance, timer_type_t type, void* timer_arg,
+                long* timer_id);
 
 /** \brief Remove the timer from list
  *  \param timer_id unique timer id
  *  @returns -1 on failure, 0 otherwise
  **/
 
-int timer_remove (long timer_id, void ** arg);
+int timer_remove(long timer_id, void** arg);
 #define timer_stop timer_remove
 
 /** \brief Initialize timer task and its API

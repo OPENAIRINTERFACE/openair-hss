@@ -4,18 +4,17 @@
  * 	found in "S1AP-IEs.asn"
  */
 
-#ifndef	_S1ap_CGI_H_
-#define	_S1ap_CGI_H_
-
+#ifndef _S1ap_CGI_H_
+#define _S1ap_CGI_H_
 
 #include <asn_application.h>
 
 /* Including external dependencies */
-#include "S1ap-PLMNidentity.h"
-#include "S1ap-LAC.h"
-#include "S1ap-CI.h"
-#include "S1ap-RAC.h"
 #include <constr_SEQUENCE.h>
+#include "S1ap-CI.h"
+#include "S1ap-LAC.h"
+#include "S1ap-PLMNidentity.h"
+#include "S1ap-RAC.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -26,18 +25,18 @@ struct S1ap_IE_Extensions;
 
 /* S1ap-CGI */
 typedef struct S1ap_CGI {
-	S1ap_PLMNidentity_t	 pLMNidentity;
-	S1ap_LAC_t	 lAC;
-	S1ap_CI_t	 cI;
-	S1ap_RAC_t	*rAC	/* OPTIONAL */;
-	struct S1ap_IE_Extensions	*iE_Extensions	/* OPTIONAL */;
-	/*
-	 * This type is extensible,
-	 * possible extensions are below.
-	 */
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+  S1ap_PLMNidentity_t pLMNidentity;
+  S1ap_LAC_t lAC;
+  S1ap_CI_t cI;
+  S1ap_RAC_t* rAC /* OPTIONAL */;
+  struct S1ap_IE_Extensions* iE_Extensions /* OPTIONAL */;
+  /*
+   * This type is extensible,
+   * possible extensions are below.
+   */
+
+  /* Context for parsing across buffer boundaries */
+  asn_struct_ctx_t _asn_ctx;
 } S1ap_CGI_t;
 
 /* Implementation */
@@ -50,5 +49,5 @@ extern asn_TYPE_descriptor_t asn_DEF_S1ap_CGI;
 /* Referred external types */
 #include "S1ap-IE-Extensions.h"
 
-#endif	/* _S1ap_CGI_H_ */
+#endif /* _S1ap_CGI_H_ */
 #include <asn_internal.h>

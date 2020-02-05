@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -55,8 +55,8 @@
    Identifiers of the Network Simulator command line options
 */
 enum {
-  NETWORK_PARSER_HOST,          /* Remote hostname  */
-  NETWORK_PARSER_PORT,          /* Remote port number */
+  NETWORK_PARSER_HOST, /* Remote hostname  */
+  NETWORK_PARSER_PORT, /* Remote port number */
   NETWORK_PARSER_NB_OPTIONS
 };
 
@@ -69,17 +69,18 @@ enum {
     An option is defined with a name, an argument following the name,
     the usage displayed by the usage function and a default value.
 */
-static parser_command_line_t            networkParserCommandLine = {
-  "NetworkProcess",             /* Command name     */
-  NETWORK_PARSER_NB_OPTIONS,    /* Number of options    */
-  {
-   /*
-    * Command line options
-    */
-   {"-host", "<host>", "Remote hostname\t\t", NETWORK_PARSER_DEFAULT_REMOTE_HOSTNAME},
-   {"-port", "<port>", "Remote port number\t", NETWORK_PARSER_DEFAULT_REMOTE_PORT_NUMBER},
-   }
-};
+static parser_command_line_t networkParserCommandLine = {
+    "NetworkProcess",          /* Command name     */
+    NETWORK_PARSER_NB_OPTIONS, /* Number of options    */
+    {
+        /*
+         * Command line options
+         */
+        {"-host", "<host>", "Remote hostname\t\t",
+         NETWORK_PARSER_DEFAULT_REMOTE_HOSTNAME},
+        {"-port", "<port>", "Remote port number\t",
+         NETWORK_PARSER_DEFAULT_REMOTE_PORT_NUMBER},
+    }};
 
 /****************************************************************************/
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
@@ -99,11 +100,8 @@ static parser_command_line_t            networkParserCommandLine = {
  **      Others:  None                                       **
  **                                                                        **
  ***************************************************************************/
-inline void
-network_parser_print_usage (
-  void)
-{
-  parser_print_usage (&networkParserCommandLine);
+inline void network_parser_print_usage(void) {
+  parser_print_usage(&networkParserCommandLine);
 }
 
 /****************************************************************************
@@ -121,12 +119,8 @@ network_parser_print_usage (
  **      Others:  None                                       **
  **                                                                        **
  ***************************************************************************/
-inline int
-network_parser_get_options (
-  int argc,
-  const char **argv)
-{
-  return parser_get_options (argc, argv, &networkParserCommandLine);
+inline int network_parser_get_options(int argc, const char **argv) {
+  return parser_get_options(argc, argv, &networkParserCommandLine);
 }
 
 /****************************************************************************
@@ -143,10 +137,7 @@ network_parser_get_options (
  **      Others:  None                                       **
  **                                                                        **
  ***************************************************************************/
-inline int
-network_parser_get_nb_options (
-  void)
-{
+inline int network_parser_get_nb_options(void) {
   return networkParserCommandLine.nb_options;
 }
 
@@ -163,10 +154,7 @@ network_parser_get_nb_options (
  **      Others:  None                                       **
  **                                                                        **
  ***************************************************************************/
-inline const char                      *
-network_parser_get_host (
-  void)
-{
+inline const char *network_parser_get_host(void) {
   return networkParserCommandLine.options[NETWORK_PARSER_HOST].pvalue;
 }
 
@@ -183,10 +171,7 @@ network_parser_get_host (
  **      Others:  None                                       **
  **                                                                        **
  ***************************************************************************/
-inline const char                      *
-network_parser_get_port (
-  void)
-{
+inline const char *network_parser_get_port(void) {
   return networkParserCommandLine.options[NETWORK_PARSER_PORT].pvalue;
 }
 

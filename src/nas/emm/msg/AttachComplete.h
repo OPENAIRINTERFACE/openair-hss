@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -19,43 +19,40 @@
  *      contact@openairinterface.org
  */
 
-
 #ifndef FILE_ATTACH_COMPLETE_SEEN
 #define FILE_ATTACH_COMPLETE_SEEN
-#include "EsmMessageContainer.h"
-#include "MessageType.h"
-#include "SecurityHeaderType.h"
 #include "3gpp_23.003.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"
+#include "EsmMessageContainer.h"
+#include "MessageType.h"
+#include "SecurityHeaderType.h"
 
 /* Minimum length macro. Formed by minimum length of each mandatory field */
-#define ATTACH_COMPLETE_MINIMUM_LENGTH ( \
-    ESM_MESSAGE_CONTAINER_MINIMUM_LENGTH )
+#define ATTACH_COMPLETE_MINIMUM_LENGTH (ESM_MESSAGE_CONTAINER_MINIMUM_LENGTH)
 
 /* Maximum length macro. Formed by maximum length of each field */
-#define ATTACH_COMPLETE_MAXIMUM_LENGTH ( \
-    ESM_MESSAGE_CONTAINER_MAXIMUM_LENGTH )
-
+#define ATTACH_COMPLETE_MAXIMUM_LENGTH (ESM_MESSAGE_CONTAINER_MAXIMUM_LENGTH)
 
 /*
  * Message name: Attach complete
- * Description: This message is sent by the UE to the network in response to an ATTACH ACCEPT message. See table 8.2.2.1.
- * Significance: dual
- * Direction: UE to network
+ * Description: This message is sent by the UE to the network in response to an
+ * ATTACH ACCEPT message. See table 8.2.2.1. Significance: dual Direction: UE to
+ * network
  */
 
 typedef struct attach_complete_msg_tag {
   /* Mandatory fields */
-  eps_protocol_discriminator_t  protocoldiscriminator:4;
-  security_header_type_t        securityheadertype:4;
-  message_type_t                messagetype;
-  EsmMessageContainer           esmmessagecontainer;
+  eps_protocol_discriminator_t protocoldiscriminator : 4;
+  security_header_type_t securityheadertype : 4;
+  message_type_t messagetype;
+  EsmMessageContainer esmmessagecontainer;
 } attach_complete_msg;
 
-int decode_attach_complete(attach_complete_msg *attachcomplete, uint8_t *buffer, uint32_t len);
+int decode_attach_complete(attach_complete_msg* attachcomplete, uint8_t* buffer,
+                           uint32_t len);
 
-int encode_attach_complete(attach_complete_msg *attachcomplete, uint8_t *buffer, uint32_t len);
+int encode_attach_complete(attach_complete_msg* attachcomplete, uint8_t* buffer,
+                           uint32_t len);
 
 #endif /* ! defined(FILE_ATTACH_COMPLETE_SEEN) */
-

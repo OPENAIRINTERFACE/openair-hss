@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -22,6 +22,6 @@
 #ifndef FILE_S10_MME_SEEN
 #define FILE_S10_MME_SEEN
 
-int s10_mme_init(const mme_config_t *mme_config);
+int s10_mme_init(const mme_config_t* mme_config);
 
 #endif /* FILE_S10_MME_SEEN */

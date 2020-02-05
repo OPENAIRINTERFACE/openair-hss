@@ -4,9 +4,8 @@
  * 	found in "S1AP-IEs.asn"
  */
 
-#ifndef	_S1ap_Cdma2000OneXMEID_H_
-#define	_S1ap_Cdma2000OneXMEID_H_
-
+#ifndef _S1ap_Cdma2000OneXMEID_H_
+#define _S1ap_Cdma2000OneXMEID_H_
 
 #include <asn_application.h>
 
@@ -18,7 +17,7 @@ extern "C" {
 #endif
 
 /* S1ap-Cdma2000OneXMEID */
-typedef OCTET_STRING_t	 S1ap_Cdma2000OneXMEID_t;
+typedef OCTET_STRING_t S1ap_Cdma2000OneXMEID_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_S1ap_Cdma2000OneXMEID;
@@ -34,5 +33,5 @@ xer_type_encoder_f S1ap_Cdma2000OneXMEID_encode_xer;
 }
 #endif
 
-#endif	/* _S1ap_Cdma2000OneXMEID_H_ */
+#endif /* _S1ap_Cdma2000OneXMEID_H_ */
 #include <asn_internal.h>

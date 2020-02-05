@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -41,9 +41,10 @@ Description
 #define FILE_EMM_CN_SEEN
 
 #include "emm_cnDef.h"
-int emm_cn_send(const emm_cn_t *msg);
-//int emm_cn_pdn_connectivity_res (emm_cn_pdn_res_t * msg_pP);
-int _emm_wrapper_esm_accept(mme_ue_s1ap_id_t ue_id, bstring *esm_rsp, eps_bearer_context_status_t ebr_status);
-int _emm_wrapper_esm_reject(mme_ue_s1ap_id_t ue_id, bstring *esm_rsp);
+int emm_cn_send(const emm_cn_t* msg);
+// int emm_cn_pdn_connectivity_res (emm_cn_pdn_res_t * msg_pP);
+int _emm_wrapper_esm_accept(mme_ue_s1ap_id_t ue_id, bstring* esm_rsp,
+                            eps_bearer_context_status_t ebr_status);
+int _emm_wrapper_esm_reject(mme_ue_s1ap_id_t ue_id, bstring* esm_rsp);
 
 #endif /* FILE_EMM_CN_SEEN */

@@ -32,26 +32,31 @@
 #include "itti_types.h"
 
 /* Defines to handle bit fields on unsigned long values */
-#define UL_BIT_MASK(lENGTH)             ((1UL << (lENGTH)) - 1UL)
-#define UL_BIT_SHIFT(vALUE, oFFSET)     ((vALUE) << (oFFSET))
-#define UL_BIT_UNSHIFT(vALUE, oFFSET)   ((vALUE) >> (oFFSET))
+#define UL_BIT_MASK(lENGTH) ((1UL << (lENGTH)) - 1UL)
+#define UL_BIT_SHIFT(vALUE, oFFSET) ((vALUE) << (oFFSET))
+#define UL_BIT_UNSHIFT(vALUE, oFFSET) ((vALUE) >> (oFFSET))
 
-#define UL_FIELD_MASK(oFFSET, lENGTH)                   UL_BIT_SHIFT(UL_BIT_MASK(lENGTH), (oFFSET))
-#define UL_FIELD_INSERT(vALUE, fIELD, oFFSET, lENGTH)   (((vALUE) & (~UL_FIELD_MASK(oFFSET, lENGTH))) | UL_BIT_SHIFT(((fIELD) & UL_BIT_MASK(lENGTH)), oFFSET))
-#define UL_FIELD_EXTRACT(vALUE, oFFSET, lENGTH)         (UL_BIT_UNSHIFT((vALUE), (oFFSET)) & UL_BIT_MASK(lENGTH))
+#define UL_FIELD_MASK(oFFSET, lENGTH) \
+  UL_BIT_SHIFT(UL_BIT_MASK(lENGTH), (oFFSET))
+#define UL_FIELD_INSERT(vALUE, fIELD, oFFSET, lENGTH) \
+  (((vALUE) & (~UL_FIELD_MASK(oFFSET, lENGTH))) |     \
+   UL_BIT_SHIFT(((fIELD)&UL_BIT_MASK(lENGTH)), oFFSET))
+#define UL_FIELD_EXTRACT(vALUE, oFFSET, lENGTH) \
+  (UL_BIT_UNSHIFT((vALUE), (oFFSET)) & UL_BIT_MASK(lENGTH))
 
 /* Definitions of task ID fields */
-#define TASK_THREAD_ID_OFFSET   8
-#define TASK_THREAD_ID_LENGTH   8
+#define TASK_THREAD_ID_OFFSET 8
+#define TASK_THREAD_ID_LENGTH 8
 
 #define TASK_SUB_TASK_ID_OFFSET 0
 #define TASK_SUB_TASK_ID_LENGTH 8
 
 /* Defines to extract task ID fields */
-#define TASK_GET_THREAD_ID(tASKiD)          (itti_desc.tasks_info[tASKiD].thread)
-#define TASK_GET_PARENT_TASK_ID(tASKiD)     (itti_desc.tasks_info[tASKiD].parent_task)
+#define TASK_GET_THREAD_ID(tASKiD) (itti_desc.tasks_info[tASKiD].thread)
+#define TASK_GET_PARENT_TASK_ID(tASKiD) \
+  (itti_desc.tasks_info[tASKiD].parent_task)
 /* Extract the instance from a message */
-#define ITTI_MESSAGE_GET_INSTANCE(mESSAGE)  ((mESSAGE)->ittiMsgHeader.instance)
+#define ITTI_MESSAGE_GET_INSTANCE(mESSAGE) ((mESSAGE)->ittiMsgHeader.instance)
 
 #include <messages_types.h>
 
@@ -68,7 +73,7 @@ typedef enum {
 typedef enum {
   THREAD_NULL = 0,
 
-#define TASK_DEF(tHREADiD, pRIO, qUEUEsIZE)             THREAD_##tHREADiD,
+#define TASK_DEF(tHREADiD, pRIO, qUEUEsIZE) THREAD_##tHREADiD,
 #define SUB_TASK_DEF(tHREADiD, sUBtASKiD, qUEUEsIZE)
 #include <tasks_def.h>
 #undef SUB_TASK_DEF
@@ -80,8 +85,10 @@ typedef enum {
 
 //! Sub-tasks id, to defined offset form thread id
 typedef enum {
-#define TASK_DEF(tHREADiD, pRIO, qUEUEsIZE)             tHREADiD##_THREAD = THREAD_##tHREADiD,
-#define SUB_TASK_DEF(tHREADiD, sUBtASKiD, qUEUEsIZE)    sUBtASKiD##_THREAD = THREAD_##tHREADiD,
+#define TASK_DEF(tHREADiD, pRIO, qUEUEsIZE) \
+  tHREADiD##_THREAD = THREAD_##tHREADiD,
+#define SUB_TASK_DEF(tHREADiD, sUBtASKiD, qUEUEsIZE) \
+  sUBtASKiD##_THREAD = THREAD_##tHREADiD,
 #include <tasks_def.h>
 #undef SUB_TASK_DEF
 #undef TASK_DEF
@@ -91,8 +98,8 @@ typedef enum {
 typedef enum {
   TASK_UNKNOWN = 0,
 
-#define TASK_DEF(tHREADiD, pRIO, qUEUEsIZE)             tHREADiD,
-#define SUB_TASK_DEF(tHREADiD, sUBtASKiD, qUEUEsIZE)    sUBtASKiD,
+#define TASK_DEF(tHREADiD, pRIO, qUEUEsIZE) tHREADiD,
+#define SUB_TASK_DEF(tHREADiD, sUBtASKiD, qUEUEsIZE) sUBtASKiD,
 #include <tasks_def.h>
 #undef SUB_TASK_DEF
 #undef TASK_DEF
@@ -117,25 +124,29 @@ typedef struct itti_lte_time_s {
  *  @brief Message Header structure for inter-task communication.
  */
 typedef struct MessageHeader_s {
-  MessagesIds messageId;          /**< Unique message id as referenced in enum MessagesIds */
+  MessagesIds
+      messageId; /**< Unique message id as referenced in enum MessagesIds */
 
-  task_id_t  originTaskId;        /**< ID of the sender task */
-  task_id_t  destinationTaskId;   /**< ID of the destination task */
-  instance_t instance;            /**< Task instance for virtualization */
+  task_id_t originTaskId;      /**< ID of the sender task */
+  task_id_t destinationTaskId; /**< ID of the destination task */
+  instance_t instance;         /**< Task instance for virtualization */
 
-  MessageHeaderSize ittiMsgSize;         /**< Message size (not including header size) */
+  MessageHeaderSize
+      ittiMsgSize; /**< Message size (not including header size) */
 
-  itti_lte_time_t lte_time;       /**< Reference LTE time */
+  itti_lte_time_t lte_time; /**< Reference LTE time */
 } MessageHeader;
 
 /** @struct MessageDef
  *  @brief Message structure for inter-task communication.
  *  \internal
- *  The attached attribute \c __packed__ is neccessary, because the memory allocation code expects \ref ittiMsg directly following \ref ittiMsgHeader.
+ *  The attached attribute \c __packed__ is neccessary, because the memory
+ * allocation code expects \ref ittiMsg directly following \ref ittiMsgHeader.
  */
-typedef struct __attribute__ ((__packed__)) MessageDef_s {
+typedef struct __attribute__((__packed__)) MessageDef_s {
   MessageHeader ittiMsgHeader; /**< Message header */
-  msg_t         ittiMsg; /**< Union of payloads as defined in x_messages_def.h headers */
+  msg_t
+      ittiMsg; /**< Union of payloads as defined in x_messages_def.h headers */
 } MessageDef;
 
 #endif /* INTERTASK_INTERFACE_TYPES_H_ */

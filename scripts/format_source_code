@@ -1,0 +1,6 @@
+#!/bin/bash
+find ../src -iname *.h -o -iname *.c \
+     -o -iname *.cc  -o -iname *.hh \
+     -o -iname "*.[hc]pp"  \
+    | xargs clang-format -style=file -i -fallback-style=none
+

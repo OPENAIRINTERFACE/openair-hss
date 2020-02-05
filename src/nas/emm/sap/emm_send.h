@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -41,23 +41,23 @@ Description Defines functions executed at the EMMAS Service Access
 #ifndef FILE_EMM_SEND_SEEN
 #define FILE_EMM_SEND_SEEN
 
-#include "emm_asDef.h"
 #include "AttachAccept.h"
 #include "AttachReject.h"
 #include "AuthenticationReject.h"
 #include "AuthenticationRequest.h"
 #include "CsServiceNotification.h"
+#include "DetachAccept.h"
+#include "DetachRequest.h"
 #include "DownlinkNasTransport.h"
 #include "EmmInformation.h"
+#include "EmmStatus.h"
 #include "GutiReallocationCommand.h"
 #include "IdentityRequest.h"
 #include "NASSecurityModeCommand.h"
 #include "ServiceReject.h"
 #include "TrackingAreaUpdateAccept.h"
 #include "TrackingAreaUpdateReject.h"
-#include "DetachAccept.h"
-#include "DetachRequest.h"
-#include "EmmStatus.h"
+#include "emm_asDef.h"
 
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/
@@ -80,32 +80,33 @@ Description Defines functions executed at the EMMAS Service Access
  * Functions executed by the MME to send EMM messages to the UE
  * --------------------------------------------------------------------------
  */
-int emm_send_status(const emm_as_status_t *, emm_status_msg *);
+int emm_send_status(const emm_as_status_t*, emm_status_msg*);
 
-int emm_send_detach_accept(const emm_as_data_t *, detach_accept_msg *);
+int emm_send_detach_accept(const emm_as_data_t*, detach_accept_msg*);
 
-int emm_send_detach_request (const emm_as_data_t * msg, detach_request_msg * emm_msg);
+int emm_send_detach_request(const emm_as_data_t* msg,
+                            detach_request_msg* emm_msg);
 
-int emm_send_attach_accept(const emm_as_establish_t *, attach_accept_msg *);
-int emm_send_attach_accept_dl_nas (const emm_as_data_t * msg, attach_accept_msg *);
-int emm_send_attach_reject(const emm_as_establish_t *, attach_reject_msg *);
+int emm_send_attach_accept(const emm_as_establish_t*, attach_accept_msg*);
+int emm_send_attach_accept_dl_nas(const emm_as_data_t* msg, attach_accept_msg*);
+int emm_send_attach_reject(const emm_as_establish_t*, attach_reject_msg*);
 
-int emm_send_tracking_area_update_reject(const emm_as_establish_t *msg,
-                                   tracking_area_update_reject_msg *emm_msg);
-int emm_send_tracking_area_update_accept (const emm_as_establish_t * msg,
-                                   tracking_area_update_accept_msg * emm_msg);
+int emm_send_tracking_area_update_reject(
+    const emm_as_establish_t* msg, tracking_area_update_reject_msg* emm_msg);
+int emm_send_tracking_area_update_accept(
+    const emm_as_establish_t* msg, tracking_area_update_accept_msg* emm_msg);
 
-//int emm_send_tracking_area_update_accept_dl_nas (const emm_as_data_t * msg,
+// int emm_send_tracking_area_update_accept_dl_nas (const emm_as_data_t * msg,
 //                                   tracking_area_update_accept_msg * emm_msg);
 
-int emm_send_service_reject(const emm_as_establish_t *msg,
-                                   service_reject_msg *emm_msg);
+int emm_send_service_reject(const emm_as_establish_t* msg,
+                            service_reject_msg* emm_msg);
 
-int emm_send_identity_request(const emm_as_security_t *, identity_request_msg *);
-int emm_send_authentication_request(const emm_as_security_t *,
-                                   authentication_request_msg *);
-int emm_send_authentication_reject(authentication_reject_msg *);
-int emm_send_security_mode_command(const emm_as_security_t *,
-                                   security_mode_command_msg *);
+int emm_send_identity_request(const emm_as_security_t*, identity_request_msg*);
+int emm_send_authentication_request(const emm_as_security_t*,
+                                    authentication_request_msg*);
+int emm_send_authentication_reject(authentication_reject_msg*);
+int emm_send_security_mode_command(const emm_as_security_t*,
+                                   security_mode_command_msg*);
 
 #endif /* FILE_EMM_SEND_SEEN*/

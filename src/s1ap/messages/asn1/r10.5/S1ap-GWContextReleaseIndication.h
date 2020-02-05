@@ -4,9 +4,8 @@
  * 	found in "S1AP-IEs.asn"
  */
 
-#ifndef	_S1ap_GWContextReleaseIndication_H_
-#define	_S1ap_GWContextReleaseIndication_H_
-
+#ifndef _S1ap_GWContextReleaseIndication_H_
+#define _S1ap_GWContextReleaseIndication_H_
 
 #include <asn_application.h>
 
@@ -19,14 +18,14 @@ extern "C" {
 
 /* Dependencies */
 typedef enum S1ap_GWContextReleaseIndication {
-	S1ap_GWContextReleaseIndication_true	= 0
-	/*
-	 * Enumeration is extensible
-	 */
+  S1ap_GWContextReleaseIndication_true = 0
+  /*
+   * Enumeration is extensible
+   */
 } e_S1ap_GWContextReleaseIndication;
 
 /* S1ap-GWContextReleaseIndication */
-typedef long	 S1ap_GWContextReleaseIndication_t;
+typedef long S1ap_GWContextReleaseIndication_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_S1ap_GWContextReleaseIndication;
@@ -42,5 +41,5 @@ xer_type_encoder_f S1ap_GWContextReleaseIndication_encode_xer;
 }
 #endif
 
-#endif	/* _S1ap_GWContextReleaseIndication_H_ */
+#endif /* _S1ap_GWContextReleaseIndication_H_ */
 #include <asn_internal.h>

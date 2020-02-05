@@ -31,8 +31,8 @@ namespace openflow {
  * to the next table. Needs to be registered first, because it clears flows
  * on connection
  */
-class BaseApplication: public Application {
-private:
+class BaseApplication : public Application {
+ private:
   /**
    * Main callback event required by inherited Application class. Whenever
    * the controller gets an event like packet in or switch up, it will pass
@@ -43,18 +43,17 @@ private:
   virtual void event_callback(const ControllerEvent& ev,
                               const OpenflowMessenger& messenger);
 
-
   /**
    * Creates the default arp flow, which resubmits to table ARP
    */
   void install_default_arp_flow(fluid_base::OFConnection* ofconn,
-      const OpenflowMessenger& messenger);
+                                const OpenflowMessenger& messenger);
 
   /**
    * Creates the default gtp flows, which resubmits to GTP tables
    */
   void install_default_gtp_flow(fluid_base::OFConnection* ofconn,
-      const OpenflowMessenger& messenger);
+                                const OpenflowMessenger& messenger);
 
   /**
    * Creates the default table 0 flow, which resubmits to table 1
@@ -74,4 +73,4 @@ private:
   void handle_error_message(const ErrorEvent& ev);
 };
 
-}
+}  // namespace openflow

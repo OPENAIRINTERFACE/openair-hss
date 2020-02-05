@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -40,13 +40,13 @@
 
 #include "common_defs.h"
 
-#include <stdlib.h>             // malloc, free, atoi
-#include <string.h>             // memset
-#include <unistd.h>             // close
-#include <errno.h>              // EINTR
+#include <errno.h>       // EINTR
+#include <netdb.h>       // getaddrinfo
+#include <stdlib.h>      // malloc, free, atoi
+#include <string.h>      // memset
+#include <sys/socket.h>  // socket, setsockopt, connect, bind, recv, send
 #include <sys/types.h>
-#include <sys/socket.h>         // socket, setsockopt, connect, bind, recv, send
-#include <netdb.h>              // getaddrinfo
+#include <unistd.h>  // close
 #include "dynamic_memory_check.h"
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -65,17 +65,16 @@
     setup of the communication channel with the remote peer.
 */
 struct socket_id_s {
-  int                                     type; /* connection type (client/server)  */
-  int                                     port; /* port number      */
-#define SOCKET_HOSTNAME_SIZE  32
-  char                                    rhost[SOCKET_HOSTNAME_SIZE];  /* remote hostname    */
-  struct sockaddr_storage                 addr; /* remote address   */
-  int                                     fd;   /* socket file descriptor */
+  int type; /* connection type (client/server)  */
+  int port; /* port number      */
+#define SOCKET_HOSTNAME_SIZE 32
+  char rhost[SOCKET_HOSTNAME_SIZE]; /* remote hostname    */
+  struct sockaddr_storage addr;     /* remote address   */
+  int fd;                           /* socket file descriptor */
 };
 
 /* Set socket option at the sockets API level (SOL_SOCKET) */
-static int                              _socket_set_option (
-  int sfd);
+static int _socket_set_option(int sfd);
 
 /****************************************************************************/
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
@@ -106,16 +105,10 @@ static int                              _socket_set_option (
  **      Others:  None                                       **
  **                                                                        **
  ***************************************************************************/
-void                                   *
-socket_udp_open (
-  int type,
-  const char *host,
-  const char *port)
-{
-  struct addrinfo                         socket_info;  /* endpoint information    */
-  struct addrinfo                        *socket_addr,
-                                         *sp;   /* endpoint address    */
-  int                                     sfd;  /* socket file descriptor  */
+void *socket_udp_open(int type, const char *host, const char *port) {
+  struct addrinfo socket_info;       /* endpoint information    */
+  struct addrinfo *socket_addr, *sp; /* endpoint address    */
+  int sfd;                           /* socket file descriptor  */
 
   /*
    * Parameters sanity check
@@ -140,24 +133,25 @@ socket_udp_open (
    * matching IPv6 addresses could be found, then IPv4-mapped IPv6 addresses
    * are returned by getaddrinfo in the list pointed to by result.
    */
-  memset (&socket_info, 0, sizeof (struct addrinfo));
-  socket_info.ai_socktype = SOCK_DGRAM; /* Datagram socket   */
-  socket_info.ai_flags = AI_NUMERICSERV;        /* numeric port number  */
+  memset(&socket_info, 0, sizeof(struct addrinfo));
+  socket_info.ai_socktype = SOCK_DGRAM;  /* Datagram socket   */
+  socket_info.ai_flags = AI_NUMERICSERV; /* numeric port number  */
 
   if (type != SOCKET_CLIENT) {
     /*
      * Setup socket address options at the server side
      */
-    socket_info.ai_family = AF_INET6;   /* Accept either IPv4 or IPv6
-                                         * connections     */
-    socket_info.ai_flags |= AI_PASSIVE; /* Use "wildcard address"  */
-    socket_info.ai_flags |= AI_V4MAPPED;        /* IPv4-mapped IPv6 address */
+    socket_info.ai_family = AF_INET6;    /* Accept either IPv4 or IPv6
+                                          * connections     */
+    socket_info.ai_flags |= AI_PASSIVE;  /* Use "wildcard address"  */
+    socket_info.ai_flags |= AI_V4MAPPED; /* IPv4-mapped IPv6 address */
   } else {
     /*
      * Setup socket address options at the client side
      */
-    socket_info.ai_family = AF_INET;    /* Any address family   */
-    //         socket_info.ai_flags |= AI_V4MAPPED; /* IPv4-mapped IPv6 address */
+    socket_info.ai_family = AF_INET; /* Any address family   */
+    //         socket_info.ai_flags |= AI_V4MAPPED; /* IPv4-mapped IPv6 address
+    //         */
   }
 
   /*
@@ -167,7 +161,7 @@ socket_udp_open (
    * - The same service (port number) may be available from multiple
    * socket types (one SOCK_STREAM address and another SOCK_DGRAM address);
    */
-  int                                     rc = getaddrinfo (host, port, &socket_info, &socket_addr);
+  int rc = getaddrinfo(host, port, &socket_info, &socket_addr);
 
   if (rc != 0) {
     if (rc != EAI_SYSTEM) {
@@ -180,11 +174,11 @@ socket_udp_open (
   /*
    * Try each address until we successfully connect
    */
-  for (sp = socket_addr; sp ; sp = sp->ai_next) {
+  for (sp = socket_addr; sp; sp = sp->ai_next) {
     /*
      * Create the socket endpoint for communication
      */
-    sfd = socket (sp->ai_family, sp->ai_socktype, sp->ai_protocol);
+    sfd = socket(sp->ai_family, sp->ai_socktype, sp->ai_protocol);
 
     if (sfd < 0) {
       continue;
@@ -197,8 +191,8 @@ socket_udp_open (
       /*
        * Connect the socket to the remote server's address
        */
-      if (connect (sfd, sp->ai_addr, sp->ai_addrlen) != -1) {
-        break;                  /* Connection succeed */
+      if (connect(sfd, sp->ai_addr, sp->ai_addrlen) != -1) {
+        break; /* Connection succeed */
       }
     }
     /*
@@ -209,26 +203,26 @@ socket_udp_open (
         /*
          * Set socket options
          */
-        if (_socket_set_option (sfd) != RETURNok) {
+        if (_socket_set_option(sfd) != RETURNok) {
           continue;
         }
 
         /*
          * Bind the socket to the local server's address
          */
-        if (bind (sfd, sp->ai_addr, sp->ai_addrlen) != -1) {
-          break;                /* Bind succeed */
+        if (bind(sfd, sp->ai_addr, sp->ai_addrlen) != -1) {
+          break; /* Bind succeed */
         }
       }
     }
 
-    close (sfd);
+    close(sfd);
   }
 
   /*
    * Free the memory that was dynamically allocated for the linked list
    */
-  freeaddrinfo (socket_addr);
+  freeaddrinfo(socket_addr);
 
   if (sp == NULL) {
     /*
@@ -240,11 +234,11 @@ socket_udp_open (
   /*
    * The connection endpoint has been successfully setup
    */
-  socket_id_t                            *sid = (socket_id_t *) malloc (sizeof (struct socket_id_s));
+  socket_id_t *sid = (socket_id_t *)malloc(sizeof(struct socket_id_s));
 
-  if (sid ) {
+  if (sid) {
     sid->type = type;
-    sid->port = atoi (port);
+    sid->port = atoi(port);
     sid->fd = sfd;
   }
 
@@ -268,13 +262,10 @@ socket_udp_open (
  **      Others:  None                                       **
  **                                                                        **
  ***************************************************************************/
-void
-socket_close (
-  void *id)
-{
+void socket_close(void *id) {
   if (id) {
-    close (((socket_id_t *) id)->fd);
-    free (id);
+    close(((socket_id_t *)id)->fd);
+    free(id);
   }
 }
 
@@ -296,28 +287,24 @@ socket_close (
  **      Others:  None                                       **
  **                                                                        **
  ***************************************************************************/
-ssize_t
-socket_recv (
-  void *id,
-  char *buffer,
-  size_t length)
-{
-  socket_id_t                            *sid = (socket_id_t *) (id);
-  ssize_t                                 rbytes = -1;
+ssize_t socket_recv(void *id, char *buffer, size_t length) {
+  socket_id_t *sid = (socket_id_t *)(id);
+  ssize_t rbytes = -1;
 
   if (sid->type == SOCKET_CLIENT) {
     /*
      * Receive data from the connected socket
      */
-    rbytes = recv (sid->fd, buffer, length, 0);
+    rbytes = recv(sid->fd, buffer, length, 0);
   } else if (sid->type == SOCKET_SERVER) {
-    struct sockaddr_storage                 addr;
-    socklen_t                               addrlen = sizeof (addr);
+    struct sockaddr_storage addr;
+    socklen_t addrlen = sizeof(addr);
 
     /*
      * Receive data from the socket and retreive the remote host address
      */
-    rbytes = recvfrom (sid->fd, buffer, length, 0, (struct sockaddr *)&addr, &addrlen);
+    rbytes = recvfrom(sid->fd, buffer, length, 0, (struct sockaddr *)&addr,
+                      &addrlen);
     sid->addr = addr;
   }
 
@@ -354,25 +341,21 @@ socket_recv (
  **      Others:  None                                       **
  **                                                                        **
  ***************************************************************************/
-ssize_t
-socket_send (
-  const void *id,
-  const char *buffer,
-  size_t length)
-{
-  const socket_id_t                      *sid = (socket_id_t *) (id);
-  ssize_t                                 sbytes = -1;
+ssize_t socket_send(const void *id, const char *buffer, size_t length) {
+  const socket_id_t *sid = (socket_id_t *)(id);
+  ssize_t sbytes = -1;
 
   if (sid->type == SOCKET_CLIENT) {
     /*
      * Send data to the connected socket
      */
-    sbytes = send (sid->fd, buffer, length, 0);
+    sbytes = send(sid->fd, buffer, length, 0);
   } else if (sid->type == SOCKET_SERVER) {
     /*
      * Send data to the socket using the remote host address
      */
-    sbytes = sendto (sid->fd, buffer, length, 0, (struct sockaddr *)&sid->addr, (socklen_t) sizeof (sid->addr));
+    sbytes = sendto(sid->fd, buffer, length, 0, (struct sockaddr *)&sid->addr,
+                    (socklen_t)sizeof(sid->addr));
   }
 
   if (errno == EINTR) {
@@ -406,12 +389,9 @@ socket_send (
  **      Others:  None                                       **
  **                                                                        **
  ***************************************************************************/
-int
-socket_get_fd (
-  const void *id)
-{
+int socket_get_fd(const void *id) {
   if (id) {
-    return ((socket_id_t *) id)->fd;
+    return ((socket_id_t *)id)->fd;
   }
 
   return RETURNerror;
@@ -435,11 +415,8 @@ socket_get_fd (
  **      Others:  None                                       **
  **                                                                        **
  ***************************************************************************/
-static int
-_socket_set_option (
-  int sfd)
-{
-  int                                     optval;
+static int _socket_set_option(int sfd) {
+  int optval;
 
   /*
    * SO_REUSEADDR socket option:
@@ -453,7 +430,7 @@ _socket_set_option (
    */
   optval = true;
 
-  if (setsockopt (sfd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof (optval)) < 0) {
+  if (setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) < 0) {
     return RETURNerror;
   }
 
@@ -462,12 +439,13 @@ _socket_set_option (
    * * * * -------------------------
    * * * * When option is set to true, the socket is restricted to sending and
    * * * * receiving IPv6 packets only.
-   * * * * When option is set to false, the socket can be used to send and receive
+   * * * * When option is set to false, the socket can be used to send and
+   * receive
    * * * * packets to and from an IPv6 address or an IPv4-mapped IPv6 address.
    */
   optval = false;
 
-  if (setsockopt (sfd, IPPROTO_IPV6, IPV6_V6ONLY, &optval, sizeof (optval)) < 0) {
+  if (setsockopt(sfd, IPPROTO_IPV6, IPV6_V6ONLY, &optval, sizeof(optval)) < 0) {
     return RETURNerror;
   }
 

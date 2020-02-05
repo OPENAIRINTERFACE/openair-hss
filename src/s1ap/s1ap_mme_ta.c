@@ -26,39 +26,38 @@
   \email: lionel.gauthier@eurecom.fr
 */
 
-#include <stdlib.h>
-#include <stdio.h>
+#include <pthread.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include <pthread.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "bstrlib.h"
 
-#include "log.h"
 #include "assertions.h"
 #include "conversions.h"
+#include "log.h"
 #include "mme_config.h"
 #include "s1ap_common.h"
 #include "s1ap_mme_ta.h"
 
+static int s1ap_mme_compare_plmn(const S1AP_PLMNidentity_t *const plmn) {
+  int i = 0;
+  uint16_t mcc = 0;
+  uint16_t mnc = 0;
+  uint16_t mnc_len = 0;
 
-static
-  int
-s1ap_mme_compare_plmn (
-  const S1AP_PLMNidentity_t * const plmn)
-{
-  int                                     i = 0;
-  uint16_t                                mcc = 0;
-  uint16_t                                mnc = 0;
-  uint16_t                                mnc_len = 0;
-
-  DevAssert (plmn != NULL);
-  TBCD_TO_MCC_MNC (plmn, mcc, mnc, mnc_len);
-  mme_config_read_lock (&mme_config);
+  DevAssert(plmn != NULL);
+  TBCD_TO_MCC_MNC(plmn, mcc, mnc, mnc_len);
+  mme_config_read_lock(&mme_config);
 
   for (i = 0; i < mme_config.served_tai.nb_tai; i++) {
-    OAILOG_TRACE (LOG_S1AP, "Comparing plmn_mcc %d/%d, plmn_mnc %d/%d plmn_mnc_len %d/%d\n",
-        mme_config.served_tai.plmn_mcc[i], mcc, mme_config.served_tai.plmn_mnc[i], mnc, mme_config.served_tai.plmn_mnc_len[i], mnc_len);
+    OAILOG_TRACE(
+        LOG_S1AP,
+        "Comparing plmn_mcc %d/%d, plmn_mnc %d/%d plmn_mnc_len %d/%d\n",
+        mme_config.served_tai.plmn_mcc[i], mcc,
+        mme_config.served_tai.plmn_mnc[i], mnc,
+        mme_config.served_tai.plmn_mnc_len[i], mnc_len);
 
     if ((mme_config.served_tai.plmn_mcc[i] == mcc) &&
         (mme_config.served_tai.plmn_mnc[i] == mnc) &&
@@ -69,25 +68,21 @@ s1ap_mme_compare_plmn (
       return TA_LIST_AT_LEAST_ONE_MATCH;
   }
 
-  mme_config_unlock (&mme_config);
+  mme_config_unlock(&mme_config);
   return TA_LIST_NO_MATCH;
 }
 
 /* @brief compare a list of broadcasted plmns against the MME configured.
-*/
-static
-  int
-s1ap_mme_compare_plmns (
-  S1AP_BPLMNs_t * b_plmns)
-{
-  int                                     i =0;
-  int                                     matching_occurence = 0;
+ */
+static int s1ap_mme_compare_plmns(S1AP_BPLMNs_t *b_plmns) {
+  int i = 0;
+  int matching_occurence = 0;
 
-  DevAssert (b_plmns != NULL);
+  DevAssert(b_plmns != NULL);
 
   for (i = 0; i < b_plmns->list.count; i++) {
-    if (s1ap_mme_compare_plmn (b_plmns->list.array[i])
-        == TA_LIST_AT_LEAST_ONE_MATCH)
+    if (s1ap_mme_compare_plmn(b_plmns->list.array[i]) ==
+        TA_LIST_AT_LEAST_ONE_MATCH)
       matching_occurence++;
   }
 
@@ -100,27 +95,24 @@ s1ap_mme_compare_plmns (
 }
 
 /* @brief compare a TAC
-*/
-static
-  int
-s1ap_mme_compare_tac (
-  const S1AP_TAC_t * const tac)
-{
-  int                                     i = 0;
-  uint16_t                                tac_value = 0;
+ */
+static int s1ap_mme_compare_tac(const S1AP_TAC_t *const tac) {
+  int i = 0;
+  uint16_t tac_value = 0;
 
-  DevAssert (tac != NULL);
-  OCTET_STRING_TO_TAC (tac, tac_value);
-  mme_config_read_lock (&mme_config);
+  DevAssert(tac != NULL);
+  OCTET_STRING_TO_TAC(tac, tac_value);
+  mme_config_read_lock(&mme_config);
 
   for (i = 0; i < mme_config.served_tai.nb_tai; i++) {
-    OAILOG_TRACE (LOG_S1AP, "Comparing config tac %d, received tac = %d\n", mme_config.served_tai.tac[i], tac_value);
+    OAILOG_TRACE(LOG_S1AP, "Comparing config tac %d, received tac = %d\n",
+                 mme_config.served_tai.tac[i], tac_value);
 
     if (mme_config.served_tai.tac[i] == tac_value)
       return TA_LIST_AT_LEAST_ONE_MATCH;
   }
 
-  mme_config_unlock (&mme_config);
+  mme_config_unlock(&mme_config);
   return TA_LIST_NO_MATCH;
 }
 
@@ -130,26 +122,22 @@ s1ap_mme_compare_tac (
            - TA_LIST_UNKNOWN_TAC if at least one PLMN match and no TAC match
            - TA_LIST_RET_OK if both tac and plmn match at least one element
 */
-int
-s1ap_mme_compare_ta_lists (
-  S1AP_SupportedTAs_t * ta_list)
-{
-  int                                     i;
-  int                                     tac_ret,
-                                          bplmn_ret;
+int s1ap_mme_compare_ta_lists(S1AP_SupportedTAs_t *ta_list) {
+  int i;
+  int tac_ret, bplmn_ret;
 
-  DevAssert (ta_list != NULL);
+  DevAssert(ta_list != NULL);
 
   /*
    * Parse every item in the list and try to find matching parameters
    */
   for (i = 0; i < ta_list->list.count; i++) {
-    S1AP_SupportedTAs_Item_t               *ta;
+    S1AP_SupportedTAs_Item_t *ta;
 
     ta = ta_list->list.array[i];
-    DevAssert (ta != NULL);
-    tac_ret = s1ap_mme_compare_tac (&ta->tAC);
-    bplmn_ret = s1ap_mme_compare_plmns (&ta->broadcastPLMNs);
+    DevAssert(ta != NULL);
+    tac_ret = s1ap_mme_compare_tac(&ta->tAC);
+    bplmn_ret = s1ap_mme_compare_plmns(&ta->broadcastPLMNs);
 
     if (tac_ret == TA_LIST_NO_MATCH && bplmn_ret == TA_LIST_NO_MATCH) {
       return TA_LIST_UNKNOWN_PLMN + TA_LIST_UNKNOWN_TAC;

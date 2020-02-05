@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -54,9 +54,9 @@ Description Usefull command line parser
  */
 typedef struct {
   const char* name;     /* Option name         */
-  const char* argument;   /* Argument following the option   */
-  const char* usage;      /* Option and Argument usage     */
-#define PARSER_OPTION_VALUE_SIZE  32
+  const char* argument; /* Argument following the option   */
+  const char* usage;    /* Option and Argument usage     */
+#define PARSER_OPTION_VALUE_SIZE 32
   char value[PARSER_OPTION_VALUE_SIZE]; /* Option value      */
   char* pvalue;
 } parser_option_t;
@@ -68,10 +68,10 @@ typedef struct {
  *  list of command's options
  */
 typedef struct {
-#define PARSER_COMMAND_NAME_SIZE  32
-  char name[PARSER_COMMAND_NAME_SIZE];  /* Command name      */
-  const int nb_options;     /* Number of options     */
-  parser_option_t options[];      /* Command line options    */
+#define PARSER_COMMAND_NAME_SIZE 32
+  char name[PARSER_COMMAND_NAME_SIZE]; /* Command name      */
+  const int nb_options;                /* Number of options     */
+  parser_option_t options[];           /* Command line options    */
 } parser_command_line_t;
 
 /****************************************************************************/
@@ -83,7 +83,7 @@ typedef struct {
 /****************************************************************************/
 
 void parser_print_usage(const parser_command_line_t* commamd_line);
-int  parser_get_options(int argc, const char** argv,
-                        parser_command_line_t* commamd_line);
+int parser_get_options(int argc, const char** argv,
+                       parser_command_line_t* commamd_line);
 
 #endif /* FILE_PARSER_SEEN*/

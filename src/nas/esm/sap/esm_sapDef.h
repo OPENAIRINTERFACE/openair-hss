@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -36,7 +36,6 @@ Description Defines the ESM Service Access Point that provides EPS
         bearer context handling and resources allocation procedures.
 
 *****************************************************************************/
-
 
 #ifndef __ESM_SAPDEF_H__
 #define __ESM_SAPDEF_H__
@@ -81,67 +80,70 @@ typedef enum esm_primitive_s {
 /************************  G L O B A L    T Y P E S  ************************/
 /****************************************************************************/
 
-typedef struct itti_nas_pdn_config_rsp_s                    esm_cn_pdn_config_res_t;
-typedef struct itti_nas_pdn_config_fail_s                   esm_cn_pdn_config_fail_t;
-typedef struct itti_nas_pdn_connectivity_rsp_s              esm_cn_pdn_connectivity_res_t;
-typedef struct itti_nas_pdn_disconnect_rsp_s                esm_cn_pdn_disconnect_res_t;
+typedef struct itti_nas_pdn_config_rsp_s esm_cn_pdn_config_res_t;
+typedef struct itti_nas_pdn_config_fail_s esm_cn_pdn_config_fail_t;
+typedef struct itti_nas_pdn_connectivity_rsp_s esm_cn_pdn_connectivity_res_t;
+typedef struct itti_nas_pdn_disconnect_rsp_s esm_cn_pdn_disconnect_res_t;
 
-typedef struct itti_nas_activate_eps_bearer_ctx_req_s       esm_eps_activate_eps_bearer_ctx_req_t;
-typedef struct itti_nas_modify_eps_bearer_ctx_req_s         esm_eps_modify_esm_bearer_ctxs_req_t;
-typedef struct itti_nas_deactivate_eps_bearer_ctx_req_s     esm_eps_deactivate_eps_bearer_ctx_req_t;
+typedef struct itti_nas_activate_eps_bearer_ctx_req_s
+    esm_eps_activate_eps_bearer_ctx_req_t;
+typedef struct itti_nas_modify_eps_bearer_ctx_req_s
+    esm_eps_modify_esm_bearer_ctxs_req_t;
+typedef struct itti_nas_deactivate_eps_bearer_ctx_req_s
+    esm_eps_deactivate_eps_bearer_ctx_req_t;
 
 /*
  * ESM primitive for EPS bearer context procedure
  * ---------------------------------------------------------------
  */
 typedef struct esm_activate_eps_bearer_context_s {
-  pdn_cid_t                        pdn_cid;
-  ebi_t                            linked_ebi;
-  bearer_context_to_be_created_t  *bc_tbc;
-  bool                             retry;
-  int							   retx_count;
+  pdn_cid_t pdn_cid;
+  ebi_t linked_ebi;
+  bearer_context_to_be_created_t* bc_tbc;
+  bool retry;
+  int retx_count;
 } esm_activate_eps_bearer_context_t;
 
 typedef struct esm_modify_eps_bearer_context_s {
-  pdn_cid_t                        pdn_cid;
-  ebi_t                            linked_ebi;
-  bearer_context_to_be_updated_t  *bc_tbu;
-  ambr_t                           apn_ambr;
-  pti_t                            pti;
-  bool                             retry;
-  int							   retx_count;
+  pdn_cid_t pdn_cid;
+  ebi_t linked_ebi;
+  bearer_context_to_be_updated_t* bc_tbu;
+  ambr_t apn_ambr;
+  pti_t pti;
+  bool retry;
+  int retx_count;
 } esm_modify_eps_bearer_context_t;
 
 typedef struct esm_deactivate_eps_bearer_context_s {
-  pdn_cid_t                        pdn_cid;
-  ebi_t                            linked_ebi;
-  ebi_t                            ded_ebi;
-  pti_t                            pti;
-  bool                             retry;
-  int							   retx_count;
+  pdn_cid_t pdn_cid;
+  ebi_t linked_ebi;
+  ebi_t ded_ebi;
+  pti_t pti;
+  bool retry;
+  int retx_count;
 } esm_deactivate_eps_bearer_context_t;
 
-esm_timeout_ll_cb_arg_t      				eps_bearer_context_ll_cb_arg;
+esm_timeout_ll_cb_arg_t eps_bearer_context_ll_cb_arg;
 
-typedef struct esm_bearer_resource_allocate_rej_s{
-  ebi_t             ebi;
-}esm_bearer_resource_allocate_rej_t;
+typedef struct esm_bearer_resource_allocate_rej_s {
+  ebi_t ebi;
+} esm_bearer_resource_allocate_rej_t;
 
 /*
  * ESM primitive for PDN disconnect procedure
  * ------------------------------------------
  */
 typedef struct esm_pdn_disconnect_s {
-  ebi_t     default_ebi;        /* Default EBI of PDN context */
-  pdn_cid_t cid;                /* PDN connection local identifier      */
-  bool      local_delete;       /* PDN connection local identifier      */
+  ebi_t default_ebi; /* Default EBI of PDN context */
+  pdn_cid_t cid;     /* PDN connection local identifier      */
+  bool local_delete; /* PDN connection local identifier      */
 } esm_pdn_disconnect_t;
 
 ///*
 // * ESM bearer context creation
 // * ---------------------------------------------------------
 // */
-//typedef struct esm_eps_dedicated_bearer_context_s {
+// typedef struct esm_eps_dedicated_bearer_context_s {
 //  ebi_t                    linked_ebi;
 //  qci_e                    qci;
 //  bitrate_t                gbr_ul;
@@ -156,10 +158,11 @@ typedef struct esm_pdn_disconnect_s {
 // * ESM primitive for activate dedicated EPS bearer context procedure
 // * ---------------------------------------------------------
 // */
-//typedef struct esm_eps_dedicated_bearer_context_activate_s {
-//  pdn_cid_t                cid;        /* PDN connection local identifier      */
+// typedef struct esm_eps_dedicated_bearer_context_activate_s {
+//  pdn_cid_t                cid;        /* PDN connection local identifier */
 //  ebi_t                    linked_ebi;
-//  esm_eps_dedicated_bearer_context_t esm_eps_dedicated_bearer_context[NUM_MAX_BEARER_UE];
+//  esm_eps_dedicated_bearer_context_t
+//  esm_eps_dedicated_bearer_context[NUM_MAX_BEARER_UE];
 //} esm_eps_dedicated_bearer_context_activate_t;
 
 /*
@@ -168,37 +171,39 @@ typedef struct esm_pdn_disconnect_s {
  * ------------------------------
  */
 typedef union {
-//  esm_pdn_disconnect_t pdn_disconnect;
-//  esm_eps_deactivate_eps_bearer_ctx_req_t   eps_dedicated_bearer_context_deactivate;
-//  esm_bearer_resource_allocate_rej_t        esm_bearer_resource_allocate_rej;
-//  esm_bearer_resource_modify_rej_t          esm_bearer_resource_modify_rej;
+  //  esm_pdn_disconnect_t pdn_disconnect;
+  //  esm_eps_deactivate_eps_bearer_ctx_req_t
+  //  eps_dedicated_bearer_context_deactivate;
+  //  esm_bearer_resource_allocate_rej_t esm_bearer_resource_allocate_rej;
+  //  esm_bearer_resource_modify_rej_t          esm_bearer_resource_modify_rej;
 
   /** From here on just pointers. */
-  esm_cn_pdn_config_res_t        *pdn_config_res;
-  esm_cn_pdn_connectivity_res_t  *pdn_connectivity_res;
-  esm_cn_pdn_disconnect_res_t    *pdn_disconnect_res;
+  esm_cn_pdn_config_res_t* pdn_config_res;
+  esm_cn_pdn_connectivity_res_t* pdn_connectivity_res;
+  esm_cn_pdn_disconnect_res_t* pdn_disconnect_res;
 
   /** Non Pointer structures. */
-  esm_activate_eps_bearer_context_t         eps_bearer_context_activate;
-  esm_modify_eps_bearer_context_t           eps_bearer_context_modify;
-  esm_deactivate_eps_bearer_context_t       eps_bearer_context_deactivate;
+  esm_activate_eps_bearer_context_t eps_bearer_context_activate;
+  esm_modify_eps_bearer_context_t eps_bearer_context_modify;
+  esm_deactivate_eps_bearer_context_t eps_bearer_context_deactivate;
 
   /** Timeout LL Callback. */
-  esm_timeout_ll_cb_arg_t      				eps_bearer_context_ll_cb_arg;
+  esm_timeout_ll_cb_arg_t eps_bearer_context_ll_cb_arg;
 } esm_sap_data_t;
 
 struct emm_data_context_s;
 
 typedef struct esm_sap_s {
-  esm_primitive_t primitive;      /* ESM-SAP primitive to process                                       */
-  unsigned int        ue_id;      /* Local UE identifier                                                */
-  bool                is_attach_tau;  /* Define if it is an attach (may be edited inside the method).       */
-  pti_t               pti;        /* Procedure transaction Id (needed for BRC - at least.               */
-  const_bstring       recv;       /* Encoded ESM message received                                       */
-  esm_sap_data_t      data;       /* ESM message data parameters                                        */
-  esm_cause_t         esm_cause;
-  bool                clr;
-  uint16_t			  active_ebrs;
+  esm_primitive_t primitive; /* ESM-SAP primitive to process */
+  unsigned int ue_id;        /* Local UE identifier */
+  bool is_attach_tau; /* Define if it is an attach (may be edited inside the
+                         method).       */
+  pti_t pti;          /* Procedure transaction Id (needed for BRC - at least. */
+  const_bstring recv; /* Encoded ESM message received */
+  esm_sap_data_t data; /* ESM message data parameters */
+  esm_cause_t esm_cause;
+  bool clr;
+  uint16_t active_ebrs;
 } esm_sap_t;
 
 /****************************************************************************/

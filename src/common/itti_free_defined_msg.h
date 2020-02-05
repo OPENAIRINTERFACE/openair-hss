@@ -29,7 +29,6 @@
 #ifndef FILE_ITTI_FREE_DEFINED_MSG_SEEN
 #define FILE_ITTI_FREE_DEFINED_MSG_SEEN
 
-
-void itti_free_msg_content (MessageDef * const message_p);
+void itti_free_msg_content(MessageDef* const message_p);
 
 #endif /* FILE_ITTI_FREE_DEFINED_MSG_SEEN */

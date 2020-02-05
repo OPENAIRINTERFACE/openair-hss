@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -46,7 +46,7 @@ Description Timer utilities
  * Timer identifier returned when in inactive state (timer is stopped or has
  * failed to be started)
  */
-#define NAS_TIMER_INACTIVE_ID   (-1)
+#define NAS_TIMER_INACTIVE_ID (-1)
 
 /****************************************************************************/
 /************************  G L O B A L    T Y P E S  ************************/
@@ -54,18 +54,19 @@ Description Timer utilities
 
 /* Timer structure */
 typedef struct nas_timer_s {
-  long int id;     /* The timer identifier                 */
-  long sec;        /* The timer interval value in seconds  */
-  long usec;       /* The timer interval value in micro-seconds (used for custom processes like retries). */
+  long int id; /* The timer identifier                 */
+  long sec;    /* The timer interval value in seconds  */
+  long usec;   /* The timer interval value in micro-seconds (used for custom
+                  processes like retries). */
 } nas_timer_t;
 
 /* Type of the callback executed when the timer expired */
-typedef void (*nas_timer_callback_t)(void *);
+typedef void (*nas_timer_callback_t)(void*);
 
 typedef struct nas_itti_timer_arg_s {
-  nas_timer_callback_t  nas_timer_callback;
-  void                 *nas_timer_callback_arg;
-}nas_itti_timer_arg_t;
+  nas_timer_callback_t nas_timer_callback;
+  void* nas_timer_callback_arg;
+} nas_itti_timer_arg_t;
 
 /****************************************************************************/
 /********************  G L O B A L    V A R I A B L E S  ********************/
@@ -75,15 +76,19 @@ typedef struct nas_itti_timer_arg_s {
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
 /****************************************************************************/
 
-void _nas_proc_esm_timeout_handler (void *args);
+void _nas_proc_esm_timeout_handler(void* args);
 
 int nas_timer_init(void);
-void nas_timer_cleanup (void);
+void nas_timer_cleanup(void);
 
-long int nas_emm_timer_start (long sec, long usec, nas_timer_callback_t nas_timer_callback, void *nas_timer_callback_args);
-long int nas_esm_timer_start (long sec, long usec, void *nas_timer_callback_args);
+long int nas_emm_timer_start(long sec, long usec,
+                             nas_timer_callback_t nas_timer_callback,
+                             void* nas_timer_callback_args);
+long int nas_esm_timer_start(long sec, long usec,
+                             void* nas_timer_callback_args);
 
-long int nas_timer_stop (long int timer_id, void **nas_timer_callback_arg);
-void nas_timer_handle_signal_expiry (long timer_id, nas_itti_timer_arg_t *nas_itti_timer_arg);
+long int nas_timer_stop(long int timer_id, void** nas_timer_callback_arg);
+void nas_timer_handle_signal_expiry(long timer_id,
+                                    nas_itti_timer_arg_t* nas_itti_timer_arg);
 
 #endif /* FILE_NAS_TIMER_SEEN */

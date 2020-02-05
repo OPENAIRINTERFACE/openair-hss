@@ -21,9 +21,9 @@
 
 #pragma once
 
-#include  <memory>
-#include <unordered_map>
 #include <list>
+#include <memory>
+#include <unordered_map>
 
 #include <fluid/OFServer.hh>
 
@@ -34,20 +34,20 @@ namespace openflow {
 
 #define IP_ETH_TYPE 0x0800
 #define ARP_ETH_TYPE 0x0806
-#define ARPOP_REQUEST   1               /* ARP request                  */
-#define ARPOP_REPLY     2               /* ARP reply                    */
+#define ARPOP_REQUEST 1 /* ARP request                  */
+#define ARPOP_REPLY 2   /* ARP reply                    */
 
 #define MAX_UE_POOL_PDN 96
 
-#define OF_TABLE_SWITCH                 0
-#define OF_TABLE_ARP                    1
-#define OF_TABLE_UL_GTPU                0
-#define OF_TABLE_LOOP                  (OF_TABLE_UL_GTPU + MAX_UE_POOL_PDN)
+#define OF_TABLE_SWITCH 0
+#define OF_TABLE_ARP 1
+#define OF_TABLE_UL_GTPU 0
+#define OF_TABLE_LOOP (OF_TABLE_UL_GTPU + MAX_UE_POOL_PDN)
 // should be + MAX_UE_POOLS
-#define OF_TABLE_DL_GTPU               (OF_TABLE_LOOP + 1)
-#define OF_TABLE_PAGING_POOL            OF_TABLE_DL_GTPU
-#define OF_TABLE_PAGING_UE_IN_PROGRESS  OF_TABLE_PAGING_POOL
-#define OF_TABLE_SGI_OUT                OF_TABLE_PAGING_UE_IN_PROGRESS+MAX_UE_POOL_PDN
+#define OF_TABLE_DL_GTPU (OF_TABLE_LOOP + 1)
+#define OF_TABLE_PAGING_POOL OF_TABLE_DL_GTPU
+#define OF_TABLE_PAGING_UE_IN_PROGRESS OF_TABLE_PAGING_POOL
+#define OF_TABLE_SGI_OUT OF_TABLE_PAGING_UE_IN_PROGRESS + MAX_UE_POOL_PDN
 
 enum OF_FLOW_PRIORITIES {
   OF_PRIO_SWITCH_LOWER_PRIORITY = 0,
@@ -63,11 +63,11 @@ enum OF_FLOW_PRIORITIES {
   OF_PRIO_ARP_IF = 6,
   OF_PRIO_PAGING_UE_POOL = 5,
   OF_PRIO_PAGING_UE_IN_PROGRESS = 6,
-  OF_PRIO_GTPU     = 10,
+  OF_PRIO_GTPU = 10,
 };
 
 class Application {
-public:
+ public:
   virtual void event_callback(const ControllerEvent& ev,
                               const OpenflowMessenger& messenger) {}
   virtual ~Application() {}
@@ -80,25 +80,19 @@ enum OF_MESSAGE_TYPES {
 };
 
 class OpenflowController : public fluid_base::OFServer {
-public:
+ public:
   static const uint8_t OF_13_VERSION = 4;
-public:
-  OpenflowController(
-    const char* address,
-    const int port,
-    const int n_workers,
-    bool secure);
+
+ public:
+  OpenflowController(const char* address, const int port, const int n_workers,
+                     bool secure);
 
   /*
    * Used to specify the specific class to send openflow messages, for instance
    * during testing
    */
-  OpenflowController(
-    const char* address,
-    const int port,
-    const int n_workers,
-    bool secure,
-    std::shared_ptr<OpenflowMessenger> messenger);
+  OpenflowController(const char* address, const int port, const int n_workers,
+                     bool secure, std::shared_ptr<OpenflowMessenger> messenger);
 
   /**
    * Remove all table 0 flows on connection. Right now, all applications
@@ -110,19 +104,15 @@ public:
    * Callback for any messages like PACKET_IN. Parameters are set by super
    * class OFServer
    */
-  void message_callback(
-    fluid_base::OFConnection* ofconn,
-    uint8_t type,
-    void* data,
-    size_t len);
+  void message_callback(fluid_base::OFConnection* ofconn, uint8_t type,
+                        void* data, size_t len);
 
   /**
    * Callback for any new/removed connections. Parameters are set by super
    * class OFServer
    */
-  void connection_callback(
-      fluid_base::OFConnection* ofconn,
-      fluid_base::OFConnection::Event type);
+  void connection_callback(fluid_base::OFConnection* ofconn,
+                           fluid_base::OFConnection::Event type);
 
   /**
    * Register an application to get called when an event type happens. For
@@ -159,15 +149,14 @@ public:
    *             event is handled.
    *
    */
-   void inject_external_event(
-       std::shared_ptr<ExternalEvent> ev,
-       void* (*cb)(std::shared_ptr<void>));
+  void inject_external_event(std::shared_ptr<ExternalEvent> ev,
+                             void* (*cb)(std::shared_ptr<void>));
 
-private:
+ private:
   std::shared_ptr<OpenflowMessenger> messenger_;
   std::unordered_map<uint32_t, std::vector<Application*>> event_listeners;
   bool running_;
   fluid_base::OFConnection* latest_ofconn_;
 };
 
-}
+}  // namespace openflow

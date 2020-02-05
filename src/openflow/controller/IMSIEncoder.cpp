@@ -18,11 +18,11 @@
  * For more information about the OpenAirInterface (OAI) Software Alliance:
  *      contact@openairinterface.org
  */
+#include "IMSIEncoder.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <string>
 #include <string.h>
-#include "IMSIEncoder.h"
+#include <string>
 
 namespace openflow {
 
@@ -30,11 +30,10 @@ uint64_t IMSIEncoder::compact_imsi(const std::string& imsi) {
   const char* imsi_cstr = imsi.c_str();
   uint32_t pad = 0;
   for (; pad < strlen(imsi_cstr); pad++) {
-          if (imsi_cstr[pad] != '0')
-                  break;
+    if (imsi_cstr[pad] != '0') break;
   }
   uint64_t num = strtoull(imsi_cstr + pad, NULL, 10);
-  return num << 2 | ( pad & 0x3 );
+  return num << 2 | (pad & 0x3);
 }
 
 std::string IMSIEncoder::expand_imsi(uint64_t compact) {
@@ -42,11 +41,11 @@ std::string IMSIEncoder::expand_imsi(uint64_t compact) {
   char buf[19 + 2 + 1];
   uint32_t pad = compact & 0x3;
   unsigned long long num = compact >> 2;
-  for (uint32_t i=0; i < pad; i++) {
-          buf[i] = '0';
+  for (uint32_t i = 0; i < pad; i++) {
+    buf[i] = '0';
   }
   sprintf(buf + pad, "%llu", num);
   return std::string(buf);
 }
 
-}
+}  // namespace openflow

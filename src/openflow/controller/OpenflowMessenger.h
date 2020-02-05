@@ -21,16 +21,16 @@
 
 #pragma once
 
+#include <fluid/OFServer.hh>
 #include <fluid/of10msg.hh>
 #include <fluid/of13msg.hh>
-#include <fluid/OFServer.hh>
 
 namespace openflow {
 /**
  * Abstract helper class with libfluid message utilities
  */
 class OpenflowMessenger {
-public:
+ public:
   /**
    * Create a standard flow mod, where every parameter is the default except the
    * table id, command, and priority.
@@ -41,8 +41,7 @@ public:
    * @return a filled-in FlowMod object
    */
   virtual fluid_msg::of13::FlowMod create_default_flow_mod(
-      uint8_t table_id,
-      fluid_msg::of13::ofp_flow_mod_command command,
+      uint8_t table_id, fluid_msg::of13::ofp_flow_mod_command command,
       uint16_t priority) const {}
 
   /**
@@ -51,24 +50,21 @@ public:
    * @param flow_mod - a flow modification (add/delete) to make
    * @param ofconn - the connection to send the flow mod to
    */
-  virtual void send_of_msg(
-    fluid_msg::OFMsg& of_msg,
-    fluid_base::OFConnection* ofconn) const {}
+  virtual void send_of_msg(fluid_msg::OFMsg& of_msg,
+                           fluid_base::OFConnection* ofconn) const {}
 };
 
 /**
  * Implemented messenger class
  */
 class DefaultMessenger : public OpenflowMessenger {
-public:
+ public:
   fluid_msg::of13::FlowMod create_default_flow_mod(
-      uint8_t table_id,
-      fluid_msg::of13::ofp_flow_mod_command command,
+      uint8_t table_id, fluid_msg::of13::ofp_flow_mod_command command,
       uint16_t priority) const;
 
-  void send_of_msg(
-    fluid_msg::OFMsg& of_msg,
-    fluid_base::OFConnection* ofconn) const;
+  void send_of_msg(fluid_msg::OFMsg& of_msg,
+                   fluid_base::OFConnection* ofconn) const;
 };
 
-}
+}  // namespace openflow

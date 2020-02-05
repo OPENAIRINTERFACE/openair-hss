@@ -22,11 +22,14 @@
 #ifndef FILE_ETSI_TS_135_206_V10_0_0_ANNEX3_SEEN
 #define FILE_ETSI_TS_135_206_V10_0_0_ANNEX3_SEEN
 /*--------------------------- prototypes --------------------------*/
-void f1 ( uint8_t k[16], uint8_t rand[16], uint8_t sqn[6], uint8_t amf[2], uint8_t mac_a[8] );
-void f2345 ( uint8_t k[16], uint8_t rand[16], uint8_t res[8], uint8_t ck[16], uint8_t ik[16], uint8_t ak[6] );
-void f1star( uint8_t k[16], uint8_t rand[16], uint8_t sqn[6], uint8_t amf[2], uint8_t mac_s[8] );
-void f5star( uint8_t k[16], uint8_t rand[16], uint8_t ak[6] );
-void ComputeOPc( uint8_t op_c[16] );
-void RijndaelKeySchedule( uint8_t key[16] );
-void RijndaelEncrypt( uint8_t input[16], uint8_t output[16] );
+void f1(uint8_t k[16], uint8_t rand[16], uint8_t sqn[6], uint8_t amf[2],
+        uint8_t mac_a[8]);
+void f2345(uint8_t k[16], uint8_t rand[16], uint8_t res[8], uint8_t ck[16],
+           uint8_t ik[16], uint8_t ak[6]);
+void f1star(uint8_t k[16], uint8_t rand[16], uint8_t sqn[6], uint8_t amf[2],
+            uint8_t mac_s[8]);
+void f5star(uint8_t k[16], uint8_t rand[16], uint8_t ak[6]);
+void ComputeOPc(uint8_t op_c[16]);
+void RijndaelKeySchedule(uint8_t key[16]);
+void RijndaelEncrypt(uint8_t input[16], uint8_t output[16]);
 #endif /* FILE_ETSI_TS_135_206_V10_0_0_ANNEX3_SEEN */

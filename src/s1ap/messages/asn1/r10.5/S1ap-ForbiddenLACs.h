@@ -4,16 +4,15 @@
  * 	found in "S1AP-IEs.asn"
  */
 
-#ifndef	_S1ap_ForbiddenLACs_H_
-#define	_S1ap_ForbiddenLACs_H_
-
+#ifndef _S1ap_ForbiddenLACs_H_
+#define _S1ap_ForbiddenLACs_H_
 
 #include <asn_application.h>
 
 /* Including external dependencies */
-#include "S1ap-LAC.h"
 #include <asn_SEQUENCE_OF.h>
 #include <constr_SEQUENCE_OF.h>
+#include "S1ap-LAC.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -21,10 +20,10 @@ extern "C" {
 
 /* S1ap-ForbiddenLACs */
 typedef struct S1ap_ForbiddenLACs {
-	A_SEQUENCE_OF(S1ap_LAC_t) list;
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+  A_SEQUENCE_OF(S1ap_LAC_t) list;
+
+  /* Context for parsing across buffer boundaries */
+  asn_struct_ctx_t _asn_ctx;
 } S1ap_ForbiddenLACs_t;
 
 /* Implementation */
@@ -34,5 +33,5 @@ extern asn_TYPE_descriptor_t asn_DEF_S1ap_ForbiddenLACs;
 }
 #endif
 
-#endif	/* _S1ap_ForbiddenLACs_H_ */
+#endif /* _S1ap_ForbiddenLACs_H_ */
 #include <asn_internal.h>

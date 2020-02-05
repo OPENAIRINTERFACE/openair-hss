@@ -4,9 +4,8 @@
  * 	found in "S1AP-IEs.asn"
  */
 
-#ifndef	_S1ap_TypeOfError_H_
-#define	_S1ap_TypeOfError_H_
-
+#ifndef _S1ap_TypeOfError_H_
+#define _S1ap_TypeOfError_H_
 
 #include <asn_application.h>
 
@@ -19,15 +18,15 @@ extern "C" {
 
 /* Dependencies */
 typedef enum S1ap_TypeOfError {
-	S1ap_TypeOfError_not_understood	= 0,
-	S1ap_TypeOfError_missing	= 1
-	/*
-	 * Enumeration is extensible
-	 */
+  S1ap_TypeOfError_not_understood = 0,
+  S1ap_TypeOfError_missing = 1
+  /*
+   * Enumeration is extensible
+   */
 } e_S1ap_TypeOfError;
 
 /* S1ap-TypeOfError */
-typedef long	 S1ap_TypeOfError_t;
+typedef long S1ap_TypeOfError_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_S1ap_TypeOfError;
@@ -43,5 +42,5 @@ xer_type_encoder_f S1ap_TypeOfError_encode_xer;
 }
 #endif
 
-#endif	/* _S1ap_TypeOfError_H_ */
+#endif /* _S1ap_TypeOfError_H_ */
 #include <asn_internal.h>

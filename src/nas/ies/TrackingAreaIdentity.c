@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -19,31 +19,26 @@
  *      contact@openairinterface.org
  */
 
-
+#include <arpa/inet.h>
+#include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
-#include <stdbool.h>
-#include <arpa/inet.h>
 
 #include "bstrlib.h"
 
-#include "TLVEncoder.h"
 #include "TLVDecoder.h"
-#include "common_types.h"
+#include "TLVEncoder.h"
 #include "TrackingAreaIdentity.h"
+#include "common_types.h"
 
 //------------------------------------------------------------------------------
-int decode_tracking_area_identity (
-  tai_t * tai,
-  uint8_t iei,
-  uint8_t * buffer,
-  uint32_t len)
-{
-  int                                     decoded = 0;
+int decode_tracking_area_identity(tai_t* tai, uint8_t iei, uint8_t* buffer,
+                                  uint32_t len) {
+  int decoded = 0;
 
   if (iei > 0) {
-    CHECK_IEI_DECODER (iei, *buffer);
+    CHECK_IEI_DECODER(iei, *buffer);
     decoded++;
   }
 
@@ -56,44 +51,40 @@ int decode_tracking_area_identity (
   tai->plmn.mnc_digit2 = (*(buffer + decoded) >> 4) & 0xf;
   tai->plmn.mnc_digit1 = *(buffer + decoded) & 0xf;
   decoded++;
-  //IES_DECODE_U16(tai->tac, *(buffer + decoded));
-  IES_DECODE_U16 (buffer, decoded, tai->tac);
+  // IES_DECODE_U16(tai->tac, *(buffer + decoded));
+  IES_DECODE_U16(buffer, decoded, tai->tac);
   return decoded;
 }
 
 //------------------------------------------------------------------------------
-int encode_tracking_area_identity (
-  tai_t * tai,
-  uint8_t iei,
-  uint8_t * buffer,
-  uint32_t len)
-{
-  uint32_t                                encoded = 0;
+int encode_tracking_area_identity(tai_t* tai, uint8_t iei, uint8_t* buffer,
+                                  uint32_t len) {
+  uint32_t encoded = 0;
 
   /*
    * Checking IEI and pointer
    */
-  CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, TRACKING_AREA_IDENTITY_MINIMUM_LENGTH, len);
+  CHECK_PDU_POINTER_AND_LENGTH_ENCODER(
+      buffer, TRACKING_AREA_IDENTITY_MINIMUM_LENGTH, len);
 
   if (iei > 0) {
     *buffer = iei;
     encoded++;
   }
 
-  *(buffer + encoded) = 0x00 | ((tai->plmn.mcc_digit2 & 0xf) << 4) | (tai->plmn.mcc_digit1 & 0xf);
+  *(buffer + encoded) =
+      0x00 | ((tai->plmn.mcc_digit2 & 0xf) << 4) | (tai->plmn.mcc_digit1 & 0xf);
   encoded++;
-  *(buffer + encoded) = 0x00 | ((tai->plmn.mnc_digit3 & 0xf) << 4) | (tai->plmn.mcc_digit3 & 0xf);
+  *(buffer + encoded) =
+      0x00 | ((tai->plmn.mnc_digit3 & 0xf) << 4) | (tai->plmn.mcc_digit3 & 0xf);
   encoded++;
-  *(buffer + encoded) = 0x00 | ((tai->plmn.mnc_digit2 & 0xf) << 4) | (tai->plmn.mnc_digit1 & 0xf);
+  *(buffer + encoded) =
+      0x00 | ((tai->plmn.mnc_digit2 & 0xf) << 4) | (tai->plmn.mnc_digit1 & 0xf);
   encoded++;
-  IES_ENCODE_U16 (buffer, encoded, tai->tac);
+  IES_ENCODE_U16(buffer, encoded, tai->tac);
   return encoded;
 }
 
 //------------------------------------------------------------------------------
 /* Clear TAI without free it */
-void clear_tai(tai_t * const tai)
-{
-  memset(tai, 0, sizeof(tai_t));
-}
-
+void clear_tai(tai_t* const tai) { memset(tai, 0, sizeof(tai_t)); }

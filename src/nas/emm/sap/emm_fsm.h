@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -77,9 +77,13 @@ void emm_fsm_initialize(void);
 struct emm_data_context_s;
 struct emm_reg_s;
 
-int emm_fsm_set_state(const mme_ue_s1ap_id_t ueid, struct emm_data_context_s * const emm_context, const emm_fsm_state_t status);
-emm_fsm_state_t emm_fsm_get_state(const struct emm_data_context_s * const emm_context);
-const char *emm_fsm_get_state_str (const struct emm_data_context_s * const emm_context);
-int emm_fsm_process(struct emm_reg_s * const evt);
+int emm_fsm_set_state(const mme_ue_s1ap_id_t ueid,
+                      struct emm_data_context_s* const emm_context,
+                      const emm_fsm_state_t status);
+emm_fsm_state_t emm_fsm_get_state(
+    const struct emm_data_context_s* const emm_context);
+const char* emm_fsm_get_state_str(
+    const struct emm_data_context_s* const emm_context);
+int emm_fsm_process(struct emm_reg_s* const evt);
 
 #endif /* FILE_EMM_FSM_SEEN*/

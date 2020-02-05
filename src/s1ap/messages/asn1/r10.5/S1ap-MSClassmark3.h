@@ -4,9 +4,8 @@
  * 	found in "S1AP-IEs.asn"
  */
 
-#ifndef	_S1ap_MSClassmark3_H_
-#define	_S1ap_MSClassmark3_H_
-
+#ifndef _S1ap_MSClassmark3_H_
+#define _S1ap_MSClassmark3_H_
 
 #include <asn_application.h>
 
@@ -18,7 +17,7 @@ extern "C" {
 #endif
 
 /* S1ap-MSClassmark3 */
-typedef OCTET_STRING_t	 S1ap_MSClassmark3_t;
+typedef OCTET_STRING_t S1ap_MSClassmark3_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_S1ap_MSClassmark3;
@@ -34,5 +33,5 @@ xer_type_encoder_f S1ap_MSClassmark3_encode_xer;
 }
 #endif
 
-#endif	/* _S1ap_MSClassmark3_H_ */
+#endif /* _S1ap_MSClassmark3_H_ */
 #include <asn_internal.h>

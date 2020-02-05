@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -39,6 +39,9 @@ Description Defines EPS Mobility Management messages and functions used
 #ifndef FILE_EMM_MSG_SEEN
 #define FILE_EMM_MSG_SEEN
 
+#include "3gpp_24.301.h"
+#include "AdditionalUpdateResult.h"
+#include "AdditionalUpdateType.h"
 #include "AttachAccept.h"
 #include "AttachComplete.h"
 #include "AttachReject.h"
@@ -47,34 +50,16 @@ Description Defines EPS Mobility Management messages and functions used
 #include "AuthenticationReject.h"
 #include "AuthenticationRequest.h"
 #include "AuthenticationResponse.h"
+#include "Cli.h"
 #include "CsServiceNotification.h"
+#include "CsfbResponse.h"
 #include "DetachAccept.h"
 #include "DetachRequest.h"
+#include "DetachType.h"
 #include "DownlinkNasTransport.h"
-#include "emm_msgDef.h"
+#include "EmmCause.h"
 #include "EmmInformation.h"
 #include "EmmStatus.h"
-#include "ExtendedServiceRequest.h"
-#include "GutiReallocationCommand.h"
-#include "GutiReallocationComplete.h"
-#include "IdentityRequest.h"
-#include "IdentityResponse.h"
-#include "NASSecurityModeCommand.h"
-#include "NASSecurityModeComplete.h"
-#include "SecurityModeReject.h"
-#include "ServiceReject.h"
-#include "ServiceRequest.h"
-#include "TrackingAreaUpdateAccept.h"
-#include "TrackingAreaUpdateComplete.h"
-#include "TrackingAreaUpdateReject.h"
-#include "TrackingAreaUpdateRequest.h"
-#include "UplinkNasTransport.h"
-#include "AdditionalUpdateResult.h"
-#include "AdditionalUpdateType.h"
-#include "Cli.h"
-#include "CsfbResponse.h"
-#include "DetachType.h"
-#include "EmmCause.h"
 #include "EpsAttachResult.h"
 #include "EpsAttachType.h"
 #include "EpsBearerContextStatus.h"
@@ -83,27 +68,41 @@ Description Defines EPS Mobility Management messages and functions used
 #include "EpsUpdateResult.h"
 #include "EpsUpdateType.h"
 #include "EsmMessageContainer.h"
+#include "ExtendedServiceRequest.h"
+#include "GutiReallocationCommand.h"
+#include "GutiReallocationComplete.h"
 #include "GutiType.h"
+#include "IdentityRequest.h"
+#include "IdentityResponse.h"
 #include "KsiAndSequenceNumber.h"
 #include "LcsClientIdentity.h"
 #include "LcsIndicator.h"
 #include "MessageType.h"
+#include "NASSecurityModeCommand.h"
+#include "NASSecurityModeComplete.h"
 #include "NasKeySetIdentifier.h"
 #include "NasMessageContainer.h"
 #include "NasSecurityAlgorithms.h"
 #include "Nonce.h"
 #include "PagingIdentity.h"
 #include "SecurityHeaderType.h"
+#include "SecurityModeReject.h"
+#include "ServiceReject.h"
+#include "ServiceRequest.h"
 #include "ServiceType.h"
 #include "ShortMac.h"
 #include "SsCode.h"
 #include "TrackingAreaIdentity.h"
 #include "TrackingAreaIdentityList.h"
+#include "TrackingAreaUpdateAccept.h"
+#include "TrackingAreaUpdateComplete.h"
+#include "TrackingAreaUpdateReject.h"
+#include "TrackingAreaUpdateRequest.h"
 #include "UeNetworkCapability.h"
 #include "UeRadioCapabilityInformationUpdateNeeded.h"
 #include "UeSecurityCapability.h"
-#include "3gpp_24.301.h"
-
+#include "UplinkNasTransport.h"
+#include "emm_msgDef.h"
 
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/
@@ -150,7 +149,6 @@ typedef union {
   cs_service_notification_msg cs_service_notification;
 } EMM_msg;
 
-
 /****************************************************************************/
 /********************  G L O B A L    V A R I A B L E S  ********************/
 /****************************************************************************/
@@ -158,14 +156,16 @@ typedef union {
 /****************************************************************************/
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
 /****************************************************************************/
-int emm_msg_decode_header (emm_msg_header_t * header, const uint8_t * buffer, uint32_t len);
+int emm_msg_decode_header(emm_msg_header_t* header, const uint8_t* buffer,
+                          uint32_t len);
 
-int emm_msg_decode(EMM_msg *msg, uint8_t *buffer, uint32_t len);
+int emm_msg_decode(EMM_msg* msg, uint8_t* buffer, uint32_t len);
 
-int emm_msg_encode(EMM_msg *msg, uint8_t *buffer, uint32_t len);
+int emm_msg_encode(EMM_msg* msg, uint8_t* buffer, uint32_t len);
 
-int emm_msg_encode_header (const emm_msg_header_t * header, uint8_t * buffer, uint32_t len);
+int emm_msg_encode_header(const emm_msg_header_t* header, uint8_t* buffer,
+                          uint32_t len);
 
-void emm_msg_free (EMM_msg * msg);
+void emm_msg_free(EMM_msg* msg);
 
 #endif /* FILE_EMM_MSG_SEEN */

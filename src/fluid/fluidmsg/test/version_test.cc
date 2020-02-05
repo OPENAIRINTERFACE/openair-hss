@@ -291,33 +291,36 @@ class OF13MsgVersionTest : public testing::Test {
 
 using testing::Types;
 
-typedef Types<of10::Hello, of10::EchoRequest, of10::Error, of10::EchoReply,
- of10::Vendor, of10::FeaturesRequest, of10::FeaturesReply, of10::GetConfigRequest,
- of10::GetConfigReply, of10::SetConfig, of10::FlowMod, of10::PacketOut,of10::PacketIn,
- of10::FlowRemoved, of10::PortStatus, of10::PortMod,of10::StatsRequest, of10::StatsReply, 
- of10::QueueGetConfigRequest, of10::QueueGetConfigReply,of10::BarrierRequest,
- of10::BarrierReply > OF10Implementations;
-
+typedef Types<
+    of10::Hello, of10::EchoRequest, of10::Error, of10::EchoReply, of10::Vendor,
+    of10::FeaturesRequest, of10::FeaturesReply, of10::GetConfigRequest,
+    of10::GetConfigReply, of10::SetConfig, of10::FlowMod, of10::PacketOut,
+    of10::PacketIn, of10::FlowRemoved, of10::PortStatus, of10::PortMod,
+    of10::StatsRequest, of10::StatsReply, of10::QueueGetConfigRequest,
+    of10::QueueGetConfigReply, of10::BarrierRequest, of10::BarrierReply>
+    OF10Implementations;
 
 typedef Types<of13::Hello, of13::EchoRequest, of13::Error, of13::EchoReply,
- of13::FeaturesRequest, of13::FeaturesReply, of13::GetConfigRequest,
- of13::GetConfigReply, of13::SetConfig, of13::FlowMod, of13::PacketOut,of13::PacketIn,
- of13::FlowRemoved, of13::PortStatus, of13::PortMod, of13::GroupMod, of13::TableMod,
- of13::MultipartRequest, of13::MultipartReply, of13::QueueGetConfigRequest,
- of13::QueueGetConfigReply,of13::BarrierRequest,of13::BarrierReply, 
- of13::RoleRequest, of13::RoleReply, of13::GetAsyncRequest, of13::GetAsyncReply,
- of13::SetAsync, of13::MeterMod> OF13Implementations;
+              of13::FeaturesRequest, of13::FeaturesReply,
+              of13::GetConfigRequest, of13::GetConfigReply, of13::SetConfig,
+              of13::FlowMod, of13::PacketOut, of13::PacketIn, of13::FlowRemoved,
+              of13::PortStatus, of13::PortMod, of13::GroupMod, of13::TableMod,
+              of13::MultipartRequest, of13::MultipartReply,
+              of13::QueueGetConfigRequest, of13::QueueGetConfigReply,
+              of13::BarrierRequest, of13::BarrierReply, of13::RoleRequest,
+              of13::RoleReply, of13::GetAsyncRequest, of13::GetAsyncReply,
+              of13::SetAsync, of13::MeterMod>
+    OF13Implementations;
 
 TYPED_TEST_CASE(OF10MsgVersionTest, OF10Implementations);
 
 TYPED_TEST_CASE(OF13MsgVersionTest, OF13Implementations);
 
-TYPED_TEST(OF10MsgVersionTest, VersionAssert){
+TYPED_TEST(OF10MsgVersionTest, VersionAssert) {
   ASSERT_EQ(of10::OFP_VERSION, this->msg_->version());
 }
 
-TYPED_TEST(OF13MsgVersionTest, VersionAssert){
+TYPED_TEST(OF13MsgVersionTest, VersionAssert) {
   ASSERT_EQ(of13::OFP_VERSION, this->msg_->version());
 }
 #endif  // GTEST_HAS_TYPED_TEST
-

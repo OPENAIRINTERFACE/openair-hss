@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -36,52 +36,48 @@
         and manage ESM messages re-transmission.
 
 *****************************************************************************/
-#include <pthread.h>
 #include <inttypes.h>
-#include <stdint.h>
+#include <pthread.h>
 #include <stdbool.h>
-#include <string.h>
+#include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "bstrlib.h"
 
-#include "dynamic_memory_check.h"
-#include "log.h"
-#include "msc.h"
-#include "common_types.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"
 #include "3gpp_29.274.h"
 #include "assertions.h"
 #include "common_defs.h"
-#include "mme_app_ue_context.h"
-#include "mme_api.h"
-#include "mme_app_defs.h"
+#include "common_types.h"
+#include "dynamic_memory_check.h"
 #include "emm_data.h"
-#include "mme_app_esm_procedures.h"
 #include "esm_ebr.h"
 #include "esm_proc.h"
+#include "log.h"
+#include "mme_api.h"
 #include "mme_app_bearer_context.h"
+#include "mme_app_defs.h"
+#include "mme_app_esm_procedures.h"
+#include "mme_app_ue_context.h"
+#include "msc.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
 /****************************************************************************/
 
-
-#define ESM_EBR_NB_UE_MAX   (MME_API_NB_UE_MAX + 1)
+#define ESM_EBR_NB_UE_MAX (MME_API_NB_UE_MAX + 1)
 
 /****************************************************************************/
 /*******************  L O C A L    D E F I N I T I O N S  *******************/
 /****************************************************************************/
 
 /* String representation of EPS bearer context status */
-static const char                      *_esm_ebr_state_str[ESM_EBR_STATE_MAX] = {
-  "BEARER CONTEXT INACTIVE",
-  "BEARER CONTEXT ACTIVE",
-  "BEARER CONTEXT INACTIVE PENDING",
-  "BEARER CONTEXT MODIFY PENDING",
-  "BEARER CONTEXT ACTIVE PENDING"
-};
+static const char *_esm_ebr_state_str[ESM_EBR_STATE_MAX] = {
+    "BEARER CONTEXT INACTIVE", "BEARER CONTEXT ACTIVE",
+    "BEARER CONTEXT INACTIVE PENDING", "BEARER CONTEXT MODIFY PENDING",
+    "BEARER CONTEXT ACTIVE PENDING"};
 
 /*
    ----------------------
@@ -94,8 +90,7 @@ static const char                      *_esm_ebr_state_str[ESM_EBR_STATE_MAX] = 
 /****************************************************************************/
 // todo: fit somewhere better..
 //------------------------------------------------------------------------------
-const char * esm_ebr_state2string(esm_ebr_state esm_ebr_state)
-{
+const char *esm_ebr_state2string(esm_ebr_state esm_ebr_state) {
   switch (esm_ebr_state) {
     case ESM_EBR_INACTIVE:
       return "ESM_EBR_INACTIVE";
@@ -116,11 +111,14 @@ const char * esm_ebr_state2string(esm_ebr_state esm_ebr_state)
  * Bearer Context Procedures
  */
 //-----------------------------------------------------------------------------
-nas_esm_proc_bearer_context_t *_esm_proc_create_bearer_context_procedure(mme_ue_s1ap_id_t ue_id, pti_t pti, ebi_t linked_ebi, pdn_cid_t pdn_cid, ebi_t ebi, teid_t s1u_sgw_teid,
-    int timeout_sec, int timeout_usec, esm_timeout_cb_t timeout_notif)
-{
-  nas_esm_proc_bearer_context_t  *esm_proc_bearer_context = mme_app_nas_esm_create_bearer_context_procedure(ue_id, pti, ebi, timeout_sec, timeout_usec, timeout_notif);
-  if(esm_proc_bearer_context){
+nas_esm_proc_bearer_context_t *_esm_proc_create_bearer_context_procedure(
+    mme_ue_s1ap_id_t ue_id, pti_t pti, ebi_t linked_ebi, pdn_cid_t pdn_cid,
+    ebi_t ebi, teid_t s1u_sgw_teid, int timeout_sec, int timeout_usec,
+    esm_timeout_cb_t timeout_notif) {
+  nas_esm_proc_bearer_context_t *esm_proc_bearer_context =
+      mme_app_nas_esm_create_bearer_context_procedure(
+          ue_id, pti, ebi, timeout_sec, timeout_usec, timeout_notif);
+  if (esm_proc_bearer_context) {
     esm_proc_bearer_context->linked_ebi = linked_ebi;
     esm_proc_bearer_context->pdn_cid = pdn_cid; /**< Might be unassigned. */
     esm_proc_bearer_context->bearer_ebi = ebi;
@@ -130,28 +128,34 @@ nas_esm_proc_bearer_context_t *_esm_proc_create_bearer_context_procedure(mme_ue_
 }
 
 //-----------------------------------------------------------------------------
-void _esm_proc_free_bearer_context_procedure(nas_esm_proc_bearer_context_t ** esm_proc_bearer_context){
+void _esm_proc_free_bearer_context_procedure(
+    nas_esm_proc_bearer_context_t **esm_proc_bearer_context) {
   // free content
   void *unused = NULL;
-  /** Forget the name of the timer.. only one can exist (also used for activate default EPS bearer context.. */
-  nas_stop_esm_timer((*esm_proc_bearer_context)->esm_base_proc.ue_id,
+  /** Forget the name of the timer.. only one can exist (also used for activate
+   * default EPS bearer context.. */
+  nas_stop_esm_timer(
+      (*esm_proc_bearer_context)->esm_base_proc.ue_id,
       &((*esm_proc_bearer_context)->esm_base_proc.esm_proc_timer));
   mme_app_nas_esm_delete_bearer_context_proc(esm_proc_bearer_context);
 }
 
 //-----------------------------------------------------------------------------
-nas_esm_proc_bearer_context_t *_esm_proc_get_bearer_context_procedure(mme_ue_s1ap_id_t ue_id, pti_t pti, ebi_t ebi){
+nas_esm_proc_bearer_context_t *_esm_proc_get_bearer_context_procedure(
+    mme_ue_s1ap_id_t ue_id, pti_t pti, ebi_t ebi) {
   return mme_app_nas_esm_get_bearer_context_procedure(ue_id, pti, ebi);
 }
 
 // todo: fix this
 //-----------------------------------------------------------------------------
-esm_ebr_state _esm_ebr_get_status(mme_ue_s1ap_id_t ue_id, ebi_t ebi){
-  ue_context_t * ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, ue_id);
-  if(ue_context){
-    bearer_context_new_t * bearer_context = NULL;
-    mme_app_get_session_bearer_context_from_all(ue_context, ebi, &bearer_context);
-    if(bearer_context){
+esm_ebr_state _esm_ebr_get_status(mme_ue_s1ap_id_t ue_id, ebi_t ebi) {
+  ue_context_t *ue_context = mme_ue_context_exists_mme_ue_s1ap_id(
+      &mme_app_desc.mme_ue_contexts, ue_id);
+  if (ue_context) {
+    bearer_context_new_t *bearer_context = NULL;
+    mme_app_get_session_bearer_context_from_all(ue_context, ebi,
+                                                &bearer_context);
+    if (bearer_context) {
       return bearer_context->esm_ebr_context.status;
     }
   }

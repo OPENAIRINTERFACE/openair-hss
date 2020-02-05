@@ -19,7 +19,6 @@
  *      contact@openairinterface.org
  */
 
-
 /*! \file s1ap_common.c
    \brief s1ap procedures for both eNB and MME
    \author Sebastien ROUX <sebastien.roux@eurecom.fr>
@@ -29,15 +28,11 @@
 
 #include <stdint.h>
 
-#include "s1ap_common.h"
 #include "dynamic_memory_check.h"
 #include "log.h"
+#include "s1ap_common.h"
 
-int                                     asn_debug = 0;
-int                                     asn1_xer_print = 0;
+int asn_debug = 0;
+int asn1_xer_print = 0;
 // TODO: (amar) Unused function check with OAI
-void
-s1ap_handle_criticality (
-  S1AP_Criticality_t criticality)
-{
-}
+void s1ap_handle_criticality(S1AP_Criticality_t criticality) {}

@@ -19,27 +19,26 @@
  *      contact@openairinterface.org
  */
 
+#include <arpa/inet.h>
+#include <errno.h>
+#include <net/if.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/types.h>
-#include <arpa/inet.h>
-#include <net/if.h>
-#include <errno.h>
 
-#include "assertions.h"
-#include "log.h"
-#include "common_defs.h"
-#include "gtpv1u.h"
-#include "ControllerMain.h"
 #include "3gpp_23.003.h"
+#include "ControllerMain.h"
+#include "assertions.h"
+#include "common_defs.h"
 #include "conversions.h"
+#include "gtpv1u.h"
+#include "log.h"
 
 extern struct gtp_tunnel_ops gtp_tunnel_ops;
 
-int openflow_uninit(void)
-{
+int openflow_uninit(void) {
   int ret;
   if ((ret = stop_of_controller()) >= 0) {
     OAILOG_ERROR(LOG_GTPV1U, "Could not stop openflow controller on uninit\n");
@@ -47,43 +46,42 @@ int openflow_uninit(void)
   return ret;
 }
 
-int openflow_init(struct in_addr *ue_net, struct in_addr *ue_netmask, int mtu, int *fd0,
-                  int *fd1u)
-{
-  AssertFatal(start_of_controller() >= 0, "Could not start openflow controller\n");
+int openflow_init(struct in_addr *ue_net, struct in_addr *ue_netmask, int mtu,
+                  int *fd0, int *fd1u) {
+  AssertFatal(start_of_controller() >= 0,
+              "Could not start openflow controller\n");
   return 0;
 }
 
-int openflow_reset(void)
-{
+int openflow_reset(void) {
   int rv = 0;
   return rv;
 }
 
-int openflow_add_tunnel(struct in_addr ue, struct in_addr enb,
-                        uint32_t i_tei, uint32_t o_tei, ebi_t ebi, imsi_t imsi, const pcc_rule_t *const rule)
-{
+int openflow_add_tunnel(struct in_addr ue, struct in_addr enb, uint32_t i_tei,
+                        uint32_t o_tei, ebi_t ebi, imsi_t imsi,
+                        const pcc_rule_t *const rule) {
   char imsi_str[IMSI_BCD_DIGITS_MAX + 1] = {0};
   IMSI_TO_STRING((&imsi), imsi_str, IMSI_BCD_DIGITS_MAX + 1);
 
   return openflow_controller_add_gtp_tunnel(ue, enb, i_tei, o_tei,
-                                            (const char*) imsi_str, rule);
+                                            (const char *)imsi_str, rule);
 }
 
-int openflow_del_tunnel(struct in_addr ue, uint32_t i_tei, uint32_t o_tei, const pcc_rule_t *const rule)
-{
+int openflow_del_tunnel(struct in_addr ue, uint32_t i_tei, uint32_t o_tei,
+                        const pcc_rule_t *const rule) {
   return openflow_controller_del_gtp_tunnel(ue, i_tei, o_tei, rule);
 }
 
 static const struct gtp_tunnel_ops openflow_ops = {
-  .init         = openflow_init,
-  .uninit       = openflow_uninit,
-  .reset        = openflow_reset,
-  .add_tunnel   = openflow_add_tunnel,
-  .del_tunnel   = openflow_del_tunnel,
+    .init = openflow_init,
+    .uninit = openflow_uninit,
+    .reset = openflow_reset,
+    .add_tunnel = openflow_add_tunnel,
+    .del_tunnel = openflow_del_tunnel,
 };
 
 const struct gtp_tunnel_ops *gtp_tunnel_ops_init(void) {
-  OAILOG_DEBUG (LOG_GTPV1U , "Initializing gtp_tunnel_ops_openflow\n");
+  OAILOG_DEBUG(LOG_GTPV1U, "Initializing gtp_tunnel_ops_openflow\n");
   return &openflow_ops;
 }

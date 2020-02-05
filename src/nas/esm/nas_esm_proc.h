@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -39,9 +39,9 @@ Description NAS ESM procedure call manager
 #define FILE_NAS_ESM_PROC_SEEN
 
 #include "common_defs.h"
+#include "esm_sapDef.h"
 #include "mme_config.h"
 #include "networkDef.h"
-#include "esm_sapDef.h"
 
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/
@@ -65,35 +65,37 @@ Description NAS ESM procedure call manager
  * --------------------------------------------------------------------------
  */
 
-
 /*
  * --------------------------------------------------------------------------
  *      NAS procedures triggered by the network
  * --------------------------------------------------------------------------
  */
-void nas_stop_esm_timer(mme_ue_s1ap_id_t ue_id, nas_timer_t * const nas_timer);
+void nas_stop_esm_timer(mme_ue_s1ap_id_t ue_id, nas_timer_t* const nas_timer);
 
 int nas_proc_establish_ind(const mme_ue_s1ap_id_t ue_id,
-                            const tai_t originating_tai,
-                            const ecgi_t ecgi,
-                            const as_cause_t as_cause,
-                            STOLEN_REF bstring *msg);
+                           const tai_t originating_tai, const ecgi_t ecgi,
+                           const as_cause_t as_cause, STOLEN_REF bstring* msg);
 /*
  * --------------------------------------------------------------------------
  *      NAS ESM procedures triggered by the mme applicative layer
  * --------------------------------------------------------------------------
  */
 /** Messages sent by the EMM layer (directly from UE). */
-int nas_esm_proc_data_ind (itti_nas_esm_data_ind_t * esm_data_ind);
-int nas_esm_proc_esm_detach(itti_nas_esm_detach_ind_t * esm_detach);
+int nas_esm_proc_data_ind(itti_nas_esm_data_ind_t* esm_data_ind);
+int nas_esm_proc_esm_detach(itti_nas_esm_detach_ind_t* esm_detach);
 
 /** Messages triggered by the core network. */
-int nas_esm_proc_pdn_config_res (esm_cn_pdn_config_res_t * emm_cn_pdn_config_res);
-int nas_esm_proc_pdn_config_fail (esm_cn_pdn_config_fail_t * emm_cn_pdn_config_fail);
-int nas_esm_proc_pdn_connectivity_res(esm_cn_pdn_connectivity_res_t *esm_cn_pdn_connectivity_rsp);
+int nas_esm_proc_pdn_config_res(esm_cn_pdn_config_res_t* emm_cn_pdn_config_res);
+int nas_esm_proc_pdn_config_fail(
+    esm_cn_pdn_config_fail_t* emm_cn_pdn_config_fail);
+int nas_esm_proc_pdn_connectivity_res(
+    esm_cn_pdn_connectivity_res_t* esm_cn_pdn_connectivity_rsp);
 
-int nas_esm_proc_activate_eps_bearer_ctx(esm_eps_activate_eps_bearer_ctx_req_t * esm_cn_activate);
-int nas_esm_proc_modify_eps_bearer_ctx(esm_eps_modify_esm_bearer_ctxs_req_t * esm_cn_modify);
-int nas_esm_proc_deactivate_eps_bearer_ctx(esm_eps_deactivate_eps_bearer_ctx_req_t * esm_cn_deactivate);
+int nas_esm_proc_activate_eps_bearer_ctx(
+    esm_eps_activate_eps_bearer_ctx_req_t* esm_cn_activate);
+int nas_esm_proc_modify_eps_bearer_ctx(
+    esm_eps_modify_esm_bearer_ctxs_req_t* esm_cn_modify);
+int nas_esm_proc_deactivate_eps_bearer_ctx(
+    esm_eps_deactivate_eps_bearer_ctx_req_t* esm_cn_deactivate);
 
 #endif /* FILE_NAS_PROC_SEEN*/

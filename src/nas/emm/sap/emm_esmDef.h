@@ -20,19 +20,19 @@
 // */
 //
 ///*****************************************************************************
-//Source      emm_esmDef.h
+// Source      emm_esmDef.h
 //
-//Version     0.1
+// Version     0.1
 //
-//Date        2012/10/16
+// Date        2012/10/16
 //
-//Product     NAS stack
+// Product     NAS stack
 //
-//Subsystem   EPS Mobility Management
+// Subsystem   EPS Mobility Management
 //
-//Author      Frederic Maurel
+// Author      Frederic Maurel
 //
-//Description Defines the EMMESM Service Access Point that provides
+// Description Defines the EMMESM Service Access Point that provides
 //        interlayer services to the EPS Session Management sublayer
 //        for service registration and activate/deactivate PDN
 //        connections.
@@ -51,7 +51,7 @@
 ///*
 // * EMMESM-SAP primitives
 // */
-//typedef enum {
+// typedef enum {
 //  _EMMESM_START = 100,
 //  _EMMESM_RELEASE_IND,
 //  _EMMESM_UNITDATA_REQ,
@@ -70,7 +70,7 @@
 // * EMMESM primitive for connection establishment
 // * ---------------------------------------------
 // */
-//typedef struct emm_esm_establish_s {
+// typedef struct emm_esm_establish_s {
 //  bool is_emergency;   /* Indicates whether the PDN connection is established
 //             * for emergency bearer services only       */
 //  bool is_attached;    /* Indicates whether the UE remains attached to the
@@ -81,7 +81,7 @@
 // * EMMESM primitive for EPS bearer context establishment
 // * ---------------------------------------------
 // */
-//typedef struct emm_esm_activate_bearer_req_s {
+// typedef struct emm_esm_activate_bearer_req_s {
 //  ebi_t            ebi;        /* bearer to activate */
 //  bitrate_t        mbr_dl;
 //  bitrate_t        mbr_ul;
@@ -94,7 +94,7 @@
 // * EMMESM primitive for EPS bearer context modification
 // * ---------------------------------------------
 // */
-//typedef struct emm_esm_modify_bearer_req_s {
+// typedef struct emm_esm_modify_bearer_req_s {
 //  ebi_t            ebi;        /* bearer to activate */
 //  bitrate_t        mbr_dl;
 //  bitrate_t        mbr_ul;
@@ -107,7 +107,7 @@
 // * EMMESM primitive for EPS bearer context release
 // * ---------------------------------------------
 // */
-//typedef struct emm_esm_deactivate_bearer_req_s {
+// typedef struct emm_esm_deactivate_bearer_req_s {
 //  ebi_t            ebi;        /* bearer to deactivate */
 //  bstring          msg;        /* ESM message to be transfered     */
 //} emm_esm_deactivate_bearer_req_t;
@@ -116,7 +116,7 @@
 // * EMMESM primitive for data transfer
 // * ----------------------------------
 // */
-//typedef struct emm_esm_data_s {
+// typedef struct emm_esm_data_s {
 //  bstring          msg;        /* ESM message to be transfered     */
 //} emm_esm_data_t;
 //
@@ -125,8 +125,8 @@
 // * Structure of EMMESM-SAP primitive
 // * ---------------------------------
 // */
-//struct emm_data_context_s;
-//typedef struct {
+// struct emm_data_context_s;
+// typedef struct {
 //  emm_esm_primitive_t     primitive;
 //  mme_ue_s1ap_id_t        ue_id;
 //  struct emm_data_context_s   *ctx;

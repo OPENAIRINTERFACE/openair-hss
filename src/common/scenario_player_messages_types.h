@@ -29,12 +29,10 @@
 #ifndef FILE_SCENARIO_PLAYER_MESSAGES_TYPES_SEEN
 #define FILE_SCENARIO_PLAYER_MESSAGES_TYPES_SEEN
 
-#define SP_SCENARIO_TICK(mSGpTR)           (mSGpTR)->ittiMsg.scenario_tick
-
-
+#define SP_SCENARIO_TICK(mSGpTR) (mSGpTR)->ittiMsg.scenario_tick
 
 typedef struct sp_scenario_tick_s {
-  void  *scenario;
+  void* scenario;
 } sp_scenario_tick_t;
 
 #endif /* FILE_SCENARIO_PLAYER_MESSAGES_TYPES_SEEN */

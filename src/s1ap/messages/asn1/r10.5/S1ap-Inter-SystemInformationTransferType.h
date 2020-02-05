@@ -4,15 +4,14 @@
  * 	found in "S1AP-IEs.asn"
  */
 
-#ifndef	_S1ap_Inter_SystemInformationTransferType_H_
-#define	_S1ap_Inter_SystemInformationTransferType_H_
-
+#ifndef _S1ap_Inter_SystemInformationTransferType_H_
+#define _S1ap_Inter_SystemInformationTransferType_H_
 
 #include <asn_application.h>
 
 /* Including external dependencies */
-#include "S1ap-RIMTransfer.h"
 #include <constr_CHOICE.h>
+#include "S1ap-RIMTransfer.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -20,25 +19,26 @@ extern "C" {
 
 /* Dependencies */
 typedef enum S1ap_Inter_SystemInformationTransferType_PR {
-	S1ap_Inter_SystemInformationTransferType_PR_NOTHING,	/* No components present */
-	S1ap_Inter_SystemInformationTransferType_PR_rIMTransfer,
-	/* Extensions may appear below */
-	
+  S1ap_Inter_SystemInformationTransferType_PR_NOTHING, /* No components present
+                                                        */
+  S1ap_Inter_SystemInformationTransferType_PR_rIMTransfer,
+  /* Extensions may appear below */
+
 } S1ap_Inter_SystemInformationTransferType_PR;
 
 /* S1ap-Inter-SystemInformationTransferType */
 typedef struct S1ap_Inter_SystemInformationTransferType {
-	S1ap_Inter_SystemInformationTransferType_PR present;
-	union S1ap_Inter_SystemInformationTransferType_u {
-		S1ap_RIMTransfer_t	 rIMTransfer;
-		/*
-		 * This type is extensible,
-		 * possible extensions are below.
-		 */
-	} choice;
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+  S1ap_Inter_SystemInformationTransferType_PR present;
+  union S1ap_Inter_SystemInformationTransferType_u {
+    S1ap_RIMTransfer_t rIMTransfer;
+    /*
+     * This type is extensible,
+     * possible extensions are below.
+     */
+  } choice;
+
+  /* Context for parsing across buffer boundaries */
+  asn_struct_ctx_t _asn_ctx;
 } S1ap_Inter_SystemInformationTransferType_t;
 
 /* Implementation */
@@ -48,5 +48,5 @@ extern asn_TYPE_descriptor_t asn_DEF_S1ap_Inter_SystemInformationTransferType;
 }
 #endif
 
-#endif	/* _S1ap_Inter_SystemInformationTransferType_H_ */
+#endif /* _S1ap_Inter_SystemInformationTransferType_H_ */
 #include <asn_internal.h>

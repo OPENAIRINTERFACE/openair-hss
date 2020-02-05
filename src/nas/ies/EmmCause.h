@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -19,7 +19,6 @@
  *      contact@openairinterface.org
  */
 
-
 #ifndef EMM_CAUSE_SEEN
 #define EMM_CAUSE_SEEN
 
@@ -28,9 +27,10 @@
 
 typedef uint8_t emm_cause_t;
 
-int encode_emm_cause(emm_cause_t *emmcause, uint8_t iei, uint8_t *buffer, uint32_t len);
+int encode_emm_cause(emm_cause_t* emmcause, uint8_t iei, uint8_t* buffer,
+                     uint32_t len);
 
-int decode_emm_cause(emm_cause_t *emmcause, uint8_t iei, uint8_t *buffer, uint32_t len);
+int decode_emm_cause(emm_cause_t* emmcause, uint8_t iei, uint8_t* buffer,
+                     uint32_t len);
 
 #endif /* EMM CAUSE_SEEN */
-

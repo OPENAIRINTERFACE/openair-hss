@@ -20,18 +20,19 @@
  */
 
 /*! \file async_system.h
-   \brief We still use some unix commands for convenience, and we did not have to replace them by system calls
-   \ Instead of calling C system(...) that can take a lot of time (creation of a process, etc), in many cases
-   \ it doesn't hurt to do this asynchronously, may be we must tweak thread priority, pin it to a CPU, etc (TODO later)
-   \author  Lionel GAUTHIER
-   \date 2017
-   \email: lionel.gauthier@eurecom.fr
+   \brief We still use some unix commands for convenience, and we did not have
+   to replace them by system calls \ Instead of calling C system(...) that can
+   take a lot of time (creation of a process, etc), in many cases \ it doesn't
+   hurt to do this asynchronously, may be we must tweak thread priority, pin it
+   to a CPU, etc (TODO later) \author  Lionel GAUTHIER \date 2017 \email:
+   lionel.gauthier@eurecom.fr
 */
 
 #ifndef FILE_ASYNC_SYSTEM_SEEN
 #define FILE_ASYNC_SYSTEM_SEEN
 
-int async_system_init (void);
-int async_system_command (int sender_itti_task, bool is_abort_on_error, char *format, ...);
+int async_system_init(void);
+int async_system_command(int sender_itti_task, bool is_abort_on_error,
+                         char* format, ...);
 
 #endif /* FILE_SHARED_TS_LOG_SEEN */

@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -36,28 +36,27 @@
         the main entry point for elementary ESM processing.
 
 *****************************************************************************/
-#include <pthread.h>
 #include <inttypes.h>
-#include <stdint.h>
+#include <pthread.h>
 #include <stdbool.h>
-#include <string.h>
+#include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "bstrlib.h"
 #include "log.h"
 
-#include "common_types.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"
 #include "3gpp_29.274.h"
-#include "mme_app_session_context.h"
 #include "common_defs.h"
+#include "common_types.h"
 #include "emm_data.h"
-#include "esm_main.h"
-#include "esm_ebr.h"
-#include "esm_pt.h"
 #include "esm_data.h"
-
+#include "esm_ebr.h"
+#include "esm_main.h"
+#include "esm_pt.h"
+#include "mme_app_session_context.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -70,7 +69,6 @@
 /****************************************************************************/
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
 /****************************************************************************/
-
 
 /****************************************************************************
  **                                                                        **
@@ -86,16 +84,13 @@
  **      Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
-void
-esm_main_initialize (
-  void)
-{
-  OAILOG_FUNC_IN (LOG_NAS_ESM);
+void esm_main_initialize(void) {
+  OAILOG_FUNC_IN(LOG_NAS_ESM);
   /*
    * No ESM Data/configuration.
    * Initialize the EPS bearer context manager
    */
-  OAILOG_FUNC_OUT (LOG_NAS_ESM);
+  OAILOG_FUNC_OUT(LOG_NAS_ESM);
 }
 
 /****************************************************************************
@@ -112,15 +107,11 @@ esm_main_initialize (
  **                  Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
-void
-esm_main_cleanup (
-  void)
-{
-  OAILOG_FUNC_IN (LOG_NAS_ESM);
+void esm_main_cleanup(void) {
+  OAILOG_FUNC_IN(LOG_NAS_ESM);
   /** Currently no hash tables. */
-  OAILOG_FUNC_OUT (LOG_NAS_ESM);
+  OAILOG_FUNC_OUT(LOG_NAS_ESM);
 }
-
 
 /****************************************************************************/
 /*********************  L O C A L    F U N C T I O N S  *********************/

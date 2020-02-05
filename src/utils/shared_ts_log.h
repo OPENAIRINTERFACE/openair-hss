@@ -29,10 +29,10 @@
 #ifndef FILE_SHARED_TS_LOG_SEEN
 #define FILE_SHARED_TS_LOG_SEEN
 
-#include <sys/time.h>
 #include <liblfds710.h>
-#include "msc.h"
+#include <sys/time.h>
 #include "log.h"
+#include "msc.h"
 
 typedef enum {
   MIN_SH_TS_LOG_CLIENT = 0,
@@ -42,35 +42,37 @@ typedef enum {
 } sh_ts_log_app_id_t;
 
 /*! \struct  shared_log_queue_item_t
-* \brief Structure containing a string to be logged.
-* This structure is pushed in thread safe queues by thread producers of logs.
-* This structure is then popped by a dedicated thread that will send back this message
-* to the logger producer in a thread safe manner.
-*/
+ * \brief Structure containing a string to be logged.
+ * This structure is pushed in thread safe queues by thread producers of logs.
+ * This structure is then popped by a dedicated thread that will send back this
+ * message to the logger producer in a thread safe manner.
+ */
 typedef struct shared_log_queue_item_s {
-  struct lfds710_stack_element              se;
-  sh_ts_log_app_id_t                        app_id;    /*!< \brief application identifier. */
-  bstring                                   bstr;      /*!< \brief string containing the message. */
+  struct lfds710_stack_element se;
+  sh_ts_log_app_id_t app_id; /*!< \brief application identifier. */
+  bstring bstr;              /*!< \brief string containing the message. */
   union {
-    msc_private_t                           msc;       /*!< \brief string containing the message. */
-    log_private_t                           log;       /*!< \brief string containing the message. */
+    msc_private_t msc; /*!< \brief string containing the message. */
+    log_private_t log; /*!< \brief string containing the message. */
   } u_app_log;
 } shared_log_queue_item_t;
 
 /*! \struct  log_config_t
-* \brief Structure containing the dynamically configurable parameters of the Logging facilities.
-* This structure is filled by configuration facilities when parsing a configuration file.
-*/
+ * \brief Structure containing the dynamically configurable parameters of the
+ * Logging facilities. This structure is filled by configuration facilities when
+ * parsing a configuration file.
+ */
 
 //------------------------------------------------------------------------------
-int shared_log_get_start_time_sec (void);
-void shared_log_reuse_item(shared_log_queue_item_t * item_p);
-shared_log_queue_item_t * get_new_log_queue_item(sh_ts_log_app_id_t app_id);
-void shared_log_get_elapsed_time_since_start(struct timeval * const elapsed_time);
-int shared_log_init (const int max_threadsP);
+int shared_log_get_start_time_sec(void);
+void shared_log_reuse_item(shared_log_queue_item_t* item_p);
+shared_log_queue_item_t* get_new_log_queue_item(sh_ts_log_app_id_t app_id);
+void shared_log_get_elapsed_time_since_start(
+    struct timeval* const elapsed_time);
+int shared_log_init(const int max_threadsP);
 void shared_log_itti_connect(void);
-void shared_log_start_use (void);
-void shared_log_flush_messages (void);
-void shared_log_exit (void);
-void shared_log_item(shared_log_queue_item_t * messageP);
+void shared_log_start_use(void);
+void shared_log_flush_messages(void);
+void shared_log_exit(void);
+void shared_log_item(shared_log_queue_item_t* messageP);
 #endif /* FILE_SHARED_TS_LOG_SEEN */

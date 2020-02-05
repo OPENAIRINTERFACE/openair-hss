@@ -4,16 +4,15 @@
  * 	found in "S1AP-IEs.asn"
  */
 
-#ifndef	_S1ap_UEPagingID_H_
-#define	_S1ap_UEPagingID_H_
-
+#ifndef _S1ap_UEPagingID_H_
+#define _S1ap_UEPagingID_H_
 
 #include <asn_application.h>
 
 /* Including external dependencies */
-#include "S1ap-S-TMSI.h"
-#include "S1ap-IMSI.h"
 #include <constr_CHOICE.h>
+#include "S1ap-IMSI.h"
+#include "S1ap-S-TMSI.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -21,27 +20,27 @@ extern "C" {
 
 /* Dependencies */
 typedef enum S1ap_UEPagingID_PR {
-	S1ap_UEPagingID_PR_NOTHING,	/* No components present */
-	S1ap_UEPagingID_PR_s_TMSI,
-	S1ap_UEPagingID_PR_iMSI,
-	/* Extensions may appear below */
-	
+  S1ap_UEPagingID_PR_NOTHING, /* No components present */
+  S1ap_UEPagingID_PR_s_TMSI,
+  S1ap_UEPagingID_PR_iMSI,
+  /* Extensions may appear below */
+
 } S1ap_UEPagingID_PR;
 
 /* S1ap-UEPagingID */
 typedef struct S1ap_UEPagingID {
-	S1ap_UEPagingID_PR present;
-	union S1ap_UEPagingID_u {
-		S1ap_S_TMSI_t	 s_TMSI;
-		S1ap_IMSI_t	 iMSI;
-		/*
-		 * This type is extensible,
-		 * possible extensions are below.
-		 */
-	} choice;
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+  S1ap_UEPagingID_PR present;
+  union S1ap_UEPagingID_u {
+    S1ap_S_TMSI_t s_TMSI;
+    S1ap_IMSI_t iMSI;
+    /*
+     * This type is extensible,
+     * possible extensions are below.
+     */
+  } choice;
+
+  /* Context for parsing across buffer boundaries */
+  asn_struct_ctx_t _asn_ctx;
 } S1ap_UEPagingID_t;
 
 /* Implementation */
@@ -51,5 +50,5 @@ extern asn_TYPE_descriptor_t asn_DEF_S1ap_UEPagingID;
 }
 #endif
 
-#endif	/* _S1ap_UEPagingID_H_ */
+#endif /* _S1ap_UEPagingID_H_ */
 #include <asn_internal.h>

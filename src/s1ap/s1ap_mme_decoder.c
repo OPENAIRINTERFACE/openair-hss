@@ -19,46 +19,38 @@
  *      contact@openairinterface.org
  */
 
-
 /*! \file s1ap_mme_decoder.c
    \brief s1ap decode procedures for MME
    \author Sebastien ROUX <sebastien.roux@eurecom.fr>
    \date 2012
    \version 0.1
 */
-#include <stdbool.h>
-#include <stdint.h>
 #include <inttypes.h>
 #include <pthread.h>
+#include <stdbool.h>
+#include <stdint.h>
 
 #include "bstrlib.h"
 
-#include "log.h"
 #include "assertions.h"
 #include "common_defs.h"
+#include "dynamic_memory_check.h"
 #include "intertask_interface.h"
+#include "log.h"
 #include "s1ap_common.h"
 #include "s1ap_mme_handlers.h"
-#include "dynamic_memory_check.h"
 
 //-----------------------------------------------------------------------------
-int s1ap_mme_decode_pdu(S1AP_S1AP_PDU_t *pdu, const_bstring const raw)
-{
+int s1ap_mme_decode_pdu(S1AP_S1AP_PDU_t *pdu, const_bstring const raw) {
   asn_dec_rval_t dec_ret;
   DevAssert(pdu != NULL);
   DevAssert(blength(raw) != 0);
-  dec_ret = aper_decode(NULL,
-                        &asn_DEF_S1AP_S1AP_PDU,
-                        (void **)&pdu,
-                        bdata(raw),
-                        blength(raw),
-                        0,
-                        0);
+  dec_ret = aper_decode(NULL, &asn_DEF_S1AP_S1AP_PDU, (void **)&pdu, bdata(raw),
+                        blength(raw), 0, 0);
 
   if (dec_ret.code != RC_OK) {
-    OAILOG_ERROR (LOG_S1AP, "Failed to decode PDU\n");
+    OAILOG_ERROR(LOG_S1AP, "Failed to decode PDU\n");
     return -1;
   }
   return 0;
 }
-

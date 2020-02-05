@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -51,9 +51,9 @@ Description Defines constants and functions used by the AS simulator
  * Constansts used for MSCGEN (Message Sequence Chart Generator)
  */
 #define MSCGEN(args...) fprintf(stderr, ##args);
-#define _ue_id    "UE"
-#define _mme_id   "MME"
-#define _as_id    "AS"
+#define _ue_id "UE"
+#define _mme_id "MME"
+#define _as_id "AS"
 
 /****************************************************************************/
 /************************  G L O B A L    T Y P E S  ************************/
@@ -74,4 +74,4 @@ const char* rrcType(char type);
 const char* rrcErrCode(char code);
 const char* rrcReleaseCause(char cause);
 
-#endif // __AS_DATA_H__
+#endif  // __AS_DATA_H__

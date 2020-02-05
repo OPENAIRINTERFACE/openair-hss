@@ -4,9 +4,8 @@
  * 	found in "S1AP-IEs.asn"
  */
 
-#ifndef	_S1ap_PS_ServiceNotAvailable_H_
-#define	_S1ap_PS_ServiceNotAvailable_H_
-
+#ifndef _S1ap_PS_ServiceNotAvailable_H_
+#define _S1ap_PS_ServiceNotAvailable_H_
 
 #include <asn_application.h>
 
@@ -19,14 +18,14 @@ extern "C" {
 
 /* Dependencies */
 typedef enum S1ap_PS_ServiceNotAvailable {
-	S1ap_PS_ServiceNotAvailable_ps_service_not_available	= 0
-	/*
-	 * Enumeration is extensible
-	 */
+  S1ap_PS_ServiceNotAvailable_ps_service_not_available = 0
+  /*
+   * Enumeration is extensible
+   */
 } e_S1ap_PS_ServiceNotAvailable;
 
 /* S1ap-PS-ServiceNotAvailable */
-typedef long	 S1ap_PS_ServiceNotAvailable_t;
+typedef long S1ap_PS_ServiceNotAvailable_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_S1ap_PS_ServiceNotAvailable;
@@ -42,5 +41,5 @@ xer_type_encoder_f S1ap_PS_ServiceNotAvailable_encode_xer;
 }
 #endif
 
-#endif	/* _S1ap_PS_ServiceNotAvailable_H_ */
+#endif /* _S1ap_PS_ServiceNotAvailable_H_ */
 #include <asn_internal.h>

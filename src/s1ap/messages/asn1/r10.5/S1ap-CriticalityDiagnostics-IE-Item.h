@@ -4,17 +4,16 @@
  * 	found in "S1AP-IEs.asn"
  */
 
-#ifndef	_S1ap_CriticalityDiagnostics_IE_Item_H_
-#define	_S1ap_CriticalityDiagnostics_IE_Item_H_
-
+#ifndef _S1ap_CriticalityDiagnostics_IE_Item_H_
+#define _S1ap_CriticalityDiagnostics_IE_Item_H_
 
 #include <asn_application.h>
 
 /* Including external dependencies */
+#include <constr_SEQUENCE.h>
 #include "S1ap-Criticality.h"
 #include "S1ap-ProtocolIE-ID.h"
 #include "S1ap-TypeOfError.h"
-#include <constr_SEQUENCE.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -25,17 +24,17 @@ struct S1ap_IE_Extensions;
 
 /* S1ap-CriticalityDiagnostics-IE-Item */
 typedef struct S1ap_CriticalityDiagnostics_IE_Item {
-	S1ap_Criticality_t	 iECriticality;
-	S1ap_ProtocolIE_ID_t	 iE_ID;
-	S1ap_TypeOfError_t	 typeOfError;
-	struct S1ap_IE_Extensions	*iE_Extensions	/* OPTIONAL */;
-	/*
-	 * This type is extensible,
-	 * possible extensions are below.
-	 */
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+  S1ap_Criticality_t iECriticality;
+  S1ap_ProtocolIE_ID_t iE_ID;
+  S1ap_TypeOfError_t typeOfError;
+  struct S1ap_IE_Extensions* iE_Extensions /* OPTIONAL */;
+  /*
+   * This type is extensible,
+   * possible extensions are below.
+   */
+
+  /* Context for parsing across buffer boundaries */
+  asn_struct_ctx_t _asn_ctx;
 } S1ap_CriticalityDiagnostics_IE_Item_t;
 
 /* Implementation */
@@ -48,5 +47,5 @@ extern asn_TYPE_descriptor_t asn_DEF_S1ap_CriticalityDiagnostics_IE_Item;
 /* Referred external types */
 #include "S1ap-IE-Extensions.h"
 
-#endif	/* _S1ap_CriticalityDiagnostics_IE_Item_H_ */
+#endif /* _S1ap_CriticalityDiagnostics_IE_Item_H_ */
 #include <asn_internal.h>

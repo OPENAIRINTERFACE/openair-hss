@@ -11,61 +11,51 @@
    @brief This file contains example of a minimalistic log manager entity.
 */
 
-#include <stdio.h>
 #include <assert.h>
-#include "NwEvt.h"
-#include "NwTypes.h"
+#include <stdio.h>
 #include "NwError.h"
-#include "NwLog.h"
+#include "NwEvt.h"
 #include "NwGtpv2c.h"
+#include "NwLog.h"
+#include "NwTypes.h"
 
 #include "NwMiniLogMgrEntity.h"
 
 #ifdef __cplusplus
-extern                                  "C" {
+extern "C" {
 #endif
 
-  static
-  NwCharT                                *gLogLevelStr[] = { "EMER", "ALER", "CRIT", "ERRO", "WARN", "NOTI", "INFO", "DEBG" };
+static NwCharT *gLogLevelStr[] = {"EMER", "ALER", "CRIT", "ERRO",
+                                  "WARN", "NOTI", "INFO", "DEBG"};
 
-  NwMiniLogMgrT                           __gLogMgr;
-
+NwMiniLogMgrT __gLogMgr;
 
 /*---------------------------------------------------------------------------
    Public functions
   --------------------------------------------------------------------------*/
 
-  NwMiniLogMgrT                          *nwMiniLogMgrGetInstance (
-    ) {
-    return &(__gLogMgr);
-  }
+NwMiniLogMgrT *nwMiniLogMgrGetInstance() { return &(__gLogMgr); }
 
-  nw_rc_t                                   nwMiniLogMgrInit (
-  NwMiniLogMgrT * thiz,
-  uint32_t logLevel) {
-    thiz->logLevel = logLevel;
-    return NW_OK;
-  }
+nw_rc_t nwMiniLogMgrInit(NwMiniLogMgrT *thiz, uint32_t logLevel) {
+  thiz->logLevel = logLevel;
+  return NW_OK;
+}
 
-  nw_rc_t                                   nwMiniLogMgrSetLogLevel (
-  NwMiniLogMgrT * thiz,
-  uint32_t logLevel) {
-    thiz->logLevel = logLevel;
-  }
+nw_rc_t nwMiniLogMgrSetLogLevel(NwMiniLogMgrT *thiz, uint32_t logLevel) {
+  thiz->logLevel = logLevel;
+}
 
-  nw_rc_t                                   nwMiniLogMgrLogRequest (
-  nw_gtpv2c_LogMgrHandleT hLogMgr,
-  uint32_t logLevel,
-  NwCharT * file,
-  uint32_t line,
-  NwCharT * logStr) {
-    NwMiniLogMgrT                          *thiz = (NwMiniLogMgrT *) hLogMgr;
+nw_rc_t nwMiniLogMgrLogRequest(nw_gtpv2c_LogMgrHandleT hLogMgr,
+                               uint32_t logLevel, NwCharT *file, uint32_t line,
+                               NwCharT *logStr) {
+  NwMiniLogMgrT *thiz = (NwMiniLogMgrT *)hLogMgr;
 
-    if (thiz->logLevel >= logLevel)
-      printf ("NWGTPV2C-STK  %s - %s <%s,%u>\n", gLogLevelStr[logLevel], logStr, basename (file), line);
+  if (thiz->logLevel >= logLevel)
+    printf("NWGTPV2C-STK  %s - %s <%s,%u>\n", gLogLevelStr[logLevel], logStr,
+           basename(file), line);
 
-    return NW_OK;
-  }
+  return NW_OK;
+}
 
 #ifdef __cplusplus
 }

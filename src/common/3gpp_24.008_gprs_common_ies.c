@@ -26,20 +26,17 @@
   \email: lionel.gauthier@eurecom.fr
 */
 
-
 #include <stdbool.h>
 
 #include "bstrlib.h"
 
-#include "common_defs.h"
-#include "assertions.h"
 #include "3gpp_23.003.h"
 #include "3gpp_24.008.h"
 #include "TLVDecoder.h"
 #include "TLVEncoder.h"
+#include "assertions.h"
+#include "common_defs.h"
 #include "log.h"
-
-
 
 //******************************************************************************
 // 10.5.7 GPRS Common information elements
@@ -49,23 +46,20 @@
 // 10.5.7.3 GPRS Timer
 //------------------------------------------------------------------------------
 
-static const long                       _gprs_timer_unit[] = { 2, 60, 360, 60, 60, 60, 60, 0 };
+static const long _gprs_timer_unit[] = {2, 60, 360, 60, 60, 60, 60, 0};
 
 //------------------------------------------------------------------------------
-int decode_gprs_timer_ie (
-  gprs_timer_t * gprstimer,
-  uint8_t iei,
-  uint8_t * buffer,
-  const uint32_t len)
-{
-  int                                     decoded = 0;
+int decode_gprs_timer_ie(gprs_timer_t* gprstimer, uint8_t iei, uint8_t* buffer,
+                         const uint32_t len) {
+  int decoded = 0;
 
   if (iei > 0) {
-    CHECK_PDU_POINTER_AND_LENGTH_DECODER (buffer, GPRS_TIMER_IE_MIN_LENGTH, len);
-    CHECK_IEI_DECODER (iei, *buffer);
+    CHECK_PDU_POINTER_AND_LENGTH_DECODER(buffer, GPRS_TIMER_IE_MIN_LENGTH, len);
+    CHECK_IEI_DECODER(iei, *buffer);
     decoded++;
   } else {
-    CHECK_PDU_POINTER_AND_LENGTH_DECODER (buffer, GPRS_TIMER_IE_MIN_LENGTH - 1, len);
+    CHECK_PDU_POINTER_AND_LENGTH_DECODER(buffer, GPRS_TIMER_IE_MIN_LENGTH - 1,
+                                         len);
   }
 
   gprstimer->unit = (*(buffer + decoded) >> 5) & 0x7;
@@ -75,32 +69,28 @@ int decode_gprs_timer_ie (
 }
 
 //------------------------------------------------------------------------------
-int encode_gprs_timer_ie (
-  gprs_timer_t * gprstimer,
-  uint8_t iei,
-  uint8_t * buffer,
-  const uint32_t len)
-{
-  uint32_t                                encoded = 0;
+int encode_gprs_timer_ie(gprs_timer_t* gprstimer, uint8_t iei, uint8_t* buffer,
+                         const uint32_t len) {
+  uint32_t encoded = 0;
 
   /*
    * Checking IEI and pointer
    */
-  CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, GPRS_TIMER_IE_MIN_LENGTH, len);
+  CHECK_PDU_POINTER_AND_LENGTH_ENCODER(buffer, GPRS_TIMER_IE_MIN_LENGTH, len);
 
   if (iei > 0) {
     *buffer = iei;
     encoded++;
   }
 
-  *(buffer + encoded) = 0x00 | ((gprstimer->unit & 0x7) << 5) | (gprstimer->timervalue & 0x1f);
+  *(buffer + encoded) =
+      0x00 | ((gprstimer->unit & 0x7) << 5) | (gprstimer->timervalue & 0x1f);
   encoded++;
   return encoded;
 }
 
 //------------------------------------------------------------------------------
 
-long gprs_timer_value (gprs_timer_t * gprstimer)
-{
+long gprs_timer_value(gprs_timer_t* gprstimer) {
   return (gprstimer->timervalue * _gprs_timer_unit[gprstimer->unit]);
 }

@@ -26,12 +26,23 @@
   \email: lionel.gauthier@eurecom.fr
 */
 
-//WARNING: Do not include this header directly. Use intertask_interface.h instead.
+// WARNING: Do not include this header directly. Use intertask_interface.h
+// instead.
 
-MESSAGE_DEF(MME_APP_CONNECTION_ESTABLISHMENT_CNF  , MESSAGE_PRIORITY_MED, itti_mme_app_connection_establishment_cnf_t  , mme_app_connection_establishment_cnf)
-MESSAGE_DEF(MME_APP_INITIAL_CONTEXT_SETUP_RSP     , MESSAGE_PRIORITY_MED, itti_mme_app_initial_context_setup_rsp_t  ,    mme_app_initial_context_setup_rsp)
+MESSAGE_DEF(MME_APP_CONNECTION_ESTABLISHMENT_CNF, MESSAGE_PRIORITY_MED,
+            itti_mme_app_connection_establishment_cnf_t,
+            mme_app_connection_establishment_cnf)
+MESSAGE_DEF(MME_APP_INITIAL_CONTEXT_SETUP_RSP, MESSAGE_PRIORITY_MED,
+            itti_mme_app_initial_context_setup_rsp_t,
+            mme_app_initial_context_setup_rsp)
 
 /** New message to signal the MME_UE_S1AP_ID to S1AP. */
-MESSAGE_DEF(MME_APP_S1AP_MME_UE_ID_NOTIFICATION   , MESSAGE_PRIORITY_MED, itti_mme_app_s1ap_mme_ue_id_notification_t    ,  mme_app_s1ap_mme_ue_id_notification)
-MESSAGE_DEF(MME_APP_INITIAL_CONTEXT_SETUP_FAILURE , MESSAGE_PRIORITY_MED, itti_mme_app_initial_context_setup_failure_t  ,    mme_app_initial_context_setup_failure)
-MESSAGE_DEF(MME_APP_NAS_UPDATE_LOCATION_CNF       , MESSAGE_PRIORITY_MED, itti_mme_app_nas_update_location_cnf_t    ,  mme_app_nas_update_location_cnf)
+MESSAGE_DEF(MME_APP_S1AP_MME_UE_ID_NOTIFICATION, MESSAGE_PRIORITY_MED,
+            itti_mme_app_s1ap_mme_ue_id_notification_t,
+            mme_app_s1ap_mme_ue_id_notification)
+MESSAGE_DEF(MME_APP_INITIAL_CONTEXT_SETUP_FAILURE, MESSAGE_PRIORITY_MED,
+            itti_mme_app_initial_context_setup_failure_t,
+            mme_app_initial_context_setup_failure)
+MESSAGE_DEF(MME_APP_NAS_UPDATE_LOCATION_CNF, MESSAGE_PRIORITY_MED,
+            itti_mme_app_nas_update_location_cnf_t,
+            mme_app_nas_update_location_cnf)

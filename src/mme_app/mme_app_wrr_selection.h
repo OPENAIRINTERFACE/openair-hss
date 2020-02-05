@@ -19,7 +19,6 @@
  *      contact@openairinterface.org
  */
 
-
 #ifndef FILE_MME_APP_WRR_SELECTION_SEEN
 #define FILE_MME_APP_WRR_SELECTION_SEEN
 
@@ -30,6 +29,8 @@
   \email: lionel.gauthier@eurecom.fr
 */
 
-void mme_app_select_service(const tai_t * const tai, struct sockaddr ** const service_ip_addr, const interface_type_t interface_type);
+void mme_app_select_service(const tai_t* const tai,
+                            struct sockaddr** const service_ip_addr,
+                            const interface_type_t interface_type);
 
 #endif

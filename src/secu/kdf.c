@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -19,42 +19,31 @@
  *      contact@openairinterface.org
  */
 
-#include <stdlib.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <nettle/hmac.h>
 #include "bstrlib.h"
 
-#include "security_types.h"
-#include "secu_defs.h"
 #include "dynamic_memory_check.h"
+#include "secu_defs.h"
+#include "security_types.h"
 
-void
-kdf (
-  const uint8_t * key,
-  const unsigned key_len,
-  uint8_t * s,
-  const unsigned s_len,
-  uint8_t * out,
-  const unsigned out_len)
-{
-  struct hmac_sha256_ctx                  *ctx = calloc(1, sizeof(struct hmac_sha256_ctx));
+void kdf(const uint8_t *key, const unsigned key_len, uint8_t *s,
+         const unsigned s_len, uint8_t *out, const unsigned out_len) {
+  struct hmac_sha256_ctx *ctx = calloc(1, sizeof(struct hmac_sha256_ctx));
 
-  //memset (&ctx, 0, sizeof (ctx));
-  hmac_sha256_set_key (ctx, key_len, key);
-  hmac_sha256_update (ctx, s_len, s);
-  hmac_sha256_digest (ctx, out_len, out);
-  free_wrapper((void**)&ctx);
+  // memset (&ctx, 0, sizeof (ctx));
+  hmac_sha256_set_key(ctx, key_len, key);
+  hmac_sha256_update(ctx, s_len, s);
+  hmac_sha256_digest(ctx, out_len, out);
+  free_wrapper((void **)&ctx);
 }
 
-int
-derive_keNB (
-  const uint8_t *kasme_32,
-  const uint32_t nas_count,
-  uint8_t * keNB)
-{
-  uint8_t                                 s[7] = {0};
+int derive_keNB(const uint8_t *kasme_32, const uint32_t nas_count,
+                uint8_t *keNB) {
+  uint8_t s[7] = {0};
 
   // FC
   s[0] = FC_KENB;
@@ -66,27 +55,21 @@ derive_keNB (
   // Length of NAS count
   s[5] = 0x00;
   s[6] = 0x04;
-  kdf (kasme_32, 32, s, 7, keNB, 32);
+  kdf(kasme_32, 32, s, 7, keNB, 32);
   return 0;
 }
 
-int
-derive_nh (
-  const uint8_t *kasme_32,
-  uint8_t * nh)
-{
-
-  uint8_t                                 s[35];
+int derive_nh(const uint8_t *kasme_32, uint8_t *nh) {
+  uint8_t s[35];
   memset(s, 0, 35);
 
   s[0] = (FC_NH);
-   // P0
-  memcpy(s+1, nh, 32);
-    // L0 = len(SN input)
-   s[33] = 0x00;
-   s[34] = 0x20;
+  // P0
+  memcpy(s + 1, nh, 32);
+  // L0 = len(SN input)
+  s[33] = 0x00;
+  s[34] = 0x20;
 
-   kdf (kasme_32, 32, s, 35, nh, 32);
-   return 0;
+  kdf(kasme_32, 32, s, 35, nh, 32);
+  return 0;
 }
-

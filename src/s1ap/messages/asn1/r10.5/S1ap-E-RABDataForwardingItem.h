@@ -4,17 +4,16 @@
  * 	found in "S1AP-IEs.asn"
  */
 
-#ifndef	_S1ap_E_RABDataForwardingItem_H_
-#define	_S1ap_E_RABDataForwardingItem_H_
-
+#ifndef _S1ap_E_RABDataForwardingItem_H_
+#define _S1ap_E_RABDataForwardingItem_H_
 
 #include <asn_application.h>
 
 /* Including external dependencies */
-#include "S1ap-E-RAB-ID.h"
-#include "S1ap-TransportLayerAddress.h"
-#include "S1ap-GTP-TEID.h"
 #include <constr_SEQUENCE.h>
+#include "S1ap-E-RAB-ID.h"
+#include "S1ap-GTP-TEID.h"
+#include "S1ap-TransportLayerAddress.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -25,19 +24,19 @@ struct S1ap_IE_Extensions;
 
 /* S1ap-E-RABDataForwardingItem */
 typedef struct S1ap_E_RABDataForwardingItem {
-	S1ap_E_RAB_ID_t	 e_RAB_ID;
-	S1ap_TransportLayerAddress_t	*dL_transportLayerAddress	/* OPTIONAL */;
-	S1ap_GTP_TEID_t	*dL_gTP_TEID	/* OPTIONAL */;
-	S1ap_TransportLayerAddress_t	*uL_TransportLayerAddress	/* OPTIONAL */;
-	S1ap_GTP_TEID_t	*uL_GTP_TEID	/* OPTIONAL */;
-	struct S1ap_IE_Extensions	*iE_Extensions	/* OPTIONAL */;
-	/*
-	 * This type is extensible,
-	 * possible extensions are below.
-	 */
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+  S1ap_E_RAB_ID_t e_RAB_ID;
+  S1ap_TransportLayerAddress_t* dL_transportLayerAddress /* OPTIONAL */;
+  S1ap_GTP_TEID_t* dL_gTP_TEID /* OPTIONAL */;
+  S1ap_TransportLayerAddress_t* uL_TransportLayerAddress /* OPTIONAL */;
+  S1ap_GTP_TEID_t* uL_GTP_TEID /* OPTIONAL */;
+  struct S1ap_IE_Extensions* iE_Extensions /* OPTIONAL */;
+  /*
+   * This type is extensible,
+   * possible extensions are below.
+   */
+
+  /* Context for parsing across buffer boundaries */
+  asn_struct_ctx_t _asn_ctx;
 } S1ap_E_RABDataForwardingItem_t;
 
 /* Implementation */
@@ -50,5 +49,5 @@ extern asn_TYPE_descriptor_t asn_DEF_S1ap_E_RABDataForwardingItem;
 /* Referred external types */
 #include "S1ap-IE-Extensions.h"
 
-#endif	/* _S1ap_E_RABDataForwardingItem_H_ */
+#endif /* _S1ap_E_RABDataForwardingItem_H_ */
 #include <asn_internal.h>

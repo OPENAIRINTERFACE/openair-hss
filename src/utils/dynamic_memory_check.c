@@ -30,14 +30,13 @@
 
 #include "bstrlib.h"
 
-#include "dynamic_memory_check.h"
 #include "assertions.h"
+#include "dynamic_memory_check.h"
 
 //------------------------------------------------------------------------------
-void free_wrapper(void **ptr)
-{
+void free_wrapper(void **ptr) {
   // for debug only
-  AssertFatal( ptr, "Trying to free NULL *ptr, ptr=%p", ptr);
+  AssertFatal(ptr, "Trying to free NULL *ptr, ptr=%p", ptr);
   if (ptr) {
     // for debug only
     AssertFatal(*ptr, "Trying to free NULL *ptr, ptr=%p", ptr);
@@ -47,8 +46,7 @@ void free_wrapper(void **ptr)
 }
 
 //------------------------------------------------------------------------------
-void bdestroy_wrapper(bstring *b)
-{
+void bdestroy_wrapper(bstring *b) {
   if ((b) && (*b)) {
     bdestroy(*b);
     *b = NULL;

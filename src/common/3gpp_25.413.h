@@ -33,7 +33,7 @@
 
 typedef struct {
   uint16_t lac;
-  uint8_t  rac;
+  uint8_t rac;
 
   /* Length of RNC Id can be 2 bytes if length of element is 8
    * or 4 bytes long if length is 10.

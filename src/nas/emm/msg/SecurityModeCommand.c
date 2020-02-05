@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -19,47 +19,52 @@
  *      contact@openairinterface.org
  */
 
+#include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdint.h>
-#include <stdbool.h>
 
 #include "bstrlib.h"
 
-#include "log.h"
-#include "assertions.h"
 #include "3gpp_24.301.h"
-#include "TLVEncoder.h"
-#include "TLVDecoder.h"
 #include "NASSecurityModeCommand.h"
+#include "TLVDecoder.h"
+#include "TLVEncoder.h"
+#include "assertions.h"
+#include "log.h"
 
-int
-decode_security_mode_command (
-  security_mode_command_msg * security_mode_command,
-  uint8_t * buffer,
-  uint32_t len)
-{
-  uint32_t                                decoded = 0;
-  int                                     decoded_result = 0;
+int decode_security_mode_command(
+    security_mode_command_msg* security_mode_command, uint8_t* buffer,
+    uint32_t len) {
+  uint32_t decoded = 0;
+  int decoded_result = 0;
 
-  // Check if we got a NULL pointer and if buffer length is >= minimum length expected for the message.
-  CHECK_PDU_POINTER_AND_LENGTH_DECODER (buffer, SECURITY_MODE_COMMAND_MINIMUM_LENGTH, len);
+  // Check if we got a NULL pointer and if buffer length is >= minimum length
+  // expected for the message.
+  CHECK_PDU_POINTER_AND_LENGTH_DECODER(
+      buffer, SECURITY_MODE_COMMAND_MINIMUM_LENGTH, len);
 
   /*
    * Decoding mandatory fields
    */
-  if ((decoded_result = decode_nas_security_algorithms (&security_mode_command->selectednassecurityalgorithms, 0, buffer + decoded, len - decoded)) < 0)
+  if ((decoded_result = decode_nas_security_algorithms(
+           &security_mode_command->selectednassecurityalgorithms, 0,
+           buffer + decoded, len - decoded)) < 0)
     return decoded_result;
   else
     decoded += decoded_result;
 
-  if ((decoded_result = decode_u8_nas_key_set_identifier (&security_mode_command->naskeysetidentifier, 0, *(buffer + decoded) & 0x0f, len - decoded)) < 0)
+  if ((decoded_result = decode_u8_nas_key_set_identifier(
+           &security_mode_command->naskeysetidentifier, 0,
+           *(buffer + decoded) & 0x0f, len - decoded)) < 0)
     return decoded_result;
 
   decoded++;
 
-  if ((decoded_result = decode_ue_security_capability (&security_mode_command->replayeduesecuritycapabilities, 0, buffer + decoded, len - decoded)) < 0)
+  if ((decoded_result = decode_ue_security_capability(
+           &security_mode_command->replayeduesecuritycapabilities, 0,
+           buffer + decoded, len - decoded)) < 0)
     return decoded_result;
   else
     decoded += decoded_result;
@@ -68,7 +73,7 @@ decode_security_mode_command (
    * Decoding optional fields
    */
   while (len - decoded > 0) {
-    uint8_t                                 ieiDecoded = *(buffer + decoded);
+    uint8_t ieiDecoded = *(buffer + decoded);
 
     /*
      * Type | value iei are below 0x80 so just return the first 4 bits
@@ -77,97 +82,127 @@ decode_security_mode_command (
       ieiDecoded = ieiDecoded & 0xf0;
 
     switch (ieiDecoded) {
-    case SECURITY_MODE_COMMAND_IMEISV_REQUEST_IEI:
-      if ((decoded_result = decode_imeisv_request_ie (&security_mode_command->imeisvrequest, SECURITY_MODE_COMMAND_IMEISV_REQUEST_IEI, buffer + decoded, len - decoded)) <= 0)
-        return decoded_result;
+      case SECURITY_MODE_COMMAND_IMEISV_REQUEST_IEI:
+        if ((decoded_result = decode_imeisv_request_ie(
+                 &security_mode_command->imeisvrequest,
+                 SECURITY_MODE_COMMAND_IMEISV_REQUEST_IEI, buffer + decoded,
+                 len - decoded)) <= 0)
+          return decoded_result;
 
-      decoded += decoded_result;
-      /*
-       * Set corresponding mask to 1 in presencemask
-       */
-      security_mode_command->presencemask |= SECURITY_MODE_COMMAND_IMEISV_REQUEST_PRESENT;
-      break;
+        decoded += decoded_result;
+        /*
+         * Set corresponding mask to 1 in presencemask
+         */
+        security_mode_command->presencemask |=
+            SECURITY_MODE_COMMAND_IMEISV_REQUEST_PRESENT;
+        break;
 
-    case SECURITY_MODE_COMMAND_REPLAYED_NONCEUE_IEI:
-      if ((decoded_result = decode_nonce (&security_mode_command->replayednonceue, SECURITY_MODE_COMMAND_REPLAYED_NONCEUE_IEI, buffer + decoded, len - decoded)) <= 0)
-        return decoded_result;
+      case SECURITY_MODE_COMMAND_REPLAYED_NONCEUE_IEI:
+        if ((decoded_result =
+                 decode_nonce(&security_mode_command->replayednonceue,
+                              SECURITY_MODE_COMMAND_REPLAYED_NONCEUE_IEI,
+                              buffer + decoded, len - decoded)) <= 0)
+          return decoded_result;
 
-      decoded += decoded_result;
-      /*
-       * Set corresponding mask to 1 in presencemask
-       */
-      security_mode_command->presencemask |= SECURITY_MODE_COMMAND_REPLAYED_NONCEUE_PRESENT;
-      break;
+        decoded += decoded_result;
+        /*
+         * Set corresponding mask to 1 in presencemask
+         */
+        security_mode_command->presencemask |=
+            SECURITY_MODE_COMMAND_REPLAYED_NONCEUE_PRESENT;
+        break;
 
-    case SECURITY_MODE_COMMAND_NONCEMME_IEI:
-      if ((decoded_result = decode_nonce (&security_mode_command->noncemme, SECURITY_MODE_COMMAND_NONCEMME_IEI, buffer + decoded, len - decoded)) <= 0)
-        return decoded_result;
+      case SECURITY_MODE_COMMAND_NONCEMME_IEI:
+        if ((decoded_result = decode_nonce(&security_mode_command->noncemme,
+                                           SECURITY_MODE_COMMAND_NONCEMME_IEI,
+                                           buffer + decoded, len - decoded)) <=
+            0)
+          return decoded_result;
 
-      decoded += decoded_result;
-      /*
-       * Set corresponding mask to 1 in presencemask
-       */
-      security_mode_command->presencemask |= SECURITY_MODE_COMMAND_NONCEMME_PRESENT;
-      break;
+        decoded += decoded_result;
+        /*
+         * Set corresponding mask to 1 in presencemask
+         */
+        security_mode_command->presencemask |=
+            SECURITY_MODE_COMMAND_NONCEMME_PRESENT;
+        break;
 
-    default:
-      errorCodeDecoder = TLV_UNEXPECTED_IEI;
-      OAILOG_ERROR (LOG_NAS_EMM, "Failed to decode SECURITY_MODE_COMMAND unexpected IEI 0x%02x\n", ieiDecoded);
-      return TLV_UNEXPECTED_IEI;
+      default:
+        errorCodeDecoder = TLV_UNEXPECTED_IEI;
+        OAILOG_ERROR(
+            LOG_NAS_EMM,
+            "Failed to decode SECURITY_MODE_COMMAND unexpected IEI 0x%02x\n",
+            ieiDecoded);
+        return TLV_UNEXPECTED_IEI;
     }
   }
 
   return decoded;
 }
 
-int
-encode_security_mode_command (
-  security_mode_command_msg * security_mode_command,
-  uint8_t * buffer,
-  uint32_t len)
-{
-  int                                     encoded = 0;
-  int                                     encode_result = 0;
+int encode_security_mode_command(
+    security_mode_command_msg* security_mode_command, uint8_t* buffer,
+    uint32_t len) {
+  int encoded = 0;
+  int encode_result = 0;
 
   /*
    * Checking IEI and pointer
    */
-  CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, SECURITY_MODE_COMMAND_MINIMUM_LENGTH, len);
+  CHECK_PDU_POINTER_AND_LENGTH_ENCODER(
+      buffer, SECURITY_MODE_COMMAND_MINIMUM_LENGTH, len);
 
-  if ((encode_result = encode_nas_security_algorithms (&security_mode_command->selectednassecurityalgorithms, 0, buffer + encoded, len - encoded)) < 0) //Return in case of error
+  if ((encode_result = encode_nas_security_algorithms(
+           &security_mode_command->selectednassecurityalgorithms, 0,
+           buffer + encoded, len - encoded)) < 0)  // Return in case of error
     return encode_result;
   else
     encoded += encode_result;
-  uint8_t test_ksi = (encode_u8_nas_key_set_identifier (&security_mode_command->naskeysetidentifier) & 0x0f);
+  uint8_t test_ksi = (encode_u8_nas_key_set_identifier(
+                          &security_mode_command->naskeysetidentifier) &
+                      0x0f);
   *(buffer + encoded) = test_ksi;
   encoded++;
 
-  if ((encode_result = encode_ue_security_capability (&security_mode_command->replayeduesecuritycapabilities, 0, buffer + encoded, len - encoded)) < 0) //Return in case of error
+  if ((encode_result = encode_ue_security_capability(
+           &security_mode_command->replayeduesecuritycapabilities, 0,
+           buffer + encoded, len - encoded)) < 0)  // Return in case of error
     return encode_result;
   else
     encoded += encode_result;
 
-  if ((security_mode_command->presencemask & SECURITY_MODE_COMMAND_IMEISV_REQUEST_PRESENT)
-      == SECURITY_MODE_COMMAND_IMEISV_REQUEST_PRESENT) {
-    if ((encode_result = encode_imeisv_request_ie (&security_mode_command->imeisvrequest, SECURITY_MODE_COMMAND_IMEISV_REQUEST_IEI, buffer + encoded, len - encoded)) < 0)
+  if ((security_mode_command->presencemask &
+       SECURITY_MODE_COMMAND_IMEISV_REQUEST_PRESENT) ==
+      SECURITY_MODE_COMMAND_IMEISV_REQUEST_PRESENT) {
+    if ((encode_result =
+             encode_imeisv_request_ie(&security_mode_command->imeisvrequest,
+                                      SECURITY_MODE_COMMAND_IMEISV_REQUEST_IEI,
+                                      buffer + encoded, len - encoded)) < 0)
       // Return in case of error
       return encode_result;
     else
       encoded += encode_result;
   }
 
-  if ((security_mode_command->presencemask & SECURITY_MODE_COMMAND_REPLAYED_NONCEUE_PRESENT)
-      == SECURITY_MODE_COMMAND_REPLAYED_NONCEUE_PRESENT) {
-    if ((encode_result = encode_nonce (&security_mode_command->replayednonceue, SECURITY_MODE_COMMAND_REPLAYED_NONCEUE_IEI, buffer + encoded, len - encoded)) < 0)
+  if ((security_mode_command->presencemask &
+       SECURITY_MODE_COMMAND_REPLAYED_NONCEUE_PRESENT) ==
+      SECURITY_MODE_COMMAND_REPLAYED_NONCEUE_PRESENT) {
+    if ((encode_result =
+             encode_nonce(&security_mode_command->replayednonceue,
+                          SECURITY_MODE_COMMAND_REPLAYED_NONCEUE_IEI,
+                          buffer + encoded, len - encoded)) < 0)
       // Return in case of error
       return encode_result;
     else
       encoded += encode_result;
   }
 
-  if ((security_mode_command->presencemask & SECURITY_MODE_COMMAND_NONCEMME_PRESENT)
-      == SECURITY_MODE_COMMAND_NONCEMME_PRESENT) {
-    if ((encode_result = encode_nonce (&security_mode_command->noncemme, SECURITY_MODE_COMMAND_NONCEMME_IEI, buffer + encoded, len - encoded)) < 0)
+  if ((security_mode_command->presencemask &
+       SECURITY_MODE_COMMAND_NONCEMME_PRESENT) ==
+      SECURITY_MODE_COMMAND_NONCEMME_PRESENT) {
+    if ((encode_result = encode_nonce(&security_mode_command->noncemme,
+                                      SECURITY_MODE_COMMAND_NONCEMME_IEI,
+                                      buffer + encoded, len - encoded)) < 0)
       // Return in case of error
       return encode_result;
     else

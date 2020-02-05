@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -18,7 +18,6 @@
  * For more information about the OpenAirInterface (OAI) Software Alliance:
  *      contact@openairinterface.org
  */
-
 
 /*****************************************************************************
 
@@ -42,15 +41,15 @@ Description Defines the messages supported by the Access Stratum sublayer
 #ifndef FILE_AS_MESSAGE_H_SEEN
 #define FILE_AS_MESSAGE_H_SEEN
 
-#include "common_defs.h"
-#include "networkDef.h"
+#include "3gpp_23.003.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.301.h"
-#include "3gpp_23.003.h"
 #include "3gpp_36.331.h"
 #include "3gpp_36.401.h"
-#include "common_types.h"
 #include "TrackingAreaIdentity.h"
+#include "common_defs.h"
+#include "common_types.h"
+#include "networkDef.h"
 
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/
@@ -61,10 +60,10 @@ Description Defines the messages supported by the Access Stratum sublayer
  *              Access Stratum message types
  * --------------------------------------------------------------------------
  */
-#define AS_REQUEST  0x0100
+#define AS_REQUEST 0x0100
 #define AS_RESPONSE 0x0200
-#define AS_INDICATION   0x0400
-#define AS_CONFIRM  0x0800
+#define AS_INDICATION 0x0400
+#define AS_CONFIRM 0x0800
 
 /*
  * --------------------------------------------------------------------------
@@ -73,80 +72,82 @@ Description Defines the messages supported by the Access Stratum sublayer
  */
 
 /* Broadcast information */
-#define AS_BROADCAST_INFO       0x01
-#define AS_BROADCAST_INFO_IND       (AS_BROADCAST_INFO | AS_INDICATION)
-
+#define AS_BROADCAST_INFO 0x01
+#define AS_BROADCAST_INFO_IND (AS_BROADCAST_INFO | AS_INDICATION)
 
 /* Paging information */
-#define AS_PAGING           0x03
-#define AS_PAGING_REQ           (AS_PAGING | AS_REQUEST)
+#define AS_PAGING 0x03
+#define AS_PAGING_REQ (AS_PAGING | AS_REQUEST)
 
 /* NAS signalling connection establishment */
-#define AS_NAS_ESTABLISH        0x04
-#define AS_NAS_ESTABLISH_REQ        (AS_NAS_ESTABLISH | AS_REQUEST)
-#define AS_NAS_ESTABLISH_IND        (AS_NAS_ESTABLISH | AS_INDICATION)
-#define AS_NAS_ESTABLISH_RSP        (AS_NAS_ESTABLISH | AS_RESPONSE)
-#define AS_NAS_ESTABLISH_CNF        (AS_NAS_ESTABLISH | AS_CONFIRM)
+#define AS_NAS_ESTABLISH 0x04
+#define AS_NAS_ESTABLISH_REQ (AS_NAS_ESTABLISH | AS_REQUEST)
+#define AS_NAS_ESTABLISH_IND (AS_NAS_ESTABLISH | AS_INDICATION)
+#define AS_NAS_ESTABLISH_RSP (AS_NAS_ESTABLISH | AS_RESPONSE)
+#define AS_NAS_ESTABLISH_CNF (AS_NAS_ESTABLISH | AS_CONFIRM)
 
 /* NAS signalling connection release */
-#define AS_NAS_RELEASE          0x05
-#define AS_NAS_RELEASE_REQ      (AS_NAS_RELEASE | AS_REQUEST)
-#define AS_NAS_RELEASE_IND      (AS_NAS_RELEASE | AS_INDICATION)
+#define AS_NAS_RELEASE 0x05
+#define AS_NAS_RELEASE_REQ (AS_NAS_RELEASE | AS_REQUEST)
+#define AS_NAS_RELEASE_IND (AS_NAS_RELEASE | AS_INDICATION)
 
 /* Uplink information transfer */
-#define AS_UL_INFO_TRANSFER     0x06
-#define AS_UL_INFO_TRANSFER_REQ     (AS_UL_INFO_TRANSFER | AS_REQUEST)
-#define AS_UL_INFO_TRANSFER_CNF     (AS_UL_INFO_TRANSFER | AS_CONFIRM)
-#define AS_UL_INFO_TRANSFER_IND     (AS_UL_INFO_TRANSFER | AS_INDICATION)
+#define AS_UL_INFO_TRANSFER 0x06
+#define AS_UL_INFO_TRANSFER_REQ (AS_UL_INFO_TRANSFER | AS_REQUEST)
+#define AS_UL_INFO_TRANSFER_CNF (AS_UL_INFO_TRANSFER | AS_CONFIRM)
+#define AS_UL_INFO_TRANSFER_IND (AS_UL_INFO_TRANSFER | AS_INDICATION)
 
 /* Downlink information transfer */
-#define AS_DL_INFO_TRANSFER     0x07
-#define AS_DL_INFO_TRANSFER_REQ     (AS_DL_INFO_TRANSFER | AS_REQUEST)
-#define AS_DL_INFO_TRANSFER_CNF     (AS_DL_INFO_TRANSFER | AS_CONFIRM)
-#define AS_DL_INFO_TRANSFER_IND     (AS_DL_INFO_TRANSFER | AS_INDICATION)
+#define AS_DL_INFO_TRANSFER 0x07
+#define AS_DL_INFO_TRANSFER_REQ (AS_DL_INFO_TRANSFER | AS_REQUEST)
+#define AS_DL_INFO_TRANSFER_CNF (AS_DL_INFO_TRANSFER | AS_CONFIRM)
+#define AS_DL_INFO_TRANSFER_IND (AS_DL_INFO_TRANSFER | AS_INDICATION)
 
 /* Radio Access Bearer establishment */
-#define AS_ACTIVATE_BEARER_CONTEXT        0x08
-#define AS_ACTIVATE_BEARER_CONTEXT_REQ        (AS_ACTIVATE_BEARER_CONTEXT | AS_REQUEST)
+#define AS_ACTIVATE_BEARER_CONTEXT 0x08
+#define AS_ACTIVATE_BEARER_CONTEXT_REQ (AS_ACTIVATE_BEARER_CONTEXT | AS_REQUEST)
 
 /* Radio Access Bearer establishment */
-#define AS_MODIFY_BEARER_CONTEXT        0x09
-#define AS_MODIFY_BEARER_CONTEXT_REQ        (AS_MODIFY_BEARER_CONTEXT | AS_REQUEST)
+#define AS_MODIFY_BEARER_CONTEXT 0x09
+#define AS_MODIFY_BEARER_CONTEXT_REQ (AS_MODIFY_BEARER_CONTEXT | AS_REQUEST)
 
 /* Radio Access Bearer release */
-#define AS_RAB_RELEASE          0x0A
-#define AS_RAB_RELEASE_REQ      (AS_RAB_RELEASE | AS_REQUEST)
-#define AS_RAB_RELEASE_IND      (AS_RAB_RELEASE | AS_INDICATION)
+#define AS_RAB_RELEASE 0x0A
+#define AS_RAB_RELEASE_REQ (AS_RAB_RELEASE | AS_REQUEST)
+#define AS_RAB_RELEASE_IND (AS_RAB_RELEASE | AS_INDICATION)
 
 /* NAS Cause */
 typedef enum nas_cause_s {
-  NAS_CAUSE_IMSI_UNKNOWN_IN_HSS                           = EMM_CAUSE_IMSI_UNKNOWN_IN_HSS,
-  NAS_CAUSE_ILLEGAL_UE                                    = EMM_CAUSE_ILLEGAL_UE,
-  NAS_CAUSE_ILLEGAL_ME                                    = EMM_CAUSE_ILLEGAL_ME,
-  NAS_CAUSE_UE_IDENTITY_CANT_BE_DERIVED_BY_NW             = EMM_CAUSE_UE_IDENTITY_CANT_BE_DERIVED_BY_NW,
-  NAS_CAUSE_IMPLICITLY_DETACHED                           = EMM_CAUSE_IMPLICITLY_DETACHED,
-  NAS_CAUSE_IMEI_NOT_ACCEPTED                             = EMM_CAUSE_IMEI_NOT_ACCEPTED,
-  NAS_CAUSE_EPS_SERVICES_NOT_ALLOWED                      = EMM_CAUSE_EPS_NOT_ALLOWED,
-  NAS_CAUSE_EPS_SERVICES_AND_NON_EPS_SERVICES_NOT_ALLOWED = EMM_CAUSE_BOTH_NOT_ALLOWED,
-  NAS_CAUSE_PLMN_NOT_ALLOWED                              = EMM_CAUSE_PLMN_NOT_ALLOWED,
-  NAS_CAUSE_TRACKING_AREA_NOT_ALLOWED                     = EMM_CAUSE_TA_NOT_ALLOWED,
-  NAS_CAUSE_ROAMING_NOT_ALLOWED_IN_THIS_TRACKING_AREA     = EMM_CAUSE_ROAMING_NOT_ALLOWED,
-  NAS_CAUSE_EPS_NOT_ALLOWED_IN_PLMN                       = EMM_CAUSE_EPS_NOT_ALLOWED_IN_PLMN,
-  NAS_CAUSE_NO_SUITABLE_CELLS_IN_TRACKING_AREA            = EMM_CAUSE_NO_SUITABLE_CELLS,
-  NAS_CAUSE_CSG_NOT_AUTHORIZED                            = EMM_CAUSE_CSG_NOT_AUTHORIZED,
-  NAS_CAUSE_NOT_AUTHORIZED_IN_PLMN                        = EMM_CAUSE_NOT_AUTHORIZED_IN_PLMN,
-  NAS_CAUSE_NO_EPS_BEARER_CTX_ACTIVE                      = EMM_CAUSE_NO_EPS_BEARER_CTX_ACTIVE,
-  NAS_CAUSE_MSC_NOT_REACHABLE                             = EMM_CAUSE_MSC_NOT_REACHABLE,
-  NAS_CAUSE_NETWORK_FAILURE                               = EMM_CAUSE_NETWORK_FAILURE,
-  NAS_CAUSE_CS_DOMAIN_NOT_AVAILABLE                       = EMM_CAUSE_CS_DOMAIN_NOT_AVAILABLE,
-  NAS_CAUSE_ESM_FAILURE                                   = EMM_CAUSE_ESM_FAILURE,
-  NAS_CAUSE__MAC_FAILURE                                  = EMM_CAUSE_MAC_FAILURE,
-  NAS_CAUSE_SYNCH_FAILURE                                 = EMM_CAUSE_SYNCH_FAILURE,
-  NAS_CAUSE_CONGESTION                                    = EMM_CAUSE_CONGESTION,
-  NAS_CAUSE_SECURITY_MISMATCH                             = EMM_CAUSE_UE_SECURITY_MISMATCH,
-  NAS_CAUSE_SECURITY_MODE_REJECTED                        = EMM_CAUSE_SECURITY_MODE_REJECTED,
-  NAS_CAUSE_NON_EPS_AUTH_UNACCEPTABLE                     = EMM_CAUSE_NON_EPS_AUTH_UNACCEPTABLE,
-  NAS_CAUSE_CS_SERVICE_NOT_AVAILABLE                      = EMM_CAUSE_CS_SERVICE_NOT_AVAILABLE
+  NAS_CAUSE_IMSI_UNKNOWN_IN_HSS = EMM_CAUSE_IMSI_UNKNOWN_IN_HSS,
+  NAS_CAUSE_ILLEGAL_UE = EMM_CAUSE_ILLEGAL_UE,
+  NAS_CAUSE_ILLEGAL_ME = EMM_CAUSE_ILLEGAL_ME,
+  NAS_CAUSE_UE_IDENTITY_CANT_BE_DERIVED_BY_NW =
+      EMM_CAUSE_UE_IDENTITY_CANT_BE_DERIVED_BY_NW,
+  NAS_CAUSE_IMPLICITLY_DETACHED = EMM_CAUSE_IMPLICITLY_DETACHED,
+  NAS_CAUSE_IMEI_NOT_ACCEPTED = EMM_CAUSE_IMEI_NOT_ACCEPTED,
+  NAS_CAUSE_EPS_SERVICES_NOT_ALLOWED = EMM_CAUSE_EPS_NOT_ALLOWED,
+  NAS_CAUSE_EPS_SERVICES_AND_NON_EPS_SERVICES_NOT_ALLOWED =
+      EMM_CAUSE_BOTH_NOT_ALLOWED,
+  NAS_CAUSE_PLMN_NOT_ALLOWED = EMM_CAUSE_PLMN_NOT_ALLOWED,
+  NAS_CAUSE_TRACKING_AREA_NOT_ALLOWED = EMM_CAUSE_TA_NOT_ALLOWED,
+  NAS_CAUSE_ROAMING_NOT_ALLOWED_IN_THIS_TRACKING_AREA =
+      EMM_CAUSE_ROAMING_NOT_ALLOWED,
+  NAS_CAUSE_EPS_NOT_ALLOWED_IN_PLMN = EMM_CAUSE_EPS_NOT_ALLOWED_IN_PLMN,
+  NAS_CAUSE_NO_SUITABLE_CELLS_IN_TRACKING_AREA = EMM_CAUSE_NO_SUITABLE_CELLS,
+  NAS_CAUSE_CSG_NOT_AUTHORIZED = EMM_CAUSE_CSG_NOT_AUTHORIZED,
+  NAS_CAUSE_NOT_AUTHORIZED_IN_PLMN = EMM_CAUSE_NOT_AUTHORIZED_IN_PLMN,
+  NAS_CAUSE_NO_EPS_BEARER_CTX_ACTIVE = EMM_CAUSE_NO_EPS_BEARER_CTX_ACTIVE,
+  NAS_CAUSE_MSC_NOT_REACHABLE = EMM_CAUSE_MSC_NOT_REACHABLE,
+  NAS_CAUSE_NETWORK_FAILURE = EMM_CAUSE_NETWORK_FAILURE,
+  NAS_CAUSE_CS_DOMAIN_NOT_AVAILABLE = EMM_CAUSE_CS_DOMAIN_NOT_AVAILABLE,
+  NAS_CAUSE_ESM_FAILURE = EMM_CAUSE_ESM_FAILURE,
+  NAS_CAUSE__MAC_FAILURE = EMM_CAUSE_MAC_FAILURE,
+  NAS_CAUSE_SYNCH_FAILURE = EMM_CAUSE_SYNCH_FAILURE,
+  NAS_CAUSE_CONGESTION = EMM_CAUSE_CONGESTION,
+  NAS_CAUSE_SECURITY_MISMATCH = EMM_CAUSE_UE_SECURITY_MISMATCH,
+  NAS_CAUSE_SECURITY_MODE_REJECTED = EMM_CAUSE_SECURITY_MODE_REJECTED,
+  NAS_CAUSE_NON_EPS_AUTH_UNACCEPTABLE = EMM_CAUSE_NON_EPS_AUTH_UNACCEPTABLE,
+  NAS_CAUSE_CS_SERVICE_NOT_AVAILABLE = EMM_CAUSE_CS_SERVICE_NOT_AVAILABLE
 } nas_cause_t;
 
 /*
@@ -157,20 +158,20 @@ typedef enum nas_cause_s {
 
 /* Error code */
 typedef enum nas_error_code_s {
-  AS_SUCCESS = 1, /* Success code, transaction is going on    */
-  AS_TERMINATED_NAS,  /* Transaction terminated by NAS        */
-  AS_TERMINATED_NAS_LIGHT,  /* Transaction terminated by NAS        */
-  AS_TERMINATED_AS,   /* Transaction terminated by AS         */
-  AS_NON_DELIVERED_DUE_HO,      /* Failure code                 */
-  AS_FAILURE      /* Failure code, stand also for lower layer failure AS_LOWER_LAYER_FAILURE */
+  AS_SUCCESS = 1,          /* Success code, transaction is going on    */
+  AS_TERMINATED_NAS,       /* Transaction terminated by NAS        */
+  AS_TERMINATED_NAS_LIGHT, /* Transaction terminated by NAS        */
+  AS_TERMINATED_AS,        /* Transaction terminated by AS         */
+  AS_NON_DELIVERED_DUE_HO, /* Failure code                 */
+  AS_FAILURE               /* Failure code, stand also for lower layer failure
+                              AS_LOWER_LAYER_FAILURE */
 } nas_error_code_t;
 
 /* Core network domain */
 typedef enum core_network_s {
-  AS_PS = 1,      /* Packet-Switched  */
-  AS_CS       /* Circuit-Switched */
+  AS_PS = 1, /* Packet-Switched  */
+  AS_CS      /* Circuit-Switched */
 } core_network_t;
-
 
 /* Radio Access Bearer identity */
 typedef uint8_t as_rab_id_t;
@@ -191,10 +192,10 @@ typedef uint8_t as_rab_id_t;
  * location area
  */
 typedef struct broadcast_info_ind_s {
-#define PLMN_LIST_MAX_SIZE  6
+#define PLMN_LIST_MAX_SIZE 6
   PLMN_LIST_T(PLMN_LIST_MAX_SIZE) plmn_ids; /* List of PLMN identifiers */
-  eci_t  cell_id;    /* Identity of the cell serving the listed PLMNs */
-  tac_t tac;      /* Code of the tracking area the cell belongs to */
+  eci_t cell_id; /* Identity of the cell serving the listed PLMNs */
+  tac_t tac;     /* Code of the tracking area the cell belongs to */
 } broadcast_info_ind_t;
 
 /*
@@ -204,14 +205,14 @@ typedef struct broadcast_info_ind_s {
  */
 
 /* Radio access technologies supported by the network */
-#define AS_GSM              (1 << NET_ACCESS_GSM)
-#define AS_COMPACT          (1 << NET_ACCESS_COMPACT)
-#define AS_UTRAN            (1 << NET_ACCESS_UTRAN)
-#define AS_EGPRS            (1 << NET_ACCESS_EGPRS)
-#define AS_HSDPA            (1 << NET_ACCESS_HSDPA)
-#define AS_HSUPA            (1 << NET_ACCESS_HSUPA)
-#define AS_HSDUPA           (1 << NET_ACCESS_HSDUPA)
-#define AS_EUTRAN           (1 << NET_ACCESS_EUTRAN)
+#define AS_GSM (1 << NET_ACCESS_GSM)
+#define AS_COMPACT (1 << NET_ACCESS_COMPACT)
+#define AS_UTRAN (1 << NET_ACCESS_UTRAN)
+#define AS_EGPRS (1 << NET_ACCESS_EGPRS)
+#define AS_HSDPA (1 << NET_ACCESS_HSDPA)
+#define AS_HSUPA (1 << NET_ACCESS_HSUPA)
+#define AS_HSDUPA (1 << NET_ACCESS_HSDUPA)
+#define AS_EUTRAN (1 << NET_ACCESS_EUTRAN)
 
 /*
  * NAS->AS - Cell Information request
@@ -219,8 +220,8 @@ typedef struct broadcast_info_ind_s {
  * PLMN to camp on.
  */
 typedef struct cell_info_req_s {
-  plmn_t plmn_id;  /* Selected PLMN identity           */
-  uint8_t rat;     /* Bitmap - set of radio access technologies    */
+  plmn_t plmn_id; /* Selected PLMN identity           */
+  uint8_t rat;    /* Bitmap - set of radio access technologies    */
 } cell_info_req_t;
 
 /*
@@ -229,12 +230,12 @@ typedef struct cell_info_req_s {
  * is selected to camp on.
  */
 typedef struct cell_info_cnf_s {
-  uint8_t err_code;    /* Error code                     */
-  eci_t    cell_id;    /* Identity of the cell serving the selected PLMN */
-  tac_t   tac;      /* Code of the tracking area the cell belongs to  */
-  AcT_t   rat;      /* Radio access technology supported by the cell  */
-  uint8_t rsrq;   /* Reference signal received quality         */
-  uint8_t rsrp;   /* Reference signal received power       */
+  uint8_t err_code; /* Error code                     */
+  eci_t cell_id;    /* Identity of the cell serving the selected PLMN */
+  tac_t tac;        /* Code of the tracking area the cell belongs to  */
+  AcT_t rat;        /* Radio access technology supported by the cell  */
+  uint8_t rsrq;     /* Reference signal received quality         */
+  uint8_t rsrp;     /* Reference signal received power       */
 } cell_info_cnf_t;
 
 /*
@@ -242,8 +243,8 @@ typedef struct cell_info_cnf_s {
  * AS may change cell selection if a more suitable cell is found.
  */
 typedef struct cell_info_ind_s {
-  eci_t  cell_id;    /* Identity of the new serving cell      */
-  tac_t tac;      /* Code of the tracking area the cell belongs to */
+  eci_t cell_id; /* Identity of the new serving cell      */
+  tac_t tac;     /* Code of the tracking area the cell belongs to */
 } cell_info_ind_t;
 
 /*
@@ -254,10 +255,10 @@ typedef struct cell_info_ind_s {
 
 /* Paging cause */
 typedef enum paging_cause_s {
-  AS_CONNECTION_ESTABLISH,    /* Establish NAS signalling connection  */
-  AS_EPS_ATTACH,      /* Perform local detach and initiate EPS
-                 * attach procedure         */
-  AS_CS_FALLBACK      /* Inititate CS fallback procedure  */
+  AS_CONNECTION_ESTABLISH, /* Establish NAS signalling connection  */
+  AS_EPS_ATTACH,           /* Perform local detach and initiate EPS
+                            * attach procedure         */
+  AS_CS_FALLBACK           /* Inititate CS fallback procedure  */
 } paging_cause_t;
 
 /*
@@ -266,8 +267,8 @@ typedef enum paging_cause_s {
  * to be sent.
  */
 typedef struct paging_req_s {
-  s_tmsi_t   s_tmsi;  /* UE identity                  */
-  uint8_t    cn_domain;  /* Core network domain              */
+  s_tmsi_t s_tmsi;   /* UE identity                  */
+  uint8_t cn_domain; /* Core network domain              */
 } paging_req_t;
 
 /*
@@ -275,7 +276,7 @@ typedef struct paging_req_s {
  * AS reports to the NAS that appropriate procedure has to be initiated.
  */
 typedef struct paging_ind_s {
-  paging_cause_t cause;  /* Paging cause                 */
+  paging_cause_t cause; /* Paging cause                 */
 } paging_ind_t;
 
 /*
@@ -286,22 +287,22 @@ typedef struct paging_ind_s {
 
 /* Cause of RRC connection establishment */
 typedef enum as_cause_s {
-  AS_CAUSE_UNKNOWN    = 0,
-  AS_CAUSE_EMERGENCY  = EMERGENCY,
-  AS_CAUSE_HIGH_PRIO  = HIGH_PRIORITY_ACCESS,
-  AS_CAUSE_MT_ACCESS  = MT_ACCESS,
-  AS_CAUSE_MO_SIGNAL  = MO_SIGNALLING,
-  AS_CAUSE_MO_DATA    = MO_DATA,
-  AS_CAUSE_V1020      = DELAY_TOLERANT_ACCESS_V1020
+  AS_CAUSE_UNKNOWN = 0,
+  AS_CAUSE_EMERGENCY = EMERGENCY,
+  AS_CAUSE_HIGH_PRIO = HIGH_PRIORITY_ACCESS,
+  AS_CAUSE_MT_ACCESS = MT_ACCESS,
+  AS_CAUSE_MO_SIGNAL = MO_SIGNALLING,
+  AS_CAUSE_MO_DATA = MO_DATA,
+  AS_CAUSE_V1020 = DELAY_TOLERANT_ACCESS_V1020
 } as_cause_t;
 
 /* Type of the call associated to the RRC connection establishment */
 typedef enum as_call_type_s {
-  AS_TYPE_ORIGINATING_SIGNAL  = NET_ESTABLISH_TYPE_ORIGINATING_SIGNAL,
-  AS_TYPE_EMERGENCY_CALLS     = NET_ESTABLISH_TYPE_EMERGENCY_CALLS,
-  AS_TYPE_ORIGINATING_CALLS   = NET_ESTABLISH_TYPE_ORIGINATING_CALLS,
-  AS_TYPE_TERMINATING_CALLS   = NET_ESTABLISH_TYPE_TERMINATING_CALLS,
-  AS_TYPE_MO_CS_FALLBACK      = NET_ESTABLISH_TYPE_MO_CS_FALLBACK
+  AS_TYPE_ORIGINATING_SIGNAL = NET_ESTABLISH_TYPE_ORIGINATING_SIGNAL,
+  AS_TYPE_EMERGENCY_CALLS = NET_ESTABLISH_TYPE_EMERGENCY_CALLS,
+  AS_TYPE_ORIGINATING_CALLS = NET_ESTABLISH_TYPE_ORIGINATING_CALLS,
+  AS_TYPE_TERMINATING_CALLS = NET_ESTABLISH_TYPE_TERMINATING_CALLS,
+  AS_TYPE_MO_CS_FALLBACK = NET_ESTABLISH_TYPE_MO_CS_FALLBACK
 } as_call_type_t;
 
 /*
@@ -310,11 +311,11 @@ typedef enum as_call_type_s {
  * to transfer initial NAS message to the network while UE is in IDLE mode.
  */
 typedef struct nas_establish_req_s {
-  as_cause_t      cause;           /* RRC connection establishment cause   */
-  as_call_type_t  type;            /* RRC associated call type             */
-  s_tmsi_t        s_tmsi;          /* UE identity                          */
-  plmn_t          plmn_id;         /* Selected PLMN identity               */
-  bstring         initial_nas_msg; /* Initial NAS message to transfer      */
+  as_cause_t cause;        /* RRC connection establishment cause   */
+  as_call_type_t type;     /* RRC associated call type             */
+  s_tmsi_t s_tmsi;         /* UE identity                          */
+  plmn_t plmn_id;          /* Selected PLMN identity               */
+  bstring initial_nas_msg; /* Initial NAS message to transfer      */
 } nas_establish_req_t;
 
 /*
@@ -322,12 +323,15 @@ typedef struct nas_establish_req_s {
  * AS transfers the initial NAS message to the NAS.
  */
 typedef struct nas_establish_ind_s {
-  mme_ue_s1ap_id_t ue_id;             /* UE lower layer identifier               */
-  tai_t            tai;               /* Indicating the Tracking Area from which the UE has sent the NAS message.                         */
-  ecgi_t           ecgi;               /* Indicating the cell from which the UE has sent the NAS message.                         */
-  as_cause_t       as_cause;          /* Establishment cause                     */
-  s_tmsi_t         s_tmsi;            /* UE identity optional field, if not present, value is NOT_A_S_TMSI */
-  bstring          initial_nas_msg;   /* Initial NAS message to transfer         */
+  mme_ue_s1ap_id_t ue_id; /* UE lower layer identifier               */
+  tai_t tai; /* Indicating the Tracking Area from which the UE has sent the NAS
+                message.                         */
+  ecgi_t ecgi;         /* Indicating the cell from which the UE has sent the NAS
+                          message.                         */
+  as_cause_t as_cause; /* Establishment cause                     */
+  s_tmsi_t s_tmsi;     /* UE identity optional field, if not present, value is
+                          NOT_A_S_TMSI */
+  bstring initial_nas_msg; /* Initial NAS message to transfer         */
 } nas_establish_ind_t;
 
 /*
@@ -336,13 +340,13 @@ typedef struct nas_establish_ind_s {
  * the UE.
  */
 typedef struct nas_establish_rsp_s {
-  mme_ue_s1ap_id_t ue_id;         /* UE lower layer identifier   */
-  nas_error_code_t err_code;      /* Transaction status          */
-  bstring          nas_msg;       /* NAS message to transfer     */
-  uint32_t         nas_ul_count;  /* UL NAS COUNT                */
-  uint16_t         selected_encryption_algorithm;
-  uint16_t         selected_integrity_algorithm;
-  s_tmsi_t         s_tmsi;        /* UE identity                 */
+  mme_ue_s1ap_id_t ue_id;    /* UE lower layer identifier   */
+  nas_error_code_t err_code; /* Transaction status          */
+  bstring nas_msg;           /* NAS message to transfer     */
+  uint32_t nas_ul_count;     /* UL NAS COUNT                */
+  uint16_t selected_encryption_algorithm;
+  uint16_t selected_integrity_algorithm;
+  s_tmsi_t s_tmsi; /* UE identity                 */
 } nas_establish_rsp_t;
 
 /*
@@ -350,12 +354,12 @@ typedef struct nas_establish_rsp_s {
  * AS transfers the initial answer message to the NAS.
  */
 typedef struct nas_establish_cnf_s {
-  mme_ue_s1ap_id_t ue_id;            /* UE lower layer identifier   */
-  nas_error_code_t err_code;         /* Transaction status          */
-  bstring          nas_msg;          /* NAS message to transfer     */
-  uint32_t         ul_nas_count;
-  uint16_t         selected_encryption_algorithm;
-  uint16_t         selected_integrity_algorithm;
+  mme_ue_s1ap_id_t ue_id;    /* UE lower layer identifier   */
+  nas_error_code_t err_code; /* Transaction status          */
+  bstring nas_msg;           /* NAS message to transfer     */
+  uint32_t ul_nas_count;
+  uint16_t selected_encryption_algorithm;
+  uint16_t selected_integrity_algorithm;
 } nas_establish_cnf_t;
 
 /*
@@ -366,8 +370,8 @@ typedef struct nas_establish_cnf_s {
 
 /* Release cause */
 typedef enum release_cause_s {
-  AS_AUTHENTICATION_FAILURE = 1,  /* Authentication procedure failed   */
-  AS_DETACH                       /* Detach requested                  */
+  AS_AUTHENTICATION_FAILURE = 1, /* Authentication procedure failed   */
+  AS_DETACH                      /* Detach requested                  */
 } release_cause_t;
 
 /*
@@ -375,9 +379,9 @@ typedef enum release_cause_s {
  * NAS requests the termination of the connection with the UE.
  */
 typedef struct nas_release_req_s {
-  mme_ue_s1ap_id_t ue_id;  /* UE lower layer identifier    */
-  s_tmsi_t         s_tmsi; /* UE identity                  */
-  release_cause_t  cause;  /* Release cause                */
+  mme_ue_s1ap_id_t ue_id; /* UE lower layer identifier    */
+  s_tmsi_t s_tmsi;        /* UE identity                  */
+  release_cause_t cause;  /* Release cause                */
 } nas_release_req_t;
 
 /*
@@ -385,7 +389,7 @@ typedef struct nas_release_req_s {
  * AS reports that connection has been terminated by the network.
  */
 typedef struct nas_release_ind_s {
-  release_cause_t cause;      /* Release cause            */
+  release_cause_t cause; /* Release cause            */
 } nas_release_ind_t;
 
 /*
@@ -400,9 +404,9 @@ typedef struct nas_release_ind_s {
  * operates at the network side.
  */
 typedef struct ul_info_transfer_req_s {
-  mme_ue_s1ap_id_t ue_id;       /* UE lower layer identifier        */
-  s_tmsi_t         s_tmsi;      /* UE identity              */
-  bstring          nas_msg;     /* Uplink NAS message           */
+  mme_ue_s1ap_id_t ue_id; /* UE lower layer identifier        */
+  s_tmsi_t s_tmsi;        /* UE identity              */
+  bstring nas_msg;        /* Uplink NAS message           */
 } ul_info_transfer_req_t;
 
 /*
@@ -411,8 +415,8 @@ typedef struct ul_info_transfer_req_s {
  * successfully sent to the network or not.
  */
 typedef struct ul_info_transfer_cnf_s {
-  mme_ue_s1ap_id_t ue_id;      /* UE lower layer identifier        */
-  nas_error_code_t err_code;   /* Transaction status               */
+  mme_ue_s1ap_id_t ue_id;    /* UE lower layer identifier        */
+  nas_error_code_t err_code; /* Transaction status               */
 } ul_info_transfer_cnf_t;
 
 /*
@@ -421,8 +425,8 @@ typedef struct ul_info_transfer_cnf_s {
  * at the network side.
  */
 typedef struct ul_info_transfer_ind_s {
-  mme_ue_s1ap_id_t ue_id;     /* UE lower layer identifier        */
-  bstring          nas_msg;   /* Uplink NAS message           */
+  mme_ue_s1ap_id_t ue_id; /* UE lower layer identifier        */
+  bstring nas_msg;        /* Uplink NAS message           */
 } ul_info_transfer_ind_t;
 
 /*
@@ -431,10 +435,10 @@ typedef struct ul_info_transfer_ind_s {
  * operates at the UE side.
  */
 typedef struct dl_info_transfer_req_s {
-  mme_ue_s1ap_id_t ue_id;       /* UE lower layer identifier        */
-  s_tmsi_t         s_tmsi;      /* UE identity              */
-  bstring          nas_msg;     /* Uplink NAS message           */
-  nas_error_code_t err_code;   /* Transaction status               */
+  mme_ue_s1ap_id_t ue_id;    /* UE lower layer identifier        */
+  s_tmsi_t s_tmsi;           /* UE identity              */
+  bstring nas_msg;           /* Uplink NAS message           */
+  nas_error_code_t err_code; /* Transaction status               */
 } dl_info_transfer_req_t;
 
 /*
@@ -463,13 +467,13 @@ typedef ul_info_transfer_ind_t dl_info_transfer_ind_t;
  * bearer initialized at the network side.
  */
 typedef struct activate_bearer_context_req_s {
-  mme_ue_s1ap_id_t ue_id;  /* UE lower layer identifier        */
-  ebi_t            ebi;    /* EPS bearer id    */
-  bitrate_t        mbr_dl;
-  bitrate_t        mbr_ul;
-  bitrate_t        gbr_dl;
-  bitrate_t        gbr_ul;
-  bstring          nas_msg; /* NAS message to transfer     */
+  mme_ue_s1ap_id_t ue_id; /* UE lower layer identifier        */
+  ebi_t ebi;              /* EPS bearer id    */
+  bitrate_t mbr_dl;
+  bitrate_t mbr_ul;
+  bitrate_t gbr_dl;
+  bitrate_t gbr_ul;
+  bstring nas_msg; /* NAS message to transfer     */
 } activate_bearer_context_req_t;
 
 /*
@@ -477,8 +481,8 @@ typedef struct activate_bearer_context_req_s {
  * AS notifies the NAS that specific radio access bearer has to be setup.
  */
 typedef struct rab_establish_ind_s {
-  mme_ue_s1ap_id_t ue_id;     /* UE lower layer identifier        */
-  ebi_t            ebi;    /* EPS bearer id    */
+  mme_ue_s1ap_id_t ue_id; /* UE lower layer identifier        */
+  ebi_t ebi;              /* EPS bearer id    */
 } rab_establish_ind_t;
 
 /*
@@ -487,9 +491,9 @@ typedef struct rab_establish_ind_s {
  * successfully setup or not.
  */
 typedef struct rab_establish_rsp_s {
-  mme_ue_s1ap_id_t ue_id;     /* UE lower layer identifier        */
-  ebi_t            ebi;    /* EPS bearer id    */
-  nas_error_code_t err_code;  /* Transaction status               */
+  mme_ue_s1ap_id_t ue_id;    /* UE lower layer identifier        */
+  ebi_t ebi;                 /* EPS bearer id    */
+  nas_error_code_t err_code; /* Transaction status               */
 } rab_establish_rsp_t;
 
 /*
@@ -498,9 +502,9 @@ typedef struct rab_establish_rsp_s {
  * successfully setup at the UE side or not.
  */
 typedef struct rab_establish_cnf_s {
-  mme_ue_s1ap_id_t ue_id;     /* UE lower layer identifier        */
-  ebi_t            ebi;    /* EPS bearer id    */
-  nas_error_code_t err_code;  /* Transaction status               */
+  mme_ue_s1ap_id_t ue_id;    /* UE lower layer identifier        */
+  ebi_t ebi;                 /* EPS bearer id    */
+  nas_error_code_t err_code; /* Transaction status               */
 } rab_establish_cnf_t;
 
 /*
@@ -515,13 +519,13 @@ typedef struct rab_establish_cnf_s {
  * bearer initialized at the network side.
  */
 typedef struct modify_bearer_context_req_s {
-  mme_ue_s1ap_id_t ue_id;  /* UE lower layer identifier        */
-  ebi_t            ebi;    /* EPS bearer id    */
-  bitrate_t        mbr_dl;
-  bitrate_t        mbr_ul;
-  bitrate_t        gbr_dl;
-  bitrate_t        gbr_ul;
-  bstring          nas_msg; /* NAS message to transfer     */
+  mme_ue_s1ap_id_t ue_id; /* UE lower layer identifier        */
+  ebi_t ebi;              /* EPS bearer id    */
+  bitrate_t mbr_dl;
+  bitrate_t mbr_ul;
+  bitrate_t gbr_dl;
+  bitrate_t gbr_ul;
+  bstring nas_msg; /* NAS message to transfer     */
 } modify_bearer_context_req_t;
 
 /*
@@ -529,8 +533,8 @@ typedef struct modify_bearer_context_req_s {
  * AS notifies the NAS that specific radio access bearer has to be modified.
  */
 typedef struct rab_modify_ind_s {
-  mme_ue_s1ap_id_t ue_id;     /* UE lower layer identifier        */
-  ebi_t            ebi;    /* EPS bearer id    */
+  mme_ue_s1ap_id_t ue_id; /* UE lower layer identifier        */
+  ebi_t ebi;              /* EPS bearer id    */
 } rab_modify_ind_t;
 
 /*
@@ -539,9 +543,9 @@ typedef struct rab_modify_ind_s {
  * successfully modified or not.
  */
 typedef struct rab_modify_rsp_s {
-  mme_ue_s1ap_id_t ue_id;     /* UE lower layer identifier        */
-  ebi_t            ebi;    /* EPS bearer id    */
-  nas_error_code_t err_code;  /* Transaction status               */
+  mme_ue_s1ap_id_t ue_id;    /* UE lower layer identifier        */
+  ebi_t ebi;                 /* EPS bearer id    */
+  nas_error_code_t err_code; /* Transaction status               */
 } rab_modify_rsp_t;
 
 /*
@@ -550,9 +554,9 @@ typedef struct rab_modify_rsp_s {
  * successfully modified at the UE side or not.
  */
 typedef struct rab_modify_cnf_s {
-  mme_ue_s1ap_id_t ue_id;     /* UE lower layer identifier        */
-  ebi_t            ebi;    /* EPS bearer id    */
-  nas_error_code_t err_code;  /* Transaction status               */
+  mme_ue_s1ap_id_t ue_id;    /* UE lower layer identifier        */
+  ebi_t ebi;                 /* EPS bearer id    */
+  nas_error_code_t err_code; /* Transaction status               */
 } rab_modify_cnf_t;
 
 /*
@@ -567,10 +571,10 @@ typedef struct rab_modify_cnf_s {
  * to specific radio access bearer at the network side.
  */
 typedef struct rab_release_req_s {
-  mme_ue_s1ap_id_t ue_id;     /* UE lower layer identifier        */
-  s_tmsi_t    s_tmsi;      /* UE identity                      */
-  as_rab_id_t rab_id;      /* Radio access bearer identity     */
-  bstring     nas_msg; /* NAS message to transfer     */
+  mme_ue_s1ap_id_t ue_id; /* UE lower layer identifier        */
+  s_tmsi_t s_tmsi;        /* UE identity                      */
+  as_rab_id_t rab_id;     /* Radio access bearer identity     */
+  bstring nas_msg;        /* NAS message to transfer     */
 } rab_release_req_t;
 
 /*
@@ -578,7 +582,7 @@ typedef struct rab_release_req_s {
  * AS notifies NAS that specific radio access bearer has been released.
  */
 typedef struct rab_release_ind_s {
-  as_rab_id_t rab_id;      /* Radio access bearer identity     */
+  as_rab_id_t rab_id; /* Radio access bearer identity     */
 } rab_release_ind_t;
 
 /*
@@ -589,34 +593,34 @@ typedef struct rab_release_ind_s {
 typedef struct as_message_s {
   uint16_t msg_id;
   union {
-    broadcast_info_ind_t   broadcast_info_ind;
-    cell_info_req_t        cell_info_req;
-    cell_info_cnf_t        cell_info_cnf;
-    cell_info_ind_t        cell_info_ind;
-    paging_req_t           paging_req;
-    paging_ind_t           paging_ind;
-    nas_establish_req_t    nas_establish_req;
-    nas_establish_ind_t    nas_establish_ind;
-    nas_establish_rsp_t    nas_establish_rsp;
-    nas_establish_cnf_t    nas_establish_cnf;
-    nas_release_req_t      nas_release_req;
-    nas_release_ind_t      nas_release_ind;
+    broadcast_info_ind_t broadcast_info_ind;
+    cell_info_req_t cell_info_req;
+    cell_info_cnf_t cell_info_cnf;
+    cell_info_ind_t cell_info_ind;
+    paging_req_t paging_req;
+    paging_ind_t paging_ind;
+    nas_establish_req_t nas_establish_req;
+    nas_establish_ind_t nas_establish_ind;
+    nas_establish_rsp_t nas_establish_rsp;
+    nas_establish_cnf_t nas_establish_cnf;
+    nas_release_req_t nas_release_req;
+    nas_release_ind_t nas_release_ind;
     ul_info_transfer_req_t ul_info_transfer_req;
     ul_info_transfer_cnf_t ul_info_transfer_cnf;
     ul_info_transfer_ind_t ul_info_transfer_ind;
     dl_info_transfer_req_t dl_info_transfer_req;
     dl_info_transfer_cnf_t dl_info_transfer_cnf;
     dl_info_transfer_ind_t dl_info_transfer_ind;
-    activate_bearer_context_req_t  activate_bearer_context_req;
-    modify_bearer_context_req_t    modify_bearer_context_req;
-    rab_establish_ind_t    rab_establish_ind;
-    rab_establish_rsp_t    rab_establish_rsp;
-    rab_establish_cnf_t    rab_establish_cnf;
-    rab_modify_ind_t       rab_modify_ind;
-    rab_modify_rsp_t       rab_modify_rsp;
-    rab_modify_cnf_t       rab_modify_cnf;
-    rab_release_req_t      rab_release_req;
-    rab_release_ind_t      rab_release_ind;
+    activate_bearer_context_req_t activate_bearer_context_req;
+    modify_bearer_context_req_t modify_bearer_context_req;
+    rab_establish_ind_t rab_establish_ind;
+    rab_establish_rsp_t rab_establish_rsp;
+    rab_establish_cnf_t rab_establish_cnf;
+    rab_modify_ind_t rab_modify_ind;
+    rab_modify_rsp_t rab_modify_rsp;
+    rab_modify_cnf_t rab_modify_cnf;
+    rab_release_req_t rab_release_req;
+    rab_release_ind_t rab_release_ind;
   } __attribute__((__packed__)) msg;
 } as_message_t;
 

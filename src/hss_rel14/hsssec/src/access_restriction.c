@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -19,13 +19,13 @@
  *      contact@openairinterface.org
  */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 #include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-#include "conversion.h"
 #include "access_restriction.h"
+#include "conversion.h"
 #include "log.h"
 
 /* TODO: identification of MCC and MNC within an IMSI should be done according
@@ -34,20 +34,14 @@
 */
 
 /* Split a PLMN formed of <MCC><MNC> to mcc and mnc.
-   In case MNC is formed of only two digits a 0 is inserted at the most significant
-   digit.
-   When PLMN is represented using european convention it contains only two digits,
-   while three digits are used in North American Standard.
-   Encoding of PLMN is defined in ITU E.212.
+   In case MNC is formed of only two digits a 0 is inserted at the most
+   significant digit. When PLMN is represented using european convention it
+   contains only two digits, while three digits are used in North American
+   Standard. Encoding of PLMN is defined in ITU E.212.
    @param plmn string either 5 or 6 digits resulting of the concatenation of
    MCC and MNC.
 */
-int
-split_plmn (
-  uint8_t plmn[3],
-  uint8_t mcc[3],
-  uint8_t mnc[3])
-{
+int split_plmn(uint8_t plmn[3], uint8_t mcc[3], uint8_t mnc[3]) {
   if (plmn == NULL) {
     return -1;
   }
@@ -75,44 +69,44 @@ split_plmn (
 /* Apply restriction (if any) to current 'visited' PLMN for this user.
    Criterias are based on ODB (operator determined barring), visited PLMN
    and user PLMN (obtain from IMSI).
-   @param imsi is the user identity formed of MCC.MNC.MSIN (14 or 15 digits long)
+   @param imsi is the user identity formed of MCC.MNC.MSIN (14 or 15 digits
+   long)
    @param vplmn is the plmn of the cell the UE is currently attached to
 */
 #define FORMAT_MCC(mCC) (mCC[0] * 100 + mCC[1] * 10 + mCC[2])
 #define FORMAT_MNC(mNC) (mNC[0] * 100 + mNC[1] * 10 + mNC[2])
 
-int
-apply_access_restriction (
-  char *imsi,
-  uint8_t * vplmn)
-{
-  uint8_t                                 vmcc[3],
-                                          vmnc[3];
-  uint8_t                                 hmcc[3],
-                                          hmnc[3] = {0} ;
-  uint8_t                                 imsi_hex[15];
+int apply_access_restriction(char *imsi, uint8_t *vplmn) {
+  uint8_t vmcc[3], vmnc[3];
+  uint8_t hmcc[3], hmnc[3] = {0};
+  uint8_t imsi_hex[15];
 
-  if (bcd_to_hex (imsi_hex, imsi, strlen (imsi)) != 0) {
-    FPRINTF_ERROR ( "Failed to convert imsi %s to hex representation\n", imsi);
+  if (bcd_to_hex(imsi_hex, imsi, strlen(imsi)) != 0) {
+    FPRINTF_ERROR("Failed to convert imsi %s to hex representation\n", imsi);
     return -1;
   }
 
   /*
    * There is a problem while converting the PLMN...
    */
-  if (split_plmn (vplmn, vmcc, vmnc) != 0) {
-    FPRINTF_ERROR ( "Fail to convert vplmn %02x%02x%02x to mcc/mnc for imsi %s\n", vplmn[0], vplmn[1], vplmn[2], imsi);
+  if (split_plmn(vplmn, vmcc, vmnc) != 0) {
+    FPRINTF_ERROR("Fail to convert vplmn %02x%02x%02x to mcc/mnc for imsi %s\n",
+                  vplmn[0], vplmn[1], vplmn[2], imsi);
     return -1;
   }
 
-  FPRINTF_DEBUG ( "Converted %02x%02x%02x to plmn %u.%u\n", vplmn[0], vplmn[1], vplmn[2], FORMAT_MCC (vmcc), FORMAT_MNC (vmnc));
+  FPRINTF_DEBUG("Converted %02x%02x%02x to plmn %u.%u\n", vplmn[0], vplmn[1],
+                vplmn[2], FORMAT_MCC(vmcc), FORMAT_MNC(vmnc));
   /*
    * MCC is always 3 digits
    */
-  memcpy (hmcc, &imsi_hex[0], 3);
+  memcpy(hmcc, &imsi_hex[0], 3);
 
-  if (memcmp (vmcc, hmcc, 3) != 0) {
-    FPRINTF_ERROR ( "Only France MCC is handled for now, got imsi plmn %u.%u for a visited plmn %u.%u\n", FORMAT_MCC (hmcc), FORMAT_MNC (hmnc), FORMAT_MCC (vmcc), FORMAT_MNC (vmnc));
+  if (memcmp(vmcc, hmcc, 3) != 0) {
+    FPRINTF_ERROR(
+        "Only France MCC is handled for now, got imsi plmn %u.%u for a visited "
+        "plmn %u.%u\n",
+        FORMAT_MCC(hmcc), FORMAT_MNC(hmnc), FORMAT_MCC(vmcc), FORMAT_MNC(vmnc));
     /*
      * Reject the association
      */
@@ -123,10 +117,13 @@ apply_access_restriction (
    * In France MNC is composed of 2 digits and thus imsi by 14 digit
    */
   hmnc[0] = 0;
-  memcpy (&hmnc[1], &imsi_hex[3], 2);
+  memcpy(&hmnc[1], &imsi_hex[3], 2);
 
-  if ((memcmp (vmcc, hmcc, 3) != 0) && (memcmp (vmnc, hmnc, 3) != 0)) {
-    FPRINTF_ERROR ( "UE is roaming from %u.%u to %u.%u which is not allowed" " by the ODB\n", FORMAT_MCC (hmcc), FORMAT_MNC (hmnc), FORMAT_MCC (vmcc), FORMAT_MNC (vmnc));
+  if ((memcmp(vmcc, hmcc, 3) != 0) && (memcmp(vmnc, hmnc, 3) != 0)) {
+    FPRINTF_ERROR(
+        "UE is roaming from %u.%u to %u.%u which is not allowed"
+        " by the ODB\n",
+        FORMAT_MCC(hmcc), FORMAT_MNC(hmnc), FORMAT_MCC(vmcc), FORMAT_MNC(vmnc));
     return -1;
   }
 

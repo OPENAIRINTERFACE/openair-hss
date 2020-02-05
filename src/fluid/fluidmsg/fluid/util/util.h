@@ -34,14 +34,14 @@
 #ifndef UTIL_H
 #define UTIL_H 1
 
+#include <arpa/inet.h>
+#include <assert.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-#include <assert.h>
-#include <arpa/inet.h>
 
 #ifndef va_copy
 #ifdef __va_copy
@@ -51,16 +51,15 @@
 #endif
 #endif
 
-
 #ifndef __cplusplus
 /* Build-time assertion for use in a statement context. */
 #define BUILD_ASSERT(EXPR) \
-        sizeof(struct { unsigned int build_assert_failed : (EXPR) ? 1 : -1; })
+  sizeof(struct { unsigned int build_assert_failed : (EXPR) ? 1 : -1; })
 
 /* Build-time assertion for use in a declaration context. */
 #define BUILD_ASSERT_DECL(EXPR) \
-        extern int (*build_assert(void))[BUILD_ASSERT(EXPR)]
-#else /* __cplusplus */
+  extern int(*build_assert(void))[BUILD_ASSERT(EXPR)]
+#else  /* __cplusplus */
 #endif /* __cplusplus */
 
 #define NO_RETURN __attribute__((__noreturn__))
@@ -69,13 +68,13 @@
 #define PRINTF_FORMAT(FMT, ARG1) __attribute__((__format__(printf, FMT, ARG1)))
 #define STRFTIME_FORMAT(FMT) __attribute__((__format__(__strftime__, FMT, 0)))
 #define MALLOC_LIKE __attribute__((__malloc__))
-#define likely(x) __builtin_expect((x),1)
-#define unlikely(x) __builtin_expect((x),0)
+#define likely(x) __builtin_expect((x), 1)
+#define unlikely(x) __builtin_expect((x), 0)
 
 #define ARRAY_SIZE(ARRAY) (sizeof ARRAY / sizeof *ARRAY)
-#define ROUND_UP(X, Y) (((X) + ((Y) - 1)) / (Y) * (Y))
+#define ROUND_UP(X, Y) (((X) + ((Y)-1)) / (Y) * (Y))
 #define ROUND_DOWN(X, Y) ((X) / (Y) * (Y))
-#define IS_POW2(X) ((X) && !((X) & ((X) - 1)))
+#define IS_POW2(X) ((X) && !((X) & ((X)-1)))
 
 #ifndef MIN
 #define MIN(X, Y) ((X) < (Y) ? (X) : (Y))
@@ -87,12 +86,12 @@
 
 #define NOT_REACHED() abort()
 #define NOT_IMPLEMENTED() abort()
-#define NOT_TESTED() ((void) 0) /* XXX should print a message. */
+#define NOT_TESTED() ((void)0) /* XXX should print a message. */
 
 /* Given POINTER, the address of the given MEMBER in a STRUCT object, returns
    the STRUCT object. */
-#define CONTAINER_OF(POINTER, STRUCT, MEMBER)                           \
-        ((STRUCT *) ((char *) (POINTER) - offsetof (STRUCT, MEMBER)))
+#define CONTAINER_OF(POINTER, STRUCT, MEMBER) \
+  ((STRUCT*)((char*)(POINTER)-offsetof(STRUCT, MEMBER)))
 
 /* Check endianness on OS X. */
 #ifndef __BYTE_ORDER
@@ -105,65 +104,59 @@
 #define __LITTLE_ENDIAN __ORDER_LITTLE_ENDIAN__
 #endif
 
-#ifdef  __cplusplus
+#ifdef __cplusplus
 extern "C" {
 #endif
 
-static inline uint16_t
-hton16(uint16_t n) {
+static inline uint16_t hton16(uint16_t n) {
 #if __BYTE_ORDER == __BIG_ENDIAN
-    return n;
+  return n;
 #else
-    return htons(n);
+  return htons(n);
 #endif
 }
 
-static inline uint16_t
-ntoh16(uint16_t n) {
+static inline uint16_t ntoh16(uint16_t n) {
 #if __BYTE_ORDER == __BIG_ENDIAN
-    return n;
+  return n;
 #else
-    return ntohs(n);
+  return ntohs(n);
 #endif
 }
 
-static inline uint32_t
-hton32(uint32_t n) {
+static inline uint32_t hton32(uint32_t n) {
 #if __BYTE_ORDER == __BIG_ENDIAN
-    return n;
+  return n;
 #else
-    return htonl(n);
+  return htonl(n);
 #endif
 }
 
-static inline uint32_t
-ntoh32(uint32_t n) {
+static inline uint32_t ntoh32(uint32_t n) {
 #if __BYTE_ORDER == __BIG_ENDIAN
-    return n;
+  return n;
 #else
-    return ntohl(n);
+  return ntohl(n);
 #endif
 }
 
-static inline uint64_t
-hton64(uint64_t n) {
+static inline uint64_t hton64(uint64_t n) {
 #if __BYTE_ORDER == __BIG_ENDIAN
-    return n;
+  return n;
 #else
-    return (((uint64_t)hton32(n)) << 32) + hton32(n >> 32);
+  return (((uint64_t)hton32(n)) << 32) + hton32(n >> 32);
 #endif
 }
 
-static inline uint64_t
-ntoh64(uint64_t n) {
+static inline uint64_t ntoh64(uint64_t n) {
 #if __BYTE_ORDER == __BIG_ENDIAN
-    return n;
+  return n;
 #else
-    return (((uint64_t)ntoh32(n)) << 32) + ntoh32(n >> 32);
+  return (((uint64_t)ntoh32(n)) << 32) + ntoh32(n >> 32);
 #endif
 }
 
-#ifdef  __cplusplus
+#ifdef __cplusplus
 }
 #endif
 

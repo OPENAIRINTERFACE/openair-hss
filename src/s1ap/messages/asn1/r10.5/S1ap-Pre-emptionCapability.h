@@ -4,9 +4,8 @@
  * 	found in "S1AP-IEs.asn"
  */
 
-#ifndef	_S1ap_Pre_emptionCapability_H_
-#define	_S1ap_Pre_emptionCapability_H_
-
+#ifndef _S1ap_Pre_emptionCapability_H_
+#define _S1ap_Pre_emptionCapability_H_
 
 #include <asn_application.h>
 
@@ -19,12 +18,12 @@ extern "C" {
 
 /* Dependencies */
 typedef enum S1ap_Pre_emptionCapability {
-	S1ap_Pre_emptionCapability_shall_not_trigger_pre_emption	= 0,
-	S1ap_Pre_emptionCapability_may_trigger_pre_emption	= 1
+  S1ap_Pre_emptionCapability_shall_not_trigger_pre_emption = 0,
+  S1ap_Pre_emptionCapability_may_trigger_pre_emption = 1
 } e_S1ap_Pre_emptionCapability;
 
 /* S1ap-Pre-emptionCapability */
-typedef long	 S1ap_Pre_emptionCapability_t;
+typedef long S1ap_Pre_emptionCapability_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_S1ap_Pre_emptionCapability;
@@ -40,5 +39,5 @@ xer_type_encoder_f S1ap_Pre_emptionCapability_encode_xer;
 }
 #endif
 
-#endif	/* _S1ap_Pre_emptionCapability_H_ */
+#endif /* _S1ap_Pre_emptionCapability_H_ */
 #include <asn_internal.h>

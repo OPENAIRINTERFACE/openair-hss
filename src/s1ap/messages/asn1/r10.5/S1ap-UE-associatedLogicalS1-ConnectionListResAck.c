@@ -6,48 +6,55 @@
 
 #include "S1ap-UE-associatedLogicalS1-ConnectionListResAck.h"
 
-static asn_TYPE_member_t asn_MBR_S1ap_UE_associatedLogicalS1_ConnectionListResAck_1[] = {
-	{ ATF_POINTER, 0, 0,
-		(ASN_TAG_CLASS_UNIVERSAL | (16 << 2)),
-		0,
-		&asn_DEF_S1ap_IE,
-		0,	/* Defer constraints checking to the member type */
-		0,	/* PER is not compiled, use -gen-PER */
-		0,
-		""
-		},
+static asn_TYPE_member_t
+    asn_MBR_S1ap_UE_associatedLogicalS1_ConnectionListResAck_1[] = {
+        {ATF_POINTER, 0, 0, (ASN_TAG_CLASS_UNIVERSAL | (16 << 2)), 0,
+         &asn_DEF_S1ap_IE,
+         0, /* Defer constraints checking to the member type */
+         0, /* PER is not compiled, use -gen-PER */
+         0, ""},
 };
-static ber_tlv_tag_t asn_DEF_S1ap_UE_associatedLogicalS1_ConnectionListResAck_tags_1[] = {
-	(ASN_TAG_CLASS_UNIVERSAL | (16 << 2))
-};
-static asn_SET_OF_specifics_t asn_SPC_S1ap_UE_associatedLogicalS1_ConnectionListResAck_specs_1 = {
-	sizeof(struct S1ap_UE_associatedLogicalS1_ConnectionListResAck),
-	offsetof(struct S1ap_UE_associatedLogicalS1_ConnectionListResAck, _asn_ctx),
-	0,	/* XER encoding is XMLDelimitedItemList */
+static ber_tlv_tag_t
+    asn_DEF_S1ap_UE_associatedLogicalS1_ConnectionListResAck_tags_1[] = {
+        (ASN_TAG_CLASS_UNIVERSAL | (16 << 2))};
+static asn_SET_OF_specifics_t
+    asn_SPC_S1ap_UE_associatedLogicalS1_ConnectionListResAck_specs_1 = {
+        sizeof(struct S1ap_UE_associatedLogicalS1_ConnectionListResAck),
+        offsetof(struct S1ap_UE_associatedLogicalS1_ConnectionListResAck,
+                 _asn_ctx),
+        0, /* XER encoding is XMLDelimitedItemList */
 };
 asn_TYPE_descriptor_t asn_DEF_S1ap_UE_associatedLogicalS1_ConnectionListResAck = {
-	"S1ap-UE-associatedLogicalS1-ConnectionListResAck",
-	"S1ap-UE-associatedLogicalS1-ConnectionListResAck",
-	SEQUENCE_OF_free,
-	SEQUENCE_OF_print,
-	SEQUENCE_OF_constraint,
-	SEQUENCE_OF_decode_ber,
-	SEQUENCE_OF_encode_der,
-	SEQUENCE_OF_decode_xer,
-	SEQUENCE_OF_encode_xer,
-	0, 0,	/* No UPER support, use "-gen-PER" to enable */
-	0, 0,	/* No APER support, use "-gen-PER" to enable */
-	SEQUENCE_OF_compare,
-	0,	/* Use generic outmost tag fetcher */
-	asn_DEF_S1ap_UE_associatedLogicalS1_ConnectionListResAck_tags_1,
-	sizeof(asn_DEF_S1ap_UE_associatedLogicalS1_ConnectionListResAck_tags_1)
-		/sizeof(asn_DEF_S1ap_UE_associatedLogicalS1_ConnectionListResAck_tags_1[0]), /* 1 */
-	asn_DEF_S1ap_UE_associatedLogicalS1_ConnectionListResAck_tags_1,	/* Same as above */
-	sizeof(asn_DEF_S1ap_UE_associatedLogicalS1_ConnectionListResAck_tags_1)
-		/sizeof(asn_DEF_S1ap_UE_associatedLogicalS1_ConnectionListResAck_tags_1[0]), /* 1 */
-	0,	/* No PER visible constraints */
-	asn_MBR_S1ap_UE_associatedLogicalS1_ConnectionListResAck_1,
-	1,	/* Single element */
-	&asn_SPC_S1ap_UE_associatedLogicalS1_ConnectionListResAck_specs_1	/* Additional specs */
+    "S1ap-UE-associatedLogicalS1-ConnectionListResAck",
+    "S1ap-UE-associatedLogicalS1-ConnectionListResAck",
+    SEQUENCE_OF_free,
+    SEQUENCE_OF_print,
+    SEQUENCE_OF_constraint,
+    SEQUENCE_OF_decode_ber,
+    SEQUENCE_OF_encode_der,
+    SEQUENCE_OF_decode_xer,
+    SEQUENCE_OF_encode_xer,
+    0,
+    0, /* No UPER support, use "-gen-PER" to enable */
+    0,
+    0, /* No APER support, use "-gen-PER" to enable */
+    SEQUENCE_OF_compare,
+    0, /* Use generic outmost tag fetcher */
+    asn_DEF_S1ap_UE_associatedLogicalS1_ConnectionListResAck_tags_1,
+    sizeof(asn_DEF_S1ap_UE_associatedLogicalS1_ConnectionListResAck_tags_1) /
+        sizeof(asn_DEF_S1ap_UE_associatedLogicalS1_ConnectionListResAck_tags_1
+                   [0]),                                             /* 1 */
+    asn_DEF_S1ap_UE_associatedLogicalS1_ConnectionListResAck_tags_1, /* Same
+                                                                        as
+                                                                        above
+                                                                      */
+    sizeof(asn_DEF_S1ap_UE_associatedLogicalS1_ConnectionListResAck_tags_1) /
+        sizeof(asn_DEF_S1ap_UE_associatedLogicalS1_ConnectionListResAck_tags_1
+                   [0]), /* 1 */
+    0,                   /* No PER visible constraints */
+    asn_MBR_S1ap_UE_associatedLogicalS1_ConnectionListResAck_1,
+    1, /* Single element */
+    &asn_SPC_S1ap_UE_associatedLogicalS1_ConnectionListResAck_specs_1 /* Additional
+                                                                         specs
+                                                                       */
 };
-

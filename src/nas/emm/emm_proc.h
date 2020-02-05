@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -40,11 +40,9 @@ Description Defines the EPS Mobility Management procedures executed at
 #define FILE_EMM_PROC_SEEN
 #include "bstrlib.h"
 
-#include "nas_message.h" //nas_message_decode_status_t
-#include "emm_data.h"
 #include "common_defs.h"
-
-
+#include "emm_data.h"
+#include "nas_message.h"  //nas_message_decode_status_t
 
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/
@@ -82,73 +80,73 @@ typedef enum {
 /****************************************************************************/
 
 typedef struct emm_attach_request_ies_s {
-  emm_proc_attach_type_t         type;
-  additional_update_type_t       additional_update_type;
-  bool                           is_native_sc;
-  bool                           is_new;
-  ksi_t                          ksi;
-  bool                           is_native_guti;
-  guti_t                        *guti;
-  imsi_t                        *imsi;
-  imei_t                        *imei;
-  tai_t                         *last_visited_registered_tai;
-  tai_t                         *originating_tai;
-  ecgi_t                        *originating_ecgi;
+  emm_proc_attach_type_t type;
+  additional_update_type_t additional_update_type;
+  bool is_native_sc;
+  bool is_new;
+  ksi_t ksi;
+  bool is_native_guti;
+  guti_t* guti;
+  imsi_t* imsi;
+  imei_t* imei;
+  tai_t* last_visited_registered_tai;
+  tai_t* originating_tai;
+  ecgi_t* originating_ecgi;
 
   /* Making optional like MS network request. */
-  ue_network_capability_t       *ue_network_capability;
-  ms_network_capability_t       *ms_network_capability;
-  drx_parameter_t               *drx_parameter;
-  bstring                        esm_msg_attach_proc;
-  nas_message_decode_status_t    decode_status;
+  ue_network_capability_t* ue_network_capability;
+  ms_network_capability_t* ms_network_capability;
+  drx_parameter_t* drx_parameter;
+  bstring esm_msg_attach_proc;
+  nas_message_decode_status_t decode_status;
 } emm_attach_request_ies_t;
 
 typedef struct emm_detach_request_ies_s {
-  emm_proc_detach_type_t         type;
-  bool                           switch_off;
-  bool                           is_native_sc;
-  bool                           is_initial;
-  ksi_t                          ksi;
-  guti_t                       * guti;
-  imsi_t                       * imsi;
-  imei_t                       * imei;
-  nas_message_decode_status_t    decode_status;
+  emm_proc_detach_type_t type;
+  bool switch_off;
+  bool is_native_sc;
+  bool is_initial;
+  ksi_t ksi;
+  guti_t* guti;
+  imsi_t* imsi;
+  imei_t* imei;
+  nas_message_decode_status_t decode_status;
 } emm_detach_request_ies_t;
 
 typedef struct emm_tau_request_ies_s {
-  EpsUpdateType                  eps_update_type;
-  uint8_t                        nas_ul_count;
-  bool                           is_native_sc;
-  bool                           is_initial;
-  ksi_t                          ksi;
-  guti_t                         old_guti;
+  EpsUpdateType eps_update_type;
+  uint8_t nas_ul_count;
+  bool is_native_sc;
+  bool is_initial;
+  ksi_t ksi;
+  guti_t old_guti;
 
   /* Optional fields */
-  bool                           is_native_non_current_sc;
-  ksi_t                          non_current_ksi;
-  guti_t                        *additional_guti;
-  ue_network_capability_t       *ue_network_capability;
-  tai_t                         *last_visited_registered_tai;
-  tai_t                         *originating_tai;
-  ecgi_t                        *originating_ecgi;
+  bool is_native_non_current_sc;
+  ksi_t non_current_ksi;
+  guti_t* additional_guti;
+  ue_network_capability_t* ue_network_capability;
+  tai_t* last_visited_registered_tai;
+  tai_t* originating_tai;
+  ecgi_t* originating_ecgi;
 
-  drx_parameter_t               *drx_parameter;
-  bool                           is_ue_radio_capability_information_update_needed;
-    eps_bearer_context_status_t   *eps_bearer_context_status;
-    ms_network_capability_t       *ms_network_capability;
-  tmsi_status_t                 *tmsi_status;
-  mobile_station_classmark2_t   *mobile_station_classmark2;
-  mobile_station_classmark3_t   *mobile_station_classmark3;
-  supported_codec_list_t        *supported_codecs;
-  additional_update_type_t      *additional_updatetype;
-  guti_type_t                   *old_guti_type;
+  drx_parameter_t* drx_parameter;
+  bool is_ue_radio_capability_information_update_needed;
+  eps_bearer_context_status_t* eps_bearer_context_status;
+  ms_network_capability_t* ms_network_capability;
+  tmsi_status_t* tmsi_status;
+  mobile_station_classmark2_t* mobile_station_classmark2;
+  mobile_station_classmark3_t* mobile_station_classmark3;
+  supported_codec_list_t* supported_codecs;
+  additional_update_type_t* additional_updatetype;
+  guti_type_t* old_guti_type;
 
-  bstring                        complete_tau_request;
+  bstring complete_tau_request;
 
   /** Re-link structures. */
-  subscription_data_t           *subscription_data;
+  subscription_data_t* subscription_data;
 
-  nas_message_decode_status_t    decode_status;
+  nas_message_decode_status_t decode_status;
 } emm_tau_request_ies_t;
 /****************************************************************************/
 /********************  G L O B A L    V A R I A B L E S  ********************/
@@ -172,13 +170,11 @@ int emm_proc_status(mme_ue_s1ap_id_t ue_id, emm_cause_t emm_cause);
  *---------------------------------------------------------------------------
  */
 
-
 /*
  *---------------------------------------------------------------------------
  *              UE's Idle mode procedure
  *---------------------------------------------------------------------------
  */
-
 
 /*
  * --------------------------------------------------------------------------
@@ -186,53 +182,51 @@ int emm_proc_status(mme_ue_s1ap_id_t ue_id, emm_cause_t emm_cause);
  * --------------------------------------------------------------------------
  */
 
-void free_emm_attach_request_ies(emm_attach_request_ies_t ** const params);
+void free_emm_attach_request_ies(emm_attach_request_ies_t** const params);
 
 int emm_proc_attach_request(mme_ue_s1ap_id_t ue_id,
-                            emm_attach_request_ies_t * const params,
-                            emm_data_context_t ** duplicate_emm_ue_ctx_pP);
+                            emm_attach_request_ies_t* const params,
+                            emm_data_context_t** duplicate_emm_ue_ctx_pP);
 
-
-int _emm_attach_reject(nas_emm_attach_proc_t * attach_proc, bstring rsp);
+int _emm_attach_reject(nas_emm_attach_proc_t* attach_proc, bstring rsp);
 int emm_proc_attach_reject(mme_ue_s1ap_id_t ue_id, emm_cause_t emm_cause);
 
 /** EMM Attach Accept/Reject from ESM layer. */
-int _emm_wrapper_attach_accept (mme_ue_s1ap_id_t ue_id, bstring esm_msg);
-int _emm_wrapper_attach_reject (mme_ue_s1ap_id_t ue_id, bstring esm_msg);
+int _emm_wrapper_attach_accept(mme_ue_s1ap_id_t ue_id, bstring esm_msg);
+int _emm_wrapper_attach_reject(mme_ue_s1ap_id_t ue_id, bstring esm_msg);
 
 /** EMM TAU Accept/Reject from ESM layer. */
-int emm_wrapper_tracking_area_update_accept (mme_ue_s1ap_id_t ue_id, eps_bearer_context_status_t ebr_status);
-int emm_wrapper_tracking_area_update_reject (mme_ue_s1ap_id_t ue_id, emm_cause_t emm_cause);
+int emm_wrapper_tracking_area_update_accept(
+    mme_ue_s1ap_id_t ue_id, eps_bearer_context_status_t ebr_status);
+int emm_wrapper_tracking_area_update_reject(mme_ue_s1ap_id_t ue_id,
+                                            emm_cause_t emm_cause);
 
-int emm_proc_attach_complete (
-  mme_ue_s1ap_id_t                  ue_id,
-  int                               emm_cause,
-  const nas_message_decode_status_t status);
+int emm_proc_attach_complete(mme_ue_s1ap_id_t ue_id, int emm_cause,
+                             const nas_message_decode_status_t status);
 
-void free_emm_tau_request_ies(emm_tau_request_ies_t ** const ies);
+void free_emm_tau_request_ies(emm_tau_request_ies_t** const ies);
 
-int emm_proc_tracking_area_update_request (
-  const mme_ue_s1ap_id_t ue_id,
-  emm_tau_request_ies_t *ies,
-  const int gea,
-  const bool gprs_present,
-  int *emm_cause,
-  emm_data_context_t ** emm_context_pP);
+int emm_proc_tracking_area_update_request(const mme_ue_s1ap_id_t ue_id,
+                                          emm_tau_request_ies_t* ies,
+                                          const int gea,
+                                          const bool gprs_present,
+                                          int* emm_cause,
+                                          emm_data_context_t** emm_context_pP);
 
-int
-emm_proc_tracking_area_update_complete (
-  mme_ue_s1ap_id_t ue_id);
+int emm_proc_tracking_area_update_complete(mme_ue_s1ap_id_t ue_id);
 
-int emm_proc_service_reject (const mme_ue_s1ap_id_t ue_id, const int emm_cause);
+int emm_proc_service_reject(const mme_ue_s1ap_id_t ue_id, const int emm_cause);
 /*
  * --------------------------------------------------------------------------
  *              Detach procedure
  * --------------------------------------------------------------------------
  */
 
-void free_emm_detach_request_ies(emm_detach_request_ies_t ** const ies);
-int emm_proc_detach(mme_ue_s1ap_id_t ue_id, emm_proc_detach_type_t detach_type, int emm_cause, bool clr);
-int emm_proc_detach_request(mme_ue_s1ap_id_t ue_id, emm_detach_request_ies_t * params);
+void free_emm_detach_request_ies(emm_detach_request_ies_t** const ies);
+int emm_proc_detach(mme_ue_s1ap_id_t ue_id, emm_proc_detach_type_t detach_type,
+                    int emm_cause, bool clr);
+int emm_proc_detach_request(mme_ue_s1ap_id_t ue_id,
+                            emm_detach_request_ies_t* params);
 
 /*
  * --------------------------------------------------------------------------
@@ -241,18 +235,14 @@ int emm_proc_detach_request(mme_ue_s1ap_id_t ue_id, emm_detach_request_ies_t * p
  */
 struct emm_data_context_s;
 
-int
-emm_proc_identification (
-  struct emm_data_context_s     * const emm_context,
-  nas_emm_proc_t           * const emm_proc,
-  const identity_type2_t     type,
-  success_cb_t               success,
-  failure_cb_t               failure);
+int emm_proc_identification(struct emm_data_context_s* const emm_context,
+                            nas_emm_proc_t* const emm_proc,
+                            const identity_type2_t type, success_cb_t success,
+                            failure_cb_t failure);
 int emm_proc_identification_complete(const mme_ue_s1ap_id_t ue_id,
-                            imsi_t   * const imsi,
-                            imei_t   * const imei,
-                            imeisv_t * const imeisv,
-                            uint32_t * const tmsi);
+                                     imsi_t* const imsi, imei_t* const imei,
+                                     imeisv_t* const imeisv,
+                                     uint32_t* const tmsi);
 
 /*
  * --------------------------------------------------------------------------
@@ -260,30 +250,23 @@ int emm_proc_identification_complete(const mme_ue_s1ap_id_t ue_id,
  * --------------------------------------------------------------------------
  */
 
-int
-emm_proc_authentication_ksi (
-  struct emm_data_context_s *emm_context,
-  nas_emm_specific_proc_t  * const emm_specific_proc,
-  ksi_t ksi,
-  const uint8_t   * const rand,
-  const uint8_t   * const autn,
-  success_cb_t success,
-  failure_cb_t failure);
+int emm_proc_authentication_ksi(
+    struct emm_data_context_s* emm_context,
+    nas_emm_specific_proc_t* const emm_specific_proc, ksi_t ksi,
+    const uint8_t* const rand, const uint8_t* const autn, success_cb_t success,
+    failure_cb_t failure);
 
-int
-emm_proc_authentication (
-  struct emm_data_context_s *emm_context,
-  nas_emm_specific_proc_t  * const emm_specific_proc,
-  success_cb_t success,
-  failure_cb_t failure);
+int emm_proc_authentication(struct emm_data_context_s* emm_context,
+                            nas_emm_specific_proc_t* const emm_specific_proc,
+                            success_cb_t success, failure_cb_t failure);
 
-int emm_proc_authentication_failure (mme_ue_s1ap_id_t ue_id, int emm_cause,
-                                     const_bstring auts);
+int emm_proc_authentication_failure(mme_ue_s1ap_id_t ue_id, int emm_cause,
+                                    const_bstring auts);
 
 int emm_proc_authentication_complete(mme_ue_s1ap_id_t ue_id, int emm_cause,
-    const_bstring const res);
+                                     const_bstring const res);
 
-int emm_attach_security(struct emm_data_context_s *emm_context);
+int emm_attach_security(struct emm_data_context_s* emm_context);
 
 /*
  * --------------------------------------------------------------------------
@@ -291,22 +274,19 @@ int emm_attach_security(struct emm_data_context_s *emm_context);
  * --------------------------------------------------------------------------
  */
 
-int emm_proc_security_mode_control (
-  struct emm_data_context_s *emm_context,
-  nas_emm_specific_proc_t  * const emm_specific_proc,
-  ksi_t ksi,
-  success_cb_t success,
-  failure_cb_t failure);
-int emm_proc_security_mode_complete(mme_ue_s1ap_id_t ue_id, const imeisv_mobile_identity_t * const imeisv);
+int emm_proc_security_mode_control(
+    struct emm_data_context_s* emm_context,
+    nas_emm_specific_proc_t* const emm_specific_proc, ksi_t ksi,
+    success_cb_t success, failure_cb_t failure);
+int emm_proc_security_mode_complete(
+    mme_ue_s1ap_id_t ue_id, const imeisv_mobile_identity_t* const imeisv);
 int emm_proc_security_mode_reject(mme_ue_s1ap_id_t ue_id);
 
-void
-_clear_emm_ctxt(mme_ue_s1ap_id_t ue_id);
+void _clear_emm_ctxt(mme_ue_s1ap_id_t ue_id);
 /*
  *---------------------------------------------------------------------------
  *             Network indication handlers
  *---------------------------------------------------------------------------
  */
-
 
 #endif /* FILE_EMM_PROC_SEEN*/

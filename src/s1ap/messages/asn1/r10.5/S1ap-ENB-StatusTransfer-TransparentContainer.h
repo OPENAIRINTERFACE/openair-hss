@@ -4,15 +4,14 @@
  * 	found in "S1AP-IEs.asn"
  */
 
-#ifndef	_S1ap_ENB_StatusTransfer_TransparentContainer_H_
-#define	_S1ap_ENB_StatusTransfer_TransparentContainer_H_
-
+#ifndef _S1ap_ENB_StatusTransfer_TransparentContainer_H_
+#define _S1ap_ENB_StatusTransfer_TransparentContainer_H_
 
 #include <asn_application.h>
 
 /* Including external dependencies */
-#include "S1ap-Bearers-SubjectToStatusTransfer-List.h"
 #include <constr_SEQUENCE.h>
+#include "S1ap-Bearers-SubjectToStatusTransfer-List.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -23,19 +22,21 @@ struct S1ap_IE_Extensions;
 
 /* S1ap-ENB-StatusTransfer-TransparentContainer */
 typedef struct S1ap_ENB_StatusTransfer_TransparentContainer {
-	S1ap_Bearers_SubjectToStatusTransfer_List_t	 bearers_SubjectToStatusTransferList;
-	struct S1ap_IE_Extensions	*iE_Extensions	/* OPTIONAL */;
-	/*
-	 * This type is extensible,
-	 * possible extensions are below.
-	 */
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+  S1ap_Bearers_SubjectToStatusTransfer_List_t
+      bearers_SubjectToStatusTransferList;
+  struct S1ap_IE_Extensions* iE_Extensions /* OPTIONAL */;
+  /*
+   * This type is extensible,
+   * possible extensions are below.
+   */
+
+  /* Context for parsing across buffer boundaries */
+  asn_struct_ctx_t _asn_ctx;
 } S1ap_ENB_StatusTransfer_TransparentContainer_t;
 
 /* Implementation */
-extern asn_TYPE_descriptor_t asn_DEF_S1ap_ENB_StatusTransfer_TransparentContainer;
+extern asn_TYPE_descriptor_t
+    asn_DEF_S1ap_ENB_StatusTransfer_TransparentContainer;
 
 #ifdef __cplusplus
 }
@@ -44,5 +45,5 @@ extern asn_TYPE_descriptor_t asn_DEF_S1ap_ENB_StatusTransfer_TransparentContaine
 /* Referred external types */
 #include "S1ap-IE-Extensions.h"
 
-#endif	/* _S1ap_ENB_StatusTransfer_TransparentContainer_H_ */
+#endif /* _S1ap_ENB_StatusTransfer_TransparentContainer_H_ */
 #include <asn_internal.h>

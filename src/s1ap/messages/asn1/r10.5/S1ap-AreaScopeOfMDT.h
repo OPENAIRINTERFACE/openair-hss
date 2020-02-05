@@ -4,17 +4,16 @@
  * 	found in "S1AP-IEs.asn"
  */
 
-#ifndef	_S1ap_AreaScopeOfMDT_H_
-#define	_S1ap_AreaScopeOfMDT_H_
-
+#ifndef _S1ap_AreaScopeOfMDT_H_
+#define _S1ap_AreaScopeOfMDT_H_
 
 #include <asn_application.h>
 
 /* Including external dependencies */
-#include "S1ap-CellBasedMDT.h"
-#include "S1ap-TABasedMDT.h"
 #include <NULL.h>
 #include <constr_CHOICE.h>
+#include "S1ap-CellBasedMDT.h"
+#include "S1ap-TABasedMDT.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -22,29 +21,29 @@ extern "C" {
 
 /* Dependencies */
 typedef enum S1ap_AreaScopeOfMDT_PR {
-	S1ap_AreaScopeOfMDT_PR_NOTHING,	/* No components present */
-	S1ap_AreaScopeOfMDT_PR_cellBased,
-	S1ap_AreaScopeOfMDT_PR_tABased,
-	S1ap_AreaScopeOfMDT_PR_pLMNWide,
-	/* Extensions may appear below */
-	
+  S1ap_AreaScopeOfMDT_PR_NOTHING, /* No components present */
+  S1ap_AreaScopeOfMDT_PR_cellBased,
+  S1ap_AreaScopeOfMDT_PR_tABased,
+  S1ap_AreaScopeOfMDT_PR_pLMNWide,
+  /* Extensions may appear below */
+
 } S1ap_AreaScopeOfMDT_PR;
 
 /* S1ap-AreaScopeOfMDT */
 typedef struct S1ap_AreaScopeOfMDT {
-	S1ap_AreaScopeOfMDT_PR present;
-	union S1ap_AreaScopeOfMDT_u {
-		S1ap_CellBasedMDT_t	 cellBased;
-		S1ap_TABasedMDT_t	 tABased;
-		NULL_t	 pLMNWide;
-		/*
-		 * This type is extensible,
-		 * possible extensions are below.
-		 */
-	} choice;
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+  S1ap_AreaScopeOfMDT_PR present;
+  union S1ap_AreaScopeOfMDT_u {
+    S1ap_CellBasedMDT_t cellBased;
+    S1ap_TABasedMDT_t tABased;
+    NULL_t pLMNWide;
+    /*
+     * This type is extensible,
+     * possible extensions are below.
+     */
+  } choice;
+
+  /* Context for parsing across buffer boundaries */
+  asn_struct_ctx_t _asn_ctx;
 } S1ap_AreaScopeOfMDT_t;
 
 /* Implementation */
@@ -54,5 +53,5 @@ extern asn_TYPE_descriptor_t asn_DEF_S1ap_AreaScopeOfMDT;
 }
 #endif
 
-#endif	/* _S1ap_AreaScopeOfMDT_H_ */
+#endif /* _S1ap_AreaScopeOfMDT_H_ */
 #include <asn_internal.h>

@@ -24,7 +24,7 @@
 namespace openflow {
 
 class IMSIEncoder {
-public:
+ public:
   /*
    * Convert a IMSI string to a uint + length. IMSI strings can contain two
    * prefix zeros for test MCC and maximum fifteen digits. The first 2 bits of
@@ -36,7 +36,6 @@ public:
    */
   static uint64_t compact_imsi(const std::string& imsi);
 
-
   /*
    * Convert from the compacted uint back to a string, using the first two bits
    * to determine the padding
@@ -44,7 +43,6 @@ public:
    * @return pointer to static buffer with imsi inside
    */
   static std::string expand_imsi(uint64_t compact);
-
 };
 
-}
+}  // namespace openflow

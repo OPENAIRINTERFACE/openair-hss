@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -42,8 +42,8 @@ Description Defines the EMMREG Service Access Point that provides
 #define FILE_EMM_REGDEF_SEEN
 
 #include <stdbool.h>
-#include "common_types.h"
 #include "common_defs.h"
+#include "common_types.h"
 #include "emm_fsm.h"
 
 /****************************************************************************/
@@ -55,17 +55,17 @@ Description Defines the EMMREG Service Access Point that provides
  */
 typedef enum {
   _EMMREG_START = 0,
-  _EMMREG_COMMON_PROC_REQ,    /* EMM common procedure requested   */
-  _EMMREG_COMMON_PROC_CNF,    /* EMM common procedure successful  */
-  _EMMREG_COMMON_PROC_REJ,    /* EMM common procedure failed, CN send REJECT */
-  _EMMREG_COMMON_PROC_ABORT,  /* EMM common procedure aborted     */
-  _EMMREG_ATTACH_CNF,         /* EPS network attach accepted      */
-  _EMMREG_ATTACH_REJ,         /* EPS network attach rejected      */
-  _EMMREG_ATTACH_ABORT,       /* EPS network attach aborted      */
-  _EMMREG_DETACH_INIT,        /* Network detach initiated         */
-  _EMMREG_DETACH_REQ,         /* Network detach requested         */
-  _EMMREG_DETACH_FAILED,      /* Network detach attempt failed    */
-  _EMMREG_DETACH_CNF,         /* Network detach accepted          */
+  _EMMREG_COMMON_PROC_REQ,   /* EMM common procedure requested   */
+  _EMMREG_COMMON_PROC_CNF,   /* EMM common procedure successful  */
+  _EMMREG_COMMON_PROC_REJ,   /* EMM common procedure failed, CN send REJECT */
+  _EMMREG_COMMON_PROC_ABORT, /* EMM common procedure aborted     */
+  _EMMREG_ATTACH_CNF,        /* EPS network attach accepted      */
+  _EMMREG_ATTACH_REJ,        /* EPS network attach rejected      */
+  _EMMREG_ATTACH_ABORT,      /* EPS network attach aborted      */
+  _EMMREG_DETACH_INIT,       /* Network detach initiated         */
+  _EMMREG_DETACH_REQ,        /* Network detach requested         */
+  _EMMREG_DETACH_FAILED,     /* Network detach attempt failed    */
+  _EMMREG_DETACH_CNF,        /* Network detach accepted          */
   _EMMREG_TAU_REQ,
   _EMMREG_TAU_CNF,
   _EMMREG_TAU_REJ,
@@ -73,9 +73,9 @@ typedef enum {
   _EMMREG_SERVICE_REQ,
   _EMMREG_SERVICE_CNF,
   _EMMREG_SERVICE_REJ,
-  _EMMREG_LOWERLAYER_SUCCESS, /* Data successfully delivered      */
-  _EMMREG_LOWERLAYER_FAILURE, /* Lower layer failure indication   */
-  _EMMREG_LOWERLAYER_RELEASE, /* NAS signalling connection released   */
+  _EMMREG_LOWERLAYER_SUCCESS,      /* Data successfully delivered      */
+  _EMMREG_LOWERLAYER_FAILURE,      /* Lower layer failure indication   */
+  _EMMREG_LOWERLAYER_RELEASE,      /* NAS signalling connection released   */
   _EMMREG_LOWERLAYER_NON_DELIVERY, /*  remote Lower layer failure indication  */
   _EMMREG_END
 } emm_reg_primitive_t;
@@ -84,15 +84,14 @@ typedef enum {
 /************************  G L O B A L    T Y P E S  ************************/
 /****************************************************************************/
 
-
 /*
  * EMMREG primitive for attach procedure
  * -------------------------------------
  */
 typedef struct emm_reg_attach_s {
-  bool is_emergency;   /* true if the UE was attempting to register to
-             * the network for emergency services only  */
-  struct nas_emm_attach_proc_s *proc;
+  bool is_emergency; /* true if the UE was attempting to register to
+                      * the network for emergency services only  */
+  struct nas_emm_attach_proc_s* proc;
 } emm_reg_attach_t;
 
 /*
@@ -100,7 +99,7 @@ typedef struct emm_reg_attach_s {
  * -------------------------------------
  */
 typedef struct emm_reg_tau_s {
-  struct nas_emm_tau_proc_s *proc;
+  struct nas_emm_tau_proc_s* proc;
 } emm_reg_tau_t;
 
 /*
@@ -109,16 +108,16 @@ typedef struct emm_reg_tau_s {
  */
 typedef struct emm_reg_detach_s {
   bool switch_off; /* true if the UE is switched off       */
-  int type;       /* Network detach type              */
+  int type;        /* Network detach type              */
 } emm_reg_detach_t;
 /*
  * EMMREG primitive for service request procedure
  * -------------------------------------
  */
 typedef struct emm_reg_sr_s {
-  bool is_emergency;   /* true if the UE was attempting to register to
-             * the network for emergency services only  */
-  struct nas_sr_proc_s *proc;
+  bool is_emergency; /* true if the UE was attempting to register to
+                      * the network for emergency services only  */
+  struct nas_sr_proc_s* proc;
 } emm_reg_sr_t;
 
 /*
@@ -127,19 +126,19 @@ typedef struct emm_reg_sr_s {
  */
 struct nas_emm_common_proc_s;
 typedef struct emm_reg_common_s {
-  emm_fsm_state_t               previous_emm_fsm_state;
-  struct nas_emm_common_proc_s *common_proc;
+  emm_fsm_state_t previous_emm_fsm_state;
+  struct nas_emm_common_proc_s* common_proc;
 } emm_reg_common_t;
 /*
  * EMMREG primitive for Lower Layer success
  * ------------------------------------------
  */
 typedef struct emm_reg_ll_success_s {
-  uint64_t                      puid;
-  uint16_t                      msg_len;
+  uint64_t puid;
+  uint16_t msg_len;
 #define EMM_REG_MSG_DIGEST_SIZE 16
-  size_t                        digest_len;
-  uint8_t                       msg_digest[EMM_REG_MSG_DIGEST_SIZE];
+  size_t digest_len;
+  uint8_t msg_digest[EMM_REG_MSG_DIGEST_SIZE];
 } emm_reg_ll_sucess_t;
 
 /*
@@ -147,10 +146,10 @@ typedef struct emm_reg_ll_success_s {
  * ------------------------------------------
  */
 typedef struct emm_reg_ll_failure_s {
-  emm_fsm_state_t               previous_emm_fsm_state;
-  size_t                        msg_len;
-  size_t                        digest_len;
-  uint8_t                       msg_digest[EMM_REG_MSG_DIGEST_SIZE];
+  emm_fsm_state_t previous_emm_fsm_state;
+  size_t msg_len;
+  size_t digest_len;
+  uint8_t msg_digest[EMM_REG_MSG_DIGEST_SIZE];
 } emm_reg_ll_failure_t;
 
 /*
@@ -158,29 +157,29 @@ typedef struct emm_reg_ll_failure_s {
  * ------------------------------------------
  */
 typedef struct emm_reg_sdu_non_delivery_ho_s {
-  emm_fsm_state_t               previous_emm_fsm_state;
-  size_t                        msg_len;
-  size_t                        digest_len;
-  uint8_t                       msg_digest[EMM_REG_MSG_DIGEST_SIZE];
+  emm_fsm_state_t previous_emm_fsm_state;
+  size_t msg_len;
+  size_t digest_len;
+  uint8_t msg_digest[EMM_REG_MSG_DIGEST_SIZE];
 } emm_reg_sdu_non_delivery_ho_t;
 
 /*
  * Structure of EMMREG-SAP primitive
  */
 typedef struct emm_reg_s {
-  emm_reg_primitive_t    primitive;
-  mme_ue_s1ap_id_t       ue_id;
-  bool                   notify; // notify through call-backs
-  bool                   free_proc;
+  emm_reg_primitive_t primitive;
+  mme_ue_s1ap_id_t ue_id;
+  bool notify;  // notify through call-backs
+  bool free_proc;
 
   union {
-    emm_reg_attach_t     attach;
-    emm_reg_detach_t     detach;
-    emm_reg_tau_t        tau;
-    emm_reg_sr_t         sr;
-    emm_reg_common_t     common;
+    emm_reg_attach_t attach;
+    emm_reg_detach_t detach;
+    emm_reg_tau_t tau;
+    emm_reg_sr_t sr;
+    emm_reg_common_t common;
     emm_reg_ll_failure_t ll_failure;
-    emm_reg_ll_sucess_t  ll_success;
+    emm_reg_ll_sucess_t ll_success;
     emm_reg_sdu_non_delivery_ho_t non_delivery_ho;
   } u;
 } emm_reg_t;

@@ -31,9 +31,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.          *
  *----------------------------------------------------------------------------*/
 
-
-#include <stdlib.h>
 #include <stdint.h>
+#include <stdlib.h>
 
 #ifndef __NW_TYPES_H__
 #define __NW_TYPES_H__
@@ -41,27 +40,23 @@
 /**
  * @file NwTypes.h
  * @brief This header file contains basic type definitions.
-*/
+ */
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define NW_IN                                   /**< An input argument          */
-#define NW_OUT                                  /**< An output argument         */
-#define NW_INOUT                                /**< An input and output argument */
+#define NW_IN    /**< An input argument          */
+#define NW_OUT   /**< An output argument         */
+#define NW_INOUT /**< An input and output argument */
 
+typedef signed int NwFdT; /**< Use this for file descriptor */
 
-typedef signed int              NwFdT;          /**< Use this for file descriptor */
-
-typedef uintptr_t               NwPtrT;         /**< Use this for generic pointers      */
-typedef uintptr_t               NwHandleT;      /**< Use this for generic handles       */
-
+typedef uintptr_t NwPtrT;    /**< Use this for generic pointers      */
+typedef uintptr_t NwHandleT; /**< Use this for generic handles       */
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif /* __NW_TYPES_H__ */
-
-

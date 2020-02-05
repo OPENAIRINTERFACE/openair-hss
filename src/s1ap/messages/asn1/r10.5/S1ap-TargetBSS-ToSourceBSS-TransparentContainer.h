@@ -4,9 +4,8 @@
  * 	found in "S1AP-IEs.asn"
  */
 
-#ifndef	_S1ap_TargetBSS_ToSourceBSS_TransparentContainer_H_
-#define	_S1ap_TargetBSS_ToSourceBSS_TransparentContainer_H_
-
+#ifndef _S1ap_TargetBSS_ToSourceBSS_TransparentContainer_H_
+#define _S1ap_TargetBSS_ToSourceBSS_TransparentContainer_H_
 
 #include <asn_application.h>
 
@@ -18,10 +17,11 @@ extern "C" {
 #endif
 
 /* S1ap-TargetBSS-ToSourceBSS-TransparentContainer */
-typedef OCTET_STRING_t	 S1ap_TargetBSS_ToSourceBSS_TransparentContainer_t;
+typedef OCTET_STRING_t S1ap_TargetBSS_ToSourceBSS_TransparentContainer_t;
 
 /* Implementation */
-extern asn_TYPE_descriptor_t asn_DEF_S1ap_TargetBSS_ToSourceBSS_TransparentContainer;
+extern asn_TYPE_descriptor_t
+    asn_DEF_S1ap_TargetBSS_ToSourceBSS_TransparentContainer;
 asn_struct_free_f S1ap_TargetBSS_ToSourceBSS_TransparentContainer_free;
 asn_struct_print_f S1ap_TargetBSS_ToSourceBSS_TransparentContainer_print;
 asn_constr_check_f S1ap_TargetBSS_ToSourceBSS_TransparentContainer_constraint;
@@ -34,5 +34,5 @@ xer_type_encoder_f S1ap_TargetBSS_ToSourceBSS_TransparentContainer_encode_xer;
 }
 #endif
 
-#endif	/* _S1ap_TargetBSS_ToSourceBSS_TransparentContainer_H_ */
+#endif /* _S1ap_TargetBSS_ToSourceBSS_TransparentContainer_H_ */
 #include <asn_internal.h>

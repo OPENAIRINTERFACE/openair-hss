@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -44,11 +44,9 @@ Description Defines identifiers of the EPS Session Management messages
 /****************************************************************************/
 
 /* Header length boundaries of EPS Session Management messages  */
-#define ESM_HEADER_LENGTH   sizeof(esm_msg_header_t)
+#define ESM_HEADER_LENGTH sizeof(esm_msg_header_t)
 #define ESM_HEADER_MINIMUM_LENGTH ESM_HEADER_LENGTH
 #define ESM_HEADER_MAXIMUM_LENGTH ESM_HEADER_LENGTH
-
-
 
 /****************************************************************************/
 /************************  G L O B A L    T Y P E S  ************************/
@@ -68,12 +66,12 @@ Description Defines identifiers of the EPS Session Management messages
  */
 typedef struct {
 #ifdef __LITTLE_ENDIAN_BITFIELD
-  uint8_t protocol_discriminator:4;
-  ebi_t   eps_bearer_identity:4;
+  uint8_t protocol_discriminator : 4;
+  ebi_t eps_bearer_identity : 4;
 #endif
 #ifdef __BIG_ENDIAN_BITFIELD
-  ebi_t   eps_bearer_identity:4;
-  uint8_t protocol_discriminator:4;
+  ebi_t eps_bearer_identity : 4;
+  uint8_t protocol_discriminator : 4;
 #endif
   pti_t procedure_transaction_identity;
   uint8_t message_type;
@@ -88,4 +86,3 @@ typedef struct {
 /****************************************************************************/
 
 #endif /* __ESM_MSGDEF_H__ */
-

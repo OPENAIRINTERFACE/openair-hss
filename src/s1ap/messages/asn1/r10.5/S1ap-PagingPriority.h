@@ -4,9 +4,8 @@
  * 	found in "S1AP-IEs.asn"
  */
 
-#ifndef	_S1ap_PagingPriority_H_
-#define	_S1ap_PagingPriority_H_
-
+#ifndef _S1ap_PagingPriority_H_
+#define _S1ap_PagingPriority_H_
 
 #include <asn_application.h>
 
@@ -19,21 +18,21 @@ extern "C" {
 
 /* Dependencies */
 typedef enum S1ap_PagingPriority {
-	S1ap_PagingPriority_priolevel1	= 0,
-	S1ap_PagingPriority_priolevel2	= 1,
-	S1ap_PagingPriority_priolevel3	= 2,
-	S1ap_PagingPriority_priolevel4	= 3,
-	S1ap_PagingPriority_priolevel5	= 4,
-	S1ap_PagingPriority_priolevel6	= 5,
-	S1ap_PagingPriority_priolevel7	= 6,
-	S1ap_PagingPriority_priolevel8	= 7
-	/*
-	 * Enumeration is extensible
-	 */
+  S1ap_PagingPriority_priolevel1 = 0,
+  S1ap_PagingPriority_priolevel2 = 1,
+  S1ap_PagingPriority_priolevel3 = 2,
+  S1ap_PagingPriority_priolevel4 = 3,
+  S1ap_PagingPriority_priolevel5 = 4,
+  S1ap_PagingPriority_priolevel6 = 5,
+  S1ap_PagingPriority_priolevel7 = 6,
+  S1ap_PagingPriority_priolevel8 = 7
+  /*
+   * Enumeration is extensible
+   */
 } e_S1ap_PagingPriority;
 
 /* S1ap-PagingPriority */
-typedef long	 S1ap_PagingPriority_t;
+typedef long S1ap_PagingPriority_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_S1ap_PagingPriority;
@@ -49,5 +48,5 @@ xer_type_encoder_f S1ap_PagingPriority_encode_xer;
 }
 #endif
 
-#endif	/* _S1ap_PagingPriority_H_ */
+#endif /* _S1ap_PagingPriority_H_ */
 #include <asn_internal.h>

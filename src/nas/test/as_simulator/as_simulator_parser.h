@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -47,13 +47,13 @@ Description Command line parser of the AS Simulator process
 /****************************************************************************/
 
 /* UE process default hostname */
-#define AS_SIMULATOR_PARSER_DEFAULT_UE_HOSTNAME   "localhost"
+#define AS_SIMULATOR_PARSER_DEFAULT_UE_HOSTNAME "localhost"
 
 /* MME process default hostname */
-#define AS_SIMULATOR_PARSER_DEFAULT_MME_HOSTNAME  "localhost"
+#define AS_SIMULATOR_PARSER_DEFAULT_MME_HOSTNAME "localhost"
 
 /* UE process default port number */
-#define AS_SIMULATOR_PARSER_DEFAULT_UE_PORT_NUMBER  "12000"
+#define AS_SIMULATOR_PARSER_DEFAULT_UE_PORT_NUMBER "12000"
 
 /* MME process default port number */
 #define AS_SIMULATOR_PARSER_DEFAULT_MME_PORT_NUMBER "14000"

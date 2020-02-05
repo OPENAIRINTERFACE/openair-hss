@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -19,29 +19,24 @@
  *      contact@openairinterface.org
  */
 
-
+#include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
-#include <stdbool.h>
 
 #include "bstrlib.h"
 
-#include "TLVEncoder.h"
-#include "TLVDecoder.h"
 #include "SsCode.h"
+#include "TLVDecoder.h"
+#include "TLVEncoder.h"
 
 //------------------------------------------------------------------------------
-int decode_ss_code (
-  ss_code_t * sscode,
-  uint8_t iei,
-  uint8_t * buffer,
-  uint32_t len)
-{
-  int                                     decoded = 0;
+int decode_ss_code(ss_code_t* sscode, uint8_t iei, uint8_t* buffer,
+                   uint32_t len) {
+  int decoded = 0;
 
   if (iei > 0) {
-    CHECK_IEI_DECODER (iei, *buffer);
+    CHECK_IEI_DECODER(iei, *buffer);
     decoded++;
   }
 
@@ -51,18 +46,14 @@ int decode_ss_code (
 }
 
 //------------------------------------------------------------------------------
-int encode_ss_code (
-  ss_code_t * sscode,
-  uint8_t iei,
-  uint8_t * buffer,
-  uint32_t len)
-{
-  uint32_t                                encoded = 0;
+int encode_ss_code(ss_code_t* sscode, uint8_t iei, uint8_t* buffer,
+                   uint32_t len) {
+  uint32_t encoded = 0;
 
   /*
    * Checking IEI and pointer
    */
-  CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, SS_CODE_MINIMUM_LENGTH, len);
+  CHECK_PDU_POINTER_AND_LENGTH_ENCODER(buffer, SS_CODE_MINIMUM_LENGTH, len);
 
   if (iei > 0) {
     *buffer = iei;
@@ -73,4 +64,3 @@ int encode_ss_code (
   encoded++;
   return encoded;
 }
-

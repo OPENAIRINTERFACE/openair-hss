@@ -2,8 +2,8 @@
  * Copyright (c) 2003 Lev Walkin <vlm@lionet.info>. All rights reserved.
  * Redistribution and modifications are permitted subject to BSD license.
  */
-#ifndef	_CONSTR_SET_OF_H_
-#define	_CONSTR_SET_OF_H_
+#ifndef _CONSTR_SET_OF_H_
+#define _CONSTR_SET_OF_H_
 
 #include <asn_application.h>
 
@@ -12,14 +12,14 @@ extern "C" {
 #endif
 
 typedef struct asn_SET_OF_specifics_s {
-	/*
-	 * Target structure description.
-	 */
-	int struct_size;	/* Size of the target structure. */
-	int ctx_offset;		/* Offset of the asn_struct_ctx_t member */
+  /*
+   * Target structure description.
+   */
+  int struct_size; /* Size of the target structure. */
+  int ctx_offset;  /* Offset of the asn_struct_ctx_t member */
 
-	/* XER-specific stuff */
-	int as_XMLValueList;	/* The member type must be encoded like this */
+  /* XER-specific stuff */
+  int as_XMLValueList; /* The member type must be encoded like this */
 } asn_SET_OF_specifics_t;
 
 /*
@@ -36,10 +36,10 @@ per_type_decoder_f SET_OF_decode_uper;
 per_type_encoder_f SET_OF_encode_uper;
 per_type_decoder_f SET_OF_decode_aper;
 per_type_encoder_f SET_OF_encode_aper;
-type_compare_f     SET_OF_compare;
+type_compare_f SET_OF_compare;
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif	/* _CONSTR_SET_OF_H_ */
+#endif /* _CONSTR_SET_OF_H_ */

@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -54,8 +54,6 @@ Description Defines functions executed at the ESM Service Access
 #include "PdnConnectivityRequest.h"
 #include "PdnDisconnectRequest.h"
 
-
-
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/
 /****************************************************************************/
@@ -79,7 +77,7 @@ Description Defines functions executed at the ESM Service Access
  */
 
 esm_cause_t esm_recv_status(mme_ue_s1ap_id_t ue_id, proc_tid_t pti, ebi_t ebi,
-                    const esm_status_msg *msg);
+                            const esm_status_msg* msg);
 
 /*
  * --------------------------------------------------------------------------
@@ -90,43 +88,57 @@ esm_cause_t esm_recv_status(mme_ue_s1ap_id_t ue_id, proc_tid_t pti, ebi_t ebi,
  * Transaction related messages
  * ----------------------------
  */
-esm_cause_t esm_recv_pdn_connectivity_request(bool *is_attach, mme_ue_s1ap_id_t ue_id, const imsi_t *imsi, proc_tid_t pti, ebi_t ebi, tai_t *visited_tai,
-    const pdn_connectivity_request_msg *msg, ESM_msg * const esm_rsp_msg);
+esm_cause_t esm_recv_pdn_connectivity_request(
+    bool* is_attach, mme_ue_s1ap_id_t ue_id, const imsi_t* imsi, proc_tid_t pti,
+    ebi_t ebi, tai_t* visited_tai, const pdn_connectivity_request_msg* msg,
+    ESM_msg* const esm_rsp_msg);
 
-esm_cause_t esm_recv_information_response (bool *is_attach,mme_ue_s1ap_id_t ue_id, proc_tid_t pti,  ebi_t ebi,
-    const esm_information_response_msg * msg);
+esm_cause_t esm_recv_information_response(
+    bool* is_attach, mme_ue_s1ap_id_t ue_id, proc_tid_t pti, ebi_t ebi,
+    const esm_information_response_msg* msg);
 
-esm_cause_t esm_recv_pdn_disconnect_request(mme_ue_s1ap_id_t ue_id, proc_tid_t pti,  ebi_t ebi, const pdn_disconnect_request_msg* msg, ESM_msg * const esm_rsp_msg);
+esm_cause_t esm_recv_pdn_disconnect_request(
+    mme_ue_s1ap_id_t ue_id, proc_tid_t pti, ebi_t ebi,
+    const pdn_disconnect_request_msg* msg, ESM_msg* const esm_rsp_msg);
 
-esm_cause_t esm_recv_activate_default_eps_bearer_context_accept(mme_ue_s1ap_id_t ue_id,
-    proc_tid_t pti, ebi_t ebi, const activate_default_eps_bearer_context_accept_msg *msg);
+esm_cause_t esm_recv_activate_default_eps_bearer_context_accept(
+    mme_ue_s1ap_id_t ue_id, proc_tid_t pti, ebi_t ebi,
+    const activate_default_eps_bearer_context_accept_msg* msg);
 
-esm_cause_t esm_recv_activate_default_eps_bearer_context_reject (mme_ue_s1ap_id_t ue_id,
-    proc_tid_t pti, ebi_t ebi, const activate_default_eps_bearer_context_reject_msg * msg);
+esm_cause_t esm_recv_activate_default_eps_bearer_context_reject(
+    mme_ue_s1ap_id_t ue_id, proc_tid_t pti, ebi_t ebi,
+    const activate_default_eps_bearer_context_reject_msg* msg);
 
 /*
  * Messages related to EPS bearer contexts
  * ---------------------------------------
  */
-esm_cause_t esm_recv_activate_dedicated_eps_bearer_context_accept(mme_ue_s1ap_id_t ue_id,
-    proc_tid_t pti, ebi_t ebi, const activate_dedicated_eps_bearer_context_accept_msg *msg);
+esm_cause_t esm_recv_activate_dedicated_eps_bearer_context_accept(
+    mme_ue_s1ap_id_t ue_id, proc_tid_t pti, ebi_t ebi,
+    const activate_dedicated_eps_bearer_context_accept_msg* msg);
 
-esm_cause_t esm_recv_activate_dedicated_eps_bearer_context_reject(mme_ue_s1ap_id_t ue_id,
-    proc_tid_t pti, ebi_t ebi, const activate_dedicated_eps_bearer_context_reject_msg *msg);
+esm_cause_t esm_recv_activate_dedicated_eps_bearer_context_reject(
+    mme_ue_s1ap_id_t ue_id, proc_tid_t pti, ebi_t ebi,
+    const activate_dedicated_eps_bearer_context_reject_msg* msg);
 
-esm_cause_t esm_recv_modify_eps_bearer_context_accept(mme_ue_s1ap_id_t ue_id,
-    proc_tid_t pti, ebi_t ebi, const modify_eps_bearer_context_accept_msg *msg);
+esm_cause_t esm_recv_modify_eps_bearer_context_accept(
+    mme_ue_s1ap_id_t ue_id, proc_tid_t pti, ebi_t ebi,
+    const modify_eps_bearer_context_accept_msg* msg);
 
-esm_cause_t esm_recv_modify_eps_bearer_context_reject (mme_ue_s1ap_id_t ue_id,
-    proc_tid_t pti, ebi_t ebi, const modify_eps_bearer_context_reject_msg * msg);
+esm_cause_t esm_recv_modify_eps_bearer_context_reject(
+    mme_ue_s1ap_id_t ue_id, proc_tid_t pti, ebi_t ebi,
+    const modify_eps_bearer_context_reject_msg* msg);
 
-esm_recv_bearer_resource_allocation (mme_ue_s1ap_id_t ue_id,
-  proc_tid_t pti, ebi_t ebi, const bearer_resource_allocation_request_msg * const msg);
+esm_recv_bearer_resource_allocation(
+    mme_ue_s1ap_id_t ue_id, proc_tid_t pti, ebi_t ebi,
+    const bearer_resource_allocation_request_msg* const msg);
 
-esm_recv_bearer_resource_modification (mme_ue_s1ap_id_t ue_id,
-  proc_tid_t pti, ebi_t ebi, const bearer_resource_modification_request_msg * const msg);
+esm_recv_bearer_resource_modification(
+    mme_ue_s1ap_id_t ue_id, proc_tid_t pti, ebi_t ebi,
+    const bearer_resource_modification_request_msg* const msg);
 
-esm_cause_t esm_recv_deactivate_eps_bearer_context_accept(mme_ue_s1ap_id_t ue_id,
-    proc_tid_t pti, ebi_t ebi, const deactivate_eps_bearer_context_accept_msg *msg);
+esm_cause_t esm_recv_deactivate_eps_bearer_context_accept(
+    mme_ue_s1ap_id_t ue_id, proc_tid_t pti, ebi_t ebi,
+    const deactivate_eps_bearer_context_accept_msg* msg);
 
 #endif /* __ESM_RECV_H__*/

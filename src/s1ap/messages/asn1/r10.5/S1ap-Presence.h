@@ -4,9 +4,8 @@
  * 	found in "S1AP-CommonDataTypes.asn"
  */
 
-#ifndef	_S1ap_Presence_H_
-#define	_S1ap_Presence_H_
-
+#ifndef _S1ap_Presence_H_
+#define _S1ap_Presence_H_
 
 #include <asn_application.h>
 
@@ -19,13 +18,13 @@ extern "C" {
 
 /* Dependencies */
 typedef enum S1ap_Presence {
-	S1ap_Presence_optional	= 0,
-	S1ap_Presence_conditional	= 1,
-	S1ap_Presence_mandatory	= 2
+  S1ap_Presence_optional = 0,
+  S1ap_Presence_conditional = 1,
+  S1ap_Presence_mandatory = 2
 } e_S1ap_Presence;
 
 /* S1ap-Presence */
-typedef long	 S1ap_Presence_t;
+typedef long S1ap_Presence_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_S1ap_Presence;
@@ -41,5 +40,5 @@ xer_type_encoder_f S1ap_Presence_encode_xer;
 }
 #endif
 
-#endif	/* _S1ap_Presence_H_ */
+#endif /* _S1ap_Presence_H_ */
 #include <asn_internal.h>

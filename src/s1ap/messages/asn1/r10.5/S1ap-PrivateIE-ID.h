@@ -4,9 +4,8 @@
  * 	found in "S1AP-CommonDataTypes.asn"
  */
 
-#ifndef	_S1ap_PrivateIE_ID_H_
-#define	_S1ap_PrivateIE_ID_H_
-
+#ifndef _S1ap_PrivateIE_ID_H_
+#define _S1ap_PrivateIE_ID_H_
 
 #include <asn_application.h>
 
@@ -21,21 +20,21 @@ extern "C" {
 
 /* Dependencies */
 typedef enum S1ap_PrivateIE_ID_PR {
-	S1ap_PrivateIE_ID_PR_NOTHING,	/* No components present */
-	S1ap_PrivateIE_ID_PR_local,
-	S1ap_PrivateIE_ID_PR_global
+  S1ap_PrivateIE_ID_PR_NOTHING, /* No components present */
+  S1ap_PrivateIE_ID_PR_local,
+  S1ap_PrivateIE_ID_PR_global
 } S1ap_PrivateIE_ID_PR;
 
 /* S1ap-PrivateIE-ID */
 typedef struct S1ap_PrivateIE_ID {
-	S1ap_PrivateIE_ID_PR present;
-	union S1ap_PrivateIE_ID_u {
-		long	 local;
-		OBJECT_IDENTIFIER_t	 global;
-	} choice;
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+  S1ap_PrivateIE_ID_PR present;
+  union S1ap_PrivateIE_ID_u {
+    long local;
+    OBJECT_IDENTIFIER_t global;
+  } choice;
+
+  /* Context for parsing across buffer boundaries */
+  asn_struct_ctx_t _asn_ctx;
 } S1ap_PrivateIE_ID_t;
 
 /* Implementation */
@@ -45,5 +44,5 @@ extern asn_TYPE_descriptor_t asn_DEF_S1ap_PrivateIE_ID;
 }
 #endif
 
-#endif	/* _S1ap_PrivateIE_ID_H_ */
+#endif /* _S1ap_PrivateIE_ID_H_ */
 #include <asn_internal.h>

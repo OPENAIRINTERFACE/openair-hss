@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -35,9 +35,9 @@
   Description NAS procedure functions triggered by the network
 
 *****************************************************************************/
+#include <pthread.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include <pthread.h>
 
 #include "bstrlib.h"
 
@@ -78,15 +78,14 @@
  **          Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
-void nas_network_initialize (mme_config_t * mme_config_p)
-{
-  OAILOG_FUNC_IN (LOG_NAS);
+void nas_network_initialize(mme_config_t* mme_config_p) {
+  OAILOG_FUNC_IN(LOG_NAS);
   /*
    * Initialize the internal NAS processing data
    */
-  nas_timer_init ();
-  nas_proc_initialize (mme_config_p);
-  OAILOG_FUNC_OUT (LOG_NAS);
+  nas_timer_init();
+  nas_proc_initialize(mme_config_p);
+  OAILOG_FUNC_OUT(LOG_NAS);
 }
 
 /****************************************************************************/

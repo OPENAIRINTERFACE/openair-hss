@@ -4,9 +4,8 @@
  * 	found in "S1AP-IEs.asn"
  */
 
-#ifndef	_S1ap_ForbiddenInterRATs_H_
-#define	_S1ap_ForbiddenInterRATs_H_
-
+#ifndef _S1ap_ForbiddenInterRATs_H_
+#define _S1ap_ForbiddenInterRATs_H_
 
 #include <asn_application.h>
 
@@ -19,19 +18,19 @@ extern "C" {
 
 /* Dependencies */
 typedef enum S1ap_ForbiddenInterRATs {
-	S1ap_ForbiddenInterRATs_all	= 0,
-	S1ap_ForbiddenInterRATs_geran	= 1,
-	S1ap_ForbiddenInterRATs_utran	= 2,
-	S1ap_ForbiddenInterRATs_cdma2000	= 3,
-	/*
-	 * Enumeration is extensible
-	 */
-	S1ap_ForbiddenInterRATs_geranandutran	= 4,
-	S1ap_ForbiddenInterRATs_cdma2000andutran	= 5
+  S1ap_ForbiddenInterRATs_all = 0,
+  S1ap_ForbiddenInterRATs_geran = 1,
+  S1ap_ForbiddenInterRATs_utran = 2,
+  S1ap_ForbiddenInterRATs_cdma2000 = 3,
+  /*
+   * Enumeration is extensible
+   */
+  S1ap_ForbiddenInterRATs_geranandutran = 4,
+  S1ap_ForbiddenInterRATs_cdma2000andutran = 5
 } e_S1ap_ForbiddenInterRATs;
 
 /* S1ap-ForbiddenInterRATs */
-typedef long	 S1ap_ForbiddenInterRATs_t;
+typedef long S1ap_ForbiddenInterRATs_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_S1ap_ForbiddenInterRATs;
@@ -47,5 +46,5 @@ xer_type_encoder_f S1ap_ForbiddenInterRATs_encode_xer;
 }
 #endif
 
-#endif	/* _S1ap_ForbiddenInterRATs_H_ */
+#endif /* _S1ap_ForbiddenInterRATs_H_ */
 #include <asn_internal.h>

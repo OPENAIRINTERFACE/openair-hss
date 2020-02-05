@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -22,8 +22,8 @@
 #ifndef CONVERSION_H_
 #define CONVERSION_H_
 
-void hexa_to_ascii(uint8_t *from, char *to, size_t length);
-int ascii_to_hex(uint8_t *dst, const char *h);
-int bcd_to_hex(uint8_t *dst, const char *h, int h_length);
+void hexa_to_ascii(uint8_t* from, char* to, size_t length);
+int ascii_to_hex(uint8_t* dst, const char* h);
+int bcd_to_hex(uint8_t* dst, const char* h, int h_length);
 
 #endif /* CONVERSION_H_ */

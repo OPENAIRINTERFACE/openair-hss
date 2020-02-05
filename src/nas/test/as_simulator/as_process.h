@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -70,9 +70,11 @@ Description Defines functions executed by the Access-Stratum sublayer
 int process_cell_info_req(int msg_id, const cell_info_req_t* req,
                           cell_info_cnf_t* cnf);
 int process_nas_establish_req(int msg_id, const nas_establish_req_t* req,
-                              nas_establish_ind_t* ind, nas_establish_cnf_t* cnf);
+                              nas_establish_ind_t* ind,
+                              nas_establish_cnf_t* cnf);
 int process_ul_info_transfer_req(int msg_id, const ul_info_transfer_req_t* req,
-                                 ul_info_transfer_ind_t* ind, ul_info_transfer_cnf_t* cnf);
+                                 ul_info_transfer_ind_t* ind,
+                                 ul_info_transfer_cnf_t* cnf);
 int process_nas_release_req(int msg_id, const nas_release_req_t* req);
 
 /*
@@ -84,7 +86,8 @@ int process_nas_release_req(int msg_id, const nas_release_req_t* req);
 int process_nas_establish_rsp(int msg_id, const nas_establish_rsp_t* rsp,
                               nas_establish_cnf_t* cnf);
 int process_dl_info_transfer_req(int msg_id, const dl_info_transfer_req_t* req,
-                                 dl_info_transfer_ind_t* ind, dl_info_transfer_cnf_t* cnf);
+                                 dl_info_transfer_ind_t* ind,
+                                 dl_info_transfer_cnf_t* cnf);
 int process_nas_release_ind(int msg_id, const nas_release_req_t* req,
                             nas_release_ind_t* ind);
 

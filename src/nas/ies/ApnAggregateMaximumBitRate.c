@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -19,51 +19,50 @@
  *      contact@openairinterface.org
  */
 
+#include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
-#include <stdbool.h>
 
 #include "bstrlib.h"
 
-#include "TLVEncoder.h"
-#include "TLVDecoder.h"
 #include "ApnAggregateMaximumBitRate.h"
-
+#include "TLVDecoder.h"
+#include "TLVEncoder.h"
 
 //------------------------------------------------------------------------------
-int decode_apn_aggregate_maximum_bit_rate (
-  ApnAggregateMaximumBitRate * apnaggregatemaximumbitrate,
-  uint8_t iei,
-  uint8_t * buffer,
-  uint32_t len)
-{
-  int                                     decoded = 0;
-  uint8_t                                 ielen = 0;
+int decode_apn_aggregate_maximum_bit_rate(
+    ApnAggregateMaximumBitRate *apnaggregatemaximumbitrate, uint8_t iei,
+    uint8_t *buffer, uint32_t len) {
+  int decoded = 0;
+  uint8_t ielen = 0;
 
   if (iei > 0) {
-    CHECK_IEI_DECODER (iei, *buffer);
+    CHECK_IEI_DECODER(iei, *buffer);
     decoded++;
   }
 
   ielen = *(buffer + decoded);
   decoded++;
-  CHECK_LENGTH_DECODER (len - decoded, ielen);
+  CHECK_LENGTH_DECODER(len - decoded, ielen);
   apnaggregatemaximumbitrate->apnambrfordownlink = *(buffer + decoded);
   decoded++;
   apnaggregatemaximumbitrate->apnambrforuplink = *(buffer + decoded);
   decoded++;
 
   if (ielen >= 4) {
-    apnaggregatemaximumbitrate->apnambrfordownlink_extended = *(buffer + decoded);
+    apnaggregatemaximumbitrate->apnambrfordownlink_extended =
+        *(buffer + decoded);
     decoded++;
     apnaggregatemaximumbitrate->apnambrforuplink_extended = *(buffer + decoded);
     decoded++;
 
     if (ielen >= 6) {
-      apnaggregatemaximumbitrate->apnambrfordownlink_extended2 = *(buffer + decoded);
+      apnaggregatemaximumbitrate->apnambrfordownlink_extended2 =
+          *(buffer + decoded);
       decoded++;
-      apnaggregatemaximumbitrate->apnambrforuplink_extended2 = *(buffer + decoded);
+      apnaggregatemaximumbitrate->apnambrforuplink_extended2 =
+          *(buffer + decoded);
       decoded++;
     }
   }
@@ -71,19 +70,17 @@ int decode_apn_aggregate_maximum_bit_rate (
 }
 
 //------------------------------------------------------------------------------
-int encode_apn_aggregate_maximum_bit_rate (
-  ApnAggregateMaximumBitRate * apnaggregatemaximumbitrate,
-  uint8_t iei,
-  uint8_t * buffer,
-  uint32_t len)
-{
-  uint8_t                                *lenPtr;
-  uint32_t                                encoded = 0;
+int encode_apn_aggregate_maximum_bit_rate(
+    ApnAggregateMaximumBitRate *apnaggregatemaximumbitrate, uint8_t iei,
+    uint8_t *buffer, uint32_t len) {
+  uint8_t *lenPtr;
+  uint32_t encoded = 0;
 
   /*
    * Checking IEI and pointer
    */
-  CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, APN_AGGREGATE_MAXIMUM_BIT_RATE_MINIMUM_LENGTH, len);
+  CHECK_PDU_POINTER_AND_LENGTH_ENCODER(
+      buffer, APN_AGGREGATE_MAXIMUM_BIT_RATE_MINIMUM_LENGTH, len);
 
   if (iei > 0) {
     *buffer = iei;
@@ -97,16 +94,21 @@ int encode_apn_aggregate_maximum_bit_rate (
   *(buffer + encoded) = apnaggregatemaximumbitrate->apnambrforuplink;
   encoded++;
 
-  if (apnaggregatemaximumbitrate->extensions & APN_AGGREGATE_MAXIMUM_BIT_RATE_MAXIMUM_EXTENSION_PRESENT) {
-    *(buffer + encoded) = apnaggregatemaximumbitrate->apnambrfordownlink_extended;
+  if (apnaggregatemaximumbitrate->extensions &
+      APN_AGGREGATE_MAXIMUM_BIT_RATE_MAXIMUM_EXTENSION_PRESENT) {
+    *(buffer + encoded) =
+        apnaggregatemaximumbitrate->apnambrfordownlink_extended;
     encoded++;
     *(buffer + encoded) = apnaggregatemaximumbitrate->apnambrforuplink_extended;
     encoded++;
 
-    if (apnaggregatemaximumbitrate->extensions & APN_AGGREGATE_MAXIMUM_BIT_RATE_MAXIMUM_EXTENSION2_PRESENT) {
-      *(buffer + encoded) = apnaggregatemaximumbitrate->apnambrfordownlink_extended2;
+    if (apnaggregatemaximumbitrate->extensions &
+        APN_AGGREGATE_MAXIMUM_BIT_RATE_MAXIMUM_EXTENSION2_PRESENT) {
+      *(buffer + encoded) =
+          apnaggregatemaximumbitrate->apnambrfordownlink_extended2;
       encoded++;
-      *(buffer + encoded) = apnaggregatemaximumbitrate->apnambrforuplink_extended2;
+      *(buffer + encoded) =
+          apnaggregatemaximumbitrate->apnambrforuplink_extended2;
       encoded++;
     }
   }
@@ -116,8 +118,8 @@ int encode_apn_aggregate_maximum_bit_rate (
 }
 
 //------------------------------------------------------------------------------
-int ambr_kbps_calc(ApnAggregateMaximumBitRate *apnambr, uint64_t kbr_dl, uint64_t kbr_ul)
-{
+int ambr_kbps_calc(ApnAggregateMaximumBitRate *apnambr, uint64_t kbr_dl,
+                   uint64_t kbr_ul) {
   // if someone volunteer for subroutines..., no time yet.
   memset(apnambr, 0, sizeof(ApnAggregateMaximumBitRate));
   /** Set downlink bitrate. */
@@ -132,7 +134,8 @@ int ambr_kbps_calc(ApnAggregateMaximumBitRate *apnambr, uint64_t kbr_dl, uint64_
     apnambr->apnambrfordownlink = ((kbr_dl - 128) / 64) + 128;
   } else if (kbr_dl > 8640 && kbr_dl <= 256000) {
     apnambr->apnambrfordownlink = 0xfe;
-    apnambr->extensions = 0 | APN_AGGREGATE_MAXIMUM_BIT_RATE_MAXIMUM_EXTENSION_PRESENT;
+    apnambr->extensions =
+        0 | APN_AGGREGATE_MAXIMUM_BIT_RATE_MAXIMUM_EXTENSION_PRESENT;
     if ((kbr_dl >= 8600) && (kbr_dl <= 16000)) {
       apnambr->apnambrfordownlink_extended = (kbr_dl - 8600) / 100;
     } else if ((kbr_dl > 16000) && (kbr_dl <= 128000)) {
@@ -144,9 +147,11 @@ int ambr_kbps_calc(ApnAggregateMaximumBitRate *apnambr, uint64_t kbr_dl, uint64_
     apnambr->apnambrfordownlink = 0xfe;
     apnambr->apnambrfordownlink_extended = 0xfa;
     apnambr->apnambrfordownlink_extended2 = (kbr_dl - 256000) / 256000;
-    apnambr->extensions = 0 | APN_AGGREGATE_MAXIMUM_BIT_RATE_MAXIMUM_EXTENSION_PRESENT;
-    apnambr->extensions = 0 | APN_AGGREGATE_MAXIMUM_BIT_RATE_MAXIMUM_EXTENSION2_PRESENT;
-  }else {
+    apnambr->extensions =
+        0 | APN_AGGREGATE_MAXIMUM_BIT_RATE_MAXIMUM_EXTENSION_PRESENT;
+    apnambr->extensions =
+        0 | APN_AGGREGATE_MAXIMUM_BIT_RATE_MAXIMUM_EXTENSION2_PRESENT;
+  } else {
     /** Leaving empty (error). */
     return RETURNerror;
   }
@@ -162,7 +167,8 @@ int ambr_kbps_calc(ApnAggregateMaximumBitRate *apnambr, uint64_t kbr_dl, uint64_
     apnambr->apnambrforuplink = ((kbr_ul - 128) / 64) + 128;
   } else if (kbr_ul > 8640 && kbr_ul <= 256000) {
     apnambr->apnambrforuplink = 0xfe;
-    apnambr->extensions = 0 | APN_AGGREGATE_MAXIMUM_BIT_RATE_MAXIMUM_EXTENSION_PRESENT;
+    apnambr->extensions =
+        0 | APN_AGGREGATE_MAXIMUM_BIT_RATE_MAXIMUM_EXTENSION_PRESENT;
     if ((kbr_ul >= 8600) && (kbr_ul <= 16000)) {
       apnambr->apnambrforuplink_extended = (kbr_ul - 8600) / 100;
     } else if ((kbr_ul > 16000) && (kbr_ul <= 128000)) {
@@ -174,13 +180,14 @@ int ambr_kbps_calc(ApnAggregateMaximumBitRate *apnambr, uint64_t kbr_dl, uint64_
     apnambr->apnambrforuplink = 0xfe;
     apnambr->apnambrforuplink_extended = 0xfa;
     apnambr->apnambrforuplink_extended2 = (kbr_ul - 256000) / 256000;
-    apnambr->extensions = 0 | APN_AGGREGATE_MAXIMUM_BIT_RATE_MAXIMUM_EXTENSION_PRESENT;
-    apnambr->extensions = 0 | APN_AGGREGATE_MAXIMUM_BIT_RATE_MAXIMUM_EXTENSION2_PRESENT;
-  }else {
+    apnambr->extensions =
+        0 | APN_AGGREGATE_MAXIMUM_BIT_RATE_MAXIMUM_EXTENSION_PRESENT;
+    apnambr->extensions =
+        0 | APN_AGGREGATE_MAXIMUM_BIT_RATE_MAXIMUM_EXTENSION2_PRESENT;
+  } else {
     /** Leaving empty (error). */
     return RETURNerror;
   }
 
   return RETURNok;
 }
-

@@ -19,35 +19,32 @@
  *      contact@openairinterface.org
  */
 
-
+#include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
-#include <stdbool.h>
 
 #include "bstrlib.h"
 
-#include "TLVEncoder.h"
 #include "TLVDecoder.h"
+#include "TLVEncoder.h"
 #include "UeAdditionalSecurityCapability.h"
 
 //------------------------------------------------------------------------------
-int decode_ue_additional_security_capability (
-  ue_additional_security_capability_t * uasc,
-  uint8_t iei,
-  uint8_t * buffer,
-  uint32_t len)
-{
-  int                                     decoded = 0;
-  uint8_t                                 ielen = 0;
+int decode_ue_additional_security_capability(
+    ue_additional_security_capability_t *uasc, uint8_t iei, uint8_t *buffer,
+    uint32_t len) {
+  int decoded = 0;
+  uint8_t ielen = 0;
   if (iei > 0) {
-    CHECK_IEI_DECODER (iei, *buffer);
+    CHECK_IEI_DECODER(iei, *buffer);
     decoded++;
   }
-  DECODE_U8 (buffer + decoded, ielen, decoded);
-  memset (uasc, 0, sizeof (ue_additional_security_capability_t));
-  OAILOG_TRACE (LOG_NAS_EMM, "decode_ue_additional_security_capability len = %d\n", ielen);
-  CHECK_LENGTH_DECODER (len - decoded, ielen);
+  DECODE_U8(buffer + decoded, ielen, decoded);
+  memset(uasc, 0, sizeof(ue_additional_security_capability_t));
+  OAILOG_TRACE(LOG_NAS_EMM,
+               "decode_ue_additional_security_capability len = %d\n", ielen);
+  CHECK_LENGTH_DECODER(len - decoded, ielen);
 
   uasc->_5g_ea = (*(buffer + decoded++));
   uasc->_5g_ea << 8;
@@ -57,29 +54,30 @@ int decode_ue_additional_security_capability (
   uasc->_5g_ia << 8;
   uasc->_5g_ia |= (*(buffer + decoded++));
 
-  OAILOG_TRACE (LOG_NAS_EMM, "ue_additional_security_capability decoded=%u\n", decoded);
+  OAILOG_TRACE(LOG_NAS_EMM, "ue_additional_security_capability decoded=%u\n",
+               decoded);
 
   if ((ielen + 2) != decoded) {
-    decoded = ielen + 1 + (iei > 0 ? 1 : 0) /* Size of header for this IE */ ;
-    OAILOG_TRACE (LOG_NAS_EMM, "ue_additional_security_capability then decoded=%u\n", decoded);
+    decoded = ielen + 1 + (iei > 0 ? 1 : 0) /* Size of header for this IE */;
+    OAILOG_TRACE(LOG_NAS_EMM,
+                 "ue_additional_security_capability then decoded=%u\n",
+                 decoded);
   }
   return decoded;
 }
 
 //------------------------------------------------------------------------------
-int encode_ue_additional_security_capability (
-  ue_additional_security_capability_t * uasc,
-  uint8_t iei,
-  uint8_t * buffer,
-  uint32_t len)
-{
-  uint8_t                                *lenPtr;
-  uint32_t                                encoded = 0;
+int encode_ue_additional_security_capability(
+    ue_additional_security_capability_t *uasc, uint8_t iei, uint8_t *buffer,
+    uint32_t len) {
+  uint8_t *lenPtr;
+  uint32_t encoded = 0;
 
   /*
    * Checking IEI and pointer
    */
-  CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, UE_ADDITIONAL_SECURITY_CAPABILITY_MINIMUM_LENGTH, len);
+  CHECK_PDU_POINTER_AND_LENGTH_ENCODER(
+      buffer, UE_ADDITIONAL_SECURITY_CAPABILITY_MINIMUM_LENGTH, len);
 
   if (iei > 0) {
     *buffer = iei;
@@ -100,4 +98,3 @@ int encode_ue_additional_security_capability (
   *lenPtr = encoded - 1 - ((iei > 0) ? 1 : 0);
   return encoded;
 }
-

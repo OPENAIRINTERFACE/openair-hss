@@ -4,9 +4,8 @@
  * 	found in "S1AP-IEs.asn"
  */
 
-#ifndef	_S1ap_CauseMisc_H_
-#define	_S1ap_CauseMisc_H_
-
+#ifndef _S1ap_CauseMisc_H_
+#define _S1ap_CauseMisc_H_
 
 #include <asn_application.h>
 
@@ -19,19 +18,19 @@ extern "C" {
 
 /* Dependencies */
 typedef enum S1ap_CauseMisc {
-	S1ap_CauseMisc_control_processing_overload	= 0,
-	S1ap_CauseMisc_not_enough_user_plane_processing_resources	= 1,
-	S1ap_CauseMisc_hardware_failure	= 2,
-	S1ap_CauseMisc_om_intervention	= 3,
-	S1ap_CauseMisc_unspecified	= 4,
-	S1ap_CauseMisc_unknown_PLMN	= 5
-	/*
-	 * Enumeration is extensible
-	 */
+  S1ap_CauseMisc_control_processing_overload = 0,
+  S1ap_CauseMisc_not_enough_user_plane_processing_resources = 1,
+  S1ap_CauseMisc_hardware_failure = 2,
+  S1ap_CauseMisc_om_intervention = 3,
+  S1ap_CauseMisc_unspecified = 4,
+  S1ap_CauseMisc_unknown_PLMN = 5
+  /*
+   * Enumeration is extensible
+   */
 } e_S1ap_CauseMisc;
 
 /* S1ap-CauseMisc */
-typedef long	 S1ap_CauseMisc_t;
+typedef long S1ap_CauseMisc_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_S1ap_CauseMisc;
@@ -47,5 +46,5 @@ xer_type_encoder_f S1ap_CauseMisc_encode_xer;
 }
 #endif
 
-#endif	/* _S1ap_CauseMisc_H_ */
+#endif /* _S1ap_CauseMisc_H_ */
 #include <asn_internal.h>

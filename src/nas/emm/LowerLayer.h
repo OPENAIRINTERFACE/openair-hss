@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -42,13 +42,12 @@ Description Defines EMM procedures executed by the Non-Access Stratum
 #ifndef __LOWERLAYER_H__
 #define __LOWERLAYER_H__
 
-#include "common_types.h"
 #include "bstrlib.h"
+#include "common_types.h"
 
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/
 /****************************************************************************/
-
 
 /****************************************************************************/
 /************************  G L O B A L    T Y P E S  ************************/
@@ -62,33 +61,30 @@ Description Defines EMM procedures executed by the Non-Access Stratum
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
 /****************************************************************************/
 
-int lowerlayer_success (mme_ue_s1ap_id_t ue_id, bstring *nas_msg);
-int lowerlayer_failure(mme_ue_s1ap_id_t ueid, STOLEN_REF bstring *nas_msg);
-int lowerlayer_non_delivery_indication (mme_ue_s1ap_id_t ue_id, STOLEN_REF bstring *nas_msg);
+int lowerlayer_success(mme_ue_s1ap_id_t ue_id, bstring* nas_msg);
+int lowerlayer_failure(mme_ue_s1ap_id_t ueid, STOLEN_REF bstring* nas_msg);
+int lowerlayer_non_delivery_indication(mme_ue_s1ap_id_t ue_id,
+                                       STOLEN_REF bstring* nas_msg);
 int lowerlayer_establish(void);
 int lowerlayer_release(mme_ue_s1ap_id_t ue_id, int cause);
 
-//int lowerlayer_data_ind(mme_ue_s1ap_id_t ueid, const_bstring data);
+// int lowerlayer_data_ind(mme_ue_s1ap_id_t ueid, const_bstring data);
 int lowerlayer_data_req(mme_ue_s1ap_id_t ueid, bstring data);
 
-int lowerlayer_activate_bearer_req(const mme_ue_s1ap_id_t ue_id, const ebi_t ebi,
-	const bool			   retry,
-	const int    		   retx_count,
-	const bearer_qos_t    *bearer_qos,
-    bstring data);
+int lowerlayer_activate_bearer_req(const mme_ue_s1ap_id_t ue_id,
+                                   const ebi_t ebi, const bool retry,
+                                   const int retx_count,
+                                   const bearer_qos_t* bearer_qos,
+                                   bstring data);
 
 int lowerlayer_modify_bearer_req(const mme_ue_s1ap_id_t ue_id, const ebi_t ebi,
-	const bool			   retry,
-	const int    		   retx_count,
-	const bearer_qos_t    *bearer_qos,
-    bstring data);
+                                 const bool retry, const int retx_count,
+                                 const bearer_qos_t* bearer_qos, bstring data);
 
-int lowerlayer_deactivate_bearer_req (
-    const mme_ue_s1ap_id_t ue_id,
-    const ebi_t            ebi,
-	const bool			   retry,
-	const int    		   retx_count,
-	const bearer_qos_t    *bearer_qos,
-    bstring data);
+int lowerlayer_deactivate_bearer_req(const mme_ue_s1ap_id_t ue_id,
+                                     const ebi_t ebi, const bool retry,
+                                     const int retx_count,
+                                     const bearer_qos_t* bearer_qos,
+                                     bstring data);
 
 #endif /* __LOWERLAYER_H__*/

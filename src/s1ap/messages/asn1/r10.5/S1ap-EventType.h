@@ -4,9 +4,8 @@
  * 	found in "S1AP-IEs.asn"
  */
 
-#ifndef	_S1ap_EventType_H_
-#define	_S1ap_EventType_H_
-
+#ifndef _S1ap_EventType_H_
+#define _S1ap_EventType_H_
 
 #include <asn_application.h>
 
@@ -19,16 +18,16 @@ extern "C" {
 
 /* Dependencies */
 typedef enum S1ap_EventType {
-	S1ap_EventType_direct	= 0,
-	S1ap_EventType_change_of_serve_cell	= 1,
-	S1ap_EventType_stop_change_of_serve_cell	= 2
-	/*
-	 * Enumeration is extensible
-	 */
+  S1ap_EventType_direct = 0,
+  S1ap_EventType_change_of_serve_cell = 1,
+  S1ap_EventType_stop_change_of_serve_cell = 2
+  /*
+   * Enumeration is extensible
+   */
 } e_S1ap_EventType;
 
 /* S1ap-EventType */
-typedef long	 S1ap_EventType_t;
+typedef long S1ap_EventType_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_S1ap_EventType;
@@ -44,5 +43,5 @@ xer_type_encoder_f S1ap_EventType_encode_xer;
 }
 #endif
 
-#endif	/* _S1ap_EventType_H_ */
+#endif /* _S1ap_EventType_H_ */
 #include <asn_internal.h>

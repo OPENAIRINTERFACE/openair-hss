@@ -29,6 +29,4 @@
 #ifndef FILE_COMMON_DIM_SEEN
 #define FILE_COMMON_DIM_SEEN
 
-
-
 #endif /* FILE_COMMON_DIM_SEEN */

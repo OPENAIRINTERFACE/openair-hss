@@ -31,16 +31,15 @@
 
 // could be extracted with asn1 tool
 
-typedef enum EstablishmentCause  {
-             EMERGENCY = 1,
-             HIGH_PRIORITY_ACCESS,
-             MT_ACCESS,
-             MO_SIGNALLING,
-             MO_DATA,
-             DELAY_TOLERANT_ACCESS_V1020,
-             SPARE2,
-             SPARE1
+typedef enum EstablishmentCause {
+  EMERGENCY = 1,
+  HIGH_PRIORITY_ACCESS,
+  MT_ACCESS,
+  MO_SIGNALLING,
+  MO_DATA,
+  DELAY_TOLERANT_ACCESS_V1020,
+  SPARE2,
+  SPARE1
 } rrc_establishment_cause_t;
-
 
 #endif /* FILE_3GPP_36_331_SEEN */

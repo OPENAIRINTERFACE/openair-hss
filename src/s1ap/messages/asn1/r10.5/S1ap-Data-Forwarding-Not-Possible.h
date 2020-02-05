@@ -4,9 +4,8 @@
  * 	found in "S1AP-IEs.asn"
  */
 
-#ifndef	_S1ap_Data_Forwarding_Not_Possible_H_
-#define	_S1ap_Data_Forwarding_Not_Possible_H_
-
+#ifndef _S1ap_Data_Forwarding_Not_Possible_H_
+#define _S1ap_Data_Forwarding_Not_Possible_H_
 
 #include <asn_application.h>
 
@@ -19,14 +18,14 @@ extern "C" {
 
 /* Dependencies */
 typedef enum S1ap_Data_Forwarding_Not_Possible {
-	S1ap_Data_Forwarding_Not_Possible_data_Forwarding_not_Possible	= 0
-	/*
-	 * Enumeration is extensible
-	 */
+  S1ap_Data_Forwarding_Not_Possible_data_Forwarding_not_Possible = 0
+  /*
+   * Enumeration is extensible
+   */
 } e_S1ap_Data_Forwarding_Not_Possible;
 
 /* S1ap-Data-Forwarding-Not-Possible */
-typedef long	 S1ap_Data_Forwarding_Not_Possible_t;
+typedef long S1ap_Data_Forwarding_Not_Possible_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_S1ap_Data_Forwarding_Not_Possible;
@@ -42,5 +41,5 @@ xer_type_encoder_f S1ap_Data_Forwarding_Not_Possible_encode_xer;
 }
 #endif
 
-#endif	/* _S1ap_Data_Forwarding_Not_Possible_H_ */
+#endif /* _S1ap_Data_Forwarding_Not_Possible_H_ */
 #include <asn_internal.h>

@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -19,26 +19,23 @@
  *      contact@openairinterface.org
  */
 
-
+#include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
-#include <stdbool.h>
 
 #include "bstrlib.h"
 
-#include "log.h"
-#include "TLVEncoder.h"
-#include "TLVDecoder.h"
-#include "common_types.h"
 #include "EpsQualityOfService.h"
+#include "TLVDecoder.h"
+#include "TLVEncoder.h"
+#include "common_types.h"
+#include "log.h"
 
 //------------------------------------------------------------------------------
-static int decode_eps_qos_bit_rates (
-  EpsQoSBitRates * epsqosbitrates,
-  const uint8_t * buffer)
-{
-  int                                     decoded = 0;
+static int decode_eps_qos_bit_rates(EpsQoSBitRates *epsqosbitrates,
+                                    const uint8_t *buffer) {
+  int decoded = 0;
 
   epsqosbitrates->maxBitRateForUL = *(buffer + decoded);
   decoded++;
@@ -52,23 +49,19 @@ static int decode_eps_qos_bit_rates (
 }
 
 //------------------------------------------------------------------------------
-int decode_eps_quality_of_service (
-  EpsQualityOfService * epsqualityofservice,
-  uint8_t iei,
-  uint8_t * buffer,
-  uint32_t len)
-{
-  int                                     decoded = 0;
-  uint8_t                                 ielen = 0;
+int decode_eps_quality_of_service(EpsQualityOfService *epsqualityofservice,
+                                  uint8_t iei, uint8_t *buffer, uint32_t len) {
+  int decoded = 0;
+  uint8_t ielen = 0;
 
   if (iei > 0) {
-    CHECK_IEI_DECODER (iei, *buffer);
+    CHECK_IEI_DECODER(iei, *buffer);
     decoded++;
   }
 
   ielen = *(buffer + decoded);
   decoded++;
-  CHECK_LENGTH_DECODER (len - decoded, ielen);
+  CHECK_LENGTH_DECODER(len - decoded, ielen);
   epsqualityofservice->qci = *(buffer + decoded);
   decoded++;
 
@@ -77,7 +70,8 @@ int decode_eps_quality_of_service (
      * bitRates is present
      */
     epsqualityofservice->bitRatesPresent = 1;
-    decoded += decode_eps_qos_bit_rates (&epsqualityofservice->bitRates, buffer + decoded);
+    decoded += decode_eps_qos_bit_rates(&epsqualityofservice->bitRates,
+                                        buffer + decoded);
   } else {
     /*
      * bitRates is not present
@@ -90,7 +84,8 @@ int decode_eps_quality_of_service (
      * bitRatesExt is present
      */
     epsqualityofservice->bitRatesExtPresent = 1;
-    decoded += decode_eps_qos_bit_rates (&epsqualityofservice->bitRatesExt, buffer + decoded);
+    decoded += decode_eps_qos_bit_rates(&epsqualityofservice->bitRatesExt,
+                                        buffer + decoded);
   } else {
     /*
      * bitRatesExt is not present
@@ -102,11 +97,9 @@ int decode_eps_quality_of_service (
 }
 
 //------------------------------------------------------------------------------
-static int encode_eps_qos_bit_rates (
-  const EpsQoSBitRates * epsqosbitrates,
-  uint8_t * buffer)
-{
-  int                                     encoded = 0;
+static int encode_eps_qos_bit_rates(const EpsQoSBitRates *epsqosbitrates,
+                                    uint8_t *buffer) {
+  int encoded = 0;
 
   *(buffer + encoded) = epsqosbitrates->maxBitRateForUL;
   encoded++;
@@ -120,19 +113,16 @@ static int encode_eps_qos_bit_rates (
 }
 
 //------------------------------------------------------------------------------
-int encode_eps_quality_of_service (
-  EpsQualityOfService * epsqualityofservice,
-  uint8_t iei,
-  uint8_t * buffer,
-  uint32_t len)
-{
-  uint8_t                                *lenPtr;
-  uint32_t                                encoded = 0;
+int encode_eps_quality_of_service(EpsQualityOfService *epsqualityofservice,
+                                  uint8_t iei, uint8_t *buffer, uint32_t len) {
+  uint8_t *lenPtr;
+  uint32_t encoded = 0;
 
   /*
    * Checking IEI and pointer
    */
-  CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, EPS_QUALITY_OF_SERVICE_MINIMUM_LENGTH, len);
+  CHECK_PDU_POINTER_AND_LENGTH_ENCODER(
+      buffer, EPS_QUALITY_OF_SERVICE_MINIMUM_LENGTH, len);
 
   if (iei > 0) {
     *buffer = iei;
@@ -145,22 +135,22 @@ int encode_eps_quality_of_service (
   encoded++;
 
   if (epsqualityofservice->bitRatesPresent) {
-    encoded += encode_eps_qos_bit_rates (&epsqualityofservice->bitRates, buffer + encoded);
+    encoded += encode_eps_qos_bit_rates(&epsqualityofservice->bitRates,
+                                        buffer + encoded);
   }
 
   if (epsqualityofservice->bitRatesExtPresent) {
-    encoded += encode_eps_qos_bit_rates (&epsqualityofservice->bitRatesExt, buffer + encoded);
+    encoded += encode_eps_qos_bit_rates(&epsqualityofservice->bitRatesExt,
+                                        buffer + encoded);
   }
 
   *lenPtr = encoded - 1 - ((iei > 0) ? 1 : 0);
   return encoded;
 }
 
-
-#define EPS_QOS_BIT_RATE_MAX  262144    // 256 Mbps
+#define EPS_QOS_BIT_RATE_MAX 262144  // 256 Mbps
 //------------------------------------------------------------------------------
-int eps_qos_bit_rate_value (uint8_t br)
-{
+int eps_qos_bit_rate_value(uint8_t br) {
   if (br < 0b00000001) {
     return (EPS_QOS_BIT_RATE_MAX);
   } else if ((br > 0b00000000) && (br < 0b01000000)) {
@@ -175,8 +165,7 @@ int eps_qos_bit_rate_value (uint8_t br)
 }
 
 //------------------------------------------------------------------------------
-int eps_qos_bit_rate_ext_value (uint8_t br)
-{
+int eps_qos_bit_rate_ext_value(uint8_t br) {
   if ((br > 0b00000000) && (br < 0b01001011)) {
     return (8600 + br * 100);
   } else if ((br > 0b01001010) && (br < 0b10111011)) {
@@ -189,11 +178,13 @@ int eps_qos_bit_rate_ext_value (uint8_t br)
 }
 
 //------------------------------------------------------------------------------
-void qos_params_to_eps_qos(const qci_e qci, const bitrate_t mbr_dl, const bitrate_t mbr_ul, const bitrate_t gbr_dl, const bitrate_t gbr_ul,
-    EpsQualityOfService * const eps_qos, bool is_default_bearer)
-{
+void qos_params_to_eps_qos(const qci_e qci, const bitrate_t mbr_dl,
+                           const bitrate_t mbr_ul, const bitrate_t gbr_dl,
+                           const bitrate_t gbr_ul,
+                           EpsQualityOfService *const eps_qos,
+                           bool is_default_bearer) {
   // if someone volunteer for subroutines..., no time yet.
-//  DevAssert(eps_qos);
+  //  DevAssert(eps_qos);
   memset(eps_qos, 0, sizeof(EpsQualityOfService));
   eps_qos->qci = qci;
   if (!is_default_bearer) {
@@ -252,7 +243,8 @@ void qos_params_to_eps_qos(const qci_e qci, const bitrate_t mbr_dl, const bitrat
       } else if ((gbr_ul > 16000) && (gbr_ul <= 128000)) {
         eps_qos->bitRatesExt.guarBitRateForUL = ((gbr_ul - 16000) / 1000) + 74;
       } else if ((gbr_ul > 128000) && (gbr_ul <= 256000)) {
-        eps_qos->bitRatesExt.guarBitRateForUL = ((gbr_ul - 128000) / 2000) + 186;
+        eps_qos->bitRatesExt.guarBitRateForUL =
+            ((gbr_ul - 128000) / 2000) + 186;
       }
     }
     if (gbr_dl == 0) {
@@ -271,33 +263,32 @@ void qos_params_to_eps_qos(const qci_e qci, const bitrate_t mbr_dl, const bitrat
       } else if ((gbr_dl > 16000) && (gbr_dl <= 128000)) {
         eps_qos->bitRatesExt.guarBitRateForDL = ((gbr_dl - 16000) / 1000) + 74;
       } else if ((gbr_dl > 128000) && (gbr_dl <= 256000)) {
-        eps_qos->bitRatesExt.guarBitRateForDL = ((gbr_dl - 128000) / 2000) + 186;
+        eps_qos->bitRatesExt.guarBitRateForDL =
+            ((gbr_dl - 128000) / 2000) + 186;
       }
     }
   }
 }
 
 //------------------------------------------------------------------------------
-int validateEpsQosParameter(qci_e qci, int pvi, int pci, int pl, bitrate_t gbr_ul, bitrate_t gbr_dl, bitrate_t mbr_ul, bitrate_t mbr_dl){
+int validateEpsQosParameter(qci_e qci, int pvi, int pci, int pl,
+                            bitrate_t gbr_ul, bitrate_t gbr_dl,
+                            bitrate_t mbr_ul, bitrate_t mbr_dl) {
   /** Check ARP. */
-  if(!(0 <= pvi && pvi  <= 1))
-    OAILOG_FUNC_RETURN(LOG_NAS_ESM, RETURNerror);
+  if (!(0 <= pvi && pvi <= 1)) OAILOG_FUNC_RETURN(LOG_NAS_ESM, RETURNerror);
 
-  if(!(0 <= pci && pci <= 1))
-    OAILOG_FUNC_RETURN(LOG_NAS_ESM, RETURNerror);
+  if (!(0 <= pci && pci <= 1)) OAILOG_FUNC_RETURN(LOG_NAS_ESM, RETURNerror);
 
-  if(!(0 <= pl && pl <= 15))
-    OAILOG_FUNC_RETURN(LOG_NAS_ESM, RETURNerror);
-
+  if (!(0 <= pl && pl <= 15)) OAILOG_FUNC_RETURN(LOG_NAS_ESM, RETURNerror);
 
   /** Check MBR/GBR depending on QCI. */
-  if(is_qci_gbr(qci)){
+  if (is_qci_gbr(qci)) {
     /** Received a GBR QCI. Check that bitrate values are set. */
-    if(gbr_dl && gbr_ul && mbr_dl &&  mbr_ul )
+    if (gbr_dl && gbr_ul && mbr_dl && mbr_ul)
       OAILOG_FUNC_RETURN(LOG_NAS_ESM, RETURNok);
-  }else {
+  } else {
     /** Received a NON-GBR QCI. Check that bitrate values are 0. */
-    if(!(gbr_dl || gbr_ul || mbr_dl ||  mbr_ul ))
+    if (!(gbr_dl || gbr_ul || mbr_dl || mbr_ul))
       OAILOG_FUNC_RETURN(LOG_NAS_ESM, RETURNok);
   }
   OAILOG_FUNC_RETURN(LOG_NAS_ESM, RETURNerror);

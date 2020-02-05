@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -43,16 +43,15 @@ Description Defines identifiers of the EPS Mobility Management messages.
 /****************************************************************************/
 
 /* Header length boundaries of EPS Mobility Management messages  */
-#define EMM_HEADER_LENGTH   sizeof(emm_msg_header_t)
+#define EMM_HEADER_LENGTH sizeof(emm_msg_header_t)
 #define EMM_HEADER_MINIMUM_LENGTH EMM_HEADER_LENGTH
 #define EMM_HEADER_MAXIMUM_LENGTH EMM_HEADER_LENGTH
-
 
 /*
  * Message identifiers for EMM messages that does not follow the structure
  * of a standard layer 3 message
  */
-# define SERVICE_REQUEST               0b01001101 /* TODO: TBD - 77 = 0x4d */
+#define SERVICE_REQUEST 0b01001101 /* TODO: TBD - 77 = 0x4d */
 
 /****************************************************************************/
 /************************  G L O B A L    T Y P E S  ************************/
@@ -70,12 +69,12 @@ Description Defines identifiers of the EPS Mobility Management messages.
  */
 typedef struct emm_msg_header_s {
 #ifdef __LITTLE_ENDIAN_BITFIELD
-  uint8_t protocol_discriminator:4;
-  uint8_t security_header_type:4;
+  uint8_t protocol_discriminator : 4;
+  uint8_t security_header_type : 4;
 #endif
 #ifdef __BIG_ENDIAN_BITFIELD
-  uint8_t security_header_type:4;
-  uint8_t protocol_discriminator:4;
+  uint8_t security_header_type : 4;
+  uint8_t protocol_discriminator : 4;
 #endif
   uint8_t message_type;
 } __attribute__((__packed__)) emm_msg_header_t;
@@ -89,4 +88,3 @@ typedef struct emm_msg_header_s {
 /****************************************************************************/
 
 #endif /* FILE_EMM_MSGDEF_SEEN */
-

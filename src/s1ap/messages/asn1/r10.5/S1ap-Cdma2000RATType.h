@@ -4,9 +4,8 @@
  * 	found in "S1AP-IEs.asn"
  */
 
-#ifndef	_S1ap_Cdma2000RATType_H_
-#define	_S1ap_Cdma2000RATType_H_
-
+#ifndef _S1ap_Cdma2000RATType_H_
+#define _S1ap_Cdma2000RATType_H_
 
 #include <asn_application.h>
 
@@ -19,15 +18,15 @@ extern "C" {
 
 /* Dependencies */
 typedef enum S1ap_Cdma2000RATType {
-	S1ap_Cdma2000RATType_hRPD	= 0,
-	S1ap_Cdma2000RATType_onexRTT	= 1
-	/*
-	 * Enumeration is extensible
-	 */
+  S1ap_Cdma2000RATType_hRPD = 0,
+  S1ap_Cdma2000RATType_onexRTT = 1
+  /*
+   * Enumeration is extensible
+   */
 } e_S1ap_Cdma2000RATType;
 
 /* S1ap-Cdma2000RATType */
-typedef long	 S1ap_Cdma2000RATType_t;
+typedef long S1ap_Cdma2000RATType_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_S1ap_Cdma2000RATType;
@@ -43,5 +42,5 @@ xer_type_encoder_f S1ap_Cdma2000RATType_encode_xer;
 }
 #endif
 
-#endif	/* _S1ap_Cdma2000RATType_H_ */
+#endif /* _S1ap_Cdma2000RATType_H_ */
 #include <asn_internal.h>

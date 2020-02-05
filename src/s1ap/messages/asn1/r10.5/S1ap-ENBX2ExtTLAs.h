@@ -4,9 +4,8 @@
  * 	found in "S1AP-IEs.asn"
  */
 
-#ifndef	_S1ap_ENBX2ExtTLAs_H_
-#define	_S1ap_ENBX2ExtTLAs_H_
-
+#ifndef _S1ap_ENBX2ExtTLAs_H_
+#define _S1ap_ENBX2ExtTLAs_H_
 
 #include <asn_application.h>
 
@@ -23,10 +22,10 @@ struct S1ap_ENBX2ExtTLA;
 
 /* S1ap-ENBX2ExtTLAs */
 typedef struct S1ap_ENBX2ExtTLAs {
-	A_SEQUENCE_OF(struct S1ap_ENBX2ExtTLA) list;
-	
-	/* Context for parsing across buffer boundaries */
-	asn_struct_ctx_t _asn_ctx;
+  A_SEQUENCE_OF(struct S1ap_ENBX2ExtTLA) list;
+
+  /* Context for parsing across buffer boundaries */
+  asn_struct_ctx_t _asn_ctx;
 } S1ap_ENBX2ExtTLAs_t;
 
 /* Implementation */
@@ -39,5 +38,5 @@ extern asn_TYPE_descriptor_t asn_DEF_S1ap_ENBX2ExtTLAs;
 /* Referred external types */
 #include "S1ap-ENBX2ExtTLA.h"
 
-#endif	/* _S1ap_ENBX2ExtTLAs_H_ */
+#endif /* _S1ap_ENBX2ExtTLAs_H_ */
 #include <asn_internal.h>

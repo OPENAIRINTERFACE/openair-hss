@@ -19,32 +19,31 @@
  *      contact@openairinterface.org
  */
 
-#include <netinet/ip.h>
 #include <arpa/inet.h>
+#include <netinet/ip.h>
 #include <string>
 
-#include "SdfFilterApplication.h"
-#include "IMSIEncoder.h"
 #include <fluid/of13/openflow-13.h>
+#include "IMSIEncoder.h"
+#include "SdfFilterApplication.h"
 
 extern "C" {
-  #include "log.h"
-  #include "bstrlib.h"
-  #include "pgw_lite_paa.h"
+#include "bstrlib.h"
+#include "log.h"
+#include "pgw_lite_paa.h"
 }
 
 using namespace fluid_msg;
-
 
 namespace openflow {
 
 extern uint32_t prefix2mask(int prefix);
 
-SdfFilterApplication::SdfFilterApplication(uint32_t sgi_port_num) : sgi_port_num_(sgi_port_num) {}
-
+SdfFilterApplication::SdfFilterApplication(uint32_t sgi_port_num)
+    : sgi_port_num_(sgi_port_num) {}
 
 void SdfFilterApplication::event_callback(const ControllerEvent& ev,
-                                    const OpenflowMessenger& messenger) {
+                                          const OpenflowMessenger& messenger) {
   if (ev.get_type() == EVENT_ADD_SDF_FILTER) {
     auto add_sdf_event = static_cast<const AddSdfFilterEvent&>(ev);
     add_sdf_filter(add_sdf_event, messenger);
@@ -54,113 +53,135 @@ void SdfFilterApplication::event_callback(const ControllerEvent& ev,
   }
 }
 
-void sdf_filter2of_match(of13::FlowMod& fm, packet_filter_contents_t * const packetfiltercontents, uint8_t direction) {
+void sdf_filter2of_match(of13::FlowMod& fm,
+                         packet_filter_contents_t* const packetfiltercontents,
+                         uint8_t direction) {}
 
-}
-
-void sdf_filter2of_matching_rule(of13::FlowMod& fm, const sdf_filter_t& sdf_filter) {
+void sdf_filter2of_matching_rule(of13::FlowMod& fm,
+                                 const sdf_filter_t& sdf_filter) {
   uint8_t next_header = 0;
-  if (TRAFFIC_FLOW_TEMPLATE_IPV4_REMOTE_ADDR_FLAG & sdf_filter.packetfiltercontents.flags) {
-    bstring ip_addr = bformat("%d.%d.%d.%d",
-      sdf_filter.packetfiltercontents.ipv4remoteaddr[0], sdf_filter.packetfiltercontents.ipv4remoteaddr[1],
-      sdf_filter.packetfiltercontents.ipv4remoteaddr[2], sdf_filter.packetfiltercontents.ipv4remoteaddr[3]);
-    if ((TRAFFIC_FLOW_TEMPLATE_DOWNLINK_ONLY == sdf_filter.direction) || (TRAFFIC_FLOW_TEMPLATE_BIDIRECTIONAL == sdf_filter.direction)){
+  if (TRAFFIC_FLOW_TEMPLATE_IPV4_REMOTE_ADDR_FLAG &
+      sdf_filter.packetfiltercontents.flags) {
+    bstring ip_addr = bformat(
+        "%d.%d.%d.%d", sdf_filter.packetfiltercontents.ipv4remoteaddr[0],
+        sdf_filter.packetfiltercontents.ipv4remoteaddr[1],
+        sdf_filter.packetfiltercontents.ipv4remoteaddr[2],
+        sdf_filter.packetfiltercontents.ipv4remoteaddr[3]);
+    if ((TRAFFIC_FLOW_TEMPLATE_DOWNLINK_ONLY == sdf_filter.direction) ||
+        (TRAFFIC_FLOW_TEMPLATE_BIDIRECTIONAL == sdf_filter.direction)) {
       of13::IPv4Src match(IPAddress(bdata(ip_addr)));
       fm.add_oxm_field(match);
     }
     bdestroy(ip_addr);
   }
-  if (TRAFFIC_FLOW_TEMPLATE_IPV4_LOCAL_ADDR_FLAG & sdf_filter.packetfiltercontents.flags) {
-    bstring ip_addr = bformat("%d.%d.%d.%d",
-      sdf_filter.packetfiltercontents.ipv4remoteaddr[0], sdf_filter.packetfiltercontents.ipv4remoteaddr[1],
-      sdf_filter.packetfiltercontents.ipv4remoteaddr[2], sdf_filter.packetfiltercontents.ipv4remoteaddr[3]);
-    if ((TRAFFIC_FLOW_TEMPLATE_DOWNLINK_ONLY == sdf_filter.direction) || (TRAFFIC_FLOW_TEMPLATE_BIDIRECTIONAL == sdf_filter.direction)){
+  if (TRAFFIC_FLOW_TEMPLATE_IPV4_LOCAL_ADDR_FLAG &
+      sdf_filter.packetfiltercontents.flags) {
+    bstring ip_addr = bformat(
+        "%d.%d.%d.%d", sdf_filter.packetfiltercontents.ipv4remoteaddr[0],
+        sdf_filter.packetfiltercontents.ipv4remoteaddr[1],
+        sdf_filter.packetfiltercontents.ipv4remoteaddr[2],
+        sdf_filter.packetfiltercontents.ipv4remoteaddr[3]);
+    if ((TRAFFIC_FLOW_TEMPLATE_DOWNLINK_ONLY == sdf_filter.direction) ||
+        (TRAFFIC_FLOW_TEMPLATE_BIDIRECTIONAL == sdf_filter.direction)) {
       of13::IPv4Dst match(IPAddress(bdata(ip_addr)));
       fm.add_oxm_field(match);
     }
     bdestroy(ip_addr);
   }
-  if (TRAFFIC_FLOW_TEMPLATE_IPV6_REMOTE_ADDR_FLAG & sdf_filter.packetfiltercontents.flags) {
+  if (TRAFFIC_FLOW_TEMPLATE_IPV6_REMOTE_ADDR_FLAG &
+      sdf_filter.packetfiltercontents.flags) {
     // TODO
   }
-  if (TRAFFIC_FLOW_TEMPLATE_IPV6_REMOTE_ADDR_PREFIX_FLAG & sdf_filter.packetfiltercontents.flags) {
+  if (TRAFFIC_FLOW_TEMPLATE_IPV6_REMOTE_ADDR_PREFIX_FLAG &
+      sdf_filter.packetfiltercontents.flags) {
     // TODO
   }
-  if (TRAFFIC_FLOW_TEMPLATE_IPV6_LOCAL_ADDR_PREFIX_FLAG & sdf_filter.packetfiltercontents.flags) {
+  if (TRAFFIC_FLOW_TEMPLATE_IPV6_LOCAL_ADDR_PREFIX_FLAG &
+      sdf_filter.packetfiltercontents.flags) {
     // TODO
   }
-  if (TRAFFIC_FLOW_TEMPLATE_PROTOCOL_NEXT_HEADER_FLAG & sdf_filter.packetfiltercontents.flags) {
-    of13::IPProto match(sdf_filter.packetfiltercontents.protocolidentifier_nextheader);
+  if (TRAFFIC_FLOW_TEMPLATE_PROTOCOL_NEXT_HEADER_FLAG &
+      sdf_filter.packetfiltercontents.flags) {
+    of13::IPProto match(
+        sdf_filter.packetfiltercontents.protocolidentifier_nextheader);
     fm.add_oxm_field(match);
     next_header = sdf_filter.packetfiltercontents.protocolidentifier_nextheader;
   }
-  if ((TRAFFIC_FLOW_TEMPLATE_SINGLE_LOCAL_PORT_FLAG & sdf_filter.packetfiltercontents.flags) && (next_header)) {
-    if ((TRAFFIC_FLOW_TEMPLATE_DOWNLINK_ONLY == sdf_filter.direction) || (TRAFFIC_FLOW_TEMPLATE_BIDIRECTIONAL == sdf_filter.direction)){
+  if ((TRAFFIC_FLOW_TEMPLATE_SINGLE_LOCAL_PORT_FLAG &
+       sdf_filter.packetfiltercontents.flags) &&
+      (next_header)) {
+    if ((TRAFFIC_FLOW_TEMPLATE_DOWNLINK_ONLY == sdf_filter.direction) ||
+        (TRAFFIC_FLOW_TEMPLATE_BIDIRECTIONAL == sdf_filter.direction)) {
       switch (next_header) {
-      case IPPROTO_TCP: {
-          of13::TCPDst tcp_match(sdf_filter.packetfiltercontents.singlelocalport);
+        case IPPROTO_TCP: {
+          of13::TCPDst tcp_match(
+              sdf_filter.packetfiltercontents.singlelocalport);
           fm.add_oxm_field(tcp_match);
-        }
-        break;
-      case IPPROTO_UDP: {
-          of13::UDPDst udp_match(sdf_filter.packetfiltercontents.singlelocalport);
+        } break;
+        case IPPROTO_UDP: {
+          of13::UDPDst udp_match(
+              sdf_filter.packetfiltercontents.singlelocalport);
           fm.add_oxm_field(udp_match);
-        }
-        break;
-      case IPPROTO_SCTP: {
-          of13::SCTPDst sctp_match(sdf_filter.packetfiltercontents.singlelocalport);
+        } break;
+        case IPPROTO_SCTP: {
+          of13::SCTPDst sctp_match(
+              sdf_filter.packetfiltercontents.singlelocalport);
           fm.add_oxm_field(sctp_match);
-        }
-        break;
-      default:;
+        } break;
+        default:;
       }
     }
   }
-  if (TRAFFIC_FLOW_TEMPLATE_LOCAL_PORT_RANGE_FLAG & sdf_filter.packetfiltercontents.flags) {
+  if (TRAFFIC_FLOW_TEMPLATE_LOCAL_PORT_RANGE_FLAG &
+      sdf_filter.packetfiltercontents.flags) {
     // TODO
   }
-  if (TRAFFIC_FLOW_TEMPLATE_SINGLE_REMOTE_PORT_FLAG & sdf_filter.packetfiltercontents.flags) {
+  if (TRAFFIC_FLOW_TEMPLATE_SINGLE_REMOTE_PORT_FLAG &
+      sdf_filter.packetfiltercontents.flags) {
     switch (next_header) {
-    case IPPROTO_TCP: {
-        of13::TCPSrc tcp_match(sdf_filter.packetfiltercontents.singleremoteport);
+      case IPPROTO_TCP: {
+        of13::TCPSrc tcp_match(
+            sdf_filter.packetfiltercontents.singleremoteport);
         fm.add_oxm_field(tcp_match);
-      }
-      break;
-    case IPPROTO_UDP: {
-        of13::UDPSrc udp_match(sdf_filter.packetfiltercontents.singleremoteport);
+      } break;
+      case IPPROTO_UDP: {
+        of13::UDPSrc udp_match(
+            sdf_filter.packetfiltercontents.singleremoteport);
         fm.add_oxm_field(udp_match);
-      }
-      break;
-    case IPPROTO_SCTP: {
-        of13::SCTPSrc sctp_match(sdf_filter.packetfiltercontents.singleremoteport);
+      } break;
+      case IPPROTO_SCTP: {
+        of13::SCTPSrc sctp_match(
+            sdf_filter.packetfiltercontents.singleremoteport);
         fm.add_oxm_field(sctp_match);
-      }
-      break;
-    default:;
+      } break;
+      default:;
     }
   }
-  if (TRAFFIC_FLOW_TEMPLATE_REMOTE_PORT_RANGE_FLAG & sdf_filter.packetfiltercontents.flags) {
+  if (TRAFFIC_FLOW_TEMPLATE_REMOTE_PORT_RANGE_FLAG &
+      sdf_filter.packetfiltercontents.flags) {
     // TODO
   }
-  if (TRAFFIC_FLOW_TEMPLATE_SECURITY_PARAMETER_INDEX_FLAG & sdf_filter.packetfiltercontents.flags) {
+  if (TRAFFIC_FLOW_TEMPLATE_SECURITY_PARAMETER_INDEX_FLAG &
+      sdf_filter.packetfiltercontents.flags) {
     // TODO
   }
-  if (TRAFFIC_FLOW_TEMPLATE_TYPE_OF_SERVICE_TRAFFIC_CLASS_FLAG & sdf_filter.packetfiltercontents.flags) {
+  if (TRAFFIC_FLOW_TEMPLATE_TYPE_OF_SERVICE_TRAFFIC_CLASS_FLAG &
+      sdf_filter.packetfiltercontents.flags) {
     // TODO
   }
-  if (TRAFFIC_FLOW_TEMPLATE_FLOW_LABEL_FLAG & sdf_filter.packetfiltercontents.flags) {
+  if (TRAFFIC_FLOW_TEMPLATE_FLOW_LABEL_FLAG &
+      sdf_filter.packetfiltercontents.flags) {
     of13::IPV6Flabel match(sdf_filter.packetfiltercontents.flowlabel);
     fm.add_oxm_field(match);
   }
 }
 
-void pcc_rule2of_matching_rule(of13::FlowMod& fm,
-    const sdf_id_t sdf_id,
-    const sdf_template_t& sdf_template,
-    const bearer_qos_t& bearer_qos,
-    const uint32_t precedence)
-{
-  for (int sdff_i = 0; sdff_i < sdf_template.number_of_packet_filters; sdff_i++) {
+void pcc_rule2of_matching_rule(of13::FlowMod& fm, const sdf_id_t sdf_id,
+                               const sdf_template_t& sdf_template,
+                               const bearer_qos_t& bearer_qos,
+                               const uint32_t precedence) {
+  for (int sdff_i = 0; sdff_i < sdf_template.number_of_packet_filters;
+       sdff_i++) {
     sdf_filter2of_matching_rule(fm, sdf_template.sdf_filter[sdff_i]);
   }
 }
@@ -168,7 +189,9 @@ void pcc_rule2of_matching_rule(of13::FlowMod& fm,
 /*
  * Helper method to add matching for filtering the downlink flow
  */
-void add_downlink_sdf_filter_match(of13::FlowMod& fm, const AddSdfFilterEvent& ev, const uint32_t sgi_port) {
+void add_downlink_sdf_filter_match(of13::FlowMod& fm,
+                                   const AddSdfFilterEvent& ev,
+                                   const uint32_t sgi_port) {
   // Match on SGi in port
   of13::InPort sgi_port_match(sgi_port);
   fm.add_oxm_field(sgi_port_match);
@@ -177,7 +200,8 @@ void add_downlink_sdf_filter_match(of13::FlowMod& fm, const AddSdfFilterEvent& e
   of13::IPDSCP dscp_match(0);
   fm.add_oxm_field(dscp_match);
 
-  pcc_rule2of_matching_rule(fm, ev.get_sdf_id(), ev.get_sdf_template(), ev.get_bearer_qos(), ev.get_precedence());
+  pcc_rule2of_matching_rule(fm, ev.get_sdf_id(), ev.get_sdf_template(),
+                            ev.get_bearer_qos(), ev.get_precedence());
 
   // Get assigned IP block from mobilityd
   struct in_addr netaddr;
@@ -187,9 +211,8 @@ void add_downlink_sdf_filter_match(of13::FlowMod& fm, const AddSdfFilterEvent& e
   // Convert to string for logging
   char ip_str[INET_ADDRSTRLEN];
   inet_ntop(AF_INET, &(netaddr.s_addr), ip_str, INET_ADDRSTRLEN);
-  OAILOG_INFO(LOG_GTPV1U,
-              "Setting SDF filter for UE IP block %s/%d\n",
-              ip_str, prefix);
+  OAILOG_INFO(LOG_GTPV1U, "Setting SDF filter for UE IP block %s/%d\n", ip_str,
+              prefix);
 
   // TODO warning
   // IP eth type
@@ -204,20 +227,17 @@ void add_downlink_sdf_filter_match(of13::FlowMod& fm, const AddSdfFilterEvent& e
 /*
  * Helper method to add imsi as metadata to the packet
  */
-void add_sdf_id_metadata(of13::ApplyActions& apply_actions,
-                       const int sdf_id) {
+void add_sdf_id_metadata(of13::ApplyActions& apply_actions, const int sdf_id) {
   auto metadata_field = new of13::Metadata(sdf_id);
   of13::SetFieldAction set_metadata(metadata_field);
   apply_actions.add_action(set_metadata);
 }
 
-void SdfFilterApplication::add_sdf_filter(
-    const AddSdfFilterEvent& ev,
-    const OpenflowMessenger& messenger) {
+void SdfFilterApplication::add_sdf_filter(const AddSdfFilterEvent& ev,
+                                          const OpenflowMessenger& messenger) {
   of13::FlowMod fm = messenger.create_default_flow_mod(
-      SdfFilterApplication::TABLE,
-      of13::OFPFC_ADD,
-      SdfFilterApplication::DEFAULT_PRIORITY+ev.get_precedence());
+      SdfFilterApplication::TABLE, of13::OFPFC_ADD,
+      SdfFilterApplication::DEFAULT_PRIORITY + ev.get_precedence());
   add_downlink_sdf_filter_match(fm, ev, sgi_port_num_);
 
   of13::ApplyActions apply_ul_inst;
@@ -225,8 +245,8 @@ void SdfFilterApplication::add_sdf_filter(
   // add imsi to packet metadata to pass to other tables
   add_sdf_id_metadata(apply_ul_inst, ev.get_sdf_id());
 
-
-  //apply_ul_inst.add_action(new fluid_msg::of13::SetFieldAction(new fluid_msg::of13::IPDSCP(ev.get_sdf_id())));
+  // apply_ul_inst.add_action(new fluid_msg::of13::SetFieldAction(new
+  // fluid_msg::of13::IPDSCP(ev.get_sdf_id())));
 
   fm.add_instruction(apply_ul_inst);
 
@@ -240,10 +260,8 @@ void SdfFilterApplication::add_sdf_filter(
 }
 
 void SdfFilterApplication::delete_sdf_filter(
-    const DeleteSdfFilterEvent &ev,
-    const OpenflowMessenger& messenger) {
+    const DeleteSdfFilterEvent& ev, const OpenflowMessenger& messenger) {
   // TODO it later
 }
 
-
-}
+}  // namespace openflow

@@ -2,8 +2,8 @@
  * Copyright (c) 2003 Lev Walkin <vlm@lionet.info>. All rights reserved.
  * Redistribution and modifications are permitted subject to BSD license.
  */
-#ifndef	ASN_TYPE_NULL_H
-#define	ASN_TYPE_NULL_H
+#ifndef ASN_TYPE_NULL_H
+#define ASN_TYPE_NULL_H
 
 #include <asn_application.h>
 
@@ -27,10 +27,10 @@ per_type_decoder_f NULL_decode_uper;
 per_type_encoder_f NULL_encode_uper;
 per_type_decoder_f NULL_decode_aper;
 per_type_encoder_f NULL_encode_aper;
-type_compare_f     NULL_compare;
+type_compare_f NULL_compare;
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif	/* NULL_H */
+#endif /* NULL_H */

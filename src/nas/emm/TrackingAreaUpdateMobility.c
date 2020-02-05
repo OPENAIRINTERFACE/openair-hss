@@ -19,33 +19,32 @@
  *      contact@openairinterface.org
  */
 
-
-#include <pthread.h>
 #include <inttypes.h>
-#include <stdint.h>
+#include <pthread.h>
 #include <stdbool.h>
-#include <string.h>
+#include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 
-#include "dynamic_memory_check.h"
-#include "assertions.h"
-#include "log.h"
-#include "msc.h"
-#include "3gpp_requirements_24.301.h"
-#include "common_types.h"
-#include "common_defs.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"
 #include "3gpp_29.274.h"
+#include "3gpp_requirements_24.301.h"
+#include "assertions.h"
+#include "common_defs.h"
+#include "common_types.h"
+#include "dynamic_memory_check.h"
+#include "log.h"
+#include "msc.h"
 
+#include "emm_cause.h"
 #include "emm_data.h"
 #include "emm_proc.h"
-#include "emm_cause.h"
 #include "emm_sap.h"
-#include "nas_timer.h"
+#include "mme_app_defs.h"
 #include "mme_app_ue_context.h"
 #include "mme_config.h"
-#include "mme_app_defs.h"
+#include "nas_timer.h"
 /*
  *    R  E  A  D      M  E      B  E  F  O  R  E         D  O  I  N  G
  *
@@ -53,24 +52,20 @@
  *
  *
  *
- *  Due to legal concerns no mobility code concerning Normal TAU can be committed
- *  in this source file nor in this git project called openair-cn.
+ *  Due to legal concerns no mobility code concerning Normal TAU can be
+ * committed in this source file nor in this git project called openair-cn.
  *  Contributions to Normal TAU can only be accepted inside the git project
  *  called openair-cn-mobility.
  */
 
 //------------------------------------------------------------------------------
-int
-emm_recv_tracking_area_update_req_type_normal (
-  mme_ue_s1ap_id_t ue_id,
-  const tracking_area_update_request_msg * msg,
-  int *emm_cause )
-{
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
-  int                                     rc;
-  //Send Reject
-  rc = emm_proc_tracking_area_update_reject (ue_id, EMM_CAUSE_IMPLICITLY_DETACHED);
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+int emm_recv_tracking_area_update_req_type_normal(
+    mme_ue_s1ap_id_t ue_id, const tracking_area_update_request_msg *msg,
+    int *emm_cause) {
+  OAILOG_FUNC_IN(LOG_NAS_EMM);
+  int rc;
+  // Send Reject
+  rc = emm_proc_tracking_area_update_reject(ue_id,
+                                            EMM_CAUSE_IMPLICITLY_DETACHED);
+  OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
 }
-
-

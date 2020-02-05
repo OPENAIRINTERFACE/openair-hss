@@ -33,10 +33,10 @@
  * Intertask Interface Constants
  ******************************************************************************/
 
-#define ITTI_PORT                (10007)
+#define ITTI_PORT (10007)
 
 /* This is the queue size for signal dumper */
-#define ITTI_QUEUE_MAX_ELEMENTS  (64 * 1024)
-#define ITTI_DUMP_MAX_CON        (5)    /* Max connections in parallel */
+#define ITTI_QUEUE_MAX_ELEMENTS (64 * 1024)
+#define ITTI_DUMP_MAX_CON (5) /* Max connections in parallel */
 
 #endif /* FILE_INTERTASK_INTERFACE_CONF_SEEN */

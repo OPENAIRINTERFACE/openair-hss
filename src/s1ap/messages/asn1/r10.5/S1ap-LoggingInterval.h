@@ -4,9 +4,8 @@
  * 	found in "S1AP-IEs.asn"
  */
 
-#ifndef	_S1ap_LoggingInterval_H_
-#define	_S1ap_LoggingInterval_H_
-
+#ifndef _S1ap_LoggingInterval_H_
+#define _S1ap_LoggingInterval_H_
 
 #include <asn_application.h>
 
@@ -19,18 +18,18 @@ extern "C" {
 
 /* Dependencies */
 typedef enum S1ap_LoggingInterval {
-	S1ap_LoggingInterval_ms128	= 0,
-	S1ap_LoggingInterval_ms256	= 1,
-	S1ap_LoggingInterval_ms512	= 2,
-	S1ap_LoggingInterval_ms1024	= 3,
-	S1ap_LoggingInterval_ms2048	= 4,
-	S1ap_LoggingInterval_ms3072	= 5,
-	S1ap_LoggingInterval_ms4096	= 6,
-	S1ap_LoggingInterval_ms6144	= 7
+  S1ap_LoggingInterval_ms128 = 0,
+  S1ap_LoggingInterval_ms256 = 1,
+  S1ap_LoggingInterval_ms512 = 2,
+  S1ap_LoggingInterval_ms1024 = 3,
+  S1ap_LoggingInterval_ms2048 = 4,
+  S1ap_LoggingInterval_ms3072 = 5,
+  S1ap_LoggingInterval_ms4096 = 6,
+  S1ap_LoggingInterval_ms6144 = 7
 } e_S1ap_LoggingInterval;
 
 /* S1ap-LoggingInterval */
-typedef long	 S1ap_LoggingInterval_t;
+typedef long S1ap_LoggingInterval_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_S1ap_LoggingInterval;
@@ -46,5 +45,5 @@ xer_type_encoder_f S1ap_LoggingInterval_encode_xer;
 }
 #endif
 
-#endif	/* _S1ap_LoggingInterval_H_ */
+#endif /* _S1ap_LoggingInterval_H_ */
 #include <asn_internal.h>

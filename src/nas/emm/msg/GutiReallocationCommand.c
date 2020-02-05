@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -19,37 +19,37 @@
  *      contact@openairinterface.org
  */
 
-
+#include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdint.h>
-#include <stdbool.h>
 
 #include "bstrlib.h"
 #include "log.h"
 
-#include "assertions.h"
-#include "TLVEncoder.h"
-#include "TLVDecoder.h"
 #include "GutiReallocationCommand.h"
+#include "TLVDecoder.h"
+#include "TLVEncoder.h"
+#include "assertions.h"
 
-int
-decode_guti_reallocation_command (
-  guti_reallocation_command_msg * guti_reallocation_command,
-  uint8_t * buffer,
-  uint32_t len)
-{
-  uint32_t                                decoded = 0;
-  int                                     decoded_result = 0;
+int decode_guti_reallocation_command(
+    guti_reallocation_command_msg* guti_reallocation_command, uint8_t* buffer,
+    uint32_t len) {
+  uint32_t decoded = 0;
+  int decoded_result = 0;
 
-  // Check if we got a NULL pointer and if buffer length is >= minimum length expected for the message.
-  CHECK_PDU_POINTER_AND_LENGTH_DECODER (buffer, GUTI_REALLOCATION_COMMAND_MINIMUM_LENGTH, len);
+  // Check if we got a NULL pointer and if buffer length is >= minimum length
+  // expected for the message.
+  CHECK_PDU_POINTER_AND_LENGTH_DECODER(
+      buffer, GUTI_REALLOCATION_COMMAND_MINIMUM_LENGTH, len);
 
   /*
    * Decoding mandatory fields
    */
-  if ((decoded_result = decode_eps_mobile_identity (&guti_reallocation_command->guti, 0, buffer + decoded, len - decoded)) < 0)
+  if ((decoded_result =
+           decode_eps_mobile_identity(&guti_reallocation_command->guti, 0,
+                                      buffer + decoded, len - decoded)) < 0)
     return decoded_result;
   else
     decoded += decoded_result;
@@ -58,57 +58,64 @@ decode_guti_reallocation_command (
    * Decoding optional fields
    */
   while (len - decoded > 0) {
-    uint8_t                                 ieiDecoded = *(buffer + decoded);
+    uint8_t ieiDecoded = *(buffer + decoded);
 
     /*
      * Type | value iei are below 0x80 so just return the first 4 bits
      */
-    if (ieiDecoded >= 0x80)
-      ieiDecoded = ieiDecoded & 0xf0;
+    if (ieiDecoded >= 0x80) ieiDecoded = ieiDecoded & 0xf0;
 
     switch (ieiDecoded) {
-    case GUTI_REALLOCATION_COMMAND_TAI_LIST_IEI:
-      if ((decoded_result = decode_tracking_area_identity_list (&guti_reallocation_command->tailist, GUTI_REALLOCATION_COMMAND_TAI_LIST_IEI, buffer + decoded, len - decoded)) <= 0)
-        return decoded_result;
+      case GUTI_REALLOCATION_COMMAND_TAI_LIST_IEI:
+        if ((decoded_result = decode_tracking_area_identity_list(
+                 &guti_reallocation_command->tailist,
+                 GUTI_REALLOCATION_COMMAND_TAI_LIST_IEI, buffer + decoded,
+                 len - decoded)) <= 0)
+          return decoded_result;
 
-      decoded += decoded_result;
-      /*
-       * Set corresponding mask to 1 in presencemask
-       */
-      guti_reallocation_command->presencemask |= GUTI_REALLOCATION_COMMAND_TAI_LIST_PRESENT;
-      break;
+        decoded += decoded_result;
+        /*
+         * Set corresponding mask to 1 in presencemask
+         */
+        guti_reallocation_command->presencemask |=
+            GUTI_REALLOCATION_COMMAND_TAI_LIST_PRESENT;
+        break;
 
-    default:
-      errorCodeDecoder = TLV_UNEXPECTED_IEI;
-      return TLV_UNEXPECTED_IEI;
+      default:
+        errorCodeDecoder = TLV_UNEXPECTED_IEI;
+        return TLV_UNEXPECTED_IEI;
     }
   }
 
   return decoded;
 }
 
-int
-encode_guti_reallocation_command (
-  guti_reallocation_command_msg * guti_reallocation_command,
-  uint8_t * buffer,
-  uint32_t len)
-{
-  int                                     encoded = 0;
-  int                                     encode_result = 0;
+int encode_guti_reallocation_command(
+    guti_reallocation_command_msg* guti_reallocation_command, uint8_t* buffer,
+    uint32_t len) {
+  int encoded = 0;
+  int encode_result = 0;
 
   /*
    * Checking IEI and pointer
    */
-  CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, GUTI_REALLOCATION_COMMAND_MINIMUM_LENGTH, len);
+  CHECK_PDU_POINTER_AND_LENGTH_ENCODER(
+      buffer, GUTI_REALLOCATION_COMMAND_MINIMUM_LENGTH, len);
 
-  if ((encode_result = encode_eps_mobile_identity (&guti_reallocation_command->guti, 0, buffer + encoded, len - encoded)) < 0)  //Return in case of error
+  if ((encode_result = encode_eps_mobile_identity(
+           &guti_reallocation_command->guti, 0, buffer + encoded,
+           len - encoded)) < 0)  // Return in case of error
     return encode_result;
   else
     encoded += encode_result;
 
-  if ((guti_reallocation_command->presencemask & GUTI_REALLOCATION_COMMAND_TAI_LIST_PRESENT)
-      == GUTI_REALLOCATION_COMMAND_TAI_LIST_PRESENT) {
-    if ((encode_result = encode_tracking_area_identity_list (&guti_reallocation_command->tailist, GUTI_REALLOCATION_COMMAND_TAI_LIST_IEI, buffer + encoded, len - encoded)) < 0)
+  if ((guti_reallocation_command->presencemask &
+       GUTI_REALLOCATION_COMMAND_TAI_LIST_PRESENT) ==
+      GUTI_REALLOCATION_COMMAND_TAI_LIST_PRESENT) {
+    if ((encode_result = encode_tracking_area_identity_list(
+             &guti_reallocation_command->tailist,
+             GUTI_REALLOCATION_COMMAND_TAI_LIST_IEI, buffer + encoded,
+             len - encoded)) < 0)
       // Return in case of error
       return encode_result;
     else

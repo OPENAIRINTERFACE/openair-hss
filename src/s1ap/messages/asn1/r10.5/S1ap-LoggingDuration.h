@@ -4,9 +4,8 @@
  * 	found in "S1AP-IEs.asn"
  */
 
-#ifndef	_S1ap_LoggingDuration_H_
-#define	_S1ap_LoggingDuration_H_
-
+#ifndef _S1ap_LoggingDuration_H_
+#define _S1ap_LoggingDuration_H_
 
 #include <asn_application.h>
 
@@ -19,16 +18,16 @@ extern "C" {
 
 /* Dependencies */
 typedef enum S1ap_LoggingDuration {
-	S1ap_LoggingDuration_m10	= 0,
-	S1ap_LoggingDuration_m20	= 1,
-	S1ap_LoggingDuration_m40	= 2,
-	S1ap_LoggingDuration_m60	= 3,
-	S1ap_LoggingDuration_m90	= 4,
-	S1ap_LoggingDuration_m120	= 5
+  S1ap_LoggingDuration_m10 = 0,
+  S1ap_LoggingDuration_m20 = 1,
+  S1ap_LoggingDuration_m40 = 2,
+  S1ap_LoggingDuration_m60 = 3,
+  S1ap_LoggingDuration_m90 = 4,
+  S1ap_LoggingDuration_m120 = 5
 } e_S1ap_LoggingDuration;
 
 /* S1ap-LoggingDuration */
-typedef long	 S1ap_LoggingDuration_t;
+typedef long S1ap_LoggingDuration_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_S1ap_LoggingDuration;
@@ -44,5 +43,5 @@ xer_type_encoder_f S1ap_LoggingDuration_encode_xer;
 }
 #endif
 
-#endif	/* _S1ap_LoggingDuration_H_ */
+#endif /* _S1ap_LoggingDuration_H_ */
 #include <asn_internal.h>

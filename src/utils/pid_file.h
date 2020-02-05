@@ -30,7 +30,6 @@
 #define FILE_PID_FILE_SEEN
 #include <stdbool.h>
 
-
 /*
  * Generate the exe absolute path using a specified basepath.
  *
@@ -39,9 +38,9 @@
  *
  * @return a C string for the exe absolute path.
  */
-char* get_exe_absolute_path(char const *basepath, unsigned int instance);
+char* get_exe_absolute_path(char const* basepath, unsigned int instance);
 
-bool is_pid_file_lock_success(char const *pid_file_name);
+bool is_pid_file_lock_success(char const* pid_file_name);
 
 void pid_file_unlock(void);
 

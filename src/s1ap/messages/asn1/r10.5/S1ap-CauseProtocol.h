@@ -4,9 +4,8 @@
  * 	found in "S1AP-IEs.asn"
  */
 
-#ifndef	_S1ap_CauseProtocol_H_
-#define	_S1ap_CauseProtocol_H_
-
+#ifndef _S1ap_CauseProtocol_H_
+#define _S1ap_CauseProtocol_H_
 
 #include <asn_application.h>
 
@@ -19,20 +18,20 @@ extern "C" {
 
 /* Dependencies */
 typedef enum S1ap_CauseProtocol {
-	S1ap_CauseProtocol_transfer_syntax_error	= 0,
-	S1ap_CauseProtocol_abstract_syntax_error_reject	= 1,
-	S1ap_CauseProtocol_abstract_syntax_error_ignore_and_notify	= 2,
-	S1ap_CauseProtocol_message_not_compatible_with_receiver_state	= 3,
-	S1ap_CauseProtocol_semantic_error	= 4,
-	S1ap_CauseProtocol_abstract_syntax_error_falsely_constructed_message	= 5,
-	S1ap_CauseProtocol_unspecified	= 6
-	/*
-	 * Enumeration is extensible
-	 */
+  S1ap_CauseProtocol_transfer_syntax_error = 0,
+  S1ap_CauseProtocol_abstract_syntax_error_reject = 1,
+  S1ap_CauseProtocol_abstract_syntax_error_ignore_and_notify = 2,
+  S1ap_CauseProtocol_message_not_compatible_with_receiver_state = 3,
+  S1ap_CauseProtocol_semantic_error = 4,
+  S1ap_CauseProtocol_abstract_syntax_error_falsely_constructed_message = 5,
+  S1ap_CauseProtocol_unspecified = 6
+  /*
+   * Enumeration is extensible
+   */
 } e_S1ap_CauseProtocol;
 
 /* S1ap-CauseProtocol */
-typedef long	 S1ap_CauseProtocol_t;
+typedef long S1ap_CauseProtocol_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_S1ap_CauseProtocol;
@@ -48,5 +47,5 @@ xer_type_encoder_f S1ap_CauseProtocol_encode_xer;
 }
 #endif
 
-#endif	/* _S1ap_CauseProtocol_H_ */
+#endif /* _S1ap_CauseProtocol_H_ */
 #include <asn_internal.h>

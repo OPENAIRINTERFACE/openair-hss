@@ -4,9 +4,8 @@
  * 	found in "S1AP-IEs.asn"
  */
 
-#ifndef	_S1ap_TimeToWait_H_
-#define	_S1ap_TimeToWait_H_
-
+#ifndef _S1ap_TimeToWait_H_
+#define _S1ap_TimeToWait_H_
 
 #include <asn_application.h>
 
@@ -19,19 +18,19 @@ extern "C" {
 
 /* Dependencies */
 typedef enum S1ap_TimeToWait {
-	S1ap_TimeToWait_v1s	= 0,
-	S1ap_TimeToWait_v2s	= 1,
-	S1ap_TimeToWait_v5s	= 2,
-	S1ap_TimeToWait_v10s	= 3,
-	S1ap_TimeToWait_v20s	= 4,
-	S1ap_TimeToWait_v60s	= 5
-	/*
-	 * Enumeration is extensible
-	 */
+  S1ap_TimeToWait_v1s = 0,
+  S1ap_TimeToWait_v2s = 1,
+  S1ap_TimeToWait_v5s = 2,
+  S1ap_TimeToWait_v10s = 3,
+  S1ap_TimeToWait_v20s = 4,
+  S1ap_TimeToWait_v60s = 5
+  /*
+   * Enumeration is extensible
+   */
 } e_S1ap_TimeToWait;
 
 /* S1ap-TimeToWait */
-typedef long	 S1ap_TimeToWait_t;
+typedef long S1ap_TimeToWait_t;
 
 /* Implementation */
 extern asn_TYPE_descriptor_t asn_DEF_S1ap_TimeToWait;
@@ -47,5 +46,5 @@ xer_type_encoder_f S1ap_TimeToWait_encode_xer;
 }
 #endif
 
-#endif	/* _S1ap_TimeToWait_H_ */
+#endif /* _S1ap_TimeToWait_H_ */
 #include <asn_internal.h>

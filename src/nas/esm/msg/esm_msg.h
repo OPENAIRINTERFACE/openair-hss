@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -51,23 +51,21 @@ Description Defines EPS Session Management messages and functions used
 #include "BearerResourceModificationRequest.h"
 #include "DeactivateEpsBearerContextAccept.h"
 #include "DeactivateEpsBearerContextRequest.h"
-#include "esm_msgDef.h"
 #include "EsmInformationRequest.h"
 #include "EsmInformationResponse.h"
+#include "EsmInformationTransferFlag.h"
 #include "EsmStatus.h"
 #include "ModifyEpsBearerContextAccept.h"
 #include "ModifyEpsBearerContextReject.h"
 #include "ModifyEpsBearerContextRequest.h"
+#include "NasRequestType.h"
 #include "PdnConnectivityReject.h"
 #include "PdnConnectivityRequest.h"
 #include "PdnDisconnectReject.h"
 #include "PdnDisconnectRequest.h"
-#include "EsmInformationTransferFlag.h"
-#include "NasRequestType.h"
 #include "PdnType.h"
 #include "TrafficFlowAggregateDescription.h"
-
-
+#include "esm_msgDef.h"
 
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/
@@ -83,16 +81,23 @@ Description Defines EPS Session Management messages and functions used
  */
 typedef union {
   esm_msg_header_t header;
-  activate_default_eps_bearer_context_request_msg activate_default_eps_bearer_context_request;
-  activate_default_eps_bearer_context_accept_msg activate_default_eps_bearer_context_accept;
-  activate_default_eps_bearer_context_reject_msg activate_default_eps_bearer_context_reject;
-  activate_dedicated_eps_bearer_context_request_msg activate_dedicated_eps_bearer_context_request;
-  activate_dedicated_eps_bearer_context_accept_msg activate_dedicated_eps_bearer_context_accept;
-  activate_dedicated_eps_bearer_context_reject_msg activate_dedicated_eps_bearer_context_reject;
+  activate_default_eps_bearer_context_request_msg
+      activate_default_eps_bearer_context_request;
+  activate_default_eps_bearer_context_accept_msg
+      activate_default_eps_bearer_context_accept;
+  activate_default_eps_bearer_context_reject_msg
+      activate_default_eps_bearer_context_reject;
+  activate_dedicated_eps_bearer_context_request_msg
+      activate_dedicated_eps_bearer_context_request;
+  activate_dedicated_eps_bearer_context_accept_msg
+      activate_dedicated_eps_bearer_context_accept;
+  activate_dedicated_eps_bearer_context_reject_msg
+      activate_dedicated_eps_bearer_context_reject;
   modify_eps_bearer_context_request_msg modify_eps_bearer_context_request;
   modify_eps_bearer_context_accept_msg modify_eps_bearer_context_accept;
   modify_eps_bearer_context_reject_msg modify_eps_bearer_context_reject;
-  deactivate_eps_bearer_context_request_msg deactivate_eps_bearer_context_request;
+  deactivate_eps_bearer_context_request_msg
+      deactivate_eps_bearer_context_request;
   deactivate_eps_bearer_context_accept_msg deactivate_eps_bearer_context_accept;
   pdn_connectivity_request_msg pdn_connectivity_request;
   pdn_connectivity_reject_msg pdn_connectivity_reject;
@@ -107,7 +112,6 @@ typedef union {
   esm_status_msg esm_status;
 } ESM_msg;
 
-
 /****************************************************************************/
 /********************  G L O B A L    V A R I A B L E S  ********************/
 /****************************************************************************/
@@ -115,12 +119,13 @@ typedef union {
 /****************************************************************************/
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
 /****************************************************************************/
-int esm_msg_decode_header (esm_msg_header_t * header, const uint8_t * buffer, uint32_t len);
+int esm_msg_decode_header(esm_msg_header_t* header, const uint8_t* buffer,
+                          uint32_t len);
 
-int esm_msg_decode(ESM_msg *msg, uint8_t *buffer, uint32_t len);
+int esm_msg_decode(ESM_msg* msg, uint8_t* buffer, uint32_t len);
 
-int esm_msg_encode(ESM_msg *msg, uint8_t *buffer, uint32_t len);
+int esm_msg_encode(ESM_msg* msg, uint8_t* buffer, uint32_t len);
 
-void esm_msg_free ( ESM_msg * msg);
+void esm_msg_free(ESM_msg* msg);
 
 #endif /* __ESM_MSG_H__ */

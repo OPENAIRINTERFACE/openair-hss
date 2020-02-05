@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -71,27 +71,22 @@ enum {
     An option is defined with a name, an argument following the name,
     the usage displayed by the usage function and a default value.
 */
-static parser_command_line_t            asParserCommandLine = {
-  "ASprocess",                  /* Command name     */
-  AS_SIMULATOR_PARSER_NB_OPTIONS,       /* Number of options    */
-  {
-   /*
-    * Command line options
-    */
-   {
-    "-uhost", "<uhost>", "UE process hostname\t\t",
-    AS_SIMULATOR_PARSER_DEFAULT_UE_HOSTNAME},
-   {
-    "-uport", "<uport>", "UE process port number\t\t",
-    AS_SIMULATOR_PARSER_DEFAULT_UE_PORT_NUMBER},
-   {
-    "-mhost", "<mhost>", "MME process hostname\t\t",
-    AS_SIMULATOR_PARSER_DEFAULT_MME_HOSTNAME},
-   {
-    "-mport", "<mport>", "MME process port number\t\t",
-    AS_SIMULATOR_PARSER_DEFAULT_MME_PORT_NUMBER},
-   }
-};
+static parser_command_line_t asParserCommandLine = {
+    "ASprocess",                    /* Command name     */
+    AS_SIMULATOR_PARSER_NB_OPTIONS, /* Number of options    */
+    {
+        /*
+         * Command line options
+         */
+        {"-uhost", "<uhost>", "UE process hostname\t\t",
+         AS_SIMULATOR_PARSER_DEFAULT_UE_HOSTNAME},
+        {"-uport", "<uport>", "UE process port number\t\t",
+         AS_SIMULATOR_PARSER_DEFAULT_UE_PORT_NUMBER},
+        {"-mhost", "<mhost>", "MME process hostname\t\t",
+         AS_SIMULATOR_PARSER_DEFAULT_MME_HOSTNAME},
+        {"-mport", "<mport>", "MME process port number\t\t",
+         AS_SIMULATOR_PARSER_DEFAULT_MME_PORT_NUMBER},
+    }};
 
 /****************************************************************************/
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
@@ -111,11 +106,8 @@ static parser_command_line_t            asParserCommandLine = {
  **      Others:  None                                       **
  **                                                                        **
  ***************************************************************************/
-inline void
-as_simulator_parser_print_usage (
-  void)
-{
-  parser_print_usage (&asParserCommandLine);
+inline void as_simulator_parser_print_usage(void) {
+  parser_print_usage(&asParserCommandLine);
 }
 
 /****************************************************************************
@@ -133,12 +125,8 @@ as_simulator_parser_print_usage (
  **      Others:  asParserCommandLine.options                **
  **                                                                        **
  ***************************************************************************/
-inline int
-as_simulator_parser_get_options (
-  int argc,
-  const char **argv)
-{
-  return parser_get_options (argc, argv, &asParserCommandLine);
+inline int as_simulator_parser_get_options(int argc, const char **argv) {
+  return parser_get_options(argc, argv, &asParserCommandLine);
 }
 
 /****************************************************************************
@@ -155,10 +143,7 @@ as_simulator_parser_get_options (
  **      Others:  None                                       **
  **                                                                        **
  ***************************************************************************/
-inline int
-as_simulator_parser_get_nb_options (
-  void)
-{
+inline int as_simulator_parser_get_nb_options(void) {
   return asParserCommandLine.nb_options;
 }
 
@@ -175,10 +160,7 @@ as_simulator_parser_get_nb_options (
  **      Others:  None                                       **
  **                                                                        **
  ***************************************************************************/
-inline const char                      *
-as_simulator_parser_get_uhost (
-  void)
-{
+inline const char *as_simulator_parser_get_uhost(void) {
   return asParserCommandLine.options[AS_SIMULATOR_PARSER_UE_HOST].pvalue;
 }
 
@@ -195,10 +177,7 @@ as_simulator_parser_get_uhost (
  **      Others:  None                                       **
  **                                                                        **
  ***************************************************************************/
-inline const char                      *
-as_simulator_parser_get_uport (
-  void)
-{
+inline const char *as_simulator_parser_get_uport(void) {
   return asParserCommandLine.options[AS_SIMULATOR_PARSER_UE_PORT].pvalue;
 }
 
@@ -215,10 +194,7 @@ as_simulator_parser_get_uport (
  **      Others:  None                                       **
  **                                                                        **
  ***************************************************************************/
-inline const char                      *
-as_simulator_parser_get_mhost (
-  void)
-{
+inline const char *as_simulator_parser_get_mhost(void) {
   return asParserCommandLine.options[AS_SIMULATOR_PARSER_MME_HOST].pvalue;
 }
 
@@ -235,10 +211,7 @@ as_simulator_parser_get_mhost (
  **      Others:  None                                       **
  **                                                                        **
  ***************************************************************************/
-inline const char                      *
-as_simulator_parser_get_mport (
-  void)
-{
+inline const char *as_simulator_parser_get_mport(void) {
   return asParserCommandLine.options[AS_SIMULATOR_PARSER_MME_PORT].pvalue;
 }
 
