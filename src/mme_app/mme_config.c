@@ -1279,9 +1279,9 @@ static int mme_config_parse_file(mme_config_t *config_pP) {
           hints.ai_protocol = IPPROTO_UDP; /* TCP protocol */
           s = getaddrinfo(bdata(address), NULL, &hints, &result);
           if (s != 0) {
-            OAILOG_ERROR(
-                LOG_MME_APP,
-                "Could not get addr info for SGW node: %s rc=%d.\n", bdata(address), s);
+            OAILOG_ERROR(LOG_MME_APP,
+                         "Could not get addr info for SGW node: %s rc=%d.\n",
+                         bdata(address), s);
 
             return RETURNerror;
           }
