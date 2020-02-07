@@ -314,7 +314,7 @@ int emm_proc_security_mode_control(
      * Set the GPRS integrity algorithms to be replayed to the UE
      */
     uint8_t gea = emm_ctx->_ms_network_capability.gea1;
-    if (gea) {
+    if (emm_ctx->_ms_network_capability.egea) {
       gea = (gea << 6) | emm_ctx->_ms_network_capability.egea;
     }
     smc_proc->gea = gea;
