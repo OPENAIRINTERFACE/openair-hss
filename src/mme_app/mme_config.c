@@ -1252,6 +1252,7 @@ static int mme_config_parse_file(mme_config_t *config_pP) {
 
     config_pP->e_dns_emulation.nb_service_entries = 0;
     for (i = 0; i < num; i++) {
+      int e = config_pP->e_dns_emulation.nb_service_entries;
       sub2setting = config_setting_get_elem(setting, i);
 
       if (sub2setting != NULL) {
@@ -1262,7 +1263,7 @@ static int mme_config_parse_file(mme_config_t *config_pP) {
                        i, MME_CONFIG_STRING_WRR_LIST_SELECTION);
           break;
         }
-        config_pP->e_dns_emulation.service_id[i] = bfromcstr(id);
+        config_pP->e_dns_emulation.service_id[e] = bfromcstr(id);
 
         /** Check S11 Endpoint (service="x-3gpp-sgw:x-s11"). */
         if ((config_setting_lookup_string(
@@ -1299,7 +1300,7 @@ static int mme_config_parse_file(mme_config_t *config_pP) {
                   "Parsing configuration file found S-GW S11: %s\n",
                   inet_ntoa(((struct sockaddr_in *)rp->ai_addr)->sin_addr));
               memcpy(
-                  (struct sockaddr_in *)&config_pP->e_dns_emulation.sockaddr[i],
+                  (struct sockaddr_in *)&config_pP->e_dns_emulation.sockaddr[e],
                   (struct sockaddr_in *)rp->ai_addr, rp->ai_addrlen);
             } else if (rp->ai_family == AF_INET6) {
               if (memcmp(&((struct sockaddr_in6 *)rp->ai_addr)->sin6_addr,
@@ -1315,21 +1316,21 @@ static int mme_config_parse_file(mme_config_t *config_pP) {
                             &((struct sockaddr_in6 *)rp->ai_addr)->sin6_addr,
                             strv6, 16));
               memcpy((struct sockaddr_in6 *)&config_pP->e_dns_emulation
-                         .sockaddr[i],
+                         .sockaddr[e],
                      (struct sockaddr_in6 *)rp->ai_addr, rp->ai_addrlen);
             }
-            config_pP->e_dns_emulation.interface_type[i] = S11_SGW_GTP_C;
-            ((struct sockaddr *)&config_pP->e_dns_emulation.sockaddr[i])
+            config_pP->e_dns_emulation.interface_type[e] = S11_SGW_GTP_C;
+            ((struct sockaddr *)&config_pP->e_dns_emulation.sockaddr[e])
                 ->sa_family = rp->ai_family;
           }
           freeaddrinfo(result);
           bdestroy_wrapper(&address);
-        }
-
-        /** Check S10 Endpoint (service="x-3gpp-mme:x-s10"). */
-        if ((config_setting_lookup_string(
-                sub2setting, MME_CONFIG_STRING_PEER_MME_IP_ADDRESS_FOR_S10,
-                (const char **)&mme_ip_address_for_s10))) {
+          config_pP->e_dns_emulation.nb_service_entries++;
+        } else
+            /** Check S10 Endpoint (service="x-3gpp-mme:x-s10"). */
+            if ((config_setting_lookup_string(
+                    sub2setting, MME_CONFIG_STRING_PEER_MME_IP_ADDRESS_FOR_S10,
+                    (const char **)&mme_ip_address_for_s10))) {
           address = bfromcstr(mme_ip_address_for_s10);
           struct addrinfo hints, *result, *rp;
           int s;
@@ -1355,7 +1356,7 @@ static int mme_config_parse_file(mme_config_t *config_pP) {
                           "Parsing configuration file found peer MME S10: %s\n",
                           inet_ntoa(((struct sockaddr_in *)rp)->sin_addr));
               memcpy(
-                  (struct sockaddr_in *)&config_pP->e_dns_emulation.sockaddr[i],
+                  (struct sockaddr_in *)&config_pP->e_dns_emulation.sockaddr[e],
                   (struct sockaddr_in *)rp->ai_addr, rp->ai_addrlen);
             } else if (rp->ai_family == AF_INET6) {
               if (memcmp(&((struct sockaddr_in6 *)rp)->sin6_addr,
@@ -1370,17 +1371,17 @@ static int mme_config_parse_file(mme_config_t *config_pP) {
                   inet_ntop(AF_INET6, &((struct sockaddr_in6 *)rp)->sin6_addr,
                             strv6, 16));
               memcpy((struct sockaddr_in6 *)&config_pP->e_dns_emulation
-                         .sockaddr[i],
+                         .sockaddr[e],
                      (struct sockaddr_in6 *)rp->ai_addr, rp->ai_addrlen);
             }
-            config_pP->e_dns_emulation.interface_type[i] = S10_MME_GTP_C;
-            ((struct sockaddr *)&config_pP->e_dns_emulation.sockaddr[i])
+            config_pP->e_dns_emulation.interface_type[e] = S10_MME_GTP_C;
+            ((struct sockaddr *)&config_pP->e_dns_emulation.sockaddr[e])
                 ->sa_family = rp->ai_family;
           }
           freeaddrinfo(result);
           bdestroy_wrapper(&address);
+          config_pP->e_dns_emulation.nb_service_entries++;
         }
-        config_pP->e_dns_emulation.nb_service_entries++;
       }
     }
   }
@@ -1531,7 +1532,6 @@ static void mme_config_display(mme_config_t *config_pP) {
                 config_pP->gummei.gummei[j].mme_gid,
                 config_pP->gummei.gummei[j].mme_code);
   }
-
   OAILOG_INFO(LOG_CONFIG, "- TAIs : (mcc.mnc:tac)\n");
   switch (config_pP->served_tai.list_type) {
     case TRACKING_AREA_IDENTITY_LIST_TYPE_ONE_PLMN_CONSECUTIVE_TACS:
