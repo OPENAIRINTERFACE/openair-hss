@@ -71,13 +71,15 @@ int mme_app_edns_add_wrr_entry(bstring id, struct sockaddr *edns_ip_addr,
     struct sockaddr_in *data;
     if (edns_ip_addr->sa_family == AF_INET) {
       data = malloc(sizeof(struct sockaddr_in));
-      memcpy((struct sockaddr_in *)data, (struct sockaddr_in *)edns_ip_addr,
+      memcpy((void *)data, (struct sockaddr_in *)edns_ip_addr,
              sizeof(struct sockaddr_in));
     } else if (edns_ip_addr->sa_family == AF_INET6) {
       data = malloc(sizeof(struct sockaddr_in6));
-      memcpy((struct sockaddr_in6 *)data, (struct sockaddr_in6 *)edns_ip_addr,
+      memcpy((void *)data, (struct sockaddr_in6 *)edns_ip_addr,
              sizeof(struct sockaddr_in6));
     } else {
+      OAILOG_DEBUG(LOG_MME_APP, "Unknown socket address family %d",
+                   edns_ip_addr->sa_family);
       free_wrapper(&cid);
       return RETURNerror;
     }
@@ -91,6 +93,8 @@ int mme_app_edns_add_wrr_entry(bstring id, struct sockaddr *edns_ip_addr,
           rc = obj_hashtable_insert(sgw_e_dns_entries, cid, strlen(cid), data);
           break;
         default:
+          OAILOG_DEBUG(LOG_MME_APP, "Unknown interface type %d",
+                       interface_type);
           return RETURNerror;
       }
       /** Key is copied inside. */
@@ -124,8 +128,10 @@ int mme_app_edns_init(const mme_config_t *mme_config_p) {
     //      mme_app_edns_add_mme_entry(mme_config_p->e_dns_emulation.mme_id[i],
     //      mme_config_p->e_dns_emulation.mme_ip_addr[i]);
     //    }
+    OAILOG_DEBUG(LOG_MME_APP, "Failed to populate eDNS");
     return rc;
   }
+  OAILOG_DEBUG(LOG_MME_APP, "Failed to create eDNS hashtables");
   return RETURNerror;
 }
 

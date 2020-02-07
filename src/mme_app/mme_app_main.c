@@ -559,6 +559,7 @@ int mme_app_init(const mme_config_t *mme_config_p) {
   bdestroy_wrapper(&b);
 
   if (mme_app_edns_init(mme_config_p)) {
+    OAILOG_ERROR(LOG_MME_APP, "Error while initializing eDNS");
     OAILOG_FUNC_RETURN(LOG_MME_APP, RETURNerror);
   }
 

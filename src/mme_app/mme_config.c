@@ -1278,7 +1278,11 @@ static int mme_config_parse_file(mme_config_t *config_pP) {
           hints.ai_protocol = IPPROTO_UDP; /* TCP protocol */
           s = getaddrinfo(bdata(address), NULL, &hints, &result);
           if (s != 0) {
-            return 0;
+            OAILOG_ERROR(
+                LOG_MME_APP,
+                "Could not get addr info for SGW node: %s rc=%d.\n", bdata(address), s);
+
+            return RETURNerror;
           }
           for (rp = result; rp != NULL; rp = rp->ai_next) {
             /** Check the type. */
@@ -1348,7 +1352,7 @@ static int mme_config_parse_file(mme_config_t *config_pP) {
                 continue;
               }
               OAILOG_INFO(LOG_MME_APP,
-                          "Parsing configuration file found MME S10: %s\n",
+                          "Parsing configuration file found peer MME S10: %s\n",
                           inet_ntoa(((struct sockaddr_in *)rp)->sin_addr));
               memcpy(
                   (struct sockaddr_in *)&config_pP->e_dns_emulation.sockaddr[i],
@@ -1485,6 +1489,31 @@ static void mme_config_display(mme_config_t *config_pP) {
               config_pP->ip.port_s10);
   OAILOG_INFO(LOG_CONFIG, "    s10 MME ip .......: %s\n",
               inet_ntoa(*((struct in_addr *)&config_pP->ip.s10_mme_v4)));
+  OAILOG_INFO(LOG_CONFIG, "- Peer nodes\n");
+  for (j = 0; j < config_pP->e_dns_emulation.nb_service_entries; j++) {
+    OAILOG_INFO(LOG_CONFIG, "    Service Id %s\n",
+                bdata(config_pP->e_dns_emulation.service_id[j]));
+    OAILOG_INFO(LOG_CONFIG, "            Interface Type %d\n",
+                config_pP->e_dns_emulation.interface_type[j]);
+    // Could use     struct sockaddr_in *;
+    if (config_pP->e_dns_emulation.sockaddr[j].v4.sin_family == AF_INET) {
+      OAILOG_INFO(
+          LOG_CONFIG, "            Address : %s\n",
+          inet_ntoa(config_pP->e_dns_emulation.sockaddr[j].v4.sin_addr));
+    } else if (config_pP->e_dns_emulation.sockaddr[j].v6.sin6_family ==
+               AF_INET6) {
+      char strv6[16];
+      OAILOG_INFO(
+          LOG_CONFIG, "            Address : %s\n",
+          inet_ntop(AF_INET6,
+                    &config_pP->e_dns_emulation.sockaddr[j].v6.sin6_addr, strv6,
+                    16));
+    } else {
+      OAILOG_INFO(LOG_CONFIG,
+                  "            Address : Unknown address family %d\n",
+                  config_pP->e_dns_emulation.sockaddr[j].v4.sin_family);
+    }
+  }
   OAILOG_INFO(LOG_CONFIG, "- ITTI:\n");
   OAILOG_INFO(LOG_CONFIG, "    queue size .......: %u (bytes)\n",
               config_pP->itti_config.queue_size);
