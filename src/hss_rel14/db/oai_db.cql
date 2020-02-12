@@ -91,3 +91,22 @@ CREATE TABLE IF NOT EXISTS vhss.extid_imsi_xref (
     extid text,
     primary key (imsi, extid)
 );
+
+
+INSERT into vhss.mmeidentity       (idmmeidentity, mmeisdn, mmehost, mmerealm, ue_reachability) VALUES ( 10 ,'mme-isdn', 'mme.openair4G.eur',  'openair4G.eur', 1);
+INSERT into vhss.mmeidentity       (idmmeidentity, mmeisdn, mmehost, mmerealm, ue_reachability) VALUES ( 11 ,'mme-isdn', 'mme1.openair4G.eur', 'openair4G.eur', 1);
+INSERT into vhss.mmeidentity       (idmmeidentity, mmeisdn, mmehost, mmerealm, ue_reachability) VALUES ( 12 ,'mme-isdn', 'mme2.openair4G.eur', 'openair4G.eur', 1);
+INSERT into vhss.mmeidentity_host  (idmmeidentity, mmeisdn, mmehost, mmerealm, ue_reachability) VALUES ( 10 ,'mme-isdn', 'mme.openair4G.eur',  'openair4G.eur', 1);
+INSERT into vhss.mmeidentity_host  (idmmeidentity, mmeisdn, mmehost, mmerealm, ue_reachability) VALUES ( 11 ,'mme-isdn', 'mme1.openair4G.eur', 'openair4G.eur', 1);
+INSERT into vhss.mmeidentity_host  (idmmeidentity, mmeisdn, mmehost, mmerealm, ue_reachability) VALUES ( 12 ,'mme-isdn', 'mme2.openair4G.eur', 'openair4G.eur', 1);
+
+INSERT into vhss.mmeidentity       (idmmeidentity, mmeisdn, mmehost, mmerealm, ue_reachability) VALUES ( 20 ,'mme-isdn', 'magma-dev.magma.com', 'magma.com', 1);
+INSERT into vhss.mmeidentity_host  (idmmeidentity, mmeisdn, mmehost, mmerealm, ue_reachability) VALUES ( 20 ,'mme-isdn', 'magma-dev.magma.com', 'magma.com', 1);
+
+INSERT into vhss.mmeidentity       (idmmeidentity, mmeisdn, mmehost, mmerealm, ue_reachability) VALUES ( 30 ,'mme-isdn', 'mme.carrier.com',    'carrier.com', 1);
+INSERT into vhss.mmeidentity       (idmmeidentity, mmeisdn, mmehost, mmerealm, ue_reachability) VALUES ( 31 ,'mme-isdn', 'mme1.carrier.com',   'carrier.com', 1);
+INSERT into vhss.mmeidentity       (idmmeidentity, mmeisdn, mmehost, mmerealm, ue_reachability) VALUES ( 32 ,'mme-isdn', 'mme2.openair4G.eur', 'carrier.com', 1);
+INSERT into vhss.mmeidentity_host  (idmmeidentity, mmeisdn, mmehost, mmerealm, ue_reachability) VALUES ( 30 ,'mme-isdn', 'mme.carrier.com',    'carrier.com', 1);
+INSERT into vhss.mmeidentity_host  (idmmeidentity, mmeisdn, mmehost, mmerealm, ue_reachability) VALUES ( 31 ,'mme-isdn', 'mme1.carrier.com',   'carrier.com', 1);
+INSERT into vhss.mmeidentity_host  (idmmeidentity, mmeisdn, mmehost, mmerealm, ue_reachability) VALUES ( 32 ,'mme-isdn', 'mme2.carrier.com',   'carrier.com', 1);
+
