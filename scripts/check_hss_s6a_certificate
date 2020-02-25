@@ -64,10 +64,10 @@ function _create_hss_certs()
 
   if [ ! -d $output_path ]; then
     echo "Creating non existing directory: $output_path/"
-    sudo mkdir -p $output_path/
+    $SUDO mkdir -p $output_path/
   fi
 
-  sudo mv hss.cakey.pem hss.cert.pem hss.cacert.pem hss.key.pem $output_path/
+  $SUDO mv hss.cakey.pem hss.cert.pem hss.cacert.pem hss.key.pem $output_path/
   cd -
 }
 
