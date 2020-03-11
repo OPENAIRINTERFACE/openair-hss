@@ -228,7 +228,6 @@ pipeline {
               } else  {
                 myShCmd('docker run --name ci-oai-hss -d oai-hss:develop /bin/bash -c "sleep infinity"', new_host_flag, new_host_user, new_host)
               }
-              myShCmd('docker run --name ci-oai-hss -d oai-hss:develop /bin/bash -c "sleep infinity"', new_host_flag, new_host_user, new_host)
               // Attach S6A --> will be on eth1
               myShCmd('docker network connect ci-s6a ci-oai-hss', new_host_flag, new_host_user, new_host)
               Cassandra_IP = myShRetCmd('docker inspect --format="{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}" ci-cassandra', new_host_flag, new_host_user, new_host)
