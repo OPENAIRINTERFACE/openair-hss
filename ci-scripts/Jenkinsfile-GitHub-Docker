@@ -223,6 +223,11 @@ pipeline {
         stage('Deploy OAI-HSS') {
           steps {
             script {
+              if (env.ghprbPullId != null) {
+                myShCmd('docker run --name ci-oai-hss -d oai-hss:ci-temp /bin/bash -c "sleep infinity"', new_host_flag, new_host_user, new_host)
+              } else  {
+                myShCmd('docker run --name ci-oai-hss -d oai-hss:develop /bin/bash -c "sleep infinity"', new_host_flag, new_host_user, new_host)
+              }
               myShCmd('docker run --name ci-oai-hss -d oai-hss:develop /bin/bash -c "sleep infinity"', new_host_flag, new_host_user, new_host)
               // Attach S6A --> will be on eth1
               myShCmd('docker network connect ci-s6a ci-oai-hss', new_host_flag, new_host_user, new_host)
@@ -253,11 +258,7 @@ pipeline {
         stage('Deploy OAI-MME') {
           steps {
             script {
-              if (env.ghprbPullId != null) {
-                myShCmd('docker run --name ci-oai-mme -d oai-mme:ci-temp /bin/bash -c "sleep infinity"', new_host_flag, new_host_user, new_host)
-              } else  {
-                myShCmd('docker run --name ci-oai-mme -d oai-mme:develop /bin/bash -c "sleep infinity"', new_host_flag, new_host_user, new_host)
-              }
+              myShCmd('docker run --name ci-oai-mme -d oai-mme:develop /bin/bash -c "sleep infinity"', new_host_flag, new_host_user, new_host)
               // Attach S6A --> will be on eth1
               myShCmd('docker network connect ci-s6a ci-oai-mme', new_host_flag, new_host_user, new_host)
               // Attach S11 --> will be on eth2
