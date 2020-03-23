@@ -78,6 +78,7 @@ build_c_ares()
 build_cpp_driver()
 {
   pushd $OPENAIRCN_DIR/build/git_submodules/cpp-driver
+  git checkout -f 2.15.0
   rm -rf build
   mkdir -p build
   cd build
