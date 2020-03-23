@@ -1242,14 +1242,19 @@ FDAvp FDMessage::getFirstAVP( bool &found )
       ret = fd_msg_model( child, &model );
       if ( ret != 0 )
          throw FDException(
-            SUtility::string_format("%s:%d - INFO - unalbe to regrieve avp model",
+            SUtility::string_format("%s:%d - INFO - unable to retrieve avp model",
             __FILE__, __LINE__, ret )
          );
 
       de = new FDDictionaryEntryAVP( model );
       return FDAvp( *de, child, true );
+   } else {
+      ret = -1;
+      throw FDException(
+         SUtility::string_format("%s:%d - INFO - unable to retrieve avp model",
+         __FILE__, __LINE__, ret )
+      );
    }
-   return FDAvp( NULL, child, true );
 }
 
 void FDMessage::dump()

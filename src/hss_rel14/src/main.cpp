@@ -63,7 +63,7 @@ void handler(int signal)
       size_t cnt = fdHss.getWorkerQueue().queueDepth();
 
       if (cnt > 0)
-         printf("pending messages %lu\n", cnt);
+         printf("pending messages %lu\n", (unsigned long) cnt);
    }
    else
    {
