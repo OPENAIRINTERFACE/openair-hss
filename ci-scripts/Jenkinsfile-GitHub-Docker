@@ -157,7 +157,7 @@ pipeline {
               myShCmd('docker exec -it ci-cn-cppcheck /bin/bash -c "cd /home && tar -xjf openair-hss.tar.bz2"', new_host_flag, new_host_user, new_host)
               myShCmd('docker exec -it ci-cn-cppcheck /bin/bash -c "rm -f /home/openair-hss.tar.bz2"', new_host_flag, new_host_user, new_host)
 
-              myShCmd('docker exec -it ci-cn-cppcheck /bin/bash -c "cd /home && cppcheck --enable=warning --force --xml --xml-version=2 -i src/oai_sgw -i src/sgw -i src/fluid/fluidmsg/test -i src/gtpv2-c/nwgtpv2c-0.11/test-app -i src/nas/test -i src/test -i src/oai_hss/tests -i src/utils/bstr/bstest.c -i src/utils/bstr/test.cpp -i src/utils/bstr/testaux.c --suppressions-list=ci-scripts/cppcheck_suppressions.list src 2> cppcheck.xml 1> cppcheck_build.log"', new_host_flag, new_host_user, new_host)
+              myShCmd('docker exec -it ci-cn-cppcheck /bin/bash -c "cd /home && cppcheck --enable=warning --force --xml --xml-version=2 --suppressions-list=ci-scripts/cppcheck_suppressions.list src 2> cppcheck.xml 1> cppcheck_build.log"', new_host_flag, new_host_user, new_host)
             }
           }
           post {
@@ -197,9 +197,7 @@ pipeline {
             script {
               myShCmd('docker run --name ci-cassandra -d -e CASSANDRA_CLUSTER_NAME="OAI HSS Cluster" -e CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch cassandra:2.1', new_host_flag, new_host_user, new_host)
               sh "sleep 5"
-              // Retrieve the OAI DB file and push it to Cassandra container
-              myShCmd('wget --quiet https://raw.githubusercontent.com/OPENAIRINTERFACE/openair-hss/develop/src/hss_rel14/db/oai_db.cql', new_host_flag, new_host_user, new_host)
-              myShCmd('docker cp oai_db.cql ci-cassandra:/home', new_host_flag, new_host_user, new_host)
+              myShCmd('docker cp src/hss_rel14/db/oai_db.cql ci-cassandra:/home', new_host_flag, new_host_user, new_host)
               myShCmd('docker exec -it ci-cassandra /bin/bash -c "nodetool status" | tee archives/cassandra_status.log', new_host_flag, new_host_user, new_host)
               sh "sleep 5"
               Cassandra_IP = myShRetCmd('docker inspect --format="{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}" ci-cassandra', new_host_flag, new_host_user, new_host)
@@ -308,20 +306,23 @@ pipeline {
           sh "sleep 20"
           myShCmd('docker exec -it ci-oai-hss /bin/bash -c "killall oai_hss"', new_host_flag, new_host_user, new_host)
           myShCmd('docker exec -it ci-oai-mme /bin/bash -c "killall oai_mme"', new_host_flag, new_host_user, new_host)
-        }
-      }
-      post {
-        always {
+          sh "sleep 2"
           myShCmd('docker cp ci-oai-hss:/openair-hss/hss_check_run.log archives', new_host_flag, new_host_user, new_host)
           myShCmd('docker cp ci-oai-mme:/openair-mme/mme_check_run.log archives', new_host_flag, new_host_user, new_host)
           copyFrom2ndServer('archives/*_check_run.log', 'archives', new_host_flag, new_host_user, new_host)
-          // add a check python script
+          sh "python3 ./ci-scripts/verifySanityCheckDeployment.py --job_name=${JOB_NAME} --job_id=${BUILD_ID}"
         }
+      }
+      post {
         success {
           sh "echo 'OAI-HSS CHECK START/STOP: OK' > archives/hss_cnf_check_start.log"
           sh "echo 'OAI-MME CHECK START/STOP: OK' > archives/mme_cnf_check_start.log"
         }
         unsuccessful {
+          // If anything wrong occurs, we still try to copy
+          myShCmd('docker cp ci-oai-hss:/openair-hss/hss_check_run.log archives', new_host_flag, new_host_user, new_host)
+          myShCmd('docker cp ci-oai-mme:/openair-mme/mme_check_run.log archives', new_host_flag, new_host_user, new_host)
+          copyFrom2ndServer('archives/*_check_run.log', 'archives', new_host_flag, new_host_user, new_host)
           sh "echo 'OAI-HSS CHECK START/STOP: KO' > archives/hss_cnf_check_start.log"
           sh "echo 'OAI-MME CHECK START/STOP: KO' > archives/mme_cnf_check_start.log"
         }
