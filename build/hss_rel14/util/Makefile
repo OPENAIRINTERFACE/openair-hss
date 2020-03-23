@@ -8,7 +8,9 @@ OAI_BUILD_DIR := $(OPENAIRCN_DIR)/build/hss_rel14/util
 
 SECURITY_FLAGS := -D_FORTIFY_SOURCE=2 -fasynchronous-unwind-tables -fexceptions
 SECURITY_FLAGS += -fstack-protector-all -fstack-protector-strong -Wall
-SECURITY_FLAGS += -Werror=format-security -Werror=implicit-function-declaration
+SECURITY_FLAGS += -Werror=format-security
+# Following option not valid in C++
+#SECURITY_FLAGS += -Werror=implicit-function-declaration
 
 SRCDIR := $(OAI_HSS_UTIL_DIR)/src
 BUILDDIR := $(OAI_BUILD_DIR)/build

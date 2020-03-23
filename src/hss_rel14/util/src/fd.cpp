@@ -1247,8 +1247,9 @@ FDAvp FDMessage::getFirstAVP( bool &found )
          );
 
       de = new FDDictionaryEntryAVP( model );
+      return FDAvp( *de, child, true );
    }
-   return FDAvp( *de, child, true );
+   return FDAvp( NULL, child, true );
 }
 
 void FDMessage::dump()
