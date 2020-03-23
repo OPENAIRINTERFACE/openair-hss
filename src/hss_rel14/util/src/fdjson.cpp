@@ -308,7 +308,13 @@ public:
 
    struct avp *getAvp() { return mAvp; }
 
-   void allocBuffer(size_t len) { if (mBuff == NULL) {mBuf = new Buffer<uint8_t>(len); }}
+   void allocBuffer(size_t len)
+   {
+      if (mBuf) {
+        delete mBuf;
+      }
+      mBuf = new Buffer<uint8_t>(len);
+   }
    Buffer<uint8_t> &getBuffer() { return *mBuf; }
 
    dict_avp_basetype getBaseType() { return mBaseData.avp_basetype; }
