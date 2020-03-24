@@ -17,8 +17,7 @@
 1. [OpenAirInterface Core Network Block Diagram](#1-openairinterface-core-network-block-diagram)
 2. [OpenAirInterface Core Network Fundamentals](#2-oai-core-network-fundamentals)
 3. [OpenAirInterface Core Network Deployment](#3-oai-core-network-deployment)
-4. [OpenAirInterface MME Feature List](./FEATURE_SET_MME.md)
-5. [OpenAirInterface HSS Feature List](./FEATURE_SET_HSS.md)
+4. [OpenAirInterface HSS Feature List](./FEATURE_SET_HSS.md)
 
 # 1. OpenAirInterface Core Network Block Diagram #
 
