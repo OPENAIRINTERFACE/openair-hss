@@ -997,7 +997,7 @@ bool DataAccess::checkOpcKeys( const uint8_t opP[16] )
 
          std::string newopc = Utility::bytes2hex(opccalc, OPC_LENGTH);
 
-         Logger::system().info("COUNT: %d IMSI: %s KEY: %s OPC: %s NEW OPC: %s", ++cnt, imsi, key, opc, newopc);
+         Logger::system().info("COUNT: %d IMSI: %s KEY: %s OPC: %s NEW OPC: %s", ++cnt, (uint8_t *)imsi.c_str(), (uint8_t *)key.c_str(), (uint8_t *)opc.c_str(), (uint8_t *)newopc.c_str());
 
          if( !updateOpc(imsi, newopc) ) {
             return false;

@@ -21,11 +21,4 @@
 // */
 //*****************************************************************************
 //-----------------------------------------------------------------------------
-// is itti analyzer deprecated
-nullPointer:src/common/itti_analyzer/itti_analyzer.c
-nullPointerRedundantCheck:src/common/itti_analyzer/libbuffers/buffers.c
-doubleFree:src/common/itti_analyzer/libbuffers/socket.c
-memleak:src/common/itti_analyzer/libbuffers/socket.c
-memleak:src/common/itti_analyzer/libparser/array_type.c
-memleak:src/common/itti_analyzer/libui/ui_callbacks.c
 // *INDENT-ON*
