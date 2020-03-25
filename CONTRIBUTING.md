@@ -23,21 +23,22 @@ By contributing to OpenAirInterface, you agree that your contributions will be l
 
 ## Continuous Integration process ##
 
-1. You push your modified code with the new branch onto our [official GitHub repository](https://github.com/OPENAIRINTERFACE/openair-hss).
-   a. Please make the name of the branch explicit and short.
-2. You create a pull request from the [dedicated web page](https://github.com/OPENAIRINTERFACE/openair-hss/pulls).
-   a. The `target` (`base` in the web-page) branch **SHALL be `develop`**.
-   b. The `source` (`compare` in the web-page) branch is your branch.
-3. Our Continuous Integration (CI) process will be triggered automatically on your proposed modified code and check the validity.
-   a. Check build
-   b. Check some formatting rules
-   c. Run a bunch of tests
-4. If at least one of these steps fails, you will have to push corrections onto your source branch.
-   a. The step 3. will be again automatically triggered on this new commit.
-   b. Please wait that your run is finished before committing and pushing new modifications on your source branch.
-   c. That will allow fairness on the CI usage to other contributors.
-4. When this automated process passes, one of our CI administrators will review your changes or assign a senior contributor
+1.  You push your modified code with the new branch onto our [official GitHub repository](https://github.com/OPENAIRINTERFACE/openair-hss).
+    -  Please make the name of the branch explicit and short.
+2.  You create a pull request from the [dedicated web page](https://github.com/OPENAIRINTERFACE/openair-hss/pulls).
+    -  The `target` (`base` in the web-page) branch **SHALL be `develop`**.
+    -  The `source` (`compare` in the web-page) branch is your branch.
+3.  Our Continuous Integration (CI) process will be triggered automatically on your proposed modified code and check the validity.
+    -  Check build
+    -  Check some formatting rules
+    -  Run a bunch of tests
+4.  If at least one of these steps fails, you will have to push corrections onto your source branch.
+    -  The step 3. will be again automatically triggered on this new commit.
+    -  Please wait that your run is finished before committing and pushing new modifications on your source branch.
+    -  That will allow fairness on the CI usage to other contributors.
+4.  When this automated process passes, one of our CI administrators will review your changes or assign a senior contributor
   to do a peer-review.
-5. Once the peer reviewer accepts your modification, one of our CI administrators will accept and merge your pull request
-   a. The CI will run again on the new `develop` branch commit.
+5.  Once the peer reviewer accepts your modification, one of our CI administrators will accept and merge your pull request
+    -  The CI will run again on the new `develop` branch commit.
+    -  The source branch WILL be deleted by one of our CI administrators.
 
