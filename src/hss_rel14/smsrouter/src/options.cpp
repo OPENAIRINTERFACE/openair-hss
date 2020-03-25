@@ -131,12 +131,14 @@ bool Options::parseInputOptions( int argc, char **argv )
                case 'q': { std::cout << "Option -q (log queue size) requires an argument" << std::endl; break; }
                default: { std::cout << "Unrecognized option [" << c << "]" << std::endl; break; }
             }
-            result = false;
+            if (result)
+              result = false;
          }
          default:
          {
             std::cout << "Unrecognized option [" << c << "]" << std::endl;
-            result = false;
+            if (result)
+              result = false;
          }
       }
    }
