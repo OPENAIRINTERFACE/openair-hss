@@ -184,7 +184,7 @@ pipeline {
             script {
               myShCmd('docker run --name ci-cn-clang-formatter -d ubuntu:bionic /bin/bash -c "sleep infinity"', new_host_flag, new_host_user, new_host)
               myShCmd('docker exec -it ci-cn-clang-formatter /bin/bash -c "apt-get update && apt-get upgrade --yes" > archives/clang_format_install.log', new_host_flag, new_host_user, new_host)
-              myShCmd('docker exec -it ci-cn-clang-formatter /bin/bash -c "apt-get install --yes git tree clang-format bzip2" >> archives/clang_format_install.log', new_host_flag, new_host_user, new_host)
+              myShCmd('docker exec -it ci-cn-clang-formatter /bin/bash -c "apt-get install --yes git tree bzip2" >> archives/clang_format_install.log', new_host_flag, new_host_user, new_host)
 
               myShCmd('docker cp ./openair-hss.tar.bz2 ci-cn-clang-formatter:/home', new_host_flag, new_host_user, new_host)
               myShCmd('docker exec -it ci-cn-clang-formatter /bin/bash -c "cd /home && tar -xjf openair-hss.tar.bz2"', new_host_flag, new_host_user, new_host)
