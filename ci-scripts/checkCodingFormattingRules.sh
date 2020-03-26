@@ -69,7 +69,7 @@ then
     then
         rm -f oai_rules_result_list.txt
     fi
-    EXTENSION_LIST=("h" "c" "cpp")
+    EXTENSION_LIST=("h" "hpp" "c" "cpp")
     NB_TO_FORMAT=0
     for EXTENSION in ${EXTENSION_LIST[@]}
     do
@@ -77,17 +77,16 @@ then
         FILE_LIST=`tree -n --noreport -i -f -P *.${EXTENSION} | sed -e 's#^\./##' | grep "\.${EXTENSION}"`
         for FILE_TO_CHECK in ${FILE_LIST[@]}
         do
-            TO_FORMAT=`clang-format -verbose -output-replacements-xml ${FILE_TO_CHECK} 2>&1 | grep -c Formatting`
-            NB_TO_FORMAT=$((NB_TO_FORMAT + TO_FORMAT))
+            TO_FORMAT=`clang-format -output-replacements-xml ${FILE_TO_CHECK} 2>&1 | grep -v replacements | grep -c replacement`
             if [ $TO_FORMAT -ne 0 ]
             then
+                NB_TO_FORMAT=$((NB_TO_FORMAT + 1))
                 # In case of full repo, being silent
                 #echo "src/$FILE_TO_CHECK"
                 echo "src/$FILE_TO_CHECK" >> ./oai_rules_result_list.txt
             fi
         done
     done
-    #NB_FILES_TO_FORMAT=`astyle --dry-run --options=ci-scripts/astyle-options.txt --recursive *.c *.h | grep -c Formatted `
     echo "Nb Files that do NOT follow OAI rules: $NB_TO_FORMAT"
     echo $NB_TO_FORMAT > ./oai_rules_result.txt
     exit 0
@@ -140,7 +139,12 @@ fi
 # Merge request scenario
 
 MERGE_COMMMIT=`git log -n1 --pretty=format:%H`
-TARGET_INIT_COMMIT=`cat .git/refs/remotes/origin/$TARGET_BRANCH`
+if [ -f .git/refs/remotes/origin/$TARGET_BRANCH ]
+then
+    TARGET_INIT_COMMIT=`cat .git/refs/remotes/origin/$TARGET_BRANCH`
+else
+    TARGET_INIT_COMMIT=`git log -n1 --pretty=format:%H origin/$TARGET_BRANCH`
+fi
 
 echo " ---- Checking the modified files by the merge request ----"
 echo ""
@@ -155,9 +159,11 @@ echo ""
 # Retrieve the list of modified files since the latest develop commit
 MODIFIED_FILES=`git log $TARGET_INIT_COMMIT..$MERGE_COMMMIT --oneline --name-status | egrep "^M|^A" | sed -e "s@^M\t*@@" -e "s@^A\t*@@" | sort | uniq`
 NB_TO_FORMAT=0
-exit 0
 
-
+if [ -f oai_rules_result.txt ]
+then
+    rm -f oai_rules_result.txt
+fi
 if [ -f oai_rules_result_list.txt ]
 then
     rm -f oai_rules_result_list.txt
@@ -168,10 +174,11 @@ do
     EXT="${filename##*.}"
     if [ $EXT = "c" ] || [ $EXT = "h" ] || [ $EXT = "cpp" ] || [ $EXT = "hpp" ]
     then
-        TO_FORMAT=`astyle --dry-run --options=ci-scripts/astyle-options.txt $FULLFILE | grep -c Formatted `
-        NB_TO_FORMAT=$((NB_TO_FORMAT + TO_FORMAT))
+        SRC_FILE=`echo $FULLFILE | sed -e "s#src/##"`
+        TO_FORMAT=`clang-format -output-replacements-xml ${SRC_FILE} 2>&1 | grep -v replacements | grep -c replacement`
         if [ $TO_FORMAT -ne 0 ]
         then
+            NB_TO_FORMAT=$((NB_TO_FORMAT + 1))
             echo $FULLFILE
             echo $FULLFILE >> ./oai_rules_result_list.txt
         fi
