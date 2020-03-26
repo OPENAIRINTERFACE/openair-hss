@@ -44,6 +44,8 @@ class HtmlReport():
 		self.file = open(cwd + '/test_results_oai_hss.html', 'w')
 		self.generateHeader()
 
+		self.coding_formatting_log()
+
 		self.analyze_sca_log()
 
 		self.buildSummaryHeader()
@@ -162,6 +164,47 @@ class HtmlReport():
 		self.file.write('  <div class="well well-lg">End of Build Report -- Copyright <span class="glyphicon glyphicon-copyright-mark"></span> 2020 <a href="http://www.openairinterface.org/">OpenAirInterface</a>. All Rights Reserved.</div>\n')
 		self.file.write('</div></body>\n')
 		self.file.write('</html>\n')
+
+	def coding_formatting_log(self):
+		cwd = os.getcwd()
+		self.file.write('  <h2>OAI Coding / Formatting Guidelines Check</h2>\n')
+		if os.path.isfile(cwd + '/src/oai_rules_result.txt'):
+			cmd = 'cat ' + cwd + '/src/oai_rules_result.txt'
+			ret = subprocess.check_output(cmd, shell=True, universal_newlines=True)
+			if int(ret.strip()) == 0:
+				self.file.write('  <div class="alert alert-success">\n')
+				if self.git_pull_request:
+					self.file.write('    <strong>All modified files in Pull-Request follow OAI rules. <span class="glyphicon glyphicon-ok-circle"></span></strong>\n')
+				else:
+					self.file.write('    <strong>All files in repository follow OAI rules. <span class="glyphicon glyphicon-ok-circle"></span></strong>\n')
+				self.file.write('  </div>\n')
+			else:
+				self.file.write('  <div class="alert alert-warning">\n')
+				if self.git_pull_request:
+					self.file.write('    <strong>' + ret.strip() + ' modified files in Pull-Request DO NOT follow OAI rules. <span class="glyphicon glyphicon-warning-sign"></span></strong>\n')
+				else:
+					self.file.write('    <strong>' + ret.strip() + ' files in repository DO NOT follow OAI rules. <span class="glyphicon glyphicon-warning-sign"></span></strong>\n')
+				self.file.write('  </div>\n')
+
+				if os.path.isfile(cwd + '/src/oai_rules_result_list.txt'):
+					self.file.write('  <button data-toggle="collapse" data-target="#oai-formatting-details">More details on formatting check</button>\n')
+					self.file.write('  <div id="oai-formatting-details" class="collapse">\n')
+					self.file.write('  <p>Please apply the following command to this(ese) file(s): </p>\n')
+					self.file.write('  <p style="margin-left: 30px"><strong><code>cd src && clang-format -i filename(s)</code></strong></p>\n')
+					self.file.write('  <table class="table-bordered" width = "60%" align = "center" border = 1>\n')
+					self.file.write('    <tr><th bgcolor = "lightcyan" >Filename</th></tr>\n')
+					with open(cwd + '/src/oai_rules_result_list.txt', 'r') as filelist:
+						for line in filelist:
+							self.file.write('    <tr><td>' + line.strip() + '</td></tr>\n')
+						filelist.close()
+					self.file.write('  </table>\n')
+					self.file.write('  </div>\n')
+		else:
+			self.file.write('  <div class="alert alert-danger">\n')
+			self.file.write('	  <strong>Was NOT performed (with CLANG-FORMAT tool). <span class="glyphicon glyphicon-ban-circle"></span></strong>\n')
+			self.file.write('  </div>\n')
+
+		self.file.write('  <br>\n')
 
 	def analyze_sca_log(self):
 		cwd = os.getcwd()
