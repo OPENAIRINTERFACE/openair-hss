@@ -203,7 +203,12 @@ pipeline {
             always {
               script {
                 myShCmd('docker cp ci-cn-clang-formatter:/home/src/oai_rules_result.txt src', new_host_flag, new_host_user, new_host)
-                myShCmd('docker cp ci-cn-clang-formatter:/home/src/oai_rules_result_list.txt src', new_host_flag, new_host_user, new_host)
+                // May not have been generated
+                try {
+                  myShCmd('docker cp ci-cn-clang-formatter:/home/src/oai_rules_result_list.txt src', new_host_flag, new_host_user, new_host)
+                } catch (Exception e) {
+                  echo "Failed to copy src/oai_rules_result_list.txt! It may not have been generated. That's OK!"
+                }
                 copyFrom2ndServer('archives/clang_format*.*', 'archives', new_host_flag, new_host_user, new_host)
                 copyFrom2ndServer('src/oai_rules*.*', 'src', new_host_flag, new_host_user, new_host)
                 // no need to keep the clang-formatter container
