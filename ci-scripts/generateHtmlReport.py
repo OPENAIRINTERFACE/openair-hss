@@ -169,21 +169,23 @@ class HtmlReport():
 		cwd = os.getcwd()
 		self.file.write('  <h2>OAI Coding / Formatting Guidelines Check</h2>\n')
 		if os.path.isfile(cwd + '/src/oai_rules_result.txt'):
-			cmd = 'cat ' + cwd + '/src/oai_rules_result.txt'
-			ret = subprocess.check_output(cmd, shell=True, universal_newlines=True)
-			if int(ret.strip()) == 0:
+			cmd = 'grep NB_FILES_FAILING_CHECK ' + cwd + '/src/oai_rules_result.txt | sed -e "s#NB_FILES_FAILING_CHECK=##"'
+			nb_fail = subprocess.check_output(cmd, shell=True, universal_newlines=True)
+			cmd = 'grep NB_FILES_CHECKED ' + cwd + '/src/oai_rules_result.txt | sed -e "s#NB_FILES_CHECKED=##"'
+			nb_total = subprocess.check_output(cmd, shell=True, universal_newlines=True)
+			if int(nb_fail.strip()) == 0:
 				self.file.write('  <div class="alert alert-success">\n')
 				if self.git_pull_request:
-					self.file.write('    <strong>All modified files in Pull-Request follow OAI rules. <span class="glyphicon glyphicon-ok-circle"></span></strong>\n')
+					self.file.write('    <strong>All modified files in Pull-Request follow OAI rules. <span class="glyphicon glyphicon-ok-circle"></span> -> (' + nb_total.strip() + ' were checked)</strong>\n')
 				else:
-					self.file.write('    <strong>All files in repository follow OAI rules. <span class="glyphicon glyphicon-ok-circle"></span></strong>\n')
+					self.file.write('    <strong>All files in repository follow OAI rules. <span class="glyphicon glyphicon-ok-circle"></span> -> (' + nb_total.strip() + ' were checked)</strong>\n')
 				self.file.write('  </div>\n')
 			else:
 				self.file.write('  <div class="alert alert-warning">\n')
 				if self.git_pull_request:
-					self.file.write('    <strong>' + ret.strip() + ' modified files in Pull-Request DO NOT follow OAI rules. <span class="glyphicon glyphicon-warning-sign"></span></strong>\n')
+					self.file.write('    <strong>' + nb_fail.strip() + ' modified files in Pull-Request DO NOT follow OAI rules. <span class="glyphicon glyphicon-warning-sign"></span> -> (' + nb_total.strip() + ' were checked)</strong>\n')
 				else:
-					self.file.write('    <strong>' + ret.strip() + ' files in repository DO NOT follow OAI rules. <span class="glyphicon glyphicon-warning-sign"></span></strong>\n')
+					self.file.write('    <strong>' + nb_fail.strip() + ' files in repository DO NOT follow OAI rules. <span class="glyphicon glyphicon-warning-sign"></span> -> (' + nb_total.strip() + ' were checked)</strong>\n')
 				self.file.write('  </div>\n')
 
 				if os.path.isfile(cwd + '/src/oai_rules_result_list.txt'):

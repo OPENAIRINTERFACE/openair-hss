@@ -71,6 +71,7 @@ then
     fi
     EXTENSION_LIST=("h" "hpp" "c" "cpp")
     NB_TO_FORMAT=0
+    NB_TOTAL=0
     for EXTENSION in ${EXTENSION_LIST[@]}
     do
         echo "Checking for all files with .${EXTENSION} extension"
@@ -78,6 +79,7 @@ then
         for FILE_TO_CHECK in ${FILE_LIST[@]}
         do
             TO_FORMAT=`clang-format -output-replacements-xml ${FILE_TO_CHECK} 2>&1 | grep -v replacements | grep -c replacement`
+            NB_TOTAL=$((NB_TOTAL + 1))
             if [ $TO_FORMAT -ne 0 ]
             then
                 NB_TO_FORMAT=$((NB_TO_FORMAT + 1))
@@ -87,8 +89,9 @@ then
             fi
         done
     done
-    echo "Nb Files that do NOT follow OAI rules: $NB_TO_FORMAT"
-    echo $NB_TO_FORMAT > ./oai_rules_result.txt
+    echo "Nb Files that do NOT follow OAI rules: $NB_TO_FORMAT over $NB_TOTAL checked!"
+    echo "NB_FILES_FAILING_CHECK=$NB_TO_FORMAT" > ./oai_rules_result.txt
+    echo "NB_FILES_CHECKED=$NB_TOTAL" >> ./oai_rules_result.txt
     exit 0
 fi
 
@@ -159,6 +162,7 @@ echo ""
 # Retrieve the list of modified files since the latest develop commit
 MODIFIED_FILES=`git log $TARGET_INIT_COMMIT..$MERGE_COMMMIT --oneline --name-status | egrep "^M|^A" | sed -e "s@^M\t*@@" -e "s@^A\t*@@" | sort | uniq`
 NB_TO_FORMAT=0
+NB_TOTAL=0
 
 if [ -f oai_rules_result.txt ]
 then
@@ -176,6 +180,7 @@ do
     then
         SRC_FILE=`echo $FULLFILE | sed -e "s#src/##"`
         TO_FORMAT=`clang-format -output-replacements-xml ${SRC_FILE} 2>&1 | grep -v replacements | grep -c replacement`
+        NB_TOTAL=$((NB_TOTAL + 1))
         if [ $TO_FORMAT -ne 0 ]
         then
             NB_TO_FORMAT=$((NB_TO_FORMAT + 1))
@@ -186,7 +191,8 @@ do
 done
 echo ""
 echo " ----------------------------------------------------------"
-echo "Nb Files that do NOT follow OAI rules: $NB_TO_FORMAT"
-echo $NB_TO_FORMAT > ./oai_rules_result.txt
+echo "Nb Files that do NOT follow OAI rules: $NB_TO_FORMAT over $NB_TOTAL checked!"
+echo "NB_FILES_FAILING_CHECK=$NB_TO_FORMAT" > ./oai_rules_result.txt
+echo "NB_FILES_CHECKED=$NB_TOTAL" >> ./oai_rules_result.txt
 
 exit 0
