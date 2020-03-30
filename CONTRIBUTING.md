@@ -8,14 +8,35 @@ Please refer to the steps described on our website: [How to contribute to OAI](h
 2. Create an account on [GitHub](https://github.com).
 3. Provide the identifiant of this account to the OAI team (mailto:contact@openairinterface.org) so you have developer rights on this repository.
 4. The policies are described in these wiki pages: [OAI Policies](https://gitlab.eurecom.fr/oai/openairinterface5g/wikis/oai-policies-home)
-   - You can fork onto another hosting system. But we will NOT accept a pull request from a forked repository.
+   - You can fork onto another hosting system. But we will **NOT** accept a pull request from a forked repository.
       * This decision was made for the license reasons.
       * The Continuous Integration will reject your pull request.
-   - All pull requests SHALL have `develop` branch as target branch.
+   - All pull requests SHALL have **`develop`** branch as target branch.
 
 ## Coding Styles ##
 
-To Be developed (plan is to use CLANG)
+We are using `clang-format` as formatting tool on the C/C++ code.
+
+At the time of writing (March 30th, 2020), we are using `clang-format` version 8.0.0 or above. By default, on a Ubuntu bionic Desktop edition, you would install version 6.0.0.
+
+So it is very likely you will have to install it manually. Again, at the time of writing, the working version we found was 9.0.0.
+
+```bash
+$ wget https://releases.llvm.org/9.0.0/clang+llvm-9.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz
+$ mkdir clang_tmp
+$ tar xvfJ  clang+llvm-9.0.0-x86_64-linux-gnu-ubuntu-18.04.tar.xz -C ./clang_tmp
+$ sudo cp clang_tmp/clang+llvm-9.0.0-x86_64-linux-gnu-ubuntu-18.04/bin/clang-format /usr/bin/clang-format
+$ rm -Rf clang*
+$ clang-format --version
+clang-format version 9.0.0 (tags/RELEASE_900/final)
+```
+
+How to format:
+
+```bash
+$ cd myClonedWorkspace/src
+$ clang-format -i theFilesYouWantToFormat
+```
 
 ## License ##
 
