@@ -30,6 +30,14 @@ class hssConfigGen():
 		self.cassandra_IP = ''
 		self.hss_s6a_IP = ''
 		self.fromDockerFile = False
+		self.apn1 = 'apn.oai.svc.cluster.local'
+		self.apn2 = 'internet'
+		self.ltek = '8baf473f2f8fd09487cccbd7097c6862'
+		self.op = '11111111111111111111111111111111'
+		self.imsi = '311480100001101'
+		self.realm = 'openairinterface.org'
+		self.users = '10'
+		self.nb_mmes = 1
 
 	def GenerateHssConfigurer(self):
 		hssFile = open('./hss-cfg.sh', 'w')
@@ -47,10 +55,13 @@ class hssConfigGen():
 		else:
 			hssFile.write('PREFIX=\'/usr/local/etc/oai\'\n')
 		# The following variables could be later be passed as parameters
-		hssFile.write('MY_REALM=\'openairinterface.org\'\n')
-		hssFile.write('MY_APN=\'apn.oai.svc.cluster.local\'\n')
-		hssFile.write('MY_LTE_K=\'8baf473f2f8fd09487cccbd7097c6862\'\n')
-		hssFile.write('MY_OP_K=\'11111111111111111111111111111111\'\n')
+		hssFile.write('MY_REALM=\'' + self.realm + '\'\n')
+		hssFile.write('MY_APN1=\'' + self.apn1 + '\'\n')
+		hssFile.write('MY_APN2=\'' + self.apn2 + '\'\n')
+		hssFile.write('MY_LTE_K=\'' + self.ltek + '\'\n')
+		hssFile.write('MY_OP_K=\'' + self.op + '\'\n')
+		hssFile.write('MY_IMSI=\'' + self.imsi + '\'\n')
+		hssFile.write('MY_USERS=\'' + self.users + '\'\n')
 		hssFile.write('\n')
 		if self.fromDockerFile:
 			hssFile.write('mkdir -p /openair-hss/logs\n')
@@ -63,9 +74,14 @@ class hssConfigGen():
 			hssFile.write('mkdir -p logs\n')
 		hssFile.write('\n')
 		hssFile.write('# provision users\n')
-		hssFile.write('./data_provisioning_users --apn $MY_APN --apn2 internet --key $MY_LTE_K --imsi-first 311480100001101 --msisdn-first 00000001 --mme-identity mme.$MY_REALM --no-of-users 10 --realm $MY_REALM --truncate True --verbose True --cassandra-cluster $Cassandra_Server_IP\n')
+		hssFile.write('./data_provisioning_users --apn $MY_APN1 --apn2 $MY_APN2 --key $MY_LTE_K --imsi-first $MY_IMSI --msisdn-first 00000001 --mme-identity mme.$MY_REALM --no-of-users $MY_USERS --realm $MY_REALM --truncate True --verbose True --cassandra-cluster $Cassandra_Server_IP\n')
 		hssFile.write('# provision mme\n')
 		hssFile.write('./data_provisioning_mme --id 3 --mme-identity mme.$MY_REALM --realm $MY_REALM --ue-reachability 1 --truncate True  --verbose True -C $Cassandra_Server_IP\n')
+		if self.nb_mmes > 1:
+			i = 1
+			while i < self.nb_mmes:
+				hssFile.write('./data_provisioning_mme --id ' + str(i+3) + ' --mme-identity mme' + str(i) + '.$MY_REALM --realm $MY_REALM --ue-reachability 1 --truncate False  --verbose True -C $Cassandra_Server_IP\n')
+				i += 1
 		hssFile.write('\n')
 		if not self.fromDockerFile:
 			hssFile.write('cp ../etc/acl.conf ../etc/hss_rel14_fd.conf $PREFIX/freeDiameter\n')
@@ -105,6 +121,15 @@ def Usage():
 	print('  --cassandra=[Cassandra IP server]')
 	print('  --hss_s6a=[HSS S6A Interface IP server]')
 	print('  --from_docker_file')
+	print('---------------------------------------------------------------------------------------------- HSS Not Mandatory -----')
+	print('  --apn1=[First APN] // MUST HAVE one "." in the name')
+	print('  --apn2=[Second APN]')
+	print('  --ltek=[LTE KEY]')
+	print('  --op=[Operator Key]')
+	print('  --users=[Number of users to provision]')
+	print('  --imsi=[IMSI of the 1st user]')
+	print('  --realm=[Realm of your EPC]')
+	print('  --nb_mmes=[Number of MME instances to provision (Default = 1)]')
 
 argvs = sys.argv
 argc = len(argvs)
@@ -126,6 +151,30 @@ while len(argvs) > 1:
 	elif re.match('^\-\-hss_s6a=(.+)$', myArgv, re.IGNORECASE):
 		matchReg = re.match('^\-\-hss_s6a=(.+)$', myArgv, re.IGNORECASE)
 		myHSS.hss_s6a_IP = matchReg.group(1)
+	elif re.match('^\-\-apn1=(.+)$', myArgv, re.IGNORECASE):
+		matchReg = re.match('^\-\-apn1=(.+)$', myArgv, re.IGNORECASE)
+		myHSS.apn1 = matchReg.group(1)
+	elif re.match('^\-\-apn2=(.+)$', myArgv, re.IGNORECASE):
+		matchReg = re.match('^\-\-apn2=(.+)$', myArgv, re.IGNORECASE)
+		myHSS.apn2 = matchReg.group(1)
+	elif re.match('^\-\-ltek=(.+)$', myArgv, re.IGNORECASE):
+		matchReg = re.match('^\-\-ltek=(.+)$', myArgv, re.IGNORECASE)
+		myHSS.ltek = matchReg.group(1)
+	elif re.match('^\-\-op=(.+)$', myArgv, re.IGNORECASE):
+		matchReg = re.match('^\-\-op=(.+)$', myArgv, re.IGNORECASE)
+		myHSS.op = matchReg.group(1)
+	elif re.match('^\-\-users=(.+)$', myArgv, re.IGNORECASE):
+		matchReg = re.match('^\-\-users=(.+)$', myArgv, re.IGNORECASE)
+		myHSS.users = matchReg.group(1)
+	elif re.match('^\-\-imsi=(.+)$', myArgv, re.IGNORECASE):
+		matchReg = re.match('^\-\-imsi=(.+)$', myArgv, re.IGNORECASE)
+		myHSS.imsi = matchReg.group(1)
+	elif re.match('^\-\-realm=(.+)$', myArgv, re.IGNORECASE):
+		matchReg = re.match('^\-\-realm=(.+)$', myArgv, re.IGNORECASE)
+		myHSS.realm = matchReg.group(1)
+	elif re.match('^\-\-nb_mmes=(.+)$', myArgv, re.IGNORECASE):
+		matchReg = re.match('^\-\-nb_mmes=(.+)$', myArgv, re.IGNORECASE)
+		myHSS.nb_mmes = int(matchReg.group(1))
 	elif re.match('^\-\-from_docker_file', myArgv, re.IGNORECASE):
 		myHSS.fromDockerFile = True
 	else:
