@@ -105,7 +105,7 @@ INSERT into vhss.mmeidentity_host  (idmmeidentity, mmeisdn, mmehost, mmerealm, u
 
 INSERT into vhss.mmeidentity       (idmmeidentity, mmeisdn, mmehost, mmerealm, ue_reachability) VALUES ( 30 ,'mme-isdn', 'mme.carrier.com',    'carrier.com', 1);
 INSERT into vhss.mmeidentity       (idmmeidentity, mmeisdn, mmehost, mmerealm, ue_reachability) VALUES ( 31 ,'mme-isdn', 'mme1.carrier.com',   'carrier.com', 1);
-INSERT into vhss.mmeidentity       (idmmeidentity, mmeisdn, mmehost, mmerealm, ue_reachability) VALUES ( 32 ,'mme-isdn', 'mme2.openair4G.eur', 'carrier.com', 1);
+INSERT into vhss.mmeidentity       (idmmeidentity, mmeisdn, mmehost, mmerealm, ue_reachability) VALUES ( 32 ,'mme-isdn', 'mme2.carrier.com',   'carrier.com', 1);
 INSERT into vhss.mmeidentity_host  (idmmeidentity, mmeisdn, mmehost, mmerealm, ue_reachability) VALUES ( 30 ,'mme-isdn', 'mme.carrier.com',    'carrier.com', 1);
 INSERT into vhss.mmeidentity_host  (idmmeidentity, mmeisdn, mmehost, mmerealm, ue_reachability) VALUES ( 31 ,'mme-isdn', 'mme1.carrier.com',   'carrier.com', 1);
 INSERT into vhss.mmeidentity_host  (idmmeidentity, mmeisdn, mmehost, mmerealm, ue_reachability) VALUES ( 32 ,'mme-isdn', 'mme2.carrier.com',   'carrier.com', 1);
