@@ -122,6 +122,7 @@ init_submodules()
 {
   # Because of patch, TODO cleaner
   rm -Rf $OPENAIRCN_DIR/build/git_submodules/freeDiameter/*
+  cd $OPENAIRCN_DIR
   echo "git submodule init"
   git submodule init
   ret=$?;[[ $ret -ne 0 ]] && return $ret
@@ -271,21 +272,33 @@ check_install_hss_software() {
       make \
       $CMAKE \
       libuv-dev \
+      libuv-devel \
       libssl-dev \
+      libssl-devel \
+      openssl-devel \
       autotools-dev \
+      autotools-devel \
       libtool-bin \
+      libtool \
       m4 \
       automake \
+      patch \
       libmemcached-dev \
+      libmemcached-devel \
       memcached \
       cmake-curses-gui \
       gcc \
       bison \
       flex \
       libsctp-dev \
+      lksctp-tools-devel \
       libgnutls-dev \
+      gnutls-devel \
       libgcrypt-dev \
+      libgcrypt-devel \
       libidn11-dev \
+      libidn-devel \
+      nettle-devel \
       nettle-dev"
   else
     echo_fatal "$OS_DISTRO is not a supported distribution."

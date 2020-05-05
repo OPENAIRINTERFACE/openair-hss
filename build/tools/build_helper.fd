@@ -355,7 +355,7 @@ install_opencoord.org_freediameter() {
   fi
 
   # libpq-dev 'may' be not needed
-  $SUDO apt-get install $OPTION \
+  $SUDO $INSTALLER install $OPTION \
     autoconf  \
     automake  \
     bison     \
@@ -381,6 +381,7 @@ install_opencoord.org_freediameter() {
 
   if [[ $prompt =~ [yY](es)* ]]
   then
+    cd $OPENAIRCN_DIR
     echo "git submodule init"
     git submodule init
     ret=$?;[[ $ret -ne 0 ]] && return $ret

@@ -14,10 +14,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+OS_DISTRO=$(grep "^ID=" /etc/os-release | sed "s/ID=//" | sed "s/\"//g")
+case "$OS_DISTRO" in
+  fedora) OS_BASEDISTRO="fedora";;
+  rhel)   OS_BASEDISTRO="fedora";;
+  centos) OS_BASEDISTRO="fedora";;
+  debian) OS_BASEDISTRO="debian";;
+  ubuntu) OS_BASEDISTRO="debian";;
+esac
+
 rm -rf demoCA
 mkdir demoCA
 echo 01 > demoCA/serial
 touch demoCA/index.txt
+if [[ "$OS_BASEDISTRO" == "debian" ]]
+then
+  echo 'unique_subject = yes' > demoCA/index.txt.attr
+fi
 
 if [ "$#" -lt 2 ]; then
   echo "error provide arguments: host domain [prefix]"
@@ -38,11 +51,18 @@ else
 fi
 
 # CA self certificate
-openssl req  -new -batch -x509 -days 3650 -nodes -newkey rsa:1024 -out cacert.pem -keyout cakey.pem -subj /CN=ca.localdomain/C=FR/ST=BdR/L=Aix/O=fD/OU=Tests
+openssl req  -new -batch -x509 -days 3650 -nodes -newkey rsa:1024 -out cacert.pem -keyout cakey.pem -subj /CN=$HOST.$DOMAIN/C=FR/ST=BdR/L=Aix/O=fD/OU=Tests
 #
 openssl genrsa -out $HOST.key.pem 1024
 openssl req -new -batch -out $HOST.csr.pem -key $HOST.key.pem -subj /CN=$HOST.$DOMAIN/C=FR/ST=BdR/L=Aix/O=fD/OU=Tests
-openssl ca -cert cacert.pem -keyfile cakey.pem -in $HOST.csr.pem -out $HOST.cert.pem -outdir . -batch
+if [[ "$OS_BASEDISTRO" == "fedora" ]]; then
+  cp /etc/pki/tls/openssl.cnf .
+  chmod 664 openssl.cnf
+  sed -i -e "s#/etc/pki/CA#./demoCA#" openssl.cnf
+  openssl ca -cert cacert.pem -keyfile cakey.pem -in $HOST.csr.pem -out $HOST.cert.pem -outdir . -batch -config openssl.cnf
+else
+  openssl ca -cert cacert.pem -keyfile cakey.pem -in $HOST.csr.pem -out $HOST.cert.pem -outdir . -batch
+fi
 
 IS_CONTAINER=`egrep -c "docker|kubepods" /proc/self/cgroup`
 
