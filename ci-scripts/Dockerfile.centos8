@@ -21,14 +21,14 @@
 #---------------------------------------------------------------------
 #
 # Dockerfile for the Open-Air-Interface HSS service
-#   Valid for CentOS 7
+#   Valid for CentOS 8
 #
 #---------------------------------------------------------------------
 
 #---------------------------------------------------------------------
 # BUILDER IMAGE
 #---------------------------------------------------------------------
-FROM centos:7 as oai-hss-builder
+FROM centos:8 as oai-hss-builder
 
 ARG EURECOM_PROXY
 ARG BUILD_FOR_CI
@@ -37,10 +37,10 @@ ARG CI_SRC_COMMIT
 ARG CI_DEST_BRANCH
 
 RUN yum update -y \
-  && yum install centos-release-scl -y \
-  && yum-config-manager --enable rhel-server-rhscl-7-rpms -y \
+  && yum install epel-release -y \
+  && yum install dnf-plugins-core -y \
+  && yum config-manager --set-enabled PowerTools \
   && yum install -y \
-    devtoolset-7 \
     psmisc \
     git \
   && yum clean all -y \
@@ -61,16 +61,19 @@ RUN /bin/bash -c "if [[ -v BUILD_FOR_CI ]]; then git merge --ff origin/$CI_DEST_
 
 # Installing and Building HSS
 WORKDIR /openair-hss/scripts
-RUN scl enable devtoolset-7 'cd /openair-hss/scripts && ./build_hss_rel14 --check-installed-software --force'
+RUN ./build_hss_rel14 --check-installed-software --force
 RUN cp /usr/local/lib64/libpistache.a /usr/local/lib/libpistache.a
-RUN scl enable devtoolset-7 'cd /openair-hss/scripts && ./build_hss_rel14 --clean --build-type Release'
+RUN ./build_hss_rel14 --clean --build-type Release
 
 #---------------------------------------------------------------------
 # TARGET IMAGE
 #---------------------------------------------------------------------
-FROM centos:7 as oai-hss
+FROM centos:8 as oai-hss
 # We install some debug tools for the moment in addition of mandatory libraries
-RUN yum update -y && yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm \
+RUN yum update -y \
+  && yum install epel-release -y \
+  && yum install dnf-plugins-core -y \
+  && yum config-manager --set-enabled PowerTools \
   && yum install -y \
     psmisc \
     openssl \
@@ -82,13 +85,13 @@ RUN yum update -y && yum install -y https://dl.fedoraproject.org/pub/epel/epel-r
     gnutls \
     libconfig \
     libidn \
-    python \
+    python2 \
     python3 \
-    python-pip \
+    python2-pip \
     python3-pip \
   && yum clean all -y \
   && rm -rf /var/cache/yum \
-  && pip install --user cassandra-driver \
+  && pip2 install --user cassandra-driver \
   && pip3 install --user cassandra-driver
 
 # Copying executable and generated libraries
@@ -115,6 +118,7 @@ WORKDIR /openair-hss/scripts
 COPY --from=oai-hss-builder /openair-hss/src/hss_rel14/bin/make_certs.sh .
 COPY --from=oai-hss-builder /openair-hss/scripts/data_provisioning_users .
 COPY --from=oai-hss-builder /openair-hss/scripts/data_provisioning_mme .
+RUN sed -i -e "s@python@python2@" data_provisioning_mme
 RUN sed -i -e "s@/freeDiameter@@" make_certs.sh
 
 WORKDIR /openair-hss

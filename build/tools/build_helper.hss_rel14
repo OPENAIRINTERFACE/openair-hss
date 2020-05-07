@@ -266,40 +266,41 @@ check_install_hss_software() {
       libidn11-dev \
       nettle-dev"
   elif [[ "$OS_BASEDISTRO" == "fedora" ]]; then
+    case "$(get_distribution_release)" in
+      "centos7")
+        specific_packages="libuv-devel"
+        ;;
+      "centos8")
+        $SUDO $INSTALLER install -y wget pkg-config
+        wget --tries=3 --retry-connrefused http://mirror.centos.org/centos/8/AppStream/x86_64/os/Packages/libuv-1.23.1-1.el8.x86_64.rpm
+        $SUDO rpm -i libuv-1.23.1-1.el8.x86_64.rpm
+        wget --tries=3 --retry-connrefused https://download-ib01.fedoraproject.org/pub/epel/8/Modular/x86_64/Packages/l/libuv-devel-1.23.1-1.module_el8+8246+46ee4016.x86_64.rpm
+        $SUDO rpm -i libuv-devel-1.23.1-1.module_el8+8246+46ee4016.x86_64.rpm
+        rm -f libuv-devel-1.23.1-1.module_el8+8246+46ee4016.x86_64.rpm libuv-1.23.1-1.el8.x86_64.rpm
+        specific_packages="clang"
+        ;;
+    esac
     # LG: TODO check package list for Fedora
     PACKAGE_LIST="\
-      g++ \
+      $specific_packages \
+      gcc-c++ \
       make \
       $CMAKE \
-      libuv-dev \
-      libuv-devel \
-      libssl-dev \
-      libssl-devel \
       openssl-devel \
-      autotools-dev \
-      autotools-devel \
-      libtool-bin \
       libtool \
       m4 \
       automake \
       patch \
-      libmemcached-dev \
       libmemcached-devel \
       memcached \
-      cmake-curses-gui \
       gcc \
       bison \
       flex \
-      libsctp-dev \
       lksctp-tools-devel \
-      libgnutls-dev \
       gnutls-devel \
-      libgcrypt-dev \
       libgcrypt-devel \
-      libidn11-dev \
       libidn-devel \
-      nettle-devel \
-      nettle-dev"
+      nettle-devel"
   else
     echo_fatal "$OS_DISTRO is not a supported distribution."
   fi
