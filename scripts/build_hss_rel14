@@ -53,16 +53,32 @@ function main()
   local -i var_check_install_oai_software=0
   local -i force=0
   local    cmake_args=" "
+  local    opt_args=''
+  local    function_args="Debug"
   local    make_args="-j`nproc`"
   local    realm=""
 
   until [ -z "$1" ]; do
     case "$1" in
       -b | --build-type)
-        # For compat with CI only, TODO
         list_include_item "Debug Release RelWithDebInfo MinSizeRel" $2
         [[ $? -ne 0 ]] && echo_error "Build type $2 not recognized" && return $?
         cmake_args="$cmake_args -DCMAKE_BUILD_TYPE=$2"
+        function_args=$2
+        case "$2" in
+          Release)
+            opt_args='COPT_FLAGS="-O3"'
+            ;;
+          Debug)
+            opt_args='COPT_FLAGS="-g"'
+            ;;
+          RelWithDebInfo)
+            opt_args='COPT_FLAGS="-Og"'
+            ;;
+          MinSizeRel)
+            opt_args='COPT_FLAGS="-Os"'
+            ;;
+        esac
         shift 2;
         ;;
       -c | --clean)
@@ -149,12 +165,12 @@ function main()
 
   cmake_args="$cmake_args -DOPENAIRCN_DIR=$OPENAIRCN_DIR"
 
-  build_util 
+  build_util $function_args
   ret=$?;[[ $ret -ne 0 ]] && return $ret
-  build_hsssec
+  build_hsssec $function_args
   ret=$?;[[ $ret -ne 0 ]] && return $ret
   cd $OPENAIRCN_DIR/build/hss_rel14
-  make $make_args
+  make $make_args $opt_args
   ret=$?;[[ $ret -ne 0 ]] && return $ret
   chmod -f 777 *
 
