@@ -48,7 +48,7 @@ sqn_ms_derive (
   uint8_t                                *mac_s       = NULL;
   uint8_t                                 mac_s_computed[MAC_S_LENGTH] = {0};
   uint8_t                                *sqn_ms = NULL;
-  uint8_t                                 amf[2] = { 0, 0 };
+  uint8_t                                 amf[2] = { 0x80, 0x00 };
   int                                     i = 0;
 
   conc_sqn_ms = &auts[16];
