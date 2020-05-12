@@ -2242,9 +2242,7 @@ void AIRProcessor::phase2()
         U64_TO_SQN(eu, m_sec.sqn);
         free (sqn);
       } else {
-        SqnU64Union eu;
-        SQN_TO_U64(sqn, eu);
-        std::cerr << "Could not resync " << m_uimsi << " HSS SQN " << eu.u64 << std::endl;
+        std::cerr << "Could not resync " << m_uimsi <<  std::endl;
       }
 
    }
