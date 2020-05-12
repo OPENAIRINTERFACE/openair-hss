@@ -163,7 +163,7 @@ pipeline {
               myShCmd('docker exec -it ci-cn-cppcheck /bin/bash -c "cd /home && tar -xjf openair-hss.tar.bz2"', new_host_flag, new_host_user, new_host)
               myShCmd('docker exec -it ci-cn-cppcheck /bin/bash -c "rm -f /home/openair-hss.tar.bz2"', new_host_flag, new_host_user, new_host)
 
-              myShCmd('docker exec -it ci-cn-cppcheck /bin/bash -c "cd /home && cppcheck --enable=warning --force --xml --xml-version=2 --suppressions-list=ci-scripts/cppcheck_suppressions.list src 2> cppcheck.xml 1> cppcheck_build.log"', new_host_flag, new_host_user, new_host)
+              myShCmd('docker exec -it ci-cn-cppcheck /bin/bash -c "cd /home && cppcheck --enable=warning --force --xml --xml-version=2 --suppressions-list=ci-scripts/cppcheck_suppressions.list -I src/hss_rel14/include -I src/hss_rel14/hsssec/include -I src/hss_rel14/util/include/ -I src/hss_rel14/smsrouter/include/ src 2> cppcheck.xml 1> cppcheck_build.log"', new_host_flag, new_host_user, new_host)
             }
           }
           post {
