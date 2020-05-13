@@ -19,3 +19,4 @@
 //-----------------------------------------------------------------------------
 // *INDENT-ON*
 memleak:src/hss_rel14/src/dataaccess.cpp
+va_start_referencePassed:src/hss_rel14/util/src/slogger.cpp

@@ -961,8 +961,11 @@ ULRProcessor::ULRProcessor(FDMessageRequest &req, s6as6d::Application &app, s6as
      m_app(app),
      m_dict(dict)
 {
+   m_orig_info = {0};
+   m_new_info = {0};
    m_perf_timer = 0;
    m_present_flags = 0;
+   m_plmn_id = {0,0,0,0};
    m_plmn_len = sizeof(m_plmn_id);
    m_3count = 0;
    m_3aSuccess = false;
@@ -1878,11 +1881,15 @@ AIRProcessor::AIRProcessor(FDMessageRequest& req, s6as6d::Application &app, s6as
      m_app(app),
      m_dict(dict)
 {
+   m_sec = {0};
    m_uimsi = 0;
    m_num_vectors = 0;
+   m_plmn_id = {0,0,0,0};
    m_plmn_len = sizeof(m_plmn_id);
    m_auts_len = sizeof(m_auts);
    m_auts_set = false;
+   m_vector = {0};
+   m_auts = {0};
 
    m_nextphase = AIRSTATE_PHASE1;
    m_msgissued = 0;
@@ -2242,9 +2249,7 @@ void AIRProcessor::phase2()
         U64_TO_SQN(eu, m_sec.sqn);
         free (sqn);
       } else {
-        SqnU64Union eu;
-        SQN_TO_U64(sqn, eu);
-        std::cerr << "Could not resync " << m_uimsi << " HSS SQN " << eu.u64 << std::endl;
+        std::cerr << "Could not resync " << m_uimsi << std::endl;
       }
 
    }

@@ -70,7 +70,9 @@ void HSSWorkerQueue::finishProcessor()
 FDHss::FDHss() :
       m_s6tapp (NULL),
       m_s6aapp (NULL),
-      m_s6capp (NULL)
+      m_s6capp (NULL),
+      m_endpoint (NULL),
+      m_ossendpoint (NULL)
 {
 
 }

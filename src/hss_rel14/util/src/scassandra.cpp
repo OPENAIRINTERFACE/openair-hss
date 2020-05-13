@@ -344,6 +344,7 @@ SCassFuture& SCassFuture::operator=( SCassFuture &rval )
 
    m_future = rval.m_future;
    rval.m_future = NULL;
+   m_incb = rval.m_incb;
 
    return *this;
 }

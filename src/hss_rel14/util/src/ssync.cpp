@@ -99,6 +99,9 @@ void SMutex::leave()
 SSemaphore::SSemaphore()
 {
     mInitialized = false;
+    mCurrCount = 0;
+    mInitialCount = 0;
+    mMaxCount = 0;
 }
 
 SSemaphore::SSemaphore(unsigned int lInitialCount, unsigned int lMaxCount, const char *pszName, bool bInit)

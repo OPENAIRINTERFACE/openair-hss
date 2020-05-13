@@ -19,6 +19,7 @@
 
 WorkerManager::WorkerManager()
 {
+    m_numWorkers = 0;
 }
 
 WorkerManager::~WorkerManager()

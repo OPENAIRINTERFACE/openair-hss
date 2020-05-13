@@ -227,6 +227,7 @@ FDDictionaryEntry::FDDictionaryEntry()
 {
    m_destroy = false;
    m_de = NULL;
+   m_dict = NULL;
 }
 
 FDDictionaryEntry::FDDictionaryEntry( const void *what, enum dict_object_type type, int criteria, struct dictionary *dict )
