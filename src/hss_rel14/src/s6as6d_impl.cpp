@@ -965,7 +965,10 @@ ULRProcessor::ULRProcessor(FDMessageRequest &req, s6as6d::Application &app, s6as
    m_new_info = {0};
    m_perf_timer = 0;
    m_present_flags = 0;
-   m_plmn_id = {0,0,0,0};
+   m_plmn_id[0] = 0;
+   m_plmn_id[1] = 0;
+   m_plmn_id[2] = 0;
+   m_plmn_id[3] = 0;
    m_plmn_len = sizeof(m_plmn_id);
    m_3count = 0;
    m_3aSuccess = false;
@@ -1884,12 +1887,15 @@ AIRProcessor::AIRProcessor(FDMessageRequest& req, s6as6d::Application &app, s6as
    m_sec = {0};
    m_uimsi = 0;
    m_num_vectors = 0;
-   m_plmn_id = {0,0,0,0};
+   m_plmn_id[0] = 0;
+   m_plmn_id[1] = 0;
+   m_plmn_id[2] = 0;
+   m_plmn_id[3] = 0;
    m_plmn_len = sizeof(m_plmn_id);
    m_auts_len = sizeof(m_auts);
    m_auts_set = false;
-   m_vector = {0};
-   m_auts = {0};
+   memset(m_vector, 0, sizeof(m_vector));
+   memset(m_auts, 0, sizeof(m_vector));
 
    m_nextphase = AIRSTATE_PHASE1;
    m_msgissued = 0;
