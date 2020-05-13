@@ -3,9 +3,9 @@
 # Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
 # contributor license agreements.  See the NOTICE file distributed with
 # this work for additional information regarding copyright ownership.
-# The OpenAirInterface Software Alliance licenses this file to You under 
+# The OpenAirInterface Software Alliance licenses this file to You under
 # the Apache License, Version 2.0  (the "License"); you may not use this file
-# except in compliance with the License.  
+# except in compliance with the License.
 # You may obtain a copy of the License at
 #
 #      http://www.apache.org/licenses/LICENSE-2.0
@@ -46,6 +46,7 @@ function help()
   echo_error "  -f, --force                               No interactive script for installation of software packages."
   echo_error "  -h, --help                                Print this help."
   echo_error "  -i, --check-installed-software            Check installed software packages necessary to build and run HSS (support $SUPPORTED_DISTRO)."
+  echo_error "  -j, --jobs                                Multiple jobs for compiling."
   echo_error "                                            If filled, then OPc key in table users for all subscribers (IMSI) will be computed/updated."
   echo_error "  -v, --verbose                             Build process verbose."
 }
@@ -57,7 +58,7 @@ function main()
   local -i var_check_install_oai_software=0
   local -i force=0
   local    cmake_args=" "
-  local    make_args="-j`nproc`"
+  export make_args=" "
   local    realm=""
 
   until [ -z "$1" ]; do
@@ -94,6 +95,13 @@ function main()
         var_check_install_oai_software=1
         shift;
         ;;
+      -j | --jobs)
+        # JNPROC used in build of 3rd party libraries
+        export JNPROC="-j`nproc`"
+        # used in building OAI executable
+        make_args="$make_args -j`nproc`"
+        shift;
+        ;;
       -v | --verbose)
         echo "Make build process verbose"
         cmake_args="$cmake_args -DCMAKE_VERBOSE_MAKEFILE=ON"
@@ -101,7 +109,7 @@ function main()
         verbose=1
         shift;
         ;;
-      *)   
+      *)
         echo "Unknown option $1"
         help
         return 1
@@ -123,7 +131,7 @@ function main()
   if [ $var_check_install_oai_software -gt 0 ];then
     update_package_db
     [[ $? -ne 0 ]] && return $?
-    
+
     check_install_hss_software  $force
     if [ $? -ne 0 ]; then
         echo_error "Error: HSS software installation failed"
@@ -139,7 +147,7 @@ function main()
   if [[ $verbose -eq 1 ]]; then
     cecho "OPENAIRCN_DIR    = $OPENAIRCN_DIR" $green
   fi
-  
+
   if [[ z$OPENAIRCN_DIR = z ]]; then
     echo_error "OPENAIRCN_DIR env variable not set, exiting"
     return 1
@@ -153,7 +161,7 @@ function main()
 
   cmake_args="$cmake_args -DOPENAIRCN_DIR=$OPENAIRCN_DIR"
 
-  build_util 
+  build_util
   ret=$?;[[ $ret -ne 0 ]] && return $ret
   build_hsssec
   ret=$?;[[ $ret -ne 0 ]] && return $ret
