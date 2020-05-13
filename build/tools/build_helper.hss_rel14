@@ -30,6 +30,7 @@ source $THIS_BH_HSS_SCRIPT_PATH/build_helper
 #-------------------------------------------------------------------------------
 build_freeDiameter()
 {
+  echo "-- Starting FreeDiameter Build --"
   pushd $OPENAIRCN_DIR/build/git_submodules/freeDiameter
   patch -p1 <  $OPENAIRCN_DIR/build/patches/0001-opencoord.org.freeDiameter.patch
   ret=$?;[[ $ret -ne 0 ]] && popd && return $ret
@@ -47,12 +48,14 @@ build_freeDiameter()
   res=$?
   [[ $res -ne 0 ]] && popd && return $res
   popd
+  echo "-- FreeDiameter Build Successful --"
   return $?
 }
 
 #-------------------------------------------------------------------------------
 build_c_ares()
 {
+  echo "-- Starting C-Ares Build --"
   pushd $OPENAIRCN_DIR/build/git_submodules/c-ares
   ./buildconf
   res=$?
@@ -67,12 +70,14 @@ build_c_ares()
   res=$?
   [[ $res -ne 0 ]] && popd && return $res
   popd
+  echo "-- C-Ares Build Successful --"
   return $?
 }
 
 #-------------------------------------------------------------------------------
 build_cpp_driver()
 {
+  echo "-- Starting Cassandra-Driver Build --"
   pushd $OPENAIRCN_DIR/build/git_submodules/cpp-driver
   git checkout -f 2.15.0
   rm -rf build
@@ -88,12 +93,14 @@ build_cpp_driver()
   res=$?
   [[ $res -ne 0 ]] && popd && return $res
   popd
+  echo "-- Cassandra-Driver Build Successful --"
   return $?
 }
 
 #-------------------------------------------------------------------------------
 build_pistache()
 {
+  echo "-- Starting Pistache Build --"
   pushd $OPENAIRCN_DIR/build/git_submodules/pistache
   git checkout -f 117db02eda9d63935193ad98be813987f6c32b33
   rm -rf build
@@ -109,6 +116,7 @@ build_pistache()
   res=$?
   [[ $res -ne 0 ]] && popd && return $res
   popd
+  echo "-- Pistache Build Successful --"
   return $?
 }
 

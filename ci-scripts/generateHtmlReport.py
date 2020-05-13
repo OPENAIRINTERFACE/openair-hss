@@ -467,35 +467,35 @@ class HtmlReport():
 						result = re.search('git submodule init', line)
 						if result is not None:
 							package_install = True
-						result = re.search('Build files have been written to: /openair-hss/build/git_submodules/freeDiameter/build', line)
+						result = re.search('-- Starting FreeDiameter Build --', line)
 						if result is not None:
 							freeDiameter_build_start = True
 						if freeDiameter_build_start:
-							result = re.search('Installing: /usr/local/lib/freeDiameter/dict_S9', line)
+							result = re.search('-- FreeDiameter Build Successful --', line)
 							if result is not None:
 								freeDiameter_build_start = False
 								freeDiameter_build = True
-						result = re.search('/openair-hss/build/git_submodules/c-ares /openair-hss/scripts', line)
+						result = re.search('-- Starting C-Ares Build --', line)
 						if result is not None:
 							cares_build_start = True
 						if cares_build_start:
-							result = re.search('/usr/bin/install -c -m 644 libcares.pc', line)
+							result = re.search('-- C-Ares Build Successful --', line)
 							if result is not None:
 								cares_build_start = False
 								cares_build = True
-						result = re.search('/openair-hss/build/git_submodules/cpp-driver /openair-hss/scripts', line)
+						result = re.search('-- Starting Cassandra-Driver Build --', line)
 						if result is not None:
 							cppdriver_build_start = True
 						if cppdriver_build_start:
-							result = re.search('Installing: /usr/local/lib/x86_64-linux-gnu/pkgconfig/cassandra.pc', line)
+							result = re.search('-- Cassandra-Driver Build Successful --', line)
 							if result is not None:
 								cppdriver_build_start = False
 								cppdriver_build = True
-						result = re.search('/openair-hss/build/git_submodules/pistache /openair-hss/scripts', line)
+						result = re.search('-- Starting Pistache Build --', line)
 						if result is not None:
 							pistache_build_start = True
 						if pistache_build_start:
-							result = re.search('Installing: /usr/local/lib/libpistache', line)
+							result = re.search('-- Pistache Build Successful --', line)
 							if result is not None:
 								pistache_build_start = False
 								pistache_build = True
