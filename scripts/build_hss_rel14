@@ -58,7 +58,7 @@ function main()
   local -i var_check_install_oai_software=0
   local -i force=0
   local    cmake_args=" "
-  export make_args=" "
+  local    make_args="-j`nproc`"
   local    realm=""
 
   until [ -z "$1" ]; do
@@ -132,10 +132,10 @@ function main()
     update_package_db
     [[ $? -ne 0 ]] && return $?
 
-    check_install_hss_software  $force
-    if [ $? -ne 0 ]; then
+    ret=$(check_install_hss_software  $force)
+    if [ $ret -ne 0 ]; then
         echo_error "Error: HSS software installation failed"
-        return 1
+        return $ret
     else
         echo_success "HSS software installation successful"
         echo "HSS not compiled, to compile it, re-run build_hss without -i option"
