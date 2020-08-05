@@ -31,10 +31,6 @@
 FROM ubuntu:bionic as oai-hss-builder
 
 ARG EURECOM_PROXY
-ARG BUILD_FOR_CI
-ARG CI_SRC_BRANCH
-ARG CI_SRC_COMMIT
-ARG CI_DEST_BRANCH
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=Europe
@@ -48,14 +44,10 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get upgrade --yes && DE
 RUN /bin/bash -c "if [[ -v EURECOM_PROXY ]]; then git config --global http.proxy $EURECOM_PROXY; fi"
 RUN git config --global https.postBuffer 123289600
 RUN git config --global http.sslverify false
-# In normal case, we build out of the develop branch
-RUN /bin/bash -c "if [[ -v CI_SRC_BRANCH ]]; then git clone https://github.com/OPENAIRINTERFACE/openair-hss.git -b $CI_SRC_BRANCH /openair-hss; else git clone https://github.com/OPENAIRINTERFACE/openair-hss.git -b develop /openair-hss; fi"
-# For CI, especially for Pull/Merge Requests, we build out of temp merge
+
+# Copy the workspace as is
 WORKDIR /openair-hss
-RUN /bin/bash -c "if [[ -v BUILD_FOR_CI ]]; then git config --global user.name \"OAI CI\"; fi"
-RUN /bin/bash -c "if [[ -v BUILD_FOR_CI ]]; then git config --global user.email ci@openairinterface.org; fi"
-RUN /bin/bash -c "if [[ -v BUILD_FOR_CI ]]; then git checkout -f $CI_SRC_COMMIT; fi"
-RUN /bin/bash -c "if [[ -v BUILD_FOR_CI ]]; then git merge --ff origin/$CI_DEST_BRANCH -m \"Temporary merge for CI\"; fi"
+COPY . .
 
 # Installing and Building HSS
 WORKDIR /openair-hss/scripts
@@ -119,3 +111,6 @@ RUN sed -i -e "s@/freeDiameter@@" make_certs.sh
 WORKDIR /openair-hss
 RUN openssl rand -out /root/.rnd 128
 COPY --from=oai-hss-builder /openair-hss/version.txt .
+
+# expose ports configured in hss_fd.conf
+EXPOSE 9042/tcp 5868/tcp 9080/tcp 9081/tcp

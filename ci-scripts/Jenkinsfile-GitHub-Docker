@@ -122,17 +122,13 @@ pipeline {
         stage ('Build HSS Image') {
           steps {
             script {
-              if (env.ghprbPullId != null) {
-                // Building a temporary image
-                myShCmd('docker image prune --force', new_host_flag, new_host_user, new_host)
-                myShCmd('docker build --target oai-hss --tag oai-hss:ci-temp --file ci-scripts/Dockerfile.ubuntu18.04 --build-arg EURECOM_PROXY="http://proxy.eurecom.fr:8080" --build-arg BUILD_FOR_CI="True" --build-arg CI_SRC_BRANCH="' + env.ghprbSourceBranch + '" --build-arg CI_SRC_COMMIT="' + env.ghprbActualCommit + '" --build-arg CI_DEST_BRANCH="develop" . > archives/hss_docker_image_build.log 2>&1', new_host_flag, new_host_user, new_host)
-              } else {
+              if (env.ghprbPullId == null) {
                 // Currently this pipeline only runs for pushes to `develop` branch
                 // First clean image registry
                 myShCmd('docker image rm oai-hss:develop', new_host_flag, new_host_user, new_host)
-                myShCmd('docker image prune --force', new_host_flag, new_host_user, new_host)
-                myShCmd('docker build --target oai-hss --tag oai-hss:develop --file ci-scripts/Dockerfile.ubuntu18.04 --build-arg EURECOM_PROXY="http://proxy.eurecom.fr:8080" --build-arg CI_SRC_BRANCH="develop" . > archives/hss_docker_image_build.log 2>&1', new_host_flag, new_host_user, new_host)
               }
+              myShCmd('docker image prune --force', new_host_flag, new_host_user, new_host)
+              myShCmd('docker build --target oai-hss --tag oai-hss:' + hss_tag + ' --file ci-scripts/Dockerfile.ubuntu18.04 --build-arg EURECOM_PROXY="http://proxy.eurecom.fr:8080" . > archives/hss_docker_image_build.log 2>&1', new_host_flag, new_host_user, new_host)
               myShCmd('docker image ls >> archives/hss_docker_image_build.log', new_host_flag, new_host_user, new_host)
             }
           }
