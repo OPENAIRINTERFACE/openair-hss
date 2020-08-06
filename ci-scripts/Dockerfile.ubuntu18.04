@@ -85,6 +85,7 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get upgrade --yes && DE
 # Copying executable and generated libraries
 WORKDIR /openair-hss/bin
 COPY --from=oai-hss-builder /openair-hss/build/hss_rel14/bin/hss oai_hss
+COPY --from=oai-hss-builder /openair-hss/scripts/entrypoint.sh .
 
 COPY --from=oai-hss-builder /usr/local/lib/libfd* /usr/local/lib/
 COPY --from=oai-hss-builder /usr/local/lib/freeDiameter/* /usr/local/lib/freeDiameter/
@@ -114,3 +115,6 @@ COPY --from=oai-hss-builder /openair-hss/version.txt .
 
 # expose ports configured in hss_fd.conf
 EXPOSE 9042/tcp 5868/tcp 9080/tcp 9081/tcp
+
+CMD ["/openair-hss/bin/oai_hss", "-j", "/openair-hss/etc/hss_rel14.json", "--reloadkey", "true"]
+ENTRYPOINT ["/openair-hss/bin/entrypoint.sh"]

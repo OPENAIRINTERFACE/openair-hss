@@ -30,6 +30,7 @@ class hssConfigGen():
 		self.cassandra_IP = ''
 		self.hss_s6a_IP = ''
 		self.fromDockerFile = False
+		self.envForEntrypoint = False
 		self.apn1 = 'apn.oai.svc.cluster.local'
 		self.apn2 = 'internet'
 		self.ltek = '8baf473f2f8fd09487cccbd7097c6862'
@@ -105,6 +106,21 @@ class hssConfigGen():
 		hssFile.write('./make_certs.sh hss ${HSS_CONF[@REALM@]} $PREFIX\n')
 		hssFile.close()
 
+	def GenerateHssEnvList(self):
+		hssFile = open('./hss-env.list', 'w')
+		hssFile.write('# Environment Variables used by the OAI-HSS Entrypoint Script\n')
+		hssFile.write('REALM=' + self.realm + '\n')
+		hssFile.write('HSS_FQDN=hss' + self.realm + '\n')
+		hssFile.write('PREFIX=/openair-hss/etc\n')
+		hssFile.write('cassandra_Server_IP=' + self.cassandra_IP + '\n')
+		hssFile.write('OP_KEY=' + self.op + '\n')
+		hssFile.write('LTE_K=' + self.ltek + '\n')
+		hssFile.write('APN1=' + self.apn1 + '\n')
+		hssFile.write('APN2=' + self.imsi + '\n')
+		hssFile.write('FIRST_IMSI=' + self.imsi + '\n')
+		hssFile.write('NB_USERS=' + self.users + '\n')
+		hssFile.close()
+
 #-----------------------------------------------------------
 # Usage()
 #-----------------------------------------------------------
@@ -177,6 +193,8 @@ while len(argvs) > 1:
 		myHSS.nb_mmes = int(matchReg.group(1))
 	elif re.match('^\-\-from_docker_file', myArgv, re.IGNORECASE):
 		myHSS.fromDockerFile = True
+	elif re.match('^\-\-env_for_entrypoint', myArgv, re.IGNORECASE):
+		myHSS.envForEntrypoint = True
 	else:
 		Usage()
 		sys.exit('Invalid Parameter: ' + myArgv)
@@ -196,7 +214,10 @@ if myHSS.kind == 'HSS':
 		Usage()
 		sys.exit('missing HSS S6A IP address')
 	else:
-		myHSS.GenerateHssConfigurer()
+		if myHSS.envForEntrypoint:
+			myHSS.GenerateHssEnvList()
+		else:
+			myHSS.GenerateHssConfigurer()
 		sys.exit(0)
 else:
 	Usage()
