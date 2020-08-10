@@ -146,6 +146,7 @@ def Usage():
 	print('  --imsi=[IMSI of the 1st user]')
 	print('  --realm=[Realm of your EPC]')
 	print('  --nb_mmes=[Number of MME instances to provision (Default = 1)]')
+	print('  --envForEntrypoint    [generates a hss-env.list interpreted by the entrypoint]')
 
 argvs = sys.argv
 argc = len(argvs)
