@@ -116,6 +116,26 @@ build_pistache()
   return $?
 }
 
+build_libuv()
+{
+    echo "-- Starting libuv Build --"
+    rm -rf /tmp/libuv
+    git clone --depth=1 --branch=v1.23.1 https://github.com/libuv/libuv.git /tmp/libuv
+    cd /tmp/libuv
+    mkdir -p build
+    cd build
+    $CMAKE ..
+    res=$?
+    [[ $res -ne 0 ]] && return $res
+    make -j`nproc`
+    res=$?
+    [[ $res -ne 0 ]] && return $res
+    $SUDO make install
+    res=$?
+    [[ $res -ne 0 ]] && return $res
+    echo "-- libuv Build Successful --"
+    return $?
+}
 
 #-------------------------------------------------------------------------------
 init_submodules()
@@ -279,6 +299,11 @@ check_install_hss_software() {
         rm -f libuv-devel-1.23.1-1.module_el8+8246+46ee4016.x86_64.rpm libuv-1.23.1-1.el8.x86_64.rpm
         specific_packages="clang"
         ;;
+      "rhel8.2")
+        specific_packages="libuv"
+        $SUDO yum install $OPTION --enablerepo="codeready-builder-for-rhel-8-x86_64-rpms" $specific_packages gcc-c++ make $CMAKE openssl-devel libtool m4 automake patch libmemcached-devel memcached gcc bison flex lksctp-tools-devel gnutls-devel libgcrypt-devel libidn-devel nettle-devel
+        OPTION='${OPTION} --enablerepo="ubi-8-codeready-builder"'
+        ;;
     esac
     # LG: TODO check package list for Fedora
     PACKAGE_LIST="\
@@ -304,7 +329,13 @@ check_install_hss_software() {
   else
     echo_fatal "$OS_DISTRO is not a supported distribution."
   fi
-  $SUDO $INSTALLER install $OPTION $PACKAGE_LIST
+  if [[ "$(get_distribution_release)" == "rhel8.2" ]]; then
+    echo "====== Raphael ===="
+    echo "bypassing (already done) : $SUDO $INSTALLER install $OPTION $PACKAGE_LIST"
+    build_libuv
+  else
+    $SUDO $INSTALLER install $OPTION $PACKAGE_LIST
+  fi
   ret=$?;[[ $ret -ne 0 ]] && return $ret
 
   init_submodules

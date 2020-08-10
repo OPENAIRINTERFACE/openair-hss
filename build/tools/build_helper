@@ -125,6 +125,7 @@ get_distribution_release() {
 
 check_supported_distribution() {
     local distribution=$(get_distribution_release)
+    echo "Your distribution is ${distribution}"
     case "$distribution" in
         "ubuntu18.04") return 0 ;;
         "ubuntu17.10") return 0 ;;
@@ -133,6 +134,7 @@ check_supported_distribution() {
         "ubuntu14.04") return 0 ;;
         "rhel7")       return 0 ;;
         "rhel8")       return 0 ;;
+        "rhel8.2")     return 0 ;;
         "centos7")     return 0 ;;
         "centos8")     return 0 ;;
     esac
@@ -289,6 +291,9 @@ update_package_db() {
       [[ $? -ne 0 ]] && return $?
       touch /tmp/no_more_update_package_db
       [[ $? -ne 0 ]] && return $?
+    else
+      echo "===== Raphael ===="
+      echo "no need to update"
     fi
   fi
   return 0
@@ -302,8 +307,12 @@ check_enable_epel_repos() {
     if rpm -q epel-release > /dev/null; then
       echo "EPEL repos already present. Good."
     else
-      echo "EPEL repos not present. Installing them."
-      $SUDO $INSTALLER install $OPTION https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+      if [[ "$OS_DISTRO$OS_RELEASE" == "rhel8.2" ]]; then
+        echo "Bypassing EPEL repos for the moment"
+      else
+        echo "EPEL repos not present. Installing them."
+        $SUDO $INSTALLER install $OPTION https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+      fi
     fi
   fi
 }
