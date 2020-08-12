@@ -45,7 +45,7 @@ spec:
             destinationDir: rhsm-ca
     strategy:
         dockerStrategy:
-            dockerfilePath: "ci-scripts/Dockerfile.rhel8-2.oc4-4"
+            dockerfilePath: "docker/Dockerfile.rhel8-2.oc4-4"
     output:
         to:
             kind: "ImageStreamTag"
