@@ -51,7 +51,9 @@ RUN rm /etc/rhsm-host && \
        diffutils \
        file \
        psmisc \
-       git
+       git && \
+    echo "/usr/local/lib" > /etc/ld.so.conf.d/local-lib.conf && \
+    echo "/usr/local/lib64" >> /etc/ld.so.conf.d/local-lib.conf
 
 # Copy the workspace as is
 WORKDIR /openair-hss
@@ -63,12 +65,7 @@ RUN ./build_hss_rel14 --check-installed-software --force
 RUN cp /usr/local/lib64/libpistache.a /usr/local/lib/libpistache.a
 RUN ./build_hss_rel14 --clean --build-type Release
 
-# For debug
-RUN ldd /openair-hss/build/hss_rel14/bin/hss
-
-# Getting SHA-ONE for support
-WORKDIR /openair-hss
-RUN git log -n1 > version.txt
+RUN ldconfig -v && ldd /openair-hss/build/hss_rel14/bin/hss
 
 #---------------------------------------------------------------------
 # TARGET IMAGE
@@ -81,7 +78,6 @@ RUN yum update -y && \
        psmisc \
        openssl \
        net-tools \
-       tcpdump \
        lksctp-tools \
        nettle \
        gnutls \
@@ -89,14 +85,12 @@ RUN yum update -y && \
        python2 \
        python3 \
        python2-pip \
-       python3-pip &&\
-    yum clean all -y &&\
-    rm -rf /var/cache/yum &&\
+       python3-pip && \
+    echo "/usr/local/lib" > /etc/ld.so.conf.d/local-lib.conf && \
+    yum clean all -y && \
+    rm -rf /var/cache/yum && \
     pip2 install --user cassandra-driver && \
-    pip3 install --user cassandra-driver && \
-    # Remove entitlements and Subscription Manager configs
-    rm -rf /etc/pki/entitlement && \
-    rm -rf /etc/rhsm
+    pip3 install --user cassandra-driver
 
 # Copying executable and generated libraries
 WORKDIR /openair-hss/bin
@@ -106,8 +100,8 @@ COPY --from=oai-hss-builder /openair-hss/scripts/entrypoint.sh .
 COPY --from=oai-hss-builder /usr/local/lib/libfd* /usr/local/lib/
 COPY --from=oai-hss-builder /usr/local/lib/freeDiameter/* /usr/local/lib/freeDiameter/
 COPY --from=oai-hss-builder /usr/local/lib64/libcassandra* /usr/local/lib/
-RUN ldconfig
-RUN ldd /openair-hss/bin/oai_hss
+COPY --from=oai-hss-builder /usr/local/lib64/libuv.so /usr/local/lib/
+RUN ldconfig -v && ldd /openair-hss/bin/oai_hss
 
 # Copying template configuration files
 # The configuration folder will be flat
@@ -129,7 +123,6 @@ RUN sed -i -e "s@/freeDiameter@@" make_certs.sh
 
 WORKDIR /openair-hss
 RUN openssl rand -out /root/.rnd 128
-COPY --from=oai-hss-builder /openair-hss/version.txt .
 
 # expose ports configured in hss_fd.conf
 EXPOSE 9042/tcp 5868/tcp 9080/tcp 9081/tcp
