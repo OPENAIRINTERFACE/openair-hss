@@ -63,6 +63,9 @@ RUN ./build_hss_rel14 --check-installed-software --force
 RUN cp /usr/local/lib64/libpistache.a /usr/local/lib/libpistache.a
 RUN ./build_hss_rel14 --clean --build-type Release
 
+# For debug
+RUN ldd /openair-hss/build/hss_rel14/bin/hss
+
 # Getting SHA-ONE for support
 WORKDIR /openair-hss
 RUN git log -n1 > version.txt
@@ -72,29 +75,16 @@ RUN git log -n1 > version.txt
 #---------------------------------------------------------------------
 FROM registry.access.redhat.com/ubi8/ubi:latest as oai-hss
 
-# Same thing about entitlements and rhsm
-RUN rm -Rf /etc/rhsm/ca /etc/pki/entitlement
-COPY ./etc-pki-entitlement /etc/pki/entitlement
-COPY ./rhsm-conf /etc/rhsm
-COPY ./rhsm-ca /etc/rhsm/ca
-
 # We install some debug tools for the moment in addition of mandatory libraries
-RUN rm /etc/rhsm-host && \
-    # Initialize /etc/yum.repos.d/redhat.repo
-    # See https://access.redhat.com/solutions/1443553
-    yum repolist --disablerepo=* && \
-    subscription-manager repos --enable codeready-builder-for-rhel-8-x86_64-rpms && \
-    yum update -y && \
-    yum -y install --enablerepo="codeready-builder-for-rhel-8-x86_64-rpms" \
+RUN yum update -y && \
+    yum -y install --enablerepo="ubi-8-codeready-builder" \
        psmisc \
        openssl \
        net-tools \
        tcpdump \
        lksctp-tools \
-       libuv \
        nettle \
        gnutls \
-       libconfig \
        libidn \
        python2 \
        python3 \
@@ -117,6 +107,7 @@ COPY --from=oai-hss-builder /usr/local/lib/libfd* /usr/local/lib/
 COPY --from=oai-hss-builder /usr/local/lib/freeDiameter/* /usr/local/lib/freeDiameter/
 COPY --from=oai-hss-builder /usr/local/lib64/libcassandra* /usr/local/lib/
 RUN ldconfig
+RUN ldd /openair-hss/bin/oai_hss
 
 # Copying template configuration files
 # The configuration folder will be flat
