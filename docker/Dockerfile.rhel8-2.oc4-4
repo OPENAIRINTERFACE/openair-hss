@@ -65,8 +65,6 @@ RUN ./build_hss_rel14 --check-installed-software --force
 RUN cp /usr/local/lib64/libpistache.a /usr/local/lib/libpistache.a
 RUN ./build_hss_rel14 --clean --build-type Release
 
-RUN ldconfig -v && ldd /openair-hss/build/hss_rel14/bin/hss
-
 #---------------------------------------------------------------------
 # TARGET IMAGE
 #---------------------------------------------------------------------
@@ -101,7 +99,7 @@ COPY --from=oai-hss-builder /usr/local/lib/libfd* /usr/local/lib/
 COPY --from=oai-hss-builder /usr/local/lib/freeDiameter/* /usr/local/lib/freeDiameter/
 COPY --from=oai-hss-builder /usr/local/lib64/libcassandra* /usr/local/lib/
 COPY --from=oai-hss-builder /usr/local/lib64/libuv.so /usr/local/lib/
-RUN ldconfig -v && ldd /openair-hss/bin/oai_hss
+RUN ldconfig && ldd /openair-hss/bin/oai_hss
 
 # Copying template configuration files
 # The configuration folder will be flat
