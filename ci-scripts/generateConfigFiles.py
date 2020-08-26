@@ -110,7 +110,7 @@ class hssConfigGen():
 		hssFile = open('./hss-env.list', 'w')
 		hssFile.write('# Environment Variables used by the OAI-HSS Entrypoint Script\n')
 		hssFile.write('REALM=' + self.realm + '\n')
-		hssFile.write('HSS_FQDN=hss' + self.realm + '\n')
+		hssFile.write('HSS_FQDN=hss.' + self.realm + '\n')
 		hssFile.write('PREFIX=/openair-hss/etc\n')
 		hssFile.write('cassandra_Server_IP=' + self.cassandra_IP + '\n')
 		hssFile.write('OP_KEY=' + self.op + '\n')
