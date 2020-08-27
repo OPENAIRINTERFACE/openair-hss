@@ -230,23 +230,14 @@ pipeline {
         stage('Create Docker Networks') {
           steps {
             script {
-              myShCmd('docker network create --attachable --subnet 192.168.28.0/24 --ip-range 192.168.28.0/24 ci-s11', new_host_flag, new_host_user, new_host)
-              myShCmd('docker network create --attachable --subnet 192.168.31.0/24 --ip-range 192.168.31.0/24 ci-s6a', new_host_flag, new_host_user, new_host)
-              myShCmd('docker network create --attachable --subnet 192.168.32.0/24 --ip-range 192.168.32.0/24 ci-s10', new_host_flag, new_host_user, new_host)
-              myShCmd('docker network create --attachable --subnet 192.168.33.0/24 --ip-range 192.168.33.0/24 ci-s1c', new_host_flag, new_host_user, new_host)
+              myShCmd('python3 ./ci-scripts/sanityCheckDeploy.py --action=CreateNetworks', new_host_flag, new_host_user, new_host)
             }
           }
         }
         stage('Deploy Cassandra') {
           steps {
             script {
-              myShCmd('docker run --name ci-cassandra -d -e CASSANDRA_CLUSTER_NAME="OAI HSS Cluster" -e CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch cassandra:2.1', new_host_flag, new_host_user, new_host)
-              sh "sleep 5"
-              myShCmd('docker cp src/hss_rel14/db/oai_db.cql ci-cassandra:/home', new_host_flag, new_host_user, new_host)
-              myShCmd('docker exec -it ci-cassandra /bin/bash -c "nodetool status" | tee archives/cassandra_status.log', new_host_flag, new_host_user, new_host)
-              sh "sleep 5"
-              Cassandra_IP = myShRetCmd('docker inspect --format="{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}" ci-cassandra', new_host_flag, new_host_user, new_host)
-              myShCmd('docker exec -it ci-cassandra /bin/bash -c "cqlsh --file /home/oai_db.cql ' + Cassandra_IP + '"', new_host_flag, new_host_user, new_host)
+              myShCmd('python3 ./ci-scripts/sanityCheckDeploy.py --action=DeployCassandra', new_host_flag, new_host_user, new_host)
             }
           }
           post {
@@ -266,19 +257,7 @@ pipeline {
         stage('Deploy OAI-HSS') {
           steps {
             script {
-              if (env.ghprbPullId != null) {
-                myShCmd('docker run --name ci-oai-hss -d oai-hss:ci-temp /bin/bash -c "sleep infinity"', new_host_flag, new_host_user, new_host)
-              } else  {
-                myShCmd('docker run --name ci-oai-hss -d oai-hss:develop /bin/bash -c "sleep infinity"', new_host_flag, new_host_user, new_host)
-              }
-              // Attach S6A --> will be on eth1
-              myShCmd('docker network connect ci-s6a ci-oai-hss', new_host_flag, new_host_user, new_host)
-              Cassandra_IP = myShRetCmd('docker inspect --format="{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}" ci-cassandra', new_host_flag, new_host_user, new_host)
-              OAI_HSS_IP = myShRetCmd('docker exec -it ci-oai-hss /bin/bash -c "ifconfig eth1 | egrep inet" | sed -e "s@^.*inet @@" -e "s@  netmask.*@@"', new_host_flag, new_host_user, new_host)
-              sh "python3 ci-scripts/generateConfigFiles.py --kind=HSS --cassandra=${Cassandra_IP} --hss_s6a=${OAI_HSS_IP} --from_docker_file"
-              copyTo2ndServer('hss-cfg.sh', new_host_flag, new_host_user, new_host)
-              myShCmd('docker cp ./hss-cfg.sh ci-oai-hss:/openair-hss/scripts', new_host_flag, new_host_user, new_host)
-              myShCmd('docker exec -it ci-oai-hss /bin/bash -c "cd /openair-hss/scripts && chmod 777 hss-cfg.sh && ./hss-cfg.sh" > archives/hss_config.log', new_host_flag, new_host_user, new_host)
+              myShCmd('python3 ./ci-scripts/sanityCheckDeploy.py --action=DeployHSS --tag=' + hss_tag', new_host_flag, new_host_user, new_host)
             }
           }
           post {
@@ -300,26 +279,7 @@ pipeline {
         stage('Deploy OAI-MME') {
           steps {
             script {
-              myShCmd('docker run --name ci-oai-mme -d oai-mme:develop /bin/bash -c "sleep infinity"', new_host_flag, new_host_user, new_host)
-              // Attach S6A --> will be on eth1
-              myShCmd('docker network connect ci-s6a ci-oai-mme', new_host_flag, new_host_user, new_host)
-              // Attach S11 --> will be on eth2
-              myShCmd('docker network connect ci-s11 ci-oai-mme', new_host_flag, new_host_user, new_host)
-              // Attach S10 --> will be on eth3
-              myShCmd('docker network connect ci-s10 ci-oai-mme', new_host_flag, new_host_user, new_host)
-              // Attach S1-C --> will be on eth4
-              myShCmd('docker network connect ci-s1c ci-oai-mme', new_host_flag, new_host_user, new_host)
-              OAI_S6A_HSS_IP = myShRetCmd('docker exec -it ci-oai-hss /bin/bash -c "ifconfig eth1 | egrep inet" | sed -e "s@^.*inet @@" -e "s@  netmask.*@@"', new_host_flag, new_host_user, new_host)
-              DUMMY_SPGWC_S11_IP = myShRetCmd('docker exec -it ci-oai-hss /bin/bash -c "ifconfig eth0 | egrep inet" | sed -e "s@^.*inet @@" -e "s@  netmask.*@@"', new_host_flag, new_host_user, new_host)
-              OAI_S6A_MME_IP = myShRetCmd('docker exec -it ci-oai-mme /bin/bash -c "ifconfig eth1 | egrep inet" | sed -e "s@^.*inet @@" -e "s@  netmask.*@@"', new_host_flag, new_host_user, new_host)
-              OAI_S1C_MME_IP = myShRetCmd('docker exec -it ci-oai-mme /bin/bash -c "ifconfig eth4 | egrep inet" | sed -e "s@^.*inet @@" -e "s@  netmask.*@@"', new_host_flag, new_host_user, new_host)
-              OAI_S11_MME_IP = myShRetCmd('docker exec -it ci-oai-mme /bin/bash -c "ifconfig eth2 | egrep inet" | sed -e "s@^.*inet @@" -e "s@  netmask.*@@"', new_host_flag, new_host_user, new_host)
-              OAI_S10_MME_IP = myShRetCmd('docker exec -it ci-oai-mme /bin/bash -c "ifconfig eth3 | egrep inet" | sed -e "s@^.*inet @@" -e "s@  netmask.*@@"', new_host_flag, new_host_user, new_host)
-              sh "wget --quiet https://raw.githubusercontent.com/OPENAIRINTERFACE/openair-mme/develop/ci-scripts/generateConfigFiles.py -O ci-scripts/generateMmeConfigFiles.py"
-              sh "python3 ci-scripts/generateMmeConfigFiles.py --kind=MME --hss_s6a=${OAI_S6A_HSS_IP} --mme_s6a=${OAI_S6A_MME_IP} --mme_s1c_IP=${OAI_S1C_MME_IP} --mme_s1c_name=eth4 --mme_s10_IP=${OAI_S10_MME_IP} --mme_s10_name=eth3 --mme_s11_IP=${OAI_S11_MME_IP} --mme_s11_name=eth2 --spgwc0_s11_IP=${DUMMY_SPGWC_S11_IP} --from_docker_file"
-              copyTo2ndServer('mme-cfg.sh', new_host_flag, new_host_user, new_host)
-              myShCmd('docker cp ./mme-cfg.sh ci-oai-mme:/openair-mme/scripts', new_host_flag, new_host_user, new_host)
-              myShCmd('docker exec -it ci-oai-mme /bin/bash -c "cd /openair-mme/scripts && chmod 777 mme-cfg.sh && ./mme-cfg.sh" > archives/mme_config.log', new_host_flag, new_host_user, new_host)
+              myShCmd('python3 ./ci-scripts/sanityCheckDeploy.py --action=DeployMME --tag=develop', new_host_flag, new_host_user, new_host)
             }
           }
           post {
@@ -345,15 +305,15 @@ pipeline {
     stage ('Start-Check-Stop OAI cNFs') {
       steps {
         script {
-          myShCmd('docker exec -d ci-oai-hss /bin/bash -c "nohup ./bin/oai_hss -j ./etc/hss_rel14.json --reloadkey true > hss_check_run.log 2>&1"', new_host_flag, new_host_user, new_host)
+          myShCmd('python3 ./ci-scripts/sanityCheckDeploy.py --action=StartHSS --tag=' + hss_tag, new_host_flag, new_host_user, new_host)
           sh "sleep 2"
-          myShCmd('docker exec -d ci-oai-mme /bin/bash -c "nohup ./bin/oai_mme -c ./etc/mme.conf > mme_check_run.log 2>&1"', new_host_flag, new_host_user, new_host)
-          sh "sleep 20"
-          myShCmd('docker exec -it ci-oai-hss /bin/bash -c "killall oai_hss"', new_host_flag, new_host_user, new_host)
-          myShCmd('docker exec -it ci-oai-mme /bin/bash -c "killall oai_mme"', new_host_flag, new_host_user, new_host)
+          myShCmd('python3 ./ci-scripts/sanityCheckDeploy.py --action=StartMME --tag=develop', new_host_flag, new_host_user, new_host)
+          sh "sleep 40"
+          myShCmd('python3 ./ci-scripts/sanityCheckDeploy.py --action=StopHSS --tag=' + hss_tag, new_host_flag, new_host_user, new_host)
+          myShCmd('python3 ./ci-scripts/sanityCheckDeploy.py --action=StopMME --tag=develop', new_host_flag, new_host_user, new_host)
           sh "sleep 2"
-          myShCmd('docker cp ci-oai-hss:/openair-hss/hss_check_run.log archives', new_host_flag, new_host_user, new_host)
-          myShCmd('docker cp ci-oai-mme:/openair-mme/mme_check_run.log archives', new_host_flag, new_host_user, new_host)
+          myShCmd('python3 ./ci-scripts/sanityCheckDeploy.py --action=RetrieveLogsHSS --tag=' + hss_tag, new_host_flag, new_host_user, new_host)
+          myShCmd('python3 ./ci-scripts/sanityCheckDeploy.py --action=RetrieveLogsMME --tag=develop', new_host_flag, new_host_user, new_host)
           copyFrom2ndServer('archives/*_check_run.log', 'archives', new_host_flag, new_host_user, new_host)
           sh "python3 ./ci-scripts/verifySanityCheckDeployment.py --job_name=${JOB_NAME} --job_id=${BUILD_ID}"
         }
@@ -365,8 +325,8 @@ pipeline {
         }
         unsuccessful {
           // If anything wrong occurs, we still try to copy
-          myShCmd('docker cp ci-oai-hss:/openair-hss/hss_check_run.log archives', new_host_flag, new_host_user, new_host)
-          myShCmd('docker cp ci-oai-mme:/openair-mme/mme_check_run.log archives', new_host_flag, new_host_user, new_host)
+          myShCmd('python3 ./ci-scripts/sanityCheckDeploy.py --action=RetrieveLogsHSS --tag=' + hss_tag, new_host_flag, new_host_user, new_host)
+          myShCmd('python3 ./ci-scripts/sanityCheckDeploy.py --action=RetrieveLogsMME --tag=develop', new_host_flag, new_host_user, new_host)
           copyFrom2ndServer('archives/*_check_run.log', 'archives', new_host_flag, new_host_user, new_host)
           sh "echo 'OAI-HSS CHECK START/STOP: KO' > archives/hss_cnf_check_start.log"
           sh "echo 'OAI-MME CHECK START/STOP: KO' > archives/mme_cnf_check_start.log"
@@ -377,9 +337,9 @@ pipeline {
       steps {
         script {
           // Killing all containers
-          myShCmd('docker rm -f ci-cassandra ci-oai-hss ci-oai-mme', new_host_flag, new_host_user, new_host)
+          myShCmd('python3 ./ci-scripts/sanityCheckDeploy.py --action=RemoveAllContainers', new_host_flag, new_host_user, new_host)
           // Removing all intermediate networks
-          myShCmd('docker network rm ci-s6a ci-s10 ci-s11 ci-s1c', new_host_flag, new_host_user, new_host)
+          myShCmd('python3 ./ci-scripts/sanityCheckDeploy.py --action=RemoveNetworks', new_host_flag, new_host_user, new_host)
         }
       }
     }
@@ -439,17 +399,9 @@ pipeline {
     cleanup {
       script {
         // Killing all containers
-        try {
-          myShCmd('docker rm -f ci-cassandra ci-oai-hss ci-oai-mme', new_host_flag, new_host_user, new_host)
-        } catch (Exception e) {
-          echo "No problem: we may not started all containers"
-        }
+        myShCmd('python3 ./ci-scripts/sanityCheckDeploy.py --action=RemoveAllContainers', new_host_flag, new_host_user, new_host)
         // Removing the networks
-        try {
-          myShCmd('docker network rm ci-s6a ci-s10 ci-s11 ci-s1c', new_host_flag, new_host_user, new_host)
-        } catch (Exception e) {
-          echo "No problem: we may not started all docker networks"
-        }
+        myShCmd('python3 ./ci-scripts/sanityCheckDeploy.py --action=RemoveNetworks', new_host_flag, new_host_user, new_host)
         // In case of build failure, we might have temporary containers still running. TBD!
 
         // Removing temporary / intermediate images
