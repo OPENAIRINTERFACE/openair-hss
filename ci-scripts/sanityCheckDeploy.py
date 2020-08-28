@@ -117,7 +117,7 @@ class deploySanityCheckTest():
         if entrypoint is not None:
             subprocess_run_w_echo('python3 ci-scripts/generateConfigFiles.py --kind=HSS --cassandra=' + CI_CASS_IP_ADDR + ' --hss_s6a=' + CI_HSS_S6A_ADDR + ' --from_docker_file --env_for_entrypoint')
             # SDB to Cassandra will be on `eth0`
-            subprocess_run_w_echo('docker create --privileged --name ci-oai-hss --network ci-dbn --ip ' + CI_HSS_DBN_ADDR + ' --env-file ./hss-env.list oai-hss:ci-opt')
+            subprocess_run_w_echo('docker create --privileged --name ci-oai-hss --network ci-dbn --ip ' + CI_HSS_DBN_ADDR + ' --env-file ./hss-env.list oai-hss:' + self.tag)
             # S6A to MME will be on `eth1`
             subprocess_run_w_echo('docker network connect --ip ' + CI_HSS_S6A_ADDR + ' ci-s6a ci-oai-hss')
             subprocess_run_w_echo('docker start ci-oai-hss')
