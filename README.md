@@ -17,9 +17,9 @@
 
 # Licence info  
 
-  The source code is mainly written under the [Apache V2.0 License](http://www.apache.org/licenses/LICENSE-2.0). 
+  The source code is mainly written under the [3-Clause BSD License](https://opensource.org/licenses/BSD-3-Clause)
 
-  The text for Apache V2.0 License is also available under [LICENSE](LICENSE) file in the same directory.
+  The text for 3-Clause BSD License is also available under [LICENSE](LICENSE) file in the same directory.
 
   For more details on third party software, please read the [NOTICE](NOTICE) file in the same directory.
 
