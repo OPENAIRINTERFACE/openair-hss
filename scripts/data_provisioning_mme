@@ -78,11 +78,11 @@ def main():
         # TODO pretty print
         rows = session.execute('SELECT idmmeidentity, mmeisdn, mmehost, mmerealm, ue_reachability FROM vhss.mmeidentity')
         for row in rows:
-            logging.info("%s %s %s %s" % (row[0], row[1], row[2], row[3], row[4]))
+            logging.info("%s %s %s %s %s" % (row[0], row[1], row[2], row[3], row[4]))
 
         rows = session.execute('SELECT idmmeidentity, mmeisdn, mmehost, mmerealm, ue_reachability FROM vhss.mmeidentity_host')
         for row in rows:
-            logging.info("%s %s %s %s" % (row[0], row[1], row[2], row[3], row[4]))
+            logging.info("%s %s %s %s %s" % (row[0], row[1], row[2], row[3], row[4]))
 
 
 if __name__ == "__main__":
