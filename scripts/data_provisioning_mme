@@ -17,6 +17,7 @@
 ### Add an entry to the mme_identity table ######
 
 import argparse
+import logging
 from cassandra.cluster import Cluster
 
 #---------------------------------------------------------------------
@@ -32,6 +33,9 @@ def str2bool(arg):
 
 def main():
 
+    logger = logging.getLogger()
+    logger.setLevel(logging.DEBUG)
+    
     parser = argparse.ArgumentParser()
     parser.add_argument('-C', '--cassandra-cluster', default='127.0.0.1',      help="Cassandra list of nodes")
     parser.add_argument('-I', '--id',   type=int, default=3,     help="MME Id")
@@ -55,8 +59,8 @@ def main():
     if str2bool(args.truncate):
         session.execute("""TRUNCATE vhss.mmeidentity ;""")
         session.execute("""TRUNCATE vhss.mmeidentity_host ;""")
-        print "vhss.mmeidentity truncated"
-        print "vhss.mmeidentity_host truncated"
+        logging.info("vhss.mmeidentity truncated")
+        logging.info("vhss.mmeidentity_host truncated")
 
     session.execute(
         """
@@ -74,11 +78,11 @@ def main():
         # TODO pretty print
         rows = session.execute('SELECT idmmeidentity, mmeisdn, mmehost, mmerealm, ue_reachability FROM vhss.mmeidentity')
         for row in rows:
-            print row[0], row[1], row[2], row[3], row[4]
+            logging.info("%s %s %s %s" % (row[0], row[1], row[2], row[3], row[4]))
 
         rows = session.execute('SELECT idmmeidentity, mmeisdn, mmehost, mmerealm, ue_reachability FROM vhss.mmeidentity_host')
         for row in rows:
-            print row[0], row[1], row[2], row[3], row[4]
+            logging.info("%s %s %s %s" % (row[0], row[1], row[2], row[3], row[4]))
 
 
 if __name__ == "__main__":
