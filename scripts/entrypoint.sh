@@ -34,9 +34,9 @@ mkdir -p /openair-hss/logs
 
 # Create the certificates
 pushd /openair-hss/scripts
-./data_provisioning_users --apn ${APN1} --apn2 ${APN2} --key ${LTE_K} --imsi-first ${FIRST_IMSI} --msisdn-first 00000001 --mme-identity mme.${REALM} --no-of-users ${NB_USERS} --realm ${REALM} --truncate True --verbose True --cassandra-cluster ${cassandra_Server_IP}
-./data_provisioning_mme --id 3 --mme-identity mme.${REALM} --realm ${REALM} --ue-reachability 1 --truncate True  --verbose True -C ${cassandra_Server_IP}
-./make_certs.sh hss ${REALM} ${PREFIX}
+./data_provisioning_users --apn ${APN1} --apn2 ${APN2} --key ${LTE_K} --imsi-first ${FIRST_IMSI} --msisdn-first 00000001 --mme-identity oai-mme.${REALM} --no-of-users ${NB_USERS} --realm ${REALM} --truncate True --verbose True --cassandra-cluster ${cassandra_Server_IP}
+./data_provisioning_mme --id 3 --mme-identity oai-mme.${REALM} --realm ${REALM} --ue-reachability 1 --truncate True  --verbose True -C ${cassandra_Server_IP}
+./make_certs.sh oai-hss ${REALM} ${PREFIX}
 popd
 
 exec "$@"
