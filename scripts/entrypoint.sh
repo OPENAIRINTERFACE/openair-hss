@@ -3,6 +3,7 @@
 set -euo pipefail
 
 HSS_DOMAIN=${HSS_FQDN#*.}
+HSS_HOSTNAME=${HSS_FQDN%%.*}
 ROAMING_ALLOWED=${ROAMING_ALLOWED:-true}
 
 CONFIG_FILES=`ls /openair-hss/etc/*.conf /openair-hss/etc/hss*json`
@@ -36,7 +37,7 @@ mkdir -p /openair-hss/logs
 pushd /openair-hss/scripts
 ./data_provisioning_users --apn ${APN1} --apn2 ${APN2} --key ${LTE_K} --imsi-first ${FIRST_IMSI} --msisdn-first 00000001 --mme-identity oai-mme.${REALM} --no-of-users ${NB_USERS} --realm ${REALM} --truncate True --verbose True --cassandra-cluster ${cassandra_Server_IP}
 ./data_provisioning_mme --id 3 --mme-identity oai-mme.${REALM} --realm ${REALM} --ue-reachability 1 --truncate True  --verbose True -C ${cassandra_Server_IP}
-./make_certs.sh oai-hss ${REALM} ${PREFIX}
+./make_certs.sh ${HSS_HOSTNAME} ${REALM} ${PREFIX}
 popd
 
 exec "$@"
