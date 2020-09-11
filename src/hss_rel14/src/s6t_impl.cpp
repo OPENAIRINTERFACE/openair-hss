@@ -641,10 +641,10 @@ int NIIRcmd::process(FDMessageRequest* req) {
       // When the need to update/revoke a stored granted NIDD Authorization is
       // detected in the HSS, and the feature "NIDD Authorization Update" is
       // commonly supported by the HSS and the SCEF, the HSS shall issue an
-      // NIDD-Information Request command containing an NIDD-Authorization-Update
-      // AVP towards the SCEF using this origin host and realm as destination
-      // host and realm for NIR. TBD - Detection of the above mentioned method in
-      // HSS
+      // NIDD-Information Request command containing an
+      // NIDD-Authorization-Update AVP towards the SCEF using this origin host
+      // and realm as destination host and realm for NIR. TBD - Detection of the
+      // above mentioned method in HSS
 
       if (nir.origin_host.get(origHost) && nir.origin_realm.get(origRealm)) {
         m_app.getDbObj().UpdateNIRDestination(imsichar, origHost, origRealm);

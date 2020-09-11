@@ -301,10 +301,10 @@ class DataAccess {
   }
 
   //	bool getImsiFromScefIdScefRefId( char *scef_id, uint32_t scef_ref_id,
-  //std::string &imsi );
+  // std::string &imsi );
 
   //	bool getScefIdScefRefIdFromImsi( char *imsi, std::string &scef_id,
-  //uint32_t &scef_ref_id );
+  // uint32_t &scef_ref_id );
 
   //	bool delScefIds( const char *imsi);
 
