@@ -49,4 +49,4 @@ spec:
     output:
         to:
             kind: "ImageStreamTag"
-            name: "oai-hss:onap-test"
+            name: "oai-hss:onap-0.1.0"
