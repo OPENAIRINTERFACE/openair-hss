@@ -64,13 +64,13 @@ def main():
 
     session.execute(
         """
-        INSERT INTO vhss.mmeidentity (idmmeidentity, mmeisdn, mmehost, mmerealm, ue_reachability) VALUES (%s, %s, %s, %s, %s) 
+        INSERT INTO vhss.mmeidentity (idmmeidentity, mmeisdn, mmehost, mmerealm, ue_reachability) VALUES (%s, %s, %s, %s, %s) IF NOT EXISTS
         """, 
         (args.id, args.mme_isdn, args.mme_identity, args.realm, args.ue_reachability))
 
     session.execute(
         """
-        INSERT INTO vhss.mmeidentity_host (idmmeidentity, mmeisdn, mmehost, mmerealm, ue_reachability) VALUES (%s, %s, %s, %s, %s) 
+        INSERT INTO vhss.mmeidentity_host (idmmeidentity, mmeisdn, mmehost, mmerealm, ue_reachability) VALUES (%s, %s, %s, %s, %s) IF NOT EXISTS
         """, 
         (args.id, args.mme_isdn, args.mme_identity, args.realm, args.ue_reachability))
 
