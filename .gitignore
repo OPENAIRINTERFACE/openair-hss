@@ -1,3 +1,5 @@
+**/*.swp
+ci-scripts/generateMmeConfigFiles.py
 build/epc/build/
 build/epc/CMakeLists.txt
 build/epc/epc.conf.in.orig
