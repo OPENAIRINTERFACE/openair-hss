@@ -89,6 +89,7 @@ class hssConfigGen():
 		hssFile.write('HSS_CONF[@PREFIX@]=$PREFIX\n')
 		hssFile.write('HSS_CONF[@REALM@]=$MY_REALM\n')
 		hssFile.write('HSS_CONF[@HSS_FQDN@]="hss.${HSS_CONF[@REALM@]}"\n')
+		hssFile.write('HSS_CONF[@HSS_HOSTNAME@]="hss"\n')
 		hssFile.write('HSS_CONF[@cassandra_Server_IP@]=$Cassandra_Server_IP\n')
 		hssFile.write('HSS_CONF[@OP_KEY@]=$MY_OP_K\n')
 		hssFile.write('HSS_CONF[@ROAMING_ALLOWED@]=\'true\'\n')
