@@ -50,10 +50,6 @@ WORKDIR /openair-hss/scripts
 RUN ./build_hss_rel14 --check-installed-software --force
 RUN ./build_hss_rel14 --clean --build-type Release
 
-# Getting SHA-ONE for support
-WORKDIR /openair-hss
-RUN git log -n1 > version.txt
-
 #---------------------------------------------------------------------
 # TARGET IMAGE
 #---------------------------------------------------------------------
@@ -107,7 +103,6 @@ RUN sed -i -e "s@/freeDiameter@@" make_certs.sh
 
 WORKDIR /openair-hss
 RUN openssl rand -out /root/.rnd 128
-COPY --from=oai-hss-builder /openair-hss/version.txt .
 
 # expose ports configured in hss_fd.conf
 EXPOSE 9042/tcp 5868/tcp 9080/tcp 9081/tcp

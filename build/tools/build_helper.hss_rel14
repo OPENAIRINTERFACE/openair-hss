@@ -140,6 +140,27 @@ init_submodules()
   rm -Rf $OPENAIRCN_DIR/build/git_submodules/freeDiameter/*
   cd $OPENAIRCN_DIR
   echo "git submodule init"
+  # Taking care of the case this repository is a sub-module
+  # And we are in a container
+  if [ -f .git ] && [ $IS_CONTAINER -ne 0 ]; then
+    rm -f .git
+    git init 2>&1 > /dev/null
+    if [ -f .gitmodules ]; then
+      mv .gitmodules .gitmodules.old
+      grep path .gitmodules.old | sed -e "s@^.*path = @@" > pathlist.txt
+      grep url .gitmodules.old | sed -e "s@^.*url = @@" > urllist.txt
+      path_list=( $(grep build pathlist.txt) )
+      url_list=( $(grep git urllist.txt) )
+      rm -f urllist.txt pathlist.txt
+      rm -Rf build/git_submodules/
+      mkdir build/git_submodules/
+      len=${#url_list[@]}
+      for (( i=0; i<$len; i++ )); do
+        git submodule add -b master ${url_list[$i]} ${path_list[$i]} 2>&1 > /dev/null
+      done
+      git submodule deinit --all --force 2>&1 > /dev/null
+    fi
+  fi
   git submodule init
   ret=$?;[[ $ret -ne 0 ]] && return $ret
   echo "git submodule foreach --recursive git clean -xfd"
