@@ -19,12 +19,13 @@
 import os
 import re
 import sys
+import ipaddress
 
 class hssConfigGen():
 	def __init__(self):
 		self.kind = ''
-		self.cassandra_IP = ''
-		self.hss_s6a_IP = ''
+		self.cassandra_IP = ipaddress.ip_address('0.0.0.0')
+		self.hss_s6a_IP = ipaddress.ip_address('0.0.0.0')
 		self.fromDockerFile = False
 		self.envForEntrypoint = False
 		self.apn1 = 'apn.oai.svc.cluster.local'
@@ -46,7 +47,7 @@ class hssConfigGen():
 			hssFile.write('cd /home/scripts\n')
 		hssFile.write('\n')
 		# CASSANDRA ADDRESS SHOULD BE THE CASSANDRA CONTAINER default address
-		hssFile.write('Cassandra_Server_IP=\'' + self.cassandra_IP + '\'\n')
+		hssFile.write('Cassandra_Server_IP=\'' + str(self.cassandra_IP) + '\'\n')
 		if self.fromDockerFile:
 			hssFile.write('PREFIX=\'/openair-hss/etc\'\n')
 		else:
@@ -97,9 +98,9 @@ class hssConfigGen():
 		# HSS S6A is for the moment the default OAI-HSS Container
 		# We could later dedicate a container new interface
 		if self.fromDockerFile:
-			hssFile.write('sed -i -e \'s/#ListenOn.*$/ListenOn = "' + self.hss_s6a_IP + '";/g\' $PREFIX/hss_rel14_fd.conf\n')
+			hssFile.write('sed -i -e \'s/#ListenOn.*$/ListenOn = "' + str(self.hss_s6a_IP) + '";/g\' $PREFIX/hss_rel14_fd.conf\n')
 		else:
-			hssFile.write('sed -i -e \'s/#ListenOn.*$/ListenOn = "' + self.hss_s6a_IP + '";/g\' $PREFIX/freeDiameter/hss_rel14_fd.conf\n')
+			hssFile.write('sed -i -e \'s/#ListenOn.*$/ListenOn = "' + str(self.hss_s6a_IP) + '";/g\' $PREFIX/freeDiameter/hss_rel14_fd.conf\n')
 		hssFile.write('./make_certs.sh hss ${HSS_CONF[@REALM@]} $PREFIX\n')
 		hssFile.close()
 
@@ -109,7 +110,7 @@ class hssConfigGen():
 		hssFile.write('REALM=' + self.realm + '\n')
 		hssFile.write('HSS_FQDN=hss.' + self.realm + '\n')
 		hssFile.write('PREFIX=/openair-hss/etc\n')
-		hssFile.write('cassandra_Server_IP=' + self.cassandra_IP + '\n')
+		hssFile.write('cassandra_Server_IP=' + str(self.cassandra_IP) + '\n')
 		hssFile.write('OP_KEY=' + self.op + '\n')
 		hssFile.write('LTE_K=' + self.ltek + '\n')
 		hssFile.write('APN1=' + self.apn1 + '\n')
@@ -124,7 +125,7 @@ class hssConfigGen():
 def Usage():
 	print('----------------------------------------------------------------------------------------------------------------------')
 	print('generateConfigFiles.py')
-	print('   Prepare a bash script to be run in the workspace where either HSS and/or MME are being built.')
+	print('   Prepare a bash script to be run in the workspace where HSS is being built.')
 	print('   That bash script will copy configuration template files and adapt to your configuration.')
 	print('----------------------------------------------------------------------------------------------------------------------')
 	print('Usage: python3 generateConfigFiles.py [options]')
@@ -143,7 +144,7 @@ def Usage():
 	print('  --imsi=[IMSI of the 1st user]')
 	print('  --realm=[Realm of your EPC]')
 	print('  --nb_mmes=[Number of MME instances to provision (Default = 1)]')
-	print('  --envForEntrypoint    [generates a hss-env.list interpreted by the entrypoint]')
+	print('  --env_for_entrypoint    [generates a hss-env.list interpreted by the entrypoint]')
 
 argvs = sys.argv
 argc = len(argvs)
@@ -161,10 +162,10 @@ while len(argvs) > 1:
 		myHSS.kind = matchReg.group(1)
 	elif re.match('^\-\-cassandra=(.+)$', myArgv, re.IGNORECASE):
 		matchReg = re.match('^\-\-cassandra=(.+)$', myArgv, re.IGNORECASE)
-		myHSS.cassandra_IP = matchReg.group(1)
+		myHSS.cassandra_IP = ipaddress.ip_address(matchReg.group(1))
 	elif re.match('^\-\-hss_s6a=(.+)$', myArgv, re.IGNORECASE):
 		matchReg = re.match('^\-\-hss_s6a=(.+)$', myArgv, re.IGNORECASE)
-		myHSS.hss_s6a_IP = matchReg.group(1)
+		myHSS.hss_s6a_IP = ipaddress.ip_address(matchReg.group(1))
 	elif re.match('^\-\-apn1=(.+)$', myArgv, re.IGNORECASE):
 		matchReg = re.match('^\-\-apn1=(.+)$', myArgv, re.IGNORECASE)
 		myHSS.apn1 = matchReg.group(1)
@@ -202,15 +203,21 @@ if myHSS.kind == '':
 	sys.exit('missing kind parameter')
 
 if myHSS.kind == 'HSS':
-	if myHSS.cassandra_IP == '':
+	if re.search('\.', myHSS.apn1) is None:
+		Usage()
+		sys.exit('missing a dot (".") in APN1 name')
+	elif str(myHSS.cassandra_IP) == '0.0.0.0':
 		Usage()
 		sys.exit('missing Cassandra IP address')
-	elif myHSS.hss_s6a_IP == '':
+	elif str(myHSS.hss_s6a_IP) == '0.0.0.0':
 		Usage()
 		sys.exit('missing HSS S6A IP address')
-	elif myHSS.hss_s6a_IP == '':
+	elif len(myHSS.ltek) != 32:
 		Usage()
-		sys.exit('missing HSS S6A IP address')
+		sys.exit('LTE Key SHALL have 32 characters')
+	elif len(myHSS.op) != 32:
+		Usage()
+		sys.exit('OP Key SHALL have 32 characters')
 	else:
 		if myHSS.envForEntrypoint:
 			myHSS.GenerateHssEnvList()
