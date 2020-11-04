@@ -40,7 +40,7 @@ build_freeDiameter()
   res=$?
   [[ $res -ne 0 ]] && popd && return $res
   awk '{if (/^DISABLE_SCTP/) gsub(/OFF/, "ON"); print}' CMakeCache.txt > tmp && mv tmp CMakeCache.txt
-  make
+  make -j`nproc`
   res=$?
   [[ $res -ne 0 ]] && popd && return $res
   $SUDO make install
@@ -60,7 +60,7 @@ build_c_ares()
   ./configure
   res=$?
   [[ $res -ne 0 ]] && popd && return $res
-  make
+  make -j`nproc`
   res=$?
   [[ $res -ne 0 ]] && popd && return $res
   $SUDO make install
@@ -81,7 +81,7 @@ build_cpp_driver()
   $CMAKE ..
   res=$?
   [[ $res -ne 0 ]] && popd && return $res
-  make
+  make -j`nproc`
   res=$?
   [[ $res -ne 0 ]] && popd && return $res
   $SUDO make install
@@ -102,7 +102,7 @@ build_pistache()
   $CMAKE -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release ..
   res=$?
   [[ $res -ne 0 ]] && popd && return $res
-  make
+  make -j`nproc`
   res=$?
   [[ $res -ne 0 ]] && popd && return $res
   $SUDO make install
@@ -235,7 +235,7 @@ build_util()
   pushd $OPENAIRCN_DIR/build/hss_rel14/util
   rm -rf build
   mkdir -p build
-  make $opt_args
+  make $opt_args -j`nproc`
   res=$?
   popd
   return $res
@@ -262,7 +262,7 @@ build_hsssec()
   pushd $OPENAIRCN_DIR/build/hss_rel14/hsssec
   rm -rf build
   mkdir -p build
-  make $opt_args
+  make $opt_args -j`nproc`
   res=$?
   popd
   return $res
@@ -274,7 +274,7 @@ build_hss()
 {
   pushd $OPENAIRCN_DIR/build/hss_rel14
   make clean
-  make
+  make -j`nproc`
   res=$?
   popd
   return $res
@@ -344,7 +344,7 @@ check_install_hss_software() {
         rm -f libuv-devel-1.23.1-1.module_el8+8246+46ee4016.x86_64.rpm libuv-1.23.1-1.el8.x86_64.rpm
         specific_packages="clang"
         ;;
-      "rhel8.2")
+      "rhel8.2" | "rhel8.3" | "rhel8.4" | "rhel8.5")
         specific_packages="libuv"
         $SUDO yum install $OPTION --enablerepo="codeready-builder-for-rhel-8-x86_64-rpms" $specific_packages gcc-c++ make $CMAKE openssl-devel libtool m4 automake patch libmemcached-devel memcached gcc bison flex lksctp-tools-devel gnutls-devel libgcrypt-devel libidn-devel nettle-devel
         OPTION='${OPTION} --enablerepo="ubi-8-codeready-builder"'
@@ -374,7 +374,10 @@ check_install_hss_software() {
   else
     echo_fatal "$OS_DISTRO is not a supported distribution."
   fi
-  if [[ "$(get_distribution_release)" == "rhel8.2" ]]; then
+  if [[ "$(get_distribution_release)" == "rhel8.2" ]] || \
+     [[ "$(get_distribution_release)" == "rhel8.3" ]] || \
+     [[ "$(get_distribution_release)" == "rhel8.4" ]] || \
+     [[ "$(get_distribution_release)" == "rhel8.5" ]]; then
     echo "====== Raphael ===="
     echo "bypassing (already done) : $SUDO $INSTALLER install $OPTION $PACKAGE_LIST"
     build_libuv

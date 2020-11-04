@@ -306,7 +306,10 @@ check_enable_epel_repos() {
     if rpm -q epel-release > /dev/null; then
       echo "EPEL repos already present. Good."
     else
-      if [[ "$OS_DISTRO$OS_RELEASE" == "rhel8.2" ]]; then
+      if [[ "$OS_DISTRO$OS_RELEASE" == "rhel8.2" ]] || \
+         [[ "$OS_DISTRO$OS_RELEASE" == "rhel8.3" ]] || \
+         [[ "$OS_DISTRO$OS_RELEASE" == "rhel8.4" ]] || \
+         [[ "$OS_DISTRO$OS_RELEASE" == "rhel8.5" ]]; then
         echo "Bypassing EPEL repos for the moment"
       else
         echo "EPEL repos not present. Installing them."
