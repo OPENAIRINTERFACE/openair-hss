@@ -344,22 +344,7 @@ check_install_hss_software() {
         rm -f libuv-devel-1.23.1-1.module_el8+8246+46ee4016.x86_64.rpm libuv-1.23.1-1.el8.x86_64.rpm
         specific_packages="clang"
         ;;
-      "rhel8.2")
-        specific_packages="libuv"
-        $SUDO yum install $OPTION --enablerepo="codeready-builder-for-rhel-8-x86_64-rpms" $specific_packages gcc-c++ make $CMAKE openssl-devel libtool m4 automake patch libmemcached-devel memcached gcc bison flex lksctp-tools-devel gnutls-devel libgcrypt-devel libidn-devel nettle-devel
-        OPTION='${OPTION} --enablerepo="ubi-8-codeready-builder"'
-        ;;
-      "rhel8.3")
-        specific_packages="libuv"
-        $SUDO yum install $OPTION --enablerepo="codeready-builder-for-rhel-8-x86_64-rpms" $specific_packages gcc-c++ make $CMAKE openssl-devel libtool m4 automake patch libmemcached-devel memcached gcc bison flex lksctp-tools-devel gnutls-devel libgcrypt-devel libidn-devel nettle-devel
-        OPTION='${OPTION} --enablerepo="ubi-8-codeready-builder"'
-        ;;
-      "rhel8.4")
-        specific_packages="libuv"
-        $SUDO yum install $OPTION --enablerepo="codeready-builder-for-rhel-8-x86_64-rpms" $specific_packages gcc-c++ make $CMAKE openssl-devel libtool m4 automake patch libmemcached-devel memcached gcc bison flex lksctp-tools-devel gnutls-devel libgcrypt-devel libidn-devel nettle-devel
-        OPTION='${OPTION} --enablerepo="ubi-8-codeready-builder"'
-        ;;
-      "rhel8.5")
+      "rhel8.2" | "rhel8.3" | "rhel8.4" | "rhel8.5")
         specific_packages="libuv"
         $SUDO yum install $OPTION --enablerepo="codeready-builder-for-rhel-8-x86_64-rpms" $specific_packages gcc-c++ make $CMAKE openssl-devel libtool m4 automake patch libmemcached-devel memcached gcc bison flex lksctp-tools-devel gnutls-devel libgcrypt-devel libidn-devel nettle-devel
         OPTION='${OPTION} --enablerepo="ubi-8-codeready-builder"'
