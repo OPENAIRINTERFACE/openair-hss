@@ -40,7 +40,7 @@ build_freeDiameter()
   res=$?
   [[ $res -ne 0 ]] && popd && return $res
   awk '{if (/^DISABLE_SCTP/) gsub(/OFF/, "ON"); print}' CMakeCache.txt > tmp && mv tmp CMakeCache.txt
-  make
+  make -j`nproc`
   res=$?
   [[ $res -ne 0 ]] && popd && return $res
   $SUDO make install
@@ -60,7 +60,7 @@ build_c_ares()
   ./configure
   res=$?
   [[ $res -ne 0 ]] && popd && return $res
-  make
+  make -j`nproc`
   res=$?
   [[ $res -ne 0 ]] && popd && return $res
   $SUDO make install
@@ -81,7 +81,7 @@ build_cpp_driver()
   $CMAKE ..
   res=$?
   [[ $res -ne 0 ]] && popd && return $res
-  make
+  make -j`nproc`
   res=$?
   [[ $res -ne 0 ]] && popd && return $res
   $SUDO make install
@@ -102,7 +102,7 @@ build_pistache()
   $CMAKE -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release ..
   res=$?
   [[ $res -ne 0 ]] && popd && return $res
-  make
+  make -j`nproc`
   res=$?
   [[ $res -ne 0 ]] && popd && return $res
   $SUDO make install
@@ -235,7 +235,7 @@ build_util()
   pushd $OPENAIRCN_DIR/build/hss_rel14/util
   rm -rf build
   mkdir -p build
-  make $opt_args
+  make $opt_args -j`nproc`
   res=$?
   popd
   return $res
@@ -262,7 +262,7 @@ build_hsssec()
   pushd $OPENAIRCN_DIR/build/hss_rel14/hsssec
   rm -rf build
   mkdir -p build
-  make $opt_args
+  make $opt_args -j`nproc`
   res=$?
   popd
   return $res
@@ -274,7 +274,7 @@ build_hss()
 {
   pushd $OPENAIRCN_DIR/build/hss_rel14
   make clean
-  make
+  make -j`nproc`
   res=$?
   popd
   return $res
