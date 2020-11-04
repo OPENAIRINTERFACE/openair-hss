@@ -17,8 +17,9 @@ SRCEXT := cpp
 SOURCES := $(shell find $(SRCDIR) -type f -name *.$(SRCEXT))
 OBJECTS := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(SOURCES:.$(SRCEXT)=.o))
 DEPENDS := $(OBJECTS:%.o=%.d)
-CFLAGS := -g -pthread -std=c++11 # -Wall
-LFLAGS := -g -pthread -lpthread -Wl,-rpath,/usr/local/lib/x86_64-linux-gnu:/usr/local/lib
+COPT_FLAGS := -g
+CFLAGS := $(COPT_FLAGS) -pthread -std=c++11 # -Wall
+LFLAGS := $(COPT_FLAGS) -pthread -lpthread -Wl,-rpath,/usr/local/lib/x86_64-linux-gnu:/usr/local/lib
 LIBS := \
  $(OAI_HSS_BUILD_DIR)/util/lib/libc3po.a \
  $(OAI_HSS_BUILD_DIR)/hsssec/lib/libhsssec.a \

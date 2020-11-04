@@ -22,7 +22,8 @@ SRCEXT := c
 SOURCES := $(shell find $(SRCDIR) -type f -name *.$(SRCEXT))
 OBJECTS := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(SOURCES:.$(SRCEXT)=.o))
 DEPENDS := $(OBJECTS:%.o=%.d)
-CFLAGS := -std=c99 -Wreturn-type -g -pthread -lrt $(SECURITY_FLAGS)# -Wall -DNODEBUG
+COPT_FLAGS := -g
+CFLAGS := -std=c99 -Wreturn-type $(COPT_FLAGS) -pthread -lrt $(SECURITY_FLAGS)# -Wall -DNODEBUG
 INC := -I $(OAI_HSS_HSSSEC_DIR)/include
 
 $(TARGET): $(OBJECTS)

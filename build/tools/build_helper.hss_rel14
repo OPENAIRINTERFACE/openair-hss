@@ -218,10 +218,24 @@ init_submodules()
 #-------------------------------------------------------------------------------
 build_util()
 {
+  case "$1" in
+    Release)
+      opt_args='COPT_FLAGS="-O3"'
+      ;;
+    Debug)
+      opt_args='COPT_FLAGS="-g"'
+      ;;
+    RelWithDebInfo)
+      opt_args='COPT_FLAGS="-Og"'
+      ;;
+    MinSizeRel)
+      opt_args='COPT_FLAGS="-Os"'
+      ;;
+  esac
   pushd $OPENAIRCN_DIR/build/hss_rel14/util
   rm -rf build
   mkdir -p build
-  make
+  make $opt_args
   res=$?
   popd
   return $res
@@ -231,10 +245,24 @@ build_util()
 #-------------------------------------------------------------------------------
 build_hsssec()
 {
+  case "$1" in
+    Release)
+      opt_args='COPT_FLAGS="-O3"'
+      ;;
+    Debug)
+      opt_args='COPT_FLAGS="-g"'
+      ;;
+    RelWithDebInfo)
+      opt_args='COPT_FLAGS="-Og"'
+      ;;
+    MinSizeRel)
+      opt_args='COPT_FLAGS="-Os"'
+      ;;
+  esac
   pushd $OPENAIRCN_DIR/build/hss_rel14/hsssec
   rm -rf build
   mkdir -p build
-  make
+  make $opt_args
   res=$?
   popd
   return $res
