@@ -148,14 +148,14 @@ pipeline {
             script {
               // Running on xenial to have 1.72 version of cppcheck
               myShCmd('docker run --name ci-cn-cppcheck -d ubuntu:xenial /bin/bash -c "sleep infinity"', new_host_flag, new_host_user, new_host)
-              myShCmd('docker exec -it ci-cn-cppcheck /bin/bash -c "apt-get update && apt-get upgrade --yes" > archives/cppcheck_install.log', new_host_flag, new_host_user, new_host)
-              myShCmd('docker exec -it ci-cn-cppcheck /bin/bash -c "apt-get install --yes cppcheck bzip2" >> archives/cppcheck_install.log', new_host_flag, new_host_user, new_host)
+              myShCmd('docker exec ci-cn-cppcheck /bin/bash -c "apt-get update && apt-get upgrade --yes" > archives/cppcheck_install.log', new_host_flag, new_host_user, new_host)
+              myShCmd('docker exec ci-cn-cppcheck /bin/bash -c "apt-get install --yes cppcheck bzip2" >> archives/cppcheck_install.log', new_host_flag, new_host_user, new_host)
 
               myShCmd('docker cp ./openair-hss.tar.bz2 ci-cn-cppcheck:/home', new_host_flag, new_host_user, new_host)
-              myShCmd('docker exec -it ci-cn-cppcheck /bin/bash -c "cd /home && tar -xjf openair-hss.tar.bz2"', new_host_flag, new_host_user, new_host)
-              myShCmd('docker exec -it ci-cn-cppcheck /bin/bash -c "rm -f /home/openair-hss.tar.bz2"', new_host_flag, new_host_user, new_host)
+              myShCmd('docker exec ci-cn-cppcheck /bin/bash -c "cd /home && tar -xjf openair-hss.tar.bz2"', new_host_flag, new_host_user, new_host)
+              myShCmd('docker exec ci-cn-cppcheck /bin/bash -c "rm -f /home/openair-hss.tar.bz2"', new_host_flag, new_host_user, new_host)
 
-              myShCmd('docker exec -it ci-cn-cppcheck /bin/bash -c "cd /home && cppcheck --enable=warning --force --xml --xml-version=2 --suppressions-list=ci-scripts/cppcheck_suppressions.list -I src/hss_rel14/include -I src/hss_rel14/hsssec/include -I src/hss_rel14/util/include/ -I src/hss_rel14/smsrouter/include/ src 2> cppcheck.xml 1> cppcheck_build.log"', new_host_flag, new_host_user, new_host)
+              myShCmd('docker exec ci-cn-cppcheck /bin/bash -c "cd /home && cppcheck --enable=warning --force --xml --xml-version=2 --suppressions-list=ci-scripts/cppcheck_suppressions.list -I src/hss_rel14/include -I src/hss_rel14/hsssec/include -I src/hss_rel14/util/include/ -I src/hss_rel14/smsrouter/include/ src 2> cppcheck.xml 1> cppcheck_build.log"', new_host_flag, new_host_user, new_host)
             }
           }
           post {
@@ -181,19 +181,19 @@ pipeline {
           steps {
             script {
               myShCmd('docker run --name ci-cn-clang-formatter -d ubuntu:bionic /bin/bash -c "sleep infinity"', new_host_flag, new_host_user, new_host)
-              myShCmd('docker exec -it ci-cn-clang-formatter /bin/bash -c "apt-get update && apt-get upgrade --yes" > archives/clang_format_install.log', new_host_flag, new_host_user, new_host)
-              myShCmd('docker exec -it ci-cn-clang-formatter /bin/bash -c "apt-get install --yes git tree bzip2" >> archives/clang_format_install.log', new_host_flag, new_host_user, new_host)
+              myShCmd('docker exec ci-cn-clang-formatter /bin/bash -c "apt-get update && apt-get upgrade --yes" > archives/clang_format_install.log', new_host_flag, new_host_user, new_host)
+              myShCmd('docker exec ci-cn-clang-formatter /bin/bash -c "apt-get install --yes git tree bzip2" >> archives/clang_format_install.log', new_host_flag, new_host_user, new_host)
 
               myShCmd('docker cp ./openair-hss.tar.bz2 ci-cn-clang-formatter:/home', new_host_flag, new_host_user, new_host)
-              myShCmd('docker exec -it ci-cn-clang-formatter /bin/bash -c "cd /home && tar -xjf openair-hss.tar.bz2"', new_host_flag, new_host_user, new_host)
-              myShCmd('docker exec -it ci-cn-clang-formatter /bin/bash -c "rm -f /home/openair-hss.tar.bz2"', new_host_flag, new_host_user, new_host)
+              myShCmd('docker exec ci-cn-clang-formatter /bin/bash -c "cd /home && tar -xjf openair-hss.tar.bz2"', new_host_flag, new_host_user, new_host)
+              myShCmd('docker exec ci-cn-clang-formatter /bin/bash -c "rm -f /home/openair-hss.tar.bz2"', new_host_flag, new_host_user, new_host)
 
               // We install a dedicated version (installed on our CI server).
               myShCmd('docker cp /opt/clang-format/9.0.0/bin/clang-format ci-cn-clang-formatter:/usr/local/bin', new_host_flag, new_host_user, new_host)
               if (env.ghprbPullId != null) {
-                myShCmd('docker exec -it ci-cn-clang-formatter /bin/bash -c "cd /home && ./ci-scripts/checkCodingFormattingRules.sh --src-branch ' + env.ghprbSourceBranch +' --target-branch ' + env.ghprbTargetBranch + '"', new_host_flag, new_host_user, new_host)
+                myShCmd('docker exec ci-cn-clang-formatter /bin/bash -c "cd /home && ./ci-scripts/checkCodingFormattingRules.sh --src-branch ' + env.ghprbSourceBranch +' --target-branch ' + env.ghprbTargetBranch + '"', new_host_flag, new_host_user, new_host)
               } else {
-                myShCmd('docker exec -it ci-cn-clang-formatter /bin/bash -c "cd /home && ./ci-scripts/checkCodingFormattingRules.sh"', new_host_flag, new_host_user, new_host)
+                myShCmd('docker exec ci-cn-clang-formatter /bin/bash -c "cd /home && ./ci-scripts/checkCodingFormattingRules.sh"', new_host_flag, new_host_user, new_host)
               }
             }
           }
