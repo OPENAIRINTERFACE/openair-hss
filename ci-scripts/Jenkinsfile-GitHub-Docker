@@ -31,7 +31,7 @@ def sendSocialMediaMessage(pipeChannel, pipeColor, pipeMessage) {
 def cn_ci_host = params.Host_CN_CI_Server
 
 // for lock
-def cn_ci_resource = params.DockerContainers
+def cn_ci_resource = params.DockerContainers 
 
 // Location of the 2nd CN executor
 def new_host_flag = false
@@ -338,7 +338,7 @@ pipeline {
     stage ('Testing in FED environment') {
       steps {
         script {
-          localStatus = build job: 'CI-OpenAir-EPC-FED',
+          localStatus = build job: params.CN_EPC_FED_PipelineName,
             parameters: [
               string(name: 'HSS_TAG', value: String.valueOf(hss_tag)),
               string(name: 'HSS_BRANCH', value: String.valueOf(hss_branch))
@@ -356,7 +356,7 @@ pipeline {
       post {
         always {
           script {
-            copyArtifacts(projectName: 'CI-OpenAir-EPC-FED',
+            copyArtifacts(projectName: params.CN_EPC_FED_PipelineName,
                           filter: 'test_results_oai_epc.html',
                           selector: lastCompleted())
           }
