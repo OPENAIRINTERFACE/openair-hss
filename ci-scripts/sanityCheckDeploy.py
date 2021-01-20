@@ -80,21 +80,21 @@ class deploySanityCheckTest():
         doLoop = True
         while doLoop:
             try:
-                res = subprocess.check_output('docker exec -it ci-cassandra /bin/bash -c "nodetool status"', shell=True, universal_newlines=True)
+                res = subprocess.check_output('docker exec ci-cassandra /bin/bash -c "nodetool status"', shell=True, universal_newlines=True)
                 rackFound = re.search('UN  ' + CI_CASS_IP_ADDR, str(res))
                 if rackFound is not None:
                     doLoop = False
             except:
                 time.sleep(1)
                 pass
-        subprocess_run_w_echo('docker exec -it ci-cassandra /bin/bash -c "nodetool status" | tee archives/cassandra_status.log')
+        subprocess_run_w_echo('docker exec ci-cassandra /bin/bash -c "nodetool status" | tee archives/cassandra_status.log')
         subprocess_run_w_echo('docker cp src/hss_rel14/db/oai_db.cql ci-cassandra:/home')
         time.sleep(2)
         doLoop = True
         while doLoop:
             try:
-                res = subprocess.check_output('docker exec -it ci-cassandra /bin/bash -c "cqlsh --file /home/oai_db.cql ' + CI_CASS_IP_ADDR + '"', shell=True, universal_newlines=True)
-                print('docker exec -it ci-cassandra /bin/bash -c "cqlsh --file /home/oai_db.cql ' + CI_CASS_IP_ADDR + '"')
+                res = subprocess.check_output('docker exec ci-cassandra /bin/bash -c "cqlsh --file /home/oai_db.cql ' + CI_CASS_IP_ADDR + '"', shell=True, universal_newlines=True)
+                print('docker exec ci-cassandra /bin/bash -c "cqlsh --file /home/oai_db.cql ' + CI_CASS_IP_ADDR + '"')
                 doLoop = False
             except:
                 time.sleep(2)
@@ -132,7 +132,7 @@ class deploySanityCheckTest():
             subprocess_run_w_echo('docker network connect --ip ' + CI_HSS_S6A_ADDR + ' ci-s6a ci-oai-hss')
             subprocess_run_w_echo('python3 ci-scripts/generateConfigFiles.py --kind=HSS --cassandra=' + CI_CASS_IP_ADDR + ' --hss_s6a=' + CI_HSS_S6A_ADDR + ' --from_docker_file')
             subprocess_run_w_echo('docker cp ./hss-cfg.sh ci-oai-hss:/openair-hss/scripts')
-            subprocess_run_w_echo('docker exec -it ci-oai-hss /bin/bash -c "cd /openair-hss/scripts && chmod 777 hss-cfg.sh && ./hss-cfg.sh" > archives/hss_config.log')
+            subprocess_run_w_echo('docker exec ci-oai-hss /bin/bash -c "cd /openair-hss/scripts && chmod 777 hss-cfg.sh && ./hss-cfg.sh" > archives/hss_config.log')
 
     def deployMME(self):
         res = ''
@@ -177,7 +177,7 @@ class deploySanityCheckTest():
             subprocess_run_w_echo('wget --quiet https://raw.githubusercontent.com/OPENAIRINTERFACE/openair-mme/develop/ci-scripts/generateConfigFiles.py -O ci-scripts/generateMmeConfigFiles.py')
             subprocess_run_w_echo('python3 ci-scripts/generateMmeConfigFiles.py --kind=MME --hss_s6a=' + CI_HSS_S6A_ADDR + ' --mme_s6a=' + CI_MME_S6A_ADDR + ' --mme_s1c_IP=' + CI_MME_S1C_ADDR + ' --mme_s1c_name=eth3 --mme_s10_IP=' + CI_MME_S10_ADDR + ' --mme_s10_name=eth2 --mme_s11_IP=' + CI_MME_S11_ADDR + ' --mme_s11_name=eth1 --spgwc0_s11_IP=' + CI_DUMMY_SPGWC_ADDR + ' --from_docker_file')
             subprocess_run_w_echo('docker cp ./mme-cfg.sh ci-oai-mme:/openair-mme/scripts')
-            subprocess_run_w_echo('docker exec -it ci-oai-mme /bin/bash -c "cd /openair-mme/scripts && chmod 777 mme-cfg.sh && ./mme-cfg.sh" > archives/mme_config.log')
+            subprocess_run_w_echo('docker exec ci-oai-mme /bin/bash -c "cd /openair-mme/scripts && chmod 777 mme-cfg.sh && ./mme-cfg.sh" > archives/mme_config.log')
 
     def startHSS(self):
         res = ''
@@ -222,7 +222,7 @@ class deploySanityCheckTest():
         if entrypoint is not None:
             print('there is an entrypoint -- no need')
         else:
-            subprocess_run_w_echo('docker exec -it ci-oai-hss /bin/bash -c "killall oai_hss"')
+            subprocess_run_w_echo('docker exec ci-oai-hss /bin/bash -c "killall oai_hss"')
 
     def stopMME(self):
         res = ''
@@ -237,7 +237,7 @@ class deploySanityCheckTest():
         if entrypoint is not None:
             print('there is an entrypoint')
         else:
-            subprocess_run_w_echo('docker exec -it ci-oai-mme /bin/bash -c "killall oai_mme"')
+            subprocess_run_w_echo('docker exec ci-oai-mme /bin/bash -c "killall oai_mme"')
 
     def logsHSS(self):
         res = ''
