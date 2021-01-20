@@ -39,6 +39,7 @@ class verifySanityCheckDeployment():
 			print ('Sanity Check Deployment is OK')
 
 	def analyze_check_run_log(self, nfType):
+		# file to analyze
 		logFileName = nfType.lower() + '_check_run.log'
 
 		cwd = os.getcwd()
