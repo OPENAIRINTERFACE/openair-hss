@@ -28,6 +28,7 @@ class verifySanityCheckDeployment():
 	def checkLogs(self):
 		hss_status = self.analyze_check_run_log('HSS')
 		mme_status = self.analyze_check_run_log('MME')
+		# status check is done
 		if not hss_status:
 			print ('HSS did not deploy properly')
 		if not mme_status:
