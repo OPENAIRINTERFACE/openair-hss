@@ -85,6 +85,7 @@ pipeline {
             echo "PR ID      is ${env.ghprbPullId}"
             echo "PR LINK    is ${env.ghprbPullLink}"
             echo "PR TITLE   is ${env.ghprbPullTitle}"
+            sh "git fetch --prune --unshallow"
             sh "./ci-scripts/doGitHubPullRequestTempMerge.sh --src-branch ${env.ghprbSourceBranch} --src-commit ${env.ghprbActualCommit} --target-branch ${env.ghprbTargetBranch} --target-commit ${GIT_COMMIT}"
             sh "sleep 10"
             hss_tag = 'ci-temp'
