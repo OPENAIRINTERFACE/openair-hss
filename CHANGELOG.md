@@ -1,5 +1,11 @@
 # RELEASE NOTES: #
 
+## v1.1.1 -- February 2021 ##
+
+*  Cloud-native support
+*  RHEL8 support
+*  Proper build in release mode
+
 ## v1.1.0 -- September 2020 ##
 
 * Change the License Model to 3-Clause BSD

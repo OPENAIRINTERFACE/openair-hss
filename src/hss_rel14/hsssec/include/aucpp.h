@@ -30,14 +30,15 @@ typedef struct {
   uint8_t kasme[32];
 } auc_vector_t;
 
-uint8_t *sqn_ms_derive_cpp(const uint8_t opc[16], uint8_t *key, uint8_t *auts, uint8_t *rand);
+uint8_t* sqn_ms_derive_cpp(
+    const uint8_t opc[16], uint8_t* key, uint8_t* auts, uint8_t* rand);
 
-void generate_random_cpp(uint8_t *random, ssize_t length);
+void generate_random_cpp(uint8_t* random, ssize_t length);
 
-int generate_vector_cpp(const uint8_t opc[16], uint64_t imsi, uint8_t key[16], uint8_t plmn[3],
-                    uint8_t sqn[6], auc_vector_t *vector);
+int generate_vector_cpp(
+    const uint8_t opc[16], uint64_t imsi, uint8_t key[16], uint8_t plmn[3],
+    uint8_t sqn[6], auc_vector_t* vector);
 
 void random_init(void);
-
 
 #endif /* AUCPP_H_ */

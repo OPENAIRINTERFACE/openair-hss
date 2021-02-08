@@ -18,25 +18,17 @@
 #include "aucpp.h"
 #include "auc.h"
 
-uint8_t                                *
-sqn_ms_derive_cpp (
-  const uint8_t opc[16],
-  uint8_t * key,
-  uint8_t * auts,
-  uint8_t * rand_p)
-{
-    return sqn_ms_derive(opc, key, auts, rand_p);
+uint8_t* sqn_ms_derive_cpp(
+    const uint8_t opc[16], uint8_t* key, uint8_t* auts, uint8_t* rand_p) {
+  return sqn_ms_derive(opc, key, auts, rand_p);
 }
 
-void
-generate_random_cpp (
-  uint8_t * random_p,
-  ssize_t length)
-{
-    generate_random(random_p, length);
+void generate_random_cpp(uint8_t* random_p, ssize_t length) {
+  generate_random(random_p, length);
 }
 
-int generate_vector_cpp(const uint8_t opc[16], uint64_t imsi, uint8_t key[16], uint8_t plmn[3],
-                    uint8_t sqn[6], auc_vector_t *vector){
-    return generate_vector(opc, imsi, key, plmn, sqn, vector);
+int generate_vector_cpp(
+    const uint8_t opc[16], uint64_t imsi, uint8_t key[16], uint8_t plmn[3],
+    uint8_t sqn[6], auc_vector_t* vector) {
+  return generate_vector(opc, imsi, key, plmn, sqn, vector);
 }

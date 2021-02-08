@@ -1,19 +1,18 @@
 /*
-* Copyright (c) 2017 Sprint
-*
-* Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
-* contributor license agreements.  See the NOTICE file distributed with
-* this work for additional information regarding copyright ownership.
-* The OpenAirInterface Software Alliance licenses this file to You under
-* the terms found in the LICENSE file in the root of this source tree.
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
-
+ * Copyright (c) 2017 Sprint
+ *
+ * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The OpenAirInterface Software Alliance licenses this file to You under
+ * the terms found in the LICENSE file in the root of this source tree.
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 #include <signal.h>
 #include <iostream>
@@ -28,97 +27,96 @@
 
 SMSRouter smsrouter;
 
-void handler(int signo, siginfo_t *pinfo, void *pcontext)
-{
-   Logger::system().startup( "Caught signal (%d) shutting down", signo );
-   smsrouter.uninit();
-   smsrouter.waitForShutdown();
-   exit(0);
+void handler(int signo, siginfo_t* pinfo, void* pcontext) {
+  Logger::system().startup("Caught signal (%d) shutting down", signo);
+  smsrouter.uninit();
+  smsrouter.waitForShutdown();
+  exit(0);
 }
 
-void initHandler()
-{
-   struct sigaction sa;
+void initHandler() {
+  struct sigaction sa;
 
-   Logger::system().startup( "registering signal hander" );
+  Logger::system().startup("registering signal hander");
 
-   sa.sa_flags = SA_SIGINFO;
-   sa.sa_sigaction = handler;
-   sigemptyset(&sa.sa_mask);
-   int signo = SIGINT;
-   if (sigaction(signo, &sa, NULL) == -1)
-      SError::throwRuntimeExceptionWithErrno( "Unable to register timer handler" );
+  sa.sa_flags     = SA_SIGINFO;
+  sa.sa_sigaction = handler;
+  sigemptyset(&sa.sa_mask);
+  int signo = SIGINT;
+  if (sigaction(signo, &sa, NULL) == -1)
+    SError::throwRuntimeExceptionWithErrno("Unable to register timer handler");
 }
 
-void displaymenu()
-{
-   std::cout << std::endl << std::endl
-             << "**********  PCEF MENU  **********" << std::endl
-             << "  1) Send SRR with MSISDN only" << std::endl
-             << "  2) Send SRR with IMSI only" << std::endl
-             << "  3) Send SRR with MSISDN & IMSI" << std::endl
-             << " 99) Quit" << std::endl
-             ;
+void displaymenu() {
+  std::cout << std::endl
+            << std::endl
+            << "**********  PCEF MENU  **********" << std::endl
+            << "  1) Send SRR with MSISDN only" << std::endl
+            << "  2) Send SRR with IMSI only" << std::endl
+            << "  3) Send SRR with MSISDN & IMSI" << std::endl
+            << " 99) Quit" << std::endl;
 }
 
-void menu()
-{
-   int choice;
+void menu() {
+  int choice;
 
-   for(;;)
-   {
-      displaymenu();
+  for (;;) {
+    displaymenu();
 
-      std::string line;
+    std::string line;
 
-      std::cin.clear();
-      if ( std::cin >> choice )
-      {
-         switch ( choice )
-         {
-            case 1: { smsrouter.s6cApp().sendSERIFSRreq( true, false ); break; }
-            case 2: { smsrouter.s6cApp().sendSERIFSRreq( false, true ); break; }
-            case 3: { smsrouter.s6cApp().sendSERIFSRreq( true, true ); break; }
-            case 99: { break; }
-            default:
-            {
-               std::cout << "Unrecognized menu option" << std::endl;
-            }
-         }
-
-         if ( choice == 99 )
-            break;
+    std::cin.clear();
+    if (std::cin >> choice) {
+      switch (choice) {
+        case 1: {
+          smsrouter.s6cApp().sendSERIFSRreq(true, false);
+          break;
+        }
+        case 2: {
+          smsrouter.s6cApp().sendSERIFSRreq(false, true);
+          break;
+        }
+        case 3: {
+          smsrouter.s6cApp().sendSERIFSRreq(true, true);
+          break;
+        }
+        case 99: {
+          break;
+        }
+        default: {
+          std::cout << "Unrecognized menu option" << std::endl;
+        }
       }
-   }
+
+      if (choice == 99) break;
+    }
+  }
 }
 
-int main(int argc, char **argv)
-{
-   if ( !Options::parse( argc, argv ) )
-   {
-      std::cout << "Options::parse() failed" << std::endl;
-      return 1;
-   }
+int main(int argc, char** argv) {
+  if (!Options::parse(argc, argv)) {
+    std::cout << "Options::parse() failed" << std::endl;
+    return 1;
+  }
 
-   Logger::init( "smsrouter" );
+  Logger::init("smsrouter");
 
-   /////////////////////////////////////////////////////////////////////////////
-   /////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////////
 
-   // initizlie the signal handler
-   initHandler();
+  // initizlie the signal handler
+  initHandler();
 
-   // initialize and start the scef
-   if ( !smsrouter.init() )
-      return 1;
+  // initialize and start the scef
+  if (!smsrouter.init()) return 1;
 
-   // wait for scef to shutdown
-   menu();
+  // wait for scef to shutdown
+  menu();
 
-   smsrouter.uninit();
-   smsrouter.waitForShutdown();
+  smsrouter.uninit();
+  smsrouter.waitForShutdown();
 
-   Logger::system().startup( "exiting" );
+  Logger::system().startup("exiting");
 
-   return 0;
+  return 0;
 }
