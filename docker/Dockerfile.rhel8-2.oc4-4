@@ -69,10 +69,11 @@ RUN ./build_hss_rel14 --clean --build-type Release
 # TARGET IMAGE
 #---------------------------------------------------------------------
 FROM registry.access.redhat.com/ubi8/ubi:latest as oai-hss
-
+ENV TZ=Europe/Paris
 # We install some debug tools for the moment in addition of mandatory libraries
 RUN yum update -y && \
     yum -y install --enablerepo="ubi-8-codeready-builder" \
+       tzdata \
        psmisc \
        openssl \
        net-tools \

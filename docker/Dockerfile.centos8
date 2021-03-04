@@ -65,12 +65,14 @@ RUN ./build_hss_rel14 --clean --build-type Release
 # TARGET IMAGE
 #---------------------------------------------------------------------
 FROM centos:8 as oai-hss
+ENV TZ=Europe/Paris
 # We install some debug tools for the moment in addition of mandatory libraries
 RUN yum update -y \
   && yum install epel-release -y \
   && yum install dnf-plugins-core -y \
   && yum config-manager --set-enabled PowerTools \
   && yum install -y \
+    tzdata \
     psmisc \
     openssl \
     net-tools \
