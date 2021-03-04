@@ -65,9 +65,11 @@ RUN scl enable devtoolset-7 'cd /openair-hss/scripts && ./build_hss_rel14 --clea
 # TARGET IMAGE
 #---------------------------------------------------------------------
 FROM centos:7 as oai-hss
+ENV TZ=Europe/Paris
 # We install some debug tools for the moment in addition of mandatory libraries
 RUN yum update -y && yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm \
   && yum install -y \
+    tzdata \
     psmisc \
     openssl \
     net-tools \

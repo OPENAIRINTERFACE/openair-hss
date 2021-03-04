@@ -31,10 +31,12 @@ ARG EURECOM_PROXY
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=Europe
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
-RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get upgrade --yes && DEBIAN_FRONTEND=noninteractive apt-get install --yes \
-    psmisc \
-    git \
-  && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get upgrade --yes && \
+    DEBIAN_FRONTEND=noninteractive apt-get install --yes \
+      psmisc \
+      git && \
+    rm -rf /var/lib/apt/lists/*
 
 # Some GIT configuration command quite useful
 RUN /bin/bash -c "if [[ -v EURECOM_PROXY ]]; then git config --global http.proxy $EURECOM_PROXY; fi"
@@ -55,24 +57,25 @@ RUN ./build_hss_rel14 --clean --build-type Release
 #---------------------------------------------------------------------
 FROM ubuntu:bionic as oai-hss
 ENV DEBIAN_FRONTEND=noninteractive
-ENV TZ=Europe
-RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+ENV TZ=Europe/Paris
 # We install some debug tools for the moment in addition of mandatory libraries
-RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get upgrade --yes && DEBIAN_FRONTEND=noninteractive apt-get install --yes \
-    psmisc \
-    openssl \
-    net-tools \
-    tshark \
-    libsctp1 \
-    libuv1 \
-    libconfig9 \
-    libidn11 \
-    python \
-    python3 \
-    python-cassandra \
-    python3-cassandra \
-  && rm -rf /var/lib/apt/lists/*
-
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get upgrade --yes && \
+    DEBIAN_FRONTEND=noninteractive apt-get install --yes \
+      tzdata \
+      psmisc \
+      openssl \
+      net-tools \
+      tshark \
+      libsctp1 \
+      libuv1 \
+      libconfig9 \
+      libidn11 \
+      python \
+      python3 \
+      python-cassandra \
+      python3-cassandra && \
+    rm -rf /var/lib/apt/lists/*
 
 # Copying executable and generated libraries
 WORKDIR /openair-hss/bin
