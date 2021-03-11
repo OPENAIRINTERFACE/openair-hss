@@ -364,12 +364,13 @@ class HtmlReport():
 			self.file.write('  </div>\n')
 
 	def buildSummaryHeader(self):
-		self.file.write('  <h2>Docker Image Build Summary</h2>\n')
+		self.file.write('  <h2>Docker / Podman Image Build Summary</h2>\n')
 		self.file.write('  <table class="table-bordered" width = "100%" align = "center" border = "1">\n')
 		self.file.write('	  <tr bgcolor="#33CCFF" >\n')
 		self.file.write('		<th>Stage Name</th>\n')
 		self.file.write('		<th>Image Kind</th>\n')
-		self.file.write('		<th>OAI HSS cNF</th>\n')
+		self.file.write('		<th>OAI HSS <font color="Gold">Ubuntu18</font> Image</th>\n')
+		self.file.write('		<th>OAI HSS <font color="Gold">RHEL8</font> Image</th>\n')
 		self.file.write('	  </tr>\n')
 
 	def buildSummaryFooter(self):
@@ -385,42 +386,42 @@ class HtmlReport():
 	def analyze_docker_build_git_part(self, nfType):
 		if nfType != 'HSS':
 			self.file.write('      <td>N/A</td>\n')
-			self.file.write('	   <td>Wrong NF Type for this Report</td>\n')
+			self.file.write('	   <td colspan="2">Wrong NF Type for this Report</td>\n')
 			return
 
-		logFileName = 'hss_docker_image_build.log'
 		self.file.write('      <td>Builder Image</td>\n')
-
 		cwd = os.getcwd()
-		if os.path.isfile(cwd + '/archives/' + logFileName):
-			status = False
-			section_start_pattern = 'git config --global http'
-			section_end_pattern = 'WORKDIR /openair-hss/scripts'
-			section_status = False
-			with open(cwd + '/archives/' + logFileName, 'r') as logfile:
-				for line in logfile:
-					result = re.search(section_start_pattern, line)
-					if result is not None:
-						section_status = True
-					result = re.search(section_end_pattern, line)
-					if result is not None:
-						section_status = False
-						status = True
-				logfile.close()
 
-			if status:
-				cell_msg = '	  <td bgcolor="LimeGreen"><pre style="border:none; background-color:LimeGreen"><b>'
-				cell_msg += 'OK:\n'
-				cell_msg += ' -- All Git Operations went successfully</b></pre></td>\n'
+		variants = ['docker', 'podman']
+		for variant in variants:
+			logFileName = 'hss_' + variant + '_image_build.log'
+			if os.path.isfile(cwd + '/archives/' + logFileName):
+				status = False
+				section_start_pattern = 'git config --global http'
+				section_end_pattern = 'WORKDIR /openair-hss/scripts'
+				section_status = False
+				with open(cwd + '/archives/' + logFileName, 'r') as logfile:
+					for line in logfile:
+						result = re.search(section_start_pattern, line)
+						if result is not None:
+							section_status = True
+						result = re.search(section_end_pattern, line)
+						if result is not None:
+							section_status = False
+							status = True
+					logfile.close()
+				if status:
+					cell_msg = '	  <td bgcolor="LimeGreen"><pre style="border:none; background-color:LimeGreen"><b>'
+					cell_msg += 'OK:\n'
+					cell_msg += ' -- All Git Operations went successfully</b></pre></td>\n'
+				else:
+					cell_msg = '	  <td bgcolor="Tomato"><pre style="border:none; background-color:Tomato"><b>'
+					cell_msg += 'KO::\n'
+					cell_msg += ' -- Some Git Operations went WRONG</b></pre></td>\n'
 			else:
-				cell_msg = '	  <td bgcolor="Tomato"><pre style="border:none; background-color:Tomato"><b>'
-				cell_msg += 'KO::\n'
-				cell_msg += ' -- Some Git Operations went WRONG</b></pre></td>\n'
-		else:
-			cell_msg = '      <td bgcolor="Tomato"><pre style="border:none; background-color:Tomato"><b>'
-			cell_msg += 'KO: logfile (' + logFileName + ') not found</b></pre></td>\n'
-
-		self.file.write(cell_msg)
+				cell_msg = '      <td bgcolor="Tomato"><pre style="border:none; background-color:Tomato"><b>'
+				cell_msg += 'KO: logfile (' + logFileName + ') not found</b></pre></td>\n'
+			self.file.write(cell_msg)
 
 	def installLibsPackagesRow(self):
 		self.file.write('	 <tr>\n')
@@ -431,108 +432,109 @@ class HtmlReport():
 	def analyze_install_log(self, nfType):
 		if nfType != 'HSS':
 			self.file.write('      <td>N/A</td>\n')
-			self.file.write('	   <td>Wrong NF Type for this Report</td>\n')
+			self.file.write('	   <td colspan="2">Wrong NF Type for this Report</td>\n')
 			return
 
-		logFileName = 'hss_docker_image_build.log'
 		self.file.write('      <td>Builder Image</td>\n')
-
 		cwd = os.getcwd()
-		if os.path.isfile(cwd + '/archives/' + logFileName):
-			status = False
-			section_start_pattern = 'build_hss_rel14 --check-installed-software --force'
-			section_end_pattern = 'build_hss_rel14 --clean --build-type Release'
-			section_status = False
-			package_install = False
-			freeDiameter_build_start = False
-			freeDiameter_build = False
-			cares_build_start = False
-			cares_build = False
-			cppdriver_build_start = False
-			cppdriver_build = False
-			pistache_build_start = False
-			pistache_build = False
-			with open(cwd + '/archives/' + logFileName, 'r') as logfile:
-				for line in logfile:
-					result = re.search(section_start_pattern, line)
-					if result is not None:
-						section_status = True
-					result = re.search(section_end_pattern, line)
-					if result is not None:
-						section_status = False
-					if section_status:
-						result = re.search('HSS software installation successful', line)
+
+		variants = ['docker', 'podman']
+		for variant in variants:
+			logFileName = 'hss_' + variant + '_image_build.log'
+			if os.path.isfile(cwd + '/archives/' + logFileName):
+				status = False
+				section_start_pattern = 'build_hss_rel14 --check-installed-software --force'
+				section_end_pattern = 'build_hss_rel14 --clean --build-type Release'
+				section_status = False
+				package_install = False
+				freeDiameter_build_start = False
+				freeDiameter_build = False
+				cares_build_start = False
+				cares_build = False
+				cppdriver_build_start = False
+				cppdriver_build = False
+				pistache_build_start = False
+				pistache_build = False
+				with open(cwd + '/archives/' + logFileName, 'r') as logfile:
+					for line in logfile:
+						result = re.search(section_start_pattern, line)
 						if result is not None:
-							status = True
-						result = re.search('git submodule init', line)
+							section_status = True
+						result = re.search(section_end_pattern, line)
 						if result is not None:
-							package_install = True
-						result = re.search('Build files have been written to: /openair-hss/build/git_submodules/freeDiameter/build', line)
-						if result is not None:
-							freeDiameter_build_start = True
-						if freeDiameter_build_start:
-							result = re.search('Installing: /usr/local/lib/freeDiameter/dict_S9', line)
+							section_status = False
+						if section_status:
+							result = re.search('HSS software installation successful', line)
 							if result is not None:
-								freeDiameter_build_start = False
-								freeDiameter_build = True
-						result = re.search('/openair-hss/build/git_submodules/c-ares /openair-hss/scripts', line)
-						if result is not None:
-							cares_build_start = True
-						if cares_build_start:
-							result = re.search('/usr/bin/install -c -m 644 libcares.pc', line)
+								status = True
+							result = re.search('git submodule init', line)
 							if result is not None:
-								cares_build_start = False
-								cares_build = True
-						result = re.search('/openair-hss/build/git_submodules/cpp-driver /openair-hss/scripts', line)
-						if result is not None:
-							cppdriver_build_start = True
-						if cppdriver_build_start:
-							result = re.search('Installing: /usr/local/lib/x86_64-linux-gnu/pkgconfig/cassandra.pc', line)
+								package_install = True
+							result = re.search('Build files have been written to: /openair-hss/build/git_submodules/freeDiameter/build', line)
 							if result is not None:
-								cppdriver_build_start = False
-								cppdriver_build = True
-						result = re.search('/openair-hss/build/git_submodules/pistache /openair-hss/scripts', line)
-						if result is not None:
-							pistache_build_start = True
-						if pistache_build_start:
-							result = re.search('Installing: /usr/local/lib/libpistache', line)
+								freeDiameter_build_start = True
+							if freeDiameter_build_start:
+								result = re.search('Installing: /usr/local/lib/freeDiameter/dict_S9', line)
+								if result is not None:
+									freeDiameter_build_start = False
+									freeDiameter_build = True
+							result = re.search('/openair-hss/build/git_submodules/c-ares /openair-hss/scripts', line)
 							if result is not None:
-								pistache_build_start = False
-								pistache_build = True
-				logfile.close()
-			if status:
-				cell_msg = '	  <td bgcolor="LimeGreen"><pre style="border:none; background-color:LimeGreen"><b>'
-				cell_msg += 'OK:\n'
+								cares_build_start = True
+							if cares_build_start:
+								result = re.search('/usr/bin/install -c -m 644 libcares.pc', line)
+								if result is not None:
+									cares_build_start = False
+									cares_build = True
+							result = re.search('/openair-hss/build/git_submodules/cpp-driver /openair-hss/scripts', line)
+							if result is not None:
+								cppdriver_build_start = True
+							if cppdriver_build_start:
+								result = re.search('Installing: /usr/local/lib/x86_64-linux-gnu/pkgconfig/cassandra.pc', line)
+								if result is not None:
+									cppdriver_build_start = False
+									cppdriver_build = True
+							result = re.search('/openair-hss/build/git_submodules/pistache /openair-hss/scripts', line)
+							if result is not None:
+								pistache_build_start = True
+							if pistache_build_start:
+								result = re.search('Installing: /usr/local/lib/libpistache', line)
+								if result is not None:
+									pistache_build_start = False
+									pistache_build = True
+					logfile.close()
+				if status:
+					cell_msg = '	  <td bgcolor="LimeGreen"><pre style="border:none; background-color:LimeGreen"><b>'
+					cell_msg += 'OK:\n'
+				else:
+					cell_msg = '	  <td bgcolor="Tomato"><pre style="border:none; background-color:Tomato"><b>'
+					cell_msg += 'KO:\n'
+				cell_msg += ' -- build_hss_rel14 --check-installed-software --force\n'
+				if package_install:
+					cell_msg += '   ** Packages Installation: OK\n'
+				else:
+					cell_msg += '   ** Packages Installation: KO\n'
+				if freeDiameter_build:
+					cell_msg += '   ** FreeDiameter Installation: OK\n'
+				else:
+					cell_msg += '   ** FreeDiameter Installation: KO\n'
+				if cares_build:
+					cell_msg += '   ** C-Ares Installation: OK\n'
+				else:
+					cell_msg += '   ** C-Ares Installation: KO\n'
+				if cppdriver_build:
+					cell_msg += '   ** Cassandra Driver Installation: OK\n'
+				else:
+					cell_msg += '   ** Cassandra Driver Installation: KO\n'
+				if pistache_build:
+					cell_msg += '   ** Pistache Installation: OK\n'
+				else:
+					cell_msg += '   ** Pistache Installation: KO\n'
+				cell_msg += '</b></pre></td>\n'
 			else:
 				cell_msg = '	  <td bgcolor="Tomato"><pre style="border:none; background-color:Tomato"><b>'
-				cell_msg += 'KO:\n'
-			cell_msg += ' -- build_hss_rel14 --check-installed-software --force\n'
-			if package_install:
-				cell_msg += '   ** Packages Installation: OK\n'
-			else:
-				cell_msg += '   ** Packages Installation: KO\n'
-			if freeDiameter_build:
-				cell_msg += '   ** FreeDiameter Installation: OK\n'
-			else:
-				cell_msg += '   ** FreeDiameter Installation: KO\n'
-			if cares_build:
-				cell_msg += '   ** C-Ares Installation: OK\n'
-			else:
-				cell_msg += '   ** C-Ares Installation: KO\n'
-			if cppdriver_build:
-				cell_msg += '   ** Cassandra Driver Installation: OK\n'
-			else:
-				cell_msg += '   ** Cassandra Driver Installation: KO\n'
-			if pistache_build:
-				cell_msg += '   ** Pistache Installation: OK\n'
-			else:
-				cell_msg += '   ** Pistache Installation: KO\n'
-			cell_msg += '</b></pre></td>\n'
-		else:
-			cell_msg = '	  <td bgcolor="Tomato"><pre style="border:none; background-color:Tomato"><b>'
-			cell_msg += 'KO: logfile (' + logFileName + ') not found</b></pre></td>\n'
-
-		self.file.write(cell_msg)
+				cell_msg += 'KO: logfile (' + logFileName + ') not found</b></pre></td>\n'
+			self.file.write(cell_msg)
 
 	def buildCompileRows(self):
 		self.file.write('	 <tr>\n')
@@ -546,91 +548,92 @@ class HtmlReport():
 	def analyze_build_log(self, nfType):
 		if nfType != 'HSS':
 			self.file.write('      <td>N/A</td>\n')
-			self.file.write('	   <td>Wrong NF Type for this Report</td>\n')
+			self.file.write('	   <td colspan="2">Wrong NF Type for this Report</td>\n')
 			return
 
-		logFileName = 'hss_docker_image_build.log'
 		self.file.write('      <td>Builder Image</td>\n')
-
 		cwd = os.getcwd()
-		if os.path.isfile(cwd + '/archives/' + logFileName):
-			status = False
-			section_start_pattern = 'build_hss_rel14 --clean --build-type Release'
-			section_end_pattern = 'FROM ubuntu:bionic as oai-hss$'
-			section_status = False
-			with open(cwd + '/archives/' + logFileName, 'r') as logfile:
-				for line in logfile:
-					result = re.search(section_start_pattern, line)
-					if result is not None:
-						section_status = True
-					result = re.search(section_end_pattern, line)
-					if result is not None:
-						section_status = False
-					if section_status:
-						result = re.search('oai_hss installed', line)
+
+		variants = ['docker', 'podman']
+		for variant in variants:
+			logFileName = 'hss_' + variant + '_image_build.log'
+			if os.path.isfile(cwd + '/archives/' + logFileName):
+				status = False
+				section_start_pattern = 'build_hss_rel14 --clean --build-type Release'
+				section_end_pattern = 'FROM ubuntu:bionic as oai-hss$'
+				section_status = False
+				with open(cwd + '/archives/' + logFileName, 'r') as logfile:
+					for line in logfile:
+						result = re.search(section_start_pattern, line)
 						if result is not None:
-							status = True
-				logfile.close()
-			if status:
-				cell_msg = '	  <td bgcolor="LimeGreen"><pre style="border:none; background-color:LimeGreen"><b>'
-				cell_msg += 'OK:\n'
+							section_status = True
+						result = re.search(section_end_pattern, line)
+						if result is not None:
+							section_status = False
+						if section_status:
+							result = re.search('oai_hss installed', line)
+							if result is not None:
+								status = True
+					logfile.close()
+				if status:
+					cell_msg = '	  <td bgcolor="LimeGreen"><pre style="border:none; background-color:LimeGreen"><b>'
+					cell_msg += 'OK:\n'
+				else:
+					cell_msg = '	  <td bgcolor="Tomato"><pre style="border:none; background-color:Tomato"><b>'
+					cell_msg += 'KO:\n'
+				cell_msg += ' -- build_hss_rel14 --clean --build-type Release</b></pre></td>\n'
 			else:
 				cell_msg = '	  <td bgcolor="Tomato"><pre style="border:none; background-color:Tomato"><b>'
-				cell_msg += 'KO:\n'
-			cell_msg += ' -- build_hss_rel14 --clean --build-type Release</b></pre></td>\n'
-		else:
-			cell_msg = '	  <td bgcolor="Tomato"><pre style="border:none; background-color:Tomato"><b>'
-			cell_msg += 'KO: logfile (' + logFileName + ') not found</b></pre></td>\n'
-
-		self.file.write(cell_msg)
+				cell_msg += 'KO: logfile (' + logFileName + ') not found</b></pre></td>\n'
+			self.file.write(cell_msg)
 
 	def analyze_compile_log(self, nfType):
 		if nfType != 'HSS':
 			self.file.write('      <td>N/A</td>\n')
-			self.file.write('	   <td>Wrong NF Type for this Report</td>\n')
+			self.file.write('	   <td colspan="2">Wrong NF Type for this Report</td>\n')
 			return
 
-		logFileName = 'hss_docker_image_build.log'
 		self.file.write('      <td>Builder Image</td>\n')
-
 		cwd = os.getcwd()
-		nb_errors = 0
-		nb_warnings = 0
 
-		if os.path.isfile(cwd + '/archives/' + logFileName):
-			section_start_pattern = 'build_hss_rel14 --clean --build-type Release'
-			section_end_pattern = 'FROM ubuntu:bionic as oai-hss$'
-			section_status = False
-			with open(cwd + '/archives/' + logFileName, 'r') as logfile:
-				for line in logfile:
-					result = re.search(section_start_pattern, line)
-					if result is not None:
-						section_status = True
-					result = re.search(section_end_pattern, line)
-					if result is not None:
-						section_status = False
-					if section_status:
-						result = re.search('error:', line)
+		variants = ['docker', 'podman']
+		for variant in variants:
+			logFileName = 'hss_' + variant + '_image_build.log'
+			nb_errors = 0
+			nb_warnings = 0
+			if os.path.isfile(cwd + '/archives/' + logFileName):
+				section_start_pattern = 'build_hss_rel14 --clean --build-type Release'
+				section_end_pattern = 'FROM ubuntu:bionic as oai-hss$'
+				section_status = False
+				with open(cwd + '/archives/' + logFileName, 'r') as logfile:
+					for line in logfile:
+						result = re.search(section_start_pattern, line)
 						if result is not None:
-							nb_errors += 1
-						result = re.search('warning:', line)
+							section_status = True
+						result = re.search(section_end_pattern, line)
 						if result is not None:
-							nb_warnings += 1
-				logfile.close()
-			if nb_warnings == 0 and nb_errors == 0:
-				cell_msg = '	   <td bgcolor="LimeGreen"><pre style="border:none; background-color:LimeGreen"><b>'
-			elif nb_warnings < 20 and nb_errors == 0:
-				cell_msg = '	   <td bgcolor="Orange"><pre style="border:none; background-color:Orange"><b>'
+							section_status = False
+						if section_status:
+							result = re.search('error:', line)
+							if result is not None:
+								nb_errors += 1
+							result = re.search('warning:', line)
+							if result is not None:
+								nb_warnings += 1
+					logfile.close()
+				if nb_warnings == 0 and nb_errors == 0:
+					cell_msg = '	   <td bgcolor="LimeGreen"><pre style="border:none; background-color:LimeGreen"><b>'
+				elif nb_warnings < 20 and nb_errors == 0:
+					cell_msg = '	   <td bgcolor="Orange"><pre style="border:none; background-color:Orange"><b>'
+				else:
+					cell_msg = '	   <td bgcolor="Tomato"><pre style="border:none; background-color:Tomato"><b>'
+				if nb_errors > 0:
+					cell_msg += str(nb_errors) + ' errors found in compile log\n'
+				cell_msg += str(nb_warnings) + ' warnings found in compile log</b></pre></td>\n'
 			else:
-				cell_msg = '	   <td bgcolor="Tomato"><pre style="border:none; background-color:Tomato"><b>'
-			if nb_errors > 0:
-				cell_msg += str(nb_errors) + ' errors found in compile log\n'
-			cell_msg += str(nb_warnings) + ' warnings found in compile log</b></pre></td>\n'
-		else:
-			cell_msg = '	  <td bgcolor="Tomato"><pre style="border:none; background-color:Tomato"><b>'
-			cell_msg += 'KO: logfile (' + logFileName + ') not found</b></pre></td>\n'
-
-		self.file.write(cell_msg)
+				cell_msg = '	  <td bgcolor="Tomato"><pre style="border:none; background-color:Tomato"><b>'
+				cell_msg += 'KO: logfile (' + logFileName + ') not found</b></pre></td>\n'
+			self.file.write(cell_msg)
 
 	def copyToTargetImage(self):
 		self.file.write('	 <tr>\n')
@@ -641,40 +644,41 @@ class HtmlReport():
 	def analyze_copy_log(self, nfType):
 		if nfType != 'HSS':
 			self.file.write('      <td>N/A</td>\n')
-			self.file.write('	   <td>Wrong NF Type for this Report</td>\n')
+			self.file.write('	   <td colspan="2">Wrong NF Type for this Report</td>\n')
 			return
 
-		logFileName = 'hss_docker_image_build.log'
 		self.file.write('      <td>Target Image</td>\n')
-
 		cwd = os.getcwd()
-		if os.path.isfile(cwd + '/archives/' + logFileName):
-			section_start_pattern = 'FROM ubuntu:bionic as oai-hss$'
-			section_end_pattern = 'WORKDIR /openair-hss/etc'
-			section_status = False
-			status = False
-			with open(cwd + '/archives/' + logFileName, 'r') as logfile:
-				for line in logfile:
-					result = re.search(section_start_pattern, line)
-					if result is not None:
-						section_status = True
-					result = re.search(section_end_pattern, line)
-					if result is not None:
-						section_status = False
-						status = True
-				logfile.close()
-			if status:
-				cell_msg = '	   <td bgcolor="LimeGreen"><pre style="border:none; background-color:LimeGreen"><b>'
-				cell_msg += 'OK:\n'
-			else:
-				cell_msg = '	   <td bgcolor="Tomato"><pre style="border:none; background-color:Tomato"><b>'
-				cell_msg += 'KO:\n'
-			cell_msg += '</b></pre></td>\n'
-		else:
-			cell_msg = '	  <td bgcolor="Tomato"><pre style="border:none; background-color:Tomato"><b>'
-			cell_msg += 'KO: logfile (' + logFileName + ') not found</b></pre></td>\n'
 
-		self.file.write(cell_msg)
+		variants = ['docker', 'podman']
+		for variant in variants:
+			logFileName = 'hss_' + variant + '_image_build.log'
+			if os.path.isfile(cwd + '/archives/' + logFileName):
+				section_start_pattern = 'FROM ubuntu:bionic as oai-hss$'
+				section_end_pattern = 'WORKDIR /openair-hss/etc'
+				section_status = False
+				status = False
+				with open(cwd + '/archives/' + logFileName, 'r') as logfile:
+					for line in logfile:
+						result = re.search(section_start_pattern, line)
+						if result is not None:
+							section_status = True
+						result = re.search(section_end_pattern, line)
+						if result is not None:
+							section_status = False
+							status = True
+					logfile.close()
+				if status:
+					cell_msg = '	   <td bgcolor="LimeGreen"><pre style="border:none; background-color:LimeGreen"><b>'
+					cell_msg += 'OK:\n'
+				else:
+					cell_msg = '	   <td bgcolor="Tomato"><pre style="border:none; background-color:Tomato"><b>'
+					cell_msg += 'KO:\n'
+				cell_msg += '</b></pre></td>\n'
+			else:
+				cell_msg = '	  <td bgcolor="Tomato"><pre style="border:none; background-color:Tomato"><b>'
+				cell_msg += 'KO: logfile (' + logFileName + ') not found</b></pre></td>\n'
+			self.file.write(cell_msg)
 
 	def copyConfToolsToTargetImage(self):
 		self.file.write('	 <tr>\n')
@@ -685,40 +689,44 @@ class HtmlReport():
 	def analyze_copy_conf_tool_log(self, nfType):
 		if nfType != 'HSS':
 			self.file.write('      <td>N/A</td>\n')
-			self.file.write('	   <td>Wrong NF Type for this Report</td>\n')
+			self.file.write('	   <td colspan="2">Wrong NF Type for this Report</td>\n')
 			return
 
-		logFileName = 'hss_docker_image_build.log'
 		self.file.write('      <td>Target Image</td>\n')
-
 		cwd = os.getcwd()
-		if os.path.isfile(cwd + '/archives/' + logFileName):
-			section_start_pattern = 'WORKDIR /openair-hss/etc'
-			section_end_pattern = 'Successfully tagged oai-hss'
-			section_status = False
-			status = False
-			with open(cwd + '/archives/' + logFileName, 'r') as logfile:
-				for line in logfile:
-					result = re.search(section_start_pattern, line)
-					if result is not None:
-						section_status = True
-					result = re.search(section_end_pattern, line)
-					if result is not None:
-						section_status = False
-						status = True
-				logfile.close()
-			if status:
-				cell_msg = '	   <td bgcolor="LimeGreen"><pre style="border:none; background-color:LimeGreen"><b>'
-				cell_msg += 'OK:\n'
-			else:
-				cell_msg = '	   <td bgcolor="Tomato"><pre style="border:none; background-color:Tomato"><b>'
-				cell_msg += 'KO:\n'
-			cell_msg += '</b></pre></td>\n'
-		else:
-			cell_msg = '	  <td bgcolor="Tomato"><pre style="border:none; background-color:Tomato"><b>'
-			cell_msg += 'KO: logfile (' + logFileName + ') not found</b></pre></td>\n'
 
-		self.file.write(cell_msg)
+		variants = ['docker', 'podman']
+		for variant in variants:
+			logFileName = 'hss_'+ variant + '_image_build.log'
+			if os.path.isfile(cwd + '/archives/' + logFileName):
+				section_start_pattern = 'WORKDIR /openair-hss/etc'
+				if variant == 'docker':
+					section_end_pattern = 'Successfully tagged oai-hss'
+				else:
+					section_end_pattern = 'COMMIT oai-hss:'
+				section_status = False
+				status = False
+				with open(cwd + '/archives/' + logFileName, 'r') as logfile:
+					for line in logfile:
+						result = re.search(section_start_pattern, line)
+						if result is not None:
+							section_status = True
+						result = re.search(section_end_pattern, line)
+						if result is not None:
+							section_status = False
+							status = True
+					logfile.close()
+				if status:
+					cell_msg = '	   <td bgcolor="LimeGreen"><pre style="border:none; background-color:LimeGreen"><b>'
+					cell_msg += 'OK:\n'
+				else:
+					cell_msg = '	   <td bgcolor="Tomato"><pre style="border:none; background-color:Tomato"><b>'
+					cell_msg += 'KO:\n'
+				cell_msg += '</b></pre></td>\n'
+			else:
+				cell_msg = '	  <td bgcolor="Tomato"><pre style="border:none; background-color:Tomato"><b>'
+				cell_msg += 'KO: logfile (' + logFileName + ') not found</b></pre></td>\n'
+			self.file.write(cell_msg)
 
 	def imageSizeRow(self):
 		self.file.write('	 <tr>\n')
@@ -729,52 +737,57 @@ class HtmlReport():
 	def analyze_image_size_log(self, nfType):
 		if nfType != 'HSS':
 			self.file.write('      <td>N/A</td>\n')
-			self.file.write('	   <td>Wrong NF Type for this Report</td>\n')
+			self.file.write('	   <td colspan="2">Wrong NF Type for this Report</td>\n')
 			return
 
-		logFileName = 'hss_docker_image_build.log'
 		self.file.write('      <td>Target Image</td>\n')
-
 		cwd = os.getcwd()
-		if os.path.isfile(cwd + '/archives/' + logFileName):
-			section_start_pattern = 'Successfully tagged oai-hss'
-			section_end_pattern = 'OAI-HSS DOCKER IMAGE BUILD'
-			section_status = False
-			status = False
-			with open(cwd + '/archives/' + logFileName, 'r') as logfile:
-				for line in logfile:
-					result = re.search(section_start_pattern, line)
-					if result is not None:
-						section_status = True
-					result = re.search(section_end_pattern, line)
-					if result is not None:
-						section_status = False
-					if section_status:
-						if self.git_pull_request:
-							result = re.search('oai-hss *ci-temp', line)
-						else:
-							result = re.search('oai-hss *develop', line)
-						if result is not None:
-							result = re.search('ago *([0-9A-Z]+)', line)
-							if result is not None:
-								size = result.group(1)
-								status = True
-				logfile.close()
-			if status:
-				cell_msg = '	   <td bgcolor="LimeGreen"><pre style="border:none; background-color:LimeGreen"><b>'
-				cell_msg += 'OK:  ' + size + '\n'
-			else:
-				cell_msg = '	   <td bgcolor="Tomato"><pre style="border:none; background-color:Tomato"><b>'
-				cell_msg += 'KO:\n'
-			cell_msg += '</b></pre></td>\n'
-		else:
-			cell_msg = '	  <td bgcolor="Tomato"><pre style="border:none; background-color:Tomato"><b>'
-			cell_msg += 'KO: logfile (' + logFileName + ') not found</b></pre></td>\n'
 
-		self.file.write(cell_msg)
+		variants = ['docker', 'podman']
+		for variant in variants:
+			logFileName = 'hss_' + variant + '_image_build.log'
+			if os.path.isfile(cwd + '/archives/' + logFileName):
+				section_start_pattern = 'Successfully tagged oai-hss'
+				if variant == 'docker':
+					section_start_pattern = 'Successfully tagged oai-hss'
+				else:
+					section_start_pattern = 'COMMIT oai-hss:'
+				section_end_pattern = 'OAI-HSS DOCKER IMAGE BUILD'
+				section_status = False
+				status = False
+				with open(cwd + '/archives/' + logFileName, 'r') as logfile:
+					for line in logfile:
+						result = re.search(section_start_pattern, line)
+						if result is not None:
+							section_status = True
+						result = re.search(section_end_pattern, line)
+						if result is not None:
+							section_status = False
+						if section_status:
+							if self.git_pull_request:
+								result = re.search('oai-hss *ci-temp', line)
+							else:
+								result = re.search('oai-hss *develop', line)
+							if result is not None:
+								result = re.search('ago *([0-9 A-Z]+)', line)
+								if result is not None:
+									size = result.group(1)
+									status = True
+					logfile.close()
+				if status:
+					cell_msg = '	   <td bgcolor="LimeGreen"><pre style="border:none; background-color:LimeGreen"><b>'
+					cell_msg += 'OK:  ' + size + '\n'
+				else:
+					cell_msg = '	   <td bgcolor="Tomato"><pre style="border:none; background-color:Tomato"><b>'
+					cell_msg += 'KO:\n'
+				cell_msg += '</b></pre></td>\n'
+			else:
+				cell_msg = '	  <td bgcolor="Tomato"><pre style="border:none; background-color:Tomato"><b>'
+				cell_msg += 'KO: logfile (' + logFileName + ') not found</b></pre></td>\n'
+			self.file.write(cell_msg)
 
 	def sanityCheckSummaryHeader(self):
-		self.file.write('  <h2>Sanity Check Deployment Summary</h2>\n')
+		self.file.write('  <h2>Ubuntu18 Sanity Check Deployment Summary</h2>\n')
 		self.file.write('  <table class="table-bordered" width = "100%" align = "center" border = "1">\n')
 		self.file.write('	  <tr bgcolor="#33CCFF" >\n')
 		self.file.write('		<th>Stage Name</th>\n')
