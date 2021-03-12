@@ -64,7 +64,7 @@ else
   openssl ca -cert cacert.pem -keyfile cakey.pem -in $HOST.csr.pem -out $HOST.cert.pem -outdir . -batch
 fi
 
-IS_CONTAINER=`egrep -c "docker|kubepods" /proc/self/cgroup`
+IS_CONTAINER=`egrep -c "docker|podman|kubepods|libpod|buildah" /proc/self/cgroup`
 
 if [ $IS_CONTAINER -eq 0 ]
 then
