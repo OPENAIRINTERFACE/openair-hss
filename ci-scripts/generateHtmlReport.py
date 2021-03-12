@@ -478,7 +478,7 @@ class HtmlReport():
 								if result is not None:
 									freeDiameter_build_start = False
 									freeDiameter_build = True
-							result = re.search('/openair-hss/build/git_submodules/c-ares /openair-hss/scripts', line)
+							result = re.search('/openair-hss/build/git_submodules/c-ares /openair-hss', line)
 							if result is not None:
 								cares_build_start = True
 							if cares_build_start:
@@ -486,19 +486,25 @@ class HtmlReport():
 								if result is not None:
 									cares_build_start = False
 									cares_build = True
-							result = re.search('/openair-hss/build/git_submodules/cpp-driver /openair-hss/scripts', line)
+							result = re.search('/openair-hss/build/git_submodules/cpp-driver /openair-hss', line)
 							if result is not None:
 								cppdriver_build_start = True
 							if cppdriver_build_start:
-								result = re.search('Installing: /usr/local/lib/x86_64-linux-gnu/pkgconfig/cassandra.pc', line)
+								if variant == 'docker':
+									result = re.search('Installing: /usr/local/lib/x86_64-linux-gnu/pkgconfig/cassandra.pc', line)
+								else:
+									result = re.search('Installing: /usr/local/lib64/pkgconfig/cassandra.pc', line)
 								if result is not None:
 									cppdriver_build_start = False
 									cppdriver_build = True
-							result = re.search('/openair-hss/build/git_submodules/pistache /openair-hss/scripts', line)
+							result = re.search('/openair-hss/build/git_submodules/pistache /openair-hss', line)
 							if result is not None:
 								pistache_build_start = True
 							if pistache_build_start:
-								result = re.search('Installing: /usr/local/lib/libpistache', line)
+								if variant == 'docker':
+									result = re.search('Installing: /usr/local/lib/libpistache', line)
+								else:
+									result = re.search('Installing: /usr/local/lib64/libpistache', line)
 								if result is not None:
 									pistache_build_start = False
 									pistache_build = True
