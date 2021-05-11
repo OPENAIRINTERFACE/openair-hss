@@ -123,6 +123,7 @@ check_supported_distribution() {
     local distribution=$(get_distribution_release)
     echo "Your distribution is ${distribution}"
     case "$distribution" in
+        "ubuntu20.04") return 0 ;;
         "ubuntu18.04") return 0 ;;
         "ubuntu17.10") return 0 ;;
         "ubuntu17.04") return 0 ;;
