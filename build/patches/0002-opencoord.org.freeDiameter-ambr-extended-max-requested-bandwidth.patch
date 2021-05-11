@@ -8,8 +8,8 @@ index 5d74805..f6261ba 100644
 		{
 -			{ { .avp_vendor = 10415, .avp_name = "Max-Requested-Bandwidth-UL"}, RULE_REQUIRED, -1, -1 },
 -			{ { .avp_vendor = 10415, .avp_name = "Max-Requested-Bandwidth-DL"}, RULE_REQUIRED, -1, -1 }
-+           { { .avp_vendor = 10415, .avp_name = "Max-Requested-Bandwidth-UL"}, RULE_OPTIONAL, -1, -1 },
-+           { { .avp_vendor = 10415, .avp_name = "Max-Requested-Bandwidth-DL"}, RULE_OPTIONAL, -1, -1 },
++           { { .avp_vendor = 10415, .avp_name = "Max-Requested-Bandwidth-UL"}, RULE_REQUIRED, -1, -1 },
++           { { .avp_vendor = 10415, .avp_name = "Max-Requested-Bandwidth-DL"}, RULE_REQUIRED, -1, -1 },
 +           { { .avp_vendor = 10415, .avp_name = "Extended-Max-Requested-BW-UL"}, RULE_OPTIONAL, -1, -1 },
 +           { { .avp_vendor = 10415, .avp_name = "Extended-Max-Requested-BW-DL"}, RULE_OPTIONAL, -1, -1 }
 		};
