@@ -47,6 +47,10 @@ RUN git config --global http.sslverify false
 WORKDIR /openair-hss
 COPY . .
 
+# wait for it
+workdir /
+RUN git clone https://github.com/vishnubob/wait-for-it.git
+
 # Installing and Building HSS
 WORKDIR /openair-hss/scripts
 RUN ./build_hss_rel14 --check-installed-software --force
@@ -102,6 +106,7 @@ WORKDIR /openair-hss/scripts
 COPY --from=oai-hss-builder /openair-hss/src/hss_rel14/bin/make_certs.sh .
 COPY --from=oai-hss-builder /openair-hss/scripts/data_provisioning_users .
 COPY --from=oai-hss-builder /openair-hss/scripts/data_provisioning_mme .
+COPY --from=oai-hss-builder /wait-for-it/wait-for-it.sh .
 RUN sed -i -e "s@/freeDiameter@@" make_certs.sh
 
 WORKDIR /openair-hss
