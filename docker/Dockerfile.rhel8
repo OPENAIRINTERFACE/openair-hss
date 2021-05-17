@@ -52,6 +52,10 @@ RUN rm /etc/rhsm-host && \
     echo "/usr/local/lib" > /etc/ld.so.conf.d/local-lib.conf && \
     echo "/usr/local/lib64" >> /etc/ld.so.conf.d/local-lib.conf
 
+# wait for it
+workdir /
+RUN git clone https://github.com/vishnubob/wait-for-it.git
+
 # Copy the workspace as is
 WORKDIR /openair-hss
 COPY . .
@@ -115,6 +119,7 @@ WORKDIR /openair-hss/scripts
 COPY --from=oai-hss-builder /openair-hss/src/hss_rel14/bin/make_certs.sh .
 COPY --from=oai-hss-builder /openair-hss/scripts/data_provisioning_users .
 COPY --from=oai-hss-builder /openair-hss/scripts/data_provisioning_mme .
+COPY --from=oai-hss-builder /wait-for-it/wait-for-it.sh .
 RUN sed -i -e "s@/freeDiameter@@" make_certs.sh
 
 WORKDIR /openair-hss

@@ -415,7 +415,13 @@ install_opencoord.org_freediameter() {
     if ! patch -R -p1 -s -f --dry-run <  $OPENAIRCN_DIR/build/patches/0001-opencoord.org.freeDiameter.patch; then
           patch -p1 <  $OPENAIRCN_DIR/build/patches/0001-opencoord.org.freeDiameter.patch
     else
-      echo_info "Detected freeDiameter $OPENAIRCN_DIR/build/patches/0001-opencoord.org.freeDiameter.patch alredy applied"
+      echo_info "Detected freeDiameter $OPENAIRCN_DIR/build/patches/0001-opencoord.org.freeDiameter.patch already applied"
+    fi
+    ret=$?;[[ $ret -ne 0 ]] && return $ret
+    if ! patch -R -p1 -s -f --dry-run <  $OPENAIRCN_DIR/build/patches/0002-opencoord.org.freeDiameter-ambr-extended-max-requested-bandwidth.patch; then
+          patch -p1 <  $OPENAIRCN_DIR/build/patches/0002-opencoord.org.freeDiameter-ambr-extended-max-requested-bandwidth.patch
+    else
+      echo_info "Detected freeDiameter $OPENAIRCN_DIR/build/patches/0002-opencoord.org.freeDiameter-ambr-extended-max-requested-bandwidth.patch already applied"
     fi
     ret=$?;[[ $ret -ne 0 ]] && return $ret
   

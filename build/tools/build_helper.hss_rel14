@@ -33,6 +33,8 @@ build_freeDiameter()
   pushd $OPENAIRCN_DIR/build/git_submodules/freeDiameter
   patch -p1 <  $OPENAIRCN_DIR/build/patches/0001-opencoord.org.freeDiameter.patch
   ret=$?;[[ $ret -ne 0 ]] && popd && return $ret
+  patch -p1 <  $OPENAIRCN_DIR/build/patches/0002-opencoord.org.freeDiameter-ambr-extended-max-requested-bandwidth.patch
+  ret=$?;[[ $ret -ne 0 ]] && popd && return $ret
   rm -rf build
   mkdir -p build
   cd build
@@ -298,11 +300,14 @@ check_install_hss_software() {
   # packages
   if [[ $OS_DISTRO == "ubuntu" ]]; then
     case "$(get_distribution_release)" in
+	"ubuntu20.04")
+	    specific_packages="libgnutls28-dev libgcrypt20-dev "
+	    ;;
 	"ubuntu17.04" | "ubuntu17.10" | "ubuntu18.04")
-	    specific_packages="libgnutls28-dev"
+	    specific_packages="libgnutls28-dev libgcrypt-dev python-cassandra python-blist"
 	    ;;
 	"ubuntu14.04" | "ubuntu16.04")
-	    specific_packages="libgnutls-dev"
+	    specific_packages="libgnutls-dev libgcrypt-dev python-cassandra python-blist"
 	    ;;
     esac
     PACKAGE_LIST="\
@@ -319,15 +324,12 @@ check_install_hss_software() {
       libmemcached-dev \
       memcached \
       cmake-curses-gui \
-      python-cassandra \
       python3-cassandra \
-      python-blist \
       python3-blist \
       gcc \
       bison \
       flex \
       libsctp-dev \
-      libgcrypt-dev \
       libidn11-dev \
       nettle-dev"
   elif [[ "$OS_BASEDISTRO" == "fedora" ]]; then

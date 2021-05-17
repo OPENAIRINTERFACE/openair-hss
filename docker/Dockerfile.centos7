@@ -55,6 +55,10 @@ RUN /bin/bash -c "if [[ -v BUILD_FOR_CI ]]; then git config --global user.email 
 RUN /bin/bash -c "if [[ -v BUILD_FOR_CI ]]; then git checkout -f $CI_SRC_COMMIT; fi"
 RUN /bin/bash -c "if [[ -v BUILD_FOR_CI ]]; then git merge --ff origin/$CI_DEST_BRANCH -m \"Temporary merge for CI\"; fi"
 
+# wait for it
+workdir /
+RUN git clone https://github.com/vishnubob/wait-for-it.git
+
 # Installing and Building HSS
 WORKDIR /openair-hss/scripts
 RUN scl enable devtoolset-7 'cd /openair-hss/scripts && ./build_hss_rel14 --check-installed-software --force'
@@ -113,6 +117,7 @@ WORKDIR /openair-hss/scripts
 COPY --from=oai-hss-builder /openair-hss/src/hss_rel14/bin/make_certs.sh .
 COPY --from=oai-hss-builder /openair-hss/scripts/data_provisioning_users .
 COPY --from=oai-hss-builder /openair-hss/scripts/data_provisioning_mme .
+COPY --from=oai-hss-builder /wait-for-it/wait-for-it.sh .
 RUN sed -i -e "s@/freeDiameter@@" make_certs.sh
 
 WORKDIR /openair-hss
