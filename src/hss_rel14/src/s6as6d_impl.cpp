@@ -51,7 +51,9 @@ extern "C" {
 #define ULR_NODE_TYPE_IND (1U << 4)
 #define ULR_INITIAL_ATTACH_IND (1U << 5)
 #define ULR_PS_LCS_SUPPORTED_BY_UE (1U << 6)
-#define ULR_PAD_VALID(x) ((x & ~0x7f) == 0)
+#define ULR_SMS_ONLY_INDICATION (1U << 7)
+#define ULR_DUAL_REGISTRATION_5G_INDICATOR (1U << 8)
+#define ULR_PAD_VALID(x) ((x & ~0x01ff) == 0)
 
 /* Access-restriction-data bits */
 #define UTRAN_NOT_ALLOWED (1U)
