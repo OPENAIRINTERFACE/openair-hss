@@ -45,19 +45,28 @@ def str2bool(arg):
 def ambr2json(br_ul, br_dl):
     ambr = '"AMBR":'
 
+    extended_max_requested_bw_ul = 0
+    extended_max_requested_bw_dl = 0
+
     if br_ul > 4294967295:
-        max_requested_bandwidth_ul = 4294967295
+        # kilobits (1000 bits)
         extended_max_requested_bw_ul = int(br_ul/1000)
-        ambr = ambr + '{'+'"Max-Requested-Bandwidth-UL":{0},"Extended-Max-Requested-BW-UL":{1}'.format(max_requested_bandwidth_ul, extended_max_requested_bw_ul)
-    else:
-        ambr = ambr + '{'+'"Max-Requested-Bandwidth-UL":{0}'.format(br_ul)
+        br_ul = 4294967295
+
+    ambr = ambr + '{'+'"Max-Requested-Bandwidth-UL":{0}'.format(br_ul)
       
     if br_dl > 4294967295:
-        max_requested_bandwidth_dl = 4294967295
+        # kilobits (1000 bits)
         extended_max_requested_bw_dl = int(br_dl/1000)
-        ambr = ambr + ',"Max-Requested-Bandwidth-DL":{0},"Extended-Max-Requested-BW-DL":{1}'.format(max_requested_bandwidth_dl, extended_max_requested_bw_dl)
-    else:
-        ambr = ambr + ',"Max-Requested-Bandwidth-DL":{0}'.format(br_dl)
+        br_dl = 4294967295
+    ambr = ambr + ',"Max-Requested-Bandwidth-DL":{0}'.format(br_dl)
+        
+    if extended_max_requested_bw_ul !=0:
+        ambr = ambr + ',"Extended-Max-Requested-BW-UL":{0}'.format(extended_max_requested_bw_ul)
+      
+    if extended_max_requested_bw_dl != 0:
+        ambr = ambr + ',"Extended-Max-Requested-BW-DL":{0}'.format(extended_max_requested_bw_dl)
+        
     return ambr+'}'
 
 #---------------------------------------------------------------------

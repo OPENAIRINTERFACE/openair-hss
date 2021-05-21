@@ -1556,6 +1556,17 @@ void ULRProcessor::phase2() {
     if (u32 == VENDOR_3GPP) {
       (*seit)->feature_list.get(u32);
       FLAGS_SET(m_present_flags, MME_SUPPORTED_FEATURES_PRESENT);
+      (*seit)->feature_list_id.get(u32);
+      if (u32 == 2) {
+        (*seit)->feature_list.get(u32);
+        FDAvp supported_features(m_dict.avpSupportedFeatures());
+        supported_features.add(m_dict.avpVendorId(), VENDOR_3GPP);
+        supported_features.add(m_dict.avpFeatureListId(), 2);
+        // Blindly replicate supported feature
+        // TODO get supported features from config file
+        supported_features.add(m_dict.avpFeatureList(), u32);
+        m_ans.add(supported_features);
+      }
     }
   }
 
