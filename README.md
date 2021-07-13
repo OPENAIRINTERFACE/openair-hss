@@ -1,3 +1,7 @@
+<h1 align="center">
+    <a href="https://openairinterface.org/"><img src="https://openairinterface.org/wp-content/uploads/2015/06/cropped-oai_final_logo.png" alt="OAI" width="550"></a>
+</h1>
+
 ------------------------------------------------------------------------------
 
                              OPENAIR-CN
@@ -5,6 +9,11 @@
     
 ------------------------------------------------------------------------------
     
+<p align="center">
+    <a href="https://github.com/OPENAIRINTERFACE/openair-hss/blob/master/LICENSE"><img src="https://img.shields.io/badge/license-BSD3clause-blue.svg" alt="License"></a>
+    <a href="https://jenkins-oai.eurecom.fr/job/OAI-CN-HSS/"><img src="https://img.shields.io/jenkins/build?jobUrl=https%3A%2F%2Fjenkins-oai.eurecom.fr%2Fjob%2FOAI-CN-HSS%2F&label=build%20HSS"></a>
+</p>
+
   Openair-cn is an implementation of the 3GPP specifications concerning the 
   Evolved Packet Core Networks, that means it contains the implementation of the
   following network elements:
@@ -25,7 +34,9 @@
 
 # Where to start
 
-  The Openair-cn HSS code is written, executed, and tested on UBUNTU server bionic version.
+  The Openair-cn HSS code is written, executed, and tested on `UBUNTU` server `bionic` version.
+
+  It is also built and tested on `RHEL8` platform (such as `Openshift`).
 
   More details on the deployment options and the supported feature set is available on this [page](docs/FEATURE_SET.md).
 

@@ -58,4 +58,5 @@
    -  Container
    -  Virtual Machine
 
+**We strongly recommend a container-based deployment (either in a `docker-compose` fashion, or in a `Kubernetes`-like cluster).**
 
