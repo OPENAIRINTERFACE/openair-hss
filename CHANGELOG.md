@@ -1,5 +1,12 @@
 # RELEASE NOTES: #
 
+## v1.1.2 -- July 2021 ##
+
+* Enable Dual-Registration- 5G-Indicator flag in S6a/ULR
+* Fix users' provision in case of multi-pdn
+* Adding correct TZ env var to dockerfiles
+* Improved Continuous Integration
+
 ## v1.1.1 -- February 2021 ##
 
 *  Cloud-native support
