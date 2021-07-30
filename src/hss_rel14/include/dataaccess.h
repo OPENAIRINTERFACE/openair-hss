@@ -63,6 +63,7 @@ class DAEvent {
     extid.clear();
     ui_json.clear();
     mec_json.clear();
+    monitoring_type = 0;
   }
 
   std::string scef_id;
