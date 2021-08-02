@@ -20,3 +20,7 @@
 // *INDENT-ON*
 memleak:src/hss_rel14/src/dataaccess.cpp
 va_start_referencePassed:src/hss_rel14/util/src/slogger.cpp
+operatorEqVarError:src/hss_rel14/util/src/scassandra.cpp
+//
+uninitMemberVar:src/hss_rel14/src/s6as6d_impl.cpp:899
+uninitMemberVar:src/hss_rel14/src/s6as6d_impl.cpp:1756
