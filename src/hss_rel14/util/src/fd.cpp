@@ -207,6 +207,7 @@ void FDEngine::advertiseSupport(
 FDDictionaryEntry::FDDictionaryEntry() {
   m_destroy = false;
   m_de      = NULL;
+  m_dict    = NULL;
 }
 
 FDDictionaryEntry::FDDictionaryEntry(
