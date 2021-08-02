@@ -92,7 +92,10 @@ void SMutex::leave() {
 ////////////////////////////////////////////////////////////////////////////////
 
 SSemaphore::SSemaphore() {
-  mInitialized = false;
+  mInitialized  = false;
+  mCurrCount    = 0;
+  mInitialCount = 0;
+  mMaxCount     = 0;
 }
 
 SSemaphore::SSemaphore(
