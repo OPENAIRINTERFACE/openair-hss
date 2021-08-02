@@ -24,8 +24,15 @@
 
 using namespace CachedDNS;
 
-Parser::Parser(Query* q, unsigned char* rdata, int rlen) : m_query(q) {
+Parser::Parser(Query* q, unsigned char* rdata, int rlen)
+    : m_query(q), m_rdata(NULL) {
   m_data.setData(rdata, rlen);
+  m_qdcount  = 0;
+  m_ancount  = 0;
+  m_nscount  = 0;
+  m_arcount  = 0;
+  m_ttl      = 0;
+  m_rdlength = 0;
 }
 
 void Parser::parse() {
