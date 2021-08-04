@@ -22,7 +22,9 @@
 #include "options.h"
 #include "logger.h"
 
-SMSRouter::SMSRouter() : m_s6c(NULL) {}
+SMSRouter::SMSRouter() : m_s6c(NULL), m_sgd(NULL) {
+  m_repetitive = false;
+}
 
 SMSRouter::~SMSRouter() {}
 

@@ -34,6 +34,7 @@ SSysLog::SSysLog(const std::string& identity, int option)
 }
 SSysLog::SSysLog(const std::string& identity, int option, int facility)
     : m_ident(identity), m_option(option), m_facility(facility) {
+  m_isopen = false;
   openSysLog();
 }
 

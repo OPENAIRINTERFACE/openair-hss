@@ -997,7 +997,8 @@ NodeSelectorResultList& NodeSelector::process() {
 }
 
 NodeSelector::NodeSelector() {
-  m_query = NULL;
+  m_query          = NULL;
+  m_desiredService = x_3gpp_unknown;
 }
 
 NodeSelector::~NodeSelector() {

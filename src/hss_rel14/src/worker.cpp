@@ -17,7 +17,9 @@
 #include "worker.h"
 #include "logger.h"
 
-WorkerManager::WorkerManager() {}
+WorkerManager::WorkerManager() {
+  m_numWorkers = 0;
+}
 
 WorkerManager::~WorkerManager() {}
 

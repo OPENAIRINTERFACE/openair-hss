@@ -39,7 +39,6 @@ class OssOptionReader {
     FILE* fp = fopen(m_file.c_str(), "r");
 
     if (fp == NULL) {
-      fclose(fp);
       return false;
     }
 

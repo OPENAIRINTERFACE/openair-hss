@@ -876,7 +876,10 @@ enum DiameterNaptrTypeEnum { dnt_unknown, dnt_hostname, dnt_service };
 
 class DiameterNaptr {
  public:
-  DiameterNaptr(DiameterNaptrTypeEnum drt) : m_type(drt) {}
+  DiameterNaptr(DiameterNaptrTypeEnum drt) : m_type(drt) {
+    m_order      = 0;
+    m_preference = 0;
+  }
 
   virtual ~DiameterNaptr() {}
 
@@ -963,7 +966,11 @@ class DiameterHost {
 
 class DiameterSrv {
  public:
-  DiameterSrv() {}
+  DiameterSrv() {
+    m_priority = 0;
+    m_weight   = 0;
+    m_port     = 0;
+  }
   ~DiameterSrv() {}
 
   uint16_t getPriority() { return m_priority; }
