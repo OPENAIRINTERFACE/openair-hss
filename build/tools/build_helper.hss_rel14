@@ -190,7 +190,7 @@ init_submodules()
   local cnt="0"
   while [ $cnt -lt 3 ]
   do
-      git submodule foreach git pull origin master
+      git submodule foreach "git pull origin main || git pull origin master || true"
       ret=$?
       if [[ $ret -ne 0 ]]
       then
