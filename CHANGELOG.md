@@ -1,5 +1,10 @@
 # RELEASE NOTES: #
 
+## v1.1.3 -- September 2021 ##
+
+* Fix build on external git sub-modules that are using `main` as master branch name
+* Code clean-up with no more cppcheck errors
+
 ## v1.1.2 -- July 2021 ##
 
 * Enable Dual-Registration- 5G-Indicator flag in S6a/ULR
