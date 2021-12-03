@@ -158,7 +158,9 @@ init_submodules()
       mkdir build/git_submodules/
       len=${#url_list[@]}
       for (( i=0; i<$len; i++ )); do
-        git submodule add -b master ${url_list[$i]} ${path_list[$i]} 2>&1 > /dev/null
+        for branch in master main; do
+          git submodule add -b $branch ${url_list[$i]} ${path_list[$i]} 2>&1 > /dev/null
+        done
       done
       git submodule deinit --all --force 2>&1 > /dev/null
     fi
