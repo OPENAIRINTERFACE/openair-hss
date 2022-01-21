@@ -62,9 +62,10 @@ COPY . .
 
 # Installing and Building HSS
 WORKDIR /openair-hss/scripts
-RUN ./build_hss_rel14 --check-installed-software --force
-RUN cp /usr/local/lib64/libpistache.a /usr/local/lib/libpistache.a
-RUN ./build_hss_rel14 --clean --build-type Release
+RUN ./build_hss_rel14 --check-installed-software --force && \
+    cp /usr/local/lib64/libpistache.a /usr/local/lib/libpistache.a
+RUN ./build_hss_rel14 --clean --build-type Release && \
+    mv /openair-hss/build/hss_rel14/bin/hss /openair-hss/build/hss_rel14/bin/oai_hss
 
 #---------------------------------------------------------------------
 # TARGET IMAGE
@@ -95,32 +96,40 @@ RUN yum update -y && \
 
 # Copying executable and generated libraries
 WORKDIR /openair-hss/bin
-COPY --from=oai-hss-builder /openair-hss/build/hss_rel14/bin/hss oai_hss
-COPY --from=oai-hss-builder /openair-hss/scripts/entrypoint.sh .
+COPY --from=oai-hss-builder \
+    /openair-hss/build/hss_rel14/bin/oai_hss \
+    /openair-hss/scripts/entrypoint.sh \
+    ./
 
-COPY --from=oai-hss-builder /usr/local/lib/libfd* /usr/local/lib/
+COPY --from=oai-hss-builder \
+    /usr/local/lib/libfd* \
+    /usr/local/lib64/libcassandra* \
+    /usr/local/lib64/libuv.so \
+    /usr/local/lib/
 COPY --from=oai-hss-builder /usr/local/lib/freeDiameter/* /usr/local/lib/freeDiameter/
-COPY --from=oai-hss-builder /usr/local/lib64/libcassandra* /usr/local/lib/
-COPY --from=oai-hss-builder /usr/local/lib64/libuv.so /usr/local/lib/
 RUN ldconfig && ldd /openair-hss/bin/oai_hss
 
 # Copying template configuration files
 # The configuration folder will be flat
 WORKDIR /openair-hss/etc
-COPY --from=oai-hss-builder /openair-hss/etc/hss_rel14.conf .
-COPY --from=oai-hss-builder /openair-hss/etc/hss_rel14.json .
-RUN sed -i -e 's#freeDiameter##' hss_rel14.json
-COPY --from=oai-hss-builder /openair-hss/etc/acl.conf .
-COPY --from=oai-hss-builder /openair-hss/etc/oss.json .
-COPY --from=oai-hss-builder /openair-hss/etc/hss_rel14_fd.conf .
-RUN sed -i -e "s#@PREFIX@/freeDiameter#@PREFIX@#g" hss_rel14_fd.conf
+COPY --from=oai-hss-builder \
+    /openair-hss/etc/hss_rel14.conf \
+    /openair-hss/etc/hss_rel14.json \
+    /openair-hss/etc/acl.conf \
+    /openair-hss/etc/oss.json \
+    /openair-hss/etc/hss_rel14_fd.conf \
+    ./
+RUN sed -i -e 's#freeDiameter##' hss_rel14.json && \
+    sed -i -e "s#@PREFIX@/freeDiameter#@PREFIX@#g" hss_rel14_fd.conf
 
 # Copy the certificate generation script
 WORKDIR /openair-hss/scripts
-COPY --from=oai-hss-builder /openair-hss/src/hss_rel14/bin/make_certs.sh .
-COPY --from=oai-hss-builder /openair-hss/scripts/data_provisioning_users .
-COPY --from=oai-hss-builder /openair-hss/scripts/data_provisioning_mme .
-COPY --from=oai-hss-builder /wait-for-it/wait-for-it.sh .
+COPY --from=oai-hss-builder \
+    /openair-hss/src/hss_rel14/bin/make_certs.sh \
+    /openair-hss/scripts/data_provisioning_users \
+    /openair-hss/scripts/data_provisioning_mme \
+    /wait-for-it/wait-for-it.sh \
+    ./
 RUN sed -i -e "s@/freeDiameter@@" make_certs.sh
 
 WORKDIR /openair-hss
