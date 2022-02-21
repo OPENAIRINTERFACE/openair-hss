@@ -1,5 +1,11 @@
 # RELEASE NOTES: #
 
+## v1.2.0 -- February 2022 ##
+
+* Obsolescence of Legacy OAI-MME
+* Build fixes
+* Docker image layer optimization
+
 ## v1.1.3 -- September 2021 ##
 
 * Fix build on external git sub-modules that are using `main` as master branch name
