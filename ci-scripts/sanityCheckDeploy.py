@@ -145,8 +145,7 @@ class deploySanityCheckTest():
         # check if there is an entrypoint
         entrypoint = re.search('entrypoint', str(res))
         if entrypoint is not None:
-            subprocess_run_w_echo('wget --quiet https://raw.githubusercontent.com/OPENAIRINTERFACE/openair-mme/develop/ci-scripts/generateConfigFiles.py -O ci-scripts/generateMmeConfigFiles.py')
-            subprocess_run_w_echo('python3 ci-scripts/generateMmeConfigFiles.py --kind=MME --hss_s6a=' + CI_HSS_S6A_ADDR + ' --mme_s6a=' + CI_MME_S6A_ADDR + ' --mme_s1c_IP=' + CI_MME_S1C_ADDR + ' --mme_s1c_name=eth3 --mme_s10_IP=' + CI_MME_S10_ADDR + ' --mme_s10_name=eth2 --mme_s11_IP=' + CI_MME_S11_ADDR + ' --mme_s11_name=eth1 --spgwc0_s11_IP=' + CI_DUMMY_SPGWC_ADDR + ' --from_docker_file --env_for_entrypoint')
+            subprocess_run_w_echo('python3 ci-scripts/legacy-oai-mme/generateConfigFiles.py --kind=MME --hss_s6a=' + CI_HSS_S6A_ADDR + ' --mme_s6a=' + CI_MME_S6A_ADDR + ' --mme_s1c_IP=' + CI_MME_S1C_ADDR + ' --mme_s1c_name=eth3 --mme_s10_IP=' + CI_MME_S10_ADDR + ' --mme_s10_name=eth2 --mme_s11_IP=' + CI_MME_S11_ADDR + ' --mme_s11_name=eth1 --spgwc0_s11_IP=' + CI_DUMMY_SPGWC_ADDR + ' --from_docker_file --env_for_entrypoint')
             # S6A to HSS will be on `eth0`
             # S11 to SPGW-C will be on `eth1`
             # S10 to another MME will be on `eth2`
