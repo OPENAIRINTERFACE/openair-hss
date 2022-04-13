@@ -53,8 +53,10 @@ COPY . .
 
 # Installing and Building HSS
 WORKDIR /openair-hss/scripts
-RUN ./build_hss_rel14 --check-installed-software --force
+RUN ./build_hss_rel14 --check-installed-software --force && \
+    ldconfig
 RUN ./build_hss_rel14 --clean --build-type Release && \
+    ldd /openair-hss/build/hss_rel14/bin/hss && \
     mv /openair-hss/build/hss_rel14/bin/hss /openair-hss/build/hss_rel14/bin/oai_hss
 
 #---------------------------------------------------------------------
@@ -71,7 +73,6 @@ RUN apt-get update && \
       psmisc \
       openssl \
       net-tools \
-      tshark \
       libsctp1 \
       libuv1 \
       libconfig9 \
@@ -94,6 +95,9 @@ COPY --from=oai-hss-builder \
     /usr/local/lib/x86_64-linux-gnu/libcassandra* \
     /usr/local/lib/
 COPY --from=oai-hss-builder /usr/local/lib/freeDiameter/* /usr/local/lib/freeDiameter/
+
+RUN ldconfig && \
+    ldd /openair-hss/bin/oai_hss
 
 # Copying template configuration files
 # The configuration folder will be flat

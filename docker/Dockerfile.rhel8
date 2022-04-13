@@ -65,8 +65,10 @@ COPY . .
 # Installing and Building HSS
 WORKDIR /openair-hss/scripts
 RUN ./build_hss_rel14 --check-installed-software --force && \
-    cp /usr/local/lib64/libpistache.a /usr/local/lib/libpistache.a
+    cp /usr/local/lib64/libpistache.a /usr/local/lib/libpistache.a && \
+    ldconfig
 RUN ./build_hss_rel14 --clean --build-type Release && \
+    ldd /openair-hss/build/hss_rel14/bin/hss && \
     mv /openair-hss/build/hss_rel14/bin/hss /openair-hss/build/hss_rel14/bin/oai_hss
 
 #---------------------------------------------------------------------
@@ -92,7 +94,7 @@ RUN yum update -y && \
        python3-pip && \
     echo "/usr/local/lib" > /etc/ld.so.conf.d/local-lib.conf && \
     yum clean all -y && \
-    rm -rf /var/cache/yum && \
+    rm -rf /var/cache/yum /var/cache/dnf && \
     pip2 install --user cassandra-driver && \
     pip3 install --user cassandra-driver
 
@@ -109,7 +111,8 @@ COPY --from=oai-hss-builder \
     /usr/local/lib64/libuv.so \
     /usr/local/lib/
 COPY --from=oai-hss-builder /usr/local/lib/freeDiameter/* /usr/local/lib/freeDiameter/
-RUN ldconfig && ldd /openair-hss/bin/oai_hss
+RUN ldconfig && \
+    ldd /openair-hss/bin/oai_hss
 
 # Copying template configuration files
 # The configuration folder will be flat
