@@ -58,6 +58,7 @@ def perform_flattening(tag):
     if cli == '':
         print ('No docker / podman installed: quitting')
         return -1
+
     print (f'Flattening {tag}')
     # Creating a container
     cmd = cli + ' run --name test-flatten --entrypoint /bin/true -d ' + tag
