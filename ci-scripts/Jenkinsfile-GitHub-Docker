@@ -187,7 +187,6 @@ pipeline {
                 myShCmd('sudo podman build --no-cache --target oai-hss --tag oai-hss:' + hss_tag + ' --file docker/Dockerfile.rhel8 . > archives/hss_podman_image_build.log 2>&1', rem_rhel_host_flag, rem_rhel_host_user, rem_rhel_host)
                 myShCmd('sudo podman image ls >> archives/hss_podman_image_build.log', rem_rhel_host_flag, rem_rhel_host_user, rem_rhel_host)
                 // Putting a place holder to try out on the flattening of image.
-                // If not satisfactory, we can remove it.
                 myShCmd('python3 ./ci-scripts/flatten_image.py --tag oai-hss:' + hss_tag, rem_rhel_host_flag, rem_rhel_host_user, rem_rhel_host)
                 if (env.ghprbPullId != null) {
                   myShCmd('sudo podman image tag oai-hss:' + hss_tag + ' oai-hss:' + rhel_hss_tag, rem_rhel_host_flag, rem_rhel_host_user, rem_rhel_host)
