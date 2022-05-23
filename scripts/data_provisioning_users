@@ -89,17 +89,15 @@ def main():
     parser.add_argument('-E', '--ue-ambr-max-requested-bandwidth-dl', type=int,   default=40000000, help="Max requested DL bandwidth in bits per seconds for UE")
     
     parser.add_argument('-k', '--key',          default='8baf473f2f8fd09487cccbd7097c6862', help="LTE K (common for all IMSI)=8baf473f2f8fd09487cccbd7097c6862 for OP=11111111111111111111111111111111\n\
-
-    parser.add_argument('-l', '--cassandra-login', default='cassandra', help="cassandra user")
                                                                                                 LTE K (common for all IMSI)=fec86ba6eb707ed08905757b1bb44b8f for OP=1006020f0a478bf6b699f15c062e42b3")
+    parser.add_argument('-l', '--cassandra-login', default='cassandra', help="cassandra user")
     parser.add_argument('-I', '--imsi-first',   default='001010000000001',     help="First IMSI for creating subscribers")
     parser.add_argument('-M', '--msisdn-first', default='+33663000021',        help="MSISDN of users (TODO: distincts MSISDN)")
     parser.add_argument('-m', '--mme-identity', default='mme.openair4G.eur',   help="Granted MME access to HSS")
     parser.add_argument('-n', '--no-of-users',  type=int, default=200,         help="Number of users")
     parser.add_argument('-o', '--opc',          default='8e27b6af0e692e750f32667a3b14605d', help="OPC (common for all IMSI)=8e27b6af0e692e750f32667a3b14605d for OP=11111111111111111111111111111111\n\
-
-    parser.add_argument('-p', '--cassandra-password', default='my password', help="cassandra user password")
                                                                                                 LTE K (common for all IMSI)=c42449363bbad02b66d16bc975d77cc1 for OP=1006020f0a478bf6b699f15c062e42b3")
+    parser.add_argument('-p', '--cassandra-password', default='my password', help="cassandra user password")
     parser.add_argument('-q', '--sqn',          type=int, default=96,          help="SQN of the USIM of the subscriber")
     parser.add_argument('-r', '--realm',        default='openair4G.eur',       help="Realm of the CN")
     parser.add_argument('-s', '--static-ue-ipv4-allocation', default=None,     help="UE IPv4 address statically allocated by HSS, disabled if not provided")
