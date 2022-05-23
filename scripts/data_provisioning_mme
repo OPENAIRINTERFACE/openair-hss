@@ -18,6 +18,7 @@
 
 import argparse
 import logging
+from cassandra.auth import PlainTextAuthProvider
 from cassandra.cluster import Cluster
 
 #---------------------------------------------------------------------
@@ -40,7 +41,9 @@ def main():
     parser.add_argument('-C', '--cassandra-cluster', default='127.0.0.1',      help="Cassandra list of nodes")
     parser.add_argument('-I', '--id',   type=int, default=3,     help="MME Id")
     parser.add_argument('-i', '--mme-isdn', default = 'mme-isdn',                help="MME ISDN")
+    parser.add_argument('-l', '--cassandra-login', default = 'cassandra', help="cassandra user")
     parser.add_argument('-m', '--mme-identity', default='mme.openair4G.eur',   help="Granted MME access to HSS")
+    parser.add_argument('-p', '--cassandra-password', default = 'my password', help="user password")
     parser.add_argument('-r', '--realm',        default='openair4G.eur',       help="Realm of the CN")
     parser.add_argument('-R', '--ue-reachability',  type=int, default=0,       help="UE reachability")
     parser.add_argument('-t', '--truncate', default='False', choices=['True', 'TRUE', 'true', 'False', 'FALSE', 'false'], help="Truncate tables before populating them")
@@ -51,7 +54,9 @@ def main():
     # The set of IP addresses we pass to the :class:`~.Cluster` is simply an initial set of contact points.
     # After the driver connects to one of these nodes it will automatically discover the rest of the nodes 
     # in the cluster and connect to them, so you don't need to list every node in your cluster.
-    cluster = Cluster([args.cassandra_cluster])
+
+    ap = PlainTextAuthProvider(username=args.cassandra_login, password=args.cassandra_password)
+    cluster = Cluster([args.cassandra_cluster], protocol_version=2, auth_provider=ap)
     
     session = cluster.connect()
     # session.set_keyspace('mykeyspace')
