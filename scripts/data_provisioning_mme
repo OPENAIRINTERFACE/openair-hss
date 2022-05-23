@@ -56,7 +56,7 @@ def main():
     # in the cluster and connect to them, so you don't need to list every node in your cluster.
 
     ap = PlainTextAuthProvider(username=args.cassandra_login, password=args.cassandra_password)
-    cluster = Cluster([args.cassandra_cluster], protocol_version=2, auth_provider=ap)
+    cluster = Cluster([args.cassandra_cluster], auth_provider=ap)
     
     session = cluster.connect()
     # session.set_keyspace('mykeyspace')
