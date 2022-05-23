@@ -18,7 +18,6 @@ OS_DISTRO=$(grep "^ID=" /etc/os-release | sed "s/ID=//" | sed "s/\"//g")
 case "$OS_DISTRO" in
   fedora) OS_BASEDISTRO="fedora";;
   rhel)   OS_BASEDISTRO="fedora";;
-  centos) OS_BASEDISTRO="fedora";;
   debian) OS_BASEDISTRO="debian";;
   ubuntu) OS_BASEDISTRO="debian";;
 esac

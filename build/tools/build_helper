@@ -20,7 +20,7 @@
 # author Laurent Thomas, Lionel GAUTHIER
 #
 #######################################
-SUPPORTED_DISTRO="Ubuntu 14.04/16.04/17.04/17.10/18.04, CentOS 7/8, RHEL 7/8"
+SUPPORTED_DISTRO="Ubuntu 18.04, RHEL 7/8"
 if [ ! -f /etc/os-release ]; then
   echo_fatal "No /etc/os-release file found. You're likely on an unsupported distro."
 fi
@@ -29,7 +29,6 @@ OS_RELEASE=$(grep "^VERSION_ID=" /etc/os-release | sed "s/VERSION_ID=//" | sed "
 case "$OS_DISTRO" in
   fedora) OS_BASEDISTRO="fedora"; INSTALLER="dnf"; CMAKE="cmake" ;;
   rhel)   OS_BASEDISTRO="fedora"; INSTALLER="yum"; CMAKE="cmake3" ;;
-  centos) OS_BASEDISTRO="fedora"; INSTALLER="yum"; CMAKE="cmake3" ;;
   debian) OS_BASEDISTRO="debian"; INSTALLER="apt-get"; CMAKE="cmake" ;;
   ubuntu) OS_BASEDISTRO="debian"; INSTALLER="apt-get"; CMAKE="cmake" ;;
 esac
@@ -109,7 +108,7 @@ version_gt() {
 # If we can't check the distribution, it returns "Unknown"
 # This function return always true as exit code by design
 # Examples:
-#   ubuntu16.04
+#   ubuntu18.04
 #   debian8.5
 get_distribution_release() {
     if [[ ! -z "$OS_DISTRO$OS_RELEASE" ]]; then
@@ -125,18 +124,13 @@ check_supported_distribution() {
     case "$distribution" in
         "ubuntu20.04") return 0 ;;
         "ubuntu18.04") return 0 ;;
-        "ubuntu17.10") return 0 ;;
-        "ubuntu17.04") return 0 ;;
-        "ubuntu16.04") return 0 ;;
-        "ubuntu14.04") return 0 ;;
         "rhel7")       return 0 ;;
         "rhel8")       return 0 ;;
         "rhel8.2")     return 0 ;;
         "rhel8.3")     return 0 ;;
         "rhel8.4")     return 0 ;;
         "rhel8.5")     return 0 ;;
-        "centos7")     return 0 ;;
-        "centos8")     return 0 ;;
+        "rhel8.6")     return 0 ;;
     esac
     return 1
 }
@@ -303,14 +297,15 @@ update_package_db() {
 check_enable_epel_repos() {
   # on Enterprise Linuxes, ensure EPEL repos are installed
   # (provides: libidn2-devel, vconfig, iperf, phpMyAdmin, dkms, ...)
-  if [[ "$OS_DISTRO" == "rhel" ]] || [[ "$OS_DISTRO" == "centos" ]]; then
+  if [[ "$OS_DISTRO" == "rhel" ]]; then
     if rpm -q epel-release > /dev/null; then
       echo "EPEL repos already present. Good."
     else
       if [[ "$OS_DISTRO$OS_RELEASE" == "rhel8.2" ]] || \
          [[ "$OS_DISTRO$OS_RELEASE" == "rhel8.3" ]] || \
          [[ "$OS_DISTRO$OS_RELEASE" == "rhel8.4" ]] || \
-         [[ "$OS_DISTRO$OS_RELEASE" == "rhel8.5" ]]; then
+         [[ "$OS_DISTRO$OS_RELEASE" == "rhel8.5" ]] || \
+         [[ "$OS_DISTRO$OS_RELEASE" == "rhel8.6" ]]; then
         echo "Bypassing EPEL repos for the moment"
       else
         echo "EPEL repos not present. Installing them."
