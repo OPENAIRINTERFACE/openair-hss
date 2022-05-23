@@ -139,12 +139,23 @@ class DataAccess {
   std::string& keyspace(const std::string& ks) { return m_db.keyspace(ks); }
   std::string& keyspace() { return m_db.keyspace(); }
 
+  std::string& user(const char* us) { return m_db.host(us); }
+  std::string& user(const std::string& us) { return m_db.host(us); }
+  std::string& user() { return m_db.host(); }
+
+  std::string& password(const char* pw) { return m_db.password(pw); }
+  std::string& password(const std::string& pw) { return m_db.password(pw); }
+  std::string& password() { return m_db.password(); }
+
+
   int protocolVersion(int pv) { return m_db.protocolVersion(pv); }
   int protocolVersion() { return m_db.protocolVersion(); }
 
   void connect();
-  void connect(const std::string& hst, const std::string& ks = "vhss");
-  void connect(const char* hst, const char* ks = "vhss");
+  void connect(const std::string& hst, const std::string& usr,
+		  const std::string& pw, const std::string& ks = "vhss");
+  void connect(const char* hst, const char* usr,
+		  const char* pw, const char* ks = "vhss");
 
   void disconnect();
 

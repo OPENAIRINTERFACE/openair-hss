@@ -97,15 +97,19 @@ DataAccess::~DataAccess() {
 /////////////////////////////// PUBLIC METHODS /////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-void DataAccess::connect(const std::string& hst, const std::string& ks) {
+void DataAccess::connect(const std::string& hst, const std::string& usr, const std::string& pw, const std::string& ks) {
   host(hst);
   keyspace(ks);
+  user(usr);
+  password(pw);
   connect();
 }
 
-void DataAccess::connect(const char* hst, const char* ks) {
+void DataAccess::connect(const char* hst, const char* usr, const char* pw, const char* ks) {
   host(hst);
   keyspace(ks);
+  user(usr);
+  password(pw);
   connect();
 }
 
