@@ -24,6 +24,7 @@ apiVersion: v1
 kind: ImageStream
 metadata:
     name: oai-hss
-    namespace: oai
+    namespace: oai4g
 status:
-    tag: onap-0.1.0
+    tag: oai-oc
+    

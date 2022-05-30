@@ -29,9 +29,7 @@ spec:
     source:
         git:
             uri: "https://github.com/OPENAIRINTERFACE/openair-hss.git"
-            ref: "develop"
-            httpProxy: http://proxy.eurecom.fr:8080
-            httpsProxy: https://proxy.eurecom.fr:8080
+            ref: "cassandra4-oc4"
         secrets:
           - secret:
               name: etc-pki-entitlement
@@ -49,4 +47,4 @@ spec:
     output:
         to:
             kind: "ImageStreamTag"
-            name: "oai-hss:onap-0.1.0"
+            name: "oai-hss:oai-oc"
