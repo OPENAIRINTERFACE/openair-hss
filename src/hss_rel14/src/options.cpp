@@ -176,7 +176,7 @@ bool Options::parseJson() {
     }
     if (!(options & cassuser) && hssSection.HasMember("cassusr")) {
       if (!hssSection["cassusr"].IsString()) {
-        std::cout << "Error parsing json value: [cassusr]" << std::endl;
+        std::cout << "Error parsing json value: [cassuser]" << std::endl;
         return false;
       }
       m_cassuser = hssSection["cassusr"].GetString();
