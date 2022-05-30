@@ -114,8 +114,7 @@ int FDHss::s6a_peer_validate(
 }
 
 bool FDHss::initdb(hss_config_t* hss_config_p) {
-  m_dbobj.connect(hss_config_p->cassandra_server, hss_config_p->cassandra_user,
-		  hss_config_p->cassandra_password, hss_config_p->cassandra_database);
+  m_dbobj.connect(hss_config_p->cassandra_server);
   return true;
 }
 

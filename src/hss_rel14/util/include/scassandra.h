@@ -207,14 +207,6 @@ class SCassandra {
   std::string& keyspace(const std::string& ks) { return keyspace(ks.c_str()); }
   std::string& keyspace() { return m_keyspace; }
 
-  std::string& user(const char* us) { return m_user = us; }
-  std::string& user(const std::string& us) { return user(us.c_str()); }
-  std::string& user() { return m_user; }
-
-  std::string& password(const char* pw) { return m_password = pw; }
-  std::string& password(const std::string& pw) { return password(pw.c_str()); }
-  std::string& password() { return m_password; }
-
   int protocolVersion(int protver) { return m_protver = protver; }
   int protocolVersion() { return m_protver; }
 
@@ -230,8 +222,6 @@ class SCassandra {
   CassSession* m_session;
   std::string m_host;
   std::string m_keyspace;
-  std::string m_user;
-  std::string m_password;
   int m_protver;
 };
 

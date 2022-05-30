@@ -16,8 +16,6 @@
 
 #include "scassandra.h"
 
-#include <string.h>
-
 SCassValue::SCassValue() : m_value(NULL) {}
 
 SCassValue::SCassValue(const CassValue* value) : m_value(value) {}
@@ -341,65 +339,6 @@ CassError SCassStatement::setPagingState(SCassResult& result) {
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-typedef struct Credentials_ {
-  const char* password;
-  const char* username;
-} Credentials;
-
-void on_auth_initial(CassAuthenticator* auth, void* data) {
-  /*
-   * This callback is used to initiate a request to begin an authentication
-   * exchange. Required resources can be acquired and initialized here.
-   *
-   * Resources required for this specific exchange can be stored in the
-   * auth->data field and will be available in the subsequent challenge
-   * and success phases of the exchange. The cleanup callback should be used to
-   * free these resources.
-   */
-
-  /*
-   * The data parameter contains the credentials passed in when the
-   * authentication callbacks were set and is available to all
-   * authentication exchanges.
-   */
-  const Credentials* credentials = (const Credentials*)data;
-
-  size_t username_size = strlen(credentials->username);
-  size_t password_size = strlen(credentials->password);
-  size_t size = username_size + password_size + 2;
-
-  char* response = cass_authenticator_response(auth, size);
-
-  /* Credentials are prefixed with '\0' */
-  response[0] = '\0';
-  memcpy(response + 1, credentials->username, username_size);
-
-  response[username_size + 1] = '\0';
-  memcpy(response + username_size + 2, credentials->password, password_size);
-}
-
-void on_auth_challenge(CassAuthenticator* auth, void* data, const char* token, size_t token_size) {
-  /*
-   * Not used for plain text authentication, but this is to be used
-   * for handling an authentication challenge initiated by the server.
-   */
-}
-
-void on_auth_success(CassAuthenticator* auth, void* data, const char* token, size_t token_size) {
-  /*
-   * Not used for plain text authentication, but this is to be used
-   * for handling the success phase of an exchange.
-   */
-}
-
-void on_auth_cleanup(CassAuthenticator* auth, void* data) {
-  /*
-   * No resources cleanup is necessary for plain text authentication, but
-   * this is used to cleanup resources acquired during the authentication
-   * exchange.
-   */
-}
-
 SCassandra::SCassandra() : m_cluster(NULL), m_session(NULL), m_protver(3) {}
 
 SCassandra::~SCassandra() {
@@ -424,12 +363,6 @@ SCassFuture SCassandra::connect() {
   // create the cluster object
   m_cluster = cass_cluster_new();
 
-  /* Setup authentication callbacks and credentials */
-  CassAuthenticatorCallbacks auth_callbacks = { on_auth_initial, on_auth_challenge, on_auth_success,
-                                                on_auth_cleanup };
-
-  Credentials credentials = { user().c_str(), password().c_str() };
-
   // set the protocol version
   cass_cluster_set_protocol_version(m_cluster, m_protver);
 
@@ -438,9 +371,6 @@ SCassFuture SCassandra::connect() {
 
   // add contact points
   cass_cluster_set_contact_points(m_cluster, m_host.c_str());
-
-  /* Set custom authentication callbacks and credentials */
-  cass_cluster_set_authenticator_callbacks(m_cluster, &auth_callbacks, NULL, &credentials);
 
   // open without keyspace if keyspace is not defined
   if (m_keyspace.empty())
