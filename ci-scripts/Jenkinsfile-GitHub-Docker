@@ -110,16 +110,23 @@ pipeline {
             shortenShaOne = shortenShaOne.trim()
             sh "./ci-scripts/doGitHubPullRequestTempMerge.sh --src-branch ${env.ghprbSourceBranch} --src-commit ${env.ghprbActualCommit} --target-branch ${env.ghprbTargetBranch} --target-commit ${GIT_COMMIT}"
             sh "sleep 10"
-            hss_tag = 'ci-temp'
-            rhel_hss_tag = 'ci-temp-pr-' + env.ghprbPullId + '-' + shortenShaOne
+            hss_tag = 'ci-temp-pr-' + env.ghprbPullId + '-' + shortenShaOne
             hss_branch = env.ghprbSourceBranch
-            echo "PR TAG     is ${rhel_hss_tag}"
+            echo "PR TAG     is ${hss_tag}"
           } else {
             echo "======= THIS IS A PUSH EVENT ======"
             echo "Git Branch is ${GIT_BRANCH}"
             echo "Git Commit is ${GIT_COMMIT}"
+            shortenShaOne = sh returnStdout: true, script: 'git log -1 --pretty=format:"%h" ' + env.GIT_COMMIT
+            shortenShaOne = shortenShaOne.trim()
+            hss_tag = 'develop-' + shortenShaOne
+            echo "DEV TAG    is ${hss_tag}"
             // Making a hard copy of the SHA-ONE
             getCommitSha()
+            // Prevention when developing a new version of this pipeline
+            if ((env.GIT_BRANCH != 'develop') && (env.GIT_BRANCH != 'origin/develop')) {
+              error "Stopping pipeline because not the develop branch"
+            }
           }
         }
       }
@@ -152,6 +159,12 @@ pipeline {
               // If not satisfactory, we can remove it.
               myShCmd('python3 ./ci-scripts/flatten_image.py --tag oai-hss:' + hss_tag, rem_u18_host_flag, rem_u18_host_user, rem_u18_host)
               myShCmd('docker image ls >> archives/hss_docker_image_build.log', rem_u18_host_flag, rem_u18_host_user, rem_u18_host)
+              // Pushing to local private registry for testing purpose
+              myShCmd('docker login -u oaicicd -p oaicicd selfix.sboai.cs.eurecom.fr', rem_u18_host_flag, rem_u18_host_user, rem_u18_host)
+              myShCmd('docker image tag oai-hss:' + hss_tag + ' selfix.sboai.cs.eurecom.fr/oai-hss:' + hss_tag, rem_u18_host_flag, rem_u18_host_user, rem_u18_host)
+              myShCmd('docker push selfix.sboai.cs.eurecom.fr/oai-hss:' + hss_tag, rem_u18_host_flag, rem_u18_host_user, rem_u18_host)
+              myShCmd('docker rmi oai-hss:' + hss_tag + ' selfix.sboai.cs.eurecom.fr/oai-hss:' + hss_tag, rem_u18_host_flag, rem_u18_host_user, rem_u18_host)
+              myShCmd('docker logout selfix.sboai.cs.eurecom.fr', rem_u18_host_flag, rem_u18_host_user, rem_u18_host)
             }
           }
           post {
@@ -191,9 +204,6 @@ pipeline {
                 myShCmd('sudo podman image ls >> archives/hss_podman_image_build.log', rem_rhel_host_flag, rem_rhel_host_user, rem_rhel_host)
                 // Putting a place holder to try out on the flattening of image.
                 myShCmd('python3 ./ci-scripts/flatten_image.py --tag oai-hss:' + hss_tag, rem_rhel_host_flag, rem_rhel_host_user, rem_rhel_host)
-                if (env.ghprbPullId != null) {
-                  myShCmd('sudo podman image tag oai-hss:' + hss_tag + ' oai-hss:' + rhel_hss_tag, rem_rhel_host_flag, rem_rhel_host_user, rem_rhel_host)
-                }
               }
             }
           }

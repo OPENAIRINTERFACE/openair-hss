@@ -135,7 +135,7 @@ COPY --from=oai-hss-builder \
     /openair-hss/scripts/data_provisioning_mme \
     /wait-for-it/wait-for-it.sh \
     ./
-RUN sed -i -e "s@/freeDiameter@@" make_certs.sh
+RUN sed -i -e "s@/freeDiameter@@" -e "s@\$SUDO @@" make_certs.sh
 
 WORKDIR /openair-hss
 RUN openssl rand -out /root/.rnd 128
