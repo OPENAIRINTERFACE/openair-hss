@@ -163,7 +163,7 @@ pipeline {
               myShCmd('docker login -u oaicicd -p oaicicd selfix.sboai.cs.eurecom.fr', rem_u18_host_flag, rem_u18_host_user, rem_u18_host)
               myShCmd('docker image tag oai-hss:' + hss_tag + ' selfix.sboai.cs.eurecom.fr/oai-hss:' + hss_tag, rem_u18_host_flag, rem_u18_host_user, rem_u18_host)
               myShCmd('docker push selfix.sboai.cs.eurecom.fr/oai-hss:' + hss_tag, rem_u18_host_flag, rem_u18_host_user, rem_u18_host)
-              myShCmd('docker rmi oai-hss:' + hss_tag + ' selfix.sboai.cs.eurecom.fr/oai-hss:' + hss_tag, rem_u18_host_flag, rem_u18_host_user, rem_u18_host)
+              myShCmd('docker rmi selfix.sboai.cs.eurecom.fr/oai-hss:' + hss_tag, rem_u18_host_flag, rem_u18_host_user, rem_u18_host)
               myShCmd('docker logout selfix.sboai.cs.eurecom.fr', rem_u18_host_flag, rem_u18_host_user, rem_u18_host)
             }
           }
@@ -411,6 +411,7 @@ pipeline {
           myShCmd('python3 ./ci-scripts/sanityCheckDeploy.py --action=RemoveAllContainers', rem_u18_host_flag, rem_u18_host_user, rem_u18_host)
           // Removing all intermediate networks
           myShCmd('python3 ./ci-scripts/sanityCheckDeploy.py --action=RemoveNetworks', rem_u18_host_flag, rem_u18_host_user, rem_u18_host)
+          myShCmd('docker rmi oai-hss:' + hss_tag + ' || true', rem_u18_host_flag, rem_u18_host_user, rem_u18_host)
         }
       }
     }
@@ -485,7 +486,7 @@ pipeline {
               [$class: 'UsernamePasswordMultiBinding', credentialsId: "${params.DockerHubCredentials}", usernameVariable: 'DH_Username', passwordVariable: 'DH_Password']
             ]) {
               myShCmd("echo ${DH_Password} | docker login --username ${DH_Username} --password-stdin", rem_u18_host_flag, rem_u18_host_user, rem_u18_host)
-              myShCmd("docker image tag oai-hss:develop ${DH_Account}/oai-hss:develop", rem_u18_host_flag, rem_u18_host_user, rem_u18_host)
+              myShCmd("docker image tag oai-hss:" + hss_tag + " ${DH_Account}/oai-hss:develop", rem_u18_host_flag, rem_u18_host_user, rem_u18_host)
               myShCmd("docker push ${DH_Account}/oai-hss:develop", rem_u18_host_flag, rem_u18_host_user, rem_u18_host)
               myShCmd("docker rmi ${DH_Account}/oai-hss:develop", rem_u18_host_flag, rem_u18_host_user, rem_u18_host)
               myShCmd("docker logout", rem_u18_host_flag, rem_u18_host_user, rem_u18_host)
@@ -538,18 +539,9 @@ pipeline {
 
         // Removing temporary / intermediate images
         try {
-          if (env.ghprbPullId != null) {
-            myShCmd('docker image rm --force oai-hss:ci-temp', rem_u18_host_flag, rem_u18_host_user, rem_u18_host)
-          }
+          myShCmd('docker rmi oai-hss:' + hss_tag, rem_u18_host_flag, rem_u18_host_user, rem_u18_host)
         } catch (Exception e) {
-          echo "We failed to delete the OAI-HSS temp image"
-        }
-        try {
-          if (env.ghprbPullId != null) {
-            myShCmd('sudo podman image rm oai-hss:ci-temp', rem_rhel_host_flag, rem_rhel_host_user, rem_rhel_host)
-          }
-        } catch (Exception e) {
-          echo "We failed to delete the OAI-HSS temp image"
+          echo "We failed to delete the OAI-HSS local image"
         }
         try {
           myShCmd('docker image prune --force', rem_u18_host_flag, rem_u18_host_user, rem_u18_host)
