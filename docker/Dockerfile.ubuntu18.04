@@ -18,16 +18,16 @@
 #
 # Dockerfile for the Open-Air-Interface HSS service
 #   Valid for Ubuntu-18.04 (bionic)
+#             Ubuntu-20.04 (focal)
 #
 #---------------------------------------------------------------------
 
 #---------------------------------------------------------------------
 # BUILDER IMAGE
 #---------------------------------------------------------------------
-FROM ubuntu:bionic as oai-hss-builder
-
-ARG EURECOM_PROXY
-
+ARG BASE_IMAGE=ubuntu:bionic
+FROM $BASE_IMAGE as oai-hss-builder
+ENV IS_DOCKERFILE=1
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=Europe
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
@@ -39,8 +39,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Some GIT configuration command quite useful
-RUN /bin/bash -c "if [[ -v EURECOM_PROXY ]]; then git config --global http.proxy $EURECOM_PROXY; fi" && \
-    git config --global https.postBuffer 123289600 && \
+RUN git config --global https.postBuffer 123289600 && \
     git config --global http.sslverify false
 
 # wait for it
@@ -62,7 +61,7 @@ RUN ./build_hss_rel14 --clean --build-type Release && \
 #---------------------------------------------------------------------
 # TARGET IMAGE
 #---------------------------------------------------------------------
-FROM ubuntu:bionic as oai-hss
+FROM $BASE_IMAGE as oai-hss
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=Europe/Paris
 # We install some debug tools for the moment in addition of mandatory libraries
@@ -77,9 +76,7 @@ RUN apt-get update && \
       libuv1 \
       libconfig9 \
       libidn11 \
-      python \
       python3 \
-      python-cassandra \
       python3-cassandra && \
     rm -rf /var/lib/apt/lists/*
 
