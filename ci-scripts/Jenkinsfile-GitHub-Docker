@@ -481,10 +481,14 @@ pipeline {
             withCredentials([
               [$class: 'UsernamePasswordMultiBinding', credentialsId: "${params.DockerHubCredentials}", usernameVariable: 'DH_Username', passwordVariable: 'DH_Password']
             ]) {
+              myShCmd('docker login -u oaicicd -p oaicicd selfix.sboai.cs.eurecom.fr', rem_u18_host_flag, rem_u18_host_user, rem_u18_host)
+              myShCmd('docker pull selfix.sboai.cs.eurecom.fr/oai-hss:' + hss_tag, rem_u18_host_flag, rem_u18_host_user, rem_u18_host)
+              myShCmd('docker logout selfix.sboai.cs.eurecom.fr', rem_u18_host_flag, rem_u18_host_user, rem_u18_host)
               myShCmd("echo ${DH_Password} | docker login --username ${DH_Username} --password-stdin", rem_u18_host_flag, rem_u18_host_user, rem_u18_host)
-              myShCmd("docker image tag oai-hss:" + hss_tag + " ${DH_Account}/oai-hss:develop", rem_u18_host_flag, rem_u18_host_user, rem_u18_host)
+              myShCmd("docker image tag selfix.sboai.cs.eurecom.fr/oai-hss:" + hss_tag + " ${DH_Account}/oai-hss:develop", rem_u18_host_flag, rem_u18_host_user, rem_u18_host)
               myShCmd("docker push ${DH_Account}/oai-hss:develop", rem_u18_host_flag, rem_u18_host_user, rem_u18_host)
               myShCmd("docker rmi ${DH_Account}/oai-hss:develop", rem_u18_host_flag, rem_u18_host_user, rem_u18_host)
+              myShCmd('docker rmi selfix.sboai.cs.eurecom.fr/oai-hss:' + hss_tag, rem_u18_host_flag, rem_u18_host_user, rem_u18_host)
               myShCmd("docker logout", rem_u18_host_flag, rem_u18_host_user, rem_u18_host)
             }
           }
