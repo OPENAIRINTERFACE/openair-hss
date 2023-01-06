@@ -348,7 +348,7 @@ check_install_hss_software() {
         rm -f libuv-devel-1.23.1-1.module_el8+8246+46ee4016.x86_64.rpm libuv-1.23.1-1.el8.x86_64.rpm
         specific_packages="clang"
         ;;
-      "rhel8.2" | "rhel8.3" | "rhel8.4" | "rhel8.5")
+      "rhel8.2" | "rhel8.3" | "rhel8.4" | "rhel8.5" | "rhel8.6" | "rhel8.7" | "rhel8.8" )
         specific_packages="libuv"
         $SUDO yum install $OPTION --enablerepo="codeready-builder-for-rhel-8-x86_64-rpms" $specific_packages gcc-c++ make $CMAKE openssl-devel libtool m4 automake patch libmemcached-devel memcached gcc bison flex lksctp-tools-devel gnutls-devel libgcrypt-devel libidn-devel nettle-devel
         OPTION='${OPTION} --enablerepo="ubi-8-codeready-builder"'
@@ -381,7 +381,11 @@ check_install_hss_software() {
   if [[ "$(get_distribution_release)" == "rhel8.2" ]] || \
      [[ "$(get_distribution_release)" == "rhel8.3" ]] || \
      [[ "$(get_distribution_release)" == "rhel8.4" ]] || \
-     [[ "$(get_distribution_release)" == "rhel8.5" ]]; then
+     [[ "$(get_distribution_release)" == "rhel8.4" ]] || \
+     [[ "$(get_distribution_release)" == "rhel8.5" ]] || \
+     [[ "$(get_distribution_release)" == "rhel8.6" ]] || \
+     [[ "$(get_distribution_release)" == "rhel8.7" ]] || \
+     [[ "$(get_distribution_release)" == "rhel8.8" ]]; then
     echo "====== Raphael ===="
     echo "bypassing (already done) : $SUDO $INSTALLER install $OPTION $PACKAGE_LIST"
     build_libuv

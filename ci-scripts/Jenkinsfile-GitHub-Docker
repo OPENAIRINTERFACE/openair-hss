@@ -145,16 +145,12 @@ pipeline {
     }
     stage('Build Core Network Function') {
       parallel {
-        stage ('Build U18 HSS Image') {
+        stage ('Build Ubuntu HSS Image') {
           steps {
             script {
-              if (env.ghprbPullId == null) {
-                // Currently this pipeline only runs for pushes to `develop` branch
-                // First clean image registry
-                myShCmd('docker image rm oai-hss:develop', rem_u18_host_flag, rem_u18_host_user, rem_u18_host)
-              }
+              myShCmd('docker image rm oai-hss:' + hss_tag + ' || true', rem_u18_host_flag, rem_u18_host_user, rem_u18_host)
               myShCmd('docker image prune --force', rem_u18_host_flag, rem_u18_host_user, rem_u18_host)
-              myShCmd('docker build --no-cache --target oai-hss --tag oai-hss:' + hss_tag + ' --file docker/Dockerfile.ubuntu18.04 . > archives/hss_docker_image_build.log 2>&1', rem_u18_host_flag, rem_u18_host_user, rem_u18_host)
+              myShCmd('docker build --no-cache --target oai-hss --tag oai-hss:' + hss_tag + ' --file docker/Dockerfile.ubuntu . > archives/hss_docker_image_build.log 2>&1', rem_u18_host_flag, rem_u18_host_user, rem_u18_host)
               // Putting a place holder to try out on the flattening of image.
               // If not satisfactory, we can remove it.
               myShCmd('python3 ./ci-scripts/flatten_image.py --tag oai-hss:' + hss_tag, rem_u18_host_flag, rem_u18_host_user, rem_u18_host)
