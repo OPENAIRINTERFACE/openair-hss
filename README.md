@@ -59,4 +59,3 @@
 # Release Notes
 
   They are available on the [CHANGELOG](CHANGELOG.md) file.
-
