@@ -1,0 +1,75 @@
+diff --git a/build/tools/build_helper b/build/tools/build_helper
+index 45568b98..2edc3135 100644
+--- a/build/tools/build_helper
++++ b/build/tools/build_helper
+@@ -34,8 +34,8 @@ case "$OS_DISTRO" in
+   ubuntu) OS_BASEDISTRO="debian"; INSTALLER="apt-get"; CMAKE="cmake" ;;
+ esac
+ 
+-IS_CONTAINER=`egrep -c "docker|podman|kubepods|libpod|buildah" /proc/self/cgroup || true`
+-
++#IS_CONTAINER=`egrep -c "docker|podman|kubepods|libpod|buildah" /proc/self/cgroup || true`
++IS_CONTAINER=1
+ if [ $IS_CONTAINER -eq 0 ]
+ then
+   SUDO='sudo -S -E'
+diff --git a/scripts/data_provisioning_users b/scripts/data_provisioning_users
+index b5a016ee..f71e0c1c 100755
+--- a/scripts/data_provisioning_users
++++ b/scripts/data_provisioning_users
+@@ -179,7 +179,7 @@ def main():
+                 IF NOT EXISTS
+                 """,
+                 (imsi_str, msisdn, 41, args.key, args.opc, args.mme_identity, 3, args.realm, '2683b376d1056746de3b254012908e0e', args.sqn,
+-                '{"Subscription-Data":{"Access-Restriction-Data":41,"Subscriber-Status":0,"Network-Access-Mode":2,"Regional-Subscription-Zone-Code":["0x0123","0x4567","0x89AB","0xCDEF","0x1234","0x5678","0x9ABC","0xDEF0","0x2345","0x6789"],"MSISDN":"0x'+str(msisdn)+'",'+ue_ambr+',"APN-Configuration-Profile":{"Context-Identifier":0,"All-APN-Configurations-Included-Indicator":0,"APN-Configuration":{"Context-Identifier":0,"PDN-Type":0,'+served_party_ip_address+',"Service-Selection":"'+args.apn+'","EPS-Subscribed-QoS-Profile":{"QoS-Class-Identifier":9,"Allocation-Retention-Priority":{"Priority-Level":15,"Pre-emption-Capability":0,"Pre-emption-Vulnerability":0}},'+apn1_ambr+',"PDN-GW-Allocation-Type":0,"MIP6-Agent-Info":{"MIP-Home-Agent-Address":["172.26.17.183"]}},"APN-Configuration":{"Context-Identifier":1,"PDN-Type":0,'+served_party_ip_address+',"Service-Selection":"'+args.apn2+'","EPS-Subscribed-QoS-Profile":{"QoS-Class-Identifier":9,"Allocation-Retention-Priority":{"Priority-Level":13,"Pre-emption-Capability":1,"Pre-emption-Vulnerability":0}},'+apn2_ambr+',"PDN-GW-Allocation-Type":0,"MIP6-Agent-Info":{"MIP-Home-Agent-Address":["172.26.17.183"]}}},"Subscribed-Periodic-RAU-TAU-Timer":0}}'
++                '{"Subscription-Data":{"Access-Restriction-Data":41,"Subscriber-Status":0,"Network-Access-Mode":2,"MSISDN":"0x'+str(msisdn)+'",'+ue_ambr+',"APN-Configuration-Profile":{"Context-Identifier":0,"All-APN-Configurations-Included-Indicator":0,"APN-Configuration":{"Context-Identifier":0,"PDN-Type":0,'+served_party_ip_address+',"Service-Selection":"'+args.apn+'","EPS-Subscribed-QoS-Profile":{"QoS-Class-Identifier":9,"Allocation-Retention-Priority":{"Priority-Level":15,"Pre-emption-Capability":0,"Pre-emption-Vulnerability":0}},'+apn1_ambr+',"PDN-GW-Allocation-Type":0,"MIP6-Agent-Info":{"MIP-Home-Agent-Address":["172.26.17.183"]}},"APN-Configuration":{"Context-Identifier":1,"PDN-Type":0,'+served_party_ip_address+',"Service-Selection":"'+args.apn2+'","EPS-Subscribed-QoS-Profile":{"QoS-Class-Identifier":9,"Allocation-Retention-Priority":{"Priority-Level":13,"Pre-emption-Capability":1,"Pre-emption-Vulnerability":0}},'+apn2_ambr+',"PDN-GW-Allocation-Type":0,"MIP6-Agent-Info":{"MIP-Home-Agent-Address":["172.26.17.183"]}}},"Subscribed-Periodic-RAU-TAU-Timer":0}}'
+                 )
+             )
+         else:
+@@ -190,7 +190,7 @@ def main():
+                 IF NOT EXISTS
+                 """,
+                 (imsi_str, msisdn, 41, args.key, args.opc, args.mme_identity, 3, args.realm, '2683b376d1056746de3b254012908e0e', args.sqn,
+-                '{"Subscription-Data":{"Access-Restriction-Data":41,"Subscriber-Status":0,"Network-Access-Mode":2,"Regional-Subscription-Zone-Code":["0x0123","0x4567","0x89AB","0xCDEF","0x1234","0x5678","0x9ABC","0xDEF0","0x2345","0x6789"],"MSISDN":"0x'+str(msisdn)+'",'+ue_ambr+',"APN-Configuration-Profile":{"Context-Identifier":0,"All-APN-Configurations-Included-Indicator":0,"APN-Configuration":{"Context-Identifier":0,"PDN-Type":0,"Service-Selection":"'+args.apn+'","EPS-Subscribed-QoS-Profile":{"QoS-Class-Identifier":9,"Allocation-Retention-Priority":{"Priority-Level":15,"Pre-emption-Capability":0,"Pre-emption-Vulnerability":0}},'+apn1_ambr+',"PDN-GW-Allocation-Type":0,"MIP6-Agent-Info":{"MIP-Home-Agent-Address":["172.26.17.183"]}},"APN-Configuration":{"Context-Identifier":1,"PDN-Type":0,"Service-Selection":"'+args.apn2+'","EPS-Subscribed-QoS-Profile":{"QoS-Class-Identifier":9,"Allocation-Retention-Priority":{"Priority-Level":13,"Pre-emption-Capability":1,"Pre-emption-Vulnerability":0}},'+apn2_ambr+',"PDN-GW-Allocation-Type":0,"MIP6-Agent-Info":{"MIP-Home-Agent-Address":["172.26.17.183"]}}},"Subscribed-Periodic-RAU-TAU-Timer":0}}'
++                '{"Subscription-Data":{"Access-Restriction-Data":41,"Subscriber-Status":0,"Network-Access-Mode":2,"MSISDN":"0x'+str(msisdn)+'",'+ue_ambr+',"APN-Configuration-Profile":{"Context-Identifier":0,"All-APN-Configurations-Included-Indicator":0,"APN-Configuration":{"Context-Identifier":0,"PDN-Type":0,"Service-Selection":"'+args.apn+'","EPS-Subscribed-QoS-Profile":{"QoS-Class-Identifier":9,"Allocation-Retention-Priority":{"Priority-Level":15,"Pre-emption-Capability":0,"Pre-emption-Vulnerability":0}},'+apn1_ambr+',"PDN-GW-Allocation-Type":0,"MIP6-Agent-Info":{"MIP-Home-Agent-Address":["172.26.17.183"]}},"APN-Configuration":{"Context-Identifier":1,"PDN-Type":0,"Service-Selection":"'+args.apn2+'","EPS-Subscribed-QoS-Profile":{"QoS-Class-Identifier":9,"Allocation-Retention-Priority":{"Priority-Level":13,"Pre-emption-Capability":1,"Pre-emption-Vulnerability":0}},'+apn2_ambr+',"PDN-GW-Allocation-Type":0,"MIP6-Agent-Info":{"MIP-Home-Agent-Address":["172.26.17.183"]}}},"Subscribed-Periodic-RAU-TAU-Timer":0}}'
+                 )
+             )
+ 
+diff --git a/scripts/data_provisioning_users.sh b/scripts/data_provisioning_users.sh
+index cc7c58d8..40db9d81 100755
+--- a/scripts/data_provisioning_users.sh
++++ b/scripts/data_provisioning_users.sh
+@@ -34,7 +34,7 @@ for (( i=1; i<=$no_of_users; i++ ))
+ do
+ 	echo "IMSI=$imsi MSISDN=$msisdn"
+ 
+-	cqlsh $cassandra_ip -e "INSERT INTO vhss.users_imsi (imsi, msisdn, access_restriction, key, mmehost, mmeidentity_idmmeidentity, mmerealm, rand, sqn, subscription_data) VALUES ('$imsi', $msisdn, 41, '$key', 'mme.localdomain', 3, 'localdomain', '2683b376d1056746de3b254012908e0e', 96, '{\"Subscription-Data\":{\"Access-Restriction-Data\":41,\"Subscriber-Status\":0,\"Network-Access-Mode\":2,\"Regional-Subscription-Zone-Code\":[\"0x0123\",\"0x4567\",\"0x89AB\",\"0xCDEF\",\"0x1234\",\"0x5678\",\"0x9ABC\",\"0xDEF0\",\"0x2345\",\"0x6789\"],\"MSISDN\":\"0x$msisdn\",\"AMBR\":{\"Max-Requested-Bandwidth-UL\":50000000,\"Max-Requested-Bandwidth-DL\":100000000},\"APN-Configuration-Profile\":{\"Context-Identifier\":0,\"All-APN-Configurations-Included-Indicator\":0,\"APN-Configuration\":{\"Context-Identifier\":0,\"PDN-Type\":0,\"Served-Party-IP-Address\":[\"10.0.0.1\",\"10.0.0.2\"],\"Service-Selection\":\"apn1\",\"EPS-Subscribed-QoS-Profile\":{\"QoS-Class-Identifier\":9,\"Allocation-Retention-Priority\":{\"Priority-Level\":15,\"Pre-emption-Capability\":0,\"Pre-emption-Vulnerability\":0}},\"AMBR\":{\"Max-Requested-Bandwidth-UL\":50000000,\"Max-Requested-Bandwidth-DL\":100000000},\"PDN-GW-Allocation-Type\":0,\"MIP6-Agent-Info\":{\"MIP-Home-Agent-Address\":[\"172.26.17.183\"]}}},\"Subscribed-Periodic-RAU-TAU-Timer\":0}}');"
++	cqlsh $cassandra_ip -e "INSERT INTO vhss.users_imsi (imsi, msisdn, access_restriction, key, mmehost, mmeidentity_idmmeidentity, mmerealm, rand, sqn, subscription_data) VALUES ('$imsi', $msisdn, 41, '$key', 'mme.localdomain', 3, 'localdomain', '2683b376d1056746de3b254012908e0e', 96, '{\"Subscription-Data\":{\"Access-Restriction-Data\":41,\"Subscriber-Status\":0,\"Network-Access-Mode\":2,\"MSISDN\":\"0x$msisdn\",\"AMBR\":{\"Max-Requested-Bandwidth-UL\":50000000,\"Max-Requested-Bandwidth-DL\":100000000},\"APN-Configuration-Profile\":{\"Context-Identifier\":0,\"All-APN-Configurations-Included-Indicator\":0,\"APN-Configuration\":{\"Context-Identifier\":0,\"PDN-Type\":0,\"Served-Party-IP-Address\":[\"10.0.0.1\",\"10.0.0.2\"],\"Service-Selection\":\"apn1\",\"EPS-Subscribed-QoS-Profile\":{\"QoS-Class-Identifier\":9,\"Allocation-Retention-Priority\":{\"Priority-Level\":15,\"Pre-emption-Capability\":0,\"Pre-emption-Vulnerability\":0}},\"AMBR\":{\"Max-Requested-Bandwidth-UL\":50000000,\"Max-Requested-Bandwidth-DL\":100000000},\"PDN-GW-Allocation-Type\":0,\"MIP6-Agent-Info\":{\"MIP-Home-Agent-Address\":[\"172.26.17.183\"]}}},\"Subscribed-Periodic-RAU-TAU-Timer\":0}}');"
+ 	if [ $? -ne 0 ];then
+ 	   echo -e "Oops! Something went wrong adding to vhss.users_imsi!\n"
+ 	   exit
+diff --git a/src/hss_rel14/bin/make_certs.sh b/src/hss_rel14/bin/make_certs.sh
+index b673cd11..3d1ac6a9 100755
+--- a/src/hss_rel14/bin/make_certs.sh
++++ b/src/hss_rel14/bin/make_certs.sh
+@@ -64,14 +64,14 @@ else
+   openssl ca -cert cacert.pem -keyfile cakey.pem -in $HOST.csr.pem -out $HOST.cert.pem -outdir . -batch
+ fi
+ 
+-IS_CONTAINER=`egrep -c "docker|podman|kubepods|libpod|buildah" /proc/self/cgroup`
++#IS_CONTAINER=`egrep -c "docker|podman|kubepods|libpod|buildah" /proc/self/cgroup`
+ 
+-if [ $IS_CONTAINER -eq 0 ]
+-then
+-  SUDO='sudo -S -E'
+-else
++#if [ $IS_CONTAINER -eq 0 ]
++#then
++#  SUDO='sudo -S -E'
++#else
+   SUDO=''
+-fi
++#fi
+ 
+ $SUDO cp -upv $HOST.cert.pem cacert.pem $HOST.key.pem  $PREFIX/freeDiameter
+ 
